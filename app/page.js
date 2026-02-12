@@ -38,14 +38,12 @@ export default function Home() {
   }
 
   async function loadStages() {
-    // stages har ikke RLS hos dig lige nu, så vi kan bare hente dem
     const { data, error } = await supabase
       .from("stages")
       .select("id,name,distance_km")
       .order("created_at", { ascending: false });
 
     if (error) {
-      // stages er "nice to have" – vi viser bare fejl i race-sektionen
       setRaceError("Kunne ikke hente stages: " + error.message);
       return;
     }
@@ -110,7 +108,7 @@ export default function Home() {
 
     const { error } = await supabase.auth.signInWithOtp({
       email,
-      options: { emailRedirectTo: "https://tennedz.eu" },
+      options: { emailRedirectTo: "https://tennedz.eu" }
     });
 
     if (error) setStatus("Fejl: " + error.message);
@@ -167,7 +165,7 @@ export default function Home() {
       const res = await fetch("/api/run-race", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ stage_id: selectedStageId }),
+        body: JSON.stringify({ stage_id: selectedStageId })
       });
 
       const text = await res.text();
@@ -183,10 +181,7 @@ export default function Home() {
         throw new Error(msg);
       }
 
-      // json = { ok, race_id, stage, top10 }
       const top10 = json.top10 ?? [];
-
-      // Hent rytter-navne for top10 (så vi kan vise dem pænt)
       const ids = top10.map((x) => x.rider_id).filter(Boolean);
 
       let riderMap = {};
@@ -203,13 +198,13 @@ export default function Home() {
 
       const top10Pretty = top10.map((x) => ({
         ...x,
-        rider_name: riderMap[x.rider_id] ?? riderNameById.get(x.rider_id) ?? x.rider_id,
+        rider_name: riderMap[x.rider_id] ?? riderNameById.get(x.rider_id) ?? x.rider_id
       }));
 
       setRaceResult({
         race_id: json.race_id,
         stage: json.stage,
-        top10: top10Pretty,
+        top10: top10Pretty
       });
     } catch (e) {
       setRaceError(e?.message ?? String(e));
@@ -252,7 +247,14 @@ export default function Home() {
               <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: 12 }}>
                 {riders.map((r) => (
                   <div key={r.id} style={{ border: "1px solid #eee", borderRadius: 10, padding: 12 }}>
-                    <div style={{ fontWeight: 700 }}>{r.name}</div>
+                    <div style={{ fontWeight: 700 }}>
+                      {r.name}{" "}
+                      {r.nationality ? (
+                        <span style={{ fontWeight: 400, opacity: 0.7 }}>
+                          ({r.nationality})
+                        </span>
+                      ) : null}
+                    </div>
                     <div style={{ fontSize: 13, opacity: 0.85, marginTop: 6 }}>
                       Sprint: {r.sprint} · Flat: {r.flat} · Hills: {r.hills} · Mountain: {r.mountain}
                       <br />
@@ -331,10 +333,11 @@ export default function Home() {
               </div>
             )}
 
-            <div style={{ marginTop: 10, opacity: 0.7 }}>Build marker: UI-RACE-V1</div>
+            <div style={{ marginTop: 10, opacity: 0.7 }}>Build marker: UI-RACE-V2</div>
           </div>
         </div>
       ) : null}
     </main>
   );
 }
+
