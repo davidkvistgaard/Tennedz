@@ -27,7 +27,14 @@ export default function Home() {
   }
 
   async function refresh() {
-    const { data } = await supabase.auth.getSession();
+    const { data, error } = await supabase.auth.getSession();
+    if (error) {
+      setStatus("Fejl: " + error.message);
+      setTeam(null);
+      setRiders([]);
+      return;
+    }
+
     const loggedIn = !!data?.session;
     setStatus(loggedIn ? "Logget ind ✅" : "Ikke logget ind");
 
@@ -43,6 +50,8 @@ export default function Home() {
 
       if (res.team?.id) {
         await loadRiders(res.team.id);
+      } else {
+        setRiders([]);
       }
     } catch (e) {
       setTeam(null);
@@ -53,7 +62,11 @@ export default function Home() {
 
   useEffect(() => {
     refresh();
-    const { data: sub } = supabase.auth.onAuthStateChange(() => refresh());
+
+    const { data: sub } = supabase.auth.onAuthStateChange(() => {
+      refresh();
+    });
+
     return () => sub?.subscription?.unsubscribe?.();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -64,7 +77,7 @@ export default function Home() {
 
     const { error } = await supabase.auth.signInWithOtp({
       email,
-      options: { emailRedirectTo: "https://tennedz.eu" },
+      options: { emailRedirectTo: "https://tennedz.eu" }
     });
 
     if (error) setStatus("Fejl: " + error.message);
@@ -80,20 +93,21 @@ export default function Home() {
 
   async function grantStarterPack() {
     if (!team?.id) return;
+
     setBusy(true);
     setStatus("Tildeler starter-ryttere…");
 
-    const { error } = await supabase.rpc("grant_starter_pack", { p_count: 10 });
+    try {
+      const { error } = await supabase.rpc("grant_starter_pack", { p_count: 10 });
+      if (error) throw error;
 
-    if (error) {
+      await loadRiders(team.id);
+      setStatus("Starter-pack tildelt ✅");
+    } catch (e) {
+      setStatus("Fejl: " + (e?.message ?? String(e)));
+    } finally {
       setBusy(false);
-      setStatus("Fejl: " + error.message);
-      return;
     }
-
-    await loadRiders(team.id);
-    setBusy(false);
-    setStatus("Starter-pack tildelt ✅");
   }
 
   return (
@@ -123,7 +137,7 @@ export default function Home() {
             padding: 12,
             border: "1px solid #ddd",
             borderRadius: 8,
-            maxWidth: 900,
+            maxWidth: 900
           }}
         >
           <h2 style={{ marginTop: 0 }}>Dit hold</h2>
@@ -146,7 +160,7 @@ export default function Home() {
                 style={{
                   display: "grid",
                   gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))",
-                  gap: 12,
+                  gap: 12
                 }}
               >
                 {riders.map((r) => (
@@ -164,7 +178,7 @@ export default function Home() {
               </div>
             )}
 
-            <div style={{ marginTop: 10, opacity: 0.7 }}>Build marker: RIDERS-V1</div>
+            <div style={{ marginTop: 10, opacity: 0.7 }}>Build marker: RIDERS-V2</div>
           </div>
         </div>
       ) : null}
