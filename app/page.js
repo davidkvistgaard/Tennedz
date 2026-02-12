@@ -2,16 +2,39 @@
 
 import { useEffect, useState } from "react";
 import { supabase } from "../lib/supabaseClient";
+import { getOrCreateTeam } from "../lib/team";
 
 export default function Home() {
   const [email, setEmail] = useState("");
-  const [status, setStatus] = useState("Ikke logget ind");
+  const [status, setStatus] = useState("Loader…");
+  const [team, setTeam] = useState(null);
+
+  async function refresh() {
+    const { data } = await supabase.auth.getSession();
+    const loggedIn = !!data?.session;
+    setStatus(loggedIn ? "Logget ind ✅" : "Ikke logget ind");
+
+    if (loggedIn) {
+      try {
+        const res = await getOrCreateTeam();
+        setTeam(res.team);
+      } catch (e) {
+        setTeam(null);
+        setStatus("Fejl: " + (e?.message ?? String(e)));
+      }
+    } else {
+      setTeam(null);
+    }
+  }
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data, error }) => {
-      if (error) setStatus("Fejl: " + error.message);
-      else setStatus(data?.session ? "Logget ind ✅" : "Ikke logget ind");
+    refresh();
+
+    const { data: sub } = supabase.auth.onAuthStateChange(() => {
+      refresh();
     });
+
+    return () => sub?.subscription?.unsubscribe?.();
   }, []);
 
   async function signInWithEmail(e) {
@@ -29,6 +52,7 @@ export default function Home() {
 
   async function signOut() {
     await supabase.auth.signOut();
+    setTeam(null);
     setStatus("Ikke logget ind");
   }
 
@@ -48,10 +72,14 @@ export default function Home() {
         <button type="button" onClick={signOut} style={{ padding: "8px 12px" }}>Log ud</button>
       </form>
 
-      <p style={{ marginTop: 16, opacity: 0.7 }}>
-        Build marker: LOGIN-BOX-V1
-      </p>
+      {team && (
+        <div style={{ marginTop: 18, padding: 12, border: "1px solid #ddd", borderRadius: 8, maxWidth: 520 }}>
+          <h2 style={{ marginTop: 0 }}>Dit hold</h2>
+          <div><b>Navn:</b> {team.name}</div>
+          <div><b>Budget:</b> {team.budget.toLocaleString("da-DK")} </div>
+          <div style={{ marginTop: 8, opacity: 0.7 }}>Build marker: TEAM-V1</div>
+        </div>
+      )}
     </main>
   );
 }
-
