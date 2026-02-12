@@ -55,6 +55,7 @@ export default function Home() {
     refresh();
     const { data: sub } = supabase.auth.onAuthStateChange(() => refresh());
     return () => sub?.subscription?.unsubscribe?.();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   async function signInWithEmail(e) {
@@ -63,7 +64,7 @@ export default function Home() {
 
     const { error } = await supabase.auth.signInWithOtp({
       email,
-      options: { emailRedirectTo: "https://tennedz.eu" }
+      options: { emailRedirectTo: "https://tennedz.eu" },
     });
 
     if (error) setStatus("Fejl: " + error.message);
@@ -83,6 +84,7 @@ export default function Home() {
     setStatus("Tildeler starter-ryttere…");
 
     const { error } = await supabase.rpc("grant_starter_pack", { p_count: 10 });
+
     if (error) {
       setBusy(false);
       setStatus("Fejl: " + error.message);
@@ -106,15 +108,31 @@ export default function Home() {
           placeholder="din@email.dk"
           style={{ padding: 8, width: 260 }}
         />
-        <button type="submit" style={{ padding: "8px 12px" }}>Login</button>
-        <button type="button" onClick={signOut} style={{ padding: "8px 12px" }}>Log ud</button>
+        <button type="submit" style={{ padding: "8px 12px" }}>
+          Login
+        </button>
+        <button type="button" onClick={signOut} style={{ padding: "8px 12px" }}>
+          Log ud
+        </button>
       </form>
 
-      {team && (
-        <div style={{ marginTop: 18, padding: 12, border: "1px solid #ddd", borderRadius: 8, maxWidth: 900 }}>
+      {team ? (
+        <div
+          style={{
+            marginTop: 18,
+            padding: 12,
+            border: "1px solid #ddd",
+            borderRadius: 8,
+            maxWidth: 900,
+          }}
+        >
           <h2 style={{ marginTop: 0 }}>Dit hold</h2>
-          <div><b>Navn:</b> {team.name}</div>
-          <div><b>Budget:</b> {team.budget.toLocaleString("da-DK")}</div>
+          <div>
+            <b>Navn:</b> {team.name}
+          </div>
+          <div>
+            <b>Budget:</b> {Number(team.budget).toLocaleString("da-DK")}
+          </div>
 
           <div style={{ marginTop: 16 }}>
             <h3>Dine ryttere ({riders.length})</h3>
@@ -124,7 +142,13 @@ export default function Home() {
                 {busy ? "Arbejder…" : "Giv mig 10 starter-ryttere"}
               </button>
             ) : (
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: 12 }}>
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))",
+                  gap: 12,
+                }}
+              >
                 {riders.map((r) => (
                   <div key={r.id} style={{ border: "1px solid #eee", borderRadius: 10, padding: 12 }}>
                     <div style={{ fontWeight: 700 }}>{r.name}</div>
@@ -143,11 +167,7 @@ export default function Home() {
             <div style={{ marginTop: 10, opacity: 0.7 }}>Build marker: RIDERS-V1</div>
           </div>
         </div>
-      )}
-    </main>
-  );
-}
-
+      ) : null}
     </main>
   );
 }
