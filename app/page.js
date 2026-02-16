@@ -5,23 +5,26 @@ import { supabase } from "../lib/supabaseClient";
 import { getOrCreateTeam } from "../lib/team";
 
 export default function Home() {
-  // auth + team
   const [email, setEmail] = useState("");
   const [status, setStatus] = useState("Loader…");
   const [team, setTeam] = useState(null);
 
-  // riders
   const [riders, setRiders] = useState([]);
   const [busy, setBusy] = useState(false);
 
-  // stages + race
   const [stages, setStages] = useState([]);
   const [selectedStageId, setSelectedStageId] = useState("");
+
+  // Old test-race (kan blive) — vi bruger nu stage+points som main
   const [raceBusy, setRaceBusy] = useState(false);
   const [raceError, setRaceError] = useState("");
-  const [raceResult, setRaceResult] = useState(null); // { race_id, stage, top10[] with names }
+  const [raceResult, setRaceResult] = useState(null);
 
-  // ---------- data loaders ----------
+  // New stage+points
+  const [stageBusy, setStageBusy] = useState(false);
+  const [stageError, setStageError] = useState("");
+  const [stageResult, setStageResult] = useState(null);
+
   async function loadRiders(teamId) {
     const { data, error } = await supabase
       .from("team_riders")
@@ -44,14 +47,12 @@ export default function Home() {
       .order("created_at", { ascending: false });
 
     if (error) {
-      setRaceError("Kunne ikke hente stages: " + error.message);
+      setStageError("Kunne ikke hente stages: " + error.message);
       return;
     }
 
     setStages(data ?? []);
-    if (!selectedStageId && data?.length) {
-      setSelectedStageId(data[0].id);
-    }
+    if (!selectedStageId && data?.length) setSelectedStageId(data[0].id);
   }
 
   async function refresh() {
@@ -76,11 +77,8 @@ export default function Home() {
       const res = await getOrCreateTeam();
       setTeam(res.team);
 
-      if (res.team?.id) {
-        await loadRiders(res.team.id);
-      } else {
-        setRiders([]);
-      }
+      if (res.team?.id) await loadRiders(res.team.id);
+      else setRiders([]);
     } catch (e) {
       setTeam(null);
       setRiders([]);
@@ -88,20 +86,15 @@ export default function Home() {
     }
   }
 
-  // ---------- effects ----------
   useEffect(() => {
     refresh();
     loadStages();
 
-    const { data: sub } = supabase.auth.onAuthStateChange(() => {
-      refresh();
-    });
-
+    const { data: sub } = supabase.auth.onAuthStateChange(() => refresh());
     return () => sub?.subscription?.unsubscribe?.();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // ---------- auth actions ----------
   async function signInWithEmail(e) {
     e.preventDefault();
     setStatus("Sender login-link…");
@@ -121,19 +114,17 @@ export default function Home() {
     setRiders([]);
     setStatus("Ikke logget ind");
     setRaceResult(null);
+    setStageResult(null);
   }
 
-  // ---------- rider actions ----------
   async function grantStarterPack() {
     if (!team?.id) return;
-
     setBusy(true);
     setStatus("Tildeler starter-ryttere…");
 
     try {
       const { error } = await supabase.rpc("grant_starter_pack", { p_count: 10 });
       if (error) throw error;
-
       await loadRiders(team.id);
       setStatus("Starter-pack tildelt ✅");
     } catch (e) {
@@ -143,29 +134,46 @@ export default function Home() {
     }
   }
 
-  // ---------- race actions ----------
   const riderNameById = useMemo(() => {
     const m = new Map();
     for (const r of riders) m.set(r.id, r.name);
     return m;
   }, [riders]);
 
-  async function runRace() {
-    setRaceError("");
-    setRaceResult(null);
+  async function enrichNamesForTop(list, setFn) {
+    const ids = (list ?? []).map((x) => x.rider_id).filter(Boolean);
+    let riderMap = {};
+    if (ids.length > 0) {
+      const { data: rData, error: rErr } = await supabase.from("riders").select("id,name").in("id", ids);
+      if (!rErr && rData?.length) for (const rr of rData) riderMap[rr.id] = rr.name;
+    }
+    setFn(
+      (list ?? []).map((x) => ({
+        ...x,
+        rider_name: riderMap[x.rider_id] ?? riderNameById.get(x.rider_id) ?? x.rider_id
+      }))
+    );
+  }
+
+  async function runStageWithPoints() {
+    setStageError("");
+    setStageResult(null);
 
     if (!selectedStageId) {
-      setRaceError("Vælg en stage først.");
+      setStageError("Vælg en stage først.");
       return;
     }
 
-    setRaceBusy(true);
+    setStageBusy(true);
 
     try {
-      const res = await fetch("/api/run-race", {
+      const res = await fetch("/api/run-stage", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ stage_id: selectedStageId })
+        body: JSON.stringify({
+          stage_template_id: selectedStageId,
+          event_kind: "one_day"
+        })
       });
 
       const text = await res.text();
@@ -177,43 +185,27 @@ export default function Home() {
       }
 
       if (!res.ok) {
-        const msg = json?.error ?? text ?? "Ukendt fejl";
-        throw new Error(msg);
+        throw new Error(json?.error ?? text ?? "Ukendt fejl");
       }
 
       const top10 = json.top10 ?? [];
-      const ids = top10.map((x) => x.rider_id).filter(Boolean);
+      let top10Pretty = [];
+      await enrichNamesForTop(top10, (v) => (top10Pretty = v));
 
-      let riderMap = {};
-      if (ids.length > 0) {
-        const { data: rData, error: rErr } = await supabase
-          .from("riders")
-          .select("id,name")
-          .in("id", ids);
-
-        if (!rErr && rData?.length) {
-          for (const rr of rData) riderMap[rr.id] = rr.name;
-        }
-      }
-
-      const top10Pretty = top10.map((x) => ({
-        ...x,
-        rider_name: riderMap[x.rider_id] ?? riderNameById.get(x.rider_id) ?? x.rider_id
-      }));
-
-      setRaceResult({
-        race_id: json.race_id,
-        stage: json.stage,
-        top10: top10Pretty
+      setStageResult({
+        event: json.event,
+        event_stage: json.event_stage,
+        stage_template: json.stage_template,
+        top10: top10Pretty,
+        leaderboards: json.leaderboards
       });
     } catch (e) {
-      setRaceError(e?.message ?? String(e));
+      setStageError(e?.message ?? String(e));
     } finally {
-      setRaceBusy(false);
+      setStageBusy(false);
     }
   }
 
-  // ---------- UI ----------
   return (
     <main style={{ padding: 24, fontFamily: "system-ui, sans-serif" }}>
       <h1>Tennedz</h1>
@@ -231,7 +223,7 @@ export default function Home() {
       </form>
 
       {team ? (
-        <div style={{ marginTop: 18, padding: 12, border: "1px solid #ddd", borderRadius: 8, maxWidth: 1000 }}>
+        <div style={{ marginTop: 18, padding: 12, border: "1px solid #ddd", borderRadius: 8, maxWidth: 1100 }}>
           <h2 style={{ marginTop: 0 }}>Dit hold</h2>
           <div><b>Navn:</b> {team.name}</div>
           <div><b>Budget:</b> {Number(team.budget).toLocaleString("da-DK")}</div>
@@ -249,11 +241,7 @@ export default function Home() {
                   <div key={r.id} style={{ border: "1px solid #eee", borderRadius: 10, padding: 12 }}>
                     <div style={{ fontWeight: 700 }}>
                       {r.name}{" "}
-                      {r.nationality ? (
-                        <span style={{ fontWeight: 400, opacity: 0.7 }}>
-                          ({r.nationality})
-                        </span>
-                      ) : null}
+                      {r.nationality ? <span style={{ fontWeight: 400, opacity: 0.7 }}>({r.nationality})</span> : null}
                     </div>
                     <div style={{ fontSize: 13, opacity: 0.85, marginTop: 6 }}>
                       Sprint: {r.sprint} · Flat: {r.flat} · Hills: {r.hills} · Mountain: {r.mountain}
@@ -271,7 +259,7 @@ export default function Home() {
           <hr style={{ margin: "18px 0" }} />
 
           <div>
-            <h3>Test-løb</h3>
+            <h3>Stage + points (V1)</h3>
 
             <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center" }}>
               <label style={{ display: "flex", gap: 8, alignItems: "center" }}>
@@ -294,50 +282,65 @@ export default function Home() {
               </label>
 
               <button
-                onClick={runRace}
-                disabled={raceBusy || riders.length === 0 || !selectedStageId}
+                onClick={runStageWithPoints}
+                disabled={stageBusy || riders.length === 0 || !selectedStageId}
                 style={{ padding: "10px 12px" }}
               >
-                {raceBusy ? "Kører…" : "Kør test-løb"}
+                {stageBusy ? "Kører…" : "Kør stage + points"}
               </button>
             </div>
 
-            {riders.length === 0 && (
-              <p style={{ marginTop: 8, opacity: 0.8 }}>
-                Du skal have ryttere før du kan køre et løb (tryk “starter-ryttere” ovenfor).
-              </p>
-            )}
+            {stageError && <p style={{ marginTop: 10, color: "crimson" }}>Fejl: {stageError}</p>}
 
-            {raceError && (
-              <p style={{ marginTop: 10, color: "crimson" }}>
-                Fejl: {raceError}
-              </p>
-            )}
-
-            {raceResult && (
+            {stageResult && (
               <div style={{ marginTop: 12 }}>
                 <div style={{ opacity: 0.85 }}>
-                  <b>Race:</b> {raceResult.race_id}
-                  {" · "}
-                  <b>Stage:</b> {raceResult.stage?.name ?? "?"}
+                  <b>Event:</b> {stageResult.event?.name}{" "}
+                  · <b>Stage:</b> {stageResult.stage_template?.name}
+                  {stageResult.stage_template?.is_mountain ? " · KOM aktiv" : ""}
                 </div>
 
-                <h4 style={{ marginBottom: 8 }}>Top 10</h4>
+                <h4 style={{ marginBottom: 8 }}>Top 10 (tid)</h4>
                 <ol style={{ marginTop: 0 }}>
-                  {raceResult.top10.map((x) => (
+                  {stageResult.top10.map((x) => (
                     <li key={x.rider_id}>
                       {x.rider_name} — {Math.round(Number(x.time_sec))} sek
                     </li>
                   ))}
                 </ol>
+
+                <h4 style={{ marginBottom: 8 }}>Team leaderboard (points)</h4>
+                {stageResult.leaderboards?.team_points?.length ? (
+                  <ol style={{ marginTop: 0 }}>
+                    {stageResult.leaderboards.team_points.map((x) => (
+                      <li key={x.team_id}>
+                        Team {x.team_id.slice(0, 8)}… — {x.points} pts
+                      </li>
+                    ))}
+                  </ol>
+                ) : (
+                  <div style={{ opacity: 0.8 }}>Ingen point tildelt endnu.</div>
+                )}
+
+                <h4 style={{ marginBottom: 8 }}>Team leaderboard (KOM)</h4>
+                {stageResult.leaderboards?.team_kom?.length ? (
+                  <ol style={{ marginTop: 0 }}>
+                    {stageResult.leaderboards.team_kom.map((x) => (
+                      <li key={x.team_id}>
+                        Team {x.team_id.slice(0, 8)}… — {x.points} pts
+                      </li>
+                    ))}
+                  </ol>
+                ) : (
+                  <div style={{ opacity: 0.8 }}>Ingen KOM point (eller ikke en bjergetape).</div>
+                )}
               </div>
             )}
 
-            <div style={{ marginTop: 10, opacity: 0.7 }}>Build marker: UI-RACE-V2</div>
+            <div style={{ marginTop: 10, opacity: 0.7 }}>Build marker: POINTS-LEADERBOARD-V1</div>
           </div>
         </div>
       ) : null}
     </main>
   );
 }
-
