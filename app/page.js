@@ -4,6 +4,26 @@ import { useEffect, useMemo, useState } from "react";
 import { supabase } from "../lib/supabaseClient";
 import { getOrCreateTeam } from "../lib/team";
 
+function formatHMS(totalSeconds) {
+  const s = Math.max(0, Math.round(Number(totalSeconds) || 0));
+  const h = Math.floor(s / 3600);
+  const m = Math.floor((s % 3600) / 60);
+  const sec = s % 60;
+
+  if (h > 0) {
+    return `${h}:${String(m).padStart(2, "0")}:${String(sec).padStart(2, "0")}`;
+  }
+  return `${m}:${String(sec).padStart(2, "0")}`;
+}
+
+function formatGap(gapSeconds) {
+  const s = Math.max(0, Math.round(Number(gapSeconds) || 0));
+  // Vis 0 som "s.t." (same time) eller +0:00 – jeg vælger s.t.
+  if (s === 0) return "s.t.";
+  // gaps giver mest mening som mm:ss (eller h:mm:ss hvis meget stort)
+  return `+${formatHMS(s)}`;
+}
+
 export default function Home() {
   const [email, setEmail] = useState("");
   const [status, setStatus] = useState("Loader…");
@@ -14,11 +34,6 @@ export default function Home() {
 
   const [stages, setStages] = useState([]);
   const [selectedStageId, setSelectedStageId] = useState("");
-
-  // Old test-race (kan blive) — vi bruger nu stage+points som main
-  const [raceBusy, setRaceBusy] = useState(false);
-  const [raceError, setRaceError] = useState("");
-  const [raceResult, setRaceResult] = useState(null);
 
   // New stage+points
   const [stageBusy, setStageBusy] = useState(false);
@@ -113,7 +128,6 @@ export default function Home() {
     setTeam(null);
     setRiders([]);
     setStatus("Ikke logget ind");
-    setRaceResult(null);
     setStageResult(null);
   }
 
@@ -140,19 +154,20 @@ export default function Home() {
     return m;
   }, [riders]);
 
-  async function enrichNamesForTop(list, setFn) {
+  async function enrichNamesForTop(list) {
     const ids = (list ?? []).map((x) => x.rider_id).filter(Boolean);
     let riderMap = {};
     if (ids.length > 0) {
-      const { data: rData, error: rErr } = await supabase.from("riders").select("id,name").in("id", ids);
+      const { data: rData, error: rErr } = await supabase
+        .from("riders")
+        .select("id,name")
+        .in("id", ids);
       if (!rErr && rData?.length) for (const rr of rData) riderMap[rr.id] = rr.name;
     }
-    setFn(
-      (list ?? []).map((x) => ({
-        ...x,
-        rider_name: riderMap[x.rider_id] ?? riderNameById.get(x.rider_id) ?? x.rider_id
-      }))
-    );
+    return (list ?? []).map((x) => ({
+      ...x,
+      rider_name: riderMap[x.rider_id] ?? riderNameById.get(x.rider_id) ?? x.rider_id
+    }));
   }
 
   async function runStageWithPoints() {
@@ -188,9 +203,8 @@ export default function Home() {
         throw new Error(json?.error ?? text ?? "Ukendt fejl");
       }
 
-      const top10 = json.top10 ?? [];
-      let top10Pretty = [];
-      await enrichNamesForTop(top10, (v) => (top10Pretty = v));
+      const top10Raw = json.top10 ?? [];
+      const top10Pretty = await enrichNamesForTop(top10Raw);
 
       setStageResult({
         event: json.event,
@@ -282,6 +296,7 @@ export default function Home() {
               </label>
 
               <button
+                type="button"
                 onClick={runStageWithPoints}
                 disabled={stageBusy || riders.length === 0 || !selectedStageId}
                 style={{ padding: "10px 12px" }}
@@ -300,14 +315,30 @@ export default function Home() {
                   {stageResult.stage_template?.is_mountain ? " · KOM aktiv" : ""}
                 </div>
 
-                <h4 style={{ marginBottom: 8 }}>Top 10 (tid)</h4>
-                <ol style={{ marginTop: 0 }}>
-                  {stageResult.top10.map((x) => (
-                    <li key={x.rider_id}>
-                      {x.rider_name} — {Math.round(Number(x.time_sec))} sek
-                    </li>
-                  ))}
-                </ol>
+                <h4 style={{ marginBottom: 8 }}>Top 10</h4>
+                {(() => {
+                  const top = stageResult.top10 ?? [];
+                  const leaderTime = top.length ? Number(top[0].time_sec) : null;
+
+                  return (
+                    <ol style={{ marginTop: 0 }}>
+                      {top.map((x, idx) => {
+                        const t = Number(x.time_sec);
+                        const gap = leaderTime == null ? null : t - leaderTime;
+
+                        // Vinder: vis fuld tid. Andre: vis +gap.
+                        const timeLabel =
+                          idx === 0 ? formatHMS(t) : formatGap(gap);
+
+                        return (
+                          <li key={x.rider_id}>
+                            {x.rider_name} — {timeLabel}
+                          </li>
+                        );
+                      })}
+                    </ol>
+                  );
+                })()}
 
                 <h4 style={{ marginBottom: 8 }}>Team leaderboard (points)</h4>
                 {stageResult.leaderboards?.team_points?.length ? (
@@ -337,7 +368,7 @@ export default function Home() {
               </div>
             )}
 
-            <div style={{ marginTop: 10, opacity: 0.7 }}>Build marker: POINTS-LEADERBOARD-V1</div>
+            <div style={{ marginTop: 10, opacity: 0.7 }}>Build marker: POINTS-LEADERBOARD-V2</div>
           </div>
         </div>
       ) : null}
