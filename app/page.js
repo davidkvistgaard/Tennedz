@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "../lib/supabaseClient";
 import { getOrCreateTeam } from "../lib/team";
 
@@ -9,18 +9,13 @@ function formatHMS(totalSeconds) {
   const h = Math.floor(s / 3600);
   const m = Math.floor((s % 3600) / 60);
   const sec = s % 60;
-
-  if (h > 0) {
-    return `${h}:${String(m).padStart(2, "0")}:${String(sec).padStart(2, "0")}`;
-  }
+  if (h > 0) return `${h}:${String(m).padStart(2, "0")}:${String(sec).padStart(2, "0")}`;
   return `${m}:${String(sec).padStart(2, "0")}`;
 }
 
 function formatGap(gapSeconds) {
   const s = Math.max(0, Math.round(Number(gapSeconds) || 0));
-  // Vis 0 som "s.t." (same time) eller +0:00 – jeg vælger s.t.
   if (s === 0) return "s.t.";
-  // gaps giver mest mening som mm:ss (eller h:mm:ss hvis meget stort)
   return `+${formatHMS(s)}`;
 }
 
@@ -35,10 +30,21 @@ export default function Home() {
   const [stages, setStages] = useState([]);
   const [selectedStageId, setSelectedStageId] = useState("");
 
-  // New stage+points
+  // Stage+points result
   const [stageBusy, setStageBusy] = useState(false);
   const [stageError, setStageError] = useState("");
   const [stageResult, setStageResult] = useState(null);
+
+  // Viewer
+  const [viewerStageId, setViewerStageId] = useState("");
+  const [viewerLoading, setViewerLoading] = useState(false);
+  const [viewerError, setViewerError] = useState("");
+  const [feed, setFeed] = useState([]);
+  const [snapshots, setSnapshots] = useState([]);
+  const [play, setPlay] = useState(false);
+  const [cursor, setCursor] = useState(0); // index into snapshots
+
+  const timerRef = useRef(null);
 
   async function loadRiders(teamId) {
     const { data, error } = await supabase
@@ -47,11 +53,7 @@ export default function Home() {
       .eq("team_id", teamId);
 
     if (error) throw error;
-
-    const list = (data ?? [])
-      .map((x) => x.rider)
-      .filter(Boolean);
-
+    const list = (data ?? []).map((x) => x.rider).filter(Boolean);
     setRiders(list);
   }
 
@@ -91,7 +93,6 @@ export default function Home() {
     try {
       const res = await getOrCreateTeam();
       setTeam(res.team);
-
       if (res.team?.id) await loadRiders(res.team.id);
       else setRiders([]);
     } catch (e) {
@@ -104,7 +105,6 @@ export default function Home() {
   useEffect(() => {
     refresh();
     loadStages();
-
     const { data: sub } = supabase.auth.onAuthStateChange(() => refresh());
     return () => sub?.subscription?.unsubscribe?.();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -129,6 +129,12 @@ export default function Home() {
     setRiders([]);
     setStatus("Ikke logget ind");
     setStageResult(null);
+
+    setFeed([]);
+    setSnapshots([]);
+    setViewerStageId("");
+    setCursor(0);
+    setPlay(false);
   }
 
   async function grantStarterPack() {
@@ -158,10 +164,7 @@ export default function Home() {
     const ids = (list ?? []).map((x) => x.rider_id).filter(Boolean);
     let riderMap = {};
     if (ids.length > 0) {
-      const { data: rData, error: rErr } = await supabase
-        .from("riders")
-        .select("id,name")
-        .in("id", ids);
+      const { data: rData, error: rErr } = await supabase.from("riders").select("id,name").in("id", ids);
       if (!rErr && rData?.length) for (const rr of rData) riderMap[rr.id] = rr.name;
     }
     return (list ?? []).map((x) => ({
@@ -185,26 +188,16 @@ export default function Home() {
       const res = await fetch("/api/run-stage", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          stage_template_id: selectedStageId,
-          event_kind: "one_day"
-        })
+        body: JSON.stringify({ stage_template_id: selectedStageId, event_kind: "one_day" })
       });
 
       const text = await res.text();
       let json = null;
-      try {
-        json = JSON.parse(text);
-      } catch {
-        json = null;
-      }
+      try { json = JSON.parse(text); } catch { json = null; }
 
-      if (!res.ok) {
-        throw new Error(json?.error ?? text ?? "Ukendt fejl");
-      }
+      if (!res.ok) throw new Error(json?.error ?? text ?? "Ukendt fejl");
 
-      const top10Raw = json.top10 ?? [];
-      const top10Pretty = await enrichNamesForTop(top10Raw);
+      const top10Pretty = await enrichNamesForTop(json.top10 ?? []);
 
       setStageResult({
         event: json.event,
@@ -213,6 +206,14 @@ export default function Home() {
         top10: top10Pretty,
         leaderboards: json.leaderboards
       });
+
+      // auto set viewer id to last run stage
+      setViewerStageId(json.event_stage?.id || "");
+      setFeed([]);
+      setSnapshots([]);
+      setCursor(0);
+      setPlay(false);
+      setViewerError("");
     } catch (e) {
       setStageError(e?.message ?? String(e));
     } finally {
@@ -220,24 +221,82 @@ export default function Home() {
     }
   }
 
+  async function loadViewer() {
+    setViewerError("");
+    setViewerLoading(true);
+    setFeed([]);
+    setSnapshots([]);
+    setCursor(0);
+    setPlay(false);
+
+    try {
+      if (!viewerStageId) throw new Error("Ingen event_stage_id valgt endnu.");
+
+      const res = await fetch("/api/view-stage", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ event_stage_id: viewerStageId })
+      });
+
+      const text = await res.text();
+      let json = null;
+      try { json = JSON.parse(text); } catch { json = null; }
+      if (!res.ok) throw new Error(json?.error ?? text ?? "Ukendt fejl");
+
+      setFeed(json.feed ?? []);
+      setSnapshots(json.snapshots ?? []);
+      setCursor(0);
+    } catch (e) {
+      setViewerError(e?.message ?? String(e));
+    } finally {
+      setViewerLoading(false);
+    }
+  }
+
+  // play/pause ticker
+  useEffect(() => {
+    if (timerRef.current) clearInterval(timerRef.current);
+    if (!play) return;
+
+    timerRef.current = setInterval(() => {
+      setCursor((c) => {
+        const max = Math.max(0, snapshots.length - 1);
+        if (c >= max) return c;
+        return c + 1;
+      });
+    }, 650); // “fake live” hastighed
+
+    return () => {
+      if (timerRef.current) clearInterval(timerRef.current);
+    };
+  }, [play, snapshots.length]);
+
+  useEffect(() => {
+    // stop autoplay at end
+    if (snapshots.length && cursor >= snapshots.length - 1) setPlay(false);
+  }, [cursor, snapshots.length]);
+
+  const currentSnap = snapshots[cursor]?.state || null;
+  const currentKm = currentSnap?.km ?? 0;
+
+  const visibleFeed = useMemo(() => {
+    // show feed events up to currentKm
+    return (feed ?? []).filter((e) => Number(e.km) <= Number(currentKm));
+  }, [feed, currentKm]);
+
   return (
     <main style={{ padding: 24, fontFamily: "system-ui, sans-serif" }}>
       <h1>Tennedz</h1>
       <p>Status: {status}</p>
 
       <form onSubmit={signInWithEmail} style={{ display: "flex", gap: 8, marginTop: 12 }}>
-        <input
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          placeholder="din@email.dk"
-          style={{ padding: 8, width: 260 }}
-        />
+        <input value={email} onChange={(e) => setEmail(e.target.value)} placeholder="din@email.dk" style={{ padding: 8, width: 260 }} />
         <button type="submit" style={{ padding: "8px 12px" }}>Login</button>
         <button type="button" onClick={signOut} style={{ padding: "8px 12px" }}>Log ud</button>
       </form>
 
       {team ? (
-        <div style={{ marginTop: 18, padding: 12, border: "1px solid #ddd", borderRadius: 8, maxWidth: 1100 }}>
+        <div style={{ marginTop: 18, padding: 12, border: "1px solid #ddd", borderRadius: 8, maxWidth: 1150 }}>
           <h2 style={{ marginTop: 0 }}>Dit hold</h2>
           <div><b>Navn:</b> {team.name}</div>
           <div><b>Budget:</b> {Number(team.budget).toLocaleString("da-DK")}</div>
@@ -278,11 +337,7 @@ export default function Home() {
             <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center" }}>
               <label style={{ display: "flex", gap: 8, alignItems: "center" }}>
                 <span>Stage:</span>
-                <select
-                  value={selectedStageId}
-                  onChange={(e) => setSelectedStageId(e.target.value)}
-                  style={{ padding: 8, minWidth: 260 }}
-                >
+                <select value={selectedStageId} onChange={(e) => setSelectedStageId(e.target.value)} style={{ padding: 8, minWidth: 260 }}>
                   {stages.length === 0 ? (
                     <option value="">(ingen stages fundet)</option>
                   ) : (
@@ -295,12 +350,7 @@ export default function Home() {
                 </select>
               </label>
 
-              <button
-                type="button"
-                onClick={runStageWithPoints}
-                disabled={stageBusy || riders.length === 0 || !selectedStageId}
-                style={{ padding: "10px 12px" }}
-              >
+              <button type="button" onClick={runStageWithPoints} disabled={stageBusy || riders.length === 0 || !selectedStageId} style={{ padding: "10px 12px" }}>
                 {stageBusy ? "Kører…" : "Kør stage + points"}
               </button>
             </div>
@@ -310,8 +360,7 @@ export default function Home() {
             {stageResult && (
               <div style={{ marginTop: 12 }}>
                 <div style={{ opacity: 0.85 }}>
-                  <b>Event:</b> {stageResult.event?.name}{" "}
-                  · <b>Stage:</b> {stageResult.stage_template?.name}
+                  <b>Event:</b> {stageResult.event?.name} · <b>Stage:</b> {stageResult.stage_template?.name}
                   {stageResult.stage_template?.is_mountain ? " · KOM aktiv" : ""}
                 </div>
 
@@ -325,11 +374,7 @@ export default function Home() {
                       {top.map((x, idx) => {
                         const t = Number(x.time_sec);
                         const gap = leaderTime == null ? null : t - leaderTime;
-
-                        // Vinder: vis fuld tid. Andre: vis +gap.
-                        const timeLabel =
-                          idx === 0 ? formatHMS(t) : formatGap(gap);
-
+                        const timeLabel = idx === 0 ? formatHMS(t) : formatGap(gap);
                         return (
                           <li key={x.rider_id}>
                             {x.rider_name} — {timeLabel}
@@ -367,8 +412,88 @@ export default function Home() {
                 )}
               </div>
             )}
+          </div>
 
-            <div style={{ marginTop: 10, opacity: 0.7 }}>Build marker: POINTS-LEADERBOARD-V2</div>
+          <hr style={{ margin: "18px 0" }} />
+
+          <div>
+            <h3>Viewer (match report)</h3>
+
+            <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center" }}>
+              <label style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                <span>event_stage_id:</span>
+                <input
+                  value={viewerStageId}
+                  onChange={(e) => setViewerStageId(e.target.value)}
+                  placeholder="(auto-udfyldes efter run)"
+                  style={{ padding: 8, width: 420 }}
+                />
+              </label>
+
+              <button type="button" onClick={loadViewer} disabled={viewerLoading || !viewerStageId} style={{ padding: "10px 12px" }}>
+                {viewerLoading ? "Loader…" : "Load viewer data"}
+              </button>
+
+              <button type="button" onClick={() => setPlay((p) => !p)} disabled={!snapshots.length} style={{ padding: "10px 12px" }}>
+                {play ? "Pause" : "Play"}
+              </button>
+            </div>
+
+            {viewerError && <p style={{ marginTop: 10, color: "crimson" }}>Fejl: {viewerError}</p>}
+
+            {snapshots.length > 0 && (
+              <div style={{ marginTop: 12, border: "1px solid #eee", borderRadius: 10, padding: 12 }}>
+                <div style={{ display: "flex", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
+                  <div>
+                    <b>KM:</b> {currentKm}
+                    {"  "}
+                    <span style={{ opacity: 0.7 }}>
+                      (snapshot {cursor + 1}/{snapshots.length})
+                    </span>
+                  </div>
+
+                  <input
+                    type="range"
+                    min={0}
+                    max={Math.max(0, snapshots.length - 1)}
+                    value={cursor}
+                    onChange={(e) => setCursor(Number(e.target.value))}
+                    style={{ width: 380 }}
+                  />
+                </div>
+
+                <div style={{ marginTop: 10 }}>
+                  <b>Grupper</b>
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: 10, marginTop: 8 }}>
+                    {(currentSnap?.groups ?? []).map((g) => (
+                      <div key={g.id} style={{ border: "1px solid #f0f0f0", borderRadius: 10, padding: 10 }}>
+                        <div style={{ fontWeight: 700 }}>{g.type}</div>
+                        <div style={{ opacity: 0.85 }}>Ryttere: {g.riders}</div>
+                        <div style={{ opacity: 0.85 }}>Gap: {formatGap(g.gap_sec)}</div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div style={{ marginTop: 14 }}>
+                  <b>Live feed</b>
+                  <div style={{ marginTop: 8, maxHeight: 260, overflow: "auto", border: "1px solid #f3f3f3", borderRadius: 10, padding: 10 }}>
+                    {visibleFeed.length === 0 ? (
+                      <div style={{ opacity: 0.7 }}>Ingen events endnu (prøv play).</div>
+                    ) : (
+                      visibleFeed.map((e, idx) => (
+                        <div key={`${e.km}-${idx}`} style={{ padding: "6px 0", borderBottom: "1px solid #f2f2f2" }}>
+                          <div style={{ fontSize: 13, opacity: 0.65 }}>{e.type} · {e.km} km</div>
+                          <div>{e.message}</div>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            <div style={{ marginTop: 10, opacity: 0.7 }}>Build marker: VIEWER-V1</div>
           </div>
         </div>
       ) : null}
