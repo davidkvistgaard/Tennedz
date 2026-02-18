@@ -13,11 +13,7 @@ function toInt(x, fallback = 0) {
 function parseProfile(profile) {
   if (!profile) return null;
   if (typeof profile === "string") {
-    try {
-      return JSON.parse(profile);
-    } catch {
-      return null;
-    }
+    try { return JSON.parse(profile); } catch { return null; }
   }
   return profile;
 }
@@ -30,11 +26,11 @@ function isMountainStage(profile) {
   });
 }
 
-function defaultOrders(team_id) {
+function defaultOrders() {
   return {
     name: "Default balanced",
     team_plan: { risk: "medium", style: "balanced", focus: "balanced", energy_policy: "normal" },
-    roles: { captain: null, sprinter: null, climber: null },
+    roles: { captain: null, sprinter: null, rouleur: null },
     riders: {}
   };
 }
@@ -57,11 +53,13 @@ export async function POST(req) {
     const stage_template_id = body.stage_template_id;
     const event_kind = body.event_kind || "one_day";
 
+    const requestTeamId = body.team_id || null;
+    const requestOrders = body.orders || null;
+
     if (!stage_template_id) {
       return NextResponse.json({ error: "Missing stage_template_id" }, { status: 400 });
     }
 
-    // 1) Load stage template
     const { data: stage, error: stageErr } = await supabaseAdmin
       .from("stages")
       .select("id,name,distance_km,profile")
@@ -76,7 +74,6 @@ export async function POST(req) {
       return NextResponse.json({ error: "Stage has no segments defined" }, { status: 400 });
     }
 
-    // 2) Create event + event_stage (dev klik)
     const { data: event, error: eventErr } = await supabaseAdmin
       .from("events")
       .insert({
@@ -102,8 +99,10 @@ export async function POST(req) {
 
     if (eventStageErr) return NextResponse.json({ error: "Event stage create failed: " + eventStageErr.message }, { status: 500 });
 
-    // 3) Load teams + riders
-    const { data: teams, error: teamsErr } = await supabaseAdmin.from("teams").select("id");
+    const { data: teams, error: teamsErr } = await supabaseAdmin
+      .from("teams")
+      .select("id,name,user_id");
+
     if (teamsErr) return NextResponse.json({ error: "Teams load failed: " + teamsErr.message }, { status: 500 });
 
     const bundles = [];
@@ -128,6 +127,7 @@ export async function POST(req) {
             Cobbles: rr.cobbles,
             Leadership: rr.leadership,
             Endurance: rr.endurance,
+            Strength: rr.strength,
             Moral: rr.moral,
             Luck: rr.luck,
             Wind: rr.wind,
@@ -136,30 +136,37 @@ export async function POST(req) {
           }
         }));
 
-      if (riders.length > 0) bundles.push({ team_id: t.id, riders });
+      if (riders.length > 0) {
+        bundles.push({ team_id: t.id, team_name: t.name, riders });
+      }
     }
 
     if (bundles.length === 0) {
       return NextResponse.json({ error: "No teams with riders found." }, { status: 400 });
     }
 
-    // 4) Load stage_orders (hvis ingen, brug default)
+    if (requestTeamId && requestOrders) {
+      const { error: insErr } = await supabaseAdmin
+        .from("stage_orders")
+        .upsert(
+          { event_stage_id: eventStage.id, team_id: requestTeamId, payload: requestOrders },
+          { onConflict: "event_stage_id,team_id" }
+        );
+
+      if (insErr) return NextResponse.json({ error: "Insert stage_orders failed: " + insErr.message }, { status: 500 });
+    }
+
     const { data: ordersRows, error: ordersErr } = await supabaseAdmin
       .from("stage_orders")
       .select("team_id,payload")
       .eq("event_stage_id", eventStage.id);
 
-    // Der findes typisk ingen endnu i V1 (vi laver editor senere)
     const ordersByTeam = {};
-    for (const t of bundles) ordersByTeam[t.team_id] = defaultOrders(t.team_id);
-
+    for (const b of bundles) ordersByTeam[b.team_id] = defaultOrders();
     if (!ordersErr && ordersRows?.length) {
-      for (const row of ordersRows) {
-        ordersByTeam[row.team_id] = row.payload || defaultOrders(row.team_id);
-      }
+      for (const row of ordersRows) ordersByTeam[row.team_id] = row.payload || defaultOrders();
     }
 
-    // 5) Run simulation (V1: returns results + feed + snapshots)
     const sim = simulateStage({
       stageDistanceKm: stage.distance_km,
       profile,
@@ -178,7 +185,6 @@ export async function POST(req) {
       return NextResponse.json({ error: "Simulation returned no results" }, { status: 500 });
     }
 
-    // 6) Save stage_results
     const stageRows = results.map((r) => ({
       event_stage_id: eventStage.id,
       team_id: r.team_id,
@@ -190,7 +196,6 @@ export async function POST(req) {
     const { error: resErr } = await supabaseAdmin.from("stage_results").insert(stageRows);
     if (resErr) return NextResponse.json({ error: "Insert stage_results failed: " + resErr.message }, { status: 500 });
 
-    // 7) Save feed + snapshots
     if (feed.length) {
       const feedRows = feed.map((e) => ({
         event_stage_id: eventStage.id,
@@ -213,7 +218,7 @@ export async function POST(req) {
       if (sErr) return NextResponse.json({ error: "Insert race_snapshots failed: " + sErr.message }, { status: 500 });
     }
 
-    // 8) Points (finish + KOM proxy)
+    // Points
     const pointsRows = [];
     const teamPoints = new Map();
     const teamKom = new Map();
@@ -244,28 +249,15 @@ export async function POST(req) {
     }
 
     const teamStageRows = [];
-    for (const [team_id, pts] of teamPoints.entries()) {
-      teamStageRows.push({ event_stage_id: eventStage.id, team_id, classification: "points", points: pts });
-    }
-    for (const [team_id, pts] of teamKom.entries()) {
-      teamStageRows.push({ event_stage_id: eventStage.id, team_id, classification: "kom", points: pts });
-    }
+    for (const [team_id, pts] of teamPoints.entries()) teamStageRows.push({ event_stage_id: eventStage.id, team_id, classification: "points", points: pts });
+    for (const [team_id, pts] of teamKom.entries()) teamStageRows.push({ event_stage_id: eventStage.id, team_id, classification: "kom", points: pts });
 
     if (teamStageRows.length) {
       const { error: tspErr } = await supabaseAdmin.from("team_stage_points").insert(teamStageRows);
       if (tspErr) return NextResponse.json({ error: "Insert team_stage_points failed: " + tspErr.message }, { status: 500 });
     }
 
-    // 9) Response: top10 + leaderboards + event_stage_id (så viewer kan hente feed/snapshots)
     const top10 = [...stageRows].sort((a, b) => toInt(a.position) - toInt(b.position)).slice(0, 10);
-
-    const teamPointsBoard = teamStageRows
-      .filter((x) => x.classification === "points")
-      .sort((a, b) => toInt(b.points) - toInt(a.points));
-
-    const teamKomBoard = teamStageRows
-      .filter((x) => x.classification === "kom")
-      .sort((a, b) => toInt(b.points) - toInt(a.points));
 
     return NextResponse.json({
       ok: true,
@@ -273,7 +265,6 @@ export async function POST(req) {
       event_stage: { id: eventStage.id, stage_no: eventStage.stage_no },
       stage_template: { id: stage.id, name: stage.name, distance_km: stage.distance_km, is_mountain: doKom },
       top10,
-      leaderboards: { team_points: teamPointsBoard, team_kom: teamKomBoard },
       viewer: { has_feed: feed.length > 0, has_snapshots: snapshots.length > 0 }
     });
   } catch (e) {
