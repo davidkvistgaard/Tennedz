@@ -12,11 +12,19 @@ function formatHMS(totalSeconds) {
   if (h > 0) return `${h}:${String(m).padStart(2, "0")}:${String(sec).padStart(2, "0")}`;
   return `${m}:${String(sec).padStart(2, "0")}`;
 }
-
 function formatGap(gapSeconds) {
   const s = Math.max(0, Math.round(Number(gapSeconds) || 0));
   if (s === 0) return "s.t.";
   return `+${formatHMS(s)}`;
+}
+
+function defaultOrders(teamId) {
+  return {
+    name: "My tactic",
+    team_plan: { risk: "medium", style: "balanced", focus: "balanced", energy_policy: "normal" },
+    roles: { captain: null, sprinter: null, rouleur: null },
+    riders: {}
+  };
 }
 
 export default function Home() {
@@ -30,7 +38,6 @@ export default function Home() {
   const [stages, setStages] = useState([]);
   const [selectedStageId, setSelectedStageId] = useState("");
 
-  // Stage+points result
   const [stageBusy, setStageBusy] = useState(false);
   const [stageError, setStageError] = useState("");
   const [stageResult, setStageResult] = useState(null);
@@ -42,9 +49,14 @@ export default function Home() {
   const [feed, setFeed] = useState([]);
   const [snapshots, setSnapshots] = useState([]);
   const [play, setPlay] = useState(false);
-  const [cursor, setCursor] = useState(0); // index into snapshots
-
+  const [cursor, setCursor] = useState(0);
   const timerRef = useRef(null);
+
+  // Tactics + presets
+  const [orders, setOrders] = useState(defaultOrders(null));
+  const [presets, setPresets] = useState([]);
+  const [selectedPresetId, setSelectedPresetId] = useState("");
+  const [presetStatus, setPresetStatus] = useState("");
 
   async function loadRiders(teamId) {
     const { data, error } = await supabase
@@ -67,9 +79,27 @@ export default function Home() {
       setStageError("Kunne ikke hente stages: " + error.message);
       return;
     }
-
     setStages(data ?? []);
     if (!selectedStageId && data?.length) setSelectedStageId(data[0].id);
+  }
+
+  async function loadPresets() {
+    setPresetStatus("");
+    const { data: authData } = await supabase.auth.getUser();
+    const uid = authData?.user?.id;
+    if (!uid) return;
+
+    const { data, error } = await supabase
+      .from("tactic_presets")
+      .select("id,name,payload,created_at")
+      .eq("user_id", uid)
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      setPresetStatus("Kunne ikke hente presets: " + error.message);
+      return;
+    }
+    setPresets(data ?? []);
   }
 
   async function refresh() {
@@ -93,8 +123,12 @@ export default function Home() {
     try {
       const res = await getOrCreateTeam();
       setTeam(res.team);
-      if (res.team?.id) await loadRiders(res.team.id);
-      else setRiders([]);
+      if (res.team?.id) {
+        await loadRiders(res.team.id);
+        // init default orders with team_id context
+        setOrders((o) => ({ ...defaultOrders(res.team.id), ...o }));
+      } else setRiders([]);
+      await loadPresets();
     } catch (e) {
       setTeam(null);
       setRiders([]);
@@ -113,12 +147,10 @@ export default function Home() {
   async function signInWithEmail(e) {
     e.preventDefault();
     setStatus("Sender login-link…");
-
     const { error } = await supabase.auth.signInWithOtp({
       email,
       options: { emailRedirectTo: "https://tennedz.eu" }
     });
-
     if (error) setStatus("Fejl: " + error.message);
     else setStatus("Tjek din email for login-link ✉️");
   }
@@ -129,19 +161,19 @@ export default function Home() {
     setRiders([]);
     setStatus("Ikke logget ind");
     setStageResult(null);
-
     setFeed([]);
     setSnapshots([]);
     setViewerStageId("");
     setCursor(0);
     setPlay(false);
+    setPresets([]);
+    setSelectedPresetId("");
   }
 
   async function grantStarterPack() {
     if (!team?.id) return;
     setBusy(true);
     setStatus("Tildeler starter-ryttere…");
-
     try {
       const { error } = await supabase.rpc("grant_starter_pack", { p_count: 10 });
       if (error) throw error;
@@ -173,12 +205,52 @@ export default function Home() {
     }));
   }
 
+  // Preset actions
+  async function savePreset() {
+    setPresetStatus("");
+    const name = prompt("Navn på preset?");
+    if (!name) return;
+
+    const { data: authData } = await supabase.auth.getUser();
+    const uid = authData?.user?.id;
+    if (!uid) {
+      setPresetStatus("Du er ikke logget ind.");
+      return;
+    }
+
+    const payload = { ...orders, name };
+
+    const { error } = await supabase
+      .from("tactic_presets")
+      .insert({ user_id: uid, name, payload });
+
+    if (error) {
+      setPresetStatus("Kunne ikke gemme preset: " + error.message);
+      return;
+    }
+
+    setPresetStatus("Preset gemt ✅");
+    await loadPresets();
+  }
+
+  function applyPreset(presetId) {
+    const p = presets.find((x) => x.id === presetId);
+    if (!p) return;
+    setOrders(p.payload);
+    setPresetStatus(`Preset loaded: ${p.name}`);
+  }
+
+  // Run stage with orders
   async function runStageWithPoints() {
     setStageError("");
     setStageResult(null);
 
     if (!selectedStageId) {
       setStageError("Vælg en stage først.");
+      return;
+    }
+    if (!team?.id) {
+      setStageError("Ingen team fundet.");
       return;
     }
 
@@ -188,7 +260,12 @@ export default function Home() {
       const res = await fetch("/api/run-stage", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ stage_template_id: selectedStageId, event_kind: "one_day" })
+        body: JSON.stringify({
+          stage_template_id: selectedStageId,
+          event_kind: "one_day",
+          team_id: team.id,
+          orders
+        })
       });
 
       const text = await res.text();
@@ -203,11 +280,9 @@ export default function Home() {
         event: json.event,
         event_stage: json.event_stage,
         stage_template: json.stage_template,
-        top10: top10Pretty,
-        leaderboards: json.leaderboards
+        top10: top10Pretty
       });
 
-      // auto set viewer id to last run stage
       setViewerStageId(json.event_stage?.id || "");
       setFeed([]);
       setSnapshots([]);
@@ -221,6 +296,7 @@ export default function Home() {
     }
   }
 
+  // Viewer load
   async function loadViewer() {
     setViewerError("");
     setViewerLoading(true);
@@ -253,7 +329,6 @@ export default function Home() {
     }
   }
 
-  // play/pause ticker
   useEffect(() => {
     if (timerRef.current) clearInterval(timerRef.current);
     if (!play) return;
@@ -264,7 +339,7 @@ export default function Home() {
         if (c >= max) return c;
         return c + 1;
       });
-    }, 650); // “fake live” hastighed
+    }, 650);
 
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
@@ -272,7 +347,6 @@ export default function Home() {
   }, [play, snapshots.length]);
 
   useEffect(() => {
-    // stop autoplay at end
     if (snapshots.length && cursor >= snapshots.length - 1) setPlay(false);
   }, [cursor, snapshots.length]);
 
@@ -280,9 +354,27 @@ export default function Home() {
   const currentKm = currentSnap?.km ?? 0;
 
   const visibleFeed = useMemo(() => {
-    // show feed events up to currentKm
     return (feed ?? []).filter((e) => Number(e.km) <= Number(currentKm));
   }, [feed, currentKm]);
+
+  // UI helpers for tactics
+  const riderOptions = useMemo(() => {
+    return riders.map((r) => ({ id: r.id, label: `${r.name}${r.nationality ? " (" + r.nationality + ")" : ""}` }));
+  }, [riders]);
+
+  function setPlanField(key, value) {
+    setOrders((o) => ({
+      ...o,
+      team_plan: { ...(o.team_plan || {}), [key]: value }
+    }));
+  }
+
+  function setRole(role, riderId) {
+    setOrders((o) => ({
+      ...o,
+      roles: { ...(o.roles || {}), [role]: riderId || null }
+    }));
+  }
 
   return (
     <main style={{ padding: 24, fontFamily: "system-ui, sans-serif" }}>
@@ -296,7 +388,7 @@ export default function Home() {
       </form>
 
       {team ? (
-        <div style={{ marginTop: 18, padding: 12, border: "1px solid #ddd", borderRadius: 8, maxWidth: 1150 }}>
+        <div style={{ marginTop: 18, padding: 12, border: "1px solid #ddd", borderRadius: 8, maxWidth: 1200 }}>
           <h2 style={{ marginTop: 0 }}>Dit hold</h2>
           <div><b>Navn:</b> {team.name}</div>
           <div><b>Budget:</b> {Number(team.budget).toLocaleString("da-DK")}</div>
@@ -309,17 +401,17 @@ export default function Home() {
                 {busy ? "Arbejder…" : "Giv mig 10 starter-ryttere"}
               </button>
             ) : (
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: 12 }}>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(270px, 1fr))", gap: 12 }}>
                 {riders.map((r) => (
                   <div key={r.id} style={{ border: "1px solid #eee", borderRadius: 10, padding: 12 }}>
                     <div style={{ fontWeight: 700 }}>
                       {r.name}{" "}
                       {r.nationality ? <span style={{ fontWeight: 400, opacity: 0.7 }}>({r.nationality})</span> : null}
                     </div>
-                    <div style={{ fontSize: 13, opacity: 0.85, marginTop: 6 }}>
+                    <div style={{ fontSize: 13, opacity: 0.88, marginTop: 6 }}>
                       Sprint: {r.sprint} · Flat: {r.flat} · Hills: {r.hills} · Mountain: {r.mountain}
                       <br />
-                      TT: {r.timetrial} · Endurance: {r.endurance} · Wind: {r.wind}
+                      TT: {r.timetrial} · Endurance: {r.endurance} · <b>Strength:</b> {r.strength ?? 0} · Wind: {r.wind}
                       <br />
                       Moral: {r.moral} · Form: {r.form} · Luck: {r.luck} · Leadership: {r.leadership}
                     </div>
@@ -332,7 +424,114 @@ export default function Home() {
           <hr style={{ margin: "18px 0" }} />
 
           <div>
-            <h3>Stage + points (V1)</h3>
+            <h3>Taktik (MVP) + Presets</h3>
+
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 12 }}>
+              <div style={{ border: "1px solid #eee", borderRadius: 10, padding: 12 }}>
+                <div style={{ fontWeight: 700, marginBottom: 8 }}>Team plan</div>
+
+                <label style={{ display: "flex", justifyContent: "space-between", gap: 8, marginBottom: 8 }}>
+                  <span>Focus</span>
+                  <select value={orders.team_plan?.focus || "balanced"} onChange={(e) => setPlanField("focus", e.target.value)} style={{ padding: 8 }}>
+                    <option value="balanced">balanced</option>
+                    <option value="sprint">sprint</option>
+                    <option value="break">break</option>
+                    <option value="gc_safe">gc_safe</option>
+                    <option value="chaos">chaos</option>
+                  </select>
+                </label>
+
+                <label style={{ display: "flex", justifyContent: "space-between", gap: 8, marginBottom: 8 }}>
+                  <span>Style</span>
+                  <select value={orders.team_plan?.style || "balanced"} onChange={(e) => setPlanField("style", e.target.value)} style={{ padding: 8 }}>
+                    <option value="defensive">defensive</option>
+                    <option value="balanced">balanced</option>
+                    <option value="aggressive">aggressive</option>
+                  </select>
+                </label>
+
+                <label style={{ display: "flex", justifyContent: "space-between", gap: 8, marginBottom: 8 }}>
+                  <span>Risk</span>
+                  <select value={orders.team_plan?.risk || "medium"} onChange={(e) => setPlanField("risk", e.target.value)} style={{ padding: 8 }}>
+                    <option value="low">low</option>
+                    <option value="medium">medium</option>
+                    <option value="high">high</option>
+                  </select>
+                </label>
+
+                <label style={{ display: "flex", justifyContent: "space-between", gap: 8 }}>
+                  <span>Energy</span>
+                  <select value={orders.team_plan?.energy_policy || "normal"} onChange={(e) => setPlanField("energy_policy", e.target.value)} style={{ padding: 8 }}>
+                    <option value="conserve">conserve</option>
+                    <option value="normal">normal</option>
+                    <option value="burn">burn</option>
+                  </select>
+                </label>
+              </div>
+
+              <div style={{ border: "1px solid #eee", borderRadius: 10, padding: 12 }}>
+                <div style={{ fontWeight: 700, marginBottom: 8 }}>Roles</div>
+
+                <label style={{ display: "flex", justifyContent: "space-between", gap: 8, marginBottom: 8 }}>
+                  <span>Captain</span>
+                  <select value={orders.roles?.captain || ""} onChange={(e) => setRole("captain", e.target.value)} style={{ padding: 8, width: 180 }}>
+                    <option value="">(none)</option>
+                    {riderOptions.map((o) => <option key={o.id} value={o.id}>{o.label}</option>)}
+                  </select>
+                </label>
+
+                <label style={{ display: "flex", justifyContent: "space-between", gap: 8, marginBottom: 8 }}>
+                  <span>Sprinter</span>
+                  <select value={orders.roles?.sprinter || ""} onChange={(e) => setRole("sprinter", e.target.value)} style={{ padding: 8, width: 180 }}>
+                    <option value="">(none)</option>
+                    {riderOptions.map((o) => <option key={o.id} value={o.id}>{o.label}</option>)}
+                  </select>
+                </label>
+
+                <label style={{ display: "flex", justifyContent: "space-between", gap: 8 }}>
+                  <span>Rouleur</span>
+                  <select value={orders.roles?.rouleur || ""} onChange={(e) => setRole("rouleur", e.target.value)} style={{ padding: 8, width: 180 }}>
+                    <option value="">(none)</option>
+                    {riderOptions.map((o) => <option key={o.id} value={o.id}>{o.label}</option>)}
+                  </select>
+                </label>
+              </div>
+
+              <div style={{ border: "1px solid #eee", borderRadius: 10, padding: 12 }}>
+                <div style={{ fontWeight: 700, marginBottom: 8 }}>Presets</div>
+
+                <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                  <button type="button" onClick={savePreset} style={{ padding: "10px 12px" }}>
+                    Gem preset
+                  </button>
+
+                  <select value={selectedPresetId} onChange={(e) => setSelectedPresetId(e.target.value)} style={{ padding: 8, minWidth: 220 }}>
+                    <option value="">(vælg preset)</option>
+                    {presets.map((p) => (
+                      <option key={p.id} value={p.id}>
+                        {p.name}
+                      </option>
+                    ))}
+                  </select>
+
+                  <button type="button" onClick={() => applyPreset(selectedPresetId)} disabled={!selectedPresetId} style={{ padding: "10px 12px" }}>
+                    Load preset
+                  </button>
+                </div>
+
+                {presetStatus ? <div style={{ marginTop: 8, opacity: 0.85 }}>{presetStatus}</div> : null}
+
+                <div style={{ marginTop: 10, fontSize: 13, opacity: 0.7 }}>
+                  (MVP: Vi bruger team_plan + roles. Rider-specifikke ordrer kommer næste.)
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <hr style={{ margin: "18px 0" }} />
+
+          <div>
+            <h3>Stage + points</h3>
 
             <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center" }}>
               <label style={{ display: "flex", gap: 8, alignItems: "center" }}>
@@ -351,7 +550,7 @@ export default function Home() {
               </label>
 
               <button type="button" onClick={runStageWithPoints} disabled={stageBusy || riders.length === 0 || !selectedStageId} style={{ padding: "10px 12px" }}>
-                {stageBusy ? "Kører…" : "Kør stage + points"}
+                {stageBusy ? "Kører…" : "Kør stage + points (med taktik)"}
               </button>
             </div>
 
@@ -361,7 +560,6 @@ export default function Home() {
               <div style={{ marginTop: 12 }}>
                 <div style={{ opacity: 0.85 }}>
                   <b>Event:</b> {stageResult.event?.name} · <b>Stage:</b> {stageResult.stage_template?.name}
-                  {stageResult.stage_template?.is_mountain ? " · KOM aktiv" : ""}
                 </div>
 
                 <h4 style={{ marginBottom: 8 }}>Top 10</h4>
@@ -384,32 +582,6 @@ export default function Home() {
                     </ol>
                   );
                 })()}
-
-                <h4 style={{ marginBottom: 8 }}>Team leaderboard (points)</h4>
-                {stageResult.leaderboards?.team_points?.length ? (
-                  <ol style={{ marginTop: 0 }}>
-                    {stageResult.leaderboards.team_points.map((x) => (
-                      <li key={x.team_id}>
-                        Team {x.team_id.slice(0, 8)}… — {x.points} pts
-                      </li>
-                    ))}
-                  </ol>
-                ) : (
-                  <div style={{ opacity: 0.8 }}>Ingen point tildelt endnu.</div>
-                )}
-
-                <h4 style={{ marginBottom: 8 }}>Team leaderboard (KOM)</h4>
-                {stageResult.leaderboards?.team_kom?.length ? (
-                  <ol style={{ marginTop: 0 }}>
-                    {stageResult.leaderboards.team_kom.map((x) => (
-                      <li key={x.team_id}>
-                        Team {x.team_id.slice(0, 8)}… — {x.points} pts
-                      </li>
-                    ))}
-                  </ol>
-                ) : (
-                  <div style={{ opacity: 0.8 }}>Ingen KOM point (eller ikke en bjergetape).</div>
-                )}
               </div>
             )}
           </div>
@@ -445,11 +617,8 @@ export default function Home() {
               <div style={{ marginTop: 12, border: "1px solid #eee", borderRadius: 10, padding: 12 }}>
                 <div style={{ display: "flex", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
                   <div>
-                    <b>KM:</b> {currentKm}
-                    {"  "}
-                    <span style={{ opacity: 0.7 }}>
-                      (snapshot {cursor + 1}/{snapshots.length})
-                    </span>
+                    <b>KM:</b> {currentKm}{" "}
+                    <span style={{ opacity: 0.7 }}>(snapshot {cursor + 1}/{snapshots.length})</span>
                   </div>
 
                   <input
@@ -493,7 +662,7 @@ export default function Home() {
               </div>
             )}
 
-            <div style={{ marginTop: 10, opacity: 0.7 }}>Build marker: VIEWER-V1</div>
+            <div style={{ marginTop: 10, opacity: 0.7 }}>Build marker: TACTICS-V1-STRENGTH</div>
           </div>
         </div>
       ) : null}
