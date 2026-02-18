@@ -1,3 +1,5 @@
+// BUILD: MOTOR-V1.3-BATCH
+
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { simulateStage } from "../../../lib/engine/simulateStage";
@@ -13,7 +15,11 @@ function toInt(x, fallback = 0) {
 function parseProfile(profile) {
   if (!profile) return null;
   if (typeof profile === "string") {
-    try { return JSON.parse(profile); } catch { return null; }
+    try {
+      return JSON.parse(profile);
+    } catch {
+      return null;
+    }
   }
   return profile;
 }
@@ -31,7 +37,8 @@ function defaultOrders() {
     name: "Default balanced",
     team_plan: { risk: "medium", style: "balanced", focus: "balanced", energy_policy: "normal" },
     roles: { captain: null, sprinter: null, rouleur: null },
-    riders: {}
+    riders: {},
+    triggers: { protect_captain: true, sprint_chase: true }
   };
 }
 
@@ -52,7 +59,6 @@ export async function POST(req) {
     const body = await req.json().catch(() => ({}));
     const stage_template_id = body.stage_template_id;
     const event_kind = body.event_kind || "one_day";
-
     const requestTeamId = body.team_id || null;
     const requestOrders = body.orders || null;
 
@@ -99,6 +105,7 @@ export async function POST(req) {
 
     if (eventStageErr) return NextResponse.json({ error: "Event stage create failed: " + eventStageErr.message }, { status: 500 });
 
+    // Teams
     const { data: teams, error: teamsErr } = await supabaseAdmin
       .from("teams")
       .select("id,name,user_id");
@@ -119,6 +126,7 @@ export async function POST(req) {
         .filter(Boolean)
         .map((rr) => ({
           rider_id: rr.id,
+          rider_name: rr.name,
           skills: {
             Sprint: rr.sprint,
             Flat: rr.flat,
@@ -136,15 +144,14 @@ export async function POST(req) {
           }
         }));
 
-      if (riders.length > 0) {
-        bundles.push({ team_id: t.id, team_name: t.name, riders });
-      }
+      if (riders.length > 0) bundles.push({ team_id: t.id, team_name: t.name, riders });
     }
 
     if (bundles.length === 0) {
       return NextResponse.json({ error: "No teams with riders found." }, { status: 400 });
     }
 
+    // Save orders for requestTeamId on this stage
     if (requestTeamId && requestOrders) {
       const { error: insErr } = await supabaseAdmin
         .from("stage_orders")
@@ -156,6 +163,7 @@ export async function POST(req) {
       if (insErr) return NextResponse.json({ error: "Insert stage_orders failed: " + insErr.message }, { status: 500 });
     }
 
+    // Load all orders for this stage
     const { data: ordersRows, error: ordersErr } = await supabaseAdmin
       .from("stage_orders")
       .select("team_id,payload")
@@ -163,6 +171,7 @@ export async function POST(req) {
 
     const ordersByTeam = {};
     for (const b of bundles) ordersByTeam[b.team_id] = defaultOrders();
+
     if (!ordersErr && ordersRows?.length) {
       for (const row of ordersRows) ordersByTeam[row.team_id] = row.payload || defaultOrders();
     }
