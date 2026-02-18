@@ -1,3 +1,4 @@
+// BUILD: MOTOR-V1.3-BATCH
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -23,11 +24,11 @@ function defaultOrders(teamId) {
     name: "My tactic",
     team_plan: { risk: "medium", style: "balanced", focus: "balanced", energy_policy: "normal" },
     roles: { captain: null, sprinter: null, rouleur: null },
-    riders: {}
+    riders: {}, // rider_id -> { mode, effort }
+    triggers: { protect_captain: true, sprint_chase: true }
   };
 }
 
-// Small helper: timeout wrapper so UI never hangs forever
 async function withTimeout(promise, ms, label = "timeout") {
   let t;
   const timeout = new Promise((_, rej) => {
@@ -40,29 +41,18 @@ async function withTimeout(promise, ms, label = "timeout") {
   }
 }
 
-/**
- * Critical login fix:
- * If Supabase magic link returns with ?code=... (PKCE),
- * we must exchange it for a session on the client.
- */
 async function maybeExchangeCodeForSession() {
   if (typeof window === "undefined") return { didExchange: false };
 
   const url = new URL(window.location.href);
   const code = url.searchParams.get("code");
-
   if (!code) return { didExchange: false };
 
-  // Try exchange
   const { error } = await supabase.auth.exchangeCodeForSession(code);
-  if (error) {
-    return { didExchange: true, error };
-  }
+  if (error) return { didExchange: true, error };
 
-  // Clean URL (remove ?code=...)
   url.searchParams.delete("code");
   window.history.replaceState({}, document.title, url.toString());
-
   return { didExchange: true, error: null };
 }
 
@@ -141,11 +131,26 @@ export default function Home() {
     setPresets(data ?? []);
   }
 
+  function ensureRiderOrdersScaffold(teamId, ridersList) {
+    setOrders((o) => {
+      const base = { ...defaultOrders(teamId), ...o };
+      const ro = { ...(base.riders || {}) };
+
+      for (const r of ridersList || []) {
+        if (!ro[r.id]) ro[r.id] = { mode: "normal", effort: 0.6 };
+        if (!ro[r.id].mode) ro[r.id].mode = "normal";
+        if (ro[r.id].effort == null) ro[r.id].effort = 0.6;
+      }
+
+      base.riders = ro;
+      base.triggers = base.triggers || { protect_captain: true, sprint_chase: true };
+      return base;
+    });
+  }
+
   async function refresh() {
-    // Never let this hang the UI forever
     setStatus("Tjekker login…");
 
-    // First: if we came from magic link with ?code=..., exchange it
     const ex = await maybeExchangeCodeForSession();
     if (ex?.error) {
       setStatus("Login-fejl: " + ex.error.message);
@@ -154,7 +159,6 @@ export default function Home() {
       return;
     }
 
-    // Then: read session
     const { data, error } = await supabase.auth.getSession();
     if (error) {
       setStatus("Fejl: " + error.message);
@@ -174,14 +178,12 @@ export default function Home() {
       return;
     }
 
-    // Load team + riders (with timeout so it never gets stuck on "Loader")
     try {
       const res = await withTimeout(getOrCreateTeam(), 10000, "getOrCreateTeam timeout");
       setTeam(res.team);
 
       if (res.team?.id) {
         await withTimeout(loadRiders(res.team.id), 10000, "loadRiders timeout");
-        setOrders((o) => ({ ...defaultOrders(res.team.id), ...o }));
       } else {
         setRiders([]);
       }
@@ -202,9 +204,7 @@ export default function Home() {
       await loadStages();
     })();
 
-    // IMPORTANT: subscribe to auth changes
     const { data: sub } = supabase.auth.onAuthStateChange(() => {
-      // refresh after auth event
       refresh();
     });
 
@@ -214,6 +214,14 @@ export default function Home() {
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // When riders load, scaffold rider orders
+  useEffect(() => {
+    if (!team?.id) return;
+    if (!riders?.length) return;
+    ensureRiderOrdersScaffold(team.id, riders);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [team?.id, riders.length]);
 
   async function signInWithEmail(e) {
     e.preventDefault();
@@ -435,7 +443,6 @@ export default function Home() {
     return (feed ?? []).filter((e) => Number(e.km) <= Number(currentKm));
   }, [feed, currentKm]);
 
-  // UI helpers for tactics
   const riderOptions = useMemo(() => {
     return riders.map((r) => ({ id: r.id, label: `${r.name}${r.nationality ? " (" + r.nationality + ")" : ""}` }));
   }, [riders]);
@@ -454,35 +461,50 @@ export default function Home() {
     }));
   }
 
+  function setTrigger(key, value) {
+    setOrders((o) => ({
+      ...o,
+      triggers: { ...(o.triggers || {}), [key]: !!value }
+    }));
+  }
+
+  function setRiderMode(riderId, mode) {
+    setOrders((o) => ({
+      ...o,
+      riders: {
+        ...(o.riders || {}),
+        [riderId]: { ...(o.riders?.[riderId] || {}), mode }
+      }
+    }));
+  }
+
+  function setRiderEffort(riderId, effort) {
+    const n = Number(effort);
+    setOrders((o) => ({
+      ...o,
+      riders: {
+        ...(o.riders || {}),
+        [riderId]: { ...(o.riders?.[riderId] || {}), effort: n }
+      }
+    }));
+  }
+
   return (
     <main style={{ padding: 24, fontFamily: "system-ui, sans-serif" }}>
       <h1>Tennedz</h1>
       <p>Status: {status}</p>
 
       <form onSubmit={signInWithEmail} style={{ display: "flex", gap: 8, marginTop: 12 }}>
-        <input
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          placeholder="din@email.dk"
-          style={{ padding: 8, width: 260 }}
-        />
-        <button type="submit" style={{ padding: "8px 12px" }}>
-          Login
-        </button>
-        <button type="button" onClick={signOut} style={{ padding: "8px 12px" }}>
-          Log ud
-        </button>
+        <input value={email} onChange={(e) => setEmail(e.target.value)} placeholder="din@email.dk" style={{ padding: 8, width: 260 }} />
+        <button type="submit" style={{ padding: "8px 12px" }}>Login</button>
+        <button type="button" onClick={signOut} style={{ padding: "8px 12px" }}>Log ud</button>
       </form>
 
       {team ? (
         <div style={{ marginTop: 18, padding: 12, border: "1px solid #ddd", borderRadius: 8, maxWidth: 1200 }}>
           <h2 style={{ marginTop: 0 }}>Dit hold</h2>
-          <div>
-            <b>Navn:</b> {team.name}
-          </div>
-          <div>
-            <b>Budget:</b> {Number(team.budget).toLocaleString("da-DK")}
-          </div>
+          <div><b>Navn:</b> {team.name}</div>
+          <div><b>Budget:</b> {Number(team.budget).toLocaleString("da-DK")}</div>
 
           <div style={{ marginTop: 16 }}>
             <h3>Dine ryttere ({riders.length})</h3>
@@ -515,7 +537,7 @@ export default function Home() {
           <hr style={{ margin: "18px 0" }} />
 
           <div>
-            <h3>Taktik (MVP) + Presets</h3>
+            <h3>Taktik (V1.3) + Presets</h3>
 
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 12 }}>
               <div style={{ border: "1px solid #eee", borderRadius: 10, padding: 12 }}>
@@ -523,11 +545,7 @@ export default function Home() {
 
                 <label style={{ display: "flex", justifyContent: "space-between", gap: 8, marginBottom: 8 }}>
                   <span>Focus</span>
-                  <select
-                    value={orders.team_plan?.focus || "balanced"}
-                    onChange={(e) => setPlanField("focus", e.target.value)}
-                    style={{ padding: 8 }}
-                  >
+                  <select value={orders.team_plan?.focus || "balanced"} onChange={(e) => setPlanField("focus", e.target.value)} style={{ padding: 8 }}>
                     <option value="balanced">balanced</option>
                     <option value="sprint">sprint</option>
                     <option value="break">break</option>
@@ -538,11 +556,7 @@ export default function Home() {
 
                 <label style={{ display: "flex", justifyContent: "space-between", gap: 8, marginBottom: 8 }}>
                   <span>Style</span>
-                  <select
-                    value={orders.team_plan?.style || "balanced"}
-                    onChange={(e) => setPlanField("style", e.target.value)}
-                    style={{ padding: 8 }}
-                  >
+                  <select value={orders.team_plan?.style || "balanced"} onChange={(e) => setPlanField("style", e.target.value)} style={{ padding: 8 }}>
                     <option value="defensive">defensive</option>
                     <option value="balanced">balanced</option>
                     <option value="aggressive">aggressive</option>
@@ -551,11 +565,7 @@ export default function Home() {
 
                 <label style={{ display: "flex", justifyContent: "space-between", gap: 8, marginBottom: 8 }}>
                   <span>Risk</span>
-                  <select
-                    value={orders.team_plan?.risk || "medium"}
-                    onChange={(e) => setPlanField("risk", e.target.value)}
-                    style={{ padding: 8 }}
-                  >
+                  <select value={orders.team_plan?.risk || "medium"} onChange={(e) => setPlanField("risk", e.target.value)} style={{ padding: 8 }}>
                     <option value="low">low</option>
                     <option value="medium">medium</option>
                     <option value="high">high</option>
@@ -564,16 +574,38 @@ export default function Home() {
 
                 <label style={{ display: "flex", justifyContent: "space-between", gap: 8 }}>
                   <span>Energy</span>
-                  <select
-                    value={orders.team_plan?.energy_policy || "normal"}
-                    onChange={(e) => setPlanField("energy_policy", e.target.value)}
-                    style={{ padding: 8 }}
-                  >
+                  <select value={orders.team_plan?.energy_policy || "normal"} onChange={(e) => setPlanField("energy_policy", e.target.value)} style={{ padding: 8 }}>
                     <option value="conserve">conserve</option>
                     <option value="normal">normal</option>
                     <option value="burn">burn</option>
                   </select>
                 </label>
+
+                <div style={{ marginTop: 12, paddingTop: 10, borderTop: "1px solid #f0f0f0" }}>
+                  <div style={{ fontWeight: 700, marginBottom: 8 }}>Triggers (auto)</div>
+
+                  <label style={{ display: "flex", justifyContent: "space-between", gap: 10, marginBottom: 8 }}>
+                    <span>Protect captain if dropped</span>
+                    <input
+                      type="checkbox"
+                      checked={!!orders.triggers?.protect_captain}
+                      onChange={(e) => setTrigger("protect_captain", e.target.checked)}
+                    />
+                  </label>
+
+                  <label style={{ display: "flex", justifyContent: "space-between", gap: 10 }}>
+                    <span>Sprint chase if break exists</span>
+                    <input
+                      type="checkbox"
+                      checked={!!orders.triggers?.sprint_chase}
+                      onChange={(e) => setTrigger("sprint_chase", e.target.checked)}
+                    />
+                  </label>
+
+                  <div style={{ marginTop: 8, fontSize: 13, opacity: 0.7 }}>
+                    (MVP: 2 triggers. Vi kan udvide til et rigtigt rule-system senere.)
+                  </div>
+                </div>
               </div>
 
               <div style={{ border: "1px solid #eee", borderRadius: 10, padding: 12 }}>
@@ -583,11 +615,7 @@ export default function Home() {
                   <span>Captain</span>
                   <select value={orders.roles?.captain || ""} onChange={(e) => setRole("captain", e.target.value)} style={{ padding: 8, width: 180 }}>
                     <option value="">(none)</option>
-                    {riderOptions.map((o) => (
-                      <option key={o.id} value={o.id}>
-                        {o.label}
-                      </option>
-                    ))}
+                    {riderOptions.map((o) => <option key={o.id} value={o.id}>{o.label}</option>)}
                   </select>
                 </label>
 
@@ -595,11 +623,7 @@ export default function Home() {
                   <span>Sprinter</span>
                   <select value={orders.roles?.sprinter || ""} onChange={(e) => setRole("sprinter", e.target.value)} style={{ padding: 8, width: 180 }}>
                     <option value="">(none)</option>
-                    {riderOptions.map((o) => (
-                      <option key={o.id} value={o.id}>
-                        {o.label}
-                      </option>
-                    ))}
+                    {riderOptions.map((o) => <option key={o.id} value={o.id}>{o.label}</option>)}
                   </select>
                 </label>
 
@@ -607,13 +631,13 @@ export default function Home() {
                   <span>Rouleur</span>
                   <select value={orders.roles?.rouleur || ""} onChange={(e) => setRole("rouleur", e.target.value)} style={{ padding: 8, width: 180 }}>
                     <option value="">(none)</option>
-                    {riderOptions.map((o) => (
-                      <option key={o.id} value={o.id}>
-                        {o.label}
-                      </option>
-                    ))}
+                    {riderOptions.map((o) => <option key={o.id} value={o.id}>{o.label}</option>)}
                   </select>
                 </label>
+
+                <div style={{ marginTop: 10, fontSize: 13, opacity: 0.7 }}>
+                  Rollen påvirker nu motoren direkte (jagt/energi/finale).
+                </div>
               </div>
 
               <div style={{ border: "1px solid #eee", borderRadius: 10, padding: 12 }}>
@@ -627,9 +651,7 @@ export default function Home() {
                   <select value={selectedPresetId} onChange={(e) => setSelectedPresetId(e.target.value)} style={{ padding: 8, minWidth: 220 }}>
                     <option value="">(vælg preset)</option>
                     {presets.map((p) => (
-                      <option key={p.id} value={p.id}>
-                        {p.name}
-                      </option>
+                      <option key={p.id} value={p.id}>{p.name}</option>
                     ))}
                   </select>
 
@@ -641,9 +663,62 @@ export default function Home() {
                 {presetStatus ? <div style={{ marginTop: 8, opacity: 0.85 }}>{presetStatus}</div> : null}
 
                 <div style={{ marginTop: 10, fontSize: 13, opacity: 0.7 }}>
-                  (MVP: Vi bruger team_plan + roles. Rider-specifikke ordrer kommer næste.)
+                  Presets gemmer nu også rider orders + triggers.
                 </div>
               </div>
+            </div>
+
+            <div style={{ marginTop: 12, border: "1px solid #eee", borderRadius: 10, padding: 12 }}>
+              <div style={{ fontWeight: 700, marginBottom: 8 }}>Rider orders (MVP)</div>
+              <div style={{ fontSize: 13, opacity: 0.75, marginBottom: 10 }}>
+                Modes: normal / pull / protect_captain / leadout / opportunist — Effort påvirker energi og bidrag.
+              </div>
+
+              {riders.length === 0 ? (
+                <div style={{ opacity: 0.7 }}>Du har ingen ryttere endnu.</div>
+              ) : (
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(360px, 1fr))", gap: 10 }}>
+                  {riders.map((r) => {
+                    const ro = orders.riders?.[r.id] || { mode: "normal", effort: 0.6 };
+                    const mode = ro.mode || "normal";
+                    const effort = Number(ro.effort ?? 0.6);
+
+                    return (
+                      <div key={r.id} style={{ border: "1px solid #f0f0f0", borderRadius: 10, padding: 10 }}>
+                        <div style={{ display: "flex", justifyContent: "space-between", gap: 10, flexWrap: "wrap" }}>
+                          <div style={{ fontWeight: 700 }}>
+                            {r.name}{" "}
+                            {r.nationality ? <span style={{ fontWeight: 400, opacity: 0.7 }}>({r.nationality})</span> : null}
+                          </div>
+
+                          <select value={mode} onChange={(e) => setRiderMode(r.id, e.target.value)} style={{ padding: 8 }}>
+                            <option value="normal">normal</option>
+                            <option value="pull">pull</option>
+                            <option value="protect_captain">protect_captain</option>
+                            <option value="leadout">leadout</option>
+                            <option value="opportunist">opportunist</option>
+                          </select>
+                        </div>
+
+                        <div style={{ marginTop: 8, display: "flex", justifyContent: "space-between", gap: 10, alignItems: "center" }}>
+                          <div style={{ fontSize: 13, opacity: 0.8 }}>
+                            Effort: <b>{effort.toFixed(2)}</b>
+                          </div>
+                          <input
+                            type="range"
+                            min={0.3}
+                            max={1.0}
+                            step={0.05}
+                            value={effort}
+                            onChange={(e) => setRiderEffort(r.id, e.target.value)}
+                            style={{ width: 220 }}
+                          />
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
             </div>
           </div>
 
@@ -669,7 +744,7 @@ export default function Home() {
               </label>
 
               <button type="button" onClick={runStageWithPoints} disabled={stageBusy || riders.length === 0 || !selectedStageId} style={{ padding: "10px 12px" }}>
-                {stageBusy ? "Kører…" : "Kør stage + points (med taktik)"}
+                {stageBusy ? "Kører…" : "Kør stage + points (V1.3)"}
               </button>
             </div>
 
@@ -736,7 +811,8 @@ export default function Home() {
               <div style={{ marginTop: 12, border: "1px solid #eee", borderRadius: 10, padding: 12 }}>
                 <div style={{ display: "flex", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
                   <div>
-                    <b>KM:</b> {currentKm} <span style={{ opacity: 0.7 }}>(snapshot {cursor + 1}/{snapshots.length})</span>
+                    <b>KM:</b> {currentKm}{" "}
+                    <span style={{ opacity: 0.7 }}>(snapshot {cursor + 1}/{snapshots.length})</span>
                   </div>
 
                   <input
@@ -770,9 +846,7 @@ export default function Home() {
                     ) : (
                       visibleFeed.map((e, idx) => (
                         <div key={`${e.km}-${idx}`} style={{ padding: "6px 0", borderBottom: "1px solid #f2f2f2" }}>
-                          <div style={{ fontSize: 13, opacity: 0.65 }}>
-                            {e.type} · {e.km} km
-                          </div>
+                          <div style={{ fontSize: 13, opacity: 0.65 }}>{e.type} · {e.km} km</div>
                           <div>{e.message}</div>
                         </div>
                       ))
@@ -782,7 +856,7 @@ export default function Home() {
               </div>
             )}
 
-            <div style={{ marginTop: 10, opacity: 0.7 }}>Build marker: LOGIN-EXCHANGE-FIX</div>
+            <div style={{ marginTop: 10, opacity: 0.7 }}>Build marker: MOTOR-V1.3-BATCH</div>
           </div>
         </div>
       ) : null}
