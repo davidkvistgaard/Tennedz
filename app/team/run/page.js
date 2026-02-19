@@ -40,27 +40,30 @@ function defaultOrders(teamId) {
 
 export default function RunPage() {
   const [status, setStatus] = useState("Loader…");
+  const [pageError, setPageError] = useState("");
+
   const [team, setTeam] = useState(null);
   const [riders, setRiders] = useState([]);
 
   const [stages, setStages] = useState([]);
   const [selectedStageId, setSelectedStageId] = useState("");
-
   const [stageObj, setStageObj] = useState(null);
 
   const [orders, setOrders] = useState(defaultOrders(null));
 
   const [busy, setBusy] = useState(false);
-  const [error, setError] = useState("");
+  const [actionError, setActionError] = useState("");
   const [result, setResult] = useState(null);
 
-  // stage race output
   const [eventResult, setEventResult] = useState(null);
   const [selectedEventStageId, setSelectedEventStageId] = useState("");
 
   async function init() {
-    setStatus("Tjekker login…");
-    const { data } = await supabase.auth.getSession();
+    setPageError("");
+    setStatus("Tjekker session…");
+
+    const { data, error } = await supabase.auth.getSession();
+    if (error) throw new Error("Session-fejl: " + error.message);
     if (!data?.session) {
       setStatus("Du skal logge ind på 'Mit hold' først.");
       return;
@@ -70,23 +73,23 @@ export default function RunPage() {
     const res = await getOrCreateTeam();
     setTeam(res.team);
 
-    // riders
+    setStatus("Loader ryttere…");
     const { data: tr, error: trErr } = await supabase
       .from("team_riders")
       .select("rider:riders(*)")
       .eq("team_id", res.team.id);
 
-    if (trErr) throw trErr;
-    const list = (tr ?? []).map((x) => x.rider).filter(Boolean);
-    setRiders(list);
+    if (trErr) throw new Error("Kunne ikke hente ryttere: " + trErr.message);
+    setRiders((tr ?? []).map((x) => x.rider).filter(Boolean));
 
-    // stages
+    setStatus("Loader etaper…");
     const { data: stageList, error: sErr } = await supabase
       .from("stages")
       .select("id,name,distance_km,profile")
       .order("created_at", { ascending: false });
 
-    if (sErr) throw sErr;
+    if (sErr) throw new Error("Kunne ikke hente etaper: " + sErr.message);
+
     setStages(stageList ?? []);
     if ((stageList ?? []).length && !selectedStageId) setSelectedStageId(stageList[0].id);
 
@@ -94,7 +97,10 @@ export default function RunPage() {
   }
 
   useEffect(() => {
-    init().catch((e) => setStatus("Fejl: " + (e?.message ?? String(e))));
+    init().catch((e) => {
+      setPageError(e?.message ?? String(e));
+      setStatus("Fejl");
+    });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -116,13 +122,14 @@ export default function RunPage() {
   }
 
   async function runOneDay() {
-    setError("");
+    setActionError("");
     setResult(null);
     setEventResult(null);
     setSelectedEventStageId("");
 
-    if (!team?.id) return setError("Ingen team.");
-    if (!selectedStageId) return setError("Vælg en etape.");
+    if (!team?.id) return setActionError("Ingen team.");
+    if (!selectedStageId) return setActionError("Vælg en etape.");
+
     setBusy(true);
     try {
       const res = await fetch("/api/run-stage", {
@@ -141,41 +148,37 @@ export default function RunPage() {
       try { json = JSON.parse(text); } catch { json = null; }
       if (!res.ok) throw new Error(json?.error ?? text ?? "Ukendt fejl");
 
-      // enrich names for top10
       const ids = (json.top10 ?? []).map((x) => x.rider_id).filter(Boolean);
       let nameMap = {};
       if (ids.length) {
-        const { data: rData } = await supabase.from("riders").select("id,name").in("id", ids);
+        const { data: rData, error: rErr } = await supabase.from("riders").select("id,name").in("id", ids);
+        if (rErr) throw new Error("Kunne ikke hente rytter-navne: " + rErr.message);
         if (rData?.length) for (const rr of rData) nameMap[rr.id] = rr.name;
       }
 
-      const top10 = (json.top10 ?? []).map((x) => ({
-        ...x,
-        rider_name: nameMap[x.rider_id] ?? x.rider_id
-      }));
-
+      const top10 = (json.top10 ?? []).map((x) => ({ ...x, rider_name: nameMap[x.rider_id] ?? x.rider_id }));
       setResult({ ...json, top10 });
-      // Viewer: event_stage.id
+
       setSelectedEventStageId(json.event_stage?.id || "");
     } catch (e) {
-      setError(e?.message ?? String(e));
+      setActionError(e?.message ?? String(e));
     } finally {
       setBusy(false);
     }
   }
 
   async function runMiniStageRace() {
-    setError("");
+    setActionError("");
     setResult(null);
     setEventResult(null);
     setSelectedEventStageId("");
-    setBusy(true);
 
+    setBusy(true);
     try {
       const res = await fetch("/api/run-event", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({}) // auto-picks 2 newest stages
+        body: JSON.stringify({})
       });
 
       const text = await res.text();
@@ -183,11 +186,11 @@ export default function RunPage() {
       try { json = JSON.parse(text); } catch { json = null; }
       if (!res.ok) throw new Error(json?.error ?? text ?? "Ukendt fejl");
 
-      // names for GC
       const ids = (json.gc_top10 ?? []).map((x) => x.rider_id).filter(Boolean);
       let nameMap = {};
       if (ids.length) {
-        const { data: rData } = await supabase.from("riders").select("id,name").in("id", ids);
+        const { data: rData, error: rErr } = await supabase.from("riders").select("id,name").in("id", ids);
+        if (rErr) throw new Error("Kunne ikke hente rytter-navne: " + rErr.message);
         if (rData?.length) for (const rr of rData) nameMap[rr.id] = rr.name;
       }
 
@@ -205,14 +208,25 @@ export default function RunPage() {
 
       setEventResult({ ...json, gc_top10_pretty: gcPretty });
 
-      // default viewer = last stage
       const last = (json.event_stages ?? []).slice().sort((a, b) => a.stage_no - b.stage_no).at(-1);
       if (last?.event_stage_id) setSelectedEventStageId(last.event_stage_id);
     } catch (e) {
-      setError(e?.message ?? String(e));
+      setActionError(e?.message ?? String(e));
     } finally {
       setBusy(false);
     }
+  }
+
+  if (pageError) {
+    return (
+      <main>
+        <h2 style={{ marginTop: 0 }}>Kør løb</h2>
+        <div style={{ color: "crimson" }}>Fejl: {pageError}</div>
+        <div style={{ marginTop: 8, opacity: 0.75 }}>
+          Tip: hvis fejlen nævner “JWT/session”, så prøv at logge ud og ind igen på “Mit hold”.
+        </div>
+      </main>
+    );
   }
 
   return (
@@ -244,55 +258,59 @@ export default function RunPage() {
           <div style={{ border: "1px solid #eee", borderRadius: 14, padding: 14 }}>
             <div style={{ fontWeight: 800, marginBottom: 10 }}>Taktik (MVP)</div>
 
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-              <label style={{ display: "flex", justifyContent: "space-between", gap: 8, alignItems: "center" }}>
-                <span>Focus</span>
-                <select value={orders.team_plan?.focus || "balanced"} onChange={(e) => setPlanField("focus", e.target.value)} style={{ padding: 8 }}>
-                  <option value="balanced">balanced</option>
-                  <option value="sprint">sprint</option>
-                  <option value="break">break</option>
-                  <option value="gc_safe">gc_safe</option>
-                  <option value="chaos">chaos</option>
-                </select>
-              </label>
+            {riders.length === 0 ? (
+              <div style={{ opacity: 0.75 }}>Du har ingen ryttere endnu. Gå til “Mit hold” og giv starter-pack.</div>
+            ) : (
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+                <label style={{ display: "flex", justifyContent: "space-between", gap: 8, alignItems: "center" }}>
+                  <span>Focus</span>
+                  <select value={orders.team_plan?.focus || "balanced"} onChange={(e) => setPlanField("focus", e.target.value)} style={{ padding: 8 }}>
+                    <option value="balanced">balanced</option>
+                    <option value="sprint">sprint</option>
+                    <option value="break">break</option>
+                    <option value="gc_safe">gc_safe</option>
+                    <option value="chaos">chaos</option>
+                  </select>
+                </label>
 
-              <label style={{ display: "flex", justifyContent: "space-between", gap: 8, alignItems: "center" }}>
-                <span>Risk</span>
-                <select value={orders.team_plan?.risk || "medium"} onChange={(e) => setPlanField("risk", e.target.value)} style={{ padding: 8 }}>
-                  <option value="low">low</option>
-                  <option value="medium">medium</option>
-                  <option value="high">high</option>
-                </select>
-              </label>
+                <label style={{ display: "flex", justifyContent: "space-between", gap: 8, alignItems: "center" }}>
+                  <span>Risk</span>
+                  <select value={orders.team_plan?.risk || "medium"} onChange={(e) => setPlanField("risk", e.target.value)} style={{ padding: 8 }}>
+                    <option value="low">low</option>
+                    <option value="medium">medium</option>
+                    <option value="high">high</option>
+                  </select>
+                </label>
 
-              <label style={{ display: "flex", justifyContent: "space-between", gap: 8, alignItems: "center" }}>
-                <span>Captain</span>
-                <select value={orders.roles?.captain || ""} onChange={(e) => setRole("captain", e.target.value)} style={{ padding: 8 }}>
-                  <option value="">(none)</option>
-                  {riderOptions.map((o) => <option key={o.id} value={o.id}>{o.label}</option>)}
-                </select>
-              </label>
+                <label style={{ display: "flex", justifyContent: "space-between", gap: 8, alignItems: "center" }}>
+                  <span>Captain</span>
+                  <select value={orders.roles?.captain || ""} onChange={(e) => setRole("captain", e.target.value)} style={{ padding: 8 }}>
+                    <option value="">(none)</option>
+                    {riderOptions.map((o) => <option key={o.id} value={o.id}>{o.label}</option>)}
+                  </select>
+                </label>
 
-              <label style={{ display: "flex", justifyContent: "space-between", gap: 8, alignItems: "center" }}>
-                <span>Sprinter</span>
-                <select value={orders.roles?.sprinter || ""} onChange={(e) => setRole("sprinter", e.target.value)} style={{ padding: 8 }}>
-                  <option value="">(none)</option>
-                  {riderOptions.map((o) => <option key={o.id} value={o.id}>{o.label}</option>)}
-                </select>
-              </label>
-            </div>
+                <label style={{ display: "flex", justifyContent: "space-between", gap: 8, alignItems: "center" }}>
+                  <span>Sprinter</span>
+                  <select value={orders.roles?.sprinter || ""} onChange={(e) => setRole("sprinter", e.target.value)} style={{ padding: 8 }}>
+                    <option value="">(none)</option>
+                    {riderOptions.map((o) => <option key={o.id} value={o.id}>{o.label}</option>)}
+                  </select>
+                </label>
+              </div>
+            )}
 
             <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginTop: 14 }}>
-              <SmallButton disabled={busy || !selectedStageId} onClick={runOneDay}>
+              <SmallButton disabled={busy || !selectedStageId || riders.length === 0} onClick={runOneDay}>
                 {busy ? "Kører…" : "Kør endagsløb"}
               </SmallButton>
 
-              <SmallButton disabled={busy} onClick={runMiniStageRace}>
+              <SmallButton disabled={busy || riders.length === 0} onClick={runMiniStageRace}>
                 {busy ? "Kører…" : "Kør mini etapeløb (2 etaper)"}
               </SmallButton>
             </div>
 
-            {error ? <div style={{ marginTop: 10, color: "crimson" }}>Fejl: {error}</div> : null}
+            {actionError ? <div style={{ marginTop: 10, color: "crimson" }}>Fejl: {actionError}</div> : null}
 
             {result ? (
               <div style={{ marginTop: 14 }}>
