@@ -30,6 +30,14 @@ function calcAge(birthDateStr, gameDateStr) {
   return age;
 }
 
+function withTimeout(promise, ms, label = "timeout") {
+  let t;
+  const timeout = new Promise((_, reject) => {
+    t = setTimeout(() => reject(new Error(`Timeout: ${label}`)), ms);
+  });
+  return Promise.race([promise, timeout]).finally(() => clearTimeout(t));
+}
+
 export default function TeamHome() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
@@ -40,10 +48,8 @@ export default function TeamHome() {
   const [session, setSession] = useState(null);
   const [team, setTeam] = useState(null);
   const [riders, setRiders] = useState([]);
-
   const [gameDate, setGameDate] = useState(null);
 
-  // filters/sorting
   const [genderFilter, setGenderFilter] = useState("ALL"); // ALL | M | F
   const [sortKey, setSortKey] = useState("sprint");
   const [sortDir, setSortDir] = useState("desc");
@@ -74,7 +80,7 @@ export default function TeamHome() {
 
   async function loadGameDate() {
     try {
-      const res = await fetch("/api/game-date");
+      const res = await withTimeout(fetch("/api/game-date"), 6000, "game-date");
       const j = await res.json();
       if (j?.ok) setGameDate(j.game_date);
     } catch {
@@ -83,48 +89,84 @@ export default function TeamHome() {
   }
 
   async function loadRiders(teamId) {
-    const { data, error } = await supabase
-      .from("team_riders")
-      .select("rider:riders(*)")
-      .eq("team_id", teamId);
+    const { data, error } = await withTimeout(
+      supabase
+        .from("team_riders")
+        .select("rider:riders(*)")
+        .eq("team_id", teamId),
+      8000,
+      "loadRiders"
+    );
+
     if (error) throw error;
     setRiders((data ?? []).map((x) => x.rider).filter(Boolean));
   }
 
-  async function refresh() {
+  const refresh = async () => {
     setStatus("Tjekker login…");
-    const { data, error } = await supabase.auth.getSession();
-    if (error) {
-      setStatus("Fejl: " + error.message);
-      setSession(null);
-      return;
-    }
-
-    const s = data?.session || null;
-    setSession(s);
-    setStatus(s ? "Logget ind ✅" : "Ikke logget ind");
-
-    if (!s) {
-      setTeam(null);
-      setRiders([]);
-      return;
-    }
 
     try {
+      // 1) Get session with timeout so UI never hangs
+      const { data, error } = await withTimeout(supabase.auth.getSession(), 8000, "getSession");
+      if (error) {
+        setSession(null);
+        setTeam(null);
+        setRiders([]);
+        setStatus("Fejl i login-check: " + error.message);
+        return;
+      }
+
+      const s = data?.session || null;
+      setSession(s);
+
+      if (!s) {
+        setTeam(null);
+        setRiders([]);
+        setStatus("Ikke logget ind");
+        return;
+      }
+
+      setStatus("Logget ind ✅ Loader hold…");
+
+      // 2) Load game date (non-blocking-ish)
       await loadGameDate();
 
-      const res = await getOrCreateTeam();
+      // 3) Ensure team exists (with timeout)
+      const res = await withTimeout(getOrCreateTeam(), 9000, "getOrCreateTeam");
       setTeam(res.team || null);
-      if (res.team?.id) await loadRiders(res.team.id);
-    } catch (e) {
-      setStatus("Fejl ved init: " + (e?.message ?? String(e)));
-    }
-  }
 
+      if (res.team?.id) {
+        await loadRiders(res.team.id);
+      }
+
+      setStatus("Logget ind ✅");
+    } catch (e) {
+      setSession(null); // important: force UI into recoverable state
+      setTeam(null);
+      setRiders([]);
+      setStatus("Fejl: " + (e?.message ?? String(e)));
+    }
+  };
+
+  // When coming back to tab/focus, re-check auth state (fixes "stuck" cases)
   useEffect(() => {
     refresh();
+
+    const onFocus = () => refresh();
+    const onVis = () => {
+      if (document.visibilityState === "visible") refresh();
+    };
+
+    window.addEventListener("focus", onFocus);
+    document.addEventListener("visibilitychange", onVis);
+
     const { data: sub } = supabase.auth.onAuthStateChange(() => refresh());
-    return () => sub?.subscription?.unsubscribe?.();
+
+    return () => {
+      window.removeEventListener("focus", onFocus);
+      document.removeEventListener("visibilitychange", onVis);
+      sub?.subscription?.unsubscribe?.();
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -138,11 +180,11 @@ export default function TeamHome() {
     setStatus("Opretter konto…");
     try {
       const email = usernameToEmail(u);
-      const { error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: { data: { username: u } }
-      });
+      const { error } = await withTimeout(
+        supabase.auth.signUp({ email, password, options: { data: { username: u } } }),
+        12000,
+        "signUp"
+      );
       if (error) throw error;
       setStatus("Konto oprettet ✅ Du kan nu logge ind.");
     } catch (e2) {
@@ -162,9 +204,14 @@ export default function TeamHome() {
     setStatus("Logger ind…");
     try {
       const email = usernameToEmail(u);
-      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      const { error } = await withTimeout(
+        supabase.auth.signInWithPassword({ email, password }),
+        12000,
+        "signIn"
+      );
       if (error) throw error;
       setStatus("Logget ind ✅");
+      await refresh();
     } catch (e2) {
       setStatus("Fejl: " + (e2?.message ?? String(e2)));
     } finally {
@@ -173,17 +220,44 @@ export default function TeamHome() {
   }
 
   async function signOut() {
-    await supabase.auth.signOut();
+    setBusy(true);
+    try {
+      await withTimeout(supabase.auth.signOut(), 8000, "signOut");
+    } catch {}
+    setBusy(false);
     setSession(null);
     setTeam(null);
     setRiders([]);
     setStatus("Ikke logget ind");
   }
 
+  // IMPORTANT: fixes "stuck login" without resetting database
+  async function fixLogin() {
+    setBusy(true);
+    setStatus("Rydder lokal login-cache…");
+    try {
+      // sign out best-effort
+      try { await withTimeout(supabase.auth.signOut(), 6000, "signOut"); } catch {}
+
+      // clear storage used by Supabase (common keys)
+      try {
+        localStorage.removeItem("tennedz-auth");
+        // Supabase default keys (depending on version)
+        Object.keys(localStorage)
+          .filter((k) => k.includes("supabase") || k.includes("sb-"))
+          .forEach((k) => localStorage.removeItem(k));
+      } catch {}
+
+      setStatus("Genindlæser…");
+      window.location.reload();
+    } finally {
+      setBusy(false);
+    }
+  }
+
   async function grantStarterPack16() {
     if (!team?.id) return;
 
-    // UI-lås: ingen starterpack hvis du allerede har 16+
     if (riders.length >= 16) {
       setStatus("Du har allerede en starter pack (16 ryttere).");
       return;
@@ -192,7 +266,7 @@ export default function TeamHome() {
     setBusy(true);
     setStatus("Tildeler starter-pack (16 ryttere: 8/8)…");
     try {
-      const { error } = await supabase.rpc("grant_starter_pack", { p_count: 16 });
+      const { error } = await withTimeout(supabase.rpc("grant_starter_pack", { p_count: 16 }), 20000, "starterPack");
       if (error) throw error;
       await loadRiders(team.id);
       setStatus("Starter-pack tildelt ✅");
@@ -241,6 +315,11 @@ export default function TeamHome() {
     <main>
       <p>Status: {status}</p>
 
+      <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginBottom: 10 }}>
+        <SmallButton disabled={busy} onClick={refresh}>Retry</SmallButton>
+        <SmallButton disabled={busy} onClick={fixLogin}>Fix login</SmallButton>
+      </div>
+
       {!session ? (
         <div style={{ marginTop: 12, border: "1px solid #eee", borderRadius: 14, padding: 14 }}>
           <div style={{ fontWeight: 800, marginBottom: 10 }}>Login</div>
@@ -272,13 +351,13 @@ export default function TeamHome() {
             </div>
 
             <div style={{ fontSize: 12, opacity: 0.75 }}>
-              (MVP) Brugernavne normaliseres til små bogstaver uden mellemrum. Kodeord min. 6 tegn.
+              Hvis den “hænger” efter tabs/reload: tryk <b>Fix login</b>.
             </div>
           </form>
         </div>
       ) : (
         <div style={{ marginTop: 12 }}>
-          <SmallButton onClick={signOut}>Log ud</SmallButton>
+          <SmallButton disabled={busy} onClick={signOut}>Log ud</SmallButton>
         </div>
       )}
 
@@ -297,11 +376,7 @@ export default function TeamHome() {
 
             <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center" }}>
               <SmallButton disabled={starterPackDisabled} onClick={grantStarterPack16}>
-                {riders.length >= 16
-                  ? "Starter pack allerede modtaget"
-                  : busy
-                    ? "Arbejder…"
-                    : "Giv mig 16 starter-ryttere (8/8)"}
+                {riders.length >= 16 ? "Starter pack allerede modtaget" : busy ? "Arbejder…" : "Giv mig 16 starter-ryttere (8/8)"}
               </SmallButton>
             </div>
           </div>
@@ -328,7 +403,7 @@ export default function TeamHome() {
                 <select
                   value={sortKey}
                   onChange={(e) => setSortKey(e.target.value)}
-                  style={{ padding: 8, borderRadius: 10, border: "1px solid #ddd" }}
+                  style={{ padding: 8, borderRadius: 10, borderRadius: 10, border: "1px solid #ddd" }}
                 >
                   {sortOptions.map((o) => (
                     <option key={o.key} value={o.key}>
@@ -372,15 +447,6 @@ export default function TeamHome() {
                       <div style={{ fontSize: 13, opacity: 0.9, marginTop: 6, lineHeight: 1.35 }}>
                         <b>Alder</b> {r.age ?? "?"} · <b>Form</b> {form} · <b>Fatigue</b> {fatigue} ·{" "}
                         <b>Status</b> {injured ? `Skadet (til ${r.injury_until})` : "Klar"}
-                        <hr style={{ border: 0, borderTop: "1px solid #eee", margin: "10px 0" }} />
-                        <b>Sprint</b> {r.sprint} · <b>Flat</b> {r.flat} · <b>Hills</b> {r.hills} · <b>Mountain</b>{" "}
-                        {r.mountain}
-                        <br />
-                        <b>Cobbles</b> {r.cobbles} · <b>TT</b> {r.timetrial} · <b>Wind</b> {r.wind}
-                        <br />
-                        <b>Endurance</b> {r.endurance} · <b>Strength</b> {r.strength}
-                        <br />
-                        <b>Leadership</b> {r.leadership} · <b>Moral</b> {r.moral} · <b>Luck</b> {r.luck}
                       </div>
                     </div>
                   );
