@@ -14,10 +14,12 @@ export default function HistoryPage() {
 
   async function load() {
     setError("");
-    setStatus("Tjekker login…");
-    const { data } = await supabase.auth.getSession();
+    setStatus("Tjekker session…");
+
+    const { data, error } = await supabase.auth.getSession();
+    if (error) throw new Error("Session-fejl: " + error.message);
     if (!data?.session) {
-      setStatus("Du skal logge ind først.");
+      setStatus("Du skal logge ind på 'Mit hold' først.");
       return;
     }
 
