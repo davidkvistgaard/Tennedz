@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { supabase } from "../../lib/supabaseClient";
 import { getOrCreateTeam } from "../../lib/team";
 import Loading from "../components/Loading";
@@ -13,57 +13,61 @@ function normalizeUsername(u) {
     .replace(/\s+/g, "")
     .replace(/[^a-z0-9._-]/g, "");
 }
-
-// Hidden internal email mapping
 function usernameToEmail(username) {
   const u = normalizeUsername(username);
   return `${u}@tennedz.local`;
 }
 
-async function maybeExchangeCodeForSession() {
-  // keep compatibility if old email OTP links still exist
-  if (typeof window === "undefined") return { didExchange: false };
-  const url = new URL(window.location.href);
-  const code = url.searchParams.get("code");
-  if (!code) return { didExchange: false };
-
-  const { error } = await supabase.auth.exchangeCodeForSession(code);
-  if (error) return { didExchange: true, error };
-
-  url.searchParams.delete("code");
-  window.history.replaceState({}, document.title, url.toString());
-  return { didExchange: true, error: null };
-}
-
 export default function TeamHome() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
-  const [status, setStatus] = useState("Tjekker login…");
-  const [session, setSession] = useState(null);
 
+  const [status, setStatus] = useState("Tjekker login…");
+  const [busy, setBusy] = useState(false);
+
+  const [session, setSession] = useState(null);
   const [team, setTeam] = useState(null);
   const [riders, setRiders] = useState([]);
-  const [busy, setBusy] = useState(false);
+
+  // NEW: filters/sorting
+  const [genderFilter, setGenderFilter] = useState("ALL"); // ALL | M | F
+  const [sortKey, setSortKey] = useState("sprint"); // default
+  const [sortDir, setSortDir] = useState("desc"); // asc | desc
+
+  const sortOptions = [
+    { key: "name", label: "Navn" },
+    { key: "nationality", label: "Nationalitet" },
+    { key: "gender", label: "Køn" },
+
+    { key: "sprint", label: "Sprint" },
+    { key: "flat", label: "Flat" },
+    { key: "hills", label: "Hills" },
+    { key: "mountain", label: "Mountain" },
+    { key: "cobbles", label: "Cobbles" },
+    { key: "timetrial", label: "Timetrial" },
+
+    { key: "endurance", label: "Endurance" },
+    { key: "strength", label: "Strength" },
+    { key: "wind", label: "Wind" },
+
+    { key: "leadership", label: "Leadership" },
+    { key: "moral", label: "Moral" },
+    { key: "form", label: "Form" },
+    { key: "luck", label: "Luck" }
+  ];
 
   async function loadRiders(teamId) {
     const { data, error } = await supabase
       .from("team_riders")
       .select("rider:riders(*)")
       .eq("team_id", teamId);
+
     if (error) throw error;
     setRiders((data ?? []).map((x) => x.rider).filter(Boolean));
   }
 
   async function refresh() {
     setStatus("Tjekker login…");
-
-    const ex = await maybeExchangeCodeForSession();
-    if (ex?.error) {
-      setStatus("Login-fejl: " + ex.error.message);
-      setSession(null);
-      return;
-    }
-
     const { data, error } = await supabase.auth.getSession();
     if (error) {
       setStatus("Fejl: " + error.message);
@@ -107,17 +111,12 @@ export default function TeamHome() {
     setStatus("Opretter konto…");
     try {
       const email = usernameToEmail(u);
-
       const { error } = await supabase.auth.signUp({
         email,
         password,
-        options: {
-          data: { username: u }
-        }
+        options: { data: { username: u } }
       });
-
       if (error) throw error;
-
       setStatus("Konto oprettet ✅ Du kan nu logge ind.");
     } catch (e2) {
       setStatus("Fejl: " + (e2?.message ?? String(e2)));
@@ -136,14 +135,8 @@ export default function TeamHome() {
     setStatus("Logger ind…");
     try {
       const email = usernameToEmail(u);
-
-      const { error } = await supabase.auth.signInWithPassword({
-        email,
-        password
-      });
-
+      const { error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) throw error;
-
       setStatus("Logget ind ✅");
     } catch (e2) {
       setStatus("Fejl: " + (e2?.message ?? String(e2)));
@@ -160,12 +153,12 @@ export default function TeamHome() {
     setStatus("Ikke logget ind");
   }
 
-  async function grantStarterPack() {
+  async function grantStarterPack16() {
     if (!team?.id) return;
     setBusy(true);
-    setStatus("Tildeler starter-ryttere…");
+    setStatus("Tildeler starter-pack (16 ryttere: 8/8)…");
     try {
-      const { error } = await supabase.rpc("grant_starter_pack", { p_count: 10 });
+      const { error } = await supabase.rpc("grant_starter_pack", { p_count: 16 });
       if (error) throw error;
       await loadRiders(team.id);
       setStatus("Starter-pack tildelt ✅");
@@ -175,6 +168,37 @@ export default function TeamHome() {
       setBusy(false);
     }
   }
+
+  const filteredSortedRiders = useMemo(() => {
+    const list = Array.isArray(riders) ? [...riders] : [];
+
+    const filtered = list.filter((r) => {
+      if (genderFilter === "ALL") return true;
+      return String(r.gender || "").toUpperCase() === genderFilter;
+    });
+
+    const dir = sortDir === "asc" ? 1 : -1;
+
+    filtered.sort((a, b) => {
+      const ka = a?.[sortKey];
+      const kb = b?.[sortKey];
+
+      // string keys
+      if (sortKey === "name" || sortKey === "nationality" || sortKey === "gender") {
+        const sa = String(ka || "");
+        const sb = String(kb || "");
+        return sa.localeCompare(sb, "da") * dir;
+      }
+
+      // numeric keys
+      const na = Number(ka ?? -999999);
+      const nb = Number(kb ?? -999999);
+      if (na === nb) return String(a?.name || "").localeCompare(String(b?.name || ""), "da");
+      return (na - nb) * dir;
+    });
+
+    return filtered;
+  }, [riders, genderFilter, sortKey, sortDir]);
 
   return (
     <main>
@@ -206,7 +230,6 @@ export default function TeamHome() {
               <SmallButton disabled={busy} type="submit">
                 Log ind
               </SmallButton>
-
               <SmallButton disabled={busy} onClick={signUp}>
                 Opret konto
               </SmallButton>
@@ -234,29 +257,84 @@ export default function TeamHome() {
               <div style={{ fontWeight: 800 }}>{team.name}</div>
               <div style={{ opacity: 0.8 }}>Budget: {Number(team.budget ?? 0).toLocaleString("da-DK")}</div>
             </div>
-            {riders.length === 0 ? (
-              <SmallButton disabled={busy} onClick={grantStarterPack}>
-                {busy ? "Arbejder…" : "Giv mig 10 starter-ryttere"}
-              </SmallButton>
-            ) : null}
+
+            <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center" }}>
+              {riders.length === 0 ? (
+                <SmallButton disabled={busy} onClick={grantStarterPack16}>
+                  {busy ? "Arbejder…" : "Giv mig 16 starter-ryttere (8/8)"}
+                </SmallButton>
+              ) : (
+                <SmallButton disabled={busy} onClick={grantStarterPack16}>
+                  {busy ? "Arbejder…" : "Tilføj 16 ekstra ryttere (8/8)"}
+                </SmallButton>
+              )}
+            </div>
           </div>
 
           <div style={{ marginTop: 12 }}>
-            <h3 style={{ marginBottom: 8 }}>Ryttere ({riders.length})</h3>
+            <h3 style={{ marginBottom: 8 }}>Ryttere ({filteredSortedRiders.length}/{riders.length})</h3>
+
+            <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center", marginBottom: 10 }}>
+              <label style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                <span style={{ fontWeight: 700 }}>Køn</span>
+                <select
+                  value={genderFilter}
+                  onChange={(e) => setGenderFilter(e.target.value)}
+                  style={{ padding: 8, borderRadius: 10, border: "1px solid #ddd" }}
+                >
+                  <option value="ALL">Alle</option>
+                  <option value="M">Mænd</option>
+                  <option value="F">Kvinder</option>
+                </select>
+              </label>
+
+              <label style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                <span style={{ fontWeight: 700 }}>Sortér</span>
+                <select
+                  value={sortKey}
+                  onChange={(e) => setSortKey(e.target.value)}
+                  style={{ padding: 8, borderRadius: 10, border: "1px solid #ddd" }}
+                >
+                  {sortOptions.map((o) => (
+                    <option key={o.key} value={o.key}>{o.label}</option>
+                  ))}
+                </select>
+              </label>
+
+              <label style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                <span style={{ fontWeight: 700 }}>Orden</span>
+                <select
+                  value={sortDir}
+                  onChange={(e) => setSortDir(e.target.value)}
+                  style={{ padding: 8, borderRadius: 10, border: "1px solid #ddd" }}
+                >
+                  <option value="desc">Høj → lav</option>
+                  <option value="asc">Lav → høj</option>
+                </select>
+              </label>
+            </div>
+
             {riders.length === 0 ? (
               <div style={{ opacity: 0.7 }}>Ingen ryttere endnu.</div>
             ) : (
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: 10 }}>
-                {riders.map((r) => (
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 10 }}>
+                {filteredSortedRiders.map((r) => (
                   <div key={r.id} style={{ border: "1px solid #f0f0f0", borderRadius: 12, padding: 10 }}>
-                    <div style={{ fontWeight: 800 }}>
-                      {r.name}{" "}
-                      {r.nationality ? <span style={{ fontWeight: 400, opacity: 0.7 }}>({r.nationality})</span> : null}
+                    <div style={{ fontWeight: 900 }}>
+                      {r.name || "(no name)"}{" "}
+                      <span style={{ fontWeight: 600, opacity: 0.7 }}>
+                        {r.gender === "F" ? "♀" : "♂"} {r.nationality ? `(${r.nationality})` : ""}
+                      </span>
                     </div>
-                    <div style={{ fontSize: 13, opacity: 0.85, marginTop: 6 }}>
-                      Sprint {r.sprint} · Flat {r.flat} · Hills {r.hills} · Mountain {r.mountain}
+
+                    <div style={{ fontSize: 13, opacity: 0.9, marginTop: 6, lineHeight: 1.35 }}>
+                      <b>Sprint</b> {r.sprint} · <b>Flat</b> {r.flat} · <b>Hills</b> {r.hills} · <b>Mountain</b> {r.mountain}
                       <br />
-                      Endurance {r.endurance} · Strength {r.strength} · Wind {r.wind} · TT {r.timetrial}
+                      <b>Cobbles</b> {r.cobbles} · <b>TT</b> {r.timetrial} · <b>Wind</b> {r.wind}
+                      <br />
+                      <b>Endurance</b> {r.endurance} · <b>Strength</b> {r.strength}
+                      <br />
+                      <b>Leadership</b> {r.leadership} · <b>Form</b> {r.form} · <b>Moral</b> {r.moral} · <b>Luck</b> {r.luck}
                     </div>
                   </div>
                 ))}
