@@ -46,9 +46,13 @@ async function maybeExchangeCodeForSession() {
 
 export default function TeamShell({ children }) {
   const router = useRouter();
+  const pathname = usePathname();
+
   const [booting, setBooting] = useState(true);
   const [session, setSession] = useState(null);
   const [bootError, setBootError] = useState("");
+
+  const isTeamHome = pathname === "/team";
 
   useEffect(() => {
     let alive = true;
@@ -57,7 +61,7 @@ export default function TeamShell({ children }) {
       setBootError("");
       setBooting(true);
 
-      // Important: ensure magic-link code is exchanged on ANY /team/* page
+      // Handle magic-link code on ANY /team/* page
       const ex = await maybeExchangeCodeForSession();
       if (!alive) return;
 
@@ -140,7 +144,8 @@ export default function TeamShell({ children }) {
           </aside>
 
           <section style={{ minWidth: 0 }}>
-            {!session ? (
+            {/* IMPORTANT: Allow /team to render even when logged out (so login form shows). */}
+            {!session && !isTeamHome ? (
               <div style={{ border: "1px solid #eee", borderRadius: 14, padding: 14 }}>
                 <div style={{ fontWeight: 800 }}>Du er ikke logget ind</div>
                 <div style={{ marginTop: 8, opacity: 0.8 }}>
