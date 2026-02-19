@@ -1,386 +1,223 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { supabase } from "../../../lib/supabaseClient";
-import { getOrCreateTeam } from "../../../lib/team";
+import TeamShell from "../../components/TeamShell";
 import Loading from "../../components/Loading";
 import SmallButton from "../../components/SmallButton";
-import StageProfile from "../../components/StageProfile";
+import { supabase } from "../../../lib/supabaseClient";
+import { getOrCreateTeam } from "../../../lib/team";
 
-function parseProfile(profile) {
-  if (!profile) return null;
-  if (typeof profile === "string") {
-    try { return JSON.parse(profile); } catch { return null; }
-  }
-  return profile;
-}
-
-function formatHMS(totalSeconds) {
-  const s = Math.max(0, Math.round(Number(totalSeconds) || 0));
-  const h = Math.floor(s / 3600);
-  const m = Math.floor((s % 3600) / 60);
-  const sec = s % 60;
-  if (h > 0) return `${h}:${String(m).padStart(2, "0")}:${String(sec).padStart(2, "0")}`;
-  return `${m}:${String(sec).padStart(2, "0")}`;
-}
-function formatGap(gapSeconds) {
-  const s = Math.max(0, Math.round(Number(gapSeconds) || 0));
-  if (s === 0) return "s.t.";
-  return `+${formatHMS(s)}`;
-}
-
-function defaultOrders(teamId) {
-  return {
-    name: "My tactic",
-    team_plan: { risk: "medium", style: "balanced", focus: "balanced", energy_policy: "normal" },
-    roles: { captain: null, sprinter: null, rouleur: null },
-    riders: {}
-  };
+function isUuid(x) {
+  return typeof x === "string" && /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(x);
 }
 
 export default function RunPage() {
   const [status, setStatus] = useState("Loader…");
-  const [pageError, setPageError] = useState("");
+  const [busy, setBusy] = useState(false);
 
   const [team, setTeam] = useState(null);
   const [riders, setRiders] = useState([]);
+  const [events, setEvents] = useState([]);
 
-  const [stages, setStages] = useState([]);
-  const [selectedStageId, setSelectedStageId] = useState("");
-  const [stageObj, setStageObj] = useState(null);
+  const [selectedEventId, setSelectedEventId] = useState("");
+  const [selectedRiderIds, setSelectedRiderIds] = useState([]);
+  const [captainId, setCaptainId] = useState("");
 
-  const [orders, setOrders] = useState(defaultOrders(null));
+  async function load() {
+    setStatus("Loader…");
+    try {
+      const { data: s } = await supabase.auth.getSession();
+      if (!s?.session) {
+        setStatus("Du er ikke logget ind.");
+        setTeam(null);
+        setRiders([]);
+        return;
+      }
 
-  const [busy, setBusy] = useState(false);
-  const [actionError, setActionError] = useState("");
-  const [result, setResult] = useState(null);
+      const res = await getOrCreateTeam();
+      setTeam(res.team);
 
-  const [eventResult, setEventResult] = useState(null);
-  const [selectedEventStageId, setSelectedEventStageId] = useState("");
+      const { data: tr, error: trErr } = await supabase
+        .from("team_riders")
+        .select("rider:riders(id,name,gender,nationality,sprint,flat,hills,mountain,cobbles,timetrial,endurance,strength,form,fatigue,injury_until)")
+        .eq("team_id", res.team.id);
 
-  async function init() {
-    setPageError("");
-    setStatus("Tjekker session…");
+      if (trErr) throw trErr;
+      setRiders((tr ?? []).map(x => x.rider).filter(Boolean));
 
-    const { data, error } = await supabase.auth.getSession();
-    if (error) throw new Error("Session-fejl: " + error.message);
-    if (!data?.session) {
-      setStatus("Du skal logge ind på 'Mit hold' først.");
-      return;
+      const ev = await fetch("/api/events?limit=25").then(r => r.json());
+      if (!ev?.ok) throw new Error(ev?.error || "Could not load events");
+      setEvents(ev.events ?? []);
+
+      setStatus("Klar ✅");
+    } catch (e) {
+      setStatus("Fejl: " + (e?.message ?? String(e)));
     }
-
-    setStatus("Loader hold…");
-    const res = await getOrCreateTeam();
-    setTeam(res.team);
-
-    setStatus("Loader ryttere…");
-    const { data: tr, error: trErr } = await supabase
-      .from("team_riders")
-      .select("rider:riders(*)")
-      .eq("team_id", res.team.id);
-
-    if (trErr) throw new Error("Kunne ikke hente ryttere: " + trErr.message);
-    setRiders((tr ?? []).map((x) => x.rider).filter(Boolean));
-
-    setStatus("Loader etaper…");
-    const { data: stageList, error: sErr } = await supabase
-      .from("stages")
-      .select("id,name,distance_km,profile")
-      .order("created_at", { ascending: false });
-
-    if (sErr) throw new Error("Kunne ikke hente etaper: " + sErr.message);
-
-    setStages(stageList ?? []);
-    if ((stageList ?? []).length && !selectedStageId) setSelectedStageId(stageList[0].id);
-
-    setStatus("Klar ✅");
   }
 
   useEffect(() => {
-    init().catch((e) => {
-      setPageError(e?.message ?? String(e));
-      setStatus("Fejl");
-    });
+    load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  const selectedEvent = useMemo(
+    () => events.find(e => e.id === selectedEventId) || null,
+    [events, selectedEventId]
+  );
+
+  const locked = selectedEvent ? (new Date(selectedEvent.deadline) <= new Date()) : false;
+
+  function toggleRider(id) {
+    setSelectedRiderIds(prev => {
+      if (prev.includes(id)) return prev.filter(x => x !== id);
+      if (prev.length >= 8) return prev; // cap at 8
+      return [...prev, id];
+    });
+  }
+
   useEffect(() => {
-    const s = stages.find((x) => x.id === selectedStageId);
-    if (!s) return;
-    setStageObj({ ...s, profile: parseProfile(s.profile) });
-  }, [selectedStageId, stages]);
+    // if captain not in selection, clear captain
+    if (captainId && !selectedRiderIds.includes(captainId)) setCaptainId("");
+  }, [selectedRiderIds, captainId]);
 
-  const riderOptions = useMemo(() => {
-    return riders.map((r) => ({ id: r.id, label: `${r.name}${r.nationality ? " (" + r.nationality + ")" : ""}` }));
-  }, [riders]);
-
-  function setRole(role, riderId) {
-    setOrders((o) => ({ ...o, roles: { ...(o.roles || {}), [role]: riderId || null } }));
-  }
-  function setPlanField(key, value) {
-    setOrders((o) => ({ ...o, team_plan: { ...(o.team_plan || {}), [key]: value } }));
-  }
-
-  async function runOneDay() {
-    setActionError("");
-    setResult(null);
-    setEventResult(null);
-    setSelectedEventStageId("");
-
-    if (!team?.id) return setActionError("Ingen team.");
-    if (!selectedStageId) return setActionError("Vælg en etape.");
+  async function join() {
+    if (!team?.id) return;
+    if (!isUuid(selectedEventId)) return setStatus("Vælg et event.");
+    if (selectedRiderIds.length !== 8) return setStatus("Vælg præcis 8 ryttere.");
+    if (!captainId) return setStatus("Vælg en kaptajn.");
+    if (locked) return setStatus("Deadline er passeret (event locked).");
 
     setBusy(true);
+    setStatus("Tilmeldes…");
     try {
-      const res = await fetch("/api/run-stage", {
+      const res = await fetch("/api/event/join", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          stage_template_id: selectedStageId,
-          event_kind: "one_day",
+          event_id: selectedEventId,
           team_id: team.id,
-          orders
+          selected_riders: selectedRiderIds,
+          captain_id: captainId
         })
-      });
+      }).then(r => r.json());
 
-      const text = await res.text();
-      let json = null;
-      try { json = JSON.parse(text); } catch { json = null; }
-      if (!res.ok) throw new Error(json?.error ?? text ?? "Ukendt fejl");
-
-      const ids = (json.top10 ?? []).map((x) => x.rider_id).filter(Boolean);
-      let nameMap = {};
-      if (ids.length) {
-        const { data: rData, error: rErr } = await supabase.from("riders").select("id,name").in("id", ids);
-        if (rErr) throw new Error("Kunne ikke hente rytter-navne: " + rErr.message);
-        if (rData?.length) for (const rr of rData) nameMap[rr.id] = rr.name;
-      }
-
-      const top10 = (json.top10 ?? []).map((x) => ({ ...x, rider_name: nameMap[x.rider_id] ?? x.rider_id }));
-      setResult({ ...json, top10 });
-
-      setSelectedEventStageId(json.event_stage?.id || "");
+      if (!res?.ok) throw new Error(res?.error || "Join failed");
+      setStatus("Tilmeldt ✅ (holdudtagelse gemt)");
     } catch (e) {
-      setActionError(e?.message ?? String(e));
+      setStatus("Fejl: " + (e?.message ?? String(e)));
     } finally {
       setBusy(false);
     }
-  }
-
-  async function runMiniStageRace() {
-    setActionError("");
-    setResult(null);
-    setEventResult(null);
-    setSelectedEventStageId("");
-
-    setBusy(true);
-    try {
-      const res = await fetch("/api/run-event", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({})
-      });
-
-      const text = await res.text();
-      let json = null;
-      try { json = JSON.parse(text); } catch { json = null; }
-      if (!res.ok) throw new Error(json?.error ?? text ?? "Ukendt fejl");
-
-      const ids = (json.gc_top10 ?? []).map((x) => x.rider_id).filter(Boolean);
-      let nameMap = {};
-      if (ids.length) {
-        const { data: rData, error: rErr } = await supabase.from("riders").select("id,name").in("id", ids);
-        if (rErr) throw new Error("Kunne ikke hente rytter-navne: " + rErr.message);
-        if (rData?.length) for (const rr of rData) nameMap[rr.id] = rr.name;
-      }
-
-      const leaderTime = json.gc_top10?.length ? Number(json.gc_top10[0].total_time_sec) : null;
-      const gcPretty = (json.gc_top10 ?? []).map((x, idx) => {
-        const t = Number(x.total_time_sec);
-        const gap = leaderTime == null ? 0 : t - leaderTime;
-        return {
-          ...x,
-          position: idx + 1,
-          rider_name: nameMap[x.rider_id] ?? x.rider_id,
-          display: idx === 0 ? formatHMS(t) : formatGap(gap)
-        };
-      });
-
-      setEventResult({ ...json, gc_top10_pretty: gcPretty });
-
-      const last = (json.event_stages ?? []).slice().sort((a, b) => a.stage_no - b.stage_no).at(-1);
-      if (last?.event_stage_id) setSelectedEventStageId(last.event_stage_id);
-    } catch (e) {
-      setActionError(e?.message ?? String(e));
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  if (pageError) {
-    return (
-      <main>
-        <h2 style={{ marginTop: 0 }}>Kør løb</h2>
-        <div style={{ color: "crimson" }}>Fejl: {pageError}</div>
-        <div style={{ marginTop: 8, opacity: 0.75 }}>
-          Tip: hvis fejlen nævner “JWT/session”, så prøv at logge ud og ind igen på “Mit hold”.
-        </div>
-      </main>
-    );
   }
 
   return (
-    <main>
-      <h2 style={{ marginTop: 0 }}>Kør løb</h2>
-      <p style={{ opacity: 0.85 }}>{status}</p>
+    <TeamShell title="Kør løb">
+      <p>Status: {status}</p>
 
       {!team ? <Loading text="Loader…" /> : (
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
-          <div style={{ border: "1px solid #eee", borderRadius: 14, padding: 14 }}>
-            <div style={{ fontWeight: 800, marginBottom: 10 }}>Vælg etape</div>
-            <select
-              value={selectedStageId}
-              onChange={(e) => setSelectedStageId(e.target.value)}
-              style={{ padding: 10, borderRadius: 10, border: "1px solid #ddd", width: "100%" }}
-            >
-              {stages.map((s) => (
-                <option key={s.id} value={s.id}>
-                  {s.name} ({s.distance_km} km)
-                </option>
-              ))}
-            </select>
+        <div style={{ border: "1px solid #eee", borderRadius: 14, padding: 14 }}>
+          <div style={{ fontWeight: 900, marginBottom: 10 }}>1) Vælg løb</div>
 
-            <div style={{ marginTop: 12 }}>
-              {stageObj ? <StageProfile stage={stageObj} /> : <Loading text="Loader etapeprofil…" />}
+          <select
+            value={selectedEventId}
+            onChange={(e) => {
+              setSelectedEventId(e.target.value);
+              setSelectedRiderIds([]);
+              setCaptainId("");
+            }}
+            style={{ padding: 10, borderRadius: 10, border: "1px solid #ddd", width: "100%", maxWidth: 520 }}
+          >
+            <option value="">Vælg event…</option>
+            {events.map(ev => (
+              <option key={ev.id} value={ev.id}>
+                {ev.name} · {ev.type} · {ev.gender} · deadline: {new Date(ev.deadline).toLocaleString()}
+              </option>
+            ))}
+          </select>
+
+          {selectedEvent ? (
+            <div style={{ marginTop: 10, opacity: 0.85 }}>
+              <b>Status:</b> {selectedEvent.status} · <b>Entry fee:</b> {selectedEvent.entry_fee} coins ·{" "}
+              <b>Prize pool:</b> {selectedEvent.prize_pool} ·{" "}
+              <b>Deadline:</b> {new Date(selectedEvent.deadline).toLocaleString()}{" "}
+              {locked ? <span style={{ color: "#a11", fontWeight: 900 }}> (LOCKED)</span> : null}
             </div>
+          ) : null}
+
+          <hr style={{ border: 0, borderTop: "1px solid #eee", margin: "14px 0" }} />
+
+          <div style={{ fontWeight: 900, marginBottom: 10 }}>2) Vælg 8 ryttere</div>
+          <div style={{ fontSize: 12, opacity: 0.75, marginBottom: 10 }}>
+            (MVP) Kun simple udtagelse. Taktik-orders kommer senere.
           </div>
 
-          <div style={{ border: "1px solid #eee", borderRadius: 14, padding: 14 }}>
-            <div style={{ fontWeight: 800, marginBottom: 10 }}>Taktik (MVP)</div>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: 10 }}>
+            {riders.map(r => {
+              const selected = selectedRiderIds.includes(r.id);
+              const injured = r.injury_until && new Date(r.injury_until) > new Date();
 
-            {riders.length === 0 ? (
-              <div style={{ opacity: 0.75 }}>Du har ingen ryttere endnu. Gå til “Mit hold” og giv starter-pack.</div>
-            ) : (
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-                <label style={{ display: "flex", justifyContent: "space-between", gap: 8, alignItems: "center" }}>
-                  <span>Focus</span>
-                  <select value={orders.team_plan?.focus || "balanced"} onChange={(e) => setPlanField("focus", e.target.value)} style={{ padding: 8 }}>
-                    <option value="balanced">balanced</option>
-                    <option value="sprint">sprint</option>
-                    <option value="break">break</option>
-                    <option value="gc_safe">gc_safe</option>
-                    <option value="chaos">chaos</option>
-                  </select>
-                </label>
+              return (
+                <button
+                  key={r.id}
+                  onClick={() => toggleRider(r.id)}
+                  disabled={!selected && selectedRiderIds.length >= 8}
+                  style={{
+                    textAlign: "left",
+                    padding: 10,
+                    borderRadius: 12,
+                    border: "1px solid #eee",
+                    background: selected ? "#111" : "white",
+                    color: selected ? "white" : "#111",
+                    opacity: injured ? 0.6 : 1,
+                    cursor: "pointer"
+                  }}
+                >
+                  <div style={{ fontWeight: 900 }}>
+                    {r.name}{" "}
+                    <span style={{ fontWeight: 600, opacity: 0.75 }}>
+                      {r.gender === "F" ? "♀" : "♂"} {r.nationality ? `(${r.nationality})` : ""}
+                      {injured ? " · SKADET" : ""}
+                    </span>
+                  </div>
+                  <div style={{ fontSize: 12, opacity: 0.85, marginTop: 6 }}>
+                    Sprint {r.sprint} · Flat {r.flat} · Hills {r.hills} · Mountain {r.mountain}
+                    <br />
+                    Endurance {r.endurance} · Strength {r.strength} · Form {r.form} · Fatigue {r.fatigue}
+                  </div>
+                </button>
+              );
+            })}
+          </div>
 
-                <label style={{ display: "flex", justifyContent: "space-between", gap: 8, alignItems: "center" }}>
-                  <span>Risk</span>
-                  <select value={orders.team_plan?.risk || "medium"} onChange={(e) => setPlanField("risk", e.target.value)} style={{ padding: 8 }}>
-                    <option value="low">low</option>
-                    <option value="medium">medium</option>
-                    <option value="high">high</option>
-                  </select>
-                </label>
+          <div style={{ marginTop: 10, fontWeight: 800 }}>
+            Valgt: {selectedRiderIds.length}/8
+          </div>
 
-                <label style={{ display: "flex", justifyContent: "space-between", gap: 8, alignItems: "center" }}>
-                  <span>Captain</span>
-                  <select value={orders.roles?.captain || ""} onChange={(e) => setRole("captain", e.target.value)} style={{ padding: 8 }}>
-                    <option value="">(none)</option>
-                    {riderOptions.map((o) => <option key={o.id} value={o.id}>{o.label}</option>)}
-                  </select>
-                </label>
+          <hr style={{ border: 0, borderTop: "1px solid #eee", margin: "14px 0" }} />
 
-                <label style={{ display: "flex", justifyContent: "space-between", gap: 8, alignItems: "center" }}>
-                  <span>Sprinter</span>
-                  <select value={orders.roles?.sprinter || ""} onChange={(e) => setRole("sprinter", e.target.value)} style={{ padding: 8 }}>
-                    <option value="">(none)</option>
-                    {riderOptions.map((o) => <option key={o.id} value={o.id}>{o.label}</option>)}
-                  </select>
-                </label>
-              </div>
-            )}
+          <div style={{ fontWeight: 900, marginBottom: 10 }}>3) Vælg kaptajn</div>
 
-            <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginTop: 14 }}>
-              <SmallButton disabled={busy || !selectedStageId || riders.length === 0} onClick={runOneDay}>
-                {busy ? "Kører…" : "Kør endagsløb"}
-              </SmallButton>
+          <select
+            value={captainId}
+            onChange={(e) => setCaptainId(e.target.value)}
+            style={{ padding: 10, borderRadius: 10, border: "1px solid #ddd", width: "100%", maxWidth: 420 }}
+            disabled={selectedRiderIds.length !== 8}
+          >
+            <option value="">Vælg kaptajn…</option>
+            {riders.filter(r => selectedRiderIds.includes(r.id)).map(r => (
+              <option key={r.id} value={r.id}>
+                {r.name} ({r.gender}) – Sprint {r.sprint}, Mountain {r.mountain}, Endurance {r.endurance}
+              </option>
+            ))}
+          </select>
 
-              <SmallButton disabled={busy || riders.length === 0} onClick={runMiniStageRace}>
-                {busy ? "Kører…" : "Kør mini etapeløb (2 etaper)"}
-              </SmallButton>
-            </div>
-
-            {actionError ? <div style={{ marginTop: 10, color: "crimson" }}>Fejl: {actionError}</div> : null}
-
-            {result ? (
-              <div style={{ marginTop: 14 }}>
-                <div style={{ fontWeight: 800 }}>Resultat (Top 10)</div>
-                <ol style={{ marginTop: 8 }}>
-                  {(() => {
-                    const top = result.top10 ?? [];
-                    const leader = top.length ? Number(top[0].time_sec) : null;
-                    return top.map((x, idx) => {
-                      const t = Number(x.time_sec);
-                      const gap = leader == null ? 0 : (t - leader);
-                      const label = idx === 0 ? formatHMS(t) : formatGap(gap);
-                      return <li key={x.rider_id}>{x.rider_name} — {label}</li>;
-                    });
-                  })()}
-                </ol>
-
-                <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
-                  <a href={`/team/results/${selectedEventStageId}`} style={{ textDecoration: "none" }}>
-                    <SmallButton disabled={!selectedEventStageId}>Se resultat</SmallButton>
-                  </a>
-                  <a href={`/team/view/${selectedEventStageId}`} style={{ textDecoration: "none" }}>
-                    <SmallButton disabled={!selectedEventStageId}>Se løb</SmallButton>
-                  </a>
-                </div>
-              </div>
-            ) : null}
-
-            {eventResult ? (
-              <div style={{ marginTop: 14 }}>
-                <div style={{ fontWeight: 800 }}>Etapeløb: GC Top 10</div>
-
-                <div style={{ marginTop: 10 }}>
-                  <label style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
-                    <span><b>Viewer etape:</b></span>
-                    <select
-                      value={selectedEventStageId}
-                      onChange={(e) => setSelectedEventStageId(e.target.value)}
-                      style={{ padding: 8, borderRadius: 10, border: "1px solid #ddd" }}
-                    >
-                      {(eventResult.event_stages ?? []).map((s) => (
-                        <option key={s.event_stage_id} value={s.event_stage_id}>
-                          Etape {s.stage_no}: {s.stage_name}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
-                </div>
-
-                <ol style={{ marginTop: 8 }}>
-                  {(eventResult.gc_top10_pretty ?? []).map((x) => (
-                    <li key={x.rider_id}>
-                      {x.rider_name} — {x.display}
-                    </li>
-                  ))}
-                </ol>
-
-                <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
-                  <a href={`/team/results/${selectedEventStageId}`} style={{ textDecoration: "none" }}>
-                    <SmallButton disabled={!selectedEventStageId}>Se resultat</SmallButton>
-                  </a>
-                  <a href={`/team/view/${selectedEventStageId}`} style={{ textDecoration: "none" }}>
-                    <SmallButton disabled={!selectedEventStageId}>Se løb</SmallButton>
-                  </a>
-                </div>
-              </div>
-            ) : null}
+          <div style={{ marginTop: 12 }}>
+            <SmallButton disabled={busy || !selectedEventId || locked} onClick={join}>
+              {busy ? "Arbejder…" : locked ? "Deadline passeret" : "Tilmeld + gem udtagelse"}
+            </SmallButton>
           </div>
         </div>
       )}
-    </main>
+    </TeamShell>
   );
 }
