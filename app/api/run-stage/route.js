@@ -1,7 +1,7 @@
 // app/api/run-stage/route.js
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
-import { simulateStage } from "../../../../lib/simulateStage";
+import { simulateStage } from "../../../../lib/engine/simulateStage";
 
 function clamp(n, a, b) {
   return Math.max(a, Math.min(b, n));
@@ -20,13 +20,17 @@ export async function POST(req) {
       process.env.SUPABASE_SERVICE_ROLE_KEY
     );
 
-    // Load game_date (real-time calendar baseline)
+    // Load game_date
     let gameDate = new Date();
     try {
-      const { data: gs } = await supabase.from("game_state").select("game_date").eq("id", 1).single();
+      const { data: gs } = await supabase
+        .from("game_state")
+        .select("game_date")
+        .eq("id", 1)
+        .single();
       if (gs?.game_date) gameDate = new Date(gs.game_date);
     } catch {
-      // ok: if RLS blocks game_state, we still run
+      // ok
     }
 
     // Load stage
@@ -55,10 +59,7 @@ export async function POST(req) {
         .eq("team_id", team.id);
 
       if (trErr) throw new Error(trErr.message);
-
-      const riders = (tr || []).map(x => x.rider).filter(Boolean);
-
-      // If you ever allow selecting "active roster", filter here later.
+      const riders = (tr || []).map((x) => x.rider).filter(Boolean);
       teamsWithRiders.push({ id: team.id, name: team.name, riders });
     }
 
@@ -71,9 +72,8 @@ export async function POST(req) {
       seed: `${race_id}:${stage.id}:${toISODate(gameDate)}`
     });
 
-    // Persist results (race_results)
-    // We write all riders; you can limit later.
-    const rows = results.map(r => ({
+    // Persist results
+    const rows = results.map((r) => ({
       race_id,
       team_id: r.team_id,
       rider_id: r.rider_id,
@@ -81,13 +81,10 @@ export async function POST(req) {
       position: r.position
     }));
 
-    // Clear any old by same race_id (should be none) then insert
     const { error: insErr } = await supabase.from("race_results").insert(rows);
     if (insErr) throw new Error(insErr.message);
 
-    // ---- Phase 4: Update fatigue/form + injuries
-    // Fatigue increases by stage difficulty proxy, form increases a bit if not injured.
-    // Injury chance low, and severity in weeks.
+    // Update fatigue/form + injuries
     const now = new Date(gameDate);
 
     for (const r of results) {
@@ -97,33 +94,29 @@ export async function POST(req) {
         .eq("id", r.rider_id)
         .single();
 
-      if (rrErr) continue;
+      if (rrErr || !riderRow) continue;
 
       const currentFatigue = clamp(Number(riderRow.fatigue ?? 0), 0, 100);
       const currentForm = clamp(Number(riderRow.form ?? 50), 0, 100);
 
-      // difficulty: longer stage => more fatigue
       const dist = Number(stage.distance_km ?? 150);
-      const fatigueGain = clamp(Math.round(10 + dist * 0.08), 12, 28); // 12-28 typical
-      const formGain = 3; // small
+      const fatigueGain = clamp(Math.round(10 + dist * 0.08), 12, 28);
+      const formGain = 3;
 
       let newFatigue = clamp(currentFatigue + fatigueGain, 0, 100);
       let newForm = currentForm;
 
-      // Injured riders: form tends to stay low
       const stillInjured = riderRow.injury_until && new Date(riderRow.injury_until) > now;
       if (!stillInjured) newForm = clamp(currentForm + formGain, 0, 100);
 
-      // Crash chance (very low, tune later per terrain/weather)
       let injury_until = riderRow.injury_until || null;
-      const crashChance = 0.015; // 1.5% per stage per rider (MVP)
+      const crashChance = 0.015; // 1.5%
       if (!stillInjured && Math.random() < crashChance) {
-        const weeks = 1 + Math.floor(Math.random() * 6); // 1-6 weeks
+        const weeks = 1 + Math.floor(Math.random() * 6); // 1-6
         const d = new Date(now);
         d.setDate(d.getDate() + weeks * 7);
         injury_until = toISODate(d);
 
-        // Injury nukes form
         newForm = clamp(newForm - 35, 0, 100);
       }
 
@@ -137,8 +130,7 @@ export async function POST(req) {
         .eq("id", r.rider_id);
     }
 
-    // Return top10 with gaps
-    const top10 = results.slice(0, 10).map(r => ({
+    const top10 = results.slice(0, 10).map((r) => ({
       position: r.position,
       team_id: r.team_id,
       team_name: r.team_name,
@@ -164,7 +156,6 @@ export async function POST(req) {
   }
 }
 
-// Optional: block other methods
 export async function GET() {
   return NextResponse.json({ error: "Method Not Allowed" }, { status: 405 });
 }
