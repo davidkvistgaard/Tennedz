@@ -5,6 +5,7 @@ import { supabase } from "../../lib/supabaseClient";
 import { getOrCreateTeam } from "../../lib/team";
 import Loading from "../components/Loading";
 import SmallButton from "../components/SmallButton";
+import TeamShell from "../components/TeamShell";
 
 function normalizeUsername(u) {
   return String(u || "")
@@ -41,7 +42,6 @@ export default function TeamHome() {
   const [team, setTeam] = useState(null);
   const [riders, setRiders] = useState([]);
 
-  // NEW: game_date
   const [gameDate, setGameDate] = useState(null);
 
   // filters/sorting
@@ -70,21 +70,15 @@ export default function TeamHome() {
 
     { key: "leadership", label: "Leadership" },
     { key: "moral", label: "Moral" },
-    { key: "form", label: "Form" },
     { key: "luck", label: "Luck" }
   ];
 
   async function loadGameDate() {
     try {
-      const { data, error } = await supabase
-        .from("game_state")
-        .select("game_date")
-        .eq("id", 1)
-        .single();
-      if (error) throw error;
-      setGameDate(data?.game_date || null);
+      const res = await fetch("/api/game-date");
+      const j = await res.json();
+      if (j?.ok) setGameDate(j.game_date);
     } catch {
-      // If RLS blocks it, just hide it.
       setGameDate(null);
     }
   }
@@ -189,6 +183,13 @@ export default function TeamHome() {
 
   async function grantStarterPack16() {
     if (!team?.id) return;
+
+    // UI-lås: ingen starterpack hvis du allerede har 16+
+    if (riders.length >= 16) {
+      setStatus("Du har allerede en starter pack (16 ryttere).");
+      return;
+    }
+
     setBusy(true);
     setStatus("Tildeler starter-pack (16 ryttere: 8/8)…");
     try {
@@ -208,10 +209,7 @@ export default function TeamHome() {
     const gd = gameDate;
 
     const filtered = list
-      .map((r) => ({
-        ...r,
-        age: calcAge(r.birth_date, gd)
-      }))
+      .map((r) => ({ ...r, age: calcAge(r.birth_date, gd) }))
       .filter((r) => {
         if (genderFilter === "ALL") return true;
         return String(r.gender || "").toUpperCase() === genderFilter;
@@ -238,11 +236,11 @@ export default function TeamHome() {
     return filtered;
   }, [riders, genderFilter, sortKey, sortDir, gameDate]);
 
+  const starterPackDisabled = busy || !team?.id || riders.length >= 16;
+
   return (
-    <main>
-      <h2 style={{ marginTop: 0 }}>Mit hold</h2>
+    <TeamShell title="Mit hold">
       <p>Status: {status}</p>
-      {gameDate ? <p style={{ opacity: 0.75 }}>Game date: <b>{gameDate}</b> (real-time kalender)</p> : null}
 
       {!session ? (
         <div style={{ marginTop: 12, border: "1px solid #eee", borderRadius: 14, padding: 14 }}>
@@ -295,11 +293,12 @@ export default function TeamHome() {
             <div>
               <div style={{ fontWeight: 800 }}>{team.name}</div>
               <div style={{ opacity: 0.8 }}>Budget: {Number(team.budget ?? 0).toLocaleString("da-DK")}</div>
+              <div style={{ opacity: 0.7, fontSize: 12 }}>Ryttere: {riders.length}/16 (starter pack)</div>
             </div>
 
             <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center" }}>
-              <SmallButton disabled={busy} onClick={grantStarterPack16}>
-                {busy ? "Arbejder…" : "Tilføj 16 ryttere (8/8)"}
+              <SmallButton disabled={starterPackDisabled} onClick={grantStarterPack16}>
+                {riders.length >= 16 ? "Starter pack allerede modtaget" : busy ? "Arbejder…" : "Giv mig 16 starter-ryttere (8/8)"}
               </SmallButton>
             </div>
           </div>
@@ -378,8 +377,7 @@ export default function TeamHome() {
                         <br />
                         <b>Endurance</b> {r.endurance} · <b>Strength</b> {r.strength}
                         <br />
-                        <b>Leadership</b> {r.leadership} · <b>Form</b> {r.form} · <b>Moral</b> {r.moral} · <b>Luck</b>{" "}
-                        {r.luck}
+                        <b>Leadership</b> {r.leadership} · <b>Moral</b> {r.moral} · <b>Luck</b> {r.luck}
                       </div>
                     </div>
                   );
@@ -389,6 +387,6 @@ export default function TeamHome() {
           </div>
         </div>
       )}
-    </main>
+    </TeamShell>
   );
 }
