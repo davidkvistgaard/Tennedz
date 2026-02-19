@@ -148,3 +148,123 @@ export default function TeamHome() {
     } catch (e2) {
       setStatus("Fejl: " + (e2?.message ?? String(e2)));
     } finally {
+      setBusy(false);
+    }
+  }
+
+  async function signOut() {
+    await supabase.auth.signOut();
+    setSession(null);
+    setTeam(null);
+    setRiders([]);
+    setStatus("Ikke logget ind");
+  }
+
+  async function grantStarterPack() {
+    if (!team?.id) return;
+    setBusy(true);
+    setStatus("Tildeler starter-ryttere…");
+    try {
+      const { error } = await supabase.rpc("grant_starter_pack", { p_count: 10 });
+      if (error) throw error;
+      await loadRiders(team.id);
+      setStatus("Starter-pack tildelt ✅");
+    } catch (e) {
+      setStatus("Fejl: " + (e?.message ?? String(e)));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <main>
+      <h2 style={{ marginTop: 0 }}>Mit hold</h2>
+      <p>Status: {status}</p>
+
+      {!session ? (
+        <div style={{ marginTop: 12, border: "1px solid #eee", borderRadius: 14, padding: 14 }}>
+          <div style={{ fontWeight: 800, marginBottom: 10 }}>Login</div>
+
+          <form onSubmit={signIn} style={{ display: "grid", gap: 10, maxWidth: 360 }}>
+            <input
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              placeholder="Brugernavn"
+              autoCapitalize="none"
+              autoCorrect="off"
+              style={{ padding: 10, borderRadius: 10, border: "1px solid #ddd" }}
+            />
+            <input
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="Kodeord"
+              type="password"
+              style={{ padding: 10, borderRadius: 10, border: "1px solid #ddd" }}
+            />
+
+            <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+              <SmallButton disabled={busy} type="submit">
+                Log ind
+              </SmallButton>
+
+              <SmallButton disabled={busy} onClick={signUp}>
+                Opret konto
+              </SmallButton>
+            </div>
+
+            <div style={{ fontSize: 12, opacity: 0.75 }}>
+              (MVP) Brugernavne normaliseres til små bogstaver uden mellemrum. Kodeord min. 6 tegn.
+            </div>
+          </form>
+        </div>
+      ) : (
+        <div style={{ marginTop: 12 }}>
+          <SmallButton onClick={signOut}>Log ud</SmallButton>
+        </div>
+      )}
+
+      {!session ? null : !team ? (
+        <div style={{ marginTop: 14 }}>
+          <Loading text="Loader dit hold…" />
+        </div>
+      ) : (
+        <div style={{ marginTop: 14, border: "1px solid #eee", borderRadius: 14, padding: 14 }}>
+          <div style={{ display: "flex", gap: 12, justifyContent: "space-between", flexWrap: "wrap" }}>
+            <div>
+              <div style={{ fontWeight: 800 }}>{team.name}</div>
+              <div style={{ opacity: 0.8 }}>Budget: {Number(team.budget ?? 0).toLocaleString("da-DK")}</div>
+            </div>
+            {riders.length === 0 ? (
+              <SmallButton disabled={busy} onClick={grantStarterPack}>
+                {busy ? "Arbejder…" : "Giv mig 10 starter-ryttere"}
+              </SmallButton>
+            ) : null}
+          </div>
+
+          <div style={{ marginTop: 12 }}>
+            <h3 style={{ marginBottom: 8 }}>Ryttere ({riders.length})</h3>
+            {riders.length === 0 ? (
+              <div style={{ opacity: 0.7 }}>Ingen ryttere endnu.</div>
+            ) : (
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: 10 }}>
+                {riders.map((r) => (
+                  <div key={r.id} style={{ border: "1px solid #f0f0f0", borderRadius: 12, padding: 10 }}>
+                    <div style={{ fontWeight: 800 }}>
+                      {r.name}{" "}
+                      {r.nationality ? <span style={{ fontWeight: 400, opacity: 0.7 }}>({r.nationality})</span> : null}
+                    </div>
+                    <div style={{ fontSize: 13, opacity: 0.85, marginTop: 6 }}>
+                      Sprint {r.sprint} · Flat {r.flat} · Hills {r.hills} · Mountain {r.mountain}
+                      <br />
+                      Endurance {r.endurance} · Strength {r.strength} · Wind {r.wind} · TT {r.timetrial}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+    </main>
+  );
+}
