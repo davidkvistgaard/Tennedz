@@ -1,11 +1,10 @@
-// BUILD: MOTOR-V1.3-BATCH
+// BUILD: MOTOR-V1.4-BATCH
 
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { simulateStage } from "../../../lib/engine/simulateStage";
 
 const FINISH_POINTS = [25, 20, 16, 13, 11, 10, 9, 8, 7, 6];
-const KOM_POINTS = [10, 8, 6, 5, 4, 3, 2, 1];
 
 function toInt(x, fallback = 0) {
   const n = Number(x);
@@ -24,21 +23,12 @@ function parseProfile(profile) {
   return profile;
 }
 
-function isMountainStage(profile) {
-  const segs = profile?.segments ?? [];
-  return segs.some((s) => {
-    const t = String(s.terrain ?? "").toLowerCase();
-    return t.includes("mount") || t.includes("climb");
-  });
-}
-
 function defaultOrders() {
   return {
-    name: "Default balanced",
+    name: "Default",
     team_plan: { risk: "medium", style: "balanced", focus: "balanced", energy_policy: "normal" },
     roles: { captain: null, sprinter: null, rouleur: null },
-    riders: {},
-    triggers: { protect_captain: true, sprint_chase: true }
+    riders: {}
   };
 }
 
@@ -91,13 +81,14 @@ export async function POST(req) {
 
     if (eventErr) return NextResponse.json({ error: "Event create failed: " + eventErr.message }, { status: 500 });
 
+    // You can later randomize wind/rain per stage. For now keep it stable.
     const { data: eventStage, error: eventStageErr } = await supabaseAdmin
       .from("event_stages")
       .insert({
         event_id: event.id,
         stage_no: 1,
         stage_template_id: stage.id,
-        wind_speed_ms: 10,
+        wind_speed_ms: 8,
         rain: false
       })
       .select("*")
@@ -227,10 +218,9 @@ export async function POST(req) {
       if (sErr) return NextResponse.json({ error: "Insert race_snapshots failed: " + sErr.message }, { status: 500 });
     }
 
-    // Points
+    // Points (finish)
     const pointsRows = [];
     const teamPoints = new Map();
-    const teamKom = new Map();
 
     for (const row of stageRows) {
       const idx = toInt(row.position) - 1;
@@ -241,26 +231,15 @@ export async function POST(req) {
       }
     }
 
-    const doKom = isMountainStage(profile);
-    if (doKom) {
-      const sorted = [...stageRows].sort((a, b) => toInt(a.position) - toInt(b.position));
-      for (let i = 0; i < sorted.length && i < KOM_POINTS.length; i++) {
-        const row = sorted[i];
-        const pts = KOM_POINTS[i];
-        pointsRows.push({ event_stage_id: eventStage.id, rider_id: row.rider_id, classification: "kom", points: pts });
-        teamKom.set(row.team_id, (teamKom.get(row.team_id) || 0) + pts);
-      }
-    }
-
     if (pointsRows.length) {
       const { error: spErr } = await supabaseAdmin.from("stage_points").insert(pointsRows);
       if (spErr) return NextResponse.json({ error: "Insert stage_points failed: " + spErr.message }, { status: 500 });
     }
 
     const teamStageRows = [];
-    for (const [team_id, pts] of teamPoints.entries()) teamStageRows.push({ event_stage_id: eventStage.id, team_id, classification: "points", points: pts });
-    for (const [team_id, pts] of teamKom.entries()) teamStageRows.push({ event_stage_id: eventStage.id, team_id, classification: "kom", points: pts });
-
+    for (const [team_id, pts] of teamPoints.entries()) {
+      teamStageRows.push({ event_stage_id: eventStage.id, team_id, classification: "points", points: pts });
+    }
     if (teamStageRows.length) {
       const { error: tspErr } = await supabaseAdmin.from("team_stage_points").insert(teamStageRows);
       if (tspErr) return NextResponse.json({ error: "Insert team_stage_points failed: " + tspErr.message }, { status: 500 });
@@ -272,7 +251,7 @@ export async function POST(req) {
       ok: true,
       event: { id: event.id, name: event.name, kind: event.kind },
       event_stage: { id: eventStage.id, stage_no: eventStage.stage_no },
-      stage_template: { id: stage.id, name: stage.name, distance_km: stage.distance_km, is_mountain: doKom },
+      stage_template: { id: stage.id, name: stage.name, distance_km: stage.distance_km },
       top10,
       viewer: { has_feed: feed.length > 0, has_snapshots: snapshots.length > 0 }
     });
