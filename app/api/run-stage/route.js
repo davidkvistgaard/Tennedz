@@ -44,11 +44,11 @@ export async function POST(req) {
     }
     if (!stage) throw new Error("No stage found in table 'stages'.");
 
-    // Load all teams
+    // Load teams
     const { data: teams, error: tErr } = await supabase.from("teams").select("id,name");
     if (tErr) throw new Error(tErr.message);
 
-    // Load riders per team
+    // Load riders
     const teamsWithRiders = [];
     for (const team of teams || []) {
       const { data: tr, error: trErr } = await supabase
@@ -82,8 +82,9 @@ export async function POST(req) {
     const { error: insErr } = await supabase.from("race_results").insert(rows);
     if (insErr) throw new Error(insErr.message);
 
-    // Update fatigue/form + injuries
+    // Update fatigue/form + injuries + last_raced_on
     const now = new Date(gameDate);
+    const racedOn = toISODate(now);
 
     for (const r of results) {
       const { data: riderRow, error: rrErr } = await supabase
@@ -122,7 +123,8 @@ export async function POST(req) {
         .update({
           fatigue: newFatigue,
           form: newForm,
-          injury_until
+          injury_until,
+          last_raced_on: racedOn
         })
         .eq("id", r.rider_id);
     }
@@ -141,7 +143,7 @@ export async function POST(req) {
       ok: true,
       race_id,
       stage: { id: stage.id, name: stage.name },
-      game_date: toISODate(gameDate),
+      game_date: racedOn,
       top10,
       feed
     });
