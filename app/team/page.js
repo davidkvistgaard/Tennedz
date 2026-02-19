@@ -6,17 +6,22 @@ import { getOrCreateTeam } from "../../lib/team";
 import Loading from "../components/Loading";
 import SmallButton from "../components/SmallButton";
 
-async function withTimeout(promise, ms, label = "timeout") {
-  let t;
-  const timeout = new Promise((_, rej) => (t = setTimeout(() => rej(new Error(label)), ms)));
-  try {
-    return await Promise.race([promise, timeout]);
-  } finally {
-    clearTimeout(t);
-  }
+function normalizeUsername(u) {
+  return String(u || "")
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, "")
+    .replace(/[^a-z0-9._-]/g, "");
+}
+
+// Hidden internal email mapping
+function usernameToEmail(username) {
+  const u = normalizeUsername(username);
+  return `${u}@tennedz.local`;
 }
 
 async function maybeExchangeCodeForSession() {
+  // keep compatibility if old email OTP links still exist
   if (typeof window === "undefined") return { didExchange: false };
   const url = new URL(window.location.href);
   const code = url.searchParams.get("code");
@@ -31,7 +36,8 @@ async function maybeExchangeCodeForSession() {
 }
 
 export default function TeamHome() {
-  const [email, setEmail] = useState("");
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
   const [status, setStatus] = useState("Tjekker login…");
   const [session, setSession] = useState(null);
 
@@ -50,6 +56,7 @@ export default function TeamHome() {
 
   async function refresh() {
     setStatus("Tjekker login…");
+
     const ex = await maybeExchangeCodeForSession();
     if (ex?.error) {
       setStatus("Login-fejl: " + ex.error.message);
@@ -75,9 +82,9 @@ export default function TeamHome() {
     }
 
     try {
-      const res = await withTimeout(getOrCreateTeam(), 10000, "getOrCreateTeam timeout");
+      const res = await getOrCreateTeam();
       setTeam(res.team || null);
-      if (res.team?.id) await withTimeout(loadRiders(res.team.id), 10000, "loadRiders timeout");
+      if (res.team?.id) await loadRiders(res.team.id);
     } catch (e) {
       setStatus("Fejl ved init: " + (e?.message ?? String(e)));
     }
@@ -90,104 +97,54 @@ export default function TeamHome() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  async function signInWithEmail(e) {
+  async function signUp(e) {
     e.preventDefault();
-    setStatus("Sender login-link…");
-    const { error } = await supabase.auth.signInWithOtp({
-      email,
-      options: { emailRedirectTo: "https://tennedz.eu/team" }
-    });
-    if (error) setStatus("Fejl: " + error.message);
-    else setStatus("Tjek din email for login-link ✉️");
-  }
+    const u = normalizeUsername(username);
+    if (!u) return setStatus("Skriv et brugernavn.");
+    if (!password || password.length < 6) return setStatus("Kodeord skal være mindst 6 tegn.");
 
-  async function signOut() {
-    await supabase.auth.signOut();
-    setSession(null);
-    setTeam(null);
-    setRiders([]);
-    setStatus("Ikke logget ind");
-  }
-
-  async function grantStarterPack() {
-    if (!team?.id) return;
     setBusy(true);
-    setStatus("Tildeler starter-ryttere…");
+    setStatus("Opretter konto…");
     try {
-      const { error } = await supabase.rpc("grant_starter_pack", { p_count: 10 });
+      const email = usernameToEmail(u);
+
+      const { error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: { username: u }
+        }
+      });
+
       if (error) throw error;
-      await loadRiders(team.id);
-      setStatus("Starter-pack tildelt ✅");
-    } catch (e) {
-      setStatus("Fejl: " + (e?.message ?? String(e)));
+
+      setStatus("Konto oprettet ✅ Du kan nu logge ind.");
+    } catch (e2) {
+      setStatus("Fejl: " + (e2?.message ?? String(e2)));
     } finally {
       setBusy(false);
     }
   }
 
-  return (
-    <main>
-      <h2 style={{ marginTop: 0 }}>Mit hold</h2>
-      <p>Status: {status}</p>
+  async function signIn(e) {
+    e.preventDefault();
+    const u = normalizeUsername(username);
+    if (!u) return setStatus("Skriv et brugernavn.");
+    if (!password) return setStatus("Skriv et kodeord.");
 
-      {!session ? (
-        <form onSubmit={signInWithEmail} style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 12 }}>
-          <input
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            placeholder="din@email.dk"
-            style={{ padding: 10, width: 280, borderRadius: 10, border: "1px solid #ddd" }}
-          />
-          <SmallButton type="submit">Login</SmallButton>
-        </form>
-      ) : (
-        <div style={{ marginTop: 12 }}>
-          <SmallButton onClick={signOut}>Log ud</SmallButton>
-        </div>
-      )}
+    setBusy(true);
+    setStatus("Logger ind…");
+    try {
+      const email = usernameToEmail(u);
 
-      {!session ? null : !team ? (
-        <div style={{ marginTop: 14 }}>
-          <Loading text="Loader dit hold…" />
-        </div>
-      ) : (
-        <div style={{ marginTop: 14, border: "1px solid #eee", borderRadius: 14, padding: 14 }}>
-          <div style={{ display: "flex", gap: 12, justifyContent: "space-between", flexWrap: "wrap" }}>
-            <div>
-              <div style={{ fontWeight: 800 }}>{team.name}</div>
-              <div style={{ opacity: 0.8 }}>Budget: {Number(team.budget ?? 0).toLocaleString("da-DK")}</div>
-            </div>
-            {riders.length === 0 ? (
-              <SmallButton disabled={busy} onClick={grantStarterPack}>
-                {busy ? "Arbejder…" : "Giv mig 10 starter-ryttere"}
-              </SmallButton>
-            ) : null}
-          </div>
+      const { error } = await supabase.auth.signInWithPassword({
+        email,
+        password
+      });
 
-          <div style={{ marginTop: 12 }}>
-            <h3 style={{ marginBottom: 8 }}>Ryttere ({riders.length})</h3>
-            {riders.length === 0 ? (
-              <div style={{ opacity: 0.7 }}>Ingen ryttere endnu.</div>
-            ) : (
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: 10 }}>
-                {riders.map((r) => (
-                  <div key={r.id} style={{ border: "1px solid #f0f0f0", borderRadius: 12, padding: 10 }}>
-                    <div style={{ fontWeight: 800 }}>
-                      {r.name}{" "}
-                      {r.nationality ? <span style={{ fontWeight: 400, opacity: 0.7 }}>({r.nationality})</span> : null}
-                    </div>
-                    <div style={{ fontSize: 13, opacity: 0.85, marginTop: 6 }}>
-                      Sprint {r.sprint} · Flat {r.flat} · Hills {r.hills} · Mountain {r.mountain}
-                      <br />
-                      Endurance {r.endurance} · Strength {r.strength} · Wind {r.wind} · TT {r.timetrial}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-    </main>
-  );
-}
+      if (error) throw error;
+
+      setStatus("Logget ind ✅");
+    } catch (e2) {
+      setStatus("Fejl: " + (e2?.message ?? String(e2)));
+    } finally {
