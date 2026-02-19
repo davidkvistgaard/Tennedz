@@ -1,4 +1,4 @@
-// BUILD: MOTOR-V1.3-BATCH
+// BUILD: MOTOR-V1.4-BATCH
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -24,8 +24,7 @@ function defaultOrders(teamId) {
     name: "My tactic",
     team_plan: { risk: "medium", style: "balanced", focus: "balanced", energy_policy: "normal" },
     roles: { captain: null, sprinter: null, rouleur: null },
-    riders: {}, // rider_id -> { mode, effort }
-    triggers: { protect_captain: true, sprint_chase: true }
+    riders: {} // rider_id -> { mode, effort }
   };
 }
 
@@ -70,6 +69,11 @@ export default function Home() {
   const [stageBusy, setStageBusy] = useState(false);
   const [stageError, setStageError] = useState("");
   const [stageResult, setStageResult] = useState(null);
+
+  // Stage race (event)
+  const [eventBusy, setEventBusy] = useState(false);
+  const [eventError, setEventError] = useState("");
+  const [eventResult, setEventResult] = useState(null);
 
   // Viewer
   const [viewerStageId, setViewerStageId] = useState("");
@@ -143,7 +147,6 @@ export default function Home() {
       }
 
       base.riders = ro;
-      base.triggers = base.triggers || { protect_captain: true, sprint_chase: true };
       return base;
     });
   }
@@ -215,7 +218,6 @@ export default function Home() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // When riders load, scaffold rider orders
   useEffect(() => {
     if (!team?.id) return;
     if (!riders?.length) return;
@@ -240,6 +242,7 @@ export default function Home() {
     setRiders([]);
     setStatus("Ikke logget ind");
     setStageResult(null);
+    setEventResult(null);
     setFeed([]);
     setSnapshots([]);
     setViewerStageId("");
@@ -300,7 +303,6 @@ export default function Home() {
     const payload = { ...orders, name };
 
     const { error } = await supabase.from("tactic_presets").insert({ user_id: uid, name, payload });
-
     if (error) {
       setPresetStatus("Kunne ikke gemme preset: " + error.message);
       return;
@@ -315,6 +317,41 @@ export default function Home() {
     if (!p) return;
     setOrders(p.payload);
     setPresetStatus(`Preset loaded: ${p.name}`);
+  }
+
+  function setPlanField(key, value) {
+    setOrders((o) => ({
+      ...o,
+      team_plan: { ...(o.team_plan || {}), [key]: value }
+    }));
+  }
+
+  function setRole(role, riderId) {
+    setOrders((o) => ({
+      ...o,
+      roles: { ...(o.roles || {}), [role]: riderId || null }
+    }));
+  }
+
+  function setRiderMode(riderId, mode) {
+    setOrders((o) => ({
+      ...o,
+      riders: {
+        ...(o.riders || {}),
+        [riderId]: { ...(o.riders?.[riderId] || {}), mode }
+      }
+    }));
+  }
+
+  function setRiderEffort(riderId, effort) {
+    const n = Number(effort);
+    setOrders((o) => ({
+      ...o,
+      riders: {
+        ...(o.riders || {}),
+        [riderId]: { ...(o.riders?.[riderId] || {}), effort: n }
+      }
+    }));
   }
 
   // Run stage with orders
@@ -347,22 +384,11 @@ export default function Home() {
 
       const text = await res.text();
       let json = null;
-      try {
-        json = JSON.parse(text);
-      } catch {
-        json = null;
-      }
-
+      try { json = JSON.parse(text); } catch { json = null; }
       if (!res.ok) throw new Error(json?.error ?? text ?? "Ukendt fejl");
 
       const top10Pretty = await enrichNamesForTop(json.top10 ?? []);
-
-      setStageResult({
-        event: json.event,
-        event_stage: json.event_stage,
-        stage_template: json.stage_template,
-        top10: top10Pretty
-      });
+      setStageResult({ event: json.event, event_stage: json.event_stage, stage_template: json.stage_template, top10: top10Pretty });
 
       setViewerStageId(json.event_stage?.id || "");
       setFeed([]);
@@ -374,6 +400,49 @@ export default function Home() {
       setStageError(e?.message ?? String(e));
     } finally {
       setStageBusy(false);
+    }
+  }
+
+  // Run mini stage race (2 stages)
+  async function runStageRace() {
+    setEventError("");
+    setEventResult(null);
+
+    setEventBusy(true);
+    try {
+      const res = await fetch("/api/run-event", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          // optional: stage_template_ids: [id1, id2]
+          // MVP: auto-picks 2 newest stages if not provided
+        })
+      });
+
+      const text = await res.text();
+      let json = null;
+      try { json = JSON.parse(text); } catch { json = null; }
+      if (!res.ok) throw new Error(json?.error ?? text ?? "Ukendt fejl");
+
+      // enrich GC names
+      const ids = (json.gc_top10 ?? []).map((x) => x.rider_id).filter(Boolean);
+      let riderMap = {};
+      if (ids.length) {
+        const { data: rData } = await supabase.from("riders").select("id,name").in("id", ids);
+        if (rData?.length) for (const rr of rData) riderMap[rr.id] = rr.name;
+      }
+
+      const gcPretty = (json.gc_top10 ?? []).map((x, idx) => ({
+        ...x,
+        position: idx + 1,
+        rider_name: riderMap[x.rider_id] ?? riderNameById.get(x.rider_id) ?? x.rider_id
+      }));
+
+      setEventResult({ ...json, gc_top10_pretty: gcPretty });
+    } catch (e) {
+      setEventError(e?.message ?? String(e));
+    } finally {
+      setEventBusy(false);
     }
   }
 
@@ -397,12 +466,7 @@ export default function Home() {
 
       const text = await res.text();
       let json = null;
-      try {
-        json = JSON.parse(text);
-      } catch {
-        json = null;
-      }
-
+      try { json = JSON.parse(text); } catch { json = null; }
       if (!res.ok) throw new Error(json?.error ?? text ?? "Ukendt fejl");
 
       setFeed(json.feed ?? []);
@@ -447,48 +511,6 @@ export default function Home() {
     return riders.map((r) => ({ id: r.id, label: `${r.name}${r.nationality ? " (" + r.nationality + ")" : ""}` }));
   }, [riders]);
 
-  function setPlanField(key, value) {
-    setOrders((o) => ({
-      ...o,
-      team_plan: { ...(o.team_plan || {}), [key]: value }
-    }));
-  }
-
-  function setRole(role, riderId) {
-    setOrders((o) => ({
-      ...o,
-      roles: { ...(o.roles || {}), [role]: riderId || null }
-    }));
-  }
-
-  function setTrigger(key, value) {
-    setOrders((o) => ({
-      ...o,
-      triggers: { ...(o.triggers || {}), [key]: !!value }
-    }));
-  }
-
-  function setRiderMode(riderId, mode) {
-    setOrders((o) => ({
-      ...o,
-      riders: {
-        ...(o.riders || {}),
-        [riderId]: { ...(o.riders?.[riderId] || {}), mode }
-      }
-    }));
-  }
-
-  function setRiderEffort(riderId, effort) {
-    const n = Number(effort);
-    setOrders((o) => ({
-      ...o,
-      riders: {
-        ...(o.riders || {}),
-        [riderId]: { ...(o.riders?.[riderId] || {}), effort: n }
-      }
-    }));
-  }
-
   return (
     <main style={{ padding: 24, fontFamily: "system-ui, sans-serif" }}>
       <h1>Tennedz</h1>
@@ -525,8 +547,6 @@ export default function Home() {
                       Sprint: {r.sprint} · Flat: {r.flat} · Hills: {r.hills} · Mountain: {r.mountain}
                       <br />
                       TT: {r.timetrial} · Endurance: {r.endurance} · <b>Strength:</b> {r.strength ?? 0} · Wind: {r.wind}
-                      <br />
-                      Moral: {r.moral} · Form: {r.form} · Luck: {r.luck} · Leadership: {r.leadership}
                     </div>
                   </div>
                 ))}
@@ -537,7 +557,7 @@ export default function Home() {
           <hr style={{ margin: "18px 0" }} />
 
           <div>
-            <h3>Taktik (V1.3) + Presets</h3>
+            <h3>Taktik (V1.4) + Presets</h3>
 
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 12 }}>
               <div style={{ border: "1px solid #eee", borderRadius: 10, padding: 12 }}>
@@ -581,30 +601,8 @@ export default function Home() {
                   </select>
                 </label>
 
-                <div style={{ marginTop: 12, paddingTop: 10, borderTop: "1px solid #f0f0f0" }}>
-                  <div style={{ fontWeight: 700, marginBottom: 8 }}>Triggers (auto)</div>
-
-                  <label style={{ display: "flex", justifyContent: "space-between", gap: 10, marginBottom: 8 }}>
-                    <span>Protect captain if dropped</span>
-                    <input
-                      type="checkbox"
-                      checked={!!orders.triggers?.protect_captain}
-                      onChange={(e) => setTrigger("protect_captain", e.target.checked)}
-                    />
-                  </label>
-
-                  <label style={{ display: "flex", justifyContent: "space-between", gap: 10 }}>
-                    <span>Sprint chase if break exists</span>
-                    <input
-                      type="checkbox"
-                      checked={!!orders.triggers?.sprint_chase}
-                      onChange={(e) => setTrigger("sprint_chase", e.target.checked)}
-                    />
-                  </label>
-
-                  <div style={{ marginTop: 8, fontSize: 13, opacity: 0.7 }}>
-                    (MVP: 2 triggers. Vi kan udvide til et rigtigt rule-system senere.)
-                  </div>
+                <div style={{ marginTop: 10, fontSize: 13, opacity: 0.7 }}>
+                  (Auto-logik: Du jagter aldrig dine egne ryttere i udbrud.)
                 </div>
               </div>
 
@@ -636,7 +634,7 @@ export default function Home() {
                 </label>
 
                 <div style={{ marginTop: 10, fontSize: 13, opacity: 0.7 }}>
-                  Rollen påvirker nu motoren direkte (jagt/energi/finale).
+                  Effort giver tradeoff: høj effort = mere energi-tab + drop-risk (kun når etapen er “stresset”).
                 </div>
               </div>
 
@@ -661,17 +659,13 @@ export default function Home() {
                 </div>
 
                 {presetStatus ? <div style={{ marginTop: 8, opacity: 0.85 }}>{presetStatus}</div> : null}
-
-                <div style={{ marginTop: 10, fontSize: 13, opacity: 0.7 }}>
-                  Presets gemmer nu også rider orders + triggers.
-                </div>
               </div>
             </div>
 
             <div style={{ marginTop: 12, border: "1px solid #eee", borderRadius: 10, padding: 12 }}>
               <div style={{ fontWeight: 700, marginBottom: 8 }}>Rider orders (MVP)</div>
               <div style={{ fontSize: 13, opacity: 0.75, marginBottom: 10 }}>
-                Modes: normal / pull / protect_captain / leadout / opportunist — Effort påvirker energi og bidrag.
+                Modes: normal / pull / protect_captain / leadout / opportunist — Effort påvirker energi og impact.
               </div>
 
               {riders.length === 0 ? (
@@ -744,11 +738,16 @@ export default function Home() {
               </label>
 
               <button type="button" onClick={runStageWithPoints} disabled={stageBusy || riders.length === 0 || !selectedStageId} style={{ padding: "10px 12px" }}>
-                {stageBusy ? "Kører…" : "Kør stage + points (V1.3)"}
+                {stageBusy ? "Kører…" : "Kør stage + points (V1.4)"}
+              </button>
+
+              <button type="button" onClick={runStageRace} disabled={eventBusy || riders.length === 0} style={{ padding: "10px 12px" }}>
+                {eventBusy ? "Kører…" : "Kør mini etapeløb (2 stages)"}
               </button>
             </div>
 
             {stageError && <p style={{ marginTop: 10, color: "crimson" }}>Fejl: {stageError}</p>}
+            {eventError && <p style={{ marginTop: 10, color: "crimson" }}>Fejl: {eventError}</p>}
 
             {stageResult && (
               <div style={{ marginTop: 12 }}>
@@ -776,6 +775,37 @@ export default function Home() {
                     </ol>
                   );
                 })()}
+              </div>
+            )}
+
+            {eventResult && (
+              <div style={{ marginTop: 14, border: "1px solid #eee", borderRadius: 10, padding: 12 }}>
+                <div style={{ fontWeight: 700 }}>Mini etapeløb resultat</div>
+                <div style={{ opacity: 0.85, marginTop: 6 }}>
+                  <b>Event:</b> {eventResult.event?.name}
+                </div>
+
+                <div style={{ marginTop: 10 }}>
+                  <b>Stages</b>
+                  <ul style={{ marginTop: 6 }}>
+                    {(eventResult.stages ?? []).map((s) => (
+                      <li key={s.stage_no}>
+                        Stage {s.stage_no}: {s.name} ({s.distance_km} km)
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+
+                <div style={{ marginTop: 10 }}>
+                  <b>GC Top 10 (samlet tid)</b>
+                  <ol style={{ marginTop: 6 }}>
+                    {(eventResult.gc_top10_pretty ?? []).map((x) => (
+                      <li key={x.rider_id}>
+                        {x.rider_name} — {formatHMS(x.total_time_sec)}
+                      </li>
+                    ))}
+                  </ol>
+                </div>
               </div>
             )}
           </div>
@@ -856,7 +886,7 @@ export default function Home() {
               </div>
             )}
 
-            <div style={{ marginTop: 10, opacity: 0.7 }}>Build marker: MOTOR-V1.3-BATCH</div>
+            <div style={{ marginTop: 10, opacity: 0.7 }}>Build marker: MOTOR-V1.4-BATCH</div>
           </div>
         </div>
       ) : null}
