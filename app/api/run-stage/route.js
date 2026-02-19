@@ -1,7 +1,7 @@
 // app/api/run-stage/route.js
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
-import { simulateStage } from "../../../../lib/engine/simulateStage";
+import { simulateStage } from "../../../lib/engine/simulateStage";
 
 function clamp(n, a, b) {
   return Math.max(a, Math.min(b, n));
@@ -29,9 +29,7 @@ export async function POST(req) {
         .eq("id", 1)
         .single();
       if (gs?.game_date) gameDate = new Date(gs.game_date);
-    } catch {
-      // ok
-    }
+    } catch {}
 
     // Load stage
     let stage = null;
@@ -110,13 +108,12 @@ export async function POST(req) {
       if (!stillInjured) newForm = clamp(currentForm + formGain, 0, 100);
 
       let injury_until = riderRow.injury_until || null;
-      const crashChance = 0.015; // 1.5%
+      const crashChance = 0.015;
       if (!stillInjured && Math.random() < crashChance) {
-        const weeks = 1 + Math.floor(Math.random() * 6); // 1-6
+        const weeks = 1 + Math.floor(Math.random() * 6);
         const d = new Date(now);
         d.setDate(d.getDate() + weeks * 7);
         injury_until = toISODate(d);
-
         newForm = clamp(newForm - 35, 0, 100);
       }
 
