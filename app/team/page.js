@@ -5,7 +5,6 @@ import { supabase } from "../../lib/supabaseClient";
 import { getOrCreateTeam } from "../../lib/team";
 import Loading from "../components/Loading";
 import SmallButton from "../components/SmallButton";
-import TeamShell from "../components/TeamShell";
 
 function normalizeUsername(u) {
   return String(u || "")
@@ -239,7 +238,7 @@ export default function TeamHome() {
   const starterPackDisabled = busy || !team?.id || riders.length >= 16;
 
   return (
-    <TeamShell title="Mit hold">
+    <main>
       <p>Status: {status}</p>
 
       {!session ? (
@@ -291,14 +290,18 @@ export default function TeamHome() {
         <div style={{ marginTop: 14, border: "1px solid #eee", borderRadius: 14, padding: 14 }}>
           <div style={{ display: "flex", gap: 12, justifyContent: "space-between", flexWrap: "wrap" }}>
             <div>
-              <div style={{ fontWeight: 800 }}>{team.name}</div>
+              <div style={{ fontWeight: 900, fontSize: 18 }}>{team.name}</div>
               <div style={{ opacity: 0.8 }}>Budget: {Number(team.budget ?? 0).toLocaleString("da-DK")}</div>
-              <div style={{ opacity: 0.7, fontSize: 12 }}>Ryttere: {riders.length}/16 (starter pack)</div>
+              <div style={{ opacity: 0.7, fontSize: 12 }}>Ryttere: {riders.length} (starter pack = 16)</div>
             </div>
 
             <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center" }}>
               <SmallButton disabled={starterPackDisabled} onClick={grantStarterPack16}>
-                {riders.length >= 16 ? "Starter pack allerede modtaget" : busy ? "Arbejder…" : "Giv mig 16 starter-ryttere (8/8)"}
+                {riders.length >= 16
+                  ? "Starter pack allerede modtaget"
+                  : busy
+                    ? "Arbejder…"
+                    : "Giv mig 16 starter-ryttere (8/8)"}
               </SmallButton>
             </div>
           </div>
@@ -387,6 +390,6 @@ export default function TeamHome() {
           </div>
         </div>
       )}
-    </TeamShell>
+    </main>
   );
 }
