@@ -1,5 +1,4 @@
-// BUILD: MOTOR-V1.4-BATCH
-// Runs a small stage race (default: 2 stages) and returns GC in the response.
+// BUILD: UX-UPDATE-1 (stage race returns event_stages list)
 
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
@@ -80,7 +79,6 @@ export async function POST(req) {
     const supabaseAdmin = createClient(url, serviceKey);
     const body = await req.json().catch(() => ({}));
 
-    // Optional stage_template_ids; if absent pick newest 2 stages
     let stageIds = Array.isArray(body.stage_template_ids) ? body.stage_template_ids.filter(Boolean) : null;
 
     if (!stageIds || stageIds.length < 2) {
@@ -102,7 +100,6 @@ export async function POST(req) {
 
     if (stagesErr) throw new Error("Stage load failed: " + stagesErr.message);
 
-    // keep stage order as stageIds
     const stageById = new Map((stages ?? []).map((s) => [s.id, s]));
     const orderedStages = stageIds.map((id) => stageById.get(id)).filter(Boolean);
     if (orderedStages.length < 2) throw new Error("Could not load all requested stages.");
@@ -114,18 +111,15 @@ export async function POST(req) {
       .insert({ name: `Mini stage race (${orderedStages.length} stages)`, kind: "stage_race" })
       .select("*")
       .single();
+
     if (eventErr) throw new Error("Event create failed: " + eventErr.message);
 
-    // Load any existing orders per team for each created event_stage after we insert it.
-    // For MVP: we’ll apply the same latest saved orders per team (if exists from a prior stage run),
-    // otherwise default.
-    // (Later: per-stage orders and deadlines.)
     const ordersByTeamBase = {};
     for (const b of bundles) ordersByTeamBase[b.team_id] = defaultOrders();
 
-    // GC accumulator
     const gc = new Map(); // rider_id -> total_time_sec
     const stageWinners = [];
+    const eventStagesOut = [];
 
     for (let i = 0; i < orderedStages.length; i++) {
       const st = orderedStages[i];
@@ -133,7 +127,7 @@ export async function POST(req) {
       const segments = profile?.segments ?? [];
       if (!segments.length) throw new Error("Stage has no segments defined: " + st.name);
 
-      // simple conditions per stage: slightly different wind
+      // simple conditions per stage
       const wind = 6 + (i * 3);
       const rain = false;
 
@@ -148,9 +142,16 @@ export async function POST(req) {
         })
         .select("*")
         .single();
+
       if (esErr) throw new Error("Event stage create failed: " + esErr.message);
 
-      // load saved orders for this stage if present (rare in MVP) else use base
+      eventStagesOut.push({
+        stage_no: i + 1,
+        event_stage_id: eventStage.id,
+        stage_template_id: st.id,
+        stage_name: st.name
+      });
+
       const { data: ordersRows } = await supabaseAdmin
         .from("stage_orders")
         .select("team_id,payload")
@@ -209,28 +210,21 @@ export async function POST(req) {
         if (sErr) throw new Error("Insert race_snapshots failed: " + sErr.message);
       }
 
-      // GC accumulate
-      for (const r of results) {
-        gc.set(r.rider_id, (gc.get(r.rider_id) || 0) + Number(r.time_sec));
-      }
+      for (const r of results) gc.set(r.rider_id, (gc.get(r.rider_id) || 0) + Number(r.time_sec));
 
-      // stage winner
       const winner = results.slice().sort((a, b) => a.time_sec - b.time_sec)[0];
       stageWinners.push({ stage_no: i + 1, stage_name: st.name, rider_id: winner.rider_id, time_sec: winner.time_sec });
-
-      // return viewer id for last stage
     }
 
-    // Prepare GC top10
     const gcRows = [...gc.entries()].map(([rider_id, total_time_sec]) => ({ rider_id, total_time_sec }));
     gcRows.sort((a, b) => a.total_time_sec - b.total_time_sec);
-
     const top10 = gcRows.slice(0, 10);
 
     return NextResponse.json({
       ok: true,
       event: { id: event.id, name: event.name, kind: event.kind },
       stages: orderedStages.map((s, idx) => ({ stage_no: idx + 1, id: s.id, name: s.name, distance_km: s.distance_km })),
+      event_stages: eventStagesOut,
       stage_winners: stageWinners,
       gc_top10: top10
     });
