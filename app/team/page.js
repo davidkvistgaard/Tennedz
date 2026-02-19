@@ -17,6 +17,18 @@ function usernameToEmail(username) {
   const u = normalizeUsername(username);
   return `${u}@tennedz.local`;
 }
+function clamp(n, a, b) {
+  return Math.max(a, Math.min(b, n));
+}
+function calcAge(birthDateStr, gameDateStr) {
+  if (!birthDateStr) return null;
+  const bd = new Date(birthDateStr);
+  const gd = gameDateStr ? new Date(gameDateStr) : new Date();
+  let age = gd.getFullYear() - bd.getFullYear();
+  const m = gd.getMonth() - bd.getMonth();
+  if (m < 0 || (m === 0 && gd.getDate() < bd.getDate())) age--;
+  return age;
+}
 
 export default function TeamHome() {
   const [username, setUsername] = useState("");
@@ -29,15 +41,21 @@ export default function TeamHome() {
   const [team, setTeam] = useState(null);
   const [riders, setRiders] = useState([]);
 
-  // NEW: filters/sorting
+  // NEW: game_date
+  const [gameDate, setGameDate] = useState(null);
+
+  // filters/sorting
   const [genderFilter, setGenderFilter] = useState("ALL"); // ALL | M | F
-  const [sortKey, setSortKey] = useState("sprint"); // default
-  const [sortDir, setSortDir] = useState("desc"); // asc | desc
+  const [sortKey, setSortKey] = useState("sprint");
+  const [sortDir, setSortDir] = useState("desc");
 
   const sortOptions = [
     { key: "name", label: "Navn" },
     { key: "nationality", label: "Nationalitet" },
     { key: "gender", label: "Køn" },
+    { key: "age", label: "Alder" },
+    { key: "form", label: "Form" },
+    { key: "fatigue", label: "Fatigue" },
 
     { key: "sprint", label: "Sprint" },
     { key: "flat", label: "Flat" },
@@ -56,12 +74,26 @@ export default function TeamHome() {
     { key: "luck", label: "Luck" }
   ];
 
+  async function loadGameDate() {
+    try {
+      const { data, error } = await supabase
+        .from("game_state")
+        .select("game_date")
+        .eq("id", 1)
+        .single();
+      if (error) throw error;
+      setGameDate(data?.game_date || null);
+    } catch {
+      // If RLS blocks it, just hide it.
+      setGameDate(null);
+    }
+  }
+
   async function loadRiders(teamId) {
     const { data, error } = await supabase
       .from("team_riders")
       .select("rider:riders(*)")
       .eq("team_id", teamId);
-
     if (error) throw error;
     setRiders((data ?? []).map((x) => x.rider).filter(Boolean));
   }
@@ -86,6 +118,8 @@ export default function TeamHome() {
     }
 
     try {
+      await loadGameDate();
+
       const res = await getOrCreateTeam();
       setTeam(res.team || null);
       if (res.team?.id) await loadRiders(res.team.id);
@@ -171,11 +205,17 @@ export default function TeamHome() {
 
   const filteredSortedRiders = useMemo(() => {
     const list = Array.isArray(riders) ? [...riders] : [];
+    const gd = gameDate;
 
-    const filtered = list.filter((r) => {
-      if (genderFilter === "ALL") return true;
-      return String(r.gender || "").toUpperCase() === genderFilter;
-    });
+    const filtered = list
+      .map((r) => ({
+        ...r,
+        age: calcAge(r.birth_date, gd)
+      }))
+      .filter((r) => {
+        if (genderFilter === "ALL") return true;
+        return String(r.gender || "").toUpperCase() === genderFilter;
+      });
 
     const dir = sortDir === "asc" ? 1 : -1;
 
@@ -183,14 +223,12 @@ export default function TeamHome() {
       const ka = a?.[sortKey];
       const kb = b?.[sortKey];
 
-      // string keys
       if (sortKey === "name" || sortKey === "nationality" || sortKey === "gender") {
         const sa = String(ka || "");
         const sb = String(kb || "");
         return sa.localeCompare(sb, "da") * dir;
       }
 
-      // numeric keys
       const na = Number(ka ?? -999999);
       const nb = Number(kb ?? -999999);
       if (na === nb) return String(a?.name || "").localeCompare(String(b?.name || ""), "da");
@@ -198,12 +236,13 @@ export default function TeamHome() {
     });
 
     return filtered;
-  }, [riders, genderFilter, sortKey, sortDir]);
+  }, [riders, genderFilter, sortKey, sortDir, gameDate]);
 
   return (
     <main>
       <h2 style={{ marginTop: 0 }}>Mit hold</h2>
       <p>Status: {status}</p>
+      {gameDate ? <p style={{ opacity: 0.75 }}>Game date: <b>{gameDate}</b> (real-time kalender)</p> : null}
 
       {!session ? (
         <div style={{ marginTop: 12, border: "1px solid #eee", borderRadius: 14, padding: 14 }}>
@@ -259,15 +298,9 @@ export default function TeamHome() {
             </div>
 
             <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center" }}>
-              {riders.length === 0 ? (
-                <SmallButton disabled={busy} onClick={grantStarterPack16}>
-                  {busy ? "Arbejder…" : "Giv mig 16 starter-ryttere (8/8)"}
-                </SmallButton>
-              ) : (
-                <SmallButton disabled={busy} onClick={grantStarterPack16}>
-                  {busy ? "Arbejder…" : "Tilføj 16 ekstra ryttere (8/8)"}
-                </SmallButton>
-              )}
+              <SmallButton disabled={busy} onClick={grantStarterPack16}>
+                {busy ? "Arbejder…" : "Tilføj 16 ryttere (8/8)"}
+              </SmallButton>
             </div>
           </div>
 
@@ -296,7 +329,9 @@ export default function TeamHome() {
                   style={{ padding: 8, borderRadius: 10, border: "1px solid #ddd" }}
                 >
                   {sortOptions.map((o) => (
-                    <option key={o.key} value={o.key}>{o.label}</option>
+                    <option key={o.key} value={o.key}>
+                      {o.label}
+                    </option>
                   ))}
                 </select>
               </label>
@@ -317,27 +352,38 @@ export default function TeamHome() {
             {riders.length === 0 ? (
               <div style={{ opacity: 0.7 }}>Ingen ryttere endnu.</div>
             ) : (
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 10 }}>
-                {filteredSortedRiders.map((r) => (
-                  <div key={r.id} style={{ border: "1px solid #f0f0f0", borderRadius: 12, padding: 10 }}>
-                    <div style={{ fontWeight: 900 }}>
-                      {r.name || "(no name)"}{" "}
-                      <span style={{ fontWeight: 600, opacity: 0.7 }}>
-                        {r.gender === "F" ? "♀" : "♂"} {r.nationality ? `(${r.nationality})` : ""}
-                      </span>
-                    </div>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: 10 }}>
+                {filteredSortedRiders.map((r) => {
+                  const form = clamp(Number(r.form ?? 50), 0, 100);
+                  const fatigue = clamp(Number(r.fatigue ?? 0), 0, 100);
+                  const injured = r.injury_until && (!gameDate || new Date(r.injury_until) > new Date(gameDate));
 
-                    <div style={{ fontSize: 13, opacity: 0.9, marginTop: 6, lineHeight: 1.35 }}>
-                      <b>Sprint</b> {r.sprint} · <b>Flat</b> {r.flat} · <b>Hills</b> {r.hills} · <b>Mountain</b> {r.mountain}
-                      <br />
-                      <b>Cobbles</b> {r.cobbles} · <b>TT</b> {r.timetrial} · <b>Wind</b> {r.wind}
-                      <br />
-                      <b>Endurance</b> {r.endurance} · <b>Strength</b> {r.strength}
-                      <br />
-                      <b>Leadership</b> {r.leadership} · <b>Form</b> {r.form} · <b>Moral</b> {r.moral} · <b>Luck</b> {r.luck}
+                  return (
+                    <div key={r.id} style={{ border: "1px solid #f0f0f0", borderRadius: 12, padding: 10 }}>
+                      <div style={{ fontWeight: 900 }}>
+                        {r.name || "(no name)"}{" "}
+                        <span style={{ fontWeight: 600, opacity: 0.7 }}>
+                          {r.gender === "F" ? "♀" : "♂"} {r.nationality ? `(${r.nationality})` : ""}
+                        </span>
+                      </div>
+
+                      <div style={{ fontSize: 13, opacity: 0.9, marginTop: 6, lineHeight: 1.35 }}>
+                        <b>Alder</b> {r.age ?? "?"} · <b>Form</b> {form} · <b>Fatigue</b> {fatigue} ·{" "}
+                        <b>Status</b> {injured ? `Skadet (til ${r.injury_until})` : "Klar"}
+                        <hr style={{ border: 0, borderTop: "1px solid #eee", margin: "10px 0" }} />
+                        <b>Sprint</b> {r.sprint} · <b>Flat</b> {r.flat} · <b>Hills</b> {r.hills} · <b>Mountain</b>{" "}
+                        {r.mountain}
+                        <br />
+                        <b>Cobbles</b> {r.cobbles} · <b>TT</b> {r.timetrial} · <b>Wind</b> {r.wind}
+                        <br />
+                        <b>Endurance</b> {r.endurance} · <b>Strength</b> {r.strength}
+                        <br />
+                        <b>Leadership</b> {r.leadership} · <b>Form</b> {r.form} · <b>Moral</b> {r.moral} · <b>Luck</b>{" "}
+                        {r.luck}
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </div>
