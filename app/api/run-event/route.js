@@ -8,12 +8,8 @@ import { generateLockedWeather } from "../../../lib/weather/weatherModel";
 function isUuid(x) {
   return typeof x === "string" && /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(x);
 }
+function clamp(n, a, b) { return Math.max(a, Math.min(b, n)); }
 
-function clamp(n, a, b) {
-  return Math.max(a, Math.min(b, n));
-}
-
-// Base points for placement 1..20 (index 1-based)
 const BASE_POINTS = {
   1: 100, 2: 85, 3: 75, 4: 68, 5: 62,
   6: 57, 7: 53, 8: 49, 9: 45, 10: 41,
@@ -21,23 +17,11 @@ const BASE_POINTS = {
   16: 23, 17: 20, 18: 17, 19: 14, 20: 11
 };
 
-/**
- * Dynamic multiplier based on total divisions N and division index d.
- * Requirements:
- * - div1 always ~1.00
- * - fewer divisions => harsher penalty for lower divisions
- * - more divisions => gentler slope (div2/20 almost top)
- *
- * minMult(N) increases with N.
- */
 function minMult(N) {
-  // 0.62 + 0.25*(1 - exp(-(N-1)/6))
-  // N=2 -> ~0.66, N=10 -> ~0.82, N=20 -> ~0.86
   const x = (Math.max(1, N) - 1) / 6;
   const v = 0.62 + 0.25 * (1 - Math.exp(-x));
   return clamp(v, 0.62, 0.90);
 }
-
 function divisionMultiplier(d, N, gamma = 1.35) {
   if (N <= 1) return 1.0;
   const p = (d - 1) / (N - 1); // 0..1
@@ -46,8 +30,8 @@ function divisionMultiplier(d, N, gamma = 1.35) {
   return clamp(mult, mm, 1.0);
 }
 
-// Rider power used for team rating (top16)
-function riderPower(r) {
+// Seed Power for heat split (NOT rating)
+function riderSeedPower(r) {
   const sprint = Number(r.sprint ?? 0);
   const flat = Number(r.flat ?? 0);
   const hills = Number(r.hills ?? 0);
@@ -58,8 +42,8 @@ function riderPower(r) {
   const strength = Number(r.strength ?? 0);
   const wind = Number(r.wind ?? 0);
 
-  const form = Number(r.form ?? 50);
-  const fatigue = Number(r.fatigue ?? 0);
+  const form = Number.isFinite(Number(r?.form)) ? Number(r.form) : 50;
+  const fatigue = Number.isFinite(Number(r?.fatigue)) ? Number(r.fatigue) : 0;
 
   const base =
     (sprint + flat + hills + mountain + cobbles + timetrial + endurance + strength + wind) / 9;
@@ -91,7 +75,7 @@ export async function POST(req) {
 
     const now = new Date();
 
-    // Load game_date (used by weather model)
+    // Load game_date
     const { data: gs, error: gsErr } = await supabase
       .from("game_state")
       .select("game_date")
@@ -108,25 +92,11 @@ export async function POST(req) {
     if (eErr) throw new Error(eErr.message);
     if (!event) throw new Error("Event not found");
 
-    // Must be past deadline
     if (new Date(event.deadline) > now) {
       throw new Error("Deadline not reached yet (event still open).");
     }
 
-    // If finished and runs exist, return summary
-    if (event.status === "FINISHED") {
-      const { data: divRuns } = await supabase
-        .from("event_division_runs")
-        .select("division_index")
-        .eq("event_id", event_id);
-      return NextResponse.json({
-        ok: true,
-        already_finished: true,
-        divisions: (divRuns || []).map(x => x.division_index).sort((a, b) => a - b)
-      });
-    }
-
-    // LOCK WEATHER if not already locked
+    // Lock weather if missing
     let weatherLocked = event.weather_locked;
     if (!weatherLocked) {
       const locked = generateLockedWeather({
@@ -149,7 +119,7 @@ export async function POST(req) {
       weatherLocked = locked;
     }
 
-    // Load participants (joined teams)
+    // Participants
     const { data: etRows, error: etErr } = await supabase
       .from("event_teams")
       .select("team_id,captain_id,selected_riders")
@@ -157,12 +127,11 @@ export async function POST(req) {
     if (etErr) throw new Error(etErr.message);
     if (!etRows?.length) throw new Error("No teams joined this event.");
 
-    // Compute TEAM RATING based on best 16 riders on the team (not only selected 8)
-    const ratings = [];
+    // Compute SEED POWER (top16) for heat split
+    const seedPowers = [];
     for (const et of etRows) {
       const team_id = et.team_id;
 
-      // Fetch all riders for this team
       const { data: tr, error: trErr } = await supabase
         .from("team_riders")
         .select("rider:riders(*)")
@@ -170,34 +139,28 @@ export async function POST(req) {
       if (trErr) throw new Error(trErr.message);
 
       const ridersAll = (tr || []).map(x => x.rider).filter(Boolean);
-      const powers = ridersAll.map(r => riderPower(r)).sort((a, b) => b - a);
+      const powers = ridersAll.map(r => riderSeedPower(r)).sort((a, b) => b - a);
 
       const top16 = powers.slice(0, 16);
-      const rating = top16.reduce((s, v) => s + v, 0);
+      const seed_power = top16.reduce((s, v) => s + v, 0);
 
-      ratings.push({ team_id, rating });
+      seedPowers.push({ team_id, seed_power });
     }
 
-    // Sort teams by rating desc
-    ratings.sort((a, b) => b.rating - a.rating);
+    seedPowers.sort((a, b) => b.seed_power - a.seed_power);
 
-    // Build divisions (chunks of 20)
-    const totalTeams = ratings.length;
+    const totalTeams = seedPowers.length;
     const totalDivisions = Math.ceil(totalTeams / 20);
 
     const divisions = [];
     for (let i = 0; i < totalDivisions; i++) {
-      const start = i * 20;
-      const end = start + 20;
-      const slice = ratings.slice(start, end);
       divisions.push({
         division_index: i + 1,
-        teams: slice
+        teams: seedPowers.slice(i * 20, i * 20 + 20)
       });
     }
 
-    // Persist division assignment (event_divisions)
-    // First delete previous assignments if any (safety)
+    // Persist division assignment (stores seed_power in team_rating column for now)
     await supabase.from("event_divisions").delete().eq("event_id", event_id);
 
     const divRows = [];
@@ -208,14 +171,19 @@ export async function POST(req) {
           team_id: t.team_id,
           division_index: div.division_index,
           total_divisions: totalDivisions,
-          team_rating: t.rating
+          team_rating: t.seed_power // NOTE: this is seed_power, not points-rating
         });
       }
     }
     const { error: divInsErr } = await supabase.from("event_divisions").insert(divRows);
     if (divInsErr) throw new Error(divInsErr.message);
 
-    // Stage snapshot MVP (later: stage_profile snapshot)
+    // Clear old results/runs
+    await supabase.from("event_division_runs").delete().eq("event_id", event_id);
+    await supabase.from("event_team_results").delete().eq("event_id", event_id);
+    await supabase.from("event_rider_results").delete().eq("event_id", event_id);
+
+    // Stage snapshot MVP
     const stage_snapshot = {
       id: "mvp-stage",
       name: event.name || "MVP Stage",
@@ -225,20 +193,18 @@ export async function POST(req) {
       country_code: (event.country_code || "FR").toUpperCase()
     };
 
-    const ENGINE_VERSION = event.engine_version || "3.0-divisions";
+    const ENGINE_VERSION = event.engine_version || "3.1-points-rating";
     const baseSeed = event.seed || `${event_id}:${hashSeed(event_id)}:${ENGINE_VERSION}`;
 
-    // Clear previous results/runs if any (safety)
-    await supabase.from("event_division_runs").delete().eq("event_id", event_id);
-    await supabase.from("event_team_results").delete().eq("event_id", event_id);
-    await supabase.from("event_rider_results").delete().eq("event_id", event_id);
+    // We’ll accumulate rating increments to apply at the end
+    const teamRatingAdd = new Map();   // team_id -> points
+    const riderRatingAdd = new Map();  // rider_id -> points
 
-    // Run each division
     for (const div of divisions) {
       const d = div.division_index;
       const mult = divisionMultiplier(d, totalDivisions);
+      const divSeed = `${baseSeed}:div${d}`;
 
-      // Build teamsWithRiders for this division based on event selection (must be exactly 8)
       const teamsWithRiders = [];
 
       for (const t of div.teams) {
@@ -268,12 +234,8 @@ export async function POST(req) {
         });
       }
 
-      if (teamsWithRiders.length < 2) {
-        // if too few valid teams in this division, skip
-        continue;
-      }
+      if (teamsWithRiders.length < 2) continue;
 
-      const divSeed = `${baseSeed}:div${d}`;
       const sim = simulateStage({
         stage: stage_snapshot,
         teamsWithRiders,
@@ -281,7 +243,9 @@ export async function POST(req) {
         weather: weatherLocked
       });
 
-      // Store division run
+      const results = sim.results || [];
+
+      // Store run
       const { error: runErr } = await supabase
         .from("event_division_runs")
         .upsert({
@@ -291,34 +255,25 @@ export async function POST(req) {
           engine_version: ENGINE_VERSION,
           stage_snapshot: { ...stage_snapshot, weather_locked: weatherLocked, total_divisions: totalDivisions, division_index: d },
           feed: sim.feed || [],
-          results: sim.results || []
+          results
         });
       if (runErr) throw new Error(runErr.message);
 
-      const results = sim.results || [];
-
-      // Compute TEAM standing based on captain (fallback: best rider)
+      // Team standings based on captain (fallback best rider)
       const captainByTeam = new Map();
       for (const twr of teamsWithRiders) {
         const cap = twr.riders.find(r => r.is_captain);
         captainByTeam.set(twr.id, cap?.id || null);
       }
 
-      // rider position lookup
       const posByRider = new Map();
-      for (const r of results) {
-        posByRider.set(r.rider_id, r);
-      }
+      for (const r of results) posByRider.set(r.rider_id, r);
 
       const teamRows = [];
       for (const twr of teamsWithRiders) {
         const capId = captainByTeam.get(twr.id);
         let ref = capId ? posByRider.get(capId) : null;
-
-        if (!ref) {
-          // fallback: best placed rider from this team
-          ref = results.find(x => x.team_id === twr.id) || null;
-        }
+        if (!ref) ref = results.find(x => x.team_id === twr.id) || null;
         if (!ref) continue;
 
         teamRows.push({
@@ -327,28 +282,35 @@ export async function POST(req) {
           division_index: d,
           total_divisions: totalDivisions,
           captain_id: capId,
-          position: Number(ref.position ?? 9999),
+          position: 9999,
           time_sec: Number(ref.time_sec ?? 0),
           multiplier: mult
         });
       }
 
-      // rank teams by captain/best time
       teamRows.sort((a, b) => a.time_sec - b.time_sec);
       teamRows.forEach((tr, idx) => {
         tr.position = idx + 1;
         const base = BASE_POINTS[tr.position] || 0;
         tr.points = Math.round(base * mult);
+
+        // accumulate TEAM rating points
+        teamRatingAdd.set(tr.team_id, (teamRatingAdd.get(tr.team_id) || 0) + tr.points);
       });
 
       const { error: teamResErr } = await supabase.from("event_team_results").insert(teamRows);
       if (teamResErr) throw new Error(teamResErr.message);
 
-      // Rider points: award points to top 20 riders in the division
-      const riderRows = results.slice(0, 200).map(rr => {
+      // Rider points (top 20 only)
+      const riderRows = results.slice(0, 300).map(rr => {
         const pos = Number(rr.position ?? 9999);
         const base = BASE_POINTS[pos] || 0;
         const pts = pos <= 20 ? Math.round(base * mult) : 0;
+
+        if (pts > 0) {
+          riderRatingAdd.set(rr.rider_id, (riderRatingAdd.get(rr.rider_id) || 0) + pts);
+        }
+
         return {
           event_id,
           rider_id: rr.rider_id,
@@ -366,7 +328,34 @@ export async function POST(req) {
       if (riderResErr) throw new Error(riderResErr.message);
     }
 
-    // Mark event finished + set seed if missing
+    // Apply rating increments (points) to teams + riders
+    // Teams
+    for (const [team_id, add] of teamRatingAdd.entries()) {
+      const { data: cur, error } = await supabase
+        .from("teams")
+        .select("rating")
+        .eq("id", team_id)
+        .single();
+      if (!error) {
+        const next = (cur?.rating ?? 0) + add;
+        await supabase.from("teams").update({ rating: next }).eq("id", team_id);
+      }
+    }
+
+    // Riders
+    for (const [rider_id, add] of riderRatingAdd.entries()) {
+      const { data: cur, error } = await supabase
+        .from("riders")
+        .select("rating")
+        .eq("id", rider_id)
+        .single();
+      if (!error) {
+        const next = (cur?.rating ?? 0) + add;
+        await supabase.from("riders").update({ rating: next }).eq("id", rider_id);
+      }
+    }
+
+    // Mark event finished
     const { error: updEventErr } = await supabase
       .from("events")
       .update({ status: "FINISHED", seed: baseSeed, engine_version: ENGINE_VERSION })
@@ -378,7 +367,9 @@ export async function POST(req) {
       event_id,
       engine_version: ENGINE_VERSION,
       seed: baseSeed,
-      total_divisions: totalDivisions
+      total_divisions: totalDivisions,
+      applied_team_rating_updates: teamRatingAdd.size,
+      applied_rider_rating_updates: riderRatingAdd.size
     });
   } catch (e) {
     return NextResponse.json({ ok: false, error: e?.message ?? String(e) }, { status: 500 });
