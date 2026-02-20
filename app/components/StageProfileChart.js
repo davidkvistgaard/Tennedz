@@ -1,217 +1,117 @@
-// app/components/StageProfileChart.js
 "use client";
 
-// Simple SVG stage profile chart.
-// Supports:
-// - stage.profile.elevation_points: [{ km, alt }]  (if you later add real data)
-// - fallback: synth elevation curve from segments terrain (flat/hills/mountain/cobbles)
-// - markers from stage.profile.key_points: [{ km, name, type }]
+function clamp(n, a, b) { return Math.max(a, Math.min(b, n)); }
 
-function clamp(n, a, b) {
-  return Math.max(a, Math.min(b, n));
-}
+function normalizePoints(profile_points) {
+  // expects [[km,elev], ...]
+  const pts = Array.isArray(profile_points) ? profile_points : [];
+  const cleaned = pts
+    .map(p => Array.isArray(p) ? { km: Number(p[0]), elev: Number(p[1]) } : null)
+    .filter(Boolean)
+    .filter(p => Number.isFinite(p.km) && Number.isFinite(p.elev))
+    .sort((a, b) => a.km - b.km);
 
-function normalizeKeyType(t) {
-  const x = String(t || "").toLowerCase();
-  if (x.includes("sprint")) return "SPRINT";
-  if (x.includes("kom") || x.includes("climb") || x.includes("mount")) return "CLIMB";
-  if (x.includes("cobbl") || x.includes("pave") || x.includes("sector")) return "COBBLES";
-  if (x.includes("gravel")) return "GRAVEL";
-  return "POINT";
-}
-
-function terrainWeight(terrain) {
-  const t = String(terrain || "").toLowerCase();
-  if (t.includes("mount")) return 3.0;
-  if (t.includes("hill")) return 1.8;
-  if (t.includes("cobbl")) return 0.8;
-  if (t.includes("gravel")) return 0.9;
-  return 0.3; // flat
-}
-
-// Build fallback elevation points from segments
-function buildSyntheticElevation(distanceKm, segments) {
-  const pts = [];
-  const total = Math.max(1, Math.round(distanceKm));
-  let km = 0;
-  let alt = 50; // baseline
-  const segs = Array.isArray(segments) ? segments : [];
-
-  // Expand segments into per-km weights
-  const weights = [];
-  let covered = 0;
-  for (const s of segs) {
-    const len = Math.max(1, Math.round(Number(s.km) || 0));
-    const w = terrainWeight(s.terrain);
-    for (let i = 0; i < len; i++) weights.push(w);
-    covered += len;
+  if (cleaned.length < 2) {
+    return [{ km: 0, elev: 0 }, { km: 1, elev: 0 }];
   }
-  // If segments don't cover full distance, pad as flat
-  while (weights.length < total) weights.push(terrainWeight("flat"));
-  // If too long, trim
-  weights.length = total;
-
-  // Make a smooth-ish curve
-  for (km = 0; km <= total; km++) {
-    const idx = clamp(km, 0, total - 1);
-    const w = weights[idx] ?? 0.3;
-
-    // deterministic “noise” based on km for variety (no randomness)
-    const noise = Math.sin(km * 0.35) * 4 + Math.sin(km * 0.11) * 2;
-
-    // altitude delta: hills/mountain create bigger bumps
-    const delta = w * (6 + Math.sin(km * 0.22) * 5) + noise;
-
-    alt = clamp(alt + delta * 0.35, 10, 600);
-    pts.push({ km, alt });
-  }
-  return pts;
+  return cleaned;
 }
 
-// Convert points to SVG path
-function toPath(points, width, height, padding = 18) {
-  if (!points || points.length < 2) return "";
+function kindColor(kind) {
+  const k = String(kind || "").toUpperCase();
+  if (k === "KOM") return "rgba(77,214,255,0.95)";
+  if (k === "COBBLES") return "rgba(124,255,107,0.95)";
+  if (k === "FINISH") return "rgba(255,255,255,0.95)";
+  return "rgba(255,255,255,0.65)";
+}
 
-  const minKm = points[0].km;
-  const maxKm = points[points.length - 1].km;
+export default function StageProfileChart({
+  stage,
+  height = 140,
+  onSelectKm,
+  selectedKm
+}) {
+  const pts = normalizePoints(stage?.profile_points);
+  const dist = Number(stage?.distance_km ?? pts[pts.length - 1]?.km ?? 1);
 
-  let minAlt = Infinity;
-  let maxAlt = -Infinity;
-  for (const p of points) {
-    minAlt = Math.min(minAlt, p.alt);
-    maxAlt = Math.max(maxAlt, p.alt);
-  }
-  // prevent flat line
-  if (maxAlt - minAlt < 1) maxAlt = minAlt + 1;
+  const elevs = pts.map(p => p.elev);
+  const minE = Math.min(...elevs);
+  const maxE = Math.max(...elevs);
+  const pad = 18;
+  const w = 1000; // virtual width for SVG viewBox
+  const h = height;
 
-  const x = (km) => {
-    const t = (km - minKm) / (maxKm - minKm);
-    return padding + t * (width - padding * 2);
-  };
-  const y = (alt) => {
-    const t = (alt - minAlt) / (maxAlt - minAlt);
-    return height - padding - t * (height - padding * 2);
+  const x = (km) => pad + (clamp(km, 0, dist) / dist) * (w - pad * 2);
+  const y = (elev) => {
+    if (maxE === minE) return h / 2;
+    const t = (elev - minE) / (maxE - minE);
+    return pad + (1 - t) * (h - pad * 2);
   };
 
-  let d = `M ${x(points[0].km).toFixed(2)} ${y(points[0].alt).toFixed(2)}`;
-  for (let i = 1; i < points.length; i++) {
-    d += ` L ${x(points[i].km).toFixed(2)} ${y(points[i].alt).toFixed(2)}`;
-  }
-  return { d, x, y, minAlt, maxAlt, minKm, maxKm };
-}
+  const d = pts.map((p, i) => `${i === 0 ? "M" : "L"} ${x(p.km).toFixed(2)} ${y(p.elev).toFixed(2)}`).join(" ");
 
-function Marker({ x, y, label, kind }) {
-  const shape = (() => {
-    if (kind === "SPRINT") return { text: "S", bg: "#111", fg: "white" };
-    if (kind === "CLIMB") return { text: "▲", bg: "#111", fg: "white" };
-    if (kind === "COBBLES") return { text: "C", bg: "#111", fg: "white" };
-    if (kind === "GRAVEL") return { text: "G", bg: "#111", fg: "white" };
-    return { text: "•", bg: "#111", fg: "white" };
-  })();
+  const keypoints = Array.isArray(stage?.keypoints) ? stage.keypoints : [];
+
+  const selectedX = selectedKm != null ? x(selectedKm) : null;
 
   return (
-    <g>
-      <circle cx={x} cy={y} r="7" fill={shape.bg} />
-      <text x={x} y={y + 4} fontSize="10" textAnchor="middle" fill={shape.fg} fontWeight="700">
-        {shape.text}
-      </text>
-      {label ? (
-        <text x={x} y={y - 10} fontSize="11" textAnchor="middle" fill="#111">
-          {label}
-        </text>
-      ) : null}
-    </g>
-  );
-}
+    <div style={{ width: "100%" }}>
+      <svg viewBox={`0 0 ${w} ${h}`} width="100%" height={h} style={{ display: "block" }}>
+        {/* background */}
+        <rect x="0" y="0" width={w} height={h} rx="18" fill="rgba(0,0,0,0.22)" stroke="rgba(255,255,255,0.10)" />
 
-export default function StageProfileChart({ stage, height = 220 }) {
-  const distanceKm = Number(stage?.distance_km ?? stage?.distanceKm ?? 0) || 0;
-  const profile = stage?.profile || {};
-  const segments = profile?.segments || [];
-  const keyPoints = profile?.key_points || [];
+        {/* area fill */}
+        <path
+          d={`${d} L ${x(dist).toFixed(2)} ${h - pad} L ${x(0).toFixed(2)} ${h - pad} Z`}
+          fill="rgba(124,255,107,0.10)"
+        />
 
-  const elevation = Array.isArray(profile?.elevation_points) && profile.elevation_points.length >= 2
-    ? profile.elevation_points.map((p) => ({ km: Number(p.km), alt: Number(p.alt) }))
-    : buildSyntheticElevation(distanceKm, segments);
+        {/* main line */}
+        <path d={d} fill="none" stroke="rgba(255,255,255,0.80)" strokeWidth="2.2" />
 
-  const width = 980; // internal viewbox width
-  const vpH = height;
-  const padding = 18;
+        {/* selected km vertical */}
+        {selectedX != null ? (
+          <line x1={selectedX} x2={selectedX} y1={pad} y2={h - pad} stroke="rgba(77,214,255,0.75)" strokeWidth="2" />
+        ) : null}
 
-  const geom = toPath(elevation, width, vpH, padding);
-  if (!geom) return null;
+        {/* keypoint markers */}
+        {keypoints.map((k, idx) => {
+          const km = Number(k.km ?? 0);
+          const cx = x(km);
+          const cy = pad + 8;
+          const color = kindColor(k.kind);
 
-  // Build area under line
-  const areaD = `${geom.d} L ${geom.x(geom.maxKm).toFixed(2)} ${(vpH - padding).toFixed(2)} L ${geom.x(geom.minKm).toFixed(2)} ${(vpH - padding).toFixed(2)} Z`;
-
-  // Axis ticks: every 10 km (or 20 if long)
-  const tickStep = distanceKm > 200 ? 20 : 10;
-  const ticks = [];
-  for (let km = 0; km <= Math.round(distanceKm); km += tickStep) ticks.push(km);
-
-  const markers = (keyPoints || [])
-    .map((p) => ({
-      km: Number(p.km),
-      name: String(p.name || ""),
-      kind: normalizeKeyType(p.type || p.kind || p.name)
-    }))
-    .filter((m) => Number.isFinite(m.km));
-
-  return (
-    <div style={{ border: "1px solid #eee", borderRadius: 14, padding: 12 }}>
-      <div style={{ display: "flex", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
-        <div style={{ fontWeight: 800 }}>{stage?.name || "Etapeprofil"}</div>
-        <div style={{ opacity: 0.75 }}><b>{distanceKm}</b> km</div>
-      </div>
-
-      <svg
-        viewBox={`0 0 ${width} ${vpH}`}
-        width="100%"
-        height={vpH}
-        style={{ marginTop: 10, display: "block", borderRadius: 12, background: "white" }}
-      >
-        {/* grid */}
-        {[0.25, 0.5, 0.75].map((t, idx) => {
-          const yy = vpH - padding - t * (vpH - padding * 2);
-          return <line key={idx} x1={padding} x2={width - padding} y1={yy} y2={yy} stroke="#f0f0f0" />;
-        })}
-
-        {/* area */}
-        <path d={areaD} fill="#9ad84b" opacity="0.9" stroke="none" />
-        {/* line */}
-        <path d={geom.d} fill="none" stroke="#2a2a2a" strokeWidth="2" />
-
-        {/* x axis */}
-        <line x1={padding} x2={width - padding} y1={vpH - padding} y2={vpH - padding} stroke="#111" strokeWidth="1" />
-
-        {/* ticks */}
-        {ticks.map((km) => {
-          const xx = geom.x(km);
           return (
-            <g key={km}>
-              <line x1={xx} x2={xx} y1={vpH - padding} y2={vpH - padding + 6} stroke="#111" />
-              <text x={xx} y={vpH - 2} fontSize="11" textAnchor="middle" fill="#111">
-                {km}
-              </text>
+            <g key={idx} onClick={() => onSelectKm?.(km)} style={{ cursor: "pointer" }}>
+              <circle cx={cx} cy={cy} r="7" fill="rgba(0,0,0,0.55)" stroke={color} strokeWidth="2" />
+              <circle cx={cx} cy={cy} r="2.5" fill={color} />
             </g>
           );
         })}
 
-        {/* markers */}
-        {markers.map((m, idx) => {
-          const xx = geom.x(clamp(m.km, geom.minKm, geom.maxKm));
-          // place marker slightly above line at that km
-          // find nearest point
-          const nearest = elevation[Math.round(clamp(m.km, 0, elevation.length - 1))] || elevation[0];
-          const yy = geom.y(nearest.alt) - 2;
-
-          const label = m.kind === "CLIMB" ? `${m.km} km` : ""; // keep minimal for MVP
-          return <Marker key={idx} x={xx} y={yy} label={label} kind={m.kind} />;
-        })}
+        {/* click overlay for selecting km */}
+        <rect
+          x={pad}
+          y={pad}
+          width={w - pad * 2}
+          height={h - pad * 2}
+          fill="transparent"
+          onClick={(e) => {
+            if (!onSelectKm) return;
+            const rect = e.currentTarget.getBoundingClientRect();
+            const px = (e.clientX - rect.left) / rect.width; // 0..1
+            onSelectKm(Math.round(px * dist));
+          }}
+          style={{ cursor: onSelectKm ? "crosshair" : "default" }}
+        />
       </svg>
 
-      <div style={{ marginTop: 8, fontSize: 12, opacity: 0.75 }}>
-        *MVP: Kurven er syntetisk fra segments (senere kan vi bruge rigtige elevation_points fra GPX).
+      <div style={{ display: "flex", justifyContent: "space-between", marginTop: 8 }}>
+        <span className="small">0 km</span>
+        <span className="small">
+          Elev: {Math.round(minE)}–{Math.round(maxE)} m
+        </span>
+        <span className="small">{dist} km</span>
       </div>
     </div>
   );
