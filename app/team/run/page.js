@@ -48,13 +48,11 @@ export default function RunPage() {
   const [selectedRiderIds, setSelectedRiderIds] = useState([]);
   const [captainId, setCaptainId] = useState("");
 
-  // UI controls
-  const [genderFilter, setGenderFilter] = useState("ALL"); // ALL/M/F
+  const [genderFilter, setGenderFilter] = useState("ALL");
   const [sortKey, setSortKey] = useState("form");
-  const [sortDir, setSortDir] = useState("DESC"); // DESC/ASC
+  const [sortDir, setSortDir] = useState("DESC");
 
-  // Weather
-  const [weatherBox, setWeatherBox] = useState(null);
+  const [stage, setStage] = useState(null);
 
   async function load() {
     setStatus("Loader…");
@@ -97,43 +95,23 @@ export default function RunPage() {
 
   const locked = selectedEvent ? (new Date(selectedEvent.deadline) <= new Date()) : false;
 
-  // Load forecast whenever event changes
+  // Fetch stage profile for selected event
   useEffect(() => {
     (async () => {
-      setWeatherBox(null);
+      setStage(null);
       if (!selectedEventId) return;
       try {
-        const j = await fetch(`/api/weather/forecast?event_id=${selectedEventId}`).then(r => r.json());
-        if (!j?.ok) return;
-        setWeatherBox(j);
+        const j = await fetch(`/api/stage-profile?event_id=${selectedEventId}`).then(r => r.json());
+        if (j?.ok) setStage(j.stage);
       } catch {
         // ignore
       }
     })();
   }, [selectedEventId]);
 
-  // stage snapshot for UI (MVP)
-  const stageUi = useMemo(() => {
-    if (!selectedEvent) return null;
-    const dist = 150;
-    return {
-      name: selectedEvent.name,
-      distance_km: dist,
-      profile_type: "FLAT",
-      keypoints: [
-        { km: dist - 5, label: "Positionering" },
-        { km: dist - 3, label: "Tog" },
-        { km: dist - 1, label: "Sprint" }
-      ]
-    };
-  }, [selectedEvent]);
-
   const filteredSortedRiders = useMemo(() => {
     const list = riders
-      .filter(r => {
-        if (genderFilter === "ALL") return true;
-        return r.gender === genderFilter;
-      })
+      .filter(r => genderFilter === "ALL" ? true : r.gender === genderFilter)
       .slice();
 
     list.sort((a, b) => {
@@ -226,14 +204,13 @@ export default function RunPage() {
 
       {!team ? <Loading text="Loader…" /> : (
         <div style={{ display: "grid", gap: 14 }}>
-
-          {/* Event */}
           <div className="card" style={{ padding: 14 }}>
             <SectionHeader
               title="Vælg event"
-              subtitle="Forecast vises før deadline. Vejret låses automatisk ved deadline/run."
+              subtitle="Etapeprofilen under viser præcis profilen + momenter."
               right={<SmallButton onClick={load} disabled={busy}>Reload</SmallButton>}
             />
+
             <div className="hr" />
 
             <select
@@ -265,43 +242,14 @@ export default function RunPage() {
                 </a>
               </div>
             ) : null}
-
-            {/* Weather box */}
-            {weatherBox?.weather ? (
-              <div style={{ marginTop: 12, padding: 12, borderRadius: 16, border: "1px solid var(--border)", background: "rgba(0,0,0,0.25)" }}>
-                <div style={{ display: "flex", justifyContent: "space-between", gap: 10, flexWrap: "wrap", alignItems: "center" }}>
-                  <div style={{ fontWeight: 1000 }}>
-                    Vejr ({weatherBox.locked ? "låst" : "forecast"})
-                    <span className="small" style={{ marginLeft: 10, opacity: 0.75 }}>
-                      {weatherBox.source}
-                    </span>
-                  </div>
-                  <Pill tone={weatherBox.locked ? "danger" : "info"}>
-                    {weatherBox.locked ? "LOCKED" : "FORECAST"}
-                  </Pill>
-                </div>
-
-                <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 10 }}>
-                  <Pill tone="accent">{weatherBox.weather.condition}</Pill>
-                  <Pill>{weatherBox.weather.temp_c}°C</Pill>
-                  <Pill>Vind {weatherBox.weather.wind_kph} km/t ({weatherBox.weather.wind_dir})</Pill>
-                  <Pill>Nedbør {weatherBox.weather.precipitation_mm} mm</Pill>
-                </div>
-
-                {!weatherBox.locked ? (
-                  <div className="small" style={{ marginTop: 8 }}>
-                    Forecast kan ændre sig frem til deadline. Når eventet låses/køres, fastlåses vejret til et “locked” objekt.
-                  </div>
-                ) : (
-                  <div className="small" style={{ marginTop: 8 }}>
-                    Vejret er låst og vil være identisk for alle, når løbet simuleres.
-                  </div>
-                )}
-              </div>
-            ) : null}
           </div>
 
-          {stageUi ? <StageProfile stage={stageUi} /> : null}
+          {/* Stage profile */}
+          {stage ? (
+            <StageProfile stage={stage} mode="overview" />
+          ) : selectedEventId ? (
+            <Loading text="Loader etapeprofil…" />
+          ) : null}
 
           {/* Presets */}
           <LineupPresets
@@ -313,7 +261,7 @@ export default function RunPage() {
             setCaptainId={setCaptainId}
           />
 
-          {/* Selection Controls */}
+          {/* Selection */}
           <div className="card" style={{ padding: 14 }}>
             <SectionHeader
               title="Udtagelse"
@@ -358,7 +306,7 @@ export default function RunPage() {
                 <SmallButton onClick={() => pickSplit("wind", "strength")} disabled={locked}>
                   Wind team (4+4)
                 </SmallButton>
-                <SmallButton className="danger" onClick={() => { setSelectedRiderIds([]); setCaptainId(""); }} disabled={locked}>
+                <SmallButton className="danger" onClick={clearSelection} disabled={locked}>
                   Ryd
                 </SmallButton>
               </div>
@@ -384,10 +332,7 @@ export default function RunPage() {
 
             <div className="hr" />
 
-            <SectionHeader
-              title="Kaptajn"
-              subtitle="Vælg den rytter du vil beskytte/spille for (MVP)."
-            />
+            <SectionHeader title="Kaptajn" subtitle="Vælg den rytter du vil beskytte/spille for." />
 
             <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center", marginTop: 10 }}>
               <select
@@ -411,12 +356,6 @@ export default function RunPage() {
                 {busy ? "Arbejder…" : locked ? "Deadline passeret" : "Gem tilmelding"}
               </SmallButton>
             </div>
-
-            {locked ? (
-              <div className="small" style={{ marginTop: 10, color: "rgba(255,77,77,0.85)" }}>
-                Event er låst. Vejret er/kan blive låst. Du kan stadig se resultat/viewer når eventet er kørt.
-              </div>
-            ) : null}
           </div>
         </div>
       )}
