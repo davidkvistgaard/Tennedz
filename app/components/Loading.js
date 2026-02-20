@@ -1,7 +1,12 @@
+"use client";
+
 export default function Loading({ text = "Loader…" }) {
   return (
-    <div style={{ padding: 12, border: "1px solid #eee", borderRadius: 10, opacity: 0.85 }}>
-      {text}
+    <div className="card" style={{ padding: 14 }}>
+      <div className="badge">
+        <span style={{ width: 10, height: 10, borderRadius: 999, background: "var(--accent2)" }} />
+        {text}
+      </div>
     </div>
   );
 }
