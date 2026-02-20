@@ -1,88 +1,113 @@
 "use client";
 
+import { useMemo, useState } from "react";
+import StageProfileChart from "./StageProfileChart";
 import { Pill } from "./ui";
 
-function kmLabel(x) {
-  return `${Math.round(x)} km`;
+function uniqBy(arr, keyFn) {
+  const seen = new Set();
+  const out = [];
+  for (const x of arr) {
+    const k = keyFn(x);
+    if (seen.has(k)) continue;
+    seen.add(k);
+    out.push(x);
+  }
+  return out;
 }
 
-/**
- * stage snapshot example:
- * { distance_km: 150, profile_type: 'FLAT', keypoints: [{ km: 145, label: '5 km' }, ...] }
- */
-export default function StageProfile({ stage }) {
+function buildTacticMoments(stage) {
   const dist = Number(stage?.distance_km ?? 0);
-  const profile = stage?.profile_type || "FLAT";
-  const keypoints = stage?.keypoints || [
-    { km: Math.max(0, dist - 5), label: "5 km" },
-    { km: Math.max(0, dist - 3), label: "3 km" },
-    { km: Math.max(0, dist - 1), label: "1 km" }
-  ];
+  const keypoints = Array.isArray(stage?.keypoints) ? stage.keypoints : [];
+
+  const ticks = [];
+  for (let km = 0; km <= dist; km += 5) {
+    ticks.push({ km, label: `${km} km`, kind: "TICK" });
+  }
+
+  const moments = uniqBy(
+    [...ticks, ...keypoints.map(k => ({ km: Number(k.km), label: k.label || `${k.km} km`, kind: k.kind || "KEY" }))],
+    (x) => `${x.km}:${x.kind}:${x.label}`
+  )
+    .filter(x => Number.isFinite(x.km))
+    .sort((a, b) => a.km - b.km);
+
+  return moments;
+}
+
+export default function StageProfile({ stage, mode = "overview" }) {
+  const [selectedKm, setSelectedKm] = useState(null);
+
+  const moments = useMemo(() => buildTacticMoments(stage), [stage]);
+  const dist = Number(stage?.distance_km ?? 0);
+
+  const selectedMoment = useMemo(() => {
+    if (selectedKm == null) return null;
+    // find nearest moment
+    let best = null;
+    let bestD = Infinity;
+    for (const m of moments) {
+      const d = Math.abs(m.km - selectedKm);
+      if (d < bestD) { bestD = d; best = m; }
+    }
+    return best;
+  }, [selectedKm, moments]);
+
+  const country = (stage?.country_code || "FR").toUpperCase();
 
   return (
     <div className="card" style={{ padding: 14 }}>
-      <div style={{ display: "flex", justifyContent: "space-between", gap: 10, flexWrap: "wrap" }}>
+      <div style={{ display: "flex", justifyContent: "space-between", gap: 10, flexWrap: "wrap", alignItems: "start" }}>
         <div>
           <div className="h2" style={{ fontWeight: 1000 }}>{stage?.name || "Etape"}</div>
           <div className="small" style={{ marginTop: 4 }}>
-            {dist} km · Profil: <b style={{ color: "var(--text)" }}>{profile}</b>
+            {dist} km · Land: <b style={{ color: "var(--text)" }}>{country}</b>
           </div>
         </div>
-        <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
-          <Pill tone="info">Keypoints</Pill>
-          <Pill tone="accent">{keypoints.length}</Pill>
+
+        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+          <Pill tone="info">{mode}</Pill>
+          <Pill tone="accent">{moments.length} momenter</Pill>
         </div>
       </div>
 
       <div className="hr" />
 
-      {/* profile bar */}
-      <div style={{ position: "relative", height: 18, borderRadius: 999, border: "1px solid var(--border)", background: "rgba(0,0,0,0.35)" }}>
-        <div
-          style={{
-            position: "absolute",
-            inset: 0,
-            borderRadius: 999,
-            background:
-              profile === "MOUNTAIN"
-                ? "linear-gradient(90deg, rgba(77,214,255,0.12), rgba(77,214,255,0.28))"
-                : profile === "HILLS"
-                ? "linear-gradient(90deg, rgba(124,255,107,0.10), rgba(124,255,107,0.22))"
-                : "linear-gradient(90deg, rgba(255,255,255,0.06), rgba(255,255,255,0.12))"
-          }}
-        />
-        {keypoints.map((k, idx) => {
-          const left = dist > 0 ? Math.max(0, Math.min(100, (k.km / dist) * 100)) : 0;
+      <StageProfileChart stage={stage} selectedKm={selectedKm} onSelectKm={setSelectedKm} />
+
+      <div className="hr" />
+
+      <div style={{ display: "flex", justifyContent: "space-between", gap: 10, flexWrap: "wrap", alignItems: "center" }}>
+        <div className="small">
+          Klik på profilen eller markører for at vælge et km-punkt. (Senere: her sætter vi taktik).
+        </div>
+        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+          <Pill tone={selectedMoment?.kind === "KOM" ? "info" : selectedMoment?.kind === "COBBLES" ? "accent" : "default"}>
+            {selectedMoment ? `Valgt: ${selectedMoment.label} (km ${selectedMoment.km})` : "Intet valgt"}
+          </Pill>
+        </div>
+      </div>
+
+      {/* Tactic moments list */}
+      <div style={{ marginTop: 12, display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 10 }}>
+        {moments.map((m, idx) => {
+          const active = selectedMoment && m.km === selectedMoment.km && m.label === selectedMoment.label;
           return (
-            <div key={idx} title={`${k.label} · ${kmLabel(k.km)}`}
+            <button
+              key={idx}
+              className="pillBtn"
+              onClick={() => setSelectedKm(m.km)}
               style={{
-                position: "absolute",
-                left: `calc(${left}% - 6px)`,
-                top: -6,
-                width: 12,
-                height: 30,
-                borderRadius: 10,
-                border: "1px solid rgba(255,255,255,0.22)",
-                background: "rgba(0,0,0,0.45)",
-                boxShadow: "0 10px 20px rgba(0,0,0,0.25)"
+                justifyContent: "space-between",
+                background: active ? "linear-gradient(90deg, rgba(124,255,107,0.18), rgba(77,214,255,0.12))" : "rgba(0,0,0,0.25)",
+                borderColor: active ? "rgba(124,255,107,0.35)" : "var(--border)"
               }}
-            />
+            >
+              <span style={{ fontWeight: 900 }}>{m.label}</span>
+              <span className="badge" style={{ opacity: 0.9 }}>{m.kind}</span>
+            </button>
           );
         })}
-      </div>
-
-      {/* labels */}
-      <div style={{ display: "flex", justifyContent: "space-between", marginTop: 10 }}>
-        <span className="small">0 km</span>
-        <span className="small">{dist} km</span>
-      </div>
-
-      <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 10 }}>
-        {keypoints.map((k, idx) => (
-          <Pill key={idx} tone="default">
-            {k.label} · {kmLabel(k.km)}
-          </Pill>
-        ))}
       </div>
     </div>
   );
