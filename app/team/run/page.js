@@ -7,15 +7,35 @@ import SmallButton from "../../components/SmallButton";
 import { SectionHeader, Pill } from "../../components/ui";
 import RiderCard from "../../components/RiderCard";
 import StageProfile from "../../components/StageProfile";
+import LineupPresets from "../../components/LineupPresets";
 import { supabase } from "../../../lib/supabaseClient";
 import { getOrCreateTeam } from "../../../lib/team";
 
 function isUuid(x) {
   return typeof x === "string" && /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(x);
 }
-
 function fmtTime(ts) {
   try { return new Date(ts).toLocaleString(); } catch { return String(ts); }
+}
+function clamp(n, a, b) { return Math.max(a, Math.min(b, n)); }
+
+const SKILLS = [
+  { key: "sprint", label: "Sprint" },
+  { key: "flat", label: "Flat" },
+  { key: "hills", label: "Hills" },
+  { key: "mountain", label: "Mountain" },
+  { key: "cobbles", label: "Cobbles" },
+  { key: "timetrial", label: "Timetrial" },
+  { key: "endurance", label: "Endurance" },
+  { key: "strength", label: "Strength" },
+  { key: "wind", label: "Wind" },
+  { key: "form", label: "Form" },
+  { key: "fatigue", label: "Fatigue" }
+];
+
+function getVal(r, k) {
+  const v = Number(r?.[k] ?? 0);
+  return Number.isFinite(v) ? v : 0;
 }
 
 export default function RunPage() {
@@ -29,6 +49,11 @@ export default function RunPage() {
   const [selectedEventId, setSelectedEventId] = useState("");
   const [selectedRiderIds, setSelectedRiderIds] = useState([]);
   const [captainId, setCaptainId] = useState("");
+
+  // UI controls
+  const [genderFilter, setGenderFilter] = useState("ALL"); // ALL/M/F
+  const [sortKey, setSortKey] = useState("form");
+  const [sortDir, setSortDir] = useState("DESC"); // DESC/ASC
 
   async function load() {
     setStatus("Loader…");
@@ -71,6 +96,40 @@ export default function RunPage() {
 
   const locked = selectedEvent ? (new Date(selectedEvent.deadline) <= new Date()) : false;
 
+  // stage snapshot for UI (MVP)
+  const stageUi = useMemo(() => {
+    if (!selectedEvent) return null;
+    const dist = 150;
+    return {
+      name: selectedEvent.name,
+      distance_km: dist,
+      profile_type: "FLAT",
+      keypoints: [
+        { km: dist - 5, label: "Positionering" },
+        { km: dist - 3, label: "Tog" },
+        { km: dist - 1, label: "Sprint" }
+      ]
+    };
+  }, [selectedEvent]);
+
+  const filteredSortedRiders = useMemo(() => {
+    const list = riders
+      .filter(r => {
+        if (genderFilter === "ALL") return true;
+        return r.gender === genderFilter;
+      })
+      .slice();
+
+    list.sort((a, b) => {
+      const av = getVal(a, sortKey);
+      const bv = getVal(b, sortKey);
+      if (sortDir === "ASC") return av - bv;
+      return bv - av;
+    });
+
+    return list;
+  }, [riders, genderFilter, sortKey, sortDir]);
+
   function toggleRider(id) {
     setSelectedRiderIds(prev => {
       if (prev.includes(id)) return prev.filter(x => x !== id);
@@ -82,6 +141,38 @@ export default function RunPage() {
   useEffect(() => {
     if (captainId && !selectedRiderIds.includes(captainId)) setCaptainId("");
   }, [selectedRiderIds, captainId]);
+
+  function clearSelection() {
+    setSelectedRiderIds([]);
+    setCaptainId("");
+  }
+
+  function pickTop8BySkill(skillKey) {
+    const pool = filteredSortedRiders.slice().sort((a, b) => getVal(b, skillKey) - getVal(a, skillKey));
+    const pick = pool.slice(0, 8).map(r => r.id);
+    if (pick.length === 8) {
+      setSelectedRiderIds(pick);
+      setCaptainId(pick[0] || "");
+      setSortKey(skillKey);
+      setSortDir("DESC");
+    }
+  }
+
+  // "Top 4 + Top 4" (fx 4 mountain + 4 endurance)
+  function pickSplit(skillA, skillB) {
+    const pool = filteredSortedRiders.slice();
+    const a = pool.slice().sort((x, y) => getVal(y, skillA) - getVal(x, skillA)).slice(0, 10);
+    const b = pool.slice().sort((x, y) => getVal(y, skillB) - getVal(x, skillB)).slice(0, 10);
+
+    const pick = [];
+    for (const r of a) if (pick.length < 4 && !pick.includes(r.id)) pick.push(r.id);
+    for (const r of b) if (pick.length < 8 && !pick.includes(r.id)) pick.push(r.id);
+
+    if (pick.length === 8) {
+      setSelectedRiderIds(pick);
+      setCaptainId(pick[0] || "");
+    }
+  }
 
   async function join() {
     if (!team?.id) return;
@@ -113,21 +204,7 @@ export default function RunPage() {
     }
   }
 
-  // Stage snapshot for UI (MVP)
-  const stageUi = useMemo(() => {
-    if (!selectedEvent) return null;
-    const dist = 150;
-    return {
-      name: selectedEvent.name,
-      distance_km: dist,
-      profile_type: "FLAT",
-      keypoints: [
-        { km: dist - 5, label: "Positionering" },
-        { km: dist - 3, label: "Tog" },
-        { km: dist - 1, label: "Sprint" }
-      ]
-    };
-  }, [selectedEvent]);
+  const selectedCount = selectedRiderIds.length;
 
   return (
     <TeamShell title="Kør løb">
@@ -135,23 +212,23 @@ export default function RunPage() {
 
       {!team ? <Loading text="Loader…" /> : (
         <div style={{ display: "grid", gap: 14 }}>
+
+          {/* Event */}
           <div className="card" style={{ padding: 14 }}>
             <SectionHeader
               title="Vælg event"
               subtitle="Vælg et løb, sæt udtagelse og kaptajn. Ordrer låses ved deadline."
               right={<SmallButton onClick={load} disabled={busy}>Reload</SmallButton>}
             />
-
             <div className="hr" />
 
             <select
               value={selectedEventId}
               onChange={(e) => {
                 setSelectedEventId(e.target.value);
-                setSelectedRiderIds([]);
-                setCaptainId("");
+                clearSelection();
               }}
-              style={{ maxWidth: 700 }}
+              style={{ maxWidth: 760 }}
             >
               <option value="">Vælg event…</option>
               {events.map(ev => (
@@ -179,25 +256,81 @@ export default function RunPage() {
 
           {stageUi ? <StageProfile stage={stageUi} /> : null}
 
+          {/* Presets */}
+          <LineupPresets
+            teamId={team.id}
+            riders={riders}
+            selectedIds={selectedRiderIds}
+            setSelectedIds={setSelectedRiderIds}
+            captainId={captainId}
+            setCaptainId={setCaptainId}
+          />
+
+          {/* Selection Controls */}
           <div className="card" style={{ padding: 14 }}>
             <SectionHeader
               title="Udtagelse"
-              subtitle="Vælg præcis 8 ryttere. (MVP) Taktik presets/orders kommer næste."
-              right={<Pill tone="accent">Valgt: {selectedRiderIds.length}/8</Pill>}
+              subtitle="Sortér, filtrér og brug quick-picks for hurtigt overblik."
+              right={<Pill tone="accent">Valgt: {selectedCount}/8</Pill>}
             />
 
             <div className="hr" />
 
+            <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center" }}>
+              <div style={{ minWidth: 200 }}>
+                <div className="small" style={{ marginBottom: 6 }}>Køn</div>
+                <select value={genderFilter} onChange={(e) => setGenderFilter(e.target.value)} disabled={locked}>
+                  <option value="ALL">Alle</option>
+                  <option value="M">Mænd</option>
+                  <option value="F">Kvinder</option>
+                </select>
+              </div>
+
+              <div style={{ minWidth: 240 }}>
+                <div className="small" style={{ marginBottom: 6 }}>Sortér efter</div>
+                <select value={sortKey} onChange={(e) => setSortKey(e.target.value)}>
+                  {SKILLS.map(s => <option key={s.key} value={s.key}>{s.label}</option>)}
+                </select>
+              </div>
+
+              <div style={{ minWidth: 180 }}>
+                <div className="small" style={{ marginBottom: 6 }}>Orden</div>
+                <select value={sortDir} onChange={(e) => setSortDir(e.target.value)}>
+                  <option value="DESC">Høj → lav</option>
+                  <option value="ASC">Lav → høj</option>
+                </select>
+              </div>
+
+              <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "end" }}>
+                <SmallButton onClick={() => pickTop8BySkill(sortKey)} disabled={locked}>
+                  Top 8 ({SKILLS.find(x => x.key === sortKey)?.label || sortKey})
+                </SmallButton>
+                <SmallButton onClick={() => pickSplit("mountain", "endurance")} disabled={locked}>
+                  Mountain team (4+4)
+                </SmallButton>
+                <SmallButton onClick={() => pickSplit("wind", "strength")} disabled={locked}>
+                  Wind team (4+4)
+                </SmallButton>
+                <SmallButton className="danger" onClick={clearSelection} disabled={locked}>
+                  Ryd
+                </SmallButton>
+              </div>
+            </div>
+
+            <div className="hr" />
+
+            {/* Rider grid */}
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 10 }}>
-              {riders.map(r => {
+              {filteredSortedRiders.map(r => {
                 const selected = selectedRiderIds.includes(r.id);
-                const disabled = !selected && selectedRiderIds.length >= 8;
+                const disabled = (!selected && selectedRiderIds.length >= 8) || locked;
+
                 return (
                   <RiderCard
                     key={r.id}
                     r={r}
                     selected={selected}
-                    disabled={disabled || locked}
+                    disabled={disabled}
                     onClick={() => toggleRider(r.id)}
                   />
                 );
@@ -206,9 +339,10 @@ export default function RunPage() {
 
             <div className="hr" />
 
+            {/* Captain */}
             <SectionHeader
               title="Kaptajn"
-              subtitle="Kaptajnen er dit primære mål i løbet (beskyttelse/positionering)."
+              subtitle="Vælg den rytter du vil beskytte/spille for (MVP)."
             />
 
             <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center", marginTop: 10 }}>
@@ -219,11 +353,14 @@ export default function RunPage() {
                 style={{ maxWidth: 520 }}
               >
                 <option value="">Vælg kaptajn…</option>
-                {riders.filter(r => selectedRiderIds.includes(r.id)).map(r => (
-                  <option key={r.id} value={r.id}>
-                    {r.name} ({r.gender}) – End {r.endurance} · Str {r.strength} · Spr {r.sprint}
-                  </option>
-                ))}
+                {riders
+                  .filter(r => selectedRiderIds.includes(r.id))
+                  .sort((a, b) => (getVal(b, "leadership") + getVal(b, "endurance")) - (getVal(a, "leadership") + getVal(a, "endurance")))
+                  .map(r => (
+                    <option key={r.id} value={r.id}>
+                      {r.name} ({r.gender}) – Lead {r.leadership ?? 0} · End {r.endurance ?? 0}
+                    </option>
+                  ))}
               </select>
 
               <SmallButton className="primary" disabled={busy || !selectedEventId || locked} onClick={join}>
