@@ -1,95 +1,208 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import TeamShell from "../../../components/TeamShell";
 import Loading from "../../../components/Loading";
-import { SectionHeader, Pill } from "../../../components/ui";
+import SmallButton from "../../../components/SmallButton";
+import { Pill, SectionHeader } from "../../../components/ui";
+import { supabase } from "../../../../lib/supabaseClient";
+import { getOrCreateTeam } from "../../../../lib/team";
 
-function fmtGap(g) {
-  if (!g || g === "+0s" || g === "0s") return "0s";
-  return g;
+function fmtGapToWinner(timeSec, winnerSec) {
+  const diff = Number(timeSec) - Number(winnerSec);
+  if (diff <= 0.4) return "0s";
+  if (diff < 60) return `+${Math.round(diff)}s`;
+  const m = Math.floor(diff / 60);
+  const s = Math.round(diff - m * 60);
+  return `+${m}:${String(s).padStart(2, "0")}`;
 }
 
 export default function ResultsPage({ params }) {
-  const eventId = params?.event_stage_id;
+  const eventId = params.event_stage_id;
+
   const [status, setStatus] = useState("Loader…");
-  const [run, setRun] = useState(null);
+  const [team, setTeam] = useState(null);
+
+  const [divInfo, setDivInfo] = useState(null);
+  const [divisionIndex, setDivisionIndex] = useState(1);
+
+  const [data, setData] = useState(null);
+
+  async function loadBase() {
+    setStatus("Loader…");
+    const { data: s } = await supabase.auth.getSession();
+    if (!s?.session) {
+      setStatus("Du er ikke logget ind.");
+      setTeam(null);
+      return;
+    }
+    const res = await getOrCreateTeam();
+    setTeam(res.team);
+    setStatus("Klar ✅");
+  }
+
+  async function loadDivisions(teamId) {
+    const j = await fetch(`/api/event/divisions?event_id=${eventId}&team_id=${teamId}`).then(r => r.json());
+    if (j?.ok) {
+      setDivInfo(j);
+      if (j.my_division) setDivisionIndex(j.my_division);
+    }
+  }
+
+  async function loadResults(divIndex) {
+    setData(null);
+    const j = await fetch(`/api/event/results?event_id=${eventId}&division_index=${divIndex}`).then(r => r.json());
+    if (!j?.ok) throw new Error(j?.error || "Could not load results");
+    setData(j);
+  }
 
   useEffect(() => {
     (async () => {
-      setStatus("Loader…");
       try {
-        const j = await fetch(`/api/event-run?event_id=${eventId}`).then((r) => r.json());
-        if (!j?.ok) throw new Error(j?.error || "Could not load event run");
-        setRun(j.run);
-        setStatus("Klar ✅");
+        await loadBase();
       } catch (e) {
         setStatus("Fejl: " + (e?.message ?? String(e)));
       }
     })();
-  }, [eventId]);
+    // eslint-disable-next-line
+  }, []);
 
-  const top = run?.results?.slice?.(0, 3) ?? [];
+  useEffect(() => {
+    if (!team?.id) return;
+    (async () => {
+      try {
+        await loadDivisions(team.id);
+      } catch (e) {
+        // ignore
+      }
+    })();
+  }, [team?.id]);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        await loadResults(divisionIndex);
+      } catch (e) {
+        setStatus("Fejl: " + (e?.message ?? String(e)));
+      }
+    })();
+  }, [divisionIndex]);
+
+  const winnerTime = useMemo(() => {
+    const t0 = data?.teams?.[0]?.time_sec;
+    return t0 != null ? Number(t0) : null;
+  }, [data]);
 
   return (
     <TeamShell title="Resultat">
       <p className="small">Status: {status}</p>
 
-      {!run ? (
-        <Loading text="Loader…" />
-      ) : (
+      {!team ? <Loading text="Loader…" /> : (
         <div style={{ display: "grid", gap: 14 }}>
           <div className="card" style={{ padding: 14 }}>
             <SectionHeader
-              title={run?.stage_snapshot?.name || "Event"}
-              subtitle={`Engine ${run.engine_version} · Seed ${run.seed}`}
-              right={<a className="pillBtn" href={`/team/view/${eventId}`} style={{ textDecoration: "none" }}>Se løb</a>}
+              title={data?.event?.name || "Event"}
+              subtitle="Resultater og points pr. division (max 20 hold)."
+              right={<SmallButton onClick={() => loadResults(divisionIndex)}>Reload</SmallButton>}
             />
 
             <div className="hr" />
 
-            <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
-              {top.map((r, idx) => (
-                <div key={idx} className="card" style={{ padding: 12, minWidth: 240, background: "rgba(0,0,0,0.25)" }}>
-                  <div className="badge" style={{ marginBottom: 8 }}>
-                    <span style={{ color: "var(--accent)", fontWeight: 1000 }}>#{r.position}</span>
-                    <span>{r.team_name}</span>
-                  </div>
-                  <div style={{ fontWeight: 1000, fontSize: 16 }}>{r.rider_name || r.name}</div>
-                  <div className="small" style={{ marginTop: 6 }}>Gap: <b style={{ color: "var(--text)" }}>{fmtGap(r.gap_text)}</b></div>
-                </div>
-              ))}
+            <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center" }}>
+              <div>
+                <div className="small" style={{ marginBottom: 6 }}>Division</div>
+                <select
+                  value={divisionIndex}
+                  onChange={(e) => setDivisionIndex(Number(e.target.value))}
+                  style={{ minWidth: 220 }}
+                >
+                  {(divInfo?.divisions || [{ division_index: 1, team_count: 0 }]).map(d => (
+                    <option key={d.division_index} value={d.division_index}>
+                      Division {d.division_index}/{divInfo?.total_divisions || data?.total_divisions || 1} ({d.team_count} hold)
+                      {divInfo?.my_division === d.division_index ? " · DIN" : ""}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <Pill tone="info">
+                Total divisions: {divInfo?.total_divisions || data?.total_divisions || 1}
+              </Pill>
+              {divInfo?.my_division ? <Pill tone="accent">Din division: {divInfo.my_division}</Pill> : null}
             </div>
           </div>
 
-          <div className="card" style={{ padding: 14 }}>
-            <SectionHeader title="Top 50" subtitle="Gaps vises relativt til vinderen." />
+          {!data ? <Loading text="Loader resultater…" /> : (
+            <>
+              {/* Team standings */}
+              <div className="card" style={{ padding: 14 }}>
+                <SectionHeader
+                  title="Hold (division)"
+                  subtitle="Placering beregnes ud fra kaptajnens (eller bedste rytters) tid. Points = matrix × dynamic multiplier."
+                />
+                <div className="hr" />
 
-            <div className="hr" />
+                <div style={{ overflowX: "auto" }}>
+                  <table className="table">
+                    <thead>
+                      <tr>
+                        <th>#</th>
+                        <th>Hold</th>
+                        <th>Gap</th>
+                        <th>Points</th>
+                        <th>Multiplier</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {data.teams.map((t) => (
+                        <tr key={t.team_id} style={{ opacity: t.team_id === team.id ? 1 : 0.95 }}>
+                          <td><b>{t.position}</b></td>
+                          <td>{t.teams?.name || "Team"}</td>
+                          <td>{winnerTime == null ? "-" : fmtGapToWinner(t.time_sec, winnerTime)}</td>
+                          <td><b>{t.points}</b></td>
+                          <td>{Number(t.multiplier).toFixed(3)}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
 
-            <table className="table">
-              <thead>
-                <tr>
-                  <th>#</th>
-                  <th>Rytter</th>
-                  <th>Hold</th>
-                  <th>Gap</th>
-                </tr>
-              </thead>
-              <tbody>
-                {(run.results || []).slice(0, 50).map((r) => (
-                  <tr key={`${r.rider_id}-${r.position}`}>
-                    <td>{r.position}</td>
-                    <td style={{ fontWeight: 900 }}>{r.rider_name || r.name}</td>
-                    <td>{r.team_name}</td>
-                    <td>{fmtGap(r.gap_text)}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+              {/* Rider standings */}
+              <div className="card" style={{ padding: 14 }}>
+                <SectionHeader
+                  title="Top 50 ryttere (division)"
+                  subtitle="Rytterpoints gives til top 20 ryttere i divisionen (samme matrix × multiplier)."
+                />
+                <div className="hr" />
 
-            {!run.results?.length ? <div className="small">Ingen resultater endnu. (Event skal køres i admin.)</div> : null}
-          </div>
+                <div style={{ overflowX: "auto" }}>
+                  <table className="table">
+                    <thead>
+                      <tr>
+                        <th>#</th>
+                        <th>Rytter</th>
+                        <th>Hold</th>
+                        <th>Gap</th>
+                        <th>Points</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {data.riders.map((r) => (
+                        <tr key={r.rider_id}>
+                          <td><b>{r.position}</b></td>
+                          <td>{r.riders?.name || "Rider"}</td>
+                          <td>{r.teams?.name || "Team"}</td>
+                          <td>{winnerTime == null ? "-" : fmtGapToWinner(r.time_sec, winnerTime)}</td>
+                          <td><b>{r.points}</b></td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </>
+          )}
         </div>
       )}
     </TeamShell>
