@@ -1,103 +1,88 @@
-// app/components/StageProfile.js
 "use client";
 
-import StageProfileChart from "./StageProfileChart";
+import { Pill } from "./ui";
 
-function uniqSorted(nums) {
-  const set = new Set(nums.filter((n) => Number.isFinite(n)));
-  return [...set].sort((a, b) => a - b);
+function kmLabel(x) {
+  return `${Math.round(x)} km`;
 }
 
-function normalizeKeyType(t) {
-  const x = String(t || "").toLowerCase();
-  if (x.includes("sprint")) return "Sprint";
-  if (x.includes("kom") || x.includes("climb") || x.includes("mount")) return "Climb";
-  if (x.includes("cobbl") || x.includes("pave") || x.includes("sector")) return "Cobbles";
-  if (x.includes("gravel")) return "Gravel";
-  return "Point";
-}
-
+/**
+ * stage snapshot example:
+ * { distance_km: 150, profile_type: 'FLAT', keypoints: [{ km: 145, label: '5 km' }, ...] }
+ */
 export default function StageProfile({ stage }) {
-  const profile = stage?.profile || {};
-  const distanceKm = Number(stage?.distance_km ?? 0) || 0;
-  const keyPoints = Array.isArray(profile?.key_points) ? profile.key_points : [];
-
-  // Tactic points:
-  // - every 5 km
-  // - all key points
-  // - finale: 5 / 3 / 1 / 0 km to go
-  const every5 = [];
-  for (let km = 0; km <= Math.round(distanceKm); km += 5) every5.push(km);
-
-  const keyKms = keyPoints.map((p) => Number(p.km));
-  const finale = [
-    Math.max(0, Math.round(distanceKm - 5)),
-    Math.max(0, Math.round(distanceKm - 3)),
-    Math.max(0, Math.round(distanceKm - 1)),
-    Math.round(distanceKm)
+  const dist = Number(stage?.distance_km ?? 0);
+  const profile = stage?.profile_type || "FLAT";
+  const keypoints = stage?.keypoints || [
+    { km: Math.max(0, dist - 5), label: "5 km" },
+    { km: Math.max(0, dist - 3), label: "3 km" },
+    { km: Math.max(0, dist - 1), label: "1 km" }
   ];
 
-  const tacticPoints = uniqSorted([...every5, ...keyKms, ...finale]).filter((km) => km >= 0 && km <= Math.round(distanceKm));
-
   return (
-    <div style={{ display: "grid", gap: 12 }}>
-      <StageProfileChart stage={stage} />
-
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
-        <div style={{ border: "1px solid #eee", borderRadius: 14, padding: 12 }}>
-          <div style={{ fontWeight: 800 }}>Key points</div>
-          {keyPoints.length === 0 ? (
-            <div style={{ marginTop: 8, opacity: 0.7 }}>Ingen key points endnu.</div>
-          ) : (
-            <div style={{ marginTop: 10, display: "grid", gap: 8 }}>
-              {keyPoints
-                .slice()
-                .sort((a, b) => Number(a.km) - Number(b.km))
-                .map((p, idx) => (
-                  <div key={idx} style={{ border: "1px solid #f0f0f0", borderRadius: 12, padding: 10 }}>
-                    <div style={{ fontWeight: 800 }}>
-                      Km {p.km} · {normalizeKeyType(p.type || p.kind || p.name)}
-                    </div>
-                    <div style={{ opacity: 0.85 }}>{p.name || "Point"}</div>
-                  </div>
-                ))}
-            </div>
-          )}
-        </div>
-
-        <div style={{ border: "1px solid #eee", borderRadius: 14, padding: 12 }}>
-          <div style={{ fontWeight: 800 }}>Taktik-punkter (MVP)</div>
-          <div style={{ marginTop: 6, opacity: 0.75, fontSize: 13 }}>
-            Her viser vi steder, hvor man kan sætte/ændre taktik. (Vi binder det til rigtige “orders” senere.)
-          </div>
-
-          <div style={{ marginTop: 10, display: "flex", flexWrap: "wrap", gap: 8 }}>
-            {tacticPoints.map((km) => {
-              const isFinal = km >= Math.round(distanceKm - 5);
-              return (
-                <span
-                  key={km}
-                  title={isFinal ? "Finale-zone" : "Taktikpunkt"}
-                  style={{
-                    padding: "6px 10px",
-                    borderRadius: 999,
-                    border: "1px solid #ddd",
-                    background: isFinal ? "#111" : "white",
-                    color: isFinal ? "white" : "black",
-                    fontSize: 13,
-                    fontWeight: 700
-                  }}
-                >
-                  {km} km
-                </span>
-              );
-            })}
-          </div>
-
-          <div style={{ marginTop: 10, fontSize: 12, opacity: 0.75 }}>
-            *Finale-zone (sidste 5 km) bliver senere til: positionering → tog → spurt.
+    <div className="card" style={{ padding: 14 }}>
+      <div style={{ display: "flex", justifyContent: "space-between", gap: 10, flexWrap: "wrap" }}>
+        <div>
+          <div className="h2" style={{ fontWeight: 1000 }}>{stage?.name || "Etape"}</div>
+          <div className="small" style={{ marginTop: 4 }}>
+            {dist} km · Profil: <b style={{ color: "var(--text)" }}>{profile}</b>
           </div>
         </div>
+        <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
+          <Pill tone="info">Keypoints</Pill>
+          <Pill tone="accent">{keypoints.length}</Pill>
+        </div>
+      </div>
+
+      <div className="hr" />
+
+      {/* profile bar */}
+      <div style={{ position: "relative", height: 18, borderRadius: 999, border: "1px solid var(--border)", background: "rgba(0,0,0,0.35)" }}>
+        <div
+          style={{
+            position: "absolute",
+            inset: 0,
+            borderRadius: 999,
+            background:
+              profile === "MOUNTAIN"
+                ? "linear-gradient(90deg, rgba(77,214,255,0.12), rgba(77,214,255,0.28))"
+                : profile === "HILLS"
+                ? "linear-gradient(90deg, rgba(124,255,107,0.10), rgba(124,255,107,0.22))"
+                : "linear-gradient(90deg, rgba(255,255,255,0.06), rgba(255,255,255,0.12))"
+          }}
+        />
+        {keypoints.map((k, idx) => {
+          const left = dist > 0 ? Math.max(0, Math.min(100, (k.km / dist) * 100)) : 0;
+          return (
+            <div key={idx} title={`${k.label} · ${kmLabel(k.km)}`}
+              style={{
+                position: "absolute",
+                left: `calc(${left}% - 6px)`,
+                top: -6,
+                width: 12,
+                height: 30,
+                borderRadius: 10,
+                border: "1px solid rgba(255,255,255,0.22)",
+                background: "rgba(0,0,0,0.45)",
+                boxShadow: "0 10px 20px rgba(0,0,0,0.25)"
+              }}
+            />
+          );
+        })}
+      </div>
+
+      {/* labels */}
+      <div style={{ display: "flex", justifyContent: "space-between", marginTop: 10 }}>
+        <span className="small">0 km</span>
+        <span className="small">{dist} km</span>
+      </div>
+
+      <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 10 }}>
+        {keypoints.map((k, idx) => (
+          <Pill key={idx} tone="default">
+            {k.label} · {kmLabel(k.km)}
+          </Pill>
+        ))}
       </div>
     </div>
   );
