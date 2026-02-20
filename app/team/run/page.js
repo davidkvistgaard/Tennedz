@@ -4,11 +4,18 @@ import { useEffect, useMemo, useState } from "react";
 import TeamShell from "../../components/TeamShell";
 import Loading from "../../components/Loading";
 import SmallButton from "../../components/SmallButton";
+import { SectionHeader, Pill } from "../../components/ui";
+import RiderCard from "../../components/RiderCard";
+import StageProfile from "../../components/StageProfile";
 import { supabase } from "../../../lib/supabaseClient";
 import { getOrCreateTeam } from "../../../lib/team";
 
 function isUuid(x) {
   return typeof x === "string" && /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(x);
+}
+
+function fmtTime(ts) {
+  try { return new Date(ts).toLocaleString(); } catch { return String(ts); }
 }
 
 export default function RunPage() {
@@ -39,7 +46,7 @@ export default function RunPage() {
 
       const { data: tr, error: trErr } = await supabase
         .from("team_riders")
-        .select("rider:riders(id,name,gender,nationality,sprint,flat,hills,mountain,cobbles,timetrial,endurance,strength,form,fatigue,injury_until)")
+        .select("rider:riders(*)")
         .eq("team_id", res.team.id);
 
       if (trErr) throw trErr;
@@ -55,10 +62,7 @@ export default function RunPage() {
     }
   }
 
-  useEffect(() => {
-    load();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  useEffect(() => { load(); }, []);
 
   const selectedEvent = useMemo(
     () => events.find(e => e.id === selectedEventId) || null,
@@ -70,13 +74,12 @@ export default function RunPage() {
   function toggleRider(id) {
     setSelectedRiderIds(prev => {
       if (prev.includes(id)) return prev.filter(x => x !== id);
-      if (prev.length >= 8) return prev; // cap at 8
+      if (prev.length >= 8) return prev;
       return [...prev, id];
     });
   }
 
   useEffect(() => {
-    // if captain not in selection, clear captain
     if (captainId && !selectedRiderIds.includes(captainId)) setCaptainId("");
   }, [selectedRiderIds, captainId]);
 
@@ -88,7 +91,7 @@ export default function RunPage() {
     if (locked) return setStatus("Deadline er passeret (event locked).");
 
     setBusy(true);
-    setStatus("Tilmeldes…");
+    setStatus("Gemmer tilmelding…");
     try {
       const res = await fetch("/api/event/join", {
         method: "POST",
@@ -102,7 +105,7 @@ export default function RunPage() {
       }).then(r => r.json());
 
       if (!res?.ok) throw new Error(res?.error || "Join failed");
-      setStatus("Tilmeldt ✅ (holdudtagelse gemt)");
+      setStatus("Tilmeldt ✅ (udtagelse gemt)");
     } catch (e) {
       setStatus("Fejl: " + (e?.message ?? String(e)));
     } finally {
@@ -110,111 +113,129 @@ export default function RunPage() {
     }
   }
 
+  // Stage snapshot for UI (MVP)
+  const stageUi = useMemo(() => {
+    if (!selectedEvent) return null;
+    const dist = 150;
+    return {
+      name: selectedEvent.name,
+      distance_km: dist,
+      profile_type: "FLAT",
+      keypoints: [
+        { km: dist - 5, label: "Positionering" },
+        { km: dist - 3, label: "Tog" },
+        { km: dist - 1, label: "Sprint" }
+      ]
+    };
+  }, [selectedEvent]);
+
   return (
     <TeamShell title="Kør løb">
-      <p>Status: {status}</p>
+      <p className="small">Status: {status}</p>
 
       {!team ? <Loading text="Loader…" /> : (
-        <div style={{ border: "1px solid #eee", borderRadius: 14, padding: 14 }}>
-          <div style={{ fontWeight: 900, marginBottom: 10 }}>1) Vælg løb</div>
+        <div style={{ display: "grid", gap: 14 }}>
+          <div className="card" style={{ padding: 14 }}>
+            <SectionHeader
+              title="Vælg event"
+              subtitle="Vælg et løb, sæt udtagelse og kaptajn. Ordrer låses ved deadline."
+              right={<SmallButton onClick={load} disabled={busy}>Reload</SmallButton>}
+            />
 
-          <select
-            value={selectedEventId}
-            onChange={(e) => {
-              setSelectedEventId(e.target.value);
-              setSelectedRiderIds([]);
-              setCaptainId("");
-            }}
-            style={{ padding: 10, borderRadius: 10, border: "1px solid #ddd", width: "100%", maxWidth: 520 }}
-          >
-            <option value="">Vælg event…</option>
-            {events.map(ev => (
-              <option key={ev.id} value={ev.id}>
-                {ev.name} · {ev.type} · {ev.gender} · deadline: {new Date(ev.deadline).toLocaleString()}
-              </option>
-            ))}
-          </select>
+            <div className="hr" />
 
-          {selectedEvent ? (
-            <div style={{ marginTop: 10, opacity: 0.85 }}>
-              <b>Status:</b> {selectedEvent.status} · <b>Entry fee:</b> {selectedEvent.entry_fee} coins ·{" "}
-              <b>Prize pool:</b> {selectedEvent.prize_pool} ·{" "}
-              <b>Deadline:</b> {new Date(selectedEvent.deadline).toLocaleString()}{" "}
-              {locked ? <span style={{ color: "#a11", fontWeight: 900 }}> (LOCKED)</span> : null}
+            <select
+              value={selectedEventId}
+              onChange={(e) => {
+                setSelectedEventId(e.target.value);
+                setSelectedRiderIds([]);
+                setCaptainId("");
+              }}
+              style={{ maxWidth: 700 }}
+            >
+              <option value="">Vælg event…</option>
+              {events.map(ev => (
+                <option key={ev.id} value={ev.id}>
+                  {ev.name} · {ev.gender} · deadline: {fmtTime(ev.deadline)} · {ev.status}
+                </option>
+              ))}
+            </select>
+
+            {selectedEvent ? (
+              <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 10 }}>
+                <Pill tone={locked ? "danger" : "accent"}>{locked ? "LOCKED" : "OPEN"}</Pill>
+                <Pill tone="info">Deadline: {fmtTime(selectedEvent.deadline)}</Pill>
+                <Pill>Fee: {selectedEvent.entry_fee ?? 0} coins</Pill>
+                <Pill>Kind: {selectedEvent.kind}</Pill>
+                <a href={`/team/results/${selectedEvent.id}`} style={{ textDecoration: "none" }}>
+                  <span className="pillBtn">Se resultat</span>
+                </a>
+                <a href={`/team/view/${selectedEvent.id}`} style={{ textDecoration: "none" }}>
+                  <span className="pillBtn">Se løb</span>
+                </a>
+              </div>
+            ) : null}
+          </div>
+
+          {stageUi ? <StageProfile stage={stageUi} /> : null}
+
+          <div className="card" style={{ padding: 14 }}>
+            <SectionHeader
+              title="Udtagelse"
+              subtitle="Vælg præcis 8 ryttere. (MVP) Taktik presets/orders kommer næste."
+              right={<Pill tone="accent">Valgt: {selectedRiderIds.length}/8</Pill>}
+            />
+
+            <div className="hr" />
+
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 10 }}>
+              {riders.map(r => {
+                const selected = selectedRiderIds.includes(r.id);
+                const disabled = !selected && selectedRiderIds.length >= 8;
+                return (
+                  <RiderCard
+                    key={r.id}
+                    r={r}
+                    selected={selected}
+                    disabled={disabled || locked}
+                    onClick={() => toggleRider(r.id)}
+                  />
+                );
+              })}
             </div>
-          ) : null}
 
-          <hr style={{ border: 0, borderTop: "1px solid #eee", margin: "14px 0" }} />
+            <div className="hr" />
 
-          <div style={{ fontWeight: 900, marginBottom: 10 }}>2) Vælg 8 ryttere</div>
-          <div style={{ fontSize: 12, opacity: 0.75, marginBottom: 10 }}>
-            (MVP) Kun simple udtagelse. Taktik-orders kommer senere.
-          </div>
+            <SectionHeader
+              title="Kaptajn"
+              subtitle="Kaptajnen er dit primære mål i løbet (beskyttelse/positionering)."
+            />
 
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: 10 }}>
-            {riders.map(r => {
-              const selected = selectedRiderIds.includes(r.id);
-              const injured = r.injury_until && new Date(r.injury_until) > new Date();
+            <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center", marginTop: 10 }}>
+              <select
+                value={captainId}
+                onChange={(e) => setCaptainId(e.target.value)}
+                disabled={selectedRiderIds.length !== 8 || locked}
+                style={{ maxWidth: 520 }}
+              >
+                <option value="">Vælg kaptajn…</option>
+                {riders.filter(r => selectedRiderIds.includes(r.id)).map(r => (
+                  <option key={r.id} value={r.id}>
+                    {r.name} ({r.gender}) – End {r.endurance} · Str {r.strength} · Spr {r.sprint}
+                  </option>
+                ))}
+              </select>
 
-              return (
-                <button
-                  key={r.id}
-                  onClick={() => toggleRider(r.id)}
-                  disabled={!selected && selectedRiderIds.length >= 8}
-                  style={{
-                    textAlign: "left",
-                    padding: 10,
-                    borderRadius: 12,
-                    border: "1px solid #eee",
-                    background: selected ? "#111" : "white",
-                    color: selected ? "white" : "#111",
-                    opacity: injured ? 0.6 : 1,
-                    cursor: "pointer"
-                  }}
-                >
-                  <div style={{ fontWeight: 900 }}>
-                    {r.name}{" "}
-                    <span style={{ fontWeight: 600, opacity: 0.75 }}>
-                      {r.gender === "F" ? "♀" : "♂"} {r.nationality ? `(${r.nationality})` : ""}
-                      {injured ? " · SKADET" : ""}
-                    </span>
-                  </div>
-                  <div style={{ fontSize: 12, opacity: 0.85, marginTop: 6 }}>
-                    Sprint {r.sprint} · Flat {r.flat} · Hills {r.hills} · Mountain {r.mountain}
-                    <br />
-                    Endurance {r.endurance} · Strength {r.strength} · Form {r.form} · Fatigue {r.fatigue}
-                  </div>
-                </button>
-              );
-            })}
-          </div>
+              <SmallButton className="primary" disabled={busy || !selectedEventId || locked} onClick={join}>
+                {busy ? "Arbejder…" : locked ? "Deadline passeret" : "Gem tilmelding"}
+              </SmallButton>
+            </div>
 
-          <div style={{ marginTop: 10, fontWeight: 800 }}>
-            Valgt: {selectedRiderIds.length}/8
-          </div>
-
-          <hr style={{ border: 0, borderTop: "1px solid #eee", margin: "14px 0" }} />
-
-          <div style={{ fontWeight: 900, marginBottom: 10 }}>3) Vælg kaptajn</div>
-
-          <select
-            value={captainId}
-            onChange={(e) => setCaptainId(e.target.value)}
-            style={{ padding: 10, borderRadius: 10, border: "1px solid #ddd", width: "100%", maxWidth: 420 }}
-            disabled={selectedRiderIds.length !== 8}
-          >
-            <option value="">Vælg kaptajn…</option>
-            {riders.filter(r => selectedRiderIds.includes(r.id)).map(r => (
-              <option key={r.id} value={r.id}>
-                {r.name} ({r.gender}) – Sprint {r.sprint}, Mountain {r.mountain}, Endurance {r.endurance}
-              </option>
-            ))}
-          </select>
-
-          <div style={{ marginTop: 12 }}>
-            <SmallButton disabled={busy || !selectedEventId || locked} onClick={join}>
-              {busy ? "Arbejder…" : locked ? "Deadline passeret" : "Tilmeld + gem udtagelse"}
-            </SmallButton>
+            {locked ? (
+              <div className="small" style={{ marginTop: 10, color: "rgba(255,77,77,0.85)" }}>
+                Event er låst. Du kan stadig se resultat/viewer når eventet er kørt.
+              </div>
+            ) : null}
           </div>
         </div>
       )}
