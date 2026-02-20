@@ -12,17 +12,18 @@ function NavLink({ href, label }) {
     <Link
       href={href}
       style={{
-        textDecoration: "none",
-        padding: "8px 10px",
-        borderRadius: 10,
-        border: "1px solid #e8e8e8",
-        background: active ? "#111" : "white",
-        color: active ? "white" : "#111",
-        fontWeight: 700,
-        fontSize: 13
+        textDecoration: "none"
       }}
     >
-      {label}
+      <span
+        className="pillBtn"
+        style={{
+          background: active ? "linear-gradient(90deg, rgba(124,255,107,0.22), rgba(77,214,255,0.18))" : undefined,
+          borderColor: active ? "rgba(124,255,107,0.35)" : undefined
+        }}
+      >
+        {label}
+      </span>
     </Link>
   );
 }
@@ -39,53 +40,41 @@ export default function TeamShell({ title, children }) {
         if (j?.ok) setGameDate(j.game_date);
       })
       .catch(() => {});
-    return () => {
-      alive = false;
-    };
+    return () => (alive = false);
   }, []);
 
   return (
-    <div style={{ padding: 16 }}>
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          gap: 12,
-          alignItems: "baseline",
-          flexWrap: "wrap",
-          marginBottom: 10
-        }}
-      >
-        <div>
-          <div style={{ fontSize: 12, opacity: 0.7, fontWeight: 700 }}>Tennedz</div>
-          <h2 style={{ margin: 0 }}>{title || "Mit hold"}</h2>
-        </div>
+    <div style={{ display: "grid", gap: 14 }}>
+      <div className="card" style={{ padding: 16 }}>
+        <div style={{ display: "flex", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
+          <div>
+            <div className="badge" style={{ marginBottom: 10 }}>
+              <span style={{ color: "var(--accent)", fontWeight: 1000 }}>TEN</span>
+              <span style={{ color: "var(--muted)" }}>nedz</span>
+              <span style={{ marginLeft: 8, opacity: 0.85 }}>Cycling Manager</span>
+            </div>
 
-        <div style={{ opacity: 0.8, fontSize: 13 }}>
-          {gameDate ? (
-            <>
-              Game date: <b>{gameDate}</b>
-            </>
-          ) : null}
-        </div>
-      </div>
+            <div className="h1">{title || "Mit hold"}</div>
+            <div className="small" style={{ marginTop: 6 }}>
+              {gameDate ? (
+                <>
+                  Game date: <b style={{ color: "var(--text)" }}>{gameDate}</b> · Year = 90 days
+                </>
+              ) : (
+                "…"
+              )}
+            </div>
+          </div>
 
-      {/* Navigation */}
-      <div
-        style={{
-          display: "flex",
-          gap: 8,
-          flexWrap: "wrap",
-          marginBottom: 14
-        }}
-      >
-        <NavLink href="/team" label="Hold" />
-        <NavLink href="/team/run" label="Kør løb" />
-        <NavLink href="/team/leaderboards" label="Ranglister" />
-        <NavLink href="/team/presets" label="Taktik-presets" />
-        <NavLink href="/team/history" label="Tidligere løb" />
-        {/* Admin ligger separat, men link er rart når du tester */}
-        <NavLink href="/admin" label="Admin" />
+          <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center" }}>
+            <NavLink href="/team" label="Hold" />
+            <NavLink href="/team/run" label="Kør løb" />
+            <NavLink href="/team/leaderboards" label="Ranglister" />
+            <NavLink href="/team/presets" label="Presets" />
+            <NavLink href="/team/history" label="Historik" />
+            <NavLink href="/admin" label="Admin" />
+          </div>
+        </div>
       </div>
 
       <div>{children}</div>
