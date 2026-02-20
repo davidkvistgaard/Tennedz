@@ -28,6 +28,42 @@ function getVal(r, k) {
   return Number.isFinite(v) ? v : 0;
 }
 
+// Same rating logic as run-event (top16, form/fatigue adjusted)
+function riderPower(r) {
+  const sprint = getVal(r, "sprint");
+  const flat = getVal(r, "flat");
+  const hills = getVal(r, "hills");
+  const mountain = getVal(r, "mountain");
+  const cobbles = getVal(r, "cobbles");
+  const timetrial = getVal(r, "timetrial");
+  const endurance = getVal(r, "endurance");
+  const strength = getVal(r, "strength");
+  const wind = getVal(r, "wind");
+
+  const form = Number.isFinite(Number(r?.form)) ? Number(r.form) : 50;
+  const fatigue = Number.isFinite(Number(r?.fatigue)) ? Number(r.fatigue) : 0;
+
+  const base =
+    (sprint + flat + hills + mountain + cobbles + timetrial + endurance + strength + wind) / 9;
+
+  const formMult = 0.85 + (form / 100) * 0.30;          // 0.85..1.15
+  const fatigueMult = 1.0 - (fatigue / 100) * 0.20;     // 1..0.80
+
+  return base * formMult * fatigueMult;
+}
+
+function computeTeamRatingTop16(riders) {
+  const powers = (riders || [])
+    .map(r => riderPower(r))
+    .filter(v => Number.isFinite(v))
+    .sort((a, b) => b - a);
+
+  const top16 = powers.slice(0, 16);
+  const rating = top16.reduce((s, v) => s + v, 0);
+
+  return rating;
+}
+
 export default function TeamPage() {
   const [status, setStatus] = useState("Loader…");
   const [busy, setBusy] = useState(false);
@@ -83,6 +119,9 @@ export default function TeamPage() {
     return list;
   }, [riders, genderFilter, sortKey, sortDir]);
 
+  const teamRating = useMemo(() => computeTeamRatingTop16(riders), [riders]);
+  const teamRatingRounded = useMemo(() => Math.round(teamRating), [teamRating]);
+
   // Starter pack button should be disabled if you already have >=16 riders
   const starterDisabled = riders.length >= 16;
 
@@ -116,6 +155,8 @@ export default function TeamPage() {
               right={
                 <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
                   <SmallButton onClick={load} disabled={busy}>Reload</SmallButton>
+
+                  {/* Keep the starter pack button, but do NOT show starter status in KPI */}
                   <SmallButton
                     className={starterDisabled ? "" : "primary"}
                     onClick={grantStarterPack}
@@ -139,10 +180,20 @@ export default function TeamPage() {
                 <div className="small">Ryttere</div>
                 <b>{riders.length}</b>
               </div>
+
+              {/* REPLACED: Starter pack -> Rating */}
               <div className="k">
-                <div className="small">Starter pack</div>
-                <b>{riders.length >= 16 ? "OK" : "Mangler"}</b>
+                <div className="small">Rating (Top 16)</div>
+                <b>{teamRatingRounded.toLocaleString("da-DK")}</b>
+                <div className="small" style={{ opacity: 0.75, marginTop: 2 }}>
+                  Form/Fatigue justeret
+                </div>
               </div>
+            </div>
+
+            <div style={{ marginTop: 10, display: "flex", gap: 8, flexWrap: "wrap" }}>
+              <Pill tone="info">Bruges til divisions-seeding i løb</Pill>
+              <Pill tone="accent">Top 16 ryttere</Pill>
             </div>
           </div>
 
