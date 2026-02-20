@@ -10,19 +10,18 @@ export default function AdminPage() {
 
   const [gameDate, setGameDate] = useState(null);
   const [counts, setCounts] = useState(null);
+  const [events, setEvents] = useState([]);
 
   async function loadStatus() {
     try {
       const gd = await fetch("/api/game-date").then(r => r.json());
       if (gd?.ok) setGameDate(gd.game_date);
 
-      // lightweight counts via existing endpoints (admin secret not needed)
-      // We'll fetch team page data indirectly later; for now keep it simple:
-      const res = await fetch("/api/admin/stats", { method: "GET" });
-      if (res.ok) {
-        const j = await res.json();
-        setCounts(j);
-      }
+      const st = await fetch("/api/admin/stats").then(r => r.json());
+      if (st?.ok) setCounts(st);
+
+      const ev = await fetch("/api/events?limit=25").then(r => r.json());
+      if (ev?.ok) setEvents(ev.events ?? []);
     } catch {
       // ignore
     }
@@ -87,8 +86,31 @@ export default function AdminPage() {
     }
   }
 
+  async function runEvent(event_id) {
+    setStatus("");
+    if (!secret) return setStatus("Skriv ADMIN-koden først.");
+
+    setBusy(true);
+    try {
+      const res = await fetch("/api/admin/run-event", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ secret, event_id })
+      }).then(r => r.json());
+
+      if (!res?.ok) throw new Error(res?.error || "Run failed");
+
+      setStatus(`✅ Event kørt: ${event_id}`);
+      await loadStatus();
+    } catch (e) {
+      setStatus("❌ " + (e?.message ?? String(e)));
+    } finally {
+      setBusy(false);
+    }
+  }
+
   return (
-    <main style={{ padding: 18, fontFamily: "system-ui, sans-serif", maxWidth: 900 }}>
+    <main style={{ padding: 18, fontFamily: "system-ui, sans-serif", maxWidth: 1000 }}>
       <h1 style={{ marginTop: 0 }}>Admin</h1>
 
       <div style={{ border: "1px solid #eee", borderRadius: 14, padding: 14 }}>
@@ -119,7 +141,7 @@ export default function AdminPage() {
 
         <div style={{ marginTop: 16, fontWeight: 900 }}>Weekly tick</div>
         <div style={{ marginTop: 6, opacity: 0.8 }}>
-          Avancerer game date og opdaterer riders (form/fatigue/skader/alder-decline).
+          Avancerer game date og opdaterer riders (form/fatigue/skader/alder-decline). (Game-år = 90 dage)
         </div>
 
         <div style={{ marginTop: 10, display: "flex", gap: 10, flexWrap: "wrap" }}>
@@ -137,6 +159,53 @@ export default function AdminPage() {
           >
             {busy ? "Arbejder…" : "+4 uger"}
           </button>
+        </div>
+
+        <hr style={{ border: 0, borderTop: "1px solid #eee", margin: "14px 0" }} />
+
+        <div style={{ fontWeight: 900, marginBottom: 8 }}>Events</div>
+        <div style={{ opacity: 0.8, marginBottom: 10 }}>Kør event efter deadline (server-side).</div>
+
+        <div style={{ display: "grid", gap: 10 }}>
+          {(events || []).map(ev => {
+            const locked = new Date(ev.deadline) <= new Date();
+            return (
+              <div key={ev.id} style={{ border: "1px solid #eee", borderRadius: 12, padding: 10 }}>
+                <div style={{ fontWeight: 900 }}>
+                  {ev.name}{" "}
+                  <span style={{ fontWeight: 600, opacity: 0.7 }}>
+                    · {ev.type} · {ev.gender} · {ev.status}
+                  </span>
+                </div>
+                <div style={{ fontSize: 13, opacity: 0.85, marginTop: 4 }}>
+                  Deadline: {new Date(ev.deadline).toLocaleString()} {locked ? "(OK at run)" : "(not yet)"} · Fee: {ev.entry_fee}
+                </div>
+
+                <div style={{ marginTop: 8, display: "flex", gap: 10, flexWrap: "wrap" }}>
+                  <button
+                    onClick={() => runEvent(ev.id)}
+                    disabled={busy || !locked || ev.status === "FINISHED"}
+                    style={{
+                      padding: "8px 10px",
+                      borderRadius: 10,
+                      border: "1px solid #ddd",
+                      background: locked ? "#111" : "#777",
+                      color: "white"
+                    }}
+                  >
+                    {ev.status === "FINISHED" ? "Finished" : busy ? "Arbejder…" : "Run event"}
+                  </button>
+
+                  <a href={`/team/results/${ev.id}`} style={{ padding: "8px 10px", borderRadius: 10, border: "1px solid #ddd", textDecoration: "none" }}>
+                    Se resultat
+                  </a>
+                  <a href={`/team/view/${ev.id}`} style={{ padding: "8px 10px", borderRadius: 10, border: "1px solid #ddd", textDecoration: "none" }}>
+                    Se løb
+                  </a>
+                </div>
+              </div>
+            );
+          })}
         </div>
 
         <hr style={{ border: 0, borderTop: "1px solid #eee", margin: "14px 0" }} />
