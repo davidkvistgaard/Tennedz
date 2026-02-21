@@ -1,4 +1,3 @@
-// app/components/RiderCard.js
 "use client";
 
 import RiderAvatar from "./RiderAvatar";
@@ -52,7 +51,6 @@ export default function RiderCard({ r, selected, onClick, disabled }) {
           </div>
         </div>
 
-        {/* Small role chips (optional if you already have) */}
         <div style={{ marginTop: 8, display: "flex", gap: 6, flexWrap: "wrap" }}>
           <span className="pill">{(r.sprint ?? 0) >= 40 ? "Sprinter" : "Rytter"}</span>
           {(r.cobbles ?? 0) >= 40 ? <span className="pill">Brosten</span> : null}
