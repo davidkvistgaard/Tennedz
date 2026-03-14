@@ -128,14 +128,14 @@ export default function TeamPage() {
         <div className="card" style={{ padding: 16 }}>
           <SectionHeader
             title="Du er ikke logget ind"
-            subtitle="Gå tilbage til forsiden og log ind for at se dit hold."
+            subtitle="Gå til login for at se dit hold."
           />
 
           <div className="hr" />
 
           <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
-            <a href="/">
-              <SmallButton>Gå til forsiden</SmallButton>
+            <a href="/login">
+              <SmallButton>Gå til login</SmallButton>
             </a>
             <SmallButton onClick={load}>Prøv igen</SmallButton>
           </div>
