@@ -32,6 +32,8 @@ function getVal(r, k) {
 export default function TeamPage() {
   const [status, setStatus] = useState("Loader…");
   const [busy, setBusy] = useState(false);
+  const [authChecked, setAuthChecked] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
 
   const [team, setTeam] = useState(null);
   const [riders, setRiders] = useState([]);
@@ -42,14 +44,22 @@ export default function TeamPage() {
 
   async function load() {
     setStatus("Loader…");
+    setAuthChecked(false);
+
     try {
-      const { data: s } = await supabase.auth.getSession();
+      const { data: s, error: sessionErr } = await supabase.auth.getSession();
+      if (sessionErr) throw sessionErr;
+
       if (!s?.session) {
-        setStatus("Du er ikke logget ind.");
+        setIsLoggedIn(false);
         setTeam(null);
         setRiders([]);
+        setStatus("Du er ikke logget ind.");
+        setAuthChecked(true);
         return;
       }
+
+      setIsLoggedIn(true);
 
       const res = await getOrCreateTeam();
       setTeam(res.team);
@@ -60,15 +70,22 @@ export default function TeamPage() {
         .eq("team_id", res.team.id);
 
       if (trErr) throw trErr;
-      setRiders((tr ?? []).map(x => x.rider).filter(Boolean));
 
+      setRiders((tr ?? []).map(x => x.rider).filter(Boolean));
       setStatus("Klar ✅");
     } catch (e) {
+      setIsLoggedIn(false);
+      setTeam(null);
+      setRiders([]);
       setStatus("Fejl: " + (e?.message ?? String(e)));
+    } finally {
+      setAuthChecked(true);
     }
   }
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => {
+    load();
+  }, []);
 
   const filteredSorted = useMemo(() => {
     const list = riders
@@ -105,7 +122,25 @@ export default function TeamPage() {
     <TeamShell title="Mit hold">
       <p className="small">Status: {status}</p>
 
-      {!team ? (
+      {!authChecked ? (
+        <Loading text="Tjekker login…" />
+      ) : !isLoggedIn ? (
+        <div className="card" style={{ padding: 16 }}>
+          <SectionHeader
+            title="Du er ikke logget ind"
+            subtitle="Gå tilbage til forsiden og log ind for at se dit hold."
+          />
+
+          <div className="hr" />
+
+          <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+            <a href="/">
+              <SmallButton>Gå til forsiden</SmallButton>
+            </a>
+            <SmallButton onClick={load}>Prøv igen</SmallButton>
+          </div>
+        </div>
+      ) : !team ? (
         <Loading text="Loader hold…" />
       ) : (
         <div style={{ display: "grid", gap: 14 }}>
@@ -140,7 +175,6 @@ export default function TeamPage() {
                 <b>{riders.length}</b>
               </div>
 
-              {/* Rating = points earned */}
               <div className="k">
                 <div className="small">Rating (points)</div>
                 <b>{Number(team.rating ?? 0).toLocaleString("da-DK")}</b>
