@@ -1,10 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { supabase } from "../../lib/supabaseClient";
 
 export default function LoginPage() {
-  const [email, setEmail] = useState("");
+  const [loginName, setLoginName] = useState("");
   const [password, setPassword] = useState("");
   const [status, setStatus] = useState("");
   const [busy, setBusy] = useState(false);
@@ -13,11 +12,14 @@ export default function LoginPage() {
     let mounted = true;
 
     async function checkSession() {
-      const { data } = await supabase.auth.getSession();
-      if (!mounted) return;
-
-      if (data?.session) {
-        window.location.href = "/team";
+      try {
+        const j = await fetch("/api/auth/me", { cache: "no-store" }).then(r => r.json());
+        if (!mounted) return;
+        if (j?.logged_in) {
+          window.location.href = "/team";
+        }
+      } catch {
+        // ignore
       }
     }
 
@@ -34,12 +36,20 @@ export default function LoginPage() {
     setStatus("Logger ind...");
 
     try {
-      const { error } = await supabase.auth.signInWithPassword({
-        email: email.trim(),
-        password,
+      const res = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          login_name: loginName.trim(),
+          password
+        })
       });
 
-      if (error) throw error;
+      const j = await res.json();
+
+      if (!j?.ok) throw new Error(j?.error || "Login fejlede");
 
       setStatus("Logget ind ✅");
       window.location.href = "/team";
@@ -93,13 +103,13 @@ export default function LoginPage() {
         </h1>
 
         <p style={{ margin: "0 0 20px 0", color: "rgba(15,23,42,0.72)" }}>
-          Log ind for at se dit hold, dine ryttere og dine løb.
+          Log ind med login-navn og kodeord for at se dit hold.
         </p>
 
         <form onSubmit={handleLogin} style={{ display: "grid", gap: 14 }}>
           <div>
             <label
-              htmlFor="email"
+              htmlFor="login_name"
               style={{
                 display: "block",
                 marginBottom: 6,
@@ -108,15 +118,15 @@ export default function LoginPage() {
                 color: "#0f172a",
               }}
             >
-              Email
+              Login-navn
             </label>
             <input
-              id="email"
-              type="email"
-              autoComplete="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="din@email.com"
+              id="login_name"
+              type="text"
+              autoComplete="username"
+              value={loginName}
+              onChange={(e) => setLoginName(e.target.value)}
+              placeholder="fx Tennedz"
               required
               style={{
                 width: "100%",
