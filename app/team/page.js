@@ -6,8 +6,6 @@ import Loading from "../components/Loading";
 import SmallButton from "../components/SmallButton";
 import RiderCard from "../components/RiderCard";
 import { SectionHeader, Pill } from "../components/ui";
-import { supabase } from "../../lib/supabaseClient";
-import { getOrCreateTeam } from "../../lib/team";
 
 const SKILLS = [
   { key: "rating", label: "Rating (points)" },
@@ -37,6 +35,7 @@ export default function TeamPage() {
 
   const [team, setTeam] = useState(null);
   const [riders, setRiders] = useState([]);
+  const [loginName, setLoginName] = useState("");
 
   const [genderFilter, setGenderFilter] = useState("ALL");
   const [sortKey, setSortKey] = useState("rating");
@@ -47,36 +46,28 @@ export default function TeamPage() {
     setAuthChecked(false);
 
     try {
-      const { data: s, error: sessionErr } = await supabase.auth.getSession();
-      if (sessionErr) throw sessionErr;
+      const j = await fetch("/api/auth/me", { cache: "no-store" }).then(r => r.json());
 
-      if (!s?.session) {
+      if (!j?.logged_in) {
         setIsLoggedIn(false);
         setTeam(null);
         setRiders([]);
+        setLoginName("");
         setStatus("Du er ikke logget ind.");
         setAuthChecked(true);
         return;
       }
 
       setIsLoggedIn(true);
-
-      const res = await getOrCreateTeam();
-      setTeam(res.team);
-
-      const { data: tr, error: trErr } = await supabase
-        .from("team_riders")
-        .select("rider:riders(*)")
-        .eq("team_id", res.team.id);
-
-      if (trErr) throw trErr;
-
-      setRiders((tr ?? []).map(x => x.rider).filter(Boolean));
+      setLoginName(j?.login?.login_name || "");
+      setTeam(j.team || null);
+      setRiders(j.riders || []);
       setStatus("Klar ✅");
     } catch (e) {
       setIsLoggedIn(false);
       setTeam(null);
       setRiders([]);
+      setLoginName("");
       setStatus("Fejl: " + (e?.message ?? String(e)));
     } finally {
       setAuthChecked(true);
@@ -101,18 +92,13 @@ export default function TeamPage() {
     return list;
   }, [riders, genderFilter, sortKey, sortDir]);
 
-  const starterDisabled = riders.length >= 16;
-
-  async function grantStarterPack() {
+  async function handleLogout() {
     setBusy(true);
-    setStatus("Giver starter pack…");
     try {
-      const j = await fetch("/api/grant-starter-pack", { method: "POST" }).then(r => r.json());
-      if (!j?.ok) throw new Error(j?.error || "Grant failed");
-      await load();
-      setStatus("Starter pack givet ✅");
+      await fetch("/api/auth/logout", { method: "POST" });
+      window.location.href = "/login";
     } catch (e) {
-      setStatus("Fejl: " + (e?.message ?? String(e)));
+      setStatus("Fejl ved log ud: " + (e?.message ?? String(e)));
     } finally {
       setBusy(false);
     }
@@ -147,18 +133,11 @@ export default function TeamPage() {
           <div className="card" style={{ padding: 14 }}>
             <SectionHeader
               title={team.name || "My Team"}
-              subtitle="Overblik over ryttere, budget og hurtig sortering."
+              subtitle={`Logget ind som ${loginName || "ukendt bruger"}`}
               right={
                 <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
                   <SmallButton onClick={load} disabled={busy}>Reload</SmallButton>
-                  <SmallButton
-                    className={starterDisabled ? "" : "primary"}
-                    onClick={grantStarterPack}
-                    disabled={busy || starterDisabled}
-                    title={starterDisabled ? "Du har allerede 16+ ryttere" : "Giv starter pack (16 ryttere)"}
-                  >
-                    {starterDisabled ? "Starter pack allerede modtaget" : "Giv starter pack"}
-                  </SmallButton>
+                  <SmallButton onClick={handleLogout} disabled={busy}>Log ud</SmallButton>
                 </div>
               }
             />
