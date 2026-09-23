@@ -35,3 +35,11 @@ Landekoder er vendoret fra [i18n-iso-countries v7.14.0](https://github.com/micha
 ## Produktion
 
 Før release: 1 hold, 112 ryttere, 112 medlemskaber. Fingeraftryk af de eksisterende kolonner skal bevares ved den additive migration. Main må ikke bruges som rollback: tidligere sikre produktion er Vercel `dpl_Dh9sarpGxVVGBuVvjiBtJEPf2jMM`.
+
+
+Udgivet 23. september 2026: commit `7c00d2277613e065bcade02087a175b4ae12eaff`, Preview `dpl_9gCPmWBRc9AKvtwm9pJir3w1SJww` (READY, 27 s), produktionsgenbygning `dpl_7m2uhh2oz3KkAU8p1DhtXAsqG2Fg` (READY, 26 s). Domæne https://tennedz.eu, immutable `tennedz-5tbr0jje5-david-kvistgaards-projects.vercel.app`. Ingen miljøvariabler ændret.
+
+Alle 15 produktions-HTTP-kontroller bestod. Ejerens eksisterende session viser `/team/portraits` med de historiske ryttere og fortsat Admin-adgang. Ingen konsolfejl observeret; kort error/fatal-logkontrol efter release gav ingen poster. Ingen nye produktionskonti eller hold oprettet til test.
+
+Før/efter-fingeraftryk af gamle kolonner er ens: teams `099f7c45cd8c6a265759eb69741db370`, riders `c4532614cd7810981d5ecaff2db3d430`, team_riders `70995348a3791431cb3a18c4c2c3d8c6`. Rytterfunktionens rettigheder fortsat anon=false, authenticated=false, service_role=true. Main er uændret, kladde-PR #1 opdateret.
+
