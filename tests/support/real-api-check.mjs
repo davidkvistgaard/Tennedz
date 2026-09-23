@@ -37,8 +37,8 @@ try {
     const body = await res.json();
     assert.equal(body.user.id, fixtures.alice.id);
     assert.equal(body.team.id, fixtures.alice.teamIds[0]);
-    assert.equal(body.riders.length, 1);
-    assert.equal(body.riders[0].name, "ALICE Test Rytter");
+    assert.ok(body.riders.length >= 1);
+    assert.ok(body.riders.every(r => r.name.startsWith("ALICE ")));
     assert.match(res.headers()["cache-control"], /no-store/);
   });
   await check("secure HttpOnly cookies and navigation APIs", async () => {
@@ -48,7 +48,7 @@ try {
     for (const path of ["/api/events", "/api/game-date", "/api/auth/me"]) assert.equal((await alice.get(path)).status(), 200, path);
     const history = await alice.post("/api/my-history", { data: {} });
     assert.equal(history.status(), 200);
-    assert.deepEqual((await history.json()).rows, []);
+    assert.ok((await history.json()).rows.every(r => r.team_id === fixtures.alice.teamIds[0]));
   });
   await check("forged team ownership and origin rejected", async () => {
     assert.equal((await alice.post("/api/my-history", { data: { team_id: fixtures.bob.teamIds[0] } })).status(), 403);
@@ -68,7 +68,7 @@ try {
     assert.equal(res.status(), 200);
     const body = await res.json();
     assert.equal(body.team.id, fixtures.bob.teamIds[0]);
-    assert.equal(body.riders[0].name, "BOB Test Rytter");
+    assert.ok(body.riders.length >= 1 && body.riders.every(r => r.name.startsWith("BOB ")));
   });
   await check("authenticated direct database access is blocked", async () => {
     const state = await alice.storageState();

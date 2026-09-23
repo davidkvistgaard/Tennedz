@@ -2,6 +2,8 @@
 
 Status: login-milepælen er bestået lokalt, på beskyttet Vercel Preview og nu i produktion med ejerens eksisterende konto. Login, 112 egne ryttere, genindlæsning, navigation, ekstra fane og logout er verificeret. Se PRODUCTION-RELEASE.md for seneste status. Historiske testresultater findes i VERCEL-PREVIEW-VERIFICATION.md.
 
+Endagsløbenes kerneforløb er nu genoprettet på recovery-grenen og afprøvet lokalt med isoleret Supabase. Se [ONE-DAY-RECOVERY.md](ONE-DAY-RECOVERY.md) for funktioner, testbeviser, begrænsninger og næste produktionsgodkendelse.
+
 Efterfølgende godkendt databaseindgreb: direkte klientadgang er lukket, og RLS er slået til på alle public-tabeller. Se CONTAINMENT-APPLIED.md. Spildata og konti er bevaret; produktionskontoadgang er verificeret.
 
 ## Fast udgangspunkt
@@ -25,7 +27,7 @@ Faner får besked om login/logout gennem en lokal ændringsmarkør uden legitima
 
 Browserens gamle Supabase-klient og custom-auth-hjælper er pensioneret. `login_accounts` og `auth_sessions` er IKKE slettet eller ændret. Det gamle oprettelses-endpoint svarer 410.
 
-Alle eksisterende data-API'er kræver login; administrator-API kræver desuden et bruger-id i serverens `ADMIN_USER_IDS`. Den tidligere delte ADMIN_SECRET bruges ikke længere af aktive endpoints. Løbsafvikling, tilmelding, spilledato, nulstilling og nye database-presets er lukket. Deres eksisterende kode er bevaret under `lib/legacy`, uden nogen aktiv import. Spilmotoren og visningskomponenterne er bevaret.
+Alle eksisterende data-API'er kræver login; administrator-API kræver desuden et bruger-id i serverens `ADMIN_USER_IDS`. Den tidligere delte ADMIN_SECRET bruges ikke længere af aktive endpoints. Produktionens spilskrivninger er stadig lukket. På recovery-grenen er kontrolleret tilmelding og atomiske endagsløb implementeret bag skriveflaget. Spilledato, nulstilling og gamle løbssystemer forbliver lukkede. Tidligere kode er bevaret under `lib/legacy`; spilmotoren og visningskomponenterne er genbrugt.
 
 ## Lokal installation og test
 
@@ -43,7 +45,7 @@ pnpm run test:e2e
 
 Browsertest bruger Edge på Windows og Chromium på andre systemer. På andre systemer skal Playwright Chromium være installeret. Testserveren bruger kun lokale, syntetiske konti og en HTTP-testudgave af Supabase-protokollen. Der behøves ingen .env-fil og ingen rigtig database. Testportene er 3100 og 54329. Kør ikke en anden server på disse porte.
 
-Den lokale protokoltest dokumenterer frontend → Next API → Supabase SDK → testtjeneste. Efterfølgende er rigtig Supabase Auth, refresh, ejerskab, klientrettigheder og browserforløb verificeret i et isoleret projekt. Se REAL-AUTH-VERIFICATION.md; produktionskonti og Vercel-release er stadig ikke afprøvet.
+Den lokale protokoltest dokumenterer frontend → Next API → Supabase SDK → testtjeneste. Rigtig Supabase Auth, refresh, ejerskab, klientrettigheder og browserforløb er verificeret i et isoleret projekt. Se REAL-AUTH-VERIFICATION.md. Produktionslogin og Vercel-release er efterfølgende afprøvet som dokumenteret i PRODUCTION-RELEASE.md.
 
 ## Næste godkendelsespunkt
 
@@ -51,14 +53,14 @@ Den lokale protokoltest dokumenterer frontend → Next API → Supabase SDK → 
 2. Read-only skema- og ejerskabskontrol samt godkendt adgangssikring er gennemført. Metadata-snapshot erstatter ikke en fuld databackup.
 3. Isoleret rigtig Supabase-test er bestået: 12 HTTP-kontroller plus browserforløb med to faner. Se REAL-AUTH-VERIFICATION.md.
 4. Testprojektet beholdes på gratisplanen efter ejerens ønske. Ingen produktionskonti skal slettes, sammenlægges eller nulstilles automatisk.
-5. Fremlæg konkret produktionskonfiguration, kontoadgang og deploymentplan til godkendelse. Funktionel login-milepæl er verificeret i testmiljøet; offentlig drift er ikke godkendt. Løbscyklussen genopbygges først efter rapportering til ejeren.
+5. Den særskilt godkendte login-release er nu i produktion. Næste godkendelse vedrører endagsløbenes migrationer, administratoradgang og åbning af spilskrivninger, jf. ONE-DAY-RECOVERY.md.
 
 ## Begrænsninger og senere arbejde
 
 - In-process loginbegrænsning supplerer kun Supabase Auths egne grænser. Den er ikke en global rate limiter på tværs af Vercel-instanser; providerindstillinger og eventuel CAPTCHA skal verificeres inden offentlig release.
 - Service-role-adgang er kun på serveren, men omgår RLS. Hver personlige forespørgsel begrænses eksplicit til ejeren. Produktionsrettigheder er sikret og verificeret; direkte klientadgang er desuden afprøvet i testprojektet.
 - Rettighedsmigrationen er baseret på faktisk databasestruktur og allerede anvendt efter godkendelse. Se CONTAINMENT-APPLIED.md; anvend den ikke igen som en ny migration.
-- Løbsdata bruger flere generationer af tabeller, og visning/historik er endnu ikke harmoniseret. Ranglisten er stadig en eksisterende pladsholder. Ingen af delene er erklæret repareret.
-- Næste løbsfase skal gøre afvikling og pointtildeling atomisk og forhindre dobbeltkørsel, før de bevarede handlers åbnes igen.
+- Endagsløbenes nye resultater, historik, referat og ranglister er harmoniseret på recovery-grenen. Ældre etaperesultater er bevaret, men ikke konverteret. Produktionsrelease af løbsændringerne afventer godkendelse.
+- Atomisk pointtildeling og beskyttelse mod dobbeltkørsel er afprøvet i testprojektet. Automatisk kalender, etapeløb og fuld sæsonbalance er senere arbejde.
 
 Tilbagerulning før produktion: behold main uændret og undlad at deploye recovery-grenen. En tidligere produktionsversion har kendte sikkerhedsmangler og bør ikke genudrulles som en påstået sikker løsning.

@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { api } from "../../../lib/api";
 import Loading from "../../components/Loading";
 import SmallButton from "../../components/SmallButton";
+import TeamShell from "../../components/TeamShell";
 
 export default function HistoryPage() {
   const [status, setStatus] = useState("Loader…");
@@ -42,7 +43,7 @@ const res = await api("/api/auth/me");
   }, []);
 
   return (
-    <main>
+    <TeamShell title="Historik">
       <h2 style={{ marginTop: 0 }}>Tidligere løb</h2>
       <p style={{ opacity: 0.85 }}>{status}</p>
 
@@ -55,11 +56,11 @@ const res = await api("/api/auth/me");
           ) : (
             <div style={{ display: "grid", gap: 10 }}>
               {rows.map((x) => (
-                <div key={x.event_stage_id} style={{ border: "1px solid #eee", borderRadius: 14, padding: 12 }}>
+                <div key={x.event_id} style={{ border: "1px solid #eee", borderRadius: 14, padding: 12 }}>
                   <div style={{ display: "flex", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
                     <div>
                       <div style={{ fontWeight: 800 }}>
-                        {x.event_name} · Etape {x.stage_no}: {x.stage_name}
+                        {x.event_name} · Division {x.division_index} · Nr. {x.position} · {x.points} point
                       </div>
                       <div style={{ opacity: 0.8, fontSize: 13 }}>
                         Kørt: {x.created_at ? new Date(x.created_at).toLocaleString("da-DK") : ""}
@@ -67,10 +68,10 @@ const res = await api("/api/auth/me");
                     </div>
 
                     <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
-                      <a href={`/team/results/${x.event_stage_id}`} style={{ textDecoration: "none" }}>
+                      <a href={`/team/results/${x.event_id}`} style={{ textDecoration: "none" }}>
                         <SmallButton>Se resultat</SmallButton>
                       </a>
-                      <a href={`/team/view/${x.event_stage_id}`} style={{ textDecoration: "none" }}>
+                      <a href={`/team/view/${x.event_id}`} style={{ textDecoration: "none" }}>
                         <SmallButton>Se løb</SmallButton>
                       </a>
                     </div>
@@ -81,6 +82,6 @@ const res = await api("/api/auth/me");
           )}
         </div>
       )}
-    </main>
+    </TeamShell>
   );
 }

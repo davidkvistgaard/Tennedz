@@ -1,2 +1,3 @@
-import { suspendRaceWrite } from "../../../../lib/auth/server";
-export const POST = suspendRaceWrite;
+export { runEvent as POST } from "../../../../lib/race/server";
+export const runtime = "nodejs";
+export const maxDuration = 60;

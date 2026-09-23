@@ -118,6 +118,7 @@ export default function TeamPage() {
               <div className="k">
                 <div className="small">Budget</div>
                 <b>{(team.budget ?? 0).toLocaleString("da-DK")}</b>
+                <div className="small">Coins: {Number(team.coins ?? 0).toLocaleString("da-DK")}</div>
               </div>
               <div className="k">
                 <div className="small">Ryttere</div>

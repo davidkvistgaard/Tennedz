@@ -34,7 +34,7 @@ async function handler(req, context, auth) {
       .eq("event_id", event_id)
       .eq("division_index", division_index)
       .order("position", { ascending: true })
-      .limit(50);
+      .limit(160);
     if (rErr) throw new Error(rErr.message);
 
     const total_divisions = teams?.[0]?.total_divisions ?? 1;
