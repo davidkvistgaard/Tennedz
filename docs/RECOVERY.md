@@ -1,18 +1,18 @@
 # Pelotonia: sikker genopretning
 
-Status: login-milepælen er bestået lokalt og på beskyttet Vercel Preview med isoleret testdatabase. Ikke godkendt til produktion. Se VERCEL-PREVIEW-VERIFICATION.md for seneste resultat og LIVE-REVIEW.md for kontrollen af den genaktiverede produktionsdatabase.
+Status: login-milepælen er bestået lokalt, på beskyttet Vercel Preview og nu i produktion med ejerens eksisterende konto. Login, 112 egne ryttere, genindlæsning, navigation, ekstra fane og logout er verificeret. Se PRODUCTION-RELEASE.md for seneste status. Historiske testresultater findes i VERCEL-PREVIEW-VERIFICATION.md.
 
-Efterfølgende godkendt databaseindgreb: direkte klientadgang er lukket, og RLS er slået til på alle public-tabeller. Se CONTAINMENT-APPLIED.md. Spildata og konti er bevaret; produktionsrelease mangler stadig.
+Efterfølgende godkendt databaseindgreb: direkte klientadgang er lukket, og RLS er slået til på alle public-tabeller. Se CONTAINMENT-APPLIED.md. Spildata og konti er bevaret; produktionskontoadgang er verificeret.
 
 ## Fast udgangspunkt
 
 - Repository: davidkvistgaard/Tennedz.
 - Produktionsgren er urørt: main, udgangspunkt `2fb499f925c2e1a1c545e7c53386a1e1e7daccc5`.
 - Arbejdsgren: `codex/recovery-supabase-auth`.
-- `vercel.json` slår automatisk deployment fra for netop denne gren. Kun branch-afgrænsede Preview-variabler og manuelle Preview-deployments er efterfølgende godkendt og oprettet.
-- Ingen produktionsdata, miljøvariabler eller Supabase-konti er ændret. Databaserettigheder og RLS er efter særskilt godkendelse ændret som beskrevet i CONTAINMENT-APPLIED.md.
+- `vercel.json` slår automatisk deployment fra for netop denne gren. Preview og senere manuel produktionsrelease er særskilt godkendt; se PRODUCTION-RELEASE.md for ændrede variabler.
+- Ingen produktionsdata eller Supabase-konti er ændret. Miljøvariabler er ændret som dokumenteret i PRODUCTION-RELEASE.md. Databaserettigheder og RLS er efter særskilt godkendelse ændret som beskrevet i CONTAINMENT-APPLIED.md.
 - Supabase-projekt `thacsxtnycmnnpjobgiv` (Tennedz) var INACTIVE, men blev derefter genaktiveret efter brugerens godkendelse og er ACTIVE_HEALTHY. Skema, rettigheder og holdkoblinger er nu kontrolleret med read-only SQL. Se LIVE-REVIEW.md.
-- Vercel-adgang er genoprettet. Recovery er deployet og testet i Preview; produktionsdeploymenten er uændret. Se VERCEL-PREVIEW-VERIFICATION.md.
+- Vercel-adgang er genoprettet. Recovery er testet i Preview og nu genbygget til produktion. Se PRODUCTION-RELEASE.md.
 - GitHub-skriveadgang er genoprettet. Recovery-grenen og kladde-PR #1 er oprettet: https://github.com/davidkvistgaard/Tennedz/pull/1.
 
 ## Hvad er ændret?

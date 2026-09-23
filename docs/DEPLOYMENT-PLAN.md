@@ -1,5 +1,7 @@
 # Udrulningsplan efter rigtig login-test
 
+Nyeste status: produktionsudrulningen blev efterfølgende godkendt og gennemført. Se PRODUCTION-RELEASE.md for den præcise konfiguration, resultat og resterende kontotest. Nedenstående er den oprindelige plan.
+
 Status 23. september 2026: den nedenfor beskrevne Preview-plan er godkendt og gennemført. Browserkontrollen bestod på kodegrundlag `8595a5d2fb0a0992c086ac8f7890b0bacc5f9765`; se VERCEL-PREVIEW-VERIFICATION.md. Produktionsplanen afventer fortsat konkret godkendelse. De følgende konfigurationsobservationer beskriver udgangspunktet før Preview-ændringerne.
 
 ## Faktisk Vercel-konfiguration
