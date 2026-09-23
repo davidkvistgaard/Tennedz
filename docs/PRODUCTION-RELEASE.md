@@ -1,5 +1,7 @@
 # Produktionsrelease: Supabase-login
 
+Denne login-release er efterfølgende afløst af den godkendte endagsløbsrelease. Se [ONE-DAY-PRODUCTION.md](ONE-DAY-PRODUCTION.md) for den aktuelle deployment og konfiguration. Resten af dokumentet er historik for login-milepælen.
+
 23. september 2026. Ejeren godkendte produktionsudrulning med »go« efter rapporten om bestået Preview-test. Recovery blev genbygget med Production-miljø, ikke blot promoveret med testdatabasens konfiguration. Ingen merge til main.
 
 ## Release og kontrol
