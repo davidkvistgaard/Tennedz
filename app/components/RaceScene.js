@@ -1,0 +1,241 @@
+"use client";
+import { formatGap } from "../../lib/race/replay.mjs";
+
+function Cyclist({ x, y, color, mine, captain }) {
+  return (
+    <g transform={`translate(${x} ${y})`}>
+      {mine && (
+        <ellipse cx="0" cy="17" rx="19" ry="5" fill="#e1b957" opacity=".6" />
+      )}
+      <g stroke="#354b40" fill="none" strokeWidth="2">
+        <circle cx="-12" cy="10" r="9" fill="#f0e7d5" />
+        <circle cx="14" cy="10" r="9" fill="#f0e7d5" />
+        <path d="M-12 10L-3-3L5 10H-12L0 2L14 10L8-9H14" />
+      </g>
+      <path
+        d="M-3-10L5-3L0 9"
+        stroke="#edc8a5"
+        strokeWidth="4"
+        fill="none"
+        strokeLinecap="round"
+      />
+      <path
+        d="M-8-10L1-18L10-14"
+        stroke={color}
+        strokeWidth="7"
+        fill="none"
+        strokeLinecap="round"
+      />
+      <path d="M9-13L14-5L10-3" stroke="#edc8a5" strokeWidth="3" fill="none" />
+      <circle cx="13" cy="-20" r="4" fill="#c68f64" />
+      <path d="M9-21q3-8 8 0Z" fill={mine ? "#deb34c" : color} />
+      {captain && (
+        <text
+          x="0"
+          y="-33"
+          textAnchor="middle"
+          fontSize="12"
+          fontWeight="700"
+          fill="#6f5113"
+        >
+          ★
+        </text>
+      )}
+    </g>
+  );
+}
+
+export default function RaceScene({
+  frame,
+  roster,
+  teamId,
+  focusId,
+  weather,
+  finished,
+}) {
+  const colors = [
+    "#27694e",
+    "#b97959",
+    "#739597",
+    "#8c7a9d",
+    "#c5a65c",
+    "#697b56",
+  ];
+  const groups = frame.groups,
+    largest = Math.max(...groups.map((g) => g.riders.length));
+  const show = groups.slice(0, 6);
+  const focus = groups.find((g) => g.riders.includes(focusId));
+  if (focus && !show.includes(focus)) show[5] = focus;
+  const maxGap = Math.max(30, ...show.map((g) => g.gap));
+  // Keep labels readable even when finish gaps differ by fractions of a second.
+  // Exact gaps remain in the labels; the scene is deliberately schematic.
+  const positions = new Map();
+  let previous = 950;
+  show.forEach((group, i) => {
+    const ideal = 850 - Math.sqrt(group.gap / maxGap) * 650;
+    const x = Math.max(
+      150 + (show.length - 1 - i) * 125,
+      Math.min(ideal, previous - 125),
+    );
+    positions.set(group, x);
+    previous = x;
+  });
+  return (
+    <div className="race-scene">
+      <svg
+        viewBox="0 0 1000 340"
+        role="img"
+        aria-label={`${groups.length} løbsgrupper ved kilometer ${frame.km}. Placeringerne er en oversigt over de gemte tidsafstande.`}
+      >
+        <defs>
+          <linearGradient id="race-sky" x2="0" y2="1">
+            <stop stopColor="#d9e4d8" />
+            <stop offset="1" stopColor="#f6efdc" />
+          </linearGradient>
+        </defs>
+        <rect width="1000" height="340" fill="url(#race-sky)" />
+        <circle cx="815" cy="56" r="29" fill="#f4d886" opacity=".8" />
+        <path
+          d="M0 175Q110 55 240 128T520 101T770 145T1000 84V340H0Z"
+          fill="#aebfa3"
+        />
+        <path
+          d={
+            frame.terrain === "mountain"
+              ? "M0 188L170 61L279 150L417 45L620 171L779 85L1000 180V340H0Z"
+              : "M0 184Q173 95 342 181T695 136T1000 167V340H0Z"
+          }
+          fill="#8da48b"
+        />
+        <path
+          d="M0 216Q180 163 369 203T703 184T1000 207V340H0Z"
+          fill="#698a66"
+        />
+        {[40, 95, 290, 475, 703, 906, 960].map((x, i) => (
+          <g key={x}>
+            <rect
+              x={x}
+              y={130 + (i % 3) * 16}
+              width="5"
+              height="78"
+              rx="2"
+              fill="#6e7050"
+            />
+            <ellipse
+              cx={x + 3}
+              cy={133 + (i % 3) * 16}
+              rx={18 + (i % 2) * 8}
+              ry="30"
+              fill={i % 2 ? "#406b50" : "#527b55"}
+            />
+          </g>
+        ))}
+        <path
+          d="M0 214Q200 196 443 218T1000 205V291Q730 305 475 287T0 294Z"
+          fill="#ede7d5"
+        />
+        <path
+          d="M0 226Q200 208 443 230T1000 217V277Q730 291 475 273T0 280Z"
+          fill="#777b6b"
+        />
+        <path
+          d="M0 251Q200 233 443 255T1000 242"
+          fill="none"
+          stroke="#e7debf"
+          strokeWidth="2"
+          strokeDasharray="16 22"
+        />
+        {show
+          .slice()
+          .reverse()
+          .map((group) => {
+            const x = positions.get(group);
+            const members = group.riders.map((id) =>
+              roster.find((r) => r.id === id),
+            );
+            const own = members.filter((r) => r.team_id === teamId),
+              others = members.filter((r) => r.team_id !== teamId);
+            const visible = [...own, ...others].slice(0, 12);
+            const selected = group.riders.includes(focusId);
+            return (
+              <g
+                key={group.riders[0]}
+                opacity={!focusId || selected ? 1 : 0.68}
+              >
+                <g transform={`translate(${x - 54} 161)`}>
+                  <rect
+                    width="108"
+                    height="37"
+                    rx="12"
+                    fill={selected ? "#204f3e" : "#fffaf0"}
+                    stroke={selected ? "#edca78" : "#d4d4bd"}
+                    strokeWidth="1.5"
+                  />
+                  <text
+                    x="54"
+                    y="15"
+                    fontSize="11"
+                    textAnchor="middle"
+                    fill={selected ? "#fffaf0" : "#294d3b"}
+                    fontWeight="700"
+                  >
+                    {group.gap < 0.5
+                      ? groups.length === 1
+                        ? "Samlet felt"
+                        : "Fronten"
+                      : formatGap(group.gap)}
+                  </text>
+                  <text
+                    x="54"
+                    y="28"
+                    fontSize="10"
+                    textAnchor="middle"
+                    fill={selected ? "#d6e2cb" : "#687769"}
+                  >
+                    {group.riders.length} ryttere
+                    {own.length ? ` · ${own.length} dine` : ""}
+                  </text>
+                </g>
+                {visible.map((r, i) => (
+                  <Cyclist
+                    key={r.id}
+                    x={x - (i % 4) * 22}
+                    y={226 + Math.floor(i / 4) * 13}
+                    color={
+                      r.team_id === teamId
+                        ? "#226449"
+                        : colors[
+                            roster.findIndex((x) => x.team_id === r.team_id) %
+                              colors.length
+                          ]
+                    }
+                    mine={r.team_id === teamId}
+                    captain={r.captain && r.team_id === teamId}
+                  />
+                ))}
+              </g>
+            );
+          })}
+        {Number(weather?.precipitation_mm) > 0 &&
+          Array.from({ length: 22 }, (_, i) => (
+            <path
+              key={i}
+              d={`M${i * 47} ${20 + ((i * 17) % 115)}l-6 14`}
+              stroke="#889f99"
+              opacity=".38"
+              strokeWidth="1.5"
+            />
+          ))}
+        <path d="M0 310Q220 281 408 316T1000 300V340H0Z" fill="#50764f" />
+        <path
+          d="M0 331Q130 302 260 331T510 330T1000 320V340H0Z"
+          fill="#365e46"
+        />
+      </svg>
+      <div className="scene-caption">
+        <span>{finished ? "Målpassage" : "Løbsbilledet"}</span>
+        <span>Gruppeoversigt · {largest} i største gruppe</span>
+      </div>
+    </div>
+  );
+}

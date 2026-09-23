@@ -1,30 +1,47 @@
 import { protectedRoute } from "../../../lib/auth/server";
-// app/api/events/route.js
 import { NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
 
+// Upcoming entries must not disappear behind an ever-growing race archive.
+// Read each bucket independently, returning only public event metadata.
+const fields =
+  "id,name,kind,gender,country_code,stage_profile_id,entry_fee,status,deadline";
 async function handler(req, context, auth) {
-  try {
-    const url = new URL(req.url);
-    const limit = Math.min(Number(url.searchParams.get("limit") ?? 20), 50);
-
-    const supabase = createClient(
-      process.env.SUPABASE_URL,
-      process.env.SUPABASE_SERVICE_ROLE_KEY
+  const url = new URL(req.url);
+  const requested = Number(url.searchParams.get("limit") ?? 50);
+  if (!Number.isInteger(requested) || requested < 1 || requested > 100)
+    return NextResponse.json(
+      { ok: false, error: "Antal løb skal være et helt tal mellem 1 og 100." },
+      { status: 400 },
     );
-
-    const { data, error } = await supabase
+  const now = new Date().toISOString();
+  const [upcoming, pending, finished] = await Promise.all([
+    auth.db
       .from("events")
-      .select("*")
-      .order("deadline", { ascending: true })
-      .limit(limit);
-
-    if (error) throw new Error(error.message);
-
-    return NextResponse.json({ ok: true, events: data ?? [] });
-  } catch (e) {
-    return NextResponse.json({ ok: false, error: e?.message ?? String(e) }, { status: 500 });
-  }
+      .select(fields)
+      .eq("status", "OPEN")
+      .gt("deadline", now)
+      .order("deadline")
+      .limit(requested),
+    auth.db
+      .from("events")
+      .select(fields)
+      .eq("status", "OPEN")
+      .lte("deadline", now)
+      .order("deadline", { ascending: false })
+      .limit(requested),
+    auth.db
+      .from("events")
+      .select(fields)
+      .neq("status", "OPEN")
+      .order("deadline", { ascending: false })
+      .limit(requested),
+  ]);
+  if (upcoming.error || pending.error || finished.error)
+    throw new Error("Event query failed");
+  return NextResponse.json({
+    ok: true,
+    events: [...upcoming.data, ...pending.data, ...finished.data],
+    server_time: now,
+  });
 }
-
 export const GET = protectedRoute(handler);
