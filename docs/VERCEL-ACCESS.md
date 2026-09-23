@@ -11,4 +11,4 @@ Den 23. september 2026 blev forbindelsen genautoriseret af brugeren. list_teams,
 
 get_project fejler fortsat i connectorens parameteroversættelse: idOrName modtages som undefined. Det er ikke den tidligere 403-fejl, og genautorisationen er verificeret gennem de øvrige kald. Der er endnu ikke verificeret miljøvariabler eller preview-konfiguration.
 
-Recovery-koden er stadig lokal. Den tidligere GitHub-skriveadgang blev afvist med 403 og er en separat forbindelse. Før release skal kodepublicering, isoleret rigtig Supabase-test og konkret deploymentplan færdiggøres.
+Efterfølgende er GitHub-skriveadgang genoprettet, kladde-PR #1 oprettet, og rigtig Supabase-login verificeret i et separat testprojekt. Dashboardets variabelnavne/scopes, buildindstillinger, domæner og deploymentbeskyttelse er nu læst via den autoriserede browser. Se DEPLOYMENT-PLAN.md for konkrete fund og næste godkendelsespunkt. Ingen Vercel-ændringer er udført.
