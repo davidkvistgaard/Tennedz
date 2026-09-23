@@ -1,5 +1,7 @@
 # Rigtig Supabase-login: testresultat
 
+Efterfølgende status: den beskyttede Vercel Preview er nu også testet og bestået. Se VERCEL-PREVIEW-VERIFICATION.md. Rapporten nedenfor beskriver den oprindelige lokale test og dens daværende afgrænsning.
+
 Kontrolleret 23. september 2026 på recovery-branchen. Appens produktionsbuild blev kørt lokalt mod det særskilte, gratis Supabase-projekt `pelotonia-recovery-auth-test` (`nxhvaoonnvmvohqaxfdx`). Produktion og Vercel blev ikke ændret under testen.
 
 ## Testgrundlag

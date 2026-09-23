@@ -1,18 +1,18 @@
 # Pelotonia: sikker genopretning
 
-Status: recovery-kode lokalt testet, ikke godkendt til produktion. Se LIVE-REVIEW.md for den efterfølgende kontrol af den genaktiverede database.
+Status: login-milepælen er bestået lokalt og på beskyttet Vercel Preview med isoleret testdatabase. Ikke godkendt til produktion. Se VERCEL-PREVIEW-VERIFICATION.md for seneste resultat og LIVE-REVIEW.md for kontrollen af den genaktiverede produktionsdatabase.
 
-Efterfølgende godkendt databaseindgreb: direkte klientadgang er lukket, og RLS er slået til på alle public-tabeller. Se CONTAINMENT-APPLIED.md. Spildata og konti er bevaret; Vercel-deployment mangler stadig.
+Efterfølgende godkendt databaseindgreb: direkte klientadgang er lukket, og RLS er slået til på alle public-tabeller. Se CONTAINMENT-APPLIED.md. Spildata og konti er bevaret; produktionsrelease mangler stadig.
 
 ## Fast udgangspunkt
 
 - Repository: davidkvistgaard/Tennedz.
 - Produktionsgren er urørt: main, udgangspunkt `2fb499f925c2e1a1c545e7c53386a1e1e7daccc5`.
 - Arbejdsgren: `codex/recovery-supabase-auth`.
-- `vercel.json` slår automatisk deployment fra for netop denne gren. Ingen live Vercel-indstillinger er ændret.
+- `vercel.json` slår automatisk deployment fra for netop denne gren. Kun branch-afgrænsede Preview-variabler og manuelle Preview-deployments er efterfølgende godkendt og oprettet.
 - Ingen produktionsdata, miljøvariabler eller Supabase-konti er ændret. Databaserettigheder og RLS er efter særskilt godkendelse ændret som beskrevet i CONTAINMENT-APPLIED.md.
 - Supabase-projekt `thacsxtnycmnnpjobgiv` (Tennedz) var INACTIVE, men blev derefter genaktiveret efter brugerens godkendelse og er ACTIVE_HEALTHY. Skema, rettigheder og holdkoblinger er nu kontrolleret med read-only SQL. Se LIVE-REVIEW.md.
-- Vercel-adgang er genoprettet, og projekt og eksisterende deployment er identificeret. Se VERCEL-ACCESS.md. Recovery er ikke deployet.
+- Vercel-adgang er genoprettet. Recovery er deployet og testet i Preview; produktionsdeploymenten er uændret. Se VERCEL-PREVIEW-VERIFICATION.md.
 - GitHub-skriveadgang er genoprettet. Recovery-grenen og kladde-PR #1 er oprettet: https://github.com/davidkvistgaard/Tennedz/pull/1.
 
 ## Hvad er ændret?
