@@ -1,10 +1,11 @@
 "use client";
 
+import { countryLabel } from "../../lib/riders/identity.mjs";
 import RiderAvatar from "./RiderAvatar";
 
 function fmtNat(n) {
   if (!n) return "";
-  return String(n).toUpperCase();
+  return countryLabel(n);
 }
 
 export default function RiderCard({ r, selected, onClick, disabled }) {
@@ -35,7 +36,7 @@ export default function RiderCard({ r, selected, onClick, disabled }) {
         <div style={{ display: "flex", justifyContent: "space-between", gap: 10 }}>
           <div>
             <div style={{ fontWeight: 800, fontSize: 16, lineHeight: 1.1 }}>
-              {r.name} <span style={{ opacity: 0.65 }}>{genderIcon}</span>{" "}
+              {r.display_name || r.name} <span style={{ opacity: 0.65 }}>{genderIcon}</span>{" "}
               <span style={{ opacity: 0.75, fontSize: 13 }}>
                 ({fmtNat(r.nationality)})
               </span>

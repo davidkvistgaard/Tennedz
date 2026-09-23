@@ -69,6 +69,7 @@ export default function TeamShell({ title, children }) {
 
           <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center" }}>
             <NavLink href="/team" label="Hold" />
+            <NavLink href="/team/portraits" label="Ryttere" />
             <NavLink href="/team/run" label="Kør løb" />
             <NavLink href="/team/leaderboards" label="Ranglister" />
             <NavLink href="/team/presets" label="Presets" />
