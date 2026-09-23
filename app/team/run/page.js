@@ -8,8 +8,7 @@ import { SectionHeader, Pill } from "../../components/ui";
 import RiderCard from "../../components/RiderCard";
 import StageProfile from "../../components/StageProfile";
 import LineupPresets from "../../components/LineupPresets";
-import { supabase } from "../../../lib/supabaseClient";
-import { getOrCreateTeam } from "../../../lib/team";
+import { api } from "../../../lib/api";
 
 function isUuid(x) {
   return typeof x === "string" && /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(x);
@@ -57,24 +56,10 @@ export default function RunPage() {
   async function load() {
     setStatus("Loader…");
     try {
-      const { data: s } = await supabase.auth.getSession();
-      if (!s?.session) {
-        setStatus("Du er ikke logget ind.");
-        setTeam(null);
-        setRiders([]);
-        return;
-      }
+      const res = await api("/api/auth/me");
+    setTeam(res.team);
 
-      const res = await getOrCreateTeam();
-      setTeam(res.team);
-
-      const { data: tr, error: trErr } = await supabase
-        .from("team_riders")
-        .select("rider:riders(*)")
-        .eq("team_id", res.team.id);
-
-      if (trErr) throw trErr;
-      setRiders((tr ?? []).map(x => x.rider).filter(Boolean));
+      setRiders(res.riders || []);
 
       const ev = await fetch("/api/events?limit=25").then(r => r.json());
       if (!ev?.ok) throw new Error(ev?.error || "Could not load events");

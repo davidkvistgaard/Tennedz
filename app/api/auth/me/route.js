@@ -1,30 +1,15 @@
-// app/api/auth/me/route.js
 import { NextResponse } from "next/server";
-import { getCurrentAuth } from "../../../../lib/serverAuth";
-
-export const runtime = "nodejs";
-
+import { requireTeam, authFailure, privateHeaders } from "../../../../lib/auth/server";
+import { AuthError } from "../../../../lib/auth/policy.mjs";
+export const dynamic = "force-dynamic";
 export async function GET() {
   try {
-    const auth = await getCurrentAuth();
-
-    return NextResponse.json({
-      ok: true,
-      logged_in: !!auth?.team,
-      login: auth.login
-        ? {
-            id: auth.login.id,
-            login_name: auth.login.login_name,
-            team_id: auth.login.team_id,
-          }
-        : null,
-      team: auth.team || null,
-      riders: auth.riders || [],
-    });
-  } catch (e) {
-    return NextResponse.json(
-      { ok: false, error: e?.message ?? String(e) },
-      { status: 500 }
-    );
-  }
+    const { user, team, db } = await requireTeam();
+    const { data, error } = await db.from("team_riders").select("rider:riders(*)").eq("team_id", team.id);
+    if (error) throw new AuthError("RIDERS_UNAVAILABLE", "Holdet blev fundet, men rytterne kunne ikke hentes. Prøv igen.", 503);
+    return NextResponse.json({ ok: true, logged_in: true,
+      user: { id: user.id, display_name: user.user_metadata?.username || user.email || "Spiller" },
+      team, riders: (data || []).map(row => row.rider).filter(Boolean),
+    }, { headers: privateHeaders });
+  } catch (error) { return authFailure(error); }
 }

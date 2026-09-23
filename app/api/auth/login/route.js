@@ -1,70 +1,31 @@
-// app/api/auth/login/route.js
+import { createHash } from "node:crypto";
 import { NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
-import { createSession, getSessionCookieName, verifyPassword } from "../../../../lib/serverAuth";
+import { sessionClient, requireSameOrigin, authFailure, privateHeaders } from "../../../../lib/auth/server";
+import { AuthError, loginEmail } from "../../../../lib/auth/policy.mjs";
+import { allowLogin } from "../../../../lib/auth/rate-limit.mjs";
 
 export const runtime = "nodejs";
-
 export async function POST(req) {
   try {
-    const body = await req.json();
-    const loginName = String(body?.login_name || "").trim();
-    const password = String(body?.password || "");
-
-    if (!loginName || !password) {
-      return NextResponse.json(
-        { ok: false, error: "Login-navn og kodeord mangler." },
-        { status: 400 }
-      );
+    requireSameOrigin(req);
+    const raw = await req.text();
+    if (raw.length > 4096) throw new AuthError("INVALID_LOGIN", "Loginoplysningerne er for lange.", 400);
+    let body;
+    try { body = JSON.parse(raw); } catch { throw new AuthError("INVALID_LOGIN", "Ugyldig anmodning.", 400); }
+    const email = loginEmail(body?.login_name);
+    const password = body?.password;
+    if (typeof password !== "string" || !password || password.length > 1024) throw new AuthError("INVALID_LOGIN", "Skriv dit kodeord.", 400);
+    const key = createHash("sha256").update(email).digest("hex");
+    if (!allowLogin(key)) throw new AuthError("RATE_LIMITED", "For mange loginforsøg. Vent lidt og prøv igen.", 429);
+    const client = await sessionClient();
+    const { error } = await client.auth.signInWithPassword({ email, password });
+    if (error) {
+      if (error.status === 429) throw new AuthError("RATE_LIMITED", "For mange loginforsøg. Vent lidt og prøv igen.", 429);
+      if (!error.status || error.status >= 500) throw new AuthError("AUTH_UNAVAILABLE", "Login-tjenesten svarer ikke. Prøv igen.", 503);
+      throw new AuthError("INVALID_CREDENTIALS", "Forkert e-mail/brugernavn eller kodeord.");
     }
-
-    const supabase = createClient(
-      process.env.SUPABASE_URL,
-      process.env.SUPABASE_SERVICE_ROLE_KEY
-    );
-
-    const { data: account, error } = await supabase
-      .from("login_accounts")
-      .select("id, login_name, password_hash, team_id")
-      .ilike("login_name", loginName)
-      .single();
-
-    if (error || !account) {
-      return NextResponse.json(
-        { ok: false, error: "Forkert login-navn eller kodeord." },
-        { status: 401 }
-      );
-    }
-
-    const valid = verifyPassword(password, account.password_hash);
-    if (!valid) {
-      return NextResponse.json(
-        { ok: false, error: "Forkert login-navn eller kodeord." },
-        { status: 401 }
-      );
-    }
-
-    const session = await createSession(account.id);
-
-    const res = NextResponse.json({
-      ok: true,
-      login_name: account.login_name,
-      team_id: account.team_id,
-    });
-
-    res.cookies.set(getSessionCookieName(), session.id, {
-      httpOnly: true,
-      secure: true,
-      sameSite: "lax",
-      path: "/",
-      expires: new Date(session.expires_at),
-    });
-
-    return res;
-  } catch (e) {
-    return NextResponse.json(
-      { ok: false, error: e?.message ?? String(e) },
-      { status: 500 }
-    );
-  }
+    const response = NextResponse.json({ ok: true }, { headers: privateHeaders });
+    response.cookies.set("pelotonia_session", "", { path: "/", maxAge: 0, httpOnly: true });
+    return response;
+  } catch (error) { return authFailure(error); }
 }

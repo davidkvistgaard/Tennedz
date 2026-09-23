@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { use, useEffect, useMemo, useState } from "react";
 import TeamShell from "../../../components/TeamShell";
 import Loading from "../../../components/Loading";
 import { SectionHeader, Pill } from "../../../components/ui";
@@ -14,7 +14,7 @@ function toLines(feed) {
 }
 
 export default function ViewPage({ params }) {
-  const eventId = params?.event_stage_id;
+  const eventId = use(params).event_stage_id;
   const [status, setStatus] = useState("Loader…");
   const [run, setRun] = useState(null);
 

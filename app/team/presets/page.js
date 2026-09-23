@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { supabase } from "../../../lib/supabaseClient";
+import { api } from "../../../lib/api";
 import Loading from "../../components/Loading";
 import SmallButton from "../../components/SmallButton";
 
@@ -13,22 +13,8 @@ export default function PresetsPage() {
   async function load() {
     setError("");
     setStatus("Tjekker login…");
-    const { data: auth } = await supabase.auth.getUser();
-    const uid = auth?.user?.id;
-    if (!uid) {
-      setStatus("Du skal logge ind først.");
-      return;
-    }
-
-    setStatus("Loader presets…");
-    const { data, error } = await supabase
-      .from("tactic_presets")
-      .select("id,name,created_at,payload")
-      .eq("user_id", uid)
-      .order("created_at", { ascending: false });
-
-    if (error) throw error;
-    setPresets(data ?? []);
+    const { presets } = await api("/api/presets");
+    setPresets(presets);
     setStatus("Klar ✅");
   }
 
@@ -43,10 +29,6 @@ export default function PresetsPage() {
     const name = prompt("Navn på preset?");
     if (!name) return;
 
-    const { data: auth } = await supabase.auth.getUser();
-    const uid = auth?.user?.id;
-    if (!uid) return;
-
     // MVP: tom preset
     const payload = {
       name,
@@ -55,8 +37,9 @@ export default function PresetsPage() {
       riders: {}
     };
 
-    const { error } = await supabase.from("tactic_presets").insert({ user_id: uid, name, payload });
-    if (error) return alert("Fejl: " + error.message);
+    try {
+      await api("/api/presets", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ name, payload }) });
+    } catch (e) { setError(e.message); return; }
 
     await load();
   }

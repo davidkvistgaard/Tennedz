@@ -1,12 +1,11 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { use, useEffect, useMemo, useState } from "react";
 import TeamShell from "../../../components/TeamShell";
 import Loading from "../../../components/Loading";
 import SmallButton from "../../../components/SmallButton";
 import { Pill, SectionHeader } from "../../../components/ui";
-import { supabase } from "../../../../lib/supabaseClient";
-import { getOrCreateTeam } from "../../../../lib/team";
+import { api } from "../../../../lib/api";
 
 function fmtGapToWinner(timeSec, winnerSec) {
   const diff = Number(timeSec) - Number(winnerSec);
@@ -18,7 +17,7 @@ function fmtGapToWinner(timeSec, winnerSec) {
 }
 
 export default function ResultsPage({ params }) {
-  const eventId = params.event_stage_id;
+  const eventId = use(params).event_stage_id;
 
   const [status, setStatus] = useState("Loader…");
   const [team, setTeam] = useState(null);
@@ -30,13 +29,7 @@ export default function ResultsPage({ params }) {
 
   async function loadBase() {
     setStatus("Loader…");
-    const { data: s } = await supabase.auth.getSession();
-    if (!s?.session) {
-      setStatus("Du er ikke logget ind.");
-      setTeam(null);
-      return;
-    }
-    const res = await getOrCreateTeam();
+    const res = await api("/api/auth/me");
     setTeam(res.team);
     setStatus("Klar ✅");
   }
@@ -64,7 +57,6 @@ export default function ResultsPage({ params }) {
         setStatus("Fejl: " + (e?.message ?? String(e)));
       }
     })();
-    // eslint-disable-next-line
   }, []);
 
   useEffect(() => {

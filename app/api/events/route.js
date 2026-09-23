@@ -1,8 +1,9 @@
+import { protectedRoute } from "../../../lib/auth/server";
 // app/api/events/route.js
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 
-export async function GET(req) {
+async function handler(req, context, auth) {
   try {
     const url = new URL(req.url);
     const limit = Math.min(Number(url.searchParams.get("limit") ?? 20), 50);
@@ -25,3 +26,5 @@ export async function GET(req) {
     return NextResponse.json({ ok: false, error: e?.message ?? String(e) }, { status: 500 });
   }
 }
+
+export const GET = protectedRoute(handler);

@@ -1,11 +1,13 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import TeamShell from "../components/TeamShell";
 import Loading from "../components/Loading";
 import SmallButton from "../components/SmallButton";
 import RiderCard from "../components/RiderCard";
 import { SectionHeader, Pill } from "../components/ui";
+
+import { useAuth } from "../components/AuthProvider";
 
 const SKILLS = [
   { key: "rating", label: "Rating (points)" },
@@ -28,14 +30,14 @@ function getVal(r, k) {
 }
 
 export default function TeamPage() {
-  const [status, setStatus] = useState("Loader…");
+  const [status, setStatus] = useState("Klar ✅");
   const [busy, setBusy] = useState(false);
-  const [authChecked, setAuthChecked] = useState(false);
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-
-  const [team, setTeam] = useState(null);
-  const [riders, setRiders] = useState([]);
-  const [loginName, setLoginName] = useState("");
+  const { session, refresh, logout } = useAuth();
+  const authChecked = true;
+  const isLoggedIn = !!session;
+  const team = session?.team;
+  const riders = session?.riders || [];
+  const loginName = session?.user?.display_name || "";
 
   const [genderFilter, setGenderFilter] = useState("ALL");
   const [sortKey, setSortKey] = useState("rating");
@@ -43,40 +45,9 @@ export default function TeamPage() {
 
   async function load() {
     setStatus("Loader…");
-    setAuthChecked(false);
-
-    try {
-      const j = await fetch("/api/auth/me", { cache: "no-store" }).then(r => r.json());
-
-      if (!j?.logged_in) {
-        setIsLoggedIn(false);
-        setTeam(null);
-        setRiders([]);
-        setLoginName("");
-        setStatus("Du er ikke logget ind.");
-        setAuthChecked(true);
-        return;
-      }
-
-      setIsLoggedIn(true);
-      setLoginName(j?.login?.login_name || "");
-      setTeam(j.team || null);
-      setRiders(j.riders || []);
-      setStatus("Klar ✅");
-    } catch (e) {
-      setIsLoggedIn(false);
-      setTeam(null);
-      setRiders([]);
-      setLoginName("");
-      setStatus("Fejl: " + (e?.message ?? String(e)));
-    } finally {
-      setAuthChecked(true);
-    }
+    await refresh();
+    setStatus("Klar ✅");
   }
-
-  useEffect(() => {
-    load();
-  }, []);
 
   const filteredSorted = useMemo(() => {
     const list = riders
@@ -95,8 +66,7 @@ export default function TeamPage() {
   async function handleLogout() {
     setBusy(true);
     try {
-      await fetch("/api/auth/logout", { method: "POST" });
-      window.location.href = "/login";
+      await logout();
     } catch (e) {
       setStatus("Fejl ved log ud: " + (e?.message ?? String(e)));
     } finally {
