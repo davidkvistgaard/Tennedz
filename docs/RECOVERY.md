@@ -1,6 +1,6 @@
 # Pelotonia: sikker genopretning
 
-Status: recovery-kode under test, ikke godkendt til produktion.
+Status: recovery-kode lokalt testet, ikke godkendt til produktion. Se LIVE-REVIEW.md for den efterfølgende kontrol af den genaktiverede database.
 
 ## Fast udgangspunkt
 
@@ -9,7 +9,7 @@ Status: recovery-kode under test, ikke godkendt til produktion.
 - Arbejdsgren: `codex/recovery-supabase-auth`.
 - `vercel.json` slår automatisk deployment fra for netop denne gren. Ingen live Vercel-indstillinger er ændret.
 - Ingen produktionsdata, databaseobjekter, miljøvariabler eller Supabase-konti er ændret.
-- Supabase-projekt `thacsxtnycmnnpjobgiv` (Tennedz) rapporterede INACTIVE 23. september 2026. En read-only SELECT fik forbindelsestimeout. Skema, RLS og holdkoblinger er derfor endnu ikke kontrolleret direkte.
+- Supabase-projekt `thacsxtnycmnnpjobgiv` (Tennedz) var INACTIVE, men blev derefter genaktiveret efter brugerens godkendelse og er ACTIVE_HEALTHY. Skema, rettigheder og holdkoblinger er nu kontrolleret med read-only SQL. Se LIVE-REVIEW.md.
 - Vercel-forbindelsen returnerede ingen teams. Den faktiske produktionskonfiguration er ikke verificeret.
 - GitHub-connectorens forsøg på at oprette et Git-træ blev afvist med HTTP 403, `Resource not accessible by integration`. Ændringerne er derfor foreløbig kun gemt som lokale commits på recovery-grenen; ingen fjernbranch eller PR er oprettet. GitHub-forbindelsen skal have skriveadgang, før arbejdet kan publiceres der.
 
@@ -45,8 +45,8 @@ Testen dokumenterer frontend → Next API → Supabase SDK → testtjeneste. Den
 
 ## Næste godkendelsespunkt
 
-1. Godkend genaktivering af det eksisterende Supabase-projekt. Der må ikke oprettes, slettes eller flyttes spil-/kontodata som del af genaktiveringen.
-2. Derefter: læs skema, migrationshistorik, auth-konfiguration, RLS, grants, funktioner og aggregerede ejerskabskontroller. Gem en skemabackup sikkert; ingen passwords, tokens eller persondata i Git.
+1. Genaktivering er godkendt og gennemført. Ingen spil-/kontodata er oprettet, slettet eller flyttet.
+2. Read-only kontrol af skema, migrationshistorik, RLS, grants, funktionsrettigheder og aggregeret ejerskab er gennemført. Metadata-snapshot er gemt; det erstatter ikke en fuld databackup. Auth-konfiguration og rigtig login-test mangler stadig.
 3. Lav en konkret, ikke-destruktiv migrationsplan ud fra det faktiske skema. Kontroller eksisterende `teams.user_id`, dubletter, forældreløse hold og custom-login-koblinger. Ingen automatisk sammenlægning eller nulstilling.
 4. Opret/brug et isoleret testmiljø efter afklaring af adgang og eventuelle omkostninger. Kør rigtig Supabase-login, refresh, parallelle faner, logout, sessionstilbagekaldelse og adgangsforsøg mellem to brugere. Direkte anon/authenticated databaseadgang skal også testes; API-beskyttelse erstatter ikke RLS.
 5. Fremlæg resultat og præcis database-/deploymentændring til godkendelse. Milestonen er først nået efter disse kontroller. Løbscyklussen genopbygges først derefter.
@@ -55,7 +55,7 @@ Testen dokumenterer frontend → Next API → Supabase SDK → testtjeneste. Den
 
 - In-process loginbegrænsning supplerer kun Supabase Auths egne grænser. Den er ikke en global rate limiter på tværs af Vercel-instanser; providerindstillinger og eventuel CAPTCHA skal verificeres inden offentlig release.
 - Service-role-adgang er kun på serveren, men omgår RLS. Hver personlige forespørgsel begrænses eksplicit til ejeren. Live RLS skal stadig gennemgås, også for gamle offentlige nøgler.
-- Ingen migrationsfil er gættet ud fra kode alene. Den inaktive database forhindrer sikker verificering af eksisterende constraints og politikker.
+- Ingen migrationsfil er gættet ud fra kode alene. Databasen er nu tilgængelig; et konkret forslag baseret på dens faktiske rettigheder står i LIVE-REVIEW.md og afventer godkendelse.
 - Løbsdata bruger flere generationer af tabeller, og visning/historik er endnu ikke harmoniseret. Ranglisten er stadig en eksisterende pladsholder. Ingen af delene er erklæret repareret.
 - Næste løbsfase skal gøre afvikling og pointtildeling atomisk og forhindre dobbeltkørsel, før de bevarede handlers åbnes igen.
 

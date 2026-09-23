@@ -8,7 +8,7 @@
 | Otte browsertests, Edge og produktionsbuild | Bestået mod lokal Supabase-protokoltesttjeneste |
 | `pnpm audit --prod` efter PostCSS-rettelse | Ingen kendte sårbarheder |
 | Visuel kontrol af holdsiden med syntetiske testdata | Indhold, navigation, filtre og logout vises uden fejlskærm |
-| Rigtig Supabase Auth, database og RLS | Ikke testet: projekt inaktivt, SQL-forbindelse fik timeout |
+| Rigtig Supabase Auth, database og RLS | Efterfølgende genaktiveret: skema/RLS/ejerskab undersøgt read-only; kritiske adgangsproblemer fundet. Rigtigt login er ikke testet. Se LIVE-REVIEW.md |
 | Vercel-produktionsmiljø | Ikke verificeret: connector returnerede ingen teams |
 
 Browsertestene omfatter login, forkert kodeord, reload, navigation til løb og historik, to faner, logout, kontoskift, sessionsfornyelse, tilbagekaldt session, manglende/dobbelt holdtilknytning, forfalsket hold-id, cross-origin-login og lukkede skrive-endpoints. Der blev ikke kontaktet nogen ekstern database eller brugt rigtige konti.
