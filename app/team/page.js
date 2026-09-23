@@ -8,6 +8,7 @@ import RiderCard from "../components/RiderCard";
 import { SectionHeader, Pill } from "../components/ui";
 
 import { useAuth } from "../components/AuthProvider";
+import { teamRating } from "../../lib/race/rating.mjs";
 
 const SKILLS = [
   { key: "rating", label: "Rating (points)" },
@@ -126,10 +127,11 @@ export default function TeamPage() {
               </div>
 
               <div className="k">
-                <div className="small">Rating (points)</div>
-                <b>{Number(team.rating ?? 0).toLocaleString("da-DK")}</b>
+                <div className="small">Holdrating · resultatpoint</div>
+                <b>Mænd: {teamRating(riders,"M").toLocaleString("da-DK")}</b>
+                <div><b>Kvinder: {teamRating(riders,"F").toLocaleString("da-DK")}</b></div>
                 <div className="small" style={{ opacity: 0.75, marginTop: 2 }}>
-                  Optjent i løb
+                  De 16 bedst ratede ryttere pr. køn
                 </div>
               </div>
             </div>
