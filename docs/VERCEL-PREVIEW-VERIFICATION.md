@@ -1,5 +1,7 @@
 # Beskyttet Vercel Preview: bestået
 
+Efterfølgende ændring: ved den godkendte produktionsrelease flyttede Vercel også branchens faste alias til produktionsbuildet. Brug ikke længere den faste testadresse nedenfor som isoleret testmiljø. Se PRODUCTION-RELEASE.md. Denne rapport beskriver den tidligere beståede Preview-test.
+
 Kontrolleret 23. september 2026 efter ejerens konkrete godkendelse. Kun recovery-branchens Preview-konfiguration og manuelle Preview-deployments er ændret. Ingen merge, produktionsdeployment, produktionsvariabel, DNS eller produktionsdata er ændret i dette trin.
 
 ## Verificeret deployment
