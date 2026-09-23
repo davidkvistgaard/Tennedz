@@ -28,7 +28,7 @@ Browserkontrollen bestod: login, genindlæsning, navigation til løb og historik
 
 Login-milepælens funktioner er verificeret i testmiljøet. Dette er **ikke en produktionsgodkendelse**: recovery-build er ikke deployet på Vercel, produktionsvariabler er ikke afprøvet, og eksisterende kontiers faktiske login er ikke testet eller ændret. Sessionsfornyelsen blev udløst ved at ændre lokal udløbstid, ikke ved at vente en hel JWT-levetid. Ingen belastningstest eller langvarig driftstest.
 
-Den lokale server er stoppet. Testprojektets sletning afventer afsluttende browserbekræftelse. Næste trin er en konkret plan for produktionsvariabler, eksisterende kontoadgang og deployment med ejerens godkendelse. Løbscyklussen er fortsat lukket og er ikke genopbygget.
+Den lokale server er stoppet. Ejeren har efter testen bedt om at beholde projektet, så længe det er gratis. Det er bevaret på den gratis plan (prisopslag: 0 USD/måned); ingen opgradering er foretaget. Næste trin er en konkret plan for produktionsvariabler, eksisterende kontoadgang og deployment med ejerens godkendelse. Løbscyklussen er fortsat lukket og er ikke genopbygget.
 
 ## Reproduktion for udvikleren
 
