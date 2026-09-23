@@ -11,6 +11,9 @@ export default function LoginPage() {
 
   useEffect(() => {
     let mounted = true;
+    if (new URLSearchParams(window.location.search).get("confirmation") === "failed") {
+      setStatus("Bekræftelseslinket kunne ikke bruges i denne browser. Prøv at logge ind med din e-mail og dit kodeord.");
+    }
 
     async function checkSession() {
       try {
@@ -54,7 +57,7 @@ export default function LoginPage() {
 
       signalAuthChange();
       setStatus("Logget ind ✅");
-      window.location.href = "/team";
+      window.location.href = "/onboarding";
     } catch (err) {
       setStatus("Fejl: " + (err?.message ?? String(err)));
     } finally {
@@ -105,7 +108,7 @@ export default function LoginPage() {
         </h1>
 
         <p style={{ margin: "0 0 20px 0", color: "rgba(15,23,42,0.72)" }}>
-          Log ind med login-navn og kodeord for at se dit hold.
+          Log ind med e-mail eller dit eksisterende login-navn.
         </p>
 
         <form onSubmit={handleLogin} style={{ display: "grid", gap: 14 }}>
@@ -120,7 +123,7 @@ export default function LoginPage() {
                 color: "#0f172a",
               }}
             >
-              Login-navn
+              E-mail eller login-navn
             </label>
             <input
               id="login_name"
@@ -206,6 +209,7 @@ export default function LoginPage() {
         </div>
 
         <div style={{ marginTop: 18 }}>
+          <p>Ny i Pelotonia? <a href="/signup" style={{color:"#0E8F46",fontWeight:700}}>Opret konto</a></p>
           <a
             href="/"
             style={{

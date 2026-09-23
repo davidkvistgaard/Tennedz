@@ -19,6 +19,8 @@ Ejerens 50 punkter er bevaret i PRODUCT-VISION.md. Senere præciseringer har for
 
 ## Ratingændringens teknik og test
 
+Første holdoprettelse og starttrup er implementeret; se ONBOARDING.md for test, startværdier og begrænsninger i e-mailverifikationen. Næste sportslige leverance er nye fremtidige endagsløb og en gentagelig kalender.
+
 `teamRating()` beregner top 16 pr. køn for holdvisning og løbsseeding. `recovery_rankings(text)` anvender samme regel i databasen, så globale holdranglister ikke afhænger af at hente en afkortet liste af ryttere. Rytterranglister filtreres på køn. Funktionen er kun tilgængelig for serverrollen og ændrer ingen rækker.
 
 `teams.rating` bevares som den historiske opsummering af holdets løbspræmier; den er ikke længere holdets viste konkurrencerating eller grundlag for seeding. `event_team_results.points` bevarer pointene fra hvert enkelt løb. Ingen gamle point omskrives. Motorkoden er versionsmærket `recovery-one-day-2`; allerede afsluttede løb returnerer fortsat deres gemte resultat.
