@@ -44,4 +44,12 @@ Løbskalenderen har stadig kun de udløbne historiske events. Et nyt hold betyde
 
 ## Produktionsmigration
 
+Kode `bf214deba3322ecb1b898e5602d56f14337a7924` er udgivet på https://tennedz.eu. Preview `dpl_7ZWioo6x6aS9aBcBn15Df5ujCKbd` bestod på 31 sekunder. Vercel genbyggede samme commit med Production-miljøet til `dpl_Dh9sarpGxVVGBuVvjiBtJEPf2jMM` (READY, ca. 33 sekunder), immutable adresse `tennedz-2u2xips6h-david-kvistgaards-projects.vercel.app`. Ingen miljøvariabler blev ændret. Foregående sikre release: `dpl_6MQnEgLmDT4vj2W4Wenrd1NHYWA9`.
+
+Alle 15 produktions-HTTP-kontroller består. Browserkontrol viser ny forside og registreringsformular samt ejerens eksisterende My Team med 112 ryttere, 100.000 coins, rating 0/0 og fortsat Admin-link. Ejerens login er bevaret. Produktionsregistrering af en faktisk ny bruger er ikke udført som test.
+
+Ingen browserkonsolfejl blev observeret, og den korte Vercel error/fatal-logkontrol efter release fandt ingen poster. Det er en releasekontrol, ikke løbende overvågning. Main er uændret; kladde-PR #1 og recovery-grenen indeholder arbejdet.
+
 `20260923184920_atomic_starter_team.sql` er anvendt i produktion. Før/efter-fingeraftryk af samtlige teams-, riders- og team_riders-rækker er identiske (1/112/112 rækker). Funktionens execute-rettigheder er kontrolleret: anon=false, authenticated=false, service_role=true. Ingen produktionskonto eller testhold er oprettet under kontrollen. Mobilkontrol ved 390 px viser formularen uden vandret overløb.
+
+Supabase-advisor er kontrolleret efter migrationen og viser ingen nye fund: de dokumenterede otte gamle [search_path-advarsler](https://supabase.com/docs/guides/database/database-linter?lint=0011_function_search_path_mutable), én eksisterende [advarsel om lækkede kodeord](https://supabase.com/docs/guides/auth/password-security#password-strength-and-leaked-password-protection) og 24 forventede INFO-fund om RLS uden klientpolitikker består.

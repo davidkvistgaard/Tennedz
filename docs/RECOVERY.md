@@ -1,5 +1,7 @@
 # Pelotonia: sikker genopretning
 
+Nyeste release: forside, Supabase-registreringsformular og atomisk holdoprettelse med 8 mænd og 8 kvinder er udgivet. Se [ONBOARDING.md](ONBOARDING.md) for release, test, datakontrol og registreringens begrænsninger. Nye fremtidige løb er næste milepæl.
+
 Seneste release: kønsopdelt resultatbaseret rating, seeding og ranglister er i produktion. Se [RATING-RELEASE.md](RATING-RELEASE.md). Ejerens samlede vision og rækkefølgen for videre udvikling findes i [PRODUCT-ROADMAP.md](PRODUCT-ROADMAP.md).
 
 Status: login-milepælen er bestået lokalt, på beskyttet Vercel Preview og nu i produktion med ejerens eksisterende konto. Login, 112 egne ryttere, genindlæsning, navigation, ekstra fane og logout er verificeret. Se PRODUCTION-RELEASE.md for seneste status. Historiske testresultater findes i VERCEL-PREVIEW-VERIFICATION.md.

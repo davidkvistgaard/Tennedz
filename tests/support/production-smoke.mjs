@@ -3,6 +3,11 @@ import assert from "node:assert/strict";
 const origin = "https://tennedz.eu";
 const checks = [
   ["GET", "/login", undefined, 200],
+  ["GET", "/signup", undefined, 200],
+  ["GET", "/onboarding", undefined, 200],
+  ["GET", "/api/onboarding", undefined, 401],
+  ["POST", "/api/onboarding", {}, 401],
+  ["POST", "/api/auth/signup", {}, 400],
   ["GET", "/api/auth/me", undefined, 401],
   ["GET", "/api/events", undefined, 401],
   ["GET", "/api/admin/stats", undefined, 401],
