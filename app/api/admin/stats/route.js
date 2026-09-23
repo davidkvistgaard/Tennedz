@@ -1,8 +1,9 @@
+import { protectedRoute } from "../../../../lib/auth/server";
 // app/api/admin/stats/route.js
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 
-export async function GET() {
+async function handler(req, context, auth) {
   try {
     const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
 
@@ -22,3 +23,5 @@ export async function GET() {
     return NextResponse.json({ ok: false, error: e?.message ?? String(e) }, { status: 500 });
   }
 }
+
+export const GET = protectedRoute(handler, { admin: true });

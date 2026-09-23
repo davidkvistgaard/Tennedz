@@ -1,34 +1,15 @@
-// app/api/auth/logout/route.js
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
-import { destroySession, getSessionCookieName } from "../../../../lib/serverAuth";
-
-export const runtime = "nodejs";
-
-export async function POST() {
+import { sessionClient, requireSameOrigin, authFailure, privateHeaders } from "../../../../lib/auth/server";
+import { AuthError } from "../../../../lib/auth/policy.mjs";
+export async function POST(req) {
   try {
-    const cookieStore = await cookies();
-    const name = getSessionCookieName();
-    const sessionId = cookieStore.get(name)?.value;
-
-    if (sessionId) {
-      await destroySession(sessionId);
-    }
-
-    const res = NextResponse.json({ ok: true });
-    res.cookies.set(name, "", {
-      httpOnly: true,
-      secure: true,
-      sameSite: "lax",
-      path: "/",
-      expires: new Date(0),
-    });
-
-    return res;
-  } catch (e) {
-    return NextResponse.json(
-      { ok: false, error: e?.message ?? String(e) },
-      { status: 500 }
-    );
-  }
+    requireSameOrigin(req);
+    const client = await sessionClient();
+    const { error } = await client.auth.signOut({ scope: "local" });
+    if (error) throw new AuthError("LOGOUT_FAILED", "Log ud kunne ikke gennemføres. Prøv igen.", 503);
+    const jar = await cookies();
+    jar.set("pelotonia_session", "", { path: "/", maxAge: 0, httpOnly: true });
+    return NextResponse.json({ ok: true }, { headers: privateHeaders });
+  } catch (error) { return authFailure(error); }
 }

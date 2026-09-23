@@ -1,4 +1,5 @@
 import "./globals.css";
+import { AuthProvider } from "./components/AuthProvider";
 
 export const metadata = {
   title: "Pelotonia – Cycling Manager",
@@ -9,7 +10,7 @@ export default function RootLayout({ children }) {
   return (
     <html lang="da">
       <body>
-        <main>{children}</main>
+        <AuthProvider><main>{children}</main></AuthProvider>
       </body>
     </html>
   );

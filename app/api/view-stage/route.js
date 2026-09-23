@@ -1,7 +1,8 @@
+import { protectedRoute } from "../../../lib/auth/server";
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 
-export async function POST(req) {
+async function handler(req, context, auth) {
   try {
     const url = process.env.SUPABASE_URL;
     const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -43,3 +44,5 @@ export async function POST(req) {
     return NextResponse.json({ error: "Unhandled error: " + (e?.message ?? String(e)) }, { status: 500 });
   }
 }
+
+export const POST = protectedRoute(handler);

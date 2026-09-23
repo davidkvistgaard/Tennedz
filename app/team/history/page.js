@@ -1,8 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { supabase } from "../../../lib/supabaseClient";
-import { getOrCreateTeam } from "../../../lib/team";
+import { api } from "../../../lib/api";
 import Loading from "../../components/Loading";
 import SmallButton from "../../components/SmallButton";
 
@@ -16,15 +15,7 @@ export default function HistoryPage() {
     setError("");
     setStatus("Tjekker session…");
 
-    const { data, error } = await supabase.auth.getSession();
-    if (error) throw new Error("Session-fejl: " + error.message);
-    if (!data?.session) {
-      setStatus("Du skal logge ind på 'Mit hold' først.");
-      return;
-    }
-
-    setStatus("Loader hold…");
-    const res = await getOrCreateTeam();
+const res = await api("/api/auth/me");
     setTeam(res.team);
 
     setStatus("Loader løb…");

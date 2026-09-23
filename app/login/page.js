@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { signalAuthChange } from "../components/AuthProvider";
 
 export default function LoginPage() {
   const [loginName, setLoginName] = useState("");
@@ -51,6 +52,7 @@ export default function LoginPage() {
 
       if (!j?.ok) throw new Error(j?.error || "Login fejlede");
 
+      signalAuthChange();
       setStatus("Logget ind ✅");
       window.location.href = "/team";
     } catch (err) {
