@@ -1,5 +1,7 @@
 # Pelotonia: sikker genopretning
 
+Seneste release: kønsopdelt resultatbaseret rating, seeding og ranglister er i produktion. Se [RATING-RELEASE.md](RATING-RELEASE.md). Ejerens samlede vision og rækkefølgen for videre udvikling findes i [PRODUCT-ROADMAP.md](PRODUCT-ROADMAP.md).
+
 Status: login-milepælen er bestået lokalt, på beskyttet Vercel Preview og nu i produktion med ejerens eksisterende konto. Login, 112 egne ryttere, genindlæsning, navigation, ekstra fane og logout er verificeret. Se PRODUCTION-RELEASE.md for seneste status. Historiske testresultater findes i VERCEL-PREVIEW-VERIFICATION.md.
 
 Endagsløbenes kerneforløb er genoprettet, afprøvet med isoleret Supabase og efter ejerens »Go« udrullet i produktion. Se [ONE-DAY-PRODUCTION.md](ONE-DAY-PRODUCTION.md) for aktuel status og [ONE-DAY-RECOVERY.md](ONE-DAY-RECOVERY.md) for testgrundlaget. De gamle events er udløbet, og der mangler et andet hold; et nyt spilbart produktionsløb er derfor næste produktbeslutning.
