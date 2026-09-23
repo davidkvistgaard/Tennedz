@@ -1,5 +1,7 @@
 # Livekontrol efter genaktivering – 23. september 2026
 
+**Opdatering:** Det nedenfor beskrevne indgreb er efterfølgende godkendt og gennemført. Se CONTAINMENT-APPLIED.md for udførelse og verificerede resultater. Resten af dette dokument beskriver den oprindelige undersøgelse og beslutningsgrundlaget.
+
 Supabase-projektet Tennedz blev genaktiveret efter brugerens udtrykkelige godkendelse. Status er ACTIVE_HEALTHY, og read-only SQL virker. Der er ikke ændret rækker, skema, konti eller rettigheder.
 
 ## Bekræftede oplysninger

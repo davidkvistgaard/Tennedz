@@ -2,13 +2,15 @@
 
 Status: recovery-kode lokalt testet, ikke godkendt til produktion. Se LIVE-REVIEW.md for den efterfølgende kontrol af den genaktiverede database.
 
+Efterfølgende godkendt databaseindgreb: direkte klientadgang er lukket, og RLS er slået til på alle public-tabeller. Se CONTAINMENT-APPLIED.md. Spildata og konti er bevaret; Vercel-deployment mangler stadig.
+
 ## Fast udgangspunkt
 
 - Repository: davidkvistgaard/Tennedz.
 - Produktionsgren er urørt: main, udgangspunkt `2fb499f925c2e1a1c545e7c53386a1e1e7daccc5`.
 - Arbejdsgren: `codex/recovery-supabase-auth`.
 - `vercel.json` slår automatisk deployment fra for netop denne gren. Ingen live Vercel-indstillinger er ændret.
-- Ingen produktionsdata, databaseobjekter, miljøvariabler eller Supabase-konti er ændret.
+- Ingen produktionsdata, miljøvariabler eller Supabase-konti er ændret. Databaserettigheder og RLS er efter særskilt godkendelse ændret som beskrevet i CONTAINMENT-APPLIED.md.
 - Supabase-projekt `thacsxtnycmnnpjobgiv` (Tennedz) var INACTIVE, men blev derefter genaktiveret efter brugerens godkendelse og er ACTIVE_HEALTHY. Skema, rettigheder og holdkoblinger er nu kontrolleret med read-only SQL. Se LIVE-REVIEW.md.
 - Vercel-forbindelsen returnerede ingen teams. Den faktiske produktionskonfiguration er ikke verificeret.
 - GitHub-connectorens forsøg på at oprette et Git-træ blev afvist med HTTP 403, `Resource not accessible by integration`. Ændringerne er derfor foreløbig kun gemt som lokale commits på recovery-grenen; ingen fjernbranch eller PR er oprettet. GitHub-forbindelsen skal have skriveadgang, før arbejdet kan publiceres der.

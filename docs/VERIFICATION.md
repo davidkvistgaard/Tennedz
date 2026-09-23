@@ -1,5 +1,7 @@
 # Kontrol af recovery-branchen – 23. september 2026
 
+Efterfølgende live-kontrol: den godkendte rettighedsmigration er anvendt og verificeret. Alle 28 tabellers rækkeantal er uændrede, klientadgang afvises, og service_role-adgang virker. Se CONTAINMENT-APPLIED.md. Dette erstatter ikke en rigtig end-to-end login-test.
+
 | Kontrol | Resultat |
 |---|---|
 | Produktionsbuild, Next.js 15.5.26 | Bestået |
