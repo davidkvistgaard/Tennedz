@@ -11,6 +11,7 @@ Status: recovery-kode under test, ikke godkendt til produktion.
 - Ingen produktionsdata, databaseobjekter, miljøvariabler eller Supabase-konti er ændret.
 - Supabase-projekt `thacsxtnycmnnpjobgiv` (Tennedz) rapporterede INACTIVE 23. september 2026. En read-only SELECT fik forbindelsestimeout. Skema, RLS og holdkoblinger er derfor endnu ikke kontrolleret direkte.
 - Vercel-forbindelsen returnerede ingen teams. Den faktiske produktionskonfiguration er ikke verificeret.
+- GitHub-connectorens forsøg på at oprette et Git-træ blev afvist med HTTP 403, `Resource not accessible by integration`. Ændringerne er derfor foreløbig kun gemt som lokale commits på recovery-grenen; ingen fjernbranch eller PR er oprettet. GitHub-forbindelsen skal have skriveadgang, før arbejdet kan publiceres der.
 
 ## Hvad er ændret?
 
