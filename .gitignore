@@ -8,3 +8,4 @@ playwright-report/
 coverage/
 *.log
 .recovery-local/
+supabase/.temp/
