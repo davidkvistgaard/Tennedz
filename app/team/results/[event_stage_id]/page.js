@@ -95,7 +95,7 @@ export default function ResultsPage({ params }) {
             <SectionHeader
               title={data?.event?.name || "Event"}
               subtitle="Resultater og points pr. division (max 20 hold)."
-              right={<SmallButton onClick={() => loadResults(divisionIndex)}>Reload</SmallButton>}
+              right={<SmallButton onClick={() => loadResults(divisionIndex).catch(e=>setStatus("Fejl: "+e.message))}>Reload</SmallButton>}
             />
 
             <div className="hr" />
@@ -130,7 +130,7 @@ export default function ResultsPage({ params }) {
               <div className="card" style={{ padding: 14 }}>
                 <SectionHeader
                   title="Hold (division)"
-                  subtitle="Placering beregnes ud fra kaptajnens (eller bedste rytters) tid. Points = matrix × dynamic multiplier."
+                  subtitle="Holdets placering følger kaptajnens tid. Point justeres efter division."
                 />
                 <div className="hr" />
 
@@ -163,7 +163,7 @@ export default function ResultsPage({ params }) {
               {/* Rider standings */}
               <div className="card" style={{ padding: 14 }}>
                 <SectionHeader
-                  title="Top 50 ryttere (division)"
+                  title="Alle ryttere (division)"
                   subtitle="Rytterpoints gives til top 20 ryttere i divisionen (samme matrix × multiplier)."
                 />
                 <div className="hr" />
@@ -185,7 +185,7 @@ export default function ResultsPage({ params }) {
                           <td><b>{r.position}</b></td>
                           <td>{r.riders?.name || "Rider"}</td>
                           <td>{r.teams?.name || "Team"}</td>
-                          <td>{winnerTime == null ? "-" : fmtGapToWinner(r.time_sec, winnerTime)}</td>
+                          <td>{data.riders[0]?.time_sec == null ? "-" : fmtGapToWinner(r.time_sec, data.riders[0].time_sec)}</td>
                           <td><b>{r.points}</b></td>
                         </tr>
                       ))}

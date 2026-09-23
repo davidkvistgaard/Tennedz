@@ -2,8 +2,7 @@
 
 import { use, useEffect, useMemo, useState } from "react";
 import TeamShell from "../../../components/TeamShell";
-import Loading from "../../../components/Loading";
-import { SectionHeader, Pill } from "../../../components/ui";
+import { SectionHeader } from "../../../components/ui";
 
 function toLines(feed) {
   if (!Array.isArray(feed)) return [];
@@ -51,14 +50,13 @@ export default function ViewPage({ params }) {
       <p className="small">Status: {status}</p>
 
       {!run ? (
-        <Loading text="Loader…" />
+        <p>{status === "Loader…" ? "Loader…" : status}</p>
       ) : (
         <div style={{ display: "grid", gap: 14 }}>
           <div className="card" style={{ padding: 14 }}>
             <SectionHeader
               title={run?.stage_snapshot?.name || "Event"}
-              subtitle={`${distance} km · Engine ${run.engine_version}`}
-              right={<Pill tone="info">Seed: {run.seed}</Pill>}
+              subtitle={`${distance} km · Division ${run.division_index}`}
             />
 
             <div className="hr" />
@@ -91,7 +89,7 @@ export default function ViewPage({ params }) {
           </div>
 
           <div className="card" style={{ padding: 14 }}>
-            <SectionHeader title="Live feed" subtitle="MVP feed (næste: bedre segmentering + flere events i finalen)" />
+            <SectionHeader title="Løbsreferat" subtitle="Hændelser fra det afsluttede løb." />
 
             <div className="hr" />
 

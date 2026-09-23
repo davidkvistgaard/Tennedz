@@ -10,11 +10,13 @@ async function handler(req, context, auth) {
     const [teams, riders, race_results] = await Promise.all([
       supabase.from("teams").select("id", { count: "exact", head: true }),
       supabase.from("riders").select("id", { count: "exact", head: true }),
-      supabase.from("race_results").select("race_id", { count: "exact", head: true })
+      supabase.from("event_team_results").select("event_id", { count: "exact", head: true })
     ]);
 
+    if ([teams,riders,race_results].some(result=>result.error)) throw new Error("Statistikken kunne ikke hentes.");
     return NextResponse.json({
       ok: true,
+      game_writes_enabled: process.env.RECOVERY_ALLOW_GAME_WRITES === "true",
       teams: teams.count ?? 0,
       riders: riders.count ?? 0,
       race_results: race_results.count ?? 0

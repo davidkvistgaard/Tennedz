@@ -52,6 +52,10 @@ export default function RunPage() {
   const [sortDir, setSortDir] = useState("DESC");
 
   const [stage, setStage] = useState(null);
+  const [entryLoading, setEntryLoading] = useState(false);
+  const [stageError, setStageError] = useState("");
+  const [now, setNow] = useState(Date.now());
+  useEffect(() => { const timer=setInterval(()=>setNow(Date.now()),1000); return ()=>clearInterval(timer); },[]);
 
   async function load() {
     setStatus("Loader…");
@@ -63,7 +67,7 @@ export default function RunPage() {
 
       const ev = await fetch("/api/events?limit=25").then(r => r.json());
       if (!ev?.ok) throw new Error(ev?.error || "Could not load events");
-      setEvents(ev.events ?? []);
+      setEvents((ev.events ?? []).filter(e => e.kind === "one_day"));
 
       setStatus("Klar ✅");
     } catch (e) {
@@ -78,25 +82,38 @@ export default function RunPage() {
     [events, selectedEventId]
   );
 
-  const locked = selectedEvent ? (new Date(selectedEvent.deadline) <= new Date()) : false;
+  const locked = selectedEvent ? selectedEvent.status !== "OPEN" || new Date(selectedEvent.deadline).getTime() <= now : false;
 
   // Fetch stage profile for selected event
   useEffect(() => {
+    let active = true;
     (async () => {
       setStage(null);
-      if (!selectedEventId) return;
+      setStageError("");
+      if (!selectedEventId) { setEntryLoading(false); return; }
+      setEntryLoading(true);
       try {
-        const j = await fetch(`/api/stage-profile?event_id=${selectedEventId}`).then(r => r.json());
-        if (j?.ok) setStage(j.stage);
-      } catch {
-        // ignore
+        const [j,saved] = await Promise.all([
+          api(`/api/stage-profile?event_id=${selectedEventId}`),
+          api(`/api/event/join?event_id=${selectedEventId}`),
+        ]);
+        if (active) {
+          setStage(j.stage);
+          setSelectedRiderIds(saved.entry?.selected_riders || []);
+          setCaptainId(saved.entry?.captain_id || "");
+        }
+      } catch(e) {
+        if (active) { setStageError(e.message); setStatus("Fejl: " + e.message); }
+      } finally {
+        if(active) setEntryLoading(false);
       }
     })();
+    return () => { active=false; };
   }, [selectedEventId]);
 
   const filteredSortedRiders = useMemo(() => {
     const list = riders
-      .filter(r => genderFilter === "ALL" ? true : r.gender === genderFilter)
+      .filter(r => (!selectedEvent?.gender || r.gender === selectedEvent.gender) && (genderFilter === "ALL" || r.gender === genderFilter))
       .slice();
 
     list.sort((a, b) => {
@@ -106,7 +123,7 @@ export default function RunPage() {
     });
 
     return list;
-  }, [riders, genderFilter, sortKey, sortDir]);
+  }, [riders, genderFilter, sortKey, sortDir, selectedEvent]);
 
   function toggleRider(id) {
     setSelectedRiderIds(prev => {
@@ -199,6 +216,8 @@ export default function RunPage() {
             <div className="hr" />
 
             <select
+              aria-label="Løb"
+              disabled={busy}
               value={selectedEventId}
               onChange={(e) => {
                 setSelectedEventId(e.target.value);
@@ -219,6 +238,7 @@ export default function RunPage() {
                 <Pill tone={locked ? "danger" : "accent"}>{locked ? "LOCKED" : "OPEN"}</Pill>
                 <Pill tone="info">Deadline: {fmtTime(selectedEvent.deadline)}</Pill>
                 <Pill>Land: {(selectedEvent.country_code || "FR").toUpperCase()}</Pill>
+                <Pill>Startgebyr: {selectedEvent.entry_fee ?? 0} coins · trækkes kun ved første tilmelding</Pill>
                 <a href={`/team/results/${selectedEvent.id}`} style={{ textDecoration: "none" }}>
                   <span className="pillBtn">Se resultat</span>
                 </a>
@@ -233,10 +253,11 @@ export default function RunPage() {
           {stage ? (
             <StageProfile stage={stage} mode="overview" />
           ) : selectedEventId ? (
-            <Loading text="Loader etapeprofil…" />
+            <p role="status">{stageError || "Loader etapeprofil…"}</p>
           ) : null}
 
           {/* Presets */}
+          <fieldset disabled={locked || entryLoading || busy} style={{border:0,padding:0,margin:0,minWidth:0}}>
           <LineupPresets
             teamId={team.id}
             riders={riders}
@@ -245,6 +266,7 @@ export default function RunPage() {
             captainId={captainId}
             setCaptainId={setCaptainId}
           />
+          </fieldset>
 
           {/* Selection */}
           <div className="card" style={{ padding: 14 }}>
@@ -321,6 +343,7 @@ export default function RunPage() {
 
             <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center", marginTop: 10 }}>
               <select
+                aria-label="Kaptajn"
                 value={captainId}
                 onChange={(e) => setCaptainId(e.target.value)}
                 disabled={selectedRiderIds.length !== 8 || locked}
@@ -337,7 +360,7 @@ export default function RunPage() {
                   ))}
               </select>
 
-              <SmallButton className="primary" disabled={busy || !selectedEventId || locked} onClick={join}>
+              <SmallButton className="primary" disabled={busy || entryLoading || !!stageError || selectedCount!==8 || !captainId || !selectedEventId || locked} onClick={join}>
                 {busy ? "Arbejder…" : locked ? "Deadline passeret" : "Gem tilmelding"}
               </SmallButton>
             </div>
