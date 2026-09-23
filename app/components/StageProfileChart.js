@@ -1,117 +1,134 @@
 "use client";
-
-function clamp(n, a, b) { return Math.max(a, Math.min(b, n)); }
-
-function normalizePoints(profile_points) {
-  // expects [[km,elev], ...]
-  const pts = Array.isArray(profile_points) ? profile_points : [];
-  const cleaned = pts
-    .map(p => Array.isArray(p) ? { km: Number(p[0]), elev: Number(p[1]) } : null)
-    .filter(Boolean)
-    .filter(p => Number.isFinite(p.km) && Number.isFinite(p.elev))
-    .sort((a, b) => a.km - b.km);
-
-  if (cleaned.length < 2) {
-    return [{ km: 0, elev: 0 }, { km: 1, elev: 0 }];
-  }
-  return cleaned;
-}
-
-function kindColor(kind) {
-  const k = String(kind || "").toUpperCase();
-  if (k === "KOM") return "rgba(77,214,255,0.95)";
-  if (k === "COBBLES") return "rgba(124,255,107,0.95)";
-  if (k === "FINISH") return "rgba(255,255,255,0.95)";
-  return "rgba(255,255,255,0.65)";
-}
+import { useId } from "react";
+import { normalizeRoute, routeAt, clamp } from "../../lib/race/route.mjs";
 
 export default function StageProfileChart({
   stage,
-  height = 140,
+  height = 145,
   onSelectKm,
-  selectedKm
+  selectedKm,
 }) {
-  const pts = normalizePoints(stage?.profile_points);
-  const dist = Number(stage?.distance_km ?? pts[pts.length - 1]?.km ?? 1);
-
-  const elevs = pts.map(p => p.elev);
-  const minE = Math.min(...elevs);
-  const maxE = Math.max(...elevs);
-  const pad = 18;
-  const w = 1000; // virtual width for SVG viewBox
-  const h = height;
-
-  const x = (km) => pad + (clamp(km, 0, dist) / dist) * (w - pad * 2);
-  const y = (elev) => {
-    if (maxE === minE) return h / 2;
-    const t = (elev - minE) / (maxE - minE);
-    return pad + (1 - t) * (h - pad * 2);
-  };
-
-  const d = pts.map((p, i) => `${i === 0 ? "M" : "L"} ${x(p.km).toFixed(2)} ${y(p.elev).toFixed(2)}`).join(" ");
-
-  const keypoints = Array.isArray(stage?.keypoints) ? stage.keypoints : [];
-
-  const selectedX = selectedKm != null ? x(selectedKm) : null;
-
+  const id = useId().replace(/:/g, "");
+  let route;
+  try {
+    route = normalizeRoute(stage);
+  } catch {
+    return <p className="small">Ruteprofilen er endnu ikke tilgængelig.</p>;
+  }
+  const min = Math.min(...route.points.map((p) => p[1])),
+    max = Math.max(...route.points.map((p) => p[1]));
+  const x = (km) => 22 + (km / route.distance) * 956,
+    y = (elevation) =>
+      height -
+      25 -
+      ((elevation - min) / Math.max(80, max - min)) * (height - 62);
+  const line = route.points
+      .map(([km, e], i) => `${i ? "L" : "M"}${x(km)} ${y(e)}`)
+      .join(" "),
+    position = selectedKm == null ? null : clamp(selectedKm, 0, route.distance);
+  const selected = position == null ? null : routeAt(route, position);
   return (
-    <div style={{ width: "100%" }}>
-      <svg viewBox={`0 0 ${w} ${h}`} width="100%" height={h} style={{ display: "block" }}>
-        {/* background */}
-        <rect x="0" y="0" width={w} height={h} rx="18" fill="rgba(0,0,0,0.22)" stroke="rgba(255,255,255,0.10)" />
-
-        {/* area fill */}
+    <div className="stage-chart">
+      <svg
+        viewBox={`0 0 1000 ${height}`}
+        width="100%"
+        height={height}
+        role="img"
+        aria-label={`${route.distance} kilometer, ${route.ascent} højdemeter. ${selected ? `Position ${position.toFixed(1)} km, ${selected.elevation} meter over havet.` : ""}`}
+      >
+        <defs>
+          <linearGradient id={`profile-${id}`} x2="0" y2="1">
+            <stop stopColor="#a3b78e" />
+            <stop offset="1" stopColor="#e6ecd9" />
+          </linearGradient>
+        </defs>
+        {[0.25, 0.5, 0.75].map((t) => (
+          <line
+            key={t}
+            x1="22"
+            x2="978"
+            y1={height - 25 - t * (height - 50)}
+            y2={height - 25 - t * (height - 50)}
+            stroke="#e7e6d8"
+            strokeDasharray="3 7"
+          />
+        ))}
         <path
-          d={`${d} L ${x(dist).toFixed(2)} ${h - pad} L ${x(0).toFixed(2)} ${h - pad} Z`}
-          fill="rgba(124,255,107,0.10)"
+          d={`${line}L978 ${height - 24}H22Z`}
+          fill={`url(#profile-${id})`}
         />
-
-        {/* main line */}
-        <path d={d} fill="none" stroke="rgba(255,255,255,0.80)" strokeWidth="2.2" />
-
-        {/* selected km vertical */}
-        {selectedX != null ? (
-          <line x1={selectedX} x2={selectedX} y1={pad} y2={h - pad} stroke="rgba(77,214,255,0.75)" strokeWidth="2" />
-        ) : null}
-
-        {/* keypoint markers */}
-        {keypoints.map((k, idx) => {
-          const km = Number(k.km ?? 0);
-          const cx = x(km);
-          const cy = pad + 8;
-          const color = kindColor(k.kind);
-
-          return (
-            <g key={idx} onClick={() => onSelectKm?.(km)} style={{ cursor: "pointer" }}>
-              <circle cx={cx} cy={cy} r="7" fill="rgba(0,0,0,0.55)" stroke={color} strokeWidth="2" />
-              <circle cx={cx} cy={cy} r="2.5" fill={color} />
-            </g>
-          );
-        })}
-
-        {/* click overlay for selecting km */}
-        <rect
-          x={pad}
-          y={pad}
-          width={w - pad * 2}
-          height={h - pad * 2}
-          fill="transparent"
-          onClick={(e) => {
-            if (!onSelectKm) return;
-            const rect = e.currentTarget.getBoundingClientRect();
-            const px = (e.clientX - rect.left) / rect.width; // 0..1
-            onSelectKm(Math.round(px * dist));
-          }}
-          style={{ cursor: onSelectKm ? "crosshair" : "default" }}
-        />
+        <path d={line} stroke="#567549" strokeWidth="2.5" fill="none" />
+        {route.keypoints.map((k, i) => (
+          <g key={i}>
+            <line
+              x1={x(k.km)}
+              x2={x(k.km)}
+              y1="16"
+              y2={y(routeAt(route, k.km).elevation)}
+              stroke="#919c77"
+              strokeDasharray="2 4"
+            />
+            <circle
+              cx={x(k.km)}
+              cy="17"
+              r="5"
+              fill={
+                k.kind === "FINISH"
+                  ? "#b18b36"
+                  : k.kind === "COBBLES"
+                    ? "#86745f"
+                    : "#71855e"
+              }
+            />
+          </g>
+        ))}
+        {selected && (
+          <g>
+            <line
+              x1={x(position)}
+              x2={x(position)}
+              y1="13"
+              y2={height - 22}
+              stroke="#b38730"
+              strokeWidth="2"
+            />
+            <circle
+              cx={x(position)}
+              cy={y(selected.elevation)}
+              r="5"
+              fill="#d4b259"
+              stroke="#fffdf6"
+              strokeWidth="2"
+            />
+          </g>
+        )}
+        {onSelectKm && (
+          <rect
+            x="22"
+            y="0"
+            width="956"
+            height={height}
+            fill="transparent"
+            style={{ cursor: "crosshair" }}
+            onClick={(event) => {
+              const rect = event.currentTarget.getBoundingClientRect();
+              onSelectKm(
+                clamp(
+                  ((event.clientX - rect.left) / rect.width) * route.distance,
+                  0,
+                  route.distance,
+                ),
+              );
+            }}
+          />
+        )}
       </svg>
-
-      <div style={{ display: "flex", justifyContent: "space-between", marginTop: 8 }}>
-        <span className="small">0 km</span>
-        <span className="small">
-          Elev: {Math.round(minE)}–{Math.round(maxE)} m
+      <div className="profile-scale">
+        <span>Start · 0 km</span>
+        <span>
+          {min}–{max} m over havet
         </span>
-        <span className="small">{dist} km</span>
+        <span>{route.distance} km · Mål</span>
       </div>
     </div>
   );

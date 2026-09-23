@@ -56,6 +56,12 @@ try{
  const history=await (await alice.post("/api/my-history",{data:{}})).json();assert.ok(history.rows.some(r=>r.event_id===f.event));
  const result=await (await alice.get(`/api/event/results?event_id=${f.event}`)).json();assert.equal(result.riders.length,16);assert.equal(result.teams.length,2);
  const run=await (await alice.get(`/api/event-run?event_id=${f.event}`)).json();assert.equal(run.run.stage_snapshot.distance_km,130);assert.ok(run.run.feed.length>0);
+ assert.equal(run.run.replay.version,1);assert.equal(run.run.replay.roster.length,16);
+ assert.deepEqual(run.run.replay,output.divisions[0].replay);
+ assert.equal(run.team_id,f.teams.alice.id);assert.equal(run.run.seed,undefined);
+ const reloaded=await (await alice.get(`/api/event-run?event_id=${f.event}`)).json();
+ assert.deepEqual(reloaded.run.replay,run.run.replay);
+ console.log(`PASS persisted replay survives reload without exposing seed; viewer /team/view/${f.event}`);
  assert.equal((await alice.get("/api/leaderboards")).status(),200);
  const anon=createClient(cfg.url,cfg.anonKey,{auth:{persistSession:false}});
  assert.ok((await anon.rpc("recovery_race_snapshot",{p_event:f.event})).error);
