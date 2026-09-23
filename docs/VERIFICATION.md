@@ -1,5 +1,7 @@
 # Kontrol af recovery-branchen – 23. september 2026
 
+**Nyeste resultat:** 12 HTTP-kontroller mod rigtig Supabase samt browserkontrol af login, reload, navigation, to faner, logout og kontoskift er bestået i et isoleret testprojekt. Se [REAL-AUTH-VERIFICATION.md](REAL-AUTH-VERIFICATION.md). GitHub- og Vercel-adgang er genoprettet; recovery-koden er i kladde-PR #1 og er ikke deployet. Nedenstående er den tidligere kontrolhistorik.
+
 Efterfølgende live-kontrol: den godkendte rettighedsmigration er anvendt og verificeret. Alle 28 tabellers rækkeantal er uændrede, klientadgang afvises, og service_role-adgang virker. Se CONTAINMENT-APPLIED.md. Dette erstatter ikke en rigtig end-to-end login-test.
 
 | Kontrol | Resultat |

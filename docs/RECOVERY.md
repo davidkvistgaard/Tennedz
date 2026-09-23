@@ -12,8 +12,8 @@ Efterfølgende godkendt databaseindgreb: direkte klientadgang er lukket, og RLS 
 - `vercel.json` slår automatisk deployment fra for netop denne gren. Ingen live Vercel-indstillinger er ændret.
 - Ingen produktionsdata, miljøvariabler eller Supabase-konti er ændret. Databaserettigheder og RLS er efter særskilt godkendelse ændret som beskrevet i CONTAINMENT-APPLIED.md.
 - Supabase-projekt `thacsxtnycmnnpjobgiv` (Tennedz) var INACTIVE, men blev derefter genaktiveret efter brugerens godkendelse og er ACTIVE_HEALTHY. Skema, rettigheder og holdkoblinger er nu kontrolleret med read-only SQL. Se LIVE-REVIEW.md.
-- Vercel-forbindelsen returnerede ingen teams. Den faktiske produktionskonfiguration er ikke verificeret.
-- GitHub-connectorens forsøg på at oprette et Git-træ blev afvist med HTTP 403, `Resource not accessible by integration`. Ændringerne er derfor foreløbig kun gemt som lokale commits på recovery-grenen; ingen fjernbranch eller PR er oprettet. GitHub-forbindelsen skal have skriveadgang, før arbejdet kan publiceres der.
+- Vercel-adgang er genoprettet, og projekt og eksisterende deployment er identificeret. Se VERCEL-ACCESS.md. Recovery er ikke deployet.
+- GitHub-skriveadgang er genoprettet. Recovery-grenen og kladde-PR #1 er oprettet: https://github.com/davidkvistgaard/Tennedz/pull/1.
 
 ## Hvad er ændret?
 
@@ -43,21 +43,21 @@ pnpm run test:e2e
 
 Browsertest bruger Edge på Windows og Chromium på andre systemer. På andre systemer skal Playwright Chromium være installeret. Testserveren bruger kun lokale, syntetiske konti og en HTTP-testudgave af Supabase-protokollen. Der behøves ingen .env-fil og ingen rigtig database. Testportene er 3100 og 54329. Kør ikke en anden server på disse porte.
 
-Testen dokumenterer frontend → Next API → Supabase SDK → testtjeneste. Den dokumenterer IKKE produktions-RLS, rigtige passwords, Supabase-konfiguration eller refresh-token-adfærd i den rigtige tjeneste. Det er obligatoriske næste kontroller.
+Den lokale protokoltest dokumenterer frontend → Next API → Supabase SDK → testtjeneste. Efterfølgende er rigtig Supabase Auth, refresh, ejerskab, klientrettigheder og browserforløb verificeret i et isoleret projekt. Se REAL-AUTH-VERIFICATION.md; produktionskonti og Vercel-release er stadig ikke afprøvet.
 
 ## Næste godkendelsespunkt
 
 1. Genaktivering er godkendt og gennemført. Ingen spil-/kontodata er oprettet, slettet eller flyttet.
-2. Read-only kontrol af skema, migrationshistorik, RLS, grants, funktionsrettigheder og aggregeret ejerskab er gennemført. Metadata-snapshot er gemt; det erstatter ikke en fuld databackup. Auth-konfiguration og rigtig login-test mangler stadig.
-3. Lav en konkret, ikke-destruktiv migrationsplan ud fra det faktiske skema. Kontroller eksisterende `teams.user_id`, dubletter, forældreløse hold og custom-login-koblinger. Ingen automatisk sammenlægning eller nulstilling.
-4. Opret/brug et isoleret testmiljø efter afklaring af adgang og eventuelle omkostninger. Kør rigtig Supabase-login, refresh, parallelle faner, logout, sessionstilbagekaldelse og adgangsforsøg mellem to brugere. Direkte anon/authenticated databaseadgang skal også testes; API-beskyttelse erstatter ikke RLS.
-5. Fremlæg resultat og præcis database-/deploymentændring til godkendelse. Milestonen er først nået efter disse kontroller. Løbscyklussen genopbygges først derefter.
+2. Read-only skema- og ejerskabskontrol samt godkendt adgangssikring er gennemført. Metadata-snapshot erstatter ikke en fuld databackup.
+3. Isoleret rigtig Supabase-test er bestået: 12 HTTP-kontroller plus browserforløb med to faner. Se REAL-AUTH-VERIFICATION.md.
+4. Afslut oprydning af det disponible testprojekt. Ingen produktionskonti skal slettes, sammenlægges eller nulstilles automatisk.
+5. Fremlæg konkret produktionskonfiguration, kontoadgang og deploymentplan til godkendelse. Funktionel login-milepæl er verificeret i testmiljøet; offentlig drift er ikke godkendt. Løbscyklussen genopbygges først efter rapportering til ejeren.
 
 ## Begrænsninger og senere arbejde
 
 - In-process loginbegrænsning supplerer kun Supabase Auths egne grænser. Den er ikke en global rate limiter på tværs af Vercel-instanser; providerindstillinger og eventuel CAPTCHA skal verificeres inden offentlig release.
-- Service-role-adgang er kun på serveren, men omgår RLS. Hver personlige forespørgsel begrænses eksplicit til ejeren. Live RLS skal stadig gennemgås, også for gamle offentlige nøgler.
-- Ingen migrationsfil er gættet ud fra kode alene. Databasen er nu tilgængelig; et konkret forslag baseret på dens faktiske rettigheder står i LIVE-REVIEW.md og afventer godkendelse.
+- Service-role-adgang er kun på serveren, men omgår RLS. Hver personlige forespørgsel begrænses eksplicit til ejeren. Produktionsrettigheder er sikret og verificeret; direkte klientadgang er desuden afprøvet i testprojektet.
+- Rettighedsmigrationen er baseret på faktisk databasestruktur og allerede anvendt efter godkendelse. Se CONTAINMENT-APPLIED.md; anvend den ikke igen som en ny migration.
 - Løbsdata bruger flere generationer af tabeller, og visning/historik er endnu ikke harmoniseret. Ranglisten er stadig en eksisterende pladsholder. Ingen af delene er erklæret repareret.
 - Næste løbsfase skal gøre afvikling og pointtildeling atomisk og forhindre dobbeltkørsel, før de bevarede handlers åbnes igen.
 
