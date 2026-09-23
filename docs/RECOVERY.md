@@ -50,7 +50,7 @@ Den lokale protokoltest dokumenterer frontend → Next API → Supabase SDK → 
 1. Genaktivering er godkendt og gennemført. Ingen spil-/kontodata er oprettet, slettet eller flyttet.
 2. Read-only skema- og ejerskabskontrol samt godkendt adgangssikring er gennemført. Metadata-snapshot erstatter ikke en fuld databackup.
 3. Isoleret rigtig Supabase-test er bestået: 12 HTTP-kontroller plus browserforløb med to faner. Se REAL-AUTH-VERIFICATION.md.
-4. Afslut oprydning af det disponible testprojekt. Ingen produktionskonti skal slettes, sammenlægges eller nulstilles automatisk.
+4. Testprojektet beholdes på gratisplanen efter ejerens ønske. Ingen produktionskonti skal slettes, sammenlægges eller nulstilles automatisk.
 5. Fremlæg konkret produktionskonfiguration, kontoadgang og deploymentplan til godkendelse. Funktionel login-milepæl er verificeret i testmiljøet; offentlig drift er ikke godkendt. Løbscyklussen genopbygges først efter rapportering til ejeren.
 
 ## Begrænsninger og senere arbejde
