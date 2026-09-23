@@ -62,6 +62,7 @@ export function RequireTeam({ children }) {
   if (!session) return <section className="card" style={{ padding: 24 }}>
     <h1>{error?.status === 401 ? "Log ind for at se dit hold" : "Dit hold kunne ikke åbnes"}</h1>
     <p role="alert">{error?.message || "Du skal logge ind."}</p>
+    {error?.code === "TEAM_NOT_LINKED" && <p><a className="btn primary" href="/onboarding">Opret dit første hold</a></p>}
     <a href="/login">Gå til login</a>{" "}
     <button onClick={() => refresh(true)}>Prøv igen</button>{" "}
     <button onClick={() => logout().catch(e => setLogoutError(e.message))}>Log ud</button>

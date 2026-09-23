@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useAuth } from "./AuthProvider";
 
 function NavLink({ href, label }) {
   const pathname = usePathname();
@@ -30,6 +31,7 @@ function NavLink({ href, label }) {
 
 export default function TeamShell({ title, children }) {
   const [gameDate, setGameDate] = useState(null);
+  const { session } = useAuth();
 
   useEffect(() => {
     let alive = true;
@@ -49,8 +51,7 @@ export default function TeamShell({ title, children }) {
         <div style={{ display: "flex", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
           <div>
             <div className="badge" style={{ marginBottom: 10 }}>
-              <span style={{ color: "var(--accent)", fontWeight: 1000 }}>TEN</span>
-              <span style={{ color: "var(--muted)" }}>nedz</span>
+              <span style={{ color: "var(--green2)", fontWeight: 900 }}>PELOTONIA</span>
               <span style={{ marginLeft: 8, opacity: 0.85 }}>Cycling Manager</span>
             </div>
 
@@ -72,7 +73,7 @@ export default function TeamShell({ title, children }) {
             <NavLink href="/team/leaderboards" label="Ranglister" />
             <NavLink href="/team/presets" label="Presets" />
             <NavLink href="/team/history" label="Historik" />
-            <NavLink href="/admin" label="Admin" />
+            {session?.is_admin && <NavLink href="/admin" label="Admin" />}
           </div>
         </div>
       </div>
