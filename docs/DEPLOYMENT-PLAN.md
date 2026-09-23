@@ -1,6 +1,6 @@
 # Udrulningsplan efter rigtig login-test
 
-Status 23. september 2026. Planen er forberedt, men ingen Vercel-variabler, domæner eller deployments er ændret. Recovery-koden er i kladde-PR #1 på `codex/recovery-supabase-auth`; verificeret kodegrundlag er `adfea23de658835f9efb9119fb9f408e926e5d45`.
+Status 23. september 2026: den nedenfor beskrevne Preview-plan er godkendt og gennemført. Browserkontrollen bestod på kodegrundlag `8595a5d2fb0a0992c086ac8f7890b0bacc5f9765`; se VERCEL-PREVIEW-VERIFICATION.md. Produktionsplanen afventer fortsat konkret godkendelse. De følgende konfigurationsobservationer beskriver udgangspunktet før Preview-ændringerne.
 
 ## Faktisk Vercel-konfiguration
 
@@ -18,7 +18,7 @@ Read-only SQL viste to bekræftede Supabase-konti med email-provider og et eksis
 
 Der kræves derfor ingen ejerskabsflytning, ny konto eller nyt hold. Login skal bruge Supabase-kontoens password; kontrollen fastslår ikke, om det er det samme som passwordet fra custom-login. Password-hashes er ikke læst. Kontoen uden hold skal fortsat få en tydelig afvisning, ikke overtage det eksisterende hold. Eventuel kontogendannelse kræver en konkret aftale med ejeren og må ikke nulstille konti automatisk.
 
-## Næste konkrete godkendelse: beskyttet Preview
+## Godkendt og gennemført: beskyttet Preview
 
 Tilføj variabler KUN i Preview, afgrænset til Git-branchen `codex/recovery-supabase-auth`. Eksisterende All Environments-værdier ændres ikke. Ingen produktionsnøgler må anvendes af det nye preview-build:
 
