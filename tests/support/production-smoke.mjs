@@ -5,6 +5,10 @@ const checks = [
   ["GET", "/login", undefined, 200],
   ["GET", "/api/auth/me", undefined, 401],
   ["GET", "/api/events", undefined, 401],
+  ["GET", "/api/admin/stats", undefined, 401],
+  ["GET", "/api/leaderboards", undefined, 401],
+  ["POST", "/api/event/join", {}, 401],
+  ["POST", "/api/admin/run-event", {}, 401],
   ["POST", "/api/my-history", {}, 401],
   ["POST", "/api/auth/login", {}, 400],
 ];

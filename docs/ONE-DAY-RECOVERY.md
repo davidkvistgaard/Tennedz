@@ -1,6 +1,6 @@
 # Endagsløb: genoprettet kerneforløb
 
-23. september 2026. Arbejdsgren: `codex/recovery-supabase-auth`. Kun det isolerede Supabase-projekt `nxhvaoonnvmvohqaxfdx` er ændret i denne fase. Produktionen på tennedz.eu kører fortsat den tidligere godkendte login-release, med spilskrivninger lukket.
+23. september 2026. Arbejdsgren: `codex/recovery-supabase-auth`. Dette dokument beskriver implementeringen og testgrundlaget. Ejeren godkendte derefter produktionsudrulningen med »Go«. Se ONE-DAY-PRODUCTION.md for den efterfølgende release og kontrol.
 
 ## Spillerens forløb
 
@@ -53,7 +53,7 @@ Testværktøjer: `tests/support/race-seed.mjs`, `race-check.mjs`, `race-browser-
 
 ## Næste produktionsbeslutning
 
-Ingen ny produktionsændring er foretaget. Efter konkret godkendelse kan de to migrationer anvendes og denne version bygges til produktion. Før åbning skal administratorens Supabase-id angives i `ADMIN_USER_IDS`, og `RECOVERY_ALLOW_GAME_WRITES` ændres til `true`. Det åbner tilmelding og de kontrollerede endagsløb; tid/nulstilling og gamle afviklere forbliver lukkede. Eksisterende presets-endpoint følger også skriveflaget, så det skal medtages i releasekontrollen.
+Den følgende plan blev efterfølgende godkendt: anvend de to migrationer og byg denne version til produktion. Angiv administratorens Supabase-id i `ADMIN_USER_IDS`, og ændr `RECOVERY_ALLOW_GAME_WRITES` til `true`. Det åbner tilmelding og de kontrollerede endagsløb; tid/nulstilling og gamle afviklere forbliver lukkede. Database-presets forbliver også lukkede; browserens lokale udtagelses-presets er fortsat tilgængelige.
 
 Kontrollér først aktuelle produktionsmetadata, aktive events, gebyrer, gamedate og rækkeantal; tag et passende backup-/eksportgrundlag før åben drift. Deploy ikke en gammel main-build: main er endnu ikke opdateret med recovery-sikkerheden. Recovery-grenens automatiske Vercel-deploy er fortsat slået fra. Den tidligere recovery-branch-alias peger nu på produktion og må ikke forveksles med testmiljøet.
 
