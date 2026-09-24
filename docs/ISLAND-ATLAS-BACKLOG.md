@@ -88,3 +88,7 @@ Tests skal dække brudte parentreferencer, forældreløse distrikter/landmarks, 
 ## Afslutningsrapport ved implementation
 
 Rapportér valgt arkitektur, nye filer/komponenter, begrundede afhængigheder, ændringer til verdensdata, test-/buildresultater, fuldt fungerende funktioner, placeholders, screenshots hvor muligt og alle selvvalgte verdensdesignbeslutninger. Forklar enhver nødvendig ændring af et eksisterende koncept; omdøb eller genfortolk ikke tavst.
+
+## Prototypeleverance 24. september 2026
+
+En første navigerbar SVG-prototype er nu implementeret lokalt: se [arkitektur og begrænsninger](ATLAS-PROTOTYPE.md) og [leverancen](VISUAL-ATLAS-RELEASE.md). ATLAS-01 er besluttet; 02–05 har et sammenhængende prototypeudsnit. ATLAS-06 er fortsat visuelt prototypearbejde, ikke færdig topografisk art. ATLAS-07 omfatter nye data-/browsertests og previewkontrol. Den større landsdækkende detaljeringsopgave er ikke markeret færdig.

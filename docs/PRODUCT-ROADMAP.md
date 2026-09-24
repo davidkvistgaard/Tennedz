@@ -36,3 +36,7 @@ Første holdoprettelse og starttrup er implementeret; se ONBOARDING.md for test,
 `teams.rating` bevares som den historiske opsummering af holdets løbspræmier; den er ikke længere holdets viste konkurrencerating eller grundlag for seeding. `event_team_results.points` bevarer pointene fra hvert enkelt løb. Ingen gamle point omskrives. Motorkoden er versionsmærket `recovery-one-day-2`; allerede afsluttede løb returnerer fortsat deres gemte resultat.
 
 Verifikation: 11 enhedstests, lint og build består. Transaktionstest i isoleret Supabase opretter midlertidigt 20 mænd med rating 1–20 og otte kvinder med rating 100: forventet holdrating er 200/800. Ændring af form/fatigue påvirker ikke rating. Klientroller har ikke direkte execute-adgang. Alle syntetiske rækker rulles tilbage efter testen.
+
+## Portrætter: art direction V1, godkendt til videre test
+
+Portrætstudie 04 erstatter 02 som gældende stilreference. Se [ejerens fulde krav](PORTRAIT-ART-DIRECTION-V1.md) og [portrætbacklog](PORTRAIT-BACKLOG.md). De 12 ansigter er ikke en skabelonpulje eller godkendte produktionsaktiver. Smykker og farvet hår skal være sjældnere træk. Denne registrering starter ikke betalt massegenerering eller produktionsmigrationer.
