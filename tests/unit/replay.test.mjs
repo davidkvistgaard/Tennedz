@@ -9,10 +9,10 @@ import {
 } from "../../lib/race/replay.mjs";
 const teams = Array.from({ length: 3 }, (_, t) => ({
   id: `team-${t}`,
-  name: `Hold ${t}`,
+  name: `Team ${t}`,
   riders: Array.from({ length: 8 }, (_, i) => ({
     id: `r${t}-${i}`,
-    name: `Rytter ${t}-${i}`,
+    name: `Rider ${t}-${i}`,
     gender: "F",
     is_captain: i === 0,
     sprint: 30 + i * 4,
@@ -29,7 +29,7 @@ const teams = Array.from({ length: 3 }, (_, t) => ({
   })),
 }));
 const stage = {
-  name: "Bakkernes finale",
+  name: "Hills finale",
   distance_km: 130,
   tags: ["HILLS"],
   profile_points: [
@@ -39,7 +39,7 @@ const stage = {
     [110, 500],
     [130, 80],
   ],
-  keypoints: [{ km: 110, kind: "KOM", label: "Sidste stigning" }],
+  keypoints: [{ km: 110, kind: "KOM", label: "Final climb" }],
 };
 test("recorded replay retains every rider once in every frame and ends at exact results", () => {
   for (let i = 0; i < 80; i++) {

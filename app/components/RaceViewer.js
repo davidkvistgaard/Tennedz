@@ -1,4 +1,5 @@
 "use client";
+import { commentaryText } from "../../lib/race/commentary.mjs";
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import RaceScene from "./RaceScene";
@@ -87,24 +88,24 @@ export default function RaceViewer({ run, teamId }) {
         <div className="race-titlebar">
           <div>
             <p className="eyebrow">
-              {finished ? "I mål" : "Løbsdag · afspilning"} · Division{" "}
+              {finished ? "Finished" : "Race day · replay"} · Division{" "}
               {run.division_index}
             </p>
             <h1>{replay.route.name}</h1>
           </div>
           <div className="distance-display">
             <strong>{Math.max(0, distance - km).toFixed(1)}</strong>
-            <span>km til mål</span>
+            <span>km to go</span>
           </div>
         </div>
         <div className="race-conditions">
           <span>{terrainLabels[terrain.terrain]}</span>
           <span>{replay.weather?.temp_c ?? "—"} °C</span>
-          <span>Vind {replay.weather?.wind_kph ?? "—"} km/t</span>
+          <span>Wind {replay.weather?.wind_kph ?? "—"} km/h</span>
           <span>
             {Number(replay.weather?.precipitation_mm) > 0
-              ? "Regn på ruten"
-              : "Tørt føre"}
+              ? "Rain on the route"
+              : "Dry conditions"}
           </span>
         </div>
         <RaceScene
@@ -115,7 +116,7 @@ export default function RaceViewer({ run, teamId }) {
           weather={replay.weather}
           finished={finished}
         />
-        <section className="replay-controls" aria-label="Afspilning">
+        <section className="replay-controls" aria-label="Playback">
           <div className="control-row">
             <button
               className="btn primary"
@@ -124,19 +125,19 @@ export default function RaceViewer({ run, teamId }) {
                 setPlaying(!playing);
               }}
             >
-              {playing ? "Pause" : finished ? "Se igen" : "▶ Afspil"}
+              {playing ? "Pause" : finished ? "Watch again" : "▶ Play"}
             </button>
             <button
               className="btn"
               onClick={() => jump(nextMoment(replay, km))}
               disabled={finished}
             >
-              Næste øjeblik →
+              Next moment →
             </button>
             <label className="speed-control">
               Tempo
               <select
-                aria-label="Afspilningshastighed"
+                aria-label="Playback speed"
                 value={speed}
                 onChange={(e) => setSpeed(Number(e.target.value))}
               >
@@ -153,7 +154,7 @@ export default function RaceViewer({ run, teamId }) {
                 jump(0);
               }}
             >
-              Fra start
+              From the start
             </button>
           </div>
           {resumeAt > 0 && km === 0 && (
@@ -164,11 +165,11 @@ export default function RaceViewer({ run, teamId }) {
                 setResumeAt(0);
               }}
             >
-              Fortsæt fra din sidste visning · km {resumeAt.toFixed(1)}
+              Resume from your last viewing · km {resumeAt.toFixed(1)}
             </button>
           )}
           <label className="sr-only" htmlFor="replay-position">
-            Position i afspilningen
+            Playback position
           </label>
           <input
             id="replay-position"
@@ -179,19 +180,19 @@ export default function RaceViewer({ run, teamId }) {
             step="0.1"
             value={km}
             onChange={(e) => jump(Number(e.target.value))}
-            aria-valuetext={`Kilometer ${km.toFixed(1)} af ${distance}`}
+            aria-valuetext={`Kilometre ${km.toFixed(1)} of ${distance}`}
           />
           <div className="control-footnote">
             <span>Start</span>
-            <span>Hele løbet er beregnet. Du styrer kun visningen.</span>
-            <span>Mål</span>
+            <span>The whole race has been calculated. You control only the playback.</span>
+            <span>Finish</span>
           </div>
         </section>
         <section className="card profile-panel">
           <div className="panel-heading">
-            <h2>Vejen til mål</h2>
+            <h2>The road to the finish</h2>
             <span>
-              {replay.route.ascent.toLocaleString("da-DK")} højdemeter
+              {replay.route.ascent.toLocaleString("en-GB")} m of climbing
             </span>
           </div>
           <StageProfileChart
@@ -202,8 +203,8 @@ export default function RaceViewer({ run, teamId }) {
         </section>
         <section className="card commentary-panel">
           <div className="panel-heading">
-            <h2>Fra løbet</h2>
-            <span>{moments.length} hændelser</span>
+            <h2>Race commentary</h2>
+            <span>{moments.length} moments</span>
           </div>
           <ol className="race-feed">
             {moments
@@ -215,34 +216,34 @@ export default function RaceViewer({ run, teamId }) {
                     {moment.km.toFixed(0)}
                     <small>km</small>
                   </span>
-                  <p>{moment.text}</p>
+                  <p>{commentaryText(moment.text)}</p>
                   {moment.rider_ids?.some((id) =>
                     own.some((r) => r.id === id),
-                  ) && <span className="own-chip">Dit hold</span>}
+                  ) && <span className="own-chip">Your team</span>}
                 </li>
               ))}
           </ol>
         </section>
         {finished && (
           <section className="card finish-panel">
-            <p className="eyebrow">Løbet er afgjort</p>
+            <p className="eyebrow">The race is decided</p>
             <h2>
               {
                 replay.roster.find((r) => r.id === replay.finish[0]?.rider_id)
                   ?.name
               }{" "}
-              vinder
+              wins
             </h2>
             <p>
               {captain
-                ? `Din kaptajn ${captain.name} slutter som nr. ${replay.finish.find((r) => r.rider_id === captain.id)?.position}.`
-                : "Se placeringer og point fra divisionen."}
+                ? `Your captain ${captain.name} finishes in position ${replay.finish.find((r) => r.rider_id === captain.id)?.position}.`
+                : "See the division placings and points."}
             </p>
             <Link
               className="btn primary"
               href={`/team/results/${run.event_id}?division=${run.division_index}`}
             >
-              Se resultat og point →
+              View results and points →
             </Link>
           </section>
         )}
@@ -250,7 +251,7 @@ export default function RaceViewer({ run, teamId }) {
       <aside className="replay-sidebar">
         <section className="card captain-panel">
           <p className="eyebrow">
-            {currentRider?.captain ? "Din kaptajn" : "Dit fokus"}
+            {currentRider?.captain ? "Your captain" : "Your focus"}
           </p>
           {currentRider ? (
             <>
@@ -269,27 +270,27 @@ export default function RaceViewer({ run, teamId }) {
               <p className="captain-gap">
                 {focusGroup?.gap > 0.5
                   ? formatGap(focusGroup.gap)
-                  : "Med helt fremme"}
+                  : "With the leaders"}
               </p>
               <p className="small">
-                {focusGroup?.riders.length || 0} ryttere i gruppen
+                {focusGroup?.riders.length || 0} riders in the group
               </p>
             </>
           ) : (
             <p>
-              Dit hold deltager ikke i denne division. Du følger løbet som
-              tilskuer.
+              Your team is not competing in this division. You are watching as
+              a spectator.
             </p>
           )}
           <button className="text-button" onClick={() => setFocusId(null)}>
-            Vis alle grupper
+            Show all groups
           </button>
         </section>
         {!!own.length && (
           <section className="card roster-panel">
             <div className="panel-heading">
-              <h2>Dit hold</h2>
-              <span>{own.length} ryttere</span>
+              <h2>Your team</h2>
+              <span>{own.length} riders</span>
             </div>
             {own.map((r) => {
               const group = frame.groups.find((g) => g.riders.includes(r.id));
@@ -303,7 +304,7 @@ export default function RaceViewer({ run, teamId }) {
                   <span className="rider-dot">{r.captain ? "★" : "●"}</span>
                   <span>
                     {r.name}
-                    <small>{r.captain ? "Kaptajn" : "Rytter"}</small>
+                    <small>{r.captain ? "Captain" : "Rider"}</small>
                   </span>
                   <strong>
                     {group?.gap > 0.5 ? formatGap(group.gap) : "Front"}
@@ -315,19 +316,19 @@ export default function RaceViewer({ run, teamId }) {
         )}
         <section className="card groups-panel">
           <div className="panel-heading">
-            <h2>På vejen</h2>
-            <span>{frame.groups.length} grupper</span>
+            <h2>On the road</h2>
+            <span>{frame.groups.length} groups</span>
           </div>
           {frame.groups.slice(0, 8).map((g, i) => (
             <div className="group-row" key={i}>
-              <span>{i === 0 ? "Fronten" : `Gruppe ${i + 1}`}</span>
+              <span>{i === 0 ? "Leaders" : `Group ${i + 1}`}</span>
               <strong>{g.riders.length}</strong>
               <span>{i === 0 ? "—" : formatGap(g.gap)}</span>
             </div>
           ))}
           {frame.groups.length > 8 && (
             <p className="small">
-              + {frame.groups.length - 8} grupper længere tilbage
+              + {frame.groups.length - 8} groups further back
             </p>
           )}
         </section>

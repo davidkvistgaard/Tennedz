@@ -89,7 +89,7 @@ function RaceScene({
       <svg
         viewBox="0 0 1000 340"
         role="img"
-        aria-label={`${groups.length} løbsgrupper ved kilometer ${frame.km}. Placeringerne er en oversigt over de gemte tidsafstande.`}
+        aria-label={`${groups.length} race groups at kilometre ${frame.km}. Positions represent the recorded time gaps.`}
       >
         <path
           d="M0 214Q200 196 443 218T1000 205V291Q730 305 475 287T0 294Z"
@@ -142,8 +142,8 @@ function RaceScene({
                   >
                     {group.gap < 0.5
                       ? groups.length === 1
-                        ? "Samlet felt"
-                        : "Fronten"
+                        ? "Peloton together"
+                        : "Leaders"
                       : formatGap(group.gap)}
                   </text>
                   <text
@@ -153,8 +153,8 @@ function RaceScene({
                     textAnchor="middle"
                     fill={selected ? "#d6e2cb" : "#687769"}
                   >
-                    {group.riders.length} ryttere
-                    {own.length ? ` · ${own.length} dine` : ""}
+                    {group.riders.length} riders
+                    {own.length ? ` · ${own.length} yours` : ""}
                   </text>
                 </g>
                 {visible.map((r, i) => (
@@ -190,8 +190,8 @@ function RaceScene({
       </svg>
       </div>
       <div className="scene-caption">
-        <span>{finished ? "Målpassage" : "Løbsbilledet"}</span>
-        <span>Gruppeoversigt · {largest} i største gruppe</span>
+        <span>{finished ? "Crossing the line" : "Race view"}</span>
+        <span>Group overview · {largest} in the largest group</span>
       </div>
     </div>
   );

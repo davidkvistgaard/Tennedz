@@ -14,14 +14,14 @@ export const GET = protectedRoute(async (req, context, auth) => {
   if (mine.error)
     throw new AuthError(
       "RUN_UNAVAILABLE",
-      "Divisionen kunne ikke hentes.",
+      "Could not load the division.",
       503,
     );
   const index = Number(
     url.searchParams.get("division_index") || mine.data?.division_index || 1,
   );
   if (!Number.isInteger(index) || index < 1)
-    throw new AuthError("INVALID_DIVISION", "Ugyldig division.", 400);
+    throw new AuthError("INVALID_DIVISION", "Invalid division.", 400);
   const { data, error } = await auth.db
     .from("event_division_runs")
     .select(
@@ -33,13 +33,13 @@ export const GET = protectedRoute(async (req, context, auth) => {
   if (error)
     throw new AuthError(
       "RUN_UNAVAILABLE",
-      "Løbsreferatet kunne ikke hentes.",
+      "Could not load the race report.",
       503,
     );
   if (!data)
     throw new AuthError(
       "RUN_PENDING",
-      "Denne division er ikke afviklet endnu.",
+      "This division has not raced yet.",
       404,
     );
   return NextResponse.json({ ok: true, run: data, team_id: auth.team.id });

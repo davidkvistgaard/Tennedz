@@ -21,20 +21,24 @@ export function RiderArt({rider}) {
   const mouths=`M${100-mw} ${lipY} Q100 ${lipY+smile} ${100+mw} ${lipY-a.asymmetry}`;
   const hairline=a.hairline==='high'?8:a.hairline==='receding'?12:a.hairline==='low'?-4:0;
   const fringe=a.hairStyle==='pixie'?`M56 64Q72 29 138 49L120 73L124 56L77 72Z`:a.hairStyle==='fade'?`M58 67L63 42Q96 23 139 42L141 60Q101 47 58 67Z`:a.hairStyle==='classic'?`M56 70Q64 22 139 42Q127 62 80 67L64 83Z`:null;
-  return <svg viewBox="0 0 200 240" width="100%" height="100%" aria-hidden="true">
+  return <svg viewBox="8 8 184 222" preserveAspectRatio="xMidYMax meet" width="100%" height="100%" aria-hidden="true">
     <defs>
+      <radialGradient id={`${id}paper`} cx="35%" cy="28%" r="80%"><stop stopColor="#fcf4df"/><stop offset=".65" stopColor="#e4dfc7"/><stop offset="1" stopColor="#c5cdb4"/></radialGradient>
       <linearGradient id={`${id}s`} x1="0" y1="0" x2="1" y2=".6"><stop stopColor={shade(a.skin,1.08)}/><stop offset=".48" stopColor={a.skin}/><stop offset="1" stopColor={shade(a.skin,.83)}/></linearGradient>
       <linearGradient id={`${id}h`} x1="0" y1="0" x2="1" y2="1"><stop stopColor={shade(hair,1.22)}/><stop offset="1" stopColor={hair}/></linearGradient>
       <linearGradient id={`${id}j`} x1="0" y1="0" x2="1" y2="1"><stop stopColor="#36866b"/><stop offset="1" stopColor="#124d40"/></linearGradient>
       <clipPath id={`${id}face`}><path d={head}/></clipPath>
       <clipPath id={`${id}hair`}><path d={`M${100-side-5} 85 Q44 29 100 ${top-8} Q158 25 ${100+side+5} 87 L138 64 Q101 74 62 64Z`}/></clipPath>
     </defs>
-    <rect width="200" height="240" fill="#eee9df"/><circle cx="99" cy="92" r="82" fill="#f8f3e9"/>
+    <rect width="200" height="240" fill={`url(#${id}paper)`}/>
+    <path d="M0 185Q42 173 66 185T129 179T200 168V240H0Z" fill="#a1ae8d" opacity=".15"/>
+    <ellipse cx="101" cy="233" rx="77" ry="14" fill="#293e30" opacity=".10"/>
     {long&&<path d="M56 68 Q42 120 55 190 L144 190 Q157 115 144 66Z" fill={hair}/>}
     <path d={`M${100-18*a.neckWidth} 137 L${100-18*a.neckWidth} 176 Q100 194 ${100+18*a.neckWidth} 176 L${100+18*a.neckWidth} 137Z`} fill={`url(#${id}s)`}/>
     <path d="M79 147 Q100 167 121 147 L120 161 Q101 176 80 161Z" fill="#5b3428" opacity=".16"/>
     <path d={`M${100-83*a.shoulders} 240 L${100-74*a.shoulders} 193 Q49 177 76 170 Q100 187 124 170 Q151 177 ${100+74*a.shoulders} 193 L${100+83*a.shoulders} 240Z`} fill={`url(#${id}j)`}/>
     <path d="M76 171 Q100 188 124 171 L127 180 Q100 198 73 180Z" fill="#a6b8a2"/>
+    <path d="M41 191Q47 213 46 240M157 191Q151 213 153 240" fill="none" stroke="#092f28" strokeWidth="2" opacity=".25"/>
     <path d="M100 187V240" stroke="#c4d0b4" strokeWidth="2" opacity=".7"/>
     <path d="M28 211L53 219M147 219L174 211" stroke="#d3dcc3" strokeWidth="8" opacity=".8"/>
     <g transform={`translate(100 98) scale(${sx} ${sy}) translate(-100 -98)`}>
@@ -88,7 +92,7 @@ export default function RiderAvatar({rider,size=76}) {
   const [failedPath,setFailedPath]=useState(null);
   // Only reviewed local assets; no arbitrary remote tracking URLs or SVG uploads.
   const path=/^\/portraits\/[a-zA-Z0-9_-]+\.(png|webp)$/.test(rider?.portrait_path||'')?rider.portrait_path:null;
-  return <div role="img" aria-label={`Portræt af ${rider?.display_name||rider?.name||'rytter'}`} style={{width:size,height:size,flexShrink:0,borderRadius:12,overflow:'hidden',background:'#eee9df',border:'1px solid #dadfd6'}}>
+  return <div className="rider-avatar" role="img" aria-label={`Portrait of ${rider?.display_name||rider?.name||'rider'}`} style={{width:size,height:size,flexShrink:0,borderRadius:12,overflow:'hidden',background:'#eee9df',border:'1px solid #dadfd6'}}>
     {path&&failedPath!==path?<img src={path} alt="" width={size} height={size} onError={()=>setFailedPath(path)} style={{width:'100%',height:'100%',objectFit:'cover'}}/>:<RiderArt rider={rider}/>}
   </div>;
 }

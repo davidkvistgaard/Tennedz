@@ -13,7 +13,7 @@ async function handler(req, context, auth) {
       supabase.from("event_team_results").select("event_id", { count: "exact", head: true })
     ]);
 
-    if ([teams,riders,race_results].some(result=>result.error)) throw new Error("Statistikken kunne ikke hentes.");
+    if ([teams,riders,race_results].some(result=>result.error)) throw new Error("Could not load statistics.");
     return NextResponse.json({
       ok: true,
       game_writes_enabled: process.env.RECOVERY_ALLOW_GAME_WRITES === "true",

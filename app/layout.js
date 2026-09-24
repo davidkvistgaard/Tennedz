@@ -1,4 +1,5 @@
 import "./globals.css";
+import "./experience.css";
 import { AuthProvider } from "./components/AuthProvider";
 
 export const metadata = {
@@ -8,7 +9,7 @@ export const metadata = {
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="da">
+    <html lang="en">
       <body>
         <AuthProvider><main>{children}</main></AuthProvider>
       </body>

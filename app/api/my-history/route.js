@@ -8,6 +8,6 @@ export const POST = protectedRoute(async(req,context,auth)=>{
   const {data,error}=await auth.db.from("event_team_results")
     .select("event_id,team_id,division_index,position,points,created_at,event:events(name)")
     .eq("team_id",auth.team.id).order("created_at",{ascending:false}).limit(limit);
-  if (error) throw new AuthError("HISTORY_UNAVAILABLE","Historikken kunne ikke hentes.",503);
-  return NextResponse.json({ok:true,rows:(data || []).map(r=>({...r,event_name:r.event?.name || "Endagsløb"}))});
+  if (error) throw new AuthError("HISTORY_UNAVAILABLE","Could not load your history.",503);
+  return NextResponse.json({ok:true,rows:(data || []).map(r=>({...r,event_name:r.event?.name || "One-day race"}))});
 });

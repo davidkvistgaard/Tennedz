@@ -58,14 +58,14 @@ export const useAuth = () => useContext(AuthContext);
 export function RequireTeam({ children }) {
   const { loading, session, error, refresh, logout } = useAuth();
   const [logoutError, setLogoutError] = useState("");
-  if (loading) return <p role="status">Tjekker login…</p>;
+  if (loading) return <p role="status">Checking your session…</p>;
   if (!session) return <section className="card" style={{ padding: 24 }}>
-    <h1>{error?.status === 401 ? "Log ind for at se dit hold" : "Dit hold kunne ikke åbnes"}</h1>
-    <p role="alert">{error?.message || "Du skal logge ind."}</p>
-    {error?.code === "TEAM_NOT_LINKED" && <p><a className="btn primary" href="/onboarding">Opret dit første hold</a></p>}
-    <a href="/login">Gå til login</a>{" "}
-    <button onClick={() => refresh(true)}>Prøv igen</button>{" "}
-    <button onClick={() => logout().catch(e => setLogoutError(e.message))}>Log ud</button>
+    <h1>{error?.status === 401 ? "Sign in to see your team" : "Could not open your team"}</h1>
+    <p role="alert">{error?.message || "Please sign in."}</p>
+    {error?.code === "TEAM_NOT_LINKED" && <p><a className="btn primary" href="/onboarding">Create your first team</a></p>}
+    <a href="/login">Go to sign in</a>{" "}
+    <button onClick={() => refresh(true)}>Try again</button>{" "}
+    <button onClick={() => logout().catch(e => setLogoutError(e.message))}>Sign out</button>
     {logoutError && <p role="alert">{logoutError}</p>}
   </section>;
   // Remount page state when the account changes, including across browser tabs.

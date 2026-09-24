@@ -25,11 +25,11 @@ export default function OnboardingPage() {
       signalAuthChange(); window.location.assign("/team");
     } catch(e) {setError(e.message);setBusy(false);}
   }
-  return <WelcomeFrame eyebrow="TRIN 2 AF 2 · DIT HOLD" title="Giv ambitionerne et navn" intro="Dit første hold består af 8 mænd og 8 kvinder. To separate løbskalendere, én fælles ambition.">
-    <div className="starter-summary"><div><strong>16</strong><span>ryttere</span></div><div><strong>8 + 8</strong><span>mænd og kvinder</span></div><div><strong>100.000</strong><span>coins</span></div></div>
-    <p className="welcome-intro">Du får sprintere, klatrere, klassikerryttere og tempospecialister. Alle starter med 0 resultatpoint.</p>
-    {ready && <form onSubmit={submit} className="welcome-fields"><label>Holdnavn<input autoComplete="off" minLength={3} maxLength={40} required value={name} placeholder="Fx Nordlys Cycling" onChange={e=>setName(e.target.value)}/></label><button className="btn primary" disabled={busy}>{busy ? "Samler dit hold…" : "Opret mit hold →"}</button></form>}
-    {error ? <p role="alert" className="welcome-error">{error}</p> : !ready && <p role="status">Tjekker din konto…</p>}
-    <p className="welcome-footer"><Link href="/login">Til login</Link> · <button className="welcome-text-button" onClick={()=>logout().catch(e=>setError(e.message))}>Log ud</button></p>
+  return <WelcomeFrame eyebrow="STEP 2 OF 2 · YOUR TEAM" title="Give your ambitions a name" intro="Your first team has 8 men and 8 women. Two separate race calendars, one shared ambition.">
+    <div className="starter-summary"><div><strong>16</strong><span>riders</span></div><div><strong>8 + 8</strong><span>men and women</span></div><div><strong>100,000</strong><span>coins</span></div></div>
+    <p className="welcome-intro">Your squad includes sprinters, climbers, classics riders, and time trial specialists. Everyone starts with 0 race points.</p>
+    {ready && <form onSubmit={submit} className="welcome-fields"><label>Team name<input autoComplete="off" minLength={3} maxLength={40} required value={name} placeholder="e.g. Northern Lights Cycling" onChange={e=>setName(e.target.value)}/></label><button className="btn primary" disabled={busy}>{busy ? "Assembling your team…" : "Create my team →"}</button></form>}
+    {error ? <p role="alert" className="welcome-error">{error}</p> : !ready && <p role="status">Checking your account…</p>}
+    <p className="welcome-footer"><Link href="/login">Sign in</Link> · <button className="welcome-text-button" onClick={()=>logout().catch(e=>setError(e.message))}>Sign out</button></p>
   </WelcomeFrame>;
 }

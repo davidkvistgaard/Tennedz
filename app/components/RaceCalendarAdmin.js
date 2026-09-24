@@ -54,7 +54,7 @@ export default function RaceCalendarAdmin({ enabled, onCreated }) {
         body: JSON.stringify({ ...input, request_id: request.current.id }),
       });
       setMessage(
-        `${result.event_ids.length} ${result.event_ids.length === 1 ? "løb er" : "separate løb er"} ${result.already_created ? "allerede oprettet" : "oprettet"}. Tilmeldingen er åben i kalenderen.`,
+        `${result.event_ids.length} ${result.event_ids.length === 1 ? "race is" : "separate races are"} ${result.already_created ? "already created" : "created"}. Entries are open in the calendar.`,
       );
       await onCreated();
     } catch (e) {
@@ -65,26 +65,26 @@ export default function RaceCalendarAdmin({ enabled, onCreated }) {
   }
   return (
     <section className="admin-calendar">
-      <h2>Opret en løbsdag</h2>
+      <h2>Create a race day</h2>
       <p>
-        Nye løb er gratis. Begge køn oprettes som to selvstændige løb på samme
-        rute. Ruterne er fiktive, og eksisterende løb ændres ikke.
+        New races are free to enter. Selecting both categories creates two separate races on the same
+        route. Routes are fictional, and existing races stay unchanged.
       </p>
       <form onSubmit={create}>
         <fieldset disabled={!enabled || busy} className="calendar-form">
           <label>
-            Løbsnavn
+            Race name
             <input
               required
               minLength={3}
               maxLength={90}
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="Fx Pelotonia Åbningsløb"
+              placeholder="e.g. Pelotonia Opening Race"
             />
           </label>
           <label>
-            Rute
+            Route
             <select
               value={template}
               onChange={(e) => setTemplate(e.target.value)}
@@ -97,15 +97,15 @@ export default function RaceCalendarAdmin({ enabled, onCreated }) {
             </select>
           </label>
           <label>
-            Kategori
+            Category
             <select value={gender} onChange={(e) => setGender(e.target.value)}>
-              <option value="BOTH">Mænd og kvinder · separate løb</option>
-              <option value="M">Mænd</option>
-              <option value="F">Kvinder</option>
+              <option value="BOTH">Men and women · separate races</option>
+              <option value="M">Men</option>
+              <option value="F">Women</option>
             </select>
           </label>
           <label>
-            Tilmeldingsdeadline · din lokale tid
+            Entry deadline · your local time
             <input
               required
               type="datetime-local"
@@ -118,7 +118,7 @@ export default function RaceCalendarAdmin({ enabled, onCreated }) {
             disabled={!templates.length}
             type="submit"
           >
-            {busy ? "Opretter…" : "Opret gratis løbsdag"}
+            {busy ? "Creating…" : "Create free race day"}
           </button>
         </fieldset>
       </form>

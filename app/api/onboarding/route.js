@@ -20,16 +20,16 @@ export async function POST(req) {
     const { user } = await requireUser();
     requireGameWrites();
     const raw = await req.text();
-    if (raw.length > 1024) throw new AuthError("INVALID_REQUEST","Anmodningen er for stor.",400);
+    if (raw.length > 1024) throw new AuthError("INVALID_REQUEST","The request is too large.",400);
     let body;
-    try { body = JSON.parse(raw); } catch { throw new AuthError("INVALID_REQUEST","Ugyldig anmodning.",400); }
+    try { body = JSON.parse(raw); } catch { throw new AuthError("INVALID_REQUEST","Invalid request.",400); }
     // Never accept user IDs, rider stats, coins or ownership claims from the client.
     const name = teamName(body?.name);
     const { data, error } = await databaseClient().rpc("recovery_create_starter_team", {
       p_user:user.id, p_name:name, p_riders:starterPack(() => randomInt(0,2**32)/2**32),
     });
     if (error) {
-      if (error.code === "P0001") throw new AuthError("TEAM_LINK_CONFLICT","Din holdtilknytning skal kontrolleres af administratoren. Ingen data er ændret.",409);
+      if (error.code === "P0001") throw new AuthError("TEAM_LINK_CONFLICT","Your team ownership needs to be checked by the administrator. No data has been changed.",409);
       throw new Error("Team creation failed");
     }
     return NextResponse.json({ok:true,team_id:data.team_id,created:data.created},{headers:privateHeaders});

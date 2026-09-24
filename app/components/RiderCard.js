@@ -42,7 +42,7 @@ export default function RiderCard({ r, selected, onClick, disabled }) {
               </span>
             </div>
             <div className="small" style={{ marginTop: 4, opacity: 0.8 }}>
-              Alder {r.age ?? "?"} · Form {r.form ?? 0} · Fatigue {r.fatigue ?? 0}
+              Age {r.age ?? "?"} · Form {r.form ?? 0} · Fatigue {r.fatigue ?? 0}
             </div>
           </div>
 
@@ -53,9 +53,9 @@ export default function RiderCard({ r, selected, onClick, disabled }) {
         </div>
 
         <div style={{ marginTop: 8, display: "flex", gap: 6, flexWrap: "wrap" }}>
-          <span className="pill">{(r.sprint ?? 0) >= 40 ? "Sprinter" : "Rytter"}</span>
-          {(r.cobbles ?? 0) >= 40 ? <span className="pill">Brosten</span> : null}
-          {(r.mountain ?? 0) >= 40 ? <span className="pill">Bjerge</span> : null}
+          <span className="pill">{(r.sprint ?? 0) >= 40 ? "Sprinter" : "Rider"}</span>
+          {(r.cobbles ?? 0) >= 40 ? <span className="pill">Cobbles</span> : null}
+          {(r.mountain ?? 0) >= 40 ? <span className="pill">Mountains</span> : null}
           {(r.timetrial ?? 0) >= 40 ? <span className="pill">TT</span> : null}
         </div>
       </div>

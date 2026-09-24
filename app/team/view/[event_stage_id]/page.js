@@ -1,4 +1,5 @@
 "use client";
+import { commentaryText } from "../../../../lib/race/commentary.mjs";
 import { use, useEffect, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
@@ -33,7 +34,7 @@ export default function ViewPage({ params }) {
         });
         const result = await prepared.json();
         if (!prepared.ok || !result.ok)
-          throw new Error(result.error || "Løbet kunne ikke gøres klar.");
+          throw new Error(result.error || "Could not prepare the race.");
         r = await fetch(runUrl, {
           signal: controller.signal,
           cache: "no-store",
@@ -41,7 +42,7 @@ export default function ViewPage({ params }) {
       }
       const j = await r.json();
       if (!r.ok || !j.ok)
-        throw new Error(j.error || "Løbet kunne ikke hentes.");
+        throw new Error(j.error || "Could not load the race.");
       if (active) setData(j);
     })().catch((e) => {
       if (active && e.name !== "AbortError") setError(e.message);
@@ -52,27 +53,27 @@ export default function ViewPage({ params }) {
     };
   }, [eventId, division, attempt]);
   return (
-    <TeamShell title="Løbsdagen" compact>
+    <TeamShell title="Race day" compact>
       {error ? (
         <section className="card empty-state" role="status">
-          <p className="eyebrow">Løbet er ikke klar</p>
-          <h1>Vi mangler løbsforløbet</h1>
+          <p className="eyebrow">The race is not ready</p>
+          <h1>Race replay unavailable</h1>
           <p>{error}</p>
           <button
             className="btn primary"
             onClick={() => setAttempt((n) => n + 1)}
           >
-            Prøv igen
+            Try again
           </button>
           <Link className="btn" href="/team/run">
-            Til løbskalenderen
+            To the race calendar
           </Link>
         </section>
       ) : !data ? (
         <section className="card empty-state" role="status">
           <div className="loading-wheel" />
-          <h2>Gør løbsdagen klar…</h2>
-          <p>Henter det gemte løbsforløb.</p>
+          <h2>Preparing race day…</h2>
+          <p>Loading the recorded race.</p>
         </section>
       ) : data.run.replay?.version === 1 ? (
         <RaceViewer
@@ -82,19 +83,19 @@ export default function ViewPage({ params }) {
         />
       ) : (
         <section className="card empty-state">
-          <p className="eyebrow">Historisk løb</p>
-          <h1>{data.run.stage_snapshot?.name || "Løbsreferat"}</h1>
+          <p className="eyebrow">Historic race</p>
+          <h1>{data.run.stage_snapshot?.name || "Race report"}</h1>
           <p>
-            Dette løb blev kørt før den nye viewer. Det originale referat er
-            bevaret; der findes ingen optagelse med grupper.
+            This race took place before the new viewer. The original report is
+            preserved; no recorded group replay is available.
           </p>
           <button
             className="btn primary"
             onClick={() => setShowReport(!showReport)}
           >
             {showReport
-              ? "Skjul referat"
-              : "Vis hele referatet (afslører resultatet)"}
+              ? "Hide report"
+              : "Show the full report (reveals the result)"}
           </button>
           {showReport && (
             <ol className="race-feed">
@@ -104,7 +105,7 @@ export default function ViewPage({ params }) {
                     {x.km ?? "—"}
                     <small>km</small>
                   </span>
-                  <p>{x.text || x.message || String(x)}</p>
+                  <p>{commentaryText(x.text || x.message || String(x))}</p>
                 </li>
               ))}
             </ol>
