@@ -4,6 +4,7 @@ import { spawn } from "node:child_process";
 import { randomUUID } from "node:crypto";
 
 const sessions = new Map();
+const clubKits = new Map();
 const ids = { alice: "11111111-1111-4111-8111-111111111111", bob: "22222222-2222-4222-8222-222222222222", missing: "33333333-3333-4333-8333-333333333333", duplicate: "44444444-4444-4444-8444-444444444444" };
 const user = name => ({ id: ids[name], email: `${name}@tennedz.local`, aud: "authenticated", role: "authenticated", app_metadata: {}, user_metadata: {}, created_at: "2026-01-01T00:00:00Z" });
 function token(name) {
@@ -44,6 +45,11 @@ const server = http.createServer(async (req, res) => {
   }
   if (url.pathname.startsWith("/rest/v1/")) {
     if (req.headers.apikey !== "fixture-service-role") return send(403, { message: "Bad fixture key" });
+    if (url.pathname === "/rest/v1/club_identities") {
+      if (req.method === "POST") { clubKits.set(body.team_id, { palette: body.palette, pattern: body.pattern }); return send(200, clubKits.get(body.team_id)); }
+      const saved = clubKits.get(url.searchParams.get("team_id")?.replace("eq.", ""));
+      return send(200, saved ? [saved] : []);
+    }
     if (req.method !== "GET" && req.method !== "HEAD") return send(500, { message: "Unexpected database mutation in recovery" });
     const table = url.pathname.split("/").at(-1);
     if (table === "teams") {

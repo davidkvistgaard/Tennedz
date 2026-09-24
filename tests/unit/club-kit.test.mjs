@@ -23,3 +23,13 @@ test('team draws are stable, unique, restricted and cover the catalogue',()=>{
   }
   assert.equal(palettes.size,50);assert.equal(patterns.size,25);assert.ok(draws.size>990);
 });
+
+
+test('write validation rejects arbitrary colours, foreign allocation and extra fields', async () => {
+  const { validKitSelection } = await import('../../lib/riders/club-kit.mjs');
+  const id='team-alice', kit=defaultKit(id);
+  assert.equal(validKitSelection(kit,id),true);
+  for(const value of [null,[],{}, {...kit,palette:'#123456'}, {...kit,admin:true}]) assert.equal(validKitSelection(value,id),false);
+  const unallocated=Object.keys(CLUB_PALETTES).find(p=>!teamKitOptions(id).palettes.includes(p));
+  assert.equal(validKitSelection({...kit,palette:unallocated},id),false);
+});

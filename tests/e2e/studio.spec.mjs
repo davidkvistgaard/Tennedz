@@ -37,8 +37,8 @@ for (const width of [390, 1440]) test(`visual studio profiles, comparison and lo
   await expect(patternSelect.locator('option')).toHaveCount(3);
   const chosenPattern=await patternSelect.locator('option').nth(1).getAttribute('value');
   await patternSelect.selectOption(chosenPattern);
-  await page.getByRole('button', { name: 'Save local preview' }).click();
-  await expect(page.getByRole('status')).toContainText('Preview saved in this browser');
+  await page.getByRole('button', { name: 'Save club design' }).click();
+  await expect(page.getByRole('status')).toContainText('Club design saved to your account');
   await page.reload();
   await expect(page.getByRole('button', { name: chosenPalette, exact: true })).toHaveAttribute('aria-pressed', 'true');
   await expect(page.getByLabel('Jersey pattern')).toHaveValue(chosenPattern);

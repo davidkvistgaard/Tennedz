@@ -1,5 +1,7 @@
 # Visual studio preview
 
+Current status: the visual package is live; see VISUAL-PACKAGE-RELEASE.md. The club editor now uses account storage in development and is pending production approval; see CLUB-IDENTITY-PERSISTENCE.md. Earlier local-preview descriptions below are historical.
+
 This increment follows the owner's priority order: shared visual foundations,
 squad/profiles, club identity, public entry pages, then atlas presentation.
 The new engine remains paused. No simulation, race orders, training, economy,
