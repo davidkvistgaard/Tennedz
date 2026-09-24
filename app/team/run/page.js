@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import TeamShell from "../../components/TeamShell";
 import StageProfile from "../../components/StageProfile";
 import RiderAvatar from "../../components/RiderAvatar";
@@ -203,11 +204,18 @@ export default function RunPage() {
     }
   }
   return (
-    <TeamShell title="Calendar & races">
-      <p className="page-intro">
-        Select your lineup before the deadline. Then watch the race unfold,
-        with every decision already made.
-      </p>
+    <TeamShell compact>
+      <div className="race-calendar">
+      <header className="calendar-hero">
+        <Image src="/images/race-countryside-v1.png" alt="" fill sizes="(max-width: 760px) 100vw, 1200px" priority />
+        <div><p className="eyebrow">THE NEXT CHAPTER</p><h1>Race day starts<br/><em>with you.</em></h1><p>Read the road. Pick your eight. Give your captain a chance to shine.</p></div>
+        <span className="calendar-hero-note">PLAN BEFORE THE DEADLINE · WATCH IT UNFOLD</span>
+      </header>
+      <ol className="race-steps" aria-label="Your race plan">
+        <li aria-current={!event ? "step" : undefined}><span>01</span><div><strong>Find your race</strong><small>A route to suit your squad.</small></div></li>
+        <li aria-current={event && !saved ? "step" : undefined}><span>02</span><div><strong>Choose your eight</strong><small>One captain. A shared ambition.</small></div></li>
+        <li aria-current={saved ? "step" : undefined}><span>03</span><div><strong>Watch it unfold</strong><small>All decisions lock at the deadline.</small></div></li>
+      </ol>
       <div className="calendar-toolbar">
         <div className="segmented" aria-label="Category">
           {[
@@ -308,7 +316,7 @@ export default function RunPage() {
         </div>
       )}
       {event && (
-        <section className="race-preparation" aria-label="Race preparation">
+        <section id="race-preparation" className="race-preparation" aria-label="Race preparation">
           <div className="page-heading">
             <div>
               <p className="eyebrow">
@@ -331,6 +339,7 @@ export default function RunPage() {
           ) : (
             <>
               {stage && <StageProfile stage={stage} />}
+              {!locked && <a className="lineup-jump" href="#race-lineup">Build your lineup <span aria-hidden="true">↓</span></a>}
               {event.status === "FINISHED" ? (
                 <div className="card race-ready">
                   <h2>The race is ready</h2>
@@ -365,7 +374,7 @@ export default function RunPage() {
                       </Link>
                     </section>
                   )}
-                  <section className="card lineup-summary">
+                  <section id="race-lineup" className="card lineup-summary">
                     <div className="panel-heading">
                       <div>
                         <h2>Your lineup</h2>
@@ -552,6 +561,7 @@ export default function RunPage() {
           )}
         </section>
       )}
+      </div>
     </TeamShell>
   );
 }

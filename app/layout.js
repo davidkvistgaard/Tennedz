@@ -1,4 +1,5 @@
 import "./globals.css";
+import "./experience.css";
 import { AuthProvider } from "./components/AuthProvider";
 
 export const metadata = {

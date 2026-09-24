@@ -20,7 +20,7 @@ for(const width of [390,1440]) test(`landing and squad are usable at ${width}px`
   await page.getByLabel('Search riders').fill('Freja');
   await expect(page.locator('.club-rider')).toHaveCount(1);
   await page.getByText('View attributes',{exact:true}).click();
-  await expect(page.getByRole('article').getByText('Endurance',{exact:true})).toBeVisible();
+  await expect(page.getByRole('article').locator('dl').getByText('Endurance',{exact:true})).toBeVisible();
   await page.getByLabel('Search riders').fill('findes-ikke');
   await expect(page.getByText('No riders match your search.')).toBeVisible();
   await page.getByLabel('Search riders').fill('');

@@ -2,7 +2,7 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import TeamShell from "../components/TeamShell";
-import RiderAvatar from "../components/RiderAvatar";
+import SquadRider from "../components/SquadRider";
 import { useAuth } from "../components/AuthProvider";
 import { teamRating } from "../../lib/race/rating.mjs";
 import { api } from "../../lib/api";
@@ -31,15 +31,6 @@ function NextRace({ gender }) {
     <p>{calendar.error || (next ? `Select eight riders and a captain before ${new Date(next.deadline).toLocaleString("en-GB",{timeZone:"UTC",day:"numeric",month:"long",hour:"2-digit",minute:"2-digit"})} (UTC).` : calendar.loading?"":"There are no open one-day races for this squad yet. Get to know your riders and check the calendar for your next race.")}</p>
     <Link className="btn" href={`/team/run?gender=${gender}`}>{next?"Race details and lineup":"Open race calendar"} ↗</Link>
   </section>;
-}
-function SquadRider({ rider }) {
-  return <article className="club-rider">
-    <div className="club-rider-art"><RiderAvatar rider={rider} size={160}/></div>
-    <div className="club-rider-body"><div className="club-rider-meta">{rider.country_code || "Country not specified"} · {rider.age?`${rider.age} years`:"Age unknown"}</div><h3>{rider.display_name || rider.name || "Unnamed rider"}</h3>
-      <div className="club-rider-points"><strong>{format(rider.rating)}</strong> race points</div>
-      <details><summary>View attributes</summary><dl>{SKILLS.slice(1).map(([key,label])=><div className="club-skill" key={key}><dt>{label}</dt><dd>{rider[key] == null ? "—" : format(rider[key])}</dd></div>)}</dl></details>
-    </div>
-  </article>;
 }
 export default function TeamPage() {
   const {session,refresh,logout} = useAuth();

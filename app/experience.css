@@ -1,0 +1,75 @@
+/* Shared player journey: warm paper, painted landscapes, forest-green controls. */
+.experience-welcome { background:var(--bg); padding:20px; gap:20px; min-height:100svh; grid-template-columns:minmax(0,1fr) minmax(0,1fr); }
+.experience-welcome .welcome-story { position:relative; padding:40px 44px 24px; border-radius:24px; background:#e9e6d5; color:#263e32; gap:24px; justify-content:flex-start; }
+.experience-welcome .welcome-brand { font-family:Bricolage,sans-serif; font-size:34px; letter-spacing:-1.7px; line-height:1; text-decoration:none; }
+.experience-welcome .welcome-brand span { font-size:9px; letter-spacing:3px; color:#546749; margin-top:9px; }
+.experience-welcome .welcome-story-copy { position:relative; z-index:1; margin-top:30px; }
+.experience-welcome .welcome-story h2 { font-family:Bricolage,sans-serif; font-size:clamp(38px,4.3vw,65px); line-height:1.05; letter-spacing:-2px; margin:16px 0; }
+.experience-welcome .welcome-story h2 em { color:#778751; font-style:normal; }
+.experience-welcome .welcome-story .welcome-eyebrow { color:#586a43; }
+.experience-welcome .welcome-story-copy>p:last-child { display:block; font-size:15px; line-height:1.7; max-width:290px; }
+.welcome-art { position:relative; min-height:320px; flex:1; margin:15px -44px -70px; overflow:hidden; }
+.welcome-art>img { object-fit:cover; object-position:40% 50%; }
+.welcome-art:after { content:""; position:absolute; inset:0; background:linear-gradient(#e9e6d5 0%,transparent 35%,#1e3c2bbb); }
+.welcome-art-portrait { position:absolute; z-index:1; width:220px; aspect-ratio:320/338; left:10%; bottom:65px; transform:rotate(-7deg); border:8px solid #fff8e8; border-bottom-width:24px; border-radius:6px; overflow:hidden; box-shadow:0 15px 30px #182d2940; }
+.welcome-art-portrait>div { position:absolute; width:320%; height:454.44%; left:-109.375%; top:-17.7515%; }
+.welcome-art-note { position:absolute; z-index:1; bottom:100px; right:8%; writing-mode:vertical-rl; color:#fff8e8; font-size:10px; letter-spacing:3px; }
+.experience-welcome .welcome-story-foot { position:relative; z-index:1; color:#fff8e8; font-size:11px; letter-spacing:.3px; max-width:none; }
+.experience-welcome .welcome-form { padding:45px 36px; }
+.experience-welcome .welcome-card { max-width:420px; }
+.experience-welcome .welcome-card h1 { font-family:Bricolage,sans-serif; font-size:clamp(34px,3.2vw,46px); letter-spacing:-1.6px; line-height:1.1; margin:16px 0; }
+.experience-welcome .welcome-eyebrow { color:#65734f; }
+.experience-welcome .welcome-fields { gap:18px; margin-top:28px; }
+.experience-welcome .welcome-fields input { background:#fffdf4; border-color:#cbd0b9; border-radius:12px; min-height:52px; font-size:16px; }
+.experience-welcome .btn.primary { border:1px solid #27513d; border-radius:12px; background:#27513d; color:#fff9e9; min-height:52px; box-shadow:0 5px 0 #d5dcc9; font-size:15px; }
+.experience-welcome .btn.primary:hover { background:#193e2b; }
+.experience-welcome .welcome-status:empty { display:none; }
+.experience-welcome .welcome-status { font-size:13px; margin:0; }
+.experience-welcome .welcome-error { background:#f3e4d8; border-left:3px solid #9c4937; border-radius:6px; padding:12px; margin:0; color:#853c2f; }
+.experience-welcome .welcome-footer { border-top:1px solid #dbdecb; padding-top:24px; }
+.welcome-back { display:inline-block; font-size:12px; color:#52664d; padding:8px 0; }
+.experience-welcome .starter-summary { background:#e9ead9; border:1px solid #d4d9c1; border-radius:16px; }
+.experience-welcome a:focus-visible,.experience-welcome button:focus-visible,.race-calendar a:focus-visible,.race-calendar button:focus-visible { outline:3px solid #9c752e; outline-offset:4px; }
+.calendar-hero { position:relative; overflow:hidden; min-height:300px; border-radius:24px; margin:26px 0 0; color:#fff9e8; background:#274934; }
+.calendar-hero>img { object-fit:cover; object-position:center 55%; }
+.calendar-hero:after { content:""; position:absolute; inset:0; background:linear-gradient(90deg,#183d2df5,#183d2d80 60%,#183d2d18); }
+.calendar-hero>div { position:relative; z-index:1; padding:35px 42px; max-width:600px; }
+.calendar-hero h1 { font-family:Bricolage,sans-serif; font-size:clamp(38px,4vw,58px); line-height:1.05; letter-spacing:-2px; margin:16px 0; color:inherit; }
+.calendar-hero h1 em { font-style:normal; color:#d7dfb0; }
+.calendar-hero p { font-size:14px; line-height:1.6; max-width:330px; }
+.calendar-hero .eyebrow { color:#e5d6a9; font-size:10px; }
+.calendar-hero-note { position:absolute; z-index:1; right:30px; bottom:26px; font-size:9px; letter-spacing:1.5px; }
+.race-steps { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:20px; padding:22px 0; list-style:none; border-bottom:1px solid #d6dbc4; margin:0 0 24px; }
+.race-steps li { display:flex; align-items:center; gap:14px; color:#53634e; }
+.race-steps li>span { font-family:Bricolage,sans-serif; font-size:25px; color:#8f9a75; }
+.race-steps li[aria-current=step]>span { color:#2f5b41; }
+.race-steps strong { display:block; font-size:14px; }
+.race-steps small { display:block; margin-top:4px; font-size:11px; }
+.race-calendar .calendar-toolbar { padding:8px 0; }
+.race-calendar .event-card { border-radius:18px; border-color:#d0d7bd; border-top:4px solid #80936d; min-height:236px; box-shadow:0 4px 0 #d4d9c329; }
+.race-calendar .event-card.selected { border:2px solid #2f5b41; border-top-width:4px; padding:24px; background:#e8edda; }
+.race-calendar .event-card h2 { font-size:26px; letter-spacing:-.8px; }
+.race-calendar .event-card .event-meta { margin-top:auto; padding-top:20px; }
+.race-calendar .event-meta strong { background:#e5e9d7; padding:4px 8px; border-radius:5px; }
+.race-calendar .empty-state { background:#eeebdc; border:1px solid #d5dbc4; padding:42px 25px; }
+.race-calendar .race-preparation { scroll-margin-top:24px; }
+.race-calendar .lineup-summary { background:#fffdf4; border:1px solid #d2d9c1; border-radius:22px; scroll-margin-top:20px; }
+.lineup-jump { display:flex; justify-content:space-between; padding:18px 22px; margin:16px 0; text-decoration:none; background:#e6e9d6; border:1px solid #d0d7bd; border-radius:12px; color:#2b553c; font-size:14px; font-weight:700; }
+.race-calendar .lineup-slot { background:#f0efdf; border-color:#cad2b7; padding:22px 6px 8px; }
+.race-calendar .lineup-slot.captain { background:#f3e8c9; border-color:#a8873d; }
+.race-calendar .lineup-slot strong { font-size:12px; }
+.race-calendar .lineup-slot .text-button { font-size:11px; min-height:44px; padding:5px 2px; line-height:1.3; }
+.race-calendar .remove-rider { min-width:32px; min-height:32px; background:#fffdf4; border-radius:50%; font-size:20px; line-height:1; }
+.race-calendar .lineup-rider { min-height:96px; border-color:#d2d9c1; background:#fffdf4; }
+.race-calendar .lineup-rider strong { font-size:15px; }
+.race-calendar .lineup-rider div>span { font-size:12px; line-height:1.5; }
+.race-calendar .lineup-rider.selected { border-color:#3f6d47; background:#e6ebd6; }
+.race-calendar .lineup-save { background:#f0efdf; padding:17px; border-radius:14px; }
+.race-calendar .lineup-save .btn.primary { min-height:48px; border-radius:10px; }
+.race-calendar .rider-selection-toolbar select { background:#fffdf4; border:1px solid #d2d9c1; border-radius:10px; min-height:44px; padding:8px; color:#294631; }
+@media(max-width:1000px) { .experience-welcome .welcome-story{padding:30px 26px 20px}.welcome-art{margin-left:-26px;margin-right:-26px}.welcome-art-portrait{width:180px}.experience-welcome .welcome-form{padding:30px 18px}.calendar-hero-note{display:none} }
+@media(max-width:760px) {
+ .experience-welcome{padding:0;gap:0;grid-template-columns:1fr}.experience-welcome .welcome-story{padding:23px 25px;border-radius:0;min-height:190px;gap:16px;background:#e9e6d5}.experience-welcome .welcome-story-copy{margin-top:0;max-width:65%}.experience-welcome .welcome-story h2{font-size:26px;letter-spacing:-.8px;margin:8px 0}.experience-welcome .welcome-story-copy>p:last-child,.experience-welcome .welcome-story-foot,.welcome-art-note{display:none}.experience-welcome .welcome-brand{font-size:29px}.experience-welcome .welcome-story .welcome-eyebrow{font-size:8px;letter-spacing:1px}.welcome-art{position:absolute;right:0;bottom:0;width:35%;height:160px;min-height:0;margin:0;background:transparent;overflow:visible}.welcome-art>img,.welcome-art:after{display:none}.welcome-art-portrait{width:115px;max-width:90%;left:0;bottom:12px;border-width:5px;border-bottom-width:15px}.experience-welcome .welcome-form{padding:34px 25px 40px}.experience-welcome .welcome-card h1{font-size:36px}.experience-welcome .welcome-card{max-width:460px}
+ .calendar-hero{min-height:260px;margin-top:20px;border-radius:19px}.calendar-hero>div{padding:28px 25px}.calendar-hero h1{font-size:42px}.calendar-hero p{font-size:13px;max-width:260px}.race-steps{gap:12px;padding:20px 0}.race-steps li{display:block}.race-steps li>span{font-size:21px}.race-steps strong{font-size:12px;margin-top:8px;line-height:1.4}.race-steps small{display:none}.race-calendar .lineup-slots{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.race-calendar .lineup-slot{min-height:165px}.race-calendar .lineup-slot svg{max-width:none}.race-calendar .lineup-slot .text-button{font-size:12px}.race-calendar .lineup-summary{padding:16px}.race-calendar .lineup-save{padding:13px}.race-calendar .lineup-rider strong{font-size:14px}.race-calendar .event-card{min-height:215px}
+}
+@media(prefers-reduced-motion:reduce){.race-calendar .event-card{transition:none}.race-calendar .event-card:hover{transform:none}}
