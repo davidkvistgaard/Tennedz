@@ -1,4 +1,27 @@
 /* Portrait-inspired foundations: paper, ink, painted colour and tactile edges. */
+.club-badge { width: 46px; height: 52px; flex-shrink: 0; }
+.game-shell .game-date { display: flex; align-items: center; gap: 12px; }
+.studio-skip { position: fixed; top: -100px; left: 16px; z-index: 100; padding: 14px; background: #fff9eb; color: #283f35; border: 2px solid #285440; border-radius: 10px; }
+.studio-skip:focus { top: 12px; }
+.studio-dialog-heading { position: sticky; top: -28px; background: var(--studio-paper); z-index: 2; }
+.studio-table .studio-best-value { background: #dce9cf; box-shadow: inset 3px 0 #527247; }
+.studio-table th:first-child { position: sticky; left: 0; background: var(--studio-paper); z-index: 1; }
+.atlas-directory { padding: 20px 24px; background: var(--studio-paper); border: 1px solid var(--studio-line); border-radius: 16px; margin: 18px 0; }
+.atlas-directory summary { cursor: pointer; min-height: 44px; font-weight: 700; display: list-item; }
+.atlas-directory-controls { display: flex; gap: 20px; flex-wrap: wrap; }
+.atlas-directory-controls label { display: grid; gap: 8px; flex: 1; min-width: 180px; font-size: 13px; }
+.atlas-directory-controls input,.atlas-directory-controls select { min-height: 44px; border: 1px solid var(--studio-line); border-radius: 9px; padding: 10px; background: #fffdf6; color: var(--studio-ink); width: 100%; box-sizing: border-box; }
+.atlas-directory-results { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 10px; }
+.atlas-directory-results button { text-align: left; padding: 16px; border: 1px solid var(--studio-line); border-radius: 12px; background: #f4ecd9; color: var(--studio-ink); cursor: pointer; min-height: 64px; }
+.atlas-directory-results button span { display: block; margin-top: 8px; font-size: 11px; text-transform: capitalize; }
+.atlas-place-notes { border-left: 3px solid var(--studio-honey); padding-left: 15px; margin: 20px 0; line-height: 1.7; font-size: 13px; }
+.atlas-place-notes:empty { display: none; }
+.identity-questions { display: grid; grid-template-columns: 1fr 1.3fr; gap: 40px; padding: 0 0 60px; }
+.identity-questions h2 { font: 700 clamp(32px,4vw,48px) Bricolage,sans-serif; line-height: 1.1; margin: 18px 0; }
+.identity-questions p { line-height: 1.7; max-width: 500px; color: #596451; }
+.identity-questions details { padding: 20px; margin-bottom: 12px; background: var(--studio-paper); border: 1px solid var(--studio-line); border-radius: 14px; }
+.identity-questions summary { cursor: pointer; font-weight: 700; min-height: 44px; }
+@media(max-width:700px) { .atlas-directory-results { grid-template-columns: 1fr; }.identity-questions { grid-template-columns: 1fr; gap: 16px; }.studio-dialog-heading { top: -16px; }.game-shell .game-date { gap: 6px; }.club-badge { width: 35px; height: 40px; } }
 .supporter-kit-studio { border-top: 1px solid #d6cdb7; margin: 24px 0; padding: 20px 0; }
 .supporter-kit-studio summary { cursor: pointer; font-weight: 700; min-height: 44px; }
 .supporter-kit-studio .studio-jersey { display: block; max-width: 240px; margin: auto; }

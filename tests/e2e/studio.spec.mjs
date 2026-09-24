@@ -19,6 +19,7 @@ for (const width of [390, 1440]) test(`visual studio profiles, comparison and lo
   await page.getByRole('button', { name: 'Compare selected riders', exact: true }).click();
   await expect(page.getByRole('dialog').getByRole('heading', { name: 'Compare riders' })).toBeVisible();
   await expect(page.getByRole('dialog').locator('tbody tr')).toHaveCount(11);
+  await expect(page.getByRole('dialog').locator('tbody tr').filter({hasText:'Fatigue'}).locator('td').first()).toHaveClass('studio-best-value');
   await page.screenshot({ path: `test-results/studio-comparison-${width}.png` });
   await page.getByRole('button', { name: 'Close', exact: true }).click();
   await page.getByRole('button', { name: 'Women', exact: true }).click();
@@ -65,5 +66,20 @@ for (const width of [390, 1440]) test(`visual studio profiles, comparison and lo
   await expect(page.locator('.studio-palette-options button')).toHaveCount(4);
   expect(await page.locator('.studio-palette-options button').allTextContents()).not.toEqual(paletteNames);
   await expect(page.locator('.studio-palette-options button').first()).toHaveAttribute('aria-pressed','true');
+  await expect(page.locator('.game-date .club-badge')).toBeVisible();
+  await page.getByRole('link',{name:'Atlas',exact:true}).click();
+  await page.getByText('Find a place',{exact:true}).click();
+  await page.getByLabel('Search the atlas').fill('Northern Plateau');
+  await expect(page.locator('.atlas-directory-results button')).toHaveCount(1);
+  await page.getByRole('button',{name:'Visit Northern Plateau',exact:true}).click();
+  await expect(page.getByRole('heading',{name:'Northern Plateau',exact:true})).toBeVisible();
+  await expect(page.getByRole('region',{name:'Place notes'})).toContainText('regular snow');
+  await page.screenshot({path:`test-results/studio-atlas-${width}.png`,fullPage:true});
+  await page.getByLabel('Search the atlas').fill('no-such-place');
+  await expect(page.getByText('No places match. Try another name or place type.')).toBeVisible();
+  await page.goto('/');
+  await page.getByText('Do I need to be online during the race?',{exact:true}).click();
+  await expect(page.getByText('No. Choose your lineup and orders before the deadline. The whole race is calculated before you watch its replay.')).toBeVisible();
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
   expect(errors).toEqual([]);
 });
