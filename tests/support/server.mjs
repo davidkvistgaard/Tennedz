@@ -53,7 +53,7 @@ const server = http.createServer(async (req, res) => {
       if (name === "duplicate") teams.push({ ...teams[0], id: "second-team" });
       return send(200, teams);
     }
-    if (table === "team_riders") return send(200, [{ rider: { id: "rider-a", name: "Test Rytter", gender: "M", rating: 10 } }]);
+    if (table === "team_riders") return send(200, ["M","F"].flatMap((gender,g) => Array.from({length:8},(_,i)=>({rider:{id:`fixture-${gender}-${i}`,name: ["Emil Berg","Louis Morel","Mateo Rojas","Dawit Tesfay","Luca Rossi","Noah Vermeer","Adam Nowak","Elias Holm","Freja Møller","Elin Lind","Femke Visser","Zofia Kowalska","Haruka Mori","Lina Moreau","Sara Costa","Amina Diallo"][g*8+i],gender,country_code:["DK","FR","CO","ER","IT","NL","PL","SE"][i],age:20+i*2,rating:i*11,sprint:40+i*3,flat:52,hills:45+i,mountain:65-i*3,cobbles:40,timetrial:43,endurance:60,strength:45,wind:47,form:85,fatigue:i*2}}))));
     if (table === "game_state") return send(200, { game_date: "2026-01-01" });
     return send(200, []);
   }

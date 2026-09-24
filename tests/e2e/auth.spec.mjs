@@ -4,32 +4,32 @@ async function login(page, name = "alice") {
   await page.getByLabel("Login-navn").fill(name);
   await page.getByLabel("Kodeord").fill("fixture-password");
   await page.getByRole("button", { name: "Log ind", exact: true }).click();
-  await expect(page).toHaveURL(/\/team$/);
+  await expect(page).toHaveURL(name === "missing" || name === "duplicate" ? /\/onboarding$/ : /\/team$/);
 }
 
 test("login, reload, navigation, second tab and logout share one secure session", async ({ page, context }) => {
   const errors = [];
   page.on("pageerror", e => errors.push(e.message));
   await login(page);
-  await expect(page.getByText("ALICE Cycling", { exact: true })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "ALICE Cycling", exact: true })).toBeVisible();
   await page.screenshot({ path: "test-results/team-smoke.png", fullPage: true });
   const cookies = await context.cookies();
   expect(cookies.some(c => c.name.includes("auth-token"))).toBe(true);
   expect(cookies.filter(c => c.name.includes("auth-token")).every(c => c.httpOnly && c.secure)).toBe(true);
   expect(await page.evaluate(() => document.cookie)).not.toContain("auth-token");
   await page.reload();
-  await expect(page.getByText("ALICE Cycling", { exact: true })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "ALICE Cycling", exact: true })).toBeVisible();
   await page.goto("/team/run");
-  await expect(page.getByText("Klar ✅", { exact: false }).first()).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Næste løbsdag er på vej" })).toBeVisible();
   await page.goto("/team/history");
-  await expect(page.getByText("Ingen løb fundet endnu.", { exact: false })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Dit første løb venter" })).toBeVisible();
   await page.goto("/team");
   const second = await context.newPage();
   await second.goto("/team");
-  await expect(second.getByText("ALICE Cycling", { exact: true })).toBeVisible();
+  await expect(second.getByRole("heading", { name: "ALICE Cycling", exact: true })).toBeVisible();
   await page.getByRole("button", { name: "Log ud", exact: true }).click();
   await expect(page).toHaveURL(/\/login$/);
-  await expect(second.getByText("ALICE Cycling", { exact: true })).toHaveCount(0);
+  await expect(second.getByRole("heading", { name: "ALICE Cycling", exact: true })).toHaveCount(0);
   await expect(second.getByRole("heading", { name: "Log ind for at se dit hold" })).toBeVisible();
   expect((await context.request.get("/api/auth/me")).status()).toBe(401);
   expect(errors).toEqual([]);
@@ -38,7 +38,7 @@ test("login, reload, navigation, second tab and logout share one secure session"
 
 test("an expired stored session refreshes through Supabase before team access", async ({ page, context }) => {
   await login(page);
-  await expect(page.getByText("ALICE Cycling", { exact: true })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "ALICE Cycling", exact: true })).toBeVisible();
   const cookies = (await context.cookies()).filter(c => c.name.includes("auth-token"));
   expect(cookies).toHaveLength(1);
   const cookie = cookies[0];
@@ -47,20 +47,20 @@ test("an expired stored session refreshes through Supabase before team access", 
   stored.expires_at = 1;
   await context.addCookies([{ ...cookie, value: "base64-" + Buffer.from(JSON.stringify(stored)).toString("base64url") }]);
   await page.reload();
-  await expect(page.getByText("ALICE Cycling", { exact: true })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "ALICE Cycling", exact: true })).toBeVisible();
   const refreshed = (await context.cookies()).find(c => c.name.includes("auth-token"));
   expect(JSON.parse(Buffer.from(refreshed.value.replace(/^base64-/, ""), "base64url").toString()).access_token).not.toBe(oldToken);
 });
 
 test("revoked session cannot read cached team data after reload", async ({ page, context }) => {
   await login(page);
-  await expect(page.getByText("ALICE Cycling", { exact: true })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "ALICE Cycling", exact: true })).toBeVisible();
   const cookie = (await context.cookies()).find(c => c.name.includes("auth-token"));
   const stored = JSON.parse(Buffer.from(cookie.value.replace(/^base64-/, ""), "base64url").toString());
   await context.request.post("http://127.0.0.1:54329/auth/v1/logout", { headers: { Authorization: `Bearer ${stored.access_token}` } });
   await page.reload();
   await expect(page.getByRole("heading", { name: "Log ind for at se dit hold" })).toBeVisible();
-  await expect(page.getByText("ALICE Cycling", { exact: true })).toHaveCount(0);
+  await expect(page.getByRole("heading", { name: "ALICE Cycling", exact: true })).toHaveCount(0);
 });
 
 test("invalid password is rejected without custom-auth fallback", async ({ page }) => {
@@ -72,10 +72,20 @@ test("invalid password is rejected without custom-auth fallback", async ({ page 
   await expect(page).toHaveURL(/\/login$/);
 });
 
-for (const name of ["missing", "duplicate"]) test(`${name} team link fails closed`, async ({ page }) => {
+for (const name of ["missing", "duplicate"]) test(`${name} team link fails closed`, async ({ page, context }) => {
   await login(page, name);
+  if (name === "missing") {
+    await expect(page.getByLabel("Holdnavn")).toBeVisible();
+    await expect(page.getByRole("button", { name: "Opret mit hold →" })).toBeVisible();
+  } else {
+    await expect(page.getByRole("alert").filter({hasText:"Ingen data er ændret"})).toBeVisible();
+    await expect(page.getByLabel("Holdnavn")).toHaveCount(0);
+  }
+  expect((await context.request.get("/api/auth/me")).status()).toBe(409);
+  expect((await context.request.get("/api/events")).status()).toBe(409);
+  await page.goto("/team");
   await expect(page.getByRole("heading", { name: "Dit hold kunne ikke åbnes" })).toBeVisible();
-  await expect(page.getByText("Kontakt administratoren.", { exact: false }).or(page.getByText("Ingen data er ændret.", { exact: false }))).toBeVisible();
+  if (name === "missing") await expect(page.getByRole("link", { name: "Opret dit første hold" })).toBeVisible();
 });
 
 test("ownership, origin and retired mutation endpoints are enforced server-side", async ({ page, context }) => {
@@ -93,11 +103,11 @@ test("account switch clears old team in an already open tab", async ({ page, con
   await login(page);
   const second = await context.newPage();
   await second.goto("/team");
-  await expect(second.getByText("ALICE Cycling", { exact: true })).toBeVisible();
+  await expect(second.getByRole("heading", { name: "ALICE Cycling", exact: true })).toBeVisible();
   await page.getByRole("button", { name: "Log ud", exact: true }).click();
   await expect(page).toHaveURL(/\/login$/);
   await login(page, "bob");
-  await expect(second.getByText("BOB Cycling", { exact: true })).toBeVisible();
-  await expect(second.getByText("ALICE Cycling", { exact: true })).toHaveCount(0);
+  await expect(second.getByRole("heading", { name: "BOB Cycling", exact: true })).toBeVisible();
+  await expect(second.getByRole("heading", { name: "ALICE Cycling", exact: true })).toHaveCount(0);
   await second.close();
 });

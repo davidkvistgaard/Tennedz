@@ -89,6 +89,8 @@ export default function RunPage() {
     }
   }
   useEffect(() => {
+    const requestedGender = new URLSearchParams(window.location.search).get("gender");
+    if (requestedGender === "M" || requestedGender === "F") setGender(requestedGender);
     load();
   }, []);
   const event = events.find((e) => e.id === eventId),

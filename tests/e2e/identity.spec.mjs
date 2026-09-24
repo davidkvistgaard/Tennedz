@@ -1,0 +1,42 @@
+import { test, expect } from "@playwright/test";
+async function login(page){await page.goto('/login');await page.getByLabel('Login-navn').fill('alice');await page.getByLabel('Kodeord').fill('fixture-password');await page.getByRole('button',{name:'Log ind',exact:true}).click();await expect(page).toHaveURL(/\/team$/);}
+for(const width of [390,1440]) test(`landing and squad are usable at ${width}px`,async({page})=>{
+  await page.setViewportSize({width,height:900});
+  const errors=[];page.on('pageerror',e=>errors.push(e.message));
+  await page.goto('/');
+  await expect(page.getByRole('heading',{name:'Et hold at tro på. Et løb at leve for.'})).toBeVisible();
+  await expect(page.getByRole('link',{name:/Din historie starter/})).toHaveAttribute('href','/signup');
+  await page.screenshot({path:`test-results/home-${width}.png`,fullPage:true});
+  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth)).toBe(true);
+  await login(page);
+  await expect(page.locator('.club-rider')).toHaveCount(8);
+  await expect(page.getByRole('heading',{name:'Landevejen venter på jer'})).toBeVisible();
+  await page.screenshot({path:`test-results/club-${width}.png`,fullPage:true});
+  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth)).toBe(true);
+  await page.getByRole('button',{name:'Kvinder',exact:true}).click();
+  await expect(page.getByRole('heading',{name:'Freja Møller'})).toBeVisible();
+  await expect(page.getByRole('heading',{name:'Emil Berg'})).toHaveCount(0);
+  await page.getByLabel('Søg rytter').fill('Freja');
+  await expect(page.locator('.club-rider')).toHaveCount(1);
+  await page.getByText('Se egenskaber',{exact:true}).click();
+  await expect(page.getByRole('article').getByText('Udholdenhed',{exact:true})).toBeVisible();
+  await page.getByLabel('Søg rytter').fill('findes-ikke');
+  await expect(page.getByText('Ingen ryttere matcher din søgning.')).toBeVisible();
+  await page.getByLabel('Søg rytter').fill('');
+  await page.getByLabel('Rækkefølge').selectOption('ASC');
+  await expect(page.locator('.club-rider h3').first()).toHaveText('Freja Møller');
+  expect(errors).toEqual([]);
+});
+test('next race is gender-specific and a failed calendar is not shown as empty',async({page})=>{
+  await page.route('**/api/events?*',route=>route.fulfill({json:{ok:true,server_time:new Date().toISOString(),events:[{id:'future',name:'Kvindernes kystløb',kind:'one_day',gender:'F',status:'OPEN',deadline:new Date(Date.now()+3600000).toISOString()},{id:'expired',name:'Forældet løb',kind:'one_day',gender:'M',status:'OPEN',deadline:'2020-01-01T00:00:00Z'}]}}));
+  await login(page);
+  await expect(page.getByRole('heading',{name:'Landevejen venter på jer'})).toBeVisible();
+  await page.getByRole('button',{name:'Kvinder',exact:true}).click();
+  await expect(page.getByRole('heading',{name:'Kvindernes kystløb'})).toBeVisible();
+  await expect(page.getByRole('link',{name:/Til løb og holdudtagelse/})).toHaveAttribute('href','/team/run?gender=F');
+  await page.unroute('**/api/events?*');
+  await page.route('**/api/events?*',route=>route.fulfill({status:503,json:{ok:false,error:'Unavailable'}}));
+  await page.reload();
+  await expect(page.getByRole('heading',{name:'Kalenderen er ikke tilgængelig'})).toBeVisible();
+  await expect(page.getByRole('heading',{name:'Landevejen venter på jer'})).toHaveCount(0);
+});

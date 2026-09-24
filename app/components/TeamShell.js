@@ -26,6 +26,7 @@ export default function TeamShell({ title, children, compact = false }) {
     ["/team/portraits", "Ryttere"],
     ["/team/leaderboards", "Ranglister"],
     ["/team/history", "Historik"],
+    ["/team/atlas", "Atlas"],
   ];
   if (session?.is_admin) links.push(["/admin", "Admin"]);
   return (
