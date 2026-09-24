@@ -1,6 +1,7 @@
 "use client";
 import {useId,useState} from 'react';
 import {useClubStyle, CLUB_PALETTES} from './ClubStyle';
+import KitPattern from './KitPattern';
 import {riderAppearance} from '../../lib/riders/identity.mjs';
 
 const shade=(hex,factor)=>'#'+hex.slice(1).match(/../g).map(v=>Math.min(255,Math.round(parseInt(v,16)*factor)).toString(16).padStart(2,'0')).join('');
@@ -40,8 +41,7 @@ export function RiderArt({rider}) {
     <path d={`M${100-18*a.neckWidth} 137 L${100-18*a.neckWidth} 176 Q100 194 ${100+18*a.neckWidth} 176 L${100+18*a.neckWidth} 137Z`} fill={`url(#${id}s)`}/>
     <path d="M79 147 Q100 167 121 147 L120 161 Q101 176 80 161Z" fill="#5b3428" opacity=".16"/>
     <path d={`M${100-83*a.shoulders} 240 L${100-74*a.shoulders} 193 Q49 177 76 170 Q100 187 124 170 Q151 177 ${100+74*a.shoulders} 193 L${100+83*a.shoulders} 240Z`} fill={`url(#${id}j)`}/>
-    {kit.pattern==='band'&&<path d="M48 208H151V225H48Z" fill={colors.accent}/>}
-    {kit.pattern==='diagonal'&&<path d="M49 225L134 181L150 192L62 240H49Z" fill={colors.accent}/>}
+    <g transform="translate(51 188) scale(.98 .52)"><KitPattern pattern={kit.pattern} color={colors.accent}/></g>
     <path d="M76 171 Q100 188 124 171 L127 180 Q100 198 73 180Z" fill="#a6b8a2"/>
     <path d="M41 191Q47 213 46 240M157 191Q151 213 153 240" fill="none" stroke="#092f28" strokeWidth="2" opacity=".25"/>
     <path d="M100 187V240" stroke="#c4d0b4" strokeWidth="2" opacity=".7"/>

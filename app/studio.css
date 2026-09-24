@@ -1,4 +1,10 @@
 /* Portrait-inspired foundations: paper, ink, painted colour and tactile edges. */
+.supporter-kit-studio { border-top: 1px solid #d6cdb7; margin: 24px 0; padding: 20px 0; }
+.supporter-kit-studio summary { cursor: pointer; font-weight: 700; min-height: 44px; }
+.supporter-kit-studio .studio-jersey { display: block; max-width: 240px; margin: auto; }
+.studio-custom-colors { display: flex; gap: 20px; flex-wrap: wrap; }
+.studio-custom-colors label { display: grid; gap: 8px; }
+.studio-custom-colors input { width: 80px; height: 44px; padding: 4px; border: 1px solid #d6cdb7; border-radius: 8px; }
 :root {
   --studio-paper: #fff9eb;
   --studio-cream: #f2ead8;

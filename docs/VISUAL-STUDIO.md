@@ -30,11 +30,26 @@ All product copy is English. Reduced-motion preferences are respected.
 
 ## Club identity — local prototype
 
-`/team/identity` offers four curated palettes and three jersey patterns, with a
-live jersey illustration. Saving stores only palette/pattern in localStorage,
+`/team/identity` draws four palettes from a catalogue of 50 and three patterns
+from 25 distinct layouts. The v1 seeded allocation uses the team's stable ID,
+not its name, browser storage or login time. Reloading/clearing local storage
+cannot reroll the options. Do not reorder the v1 catalogue without a migration
+strategy. Different teams may share individual options; uniqueness across teams
+is not guaranteed or required. Both jersey and procedural rider previews use the
+same pattern artwork. Saving stores only palette/pattern in localStorage,
 keyed by team ID. Read values are allowlisted; account changes do not reuse the
 previous team's preview. A storage event updates other tabs. Failed storage is
 reported instead of claiming success. No server persistence or new API exists.
+
+Old local previews outside the newly allocated choices fall back to the team's
+first palette/pattern. No production records are changed. The client-side check
+is preview validation, not a secure supporter entitlement boundary. Production
+will require server-persisted allocations and server-authorized custom designs.
+
+The expandable Supporter studio lets users try arbitrary main/accent colours and
+all 25 layouts. It is explicitly a future-feature preview, cannot apply a custom
+kit to the standard team and resets on leaving. No checkout, subscription,
+supporter entitlement or custom design persistence is implemented.
 
 The saved preview changes procedural portrait jersey colours/patterns while
 leaving faces unchanged. Existing painted assets retain their original jersey.
@@ -73,3 +88,11 @@ isolation. Screenshots reviewed for squad, profile, comparison, homepage and kit
 the local in-app browser displays the fixture squad. Mobile checks are emulated.
 The generated OneDrive `.next` cache was cleared before rebuilds; existing Next
 ESLint-plugin and Node module-type warnings remain.
+
+Kit catalogue extension: 49 unit tests pass, including exact catalogue counts,
+distinct artwork/colour pairs, stable allocations and coverage over 1,000 teams.
+All 18 existing browser journeys pass; the two updated studio journeys also pass
+at 390/1440px, iterating all 25 supporter layouts, changing a custom colour and
+verifying the saved standard kit remains unchanged. A test-file encoding error
+was corrected before the successful rerun. ESLint/build pass. Supporter preview
+and standard kit screenshots reviewed; no production services changed.
