@@ -17,7 +17,17 @@ Ejerens 50 punkter er bevaret i PRODUCT-VISION.md. Senere præciseringer har for
 6. Træning, alder og karriere kobles til et dokumenteret ur: faktisk kalenderdato til events og accelereret rytteralder på 90 dage pr. år. Skade- og restitutionsperioders tidsenhed skal være entydig.
 7. Portrætter og trøjer med vedvarende ansigtsidentitet, onboarding og samlet visuel polering; derefter Supporter uden direkte køb af sportslig styrke.
 
-## Ratingændringens teknik og test
+## Nyt sideløbende spor: Pelotonia Island Atlas
+
+Featurepakken er optaget i backloggen den 24. september 2026. Se [prioriterede delopgaver og acceptkrav](ISLAND-ATLAS-BACKLOG.md) og [ejerens fulde specifikation](ISLAND-ATLAS-SPECIFICATION.md).
+
+Atlas udvider det eksisterende Pelotonia World 1.0; det skal ikke have en separat verdensmodel. Pelotonia bygges som et suverænt øland på Jorden, før cykling senere anvender verdenen. Denne pakke omfatter ikke cykelruter, etaper eller sportslig kortlogik.
+
+Den eksisterende rækkefølge ovenfor bevares. Login, sikkerhed, dataintegritet og et fungerende endagsløbsforløb har forrang og er forudsætninger for produktionsrelease. Atlas må dog udvikles selvstændigt på recovery-grenen allerede under det fortsatte stabilitetsarbejde; det skal ikke vente på etapeløb, karriere eller Supporter. Akutte stabilitetsfejl afbryder atlasarbejde. Den aftalte forbedring af forside/hovedside bevares som selvstændig designprioritet, og atlas skal bruge en kompatibel visuel identitet.
+
+Næste atlasarbejde er arkitekturvalg og en afgrænset prototype med hele øen → makroområde → Aurelia → Old Aurelia → Great Cathedral, inklusive navigation tilbage. Resten af landet må begynde på L1/L2. Den eksisterende Northern Plateau-rettelse er færdig og skal ikke udføres igen. Backlogoptagelsen indebærer ikke, at kortvisningen er implementeret eller udgivet.
+
+## Ratingændringens teknik og test (tidligere leverance)
 
 Første holdoprettelse og starttrup er implementeret; se ONBOARDING.md for test, startværdier og begrænsninger i e-mailverifikationen. Næste sportslige leverance er nye fremtidige endagsløb og en gentagelig kalender.
 
