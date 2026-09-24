@@ -96,3 +96,26 @@ at 390/1440px, iterating all 25 supporter layouts, changing a custom colour and
 verifying the saved standard kit remains unchanged. A test-file encoding error
 was corrected before the successful rerun. ESLint/build pass. Supporter preview
 and standard kit screenshots reviewed; no production services changed.
+
+## Visual continuation
+
+- Shared team navigation displays a monogram crest in the team's saved preview
+  colours. It derives initials from the existing name; no new identity data.
+  Keyboard users can skip navigation to page content.
+- Comparison highlights the highest available attribute values, including ties,
+  and the lowest fatigue. Sticky row labels preserve context when scrolling the
+  table horizontally; the dialog's Close control stays available while scrolling.
+- Homepage questions explain pre-deadline choices, recorded playback, separate
+  squads and starter roster size using current functionality only.
+- Atlas directory searches named, navigable, non-reserved places by name/type.
+  Results are limited to 12 with a visible count and explicit empty state.
+  Selection reuses existing map navigation. Place notes render existing canonical
+  descriptions, elevation ranges, land cover and seasonal climate fields; no
+  geometry, place names, population estimates or climate facts are invented.
+- No changes to the paused engine, supporter entitlements, production or schema.
+
+Verification: 49 unit tests, 20 browser tests, ESLint and production build pass.
+The mobile/desktop studio journeys now include fatigue highlighting, the shared
+crest, atlas search/selection/empty state, Northern Plateau source-data notes and
+homepage question expansion. Atlas and comparison screenshots reviewed at both
+test widths; all prior authentication, calendar, replay and atlas journeys pass.
