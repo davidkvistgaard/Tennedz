@@ -10,6 +10,9 @@ import { useAuth } from "../../components/AuthProvider";
 import { api } from "../../../lib/api";
 import { normalizeRoute, routeAdvice } from "../../../lib/race/route.mjs";
 
+import RaceOrders from "../../components/RaceOrders";
+import { draftOrders } from "../../../lib/race/orders.mjs";
+
 const skills = {
   sprint: "Sprint",
   flat: "Flat roads",
@@ -42,7 +45,8 @@ const sameLineup = (a, b) =>
   !!a &&
   a.captain_id === b.captain_id &&
   a.selected_riders.length === b.selected_riders.length &&
-  a.selected_riders.every((id) => b.selected_riders.includes(id));
+  a.selected_riders.every((id) => b.selected_riders.includes(id)) &&
+  JSON.stringify(draftOrders(a.orders,b.selected_riders,b.captain_id)) === JSON.stringify(b.orders);
 
 export default function RunPage() {
   const { session } = useAuth(),
@@ -63,6 +67,8 @@ export default function RunPage() {
     [saved, setSaved] = useState(null),
     [busy, setBusy] = useState(false),
     [notice, setNotice] = useState("");
+  const [orderDraft,setOrderDraft]=useState(null);
+  const orders=draftOrders(orderDraft,selected,captain);
   const [sortKey, setSortKey] = useState("form"),
     [now, setNow] = useState(Date.now()),
     [offset, setOffset] = useState(0);
@@ -102,6 +108,7 @@ export default function RunPage() {
   useEffect(() => {
     const abort = new AbortController();
     setSelected([]);
+    setOrderDraft(null);
     setCaptain("");
     setSaved(null);
     setStage(null);
@@ -120,6 +127,7 @@ export default function RunPage() {
         if (abort.signal.aborted) return;
         setStage(profile.stage);
         setSaved(entry.entry);
+        setOrderDraft(entry.entry?.orders || null);
         setSelected(entry.entry?.selected_riders || []);
         setCaptain(entry.entry?.captain_id || "");
         try {
@@ -166,6 +174,7 @@ export default function RunPage() {
   const unchanged = sameLineup(saved, {
     selected_riders: selected,
     captain_id: captain,
+    orders,
   });
   function choose(ids) {
     if (locked || entryLoading || busy) return;
@@ -190,11 +199,12 @@ export default function RunPage() {
           team_id: team.id,
           selected_riders: selected,
           captain_id: captain,
+    orders,
         }),
       });
-      setSaved({ selected_riders: [...selected], captain_id: captain });
+      setSaved({ selected_riders: [...selected], captain_id: captain, orders });
       setNotice(
-        "Your team is entered. You can change your lineup until the deadline.",
+        "Your team is entered. You can change your lineup and orders until the deadline.",
       );
     } catch (e) {
       setNotice(e.message);
@@ -439,6 +449,7 @@ export default function RunPage() {
                         );
                       })}
                     </div>
+                    <RaceOrders orders={orders} riders={selected.map(id=>riders.find(r=>r.id===id)).filter(Boolean)} onChange={setOrderDraft} disabled={locked || busy || entryLoading} />
                     <div className="lineup-save">
                       <span>
                         {selected.length}/8 riders ·{" "}
