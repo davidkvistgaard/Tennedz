@@ -1,5 +1,7 @@
 # Arbejdsstatus: endagsløb og viewer
 
+Opdatering 24/9: nattens version er nu udgivet og kontrolleret på tennedz.eu. Se [release-kontrol](RACE-REPLAY-RELEASE.md). Nedenstående er den historiske arbejdslog. Periodens varighed er forløbet klokketid, ikke dokumentation for otte timers aktivt arbejde; et længere ophold omkring en afventende værktøjshandling indgår.
+
 Arbejdsramme: 23/9 2026 20:26 UTC til 24/9 04:26 UTC (06:26 dansk tid). Aktivt goal og midlertidig heartbeat `pelotonia-otte-timers-udvikling` hvert 30. minut. Slet heartbeat ved afslutning; ingen nyt arbejde efter fristen.
 
 ## Fastlagt af ejeren
