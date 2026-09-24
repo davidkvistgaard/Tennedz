@@ -1,5 +1,5 @@
 import { test, expect } from "@playwright/test";
-for (const width of [390, 1440]) test(`released profiles, comparison and atlas at ${width}px`, async ({ page }) => {
+for (const width of [390, 1440]) test(`visual studio profiles, comparison and local kit at ${width}px`, async ({ page }) => {
   await page.setViewportSize({ width, height: 960 });
   const errors = []; page.on('pageerror', e => errors.push(e.message));
   await page.goto('/login');
@@ -27,6 +27,45 @@ for (const width of [390, 1440]) test(`released profiles, comparison and atlas a
   await page.getByRole('combobox', { name: 'Specialty', exact: true }).selectOption('mountain');
   await expect(page.locator('.club-rider')).toHaveCount(5);
   await page.getByRole('combobox', { name: 'Specialty', exact: true }).selectOption('all');
+  await page.getByRole('link', { name: 'Club identity', exact: true }).click();
+  const paletteButtons=page.locator('.studio-palette-options button');
+  await expect(paletteButtons).toHaveCount(4);
+  const paletteNames=await paletteButtons.allTextContents();
+  const chosenPalette=paletteNames[1];
+  await paletteButtons.nth(1).click();
+  const patternSelect=page.getByLabel('Jersey pattern', {exact:false});
+  await expect(patternSelect.locator('option')).toHaveCount(3);
+  const chosenPattern=await patternSelect.locator('option').nth(1).getAttribute('value');
+  await patternSelect.selectOption(chosenPattern);
+  await page.getByRole('button', { name: 'Save club design' }).click();
+  await expect(page.getByRole('status')).toContainText('Club design saved to your account');
+  await page.reload();
+  await expect(page.getByRole('button', { name: chosenPalette, exact: true })).toHaveAttribute('aria-pressed', 'true');
+  await expect(page.getByLabel('Jersey pattern')).toHaveValue(chosenPattern);
+  await page.locator('.supporter-kit-studio summary').click();
+  await expect(page.getByLabel('Custom jersey layout').locator('option')).toHaveCount(25);
+  for(const layout of await page.getByLabel('Custom jersey layout').locator('option').evaluateAll(nodes=>nodes.map(n=>n.value))) {
+    await page.getByLabel('Custom jersey layout').selectOption(layout);
+    await expect(page.getByRole('img',{name:'Custom supporter jersey preview'})).toBeVisible();
+  }
+  await page.getByLabel('Main colour', {exact:true}).fill('#123456');
+  await expect(page.getByLabel('Jersey pattern')).toHaveValue(chosenPattern);
+  await page.screenshot({ path: `test-results/studio-kit-${width}.png`, fullPage: true });
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  await page.getByRole('link', { name: 'Back to my team' }).click();
+  await expect(page.locator('.club-rider')).toHaveCount(8);
+  await page.screenshot({ path: `test-results/studio-squad-${width}.png`, fullPage: true });
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  await page.getByRole('button', { name: 'Sign out', exact: true }).click();
+  await expect(page).toHaveURL(/\/login$/);
+  await page.getByLabel('Email or username').fill('bob');
+  await page.getByLabel('Password', { exact: true }).fill('fixture-password');
+  await page.getByRole('button', { name: 'Sign in', exact: true }).click();
+  await expect(page).toHaveURL(/\/team$/);
+  await page.getByRole('link', { name: 'Club identity', exact: true }).click();
+  await expect(page.locator('.studio-palette-options button')).toHaveCount(4);
+  expect(await page.locator('.studio-palette-options button').allTextContents()).not.toEqual(paletteNames);
+  await expect(page.locator('.studio-palette-options button').first()).toHaveAttribute('aria-pressed','true');
   await expect(page.locator('.game-date .club-badge')).toBeVisible();
   await page.getByRole('link',{name:'Atlas',exact:true}).click();
   await page.getByText('Find a place',{exact:true}).click();

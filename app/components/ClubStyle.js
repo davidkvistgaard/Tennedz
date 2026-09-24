@@ -1,32 +1,53 @@
 "use client";
-import { createContext, useContext, useEffect, useState, useId } from "react";
+import { createContext, useContext, useEffect, useState, useId, useRef, useCallback } from "react";
 import { useAuth } from "./AuthProvider";
 
 import { CLUB_PALETTES, defaultKit, validateTeamKit, teamKitOptions } from "../../lib/riders/club-kit.mjs";
 import KitPattern from "./KitPattern";
+import { api } from "../../lib/api";
 export { CLUB_PALETTES } from "../../lib/riders/club-kit.mjs";
 const DEFAULT = defaultKit(null);
-const Context = createContext({ kit: DEFAULT, choices: teamKitOptions(null), save: () => false });
+const Context = createContext({ kit: DEFAULT, choices: teamKitOptions(null), loading: false, saving: false, error: "", save: async () => false });
 export function ClubStyleProvider({ children }) {
   const { session } = useAuth();
   const teamId = session?.team?.id;
-  const choices = teamKitOptions(teamId);
-  const fallback = defaultKit(teamId);
-  const key = session?.team?.id ? `pelotonia:kit-preview:${session.team.id}` : null;
-  const [saved, setSaved] = useState({ key: null, kit: DEFAULT });
+  return <TeamClubStyle key={teamId || "guest"} teamId={teamId}>{children}</TeamClubStyle>;
+}
+function TeamClubStyle({ teamId, children }) {
+  const [kit, setKit] = useState(() => defaultKit(teamId));
+  const [loading, setLoading] = useState(!!teamId), [saving, setSaving] = useState(false), [error, setError] = useState("");
+  const sequence = useRef(0), busy = useRef(false), mounted = useRef(false);
+  const refresh = useCallback(async () => {
+    if (!teamId || busy.current) return;
+    const request = ++sequence.current;
+    try {
+      const result = await api(`/api/team/identity?team_id=${encodeURIComponent(teamId)}`);
+      if (mounted.current && request === sequence.current && result.team_id === teamId) { setKit(validateTeamKit(result.kit, teamId)); setError(""); }
+    } catch (e) { if (mounted.current && request === sequence.current) setError(e.message); }
+    finally { if (mounted.current && request === sequence.current) setLoading(false); }
+  }, [teamId]);
   useEffect(() => {
-    const read = () => { try { setSaved({ key, kit: validateTeamKit(JSON.parse(localStorage.getItem(key)), teamId) }); } catch { setSaved({ key, kit: defaultKit(teamId) }); } };
-    read();
-    const changed = event => { if (event.key === key || event.key === null) read(); };
-    window.addEventListener("storage", changed);
-    return () => window.removeEventListener("storage", changed);
-  }, [key, teamId]);
-  const kit = saved.key === key ? saved.kit : fallback;
-  function save(value) {
-    if (!key) return false;
-    try { const next = validateTeamKit(value, teamId); localStorage.setItem(key, JSON.stringify(next)); setSaved({ key, kit: next }); return true; } catch { return false; }
+    mounted.current = true; refresh();
+    const visible = () => { if (document.visibilityState === "visible") refresh(); };
+    const changed = e => { if (e.key === `pelotonia:kit-change:${teamId}`) refresh(); };
+    window.addEventListener("focus", visible); window.addEventListener("storage", changed);
+    document.addEventListener("visibilitychange", visible);
+    const timer = setInterval(visible, 30000);
+    return () => { mounted.current = false; sequence.current++; clearInterval(timer); window.removeEventListener("focus", visible); window.removeEventListener("storage", changed); document.removeEventListener("visibilitychange", visible); };
+  }, [refresh, teamId]);
+  async function save(value) {
+    if (!teamId || busy.current || loading) return false;
+    busy.current = true; sequence.current++; setSaving(true); setError("");
+    try {
+      const result = await api("/api/team/identity", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ team_id: teamId, kit: value }) });
+      if (!mounted.current || result.team_id !== teamId) return false;
+      setKit(validateTeamKit(result.kit, teamId));
+      try { localStorage.setItem(`pelotonia:kit-change:${teamId}`, crypto.randomUUID()); } catch { /* Focus/polling still synchronize devices. */ }
+      return true;
+    } catch (e) { if (mounted.current) setError(e.message); return false; }
+    finally { busy.current = false; if (mounted.current) setSaving(false); }
   }
-  return <Context.Provider value={{ kit, choices, save }}>{children}</Context.Provider>;
+  return <Context.Provider value={{ kit, choices: teamKitOptions(teamId), loading, saving, error, refresh, save }}>{children}</Context.Provider>;
 }
 export const useClubStyle = () => useContext(Context);
 export function Jersey({ kit, name = "Team jersey", customColors }) {

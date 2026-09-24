@@ -25,6 +25,7 @@ export default function TeamShell({ title, children, compact = false }) {
     ["/team", "My team"],
     ["/team/run", "Calendar & races"],
     ["/team/portraits", "Riders"],
+    ["/team/identity", "Club identity"],
     ["/team/leaderboards", "Rankings"],
     ["/team/history", "History"],
     ["/team/atlas", "Atlas"],
