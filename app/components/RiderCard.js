@@ -1,10 +1,11 @@
 "use client";
 
+import { countryLabel } from "../../lib/riders/identity.mjs";
 import RiderAvatar from "./RiderAvatar";
 
 function fmtNat(n) {
   if (!n) return "";
-  return String(n).toUpperCase();
+  return countryLabel(n);
 }
 
 export default function RiderCard({ r, selected, onClick, disabled }) {
@@ -35,13 +36,13 @@ export default function RiderCard({ r, selected, onClick, disabled }) {
         <div style={{ display: "flex", justifyContent: "space-between", gap: 10 }}>
           <div>
             <div style={{ fontWeight: 800, fontSize: 16, lineHeight: 1.1 }}>
-              {r.name} <span style={{ opacity: 0.65 }}>{genderIcon}</span>{" "}
+              {r.display_name || r.name} <span style={{ opacity: 0.65 }}>{genderIcon}</span>{" "}
               <span style={{ opacity: 0.75, fontSize: 13 }}>
                 ({fmtNat(r.nationality)})
               </span>
             </div>
             <div className="small" style={{ marginTop: 4, opacity: 0.8 }}>
-              Alder {r.age ?? "?"} · Form {r.form ?? 0} · Fatigue {r.fatigue ?? 0}
+              Age {r.age ?? "?"} · Form {r.form ?? 0} · Fatigue {r.fatigue ?? 0}
             </div>
           </div>
 
@@ -52,9 +53,9 @@ export default function RiderCard({ r, selected, onClick, disabled }) {
         </div>
 
         <div style={{ marginTop: 8, display: "flex", gap: 6, flexWrap: "wrap" }}>
-          <span className="pill">{(r.sprint ?? 0) >= 40 ? "Sprinter" : "Rytter"}</span>
-          {(r.cobbles ?? 0) >= 40 ? <span className="pill">Brosten</span> : null}
-          {(r.mountain ?? 0) >= 40 ? <span className="pill">Bjerge</span> : null}
+          <span className="pill">{(r.sprint ?? 0) >= 40 ? "Sprinter" : "Rider"}</span>
+          {(r.cobbles ?? 0) >= 40 ? <span className="pill">Cobbles</span> : null}
+          {(r.mountain ?? 0) >= 40 ? <span className="pill">Mountains</span> : null}
           {(r.timetrial ?? 0) >= 40 ? <span className="pill">TT</span> : null}
         </div>
       </div>

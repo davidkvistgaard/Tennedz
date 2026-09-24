@@ -9,13 +9,22 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "eslint app lib tests",
+    "test": "node --test tests/unit/*.test.mjs",
+    "test:e2e": "playwright test"
   },
   "dependencies": {
-    "@supabase/supabase-js": "^2.43.4",
-    "next": "15.5.12",
-    "react": "^18.3.1",
-    "react-dom": "^18.3.1",
-    "seedrandom": "^3.0.5"
-  }
+    "@supabase/ssr": "0.12.7",
+    "@supabase/supabase-js": "2.117.1",
+    "next": "15.5.26",
+    "react": "19.3.0",
+    "react-dom": "19.3.0",
+    "seedrandom": "3.0.5",
+    "server-only": "0.0.1"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.56.1",
+    "eslint": "9.39.1"
+  },
+  "packageManager": "pnpm@11.25.0"
 }

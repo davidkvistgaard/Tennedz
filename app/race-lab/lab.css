@@ -1,0 +1,158 @@
+.lab {
+  max-width: 1160px;
+  margin: auto;
+  padding: 32px 20px;
+  color: #1d4235;
+  background: #f4f0e5;
+}
+.lab h1 {
+  font-size: clamp(2.5rem, 6vw, 5rem);
+  margin: 10px 0;
+}
+.lab h2 {
+  font-size: 1.5rem;
+}
+.lab p {
+  line-height: 1.6;
+}
+.lab-eyebrow {
+  letter-spacing: 0.16em;
+  font-size: 0.75rem;
+}
+.lab-badge,
+.lab-notice {
+  background: #e4ead6;
+  border-radius: 12px;
+  padding: 12px;
+  display: block;
+}
+.lab-notice {
+  margin: 24px 0;
+  border-left: 4px solid #bb6a36;
+}
+.lab-card {
+  background: #fffdf5;
+  padding: 24px;
+  border: 1px solid #d9decd;
+  border-radius: 20px;
+  margin: 24px 0;
+}
+.lab-controls {
+  border: 0;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+  padding: 0;
+  min-width: 0;
+}
+.lab-controls legend {
+  margin-bottom: 16px;
+  font-weight: 700;
+}
+.lab label {
+  display: grid;
+  gap: 8px;
+  font-weight: 600;
+}
+.lab input,
+.lab select,
+.lab button {
+  font: inherit;
+  min-width: 0;
+  min-height: 44px;
+  border: 1px solid #a3b495;
+  border-radius: 8px;
+  padding: 10px;
+  background: #fffdf5;
+  color: #1d4235;
+}
+.lab button {
+  cursor: pointer;
+  margin: 8px 8px 8px 0;
+}
+.lab .lab-primary {
+  background: #214f3c;
+  color: white;
+}
+.lab button:disabled {
+  opacity: 0.5;
+  cursor: wait;
+}
+.lab :focus-visible {
+  outline: 3px solid #bb6a36;
+  outline-offset: 3px;
+}
+.lab-scroll {
+  overflow-x: auto;
+}
+.lab table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  font-size: 0.88rem;
+}
+.lab th,
+.lab td {
+  padding: 12px;
+  border-bottom: 1px solid #d9decd;
+  white-space: nowrap;
+}
+.lab caption {
+  text-align: left;
+  padding: 8px 0;
+}
+.lab-metrics,
+.lab-actions {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+.lab-metrics strong,
+.lab-actions article {
+  background: #eef0e1;
+  border-radius: 12px;
+  padding: 16px;
+}
+.lab-actions {
+  grid-template-columns: repeat(2, 1fr);
+  margin: 20px 0;
+}
+.lab svg {
+  width: 100%;
+  height: auto;
+  margin-top: 16px;
+}
+.lab input[type="range"] {
+  width: 100%;
+  padding: 0;
+}
+.lab li {
+  margin: 12px 0;
+}
+.lab summary {
+  cursor: pointer;
+  min-height: 44px;
+  padding: 12px 0;
+}
+.lab footer {
+  padding: 8px 12px;
+}
+.lab [role="alert"] {
+  color: #9b3021;
+}
+@media (max-width: 650px) {
+  .lab {
+    padding: 20px 12px;
+  }
+  .lab-card {
+    padding: 16px;
+  }
+  .lab-controls,
+  .lab-metrics,
+  .lab-actions {
+    grid-template-columns: 1fr;
+  }
+  .lab table {
+    font-size: 0.8rem;
+  }
+}

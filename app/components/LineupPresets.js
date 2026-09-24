@@ -43,7 +43,7 @@ export default function LineupPresets({
   function applyPreset(p) {
     const ids = (p?.riderIds || []).filter((id) => riders.some((r) => r.id === id));
     if (ids.length !== 8) {
-      alert("Dette preset matcher ikke længere (mangler ryttere). Gem det igen.");
+      alert("This preset no longer matches your squad (riders are missing). Save it again.");
       return;
     }
     setSelectedIds(ids);
@@ -60,12 +60,12 @@ export default function LineupPresets({
   function saveCurrent() {
     if (!teamId) return;
     if (selectedIds.length !== 8) {
-      alert("Vælg præcis 8 ryttere før du gemmer et preset.");
+      alert("Select exactly 8 riders before saving a preset.");
       return;
     }
     const name = newName.trim();
     if (!name) {
-      alert("Skriv et navn til preset (fx 'Mountain team').");
+      alert("Enter a preset name (e.g. 'Mountain team').");
       return;
     }
 
@@ -85,7 +85,7 @@ export default function LineupPresets({
         <div>
           <div className="h2" style={{ fontWeight: 1000 }}>Lineup presets</div>
           <div className="small" style={{ marginTop: 4 }}>
-            Gem og indlæs faste “8-mands hold” (fx Mountain/Wind/Sprint). (Gemmes i din browser).
+            Save and load eight-rider lineups (e.g. Mountain/Wind/Sprint). Stored in your browser.
           </div>
         </div>
         <Pill tone="info">{presets.length} presets</Pill>
@@ -98,17 +98,17 @@ export default function LineupPresets({
           className="input"
           value={newName}
           onChange={(e) => setNewName(e.target.value)}
-          placeholder='Navn på preset (fx "Mountain team")'
+          placeholder='Preset name (e.g. "Mountain team")'
           style={{ maxWidth: 360 }}
         />
         <SmallButton className="primary" onClick={saveCurrent}>
-          Gem nuværende 8
+          Save current eight
         </SmallButton>
       </div>
 
       <div style={{ marginTop: 12, display: "grid", gap: 10 }}>
         {presets.length === 0 ? (
-          <div className="small">Ingen presets endnu. Vælg 8 ryttere og gem et preset.</div>
+          <div className="small">No presets yet. Select 8 riders and save a preset.</div>
         ) : (
           presets.map((p) => {
             const matches = (p.riderIds || []).filter((id) => selectedSet.has(id)).length;
@@ -130,13 +130,13 @@ export default function LineupPresets({
                 <div>
                   <div style={{ fontWeight: 1000 }}>{p.name}</div>
                   <div className="small" style={{ marginTop: 4 }}>
-                    {p.riderIds?.length || 0} ryttere · matcher nuvalgte: {matches}/8
+                    {p.riderIds?.length || 0} riders · matching current selection: {matches}/8
                   </div>
                 </div>
 
                 <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-                  <SmallButton onClick={() => applyPreset(p)}>Indlæs</SmallButton>
-                  <SmallButton className="danger" onClick={() => deletePreset(p.name)}>Slet</SmallButton>
+                  <SmallButton onClick={() => applyPreset(p)}>Load</SmallButton>
+                  <SmallButton className="danger" onClick={() => deletePreset(p.name)}>Delete</SmallButton>
                 </div>
               </div>
             );

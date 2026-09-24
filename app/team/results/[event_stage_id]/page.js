@@ -1,209 +1,262 @@
 "use client";
-
-import { useEffect, useMemo, useState } from "react";
+import { use, useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
+import Link from "next/link";
 import TeamShell from "../../../components/TeamShell";
-import Loading from "../../../components/Loading";
-import SmallButton from "../../../components/SmallButton";
-import { Pill, SectionHeader } from "../../../components/ui";
-import { supabase } from "../../../../lib/supabaseClient";
-import { getOrCreateTeam } from "../../../../lib/team";
-
-function fmtGapToWinner(timeSec, winnerSec) {
-  const diff = Number(timeSec) - Number(winnerSec);
-  if (diff <= 0.4) return "0s";
-  if (diff < 60) return `+${Math.round(diff)}s`;
-  const m = Math.floor(diff / 60);
-  const s = Math.round(diff - m * 60);
-  return `+${m}:${String(s).padStart(2, "0")}`;
-}
+import { useAuth } from "../../../components/AuthProvider";
+import { api } from "../../../../lib/api";
+import { formatGap } from "../../../../lib/race/replay.mjs";
 
 export default function ResultsPage({ params }) {
-  const eventId = params.event_stage_id;
-
-  const [status, setStatus] = useState("Loader…");
-  const [team, setTeam] = useState(null);
-
-  const [divInfo, setDivInfo] = useState(null);
-  const [divisionIndex, setDivisionIndex] = useState(1);
-
-  const [data, setData] = useState(null);
-
-  async function loadBase() {
-    setStatus("Loader…");
-    const { data: s } = await supabase.auth.getSession();
-    if (!s?.session) {
-      setStatus("Du er ikke logget ind.");
-      setTeam(null);
-      return;
-    }
-    const res = await getOrCreateTeam();
-    setTeam(res.team);
-    setStatus("Klar ✅");
-  }
-
-  async function loadDivisions(teamId) {
-    const j = await fetch(`/api/event/divisions?event_id=${eventId}&team_id=${teamId}`).then(r => r.json());
-    if (j?.ok) {
-      setDivInfo(j);
-      if (j.my_division) setDivisionIndex(j.my_division);
-    }
-  }
-
-  async function loadResults(divIndex) {
+  const eventId = use(params).event_stage_id,
+    query = useSearchParams(),
+    requested = Number(query.get("division"));
+  const { session } = useAuth(),
+    teamId = session?.team?.id;
+  const [divisions, setDivisions] = useState(null),
+    [division, setDivision] = useState(null),
+    [data, setData] = useState(null),
+    [error, setError] = useState(""),
+    [revealed, setRevealed] = useState(false);
+  useEffect(() => {
+    setRevealed(false);
+    try {
+      setRevealed(
+        localStorage.getItem(`pelotonia-watched:${eventId}`) === "true",
+      );
+    } catch {}
+  }, [eventId]);
+  useEffect(() => {
+    const abort = new AbortController();
+    setDivisions(null);
+    setDivision(null);
     setData(null);
-    const j = await fetch(`/api/event/results?event_id=${eventId}&division_index=${divIndex}`).then(r => r.json());
-    if (!j?.ok) throw new Error(j?.error || "Could not load results");
-    setData(j);
-  }
-
+    setError("");
+    api(`/api/event/divisions?event_id=${eventId}`, { signal: abort.signal })
+      .then((j) => {
+        if (abort.signal.aborted) return;
+        setDivisions(j);
+        setDivision(
+          j.divisions.some((d) => d.division_index === requested)
+            ? requested
+            : j.my_division || j.divisions[0]?.division_index || 1,
+        );
+      })
+      .catch((e) => {
+        if (!abort.signal.aborted) setError(e.message);
+      });
+    return () => abort.abort();
+  }, [eventId, requested]);
   useEffect(() => {
-    (async () => {
-      try {
-        await loadBase();
-      } catch (e) {
-        setStatus("Fejl: " + (e?.message ?? String(e)));
-      }
-    })();
-    // eslint-disable-next-line
-  }, []);
-
-  useEffect(() => {
-    if (!team?.id) return;
-    (async () => {
-      try {
-        await loadDivisions(team.id);
-      } catch (e) {
-        // ignore
-      }
-    })();
-  }, [team?.id]);
-
-  useEffect(() => {
-    (async () => {
-      try {
-        await loadResults(divisionIndex);
-      } catch (e) {
-        setStatus("Fejl: " + (e?.message ?? String(e)));
-      }
-    })();
-  }, [divisionIndex]);
-
-  const winnerTime = useMemo(() => {
-    const t0 = data?.teams?.[0]?.time_sec;
-    return t0 != null ? Number(t0) : null;
-  }, [data]);
-
+    if (!division || !revealed) return;
+    const abort = new AbortController();
+    setData(null);
+    setError("");
+    api(`/api/event/results?event_id=${eventId}&division_index=${division}`, {
+      signal: abort.signal,
+    })
+      .then((j) => {
+        if (!abort.signal.aborted) setData(j);
+      })
+      .catch((e) => {
+        if (!abort.signal.aborted) setError(e.message);
+      });
+    return () => abort.abort();
+  }, [eventId, division, revealed]);
+  const mine = data?.teams.find((t) => t.team_id === teamId);
   return (
-    <TeamShell title="Resultat">
-      <p className="small">Status: {status}</p>
-
-      {!team ? <Loading text="Loader…" /> : (
-        <div style={{ display: "grid", gap: 14 }}>
-          <div className="card" style={{ padding: 14 }}>
-            <SectionHeader
-              title={data?.event?.name || "Event"}
-              subtitle="Resultater og points pr. division (max 20 hold)."
-              right={<SmallButton onClick={() => loadResults(divisionIndex)}>Reload</SmallButton>}
-            />
-
-            <div className="hr" />
-
-            <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center" }}>
-              <div>
-                <div className="small" style={{ marginBottom: 6 }}>Division</div>
-                <select
-                  value={divisionIndex}
-                  onChange={(e) => setDivisionIndex(Number(e.target.value))}
-                  style={{ minWidth: 220 }}
-                >
-                  {(divInfo?.divisions || [{ division_index: 1, team_count: 0 }]).map(d => (
-                    <option key={d.division_index} value={d.division_index}>
-                      Division {d.division_index}/{divInfo?.total_divisions || data?.total_divisions || 1} ({d.team_count} hold)
-                      {divInfo?.my_division === d.division_index ? " · DIN" : ""}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <Pill tone="info">
-                Total divisions: {divInfo?.total_divisions || data?.total_divisions || 1}
-              </Pill>
-              {divInfo?.my_division ? <Pill tone="accent">Din division: {divInfo.my_division}</Pill> : null}
-            </div>
+    <TeamShell title="Results & points">
+      {!revealed ? (
+        <section className="card empty-state">
+          <p className="eyebrow">Keep the suspense</p>
+          <h2>Watch the race first?</h2>
+          <p>
+            The results reveal the winner, the placings, and the points
+            earned.
+          </p>
+          <div className="control-row">
+            <Link
+              className="btn primary"
+              href={`/team/view/${eventId}${division ? `?division=${division}` : ""}`}
+            >
+              Watch the race →
+            </Link>
+            <button className="btn" onClick={() => setRevealed(true)}>
+              Reveal the result now
+            </button>
           </div>
-
-          {!data ? <Loading text="Loader resultater…" /> : (
+        </section>
+      ) : (
+        <>
+          {error ? (
+            <p role="alert" className="form-message error">
+              {error}
+            </p>
+          ) : !data ? (
+            <p role="status">Loading the result…</p>
+          ) : (
             <>
-              {/* Team standings */}
-              <div className="card" style={{ padding: 14 }}>
-                <SectionHeader
-                  title="Hold (division)"
-                  subtitle="Placering beregnes ud fra kaptajnens (eller bedste rytters) tid. Points = matrix × dynamic multiplier."
-                />
-                <div className="hr" />
-
-                <div style={{ overflowX: "auto" }}>
-                  <table className="table">
-                    <thead>
-                      <tr>
-                        <th>#</th>
-                        <th>Hold</th>
-                        <th>Gap</th>
-                        <th>Points</th>
-                        <th>Multiplier</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {data.teams.map((t) => (
-                        <tr key={t.team_id} style={{ opacity: t.team_id === team.id ? 1 : 0.95 }}>
-                          <td><b>{t.position}</b></td>
-                          <td>{t.teams?.name || "Team"}</td>
-                          <td>{winnerTime == null ? "-" : fmtGapToWinner(t.time_sec, winnerTime)}</td>
-                          <td><b>{t.points}</b></td>
-                          <td>{Number(t.multiplier).toFixed(3)}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
+              <section className="card result-overview">
+                <div>
+                  <p className="eyebrow">
+                    {data.event.status === "FINISHED"
+                      ? "Finished"
+                      : "Result pending"}
+                  </p>
+                  <h2>{data.event.name}</h2>
+                  <p className="small">
+                    Your team’s placing follows your captain’s time. Points are adjusted
+                    by division.
+                  </p>
                 </div>
-              </div>
-
-              {/* Rider standings */}
-              <div className="card" style={{ padding: 14 }}>
-                <SectionHeader
-                  title="Top 50 ryttere (division)"
-                  subtitle="Rytterpoints gives til top 20 ryttere i divisionen (samme matrix × multiplier)."
-                />
-                <div className="hr" />
-
-                <div style={{ overflowX: "auto" }}>
-                  <table className="table">
-                    <thead>
-                      <tr>
-                        <th>#</th>
-                        <th>Rytter</th>
-                        <th>Hold</th>
-                        <th>Gap</th>
-                        <th>Points</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {data.riders.map((r) => (
-                        <tr key={r.rider_id}>
-                          <td><b>{r.position}</b></td>
-                          <td>{r.riders?.name || "Rider"}</td>
-                          <td>{r.teams?.name || "Team"}</td>
-                          <td>{winnerTime == null ? "-" : fmtGapToWinner(r.time_sec, winnerTime)}</td>
-                          <td><b>{r.points}</b></td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                <label>
+                  Division{" "}
+                  <select
+                    aria-label="Results division"
+                    value={division}
+                    onChange={(e) => setDivision(Number(e.target.value))}
+                  >
+                    {(divisions?.divisions || []).map((d) => (
+                      <option key={d.division_index} value={d.division_index}>
+                        {d.division_index} · {d.team_count} teams
+                        {d.division_index === divisions.my_division
+                          ? " · your team"
+                          : ""}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <Link
+                  className="text-button"
+                  href={`/team/view/${eventId}?division=${division}`}
+                >
+                  Watch the race again →
+                </Link>
+              </section>
+              {mine && (
+                <div className="result-summary">
+                  <div>
+                    <span>Team placing</span>
+                    <strong>#{mine.position}</strong>
+                  </div>
+                  <div>
+                    <span>Team points from this race</span>
+                    <strong>+{mine.points}</strong>
+                  </div>
+                  <div>
+                    <span>Division</span>
+                    <strong>
+                      {division}/{data.total_divisions}
+                    </strong>
+                  </div>
                 </div>
-              </div>
+              )}
+              {!data.teams.length ? (
+                <section className="card empty-state">
+                  <h2>No result yet</h2>
+                  <p>
+                    The race must be completed before placings and points can
+                    be shown.
+                  </p>
+                  <Link className="btn" href="/team/run">
+                    To the calendar
+                  </Link>
+                </section>
+              ) : (
+                <>
+                  <section className="card results-table">
+                    <h2>Team results</h2>
+                    <div className="table-scroll">
+                      <table className="table">
+                        <thead>
+                          <tr>
+                            <th scope="col">Pos.</th>
+                            <th scope="col">Team</th>
+                            <th scope="col">Gap</th>
+                            <th scope="col">Points</th>
+                            <th scope="col">Division multiplier</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {data.teams.map((t) => (
+                            <tr
+                              className={
+                                t.team_id === teamId ? "own-result" : ""
+                              }
+                              key={t.team_id}
+                            >
+                              <td>{t.position}</td>
+                              <td>
+                                <strong>{t.teams?.name || "Team"}</strong>
+                                {t.team_id === teamId && (
+                                  <span className="own-chip">Your team</span>
+                                )}
+                              </td>
+                              <td>
+                                {formatGap(t.time_sec - data.teams[0].time_sec)}
+                              </td>
+                              <td>
+                                <strong>{t.points}</strong>
+                              </td>
+                              <td>
+                                {Number(t.multiplier).toLocaleString("en-GB", {
+                                  maximumFractionDigits: 3,
+                                })}
+                                ×
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </section>
+                  <section className="card results-table">
+                    <h2>Rider results</h2>
+                    <p className="small">
+                      The first 20 riders earn rider points. These points
+                      contribute to your team’s rating in this race category.
+                    </p>
+                    <div className="table-scroll">
+                      <table className="table">
+                        <thead>
+                          <tr>
+                            <th scope="col">Pos.</th>
+                            <th scope="col">Rider</th>
+                            <th scope="col">Team</th>
+                            <th scope="col">Gap</th>
+                            <th scope="col">Points</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {data.riders.map((r) => (
+                            <tr
+                              key={r.rider_id}
+                              className={
+                                r.team_id === teamId ? "own-result" : ""
+                              }
+                            >
+                              <td>{r.position}</td>
+                              <td>
+                                <strong>{r.riders?.name || "Rider"}</strong>
+                              </td>
+                              <td>{r.teams?.name || "Team"}</td>
+                              <td>
+                                {formatGap(
+                                  r.time_sec - data.riders[0].time_sec,
+                                )}
+                              </td>
+                              <td>{r.points}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </section>
+                </>
+              )}
             </>
           )}
-        </div>
+        </>
       )}
     </TeamShell>
   );
