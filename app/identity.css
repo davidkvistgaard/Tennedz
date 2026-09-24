@@ -25,19 +25,3 @@
 .identity-victory h2 { font-size: clamp(28px,3vw,42px); line-height: 1.1; letter-spacing: -1px; }
 .identity-victory p:not(.identity-eyebrow) { line-height: 1.7; color: #58674f; }
 @media(max-width:700px) { .identity-hero,.identity-victory { grid-template-columns: 1fr; }.identity-race-art { transform: none; }.identity-victory > div { padding: 24px; } }
-
-/* Homepage-only visual treatment: no club, auth or engine changes. */
-.identity-home { --studio-paper:#fff9eb; --studio-forest:#285440; --studio-line:#d6cdb7; --studio-shadow:0 5px 0 #c9baa32b,0 14px 35px #423c2510; background:radial-gradient(ellipse at 15% 0%,#fffcf0 0,transparent 60%),#f2ead8; }
-.identity-home .btn { border-radius:10px; min-height:44px; font-weight:700; }
-.identity-home .btn.primary { background:#285440; color:#fff9eb; border-color:#285440; box-shadow:0 3px 0 #153729; }
-.identity-home .identity-logo { color:#285440; }
-.identity-home .identity-copy h1 em { color:#a15e43; }
-.identity-questions { display: grid; grid-template-columns: 1fr 1.3fr; gap: 40px; padding: 0 0 60px; }
-.identity-questions h2 { font: 700 clamp(32px,4vw,48px) Bricolage,sans-serif; line-height: 1.1; margin: 18px 0; }
-.identity-questions p { line-height: 1.7; max-width: 500px; color: #596451; }
-.identity-questions details { padding: 20px; margin-bottom: 12px; background: var(--studio-paper); border: 1px solid var(--studio-line); border-radius: 14px; }
-.identity-questions summary { cursor: pointer; font-weight: 700; min-height: 44px; }
-.identity-home .identity-nav { border-bottom: 2px solid var(--studio-line); }
-.identity-home .identity-steps article { background: #fff9ebbd; padding: 26px; border: 1px solid var(--studio-line); border-radius: 16px 16px 5px 16px; box-shadow: var(--studio-shadow); }
-.identity-home .identity-steps { gap: 22px; }
-@media(max-width:700px) { .identity-questions { grid-template-columns:1fr; gap:16px; } }

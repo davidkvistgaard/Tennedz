@@ -1,5 +1,7 @@
 import "./globals.css";
 import "./experience.css";
+import "./studio.css";
+import { ClubStyleProvider } from "./components/ClubStyle";
 import { AuthProvider } from "./components/AuthProvider";
 
 export const metadata = {
@@ -11,7 +13,7 @@ export default function RootLayout({ children }) {
   return (
     <html lang="en">
       <body>
-        <AuthProvider><main>{children}</main></AuthProvider>
+        <AuthProvider><ClubStyleProvider><main>{children}</main></ClubStyleProvider></AuthProvider>
       </body>
     </html>
   );
