@@ -13,3 +13,15 @@
 .club-rider-strengths{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;padding:12px 0;border-top:1px solid #e0e3cf;border-bottom:1px solid #e0e3cf}.club-rider-strengths span{display:block;font-size:10px;color:#5c6b52;min-height:2.5em;line-height:1.25}.club-rider-strengths strong{font-family:Bricolage,sans-serif;font-size:22px;color:#35583d}.club-rider-condition{display:flex;justify-content:space-between;gap:7px;font-size:11px;color:#586a4e;margin:14px 0}.club-rider-condition strong{color:#2e5038;margin-left:3px}.club-roster .club-rider-points{border:0;padding:0;gap:7px}.club-roster .club-rider-points strong{font-size:20px}.club-roster .club-rider-points span{font-size:11px}.club-roster .club-rider summary{margin-top:13px;border-top:1px solid #e0e3cf;padding:13px 0 0;min-height:44px}
 @media(max-width:700px){.club-roster .club-rider-art>.rider-avatar{height:180px!important}.club-roster .club-rider-body{padding:12px}.club-roster .club-rider h3{font-size:20px}.club-rider-specialty{left:8px;top:8px;font-size:9px;padding:4px 6px}.club-rider-country{left:8px;bottom:8px;font-size:9px;padding:5px 7px;max-width:calc(100% - 16px)}.club-roster .club-rider-meta>span{display:none}.club-rider-strengths{gap:4px}.club-rider-strengths strong{font-size:20px}.club-rider-strengths span{font-size:9px}.club-rider-condition{font-size:10px;gap:4px}.club-roster .club-rider summary{font-size:11px}}
 @media(max-width:360px){.club-roster{grid-template-columns:1fr}.club-roster .club-rider-art>.rider-avatar{height:245px!important}.club-roster .club-rider-body{padding:18px}.club-roster .club-rider h3{min-height:0}}
+
+/* Owner-supplied race illustrations stay uncropped, including island landmarks. */
+.identity-hero { grid-template-columns: .85fr 1.15fr; }
+.identity-race-art { margin: 0; transform: rotate(1deg); background: #fff9e9; padding: 10px; border: 1px solid #d8d9c8; border-radius: 20px; box-shadow: 0 18px 40px #263e3220; }
+.identity-race-art img { display: block; width: 100%; height: auto; border-radius: 12px; }
+.identity-race-art figcaption { padding: 15px 8px 6px; font-size: 12px; font-weight: 700; text-align: center; }
+.identity-victory { display: grid; grid-template-columns: 1.4fr 1fr; align-items: center; overflow: hidden; border-radius: 22px; background: #e9e6d3; border: 1px solid #d8d9c8; }
+.identity-victory > img { display: block; width: 100%; height: auto; }
+.identity-victory > div { padding: 30px; }
+.identity-victory h2 { font-size: clamp(28px,3vw,42px); line-height: 1.1; letter-spacing: -1px; }
+.identity-victory p:not(.identity-eyebrow) { line-height: 1.7; color: #58674f; }
+@media(max-width:700px) { .identity-hero,.identity-victory { grid-template-columns: 1fr; }.identity-race-art { transform: none; }.identity-victory > div { padding: 24px; } }
