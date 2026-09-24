@@ -26,7 +26,7 @@ for (const name of ["alice", "bob", "missing", "duplicate"]) {
     persist();
     if (index || name === "duplicate") continue;
     const skills = Object.fromEntries(["sprint", "flat", "hills", "mountain", "cobbles", "leadership", "endurance", "moral", "luck", "wind", "form", "timetrial"].map(key => [key, 40]));
-    const rider = await db.from("riders").insert({ name: `${name.toUpperCase()} Test Rytter`, gender: "M", ...skills }).select("id").single();
+    const rider = await db.from("riders").insert({ name: `${name.toUpperCase()} Test Rider`, gender: "M", ...skills }).select("id").single();
     if (rider.error) throw rider.error;
     const membership = await db.from("team_riders").insert({ team_id: result.data.id, rider_id: rider.data.id });
     if (membership.error) throw membership.error;

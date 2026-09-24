@@ -21,11 +21,11 @@ export default function TeamShell({ title, children, compact = false }) {
     };
   }, []);
   const links = [
-    ["/team", "Mit hold"],
-    ["/team/run", "Kalender & løb"],
-    ["/team/portraits", "Ryttere"],
-    ["/team/leaderboards", "Ranglister"],
-    ["/team/history", "Historik"],
+    ["/team", "My team"],
+    ["/team/run", "Calendar & races"],
+    ["/team/portraits", "Riders"],
+    ["/team/leaderboards", "Rankings"],
+    ["/team/history", "History"],
     ["/team/atlas", "Atlas"],
   ];
   if (session?.is_admin) links.push(["/admin", "Admin"]);
@@ -35,7 +35,7 @@ export default function TeamShell({ title, children, compact = false }) {
         <Link
           href="/team"
           className="game-brand"
-          aria-label="Pelotonia – mit hold"
+          aria-label="Pelotonia – my team"
         >
           <span className="brand-mark">
             <svg viewBox="0 0 32 32" width="28" height="28" aria-hidden="true">
@@ -53,7 +53,7 @@ export default function TeamShell({ title, children, compact = false }) {
             pelotonia<small>Cycling Manager</small>
           </span>
         </Link>
-        <nav className="game-nav" aria-label="Hovednavigation">
+        <nav className="game-nav" aria-label="Main navigation">
           {links.map(([href, label]) => (
             <Link
               href={href}
@@ -68,13 +68,13 @@ export default function TeamShell({ title, children, compact = false }) {
           {session?.team?.name}
           <br />
           {gameDate
-            ? `Spildag ${new Date(gameDate + "T12:00:00Z").toLocaleDateString("da-DK")}`
-            : "Henter spildag…"}
+            ? `Game date ${new Date(gameDate + "T12:00:00Z").toLocaleDateString("en-GB", { timeZone: "UTC" })}`
+            : "Loading game date…"}
         </div>
       </header>
       {!compact && (
         <div className="page-heading">
-          <h1>{title || "Mit hold"}</h1>
+          <h1>{title || "My team"}</h1>
         </div>
       )}
       <div>{children}</div>

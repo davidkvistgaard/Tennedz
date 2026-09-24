@@ -2,6 +2,8 @@
 
 Ejerens 50 punkter er bevaret i PRODUCT-VISION.md. Senere præciseringer har forrang:
 
+- **Spillets sprog er engelsk overalt.** Forside, spillerinterface, onboarding, løbsviewer, atlas, fejlbeskeder og fremtidige illustrationers tekster skal være engelske, selv om ejerdialogen foregår på dansk. Visionen er et globalt cycling manager-spil. Bevar internationale personnavne og spilleroprettede navne. Deadlines skal have en eksplicit tidszone.
+
 - Herre- og kvindekonkurrencer er separate. Holdrating og seeding bruger summen af de op til 16 bedst ratede ryttere af løbets køn. Kun resultatpoint tæller, ikke skills/form/fatigue. Skadede ryttere forbliver en del af holdets rating.
 - Almindelige ændringer, test og releases inden for visionen må gennemføres autonomt. Bevar produktionsdata. Destruktive ændringer, nye omkostninger og væsentlige regelændringer afklares.
 - Målet omfatter etaper på samme dato og rute som virkelige løb, eksempelvis Tour de France 2027, med etaperesultater og samlet klassement. Rutedata må først importeres efter kontrol mod offentliggjorte kilder; der er endnu ikke importeret nogen TdF 2027-rute.

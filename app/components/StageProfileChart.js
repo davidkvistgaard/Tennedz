@@ -13,7 +13,7 @@ export default function StageProfileChart({
   try {
     route = normalizeRoute(stage);
   } catch {
-    return <p className="small">Ruteprofilen er endnu ikke tilgængelig.</p>;
+    return <p className="small">The route profile is not available yet.</p>;
   }
   const min = Math.min(...route.points.map((p) => p[1])),
     max = Math.max(...route.points.map((p) => p[1]));
@@ -34,7 +34,7 @@ export default function StageProfileChart({
         width="100%"
         height={height}
         role="img"
-        aria-label={`${route.distance} kilometer, ${route.ascent} højdemeter. ${selected ? `Position ${position.toFixed(1)} km, ${selected.elevation} meter over havet.` : ""}`}
+        aria-label={`${route.distance} kilometer, ${route.ascent} m of climbing. ${selected ? `Position ${position.toFixed(1)} km, ${selected.elevation} metres above sea level.` : ""}`}
       >
         <defs>
           <linearGradient id={`profile-${id}`} x2="0" y2="1">
@@ -126,9 +126,9 @@ export default function StageProfileChart({
       <div className="profile-scale">
         <span>Start · 0 km</span>
         <span>
-          {min}–{max} m over havet
+          {min}–{max} m above sea level
         </span>
-        <span>{route.distance} km · Mål</span>
+        <span>{route.distance} km · Finish</span>
       </div>
     </div>
   );

@@ -65,24 +65,24 @@ export default function ResultsPage({ params }) {
   }, [eventId, division, revealed]);
   const mine = data?.teams.find((t) => t.team_id === teamId);
   return (
-    <TeamShell title="Resultat & point">
+    <TeamShell title="Results & points">
       {!revealed ? (
         <section className="card empty-state">
-          <p className="eyebrow">Bevar spændingen</p>
-          <h2>Vil du se løbet først?</h2>
+          <p className="eyebrow">Keep the suspense</p>
+          <h2>Watch the race first?</h2>
           <p>
-            Resultatlisten afslører vinderen, placeringerne og de optjente
-            point.
+            The results reveal the winner, the placings, and the points
+            earned.
           </p>
           <div className="control-row">
             <Link
               className="btn primary"
               href={`/team/view/${eventId}${division ? `?division=${division}` : ""}`}
             >
-              Se løbet →
+              Watch the race →
             </Link>
             <button className="btn" onClick={() => setRevealed(true)}>
-              Vis resultatet nu
+              Reveal the result now
             </button>
           </div>
         </section>
@@ -93,34 +93,34 @@ export default function ResultsPage({ params }) {
               {error}
             </p>
           ) : !data ? (
-            <p role="status">Henter resultatet…</p>
+            <p role="status">Loading the result…</p>
           ) : (
             <>
               <section className="card result-overview">
                 <div>
                   <p className="eyebrow">
                     {data.event.status === "FINISHED"
-                      ? "I mål"
-                      : "Resultat afventer"}
+                      ? "Finished"
+                      : "Result pending"}
                   </p>
                   <h2>{data.event.name}</h2>
                   <p className="small">
-                    Holdets placering følger kaptajnens tid. Point justeres
-                    efter division.
+                    Your team’s placing follows your captain’s time. Points are adjusted
+                    by division.
                   </p>
                 </div>
                 <label>
                   Division{" "}
                   <select
-                    aria-label="Resultatdivision"
+                    aria-label="Results division"
                     value={division}
                     onChange={(e) => setDivision(Number(e.target.value))}
                   >
                     {(divisions?.divisions || []).map((d) => (
                       <option key={d.division_index} value={d.division_index}>
-                        {d.division_index} · {d.team_count} hold
+                        {d.division_index} · {d.team_count} teams
                         {d.division_index === divisions.my_division
-                          ? " · dit hold"
+                          ? " · your team"
                           : ""}
                       </option>
                     ))}
@@ -130,17 +130,17 @@ export default function ResultsPage({ params }) {
                   className="text-button"
                   href={`/team/view/${eventId}?division=${division}`}
                 >
-                  Se løbet igen →
+                  Watch the race again →
                 </Link>
               </section>
               {mine && (
                 <div className="result-summary">
                   <div>
-                    <span>Holdets placering</span>
+                    <span>Team placing</span>
                     <strong>#{mine.position}</strong>
                   </div>
                   <div>
-                    <span>Holdpoint fra løbet</span>
+                    <span>Team points from this race</span>
                     <strong>+{mine.points}</strong>
                   </div>
                   <div>
@@ -153,28 +153,28 @@ export default function ResultsPage({ params }) {
               )}
               {!data.teams.length ? (
                 <section className="card empty-state">
-                  <h2>Intet resultat endnu</h2>
+                  <h2>No result yet</h2>
                   <p>
-                    Løbet skal være afviklet, før placeringer og point kan
-                    vises.
+                    The race must be completed before placings and points can
+                    be shown.
                   </p>
                   <Link className="btn" href="/team/run">
-                    Til kalenderen
+                    To the calendar
                   </Link>
                 </section>
               ) : (
                 <>
                   <section className="card results-table">
-                    <h2>Holdenes resultat</h2>
+                    <h2>Team results</h2>
                     <div className="table-scroll">
                       <table className="table">
                         <thead>
                           <tr>
-                            <th scope="col">Nr.</th>
-                            <th scope="col">Hold</th>
-                            <th scope="col">Afstand</th>
-                            <th scope="col">Point</th>
-                            <th scope="col">Divisionsfaktor</th>
+                            <th scope="col">Pos.</th>
+                            <th scope="col">Team</th>
+                            <th scope="col">Gap</th>
+                            <th scope="col">Points</th>
+                            <th scope="col">Division multiplier</th>
                           </tr>
                         </thead>
                         <tbody>
@@ -187,9 +187,9 @@ export default function ResultsPage({ params }) {
                             >
                               <td>{t.position}</td>
                               <td>
-                                <strong>{t.teams?.name || "Hold"}</strong>
+                                <strong>{t.teams?.name || "Team"}</strong>
                                 {t.team_id === teamId && (
-                                  <span className="own-chip">Dit hold</span>
+                                  <span className="own-chip">Your team</span>
                                 )}
                               </td>
                               <td>
@@ -199,7 +199,7 @@ export default function ResultsPage({ params }) {
                                 <strong>{t.points}</strong>
                               </td>
                               <td>
-                                {Number(t.multiplier).toLocaleString("da-DK", {
+                                {Number(t.multiplier).toLocaleString("en-GB", {
                                   maximumFractionDigits: 3,
                                 })}
                                 ×
@@ -211,20 +211,20 @@ export default function ResultsPage({ params }) {
                     </div>
                   </section>
                   <section className="card results-table">
-                    <h2>Rytternes resultat</h2>
+                    <h2>Rider results</h2>
                     <p className="small">
-                      De første 20 ryttere optjener rytterpoint. Disse point
-                      indgår i holdets rating for løbets køn.
+                      The first 20 riders earn rider points. These points
+                      contribute to your team’s rating in this race category.
                     </p>
                     <div className="table-scroll">
                       <table className="table">
                         <thead>
                           <tr>
-                            <th scope="col">Nr.</th>
-                            <th scope="col">Rytter</th>
-                            <th scope="col">Hold</th>
-                            <th scope="col">Afstand</th>
-                            <th scope="col">Point</th>
+                            <th scope="col">Pos.</th>
+                            <th scope="col">Rider</th>
+                            <th scope="col">Team</th>
+                            <th scope="col">Gap</th>
+                            <th scope="col">Points</th>
                           </tr>
                         </thead>
                         <tbody>
@@ -237,9 +237,9 @@ export default function ResultsPage({ params }) {
                             >
                               <td>{r.position}</td>
                               <td>
-                                <strong>{r.riders?.name || "Rytter"}</strong>
+                                <strong>{r.riders?.name || "Rider"}</strong>
                               </td>
-                              <td>{r.teams?.name || "Hold"}</td>
+                              <td>{r.teams?.name || "Team"}</td>
                               <td>
                                 {formatGap(
                                   r.time_sec - data.riders[0].time_sec,

@@ -1,6 +1,6 @@
 "use client";
 
-export default function Loading({ text = "Loader…" }) {
+export default function Loading({ text = "Loading…" }) {
   return (
     <div className="card" style={{ padding: 14 }}>
       <div className="badge">

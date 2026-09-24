@@ -11,29 +11,31 @@ import { normalizeRoute, routeAdvice } from "../../../lib/race/route.mjs";
 
 const skills = {
   sprint: "Sprint",
-  flat: "Flad vej",
-  hills: "Bakker",
-  mountain: "Bjerge",
-  cobbles: "Brosten",
-  timetrial: "Enkeltstart",
-  endurance: "Udholdenhed",
-  strength: "Styrke",
-  wind: "Vind",
+  flat: "Flat roads",
+  hills: "Hills",
+  mountain: "Mountains",
+  cobbles: "Cobbles",
+  timetrial: "Time trial",
+  endurance: "Endurance",
+  strength: "Strength",
+  wind: "Wind",
   form: "Form",
-  fatigue: "Træthed",
+  fatigue: "Fatigue",
 };
 const date = (ts) =>
-  new Date(ts).toLocaleString("da-DK", {
+  new Date(ts).toLocaleString("en-GB", {
     day: "numeric",
     month: "short",
+    timeZone: "UTC",
+    timeZoneName: "short",
     hour: "2-digit",
     minute: "2-digit",
   });
 function countdown(deadline, now) {
   const sec = Math.max(0, Math.floor((new Date(deadline) - now) / 1000));
   if (sec >= 86400)
-    return `${Math.floor(sec / 86400)} ${sec < 172800 ? "dag" : "dage"} · ${Math.floor((sec % 86400) / 3600)} timer`;
-  return `${Math.floor(sec / 3600)}t ${Math.floor((sec % 3600) / 60)}m ${sec % 60}s`;
+    return `${Math.floor(sec / 86400)} ${sec < 172800 ? "day" : "days"} · ${Math.floor((sec % 86400) / 3600)} hours`;
+  return `${Math.floor(sec / 3600)}h ${Math.floor((sec % 3600) / 60)}m ${sec % 60}s`;
 }
 const sameLineup = (a, b) =>
   !!a &&
@@ -191,7 +193,7 @@ export default function RunPage() {
       });
       setSaved({ selected_riders: [...selected], captain_id: captain });
       setNotice(
-        "Dit hold er tilmeldt. Du kan ændre udtagelsen indtil deadline.",
+        "Your team is entered. You can change your lineup until the deadline.",
       );
     } catch (e) {
       setNotice(e.message);
@@ -201,16 +203,16 @@ export default function RunPage() {
     }
   }
   return (
-    <TeamShell title="Kalender & løb">
+    <TeamShell title="Calendar & races">
       <p className="page-intro">
-        Udtag dit hold før deadline. Se derefter løbet folde sig ud — alle
-        beslutninger er truffet på forhånd.
+        Select your lineup before the deadline. Then watch the race unfold,
+        with every decision already made.
       </p>
       <div className="calendar-toolbar">
-        <div className="segmented" aria-label="Køn">
+        <div className="segmented" aria-label="Category">
           {[
-            ["M", "Mænd"],
-            ["F", "Kvinder"],
+            ["M", "Men"],
+            ["F", "Women"],
           ].map(([value, label]) => (
             <button
               key={value}
@@ -226,9 +228,9 @@ export default function RunPage() {
         </div>
         <div className="calendar-tabs">
           {[
-            ["upcoming", "Åben tilmelding"],
-            ["pending", "Afventer løb"],
-            ["finished", "Afsluttede"],
+            ["upcoming", "Open entries"],
+            ["pending", "Awaiting race"],
+            ["finished", "Finished"],
           ].map(([value, label]) => (
             <button
               key={value}
@@ -243,7 +245,7 @@ export default function RunPage() {
           ))}
         </div>
         <button className="text-button" onClick={load} disabled={loading}>
-          Opdatér
+          Refresh
         </button>
       </div>
       {error && (
@@ -252,21 +254,21 @@ export default function RunPage() {
         </p>
       )}
       {loading ? (
-        <p role="status">Henter løbskalenderen…</p>
+        <p role="status">Loading the race calendar…</p>
       ) : !list.length ? (
         <div className="card empty-state">
           <h2>
             {bucket === "upcoming"
-              ? "Næste løbsdag er på vej"
-              : "Ingen løb her endnu"}
+              ? "Your next race day is on its way"
+              : "No races here yet"}
           </h2>
           <p>
             {bucket === "upcoming"
-              ? "Der er endnu ingen åbne løb for dette køn. Du kan se tidligere løb eller lære dine ryttere at kende."
-              : "Vælg en anden kategori for at se løb."}
+              ? "There are no open races in this category yet. Browse past races or get to know your riders."
+              : "Choose another category to see races."}
           </p>
           <Link className="btn" href="/team/portraits">
-            Mød dine ryttere →
+            Meet your riders →
           </Link>
         </div>
       ) : (
@@ -279,26 +281,26 @@ export default function RunPage() {
               aria-pressed={eventId === e.id}
             >
               <span className="eyebrow">
-                {e.gender === "F" ? "Kvinder" : "Mænd"} · Endagsløb
+                {e.gender === "F" ? "Women" : "Men"} · One-day race
               </span>
               <h2>{e.name}</h2>
               <span className="event-date">{date(e.deadline)}</span>
               <span className="event-meta">
                 <span>
                   {e.status === "FINISHED"
-                    ? "Klar til afspilning"
+                    ? "Ready to watch"
                     : Date.parse(e.deadline) <= now
-                      ? "Tilmelding lukket"
-                      : `Deadline om ${countdown(e.deadline, now)}`}
+                      ? "Entries closed"
+                      : `Deadline in ${countdown(e.deadline, now)}`}
                 </span>
                 <strong>
-                  {Number(e.entry_fee) > 0 ? `${e.entry_fee} coins` : "Gratis"}
+                  {Number(e.entry_fee) > 0 ? `${e.entry_fee} coins` : "Free"}
                 </strong>
               </span>
               <span className="event-action">
                 {e.status === "FINISHED"
-                  ? "Åbn løbsdag"
-                  : "Se rute og udtag hold"}{" "}
+                  ? "Open race day"
+                  : "View route and select lineup"}{" "}
                 →
               </span>
             </button>
@@ -306,22 +308,22 @@ export default function RunPage() {
         </div>
       )}
       {event && (
-        <section className="race-preparation" aria-label="Løbsforberedelse">
+        <section className="race-preparation" aria-label="Race preparation">
           <div className="page-heading">
             <div>
               <p className="eyebrow">
-                {event.gender === "F" ? "Kvindernes" : "Mændenes"} løbsdag
+                {event.gender === "F" ? "Women’s" : "Men’s"} race day
               </p>
               <h2>{event.name}</h2>
             </div>
             <span className="deadline-badge">
               {locked
-                ? "Tilmelding lukket"
-                : `Deadline om ${countdown(event.deadline, now)}`}
+                ? "Entries closed"
+                : `Deadline in ${countdown(event.deadline, now)}`}
             </span>
           </div>
           {entryLoading ? (
-            <p role="status">Henter rute og din gemte udtagelse…</p>
+            <p role="status">Loading the route and your saved lineup…</p>
           ) : entryError ? (
             <p role="alert" className="form-message error">
               {entryError}
@@ -331,45 +333,45 @@ export default function RunPage() {
               {stage && <StageProfile stage={stage} />}
               {event.status === "FINISHED" ? (
                 <div className="card race-ready">
-                  <h2>Løbet er klar</h2>
+                  <h2>The race is ready</h2>
                   <p>
-                    Følg din division i vieweren, eller gå direkte til
-                    resultaterne.
+                    Follow your division in the viewer, or go straight to
+                    the results.
                   </p>
                   <Link className="btn primary" href={`/team/view/${event.id}`}>
-                    Se løbet →
+                    Watch the race →
                   </Link>
                   <Link
                     className="text-button"
                     href={`/team/results/${event.id}`}
                   >
-                    Resultater
+                    Results
                   </Link>
                 </div>
               ) : (
                 <>
                   {locked && saved && (
                     <section className="card race-ready">
-                      <h2>Din udtagelse er låst</h2>
+                      <h2>Your lineup is locked</h2>
                       <p>
-                        Åbn løbsdagen for at se løbet. Hele forløbet beregnes og
-                        gemmes, før afspilningen begynder.
+                        Open race day to watch the race. The full race is calculated and
+                        saved before playback begins.
                       </p>
                       <Link
                         className="btn primary"
                         href={`/team/view/${event.id}`}
                       >
-                        Se løbet →
+                        Watch the race →
                       </Link>
                     </section>
                   )}
                   <section className="card lineup-summary">
                     <div className="panel-heading">
                       <div>
-                        <h2>Din udtagelse</h2>
+                        <h2>Your lineup</h2>
                         <p className="small">
-                          Otte ryttere og én kaptajn. Kaptajnens tid bestemmer
-                          holdets placering.
+                          Eight riders and one captain. Your captain’s time determines
+                          your team’s placing.
                         </p>
                       </div>
                       <span
@@ -377,9 +379,9 @@ export default function RunPage() {
                       >
                         {saved
                           ? unchanged
-                            ? "Gemt ✓"
-                            : "Ændringer ikke gemt"
-                          : "Ikke tilmeldt"}
+                            ? "Saved ✓"
+                            : "Unsaved changes"
+                          : "Not entered"}
                       </span>
                     </div>
                     <div className="lineup-slots">
@@ -406,12 +408,12 @@ export default function RunPage() {
                                   }}
                                 >
                                   {captain === rider.id
-                                    ? "★ Kaptajn"
-                                    : "Vælg kaptajn"}
+                                    ? "★ Captain"
+                                    : "Choose captain"}
                                 </button>
                                 <button
                                   className="remove-rider"
-                                  aria-label={`Fjern ${rider.name}`}
+                                  aria-label={`Remove ${rider.name}`}
                                   disabled={locked || busy}
                                   onClick={() => toggle(rider.id)}
                                 >
@@ -421,7 +423,7 @@ export default function RunPage() {
                             ) : (
                               <>
                                 <span className="empty-slot">{i + 1}</span>
-                                <span>Ledig plads</span>
+                                <span>Available place</span>
                               </>
                             )}
                           </div>
@@ -430,10 +432,10 @@ export default function RunPage() {
                     </div>
                     <div className="lineup-save">
                       <span>
-                        {selected.length}/8 ryttere ·{" "}
-                        {captain ? "Kaptajn valgt" : "Vælg kaptajn"}
+                        {selected.length}/8 riders ·{" "}
+                        {captain ? "Captain selected" : "Choose captain"}
                         {!saved && Number(event.entry_fee) > 0
-                          ? ` · Pris ${event.entry_fee} coins`
+                          ? ` · Cost ${event.entry_fee} coins`
                           : ""}
                       </span>
                       <button
@@ -442,18 +444,18 @@ export default function RunPage() {
                         onClick={save}
                       >
                         {busy
-                          ? "Gemmer…"
+                          ? "Saving…"
                           : locked
-                            ? "Deadline er passeret"
+                            ? "Deadline passed"
                             : saved
-                              ? "Gem ændringer"
-                              : "Tilmeld hold"}
+                              ? "Save changes"
+                              : "Enter team"}
                       </button>
                     </div>
                     <p className="small">
                       {locked
-                        ? "Din gemte udtagelse er låst. Løbet kan afvikles, når mindst to hold er tilmeldt."
-                        : "Tilmeldingsprisen betales kun én gang. Ændringer før deadline koster ikke ekstra."}
+                        ? "Your saved lineup is locked. The race can run once at least two teams have entered."
+                        : "The entry fee is paid only once. Changes before the deadline cost nothing extra."}
                     </p>
                     {notice && (
                       <p role="status" className="form-message">
@@ -465,14 +467,14 @@ export default function RunPage() {
                     <>
                       <div className="rider-selection-toolbar">
                         <div>
-                          <h2>Vælg dine ryttere</h2>
+                          <h2>Choose your riders</h2>
                           <p className="small">
-                            Skadede ryttere kan ikke udtages. Lav træthed og høj
-                            form er en fordel.
+                            Injured riders cannot be selected. Low fatigue and high
+                            form are an advantage.
                           </p>
                         </div>
                         <label>
-                          Sortér efter{" "}
+                          Sort by{" "}
                           <select
                             value={sortKey}
                             onChange={(e) => setSortKey(e.target.value)}
@@ -496,7 +498,7 @@ export default function RunPage() {
                             )
                           }
                         >
-                          Vælg de første otte
+                          Select the first eight
                         </button>
                       </div>
                       <div className="lineup-riders">
@@ -520,8 +522,8 @@ export default function RunPage() {
                                 <strong>{r.name}</strong>
                                 <span>
                                   {injured
-                                    ? `Skadet til ${r.injury_until}`
-                                    : `${skills[sortKey]} ${r[sortKey] ?? 0} · Form ${r.form} · Træthed ${r.fatigue}`}
+                                    ? `Injured until ${r.injury_until}`
+                                    : `${skills[sortKey]} ${r[sortKey] ?? 0} · Form ${r.form} · Fatigue ${r.fatigue}`}
                                 </span>
                               </div>
                               <span className="selection-mark">
@@ -532,7 +534,7 @@ export default function RunPage() {
                         })}
                       </div>
                       <details className="lineup-presets">
-                        <summary>Gemte udtagelser i denne browser</summary>
+                        <summary>Saved lineups in this browser</summary>
                         <LineupPresets
                           teamId={team?.id}
                           riders={available.filter(eligible)}

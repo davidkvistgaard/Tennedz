@@ -20,13 +20,13 @@ export const POST = protectedRoute(async (req, context, auth) => {
   if (error)
     throw new AuthError(
       "ENTRY_UNAVAILABLE",
-      "Tilmeldingen kunne ikke kontrolleres.",
+      "Could not check your entry.",
       503,
     );
   if (!data)
     throw new AuthError(
       "NOT_ENTERED",
-      "Dit hold er ikke tilmeldt dette løb. Det kan ses, når en deltager eller administrator har gjort løbet klar.",
+      "Your team has not entered this race. You can watch it once a participant or administrator has prepared the race.",
       403,
     );
   const result = await executeRace(auth.db, id);

@@ -35,21 +35,21 @@ export default function HistoryPage() {
     };
   }, []);
   return (
-    <TeamShell title="Dine løbsdage">
+    <TeamShell title="Your race days">
       <p className="page-intro">
-        Gense højdepunkterne og følg holdets resultater. Placeringer skjules,
-        indtil du har set løbet eller selv vælger at vise dem.
+        Relive the highlights and follow your team’s results. Placings stay hidden
+        until you watch the race or choose to reveal them.
       </p>
       {error ? (
         <p role="alert">{error}</p>
       ) : !rows ? (
-        <p role="status">Henter dine løb…</p>
+        <p role="status">Loading your races…</p>
       ) : !rows.length ? (
         <section className="card empty-state">
-          <h2>Dit første løb venter</h2>
-          <p>Udtag otte ryttere og en kaptajn til et åbent løb i kalenderen.</p>
+          <h2>Your first race awaits</h2>
+          <p>Select eight riders and a captain for an open race in the calendar.</p>
           <Link className="btn primary" href="/team/run">
-            Find et løb →
+            Find a race →
           </Link>
         </section>
       ) : (
@@ -60,7 +60,7 @@ export default function HistoryPage() {
               checked={reveal}
               onChange={(e) => setReveal(e.target.checked)}
             />{" "}
-            Vis alle placeringer og point
+            Reveal all placings and points
           </label>
           <div className="history-list">
             {rows.map((r) => (
@@ -69,14 +69,14 @@ export default function HistoryPage() {
                   <p className="eyebrow">
                     Division {r.division_index} ·{" "}
                     {r.created_at
-                      ? new Date(r.created_at).toLocaleDateString("da-DK")
+                      ? new Date(r.created_at).toLocaleDateString("en-GB", { timeZone: "UTC" })
                       : ""}
                   </p>
                   <h2>{r.event_name}</h2>
                   <p>
                     {reveal || seen[r.event_id]
-                      ? `Nr. ${r.position} · ${r.points} holdpoint`
-                      : "Løbet er klar — resultatet er skjult"}
+                      ? `Position ${r.position} · ${r.points} team points`
+                      : "Race ready — result hidden"}
                   </p>
                 </div>
                 <div className="control-row">
@@ -84,13 +84,13 @@ export default function HistoryPage() {
                     className="btn primary"
                     href={`/team/view/${r.event_id}?division=${r.division_index}`}
                   >
-                    {seen[r.event_id] ? "Se igen" : "Se løbet"} →
+                    {seen[r.event_id] ? "Watch again" : "Watch the race"} →
                   </Link>
                   <Link
                     className="text-button"
                     href={`/team/results/${r.event_id}?division=${r.division_index}`}
                   >
-                    Resultat
+                    Result
                   </Link>
                 </div>
               </article>

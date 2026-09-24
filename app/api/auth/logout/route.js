@@ -7,7 +7,7 @@ export async function POST(req) {
     requireSameOrigin(req);
     const client = await sessionClient();
     const { error } = await client.auth.signOut({ scope: "local" });
-    if (error) throw new AuthError("LOGOUT_FAILED", "Log ud kunne ikke gennemføres. Prøv igen.", 503);
+    if (error) throw new AuthError("LOGOUT_FAILED", "Could not sign out. Please try again.", 503);
     const jar = await cookies();
     jar.set("pelotonia_session", "", { path: "/", maxAge: 0, httpOnly: true });
     return NextResponse.json({ ok: true }, { headers: privateHeaders });

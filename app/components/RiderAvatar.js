@@ -88,7 +88,7 @@ export default function RiderAvatar({rider,size=76}) {
   const [failedPath,setFailedPath]=useState(null);
   // Only reviewed local assets; no arbitrary remote tracking URLs or SVG uploads.
   const path=/^\/portraits\/[a-zA-Z0-9_-]+\.(png|webp)$/.test(rider?.portrait_path||'')?rider.portrait_path:null;
-  return <div role="img" aria-label={`Portræt af ${rider?.display_name||rider?.name||'rytter'}`} style={{width:size,height:size,flexShrink:0,borderRadius:12,overflow:'hidden',background:'#eee9df',border:'1px solid #dadfd6'}}>
+  return <div role="img" aria-label={`Portrait of ${rider?.display_name||rider?.name||'rider'}`} style={{width:size,height:size,flexShrink:0,borderRadius:12,overflow:'hidden',background:'#eee9df',border:'1px solid #dadfd6'}}>
     {path&&failedPath!==path?<img src={path} alt="" width={size} height={size} onError={()=>setFailedPath(path)} style={{width:'100%',height:'100%',objectFit:'cover'}}/>:<RiderArt rider={rider}/>}
   </div>;
 }

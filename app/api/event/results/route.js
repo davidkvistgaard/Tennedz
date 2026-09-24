@@ -11,7 +11,7 @@ export const GET = protectedRoute(async (req, context, auth) => {
     division_index < 1 ||
     division_index > 400
   )
-    throw new AuthError("INVALID_DIVISION", "Ugyldig division.", 400);
+    throw new AuthError("INVALID_DIVISION", "Invalid division.", 400);
   const [event, teams, riders] = await Promise.all([
     auth.db
       .from("events")
@@ -40,11 +40,11 @@ export const GET = protectedRoute(async (req, context, auth) => {
   if (event.error || teams.error || riders.error)
     throw new AuthError(
       "RESULT_UNAVAILABLE",
-      "Resultatet kunne ikke hentes. Prøv igen.",
+      "Could not load the result. Please try again.",
       503,
     );
   if (!event.data)
-    throw new AuthError("EVENT_NOT_FOUND", "Løbet blev ikke fundet.", 404);
+    throw new AuthError("EVENT_NOT_FOUND", "Race not found.", 404);
   return NextResponse.json({
     ok: true,
     event: event.data,

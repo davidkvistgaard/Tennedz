@@ -6,7 +6,7 @@ import TeamShell from "../components/TeamShell";
 import RaceCalendarAdmin from "../components/RaceCalendarAdmin";
 
 function AdminStatus() {
-  const [status, setStatus] = useState("Kontrollerer administratoradgang…");
+  const [status, setStatus] = useState("Checking administrator access…");
   const [counts, setCounts] = useState(null);
   const [events, setEvents] = useState([]);
   const [busy, setBusy] = useState(false);
@@ -16,7 +16,7 @@ function AdminStatus() {
   }
   async function runEvent(id) {
     setBusy(true);
-    setStatus("Afvikler løbet…");
+    setStatus("Running the race…");
     try {
       const result = await api("/api/admin/run-event", {
         method: "POST",
@@ -26,8 +26,8 @@ function AdminStatus() {
       });
       setStatus(
         result.already_finished
-          ? "Løbet var allerede afsluttet. Ingen ekstra point tildelt."
-          : "Løbet er afsluttet. Resultater og point er gemt.",
+          ? "This race was already finished. No extra points were awarded."
+          : "The race is finished. Results and points have been saved.",
       );
       await loadEvents();
     } catch (e) {
@@ -42,7 +42,7 @@ function AdminStatus() {
       .then((data) => {
         if (active) {
           setCounts(data);
-          setStatus("Administratoradgang bekræftet.");
+          setStatus("Administrator access confirmed.");
           loadEvents().catch((e) => setStatus(e.message));
         }
       })
@@ -59,15 +59,15 @@ function AdminStatus() {
         <p role="status">{status}</p>
         {counts && (
           <p>
-            Hold: {counts.teams} · Ryttere: {counts.riders} · Løbsresultater:{" "}
+            Team: {counts.teams} · Riders: {counts.riders} · Race results:{" "}
             {counts.race_results}
           </p>
         )}
         <p>
           {counts?.game_writes_enabled
-            ? "Endagsløb kan afvikles efter deadline. Resultater gemmes kun én gang."
-            : "Løbsafvikling er lukket i dette miljø."}{" "}
-          Spilledato og nulstilling er fortsat lukket.
+            ? "One-day races can run after the deadline. Results are saved only once."
+            : "Race processing is disabled in this environment."}{" "}
+          Game date changes and resets remain disabled.
         </p>
         {counts && (
           <RaceCalendarAdmin
@@ -75,14 +75,14 @@ function AdminStatus() {
             onCreated={loadEvents}
           />
         )}
-        <h2 style={{ marginTop: 30 }}>Afvikling af løb</h2>
+        <h2 style={{ marginTop: 30 }}>Race processing</h2>
         {counts &&
           events
             .filter((e) => e.kind === "one_day")
             .map((e) => (
               <div key={e.id} style={{ marginBottom: 16 }}>
                 <strong>{e.name}</strong> · {e.status} ·{" "}
-                {new Date(e.deadline).toLocaleString("da-DK")}{" "}
+                {new Date(e.deadline).toLocaleString("en-GB", { timeZone: "UTC", timeZoneName: "short" })}{" "}
                 <button
                   disabled={
                     busy ||
@@ -92,13 +92,13 @@ function AdminStatus() {
                   onClick={() => runEvent(e.id)}
                 >
                   {e.status === "FINISHED"
-                    ? "Kontroller afsluttet løb"
-                    : "Afvikl løb"}
+                    ? "Check finished race"
+                    : "Run race"}
                 </button>{" "}
-                <a href={`/team/results/${e.id}`}>Resultat</a>
+                <a href={`/team/results/${e.id}`}>Result</a>
               </div>
             ))}
-        <a href="/team">Tilbage til mit hold</a>
+        <a href="/team">Back to my team</a>
       </section>
     </TeamShell>
   );

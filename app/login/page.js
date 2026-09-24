@@ -12,7 +12,7 @@ export default function LoginPage() {
   useEffect(() => {
     let mounted = true;
     if (new URLSearchParams(window.location.search).get("confirmation") === "failed") {
-      setStatus("Bekræftelseslinket kunne ikke bruges i denne browser. Prøv at logge ind med din e-mail og dit kodeord.");
+      setStatus("The confirmation link could not be used in this browser. Try signing in with your email and password.");
     }
 
     async function checkSession() {
@@ -37,7 +37,7 @@ export default function LoginPage() {
   async function handleLogin(e) {
     e.preventDefault();
     setBusy(true);
-    setStatus("Logger ind...");
+    setStatus("Signing in...");
 
     try {
       const res = await fetch("/api/auth/login", {
@@ -53,13 +53,13 @@ export default function LoginPage() {
 
       const j = await res.json();
 
-      if (!j?.ok) throw new Error(j?.error || "Login fejlede");
+      if (!j?.ok) throw new Error(j?.error || "Sign-in failed");
 
       signalAuthChange();
-      setStatus("Logget ind ✅");
+      setStatus("Signed in ✅");
       window.location.href = "/onboarding";
     } catch (err) {
-      setStatus("Fejl: " + (err?.message ?? String(err)));
+      setStatus("Error: " + (err?.message ?? String(err)));
     } finally {
       setBusy(false);
     }
@@ -104,11 +104,11 @@ export default function LoginPage() {
             color: "#0f172a",
           }}
         >
-          Log ind
+          Sign in
         </h1>
 
         <p style={{ margin: "0 0 20px 0", color: "rgba(15,23,42,0.72)" }}>
-          Log ind med e-mail eller dit eksisterende login-navn.
+          Sign in with your email or existing username.
         </p>
 
         <form onSubmit={handleLogin} style={{ display: "grid", gap: 14 }}>
@@ -123,7 +123,7 @@ export default function LoginPage() {
                 color: "#0f172a",
               }}
             >
-              E-mail eller login-navn
+              Email or username
             </label>
             <input
               id="login_name"
@@ -131,7 +131,7 @@ export default function LoginPage() {
               autoComplete="username"
               value={loginName}
               onChange={(e) => setLoginName(e.target.value)}
-              placeholder="fx Tennedz"
+              placeholder="e.g. Tennedz"
               required
               style={{
                 width: "100%",
@@ -155,7 +155,7 @@ export default function LoginPage() {
                 color: "#0f172a",
               }}
             >
-              Kodeord
+              Password
             </label>
             <input
               id="password"
@@ -193,7 +193,7 @@ export default function LoginPage() {
               cursor: busy ? "default" : "pointer",
             }}
           >
-            {busy ? "Logger ind..." : "Log ind"}
+            {busy ? "Signing in..." : "Sign in"}
           </button>
         </form>
 
@@ -201,7 +201,7 @@ export default function LoginPage() {
           style={{
             marginTop: 18,
             minHeight: 22,
-            color: status.startsWith("Fejl") ? "#b91c1c" : "rgba(15,23,42,0.72)",
+            color: status.startsWith("Error") ? "#b91c1c" : "rgba(15,23,42,0.72)",
             fontSize: 14,
           }}
         >
@@ -209,7 +209,7 @@ export default function LoginPage() {
         </div>
 
         <div style={{ marginTop: 18 }}>
-          <p>Ny i Pelotonia? <a href="/signup" style={{color:"#0E8F46",fontWeight:700}}>Opret konto</a></p>
+          <p>New to Pelotonia? <a href="/signup" style={{color:"#0E8F46",fontWeight:700}}>Create account</a></p>
           <a
             href="/"
             style={{
@@ -218,7 +218,7 @@ export default function LoginPage() {
               textDecoration: "none",
             }}
           >
-            ← Tilbage til forsiden
+            ← Back to home
           </a>
         </div>
       </div>

@@ -16,16 +16,16 @@ export default function SignupPage() {
       else { signalAuthChange(); window.location.assign("/onboarding"); }
     } catch(e) { setError(e.message); } finally { setBusy(false); }
   }
-  return <WelcomeFrame eyebrow="TRIN 1 AF 2 · DIN KONTO" title="Velkommen til feltet" intro="Opret din konto. Derefter vælger du navn til dit hold og møder dine første 16 ryttere.">
-    {confirm ? <div role="status"><h3>Tjek din indbakke</h3><p>Hvis adressen kan registreres, modtager du en bekræftelse. Åbn linket i samme browser. Har du allerede en konto, kan du logge ind nedenfor.</p></div> :
+  return <WelcomeFrame eyebrow="STEP 1 OF 2 · YOUR ACCOUNT" title="Welcome to the peloton" intro="Create your account. Then name your team and meet your first 16 riders.">
+    {confirm ? <div role="status"><h3>Check your inbox</h3><p>If this address can be registered, you will receive a confirmation email. Open the link in the same browser. If you already have an account, sign in below.</p></div> :
       <form onSubmit={submit} className="welcome-fields">
-        <label>E-mail<input type="email" autoComplete="email" required maxLength={254} value={email} onChange={e=>setEmail(e.target.value)}/></label>
-        <label>Kodeord<input type="password" autoComplete="new-password" required minLength={12} maxLength={128} value={password} onChange={e=>setPassword(e.target.value)} aria-describedby="password-hint"/></label>
-        <p id="password-hint" className="small">Mindst 12 tegn. Brug gerne en lang, unik sætning.</p>
+        <label>Email<input type="email" autoComplete="email" required maxLength={254} value={email} onChange={e=>setEmail(e.target.value)}/></label>
+        <label>Password<input type="password" autoComplete="new-password" required minLength={12} maxLength={128} value={password} onChange={e=>setPassword(e.target.value)} aria-describedby="password-hint"/></label>
+        <p id="password-hint" className="small">At least 12 characters. A long, unique passphrase works well.</p>
         {error && <p role="alert" className="welcome-error">{error}</p>}
-        <button className="btn primary" disabled={busy}>{busy ? "Opretter konto…" : "Opret konto →"}</button>
+        <button className="btn primary" disabled={busy}>{busy ? "Creating account…" : "Create account →"}</button>
       </form>}
-    <p className="welcome-footer">Har du allerede en konto? <Link href="/login">Log ind</Link></p>
-    <p className="small">Pelotonia er under udvikling. Nye løb og funktioner kommer løbende.</p>
+    <p className="welcome-footer">Already have an account? <Link href="/login">Sign in</Link></p>
+    <p className="small">Pelotonia is in development. More races and features are on the way.</p>
   </WelcomeFrame>;
 }

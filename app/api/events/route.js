@@ -10,7 +10,7 @@ async function handler(req, context, auth) {
   const requested = Number(url.searchParams.get("limit") ?? 50);
   if (!Number.isInteger(requested) || requested < 1 || requested > 100)
     return NextResponse.json(
-      { ok: false, error: "Antal løb skal være et helt tal mellem 1 og 100." },
+      { ok: false, error: "The race count must be a whole number between 1 and 100." },
       { status: 400 },
     );
   const now = new Date().toISOString();

@@ -16,7 +16,7 @@ test('every supported country has working male and female names and a stable app
       assert.deepEqual(r,generateIdentity('coverage-'+c.code+gender,gender,{nationality:c.code}));
     }
   }
-  assert.equal(countryCode('DEN'),'DK');assert.equal(countryCode('DNK'),'DK');assert.equal(countryLabel('SWE'),'Sverige');
+  assert.equal(countryCode('DEN'),'DK');assert.equal(countryCode('DNK'),'DK');assert.equal(countryLabel('SWE'),'Sweden');
 });
 test('weighted nations follow 75/20/5 and every world country remains reachable',()=>{
   const random=seedrandom('nationality-distribution'),counts={major:0,established:0,world:0},seen=new Set();

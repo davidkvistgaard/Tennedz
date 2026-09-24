@@ -8,7 +8,7 @@ async function handler(req, context, auth) {
     const url = new URL(req.url);
     const event_id = url.searchParams.get("event_id");
     const team_id = auth.team.id;
-    if (url.searchParams.get("team_id") && url.searchParams.get("team_id") !== team_id) return NextResponse.json({ error: "Adgang nægtet" }, { status: 403 });
+    if (url.searchParams.get("team_id") && url.searchParams.get("team_id") !== team_id) return NextResponse.json({ error: "Access denied" }, { status: 403 });
 
     if (!event_id) return NextResponse.json({ ok: false, error: "Missing event_id" }, { status: 400 });
 

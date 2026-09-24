@@ -14,7 +14,7 @@ export default function StageProfile({ stage }) {
   try {
     route = normalizeRoute(stage);
   } catch {
-    return <p>Der mangler en gyldig ruteprofil.</p>;
+    return <p>A valid route profile is missing.</p>;
   }
   const location = routeAt(route, km),
     advice = routeAdvice(route);
@@ -22,7 +22,7 @@ export default function StageProfile({ stage }) {
     <section className="card profile-panel">
       <div className="panel-heading">
         <div>
-          <p className="eyebrow">Lær ruten at kende</p>
+          <p className="eyebrow">Get to know the route</p>
           <h2>{route.name}</h2>
         </div>
         <span>
@@ -31,8 +31,8 @@ export default function StageProfile({ stage }) {
       </div>
       <StageProfileChart stage={stage} selectedKm={km} onSelectKm={setKm} />
       <p className="route-advice">
-        {advice.description}. Form og træthed påvirker præstationen; rating
-        bruges til divisionerne.
+        {advice.description}. Form and fatigue affect performance; rating
+        determines divisions.
       </p>
       <div className="route-keypoints">
         {route.keypoints.map((point, i) => (
@@ -48,10 +48,10 @@ export default function StageProfile({ stage }) {
         ))}
       </div>
       <label className="small">
-        Udforsk ruten
+        Explore the route
         <input
           className="replay-range"
-          aria-label="Kilometer på ruten"
+          aria-label="Kilometre on the route"
           type="range"
           min="0"
           max={route.distance}
@@ -62,7 +62,7 @@ export default function StageProfile({ stage }) {
       </label>
       <p className="small">
         Km {km.toFixed(1)} · {location.elevation} m ·{" "}
-        {terrainLabels[location.terrain]} · hældning {location.gradient} %
+        {terrainLabels[location.terrain]} · gradient {location.gradient} %
       </p>
     </section>
   );

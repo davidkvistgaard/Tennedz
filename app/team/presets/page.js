@@ -6,27 +6,27 @@ import Loading from "../../components/Loading";
 import SmallButton from "../../components/SmallButton";
 
 export default function PresetsPage() {
-  const [status, setStatus] = useState("Loader…");
+  const [status, setStatus] = useState("Loading…");
   const [error, setError] = useState("");
   const [presets, setPresets] = useState([]);
 
   async function load() {
     setError("");
-    setStatus("Tjekker login…");
+    setStatus("Checking your session…");
     const { presets } = await api("/api/presets");
     setPresets(presets);
-    setStatus("Klar ✅");
+    setStatus("Ready ✅");
   }
 
   useEffect(() => {
     load().catch((e) => {
       setError(e?.message ?? String(e));
-      setStatus("Fejl");
+      setStatus("Error");
     });
   }, []);
 
   async function createPreset() {
-    const name = prompt("Navn på preset?");
+    const name = prompt("Preset name?");
     if (!name) return;
 
     // MVP: tom preset
@@ -46,15 +46,15 @@ export default function PresetsPage() {
 
   return (
     <main>
-      <h2 style={{ marginTop: 0 }}>Taktik-presets</h2>
+      <h2 style={{ marginTop: 0 }}>Tactics presets</h2>
       <p style={{ opacity: 0.85 }}>{status}</p>
 
-      {error ? <div style={{ color: "crimson" }}>Fejl: {error}</div> : null}
+      {error ? <div style={{ color: "crimson" }}>Error: {error}</div> : null}
 
-      {status.includes("Loader") && presets.length === 0 ? <Loading /> : null}
+      {status.includes("Loading") && presets.length === 0 ? <Loading /> : null}
 
       <div style={{ marginTop: 10 }}>
-        <SmallButton onClick={createPreset}>Opret preset</SmallButton>
+        <SmallButton onClick={createPreset}>Create preset</SmallButton>
       </div>
 
       <div style={{ marginTop: 12, display: "grid", gap: 10 }}>
@@ -62,10 +62,10 @@ export default function PresetsPage() {
           <div key={p.id} style={{ border: "1px solid #eee", borderRadius: 14, padding: 12 }}>
             <div style={{ fontWeight: 800 }}>{p.name}</div>
             <div style={{ opacity: 0.75, fontSize: 13 }}>
-              {p.created_at ? new Date(p.created_at).toLocaleString("da-DK") : ""}
+              {p.created_at ? new Date(p.created_at).toLocaleString("en-GB") : ""}
             </div>
             <div style={{ marginTop: 8, opacity: 0.8, fontSize: 13 }}>
-              (MVP: presets bliver brugt i “Kør løb” senere, når vi binder dem til events/stages med deadlines)
+              (Tactics presets are a work in progress and are not yet applied to races.)
             </div>
           </div>
         ))}
