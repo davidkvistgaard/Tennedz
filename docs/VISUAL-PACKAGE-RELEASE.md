@@ -1,6 +1,6 @@
 # Visual package production release — 24 September 2026
 
-Live at https://tennedz.eu. Commit 6a1ce9a412c96b03d067b54c5ef5a7be4537eb82 on codex/release-visual-package, deployment dpl_F2UdPdtqfXWxHfdqrPd3TuQjVsPj, READY production, 44 seconds. Immutable URL: https://tennedz-d638asuow-david-kvistgaards-projects.vercel.app.
+Superseded by the additive club identity release documented in CLUB-IDENTITY-RELEASE.md. This record describes the preceding visual release at https://tennedz.eu. Commit 6a1ce9a412c96b03d067b54c5ef5a7be4537eb82 on codex/release-visual-package, deployment dpl_F2UdPdtqfXWxHfdqrPd3TuQjVsPj, READY production, 44 seconds. Immutable URL: https://tennedz-d638asuow-david-kvistgaards-projects.vercel.app.
 
 Built on the homepage-only release b08168f. Includes shared visual styling, rider profiles/comparison, specialty filtering, club badges and atlas directory/place notes. No engine/API/database/environment changes. Club identity editor and supporter studio are excluded until account persistence is separately approved. Recovery-only race orders and Race Lab remain unpublished. New engine remains paused.
 
