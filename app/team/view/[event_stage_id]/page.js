@@ -18,19 +18,34 @@ export default function ViewPage({ params }) {
     setData(null);
     setError("");
     setShowReport(false);
-    fetch(
-      `/api/event-run?event_id=${encodeURIComponent(eventId)}${division ? `&division_index=${encodeURIComponent(division)}` : ""}`,
-      { signal: controller.signal },
-    )
-      .then(async (r) => {
-        const j = await r.json();
-        if (!r.ok || !j.ok)
-          throw new Error(j.error || "Løbet kunne ikke hentes.");
-        if (active) setData(j);
-      })
-      .catch((e) => {
-        if (active && e.name !== "AbortError") setError(e.message);
+    const runUrl = `/api/event-run?event_id=${encodeURIComponent(eventId)}${division ? `&division_index=${encodeURIComponent(division)}` : ""}`;
+    (async () => {
+      let r = await fetch(runUrl, {
+        signal: controller.signal,
+        cache: "no-store",
       });
+      if (r.status === 404) {
+        const prepared = await fetch("/api/event/prepare", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ event_id: eventId }),
+          signal: controller.signal,
+        });
+        const result = await prepared.json();
+        if (!prepared.ok || !result.ok)
+          throw new Error(result.error || "Løbet kunne ikke gøres klar.");
+        r = await fetch(runUrl, {
+          signal: controller.signal,
+          cache: "no-store",
+        });
+      }
+      const j = await r.json();
+      if (!r.ok || !j.ok)
+        throw new Error(j.error || "Løbet kunne ikke hentes.");
+      if (active) setData(j);
+    })().catch((e) => {
+      if (active && e.name !== "AbortError") setError(e.message);
+    });
     return () => {
       active = false;
       controller.abort();

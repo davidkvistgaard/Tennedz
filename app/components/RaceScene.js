@@ -1,4 +1,6 @@
 "use client";
+import Image from "next/image";
+import {memo} from 'react';
 import { formatGap } from "../../lib/race/replay.mjs";
 
 function Cyclist({ x, y, color, mine, captain }) {
@@ -45,7 +47,7 @@ function Cyclist({ x, y, color, mine, captain }) {
   );
 }
 
-export default function RaceScene({
+function RaceScene({
   frame,
   roster,
   teamId,
@@ -82,54 +84,13 @@ export default function RaceScene({
   });
   return (
     <div className="race-scene">
+      <div className="race-scene-canvas">
+      <Image src="/images/race-countryside-v1.png" alt="" fill sizes="(max-width: 760px) 100vw, 1000px" className="race-scene-art" priority/>
       <svg
         viewBox="0 0 1000 340"
         role="img"
         aria-label={`${groups.length} løbsgrupper ved kilometer ${frame.km}. Placeringerne er en oversigt over de gemte tidsafstande.`}
       >
-        <defs>
-          <linearGradient id="race-sky" x2="0" y2="1">
-            <stop stopColor="#d9e4d8" />
-            <stop offset="1" stopColor="#f6efdc" />
-          </linearGradient>
-        </defs>
-        <rect width="1000" height="340" fill="url(#race-sky)" />
-        <circle cx="815" cy="56" r="29" fill="#f4d886" opacity=".8" />
-        <path
-          d="M0 175Q110 55 240 128T520 101T770 145T1000 84V340H0Z"
-          fill="#aebfa3"
-        />
-        <path
-          d={
-            frame.terrain === "mountain"
-              ? "M0 188L170 61L279 150L417 45L620 171L779 85L1000 180V340H0Z"
-              : "M0 184Q173 95 342 181T695 136T1000 167V340H0Z"
-          }
-          fill="#8da48b"
-        />
-        <path
-          d="M0 216Q180 163 369 203T703 184T1000 207V340H0Z"
-          fill="#698a66"
-        />
-        {[40, 95, 290, 475, 703, 906, 960].map((x, i) => (
-          <g key={x}>
-            <rect
-              x={x}
-              y={130 + (i % 3) * 16}
-              width="5"
-              height="78"
-              rx="2"
-              fill="#6e7050"
-            />
-            <ellipse
-              cx={x + 3}
-              cy={133 + (i % 3) * 16}
-              rx={18 + (i % 2) * 8}
-              ry="30"
-              fill={i % 2 ? "#406b50" : "#527b55"}
-            />
-          </g>
-        ))}
         <path
           d="M0 214Q200 196 443 218T1000 205V291Q730 305 475 287T0 294Z"
           fill="#ede7d5"
@@ -226,12 +187,8 @@ export default function RaceScene({
               strokeWidth="1.5"
             />
           ))}
-        <path d="M0 310Q220 281 408 316T1000 300V340H0Z" fill="#50764f" />
-        <path
-          d="M0 331Q130 302 260 331T510 330T1000 320V340H0Z"
-          fill="#365e46"
-        />
       </svg>
+      </div>
       <div className="scene-caption">
         <span>{finished ? "Målpassage" : "Løbsbilledet"}</span>
         <span>Gruppeoversigt · {largest} i største gruppe</span>
@@ -239,3 +196,5 @@ export default function RaceScene({
     </div>
   );
 }
+
+export default memo(RaceScene);

@@ -346,6 +346,21 @@ export default function RunPage() {
                 </div>
               ) : (
                 <>
+                  {locked && saved && (
+                    <section className="card race-ready">
+                      <h2>Din udtagelse er låst</h2>
+                      <p>
+                        Åbn løbsdagen for at se løbet. Hele forløbet beregnes og
+                        gemmes, før afspilningen begynder.
+                      </p>
+                      <Link
+                        className="btn primary"
+                        href={`/team/view/${event.id}`}
+                      >
+                        Se løbet →
+                      </Link>
+                    </section>
+                  )}
                   <section className="card lineup-summary">
                     <div className="panel-heading">
                       <div>

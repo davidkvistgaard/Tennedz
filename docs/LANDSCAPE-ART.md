@@ -1,0 +1,9 @@
+# Landskabsillustration v1
+
+Genereret 23. september 2026 med den indbyggede imagegen-funktion. Ingen ekstern API eller betalt billedtjeneste er aktiveret. Billedet er et fælles dekorativt landskab, ikke en geografisk rekonstruktion af løbsruten. SVG-grupper, tidsafstande og cyklister ligger ovenpå og kommer fra det gemte replay.
+
+Aktiv: `public/images/race-countryside-v1.png`, 2172 × 724 px. Next Image leverer almindelig weboptimering. Originalen er bevaret i Codex' generated_images-mappe. Stilreference: det af ejeren godkendte portrætark 02.
+
+## Endelig prompt
+
+Create ONE production game background illustration for Pelotonia cycling manager. Use case stylized-concept. The attached image is STYLE REFERENCE ONLY: match its mature, charming stylized painted rendering, sculpted facets, warm light, rich natural forest green, warm cream and subtle brush texture. Do not include portraits, people, lettering, panels or UI. New subject: inviting European cycling countryside, softly rolling green hills, clusters of beautiful deciduous trees, distant small terracotta roof village, atmospheric warm ivory sky, subtle blue-green distant ridges. Very wide landscape aspect ratio 3:1, intended as a 1536x512 race viewer backdrop. Composition: sky top 35%, rich landscape middle, unobstructed horizontal strip of pale grassy ground at 65–90% height reserved for a road and cycling game sprites to be overlaid later by code. No roads in the illustration, no cyclists or vehicles, no foreground objects obstructing that horizontal strip. Trees mostly along mid-distance horizon and outer edges. Beautiful polished premium strategy-game concept art, understated adult graphic-novel aesthetic, enough depth and texture to harmonize with the reference portraits, not photoreal, not childish flat vector art. No text, no logos, no watermark. Clean full bleed rectangular illustration.
