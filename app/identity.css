@@ -13,3 +13,31 @@
 .club-rider-strengths{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;padding:12px 0;border-top:1px solid #e0e3cf;border-bottom:1px solid #e0e3cf}.club-rider-strengths span{display:block;font-size:10px;color:#5c6b52;min-height:2.5em;line-height:1.25}.club-rider-strengths strong{font-family:Bricolage,sans-serif;font-size:22px;color:#35583d}.club-rider-condition{display:flex;justify-content:space-between;gap:7px;font-size:11px;color:#586a4e;margin:14px 0}.club-rider-condition strong{color:#2e5038;margin-left:3px}.club-roster .club-rider-points{border:0;padding:0;gap:7px}.club-roster .club-rider-points strong{font-size:20px}.club-roster .club-rider-points span{font-size:11px}.club-roster .club-rider summary{margin-top:13px;border-top:1px solid #e0e3cf;padding:13px 0 0;min-height:44px}
 @media(max-width:700px){.club-roster .club-rider-art>.rider-avatar{height:180px!important}.club-roster .club-rider-body{padding:12px}.club-roster .club-rider h3{font-size:20px}.club-rider-specialty{left:8px;top:8px;font-size:9px;padding:4px 6px}.club-rider-country{left:8px;bottom:8px;font-size:9px;padding:5px 7px;max-width:calc(100% - 16px)}.club-roster .club-rider-meta>span{display:none}.club-rider-strengths{gap:4px}.club-rider-strengths strong{font-size:20px}.club-rider-strengths span{font-size:9px}.club-rider-condition{font-size:10px;gap:4px}.club-roster .club-rider summary{font-size:11px}}
 @media(max-width:360px){.club-roster{grid-template-columns:1fr}.club-roster .club-rider-art>.rider-avatar{height:245px!important}.club-roster .club-rider-body{padding:18px}.club-roster .club-rider h3{min-height:0}}
+
+/* Owner-supplied race illustrations stay uncropped, including island landmarks. */
+.identity-hero { grid-template-columns: .85fr 1.15fr; }
+.identity-race-art { margin: 0; transform: rotate(1deg); background: #fff9e9; padding: 10px; border: 1px solid #d8d9c8; border-radius: 20px; box-shadow: 0 18px 40px #263e3220; }
+.identity-race-art img { display: block; width: 100%; height: auto; border-radius: 12px; }
+.identity-race-art figcaption { padding: 15px 8px 6px; font-size: 12px; font-weight: 700; text-align: center; }
+.identity-victory { display: grid; grid-template-columns: 1.4fr 1fr; align-items: center; overflow: hidden; border-radius: 22px; background: #e9e6d3; border: 1px solid #d8d9c8; }
+.identity-victory > img { display: block; width: 100%; height: auto; }
+.identity-victory > div { padding: 30px; }
+.identity-victory h2 { font-size: clamp(28px,3vw,42px); line-height: 1.1; letter-spacing: -1px; }
+.identity-victory p:not(.identity-eyebrow) { line-height: 1.7; color: #58674f; }
+@media(max-width:700px) { .identity-hero,.identity-victory { grid-template-columns: 1fr; }.identity-race-art { transform: none; }.identity-victory > div { padding: 24px; } }
+
+/* Homepage-only visual treatment: no club, auth or engine changes. */
+.identity-home { --studio-paper:#fff9eb; --studio-forest:#285440; --studio-line:#d6cdb7; --studio-shadow:0 5px 0 #c9baa32b,0 14px 35px #423c2510; background:radial-gradient(ellipse at 15% 0%,#fffcf0 0,transparent 60%),#f2ead8; }
+.identity-home .btn { border-radius:10px; min-height:44px; font-weight:700; }
+.identity-home .btn.primary { background:#285440; color:#fff9eb; border-color:#285440; box-shadow:0 3px 0 #153729; }
+.identity-home .identity-logo { color:#285440; }
+.identity-home .identity-copy h1 em { color:#a15e43; }
+.identity-questions { display: grid; grid-template-columns: 1fr 1.3fr; gap: 40px; padding: 0 0 60px; }
+.identity-questions h2 { font: 700 clamp(32px,4vw,48px) Bricolage,sans-serif; line-height: 1.1; margin: 18px 0; }
+.identity-questions p { line-height: 1.7; max-width: 500px; color: #596451; }
+.identity-questions details { padding: 20px; margin-bottom: 12px; background: var(--studio-paper); border: 1px solid var(--studio-line); border-radius: 14px; }
+.identity-questions summary { cursor: pointer; font-weight: 700; min-height: 44px; }
+.identity-home .identity-nav { border-bottom: 2px solid var(--studio-line); }
+.identity-home .identity-steps article { background: #fff9ebbd; padding: 26px; border: 1px solid var(--studio-line); border-radius: 16px 16px 5px 16px; box-shadow: var(--studio-shadow); }
+.identity-home .identity-steps { gap: 22px; }
+@media(max-width:700px) { .identity-questions { grid-template-columns:1fr; gap:16px; } }
