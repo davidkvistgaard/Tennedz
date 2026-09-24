@@ -17,3 +17,12 @@ This increment continues the English-language recovery branch. It creates a shar
 The new journey tests explicitly mock browser API responses for signup/onboarding, calendar and persistence. They exercise rendered UI, eight-rider/captain gating, failed-save feedback, retry, reload, finished-race entry lock, spoiler gate, play/pause/seek and results. The real deterministic race engine generates their replay/results in Node. These tests do not claim to revalidate Supabase database transactions; prior isolated integration checks remain documented separately. Existing auth browser tests still use the isolated protocol fixture and exercise the real app authentication routes.
 
 Production services, database schema/data, environment variables, spending and main are unchanged. The online delivery is an isolated recovery preview; its existing game-write gate remains disabled.
+
+## Online preview evidence
+
+Commit `2994361f0689d4a45e0f4fb6a2643f1d7249c4f4` is READY as Vercel preview `dpl_4KjjEWPDLHbzzBydeFdk7S986iUp`:
+https://tennedz-l01wbrv5w-david-kvistgaards-projects.vercel.app
+
+The stable branch alias is https://tennedz-git-codex-recovery-su-ffab0f-david-kvistgaards-projects.vercel.app (use this origin for interactive sign-in).
+
+Remote API checks passed for the English landing, isolated Supabase test-account login, correct team association, team/calendar/atlas/event endpoints, disabled preview game writes (503), and logout (subsequent /me returns 401). Remote browser checks passed for landing hydration, squad and gender control, atlas navigation through Aurelia to the cathedral, 390px overflow check and absence of uncaught page errors. Temporary test-access links and test credentials are excluded from version control. Production remains on `dda04b1` and was not redeployed.
