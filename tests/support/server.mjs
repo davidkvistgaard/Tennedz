@@ -61,7 +61,7 @@ const server = http.createServer(async (req, res) => {
 });
 server.listen(54329, "127.0.0.1");
 const child = spawn(process.execPath, ["node_modules/next/dist/bin/next", "start", "-p", "3100"], { stdio: "inherit", env: {
-  ...process.env, SUPABASE_URL: "http://127.0.0.1:54329", SUPABASE_ANON_KEY: "fixture-anon", SUPABASE_SERVICE_ROLE_KEY: "fixture-service-role",
+  ...process.env, RACE_LAB_ENABLED: "true", SUPABASE_URL: "http://127.0.0.1:54329", SUPABASE_ANON_KEY: "fixture-anon", SUPABASE_SERVICE_ROLE_KEY: "fixture-service-role",
   NEXT_PUBLIC_SUPABASE_URL: "", NEXT_PUBLIC_SUPABASE_ANON_KEY: "", APP_ORIGIN: "http://localhost:3100", ADMIN_USER_IDS: ids.alice, RECOVERY_ALLOW_GAME_WRITES: "false",
 } });
 const stop = () => { child.kill(); server.closeAllConnections(); server.close(); };

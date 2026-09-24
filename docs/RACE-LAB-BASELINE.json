@@ -1,0 +1,607 @@
+{
+  "note": "Fixed opponents, synthetic flat route; sensitivity evidence, not calibrated game balance.",
+  "reports": [
+    {
+      "name": "baseline",
+      "version": "flat-lab-1",
+      "count": 500,
+      "seed": "pelotonia",
+      "config": {
+        "distanceKm": 160,
+        "stepKm": 5,
+        "attackKm": 20,
+        "packSpeed": 41,
+        "breakSpeed": 43.5,
+        "chaseStrength": 1.25,
+        "cooperation": 0.85,
+        "energyCost": 1,
+        "shelteredCost": 0.12,
+        "workCost": 0.38,
+        "breakCost": 0.27,
+        "fatigueSpeedLoss": 0.055,
+        "helperFloor": 30,
+        "positionPenalty": 7,
+        "sprintSpread": 8
+      },
+      "opponents": [
+        "sprint",
+        "break",
+        "balanced"
+      ],
+      "rows": [
+        {
+          "strategy": "sprint",
+          "captainWins": 207,
+          "captainWinRate": 0.414,
+          "winInterval95": [
+            0.37164184827781455,
+            0.4576695861095008
+          ],
+          "riderWinRate": 0.414,
+          "averageCaptainPosition": 1.732,
+          "averageEnergy": 70.8774962499998,
+          "breakSurvivalRate": 0,
+          "pairedPositionDelta": 0
+        },
+        {
+          "strategy": "break",
+          "captainWins": 195,
+          "captainWinRate": 0.39,
+          "winInterval95": [
+            0.34824058390510465,
+            0.4334368321716941
+          ],
+          "riderWinRate": 0.39,
+          "averageCaptainPosition": 2.368,
+          "averageEnergy": 78.59903745624962,
+          "breakSurvivalRate": 0.774,
+          "pairedPositionDelta": 0.636
+        },
+        {
+          "strategy": "balanced",
+          "captainWins": 32,
+          "captainWinRate": 0.064,
+          "winInterval95": [
+            0.045695733565557124,
+            0.08895293379339062
+          ],
+          "riderWinRate": 0.1,
+          "averageCaptainPosition": 3.598,
+          "averageEnergy": 78.77357520312471,
+          "breakSurvivalRate": 0.576,
+          "pairedPositionDelta": 1.866
+        },
+        {
+          "strategy": "conserve",
+          "captainWins": 2,
+          "captainWinRate": 0.004,
+          "winInterval95": [
+            0.0010976075412372681,
+            0.014466014041418871
+          ],
+          "riderWinRate": 0.004,
+          "averageCaptainPosition": 4.02,
+          "averageEnergy": 86.36800000000011,
+          "breakSurvivalRate": 0.686,
+          "pairedPositionDelta": 2.288
+        }
+      ]
+    },
+    {
+      "name": "weak-chase",
+      "version": "flat-lab-1",
+      "count": 100,
+      "seed": "pelotonia",
+      "config": {
+        "distanceKm": 160,
+        "stepKm": 5,
+        "attackKm": 20,
+        "packSpeed": 41,
+        "breakSpeed": 43.5,
+        "chaseStrength": 0,
+        "cooperation": 0.85,
+        "energyCost": 1,
+        "shelteredCost": 0.12,
+        "workCost": 0.38,
+        "breakCost": 0.27,
+        "fatigueSpeedLoss": 0.055,
+        "helperFloor": 30,
+        "positionPenalty": 7,
+        "sprintSpread": 8
+      },
+      "opponents": [
+        "sprint",
+        "break",
+        "balanced"
+      ],
+      "rows": [
+        {
+          "strategy": "sprint",
+          "captainWins": 3,
+          "captainWinRate": 0.03,
+          "winInterval95": [
+            0.010254338223414816,
+            0.08452078080402699
+          ],
+          "riderWinRate": 0.03,
+          "averageCaptainPosition": 3.21,
+          "averageEnergy": 66.70188999999985,
+          "breakSurvivalRate": 0.92,
+          "pairedPositionDelta": 0
+        },
+        {
+          "strategy": "break",
+          "captainWins": 42,
+          "captainWinRate": 0.42,
+          "winInterval95": [
+            0.327982249185113,
+            0.5179369200110473
+          ],
+          "riderWinRate": 0.42,
+          "averageCaptainPosition": 1.8,
+          "averageEnergy": 78.70251090624988,
+          "breakSurvivalRate": 0.99,
+          "pairedPositionDelta": -1.41
+        },
+        {
+          "strategy": "balanced",
+          "captainWins": 1,
+          "captainWinRate": 0.01,
+          "winInterval95": [
+            0.0017673865655472645,
+            0.0544875247609346
+          ],
+          "riderWinRate": 0.05,
+          "averageCaptainPosition": 4.3,
+          "averageEnergy": 77.94321953124987,
+          "breakSurvivalRate": 0.96,
+          "pairedPositionDelta": 1.09
+        },
+        {
+          "strategy": "conserve",
+          "captainWins": 0,
+          "captainWinRate": 0,
+          "winInterval95": [
+            0,
+            0.03699480747600191
+          ],
+          "riderWinRate": 0,
+          "averageCaptainPosition": 4.38,
+          "averageEnergy": 86.3680000000002,
+          "breakSurvivalRate": 0.92,
+          "pairedPositionDelta": 1.17
+        }
+      ]
+    },
+    {
+      "name": "strong-chase",
+      "version": "flat-lab-1",
+      "count": 100,
+      "seed": "pelotonia",
+      "config": {
+        "distanceKm": 160,
+        "stepKm": 5,
+        "attackKm": 20,
+        "packSpeed": 41,
+        "breakSpeed": 43.5,
+        "chaseStrength": 3,
+        "cooperation": 0.85,
+        "energyCost": 1,
+        "shelteredCost": 0.12,
+        "workCost": 0.38,
+        "breakCost": 0.27,
+        "fatigueSpeedLoss": 0.055,
+        "helperFloor": 30,
+        "positionPenalty": 7,
+        "sprintSpread": 8
+      },
+      "opponents": [
+        "sprint",
+        "break",
+        "balanced"
+      ],
+      "rows": [
+        {
+          "strategy": "sprint",
+          "captainWins": 33,
+          "captainWinRate": 0.33,
+          "winInterval95": [
+            0.24562983793895452,
+            0.4269483966028862
+          ],
+          "riderWinRate": 0.33,
+          "averageCaptainPosition": 1.96,
+          "averageEnergy": 81.7732362499998,
+          "breakSurvivalRate": 0,
+          "pairedPositionDelta": 0
+        },
+        {
+          "strategy": "break",
+          "captainWins": 0,
+          "captainWinRate": 0,
+          "winInterval95": [
+            0,
+            0.03699480747600191
+          ],
+          "riderWinRate": 0,
+          "averageCaptainPosition": 3.52,
+          "averageEnergy": 81.2504418437498,
+          "breakSurvivalRate": 0,
+          "pairedPositionDelta": 1.56
+        },
+        {
+          "strategy": "balanced",
+          "captainWins": 11,
+          "captainWinRate": 0.11,
+          "winInterval95": [
+            0.06254131955225126,
+            0.18631463027903022
+          ],
+          "riderWinRate": 0.11,
+          "averageCaptainPosition": 2.59,
+          "averageEnergy": 82.08370117187489,
+          "breakSurvivalRate": 0,
+          "pairedPositionDelta": 0.63
+        },
+        {
+          "strategy": "conserve",
+          "captainWins": 0,
+          "captainWinRate": 0,
+          "winInterval95": [
+            0,
+            0.03699480747600191
+          ],
+          "riderWinRate": 0,
+          "averageCaptainPosition": 3.29,
+          "averageEnergy": 86.3680000000002,
+          "breakSurvivalRate": 0,
+          "pairedPositionDelta": 1.33
+        }
+      ]
+    },
+    {
+      "name": "no-cooperation",
+      "version": "flat-lab-1",
+      "count": 100,
+      "seed": "pelotonia",
+      "config": {
+        "distanceKm": 160,
+        "stepKm": 5,
+        "attackKm": 20,
+        "packSpeed": 41,
+        "breakSpeed": 43.5,
+        "chaseStrength": 1.25,
+        "cooperation": 0,
+        "energyCost": 1,
+        "shelteredCost": 0.12,
+        "workCost": 0.38,
+        "breakCost": 0.27,
+        "fatigueSpeedLoss": 0.055,
+        "helperFloor": 30,
+        "positionPenalty": 7,
+        "sprintSpread": 8
+      },
+      "opponents": [
+        "sprint",
+        "break",
+        "balanced"
+      ],
+      "rows": [
+        {
+          "strategy": "sprint",
+          "captainWins": 36,
+          "captainWinRate": 0.36,
+          "winInterval95": [
+            0.2727107459049014,
+            0.45764780018837914
+          ],
+          "riderWinRate": 0.36,
+          "averageCaptainPosition": 1.82,
+          "averageEnergy": 77.91634312499987,
+          "breakSurvivalRate": 0,
+          "pairedPositionDelta": 0
+        },
+        {
+          "strategy": "break",
+          "captainWins": 0,
+          "captainWinRate": 0,
+          "winInterval95": [
+            0,
+            0.03699480747600191
+          ],
+          "riderWinRate": 0,
+          "averageCaptainPosition": 3.52,
+          "averageEnergy": 80.90154193749994,
+          "breakSurvivalRate": 0,
+          "pairedPositionDelta": 1.7
+        },
+        {
+          "strategy": "balanced",
+          "captainWins": 11,
+          "captainWinRate": 0.11,
+          "winInterval95": [
+            0.06254131955225126,
+            0.18631463027903022
+          ],
+          "riderWinRate": 0.11,
+          "averageCaptainPosition": 2.45,
+          "averageEnergy": 81.7549285937498,
+          "breakSurvivalRate": 0,
+          "pairedPositionDelta": 0.63
+        },
+        {
+          "strategy": "conserve",
+          "captainWins": 0,
+          "captainWinRate": 0,
+          "winInterval95": [
+            0,
+            0.03699480747600191
+          ],
+          "riderWinRate": 0,
+          "averageCaptainPosition": 3.11,
+          "averageEnergy": 86.3680000000002,
+          "breakSurvivalRate": 0,
+          "pairedPositionDelta": 1.29
+        }
+      ]
+    },
+    {
+      "name": "full-cooperation",
+      "version": "flat-lab-1",
+      "count": 100,
+      "seed": "pelotonia",
+      "config": {
+        "distanceKm": 160,
+        "stepKm": 5,
+        "attackKm": 20,
+        "packSpeed": 41,
+        "breakSpeed": 43.5,
+        "chaseStrength": 1.25,
+        "cooperation": 1,
+        "energyCost": 1,
+        "shelteredCost": 0.12,
+        "workCost": 0.38,
+        "breakCost": 0.27,
+        "fatigueSpeedLoss": 0.055,
+        "helperFloor": 30,
+        "positionPenalty": 7,
+        "sprintSpread": 8
+      },
+      "opponents": [
+        "sprint",
+        "break",
+        "balanced"
+      ],
+      "rows": [
+        {
+          "strategy": "sprint",
+          "captainWins": 36,
+          "captainWinRate": 0.36,
+          "winInterval95": [
+            0.2727107459049014,
+            0.45764780018837914
+          ],
+          "riderWinRate": 0.36,
+          "averageCaptainPosition": 1.82,
+          "averageEnergy": 69.14721374999988,
+          "breakSurvivalRate": 0,
+          "pairedPositionDelta": 0
+        },
+        {
+          "strategy": "break",
+          "captainWins": 46,
+          "captainWinRate": 0.46,
+          "winInterval95": [
+            0.36560643853331865,
+            0.5573531460647615
+          ],
+          "riderWinRate": 0.46,
+          "averageCaptainPosition": 1.76,
+          "averageEnergy": 78.38679062500002,
+          "breakSurvivalRate": 0.99,
+          "pairedPositionDelta": -0.06
+        },
+        {
+          "strategy": "balanced",
+          "captainWins": 1,
+          "captainWinRate": 0.01,
+          "winInterval95": [
+            0.0017673865655472645,
+            0.0544875247609346
+          ],
+          "riderWinRate": 0.05,
+          "averageCaptainPosition": 4.28,
+          "averageEnergy": 77.9627293749999,
+          "breakSurvivalRate": 0.94,
+          "pairedPositionDelta": 2.46
+        },
+        {
+          "strategy": "conserve",
+          "captainWins": 0,
+          "captainWinRate": 0,
+          "winInterval95": [
+            0,
+            0.03699480747600191
+          ],
+          "riderWinRate": 0,
+          "averageCaptainPosition": 4.38,
+          "averageEnergy": 86.3680000000002,
+          "breakSurvivalRate": 0.92,
+          "pairedPositionDelta": 2.56
+        }
+      ]
+    },
+    {
+      "name": "low-cost",
+      "version": "flat-lab-1",
+      "count": 100,
+      "seed": "pelotonia",
+      "config": {
+        "distanceKm": 160,
+        "stepKm": 5,
+        "attackKm": 20,
+        "packSpeed": 41,
+        "breakSpeed": 43.5,
+        "chaseStrength": 1.25,
+        "cooperation": 0.85,
+        "energyCost": 0.5,
+        "shelteredCost": 0.12,
+        "workCost": 0.38,
+        "breakCost": 0.27,
+        "fatigueSpeedLoss": 0.055,
+        "helperFloor": 30,
+        "positionPenalty": 7,
+        "sprintSpread": 8
+      },
+      "opponents": [
+        "sprint",
+        "break",
+        "balanced"
+      ],
+      "rows": [
+        {
+          "strategy": "sprint",
+          "captainWins": 26,
+          "captainWinRate": 0.26,
+          "winInterval95": [
+            0.18404578126986462,
+            0.35371172631861636
+          ],
+          "riderWinRate": 0.26,
+          "averageCaptainPosition": 2.17,
+          "averageEnergy": 84.34527437500009,
+          "breakSurvivalRate": 0.2,
+          "pairedPositionDelta": 0
+        },
+        {
+          "strategy": "break",
+          "captainWins": 45,
+          "captainWinRate": 0.45,
+          "winInterval95": [
+            0.3561437510640346,
+            0.5475557296835656
+          ],
+          "riderWinRate": 0.45,
+          "averageCaptainPosition": 1.77,
+          "averageEnergy": 89.35125545312496,
+          "breakSurvivalRate": 0.99,
+          "pairedPositionDelta": -0.4
+        },
+        {
+          "strategy": "balanced",
+          "captainWins": 1,
+          "captainWinRate": 0.01,
+          "winInterval95": [
+            0.0017673865655472645,
+            0.0544875247609346
+          ],
+          "riderWinRate": 0.05,
+          "averageCaptainPosition": 4.27,
+          "averageEnergy": 89.13254570312495,
+          "breakSurvivalRate": 0.93,
+          "pairedPositionDelta": 2.1
+        },
+        {
+          "strategy": "conserve",
+          "captainWins": 0,
+          "captainWinRate": 0,
+          "winInterval95": [
+            0,
+            0.03699480747600191
+          ],
+          "riderWinRate": 0,
+          "averageCaptainPosition": 4.45,
+          "averageEnergy": 93.18400000000003,
+          "breakSurvivalRate": 0.92,
+          "pairedPositionDelta": 2.28
+        }
+      ]
+    },
+    {
+      "name": "high-cost",
+      "version": "flat-lab-1",
+      "count": 100,
+      "seed": "pelotonia",
+      "config": {
+        "distanceKm": 160,
+        "stepKm": 5,
+        "attackKm": 20,
+        "packSpeed": 41,
+        "breakSpeed": 43.5,
+        "chaseStrength": 1.25,
+        "cooperation": 0.85,
+        "energyCost": 2,
+        "shelteredCost": 0.12,
+        "workCost": 0.38,
+        "breakCost": 0.27,
+        "fatigueSpeedLoss": 0.055,
+        "helperFloor": 30,
+        "positionPenalty": 7,
+        "sprintSpread": 8
+      },
+      "opponents": [
+        "sprint",
+        "break",
+        "balanced"
+      ],
+      "rows": [
+        {
+          "strategy": "sprint",
+          "captainWins": 36,
+          "captainWinRate": 0.36,
+          "winInterval95": [
+            0.2727107459049014,
+            0.45764780018837914
+          ],
+          "riderWinRate": 0.36,
+          "averageCaptainPosition": 1.82,
+          "averageEnergy": 48.94746625000003,
+          "breakSurvivalRate": 0,
+          "pairedPositionDelta": 0
+        },
+        {
+          "strategy": "break",
+          "captainWins": 0,
+          "captainWinRate": 0,
+          "winInterval95": [
+            0,
+            0.03699480747600191
+          ],
+          "riderWinRate": 0,
+          "averageCaptainPosition": 23.54,
+          "averageEnergy": 59.17895725000008,
+          "breakSurvivalRate": 0,
+          "pairedPositionDelta": 21.72
+        },
+        {
+          "strategy": "balanced",
+          "captainWins": 11,
+          "captainWinRate": 0.11,
+          "winInterval95": [
+            0.06254131955225126,
+            0.18631463027903022
+          ],
+          "riderWinRate": 0.11,
+          "averageCaptainPosition": 2.45,
+          "averageEnergy": 61.01063218750007,
+          "breakSurvivalRate": 0,
+          "pairedPositionDelta": 0.63
+        },
+        {
+          "strategy": "conserve",
+          "captainWins": 0,
+          "captainWinRate": 0,
+          "winInterval95": [
+            0,
+            0.03699480747600191
+          ],
+          "riderWinRate": 0,
+          "averageCaptainPosition": 2.79,
+          "averageEnergy": 72.73599999999989,
+          "breakSurvivalRate": 0,
+          "pairedPositionDelta": 0.97
+        }
+      ]
+    }
+  ]
+}
