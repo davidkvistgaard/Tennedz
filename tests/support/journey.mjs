@@ -37,6 +37,7 @@ export async function installJourney(page) {
     return send({ok:true,rows:[]});
   });
   return {
+    lock(){event.deadline=new Date(Date.now()-1000).toISOString();},
     rejectNextSave(){rejected=true;},
     entry(){return entry;},
     finish(){
