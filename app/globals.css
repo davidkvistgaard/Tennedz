@@ -1426,3 +1426,40 @@ p {
 .history-race p {
   font-size: 12px;
 }
+.admin-calendar {
+  margin-top: 28px;
+  padding-top: 24px;
+  border-top: 1px solid var(--border);
+}
+.calendar-form {
+  border: 0;
+  padding: 0;
+  margin: 20px 0;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px;
+}
+.calendar-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 12px;
+}
+.calendar-form input,
+.calendar-form select {
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: #fffdf6;
+  color: var(--text);
+  font: inherit;
+}
+.calendar-form .btn {
+  align-self: end;
+}
+@media (max-width: 760px) {
+  .calendar-form {
+    grid-template-columns: 1fr;
+  }
+}
+.race-scene-canvas{position:relative;background:#dce3d0}.race-scene-art{object-fit:cover}.race-scene-canvas>svg{position:relative;z-index:1;display:block;width:100%;height:auto}
