@@ -53,3 +53,21 @@ test('touch pinch zooms the atlas without opening a place',async({browser})=>{
   await expect(page.getByRole('heading',{name:'Pelotonia',exact:true})).toBeVisible();
  }finally{await context.close();}
 });
+
+test('a cell-indexed World 1.1 place can be found and opened without an invented point',async({page})=>{
+ await page.goto('/login');
+ await page.getByLabel('Email or username').fill('alice');
+ await page.getByLabel('Password').fill('fixture-password');
+ await page.getByRole('button',{name:'Sign in',exact:true}).click();
+ await expect(page).toHaveURL(/\/team$/);
+ await page.goto('/team/atlas');
+ await page.getByText('Find a place',{exact:true}).click();
+ await page.getByRole('searchbox',{name:'Search the atlas'}).fill('TernHaven');
+ await page.getByRole('button',{name:'Visit TernHaven in D1'}).click();
+ await expect(page.getByRole('heading',{name:'TernHaven',exact:true})).toBeVisible();
+ await expect(page.getByRole('navigation',{name:'Atlas navigation'}).getByRole('button',{name:'D1'})).toBeVisible();
+ await page.getByLabel('Explore a macro area').selectOption('D1');
+ await page.getByRole('button',{name:'Show',exact:true}).click();
+ await expect(page.locator('.atlas-place-list').getByRole('button',{name:/TernHaven/})).toBeVisible();
+ await expect(page.getByText(/precise positions within this cell are still undecided/)).toBeVisible();
+});
