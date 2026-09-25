@@ -1,0 +1,23 @@
+import { test, expect } from '@playwright/test';
+for (const width of [390,1440]) test(`staff preview keeps squad drafts separate at ${width}px`, async ({page})=>{
+  await page.setViewportSize({width,height:960});
+  await page.goto('/login');
+  await page.getByLabel('Email or username').fill('alice');
+  await page.getByLabel('Password',{exact:true}).fill('fixture-password');
+  await page.getByRole('button',{name:'Sign in',exact:true}).click();
+  await page.getByRole('link',{name:'Staff',exact:true}).click();
+  await expect(page.getByRole('heading',{name:'Staff & development'})).toBeVisible();
+  await expect(page.locator('.staff-card')).toHaveCount(6);
+  await page.getByLabel('Men’s squad direction').selectOption('Prepare for the classics');
+  await page.getByRole('button',{name:'Women',exact:true}).click();
+  await expect(page.getByLabel('Women’s squad direction')).toHaveValue('Balanced development');
+  await page.getByLabel('Women’s squad direction').selectOption('Develop young riders');
+  await page.getByRole('button',{name:'Men',exact:true}).click();
+  await expect(page.getByLabel('Men’s squad direction')).toHaveValue('Prepare for the classics');
+  await expect(page.locator('.staff-plan-summary')).toContainText('Develop young riders');
+  await page.reload();
+  await expect(page.getByLabel('Men’s squad direction')).toHaveValue('Balanced development');
+  await expect(page.getByText('Design preview',{exact:true})).toBeVisible();
+  await page.screenshot({path:`test-results/staff-${width}.png`,fullPage:true});
+  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
+});

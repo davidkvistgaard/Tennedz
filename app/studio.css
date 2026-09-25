@@ -154,3 +154,20 @@ button:focus-visible,a:focus-visible,summary:focus-visible,input:focus-visible,s
  .studio-profile .studio-dossier-cast h3 { align-self:center; font-size:28px; }
  .profile-strengths>div { grid-template-columns:1fr; }.profile-strengths article { display:grid; grid-template-columns:1fr auto; gap:6px 14px; }.profile-strengths strong { grid-row:1 / 3; grid-column:2; margin:0; }
 }
+.staff-intro { display:grid; grid-template-columns:1.2fr 1fr; gap:32px; align-items:center; margin-bottom:32px; }
+.staff-intro h2 { font:700 clamp(30px,4vw,48px)/1.1 Bricolage,sans-serif; color:var(--studio-forest); margin:12px 0; max-width:540px; }
+.staff-intro p,.staff-card p,.staff-planner p,.staff-membership p { line-height:1.7; }
+.staff-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:18px; }
+.staff-card { position:relative; border:1px solid var(--studio-line); border-radius:22px 7px 22px 7px; background:var(--studio-paper); padding:24px; box-shadow:var(--studio-shadow); }
+.staff-card h3 { font:700 25px Bricolage,sans-serif; margin:20px 0 8px; }
+.staff-number { float:right; font:700 30px Bricolage,sans-serif; color:#8c7653; }
+.staff-tagline { color:var(--studio-forest); font-weight:700; }
+.staff-label { display:inline-block; font-size:12px; padding:7px 10px; border-radius:8px; background:#eee5cf; color:#4b493c; }
+.staff-planner { margin:32px 0; }.staff-planner .studio-field { max-width:520px; }
+.staff-plan-summary { display:grid; grid-template-columns:1fr 1fr; gap:16px; }.staff-plan-summary>div { padding:16px; background:#eee5cf; border-radius:12px; }.staff-plan-summary dt { font-weight:700; }.staff-plan-summary dd { margin:8px 0 0; }
+.staff-membership { padding:24px 0; }.staff-membership-columns { display:grid; grid-template-columns:1fr 1fr; gap:20px; }.staff-membership-columns article { border:1px solid var(--studio-line); border-radius:18px; padding:24px; background:var(--studio-paper); }.staff-membership li { padding:7px 0; line-height:1.5; }
+@media(max-width:900px) { .staff-grid { grid-template-columns:repeat(2,minmax(0,1fr)); } }
+@media(max-width:600px) { .staff-intro,.staff-grid,.staff-plan-summary,.staff-membership-columns { grid-template-columns:1fr; }.staff-intro { gap:0; }.staff-card { padding:20px; } }
+.staff-planner .club-genders { display:flex; gap:8px; }
+.staff-planner .club-genders button { min-height:44px; padding:10px 24px; border:1px solid var(--studio-line); border-radius:10px; background:var(--studio-paper); color:var(--studio-ink); font:inherit; cursor:pointer; }
+.staff-planner .club-genders button[aria-pressed=true] { background:var(--studio-forest); color:#fff9eb; }
