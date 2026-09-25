@@ -2,12 +2,15 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { world, getWorldObject, getWorldChildren, getVisibleWorldObjects, validateWorld } from '../../lib/world/index.mjs';
 import { worldV1_1 } from '../../lib/world/data-v1-1.mjs';
+import { worldV1_3 } from '../../lib/world/data-v1-3.mjs';
 import { expansionSources } from '../../lib/world/expansion-sources.mjs';
 import { atlasWorld } from '../../lib/world/atlas-data.mjs';
 import { lineCells } from '../../lib/world/network.mjs';
 
 test('V1.2 and V1.3 retain every earlier ID and all source inventories',()=>{
-  assert.equal(world.datasetVersion,'1.3');
+  assert.equal(worldV1_3.datasetVersion,'1.3');
+  assert.deepEqual(validateWorld(worldV1_3),[]);
+  assert.equal(world.datasetVersion,'1.5');
   assert.deepEqual(validateWorld(world),[]);
   assert.deepEqual(validateWorld(atlasWorld),[]);
   assert.equal(expansionSources.cells.length,192);
@@ -45,8 +48,10 @@ test('all regional cities have terrain-compatible cell placement and usable L3/L
     assert.equal(city.geometry,null);
     assert.ok(city.properties.geographicReason);
     const children=getWorldChildren(city.id);
-    assert.equal(children.filter(c=>c.type==='district').length,3);
-    assert.equal(children.filter(c=>c.type==='landmark').length,3);
+    assert.ok(children.filter(c=>c.type==='district').length>=3);
+    assert.ok(children.filter(c=>c.type==='landmark').length>=3);
+    assert.equal(worldV1_3.objects.filter(c=>c.parentId===city.id&&c.type==='district').length,3);
+    assert.equal(worldV1_3.objects.filter(c=>c.parentId===city.id&&c.type==='landmark').length,3);
     assert.ok(children.every(c=>c.gridCells[0]===city.gridCells[0]));
   }
   assert.ok(getVisibleWorldObjects(2).some(o=>o.id==='RC-001'));

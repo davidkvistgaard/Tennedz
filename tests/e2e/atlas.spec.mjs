@@ -91,3 +91,22 @@ test('a regional city and a region-only discovery can be explored without fabric
  await expect(page.getByRole('heading',{name:'The Wind Organ',exact:true})).toBeVisible();
  await expect(page.getByRole('navigation',{name:'Atlas navigation'}).getByRole('button',{name:'Stormlands'})).toBeVisible();
 });
+
+test('a connected national route opens its named places and retains the whole route view',async({page})=>{
+ await page.goto('/login');
+ await page.getByLabel('Email or username').fill('alice');
+ await page.getByLabel('Password').fill('fixture-password');
+ await page.getByRole('button',{name:'Sign in',exact:true}).click();
+ await expect(page).toHaveURL(/\/team$/);
+ await page.goto('/team/atlas');
+ await page.getByText('Find a place',{exact:true}).click();
+ await page.getByRole('searchbox',{name:'Search the atlas'}).fill('Crownway');
+ await page.getByRole('button',{name:'Visit Crownway',exact:true}).click();
+ await expect(page.getByRole('heading',{name:'Crownway',exact:true})).toBeVisible();
+ await expect(page.locator('.atlas-place-list').getByRole('button',{name:/^Northwatch ↗$/})).toBeVisible();
+ await expect(page.locator('.atlas-place-list').getByRole('button',{name:/^Southport ↗$/})).toBeVisible();
+ const map=page.getByRole('group',{name:/Map of Pelotonia/});
+ expect(Number((await map.getAttribute('viewBox')).split(' ')[2])).toBeGreaterThan(100);
+ await page.locator('.atlas-place-list').getByRole('button',{name:/^Northwatch ↗$/}).click();
+ await expect(page.getByRole('heading',{name:'Northwatch',exact:true})).toBeVisible();
+});

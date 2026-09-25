@@ -1,6 +1,6 @@
 # Pelotonia World 1.3
 
-World 1.3 extends the preserved [World 1.0](./PELOTONIA-WORLD.md) and [World 1.1](./PELOTONIA-WORLD-1.1.md) data with the owner's [deep-world V1.2](./PELOTONIA_DEEP_WORLD_EXPANSION_V1_2.md) and [discovery V1.3](./PELOTONIA_DISCOVERY_EXPANSION_V1_3.md) specifications. `lib/world/index.mjs` exports the validated 1.3 dataset; `lib/world/atlas-data.mjs` adds the existing illustrative cartography. No database migration or cycling content is involved.
+World 1.3 extends the preserved [World 1.0](./PELOTONIA-WORLD.md) and [World 1.1](./PELOTONIA-WORLD-1.1.md) data with the owner's [deep-world V1.2](./PELOTONIA_DEEP_WORLD_EXPANSION_V1_2.md) and [discovery V1.3](./PELOTONIA_DISCOVERY_EXPANSION_V1_3.md) specifications. The current public export is [World 1.5](./PELOTONIA-WORLD-1.5.md); this document describes the preserved 1.3 layer. No database migration or cycling content is involved.
 
 ## Content and identity
 
