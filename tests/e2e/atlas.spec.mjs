@@ -110,3 +110,30 @@ test('a connected national route opens its named places and retains the whole ro
  await page.locator('.atlas-place-list').getByRole('button',{name:/^Northwatch ↗$/}).click();
  await expect(page.getByRole('heading',{name:'Northwatch',exact:true})).toBeVisible();
 });
+
+test('the V1.6 illustrated atlas keeps its grid optional and exposes canonical geography',async({page})=>{
+ await page.goto('/login');
+ await page.getByLabel('Email or username').fill('alice');
+ await page.getByLabel('Password').fill('fixture-password');
+ await page.getByRole('button',{name:'Sign in',exact:true}).click();
+ await expect(page).toHaveURL(/\/team$/);
+ await page.goto('/team/atlas');
+ const grid=page.locator('.atlas-debug-grid'),toggle=page.getByRole('button',{name:'Toggle debug grid'});
+ await expect(page.locator('.atlas-place-list button')).toHaveCount(18);
+ await page.getByRole('button',{name:/Show all \d+ places/}).click();
+ expect(await page.locator('.atlas-place-list button').count()).toBeGreaterThan(18);
+ await page.getByRole('button',{name:'Show fewer places'}).click();
+ await expect(page.locator('.atlas-place-list button')).toHaveCount(18);
+ await expect(grid).toHaveCount(0);
+ await expect(toggle).toHaveAttribute('aria-pressed','false');
+ await toggle.click();
+ await expect(grid).toBeVisible();
+ await expect(grid.locator('text')).toHaveCount(192);
+ await toggle.click();
+ await expect(grid).toHaveCount(0);
+ await page.getByText('Find a place',{exact:true}).click();
+ await page.getByRole('searchbox',{name:'Search the atlas'}).fill('Great Caldera');
+ await page.getByRole('button',{name:'Visit Great Caldera',exact:true}).click();
+ await expect(page.getByRole('heading',{name:'Great Caldera',exact:true})).toBeVisible();
+ await expect(page.getByRole('group',{name:/Map of Pelotonia/}).getByRole('button',{name:'Explore Great Caldera',exact:true})).toBeVisible();
+});

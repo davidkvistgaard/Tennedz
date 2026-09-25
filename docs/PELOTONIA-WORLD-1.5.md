@@ -2,6 +2,8 @@
 
 World 1.5 applies the owner's [V1.4 local-detail](./PELOTONIA_LOCAL_DETAIL_EXPANSION_V1_4.md) and [V1.5 connectivity](./PELOTONIA_CONNECTIVITY_SYSTEMS_EXPANSION_V1_5.md) specifications after the preserved [World 1.3](./PELOTONIA-WORLD-1.3.md). `lib/world/index.mjs` exports the validated 1.5 world; `lib/world/atlas-data.mjs` adds illustrative map artwork. This is fictional geography and infrastructure, with no cycling-specific content or database migration.
 
+The separate [V1.6 visual layer](./PELOTONIA-VISUAL-GEOGRAPHY-1.6.md) renders this same dataset and does not change its stable IDs or source facts.
+
 ## Local detail and identity
 
 All **192 grid cells** receive a local-detail index. Its category reflects the existing population/geography evidence: major city, regional city, town, populated rural, wilderness or ocean. Each populated or wilderness land cell selects appropriately sparse **already named** `CELL-*` features from the V1.2 dossier and links any supported L3/L4 children. Ocean cells are not filled with invented attractions. The cell index references stable object IDs and does not invent exact coordinates.
