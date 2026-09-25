@@ -1,6 +1,6 @@
 # Pelotonia World 1.1
 
-World 1.1 is the authoritative expansion of [the owner's complete specification](./PELOTONIA_COMPLETE_WORLD_SPEC_V1_1.md). The immutable World 1.0 source remains in `lib/world/data-v1.mjs` for regression tests. `lib/world/index.mjs` exports the validated 1.1 dataset; the atlas prototype adds schematic visual geometry to the same objects. There is no database migration.
+World 1.1 is the authoritative expansion of [the owner's complete specification](./PELOTONIA_COMPLETE_WORLD_SPEC_V1_1.md). The immutable World 1.0 source remains in `lib/world/data-v1.mjs` for regression tests. `lib/world/data-v1-1.mjs` preserves the validated 1.1 dataset; the current export is [World 1.3](./PELOTONIA-WORLD-1.3.md). There is no database migration.
 
 ## Content and identity
 
