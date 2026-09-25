@@ -41,7 +41,14 @@ test('24 regional cities and 26 selected towns receive named local structure',()
 
 test('24 signature sites and five infrastructure systems get L4 children without DISC identity swaps',()=>{
  assert.equal(source.signature.length,24);
- assert.equal(rec.discoveryCollisions.length,18);
+ assert.equal(rec.discoveryCollisions.length,0);
+ assert.equal(rec.sourceCorrections.length,18);
+ for(const [prior,corrected,name] of rec.sourceCorrections){
+  assert.equal(get(corrected).name,name);
+  assert.notEqual(get(prior).id,get(corrected).id);
+  assert.ok(worldV1_4.objects.some(o=>o.id.startsWith(`V14-SITE-${prior}-`)&&o.parentId===get(corrected).id),prior);
+  assert.ok(!worldV1_4.objects.some(o=>o.id.startsWith(`V14-SITE-${corrected}-`)),corrected);
+ }
  for(const item of source.signature){
   const parent=ids.get(rec.resolvedSignatures.find(x=>x.sourceId===item.sourceId).canonicalId);
   assert.equal(parent.name,item.name);

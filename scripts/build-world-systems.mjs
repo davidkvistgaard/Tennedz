@@ -1,6 +1,8 @@
 import {readFileSync,writeFileSync} from 'node:fs';
 import {dirname,resolve} from 'node:path';
 import {fileURLToPath} from 'node:url';
+import {correctedDiscoverySources} from '../lib/world/source-corrections.mjs';
+import {expansionSources} from '../lib/world/expansion-sources.mjs';
 const root=resolve(dirname(fileURLToPath(import.meta.url)),'..');
 const local=readFileSync(resolve(root,'docs/PELOTONIA_LOCAL_DETAIL_EXPANSION_V1_4.md'),'utf8');
 const systems=readFileSync(resolve(root,'docs/PELOTONIA_CONNECTIVITY_SYSTEMS_EXPANSION_V1_5.md'),'utf8');
@@ -20,6 +22,13 @@ const signature=localSections.filter(x=>/^DISC-\d{3} /.test(x.heading)).map(x=>{
  const [,sourceId,name]=x.heading.match(/^(DISC-\d{3}) (.+)$/);
  return{sourceId,name,children:split(take(x.body,'L4 children'))};
 });
+const v13DiscoveryNames=new Map(expansionSources.discoveries.map(x=>[x.id,x.name]));
+for(const [oldId,newId,name] of correctedDiscoverySources){
+ if(!signature.some(x=>x.sourceId===newId&&x.name===name))throw new Error(`Missing corrected V1.4 source ${newId}: ${name}`);
+ if(signature.some(x=>x.sourceId===oldId&&x.name===name))throw new Error(`Uncorrected V1.4 source ${oldId}: ${name}`);
+}
+for(const item of signature)if(v13DiscoveryNames.has(item.sourceId)&&v13DiscoveryNames.get(item.sourceId)!==item.name)throw new Error(`V1.4 source collision with V1.3: ${item.sourceId}`);
+if(new Set(signature.map(x=>x.sourceId)).size!==signature.length)throw new Error('Duplicate V1.4 discovery source ID');
 const engineering=localSections.filter(x=>/^INF-0[1-5] /.test(x.heading)).map(x=>{
  const [,sourceId,rawName]=x.heading.match(/^(INF-0[1-5]) (.+)$/);
  const name=rawName.replace(/ \(.*\)$/,'');

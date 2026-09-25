@@ -288,75 +288,75 @@ Children must be spatially nested inside/adjacent to the parent site and only ap
 **L4 children:** Great Grove, Cathedral Trunk, Canopy Walk, Forest Floor Reserve, Mara Creek.
 Children must be spatially nested inside/adjacent to the parent site and only appear at close zoom.
 
-## DISC-008 Aurelia Icefield
+## DISC-120 Aurelia Icefield
 **L4 children:** Crown Glacier, Aurel Glacier, White River Glacier, Serac Basin, North Crown Snowfield, South Col Icefall.
 Children must be spatially nested inside/adjacent to the parent site and only appear at close zoom.
 
-## DISC-010 Three Lakes Basin
+## DISC-121 Three Lakes Basin
 **L4 children:** Blue Lake, Green Lake, Black Lake, Three Lakes Pass, Basin Hut.
 Children must be spatially nested inside/adjacent to the parent site and only appear at close zoom.
 
-## DISC-012 Great River Marshes
+## DISC-122 Great River Marshes
 **L4 children:** North Reed Sea, Willow Channels, Great Heron Pools, Flood Meadow, Marsh Observatory.
 Children must be spatially nested inside/adjacent to the parent site and only appear at close zoom.
 
-## DISC-013 Great Caldera
+## DISC-123 Great Caldera
 **L4 children:** North Rim, Black Rim, Ember Rim, Collapsed East Gate, Steam Shore, Obsidian Peninsula, Ash Islands, Blue Depths.
 Children must be spatially nested inside/adjacent to the parent site and only appear at close zoom.
 
-## DISC-014 White Terraces
+## DISC-124 White Terraces
 **L4 children:** Upper Terraces, Lower Terraces, Steam Steps, Mineral Pools, Terrace Walk.
 Children must be spatially nested inside/adjacent to the parent site and only appear at close zoom.
 
-## DISC-015 Glass Plain
+## DISC-125 Glass Plain
 **L4 children:** Black Glass Field, Obsidian Ridge, Glass Edge, Ash Trail.
 Children must be spatially nested inside/adjacent to the parent site and only appear at close zoom.
 
-## DISC-016 Great Escarpment
+## DISC-126 Great Escarpment
 **L4 children:** North Wall, High Step, Sage Gap, Copper Face, South Break.
 Children must be spatially nested inside/adjacent to the parent site and only appear at close zoom.
 
-## DISC-018 Red Canyon
+## DISC-127 Red Canyon
 **L4 children:** Upper Canyon, Cathedral Gorge, Copper Narrows, Great Bend, Scarlet Walls, Lower Canyon.
 Children must be spatially nested inside/adjacent to the parent site and only appear at close zoom.
 
-## DISC-019 Salt Mirror
+## DISC-128 Salt Mirror
 **L4 children:** North Pan, Mirror Basin, Salt Islands, Dry Shore.
 Children must be spatially nested inside/adjacent to the parent site and only appear at close zoom.
 
-## DISC-020 Dry Cathedral
+## DISC-129 Dry Cathedral
 **L4 children:** Great Nave, West Spires, Sun Window, Cathedral Floor, Red Steps.
 Children must be spatially nested inside/adjacent to the parent site and only appear at close zoom.
 
-## DISC-021 Black Cliffs
+## DISC-130 Black Cliffs
 **L4 children:** North Face, Great Wall, Seal Ledge, Cliff Falls, Black Head.
 Children must be spatially nested inside/adjacent to the parent site and only appear at close zoom.
 
-## DISC-022 Mist Gate
+## DISC-131 Mist Gate
 **L4 children:** West Pillar, East Pillar, Gate Channel, Mist Light.
 Children must be spatially nested inside/adjacent to the parent site and only appear at close zoom.
 
-## DISC-023 Needle Island
+## DISC-132 Needle Island
 **L4 children:** Needle Peak, North Landing, Sea Arch, Light Station.
 Children must be spatially nested inside/adjacent to the parent site and only appear at close zoom.
 
-## DISC-024 White Dunes
+## DISC-133 White Dunes
 **L4 children:** Great Dune, Dune Lakes, South Beach, White Dunes Reserve, Estuary Edge.
 Children must be spatially nested inside/adjacent to the parent site and only appear at close zoom.
 
-## DISC-026 Azure Lagoon
+## DISC-134 Azure Lagoon
 **L4 children:** Inner Lagoon, West Reef, Mara Channel, Blue Hole, Lagoon Islands.
 Children must be spatially nested inside/adjacent to the parent site and only appear at close zoom.
 
-## DISC-027 East Light
+## DISC-135 East Light
 **L4 children:** Main Tower, Keeper Houses, East Head, Signal Terrace.
 Children must be spatially nested inside/adjacent to the parent site and only appear at close zoom.
 
-## DISC-029 Rainwall Viaduct
+## DISC-136 Rainwall Viaduct
 **L4 children:** West Approach, Great Span, Rain Gorge Pier, East Portal, View Terrace.
 Children must be spatially nested inside/adjacent to the parent site and only appear at close zoom.
 
-## DISC-030 Canyon Bridge
+## DISC-137 Canyon Bridge
 **L4 children:** North Approach, Main Span, South Approach, Canyon Deck View, Service Gallery.
 Children must be spatially nested inside/adjacent to the parent site and only appear at close zoom.
 
