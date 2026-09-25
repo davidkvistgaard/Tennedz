@@ -7,7 +7,14 @@ for (const width of [390, 1440]) test(`visual studio profiles, comparison and lo
   await page.getByLabel('Password', { exact: true }).fill('fixture-password');
   await page.getByRole('button', { name: 'Sign in', exact: true }).click();
   await expect(page).toHaveURL(/\/team$/);
+  await expect(page.getByRole('region', { name: 'Club colours' })).toBeVisible();
+  await expect(page.getByRole('link', { name: 'Visit the kit room' })).toBeVisible();
+  await page.getByLabel('Search riders').fill('no-match-country');
+  await expect(page.locator('.club-rider')).toHaveCount(0);
+  await page.getByRole('button', {name:'Clear filters',exact:true}).click();
+  await expect(page.locator('.club-rider')).toHaveCount(8);
   await page.getByRole('button', { name: 'View profile of Emil Berg', exact: true }).click();
+  await expect(page.getByRole('region', {name:'Rider strengths'}).locator('article')).toHaveCount(3);
   await expect(page.getByRole('dialog')).toBeVisible();
   await expect(page.getByRole('dialog').getByRole('heading', { name: 'Emil Berg' })).toBeVisible();
   await page.screenshot({ path: `test-results/studio-profile-${width}.png` });
