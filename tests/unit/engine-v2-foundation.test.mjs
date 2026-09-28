@@ -109,13 +109,29 @@ test('repeated attacks and constant chasing consume energy; road captain improve
   assert.equal(resolveTacticalKilometre({teams:[leader,depleted],km:10}).attackers.length,0);
 });
 
+test('effort changes immediate attack and chase pressure while charging more energy',()=>{
+  const attacker=tacticalTeam('attacker','aggressive');
+  const defender=tacticalTeam('defender','protect',{baseline:{chase:'all'}});
+  const conservative={...attacker,orders:{...attacker.orders,baseline:{...attacker.orders.baseline,effort:'conserve'}}};
+  const hard=resolveTacticalKilometre({teams:[attacker,defender],km:20});
+  const gentle=resolveTacticalKilometre({teams:[conservative,defender],km:20});
+  assert.ok(hard.attackPower>gentle.attackPower);
+  const hardDefender={...defender,orders:{...defender.orders,baseline:{...defender.orders.baseline,effort:'hard'}}};
+  const hardChase=resolveTacticalKilometre({teams:[attacker,hardDefender],km:20});
+  assert.ok(hardChase.chasePower>hard.chasePower);
+  const hardTour=simulateTacticalTour({stage,teams:[attacker,defender],seed:'effort-cost'});
+  const gentleTour=simulateTacticalTour({stage,teams:[conservative,defender],seed:'effort-cost'});
+  assert.ok(hardTour.frames.at(-1).teamEnergy.find(t=>t.teamId==='attacker').mean<
+    gentleTour.frames.at(-1).teamEnergy.find(t=>t.teamId==='attacker').mean);
+});
+
 test('the full tactical trace is deterministic, bounded and makes aggressive orders costly',()=>{
   const input={stage,seed:'tour-1',weather:{temp_c:14,wind_kph:25,precipitation_mm:2},
     teams:[tacticalTeam('attacker','aggressive'),tacticalTeam('defender','protect',{baseline:{chase:'all'}}),tacticalTeam('other','balanced')]};
   const a=simulateTacticalTour(input);
   assert.deepEqual(a,simulateTacticalTour(input));
   assert.equal(a.frames.length,40);
-  assert.equal(a.tuningVersion,'v2-prototype-2');
+  assert.equal(a.tuningVersion,'v2-prototype-3');
   assert.equal(a.frames.at(-1).km,40);
   assert.ok(a.frames.some(frame=>frame.attackers.length>0));
   assert.ok(a.frames.some(frame=>frame.chasers.length>0));

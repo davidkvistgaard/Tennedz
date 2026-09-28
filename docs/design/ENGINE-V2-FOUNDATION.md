@@ -16,6 +16,8 @@ Status: **development prototype, not wired to the public race cycle**. The exist
 
 The trace records the actual riders ahead, limits one team's active breakaway contingent, prevents a rider from re-attacking while already ahead, and charges continuing energy cost for riding in the break. These are provisional race rules in the isolated model; they must be calibrated against complete group and finish simulations before release.
 
+Effort now changes immediate attack and chase pressure as well as the continuing energy bill. The stronger `hard` setting can create or close a gap sooner, but leaves less energy for later kilometres. The multiplier is a central balancing parameter, not a public percentage shown to players.
+
 Inputs fail closed on unknown order fields, bad rider IDs, invalid stats, mixed race categories and missing seeds. Team and rider inputs are sorted before calculation, so database row order does not change the saved trace. This is necessary for reproducible results and later replay verification.
 
 The existing feature-gated Race Lab now has a separate **Run kilometre prototype** action. It adapts the same fictional four-team cast to v2 and shows the saved kilometre trace and provisional finish order alongside the older flat-road experiment. Neither calculation reads player accounts or writes database rows; the two models stay visibly labelled so their outputs are not mistaken for live race results.
