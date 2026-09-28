@@ -7,6 +7,7 @@ import {simulateTacticalTour} from '../../lib/engine/v2/tour.mjs';
 import {SPORTING_SKILLS,sportingSkills,riderKilometreEffect} from '../../lib/engine/v2/physiology.mjs';
 import {runKilometreLab} from '../../lib/engine/v2/lab.mjs';
 import {updateRiderGroups} from '../../lib/engine/v2/groups.mjs';
+import {selectShelter} from '../../lib/engine/v2/support.mjs';
 import {flatScenario} from '../../lib/race-lab/scenario.mjs';
 
 const stage={distance_km:40,profile_points:[[0,100],[10,100],[20,300],[30,100],[40,100]],
@@ -156,7 +157,7 @@ test('the full tactical trace is deterministic, bounded and makes aggressive ord
   const a=simulateTacticalTour(input);
   assert.deepEqual(a,simulateTacticalTour(input));
   assert.equal(a.frames.length,40);
-  assert.equal(a.tuningVersion,'v2-prototype-5');
+  assert.equal(a.tuningVersion,'v2-prototype-6');
   assert.equal(a.frames.at(-1).km,40);
   assert.ok(a.frames.some(frame=>frame.attackers.length>0));
   assert.ok(a.frames.some(frame=>frame.chasers.length>0));
@@ -264,6 +265,32 @@ test('sustained weakness forms a dropped group while stronger kilometres can clo
   states=updateRiderGroups(states.map(s=>({...s,ability:s.id==='weak'?90:60})),[]);
   assert.ok(states[0].deficitSeconds<deficit);
   assert.ok(states.every(s=>s.deficitSeconds>=0));
+});
+
+test('helpers shelter a protected leader but cannot simultaneously chase',()=>{
+  const team=tacticalTeam('p','protect');
+  team.energy=Object.fromEntries(team.riders.map(rider=>[rider.id,90]));
+  const previousGroups=new Map(team.riders.map(rider=>[rider.id,'peloton']));
+  const segment=buildKilometreRoute(stage,{seed:'shelter'}).kilometres[0];
+  const context={team,leaderId:'p-0',segment,previousGroups,workingRiderIds:new Set()};
+  const sheltered=selectShelter(context);
+  assert.equal(sheltered.helperIds.length,2);
+  assert.ok(sheltered.reduction>0);
+  const working=selectShelter({...context,workingRiderIds:new Set(sheltered.helperIds)});
+  assert.ok(working.helperIds.every(id=>!sheltered.helperIds.includes(id)));
+  assert.deepEqual(selectShelter({...context,previousGroups:new Map([['p-0','breakaway']])}).helperIds,[]);
+});
+
+test('protecting a captain saves the captain energy and costs helpers energy',()=>{
+  const protectedTeam=tacticalTeam('p','protect',{baseline:{attack:'none',chase:'ignore'}});
+  const plainTeam=tacticalTeam('p','balanced',{baseline:{attack:'none',chase:'ignore'}});
+  const rival=tacticalTeam('r','balanced',{baseline:{attack:'none',chase:'ignore'}});
+  const sheltered=simulateTacticalTour({stage,teams:[protectedTeam,rival],seed:'shelter-cost'});
+  const unsheltered=simulateTacticalTour({stage,teams:[plainTeam,rival],seed:'shelter-cost'});
+  const finalEnergy=(result,id)=>result.frames.at(-1).riderGroups.find(r=>r.id===id).energy;
+  assert.ok(sheltered.frames.some(frame=>frame.shelterEvents.some(event=>event.teamId==='p')));
+  assert.ok(finalEnergy(sheltered,'p-0')>finalEnergy(unsheltered,'p-0'));
+  assert.ok(finalEnergy(sheltered,'p-2')<finalEnergy(unsheltered,'p-2'));
 });
 
 test('a rider still in the break finishes ahead of the bunch when its gap survives',()=>{

@@ -22,6 +22,8 @@ Selective chase now remembers a detected break while it remains ahead. The road 
 
 The `protect` preset now commits saved helpers to a progressively stronger sprint-train chase in the final ten kilometres, paying a matching energy surcharge. This gives a fresh sprint team a real counter to late attacks without making every late break automatically fail. Its balance still needs broad scenario checks before release.
 
+Outside a break, available helpers on `protect` can also shelter their active leader. The leader saves some baseline energy while those helpers spend extra energy; helpers selected for chase work in the same kilometre cannot provide shelter. Positioning, strength, handling and wind skills influence which helpers are effective. This is a first draft of team protection, not a complete drafting or road-position model.
+
 Inputs fail closed on unknown order fields, bad rider IDs, invalid stats, mixed race categories and missing seeds. Team and rider inputs are sorted before calculation, so database row order does not change the saved trace. This is necessary for reproducible results and later replay verification.
 
 The existing feature-gated Race Lab now has a separate **Run kilometre prototype** action. It adapts the same fictional four-team cast to v2 and shows the saved kilometre trace and provisional finish order alongside the older flat-road experiment. Neither calculation reads player accounts or writes database rows; the two models stay visibly labelled so their outputs are not mistaken for live race results.
