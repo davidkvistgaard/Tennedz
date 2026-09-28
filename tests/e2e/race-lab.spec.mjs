@@ -33,6 +33,10 @@ for (const width of [390, 1440])
     await page.keyboard.press("End");
     await expect(page.getByText("160 / 160 km", { exact: true })).toBeVisible();
     await expect(page.getByRole("table", { name: "Team state after this kilometre" })).toBeVisible();
+    const provisionalResults=page.getByRole("table", { name: "Provisional rider results" });
+    await expect(provisionalResults).toBeVisible();
+    await expect(provisionalResults.locator("tbody tr")).toHaveCount(32);
+    await expect(provisionalResults.locator("tbody tr").first()).toContainText("1");
     await page.getByLabel("Paired seeds", { exact: true }).selectOption("20");
     await page
       .getByRole("button", { name: "Compare all four plans", exact: true })

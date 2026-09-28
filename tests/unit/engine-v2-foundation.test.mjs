@@ -6,6 +6,7 @@ import {resolveTacticalKilometre} from '../../lib/engine/v2/tactics.mjs';
 import {simulateTacticalTour} from '../../lib/engine/v2/tour.mjs';
 import {SPORTING_SKILLS,sportingSkills,riderKilometreEffect} from '../../lib/engine/v2/physiology.mjs';
 import {runKilometreLab} from '../../lib/engine/v2/lab.mjs';
+import {updateRiderGroups} from '../../lib/engine/v2/groups.mjs';
 import {flatScenario} from '../../lib/race-lab/scenario.mjs';
 
 const stage={distance_km:40,profile_points:[[0,100],[10,100],[20,300],[30,100],[40,100]],
@@ -114,7 +115,7 @@ test('the full tactical trace is deterministic, bounded and makes aggressive ord
   const a=simulateTacticalTour(input);
   assert.deepEqual(a,simulateTacticalTour(input));
   assert.equal(a.frames.length,40);
-  assert.equal(a.tuningVersion,'v2-prototype-1');
+  assert.equal(a.tuningVersion,'v2-prototype-2');
   assert.equal(a.frames.at(-1).km,40);
   assert.ok(a.frames.some(frame=>frame.attackers.length>0));
   assert.ok(a.frames.some(frame=>frame.chasers.length>0));
@@ -124,6 +125,10 @@ test('the full tactical trace is deterministic, bounded and makes aggressive ord
   assert.ok(a.frames.every(frame=>frame.gapSeconds>=0&&frame.teamEnergy.every(team=>team.mean>=0&&team.mean<=100)));
   assert.ok(a.frames.every(frame=>frame.teamPace.every(team=>Number.isFinite(team.meanAbility))));
   assert.ok(a.frames.at(-1).teamEnergy[0].mean<a.frames.at(-1).teamEnergy[2].mean);
+  assert.equal(a.provisionalResults.length,24);
+  assert.deepEqual(a.provisionalResults.map(r=>r.position),Array.from({length:24},(_,i)=>i+1));
+  assert.ok(a.provisionalResults.every(r=>Number.isFinite(r.timeSeconds)&&r.gapSeconds>=0&&r.energy>=0));
+  assert.ok(a.provisionalResults.every(r=>r.group===a.frames.at(-1).riderGroups.find(s=>s.id===r.riderId).group));
   assert.deepEqual(input.teams[0].riders[0].id,'attacker-0');
   assert.equal(input.teams[0].energy,undefined);
 });
@@ -203,6 +208,31 @@ test('the tactical model stays bounded across a full-length twenty-team race',()
   assert.ok(result.frames.every(frame=>frame.teamEnergy.every(team=>Number.isFinite(team.mean)&&team.mean>=0&&team.mean<=100)));
   assert.ok(result.frames.every(frame=>frame.teamPace.every(team=>Number.isFinite(team.meanAbility))));
   assert.ok(result.frames.every(frame=>teams.every(team=>frame.breakawayRiderIds.filter(id=>id.startsWith(`${team.id}-`)).length<=2)));
+  assert.equal(result.provisionalResults.length,160);
+  assert.ok(result.provisionalResults.every((r,i,all)=>i===0||r.timeSeconds>=all[i-1].timeSeconds));
+});
+
+test('sustained weakness forms a dropped group while stronger kilometres can close its deficit',()=>{
+  let states=[{id:'weak',ability:25,energy:65,deficitSeconds:0,lowKilometres:0},
+    {id:'steady',ability:60,energy:65,deficitSeconds:0,lowKilometres:0},
+    {id:'strong',ability:75,energy:65,deficitSeconds:0,lowKilometres:0}];
+  for(let i=0;i<12;i++)states=updateRiderGroups(states,[]);
+  const deficit=states[0].deficitSeconds;
+  assert.equal(states[0].group,'dropped');
+  assert.ok(deficit>3);
+  states=updateRiderGroups(states.map(s=>({...s,ability:s.id==='weak'?90:60})),[]);
+  assert.ok(states[0].deficitSeconds<deficit);
+  assert.ok(states.every(s=>s.deficitSeconds>=0));
+});
+
+test('a rider still in the break finishes ahead of the bunch when its gap survives',()=>{
+  const a=tacticalTeam('a','aggressive'),b=tacticalTeam('b','protect',{baseline:{chase:'ignore'}});
+  const result=simulateTacticalTour({stage,teams:[a,b],seed:'break-finish'});
+  assert.ok(result.frames.at(-1).gapSeconds>0);
+  const ahead=new Set(result.frames.at(-1).breakawayRiderIds);
+  assert.ok(ahead.size>0);
+  assert.ok(result.provisionalResults.find(r=>ahead.has(r.riderId)).position<
+    result.provisionalResults.find(r=>!ahead.has(r.riderId)).position);
 });
 
 test('a rider already in the break cannot launch another new attack',()=>{

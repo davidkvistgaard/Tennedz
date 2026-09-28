@@ -391,7 +391,7 @@ export default function Lab() {
       {kilometreRace && currentKm && (
         <section className="lab-card" aria-label="Kilometre engine prototype">
           <h2>Kilometre engine · tactical trace</h2>
-          <p>Same four fictional squads. This separate v2 model records changing terrain, weather, energy, attacks and pursuit at every kilometre. It does not yet calculate a winner or replace the original Race Lab results.</p>
+          <p>Same four fictional squads. This separate v2 model records changing terrain, weather, energy, attacks and pursuit at every kilometre. Its finish order is experimental and does not replace the original Race Lab results.</p>
           <div className="lab-metrics"><strong>{currentKm.km} / {kilometreRace.route.distanceKm} km</strong><strong>{currentKm.gapSeconds.toFixed(1)} s break gap</strong><strong>{currentKm.terrain} · {currentKm.surface}{currentKm.exposed?' · exposed':''}</strong></div>
           <p className="small">Weather here: {kilometreRace.route.kilometres[kilometreKm].weather.temperatureC}°C · wind {kilometreRace.route.kilometres[kilometreKm].weather.windKph} km/h · rain {kilometreRace.route.kilometres[kilometreKm].weather.rainMm} mm.</p>
           <svg viewBox="0 0 800 150" role="img" aria-label="Recorded breakaway gap in the kilometre prototype">
@@ -407,7 +407,13 @@ export default function Lab() {
             return <tr key={team.teamId}><th>{name}</th><td>{team.mean.toFixed(1)}</td><td>{currentKm.teamPace.find(p=>p.teamId===team.teamId)?.meanAbility.toFixed(1)}</td><td>{leader}</td></tr>;
           })}</tbody></table></div>
           <p>{currentKm.breakawayRiderIds.length} rider{currentKm.breakawayRiderIds.length===1?'':'s'} in the break · {currentKm.attackers.length} new attack{currentKm.attackers.length===1?'':'s'} · {currentKm.chasers.length} chasing team{currentKm.chasers.length===1?'':'s'}{currentKm.decisions.length?` · ${currentKm.decisions.length} backup-plan change`:''}</p>
-          <p className="small">The entire trace was calculated before this slider appeared. The slider only reads saved frames. Balance and finish positions remain experimental work.</p>
+          <p className="small">The entire trace and finish order were calculated before this slider appeared. The slider only reads saved frames.</p>
+          <h3>Experimental finish order</h3>
+          <p className="small">For balancing only. These are not live race results or a validated prediction.</p>
+          <div className="lab-scroll"><table><caption>Provisional rider results</caption><thead><tr><th>Place</th><th>Rider</th><th>Team</th><th>Gap</th><th>Group</th><th>Energy left</th></tr></thead><tbody>{kilometreRace.provisionalResults.map(rider=>{
+            const team=kilometreRace.scenario.teams.find(t=>t.id===rider.teamId);
+            return <tr key={rider.riderId}><td>{rider.position}</td><th>{rider.name}</th><td>{team?.name??rider.teamId}</td><td>{rider.position===1?'—':`+${rider.gapSeconds.toFixed(1)} s`}</td><td>{rider.group}</td><td>{rider.energy.toFixed(1)}</td></tr>;
+          })}</tbody></table></div>
         </section>
       )}
       <footer>
@@ -422,7 +428,7 @@ export default function Lab() {
           The original flat model has one early attack opportunity and two
           groups. It does not model wind, changing terrain, intermediate attacks
           or dropped riders. The kilometre prototype above begins those systems,
-          but has no final placing or replay yet. Neither model replaces the
+          with provisional placing but no production replay yet. Neither model replaces the
           production engine.
         </p>
       </footer>
