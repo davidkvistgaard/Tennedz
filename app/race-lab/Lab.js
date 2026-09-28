@@ -406,7 +406,7 @@ export default function Lab() {
             const leader=kilometreRace.scenario.teams.find(t=>t.id===team.teamId)?.riders.find(r=>r.id===leaderId)?.name??leaderId;
             return <tr key={team.teamId}><th>{name}</th><td>{team.mean.toFixed(1)}</td><td>{currentKm.teamPace.find(p=>p.teamId===team.teamId)?.meanAbility.toFixed(1)}</td><td>{leader}</td></tr>;
           })}</tbody></table></div>
-          <p>{currentKm.attackers.length} attacking rider{currentKm.attackers.length===1?'':'s'} · {currentKm.chasers.length} chasing team{currentKm.chasers.length===1?'':'s'}{currentKm.decisions.length?` · ${currentKm.decisions.length} backup-plan change`:''}</p>
+          <p>{currentKm.breakawayRiderIds.length} rider{currentKm.breakawayRiderIds.length===1?'':'s'} in the break · {currentKm.attackers.length} new attack{currentKm.attackers.length===1?'':'s'} · {currentKm.chasers.length} chasing team{currentKm.chasers.length===1?'':'s'}{currentKm.decisions.length?` · ${currentKm.decisions.length} backup-plan change`:''}</p>
           <p className="small">The entire trace was calculated before this slider appeared. The slider only reads saved frames. Balance and finish positions remain experimental work.</p>
         </section>
       )}

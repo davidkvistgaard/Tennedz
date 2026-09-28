@@ -115,6 +115,9 @@ test('the full tactical trace is deterministic, bounded and makes aggressive ord
   assert.equal(a.frames.at(-1).km,40);
   assert.ok(a.frames.some(frame=>frame.attackers.length>0));
   assert.ok(a.frames.some(frame=>frame.chasers.length>0));
+  assert.ok(a.frames.every(frame=>new Set(frame.breakawayRiderIds).size===frame.breakawayRiderIds.length));
+  assert.ok(a.frames.every(frame=>frame.breakawayTeamIds.length===new Set(frame.breakawayTeamIds).size));
+  assert.ok(a.frames.every(frame=>frame.breakawayTeamIds.every(id=>frame.breakawayRiderIds.some(riderId=>riderId.startsWith(`${id}-`)))));
   assert.ok(a.frames.every(frame=>frame.gapSeconds>=0&&frame.teamEnergy.every(team=>team.mean>=0&&team.mean<=100)));
   assert.ok(a.frames.every(frame=>frame.teamPace.every(team=>Number.isFinite(team.meanAbility))));
   assert.ok(a.frames.at(-1).teamEnergy[0].mean<a.frames.at(-1).teamEnergy[2].mean);
@@ -196,6 +199,17 @@ test('the tactical model stays bounded across a full-length twenty-team race',()
   assert.ok(result.frames.every(frame=>Number.isFinite(frame.gapSeconds)&&frame.gapSeconds>=0));
   assert.ok(result.frames.every(frame=>frame.teamEnergy.every(team=>Number.isFinite(team.mean)&&team.mean>=0&&team.mean<=100)));
   assert.ok(result.frames.every(frame=>frame.teamPace.every(team=>Number.isFinite(team.meanAbility))));
+  assert.ok(result.frames.every(frame=>teams.every(team=>frame.breakawayRiderIds.filter(id=>id.startsWith(`${team.id}-`)).length<=2)));
+});
+
+test('a rider already in the break cannot launch another new attack',()=>{
+  const attacker=tacticalTeam('a','aggressive'),defender=tacticalTeam('d','protect',{baseline:{chase:'ignore'}});
+  const result=simulateTacticalTour({stage,teams:[attacker,defender],seed:'one-break'});
+  const first=result.frames.find(frame=>frame.attackers.length>0);
+  assert.ok(first);
+  const later=result.frames.filter(frame=>frame.km>first.km);
+  assert.ok(later.every(frame=>!frame.attackers.includes(first.attackers[0])||!frame.breakawayRiderIds.includes(first.attackers[0])));
+  assert.ok(Math.max(...result.frames.map(frame=>frame.breakawayRiderIds.length))<=2);
 });
 
 test('the new kilometre model reuses the existing laboratory cast without changing it',()=>{
