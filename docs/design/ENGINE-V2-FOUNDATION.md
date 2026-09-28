@@ -12,13 +12,13 @@ Status: **development prototype, not wired to the public race cycle**. The exist
 
 ## Current prototype
 
-`lib/engine/v2/route.mjs` validates a stage and derives one deterministic environmental record per kilometre. `orders.mjs` normalises simple presets and expert phase overrides. `tactics.mjs` models attacks versus finite chase capacity, including energy costs and a road-captain leadership response. `tour.mjs` connects these into an immutable tactical trace. `tuning.mjs` keeps balance constants in one place. These modules do **not** calculate final placements, time gaps between all riders, crashes, stage standings or a production replay.
+`lib/engine/v2/route.mjs` validates a stage and derives one deterministic environmental record per kilometre, including explicitly authored surface and wind-exposure segments. `orders.mjs` normalises simple presets, expert phase overrides and an optional precommitted backup-leader contingency. `tactics.mjs` models attacks versus finite chase capacity, including energy costs and a road-captain leadership response. `physiology.mjs` gives the proposed fourteen sporting skills specific terrain, effort and weather situations; five new skills are derived in memory for legacy riders, not written to the database. `tour.mjs` connects these into an immutable tactical trace; a stronger road captain notices an exhausted captain and executes the selected backup plan sooner. `tuning.mjs` keeps balance constants in one place. These modules do **not** calculate final placements, time gaps between all riders, crashes, stage standings or a production replay.
 
 All input, event seed, route version, locked weather, order snapshot, tuning version and engine version must be stored with a future committed race. A replay should be rendered from stored simulation events, never rerun with current tuning after a balance change. New sporting stats must get explicit migration/default rules for existing riders; potential caps must remain server-owned and hidden.
 
 ## Next gates
 
 1. Add per-rider sustained pace, drafting, terrain/surface/weather effects, energy recovery, group formation and finite team work. Write scenario tests in which each visible stat changes the action it is meant to govern.
-2. Add precommitted contingency orders and an observable road-captain response. Test cases where an original plan fails and a backup plan succeeds or fails for clear reasons.
+2. Expand precommitted contingencies beyond the first exhausted-captain rule, ensuring each has observable triggers, response delays and failure reasons. Balance leadership without making the captain's own speed depend on it.
 3. Produce complete deterministic results and a recorded replay, then compare thousands of seeded races against the existing engine. Check role diversity, order impact, sensible energy use, upset rates and men/women separately. Tune constants centrally without rewriting the simulation.
 4. Only after the new engine passes these gates: design a reversible database migration and isolated preview release. Do not change production data, the live race runner or scheduled jobs as part of this foundation.

@@ -4,9 +4,11 @@ import {buildKilometreRoute} from '../../lib/engine/v2/route.mjs';
 import {normalizeOrders,orderAt} from '../../lib/engine/v2/orders.mjs';
 import {resolveTacticalKilometre} from '../../lib/engine/v2/tactics.mjs';
 import {simulateTacticalTour} from '../../lib/engine/v2/tour.mjs';
+import {SPORTING_SKILLS,sportingSkills,riderKilometreEffect} from '../../lib/engine/v2/physiology.mjs';
 
 const stage={distance_km:40,profile_points:[[0,100],[10,100],[20,300],[30,100],[40,100]],
-  surface_segments:[{from_km:12,to_km:15,surface:'cobbles'}],keypoints:[{km:15,kind:'CLIMB'}]};
+  surface_segments:[{from_km:12,to_km:15,surface:'cobbles'}],exposed_segments:[{from_km:30,to_km:35}],
+  keypoints:[{km:15,kind:'CLIMB'}]};
 const riders=Array.from({length:8},(_,i)=>`r${i}`);
 
 test('every kilometre has coherent elevation, terrain, surface and locked-weather variation',()=>{
@@ -20,6 +22,8 @@ test('every kilometre has coherent elevation, terrain, surface and locked-weathe
   assert.equal(a.kilometres[20].terrain,'descent');
   assert.equal(a.kilometres[12].surface,'cobbles');
   assert.equal(a.kilometres[15].surface,'road');
+  assert.equal(a.kilometres[29].exposed,false);
+  assert.equal(a.kilometres[30].exposed,true);
   for(let i=0;i<a.kilometres.length;i++){
     const current=a.kilometres[i],previous=a.kilometres[i-1];
     assert.equal(current.km,i+1);
@@ -41,6 +45,7 @@ test('the same geography with another seed changes only local weather',()=>{
 test('invalid elevation or overlapping surfaces fail before simulation',()=>{
   assert.throws(()=>buildKilometreRoute({...stage,profile_points:[[0,0],[20,20],[19,30],[40,0]]}));
   assert.throws(()=>buildKilometreRoute({...stage,surface_segments:[{from_km:12,to_km:15,surface:'cobbles'},{from_km:14,to_km:16,surface:'gravel'}]}));
+  assert.throws(()=>buildKilometreRoute({...stage,exposed_segments:[{from_km:10,to_km:20},{from_km:19,to_km:30}]}));
   assert.throws(()=>buildKilometreRoute({...stage,distance_km:40.5}));
 });
 
@@ -104,10 +109,12 @@ test('the full tactical trace is deterministic, bounded and makes aggressive ord
   const a=simulateTacticalTour(input);
   assert.deepEqual(a,simulateTacticalTour(input));
   assert.equal(a.frames.length,40);
+  assert.equal(a.tuningVersion,'v2-prototype-1');
   assert.equal(a.frames.at(-1).km,40);
   assert.ok(a.frames.some(frame=>frame.attackers.length>0));
   assert.ok(a.frames.some(frame=>frame.chasers.length>0));
   assert.ok(a.frames.every(frame=>frame.gapSeconds>=0&&frame.teamEnergy.every(team=>team.mean>=0&&team.mean<=100)));
+  assert.ok(a.frames.every(frame=>frame.teamPace.every(team=>Number.isFinite(team.meanAbility))));
   assert.ok(a.frames.at(-1).teamEnergy[0].mean<a.frames.at(-1).teamEnergy[2].mean);
   assert.deepEqual(input.teams[0].riders[0].id,'attacker-0');
   assert.equal(input.teams[0].energy,undefined);
@@ -123,4 +130,68 @@ test('the tactical trace rejects mixed race categories and duplicate riders',()=
   assert.throws(()=>simulateTacticalTour({stage,teams,seed:'invalid-fatigue'}));
   teams[1].riders[0].fatigue=0;teams[1].riders[0].strength=Number.NaN;
   assert.throws(()=>simulateTacticalTour({stage,teams,seed:'invalid-skill'}));
+});
+
+test('each of the fourteen sporting skills has a clear primary racing situation',()=>{
+  const rider=Object.fromEntries(SPORTING_SKILLS.map(skill=>[skill,50]));
+  const segment={terrain:'flat',surface:'road',weather:{windKph:8,rainMm:0}};
+  const scenarios={
+    sprint:{phase:'finale'},flat:{phase:'cruise'},hills:{phase:'cruise',terrain:'hill'},
+    mountain:{phase:'cruise',terrain:'climb'},cobbles:{phase:'cruise',surface:'cobbles'},
+    timetrial:{phase:'solo'},endurance:{phase:'cruise'},strength:{phase:'chase'},
+    wind:{phase:'cruise',exposed:true,windKph:30},acceleration:{phase:'attack'},
+    repeatability:{phase:'attack'},descending:{phase:'cruise',terrain:'descent'},
+    handling:{phase:'cruise',surface:'gravel',rainMm:4},positioning:{phase:'finale'},
+  };
+  assert.equal(SPORTING_SKILLS.length,14);
+  for(const skill of SPORTING_SKILLS){
+    const {terrain='flat',surface='road',windKph=8,rainMm=0,phase='cruise',exposed=false}=scenarios[skill];
+    const environment={...segment,terrain,surface,weather:{windKph,rainMm}};
+    const normal=riderKilometreEffect(rider,environment,{phase,exposed});
+    const improved=riderKilometreEffect({...rider,[skill]:90},environment,{phase,exposed});
+    assert.ok(improved.ability>normal.ability,`${skill} should matter in ${phase}`);
+  }
+  assert.equal(Object.keys(sportingSkills({})).length,14);
+});
+
+test('fatigue and low energy reduce ability without changing permanent skills',()=>{
+  const rider={flat:70,endurance:70,form:60,fatigue:0};
+  const segment={terrain:'flat',surface:'road',weather:{windKph:0,rainMm:0}};
+  const fresh=riderKilometreEffect(rider,segment,{energy:100});
+  const tired=riderKilometreEffect({...rider,fatigue:60},segment,{energy:30});
+  assert.ok(fresh.ability>tired.ability);
+  assert.deepEqual(sportingSkills(rider),sportingSkills({...rider,fatigue:60}));
+});
+
+test('a precommitted backup plan is executed by a stronger road captain sooner',()=>{
+  const high=tacticalTeam('high','balanced'),low=tacticalTeam('low','balanced');
+  for(const team of [high,low]){
+    team.orders={...team.orders,backupId:`${team.id}-2`,contingency:'backup_if_captain_exhausted',
+      baseline:{effort:'hard',chase:'ignore',attack:'none'}};
+    team.riders[0].fatigue=100;
+  }
+  high.riders[1].leadership=90;low.riders[1].leadership=0;
+  const longStage={distance_km:140,profile_points:[[0,100],[140,100]]};
+  const frames=simulateTacticalTour({stage:longStage,teams:[high,low],seed:'leadership'}).frames;
+  const highSwitch=frames.find(frame=>frame.decisions.some(d=>d.teamId==='high'))?.km;
+  const lowSwitch=frames.find(frame=>frame.decisions.some(d=>d.teamId==='low'))?.km;
+  assert.ok(Number.isInteger(highSwitch)&&Number.isInteger(lowSwitch));
+  assert.ok(highSwitch<lowSwitch);
+  assert.equal(frames.at(-1).activeLeaders.find(t=>t.teamId==='high').riderId,'high-2');
+  assert.throws(()=>normalizeOrders({captainId:'r0',contingency:'backup_if_captain_exhausted'},
+    {riderIds:riders,distanceKm:40}));
+});
+
+test('the tactical model stays bounded across a full-length twenty-team race',()=>{
+  const longStage={distance_km:400,profile_points:[[0,100],[120,400],[240,80],[400,100]],
+    surface_segments:[{from_km:50,to_km:60,surface:'cobbles'}],exposed_segments:[{from_km:200,to_km:230}]};
+  const teams=Array.from({length:20},(_,i)=>tacticalTeam(`t${i}`,
+    i%3===0?'aggressive':i%3===1?'protect':'balanced'));
+  const result=simulateTacticalTour({stage:longStage,teams,seed:'stress',
+    weather:{temp_c:22,wind_kph:35,precipitation_mm:3}});
+  assert.equal(result.frames.length,400);
+  assert.equal(result.frames.at(-1).teamEnergy.length,20);
+  assert.ok(result.frames.every(frame=>Number.isFinite(frame.gapSeconds)&&frame.gapSeconds>=0));
+  assert.ok(result.frames.every(frame=>frame.teamEnergy.every(team=>Number.isFinite(team.mean)&&team.mean>=0&&team.mean<=100)));
+  assert.ok(result.frames.every(frame=>frame.teamPace.every(team=>Number.isFinite(team.meanAbility))));
 });
