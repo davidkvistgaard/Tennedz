@@ -5,6 +5,8 @@ import {normalizeOrders,orderAt} from '../../lib/engine/v2/orders.mjs';
 import {resolveTacticalKilometre} from '../../lib/engine/v2/tactics.mjs';
 import {simulateTacticalTour} from '../../lib/engine/v2/tour.mjs';
 import {SPORTING_SKILLS,sportingSkills,riderKilometreEffect} from '../../lib/engine/v2/physiology.mjs';
+import {runKilometreLab} from '../../lib/engine/v2/lab.mjs';
+import {flatScenario} from '../../lib/race-lab/scenario.mjs';
 
 const stage={distance_km:40,profile_points:[[0,100],[10,100],[20,300],[30,100],[40,100]],
   surface_segments:[{from_km:12,to_km:15,surface:'cobbles'}],exposed_segments:[{from_km:30,to_km:35}],
@@ -194,4 +196,15 @@ test('the tactical model stays bounded across a full-length twenty-team race',()
   assert.ok(result.frames.every(frame=>Number.isFinite(frame.gapSeconds)&&frame.gapSeconds>=0));
   assert.ok(result.frames.every(frame=>frame.teamEnergy.every(team=>Number.isFinite(team.mean)&&team.mean>=0&&team.mean<=100)));
   assert.ok(result.frames.every(frame=>frame.teamPace.every(team=>Number.isFinite(team.meanAbility))));
+});
+
+test('the new kilometre model reuses the existing laboratory cast without changing it',()=>{
+  const scenario=flatScenario('break'),before=structuredClone(scenario);
+  const a=runKilometreLab({scenario,seed:'paired'});
+  assert.deepEqual(scenario,before);
+  assert.deepEqual(a,runKilometreLab({scenario,seed:'paired'}));
+  assert.equal(a.frames.length,160);
+  assert.equal(a.scenario.teams.length,4);
+  assert.ok(a.frames.some(frame=>frame.exposed));
+  assert.ok(a.frames.some(frame=>frame.attackers.length>0));
 });

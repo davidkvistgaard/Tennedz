@@ -26,6 +26,13 @@ for (const width of [390, 1440])
       page.getByText("160 km ridden", { exact: true }),
     ).toBeVisible();
     await expect(page.getByText(/wins with .* energy remaining/)).toBeVisible();
+    await page.getByRole("button", { name: "Run kilometre prototype" }).click();
+    await expect(page.getByRole("heading", { name: "Kilometre engine · tactical trace" })).toBeVisible();
+    const kilometreSlider=page.getByRole("slider", { name: "Recorded kilometre" });
+    await kilometreSlider.focus();
+    await page.keyboard.press("End");
+    await expect(page.getByText("160 / 160 km", { exact: true })).toBeVisible();
+    await expect(page.getByRole("table", { name: "Team state after this kilometre" })).toBeVisible();
     await page.getByLabel("Paired seeds", { exact: true }).selectOption("20");
     await page
       .getByRole("button", { name: "Compare all four plans", exact: true })

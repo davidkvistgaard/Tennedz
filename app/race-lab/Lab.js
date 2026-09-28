@@ -4,6 +4,7 @@ import { DEFAULT_CONFIG, VERSION } from "../../lib/race-lab/config.mjs";
 import { flatScenario, STRATEGIES } from "../../lib/race-lab/scenario.mjs";
 import { simulateLab } from "../../lib/race-lab/simulate.mjs";
 import { batchInput, trial, summarize } from "../../lib/race-lab/batch.mjs";
+import { runKilometreLab } from "../../lib/engine/v2/lab.mjs";
 const pct = (n) => `${(100 * n).toFixed(1)}%`;
 function download(name, data) {
   const url = URL.createObjectURL(
@@ -22,6 +23,8 @@ export default function Lab() {
     [count, setCount] = useState(100);
   const [race, setRace] = useState(null),
     [report, setReport] = useState(null),
+    [kilometreRace, setKilometreRace] = useState(null),
+    [kilometreKm, setKilometreKm] = useState(0),
     [frame, setFrame] = useState(0),
     [busy, setBusy] = useState(false),
     [status, setStatus] = useState(
@@ -49,6 +52,15 @@ export default function Lab() {
     } catch (e) {
       setError(e.message);
     }
+  }
+  function runKilometres() {
+    try {
+      setError("");
+      const result=runKilometreLab({scenario:flatScenario(strategy),seed:`${seed}:v2`});
+      setKilometreRace(result);
+      setKilometreKm(0);
+      setStatus("Kilometre prototype calculated. Inspect its recorded tactical trace below.");
+    } catch(e) { setError(e.message); }
   }
   async function compare() {
     const id = ++runId.current;
@@ -79,6 +91,9 @@ export default function Lab() {
     }
   }
   const current = race?.frames[frame];
+  const currentKm=kilometreRace?.frames[kilometreKm];
+  const kmMaxGap=kilometreRace?Math.max(1,...kilometreRace.frames.map(f=>f.gapSeconds)):1;
+  const kmGapPoints=kilometreRace?.frames.map(f=>`${10+780*f.km/kilometreRace.route.distanceKm},${135-120*f.gapSeconds/kmMaxGap}`).join(' ');
   return (
     <main className="lab">
       <header>
@@ -167,6 +182,7 @@ export default function Lab() {
           <button onClick={single} className="lab-primary">
             Calculate one race
           </button>
+          <button onClick={runKilometres}>Run kilometre prototype</button>
           <button onClick={compare}>Compare all four plans</button>
           <button onClick={() => { setConfig(DEFAULT_CONFIG); setError(""); }}>
             Reset balance
@@ -372,8 +388,30 @@ export default function Lab() {
           </button>
         </section>
       )}
+      {kilometreRace && currentKm && (
+        <section className="lab-card" aria-label="Kilometre engine prototype">
+          <h2>Kilometre engine · tactical trace</h2>
+          <p>Same four fictional squads. This separate v2 model records changing terrain, weather, energy, attacks and pursuit at every kilometre. It does not yet calculate a winner or replace the original Race Lab results.</p>
+          <div className="lab-metrics"><strong>{currentKm.km} / {kilometreRace.route.distanceKm} km</strong><strong>{currentKm.gapSeconds.toFixed(1)} s break gap</strong><strong>{currentKm.terrain} · {currentKm.surface}{currentKm.exposed?' · exposed':''}</strong></div>
+          <p className="small">Weather here: {kilometreRace.route.kilometres[kilometreKm].weather.temperatureC}°C · wind {kilometreRace.route.kilometres[kilometreKm].weather.windKph} km/h · rain {kilometreRace.route.kilometres[kilometreKm].weather.rainMm} mm.</p>
+          <svg viewBox="0 0 800 150" role="img" aria-label="Recorded breakaway gap in the kilometre prototype">
+            <line x1="10" y1="135" x2="790" y2="135" stroke="#bdc7b0" />
+            <polyline fill="none" stroke="#bb6a36" strokeWidth="3" points={kmGapPoints} />
+            <line x1={10+780*currentKm.km/kilometreRace.route.distanceKm} x2={10+780*currentKm.km/kilometreRace.route.distanceKm} y1="10" y2="135" stroke="#214f3c" />
+          </svg>
+          <label>Recorded kilometre<input aria-label="Recorded kilometre" type="range" min="0" max={kilometreRace.frames.length-1} value={kilometreKm} onChange={e=>setKilometreKm(Number(e.target.value))}/></label>
+          <div className="lab-scroll"><table><caption>Team state after this kilometre</caption><thead><tr><th>Team</th><th>Mean energy</th><th>Mean riding ability</th><th>Active leader</th></tr></thead><tbody>{currentKm.teamEnergy.map(team=>{
+            const name=kilometreRace.scenario.teams.find(t=>t.id===team.teamId)?.name??team.teamId;
+            const leaderId=currentKm.activeLeaders.find(l=>l.teamId===team.teamId)?.riderId;
+            const leader=kilometreRace.scenario.teams.find(t=>t.id===team.teamId)?.riders.find(r=>r.id===leaderId)?.name??leaderId;
+            return <tr key={team.teamId}><th>{name}</th><td>{team.mean.toFixed(1)}</td><td>{currentKm.teamPace.find(p=>p.teamId===team.teamId)?.meanAbility.toFixed(1)}</td><td>{leader}</td></tr>;
+          })}</tbody></table></div>
+          <p>{currentKm.attackers.length} attacking rider{currentKm.attackers.length===1?'':'s'} · {currentKm.chasers.length} chasing team{currentKm.chasers.length===1?'':'s'}{currentKm.decisions.length?` · ${currentKm.decisions.length} backup-plan change`:''}</p>
+          <p className="small">The entire trace was calculated before this slider appeared. The slider only reads saved frames. Balance and finish positions remain experimental work.</p>
+        </section>
+      )}
       <footer>
-        <h2>What this model can tell us</h2>
+        <h2>What the original flat model can tell us</h2>
         <p>
           Helpers rotate by remaining energy. Teams do not chase their own
           break. Cooperation, fatigue and the chase determine the gap; saved
@@ -381,10 +419,11 @@ export default function Lab() {
           before inspection.
         </p>
         <p>
-          First prototype: flat roads, one early attack opportunity and two
-          groups. No wind, crashes, terrain, intermediate attacks or dropped
-          riders. Energy and speed formulas are experimental; this is not yet a
-          replacement for the production engine.
+          The original flat model has one early attack opportunity and two
+          groups. It does not model wind, changing terrain, intermediate attacks
+          or dropped riders. The kilometre prototype above begins those systems,
+          but has no final placing or replay yet. Neither model replaces the
+          production engine.
         </p>
       </footer>
     </main>
