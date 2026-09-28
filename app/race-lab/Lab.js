@@ -5,6 +5,7 @@ import { flatScenario, STRATEGIES } from "../../lib/race-lab/scenario.mjs";
 import { simulateLab } from "../../lib/race-lab/simulate.mjs";
 import { batchInput, trial, summarize } from "../../lib/race-lab/batch.mjs";
 import { runKilometreLab } from "../../lib/engine/v2/lab.mjs";
+import { readRecordedKilometre } from "../../lib/engine/v2/recording.mjs";
 const pct = (n) => `${(100 * n).toFixed(1)}%`;
 function download(name, data) {
   const url = URL.createObjectURL(
@@ -91,7 +92,7 @@ export default function Lab() {
     }
   }
   const current = race?.frames[frame];
-  const currentKm=kilometreRace?.frames[kilometreKm];
+  const currentKm=kilometreRace?readRecordedKilometre(kilometreRace,kilometreKm):null;
   const kmMaxGap=kilometreRace?Math.max(1,...kilometreRace.frames.map(f=>f.gapSeconds)):1;
   const kmGapPoints=kilometreRace?.frames.map(f=>`${10+780*f.km/kilometreRace.route.distanceKm},${135-120*f.gapSeconds/kmMaxGap}`).join(' ');
   return (

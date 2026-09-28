@@ -8,6 +8,7 @@ import {SPORTING_SKILLS,sportingSkills,riderKilometreEffect} from '../../lib/eng
 import {runKilometreLab} from '../../lib/engine/v2/lab.mjs';
 import {updateRiderGroups} from '../../lib/engine/v2/groups.mjs';
 import {selectShelter} from '../../lib/engine/v2/support.mjs';
+import {validateRecordedTour,readRecordedKilometre} from '../../lib/engine/v2/recording.mjs';
 import {flatScenario} from '../../lib/race-lab/scenario.mjs';
 
 const stage={distance_km:40,profile_points:[[0,100],[10,100],[20,300],[30,100],[40,100]],
@@ -251,6 +252,7 @@ test('the tactical model stays bounded across a full-length twenty-team race',()
   assert.ok(result.frames.every(frame=>frame.teamPace.every(team=>Number.isFinite(team.meanAbility))));
   assert.ok(result.frames.every(frame=>teams.every(team=>frame.breakawayRiderIds.filter(id=>id.startsWith(`${team.id}-`)).length<=2)));
   assert.equal(result.provisionalResults.length,160);
+  assert.equal(validateRecordedTour(result),true);
   assert.ok(result.provisionalResults.every((r,i,all)=>i===0||r.timeSeconds>=all[i-1].timeSeconds));
 });
 
@@ -322,6 +324,29 @@ test('the new kilometre model reuses the existing laboratory cast without changi
   assert.equal(a.scenario.teams.length,4);
   assert.ok(a.frames.some(frame=>frame.exposed));
   assert.ok(a.frames.some(frame=>frame.attackers.length>0));
+});
+
+test('recorded playback does not recalculate and rejects a result that differs from its frames',()=>{
+  const result=runKilometreLab({scenario:flatScenario('sprint'),seed:'recorded'});
+  assert.equal(validateRecordedTour(result),true);
+  const before=structuredClone(result);
+  const last=readRecordedKilometre(result,result.frames.length-1);
+  assert.deepEqual(last,result.frames.at(-1));
+  last.riderGroups[0].energy=0;
+  assert.deepEqual(result,before);
+  assert.throws(()=>readRecordedKilometre(result,result.frames.length));
+  const wrongFinish=structuredClone(result);
+  wrongFinish.provisionalResults[0].energy=0;
+  assert.throws(()=>validateRecordedTour(wrongFinish),/finish/);
+  const missingRider=structuredClone(result);
+  missingRider.frames[5].riderGroups.pop();
+  assert.throws(()=>validateRecordedTour(missingRider),/kilometre/);
+  const wrongBreak=structuredClone(result);
+  wrongBreak.frames[19].breakawayRiderIds.push('foreign');
+  assert.throws(()=>validateRecordedTour(wrongBreak),/breakaway|rider state/);
+  const wrongTerrain=structuredClone(result);
+  wrongTerrain.frames[19].terrain='climb';
+  assert.throws(()=>validateRecordedTour(wrongTerrain),/kilometre/);
 });
 
 test('several attackers can outlast one defender while two sprint teams can organise a catch',()=>{
