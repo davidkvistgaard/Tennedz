@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test';
 for(const width of [390,1440])test(`atlas reveals real detail and preserves navigation at ${width}px`,async({page})=>{
  await page.setViewportSize({width,height:1000});
- await page.goto('/login');await page.getByLabel('Email or username').fill('alice');await page.getByLabel('Password').fill('fixture-password');await page.getByRole('button',{name:'Sign in',exact:true}).click();await expect(page).toHaveURL(/\/team$/);
+ await page.goto('/login');await page.getByLabel('Email or username').fill('bob');await page.getByLabel('Password').fill('fixture-password');await page.getByRole('button',{name:'Sign in',exact:true}).click();await expect(page).toHaveURL(/\/team$/);
  await page.goto('/team/atlas');
  const map=page.getByRole('group',{name:/Map of Pelotonia/});
  await expect(page.getByRole('heading',{name:'Pelotonia Atlas',exact:true})).toBeVisible();
@@ -20,6 +20,7 @@ for(const width of [390,1440])test(`atlas reveals real detail and preserves navi
  await expect(page.getByRole('button',{name:'Explore Cathedral building',exact:true})).toBeVisible();
  await expect(page.getByRole('button',{name:'Explore Garden pavilion · proposal',exact:true})).toBeVisible();
  await page.screenshot({path:`test-results/atlas-cathedral-${width}.png`,fullPage:true});
+ await map.scrollIntoViewIfNeeded();
  const mapBox=await map.boundingBox();
  const panBefore=await map.getAttribute('viewBox');
  await page.mouse.move(mapBox.x+mapBox.width*.2,mapBox.y+mapBox.height*.2);await page.mouse.down();await page.mouse.move(mapBox.x+mapBox.width*.3,mapBox.y+mapBox.height*.25,{steps:5});await page.mouse.up();
@@ -40,7 +41,7 @@ test('touch pinch zooms the atlas without opening a place',async({browser})=>{
  const context=await browser.newContext({viewport:{width:390,height:844},hasTouch:true,isMobile:true});
  const page=await context.newPage();
  try{
-  await page.goto('http://localhost:3100/login');await page.getByLabel('Email or username').fill('alice');await page.getByLabel('Password').fill('fixture-password');await page.getByRole('button',{name:'Sign in',exact:true}).click();await expect(page).toHaveURL(/\/team$/);
+  await page.goto('http://localhost:3100/login');await page.getByLabel('Email or username').fill('bob');await page.getByLabel('Password').fill('fixture-password');await page.getByRole('button',{name:'Sign in',exact:true}).click();await expect(page).toHaveURL(/\/team$/);
   await page.goto('http://localhost:3100/team/atlas');
   const map=page.getByRole('group',{name:/Map of Pelotonia/});await expect(map).toBeVisible();await map.scrollIntoViewIfNeeded();
   const b=await map.boundingBox(),cx=b.x+b.width/2,cy=b.y+b.height/2;
@@ -52,4 +53,87 @@ test('touch pinch zooms the atlas without opening a place',async({browser})=>{
   await expect.poll(async()=>Number((await map.getAttribute('viewBox')).split(' ')[2])).toBeLessThan(before);
   await expect(page.getByRole('heading',{name:'Pelotonia',exact:true})).toBeVisible();
  }finally{await context.close();}
+});
+
+test('a cell-indexed World 1.1 place can be found and opened without an invented point',async({page})=>{
+ await page.goto('/login');
+ await page.getByLabel('Email or username').fill('bob');
+ await page.getByLabel('Password').fill('fixture-password');
+ await page.getByRole('button',{name:'Sign in',exact:true}).click();
+ await expect(page).toHaveURL(/\/team$/);
+ await page.goto('/team/atlas');
+ await page.getByText('Find a place',{exact:true}).click();
+ await page.getByRole('searchbox',{name:'Search the atlas'}).fill('TernHaven');
+ await page.getByRole('button',{name:'Visit TernHaven in D1'}).click();
+ await expect(page.getByRole('heading',{name:'TernHaven',exact:true})).toBeVisible();
+ await expect(page.getByRole('navigation',{name:'Atlas navigation'}).getByRole('button',{name:'D1'})).toBeVisible();
+ await page.getByLabel('Explore a macro area').selectOption('D1');
+ await page.getByRole('button',{name:'Show',exact:true}).click();
+ await expect(page.locator('.atlas-place-list').getByRole('button',{name:/TernHaven/})).toBeVisible();
+ await expect(page.getByText(/precise positions within this cell are still undecided/)).toBeVisible();
+});
+
+test('a regional city and a region-only discovery can be explored without fabricated coordinates',async({page})=>{
+ await page.goto('/login');
+ await page.getByLabel('Email or username').fill('bob');
+ await page.getByLabel('Password').fill('fixture-password');
+ await page.getByRole('button',{name:'Sign in',exact:true}).click();
+ await expect(page).toHaveURL(/\/team$/);
+ await page.goto('/team/atlas');
+ await page.getByText('Find a place',{exact:true}).click();
+ const search=page.getByRole('searchbox',{name:'Search the atlas'});
+ await search.fill('Greywatch');
+ await page.getByRole('button',{name:'Visit Greywatch',exact:true}).click();
+ await expect(page.getByRole('heading',{name:'Greywatch',exact:true})).toBeVisible();
+ await expect(page.getByRole('navigation',{name:'Atlas navigation'}).getByRole('button',{name:'Stormlands'})).toBeVisible();
+ await search.fill('The Wind Organ');
+ await page.getByRole('button',{name:'Visit The Wind Organ',exact:true}).click();
+ await expect(page.getByRole('heading',{name:'The Wind Organ',exact:true})).toBeVisible();
+ await expect(page.getByRole('navigation',{name:'Atlas navigation'}).getByRole('button',{name:'Stormlands'})).toBeVisible();
+});
+
+test('a connected national route opens its named places and retains the whole route view',async({page})=>{
+ await page.goto('/login');
+ await page.getByLabel('Email or username').fill('bob');
+ await page.getByLabel('Password').fill('fixture-password');
+ await page.getByRole('button',{name:'Sign in',exact:true}).click();
+ await expect(page).toHaveURL(/\/team$/);
+ await page.goto('/team/atlas');
+ await page.getByText('Find a place',{exact:true}).click();
+ await page.getByRole('searchbox',{name:'Search the atlas'}).fill('Crownway');
+ await page.getByRole('button',{name:'Visit Crownway',exact:true}).click();
+ await expect(page.getByRole('heading',{name:'Crownway',exact:true})).toBeVisible();
+ await expect(page.locator('.atlas-place-list').getByRole('button',{name:/^Northwatch ↗$/})).toBeVisible();
+ await expect(page.locator('.atlas-place-list').getByRole('button',{name:/^Southport ↗$/})).toBeVisible();
+ const map=page.getByRole('group',{name:/Map of Pelotonia/});
+ expect(Number((await map.getAttribute('viewBox')).split(' ')[2])).toBeGreaterThan(100);
+ await page.locator('.atlas-place-list').getByRole('button',{name:/^Northwatch ↗$/}).click();
+ await expect(page.getByRole('heading',{name:'Northwatch',exact:true})).toBeVisible();
+});
+
+test('the V1.6 illustrated atlas keeps its grid optional and exposes canonical geography',async({page})=>{
+ await page.goto('/login');
+ await page.getByLabel('Email or username').fill('bob');
+ await page.getByLabel('Password').fill('fixture-password');
+ await page.getByRole('button',{name:'Sign in',exact:true}).click();
+ await expect(page).toHaveURL(/\/team$/);
+ await page.goto('/team/atlas');
+ const grid=page.locator('.atlas-debug-grid'),toggle=page.getByRole('button',{name:'Toggle debug grid'});
+ await expect(page.locator('.atlas-place-list button')).toHaveCount(18);
+ await page.getByRole('button',{name:/Show all \d+ places/}).click();
+ expect(await page.locator('.atlas-place-list button').count()).toBeGreaterThan(18);
+ await page.getByRole('button',{name:'Show fewer places'}).click();
+ await expect(page.locator('.atlas-place-list button')).toHaveCount(18);
+ await expect(grid).toHaveCount(0);
+ await expect(toggle).toHaveAttribute('aria-pressed','false');
+ await toggle.click();
+ await expect(grid).toBeVisible();
+ await expect(grid.locator('text')).toHaveCount(192);
+ await toggle.click();
+ await expect(grid).toHaveCount(0);
+ await page.getByText('Find a place',{exact:true}).click();
+ await page.getByRole('searchbox',{name:'Search the atlas'}).fill('Great Caldera');
+ await page.getByRole('button',{name:'Visit Great Caldera',exact:true}).click();
+ await expect(page.getByRole('heading',{name:'Great Caldera',exact:true})).toBeVisible();
+ await expect(page.getByRole('group',{name:/Map of Pelotonia/}).getByRole('button',{name:'Explore Great Caldera',exact:true})).toBeVisible();
 });

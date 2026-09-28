@@ -70,6 +70,7 @@ for (const width of [390, 1440]) test(`visual studio profiles, comparison and lo
   await page.getByRole('link',{name:'Atlas',exact:true}).click();
   await page.getByText('Find a place',{exact:true}).click();
   await page.getByLabel('Search the atlas').fill('Northern Plateau');
+  await page.getByLabel('Place type').selectOption('regions');
   await expect(page.locator('.atlas-directory-results button')).toHaveCount(1);
   await page.getByRole('button',{name:'Visit Northern Plateau',exact:true}).click();
   await expect(page.getByRole('heading',{name:'Northern Plateau',exact:true})).toBeVisible();

@@ -1,6 +1,13 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { world, validateWorld, assertWorld, getWorldObject, getWorldChildren, getWorldObjectsInCell, getVisibleWorldObjects, isGridId } from '../../lib/world/index.mjs';
+import { validateWorld, assertWorld, isGridId } from '../../lib/world/index.mjs';
+import { worldV1 } from '../../lib/world/data-v1.mjs';
+const freeze = value => { if(value&&typeof value==='object'){Object.values(value).forEach(freeze);Object.freeze(value);}return value; };
+const world=freeze(structuredClone(worldV1));
+const getWorldObject=id=>world.objects.find(o=>o.id===id)??null;
+const getWorldChildren=id=>world.objects.filter(o=>o.parentId===id);
+const getWorldObjectsInCell=cell=>world.objects.filter(o=>o.gridCells.includes(cell));
+const getVisibleWorldObjects=(level,{includeConcepts=false}={})=>{if(!Number.isInteger(level)||level<0||level>4)throw new RangeError('Invalid level');return world.objects.filter(o=>o.minZoom<=level&&(o.maxZoom===null||level<=o.maxZoom)&&(includeConcepts||o.status!=='concept'));};
 const copy = () => structuredClone(world);
 
 test('Northern Plateau resolves exactly the existing P cells with editable identity and no invented population', () => {

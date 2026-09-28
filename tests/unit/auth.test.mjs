@@ -1,6 +1,14 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { loginEmail, selectOwnedTeam, assertTeamId, assertSameOrigin, assertAdmin } from "../../lib/auth/policy.mjs";
+import { loginEmail, passwordChangeInput, selectOwnedTeam, assertTeamId, assertSameOrigin, assertAdmin } from "../../lib/auth/policy.mjs";
+
+test("password change requires the old secret, a distinct strong new secret and matching confirmation", () => {
+  const valid = { current_password: "old-password", new_password: "fresh-password-2026", confirm_password: "fresh-password-2026" };
+  assert.deepEqual(passwordChangeInput(valid), { current: valid.current_password, next: valid.new_password });
+  for (const bad of [null, {}, { ...valid, confirm_password: "different" }, { ...valid, new_password: "short", confirm_password: "short" }, { ...valid, new_password: valid.current_password, confirm_password: valid.current_password }, { ...valid, extra: true }]) {
+    assert.throws(() => passwordChangeInput(bad), { status: 400 });
+  }
+});
 
 test("historical usernames resolve to Supabase email accounts", () => {
   assert.equal(loginEmail(" Tennedz "), "tennedz@tennedz.local");

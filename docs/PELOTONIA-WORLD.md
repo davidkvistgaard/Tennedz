@@ -1,5 +1,7 @@
 # Pelotonia World 1.0
 
+This page documents the preserved 1.0 source dataset. The current exported world is [World 1.5](./PELOTONIA-WORLD-1.5.md), expanded through the complete country, deep-world, discovery, local-detail and connectivity specifications. Its atlas follows the [V1.6 visual specification](./PELOTONIA-VISUAL-GEOGRAPHY-1.6.md).
+
 This is a versioned **data foundation only**. Nothing imports it into the live game yet. It adds no UI, cycling routes, simulation, API endpoints, dependencies or database migrations.
 
 ## Files and usage
