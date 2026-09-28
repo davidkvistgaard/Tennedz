@@ -100,6 +100,13 @@ button:focus-visible,a:focus-visible,summary:focus-visible,input:focus-visible,s
 .studio-field { display: grid; gap: 10px; margin: 20px 0; }
 .studio-field select { padding: 12px; background: var(--studio-paper); color: var(--studio-ink); border: 1px solid var(--studio-line); border-radius: 8px; }
 .studio-panel>.btn { margin: 4px 8px 4px 0; }
+.account-settings { display: grid; grid-template-columns: minmax(0,.8fr) minmax(0,1.2fr); align-items: start; gap: 24px; max-width: 1100px; }
+.account-settings .studio-panel h2 { margin-top: 8px; }
+.account-settings .studio-field input { width: 100%; min-height: 44px; box-sizing: border-box; padding: 12px; background: #fffdf6; color: var(--studio-ink); border: 1px solid var(--studio-line); border-radius: 8px; }
+.account-settings .studio-field { max-width: 470px; }
+.account-settings-note { color: #596451; }
+.account-settings-error { color: #8d2d24; }
+.account-settings-success { color: var(--studio-forest); font-weight: 700; }
 .studio-note { padding: 18px; margin: 20px 0; background: #eee5cf; border-left: 3px solid var(--studio-clay); font-size: 13px; line-height: 1.7; }
 .identity-home .identity-logo,.experience-welcome .welcome-brand { color: var(--studio-forest); }
 .identity-home .identity-nav { border-bottom: 2px solid var(--studio-line); }
@@ -114,7 +121,7 @@ button:focus-visible,a:focus-visible,summary:focus-visible,input:focus-visible,s
 .studio-atlas-discover p { font-size: 13px; line-height: 1.6; max-width: 470px; }
 .studio-atlas-picks { display: flex; gap: 10px; flex-wrap: wrap; }
 .game-shell .atlas-map-wrap { border: 7px solid #fdf5e1; border-radius: 18px; box-shadow: var(--studio-shadow); }
-@media(max-width:1000px) { .studio-kit-layout { grid-template-columns: 1fr; }.studio-kit-display .studio-jersey { max-width: 270px; } }
+@media(max-width:1000px) { .studio-kit-layout,.account-settings { grid-template-columns: 1fr; }.studio-kit-display .studio-jersey { max-width: 270px; } }
 @media(max-width:700px) {
   .game-shell .club-toolbar { padding: 14px; }.game-shell .club-roster { gap: 12px; }
   .game-shell .club-roster .club-rider-body { padding: 12px; }.game-shell .club-roster .club-rider h3 { font-size: 21px; }

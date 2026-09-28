@@ -5,7 +5,8 @@ import { randomUUID } from "node:crypto";
 
 const sessions = new Map();
 const clubKits = new Map();
-const ids = { alice: "11111111-1111-4111-8111-111111111111", bob: "22222222-2222-4222-8222-222222222222", missing: "33333333-3333-4333-8333-333333333333", duplicate: "44444444-4444-4444-8444-444444444444" };
+const ids = { alice: "11111111-1111-4111-8111-111111111111", bob: "22222222-2222-4222-8222-222222222222", missing: "33333333-3333-4333-8333-333333333333", duplicate: "44444444-4444-4444-8444-444444444444", settings: "55555555-5555-4555-8555-555555555555" };
+const passwords = new Map(Object.keys(ids).map(name => [name, "fixture-password"]));
 const user = name => ({ id: ids[name], email: `${name}@tennedz.local`, aud: "authenticated", role: "authenticated", app_metadata: {}, user_metadata: {}, created_at: "2026-01-01T00:00:00Z" });
 function token(name) {
   const sid = randomUUID();
@@ -35,10 +36,19 @@ const server = http.createServer(async (req, res) => {
     }
     const name = body.email?.split("@")[0];
     if (name === "unavailable") return send(503, { msg: "Fixture unavailable" });
-    if (!ids[name] || body.password !== "fixture-password") return send(400, { code: "invalid_credentials", msg: "Invalid login credentials" });
+    if (!ids[name] || body.password !== passwords.get(name)) return send(400, { code: "invalid_credentials", msg: "Invalid login credentials" });
     return send(200, token(name));
   }
-  if (url.pathname === "/auth/v1/user") return session ? send(200, session.user) : send(401, { code: "bad_jwt", msg: "Invalid JWT" });
+  if (url.pathname === "/auth/v1/user") {
+    if (!session) return send(401, { code: "bad_jwt", msg: "Invalid JWT" });
+    if (req.method === "PUT") {
+      const name = session.user.email.split("@")[0];
+      if (body.current_password !== passwords.get(name)) return send(400, { code: "invalid_credentials", msg: "Invalid current password" });
+      if (typeof body.password !== "string" || body.password.length < 12) return send(400, { code: "weak_password", msg: "Password is too short" });
+      passwords.set(name, body.password);
+    }
+    return send(200, session.user);
+  }
   if (url.pathname === "/auth/v1/logout") {
     sessions.delete(req.headers.authorization?.replace("Bearer ", ""));
     return send(200, {});
