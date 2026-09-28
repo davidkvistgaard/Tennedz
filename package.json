@@ -11,7 +11,7 @@
     "start": "next start",
     "lint": "eslint app lib tests",
     "test": "node --test tests/unit/*.test.mjs",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test --shard=1/2 && playwright test --shard=2/2"
   },
   "dependencies": {
     "@supabase/ssr": "0.12.7",
