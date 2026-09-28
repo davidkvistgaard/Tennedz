@@ -16,6 +16,8 @@ Status: **development prototype, not wired to the public race cycle**. The exist
 
 The trace records the actual riders ahead, limits one team's active breakaway contingent, prevents a rider from re-attacking while already ahead, and charges continuing energy cost for riding in the break. These are provisional race rules in the isolated model; they must be calibrated against complete group and finish simulations before release.
 
+Inputs fail closed on unknown order fields, bad rider IDs, invalid stats, mixed race categories and missing seeds. Team and rider inputs are sorted before calculation, so database row order does not change the saved trace. This is necessary for reproducible results and later replay verification.
+
 The existing feature-gated Race Lab now has a separate **Run kilometre prototype** action. It adapts the same fictional four-team cast to v2 and shows the saved kilometre trace alongside the older complete flat-road experiment. Neither calculation reads player accounts or writes database rows; the two models stay visibly labelled so their outputs are not mistaken for live race results.
 
 All input, event seed, route version, locked weather, order snapshot, tuning version and engine version must be stored with a future committed race. A replay should be rendered from stored simulation events, never rerun with current tuning after a balance change. New sporting stats must get explicit migration/default rules for existing riders; potential caps must remain server-owned and hidden.

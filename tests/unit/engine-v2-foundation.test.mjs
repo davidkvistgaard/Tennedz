@@ -69,6 +69,9 @@ test('orders reject foreign riders, ambiguous markers and unknown values',()=>{
   assert.throws(()=>normalizeOrders({captainId:'r0',phases:[{atKm:13,effort:'hard'}]},context));
   assert.throws(()=>normalizeOrders({captainId:'r0',phases:[{atKm:10,effort:'hard'},{atKm:10,chase:'all'}]},context));
   assert.throws(()=>normalizeOrders({captainId:'r0',baseline:{chase:'always'}},context));
+  assert.throws(()=>normalizeOrders({captainId:'r0',baseline:{effort:'steady',effrot:'hard'}},context));
+  assert.throws(()=>normalizeOrders({captainId:'r0',phases:[{atKm:10,attack:'none',attak:'repeated'}]},context));
+  assert.throws(()=>normalizeOrders({version:3,captainId:'r0'},context));
 });
 
 function tacticalTeam(id,preset,overrides={}){
@@ -221,4 +224,26 @@ test('the new kilometre model reuses the existing laboratory cast without changi
   assert.equal(a.scenario.teams.length,4);
   assert.ok(a.frames.some(frame=>frame.exposed));
   assert.ok(a.frames.some(frame=>frame.attackers.length>0));
+});
+
+test('team and rider input order cannot change the recorded tactical trace',()=>{
+  const teams=[tacticalTeam('a','aggressive'),tacticalTeam('b','protect'),tacticalTeam('c','balanced')];
+  const input={stage,teams,seed:'same-race',weather:{temp_c:20,wind_kph:16,precipitation_mm:1}};
+  const original=simulateTacticalTour(input);
+  const permuted=simulateTacticalTour({...input,teams:[...teams].reverse().map(team=>({...team,riders:[...team.riders].reverse()}))});
+  assert.deepEqual(permuted,original);
+  assert.throws(()=>simulateTacticalTour({...input,seed:''}));
+});
+
+test('a precommitted phase change affects only kilometres after its marker',()=>{
+  const amber=tacticalTeam('amber','balanced',{baseline:{attack:'none',chase:'ignore'}});
+  const birch=tacticalTeam('birch','balanced',{baseline:{attack:'none',chase:'ignore'}});
+  const baseline=simulateTacticalTour({stage,teams:[amber,birch],seed:'phase'});
+  const altered=simulateTacticalTour({stage,teams:[{...amber,orders:{...amber.orders,
+    phases:[{atKm:20,effort:'hard'}]}},birch],seed:'phase'});
+  assert.deepEqual(altered.frames.slice(0,20),baseline.frames.slice(0,20));
+  assert.ok(altered.frames.at(-1).teamEnergy.find(t=>t.teamId==='amber').mean<
+    baseline.frames.at(-1).teamEnergy.find(t=>t.teamId==='amber').mean);
+  assert.deepEqual(altered.frames.at(-1).teamEnergy.find(t=>t.teamId==='birch'),
+    baseline.frames.at(-1).teamEnergy.find(t=>t.teamId==='birch'));
 });
