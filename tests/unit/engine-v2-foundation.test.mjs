@@ -125,13 +125,38 @@ test('effort changes immediate attack and chase pressure while charging more ene
     gentleTour.frames.at(-1).teamEnergy.find(t=>t.teamId==='attacker').mean);
 });
 
+test('a team keeps chasing a recognised break as its gap narrows',()=>{
+  const attacker=tacticalTeam('a','aggressive');
+  const defender=tacticalTeam('d','protect');
+  const withoutMemory=resolveTacticalKilometre({teams:[attacker,defender],km:21,gapSeconds:10,
+    breakawayTeamIds:['a'],breakawayRiderIds:['a-0']});
+  const ongoing=resolveTacticalKilometre({teams:[attacker,defender],km:21,gapSeconds:10,
+    breakawayTeamIds:['a'],breakawayRiderIds:['a-0'],engagedChaseTeamIds:['d']});
+  assert.equal(withoutMemory.chasers.length,0);
+  assert.equal(ongoing.chasers.length,1);
+  assert.ok(ongoing.gapSeconds<withoutMemory.gapSeconds);
+  assert.deepEqual(ongoing.engagedChaseTeamIds,['d']);
+});
+
+test('a protected sprinter gets a costly chase surge near the finish',()=>{
+  const attacker=tacticalTeam('a','aggressive');
+  const defender=tacticalTeam('d','protect',{baseline:{chase:'all'}});
+  const context={teams:[attacker,defender],gapSeconds:5,breakawayTeamIds:['a'],
+    breakawayRiderIds:['a-0'],distanceKm:160};
+  const early=resolveTacticalKilometre({...context,km:100});
+  const late=resolveTacticalKilometre({...context,km:160});
+  assert.ok(late.chasePower>early.chasePower);
+  assert.ok(late.energyCosts.find(c=>c.reason==='chase').cost>
+    early.energyCosts.find(c=>c.reason==='chase').cost);
+});
+
 test('the full tactical trace is deterministic, bounded and makes aggressive orders costly',()=>{
   const input={stage,seed:'tour-1',weather:{temp_c:14,wind_kph:25,precipitation_mm:2},
     teams:[tacticalTeam('attacker','aggressive'),tacticalTeam('defender','protect',{baseline:{chase:'all'}}),tacticalTeam('other','balanced')]};
   const a=simulateTacticalTour(input);
   assert.deepEqual(a,simulateTacticalTour(input));
   assert.equal(a.frames.length,40);
-  assert.equal(a.tuningVersion,'v2-prototype-3');
+  assert.equal(a.tuningVersion,'v2-prototype-5');
   assert.equal(a.frames.at(-1).km,40);
   assert.ok(a.frames.some(frame=>frame.attackers.length>0));
   assert.ok(a.frames.some(frame=>frame.chasers.length>0));
@@ -270,6 +295,18 @@ test('the new kilometre model reuses the existing laboratory cast without changi
   assert.equal(a.scenario.teams.length,4);
   assert.ok(a.frames.some(frame=>frame.exposed));
   assert.ok(a.frames.some(frame=>frame.attackers.length>0));
+});
+
+test('several attackers can outlast one defender while two sprint teams can organise a catch',()=>{
+  for(let i=0;i<5;i++){
+    const seed=`tactical-balance-${i}`;
+    const protectedRace=runKilometreLab({scenario:flatScenario('sprint'),seed});
+    const chaoticRace=runKilometreLab({scenario:flatScenario('break'),seed});
+    assert.equal(protectedRace.frames.at(-1).gapSeconds,0);
+    assert.equal(protectedRace.provisionalResults[0].group,'peloton');
+    assert.ok(chaoticRace.frames.at(-1).gapSeconds>0);
+    assert.equal(chaoticRace.provisionalResults[0].group,'breakaway');
+  }
 });
 
 test('team and rider input order cannot change the recorded tactical trace',()=>{

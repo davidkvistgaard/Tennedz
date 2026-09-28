@@ -18,6 +18,10 @@ The trace records the actual riders ahead, limits one team's active breakaway co
 
 Effort now changes immediate attack and chase pressure as well as the continuing energy bill. The stronger `hard` setting can create or close a gap sooner, but leaves less energy for later kilometres. The multiplier is a central balancing parameter, not a public percentage shown to players.
 
+Selective chase now remembers a detected break while it remains ahead. The road captain's leadership still affects the initial recognition; the team does not abandon an already committed pursuit merely because it has reduced the gap below the original trigger threshold. This pursuit state is part of the deterministic simulation trace, not a mid-race user input.
+
+The `protect` preset now commits saved helpers to a progressively stronger sprint-train chase in the final ten kilometres, paying a matching energy surcharge. This gives a fresh sprint team a real counter to late attacks without making every late break automatically fail. Its balance still needs broad scenario checks before release.
+
 Inputs fail closed on unknown order fields, bad rider IDs, invalid stats, mixed race categories and missing seeds. Team and rider inputs are sorted before calculation, so database row order does not change the saved trace. This is necessary for reproducible results and later replay verification.
 
 The existing feature-gated Race Lab now has a separate **Run kilometre prototype** action. It adapts the same fictional four-team cast to v2 and shows the saved kilometre trace and provisional finish order alongside the older flat-road experiment. Neither calculation reads player accounts or writes database rows; the two models stay visibly labelled so their outputs are not mistaken for live race results.
