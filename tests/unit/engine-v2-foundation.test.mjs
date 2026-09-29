@@ -364,7 +364,7 @@ test('the full tactical trace is deterministic, bounded and makes aggressive ord
   const a=simulateTacticalTour(input);
   assert.deepEqual(a,simulateTacticalTour(input));
   assert.equal(a.frames.length,40);
-  assert.equal(a.tuningVersion,'v2-prototype-16');
+  assert.equal(a.tuningVersion,'v2-prototype-17');
   assert.equal(a.frames.at(-1).km,40);
   assert.ok(a.frames.some(frame=>frame.attackers.length>0));
   assert.ok(a.frames.some(frame=>frame.chasers.length>0));
@@ -626,6 +626,29 @@ test('the final sprint cannot reverse uncaught and dropped group order',()=>{
   assert.equal(results[0].riderId,'a-0');
   assert.ok(peloton[0].timeSeconds-ahead.at(-1).timeSeconds>=.09);
   assert.ok(dropped[0].position>peloton.at(-1).position);
+});
+
+test('a finishing sprint records a last-metre catch before the result is shown',()=>{
+  const attacker=tacticalTeam('a','aggressive',{baseline:{chase:'ignore'},
+    phases:[{atKm:30,attack:'none'}]});
+  const sprinter=tacticalTeam('b','protect',{baseline:{chase:'ignore'}});
+  attacker.riders.forEach(rider=>{rider.sprint=0;rider.acceleration=15;});
+  sprinter.riders.forEach(rider=>{rider.sprint=100;rider.acceleration=50;});
+  const flat={distance_km:40,profile_points:[[0,100],[40,100]]};
+  const recording=simulateTacticalTour({stage:flat,teams:[attacker,sprinter],seed:'probe-0'});
+  const before=recording.frames.at(-2),finish=recording.frames.at(-1);
+  assert.ok(before.gapSeconds>0);
+  assert.ok(before.breakawayRiderIds.length>0);
+  assert.equal(finish.finishLineCatch,true);
+  assert.deepEqual(new Set(finish.caughtBreakawayRiderIds),new Set(before.breakawayRiderIds));
+  assert.equal(finish.gapSeconds,0);
+  assert.deepEqual(finish.breakawayRiderIds,[]);
+  assert.equal(recording.provisionalResults[0].group,'peloton');
+  assert.equal(validateRecordedTour(recording),true);
+  const tampered=structuredClone(recording);
+  tampered.frames.at(-1).finishLineCatch=false;
+  tampered.frames[0].finishLineCatch=true;
+  assert.throws(()=>validateRecordedTour(tampered),/kilometre/);
 });
 
 test('a rider already in the break cannot launch another new attack',()=>{

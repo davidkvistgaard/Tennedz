@@ -52,7 +52,7 @@ for(const [course,stage] of Object.entries(ROUTES)){
     report.courses[course][gender]={};
     for(const strategy of STRATEGIES){
       const totals={amberWins:0,amberPodiums:0,breakWins:0,positiveFinalGaps:0,
-        caughtBreaks:0,droppedRiders:0,amberEnergy:0};
+        caughtBreaks:0,finishLineCatches:0,droppedRiders:0,amberEnergy:0,finalGaps:[]};
       for(let sample=0;sample<samples;sample++){
         const teams=fictionalTeams(sample,gender).map((team,index)=>({
           ...team,orders:{captainId:team.riders[0].id,roadCaptainId:team.riders[1].id,
@@ -72,16 +72,22 @@ for(const [course,stage] of Object.entries(ROUTES)){
         totals.amberPodiums+=Number(best<=3);
         totals.breakWins+=Number(race.provisionalResults[0].group==='breakaway');
         totals.positiveFinalGaps+=Number(race.frames.at(-1).gapSeconds>0);
+        totals.finalGaps.push(race.frames.at(-1).gapSeconds);
         totals.caughtBreaks+=race.frames.filter(frame=>frame.caughtBreakawayRiderIds.length>0).length;
+        totals.finishLineCatches+=Number(race.frames.at(-1).finishLineCatch);
         totals.droppedRiders+=race.provisionalResults.filter(rider=>rider.group==='dropped').length;
         totals.amberEnergy+=amber.reduce((sum,rider)=>sum+rider.energy,0)/amber.length;
       }
+      const sortedGaps=[...totals.finalGaps].sort((a,b)=>a-b);
       report.courses[course][gender][strategy]={
         amberWinRate:totals.amberWins/samples,
         amberPodiumRate:totals.amberPodiums/samples,
         breakWinRate:totals.breakWins/samples,
         finalGapRate:totals.positiveFinalGaps/samples,
+        medianFinalGapSeconds:sortedGaps[Math.floor((samples-1)/2)],
+        p90FinalGapSeconds:sortedGaps[Math.ceil(samples*.9)-1],
         meanCatches:+(totals.caughtBreaks/samples).toFixed(2),
+        finishLineCatchRate:totals.finishLineCatches/samples,
         meanDroppedRiders:+(totals.droppedRiders/samples).toFixed(2),
         amberMeanEnergy:+(totals.amberEnergy/samples).toFixed(2),
       };
