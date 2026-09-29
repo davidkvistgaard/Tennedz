@@ -360,6 +360,7 @@ test('successive peloton moves can make three recorded road groups',()=>{
   const second=tacticalTeam('b','balanced',{baseline:{attack:'none',chase:'ignore'},
     phases:[{atKm:20,attack:'selective',attackRiderId:'b-0'},
       {atKm:30,attack:'none'}]});
+  Object.assign(second.riders[0],{flat:95,strength:95,endurance:95,timetrial:95});
   const third=tacticalTeam('c','balanced',{baseline:{attack:'none',chase:'ignore'},
     phases:[{atKm:30,attack:'selective',attackRiderId:'c-0'}]});
   const flat={distance_km:40,profile_points:[[0,100],[40,100]],
@@ -441,6 +442,27 @@ test('break and bunch abilities change a gap even without new attacks or chase o
   assert.ok(tired.passiveGapDelta<strong.passiveGapDelta);
   assert.equal(resolveTacticalKilometre({...context,gapSeconds:0,
     breakawayTeamIds:[],breakawayRiderIds:[]}).passiveGapDelta,0);
+});
+
+test('front-group work cannot lend passive speed to a separate chase group',()=>{
+  const front=tacticalTeam('front','balanced',{baseline:{attack:'none',chase:'ignore',
+    breakWork:'cooperate'}});
+  const rear=tacticalTeam('rear','balanced',{baseline:{attack:'none',chase:'ignore',
+    breakWork:'sit_on'}});
+  const bunch=tacticalTeam('bunch','balanced',{baseline:{attack:'none',chase:'ignore'}});
+  const context={teams:[front,rear,bunch],km:21,gapSeconds:20,
+    breakawayTeamIds:['front','rear'],breakawayRiderIds:['front-0','rear-0'],
+    rearRoadGroupRiderIds:['rear-0']};
+  const strong=resolveTacticalKilometre(context);
+  Object.assign(front.riders[0],{flat:5,timetrial:5,endurance:5,strength:5});
+  const weak=resolveTacticalKilometre(context);
+  assert.equal(strong.passiveGapDelta,weak.passiveGapDelta);
+  assert.deepEqual(strong.pullRiderIds,['front-0']);
+  assert.deepEqual(weak.pullRiderIds,['front-0']);
+  assert.throws(()=>resolveTacticalKilometre({...context,
+    rearRoadGroupRiderIds:['foreign']}),/rear road-group/);
+  assert.throws(()=>resolveTacticalKilometre({...context,
+    rearRoadGroupRiderIds:[]}),/rear road-group/);
 });
 
 test('taking pulls grows the break gap but costs energy compared with sitting on',()=>{
@@ -567,7 +589,7 @@ test('the full tactical trace is deterministic, bounded and makes aggressive ord
   const a=simulateTacticalTour(input);
   assert.deepEqual(a,simulateTacticalTour(input));
   assert.equal(a.frames.length,40);
-  assert.equal(a.tuningVersion,'v2-prototype-30');
+  assert.equal(a.tuningVersion,'v2-prototype-31');
   assert.equal(a.frames.at(-1).km,40);
   assert.ok(a.frames.some(frame=>frame.attackers.length>0));
   assert.ok(a.frames.some(frame=>frame.chasers.length>0));
