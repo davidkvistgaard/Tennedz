@@ -77,6 +77,24 @@ test('a distant peloton move forms a separate chasing group with its own gap',()
     teamByRiderId:{'b-0':'b'},newGroupId:'road-2',gapSeconds:24}),/chasing/);
 });
 
+test('a second peloton move can form a third group behind an existing chase',()=>{
+  const two=[
+    {id:'road-1',riderIds:['a-0','a-1'],teamIds:['a'],gapSeconds:30},
+    {id:'road-2',riderIds:['b-0'],teamIds:['b'],gapSeconds:12},
+  ];
+  const three=formChasingRoadGroup(two,{riderIds:['c-0'],
+    teamByRiderId:{'c-0':'c'},newGroupId:'road-3',gapSeconds:5});
+  assert.deepEqual(three.map(group=>group.id),['road-1','road-2','road-3']);
+  assert.equal(validateRoadGroupTransition(two,three,{
+    joinedRiderIds:['c-0'],formedChaseGroupId:'road-3'}),true);
+  const frontSplit=splitFrontRoadGroup(two,{riderId:'a-0',
+    teamByRiderId:{'a-0':'a','a-1':'a','b-0':'b'},newGroupId:'road-3',attackSeconds:4});
+  assert.deepEqual(frontSplit.map(group=>group.id),['road-3','road-1','road-2']);
+  assert.equal(validateRoadGroupTransition(two,frontSplit,{splitRiderId:'a-0'}),true);
+  assert.throws(()=>formChasingRoadGroup(two,{riderIds:['c-0'],
+    teamByRiderId:{'c-0':'c'},newGroupId:'road-3',gapSeconds:13}),/chasing/);
+});
+
 test('several road groups can merge in order without losing their riders or identities',()=>{
   const groups=[
     {id:'road-1',riderIds:['a-0'],teamIds:['a'],gapSeconds:30},

@@ -353,6 +353,33 @@ test('a fresh attack can pursue a distant break without teleporting into it',()=
   assert.throws(()=>validateRecordedTour(tampered),/appeared/);
 });
 
+test('successive peloton moves can make three recorded road groups',()=>{
+  const leader=tacticalTeam('a','balanced',{baseline:{attack:'selective',chase:'ignore'},
+    phases:[{atKm:10,attack:'none'}]});
+  Object.assign(leader.riders[0],{flat:95,strength:95,endurance:95,timetrial:95});
+  const second=tacticalTeam('b','balanced',{baseline:{attack:'none',chase:'ignore'},
+    phases:[{atKm:20,attack:'selective',attackRiderId:'b-0'},
+      {atKm:30,attack:'none'}]});
+  const third=tacticalTeam('c','balanced',{baseline:{attack:'none',chase:'ignore'},
+    phases:[{atKm:30,attack:'selective',attackRiderId:'c-0'}]});
+  const flat={distance_km:40,profile_points:[[0,100],[40,100]],
+    keypoints:[{km:10,kind:'SPRINT'},{km:20,kind:'SPRINT'},
+      {km:30,kind:'SPRINT'}]};
+  const race=simulateTacticalTour({stage:flat,teams:[leader,second,third],
+    seed:'third-break'});
+  const three=race.frames.find(frame=>frame.roadGroups.length===3);
+  assert.ok(three,'three independent road groups should form');
+  assert.deepEqual(three.roadGroups.map(group=>group.riderIds),
+    [['a-0'],['b-0'],['c-0']]);
+  assert.equal(race.frames.at(-1).roadGroups.length,3);
+  assert.deepEqual(race.provisionalResults.slice(0,3).map(result=>result.roadGroupId),
+    race.frames.at(-1).roadGroups.map(group=>group.id));
+  assert.equal(validateRecordedTour(race),true);
+  const tampered=structuredClone(race);
+  tampered.frames[three.km-1].roadGroups[2].gapSeconds+=1;
+  assert.throws(()=>validateRecordedTour(tampered),/road group/);
+});
+
 test('a sufficiently strong move can finish its bridge instead of forming a phantom group',()=>{
   const race=runKilometreLab({scenario:flatScenario('break'),seed:'chase-30'});
   const bridged=race.frames.find(frame=>frame.bridgedBreakRiderIds.length>0);
@@ -515,7 +542,7 @@ test('the full tactical trace is deterministic, bounded and makes aggressive ord
   const a=simulateTacticalTour(input);
   assert.deepEqual(a,simulateTacticalTour(input));
   assert.equal(a.frames.length,40);
-  assert.equal(a.tuningVersion,'v2-prototype-29');
+  assert.equal(a.tuningVersion,'v2-prototype-30');
   assert.equal(a.frames.at(-1).km,40);
   assert.ok(a.frames.some(frame=>frame.attackers.length>0));
   assert.ok(a.frames.some(frame=>frame.chasers.length>0));
