@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {splitFrontRoadGroup,advanceRoadGroups,
+import {splitFrontRoadGroup,formChasingRoadGroup,advanceRoadGroups,
   validateRoadGroupTransition} from '../../lib/engine/v2/road-groups.mjs';
 
 const initial=[{id:'road-1',riderIds:['a-0','a-1','b-0'],teamIds:['a','b'],gapSeconds:20}];
@@ -60,4 +60,19 @@ test('replay must account for a split, a merge and a catch without losing riders
 test('a same-kilometre attack and finish catch can leave no road group',()=>{
   assert.equal(validateRoadGroupTransition([],[],{
     joinedRiderIds:['a-0'],caughtRiderIds:['a-0']}),true);
+});
+
+test('a distant peloton move forms a separate chasing group with its own gap',()=>{
+  const previous=[{id:'road-1',riderIds:['a-0'],teamIds:['a'],gapSeconds:24}];
+  const chasing=formChasingRoadGroup(previous,{riderIds:['b-0','c-0'],
+    teamByRiderId:{'b-0':'b','c-0':'c'},newGroupId:'road-2',gapSeconds:5});
+  assert.deepEqual(chasing[0],previous[0]);
+  assert.deepEqual(chasing[1],{id:'road-2',riderIds:['b-0','c-0'],
+    teamIds:['b','c'],gapSeconds:5});
+  assert.equal(validateRoadGroupTransition(previous,chasing,{
+    joinedRiderIds:['b-0','c-0'],formedChaseGroupId:'road-2'}),true);
+  assert.throws(()=>validateRoadGroupTransition(previous,chasing,{
+    joinedRiderIds:['b-0','c-0']}),/appeared/);
+  assert.throws(()=>formChasingRoadGroup(previous,{riderIds:['b-0'],
+    teamByRiderId:{'b-0':'b'},newGroupId:'road-2',gapSeconds:24}),/chasing/);
 });

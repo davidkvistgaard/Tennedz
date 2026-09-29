@@ -330,6 +330,29 @@ test('a rider cannot teleport into a distant break or power it from the bunch',(
   assert.deepEqual(close.joinedBreakawayRiderIds,close.attackers.map(rider=>rider.riderId));
 });
 
+test('a fresh attack can pursue a distant break without teleporting into it',()=>{
+  const leader=tacticalTeam('a','balanced',{baseline:{attack:'selective',chase:'ignore'},
+    phases:[{atKm:10,attack:'none'}]});
+  Object.assign(leader.riders[0],{flat:95,strength:95,endurance:95,timetrial:95});
+  const pursuer=tacticalTeam('b','balanced',{baseline:{attack:'none',chase:'ignore'},
+    phases:[{atKm:20,attack:'selective',attackRiderId:'b-0'}]});
+  const flat={distance_km:40,profile_points:[[0,100],[40,100]],
+    keypoints:[{km:10,kind:'SPRINT'},{km:30,kind:'SPRINT'}]};
+  const race=simulateTacticalTour({stage:flat,teams:[leader,pursuer],seed:'second-break'});
+  const formed=race.frames.find(frame=>frame.formedChaseGroupId&&
+    frame.roadGroups.at(-1).riderIds.includes('b-0'));
+  assert.ok(formed,'the later move should form its own group');
+  assert.equal(formed.roadGroups.length,2);
+  assert.ok(formed.roadGroups[0].gapSeconds>formed.roadGroups[1].gapSeconds);
+  assert.deepEqual(formed.roadGroups[1].riderIds,['b-0']);
+  assert.ok(!formed.roadGroups[0].riderIds.includes('b-0'));
+  assert.ok(formed.joinedBreakawayRiderIds.includes('b-0'));
+  assert.equal(validateRecordedTour(race),true);
+  const tampered=structuredClone(race);
+  tampered.frames[formed.km-1].formedChaseGroupId=null;
+  assert.throws(()=>validateRecordedTour(tampered),/appeared/);
+});
+
 test('break and bunch abilities change a gap even without new attacks or chase orders',()=>{
   const breakTeam=tacticalTeam('a','balanced',{baseline:{attack:'none',chase:'ignore'}});
   const bunchTeam=tacticalTeam('b','balanced',{baseline:{attack:'none',chase:'ignore'}});
@@ -478,7 +501,7 @@ test('the full tactical trace is deterministic, bounded and makes aggressive ord
   const a=simulateTacticalTour(input);
   assert.deepEqual(a,simulateTacticalTour(input));
   assert.equal(a.frames.length,40);
-  assert.equal(a.tuningVersion,'v2-prototype-26');
+  assert.equal(a.tuningVersion,'v2-prototype-27');
   assert.equal(a.frames.at(-1).km,40);
   assert.ok(a.frames.some(frame=>frame.attackers.length>0));
   assert.ok(a.frames.some(frame=>frame.chasers.length>0));
