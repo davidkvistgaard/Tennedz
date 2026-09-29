@@ -404,7 +404,7 @@ test('a precommitted attack from a pursuing group is simulated and replayable',(
   assert.ok(attack);
   assert.equal(attack.riderId,'b-0');
   assert.notEqual(attack.sourceGroupId,race.frames[29].roadGroups[0].id);
-  assert.ok(['split','joined_group_ahead'].includes(attack.status));
+  assert.equal(attack.status,'split');
   assert.equal(validateRecordedTour(race),true);
   const missing=structuredClone(race);
   missing.frames[30].splitAttack=null;
@@ -415,6 +415,34 @@ test('a precommitted attack from a pursuing group is simulated and replayable',(
   const freeJump=structuredClone(race);
   freeJump.frames[30].splitAttack.attackSeconds=0;
   assert.throws(()=>validateRecordedTour(freeJump),/break attack route/);
+});
+
+test('a strong pursuing attack can bridge into the group ahead',()=>{
+  const leader=tacticalTeam('a','balanced',{baseline:{attack:'selective',chase:'ignore'},
+    phases:[{atKm:10,attack:'none'}]});
+  Object.assign(leader.riders[0],{flat:75,strength:75,endurance:75,
+    timetrial:75,acceleration:75});
+  const second=tacticalTeam('b','balanced',{baseline:{attack:'none',chase:'ignore'},
+    phases:[{atKm:20,attack:'selective',attackRiderId:'b-0'},
+      {atKm:30,attack:'none',breakAttackRiderId:'b-0'}]});
+  const third=tacticalTeam('c','balanced',{baseline:{attack:'none',chase:'ignore'},
+    phases:[{atKm:20,attack:'selective',attackRiderId:'c-0'},
+      {atKm:30,attack:'none'}]});
+  Object.assign(second.riders[0],{flat:100,strength:100,endurance:100,
+    timetrial:100,acceleration:100});
+  Object.assign(third.riders[0],{flat:75,strength:75,endurance:75,
+    timetrial:75,acceleration:75});
+  const flat={distance_km:40,profile_points:[[0,100],[40,100]],
+    keypoints:[{km:10,kind:'SPRINT'},{km:20,kind:'SPRINT'},
+      {km:30,kind:'SPRINT'}]};
+  const race=simulateTacticalTour({stage:flat,teams:[leader,second,third],
+    seed:'chase-bridge-probe'});
+  const before=race.frames[29].roadGroups;
+  assert.ok(before.length>1);
+  assert.equal(before[1].id,race.frames[30].splitAttack?.sourceGroupId);
+  assert.equal(race.frames[30].splitAttack?.status,'joined_group_ahead');
+  assert.ok(race.frames[30].roadGroups[0].riderIds.includes('b-0'));
+  assert.equal(validateRecordedTour(race),true);
 });
 
 test('varied three-group races remain replayable in both race categories',()=>{
