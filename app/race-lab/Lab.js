@@ -22,6 +22,7 @@ export default function Lab() {
     [strategy, setStrategy] = useState("sprint"),
     [breakResponse, setBreakResponse] = useState("hold_plan"),
     [breakWork, setBreakWork] = useState("cooperate"),
+    [breakAttackAtKm, setBreakAttackAtKm] = useState(0),
     [config, setConfig] = useState(DEFAULT_CONFIG),
     [count, setCount] = useState(100);
   const [race, setRace] = useState(null),
@@ -62,6 +63,7 @@ export default function Lab() {
       const scenario=flatScenario(strategy);
       scenario.teams[0].breakResponse=breakResponse;
       scenario.teams[0].breakWork=breakWork;
+      scenario.teams[0].breakAttackAtKm=breakAttackAtKm;
       const result=runKilometreLab({scenario,seed:`${seed}:v2`});
       setKilometreRace(result);
       setKilometreKm(0);
@@ -176,6 +178,16 @@ export default function Lab() {
               onChange={e=>setBreakWork(e.target.value)}>
               <option value="cooperate">Take turns at the front</option>
               <option value="sit_on">Sit on and save energy</option>
+            </select>
+          </label>
+          <label>
+            Amber’s captain attacks from the break · kilometre prototype only
+            <select aria-label="Amber’s break attack" value={breakAttackAtKm}
+              onChange={e=>setBreakAttackAtKm(Number(e.target.value))}>
+              <option value={0}>No planned split</option>
+              <option value={40}>After kilometre 40</option>
+              <option value={80}>After kilometre 80</option>
+              <option value={120}>After kilometre 120</option>
             </select>
           </label>
           {[
@@ -429,6 +441,10 @@ export default function Lab() {
             return <tr key={team.teamId}><th>{name}</th><td>{team.mean.toFixed(1)}</td><td>{currentKm.teamPace.find(p=>p.teamId===team.teamId)?.meanAbility.toFixed(1)}</td><td>{leader}</td></tr>;
           })}</tbody></table></div>
           <p>{currentKm.breakawayRiderIds.length} rider{currentKm.breakawayRiderIds.length===1?'':'s'} in the break · {currentKm.attackers.length} attack{currentKm.attackers.length===1?'':'s'} attempted · {currentKm.joinedBreakawayRiderIds.length} joined the break · {currentKm.chasers.length} chasing team{currentKm.chasers.length===1?'':'s'} · {currentKm.shelterEvents.length} protected leader{currentKm.shelterEvents.length===1?'':'s'} · {currentKm.recoveredRiderIds.length} rider{currentKm.recoveredRiderIds.length===1?'':'s'} recovering{currentKm.decisions.length?` · ${currentKm.decisions.length} tactical decision${currentKm.decisions.length===1?'':'s'}`:''}</p>
+          {currentKm.roadGroups.length>1&&<p className="small">Road groups: {currentKm.roadGroups.map(group=>`${group.riderIds.length} rider${group.riderIds.length===1?'':'s'} at +${group.gapSeconds.toFixed(1)} s`).join(' · ')} ahead of the peloton.</p>}
+          {currentKm.splitAttack&&<p className="small">Planned attack from the break: {currentKm.splitAttack.riderId} · {currentKm.splitAttack.status.replaceAll('_',' ')}{currentKm.splitAttack.status==='split'?` · gained ${currentKm.splitAttack.attackSeconds.toFixed(1)} s on the chasing break`:''}.</p>}
+          {currentKm.blockedBreakAttacks.length>0&&<p className="small">Unexecuted break attacks: {currentKm.blockedBreakAttacks.map(event=>`${event.riderId} (${event.reason.replaceAll('_',' ')})`).join(' · ')}.</p>}
+          {currentKm.mergedRoadGroupIds.length>0&&<p className="small">The pursuing break caught the rider who attacked from it.</p>}
           {currentKm.decisions.length>0&&<p className="small">Precommitted decisions: {currentKm.decisions.map(decision=>`${kilometreRace.scenario.teams.find(team=>team.id===decision.teamId)?.name??decision.teamId} ${decision.kind.replaceAll('_',' ')}`).join(' · ')}.</p>}
           {currentKm.activeBreakResponseTeamIds.length>0&&<p className="small">Precommitted break chase active: {currentKm.activeBreakResponseTeamIds.map(id=>kilometreRace.scenario.teams.find(team=>team.id===id)?.name??id).join(', ')}.</p>}
           {currentKm.supportEvents.length>0&&<p className="small">Captain support: {currentKm.supportEvents.map(event=>`${kilometreRace.scenario.teams.find(team=>team.id===event.teamId)?.name??event.teamId} sent ${event.helperId} back to help ${event.leaderId}`).join(' · ')}.</p>}

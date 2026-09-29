@@ -104,3 +104,17 @@ test('Race Lab exposes a precommitted sit-on choice in the recorded race',async 
   await expect(page.getByText('5 / 160 km',{exact:true})).toBeVisible();
   await expect(page.getByText('Recorded break work: 0 riders took pulls this kilometre.')).toBeVisible();
 });
+
+test('Race Lab replays a planned attack from an existing break',async ({page})=>{
+  await page.goto('/race-lab');
+  await page.getByLabel('Amber’s plan',{exact:true}).selectOption('break');
+  await page.getByLabel('Amber’s break attack',{exact:true}).selectOption('40');
+  await page.getByRole('button',{name:'Run kilometre prototype'}).click();
+  const slider=page.getByRole('slider',{name:'Recorded kilometre'});
+  await slider.focus();
+  await page.keyboard.press('Home');
+  for(let kilometre=1;kilometre<41;kilometre++)await page.keyboard.press('ArrowRight');
+  await expect(page.getByText('41 / 160 km',{exact:true})).toBeVisible();
+  await expect(page.getByText(/Planned attack from the break: .* · split/)).toBeVisible();
+  await expect(page.getByText(/Road groups: .* ahead of the peloton/)).toBeVisible();
+});

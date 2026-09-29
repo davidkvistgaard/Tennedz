@@ -478,7 +478,7 @@ test('the full tactical trace is deterministic, bounded and makes aggressive ord
   const a=simulateTacticalTour(input);
   assert.deepEqual(a,simulateTacticalTour(input));
   assert.equal(a.frames.length,40);
-  assert.equal(a.tuningVersion,'v2-prototype-25');
+  assert.equal(a.tuningVersion,'v2-prototype-26');
   assert.equal(a.frames.at(-1).km,40);
   assert.ok(a.frames.some(frame=>frame.attackers.length>0));
   assert.ok(a.frames.some(frame=>frame.chasers.length>0));
@@ -761,6 +761,7 @@ test('a rider still in the break finishes ahead of the bunch when its gap surviv
   assert.equal(validateRecordedTour(result),true);
   const fabricated=structuredClone(result);
   fabricated.frames.at(-1).gapSeconds=100;
+  fabricated.frames.at(-1).pelotonGapSeconds=100;
   fabricated.frames.at(-1).roadGroups[0].gapSeconds=100;
   assert.throws(()=>validateRecordedTour(fabricated),/final breakaway gap/);
 });
@@ -884,6 +885,83 @@ test('a rider already in the break cannot launch another new attack',()=>{
   const later=result.frames.filter(frame=>frame.km>first.km);
   assert.ok(later.every(frame=>!frame.attackers.includes(first.attackers[0])||!frame.breakawayRiderIds.includes(first.attackers[0])));
   assert.ok(Math.max(...result.frames.map(frame=>frame.breakawayRiderIds.length))<=2);
+});
+
+test('a committed break attack splits the live road group and survives replay validation',()=>{
+  const flat={distance_km:40,profile_points:[[0,100],[40,100]]};
+  const makeTeam=(id,preset,phases=[])=>({id,
+    riders:Array.from({length:8},(_,index)=>({id:`${id}-${index}`,gender:'M',
+      flat:60,strength:60,endurance:60,sprint:50,acceleration:60,leadership:50})),
+    orders:{captainId:`${id}-0`,roadCaptainId:`${id}-1`,preset,
+      baseline:{chase:'ignore'},phases}});
+  const teams=[makeTeam('a','aggressive',[{atKm:20,breakAttackRiderId:'a-0'}]),
+    makeTeam('b','protect')];
+  const race=simulateTacticalTour({stage:flat,teams,seed:'split-probe'});
+  const control=simulateTacticalTour({stage:flat,
+    teams:[makeTeam('a','aggressive'),makeTeam('b','protect')],seed:'split-probe'});
+  const split=race.frames[20];
+  assert.equal(split.splitAttack.status,'split');
+  assert.deepEqual(split.roadGroups.map(group=>group.id),['road-2','road-1']);
+  assert.deepEqual(split.roadGroups[0].riderIds,['a-0']);
+  assert.ok(split.roadGroups[0].gapSeconds>split.roadGroups[1].gapSeconds);
+  const energy=recording=>recording.frames[20].riderGroups.find(rider=>rider.id==='a-0').energy;
+  assert.ok(energy(race)<energy(control));
+  assert.equal(validateRecordedTour(race),true);
+  assert.deepEqual(race.provisionalResults.slice(0,2).map(rider=>rider.roadGroupId),
+    ['road-2','road-1']);
+  const missingEvent=structuredClone(race);
+  missingEvent.frames[20].splitAttack=null;
+  assert.throws(()=>validateRecordedTour(missingEvent),/split|appeared/);
+  const wrongRearGap=structuredClone(race);
+  wrongRearGap.frames[20].pelotonGapSeconds+=1;
+  assert.throws(()=>validateRecordedTour(wrongRearGap),/road group/);
+});
+
+test('the original break can catch a tiring attacker and retain its road identity',()=>{
+  const flat={distance_km:40,profile_points:[[0,100],[40,100]]};
+  const makeTeam=(id,preset,phases=[])=>({id,
+    riders:Array.from({length:8},(_,index)=>({id:`${id}-${index}`,gender:'M',
+      flat:60,strength:60,endurance:60,sprint:50,acceleration:60,
+      leadership:50,timetrial:60})),
+    orders:{captainId:`${id}-0`,roadCaptainId:`${id}-1`,preset,
+      baseline:{chase:'ignore'},phases}});
+  const a=makeTeam('a','aggressive',[{atKm:20,breakAttackRiderId:'a-0'}]);
+  a.riders[0].acceleration=100;
+  a.riders[0].timetrial=0;
+  a.riders[0].endurance=10;
+  a.riders[1].timetrial=100;
+  a.riders[1].endurance=100;
+  const race=simulateTacticalTour({stage:flat,teams:[a,makeTeam('b','protect')],
+    seed:'split-merge-0'});
+  const split=race.frames.findIndex(frame=>frame.splitAttack?.status==='split');
+  const merged=race.frames.findIndex((frame,index)=>index>split&&frame.mergedRoadGroupIds.length);
+  assert.ok(split>=0&&merged>split);
+  assert.deepEqual(race.frames[merged].mergedRoadGroupIds,['road-2']);
+  assert.equal(race.frames[merged].roadGroups[0].id,'road-1');
+  assert.equal(race.frames[merged].roadGroups.length,1);
+  assert.equal(validateRecordedTour(race),true);
+});
+
+test('Race Lab can record a precommitted attack from an existing break',()=>{
+  const scenario=flatScenario('break');
+  scenario.teams[0].breakAttackAtKm=40;
+  const race=runKilometreLab({scenario,seed:'lab-split-probe'});
+  assert.equal(race.frames[40].splitAttack?.status,'split');
+  assert.equal(race.frames[40].roadGroups.length,2);
+  assert.equal(validateRecordedTour(race),true);
+});
+
+test('a planned split records why it cannot run when its rider is not ahead',()=>{
+  const flat={distance_km:40,profile_points:[[0,100],[40,100]]};
+  const team=id=>({id,riders:Array.from({length:8},(_,index)=>({id:`${id}-${index}`,
+    gender:'M',flat:60,strength:60,endurance:60,sprint:50,leadership:50})),
+    orders:{captainId:`${id}-0`,preset:'protect',baseline:{attack:'none',chase:'ignore'},
+      ...(id==='a'?{phases:[{atKm:20,breakAttackRiderId:'a-0'}]}:{})}});
+  const race=simulateTacticalTour({stage:flat,teams:[team('a'),team('b')],seed:'no-break-split'});
+  assert.deepEqual(race.frames[20].blockedBreakAttacks,[{
+    teamId:'a',riderId:'a-0',reason:'not_in_break',
+  }]);
+  assert.equal(validateRecordedTour(race),true);
 });
 
 test('a recently caught rider cannot reattack immediately while a fresh teammate can',()=>{
