@@ -76,3 +76,36 @@ test('a distant peloton move forms a separate chasing group with its own gap',()
   assert.throws(()=>formChasingRoadGroup(previous,{riderIds:['b-0'],
     teamByRiderId:{'b-0':'b'},newGroupId:'road-2',gapSeconds:24}),/chasing/);
 });
+
+test('several road groups can merge in order without losing their riders or identities',()=>{
+  const groups=[
+    {id:'road-1',riderIds:['a-0'],teamIds:['a'],gapSeconds:30},
+    {id:'road-2',riderIds:['b-0'],teamIds:['b'],gapSeconds:20},
+    {id:'road-3',riderIds:['c-0'],teamIds:['c'],gapSeconds:10},
+  ];
+  const moved=advanceRoadGroups(groups,{'road-1':-20,'road-2':-5,'road-3':6});
+  assert.deepEqual(moved.mergedGroupIds,['road-1','road-2']);
+  assert.deepEqual(moved.caughtRiderIds,[]);
+  assert.deepEqual(moved.groups,[{id:'road-3',riderIds:['c-0','b-0','a-0'],
+    teamIds:['c','b','a'],gapSeconds:16}]);
+  assert.equal(validateRoadGroupTransition(groups,moved.groups,
+    {mergedGroupIds:moved.mergedGroupIds}),true);
+  const swapped=structuredClone(moved.groups);
+  swapped[0].riderIds=['c-0','b-0','foreign'];
+  assert.throws(()=>validateRoadGroupTransition(groups,swapped,
+    {mergedGroupIds:moved.mergedGroupIds}),/continue|merge/);
+});
+
+test('the bunch catches a middle group before an independent rear move can pass it',()=>{
+  const groups=[
+    {id:'road-1',riderIds:['a-0'],teamIds:['a'],gapSeconds:30},
+    {id:'road-2',riderIds:['b-0'],teamIds:['b'],gapSeconds:20},
+    {id:'road-3',riderIds:['c-0'],teamIds:['c'],gapSeconds:10},
+  ];
+  const moved=advanceRoadGroups(groups,{'road-1':-10,'road-2':-21,'road-3':-9});
+  assert.deepEqual(moved.caughtRiderIds,['b-0']);
+  assert.deepEqual(moved.mergedGroupIds,[]);
+  assert.deepEqual(moved.groups.map(group=>group.id),['road-1','road-3']);
+  assert.equal(validateRoadGroupTransition(groups,moved.groups,
+    {caughtRiderIds:moved.caughtRiderIds}),true);
+});
