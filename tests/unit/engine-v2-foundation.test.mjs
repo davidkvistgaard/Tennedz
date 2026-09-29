@@ -76,6 +76,18 @@ test('orders reject foreign riders, ambiguous markers and unknown values',()=>{
   assert.throws(()=>normalizeOrders({captainId:'r0',baseline:{effort:'steady',effrot:'hard'}},context));
   assert.throws(()=>normalizeOrders({captainId:'r0',phases:[{atKm:10,attack:'none',attak:'repeated'}]},context));
   assert.throws(()=>normalizeOrders({version:3,captainId:'r0'},context));
+  assert.throws(()=>normalizeOrders({captainId:'r0',baseline:{attackRiderId:'foreign'}},context));
+  assert.throws(()=>normalizeOrders({captainId:'r0',phases:[{atKm:20,attackRiderId:'foreign'}]},context));
+});
+
+test('a planned attacker can be changed or cleared at a valid marker',()=>{
+  const orders=normalizeOrders({captainId:'r0',preset:'aggressive',
+    baseline:{attackRiderId:'r2'},phases:[{atKm:20,attackRiderId:'r3'},
+      {atKm:30,attackRiderId:null}]},
+  {riderIds:riders,distanceKm:40});
+  assert.equal(orderAt(orders,19).attackRiderId,'r2');
+  assert.equal(orderAt(orders,20).attackRiderId,'r3');
+  assert.equal(orderAt(orders,30).attackRiderId,null);
 });
 
 function tacticalTeam(id,preset,overrides={}){
@@ -131,6 +143,40 @@ test('exhausted or dropped riders cannot provide free chase work or launch attac
   assert.notEqual(alternate.attackers[0].riderId,'a-0');
   assert.equal(resolveTacticalKilometre({teams:[attacker,defender],km:20,
     droppedRiderIds:attacker.riders.map(rider=>rider.id)}).attackers.length,0);
+});
+
+test('a selected attacker is used exactly as planned or the trace explains why not',()=>{
+  const attacker=tacticalTeam('a','aggressive',{baseline:{attackRiderId:'a-3'}});
+  const defender=tacticalTeam('d','protect',{baseline:{chase:'ignore'}});
+  attacker.riders[0].acceleration=100;
+  attacker.riders[3].acceleration=10;
+  attacker.riders[3].strength=10;
+  const automatic={...attacker,orders:{...attacker.orders,baseline:{...attacker.orders.baseline,
+    attackRiderId:null}}};
+  const automaticAttack=resolveTacticalKilometre({teams:[automatic,defender],km:20});
+  const selected=resolveTacticalKilometre({teams:[attacker,defender],km:20});
+  assert.deepEqual(selected.attackers.map(attack=>attack.riderId),['a-3']);
+  assert.ok(selected.attackPower<automaticAttack.attackPower);
+  assert.ok(selected.gapSeconds<automaticAttack.gapSeconds);
+  attacker.energy=Object.fromEntries(attacker.riders.map(rider=>[rider.id,rider.id==='a-3'?0:90]));
+  const exhausted=resolveTacticalKilometre({teams:[attacker,defender],km:20});
+  assert.equal(exhausted.attackers.length,0);
+  assert.deepEqual(exhausted.blockedAttacks,[{teamId:'a',riderId:'a-3',reason:'exhausted'}]);
+  attacker.energy['a-3']=90;
+  const dropped=resolveTacticalKilometre({teams:[attacker,defender],km:20,
+    droppedRiderIds:['a-3']});
+  assert.deepEqual(dropped.blockedAttacks,[{teamId:'a',riderId:'a-3',reason:'dropped'}]);
+});
+
+test('a committed marker switches the named attacker without live intervention',()=>{
+  const attacker=tacticalTeam('a','aggressive',{baseline:{attackRiderId:'a-2'},
+    phases:[{atKm:20,attackRiderId:'a-3'}]});
+  const defender=tacticalTeam('d','protect',{baseline:{chase:'ignore'}});
+  const recording=simulateTacticalTour({stage,teams:[attacker,defender],seed:'named-switch'});
+  assert.deepEqual(recording.frames[4].attackers,['a-2']);
+  assert.ok(recording.frames[9].blockedAttacks.some(item=>item.riderId==='a-2'&&
+    item.reason==='already_ahead'));
+  assert.deepEqual(recording.frames[24].attackers,['a-3']);
 });
 
 test('effort changes immediate attack and chase pressure while charging more energy',()=>{
@@ -200,7 +246,7 @@ test('the full tactical trace is deterministic, bounded and makes aggressive ord
   const a=simulateTacticalTour(input);
   assert.deepEqual(a,simulateTacticalTour(input));
   assert.equal(a.frames.length,40);
-  assert.equal(a.tuningVersion,'v2-prototype-9');
+  assert.equal(a.tuningVersion,'v2-prototype-10');
   assert.equal(a.frames.at(-1).km,40);
   assert.ok(a.frames.some(frame=>frame.attackers.length>0));
   assert.ok(a.frames.some(frame=>frame.chasers.length>0));
@@ -448,6 +494,9 @@ test('recorded playback does not recalculate and rejects a result that differs f
   const wrongTerrain=structuredClone(result);
   wrongTerrain.frames[19].terrain='climb';
   assert.throws(()=>validateRecordedTour(wrongTerrain),/kilometre/);
+  const wrongBlocked=structuredClone(result);
+  wrongBlocked.frames[19].blockedAttacks.push({teamId:'foreign',riderId:'foreign',reason:'exhausted'});
+  assert.throws(()=>validateRecordedTour(wrongBlocked),/attack event/);
 });
 
 test('several attackers can outlast one defender while two sprint teams can organise a catch',()=>{

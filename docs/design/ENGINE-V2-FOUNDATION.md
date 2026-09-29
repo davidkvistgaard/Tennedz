@@ -30,6 +30,8 @@ Tactical attack and chase pressure now uses the same kilometre environment as ri
 
 Attack candidates and chase helpers now need enough remaining energy, and riders marked dropped cannot contribute to the peloton's chase or launch a new front-group attack. An exhausted helper therefore cannot keep producing chase power after its energy has reached zero; another available rider may take its place. This makes finite team work an actual limit rather than only a cost on paper.
 
+Managers may optionally name a specific attacker in their baseline order or change that choice at a 10 km marker or authored keypoint. `null` returns to automatic selection. A named rider is not silently replaced when already ahead, dropped or exhausted; the recorded trace keeps a reason for the blocked attempt. Simple presets still choose an available rider automatically.
+
 Inputs fail closed on unknown order fields, bad rider IDs, invalid stats, mixed race categories and missing seeds. Team and rider inputs are sorted before calculation, so database row order does not change the saved trace. This is necessary for reproducible results and later replay verification.
 
 The existing feature-gated Race Lab now has a separate **Run kilometre prototype** action. It adapts the same fictional four-team cast to v2 and shows the saved kilometre trace and provisional finish order alongside the older flat-road experiment. Neither calculation reads player accounts or writes database rows; the two models stay visibly labelled so their outputs are not mistaken for live race results.
