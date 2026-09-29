@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {normalizeOrders} from '../../lib/engine/v2/orders.mjs';
 import {buildKilometreRoute} from '../../lib/engine/v2/route.mjs';
-import {evaluateBreakAttack} from '../../lib/engine/v2/break-attack.mjs';
+import {evaluateBreakAttack,selectBreakAttackAttempt} from '../../lib/engine/v2/break-attack.mjs';
 
 const route=buildKilometreRoute({distance_km:40,profile_points:[[0,100],[40,100]]},
   {seed:'break-split'});
@@ -56,4 +56,17 @@ test('a defender with a teammate farther up the road sits on during another atta
   assert.deepEqual(withTeammateAhead.defenderRiderIds,[]);
   assert.ok(withTeammateAhead.attackSeconds>withoutTeammateAhead.attackSeconds);
   assert.deepEqual(withTeammateAhead.energyCosts.map(cost=>cost.riderId),['a-0']);
+});
+
+test('simultaneous committed attacks resolve by earned gap instead of team ID',()=>{
+  const weaker={status:'split',teamId:'a',riderId:'a-0',attackSeconds:2};
+  const stronger={status:'split',teamId:'z',riderId:'z-0',attackSeconds:5};
+  const options={roadGroupCount:2,maxRoadGroups:6};
+  assert.equal(selectBreakAttackAttempt([weaker,stronger],options),stronger);
+  assert.equal(selectBreakAttackAttempt([stronger,weaker],options),stronger);
+  assert.equal(selectBreakAttackAttempt([weaker,stronger],
+    {roadGroupCount:6,maxRoadGroups:6}),null);
+  const bridge={status:'joined_group_ahead',teamId:'c',riderId:'c-0',attackSeconds:4};
+  assert.equal(selectBreakAttackAttempt([weaker,bridge],
+    {roadGroupCount:6,maxRoadGroups:6}),bridge);
 });
