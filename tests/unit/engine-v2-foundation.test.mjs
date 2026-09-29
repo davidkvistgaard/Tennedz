@@ -7,6 +7,7 @@ import {simulateTacticalTour} from '../../lib/engine/v2/tour.mjs';
 import {SPORTING_SKILLS,sportingSkills,riderKilometreEffect} from '../../lib/engine/v2/physiology.mjs';
 import {runKilometreLab} from '../../lib/engine/v2/lab.mjs';
 import {updateRiderGroups} from '../../lib/engine/v2/groups.mjs';
+import {provisionalFinish} from '../../lib/engine/v2/finish.mjs';
 import {selectShelter} from '../../lib/engine/v2/support.mjs';
 import {validateRecordedTour,readRecordedKilometre} from '../../lib/engine/v2/recording.mjs';
 import {recoveryForKilometre} from '../../lib/engine/v2/recovery.mjs';
@@ -363,7 +364,7 @@ test('the full tactical trace is deterministic, bounded and makes aggressive ord
   const a=simulateTacticalTour(input);
   assert.deepEqual(a,simulateTacticalTour(input));
   assert.equal(a.frames.length,40);
-  assert.equal(a.tuningVersion,'v2-prototype-15');
+  assert.equal(a.tuningVersion,'v2-prototype-16');
   assert.equal(a.frames.at(-1).km,40);
   assert.ok(a.frames.some(frame=>frame.attackers.length>0));
   assert.ok(a.frames.some(frame=>frame.chasers.length>0));
@@ -604,6 +605,27 @@ test('a rider still in the break finishes ahead of the bunch when its gap surviv
   assert.ok(ahead.size>0);
   assert.ok(result.provisionalResults.find(r=>ahead.has(r.riderId)).position<
     result.provisionalResults.find(r=>!ahead.has(r.riderId)).position);
+});
+
+test('the final sprint cannot reverse uncaught and dropped group order',()=>{
+  const breakTeam=tacticalTeam('a','balanced');
+  const bunchTeam=tacticalTeam('b','balanced');
+  breakTeam.riders[0].sprint=0;
+  bunchTeam.riders[0].sprint=100;
+  const route=buildKilometreRoute(stage,{seed:'finish-bands'});
+  const states=[...breakTeam.riders,...bunchTeam.riders].map(rider=>({
+    id:rider.id,energy:80,deficitSeconds:0,
+    group:rider.id==='a-0'?'breakaway':rider.id==='b-0'?'dropped':'peloton',
+  }));
+  states.find(rider=>rider.id==='b-0').deficitSeconds=3.01;
+  const results=provisionalFinish({route,teams:[breakTeam,bunchTeam],states,
+    breakawayRiderIds:['a-0'],gapSeconds:.1,seed:'finish-bands'});
+  const ahead=results.filter(rider=>rider.group==='breakaway');
+  const peloton=results.filter(rider=>rider.group==='peloton');
+  const dropped=results.filter(rider=>rider.group==='dropped');
+  assert.equal(results[0].riderId,'a-0');
+  assert.ok(peloton[0].timeSeconds-ahead.at(-1).timeSeconds>=.09);
+  assert.ok(dropped[0].position>peloton.at(-1).position);
 });
 
 test('a rider already in the break cannot launch another new attack',()=>{
