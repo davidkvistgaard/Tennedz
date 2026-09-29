@@ -408,6 +408,10 @@ test('successive moves can maintain six independent recorded groups',()=>{
   const tampered=structuredClone(race);
   tampered.frames[six.km-1].roadGroups[2].riderIds=['a-0'];
   assert.throws(()=>validateRecordedTour(tampered),/road group|continue|riders/);
+  const swappedTeams=structuredClone(race);
+  swappedTeams.frames[six.km-1].roadGroups[0].teamIds=['b'];
+  swappedTeams.frames[six.km-1].roadGroups[1].teamIds=['a'];
+  assert.throws(()=>validateRecordedTour(swappedTeams),/road-group teams/);
 });
 
 test('a precommitted attack from a pursuing group is simulated and replayable',()=>{
