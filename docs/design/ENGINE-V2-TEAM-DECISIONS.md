@@ -18,6 +18,14 @@ A rider may pursue their own result when the committed plan gives them freedom, 
 
 Simple plans should set sensible defaults; expert managers can set priorities and contingencies such as “protect captain while within reach”, “sit on a chase when we have a rider ahead”, “release the backup if the captain is out of contention”, or “wait for the captain if reunion is feasible”. The engine evaluates these conditions using information available to the riders at that kilometre, not knowledge of the eventual winner. Every switch, failed trigger and group transfer belongs in the recorded replay.
 
+## One-day races versus stage races
+
+A one-day race ends with that day's result. A stage race has at least two distinct objectives on every stage: the stage result and the cumulative general classification (GC). A manager may value an overall top-ten finish even when winning the GC or the current stage is unrealistic. The engine must therefore evaluate threats to a defended place and opportunities to improve a place, not only whether a rider can win today.
+
+The race context needs the committed classification standings and time gaps **before** the stage, the stage's scoring and timing rules, and each team's precommitted priorities. During simulation, teams estimate the *provisional* overall standing from current road gaps. That estimate can change as groups split or rejoin; it is not final knowledge. A GC team may let a harmless stage break go, while chasing a rival whose gain would cost its captain tenth place. A team in eleventh may spend more energy to move into the top ten; a team defending seventh may reject that risk. A sprinter team can have the opposite incentive on the same road.
+
+Stages also carry forward fatigue and other defined rider state. Saving a helper or captain for later stages may be worth more than an extra place today. Event-specific time bonuses, classifications and finish-time rules must be explicit inputs to the event and versioned; they must not be guessed by the engine. Men and women retain separate events and standings.
+
 ## Required scenario checks
 
 1. With a viable teammate ahead, a team behind does not provide chase power; its rider in a pursuing group can shelter without taking pulls. A rival team can still catch the front group.
@@ -25,7 +33,10 @@ Simple plans should set sensible defaults; expert managers can set priorities an
 3. A helper in the same group gives measurable protection to a captain. A helper in a different group cannot do so until a physically possible reunion has completed.
 4. A released rider can race for themselves; a team-first rider sacrifices a personal opportunity only when the selected priority calls for it. Neither decision is forced for all teams.
 5. Reordering input teams or replaying the same seed does not change decisions. Changing one team's plan can alter its own work and the race, but cannot rewrite the opponents' submitted plans.
+6. In a one-day race, a team has no phantom future-GC objective. In a stage race, a team defending tenth responds to a direct GC threat but need not chase a stage break that cannot change its standing.
+7. Teams in tenth and eleventh can choose different energy/risk tradeoffs on the same stage. A stage-win team and a GC team may pursue opposite tactics without either being forced to work for the other.
+8. A stage's result updates cumulative standings exactly once. The next stage starts from those saved standings and carried rider state, while replay of an earlier stage remains unchanged after later stages are simulated.
 
 ## Implementation dependency
 
-The present v2 prototype has only a partial approximation: a team with a rider in the one tracked break does not chase that break, and available helpers can shelter a leader in the peloton. It has no sustained second break or chase group, no explicit sit-on participation, no physical drop-back/reunion, and no rider-level freedom policy. Build independent groups and positions first, then implement these team policies against that group state. Central balance constants and paired scenario tests must precede any production migration.
+The present v2 prototype has only a partial approximation: a team with a rider in the one tracked break does not chase that break, and available helpers can shelter a leader in the peloton. It has no sustained second break or chase group, no explicit sit-on participation, no physical drop-back/reunion, no rider-level freedom policy and no multi-stage GC context. Build independent groups and rider timing first, then team policies and persistent stage-race state. Central balance constants and paired scenario tests must precede any production migration.
