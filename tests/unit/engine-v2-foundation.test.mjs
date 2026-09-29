@@ -383,6 +383,33 @@ test('successive peloton moves can make three recorded road groups',()=>{
   assert.throws(()=>validateRecordedTour(tampered),/road group/);
 });
 
+test('successive moves can maintain six independent recorded groups',()=>{
+  const makeTeam=(id,attackAt)=>({id,
+    riders:Array.from({length:8},(_,index)=>({id:`${id}-${index}`,gender:'M',
+      flat:index===0?95:50,strength:index===0?95:60,
+      endurance:index===0?95:60,timetrial:index===0?95:50,
+      sprint:50,leadership:50})),
+    orders:{captainId:`${id}-0`,roadCaptainId:`${id}-1`,preset:'balanced',
+      baseline:{attack:attackAt===0?'selective':'none',chase:'ignore'},
+      phases:attackAt===0?[{atKm:10,attack:'none'}]:
+        [{atKm:attackAt,attack:'selective',attackRiderId:`${id}-0`},
+          {atKm:attackAt+10,attack:'none'}]}});
+  const flat={distance_km:100,profile_points:[[0,100],[100,100]],
+    keypoints:[10,20,30,40,50,60,70].map(km=>({km,kind:'SPRINT'}))};
+  const race=simulateTacticalTour({stage:flat,
+    teams:[makeTeam('a',0),makeTeam('b',20),makeTeam('c',30),
+      makeTeam('d',40),makeTeam('e',50),makeTeam('f',60)],
+    seed:'six-road-groups'});
+  const six=race.frames.find(frame=>frame.roadGroups.length===6);
+  assert.ok(six,'six separately timed moves should be able to survive together');
+  assert.deepEqual(six.roadGroups.map(group=>group.riderIds),
+    [['a-0'],['b-0'],['c-0'],['d-0'],['e-0'],['f-0']]);
+  assert.equal(validateRecordedTour(race),true);
+  const tampered=structuredClone(race);
+  tampered.frames[six.km-1].roadGroups[2].riderIds=['a-0'];
+  assert.throws(()=>validateRecordedTour(tampered),/road group|continue|riders/);
+});
+
 test('a precommitted attack from a pursuing group is simulated and replayable',()=>{
   const leader=tacticalTeam('a','balanced',{baseline:{attack:'selective',chase:'ignore'},
     phases:[{atKm:10,attack:'none'}]});
@@ -653,7 +680,7 @@ test('the full tactical trace is deterministic, bounded and makes aggressive ord
   const a=simulateTacticalTour(input);
   assert.deepEqual(a,simulateTacticalTour(input));
   assert.equal(a.frames.length,40);
-  assert.equal(a.tuningVersion,'v2-prototype-34');
+  assert.equal(a.tuningVersion,'v2-prototype-35');
   assert.equal(a.frames.at(-1).km,40);
   assert.ok(a.frames.some(frame=>frame.attackers.length>0));
   assert.ok(a.frames.some(frame=>frame.chasers.length>0));
