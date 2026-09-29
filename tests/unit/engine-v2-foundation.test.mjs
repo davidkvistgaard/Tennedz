@@ -7,7 +7,7 @@ import {simulateTacticalTour} from '../../lib/engine/v2/tour.mjs';
 import {SPORTING_SKILLS,sportingSkills,riderKilometreEffect} from '../../lib/engine/v2/physiology.mjs';
 import {runKilometreLab} from '../../lib/engine/v2/lab.mjs';
 import {updateRiderGroups} from '../../lib/engine/v2/groups.mjs';
-import {provisionalFinish} from '../../lib/engine/v2/finish.mjs';
+import {provisionalFinish,provisionalRoadGroupFinish} from '../../lib/engine/v2/finish.mjs';
 import {selectShelter} from '../../lib/engine/v2/support.mjs';
 import {validateRecordedTour,readRecordedKilometre} from '../../lib/engine/v2/recording.mjs';
 import {recoveryForKilometre} from '../../lib/engine/v2/recovery.mjs';
@@ -773,6 +773,30 @@ test('the final sprint cannot reverse uncaught and dropped group order',()=>{
   assert.equal(results[0].riderId,'a-0');
   assert.ok(peloton[0].timeSeconds-ahead.at(-1).timeSeconds>=.09);
   assert.ok(dropped[0].position>peloton.at(-1).position);
+});
+
+test('two surviving breaks finish in road order with their separate recorded gaps',()=>{
+  const teams=[tacticalTeam('a','balanced'),tacticalTeam('b','balanced')];
+  const route=buildKilometreRoute(stage,{seed:'two-break-finish'});
+  const roadGroups=[
+    {id:'road-2',riderIds:['a-0'],teamIds:['a'],gapSeconds:24},
+    {id:'road-1',riderIds:['a-1','b-0'],teamIds:['a','b'],gapSeconds:20},
+  ];
+  const ahead=new Set(roadGroups.flatMap(group=>group.riderIds));
+  const states=teams.flatMap(team=>team.riders.map(rider=>({id:rider.id,energy:80,
+    deficitSeconds:0,group:ahead.has(rider.id)?'breakaway':'peloton'})));
+  const result=provisionalRoadGroupFinish({route,teams,states,roadGroups,seed:'two-break-finish'});
+  const front=result.filter(rider=>rider.roadGroupId==='road-2');
+  const chase=result.filter(rider=>rider.roadGroupId==='road-1');
+  const bunch=result.filter(rider=>rider.group==='peloton');
+  assert.equal(front[0].position,1);
+  assert.ok(chase[0].position>front.at(-1).position);
+  assert.ok(bunch[0].position>chase.at(-1).position);
+  assert.ok(chase[0].timeSeconds-front.at(-1).timeSeconds>=3.98);
+  assert.ok(bunch[0].timeSeconds-chase.at(-1).timeSeconds>=19.98);
+  assert.throws(()=>provisionalRoadGroupFinish({route,teams,states,
+    roadGroups:[{...roadGroups[0],riderIds:['foreign']},roadGroups[1]],seed:'two-break-finish'}),
+  /outside the finish roster/);
 });
 
 test('a finishing sprint records a last-metre catch before the result is shown',()=>{
