@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {buildKilometreRoute} from '../../lib/engine/v2/route.mjs';
-import {normalizeOrders,orderAt} from '../../lib/engine/v2/orders.mjs';
+import {normalizeOrders,orderAt,breakAttackAt} from '../../lib/engine/v2/orders.mjs';
 import {resolveTacticalKilometre} from '../../lib/engine/v2/tactics.mjs';
 import {simulateTacticalTour} from '../../lib/engine/v2/tour.mjs';
 import {SPORTING_SKILLS,sportingSkills,riderKilometreEffect} from '../../lib/engine/v2/physiology.mjs';
@@ -66,6 +66,17 @@ test('simple presets and expert phases resolve without changing earlier orders',
   assert.deepEqual(orderAt(orders,20),{effort:'hard',chase:'all',attack:'none',breakWork:'cooperate',captainSupport:'hold_position'});
   assert.deepEqual(orders.helperIds,['r2','r3','r4','r5','r6','r7']);
   assert.equal(orders.roadCaptainId,'r1');
+});
+
+test('a planned attack from the break fires once after its marker',()=>{
+  const orders=normalizeOrders({captainId:'r0',phases:[{atKm:20,breakAttackRiderId:'r2'}]},
+    {riderIds:riders,distanceKm:40});
+  assert.equal(breakAttackAt(orders,20),null);
+  assert.equal(breakAttackAt(orders,21),'r2');
+  assert.equal(breakAttackAt(orders,22),null);
+  assert.equal(orderAt(orders,21).breakAttackRiderId,undefined);
+  assert.throws(()=>normalizeOrders({captainId:'r0',phases:[{atKm:20,breakAttackRiderId:'foreign'}]},
+    {riderIds:riders,distanceKm:40}),/break attack/);
 });
 
 test('orders reject foreign riders, ambiguous markers and unknown values',()=>{
