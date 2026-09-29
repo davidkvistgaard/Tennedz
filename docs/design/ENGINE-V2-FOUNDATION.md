@@ -16,7 +16,9 @@ Status: **development prototype, not wired to the public race cycle**. The exist
 
 The trace records the actual riders ahead, limits one team's active breakaway contingent, prevents a rider from re-attacking while already ahead, and charges continuing energy cost for riding in the break. These are provisional race rules in the isolated model; they must be calibrated against complete group and finish simulations before release.
 
-For provisional dropped groups, the reference pace comes from riders still attached to the bunch. Riders already distanced cannot lower that reference when many fall behind together. This changes group outcomes, so the balance version is `v2-prototype-11`; it still needs broad seeded calibration before release.
+An attempted attack now has a separate admission event. If the peloton's chase overpowers the new move, that rider pays the attack cost but cannot appear in an older break that still has a positive gap. Race Lab and the recorded frame show attempted attacks separately from riders who joined; the frame also retains attack and chase pressure so replay validation can check that distinction. This changes tactical outcomes and is balance version `v2-prototype-12`.
+
+For provisional dropped groups, the reference pace comes from riders still attached to the bunch. Riders already distanced cannot lower that reference when many fall behind together. This changed group outcomes in balance version `v2-prototype-11`; it still needs broad seeded calibration before release.
 
 Effort now changes immediate attack and chase pressure as well as the continuing energy bill. The stronger `hard` setting can create or close a gap sooner, but leaves less energy for later kilometres. The multiplier is a central balancing parameter, not a public percentage shown to players.
 

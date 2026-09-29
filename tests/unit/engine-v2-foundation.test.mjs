@@ -209,6 +209,25 @@ test('a team keeps chasing a recognised break as its gap narrows',()=>{
   assert.deepEqual(ongoing.engagedChaseTeamIds,['d']);
 });
 
+test('a chased-down new attack cannot join a break that is still ahead',()=>{
+  const ahead=tacticalTeam('a','balanced',{baseline:{attack:'none'}});
+  const attacker=tacticalTeam('b','aggressive');
+  const defender=tacticalTeam('d','protect',{baseline:{chase:'all',effort:'hard'}});
+  attacker.riders.forEach(rider=>{
+    rider.acceleration=10;rider.strength=10;rider.flat=10;
+  });
+  defender.riders.forEach(rider=>{
+    rider.strength=95;rider.endurance=95;rider.flat=95;
+  });
+  const contest=resolveTacticalKilometre({teams:[ahead,attacker,defender],km:20,
+    gapSeconds:80,breakawayTeamIds:['a'],breakawayRiderIds:['a-0']});
+  assert.equal(contest.attackers.length,1);
+  assert.ok(contest.attackPower<contest.chasePower);
+  assert.ok(contest.gapSeconds>0);
+  assert.deepEqual(contest.joinedBreakawayRiderIds,[]);
+  assert.ok(contest.energyCosts.some(cost=>cost.reason==='attack'));
+});
+
 test('a protected sprinter gets a costly chase surge near the finish',()=>{
   const attacker=tacticalTeam('a','aggressive');
   const defender=tacticalTeam('d','protect',{baseline:{chase:'all'}});
@@ -247,7 +266,7 @@ test('the full tactical trace is deterministic, bounded and makes aggressive ord
   const a=simulateTacticalTour(input);
   assert.deepEqual(a,simulateTacticalTour(input));
   assert.equal(a.frames.length,40);
-  assert.equal(a.tuningVersion,'v2-prototype-11');
+  assert.equal(a.tuningVersion,'v2-prototype-12');
   assert.equal(a.frames.at(-1).km,40);
   assert.ok(a.frames.some(frame=>frame.attackers.length>0));
   assert.ok(a.frames.some(frame=>frame.chasers.length>0));
@@ -537,6 +556,12 @@ test('recorded playback does not recalculate and rejects a result that differs f
   const missingAttack=structuredClone(result);
   missingAttack.frames[firstBreak].attackers=[];
   assert.throws(()=>validateRecordedTour(missingAttack),/breakaway/);
+  const missingJoin=structuredClone(result);
+  missingJoin.frames[firstBreak].joinedBreakawayRiderIds=[];
+  assert.throws(()=>validateRecordedTour(missingJoin),/breakaway/);
+  const impossibleJoin=structuredClone(result);
+  impossibleJoin.frames[firstBreak].chasePower=impossibleJoin.frames[firstBreak].attackPower+1;
+  assert.throws(()=>validateRecordedTour(impossibleJoin),/breakaway/);
   const firstChase=result.frames.findIndex(frame=>frame.chasers.length>0);
   assert.ok(firstChase>=0);
   const foreignChase=structuredClone(result);

@@ -32,6 +32,7 @@ for (const width of [390, 1440])
     await kilometreSlider.focus();
     await page.keyboard.press("End");
     await expect(page.getByText("160 / 160 km", { exact: true })).toBeVisible();
+    await expect(page.getByText(/attacks? attempted · \d+ joined the break/)).toBeVisible();
     await expect(page.getByRole("table", { name: "Team state after this kilometre" })).toBeVisible();
     const provisionalResults=page.getByRole("table", { name: "Provisional rider results" });
     await expect(provisionalResults).toBeVisible();
