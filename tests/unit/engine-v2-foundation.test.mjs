@@ -266,6 +266,24 @@ test('a chased-down new attack cannot join a break that is still ahead',()=>{
   assert.ok(contest.energyCosts.some(cost=>cost.reason==='attack'));
 });
 
+test('a rider cannot teleport into a distant break or power it from the bunch',()=>{
+  const ahead=tacticalTeam('a','balanced',{baseline:{attack:'none',chase:'ignore'}});
+  const attacker=tacticalTeam('b','aggressive',{baseline:{chase:'ignore'}});
+  const context={teams:[ahead,attacker],km:20,gapSeconds:80,
+    breakawayTeamIds:['a'],breakawayRiderIds:['a-0']};
+  const bridge=resolveTacticalKilometre(context);
+  const noAttack=resolveTacticalKilometre({...context,teams:[ahead,{...attacker,orders:{...attacker.orders,
+    baseline:{...attacker.orders.baseline,attack:'none'}}}]});
+  assert.ok(bridge.attackPower>0);
+  assert.deepEqual(bridge.failedBridgeRiderIds,bridge.attackers.map(rider=>rider.riderId));
+  assert.deepEqual(bridge.joinedBreakawayRiderIds,[]);
+  assert.equal(bridge.gapSeconds,noAttack.gapSeconds);
+  assert.ok(bridge.energyCosts.some(cost=>cost.reason==='attack'));
+  const close=resolveTacticalKilometre({...context,gapSeconds:5});
+  assert.deepEqual(close.failedBridgeRiderIds,[]);
+  assert.deepEqual(close.joinedBreakawayRiderIds,close.attackers.map(rider=>rider.riderId));
+});
+
 test('break and bunch abilities change a gap even without new attacks or chase orders',()=>{
   const breakTeam=tacticalTeam('a','balanced',{baseline:{attack:'none',chase:'ignore'}});
   const bunchTeam=tacticalTeam('b','balanced',{baseline:{attack:'none',chase:'ignore'}});
@@ -345,7 +363,7 @@ test('the full tactical trace is deterministic, bounded and makes aggressive ord
   const a=simulateTacticalTour(input);
   assert.deepEqual(a,simulateTacticalTour(input));
   assert.equal(a.frames.length,40);
-  assert.equal(a.tuningVersion,'v2-prototype-14');
+  assert.equal(a.tuningVersion,'v2-prototype-15');
   assert.equal(a.frames.at(-1).km,40);
   assert.ok(a.frames.some(frame=>frame.attackers.length>0));
   assert.ok(a.frames.some(frame=>frame.chasers.length>0));
@@ -670,6 +688,9 @@ test('recorded playback does not recalculate and rejects a result that differs f
   const missingJoin=structuredClone(result);
   missingJoin.frames[firstBreak].joinedBreakawayRiderIds=[];
   assert.throws(()=>validateRecordedTour(missingJoin),/breakaway/);
+  const impossibleBridge=structuredClone(result);
+  impossibleBridge.frames[firstBreak].failedBridgeRiderIds=[...impossibleBridge.frames[firstBreak].attackers];
+  assert.throws(()=>validateRecordedTour(impossibleBridge),/breakaway admission/);
   const firstCatch=result.frames.findIndex(frame=>frame.caughtBreakawayRiderIds.length>0);
   assert.ok(firstCatch>=0);
   const missingCatch=structuredClone(result);
