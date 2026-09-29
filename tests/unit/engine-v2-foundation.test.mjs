@@ -353,6 +353,20 @@ test('a fresh attack can pursue a distant break without teleporting into it',()=
   assert.throws(()=>validateRecordedTour(tampered),/appeared/);
 });
 
+test('a sufficiently strong move can finish its bridge instead of forming a phantom group',()=>{
+  const race=runKilometreLab({scenario:flatScenario('break'),seed:'chase-30'});
+  const bridged=race.frames.find(frame=>frame.bridgedBreakRiderIds.length>0);
+  assert.ok(bridged);
+  assert.equal(bridged.formedChaseGroupId,null);
+  assert.equal(bridged.roadGroups.length,1);
+  assert.ok(bridged.bridgedBreakRiderIds.every(id=>
+    bridged.roadGroups[0].riderIds.includes(id)&&bridged.joinedBreakawayRiderIds.includes(id)));
+  assert.equal(validateRecordedTour(race),true);
+  const tampered=structuredClone(race);
+  tampered.frames[bridged.km-1].bridgedBreakRiderIds=['foreign'];
+  assert.throws(()=>validateRecordedTour(tampered),/admission/);
+});
+
 test('break and bunch abilities change a gap even without new attacks or chase orders',()=>{
   const breakTeam=tacticalTeam('a','balanced',{baseline:{attack:'none',chase:'ignore'}});
   const bunchTeam=tacticalTeam('b','balanced',{baseline:{attack:'none',chase:'ignore'}});
@@ -501,7 +515,7 @@ test('the full tactical trace is deterministic, bounded and makes aggressive ord
   const a=simulateTacticalTour(input);
   assert.deepEqual(a,simulateTacticalTour(input));
   assert.equal(a.frames.length,40);
-  assert.equal(a.tuningVersion,'v2-prototype-27');
+  assert.equal(a.tuningVersion,'v2-prototype-28');
   assert.equal(a.frames.at(-1).km,40);
   assert.ok(a.frames.some(frame=>frame.attackers.length>0));
   assert.ok(a.frames.some(frame=>frame.chasers.length>0));
