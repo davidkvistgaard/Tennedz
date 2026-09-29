@@ -380,6 +380,31 @@ test('successive peloton moves can make three recorded road groups',()=>{
   assert.throws(()=>validateRecordedTour(tampered),/road group/);
 });
 
+test('varied three-group races remain replayable in both race categories',()=>{
+  const flat={distance_km:40,profile_points:[[0,100],[40,100]],
+    keypoints:[10,20,30].map(km=>({km,kind:'SPRINT'}))};
+  const plans={a:[{atKm:10,attack:'none'}],
+    b:[{atKm:20,attack:'selective',attackRiderId:'b-0'},
+      {atKm:30,attack:'none'}],
+    c:[{atKm:30,attack:'selective',attackRiderId:'c-0'}]};
+  for(const gender of ['M','F'])for(let sample=0;sample<10;sample++){
+    const teams=['a','b','c'].map((id,index)=>({id,
+      riders:Array.from({length:8},(_,riderIndex)=>({id:`${id}-${riderIndex}`,gender,
+        flat:riderIndex===0?80+(sample+index*3)%21:50,
+        strength:riderIndex===0?80+(sample+index*3)%21:60,
+        endurance:riderIndex===0?80+(sample+index*3)%21:60,
+        timetrial:riderIndex===0?80+(sample+index*3)%21:50,
+        sprint:50,leadership:50})),
+      orders:{captainId:`${id}-0`,roadCaptainId:`${id}-1`,preset:'balanced',
+        baseline:{attack:id==='a'?'selective':'none',chase:'ignore'},
+        phases:plans[id]}}));
+    const race=simulateTacticalTour({stage:flat,teams,seed:`three-groups:${gender}:${sample}`});
+    assert.ok(race.frames.some(frame=>frame.roadGroups.length===3));
+    assert.equal(validateRecordedTour(race),true);
+    assert.equal(race.raceCategory,gender);
+  }
+});
+
 test('a sufficiently strong move can finish its bridge instead of forming a phantom group',()=>{
   const race=runKilometreLab({scenario:flatScenario('break'),seed:'chase-30'});
   const bridged=race.frames.find(frame=>frame.bridgedBreakRiderIds.length>0);
