@@ -383,6 +383,40 @@ test('successive peloton moves can make three recorded road groups',()=>{
   assert.throws(()=>validateRecordedTour(tampered),/road group/);
 });
 
+test('a precommitted attack from a pursuing group is simulated and replayable',()=>{
+  const leader=tacticalTeam('a','balanced',{baseline:{attack:'selective',chase:'ignore'},
+    phases:[{atKm:10,attack:'none'}]});
+  Object.assign(leader.riders[0],{flat:95,strength:95,endurance:95,timetrial:95});
+  const second=tacticalTeam('b','balanced',{baseline:{attack:'none',chase:'ignore'},
+    phases:[{atKm:20,attack:'selective',attackRiderId:'b-0'},
+      {atKm:30,attack:'none',breakAttackRiderId:'b-0'}]});
+  const third=tacticalTeam('c','balanced',{baseline:{attack:'none',chase:'ignore'},
+    phases:[{atKm:20,attack:'selective',attackRiderId:'c-0'},
+      {atKm:30,attack:'none'}]});
+  for(const team of [second,third])Object.assign(team.riders[0],
+    {flat:95,strength:95,endurance:95,timetrial:95});
+  const flat={distance_km:40,profile_points:[[0,100],[40,100]],
+    keypoints:[{km:10,kind:'SPRINT'},{km:20,kind:'SPRINT'},
+      {km:30,kind:'SPRINT'}]};
+  const race=simulateTacticalTour({stage:flat,teams:[leader,second,third],
+    seed:'chase-break-attack'});
+  const attack=race.frames[30].splitAttack;
+  assert.ok(attack);
+  assert.equal(attack.riderId,'b-0');
+  assert.notEqual(attack.sourceGroupId,race.frames[29].roadGroups[0].id);
+  assert.ok(['split','joined_group_ahead'].includes(attack.status));
+  assert.equal(validateRecordedTour(race),true);
+  const missing=structuredClone(race);
+  missing.frames[30].splitAttack=null;
+  assert.throws(()=>validateRecordedTour(missing),/split|changed groups|appeared|ahead/);
+  const wrongSource=structuredClone(race);
+  wrongSource.frames[30].splitAttack.sourceGroupId='road-999';
+  assert.throws(()=>validateRecordedTour(wrongSource),/break attack route/);
+  const freeJump=structuredClone(race);
+  freeJump.frames[30].splitAttack.attackSeconds=0;
+  assert.throws(()=>validateRecordedTour(freeJump),/break attack route/);
+});
+
 test('varied three-group races remain replayable in both race categories',()=>{
   const flat={distance_km:40,profile_points:[[0,100],[40,100]],
     keypoints:[10,20,30].map(km=>({km,kind:'SPRINT'}))};
