@@ -62,6 +62,8 @@ All input, event seed, route version, locked weather, order snapshot, tuning ver
 
 ## Next gates
 
+The team-intent, captain-support and rider-autonomy rules to implement after independent road groups are defined in [ENGINE-V2-TEAM-DECISIONS.md](ENGINE-V2-TEAM-DECISIONS.md).
+
 For repeatable balance diagnostics, run `node scripts/engine-v2-balance.mjs 100`. It compares the four plans using the same 100 seeds and reports wins, placings, energy, breakaways, dropped riders, attempted attacks and successful admissions. This is a fixed fictional flat-road cast; its rates are diagnostic, not a target distribution for the full game.
 
 Run `node scripts/engine-v2-ensemble.mjs 20` for a second, paired diagnostic across flat, rolling and mountain routes, varied fictional specialists, changing weather and both race categories. Each strategy within a sample uses the same roster and conditions. These metrics reveal balance failures that the fixed cast cannot expose; no player data or live services are read.
