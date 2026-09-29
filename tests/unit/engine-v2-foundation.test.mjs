@@ -366,6 +366,27 @@ test('a team with a rider up the road withholds its helpers from the chase',()=>
   assert.ok(contest.energyCosts.filter(cost=>cost.reason==='chase').every(cost=>cost.teamId==='b'));
 });
 
+test('selective pursuit waits with a manageable gap but starts as the finish approaches',()=>{
+  const ahead=tacticalTeam('a','balanced',{baseline:{attack:'none',chase:'ignore'}});
+  const defender=tacticalTeam('b','protect',{baseline:{attack:'none',chase:'selective'}});
+  const context={teams:[ahead,defender],gapSeconds:7,breakawayTeamIds:['a'],
+    breakawayRiderIds:['a-0'],engagedChaseTeamIds:['b'],distanceKm:160};
+  const early=resolveTacticalKilometre({...context,km:20});
+  const late=resolveTacticalKilometre({...context,km:120});
+  assert.deepEqual(early.heldChaseTeamIds,['b']);
+  assert.deepEqual(early.chasers,[]);
+  assert.ok(early.energyCosts.every(cost=>cost.reason!=='chase'));
+  assert.deepEqual(late.heldChaseTeamIds,[]);
+  assert.deepEqual(late.chasers.map(chaser=>chaser.teamId),['b']);
+  assert.ok(late.gapSeconds<early.gapSeconds);
+  const all=tacticalTeam('b','protect',{baseline:{attack:'none',chase:'all'}});
+  assert.deepEqual(resolveTacticalKilometre({...context,teams:[ahead,all],km:20}).heldChaseTeamIds,[]);
+  const fresh=tacticalTeam('c','aggressive');
+  const reacting=resolveTacticalKilometre({...context,teams:[ahead,defender,fresh],km:20});
+  assert.ok(reacting.attackers.length>0);
+  assert.ok(!reacting.heldChaseTeamIds.includes('b'));
+});
+
 test('a solo rider needs sustained ability to keep an early break to the finish',()=>{
   const attacker=tacticalTeam('a','aggressive',{baseline:{attackRiderId:'a-2'},
     phases:[{atKm:10,attack:'none'}]});
@@ -421,7 +442,7 @@ test('the full tactical trace is deterministic, bounded and makes aggressive ord
   const a=simulateTacticalTour(input);
   assert.deepEqual(a,simulateTacticalTour(input));
   assert.equal(a.frames.length,40);
-  assert.equal(a.tuningVersion,'v2-prototype-19');
+  assert.equal(a.tuningVersion,'v2-prototype-20');
   assert.equal(a.frames.at(-1).km,40);
   assert.ok(a.frames.some(frame=>frame.attackers.length>0));
   assert.ok(a.frames.some(frame=>frame.chasers.length>0));
@@ -824,6 +845,9 @@ test('recorded playback does not recalculate and rejects a result that differs f
   const wrongPull=structuredClone(result);
   wrongPull.frames[19].pullRiderIds=['foreign'];
   assert.throws(()=>validateRecordedTour(wrongPull),/break work/);
+  const wrongHeldChase=structuredClone(result);
+  wrongHeldChase.frames[19].heldChaseTeamIds=['foreign'];
+  assert.throws(()=>validateRecordedTour(wrongHeldChase),/held chase/);
   const firstBreak=result.frames.findIndex(frame=>frame.breakawayRiderIds.length>0);
   assert.ok(firstBreak>=0);
   const wrongBreakTeam=structuredClone(result);
