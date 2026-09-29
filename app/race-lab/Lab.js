@@ -438,6 +438,7 @@ export default function Lab() {
           {currentKm.caughtBreakawayRiderIds.length>0&&<p className="small">{currentKm.finishLineCatch?'Caught in the finishing sprint':'Break caught'}: {currentKm.caughtBreakawayRiderIds.length} rider{currentKm.caughtBreakawayRiderIds.length===1?'':'s'} brought back.</p>}
           {currentKm.failedBridgeRiderIds.length>0&&<p className="small">Distant break: {currentKm.failedBridgeRiderIds.length} new attack{currentKm.failedBridgeRiderIds.length===1?'':'s'} could not bridge across the gap; the riders spent energy without joining it.</p>}
           {currentKm.blockedAttacks.length>0&&<p className="small">Blocked planned attacks: {currentKm.blockedAttacks.map(blocked=>`${kilometreRace.scenario.teams.find(team=>team.id===blocked.teamId)?.name??blocked.teamId} (${blocked.reason.replaceAll('_',' ')})`).join(' · ')}</p>}
+          {currentKm.fatiguedAttackRiderIds.length>0&&<p className="small">Repeated efforts: {currentKm.fatiguedAttackRiderIds.length} attack{currentKm.fatiguedAttackRiderIds.length===1?'':'s'} lost sharpness after earlier moves.</p>}
           <p className="small">The entire trace and finish order were calculated before this slider appeared. The slider only reads saved frames.</p>
           <h3>Experimental finish order</h3>
           <p className="small">For balancing only. These are not live race results or a validated prediction.</p>

@@ -146,6 +146,23 @@ test('repeated attacks and constant chasing consume energy; road captain improve
   assert.equal(resolveTacticalKilometre({teams:[leader,depleted],km:10}).attackers.length,0);
 });
 
+test('repeatability preserves attack pressure after several earlier efforts',()=>{
+  const team=tacticalTeam('a','aggressive',{baseline:{attackRiderId:'a-2',chase:'ignore'}});
+  const defender=tacticalTeam('b','protect',{baseline:{attack:'none',chase:'ignore'}});
+  const context={teams:[team,defender],km:20};
+  team.riders[2].repeatability=100;
+  const fresh=resolveTacticalKilometre(context);
+  team.attackLoad={'a-2':4};
+  const durable=resolveTacticalKilometre(context);
+  team.riders[2].repeatability=0;
+  const tired=resolveTacticalKilometre(context);
+  assert.ok(fresh.attackPower>durable.attackPower);
+  assert.ok(durable.attackPower>tired.attackPower);
+  assert.equal(tired.attackers[0].repeatLoad,4);
+  assert.throws(()=>resolveTacticalKilometre({...context,
+    teams:[{...team,attackLoad:{'a-2':-1}},defender]}),/attack load/);
+});
+
 test('exhausted or dropped riders cannot provide free chase work or launch attacks',()=>{
   const attacker=tacticalTeam('a','aggressive');
   const defender=tacticalTeam('d','protect',{baseline:{chase:'all'}});
@@ -450,7 +467,7 @@ test('the full tactical trace is deterministic, bounded and makes aggressive ord
   const a=simulateTacticalTour(input);
   assert.deepEqual(a,simulateTacticalTour(input));
   assert.equal(a.frames.length,40);
-  assert.equal(a.tuningVersion,'v2-prototype-23');
+  assert.equal(a.tuningVersion,'v2-prototype-24');
   assert.equal(a.frames.at(-1).km,40);
   assert.ok(a.frames.some(frame=>frame.attackers.length>0));
   assert.ok(a.frames.some(frame=>frame.chasers.length>0));
@@ -871,6 +888,7 @@ test('the new kilometre model reuses the existing laboratory cast without changi
   assert.equal(a.scenario.teams.length,4);
   assert.ok(a.frames.some(frame=>frame.exposed));
   assert.ok(a.frames.some(frame=>frame.attackers.length>0));
+  assert.ok(a.frames.some(frame=>frame.fatiguedAttackRiderIds.length>0));
 });
 
 test('Race Lab carries a selected pre-race break response into the recorded prototype',()=>{
@@ -926,6 +944,9 @@ test('recorded playback does not recalculate and rejects a result that differs f
   const wrongBreak=structuredClone(result);
   wrongBreak.frames[19].breakawayRiderIds.push('foreign');
   assert.throws(()=>validateRecordedTour(wrongBreak),/breakaway|rider state/);
+  const wrongAttackFatigue=structuredClone(result);
+  wrongAttackFatigue.frames[19].fatiguedAttackRiderIds=['foreign'];
+  assert.throws(()=>validateRecordedTour(wrongAttackFatigue),/attack event/);
   const wrongRoadGroup=structuredClone(result);
   const firstRoadGroup=wrongRoadGroup.frames.find(frame=>frame.roadGroups.length>0);
   firstRoadGroup.roadGroups[0].id='road-99';
