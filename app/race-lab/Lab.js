@@ -21,6 +21,7 @@ export default function Lab() {
   const [seed, setSeed] = useState("pelotonia"),
     [strategy, setStrategy] = useState("sprint"),
     [breakResponse, setBreakResponse] = useState("hold_plan"),
+    [breakWork, setBreakWork] = useState("cooperate"),
     [config, setConfig] = useState(DEFAULT_CONFIG),
     [count, setCount] = useState(100);
   const [race, setRace] = useState(null),
@@ -60,6 +61,7 @@ export default function Lab() {
       setError("");
       const scenario=flatScenario(strategy);
       scenario.teams[0].breakResponse=breakResponse;
+      scenario.teams[0].breakWork=breakWork;
       const result=runKilometreLab({scenario,seed:`${seed}:v2`});
       setKilometreRace(result);
       setKilometreKm(0);
@@ -166,6 +168,14 @@ export default function Lab() {
               onChange={e=>setBreakResponse(e.target.value)}>
               <option value="hold_plan">Hold the scheduled plan</option>
               <option value="chase_if_threatened">Road captain chases a threatening break</option>
+            </select>
+          </label>
+          <label>
+            Amber’s break work · kilometre prototype only
+            <select aria-label="Amber’s break work" value={breakWork}
+              onChange={e=>setBreakWork(e.target.value)}>
+              <option value="cooperate">Take turns at the front</option>
+              <option value="sit_on">Sit on and save energy</option>
             </select>
           </label>
           {[
@@ -422,6 +432,7 @@ export default function Lab() {
           {currentKm.decisions.length>0&&<p className="small">Precommitted decisions: {currentKm.decisions.map(decision=>`${kilometreRace.scenario.teams.find(team=>team.id===decision.teamId)?.name??decision.teamId} ${decision.kind.replaceAll('_',' ')}`).join(' · ')}.</p>}
           {currentKm.activeBreakResponseTeamIds.length>0&&<p className="small">Precommitted break chase active: {currentKm.activeBreakResponseTeamIds.map(id=>kilometreRace.scenario.teams.find(team=>team.id===id)?.name??id).join(', ')}.</p>}
           {currentKm.passiveGapDelta!==0&&<p className="small">Riding pace alone: the break {currentKm.passiveGapDelta>0?'gained':'lost'} {Math.abs(currentKm.passiveGapDelta).toFixed(2)} seconds this kilometre.</p>}
+          {currentKm.breakawayRiderIds.length>0&&<p className="small">Recorded break work: {currentKm.pullRiderIds.length} rider{currentKm.pullRiderIds.length===1?'':'s'} took pulls this kilometre.</p>}
           {currentKm.caughtBreakawayRiderIds.length>0&&<p className="small">{currentKm.finishLineCatch?'Caught in the finishing sprint':'Break caught'}: {currentKm.caughtBreakawayRiderIds.length} rider{currentKm.caughtBreakawayRiderIds.length===1?'':'s'} brought back.</p>}
           {currentKm.failedBridgeRiderIds.length>0&&<p className="small">Distant break: {currentKm.failedBridgeRiderIds.length} new attack{currentKm.failedBridgeRiderIds.length===1?'':'s'} could not bridge across the gap; the riders spent energy without joining it.</p>}
           {currentKm.blockedAttacks.length>0&&<p className="small">Blocked planned attacks: {currentKm.blockedAttacks.map(blocked=>`${kilometreRace.scenario.teams.find(team=>team.id===blocked.teamId)?.name??blocked.teamId} (${blocked.reason.replaceAll('_',' ')})`).join(' · ')}</p>}

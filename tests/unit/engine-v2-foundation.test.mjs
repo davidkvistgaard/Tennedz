@@ -61,9 +61,9 @@ test('simple presets and expert phases resolve without changing earlier orders',
   const orders=normalizeOrders({captainId:'r0',roadCaptainId:'r1',backupId:'r2',preset:'protect',
     phases:[{atKm:20,effort:'hard',chase:'all'},{atKm:15,chase:'ignore'}]},
     {riderIds:riders,distanceKm:40,keypoints:stage.keypoints});
-  assert.deepEqual(orderAt(orders,0),{effort:'conserve',chase:'selective',attack:'none'});
-  assert.deepEqual(orderAt(orders,15),{effort:'conserve',chase:'ignore',attack:'none'});
-  assert.deepEqual(orderAt(orders,20),{effort:'hard',chase:'all',attack:'none'});
+  assert.deepEqual(orderAt(orders,0),{effort:'conserve',chase:'selective',attack:'none',breakWork:'cooperate'});
+  assert.deepEqual(orderAt(orders,15),{effort:'conserve',chase:'ignore',attack:'none',breakWork:'cooperate'});
+  assert.deepEqual(orderAt(orders,20),{effort:'hard',chase:'all',attack:'none',breakWork:'cooperate'});
   assert.deepEqual(orders.helperIds,['r2','r3','r4','r5','r6','r7']);
   assert.equal(orders.roadCaptainId,'r1');
 });
@@ -81,8 +81,17 @@ test('orders reject foreign riders, ambiguous markers and unknown values',()=>{
   assert.throws(()=>normalizeOrders({captainId:'r0',baseline:{attackRiderId:'foreign'}},context));
   assert.throws(()=>normalizeOrders({captainId:'r0',phases:[{atKm:20,attackRiderId:'foreign'}]},context));
   assert.throws(()=>normalizeOrders({captainId:'r0',breakResponse:'improvise'},context));
+  assert.throws(()=>normalizeOrders({captainId:'r0',baseline:{breakWork:'free_speed'}},context));
   assert.equal(normalizeOrders({captainId:'r0',breakResponse:'chase_if_threatened'},context).breakResponse,
     'chase_if_threatened');
+});
+
+test('a precommitted marker changes break cooperation without rewriting earlier orders',()=>{
+  const orders=normalizeOrders({captainId:'r0',baseline:{breakWork:'sit_on'},
+    phases:[{atKm:20,breakWork:'cooperate'}]},
+  {riderIds:riders,distanceKm:40});
+  assert.equal(orderAt(orders,19).breakWork,'sit_on');
+  assert.equal(orderAt(orders,20).breakWork,'cooperate');
 });
 
 test('a planned attacker can be changed or cleared at a valid marker',()=>{
@@ -309,6 +318,54 @@ test('break and bunch abilities change a gap even without new attacks or chase o
     breakawayTeamIds:[],breakawayRiderIds:[]}).passiveGapDelta,0);
 });
 
+test('taking pulls grows the break gap but costs energy compared with sitting on',()=>{
+  const worker=tacticalTeam('a','aggressive',{baseline:{chase:'ignore',breakWork:'cooperate'},
+    phases:[{atKm:20,attack:'none'}]});
+  const sitter=tacticalTeam('a','aggressive',{baseline:{chase:'ignore',breakWork:'sit_on'},
+    phases:[{atKm:20,attack:'none'}]});
+  const bunch=tacticalTeam('b','protect',{baseline:{chase:'ignore'}});
+  const context={teams:[worker,bunch],km:12,gapSeconds:20,
+    breakawayTeamIds:['a'],breakawayRiderIds:['a-0','a-1']};
+  const pulling=resolveTacticalKilometre(context);
+  const sitting=resolveTacticalKilometre({...context,teams:[sitter,bunch]});
+  assert.deepEqual(pulling.pullRiderIds,['a-0','a-1']);
+  assert.deepEqual(sitting.pullRiderIds,[]);
+  assert.ok(pulling.gapSeconds>sitting.gapSeconds);
+  const flat={distance_km:40,profile_points:[[0,100],[40,100]]};
+  const active=simulateTacticalTour({stage:flat,teams:[worker,bunch],seed:'break-work'});
+  const passive=simulateTacticalTour({stage:flat,teams:[sitter,bunch],seed:'break-work'});
+  const workingFrame=active.frames.find(frame=>frame.pullRiderIds.includes('a-0'));
+  assert.ok(workingFrame);
+  const restingFrame=passive.frames[workingFrame.km-1];
+  assert.ok(workingFrame.riderGroups.find(rider=>rider.id==='a-0').energy<
+    restingFrame.riderGroups.find(rider=>rider.id==='a-0').energy);
+});
+
+test('a mixed break credits only willing riders with work, without gifting the sitter speed',()=>{
+  const worker=tacticalTeam('a','balanced',{baseline:{attack:'none',chase:'ignore',breakWork:'cooperate'}});
+  const sitter=tacticalTeam('b','balanced',{baseline:{attack:'none',chase:'ignore',breakWork:'sit_on'}});
+  const bunch=tacticalTeam('c','protect',{baseline:{chase:'ignore'}});
+  const context={teams:[worker,sitter,bunch],km:12,gapSeconds:20,
+    breakawayTeamIds:['a','b'],breakawayRiderIds:['a-0','b-0']};
+  const mixed=resolveTacticalKilometre(context);
+  assert.deepEqual(mixed.pullRiderIds,['a-0']);
+  const bothWorking=resolveTacticalKilometre({...context,
+    teams:[worker,tacticalTeam('b','balanced',{baseline:{attack:'none',chase:'ignore',breakWork:'cooperate'}}),bunch]});
+  const neitherWorking=resolveTacticalKilometre({...context,
+    teams:[tacticalTeam('a','balanced',{baseline:{attack:'none',chase:'ignore',breakWork:'sit_on'}}),sitter,bunch]});
+  assert.ok(bothWorking.gapSeconds>mixed.gapSeconds);
+  assert.ok(mixed.gapSeconds>neitherWorking.gapSeconds);
+});
+
+test('a team with a rider up the road withholds its helpers from the chase',()=>{
+  const represented=tacticalTeam('a','protect',{baseline:{attack:'none',chase:'all'}});
+  const opponent=tacticalTeam('b','protect',{baseline:{attack:'none',chase:'all'}});
+  const contest=resolveTacticalKilometre({teams:[represented,opponent],km:12,gapSeconds:20,
+    breakawayTeamIds:['a'],breakawayRiderIds:['a-0']});
+  assert.deepEqual(contest.chasers.map(chaser=>chaser.teamId),['b']);
+  assert.ok(contest.energyCosts.filter(cost=>cost.reason==='chase').every(cost=>cost.teamId==='b'));
+});
+
 test('a solo rider needs sustained ability to keep an early break to the finish',()=>{
   const attacker=tacticalTeam('a','aggressive',{baseline:{attackRiderId:'a-2'},
     phases:[{atKm:10,attack:'none'}]});
@@ -364,7 +421,7 @@ test('the full tactical trace is deterministic, bounded and makes aggressive ord
   const a=simulateTacticalTour(input);
   assert.deepEqual(a,simulateTacticalTour(input));
   assert.equal(a.frames.length,40);
-  assert.equal(a.tuningVersion,'v2-prototype-18');
+  assert.equal(a.tuningVersion,'v2-prototype-19');
   assert.equal(a.frames.at(-1).km,40);
   assert.ok(a.frames.some(frame=>frame.attackers.length>0));
   assert.ok(a.frames.some(frame=>frame.chasers.length>0));
@@ -726,6 +783,16 @@ test('Race Lab carries a selected pre-race break response into the recorded prot
   assert.equal(validateRecordedTour(responsive),true);
 });
 
+test('Race Lab carries precommitted break work into its recorded prototype',()=>{
+  const scenario=flatScenario('break');
+  scenario.teams[0].breakWork='sit_on';
+  const recording=runKilometreLab({scenario,seed:'pelotonia:v2'});
+  const amberPulls=recording.frames.filter(frame=>frame.pullRiderIds.some(id=>id.startsWith('team-0-')));
+  assert.equal(amberPulls.length,0);
+  assert.equal(recording.committedInputs.teams[0].orders.baseline.breakWork,'sit_on');
+  assert.equal(validateRecordedTour(recording),true);
+});
+
 test('recorded playback does not recalculate and rejects a result that differs from its frames',()=>{
   const result=runKilometreLab({scenario:flatScenario('sprint'),seed:'recorded'});
   assert.equal(validateRecordedTour(result),true);
@@ -754,6 +821,9 @@ test('recorded playback does not recalculate and rejects a result that differs f
   const wrongBreak=structuredClone(result);
   wrongBreak.frames[19].breakawayRiderIds.push('foreign');
   assert.throws(()=>validateRecordedTour(wrongBreak),/breakaway|rider state/);
+  const wrongPull=structuredClone(result);
+  wrongPull.frames[19].pullRiderIds=['foreign'];
+  assert.throws(()=>validateRecordedTour(wrongPull),/break work/);
   const firstBreak=result.frames.findIndex(frame=>frame.breakawayRiderIds.length>0);
   assert.ok(firstBreak>=0);
   const wrongBreakTeam=structuredClone(result);

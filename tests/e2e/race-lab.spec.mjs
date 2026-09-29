@@ -85,3 +85,16 @@ test('Race Lab records Amber’s precommitted road-captain chase',async ({page})
   await expect(page.getByText(/Precommitted decisions: Amber chase break/)).toBeVisible();
   await expect(page.getByText(/Precommitted break chase active: Amber/)).toBeVisible();
 });
+
+test('Race Lab exposes a precommitted sit-on choice in the recorded race',async ({page})=>{
+  await page.goto('/race-lab');
+  await page.getByLabel('Amber’s plan',{exact:true}).selectOption('break');
+  await page.getByLabel('Amber’s break work',{exact:true}).selectOption('sit_on');
+  await page.getByRole('button',{name:'Run kilometre prototype'}).click();
+  const slider=page.getByRole('slider',{name:'Recorded kilometre'});
+  await slider.focus();
+  await page.keyboard.press('Home');
+  for(let kilometre=1;kilometre<5;kilometre++)await page.keyboard.press('ArrowRight');
+  await expect(page.getByText('5 / 160 km',{exact:true})).toBeVisible();
+  await expect(page.getByText('Recorded break work: 0 riders took pulls this kilometre.')).toBeVisible();
+});
