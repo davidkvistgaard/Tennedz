@@ -71,3 +71,17 @@ for (const width of [390, 1440])
     });
     expect(errors).toEqual([]);
   });
+
+test('Race Lab records Amber’s precommitted road-captain chase',async ({page})=>{
+  await page.goto('/race-lab');
+  await page.getByLabel('Amber’s plan',{exact:true}).selectOption('conserve');
+  await page.getByLabel('Amber’s break response',{exact:true}).selectOption('chase_if_threatened');
+  await page.getByRole('button',{name:'Run kilometre prototype'}).click();
+  const slider=page.getByRole('slider',{name:'Recorded kilometre'});
+  await slider.focus();
+  await page.keyboard.press('Home');
+  for(let kilometre=1;kilometre<23;kilometre++)await page.keyboard.press('ArrowRight');
+  await expect(page.getByText('23 / 160 km',{exact:true})).toBeVisible();
+  await expect(page.getByText(/Precommitted decisions: Amber chase break/)).toBeVisible();
+  await expect(page.getByText(/Precommitted break chase active: Amber/)).toBeVisible();
+});

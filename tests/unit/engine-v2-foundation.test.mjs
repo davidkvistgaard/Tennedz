@@ -79,6 +79,9 @@ test('orders reject foreign riders, ambiguous markers and unknown values',()=>{
   assert.throws(()=>normalizeOrders({version:3,captainId:'r0'},context));
   assert.throws(()=>normalizeOrders({captainId:'r0',baseline:{attackRiderId:'foreign'}},context));
   assert.throws(()=>normalizeOrders({captainId:'r0',phases:[{atKm:20,attackRiderId:'foreign'}]},context));
+  assert.throws(()=>normalizeOrders({captainId:'r0',breakResponse:'improvise'},context));
+  assert.equal(normalizeOrders({captainId:'r0',breakResponse:'chase_if_threatened'},context).breakResponse,
+    'chase_if_threatened');
 });
 
 test('a planned attacker can be changed or cleared at a valid marker',()=>{
@@ -209,6 +212,41 @@ test('a team keeps chasing a recognised break as its gap narrows',()=>{
   assert.deepEqual(ongoing.engagedChaseTeamIds,['d']);
 });
 
+test('a precommitted road-captain break response starts sooner with leadership and stops after a catch',()=>{
+  const flatStage={distance_km:40,profile_points:[[0,100],[40,100]]};
+  const attackers=[tacticalTeam('a','aggressive'),tacticalTeam('b','aggressive')];
+  const defender=leadership=>{
+    const team=tacticalTeam('d','protect',{breakResponse:'chase_if_threatened',
+      baseline:{chase:'ignore',attack:'none'}});
+    team.riders.forEach(rider=>{rider.flat=60;});
+    team.riders[1].leadership=leadership;
+    return team;
+  };
+  attackers.forEach(team=>team.riders.forEach(rider=>{rider.flat=60;}));
+  const race=leadership=>simulateTacticalTour({stage:flatStage,
+    teams:[...attackers,defender(leadership)],seed:'response'});
+  const high=race(90),low=race(10);
+  const firstDecision=(result,kind)=>result.frames.find(frame=>
+    frame.decisions.some(decision=>decision.teamId==='d'&&decision.kind===kind));
+  const early=firstDecision(high,'chase_break');
+  const late=firstDecision(low,'chase_break');
+  assert.ok(early&&late&&early.km<late.km);
+  assert.ok(early.chasers.includes('d'));
+  assert.deepEqual(early.activeBreakResponseTeamIds,['d']);
+  assert.ok(high.frames.slice(0,4).every(frame=>!frame.chasers.includes('d')));
+  const resumed=firstDecision(high,'resume_plan');
+  assert.ok(resumed&&resumed.km>early.km&&resumed.gapSeconds===0);
+  assert.deepEqual(resumed.activeBreakResponseTeamIds,[]);
+  assert.ok(high.frames[early.km-1].teamEnergy.find(team=>team.teamId==='d').mean<
+    low.frames[early.km-1].teamEnergy.find(team=>team.teamId==='d').mean);
+  const holding=defender(90);
+  holding.orders.breakResponse='hold_plan';
+  const noResponse=simulateTacticalTour({stage:flatStage,teams:[...attackers,holding],seed:'response'});
+  assert.ok(noResponse.frames.every(frame=>!frame.decisions.some(decision=>
+    decision.teamId==='d'&&decision.kind==='chase_break')));
+  assert.ok(noResponse.frames.every(frame=>!frame.chasers.includes('d')));
+});
+
 test('a chased-down new attack cannot join a break that is still ahead',()=>{
   const ahead=tacticalTeam('a','balanced',{baseline:{attack:'none'}});
   const attacker=tacticalTeam('b','aggressive');
@@ -307,7 +345,7 @@ test('the full tactical trace is deterministic, bounded and makes aggressive ord
   const a=simulateTacticalTour(input);
   assert.deepEqual(a,simulateTacticalTour(input));
   assert.equal(a.frames.length,40);
-  assert.equal(a.tuningVersion,'v2-prototype-13');
+  assert.equal(a.tuningVersion,'v2-prototype-14');
   assert.equal(a.frames.at(-1).km,40);
   assert.ok(a.frames.some(frame=>frame.attackers.length>0));
   assert.ok(a.frames.some(frame=>frame.chasers.length>0));
@@ -588,6 +626,21 @@ test('the new kilometre model reuses the existing laboratory cast without changi
   assert.ok(a.frames.some(frame=>frame.attackers.length>0));
 });
 
+test('Race Lab carries a selected pre-race break response into the recorded prototype',()=>{
+  const scenario=flatScenario('conserve');
+  const original=runKilometreLab({scenario,seed:'pelotonia:v2'});
+  scenario.teams[0].breakResponse='chase_if_threatened';
+  const responsive=runKilometreLab({scenario,seed:'pelotonia:v2'});
+  assert.ok(original.frames.every(frame=>!frame.decisions.some(decision=>
+    decision.teamId==='team-0'&&decision.kind==='chase_break')));
+  const trigger=responsive.frames.find(frame=>frame.decisions.some(decision=>
+    decision.teamId==='team-0'&&decision.kind==='chase_break'));
+  assert.ok(trigger&&trigger.chasers.includes('team-0'));
+  assert.ok(trigger.activeBreakResponseTeamIds.includes('team-0'));
+  assert.equal(responsive.scenario.teams[0].breakResponse,'chase_if_threatened');
+  assert.equal(validateRecordedTour(responsive),true);
+});
+
 test('recorded playback does not recalculate and rejects a result that differs from its frames',()=>{
   const result=runKilometreLab({scenario:flatScenario('sprint'),seed:'recorded'});
   assert.equal(validateRecordedTour(result),true);
@@ -630,6 +683,12 @@ test('recorded playback does not recalculate and rejects a result that differs f
   const foreignChase=structuredClone(result);
   foreignChase.frames[firstChase].chasers.push('foreign');
   assert.throws(()=>validateRecordedTour(foreignChase),/chase event/);
+  const foreignDecision=structuredClone(result);
+  foreignDecision.frames[firstChase].decisions.push({teamId:'foreign',kind:'chase_break',riderId:'foreign'});
+  assert.throws(()=>validateRecordedTour(foreignDecision),/tactical decision/);
+  const falseResponse=structuredClone(result);
+  falseResponse.frames[firstChase].activeBreakResponseTeamIds=['team-0'];
+  assert.throws(()=>validateRecordedTour(falseResponse),/break response/);
   const wrongTerrain=structuredClone(result);
   wrongTerrain.frames[19].terrain='climb';
   assert.throws(()=>validateRecordedTour(wrongTerrain),/kilometre/);

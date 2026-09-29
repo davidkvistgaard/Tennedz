@@ -20,6 +20,7 @@ function download(name, data) {
 export default function Lab() {
   const [seed, setSeed] = useState("pelotonia"),
     [strategy, setStrategy] = useState("sprint"),
+    [breakResponse, setBreakResponse] = useState("hold_plan"),
     [config, setConfig] = useState(DEFAULT_CONFIG),
     [count, setCount] = useState(100);
   const [race, setRace] = useState(null),
@@ -57,7 +58,9 @@ export default function Lab() {
   function runKilometres() {
     try {
       setError("");
-      const result=runKilometreLab({scenario:flatScenario(strategy),seed:`${seed}:v2`});
+      const scenario=flatScenario(strategy);
+      scenario.teams[0].breakResponse=breakResponse;
+      const result=runKilometreLab({scenario,seed:`${seed}:v2`});
       setKilometreRace(result);
       setKilometreKm(0);
       setStatus("Kilometre prototype calculated. Inspect its recorded tactical trace below.");
@@ -155,6 +158,14 @@ export default function Lab() {
                   {n} seeds · {n * 4} races
                 </option>
               ))}
+            </select>
+          </label>
+          <label>
+            Amber’s break response · kilometre prototype only
+            <select aria-label="Amber’s break response" value={breakResponse}
+              onChange={e=>setBreakResponse(e.target.value)}>
+              <option value="hold_plan">Hold the scheduled plan</option>
+              <option value="chase_if_threatened">Road captain chases a threatening break</option>
             </select>
           </label>
           {[
@@ -407,7 +418,9 @@ export default function Lab() {
             const leader=kilometreRace.scenario.teams.find(t=>t.id===team.teamId)?.riders.find(r=>r.id===leaderId)?.name??leaderId;
             return <tr key={team.teamId}><th>{name}</th><td>{team.mean.toFixed(1)}</td><td>{currentKm.teamPace.find(p=>p.teamId===team.teamId)?.meanAbility.toFixed(1)}</td><td>{leader}</td></tr>;
           })}</tbody></table></div>
-          <p>{currentKm.breakawayRiderIds.length} rider{currentKm.breakawayRiderIds.length===1?'':'s'} in the break · {currentKm.attackers.length} attack{currentKm.attackers.length===1?'':'s'} attempted · {currentKm.joinedBreakawayRiderIds.length} joined the break · {currentKm.chasers.length} chasing team{currentKm.chasers.length===1?'':'s'} · {currentKm.shelterEvents.length} protected leader{currentKm.shelterEvents.length===1?'':'s'} · {currentKm.recoveredRiderIds.length} rider{currentKm.recoveredRiderIds.length===1?'':'s'} recovering{currentKm.decisions.length?` · ${currentKm.decisions.length} backup-plan change`:''}</p>
+          <p>{currentKm.breakawayRiderIds.length} rider{currentKm.breakawayRiderIds.length===1?'':'s'} in the break · {currentKm.attackers.length} attack{currentKm.attackers.length===1?'':'s'} attempted · {currentKm.joinedBreakawayRiderIds.length} joined the break · {currentKm.chasers.length} chasing team{currentKm.chasers.length===1?'':'s'} · {currentKm.shelterEvents.length} protected leader{currentKm.shelterEvents.length===1?'':'s'} · {currentKm.recoveredRiderIds.length} rider{currentKm.recoveredRiderIds.length===1?'':'s'} recovering{currentKm.decisions.length?` · ${currentKm.decisions.length} tactical decision${currentKm.decisions.length===1?'':'s'}`:''}</p>
+          {currentKm.decisions.length>0&&<p className="small">Precommitted decisions: {currentKm.decisions.map(decision=>`${kilometreRace.scenario.teams.find(team=>team.id===decision.teamId)?.name??decision.teamId} ${decision.kind.replaceAll('_',' ')}`).join(' · ')}.</p>}
+          {currentKm.activeBreakResponseTeamIds.length>0&&<p className="small">Precommitted break chase active: {currentKm.activeBreakResponseTeamIds.map(id=>kilometreRace.scenario.teams.find(team=>team.id===id)?.name??id).join(', ')}.</p>}
           {currentKm.passiveGapDelta!==0&&<p className="small">Riding pace alone: the break {currentKm.passiveGapDelta>0?'gained':'lost'} {Math.abs(currentKm.passiveGapDelta).toFixed(2)} seconds this kilometre.</p>}
           {currentKm.caughtBreakawayRiderIds.length>0&&<p className="small">Break caught: {currentKm.caughtBreakawayRiderIds.length} rider{currentKm.caughtBreakawayRiderIds.length===1?'':'s'} brought back.</p>}
           {currentKm.blockedAttacks.length>0&&<p className="small">Blocked planned attacks: {currentKm.blockedAttacks.map(blocked=>`${kilometreRace.scenario.teams.find(team=>team.id===blocked.teamId)?.name??blocked.teamId} (${blocked.reason.replaceAll('_',' ')})`).join(' · ')}</p>}
