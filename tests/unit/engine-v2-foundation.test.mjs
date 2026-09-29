@@ -359,7 +359,7 @@ test('successive peloton moves can make three recorded road groups',()=>{
   Object.assign(leader.riders[0],{flat:95,strength:95,endurance:95,timetrial:95});
   const second=tacticalTeam('b','balanced',{baseline:{attack:'none',chase:'ignore'},
     phases:[{atKm:20,attack:'selective',attackRiderId:'b-0'},
-      {atKm:30,attack:'none'}]});
+      {atKm:30,attack:'none',breakAttackRiderId:'b-0'}]});
   Object.assign(second.riders[0],{flat:95,strength:95,endurance:95,timetrial:95});
   const third=tacticalTeam('c','balanced',{baseline:{attack:'none',chase:'ignore'},
     phases:[{atKm:30,attack:'selective',attackRiderId:'c-0'}]});
@@ -372,6 +372,9 @@ test('successive peloton moves can make three recorded road groups',()=>{
   assert.ok(three,'three independent road groups should form');
   assert.deepEqual(three.roadGroups.map(group=>group.riderIds),
     [['a-0'],['b-0'],['c-0']]);
+  assert.deepEqual(race.frames[30].blockedBreakAttacks,[{
+    teamId:'b',riderId:'b-0',reason:'not_leading_group',
+  }]);
   assert.equal(race.frames.at(-1).roadGroups.length,3);
   assert.deepEqual(race.provisionalResults.slice(0,3).map(result=>result.roadGroupId),
     race.frames.at(-1).roadGroups.map(group=>group.id));
@@ -589,7 +592,7 @@ test('the full tactical trace is deterministic, bounded and makes aggressive ord
   const a=simulateTacticalTour(input);
   assert.deepEqual(a,simulateTacticalTour(input));
   assert.equal(a.frames.length,40);
-  assert.equal(a.tuningVersion,'v2-prototype-32');
+  assert.equal(a.tuningVersion,'v2-prototype-33');
   assert.equal(a.frames.at(-1).km,40);
   assert.ok(a.frames.some(frame=>frame.attackers.length>0));
   assert.ok(a.frames.some(frame=>frame.chasers.length>0));
