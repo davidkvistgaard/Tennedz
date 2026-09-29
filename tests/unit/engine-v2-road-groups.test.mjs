@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {splitFrontRoadGroup,formChasingRoadGroup,advanceRoadGroups,
+import {splitFrontRoadGroup,splitRoadGroup,joinRoadGroupAhead,formChasingRoadGroup,advanceRoadGroups,
   validateRoadGroupTransition,selectRoadGroupPulls} from '../../lib/engine/v2/road-groups.mjs';
 
 const initial=[{id:'road-1',riderIds:['a-0','a-1','b-0'],teamIds:['a','b'],gapSeconds:20}];
@@ -15,6 +15,36 @@ test('a break rider can open a second road group without moving teammates instan
     {id:'road-1',riderIds:['a-1','b-0'],teamIds:['a','b'],gapSeconds:20},
   ]);
   assert.deepEqual(initial,[{id:'road-1',riderIds:['a-0','a-1','b-0'],teamIds:['a','b'],gapSeconds:20}]);
+});
+
+test('a pursuing rider can attack into an intermediate group without moving the leaders',()=>{
+  const previous=[
+    {id:'road-1',riderIds:['a-0'],teamIds:['a'],gapSeconds:30},
+    {id:'road-2',riderIds:['b-0','b-1'],teamIds:['b'],gapSeconds:12},
+  ];
+  const moved=splitRoadGroup(previous,{riderId:'b-0',teamByRiderId:{'b-0':'b','b-1':'b'},
+    newGroupId:'road-3',attackSeconds:5});
+  assert.deepEqual(moved.map(group=>group.id),['road-1','road-3','road-2']);
+  assert.deepEqual(moved.map(group=>group.gapSeconds),[30,17,12]);
+  assert.equal(validateRoadGroupTransition(previous,moved,{splitRiderId:'b-0'}),true);
+  assert.throws(()=>validateRoadGroupTransition(previous,moved,{splitRiderId:'b-1'}),/split/);
+  assert.throws(()=>splitRoadGroup(previous,{riderId:'b-0',
+    teamByRiderId:{'b-0':'b','b-1':'b'},newGroupId:'road-3',attackSeconds:18}),/split/);
+});
+
+test('a pursuing rider can bridge into the group directly ahead',()=>{
+  const previous=[
+    {id:'road-1',riderIds:['a-0'],teamIds:['a'],gapSeconds:20},
+    {id:'road-2',riderIds:['b-0','b-1'],teamIds:['b'],gapSeconds:12},
+  ];
+  const moved=joinRoadGroupAhead(previous,{riderId:'b-0',
+    teamByRiderId:{'b-0':'b','b-1':'b'}});
+  assert.deepEqual(moved.map(group=>group.riderIds),[['a-0','b-0'],['b-1']]);
+  assert.equal(validateRoadGroupTransition(previous,moved,{advancedRiderId:'b-0',
+    advancedToGroupId:'road-1'}),true);
+  assert.throws(()=>validateRoadGroupTransition(previous,moved),/changed groups/);
+  assert.throws(()=>validateRoadGroupTransition(previous,moved,{advancedRiderId:'b-0',
+    advancedToGroupId:'road-2'}),/ahead/);
 });
 
 test('a teammate behind a rider up the road sits on while rivals can still pull',()=>{
