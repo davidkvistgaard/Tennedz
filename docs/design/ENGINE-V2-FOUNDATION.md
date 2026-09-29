@@ -46,6 +46,8 @@ All input, event seed, route version, locked weather, order snapshot, tuning ver
 
 ## Next gates
 
+For repeatable balance diagnostics, run `node scripts/engine-v2-balance.mjs 100`. It compares the four plans using the same 100 seeds and reports wins, placings, energy, breakaways, dropped riders, attempted attacks and successful admissions. This is a fixed fictional flat-road cast; its rates are diagnostic, not a target distribution for the full game.
+
 1. Replace the initial group/finish approximation with per-rider sustained pace, drafting, terrain/surface/weather effects, energy recovery, road positioning and realistic group formation. Write scenario tests in which each visible stat changes the action it is meant to govern.
 2. Expand precommitted contingencies beyond the first exhausted-captain rule, ensuring each has observable triggers, response delays and failure reasons. Balance leadership without making the captain's own speed depend on it.
 3. Produce complete deterministic results and a recorded replay, then compare thousands of seeded races against the existing engine. Check role diversity, order impact, sensible energy use, upset rates and men/women separately. Tune constants centrally without rewriting the simulation.
