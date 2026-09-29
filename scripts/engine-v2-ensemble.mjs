@@ -52,6 +52,7 @@ for(const [course,stage] of Object.entries(ROUTES)){
     report.courses[course][gender]={};
     for(const strategy of STRATEGIES){
       const totals={amberWins:0,amberPodiums:0,breakWins:0,positiveFinalGaps:0,
+        photoFinishBreakWins:0,clearBreakWins:0,breakWinMargins:[],
         caughtBreaks:0,finishLineCatches:0,partialFinishCatches:0,
         finishLineCaughtRiders:0,droppedRiders:0,amberEnergy:0,finalGaps:[]};
       for(let sample=0;sample<samples;sample++){
@@ -72,6 +73,14 @@ for(const [course,stage] of Object.entries(ROUTES)){
         totals.amberWins+=Number(best===1);
         totals.amberPodiums+=Number(best<=3);
         totals.breakWins+=Number(race.provisionalResults[0].group==='breakaway');
+        if(race.provisionalResults[0].group==='breakaway'){
+          const firstBunch=race.provisionalResults.find(rider=>rider.group==='peloton');
+          if(!firstBunch)throw new Error('A breakaway win has no bunch finisher to compare.');
+          const margin=firstBunch.timeSeconds-race.provisionalResults[0].timeSeconds;
+          totals.breakWinMargins.push(margin);
+          totals.photoFinishBreakWins+=Number(margin<1);
+          totals.clearBreakWins+=Number(margin>=5);
+        }
         totals.positiveFinalGaps+=Number(race.frames.at(-1).gapSeconds>0);
         totals.finalGaps.push(race.frames.at(-1).gapSeconds);
         totals.caughtBreaks+=race.frames.filter(frame=>frame.caughtBreakawayRiderIds.length>0).length;
@@ -84,10 +93,15 @@ for(const [course,stage] of Object.entries(ROUTES)){
         totals.amberEnergy+=amber.reduce((sum,rider)=>sum+rider.energy,0)/amber.length;
       }
       const sortedGaps=[...totals.finalGaps].sort((a,b)=>a-b);
+      const sortedWinMargins=[...totals.breakWinMargins].sort((a,b)=>a-b);
       report.courses[course][gender][strategy]={
         amberWinRate:totals.amberWins/samples,
         amberPodiumRate:totals.amberPodiums/samples,
         breakWinRate:totals.breakWins/samples,
+        photoFinishBreakWinRate:totals.photoFinishBreakWins/samples,
+        clearBreakWinRate:totals.clearBreakWins/samples,
+        medianBreakWinnerMarginSeconds:sortedWinMargins.length?
+          sortedWinMargins[Math.floor((sortedWinMargins.length-1)/2)]:null,
         finalGapRate:totals.positiveFinalGaps/samples,
         medianFinalGapSeconds:sortedGaps[Math.floor((samples-1)/2)],
         p90FinalGapSeconds:sortedGaps[Math.ceil(samples*.9)-1],
