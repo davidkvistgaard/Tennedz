@@ -44,3 +44,16 @@ test('a teammate will not chase its own rider while a tired attacker cannot spli
   assert.equal(evaluateBreakAttack({group,teams:[tired,team('b')],teamId:'a',km:21,
     segment}).status,'exhausted');
 });
+
+test('a defender with a teammate farther up the road sits on during another attack',()=>{
+  const attacker=team('a',{attack:true,skill:90});
+  const opponent=team('b',{cooperate:true,skill:60});
+  const withoutTeammateAhead=evaluateBreakAttack({group,teams:[attacker,opponent],
+    teamId:'a',km:21,segment});
+  const withTeammateAhead=evaluateBreakAttack({group,teams:[attacker,opponent],
+    teamId:'a',km:21,segment,teamIdsAhead:['b']});
+  assert.deepEqual(withoutTeammateAhead.defenderRiderIds,['b-0']);
+  assert.deepEqual(withTeammateAhead.defenderRiderIds,[]);
+  assert.ok(withTeammateAhead.attackSeconds>withoutTeammateAhead.attackSeconds);
+  assert.deepEqual(withTeammateAhead.energyCosts.map(cost=>cost.riderId),['a-0']);
+});
