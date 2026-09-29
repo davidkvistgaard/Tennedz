@@ -33,6 +33,11 @@ for (const width of [390, 1440])
     await page.keyboard.press("End");
     await expect(page.getByText("160 / 160 km", { exact: true })).toBeVisible();
     await expect(page.getByText(/attacks? attempted · \d+ joined the break/)).toBeVisible();
+    await kilometreSlider.focus();
+    await page.keyboard.press("Home");
+    for(let kilometre=1;kilometre<7;kilometre++)await page.keyboard.press("ArrowRight");
+    await expect(page.getByText("7 / 160 km", { exact: true })).toBeVisible();
+    await expect(page.getByText(/Break caught: \d+ riders? brought back/)).toBeVisible();
     await expect(page.getByRole("table", { name: "Team state after this kilometre" })).toBeVisible();
     const provisionalResults=page.getByRole("table", { name: "Provisional rider results" });
     await expect(provisionalResults).toBeVisible();

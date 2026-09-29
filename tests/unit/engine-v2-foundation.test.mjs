@@ -519,6 +519,23 @@ test('a rider already in the break cannot launch another new attack',()=>{
   assert.ok(Math.max(...result.frames.map(frame=>frame.breakawayRiderIds.length))<=2);
 });
 
+test('a caught break is recorded and a later planned attack can establish a new one',()=>{
+  const race=runKilometreLab({scenario:flatScenario('sprint'),seed:'cycle-0'});
+  const first=race.frames.findIndex(frame=>frame.breakawayRiderIds.length>0);
+  const caught=race.frames.findIndex((frame,index)=>index>first&&frame.caughtBreakawayRiderIds.length>0);
+  const next=race.frames.findIndex((frame,index)=>index>caught&&frame.joinedBreakawayRiderIds.length>0);
+  assert.ok(first>=0&&caught>first&&next>caught);
+  assert.deepEqual(race.frames[caught].caughtBreakawayRiderIds,
+    race.frames[caught-1].breakawayRiderIds);
+  assert.equal(race.frames[caught].gapSeconds,0);
+  assert.deepEqual(race.frames[caught].breakawayRiderIds,[]);
+  assert.ok(race.frames[next].gapSeconds>0);
+  const caughtRider=race.frames[caught].caughtBreakawayRiderIds[0];
+  const energyAt=index=>race.frames[index].riderGroups.find(rider=>rider.id===caughtRider).energy;
+  assert.ok(energyAt(caught)<energyAt(caught-1));
+  assert.equal(validateRecordedTour(race),true);
+});
+
 test('the new kilometre model reuses the existing laboratory cast without changing it',()=>{
   const scenario=flatScenario('break'),before=structuredClone(scenario);
   const a=runKilometreLab({scenario,seed:'paired'});
@@ -559,6 +576,11 @@ test('recorded playback does not recalculate and rejects a result that differs f
   const missingJoin=structuredClone(result);
   missingJoin.frames[firstBreak].joinedBreakawayRiderIds=[];
   assert.throws(()=>validateRecordedTour(missingJoin),/breakaway/);
+  const firstCatch=result.frames.findIndex(frame=>frame.caughtBreakawayRiderIds.length>0);
+  assert.ok(firstCatch>=0);
+  const missingCatch=structuredClone(result);
+  missingCatch.frames[firstCatch].caughtBreakawayRiderIds=[];
+  assert.throws(()=>validateRecordedTour(missingCatch),/catch event/);
   const impossibleJoin=structuredClone(result);
   impossibleJoin.frames[firstBreak].chasePower=impossibleJoin.frames[firstBreak].attackPower+1;
   assert.throws(()=>validateRecordedTour(impossibleJoin),/breakaway/);
