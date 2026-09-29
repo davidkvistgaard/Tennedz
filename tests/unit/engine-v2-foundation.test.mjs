@@ -663,6 +663,10 @@ test('recorded playback does not recalculate and rejects a result that differs f
   const result=runKilometreLab({scenario:flatScenario('sprint'),seed:'recorded'});
   assert.equal(validateRecordedTour(result),true);
   const before=structuredClone(result);
+  assert.equal(result.committedInputs.teams.length,4);
+  assert.equal(result.committedInputs.teams[0].riders.length,8);
+  assert.deepEqual(Object.keys(result.committedInputs.teams[0].riders[0]).filter(key=>SPORTING_SKILLS.includes(key)).sort(),
+    [...SPORTING_SKILLS].sort());
   const last=readRecordedKilometre(result,result.frames.length-1);
   assert.deepEqual(last,result.frames.at(-1));
   last.riderGroups[0].energy=0;
@@ -674,6 +678,12 @@ test('recorded playback does not recalculate and rejects a result that differs f
   const missingRider=structuredClone(result);
   missingRider.frames[5].riderGroups.pop();
   assert.throws(()=>validateRecordedTour(missingRider),/kilometre/);
+  const wrongInput=structuredClone(result);
+  wrongInput.committedInputs.teams[0].riders[0].gender='F';
+  assert.throws(()=>validateRecordedTour(wrongInput),/committed rider/);
+  const missingInput=structuredClone(result);
+  missingInput.committedInputs.teams[0].riders.pop();
+  assert.throws(()=>validateRecordedTour(missingInput),/committed team/);
   const wrongBreak=structuredClone(result);
   wrongBreak.frames[19].breakawayRiderIds.push('foreign');
   assert.throws(()=>validateRecordedTour(wrongBreak),/breakaway|rider state/);
