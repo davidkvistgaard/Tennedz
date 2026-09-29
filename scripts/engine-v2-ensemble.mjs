@@ -52,7 +52,8 @@ for(const [course,stage] of Object.entries(ROUTES)){
     report.courses[course][gender]={};
     for(const strategy of STRATEGIES){
       const totals={amberWins:0,amberPodiums:0,breakWins:0,positiveFinalGaps:0,
-        caughtBreaks:0,finishLineCatches:0,droppedRiders:0,amberEnergy:0,finalGaps:[]};
+        caughtBreaks:0,finishLineCatches:0,partialFinishCatches:0,
+        finishLineCaughtRiders:0,droppedRiders:0,amberEnergy:0,finalGaps:[]};
       for(let sample=0;sample<samples;sample++){
         const teams=fictionalTeams(sample,gender).map((team,index)=>({
           ...team,orders:{captainId:team.riders[0].id,roadCaptainId:team.riders[1].id,
@@ -75,6 +76,10 @@ for(const [course,stage] of Object.entries(ROUTES)){
         totals.finalGaps.push(race.frames.at(-1).gapSeconds);
         totals.caughtBreaks+=race.frames.filter(frame=>frame.caughtBreakawayRiderIds.length>0).length;
         totals.finishLineCatches+=Number(race.frames.at(-1).finishLineCatch);
+        totals.partialFinishCatches+=Number(race.frames.at(-1).finishLineCatch&&
+          race.frames.at(-1).breakawayRiderIds.length>0);
+        if(race.frames.at(-1).finishLineCatch)
+          totals.finishLineCaughtRiders+=race.frames.at(-1).caughtBreakawayRiderIds.length;
         totals.droppedRiders+=race.provisionalResults.filter(rider=>rider.group==='dropped').length;
         totals.amberEnergy+=amber.reduce((sum,rider)=>sum+rider.energy,0)/amber.length;
       }
@@ -88,6 +93,8 @@ for(const [course,stage] of Object.entries(ROUTES)){
         p90FinalGapSeconds:sortedGaps[Math.ceil(samples*.9)-1],
         meanCatches:+(totals.caughtBreaks/samples).toFixed(2),
         finishLineCatchRate:totals.finishLineCatches/samples,
+        partialFinishCatchRate:totals.partialFinishCatches/samples,
+        meanFinishLineCaughtRiders:+(totals.finishLineCaughtRiders/samples).toFixed(2),
         meanDroppedRiders:+(totals.droppedRiders/samples).toFixed(2),
         amberMeanEnergy:+(totals.amberEnergy/samples).toFixed(2),
       };

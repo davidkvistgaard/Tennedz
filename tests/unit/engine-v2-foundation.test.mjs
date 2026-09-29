@@ -364,7 +364,7 @@ test('the full tactical trace is deterministic, bounded and makes aggressive ord
   const a=simulateTacticalTour(input);
   assert.deepEqual(a,simulateTacticalTour(input));
   assert.equal(a.frames.length,40);
-  assert.equal(a.tuningVersion,'v2-prototype-17');
+  assert.equal(a.tuningVersion,'v2-prototype-18');
   assert.equal(a.frames.at(-1).km,40);
   assert.ok(a.frames.some(frame=>frame.attackers.length>0));
   assert.ok(a.frames.some(frame=>frame.chasers.length>0));
@@ -649,6 +649,28 @@ test('a finishing sprint records a last-metre catch before the result is shown',
   tampered.frames.at(-1).finishLineCatch=false;
   tampered.frames[0].finishLineCatch=true;
   assert.throws(()=>validateRecordedTour(tampered),/kilometre/);
+});
+
+test('the finishing sprint can catch one break rider while another stays ahead',()=>{
+  const attacker=tacticalTeam('a','aggressive',{baseline:{chase:'ignore'},
+    phases:[{atKm:30,attack:'none'}]});
+  const sprinter=tacticalTeam('b','protect',{baseline:{chase:'ignore'}});
+  attacker.riders.forEach((rider,index)=>{rider.sprint=index===0?75:0;rider.acceleration=15;});
+  sprinter.riders.forEach(rider=>{rider.sprint=100;rider.acceleration=50;});
+  const flat={distance_km:40,profile_points:[[0,100],[40,100]]};
+  const recording=simulateTacticalTour({stage:flat,teams:[attacker,sprinter],seed:'probe-0'});
+  const before=recording.frames.at(-2),finish=recording.frames.at(-1);
+  assert.deepEqual(before.breakawayRiderIds,['a-0','a-1']);
+  assert.equal(finish.finishLineCatch,true);
+  assert.deepEqual(finish.caughtBreakawayRiderIds,['a-1']);
+  assert.deepEqual(finish.breakawayRiderIds,['a-0']);
+  assert.ok(finish.gapSeconds>0&&finish.gapSeconds<before.gapSeconds);
+  assert.equal(recording.provisionalResults[0].riderId,'a-0');
+  assert.equal(recording.provisionalResults.find(rider=>rider.riderId==='a-1').group,'peloton');
+  assert.equal(validateRecordedTour(recording),true);
+  const tampered=structuredClone(recording);
+  tampered.frames.at(-1).caughtBreakawayRiderIds=['a-0','a-1'];
+  assert.throws(()=>validateRecordedTour(tampered),/breakaway|catch/);
 });
 
 test('a rider already in the break cannot launch another new attack',()=>{
