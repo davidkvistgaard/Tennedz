@@ -102,7 +102,7 @@ test('repeated attacks and constant chasing consume energy; road captain improve
   const weak=tacticalTeam('weak','balanced',{baseline:{attack:'none',chase:'selective'}});
   leader.riders[1].leadership=90;weak.riders[1].leadership=0;
   const attacker=tacticalTeam('attacker','aggressive');
-  attacker.riders.forEach(r=>{r.strength=20;r.flat=20;r.sprint=20;});
+  attacker.riders.forEach(r=>{r.strength=20;r.flat=20;r.hills=20;r.endurance=20;r.sprint=20;});
   const smart=resolveTacticalKilometre({teams:[leader,attacker],km:5});
   const late=resolveTacticalKilometre({teams:[weak,attacker],km:5});
   assert.ok(smart.chasePower>late.chasePower);
@@ -153,13 +153,33 @@ test('a protected sprinter gets a costly chase surge near the finish',()=>{
     early.energyCosts.find(c=>c.reason==='chase').cost);
 });
 
+test('road surface and weather change the balance of specialised attackers and chasers',()=>{
+  const attacker=tacticalTeam('a','aggressive');
+  const defender=tacticalTeam('d','protect',{baseline:{chase:'all'}});
+  attacker.riders.forEach(rider=>{rider.cobbles=95;rider.handling=95;rider.wind=95;});
+  defender.riders.forEach(rider=>{rider.cobbles=10;rider.handling=10;rider.wind=10;});
+  const road={terrain:'flat',surface:'road',exposed:false,
+    weather:{temperatureC:16,windKph:0,rainMm:0}};
+  const difficult={...road,surface:'cobbles',exposed:true,
+    weather:{temperatureC:16,windKph:35,rainMm:4}};
+  const context={teams:[attacker,defender],km:20};
+  const calm=resolveTacticalKilometre({...context,segment:road});
+  const storm=resolveTacticalKilometre({...context,segment:difficult});
+  const hot=resolveTacticalKilometre({...context,segment:{...road,
+    weather:{...road.weather,temperatureC:39}}});
+  assert.ok(storm.attackPower>calm.attackPower);
+  assert.ok(storm.chasePower<calm.chasePower);
+  assert.ok(storm.gapSeconds>calm.gapSeconds);
+  assert.ok(hot.attackPower<calm.attackPower);
+});
+
 test('the full tactical trace is deterministic, bounded and makes aggressive orders costly',()=>{
   const input={stage,seed:'tour-1',weather:{temp_c:14,wind_kph:25,precipitation_mm:2},
     teams:[tacticalTeam('attacker','aggressive'),tacticalTeam('defender','protect',{baseline:{chase:'all'}}),tacticalTeam('other','balanced')]};
   const a=simulateTacticalTour(input);
   assert.deepEqual(a,simulateTacticalTour(input));
   assert.equal(a.frames.length,40);
-  assert.equal(a.tuningVersion,'v2-prototype-7');
+  assert.equal(a.tuningVersion,'v2-prototype-8');
   assert.equal(a.frames.at(-1).km,40);
   assert.ok(a.frames.some(frame=>frame.attackers.length>0));
   assert.ok(a.frames.some(frame=>frame.chasers.length>0));
@@ -218,6 +238,21 @@ test('fatigue and low energy reduce ability without changing permanent skills',(
   const tired=riderKilometreEffect({...rider,fatigue:60},segment,{energy:30});
   assert.ok(fresh.ability>tired.ability);
   assert.deepEqual(sportingSkills(rider),sportingSkills({...rider,fatigue:60}));
+});
+
+test('extreme temperature lowers ability, with endurance mitigating the loss',()=>{
+  const base={flat:60,endurance:20,form:50,fatigue:0};
+  const segment={terrain:'flat',surface:'road',exposed:false,
+    weather:{temperatureC:16,windKph:0,rainMm:0}};
+  const hot={...segment,weather:{...segment.weather,temperatureC:39}};
+  const lowNormal=riderKilometreEffect(base,segment);
+  const lowHot=riderKilometreEffect(base,hot);
+  const highNormal=riderKilometreEffect({...base,endurance:90},segment);
+  const highHot=riderKilometreEffect({...base,endurance:90},hot);
+  assert.ok(lowHot.ability<lowNormal.ability);
+  assert.ok(lowHot.energyCostMultiplier>lowNormal.energyCostMultiplier);
+  assert.ok(highHot.ability/highNormal.ability>lowHot.ability/lowNormal.ability);
+  assert.throws(()=>riderKilometreEffect(base,{...segment,weather:{temperatureC:NaN}}));
 });
 
 test('a precommitted backup plan is executed by a stronger road captain sooner',()=>{
