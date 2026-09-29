@@ -614,9 +614,15 @@ test('selective pursuit waits with a manageable gap but starts as the finish app
   const context={teams:[ahead,defender],gapSeconds:7,breakawayTeamIds:['a'],
     breakawayRiderIds:['a-0'],engagedChaseTeamIds:['b'],distanceKm:160};
   const early=resolveTacticalKilometre({...context,km:20});
+  const mid=resolveTacticalKilometre({...context,km:45,gapSeconds:3});
+  const guard=resolveTacticalKilometre({...context,km:60,gapSeconds:3});
   const late=resolveTacticalKilometre({...context,km:120});
   assert.deepEqual(early.heldChaseTeamIds,['b']);
   assert.deepEqual(early.chasers,[]);
+  assert.deepEqual(mid.heldChaseTeamIds,['b']);
+  assert.deepEqual(mid.chasers,[]);
+  assert.deepEqual(guard.heldChaseTeamIds,[]);
+  assert.deepEqual(guard.chasers.map(chaser=>chaser.teamId),['b']);
   assert.ok(early.energyCosts.every(cost=>cost.reason!=='chase'));
   assert.deepEqual(late.heldChaseTeamIds,[]);
   assert.deepEqual(late.chasers.map(chaser=>chaser.teamId),['b']);
@@ -684,7 +690,7 @@ test('the full tactical trace is deterministic, bounded and makes aggressive ord
   const a=simulateTacticalTour(input);
   assert.deepEqual(a,simulateTacticalTour(input));
   assert.equal(a.frames.length,40);
-  assert.equal(a.tuningVersion,'v2-prototype-37');
+  assert.equal(a.tuningVersion,'v2-prototype-38');
   assert.equal(a.frames.at(-1).km,40);
   assert.ok(a.frames.some(frame=>frame.attackers.length>0));
   assert.ok(a.frames.some(frame=>frame.chasers.length>0));
