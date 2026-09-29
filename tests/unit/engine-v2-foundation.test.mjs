@@ -1123,6 +1123,28 @@ test('a committed break attack splits the live road group and survives replay va
   assert.throws(()=>validateRecordedTour(wrongRearGap),/road group/);
 });
 
+test('the stronger of two simultaneous break attacks wins the recorded move',()=>{
+  const flat={distance_km:40,profile_points:[[0,100],[40,100]]};
+  const makeTeam=(id,skill)=>({id,
+    riders:Array.from({length:8},(_,index)=>({id:`${id}-${index}`,gender:'M',
+      flat:index===0?skill:60,strength:index===0?skill:60,
+      endurance:index===0?skill:60,acceleration:index===0?skill:60,
+      sprint:50,leadership:50})),
+    orders:{captainId:`${id}-0`,roadCaptainId:`${id}-1`,preset:'aggressive',
+      baseline:{chase:'ignore'},
+      phases:[{atKm:20,breakAttackRiderId:`${id}-0`}]}});
+  const a=makeTeam('a',60),b=makeTeam('b',95);
+  const race=simulateTacticalTour({stage:flat,teams:[a,b],seed:'simultaneous-break'});
+  const attack=race.frames[20].splitAttack;
+  assert.equal(attack?.riderId,'b-0');
+  assert.equal(attack?.status,'split');
+  assert.deepEqual(race.frames[20].blockedBreakAttacks,[{
+    teamId:'a',riderId:'a-0',reason:'another_break_attack'}]);
+  assert.equal(validateRecordedTour(race),true);
+  const reordered=simulateTacticalTour({stage:flat,teams:[b,a],seed:'simultaneous-break'});
+  assert.deepEqual(reordered.frames,race.frames);
+});
+
 test('the original break can catch a tiring attacker and retain its road identity',()=>{
   const flat={distance_km:40,profile_points:[[0,100],[40,100]]};
   const makeTeam=(id,preset,phases=[])=>({id,
