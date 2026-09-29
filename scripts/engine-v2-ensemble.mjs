@@ -54,7 +54,9 @@ for(const [course,stage] of Object.entries(ROUTES)){
       const totals={amberWins:0,amberPodiums:0,breakWins:0,positiveFinalGaps:0,
         photoFinishBreakWins:0,clearBreakWins:0,breakWinMargins:[],
         caughtBreaks:0,finishLineCatches:0,partialFinishCatches:0,
-        finishLineCaughtRiders:0,droppedRiders:0,amberEnergy:0,finalGaps:[]};
+        finishLineCaughtRiders:0,droppedRiders:0,amberEnergy:0,finalGaps:[],
+        maxGroups:0,multiGroupFinishes:0,chaseGroupAttackMoves:0,
+        bridgesToGroupAhead:0,roadGroupLimitBlocks:0};
       for(let sample=0;sample<samples;sample++){
         const teams=fictionalTeams(sample,gender).map((team,index)=>({
           ...team,orders:{captainId:team.riders[0].id,roadCaptainId:team.riders[1].id,
@@ -91,6 +93,17 @@ for(const [course,stage] of Object.entries(ROUTES)){
           totals.finishLineCaughtRiders+=race.frames.at(-1).caughtBreakawayRiderIds.length;
         totals.droppedRiders+=race.provisionalResults.filter(rider=>rider.group==='dropped').length;
         totals.amberEnergy+=amber.reduce((sum,rider)=>sum+rider.energy,0)/amber.length;
+        totals.maxGroups+=Math.max(...race.frames.map(frame=>frame.roadGroups.length));
+        totals.multiGroupFinishes+=Number(race.frames.at(-1).roadGroups.length>1);
+        for(const [index,frame] of race.frames.entries()){
+          if(frame.splitAttack?.status==='joined_group_ahead')totals.bridgesToGroupAhead++;
+          if(['split','joined_group_ahead'].includes(frame.splitAttack?.status)&&
+            race.frames[index-1]?.roadGroups.findIndex(group=>
+              group.riderIds.includes(frame.splitAttack.riderId))>0)
+            totals.chaseGroupAttackMoves++;
+          totals.roadGroupLimitBlocks+=frame.blockedBreakAttacks.filter(event=>
+            event.reason==='road_group_limit').length;
+        }
       }
       const sortedGaps=[...totals.finalGaps].sort((a,b)=>a-b);
       const sortedWinMargins=[...totals.breakWinMargins].sort((a,b)=>a-b);
@@ -111,6 +124,11 @@ for(const [course,stage] of Object.entries(ROUTES)){
         meanFinishLineCaughtRiders:+(totals.finishLineCaughtRiders/samples).toFixed(2),
         meanDroppedRiders:+(totals.droppedRiders/samples).toFixed(2),
         amberMeanEnergy:+(totals.amberEnergy/samples).toFixed(2),
+        meanMaxRoadGroups:+(totals.maxGroups/samples).toFixed(2),
+        multiGroupFinishRate:totals.multiGroupFinishes/samples,
+        meanChaseGroupAttackMoves:+(totals.chaseGroupAttackMoves/samples).toFixed(2),
+        meanBridgesToGroupAhead:+(totals.bridgesToGroupAhead/samples).toFixed(2),
+        meanRoadGroupLimitBlocks:+(totals.roadGroupLimitBlocks/samples).toFixed(2),
       };
     }
   }
