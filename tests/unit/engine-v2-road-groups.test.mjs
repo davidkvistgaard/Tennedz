@@ -112,6 +112,28 @@ test('a new chase remains valid when older road groups merge that kilometre',()=
     joinedRiderIds:['d-0'],formedChaseGroupId:'road-4'}),/disappeared/);
 });
 
+test('a rider may split from the leading group just after its road groups merge',()=>{
+  const previous=[
+    {id:'road-1',riderIds:['a-0','b-0'],teamIds:['a','b'],gapSeconds:30},
+    {id:'road-2',riderIds:['c-0'],teamIds:['c'],gapSeconds:20},
+  ];
+  const moved=advanceRoadGroups(previous,{'road-1':-11,'road-2':0});
+  const current=splitFrontRoadGroup(moved.groups,{riderId:'a-0',
+    teamByRiderId:{'a-0':'a','b-0':'b','c-0':'c'},
+    newGroupId:'road-3',attackSeconds:4});
+  assert.deepEqual(current.map(group=>group.id),['road-3','road-2']);
+  assert.equal(validateRoadGroupTransition(previous,current,{
+    mergedGroupIds:['road-1'],splitRiderId:'a-0'}),true);
+  assert.throws(()=>validateRoadGroupTransition(previous,current,{
+    splitRiderId:'a-0'}),/disappeared/);
+  const wrongSource=[
+    {id:'road-3',riderIds:['c-0'],teamIds:['c'],gapSeconds:34},
+    {...previous[0]},
+  ];
+  assert.throws(()=>validateRoadGroupTransition(previous,wrongSource,
+    {splitRiderId:'c-0'}),/split/);
+});
+
 test('several road groups can merge in order without losing their riders or identities',()=>{
   const groups=[
     {id:'road-1',riderIds:['a-0'],teamIds:['a'],gapSeconds:30},
