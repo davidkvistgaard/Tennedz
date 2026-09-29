@@ -747,6 +747,11 @@ test('a rider still in the break finishes ahead of the bunch when its gap surviv
   assert.ok(ahead.size>0);
   assert.ok(result.provisionalResults.find(r=>ahead.has(r.riderId)).position<
     result.provisionalResults.find(r=>!ahead.has(r.riderId)).position);
+  assert.equal(validateRecordedTour(result),true);
+  const fabricated=structuredClone(result);
+  fabricated.frames.at(-1).gapSeconds=100;
+  fabricated.frames.at(-1).roadGroups[0].gapSeconds=100;
+  assert.throws(()=>validateRecordedTour(fabricated),/final breakaway gap/);
 });
 
 test('the final sprint cannot reverse uncaught and dropped group order',()=>{
