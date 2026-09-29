@@ -21,6 +21,7 @@ test('every kilometre has coherent elevation, terrain, surface and locked-weathe
   const options={seed:'fixed-race',weather:{temp_c:16,wind_kph:22,precipitation_mm:3}};
   const a=buildKilometreRoute(stage,options),b=buildKilometreRoute(stage,options);
   assert.deepEqual(a,b);
+  assert.deepEqual(a.lockedWeather,{temperatureC:16,windKph:22,rainMm:3});
   assert.equal(a.kilometres.length,40);
   assert.equal(a.kilometres[0].startM,100);
   assert.equal(a.kilometres.at(-1).endM,100);
@@ -276,6 +277,23 @@ test('the tactical trace rejects mixed race categories and duplicate riders',()=
   assert.throws(()=>simulateTacticalTour({stage,teams,seed:'invalid-skill'}));
 });
 
+test('male and female recordings retain separate categories and their locked inputs',()=>{
+  const maleTeams=[tacticalTeam('a','aggressive'),tacticalTeam('b','protect')];
+  const femaleTeams=maleTeams.map(team=>({...team,riders:team.riders.map(rider=>({...rider,gender:'F'}))}));
+  const input={stage,seed:'category-recording',weather:{temp_c:19,wind_kph:14,precipitation_mm:2}};
+  const men=simulateTacticalTour({...input,teams:maleTeams});
+  const women=simulateTacticalTour({...input,teams:femaleTeams});
+  assert.equal(men.raceCategory,'M');
+  assert.equal(women.raceCategory,'F');
+  for(const recording of [men,women]){
+    assert.equal(recording.raceSeed,input.seed);
+    assert.deepEqual(recording.route.lockedWeather,{temperatureC:19,windKph:14,rainMm:2});
+    assert.equal(validateRecordedTour(recording),true);
+  }
+  assert.deepEqual(women.frames,men.frames);
+  assert.deepEqual(women.provisionalResults,men.provisionalResults);
+});
+
 test('each of the fourteen sporting skills has a clear primary racing situation',()=>{
   const rider=Object.fromEntries(SPORTING_SKILLS.map(skill=>[skill,50]));
   const segment={terrain:'flat',surface:'road',weather:{windKph:8,rainMm:0}};
@@ -356,6 +374,15 @@ test('the tactical model stays bounded across a full-length twenty-team race',()
   assert.ok(result.frames.every(frame=>teams.every(team=>frame.breakawayRiderIds.filter(id=>id.startsWith(`${team.id}-`)).length<=2)));
   assert.equal(result.provisionalResults.length,160);
   assert.equal(validateRecordedTour(result),true);
+  for(const invalid of [
+    recording=>{recording.raceCategory='mixed';},
+    recording=>{delete recording.raceSeed;},
+    recording=>{delete recording.route.lockedWeather;},
+  ]){
+    const incomplete=structuredClone(result);
+    invalid(incomplete);
+    assert.throws(()=>validateRecordedTour(incomplete),/Incomplete race recording/);
+  }
   assert.ok(result.provisionalResults.every((r,i,all)=>i===0||r.timeSeconds>=all[i-1].timeSeconds));
 });
 
