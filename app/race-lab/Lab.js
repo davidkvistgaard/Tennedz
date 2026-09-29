@@ -407,7 +407,7 @@ export default function Lab() {
             const leader=kilometreRace.scenario.teams.find(t=>t.id===team.teamId)?.riders.find(r=>r.id===leaderId)?.name??leaderId;
             return <tr key={team.teamId}><th>{name}</th><td>{team.mean.toFixed(1)}</td><td>{currentKm.teamPace.find(p=>p.teamId===team.teamId)?.meanAbility.toFixed(1)}</td><td>{leader}</td></tr>;
           })}</tbody></table></div>
-          <p>{currentKm.breakawayRiderIds.length} rider{currentKm.breakawayRiderIds.length===1?'':'s'} in the break · {currentKm.attackers.length} new attack{currentKm.attackers.length===1?'':'s'} · {currentKm.chasers.length} chasing team{currentKm.chasers.length===1?'':'s'} · {currentKm.shelterEvents.length} protected leader{currentKm.shelterEvents.length===1?'':'s'}{currentKm.decisions.length?` · ${currentKm.decisions.length} backup-plan change`:''}</p>
+          <p>{currentKm.breakawayRiderIds.length} rider{currentKm.breakawayRiderIds.length===1?'':'s'} in the break · {currentKm.attackers.length} new attack{currentKm.attackers.length===1?'':'s'} · {currentKm.chasers.length} chasing team{currentKm.chasers.length===1?'':'s'} · {currentKm.shelterEvents.length} protected leader{currentKm.shelterEvents.length===1?'':'s'} · {currentKm.recoveredRiderIds.length} rider{currentKm.recoveredRiderIds.length===1?'':'s'} recovering{currentKm.decisions.length?` · ${currentKm.decisions.length} backup-plan change`:''}</p>
           <p className="small">The entire trace and finish order were calculated before this slider appeared. The slider only reads saved frames.</p>
           <h3>Experimental finish order</h3>
           <p className="small">For balancing only. These are not live race results or a validated prediction.</p>

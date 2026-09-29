@@ -9,6 +9,7 @@ import {runKilometreLab} from '../../lib/engine/v2/lab.mjs';
 import {updateRiderGroups} from '../../lib/engine/v2/groups.mjs';
 import {selectShelter} from '../../lib/engine/v2/support.mjs';
 import {validateRecordedTour,readRecordedKilometre} from '../../lib/engine/v2/recording.mjs';
+import {recoveryForKilometre} from '../../lib/engine/v2/recovery.mjs';
 import {flatScenario} from '../../lib/race-lab/scenario.mjs';
 
 const stage={distance_km:40,profile_points:[[0,100],[10,100],[20,300],[30,100],[40,100]],
@@ -158,7 +159,7 @@ test('the full tactical trace is deterministic, bounded and makes aggressive ord
   const a=simulateTacticalTour(input);
   assert.deepEqual(a,simulateTacticalTour(input));
   assert.equal(a.frames.length,40);
-  assert.equal(a.tuningVersion,'v2-prototype-6');
+  assert.equal(a.tuningVersion,'v2-prototype-7');
   assert.equal(a.frames.at(-1).km,40);
   assert.ok(a.frames.some(frame=>frame.attackers.length>0));
   assert.ok(a.frames.some(frame=>frame.chasers.length>0));
@@ -293,6 +294,50 @@ test('protecting a captain saves the captain energy and costs helpers energy',()
   assert.ok(sheltered.frames.some(frame=>frame.shelterEvents.some(event=>event.teamId==='p')));
   assert.ok(finalEnergy(sheltered,'p-0')>finalEnergy(unsheltered,'p-0'));
   assert.ok(finalEnergy(sheltered,'p-2')<finalEnergy(unsheltered,'p-2'));
+});
+
+test('recovery requires consecutive quiet flat kilometres and rewards endurance',()=>{
+  const segment={terrain:'flat',surface:'road',gradientPct:0,exposed:false,
+    weather:{windKph:12,rainMm:0}};
+  const context={segment,effort:'conserve',group:'peloton',working:false};
+  assert.deepEqual(recoveryForKilometre({...context,rider:{endurance:70},quietKm:0}),
+    {quietKm:1,recovery:0});
+  assert.deepEqual(recoveryForKilometre({...context,rider:{endurance:70},quietKm:1}),
+    {quietKm:2,recovery:0});
+  const rested=recoveryForKilometre({...context,rider:{endurance:70},quietKm:2});
+  assert.ok(rested.recovery>0);
+  assert.ok(recoveryForKilometre({...context,rider:{endurance:90},quietKm:2}).recovery>rested.recovery);
+  for(const exception of [{working:true},{group:'breakaway'},{effort:'hard'},
+    {segment:{...segment,terrain:'climb'}},{segment:{...segment,exposed:true}}])
+    assert.deepEqual(recoveryForKilometre({...context,rider:{endurance:70},quietKm:4,...exception}),
+      {quietKm:0,recovery:0});
+});
+
+test('resting can restore spent energy but never exceed the starting fatigue cap',()=>{
+  const quiet=tacticalTeam('q','balanced',{baseline:{effort:'conserve',attack:'none',chase:'ignore'}});
+  const steady=tacticalTeam('q','balanced',{baseline:{effort:'steady',attack:'none',chase:'ignore'}});
+  const rival=tacticalTeam('r','balanced',{baseline:{attack:'none',chase:'ignore'}});
+  for(const team of [quiet,steady])team.riders.forEach(rider=>{rider.fatigue=80;});
+  const rested=simulateTacticalTour({stage,teams:[quiet,rival],seed:'rested'});
+  const spent=simulateTacticalTour({stage,teams:[steady,rival],seed:'rested'});
+  const energy=(result,id)=>result.frames.at(-1).riderGroups.find(r=>r.id===id).energy;
+  assert.ok(rested.frames.some(frame=>frame.recoveredRiderIds.includes('q-0')));
+  assert.ok(energy(rested,'q-0')>energy(spent,'q-0'));
+  assert.ok(rested.frames.every(frame=>frame.riderGroups.filter(r=>r.teamId==='q').every(r=>r.energy<=68)));
+});
+
+test('a precommitted late conserve phase allows recovery after earlier hard effort',()=>{
+  const hard=tacticalTeam('h','balanced',{baseline:{effort:'hard',attack:'none',chase:'ignore'}});
+  const planned=tacticalTeam('h','balanced',{baseline:{effort:'hard',attack:'none',chase:'ignore'},
+    phases:[{atKm:30,effort:'conserve'}]});
+  const rival=tacticalTeam('r','balanced',{baseline:{attack:'none',chase:'ignore'}});
+  const input={stage,seed:'planned-rest'};
+  const allHard=simulateTacticalTour({...input,teams:[hard,rival]});
+  const eased=simulateTacticalTour({...input,teams:[planned,rival]});
+  assert.deepEqual(eased.frames.slice(0,30),allHard.frames.slice(0,30));
+  assert.ok(eased.frames.slice(30).some(frame=>frame.recoveredRiderIds.includes('h-0')));
+  assert.ok(eased.frames.at(-1).riderGroups.find(r=>r.id==='h-0').energy>
+    allHard.frames.at(-1).riderGroups.find(r=>r.id==='h-0').energy);
 });
 
 test('a rider still in the break finishes ahead of the bunch when its gap survives',()=>{

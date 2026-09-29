@@ -24,6 +24,8 @@ The `protect` preset now commits saved helpers to a progressively stronger sprin
 
 Outside a break, available helpers on `protect` can also shelter their active leader. The leader saves some baseline energy while those helpers spend extra energy; helpers selected for chase work in the same kilometre cannot provide shelter. Positioning, strength, handling and wind skills influence which helpers are effective. This is a first draft of team protection, not a complete drafting or road-position model.
 
+A rider following `conserve` can now recover a little energy after several uninterrupted quiet kilometres in the bunch on calm, flat roads. Higher endurance improves that recovery. Attacking, chasing, sheltering a leader, riding ahead, hard effort, rough terrain and difficult weather interrupt the rest streak. Recovery cannot exceed the rider's starting race capacity after pre-race fatigue; it is not a free refill to 100.
+
 Inputs fail closed on unknown order fields, bad rider IDs, invalid stats, mixed race categories and missing seeds. Team and rider inputs are sorted before calculation, so database row order does not change the saved trace. This is necessary for reproducible results and later replay verification.
 
 The existing feature-gated Race Lab now has a separate **Run kilometre prototype** action. It adapts the same fictional four-team cast to v2 and shows the saved kilometre trace and provisional finish order alongside the older flat-road experiment. Neither calculation reads player accounts or writes database rows; the two models stay visibly labelled so their outputs are not mistaken for live race results.
