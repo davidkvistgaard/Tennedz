@@ -28,6 +28,8 @@ A rider following `conserve` can now recover a little energy after several unint
 
 Tactical attack and chase pressure now uses the same kilometre environment as rider movement. Cobbles, gravel, rain, exposed wind and temperature can favour different specialists, rather than changing only the displayed pace. Descending uses the explicit descending skill, and extreme heat or cold lowers ability and raises energy cost with endurance providing partial resilience. These are centrally tuned prototype relationships, not published percentages for players.
 
+Attack candidates and chase helpers now need enough remaining energy, and riders marked dropped cannot contribute to the peloton's chase or launch a new front-group attack. An exhausted helper therefore cannot keep producing chase power after its energy has reached zero; another available rider may take its place. This makes finite team work an actual limit rather than only a cost on paper.
+
 Inputs fail closed on unknown order fields, bad rider IDs, invalid stats, mixed race categories and missing seeds. Team and rider inputs are sorted before calculation, so database row order does not change the saved trace. This is necessary for reproducible results and later replay verification.
 
 The existing feature-gated Race Lab now has a separate **Run kilometre prototype** action. It adapts the same fictional four-team cast to v2 and shows the saved kilometre trace and provisional finish order alongside the older flat-road experiment. Neither calculation reads player accounts or writes database rows; the two models stay visibly labelled so their outputs are not mistaken for live race results.

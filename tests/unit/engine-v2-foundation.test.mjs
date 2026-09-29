@@ -112,6 +112,27 @@ test('repeated attacks and constant chasing consume energy; road captain improve
   assert.equal(resolveTacticalKilometre({teams:[leader,depleted],km:10}).attackers.length,0);
 });
 
+test('exhausted or dropped riders cannot provide free chase work or launch attacks',()=>{
+  const attacker=tacticalTeam('a','aggressive');
+  const defender=tacticalTeam('d','protect',{baseline:{chase:'all'}});
+  const rested=resolveTacticalKilometre({teams:[attacker,defender],km:20});
+  defender.energy=Object.fromEntries(defender.riders.map(rider=>[rider.id,0]));
+  const exhausted=resolveTacticalKilometre({teams:[attacker,defender],km:20});
+  assert.equal(exhausted.chasers.length,0);
+  assert.ok(exhausted.gapSeconds>rested.gapSeconds);
+  defender.energy=Object.fromEntries(defender.riders.map(rider=>[rider.id,80]));
+  const dropped=resolveTacticalKilometre({teams:[attacker,defender],km:20,
+    droppedRiderIds:defender.orders.helperIds});
+  assert.equal(dropped.chasers.length,0);
+  attacker.riders[0].acceleration=100;
+  attacker.energy=Object.fromEntries(attacker.riders.map(rider=>[rider.id,rider.id==='a-0'?0:80]));
+  const alternate=resolveTacticalKilometre({teams:[attacker,defender],km:20});
+  assert.equal(alternate.attackers.length,1);
+  assert.notEqual(alternate.attackers[0].riderId,'a-0');
+  assert.equal(resolveTacticalKilometre({teams:[attacker,defender],km:20,
+    droppedRiderIds:attacker.riders.map(rider=>rider.id)}).attackers.length,0);
+});
+
 test('effort changes immediate attack and chase pressure while charging more energy',()=>{
   const attacker=tacticalTeam('attacker','aggressive');
   const defender=tacticalTeam('defender','protect',{baseline:{chase:'all'}});
@@ -179,7 +200,7 @@ test('the full tactical trace is deterministic, bounded and makes aggressive ord
   const a=simulateTacticalTour(input);
   assert.deepEqual(a,simulateTacticalTour(input));
   assert.equal(a.frames.length,40);
-  assert.equal(a.tuningVersion,'v2-prototype-8');
+  assert.equal(a.tuningVersion,'v2-prototype-9');
   assert.equal(a.frames.at(-1).km,40);
   assert.ok(a.frames.some(frame=>frame.attackers.length>0));
   assert.ok(a.frames.some(frame=>frame.chasers.length>0));
