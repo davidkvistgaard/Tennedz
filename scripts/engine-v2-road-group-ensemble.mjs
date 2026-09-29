@@ -24,53 +24,79 @@ const plans={
     {atKm:70,attack:'none'}]},
 };
 
-function teamsFor(sample,gender){
+function teamsFor(sample,gender,oneChaser,attackPattern){
   const rng=seedrandom(`road-group-cast:${sample}`);
-  return Object.entries(plans).map(([id,plan])=>{
+  const attackers=Object.entries(plans).map(([id,plan])=>{
     const rating=Math.round(75+rng()*25);
     const riders=Array.from({length:8},(_,index)=>({id:`${id}-${index}`,gender,
       flat:index===0?rating:50,strength:index===0?rating:60,
       endurance:index===0?rating:60,timetrial:index===0?rating:50,
       acceleration:index===0?rating:50,sprint:50,leadership:50}));
     return {id,riders,orders:{captainId:`${id}-0`,roadCaptainId:`${id}-1`,
-      preset:'balanced',baseline:{attack:plan.baselineAttack,chase:'ignore'},
-      phases:plan.phases}};
+      preset:'balanced',baseline:attackPattern==='repeated'?
+        {attack:'repeated',chase:'ignore',effort:'hard'}:
+        {attack:plan.baselineAttack,chase:'ignore'},
+      phases:attackPattern==='repeated'?[]:plan.phases}};
   });
+  if(!oneChaser)return attackers;
+  const riders=Array.from({length:8},(_,index)=>({id:`g-${index}`,gender,
+    flat:85,strength:85,endurance:85,timetrial:80,acceleration:70,
+    sprint:index===0?90:55,leadership:65}));
+  return [...attackers,{id:'g',riders,orders:{captainId:'g-0',roadCaptainId:'g-1',
+    preset:'protect',baseline:{attack:'none',chase:'all',effort:'hard'}}}];
 }
 
-const report={samples,scenario:'six fictional teams with staggered moves and one planned chase-group attack',
+const report={samples,scenario:'six fictional attackers: staggered moves with and without a chaser, plus repeated chaos against one chaser',
   categories:{}};
 for(const gender of ['M','F']){
-  const totals={maxGroups:0,multiGroupFinishes:0,chaseSplits:0,chaseBridges:0,
-    blockedByCap:0,catches:0,merges:0};
-  for(let sample=0;sample<samples;sample++){
-    const race=simulateTacticalTour({stage,teams:teamsFor(sample,gender),
-      seed:`road-group-ensemble:${sample}`});
-    validateRecordedTour(race);
-    report.tuningVersion??=race.tuningVersion;
-    totals.maxGroups+=Math.max(...race.frames.map(frame=>frame.roadGroups.length));
-    totals.multiGroupFinishes+=Number(race.frames.at(-1).roadGroups.length>1);
-    for(const [index,frame] of race.frames.entries()){
-      const previous= race.frames[index-1];
-      const wasChasing=previous?.roadGroups.findIndex(group=>
-        group.riderIds.includes(frame.splitAttack?.riderId))>0;
-      totals.chaseSplits+=Number(wasChasing&&frame.splitAttack?.status==='split');
-      totals.chaseBridges+=Number(wasChasing&&
-        frame.splitAttack?.status==='joined_group_ahead');
-      totals.blockedByCap+=frame.blockedBreakAttacks.filter(event=>
-        event.reason==='road_group_limit').length;
-      totals.catches+=frame.caughtBreakawayRiderIds.length;
-      totals.merges+=frame.mergedRoadGroupIds.length;
+  report.categories[gender]={};
+  for(const [scenario,oneChaser,attackPattern] of [
+    ['staggered',false,'staggered'],['staggeredWithChaser',true,'staggered'],
+    ['repeatedChaosWithChaser',true,'repeated']]){
+    const totals={maxGroups:0,multiGroupFinishes:0,chaseSplits:0,chaseBridges:0,
+      blockedByCap:0,catches:0,merges:0,frontBreakFinishes:0,chaserEnergy:0,
+      breakFinishes:0,attackAttempts:0,breakAdmissions:0};
+    for(let sample=0;sample<samples;sample++){
+      const race=simulateTacticalTour({stage,teams:teamsFor(sample,gender,oneChaser,attackPattern),
+        seed:`road-group-ensemble:${sample}`});
+      validateRecordedTour(race);
+      report.tuningVersion??=race.tuningVersion;
+      totals.maxGroups+=Math.max(...race.frames.map(frame=>frame.roadGroups.length));
+      totals.multiGroupFinishes+=Number(race.frames.at(-1).roadGroups.length>1);
+      totals.frontBreakFinishes+=Number(race.frames.at(-1).roadGroups.some(group=>
+        group.riderIds.includes('a-0')));
+      totals.breakFinishes+=Number(race.frames.at(-1).roadGroups.length>0);
+      if(oneChaser)totals.chaserEnergy+=race.frames.at(-1).teamEnergy.find(team=>
+        team.teamId==='g').mean;
+      for(const [index,frame] of race.frames.entries()){
+        const previous=race.frames[index-1];
+        const wasChasing=previous?.roadGroups.findIndex(group=>
+          group.riderIds.includes(frame.splitAttack?.riderId))>0;
+        totals.chaseSplits+=Number(wasChasing&&frame.splitAttack?.status==='split');
+        totals.chaseBridges+=Number(wasChasing&&
+          frame.splitAttack?.status==='joined_group_ahead');
+        totals.blockedByCap+=frame.blockedBreakAttacks.filter(event=>
+          event.reason==='road_group_limit').length;
+        totals.catches+=frame.caughtBreakawayRiderIds.length;
+        totals.merges+=frame.mergedRoadGroupIds.length;
+        totals.attackAttempts+=frame.attackers.length;
+        totals.breakAdmissions+=frame.joinedBreakawayRiderIds.length;
+      }
     }
+    report.categories[gender][scenario]={
+      meanMaxGroups:+(totals.maxGroups/samples).toFixed(2),
+      multiGroupFinishRate:totals.multiGroupFinishes/samples,
+      frontBreakFinishRate:totals.frontBreakFinishes/samples,
+      anyBreakFinishRate:totals.breakFinishes/samples,
+      meanChaseSplits:+(totals.chaseSplits/samples).toFixed(2),
+      meanChaseBridges:+(totals.chaseBridges/samples).toFixed(2),
+      meanCapBlocks:+(totals.blockedByCap/samples).toFixed(2),
+      meanCaughtRiders:+(totals.catches/samples).toFixed(2),
+      meanGroupMerges:+(totals.merges/samples).toFixed(2),
+      meanAttackAttempts:+(totals.attackAttempts/samples).toFixed(2),
+      meanBreakAdmissions:+(totals.breakAdmissions/samples).toFixed(2),
+      ...(oneChaser?{chaserMeanFinalEnergy:+(totals.chaserEnergy/samples).toFixed(2)}:{}),
+    };
   }
-  report.categories[gender]={
-    meanMaxGroups:+(totals.maxGroups/samples).toFixed(2),
-    multiGroupFinishRate:totals.multiGroupFinishes/samples,
-    meanChaseSplits:+(totals.chaseSplits/samples).toFixed(2),
-    meanChaseBridges:+(totals.chaseBridges/samples).toFixed(2),
-    meanCapBlocks:+(totals.blockedByCap/samples).toFixed(2),
-    meanCaughtRiders:+(totals.catches/samples).toFixed(2),
-    meanGroupMerges:+(totals.merges/samples).toFixed(2),
-  };
 }
 console.log(JSON.stringify(report,null,2));
