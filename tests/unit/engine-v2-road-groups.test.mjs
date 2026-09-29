@@ -95,6 +95,23 @@ test('a second peloton move can form a third group behind an existing chase',()=
     teamByRiderId:{'c-0':'c'},newGroupId:'road-3',gapSeconds:13}),/chasing/);
 });
 
+test('a new chase remains valid when older road groups merge that kilometre',()=>{
+  const previous=[
+    {id:'road-1',riderIds:['a-0'],teamIds:['a'],gapSeconds:30},
+    {id:'road-2',riderIds:['b-0'],teamIds:['b'],gapSeconds:20},
+    {id:'road-3',riderIds:['c-0'],teamIds:['c'],gapSeconds:10},
+  ];
+  const moved=advanceRoadGroups(previous,{'road-1':-11,'road-2':0,'road-3':0});
+  const current=formChasingRoadGroup(moved.groups,{riderIds:['d-0'],
+    teamByRiderId:{'d-0':'d'},newGroupId:'road-4',gapSeconds:4});
+  assert.deepEqual(current.map(group=>group.id),['road-2','road-3','road-4']);
+  assert.equal(validateRoadGroupTransition(previous,current,{
+    mergedGroupIds:moved.mergedGroupIds,joinedRiderIds:['d-0'],
+    formedChaseGroupId:'road-4'}),true);
+  assert.throws(()=>validateRoadGroupTransition(previous,current,{
+    joinedRiderIds:['d-0'],formedChaseGroupId:'road-4'}),/disappeared/);
+});
+
 test('several road groups can merge in order without losing their riders or identities',()=>{
   const groups=[
     {id:'road-1',riderIds:['a-0'],teamIds:['a'],gapSeconds:30},
