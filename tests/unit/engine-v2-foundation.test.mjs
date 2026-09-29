@@ -442,7 +442,7 @@ test('the full tactical trace is deterministic, bounded and makes aggressive ord
   const a=simulateTacticalTour(input);
   assert.deepEqual(a,simulateTacticalTour(input));
   assert.equal(a.frames.length,40);
-  assert.equal(a.tuningVersion,'v2-prototype-20');
+  assert.equal(a.tuningVersion,'v2-prototype-21');
   assert.equal(a.frames.at(-1).km,40);
   assert.ok(a.frames.some(frame=>frame.attackers.length>0));
   assert.ok(a.frames.some(frame=>frame.chasers.length>0));
@@ -761,6 +761,19 @@ test('a rider already in the break cannot launch another new attack',()=>{
   assert.ok(Math.max(...result.frames.map(frame=>frame.breakawayRiderIds.length))<=2);
 });
 
+test('a recently caught rider cannot reattack immediately while a fresh teammate can',()=>{
+  const named=tacticalTeam('a','aggressive',{baseline:{attackRiderId:'a-0'}});
+  const open=tacticalTeam('a','aggressive');
+  const defender=tacticalTeam('d','protect',{baseline:{chase:'ignore'}});
+  const context={km:10,recentlyCaughtRiderIds:['a-0'],teams:[named,defender]};
+  const blocked=resolveTacticalKilometre(context);
+  assert.deepEqual(blocked.attackers,[]);
+  assert.deepEqual(blocked.blockedAttacks,[{teamId:'a',riderId:'a-0',reason:'recently_caught'}]);
+  const replacement=resolveTacticalKilometre({...context,teams:[open,defender]});
+  assert.equal(replacement.attackers.length,1);
+  assert.notEqual(replacement.attackers[0].riderId,'a-0');
+});
+
 test('a caught break is recorded and a later planned attack can establish a new one',()=>{
   const race=runKilometreLab({scenario:flatScenario('sprint'),seed:'cycle-0'});
   const first=race.frames.findIndex(frame=>frame.breakawayRiderIds.length>0);
@@ -775,6 +788,11 @@ test('a caught break is recorded and a later planned attack can establish a new 
   const caughtRider=race.frames[caught].caughtBreakawayRiderIds[0];
   const energyAt=index=>race.frames[index].riderGroups.find(rider=>rider.id===caughtRider).energy;
   assert.ok(energyAt(caught)<energyAt(caught-1));
+  const recovering=new Set(race.frames[caught].caughtBreakawayRiderIds);
+  for(const frame of race.frames.slice(caught+1,caught+6))
+    assert.ok(frame.attackers.every(id=>!recovering.has(id)));
+  assert.ok(race.frames.some((frame,index)=>index>caught+5&&
+    frame.attackers.some(id=>recovering.has(id))));
   assert.equal(validateRecordedTour(race),true);
 });
 
