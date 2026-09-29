@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {splitFrontRoadGroup,formChasingRoadGroup,advanceRoadGroups,
-  validateRoadGroupTransition} from '../../lib/engine/v2/road-groups.mjs';
+  validateRoadGroupTransition,selectRoadGroupPulls} from '../../lib/engine/v2/road-groups.mjs';
 
 const initial=[{id:'road-1',riderIds:['a-0','a-1','b-0'],teamIds:['a','b'],gapSeconds:20}];
 const teams={"a-0":'a',"a-1":'a',"b-0":'b'};
@@ -15,6 +15,20 @@ test('a break rider can open a second road group without moving teammates instan
     {id:'road-1',riderIds:['a-1','b-0'],teamIds:['a','b'],gapSeconds:20},
   ]);
   assert.deepEqual(initial,[{id:'road-1',riderIds:['a-0','a-1','b-0'],teamIds:['a','b'],gapSeconds:20}]);
+});
+
+test('a teammate behind a rider up the road sits on while rivals can still pull',()=>{
+  const groups=[
+    {id:'road-1',riderIds:['a-0'],teamIds:['a'],gapSeconds:25},
+    {id:'road-2',riderIds:['a-1','b-0'],teamIds:['a','b'],gapSeconds:12},
+  ];
+  const teams=['a','b'].map(id=>({id,riders:[{id:`${id}-0`},{id:`${id}-1`}],
+    orders:{baseline:{breakWork:'cooperate'},phases:[]}}));
+  assert.deepEqual(selectRoadGroupPulls(groups,teams,21),['a-0','b-0']);
+  const separated=[groups[0],
+    {id:'road-3',riderIds:['b-0'],teamIds:['b'],gapSeconds:18},
+    {id:'road-2',riderIds:['a-1'],teamIds:['a'],gapSeconds:12}];
+  assert.deepEqual(selectRoadGroupPulls(separated,teams,21),['a-0','b-0']);
 });
 
 test('the pursuing break can recatch the attacker without losing its group identity',()=>{

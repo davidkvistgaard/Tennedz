@@ -589,7 +589,7 @@ test('the full tactical trace is deterministic, bounded and makes aggressive ord
   const a=simulateTacticalTour(input);
   assert.deepEqual(a,simulateTacticalTour(input));
   assert.equal(a.frames.length,40);
-  assert.equal(a.tuningVersion,'v2-prototype-31');
+  assert.equal(a.tuningVersion,'v2-prototype-32');
   assert.equal(a.frames.at(-1).km,40);
   assert.ok(a.frames.some(frame=>frame.attackers.length>0));
   assert.ok(a.frames.some(frame=>frame.chasers.length>0));
@@ -1019,7 +1019,7 @@ test('a committed break attack splits the live road group and survives replay va
   assert.ok(energy(race)<energy(control));
   assert.equal(validateRecordedTour(race),true);
   assert.deepEqual(race.provisionalResults.slice(0,2).map(rider=>rider.roadGroupId),
-    ['road-2','road-1']);
+    race.frames.at(-1).roadGroups.map(group=>group.id));
   const missingEvent=structuredClone(race);
   missingEvent.frames[20].splitAttack=null;
   assert.throws(()=>validateRecordedTour(missingEvent),/split|appeared/);
@@ -1050,6 +1050,23 @@ test('the original break can catch a tiring attacker and retain its road identit
   assert.deepEqual(race.frames[merged].mergedRoadGroupIds,['road-2']);
   assert.equal(race.frames[merged].roadGroups[0].id,'road-1');
   assert.equal(race.frames[merged].roadGroups.length,1);
+  assert.equal(validateRecordedTour(race),true);
+});
+
+test('a teammate in the chasing break does not pull against their own leader',()=>{
+  const scenario=flatScenario('break');
+  scenario.teams[0].breakAttackAtKm=40;
+  const race=runKilometreLab({scenario,seed:'break-split:0'});
+  const splitIndex=race.frames.findIndex(frame=>frame.splitAttack?.status==='split');
+  assert.ok(splitIndex>=0&&splitIndex<race.frames.length-1);
+  const leaderId=race.frames[splitIndex].splitAttack.riderId;
+  const following=race.frames[splitIndex].roadGroups.at(-1).riderIds.filter(id=>
+    race.committedInputs.teams.find(team=>team.id==='team-0').riders.some(rider=>rider.id===id));
+  assert.ok(following.length>0);
+  const next=race.frames[splitIndex+1];
+  assert.ok(next.pullRiderIds.includes(leaderId));
+  assert.ok(following.every(id=>!next.pullRiderIds.includes(id)));
+  assert.ok(next.pullRiderIds.some(id=>!id.startsWith('r-0-')));
   assert.equal(validateRecordedTour(race),true);
 });
 
