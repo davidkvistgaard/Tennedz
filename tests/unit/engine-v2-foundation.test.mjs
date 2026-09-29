@@ -798,6 +798,27 @@ test('a finishing sprint records a last-metre catch before the result is shown',
   assert.throws(()=>validateRecordedTour(tampered),/kilometre/);
 });
 
+test('a new attack on the final kilometre can be caught before the line',()=>{
+  const flat={distance_km:40,profile_points:[[0,100],[40,100]],
+    keypoints:[{km:39,kind:'SPRINT'}]};
+  const team=(id,sprint,phases)=>({id,
+    riders:Array.from({length:8},(_,index)=>({id:`${id}-${index}`,gender:'M',
+      flat:5,strength:5,endurance:5,sprint,acceleration:5,leadership:50})),
+    orders:{captainId:`${id}-0`,roadCaptainId:`${id}-1`,preset:'balanced',
+      baseline:{attack:'none',chase:'ignore'},phases}});
+  const race=simulateTacticalTour({stage:flat,seed:'last-join-0',teams:[
+    team('b',100,[]),team('c',0,[{atKm:39,attack:'selective'}]),
+  ]});
+  const final=race.frames.at(-1);
+  assert.deepEqual(final.joinedBreakawayRiderIds,['c-0']);
+  assert.deepEqual(final.caughtBreakawayRiderIds,['c-0']);
+  assert.equal(final.finishLineCatch,true);
+  assert.equal(final.gapSeconds,0);
+  assert.deepEqual(final.roadGroups,[]);
+  assert.equal(race.provisionalResults.find(rider=>rider.riderId==='c-0').group,'peloton');
+  assert.equal(validateRecordedTour(race),true);
+});
+
 test('the finishing sprint can catch one break rider while another stays ahead',()=>{
   const attacker=tacticalTeam('a','aggressive',{baseline:{chase:'ignore'},
     phases:[{atKm:30,attack:'none'}]});
