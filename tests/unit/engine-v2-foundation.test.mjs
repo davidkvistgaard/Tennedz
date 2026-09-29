@@ -442,7 +442,7 @@ test('the full tactical trace is deterministic, bounded and makes aggressive ord
   const a=simulateTacticalTour(input);
   assert.deepEqual(a,simulateTacticalTour(input));
   assert.equal(a.frames.length,40);
-  assert.equal(a.tuningVersion,'v2-prototype-21');
+  assert.equal(a.tuningVersion,'v2-prototype-22');
   assert.equal(a.frames.at(-1).km,40);
   assert.ok(a.frames.some(frame=>frame.attackers.length>0));
   assert.ok(a.frames.some(frame=>frame.chasers.length>0));
@@ -796,6 +796,25 @@ test('a caught break is recorded and a later planned attack can establish a new 
   assert.equal(validateRecordedTour(race),true);
 });
 
+test('road group identity persists until a catch and restarts for the next break',()=>{
+  const race=runKilometreLab({scenario:flatScenario('sprint'),seed:'cycle-0'});
+  const first=race.frames.findIndex(frame=>frame.roadGroups.length>0);
+  const caught=race.frames.findIndex((frame,index)=>index>first&&frame.caughtBreakawayRiderIds.length>0);
+  const next=race.frames.findIndex((frame,index)=>index>caught&&frame.roadGroups.length>0);
+  assert.ok(first>=0&&caught>first&&next>caught);
+  assert.equal(race.frames[first].roadGroups[0].id,'road-1');
+  assert.ok(race.frames.slice(first,caught).every(frame=>frame.roadGroups[0]?.id==='road-1'));
+  assert.deepEqual(race.frames[caught].roadGroups,[]);
+  assert.equal(race.frames[next].roadGroups[0].id,'road-2');
+  for(const frame of race.frames){
+    const group=frame.roadGroups[0];
+    assert.deepEqual(group?.riderIds??[],frame.breakawayRiderIds);
+    assert.deepEqual(group?.teamIds??[],frame.breakawayTeamIds);
+    assert.equal(group?.gapSeconds??0,frame.gapSeconds);
+  }
+  assert.equal(validateRecordedTour(race),true);
+});
+
 test('the new kilometre model reuses the existing laboratory cast without changing it',()=>{
   const scenario=flatScenario('break'),before=structuredClone(scenario);
   const a=runKilometreLab({scenario,seed:'paired'});
@@ -860,6 +879,10 @@ test('recorded playback does not recalculate and rejects a result that differs f
   const wrongBreak=structuredClone(result);
   wrongBreak.frames[19].breakawayRiderIds.push('foreign');
   assert.throws(()=>validateRecordedTour(wrongBreak),/breakaway|rider state/);
+  const wrongRoadGroup=structuredClone(result);
+  const firstRoadGroup=wrongRoadGroup.frames.find(frame=>frame.roadGroups.length>0);
+  firstRoadGroup.roadGroups[0].id='road-99';
+  assert.throws(()=>validateRecordedTour(wrongRoadGroup),/road group/);
   const wrongPull=structuredClone(result);
   wrongPull.frames[19].pullRiderIds=['foreign'];
   assert.throws(()=>validateRecordedTour(wrongPull),/break work/);
