@@ -16,6 +16,8 @@ Status: **development prototype, not wired to the public race cycle**. The exist
 
 The trace records the actual riders ahead, limits one team's active breakaway contingent, prevents a rider from re-attacking while already ahead, and charges continuing energy cost for riding in the break. These are provisional race rules in the isolated model; they must be calibrated against complete group and finish simulations before release.
 
+For provisional dropped groups, the reference pace comes from riders still attached to the bunch. Riders already distanced cannot lower that reference when many fall behind together. This changes group outcomes, so the balance version is `v2-prototype-11`; it still needs broad seeded calibration before release.
+
 Effort now changes immediate attack and chase pressure as well as the continuing energy bill. The stronger `hard` setting can create or close a gap sooner, but leaves less energy for later kilometres. The multiplier is a central balancing parameter, not a public percentage shown to players.
 
 Selective chase now remembers a detected break while it remains ahead. The road captain's leadership still affects the initial recognition; the team does not abandon an already committed pursuit merely because it has reduced the gap below the original trigger threshold. This pursuit state is part of the deterministic simulation trace, not a mid-race user input.

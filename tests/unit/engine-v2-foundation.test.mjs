@@ -247,7 +247,7 @@ test('the full tactical trace is deterministic, bounded and makes aggressive ord
   const a=simulateTacticalTour(input);
   assert.deepEqual(a,simulateTacticalTour(input));
   assert.equal(a.frames.length,40);
-  assert.equal(a.tuningVersion,'v2-prototype-10');
+  assert.equal(a.tuningVersion,'v2-prototype-11');
   assert.equal(a.frames.at(-1).km,40);
   assert.ok(a.frames.some(frame=>frame.attackers.length>0));
   assert.ok(a.frames.some(frame=>frame.chasers.length>0));
@@ -397,6 +397,17 @@ test('sustained weakness forms a dropped group while stronger kilometres can clo
   states=updateRiderGroups(states.map(s=>({...s,ability:s.id==='weak'?90:60})),[]);
   assert.ok(states[0].deficitSeconds<deficit);
   assert.ok(states.every(s=>s.deficitSeconds>=0));
+});
+
+test('distanced riders do not lower the reference pace of the remaining bunch',()=>{
+  const states=[...Array.from({length:3},(_,index)=>({id:`front-${index}`,ability:70,
+    deficitSeconds:0,lowKilometres:0,group:'peloton'})),
+  ...Array.from({length:5},(_,index)=>({id:`back-${index}`,ability:20,
+    deficitSeconds:4,lowKilometres:2,group:'dropped'}))];
+  const next=updateRiderGroups(states,[]);
+  assert.ok(next.filter(rider=>rider.group==='dropped').every(rider=>rider.deficitSeconds>4));
+  assert.ok(next.filter(rider=>rider.group==='peloton').every(rider=>rider.deficitSeconds===0));
+  assert.deepEqual(states.map(rider=>rider.deficitSeconds),[0,0,0,4,4,4,4,4]);
 });
 
 test('helpers shelter a protected leader but cannot simultaneously chase',()=>{
