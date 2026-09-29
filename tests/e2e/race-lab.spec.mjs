@@ -38,6 +38,7 @@ for (const width of [390, 1440])
     for(let kilometre=1;kilometre<7;kilometre++)await page.keyboard.press("ArrowRight");
     await expect(page.getByText("7 / 160 km", { exact: true })).toBeVisible();
     await expect(page.getByText(/Break caught: \d+ riders? brought back/)).toBeVisible();
+    await expect(page.getByText(/Riding pace alone: the break (gained|lost)/)).toBeVisible();
     await expect(page.getByRole("table", { name: "Team state after this kilometre" })).toBeVisible();
     const provisionalResults=page.getByRole("table", { name: "Provisional rider results" });
     await expect(provisionalResults).toBeVisible();

@@ -228,6 +228,47 @@ test('a chased-down new attack cannot join a break that is still ahead',()=>{
   assert.ok(contest.energyCosts.some(cost=>cost.reason==='attack'));
 });
 
+test('break and bunch abilities change a gap even without new attacks or chase orders',()=>{
+  const breakTeam=tacticalTeam('a','balanced',{baseline:{attack:'none',chase:'ignore'}});
+  const bunchTeam=tacticalTeam('b','balanced',{baseline:{attack:'none',chase:'ignore'}});
+  const context={teams:[breakTeam,bunchTeam],km:21,gapSeconds:30,
+    breakawayTeamIds:['a'],breakawayRiderIds:['a-0']};
+  breakTeam.riders[0].timetrial=10;
+  breakTeam.riders[0].flat=20;
+  const weak=resolveTacticalKilometre(context);
+  assert.equal(weak.attackers.length,0);
+  assert.equal(weak.chasers.length,0);
+  assert.ok(weak.passiveGapDelta<0&&weak.gapSeconds<30);
+  breakTeam.riders[0].timetrial=75;
+  breakTeam.riders[0].flat=75;
+  breakTeam.riders[0].endurance=75;
+  const strong=resolveTacticalKilometre(context);
+  assert.ok(strong.passiveGapDelta>weak.passiveGapDelta);
+  assert.ok(strong.gapSeconds>weak.gapSeconds);
+  breakTeam.energy={'a-0':5};
+  const tired=resolveTacticalKilometre(context);
+  assert.ok(tired.passiveGapDelta<strong.passiveGapDelta);
+  assert.equal(resolveTacticalKilometre({...context,gapSeconds:0,
+    breakawayTeamIds:[],breakawayRiderIds:[]}).passiveGapDelta,0);
+});
+
+test('a solo rider needs sustained ability to keep an early break to the finish',()=>{
+  const attacker=tacticalTeam('a','aggressive',{baseline:{attackRiderId:'a-2'},
+    phases:[{atKm:10,attack:'none'}]});
+  const bunch=tacticalTeam('b','balanced',{baseline:{attack:'none',chase:'ignore'}});
+  const race=timetrial=>{
+    const team=structuredClone(attacker);
+    team.riders.find(rider=>rider.id==='a-2').timetrial=timetrial;
+    return simulateTacticalTour({stage,teams:[team,bunch],seed:'solo-survival'});
+  };
+  const weak=race(0),strong=race(100);
+  assert.deepEqual(weak.frames[4].joinedBreakawayRiderIds,['a-2']);
+  assert.deepEqual(strong.frames[4].joinedBreakawayRiderIds,['a-2']);
+  assert.ok(weak.frames.at(-1).gapSeconds<strong.frames.at(-1).gapSeconds);
+  assert.ok(weak.frames.some(frame=>frame.caughtBreakawayRiderIds.includes('a-2')));
+  assert.ok(strong.frames.at(-1).breakawayRiderIds.includes('a-2'));
+});
+
 test('a protected sprinter gets a costly chase surge near the finish',()=>{
   const attacker=tacticalTeam('a','aggressive');
   const defender=tacticalTeam('d','protect',{baseline:{chase:'all'}});
@@ -266,7 +307,7 @@ test('the full tactical trace is deterministic, bounded and makes aggressive ord
   const a=simulateTacticalTour(input);
   assert.deepEqual(a,simulateTacticalTour(input));
   assert.equal(a.frames.length,40);
-  assert.equal(a.tuningVersion,'v2-prototype-12');
+  assert.equal(a.tuningVersion,'v2-prototype-13');
   assert.equal(a.frames.at(-1).km,40);
   assert.ok(a.frames.some(frame=>frame.attackers.length>0));
   assert.ok(a.frames.some(frame=>frame.chasers.length>0));

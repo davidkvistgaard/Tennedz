@@ -20,6 +20,8 @@ An attempted attack now has a separate admission event. If the peloton's chase o
 
 When a chase closes the break's gap, the frame records which riders were caught. A later attack can establish another break under its precommitted orders, with the earlier riders' spent energy preserved. Replay validation checks the catch against the preceding kilometre.
 
+The break's gap now also changes from its own sustained solo pace relative to the attached bunch, even when no new attack or chase order fires. Terrain, weather, rider ability, current energy and a small bounded cooperation/drafting allowance affect this passive change. The contribution is saved in each replay frame and shown in Race Lab. This first approximation is balance version `v2-prototype-13`; it still uses one shared breakaway gap and should not be read as a complete multi-group road model. A fixed-cast 100-seed run still produced all-or-nothing breakaway outcomes for some presets, so this is a mechanic correction, not completed balance.
+
 For provisional dropped groups, the reference pace comes from riders still attached to the bunch. Riders already distanced cannot lower that reference when many fall behind together. This changed group outcomes in balance version `v2-prototype-11`; it still needs broad seeded calibration before release.
 
 Effort now changes immediate attack and chase pressure as well as the continuing energy bill. The stronger `hard` setting can create or close a gap sooner, but leaves less energy for later kilometres. The multiplier is a central balancing parameter, not a public percentage shown to players.
