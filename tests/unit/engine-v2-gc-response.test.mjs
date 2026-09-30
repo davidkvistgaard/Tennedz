@@ -160,6 +160,34 @@ test('a GC challenger can attack behind a teammate already in the break',()=>{
   assert.equal(validateRecordedTour(race),true);
 });
 
+test('a GC defender can stop its forward helper and chase a real top-ten threat',()=>{
+  const cast=structuredClone(teams);
+  cast[0].orders.gcObjective='defend_top_ten';
+  cast[0].orders.baseline={attack:'none',chase:'ignore',effort:'conserve'};
+  cast[0].orders.phases=[
+    {atKm:10,attack:'selective',attackRiderId:'a2'},
+    {atKm:20,attack:'none',attackRiderId:null},
+  ];
+  Object.assign(cast[0].riders[2],{flat:95,strength:95,endurance:95});
+  cast[1].orders.baseline={attack:'none',chase:'ignore',effort:'conserve'};
+  cast[1].orders.phases=[{atKm:20,attack:'selective',attackRiderId:'b0'}];
+  Object.assign(cast[1].riders[0],{flat:100,strength:100,endurance:100});
+  const route={...stage,keypoints:[{km:11,kind:'SPRINT'},{km:21,kind:'SPRINT'}]};
+  const race=simulateTacticalTour({stage:route,teams:cast,
+    seed:'gc-defence-with-helper-ahead',classification});
+  assert.ok(race.frames[19].breakawayRiderIds.includes('a2'));
+  assert.ok(race.frames[20].attackers.includes('b0'));
+  const response=race.frames.find(frame=>frame.activeGcResponseTeamIds.includes('a')&&
+    frame.breakawayRiderIds.includes('a2'));
+  assert.ok(response);
+  assert.ok(response.chasers.includes('a'));
+  assert.ok(!response.pullRiderIds.includes('a2'));
+  assert.equal(validateRecordedTour(race),true);
+  const falseWork=structuredClone(race);
+  falseWork.frames[response.km-1].pullRiderIds.push('a2');
+  assert.throws(()=>validateRecordedTour(falseWork),/break work/);
+});
+
 test('a distant GC target does not force futile attacks or override a named rider',()=>{
   const challenging=structuredClone(teams);
   challenging[1].orders.gcObjective='target_top_ten';

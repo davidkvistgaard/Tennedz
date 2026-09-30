@@ -63,6 +63,16 @@ test('a teammate behind a rider up the road sits on while rivals can still pull'
   assert.deepEqual(selectRoadGroupPulls(separated,teams,21),['a-0','b-0']);
 });
 
+test('a precommitted GC emergency can stop a forward helper from towing a rival',()=>{
+  const groups=[{id:'road-1',riderIds:['a-0','b-0'],teamIds:['a','b'],gapSeconds:12}];
+  const cast=['a','b'].map(id=>({id,riders:[{id:`${id}-0`}],
+    orders:{baseline:{breakWork:'cooperate'},phases:[]}}));
+  assert.deepEqual(selectRoadGroupPulls(groups,cast,21),['a-0','b-0']);
+  assert.deepEqual(selectRoadGroupPulls(groups,cast,21,{holdTeamIds:['a']}),['b-0']);
+  assert.throws(()=>selectRoadGroupPulls(groups,cast,21,{holdTeamIds:['a','a']}),
+    /hold teams/);
+});
+
 test('a trailing teammate may work only for a nearby fading forward rider under a committed plan',()=>{
   const groups=[
     {id:'road-1',riderIds:['a-0'],teamIds:['a'],gapSeconds:25},
