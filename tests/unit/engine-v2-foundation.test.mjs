@@ -9,6 +9,7 @@ import {runKilometreLab} from '../../lib/engine/v2/lab.mjs';
 import {updateRiderGroups} from '../../lib/engine/v2/groups.mjs';
 import {provisionalFinish,provisionalRoadGroupFinish} from '../../lib/engine/v2/finish.mjs';
 import {selectShelter} from '../../lib/engine/v2/support.mjs';
+import {selectCaptainSupport,applyCaptainSupport} from '../../lib/engine/v2/captain-support.mjs';
 import {validateRecordedTour,readRecordedKilometre} from '../../lib/engine/v2/recording.mjs';
 import {recoveryForKilometre} from '../../lib/engine/v2/recovery.mjs';
 import {flatScenario} from '../../lib/race-lab/scenario.mjs';
@@ -690,7 +691,7 @@ test('the full tactical trace is deterministic, bounded and makes aggressive ord
   const a=simulateTacticalTour(input);
   assert.deepEqual(a,simulateTacticalTour(input));
   assert.equal(a.frames.length,40);
-  assert.equal(a.tuningVersion,'v2-prototype-38');
+  assert.equal(a.tuningVersion,'v2-prototype-39');
   assert.equal(a.frames.at(-1).km,40);
   assert.ok(a.frames.some(frame=>frame.attackers.length>0));
   assert.ok(a.frames.some(frame=>frame.chasers.length>0));
@@ -905,6 +906,27 @@ test('a precommitted helper can drop back to a distanced captain at a real cost'
   const tampered=structuredClone(help);
   tampered.frames[eventFrame.km-1].supportEvents[0].helperId='foreign';
   assert.throws(()=>validateRecordedTour(tampered),/captain support/);
+});
+
+test('a fresh captain helper cannot jump across an unreachable road gap',()=>{
+  const team=tacticalTeam('a','protect',{baseline:{attack:'none',chase:'ignore',
+    captainSupport:'drop_back_if_dropped'}});
+  team.activeLeaderId=team.orders.captainId;
+  team.energy=Object.fromEntries(team.riders.map(rider=>[rider.id,100]));
+  const states=team.riders.map(rider=>({id:rider.id,teamId:'a',group:'peloton',deficitSeconds:0}));
+  states[0]={...states[0],group:'dropped',deficitSeconds:60};
+  assert.equal(selectCaptainSupport(team,states,10),null);
+  const candidate=team.orders.helperIds[0];
+  assert.equal(applyCaptainSupport(states,{team,leaderId:'a-0',helperId:candidate}).event,null);
+  team.supportingHelperId=candidate;
+  states[2]={...states[2],group:'dropped',deficitSeconds:5};
+  assert.equal(selectCaptainSupport(team,states,11),null);
+  assert.equal(applyCaptainSupport(states,{team,leaderId:'a-0',helperId:candidate}).event,null);
+  team.supportingHelperId=null;
+  states[2]={...states[2],group:'peloton',deficitSeconds:0};
+  states[0]={...states[0],deficitSeconds:12};
+  assert.equal(selectCaptainSupport(team,states,10),candidate);
+  assert.ok(applyCaptainSupport(states,{team,leaderId:'a-0',helperId:candidate}).event);
 });
 
 test('an assigned captain helper cannot also chase or launch the planned attack',()=>{
