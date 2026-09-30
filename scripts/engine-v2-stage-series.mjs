@@ -10,20 +10,28 @@ if(!Number.isInteger(samples)||samples<1||samples>100)
 const opposition=process.argv[3]??'fixed';
 if(!['fixed','late_hard'].includes(opposition))
   throw new Error('Opposition must be fixed or late_hard.');
+const roster=process.argv[4]??'uniform';
+if(!['uniform','varied'].includes(roster))
+  throw new Error('Roster must be uniform or varied.');
 const stages=[
   {distance_km:120,profile_points:[[0,100],[120,100]],keypoints:[]},
   {distance_km:120,profile_points:[[0,100],[40,280],[80,100],[120,100]],keypoints:[]},
   {distance_km:120,profile_points:[[0,400],[50,1500],[80,700],[120,400]],keypoints:[]},
 ];
 const strategies=['hard','steady','conserve','late_hard'];
-const report={samples,opposition,
+const report={samples,opposition,roster,
   description:'fictional riders, three stages and explicit laboratory-only times',
   categories:{}};
 
-function startingTeams(effort,gender){
+function startingTeams(effort,gender,sample){
+  const skill=(base,teamIndex,riderIndex,salt)=>roster==='uniform'?base:
+    base+(sample*17+teamIndex*11+riderIndex*7+salt*13)%31-15;
   return ['a','b','c','d'].map((id,index)=>({id,riders:Array.from({length:8},(_,riderIndex)=>({
-    id:`${id}-${riderIndex}`,gender,flat:70,strength:70,endurance:70,
-    hills:70,mountain:70,sprint:65,leadership:55,
+    id:`${id}-${riderIndex}`,gender,
+    flat:skill(70,index,riderIndex,0),strength:skill(70,index,riderIndex,1),
+    endurance:skill(70,index,riderIndex,2),hills:skill(70,index,riderIndex,3),
+    mountain:skill(70,index,riderIndex,4),sprint:skill(65,index,riderIndex,5),
+    leadership:skill(55,index,riderIndex,6),
   })),orders:{captainId:`${id}-0`,roadCaptainId:`${id}-1`,
     preset:index===1?'aggressive':index===3?'protect':'balanced',
     ...(index===0?{baseline:{effort:effort==='late_hard'?'conserve':effort},
@@ -37,7 +45,7 @@ for(const gender of ['M','F']){
   for(const effort of strategies){
     const fatigueTotals=[0,0,0],energyTotals=[0,0,0],winTotals=[0,0,0];
     for(let sample=0;sample<samples;sample++){
-      const orders=startingTeams(effort,gender);
+      const orders=startingTeams(effort,gender,sample);
       let teams=structuredClone(orders),classification=null;
       for(const [stageIndex,stage] of stages.entries()){
         const recording=simulateTacticalTour({stage,teams,classification,
