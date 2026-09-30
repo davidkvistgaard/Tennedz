@@ -12,7 +12,7 @@ const stages=[
   {distance_km:120,profile_points:[[0,100],[40,280],[80,100],[120,100]],keypoints:[]},
   {distance_km:120,profile_points:[[0,400],[50,1500],[80,700],[120,400]],keypoints:[]},
 ];
-const strategies=['hard','steady','conserve'];
+const strategies=['hard','steady','conserve','late_hard'];
 const report={samples,description:'fictional riders, three stages and explicit laboratory-only times',
   categories:{}};
 
@@ -22,7 +22,8 @@ function startingTeams(effort,gender){
     hills:70,mountain:70,sprint:65,leadership:55,
   })),orders:{captainId:`${id}-0`,roadCaptainId:`${id}-1`,
     preset:index===1?'aggressive':index===3?'protect':'balanced',
-    ...(index===0?{baseline:{effort}}:{})}}));
+    ...(index===0?{baseline:{effort:effort==='late_hard'?'conserve':effort},
+      ...(effort==='late_hard'?{phases:[{atKm:110,effort:'hard'}]}:{})}:{})}}));
 }
 
 for(const gender of ['M','F']){
