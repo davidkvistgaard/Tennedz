@@ -19,6 +19,8 @@
 | Verden/atlas | Strukturerede verdensdata V1.0–V1.6 er udbygget. Alle fem godkendte kildekonflikter er løst lokalt som Baseline 1.6.2 på `codex/world-conflict-resolution-20260930`; denne commit er endnu ikke integreret i `engine-current` eller udgivet. Atlassets eksisterende geometri/illustration er en prototype, ikke det ønskede malede kort. |
 | Portrætter og stab | 16 særskilt malede starterportrætter findes, men den generelle reservevisning og variationen er ikke godkendt som slutniveau. `/team/staff` er en lokal designpreview uden personaleøkonomi eller sportslig effekt. |
 
+**Første synlige delmål påbegyndt:** Et serverberegnet, syntetisk [Motor Lab](MOTOR-LAB-MILESTONE-1.md) er bygget og testet lokalt. Det er et udsnit af punkt 04–09, ikke en færdig motor, ordreflade eller officiel løbsviewer. Listen over resterende arbejde og estimater nedenfor ændres først efter spiltest og en konkret ny vurdering.
+
 ## Hurtigt overblik over resterende arbejde
 
 | Spor | Punkter | Estimat |
