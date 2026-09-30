@@ -123,6 +123,12 @@ test('top-ten threat identifies only a rival break that displaces a protected pl
   assert.deepEqual(identifyTopTenThreats(prior,{...moving,roadGroups:[{
     ...moving.roadGroups[0],gapSeconds:1,
   }]}),[]);
+  assert.deepEqual(identifyTopTenThreats(prior,{...moving,roadGroups:[{
+    ...moving.roadGroups[0],gapSeconds:1,
+  }]},{warningMarginSeconds:1}),[{
+    teamId:'a',riderId:'r0',priorPosition:10,projectedPosition:10,
+    rivalRiderIds:['r8'],
+  }]);
   assert.deepEqual(identifyTopTenThreats(prior,{...moving,riderStates:states.map(state=>({
     ...state,group:state.id==='r0'?'dropped':state.group,
     deficitSeconds:state.id==='r0'?10:0,

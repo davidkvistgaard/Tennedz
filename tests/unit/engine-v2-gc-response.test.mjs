@@ -64,6 +64,7 @@ test('the same break does not trigger a GC chase when its rider cannot reach the
   assert.ok(recording.frames.some(frame=>frame.breakawayRiderIds.includes('b0')));
   assert.equal(recording.frames.some(frame=>frame.decisions.some(decision=>
     decision.kind==='chase_gc')),false);
+  assert.equal(recording.frames.some(frame=>frame.gcCounterTeamIds.includes('a')),false);
   assert.equal(validateRecordedTour(recording),true);
 });
 
@@ -133,4 +134,23 @@ test('a distant GC target does not force futile attacks or override a named ride
     classification});
   assert.equal(named.frames.some(frame=>frame.activeGcTargetTeamIds.includes('b')),false);
   assert.equal(validateRecordedTour(named),true);
+});
+
+test('a prepared GC team counters a nearby rival attack in the same kilometre',()=>{
+  const cast=structuredClone(teams);
+  cast[0].orders.gcObjective='defend_top_ten';
+  cast[1].orders.gcObjective='target_top_ten';
+  cast[1].orders.baseline={attack:'none',chase:'ignore',effort:'conserve'};
+  for(const rider of cast[0].riders.slice(2))Object.assign(rider,{
+    flat:90,strength:90,endurance:90,
+  });
+  const race=simulateTacticalTour({stage,teams:cast,seed:'gc-counter-test',classification});
+  const counter=race.frames.find(frame=>frame.gcCounterTeamIds.includes('a'));
+  assert.ok(counter,'the GC guard should counter an attack as it is launched');
+  assert.ok(counter.attackers.includes('b0'));
+  assert.ok(counter.chasers.includes('a'));
+  assert.equal(validateRecordedTour(race),true);
+  const forged=structuredClone(race);
+  forged.frames[counter.km-1].gcCounterTeamIds=[];
+  assert.throws(()=>validateRecordedTour(forged),/GC attack counter/);
 });
