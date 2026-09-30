@@ -11,7 +11,7 @@ import {provisionalFinish,provisionalRoadGroupFinish,
   resolveRearRoadGroupFinishingSprint} from '../../lib/engine/v2/finish.mjs';
 import {selectShelter} from '../../lib/engine/v2/support.mjs';
 import {selectCaptainSupport,applyCaptainSupport} from '../../lib/engine/v2/captain-support.mjs';
-import {MAX_ROAD_GROUPS,advanceRoadGroups,assertRoadGroups,
+import {MAX_ROAD_GROUPS,advanceRoadGroups,assertRoadGroups,relativeRoadGroupPace,
   validateRoadGroupTransition} from '../../lib/engine/v2/road-groups.mjs';
 import {automaticBreakAttackRider} from '../../lib/engine/v2/break-attack.mjs';
 import {validateRecordedTour,readRecordedKilometre} from '../../lib/engine/v2/recording.mjs';
@@ -606,6 +606,26 @@ test('front-group work cannot lend passive speed to a separate chase group',()=>
     rearRoadGroupRiderIds:[]}),/rear road-group/);
 });
 
+test('two willing riders pursue a solo break faster than one, without counting a sitter',()=>{
+  const front=tacticalTeam('a','balanced');
+  const pursuer=tacticalTeam('b','balanced');
+  const sitter=tacticalTeam('c','balanced',{baseline:{breakWork:'sit_on'}});
+  for(const team of [front,pursuer,sitter])
+    team.energy=Object.fromEntries(team.riders.map(rider=>[rider.id,100]));
+  const groups=[
+    {id:'road-1',riderIds:['a-0'],teamIds:['a'],gapSeconds:20},
+    {id:'road-2',riderIds:['b-0','b-1','c-0'],teamIds:['b','c'],gapSeconds:10},
+  ];
+  const segment=buildKilometreRoute(stage,{seed:'group-work'}).kilometres[20];
+  const context=[groups[0],groups[1],[front,pursuer,sitter],segment];
+  const one=relativeRoadGroupPace(...context,['a-0','b-0']);
+  const two=relativeRoadGroupPace(...context,['a-0','b-0','b-1']);
+  const withSitter=relativeRoadGroupPace(...context);
+  assert.ok(two<one,'a second working teammate should close the gap faster');
+  assert.equal(withSitter,two,'the default worker selection excludes a sit-on rider');
+  assert.ok(two<0,'cooperative pursuit should close on an equally skilled solo rider');
+});
+
 test('taking pulls grows the break gap but costs energy compared with sitting on',()=>{
   const worker=tacticalTeam('a','aggressive',{baseline:{chase:'ignore',breakWork:'cooperate'},
     phases:[{atKm:20,attack:'none'}]});
@@ -794,7 +814,7 @@ test('the full tactical trace is deterministic, bounded and makes aggressive ord
   const a=simulateTacticalTour(input);
   assert.deepEqual(a,simulateTacticalTour(input));
   assert.equal(a.frames.length,40);
-  assert.equal(a.tuningVersion,'v2-prototype-43');
+  assert.equal(a.tuningVersion,'v2-prototype-44');
   assert.equal(a.frames.at(-1).km,40);
   assert.ok(a.frames.some(frame=>frame.attackers.length>0));
   assert.ok(a.frames.some(frame=>frame.chasers.length>0));
@@ -1312,6 +1332,8 @@ test('a sprint-disadvantaged break rider can make an automatic, recorded finale 
   assert.equal(race.frames[29].splitAttack?.source,'automatic');
   assert.equal(race.frames[29].splitAttack?.status,'split');
   assert.equal(race.frames[29].splitAttack?.riderId,'a-0');
+  assert.ok(race.frames[37].mergedRoadGroupIds.includes('road-2'),
+    'the working pursuit should catch the first solo attacker before the finish');
   assert.equal(control.frames[29].splitAttack,null);
   assert.equal(control.provisionalResults[0].teamId,'b');
   assert.equal(race.provisionalResults[0].teamId,'a');
