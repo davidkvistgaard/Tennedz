@@ -42,6 +42,9 @@ for(const width of [390,1440])test(`manager runs a recorded Motor Lab race at ${
  await expect(page.getByText(/attempt an attack from the break after 40 km/)).toBeVisible();
  await page.getByRole('button',{name:/41 km Amber Captain attacked from a break/}).click();
  await expect(page.locator('.motor-scoreboard strong').nth(1)).toHaveText('2');
+ await expect(page.locator('.motor-timeline-trailing')).not.toHaveCount(0);
+ await expect(page.locator('.motor-road article').first().getByText('1.0 s to Group 2')).toBeVisible();
+ await expect(page.locator('.motor-road article').nth(1).getByText('4.6 s to peloton')).toBeVisible();
  await page.getByLabel('React to a dangerous break').selectOption('chase_if_threatened');
  await page.getByLabel("Road captain's leadership").selectOption('experienced');
  await page.getByRole('radio',{name:/Save energy/}).check();

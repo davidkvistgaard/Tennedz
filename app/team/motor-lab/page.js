@@ -34,8 +34,17 @@ export default function MotorLabPage(){
   const gaps=frames.map(frame=>frame.groups[0]?.gapSeconds??0);
   const peakGap=Math.max(...gaps),scale=Math.max(1,peakGap);
   const point=(gap,index)=>`${20+index/(frames.length-1)*960},${130-gap/scale*100}`;
+  const trailingTracks=[];
+  const latestByGroup=new Map();
+  frames.forEach((frame,index)=>frame.groups.slice(1).forEach(group=>{
+   const latest=latestByGroup.get(group.id);
+   const track=latest?.lastIndex===index-1?latest.track:{id:group.id,start:index,points:[]};
+   if(track!==latest?.track)trailingTracks.push(track);
+   track.points.push(point(group.gapSeconds,index));
+   latestByGroup.set(group.id,{lastIndex:index,track});
+  }));
   return {peakGap,trace:gaps.map(point).join(' '),
-   multi:frames.flatMap((frame,index)=>frame.groups.length>1?[20+index/(frames.length-1)*960]:[])};
+   trailingTracks:trailingTracks.map(track=>({...track,points:track.points.join(' ')}))};
  },[recording]);
  const profile=useMemo(()=>{
   if(!recording)return null;
@@ -172,11 +181,11 @@ export default function MotorLabPage(){
       <svg viewBox="0 0 1000 150" preserveAspectRatio="none" aria-hidden="true">
        <line x1="20" y1="130" x2="980" y2="130" className="motor-timeline-baseline"/>
        <polyline points={timeline.trace} className="motor-timeline-trace"/>
-       {timeline.multi.map((x,index)=><line key={index} x1={x} x2={x} y1="139" y2="148" className="motor-timeline-multi"/>)}
+       {timeline.trailingTracks.map(track=><polyline key={`${track.id}-${track.start}`} points={track.points} className="motor-timeline-trailing"/>)}
        <line x1={20+frameIndex/(recording.frames.length-1)*960} x2={20+frameIndex/(recording.frames.length-1)*960} y1="12" y2="148" className="motor-timeline-position"/>
       </svg>
       <div className="motor-timeline-ticks"><span>0 km</span><span>40</span><span>80</span><span>120</span><span>160 km</span></div>
-      <p>At {frame.km} km, the leading group is {seconds(frame.groups[0]?.gapSeconds??0)} ahead. The largest recorded gap is {seconds(timeline.peakGap)}. Gold marks indicate multiple road groups.</p>
+      <p>At {frame.km} km, the leading group is {seconds(frame.groups[0]?.gapSeconds??0)} ahead of the peloton. The largest recorded gap is {seconds(timeline.peakGap)}. Green shows the leader; gold shows groups between the leader and peloton.</p>
      </figure>
      <label className="motor-scrubber">Inspect recorded kilometre
       <input type="range" min="0" max={recording.frames.length-1} value={frameIndex}
@@ -191,6 +200,7 @@ export default function MotorLabPage(){
      <div className="motor-road" aria-label="Road groups at selected kilometre">
       {frame.groups.map((group,index)=><article key={group.id}>
        <div><span className="motor-group-marker">{index+1}</span><strong>Group {index+1} · {seconds(group.gapSeconds)} ahead</strong></div>
+       <small>{seconds(Math.max(0,group.gapSeconds-(frame.groups[index+1]?.gapSeconds??0)))} to {frame.groups[index+1]?`Group ${index+2}`:'peloton'}</small>
        <p>{group.riders.join(', ')}</p><small>{group.workers.length?`Taking pulls: ${group.workers.join(', ')}`:'No recorded pulls this kilometre'}</small>
       </article>)}
       <article><div><span className="motor-group-marker motor-peloton">P</span><strong>Peloton · {frame.pelotonCount} riders</strong></div>
