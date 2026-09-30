@@ -1443,6 +1443,36 @@ test('a whole-group finale catch is stored in the tactical replay',()=>{
     /Invalid recorded finale road-group catches/);
 });
 
+test('a partial road-group finale catch survives full race replay validation',()=>{
+  const flat={distance_km:40,profile_points:[[0,100],[40,100]],
+    keypoints:Array.from({length:31},(_,index)=>({km:10+index,kind:'SPRINT'}))};
+  const teams=['a','b','c'].map(id=>({id,riders:Array.from({length:8},(_,index)=>({
+    id:`${id}-${index}`,gender:'M',strength:index===0?(id==='b'?76:68):70,
+    endurance:index===0?(id==='b'?76:68):70,
+    sprint:index===0?(id==='c'?0:100):0,
+    timetrial:index===0?(id==='b'?76:68):70,
+    flat:index===0?(id==='b'?76:68):70,
+  })),orders:{captainId:`${id}-0`,roadCaptainId:`${id}-1`,preset:'balanced',
+    baseline:{attack:'none',chase:'ignore'},
+    phases:id==='a'||id==='c'?[{atKm:10,attack:'selective',attackRiderId:`${id}-0`},
+      {atKm:11,attack:'none'}]:
+      [{atKm:31,attack:'selective',attackRiderId:'b-0'},
+        {atKm:32,attack:'none'}]}}));
+  const race=simulateTacticalTour({stage:flat,teams,
+    seed:'front-search:68:76:31:0'});
+  assert.deepEqual(race.frames.at(-2).roadGroups.map(group=>group.riderIds),
+    [['a-0','c-0'],['b-0']]);
+  assert.deepEqual(race.frames.at(-1).finaleRoadGroupCatches,[{
+    riderId:'c-0',fromGroupId:'road-1',toGroupId:'road-2',
+  }]);
+  assert.deepEqual(race.frames.at(-1).roadGroups.map(group=>group.riderIds),
+    [['a-0'],['c-0','b-0']]);
+  assert.equal(validateRecordedTour(race),true);
+  const missingCatch=structuredClone(race);
+  missingCatch.frames.at(-1).finaleRoadGroupCatches=[];
+  assert.throws(()=>validateRecordedTour(missingCatch),/changed groups without a merge/);
+});
+
 test('a late chase group is caught at the line while the first break remains replayable',()=>{
   const front=tacticalTeam('a','balanced',{baseline:{attack:'selective',chase:'ignore'},
     phases:[{atKm:10,attack:'none'}]});
