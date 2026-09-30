@@ -28,13 +28,15 @@ for(const width of [390,1440]) test(`landing and squad are usable at ${width}px`
   await expect(page.locator('.club-rider h3').first()).toHaveText('Freja Møller');
   expect(errors).toEqual([]);
 });
-test('next race is gender-specific and a failed calendar is not shown as empty',async({page})=>{
-  await page.route('**/api/events?*',route=>route.fulfill({json:{ok:true,server_time:new Date().toISOString(),events:[{id:'future',name:'Women’s coastal race',kind:'one_day',gender:'F',status:'OPEN',deadline:new Date(Date.now()+3600000).toISOString()},{id:'expired',name:'Expired race',kind:'one_day',gender:'M',status:'OPEN',deadline:'2020-01-01T00:00:00Z'}]}}));
+test('next race is gender-specific, shows readiness and links to that event',async({page})=>{
+  await page.route('**/api/events?*',route=>route.fulfill({json:{ok:true,server_time:new Date().toISOString(),events:[{id:'future',name:'Women’s coastal race',kind:'one_day',gender:'F',status:'OPEN',deadline:new Date(Date.now()+3600000).toISOString(),scheduled_at:new Date(Date.now()+7*86400000).toISOString(),team_count:8,team_size:8,orders_ready:false,readiness:'ORDERS_MISSING',race_tier:4},{id:'legacy',name:'Old race',kind:'one_day',gender:'F',status:'OPEN',deadline:new Date(Date.now()+7200000).toISOString()},{id:'expired',name:'Expired race',kind:'one_day',gender:'M',status:'OPEN',deadline:'2020-01-01T00:00:00Z'}]}}));
   await login(page);
   await expect(page.getByRole('heading',{name:'The road is waiting'})).toBeVisible();
   await page.getByRole('button',{name:'Women',exact:true}).click();
   await expect(page.getByRole('heading',{name:'Women’s coastal race'})).toBeVisible();
-  await expect(page.getByRole('link',{name:/Race details and lineup/})).toHaveAttribute('href','/team/run?gender=F');
+  await expect(page.getByText('Team 8/8')).toBeVisible();
+  await expect(page.getByText('Orders Missing')).toBeVisible();
+  await expect(page.getByRole('link',{name:/Set orders/})).toHaveAttribute('href','/team/run?event_id=future&gender=F');
   await page.unroute('**/api/events?*');
   await page.route('**/api/events?*',route=>route.fulfill({status:503,json:{ok:false,error:'Unavailable'}}));
   await page.reload();

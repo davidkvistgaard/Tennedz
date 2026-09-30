@@ -25,3 +25,4 @@
 .identity-victory h2 { font-size: clamp(28px,3vw,42px); line-height: 1.1; letter-spacing: -1px; }
 .identity-victory p:not(.identity-eyebrow) { line-height: 1.7; color: #58674f; }
 @media(max-width:700px) { .identity-hero,.identity-victory { grid-template-columns: 1fr; }.identity-race-art { transform: none; }.identity-victory > div { padding: 24px; } }
+.club-race-date{font-size:.88rem;font-weight:700;letter-spacing:.03em}.club-race-readiness{display:flex;flex-wrap:wrap;gap:8px}.club-race-readiness span{padding:7px 10px;border:1px solid #f6e7bc55;border-radius:9px;background:#15372a99;color:#fff9e9;font-size:.83rem;text-transform:capitalize}.club-race-readiness strong{color:#fff9e9}

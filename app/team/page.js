@@ -9,6 +9,7 @@ import { countryLabel } from "../../lib/riders/identity.mjs";
 import { useAuth } from "../components/AuthProvider";
 import { teamRating } from "../../lib/race/rating.mjs";
 import { api } from "../../lib/api";
+import { nextTeamRace } from "../../lib/calendar/next-race.mjs";
 import "../identity.css";
 
 const EMPTY = [];
@@ -31,12 +32,20 @@ function NextRace({ gender }) {
     const timer=setInterval(()=>setNow(Date.now()),1000);
     return ()=>{active=false;clearInterval(timer);};
   },[]);
-  const next = calendar.events.filter(e=>e.kind==="one_day" && e.status==="OPEN" && e.gender===gender && Date.parse(e.deadline)>now+calendar.offset).sort((a,b)=>Date.parse(a.deadline)-Date.parse(b.deadline))[0];
+  const next = nextTeamRace(calendar.events,gender,now+calendar.offset);
+  const entryOpen=next&&Date.parse(next.deadline)>now+calendar.offset;
+  const raceDate=next?.scheduled_at??next?.deadline;
+  const action=!next?"Open race calendar":!entryOpen?"View race":
+    next.orders_ready?"Review orders":next.team_count===next.team_size?"Set orders":"Set up team";
   return <section className="club-race" aria-label="Next race">
     <p className="identity-eyebrow">NEXT CHAPTER · {gender==="M"?"MEN":"WOMEN"}</p>
     <h2>{calendar.loading?"Loading your next race…":next?.name || (calendar.error?"Calendar unavailable":"The road is waiting")}</h2>
-    <p>{calendar.error || (next ? `Select eight riders and a captain before ${new Date(next.deadline).toLocaleString("en-GB",{timeZone:"UTC",day:"numeric",month:"long",hour:"2-digit",minute:"2-digit"})} (UTC).` : calendar.loading?"":"There are no open one-day races for this squad yet. Get to know your riders and check the calendar for your next race.")}</p>
-    <Link className="btn" href={`/team/run?gender=${gender}`}>{next?"Race details and lineup":"Open race calendar"} ↗</Link>
+    {next&&<p className="club-race-date">{next.scheduled_at?"Race day":"Entry deadline"} · {new Date(raceDate).toLocaleDateString("en-GB",{weekday:"long",day:"numeric",month:"long",timeZone:"UTC"})}{next.race_tier?` · T${next.race_tier}`:""}</p>}
+    {next&&<div className="club-race-readiness"><span>Team <strong>{next.team_count??0}/{next.team_size??8}</strong></span>
+      <span>Orders <strong>{next.orders_ready?"Ready":"Missing"}</strong></span>
+      {!entryOpen&&<span>Locked</span>}</div>}
+    <p>{calendar.error || (next ? entryOpen?`Entries close ${new Date(next.deadline).toLocaleString("en-GB",{timeZone:"UTC",day:"numeric",month:"long",hour:"2-digit",minute:"2-digit"})} UTC.`:"Entries are locked for this race." : calendar.loading?"":"There are no open one-day races for this squad yet. Get to know your riders and check the calendar for your next race.")}</p>
+    <Link className="btn" href={next?`/team/run?event_id=${encodeURIComponent(next.id)}&gender=${gender}`:"/team/calendar"}>{action} ↗</Link>
   </section>;
 }
 export default function TeamPage() {
