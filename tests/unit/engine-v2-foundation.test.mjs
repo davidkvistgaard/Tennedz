@@ -872,6 +872,9 @@ test('a waiting chase team stays alert and later works in a recorded race',()=>{
     frame.chasers.includes('b')&&frame.attackers.length===0);
   assert.ok(later,'the waiting team should eventually begin the chase');
   assert.equal(validateRecordedTour(race),true);
+  const falsifiedPlan=structuredClone(race);
+  falsifiedPlan.committedInputs.teams.find(team=>team.id==='b').orders.baseline.chase='ignore';
+  assert.throws(()=>validateRecordedTour(falsifiedPlan),/held chase/);
 });
 
 test('a solo rider needs sustained ability to keep an early break to the finish',()=>{
