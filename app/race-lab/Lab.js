@@ -24,6 +24,7 @@ export default function Lab() {
     [forwardResponse, setForwardResponse] = useState("protect_forward"),
     [breakWork, setBreakWork] = useState("cooperate"),
     [breakFinale, setBreakFinale] = useState("hold_group"),
+    [helperAttackPolicy, setHelperAttackPolicy] = useState("open"),
     [breakAttackAtKm, setBreakAttackAtKm] = useState(0),
     [config, setConfig] = useState(DEFAULT_CONFIG),
     [count, setCount] = useState(100);
@@ -67,6 +68,7 @@ export default function Lab() {
       scenario.teams[0].forwardResponse=forwardResponse;
       scenario.teams[0].breakWork=breakWork;
       scenario.teams[0].breakFinale=breakFinale;
+      scenario.teams[0].helperAttackPolicy=helperAttackPolicy;
       scenario.teams[0].breakAttackAtKm=breakAttackAtKm;
       const result=runKilometreLab({scenario,seed:`${seed}:v2`});
       setKilometreRace(result);
@@ -198,6 +200,15 @@ export default function Lab() {
               onChange={e=>setBreakFinale(e.target.value)}>
               <option value="hold_group">Stay with the group</option>
               <option value="attack_if_outsprinted">Attack at finale checkpoints if out-sprinted</option>
+            </select>
+          </label>
+          <label>
+            Amber's helper freedom - kilometre prototype only
+            <select aria-label="Amber's helper freedom" value={helperAttackPolicy}
+              onChange={e=>setHelperAttackPolicy(e.target.value)}>
+              <option value="open">Helpers may take their own chances</option>
+              <option value="hold_for_captain">Keep helpers for the captain</option>
+              <option value="release_if_dropped">Release helpers if the captain is dropped</option>
             </select>
           </label>
           <label>
@@ -466,6 +477,7 @@ export default function Lab() {
           {currentKm.bridgedBreakRiderIds.length>0&&<p className="small">Bridge completed: {currentKm.bridgedBreakRiderIds.length} rider{currentKm.bridgedBreakRiderIds.length===1?'':'s'} caught the nearest break group after closing its remaining gap.</p>}
           {currentKm.splitAttack&&<p className="small">{currentKm.splitAttack.source==='automatic'?'Automatic finale attack':'Planned attack'} from the break: {currentKm.splitAttack.riderId} · {currentKm.splitAttack.status.replaceAll('_',' ')}{currentKm.splitAttack.status==='split'?` · gained ${currentKm.splitAttack.attackSeconds.toFixed(1)} s on their group`:''}.</p>}
           {currentKm.blockedBreakAttacks.length>0&&<p className="small">Unexecuted break attacks: {currentKm.blockedBreakAttacks.map(event=>`${event.riderId} (${event.reason.replaceAll('_',' ')})`).join(' · ')}.</p>}
+          {currentKm.releasedHelperAttackRiderIds.length>0&&<p className="small">Helpers released after their captain was dropped: {currentKm.releasedHelperAttackRiderIds.join(', ')}.</p>}
           {currentKm.mergedRoadGroupIds.length>0&&<p className="small">Road groups came together.</p>}
           {currentKm.decisions.length>0&&<p className="small">Precommitted decisions: {currentKm.decisions.map(decision=>`${kilometreRace.scenario.teams.find(team=>team.id===decision.teamId)?.name??decision.teamId} ${decision.kind.replaceAll('_',' ')}`).join(' · ')}.</p>}
           {currentKm.activeBreakResponseTeamIds.length>0&&<p className="small">Precommitted break chase active: {currentKm.activeBreakResponseTeamIds.map(id=>kilometreRace.scenario.teams.find(team=>team.id===id)?.name??id).join(', ')}.</p>}

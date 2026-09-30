@@ -66,9 +66,9 @@ test('simple presets and expert phases resolve without changing earlier orders',
   const orders=normalizeOrders({captainId:'r0',roadCaptainId:'r1',backupId:'r2',preset:'protect',
     phases:[{atKm:20,effort:'hard',chase:'all'},{atKm:15,chase:'ignore'}]},
     {riderIds:riders,distanceKm:40,keypoints:stage.keypoints});
-  assert.deepEqual(orderAt(orders,0),{effort:'conserve',chase:'selective',attack:'none',breakWork:'cooperate',breakFinale:'hold_group',captainSupport:'hold_position'});
-  assert.deepEqual(orderAt(orders,15),{effort:'conserve',chase:'ignore',attack:'none',breakWork:'cooperate',breakFinale:'hold_group',captainSupport:'hold_position'});
-  assert.deepEqual(orderAt(orders,20),{effort:'hard',chase:'all',attack:'none',breakWork:'cooperate',breakFinale:'hold_group',captainSupport:'hold_position'});
+  assert.deepEqual(orderAt(orders,0),{effort:'conserve',chase:'selective',attack:'none',breakWork:'cooperate',breakFinale:'hold_group',helperAttackPolicy:'open',captainSupport:'hold_position'});
+  assert.deepEqual(orderAt(orders,15),{effort:'conserve',chase:'ignore',attack:'none',breakWork:'cooperate',breakFinale:'hold_group',helperAttackPolicy:'open',captainSupport:'hold_position'});
+  assert.deepEqual(orderAt(orders,20),{effort:'hard',chase:'all',attack:'none',breakWork:'cooperate',breakFinale:'hold_group',helperAttackPolicy:'open',captainSupport:'hold_position'});
   assert.deepEqual(orders.helperIds,['r2','r3','r4','r5','r6','r7']);
   assert.equal(orders.roadCaptainId,'r1');
 });
@@ -100,6 +100,7 @@ test('orders reject foreign riders, ambiguous markers and unknown values',()=>{
   assert.throws(()=>normalizeOrders({captainId:'r0',forwardResponse:'chase_always'},context));
   assert.throws(()=>normalizeOrders({captainId:'r0',baseline:{breakWork:'free_speed'}},context));
   assert.throws(()=>normalizeOrders({captainId:'r0',baseline:{breakFinale:'win_anyway'}},context));
+  assert.throws(()=>normalizeOrders({captainId:'r0',baseline:{helperAttackPolicy:'teleport'}},context));
   assert.throws(()=>normalizeOrders({captainId:'r0',baseline:{captainSupport:'teleport'}},context));
   assert.equal(normalizeOrders({captainId:'r0',breakResponse:'chase_if_threatened'},context).breakResponse,
     'chase_if_threatened');
@@ -120,6 +121,14 @@ test('a support order can be precommitted for a later route marker',()=>{
     {riderIds:riders,distanceKm:40});
   assert.equal(orderAt(orders,19).captainSupport,'hold_position');
   assert.equal(orderAt(orders,20).captainSupport,'drop_back_if_dropped');
+});
+
+test('helper freedom may change at a committed route marker',()=>{
+  const orders=normalizeOrders({captainId:'r0',baseline:{helperAttackPolicy:'hold_for_captain'},
+    phases:[{atKm:20,helperAttackPolicy:'release_if_dropped'}]},
+    {riderIds:riders,distanceKm:40});
+  assert.equal(orderAt(orders,19).helperAttackPolicy,'hold_for_captain');
+  assert.equal(orderAt(orders,20).helperAttackPolicy,'release_if_dropped');
 });
 
 test('a planned attacker can be changed or cleared at a valid marker',()=>{
@@ -163,6 +172,58 @@ test('a precommitted break finale order reacts only at checkpoints to a sprint d
   rival.riders[0].sprint=80;
   assert.equal(automaticBreakAttackRider({team:attacker,group,teams:[attacker,rival],
     segment,distanceKm:40}),null);
+  attacker.orders.baseline.breakFinale='attack_if_outsprinted';
+  attacker.orders.baseline.helperAttackPolicy='release_if_dropped';
+  attacker.riders[2].sprint=20;
+  const helperGroup={...group,riderIds:['a-2','b-0']};
+  assert.equal(automaticBreakAttackRider({team:attacker,group:helperGroup,
+    teams:[attacker,rival],segment,distanceKm:40}),null);
+  assert.equal(automaticBreakAttackRider({team:attacker,group:helperGroup,
+    teams:[attacker,rival],segment,distanceKm:40,leaderDropped:true}),'a-2');
+});
+
+test('helper freedom protects the captain until dropped without overriding a named attack',()=>{
+  const team=tacticalTeam('a','balanced',{baseline:{attack:'selective',chase:'ignore'}});
+  const rival=tacticalTeam('b','protect',{baseline:{chase:'ignore'}});
+  Object.assign(team.riders[2],{flat:95,strength:95,acceleration:95});
+  const context={teams:[team,rival],km:20};
+  assert.equal(resolveTacticalKilometre(context).attackers.find(a=>a.teamId==='a').riderId,'a-2');
+  team.orders.baseline.helperAttackPolicy='hold_for_captain';
+  assert.notEqual(resolveTacticalKilometre(context).attackers.find(a=>a.teamId==='a').riderId,'a-2');
+  team.orders.baseline.helperAttackPolicy='release_if_dropped';
+  assert.notEqual(resolveTacticalKilometre(context).attackers.find(a=>a.teamId==='a').riderId,'a-2');
+  const released=resolveTacticalKilometre({...context,droppedRiderIds:['a-0']});
+  assert.equal(released.attackers.find(a=>a.teamId==='a').riderId,'a-2');
+  assert.deepEqual(released.releasedHelperAttackRiderIds,['a-2']);
+  team.orders.baseline.helperAttackPolicy='hold_for_captain';
+  team.orders.baseline.attackRiderId='a-2';
+  assert.equal(resolveTacticalKilometre(context).attackers.find(a=>a.teamId==='a').riderId,'a-2');
+  assert.deepEqual(resolveTacticalKilometre(context).releasedHelperAttackRiderIds,[]);
+});
+
+test('a dropped captain can release a helper into a recorded attack',()=>{
+  const flat={distance_km:40,profile_points:[[0,100],[40,100]]};
+  const make=(id,policy)=>({id,
+    riders:Array.from({length:8},(_,index)=>({id:`${id}-${index}`,gender:'M',
+      flat:id==='a'&&index===0?5:id==='a'&&index===2?95:60,
+      strength:id==='a'&&index===0?5:id==='a'&&index===2?95:60,
+      endurance:60,acceleration:id==='a'&&index===2?95:60,
+      sprint:50,leadership:50})),
+    orders:{captainId:`${id}-0`,roadCaptainId:`${id}-1`,
+      preset:id==='a'?'balanced':'protect',baseline:{attack:id==='a'?'selective':'none',
+        chase:'ignore',helperAttackPolicy:policy}}});
+  const release=simulateTacticalTour({stage:flat,seed:'helper-release',
+    teams:[make('a','release_if_dropped'),make('b','open')]});
+  const hold=simulateTacticalTour({stage:flat,seed:'helper-release',
+    teams:[make('a','hold_for_captain'),make('b','open')]});
+  assert.equal(release.frames[2].riderGroups.find(rider=>rider.id==='a-0').group,'dropped');
+  assert.deepEqual(release.frames[19].releasedHelperAttackRiderIds,['a-2']);
+  assert.deepEqual(hold.frames[19].releasedHelperAttackRiderIds,[]);
+  assert.notEqual(hold.frames[19].attackers[0],release.frames[19].attackers[0]);
+  assert.equal(validateRecordedTour(release),true);
+  const tampered=structuredClone(release);
+  tampered.frames[19].releasedHelperAttackRiderIds=['b-2'];
+  assert.throws(()=>validateRecordedTour(tampered),/helper release/);
 });
 
 test('a single team cannot neutralise several coordinated attacks at no cost',()=>{
@@ -814,7 +875,7 @@ test('the full tactical trace is deterministic, bounded and makes aggressive ord
   const a=simulateTacticalTour(input);
   assert.deepEqual(a,simulateTacticalTour(input));
   assert.equal(a.frames.length,40);
-  assert.equal(a.tuningVersion,'v2-prototype-44');
+  assert.equal(a.tuningVersion,'v2-prototype-45');
   assert.equal(a.frames.at(-1).km,40);
   assert.ok(a.frames.some(frame=>frame.attackers.length>0));
   assert.ok(a.frames.some(frame=>frame.chasers.length>0));
@@ -1575,6 +1636,15 @@ test('Race Lab records the optional break-finale rule before calculation',()=>{
   const race=runKilometreLab({scenario,seed:'break-finale'});
   assert.equal(race.committedInputs.teams[0].orders.baseline.breakFinale,
     'attack_if_outsprinted');
+  assert.equal(validateRecordedTour(race),true);
+});
+
+test('Race Lab records the selected helper attack policy before calculation',()=>{
+  const scenario=flatScenario('break');
+  scenario.teams[0].helperAttackPolicy='release_if_dropped';
+  const race=runKilometreLab({scenario,seed:'helper-freedom'});
+  assert.equal(race.committedInputs.teams[0].orders.baseline.helperAttackPolicy,
+    'release_if_dropped');
   assert.equal(validateRecordedTour(race),true);
 });
 
