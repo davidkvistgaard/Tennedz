@@ -1,0 +1,40 @@
+import {createMotorLabPreview} from '../lib/engine/v2/preview.mjs';
+
+const count=Number(process.argv[2]??20);
+if(!Number.isInteger(count)||count<1||count>200)
+ throw new Error('Choose 1–200 scenario seeds.');
+
+function metrics(recording){
+ const frames=recording.frames;
+ return {
+  breakKm:frames.filter(frame=>frame.groups.length>0).length,
+  multiGroupKm:frames.filter(frame=>frame.groups.length>1).length,
+  maxGapSeconds:Math.max(...frames.map(frame=>frame.groups[0]?.gapSeconds??0)),
+  amberWin:recording.results[0].team==='Amber',
+  captainPlace:recording.results.find(result=>result.name==='Amber Captain').position,
+  split:frames.some(frame=>frame.moments.includes('Amber Captain attacked from a break')),
+  blocked:frames.some(frame=>frame.moments.some(moment=>moment.includes('planned break attack could not start'))),
+ };
+}
+function summarise(rows){
+ const mean=key=>Number((rows.reduce((sum,row)=>sum+row[key],0)/rows.length).toFixed(1));
+ return {
+  amberWins:rows.filter(row=>row.amberWin).length,
+  meanCaptainPlace:mean('captainPlace'),
+  meanBreakKm:mean('breakKm'),
+  meanMaxGapSeconds:mean('maxGapSeconds'),
+  totalMultiGroupKm:rows.reduce((sum,row)=>sum+row.multiGroupKm,0),
+  splits:rows.filter(row=>row.split).length,
+  blockedOrders:rows.filter(row=>row.blocked).length,
+ };
+}
+const report={kind:'fictional-motor-lab-audit',seedCount:count,plans:{}};
+for(const plan of ['sprint','break','balanced','conserve']){
+ const baseline=[],attack40=[];
+ for(let seed=0;seed<count;seed++){
+  baseline.push(metrics(createMotorLabPreview({plan,seed})));
+  attack40.push(metrics(createMotorLabPreview({plan,seed,orders:{breakAttackMarker:'40'}})));
+ }
+ report.plans[plan]={baseline:summarise(baseline),attackAfter40Km:summarise(attack40)};
+}
+console.log(JSON.stringify(report,null,2));
