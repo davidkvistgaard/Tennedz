@@ -932,7 +932,7 @@ test('the full tactical trace is deterministic, bounded and makes aggressive ord
   const a=simulateTacticalTour(input);
   assert.deepEqual(a,simulateTacticalTour(input));
   assert.equal(a.frames.length,40);
-  assert.equal(a.tuningVersion,'v2-prototype-63');
+  assert.equal(a.tuningVersion,'v2-prototype-64');
   assert.equal(a.frames.at(-1).km,40);
   assert.ok(a.frames.some(frame=>frame.attackers.length>0));
   assert.ok(a.frames.some(frame=>frame.chasers.length>0));
@@ -1007,6 +1007,11 @@ test('fatigue and low energy reduce ability without changing permanent skills',(
   const fresh=riderKilometreEffect(rider,segment,{energy:100});
   const tired=riderKilometreEffect({...rider,fatigue:60},segment,{energy:30});
   assert.ok(fresh.ability>tired.ability);
+  const threshold=riderKilometreEffect(rider,segment,{energy:12});
+  const depleted=riderKilometreEffect(rider,segment,{energy:0});
+  assert.ok(depleted.ability<threshold.ability*.8,
+    'near-empty energy should sharply reduce sustainable pace');
+  assert.ok(depleted.ability>0);
   assert.deepEqual(sportingSkills(rider),sportingSkills({...rider,fatigue:60}));
 });
 
