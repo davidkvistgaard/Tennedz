@@ -7,13 +7,17 @@ import {validateRecordedTour} from '../lib/engine/v2/recording.mjs';
 const samples=process.argv[2]===undefined?10:Number(process.argv[2]);
 if(!Number.isInteger(samples)||samples<1||samples>100)
   throw new Error('Usage: node scripts/engine-v2-stage-series.mjs [samples: 1-100]');
+const opposition=process.argv[3]??'fixed';
+if(!['fixed','late_hard'].includes(opposition))
+  throw new Error('Opposition must be fixed or late_hard.');
 const stages=[
   {distance_km:120,profile_points:[[0,100],[120,100]],keypoints:[]},
   {distance_km:120,profile_points:[[0,100],[40,280],[80,100],[120,100]],keypoints:[]},
   {distance_km:120,profile_points:[[0,400],[50,1500],[80,700],[120,400]],keypoints:[]},
 ];
 const strategies=['hard','steady','conserve','late_hard'];
-const report={samples,description:'fictional riders, three stages and explicit laboratory-only times',
+const report={samples,opposition,
+  description:'fictional riders, three stages and explicit laboratory-only times',
   categories:{}};
 
 function startingTeams(effort,gender){
@@ -23,7 +27,9 @@ function startingTeams(effort,gender){
   })),orders:{captainId:`${id}-0`,roadCaptainId:`${id}-1`,
     preset:index===1?'aggressive':index===3?'protect':'balanced',
     ...(index===0?{baseline:{effort:effort==='late_hard'?'conserve':effort},
-      ...(effort==='late_hard'?{phases:[{atKm:110,effort:'hard'}]}:{})}:{})}}));
+      ...(effort==='late_hard'?{phases:[{atKm:110,effort:'hard'}]}:{})}:
+      opposition==='late_hard'?{baseline:{effort:'conserve'},
+        phases:[{atKm:110,effort:'hard'}]}:{})}}));
 }
 
 for(const gender of ['M','F']){
