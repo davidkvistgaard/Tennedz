@@ -25,3 +25,8 @@
 .identity-victory h2 { font-size: clamp(28px,3vw,42px); line-height: 1.1; letter-spacing: -1px; }
 .identity-victory p:not(.identity-eyebrow) { line-height: 1.7; color: #58674f; }
 @media(max-width:700px) { .identity-hero,.identity-victory { grid-template-columns: 1fr; }.identity-race-art { transform: none; }.identity-victory > div { padding: 24px; } }
+
+/* The wordmark is part of the vector lockup, with no secondary tagline. */
+.identity-logo img { display:block; width:190px; height:auto; }
+.identity-footer > img { display:block; width:170px; height:auto; flex:none; }
+@media(max-width:700px) { .identity-logo img { width:150px; } .identity-footer > img { width:145px; } }

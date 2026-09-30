@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 380 96" role="img" aria-labelledby="title">
+  <title id="title">Pelotonia</title>
+  <defs><mask id="road-mark" maskUnits="userSpaceOnUse"><rect width="100" height="100" fill="white"/><path d="M34 81c5-16 17-28 33-37" fill="none" stroke="black" stroke-width="3.4" stroke-linecap="round" stroke-dasharray="6 5"/></mask></defs>
+  <g fill="#0E2D24" mask="url(#road-mark)">
+    <path fill-rule="evenodd" d="M25 12h37c20 0 32 11 32 28S82 68 62 68H46v20H25V12Zm21 20v17h16c8 0 12-3 12-9s-4-8-12-8H46Z"/>
+    <path d="M20 88c3-18 14-33 30-43 8-5 17-8 25-9l6 7c-14 5-23 11-29 19-7 9-10 17-11 26H20Z"/>
+  </g>
+  <text x="112" y="60" fill="#0E2D24" font-family="Arial, Helvetica, sans-serif" font-size="30" font-weight="700" letter-spacing="2.5">PELOTONIA</text>
+</svg>

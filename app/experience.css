@@ -2,6 +2,7 @@
 .experience-welcome { background:var(--bg); padding:20px; gap:20px; min-height:100svh; grid-template-columns:minmax(0,1fr) minmax(0,1fr); }
 .experience-welcome .welcome-story { position:relative; padding:40px 44px 24px; border-radius:24px; background:#e9e6d5; color:#263e32; gap:24px; justify-content:flex-start; }
 .experience-welcome .welcome-brand { font-family:Bricolage,sans-serif; font-size:34px; letter-spacing:-1.7px; line-height:1; text-decoration:none; }
+.experience-welcome .welcome-brand img { display:block; width:190px; max-width:100%; height:auto; }
 .experience-welcome .welcome-brand span { font-size:9px; letter-spacing:3px; color:#546749; margin-top:9px; }
 .experience-welcome .welcome-story-copy { position:relative; z-index:1; margin-top:30px; }
 .experience-welcome .welcome-story h2 { font-family:Bricolage,sans-serif; font-size:clamp(38px,4.3vw,65px); line-height:1.05; letter-spacing:-2px; margin:16px 0; }

@@ -29,10 +29,10 @@
 .studio-custom-colors label { display: grid; gap: 8px; }
 .studio-custom-colors input { width: 80px; height: 44px; padding: 4px; border: 1px solid #d6cdb7; border-radius: 8px; }
 :root {
-  --studio-paper: #fff9eb;
+  --studio-paper: var(--pelotonia-cream);
   --studio-cream: #f2ead8;
-  --studio-ink: #283f35;
-  --studio-forest: #285440;
+  --studio-ink: var(--pelotonia-ink);
+  --studio-forest: var(--pelotonia-forest);
   --studio-honey: #dfb665;
   --studio-clay: #ad6349;
   --studio-line: #d6cdb7;
@@ -44,7 +44,6 @@
 body { background: radial-gradient(ellipse at 15% 0%, #fffcf0 0, transparent 60%), var(--studio-cream); }
 .game-shell { max-width: 1500px; }
 .game-shell .game-header { border-bottom: 2px solid var(--studio-line); padding-bottom: 22px; }
-.game-shell .game-brand .brand-mark { background: var(--studio-forest); color: var(--studio-paper); border-radius: 16px 8px 16px 8px; box-shadow: 3px 3px 0 var(--studio-honey); }
 .game-shell .game-nav { flex-wrap: wrap; }
 .game-shell .game-nav a { border-radius: 9px; min-height: 44px; display: inline-flex; align-items: center; }
 .game-shell .game-nav a[aria-current=page] { background: var(--studio-forest); color: var(--studio-paper); box-shadow: 0 3px 0 #142e24; }

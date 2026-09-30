@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pelotonia logo v0.1</title>
+<style>
+  :root { --forest:#0E2D24; --green:#4FB28A; --cream:#F6F4EC; --sage:#5E806E; --ink:#10191A; }
+  * { box-sizing:border-box; }
+  body { margin:0; padding:40px; background:var(--cream); color:var(--ink); font:16px Arial,sans-serif; }
+  h1 { margin:0 0 10px; color:var(--forest); }
+  p { margin:0 0 30px; color:var(--sage); }
+  main { max-width:1100px; margin:auto; }
+  .grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:20px; }
+  figure { margin:0; padding:22px; border:1px solid #c6d2c9; border-radius:16px; background:white; }
+  figure.dark { background:var(--forest); }
+  .art { display:flex; justify-content:center; align-items:center; min-height:160px; }
+  img { display:block; max-width:100%; max-height:190px; }
+  figcaption { border-top:1px solid #c6d2c9; margin-top:20px; padding-top:14px; color:var(--sage); font-size:13px; }
+  .dark figcaption { color:var(--cream); border-color:var(--sage); }
+  .swatches { display:flex; gap:12px; margin-top:25px; flex-wrap:wrap; }
+  .swatches span { padding:10px 14px; border-radius:8px; font-size:12px; }
+  @media(max-width:700px) { body { padding:20px; }.grid { grid-template-columns:1fr; } }
+</style>
+<main>
+  <h1>Pelotonia logo v0.1</h1>
+  <p>Six production SVG variants. The road remains inside a legible P.</p>
+  <div class="grid">
+    <figure><div class="art"><img src="../public/brand/pelotonia-icon.svg" width="130" alt="Pelotonia icon"></div><figcaption>01 · Icon only</figcaption></figure>
+    <figure><div class="art"><img src="../public/brand/pelotonia-horizontal.svg" width="380" alt="Horizontal Pelotonia logo"></div><figcaption>02 · Horizontal lockup</figcaption></figure>
+    <figure><div class="art"><img src="../public/brand/pelotonia-stacked.svg" width="205" alt="Stacked Pelotonia logo"></div><figcaption>03 · Stacked lockup</figcaption></figure>
+    <figure class="dark"><div class="art"><img src="../public/brand/pelotonia-monochrome-light.svg" width="350" alt="Light monochrome Pelotonia logo"></div><figcaption>04 · Monochrome light on dark</figcaption></figure>
+    <figure><div class="art"><img src="../public/brand/pelotonia-monochrome-dark.svg" width="350" alt="Dark monochrome Pelotonia logo"></div><figcaption>05 · Monochrome dark on light</figcaption></figure>
+    <figure><div class="art"><img src="../app/icon.svg" width="64" alt="Pelotonia app icon"></div><figcaption>06 · Favicon / app icon at 64 px</figcaption></figure>
+  </div>
+  <div class="swatches">
+    <span style="background:#0E2D24;color:#F6F4EC">Forest #0E2D24</span>
+    <span style="background:#4FB28A;color:#10191A">Green #4FB28A</span>
+    <span style="background:#F6F4EC;color:#10191A;border:1px solid #c6d2c9">Cream #F6F4EC</span>
+    <span style="background:#5E806E;color:#F6F4EC">Sage #5E806E</span>
+    <span style="background:#10191A;color:#F6F4EC">Ink #10191A</span>
+  </div>
+</main>
+</html>
