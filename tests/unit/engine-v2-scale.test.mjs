@@ -21,17 +21,20 @@ const teams=Array.from({length:20},(_,index)=>{
       {atKm:attackAt+10,attack:'none'}]}};
 });
 
-test('the maximum team roster produces bounded, replayable multi-group racing',()=>{
-  const input={stage,teams,seed:'twenty-team-stress'};
-  const race=simulateTacticalTour(input);
-  assert.equal(race.provisionalResults.length,160);
-  assert.equal(race.frames.length,100);
-  assert.ok(race.frames.some(frame=>frame.roadGroups.length>=2));
-  assert.ok(race.frames.every(frame=>frame.roadGroups.length<=MAX_ROAD_GROUPS&&
-    frame.riderGroups.length===160));
-  assert.equal(validateRecordedTour(race),true);
-  assert.deepEqual(race,simulateTacticalTour({...input,
-    teams:[...teams].reverse().map(team=>({...team,riders:[...team.riders].reverse()}))}));
+test('the maximum team roster stays bounded and replayable across race seeds',()=>{
+  for(const seed of ['twenty-team-stress','twenty-team-stress-2',
+    'twenty-team-stress-3','twenty-team-stress-4','twenty-team-stress-5']){
+    const input={stage,teams,seed};
+    const race=simulateTacticalTour(input);
+    assert.equal(race.provisionalResults.length,160);
+    assert.equal(race.frames.length,100);
+    assert.ok(race.frames.some(frame=>frame.roadGroups.length>=2));
+    assert.ok(race.frames.every(frame=>frame.roadGroups.length<=MAX_ROAD_GROUPS&&
+      frame.riderGroups.length===160));
+    assert.equal(validateRecordedTour(race),true);
+    assert.deepEqual(race,simulateTacticalTour({...input,
+      teams:[...teams].reverse().map(team=>({...team,riders:[...team.riders].reverse()}))}));
+  }
 });
 
 test('the full roster can project GC without mixing categories or corrupting replay',()=>{
