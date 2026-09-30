@@ -15,3 +15,7 @@ The existing in-memory recording now has a playable kilometre timeline. A line s
 ## Conditional attack from the break
 
 The manager can now commit Amber Captain to try an attack from a break after 40, 80 or 120 km. The existing v2 marker order fires on the following kilometre only if the captain is in a suitable road group. The recording explains a split or a blocked attempt; the UI does not pretend the order succeeded when its condition failed. In the fixed laboratory scenario, the 40 km choice can show two simultaneous road groups, making the multi-group viewer testable. This is still one pre-race conditional order, not a live instruction or a balancing claim.
+
+## Road captain laboratory profile
+
+Amber's fictional road captain can use either the original 45 leadership or an experienced 85 leadership profile. The rider's other sporting skills and the scenario seed stay fixed. When a threatening-break response is committed, the higher leadership may detect and call a chase earlier or more often; it does not guarantee a better result. The choice is a controlled preview variable, not a staff upgrade, roster edit or persistent rider attribute. Scenario 1 with the conserve plan and threatening-break response records its first Amber chase call at km 23 with the standard profile and km 22 with the experienced profile.
