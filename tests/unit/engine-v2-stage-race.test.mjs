@@ -87,12 +87,15 @@ test('costly stage work carries more fatigue while a rest day lowers the next st
 });
 
 test('three stages carry separate GC and rider condition without rewriting old races',()=>{
+  const longStage={distance_km:120,profile_points:[[0,100],[120,100]],keypoints:[]};
+  const hardTeams=structuredClone(teams);
+  hardTeams[0].orders.baseline.effort='hard';
   const standings=[];
   const recordings=[];
-  let nextTeams=structuredClone(teams);
+  let nextTeams=structuredClone(hardTeams);
   let classification=null;
   for(let index=0;index<3;index++){
-    const recording=simulateTacticalTour({stage,teams:nextTeams,
+    const recording=simulateTacticalTour({stage:longStage,teams:nextTeams,
       seed:`three-stage-${index}`,classification});
     recordings.push(structuredClone(recording));
     const before=structuredClone(recording);
@@ -101,13 +104,14 @@ test('three stages carry separate GC and rider condition without rewriting old r
     standings.push(structuredClone(classification));
     const condition=carryStageFatigue({recording,restDays:index===1?1:0});
     nextTeams=condition.teams.map(team=>({...team,
-      orders:structuredClone(teams.find(original=>original.id===team.id).orders)}));
+      orders:structuredClone(hardTeams.find(original=>original.id===team.id).orders)}));
     assert.deepEqual(recording,before);
     assert.equal(validateRecordedTour(recording),true);
   }
   assert.deepEqual(classification.completedStageIds,['stage-1','stage-2','stage-3']);
   assert.deepEqual(recordings[1].committedInputs.classification,standings[0]);
   assert.deepEqual(recordings[2].committedInputs.classification,standings[1]);
+  assert.ok(recordings[1].committedInputs.teams[0].riders[0].fatigue>0);
   assert.deepEqual(recordings[1].committedInputs.teams[0].riders[0].fatigue,
     carryStageFatigue({recording:recordings[0]}).teams[0].riders[0].fatigue);
   assert.deepEqual(recordings[2].committedInputs.teams[0].riders[0].fatigue,
