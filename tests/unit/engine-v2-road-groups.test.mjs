@@ -61,6 +61,27 @@ test('a teammate behind a rider up the road sits on while rivals can still pull'
   assert.deepEqual(selectRoadGroupPulls(separated,teams,21),['a-0','b-0']);
 });
 
+test('a trailing teammate may work only for a nearby fading forward rider under a committed plan',()=>{
+  const groups=[
+    {id:'road-1',riderIds:['a-0'],teamIds:['a'],gapSeconds:25},
+    {id:'road-2',riderIds:['a-1','b-0'],teamIds:['a','b'],gapSeconds:18},
+  ];
+  const teams=['a','b'].map(id=>({id,riders:[{id:`${id}-0`},{id:`${id}-1`}],
+    energy:{[`${id}-0`]:id==='a'?20:70},
+    orders:{forwardResponse:id==='a'?'chase_if_fading':'protect_forward',
+      baseline:{breakWork:'cooperate'},phases:[]}}));
+  assert.deepEqual(selectRoadGroupPulls(groups,teams,21),['a-0','a-1','b-0']);
+  teams[0].energy['a-0']=31;
+  assert.deepEqual(selectRoadGroupPulls(groups,teams,21),['a-0','b-0']);
+  delete teams[0].energy['a-0'];
+  assert.deepEqual(selectRoadGroupPulls(groups,teams,21),['a-0','b-0']);
+  teams[0].energy['a-0']=20;
+  assert.deepEqual(selectRoadGroupPulls([{...groups[0],gapSeconds:30},groups[1]],teams,21),
+    ['a-0','b-0']);
+  teams[0].orders.forwardResponse='protect_forward';
+  assert.deepEqual(selectRoadGroupPulls(groups,teams,21),['a-0','b-0']);
+});
+
 test('the pursuing break can recatch the attacker without losing its group identity',()=>{
   const state=advanceRoadGroups(split(),{'road-2':-5,'road-1':0});
   assert.deepEqual(state.mergedGroupIds,['road-2']);
