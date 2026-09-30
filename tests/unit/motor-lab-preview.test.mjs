@@ -63,9 +63,13 @@ test('road captain leadership changes a precommitted chase response',()=>{
   breakResponse:'chase_if_threatened',roadCaptain:'experienced',
  }});
  const firstChase=recording=>recording.frames.find(frame=>
-  frame.moments.includes('Amber road captain called a chase'))?.km;
+  frame.moments.some(moment=>moment.startsWith('Amber road captain called a chase')))?.km;
  assert.equal(firstChase(standard),23);
  assert.equal(firstChase(experienced),22);
+ assert(standard.frames[22].moments.some(moment=>
+  /called a chase with the leader 8\.2 s ahead/.test(moment)));
+ assert(standard.frames[23].moments.includes(
+  'Amber road captain ended the chase after the break was caught'));
  assert(experienced.frames.filter(frame=>frame.chasingTeams.includes('Amber')).length>
   standard.frames.filter(frame=>frame.chasingTeams.includes('Amber')).length);
  assert.deepEqual(experienced,createMotorLabPreview({plan:'conserve',seed:1,orders:{
