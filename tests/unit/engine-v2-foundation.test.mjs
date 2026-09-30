@@ -828,18 +828,50 @@ test('selective pursuit waits with a manageable gap but starts as the finish app
   assert.deepEqual(early.chasers,[]);
   assert.deepEqual(mid.heldChaseTeamIds,['b']);
   assert.deepEqual(mid.chasers,[]);
-  assert.deepEqual(guard.heldChaseTeamIds,[]);
-  assert.deepEqual(guard.chasers.map(chaser=>chaser.teamId),['b']);
+  assert.deepEqual(guard.heldChaseTeamIds,['b']);
+  assert.deepEqual(guard.chasers,[]);
+  const watching=[...guard.engagedChaseTeamIds,...guard.heldChaseTeamIds];
+  const nextKm=resolveTacticalKilometre({...context,km:61,gapSeconds:3,
+    engagedChaseTeamIds:watching});
+  assert.deepEqual(nextKm.heldChaseTeamIds,['b']);
+  const watchUntilUrgent=resolveTacticalKilometre({...context,km:120,gapSeconds:3,
+    engagedChaseTeamIds:[...nextKm.heldChaseTeamIds]});
+  assert.deepEqual(watchUntilUrgent.chasers.map(chaser=>chaser.teamId),['b']);
   assert.ok(early.energyCosts.every(cost=>cost.reason!=='chase'));
   assert.deepEqual(late.heldChaseTeamIds,[]);
   assert.deepEqual(late.chasers.map(chaser=>chaser.teamId),['b']);
   assert.ok(late.gapSeconds<early.gapSeconds);
+  const stillSafe=resolveTacticalKilometre({...context,km:120,gapSeconds:1});
+  const nowUrgent=resolveTacticalKilometre({...context,km:150,gapSeconds:1});
+  assert.deepEqual(stillSafe.heldChaseTeamIds,['b']);
+  assert.deepEqual(nowUrgent.chasers.map(chaser=>chaser.teamId),['b']);
   const all=tacticalTeam('b','protect',{baseline:{attack:'none',chase:'all'}});
   assert.deepEqual(resolveTacticalKilometre({...context,teams:[ahead,all],km:20}).heldChaseTeamIds,[]);
   const fresh=tacticalTeam('c','aggressive');
   const reacting=resolveTacticalKilometre({...context,teams:[ahead,defender,fresh],km:20});
   assert.ok(reacting.attackers.length>0);
   assert.ok(!reacting.heldChaseTeamIds.includes('b'));
+});
+
+test('a waiting chase team stays alert and later works in a recorded race',()=>{
+  const flat={distance_km:160,profile_points:[[0,100],[160,100]],
+    keypoints:[{km:20,kind:'SPRINT'},{km:21,kind:'SPRINT'}]};
+  const teams=['a','b'].map(id=>({id,riders:Array.from({length:8},(_,index)=>({
+    id:`${id}-${index}`,gender:'M',strength:id==='a'&&index===0?30:70,
+    flat:id==='a'&&index===0?90:70,endurance:70,timetrial:75,sprint:70,
+  })),orders:{captainId:`${id}-0`,roadCaptainId:`${id}-1`,preset:'balanced',
+    baseline:{attack:'none',chase:id==='a'?'ignore':'selective'},
+    phases:id==='a'?[{atKm:20,attack:'selective',attackRiderId:'a-0'},
+      {atKm:21,attack:'none'}]:[]}}));
+  const race=simulateTacticalTour({stage:flat,teams,seed:'watch:30:0'});
+  const waiting=race.frames.findIndex(frame=>frame.heldChaseTeamIds.includes('b'));
+  assert.ok(waiting>0);
+  assert.ok(race.frames.slice(waiting,waiting+3).every(frame=>
+    frame.heldChaseTeamIds.includes('b')&&!frame.chasers.includes('b')));
+  const later=race.frames.slice(waiting+3).find(frame=>
+    frame.chasers.includes('b')&&frame.attackers.length===0);
+  assert.ok(later,'the waiting team should eventually begin the chase');
+  assert.equal(validateRecordedTour(race),true);
 });
 
 test('a solo rider needs sustained ability to keep an early break to the finish',()=>{
@@ -897,7 +929,7 @@ test('the full tactical trace is deterministic, bounded and makes aggressive ord
   const a=simulateTacticalTour(input);
   assert.deepEqual(a,simulateTacticalTour(input));
   assert.equal(a.frames.length,40);
-  assert.equal(a.tuningVersion,'v2-prototype-56');
+  assert.equal(a.tuningVersion,'v2-prototype-57');
   assert.equal(a.frames.at(-1).km,40);
   assert.ok(a.frames.some(frame=>frame.attackers.length>0));
   assert.ok(a.frames.some(frame=>frame.chasers.length>0));

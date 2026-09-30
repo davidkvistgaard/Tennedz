@@ -38,6 +38,8 @@ The isolated prototype now has an experimental `carryStageFatigue` handoff. It t
 
 The experimental per-kilometre break model now shares the added exposure cost among willing workers in the same road group. The relief is capped and a worker always pays more than a rider sitting on; workers in separate groups cannot share it. Cost is attributed to the riders who worked at the start of the kilometre even if their group is caught before that frame is saved. These are balance parameters, not a claim that the full drafting and rotation mechanics are complete.
 
+A selective chase can keep watching a manageable break without spending chase energy, then engage when the remaining distance makes its current gap unsafe. The watching state persists across quiet kilometres; it is distinct from the recorded list of teams actually pulling. Fresh attacks and all-out orders bypass this wait. The safe-gap rule is a provisional balance heuristic and needs broader scenario calibration.
+
 1. With a viable teammate ahead, a team behind does not provide chase power; its rider in a pursuing group can shelter without taking pulls. A rival team can still catch the front group.
 2. If the forward teammate fades badly while the protected captain remains viable, the team may change its priority under a precommitted rule. The decision and energy costs are visible.
 3. A helper in the same group gives measurable protection to a captain. A helper in a different group cannot do so until a physically possible reunion has completed.
