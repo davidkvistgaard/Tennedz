@@ -242,10 +242,10 @@ export default function Lab() {
             <select aria-label="Amber's order-change marker" value={phaseAtKm}
               onChange={e=>setPhaseAtKm(Number(e.target.value))}>
               <option value={0}>No scheduled change</option>
-              <option value={40}>After kilometre 40</option>
-              <option value={55}>After exposed-coast keypoint (55 km)</option>
-              <option value={80}>After kilometre 80</option>
-              <option value={120}>After kilometre 120</option>
+              {[...Array.from({length:15},(_,index)=>(index+1)*10),55]
+                .sort((a,b)=>a-b).map(km=><option key={km} value={km}>
+                  {km===55?'After exposed-coast keypoint (55 km)':`After kilometre ${km}`}
+                </option>)}
             </select>
           </label>
           <label>
@@ -259,6 +259,7 @@ export default function Lab() {
               <option value="hard">Hard effort</option>
             </select>
           </label>
+          <p className="small">Hard effort supports attacks, pursuit and the finishing burst, but uses more energy. A late change can save strength for the final kilometres.</p>
           <label>
             Amber's later chase · kilometre prototype only
             <select aria-label="Amber's later chase" value={phaseChase}

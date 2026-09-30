@@ -158,3 +158,17 @@ test('Race Lab previews a scheduled order change after its marker',async ({page}
   await expect(page.getByText(/Scheduled Amber orders: hard effort · all chase/)).toBeVisible();
   await expect(page.getByText(/Scheduled Amber orders/)).toContainText('sit on in the break');
 });
+
+test('Race Lab can reserve hard effort for the final ten kilometres',async ({page})=>{
+  await page.goto('/race-lab');
+  await page.getByLabel("Amber's order-change marker").selectOption('150');
+  await page.getByLabel("Amber's later effort").selectOption('hard');
+  await page.getByRole('button',{name:'Run kilometre prototype'}).click();
+  const slider=page.getByRole('slider',{name:'Recorded kilometre'});
+  await slider.focus();
+  await page.keyboard.press('End');
+  for(let kilometre=160;kilometre>151;kilometre--)
+    await page.keyboard.press('ArrowLeft');
+  await expect(page.getByText('151 / 160 km',{exact:true})).toBeVisible();
+  await expect(page.getByText(/Scheduled Amber orders: hard effort/)).toBeVisible();
+});
