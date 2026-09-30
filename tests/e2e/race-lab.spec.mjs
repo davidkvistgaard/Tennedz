@@ -103,6 +103,8 @@ test('Race Lab exposes a precommitted sit-on choice in the recorded race',async 
   for(let kilometre=1;kilometre<5;kilometre++)await page.keyboard.press('ArrowRight');
   await expect(page.getByText('5 / 160 km',{exact:true})).toBeVisible();
   await expect(page.getByText('Recorded break work: 0 riders took pulls this kilometre.')).toBeVisible();
+  await page.getByText('Inspect road groups and riders').click();
+  await expect(page.getByText(/Not pulling this km/).first()).toBeVisible();
 });
 
 test('Race Lab replays a planned attack from an existing break',async ({page})=>{

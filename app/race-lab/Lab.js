@@ -473,6 +473,19 @@ export default function Lab() {
           })}</tbody></table></div>
           <p>{currentKm.breakawayRiderIds.length} rider{currentKm.breakawayRiderIds.length===1?'':'s'} in the break · {currentKm.attackers.length} attack{currentKm.attackers.length===1?'':'s'} attempted · {currentKm.joinedBreakawayRiderIds.length} joined the break · {currentKm.chasers.length} chasing team{currentKm.chasers.length===1?'':'s'} · {currentKm.shelterEvents.length} protected leader{currentKm.shelterEvents.length===1?'':'s'} · {currentKm.recoveredRiderIds.length} rider{currentKm.recoveredRiderIds.length===1?'':'s'} recovering{currentKm.decisions.length?` · ${currentKm.decisions.length} tactical decision${currentKm.decisions.length===1?'':'s'}`:''}</p>
           {currentKm.roadGroups.length>1&&<p className="small">Road groups: {currentKm.roadGroups.map(group=>`${group.riderIds.length} rider${group.riderIds.length===1?'':'s'} at +${group.gapSeconds.toFixed(1)} s`).join(' · ')} ahead of the peloton.</p>}
+          {currentKm.roadGroups.length>0&&<details className="lab-road-groups">
+            <summary>Inspect road groups and riders</summary>
+            {currentKm.roadGroups.map((group,index)=><div key={group.id}>
+              <strong>Group {index+1} · +{group.gapSeconds.toFixed(1)} s</strong>
+              <ul>{group.riderIds.map(id=>{
+                const rider=kilometreRace.committedInputs.teams.flatMap(team=>team.riders)
+                  .find(candidate=>candidate.id===id);
+                const energy=currentKm.riderGroups.find(state=>state.id===id)?.energy;
+                return <li key={id}>{rider?.name??id} · {currentKm.pullRiderIds.includes(id)?
+                  'Pulling this km':'Not pulling this km'} · {energy?.toFixed(1)??'?'} energy</li>;
+              })}</ul>
+            </div>)}
+          </details>}
           {currentKm.formedChaseGroupId&&<p className="small">New chase group from the peloton: {currentKm.roadGroups.at(-1).riderIds.length} rider{currentKm.roadGroups.at(-1).riderIds.length===1?'':'s'} escaped behind the leading break.</p>}
           {currentKm.bridgedBreakRiderIds.length>0&&<p className="small">Bridge completed: {currentKm.bridgedBreakRiderIds.length} rider{currentKm.bridgedBreakRiderIds.length===1?'':'s'} caught the nearest break group after closing its remaining gap.</p>}
           {currentKm.splitAttack&&<p className="small">{currentKm.splitAttack.source==='automatic'?'Automatic finale attack':'Planned attack'} from the break: {currentKm.splitAttack.riderId} · {currentKm.splitAttack.status.replaceAll('_',' ')}{currentKm.splitAttack.status==='split'?` · gained ${currentKm.splitAttack.attackSeconds.toFixed(1)} s on their group`:''}.</p>}

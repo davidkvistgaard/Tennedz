@@ -134,6 +134,23 @@
   min-height: 44px;
   padding: 12px 0;
 }
+.lab-road-groups {
+  border: 1px solid #d9decd;
+  border-radius: 12px;
+  margin: 12px 0;
+  padding: 0 14px;
+}
+.lab-road-groups > div {
+  border-top: 1px solid #d9decd;
+  padding: 12px 0;
+}
+.lab-road-groups ul {
+  margin: 4px 0 0;
+  padding-left: 22px;
+}
+.lab-road-groups li {
+  margin: 4px 0;
+}
 .lab footer {
   padding: 8px 12px;
 }
