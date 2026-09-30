@@ -72,6 +72,14 @@ for(const width of [390,1440])test(`manager runs a recorded Motor Lab race at ${
  await ridgeSlider.focus();await page.keyboard.press('Home');
  for(let step=0;step<34;step++)await page.keyboard.press('ArrowRight');
  await expect(page.getByText(/At 35 km: 330 m elevation, \+5\.0% gradient/)).toBeVisible();
+ await page.getByLabel('Peloton chase contribution').selectOption('follow_plan');
+ await page.getByLabel('If Amber Captain is in a break').selectOption('none');
+ await page.getByLabel("Road captain's leadership").selectOption('standard');
+ await page.getByRole('button',{name:'Run the race'}).click();
+ await page.getByLabel('Help a dropped captain').selectOption('drop_back_if_dropped');
+ await page.getByRole('button',{name:'Run the race'}).click();
+ await expect(page.getByRole('row',{name:/Amber Captain behind the peloton/}).getByRole('cell').last()).toHaveText('2 km');
+ await expect(page.getByText(/helped Amber Captain recover/).first()).toBeVisible();
  await page.screenshot({path:`test-results/motor-lab-${width}.png`,fullPage:true});
  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
  expect(errors).toEqual([]);

@@ -14,13 +14,14 @@ const seconds=value=>`${value.toFixed(1)} s`;
 const captainPlace=recording=>`#${recording.results.find(result=>result.name==='Amber Captain')?.position??'—'}`;
 const chaseKilometres=recording=>recording.frames.filter(frame=>frame.chasingTeams.includes('Amber')).length;
 const captainBreakKilometres=recording=>recording.frames.filter(frame=>frame.groups.some(group=>group.riders.includes('Amber Captain'))).length;
+const captainDroppedKilometres=recording=>recording.frames.filter(frame=>frame.amberCaptainDropped).length;
 const largestBreakGap=recording=>Math.max(...recording.frames.map(frame=>frame.groups[0]?.gapSeconds??0));
-const orderSummary=recording=>`${recording.orders.breakResponse==='chase_if_threatened'?'Threat chase':'Plan chase'} · ${recording.orders.chaseContribution==='follow_plan'?'Plan chase work':recording.orders.chaseContribution==='ignore'?'Hold chase helpers':'Commit chase helpers'} · ${recording.orders.breakWork.replace('_',' ')} · ${recording.orders.lateEffort==='follow_plan'?'Plan finish':recording.orders.lateEffort+' finish'} · ${recording.orders.breakAttackMarker==='none'?'No planned break attack':'Attack after '+recording.orders.breakAttackMarker+' km'} · ${recording.orders.roadCaptain==='experienced'?'Experienced':'Standard'} road captain`;
+const orderSummary=recording=>`${recording.orders.breakResponse==='chase_if_threatened'?'Threat chase':'Plan chase'} · ${recording.orders.chaseContribution==='follow_plan'?'Plan chase work':recording.orders.chaseContribution==='ignore'?'Hold chase helpers':'Commit chase helpers'} · ${recording.orders.breakWork.replace('_',' ')} · ${recording.orders.lateEffort==='follow_plan'?'Plan finish':recording.orders.lateEffort+' finish'} · ${recording.orders.breakAttackMarker==='none'?'No planned break attack':'Attack after '+recording.orders.breakAttackMarker+' km'} · ${recording.orders.roadCaptain==='experienced'?'Experienced':'Standard'} road captain · ${recording.orders.captainSupport==='drop_back_if_dropped'?'Help a dropped captain':'Hold helper positions'}`;
 
 export default function MotorLabPage(){
  const [plan,setPlan]=useState('sprint');
  const [routeId,setRouteId]=useState('coast');
- const [orders,setOrders]=useState({chaseContribution:'follow_plan',breakResponse:'hold_plan',breakWork:'cooperate',lateEffort:'follow_plan',breakAttackMarker:'none',roadCaptain:'standard'});
+ const [orders,setOrders]=useState({chaseContribution:'follow_plan',breakResponse:'hold_plan',breakWork:'cooperate',lateEffort:'follow_plan',breakAttackMarker:'none',roadCaptain:'standard',captainSupport:'hold_position'});
  const [seed,setSeed]=useState(1);
  const [recording,setRecording]=useState(null);
  const [previousRecording,setPreviousRecording]=useState(null);
@@ -142,6 +143,12 @@ export default function MotorLabPage(){
         <option value="experienced">Experienced (85)</option>
        </select>
       </label>
+      <label>Help a dropped captain
+       <select value={orders.captainSupport} onChange={event=>setOrders({...orders,captainSupport:event.target.value})}>
+        <option value="hold_position">Helpers hold their positions</option>
+        <option value="drop_back_if_dropped">Send a helper back if reachable</option>
+       </select>
+      </label>
      </div>
     </fieldset>
     <div className="motor-run-row"><label>Laboratory route
@@ -155,20 +162,21 @@ export default function MotorLabPage(){
     </label><button type="button" className="motor-primary" onClick={()=>run()} disabled={busy||!Number.isInteger(seed)||seed<0||seed>9999}>
      {busy?'Calculating…':'Run the race'}
     </button><button type="button" onClick={()=>run(Number(seed)+1)} disabled={busy||!Number.isInteger(seed)||seed<0||seed>=9999}>Try another scenario</button></div>
-    <p className="motor-hint">Keep the route and scenario number when comparing plans. All four teams and the weather then start from the same conditions.</p>
+    <p className="motor-hint">Keep the route and scenario number when comparing plans. All four teams and the weather then start from the same conditions. On the ridge, Amber has a sprinter captain who may need climbing support.</p>
     {error&&<p role="alert" className="motor-error">{error}</p>}
    </section>
    {recording&&frame&&<>
     <section className="motor-panel" aria-labelledby="motor-record-title">
      <div className="motor-section-heading"><span>02 / RECORDED RACE</span><h2 id="motor-record-title">{recording.scenarioName}</h2></div>
      <p>Amber rode <strong>{recording.planLabel}</strong> in scenario {recording.seed}. Birch protected its sprinter, Cedar attacked and Dune raced balanced. The entire result was calculated before this replay opened.</p>
-     <p className="motor-committed">Committed orders: {recording.orders.breakResponse==='chase_if_threatened'?'chase a threatening break':'keep the original chase plan'} · {recording.orders.chaseContribution==='follow_plan'?'follow the plan for chase work':recording.orders.chaseContribution==='ignore'?'hold chase helpers back':'commit chase helpers'} · {recording.orders.breakWork.replace('_',' ')} in a break · {recording.orders.lateEffort==='follow_plan'?'keep the original effort':'ride '+recording.orders.lateEffort} after 120 km · {recording.orders.breakAttackMarker==='none'?'stay in the break':'attempt an attack from the break after '+recording.orders.breakAttackMarker+' km'} · {recording.orders.roadCaptain==='experienced'?'experienced':'standard'} road captain.</p>
+     <p className="motor-committed">Committed orders: {recording.orders.breakResponse==='chase_if_threatened'?'chase a threatening break':'keep the original chase plan'} · {recording.orders.chaseContribution==='follow_plan'?'follow the plan for chase work':recording.orders.chaseContribution==='ignore'?'hold chase helpers back':'commit chase helpers'} · {recording.orders.breakWork.replace('_',' ')} in a break · {recording.orders.lateEffort==='follow_plan'?'keep the original effort':'ride '+recording.orders.lateEffort} after 120 km · {recording.orders.breakAttackMarker==='none'?'stay in the break':'attempt an attack from the break after '+recording.orders.breakAttackMarker+' km'} · {recording.orders.roadCaptain==='experienced'?'experienced':'standard'} road captain · {recording.orders.captainSupport==='drop_back_if_dropped'?'send a reachable helper back to a dropped captain':'hold helper positions'}.</p>
      {comparison&&<div className="motor-compare" aria-label="Compare two runs of the same scenario">
       <h3>Same scenario, two decisions</h3>
       <table><thead><tr><th scope="col">Outcome</th><th scope="col">Previous: {comparison.planLabel}<small>{orderSummary(comparison)}</small></th><th scope="col">Current: {recording.planLabel}<small>{orderSummary(recording)}</small></th></tr></thead>
        <tbody><tr><th scope="row">Amber Captain</th><td>{captainPlace(comparison)}</td><td>{captainPlace(recording)}</td></tr>
         <tr><th scope="row">Amber chase kilometres</th><td>{chaseKilometres(comparison)}</td><td>{chaseKilometres(recording)}</td></tr>
         <tr><th scope="row">Amber Captain in a break</th><td>{captainBreakKilometres(comparison)} km</td><td>{captainBreakKilometres(recording)} km</td></tr>
+        <tr><th scope="row">Amber Captain behind the peloton</th><td>{captainDroppedKilometres(comparison)} km</td><td>{captainDroppedKilometres(recording)} km</td></tr>
         <tr><th scope="row">Largest break advantage</th><td>{seconds(largestBreakGap(comparison))}</td><td>{seconds(largestBreakGap(recording))}</td></tr>
         <tr><th scope="row">Winner</th><td>{comparison.results[0].name}</td><td>{recording.results[0].name}</td></tr></tbody></table>
       <p>Both runs used scenario {recording.seed}. This comparison is a test signal, not proof that the race balance is final.</p>
