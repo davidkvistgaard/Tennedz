@@ -207,6 +207,23 @@ test('a distant GC target does not force futile attacks or override a named ride
   assert.equal(validateRecordedTour(named),true);
 });
 
+test('a GC target waits while two team riders already occupy the break',()=>{
+  const cast=structuredClone(teams);
+  cast[1].orders.gcObjective='target_top_ten';
+  cast[1].orders.baseline={attack:'repeated',attackRiderId:'b2',
+    chase:'ignore',effort:'hard'};
+  cast[1].orders.phases=[{atKm:10,attackRiderId:'b3'},
+    {atKm:20,attack:'none',attackRiderId:null}];
+  for(const rider of cast[1].riders.filter(rider=>['b2','b3'].includes(rider.id)))
+    Object.assign(rider,{flat:100,strength:100,endurance:100,acceleration:100});
+  const race=simulateTacticalTour({stage,teams:cast,seed:'gc-break-cap',classification});
+  assert.ok(['b2','b3'].every(id=>race.frames[19].breakawayRiderIds.includes(id)));
+  assert.equal(race.frames[20].activeGcTargetTeamIds.includes('b'),false);
+  assert.equal(race.frames[20].blockedAttacks.some(attack=>
+    attack.teamId==='b'&&attack.reason==='team_break_limit'),false);
+  assert.equal(validateRecordedTour(race),true);
+});
+
 test('a prepared GC team counters a nearby rival attack in the same kilometre',()=>{
   const cast=structuredClone(teams);
   cast[0].orders.gcObjective='defend_top_ten';
