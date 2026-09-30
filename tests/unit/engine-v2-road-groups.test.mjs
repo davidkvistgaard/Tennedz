@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {splitFrontRoadGroup,splitRoadGroup,joinRoadGroupAhead,formChasingRoadGroup,advanceRoadGroups,
+import {MAX_ROAD_GROUPS,assertRoadGroups,splitFrontRoadGroup,splitRoadGroup,
+  joinRoadGroupAhead,formChasingRoadGroup,advanceRoadGroups,
   validateRoadGroupTransition,selectRoadGroupPulls,relativeRoadGroupPace} from
   '../../lib/engine/v2/road-groups.mjs';
 import {buildKilometreRoute} from '../../lib/engine/v2/route.mjs';
@@ -9,6 +10,16 @@ const initial=[{id:'road-1',riderIds:['a-0','a-1','b-0'],teamIds:['a','b'],gapSe
 const teams={"a-0":'a',"a-1":'a',"b-0":'b'};
 const split=()=>splitFrontRoadGroup(initial,{riderId:'a-0',teamByRiderId:teams,
   newGroupId:'road-2',attackSeconds:4});
+
+test('road groups reject duplicate team memberships and impossible capacity',()=>{
+  assert.throws(()=>assertRoadGroups([{...initial[0],teamIds:['a','a','b']}]),
+    /Invalid road groups/);
+  const tooMany=Array.from({length:MAX_ROAD_GROUPS+1},(_,index)=>({
+    id:`road-${index+1}`,riderIds:[`r-${index}`],teamIds:[`t-${index}`],
+    gapSeconds:MAX_ROAD_GROUPS+1-index,
+  }));
+  assert.throws(()=>assertRoadGroups(tooMany),/capacity/);
+});
 
 test('a break rider can open a second road group without moving teammates instantly',()=>{
   const groups=split();
