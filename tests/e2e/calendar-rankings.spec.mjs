@@ -53,3 +53,32 @@ test("ranking dimensions come from the same points view", async ({ page }) => {
   await page.getByLabel("Ranking").selectOption("team");
   await expect(page.getByLabel("Category").locator("option[value=combined]")).toHaveCount(1);
 });
+
+test("automatic entries remain administrator-only", async ({ page }) => {
+  await page.goto("/login");
+  await page.getByLabel("Email or username").fill("bob");
+  await page.getByLabel("Password").fill("fixture-password");
+  await page.getByRole("button", { name: "Sign in", exact: true }).click();
+  await expect(page).toHaveURL(/\/team$/);
+  const denied = await page.request.post("/api/admin/autopilot", {
+    headers: { Origin: "http://localhost:3100" }, data: {},
+  });
+  expect(denied.status()).toBe(403);
+  expect((await page.request.post("/api/admin/autopilot/batch", {
+    headers: { Origin: "http://localhost:3100" }, data: {},
+  })).status()).toBe(403);
+});
+
+test("automatic entries remain behind the game-write gate", async ({ page }) => {
+  await login(page);
+  const gated = await page.request.post("/api/admin/autopilot", {
+    headers: { Origin: "http://localhost:3100" }, data: {},
+  });
+  expect(gated.status()).toBe(503);
+  expect((await gated.json()).code).toBe("GAME_READ_ONLY");
+  const batch = await page.request.post("/api/admin/autopilot/batch", {
+    headers: { Origin: "http://localhost:3100" }, data: {},
+  });
+  expect(batch.status()).toBe(503);
+  expect((await batch.json()).code).toBe("GAME_READ_ONLY");
+});

@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import {oneDaySlot,validCalendarPlacement,entryReadiness} from '../../lib/calendar/rhythm.mjs';
 import {validateDefaultLineup,resolveAutopilotLineup} from '../../lib/calendar/autopilot.mjs';
 import {pointsForResult,aggregateRanking,POINT_POLICY_VERSION} from '../../lib/calendar/points.mjs';
+import {planAutopilotEntry} from '../../lib/calendar/autopilot-entry.mjs';
 
 test('UCI one-day sources keep their week while mapping to fixed slots',()=>{
   assert.equal(oneDaySlot('2026-04-11'),'2026-04-12'); // Saturday to Sunday.
@@ -36,6 +37,29 @@ test('autopilot replaces unavailable defaults deterministically without inventin
     unavailableRiderIds:['a','c','d'],teamSize:2}),{ready:false,
     reason:'NOT_ENOUGH_ELIGIBLE_RIDERS',selectedRiders:['b'],missing:1});
   assert.throws(()=>validateDefaultLineup({...fallback,selectedRiders:['a','a']},roster,{teamSize:2}));
+  assert.equal(resolveAutopilotLineup({event,roster,teamSize:2}).reason,'DEFAULT_NOT_CONFIGURED');
+});
+
+test('autopilot builds a valid conservative entry without overwriting a manager',()=>{
+  const event={id:'event',kind:'one_day',gender:'F',calendar_source:'PELOTONIA',
+    scheduled_at:'2099-05-03T12:00:00Z',deadline:'2099-05-02T12:00:00Z',status:'OPEN'};
+  const team={id:'team',user_id:'user'};
+  const roster=Array.from({length:9},(_,i)=>({id:`r${i}`,gender:'F',rating:90-i}));
+  const defaultSelection={selectedRiders:roster.slice(0,8).map(r=>r.id),captainId:'r0'};
+  const input={event,team,roster,defaultSelection};
+  const plan=planAutopilotEntry(input);
+  assert.equal(plan.ready,true);
+  assert.equal(plan.orders.plan,'balanced');
+  assert.equal(plan.orders.riders.r0.role,'captain');
+  assert.equal(Object.keys(plan.orders.riders).length,8);
+  assert.equal(planAutopilotEntry({...input,existingEntry:true}).reason,'ENTRY_ALREADY_EXISTS');
+  assert.equal(planAutopilotEntry({...input,conflictingEventIds:['another']}).reason,
+    'SIMULTANEOUS_EVENT_PRIORITY_UNRESOLVED');
+  assert.equal(planAutopilotEntry({...input,defaultSelection:null}).reason,'DEFAULT_NOT_CONFIGURED');
+  assert.equal(planAutopilotEntry({...input,event:{...event,scheduled_at:null}}).reason,
+    'EVENT_NOT_SCHEDULED');
+  assert.equal(planAutopilotEntry({...input,event:{...event,scheduled_at:'2099-05-05T12:00:00Z'}}).reason,
+    'EVENT_NOT_SCHEDULED');
 });
 
 test('one points award belongs to filtered rankings without duplicate transactions',()=>{
