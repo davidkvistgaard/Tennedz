@@ -15,6 +15,8 @@ for(const width of [390,1440])test(`manager runs a recorded Motor Lab race at ${
  expect((await context.request.post(endpoint,{headers:{Origin:'https://another.example'},data:{plan:'sprint',seed:1}})).status()).toBe(403);
  expect((await context.request.post(endpoint,{headers:{Origin:'http://localhost:3100'},
   data:{plan:'sprint',seed:1,orders:{breakWork:'freewheel'}}})).status()).toBe(400);
+ expect((await context.request.post(endpoint,{headers:{Origin:'http://localhost:3100'},
+  data:{plan:'sprint',seed:1,routeId:'unknown'}})).status()).toBe(400);
  await page.getByRole('radio',{name:/Send the captain ahead/}).check();
  await page.getByLabel('React to a dangerous break').selectOption('chase_if_threatened');
  await page.getByLabel('If Amber reaches a break').selectOption('sit_on');
@@ -51,6 +53,10 @@ for(const width of [390,1440])test(`manager runs a recorded Motor Lab race at ${
  await expect(page.getByText('Amber rode Protect the sprinter')).toBeVisible();
  await expect(page.getByRole('heading',{name:'Same scenario, two decisions'})).toBeVisible();
  await expect(page.getByRole('table').getByRole('row',{name:/Amber Captain/})).toBeVisible();
+ await page.getByLabel('Laboratory route').selectOption('ridge');
+ await page.getByRole('button',{name:'Run the race'}).click();
+ await expect(page.getByRole('heading',{name:'Ridge Road laboratory'})).toBeVisible();
+ await expect(page.getByRole('heading',{name:'Same scenario, two decisions'})).toHaveCount(0);
  await page.screenshot({path:`test-results/motor-lab-${width}.png`,fullPage:true});
  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
  expect(errors).toEqual([]);

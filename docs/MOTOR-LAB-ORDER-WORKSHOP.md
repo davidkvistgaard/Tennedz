@@ -19,3 +19,7 @@ The manager can now commit Amber Captain to try an attack from a break after 40,
 ## Road captain laboratory profile
 
 Amber's fictional road captain can use either the original 45 leadership or an experienced 85 leadership profile. The rider's other sporting skills and the scenario seed stay fixed. When a threatening-break response is committed, the higher leadership may detect and call a chase earlier or more often; it does not guarantee a better result. The choice is a controlled preview variable, not a staff upgrade, roster edit or persistent rider attribute. Scenario 1 with the conserve plan and threatening-break response records its first Amber chase call at km 23 with the standard profile and km 22 with the experienced profile.
+
+## Second route fixture
+
+Motor Lab now offers the original exposed 160 km Coast Road and a 160 km Ridge Road with two sustained climbs, descents and a final rise. Both use fixed, fictional geometry and locked starting weather; neither is a canonical Pelotonia atlas route. The same scenario number is repeatable on either route, but the comparison card appears only when the route and scenario number are both unchanged. This begins route-sensitive testing without claiming that the generic synthetic riders provide realistic climbing balance.

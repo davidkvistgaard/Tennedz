@@ -7,6 +7,7 @@ test('guided preview is deterministic, complete and omits the engine tuning tabl
  const again=createMotorLabPreview({plan:'break',seed:7});
  assert.deepEqual(first,again);
  assert.equal(first.kind,'fictional-motor-lab');
+ assert.equal(first.routeId,'coast');
  assert.equal(first.frames.length,160);
  assert.equal(first.frames.at(-1).km,160);
  assert.equal(first.results.length,32);
@@ -15,6 +16,19 @@ test('guided preview is deterministic, complete and omits the engine tuning tabl
  assert(first.frames.some(frame=>frame.moments.length));
  assert(!JSON.stringify(first).includes('chaseStrength'));
  assert(!JSON.stringify(first).includes('cooperationBonus'));
+});
+
+test('two fixed routes preserve the seed but produce distinct recorded terrain',()=>{
+ const coast=createMotorLabPreview({plan:'sprint',routeId:'coast',seed:1});
+ const ridge=createMotorLabPreview({plan:'sprint',routeId:'ridge',seed:1});
+ assert.equal(ridge.scenarioName,'Ridge Road laboratory');
+ assert.equal(ridge.routeId,'ridge');
+ assert.equal(ridge.frames.length,160);
+ assert(ridge.frames.some(frame=>frame.terrain==='climb'));
+ assert(ridge.frames.some(frame=>frame.terrain==='descent'));
+ assert(!coast.frames.some(frame=>frame.terrain==='climb'));
+ assert.notDeepEqual(coast.frames,ridge.frames);
+ assert.deepEqual(ridge,createMotorLabPreview({plan:'sprint',routeId:'ridge',seed:1}));
 });
 
 test('another committed plan can change the same seeded fictional race',()=>{
@@ -66,8 +80,9 @@ test('a committed break attack can split a group or be visibly blocked',()=>{
 
 test('guided preview rejects unbounded or unknown requests',()=>{
  for(const input of [{plan:'unknown',seed:0},{plan:'sprint',seed:-1},
-  {plan:'sprint',seed:10000},{plan:'sprint',seed:'1'}])
-  assert.throws(()=>createMotorLabPreview(input),/valid plan and scenario number/);
+  {plan:'sprint',seed:10000},{plan:'sprint',seed:'1'},
+  {plan:'sprint',seed:1,routeId:'outside'}])
+  assert.throws(()=>createMotorLabPreview(input),/valid plan, route and scenario number/);
  for(const orders of [null,[],{breakWork:'freewheel'},{lateEffort:120},
   {breakAttackMarker:'41'},{breakAttackMarker:40},{roadCaptain:'legend'},{admin:true}])
   assert.throws(()=>createMotorLabPreview({plan:'sprint',seed:1,orders}),/valid advanced orders/);
