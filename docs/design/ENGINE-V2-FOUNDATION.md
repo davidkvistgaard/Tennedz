@@ -2,7 +2,7 @@
 
 Status: **development prototype, not wired to the public race cycle**. The existing `recovery-one-day-4-orders` engine, stored race outputs, database schema and live site remain unchanged. This work starts a separate, versioned engine on top of the latest recovery code so the working cycle can remain the comparison baseline while the replacement is built and balanced.
 
-Current balance version: `v2-prototype-65`. The simulator supports ordered independent road groups and records their formation, splits, pursuit, merges and catches. At the finish, a faster rear group can absorb slower riders ahead, and the bunch can catch individual riders from any road group while other groups survive. The final frame and provisional result must agree, and the replay validator checks those transitions. These are deterministic laboratory outcomes, not official race times or a production-ready viewer.
+Current balance version: `v2-prototype-66`. The simulator supports ordered independent road groups and records their formation, splits, pursuit, merges and catches. At the finish, a faster rear group can absorb slower riders ahead, and the bunch can catch individual riders from any road group while other groups survive. The final frame and provisional result must agree, and the replay validator checks those transitions. These are deterministic laboratory outcomes, not official race times or a production-ready viewer.
 
 ## Product contract
 
@@ -117,6 +117,8 @@ Version `v2-prototype-63` stops a breakaway rider from taking effective pulls on
 Version `v2-prototype-64` adds a smooth exhaustion penalty below the minimum working-energy threshold. A rider with almost no energy now loses substantially more sustainable pace instead of riding almost as strongly as a rested rider. The penalty is centrally tuned and applies to the same per-kilometre ability used by attacks, pursuit and finishing; the existing scenario tests remain the balance guardrail.
 
 Version `v2-prototype-65` prevents an exhausted GC challenger from repeatedly activating an automatic top-ten attack that they cannot physically attempt. The precommitted objective resumes only when the leader meets the same minimum energy as a normal attack. The replay validates this against the energy recorded before each kilometre.
+
+Version `v2-prototype-66` makes a selective peloton chase judge the leading road group's gap, even when a nearer chasing group has only a small gap. Teams can still let a manageable break ride, but they no longer mistake a distant leader for a safe break merely because another group is close behind.
 
 Version `v2-prototype-45` gives managers a precommitted helper-attack policy: `open` (the existing default), `hold_for_captain`, or `release_if_dropped`. The last choice reserves unnamed helpers until the active leader is recorded as dropped, then allows them to seek their own result. A manager's explicitly named attacker takes precedence. The rule also applies to automatic finale attacks from a break, and a helper released into a normal attack is identified in the recorded kilometre. This is a first rider-autonomy rule; it does not yet model a graded captain winning chance or delayed road-captain recognition.
 
