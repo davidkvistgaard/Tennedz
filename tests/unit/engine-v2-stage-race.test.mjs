@@ -1,7 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {simulateTacticalTour} from '../../lib/engine/v2/tour.mjs';
-import {classifyTacticalStage,carryStageFatigue} from '../../lib/engine/v2/stage-race.mjs';
+import {classifyTacticalStage,carryStageFatigue,createStageHandoff} from
+  '../../lib/engine/v2/stage-race.mjs';
 import {validateRecordedTour} from '../../lib/engine/v2/recording.mjs';
 
 const stage={distance_km:40,profile_points:[[0,100],[40,100]],keypoints:[]};
@@ -99,11 +100,11 @@ test('three stages carry separate GC and rider condition without rewriting old r
       seed:`three-stage-${index}`,classification});
     recordings.push(structuredClone(recording));
     const before=structuredClone(recording);
-    classification=classifyTacticalStage({recording,stageId:`stage-${index+1}`,
-      classifiedTimes:classifiedTimes(recording)});
+    const handoff=createStageHandoff({recording,stageId:`stage-${index+1}`,
+      classifiedTimes:classifiedTimes(recording),restDays:index===1?1:0});
+    classification=handoff.classification;
     standings.push(structuredClone(classification));
-    const condition=carryStageFatigue({recording,restDays:index===1?1:0});
-    nextTeams=condition.teams.map(team=>({...team,
+    nextTeams=handoff.condition.teams.map(team=>({...team,
       orders:structuredClone(hardTeams.find(original=>original.id===team.id).orders)}));
     assert.deepEqual(recording,before);
     assert.equal(validateRecordedTour(recording),true);
@@ -117,4 +118,14 @@ test('three stages carry separate GC and rider condition without rewriting old r
   assert.deepEqual(recordings[2].committedInputs.teams[0].riders[0].fatigue,
     carryStageFatigue({recording:recordings[1],restDays:1}).teams[0].riders[0].fatigue);
   assert.equal(validateRecordedTour(recordings[0]),true);
+});
+
+test('a stage handoff requires classified results before carrying its condition',()=>{
+  const recording=simulateTacticalTour({stage,teams,seed:'stage-handoff-explicit'});
+  const before=structuredClone(recording);
+  assert.throws(()=>createStageHandoff({recording,stageId:'first'}),
+    /classification stage/);
+  assert.throws(()=>createStageHandoff({recording,stageId:'first',
+    classifiedTimes:classifiedTimes(recording),restDays:-1}),/Rest days/);
+  assert.deepEqual(recording,before);
 });
