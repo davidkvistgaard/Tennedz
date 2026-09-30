@@ -1301,10 +1301,18 @@ test('a sprint-disadvantaged break rider can make an automatic, recorded finale 
   assert.equal(race.frames[29].splitAttack?.status,'split');
   assert.equal(race.frames[29].splitAttack?.riderId,'a-0');
   assert.equal(control.frames[29].splitAttack,null);
+  assert.equal(control.provisionalResults[0].teamId,'b');
+  assert.equal(race.provisionalResults[0].teamId,'a');
   assert.equal(validateRecordedTour(race),true);
   const tampered=structuredClone(race);
   tampered.frames[29].splitAttack.source='unplanned';
   assert.throws(()=>validateRecordedTour(tampered),/break attack/);
+  const disguised=structuredClone(race);
+  disguised.frames[29].splitAttack.source='committed';
+  assert.throws(()=>validateRecordedTour(disguised),/committed orders/);
+  const removedOrder=structuredClone(race);
+  removedOrder.committedInputs.teams.find(team=>team.id==='a').orders.baseline.breakFinale='hold_group';
+  assert.throws(()=>validateRecordedTour(removedOrder),/committed orders/);
 });
 
 test('a committed break attack splits the live road group and survives replay validation',()=>{
@@ -1322,6 +1330,9 @@ test('a committed break attack splits the live road group and survives replay va
   const split=race.frames[20];
   assert.equal(split.splitAttack.status,'split');
   assert.equal(split.splitAttack.source,'committed');
+  const disguised=structuredClone(race);
+  disguised.frames[20].splitAttack.source='automatic';
+  assert.throws(()=>validateRecordedTour(disguised),/committed orders/);
   assert.deepEqual(split.roadGroups.map(group=>group.id),['road-2','road-1']);
   assert.deepEqual(split.roadGroups[0].riderIds,['a-0']);
   assert.ok(split.roadGroups[0].gapSeconds>split.roadGroups[1].gapSeconds);
