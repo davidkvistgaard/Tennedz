@@ -31,11 +31,27 @@ test('advanced orders are committed and alter the same seeded race',()=>{
   breakResponse:'chase_if_threatened',breakWork:'sit_on',lateEffort:'hard',
  }});
  assert.deepEqual(advanced.orders,{breakResponse:'chase_if_threatened',
-  breakWork:'sit_on',lateEffort:'hard',breakAttackMarker:'none'});
+  breakWork:'sit_on',lateEffort:'hard',breakAttackMarker:'none',roadCaptain:'standard'});
  assert(advanced.frames[120].moments.includes('Amber switched to hard effort'));
  assert(!standard.frames[120].moments.includes('Amber switched to hard effort'));
  assert.notDeepEqual(standard.frames,advanced.frames);
  assert.deepEqual(advanced,createMotorLabPreview({plan:'break',seed:5,orders:advanced.orders}));
+});
+
+test('road captain leadership changes a precommitted chase response',()=>{
+ const standard=createMotorLabPreview({plan:'conserve',seed:1,orders:{breakResponse:'chase_if_threatened'}});
+ const experienced=createMotorLabPreview({plan:'conserve',seed:1,orders:{
+  breakResponse:'chase_if_threatened',roadCaptain:'experienced',
+ }});
+ const firstChase=recording=>recording.frames.find(frame=>
+  frame.moments.includes('Amber road captain called a chase'))?.km;
+ assert.equal(firstChase(standard),23);
+ assert.equal(firstChase(experienced),22);
+ assert(experienced.frames.filter(frame=>frame.chasingTeams.includes('Amber')).length>
+  standard.frames.filter(frame=>frame.chasingTeams.includes('Amber')).length);
+ assert.deepEqual(experienced,createMotorLabPreview({plan:'conserve',seed:1,orders:{
+  breakResponse:'chase_if_threatened',roadCaptain:'experienced',
+ }}));
 });
 
 test('a committed break attack can split a group or be visibly blocked',()=>{
@@ -53,6 +69,6 @@ test('guided preview rejects unbounded or unknown requests',()=>{
   {plan:'sprint',seed:10000},{plan:'sprint',seed:'1'}])
   assert.throws(()=>createMotorLabPreview(input),/valid plan and scenario number/);
  for(const orders of [null,[],{breakWork:'freewheel'},{lateEffort:120},
-  {breakAttackMarker:'41'},{breakAttackMarker:40},{admin:true}])
+  {breakAttackMarker:'41'},{breakAttackMarker:40},{roadCaptain:'legend'},{admin:true}])
   assert.throws(()=>createMotorLabPreview({plan:'sprint',seed:1,orders}),/valid advanced orders/);
 });
