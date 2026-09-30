@@ -8,8 +8,19 @@ if(!PREVIEW_ROUTES.includes(routeId))throw new Error('Choose a laboratory route.
 
 function metrics(recording){
  const frames=recording.frames;
+ const breakEpisodes=[];
+ let currentEpisode=0;
+ for(const frame of frames){
+  if(frame.groups.length)currentEpisode++;
+  else if(currentEpisode){breakEpisodes.push(currentEpisode);currentEpisode=0;}
+ }
+ if(currentEpisode)breakEpisodes.push(currentEpisode);
  return {
   breakKm:frames.filter(frame=>frame.groups.length>0).length,
+  breakEpisodes:breakEpisodes.length,
+  longestBreakKm:Math.max(0,...breakEpisodes),
+  breakAtFinish:frames.at(-1).groups.length>0,
+  roadGroupsCreated:new Set(frames.flatMap(frame=>frame.groups.map(group=>group.id))).size,
   multiGroupKm:frames.filter(frame=>frame.groups.length>1).length,
   maxGapSeconds:Math.max(...frames.map(frame=>frame.groups[0]?.gapSeconds??0)),
   amberWin:recording.results[0].team==='Amber',
@@ -24,6 +35,10 @@ function summarise(rows){
   amberWins:rows.filter(row=>row.amberWin).length,
   meanCaptainPlace:mean('captainPlace'),
   meanBreakKm:mean('breakKm'),
+  meanBreakEpisodes:mean('breakEpisodes'),
+  meanLongestBreakKm:mean('longestBreakKm'),
+  breaksAtFinish:rows.filter(row=>row.breakAtFinish).length,
+  meanRoadGroupsCreated:mean('roadGroupsCreated'),
   meanMaxGapSeconds:mean('maxGapSeconds'),
   totalMultiGroupKm:rows.reduce((sum,row)=>sum+row.multiGroupKm,0),
   splits:rows.filter(row=>row.split).length,
