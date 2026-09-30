@@ -68,6 +68,8 @@ test('a reachable helper can support Amber Captain on the fixed ridge exercise',
  assert.equal(alone.results.find(result=>result.name==='Amber Captain').position,
   supported.results.find(result=>result.name==='Amber Captain').position);
  assert.deepEqual(supported,createMotorLabPreview({...common,orders:supported.orders}));
+ const attackPlan=createMotorLabPreview({...common,plan:'break'});
+ assert.equal(attackPlan.frames.filter(frame=>frame.amberCaptainDropped).length,0);
 });
 
 test('road captain leadership changes a precommitted chase response',()=>{
