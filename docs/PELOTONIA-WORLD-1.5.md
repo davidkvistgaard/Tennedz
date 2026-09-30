@@ -2,6 +2,8 @@
 
 World 1.5 applies the owner's [V1.4 local-detail](./PELOTONIA_LOCAL_DETAIL_EXPANSION_V1_4.md) and [V1.5 connectivity](./PELOTONIA_CONNECTIVITY_SYSTEMS_EXPANSION_V1_5.md) specifications after the preserved [World 1.3](./PELOTONIA-WORLD-1.3.md). `lib/world/index.mjs` exports the validated 1.5 world; `lib/world/atlas-data.mjs` adds illustrative map artwork. This is fictional geography and infrastructure, with no cycling-specific content or database migration.
 
+The current exported graph includes the owner's later [Baseline 1.6.2 semantic decisions](./PELOTONIA-WORLD-BASELINE-1.6.2.md). The original World 1.0–1.4 source datasets remain versioned history; the paragraphs below describe the 1.5 implementation before those decisions.
+
 The separate [V1.6 visual layer](./PELOTONIA-VISUAL-GEOGRAPHY-1.6.md) renders this same dataset and does not change its stable IDs or source facts.
 
 ## Local detail and identity
