@@ -40,6 +40,7 @@ Stages also carry forward fatigue and other defined rider state. Saving a helper
 6. In a one-day race, a team has no phantom future-GC objective. In a stage race, a team defending tenth responds to a direct GC threat but need not chase a stage break that cannot change its standing.
 7. Teams in tenth and eleventh can choose different energy/risk tradeoffs on the same stage. A stage-win team and a GC team may pursue opposite tactics without either being forced to work for the other.
 8. A stage's result updates cumulative standings exactly once. The next stage starts from those saved standings and carried rider state, while replay of an earlier stage remains unchanged after later stages are simulated.
+9. A prepared team can counter one nearby GC rival's launch immediately if helpers are available, but three coordinated challengers can still overwhelm that one team's chase capacity. A harmless attack must not trigger the GC counter.
 
 ## Implementation dependency
 

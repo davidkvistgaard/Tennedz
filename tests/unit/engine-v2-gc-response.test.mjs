@@ -154,3 +154,46 @@ test('a prepared GC team counters a nearby rival attack in the same kilometre',(
   forged.frames[counter.km-1].gcCounterTeamIds=[];
   assert.throws(()=>validateRecordedTour(forged),/GC attack counter/);
 });
+
+test('one GC team cannot automatically contain three coordinated challengers',()=>{
+  const cast=structuredClone(teams);
+  cast[0].orders.gcObjective='defend_top_ten';
+  for(const rider of cast[0].riders.slice(2))Object.assign(rider,{
+    flat:85,strength:85,endurance:85,
+  });
+  for(const id of ['c','d']){
+    const other=structuredClone(cast[1]);
+    other.id=id;
+    other.riders=other.riders.map(rider=>({...rider,id:rider.id.replace('b',id)}));
+    other.orders={...other.orders,captainId:`${id}0`,roadCaptainId:`${id}1`};
+    cast.push(other);
+  }
+  for(const team of cast.slice(1)){
+    team.orders.gcObjective='target_top_ten';
+    team.orders.baseline={attack:'none',chase:'ignore',effort:'conserve'};
+    Object.assign(team.riders[0],{flat:90,strength:90,endurance:90});
+  }
+  const field=cast.flatMap(team=>team.riders.map(rider=>({
+    riderId:rider.id,teamId:team.id,gender:'M',
+  })));
+  const start=startGeneralClassification({raceCategory:'M',riders:field});
+  const fast=new Set([...cast[0].riders.slice(1).map(rider=>rider.id),'b1','b2']);
+  const before=recordGeneralClassificationStage(start,{stageId:'earlier-stage',
+    classifiedTimes:field.map(rider=>({riderId:rider.riderId,
+      timeSeconds:fast.has(rider.riderId)?3590:
+        rider.riderId==='a0'?3600:
+          rider.riderId==='b0'?3602:
+            rider.riderId==='c0'?3603:
+              rider.riderId==='d0'?3604:3610,
+    }))});
+  const race=simulateTacticalTour({stage,teams:cast,seed:'three-gc-challengers',
+    classification:before});
+  const attack=race.frames.find(frame=>['b0','c0','d0'].every(id=>
+    frame.attackers.includes(id)));
+  assert.ok(attack,'the three challengers should attack together');
+  assert.ok(attack.gcCounterTeamIds.includes('a'));
+  assert.ok(attack.chasers.includes('a'));
+  assert.ok(attack.joinedBreakawayRiderIds.length>0,
+    'a single team should not erase all three attacks');
+  assert.equal(validateRecordedTour(race),true);
+});
