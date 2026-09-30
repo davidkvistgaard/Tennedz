@@ -37,6 +37,12 @@ export default function MotorLabPage(){
   return {peakGap,trace:gaps.map(point).join(' '),
    multi:frames.flatMap((frame,index)=>frame.groups.length>1?[20+index/(frames.length-1)*960]:[])};
  },[recording]);
+ const profile=useMemo(()=>{
+  if(!recording)return null;
+  const frames=recording.frames,maxM=Math.max(1,...frames.map(item=>item.elevationM));
+  const points=frames.map((item,index)=>`${20+index/(frames.length-1)*960},${130-item.elevationM/maxM*100}`);
+  return {maxM,trace:points.join(' '),area:`20,130 ${points.join(' ')} 980,130`};
+ },[recording]);
  const frame=recording?.frames[frameIndex];
  const comparison=previousRecording?.seed===recording?.seed&&
   previousRecording?.routeId===recording?.routeId?previousRecording:null;
@@ -150,6 +156,17 @@ export default function MotorLabPage(){
      <div className="motor-scoreboard"><div><small>KILOMETRE</small><strong>{frame.km} / {recording.distanceKm}</strong></div>
       <div><small>GROUPS AHEAD</small><strong>{frame.groups.length}</strong></div>
       <div><small>AMBER CAPTAIN</small><strong>#{amberCaptain?.position??'—'}</strong></div></div>
+     <figure className="motor-profile">
+      <figcaption>Recorded route elevation</figcaption>
+      <svg viewBox="0 0 1000 150" preserveAspectRatio="none" aria-hidden="true">
+       <line x1="20" y1="130" x2="980" y2="130" className="motor-timeline-baseline"/>
+       <polygon points={profile.area} className="motor-profile-area"/>
+       <polyline points={profile.trace} className="motor-profile-trace"/>
+       <line x1={20+frameIndex/(recording.frames.length-1)*960} x2={20+frameIndex/(recording.frames.length-1)*960} y1="12" y2="148" className="motor-timeline-position"/>
+      </svg>
+      <div className="motor-timeline-ticks"><span>0 km</span><span>40</span><span>80</span><span>120</span><span>160 km</span></div>
+      <p>At {frame.km} km: {frame.elevationM.toFixed(0)} m elevation, {frame.gradientPct>=0?'+':''}{frame.gradientPct.toFixed(1)}% gradient. Highest point: {profile.maxM.toFixed(0)} m.</p>
+     </figure>
      <figure className="motor-timeline">
       <figcaption>Breakaway advantage across the race</figcaption>
       <svg viewBox="0 0 1000 150" preserveAspectRatio="none" aria-hidden="true">

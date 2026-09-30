@@ -57,6 +57,11 @@ for(const width of [390,1440])test(`manager runs a recorded Motor Lab race at ${
  await page.getByRole('button',{name:'Run the race'}).click();
  await expect(page.getByRole('heading',{name:'Ridge Road laboratory'})).toBeVisible();
  await expect(page.getByRole('heading',{name:'Same scenario, two decisions'})).toHaveCount(0);
+ await expect(page.getByText(/Highest point: 490 m/)).toBeVisible();
+ const ridgeSlider=page.getByRole('slider',{name:'Inspect recorded kilometre'});
+ await ridgeSlider.focus();await page.keyboard.press('Home');
+ for(let step=0;step<34;step++)await page.keyboard.press('ArrowRight');
+ await expect(page.getByText(/At 35 km: 330 m elevation, \+5\.0% gradient/)).toBeVisible();
  await page.screenshot({path:`test-results/motor-lab-${width}.png`,fullPage:true});
  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
  expect(errors).toEqual([]);

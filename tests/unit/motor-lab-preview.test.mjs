@@ -26,7 +26,12 @@ test('two fixed routes preserve the seed but produce distinct recorded terrain',
  assert.equal(ridge.frames.length,160);
  assert(ridge.frames.some(frame=>frame.terrain==='climb'));
  assert(ridge.frames.some(frame=>frame.terrain==='descent'));
+ assert.equal(ridge.frames[34].elevationM,330);
+ assert.equal(ridge.frames[34].gradientPct,5);
+ assert(ridge.frames.every(frame=>Number.isFinite(frame.elevationM)&&
+  Number.isFinite(frame.gradientPct)));
  assert(!coast.frames.some(frame=>frame.terrain==='climb'));
+ assert(coast.frames.every(frame=>frame.elevationM<40));
  assert.notDeepEqual(coast.frames,ridge.frames);
  assert.deepEqual(ridge,createMotorLabPreview({plan:'sprint',routeId:'ridge',seed:1}));
 });
