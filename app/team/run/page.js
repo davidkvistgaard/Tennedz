@@ -54,6 +54,7 @@ export default function RunPage() {
   const [gender, setGender] = useState("M"),
     [bucket, setBucket] = useState("upcoming"),
     [eventId, setEventId] = useState("");
+  const [returnFilter, setReturnFilter] = useState("All");
   const [stage, setStage] = useState(null),
     [gameDate, setGameDate] = useState(null),
     [entryLoading, setEntryLoading] = useState(false),
@@ -92,8 +93,12 @@ export default function RunPage() {
     }
   }
   useEffect(() => {
-    const requestedGender = new URLSearchParams(window.location.search).get("gender");
+    const params = new URLSearchParams(window.location.search);
+    const requestedGender = params.get("gender");
     if (requestedGender === "M" || requestedGender === "F") setGender(requestedGender);
+    const requestedEvent = params.get("event_id");
+    if (requestedEvent && /^[0-9a-f-]{36}$/i.test(requestedEvent)) setEventId(requestedEvent);
+    if (params.get("return_filter")) setReturnFilter(params.get("return_filter"));
     load();
   }, []);
   const event = events.find((e) => e.id === eventId),
@@ -211,6 +216,7 @@ export default function RunPage() {
         <div><p className="eyebrow">THE NEXT CHAPTER</p><h1>Race day starts<br/><em>with you.</em></h1><p>Read the road. Pick your eight. Give your captain a chance to shine.</p></div>
         <span className="calendar-hero-note">PLAN BEFORE THE DEADLINE · WATCH IT UNFOLD</span>
       </header>
+      <p><Link href={`/team/calendar?filter=${encodeURIComponent(returnFilter)}`}>← Back to race calendar</Link></p>
       <ol className="race-steps" aria-label="Your race plan">
         <li aria-current={!event ? "step" : undefined}><span>01</span><div><strong>Find your race</strong><small>A route to suit your squad.</small></div></li>
         <li aria-current={event && !saved ? "step" : undefined}><span>02</span><div><strong>Choose your eight</strong><small>One captain. A shared ambition.</small></div></li>
