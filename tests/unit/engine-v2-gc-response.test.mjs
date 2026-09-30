@@ -142,6 +142,24 @@ test('an eleventh-place leader can commit to a costly late top-ten attack',()=>{
   assert.throws(()=>validateRecordedTour(tampered),/GC target/);
 });
 
+test('a GC challenger can attack behind a teammate already in the break',()=>{
+  const cast=structuredClone(teams);
+  cast[1].orders.gcObjective='target_top_ten';
+  cast[1].orders.baseline={attack:'none',chase:'ignore',effort:'conserve'};
+  cast[1].orders.phases=[
+    {atKm:10,attack:'selective',attackRiderId:'b2'},
+    {atKm:20,attack:'none',attackRiderId:null},
+  ];
+  Object.assign(cast[1].riders[2],{flat:95,strength:95,endurance:95});
+  const route={...stage,keypoints:[{km:11,kind:'SPRINT'},{km:21,kind:'SPRINT'}]};
+  const race=simulateTacticalTour({stage:route,teams:cast,
+    seed:'gc-target-with-teammate-ahead',classification});
+  assert.ok(race.frames[10].breakawayRiderIds.includes('b2'));
+  assert.ok(race.frames[19].breakawayRiderIds.includes('b2'));
+  assert.ok(race.frames[20].attackers.includes('b0'));
+  assert.equal(validateRecordedTour(race),true);
+});
+
 test('a distant GC target does not force futile attacks or override a named rider',()=>{
   const challenging=structuredClone(teams);
   challenging[1].orders.gcObjective='target_top_ten';
