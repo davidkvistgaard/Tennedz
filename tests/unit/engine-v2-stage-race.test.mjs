@@ -150,6 +150,14 @@ test('stage accounting rejects impossible energy hidden in a recorded kilometre'
   impossibleLoss.frames[0].riderGroups.find(rider=>rider.id==='a0').energy=0;
   assert.throws(()=>carryStageFatigue({recording:impossibleLoss}),
     /recorded rider state/);
+  const falseSummary=structuredClone(recording);
+  falseSummary.frames[0].teamEnergy[0].mean++;
+  assert.throws(()=>carryStageFatigue({recording:falseSummary}),
+    /team metrics/);
+  const falsePace=structuredClone(recording);
+  falsePace.frames[0].teamPace[0].meanAbility=Infinity;
+  assert.throws(()=>carryStageFatigue({recording:falsePace}),
+    /team metrics/);
 });
 
 test('historical replays cannot silently acquire current stage-fatigue tuning',()=>{
