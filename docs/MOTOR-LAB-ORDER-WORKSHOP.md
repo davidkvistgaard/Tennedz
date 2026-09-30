@@ -10,7 +10,7 @@ Verification: 241 unit tests, ESLint, production build, and authenticated 390/14
 
 ## Recorded timeline increment
 
-The existing in-memory recording now has a playable kilometre timeline. A line shows the leading group's recorded advantage at each kilometre, while marks identify kilometres with multiple road groups. The manager can play, pause, scrub or jump to the previous and next key moment. Playback reads the completed recording; it does not rerun the simulation or change orders mid-race. The chart includes a text summary of the selected and largest gaps and was checked at 390 and 1440 px. It remains a laboratory viewer with a fictional route and riders, not a persistent or official race replay.
+The existing in-memory recording now has a playable kilometre timeline. A green line shows the leading group's recorded advantage at each kilometre; gold tracks show distinct groups between the leader and peloton without joining unrelated moves into one line. The selected road cards give the gap to the next group or peloton. The manager can play, pause, scrub or jump to the previous and next key moment. Playback reads the completed recording; it does not rerun the simulation or change orders mid-race. The chart includes a text summary of the selected and largest gaps and was checked at 390 and 1440 px. It remains a laboratory viewer with a fictional route and riders, not a persistent or official race replay.
 
 ## Conditional attack from the break
 
