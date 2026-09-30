@@ -875,7 +875,7 @@ test('the full tactical trace is deterministic, bounded and makes aggressive ord
   const a=simulateTacticalTour(input);
   assert.deepEqual(a,simulateTacticalTour(input));
   assert.equal(a.frames.length,40);
-  assert.equal(a.tuningVersion,'v2-prototype-49');
+  assert.equal(a.tuningVersion,'v2-prototype-50');
   assert.equal(a.frames.at(-1).km,40);
   assert.ok(a.frames.some(frame=>frame.attackers.length>0));
   assert.ok(a.frames.some(frame=>frame.chasers.length>0));
@@ -1377,6 +1377,27 @@ test('a rider already in the break cannot launch another new attack',()=>{
   const later=result.frames.filter(frame=>frame.km>first.km);
   assert.ok(later.every(frame=>!frame.attackers.includes(first.attackers[0])||!frame.breakawayRiderIds.includes(first.attackers[0])));
   assert.ok(Math.max(...result.frames.map(frame=>frame.breakawayRiderIds.length))<=2);
+});
+
+test('a rider cannot join a break and launch a second attack in the same kilometre',()=>{
+  const route={distance_km:40,profile_points:[[0,100],[40,100]],
+    keypoints:[{km:11,kind:'SPRINT'}]};
+  const make=id=>({id,riders:Array.from({length:8},(_,index)=>({
+    id:`${id}-${index}`,gender:'M',flat:75,strength:75,endurance:75,
+    acceleration:75,sprint:60,leadership:50,
+  })),orders:{captainId:`${id}-0`,roadCaptainId:`${id}-1`,preset:'balanced',
+    baseline:{attack:'none',chase:'ignore',attackRiderId:`${id}-0`},
+    phases:[{atKm:10,attack:'repeated',
+      ...(id==='a'?{breakAttackRiderId:'a-0'}:{})}]}});
+  const race=simulateTacticalTour({stage:route,teams:[make('a'),make('b')],
+    seed:'no-double-attack'});
+  const first=race.frames[10];
+  assert.ok(first.attackers.includes('a-0'));
+  assert.ok(first.joinedBreakawayRiderIds.includes('a-0'));
+  assert.equal(first.splitAttack,null);
+  assert.deepEqual(first.blockedBreakAttacks,[{teamId:'a',riderId:'a-0',
+    reason:'group_formed_this_km'}]);
+  assert.equal(validateRecordedTour(race),true);
 });
 
 test('a sprint-disadvantaged break rider can make an automatic, recorded finale split',()=>{
