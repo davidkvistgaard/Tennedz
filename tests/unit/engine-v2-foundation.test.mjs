@@ -12,7 +12,7 @@ import {provisionalFinish,provisionalRoadGroupFinish,
 import {selectShelter} from '../../lib/engine/v2/support.mjs';
 import {selectCaptainSupport,applyCaptainSupport} from '../../lib/engine/v2/captain-support.mjs';
 import {MAX_ROAD_GROUPS,advanceRoadGroups,assertRoadGroups,relativeRoadGroupPace,
-  validateRoadGroupTransition} from '../../lib/engine/v2/road-groups.mjs';
+  validateRoadGroupTransition,roadGroupExposureCosts} from '../../lib/engine/v2/road-groups.mjs';
 import {automaticBreakAttackRider} from '../../lib/engine/v2/break-attack.mjs';
 import {validateRecordedTour,readRecordedKilometre} from '../../lib/engine/v2/recording.mjs';
 import {recoveryForKilometre} from '../../lib/engine/v2/recovery.mjs';
@@ -687,6 +687,28 @@ test('two willing riders pursue a solo break faster than one, without counting a
   assert.ok(two<0,'cooperative pursuit should close on an equally skilled solo rider');
 });
 
+test('rotating pulls shares exposure within a group without rewarding a sitter',()=>{
+  const together=[{id:'road-1',riderIds:['a-0','b-0','c-0'],
+    teamIds:['a','b','c'],gapSeconds:10}];
+  const solo=roadGroupExposureCosts(together,['a-0']);
+  const rotating=roadGroupExposureCosts(together,['a-0','b-0']);
+  assert.ok(rotating.get('a-0')<solo.get('a-0'));
+  assert.ok(rotating.get('a-0')>rotating.get('c-0'));
+  assert.equal(rotating.get('a-0'),rotating.get('b-0'));
+  assert.equal(rotating.get('c-0'),solo.get('c-0'));
+  const separate=roadGroupExposureCosts([
+    {id:'road-1',riderIds:['a-0'],teamIds:['a'],gapSeconds:20},
+    {id:'road-2',riderIds:['b-0','c-0'],teamIds:['b','c'],gapSeconds:10},
+  ],['a-0','b-0']);
+  assert.equal(separate.get('a-0'),solo.get('a-0'));
+  assert.equal(separate.get('b-0'),solo.get('a-0'));
+  const large=[{id:'road-1',riderIds:Array.from({length:20},(_,index)=>`r-${index}`),
+    teamIds:['large'],gapSeconds:10}];
+  const largeCosts=roadGroupExposureCosts(large,large[0].riderIds);
+  assert.ok(largeCosts.get('r-0')>rotating.get('c-0'));
+  assert.throws(()=>roadGroupExposureCosts(together,['foreign']),/puller/);
+});
+
 test('taking pulls grows the break gap but costs energy compared with sitting on',()=>{
   const worker=tacticalTeam('a','aggressive',{baseline:{chase:'ignore',breakWork:'cooperate'},
     phases:[{atKm:20,attack:'none'}]});
@@ -875,7 +897,7 @@ test('the full tactical trace is deterministic, bounded and makes aggressive ord
   const a=simulateTacticalTour(input);
   assert.deepEqual(a,simulateTacticalTour(input));
   assert.equal(a.frames.length,40);
-  assert.equal(a.tuningVersion,'v2-prototype-55');
+  assert.equal(a.tuningVersion,'v2-prototype-56');
   assert.equal(a.frames.at(-1).km,40);
   assert.ok(a.frames.some(frame=>frame.attackers.length>0));
   assert.ok(a.frames.some(frame=>frame.chasers.length>0));

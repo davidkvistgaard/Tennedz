@@ -36,6 +36,8 @@ The isolated prototype now has an experimental `carryStageFatigue` handoff. It t
 
 ## Required scenario checks
 
+The experimental per-kilometre break model now shares the added exposure cost among willing workers in the same road group. The relief is capped and a worker always pays more than a rider sitting on; workers in separate groups cannot share it. Cost is attributed to the riders who worked at the start of the kilometre even if their group is caught before that frame is saved. These are balance parameters, not a claim that the full drafting and rotation mechanics are complete.
+
 1. With a viable teammate ahead, a team behind does not provide chase power; its rider in a pursuing group can shelter without taking pulls. A rival team can still catch the front group.
 2. If the forward teammate fades badly while the protected captain remains viable, the team may change its priority under a precommitted rule. The decision and energy costs are visible.
 3. A helper in the same group gives measurable protection to a captain. A helper in a different group cannot do so until a physically possible reunion has completed.
