@@ -147,3 +147,14 @@ test('stage accounting rejects impossible energy hidden in a recorded kilometre'
   assert.throws(()=>carryStageFatigue({recording:impossibleRecovery}),
     /recorded rider state/);
 });
+
+test('historical replays cannot silently acquire current stage-fatigue tuning',()=>{
+  const recording=simulateTacticalTour({stage,teams,seed:'historical-condition'});
+  const historical=structuredClone(recording);
+  historical.tuningVersion='v2-prototype-52';
+  assert.equal(validateRecordedTour(historical),true);
+  assert.throws(()=>carryStageFatigue({recording:historical}),/tuning versions/);
+  assert.throws(()=>createStageHandoff({recording:historical,stageId:'first',
+    classifiedTimes:classifiedTimes(historical)}),/tuning versions/);
+  assert.equal(validateRecordedTour(recording),true);
+});
