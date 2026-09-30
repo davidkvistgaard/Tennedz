@@ -263,6 +263,24 @@ test('a second peloton move can form a third group behind an existing chase',()=
     teamByRiderId:{'c-0':'c'},newGroupId:'road-3',gapSeconds:13}),/chasing/);
 });
 
+test('an established break can split while a new chase forms behind it',()=>{
+  const previous=[{id:'road-1',riderIds:['a-0','a-1','b-0'],
+    teamIds:['a','b'],gapSeconds:30}];
+  const withChase=formChasingRoadGroup(previous,{riderIds:['c-0'],
+    teamByRiderId:{'c-0':'c'},newGroupId:'road-2',gapSeconds:5});
+  const current=splitFrontRoadGroup(withChase,{riderId:'a-0',
+    teamByRiderId:{'a-0':'a','a-1':'a','b-0':'b','c-0':'c'},
+    newGroupId:'road-3',attackSeconds:4});
+  assert.deepEqual(current.map(group=>group.id),['road-3','road-1','road-2']);
+  const events={joinedRiderIds:['c-0'],formedChaseGroupId:'road-2',
+    breakMoves:[{status:'split',riderId:'a-0'}]};
+  assert.equal(validateRoadGroupTransition(previous,current,events),true);
+  assert.throws(()=>validateRoadGroupTransition(previous,current,{
+    ...events,breakMoves:[]}),/chase group/);
+  assert.throws(()=>validateRoadGroupTransition(previous,current,{
+    ...events,formedChaseGroupId:null}),/split/);
+});
+
 test('a new chase remains valid when older road groups merge that kilometre',()=>{
   const previous=[
     {id:'road-1',riderIds:['a-0'],teamIds:['a'],gapSeconds:30},

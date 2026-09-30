@@ -142,11 +142,11 @@ test('a planned attacker can be changed or cleared at a valid marker',()=>{
   assert.equal(orderAt(orders,30).attackRiderId,null);
 });
 
-function tacticalTeam(id,preset,overrides={}){
+function tacticalTeam(id,preset,overrides={},keypoints=[]){
   const riderIds=Array.from({length:8},(_,i)=>`${id}-${i}`);
   return {id,riders:riderIds.map(riderId=>({id:riderId,gender:'M',flat:50,strength:60,endurance:60,sprint:50,leadership:50})),
     orders:normalizeOrders({captainId:riderIds[0],roadCaptainId:riderIds[1],preset,...overrides},
-      {riderIds,distanceKm:40})};
+      {riderIds,distanceKm:40,keypoints})};
 }
 
 test('a precommitted break finale order reacts only at checkpoints to a sprint disadvantage',()=>{
@@ -614,6 +614,29 @@ test('two independent break groups can attack in the same recorded kilometre',()
   const tampered=structuredClone(race);
   tampered.frames[30].splitAttacks.pop();
   assert.throws(()=>validateRecordedTour(tampered),/split|break attack/);
+});
+
+test('an older break can attack as a fresh peloton move forms a chasing group',()=>{
+  const teams=['a','b','c','d'].map(id=>{
+    const team=tacticalTeam(id,'balanced',{baseline:{attack:'none',chase:'ignore',
+      breakWork:'sit_on'},phases:id==='a'?[{atKm:10,attack:'selective',
+      attackRiderId:'a-0'},{atKm:20,attack:'none'},
+      {atKm:29,breakAttackRiderId:'a-0'}]:
+      id==='b'?[{atKm:10,attack:'selective',attackRiderId:'b-0'},
+        {atKm:20,attack:'none'}]:[{atKm:29,attack:'selective',
+        attackRiderId:`${id}-0`}]},[{km:29}]);
+    Object.assign(team.riders[0],{flat:95,strength:95,endurance:95,
+      timetrial:95,acceleration:95});
+    return team;
+  });
+  const stage={distance_km:40,profile_points:[[0,100],[40,100]],
+    keypoints:[10,20,29,30].map(km=>({km,kind:'SPRINT'}))};
+  const race=simulateTacticalTour({stage,teams,seed:'new-chase-front-attack'});
+  const frame=race.frames[29];
+  assert.ok(frame.formedChaseGroupId);
+  assert.ok(frame.splitAttacks.some(attack=>attack.riderId==='a-0'&&
+    attack.status==='split'));
+  assert.equal(validateRecordedTour(race),true);
 });
 
 test('varied three-group races remain replayable in both race categories',()=>{

@@ -2,7 +2,7 @@
 
 Status: **development prototype, not wired to the public race cycle**. The existing `recovery-one-day-4-orders` engine, stored race outputs, database schema and live site remain unchanged. This work starts a separate, versioned engine on top of the latest recovery code so the working cycle can remain the comparison baseline while the replacement is built and balanced.
 
-Current balance version: `v2-prototype-69`. The simulator supports ordered independent road groups and records their formation, splits, pursuit, merges and catches. At the finish, a faster rear group can absorb slower riders ahead, and the bunch can catch individual riders from any road group while other groups survive. The final frame and provisional result must agree, and the replay validator checks those transitions. These are deterministic laboratory outcomes, not official race times or a production-ready viewer.
+Current balance version: `v2-prototype-72`. The simulator supports ordered independent road groups and records their formation, splits, pursuit, merges and catches. At the finish, a faster rear group can absorb slower riders ahead, and the bunch can catch individual riders from any road group while other groups survive. The final frame and provisional result must agree, and the replay validator checks those transitions. These are deterministic laboratory outcomes, not official race times or a production-ready viewer.
 
 ## Product contract
 
@@ -129,6 +129,8 @@ Version `v2-prototype-69` adds an optional `drive` break-work order alongside sh
 Version `v2-prototype-70` lets a cooperative rider reduce their turns when a rival in the same road group intentionally sits on. The cooperative rider still pulls periodically and resumes full work if their group is close to being caught. An explicit `drive` order keeps working. This deterministic response makes the rival's choice consequential without giving the rider knowledge of future race results.
 
 Version `v2-prototype-71` clears a rider's residual bunch deficit once they have actually joined a road group ahead. The old deficit had incorrectly been charged again at the finish despite the recorded escape. Replay validation rejects a break rider who still carries that old deficit.
+
+Version `v2-prototype-72` lets an established road group attack on the same kilometre that a different move leaves the peloton and forms a chasing group. The new chasers cannot attack again immediately. The replay validator requires both the new chase-group identity and the older group's split, so neither movement can silently disappear from the saved race.
 
 The recording marks `reciprocalHoldRiderIds` separately from ordinary non-workers. Replay validation reconstructs this event from the locked orders and preceding groups, and Race Lab explains the withheld turns in the group detail.
 
