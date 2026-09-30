@@ -25,3 +25,7 @@ Amber's fictional road captain can use either the original 45 leadership or an e
 Motor Lab now offers the original exposed 160 km Coast Road and a 160 km Ridge Road with two sustained climbs, descents and a final rise. Both use fixed, fictional geometry and locked starting weather; neither is a canonical Pelotonia atlas route. The same scenario number is repeatable on either route, but the comparison card appears only when the route and scenario number are both unchanged. This begins route-sensitive testing without claiming that the generic synthetic riders provide realistic climbing balance.
 
 The replay now includes an elevation profile derived from the same committed kilometre route used by the simulation. Its cursor follows the selected frame and a text summary gives that kilometre's altitude and gradient. There is no separately drawn route profile to drift away from the engine input.
+
+## Chase-contribution order
+
+Amber can now commit how much its helpers contribute to the peloton chase: follow the preset, hold helpers back, or commit them to chase. This maps to the existing v2 chase order; a separately committed road-captain threat response can still override a held chase when its condition fires. The choice is recorded and included in same-seed comparisons. In Coast Road scenario 1 with the sprint preset and no threat override, holding helpers yields zero Amber chase kilometres; the default contributes work. Other teams keep their own plans, so withholding Amber's helpers does not guarantee an escape or a better placing.

@@ -23,7 +23,7 @@ for(const width of [390,1440])test(`manager runs a recorded Motor Lab race at ${
  await page.getByLabel('From the 120 km marker').selectOption('hard');
  await page.getByRole('button',{name:'Run the race'}).click();
  await expect(page.getByRole('heading',{name:'Coast Road laboratory'})).toBeVisible();
- await expect(page.getByText(/Committed orders: chase a threatening break · sit on in a break · ride hard after 120 km/)).toBeVisible();
+ await expect(page.getByText(/Committed orders: chase a threatening break · follow the plan for chase work · sit on in a break · ride hard after 120 km/)).toBeVisible();
  await expect(page.getByText('1 / 160',{exact:true})).toBeVisible();
  await expect(page.getByText(/The largest recorded gap is/)).toBeVisible();
  await page.getByRole('button',{name:/Play replay/}).click();
@@ -56,6 +56,11 @@ for(const width of [390,1440])test(`manager runs a recorded Motor Lab race at ${
  await expect(page.getByText('Amber rode Protect the sprinter')).toBeVisible();
  await expect(page.getByRole('heading',{name:'Same scenario, two decisions'})).toBeVisible();
  await expect(page.getByRole('table').getByRole('row',{name:/Amber Captain/})).toBeVisible();
+ await page.getByLabel('React to a dangerous break').selectOption('hold_plan');
+ await page.getByLabel('Peloton chase contribution').selectOption('ignore');
+ await page.getByRole('button',{name:'Run the race'}).click();
+ await expect(page.getByText(/hold chase helpers back/)).toBeVisible();
+ await expect(page.getByRole('row',{name:/Amber chase kilometres/}).getByRole('cell').last()).toHaveText('0');
  await page.getByLabel('Laboratory route').selectOption('ridge');
  await page.getByRole('button',{name:'Run the race'}).click();
  await expect(page.getByRole('heading',{name:'Ridge Road laboratory'})).toBeVisible();
