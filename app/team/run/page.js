@@ -58,6 +58,7 @@ export default function RunPage() {
   const [gender, setGender] = useState("M"),
     [bucket, setBucket] = useState("upcoming"),
     [eventId, setEventId] = useState("");
+  const [returnFilter,setReturnFilter]=useState("");
   const [stage, setStage] = useState(null),
     [gameDate, setGameDate] = useState(null),
     [entryLoading, setEntryLoading] = useState(false),
@@ -108,6 +109,9 @@ export default function RunPage() {
   }
   useEffect(() => {
     const requestedGender = new URLSearchParams(window.location.search).get("gender");
+    const requestedFilter = new URLSearchParams(window.location.search).get("return_filter");
+    if(["All","Men","Women","UCI","Pelotonia","Stage races","My races"].includes(requestedFilter))
+      setReturnFilter(requestedFilter);
     if (requestedGender === "M" || requestedGender === "F") setGender(requestedGender);
     load();
   }, []);
@@ -225,7 +229,7 @@ export default function RunPage() {
   return (
     <TeamShell compact>
       <div className="race-calendar">
-      <Link className="text-button" href="/team/calendar">← Back to race calendar</Link>
+      <Link className="text-button" href={returnFilter?`/team/calendar?filter=${encodeURIComponent(returnFilter)}`:"/team/calendar"}>← Back to race calendar</Link>
       <header className="calendar-hero">
         <Image src="/images/race-countryside-v1.png" alt="" fill sizes="(max-width: 760px) 100vw, 1200px" priority />
         <div><p className="eyebrow">THE NEXT CHAPTER</p><h1>Race day starts<br/><em>with you.</em></h1><p>Read the road. Pick your eight. Give your captain a chance to shine.</p></div>

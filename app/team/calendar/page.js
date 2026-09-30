@@ -19,7 +19,7 @@ function matches(event,filter){
   return true;
 }
 
-function EventCard({event}){
+function EventCard({event,filter}){
   const raceDate=event.scheduled_at??event.deadline;
   const source=event.calendar_source??"Unclassified";
   const tier=event.race_tier?`T${event.race_tier}`:"Unranked";
@@ -34,7 +34,7 @@ function EventCard({event}){
       <span>Orders <strong>{event.orders_ready?"Ready":"Missing"}</strong></span>
       <span className="agenda-state">{status}</span></div>
     <div className="agenda-card-bottom"><span>{event.winner_points===null?"Ranking points not set":`Winner · ${event.winner_points.toLocaleString("en-GB")} pts`}</span>
-      {setup?<Link className="btn primary" href={`/team/run?event_id=${encodeURIComponent(event.id)}&gender=${event.gender}`}>Set up →</Link>:
+      {setup?<Link className="btn primary" href={`/team/run?event_id=${encodeURIComponent(event.id)}&gender=${event.gender}&return_filter=${encodeURIComponent(filter)}`}>Set up →</Link>:
         <span className="agenda-muted">{event.kind==="stage_race"?"Stage setup is in development":event.status==="FINISHED"?"Finished":"Locked"}</span>}</div>
     {event.race_tier&&<details className="agenda-points"><summary>Points table</summary>
       <p>Tier {event.race_tier} · points by placing</p>
@@ -57,6 +57,8 @@ function PointsList({values}){
 
 export default function CalendarPage(){
   const [data,setData]=useState(null),[error,setError]=useState(""),[filter,setFilter]=useState("All");
+  useEffect(()=>{const requested=new URLSearchParams(window.location.search).get("filter");
+    if(FILTERS.includes(requested))setFilter(requested);},[]);
   useEffect(()=>{let active=true;api("/api/events?limit=100").then(result=>{if(active)setData(result);})
     .catch(e=>{if(active)setError(e.message);});return()=>{active=false;};},[]);
   const visible=useMemo(()=>{
@@ -84,7 +86,7 @@ export default function CalendarPage(){
     {data&&!groups.length&&<section className="card agenda-empty"><h2>No races match this view yet</h2>
       <p>Choose another filter or return when the next events are published.</p></section>}
     {groups.map(([day,events])=><section className="agenda-day" key={day}>
-      <h2>{displayDate(day)}</h2><div className="agenda-grid">{events.map(event=><EventCard key={event.id} event={event}/>)}</div>
+      <h2>{displayDate(day)}</h2><div className="agenda-grid">{events.map(event=><EventCard key={event.id} event={event} filter={filter}/>)}</div>
     </section>)}
   </div></TeamShell>;
 }

@@ -29,7 +29,11 @@ test("calendar shows separate races, readiness, filters and direct setup on mobi
   await page.screenshot({ path: "test-results/calendar-agenda-mobile.png", fullPage: true });
   await page.getByRole("button", { name: "Women", exact: true }).click();
   await expect(page.getByRole("heading", { name: "Coastal Men" })).toHaveCount(0);
-  await expect(page.getByRole("link", { name: /Set up/ })).toHaveAttribute("href", "/team/run?event_id=women-race&gender=F");
+  await expect(page.getByRole("link", { name: /Set up/ })).toHaveAttribute("href", "/team/run?event_id=women-race&gender=F&return_filter=Women");
+  await page.getByRole("link", { name: /Set up/ }).click();
+  await expect(page.getByRole("link", { name: /Back to race calendar/ })).toHaveAttribute("href","/team/calendar?filter=Women");
+  await page.getByRole("link", { name: /Back to race calendar/ }).click();
+  await expect(page.getByRole("button", { name: "Women", exact: true })).toHaveAttribute("aria-pressed","true");
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
   expect(errors).toEqual([]);
 });
