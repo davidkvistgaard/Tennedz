@@ -1,8 +1,10 @@
-import {createMotorLabPreview} from '../lib/engine/v2/preview.mjs';
+import {createMotorLabPreview,PREVIEW_ROUTES} from '../lib/engine/v2/preview.mjs';
 
 const count=Number(process.argv[2]??20);
 if(!Number.isInteger(count)||count<1||count>200)
  throw new Error('Choose 1–200 scenario seeds.');
+const routeId=process.argv[3]??'coast';
+if(!PREVIEW_ROUTES.includes(routeId))throw new Error('Choose a laboratory route.');
 
 function metrics(recording){
  const frames=recording.frames;
@@ -28,12 +30,12 @@ function summarise(rows){
   blockedOrders:rows.filter(row=>row.blocked).length,
  };
 }
-const report={kind:'fictional-motor-lab-audit',seedCount:count,plans:{}};
+const report={kind:'fictional-motor-lab-audit',routeId,seedCount:count,plans:{}};
 for(const plan of ['sprint','break','balanced','conserve']){
  const baseline=[],attack40=[];
  for(let seed=0;seed<count;seed++){
-  baseline.push(metrics(createMotorLabPreview({plan,seed})));
-  attack40.push(metrics(createMotorLabPreview({plan,seed,orders:{breakAttackMarker:'40'}})));
+  baseline.push(metrics(createMotorLabPreview({plan,seed,routeId})));
+  attack40.push(metrics(createMotorLabPreview({plan,seed,routeId,orders:{breakAttackMarker:'40'}})));
  }
  report.plans[plan]={baseline:summarise(baseline),attackAfter40Km:summarise(attack40)};
 }

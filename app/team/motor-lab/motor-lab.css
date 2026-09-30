@@ -11,7 +11,7 @@
 .motor-plan[data-selected="true"]{border:2px solid #1c5d42;background:#e8f1df;padding:15px}.motor-plan input{accent-color:#1c5d42;align-self:flex-start;margin-top:4px}
 .motor-plan strong,.motor-plan small{display:block}.motor-plan strong{line-height:1.25}.motor-plan small{margin-top:8px;line-height:1.4;color:#4b6458}
 .motor-run-row{display:flex;flex-wrap:wrap;align-items:flex-end;gap:12px;margin-top:24px}.motor-run-row label{display:grid;gap:6px;font-weight:700;font-size:.9rem}
-.motor-run-row input{width:135px}.motor-lab button,.motor-run-row input{font:inherit;min-height:44px;border:1px solid #799985;border-radius:10px;padding:9px 14px;background:#fffdf7;color:#193b30}
+.motor-run-row input{width:135px}.motor-run-row select{min-width:180px}.motor-lab button,.motor-run-row input,.motor-run-row select{font:inherit;min-height:44px;border:1px solid #799985;border-radius:10px;padding:9px 14px;background:#fffdf7;color:#193b30}
 .motor-lab button{cursor:pointer}.motor-lab button:hover:not(:disabled){border-color:#17543a;background:#ebf2e4}.motor-lab button:disabled{opacity:.5;cursor:not-allowed}
 .motor-lab button:focus-visible,.motor-lab input:focus-visible{outline:3px solid #bb783d;outline-offset:3px}
 .motor-run-row .motor-primary{background:#1d573e;color:white;border-color:#1d573e;font-weight:800;padding-inline:20px}.motor-run-row .motor-primary:hover:not(:disabled){background:#123c2c;color:white}

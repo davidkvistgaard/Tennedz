@@ -17,6 +17,7 @@ const orderSummary=recording=>`${recording.orders.breakResponse==='chase_if_thre
 
 export default function MotorLabPage(){
  const [plan,setPlan]=useState('sprint');
+ const [routeId,setRouteId]=useState('coast');
  const [orders,setOrders]=useState({breakResponse:'hold_plan',breakWork:'cooperate',lateEffort:'follow_plan',breakAttackMarker:'none',roadCaptain:'standard'});
  const [seed,setSeed]=useState(1);
  const [recording,setRecording]=useState(null);
@@ -37,7 +38,8 @@ export default function MotorLabPage(){
    multi:frames.flatMap((frame,index)=>frame.groups.length>1?[20+index/(frames.length-1)*960]:[])};
  },[recording]);
  const frame=recording?.frames[frameIndex];
- const comparison=previousRecording?.seed===recording?.seed?previousRecording:null;
+ const comparison=previousRecording?.seed===recording?.seed&&
+  previousRecording?.routeId===recording?.routeId?previousRecording:null;
  const amberCaptain=recording?.results.find(result=>result.name==='Amber Captain');
  useEffect(()=>{
   if(!playing||!recording)return;
@@ -52,7 +54,7 @@ export default function MotorLabPage(){
   setBusy(true);setError('');
   try{
    const response=await api('/api/motor-lab',{method:'POST',headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({plan,seed:nextSeed,orders})});
+    body:JSON.stringify({plan,routeId,seed:nextSeed,orders})});
    setPlaying(false);setPreviousRecording(recording);setRecording(response.recording);setFrameIndex(0);setSeed(nextSeed);
   }catch(cause){setError(cause.message||'The preview could not run. Please try again.');}
   finally{setBusy(false);}
@@ -67,7 +69,7 @@ export default function MotorLabPage(){
      <p>Choose a simple order for Amber, then inspect every recorded kilometre of a fictional four-team race. Run the same scenario again with another plan to see what changes.</p>
     </div><span className="motor-tag">Experimental · no live results</span>
    </section>
-   <p className="motor-boundary">This laboratory uses fictional riders and a fixed 160 km route. It reads no team roster, makes no database changes and awards no points. The current live race engine is unchanged.</p>
+   <p className="motor-boundary">This laboratory uses fictional riders and two fixed 160 km routes. It reads no team roster, makes no database changes and awards no points. The current live race engine is unchanged.</p>
    <section className="motor-panel" aria-labelledby="motor-orders-title">
     <div className="motor-section-heading"><span>01 / COMMIT A PLAN</span><h2 id="motor-orders-title">How should Amber race?</h2></div>
     <div className="motor-plans" role="radiogroup" aria-label="Amber race plan">
@@ -118,13 +120,18 @@ export default function MotorLabPage(){
       </label>
      </div>
     </fieldset>
-    <div className="motor-run-row"><label>Scenario number
+    <div className="motor-run-row"><label>Laboratory route
+     <select value={routeId} onChange={event=>setRouteId(event.target.value)} disabled={busy}>
+      <option value="coast">Exposed coast</option>
+      <option value="ridge">Rolling ridge</option>
+     </select>
+    </label><label>Scenario number
      <input type="number" min="0" max="9999" step="1" value={seed}
       onChange={event=>setSeed(event.target.value===''?'':Number(event.target.value))} disabled={busy}/>
     </label><button type="button" className="motor-primary" onClick={()=>run()} disabled={busy||!Number.isInteger(seed)||seed<0||seed>9999}>
      {busy?'Calculating…':'Run the race'}
     </button><button type="button" onClick={()=>run(Number(seed)+1)} disabled={busy||!Number.isInteger(seed)||seed<0||seed>=9999}>Try another scenario</button></div>
-    <p className="motor-hint">Keep the scenario number when comparing plans. All four teams and the weather then start from the same conditions.</p>
+    <p className="motor-hint">Keep the route and scenario number when comparing plans. All four teams and the weather then start from the same conditions.</p>
     {error&&<p role="alert" className="motor-error">{error}</p>}
    </section>
    {recording&&frame&&<>

@@ -26,10 +26,11 @@ async function handler(request,_context,auth){
   return NextResponse.json({ok:false,error:'Invalid request.'},{status:400});
  }
  try{
-  const recording=createMotorLabPreview({plan:input?.plan,seed:input?.seed,orders:input?.orders});
+  const recording=createMotorLabPreview({plan:input?.plan,seed:input?.seed,
+   routeId:input?.routeId,orders:input?.orders});
   return NextResponse.json({ok:true,recording});
  }catch(error){
-  if(['Choose a valid plan and scenario number.','Choose valid advanced orders.'].includes(error.message))
+  if(['Choose a valid plan, route and scenario number.','Choose valid advanced orders.'].includes(error.message))
    return NextResponse.json({ok:false,error:error.message},{status:400});
   throw error;
  }

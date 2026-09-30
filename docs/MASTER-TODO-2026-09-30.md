@@ -27,6 +27,8 @@
 
 **Taktisk deltrin:** En betinget ordre kan nu forsøge et angreb fra udbruddet efter et valgt kilometermærke. Optagelsen viser både et vellykket split og grunden til et blokeret forsøg. Det gør flere samtidige grupper synlige i en fiktiv test, men er ikke en fuld ekspertordreflade eller verificeret løbsbalance.
 
+**Rute-deltrin:** Motor Lab kan sammenligne en flad, vindeksponeret og en kuperet, fiktiv 160 km-rute med samme scenarienummer. Sammenligningskortet kræver samme rute; de officielle rutedata og rytterspecialisering mangler stadig under punkt 06–07.
+
 ## Hurtigt overblik over resterende arbejde
 
 | Spor | Punkter | Estimat |
