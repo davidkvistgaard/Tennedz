@@ -83,6 +83,12 @@ test("automatic entries remain behind the game-write gate", async ({ page }) => 
   expect((await batch.json()).code).toBe("GAME_READ_ONLY");
 });
 
+test("the scheduled autopilot endpoint rejects ordinary visitors", async ({ page }) => {
+  const response = await page.request.get("/api/cron/autopilot");
+  expect(response.status()).toBe(401);
+  expect((await response.json()).code).toBe("UNAUTHORIZED");
+});
+
 test("administrator editor exposes a scheduled Pelotonia race day and tier", async ({ page }) => {
   await login(page);
   await page.goto("/admin");

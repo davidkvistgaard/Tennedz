@@ -1,4 +1,5 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "git": { "deploymentEnabled": { "codex/recovery-supabase-auth": false } }
+  "git": { "deploymentEnabled": { "codex/recovery-supabase-auth": false } },
+  "crons": [{ "path": "/api/cron/autopilot", "schedule": "0 2 * * *" }]
 }
