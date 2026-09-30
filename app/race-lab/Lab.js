@@ -539,8 +539,9 @@ export default function Lab() {
                 const rider=kilometreRace.committedInputs.teams.flatMap(team=>team.riders)
                   .find(candidate=>candidate.id===id);
                 const energy=currentKm.riderGroups.find(state=>state.id===id)?.energy;
-                return <li key={id}>{rider?.name??id} · {currentKm.pullRiderIds.includes(id)?
-                  'Pulling this km':'Not pulling this km'} · {energy?.toFixed(1)??'?'} energy</li>;
+                return <li key={id}>{rider?.name??id} · {currentKm.driveRiderIds.includes(id)?
+                  'Driving this km':currentKm.pullRiderIds.includes(id)?
+                    'Pulling this km':'Not pulling this km'} · {energy?.toFixed(1)??'?'} energy</li>;
               })}</ul>
             </div>)}
           </details>}

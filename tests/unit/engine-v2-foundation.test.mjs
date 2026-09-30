@@ -789,10 +789,18 @@ test('taking pulls grows the break gap but costs energy compared with sitting on
   assert.ok(workingFrame.riderGroups.find(rider=>rider.id==='a-0').energy<
     restingFrame.riderGroups.find(rider=>rider.id==='a-0').energy);
   const drivingFrame=driving.frames[workingFrame.km-1];
+  assert.ok(drivingFrame.driveRiderIds.includes('a-0'));
+  assert.deepEqual(workingFrame.driveRiderIds,[]);
   assert.ok(drivingFrame.riderGroups.find(rider=>rider.id==='a-0').energy<
     workingFrame.riderGroups.find(rider=>rider.id==='a-0').energy);
   assert.ok(drivingFrame.gapSeconds>=workingFrame.gapSeconds);
   assert.equal(validateRecordedTour(driving),true);
+  const hiddenDrive=structuredClone(driving);
+  hiddenDrive.frames[workingFrame.km-1].driveRiderIds=[];
+  assert.throws(()=>validateRecordedTour(hiddenDrive),/break drive differs/);
+  const fabricatedDrive=structuredClone(active);
+  fabricatedDrive.frames[workingFrame.km-1].driveRiderIds=['a-0'];
+  assert.throws(()=>validateRecordedTour(fabricatedDrive),/break drive differs/);
 });
 
 test('a mixed break credits only willing riders with work, without gifting the sitter speed',()=>{
