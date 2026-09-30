@@ -224,6 +224,23 @@ test('a GC target waits while two team riders already occupy the break',()=>{
   assert.equal(validateRecordedTour(race),true);
 });
 
+test('an exhausted GC leader does not issue automatic attacks in the finale',()=>{
+  const cast=structuredClone(teams);
+  for(const team of cast){
+    team.orders.baseline={attack:'none',chase:'ignore',effort:'hard'};
+    for(const rider of team.riders)rider.fatigue=100;
+  }
+  cast[1].orders.gcObjective='target_top_ten';
+  const longStage={distance_km:400,profile_points:[[0,100],[400,100]],keypoints:[]};
+  const race=simulateTacticalTour({stage:longStage,teams:cast,
+    seed:'exhausted-gc-target',classification});
+  const finale=race.frames.slice(-20);
+  assert.ok(finale.every(frame=>frame.riderGroups.find(rider=>rider.id==='b0').energy<12));
+  assert.ok(finale.every(frame=>!frame.activeGcTargetTeamIds.includes('b')));
+  assert.ok(finale.every(frame=>!frame.attackers.includes('b0')));
+  assert.equal(validateRecordedTour(race),true);
+});
+
 test('a prepared GC team counters a nearby rival attack in the same kilometre',()=>{
   const cast=structuredClone(teams);
   cast[0].orders.gcObjective='defend_top_ten';
