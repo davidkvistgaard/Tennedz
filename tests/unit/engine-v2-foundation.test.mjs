@@ -1603,6 +1603,12 @@ test('recorded playback does not recalculate and rejects a result that differs f
   const missingInput=structuredClone(result);
   missingInput.committedInputs.teams[0].riders.pop();
   assert.throws(()=>validateRecordedTour(missingInput),/committed team/);
+  const impossiblePhase=structuredClone(result);
+  impossiblePhase.committedInputs.teams[0].orders.phases=[{atKm:13,attack:'none'}];
+  assert.throws(()=>validateRecordedTour(impossiblePhase),/committed team orders/);
+  const invalidChase=structuredClone(result);
+  invalidChase.committedInputs.teams[0].orders.baseline.chase='teleport';
+  assert.throws(()=>validateRecordedTour(invalidChase),/committed team orders/);
   const wrongBreak=structuredClone(result);
   wrongBreak.frames[19].breakawayRiderIds.push('foreign');
   assert.throws(()=>validateRecordedTour(wrongBreak),/breakaway|rider state/);
