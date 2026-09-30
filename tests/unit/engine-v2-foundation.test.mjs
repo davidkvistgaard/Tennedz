@@ -12,6 +12,7 @@ import {provisionalFinish,provisionalRoadGroupFinish,
 import {selectShelter} from '../../lib/engine/v2/support.mjs';
 import {selectCaptainSupport,applyCaptainSupport} from '../../lib/engine/v2/captain-support.mjs';
 import {validateRoadGroupTransition} from '../../lib/engine/v2/road-groups.mjs';
+import {automaticBreakAttackRider} from '../../lib/engine/v2/break-attack.mjs';
 import {validateRecordedTour,readRecordedKilometre} from '../../lib/engine/v2/recording.mjs';
 import {recoveryForKilometre} from '../../lib/engine/v2/recovery.mjs';
 import {flatScenario} from '../../lib/race-lab/scenario.mjs';
@@ -64,9 +65,9 @@ test('simple presets and expert phases resolve without changing earlier orders',
   const orders=normalizeOrders({captainId:'r0',roadCaptainId:'r1',backupId:'r2',preset:'protect',
     phases:[{atKm:20,effort:'hard',chase:'all'},{atKm:15,chase:'ignore'}]},
     {riderIds:riders,distanceKm:40,keypoints:stage.keypoints});
-  assert.deepEqual(orderAt(orders,0),{effort:'conserve',chase:'selective',attack:'none',breakWork:'cooperate',captainSupport:'hold_position'});
-  assert.deepEqual(orderAt(orders,15),{effort:'conserve',chase:'ignore',attack:'none',breakWork:'cooperate',captainSupport:'hold_position'});
-  assert.deepEqual(orderAt(orders,20),{effort:'hard',chase:'all',attack:'none',breakWork:'cooperate',captainSupport:'hold_position'});
+  assert.deepEqual(orderAt(orders,0),{effort:'conserve',chase:'selective',attack:'none',breakWork:'cooperate',breakFinale:'hold_group',captainSupport:'hold_position'});
+  assert.deepEqual(orderAt(orders,15),{effort:'conserve',chase:'ignore',attack:'none',breakWork:'cooperate',breakFinale:'hold_group',captainSupport:'hold_position'});
+  assert.deepEqual(orderAt(orders,20),{effort:'hard',chase:'all',attack:'none',breakWork:'cooperate',breakFinale:'hold_group',captainSupport:'hold_position'});
   assert.deepEqual(orders.helperIds,['r2','r3','r4','r5','r6','r7']);
   assert.equal(orders.roadCaptainId,'r1');
 });
@@ -97,6 +98,7 @@ test('orders reject foreign riders, ambiguous markers and unknown values',()=>{
   assert.throws(()=>normalizeOrders({captainId:'r0',breakResponse:'improvise'},context));
   assert.throws(()=>normalizeOrders({captainId:'r0',forwardResponse:'chase_always'},context));
   assert.throws(()=>normalizeOrders({captainId:'r0',baseline:{breakWork:'free_speed'}},context));
+  assert.throws(()=>normalizeOrders({captainId:'r0',baseline:{breakFinale:'win_anyway'}},context));
   assert.throws(()=>normalizeOrders({captainId:'r0',baseline:{captainSupport:'teleport'}},context));
   assert.equal(normalizeOrders({captainId:'r0',breakResponse:'chase_if_threatened'},context).breakResponse,
     'chase_if_threatened');
@@ -135,6 +137,32 @@ function tacticalTeam(id,preset,overrides={}){
     orders:normalizeOrders({captainId:riderIds[0],roadCaptainId:riderIds[1],preset,...overrides},
       {riderIds,distanceKm:40})};
 }
+
+test('a precommitted break finale order reacts only at checkpoints to a sprint disadvantage',()=>{
+  const attacker=tacticalTeam('a','balanced',{baseline:{breakFinale:'attack_if_outsprinted'}});
+  const rival=tacticalTeam('b','balanced');
+  attacker.riders[0].sprint=25;
+  rival.riders[0].sprint=80;
+  const group={id:'road-1',riderIds:['a-0','b-0'],teamIds:['a','b'],gapSeconds:15};
+  const segment=buildKilometreRoute(stage,{seed:'break-finale'}).kilometres[29];
+  assert.equal(automaticBreakAttackRider({team:attacker,group,teams:[attacker,rival],
+    segment,distanceKm:40}),'a-0');
+  assert.equal(automaticBreakAttackRider({team:attacker,group,teams:[attacker,rival],
+    segment,distanceKm:40,teamIdsAhead:['a']}),null);
+  assert.equal(automaticBreakAttackRider({team:attacker,group,teams:[attacker,rival],
+    segment:{...segment,km:29},distanceKm:40}),null);
+  attacker.energy={'a-0':25};
+  assert.equal(automaticBreakAttackRider({team:attacker,group,teams:[attacker,rival],
+    segment,distanceKm:40}),null);
+  attacker.energy={'a-0':100};
+  rival.riders[0].sprint=40;
+  assert.equal(automaticBreakAttackRider({team:attacker,group,teams:[attacker,rival],
+    segment,distanceKm:40}),null);
+  attacker.orders.baseline.breakFinale='hold_group';
+  rival.riders[0].sprint=80;
+  assert.equal(automaticBreakAttackRider({team:attacker,group,teams:[attacker,rival],
+    segment,distanceKm:40}),null);
+});
 
 test('a single team cannot neutralise several coordinated attacks at no cost',()=>{
   const lone=[tacticalTeam('defender','protect',{baseline:{chase:'all'}}),tacticalTeam('a','aggressive'),tacticalTeam('b','aggressive'),tacticalTeam('c','aggressive')];
@@ -754,7 +782,7 @@ test('the full tactical trace is deterministic, bounded and makes aggressive ord
   const a=simulateTacticalTour(input);
   assert.deepEqual(a,simulateTacticalTour(input));
   assert.equal(a.frames.length,40);
-  assert.equal(a.tuningVersion,'v2-prototype-41');
+  assert.equal(a.tuningVersion,'v2-prototype-42');
   assert.equal(a.frames.at(-1).km,40);
   assert.ok(a.frames.some(frame=>frame.attackers.length>0));
   assert.ok(a.frames.some(frame=>frame.chasers.length>0));
@@ -1258,6 +1286,27 @@ test('a rider already in the break cannot launch another new attack',()=>{
   assert.ok(Math.max(...result.frames.map(frame=>frame.breakawayRiderIds.length))<=2);
 });
 
+test('a sprint-disadvantaged break rider can make an automatic, recorded finale split',()=>{
+  const flat={distance_km:40,profile_points:[[0,100],[40,100]]};
+  const make=(id,sprint,breakFinale)=>({id,
+    riders:Array.from({length:8},(_,index)=>({id:`${id}-${index}`,gender:'M',
+      flat:60,strength:60,endurance:60,sprint,acceleration:60,leadership:50})),
+    orders:{captainId:`${id}-0`,roadCaptainId:`${id}-1`,preset:'aggressive',
+      baseline:{chase:'ignore',breakFinale}}});
+  const teams=[make('a',20,'attack_if_outsprinted'),make('b',90,'hold_group')];
+  const race=simulateTacticalTour({stage:flat,teams,seed:'split-probe'});
+  const control=simulateTacticalTour({stage:flat,
+    teams:[make('a',20,'hold_group'),make('b',90,'hold_group')],seed:'split-probe'});
+  assert.equal(race.frames[29].splitAttack?.source,'automatic');
+  assert.equal(race.frames[29].splitAttack?.status,'split');
+  assert.equal(race.frames[29].splitAttack?.riderId,'a-0');
+  assert.equal(control.frames[29].splitAttack,null);
+  assert.equal(validateRecordedTour(race),true);
+  const tampered=structuredClone(race);
+  tampered.frames[29].splitAttack.source='unplanned';
+  assert.throws(()=>validateRecordedTour(tampered),/break attack/);
+});
+
 test('a committed break attack splits the live road group and survives replay validation',()=>{
   const flat={distance_km:40,profile_points:[[0,100],[40,100]]};
   const makeTeam=(id,preset,phases=[])=>({id,
@@ -1272,6 +1321,7 @@ test('a committed break attack splits the live road group and survives replay va
     teams:[makeTeam('a','aggressive'),makeTeam('b','protect')],seed:'split-probe'});
   const split=race.frames[20];
   assert.equal(split.splitAttack.status,'split');
+  assert.equal(split.splitAttack.source,'committed');
   assert.deepEqual(split.roadGroups.map(group=>group.id),['road-2','road-1']);
   assert.deepEqual(split.roadGroups[0].riderIds,['a-0']);
   assert.ok(split.roadGroups[0].gapSeconds>split.roadGroups[1].gapSeconds);
@@ -1472,6 +1522,15 @@ test('Race Lab carries precommitted break work into its recorded prototype',()=>
   assert.equal(amberPulls.length,0);
   assert.equal(recording.committedInputs.teams[0].orders.baseline.breakWork,'sit_on');
   assert.equal(validateRecordedTour(recording),true);
+});
+
+test('Race Lab records the optional break-finale rule before calculation',()=>{
+  const scenario=flatScenario('break');
+  scenario.teams[0].breakFinale='attack_if_outsprinted';
+  const race=runKilometreLab({scenario,seed:'break-finale'});
+  assert.equal(race.committedInputs.teams[0].orders.baseline.breakFinale,
+    'attack_if_outsprinted');
+  assert.equal(validateRecordedTour(race),true);
 });
 
 test('recorded playback does not recalculate and rejects a result that differs from its frames',()=>{
