@@ -21,6 +21,8 @@
 
 **Første synlige delmål påbegyndt:** Et serverberegnet, syntetisk [Motor Lab](MOTOR-LAB-MILESTONE-1.md) er bygget og testet lokalt. Det er et udsnit af punkt 04–09, ikke en færdig motor, ordreflade eller officiel løbsviewer. Listen over resterende arbejde og estimater nedenfor ændres først efter spiltest og en konkret ny vurdering.
 
+**Efterfølgende lokalt delmål:** [Ordre-værkstedet](MOTOR-LAB-ORDER-WORKSHOP.md) lader spilleren afprøve tre forudbestemte taktiske valg og sammenligne to kørsler af samme fiktive scenarie. Det er fortsat ikke et gemt ordreflow til officielle løb. [Logo v0.1](PELOTONIA-BRAND-LOGO-V0.1.md) er også implementeret lokalt og skal med ved næste offentliggørelse.
+
 ## Hurtigt overblik over resterende arbejde
 
 | Spor | Punkter | Estimat |

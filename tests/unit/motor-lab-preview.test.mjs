@@ -25,8 +25,23 @@ test('another committed plan can change the same seeded fictional race',()=>{
  assert.notDeepEqual(sprint.frames,breakPlan.frames);
 });
 
+test('advanced orders are committed and alter the same seeded race',()=>{
+ const standard=createMotorLabPreview({plan:'break',seed:5});
+ const advanced=createMotorLabPreview({plan:'break',seed:5,orders:{
+  breakResponse:'chase_if_threatened',breakWork:'sit_on',lateEffort:'hard',
+ }});
+ assert.deepEqual(advanced.orders,{breakResponse:'chase_if_threatened',
+  breakWork:'sit_on',lateEffort:'hard'});
+ assert(advanced.frames[120].moments.includes('Amber switched to hard effort'));
+ assert(!standard.frames[120].moments.includes('Amber switched to hard effort'));
+ assert.notDeepEqual(standard.frames,advanced.frames);
+ assert.deepEqual(advanced,createMotorLabPreview({plan:'break',seed:5,orders:advanced.orders}));
+});
+
 test('guided preview rejects unbounded or unknown requests',()=>{
  for(const input of [{plan:'unknown',seed:0},{plan:'sprint',seed:-1},
   {plan:'sprint',seed:10000},{plan:'sprint',seed:'1'}])
   assert.throws(()=>createMotorLabPreview(input),/valid plan and scenario number/);
+ for(const orders of [null,[],{breakWork:'freewheel'},{lateEffort:120},{admin:true}])
+  assert.throws(()=>createMotorLabPreview({plan:'sprint',seed:1,orders}),/valid advanced orders/);
 });
