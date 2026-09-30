@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {startGeneralClassification,recordGeneralClassificationStage,
-  projectGeneralClassification} from
+  projectGeneralClassification,identifyTopTenThreats} from
   '../../lib/engine/v2/classification.mjs';
 
 const riders=Array.from({length:16},(_,index)=>({riderId:`r${index}`,
@@ -103,4 +103,28 @@ test('GC projection rejects missing or contradictory road state',()=>{
     id:'road-1',riderIds:['r8'],teamIds:['a'],gapSeconds:5,
   }],riderStates:states.map(state=>({...state,group:state.id==='r8'?'breakaway':'peloton'}))}),
   /rider state/);
+});
+
+test('top-ten threat identifies only a rival break that displaces a protected place',()=>{
+  const start=startGeneralClassification({raceCategory:'M',riders});
+  const faster=new Set(['r1','r2','r3','r4','r5','r6','r7','r9','r10']);
+  const prior=recordGeneralClassificationStage(start,{stageId:'stage-1',
+    classifiedTimes:times(Object.fromEntries(riders.map(rider=>[
+      rider.riderId,faster.has(rider.riderId)?3590:
+        rider.riderId==='r0'?3600:rider.riderId==='r8'?3602:3610,
+    ])))});
+  const states=riders.map(rider=>({id:rider.riderId,teamId:rider.teamId,
+    group:rider.riderId==='r8'?'breakaway':'peloton',deficitSeconds:0}));
+  const moving={roadGroups:[{id:'road-1',riderIds:['r8'],teamIds:['b'],gapSeconds:5}],
+    riderStates:states};
+  assert.deepEqual(identifyTopTenThreats(prior,moving),[{
+    teamId:'a',riderId:'r0',priorPosition:10,projectedPosition:11,rivalRiderIds:['r8'],
+  }]);
+  assert.deepEqual(identifyTopTenThreats(prior,{...moving,roadGroups:[{
+    ...moving.roadGroups[0],gapSeconds:1,
+  }]}),[]);
+  assert.deepEqual(identifyTopTenThreats(prior,{...moving,riderStates:states.map(state=>({
+    ...state,group:state.id==='r0'?'dropped':state.group,
+    deficitSeconds:state.id==='r0'?10:0,
+  }))}),[]);
 });
