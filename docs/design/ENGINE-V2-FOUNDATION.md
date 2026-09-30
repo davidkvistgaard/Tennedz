@@ -2,7 +2,7 @@
 
 Status: **development prototype, not wired to the public race cycle**. The existing `recovery-one-day-4-orders` engine, stored race outputs, database schema and live site remain unchanged. This work starts a separate, versioned engine on top of the latest recovery code so the working cycle can remain the comparison baseline while the replacement is built and balanced.
 
-Current balance version: `v2-prototype-62`. The simulator supports ordered independent road groups and records their formation, splits, pursuit, merges and catches. At the finish, a faster rear group can absorb slower riders ahead, and the bunch can catch individual riders from any road group while other groups survive. The final frame and provisional result must agree, and the replay validator checks those transitions. These are deterministic laboratory outcomes, not official race times or a production-ready viewer.
+Current balance version: `v2-prototype-63`. The simulator supports ordered independent road groups and records their formation, splits, pursuit, merges and catches. At the finish, a faster rear group can absorb slower riders ahead, and the bunch can catch individual riders from any road group while other groups survive. The final frame and provisional result must agree, and the replay validator checks those transitions. These are deterministic laboratory outcomes, not official race times or a production-ready viewer.
 
 ## Product contract
 
@@ -111,6 +111,8 @@ Version `v2-prototype-60` lets a leader targeting a top-ten GC place attack from
 Version `v2-prototype-61` gives a precommitted top-ten defence priority when a rival break genuinely threatens the leader, even if a helper from the defending team is already ahead. After the road captain's response delay, that helper stops pulling the break and available teammates may chase from the bunch at the normal energy cost. An unthreatened team still protects its forward rider. The saved replay verifies the decision, work roster and chase event.
 
 Version `v2-prototype-62` only activates an automatic top-ten attack when the leader's team still has room in the break. Two teammates already ahead consume its two-rider allowance; the captain waits instead of repeatedly issuing an impossible attack. The recorded replay validates that decision.
+
+Version `v2-prototype-63` stops a breakaway rider from taking effective pulls once their energy falls to the centrally tuned minimum. A willing teammate may continue working, while a group with no eligible worker loses its cooperation benefit. The replay verifies the worker list from the saved prior energy state.
 
 Version `v2-prototype-45` gives managers a precommitted helper-attack policy: `open` (the existing default), `hold_for_captain`, or `release_if_dropped`. The last choice reserves unnamed helpers until the active leader is recorded as dropped, then allows them to seek their own result. A manager's explicitly named attacker takes precedence. The rule also applies to automatic finale attacks from a break, and a helper released into a normal attack is identified in the recorded kilometre. This is a first rider-autonomy rule; it does not yet model a graded captain winning chance or delayed road-captain recognition.
 

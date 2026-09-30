@@ -73,6 +73,28 @@ test('a precommitted GC emergency can stop a forward helper from towing a rival'
     /hold teams/);
 });
 
+test('an exhausted break rider stops pulling while a fresher partner can continue',()=>{
+  const groups=[
+    {id:'road-1',riderIds:['c-0'],teamIds:['c'],gapSeconds:25},
+    {id:'road-2',riderIds:['a-0','b-0'],teamIds:['a','b'],gapSeconds:12},
+  ];
+  const cast=['a','b','c'].map(id=>({id,riders:[{id:`${id}-0`,flat:70,
+    strength:70,endurance:70,timetrial:70}],
+  energy:{[`${id}-0`]:id==='a'?12:id==='b'?13:80},
+  orders:{baseline:{breakWork:'cooperate'},phases:[]}}));
+  const segment=buildKilometreRoute({distance_km:40,
+    profile_points:[[0,100],[40,100]],keypoints:[]},
+  {seed:'exhausted-break-work'}).kilometres[20];
+  const oneWorker=selectRoadGroupPulls(groups,cast,21);
+  assert.deepEqual(oneWorker,['c-0','b-0']);
+  const workingPace=relativeRoadGroupPace(groups[0],groups[1],cast,segment,oneWorker);
+  cast[1].energy['b-0']=12;
+  const noRearWorker=selectRoadGroupPulls(groups,cast,21);
+  assert.deepEqual(noRearWorker,['c-0']);
+  assert.ok(relativeRoadGroupPace(groups[0],groups[1],cast,segment,noRearWorker)>
+    workingPace);
+});
+
 test('a trailing teammate may work only for a nearby fading forward rider under a committed plan',()=>{
   const groups=[
     {id:'road-1',riderIds:['a-0'],teamIds:['a'],gapSeconds:25},
