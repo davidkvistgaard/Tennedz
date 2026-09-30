@@ -23,6 +23,8 @@
 
 **Efterfølgende lokalt delmål:** [Ordre-værkstedet](MOTOR-LAB-ORDER-WORKSHOP.md) lader spilleren afprøve tre forudbestemte taktiske valg og sammenligne to kørsler af samme fiktive scenarie. Det er fortsat ikke et gemt ordreflow til officielle løb. [Logo v0.1](PELOTONIA-BRAND-LOGO-V0.1.md) er også implementeret lokalt og skal med ved næste offentliggørelse.
 
+**Replay-deltrin:** Motor Lab har nu en afspillelig kilometertidslinje og en kurve over det registrerede forspring. Afspilningen bruger den eksisterende optagelse i browserhukommelsen. Vedvarende replay, rigtige hold, rigtige ruter og officielle resultater er fortsat åbne under punkt 07–09.
+
 ## Hurtigt overblik over resterende arbejde
 
 | Spor | Punkter | Estimat |

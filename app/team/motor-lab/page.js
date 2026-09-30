@@ -1,5 +1,5 @@
 "use client";
-import {useMemo,useState} from 'react';
+import {useEffect,useMemo,useState} from 'react';
 import TeamShell from '../../components/TeamShell';
 import {api} from '../../../lib/api';
 import './motor-lab.css';
@@ -22,20 +22,38 @@ export default function MotorLabPage(){
  const [recording,setRecording]=useState(null);
  const [previousRecording,setPreviousRecording]=useState(null);
  const [frameIndex,setFrameIndex]=useState(0);
+ const [playing,setPlaying]=useState(false);
  const [busy,setBusy]=useState(false);
  const [error,setError]=useState('');
  const highlights=useMemo(()=>recording?.frames
   .map((frame,index)=>({...frame,index})).filter(frame=>frame.moments.length)??[],[recording]);
+ const timeline=useMemo(()=>{
+  if(!recording)return null;
+  const frames=recording.frames;
+  const gaps=frames.map(frame=>frame.groups[0]?.gapSeconds??0);
+  const peakGap=Math.max(...gaps),scale=Math.max(1,peakGap);
+  const point=(gap,index)=>`${20+index/(frames.length-1)*960},${130-gap/scale*100}`;
+  return {peakGap,trace:gaps.map(point).join(' '),
+   multi:frames.flatMap((frame,index)=>frame.groups.length>1?[20+index/(frames.length-1)*960]:[])};
+ },[recording]);
  const frame=recording?.frames[frameIndex];
  const comparison=previousRecording?.seed===recording?.seed?previousRecording:null;
  const amberCaptain=recording?.results.find(result=>result.name==='Amber Captain');
+ useEffect(()=>{
+  if(!playing||!recording)return;
+  const timer=setInterval(()=>setFrameIndex(index=>Math.min(index+2,recording.frames.length-1)),140);
+  return ()=>clearInterval(timer);
+ },[playing,recording]);
+ useEffect(()=>{
+  if(playing&&recording&&frameIndex===recording.frames.length-1)setPlaying(false);
+ },[playing,recording,frameIndex]);
  async function run(nextSeed=seed){
   if(busy)return;
   setBusy(true);setError('');
   try{
    const response=await api('/api/motor-lab',{method:'POST',headers:{'Content-Type':'application/json'},
     body:JSON.stringify({plan,seed:nextSeed,orders})});
-   setPreviousRecording(recording);setRecording(response.recording);setFrameIndex(0);setSeed(nextSeed);
+   setPlaying(false);setPreviousRecording(recording);setRecording(response.recording);setFrameIndex(0);setSeed(nextSeed);
   }catch(cause){setError(cause.message||'The preview could not run. Please try again.');}
   finally{setBusy(false);}
  }
@@ -111,12 +129,24 @@ export default function MotorLabPage(){
      <div className="motor-scoreboard"><div><small>KILOMETRE</small><strong>{frame.km} / {recording.distanceKm}</strong></div>
       <div><small>GROUPS AHEAD</small><strong>{frame.groups.length}</strong></div>
       <div><small>AMBER CAPTAIN</small><strong>#{amberCaptain?.position??'—'}</strong></div></div>
+     <figure className="motor-timeline">
+      <figcaption>Breakaway advantage across the race</figcaption>
+      <svg viewBox="0 0 1000 150" preserveAspectRatio="none" aria-hidden="true">
+       <line x1="20" y1="130" x2="980" y2="130" className="motor-timeline-baseline"/>
+       <polyline points={timeline.trace} className="motor-timeline-trace"/>
+       {timeline.multi.map((x,index)=><line key={index} x1={x} x2={x} y1="139" y2="148" className="motor-timeline-multi"/>)}
+       <line x1={20+frameIndex/(recording.frames.length-1)*960} x2={20+frameIndex/(recording.frames.length-1)*960} y1="12" y2="148" className="motor-timeline-position"/>
+      </svg>
+      <div className="motor-timeline-ticks"><span>0 km</span><span>40</span><span>80</span><span>120</span><span>160 km</span></div>
+      <p>At {frame.km} km, the leading group is {seconds(frame.groups[0]?.gapSeconds??0)} ahead. The largest recorded gap is {seconds(timeline.peakGap)}. Gold marks indicate multiple road groups.</p>
+     </figure>
      <label className="motor-scrubber">Inspect recorded kilometre
       <input type="range" min="0" max={recording.frames.length-1} value={frameIndex}
-       onChange={event=>setFrameIndex(Number(event.target.value))}/>
+       onChange={event=>{setPlaying(false);setFrameIndex(Number(event.target.value));}}/>
      </label>
-     <div className="motor-step"><button type="button" disabled={!previous} onClick={()=>setFrameIndex(previous.index)}>← Previous moment</button>
-      <button type="button" disabled={!next} onClick={()=>setFrameIndex(next.index)}>Next moment →</button></div>
+     <div className="motor-step"><button type="button" disabled={!previous} onClick={()=>{setPlaying(false);setFrameIndex(previous.index);}}>← Previous moment</button>
+      <button type="button" onClick={()=>{if(playing)setPlaying(false);else{if(frameIndex===recording.frames.length-1)setFrameIndex(0);setPlaying(true);}}}>{playing?'Pause replay':'▶ Play replay'}</button>
+      <button type="button" disabled={!next} onClick={()=>{setPlaying(false);setFrameIndex(next.index);}}>Next moment →</button></div>
      <div className="motor-conditions"><span>{frame.terrain} · {frame.surface}{frame.exposed?' · exposed':''}</span>
       <span>{frame.weather.temperatureC}°C · wind {frame.weather.windKph} km/h · rain {frame.weather.rainMm} mm</span>
       <span>Amber mean energy {frame.amberEnergy?.toFixed(1)??'—'}</span></div>
@@ -134,7 +164,7 @@ export default function MotorLabPage(){
     <div className="motor-bottom">
      <section className="motor-panel"><div className="motor-section-heading"><span>03 / KEY MOMENTS</span><h2>How the race changed</h2></div>
       <ol className="motor-moments">{highlights.map(moment=><li key={moment.km}>
-       <button type="button" aria-current={frameIndex===moment.index?'step':undefined} onClick={()=>setFrameIndex(moment.index)}>
+       <button type="button" aria-current={frameIndex===moment.index?'step':undefined} onClick={()=>{setPlaying(false);setFrameIndex(moment.index);}}>
         <strong>{moment.km} km</strong><span>{moment.moments.join(' · ')}</span></button></li>)}</ol>
      </section>
      <section className="motor-panel"><div className="motor-section-heading"><span>04 / PROVISIONAL FINISH</span><h2>Who came home first?</h2></div>

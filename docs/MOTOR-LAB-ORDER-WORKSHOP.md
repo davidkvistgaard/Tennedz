@@ -7,3 +7,7 @@ The choices use the existing v2 `normalizeOrders` and `orderAt` path through the
 This increment has no Supabase migration, roster access, points, official race orders or persistent replay. The old production race flow is unchanged. A real order deadline, lineup, route-specific markers, stored replay and player-versus-player test race remain in the [master plan](MASTER-TODO-2026-09-30.md).
 
 Verification: 241 unit tests, ESLint, production build, and authenticated 390/1440 px Motor Lab browser journeys. Browser checks include malformed-order rejection, all three advanced controls, replay navigation, and a same-scenario comparison.
+
+## Recorded timeline increment
+
+The existing in-memory recording now has a playable kilometre timeline. A line shows the leading group's recorded advantage at each kilometre, while marks identify kilometres with multiple road groups. The manager can play, pause, scrub or jump to the previous and next key moment. Playback reads the completed recording; it does not rerun the simulation or change orders mid-race. The chart includes a text summary of the selected and largest gaps and was checked at 390 and 1440 px. It remains a laboratory viewer with a fictional route and riders, not a persistent or official race replay.
