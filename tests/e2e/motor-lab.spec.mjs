@@ -13,9 +13,15 @@ for(const width of [390,1440])test(`manager runs a recorded Motor Lab race at ${
  await page.getByRole('link',{name:'Motor Lab'}).click();
  await expect(page.getByRole('heading',{name:'Motor Lab'})).toBeVisible();
  expect((await context.request.post(endpoint,{headers:{Origin:'https://another.example'},data:{plan:'sprint',seed:1}})).status()).toBe(403);
+ expect((await context.request.post(endpoint,{headers:{Origin:'http://localhost:3100'},
+  data:{plan:'sprint',seed:1,orders:{breakWork:'freewheel'}}})).status()).toBe(400);
  await page.getByRole('radio',{name:/Send the captain ahead/}).check();
+ await page.getByLabel('React to a dangerous break').selectOption('chase_if_threatened');
+ await page.getByLabel('If Amber reaches a break').selectOption('sit_on');
+ await page.getByLabel('From the 120 km marker').selectOption('hard');
  await page.getByRole('button',{name:'Run the race'}).click();
  await expect(page.getByRole('heading',{name:'Coast Road laboratory'})).toBeVisible();
+ await expect(page.getByText(/Committed orders: chase a threatening break · sit on in a break · ride hard after 120 km/)).toBeVisible();
  await expect(page.getByText('1 / 160',{exact:true})).toBeVisible();
  const slider=page.getByRole('slider',{name:'Inspect recorded kilometre'});
  await slider.focus();await page.keyboard.press('End');
@@ -25,6 +31,8 @@ for(const width of [390,1440])test(`manager runs a recorded Motor Lab race at ${
  await page.getByRole('radio',{name:/Protect the sprinter/}).check();
  await page.getByRole('button',{name:'Run the race'}).click();
  await expect(page.getByText('Amber rode Protect the sprinter')).toBeVisible();
+ await expect(page.getByRole('heading',{name:'Same scenario, two decisions'})).toBeVisible();
+ await expect(page.getByRole('table').getByRole('row',{name:/Amber Captain/})).toBeVisible();
  await page.screenshot({path:`test-results/motor-lab-${width}.png`,fullPage:true});
  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
  expect(errors).toEqual([]);

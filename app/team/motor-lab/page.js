@@ -11,25 +11,31 @@ const PLANS=[
  {id:'conserve',title:'Save energy',description:'Take fewer risks early and keep strength for later.'},
 ];
 const seconds=value=>`${value.toFixed(1)} s`;
+const captainPlace=recording=>`#${recording.results.find(result=>result.name==='Amber Captain')?.position??'—'}`;
+const chaseKilometres=recording=>recording.frames.filter(frame=>frame.chasingTeams.includes('Amber')).length;
+const orderSummary=recording=>`${recording.orders.breakResponse==='chase_if_threatened'?'Threat chase':'Plan chase'} · ${recording.orders.breakWork.replace('_',' ')} · ${recording.orders.lateEffort==='follow_plan'?'Plan finish':recording.orders.lateEffort+' finish'}`;
 
 export default function MotorLabPage(){
  const [plan,setPlan]=useState('sprint');
+ const [orders,setOrders]=useState({breakResponse:'hold_plan',breakWork:'cooperate',lateEffort:'follow_plan'});
  const [seed,setSeed]=useState(1);
  const [recording,setRecording]=useState(null);
+ const [previousRecording,setPreviousRecording]=useState(null);
  const [frameIndex,setFrameIndex]=useState(0);
  const [busy,setBusy]=useState(false);
  const [error,setError]=useState('');
  const highlights=useMemo(()=>recording?.frames
   .map((frame,index)=>({...frame,index})).filter(frame=>frame.moments.length)??[],[recording]);
  const frame=recording?.frames[frameIndex];
+ const comparison=previousRecording?.seed===recording?.seed?previousRecording:null;
  const amberCaptain=recording?.results.find(result=>result.name==='Amber Captain');
  async function run(nextSeed=seed){
   if(busy)return;
   setBusy(true);setError('');
   try{
    const response=await api('/api/motor-lab',{method:'POST',headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({plan,seed:nextSeed})});
-   setRecording(response.recording);setFrameIndex(0);setSeed(nextSeed);
+    body:JSON.stringify({plan,seed:nextSeed,orders})});
+   setPreviousRecording(recording);setRecording(response.recording);setFrameIndex(0);setSeed(nextSeed);
   }catch(cause){setError(cause.message||'The preview could not run. Please try again.');}
   finally{setBusy(false);}
  }
@@ -53,6 +59,33 @@ export default function MotorLabPage(){
       <span><strong>{option.title}</strong><small>{option.description}</small></span>
      </label>)}
     </div>
+    <fieldset className="motor-advanced" disabled={busy}>
+     <legend>Advanced orders</legend>
+     <p>These choices are committed before the race. They cannot be changed during playback.</p>
+     <div className="motor-order-grid">
+      <label>React to a dangerous break
+       <select value={orders.breakResponse} onChange={event=>setOrders({...orders,breakResponse:event.target.value})}>
+        <option value="hold_plan">Keep the plan</option>
+        <option value="chase_if_threatened">Ask the road captain to organise a chase</option>
+       </select>
+      </label>
+      <label>If Amber reaches a break
+       <select value={orders.breakWork} onChange={event=>setOrders({...orders,breakWork:event.target.value})}>
+        <option value="cooperate">Share the work</option>
+        <option value="sit_on">Sit on the wheels</option>
+        <option value="drive">Drive the break</option>
+       </select>
+      </label>
+      <label>From the 120 km marker
+       <select value={orders.lateEffort} onChange={event=>setOrders({...orders,lateEffort:event.target.value})}>
+        <option value="follow_plan">Keep the plan's effort</option>
+        <option value="conserve">Conserve</option>
+        <option value="steady">Ride steadily</option>
+        <option value="hard">Ride hard</option>
+       </select>
+      </label>
+     </div>
+    </fieldset>
     <div className="motor-run-row"><label>Scenario number
      <input type="number" min="0" max="9999" step="1" value={seed}
       onChange={event=>setSeed(event.target.value===''?'':Number(event.target.value))} disabled={busy}/>
@@ -66,6 +99,15 @@ export default function MotorLabPage(){
     <section className="motor-panel" aria-labelledby="motor-record-title">
      <div className="motor-section-heading"><span>02 / RECORDED RACE</span><h2 id="motor-record-title">{recording.scenarioName}</h2></div>
      <p>Amber rode <strong>{recording.planLabel}</strong> in scenario {recording.seed}. Birch protected its sprinter, Cedar attacked and Dune raced balanced. The entire result was calculated before this replay opened.</p>
+     <p className="motor-committed">Committed orders: {recording.orders.breakResponse==='chase_if_threatened'?'chase a threatening break':'keep the original chase plan'} · {recording.orders.breakWork.replace('_',' ')} in a break · {recording.orders.lateEffort==='follow_plan'?'keep the original effort':'ride '+recording.orders.lateEffort} after 120 km.</p>
+     {comparison&&<div className="motor-compare" aria-label="Compare two runs of the same scenario">
+      <h3>Same scenario, two decisions</h3>
+      <table><thead><tr><th scope="col">Outcome</th><th scope="col">Previous: {comparison.planLabel}<small>{orderSummary(comparison)}</small></th><th scope="col">Current: {recording.planLabel}<small>{orderSummary(recording)}</small></th></tr></thead>
+       <tbody><tr><th scope="row">Amber Captain</th><td>{captainPlace(comparison)}</td><td>{captainPlace(recording)}</td></tr>
+        <tr><th scope="row">Amber chase kilometres</th><td>{chaseKilometres(comparison)}</td><td>{chaseKilometres(recording)}</td></tr>
+        <tr><th scope="row">Winner</th><td>{comparison.results[0].name}</td><td>{recording.results[0].name}</td></tr></tbody></table>
+      <p>Both runs used scenario {recording.seed}. This comparison is a test signal, not proof that the race balance is final.</p>
+     </div>}
      <div className="motor-scoreboard"><div><small>KILOMETRE</small><strong>{frame.km} / {recording.distanceKm}</strong></div>
       <div><small>GROUPS AHEAD</small><strong>{frame.groups.length}</strong></div>
       <div><small>AMBER CAPTAIN</small><strong>#{amberCaptain?.position??'—'}</strong></div></div>
