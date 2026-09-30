@@ -7,9 +7,11 @@ import {simulateTacticalTour} from '../../lib/engine/v2/tour.mjs';
 import {SPORTING_SKILLS,sportingSkills,riderKilometreEffect} from '../../lib/engine/v2/physiology.mjs';
 import {runKilometreLab} from '../../lib/engine/v2/lab.mjs';
 import {updateRiderGroups} from '../../lib/engine/v2/groups.mjs';
-import {provisionalFinish,provisionalRoadGroupFinish} from '../../lib/engine/v2/finish.mjs';
+import {provisionalFinish,provisionalRoadGroupFinish,
+  resolveRearRoadGroupFinishingSprint} from '../../lib/engine/v2/finish.mjs';
 import {selectShelter} from '../../lib/engine/v2/support.mjs';
 import {selectCaptainSupport,applyCaptainSupport} from '../../lib/engine/v2/captain-support.mjs';
+import {validateRoadGroupTransition} from '../../lib/engine/v2/road-groups.mjs';
 import {validateRecordedTour,readRecordedKilometre} from '../../lib/engine/v2/recording.mjs';
 import {recoveryForKilometre} from '../../lib/engine/v2/recovery.mjs';
 import {flatScenario} from '../../lib/race-lab/scenario.mjs';
@@ -691,7 +693,7 @@ test('the full tactical trace is deterministic, bounded and makes aggressive ord
   const a=simulateTacticalTour(input);
   assert.deepEqual(a,simulateTacticalTour(input));
   assert.equal(a.frames.length,40);
-  assert.equal(a.tuningVersion,'v2-prototype-39');
+  assert.equal(a.tuningVersion,'v2-prototype-40');
   assert.equal(a.frames.at(-1).km,40);
   assert.ok(a.frames.some(frame=>frame.attackers.length>0));
   assert.ok(a.frames.some(frame=>frame.chasers.length>0));
@@ -1043,6 +1045,53 @@ test('two surviving breaks finish in road order with their separate recorded gap
   assert.throws(()=>provisionalRoadGroupFinish({route,teams,states,
     roadGroups:[{...roadGroups[0],riderIds:['foreign']},roadGroups[1]],seed:'two-break-finish'}),
   /outside the finish roster/);
+});
+
+test('the bunch may catch the rear break at the line while the front break survives',()=>{
+  const teams=[tacticalTeam('a','balanced'),tacticalTeam('b','balanced')];
+  teams[0].riders[1].sprint=0;
+  teams[1].riders.forEach(rider=>{rider.sprint=100;rider.acceleration=90;});
+  const route=buildKilometreRoute(stage,{seed:'rear-break-finish'});
+  const roadGroups=[
+    {id:'road-2',riderIds:['a-0'],teamIds:['a'],gapSeconds:24},
+    {id:'road-1',riderIds:['a-1'],teamIds:['a'],gapSeconds:.1},
+  ];
+  const states=teams.flatMap(team=>team.riders.map(rider=>({id:rider.id,energy:80,
+    deficitSeconds:0,group:roadGroups.some(group=>group.riderIds.includes(rider.id))?
+      'breakaway':'peloton'})));
+  const finish=resolveRearRoadGroupFinishingSprint({route,teams,states,roadGroups,
+    seed:'rear-break-finish'});
+  assert.deepEqual(finish.caughtRiderIds,['a-1']);
+  assert.deepEqual(finish.roadGroups,[roadGroups[0]]);
+  assert.equal(validateRoadGroupTransition(roadGroups,finish.roadGroups,
+    {caughtRiderIds:finish.caughtRiderIds}),true);
+  assert.equal(finish.results[0].riderId,'a-0');
+  assert.equal(finish.results.find(result=>result.riderId==='a-1').group,'peloton');
+  assert.ok(finish.results.find(result=>result.riderId==='a-1').position>1);
+});
+
+test('a late chase group is caught at the line while the first break remains replayable',()=>{
+  const front=tacticalTeam('a','balanced',{baseline:{attack:'selective',chase:'ignore'},
+    phases:[{atKm:10,attack:'none'}]});
+  Object.assign(front.riders[0],{flat:95,strength:95,endurance:95,timetrial:95,sprint:75});
+  const rear=tacticalTeam('b','balanced',{baseline:{attack:'none',chase:'ignore'},
+    phases:[{atKm:30,attack:'selective',attackRiderId:'b-0'}]});
+  Object.assign(rear.riders[0],{flat:34,strength:10,endurance:95,sprint:0,acceleration:10});
+  const bunch=tacticalTeam('c','protect',{baseline:{attack:'none',chase:'ignore'}});
+  bunch.riders.forEach(rider=>{rider.sprint=100;rider.acceleration=100;rider.flat=100;});
+  const flat={distance_km:40,profile_points:[[0,100],[40,100]],
+    keypoints:[{km:10,kind:'SPRINT'},{km:40,kind:'SPRINT'}]};
+  const race=simulateTacticalTour({stage:flat,teams:[front,rear,bunch],seed:'rear-probe-0'});
+  const final=race.frames.at(-1);
+  assert.equal(final.finishLineCatch,true);
+  assert.ok(final.caughtBreakawayRiderIds.includes('b-0'));
+  assert.ok(final.roadGroups[0].riderIds.includes('a-0'));
+  assert.ok(final.roadGroups.every(group=>!group.riderIds.includes('b-0')));
+  assert.equal(race.provisionalResults.find(result=>result.riderId==='b-0').group,'peloton');
+  assert.equal(validateRecordedTour(race),true);
+  const tampered=structuredClone(race);
+  tampered.frames.at(-1).formedChaseGroupId='road-99';
+  assert.throws(()=>validateRecordedTour(tampered),/identity/);
 });
 
 test('a finishing sprint records a last-metre catch before the result is shown',()=>{
