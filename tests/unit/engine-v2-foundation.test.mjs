@@ -1061,7 +1061,7 @@ test('the full tactical trace is deterministic, bounded and makes aggressive ord
   const a=simulateTacticalTour(input);
   assert.deepEqual(a,simulateTacticalTour(input));
   assert.equal(a.frames.length,40);
-  assert.equal(a.tuningVersion,'v2-prototype-71');
+  assert.equal(a.tuningVersion,'v2-prototype-73');
   assert.equal(a.frames.at(-1).km,40);
   assert.ok(a.frames.some(frame=>frame.attackers.length>0));
   assert.ok(a.frames.some(frame=>frame.chasers.length>0));
@@ -1406,6 +1406,22 @@ test('the final sprint cannot reverse uncaught and dropped group order',()=>{
   assert.equal(results[0].riderId,'a-0');
   assert.ok(peloton[0].timeSeconds-ahead.at(-1).timeSeconds>=.09);
   assert.ok(dropped[0].position>peloton.at(-1).position);
+});
+
+test('precommitted final effort changes the sprint burst at equal remaining energy',()=>{
+  const route=buildKilometreRoute(stage,{seed:'finish-effort'});
+  const results=effort=>{
+    const team=tacticalTeam('a','balanced',{baseline:{effort}});
+    const states=team.riders.map(rider=>({id:rider.id,energy:80,
+      deficitSeconds:0,group:'peloton'}));
+    return provisionalFinish({route,teams:[team],states,seed:'finish-effort'})
+      .find(result=>result.riderId==='a-0');
+  };
+  const conserved=results('conserve'),steady=results('steady'),hard=results('hard');
+  assert.ok(hard.finaleAbility>steady.finaleAbility&&
+    steady.finaleAbility>conserved.finaleAbility);
+  assert.ok(hard.timeSeconds<steady.timeSeconds&&
+    steady.timeSeconds<conserved.timeSeconds);
 });
 
 test('two surviving breaks finish in road order with their separate recorded gaps',()=>{
