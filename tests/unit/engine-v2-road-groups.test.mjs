@@ -60,6 +60,24 @@ test('a pursuing rider can bridge into the group directly ahead',()=>{
     advancedToGroupId:'road-2'}),/ahead/);
 });
 
+test('separate road groups can each produce a recorded attack in one kilometre',()=>{
+  const previous=[
+    {id:'road-1',riderIds:['a-0','a-1'],teamIds:['a'],gapSeconds:40},
+    {id:'road-2',riderIds:['b-0','b-1'],teamIds:['b'],gapSeconds:20},
+  ];
+  const teamByRiderId={'a-0':'a','a-1':'a','b-0':'b','b-1':'b'};
+  const fromRear=splitRoadGroup(previous,{riderId:'b-0',teamByRiderId,
+    newGroupId:'road-3',attackSeconds:4});
+  const current=splitRoadGroup(fromRear,{riderId:'a-0',teamByRiderId,
+    newGroupId:'road-4',attackSeconds:5});
+  assert.equal(validateRoadGroupTransition(previous,current,{breakMoves:[
+    {status:'split',riderId:'b-0'},{status:'split',riderId:'a-0'},
+  ]}),true);
+  assert.throws(()=>validateRoadGroupTransition(previous,current,{breakMoves:[
+    {status:'split',riderId:'b-0'},
+  ]}),/split/);
+});
+
 test('a teammate behind a rider up the road sits on while rivals can still pull',()=>{
   const groups=[
     {id:'road-1',riderIds:['a-0'],teamIds:['a'],gapSeconds:25},

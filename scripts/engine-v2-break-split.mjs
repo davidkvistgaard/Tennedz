@@ -24,18 +24,20 @@ for(let sample=0;sample<samples;sample++){
   const plannedScenario=structuredClone(scenario);
   plannedScenario.teams[0].breakAttackAtKm=attackAtKm;
   const planned=runKilometreLab({scenario:plannedScenario,seed});
-  const firstAttempt=planned.frames.find(frame=>frame.splitAttack?.riderId===attackerId);
-  summary.plannedAttacks+=Number(Boolean(firstAttempt));
-  const outcome=firstAttempt?.splitAttack.status??'no_attempt';
+  const firstAttempt=planned.frames.find(frame=>frame.splitAttacks.some(attack=>
+    attack.riderId===attackerId));
+  const attack=firstAttempt?.splitAttacks.find(event=>event.riderId===attackerId);
+  summary.plannedAttacks+=Number(Boolean(attack));
+  const outcome=attack?.status??'no_attempt';
   summary.outcomeCounts[outcome]=(summary.outcomeCounts[outcome]??0)+1;
-  summary.splits+=Number(firstAttempt?.splitAttack.status==='split');
-  summary.contained+=Number(firstAttempt?.splitAttack.status==='contained');
-  summary.otherOutcomes+=Number(Boolean(firstAttempt)&&
-    !['split','contained'].includes(firstAttempt.splitAttack.status));
+  summary.splits+=Number(attack?.status==='split');
+  summary.contained+=Number(attack?.status==='contained');
+  summary.otherOutcomes+=Number(Boolean(attack)&&
+    !['split','contained'].includes(attack.status));
   summary.mergeEvents+=planned.frames.reduce((total,frame)=>total+frame.mergedRoadGroupIds.length,0);
   summary.splitGroupKilometres+=planned.frames.filter(frame=>frame.roadGroups.length===2).length;
   summary.splitSurvivalsToFinish+=Number(planned.frames.at(-1).roadGroups.length===2);
-  if(firstAttempt?.splitAttack.status==='split'){
+  if(attack?.status==='split'){
     const caughtSoon=planned.frames.slice(firstAttempt.km-1,firstAttempt.km+5)
       .some(frame=>frame.caughtBreakawayRiderIds.includes(attackerId));
     summary.attackerCaughtWithinFiveKm+=Number(caughtSoon);

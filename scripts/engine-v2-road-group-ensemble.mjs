@@ -70,11 +70,13 @@ for(const gender of ['M','F']){
         team.teamId==='g').mean;
       for(const [index,frame] of race.frames.entries()){
         const previous=race.frames[index-1];
-        const wasChasing=previous?.roadGroups.findIndex(group=>
-          group.riderIds.includes(frame.splitAttack?.riderId))>0;
-        totals.chaseSplits+=Number(wasChasing&&frame.splitAttack?.status==='split');
-        totals.chaseBridges+=Number(wasChasing&&
-          frame.splitAttack?.status==='joined_group_ahead');
+        for(const attack of frame.splitAttacks){
+          const wasChasing=previous?.roadGroups.findIndex(group=>
+            group.riderIds.includes(attack.riderId))>0;
+          totals.chaseSplits+=Number(wasChasing&&attack.status==='split');
+          totals.chaseBridges+=Number(wasChasing&&
+            attack.status==='joined_group_ahead');
+        }
         totals.blockedByCap+=frame.blockedBreakAttacks.filter(event=>
           event.reason==='road_group_limit').length;
         totals.catches+=frame.caughtBreakawayRiderIds.length;

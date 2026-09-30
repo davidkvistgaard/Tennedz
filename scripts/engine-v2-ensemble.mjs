@@ -96,11 +96,13 @@ for(const [course,stage] of Object.entries(ROUTES)){
         totals.maxGroups+=Math.max(...race.frames.map(frame=>frame.roadGroups.length));
         totals.multiGroupFinishes+=Number(race.frames.at(-1).roadGroups.length>1);
         for(const [index,frame] of race.frames.entries()){
-          if(frame.splitAttack?.status==='joined_group_ahead')totals.bridgesToGroupAhead++;
-          if(['split','joined_group_ahead'].includes(frame.splitAttack?.status)&&
-            race.frames[index-1]?.roadGroups.findIndex(group=>
-              group.riderIds.includes(frame.splitAttack.riderId))>0)
-            totals.chaseGroupAttackMoves++;
+          for(const attack of frame.splitAttacks){
+            if(attack.status==='joined_group_ahead')totals.bridgesToGroupAhead++;
+            if(['split','joined_group_ahead'].includes(attack.status)&&
+              race.frames[index-1]?.roadGroups.findIndex(group=>
+                group.riderIds.includes(attack.riderId))>0)
+              totals.chaseGroupAttackMoves++;
+          }
           totals.roadGroupLimitBlocks+=frame.blockedBreakAttacks.filter(event=>
             event.reason==='road_group_limit').length;
         }
