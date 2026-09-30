@@ -129,3 +129,21 @@ test('a stage handoff requires classified results before carrying its condition'
     classifiedTimes:classifiedTimes(recording),restDays:-1}),/Rest days/);
   assert.deepEqual(recording,before);
 });
+
+test('stage accounting rejects impossible energy hidden in a recorded kilometre',()=>{
+  const tired=structuredClone(teams);
+  tired[0].riders[0].fatigue=50;
+  const recording=simulateTacticalTour({stage,teams:tired,seed:'energy-integrity'});
+  assert.equal(validateRecordedTour(recording),true);
+  const overCapacity=structuredClone(recording);
+  overCapacity.frames[0].riderGroups.find(rider=>rider.id==='a0').energy=80.1;
+  assert.throws(()=>createStageHandoff({recording:overCapacity,stageId:'first',
+    classifiedTimes:classifiedTimes(recording)}),/recorded rider state/);
+  const impossibleRecovery=structuredClone(recording);
+  const first=impossibleRecovery.frames[0].riderGroups.find(rider=>rider.id==='a0');
+  impossibleRecovery.frames[1].riderGroups.find(rider=>rider.id==='a0').energy=
+    +(first.energy+1).toFixed(3);
+  impossibleRecovery.frames[1].recoveredRiderIds.push('a0');
+  assert.throws(()=>carryStageFatigue({recording:impossibleRecovery}),
+    /recorded rider state/);
+});
