@@ -107,6 +107,16 @@ test('chase contribution changes Amber work without changing the seeded route',(
  assert.deepEqual(held,createMotorLabPreview({...common,orders:held.orders}));
 });
 
+test('recording distinguishes a deliberate wait from teams represented up the road',()=>{
+ const recording=createMotorLabPreview({plan:'sprint',seed:1});
+ const frame=recording.frames[21];
+ assert.equal(frame.km,22);
+ assert.deepEqual(frame.chasingTeams,[]);
+ assert.deepEqual(frame.waitingTeams,['Amber','Birch']);
+ assert.deepEqual(frame.teamsUpRoad,['Cedar','Dune']);
+ assert(recording.frames.every(item=>item.groups.length||!item.waitingTeams.length));
+});
+
 test('a committed break attack can split a group or be visibly blocked',()=>{
  const split=createMotorLabPreview({plan:'break',seed:1,orders:{breakAttackMarker:'40'}});
  assert.equal(split.frames[40].groups.length,2);

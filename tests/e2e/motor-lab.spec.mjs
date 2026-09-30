@@ -6,7 +6,9 @@ for(const width of [390,1440])test(`manager runs a recorded Motor Lab race at ${
  const endpoint='http://localhost:3100/api/motor-lab';
  expect((await context.request.post(endpoint,{headers:{Origin:'http://localhost:3100'},data:{plan:'sprint',seed:1}})).status()).toBe(401);
  await page.goto('/login');
- await page.getByLabel('Email or username').fill('alice');
+ // Use separate fixture managers so both viewport journeys respect the
+ // read-only preview endpoint's per-user run limit.
+ await page.getByLabel('Email or username').fill(width===390?'alice':'bob');
  await page.getByLabel('Password',{exact:true}).fill('fixture-password');
  await page.getByRole('button',{name:'Sign in',exact:true}).click();
  await expect(page).toHaveURL(/\/team$/);
@@ -78,8 +80,16 @@ for(const width of [390,1440])test(`manager runs a recorded Motor Lab race at ${
  await page.getByRole('button',{name:'Run the race'}).click();
  await page.getByLabel('Help a dropped captain').selectOption('drop_back_if_dropped');
  await page.getByRole('button',{name:'Run the race'}).click();
+ await expect(page.getByText(/Committed orders:.*send a reachable helper back to a dropped captain/)).toBeVisible();
  await expect(page.getByRole('row',{name:/Amber Captain behind the peloton/}).getByRole('cell').last()).toHaveText('2 km');
  await expect(page.getByText(/helped Amber Captain recover/).first()).toBeVisible();
+ await page.getByLabel('Laboratory route').selectOption('coast');
+ await page.getByRole('button',{name:'Run the race'}).click();
+ const waitingSlider=page.getByRole('slider',{name:'Inspect recorded kilometre'});
+ await waitingSlider.fill('21');
+ await expect(page.getByText('22 / 160',{exact:true})).toBeVisible();
+ await expect(page.getByText('Waiting while the gap remains manageable: Amber, Birch')).toBeVisible();
+ await expect(page.getByText('Teams with riders ahead: Cedar, Dune')).toBeVisible();
  await page.screenshot({path:`test-results/motor-lab-${width}.png`,fullPage:true});
  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
  expect(errors).toEqual([]);

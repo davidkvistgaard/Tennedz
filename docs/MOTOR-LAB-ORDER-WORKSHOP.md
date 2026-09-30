@@ -39,3 +39,9 @@ The paired comparison now includes kilometres with Amber Captain in a break and 
 The fixed Ridge Road sprint exercise gives Amber a sprinter captain with a weaker climbing profile than the team's helpers. Other plans retain their original rider profiles. A precommitted support order can send a reachable helper back when that captain loses the peloton. The existing v2 support mechanism checks distance and energy; the replay names the helper and records the seconds recovered. The comparison includes kilometres that Amber Captain spent behind the peloton. In seeded ridge scenario 1 with the sprint plan, support changes that count from seven to two kilometres, while the captain finishes fifth in both runs. This is useful evidence of an order's road effect without suggesting every tactical action changes the final placing. Coast Road's rider fixture remains unchanged.
 
 Verification for this increment: 247 unit tests, repository ESLint, production build and authenticated browser journeys at 390 and 1440 px. The preview still uses fictional riders and routes and has no live roster or official results.
+
+## Why the peloton is waiting
+
+The peloton card now distinguishes teams actively chasing, teams deliberately waiting while a small gap remains manageable, and teams represented in a road group ahead. These are recorded kilometre states from the same simulation, not hindsight inferred from the finish. This makes the common situation where a break remains useful and the bunch declines to close it visible in the replay. A waiting label disappears when the break has been caught.
+
+Verification: 248 unit tests, repository ESLint, production build, and authenticated 390/1440 px browser journeys. Each viewport uses a separate fixture manager so the browser check stays within the preview API's per-user run limit.
