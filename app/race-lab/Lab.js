@@ -6,6 +6,7 @@ import { simulateLab } from "../../lib/race-lab/simulate.mjs";
 import { batchInput, trial, summarize } from "../../lib/race-lab/batch.mjs";
 import { runKilometreLab } from "../../lib/engine/v2/lab.mjs";
 import { readRecordedKilometre } from "../../lib/engine/v2/recording.mjs";
+import { orderAt } from "../../lib/engine/v2/orders.mjs";
 const pct = (n) => `${(100 * n).toFixed(1)}%`;
 function download(name, data) {
   const url = URL.createObjectURL(
@@ -26,6 +27,9 @@ export default function Lab() {
     [breakFinale, setBreakFinale] = useState("hold_group"),
     [helperAttackPolicy, setHelperAttackPolicy] = useState("open"),
     [breakAttackAtKm, setBreakAttackAtKm] = useState(0),
+    [phaseAtKm, setPhaseAtKm] = useState(0),
+    [phaseEffort, setPhaseEffort] = useState(""),
+    [phaseChase, setPhaseChase] = useState(""),
     [config, setConfig] = useState(DEFAULT_CONFIG),
     [count, setCount] = useState(100);
   const [race, setRace] = useState(null),
@@ -70,6 +74,9 @@ export default function Lab() {
       scenario.teams[0].breakFinale=breakFinale;
       scenario.teams[0].helperAttackPolicy=helperAttackPolicy;
       scenario.teams[0].breakAttackAtKm=breakAttackAtKm;
+      scenario.teams[0].phaseAtKm=phaseAtKm;
+      scenario.teams[0].phaseEffort=phaseEffort;
+      scenario.teams[0].phaseChase=phaseChase;
       const result=runKilometreLab({scenario,seed:`${seed}:v2`});
       setKilometreRace(result);
       setKilometreKm(0);
@@ -106,6 +113,9 @@ export default function Lab() {
   }
   const current = race?.frames[frame];
   const currentKm=kilometreRace?readRecordedKilometre(kilometreRace,kilometreKm):null;
+  const amberCommitted=kilometreRace?.committedInputs.teams.find(team=>team.id==='team-0');
+  const amberCurrentOrder=currentKm&&amberCommitted?
+    orderAt(amberCommitted.orders,currentKm.km-1):null;
   const kmMaxGap=kilometreRace?Math.max(1,...kilometreRace.frames.map(f=>f.gapSeconds)):1;
   const kmGapPoints=kilometreRace?.frames.map(f=>`${10+780*f.km/kilometreRace.route.distanceKm},${135-120*f.gapSeconds/kmMaxGap}`).join(' ');
   return (
@@ -219,6 +229,39 @@ export default function Lab() {
               <option value={40}>After kilometre 40</option>
               <option value={80}>After kilometre 80</option>
               <option value={120}>After kilometre 120</option>
+            </select>
+          </label>
+          <label>
+            Amber's order-change marker · kilometre prototype only
+            <select aria-label="Amber's order-change marker" value={phaseAtKm}
+              onChange={e=>setPhaseAtKm(Number(e.target.value))}>
+              <option value={0}>No scheduled change</option>
+              <option value={40}>After kilometre 40</option>
+              <option value={55}>After exposed-coast keypoint (55 km)</option>
+              <option value={80}>After kilometre 80</option>
+              <option value={120}>After kilometre 120</option>
+            </select>
+          </label>
+          <label>
+            Amber's later effort · kilometre prototype only
+            <select aria-label="Amber's later effort" value={phaseEffort}
+              disabled={phaseAtKm===0}
+              onChange={e=>setPhaseEffort(e.target.value)}>
+              <option value="">Keep the original effort</option>
+              <option value="conserve">Conserve energy</option>
+              <option value="steady">Steady effort</option>
+              <option value="hard">Hard effort</option>
+            </select>
+          </label>
+          <label>
+            Amber's later chase · kilometre prototype only
+            <select aria-label="Amber's later chase" value={phaseChase}
+              disabled={phaseAtKm===0}
+              onChange={e=>setPhaseChase(e.target.value)}>
+              <option value="">Keep the original chase order</option>
+              <option value="ignore">Ignore the break</option>
+              <option value="selective">Chase selectively</option>
+              <option value="all">Commit every available helper</option>
             </select>
           </label>
           {[
@@ -465,6 +508,7 @@ export default function Lab() {
             <line x1={10+780*currentKm.km/kilometreRace.route.distanceKm} x2={10+780*currentKm.km/kilometreRace.route.distanceKm} y1="10" y2="135" stroke="#214f3c" />
           </svg>
           <label>Recorded kilometre<input aria-label="Recorded kilometre" type="range" min="0" max={kilometreRace.frames.length-1} value={kilometreKm} onChange={e=>setKilometreKm(Number(e.target.value))}/></label>
+          {amberCurrentOrder&&<p className="small">Scheduled Amber orders: {amberCurrentOrder.effort} effort · {amberCurrentOrder.chase} chase · {amberCurrentOrder.attack} attacks. Changes take effect after their marker.</p>}
           <div className="lab-scroll"><table><caption>Team state after this kilometre</caption><thead><tr><th>Team</th><th>Mean energy</th><th>Mean riding ability</th><th>Active leader</th></tr></thead><tbody>{currentKm.teamEnergy.map(team=>{
             const name=kilometreRace.scenario.teams.find(t=>t.id===team.teamId)?.name??team.teamId;
             const leaderId=currentKm.activeLeaders.find(l=>l.teamId===team.teamId)?.riderId;

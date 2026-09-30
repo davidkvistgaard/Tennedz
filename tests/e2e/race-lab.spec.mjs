@@ -129,3 +129,21 @@ test('Race Lab accepts a precommitted fallback for a fading rider ahead',async (
   await expect(page.getByRole('heading',{name:/Kilometre engine/})).toBeVisible();
   await expect(fallback).toHaveValue('chase_if_fading');
 });
+
+test('Race Lab previews a scheduled order change after its marker',async ({page})=>{
+  await page.goto('/race-lab');
+  await page.getByLabel('Amber’s plan',{exact:true}).selectOption('conserve');
+  await page.getByLabel("Amber's order-change marker").selectOption('40');
+  await page.getByLabel("Amber's later effort").selectOption('hard');
+  await page.getByLabel("Amber's later chase").selectOption('all');
+  await page.getByRole('button',{name:'Run kilometre prototype'}).click();
+  const slider=page.getByRole('slider',{name:'Recorded kilometre'});
+  await slider.focus();
+  await page.keyboard.press('Home');
+  for(let kilometre=1;kilometre<40;kilometre++)await page.keyboard.press('ArrowRight');
+  await expect(page.getByText('40 / 160 km',{exact:true})).toBeVisible();
+  await expect(page.getByText(/Scheduled Amber orders: conserve effort · ignore chase/)).toBeVisible();
+  await page.keyboard.press('ArrowRight');
+  await expect(page.getByText('41 / 160 km',{exact:true})).toBeVisible();
+  await expect(page.getByText(/Scheduled Amber orders: hard effort · all chase/)).toBeVisible();
+});

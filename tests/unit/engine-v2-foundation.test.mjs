@@ -2046,3 +2046,21 @@ test('a precommitted phase change affects only kilometres after its marker',()=>
   assert.deepEqual(altered.frames.at(-1).teamEnergy.find(t=>t.teamId==='birch'),
     baseline.frames.at(-1).teamEnergy.find(t=>t.teamId==='birch'));
 });
+
+test('Race Lab combines a scheduled order change and break attack at one marker',()=>{
+  const scenario=flatScenario('conserve');
+  const baseline=runKilometreLab({scenario,seed:'lab-phase'});
+  scenario.teams[0].phaseAtKm=40;
+  scenario.teams[0].phaseEffort='hard';
+  scenario.teams[0].phaseChase='all';
+  scenario.teams[0].breakAttackAtKm=40;
+  const altered=runKilometreLab({scenario,seed:'lab-phase'});
+  const amber=altered.committedInputs.teams.find(team=>team.id==='team-0');
+  assert.equal(amber.orders.phases.length,1);
+  assert.equal(amber.orders.phases[0].breakAttackRiderId,amber.orders.captainId);
+  assert.equal(orderAt(amber.orders,39).effort,'conserve');
+  assert.equal(orderAt(amber.orders,40).effort,'hard');
+  assert.equal(orderAt(amber.orders,40).chase,'all');
+  assert.deepEqual(altered.frames.slice(0,40),baseline.frames.slice(0,40));
+  assert.equal(validateRecordedTour(altered),true);
+});
