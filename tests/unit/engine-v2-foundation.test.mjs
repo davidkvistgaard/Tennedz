@@ -12,7 +12,8 @@ import {provisionalFinish,provisionalRoadGroupFinish,
 import {selectShelter} from '../../lib/engine/v2/support.mjs';
 import {selectCaptainSupport,applyCaptainSupport} from '../../lib/engine/v2/captain-support.mjs';
 import {MAX_ROAD_GROUPS,advanceRoadGroups,assertRoadGroups,relativeRoadGroupPace,
-  validateRoadGroupTransition,roadGroupExposureCosts,selectRoadGroupPulls} from '../../lib/engine/v2/road-groups.mjs';
+  validateRoadGroupTransition,roadGroupExposureCosts,selectRoadGroupPulls,
+  selectRoadGroupWork} from '../../lib/engine/v2/road-groups.mjs';
 import {automaticBreakAttackRider} from '../../lib/engine/v2/break-attack.mjs';
 import {validateRecordedTour,readRecordedKilometre} from '../../lib/engine/v2/recording.mjs';
 import {recoveryForKilometre} from '../../lib/engine/v2/recovery.mjs';
@@ -771,6 +772,9 @@ test('a cooperative group reduces work when a rival persistently sits on',()=>{
   const group={id:'road-1',riderIds:['a-0','b-0','c-0'],
     teamIds:['a','b','c'],gapSeconds:15};
   assert.deepEqual(selectRoadGroupPulls([group],[cooperator,sitter,driver],1),['c-0']);
+  assert.deepEqual(selectRoadGroupWork([group],[cooperator,sitter,driver],1),{
+    pullRiderIds:['c-0'],reciprocalHoldRiderIds:['a-0'],
+  });
   assert.deepEqual(selectRoadGroupPulls([group],[cooperator,sitter,driver],4),
     ['a-0','c-0']);
   assert.deepEqual(selectRoadGroupPulls([{...group,gapSeconds:4}],
@@ -778,6 +782,15 @@ test('a cooperative group reduces work when a rival persistently sits on',()=>{
   const allWilling=tacticalTeam('b','balanced',{baseline:{breakWork:'cooperate'}});
   assert.deepEqual(selectRoadGroupPulls([group],[cooperator,allWilling,driver],1),
     ['a-0','b-0','c-0']);
+  const scenario=flatScenario('break');
+  scenario.teams[0].breakWork='sit_on';
+  const race=runKilometreLab({scenario,seed:'reciprocal-break-work'});
+  const withheld=race.frames.find(frame=>frame.reciprocalHoldRiderIds.length>0);
+  assert.ok(withheld);
+  assert.equal(validateRecordedTour(race),true);
+  const hidden=structuredClone(race);
+  hidden.frames[withheld.km-1].reciprocalHoldRiderIds=[];
+  assert.throws(()=>validateRecordedTour(hidden),/reciprocal break work/);
 });
 
 test('taking pulls grows the break gap but costs energy compared with sitting on',()=>{

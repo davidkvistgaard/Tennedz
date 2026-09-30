@@ -128,6 +128,8 @@ Version `v2-prototype-69` adds an optional `drive` break-work order alongside sh
 
 Version `v2-prototype-70` lets a cooperative rider reduce their turns when a rival in the same road group intentionally sits on. The cooperative rider still pulls periodically and resumes full work if their group is close to being caught. An explicit `drive` order keeps working. This deterministic response makes the rival's choice consequential without giving the rider knowledge of future race results.
 
+The recording marks `reciprocalHoldRiderIds` separately from ordinary non-workers. Replay validation reconstructs this event from the locked orders and preceding groups, and Race Lab explains the withheld turns in the group detail.
+
 The kilometre recording distinguishes `driveRiderIds` from ordinary pullers. Replay validation derives the driving roster from the precommitted orders and the previous road groups, so a viewer cannot silently present a rider as driving or conceal that effort. Race Lab labels driving riders in the group detail.
 
 Version `v2-prototype-45` gives managers a precommitted helper-attack policy: `open` (the existing default), `hold_for_captain`, or `release_if_dropped`. The last choice reserves unnamed helpers until the active leader is recorded as dropped, then allows them to seek their own result. A manager's explicitly named attacker takes precedence. The rule also applies to automatic finale attacks from a break, and a helper released into a normal attack is identified in the recorded kilometre. This is a first rider-autonomy rule; it does not yet model a graded captain winning chance or delayed road-captain recognition.

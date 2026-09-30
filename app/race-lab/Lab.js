@@ -541,7 +541,8 @@ export default function Lab() {
                 const energy=currentKm.riderGroups.find(state=>state.id===id)?.energy;
                 return <li key={id}>{rider?.name??id} · {currentKm.driveRiderIds.includes(id)?
                   'Driving this km':currentKm.pullRiderIds.includes(id)?
-                    'Pulling this km':'Not pulling this km'} · {energy?.toFixed(1)??'?'} energy</li>;
+                    'Pulling this km':currentKm.reciprocalHoldRiderIds.includes(id)?
+                      'Withholding turns while a rival sits on':'Not pulling this km'} · {energy?.toFixed(1)??'?'} energy</li>;
               })}</ul>
             </div>)}
           </details>}
