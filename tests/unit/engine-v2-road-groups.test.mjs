@@ -78,6 +78,23 @@ test('separate road groups can each produce a recorded attack in one kilometre',
   ]}),/split/);
 });
 
+test('a rear bridge and front split can resolve independently in one kilometre',()=>{
+  const previous=[
+    {id:'road-1',riderIds:['a-0','a-1'],teamIds:['a'],gapSeconds:20},
+    {id:'road-2',riderIds:['b-0','b-1'],teamIds:['b'],gapSeconds:12},
+  ];
+  const teamByRiderId={'a-0':'a','a-1':'a','b-0':'b','b-1':'b'};
+  const bridged=joinRoadGroupAhead(previous,{riderId:'b-0',teamByRiderId});
+  const current=splitRoadGroup(bridged,{riderId:'a-0',teamByRiderId,
+    newGroupId:'road-3',attackSeconds:4});
+  const moves=[{status:'joined_group_ahead',riderId:'b-0',targetGroupId:'road-1'},
+    {status:'split',riderId:'a-0'}];
+  assert.equal(validateRoadGroupTransition(previous,current,{breakMoves:moves}),true);
+  assert.throws(()=>validateRoadGroupTransition(previous,current,{breakMoves:[
+    {...moves[0],targetGroupId:'road-3'},moves[1],
+  ]}),/group ahead/);
+});
+
 test('a teammate behind a rider up the road sits on while rivals can still pull',()=>{
   const groups=[
     {id:'road-1',riderIds:['a-0'],teamIds:['a'],gapSeconds:25},
