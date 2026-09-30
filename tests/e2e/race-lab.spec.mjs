@@ -117,7 +117,7 @@ test('Race Lab replays a planned attack from an existing break',async ({page})=>
   await page.keyboard.press('Home');
   for(let kilometre=1;kilometre<41;kilometre++)await page.keyboard.press('ArrowRight');
   await expect(page.getByText('41 / 160 km',{exact:true})).toBeVisible();
-  await expect(page.getByText(/Planned attack from the break: .* · split/)).toBeVisible();
+  await expect(page.getByText(/Planned attack from the break: Amber Captain · split/)).toBeVisible();
   await expect(page.getByText(/Road groups: .* ahead of the peloton/)).toBeVisible();
 });
 

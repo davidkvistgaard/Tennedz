@@ -115,6 +115,9 @@ export default function Lab() {
   }
   const current = race?.frames[frame];
   const currentKm=kilometreRace?readRecordedKilometre(kilometreRace,kilometreKm):null;
+  const riderNames=new Map(kilometreRace?.committedInputs.teams.flatMap(team=>
+    team.riders.map(rider=>[rider.id,rider.name]))??[]);
+  const riderName=id=>riderNames.get(id)??id;
   const amberCommitted=kilometreRace?.committedInputs.teams.find(team=>team.id==='team-0');
   const amberCurrentOrder=currentKm&&amberCommitted?
     orderAt(amberCommitted.orders,currentKm.km-1):null;
@@ -536,10 +539,8 @@ export default function Lab() {
             {currentKm.roadGroups.map((group,index)=><div key={group.id}>
               <strong>Group {index+1} · +{group.gapSeconds.toFixed(1)} s</strong>
               <ul>{group.riderIds.map(id=>{
-                const rider=kilometreRace.committedInputs.teams.flatMap(team=>team.riders)
-                  .find(candidate=>candidate.id===id);
                 const energy=currentKm.riderGroups.find(state=>state.id===id)?.energy;
-                return <li key={id}>{rider?.name??id} · {currentKm.driveRiderIds.includes(id)?
+                return <li key={id}>{riderName(id)} · {currentKm.driveRiderIds.includes(id)?
                   'Driving this km':currentKm.pullRiderIds.includes(id)?
                     'Pulling this km':currentKm.reciprocalHoldRiderIds.includes(id)?
                       'Withholding turns while a rival sits on':'Not pulling this km'} · {energy?.toFixed(1)??'?'} energy</li>;
@@ -548,15 +549,15 @@ export default function Lab() {
           </details>}
           {currentKm.formedChaseGroupId&&<p className="small">New chase group from the peloton: {currentKm.roadGroups.at(-1).riderIds.length} rider{currentKm.roadGroups.at(-1).riderIds.length===1?'':'s'} escaped behind the leading break.</p>}
           {currentKm.bridgedBreakRiderIds.length>0&&<p className="small">Bridge completed: {currentKm.bridgedBreakRiderIds.length} rider{currentKm.bridgedBreakRiderIds.length===1?'':'s'} caught the nearest break group after closing its remaining gap.</p>}
-          {currentKm.splitAttacks?.map(attack=><p className="small" key={`break-attack-${attack.riderId}`}>{attack.source==='automatic'?'Automatic finale attack':'Planned attack'} from the break: {attack.riderId} · {attack.status.replaceAll('_',' ')}{attack.status==='split'?` · gained ${attack.attackSeconds.toFixed(1)} s on their group`:''}.</p>)}
-          {currentKm.blockedBreakAttacks.length>0&&<p className="small">Unexecuted break attacks: {currentKm.blockedBreakAttacks.map(event=>`${event.riderId} (${event.reason.replaceAll('_',' ')})`).join(' · ')}.</p>}
-          {currentKm.releasedHelperAttackRiderIds.length>0&&<p className="small">Helpers released after their captain was dropped: {currentKm.releasedHelperAttackRiderIds.join(', ')}.</p>}
+          {currentKm.splitAttacks?.map(attack=><p className="small" key={`break-attack-${attack.riderId}`}>{attack.source==='automatic'?'Automatic finale attack':'Planned attack'} from the break: {riderName(attack.riderId)} · {attack.status.replaceAll('_',' ')}{attack.status==='split'?` · gained ${attack.attackSeconds.toFixed(1)} s on their group`:''}.</p>)}
+          {currentKm.blockedBreakAttacks.length>0&&<p className="small">Unexecuted break attacks: {currentKm.blockedBreakAttacks.map(event=>`${riderName(event.riderId)} (${event.reason.replaceAll('_',' ')})`).join(' · ')}.</p>}
+          {currentKm.releasedHelperAttackRiderIds.length>0&&<p className="small">Helpers released after their captain was dropped: {currentKm.releasedHelperAttackRiderIds.map(riderName).join(', ')}.</p>}
           {currentKm.mergedRoadGroupIds.length>0&&<p className="small">Road groups came together.</p>}
           {currentKm.finaleRoadGroupCatches.length>0&&<p className="small">Finale catch: {currentKm.finaleRoadGroupCatches.length} rider{currentKm.finaleRoadGroupCatches.length===1?'':'s'} caught by a faster road group, while riders ahead stayed clear.</p>}
           {currentKm.decisions.length>0&&<p className="small">Precommitted decisions: {currentKm.decisions.map(decision=>`${kilometreRace.scenario.teams.find(team=>team.id===decision.teamId)?.name??decision.teamId} ${decision.kind.replaceAll('_',' ')}`).join(' · ')}.</p>}
           {currentKm.activeBreakResponseTeamIds.length>0&&<p className="small">Precommitted break chase active: {currentKm.activeBreakResponseTeamIds.map(id=>kilometreRace.scenario.teams.find(team=>team.id===id)?.name??id).join(', ')}.</p>}
           {currentKm.releasedForwardTeamIds.length>0&&<p className="small">Fading rider ahead: {currentKm.releasedForwardTeamIds.map(id=>kilometreRace.scenario.teams.find(team=>team.id===id)?.name??id).join(', ')} switched to chasing for their remaining riders.</p>}
-          {currentKm.supportEvents.length>0&&<p className="small">Captain support: {currentKm.supportEvents.map(event=>`${kilometreRace.scenario.teams.find(team=>team.id===event.teamId)?.name??event.teamId} sent ${event.helperId} back to help ${event.leaderId}`).join(' · ')}.</p>}
+          {currentKm.supportEvents.length>0&&<p className="small">Captain support: {currentKm.supportEvents.map(event=>`${kilometreRace.scenario.teams.find(team=>team.id===event.teamId)?.name??event.teamId} sent ${riderName(event.helperId)} back to help ${riderName(event.leaderId)}`).join(' · ')}.</p>}
           {currentKm.heldChaseTeamIds.length>0&&<p className="small">Waiting to chase: {currentKm.heldChaseTeamIds.map(id=>kilometreRace.scenario.teams.find(team=>team.id===id)?.name??id).join(', ')} let a manageable gap stand for now.</p>}
           {currentKm.passiveGapDelta!==0&&<p className="small">Riding pace alone: the break {currentKm.passiveGapDelta>0?'gained':'lost'} {Math.abs(currentKm.passiveGapDelta).toFixed(2)} seconds this kilometre.</p>}
           {currentKm.breakawayRiderIds.length>0&&<p className="small">Recorded break work: {currentKm.pullRiderIds.length} rider{currentKm.pullRiderIds.length===1?'':'s'} took pulls this kilometre.</p>}
