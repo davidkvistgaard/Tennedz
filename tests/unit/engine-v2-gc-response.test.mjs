@@ -197,3 +197,23 @@ test('one GC team cannot automatically contain three coordinated challengers',()
     'a single team should not erase all three attacks');
   assert.equal(validateRecordedTour(race),true);
 });
+
+test('a caught GC challenger may try again while the defender counters both moves',()=>{
+  const cast=structuredClone(teams);
+  cast[0].orders.gcObjective='defend_top_ten';
+  cast[1].orders.gcObjective='target_top_ten';
+  cast[1].orders.baseline={attack:'none',chase:'ignore',effort:'conserve'};
+  Object.assign(cast[0].riders[0],{flat:85,strength:85,endurance:85});
+  Object.assign(cast[1].riders[0],{flat:70,strength:70,endurance:70});
+  for(const rider of cast[0].riders.slice(2))Object.assign(rider,{
+    flat:75,strength:75,endurance:75,
+  });
+  const race=simulateTacticalTour({stage,teams:cast,seed:'paired-gc-9',classification});
+  assert.ok(race.frames[19].joinedBreakawayRiderIds.includes('b0'));
+  assert.ok(race.frames.slice(20,30).some(frame=>frame.caughtBreakawayRiderIds.includes('b0')));
+  assert.ok(race.frames[39].attackers.includes('b0'));
+  assert.ok(race.frames[19].gcCounterTeamIds.includes('a'));
+  assert.ok(race.frames[39].gcCounterTeamIds.includes('a'));
+  assert.equal(race.frames.at(-1).breakawayRiderIds.includes('b0'),false);
+  assert.equal(validateRecordedTour(race),true);
+});

@@ -41,6 +41,7 @@ Stages also carry forward fatigue and other defined rider state. Saving a helper
 7. Teams in tenth and eleventh can choose different energy/risk tradeoffs on the same stage. A stage-win team and a GC team may pursue opposite tactics without either being forced to work for the other.
 8. A stage's result updates cumulative standings exactly once. The next stage starts from those saved standings and carried rider state, while replay of an earlier stage remains unchanged after later stages are simulated.
 9. A prepared team can counter one nearby GC rival's launch immediately if helpers are available, but three coordinated challengers can still overwhelm that one team's chase capacity. A harmless attack must not trigger the GC counter.
+10. A challenger caught after an initial GC attack can try again later under the same committed objective; the defender can counter each attempt, and every launch, catch and response survives replay validation.
 
 ## Implementation dependency
 
