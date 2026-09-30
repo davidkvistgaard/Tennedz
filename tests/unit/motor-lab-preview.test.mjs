@@ -50,11 +50,24 @@ test('advanced orders are committed and alter the same seeded race',()=>{
   breakResponse:'chase_if_threatened',breakWork:'sit_on',lateEffort:'hard',
  }});
  assert.deepEqual(advanced.orders,{chaseContribution:'follow_plan',breakResponse:'chase_if_threatened',
-  breakWork:'sit_on',lateEffort:'hard',breakAttackMarker:'none',roadCaptain:'standard'});
+  breakWork:'sit_on',lateEffort:'hard',breakAttackMarker:'none',roadCaptain:'standard',captainSupport:'hold_position'});
  assert(advanced.frames[120].moments.includes('Amber switched to hard effort'));
  assert(!standard.frames[120].moments.includes('Amber switched to hard effort'));
  assert.notDeepEqual(standard.frames,advanced.frames);
  assert.deepEqual(advanced,createMotorLabPreview({plan:'break',seed:5,orders:advanced.orders}));
+});
+
+test('a reachable helper can support Amber Captain on the fixed ridge exercise',()=>{
+ const common={plan:'sprint',seed:1,routeId:'ridge'};
+ const alone=createMotorLabPreview(common);
+ const supported=createMotorLabPreview({...common,orders:{captainSupport:'drop_back_if_dropped'}});
+ assert.equal(alone.frames.filter(frame=>frame.amberCaptainDropped).length,7);
+ assert.equal(supported.frames.filter(frame=>frame.amberCaptainDropped).length,2);
+ assert(supported.frames.some(frame=>frame.moments.some(moment=>
+  /helped Amber Captain recover \d+\.\d s/.test(moment))));
+ assert.equal(alone.results.find(result=>result.name==='Amber Captain').position,
+  supported.results.find(result=>result.name==='Amber Captain').position);
+ assert.deepEqual(supported,createMotorLabPreview({...common,orders:supported.orders}));
 });
 
 test('road captain leadership changes a precommitted chase response',()=>{
@@ -109,6 +122,6 @@ test('guided preview rejects unbounded or unknown requests',()=>{
   assert.throws(()=>createMotorLabPreview(input),/valid plan, route and scenario number/);
  for(const orders of [null,[],{breakWork:'freewheel'},{lateEffort:120},
   {breakAttackMarker:'41'},{breakAttackMarker:40},{roadCaptain:'legend'},
-  {chaseContribution:'infinite'},{admin:true}])
+  {chaseContribution:'infinite'},{captainSupport:'teleport'},{admin:true}])
   assert.throws(()=>createMotorLabPreview({plan:'sprint',seed:1,orders}),/valid advanced orders/);
 });
