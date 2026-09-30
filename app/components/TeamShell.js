@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useAuth } from "./AuthProvider";
 import ClubBadge from "./ClubBadge";
@@ -42,21 +43,7 @@ export default function TeamShell({ title, children, compact = false }) {
           className="game-brand"
           aria-label="Pelotonia – my team"
         >
-          <span className="brand-mark">
-            <svg viewBox="0 0 32 32" width="28" height="28" aria-hidden="true">
-              <path
-                d="M5 25L14 8H22L13 25M9 17H24"
-                stroke="currentColor"
-                strokeWidth="3"
-                fill="none"
-                strokeLinecap="round"
-              />
-              <circle cx="23" cy="8" r="3" fill="currentColor" />
-            </svg>
-          </span>
-          <span className="brand-word">
-            pelotonia<small>Cycling Manager</small>
-          </span>
+          <Image src="/brand/pelotonia-horizontal.svg" alt="" width={190} height={48} priority />
         </Link>
         <nav className="game-nav" aria-label="Main navigation">
           {links.map(([href, label]) => (

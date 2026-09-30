@@ -24,7 +24,7 @@ for(const width of [390,1440])test(`English manager journey from signup to repla
   await expect(page.locator('.club-rider')).toHaveCount(8);
   await fits();
   await page.getByRole('link',{name:'My team',exact:true}).click();
-  await page.getByRole('link',{name:'Race details and lineup ↗'}).click();
+  await page.getByRole('link',{name:'Set up team ↗'}).click();
   await page.getByRole('button',{name:/The Coast Classic/}).click();
   await expect(page.getByText('Your lineup',{exact:true})).toBeVisible();
   await expect(page.getByRole('button',{name:'Enter team',exact:true})).toBeDisabled();
