@@ -875,7 +875,7 @@ test('the full tactical trace is deterministic, bounded and makes aggressive ord
   const a=simulateTacticalTour(input);
   assert.deepEqual(a,simulateTacticalTour(input));
   assert.equal(a.frames.length,40);
-  assert.equal(a.tuningVersion,'v2-prototype-50');
+  assert.equal(a.tuningVersion,'v2-prototype-51');
   assert.equal(a.frames.at(-1).km,40);
   assert.ok(a.frames.some(frame=>frame.attackers.length>0));
   assert.ok(a.frames.some(frame=>frame.chasers.length>0));
@@ -1250,6 +1250,29 @@ test('the bunch may catch the rear break at the line while the front break survi
   assert.equal(finish.results[0].riderId,'a-0');
   assert.equal(finish.results.find(result=>result.riderId==='a-1').group,'peloton');
   assert.ok(finish.results.find(result=>result.riderId==='a-1').position>1);
+});
+
+test('a final sprint can catch two rear road groups without erasing the leading break',()=>{
+  const teams=['a','b','c'].map(id=>tacticalTeam(id,'balanced'));
+  teams[0].riders[1].sprint=0;
+  teams[1].riders[0].sprint=0;
+  teams[2].riders.forEach(rider=>{rider.sprint=100;rider.acceleration=90;});
+  const route=buildKilometreRoute(stage,{seed:'two-rear-finish-catches'});
+  const roadGroups=[
+    {id:'road-1',riderIds:['a-0'],teamIds:['a'],gapSeconds:25},
+    {id:'road-2',riderIds:['a-1'],teamIds:['a'],gapSeconds:.2},
+    {id:'road-3',riderIds:['b-0'],teamIds:['b'],gapSeconds:.1},
+  ];
+  const ahead=new Set(roadGroups.flatMap(group=>group.riderIds));
+  const states=teams.flatMap(team=>team.riders.map(rider=>({id:rider.id,energy:80,
+    deficitSeconds:0,group:ahead.has(rider.id)?'breakaway':'peloton'})));
+  const finish=resolveRearRoadGroupFinishingSprint({route,teams,states,roadGroups,
+    seed:'two-rear-finish-catches'});
+  assert.deepEqual(new Set(finish.caughtRiderIds),new Set(['a-1','b-0']));
+  assert.deepEqual(finish.roadGroups,[roadGroups[0]]);
+  assert.equal(validateRoadGroupTransition(roadGroups,finish.roadGroups,
+    {caughtRiderIds:finish.caughtRiderIds,finishLineCatch:true}),true);
+  assert.equal(finish.results[0].riderId,'a-0');
 });
 
 test('a stronger rear-break rider can survive when their companion is caught at the line',()=>{
