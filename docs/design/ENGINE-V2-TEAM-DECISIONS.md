@@ -40,6 +40,8 @@ The experimental per-kilometre break model now shares the added exposure cost am
 
 A selective chase can keep watching a manageable break without spending chase energy, then engage when the remaining distance makes its current gap unsafe. The watching state persists across quiet kilometres; it is distinct from the recorded list of teams actually pulling. Fresh attacks and all-out orders bypass this wait. The safe-gap rule is a provisional balance heuristic and needs broader scenario calibration.
 
+The experimental finishing burst checks each break rider against the bunch rather than assuming only the rearmost group can lose someone. A slow rider from a leading group may be caught while a chasing group still survives; group gaps and result order are then rebuilt from the surviving riders. This remains a simplified finish model, not individual timing for the whole race.
+
 1. With a viable teammate ahead, a team behind does not provide chase power; its rider in a pursuing group can shelter without taking pulls. A rival team can still catch the front group.
 2. If the forward teammate fades badly while the protected captain remains viable, the team may change its priority under a precommitted rule. The decision and energy costs are visible.
 3. A helper in the same group gives measurable protection to a captain. A helper in a different group cannot do so until a physically possible reunion has completed.

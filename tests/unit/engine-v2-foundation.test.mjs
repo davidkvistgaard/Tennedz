@@ -932,7 +932,7 @@ test('the full tactical trace is deterministic, bounded and makes aggressive ord
   const a=simulateTacticalTour(input);
   assert.deepEqual(a,simulateTacticalTour(input));
   assert.equal(a.frames.length,40);
-  assert.equal(a.tuningVersion,'v2-prototype-57');
+  assert.equal(a.tuningVersion,'v2-prototype-58');
   assert.equal(a.frames.at(-1).km,40);
   assert.ok(a.frames.some(frame=>frame.attackers.length>0));
   assert.ok(a.frames.some(frame=>frame.chasers.length>0));
@@ -1301,7 +1301,8 @@ test('the bunch may catch the rear break at the line while the front break survi
   const finish=resolveRearRoadGroupFinishingSprint({route,teams,states,roadGroups,
     seed:'rear-break-finish'});
   assert.deepEqual(finish.caughtRiderIds,['a-1']);
-  assert.deepEqual(finish.roadGroups,[roadGroups[0]]);
+  assert.deepEqual(finish.roadGroups.map(group=>group.riderIds),[['a-0']]);
+  assert.ok(finish.roadGroups[0].gapSeconds>0);
   assert.equal(validateRoadGroupTransition(roadGroups,finish.roadGroups,
     {caughtRiderIds:finish.caughtRiderIds}),true);
   assert.equal(finish.results[0].riderId,'a-0');
@@ -1326,10 +1327,38 @@ test('a final sprint can catch two rear road groups without erasing the leading 
   const finish=resolveRearRoadGroupFinishingSprint({route,teams,states,roadGroups,
     seed:'two-rear-finish-catches'});
   assert.deepEqual(new Set(finish.caughtRiderIds),new Set(['a-1','b-0']));
-  assert.deepEqual(finish.roadGroups,[roadGroups[0]]);
+  assert.deepEqual(finish.roadGroups.map(group=>group.riderIds),[['a-0']]);
+  assert.ok(finish.roadGroups[0].gapSeconds>0);
   assert.equal(validateRoadGroupTransition(roadGroups,finish.roadGroups,
     {caughtRiderIds:finish.caughtRiderIds,finishLineCatch:true}),true);
   assert.equal(finish.results[0].riderId,'a-0');
+});
+
+test('the bunch can catch a slow front-group rider while the rear group survives',()=>{
+  const teams=['a','b','c'].map(id=>tacticalTeam(id,'balanced'));
+  teams.flatMap(team=>team.riders).forEach(rider=>{rider.sprint=100;});
+  teams[0].riders[1].sprint=0;
+  const route=buildKilometreRoute({distance_km:40,
+    profile_points:[[0,100],[40,100]]},{seed:'front-bunch-catch'});
+  const roadGroups=[
+    {id:'road-1',riderIds:['a-0','a-1'],teamIds:['a'],gapSeconds:1.2},
+    {id:'road-2',riderIds:['b-0'],teamIds:['b'],gapSeconds:.8},
+  ];
+  const ahead=new Set(roadGroups.flatMap(group=>group.riderIds));
+  const states=teams.flatMap(team=>team.riders.map(rider=>({id:rider.id,energy:80,
+    deficitSeconds:0,group:ahead.has(rider.id)?'breakaway':'peloton'})));
+  const finish=resolveRearRoadGroupFinishingSprint({route,teams,states,roadGroups,
+    seed:'front-bunch-catch'});
+  assert.ok(finish.caughtRiderIds.includes('a-1'));
+  assert.ok(finish.roadGroups.some(group=>group.riderIds.includes('b-0')));
+  assert.ok(!finish.roadGroups.some(group=>group.riderIds.includes('a-1')));
+  assert.equal(validateRoadGroupTransition(roadGroups,finish.roadGroups,{
+    caughtRiderIds:finish.caughtRiderIds,
+    finaleCatchMoves:finish.finaleRoadGroupCatches,
+    mergedGroupIds:finish.mergedRoadGroupIds,
+    finishLineCatch:true,
+  }),true);
+  assert.equal(finish.results.find(result=>result.riderId==='a-1').group,'peloton');
 });
 
 test('a stronger rear-break rider can survive when their companion is caught at the line',()=>{
