@@ -90,3 +90,47 @@ test('GC defence stays deterministic across input order and rider category',()=>
     assert.equal(validateRecordedTour(first),true);
   }
 });
+
+test('an eleventh-place leader can commit to a costly late top-ten attack',()=>{
+  const challenging=structuredClone(teams);
+  challenging[1].orders.gcObjective='target_top_ten';
+  challenging[1].orders.baseline={attack:'none',chase:'ignore',effort:'conserve'};
+  const common={stage,seed:'gc-target-test',classification};
+  const active=simulateTacticalTour({...common,teams:challenging});
+  const quiet=structuredClone(challenging);
+  quiet[1].orders.gcObjective='stage_result';
+  const passive=simulateTacticalTour({...common,teams:quiet});
+  const first=active.frames.find(frame=>frame.decisions.some(decision=>
+    decision.teamId==='b'&&decision.kind==='target_gc'));
+  assert.ok(first);
+  assert.equal(first.km,20);
+  assert.ok(active.frames.some(frame=>frame.attackers.includes('b0')));
+  assert.ok(active.frames.some(frame=>frame.decisions.some(decision=>
+    decision.teamId==='b'&&decision.kind==='end_gc_target')));
+  assert.equal(passive.frames.some(frame=>frame.attackers.includes('b0')),false);
+  assert.ok(active.frames.at(-1).teamEnergy.find(row=>row.teamId==='b').mean<
+    passive.frames.at(-1).teamEnergy.find(row=>row.teamId==='b').mean);
+  assert.equal(validateRecordedTour(active),true);
+  const tampered=structuredClone(active);
+  tampered.frames[first.km-1].activeGcTargetTeamIds=[];
+  assert.throws(()=>validateRecordedTour(tampered),/GC target/);
+});
+
+test('a distant GC target does not force futile attacks or override a named rider',()=>{
+  const challenging=structuredClone(teams);
+  challenging[1].orders.gcObjective='target_top_ten';
+  challenging[1].orders.baseline={attack:'none',chase:'ignore'};
+  const far=recordGeneralClassificationStage(initial,{stageId:'earlier-stage',
+    classifiedTimes:teams.flatMap(team=>team.riders.map(rider=>({
+      riderId:rider.id,timeSeconds:faster.has(rider.id)?3590:
+        rider.id==='a0'?3600:rider.id==='b0'?3700:3610,
+    })))});
+  const distant=simulateTacticalTour({stage,teams:challenging,seed:'gc-target-far',
+    classification:far});
+  assert.equal(distant.frames.some(frame=>frame.activeGcTargetTeamIds.includes('b')),false);
+  challenging[1].orders.baseline.attackRiderId='b2';
+  const named=simulateTacticalTour({stage,teams:challenging,seed:'gc-target-named',
+    classification});
+  assert.equal(named.frames.some(frame=>frame.activeGcTargetTeamIds.includes('b')),false);
+  assert.equal(validateRecordedTour(named),true);
+});

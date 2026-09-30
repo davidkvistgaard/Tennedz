@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {startGeneralClassification,recordGeneralClassificationStage,
-  projectGeneralClassification,identifyTopTenThreats} from
+  projectGeneralClassification,identifyTopTenThreats,identifyTopTenOpportunities} from
   '../../lib/engine/v2/classification.mjs';
 
 const riders=Array.from({length:16},(_,index)=>({riderId:`r${index}`,
@@ -127,4 +127,27 @@ test('top-ten threat identifies only a rival break that displaces a protected pl
     ...state,group:state.id==='r0'?'dropped':state.group,
     deficitSeconds:state.id==='r0'?10:0,
   }))}),[]);
+});
+
+test('a challenger knows the current top-ten gap without a future finish prediction',()=>{
+  const start=startGeneralClassification({raceCategory:'M',riders});
+  const fast=new Set(['r1','r2','r3','r4','r5','r6','r7','r9','r10']);
+  const prior=recordGeneralClassificationStage(start,{stageId:'stage-1',
+    classifiedTimes:times(Object.fromEntries(riders.map(rider=>[
+      rider.riderId,fast.has(rider.riderId)?3590:
+        rider.riderId==='r0'?3600:rider.riderId==='r8'?3602:3610,
+    ])))});
+  const peloton=riders.map(rider=>({id:rider.riderId,teamId:rider.teamId,
+    group:'peloton',deficitSeconds:0}));
+  const waiting=identifyTopTenOpportunities(prior,{roadGroups:[],riderStates:peloton});
+  assert.deepEqual(waiting.find(row=>row.riderId==='r8'),{
+    teamId:'b',riderId:'r8',priorPosition:11,projectedPosition:11,
+    gapToTopTenSeconds:2,
+  });
+  const ahead=identifyTopTenOpportunities(prior,{roadGroups:[{
+    id:'road-1',riderIds:['r8'],teamIds:['b'],gapSeconds:5,
+  }],riderStates:peloton.map(state=>({...state,
+    group:state.id==='r8'?'breakaway':'peloton',
+  }))});
+  assert.equal(ahead.some(row=>row.riderId==='r8'),false);
 });
