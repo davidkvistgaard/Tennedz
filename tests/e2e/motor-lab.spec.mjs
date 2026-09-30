@@ -85,6 +85,7 @@ for(const width of [390,1440])test(`manager runs a recorded Motor Lab race at ${
  await expect(page.getByText(/helped Amber Captain recover/).first()).toBeVisible();
  await page.getByLabel('Laboratory route').selectOption('coast');
  await page.getByRole('button',{name:'Run the race'}).click();
+ await expect(page.getByRole('heading',{name:'Coast Road laboratory'})).toBeVisible();
  const waitingSlider=page.getByRole('slider',{name:'Inspect recorded kilometre'});
  await waitingSlider.fill('21');
  await expect(page.getByText('22 / 160',{exact:true})).toBeVisible();
