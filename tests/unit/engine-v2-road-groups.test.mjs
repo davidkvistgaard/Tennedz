@@ -173,12 +173,12 @@ test('the fading-rider fallback changes the trailing group pace without giving i
   orders:{forwardResponse:id==='a'?'chase_if_fading':'protect_forward',
     baseline:{breakWork:id==='c'?'sit_on':'cooperate'},phases:[]}}));
   const segment=buildKilometreRoute({distance_km:40,
-    profile_points:[[0,100],[40,100]],keypoints:[]},{seed:'fading-group-pace'}).kilometres[20];
-  const fallback=selectRoadGroupPulls(groups,teams,21);
+    profile_points:[[0,100],[40,100]],keypoints:[]},{seed:'fading-group-pace'}).kilometres[19];
+  const fallback=selectRoadGroupPulls(groups,teams,20);
   assert.deepEqual(fallback,['a-0','a-1','b-0']);
   const withFallback=relativeRoadGroupPace(groups[0],groups[1],teams,segment,fallback);
   teams[0].orders.forwardResponse='protect_forward';
-  const protectedPulls=selectRoadGroupPulls(groups,teams,21);
+  const protectedPulls=selectRoadGroupPulls(groups,teams,20);
   assert.deepEqual(protectedPulls,['a-0','b-0']);
   const protectedPace=relativeRoadGroupPace(groups[0],groups[1],teams,segment,
     protectedPulls);

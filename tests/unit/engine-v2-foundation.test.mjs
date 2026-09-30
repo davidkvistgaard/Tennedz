@@ -12,7 +12,7 @@ import {provisionalFinish,provisionalRoadGroupFinish,
 import {selectShelter} from '../../lib/engine/v2/support.mjs';
 import {selectCaptainSupport,applyCaptainSupport} from '../../lib/engine/v2/captain-support.mjs';
 import {MAX_ROAD_GROUPS,advanceRoadGroups,assertRoadGroups,relativeRoadGroupPace,
-  validateRoadGroupTransition,roadGroupExposureCosts} from '../../lib/engine/v2/road-groups.mjs';
+  validateRoadGroupTransition,roadGroupExposureCosts,selectRoadGroupPulls} from '../../lib/engine/v2/road-groups.mjs';
 import {automaticBreakAttackRider} from '../../lib/engine/v2/break-attack.mjs';
 import {validateRecordedTour,readRecordedKilometre} from '../../lib/engine/v2/recording.mjs';
 import {recoveryForKilometre} from '../../lib/engine/v2/recovery.mjs';
@@ -764,6 +764,22 @@ test('driving a break is faster than sharing turns but costs the driver more ene
     /pull roster/);
 });
 
+test('a cooperative group reduces work when a rival persistently sits on',()=>{
+  const cooperator=tacticalTeam('a','balanced',{baseline:{breakWork:'cooperate'}});
+  const sitter=tacticalTeam('b','balanced',{baseline:{breakWork:'sit_on'}});
+  const driver=tacticalTeam('c','balanced',{baseline:{breakWork:'drive'}});
+  const group={id:'road-1',riderIds:['a-0','b-0','c-0'],
+    teamIds:['a','b','c'],gapSeconds:15};
+  assert.deepEqual(selectRoadGroupPulls([group],[cooperator,sitter,driver],1),['c-0']);
+  assert.deepEqual(selectRoadGroupPulls([group],[cooperator,sitter,driver],4),
+    ['a-0','c-0']);
+  assert.deepEqual(selectRoadGroupPulls([{...group,gapSeconds:4}],
+    [cooperator,sitter,driver],1),['a-0','c-0']);
+  const allWilling=tacticalTeam('b','balanced',{baseline:{breakWork:'cooperate'}});
+  assert.deepEqual(selectRoadGroupPulls([group],[cooperator,allWilling,driver],1),
+    ['a-0','b-0','c-0']);
+});
+
 test('taking pulls grows the break gap but costs energy compared with sitting on',()=>{
   const worker=tacticalTeam('a','aggressive',{baseline:{chase:'ignore',breakWork:'cooperate'},
     phases:[{atKm:20,attack:'none'}]});
@@ -1009,7 +1025,7 @@ test('the full tactical trace is deterministic, bounded and makes aggressive ord
   const a=simulateTacticalTour(input);
   assert.deepEqual(a,simulateTacticalTour(input));
   assert.equal(a.frames.length,40);
-  assert.equal(a.tuningVersion,'v2-prototype-69');
+  assert.equal(a.tuningVersion,'v2-prototype-70');
   assert.equal(a.frames.at(-1).km,40);
   assert.ok(a.frames.some(frame=>frame.attackers.length>0));
   assert.ok(a.frames.some(frame=>frame.chasers.length>0));
