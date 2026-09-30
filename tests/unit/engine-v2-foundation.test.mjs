@@ -1038,7 +1038,7 @@ test('the full tactical trace is deterministic, bounded and makes aggressive ord
   const a=simulateTacticalTour(input);
   assert.deepEqual(a,simulateTacticalTour(input));
   assert.equal(a.frames.length,40);
-  assert.equal(a.tuningVersion,'v2-prototype-70');
+  assert.equal(a.tuningVersion,'v2-prototype-71');
   assert.equal(a.frames.at(-1).km,40);
   assert.ok(a.frames.some(frame=>frame.attackers.length>0));
   assert.ok(a.frames.some(frame=>frame.chasers.length>0));
@@ -1193,6 +1193,18 @@ test('sustained weakness forms a dropped group while stronger kilometres can clo
   states=updateRiderGroups(states.map(s=>({...s,ability:s.id==='weak'?90:60})),[]);
   assert.ok(states[0].deficitSeconds<deficit);
   assert.ok(states.every(s=>s.deficitSeconds>=0));
+});
+
+test('an admitted attacker clears an old small bunch deficit instead of paying it at the finish',()=>{
+  const states=[{id:'attacker',ability:70,energy:80,deficitSeconds:2,
+    lowKilometres:1,group:'peloton'},
+  {id:'bunch',ability:65,energy:80,deficitSeconds:0,
+    lowKilometres:0,group:'peloton'}];
+  const next=updateRiderGroups(states,['attacker']);
+  assert.equal(next[0].group,'breakaway');
+  assert.equal(next[0].deficitSeconds,0);
+  assert.equal(next[0].lowKilometres,0);
+  assert.equal(states[0].deficitSeconds,2);
 });
 
 test('distanced riders do not lower the reference pace of the remaining bunch',()=>{
@@ -1636,7 +1648,7 @@ test('a partial road-group finale catch survives full race replay validation',()
   assert.throws(()=>validateRecordedTour(missingCatch),/changed groups without a merge/);
 });
 
-test('a late chase group is caught at the line while the first break remains replayable',()=>{
+test('a late chase group keeps its place after closing a prior bunch deficit',()=>{
   const front=tacticalTeam('a','balanced',{baseline:{attack:'selective',chase:'ignore'},
     phases:[{atKm:10,attack:'none'}]});
   Object.assign(front.riders[0],{flat:95,strength:95,endurance:95,timetrial:95,sprint:75});
@@ -1649,15 +1661,19 @@ test('a late chase group is caught at the line while the first break remains rep
     keypoints:[{km:10,kind:'SPRINT'},{km:40,kind:'SPRINT'}]};
   const race=simulateTacticalTour({stage:flat,teams:[front,rear,bunch],seed:'rear-probe-0'});
   const final=race.frames.at(-1);
-  assert.equal(final.finishLineCatch,true);
-  assert.ok(final.caughtBreakawayRiderIds.includes('b-0'));
+  assert.equal(final.finishLineCatch,false);
   assert.ok(final.roadGroups[0].riderIds.includes('a-0'));
-  assert.ok(final.roadGroups.every(group=>!group.riderIds.includes('b-0')));
-  assert.equal(race.provisionalResults.find(result=>result.riderId==='b-0').group,'peloton');
+  assert.ok(final.roadGroups[1].riderIds.includes('b-0'));
+  assert.equal(final.riderGroups.find(rider=>rider.id==='b-0').deficitSeconds,0);
+  assert.equal(race.provisionalResults.find(result=>result.riderId==='b-0').group,
+    'breakaway');
   assert.equal(validateRecordedTour(race),true);
+  const doubledGap=structuredClone(race);
+  doubledGap.frames.at(-1).riderGroups.find(rider=>rider.id==='b-0').deficitSeconds=2;
+  assert.throws(()=>validateRecordedTour(doubledGap),/rider state/);
   const tampered=structuredClone(race);
   tampered.frames.at(-1).formedChaseGroupId='road-99';
-  assert.throws(()=>validateRecordedTour(tampered),/identity/);
+  assert.throws(()=>validateRecordedTour(tampered),/chase group|identity/);
 });
 
 test('a finishing sprint records a last-metre catch before the result is shown',()=>{

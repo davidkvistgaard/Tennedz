@@ -128,6 +128,8 @@ Version `v2-prototype-69` adds an optional `drive` break-work order alongside sh
 
 Version `v2-prototype-70` lets a cooperative rider reduce their turns when a rival in the same road group intentionally sits on. The cooperative rider still pulls periodically and resumes full work if their group is close to being caught. An explicit `drive` order keeps working. This deterministic response makes the rival's choice consequential without giving the rider knowledge of future race results.
 
+Version `v2-prototype-71` clears a rider's residual bunch deficit once they have actually joined a road group ahead. The old deficit had incorrectly been charged again at the finish despite the recorded escape. Replay validation rejects a break rider who still carries that old deficit.
+
 The recording marks `reciprocalHoldRiderIds` separately from ordinary non-workers. Replay validation reconstructs this event from the locked orders and preceding groups, and Race Lab explains the withheld turns in the group detail.
 
 The kilometre recording distinguishes `driveRiderIds` from ordinary pullers. Replay validation derives the driving roster from the precommitted orders and the previous road groups, so a viewer cannot silently present a rider as driving or conceal that effort. Race Lab labels driving riders in the group detail.
