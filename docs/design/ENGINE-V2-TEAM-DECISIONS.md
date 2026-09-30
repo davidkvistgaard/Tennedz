@@ -20,6 +20,8 @@ Simple plans should set sensible defaults; expert managers can set priorities an
 
 ## One-day races versus stage races
 
+The isolated `classification.mjs` module now provides the first accounting boundary for stage races. It starts a category-specific roster and adds supplied classified stage times exactly once per stage ID, in integer milliseconds. Tied totals share a place; the previous standings remain unchanged. The caller must first apply the event's actual group-time, bonus, penalty and abandonment rules. Those rules have not been specified or implemented here, and the accumulator is not wired to the race engine or live calendar. It is a tested foundation for the later GC decisions below.
+
 A one-day race ends with that day's result. A stage race has at least two distinct objectives on every stage: the stage result and the cumulative general classification (GC). A manager may value an overall top-ten finish even when winning the GC or the current stage is unrealistic. The engine must therefore evaluate threats to a defended place and opportunities to improve a place, not only whether a rider can win today.
 
 The race context needs the committed classification standings and time gaps **before** the stage, the stage's scoring and timing rules, and each team's precommitted priorities. During simulation, teams estimate the *provisional* overall standing from current road gaps. That estimate can change as groups split or rejoin; it is not final knowledge. A GC team may let a harmless stage break go, while chasing a rival whose gain would cost its captain tenth place. A team in eleventh may spend more energy to move into the top ten; a team defending seventh may reject that risk. A sprinter team can have the opposite incentive on the same road.
