@@ -29,3 +29,5 @@ The replay now includes an elevation profile derived from the same committed kil
 ## Chase-contribution order
 
 Amber can now commit how much its helpers contribute to the peloton chase: follow the preset, hold helpers back, or commit them to chase. This maps to the existing v2 chase order; a separately committed road-captain threat response can still override a held chase when its condition fires. The choice is recorded and included in same-seed comparisons. In Coast Road scenario 1 with the sprint preset and no threat override, holding helpers yields zero Amber chase kilometres; the default contributes work. Other teams keep their own plans, so withholding Amber's helpers does not guarantee an escape or a better placing.
+
+The paired comparison now includes kilometres with Amber Captain in a break and the largest leading-group gap, alongside Amber's chase work, the captain's placing and winner. These are derived from the two completed recordings. They make the tactical consequences visible even when the finishing order does not change.

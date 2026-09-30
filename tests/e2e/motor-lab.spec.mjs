@@ -55,7 +55,9 @@ for(const width of [390,1440])test(`manager runs a recorded Motor Lab race at ${
  await page.getByRole('button',{name:'Run the race'}).click();
  await expect(page.getByText('Amber rode Protect the sprinter')).toBeVisible();
  await expect(page.getByRole('heading',{name:'Same scenario, two decisions'})).toBeVisible();
- await expect(page.getByRole('table').getByRole('row',{name:/Amber Captain/})).toBeVisible();
+ await expect(page.getByRole('table').getByRole('rowheader',{name:'Amber Captain',exact:true})).toBeVisible();
+ await expect(page.getByRole('row',{name:/Amber Captain in a break/})).toBeVisible();
+ await expect(page.getByRole('row',{name:/Largest break advantage/})).toBeVisible();
  await page.getByLabel('React to a dangerous break').selectOption('hold_plan');
  await page.getByLabel('Peloton chase contribution').selectOption('ignore');
  await page.getByRole('button',{name:'Run the race'}).click();
