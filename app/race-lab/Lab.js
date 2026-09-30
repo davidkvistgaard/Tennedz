@@ -30,6 +30,7 @@ export default function Lab() {
     [phaseAtKm, setPhaseAtKm] = useState(0),
     [phaseEffort, setPhaseEffort] = useState(""),
     [phaseChase, setPhaseChase] = useState(""),
+    [phaseBreakWork, setPhaseBreakWork] = useState(""),
     [config, setConfig] = useState(DEFAULT_CONFIG),
     [count, setCount] = useState(100);
   const [race, setRace] = useState(null),
@@ -77,6 +78,7 @@ export default function Lab() {
       scenario.teams[0].phaseAtKm=phaseAtKm;
       scenario.teams[0].phaseEffort=phaseEffort;
       scenario.teams[0].phaseChase=phaseChase;
+      scenario.teams[0].phaseBreakWork=phaseBreakWork;
       const result=runKilometreLab({scenario,seed:`${seed}:v2`});
       setKilometreRace(result);
       setKilometreKm(0);
@@ -262,6 +264,16 @@ export default function Lab() {
               <option value="ignore">Ignore the break</option>
               <option value="selective">Chase selectively</option>
               <option value="all">Commit every available helper</option>
+            </select>
+          </label>
+          <label>
+            Amber's later break work - kilometre prototype only
+            <select aria-label="Amber's later break work" value={phaseBreakWork}
+              disabled={phaseAtKm===0}
+              onChange={e=>setPhaseBreakWork(e.target.value)}>
+              <option value="">Keep the original break work</option>
+              <option value="cooperate">Take turns at the front</option>
+              <option value="sit_on">Sit on without pulling</option>
             </select>
           </label>
           {[
@@ -508,7 +520,7 @@ export default function Lab() {
             <line x1={10+780*currentKm.km/kilometreRace.route.distanceKm} x2={10+780*currentKm.km/kilometreRace.route.distanceKm} y1="10" y2="135" stroke="#214f3c" />
           </svg>
           <label>Recorded kilometre<input aria-label="Recorded kilometre" type="range" min="0" max={kilometreRace.frames.length-1} value={kilometreKm} onChange={e=>setKilometreKm(Number(e.target.value))}/></label>
-          {amberCurrentOrder&&<p className="small">Scheduled Amber orders: {amberCurrentOrder.effort} effort · {amberCurrentOrder.chase} chase · {amberCurrentOrder.attack} attacks. Changes take effect after their marker.</p>}
+          {amberCurrentOrder&&<p className="small">Scheduled Amber orders: {amberCurrentOrder.effort} effort · {amberCurrentOrder.chase} chase · {amberCurrentOrder.breakWork.replaceAll('_',' ')} in the break · {amberCurrentOrder.attack} attacks. Changes take effect after their marker.</p>}
           <div className="lab-scroll"><table><caption>Team state after this kilometre</caption><thead><tr><th>Team</th><th>Mean energy</th><th>Mean riding ability</th><th>Active leader</th></tr></thead><tbody>{currentKm.teamEnergy.map(team=>{
             const name=kilometreRace.scenario.teams.find(t=>t.id===team.teamId)?.name??team.teamId;
             const leaderId=currentKm.activeLeaders.find(l=>l.teamId===team.teamId)?.riderId;

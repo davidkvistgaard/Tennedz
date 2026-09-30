@@ -2102,3 +2102,20 @@ test('Race Lab combines a scheduled order change and break attack at one marker'
   assert.deepEqual(altered.frames.slice(0,40),baseline.frames.slice(0,40));
   assert.equal(validateRecordedTour(altered),true);
 });
+
+test('Race Lab can schedule a later break-work choice without changing earlier kilometres',()=>{
+  const scenario=flatScenario('break');
+  const baseline=runKilometreLab({scenario,seed:'lab-later-break-work'});
+  scenario.teams[0].phaseAtKm=40;
+  scenario.teams[0].phaseBreakWork='sit_on';
+  const altered=runKilometreLab({scenario,seed:'lab-later-break-work'});
+  const amber=altered.committedInputs.teams.find(team=>team.id==='team-0');
+  assert.equal(orderAt(amber.orders,39).breakWork,'cooperate');
+  assert.equal(orderAt(amber.orders,40).breakWork,'sit_on');
+  assert.deepEqual(altered.frames.slice(0,40),baseline.frames.slice(0,40));
+  const captainId=amber.orders.captainId;
+  assert.ok(baseline.frames.slice(40).some((frame,index)=>
+    frame.pullRiderIds.includes(captainId)&&
+    !altered.frames[index+40].pullRiderIds.includes(captainId)));
+  assert.equal(validateRecordedTour(altered),true);
+});

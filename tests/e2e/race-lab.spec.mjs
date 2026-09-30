@@ -136,6 +136,7 @@ test('Race Lab previews a scheduled order change after its marker',async ({page}
   await page.getByLabel("Amber's order-change marker").selectOption('40');
   await page.getByLabel("Amber's later effort").selectOption('hard');
   await page.getByLabel("Amber's later chase").selectOption('all');
+  await page.getByLabel("Amber's later break work").selectOption('sit_on');
   await page.getByRole('button',{name:'Run kilometre prototype'}).click();
   const slider=page.getByRole('slider',{name:'Recorded kilometre'});
   await slider.focus();
@@ -146,4 +147,5 @@ test('Race Lab previews a scheduled order change after its marker',async ({page}
   await page.keyboard.press('ArrowRight');
   await expect(page.getByText('41 / 160 km',{exact:true})).toBeVisible();
   await expect(page.getByText(/Scheduled Amber orders: hard effort · all chase/)).toBeVisible();
+  await expect(page.getByText(/Scheduled Amber orders/)).toContainText('sit on in the break');
 });
