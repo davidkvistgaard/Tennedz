@@ -2,7 +2,7 @@
 
 Status: **development prototype, not wired to the public race cycle**. The existing `recovery-one-day-4-orders` engine, stored race outputs, database schema and live site remain unchanged. This work starts a separate, versioned engine on top of the latest recovery code so the working cycle can remain the comparison baseline while the replacement is built and balanced.
 
-Current balance version: `v2-prototype-58`. The simulator supports ordered independent road groups and records their formation, splits, pursuit, merges and catches. At the finish, a faster rear group can absorb slower riders ahead, and the bunch can catch individual riders from any road group while other groups survive. The final frame and provisional result must agree, and the replay validator checks those transitions. These are deterministic laboratory outcomes, not official race times or a production-ready viewer.
+Current balance version: `v2-prototype-59`. The simulator supports ordered independent road groups and records their formation, splits, pursuit, merges and catches. At the finish, a faster rear group can absorb slower riders ahead, and the bunch can catch individual riders from any road group while other groups survive. The final frame and provisional result must agree, and the replay validator checks those transitions. These are deterministic laboratory outcomes, not official race times or a production-ready viewer.
 
 ## Product contract
 
@@ -103,6 +103,8 @@ Version `v2-prototype-50` prevents one rider from both escaping the peloton and 
 Version `v2-prototype-51` lets the bunch catch successive rear road groups in the final sprint. If the rearmost group is wholly caught, the next group is checked against the same visible finish effort; an earlier break can still survive. A partly surviving rear group stops that cascade. The final replay frame records every caught rider. Final-metre catches between two break groups remain unmodelled.
 
 Later versions through `v2-prototype-58` add partial catches between road groups, make selective pursuit wait while a gap is manageable, and let the bunch catch a slower rider from any surviving group in the final burst. The closing result keeps each surviving group in road order and records every rider who changed group. Scenario and replay tests cover partial catches and a complete front-group catch; five different seeds also exercise the maximum 20-team field. The finishing calculation is still an approximation of rider effort, not a calibrated physical timing model.
+
+Version `v2-prototype-59` keeps the active leader of a team defending a top-ten GC place out of automatically selected attacks. The manager can still explicitly name that leader as the attacker. This prevents a default attack preset from undermining a precommitted defence plan while preserving the manager's deliberate choice.
 
 Version `v2-prototype-45` gives managers a precommitted helper-attack policy: `open` (the existing default), `hold_for_captain`, or `release_if_dropped`. The last choice reserves unnamed helpers until the active leader is recorded as dropped, then allows them to seek their own result. A manager's explicitly named attacker takes precedence. The rule also applies to automatic finale attacks from a break, and a helper released into a normal attack is identified in the recorded kilometre. This is a first rider-autonomy rule; it does not yet model a graded captain winning chance or delayed road-captain recognition.
 

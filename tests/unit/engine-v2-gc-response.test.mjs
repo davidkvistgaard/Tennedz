@@ -2,6 +2,8 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {simulateTacticalTour} from '../../lib/engine/v2/tour.mjs';
 import {validateRecordedTour} from '../../lib/engine/v2/recording.mjs';
+import {normalizeOrders} from '../../lib/engine/v2/orders.mjs';
+import {resolveTacticalKilometre} from '../../lib/engine/v2/tactics.mjs';
 import {startGeneralClassification,recordGeneralClassificationStage} from
   '../../lib/engine/v2/classification.mjs';
 
@@ -21,6 +23,29 @@ const classification=recordGeneralClassificationStage(initial,{stageId:'earlier-
     riderId:rider.id,timeSeconds:faster.has(rider.id)?3590:
       rider.id==='a0'?3600:rider.id==='b0'?3602:3610,
   })))});
+
+test('a GC defender keeps its leader back during an unnamed attack but honours a named move',()=>{
+  const make=(id,gcObjective,attackRiderId)=>{
+    const riderIds=Array.from({length:8},(_,index)=>`${id}${index}`);
+    return {id,riders:riderIds.map((riderId,index)=>({id:riderId,gender:'M',
+      flat:index===0?100:60,strength:index===0?100:60,
+      acceleration:index===0?100:60,endurance:70})),
+    orders:normalizeOrders({captainId:riderIds[0],roadCaptainId:riderIds[1],
+      gcObjective,preset:'balanced',baseline:{attack:'selective',chase:'ignore',
+        ...(attackRiderId===undefined?{}:{attackRiderId})}},
+    {riderIds,distanceKm:40}),
+    energy:Object.fromEntries(riderIds.map(riderId=>[riderId,100])),
+    attackLoad:Object.fromEntries(riderIds.map(riderId=>[riderId,0])),
+    activeLeaderId:riderIds[0]};
+  };
+  const opponent=make('b','stage_result');
+  opponent.orders.baseline.attack='none';
+  const attempt=defender=>resolveTacticalKilometre({teams:[defender,opponent],
+    km:20,distanceKm:40}).attackers[0].riderId;
+  assert.equal(attempt(make('a','stage_result')),'a0');
+  assert.notEqual(attempt(make('a','defend_top_ten')),'a0');
+  assert.equal(attempt(make('a','defend_top_ten','a0')),'a0');
+});
 
 test('a committed top-ten objective reacts to a real GC threat and remains replayable',()=>{
   const defending=structuredClone(teams);
