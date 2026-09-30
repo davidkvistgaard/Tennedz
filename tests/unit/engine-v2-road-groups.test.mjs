@@ -1,7 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {splitFrontRoadGroup,splitRoadGroup,joinRoadGroupAhead,formChasingRoadGroup,advanceRoadGroups,
-  validateRoadGroupTransition,selectRoadGroupPulls} from '../../lib/engine/v2/road-groups.mjs';
+  validateRoadGroupTransition,selectRoadGroupPulls,relativeRoadGroupPace} from
+  '../../lib/engine/v2/road-groups.mjs';
+import {buildKilometreRoute} from '../../lib/engine/v2/route.mjs';
 
 const initial=[{id:'road-1',riderIds:['a-0','a-1','b-0'],teamIds:['a','b'],gapSeconds:20}];
 const teams={"a-0":'a',"a-1":'a',"b-0":'b'};
@@ -80,6 +82,29 @@ test('a trailing teammate may work only for a nearby fading forward rider under 
     ['a-0','b-0']);
   teams[0].orders.forwardResponse='protect_forward';
   assert.deepEqual(selectRoadGroupPulls(groups,teams,21),['a-0','b-0']);
+});
+
+test('the fading-rider fallback changes the trailing group pace without giving its sitter free work',()=>{
+  const groups=[
+    {id:'road-1',riderIds:['a-0'],teamIds:['a'],gapSeconds:25},
+    {id:'road-2',riderIds:['a-1','b-0','c-0'],teamIds:['a','b','c'],gapSeconds:18},
+  ];
+  const teams=['a','b','c'].map(id=>({id,riders:[0,1].map(index=>({
+    id:`${id}-${index}`,flat:70,strength:70,endurance:70,timetrial:70,
+  })),energy:{[`${id}-0`]:id==='a'?20:80,[`${id}-1`]:80},
+  orders:{forwardResponse:id==='a'?'chase_if_fading':'protect_forward',
+    baseline:{breakWork:id==='c'?'sit_on':'cooperate'},phases:[]}}));
+  const segment=buildKilometreRoute({distance_km:40,
+    profile_points:[[0,100],[40,100]],keypoints:[]},{seed:'fading-group-pace'}).kilometres[20];
+  const fallback=selectRoadGroupPulls(groups,teams,21);
+  assert.deepEqual(fallback,['a-0','a-1','b-0']);
+  const withFallback=relativeRoadGroupPace(groups[0],groups[1],teams,segment,fallback);
+  teams[0].orders.forwardResponse='protect_forward';
+  const protectedPulls=selectRoadGroupPulls(groups,teams,21);
+  assert.deepEqual(protectedPulls,['a-0','b-0']);
+  const protectedPace=relativeRoadGroupPace(groups[0],groups[1],teams,segment,
+    protectedPulls);
+  assert.ok(withFallback<protectedPace);
 });
 
 test('the pursuing break can recatch the attacker without losing its group identity',()=>{
