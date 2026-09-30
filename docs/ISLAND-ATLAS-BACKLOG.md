@@ -1,5 +1,7 @@
 # Pelotonia Island Atlas — featurepakke
 
+> **Historisk featureopdeling.** Aktuel status og resterende atlasopgaver med estimater findes i [MASTER-TODO-2026-09-30.md](MASTER-TODO-2026-09-30.md), punkt 21–26.
+
 Status: **planlagt; datagrundlag eksisterer, interaktivt atlas er ikke implementeret**. Optaget 24. september 2026 på ejerens anmodning. Den [fulde specifikation](ISLAND-ATLAS-SPECIFICATION.md) er bevaret som kilde; denne fil omsætter den til leverancer. Overordnet prioritering: [PRODUCT-ROADMAP.md](PRODUCT-ROADMAP.md).
 
 ## Formål og afgrænsning

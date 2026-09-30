@@ -7,6 +7,7 @@ import {atlasWorld} from '../lib/world/atlas-data.mjs';
 import {correctedDiscoverySources} from '../lib/world/source-corrections.mjs';
 import {validateWorld} from '../lib/world/validate.mjs';
 import {validateVisualGeography} from '../lib/world/visual-validate.mjs';
+import {SAME_PLACE_ALIASES,WORLD_BASELINE_DECISIONS} from '../lib/world/baseline-decisions.mjs';
 
 export function auditWorldBaseline(){
  const versions=[worldV1,worldV1_3,worldV1_4,worldV1_5,atlasWorld];
@@ -59,6 +60,29 @@ export function auditWorldBaseline(){
   assert.equal(outline.properties.canonicalFeatureId,featureId,outlineId);
   assert.equal(outline.relations.find(r=>r.kind==='alias_of')?.targetId,featureId,outlineId);
  }
+ const caldera=current.get('DISC-012'),lake=current.get('PHY-011');
+ assert.equal(caldera.type,'caldera');
+ assert.equal(lake.type,'lake');
+ assert.equal(lake.parentId,caldera.id);
+ assert.equal(current.get('V12-NAT-GREAT-CALDERA-VOLCANIC-BASIN-01').parentId,caldera.id);
+ assert.equal(current.get('V12-NAT-GREAT-CALDERA-VOLCANIC-BASIN-05').parentId,lake.id);
+ assert.equal(current.get('AUR-SITE-003').parentId,'AUR-LMK-001');
+ for(const [olderId,canonicalId] of SAME_PLACE_ALIASES){
+  const older=current.get(olderId),canonical=current.get(canonicalId);
+  assert.equal(older.name,canonical.name,olderId);
+  assert.equal(older.status,'concept',olderId);
+  assert.equal(older.properties.canonicalFeatureId,canonicalId,olderId);
+  assert.equal(older.relations.find(relation=>relation.kind==='alias_of')?.targetId,canonicalId,olderId);
+ }
+ const regions=worldV1_5.objects.filter(object=>object.type==='region');
+ assert.equal(regions.reduce((sum,region)=>sum+(region.properties.population?.value??0),0),current.get('WORLD-001').properties.population.value);
+ assert.equal(current.get('REG-NORTHERN-PLATEAU').properties.population.value,WORLD_BASELINE_DECISIONS.northernPlateauPopulation);
+ assert.equal(current.get('REG-002').properties.population.value,1_100_000);
+ assert.equal(current.get('REG-006').properties.population.value,3_500_000);
+ assert.equal(current.get('RIV-004').properties.terminalKind,'seasonal-ocean-mouth');
+ assert.equal(current.get('HYD-R04-SEG-03').properties.flowRegime,'wet-year-only');
+ assert.ok(atlas.get('RIV-004').representations.some(representation=>representation.style==='seasonal-river'));
+ assert.equal(worldV1_5.issues.find(issue=>issue.id==='SOURCE-002')?.status,'resolved');
  return {worldObjects:current.size,atlasObjects:atlas.size,sourceAliases:aliases.size,correctedDiscoverySources:correctedDiscoverySources.length,gridCells:worldV1_5.objects.filter(o=>o.type==='grid_cell').length};
 }
 

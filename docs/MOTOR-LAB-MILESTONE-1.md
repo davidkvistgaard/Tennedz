@@ -1,0 +1,9 @@
+# Motor Lab — first visible engine milestone
+
+This slice adds `/team/motor-lab` for signed-in managers and a read-only `POST /api/motor-lab`. It is a fictional, isolated demonstration, not the official race viewer or an alternate live race runner. The current race engine, results, Supabase schema/data, scheduled jobs and points are unchanged.
+
+The manager chooses one of four simple Amber plans and a bounded scenario number. The server builds the same four synthetic eight-rider squads and 160 km route, runs `v2-prototype-74`, validates the complete in-memory recording and returns only a compact presentation of each kilometre: road groups, chase, conditions, energy and notable movements. The browser can scrub or jump between recorded moments; changing a plan requires a new calculation. The experimental provisional result is labelled as such. No engine tuning table or hidden coefficient is bundled into the browser.
+
+The API uses existing authenticated team ownership and same-origin checks, a bounded input and supplemental per-process rate limit. It never reads the manager's riders or writes any database row. The fixture is intentionally simple: flat/coastal terrain, four fictional teams and shared male synthetic profiles. It cannot establish realistic balance, category parity, stage racing or suitability for official events. The richer order workshop, full viewer and real test-race persistence remain later milestones.
+
+Verification: copied v2 engine scenario/unit coverage plus focused guided-preview tests; full unit suite, ESLint, production build and authenticated 390/1440 px browser journeys. Browser checks include anonymous rejection, foreign-Origin rejection, plan selection, server-calculated replay, scrubbing, moment navigation and a same-seed rerun. World Baseline 1.6.2 remains in the same release candidate. Production publication requires a separate deployment check; no migration is needed for this slice.

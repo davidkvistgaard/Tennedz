@@ -1,5 +1,7 @@
 # Pelotonia World Baseline 1.6.1 — source reconciliation
 
+The five editorial decisions listed below were subsequently resolved by the owner in [World Baseline 1.6.2](./PELOTONIA-WORLD-BASELINE-1.6.2.md). This file remains the record of the 1.6.1 audit and its then-open questions.
+
 This is an errata and audit layer over the existing World 1.5 object graph and Visual Geography 1.6 atlas. It does not renumber stable repository IDs, create a parallel geographic dataset, or add cycling content. The implemented repository state is the technical baseline; the original source documents remain historical evidence where they conflict with the owner's later correction.
 
 ## Resolved corrections

@@ -1,5 +1,7 @@
 # Pelotonia: produktgrundlag og rækkefølge
 
+> **Historisk roadmap.** Den ajourførte samlede to-do-liste, status og timeestimater findes i [MASTER-TODO-2026-09-30.md](MASTER-TODO-2026-09-30.md). Flere status- og »næste«-udsagn nedenfor er overhalet af senere implementeringer.
+
 Ejerens 50 punkter er bevaret i PRODUCT-VISION.md. Senere præciseringer har forrang:
 
 - **Spillets sprog er engelsk overalt.** Forside, spillerinterface, onboarding, løbsviewer, atlas, fejlbeskeder og fremtidige illustrationers tekster skal være engelske, selv om ejerdialogen foregår på dansk. Visionen er et globalt cycling manager-spil. Bevar internationale personnavne og spilleroprettede navne. Deadlines skal have en eksplicit tidszone.
