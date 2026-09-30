@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {simulateTacticalTour} from '../../lib/engine/v2/tour.mjs';
-import {classifyTacticalStage} from '../../lib/engine/v2/stage-race.mjs';
+import {classifyTacticalStage,carryStageFatigue} from '../../lib/engine/v2/stage-race.mjs';
 import {validateRecordedTour} from '../../lib/engine/v2/recording.mjs';
 
 const stage={distance_km:40,profile_points:[[0,100],[40,100]],keypoints:[]};
@@ -58,4 +58,30 @@ test('stage accounting keeps the women’s event in its own race category',()=>{
     classification});
   assert.equal(next.raceCategory,'F');
   assert.equal(validateRecordedTour(next),true);
+});
+
+test('costly stage work carries more fatigue while a rest day lowers the next start load',()=>{
+  const longStage={distance_km:120,profile_points:[[0,100],[120,100]],keypoints:[]};
+  const hard=structuredClone(teams);
+  const easy=structuredClone(teams);
+  hard[0].orders.baseline.effort='hard';
+  easy[0].orders.baseline.effort='conserve';
+  const full=simulateTacticalTour({stage:longStage,teams:hard,seed:'carried-fatigue'});
+  const saved=simulateTacticalTour({stage:longStage,teams:easy,seed:'carried-fatigue'});
+  const hardCarry=carryStageFatigue({recording:full});
+  const easyCarry=carryStageFatigue({recording:saved});
+  const rested=carryStageFatigue({recording:full,restDays:1});
+  const fatigue=result=>result.teams.find(team=>team.id==='a').riders[0].fatigue;
+  assert.equal(hardCarry.tuningVersion,full.tuningVersion);
+  assert.ok(fatigue(hardCarry)>fatigue(easyCarry));
+  assert.ok(fatigue(rested)<fatigue(hardCarry));
+  assert.deepEqual(full.committedInputs.teams[0].riders[0].fatigue,0);
+  const nextTeams=hardCarry.teams.map(team=>({...team,
+    orders:hard.find(original=>original.id===team.id).orders}));
+  const next=simulateTacticalTour({stage,teams:nextTeams,seed:'stage-after-work'});
+  assert.ok(next.frames[0].riderGroups.find(rider=>rider.id==='a0').energy<
+    simulateTacticalTour({stage,teams,seed:'stage-after-work'}).frames[0]
+      .riderGroups.find(rider=>rider.id==='a0').energy);
+  assert.equal(validateRecordedTour(next),true);
+  assert.throws(()=>carryStageFatigue({recording:full,restDays:-1}),/Rest days/);
 });
