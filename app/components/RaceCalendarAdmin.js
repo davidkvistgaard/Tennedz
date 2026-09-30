@@ -2,6 +2,9 @@
 import { useEffect, useRef, useState } from "react";
 import { api } from "../../lib/api";
 import StageProfile from "./StageProfile";
+import {TIER_WINNER_POINTS} from "../../lib/calendar/points.mjs";
+
+const tierNames={1:"Open",2:"Challenger",3:"Pro",4:"World",5:"Major",6:"Pinnacle"};
 
 export default function RaceCalendarAdmin({ enabled, onCreated }) {
   const [templates, setTemplates] = useState([]),
@@ -9,6 +12,8 @@ export default function RaceCalendarAdmin({ enabled, onCreated }) {
     [name, setName] = useState(""),
     [gender, setGender] = useState("BOTH"),
     [deadline, setDeadline] = useState(""),
+    [scheduledAt, setScheduledAt] = useState(""),
+    [tier, setTier] = useState("1"),
     [busy, setBusy] = useState(false),
     [message, setMessage] = useState("");
   const request = useRef(null);
@@ -29,6 +34,12 @@ export default function RaceCalendarAdmin({ enabled, onCreated }) {
         .toISOString()
         .slice(0, 16),
     );
+    const race=new Date();
+    race.setDate(race.getDate()+7);
+    while(![0,3].includes(race.getDay()))race.setDate(race.getDate()+1);
+    race.setHours(18,0,0,0);
+    setScheduledAt(new Date(race.getTime()-race.getTimezoneOffset()*60000)
+      .toISOString().slice(0,16));
     return () => {
       active = false;
     };
@@ -44,6 +55,9 @@ export default function RaceCalendarAdmin({ enabled, onCreated }) {
         gender,
         template_id: template,
         deadline: new Date(deadline).toISOString(),
+        scheduled_at: new Date(scheduledAt).toISOString(),
+        calendar_source: "PELOTONIA",
+        race_tier: Number(tier),
       };
       const signature = JSON.stringify(input);
       if (request.current?.signature !== signature)
@@ -112,6 +126,19 @@ export default function RaceCalendarAdmin({ enabled, onCreated }) {
               value={deadline}
               onChange={(e) => setDeadline(e.target.value)}
             />
+          </label>
+          <label>
+            Race day · Wednesday or Sunday · your local time
+            <input required type="datetime-local" value={scheduledAt}
+              onChange={(e) => setScheduledAt(e.target.value)} />
+          </label>
+          <label>
+            Race tier
+            <select value={tier} onChange={(e) => setTier(e.target.value)}>
+              {Object.entries(TIER_WINNER_POINTS).map(([number,points])=><option key={number} value={number}>
+                T{number} · {tierNames[number]} · {points.toLocaleString("en-GB")} winner points
+              </option>)}
+            </select>
           </label>
           <button
             className="btn primary"

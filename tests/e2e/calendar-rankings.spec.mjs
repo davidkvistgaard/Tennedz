@@ -82,3 +82,12 @@ test("automatic entries remain behind the game-write gate", async ({ page }) => 
   expect(batch.status()).toBe(503);
   expect((await batch.json()).code).toBe("GAME_READ_ONLY");
 });
+
+test("administrator editor exposes a scheduled Pelotonia race day and tier", async ({ page }) => {
+  await login(page);
+  await page.goto("/admin");
+  await expect(page.getByRole("heading", { name: "Create a race day" })).toBeVisible();
+  await expect(page.getByLabel(/Race day · Wednesday or Sunday/)).toBeVisible();
+  await expect(page.getByLabel("Race tier")).toBeVisible();
+  await expect(page.getByLabel("Race tier").locator("option")).toHaveCount(6);
+});
