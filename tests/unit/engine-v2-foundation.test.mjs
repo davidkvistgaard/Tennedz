@@ -1070,6 +1070,33 @@ test('the bunch may catch the rear break at the line while the front break survi
   assert.ok(finish.results.find(result=>result.riderId==='a-1').position>1);
 });
 
+test('a stronger rear-break rider can survive when their companion is caught at the line',()=>{
+  const teams=[tacticalTeam('a','balanced'),tacticalTeam('b','balanced'),
+    tacticalTeam('c','balanced')];
+  teams[0].riders[1].sprint=0;
+  teams[1].riders[0].sprint=100;
+  teams[2].riders.forEach(rider=>{rider.sprint=100;});
+  const flat={distance_km:40,profile_points:[[0,100],[40,100]]};
+  const route=buildKilometreRoute(flat,{seed:'partial-rear'});
+  const roadGroups=[
+    {id:'road-1',riderIds:['a-0'],teamIds:['a'],gapSeconds:24},
+    {id:'road-2',riderIds:['a-1','b-0'],teamIds:['a','b'],gapSeconds:.5},
+  ];
+  const ahead=new Set(roadGroups.flatMap(group=>group.riderIds));
+  const states=teams.flatMap(team=>team.riders.map(rider=>({id:rider.id,energy:80,
+    deficitSeconds:0,group:ahead.has(rider.id)?'breakaway':'peloton'})));
+  const finish=resolveRearRoadGroupFinishingSprint({route,teams,states,roadGroups,
+    seed:'partial-rear'});
+  assert.deepEqual(finish.caughtRiderIds,['a-1']);
+  assert.deepEqual(finish.roadGroups[1].riderIds,['b-0']);
+  assert.deepEqual(finish.roadGroups[1].teamIds,['b']);
+  assert.ok(finish.roadGroups[1].gapSeconds>0);
+  assert.equal(validateRoadGroupTransition(roadGroups,finish.roadGroups,
+    {caughtRiderIds:finish.caughtRiderIds}),true);
+  assert.equal(finish.results.find(result=>result.riderId==='b-0').group,'breakaway');
+  assert.equal(finish.results.find(result=>result.riderId==='a-1').group,'peloton');
+});
+
 test('a late chase group is caught at the line while the first break remains replayable',()=>{
   const front=tacticalTeam('a','balanced',{baseline:{attack:'selective',chase:'ignore'},
     phases:[{atKm:10,attack:'none'}]});
