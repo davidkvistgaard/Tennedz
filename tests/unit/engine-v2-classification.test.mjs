@@ -62,6 +62,24 @@ test('classification rejects missing, duplicate, foreign and invented stage time
   assert.throws(()=>apply(times({r0:'3600'})),/classified stage time/);
 });
 
+test('a later stage rejects corrupted prior standings instead of carrying them forward',()=>{
+  const start=startGeneralClassification({raceCategory:'M',riders});
+  const first=recordGeneralClassificationStage(start,{stageId:'stage-1',
+    classifiedTimes:times({r0:3590})});
+  const apply=previous=>recordGeneralClassificationStage(previous,{stageId:'stage-2',
+    classifiedTimes:times()});
+  const wrongPlace=structuredClone(first);
+  wrongPlace.standings[0].position=2;
+  assert.throws(()=>apply(wrongPlace),/committed GC classification/);
+  const wrongOrder=structuredClone(first);
+  wrongOrder.standings.reverse();
+  assert.throws(()=>apply(wrongOrder),/committed GC classification/);
+  const falseStart=structuredClone(start);
+  falseStart.standings[0].totalMilliseconds=1000;
+  assert.throws(()=>recordGeneralClassificationStage(falseStart,{stageId:'stage-1',
+    classifiedTimes:times()}),/initial classification/);
+});
+
 test('provisional road gaps reveal a top-ten GC threat without future results',()=>{
   const prior=startGeneralClassification({raceCategory:'M',riders});
   const faster=new Set(['r1','r2','r3','r4','r5','r6','r7','r9','r10']);
