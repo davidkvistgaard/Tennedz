@@ -130,6 +130,15 @@ test('Race Lab accepts a precommitted fallback for a fading rider ahead',async (
   await expect(fallback).toHaveValue('chase_if_fading');
 });
 
+test('Race Lab accepts a costly drive-the-break order',async ({page})=>{
+  await page.goto('/race-lab');
+  const breakWork=page.getByLabel('Amber’s break work',{exact:true});
+  await breakWork.selectOption('drive');
+  await page.getByRole('button',{name:'Run kilometre prototype'}).click();
+  await expect(page.getByRole('heading',{name:/Kilometre engine/})).toBeVisible();
+  await expect(breakWork).toHaveValue('drive');
+});
+
 test('Race Lab previews a scheduled order change after its marker',async ({page})=>{
   await page.goto('/race-lab');
   await page.getByLabel('Amber’s plan',{exact:true}).selectOption('conserve');

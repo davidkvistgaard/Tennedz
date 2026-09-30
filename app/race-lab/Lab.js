@@ -204,6 +204,7 @@ export default function Lab() {
               onChange={e=>setBreakWork(e.target.value)}>
               <option value="cooperate">Take turns at the front</option>
               <option value="sit_on">Sit on and save energy</option>
+              <option value="drive">Drive the break at a higher energy cost</option>
             </select>
           </label>
           <label>
@@ -274,6 +275,7 @@ export default function Lab() {
               <option value="">Keep the original break work</option>
               <option value="cooperate">Take turns at the front</option>
               <option value="sit_on">Sit on without pulling</option>
+              <option value="drive">Drive the break at a higher energy cost</option>
             </select>
           </label>
           {[

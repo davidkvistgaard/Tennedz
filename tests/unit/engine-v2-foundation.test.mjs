@@ -741,10 +741,35 @@ test('rotating pulls shares exposure within a group without rewarding a sitter',
   assert.throws(()=>roadGroupExposureCosts(together,['foreign']),/puller/);
 });
 
+test('driving a break is faster than sharing turns but costs the driver more energy',()=>{
+  const sharer=tacticalTeam('a','balanced',{baseline:{attack:'none',chase:'ignore',
+    breakWork:'cooperate'}});
+  const driver=tacticalTeam('a','balanced',{baseline:{attack:'none',chase:'ignore',
+    breakWork:'drive'}});
+  const pursuer=tacticalTeam('b','balanced',{baseline:{attack:'none',chase:'ignore',
+    breakWork:'cooperate'}});
+  for(const team of [sharer,driver,pursuer])
+    team.energy=Object.fromEntries(team.riders.map(rider=>[rider.id,100]));
+  const groups=[{id:'road-1',riderIds:['a-0','a-1'],teamIds:['a'],gapSeconds:20},
+    {id:'road-2',riderIds:['b-0','b-1'],teamIds:['b'],gapSeconds:10}];
+  const segment=buildKilometreRoute(stage,{seed:'drive-break'}).kilometres[20];
+  const pulls=['a-0','a-1','b-0','b-1'];
+  assert.ok(relativeRoadGroupPace(...groups,[driver,pursuer],segment,pulls)>
+    relativeRoadGroupPace(...groups,[sharer,pursuer],segment,pulls));
+  const sharedCosts=roadGroupExposureCosts(groups,pulls);
+  const driveCosts=roadGroupExposureCosts(groups,pulls,{driveRiderIds:['a-0','a-1']});
+  assert.ok(driveCosts.get('a-0')>sharedCosts.get('a-0'));
+  assert.equal(driveCosts.get('b-0'),sharedCosts.get('b-0'));
+  assert.throws(()=>roadGroupExposureCosts(groups,pulls,{driveRiderIds:['foreign']}),
+    /pull roster/);
+});
+
 test('taking pulls grows the break gap but costs energy compared with sitting on',()=>{
   const worker=tacticalTeam('a','aggressive',{baseline:{chase:'ignore',breakWork:'cooperate'},
     phases:[{atKm:20,attack:'none'}]});
   const sitter=tacticalTeam('a','aggressive',{baseline:{chase:'ignore',breakWork:'sit_on'},
+    phases:[{atKm:20,attack:'none'}]});
+  const driver=tacticalTeam('a','aggressive',{baseline:{chase:'ignore',breakWork:'drive'},
     phases:[{atKm:20,attack:'none'}]});
   const bunch=tacticalTeam('b','protect',{baseline:{chase:'ignore'}});
   const context={teams:[worker,bunch],km:12,gapSeconds:20,
@@ -757,11 +782,17 @@ test('taking pulls grows the break gap but costs energy compared with sitting on
   const flat={distance_km:40,profile_points:[[0,100],[40,100]]};
   const active=simulateTacticalTour({stage:flat,teams:[worker,bunch],seed:'break-work'});
   const passive=simulateTacticalTour({stage:flat,teams:[sitter,bunch],seed:'break-work'});
+  const driving=simulateTacticalTour({stage:flat,teams:[driver,bunch],seed:'break-work'});
   const workingFrame=active.frames.find(frame=>frame.pullRiderIds.includes('a-0'));
   assert.ok(workingFrame);
   const restingFrame=passive.frames[workingFrame.km-1];
   assert.ok(workingFrame.riderGroups.find(rider=>rider.id==='a-0').energy<
     restingFrame.riderGroups.find(rider=>rider.id==='a-0').energy);
+  const drivingFrame=driving.frames[workingFrame.km-1];
+  assert.ok(drivingFrame.riderGroups.find(rider=>rider.id==='a-0').energy<
+    workingFrame.riderGroups.find(rider=>rider.id==='a-0').energy);
+  assert.ok(drivingFrame.gapSeconds>=workingFrame.gapSeconds);
+  assert.equal(validateRecordedTour(driving),true);
 });
 
 test('a mixed break credits only willing riders with work, without gifting the sitter speed',()=>{
@@ -970,7 +1001,7 @@ test('the full tactical trace is deterministic, bounded and makes aggressive ord
   const a=simulateTacticalTour(input);
   assert.deepEqual(a,simulateTacticalTour(input));
   assert.equal(a.frames.length,40);
-  assert.equal(a.tuningVersion,'v2-prototype-68');
+  assert.equal(a.tuningVersion,'v2-prototype-69');
   assert.equal(a.frames.at(-1).km,40);
   assert.ok(a.frames.some(frame=>frame.attackers.length>0));
   assert.ok(a.frames.some(frame=>frame.chasers.length>0));
