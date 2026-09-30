@@ -11,7 +11,8 @@ import {provisionalFinish,provisionalRoadGroupFinish,
   resolveRearRoadGroupFinishingSprint} from '../../lib/engine/v2/finish.mjs';
 import {selectShelter} from '../../lib/engine/v2/support.mjs';
 import {selectCaptainSupport,applyCaptainSupport} from '../../lib/engine/v2/captain-support.mjs';
-import {validateRoadGroupTransition} from '../../lib/engine/v2/road-groups.mjs';
+import {MAX_ROAD_GROUPS,advanceRoadGroups,assertRoadGroups,
+  validateRoadGroupTransition} from '../../lib/engine/v2/road-groups.mjs';
 import {automaticBreakAttackRider} from '../../lib/engine/v2/break-attack.mjs';
 import {validateRecordedTour,readRecordedKilometre} from '../../lib/engine/v2/recording.mjs';
 import {recoveryForKilometre} from '../../lib/engine/v2/recovery.mjs';
@@ -417,7 +418,7 @@ test('successive peloton moves can make three recorded road groups',()=>{
   assert.throws(()=>validateRecordedTour(tampered),/road group/);
 });
 
-test('successive moves can maintain six independent recorded groups',()=>{
+test('successive moves can maintain more than six independent recorded groups',()=>{
   const makeTeam=(id,attackAt)=>({id,
     riders:Array.from({length:8},(_,index)=>({id:`${id}-${index}`,gender:'M',
       flat:index===0?95:50,strength:index===0?95:60,
@@ -432,20 +433,31 @@ test('successive moves can maintain six independent recorded groups',()=>{
     keypoints:[10,20,30,40,50,60,70].map(km=>({km,kind:'SPRINT'}))};
   const race=simulateTacticalTour({stage:flat,
     teams:[makeTeam('a',0),makeTeam('b',20),makeTeam('c',30),
-      makeTeam('d',40),makeTeam('e',50),makeTeam('f',60)],
-    seed:'six-road-groups'});
-  const six=race.frames.find(frame=>frame.roadGroups.length===6);
-  assert.ok(six,'six separately timed moves should be able to survive together');
-  assert.deepEqual(six.roadGroups.map(group=>group.riderIds),
-    [['a-0'],['b-0'],['c-0'],['d-0'],['e-0'],['f-0']]);
+      makeTeam('d',40),makeTeam('e',50),makeTeam('f',60),makeTeam('g',70)],
+    seed:'seven-road-groups'});
+  const seven=race.frames.find(frame=>frame.roadGroups.length===7);
+  assert.ok(seven,'seven separately timed moves should be able to survive together');
+  assert.deepEqual(seven.roadGroups.map(group=>group.riderIds),
+    [['a-0'],['b-0'],['c-0'],['d-0'],['e-0'],['f-0'],['g-0']]);
   assert.equal(validateRecordedTour(race),true);
   const tampered=structuredClone(race);
-  tampered.frames[six.km-1].roadGroups[2].riderIds=['a-0'];
+  tampered.frames[seven.km-1].roadGroups[2].riderIds=['a-0'];
   assert.throws(()=>validateRecordedTour(tampered),/road group|continue|riders/);
   const swappedTeams=structuredClone(race);
-  swappedTeams.frames[six.km-1].roadGroups[0].teamIds=['b'];
-  swappedTeams.frames[six.km-1].roadGroups[1].teamIds=['a'];
+  swappedTeams.frames[seven.km-1].roadGroups[0].teamIds=['b'];
+  swappedTeams.frames[seven.km-1].roadGroups[1].teamIds=['a'];
   assert.throws(()=>validateRecordedTour(swappedTeams),/road-group teams/);
+});
+
+test('the road-group transition supports the full two-riders-per-team ceiling',()=>{
+  assert.equal(MAX_ROAD_GROUPS,40);
+  const groups=Array.from({length:MAX_ROAD_GROUPS},(_,index)=>({
+    id:`road-${index+1}`,riderIds:[`rider-${index+1}`],
+    teamIds:[`team-${Math.floor(index/2)+1}`],gapSeconds:400-index*5,
+  }));
+  assert.doesNotThrow(()=>assertRoadGroups(groups));
+  const changes=Object.fromEntries(groups.map(group=>[group.id,0]));
+  assert.equal(advanceRoadGroups(groups,changes).groups.length,MAX_ROAD_GROUPS);
 });
 
 test('a precommitted attack from a pursuing group is simulated and replayable',()=>{
@@ -782,7 +794,7 @@ test('the full tactical trace is deterministic, bounded and makes aggressive ord
   const a=simulateTacticalTour(input);
   assert.deepEqual(a,simulateTacticalTour(input));
   assert.equal(a.frames.length,40);
-  assert.equal(a.tuningVersion,'v2-prototype-42');
+  assert.equal(a.tuningVersion,'v2-prototype-43');
   assert.equal(a.frames.at(-1).km,40);
   assert.ok(a.frames.some(frame=>frame.attackers.length>0));
   assert.ok(a.frames.some(frame=>frame.chasers.length>0));
