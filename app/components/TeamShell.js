@@ -24,7 +24,7 @@ export default function TeamShell({ title, children, compact = false }) {
   const links = [
     ["/team", "My team"],
     ["/team/settings", "Settings"],
-    ["/team/run", "Calendar & races"],
+    ["/team/calendar", "Calendar & races"],
     ["/team/portraits", "Riders"],
     ["/team/identity", "Club identity"],
     ["/team/leaderboards", "Rankings"],
