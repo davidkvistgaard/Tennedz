@@ -14,43 +14,48 @@ const stages=[
 ];
 const strategies=['hard','steady','conserve'];
 const report={samples,description:'fictional riders, three stages and explicit laboratory-only times',
-  strategies:{}};
+  categories:{}};
 
-function startingTeams(effort){
+function startingTeams(effort,gender){
   return ['a','b','c','d'].map((id,index)=>({id,riders:Array.from({length:8},(_,riderIndex)=>({
-    id:`${id}-${riderIndex}`,gender:'M',flat:70,strength:70,endurance:70,
+    id:`${id}-${riderIndex}`,gender,flat:70,strength:70,endurance:70,
     hills:70,mountain:70,sprint:65,leadership:55,
   })),orders:{captainId:`${id}-0`,roadCaptainId:`${id}-1`,
     preset:index===1?'aggressive':index===3?'protect':'balanced',
     ...(index===0?{baseline:{effort}}:{})}}));
 }
 
-for(const effort of strategies){
-  const fatigueTotals=[0,0,0],energyTotals=[0,0,0],winTotals=[0,0,0];
-  for(let sample=0;sample<samples;sample++){
-    const orders=startingTeams(effort);
-    let teams=structuredClone(orders),classification=null;
-    for(const [stageIndex,stage] of stages.entries()){
-      const recording=simulateTacticalTour({stage,teams,classification,
-        seed:`stage-series:${sample}:${stageIndex}`});
-      validateRecordedTour(recording);
-      report.tuningVersion??=recording.tuningVersion;
-      const results=recording.provisionalResults;
-      const handoff=createStageHandoff({recording,stageId:`stage-${stageIndex+1}`,
-        classifiedTimes:results.map(result=>({riderId:result.riderId,
-          timeSeconds:result.timeSeconds}))});
-      classification=handoff.classification;
-      const active=handoff.condition.teams.find(team=>team.id==='a');
-      const final=recording.frames.at(-1).riderGroups.filter(rider=>rider.teamId==='a');
-      fatigueTotals[stageIndex]+=active.riders.reduce((sum,rider)=>sum+rider.fatigue,0)/8;
-      energyTotals[stageIndex]+=final.reduce((sum,rider)=>sum+rider.energy,0)/8;
-      winTotals[stageIndex]+=Number(results[0].teamId==='a');
-      teams=handoff.condition.teams.map(team=>({...team,
-        orders:structuredClone(orders.find(original=>original.id===team.id).orders)}));
+for(const gender of ['M','F']){
+  report.categories[gender]={};
+  for(const effort of strategies){
+    const fatigueTotals=[0,0,0],energyTotals=[0,0,0],winTotals=[0,0,0];
+    for(let sample=0;sample<samples;sample++){
+      const orders=startingTeams(effort,gender);
+      let teams=structuredClone(orders),classification=null;
+      for(const [stageIndex,stage] of stages.entries()){
+        const recording=simulateTacticalTour({stage,teams,classification,
+          seed:`stage-series:${sample}:${stageIndex}`});
+        validateRecordedTour(recording);
+        if(recording.raceCategory!==gender)
+          throw new Error('Stage-series race category changed unexpectedly.');
+        report.tuningVersion??=recording.tuningVersion;
+        const results=recording.provisionalResults;
+        const handoff=createStageHandoff({recording,stageId:`stage-${stageIndex+1}`,
+          classifiedTimes:results.map(result=>({riderId:result.riderId,
+            timeSeconds:result.timeSeconds}))});
+        classification=handoff.classification;
+        const active=handoff.condition.teams.find(team=>team.id==='a');
+        const final=recording.frames.at(-1).riderGroups.filter(rider=>rider.teamId==='a');
+        fatigueTotals[stageIndex]+=active.riders.reduce((sum,rider)=>sum+rider.fatigue,0)/8;
+        energyTotals[stageIndex]+=final.reduce((sum,rider)=>sum+rider.energy,0)/8;
+        winTotals[stageIndex]+=Number(results[0].teamId==='a');
+        teams=handoff.condition.teams.map(team=>({...team,
+          orders:structuredClone(orders.find(original=>original.id===team.id).orders)}));
+      }
     }
+    report.categories[gender][effort]={meanCarriedFatigue:fatigueTotals.map(total=>
+      +(total/samples).toFixed(2)),meanFinalEnergy:energyTotals.map(total=>
+      +(total/samples).toFixed(2)),stageWinRate:winTotals.map(total=>total/samples)};
   }
-  report.strategies[effort]={meanCarriedFatigue:fatigueTotals.map(total=>
-    +(total/samples).toFixed(2)),meanFinalEnergy:energyTotals.map(total=>
-    +(total/samples).toFixed(2)),stageWinRate:winTotals.map(total=>total/samples)};
 }
 console.log(JSON.stringify(report,null,2));
