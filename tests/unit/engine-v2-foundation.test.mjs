@@ -875,7 +875,7 @@ test('the full tactical trace is deterministic, bounded and makes aggressive ord
   const a=simulateTacticalTour(input);
   assert.deepEqual(a,simulateTacticalTour(input));
   assert.equal(a.frames.length,40);
-  assert.equal(a.tuningVersion,'v2-prototype-54');
+  assert.equal(a.tuningVersion,'v2-prototype-55');
   assert.equal(a.frames.at(-1).km,40);
   assert.ok(a.frames.some(frame=>frame.attackers.length>0));
   assert.ok(a.frames.some(frame=>frame.chasers.length>0));
@@ -1325,6 +1325,36 @@ test('a faster rear break can absorb a whole leading road group at the line',()=
     {mergedGroupIds:finish.mergedRoadGroupIds}),true);
 });
 
+test('a rear break can catch one rider while a faster front rider survives',()=>{
+  const teams=[tacticalTeam('a','balanced'),tacticalTeam('b','balanced')];
+  teams.flatMap(team=>team.riders).forEach(rider=>{rider.sprint=0;});
+  teams[0].riders[0].sprint=100;
+  teams[1].riders[0].sprint=60;
+  const route=buildKilometreRoute({distance_km:40,
+    profile_points:[[0,100],[40,100]]},{seed:'partial-road-finale'});
+  const roadGroups=[
+    {id:'road-1',riderIds:['a-0','a-1'],teamIds:['a'],gapSeconds:3},
+    {id:'road-2',riderIds:['b-0'],teamIds:['b'],gapSeconds:2.5},
+  ];
+  const ahead=new Set(roadGroups.flatMap(group=>group.riderIds));
+  const states=teams.flatMap(team=>team.riders.map(rider=>({id:rider.id,energy:80,
+    deficitSeconds:0,group:ahead.has(rider.id)?'breakaway':'peloton'})));
+  const finish=resolveRearRoadGroupFinishingSprint({route,teams,states,roadGroups,
+    seed:'partial-road-finale'});
+  assert.deepEqual(finish.mergedRoadGroupIds,[]);
+  assert.deepEqual(finish.finaleRoadGroupCatches,[{
+    riderId:'a-1',fromGroupId:'road-1',toGroupId:'road-2',
+  }]);
+  assert.deepEqual(finish.roadGroups.map(group=>group.riderIds),
+    [['a-0'],['a-1','b-0']]);
+  assert.equal(validateRoadGroupTransition(roadGroups,finish.roadGroups,{
+    finaleCatchMoves:finish.finaleRoadGroupCatches,
+  }),true);
+  assert.throws(()=>validateRoadGroupTransition(roadGroups,finish.roadGroups),
+    /changed groups without a merge/);
+  assert.equal(finish.results[0].riderId,'a-0');
+});
+
 test('a whole-group finale catch is stored in the tactical replay',()=>{
   const longFlat={distance_km:80,profile_points:[[0,100],[80,100]],
     keypoints:Array.from({length:71},(_,index)=>({km:10+index,kind:'SPRINT'}))};
@@ -1348,6 +1378,12 @@ test('a whole-group finale catch is stored in the tactical replay',()=>{
   assert.equal(recording.frames.at(-1).roadGroups.length,1);
   assert.equal(recording.provisionalResults[0].riderId,'b-0');
   assert.equal(validateRecordedTour(recording),true);
+  const inventedPartialCatch=structuredClone(recording);
+  inventedPartialCatch.frames.at(-1).finaleRoadGroupCatches=[{
+    riderId:'a-0',fromGroupId:'road-1',toGroupId:'road-2',
+  }];
+  assert.throws(()=>validateRecordedTour(inventedPartialCatch),
+    /Invalid recorded finale road-group catches/);
 });
 
 test('a late chase group is caught at the line while the first break remains replayable',()=>{
