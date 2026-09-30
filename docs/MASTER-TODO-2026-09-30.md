@@ -25,6 +25,8 @@
 
 **Replay-deltrin:** Motor Lab har nu en afspillelig kilometertidslinje og en kurve over det registrerede forspring. Afspilningen bruger den eksisterende optagelse i browserhukommelsen. Vedvarende replay, rigtige hold, rigtige ruter og officielle resultater er fortsat åbne under punkt 07–09.
 
+**Taktisk deltrin:** En betinget ordre kan nu forsøge et angreb fra udbruddet efter et valgt kilometermærke. Optagelsen viser både et vellykket split og grunden til et blokeret forsøg. Det gør flere samtidige grupper synlige i en fiktiv test, men er ikke en fuld ekspertordreflade eller verificeret løbsbalance.
+
 ## Hurtigt overblik over resterende arbejde
 
 | Spor | Punkter | Estimat |

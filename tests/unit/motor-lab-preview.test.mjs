@@ -31,17 +31,28 @@ test('advanced orders are committed and alter the same seeded race',()=>{
   breakResponse:'chase_if_threatened',breakWork:'sit_on',lateEffort:'hard',
  }});
  assert.deepEqual(advanced.orders,{breakResponse:'chase_if_threatened',
-  breakWork:'sit_on',lateEffort:'hard'});
+  breakWork:'sit_on',lateEffort:'hard',breakAttackMarker:'none'});
  assert(advanced.frames[120].moments.includes('Amber switched to hard effort'));
  assert(!standard.frames[120].moments.includes('Amber switched to hard effort'));
  assert.notDeepEqual(standard.frames,advanced.frames);
  assert.deepEqual(advanced,createMotorLabPreview({plan:'break',seed:5,orders:advanced.orders}));
 });
 
+test('a committed break attack can split a group or be visibly blocked',()=>{
+ const split=createMotorLabPreview({plan:'break',seed:1,orders:{breakAttackMarker:'40'}});
+ assert.equal(split.frames[40].groups.length,2);
+ assert(split.frames[40].moments.includes('Amber Captain attacked from a break'));
+ assert.deepEqual(split,createMotorLabPreview({plan:'break',seed:1,orders:{breakAttackMarker:'40'}}));
+ const blocked=createMotorLabPreview({plan:'break',seed:1,orders:{breakAttackMarker:'120'}});
+ assert(blocked.frames[120].moments.some(moment=>moment.includes('could not start: not in break')));
+ assert.notDeepEqual(split.frames,blocked.frames);
+});
+
 test('guided preview rejects unbounded or unknown requests',()=>{
  for(const input of [{plan:'unknown',seed:0},{plan:'sprint',seed:-1},
   {plan:'sprint',seed:10000},{plan:'sprint',seed:'1'}])
   assert.throws(()=>createMotorLabPreview(input),/valid plan and scenario number/);
- for(const orders of [null,[],{breakWork:'freewheel'},{lateEffort:120},{admin:true}])
+ for(const orders of [null,[],{breakWork:'freewheel'},{lateEffort:120},
+  {breakAttackMarker:'41'},{breakAttackMarker:40},{admin:true}])
   assert.throws(()=>createMotorLabPreview({plan:'sprint',seed:1,orders}),/valid advanced orders/);
 });

@@ -11,3 +11,7 @@ Verification: 241 unit tests, ESLint, production build, and authenticated 390/14
 ## Recorded timeline increment
 
 The existing in-memory recording now has a playable kilometre timeline. A line shows the leading group's recorded advantage at each kilometre, while marks identify kilometres with multiple road groups. The manager can play, pause, scrub or jump to the previous and next key moment. Playback reads the completed recording; it does not rerun the simulation or change orders mid-race. The chart includes a text summary of the selected and largest gaps and was checked at 390 and 1440 px. It remains a laboratory viewer with a fictional route and riders, not a persistent or official race replay.
+
+## Conditional attack from the break
+
+The manager can now commit Amber Captain to try an attack from a break after 40, 80 or 120 km. The existing v2 marker order fires on the following kilometre only if the captain is in a suitable road group. The recording explains a split or a blocked attempt; the UI does not pretend the order succeeded when its condition failed. In the fixed laboratory scenario, the 40 km choice can show two simultaneous road groups, making the multi-group viewer testable. This is still one pre-race conditional order, not a live instruction or a balancing claim.
