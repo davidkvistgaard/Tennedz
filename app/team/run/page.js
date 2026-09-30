@@ -81,10 +81,19 @@ export default function RunPage() {
     setError("");
     try {
       const [data, day] = await Promise.all([
-        api("/api/events?limit=50"),
+        api("/api/events?limit=100"),
         api("/api/game-date"),
       ]);
-      setEvents(data.events.filter((e) => e.kind === "one_day"));
+      const oneDay=data.events.filter((e) => e.kind === "one_day");
+      setEvents(oneDay);
+      const requestedId=new URLSearchParams(window.location.search).get("event_id");
+      const requested=oneDay.find(e=>e.id===requestedId);
+      if(requested){
+        setGender(requested.gender);
+        setBucket(requested.status!=="OPEN"?"finished":
+          Date.parse(requested.deadline)<=Date.parse(data.server_time)?"pending":"upcoming");
+        setEventId(requested.id);
+      }else if(requestedId)setError("This race is not available in the current calendar.");
       setGameDate(day.game_date);
       if (data.server_time) {
         const diff = Date.parse(data.server_time) - Date.now();
@@ -216,6 +225,7 @@ export default function RunPage() {
   return (
     <TeamShell compact>
       <div className="race-calendar">
+      <Link className="text-button" href="/team/calendar">← Back to race calendar</Link>
       <header className="calendar-hero">
         <Image src="/images/race-countryside-v1.png" alt="" fill sizes="(max-width: 760px) 100vw, 1200px" priority />
         <div><p className="eyebrow">THE NEXT CHAPTER</p><h1>Race day starts<br/><em>with you.</em></h1><p>Read the road. Pick your eight. Give your captain a chance to shine.</p></div>

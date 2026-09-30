@@ -1,0 +1,9 @@
+.rankings-page{max-width:1050px;margin:0 auto;padding:14px 0 56px}
+.rankings-page header{margin-bottom:24px}.rankings-page h1{font-size:clamp(2.2rem,4vw,3.5rem);margin:5px 0}.rankings-page header p:last-child{max-width:600px}
+.rankings-filters{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:22px}
+.rankings-filters label{display:grid;gap:5px;font-size:.84rem;font-weight:700}
+.rankings-filters select{width:100%;padding:10px;border:1px solid #beccba;border-radius:11px;background:#fff;color:#173726}
+.rankings-list{padding:22px}.rankings-list-head{display:flex;align-items:baseline;justify-content:space-between;gap:12px;border-bottom:1px solid #d8e3d4}
+.rankings-list-head h2{margin:0 0 12px}.rankings-list-head span{font-size:.85rem;color:#48624f}
+.rankings-list ol{list-style:none;padding:0;margin:0}.rankings-list li{display:grid;grid-template-columns:45px 1fr auto;align-items:center;gap:12px;padding:15px 3px;border-bottom:1px solid #e6ece3}
+.rankings-place{font-size:1.2rem;color:#33775a}.rankings-list li strong:last-child{white-space:nowrap}
