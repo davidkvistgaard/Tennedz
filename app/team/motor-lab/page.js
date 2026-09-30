@@ -13,11 +13,11 @@ const PLANS=[
 const seconds=value=>`${value.toFixed(1)} s`;
 const captainPlace=recording=>`#${recording.results.find(result=>result.name==='Amber Captain')?.position??'—'}`;
 const chaseKilometres=recording=>recording.frames.filter(frame=>frame.chasingTeams.includes('Amber')).length;
-const orderSummary=recording=>`${recording.orders.breakResponse==='chase_if_threatened'?'Threat chase':'Plan chase'} · ${recording.orders.breakWork.replace('_',' ')} · ${recording.orders.lateEffort==='follow_plan'?'Plan finish':recording.orders.lateEffort+' finish'}`;
+const orderSummary=recording=>`${recording.orders.breakResponse==='chase_if_threatened'?'Threat chase':'Plan chase'} · ${recording.orders.breakWork.replace('_',' ')} · ${recording.orders.lateEffort==='follow_plan'?'Plan finish':recording.orders.lateEffort+' finish'} · ${recording.orders.breakAttackMarker==='none'?'No planned break attack':'Attack after '+recording.orders.breakAttackMarker+' km'}`;
 
 export default function MotorLabPage(){
  const [plan,setPlan]=useState('sprint');
- const [orders,setOrders]=useState({breakResponse:'hold_plan',breakWork:'cooperate',lateEffort:'follow_plan'});
+ const [orders,setOrders]=useState({breakResponse:'hold_plan',breakWork:'cooperate',lateEffort:'follow_plan',breakAttackMarker:'none'});
  const [seed,setSeed]=useState(1);
  const [recording,setRecording]=useState(null);
  const [previousRecording,setPreviousRecording]=useState(null);
@@ -102,6 +102,14 @@ export default function MotorLabPage(){
         <option value="hard">Ride hard</option>
        </select>
       </label>
+      <label>If Amber Captain is in a break
+       <select value={orders.breakAttackMarker} onChange={event=>setOrders({...orders,breakAttackMarker:event.target.value})}>
+        <option value="none">Stay with the group</option>
+        <option value="40">Attack after 40 km</option>
+        <option value="80">Attack after 80 km</option>
+        <option value="120">Attack after 120 km</option>
+       </select>
+      </label>
      </div>
     </fieldset>
     <div className="motor-run-row"><label>Scenario number
@@ -117,7 +125,7 @@ export default function MotorLabPage(){
     <section className="motor-panel" aria-labelledby="motor-record-title">
      <div className="motor-section-heading"><span>02 / RECORDED RACE</span><h2 id="motor-record-title">{recording.scenarioName}</h2></div>
      <p>Amber rode <strong>{recording.planLabel}</strong> in scenario {recording.seed}. Birch protected its sprinter, Cedar attacked and Dune raced balanced. The entire result was calculated before this replay opened.</p>
-     <p className="motor-committed">Committed orders: {recording.orders.breakResponse==='chase_if_threatened'?'chase a threatening break':'keep the original chase plan'} · {recording.orders.breakWork.replace('_',' ')} in a break · {recording.orders.lateEffort==='follow_plan'?'keep the original effort':'ride '+recording.orders.lateEffort} after 120 km.</p>
+     <p className="motor-committed">Committed orders: {recording.orders.breakResponse==='chase_if_threatened'?'chase a threatening break':'keep the original chase plan'} · {recording.orders.breakWork.replace('_',' ')} in a break · {recording.orders.lateEffort==='follow_plan'?'keep the original effort':'ride '+recording.orders.lateEffort} after 120 km · {recording.orders.breakAttackMarker==='none'?'stay in the break':'attempt an attack from the break after '+recording.orders.breakAttackMarker+' km'}.</p>
      {comparison&&<div className="motor-compare" aria-label="Compare two runs of the same scenario">
       <h3>Same scenario, two decisions</h3>
       <table><thead><tr><th scope="col">Outcome</th><th scope="col">Previous: {comparison.planLabel}<small>{orderSummary(comparison)}</small></th><th scope="col">Current: {recording.planLabel}<small>{orderSummary(recording)}</small></th></tr></thead>

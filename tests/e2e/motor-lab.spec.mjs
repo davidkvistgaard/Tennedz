@@ -32,6 +32,14 @@ for(const width of [390,1440])test(`manager runs a recorded Motor Lab race at ${
  await expect(page.getByText('160 / 160',{exact:true})).toBeVisible();
  await page.getByRole('button',{name:'Previous moment'}).click();
  await expect(page.getByRole('listitem').filter({hasText:'Amber Captain'}).first()).toBeVisible();
+ await page.getByLabel('React to a dangerous break').selectOption('hold_plan');
+ await page.getByLabel('If Amber reaches a break').selectOption('cooperate');
+ await page.getByLabel('From the 120 km marker').selectOption('follow_plan');
+ await page.getByLabel('If Amber Captain is in a break').selectOption('40');
+ await page.getByRole('button',{name:'Run the race'}).click();
+ await expect(page.getByText(/attempt an attack from the break after 40 km/)).toBeVisible();
+ await page.getByRole('button',{name:/41 km Amber Captain attacked from a break/}).click();
+ await expect(page.locator('.motor-scoreboard strong').nth(1)).toHaveText('2');
  await page.getByRole('radio',{name:/Protect the sprinter/}).check();
  await page.getByRole('button',{name:'Run the race'}).click();
  await expect(page.getByText('Amber rode Protect the sprinter')).toBeVisible();
