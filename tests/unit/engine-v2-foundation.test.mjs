@@ -1692,6 +1692,11 @@ test('recorded playback does not recalculate and rejects a result that differs f
   const wrongPull=structuredClone(result);
   wrongPull.frames[19].pullRiderIds=['foreign'];
   assert.throws(()=>validateRecordedTour(wrongPull),/break work/);
+  const workingKm=result.frames.findIndex(frame=>frame.pullRiderIds.length>0);
+  assert.ok(workingKm>=0);
+  const hiddenPull=structuredClone(result);
+  hiddenPull.frames[workingKm].pullRiderIds=[];
+  assert.throws(()=>validateRecordedTour(hiddenPull),/break work differs/);
   const wrongHeldChase=structuredClone(result);
   wrongHeldChase.frames[19].heldChaseTeamIds=['foreign'];
   assert.throws(()=>validateRecordedTour(wrongHeldChase),/held chase/);
