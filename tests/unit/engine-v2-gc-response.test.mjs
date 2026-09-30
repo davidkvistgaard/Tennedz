@@ -66,3 +66,27 @@ test('the same break does not trigger a GC chase when its rider cannot reach the
     decision.kind==='chase_gc')),false);
   assert.equal(validateRecordedTour(recording),true);
 });
+
+test('GC defence stays deterministic across input order and rider category',()=>{
+  for(const raceCategory of ['M','F']){
+    const cast=structuredClone(teams);
+    for(const team of cast)for(const rider of team.riders)rider.gender=raceCategory;
+    cast[0].orders.gcObjective='defend_top_ten';
+    const start=startGeneralClassification({raceCategory,
+      riders:cast.flatMap(team=>team.riders.map(rider=>({
+        riderId:rider.id,teamId:team.id,gender:raceCategory,
+      })))});
+    const before=recordGeneralClassificationStage(start,{stageId:'earlier-stage',
+      classifiedTimes:teams.flatMap(team=>team.riders.map(rider=>({
+        riderId:rider.id,timeSeconds:faster.has(rider.id)?3590:
+          rider.id==='a0'?3600:rider.id==='b0'?3602:3610,
+      })))});
+    const common={stage,seed:`gc-${raceCategory}`,classification:before};
+    const first=simulateTacticalTour({...common,teams:cast});
+    const reordered=simulateTacticalTour({...common,teams:cast.reverse().map(team=>({
+      ...team,riders:team.riders.reverse(),
+    }))});
+    assert.deepEqual(first,reordered);
+    assert.equal(validateRecordedTour(first),true);
+  }
+});
