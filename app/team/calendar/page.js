@@ -3,7 +3,7 @@ import {useEffect,useMemo,useState} from "react";
 import Link from "next/link";
 import TeamShell from "../../components/TeamShell";
 import {api} from "../../../lib/api";
-import {PLACING_PERCENT,TIER_WINNER_POINTS} from "../../../lib/calendar/points.mjs";
+import {PLACING_PERCENT,STAGE_POINTS,TIER_WINNER_POINTS} from "../../../lib/calendar/points.mjs";
 import "./calendar.css";
 
 const FILTERS=["All","Men","Women","UCI","Pelotonia","Stage races","My races"];
@@ -36,11 +36,23 @@ function EventCard({event}){
     <div className="agenda-card-bottom"><span>{event.winner_points===null?"Ranking points not set":`Winner · ${event.winner_points.toLocaleString("en-GB")} pts`}</span>
       {setup?<Link className="btn primary" href={`/team/run?event_id=${encodeURIComponent(event.id)}&gender=${event.gender}`}>Set up →</Link>:
         <span className="agenda-muted">{event.kind==="stage_race"?"Stage setup is in development":event.status==="FINISHED"?"Finished":"Locked"}</span>}</div>
-    {event.race_tier&&event.kind==="one_day"&&<details className="agenda-points"><summary>Points table</summary>
-      <p>Tier {event.race_tier} · first 20 places</p>
-      <ol>{PLACING_PERCENT.map((percent,index)=><li key={index}>{index+1}. {Math.round(TIER_WINNER_POINTS[event.race_tier]*percent/100)} pts</li>)}</ol>
+    {event.race_tier&&<details className="agenda-points"><summary>Points table</summary>
+      <p>Tier {event.race_tier} · points by placing</p>
+      {event.kind==="one_day"?<PointsList values={PLACING_PERCENT.map(percent=>
+        Math.round(TIER_WINNER_POINTS[event.race_tier]*percent/100))}/>:
+        <div className="agenda-points-stage">
+          <section><h4>Final GC</h4><PointsList values={PLACING_PERCENT.map(percent=>
+            Math.round(TIER_WINNER_POINTS[event.race_tier]*percent/100))}/></section>
+          <section><h4>Each stage</h4><PointsList values={STAGE_POINTS[event.race_tier].stage}/></section>
+          <section><h4>Points classification</h4><PointsList values={STAGE_POINTS[event.race_tier].classification}/></section>
+          <section><h4>Mountains classification</h4><PointsList values={STAGE_POINTS[event.race_tier].classification}/></section>
+        </div>}
     </details>}
   </article>;
+}
+
+function PointsList({values}){
+  return <ol>{values.map((points,index)=><li key={index}>{index+1}. {points} pts</li>)}</ol>;
 }
 
 export default function CalendarPage(){

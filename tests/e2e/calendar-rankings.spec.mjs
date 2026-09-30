@@ -34,6 +34,27 @@ test("calendar shows separate races, readiness, filters and direct setup on mobi
   expect(errors).toEqual([]);
 });
 
+test("stage-race points preview separates GC, stages and classifications", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.route("**/api/events?*", route => route.fulfill({ json: {
+    ok: true, server_time: new Date().toISOString(), events: [{
+      id: "stage-event", name: "Highland Tour", kind: "stage_race", gender: "F",
+      status: "OPEN", deadline: new Date(Date.now()+3*86400000).toISOString(),
+      scheduled_at: new Date(Date.now()+7*86400000).toISOString(),
+      calendar_source: "PELOTONIA", race_tier: 6, team_count: 0,
+      team_size: 8, orders_ready: false, readiness: "TEAM_INCOMPLETE",
+      winner_points: 1000,
+    }],
+  } }));
+  await login(page);
+  await page.goto("/team/calendar");
+  await page.getByText("Points table").click();
+  for (const section of ["Final GC", "Each stage", "Points classification", "Mountains classification"])
+    await expect(page.getByRole("heading", { name: section })).toBeVisible();
+  await expect(page.getByText("Stage setup is in development")).toBeVisible();
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
+});
+
 test("ranking dimensions come from the same points view", async ({ page }) => {
   await page.route("**/api/leaderboards?*", route => {
     const url = new URL(route.request().url());
