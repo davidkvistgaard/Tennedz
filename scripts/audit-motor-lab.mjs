@@ -9,10 +9,14 @@ if(!PREVIEW_ROUTES.includes(routeId))throw new Error('Choose a laboratory route.
 function metrics(recording){
  const frames=recording.frames;
  const breakEpisodes=[];
- let currentEpisode=0;
+ let currentEpisode=0,catchesWithChase=0,catchesWithoutChase=0;
  for(const frame of frames){
   if(frame.groups.length)currentEpisode++;
-  else if(currentEpisode){breakEpisodes.push(currentEpisode);currentEpisode=0;}
+  else if(currentEpisode){
+   breakEpisodes.push(currentEpisode);currentEpisode=0;
+   if(frame.chasingTeams.length)catchesWithChase++;
+   else catchesWithoutChase++;
+  }
  }
  if(currentEpisode)breakEpisodes.push(currentEpisode);
  return {
@@ -20,6 +24,8 @@ function metrics(recording){
   breakEpisodes:breakEpisodes.length,
   longestBreakKm:Math.max(0,...breakEpisodes),
   breakAtFinish:frames.at(-1).groups.length>0,
+  breakKmWithChase:frames.filter(frame=>frame.groups.length&&frame.chasingTeams.length).length,
+  catchesWithChase,catchesWithoutChase,
   roadGroupsCreated:new Set(frames.flatMap(frame=>frame.groups.map(group=>group.id))).size,
   multiGroupKm:frames.filter(frame=>frame.groups.length>1).length,
   maxGapSeconds:Math.max(...frames.map(frame=>frame.groups[0]?.gapSeconds??0)),
@@ -38,6 +44,9 @@ function summarise(rows){
   meanBreakEpisodes:mean('breakEpisodes'),
   meanLongestBreakKm:mean('longestBreakKm'),
   breaksAtFinish:rows.filter(row=>row.breakAtFinish).length,
+  meanBreakKmWithChase:mean('breakKmWithChase'),
+  totalCatchesWithChase:rows.reduce((sum,row)=>sum+row.catchesWithChase,0),
+  totalCatchesWithoutChase:rows.reduce((sum,row)=>sum+row.catchesWithoutChase,0),
   meanRoadGroupsCreated:mean('roadGroupsCreated'),
   meanMaxGapSeconds:mean('maxGapSeconds'),
   totalMultiGroupKm:rows.reduce((sum,row)=>sum+row.multiGroupKm,0),
