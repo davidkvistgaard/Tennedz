@@ -1,6 +1,6 @@
 # Race engine v2 — team intent and rider autonomy
 
-Status: design contract for the isolated engine, **not implemented race behavior**. Managers submit orders before the deadline. The race then runs once from those committed orders and a fixed seed, and viewers read the saved result. None of these decisions require live manager input.
+Status: design contract for the isolated engine, **partly implemented**. Managers submit orders before the deadline. The race then runs once from those committed orders and a fixed seed, and viewers read the saved result. None of these decisions require live manager input. The implemented subset includes separate road groups, a basic teammate-ahead sit-on rule, bounded captain-helper drop-back, and an in-memory replay. Conditional team priorities, individual freedom, cumulative classification and production persistence remain future work.
 
 ## Team intent across groups
 
@@ -39,4 +39,4 @@ Stages also carry forward fatigue and other defined rider state. Saving a helper
 
 ## Implementation dependency
 
-The present v2 prototype has only a partial approximation: a team with a rider in the one tracked break does not chase that break, and available helpers can shelter a leader in the peloton. It has no sustained second break or chase group, no explicit sit-on participation, no physical drop-back/reunion, no rider-level freedom policy and no multi-stage GC context. Build independent groups and rider timing first, then team policies and persistent stage-race state. Central balance constants and paired scenario tests must precede any production migration.
+The present v2 prototype supports up to six independent road groups, records actual pulling versus sitting on, and bounds a captain helper's immediate reunion by road gap. A team with any teammate ahead still withholds its peloton chase unconditionally, even if that forward rider is no longer competitive; the recorded sit-on rule is similarly unconditional. The drop-back is a simplified same-kilometre transition rather than per-rider travel. There is no rider-level freedom policy, between-group finish catch, or multi-stage GC context. Develop conditional team objectives and rider timing before persistent stage-race state. Central balance constants and paired scenario tests must precede any production migration.
