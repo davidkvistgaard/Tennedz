@@ -95,10 +95,13 @@ test('orders reject foreign riders, ambiguous markers and unknown values',()=>{
   assert.throws(()=>normalizeOrders({captainId:'r0',baseline:{attackRiderId:'foreign'}},context));
   assert.throws(()=>normalizeOrders({captainId:'r0',phases:[{atKm:20,attackRiderId:'foreign'}]},context));
   assert.throws(()=>normalizeOrders({captainId:'r0',breakResponse:'improvise'},context));
+  assert.throws(()=>normalizeOrders({captainId:'r0',forwardResponse:'chase_always'},context));
   assert.throws(()=>normalizeOrders({captainId:'r0',baseline:{breakWork:'free_speed'}},context));
   assert.throws(()=>normalizeOrders({captainId:'r0',baseline:{captainSupport:'teleport'}},context));
   assert.equal(normalizeOrders({captainId:'r0',breakResponse:'chase_if_threatened'},context).breakResponse,
     'chase_if_threatened');
+  assert.equal(normalizeOrders({captainId:'r0',forwardResponse:'chase_if_fading'},context).forwardResponse,
+    'chase_if_fading');
 });
 
 test('a precommitted marker changes break cooperation without rewriting earlier orders',()=>{
@@ -611,6 +614,64 @@ test('a team with a rider up the road withholds its helpers from the chase',()=>
   assert.ok(contest.energyCosts.filter(cost=>cost.reason==='chase').every(cost=>cost.teamId==='b'));
 });
 
+test('a committed fallback chases only when its own fading rider is near the bunch',()=>{
+  const team=tacticalTeam('a','protect',{baseline:{attack:'none',chase:'selective'},
+    forwardResponse:'chase_if_fading'});
+  const rival=tacticalTeam('b','protect',{baseline:{attack:'none',chase:'ignore'}});
+  team.energy=Object.fromEntries(team.riders.map(rider=>[rider.id,rider.id==='a-2'?20:90]));
+  const context={teams:[team,rival],km:20,distanceKm:40,gapSeconds:8,
+    breakawayTeamIds:['a'],breakawayRiderIds:['a-2'],rearRoadGroupRiderIds:['a-2']};
+  const released=resolveTacticalKilometre(context);
+  assert.deepEqual(released.releasedForwardTeamIds,['a']);
+  assert.deepEqual(released.chasers.map(chaser=>chaser.teamId),['a']);
+  assert.ok(released.energyCosts.some(cost=>cost.teamId==='a'&&cost.reason==='chase'));
+  const held=structuredClone(team);
+  held.orders.forwardResponse='protect_forward';
+  assert.deepEqual(resolveTacticalKilometre({...context,teams:[held,rival]}).chasers,[]);
+  team.energy['a-2']=31;
+  assert.deepEqual(resolveTacticalKilometre(context).releasedForwardTeamIds,[]);
+  team.energy['a-2']=20;
+  assert.deepEqual(resolveTacticalKilometre({...context,gapSeconds:11}).releasedForwardTeamIds,[]);
+  assert.deepEqual(resolveTacticalKilometre({...context,breakawayTeamIds:['a','b'],
+    breakawayRiderIds:['a-2','b-0'],rearRoadGroupRiderIds:['b-0']})
+    .releasedForwardTeamIds,[]);
+});
+
+test('fading-rider fallback changes a full recorded race without rewriting the default plan',()=>{
+  const makeTeam=(id,stat)=>({id,
+    riders:Array.from({length:8},(_,index)=>({id:`${id}-${index}`,gender:'M',
+      flat:stat,strength:stat,endurance:stat,sprint:50,acceleration:stat,
+      timetrial:stat,leadership:50})),
+    orders:{captainId:`${id}-0`,roadCaptainId:`${id}-1`,preset:'balanced',
+      baseline:{attack:'none',chase:'all'}}});
+  const own=makeTeam('a',50),opponent=makeTeam('b',35);
+  Object.assign(own.riders[2],{flat:60,strength:60,endurance:60,timetrial:60,
+    acceleration:60,fatigue:100});
+  own.orders={captainId:'a-0',roadCaptainId:'a-1',preset:'balanced',
+    forwardResponse:'chase_if_fading',
+    baseline:{attack:'selective',attackRiderId:'a-2',chase:'all'},
+    phases:[{atKm:20,attack:'none'}]};
+  const flat={distance_km:160,profile_points:[[0,100],[160,100]]};
+  const seed='fallback-60-35-0';
+  const released=simulateTacticalTour({stage:flat,teams:[own,opponent],seed});
+  const event=released.frames.find(frame=>frame.releasedForwardTeamIds.includes('a'));
+  assert.ok(event&&event.km>20);
+  assert.ok(event.chasers.includes('a'));
+  assert.ok(released.frames[event.km-2].roadGroups.at(-1).riderIds.includes('a-2'));
+  assert.equal(validateRecordedTour(released),true);
+  const held=structuredClone(own);
+  held.orders.forwardResponse='protect_forward';
+  const defaultRace=simulateTacticalTour({stage:flat,teams:[held,opponent],seed});
+  assert.ok(defaultRace.frames.every(frame=>!frame.releasedForwardTeamIds.includes('a')));
+  assert.equal(validateRecordedTour(defaultRace),true);
+  const tampered=structuredClone(released);
+  tampered.frames[event.km-1].releasedForwardTeamIds=['b'];
+  assert.throws(()=>validateRecordedTour(tampered),/forward-rider response/);
+  const badOrder=structuredClone(released);
+  badOrder.committedInputs.teams.find(team=>team.id==='a').orders.forwardResponse='improvise';
+  assert.throws(()=>validateRecordedTour(badOrder),/committed team input/);
+});
+
 test('selective pursuit waits with a manageable gap but starts as the finish approaches',()=>{
   const ahead=tacticalTeam('a','balanced',{baseline:{attack:'none',chase:'ignore'}});
   const defender=tacticalTeam('b','protect',{baseline:{attack:'none',chase:'selective'}});
@@ -693,7 +754,7 @@ test('the full tactical trace is deterministic, bounded and makes aggressive ord
   const a=simulateTacticalTour(input);
   assert.deepEqual(a,simulateTacticalTour(input));
   assert.equal(a.frames.length,40);
-  assert.equal(a.tuningVersion,'v2-prototype-40');
+  assert.equal(a.tuningVersion,'v2-prototype-41');
   assert.equal(a.frames.at(-1).km,40);
   assert.ok(a.frames.some(frame=>frame.attackers.length>0));
   assert.ok(a.frames.some(frame=>frame.chasers.length>0));
@@ -1392,6 +1453,15 @@ test('Race Lab carries a selected pre-race break response into the recorded prot
   assert.ok(trigger.activeBreakResponseTeamIds.includes('team-0'));
   assert.equal(responsive.scenario.teams[0].breakResponse,'chase_if_threatened');
   assert.equal(validateRecordedTour(responsive),true);
+});
+
+test('Race Lab commits the optional fading-rider fallback before calculation',()=>{
+  const scenario=flatScenario('break');
+  scenario.teams[0].forwardResponse='chase_if_fading';
+  const race=runKilometreLab({scenario,seed:'forward-fallback'});
+  assert.equal(race.committedInputs.teams.find(team=>team.id===scenario.teams[0].id)
+    .orders.forwardResponse,'chase_if_fading');
+  assert.equal(validateRecordedTour(race),true);
 });
 
 test('Race Lab carries precommitted break work into its recorded prototype',()=>{

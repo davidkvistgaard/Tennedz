@@ -118,3 +118,12 @@ test('Race Lab replays a planned attack from an existing break',async ({page})=>
   await expect(page.getByText(/Planned attack from the break: .* · split/)).toBeVisible();
   await expect(page.getByText(/Road groups: .* ahead of the peloton/)).toBeVisible();
 });
+
+test('Race Lab accepts a precommitted fallback for a fading rider ahead',async ({page})=>{
+  await page.goto('/race-lab');
+  const fallback=page.getByRole('combobox',{name:/rider-ahead fallback/});
+  await fallback.selectOption('chase_if_fading');
+  await page.getByRole('button',{name:'Run kilometre prototype'}).click();
+  await expect(page.getByRole('heading',{name:/Kilometre engine/})).toBeVisible();
+  await expect(fallback).toHaveValue('chase_if_fading');
+});

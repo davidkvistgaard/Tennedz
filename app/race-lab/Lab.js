@@ -21,6 +21,7 @@ export default function Lab() {
   const [seed, setSeed] = useState("pelotonia"),
     [strategy, setStrategy] = useState("sprint"),
     [breakResponse, setBreakResponse] = useState("hold_plan"),
+    [forwardResponse, setForwardResponse] = useState("protect_forward"),
     [breakWork, setBreakWork] = useState("cooperate"),
     [breakAttackAtKm, setBreakAttackAtKm] = useState(0),
     [config, setConfig] = useState(DEFAULT_CONFIG),
@@ -62,6 +63,7 @@ export default function Lab() {
       setError("");
       const scenario=flatScenario(strategy);
       scenario.teams[0].breakResponse=breakResponse;
+      scenario.teams[0].forwardResponse=forwardResponse;
       scenario.teams[0].breakWork=breakWork;
       scenario.teams[0].breakAttackAtKm=breakAttackAtKm;
       const result=runKilometreLab({scenario,seed:`${seed}:v2`});
@@ -170,6 +172,14 @@ export default function Lab() {
               onChange={e=>setBreakResponse(e.target.value)}>
               <option value="hold_plan">Hold the scheduled plan</option>
               <option value="chase_if_threatened">Road captain chases a threatening break</option>
+            </select>
+          </label>
+          <label>
+            Amber's rider-ahead fallback - kilometre prototype only
+            <select aria-label="Amber's rider-ahead fallback" value={forwardResponse}
+              onChange={e=>setForwardResponse(e.target.value)}>
+              <option value="protect_forward">Keep protecting our rider ahead</option>
+              <option value="chase_if_fading">Chase if our rider ahead fades near the bunch</option>
             </select>
           </label>
           <label>
@@ -449,6 +459,7 @@ export default function Lab() {
           {currentKm.mergedRoadGroupIds.length>0&&<p className="small">Road groups came together.</p>}
           {currentKm.decisions.length>0&&<p className="small">Precommitted decisions: {currentKm.decisions.map(decision=>`${kilometreRace.scenario.teams.find(team=>team.id===decision.teamId)?.name??decision.teamId} ${decision.kind.replaceAll('_',' ')}`).join(' · ')}.</p>}
           {currentKm.activeBreakResponseTeamIds.length>0&&<p className="small">Precommitted break chase active: {currentKm.activeBreakResponseTeamIds.map(id=>kilometreRace.scenario.teams.find(team=>team.id===id)?.name??id).join(', ')}.</p>}
+          {currentKm.releasedForwardTeamIds.length>0&&<p className="small">Fading rider ahead: {currentKm.releasedForwardTeamIds.map(id=>kilometreRace.scenario.teams.find(team=>team.id===id)?.name??id).join(', ')} switched to chasing for their remaining riders.</p>}
           {currentKm.supportEvents.length>0&&<p className="small">Captain support: {currentKm.supportEvents.map(event=>`${kilometreRace.scenario.teams.find(team=>team.id===event.teamId)?.name??event.teamId} sent ${event.helperId} back to help ${event.leaderId}`).join(' · ')}.</p>}
           {currentKm.heldChaseTeamIds.length>0&&<p className="small">Waiting to chase: {currentKm.heldChaseTeamIds.map(id=>kilometreRace.scenario.teams.find(team=>team.id===id)?.name??id).join(', ')} let a manageable gap stand for now.</p>}
           {currentKm.passiveGapDelta!==0&&<p className="small">Riding pace alone: the break {currentKm.passiveGapDelta>0?'gained':'lost'} {Math.abs(currentKm.passiveGapDelta).toFixed(2)} seconds this kilometre.</p>}
