@@ -28,6 +28,7 @@ export default function MotorLabPage(){
  const [previousRecording,setPreviousRecording]=useState(null);
  const [frameIndex,setFrameIndex]=useState(0);
  const [playing,setPlaying]=useState(false);
+ const [playbackStep,setPlaybackStep]=useState(2);
  const [busy,setBusy]=useState(false);
  const [error,setError]=useState('');
  const highlights=useMemo(()=>recording?.frames
@@ -65,9 +66,9 @@ export default function MotorLabPage(){
   captainRoadGroup>=0?`Group ${captainRoadGroup+1}`:frame?.amberCaptainDropped?'Behind':'Peloton';
  useEffect(()=>{
   if(!playing||!recording)return;
-  const timer=setInterval(()=>setFrameIndex(index=>Math.min(index+2,recording.frames.length-1)),140);
+  const timer=setInterval(()=>setFrameIndex(index=>Math.min(index+playbackStep,recording.frames.length-1)),140);
   return ()=>clearInterval(timer);
- },[playing,recording]);
+ },[playing,recording,playbackStep]);
  useEffect(()=>{
   if(playing&&recording&&frameIndex===recording.frames.length-1)setPlaying(false);
  },[playing,recording,frameIndex]);
@@ -227,7 +228,12 @@ export default function MotorLabPage(){
      </label>
      <div className="motor-step"><button type="button" disabled={!previous} onClick={()=>{setPlaying(false);setFrameIndex(previous.index);}}>← Previous moment</button>
       <button type="button" onClick={()=>{if(playing)setPlaying(false);else{if(frameIndex===recording.frames.length-1)setFrameIndex(0);setPlaying(true);}}}>{playing?'Pause replay':'▶ Play replay'}</button>
-      <button type="button" disabled={!next} onClick={()=>{setPlaying(false);setFrameIndex(next.index);}}>Next moment →</button></div>
+      <button type="button" disabled={!next} onClick={()=>{setPlaying(false);setFrameIndex(next.index);}}>Next moment →</button>
+      <label className="motor-playback-speed">Replay speed
+       <select value={playbackStep} onChange={event=>setPlaybackStep(Number(event.target.value))}>
+        <option value="1">Slow</option><option value="2">Normal</option><option value="4">Fast</option>
+       </select>
+      </label></div>
      <div className="motor-conditions"><span>{frame.terrain} · {frame.surface}{frame.exposed?' · exposed':''}</span>
       <span>{frame.weather.temperatureC}°C · wind {frame.weather.windKph} km/h · rain {frame.weather.rainMm} mm</span>
       <span>Amber mean energy {frame.amberEnergy?.toFixed(1)??'—'}</span></div>

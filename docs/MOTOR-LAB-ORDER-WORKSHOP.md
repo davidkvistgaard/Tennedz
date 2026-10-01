@@ -65,3 +65,5 @@ The paired comparison now includes Amber's mean remaining rider energy at the fi
 ## Captain position during playback
 
 The replay scoreboard now reports Amber Captain's location at the selected kilometre: peloton, a numbered road group, or behind the peloton. It switches to the provisional finishing place only on the last kilometre. The former scoreboard displayed the final placing even at kilometre 1, which obscured the road story while replaying.
+
+Playback has slow, normal and fast speeds over the same stored kilometre frames. Changing speed does not rerun the race or change any result; scrubbing and moment jumps still pause playback for inspection.
