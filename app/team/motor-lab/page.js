@@ -60,6 +60,9 @@ export default function MotorLabPage(){
  const comparison=previousRecording?.seed===recording?.seed&&
   previousRecording?.routeId===recording?.routeId?previousRecording:null;
  const amberCaptain=recording?.results.find(result=>result.name==='Amber Captain');
+ const captainRoadGroup=frame?.groups.findIndex(group=>group.riders.includes('Amber Captain'))??-1;
+ const captainLocation=frame?.km===recording?.distanceKm?`#${amberCaptain?.position??'-'}`:
+  captainRoadGroup>=0?`Group ${captainRoadGroup+1}`:frame?.amberCaptainDropped?'Behind':'Peloton';
  useEffect(()=>{
   if(!playing||!recording)return;
   const timer=setInterval(()=>setFrameIndex(index=>Math.min(index+2,recording.frames.length-1)),140);
@@ -185,7 +188,7 @@ export default function MotorLabPage(){
      </div>}
      <div className="motor-scoreboard"><div><small>KILOMETRE</small><strong>{frame.km} / {recording.distanceKm}</strong></div>
       <div><small>GROUPS AHEAD</small><strong>{frame.groups.length}</strong></div>
-      <div><small>AMBER CAPTAIN</small><strong>#{amberCaptain?.position??'—'}</strong></div></div>
+      <div><small>AMBER CAPTAIN NOW</small><strong>{captainLocation}</strong></div></div>
      <figure className="motor-profile">
       <figcaption>Recorded route elevation</figcaption>
       <svg viewBox="0 0 1000 150" preserveAspectRatio="none" aria-hidden="true">

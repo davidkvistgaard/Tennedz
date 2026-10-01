@@ -27,6 +27,7 @@ for(const width of [390,1440])test(`manager runs a recorded Motor Lab race at ${
  await expect(page.getByRole('heading',{name:'Coast Road laboratory'})).toBeVisible();
  await expect(page.getByText(/Committed orders: chase a threatening break · follow the plan for chase work · sit on in a break · ride hard after 120 km/)).toBeVisible();
  await expect(page.getByText('1 / 160',{exact:true})).toBeVisible();
+ await expect(page.locator('.motor-scoreboard strong').nth(2)).toHaveText('Peloton');
  await expect(page.getByText(/The largest recorded gap is/)).toBeVisible();
  await page.getByRole('button',{name:/Play replay/}).click();
  await expect(page.locator('.motor-scoreboard strong').first()).not.toHaveText('1 / 160');
@@ -34,6 +35,7 @@ for(const width of [390,1440])test(`manager runs a recorded Motor Lab race at ${
  const slider=page.getByRole('slider',{name:'Inspect recorded kilometre'});
  await slider.focus();await page.keyboard.press('End');
  await expect(page.getByText('160 / 160',{exact:true})).toBeVisible();
+ await expect(page.locator('.motor-scoreboard strong').nth(2)).toHaveText(/^#\d+$/);
  await page.getByRole('button',{name:'Previous moment'}).click();
  await expect(page.getByRole('listitem').filter({hasText:'Amber Captain'}).first()).toBeVisible();
  await page.getByLabel('React to a dangerous break').selectOption('hold_plan');

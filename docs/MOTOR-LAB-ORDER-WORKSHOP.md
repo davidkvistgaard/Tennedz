@@ -61,3 +61,7 @@ Verification: 250 unit tests, repository ESLint, clean production build, and aut
 ## Cost of a tactical choice
 
 The paired comparison now includes Amber's mean remaining rider energy at the finish. On Coast Road scenario 1 with a sprint plan, holding chase helpers leaves more team energy than following the plan; committing all helpers uses more. This is a recorded outcome, not a universal recommendation: the same table also shows chase activity, break advantage and placing so the cost can be weighed against the race result.
+
+## Captain position during playback
+
+The replay scoreboard now reports Amber Captain's location at the selected kilometre: peloton, a numbered road group, or behind the peloton. It switches to the provisional finishing place only on the last kilometre. The former scoreboard displayed the final placing even at kilometre 1, which obscured the road story while replaying.
