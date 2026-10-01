@@ -51,3 +51,9 @@ Verification: 248 unit tests, repository ESLint, production build, and authentic
 The replay groups contiguous kilometres with riders ahead into break episodes. Each episode reports its start and last kilometre, peak gap, kilometres with a chase, and whether the group was caught or remained ahead at the finish. A manager can jump to its start and inspect the kilometre-by-kilometre road state. The summary is calculated from the recorded frames and does not merge a later fresh break across a kilometre when the road ahead was empty. This exposes repeated short moves in the current synthetic balance instead of hiding them behind a single breakaway label.
 
 Verification: 249 unit tests, repository ESLint, clean production build, and authenticated 390/1440 px browser journeys including episode selection and its active-state marker.
+
+## Attack attempts in the bunch
+
+The selected-kilometre peloton card now names riders who tried to attack and identifies those who did not establish a gap. This uses the recorded attack attempts and resulting road groups; an unsuccessful attempt is not presented as a new break. The balance audit counts both attempts and failures across the 20 fixed scenario seeds, exposing the regular and often unsuccessful attacks in the current prototype for later tuning.
+
+Verification: 250 unit tests, repository ESLint, clean production build, and authenticated 390/1440 px browser journeys including a failed attack at kilometre 5.

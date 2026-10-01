@@ -132,6 +132,15 @@ test('break episodes summarize only contiguous recorded kilometres',()=>{
  assert.equal(breakPlan.episodes.at(-1).lastKm,160);
 });
 
+test('recording distinguishes a failed bunch attack from a rider who got clear',()=>{
+ const recording=createMotorLabPreview({plan:'sprint',seed:1});
+ assert.deepEqual(recording.frames[4].attackAttempts,['Cedar Captain']);
+ assert.deepEqual(recording.frames[4].attacksWithoutGap,['Cedar Captain']);
+ assert.deepEqual(recording.frames[19].attacksWithoutGap,[]);
+ assert(recording.frames[19].attackAttempts.includes('Cedar Captain'));
+ assert(recording.frames[19].groups.some(group=>group.riders.includes('Cedar Captain')));
+});
+
 test('a committed break attack can split a group or be visibly blocked',()=>{
  const split=createMotorLabPreview({plan:'break',seed:1,orders:{breakAttackMarker:'40'}});
  assert.equal(split.frames[40].groups.length,2);
