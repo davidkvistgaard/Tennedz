@@ -117,6 +117,21 @@ test('recording distinguishes a deliberate wait from teams represented up the ro
  assert(recording.frames.every(item=>item.groups.length||!item.waitingTeams.length));
 });
 
+test('break episodes summarize only contiguous recorded kilometres',()=>{
+ const recording=createMotorLabPreview({plan:'sprint',seed:1});
+ assert.deepEqual(recording.episodes[0],{startKm:20,lastKm:25,
+  peakGapSeconds:12.35,chasedKm:3,waitingKm:3,
+  teams:['Cedar','Dune'],caughtAtKm:26});
+ assert.equal(recording.episodes.reduce((total,episode)=>
+  total+episode.lastKm-episode.startKm+1,0),
+ recording.frames.filter(frame=>frame.groups.length).length);
+ assert(recording.episodes.every((episode,index)=>index===0||
+  recording.episodes[index-1].caughtAtKm<episode.startKm));
+ const breakPlan=createMotorLabPreview({plan:'break',seed:1});
+ assert.equal(breakPlan.episodes.at(-1).caughtAtKm,null);
+ assert.equal(breakPlan.episodes.at(-1).lastKm,160);
+});
+
 test('a committed break attack can split a group or be visibly blocked',()=>{
  const split=createMotorLabPreview({plan:'break',seed:1,orders:{breakAttackMarker:'40'}});
  assert.equal(split.frames[40].groups.length,2);

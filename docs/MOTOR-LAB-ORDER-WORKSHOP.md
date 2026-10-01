@@ -45,3 +45,9 @@ Verification for this increment: 247 unit tests, repository ESLint, production b
 The peloton card now distinguishes teams actively chasing, teams deliberately waiting while a small gap remains manageable, and teams represented in a road group ahead. These are recorded kilometre states from the same simulation, not hindsight inferred from the finish. This makes the common situation where a break remains useful and the bunch declines to close it visible in the replay. A waiting label disappears when the break has been caught.
 
 Verification: 248 unit tests, repository ESLint, production build, and authenticated 390/1440 px browser journeys. Each viewport uses a separate fixture manager so the browser check stays within the preview API's per-user run limit.
+
+## Break episodes in the recording
+
+The replay groups contiguous kilometres with riders ahead into break episodes. Each episode reports its start and last kilometre, peak gap, kilometres with a chase, and whether the group was caught or remained ahead at the finish. A manager can jump to its start and inspect the kilometre-by-kilometre road state. The summary is calculated from the recorded frames and does not merge a later fresh break across a kilometre when the road ahead was empty. This exposes repeated short moves in the current synthetic balance instead of hiding them behind a single breakaway label.
+
+Verification: 249 unit tests, repository ESLint, clean production build, and authenticated 390/1440 px browser journeys including episode selection and its active-state marker.
