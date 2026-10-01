@@ -19,6 +19,10 @@ const ATTACK_REASON_LABELS={gc_target:'GC opportunity',named_order:'named order'
  keypoint:'route keypoint',preset_cadence:'preset attack timing'};
 const captainPlace=recording=>`#${recording.results.find(result=>result.name==='Amber Captain')?.position??'—'}`;
 const chaseKilometres=recording=>recording.frames.filter(frame=>frame.chasingTeams.includes('Amber')).length;
+const firstAmberBunchAttack=recording=>{
+ const frame=recording.frames.find(item=>item.attackAttempts.some(rider=>rider.startsWith('Amber ')));
+ return frame?`${frame.km} km`:'Never';
+};
 const captainBreakKilometres=recording=>recording.frames.filter(frame=>frame.groups.some(group=>group.riders.includes('Amber Captain'))).length;
 const captainDroppedKilometres=recording=>recording.frames.filter(frame=>frame.amberCaptainDropped).length;
 const largestBreakGap=recording=>Math.max(...recording.frames.map(frame=>frame.groups[0]?.gapSeconds??0));
@@ -242,6 +246,7 @@ export default function MotorLabPage(){
        <tbody><tr><th scope="row">Amber Captain</th><td>{captainPlace(comparison)}</td><td>{captainPlace(recording)}</td></tr>
         <tr><th scope="row">Amber chase kilometres</th><td>{chaseKilometres(comparison)}</td><td>{chaseKilometres(recording)}</td></tr>
         <tr><th scope="row">Amber bunch attack attempts</th><td>{comparison.amberBunchAttackAttempts}</td><td>{recording.amberBunchAttackAttempts}</td></tr>
+        <tr><th scope="row">First Amber bunch attack</th><td>{firstAmberBunchAttack(comparison)}</td><td>{firstAmberBunchAttack(recording)}</td></tr>
         <tr><th scope="row">Amber helper attack attempts</th><td>{comparison.amberHelperAttackAttempts}</td><td>{recording.amberHelperAttackAttempts}</td></tr>
         <tr><th scope="row">Amber mean energy at finish</th><td>{finalAmberEnergy(comparison)}</td><td>{finalAmberEnergy(recording)}</td></tr>
         <tr><th scope="row">Amber Captain in a break</th><td>{captainBreakKilometres(comparison)} km</td><td>{captainBreakKilometres(recording)} km</td></tr>

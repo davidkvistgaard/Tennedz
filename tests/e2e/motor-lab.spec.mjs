@@ -134,9 +134,11 @@ for(const width of [390,1440])test(`manager runs a recorded Motor Lab race at ${
  await page.getByRole('button',{name:'Run the race'}).click();
  await expect(page.getByText(/do not attack from the bunch/)).toBeVisible();
  await expect(page.getByRole('row',{name:/Amber bunch attack attempts/}).getByRole('cell')).toHaveText(['20','0']);
+ await expect(page.getByRole('row',{name:/First Amber bunch attack/}).getByRole('cell')).toHaveText(['5 km','Never']);
  await page.getByLabel('Bunch attacks after 120 km').selectOption('selective');
  await page.getByRole('button',{name:'Run the race'}).click();
  await expect(page.getByRole('row',{name:/Amber bunch attack attempts/}).getByRole('cell')).toHaveText(['0','2']);
+ await expect(page.getByRole('row',{name:/First Amber bunch attack/}).getByRole('cell')).toHaveText(['Never','140 km']);
  await page.getByRole('slider',{name:'Inspect recorded kilometre'}).fill('120');
  await expect(page.getByText(/Amber switched to selective bunch attacks/).first()).toBeVisible();
  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
