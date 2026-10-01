@@ -57,3 +57,7 @@ Verification: 249 unit tests, repository ESLint, clean production build, and aut
 The selected-kilometre peloton card now names riders who tried to attack and identifies those who did not establish a gap. This uses the recorded attack attempts and resulting road groups; an unsuccessful attempt is not presented as a new break. The balance audit counts both attempts and failures across the 20 fixed scenario seeds, exposing the regular and often unsuccessful attacks in the current prototype for later tuning.
 
 Verification: 250 unit tests, repository ESLint, clean production build, and authenticated 390/1440 px browser journeys including a failed attack at kilometre 5.
+
+## Cost of a tactical choice
+
+The paired comparison now includes Amber's mean remaining rider energy at the finish. On Coast Road scenario 1 with a sprint plan, holding chase helpers leaves more team energy than following the plan; committing all helpers uses more. This is a recorded outcome, not a universal recommendation: the same table also shows chase activity, break advantage and placing so the cost can be weighed against the race result.

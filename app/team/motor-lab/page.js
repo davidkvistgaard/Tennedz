@@ -16,6 +16,7 @@ const chaseKilometres=recording=>recording.frames.filter(frame=>frame.chasingTea
 const captainBreakKilometres=recording=>recording.frames.filter(frame=>frame.groups.some(group=>group.riders.includes('Amber Captain'))).length;
 const captainDroppedKilometres=recording=>recording.frames.filter(frame=>frame.amberCaptainDropped).length;
 const largestBreakGap=recording=>Math.max(...recording.frames.map(frame=>frame.groups[0]?.gapSeconds??0));
+const finalAmberEnergy=recording=>recording.frames.at(-1).amberEnergy.toFixed(1);
 const orderSummary=recording=>`${recording.orders.breakResponse==='chase_if_threatened'?'Threat chase':'Plan chase'} · ${recording.orders.chaseContribution==='follow_plan'?'Plan chase work':recording.orders.chaseContribution==='ignore'?'Hold chase helpers':'Commit chase helpers'} · ${recording.orders.breakWork.replace('_',' ')} · ${recording.orders.lateEffort==='follow_plan'?'Plan finish':recording.orders.lateEffort+' finish'} · ${recording.orders.breakAttackMarker==='none'?'No planned break attack':'Attack after '+recording.orders.breakAttackMarker+' km'} · ${recording.orders.roadCaptain==='experienced'?'Experienced':'Standard'} road captain · ${recording.orders.captainSupport==='drop_back_if_dropped'?'Help a dropped captain':'Hold helper positions'}`;
 
 export default function MotorLabPage(){
@@ -175,6 +176,7 @@ export default function MotorLabPage(){
       <table><thead><tr><th scope="col">Outcome</th><th scope="col">Previous: {comparison.planLabel}<small>{orderSummary(comparison)}</small></th><th scope="col">Current: {recording.planLabel}<small>{orderSummary(recording)}</small></th></tr></thead>
        <tbody><tr><th scope="row">Amber Captain</th><td>{captainPlace(comparison)}</td><td>{captainPlace(recording)}</td></tr>
         <tr><th scope="row">Amber chase kilometres</th><td>{chaseKilometres(comparison)}</td><td>{chaseKilometres(recording)}</td></tr>
+        <tr><th scope="row">Amber mean energy at finish</th><td>{finalAmberEnergy(comparison)}</td><td>{finalAmberEnergy(recording)}</td></tr>
         <tr><th scope="row">Amber Captain in a break</th><td>{captainBreakKilometres(comparison)} km</td><td>{captainBreakKilometres(recording)} km</td></tr>
         <tr><th scope="row">Amber Captain behind the peloton</th><td>{captainDroppedKilometres(comparison)} km</td><td>{captainDroppedKilometres(recording)} km</td></tr>
         <tr><th scope="row">Largest break advantage</th><td>{seconds(largestBreakGap(comparison))}</td><td>{seconds(largestBreakGap(recording))}</td></tr>
