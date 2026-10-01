@@ -14,6 +14,10 @@ for(const width of [390,1440])test(`manager runs a recorded Motor Lab race at ${
  await expect(page).toHaveURL(/\/team$/);
  await page.getByRole('link',{name:'Motor Lab'}).click();
  await expect(page.getByRole('heading',{name:'Motor Lab'})).toBeVisible();
+ const advanced=page.locator('details.motor-advanced');
+ await expect(advanced).not.toHaveAttribute('open','');
+ await advanced.locator('summary').click();
+ await expect(advanced).toHaveAttribute('open','');
  expect((await context.request.post(endpoint,{headers:{Origin:'https://another.example'},data:{plan:'sprint',seed:1}})).status()).toBe(403);
  expect((await context.request.post(endpoint,{headers:{Origin:'http://localhost:3100'},
   data:{plan:'sprint',seed:1,orders:{breakWork:'freewheel'}}})).status()).toBe(400);

@@ -136,8 +136,10 @@ export default function MotorLabPage(){
       <span><strong>{option.title}</strong><small>{option.description}</small></span>
      </label>)}
     </div>
-    <fieldset className="motor-advanced" disabled={busy}>
-     <legend>Advanced orders</legend>
+    <details className="motor-advanced">
+     <summary>Advanced orders</summary>
+     <fieldset className="motor-advanced-fields" disabled={busy}>
+     <legend>Pre-race commitments</legend>
      <p>These choices are committed before the race. They cannot be changed during playback.</p>
      <div className="motor-order-grid">
       <label>Peloton chase contribution
@@ -220,7 +222,8 @@ export default function MotorLabPage(){
        </select>
       </label>
      </div>
-    </fieldset>
+     </fieldset>
+    </details>
     <div className="motor-run-row"><label>Laboratory route
      <select value={routeId} onChange={event=>setRouteId(event.target.value)} disabled={busy}>
       <option value="coast">Exposed coast</option>
