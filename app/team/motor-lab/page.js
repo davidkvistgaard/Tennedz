@@ -188,6 +188,7 @@ export default function MotorLabPage(){
       <table><thead><tr><th scope="col">Outcome</th><th scope="col">Previous: {comparison.planLabel}<small>{orderSummary(comparison)}</small></th><th scope="col">Current: {recording.planLabel}<small>{orderSummary(recording)}</small></th></tr></thead>
        <tbody><tr><th scope="row">Amber Captain</th><td>{captainPlace(comparison)}</td><td>{captainPlace(recording)}</td></tr>
         <tr><th scope="row">Amber chase kilometres</th><td>{chaseKilometres(comparison)}</td><td>{chaseKilometres(recording)}</td></tr>
+        <tr><th scope="row">Amber bunch attack attempts</th><td>{comparison.amberBunchAttackAttempts}</td><td>{recording.amberBunchAttackAttempts}</td></tr>
         <tr><th scope="row">Amber helper attack attempts</th><td>{comparison.amberHelperAttackAttempts}</td><td>{recording.amberHelperAttackAttempts}</td></tr>
         <tr><th scope="row">Amber mean energy at finish</th><td>{finalAmberEnergy(comparison)}</td><td>{finalAmberEnergy(recording)}</td></tr>
         <tr><th scope="row">Amber Captain in a break</th><td>{captainBreakKilometres(comparison)} km</td><td>{captainBreakKilometres(recording)} km</td></tr>

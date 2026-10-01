@@ -111,6 +111,7 @@ for(const width of [390,1440])test(`manager runs a recorded Motor Lab race at ${
  await expect(page.getByText(/hold helpers for captain/)).toBeVisible();
  await page.getByLabel('May helpers attack for themselves?').selectOption('open');
  await page.getByRole('button',{name:'Run the race'}).click();
+ await expect(page.getByRole('row',{name:/Amber bunch attack attempts/}).getByRole('cell')).toHaveText(['20','20']);
  await expect(page.getByRole('row',{name:/Amber helper attack attempts/}).getByRole('cell')).toHaveText(['0','15']);
  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
  expect(errors).toEqual([]);

@@ -67,6 +67,8 @@ test('helper attack policy protects helpers without silently changing the captai
   .filter(name=>name.startsWith('Amber ')))];
  assert(attempts(open).includes('Amber Rider 3'));
  assert.equal(open.amberHelperAttackAttempts,15);
+ assert.equal(open.amberBunchAttackAttempts,20);
+ assert.equal(held.amberBunchAttackAttempts,20);
  assert.equal(held.amberHelperAttackAttempts,0);
  assert.equal(conditional.amberHelperAttackAttempts,0);
  assert(!attempts(held).some(name=>/^Amber Rider [3-8]$/.test(name)));
