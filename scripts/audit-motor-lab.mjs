@@ -112,19 +112,25 @@ function summarise(rows){
 }
 const report={kind:'fictional-motor-lab-audit',routeId,seedCount:count,plans:{}};
 for(const plan of ['sprint','break','balanced','conserve']){
- const baseline=[],attack40=[],helpersHeld=[],chaseHeld=[],chaseHeldThenAll=[];
+ const baseline=[],attack40=[],helpersHeld=[],attacksHeld=[],attacksSelective=[],
+  chaseHeld=[],chaseHeldThenAll=[];
  for(let seed=0;seed<count;seed++){
   baseline.push(metrics(createMotorLabPreview({plan,seed,routeId})));
   attack40.push(metrics(createMotorLabPreview({plan,seed,routeId,orders:{breakAttackMarker:'40'}})));
   helpersHeld.push(metrics(createMotorLabPreview({plan,seed,routeId,
    orders:{helperAttackPolicy:'hold_for_captain'}})));
+  attacksHeld.push(metrics(createMotorLabPreview({plan,seed,routeId,
+   orders:{attackPosture:'none'}})));
+  attacksSelective.push(metrics(createMotorLabPreview({plan,seed,routeId,
+   orders:{attackPosture:'selective'}})));
   chaseHeld.push(metrics(createMotorLabPreview({plan,seed,routeId,
    orders:{chaseContribution:'ignore'}})));
   chaseHeldThenAll.push(metrics(createMotorLabPreview({plan,seed,routeId,
    orders:{chaseContribution:'ignore',lateChaseContribution:'all'}})));
  }
  report.plans[plan]={baseline:summarise(baseline),attackAfter40Km:summarise(attack40),
-  helpersHeld:summarise(helpersHeld),chaseHeld:summarise(chaseHeld),
+  helpersHeld:summarise(helpersHeld),attacksHeld:summarise(attacksHeld),
+  attacksSelective:summarise(attacksSelective),chaseHeld:summarise(chaseHeld),
   chaseHeldThenAll:summarise(chaseHeldThenAll)};
 }
 console.log(JSON.stringify(report,null,2));

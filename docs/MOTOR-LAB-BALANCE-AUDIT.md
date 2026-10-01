@@ -42,6 +42,21 @@ The audit additionally counts distinct kilometres with a bunch attack, simultane
 
 The many simultaneous attempts, particularly under the break plan, expose the shared automatic attack cadence rather than independent team decisions. A local trial that simply suppressed unnamed attacks whenever a teammate was ahead changed several seeded race traces and made the Coast sprint's longest break shorter; it was reverted. Team representation needs to be modelled together with attack timing and chase response, then judged against recorded road outcomes, rather than treated as a standalone switch.
 
+The committed Amber attack-posture order makes that comparison possible without retuning every team. Over the same 20 scenario seeds, Amber wins with its preset attack rule / no bunch attacks / selective bunch attacks were:
+
+| Route / Amber plan | Preset | None | Selective |
+| --- | ---: | ---: | ---: |
+| Coast / sprint | 4 | 4 | 2 |
+| Coast / break | 1 | 9 | 13 |
+| Coast / balanced | 7 | 5 | 7 |
+| Coast / conserve | 0 | 0 | 5 |
+| Ridge / sprint | 4 | 4 | 2 |
+| Ridge / break | 8 | 11 | 9 |
+| Ridge / balanced | 2 | 5 | 2 |
+| Ridge / conserve | 0 | 0 | 3 |
+
+Only Amber's order changes within each paired comparison; the other three teams continue to attempt attacks, so the field-wide attempt count does not fall to zero under Amber's “none” choice. The Coast break-plan reversal is a strong sensitivity warning. The fixture is too small to infer an optimal strategy or to replace the automatic rule without broader opponents and human inspection of the replay.
+
 The audit now totals recorded chase decisions by reason. In the default Coast sprint runs, teams contribute an average of **86.0 team-kilometres answering fresh attacks** and **16.0 team-kilometres because the leader exceeded the selective safe gap**; on Ridge the figures are **84.1** and **18.1**. These are sums across teams, so several teams working on one kilometre count several times, including a response to an attack that fails to establish a break. No other chase reasons fire in these default fixtures. The predominance of reactive work is consistent with the regular attack schedule and short breaks; it does not by itself show that chasing causes every catch. A future balance trial should separately vary attack frequency and the decision to respond, then compare episode length, catches and race results.
 
 ### Timing a chase order

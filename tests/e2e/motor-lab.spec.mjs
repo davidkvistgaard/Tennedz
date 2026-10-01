@@ -25,7 +25,7 @@ for(const width of [390,1440])test(`manager runs a recorded Motor Lab race at ${
  await page.getByLabel('From the 120 km marker').selectOption('hard');
  await page.getByRole('button',{name:'Run the race'}).click();
  await expect(page.getByRole('heading',{name:'Coast Road laboratory'})).toBeVisible();
- await expect(page.getByText(/Committed orders: chase a threatening break · follow the plan for chase work · sit on in a break · ride hard after 120 km/)).toBeVisible();
+ await expect(page.getByText(/Committed orders: chase a threatening break · follow the plan for chase work · follow the plan for bunch attacks · sit on in a break · ride hard after 120 km/)).toBeVisible();
  await expect(page.getByText('1 / 160',{exact:true})).toBeVisible();
  await expect(page.locator('.motor-scoreboard strong').nth(2)).toHaveText('Peloton');
  await expect(page.getByText(/The largest recorded gap is/)).toBeVisible();
@@ -130,6 +130,10 @@ for(const width of [390,1440])test(`manager runs a recorded Motor Lab race at ${
  await page.getByRole('button',{name:'Run the race'}).click();
  await expect(page.getByRole('row',{name:/Amber bunch attack attempts/}).getByRole('cell')).toHaveText(['20','20']);
  await expect(page.getByRole('row',{name:/Amber helper attack attempts/}).getByRole('cell')).toHaveText(['0','15']);
+ await page.getByLabel('Bunch attack posture').selectOption('none');
+ await page.getByRole('button',{name:'Run the race'}).click();
+ await expect(page.getByText(/do not attack from the bunch/)).toBeVisible();
+ await expect(page.getByRole('row',{name:/Amber bunch attack attempts/}).getByRole('cell')).toHaveText(['20','0']);
  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
  expect(errors).toEqual([]);
 });

@@ -50,7 +50,7 @@ test('advanced orders are committed and alter the same seeded race',()=>{
   breakResponse:'chase_if_threatened',breakWork:'sit_on',lateEffort:'hard',
   lateChaseContribution:'selective',
  }});
- assert.deepEqual(advanced.orders,{chaseContribution:'follow_plan',breakResponse:'chase_if_threatened',
+ assert.deepEqual(advanced.orders,{chaseContribution:'follow_plan',attackPosture:'follow_plan',breakResponse:'chase_if_threatened',
   breakWork:'sit_on',lateEffort:'hard',lateChaseContribution:'selective',
   breakAttackMarker:'none',roadCaptain:'standard',
   captainSupport:'hold_position',helperAttackPolicy:'open'});
@@ -59,6 +59,19 @@ test('advanced orders are committed and alter the same seeded race',()=>{
  assert(!standard.frames[120].moments.includes('Amber switched to hard effort'));
  assert.notDeepEqual(standard.frames,advanced.frames);
  assert.deepEqual(advanced,createMotorLabPreview({plan:'break',seed:5,orders:advanced.orders}));
+});
+
+test('a committed bunch attack posture changes attempts without changing the fixture seed',()=>{
+ const common={plan:'break',seed:1};
+ const original=createMotorLabPreview(common);
+ const held=createMotorLabPreview({...common,orders:{attackPosture:'none'}});
+ const selective=createMotorLabPreview({...common,orders:{attackPosture:'selective'}});
+ assert.equal(original.amberBunchAttackAttempts,20);
+ assert.equal(held.amberBunchAttackAttempts,0);
+ assert.equal(selective.amberBunchAttackAttempts,8);
+ assert.deepEqual(original,createMotorLabPreview({...common,orders:original.orders}));
+ assert.deepEqual(held,createMotorLabPreview({...common,orders:held.orders}));
+ assert.notDeepEqual(original.frames,held.frames);
 });
 
 test('a precommitted late chase phase changes road work only after its marker',()=>{
@@ -230,7 +243,8 @@ test('guided preview rejects unbounded or unknown requests',()=>{
   assert.throws(()=>createMotorLabPreview(input),/valid plan, route and scenario number/);
  for(const orders of [null,[],{breakWork:'freewheel'},{lateEffort:120},
   {breakAttackMarker:'41'},{breakAttackMarker:40},{roadCaptain:'legend'},
-  {chaseContribution:'infinite'},{lateChaseContribution:'infinite'},
+  {chaseContribution:'infinite'},{attackPosture:'infinite'},
+  {lateChaseContribution:'infinite'},
   {captainSupport:'teleport'},
   {helperAttackPolicy:'teleport'},{admin:true}])
   assert.throws(()=>createMotorLabPreview({plan:'sprint',seed:1,orders}),/valid advanced orders/);
