@@ -264,6 +264,7 @@ export default function MotorLabPage(){
        {frame.attackAttempts.length>0&&<small>Attempted from the bunch: {frame.attackAttempts.join(', ')}</small>}
        {frame.attacksWithoutGap.length>0&&<small>Unable to open a gap: {frame.attacksWithoutGap.join(', ')}</small>}
        {frame.waitingTeams.length>0&&<small>Waiting: {frame.waitingTeams.join(', ')} · leader {seconds(frame.decisionLeadGapSeconds)} ahead before this kilometre, within the {seconds(frame.selectiveChaseSafeGapSeconds)} selective limit</small>}
+       {frame.holdingHelpers.length>0&&<small>Holding chase helpers back: {frame.holdingHelpers.join(', ')}</small>}
        {frame.teamsUpRoad.length>0&&<small>Teams with riders ahead: {frame.teamsUpRoad.join(', ')}</small>}
        {frame.droppedCount>0&&<small>{frame.droppedCount} rider{frame.droppedCount===1?'':'s'} behind the peloton</small>}</article>
      </div>

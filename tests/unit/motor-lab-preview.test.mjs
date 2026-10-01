@@ -159,6 +159,13 @@ test('rounded safe-gap display does not invalidate an exact chase decision',()=>
  assert.equal(recording.frames[105].selectiveChaseSafeGapSeconds,3.24);
 });
 
+test('the viewer names a team that deliberately holds chase helpers',()=>{
+ const recording=createMotorLabPreview({plan:'sprint',seed:1,
+  orders:{chaseContribution:'ignore'}});
+ assert.deepEqual(recording.frames[4].holdingHelpers,['Amber']);
+ assert(!recording.frames[4].chasingTeams.includes('Amber'));
+});
+
 test('break episodes summarize only contiguous recorded kilometres',()=>{
  const recording=createMotorLabPreview({plan:'sprint',seed:1});
  assert.deepEqual(recording.episodes[0],{startKm:20,lastKm:25,

@@ -980,6 +980,10 @@ test('selective pursuit waits with a manageable gap but starts as the finish app
   const committed=resolveTacticalKilometre({...context,teams:[ahead,all],km:20});
   assert.deepEqual(committed.heldChaseTeamIds,[]);
   assert.equal(committed.chasers[0].reason,'ordered_all');
+  const ignoring=tacticalTeam('b','protect',{baseline:{attack:'none',chase:'ignore'}});
+  const heldBack=resolveTacticalKilometre({...context,teams:[ahead,ignoring],km:20});
+  assert.deepEqual(heldBack.withheldChaseTeamIds,['b']);
+  assert.deepEqual(heldBack.chasers,[]);
   const fresh=tacticalTeam('c','aggressive');
   const reacting=resolveTacticalKilometre({...context,teams:[ahead,defender,fresh],km:20});
   assert.ok(reacting.attackers.length>0);
@@ -1016,6 +1020,9 @@ test('a waiting chase team stays alert and later works in a recorded race',()=>{
   const falsifiedPlan=structuredClone(race);
   falsifiedPlan.committedInputs.teams.find(team=>team.id==='b').orders.baseline.chase='ignore';
   assert.throws(()=>validateRecordedTour(falsifiedPlan),/held chase/);
+  const falsifiedWithholding=structuredClone(race);
+  falsifiedWithholding.frames[waiting].withheldChaseTeamIds=['b'];
+  assert.throws(()=>validateRecordedTour(falsifiedWithholding),/withheld chase/);
 });
 
 test('a solo rider needs sustained ability to keep an early break to the finish',()=>{
