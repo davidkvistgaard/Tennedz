@@ -1,6 +1,6 @@
 # Motor Lab scenario audit (fictional routes)
 
-Run node scripts/audit-motor-lab.mjs 20 coast or node scripts/audit-motor-lab.mjs 20 ridge to reproduce these small, deterministic comparisons. Each run simulates scenario numbers 0-19 for the four Amber presets with default orders, a conditional break attack after 40 km, helpers held for the captain, chase helpers held all race, and chase helpers held until an all-out commitment after 120 km. The other three fictional teams, rider cast, route and weather seed are held constant within each paired comparison. The script reads no database and changes no sporting data.
+Run `node scripts/audit-motor-lab.mjs 20 coast` or `node scripts/audit-motor-lab.mjs 20 ridge` to reproduce these small, deterministic comparisons. Each run simulates scenario numbers 0-19 for the four Amber presets with default orders, a conditional break attack after 40 km, helpers held for the captain, bunch attacks held, selective bunch attacks, attacks held until a selective switch after 120 km, chase helpers held all race, and chase helpers held until an all-out commitment after 120 km. The other three fictional teams, rider cast, route and weather seed are held constant within each paired comparison. The script reads no database and changes no sporting data.
 
 On 30 September 2026, the 20-seed Coast Road run found:
 
