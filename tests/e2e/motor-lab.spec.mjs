@@ -98,7 +98,7 @@ for(const width of [390,1440])test(`manager runs a recorded Motor Lab race at ${
  const waitingSlider=page.getByRole('slider',{name:'Inspect recorded kilometre'});
  await waitingSlider.fill('21');
  await expect(page.getByText('22 / 160',{exact:true})).toBeVisible();
- await expect(page.getByText('Waiting while the gap remains manageable: Amber, Birch')).toBeVisible();
+ await expect(page.getByText(/Waiting: Amber, Birch · leader 3\.4 s ahead before this kilometre, within the 8\.3 s selective limit/)).toBeVisible();
  await expect(page.getByText('Teams with riders ahead: Cedar, Dune')).toBeVisible();
  await waitingSlider.fill('4');
  await expect(page.getByText('5 / 160',{exact:true})).toBeVisible();

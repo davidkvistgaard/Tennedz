@@ -948,6 +948,7 @@ test('selective pursuit waits with a manageable gap but starts as the finish app
   const guard=resolveTacticalKilometre({...context,km:60,gapSeconds:3});
   const late=resolveTacticalKilometre({...context,km:120});
   assert.deepEqual(early.heldChaseTeamIds,['b']);
+  assert.equal(early.selectiveChaseSafeGapSeconds,8.4);
   assert.deepEqual(early.chasers,[]);
   assert.deepEqual(mid.heldChaseTeamIds,['b']);
   assert.deepEqual(mid.chasers,[]);
@@ -1001,6 +1002,9 @@ test('a waiting chase team stays alert and later works in a recorded race',()=>{
     frame.chasers.includes('b')&&frame.attackers.length===0);
   assert.ok(later,'the waiting team should eventually begin the chase');
   assert.equal(validateRecordedTour(race),true);
+  const falsifiedLimit=structuredClone(race);
+  falsifiedLimit.frames[waiting].selectiveChaseSafeGapSeconds=99;
+  assert.throws(()=>validateRecordedTour(falsifiedLimit),/recorded|Invalid/);
   const falsifiedPlan=structuredClone(race);
   falsifiedPlan.committedInputs.teams.find(team=>team.id==='b').orders.baseline.chase='ignore';
   assert.throws(()=>validateRecordedTour(falsifiedPlan),/held chase/);

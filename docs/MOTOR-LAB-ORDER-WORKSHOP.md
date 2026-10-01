@@ -44,6 +44,8 @@ Verification for this increment: 247 unit tests, repository ESLint, production b
 
 The peloton card now distinguishes teams actively chasing, teams deliberately waiting while a small gap remains manageable, and teams represented in a road group ahead. These are recorded kilometre states from the same simulation, not hindsight inferred from the finish. This makes the common situation where a break remains useful and the bunch declines to close it visible in the replay. A waiting label disappears when the break has been caught.
 
+For a selective team that waits, the card now shows the leader's gap *before* that kilometre and the safe-gap limit used by the tactical calculation. The current post-kilometre gap could already have changed, so it must not be used to explain an earlier decision. This threshold is recorded by the simulator and checked by replay validation for the current tuning version.
+
 Verification: 248 unit tests, repository ESLint, production build, and authenticated 390/1440 px browser journeys. Each viewport uses a separate fixture manager so the browser check stays within the preview API's per-user run limit.
 
 ## Break episodes in the recording
