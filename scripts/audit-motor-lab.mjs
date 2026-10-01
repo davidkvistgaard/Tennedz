@@ -10,7 +10,7 @@ function metrics(recording){
  const frames=recording.frames;
  const teamNames=recording.teams.map(team=>team.name);
  const perTeam=Object.fromEntries(teamNames.map(name=>[name,{
-  attempts:0,withoutGap:0,chaseKm:0,
+  attempts:0,withoutGap:0,chaseKm:0,withheldKm:0,
  }]));
  const chaseReasons={};
  for(const frame of frames){
@@ -20,6 +20,7 @@ function metrics(recording){
    perTeam[name].attempts+=frame.attackAttempts.filter(rider=>rider.startsWith(`${name} `)).length;
    perTeam[name].withoutGap+=frame.attacksWithoutGap.filter(rider=>rider.startsWith(`${name} `)).length;
    perTeam[name].chaseKm+=Number(frame.chasingTeams.includes(name));
+   perTeam[name].withheldKm+=Number(frame.holdingHelpers.includes(name));
   }
  }
  if(teamNames.reduce((sum,name)=>sum+perTeam[name].attempts,0)!==
@@ -95,6 +96,7 @@ function summarise(rows){
   meanByTeam:Object.fromEntries(Object.keys(rows[0].perTeam).map(name=>[name,{
    attempts:meanTeam(name,'attempts'),withoutGap:meanTeam(name,'withoutGap'),
    chaseKm:meanTeam(name,'chaseKm'),
+   withheldKm:meanTeam(name,'withheldKm'),
   }])),
   totalMultiGroupKm:rows.reduce((sum,row)=>sum+row.multiGroupKm,0),
   splits:rows.filter(row=>row.split).length,
@@ -103,14 +105,19 @@ function summarise(rows){
 }
 const report={kind:'fictional-motor-lab-audit',routeId,seedCount:count,plans:{}};
 for(const plan of ['sprint','break','balanced','conserve']){
- const baseline=[],attack40=[],helpersHeld=[];
+ const baseline=[],attack40=[],helpersHeld=[],chaseHeld=[],chaseHeldThenAll=[];
  for(let seed=0;seed<count;seed++){
   baseline.push(metrics(createMotorLabPreview({plan,seed,routeId})));
   attack40.push(metrics(createMotorLabPreview({plan,seed,routeId,orders:{breakAttackMarker:'40'}})));
   helpersHeld.push(metrics(createMotorLabPreview({plan,seed,routeId,
    orders:{helperAttackPolicy:'hold_for_captain'}})));
+  chaseHeld.push(metrics(createMotorLabPreview({plan,seed,routeId,
+   orders:{chaseContribution:'ignore'}})));
+  chaseHeldThenAll.push(metrics(createMotorLabPreview({plan,seed,routeId,
+   orders:{chaseContribution:'ignore',lateChaseContribution:'all'}})));
  }
  report.plans[plan]={baseline:summarise(baseline),attackAfter40Km:summarise(attack40),
-  helpersHeld:summarise(helpersHeld)};
+  helpersHeld:summarise(helpersHeld),chaseHeld:summarise(chaseHeld),
+  chaseHeldThenAll:summarise(chaseHeldThenAll)};
 }
 console.log(JSON.stringify(report,null,2));
