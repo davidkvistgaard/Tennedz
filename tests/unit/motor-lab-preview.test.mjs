@@ -103,6 +103,8 @@ test('chase contribution changes Amber work without changing the seeded route',(
  assert(amberChaseKm(planned)>0);
  assert(held.frames.filter(frame=>frame.groups.length).length>
   committed.frames.filter(frame=>frame.groups.length).length);
+ assert(held.frames.at(-1).amberEnergy>planned.frames.at(-1).amberEnergy);
+ assert(planned.frames.at(-1).amberEnergy>committed.frames.at(-1).amberEnergy);
  assert.equal(held.routeId,committed.routeId);
  assert.deepEqual(held,createMotorLabPreview({...common,orders:held.orders}));
 });
