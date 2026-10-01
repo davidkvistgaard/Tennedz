@@ -31,6 +31,17 @@ The compact replay and audit now distinguish an attempted attack from a rider ac
 
 The audit now splits attempts, failed gaps and chase kilometres by team, using the fixed fixture rider names. On the Coast sprint baseline, Cedar makes 32.0 attempts per race and fails to open a gap on 23.0; Dune makes 9.0 attempts and fails on 1.0. Amber and Birch make no bunch attacks but each chase for 40.0 km. In the Coast break preset, Amber and Cedar each make 19.7 attempts with **zero** failed gaps; Birch chases for 80.9 km. Ridge shows the same pattern: Cedar makes 33.0 attempts with 22.0 failures in the sprint preset, while Amber and Cedar each make 16.9 attempts without a failure in the break preset. This localizes the repeatability problem to team interaction and the attack/chase contest, rather than an equally high success rate for every isolated attacker. It also shows that the current fixtures repeatedly ask the same teams to attack or chase. These are diagnostic observations, not a claim about the intended balance of real races.
 
+The audit additionally counts distinct kilometres with a bunch attack, simultaneous attempts by multiple teams, and attempts while a break was already ahead at the start of that kilometre. Across 20 paired seeds, the baseline means are:
+
+| Route / Amber plan | Km with an attack | Km with multiple teams attacking | Attack km with an existing break |
+| --- | ---: | ---: | ---: |
+| Coast / sprint | 32.0 | 9.0 | 1.1 |
+| Coast / break | 20.7 | 19.7 | 7.8 |
+| Ridge / sprint | 33.0 | 11.0 | 4.9 |
+| Ridge / break | 19.0 | 16.9 | 7.0 |
+
+The many simultaneous attempts, particularly under the break plan, expose the shared automatic attack cadence rather than independent team decisions. A local trial that simply suppressed unnamed attacks whenever a teammate was ahead changed several seeded race traces and made the Coast sprint's longest break shorter; it was reverted. Team representation needs to be modelled together with attack timing and chase response, then judged against recorded road outcomes, rather than treated as a standalone switch.
+
 The audit now totals recorded chase decisions by reason. In the default Coast sprint runs, teams contribute an average of **86.0 team-kilometres answering fresh attacks** and **16.0 team-kilometres because the leader exceeded the selective safe gap**; on Ridge the figures are **84.1** and **18.1**. These are sums across teams, so several teams working on one kilometre count several times, including a response to an attack that fails to establish a break. No other chase reasons fire in these default fixtures. The predominance of reactive work is consistent with the regular attack schedule and short breaks; it does not by itself show that chasing causes every catch. A future balance trial should separately vary attack frequency and the decision to respond, then compare episode length, catches and race results.
 
 ### Timing a chase order

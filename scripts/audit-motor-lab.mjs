@@ -60,6 +60,10 @@ function metrics(recording){
   multiGroupKm:frames.filter(frame=>frame.groups.length>1).length,
   maxGapSeconds:Math.max(...frames.map(frame=>frame.groups[0]?.gapSeconds??0)),
   bunchAttackAttempts:frames.reduce((sum,frame)=>sum+frame.attackAttempts.length,0),
+  attackKm:frames.filter(frame=>frame.attackAttempts.length>0).length,
+  multiTeamAttackKm:frames.filter(frame=>frame.attackAttempts.length>1).length,
+  attacksIntoExistingBreakKm:frames.filter((frame,index)=>frame.attackAttempts.length>0&&
+   index>0&&frames[index-1].groups.length>0).length,
   attacksWithoutGap:frames.reduce((sum,frame)=>sum+frame.attacksWithoutGap.length,0),
   amberHelperAttackAttempts:recording.amberHelperAttackAttempts,
   chaseReasons,
@@ -88,6 +92,9 @@ function summarise(rows){
   meanRoadGroupsCreated:mean('roadGroupsCreated'),
   meanMaxGapSeconds:mean('maxGapSeconds'),
   meanBunchAttackAttempts:mean('bunchAttackAttempts'),
+  meanAttackKm:mean('attackKm'),
+  meanMultiTeamAttackKm:mean('multiTeamAttackKm'),
+  meanAttacksIntoExistingBreakKm:mean('attacksIntoExistingBreakKm'),
   meanAttacksWithoutGap:mean('attacksWithoutGap'),
   meanAmberHelperAttackAttempts:mean('amberHelperAttackAttempts'),
   meanChaseDecisionsByReason:Object.fromEntries([...new Set(rows.flatMap(row=>
