@@ -2182,6 +2182,16 @@ test('recorded playback does not recalculate and rejects a result that differs f
   const foreignChase=structuredClone(result);
   foreignChase.frames[firstChase].chasers.push('foreign');
   assert.throws(()=>validateRecordedTour(foreignChase),/chase event/);
+  const allOutScenario=flatScenario('sprint');
+  allOutScenario.teams[0].chaseContribution='all';
+  const allOutRace=runKilometreLab({scenario:allOutScenario,seed:'reason-priority'});
+  const allOutFrame=allOutRace.frames.find(frame=>frame.attackPower>0&&
+    frame.chaseReasons.some(item=>item.teamId==='team-0'&&item.reason==='ordered_all'));
+  assert.ok(allOutFrame);
+  const plausibleButWrongReason=structuredClone(allOutRace);
+  plausibleButWrongReason.frames[allOutFrame.km-1].chaseReasons
+    .find(item=>item.teamId==='team-0').reason='fresh_attack';
+  assert.throws(()=>validateRecordedTour(plausibleButWrongReason),/chase reason/);
   const foreignDecision=structuredClone(result);
   foreignDecision.frames[firstChase].decisions.push({teamId:'foreign',kind:'chase_break',riderId:'foreign'});
   assert.throws(()=>validateRecordedTour(foreignDecision),/tactical decision/);
