@@ -136,6 +136,8 @@ test('recording distinguishes a deliberate wait from teams represented up the ro
  assert.equal(frame.km,22);
  assert.deepEqual(frame.chasingTeams,[]);
  assert.deepEqual(frame.waitingTeams,['Amber','Birch']);
+ assert.equal(frame.decisionLeadGapSeconds,3.39);
+ assert.equal(frame.selectiveChaseSafeGapSeconds,8.28);
  assert.deepEqual(frame.teamsUpRoad,['Cedar','Dune']);
  assert(recording.frames.every(item=>item.groups.length||!item.waitingTeams.length));
 });
