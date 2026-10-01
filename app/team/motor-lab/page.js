@@ -206,6 +206,16 @@ export default function MotorLabPage(){
       <div className="motor-timeline-ticks"><span>0 km</span><span>40</span><span>80</span><span>120</span><span>160 km</span></div>
       <p>At {frame.km} km, the leading group is {seconds(frame.groups[0]?.gapSeconds??0)} ahead of the peloton. The largest recorded gap is {seconds(timeline.peakGap)}. Green shows the leader; gold shows groups between the leader and peloton.</p>
      </figure>
+     <div className="motor-episodes">
+      <h3>Moves at a glance</h3>
+      <p>{recording.episodes.length} break episode{recording.episodes.length===1?'':'s'} recorded. Select one to inspect where it began.</p>
+      <div>{recording.episodes.map((episode,index)=><button key={episode.startKm} type="button"
+       aria-current={frame.km>=episode.startKm&&frame.km<=episode.lastKm?'step':undefined}
+       onClick={()=>{setPlaying(false);setFrameIndex(episode.startKm-1);}}>
+       <strong>Move {index+1} · {episode.startKm}–{episode.lastKm} km</strong>
+       <small>{seconds(episode.peakGapSeconds)} peak · {episode.caughtAtKm?`caught at ${episode.caughtAtKm} km`:'ahead at the finish'} · chase active {episode.chasedKm} km</small>
+      </button>)}</div>
+     </div>
      <label className="motor-scrubber">Inspect recorded kilometre
       <input type="range" min="0" max={recording.frames.length-1} value={frameIndex}
        onChange={event=>{setPlaying(false);setFrameIndex(Number(event.target.value));}}/>

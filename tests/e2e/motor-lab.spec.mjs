@@ -86,6 +86,10 @@ for(const width of [390,1440])test(`manager runs a recorded Motor Lab race at ${
  await page.getByLabel('Laboratory route').selectOption('coast');
  await page.getByRole('button',{name:'Run the race'}).click();
  await expect(page.getByRole('heading',{name:'Coast Road laboratory'})).toBeVisible();
+ await expect(page.getByText(/8 break episodes recorded/)).toBeVisible();
+ await page.getByRole('button',{name:/Move 1 · 20–25 km/}).click();
+ await expect(page.getByText('20 / 160',{exact:true})).toBeVisible();
+ await expect(page.getByRole('button',{name:/Move 1 · 20–25 km/})).toHaveAttribute('aria-current','step');
  const waitingSlider=page.getByRole('slider',{name:'Inspect recorded kilometre'});
  await waitingSlider.fill('21');
  await expect(page.getByText('22 / 160',{exact:true})).toBeVisible();
