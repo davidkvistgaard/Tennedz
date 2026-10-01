@@ -964,6 +964,7 @@ test('selective pursuit waits with a manageable gap but starts as the finish app
   assert.ok(early.energyCosts.every(cost=>cost.reason!=='chase'));
   assert.deepEqual(late.heldChaseTeamIds,[]);
   assert.deepEqual(late.chasers.map(chaser=>chaser.teamId),['b']);
+  assert.equal(late.chasers[0].reason,'gap_over_limit');
   assert.ok(late.gapSeconds<early.gapSeconds);
   const stillSafe=resolveTacticalKilometre({...context,km:120,gapSeconds:1});
   const nowUrgent=resolveTacticalKilometre({...context,km:150,gapSeconds:1});
@@ -976,11 +977,14 @@ test('selective pursuit waits with a manageable gap but starts as the finish app
   assert.throws(()=>resolveTacticalKilometre({...context,km:120,gapSeconds:8,
     leadingGapSeconds:1}),/Invalid tactical kilometre/);
   const all=tacticalTeam('b','protect',{baseline:{attack:'none',chase:'all'}});
-  assert.deepEqual(resolveTacticalKilometre({...context,teams:[ahead,all],km:20}).heldChaseTeamIds,[]);
+  const committed=resolveTacticalKilometre({...context,teams:[ahead,all],km:20});
+  assert.deepEqual(committed.heldChaseTeamIds,[]);
+  assert.equal(committed.chasers[0].reason,'ordered_all');
   const fresh=tacticalTeam('c','aggressive');
   const reacting=resolveTacticalKilometre({...context,teams:[ahead,defender,fresh],km:20});
   assert.ok(reacting.attackers.length>0);
   assert.ok(!reacting.heldChaseTeamIds.includes('b'));
+  assert.equal(reacting.chasers.find(chaser=>chaser.teamId==='b').reason,'fresh_attack');
 });
 
 test('a waiting chase team stays alert and later works in a recorded race',()=>{
@@ -1001,7 +1005,11 @@ test('a waiting chase team stays alert and later works in a recorded race',()=>{
   const later=race.frames.slice(waiting+3).find(frame=>
     frame.chasers.includes('b')&&frame.attackers.length===0);
   assert.ok(later,'the waiting team should eventually begin the chase');
+  assert.equal(later.chaseReasons.find(item=>item.teamId==='b').reason,'gap_over_limit');
   assert.equal(validateRecordedTour(race),true);
+  const falsifiedReason=structuredClone(race);
+  falsifiedReason.frames[later.km-1].chaseReasons.find(item=>item.teamId==='b').reason='gc_defense';
+  assert.throws(()=>validateRecordedTour(falsifiedReason),/chase reason/);
   const falsifiedLimit=structuredClone(race);
   falsifiedLimit.frames[waiting].selectiveChaseSafeGapSeconds=99;
   assert.throws(()=>validateRecordedTour(falsifiedLimit),/recorded|Invalid/);

@@ -132,6 +132,15 @@ test('chase contribution changes Amber work without changing the seeded route',(
 
 test('recording distinguishes a deliberate wait from teams represented up the road',()=>{
  const recording=createMotorLabPreview({plan:'sprint',seed:1});
+ assert.deepEqual(recording.frames[4].chaseReasons,[
+  {team:'Amber',reason:'fresh_attack'},
+  {team:'Birch',reason:'fresh_attack'},
+  {team:'Dune',reason:'fresh_attack'},
+ ]);
+ assert.deepEqual(recording.frames[40].chaseReasons,[
+  {team:'Amber',reason:'gap_over_limit'},
+  {team:'Birch',reason:'gap_over_limit'},
+ ]);
  const frame=recording.frames[21];
  assert.equal(frame.km,22);
  assert.deepEqual(frame.chasingTeams,[]);
