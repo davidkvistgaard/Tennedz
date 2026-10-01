@@ -29,8 +29,10 @@ for(const width of [390,1440])test(`manager runs a recorded Motor Lab race at ${
  await expect(page.getByText('1 / 160',{exact:true})).toBeVisible();
  await expect(page.locator('.motor-scoreboard strong').nth(2)).toHaveText('Peloton');
  await expect(page.getByText(/The largest recorded gap is/)).toBeVisible();
+ await page.getByLabel('Replay speed').selectOption('1');
  await page.getByRole('button',{name:/Play replay/}).click();
  await expect(page.locator('.motor-scoreboard strong').first()).not.toHaveText('1 / 160');
+ await page.getByLabel('Replay speed').selectOption('4');
  await page.getByRole('button',{name:'Pause replay'}).click();
  const slider=page.getByRole('slider',{name:'Inspect recorded kilometre'});
  await slider.focus();await page.keyboard.press('End');
