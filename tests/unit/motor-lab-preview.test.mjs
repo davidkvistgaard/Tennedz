@@ -151,6 +151,14 @@ test('recording distinguishes a deliberate wait from teams represented up the ro
  assert(recording.frames.every(item=>item.groups.length||!item.waitingTeams.length));
 });
 
+test('rounded safe-gap display does not invalidate an exact chase decision',()=>{
+ const recording=createMotorLabPreview({plan:'conserve',seed:9});
+ assert.deepEqual(recording.frames[105].chaseReasons,[
+  {team:'Birch',reason:'gap_over_limit'},
+ ]);
+ assert.equal(recording.frames[105].selectiveChaseSafeGapSeconds,3.24);
+});
+
 test('break episodes summarize only contiguous recorded kilometres',()=>{
  const recording=createMotorLabPreview({plan:'sprint',seed:1});
  assert.deepEqual(recording.episodes[0],{startKm:20,lastKm:25,

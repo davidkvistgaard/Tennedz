@@ -12,7 +12,10 @@ function metrics(recording){
  const perTeam=Object.fromEntries(teamNames.map(name=>[name,{
   attempts:0,withoutGap:0,chaseKm:0,
  }]));
+ const chaseReasons={};
  for(const frame of frames){
+  for(const {reason} of frame.chaseReasons)
+   chaseReasons[reason]=(chaseReasons[reason]??0)+1;
   for(const name of teamNames){
    perTeam[name].attempts+=frame.attackAttempts.filter(rider=>rider.startsWith(`${name} `)).length;
    perTeam[name].withoutGap+=frame.attacksWithoutGap.filter(rider=>rider.startsWith(`${name} `)).length;
@@ -24,6 +27,9 @@ function metrics(recording){
    teamNames.reduce((sum,name)=>sum+perTeam[name].withoutGap,0)!==
    frames.reduce((sum,frame)=>sum+frame.attacksWithoutGap.length,0))
   throw new Error('The fixture rider names no longer identify their teams.');
+ if(Object.values(chaseReasons).reduce((sum,count)=>sum+count,0)!==
+   teamNames.reduce((sum,name)=>sum+perTeam[name].chaseKm,0))
+  throw new Error('Chase decisions no longer match recorded chase contributions.');
  const breakEpisodes=[];
  let currentEpisode=0,currentEpisodeChaseKm=0,catchesWithChase=0,catchesWithoutChase=0,
   caughtEpisodesEverChased=0,caughtEpisodesNeverChased=0;
@@ -55,6 +61,7 @@ function metrics(recording){
   bunchAttackAttempts:frames.reduce((sum,frame)=>sum+frame.attackAttempts.length,0),
   attacksWithoutGap:frames.reduce((sum,frame)=>sum+frame.attacksWithoutGap.length,0),
   amberHelperAttackAttempts:recording.amberHelperAttackAttempts,
+  chaseReasons,
   perTeam,
   amberWin:recording.results[0].team==='Amber',
   captainPlace:recording.results.find(result=>result.name==='Amber Captain').position,
@@ -82,6 +89,9 @@ function summarise(rows){
   meanBunchAttackAttempts:mean('bunchAttackAttempts'),
   meanAttacksWithoutGap:mean('attacksWithoutGap'),
   meanAmberHelperAttackAttempts:mean('amberHelperAttackAttempts'),
+  meanChaseDecisionsByReason:Object.fromEntries([...new Set(rows.flatMap(row=>
+   Object.keys(row.chaseReasons)))].sort().map(reason=>[reason,Number((rows.reduce((sum,row)=>
+    sum+(row.chaseReasons[reason]??0),0)/rows.length).toFixed(1))])),
   meanByTeam:Object.fromEntries(Object.keys(rows[0].perTeam).map(name=>[name,{
    attempts:meanTeam(name,'attempts'),withoutGap:meanTeam(name,'withoutGap'),
    chaseKm:meanTeam(name,'chaseKm'),
