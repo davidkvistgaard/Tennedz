@@ -66,6 +66,22 @@ export default function MotorLabPage(){
  const frame=recording?.frames[frameIndex];
  const comparison=previousRecording?.seed===recording?.seed&&
   previousRecording?.routeId===recording?.routeId?previousRecording:null;
+ const firstRoadDifference=useMemo(()=>{
+  if(!comparison||!recording)return null;
+  for(let index=0;index<recording.frames.length;index++){
+   const before=comparison.frames[index],after=recording.frames[index];
+   if(!before||!after)break;
+   const changed=(key)=>JSON.stringify(before[key])!==JSON.stringify(after[key]);
+   if(['groups','chasingTeams','waitingTeams','holdingHelpers','attackAttempts',
+    'amberEnergy','amberCaptainDropped'].some(changed)){
+    const cause=before.chasingTeams.includes('Amber')!==after.chasingTeams.includes('Amber')?
+     'Amber chase work':changed('attackAttempts')?'bunch attacks':
+      changed('groups')?'road groups':changed('amberEnergy')?'Amber energy':'team decisions';
+    return {km:after.km,cause};
+   }
+  }
+  return null;
+ },[comparison,recording]);
  const amberCaptain=recording?.results.find(result=>result.name==='Amber Captain');
  const captainRoadGroup=frame?.groups.findIndex(group=>group.riders.includes('Amber Captain'))??-1;
  const captainLocation=frame?.km===recording?.distanceKm?`#${amberCaptain?.position??'-'}`:
@@ -209,6 +225,10 @@ export default function MotorLabPage(){
         <tr><th scope="row">Largest break advantage</th><td>{seconds(largestBreakGap(comparison))}</td><td>{seconds(largestBreakGap(recording))}</td></tr>
         <tr><th scope="row">Winner</th><td>{comparison.results[0].name}</td><td>{recording.results[0].name}</td></tr></tbody></table>
       <p>Both runs used scenario {recording.seed}. This comparison is a test signal, not proof that the race balance is final.</p>
+      {firstRoadDifference?<p>First recorded road difference: <button type="button"
+       onClick={()=>{setPlaying(false);setFrameIndex(firstRoadDifference.km-1);}}>
+       {firstRoadDifference.km} km � {firstRoadDifference.cause}</button></p>:
+       <p>No different road state was recorded in this scenario.</p>}
      </div>}
      <div className="motor-scoreboard"><div><small>KILOMETRE</small><strong>{frame.km} / {recording.distanceKm}</strong></div>
       <div><small>GROUPS AHEAD</small><strong>{frame.groups.length}</strong></div>

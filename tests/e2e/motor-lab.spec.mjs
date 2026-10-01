@@ -78,6 +78,9 @@ for(const width of [390,1440])test(`manager runs a recorded Motor Lab race at ${
  await expect(page.getByRole('row',{name:/Amber chase kilometres/}).getByRole('cell').last()).toHaveText('11');
  await page.getByRole('slider',{name:'Inspect recorded kilometre'}).fill('120');
  await expect(page.getByText(/Amber switched to all chase work/).first()).toBeVisible();
+ await page.getByRole('slider',{name:'Inspect recorded kilometre'}).fill('0');
+ await page.getByRole('button',{name:/121 km.*Amber chase work/}).click();
+ await expect(page.getByText('121 / 160',{exact:true})).toBeVisible();
  await page.getByLabel('Chase work after 120 km').selectOption('follow_plan');
  await page.getByLabel('Laboratory route').selectOption('ridge');
  await page.getByRole('button',{name:'Run the race'}).click();
