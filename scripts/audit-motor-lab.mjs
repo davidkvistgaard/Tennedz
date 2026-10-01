@@ -8,6 +8,22 @@ if(!PREVIEW_ROUTES.includes(routeId))throw new Error('Choose a laboratory route.
 
 function metrics(recording){
  const frames=recording.frames;
+ const teamNames=recording.teams.map(team=>team.name);
+ const perTeam=Object.fromEntries(teamNames.map(name=>[name,{
+  attempts:0,withoutGap:0,chaseKm:0,
+ }]));
+ for(const frame of frames){
+  for(const name of teamNames){
+   perTeam[name].attempts+=frame.attackAttempts.filter(rider=>rider.startsWith(`${name} `)).length;
+   perTeam[name].withoutGap+=frame.attacksWithoutGap.filter(rider=>rider.startsWith(`${name} `)).length;
+   perTeam[name].chaseKm+=Number(frame.chasingTeams.includes(name));
+  }
+ }
+ if(teamNames.reduce((sum,name)=>sum+perTeam[name].attempts,0)!==
+   frames.reduce((sum,frame)=>sum+frame.attackAttempts.length,0)||
+   teamNames.reduce((sum,name)=>sum+perTeam[name].withoutGap,0)!==
+   frames.reduce((sum,frame)=>sum+frame.attacksWithoutGap.length,0))
+  throw new Error('The fixture rider names no longer identify their teams.');
  const breakEpisodes=[];
  let currentEpisode=0,currentEpisodeChaseKm=0,catchesWithChase=0,catchesWithoutChase=0,
   caughtEpisodesEverChased=0,caughtEpisodesNeverChased=0;
@@ -38,6 +54,7 @@ function metrics(recording){
   maxGapSeconds:Math.max(...frames.map(frame=>frame.groups[0]?.gapSeconds??0)),
   bunchAttackAttempts:frames.reduce((sum,frame)=>sum+frame.attackAttempts.length,0),
   attacksWithoutGap:frames.reduce((sum,frame)=>sum+frame.attacksWithoutGap.length,0),
+  perTeam,
   amberWin:recording.results[0].team==='Amber',
   captainPlace:recording.results.find(result=>result.name==='Amber Captain').position,
   split:frames.some(frame=>frame.moments.includes('Amber Captain attacked from a break')),
@@ -46,6 +63,7 @@ function metrics(recording){
 }
 function summarise(rows){
  const mean=key=>Number((rows.reduce((sum,row)=>sum+row[key],0)/rows.length).toFixed(1));
+ const meanTeam=(name,key)=>Number((rows.reduce((sum,row)=>sum+row.perTeam[name][key],0)/rows.length).toFixed(1));
  return {
   amberWins:rows.filter(row=>row.amberWin).length,
   meanCaptainPlace:mean('captainPlace'),
@@ -62,6 +80,10 @@ function summarise(rows){
   meanMaxGapSeconds:mean('maxGapSeconds'),
   meanBunchAttackAttempts:mean('bunchAttackAttempts'),
   meanAttacksWithoutGap:mean('attacksWithoutGap'),
+  meanByTeam:Object.fromEntries(Object.keys(rows[0].perTeam).map(name=>[name,{
+   attempts:meanTeam(name,'attempts'),withoutGap:meanTeam(name,'withoutGap'),
+   chaseKm:meanTeam(name,'chaseKm'),
+  }])),
   totalMultiGroupKm:rows.reduce((sum,row)=>sum+row.multiGroupKm,0),
   splits:rows.filter(row=>row.split).length,
   blockedOrders:rows.filter(row=>row.blocked).length,
