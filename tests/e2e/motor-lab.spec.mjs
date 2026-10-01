@@ -105,6 +105,10 @@ for(const width of [390,1440])test(`manager runs a recorded Motor Lab race at ${
  await expect(page.getByText('Attempted from the bunch: Cedar Captain')).toBeVisible();
  await expect(page.getByText('Unable to open a gap: Cedar Captain')).toBeVisible();
  await page.screenshot({path:`test-results/motor-lab-${width}.png`,fullPage:true});
+ await page.getByRole('radio',{name:/Send the captain ahead/}).check();
+ await page.getByLabel('May helpers attack for themselves?').selectOption('hold_for_captain');
+ await page.getByRole('button',{name:'Run the race'}).click();
+ await expect(page.getByText(/hold helpers for captain/)).toBeVisible();
  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
  expect(errors).toEqual([]);
 });

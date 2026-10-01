@@ -17,12 +17,13 @@ const captainBreakKilometres=recording=>recording.frames.filter(frame=>frame.gro
 const captainDroppedKilometres=recording=>recording.frames.filter(frame=>frame.amberCaptainDropped).length;
 const largestBreakGap=recording=>Math.max(...recording.frames.map(frame=>frame.groups[0]?.gapSeconds??0));
 const finalAmberEnergy=recording=>recording.frames.at(-1).amberEnergy.toFixed(1);
-const orderSummary=recording=>`${recording.orders.breakResponse==='chase_if_threatened'?'Threat chase':'Plan chase'} · ${recording.orders.chaseContribution==='follow_plan'?'Plan chase work':recording.orders.chaseContribution==='ignore'?'Hold chase helpers':'Commit chase helpers'} · ${recording.orders.breakWork.replace('_',' ')} · ${recording.orders.lateEffort==='follow_plan'?'Plan finish':recording.orders.lateEffort+' finish'} · ${recording.orders.breakAttackMarker==='none'?'No planned break attack':'Attack after '+recording.orders.breakAttackMarker+' km'} · ${recording.orders.roadCaptain==='experienced'?'Experienced':'Standard'} road captain · ${recording.orders.captainSupport==='drop_back_if_dropped'?'Help a dropped captain':'Hold helper positions'}`;
+const helperPolicyLabel=policy=>policy==='open'?'Helpers may attack':policy==='hold_for_captain'?'Hold helpers for captain':'Release helpers if captain drops';
+const orderSummary=recording=>`${recording.orders.breakResponse==='chase_if_threatened'?'Threat chase':'Plan chase'} · ${recording.orders.chaseContribution==='follow_plan'?'Plan chase work':recording.orders.chaseContribution==='ignore'?'Hold chase helpers':'Commit chase helpers'} · ${recording.orders.breakWork.replace('_',' ')} · ${recording.orders.lateEffort==='follow_plan'?'Plan finish':recording.orders.lateEffort+' finish'} · ${recording.orders.breakAttackMarker==='none'?'No planned break attack':'Attack after '+recording.orders.breakAttackMarker+' km'} · ${recording.orders.roadCaptain==='experienced'?'Experienced':'Standard'} road captain · ${recording.orders.captainSupport==='drop_back_if_dropped'?'Help a dropped captain':'Hold helper positions'} · ${helperPolicyLabel(recording.orders.helperAttackPolicy)}`;
 
 export default function MotorLabPage(){
  const [plan,setPlan]=useState('sprint');
  const [routeId,setRouteId]=useState('coast');
- const [orders,setOrders]=useState({chaseContribution:'follow_plan',breakResponse:'hold_plan',breakWork:'cooperate',lateEffort:'follow_plan',breakAttackMarker:'none',roadCaptain:'standard',captainSupport:'hold_position'});
+ const [orders,setOrders]=useState({chaseContribution:'follow_plan',breakResponse:'hold_plan',breakWork:'cooperate',lateEffort:'follow_plan',breakAttackMarker:'none',roadCaptain:'standard',captainSupport:'hold_position',helperAttackPolicy:'open'});
  const [seed,setSeed]=useState(1);
  const [recording,setRecording]=useState(null);
  const [previousRecording,setPreviousRecording]=useState(null);
@@ -154,6 +155,13 @@ export default function MotorLabPage(){
         <option value="drop_back_if_dropped">Send a helper back if reachable</option>
        </select>
       </label>
+      <label>May helpers attack for themselves?
+       <select value={orders.helperAttackPolicy} onChange={event=>setOrders({...orders,helperAttackPolicy:event.target.value})}>
+        <option value="open">Yes, when the plan calls for it</option>
+        <option value="hold_for_captain">No, keep them for the captain</option>
+        <option value="release_if_dropped">Only if the captain loses contact</option>
+       </select>
+      </label>
      </div>
     </fieldset>
     <div className="motor-run-row"><label>Laboratory route
@@ -174,7 +182,7 @@ export default function MotorLabPage(){
     <section className="motor-panel" aria-labelledby="motor-record-title">
      <div className="motor-section-heading"><span>02 / RECORDED RACE</span><h2 id="motor-record-title">{recording.scenarioName}</h2></div>
      <p>Amber rode <strong>{recording.planLabel}</strong> in scenario {recording.seed}. Birch protected its sprinter, Cedar attacked and Dune raced balanced. The entire result was calculated before this replay opened.</p>
-     <p className="motor-committed">Committed orders: {recording.orders.breakResponse==='chase_if_threatened'?'chase a threatening break':'keep the original chase plan'} · {recording.orders.chaseContribution==='follow_plan'?'follow the plan for chase work':recording.orders.chaseContribution==='ignore'?'hold chase helpers back':'commit chase helpers'} · {recording.orders.breakWork.replace('_',' ')} in a break · {recording.orders.lateEffort==='follow_plan'?'keep the original effort':'ride '+recording.orders.lateEffort} after 120 km · {recording.orders.breakAttackMarker==='none'?'stay in the break':'attempt an attack from the break after '+recording.orders.breakAttackMarker+' km'} · {recording.orders.roadCaptain==='experienced'?'experienced':'standard'} road captain · {recording.orders.captainSupport==='drop_back_if_dropped'?'send a reachable helper back to a dropped captain':'hold helper positions'}.</p>
+     <p className="motor-committed">Committed orders: {recording.orders.breakResponse==='chase_if_threatened'?'chase a threatening break':'keep the original chase plan'} · {recording.orders.chaseContribution==='follow_plan'?'follow the plan for chase work':recording.orders.chaseContribution==='ignore'?'hold chase helpers back':'commit chase helpers'} · {recording.orders.breakWork.replace('_',' ')} in a break · {recording.orders.lateEffort==='follow_plan'?'keep the original effort':'ride '+recording.orders.lateEffort} after 120 km · {recording.orders.breakAttackMarker==='none'?'stay in the break':'attempt an attack from the break after '+recording.orders.breakAttackMarker+' km'} · {recording.orders.roadCaptain==='experienced'?'experienced':'standard'} road captain · {recording.orders.captainSupport==='drop_back_if_dropped'?'send a reachable helper back to a dropped captain':'hold helper positions'} · {helperPolicyLabel(recording.orders.helperAttackPolicy).toLowerCase()}.</p>
      {comparison&&<div className="motor-compare" aria-label="Compare two runs of the same scenario">
       <h3>Same scenario, two decisions</h3>
       <table><thead><tr><th scope="col">Outcome</th><th scope="col">Previous: {comparison.planLabel}<small>{orderSummary(comparison)}</small></th><th scope="col">Current: {recording.planLabel}<small>{orderSummary(recording)}</small></th></tr></thead>
