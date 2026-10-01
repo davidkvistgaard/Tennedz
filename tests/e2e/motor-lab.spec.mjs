@@ -104,6 +104,7 @@ for(const width of [390,1440])test(`manager runs a recorded Motor Lab race at ${
  await page.getByRole('button',{name:'Run the race'}).click();
  await expect(page.getByRole('heading',{name:'Coast Road laboratory'})).toBeVisible();
  await expect(page.getByText(/8 break episodes recorded/)).toBeVisible();
+ await expect(page.getByRole('button',{name:/Move 1.*chased earlier, none at catch/})).toBeVisible();
  await page.getByRole('button',{name:/Move 1 · 20–25 km/}).click();
  await expect(page.getByText('20 / 160',{exact:true})).toBeVisible();
  await expect(page.getByRole('button',{name:/Move 1 · 20–25 km/})).toHaveAttribute('aria-current','step');

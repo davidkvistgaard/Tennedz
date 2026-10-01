@@ -186,7 +186,8 @@ test('break episodes summarize only contiguous recorded kilometres',()=>{
  const recording=createMotorLabPreview({plan:'sprint',seed:1});
  assert.deepEqual(recording.episodes[0],{startKm:20,lastKm:25,
   peakGapSeconds:12.35,chasedKm:3,waitingKm:3,
-  teams:['Cedar','Dune'],caughtAtKm:26});
+  teams:['Cedar','Dune'],caughtAtKm:26,catchChaseState:'earlier_in_move'});
+ assert.equal(recording.episodes[4].catchChaseState,'active_at_catch');
  assert.equal(recording.episodes.reduce((total,episode)=>
   total+episode.lastKm-episode.startKm+1,0),
  recording.frames.filter(frame=>frame.groups.length).length);
@@ -194,6 +195,7 @@ test('break episodes summarize only contiguous recorded kilometres',()=>{
   recording.episodes[index-1].caughtAtKm<episode.startKm));
  const breakPlan=createMotorLabPreview({plan:'break',seed:1});
  assert.equal(breakPlan.episodes.at(-1).caughtAtKm,null);
+ assert.equal(breakPlan.episodes.at(-1).catchChaseState,null);
  assert.equal(breakPlan.episodes.at(-1).lastKm,160);
 });
 

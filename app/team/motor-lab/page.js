@@ -262,7 +262,7 @@ export default function MotorLabPage(){
        aria-current={frame.km>=episode.startKm&&frame.km<=episode.lastKm?'step':undefined}
        onClick={()=>{setPlaying(false);setFrameIndex(episode.startKm-1);}}>
        <strong>Move {index+1} · {episode.startKm}–{episode.lastKm} km</strong>
-       <small>{seconds(episode.peakGapSeconds)} peak · {episode.caughtAtKm?`caught at ${episode.caughtAtKm} km`:'ahead at the finish'} · chase active {episode.chasedKm} km</small>
+       <small>{seconds(episode.peakGapSeconds)} peak · {episode.caughtAtKm?`caught at ${episode.caughtAtKm} km`:'ahead at the finish'} · chase active {episode.chasedKm} km{episode.caughtAtKm?` · ${episode.catchChaseState==='active_at_catch'?'chase active at catch':episode.catchChaseState==='earlier_in_move'?'chased earlier, none at catch':'no recorded team chase'}`:''}</small>
       </button>)}</div>
      </div>
      <label className="motor-scrubber">Inspect recorded kilometre
