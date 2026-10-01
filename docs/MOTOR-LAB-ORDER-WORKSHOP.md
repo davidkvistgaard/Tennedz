@@ -71,3 +71,5 @@ Playback has slow, normal and fast speeds over the same stored kilometre frames.
 ## Helper freedom
 
 Amber can commit whether helpers are eligible for the plan's automatic attacks, held for the captain, or released only if the captain loses contact. This uses the existing v2 helper attack policy; it does not rewrite the captain's attack rule. In Coast Road scenario 1 with the break plan, the open order lets Amber Riders 3-8 attempt attacks. Holding helpers removes those attempts while Amber Captain can still attack. The conditional release gives the same trace as holding in that fixture because the captain never drops. The comparison can show the resulting change in placement without implying that withholding helpers is always better.
+
+The paired comparison counts Amber helper attack attempts from the committed helper IDs in the validated race trace. It reads 15 with the open order and zero when helpers are held in that scenario. The count includes attempts that did not create a lasting gap; it is a tactical workload measure, not a success total.

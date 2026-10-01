@@ -66,6 +66,9 @@ test('helper attack policy protects helpers without silently changing the captai
  const attempts=recording=>[...new Set(recording.frames.flatMap(frame=>frame.attackAttempts)
   .filter(name=>name.startsWith('Amber ')))];
  assert(attempts(open).includes('Amber Rider 3'));
+ assert.equal(open.amberHelperAttackAttempts,15);
+ assert.equal(held.amberHelperAttackAttempts,0);
+ assert.equal(conditional.amberHelperAttackAttempts,0);
  assert(!attempts(held).some(name=>/^Amber Rider [3-8]$/.test(name)));
  assert(attempts(held).includes('Amber Captain'));
  assert.deepEqual(conditional.frames,held.frames);
