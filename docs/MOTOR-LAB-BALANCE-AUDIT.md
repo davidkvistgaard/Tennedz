@@ -1,6 +1,6 @@
 # Motor Lab scenario audit (fictional routes)
 
-Run node scripts/audit-motor-lab.mjs 20 coast or node scripts/audit-motor-lab.mjs 20 ridge to reproduce these small, deterministic comparisons. Each run simulates scenario numbers 0–19 for the four Amber presets, once with default orders and once with a conditional break attack after 40 km. The other three fictional teams, rider cast, route and weather seed are held constant within each paired comparison. The script reads no database and changes no sporting data.
+Run node scripts/audit-motor-lab.mjs 20 coast or node scripts/audit-motor-lab.mjs 20 ridge to reproduce these small, deterministic comparisons. Each run simulates scenario numbers 0-19 for the four Amber presets with default orders, a conditional break attack after 40 km, and helpers held for the captain. The other three fictional teams, rider cast, route and weather seed are held constant within each paired comparison. The script reads no database and changes no sporting data.
 
 On 30 September 2026, the 20-seed Coast Road run found:
 
@@ -30,3 +30,16 @@ This is a diagnostic sample, not evidence of final realism or fair strategy bala
 The compact replay and audit now distinguish an attempted attack from a rider actually establishing a road gap. Across the same 20 Coast Road seeds, the sprint preset averages **41.0 bunch attack attempts per race**, of which **24.0 fail to open a gap**; the break preset averages **48.1 attempts**, with none failing. Ridge Road produces **44.0 / 23.0** for sprint and **41.9 / 0.0** for break. These counts include all four teams, not just Amber. They expose two balance concerns: attackers currently appear on a regular schedule, and the aggressive preset's attempts are too reliably successful. The new replay field makes those attempts inspectable; this increment does not tune the behaviour or claim the current frequency is realistic.
 
 The audit now splits attempts, failed gaps and chase kilometres by team, using the fixed fixture rider names. On the Coast sprint baseline, Cedar makes 32.0 attempts per race and fails to open a gap on 23.0; Dune makes 9.0 attempts and fails on 1.0. Amber and Birch make no bunch attacks but each chase for 40.0 km. In the Coast break preset, Amber and Cedar each make 19.7 attempts with **zero** failed gaps; Birch chases for 80.9 km. Ridge shows the same pattern: Cedar makes 33.0 attempts with 22.0 failures in the sprint preset, while Amber and Cedar each make 16.9 attempts without a failure in the break preset. This localizes the repeatability problem to team interaction and the attack/chase contest, rather than an equally high success rate for every isolated attacker. It also shows that the current fixtures repeatedly ask the same teams to attack or chase. These are diagnostic observations, not a claim about the intended balance of real races.
+
+### Helper freedom sensitivity
+
+Holding Amber's helpers removes their attack attempts but leaves the team's automatic attack rule active; another eligible rider may attack instead. Across 20 paired scenario seeds, the default order versus holding helpers gives:
+
+| Route and Amber plan | Mean helper attempts, default → held | Mean captain place, default → held | Amber wins, default → held |
+| --- | ---: | ---: | ---: |
+| Coast, break | 14.7 → 0 | 5.3 → 6.5 | 1 → 1 |
+| Coast, balanced | 5.0 → 0 | 1.8 → 2.0 | 7 → 6 |
+| Ridge, break | 11.9 → 0 | 5.7 → 7.0 | 8 → 3 |
+| Ridge, balanced | 5.0 → 0 | 7.0 → 1.4 | 2 → 15 |
+
+Sprint and conserve have no Amber helper attack attempts in these fixtures, so holding helpers changes neither trace nor result. The striking reversal on Ridge balanced shows how strongly this small synthetic cast and route respond to attacker identity. It is a balance warning, not proof that protecting helpers is an optimal racing tactic. Before applying this rule to real rosters, test varied rider archetypes, competitors and routes, and inspect which riders were substituted and why the result changed.

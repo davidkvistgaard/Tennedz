@@ -54,6 +54,7 @@ function metrics(recording){
   maxGapSeconds:Math.max(...frames.map(frame=>frame.groups[0]?.gapSeconds??0)),
   bunchAttackAttempts:frames.reduce((sum,frame)=>sum+frame.attackAttempts.length,0),
   attacksWithoutGap:frames.reduce((sum,frame)=>sum+frame.attacksWithoutGap.length,0),
+  amberHelperAttackAttempts:recording.amberHelperAttackAttempts,
   perTeam,
   amberWin:recording.results[0].team==='Amber',
   captainPlace:recording.results.find(result=>result.name==='Amber Captain').position,
@@ -80,6 +81,7 @@ function summarise(rows){
   meanMaxGapSeconds:mean('maxGapSeconds'),
   meanBunchAttackAttempts:mean('bunchAttackAttempts'),
   meanAttacksWithoutGap:mean('attacksWithoutGap'),
+  meanAmberHelperAttackAttempts:mean('amberHelperAttackAttempts'),
   meanByTeam:Object.fromEntries(Object.keys(rows[0].perTeam).map(name=>[name,{
    attempts:meanTeam(name,'attempts'),withoutGap:meanTeam(name,'withoutGap'),
    chaseKm:meanTeam(name,'chaseKm'),
@@ -91,11 +93,14 @@ function summarise(rows){
 }
 const report={kind:'fictional-motor-lab-audit',routeId,seedCount:count,plans:{}};
 for(const plan of ['sprint','break','balanced','conserve']){
- const baseline=[],attack40=[];
+ const baseline=[],attack40=[],helpersHeld=[];
  for(let seed=0;seed<count;seed++){
   baseline.push(metrics(createMotorLabPreview({plan,seed,routeId})));
   attack40.push(metrics(createMotorLabPreview({plan,seed,routeId,orders:{breakAttackMarker:'40'}})));
+  helpersHeld.push(metrics(createMotorLabPreview({plan,seed,routeId,
+   orders:{helperAttackPolicy:'hold_for_captain'}})));
  }
- report.plans[plan]={baseline:summarise(baseline),attackAfter40Km:summarise(attack40)};
+ report.plans[plan]={baseline:summarise(baseline),attackAfter40Km:summarise(attack40),
+  helpersHeld:summarise(helpersHeld)};
 }
 console.log(JSON.stringify(report,null,2));
