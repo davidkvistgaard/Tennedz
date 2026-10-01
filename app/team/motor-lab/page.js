@@ -234,6 +234,8 @@ export default function MotorLabPage(){
       </article>)}
       <article><div><span className="motor-group-marker motor-peloton">P</span><strong>Peloton · {frame.pelotonCount} riders</strong></div>
        <p>{frame.chasingTeams.length?`Chasing: ${frame.chasingTeams.join(', ')}`:'No team chasing this kilometre'}</p>
+       {frame.attackAttempts.length>0&&<small>Attempted from the bunch: {frame.attackAttempts.join(', ')}</small>}
+       {frame.attacksWithoutGap.length>0&&<small>Unable to open a gap: {frame.attacksWithoutGap.join(', ')}</small>}
        {frame.waitingTeams.length>0&&<small>Waiting while the gap remains manageable: {frame.waitingTeams.join(', ')}</small>}
        {frame.teamsUpRoad.length>0&&<small>Teams with riders ahead: {frame.teamsUpRoad.join(', ')}</small>}
        {frame.droppedCount>0&&<small>{frame.droppedCount} rider{frame.droppedCount===1?'':'s'} behind the peloton</small>}</article>

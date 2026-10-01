@@ -95,6 +95,10 @@ for(const width of [390,1440])test(`manager runs a recorded Motor Lab race at ${
  await expect(page.getByText('22 / 160',{exact:true})).toBeVisible();
  await expect(page.getByText('Waiting while the gap remains manageable: Amber, Birch')).toBeVisible();
  await expect(page.getByText('Teams with riders ahead: Cedar, Dune')).toBeVisible();
+ await waitingSlider.fill('4');
+ await expect(page.getByText('5 / 160',{exact:true})).toBeVisible();
+ await expect(page.getByText('Attempted from the bunch: Cedar Captain')).toBeVisible();
+ await expect(page.getByText('Unable to open a gap: Cedar Captain')).toBeVisible();
  await page.screenshot({path:`test-results/motor-lab-${width}.png`,fullPage:true});
  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
  expect(errors).toEqual([]);
