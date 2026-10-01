@@ -189,6 +189,8 @@ test('helper freedom protects the captain until dropped without overriding a nam
   Object.assign(team.riders[2],{flat:95,strength:95,acceleration:95});
   const context={teams:[team,rival],km:20};
   assert.equal(resolveTacticalKilometre(context).attackers.find(a=>a.teamId==='a').riderId,'a-2');
+  assert.equal(resolveTacticalKilometre(context).attackers.find(a=>a.teamId==='a').reason,'preset_cadence');
+  assert.equal(resolveTacticalKilometre({...context,isKeypoint:true}).attackers.find(a=>a.teamId==='a').reason,'keypoint');
   team.orders.baseline.helperAttackPolicy='hold_for_captain';
   assert.notEqual(resolveTacticalKilometre(context).attackers.find(a=>a.teamId==='a').riderId,'a-2');
   team.orders.baseline.helperAttackPolicy='release_if_dropped';
@@ -199,6 +201,7 @@ test('helper freedom protects the captain until dropped without overriding a nam
   team.orders.baseline.helperAttackPolicy='hold_for_captain';
   team.orders.baseline.attackRiderId='a-2';
   assert.equal(resolveTacticalKilometre(context).attackers.find(a=>a.teamId==='a').riderId,'a-2');
+  assert.equal(resolveTacticalKilometre(context).attackers.find(a=>a.teamId==='a').reason,'named_order');
   assert.deepEqual(resolveTacticalKilometre(context).releasedHelperAttackRiderIds,[]);
 });
 
@@ -2140,6 +2143,11 @@ test('recorded playback does not recalculate and rejects a result that differs f
   const wrongAttackFatigue=structuredClone(result);
   wrongAttackFatigue.frames[19].fatiguedAttackRiderIds=['foreign'];
   assert.throws(()=>validateRecordedTour(wrongAttackFatigue),/attack event/);
+  const wrongAttackReason=structuredClone(result);
+  const firstAttacker=wrongAttackReason.frames.find(frame=>frame.attackReasons.length);
+  assert.ok(firstAttacker);
+  firstAttacker.attackReasons[0].reason='named_order';
+  assert.throws(()=>validateRecordedTour(wrongAttackReason),/attack reason/);
   const wrongRoadGroup=structuredClone(result);
   const firstRoadGroup=wrongRoadGroup.frames.find(frame=>frame.roadGroups.length>0);
   firstRoadGroup.roadGroups[0].id='road-99';

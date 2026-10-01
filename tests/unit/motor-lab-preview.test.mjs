@@ -204,6 +204,9 @@ test('break episodes summarize only contiguous recorded kilometres',()=>{
 test('recording distinguishes a failed bunch attack from a rider who got clear',()=>{
  const recording=createMotorLabPreview({plan:'sprint',seed:1});
  assert.deepEqual(recording.frames[4].attackAttempts,['Cedar Captain']);
+ assert.deepEqual(recording.frames[4].attackReasons,[
+  {rider:'Cedar Captain',reason:'preset_cadence'},
+ ]);
  assert.deepEqual(recording.frames[4].attacksWithoutGap,['Cedar Captain']);
  assert.deepEqual(recording.frames[19].attacksWithoutGap,[]);
  assert(recording.frames[19].attackAttempts.includes('Cedar Captain'));

@@ -15,6 +15,8 @@ const CHASE_REASON_LABELS={gc_counter:'countering a GC rival',gc_defense:'defend
  road_captain_response:'road captain response',fading_teammate:'helping a fading teammate',
  ordered_all:'committed to chase',fresh_attack:'answering a fresh attack',
  gap_over_limit:'leader beyond the safe gap'};
+const ATTACK_REASON_LABELS={gc_target:'GC opportunity',named_order:'named order',
+ keypoint:'route keypoint',preset_cadence:'preset attack timing'};
 const captainPlace=recording=>`#${recording.results.find(result=>result.name==='Amber Captain')?.position??'—'}`;
 const chaseKilometres=recording=>recording.frames.filter(frame=>frame.chasingTeams.includes('Amber')).length;
 const captainBreakKilometres=recording=>recording.frames.filter(frame=>frame.groups.some(group=>group.riders.includes('Amber Captain'))).length;
@@ -290,7 +292,8 @@ export default function MotorLabPage(){
        <p>{frame.chaseReasons.length?`Chasing: ${frame.chaseReasons.map(item=>
         `${item.team} (${CHASE_REASON_LABELS[item.reason]})`).join(', ')}`:
         'No team chasing this kilometre'}</p>
-       {frame.attackAttempts.length>0&&<small>Attempted from the bunch: {frame.attackAttempts.join(', ')}</small>}
+       {frame.attackReasons.length>0&&<small>Attempted from the bunch: {frame.attackReasons.map(item=>
+        `${item.rider} (${ATTACK_REASON_LABELS[item.reason]})`).join(', ')}</small>}
        {frame.attacksWithoutGap.length>0&&<small>Unable to open a gap: {frame.attacksWithoutGap.join(', ')}</small>}
        {frame.waitingTeams.length>0&&<small>Waiting: {frame.waitingTeams.join(', ')} · leader {seconds(frame.decisionLeadGapSeconds)} ahead before this kilometre, within the {seconds(frame.selectiveChaseSafeGapSeconds)} selective limit</small>}
        {frame.holdingHelpers.length>0&&<small>Holding chase helpers back: {frame.holdingHelpers.join(', ')}</small>}

@@ -131,6 +131,8 @@ test('an eleventh-place leader can commit to a costly late top-ten attack',()=>{
   assert.ok(first);
   assert.equal(first.km,20);
   assert.ok(active.frames.some(frame=>frame.attackers.includes('b0')));
+  assert.ok(active.frames.some(frame=>frame.attackReasons.some(item=>
+    item.riderId==='b0'&&item.reason==='gc_target')));
   assert.ok(active.frames.some(frame=>frame.decisions.some(decision=>
     decision.teamId==='b'&&decision.kind==='end_gc_target')));
   assert.equal(passive.frames.some(frame=>frame.attackers.includes('b0')),false);
