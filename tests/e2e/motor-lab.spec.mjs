@@ -113,6 +113,9 @@ for(const width of [390,1440])test(`manager runs a recorded Motor Lab race at ${
  await expect(page.getByText('22 / 160',{exact:true})).toBeVisible();
  await expect(page.getByText(/Waiting: Amber, Birch · leader 3\.4 s ahead before this kilometre, within the 8\.3 s selective limit/)).toBeVisible();
  await expect(page.getByText('Teams with riders ahead: Cedar, Dune')).toBeVisible();
+ await waitingSlider.fill('25');
+ await expect(page.getByText('26 / 160',{exact:true})).toBeVisible();
+ await expect(page.getByText(/Riders ahead at the start of this kilometre: Cedar, Dune; caught by the end/)).toBeVisible();
  await waitingSlider.fill('4');
  await expect(page.getByText('5 / 160',{exact:true})).toBeVisible();
  await expect(page.getByText(/Chasing: Amber \(answering a fresh attack\), Birch \(answering a fresh attack\)/)).toBeVisible();

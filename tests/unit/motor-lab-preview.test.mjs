@@ -188,6 +188,8 @@ test('break episodes summarize only contiguous recorded kilometres',()=>{
   peakGapSeconds:12.35,chasedKm:3,waitingKm:3,
   teams:['Cedar','Dune'],caughtAtKm:26,catchChaseState:'earlier_in_move'});
  assert.equal(recording.episodes[4].catchChaseState,'active_at_catch');
+ assert.deepEqual(recording.frames[25].teamsAheadBeforeKm,['Cedar','Dune']);
+ assert.deepEqual(recording.frames[25].teamsUpRoad,[]);
  assert.equal(recording.episodes.reduce((total,episode)=>
   total+episode.lastKm-episode.startKm+1,0),
  recording.frames.filter(frame=>frame.groups.length).length);

@@ -2160,6 +2160,9 @@ test('recorded playback does not recalculate and rejects a result that differs f
   const wrongBreakTeam=structuredClone(result);
   wrongBreakTeam.frames[firstBreak].breakawayTeamIds=[];
   assert.throws(()=>validateRecordedTour(wrongBreakTeam),/breakaway/);
+  const wrongPriorRepresentation=structuredClone(result);
+  wrongPriorRepresentation.frames[firstBreak+1].representedAheadTeamIds=[];
+  assert.throws(()=>validateRecordedTour(wrongPriorRepresentation),/teams ahead before/);
   const missingAttack=structuredClone(result);
   missingAttack.frames[firstBreak].attackers=[];
   assert.throws(()=>validateRecordedTour(missingAttack),/breakaway/);
