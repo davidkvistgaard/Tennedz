@@ -67,3 +67,7 @@ The paired comparison now includes Amber's mean remaining rider energy at the fi
 The replay scoreboard now reports Amber Captain's location at the selected kilometre: peloton, a numbered road group, or behind the peloton. It switches to the provisional finishing place only on the last kilometre. The former scoreboard displayed the final placing even at kilometre 1, which obscured the road story while replaying.
 
 Playback has slow, normal and fast speeds over the same stored kilometre frames. Changing speed does not rerun the race or change any result; scrubbing and moment jumps still pause playback for inspection.
+
+## Helper freedom
+
+Amber can commit whether helpers are eligible for the plan's automatic attacks, held for the captain, or released only if the captain loses contact. This uses the existing v2 helper attack policy; it does not rewrite the captain's attack rule. In Coast Road scenario 1 with the break plan, the open order lets Amber Riders 3-8 attempt attacks. Holding helpers removes those attempts while Amber Captain can still attack. The conditional release gives the same trace as holding in that fixture because the captain never drops. The comparison can show the resulting change in placement without implying that withholding helpers is always better.

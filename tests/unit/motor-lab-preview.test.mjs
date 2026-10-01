@@ -50,11 +50,27 @@ test('advanced orders are committed and alter the same seeded race',()=>{
   breakResponse:'chase_if_threatened',breakWork:'sit_on',lateEffort:'hard',
  }});
  assert.deepEqual(advanced.orders,{chaseContribution:'follow_plan',breakResponse:'chase_if_threatened',
-  breakWork:'sit_on',lateEffort:'hard',breakAttackMarker:'none',roadCaptain:'standard',captainSupport:'hold_position'});
+  breakWork:'sit_on',lateEffort:'hard',breakAttackMarker:'none',roadCaptain:'standard',
+  captainSupport:'hold_position',helperAttackPolicy:'open'});
  assert(advanced.frames[120].moments.includes('Amber switched to hard effort'));
  assert(!standard.frames[120].moments.includes('Amber switched to hard effort'));
  assert.notDeepEqual(standard.frames,advanced.frames);
  assert.deepEqual(advanced,createMotorLabPreview({plan:'break',seed:5,orders:advanced.orders}));
+});
+
+test('helper attack policy protects helpers without silently changing the captain order',()=>{
+ const common={plan:'break',seed:1};
+ const open=createMotorLabPreview(common);
+ const held=createMotorLabPreview({...common,orders:{helperAttackPolicy:'hold_for_captain'}});
+ const conditional=createMotorLabPreview({...common,orders:{helperAttackPolicy:'release_if_dropped'}});
+ const attempts=recording=>[...new Set(recording.frames.flatMap(frame=>frame.attackAttempts)
+  .filter(name=>name.startsWith('Amber ')))];
+ assert(attempts(open).includes('Amber Rider 3'));
+ assert(!attempts(held).some(name=>/^Amber Rider [3-8]$/.test(name)));
+ assert(attempts(held).includes('Amber Captain'));
+ assert.deepEqual(conditional.frames,held.frames);
+ assert.notDeepEqual(open.frames,held.frames);
+ assert.deepEqual(held,createMotorLabPreview({...common,orders:held.orders}));
 });
 
 test('a reachable helper can support Amber Captain on the fixed ridge exercise',()=>{
@@ -160,6 +176,7 @@ test('guided preview rejects unbounded or unknown requests',()=>{
   assert.throws(()=>createMotorLabPreview(input),/valid plan, route and scenario number/);
  for(const orders of [null,[],{breakWork:'freewheel'},{lateEffort:120},
   {breakAttackMarker:'41'},{breakAttackMarker:40},{roadCaptain:'legend'},
-  {chaseContribution:'infinite'},{captainSupport:'teleport'},{admin:true}])
+  {chaseContribution:'infinite'},{captainSupport:'teleport'},
+  {helperAttackPolicy:'teleport'},{admin:true}])
   assert.throws(()=>createMotorLabPreview({plan:'sprint',seed:1,orders}),/valid advanced orders/);
 });
