@@ -49,11 +49,13 @@ Den første reelle **endagsløbs-testsløjfe** kræver fortsat omtrent punkt 02�
 
 **Punkt 02, isoleret verificeret 4. oktober:** Alle 18 repo-migrationer er afprøvet i en frisk testdatabase oven på det dokumenterede grundskema; repoet indeholder endnu ikke den oprindelige grundskema-migration. Den isolerede database har bestået tests af kalenderoprettelse, ordrer, adgangsrettigheder, manuel prioritet, tidszoner, lease/retry, idempotent optælling og køjobs. To SQL-/regnskabsfejl og to manglende fremmednøgleindekser blev rettet. Lokal HTTP-test dækkede 400 og 1.000 syntetiske hold, herunder genoptagelse efter tidsbudgettet. En beskyttet Vercel-preview med branch-specifikke nøgler til kun testdatabasen afviste forkert cron-autorisation og gennemførte et 207-holds løb over to kald: 200 hold på 35,64 sekunder, de sidste syv på 3,61 sekunder. Der blev oprettet præcis to tilmeldinger og to kvitteringer; gentagelse gav ingen dubletter. Alle midlertidige konti, hold, løb og køposter er fjernet. Se [databasenotatet](INTEGRATION-P02-2026-10-04.md) for målinger og manuel genkørsel. **Punkt 02's isolerede verifikation er færdig, men autopilot er fortsat slået fra:** Målingen viser, at én daglig cron-kørsel ikke garanterer færdiggørelse før tilmeldingsfristen. Automatisk fortsættelse, overvågning og produktionsgrænser skal løses før aktivering i punkt 16.
 
+**Divisionskrav til den første spilbare løbssløjfe:** Tilmeldinger til samme kalenderløb matches ved låsning i selvstændige afviklinger med højst 20 hold. 45 hold skal give tre divisioner med egne replays og resultater. Nuværende løbsafvikler deler allerede 45 hold som 20/20/5 efter beregnet holdstyrke; den ønskede placering efter optjente ranglistepoint pr. køn og sæson, samt rimeligere gruppestørrelser og regler for nye hold, er endnu ikke implementeret. Se [kalendergrænsen](CALENDAR_AUTOPILOT_RANKINGS_V0_1.md).
+
 | ID | Opgave / konkret resultat | Timer | Afhænger af |
 | --- | --- | ---: | --- |
 | 01 | Saml de adskilte kalender- og motorspor i ét integreret udviklingsspor; løs konflikter, bevar gamle løb og kør fuld regression. Verdensdata integreres særskilt i punkt 21. | 12–24 | — |
 | 02 | Kør den nye kalender-/autopilot-/ledger-migration og scheduler i en isoleret database; test rettigheder, samtidighed, retry, tidszoner og kapacitet uden live data. | 12–24 | 01 |
-| 03 | Etabler en reproducerbar ende-til-ende test med flere rigtige testhold: oprettelse → kalender → udtagelse → ordre → afvikling → replay → resultat/point. Dokumentér målinger og fejl før større tuning. | 8–16 | 01–02 |
+| 03 | Etabler en reproducerbar ende-til-ende test med flere rigtige testhold: oprettelse → kalender → udtagelse → ordre → afvikling → replay → resultat/point. Medtag 45 tilmeldte hold, tre separate divisioner, egne replays/resultater og idempotent genkørsel; dokumentér målinger og fejl før større tuning. | 8–16 | 01–02 |
 
 ## P1 — første virkelig spilbare løbsoplevelse
 
@@ -77,7 +79,7 @@ Den første reelle **endagsløbs-testsløjfe** kræver fortsat omtrent punkt 02�
 | 13 | Gør de fire standardtrupper robuste i spillerflowet, inklusive onboarding/redigering, kaptajn og gyldig erstatning ved fravær. | 16–32 | 02, 08 |
 | 14 | Opbyg en kildekontrolleret UCI/Pelotonia-sæson med onsdag/søndag som endagsløbsdage, særskilte kønsløb og sammenhængende etapeløbsdage. Afklar navne-/ruterettigheder. | 24–48 | 07 |
 | 15 | Beslut konfigurerbar prioritet for samtidige løb og rytternes tilgængelighed under overlappende etapeløb. Bevar manuel tilmelding som øverste prioritet. | 16–32 | 10, 13 |
-| 16 | Verificér og aktiver autopilot-queue efter målt kapacitet; vis hvorfor et hold blev tilmeldt, sprunget over eller fik erstatningsryttere. | 16–32 | 02, 13, 15 |
+| 16 | Verificér og aktiver autopilot-queue efter målt kapacitet; vis hvorfor et hold blev tilmeldt, sprunget over eller fik erstatningsryttere. Indfør låst, pointbaseret divisionsmatchmaking for manuelle og automatiske tilmeldinger med regler for nye hold og afbalancerede grupper, før kalenderløb afvikles live. | 16–32 | 02, 13, 15, 17 |
 | 17 | Tilknyt endelige resultater til den ene idempotente pointledger med reversering, sæson, køn, format og tier; bevar eksisterende evnerating som særskilt begreb. | 20–40 | 02, 09–10 |
 | 18 | Færdiggør rangliste-UI og holdhjem: individuelle/hold, UCI/Pelotonia, endags-/etape, sæson/all-time, kombineret hold og ægte bevægelse først når snapshots findes. | 20–40 | 17 |
 | 19 | Gør kalenderkort for etapeløb operationelle: etapetrin, GC-status, udtagelse, ordrestatus og gennemsigtig pointtabel. | 32–64 | 10, 14, 17 |
