@@ -1,0 +1,78 @@
+// Browser probe for the allowlisted, temporary P03 45-team fixture.
+// Run after p03-multidivision.mjs seed and with the isolated app on localhost:3100.
+import assert from 'node:assert/strict';
+import {randomBytes} from 'node:crypto';
+import {existsSync,readFileSync} from 'node:fs';
+import {execFileSync} from 'node:child_process';
+import {fileURLToPath} from 'node:url';
+import {createClient} from '@supabase/supabase-js';
+import {chromium,expect} from '@playwright/test';
+
+const configPath=process.env.PELOTONIA_P03_TEST_CONFIG;
+const authPath=process.env.PELOTONIA_P03_AUTH_FIXTURE;
+if(!configPath||!authPath)throw Error('Set P03 isolated config and auth fixture paths.');
+const config=JSON.parse(readFileSync(configPath,'utf8'));
+if(config.url!=='https://nxhvaoonnvmvohqaxfdx.supabase.co'||!config.serviceKey||!config.anonKey)
+  throw Error('Refusing a project outside the P03 test allowlist.');
+const teamPath=new URL('../../.recovery-local/p02-isolated-teams.json',import.meta.url);
+const fixturePath=new URL('../../.recovery-local/p03-multidivision.json',import.meta.url);
+if(!existsSync(teamPath)||!existsSync(fixturePath))throw Error('Seed the P03 fixture first.');
+const teams=JSON.parse(readFileSync(teamPath,'utf8'));
+const fixture=JSON.parse(readFileSync(fixturePath,'utf8'));
+assert.equal(teams.length,45);
+assert.equal(fixture.phase,'entered');
+const rider=fixture.riders.find(r=>r.teamId===teams[0].teamId);
+assert.ok(rider);
+const db=createClient(config.url,config.serviceKey,{auth:{persistSession:false,autoRefreshToken:false}});
+const account=await db.auth.admin.getUserById(teams[0].userId);
+if(account.error)throw account.error;
+const email=account.data.user.email;
+assert.match(email,/^p02-cron-[a-f0-9-]+@example\.com$/);
+const password=randomBytes(24).toString('base64url');
+const reset=await db.auth.admin.updateUserById(teams[0].userId,{password});
+if(reset.error)throw reset.error;
+
+const browser=await chromium.launch({headless:true,channel:process.platform==='win32'?'msedge':undefined});
+const context=await browser.newContext({baseURL:'http://localhost:3100',viewport:{width:1280,height:900}});
+const page=await context.newPage();
+const errors=[];
+page.on('pageerror',e=>errors.push(e.message));
+try{
+  await page.goto('/login');
+  await page.getByLabel('Email or username').fill(email);
+  await page.getByLabel('Password').fill(password);
+  await page.getByRole('button',{name:/Sign in/}).click();
+  await expect(page).toHaveURL(/\/(onboarding|team)(?:\?|$)/);
+  await page.goto(`/team/run?event_id=${fixture.eventId}`);
+  await expect(page.getByRole('heading',{name:'Your lineup'})).toBeVisible();
+  await expect(page.getByLabel('Team plan')).toHaveValue('balanced');
+  await page.getByLabel('Team plan').selectOption('breakaway');
+  await page.getByLabel(`Effort for P03 probe 1-2`).selectOption('aggressive');
+  await page.getByRole('button',{name:'Save changes'}).click();
+  await expect(page.getByText('Your team is entered. You can change your lineup and orders until the deadline.')).toBeVisible();
+  await page.reload();
+  await expect(page.getByLabel('Team plan')).toHaveValue('breakaway');
+  await expect(page.getByLabel('Effort for P03 probe 1-2')).toHaveValue('aggressive');
+  const saved=await db.from('event_teams').select('orders').eq('event_id',fixture.eventId).eq('team_id',teams[0].teamId).single();
+  if(saved.error)throw saved.error;
+  assert.equal(saved.data.orders.plan,'breakaway');
+  assert.equal(saved.data.orders.riders[rider.id].role,'captain');
+
+  execFileSync(process.execPath,[fileURLToPath(new URL('./p03-multidivision.mjs',import.meta.url)),'run'],
+    {env:process.env,stdio:'pipe',timeout:120000});
+  await page.reload();
+  await expect(page.getByRole('heading',{name:'The race is ready'})).toBeVisible();
+  await page.getByRole('link',{name:/Watch the race/}).first().click();
+  await expect(page.getByRole('heading',{name:'Race commentary'})).toBeVisible();
+  await page.getByRole('slider',{name:'Playback position'}).focus();
+  await page.keyboard.press('End');
+  await expect(page.getByText('The race is decided',{exact:true})).toBeVisible();
+  await page.getByRole('link',{name:/View results and points/}).click();
+  await expect(page.getByRole('heading',{name:'Team results'})).toBeVisible();
+  await expect(page.getByLabel('Results division')).toContainText('your team');
+  await expect(page.getByText('Team points from this race')).toBeVisible();
+  assert.deepEqual(errors,[]);
+  console.log('PASS isolated browser: participant login, saved order edit, 45-team run, own replay and division results.');
+}finally{
+  await browser.close();
+}
