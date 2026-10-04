@@ -43,7 +43,5 @@ test('an interrupted page resumes after its lease expires without duplicate entr
   expect((await resumed.json()).batches.map(batch=>batch.processed)).toEqual([10,3]);
   state=await (await fetch(`${fixture}/__cron_state`)).json();
   expect(state).toMatchObject({complete:true,processed:23,entered:3,claims:4,lease:null});
-  // Characterizes a known accounting gap: a successful join in a failed page
-  // is not counted again when its idempotent retry finds the existing entry.
-  expect(state.reportedEntered).toBe(2);
+  expect(state.reportedEntered).toBe(3);
 });

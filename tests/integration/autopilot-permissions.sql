@@ -4,7 +4,8 @@ declare relation_name text; function_name text; relation_id oid; function_id oid
 begin
   foreach relation_name in array array[
     'recovery_default_lineups', 'recovery_team_lifecycle',
-    'recovery_ranking_awards', 'recovery_autopilot_jobs'] loop
+    'recovery_ranking_awards', 'recovery_autopilot_jobs',
+    'recovery_autopilot_entries'] loop
     select c.oid into relation_id from pg_class c
       where c.relnamespace = 'public'::regnamespace and c.relname = relation_name;
     if relation_id is null then raise exception 'Missing table: %', relation_name; end if;

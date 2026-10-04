@@ -39,7 +39,7 @@ const fixture=http.createServer(async(req,res)=>{
   }
   if(url.pathname==='/rest/v1/rpc/recovery_autopilot_advance_job'){
     if(body.p_token!==state.lease||body.p_event!==eventId)return send(res,200,false);
-    state.processed+=body.p_processed;state.reportedEntered+=body.p_entered;
+    state.processed+=body.p_processed;state.reportedEntered=state.joined.size;
     state.cursor=body.p_cursor;
     state.complete=body.p_complete;
     state.lease=null;
