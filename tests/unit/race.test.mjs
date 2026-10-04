@@ -39,11 +39,16 @@ test("45-team simulation records three separate complete races",()=>{
   return {id,name:id,riders:Array.from({length:8},(_,j)=>rider(`${id}-${j}`)),entry:{selected_riders:Array.from({length:8},(_,j)=>`${id}-${j}`),captain_id:`${id}-0`}};
  });
  const race=buildRace(s);
+ assert.deepEqual(race,buildRace(s));
  assert.deepEqual(race.divisions.map(d=>d.teams.length),[15,15,15]);
  const results=race.divisions.flatMap(d=>d.results);
  assert.equal(new Set(results.map(r=>r.rider_id)).size,360);
  assert.equal(new Set(race.divisions.flatMap(d=>d.teams.map(t=>t.team_id))).size,45);
  assert.equal(new Set(race.divisions.map(d=>d.seed)).size,3);
- assert.ok(race.divisions.every(d=>d.replay.roster.length===120));
+ for(const division of race.divisions){
+  assert.equal(division.replay.roster.length,120);
+  assert.deepEqual(new Set(division.replay.roster.map(r=>r.id)),new Set(division.results.map(r=>r.rider_id)));
+  assert.deepEqual(new Set(division.replay.roster.map(r=>r.team_id)),new Set(division.teams.map(t=>t.team_id)));
+ }
  assert.ok(race.divisions.every(d=>d.teams.every(t=>t.captain_id===`${t.team_id}-0`) && d.teams[0].points===Math.round(100*d.multiplier)));
 });
