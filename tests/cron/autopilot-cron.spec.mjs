@@ -17,6 +17,8 @@ test('enabled cron processes three pages and stays idempotent over HTTP',async({
   expect(Date.now()-started).toBeLessThan(35000);
   const state=await (await fetch('http://127.0.0.1:54330/__cron_state')).json();
   expect(state).toMatchObject({complete:true,processed:23,entered:3,claims:3,lease:null});
+  expect(state.maxConcurrentEventReads).toBeGreaterThan(1);
+  expect(state.maxConcurrentEventReads).toBeLessThanOrEqual(4);
   const repeated=await request.get('/api/cron/autopilot',{
     headers:{Authorization:'Bearer fixture-cron-secret'},
   });
@@ -33,6 +35,7 @@ test('an interrupted page resumes after its lease expires without duplicate entr
   expect(interrupted.status()).toBe(503);
   let state=await (await fetch(`${fixture}/__cron_state`)).json();
   expect(state).toMatchObject({processed:10,entered:2,claims:2,failed:true});
+  expect(state.activeEventReads).toBe(0);
   expect(state.lease).toBeTruthy();
   const stillLeased=await request.get('/api/cron/autopilot',{headers});
   expect(stillLeased.status()).toBe(200);

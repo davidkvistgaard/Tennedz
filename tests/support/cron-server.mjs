@@ -9,7 +9,8 @@ const defaultTeams=new Set([teamIds[0],teamIds[10],teamIds[20]]);
 const riderIds=teamId=>Array.from({length:8},(_,index)=>
   `cccccccc-cccc-4ccc-8ccc-${String(Number(teamId.slice(-12))*8+index).padStart(12,'0')}`);
 const state={cursor:null,lease:null,complete:false,processed:0,entered:0,
-  reportedEntered:0,claims:0,joined:new Set(),failTeamId:null,failed:false};
+  reportedEntered:0,claims:0,joined:new Set(),failTeamId:null,failed:false,
+  activeEventReads:0,maxConcurrentEventReads:0};
 const send=(res,status,data)=>{
   res.writeHead(status,{'Content-Type':'application/json','x-supabase-api-version':'2024-01-01'});
   res.end(JSON.stringify(data));
@@ -24,7 +25,8 @@ const fixture=http.createServer(async(req,res)=>{
   if(url.pathname==='/__cron_reset'&&req.method==='POST'){
     Object.assign(state,{cursor:null,lease:null,complete:false,processed:0,entered:0,
       reportedEntered:0,claims:0,joined:new Set(),
-      failTeamId:body.failAfterJoin?teamIds[11]:null,failed:false});
+      failTeamId:body.failAfterJoin?teamIds[11]:null,failed:false,
+      activeEventReads:0,maxConcurrentEventReads:0});
     return send(res,200,{ok:true});
   }
   if(url.pathname==='/__cron_expire'&&req.method==='POST'){
@@ -73,7 +75,11 @@ const fixture=http.createServer(async(req,res)=>{
   }
   if(url.pathname==='/rest/v1/events'){
     if(!url.searchParams.get('id')?.startsWith('eq.'))return send(res,200,[]);
+    state.activeEventReads++;
+    state.maxConcurrentEventReads=Math.max(state.maxConcurrentEventReads,
+      state.activeEventReads);
     await new Promise(resolve=>setTimeout(resolve,120));
+    state.activeEventReads--;
     return send(res,200,{id:eventId,kind:'one_day',gender:'M',calendar_source:'PELOTONIA',
       race_team_size:8,scheduled_at:'2099-05-03T12:00:00Z',
       deadline:'2099-05-02T12:00:00Z',status:'OPEN'});
