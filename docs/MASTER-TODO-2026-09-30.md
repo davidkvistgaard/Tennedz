@@ -45,6 +45,8 @@ Den første reelle **endagsløbs-testsløjfe** er omtrent punkt 01–09 (164–3
 
 ## P0 — sammenhæng og testgrundlag
 
+**Punkt 01, lokalt verificeret 4. oktober:** Kalender-, autopilot- og ranglistekoden er samlet med Motor Lab i et separat udviklingsspor. Konflikter er løst, den eksisterende løbsafvikler er bevaret, og unit tests, lint, build og browserregression passerer. Se [integrationsnotatet](INTEGRATION-P01-2026-10-04.md). Databaseintegration og scheduler i punkt 02 er endnu ikke verificeret; dette er ikke en produktionsrelease.
+
 | ID | Opgave / konkret resultat | Timer | Afhænger af |
 | --- | --- | ---: | --- |
 | 01 | Saml de adskilte kalender- og motorspor i ét integreret udviklingsspor; løs konflikter, bevar gamle løb og kør fuld regression. Verdensdata integreres særskilt i punkt 21. | 12–24 | — |

@@ -1,0 +1,133 @@
+import { test, expect } from "@playwright/test";
+
+async function login(page) {
+  await page.goto("/login");
+  await page.getByLabel("Email or username").fill("alice");
+  await page.getByLabel("Password").fill("fixture-password");
+  await page.getByRole("button", { name: "Sign in", exact: true }).click();
+  await expect(page).toHaveURL(/\/team$/);
+}
+
+test("calendar shows separate races, readiness, filters and direct setup on mobile", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  const errors = []; page.on("pageerror", error => errors.push(error.message));
+  const date = new Date(Date.now() + 7 * 86400000).toISOString();
+  await page.route("**/api/events?*", route => route.fulfill({ json: {
+    ok: true, server_time: new Date().toISOString(), events: [
+      { id: "women-race", name: "Coastal Women", kind: "one_day", gender: "F", status: "OPEN",
+        deadline: date, scheduled_at: date, calendar_source: "PELOTONIA", race_tier: 3,
+        team_count: 0, team_size: 8, orders_ready: false, readiness: "TEAM_INCOMPLETE", winner_points: 250 },
+      { id: "men-race", name: "Coastal Men", kind: "one_day", gender: "M", status: "OPEN",
+        deadline: date, scheduled_at: date, calendar_source: "UCI", race_tier: 5,
+        team_count: 8, team_size: 8, orders_ready: true, readiness: "READY", winner_points: 650 },
+    ],
+  } }));
+  await login(page);
+  await page.goto("/team/calendar");
+  await expect(page.getByRole("heading", { name: "Coastal Women" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Coastal Men" })).toBeVisible();
+  await page.screenshot({ path: "test-results/calendar-agenda-mobile.png", fullPage: true });
+  await page.getByRole("button", { name: "Women", exact: true }).click();
+  await expect(page.getByRole("heading", { name: "Coastal Men" })).toHaveCount(0);
+  await expect(page.getByRole("link", { name: /Set up/ })).toHaveAttribute("href", "/team/run?event_id=women-race&gender=F&return_filter=Women");
+  await page.getByRole("link", { name: /Set up/ }).click();
+  await expect(page.getByRole("link", { name: /Back to race calendar/ })).toHaveAttribute("href","/team/calendar?filter=Women");
+  await page.getByRole("link", { name: /Back to race calendar/ }).click();
+  await expect(page.getByRole("button", { name: "Women", exact: true })).toHaveAttribute("aria-pressed","true");
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
+  expect(errors).toEqual([]);
+});
+
+test("stage-race points preview separates GC, stages and classifications", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.route("**/api/events?*", route => route.fulfill({ json: {
+    ok: true, server_time: new Date().toISOString(), events: [{
+      id: "stage-event", name: "Highland Tour", kind: "stage_race", gender: "F",
+      status: "OPEN", deadline: new Date(Date.now()+3*86400000).toISOString(),
+      scheduled_at: new Date(Date.now()+7*86400000).toISOString(),
+      calendar_source: "PELOTONIA", race_tier: 6, team_count: 0,
+      team_size: 8, orders_ready: false, readiness: "TEAM_INCOMPLETE",
+      winner_points: 1000,
+    }],
+  } }));
+  await login(page);
+  await page.goto("/team/calendar");
+  await page.getByText("Points table").click();
+  for (const section of ["Final GC", "Each stage", "Points classification", "Mountains classification"])
+    await expect(page.getByRole("heading", { name: section })).toBeVisible();
+  await expect(page.getByText("Stage setup is in development")).toBeVisible();
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
+});
+
+test("ranking dimensions come from the same points view", async ({ page }) => {
+  await page.route("**/api/leaderboards?*", route => {
+    const url = new URL(route.request().url());
+    if (url.searchParams.get("view") === "ability")
+      return route.fulfill({ json: { ok: true,
+        teams: [{ id: "team-a", name: "Amber", rating: 780 }],
+        riders: [{ id: "a", name: "Freja Møller", rating: 88 }],
+      } });
+    const women = url.searchParams.get("gender") === "F";
+    return route.fulfill({ json: { ok: true, current_season: 2026, seasons: [2026, 2025],
+      season: url.searchParams.get("season"), rows: women ? [{ id: "a", name: "Freja Møller", rank: 1, points: 250 }] : [],
+    } });
+  });
+  await login(page);
+  await page.goto("/team/leaderboards");
+  await page.getByLabel("Category").selectOption("F");
+  await expect(page.getByText("Freja Møller")).toBeVisible();
+  await expect(page.getByText("250 pts")).toBeVisible();
+  await page.screenshot({ path: "test-results/rankings-desktop.png", fullPage: true });
+  await page.getByLabel("Calendar").selectOption("UCI");
+  await expect(page.getByText("Freja Møller")).toBeVisible();
+  await page.getByLabel("Ranking").selectOption("team");
+  await expect(page.getByLabel("Category").locator("option[value=combined]")).toHaveCount(1);
+  await page.getByRole("button", { name: "Ability ratings" }).click();
+  await expect(page.getByText("780 rating")).toBeVisible();
+  await expect(page.getByText("88 rating")).toBeVisible();
+  await expect(page.getByLabel("Calendar")).toHaveCount(0);
+});
+
+test("automatic entries remain administrator-only", async ({ page }) => {
+  await page.goto("/login");
+  await page.getByLabel("Email or username").fill("bob");
+  await page.getByLabel("Password").fill("fixture-password");
+  await page.getByRole("button", { name: "Sign in", exact: true }).click();
+  await expect(page).toHaveURL(/\/team$/);
+  const denied = await page.request.post("/api/admin/autopilot", {
+    headers: { Origin: "http://localhost:3100" }, data: {},
+  });
+  expect(denied.status()).toBe(403);
+  expect((await page.request.post("/api/admin/autopilot/batch", {
+    headers: { Origin: "http://localhost:3100" }, data: {},
+  })).status()).toBe(403);
+});
+
+test("automatic entries remain behind the game-write gate", async ({ page }) => {
+  await login(page);
+  const gated = await page.request.post("/api/admin/autopilot", {
+    headers: { Origin: "http://localhost:3100" }, data: {},
+  });
+  expect(gated.status()).toBe(503);
+  expect((await gated.json()).code).toBe("GAME_READ_ONLY");
+  const batch = await page.request.post("/api/admin/autopilot/batch", {
+    headers: { Origin: "http://localhost:3100" }, data: {},
+  });
+  expect(batch.status()).toBe(503);
+  expect((await batch.json()).code).toBe("GAME_READ_ONLY");
+});
+
+test("the scheduled autopilot endpoint rejects ordinary visitors", async ({ page }) => {
+  const response = await page.request.get("/api/cron/autopilot");
+  expect(response.status()).toBe(401);
+  expect((await response.json()).code).toBe("UNAUTHORIZED");
+});
+
+test("administrator editor exposes a scheduled Pelotonia race day and tier", async ({ page }) => {
+  await login(page);
+  await page.goto("/admin");
+  await expect(page.getByRole("heading", { name: "Create a race day" })).toBeVisible();
+  await expect(page.getByLabel(/Race day · Wednesday or Sunday/)).toBeVisible();
+  await expect(page.getByLabel("Race tier")).toBeVisible();
+  await expect(page.getByLabel("Race tier").locator("option")).toHaveCount(6);
+});

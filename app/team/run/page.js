@@ -10,6 +10,9 @@ import { useAuth } from "../../components/AuthProvider";
 import { api } from "../../../lib/api";
 import { normalizeRoute, routeAdvice } from "../../../lib/race/route.mjs";
 
+import RaceOrders from "../../components/RaceOrders";
+import { draftOrders } from "../../../lib/race/orders.mjs";
+
 const skills = {
   sprint: "Sprint",
   flat: "Flat roads",
@@ -42,7 +45,8 @@ const sameLineup = (a, b) =>
   !!a &&
   a.captain_id === b.captain_id &&
   a.selected_riders.length === b.selected_riders.length &&
-  a.selected_riders.every((id) => b.selected_riders.includes(id));
+  a.selected_riders.every((id) => b.selected_riders.includes(id)) &&
+  JSON.stringify(draftOrders(a.orders,b.selected_riders,b.captain_id)) === JSON.stringify(b.orders);
 
 export default function RunPage() {
   const { session } = useAuth(),
@@ -54,7 +58,7 @@ export default function RunPage() {
   const [gender, setGender] = useState("M"),
     [bucket, setBucket] = useState("upcoming"),
     [eventId, setEventId] = useState("");
-  const [returnFilter, setReturnFilter] = useState("All");
+  const [returnFilter,setReturnFilter]=useState("");
   const [stage, setStage] = useState(null),
     [gameDate, setGameDate] = useState(null),
     [entryLoading, setEntryLoading] = useState(false),
@@ -64,6 +68,8 @@ export default function RunPage() {
     [saved, setSaved] = useState(null),
     [busy, setBusy] = useState(false),
     [notice, setNotice] = useState("");
+  const [orderDraft,setOrderDraft]=useState(null);
+  const orders=draftOrders(orderDraft,selected,captain);
   const [sortKey, setSortKey] = useState("form"),
     [now, setNow] = useState(Date.now()),
     [offset, setOffset] = useState(0);
@@ -76,10 +82,19 @@ export default function RunPage() {
     setError("");
     try {
       const [data, day] = await Promise.all([
-        api("/api/events?limit=50"),
+        api("/api/events?limit=100"),
         api("/api/game-date"),
       ]);
-      setEvents(data.events.filter((e) => e.kind === "one_day"));
+      const oneDay=data.events.filter((e) => e.kind === "one_day");
+      setEvents(oneDay);
+      const requestedId=new URLSearchParams(window.location.search).get("event_id");
+      const requested=oneDay.find(e=>e.id===requestedId);
+      if(requested){
+        setGender(requested.gender);
+        setBucket(requested.status!=="OPEN"?"finished":
+          Date.parse(requested.deadline)<=Date.parse(data.server_time)?"pending":"upcoming");
+        setEventId(requested.id);
+      }else if(requestedId)setError("This race is not available in the current calendar.");
       setGameDate(day.game_date);
       if (data.server_time) {
         const diff = Date.parse(data.server_time) - Date.now();
@@ -93,12 +108,11 @@ export default function RunPage() {
     }
   }
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const requestedGender = params.get("gender");
+    const requestedGender = new URLSearchParams(window.location.search).get("gender");
+    const requestedFilter = new URLSearchParams(window.location.search).get("return_filter");
+    if(["All","Men","Women","UCI","Pelotonia","Stage races","My races"].includes(requestedFilter))
+      setReturnFilter(requestedFilter);
     if (requestedGender === "M" || requestedGender === "F") setGender(requestedGender);
-    const requestedEvent = params.get("event_id");
-    if (requestedEvent && /^[0-9a-f-]{36}$/i.test(requestedEvent)) setEventId(requestedEvent);
-    if (params.get("return_filter")) setReturnFilter(params.get("return_filter"));
     load();
   }, []);
   const event = events.find((e) => e.id === eventId),
@@ -107,6 +121,7 @@ export default function RunPage() {
   useEffect(() => {
     const abort = new AbortController();
     setSelected([]);
+    setOrderDraft(null);
     setCaptain("");
     setSaved(null);
     setStage(null);
@@ -125,6 +140,7 @@ export default function RunPage() {
         if (abort.signal.aborted) return;
         setStage(profile.stage);
         setSaved(entry.entry);
+        setOrderDraft(entry.entry?.orders || null);
         setSelected(entry.entry?.selected_riders || []);
         setCaptain(entry.entry?.captain_id || "");
         try {
@@ -171,6 +187,7 @@ export default function RunPage() {
   const unchanged = sameLineup(saved, {
     selected_riders: selected,
     captain_id: captain,
+    orders,
   });
   function choose(ids) {
     if (locked || entryLoading || busy) return;
@@ -195,11 +212,12 @@ export default function RunPage() {
           team_id: team.id,
           selected_riders: selected,
           captain_id: captain,
+    orders,
         }),
       });
-      setSaved({ selected_riders: [...selected], captain_id: captain });
+      setSaved({ selected_riders: [...selected], captain_id: captain, orders });
       setNotice(
-        "Your team is entered. You can change your lineup until the deadline.",
+        "Your team is entered. You can change your lineup and orders until the deadline.",
       );
     } catch (e) {
       setNotice(e.message);
@@ -211,12 +229,12 @@ export default function RunPage() {
   return (
     <TeamShell compact>
       <div className="race-calendar">
+      <Link className="text-button" href={returnFilter?`/team/calendar?filter=${encodeURIComponent(returnFilter)}`:"/team/calendar"}>← Back to race calendar</Link>
       <header className="calendar-hero">
         <Image src="/images/race-countryside-v1.png" alt="" fill sizes="(max-width: 760px) 100vw, 1200px" priority />
         <div><p className="eyebrow">THE NEXT CHAPTER</p><h1>Race day starts<br/><em>with you.</em></h1><p>Read the road. Pick your eight. Give your captain a chance to shine.</p></div>
         <span className="calendar-hero-note">PLAN BEFORE THE DEADLINE · WATCH IT UNFOLD</span>
       </header>
-      <p><Link href={`/team/calendar?filter=${encodeURIComponent(returnFilter)}`}>← Back to race calendar</Link></p>
       <ol className="race-steps" aria-label="Your race plan">
         <li aria-current={!event ? "step" : undefined}><span>01</span><div><strong>Find your race</strong><small>A route to suit your squad.</small></div></li>
         <li aria-current={event && !saved ? "step" : undefined}><span>02</span><div><strong>Choose your eight</strong><small>One captain. A shared ambition.</small></div></li>
@@ -445,6 +463,7 @@ export default function RunPage() {
                         );
                       })}
                     </div>
+                    <RaceOrders orders={orders} riders={selected.map(id=>riders.find(r=>r.id===id)).filter(Boolean)} onChange={setOrderDraft} disabled={locked || busy || entryLoading} />
                     <div className="lineup-save">
                       <span>
                         {selected.length}/8 riders ·{" "}

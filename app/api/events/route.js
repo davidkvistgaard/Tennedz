@@ -1,5 +1,6 @@
 import { protectedRoute } from "../../../lib/auth/server";
 import { NextResponse } from "next/server";
+import { entryReadiness } from "../../../lib/calendar/rhythm.mjs";
 import { teamSizeFor } from "../../../lib/calendar/config.mjs";
 import { pointsForResult } from "../../../lib/calendar/points.mjs";
 
@@ -40,24 +41,21 @@ async function handler(req, context, auth) {
   ]);
   if (upcoming.error || pending.error || finished.error)
     throw new Error("Event query failed");
-  const all = [...upcoming.data, ...pending.data, ...finished.data];
-  const ids = all.map(event => event.id);
-  const {data: entries, error: entryError} = ids.length
-    ? await auth.db.from("event_teams").select("event_id,selected_riders,captain_id")
-      .eq("team_id", auth.team.id).in("event_id", ids)
-    : {data: [], error: null};
-  if (entryError) throw new Error("Entry query failed");
-  const byEvent = new Map(entries.map(entry => [entry.event_id, entry]));
-  const events = all.map(event => {
-    const entry = byEvent.get(event.id);
-    const teamSize = teamSizeFor(event);
-    return {...event, team_size: teamSize,
-      team_count: entry?.selected_riders?.length ?? 0,
-      team_ready: !!entry && entry.selected_riders?.length === teamSize &&
-        entry.selected_riders.includes(entry.captain_id),
-      winner_points: event.race_tier
-        ? pointsForResult({tier: event.race_tier, resultType: event.kind === "one_day" ? "ONE_DAY" : "GC", placing: 1})
-        : null};
+  const all=[...upcoming.data,...pending.data,...finished.data];
+  const ids=all.map(event=>event.id);
+  const {data:entries,error:entryError}=ids.length?await auth.db.from("event_teams")
+    .select("event_id,selected_riders,captain_id,orders")
+    .eq("team_id",auth.team.id).in("event_id",ids):{data:[],error:null};
+  if(entryError)throw new Error("Entry query failed");
+  const entryByEvent=new Map(entries.map(entry=>[entry.event_id,entry]));
+  const events=all.map(event=>{
+    const teamSize=teamSizeFor(event),entry=entryByEvent.get(event.id);
+    const tier=event.race_tier;
+    return {...event,team_size:teamSize,
+      readiness:entryReadiness({...event,teamSize},entry,new Date(now)),
+      team_count:entry?.selected_riders?.length??0,
+      orders_ready:!!entry?.orders,
+      winner_points:tier?pointsForResult({tier,resultType:event.kind==="one_day"?"ONE_DAY":"GC",placing:1}):null};
   });
   return NextResponse.json({
     ok: true,

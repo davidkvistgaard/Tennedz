@@ -1,0 +1,29 @@
+# Calendar, autopilot and rankings V0.1 — implementation boundary
+
+This package extends the existing `events`, `event_teams`, rider and team records. The new race engine remains isolated. Nothing here deploys a race schedule or changes live data.
+
+## Implemented in this branch
+
+- The Wednesday/Sunday placement utility maps source one-day dates into the same calendar week, retaining source dates as metadata. Stage races remain exempt from the two weekly one-day slots. A shared pair ID can relate distinct men's and women's events without combining their fields.
+- The existing administrator race-day creator now has an additive scheduled path. It writes source, tier, scheduled day, team size and the optional UCI source metadata atomically with the established route/event creation. Legacy requests retain their existing behavior; the editor creates original Pelotonia races and requires Wednesday or Sunday.
+- The race calendar shows separate event cards, filters, entry and order readiness, tier points and a direct link into the existing one-day team/order page. An event with no scheduled date is explicitly shown by its existing entry deadline.
+- The calendar passes its active filter into the one-day order page, and the return link restores that filter.
+- Stage-race cards show the configured final GC, stage, points-classification and mountain-classification curves without implying that stage setup or result awards are already operational.
+- The team home card now chooses the next scheduled one-day race for the selected squad, shows actual team/order readiness and points tier, and opens that exact event. Legacy events without a race date remain a fallback and are labelled by entry deadline.
+- Managers can save four gender/format default squads with a captain. The server validates ownership, full team size, distinct riders and current roster membership. A deterministic resolver replaces unavailable defaults from eligible teammates and refuses to invent riders.
+- A guarded one-day autopilot executor can preview or submit one team/event through the existing transactional join and order validator. An administrator-only batch endpoint walks at most 25 teams at a time with a cursor and reports individual skips without losing progress. It only acts on a saved default, keeps explicit entries authoritative, and holds same-gender same-day conflicts for a future priority rule. The database repeats those last two checks under the join lock, preventing a concurrent manual entry from being overwritten. Both write endpoints also require the existing game-write flag.
+- A daily Vercel cron endpoint now claims eligible races within 48 hours of their entry deadline, processes short batches, and advances a persistent per-race cursor. A database lease prevents concurrent workers from claiming the same page; failed pages retry after lease expiry. Completed races are scanned again on a later run so a manager who saves defaults afterward can still enter before the deadline. It requires `CRON_SECRET`, `PELOTONIA_AUTOPILOT_ENABLED=true`, and the existing game-write flag. The new flag defaults to off. No cron has been deployed or enabled in production.
+- One signed points ledger carries the rider, credited team, event, season, gender, source, format, tier, result type, place and policy version. Filtered rider and team rankings aggregate that ledger, including combined team points. Reversal rows preserve the audit trail.
+- Race tier and placing values live in `lib/calendar/points.mjs`, separate from the engine. Inactivity thresholds and default team sizes live in `lib/calendar/config.mjs`.
+- The additive migration creates the required private tables and read RPCs; no existing events or results are rewritten.
+
+## Still required before the package is operational
+
+- Verify and apply the migrations on an isolated Supabase test database, then populate a reviewed UCI/Pelotonia schedule with real source dates and profiles. The editor can create individual original Pelotonia events; no UCI import or season-generation job exists yet. Legacy events remain unclassified until individually reconciled.
+- Verify the scheduler against an isolated database and measure whether a once-daily 60-second run covers the actual team/event volume before enabling it. The persistent queue retries transient failures, but capacity and deadline coverage at global scale remain unproven. Saving defaults alone does **not** submit entries while the flag is off. Resolve simultaneous-event priority and rider availability across overlapping stage races before enabling unattended participation at scale.
+- Connect finalized one-day and stage-race results to idempotent ledger awards. Until then the new earned-points rankings correctly show no points. Existing rider ability ratings remain in the database and are not converted into sporting points.
+- Integrate stage-race setup, per-stage status and the GC/stage/classification point preview into the calendar. The current direct setup covers one-day events.
+- Make four default squads part of onboarding only after the automatic-entry path and migration are verified. Introduce inactivity transitions, archival and rider release only with the transfer system; do not delete historic competitors.
+- Feed real ranking positions and ongoing stage-race state into the team home screen after awards and stage lifecycle are available. Movement indicators require prior snapshots and are not fabricated.
+
+No live Supabase or Vercel operations are part of this branch. The migration needs an isolated database execution check; the local environment has no PostgreSQL or Docker command available.

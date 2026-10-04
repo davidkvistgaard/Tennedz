@@ -27,14 +27,16 @@ function NextRace({ gender }) {
     return ()=>{active=false;clearInterval(timer);};
   },[]);
   const next = nextTeamRace(calendar.events,gender,now+calendar.offset);
+  const entryOpen=next&&Date.parse(next.deadline)>now+calendar.offset;
   const raceDate=next?.scheduled_at??next?.deadline;
-  const action=next?.team_ready?"Review lineup":next?"Set up team":"Open race calendar";
+  const action=!next?"Open race calendar":!entryOpen?"View race":
+    next.orders_ready?"Review orders":(next.team_count??0)===(next.team_size??8)?"Set orders":"Set up team";
   return <section className="club-race" aria-label="Next race">
     <p className="identity-eyebrow">NEXT CHAPTER · {gender==="M"?"MEN":"WOMEN"}</p>
     <h2>{calendar.loading?"Loading your next race…":next?.name || (calendar.error?"Calendar unavailable":"The road is waiting")}</h2>
     {next&&<p className="club-race-date">{next.scheduled_at?"Race day":"Entry deadline"} · {new Date(raceDate).toLocaleDateString("en-GB",{weekday:"long",day:"numeric",month:"long",timeZone:"UTC"})}{next.race_tier?` · T${next.race_tier}`:""}</p>}
-    {next&&<div className="club-race-readiness"><span>Team <strong>{next.team_count??0}/{next.team_size??8}</strong></span><span>{next.team_ready?"Entered":"Lineup needed"}</span></div>}
-    <p>{calendar.error || (next ? `Entries close ${new Date(next.deadline).toLocaleString("en-GB",{timeZone:"UTC",day:"numeric",month:"long",hour:"2-digit",minute:"2-digit"})} UTC.` : calendar.loading?"":"There are no open one-day races for this squad yet. Get to know your riders and check the calendar for your next race.")}</p>
+    {next&&<div className="club-race-readiness"><span>Team <strong>{next.team_count??0}/{next.team_size??8}</strong></span><span>Orders <strong>{next.orders_ready?"Ready":"Missing"}</strong></span>{!entryOpen&&<span>Locked</span>}</div>}
+    <p>{calendar.error || (next ? entryOpen?`Entries close ${new Date(next.deadline).toLocaleString("en-GB",{timeZone:"UTC",day:"numeric",month:"long",hour:"2-digit",minute:"2-digit"})} UTC.`:"Entries are locked for this race." : calendar.loading?"":"There are no open one-day races for this squad yet. Get to know your riders and check the calendar for your next race.")}</p>
     <Link className="btn" href={next?`/team/run?event_id=${encodeURIComponent(next.id)}&gender=${gender}`:"/team/calendar"}>{action} ↗</Link>
   </section>;
 }

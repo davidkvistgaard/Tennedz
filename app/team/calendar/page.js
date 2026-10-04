@@ -23,8 +23,7 @@ function EventCard({event,filter}){
   const raceDate=event.scheduled_at??event.deadline;
   const source=event.calendar_source??"Unclassified";
   const tier=event.race_tier?`T${event.race_tier}`:"Unranked";
-  const status=event.status!=="OPEN"?event.status.toLowerCase():
-    Date.parse(event.deadline)<=Date.now()?"locked":event.team_ready?"entered":"team incomplete";
+  const status=event.readiness?.replaceAll("_"," ").toLowerCase();
   const setup=event.kind==="one_day"&&event.status==="OPEN";
   return <article className="agenda-card">
     <div className="agenda-card-top"><span>{category(event.gender)} · {source} · {tier}</span>
@@ -32,6 +31,7 @@ function EventCard({event,filter}){
     <h3>{event.name}</h3>
     <p className="agenda-muted">{event.scheduled_at?"Race day":"Entry deadline"} · {displayDate(raceDate)}</p>
     <div className="agenda-readiness"><span>Team <strong>{event.team_count}/{event.team_size}</strong></span>
+      <span>Orders <strong>{event.orders_ready?"Ready":"Missing"}</strong></span>
       <span className="agenda-state">{status}</span></div>
     <div className="agenda-card-bottom"><span>{event.winner_points===null?"Ranking points not set":`Winner · ${event.winner_points.toLocaleString("en-GB")} pts`}</span>
       {setup?<Link className="btn primary" href={`/team/run?event_id=${encodeURIComponent(event.id)}&gender=${event.gender}&return_filter=${encodeURIComponent(filter)}`}>Set up →</Link>:
@@ -77,7 +77,8 @@ export default function CalendarPage(){
   },[visible]);
   return <TeamShell title="Race calendar"><div className="agenda-page">
     <header className="agenda-hero"><p className="identity-eyebrow">THE SEASON AHEAD</p>
-      <h1>Every race begins here.</h1><p>Explore upcoming races and prepare your squad. Official dates and ranking tiers appear as they are published.</p></header>
+      <h1>Every race begins here.</h1><p>Wednesday and Sunday are one-day race days. Stage races follow their own consecutive calendar.</p>
+      <Link className="btn" href="/team/defaults">Set your four default teams →</Link></header>
     <nav className="agenda-filters" aria-label="Calendar filters">{FILTERS.map(name=><button key={name}
       aria-pressed={filter===name} onClick={()=>setFilter(name)}>{name}</button>)}</nav>
     {error&&<p role="alert">Could not load the race calendar: {error}</p>}
