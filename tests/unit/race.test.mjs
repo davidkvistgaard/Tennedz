@@ -14,8 +14,15 @@ test("race replay is deterministic, complete and uses actual distance",()=>{
   assert.ok(feed.every((f,i)=>f.km>=0&&f.km<=130&&(!i||f.km>=feed[i-1].km)));
   assert.ok(a.divisions[0].results.every(r=>r.after.fatigue===20&&r.after.form>=0&&r.after.form<=100));
 });
-test("no singleton divisions at 21 and 41 teams; 400-team input stays bounded",()=>{
-  for(const n of [2,20,21,40,41,400]){const d=splitDivisions(Array.from({length:n},(_,i)=>({id:String(i),seed_power:n-i})));assert.equal(d.flat().length,n);assert.ok(d.every(x=>x.length>=2&&x.length<=20));}
+test("division sizes stay balanced and bounded at 21, 41, 45 and 400 teams",()=>{
+  for(const n of [2,20,21,40,41,45,400]){
+    const d=splitDivisions(Array.from({length:n},(_,i)=>({id:String(i),seed_power:n-i})));
+    assert.equal(d.flat().length,n);
+    assert.ok(d.every(x=>x.length>=2&&x.length<=20));
+    assert.ok(Math.max(...d.map(x=>x.length))-Math.min(...d.map(x=>x.length))<=1);
+    assert.deepEqual(d.flat().map(x=>x.seed_power),Array.from({length:n},(_,i)=>n-i));
+    if(n===45)assert.deepEqual(d.map(x=>x.length),[15,15,15]);
+  }
 });
 test("invalid ownership, duplicate selection, gender and injured riders fail closed",()=>{
   for(const mutate of [s=>s.teams[0].entry.selected_riders[0]="foreign",s=>s.teams[0].entry.selected_riders[1]="a0",s=>s.teams[0].riders[0].gender="F",s=>s.teams[0].riders[0].injury_until="2026-01-02"]){const s=input();mutate(s);assert.throws(()=>buildRace(s));}
@@ -25,15 +32,18 @@ test("route specialty changes the calculated outcome",()=>{
   const flat=buildRace(s);s.stage.tags=["MOUNTAIN"];const mountain=buildRace(s);
   assert.notDeepEqual(flat.divisions[0].results,mountain.divisions[0].results);
 });
-test("full multi-division simulation ranks each rider and captain exactly once",()=>{
+test("45-team simulation records three separate complete races",()=>{
  const s=input();
- s.teams=Array.from({length:41},(_,i)=>{
+ s.teams=Array.from({length:45},(_,i)=>{
   const id=`t${String(i).padStart(2,"0")}`;
   return {id,name:id,riders:Array.from({length:8},(_,j)=>rider(`${id}-${j}`)),entry:{selected_riders:Array.from({length:8},(_,j)=>`${id}-${j}`),captain_id:`${id}-0`}};
  });
  const race=buildRace(s);
- assert.deepEqual(race.divisions.map(d=>d.teams.length),[20,19,2]);
+ assert.deepEqual(race.divisions.map(d=>d.teams.length),[15,15,15]);
  const results=race.divisions.flatMap(d=>d.results);
- assert.equal(new Set(results.map(r=>r.rider_id)).size,328);
+ assert.equal(new Set(results.map(r=>r.rider_id)).size,360);
+ assert.equal(new Set(race.divisions.flatMap(d=>d.teams.map(t=>t.team_id))).size,45);
+ assert.equal(new Set(race.divisions.map(d=>d.seed)).size,3);
+ assert.ok(race.divisions.every(d=>d.replay.roster.length===120));
  assert.ok(race.divisions.every(d=>d.teams.every(t=>t.captain_id===`${t.team_id}-0`) && d.teams[0].points===Math.round(100*d.multiplier)));
 });
