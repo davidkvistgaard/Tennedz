@@ -30,3 +30,24 @@ Supabase security advisors report RLS without policies for the service-only tabl
 - Define operational fallback for an unfinished or failed daily scan before activation. The deterministic timing gap is addressed by an immediate on-save attempt and a creation guard when autopilot is enabled. The guard reserves the full 02:00–02:59 UTC [Vercel Hobby window](https://vercel.com/docs/cron-jobs/usage-and-pricing) plus ten minutes, but Vercel does not guarantee that a run succeeds or that one 35-second HTTP invocation processes every team. A local 1,000-team run needed two calls, which would be on separate days with the current schedule. The on-save attempt also caps work at eight races. Do not advertise automatic entry as guaranteed until the fallback and capacity threshold are tested. Keep the SQL guard synchronized with the cron schedule if it changes.
 
 Keep `PELOTONIA_AUTOPILOT_ENABLED` off until these remaining checks and the later product decisions about simultaneous races and rider availability are complete. No new official race or points award was created.
+
+## Operator recovery for an unfinished daily scan
+
+The single 02:00 UTC Hobby cron is not a retry mechanism. Until there is an automated continuation path, an operator must inspect the authenticated cron response after the daily run and invoke the same endpoint again with its server-side `CRON_SECRET` if a batch ended with `complete:false`, the request failed, or the queue may contain another race. Wait at least two minutes after an interrupted request so its lease can expire, then repeat. Never put the secret in a browser URL or a client-side bundle. The endpoint is idempotent: a saved cursor resumes, and an existing entry is not charged twice. A 200 response with no batches is insufficient proof that everything is done because another worker may hold a lease.
+
+Verify the queue in the isolated database (and, only after a separately approved activation, in the relevant production database) with this read-only query:
+
+```sql
+select e.id, e.name, e.deadline, j.status, j.cursor_team_id,
+       j.lease_until, j.processed_count, j.entered_count
+from public.events e
+left join public.recovery_autopilot_jobs j on j.event_id = e.id
+where e.kind = 'one_day' and e.status = 'OPEN'
+  and e.scheduled_at is not null
+  and e.calendar_source in ('UCI', 'PELOTONIA')
+  and e.deadline > now() and e.deadline <= now() + interval '48 hours'
+  and (j.event_id is null or j.status = 'PENDING')
+order by e.deadline, e.id;
+```
+
+Zero rows after all leases expire means there is no currently incomplete eligible race. The query ran against the restored isolated project and returned zero rows. Check again when a new race enters the 48-hour window. If any deadline passes with an incomplete job, do not mark it successful; record the missed race and investigate failed entry attempts. A preview test must prove this procedure before enabling autopilot in production. For unattended operation, the product still needs a scheduler or queue that can continue within the deadline when one 35-second invocation is insufficient.
