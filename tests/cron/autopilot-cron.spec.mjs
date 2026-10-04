@@ -48,3 +48,27 @@ test('an interrupted page resumes after its lease expires without duplicate entr
   expect(state).toMatchObject({complete:true,processed:23,entered:3,claims:4,lease:null});
   expect(state.reportedEntered).toBe(3);
 });
+
+test('daily cron processes a 400-team field inside its request budget',async({request})=>{
+  test.setTimeout(90000);
+  const fixture='http://127.0.0.1:54330';
+  const reset=await fetch(`${fixture}/__cron_reset`,{method:'POST',
+    headers:{'Content-Type':'application/json'},body:JSON.stringify({teamCount:400})});
+  expect(await reset.json()).toMatchObject({teamCount:400,defaultCount:20});
+  const started=Date.now();
+  const response=await request.get('/api/cron/autopilot',{
+    headers:{Authorization:'Bearer fixture-cron-secret'},timeout:60000,
+  });
+  expect(response.status()).toBe(200);
+  const elapsed=Date.now()-started;
+  const result=await response.json();
+  const state=await (await fetch(`${fixture}/__cron_state`)).json();
+  expect(result.ok).toBe(true);
+  expect(result.batches).toHaveLength(41);
+  expect(result.batches.at(-1)).toMatchObject({processed:0,complete:true});
+  expect(state).toMatchObject({teamCount:400,defaultCount:20,complete:true,
+    processed:400,entered:20,reportedEntered:20,claims:41,lease:null});
+  expect(state.maxConcurrentEventReads).toBeGreaterThan(1);
+  expect(state.maxConcurrentEventReads).toBeLessThanOrEqual(4);
+  expect(elapsed).toBeLessThan(35000);
+});

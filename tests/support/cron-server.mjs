@@ -3,9 +3,10 @@ import http from 'node:http';
 import {spawn} from 'node:child_process';
 
 const eventId='aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';
-const teamIds=Array.from({length:23},(_,index)=>
+const makeTeamIds=count=>Array.from({length:count},(_,index)=>
   `00000000-0000-4000-8000-${String(index+1).padStart(12,'0')}`);
-const defaultTeams=new Set([teamIds[0],teamIds[10],teamIds[20]]);
+let teamIds=makeTeamIds(23);
+let defaultTeams=new Set([teamIds[0],teamIds[10],teamIds[20]]);
 const riderIds=teamId=>Array.from({length:8},(_,index)=>
   `cccccccc-cccc-4ccc-8ccc-${String(Number(teamId.slice(-12))*8+index).padStart(12,'0')}`);
 const state={cursor:null,lease:null,complete:false,processed:0,entered:0,
@@ -23,16 +24,23 @@ const fixture=http.createServer(async(req,res)=>{
     send(res,200,{ok:true});setTimeout(stop,100);return;
   }
   if(url.pathname==='/__cron_reset'&&req.method==='POST'){
+    const teamCount=Number.isInteger(body.teamCount)&&body.teamCount>=23&&
+      body.teamCount<=1000?body.teamCount:23;
+    teamIds=makeTeamIds(teamCount);
+    defaultTeams=new Set(teamCount===23?
+      [teamIds[0],teamIds[10],teamIds[20]]:
+      teamIds.filter((_,index)=>index%20===0));
     Object.assign(state,{cursor:null,lease:null,complete:false,processed:0,entered:0,
       reportedEntered:0,claims:0,joined:new Set(),
       failTeamId:body.failAfterJoin?teamIds[11]:null,failed:false,
       activeEventReads:0,maxConcurrentEventReads:0});
-    return send(res,200,{ok:true});
+    return send(res,200,{ok:true,teamCount,defaultCount:defaultTeams.size});
   }
   if(url.pathname==='/__cron_expire'&&req.method==='POST'){
     state.lease=null;state.failTeamId=null;return send(res,200,{ok:true});
   }
-  if(url.pathname==='/__cron_state')return send(res,200,state);
+  if(url.pathname==='/__cron_state')return send(res,200,{...state,
+    teamCount:teamIds.length,defaultCount:defaultTeams.size});
   if(req.headers.apikey!=='fixture-service-role')return send(res,403,{message:'Invalid fixture key'});
   if(url.pathname==='/rest/v1/rpc/recovery_autopilot_claim_job'){
     if(state.complete||state.lease)return send(res,200,null);
