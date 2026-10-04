@@ -18,10 +18,13 @@ const save=entries=>{
 };
 
 if(mode==='seed'){
+  const count=Number(process.argv[3]??24);
+  if(!Number.isSafeInteger(count)||count<1||count>200)
+    throw new Error('Seed count must be an integer from 1 to 200.');
   if(existsSync(fixturePath))throw new Error('Existing fixture ledger; clean it first.');
   const entries=[];
   save(entries);
-  for(let index=0;index<24;index++){
+  for(let index=0;index<count;index++){
     const email=`p02-cron-${randomUUID()}@example.com`;
     const {data,error}=await db.auth.admin.createUser({email,
       password:randomBytes(24).toString('base64url'),email_confirm:true});
