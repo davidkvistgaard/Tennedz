@@ -72,3 +72,29 @@ test('daily cron processes a 400-team field inside its request budget',async({re
   expect(state.maxConcurrentEventReads).toBeLessThanOrEqual(4);
   expect(elapsed).toBeLessThan(35000);
 });
+
+test('a larger field resumes at the cursor after one request budget',async({request})=>{
+  test.setTimeout(130000);
+  const fixture='http://127.0.0.1:54330';
+  const reset=await fetch(`${fixture}/__cron_reset`,{method:'POST',
+    headers:{'Content-Type':'application/json'},body:JSON.stringify({teamCount:1000})});
+  expect(await reset.json()).toMatchObject({teamCount:1000,defaultCount:50});
+  const headers={Authorization:'Bearer fixture-cron-secret'};
+  const first=await request.get('/api/cron/autopilot',{headers,timeout:60000});
+  expect(first.status()).toBe(200);
+  const firstResult=await first.json();
+  const firstState=await (await fetch(`${fixture}/__cron_state`)).json();
+  expect(firstResult.ok).toBe(true);
+  expect(firstState.complete).toBe(false);
+  expect(firstState.processed).toBeGreaterThan(0);
+  expect(firstState.processed).toBeLessThan(1000);
+  expect(firstState.cursor).toBeTruthy();
+  expect(firstState.lease).toBeNull();
+  const second=await request.get('/api/cron/autopilot',{headers,timeout:60000});
+  expect(second.status()).toBe(200);
+  const secondState=await (await fetch(`${fixture}/__cron_state`)).json();
+  expect(secondState).toMatchObject({teamCount:1000,defaultCount:50,
+    complete:true,processed:1000,entered:50,reportedEntered:50,lease:null});
+  expect(secondState.maxConcurrentEventReads).toBeLessThanOrEqual(4);
+  expect((await second.json()).batches.at(-1)).toMatchObject({processed:0,complete:true});
+});
