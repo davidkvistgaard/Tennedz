@@ -33,7 +33,15 @@ if(mode==='seed'){
   const teams=JSON.parse(readFileSync(teamsPath,'utf8'));
   if(teams.length!==45||teams.some(t=>!t.userId||!t.teamId))
     throw Error('P03 requires exactly 45 separately owned fixture teams.');
-  const fixture={eventId:randomUUID(),riders:[],phase:'initial',browserEntries};
+  // All probe riders have identical ratings, so seed power ties break by team ID.
+  // Spread browser managers across that ordering to exercise separate divisions.
+  const rankedTeams=teams.slice().sort((a,b)=>a.teamId.localeCompare(b.teamId));
+  const browserTeams=browserEntries>1
+    ? Array.from({length:browserEntries},(_,index)=>
+      rankedTeams[Math.floor((index+0.5)*teams.length/browserEntries)])
+    : teams.slice(0,browserEntries);
+  const browserTeamIds=browserTeams.map(team=>team.teamId);
+  const fixture={eventId:randomUUID(),riders:[],phase:'initial',browserEntries,browserTeamIds};
   save(fixture);
   const riders=teams.flatMap((team,index)=>Array.from({length:8},(_,riderIndex)=>{
     const id=randomUUID();
@@ -53,7 +61,7 @@ if(mode==='seed'){
     status:'OPEN',entry_fee:0,deadline:new Date(Date.now()+8*3600000).toISOString(),
     calendar_source:'PELOTONIA',race_tier:2,scheduled_at:new Date(Date.now()+48*3600000).toISOString()}));
   fixture.phase='event';save(fixture);
-  const seededTeams=teams.slice(browserEntries);
+  const seededTeams=teams.filter(team=>!browserTeamIds.includes(team.teamId));
   for(let offset=0;offset<seededTeams.length;offset+=4){
     const joined=await Promise.all(seededTeams.slice(offset,offset+4).map(team=>{
       const selected=fixture.riders.filter(r=>r.teamId===team.teamId).map(r=>r.id);

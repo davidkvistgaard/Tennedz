@@ -24,12 +24,19 @@ assert.ok(['pending-browser','entered'].includes(fixture.phase));
 const db=createClient(config.url,config.serviceKey,{auth:{persistSession:false,autoRefreshToken:false}});
 const browser=await chromium.launch({headless:true,channel:process.platform==='win32'?'msedge':undefined});
 const participantCount=fixture.browserEntries||1;
+const browserTeams=(fixture.browserTeamIds||[teams[0].teamId]).map(id=>{
+  const team=teams.find(candidate=>candidate.teamId===id);
+  if(!team)throw Error('A reserved browser team is missing from the fixture.');
+  return team;
+});
+assert.equal(browserTeams.length,participantCount);
 const plans=['breakaway','captain','conserve'];
 const pages=[];
 const errors=[];
 try{
   for(let index=0;index<participantCount;index++){
-    const team=teams[index];
+    const team=browserTeams[index];
+    const teamNumber=teams.indexOf(team)+1;
     const account=await db.auth.admin.getUserById(team.userId);
     if(account.error)throw account.error;
     const email=account.data.user.email;
@@ -57,12 +64,12 @@ try{
     const plan=plans[index%plans.length];
     await expect(page.getByLabel('Team plan')).toHaveValue('balanced');
     await page.getByLabel('Team plan').selectOption(plan);
-    await page.getByLabel(`Effort for P03 probe ${index+1}-2`).selectOption('aggressive');
+    await page.getByLabel(`Effort for P03 probe ${teamNumber}-2`).selectOption('aggressive');
     await page.getByRole('button',{name:fixture.phase==='pending-browser'?'Enter team':'Save changes'}).click();
     await expect(page.getByText('Your team is entered. You can change your lineup and orders until the deadline.')).toBeVisible();
     await page.reload();
     await expect(page.getByLabel('Team plan')).toHaveValue(plan);
-    await expect(page.getByLabel(`Effort for P03 probe ${index+1}-2`)).toHaveValue('aggressive');
+    await expect(page.getByLabel(`Effort for P03 probe ${teamNumber}-2`)).toHaveValue('aggressive');
     const saved=await db.from('event_teams').select('captain_id,orders').eq('event_id',fixture.eventId).eq('team_id',team.teamId).single();
     if(saved.error)throw saved.error;
     assert.equal(saved.data.orders.plan,plan);
@@ -87,21 +94,43 @@ try{
 
   execFileSync(process.execPath,[fileURLToPath(new URL('./p03-multidivision.mjs',import.meta.url)),'run'],
     {env:process.env,stdio:'pipe',timeout:120000});
-  for(const page of pages){
+  const memberships=await db.from('event_divisions').select('team_id,division_index')
+    .eq('event_id',fixture.eventId).in('team_id',browserTeams.map(team=>team.teamId));
+  if(memberships.error)throw memberships.error;
+  assert.equal(memberships.data.length,participantCount);
+  const divisionByTeam=new Map(memberships.data.map(row=>[row.team_id,Number(row.division_index)]));
+  if(participantCount===3)assert.equal(new Set(divisionByTeam.values()).size,3);
+  for(let index=0;index<pages.length;index++){
+    const page=pages[index],team=browserTeams[index];
+    const ownDivision=divisionByTeam.get(team.teamId);
     await page.reload();
     await expect(page.getByRole('heading',{name:'The race is ready'})).toBeVisible();
+    const replayRequest=page.waitForResponse(response=>response.url().includes('/api/event-run?')&&response.status()===200);
     await page.getByRole('link',{name:/Watch the race/}).first().click();
+    const replay=(await (await replayRequest).json()).run;
+    assert.equal(Number(replay.division_index),ownDivision);
+    assert.ok(replay.replay.roster.some(rider=>rider.team_id===team.teamId));
+    for(const other of browserTeams.filter(other=>other.teamId!==team.teamId))
+      if(divisionByTeam.get(other.teamId)!==ownDivision)
+        assert.ok(!replay.replay.roster.some(rider=>rider.team_id===other.teamId));
     await expect(page.getByRole('heading',{name:'Race commentary'})).toBeVisible();
     await page.getByRole('slider',{name:'Playback position'}).focus();
     await page.keyboard.press('End');
     await expect(page.getByText('The race is decided',{exact:true})).toBeVisible();
+    const resultsRequest=page.waitForResponse(response=>response.url().includes('/api/event/results?')&&response.status()===200);
     await page.getByRole('link',{name:/View results and points/}).click();
+    const results=await (await resultsRequest).json();
+    assert.ok(results.teams.some(row=>row.team_id===team.teamId));
+    for(const other of browserTeams.filter(other=>other.teamId!==team.teamId))
+      if(divisionByTeam.get(other.teamId)!==ownDivision)
+        assert.ok(!results.teams.some(row=>row.team_id===other.teamId));
     await expect(page.getByRole('heading',{name:'Team results'})).toBeVisible();
     await expect(page.getByLabel('Results division')).toContainText('your team');
+    await expect(page.getByLabel('Results division')).toHaveValue(String(ownDivision));
     await expect(page.getByText('Team points from this race')).toBeVisible();
   }
   assert.deepEqual(errors,[]);
-  console.log(`PASS isolated browser: ${participantCount} separate manager sessions, lineups and orders, 45-team run, own replays and division results.`);
+  console.log(`PASS isolated browser: ${participantCount} separate manager sessions, lineups and orders, 45-team run, own replays and division results (${new Set(divisionByTeam.values()).size} divisions).`);
 }finally{
   await browser.close();
 }
