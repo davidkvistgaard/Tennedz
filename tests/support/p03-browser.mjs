@@ -53,7 +53,12 @@ try{
     await page.getByLabel('Password').fill(password);
     await page.getByRole('button',{name:/Sign in/}).click();
     await expect(page).toHaveURL(/\/(onboarding|team)(?:\?|$)/);
-    await page.goto(`/team/run?event_id=${fixture.eventId}`);
+    await page.goto('/team/calendar');
+    const calendarCard=page.locator('article.agenda-card').filter({
+      has:page.getByRole('heading',{name:'P03 isolated 45-team division probe'})});
+    await expect(calendarCard).toHaveCount(1);
+    await calendarCard.getByRole('link',{name:/Set up/}).click();
+    await expect(page).toHaveURL(new RegExp(`/team/run\\?event_id=${fixture.eventId}`));
     await expect(page.getByRole('heading',{name:'Your lineup'})).toBeVisible();
     if(fixture.phase==='pending-browser'){
       await expect(page.getByRole('button',{name:'Enter team'})).toBeDisabled();
@@ -76,6 +81,15 @@ try{
     assert.equal(saved.data.orders.riders[saved.data.captain_id].role,'captain');
     const orderedRiders=fixture.riders.filter(r=>r.teamId===team.teamId);
     assert.equal(saved.data.orders.riders[orderedRiders[1].id].effort,'aggressive');
+    await page.getByRole('link',{name:/Back to race calendar/}).click();
+    await page.getByRole('button',{name:'My races'}).click();
+    const ownCard=page.locator('article.agenda-card').filter({
+      has:page.getByRole('heading',{name:'P03 isolated 45-team division probe'})});
+    await expect(ownCard).toHaveCount(1);
+    await expect(ownCard.locator('.agenda-readiness')).toContainText('8/8');
+    await expect(ownCard.locator('.agenda-readiness')).toContainText('Orders Ready');
+    await ownCard.getByRole('link',{name:/Set up/}).click();
+    await expect(page.getByRole('heading',{name:'Your lineup'})).toBeVisible();
     if(fixture.phase==='pending-browser'){
       const entries=await db.from('event_teams').select('team_id').eq('event_id',fixture.eventId);
       if(entries.error)throw entries.error;
