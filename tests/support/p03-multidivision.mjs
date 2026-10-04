@@ -23,13 +23,17 @@ async function ok(query){const result=await query;if(result.error)throw result.e
 
 if(mode==='seed'){
   const browserEntry=process.argv[3]==='browser';
-  if(process.argv[3]&&!browserEntry)throw Error('Use seed or seed browser.');
+  if(process.argv[3]&&!browserEntry)throw Error('Use seed or seed browser [count].');
+  const browserEntries=browserEntry?Number(process.argv[4]??1):0;
+  if((!browserEntry&&process.argv[4])||!Number.isSafeInteger(browserEntries)||
+     (browserEntry&&browserEntries<1)||browserEntries>45)
+    throw Error('Browser entry count must be an integer from 1 to 45.');
   if(existsSync(fixturePath))throw Error('P03 fixture already exists; clean it before reseeding.');
   if(!existsSync(teamsPath))throw Error('Seed 45 isolated P02 test accounts and teams first.');
   const teams=JSON.parse(readFileSync(teamsPath,'utf8'));
   if(teams.length!==45||teams.some(t=>!t.userId||!t.teamId))
     throw Error('P03 requires exactly 45 separately owned fixture teams.');
-  const fixture={eventId:randomUUID(),riders:[],phase:'initial'};
+  const fixture={eventId:randomUUID(),riders:[],phase:'initial',browserEntries};
   save(fixture);
   const riders=teams.flatMap((team,index)=>Array.from({length:8},(_,riderIndex)=>{
     const id=randomUUID();
@@ -49,7 +53,7 @@ if(mode==='seed'){
     status:'OPEN',entry_fee:0,deadline:new Date(Date.now()+8*3600000).toISOString(),
     calendar_source:'PELOTONIA',race_tier:2,scheduled_at:new Date(Date.now()+48*3600000).toISOString()}));
   fixture.phase='event';save(fixture);
-  const seededTeams=browserEntry?teams.slice(1):teams;
+  const seededTeams=teams.slice(browserEntries);
   for(let offset=0;offset<seededTeams.length;offset+=4){
     const joined=await Promise.all(seededTeams.slice(offset,offset+4).map(team=>{
       const selected=fixture.riders.filter(r=>r.teamId===team.teamId).map(r=>r.id);
