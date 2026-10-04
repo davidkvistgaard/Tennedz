@@ -117,9 +117,19 @@ if(mode==='seed'){
   if(!existsSync(fixturePath))throw Error('Seed the P03 fixture first.');
   const fixture=JSON.parse(readFileSync(fixturePath,'utf8'));
   if(fixture.phase!=='entered'&&fixture.phase!=='finished')throw Error('P03 entries are incomplete.');
+  if(concurrent&&fixture.phase!=='entered')throw Error('The concurrent probe requires an unrun event.');
+  const firstRun=fixture.phase==='entered';
   const event=await ok(db.from('events').select('name,status,scheduled_at').eq('id',fixture.eventId).single());
   if(event.name!=='P03 isolated 45-team division probe')throw Error('P03 event identity mismatch.');
   if(event.status==='OPEN')await ok(db.from('events').update({deadline:new Date(Date.now()-5000).toISOString()}).eq('id',fixture.eventId));
+  const teamIds=[...new Set(fixture.riders.map(rider=>rider.teamId))];
+  const riderIds=fixture.riders.map(rider=>rider.id);
+  const teamState=()=>ok(db.from('teams').select('id,rating').in('id',teamIds));
+  const riderState=()=>ok(db.from('riders')
+    .select('id,rating,fatigue,form,injury_until,last_raced_on').in('id',riderIds));
+  const sortState=rows=>rows.slice().sort((a,b)=>a.id.localeCompare(b.id));
+  const beforeTeams=await teamState(),beforeRiders=await riderState();
+  assert.equal(beforeTeams.length,45);assert.equal(beforeRiders.length,360);
   const authPath=process.env.PELOTONIA_P03_AUTH_FIXTURE;
   if(!authPath)throw Error('Set PELOTONIA_P03_AUTH_FIXTURE for the isolated administrator.');
   const auth=JSON.parse(readFileSync(authPath,'utf8'));
@@ -161,8 +171,20 @@ if(mode==='seed'){
     }
     assert.equal(allTeams.size,45);assert.equal(allRiders.size,360);assert.equal(replayTeams.size,45);
     const awards=await ok(db.from('recovery_ranking_awards').select('award_key,rider_id,team_id,event_id,season_year,gender,calendar_source,event_format,race_tier,result_type,result_place,points,points_policy_version').eq('event_id',fixture.eventId));
-    const riderResults=await ok(db.from('event_rider_results').select('rider_id,team_id,position,multiplier').eq('event_id',fixture.eventId));
+    const riderResults=await ok(db.from('event_rider_results').select('rider_id,team_id,position,points,multiplier').eq('event_id',fixture.eventId));
+    const teamResults=await ok(db.from('event_team_results').select('team_id,points').eq('event_id',fixture.eventId));
     const byRider=new Map(riderResults.map(r=>[r.rider_id,r]));
+    const byTeam=new Map(teamResults.map(row=>[row.team_id,row]));
+    assert.equal(teamResults.length,45);assert.equal(riderResults.length,360);
+    const afterTeams=await teamState(),afterRiders=await riderState();
+    const initialTeams=new Map(beforeTeams.map(row=>[row.id,row]));
+    const initialRiders=new Map(beforeRiders.map(row=>[row.id,row]));
+    for(const row of afterTeams)
+      assert.equal(Number(row.rating),Number(initialTeams.get(row.id).rating)+
+        (firstRun?Number(byTeam.get(row.id).points):0));
+    for(const row of afterRiders)
+      assert.equal(Number(row.rating),Number(initialRiders.get(row.id).rating)+
+        (firstRun?Number(byRider.get(row.id).points):0));
     assert.equal(awards.length,60);
     assert.equal(new Set(awards.map(a=>a.award_key)).size,60);
     for(const award of awards){
@@ -185,12 +207,14 @@ if(mode==='seed'){
     const repeat=await client.post('/api/admin/run-event',{data:{event_id:fixture.eventId}});
     assert.equal(repeat.status(),200,await repeat.text());
     assert.equal((await repeat.json()).already_finished,true);
+    assert.deepEqual(sortState(await teamState()),sortState(afterTeams));
+    assert.deepEqual(sortState(await riderState()),sortState(afterRiders));
     const repeatedAwards=await ok(db.from('recovery_ranking_awards').select('award_key').eq('event_id',fixture.eventId));
     assert.equal(repeatedAwards.length,60);
     const commits=await ok(db.from('recovery_race_commits').select('event_id').eq('event_id',fixture.eventId));
     assert.equal(commits.length,1);
     fixture.phase='finished';save(fixture);
-    console.log(`PASS 45 entries, 3 independent divisions, 360 results, 3 replays, 60 ledger awards and ${concurrent?'concurrent plus sequential':'sequential'} idempotent reruns.`);
+    console.log(`PASS 45 entries, 3 independent divisions, 360 results, 3 replays, 60 ledger awards, 405 checked rating balances and ${concurrent?'concurrent plus sequential':'sequential'} idempotent reruns.`);
   }finally{await client.dispose();}
 }else if(mode==='cleanup'){
   if(!existsSync(fixturePath))throw Error('No P03 fixture ledger to clean.');
