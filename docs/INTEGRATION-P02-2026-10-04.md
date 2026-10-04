@@ -10,6 +10,7 @@ The `pelotonia-recovery-auth-test` Supabase project is separate from production.
 - `tests/integration/autopilot-permissions.sql`: new service-only tables have RLS, client roles cannot read or insert into them, and client roles cannot execute the six new privileged RPCs.
 - `tests/integration/autopilot-queue-capacity.sql`: 50 synthetic race jobs were claimed and completed once in a single database pass; fixture changes roll back. This measures database queue behavior only, not the throughput of the HTTP scheduler and per-team entry calls.
 - Two concurrent database calls submitted manual and autopilot orders to one disposable race. The final state had one entry, one receipt and the manual `captain` plan. The disposable race and its entry/receipt were removed. Post-test counts returned to 11 events, 7 teams, 13 entries, 0 queue jobs and 0 P02 fixtures.
+- A separate local HTTP fixture drives the enabled `/api/cron/autopilot` endpoint with 23 synthetic teams. `npm run test:cron` verifies secret rejection, three cursor pages (10/10/3), three actual entry RPCs, completion, and a second idempotent request. Another test injects a persistent failure after a join within an unfinished page; the route returns 503, holds the lease, then resumes after a simulated expiry without duplicating an entry. It models 120 ms for each event lookup and finishes the successful first pass in about 3.6 seconds. This is a protocol fixture, not a remote Supabase performance measurement.
 
 The first real autopilot entry check exposed `min(uuid)` in the SQL function, which PostgreSQL does not provide. The isolated project received the corrective `20261004173440_fix_autopilot_uuid_team_lookup` migration; the same migration is committed in this branch. The entry tests pass after the correction. The historical migration remains untouched so that migration history stays additive.
 
@@ -18,7 +19,8 @@ Supabase security advisors report RLS without policies for the service-only tabl
 ## Still open in P02
 
 - Replay the full migration chain against a fresh empty test database; the available test project already had the earlier migrations when this check began.
-- Exercise the enabled cron HTTP route, service credentials and complete multi-page team batches against an isolated application deployment. A 50-event database queue pass cannot establish how many teams the 35-second request window processes.
-- Measure concurrent manager/autopilot writes across repeated schedules and a larger team population, and verify deadline coverage and retry behavior under realistic latency. One concurrent fixture demonstrates the locking and manual-priority path but is not a load test.
+- Exercise the enabled cron HTTP route with real service credentials and complete multi-page team batches against an isolated application deployment. The local 23-team fixture and 50-event database queue pass cannot establish how many real teams the 35-second request window processes.
+- Measure concurrent manager/autopilot writes across repeated schedules and a larger team population, and verify deadline coverage under realistic latency. One concurrent fixture demonstrates the locking and manual-priority path but is not a load test.
+- Reconcile `entered_count` after a partially completed page: a join may succeed before a later team causes the page to fail. On retry, that entry is correctly not duplicated, but the job's completed-page counter can undercount successful entries. Treat that counter as provisional until accounting is made idempotent.
 
 Keep `PELOTONIA_AUTOPILOT_ENABLED` off until these remaining checks and the later product decisions about simultaneous races and rider availability are complete. No new official race or points award was created.

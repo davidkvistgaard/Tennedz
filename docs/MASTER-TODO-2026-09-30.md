@@ -47,7 +47,7 @@ Den første reelle **endagsløbs-testsløjfe** kræver fortsat omtrent punkt 02�
 
 **Punkt 01, lokalt verificeret 4. oktober:** Kalender-, autopilot- og ranglistekoden er samlet med Motor Lab i et separat udviklingsspor. Konflikter er løst, den eksisterende løbsafvikler er bevaret, og unit tests, lint, build og browserregression passerer. Se [integrationsnotatet](INTEGRATION-P01-2026-10-04.md). Punkt 02's databasestatus står nedenfor; dette er ikke en produktionsrelease.
 
-**Punkt 02, delvist verificeret 4. oktober:** Den isolerede Supabase-testdatabase har bestået tests af ordrer, adgangsrettigheder, manuel prioritet, tidszoner, lease/retry og 50 databasekøjobs. En virkelig SQL-fejl blev rettet i en tillægsmigration. Se [databasenotatet](INTEGRATION-P02-2026-10-04.md). Fuld migration fra tom database, cronens HTTP-flow og kapacitet med mange hold mangler stadig; autopilot forbliver slået fra.
+**Punkt 02, delvist verificeret 4. oktober:** Den isolerede Supabase-testdatabase har bestået tests af ordrer, adgangsrettigheder, manuel prioritet, tidszoner, lease/retry og 50 databasekøjobs. En virkelig SQL-fejl blev rettet i en tillægsmigration. En separat lokal HTTP-fixture har derefter kørt cron-endpointet gennem flere sider, rigtige tilmeldings-RPC-kald og en afbrudt side med genoptagelse. Se [databasenotatet](INTEGRATION-P02-2026-10-04.md). Fuld migration fra tom database og kapacitet med mange hold mod en virkelig testapp mangler stadig; autopilot forbliver slået fra.
 
 | ID | Opgave / konkret resultat | Timer | Afhænger af |
 | --- | --- | ---: | --- |
