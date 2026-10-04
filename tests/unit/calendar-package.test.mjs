@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {oneDaySlot,validCalendarPlacement,entryReadiness} from '../../lib/calendar/rhythm.mjs';
 import {validateDefaultLineup,resolveAutopilotLineup} from '../../lib/calendar/autopilot.mjs';
-import {pointsForResult,aggregateRanking,POINT_POLICY_VERSION} from '../../lib/calendar/points.mjs';
+import {pointsForResult,pointsForDivisionResult,aggregateRanking,POINT_POLICY_VERSION} from '../../lib/calendar/points.mjs';
 import {planAutopilotEntry} from '../../lib/calendar/autopilot-entry.mjs';
 
 test('UCI one-day sources keep their week while mapping to fixed slots',()=>{
@@ -69,6 +69,9 @@ test('one points award belongs to filtered rankings without duplicate transactio
   assert.equal(pointsForResult({tier:6,resultType:'STAGE',placing:1}),150);
   assert.equal(pointsForResult({tier:6,resultType:'KOM',placing:1}),300);
   assert.equal(pointsForResult({tier:3,resultType:'STAGE',placing:1}),40);
+  assert.equal(pointsForDivisionResult({tier:2,resultType:'ONE_DAY',placing:1,multiplier:0.8}),100);
+  assert.equal(pointsForDivisionResult({tier:1,resultType:'ONE_DAY',placing:21,multiplier:1}),0);
+  assert.throws(()=>pointsForDivisionResult({tier:2,resultType:'ONE_DAY',placing:1,multiplier:1.1}));
   const awards=[{rider_id:'a',team_id:'team',gender:'F',calendar_source:'PELOTONIA',
     event_format:'STAGE_RACE',season_year:2027,points:1000},
   {rider_id:'b',team_id:'team',gender:'M',calendar_source:'UCI',

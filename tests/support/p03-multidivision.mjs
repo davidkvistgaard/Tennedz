@@ -7,6 +7,7 @@ import {existsSync,readFileSync,writeFileSync,unlinkSync} from 'node:fs';
 import {createClient} from '@supabase/supabase-js';
 import {request} from '@playwright/test';
 import {defaultOrders} from '../../lib/race/orders.mjs';
+import {pointsForDivisionResult,POINT_POLICY_VERSION} from '../../lib/calendar/points.mjs';
 
 const configPath=process.env.PELOTONIA_P03_TEST_CONFIG;
 if(!configPath)throw Error('Set PELOTONIA_P03_TEST_CONFIG to the isolated project config.');
@@ -45,7 +46,8 @@ if(mode==='seed'){
   const stage=await ok(db.from('stage_profiles').select('id').eq('name','Recovery Flat 130').limit(1).single());
   await ok(db.from('events').insert({id:fixture.eventId,name:'P03 isolated 45-team division probe',
     kind:'one_day',gender:'M',country_code:'FR',stage_profile_id:stage.id,
-    status:'OPEN',entry_fee:0,deadline:new Date(Date.now()+8*3600000).toISOString()}));
+    status:'OPEN',entry_fee:0,deadline:new Date(Date.now()+8*3600000).toISOString(),
+    calendar_source:'PELOTONIA',race_tier:2,scheduled_at:new Date(Date.now()+48*3600000).toISOString()}));
   fixture.phase='event';save(fixture);
   const seededTeams=browserEntry?teams.slice(1):teams;
   for(let offset=0;offset<seededTeams.length;offset+=4){
@@ -65,7 +67,7 @@ if(mode==='seed'){
   if(!existsSync(fixturePath))throw Error('Seed the P03 fixture first.');
   const fixture=JSON.parse(readFileSync(fixturePath,'utf8'));
   if(fixture.phase!=='entered'&&fixture.phase!=='finished')throw Error('P03 entries are incomplete.');
-  const event=await ok(db.from('events').select('name,status').eq('id',fixture.eventId).single());
+  const event=await ok(db.from('events').select('name,status,scheduled_at').eq('id',fixture.eventId).single());
   if(event.name!=='P03 isolated 45-team division probe')throw Error('P03 event identity mismatch.');
   if(event.status==='OPEN')await ok(db.from('events').update({deadline:new Date(Date.now()-5000).toISOString()}).eq('id',fixture.eventId));
   const authPath=process.env.PELOTONIA_P03_AUTH_FIXTURE;
@@ -99,13 +101,37 @@ if(mode==='seed'){
       for(const rider of replay.roster)replayTeams.add(rider.team_id);
     }
     assert.equal(allTeams.size,45);assert.equal(allRiders.size,360);assert.equal(replayTeams.size,45);
+    const awards=await ok(db.from('recovery_ranking_awards').select('award_key,rider_id,team_id,event_id,season_year,gender,calendar_source,event_format,race_tier,result_type,result_place,points,points_policy_version').eq('event_id',fixture.eventId));
+    const riderResults=await ok(db.from('event_rider_results').select('rider_id,team_id,position,multiplier').eq('event_id',fixture.eventId));
+    const byRider=new Map(riderResults.map(r=>[r.rider_id,r]));
+    assert.equal(awards.length,60);
+    assert.equal(new Set(awards.map(a=>a.award_key)).size,60);
+    for(const award of awards){
+      const result=byRider.get(award.rider_id);
+      assert.ok(result);
+      assert.equal(award.team_id,result.team_id);
+      assert.equal(award.result_place,result.position);
+      assert.equal(award.points,pointsForDivisionResult({tier:2,resultType:'ONE_DAY',
+        placing:result.position,multiplier:Number(result.multiplier)}));
+      assert.equal(award.season_year,Number(event.scheduled_at.slice(0,4)));
+      assert.equal(award.gender,'M');assert.equal(award.calendar_source,'PELOTONIA');
+      assert.equal(award.event_format,'ONE_DAY');assert.equal(award.race_tier,2);
+      assert.equal(award.result_type,'ONE_DAY');assert.equal(award.points_policy_version,POINT_POLICY_VERSION);
+    }
+    const ranked=await ok(db.rpc('recovery_points_rankings',{p_entity:'team',p_gender:'M',
+      p_source:'PELOTONIA',p_format:'ONE_DAY',p_season_year:Number(event.scheduled_at.slice(0,4))}));
+    const totals=new Map();
+    for(const award of awards)totals.set(award.team_id,(totals.get(award.team_id)??0)+award.points);
+    assert.deepEqual(new Map(ranked.map(row=>[row.entity_id,Number(row.points)])),totals);
     const repeat=await client.post('/api/admin/run-event',{data:{event_id:fixture.eventId}});
     assert.equal(repeat.status(),200,await repeat.text());
     assert.equal((await repeat.json()).already_finished,true);
+    const repeatedAwards=await ok(db.from('recovery_ranking_awards').select('award_key').eq('event_id',fixture.eventId));
+    assert.equal(repeatedAwards.length,60);
     const commits=await ok(db.from('recovery_race_commits').select('event_id').eq('event_id',fixture.eventId));
     assert.equal(commits.length,1);
     fixture.phase='finished';save(fixture);
-    console.log('PASS 45 entries, 3 independent 15-team divisions, 360 results, 3 persisted replays and idempotent API rerun.');
+    console.log('PASS 45 entries, 3 independent divisions, 360 results, 3 replays, 60 ledger awards and idempotent rerun.');
   }finally{await client.dispose();}
 }else if(mode==='cleanup'){
   if(!existsSync(fixturePath))throw Error('No P03 fixture ledger to clean.');
@@ -113,7 +139,7 @@ if(mode==='seed'){
   const event=await db.from('events').select('name').eq('id',fixture.eventId).maybeSingle();
   if(event.error)throw event.error;
   if(event.data&&event.data.name!=='P03 isolated 45-team division probe')throw Error('Refusing to remove a different event.');
-  for(const table of ['event_rider_results','event_team_results','event_divisions',
+  for(const table of ['recovery_ranking_awards','event_rider_results','event_team_results','event_divisions',
     'event_division_runs','recovery_race_commits','recovery_entry_receipts','event_teams'])
     await ok(db.from(table).delete().eq('event_id',fixture.eventId));
   if(event.data)await ok(db.from('events').delete().eq('id',fixture.eventId));
