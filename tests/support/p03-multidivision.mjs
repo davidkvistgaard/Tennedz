@@ -75,6 +75,42 @@ if(mode==='seed'){
   const receipts=await ok(db.from('recovery_entry_receipts').select('team_id').eq('event_id',fixture.eventId));
   assert.equal(entries.length,seededTeams.length);assert.equal(receipts.length,seededTeams.length);
   console.log(`Seeded ${seededTeams.length} entries for 45 distinct teams and 360 riders in event ${fixture.eventId}.`);
+}else if(mode==='failure'){
+  if(!existsSync(fixturePath))throw Error('Seed the P03 fixture first.');
+  const fixture=JSON.parse(readFileSync(fixturePath,'utf8'));
+  if(fixture.phase!=='entered')throw Error('The failure probe requires all 45 entries and an unrun event.');
+  const team=await ok(db.from('event_teams').select('team_id').eq('event_id',fixture.eventId).limit(1).single());
+  const beforeTeam=await ok(db.from('teams').select('rating').eq('id',team.team_id).single());
+  const beforeRider=await ok(db.from('riders').select('rating,fatigue,form,injury_until,last_raced_on')
+    .eq('id',fixture.riders[0].id).single());
+  await ok(db.from('events').update({deadline:new Date(Date.now()-5000).toISOString(),race_tier:null})
+    .eq('id',fixture.eventId));
+  try{
+    const {buildRace}=await import('../../lib/race/cycle.mjs');
+    const snapshot=await ok(db.rpc('recovery_race_snapshot',{p_event:fixture.eventId}));
+    const output=buildRace(snapshot);
+    const rejected=await db.rpc('recovery_finish_race',{p_event:fixture.eventId,
+      p_snapshot:snapshot,p_output:output});
+    assert.ok(rejected.error,'The award trigger should reject missing scheduled-race metadata.');
+    assert.match(rejected.error.message,/Scheduled one-day race lacks valid award metadata/);
+    for(const table of ['event_division_runs','event_divisions','event_team_results',
+      'event_rider_results','recovery_ranking_awards','recovery_race_commits']){
+      const rows=await db.from(table).select('event_id',{count:'exact',head:true}).eq('event_id',fixture.eventId);
+      if(rows.error)throw rows.error;
+      assert.equal(rows.count,0,`${table} must roll back with the failed award`);
+    }
+    const event=await ok(db.from('events').select('status').eq('id',fixture.eventId).single());
+    const afterTeam=await ok(db.from('teams').select('rating').eq('id',team.team_id).single());
+    const afterRider=await ok(db.from('riders').select('rating,fatigue,form,injury_until,last_raced_on')
+      .eq('id',fixture.riders[0].id).single());
+    assert.equal(event.status,'OPEN');
+    assert.deepEqual(afterTeam,beforeTeam);
+    assert.deepEqual(afterRider,beforeRider);
+    fixture.failureVerified=true;save(fixture);
+    console.log('PASS failed award rolled back three divisions, results, rankings and rider/team changes.');
+  }finally{
+    await ok(db.from('events').update({race_tier:2}).eq('id',fixture.eventId));
+  }
 }else if(mode==='run'){
   if(!existsSync(fixturePath))throw Error('Seed the P03 fixture first.');
   const fixture=JSON.parse(readFileSync(fixturePath,'utf8'));
@@ -162,4 +198,4 @@ if(mode==='seed'){
   }
   unlinkSync(fixturePath);
   console.log('Removed P03 event, results, receipts and 360 riders. Clean the 45 accounts with p02-isolated-teams.mjs cleanup.');
-}else throw Error('Use seed, run or cleanup.');
+}else throw Error('Use seed, failure, run or cleanup.');
