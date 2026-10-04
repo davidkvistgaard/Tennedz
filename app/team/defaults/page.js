@@ -29,7 +29,13 @@ export default function DefaultTeamsPage(){
       selected_riders:draft.selected,captain_id:draft.captain})});
       setState(current=>({...current,defaults:[...current.defaults.filter(item=>
         key(item.gender,item.event_format)!==slot),result.default]}));
-      setMessage(`${gender==='M'?'Men':'Women'} ${format==='ONE_DAY'?'one-day':'stage-race'} default saved.`);
+      const saved=`${gender==='M'?'Men':'Women'} ${format==='ONE_DAY'?'one-day':'stage-race'} default saved.`;
+      const auto=result.autopilot;
+      setMessage(auto?.state==='attempted'&&auto.entered>0
+        ?`${saved} Entered ${auto.entered} upcoming race${auto.entered===1?'':'s'}. ${auto.entered<auto.attempted||auto.more_eligible?'Other entries are not confirmed. ':''}Check the calendar for each entry.`
+        :auto&&((auto.state!=='attempted')||auto.attempted>0||auto.more_eligible)
+          ?`${saved} Automatic entry is not confirmed for every upcoming race. Check the calendar before each deadline.`
+          :saved);
     }catch(e){setError(e.message);}finally{setBusy("");}
   }
   return <TeamShell title="Default teams"><div className="defaults-page">
@@ -62,6 +68,6 @@ export default function DefaultTeamsPage(){
           onClick={()=>save(gender,format)}>{busy===slot?"Saving…":"Save default team"}</button>
       </section>;
     })}</div>
-    <p className="defaults-note">These selections do not submit an entry today. Automatic race entry will be enabled when the calendar and race execution are connected and verified.</p>
+    <p className="defaults-note">A saved default is not a confirmed race entry. Check the calendar before each deadline to see whether your team is entered.</p>
   </div></TeamShell>;
 }

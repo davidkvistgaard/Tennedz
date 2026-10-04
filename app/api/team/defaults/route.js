@@ -3,6 +3,8 @@ import {protectedRoute} from "../../../../lib/auth/server";
 import {AuthError,assertTeamId} from "../../../../lib/auth/policy.mjs";
 import {DEFAULT_TEAM_SIZES} from "../../../../lib/calendar/config.mjs";
 import {validateDefaultLineup} from "../../../../lib/calendar/autopilot.mjs";
+import {enterAutopilotEntry} from "../../../../lib/calendar/autopilot-server";
+import {enterUpcomingOnDefaultSave} from "../../../../lib/calendar/autopilot-on-save.mjs";
 
 export const dynamic="force-dynamic";
 export const GET=protectedRoute(async(req,context,{team,db})=>{
@@ -36,5 +38,21 @@ export const PUT=protectedRoute(async(req,context,{team,db})=>{
   },{onConflict:"team_id,gender,event_format"})
     .select("gender,event_format,selected_riders,captain_id,updated_at").single();
   if(error)throw new AuthError("DEFAULT_SAVE_FAILED","Could not save your default team.",503);
-  return NextResponse.json({ok:true,default:data});
+  let autopilot=null;
+  if(body.event_format==="ONE_DAY"&&process.env.PELOTONIA_AUTOPILOT_ENABLED==="true"){
+    if(process.env.RECOVERY_ALLOW_GAME_WRITES!=="true"){
+      autopilot={state:"unavailable"};
+    }else{
+      try{
+        autopilot={state:"attempted",...await enterUpcomingOnDefaultSave(db,{
+          teamId:team.id,gender:body.gender,enter:enterAutopilotEntry,
+        })};
+      }catch{
+        // The default was saved. Do not report a failed save for a later join
+        // error; tell the manager to check the calendar before the deadline.
+        autopilot={state:"unconfirmed"};
+      }
+    }
+  }
+  return NextResponse.json({ok:true,default:data,autopilot});
 });
