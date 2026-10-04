@@ -21,6 +21,8 @@ const save=fixture=>writeFileSync(fixturePath,JSON.stringify(fixture,null,2));
 async function ok(query){const result=await query;if(result.error)throw result.error;return result.data;}
 
 if(mode==='seed'){
+  const browserEntry=process.argv[3]==='browser';
+  if(process.argv[3]&&!browserEntry)throw Error('Use seed or seed browser.');
   if(existsSync(fixturePath))throw Error('P03 fixture already exists; clean it before reseeding.');
   if(!existsSync(teamsPath))throw Error('Seed 45 isolated P02 test accounts and teams first.');
   const teams=JSON.parse(readFileSync(teamsPath,'utf8'));
@@ -45,19 +47,20 @@ if(mode==='seed'){
     kind:'one_day',gender:'M',country_code:'FR',stage_profile_id:stage.id,
     status:'OPEN',entry_fee:0,deadline:new Date(Date.now()+8*3600000).toISOString()}));
   fixture.phase='event';save(fixture);
-  for(let offset=0;offset<teams.length;offset+=4){
-    const joined=await Promise.all(teams.slice(offset,offset+4).map(team=>{
+  const seededTeams=browserEntry?teams.slice(1):teams;
+  for(let offset=0;offset<seededTeams.length;offset+=4){
+    const joined=await Promise.all(seededTeams.slice(offset,offset+4).map(team=>{
       const selected=fixture.riders.filter(r=>r.teamId===team.teamId).map(r=>r.id);
       return db.rpc('recovery_join_event_with_orders',{p_user:team.userId,p_event:fixture.eventId,
         p_riders:selected,p_captain:selected[0],p_orders:defaultOrders(selected,selected[0])});
     }));
     for(const result of joined)if(result.error)throw result.error;
   }
-  fixture.phase='entered';save(fixture);
+  fixture.phase=browserEntry?'pending-browser':'entered';save(fixture);
   const entries=await ok(db.from('event_teams').select('team_id').eq('event_id',fixture.eventId));
   const receipts=await ok(db.from('recovery_entry_receipts').select('team_id').eq('event_id',fixture.eventId));
-  assert.equal(entries.length,45);assert.equal(receipts.length,45);
-  console.log(`Seeded 45 distinct teams and 360 riders for event ${fixture.eventId}.`);
+  assert.equal(entries.length,seededTeams.length);assert.equal(receipts.length,seededTeams.length);
+  console.log(`Seeded ${seededTeams.length} entries for 45 distinct teams and 360 riders in event ${fixture.eventId}.`);
 }else if(mode==='run'){
   if(!existsSync(fixturePath))throw Error('Seed the P03 fixture first.');
   const fixture=JSON.parse(readFileSync(fixturePath,'utf8'));

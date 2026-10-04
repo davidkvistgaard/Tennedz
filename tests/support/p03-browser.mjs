@@ -2,7 +2,7 @@
 // Run after p03-multidivision.mjs seed and with the isolated app on localhost:3100.
 import assert from 'node:assert/strict';
 import {randomBytes} from 'node:crypto';
-import {existsSync,readFileSync} from 'node:fs';
+import {existsSync,readFileSync,writeFileSync} from 'node:fs';
 import {execFileSync} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
 import {createClient} from '@supabase/supabase-js';
@@ -20,9 +20,7 @@ if(!existsSync(teamPath)||!existsSync(fixturePath))throw Error('Seed the P03 fix
 const teams=JSON.parse(readFileSync(teamPath,'utf8'));
 const fixture=JSON.parse(readFileSync(fixturePath,'utf8'));
 assert.equal(teams.length,45);
-assert.equal(fixture.phase,'entered');
-const rider=fixture.riders.find(r=>r.teamId===teams[0].teamId);
-assert.ok(rider);
+assert.ok(['pending-browser','entered'].includes(fixture.phase));
 const db=createClient(config.url,config.serviceKey,{auth:{persistSession:false,autoRefreshToken:false}});
 const account=await db.auth.admin.getUserById(teams[0].userId);
 if(account.error)throw account.error;
@@ -45,18 +43,35 @@ try{
   await expect(page).toHaveURL(/\/(onboarding|team)(?:\?|$)/);
   await page.goto(`/team/run?event_id=${fixture.eventId}`);
   await expect(page.getByRole('heading',{name:'Your lineup'})).toBeVisible();
+  if(fixture.phase==='pending-browser'){
+    await expect(page.getByRole('button',{name:'Enter team'})).toBeDisabled();
+    await page.getByRole('button',{name:'Select the first eight'}).click();
+    await page.getByRole('button',{name:'Choose captain',exact:true}).first().click();
+    await expect(page.getByRole('button',{name:'Enter team'})).toBeEnabled();
+  }
   await expect(page.getByLabel('Team plan')).toHaveValue('balanced');
   await page.getByLabel('Team plan').selectOption('breakaway');
   await page.getByLabel(`Effort for P03 probe 1-2`).selectOption('aggressive');
-  await page.getByRole('button',{name:'Save changes'}).click();
+  await page.getByRole('button',{name:fixture.phase==='pending-browser'?'Enter team':'Save changes'}).click();
   await expect(page.getByText('Your team is entered. You can change your lineup and orders until the deadline.')).toBeVisible();
+  if(fixture.phase==='pending-browser'){
+    const entries=await db.from('event_teams').select('team_id').eq('event_id',fixture.eventId);
+    if(entries.error)throw entries.error;
+    const receipts=await db.from('recovery_entry_receipts').select('team_id').eq('event_id',fixture.eventId);
+    if(receipts.error)throw receipts.error;
+    assert.equal(entries.data.length,45);
+    assert.equal(receipts.data.length,45);
+    assert.equal(entries.data.filter(e=>e.team_id===teams[0].teamId).length,1);
+    fixture.phase='entered';
+    writeFileSync(fixturePath,JSON.stringify(fixture,null,2));
+  }
   await page.reload();
   await expect(page.getByLabel('Team plan')).toHaveValue('breakaway');
   await expect(page.getByLabel('Effort for P03 probe 1-2')).toHaveValue('aggressive');
-  const saved=await db.from('event_teams').select('orders').eq('event_id',fixture.eventId).eq('team_id',teams[0].teamId).single();
+  const saved=await db.from('event_teams').select('captain_id,orders').eq('event_id',fixture.eventId).eq('team_id',teams[0].teamId).single();
   if(saved.error)throw saved.error;
   assert.equal(saved.data.orders.plan,'breakaway');
-  assert.equal(saved.data.orders.riders[rider.id].role,'captain');
+  assert.equal(saved.data.orders.riders[saved.data.captain_id].role,'captain');
 
   execFileSync(process.execPath,[fileURLToPath(new URL('./p03-multidivision.mjs',import.meta.url)),'run'],
     {env:process.env,stdio:'pipe',timeout:120000});
@@ -72,7 +87,7 @@ try{
   await expect(page.getByLabel('Results division')).toContainText('your team');
   await expect(page.getByText('Team points from this race')).toBeVisible();
   assert.deepEqual(errors,[]);
-  console.log('PASS isolated browser: participant login, saved order edit, 45-team run, own replay and division results.');
+  console.log('PASS isolated browser: participant login, lineup and orders, 45-team run, own replay and division results.');
 }finally{
   await browser.close();
 }
