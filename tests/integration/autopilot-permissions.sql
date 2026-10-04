@@ -21,6 +21,7 @@ begin
   foreach function_name in array array[
     'recovery_autopilot_join_event', 'recovery_autopilot_claim_job',
     'recovery_autopilot_advance_job', 'recovery_create_scheduled_race_day',
+    'recovery_create_scheduled_race_day_safe',
     'recovery_points_rankings', 'recovery_ranking_seasons'] loop
     select p.oid into function_id from pg_proc p
       where p.pronamespace = 'public'::regnamespace and p.proname = function_name;

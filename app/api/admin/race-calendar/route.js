@@ -26,8 +26,10 @@ export const POST = protectedRoute(
     } catch (e) {
       throw new AuthError("INVALID_CALENDAR", e.message, 400);
     }
+    const scheduledRpc=process.env.PELOTONIA_AUTOPILOT_ENABLED==="true"
+      ?"recovery_create_scheduled_race_day_safe":"recovery_create_scheduled_race_day";
     const result = await rpc(databaseClient(),
-      definition.scheduled_at?"recovery_create_scheduled_race_day":"recovery_create_race_day", {
+      definition.scheduled_at?scheduledRpc:"recovery_create_race_day", {
       p_request: id,
       p_user: auth.user.id,
       p_definition: definition,
