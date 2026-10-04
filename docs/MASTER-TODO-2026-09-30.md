@@ -14,7 +14,7 @@
 | Område | Bekræftet status |
 | --- | --- |
 | Live grundspil | Login, konto/holdoprettelse med 8 mænd + 8 kvinder, passwordindstillinger, hold-/ryttervisning, holdidentitet, eksisterende endagsløb, resultatvisning og en kalenderforside findes. De gamle produktionsløb er historiske/udløbne; et løb med reelle modstandere i den nye cyklus er endnu ikke dokumenteret som fuldført. |
-| Kalender V0.1 | Kalender-UI og navigation er udgivet. Fire standardtrupper, beskyttet autopilot/cron, pointledger og yderligere kalenderarbejde ligger i `engine-current`; migrationen, schedulerens kapacitet og pointtildeling er ikke produktionsverificeret. Et gemt standardhold er **ikke** i sig selv en aktiv automatisk tilmelding. |
+| Kalender V0.1 | Kalender-UI og navigation er udgivet. Fire standardtrupper, beskyttet autopilot/cron, pointledger og yderligere kalenderarbejde er samlet med Motor Lab på `codex/p01-calendar-engine-integration`, men denne integration er kun lokalt testet. Migrationen, schedulerens kapacitet og pointtildeling er ikke produktionsverificeret. Et gemt standardhold er **ikke** i sig selv en aktiv automatisk tilmelding. |
 | Ny motor | Isoleret `v2-prototype-74` med kilometermodel, op til 40 vejgrupper, taktik, forsøgsvis etapeløbslogik og verificerbar in-memory replay. Ingen live ordreflow, persistent replay eller produktionsafvikling. Balancefund viser stadig stærke strategier og uafklaret realisme. |
 | Verden/atlas | Strukturerede verdensdata V1.0–V1.6 er udbygget. Alle fem godkendte kildekonflikter er løst lokalt som Baseline 1.6.2 på `codex/world-conflict-resolution-20260930`; denne commit er endnu ikke integreret i `engine-current` eller udgivet. Atlassets eksisterende geometri/illustration er en prototype, ikke det ønskede malede kort. |
 | Portrætter og stab | 16 særskilt malede starterportrætter findes, men den generelle reservevisning og variationen er ikke godkendt som slutniveau. `/team/staff` er en lokal designpreview uden personaleøkonomi eller sportslig effekt. |
@@ -33,15 +33,15 @@
 
 | Spor | Punkter | Estimat |
 | --- | ---: | ---: |
-| Integration og testgrundlag | 01–03 | 32–64 t |
+| Integration og testgrundlag | 02–03; 01 lokalt verificeret | 20–40 t |
 | Ny motor og spilbart løb | 04–12, 41 | 256–512 t |
 | Kalender, autopilot og ranglister | 13–20 | 156–312 t |
 | Atlas og stedoplevelse | 21–26 | 200–400 t |
 | Klubprogression, økonomi og fans | 27–34 | 240–480 t |
 | Portrætter, intro, nye løbsformer og ruter | 35–40 | 200–400 t |
-| **Alle kendte resterende punkter** | **01–41** | **1.084–2.168 t** |
+| **Alle kendte resterende punkter** | **02–41** | **1.072–2.144 t** |
 
-Den første reelle **endagsløbs-testsløjfe** er omtrent punkt 01–09 (164–328 t) før bred balance, etapeløb og release. Det er et planlægningssnit, ikke et løfte om, at de første spillertests først kan begynde efter alle disse timer; en smallere test kan køres undervejs.
+Den første reelle **endagsløbs-testsløjfe** kræver fortsat omtrent punkt 02–09 (152–304 t) før bred balance, etapeløb og release. Det er et planlægningssnit, ikke et løfte om, at de første spillertests først kan begynde efter alle disse timer; en smallere test kan køres undervejs.
 
 ## P0 — sammenhæng og testgrundlag
 
