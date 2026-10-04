@@ -112,6 +112,8 @@ if(mode==='seed'){
     await ok(db.from('events').update({race_tier:2}).eq('id',fixture.eventId));
   }
 }else if(mode==='run'){
+  const concurrent=process.argv[3]==='concurrent';
+  if(process.argv[3]&&!concurrent)throw Error('Use run or run concurrent.');
   if(!existsSync(fixturePath))throw Error('Seed the P03 fixture first.');
   const fixture=JSON.parse(readFileSync(fixturePath,'utf8'));
   if(fixture.phase!=='entered'&&fixture.phase!=='finished')throw Error('P03 entries are incomplete.');
@@ -126,9 +128,18 @@ if(mode==='seed'){
   try{
     const login=await client.post('/api/auth/login',{data:{login_name:auth.alice.email,password:auth.alice.password}});
     assert.equal(login.status(),200,await login.text());
-    const first=await client.post('/api/admin/run-event',{data:{event_id:fixture.eventId}});
-    assert.equal(first.status(),200,await first.text());
-    assert.equal((await first.json()).total_divisions,3);
+    const requestRace=()=>client.post('/api/admin/run-event',{data:{event_id:fixture.eventId}});
+    const attempts=concurrent?await Promise.all([requestRace(),requestRace()]):[await requestRace()];
+    const outcomes=[];
+    for(const attempt of attempts){
+      assert.equal(attempt.status(),200,await attempt.text());
+      outcomes.push(await attempt.json());
+    }
+    assert.ok(outcomes.every(outcome=>outcome.total_divisions===3));
+    if(concurrent){
+      assert.equal(outcomes.filter(outcome=>outcome.already_finished===false).length,1);
+      assert.equal(outcomes.filter(outcome=>outcome.already_finished===true).length,1);
+    }
     const divisionResponse=await client.get(`/api/event/divisions?event_id=${fixture.eventId}`);
     assert.equal(divisionResponse.status(),200);
     const divisions=await divisionResponse.json();
@@ -179,7 +190,7 @@ if(mode==='seed'){
     const commits=await ok(db.from('recovery_race_commits').select('event_id').eq('event_id',fixture.eventId));
     assert.equal(commits.length,1);
     fixture.phase='finished';save(fixture);
-    console.log('PASS 45 entries, 3 independent divisions, 360 results, 3 replays, 60 ledger awards and idempotent rerun.');
+    console.log(`PASS 45 entries, 3 independent divisions, 360 results, 3 replays, 60 ledger awards and ${concurrent?'concurrent plus sequential':'sequential'} idempotent reruns.`);
   }finally{await client.dispose();}
 }else if(mode==='cleanup'){
   if(!existsSync(fixturePath))throw Error('No P03 fixture ledger to clean.');
