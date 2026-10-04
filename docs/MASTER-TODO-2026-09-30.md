@@ -1,6 +1,6 @@
 # Pelotonia — samlet to-do og tidsestimat
 
-**Opdateret 4. oktober 2026 med 3D-sporet; øvrig status senest gennemgået 30. september.** Dette er den aktuelle hovedliste for kendte produktønsker. [Produktvisionen](PRODUCT-VISION.md), [kalenderpakken](../../engine-current/docs/CALENDAR_AUTOPILOT_RANKINGS_V0_1.md), [motorprototypen](../../engine-current/docs/design/ENGINE-V2-FOUNDATION.md), [verdensbaselinen](PELOTONIA-WORLD-BASELINE-1.6.2.md) og de enkelte designnoter er baggrund; gamle statusangivelser i dem er ikke en ny leveringsplan. Listen skelner mellem kode i produktion, kode i isolerede udviklingsspor og ubyggede funktioner.
+**Opdateret 4. oktober 2026 med 3D-sporet og lokal integration af punkt 01; øvrig status senest gennemgået 30. september.** Dette er den aktuelle hovedliste for kendte produktønsker. [Produktvisionen](PRODUCT-VISION.md), [kalenderpakken](../../engine-current/docs/CALENDAR_AUTOPILOT_RANKINGS_V0_1.md), [motorprototypen](../../engine-current/docs/design/ENGINE-V2-FOUNDATION.md), [verdensbaselinen](PELOTONIA-WORLD-BASELINE-1.6.2.md) og de enkelte designnoter er baggrund; gamle statusangivelser i dem er ikke en ny leveringsplan. Listen skelner mellem kode i produktion, kode i isolerede udviklingsspor og ubyggede funktioner.
 
 ## Sådan læses estimaterne
 
