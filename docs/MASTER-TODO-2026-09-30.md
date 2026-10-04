@@ -1,6 +1,6 @@
 # Pelotonia — samlet to-do og tidsestimat
 
-**Opdateret 30. september 2026.** Dette er den aktuelle hovedliste for kendte produktønsker. [Produktvisionen](PRODUCT-VISION.md), [kalenderpakken](../../engine-current/docs/CALENDAR_AUTOPILOT_RANKINGS_V0_1.md), [motorprototypen](../../engine-current/docs/design/ENGINE-V2-FOUNDATION.md), [verdensbaselinen](PELOTONIA-WORLD-BASELINE-1.6.2.md) og de enkelte designnoter er baggrund; gamle statusangivelser i dem er ikke en ny leveringsplan. Listen skelner mellem kode i produktion, kode i isolerede udviklingsspor og ubyggede funktioner.
+**Opdateret 4. oktober 2026 med 3D-sporet; øvrig status senest gennemgået 30. september.** Dette er den aktuelle hovedliste for kendte produktønsker. [Produktvisionen](PRODUCT-VISION.md), [kalenderpakken](../../engine-current/docs/CALENDAR_AUTOPILOT_RANKINGS_V0_1.md), [motorprototypen](../../engine-current/docs/design/ENGINE-V2-FOUNDATION.md), [verdensbaselinen](PELOTONIA-WORLD-BASELINE-1.6.2.md) og de enkelte designnoter er baggrund; gamle statusangivelser i dem er ikke en ny leveringsplan. Listen skelner mellem kode i produktion, kode i isolerede udviklingsspor og ubyggede funktioner.
 
 ## Sådan læses estimaterne
 
@@ -34,12 +34,12 @@
 | Spor | Punkter | Estimat |
 | --- | ---: | ---: |
 | Integration og testgrundlag | 01–03 | 32–64 t |
-| Ny motor og spilbart løb | 04–12 | 232–464 t |
+| Ny motor og spilbart løb | 04–12, 41 | 256–512 t |
 | Kalender, autopilot og ranglister | 13–20 | 156–312 t |
 | Atlas og stedoplevelse | 21–26 | 200–400 t |
 | Klubprogression, økonomi og fans | 27–34 | 240–480 t |
 | Portrætter, intro, nye løbsformer og ruter | 35–40 | 200–400 t |
-| **Alle kendte resterende punkter** | **01–40** | **1.060–2.120 t** |
+| **Alle kendte resterende punkter** | **01–41** | **1.084–2.168 t** |
 
 Den første reelle **endagsløbs-testsløjfe** er omtrent punkt 01–09 (164–328 t) før bred balance, etapeløb og release. Det er et planlægningssnit, ikke et løfte om, at de første spillertests først kan begynde efter alle disse timer; en smallere test kan køres undervejs.
 
@@ -64,6 +64,7 @@ Den første reelle **endagsløbs-testsløjfe** er omtrent punkt 01–09 (164–3
 | 10 | Færdiggør etapeløbsafvikling: vedvarende startliste, klassificeret tid, GC, etape-/point-/bjergklassement, udgåede ryttere og energi mellem etaper. Undgå dobbelt resultatskrivning. | 32–64 | 09 |
 | 11 | Balance- og spiltest i større, parrede scenarier for begge køn, forskellige ruter og taktikvalg. Justér centralt, og test med mennesker før accept. | 48–96 | 04–10 |
 | 12 | Isoleret preview af det sammenhængende løb, performance-/sikkerhedstest, migration/rollback og kontrolleret produktionsindføring efter godkendelse. Den gamle motor forbliver fallback indtil da. | 20–40 | 02–11 |
+| 41 | Afprøv en valgfri Three.js-scene til **rute- og løbsreplay** på én versioneret rute. Vis terræn, rute og kameraføring ud fra atlas-/rutedata og afspil de faktisk optagne gruppepositioner; behold kort, tidsforskelle, ordrer og hændelser som læsbar 2D-visning. Mål mobil ydelse, indlæsning og reduced-motion, og stop 3D-sporet hvis rutegeometri eller replay ikke kan bære en sandfærdig visning. | 24–48 | 07, 09, 25 |
 
 ## P1 — kalender, automatisk deltagelse og ranglister
 
@@ -86,7 +87,7 @@ Den første reelle **endagsløbs-testsløjfe** er omtrent punkt 01–09 (164–3
 | 22 | Skab én konsistent, redigerbar geografisk grundtegning fra atlasdata: kyst, højder, biomer, vand og hovedinfrastruktur. Kortbilledet må ikke blive en konkurrerende sandhedskilde. | 60–120 | 21 |
 | 23 | Tegn L0–L4 som sammenhængende, gradvis zoom med læsbare labels, gode overgangsniveauer og høj visuel kvalitet på mobil/desktop. Data udenfor Aurelia skal også være meningsfulde. | 40–80 | 22 |
 | 24 | Katedralen og et repræsentativt udvalg af steder får individuelt bearbejdede lokale udsnit; hver detalje skal stemme med kanoniske ID'er og nabogeografi. | 24–48 | 23 |
-| 25 | Prototyp flyvning fra øoversigt til en senere rute samt korte stedanimationer; afprøv få-sekunders timing, reduced-motion og indlæsning før masseproduktion. | 40–80 | 23–24 |
+| 25 | Byg først en **afgrænset Three.js-prøve omkring katedralen**: terræn/bygning og en flyvning fra øoversigt til stedet på cirka 4–5 sekunder, genereret fra atlasdata. Sammenlign den med det almindelige 2D-kort på mobil og desktop; test indlæsning, billedhastighed, reduced-motion, geografisk sammenhæng og kunstnerisk kvalitet. Beslut derefter om en valgfri 3D-visning og korte rute-/stedintroer fortjener videre arbejde. Atlasdata forbliver sandheden, og det brugbare 2D-kort bevares. | 40–80 | 23–24 |
 | 26 | Visuel/data-QA: gentagne renderinger skal vise samme geografi; test continuity, zoom, klik, performance, mobil og kunstnerisk gennemgang. Udgiv først efter godkendt kvalitet. | 16–32 | 22–25 |
 
 ## P2 — vedvarende klub og progression
@@ -113,7 +114,7 @@ Den første reelle **endagsløbs-testsløjfe** er omtrent punkt 01–09 (164–3
 | 39 | Virkelighedsinspirerede ruter og vejrkilder med kildedato, licens-/navneafklaring, versionering og kvalitetssikret import. Brug samme route-/weather-kontrakt som motoren. | 24–48 | 07, 14 |
 | 40 | Senere spilleroprettede eventlobbyer med eventuel entry fee/præmiepulje, anti-misbrug, betaling/regnskab og klare regler uden køb af sportslig styrke. | 40–80 | 28, 31, 38 |
 
-**Samlet, groft restestimat: 1.060–2.120 aktive timer** for alle 40 punkter ovenfor. Det er en størrelsesorden, ikke en deadline; omarbejde efter spiltest, udgifter til illustrationer/tjenester og ejerens svartid kan øge forløbet. Første brugbare testsløjfe er P0 plus motorens og kalenderens nødvendige P1-punkter, ikke hele denne liste. Punkter 21–26 kan udvikles sideløbende med sportsarbejdet, men konkurrerer om samme kapacitet, hvis én person udfører det.
+**Samlet, groft restestimat: 1.084–2.168 aktive timer** for alle 41 punkter ovenfor. Det er en størrelsesorden, ikke en deadline; omarbejde efter spiltest, udgifter til illustrationer/tjenester og ejerens svartid kan øge forløbet. Første brugbare testsløjfe er P0 plus motorens og kalenderens nødvendige P1-punkter, ikke hele denne liste. Punkter 21–26 kan udvikles sideløbende med sportsarbejdet, men konkurrerer om samme kapacitet, hvis én person udfører det.
 
 ## Beslutninger som bevidst forbliver åbne
 
