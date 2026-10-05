@@ -120,6 +120,23 @@ begin
       get stacked diagnostics v_message = message_text;
       if v_message <> 'The result differs from the saved division reveal.' then raise; end if;
     end;
+    begin
+      perform public.recovery_finish_race(v_event, v_snapshot,
+        jsonb_set(v_output, '{divisions,0,replay,roster,0,team_id}',
+          to_jsonb(v_event::text)));
+      raise exception 'A replay with a foreign team was committed.';
+    exception when sqlstate 'PT409' then
+      get stacked diagnostics v_message = message_text;
+      if v_message <> 'The recorded replay roster does not match its division results.' then raise; end if;
+    end;
+    begin
+      perform public.recovery_finish_race(v_event, v_snapshot,
+        jsonb_set(v_output, '{divisions,0,replay,roster,1}', v_roster->0));
+      raise exception 'A replay with a duplicate rider was committed.';
+    exception when sqlstate 'PT409' then
+      get stacked diagnostics v_message = message_text;
+      if v_message <> 'The recorded replay roster does not match its division results.' then raise; end if;
+    end;
     if exists(select 1 from public.event_division_runs d where d.event_id = v_event)
       or exists(select 1 from public.event_team_results t where t.event_id = v_event)
       or exists(select 1 from public.recovery_ranking_awards a where a.event_id = v_event)
