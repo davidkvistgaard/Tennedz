@@ -16,8 +16,9 @@ begin
     where event_id = v_event;
   select array_agg(rider_id) into v_riders from public.team_riders
     where team_id = any(v_teams);
-  if coalesce(array_length(v_teams, 1), 0) <> 2
-    or coalesce(array_length(v_riders, 1), 0) <> 16 then
+  if coalesce(array_length(v_teams, 1), 0) not in (2, 45)
+    or coalesce(array_length(v_riders, 1), 0) <>
+      coalesce(array_length(v_teams, 1), 0) * 8 then
     raise exception 'Unexpected fixture ownership; refusing cleanup.';
   end if;
 

@@ -15,7 +15,13 @@ declare
   v_scheduled timestamptz;
   v_index integer;
   v_rider_index integer;
+  v_team_count integer := coalesce(nullif(
+    pg_catalog.current_setting('pelotonia.real_output_team_count', true),
+    '')::integer, 2);
 begin
+  if v_team_count not in (2, 45) then
+    raise exception 'The real-output fixture supports 2 or 45 teams.';
+  end if;
   v_registration := clock_timestamp() + interval '2 hours';
   v_tactics := v_registration + interval '1 hour';
   v_scheduled := v_tactics + interval '1 hour';
@@ -32,7 +38,7 @@ begin
   values(v_event, 'Disposable two-phase real-output probe', 'one_day',
     'M', 'FR', v_stage, 'OPEN', 0,
     v_registration, v_registration, v_tactics, v_scheduled, 'PELOTONIA', 2);
-  for v_index in 1..2 loop
+  for v_index in 1..v_team_count loop
     v_team := gen_random_uuid();
     insert into public.teams(id, user_id, name)
       values(v_team, v_owner, format('Real-output probe team %s', v_index));
