@@ -207,8 +207,38 @@ try{
     await expect(page.locator('.results-table').nth(1).locator('tr.own-result').first().locator('td').nth(4))
       .toHaveText(String(ownRider.points));
   }
+  const eventAwards=await db.from('recovery_ranking_awards').select('team_id,points')
+    .eq('event_id',fixture.eventId);
+  if(eventAwards.error)throw eventAwards.error;
+  assert.equal(eventAwards.data.length,60);
+  const awardedTeamId=eventAwards.data[0].team_id;
+  const allTeamAwards=await db.from('recovery_ranking_awards').select('points')
+    .eq('team_id',awardedTeamId).eq('gender','M')
+    .eq('calendar_source','PELOTONIA').eq('event_format','ONE_DAY');
+  if(allTeamAwards.error)throw allTeamAwards.error;
+  const expectedSportingPoints=allTeamAwards.data.reduce((sum,row)=>sum+Number(row.points),0);
+  const rankingPage=pages[0];
+  await rankingPage.goto('/team/leaderboards');
+  await expect(rankingPage.getByRole('heading',{name:'Earned on the road.'})).toBeVisible();
+  await rankingPage.getByLabel('Ranking').selectOption('team');
+  await rankingPage.getByLabel('Calendar').selectOption('PELOTONIA');
+  await rankingPage.getByLabel('Race format').selectOption('ONE_DAY');
+  const rankingRequest=rankingPage.waitForResponse(response=>{
+    const url=new URL(response.url());
+    return url.pathname==='/api/leaderboards'&&url.searchParams.get('entity')==='team'&&
+      url.searchParams.get('source')==='PELOTONIA'&&url.searchParams.get('format')==='ONE_DAY'&&
+      url.searchParams.get('season')==='all';
+  });
+  await rankingPage.getByLabel('Season').selectOption('all');
+  const rankingResponse=await rankingRequest;
+  assert.equal(rankingResponse.status(),200,await rankingResponse.text());
+  const ranking=(await rankingResponse.json()).rows.find(row=>row.id===awardedTeamId);
+  assert.ok(ranking);
+  assert.equal(ranking.points,expectedSportingPoints);
+  await expect(rankingPage.locator('.rankings-list li').filter({hasText:ranking.name}))
+    .toContainText(`${expectedSportingPoints.toLocaleString('en-GB')} pts`);
   assert.deepEqual(errors,[]);
-  console.log(`PASS isolated browser: ${participantCount} separate manager sessions, lineups and orders, 45-team ${participantStart?'participant-started':'admin-started'} run, own replays and division results (${new Set(divisionByTeam.values()).size} divisions).`);
+  console.log(`PASS isolated browser: ${participantCount} separate manager sessions, lineups and orders, 45-team ${participantStart?'participant-started':'admin-started'} run, own replays and division results (${new Set(divisionByTeam.values()).size} divisions), sporting leaderboard matches the award ledger.`);
 }finally{
   await browser.close();
 }
