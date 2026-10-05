@@ -19,6 +19,16 @@ test("race health distinguishes open scanning from a blocked registration close"
   assert.equal(state(pending, event.tactics_deadline, [{ event_id: "race" }]).state, "REVEALED");
 });
 
+test("an active scan lease delays the no-contest action until it expires", () => {
+  const leased = { ...pending, lease_token: "worker",
+    lease_until: "2026-10-05T12:02:00Z" };
+  assert.equal(state(leased, event.registration_deadline).state, "SCAN_ACTIVE");
+  assert.equal(state(leased, "2026-10-05T12:01:59Z").state, "SCAN_ACTIVE");
+  assert.equal(state(leased, "2026-10-05T12:02:01Z").state, "BLOCKED");
+  assert.equal(state({ ...leased, status: "COMPLETE" }, event.registration_deadline).state,
+    "AWAITING_REVEAL");
+});
+
 test("completed scans remain visible before reveal without inventing entered teams", () => {
   assert.equal(state(complete, "2026-10-05T11:59:59Z").state, "SCAN_COMPLETE");
   const health = state(complete, event.registration_deadline);

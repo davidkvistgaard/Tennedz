@@ -6,6 +6,7 @@ import { api } from "../../lib/api";
 const labels = {
   REVEALED: "Divisions revealed",
   OVERDUE: "Division reveal overdue — administrator review required",
+  SCAN_ACTIVE: "Registration closed; entry scan still running - wait for it to finish",
   BLOCKED: "Registration closed; entry scan incomplete — administrator review required",
   AWAITING_REVEAL: "Entry scan complete; awaiting division reveal",
   SCAN_COMPLETE: "Entry scan complete; registration open",

@@ -216,6 +216,26 @@ test("administrator sees a blocked registration scan without unsafe retry or rev
   await expect(panel.getByRole("button", { name: /retry|force|reveal/i })).toHaveCount(0);
 });
 
+test("administrator waits for an active entry scan before offering no contest", async ({ page }) => {
+  await login(page);
+  await page.route("**/api/admin/stats", route => route.fulfill({ json: {
+    ok: true, teams: 1, riders: 8, race_results: 0,
+    game_writes_enabled: true, two_phase_available: true,
+  } }));
+  await page.route("**/api/admin/autopilot/health", route => route.fulfill({ json: {
+    ok: true, enabled: true, decisions: [], races: [{
+      event_id: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa", name: "Scanning preview race",
+      registration_deadline: "2026-10-05T12:00:00Z",
+      tactics_deadline: "2026-10-05T15:00:00Z",
+      state: "SCAN_ACTIVE", processed: 12, entered: 3, scan_updated_at: null,
+    }],
+  } }));
+  await page.goto("/admin");
+  const panel = page.getByRole("region", { name: "Two-phase race health" });
+  await expect(panel.getByText("entry scan still running", { exact: false })).toBeVisible();
+  await expect(panel.getByRole("button", { name: /Cancel.*no contest/ })).toHaveCount(0);
+});
+
 test("administrator confirms a missed-reveal no-contest decision", async ({ page }) => {
   await login(page);
   await page.route("**/api/admin/stats", route => route.fulfill({ json: {
