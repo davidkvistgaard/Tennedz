@@ -326,6 +326,9 @@ test("administrator no-contest action reaches the real route and saved fixture",
     event_id: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
     status: "CANCELLED", registered_teams: 2, processed_teams: 1,
   }]);
+  const divisions = await page.request.get("/api/event/divisions?event_id=aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa");
+  expect(divisions.status()).toBe(200);
+  expect(await divisions.json()).toMatchObject({ event_status: "CANCELLED", divisions: [] });
 });
 
 test("a cancelled race remains visible on the calendar without a race action", async ({ page }) => {
@@ -358,4 +361,17 @@ test("a cancelled race remains visible on the calendar without a race action", a
   await expect(page.getByRole("heading", { name: "This race was cancelled" })).toBeVisible();
   await expect(page.getByText("No results or ranking points will be awarded for this race.")).toBeVisible();
   await expect(page.getByRole("link", { name: /Watch the race/ })).toHaveCount(0);
+  await page.route("**/api/event/divisions?*", route => route.fulfill({ json: {
+    ok: true, event_status: "CANCELLED", total_divisions: 1,
+    divisions: [], my_division: null,
+  } }));
+  let resultRequests = 0;
+  await page.route("**/api/event/results?*", route => {
+    resultRequests++;
+    return route.fulfill({ json: { ok: true } });
+  });
+  await page.goto("/team/results/cancelled-race");
+  await expect(page.getByRole("heading", { name: "This race was cancelled" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Reveal the result now" })).toHaveCount(0);
+  expect(resultRequests).toBe(0);
 });

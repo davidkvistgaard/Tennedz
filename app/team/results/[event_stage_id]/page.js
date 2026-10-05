@@ -66,7 +66,13 @@ export default function ResultsPage({ params }) {
   const mine = data?.teams.find((t) => t.team_id === teamId);
   return (
     <TeamShell title="Results & rating gains">
-      {!revealed ? (
+      {divisions?.event_status === "CANCELLED" ? (
+        <section className="card empty-state">
+          <h2>This race was cancelled</h2>
+          <p>No results or ranking points will be awarded for this race.</p>
+          <Link className="btn" href="/team/calendar">Back to race calendar</Link>
+        </section>
+      ) : !revealed ? (
         <section className="card empty-state">
           <p className="eyebrow">Keep the suspense</p>
           <h2>Watch the race first?</h2>

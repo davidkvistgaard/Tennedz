@@ -113,6 +113,7 @@ const server = http.createServer(async (req, res) => {
     }
     if (table === "events" && url.searchParams.get("id") === `eq.${twoPhaseEventId}`) {
       return send(200, { id: twoPhaseEventId,
+        status: noContestCancelled ? "CANCELLED" : "OPEN",
         registration_deadline: new Date(Date.now() - 60000).toISOString(),
         tactics_deadline: new Date(Date.now() + 3600000).toISOString(),
         scheduled_at: new Date(Date.now() + 7200000).toISOString() });
