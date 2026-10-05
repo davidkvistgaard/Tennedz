@@ -10,14 +10,21 @@ const schedule = {
 
 test("registration, preparation and tactics lock change at exact deadlines", () => {
   assert.equal(racePhaseAt(schedule, "2026-10-06T07:59:59.999Z"), "registration");
-  assert.equal(racePhaseAt(schedule, schedule.registrationDeadline), "preparation");
-  assert.equal(racePhaseAt(schedule, "2026-10-06T10:59:59.999Z"), "preparation");
-  assert.equal(racePhaseAt(schedule, schedule.tacticsDeadline), "tactics_locked");
-  assert.equal(racePhaseAt(schedule, schedule.scheduledAt), "race_due");
+  assert.equal(racePhaseAt(schedule, schedule.registrationDeadline), "reveal_pending");
+  assert.equal(racePhaseAt(schedule, "2026-10-06T10:59:59.999Z", { revealCommitted: true }), "preparation");
+  assert.equal(racePhaseAt(schedule, schedule.tacticsDeadline, { revealCommitted: true }), "tactics_locked");
+  assert.equal(racePhaseAt(schedule, schedule.scheduledAt, { revealCommitted: true }), "race_due");
 });
 
 test("an offset timestamp denotes the same instant as UTC", () => {
-  assert.equal(racePhaseAt(schedule, "2026-10-06T10:00:00+02:00"), "preparation");
+  assert.equal(racePhaseAt(schedule, "2026-10-06T10:00:00+02:00", { revealCommitted: true }), "preparation");
+});
+
+test("a missing persisted reveal blocks tactics and race even when deadlines pass", () => {
+  for (const now of [schedule.registrationDeadline, schedule.tacticsDeadline, schedule.scheduledAt, "2026-10-07T12:00:00Z"]) {
+    assert.equal(racePhaseAt(schedule, now), "reveal_pending");
+  }
+  assert.throws(() => racePhaseAt(schedule, schedule.scheduledAt, { revealCommitted: "yes" }), /must be a boolean/);
 });
 
 test("a separate, strictly later tactics deadline is required", () => {
