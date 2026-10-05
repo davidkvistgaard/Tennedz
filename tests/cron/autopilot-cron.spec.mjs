@@ -49,6 +49,23 @@ test('an interrupted page resumes after its lease expires without duplicate entr
   expect(state.reportedEntered).toBe(3);
 });
 
+test('cron commits an unrevealed due division once after its entry scan',async({request})=>{
+  const fixture='http://127.0.0.1:54330';
+  await fetch(`${fixture}/__cron_reset`,{method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({revealCandidate:true})});
+  const headers={Authorization:'Bearer fixture-cron-secret'};
+  const first=await request.get('/api/cron/autopilot',{headers});
+  expect(first.status()).toBe(200);
+  expect((await first.json()).divisions.revealed).toEqual([{
+    event_id:'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',already_revealed:false,
+  }]);
+  expect((await (await fetch(`${fixture}/__cron_state`)).json()).revealed).toBe(true);
+  const repeated=await request.get('/api/cron/autopilot',{headers});
+  expect(repeated.status()).toBe(200);
+  expect((await repeated.json()).divisions.revealed).toEqual([]);
+});
+
 test('daily cron processes a 400-team field inside its request budget',async({request})=>{
   test.setTimeout(90000);
   const fixture='http://127.0.0.1:54330';
