@@ -79,6 +79,16 @@ export default function TwoPhaseRaceHealth({ onCancelled }) {
           </button>}
         </div>
       ))}
+      {health?.decisions?.length > 0 && <div style={{ marginTop: 24 }}>
+        <h3>Recent no-contest decisions</h3>
+        {health.decisions.map(decision => <div key={decision.event_id} style={{ marginTop: 12 }}>
+          <strong>{decision.name}</strong> · {decision.status} · {dateLabel(decision.voided_at)}
+          <div>Reason: incomplete entry scan. {decision.registered_teams} registered teams;
+            {` ${decision.processed_teams}`} checked, {decision.automatic_entries} automatic entries.
+          </div>
+          <div>Decision by administrator {decision.decided_by}</div>
+        </div>)}
+      </div>}
     </section>
   );
 }

@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { describeTwoPhaseHealth, twoPhaseRaceHealth } from "../../lib/calendar/autopilot-health.mjs";
+import { describeTwoPhaseHealth, recentNoContestDecisions, twoPhaseRaceHealth } from "../../lib/calendar/autopilot-health.mjs";
 
 const event = {
   id: "race", name: "Test race",
@@ -35,4 +35,17 @@ test("administrator scan rejects truncation instead of reporting a healthy queue
   };
   await assert.rejects(twoPhaseRaceHealth({ from: () => query }, "2026-10-05T12:00:00Z"),
     error => error.code === "RACE_HEALTH_TRUNCATED");
+});
+
+test("recent no-contest decisions include their saved counts and race status", async () => {
+  const saved = [{ event_id: "race", reason: "INCOMPLETE_ENTRY_SCAN",
+    decided_by: "admin", voided_at: "2026-10-05T15:00:00Z",
+    registered_teams: 7, processed_teams: 4, automatic_entries: 2 }];
+  const db = { from(table) { return {
+    select() { return this; }, order() { return this; },
+    async limit() { return { data: table === "recovery_two_phase_voids" ? saved : [], error: null }; },
+    async in() { return { data: [{ id: "race", name: "Test race", status: "CANCELLED" }], error: null }; },
+  }; } };
+  assert.deepEqual(await recentNoContestDecisions(db), [{ ...saved[0],
+    name: "Test race", status: "CANCELLED" }]);
 });

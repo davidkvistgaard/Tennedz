@@ -123,6 +123,9 @@ test("automatic entries remain administrator-only", async ({ page }) => {
   expect((await page.request.post("/api/admin/autopilot/batch", {
     headers: { Origin: "http://localhost:3100" }, data: {},
   })).status()).toBe(403);
+  expect((await page.request.post("/api/admin/autopilot/void", {
+    headers: { Origin: "http://localhost:3100" }, data: { event_id: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa" },
+  })).status()).toBe(403);
 });
 
 test("automatic entries remain behind the game-write gate", async ({ page }) => {
@@ -137,6 +140,12 @@ test("automatic entries remain behind the game-write gate", async ({ page }) => 
   });
   expect(batch.status()).toBe(503);
   expect((await batch.json()).code).toBe("GAME_READ_ONLY");
+  const cancellation = await page.request.post("/api/admin/autopilot/void", {
+    headers: { Origin: "http://localhost:3100" },
+    data: { event_id: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa" },
+  });
+  expect(cancellation.status()).toBe(503);
+  expect((await cancellation.json()).code).toBe("GAME_READ_ONLY");
 });
 
 test("the scheduled autopilot endpoint rejects ordinary visitors", async ({ page }) => {
@@ -209,7 +218,12 @@ test("administrator confirms a no-contest decision and sees the saved outcome", 
   } }));
   let cancelled = false;
   await page.route("**/api/admin/autopilot/health", route => route.fulfill({ json: {
-    ok: true, enabled: true, races: cancelled ? [] : [{
+    ok: true, enabled: true, decisions: cancelled ? [{
+      event_id: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa", name: "Preview phase race",
+      status: "CANCELLED", reason: "INCOMPLETE_ENTRY_SCAN",
+      decided_by: "admin-id", voided_at: "2026-10-05T15:01:00Z",
+      registered_teams: 7, processed_teams: 12, automatic_entries: 3,
+    }] : [], races: cancelled ? [] : [{
       event_id: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa", name: "Preview phase race",
       registration_deadline: "2026-10-05T12:00:00Z",
       tactics_deadline: "2026-10-05T15:00:00Z",
@@ -225,6 +239,9 @@ test("administrator confirms a no-contest decision and sees the saved outcome", 
   page.once("dialog", dialog => dialog.accept());
   await page.getByRole("button", { name: "Cancel as no contest" }).click();
   await expect(page.getByText("Preview phase race was cancelled as no contest", { exact: false })).toBeVisible();
+  expect((await page.evaluate(() => fetch("/api/admin/autopilot/health").then(response => response.json()))).decisions).toHaveLength(1);
+  await expect(page.getByRole("heading", { name: "Recent no-contest decisions" })).toBeVisible();
+  await expect(page.getByText("7 registered teams", { exact: false })).toBeVisible();
   expect(cancelled).toBe(true);
 });
 
