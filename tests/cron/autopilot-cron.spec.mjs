@@ -124,8 +124,9 @@ test('division reveal waits for an incomplete large scan and commits after its r
     body:JSON.stringify({teamCount:1000,revealCandidate:true})});
   const headers={Authorization:'Bearer fixture-cron-secret'};
   const first=await request.get('/api/cron/autopilot',{headers,timeout:60000});
-  expect(first.status()).toBe(200);
+  expect(first.status()).toBe(503);
   const firstResult=await first.json();
+  expect(firstResult).toMatchObject({ok:false,code:'DIVISION_REVEAL_BLOCKED'});
   const firstState=await (await fetch(`${fixture}/__cron_state`)).json();
   expect(firstState.complete).toBe(false);
   expect(firstState.revealed).toBe(false);

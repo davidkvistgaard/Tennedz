@@ -37,6 +37,13 @@ export async function GET(req){
         entered:batch.entered,complete});
     }
     const divisions=await revealDueDivisions(db);
+    // A due reveal with an unfinished entry scan cannot safely be committed.
+    // Surface it as a failed scheduler run so monitoring cannot mistake an
+    // HTTP 200 with no reveal for a healthy registration close.
+    if(divisions.pending.some(item=>item.reason==="AUTOPILOT_PENDING"))
+      return NextResponse.json({ok:false,enabled:true,
+        code:"DIVISION_REVEAL_BLOCKED",batches,divisions},
+      {status:503,headers:privateHeaders});
     return NextResponse.json({ok:true,enabled:true,batches,divisions},
       {headers:privateHeaders});
   }catch(error){return authFailure(error);}
