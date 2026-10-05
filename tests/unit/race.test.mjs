@@ -52,3 +52,33 @@ test("45-team simulation records three separate complete races",()=>{
  }
  assert.ok(race.divisions.every(d=>d.teams.every(t=>t.captain_id===`${t.team_id}-0`) && d.teams[0].points===Math.round(100*d.multiplier)));
 });
+test("an explicit locked points snapshot seeds separate races despite later roster changes",()=>{
+ const s=input();
+ s.teams=Array.from({length:45},(_,i)=>{
+  const id=`t${String(i).padStart(2,"0")}`;
+  return {id,name:id,riders:Array.from({length:8},(_,j)=>({...rider(`${id}-${j}`),flat:40+i})),
+   entry:{selected_riders:Array.from({length:8},(_,j)=>`${id}-${j}`),captain_id:`${id}-0`}};
+ });
+ s.points_at_registration_lock={eventId:s.event.id,seasonYear:2026,gender:"M",
+  entrants:s.teams.map((team,i)=>({teamId:team.id,earnedPoints:45-i}))};
+ const first=buildRace(s);
+ assert.deepEqual(first.divisions.map(d=>d.teams.length),[15,15,15]);
+ const membership=(race)=>race.divisions.map(d=>d.teams.map(t=>t.team_id).sort());
+ assert.deepEqual(membership(first),[0,1,2].map(index=>s.teams.slice(index*15,index*15+15).map(t=>t.id).sort()));
+ assert.equal(first.division_reveal.assignments[0].teamId,"t00");
+ s.teams.reverse();
+ s.teams[0].riders.forEach(r=>{r.flat=100;});
+ assert.deepEqual(membership(buildRace(s)),membership(first));
+});
+test("a locked points snapshot must match the exact event, gender and entrant set",()=>{
+ const s=input();
+ const points={eventId:s.event.id,seasonYear:2026,gender:"M",
+  entrants:s.teams.map(team=>({teamId:team.id,earnedPoints:0}))};
+ for(const invalid of [
+  {...points,eventId:"foreign"},
+  {...points,gender:"F"},
+  {...points,entrants:points.entrants.slice(0,1)},
+  {...points,entrants:[points.entrants[0],{teamId:"foreign",earnedPoints:0}]},
+  {...points,entrants:[points.entrants[0],points.entrants[0]]},
+ ]) assert.throws(()=>buildRace({...s,points_at_registration_lock:invalid}));
+});
