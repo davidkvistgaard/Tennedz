@@ -105,6 +105,8 @@ Den første tekniske **endagsløbs-testsløjfe** er nu gennemført isoleret i pu
 
 **Batchafslutning ved fristen:** En særskilt migration på den isolerede database låser nu jobfremdrift sammen med claim og no-contest og kontrollerer aktuel tid, løbsstatus og lease igen, når batchresultatet gemmes. En scanning, der krydser registreringsfristen, kan derfor ikke registreres som fuldført bagefter. SQL-prøven accepterede normal fremdrift før fristen, afviste fuldførelse efter fristen og bekræftede den efterfølgende no-contest-regel. De eksisterende kø- og optællingsprøver bestod. Cron svarer med HTTP 503 ved afvist fremdrift; et fokuseret lokalt HTTP-flow bestod. Det er en sikker fejltilstand, ikke automatisk genopretning af et mistet løb.
 
+**Annullering før claim, isoleret overlap:** En administratortransaktion låste testløbet, passerede registreringsfristen og gemte no contest, mens et claim-kald blev startet før transaktionen sluttede. Claim fik intet job. Løbet stod som annulleret med én beslutning, ingen lease og nul point; begge midlertidige testopstillinger blev fjernet. Værktøjets svartid giver ikke et sikkert mål for databasens låseventetid, så samtidig belastning, faktisk schedulerudfald og ekstern alarm er fortsat åbne. Se [P03-testnotatet](INTEGRATION-P03-2026-10-04.md).
+
 ## P1 - atlas og verdenskvalitet
 
 | ID | Opgave / konkret resultat | Timer | Afhænger af |
