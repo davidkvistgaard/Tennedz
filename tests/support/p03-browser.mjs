@@ -140,6 +140,23 @@ try{
   for(let index=0;index<pages.length;index++){
     const page=pages[index],team=browserTeams[index];
     const ownDivision=divisionByTeam.get(team.teamId);
+    const divisionApi=await page.context().request.get(`/api/event/divisions?event_id=${fixture.eventId}`);
+    assert.equal(divisionApi.status(),200,await divisionApi.text());
+    const divisionList=await divisionApi.json();
+    assert.equal(divisionList.my_division,ownDivision);
+    assert.deepEqual(divisionList.divisions.map(row=>row.team_count),[15,15,15]);
+    if(index===0){
+      const invalid=await page.context().request.get('/api/event/divisions?event_id=invalid');
+      assert.equal(invalid.status(),400);
+      assert.equal((await invalid.json()).code,'INVALID_ID');
+      const otherTeam=browserTeams.find(other=>other.teamId!==team.teamId);
+      if(otherTeam){
+        const foreign=await page.context().request.get(
+          `/api/event/divisions?event_id=${fixture.eventId}&team_id=${otherTeam.teamId}`);
+        assert.equal(foreign.status(),403);
+        assert.equal((await foreign.json()).code,'ACCESS_DENIED');
+      }
+    }
     if(participantStart&&index===0)
       await page.goto(`/team/run?event_id=${fixture.eventId}`);
     else await page.reload();
