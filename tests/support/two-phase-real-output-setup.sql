@@ -1,5 +1,5 @@
--- Isolated project only. The two-team mode uses two distinct existing owners;
--- the 45-team capacity mode uses one fixture owner. This fixture persists until
+-- Isolated project only. Both modes use distinct owners. The 45-team mode
+-- requires 45 disposable p02-isolated-teams accounts. This fixture persists until
 -- the matching cleanup script runs. Its snapshot contains private rider data.
 begin;
 do $probe$
@@ -26,14 +26,21 @@ begin
   v_registration := clock_timestamp() + interval '2 hours';
   v_tactics := v_registration + interval '1 hour';
   v_scheduled := v_tactics + interval '1 hour';
-  select array_agg(user_id order by user_id) into v_owners from (
-    select distinct user_id from public.teams where user_id is not null
-    order by user_id limit 2
-  ) owners;
+  if v_team_count = 45 then
+    select array_agg(user_id order by user_id) into v_owners from (
+      select distinct user_id from public.teams
+      where name like 'P02 isolated cron %' and user_id is not null
+      order by user_id limit 45
+    ) owners;
+  else
+    select array_agg(user_id order by user_id) into v_owners from (
+      select distinct user_id from public.teams where user_id is not null
+      order by user_id limit 2
+    ) owners;
+  end if;
   select id into v_stage from public.stage_profiles
     where distance_km between 20 and 400 order by id limit 1;
-  if v_stage is null or coalesce(cardinality(v_owners), 0) <
-      (case when v_team_count = 2 then 2 else 1 end) then
+  if v_stage is null or coalesce(cardinality(v_owners), 0) <> v_team_count then
     raise exception 'The isolated project needs distinct fixture owners and a route.';
   end if;
   insert into public.events(id, name, kind, gender, country_code,
@@ -46,7 +53,7 @@ begin
   for v_index in 1..v_team_count loop
     v_team := gen_random_uuid();
     insert into public.teams(id, user_id, name)
-      values(v_team, v_owners[case when v_team_count = 2 then v_index else 1 end],
+        values(v_team, v_owners[v_index],
         format('Real-output probe team %s', v_index));
     v_selected := '{}'::uuid[];
     for v_rider_index in 1..8 loop

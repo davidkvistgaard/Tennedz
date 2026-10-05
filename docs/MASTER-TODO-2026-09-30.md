@@ -93,6 +93,8 @@ Den første tekniske **endagsløbs-testsløjfe** er nu gennemført isoleret i pu
 
 **Konkret fristrisiko:** `recovery_autopilot_claim_job` kan kun hente et job, mens tilmeldingsfristen ligger i fremtiden. Hvis scanningen er ufærdig ved fristen, kan køen derfor ikke færdiggøres bagefter; divisions-RPC'en kræver et fuldført job, og taktikfristen kan nå at udløbe. En daglig Hobby-cron og spillerudløst reveal er ikke en garanti for dette led. Før live brug skal vi vælge og afprøve en rettidig scheduler samt en eksplicit genopretningsregel for ufærdige scans; ingen sen automatisk tilmelding eller flytning af frister må ske skjult.
 
+**45-holds backendprøve:** Den isolerede to-fase-fixture bruger nu 45 forskellige midlertidige ejere, ikke én fælles fixture-ejer. Efter frosset reveal og taktiklås gav den faktiske simulator tre divisioner à 15 hold, tre replays, 45 holdresultater, 360 rytterresultater og 60 unikke pointposter. En gentaget commit gav hverken nye point eller ændrede holdratings. Alt testindhold blev fjernet. Dette dækker ikke 45 managers gennem browseren, automatisk kø ved fristen eller belastning.
+
 ## P1 - atlas og verdenskvalitet
 
 | ID | Opgave / konkret resultat | Timer | Afhænger af |
