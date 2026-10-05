@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { buildRace,splitDivisions } from "../../lib/race/cycle.mjs";
 const rider=(id)=>({id,name:id,gender:"M",sprint:40,flat:40,hills:40,mountain:40,cobbles:40,timetrial:40,endurance:40,strength:40,wind:40,form:50,fatigue:0});
-function input(){return {event:{id:"race",kind:"one_day",gender:"M",deadline:"2026-01-01",country_code:"FR"},game_date:"2026-01-01",
+function input(){return {event:{id:"race",kind:"one_day",gender:"M",deadline:"2026-01-01",scheduled_at:"2026-01-01T12:00:00Z",country_code:"FR"},game_date:"2026-01-01",
   stage:{name:"Flat 130",distance_km:130,tags:["FLAT"],profile_points:[[0,0],[130,0]]},
   teams:["a","b"].map(id=>({id,name:id,riders:Array.from({length:8},(_,i)=>rider(`${id}${i}`)),entry:{selected_riders:Array.from({length:8},(_,i)=>`${id}${i}`),captain_id:`${id}0`}}))};}
 test("race replay is deterministic, complete and uses actual distance",()=>{
@@ -70,15 +70,17 @@ test("an explicit locked points snapshot seeds separate races despite later rost
  s.teams[0].riders.forEach(r=>{r.flat=100;});
  assert.deepEqual(membership(buildRace(s)),membership(first));
 });
-test("a locked points snapshot must match the exact event, gender and entrant set",()=>{
+test("a locked points snapshot must match the exact event, season, gender and entrant set",()=>{
  const s=input();
  const points={eventId:s.event.id,seasonYear:2026,gender:"M",
   entrants:s.teams.map(team=>({teamId:team.id,earnedPoints:0}))};
  for(const invalid of [
   {...points,eventId:"foreign"},
+  {...points,seasonYear:2025},
   {...points,gender:"F"},
   {...points,entrants:points.entrants.slice(0,1)},
   {...points,entrants:[points.entrants[0],{teamId:"foreign",earnedPoints:0}]},
   {...points,entrants:[points.entrants[0],points.entrants[0]]},
  ]) assert.throws(()=>buildRace({...s,points_at_registration_lock:invalid}));
+ assert.throws(()=>buildRace({...s,event:{...s.event,scheduled_at:null},points_at_registration_lock:points}),/scheduled race season/);
 });
