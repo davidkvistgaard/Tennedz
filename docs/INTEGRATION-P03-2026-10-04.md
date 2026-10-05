@@ -38,6 +38,8 @@ For the browser registration probe, run `p03-multidivision.mjs seed browser 45` 
 
 ## Still required for P03 and later milestones
 
+- A rollback-only SQL probe in `tests/support/missed-autopilot-deadline-probe.sql` ran on the allowlisted isolated Supabase project. With an OPEN two-phase event one hour past registration close and its scan still PENDING, the queue would not claim the event, the reveal RPC rejected it, and the atomic join rejected a late entry before lineup validation. Follow-up counts found zero disposable events, jobs or reveals. This proves the current fail-closed state; it does not yet supply a sporting recovery action or external alert.
+
 - The opt-in administrator view now reads upcoming and overdue two-phase races, their entry-scan counts and saved reveal state without mutating races. It labels an incomplete scan at registration close as blocked and an absent reveal at tactics close as overdue. Its API rejects a truncated 100-race scan rather than showing a misleading healthy list. A focused browser check covered the blocked state; an external alert and an explicit sporting recovery rule remain open.
 
 - Concurrent 45-user load, repeated races and longer-running reliability remain unverified. The sequential browser journey now covers all 45 independently owned entrants.
