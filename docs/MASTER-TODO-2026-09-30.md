@@ -107,6 +107,8 @@ Den første tekniske **endagsløbs-testsløjfe** er nu gennemført isoleret i pu
 
 **Annullering før claim, isoleret overlap:** En administratortransaktion låste testløbet, passerede registreringsfristen og gemte no contest, mens et claim-kald blev startet før transaktionen sluttede. Claim fik intet job. Løbet stod som annulleret med én beslutning, ingen lease og nul point; begge midlertidige testopstillinger blev fjernet. Værktøjets svartid giver ikke et sikkert mål for databasens låseventetid, så samtidig belastning, faktisk schedulerudfald og ekstern alarm er fortsat åbne. Se [P03-testnotatet](INTEGRATION-P03-2026-10-04.md).
 
+**Køtal ved nyt scan:** Et fuldført autopilot-job kan scannes igen efter seks timer. Den nye isolerede migration nulstiller nu antal kontrollerede hold sammen med markøren ved dette nye gennemløb; et afbrudt forsøg beholder sin delvise optælling, og automatiske tilmeldinger tælles fortsat via unikke kvitteringer. SQL-prøver for rescan, retry, 50 jobs, optælling og rettigheder består. Ændringen er ikke i produktion.
+
 ## P1 - atlas og verdenskvalitet
 
 | ID | Opgave / konkret resultat | Timer | Afhænger af |

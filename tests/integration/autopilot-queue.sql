@@ -6,11 +6,14 @@ declare
   race_event uuid := gen_random_uuid();
   token_one uuid := gen_random_uuid();
   token_two uuid := gen_random_uuid();
+  cursor_team uuid;
   claim jsonb;
   race_day timestamptz := (date_trunc('week', now() at time zone 'UTC') + interval '9 days 12 hours') at time zone 'UTC';
 begin
   select id into source_event from public.events where kind = 'one_day' limit 1;
   if source_event is null then raise exception 'A seeded one-day race is required'; end if;
+  select id into cursor_team from public.teams order by id limit 1;
+  if cursor_team is null then raise exception 'A seeded team is required'; end if;
   insert into public.events
     select (jsonb_populate_record(null::public.events, to_jsonb(e) ||
       jsonb_build_object('id', race_event, 'name', 'Autopilot queue test',
@@ -39,11 +42,12 @@ begin
   if public.recovery_autopilot_advance_job(race_event, token_one, null, 0, 0, true) then
     raise exception 'Expired worker advanced a reclaimed job';
   end if;
-  if not public.recovery_autopilot_advance_job(race_event, token_two, null, 0, 0, true) then
+  if not public.recovery_autopilot_advance_job(race_event, token_two, cursor_team, 5, 0, true) then
     raise exception 'Lease holder could not complete the job';
   end if;
   if (select status from public.recovery_autopilot_jobs where event_id = race_event)
-    is distinct from 'COMPLETE' then
+    is distinct from 'COMPLETE' or (select processed_count from public.recovery_autopilot_jobs
+    where event_id = race_event) <> 5 then
     raise exception 'Queue completion was not saved';
   end if;
   update public.recovery_autopilot_jobs
@@ -52,6 +56,10 @@ begin
   if claim->>'event_id' is distinct from race_event::text
     or claim->>'cursor_team_id' is not null then
     raise exception 'Completed job was not revisited: %', claim;
+  end if;
+  if (select processed_count from public.recovery_autopilot_jobs
+    where event_id = race_event) <> 0 then
+    raise exception 'A new scan retained the previous pass count';
   end if;
   if not public.recovery_autopilot_advance_job(race_event, token_one, null, 0, 0, true) then
     raise exception 'Revisited job could not complete';
