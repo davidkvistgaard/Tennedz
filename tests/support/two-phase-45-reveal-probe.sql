@@ -179,6 +179,19 @@ begin
       'divisions', v_divisions);
     update public.events set scheduled_at = clock_timestamp() - interval '30 seconds'
       where id = v_event;
+    begin
+      perform public.recovery_finish_race(v_event, v_snapshot,
+        jsonb_set(v_output, '{divisions,0,replay,roster,0}',
+          v_output #> '{divisions,1,replay,roster,0}'));
+      raise exception 'A replay with a rider from another division was committed.';
+    exception when sqlstate 'PT409' then
+      if sqlerrm <> 'The recorded replay roster does not match its division results.' then raise; end if;
+    end;
+    if exists(select 1 from public.event_team_results where event_id = v_event)
+      or exists(select 1 from public.event_division_runs where event_id = v_event)
+      or exists(select 1 from public.recovery_ranking_awards where event_id = v_event) then
+      raise exception 'A rejected cross-division replay left committed rows.';
+    end if;
     v_result := public.recovery_finish_race(v_event, v_snapshot, v_output);
     if v_result->>'already_finished' <> 'false'
       or (v_result->>'total_divisions')::integer <> 3
