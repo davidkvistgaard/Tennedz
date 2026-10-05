@@ -14,6 +14,7 @@ declare
   v_claim jsonb;
   v_void jsonb;
   v_error text;
+  v_advanced boolean;
 begin
   if exists(select 1 from public.recovery_autopilot_jobs)
     or exists(select 1 from public.events
@@ -42,6 +43,17 @@ begin
         and lease_until > clock_timestamp()) then
     raise exception 'The expected race was not leased: %', v_claim;
   end if;
+  v_advanced := public.recovery_autopilot_advance_job(v_event, v_token,
+    null, 0, 0, false);
+  if not v_advanced or not exists(select 1 from public.recovery_autopilot_jobs
+    where event_id = v_event and status = 'PENDING' and lease_token is null) then
+    raise exception 'Scan progress was not accepted before registration close';
+  end if;
+  v_token := gen_random_uuid();
+  v_claim := public.recovery_autopilot_claim_job(v_token);
+  if v_claim->>'event_id' is distinct from v_event::text then
+    raise exception 'The scan could not be reclaimed before the deadline';
+  end if;
 
   -- Advance only this disposable race to its registration close. The actual
   -- worker lease remains live, so an administrator cannot cancel it yet.
@@ -49,6 +61,12 @@ begin
   update public.events set deadline = v_registration,
     registration_deadline = v_registration
     where id = v_event;
+  v_advanced := public.recovery_autopilot_advance_job(v_event, v_token,
+    null, 0, 0, true);
+  if v_advanced or not exists(select 1 from public.recovery_autopilot_jobs
+    where event_id = v_event and status = 'PENDING' and lease_token = v_token) then
+    raise exception 'A batch closed after registration was recorded as complete';
+  end if;
   begin
     perform public.recovery_void_incomplete_two_phase_race(v_event, v_admin);
     raise exception 'An active claimed scan was cancelled';

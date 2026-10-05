@@ -32,8 +32,8 @@ export async function GET(req){
         p_event:job.event_id,p_token:token,p_cursor:batch.last_cursor,
         p_processed:batch.processed,p_entered:batch.entered,p_complete:complete,
       });
-      if(!advanced)throw new AuthError("AUTOPILOT_LEASE_LOST",
-        "The autopilot job lease expired. The batch will be retried.",503);
+      if(!advanced)throw new AuthError("AUTOPILOT_PROGRESS_REJECTED",
+        "The entry scan could not be saved before registration closed or its lease expired. Administrator review may be required.",503);
       batches.push({event_id:job.event_id,processed:batch.processed,
         entered:batch.entered,complete});
     }

@@ -103,6 +103,8 @@ Den første tekniske **endagsløbs-testsløjfe** er nu gennemført isoleret i pu
 
 **Claim før annullering, isoleret grænseprøve:** Et reelt database-claim fik lease før registreringsfristen; efter fristen afviste no-contest-RPC'en beslutningen, så længe leasen var aktiv. Da prøveleasen blev sat til udløbet, kunne administratorbeslutningen gemmes én gang uden point. Den tilbagerullede SQL-prøve efterlod nul testløb, jobs og beslutninger. Dette tester rækkefølgen af de faktiske RPC'er, men ikke en samtidig belastningstest eller et faktisk schedulerudfald.
 
+**Batchafslutning ved fristen:** En særskilt migration på den isolerede database låser nu jobfremdrift sammen med claim og no-contest og kontrollerer aktuel tid, løbsstatus og lease igen, når batchresultatet gemmes. En scanning, der krydser registreringsfristen, kan derfor ikke registreres som fuldført bagefter. SQL-prøven accepterede normal fremdrift før fristen, afviste fuldførelse efter fristen og bekræftede den efterfølgende no-contest-regel. De eksisterende kø- og optællingsprøver bestod. Cron svarer med HTTP 503 ved afvist fremdrift; et fokuseret lokalt HTTP-flow bestod. Det er en sikker fejltilstand, ikke automatisk genopretning af et mistet løb.
+
 ## P1 - atlas og verdenskvalitet
 
 | ID | Opgave / konkret resultat | Timer | Afhænger af |

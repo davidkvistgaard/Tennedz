@@ -26,6 +26,20 @@ test('enabled cron processes three pages and stays idempotent over HTTP',async({
   expect((await repeated.json()).batches).toEqual([]);
 });
 
+test('cron reports a rejected progress save as a failed run',async({request})=>{
+  const fixture='http://127.0.0.1:54330';
+  await fetch(`${fixture}/__cron_reset`,{method:'POST',
+    headers:{'Content-Type':'application/json'},body:JSON.stringify({advanceRejected:true})});
+  const response=await request.get('/api/cron/autopilot',{
+    headers:{Authorization:'Bearer fixture-cron-secret'},
+  });
+  expect(response.status()).toBe(503);
+  expect(await response.json()).toMatchObject({ok:false,code:'AUTOPILOT_PROGRESS_REJECTED'});
+  const state=await (await fetch(`${fixture}/__cron_state`)).json();
+  expect(state).toMatchObject({processed:0,complete:false,claims:1});
+  expect(state.lease).toBeTruthy();
+});
+
 test('an interrupted page resumes after its lease expires without duplicate entries',async({request})=>{
   const fixture='http://127.0.0.1:54330';
   await fetch(`${fixture}/__cron_reset`,{method:'POST',
