@@ -91,6 +91,8 @@ Den første tekniske **endagsløbs-testsløjfe** er nu gennemført isoleret i pu
 
 **Opdatering 5. oktober, isoleret preview:** To uafhængige managerkonti tilmeldte sig samme to-fase-løb via kalenderen, så deres frosne pointbaserede division, ændrede hver sin taktik og åbnede vieweren samtidig. Begge så replay og resultater. Testdatabasen gemte 1 replay, 2 holdresultater, 16 rytterresultater og 16 unikke pointposter; en gentaget spilleranmodning gav `already_finished` uden nye point eller ændrede holdratings. Testløb, ryttere, konti og lokale testnøgler er fjernet. Dette er et to-holds funktionsbevis, ikke belastningstest eller valideret sportslig balance. En 45-holds to-fase-browserprøve, timing af automatisk tilmeldingslukning og genopretning efter afbrudt kø er stadig åbne i punkt 16.
 
+**Konkret fristrisiko:** `recovery_autopilot_claim_job` kan kun hente et job, mens tilmeldingsfristen ligger i fremtiden. Hvis scanningen er ufærdig ved fristen, kan køen derfor ikke færdiggøres bagefter; divisions-RPC'en kræver et fuldført job, og taktikfristen kan nå at udløbe. En daglig Hobby-cron og spillerudløst reveal er ikke en garanti for dette led. Før live brug skal vi vælge og afprøve en rettidig scheduler samt en eksplicit genopretningsregel for ufærdige scans; ingen sen automatisk tilmelding eller flytning af frister må ske skjult.
+
 ## P1 - atlas og verdenskvalitet
 
 | ID | Opgave / konkret resultat | Timer | Afhænger af |
