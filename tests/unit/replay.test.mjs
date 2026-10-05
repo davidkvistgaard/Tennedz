@@ -90,6 +90,26 @@ test("pause/seek helpers do not mutate replay or reveal future moments", () => {
   assert.ok(!visibleMoments(sim.replay, 129).some((m) => m.kind === "finish"));
   assert.equal(JSON.stringify(sim), before);
 });
+
+test("viewer interpolates recorded gaps between checkpoints without changing them",()=>{
+  const route=normalizeRoute({name:"Flat",distance_km:20,
+    profile_points:[[0,0],[20,0]]});
+  const replay={route,frames:[
+    {km:0,elapsed_sec:0,terrain:"flat",groups:[
+      {gap:0,riders:["a"]},{gap:10,riders:["b"]}]},
+    {km:2,elapsed_sec:100,terrain:"flat",groups:[
+      {gap:0,riders:["a"]},{gap:30,riders:["b"]}]},
+  ]};
+  const original=JSON.stringify(replay);
+  const middle=replayFrame(replay,1);
+  assert.equal(middle.km,1);
+  assert.equal(middle.elapsed_sec,50);
+  assert.deepEqual(middle.groups,[
+    {gap:0,riders:["a"]},{gap:20,riders:["b"]}]);
+  assert.equal(replayFrame(replay,0),replay.frames[0]);
+  assert.equal(replayFrame(replay,2),replay.frames[1]);
+  assert.equal(JSON.stringify(replay),original);
+});
 test("shared route interprets actual elevation and supports short and long races", () => {
   const route = normalizeRoute(stage);
   assert.equal(routeAt(route, 105).elevation, 300);
