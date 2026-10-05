@@ -30,13 +30,11 @@ function EventCard({event,filter,now}){
   const entered=event.team_count>0;
   const replayReady=event.kind==="one_day"&&event.status==="FINISHED"&&entered;
   const registrationClosed=twoPhase&&Date.parse(event.registration_deadline)<=now;
-  const raceDue=twoPhase&&Date.parse(event.scheduled_at)<=now;
   const action=registrationClosed
-    ? !entered?null:raceDue?"Watch race":Date.parse(event.tactics_deadline)<=now
-      ?"View division":"Review tactics"
+    ? !entered?null:Date.parse(event.tactics_deadline)<=now
+      ?"Check race status":"Review tactics"
     :"Set up";
-  const href=raceDue&&entered?`/team/view/${encodeURIComponent(event.id)}`
-    :`/team/run?event_id=${encodeURIComponent(event.id)}&gender=${event.gender}&return_filter=${encodeURIComponent(filter)}`;
+  const href=`/team/run?event_id=${encodeURIComponent(event.id)}&gender=${event.gender}&return_filter=${encodeURIComponent(filter)}`;
   return <article className="agenda-card">
     <div className="agenda-card-top"><span>{category(event.gender)} · {source} · {tier}</span>
       <strong>{event.kind==="stage_race"?"Stage race":"One-day"}</strong></div>

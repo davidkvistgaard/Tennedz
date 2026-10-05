@@ -172,7 +172,7 @@ export default function RunPage() {
     const abort = new AbortController();
     setReveal(null);
     setRevealError("");
-    if (!twoPhase || saved?.event_id !== eventId) {
+    if (!twoPhase || event?.status === "CANCELLED" || saved?.event_id !== eventId) {
       setRevealLoading(false);
       return;
     }
@@ -201,7 +201,7 @@ export default function RunPage() {
     refresh();
     const timer = setInterval(refresh, 30000);
     return () => { abort.abort(); clearInterval(timer); };
-  }, [eventId, twoPhase, saved]);
+  }, [eventId, twoPhase, saved, event?.status]);
   const list = events.filter(
     (e) =>
       e.gender === gender &&
@@ -368,7 +368,9 @@ export default function RunPage() {
               <span className="event-date">{date(e.deadline)}</span>
               <span className="event-meta">
                 <span>
-                  {e.status === "FINISHED"
+                  {e.status === "CANCELLED"
+                    ? "Cancelled - no results or points"
+                    : e.status === "FINISHED"
                     ? "Ready to watch"
                     : Date.parse(e.deadline) <= now
                       ? e.tactics_deadline && Date.parse(e.tactics_deadline) > now
@@ -381,7 +383,9 @@ export default function RunPage() {
                 </strong>
               </span>
               <span className="event-action">
-                {e.status === "FINISHED"
+                {e.status === "CANCELLED"
+                  ? "View cancellation"
+                  : e.status === "FINISHED"
                   ? "Open race day"
                   : "View route and select lineup"}{" "}
                 →
@@ -416,10 +420,15 @@ export default function RunPage() {
           ) : (
             <>
               {stage && <StageProfile stage={stage} />}
-              {twoPhase && saved && <DivisionReveal view={reveal} error={revealError}
+              {twoPhase && saved && event.status !== "CANCELLED" && <DivisionReveal view={reveal} error={revealError}
                 loading={revealLoading} myTeamId={team?.id} />}
               {!locked && <a className="lineup-jump" href="#race-lineup">Build your lineup <span aria-hidden="true">↓</span></a>}
-              {event.status === "FINISHED" ? (
+              {event.status === "CANCELLED" ? (
+                <div className="card race-ready">
+                  <h2>This race was cancelled</h2>
+                  <p>No results or ranking points will be awarded for this race.</p>
+                </div>
+              ) : event.status === "FINISHED" ? (
                 <div className="card race-ready">
                   <h2>The race is ready</h2>
                   <p>

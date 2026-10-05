@@ -148,8 +148,8 @@ test("a registered manager sees the saved division and can edit tactics without 
     "href", `/team/view/${eventId}`,
   );
   await page.goto("/team/calendar");
-  await expect(page.getByRole("link", { name: /Watch race/ })).toHaveAttribute(
-    "href", `/team/view/${eventId}`,
+  await expect(page.getByRole("link", { name: /Check race status/ })).toHaveAttribute(
+    "href", new RegExp(`/team/run\\?event_id=${eventId}`),
   );
   expect(pageErrors).toEqual([]);
 });
@@ -211,6 +211,10 @@ test("an overdue division reveal explains the delay and keeps tactics closed", a
     prepareCalls++;
     return route.fulfill({ status: 409, json: { ok: false } });
   });
+  await page.goto("/team/calendar");
+  await expect(page.getByRole("link", { name: /Check race status/ })).toHaveAttribute(
+    "href", new RegExp(`/team/run\\?event_id=${eventId}`),
+  );
   await page.goto(`/team/run?event_id=${eventId}`);
   await expect(page.getByRole("heading", { name: "Race preparation is delayed" })).toBeVisible();
   await expect(page.getByText("An administrator needs to review the automatic entry scan", { exact: false })).toBeVisible();
