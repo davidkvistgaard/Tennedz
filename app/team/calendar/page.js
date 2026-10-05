@@ -19,12 +19,22 @@ function matches(event,filter){
   return true;
 }
 
-function EventCard({event,filter}){
+function EventCard({event,filter,now}){
   const raceDate=event.scheduled_at??event.deadline;
   const source=event.calendar_source??"Unclassified";
   const tier=event.race_tier?`T${event.race_tier}`:"Unranked";
   const status=event.readiness?.replaceAll("_"," ").toLowerCase();
   const setup=event.kind==="one_day"&&event.status==="OPEN";
+  const twoPhase=Boolean(event.registration_deadline&&event.tactics_deadline);
+  const entered=event.team_count>0;
+  const registrationClosed=twoPhase&&Date.parse(event.registration_deadline)<=now;
+  const raceDue=twoPhase&&Date.parse(event.scheduled_at)<=now;
+  const action=registrationClosed
+    ? !entered?null:raceDue?"Watch race":Date.parse(event.tactics_deadline)<=now
+      ?"View division":"Review tactics"
+    :"Set up";
+  const href=raceDue&&entered?`/team/view/${encodeURIComponent(event.id)}`
+    :`/team/run?event_id=${encodeURIComponent(event.id)}&gender=${event.gender}&return_filter=${encodeURIComponent(filter)}`;
   return <article className="agenda-card">
     <div className="agenda-card-top"><span>{category(event.gender)} · {source} · {tier}</span>
       <strong>{event.kind==="stage_race"?"Stage race":"One-day"}</strong></div>
@@ -34,7 +44,8 @@ function EventCard({event,filter}){
       <span>Orders <strong>{event.orders_ready?"Ready":"Missing"}</strong></span>
       <span className="agenda-state">{status}</span></div>
     <div className="agenda-card-bottom"><span>{event.winner_points===null?"Ranking points not set":`Winner · ${event.winner_points.toLocaleString("en-GB")} pts`}</span>
-      {setup?<Link className="btn primary" href={`/team/run?event_id=${encodeURIComponent(event.id)}&gender=${event.gender}&return_filter=${encodeURIComponent(filter)}`}>Set up →</Link>:
+      {setup&&action?<Link className="btn primary" href={href}>{action} →</Link>:
+        setup?<span className="agenda-muted">Registration closed</span>:
         <span className="agenda-muted">{event.kind==="stage_race"?"Stage setup is in development":event.status==="FINISHED"?"Finished":"Locked"}</span>}</div>
     {event.race_tier&&<details className="agenda-points"><summary>Points table</summary>
       <p>Tier {event.race_tier} · points by placing</p>
@@ -86,7 +97,7 @@ export default function CalendarPage(){
     {data&&!groups.length&&<section className="card agenda-empty"><h2>No races match this view yet</h2>
       <p>Choose another filter or return when the next events are published.</p></section>}
     {groups.map(([day,events])=><section className="agenda-day" key={day}>
-      <h2>{displayDate(day)}</h2><div className="agenda-grid">{events.map(event=><EventCard key={event.id} event={event} filter={filter}/>)}</div>
+      <h2>{displayDate(day)}</h2><div className="agenda-grid">{events.map(event=><EventCard key={event.id} event={event} filter={filter} now={Date.parse(data.server_time)}/>)}</div>
     </section>)}
   </div></TeamShell>;
 }

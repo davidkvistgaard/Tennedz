@@ -23,6 +23,8 @@ test("a registered manager sees the saved division and can edit tactics without 
       status: "OPEN", deadline: registrationDeadline, registration_deadline: registrationDeadline,
       tactics_deadline: tacticsDeadline, scheduled_at: scheduledAt, entry_fee: 0,
       calendar_source: "PELOTONIA", race_tier: 3, race_team_size: 8,
+      team_count: 8, team_size: 8, orders_ready: true, readiness: "TACTICS_WINDOW",
+      winner_points: 250,
     }],
   } }));
   await page.route("**/api/game-date", (route) => route.fulfill({ json: { game_date: "2026-01-01" } }));
@@ -45,6 +47,10 @@ test("a registered manager sees the saved division and can edit tactics without 
     await route.fulfill({ json: { ok: true } });
   });
 
+  await page.goto("/team/calendar");
+  await expect(page.getByRole("link", { name: /Review tactics/ })).toHaveAttribute(
+    "href", new RegExp(`/team/run\\?event_id=${eventId}`),
+  );
   await page.goto(`/team/run?event_id=${eventId}`);
   await expect(page.getByRole("heading", { name: "Your division is ready" })).toBeVisible();
   await expect(page.getByText("Division 2 of 3", { exact: false })).toBeVisible();
@@ -70,6 +76,8 @@ test("a registered manager sees the saved division and can edit tactics without 
       tactics_deadline: new Date(Date.now() - 120_000).toISOString(),
       scheduled_at: new Date(Date.now() - 60_000).toISOString(), entry_fee: 0,
       calendar_source: "PELOTONIA", race_tier: 3, race_team_size: 8,
+      team_count: 8, team_size: 8, orders_ready: true, readiness: "LOCKED",
+      winner_points: 250,
     }],
   } }));
   await page.unroute("**/api/event/reveal?*");
@@ -86,5 +94,34 @@ test("a registered manager sees the saved division and can edit tactics without 
   await expect(page.getByRole("link", { name: /Watch the race/ })).toHaveAttribute(
     "href", `/team/view/${eventId}`,
   );
+  await page.goto("/team/calendar");
+  await expect(page.getByRole("link", { name: /Watch race/ })).toHaveAttribute(
+    "href", `/team/view/${eventId}`,
+  );
+  expect(pageErrors).toEqual([]);
+});
+
+test("a team that missed registration cannot enter during the tactics window", async ({ page }) => {
+  const pageErrors = [];
+  page.on("pageerror", (error) => pageErrors.push(error.message));
+  await page.goto("/login");
+  await page.getByLabel("Email or username").fill("alice");
+  await page.getByLabel("Password").fill("fixture-password");
+  await page.getByRole("button", { name: "Sign in", exact: true }).click();
+  await expect(page).toHaveURL(/\/team$/);
+  await page.route("**/api/events?*", (route) => route.fulfill({ json: {
+    ok: true, server_time: new Date().toISOString(), events: [{
+      id: eventId, name: "Closed registration fixture", kind: "one_day", gender: "M",
+      status: "OPEN", deadline: registrationDeadline,
+      registration_deadline: registrationDeadline, tactics_deadline: tacticsDeadline,
+      scheduled_at: scheduledAt, entry_fee: 0, calendar_source: "PELOTONIA",
+      race_tier: 3, race_team_size: 8, team_size: 8, team_count: 0,
+      orders_ready: false, readiness: "REGISTRATION_CLOSED", winner_points: 250,
+    }],
+  } }));
+  await page.goto("/team/calendar");
+  const card = page.locator(".agenda-card").filter({ hasText: "Closed registration fixture" });
+  await expect(card.getByText("Registration closed", { exact: true })).toBeVisible();
+  await expect(card.getByRole("link")).toHaveCount(0);
   expect(pageErrors).toEqual([]);
 });
