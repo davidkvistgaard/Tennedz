@@ -12,8 +12,9 @@ test("registration, preparation and tactics lock change at exact deadlines", () 
   assert.equal(racePhaseAt(schedule, "2026-10-06T07:59:59.999Z"), "registration");
   assert.equal(racePhaseAt(schedule, schedule.registrationDeadline), "reveal_pending");
   assert.equal(racePhaseAt(schedule, "2026-10-06T10:59:59.999Z", { revealCommitted: true }), "preparation");
-  assert.equal(racePhaseAt(schedule, schedule.tacticsDeadline, { revealCommitted: true }), "tactics_locked");
-  assert.equal(racePhaseAt(schedule, schedule.scheduledAt, { revealCommitted: true }), "race_due");
+  assert.equal(racePhaseAt(schedule, schedule.tacticsDeadline, { revealCommitted: true }), "tactics_lock_pending");
+  assert.equal(racePhaseAt(schedule, schedule.tacticsDeadline, { revealCommitted: true, tacticsCommitted: true }), "tactics_locked");
+  assert.equal(racePhaseAt(schedule, schedule.scheduledAt, { revealCommitted: true, tacticsCommitted: true }), "race_due");
 });
 
 test("an offset timestamp denotes the same instant as UTC", () => {
@@ -25,6 +26,13 @@ test("a missing persisted reveal blocks tactics and race even when deadlines pas
     assert.equal(racePhaseAt(schedule, now), "reveal_pending");
   }
   assert.throws(() => racePhaseAt(schedule, schedule.scheduledAt, { revealCommitted: "yes" }), /must be a boolean/);
+});
+
+test("a missing final tactics snapshot blocks the race after tactics and start deadlines", () => {
+  assert.equal(racePhaseAt(schedule, schedule.tacticsDeadline, { revealCommitted: true }), "tactics_lock_pending");
+  assert.equal(racePhaseAt(schedule, schedule.scheduledAt, { revealCommitted: true }), "tactics_lock_pending");
+  assert.throws(() => racePhaseAt(schedule, schedule.scheduledAt, { revealCommitted: true, tacticsCommitted: "yes" }), /must be a boolean/);
+  assert.throws(() => racePhaseAt(schedule, schedule.scheduledAt, { tacticsCommitted: true }), /before the division reveal/);
 });
 
 test("a separate, strictly later tactics deadline is required", () => {
