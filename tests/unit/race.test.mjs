@@ -1,6 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { buildRace,splitDivisions } from "../../lib/race/cycle.mjs";
+import { defaultOrders } from "../../lib/race/orders.mjs";
 const rider=(id)=>({id,name:id,gender:"M",sprint:40,flat:40,hills:40,mountain:40,cobbles:40,timetrial:40,endurance:40,strength:40,wind:40,form:50,fatigue:0});
 function input(){return {event:{id:"race",kind:"one_day",gender:"M",deadline:"2026-01-01",scheduled_at:"2026-01-01T12:00:00Z",country_code:"FR"},game_date:"2026-01-01",
   stage:{name:"Flat 130",distance_km:130,tags:["FLAT"],profile_points:[[0,0],[130,0]]},
@@ -76,6 +77,28 @@ test("an explicit locked points snapshot seeds separate races despite later rost
  assert.deepEqual(replayed.division_reveal,first.division_reveal);
  s.locked_division_reveal.assignments[0].divisionIndex=3;
  assert.throws(()=>buildRace(s),/saved division reveal/);
+});
+test("a changed order in the third locked division leaves the other two recorded races intact",()=>{
+ const s=input();
+ s.teams=Array.from({length:45},(_,i)=>{
+  const id=`t${String(i).padStart(2,"0")}`;
+  const selected=Array.from({length:8},(_,j)=>`${id}-${j}`);
+  return {id,name:id,riders:selected.map(rider),entry:{selected_riders:selected,captain_id:selected[0]}};
+ });
+ s.points_at_registration_lock={eventId:s.event.id,seasonYear:2026,gender:"M",
+  entrants:s.teams.map((team,i)=>({teamId:team.id,earnedPoints:45-i}))};
+ const first=buildRace(s);
+ assert.equal(first.division_reveal.assignments.find(row=>row.teamId==="t44").divisionIndex,3);
+ const target=s.teams[44];
+ const orders=defaultOrders(target.entry.selected_riders,target.entry.captain_id);
+ orders.plan="conserve";
+ for(const riderOrder of Object.values(orders.riders))riderOrder.effort="careful";
+ target.entry.orders=orders;
+ const changed=buildRace(s);
+ assert.deepEqual(changed.division_reveal,first.division_reveal);
+ assert.deepEqual(changed.divisions.slice(0,2),first.divisions.slice(0,2));
+ assert.notDeepEqual(changed.divisions[2].results,first.divisions[2].results);
+ assert.notDeepEqual(changed.divisions[2].replay,first.divisions[2].replay);
 });
 test("a locked points snapshot must match the exact event, season, gender and entrant set",()=>{
  const s=input();

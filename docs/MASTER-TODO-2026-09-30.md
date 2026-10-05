@@ -87,7 +87,9 @@ Den første tekniske **endagsløbs-testsløjfe** er nu gennemført isoleret i pu
 | 19 | Gør kalenderkort for etapeløb operationelle: etapetrin, GC-status, udtagelse, ordrestatus og gennemsigtig pointtabel. | 32–64 | 10, 14, 17 |
 | 20 | Gennemgå live release af kalenderpakken, opret først derefter gennemgåede fremtidige løb, og verificér tilmelding/afvikling med rigtige modstandere. | 12–24 | 12, 14, 16–19 |
 
-## P1 — atlas og verdenskvalitet
+**Status for punkt 16–17, 5. oktober:** Det isolerede udviklingsspor har nu særskilt tilmeldings- og taktikfrist, gemt pointbaseret divisionsafsløring, modstandervisning og låst taktik. En prøve med 45 hold gav tre uafhængige løb og replays; et særskilt to-holds forløb skrev simulatorens faktiske output, replay og point atomisk til testdatabasen og blev ryddet op. Kalenderen viser de tre frister. Dette er fortsat ikke en spilbar 45-manager-prøve af det tofasede flow eller en sportslig balancetest. Autopilotkapacitet, fejlgenopretning, pointreversering og produktionskontrol er åbne.
+
+## P1 - atlas og verdenskvalitet
 
 | ID | Opgave / konkret resultat | Timer | Afhænger af |
 | --- | --- | ---: | --- |
