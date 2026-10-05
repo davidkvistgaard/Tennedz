@@ -24,6 +24,8 @@ assert.ok(['pending-browser','entered'].includes(fixture.phase));
 const db=createClient(config.url,config.serviceKey,{auth:{persistSession:false,autoRefreshToken:false}});
 const browser=await chromium.launch({headless:true,channel:process.platform==='win32'?'msedge':undefined});
 const participantCount=fixture.browserEntries||1;
+const participantStart=process.argv[2]==='participant';
+if(process.argv[2]&&!participantStart)throw Error('Use no argument or participant.');
 const browserTeams=(fixture.browserTeamIds||[teams[0].teamId]).map(id=>{
   const team=teams.find(candidate=>candidate.teamId===id);
   if(!team)throw Error('A reserved browser team is missing from the fixture.');
@@ -106,6 +108,27 @@ try{
     writeFileSync(fixturePath,JSON.stringify(fixture,null,2));
   }
 
+  if(participantStart){
+    const cutoff=await db.from('events').update({deadline:new Date(Date.now()-5000).toISOString()})
+      .eq('id',fixture.eventId);
+    if(cutoff.error)throw cutoff.error;
+    const firstPage=pages[0];
+    await firstPage.reload();
+    await expect(firstPage.getByRole('heading',{name:'Your lineup is locked'})).toBeVisible();
+    const preparation=firstPage.waitForResponse(response=>
+      response.url().includes('/api/event/prepare')&&response.request().method()==='POST');
+    await firstPage.getByRole('link',{name:/Watch the race/}).first().click();
+    const prepared=await preparation;
+    assert.equal(prepared.status(),200,await prepared.text());
+    assert.equal((await prepared.json()).already_finished,false);
+    await expect(firstPage.getByRole('heading',{name:'Race commentary'})).toBeVisible();
+    const commits=await db.from('recovery_race_commits').select('event_id').eq('event_id',fixture.eventId);
+    if(commits.error)throw commits.error;
+    assert.equal(commits.data.length,1);
+    fixture.phase='finished';
+    writeFileSync(fixturePath,JSON.stringify(fixture,null,2));
+  }
+
   execFileSync(process.execPath,[fileURLToPath(new URL('./p03-multidivision.mjs',import.meta.url)),'run'],
     {env:process.env,stdio:'pipe',timeout:120000});
   const memberships=await db.from('event_divisions').select('team_id,division_index')
@@ -117,7 +140,9 @@ try{
   for(let index=0;index<pages.length;index++){
     const page=pages[index],team=browserTeams[index];
     const ownDivision=divisionByTeam.get(team.teamId);
-    await page.reload();
+    if(participantStart&&index===0)
+      await page.goto(`/team/run?event_id=${fixture.eventId}`);
+    else await page.reload();
     await expect(page.getByRole('heading',{name:'The race is ready'})).toBeVisible();
     const replayRequest=page.waitForResponse(response=>response.url().includes('/api/event-run?')&&response.status()===200);
     await page.getByRole('link',{name:/Watch the race/}).first().click();
@@ -144,7 +169,7 @@ try{
     await expect(page.getByText('Team points from this race')).toBeVisible();
   }
   assert.deepEqual(errors,[]);
-  console.log(`PASS isolated browser: ${participantCount} separate manager sessions, lineups and orders, 45-team run, own replays and division results (${new Set(divisionByTeam.values()).size} divisions).`);
+  console.log(`PASS isolated browser: ${participantCount} separate manager sessions, lineups and orders, 45-team ${participantStart?'participant-started':'admin-started'} run, own replays and division results (${new Set(divisionByTeam.values()).size} divisions).`);
 }finally{
   await browser.close();
 }
