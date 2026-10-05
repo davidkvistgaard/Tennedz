@@ -117,6 +117,23 @@ try{
     const cutoff=await db.from('events').update({deadline:new Date(Date.now()-5000).toISOString()})
       .eq('id',fixture.eventId);
     if(cutoff.error)throw cutoff.error;
+    const lockedTeam=browserTeams[0];
+    const lockedEntry=()=>db.from('event_teams').select('selected_riders,captain_id,orders')
+      .eq('event_id',fixture.eventId).eq('team_id',lockedTeam.teamId).single();
+    const beforeLock=await lockedEntry();
+    if(beforeLock.error)throw beforeLock.error;
+    const changedOrders={...beforeLock.data.orders,
+      plan:beforeLock.data.orders.plan==='conserve'?'breakaway':'conserve'};
+    const lateChange=await pages[0].context().request.post('/api/event/join',{
+      data:{event_id:fixture.eventId,team_id:lockedTeam.teamId,
+        selected_riders:beforeLock.data.selected_riders,
+        captain_id:beforeLock.data.captain_id,orders:changedOrders},
+      headers:{Origin:'http://localhost:3100'},
+    });
+    assert.equal(lateChange.status(),409,await lateChange.text());
+    const afterLock=await lockedEntry();
+    if(afterLock.error)throw afterLock.error;
+    assert.deepEqual(afterLock.data,beforeLock.data);
     const starters=concurrentStart?pages.slice(0,3):pages.slice(0,1);
     await Promise.all(starters.map(async page=>{
       await page.reload();
@@ -260,7 +277,7 @@ try{
   await expect(rankingPage.locator('.rankings-list li').filter({hasText:ranking.name}))
     .toContainText(`${expectedSportingPoints.toLocaleString('en-GB')} pts`);
   assert.deepEqual(errors,[]);
-  console.log(`PASS isolated browser: ${participantCount} separate manager sessions, lineups and orders, 45-team ${startMode} run, own replays and division results (${new Set(divisionByTeam.values()).size} divisions), sporting leaderboard matches the award ledger.`);
+  console.log(`PASS isolated browser: ${participantCount} separate manager sessions, lineups and orders, 45-team ${startMode} run, own replays and division results (${new Set(divisionByTeam.values()).size} divisions), sporting leaderboard matches the award ledger${participantStart?', late order edit rejected':''}.`);
 }finally{
   await browser.close();
 }
