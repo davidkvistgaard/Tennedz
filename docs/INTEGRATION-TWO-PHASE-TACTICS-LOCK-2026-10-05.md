@@ -1,0 +1,7 @@
+# Isolated final tactics lock
+
+`20261005070555_persist_two_phase_tactics_lock.sql` adds a private, service-only final-input transaction for opted-in two-phase events. After tactics close, it checks that the division reveal exists, every current entrant appears in it, and every entrant has orders. Under the same advisory lock as joins and reveals, it saves the existing race snapshot together with the previously frozen point-based division assignment in `recovery_tactics_commits`. A retry returns that exact saved JSON. The snapshot includes private orders and full rider data, so it must never be sent to opponents or an unauthorised browser.
+
+The migration was applied only to isolated project `nxhvaoonnvmvohqaxfdx`. The rollback-only `tests/support/two-phase-tactics-lock-probe.sql` passed: legacy and early locks failed, a two-team input was saved after the deadline, and a retry returned the same input even after a fixture entry changed. The probe left no opted-in events, reveals, autopilot jobs or tactics commits.
+
+This still does **not** run a two-phase race. The existing trigger blocks result commits. The runner must be updated to consume the saved tactics input and saved divisions, verify a complete independent result for each division, and commit results and sporting points exactly once. The final test must cover 45 participants, separate recorded viewers, privacy, and retries. No production database was changed.
