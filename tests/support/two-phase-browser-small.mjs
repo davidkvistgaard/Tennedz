@@ -18,14 +18,16 @@ const preview = new URL(process.env.PELOTONIA_TWO_PHASE_PREVIEW_URL);
 if (preview.protocol !== "https:" || !/^tennedz-[a-z0-9-]+\.vercel\.app$/.test(preview.hostname)) {
   throw Error("Use an isolated Vercel preview URL, never the production domain.");
 }
-const teams = JSON.parse(readFileSync(new URL("../../.recovery-local/p02-isolated-teams.json", import.meta.url), "utf8"));
+const fixtureTeams = JSON.parse(readFileSync(new URL("../../.recovery-local/p02-isolated-teams.json", import.meta.url), "utf8"));
 const managerCount = Number(process.argv[2] ?? 2);
 assert.ok([2, 45].includes(managerCount), "Use 2 or 45 managers.");
 const revealMode = process.argv[3] ?? "manual";
 assert.ok(["manual", "scheduler"].includes(revealMode), "Use manual or scheduler reveal mode.");
 if (revealMode === "scheduler") assert.equal(managerCount, 2,
   "The timed scheduler probe uses two managers to limit disposable test data.");
-assert.equal(teams.length, managerCount);
+if (revealMode === "scheduler") assert.ok(fixtureTeams.length >= managerCount);
+else assert.equal(fixtureTeams.length, managerCount);
+const teams = fixtureTeams.slice(0, managerCount);
 assert.equal(new Set(teams.map(team => team.userId)).size, managerCount);
 const db = createClient(config.url, config.serviceKey,
   { auth: { persistSession: false, autoRefreshToken: false } });
@@ -127,14 +129,14 @@ try {
       const job = await ok(db.from("recovery_autopilot_jobs").select("status,processed_count")
         .eq("event_id", eventId).maybeSingle());
       if (job?.status === "COMPLETE") {
-        assert.ok(job.processed_count >= managerCount);
+        assert.ok(job.processed_count >= fixtureTeams.length);
         complete = true;
+        console.log(`Scheduled entry scan processed ${job.processed_count} teams while registration was open.`);
         break;
       }
       await new Promise(resolve => setTimeout(resolve, 3000));
     }
     assert.ok(complete, "The timed scheduler did not complete the entry scan before registration closed.");
-    console.log("Scheduled entry scan completed while registration was open.");
   }
   const closed = new Date(Date.now() - 60000).toISOString();
   await ok(db.from("events").update({ deadline: closed, registration_deadline: closed })
