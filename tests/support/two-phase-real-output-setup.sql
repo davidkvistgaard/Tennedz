@@ -1,9 +1,10 @@
--- Isolated project only. This fixture persists until the matching cleanup
--- script runs. Its returned snapshot contains private rider and order data.
+-- Isolated project only. The two-team mode uses two distinct existing owners;
+-- the 45-team capacity mode uses one fixture owner. This fixture persists until
+-- the matching cleanup script runs. Its snapshot contains private rider data.
 begin;
 do $probe$
 declare
-  v_owner uuid;
+  v_owners uuid[];
   v_stage uuid;
   v_event uuid := gen_random_uuid();
   v_team uuid;
@@ -25,11 +26,15 @@ begin
   v_registration := clock_timestamp() + interval '2 hours';
   v_tactics := v_registration + interval '1 hour';
   v_scheduled := v_tactics + interval '1 hour';
-  select user_id into v_owner from public.teams order by id limit 1;
+  select array_agg(user_id order by user_id) into v_owners from (
+    select distinct user_id from public.teams where user_id is not null
+    order by user_id limit 2
+  ) owners;
   select id into v_stage from public.stage_profiles
     where distance_km between 20 and 400 order by id limit 1;
-  if v_owner is null or v_stage is null then
-    raise exception 'The isolated project needs a fixture owner and route.';
+  if v_stage is null or coalesce(cardinality(v_owners), 0) <
+      (case when v_team_count = 2 then 2 else 1 end) then
+    raise exception 'The isolated project needs distinct fixture owners and a route.';
   end if;
   insert into public.events(id, name, kind, gender, country_code,
     stage_profile_id, status, entry_fee, deadline,
@@ -41,7 +46,8 @@ begin
   for v_index in 1..v_team_count loop
     v_team := gen_random_uuid();
     insert into public.teams(id, user_id, name)
-      values(v_team, v_owner, format('Real-output probe team %s', v_index));
+      values(v_team, v_owners[case when v_team_count = 2 then v_index else 1 end],
+        format('Real-output probe team %s', v_index));
     v_selected := '{}'::uuid[];
     for v_rider_index in 1..8 loop
       v_rider := gen_random_uuid();
