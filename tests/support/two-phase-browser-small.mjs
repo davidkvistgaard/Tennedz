@@ -21,6 +21,10 @@ if (preview.protocol !== "https:" || !/^tennedz-[a-z0-9-]+\.vercel\.app$/.test(p
 const teams = JSON.parse(readFileSync(new URL("../../.recovery-local/p02-isolated-teams.json", import.meta.url), "utf8"));
 const managerCount = Number(process.argv[2] ?? 2);
 assert.ok([2, 45].includes(managerCount), "Use 2 or 45 managers.");
+const revealMode = process.argv[3] ?? "manual";
+assert.ok(["manual", "scheduler"].includes(revealMode), "Use manual or scheduler reveal mode.");
+if (revealMode === "scheduler") assert.equal(managerCount, 2,
+  "The timed scheduler probe uses two managers to limit disposable test data.");
 assert.equal(teams.length, managerCount);
 assert.equal(new Set(teams.map(team => team.userId)).size, managerCount);
 const db = createClient(config.url, config.serviceKey,
@@ -116,10 +120,42 @@ try {
   }
 
   assert.equal((await ok(db.from("event_teams").select("team_id").eq("event_id", eventId))).length, managerCount);
+  if (revealMode === "scheduler") {
+    const scanLimit = Date.now() + 180000;
+    let complete = false;
+    while (Date.now() < scanLimit) {
+      const job = await ok(db.from("recovery_autopilot_jobs").select("status,processed_count")
+        .eq("event_id", eventId).maybeSingle());
+      if (job?.status === "COMPLETE") {
+        assert.ok(job.processed_count >= managerCount);
+        complete = true;
+        break;
+      }
+      await new Promise(resolve => setTimeout(resolve, 3000));
+    }
+    assert.ok(complete, "The timed scheduler did not complete the entry scan before registration closed.");
+    console.log("Scheduled entry scan completed while registration was open.");
+  }
   const closed = new Date(Date.now() - 60000).toISOString();
   await ok(db.from("events").update({ deadline: closed, registration_deadline: closed })
     .eq("id", eventId));
-  await ok(db.from("recovery_autopilot_jobs").insert({ event_id: eventId, status: "COMPLETE" }));
+  if (revealMode === "manual") {
+    await ok(db.from("recovery_autopilot_jobs").insert({ event_id: eventId, status: "COMPLETE" }));
+  } else {
+    const revealLimit = Date.now() + 180000;
+    let committed = false;
+    while (Date.now() < revealLimit) {
+      const record = await ok(db.from("recovery_division_reveals").select("event_id")
+        .eq("event_id", eventId).maybeSingle());
+      if (record) {
+        committed = true;
+        break;
+      }
+      await new Promise(resolve => setTimeout(resolve, 3000));
+    }
+    assert.ok(committed, "The timed scheduler did not reveal divisions after registration closed.");
+    console.log("Scheduled division reveal committed after registration closed.");
+  }
   const reveal = await ok(db.rpc("recovery_commit_division_reveal", { p_event: eventId }));
   assert.equal(reveal.assignments.length, managerCount);
   const divisions = new Map();
