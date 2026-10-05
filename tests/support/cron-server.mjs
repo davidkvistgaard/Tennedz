@@ -12,7 +12,7 @@ const riderIds=teamId=>Array.from({length:8},(_,index)=>
 const state={cursor:null,lease:null,complete:false,processed:0,entered:0,
   reportedEntered:0,claims:0,joined:new Set(),failTeamId:null,failed:false,
   activeEventReads:0,maxConcurrentEventReads:0,
-  revealCandidate:false,revealed:false};
+  revealCandidate:false,revealed:false,overdueCandidate:false};
 const send=(res,status,data)=>{
   res.writeHead(status,{'Content-Type':'application/json','x-supabase-api-version':'2024-01-01'});
   res.end(JSON.stringify(data));
@@ -35,7 +35,8 @@ const fixture=http.createServer(async(req,res)=>{
       reportedEntered:0,claims:0,joined:new Set(),
       failTeamId:body.failAfterJoin?teamIds[11]:null,failed:false,
       activeEventReads:0,maxConcurrentEventReads:0,
-      revealCandidate:body.revealCandidate===true,revealed:false});
+      revealCandidate:body.revealCandidate===true,revealed:false,
+      overdueCandidate:body.overdueCandidate===true});
     return send(res,200,{ok:true,teamCount,defaultCount:defaultTeams.size});
   }
   if(url.pathname==='/__cron_expire'&&req.method==='POST'){
@@ -72,6 +73,9 @@ const fixture=http.createServer(async(req,res)=>{
     return send(res,200,state.revealCandidate&&!state.revealed?
       [{event_id:eventId,autopilot_complete:state.complete}]:[]);
   }
+  if(url.pathname==='/rest/v1/recovery_division_reveals'){
+    return send(res,200,state.revealed?[{event_id:eventId}]:[]);
+  }
   if(url.pathname==='/rest/v1/rpc/recovery_commit_division_reveal'){
     if(body.p_event!==eventId||!state.complete)
       return send(res,409,{code:'PT409',message:'The autopilot entry scan is incomplete.'});
@@ -94,7 +98,8 @@ const fixture=http.createServer(async(req,res)=>{
       .map(teamId=>({id:teamId})));
   }
   if(url.pathname==='/rest/v1/events'){
-    if(!url.searchParams.get('id')?.startsWith('eq.'))return send(res,200,[]);
+    if(!url.searchParams.get('id')?.startsWith('eq.'))
+      return send(res,200,state.overdueCandidate?[{id:eventId}]:[]);
     state.activeEventReads++;
     state.maxConcurrentEventReads=Math.max(state.maxConcurrentEventReads,
       state.activeEventReads);

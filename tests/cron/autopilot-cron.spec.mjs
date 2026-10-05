@@ -149,3 +149,19 @@ test('division reveal waits for an incomplete large scan and commits after its r
   expect(repeated.status()).toBe(200);
   expect((await repeated.json()).divisions.revealed).toEqual([]);
 });
+
+test('cron reports a missing reveal after tactics closed instead of returning healthy',async({request})=>{
+  const fixture='http://127.0.0.1:54330';
+  await fetch(`${fixture}/__cron_reset`,{method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({overdueCandidate:true})});
+  const headers={Authorization:'Bearer fixture-cron-secret'};
+  const first=await request.get('/api/cron/autopilot',{headers});
+  expect(first.status()).toBe(503);
+  expect(await first.json()).toMatchObject({ok:false,
+    code:'DIVISION_REVEAL_OVERDUE',
+    overdue:['aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa']});
+  const repeated=await request.get('/api/cron/autopilot',{headers});
+  expect(repeated.status()).toBe(503);
+  expect((await repeated.json()).batches).toEqual([]);
+});

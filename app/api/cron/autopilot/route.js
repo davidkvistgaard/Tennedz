@@ -5,6 +5,7 @@ import {AuthError} from "../../../../lib/auth/policy.mjs";
 import {rpc} from "../../../../lib/race/server";
 import {runAutopilotBatch} from "../../../../lib/calendar/autopilot-server";
 import {revealDueDivisions} from "../../../../lib/calendar/reveal-server";
+import {overdueDivisionReveals} from "../../../../lib/calendar/reveal-health.mjs";
 
 export const dynamic="force-dynamic";
 export const maxDuration=60;
@@ -37,14 +38,16 @@ export async function GET(req){
         entered:batch.entered,complete});
     }
     const divisions=await revealDueDivisions(db);
+    const overdue=await overdueDivisionReveals(db);
     // A due reveal with an unfinished entry scan cannot safely be committed.
     // Surface it as a failed scheduler run so monitoring cannot mistake an
     // HTTP 200 with no reveal for a healthy registration close.
-    if(divisions.pending.some(item=>item.reason==="AUTOPILOT_PENDING"))
+    if(overdue.length||divisions.pending.some(item=>item.reason==="AUTOPILOT_PENDING"))
       return NextResponse.json({ok:false,enabled:true,
-        code:"DIVISION_REVEAL_BLOCKED",batches,divisions},
+        code:overdue.length?"DIVISION_REVEAL_OVERDUE":"DIVISION_REVEAL_BLOCKED",
+        batches,divisions,overdue},
       {status:503,headers:privateHeaders});
-    return NextResponse.json({ok:true,enabled:true,batches,divisions},
+    return NextResponse.json({ok:true,enabled:true,batches,divisions,overdue},
       {headers:privateHeaders});
   }catch(error){return authFailure(error);}
 }
