@@ -13,8 +13,19 @@ const output=buildRace(snapshot);
 assert.deepEqual(output,buildRace(snapshot));
 assert.deepEqual(output.division_reveal,reveal);
 const assigned=new Set(reveal.assignments.map(row=>row.teamId));
+const expectedByDivision=new Map();
+for(const row of reveal.assignments){
+  if(!expectedByDivision.has(row.divisionIndex))expectedByDivision.set(row.divisionIndex,new Set());
+  expectedByDivision.get(row.divisionIndex).add(row.teamId);
+}
+assert.equal(output.divisions.length,expectedByDivision.size);
 const seenTeams=new Set(),seenRiders=new Set();
 for(const division of output.divisions){
+  const expected=expectedByDivision.get(division.index);
+  assert.ok(expected,`Unexpected division ${division.index}`);
+  assert.deepEqual(new Set(division.teams.map(row=>row.team_id)),expected);
+  assert.deepEqual(new Set(division.results.map(row=>row.team_id)),expected);
+  assert.deepEqual(new Set(division.replay.roster.map(row=>row.team_id)),expected);
   assert.equal(division.teams.length*8,division.results.length);
   assert.deepEqual(new Set(division.replay.roster.map(row=>row.id)),
     new Set(division.results.map(row=>row.rider_id)));
