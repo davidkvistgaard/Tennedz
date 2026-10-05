@@ -27,6 +27,7 @@ function EventCard({event,filter,now}){
   const setup=event.kind==="one_day"&&event.status==="OPEN";
   const twoPhase=Boolean(event.registration_deadline&&event.tactics_deadline);
   const entered=event.team_count>0;
+  const replayReady=event.kind==="one_day"&&event.status==="FINISHED"&&entered;
   const registrationClosed=twoPhase&&Date.parse(event.registration_deadline)<=now;
   const raceDue=twoPhase&&Date.parse(event.scheduled_at)<=now;
   const action=registrationClosed
@@ -44,7 +45,9 @@ function EventCard({event,filter,now}){
       <span>Orders <strong>{event.orders_ready?"Ready":"Missing"}</strong></span>
       <span className="agenda-state">{status}</span></div>
     <div className="agenda-card-bottom"><span>{event.winner_points===null?"Ranking points not set":`Winner · ${event.winner_points.toLocaleString("en-GB")} pts`}</span>
-      {setup&&action?<Link className="btn primary" href={href}>{action} →</Link>:
+      {replayReady?<Link className="btn primary"
+        href={`/team/view/${encodeURIComponent(event.id)}`}>Watch again →</Link>:
+        setup&&action?<Link className="btn primary" href={href}>{action} →</Link>:
         setup?<span className="agenda-muted">Registration closed</span>:
         <span className="agenda-muted">{event.kind==="stage_race"?"Stage setup is in development":event.status==="FINISHED"?"Finished":"Locked"}</span>}</div>
     {event.race_tier&&<details className="agenda-points"><summary>Points table</summary>

@@ -38,6 +38,28 @@ test("calendar shows separate races, readiness, filters and direct setup on mobi
   expect(errors).toEqual([]);
 });
 
+test("finished calendar races link entrants back to their recorded replay", async ({ page }) => {
+  const scheduledAt=new Date(Date.now()-86400000).toISOString();
+  await page.route("**/api/events?*",route=>route.fulfill({json:{
+    ok:true,server_time:new Date().toISOString(),events:[
+      {id:"entered-finish",name:"My finished race",kind:"one_day",gender:"M",
+        status:"FINISHED",deadline:scheduledAt,scheduled_at:scheduledAt,
+        calendar_source:"PELOTONIA",race_tier:2,team_count:8,team_size:8,
+        orders_ready:true,readiness:"FINISHED",winner_points:150},
+      {id:"other-finish",name:"Other finished race",kind:"one_day",gender:"M",
+        status:"FINISHED",deadline:scheduledAt,scheduled_at:scheduledAt,
+        calendar_source:"PELOTONIA",race_tier:2,team_count:0,team_size:8,
+        orders_ready:false,readiness:"FINISHED",winner_points:150},
+    ],
+  }}));
+  await login(page);
+  await page.goto("/team/calendar");
+  await expect(page.getByRole("link",{name:/Watch again/})).toHaveAttribute(
+    "href","/team/view/entered-finish");
+  await expect(page.getByRole("heading",{name:"Other finished race"})).toBeVisible();
+  await expect(page.getByRole("link",{name:/Watch again/})).toHaveCount(1);
+});
+
 test("stage-race points preview separates GC, stages and classifications", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.route("**/api/events?*", route => route.fulfill({ json: {
