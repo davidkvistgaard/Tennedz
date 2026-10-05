@@ -1,5 +1,6 @@
-// Disposable two-manager, two-phase preview probe. Requires the allowlisted
-// isolated Supabase config and two p02-isolated-teams accounts. Clean the
+// Disposable two-phase preview probe for 2 or 45 independent managers.
+// Requires the allowlisted isolated Supabase config and the same number of
+// p02-isolated-teams accounts. Clean the
 // event/riders with two-phase-browser-small-cleanup.sql through the isolated
 // project's management SQL tool, then clean accounts with the fixture CLI.
 import assert from "node:assert/strict";
@@ -18,8 +19,10 @@ if (preview.protocol !== "https:" || !/^tennedz-[a-z0-9-]+\.vercel\.app$/.test(p
   throw Error("Use an isolated Vercel preview URL, never the production domain.");
 }
 const teams = JSON.parse(readFileSync(new URL("../../.recovery-local/p02-isolated-teams.json", import.meta.url), "utf8"));
-assert.equal(teams.length, 2);
-assert.notEqual(teams[0].userId, teams[1].userId);
+const managerCount = Number(process.argv[2] ?? 2);
+assert.ok([2, 45].includes(managerCount), "Use 2 or 45 managers.");
+assert.equal(teams.length, managerCount);
+assert.equal(new Set(teams.map(team => team.userId)).size, managerCount);
 const db = createClient(config.url, config.serviceKey,
   { auth: { persistSession: false, autoRefreshToken: false } });
 const eventId = randomUUID();
@@ -34,9 +37,21 @@ const riders = teams.flatMap((team, teamIndex) => Array.from({ length: 8 }, (_, 
 })));
 const browser = await chromium.launch({ headless: true,
   channel: process.platform === "win32" ? "msedge" : undefined });
-const contexts = [];
-const pages = [];
+const browserStates = [];
 const pageErrors = [];
+const activePages = new Set();
+const newManagerPage = async index => {
+  const context = await browser.newContext({ baseURL: preview.origin,
+    viewport: { width: 1280, height: 900 }, storageState: browserStates[index] });
+  const page = await context.newPage();
+  page.on("pageerror", error => pageErrors.push(error.message));
+  activePages.add(page);
+  return page;
+};
+const closeManagerPage = async page => {
+  activePages.delete(page);
+  await page.context().close();
+};
 async function ok(promise) {
   const result = await promise;
   if (result.error) throw result.error;
@@ -74,10 +89,8 @@ try {
     await ok(db.auth.admin.updateUserById(team.userId, { password }));
     const context = await browser.newContext({ baseURL: preview.origin,
       viewport: { width: 1280, height: 900 } });
-    contexts.push(context);
     const page = await context.newPage();
     page.on("pageerror", error => pageErrors.push(error.message));
-    pages.push(page);
     if (preview.searchParams.has("_vercel_share")) await page.goto(preview.href);
     await page.goto("/login");
     await page.getByLabel("Email or username").fill(account.user.email);
@@ -97,24 +110,37 @@ try {
     const entry = await ok(db.from("event_teams").select("team_id")
       .eq("event_id", eventId).eq("team_id", team.teamId).single());
     assert.equal(entry.team_id, team.teamId);
+    browserStates.push(await context.storageState());
+    await context.close();
     console.log(`Manager ${index + 1} registered through the preview calendar.`);
   }
 
-  assert.equal((await ok(db.from("event_teams").select("team_id").eq("event_id", eventId))).length, 2);
+  assert.equal((await ok(db.from("event_teams").select("team_id").eq("event_id", eventId))).length, managerCount);
   const closed = new Date(Date.now() - 60000).toISOString();
   await ok(db.from("events").update({ deadline: closed, registration_deadline: closed })
     .eq("id", eventId));
   await ok(db.from("recovery_autopilot_jobs").insert({ event_id: eventId, status: "COMPLETE" }));
   const reveal = await ok(db.rpc("recovery_commit_division_reveal", { p_event: eventId }));
-  assert.equal(reveal.assignments.length, 2);
-  for (const [index, page] of pages.entries()) {
-    await page.reload();
+  assert.equal(reveal.assignments.length, managerCount);
+  const divisions = new Map();
+  for (const assignment of reveal.assignments) {
+    divisions.set(assignment.divisionIndex, (divisions.get(assignment.divisionIndex) ?? 0) + 1);
+  }
+  assert.deepEqual([...divisions.values()].sort((a, b) => a - b),
+    managerCount === 45 ? [15, 15, 15] : [2]);
+  for (const [index, team] of teams.entries()) {
+    const page = await newManagerPage(index);
+    await page.goto(`/team/run?event_id=${eventId}`);
     await expect(page.getByRole("heading", { name: "Your division is ready" }))
       .toBeVisible({ timeout: 20000 });
-    await expect(page.getByText("Division 1 of 1", { exact: false })).toBeVisible();
-    await page.getByLabel("Team plan").selectOption(index === 0 ? "breakaway" : "conserve");
+    const division = reveal.assignments.find(row => row.teamId === team.teamId)?.divisionIndex;
+    assert.ok(division);
+    await expect(page.getByText(`Division ${division} of ${divisions.size}`, { exact: false })).toBeVisible();
+    await page.getByLabel("Team plan").selectOption(index % 2 === 0 ? "breakaway" : "conserve");
     await page.getByRole("button", { name: "Save changes" }).click();
     await expect(page.getByText("Your updated lineup and orders are saved until tactics close.")).toBeVisible();
+    browserStates[index] = await page.context().storageState();
+    await closeManagerPage(page);
   }
   const entries = await ok(db.from("event_teams").select("team_id,orders").eq("event_id", eventId));
   assert.equal(entries.find(entry => entry.team_id === teams[0].teamId).orders.plan, "breakaway");
@@ -125,28 +151,51 @@ try {
   await ok(db.rpc("recovery_commit_tactics_lock", { p_event: eventId }));
   await ok(db.from("events").update({ scheduled_at: new Date(Date.now() - 10000).toISOString() })
     .eq("id", eventId));
-  // Both viewers may arrive before either prepares the race. The database
-  // must still commit one replay and one set of point awards.
-  await Promise.all(pages.map(page => page.goto(`/team/view/${eventId}`)));
-  await Promise.all(pages.map(page => expect(page.locator(".replay-layout"))
+  // Representatives of every division may arrive before either prepares the
+  // race. The database must still commit one set of replays and awards.
+  const starterIndices = managerCount === 2 ? [0, 1] :
+    [...divisions.keys()].map(division => teams.findIndex(team =>
+      reveal.assignments.some(row => row.teamId === team.teamId && row.divisionIndex === division)));
+  assert.equal(new Set(starterIndices).size, divisions.size === 1 ? 2 : divisions.size);
+  const starterPages = await Promise.all(starterIndices.map(newManagerPage));
+  await Promise.all(starterPages.map(page => page.goto(`/team/view/${eventId}`)));
+  await Promise.all(starterPages.map(page => expect(page.locator(".replay-layout"))
     .toBeVisible({ timeout: 60000 })));
-  for (const page of pages) {
-    const response = await page.request.get(`/api/event/results?event_id=${eventId}`);
+  async function checkManagerResult(page, index) {
+    const division = reveal.assignments.find(row => row.teamId === teams[index].teamId)?.divisionIndex;
+    assert.ok(division);
+    const response = await page.request.get(
+      `/api/event/results?event_id=${eventId}&division_index=${division}`);
     assert.equal(response.status(), 200, await response.text());
     const result = await response.json();
-    assert.equal(result.teams.length, 2);
-    assert.equal(result.riders.length, 16);
+    assert.equal(result.teams.length, divisions.get(division));
+    assert.equal(result.riders.length, divisions.get(division) * 8);
+    assert.ok(result.teams.some(row => row.team_id === teams[index].teamId));
   }
-  assert.equal((await ok(db.from("event_team_results").select("team_id").eq("event_id", eventId))).length, 2);
-  assert.equal((await ok(db.from("event_rider_results").select("rider_id").eq("event_id", eventId))).length, 16);
-  assert.equal((await ok(db.from("event_division_runs").select("division_index").eq("event_id", eventId))).length, 1);
+  for (const [position, page] of starterPages.entries()) {
+    await checkManagerResult(page, starterIndices[position]);
+  }
+  for (const page of starterPages) await closeManagerPage(page);
+  for (let index = 0; index < managerCount; index++) {
+    if (starterIndices.includes(index)) continue;
+    const page = await newManagerPage(index);
+    await page.goto(`/team/view/${eventId}`);
+    await expect(page.locator(".replay-layout")).toBeVisible({ timeout: 60000 });
+    await checkManagerResult(page, index);
+    await closeManagerPage(page);
+  }
+  assert.equal((await ok(db.from("event_team_results").select("team_id").eq("event_id", eventId))).length, managerCount);
+  assert.equal((await ok(db.from("event_rider_results").select("rider_id").eq("event_id", eventId))).length, managerCount * 8);
+  assert.equal((await ok(db.from("event_division_runs").select("division_index").eq("event_id", eventId))).length, divisions.size);
   const awards = await ok(db.from("recovery_ranking_awards").select("award_key")
     .eq("event_id", eventId));
-  assert.equal(awards.length, 16);
-  assert.equal(new Set(awards.map(row => row.award_key)).size, 16);
+  const expectedAwards = managerCount === 45 ? 60 : 16;
+  assert.equal(awards.length, expectedAwards);
+  assert.equal(new Set(awards.map(row => row.award_key)).size, expectedAwards);
   const beforeRepeat = await ok(db.from("teams").select("id,rating")
     .in("id", teams.map(team => team.teamId)));
-  const repeat = await pages[1].request.post("/api/event/prepare", {
+  const repeatPage = await newManagerPage(1);
+  const repeat = await repeatPage.request.post("/api/event/prepare", {
     headers: { Origin: preview.origin }, data: { event_id: eventId },
   });
   assert.equal(repeat.status(), 200, await repeat.text());
@@ -156,12 +205,13 @@ try {
   assert.deepEqual(afterRepeat.sort((a, b) => a.id.localeCompare(b.id)),
     beforeRepeat.sort((a, b) => a.id.localeCompare(b.id)));
   assert.equal((await ok(db.from("recovery_ranking_awards").select("award_key")
-    .eq("event_id", eventId))).length, 16);
+    .eq("event_id", eventId))).length, expectedAwards);
+  await closeManagerPage(repeatPage);
   assert.deepEqual(pageErrors, []);
-  console.log("Two managers completed registration, reveal, tactics, replay, results and idempotent points.");
+  console.log(`${managerCount} managers completed registration, reveal, tactics, replay, results and idempotent points.`);
 } catch (error) {
   console.error("Browser probe failed:", error);
-  for (const [index, page] of pages.entries()) {
+  for (const [index, page] of [...activePages].entries()) {
     const location = new URL(page.url());
     console.error(`Manager ${index + 1} page:`, `${location.origin}${location.pathname}`,
       (await page.locator('[aria-label="Your division"]').innerText().catch(() => "No division panel")),
@@ -169,7 +219,6 @@ try {
   }
   throw error;
 } finally {
-  await Promise.allSettled(contexts.map(context => context.close()));
   await browser.close();
-  console.log(`Clean disposable event ${eventId} and its 16 riders with guarded management SQL.`);
+  console.log(`Clean disposable event ${eventId} and its ${managerCount * 8} riders with guarded management SQL.`);
 }
