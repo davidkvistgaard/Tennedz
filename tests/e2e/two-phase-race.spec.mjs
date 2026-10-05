@@ -6,6 +6,34 @@ const tacticsDeadline = new Date(Date.now() + 3_600_000).toISOString();
 const scheduledAt = new Date(Date.now() + 7_200_000).toISOString();
 const selectedRiders = Array.from({ length: 8 }, (_, index) => `fixture-M-${index}`);
 
+test("an open calendar changes from registration to tactics when the deadline passes", async ({ page }) => {
+  await page.goto("/login");
+  await page.getByLabel("Email or username").fill("alice");
+  await page.getByLabel("Password").fill("fixture-password");
+  await page.getByRole("button", { name: "Sign in", exact: true }).click();
+  await expect(page).toHaveURL(/\/team$/);
+
+  const start = new Date();
+  await page.clock.install({ time: start });
+  await page.route("**/api/events?*", route => route.fulfill({ json: {
+    ok: true, server_time: start.toISOString(), events: [{
+      id: eventId, name: "Registration boundary fixture", kind: "one_day", gender: "M",
+      status: "OPEN", deadline: new Date(start.getTime() + 10_000).toISOString(),
+      registration_deadline: new Date(start.getTime() + 10_000).toISOString(),
+      tactics_deadline: new Date(start.getTime() + 3_600_000).toISOString(),
+      scheduled_at: new Date(start.getTime() + 7_200_000).toISOString(),
+      entry_fee: 0, calendar_source: "PELOTONIA", race_tier: 3,
+      team_count: 8, team_size: 8, orders_ready: true,
+      readiness: "REGISTERED", winner_points: 250,
+    }],
+  } }));
+  await page.goto("/team/calendar");
+  await expect(page.getByRole("link", { name: /Set up/ })).toBeVisible();
+  await page.clock.runFor(15_000);
+  await expect(page.getByRole("link", { name: /Review tactics/ })).toBeVisible();
+  await expect(page.getByRole("link", { name: /Set up/ })).toHaveCount(0);
+});
+
 test("separately signed-in managers receive only their own division from the reveal API", async ({ browser }) => {
   const contexts = await Promise.all([browser.newContext(), browser.newContext(), browser.newContext()]);
   try {

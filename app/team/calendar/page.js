@@ -74,18 +74,25 @@ function PointsList({values}){
 
 export default function CalendarPage(){
   const [data,setData]=useState(null),[error,setError]=useState(""),[filter,setFilter]=useState("All");
+  const [now,setNow]=useState(Date.now()),[serverOffset,setServerOffset]=useState(0);
   useEffect(()=>{const requested=new URLSearchParams(window.location.search).get("filter");
     if(FILTERS.includes(requested))setFilter(requested);},[]);
-  useEffect(()=>{let active=true;api("/api/events?limit=100").then(result=>{if(active)setData(result);})
+  useEffect(()=>{const timer=setInterval(()=>setNow(Date.now()+serverOffset),5000);
+    return()=>clearInterval(timer);},[serverOffset]);
+  useEffect(()=>{let active=true;api("/api/events?limit=100").then(result=>{if(active){
+    const offset=Date.parse(result.server_time)-Date.now();
+    setServerOffset(Number.isFinite(offset)?offset:0);
+    setNow(Number.isFinite(offset)?Date.now()+offset:Date.now());
+    setData(result);
+  }})
     .catch(e=>{if(active)setError(e.message);});return()=>{active=false;};},[]);
   const visible=useMemo(()=>{
-    const now=Date.parse(data?.server_time??new Date().toISOString());
     const end=now+42*86400000;
     return (data?.events??[]).filter(event=>matches(event,filter)&&
       (event.scheduled_at?Date.parse(event.scheduled_at)>=now-7*86400000&&
         Date.parse(event.scheduled_at)<=end:event.status==="OPEN"))
       .sort((a,b)=>Date.parse(a.scheduled_at??a.deadline)-Date.parse(b.scheduled_at??b.deadline));
-  },[data,filter]);
+  },[data,filter,now]);
   const groups=useMemo(()=>{
     const result=new Map();
     for(const event of visible){const key=(event.scheduled_at??event.deadline).slice(0,10);
@@ -103,7 +110,7 @@ export default function CalendarPage(){
     {data&&!groups.length&&<section className="card agenda-empty"><h2>No races match this view yet</h2>
       <p>Choose another filter or return when the next events are published.</p></section>}
     {groups.map(([day,events])=><section className="agenda-day" key={day}>
-      <h2>{displayDate(day)}</h2><div className="agenda-grid">{events.map(event=><EventCard key={event.id} event={event} filter={filter} now={Date.parse(data.server_time)}/>)}</div>
+      <h2>{displayDate(day)}</h2><div className="agenda-grid">{events.map(event=><EventCard key={event.id} event={event} filter={filter} now={now}/>)}</div>
     </section>)}
   </div></TeamShell>;
 }
