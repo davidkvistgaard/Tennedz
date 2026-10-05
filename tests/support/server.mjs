@@ -8,6 +8,8 @@ const clubKits = new Map();
 const ids = { alice: "11111111-1111-4111-8111-111111111111", bob: "22222222-2222-4222-8222-222222222222", missing: "33333333-3333-4333-8333-333333333333", duplicate: "44444444-4444-4444-8444-444444444444", settings: "55555555-5555-4555-8555-555555555555" };
 const passwords = new Map(Object.keys(ids).map(name => [name, "fixture-password"]));
 const twoPhaseEventId = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
+const noContestFixture = process.env.PELOTONIA_E2E_NO_CONTEST === "true";
+let noContestCancelled = false;
 const divisionTeams = [
   ["team-alice", "ALICE Cycling", 1], ["team-a2", "ALICE Rival", 1],
   ["team-bob", "BOB Cycling", 2], ["team-b2", "BOB Rival", 2],
@@ -61,6 +63,13 @@ const server = http.createServer(async (req, res) => {
   }
   if (url.pathname.startsWith("/rest/v1/")) {
     if (req.headers.apikey !== "fixture-service-role") return send(403, { message: "Bad fixture key" });
+    if (noContestFixture && url.pathname === "/rest/v1/rpc/recovery_void_incomplete_two_phase_race") {
+      if (req.method !== "POST" || body.p_event !== twoPhaseEventId || body.p_user !== ids.alice)
+        return send(409, { code: "PT409", message: "This race cannot be cancelled under the missed-scan rule." });
+      const already_cancelled = noContestCancelled;
+      noContestCancelled = true;
+      return send(200, { ok: true, event_id: twoPhaseEventId, already_cancelled, registered_teams: 2 });
+    }
     if (url.pathname === "/rest/v1/club_identities") {
       if (req.method === "POST") { clubKits.set(body.team_id, { palette: body.palette, pattern: body.pattern }); return send(200, clubKits.get(body.team_id)); }
       const saved = clubKits.get(url.searchParams.get("team_id")?.replace("eq.", ""));
@@ -68,6 +77,25 @@ const server = http.createServer(async (req, res) => {
     }
     if (req.method !== "GET" && req.method !== "HEAD") return send(500, { message: "Unexpected database mutation in recovery" });
     const table = url.pathname.split("/").at(-1);
+    if (noContestFixture && table === "recovery_two_phase_voids")
+      return send(200, noContestCancelled ? [{
+        event_id: twoPhaseEventId, reason: "INCOMPLETE_ENTRY_SCAN", decided_by: ids.alice,
+        voided_at: "2026-10-05T15:01:00Z", registered_teams: 2,
+        processed_teams: 1, automatic_entries: 1,
+      }] : []);
+    if (noContestFixture && table === "events" && url.searchParams.get("status") === "eq.OPEN")
+      return send(200, noContestCancelled ? [] : [{
+        id: twoPhaseEventId, name: "Disposable no-contest fixture",
+        registration_deadline: "2026-10-05T12:00:00Z",
+        tactics_deadline: "2026-10-05T15:00:00Z",
+      }]);
+    if (noContestFixture && table === "events" && url.searchParams.get("id")?.startsWith("in."))
+      return send(200, [{ id: twoPhaseEventId, name: "Disposable no-contest fixture",
+        status: noContestCancelled ? "CANCELLED" : "OPEN" }]);
+    if (noContestFixture && table === "recovery_autopilot_jobs")
+      return send(200, [{ event_id: twoPhaseEventId, status: "PENDING",
+        processed_count: 1, entered_count: 1, updated_at: "2026-10-05T11:59:00Z" }]);
+    if (noContestFixture && table === "recovery_division_reveals") return send(200, []);
     if (table === "teams") {
       if (url.searchParams.get("id")?.startsWith("in."))
         return send(200, divisionTeams.map(([id, name]) => ({ id, name })));
@@ -108,7 +136,9 @@ const server = http.createServer(async (req, res) => {
 server.listen(54329, "127.0.0.1");
 const child = spawn(process.execPath, ["node_modules/next/dist/bin/next", "start", "-p", "3100"], { stdio: "inherit", env: {
   ...process.env, RACE_LAB_ENABLED: "true", SUPABASE_URL: "http://127.0.0.1:54329", SUPABASE_ANON_KEY: "fixture-anon", SUPABASE_SERVICE_ROLE_KEY: "fixture-service-role",
-  NEXT_PUBLIC_SUPABASE_URL: "", NEXT_PUBLIC_SUPABASE_ANON_KEY: "", APP_ORIGIN: "http://localhost:3100", ADMIN_USER_IDS: ids.alice, RECOVERY_ALLOW_GAME_WRITES: "false",
+  NEXT_PUBLIC_SUPABASE_URL: "", NEXT_PUBLIC_SUPABASE_ANON_KEY: "", APP_ORIGIN: "http://localhost:3100", ADMIN_USER_IDS: ids.alice,
+  RECOVERY_ALLOW_GAME_WRITES: noContestFixture ? "true" : "false",
+  PELOTONIA_AUTOPILOT_ENABLED: noContestFixture ? "true" : "false",
 } });
 const stop = () => { child.kill(); server.closeAllConnections(); server.close(); };
 process.on("SIGINT", stop); process.on("SIGTERM", stop);

@@ -245,6 +245,26 @@ test("administrator confirms a no-contest decision and sees the saved outcome", 
   expect(cancelled).toBe(true);
 });
 
+test("administrator no-contest action reaches the real route and saved fixture", async ({ page }) => {
+  test.skip(process.env.PELOTONIA_E2E_NO_CONTEST !== "true", "Run with the isolated no-contest server fixture");
+  await login(page);
+  await page.goto("/admin");
+  const panel = page.getByRole("region", { name: "Two-phase race health" });
+  await expect(panel.getByText("Disposable no-contest fixture")).toBeVisible();
+  page.once("dialog", dialog => dialog.accept());
+  await panel.getByRole("button", { name: "Cancel as no contest" }).click();
+  await expect(panel.getByRole("heading", { name: "Recent no-contest decisions" })).toBeVisible();
+  await expect(panel.getByText("2 registered teams", { exact: false })).toBeVisible();
+  const response = await page.request.get("/api/admin/autopilot/health");
+  expect(response.status()).toBe(200);
+  const saved = await response.json();
+  expect(saved.races).toHaveLength(0);
+  expect(saved.decisions).toMatchObject([{
+    event_id: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+    status: "CANCELLED", registered_teams: 2, processed_teams: 1,
+  }]);
+});
+
 test("a cancelled race remains visible on the calendar without a race action", async ({ page }) => {
   const now = new Date();
   const scheduled = new Date(now.getTime() + 86400000).toISOString();
