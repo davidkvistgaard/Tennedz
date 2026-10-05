@@ -17,6 +17,7 @@ async function handler(req, context, auth) {
     return NextResponse.json({
       ok: true,
       game_writes_enabled: process.env.RECOVERY_ALLOW_GAME_WRITES === "true",
+      two_phase_available: process.env.PELOTONIA_AUTOPILOT_ENABLED === "true",
       teams: teams.count ?? 0,
       riders: riders.count ?? 0,
       race_results: race_results.count ?? 0

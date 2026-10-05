@@ -178,3 +178,25 @@ test("administrator can opt in to a separate registration and tactics deadline",
   expect(Date.parse(saved.deadline)).toBeLessThan(Date.parse(saved.tactics_deadline));
   expect(Date.parse(saved.tactics_deadline)).toBeLessThan(Date.parse(saved.scheduled_at));
 });
+
+test("administrator sees a blocked registration scan without a recovery action", async ({ page }) => {
+  await login(page);
+  await page.route("**/api/admin/stats", route => route.fulfill({ json: {
+    ok: true, teams: 1, riders: 8, race_results: 0,
+    game_writes_enabled: true, two_phase_available: true,
+  } }));
+  await page.route("**/api/admin/autopilot/health", route => route.fulfill({ json: {
+    ok: true, enabled: true, races: [{
+      event_id: "preview-race", name: "Preview phase race",
+      registration_deadline: "2026-10-05T12:00:00Z",
+      tactics_deadline: "2026-10-05T15:00:00Z",
+      state: "BLOCKED", processed: 12, entered: 3, scan_updated_at: null,
+    }],
+  } }));
+  await page.goto("/admin");
+  const panel = page.getByRole("region", { name: "Two-phase race health" });
+  await expect(panel.getByText("Registration closed; entry scan incomplete", { exact: false })).toBeVisible();
+  await expect(panel.getByText("Entry scan: 12 teams checked, 3 entered", { exact: false })).toBeVisible();
+  await expect(panel.getByRole("button", { name: "Refresh race health" })).toBeVisible();
+  await expect(panel.getByRole("button", { name: /retry|force|reveal/i })).toHaveCount(0);
+});

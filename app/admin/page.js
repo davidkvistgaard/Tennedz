@@ -4,6 +4,7 @@ import { api } from "../../lib/api";
 import { RequireTeam } from "../components/AuthProvider";
 import TeamShell from "../components/TeamShell";
 import RaceCalendarAdmin from "../components/RaceCalendarAdmin";
+import TwoPhaseRaceHealth from "../components/TwoPhaseRaceHealth";
 
 function AdminStatus() {
   const [status, setStatus] = useState("Checking administrator access…");
@@ -75,6 +76,7 @@ function AdminStatus() {
             onCreated={loadEvents}
           />
         )}
+        {counts?.two_phase_available && <TwoPhaseRaceHealth />}
         <h2 style={{ marginTop: 30 }}>Race processing</h2>
         {counts &&
           events
