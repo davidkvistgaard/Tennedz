@@ -131,3 +131,28 @@ test("administrator editor exposes a scheduled Pelotonia race day and tier", asy
   await expect(page.getByLabel("Race tier")).toBeVisible();
   await expect(page.getByLabel("Race tier").locator("option")).toHaveCount(6);
 });
+
+test("administrator can opt in to a separate registration and tactics deadline", async ({ page }) => {
+  await login(page);
+  await page.route("**/api/admin/stats", route => route.fulfill({ json: {
+    ok:true,teams:1,riders:8,race_results:0,game_writes_enabled:true,
+  } }));
+  let saved;
+  await page.route("**/api/admin/race-calendar", async route => {
+    if(route.request().method()==="POST"){
+      saved=route.request().postDataJSON();
+      return route.fulfill({ json:{ok:true,event_ids:["men","women"],already_created:false} });
+    }
+    const response=await route.fetch();
+    const data=await response.json();
+    return route.fulfill({ json:{...data,two_phase_available:true} });
+  });
+  await page.goto("/admin");
+  await page.getByLabel(/Two-phase race/).check();
+  await expect(page.getByLabel(/Tactics deadline/)).toBeVisible();
+  await page.getByLabel("Race name").fill("Preview phase race");
+  await page.getByRole("button",{name:"Create free race day"}).click();
+  await expect(page.getByRole("status").filter({hasText:"Registration is open"})).toBeVisible();
+  expect(Date.parse(saved.deadline)).toBeLessThan(Date.parse(saved.tactics_deadline));
+  expect(Date.parse(saved.tactics_deadline)).toBeLessThan(Date.parse(saved.scheduled_at));
+});

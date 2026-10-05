@@ -51,3 +51,20 @@ test("scheduled calendar creation preserves a UCI source week and keeps genders 
   assert.equal(calendarRequest({...input,calendar_source:"PELOTONIA",
     source_date:null,source_url:null},now).calendar_source,"PELOTONIA");
 });
+
+test("two-phase calendar creation leaves time for the next division scan",()=>{
+  const now=Date.parse("2026-10-05T09:00:00Z");
+  const input={name:"Two phase race",template_id:"coast",gender:"BOTH",
+    deadline:"2026-10-06T12:00:00Z",tactics_deadline:"2026-10-08T12:00:00Z",
+    scheduled_at:"2026-10-11T18:00:00Z",calendar_source:"PELOTONIA",race_tier:1};
+  const value=calendarRequest(input,now);
+  assert.equal(value.tactics_deadline,new Date(input.tactics_deadline).toISOString());
+  for(const patch of [
+    {tactics_deadline:"invalid"},
+    {tactics_deadline:"2026-10-07T03:00:00Z"},
+    {tactics_deadline:"2026-10-11T18:00:00Z"},
+    {scheduled_at:undefined},
+  ])assert.throws(()=>calendarRequest({...input,...patch},now));
+  const legacy=calendarRequest({...input,tactics_deadline:undefined},now);
+  assert.equal(legacy.tactics_deadline,undefined);
+});

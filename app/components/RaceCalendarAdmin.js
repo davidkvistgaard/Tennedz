@@ -12,7 +12,10 @@ export default function RaceCalendarAdmin({ enabled, onCreated }) {
     [name, setName] = useState(""),
     [gender, setGender] = useState("BOTH"),
     [deadline, setDeadline] = useState(""),
+    [tacticsDeadline, setTacticsDeadline] = useState(""),
     [scheduledAt, setScheduledAt] = useState(""),
+    [twoPhaseAvailable, setTwoPhaseAvailable] = useState(false),
+    [twoPhase, setTwoPhase] = useState(false),
     [tier, setTier] = useState("1"),
     [busy, setBusy] = useState(false),
     [message, setMessage] = useState("");
@@ -21,7 +24,10 @@ export default function RaceCalendarAdmin({ enabled, onCreated }) {
     let active = true;
     api("/api/admin/race-calendar")
       .then((data) => {
-        if (active) setTemplates(data.templates);
+        if (active) {
+          setTemplates(data.templates);
+          setTwoPhaseAvailable(Boolean(data.two_phase_available));
+        }
       })
       .catch((e) => {
         if (active) setMessage(e.message);
@@ -34,6 +40,10 @@ export default function RaceCalendarAdmin({ enabled, onCreated }) {
         .toISOString()
         .slice(0, 16),
     );
+    const tactics=new Date(day);
+    tactics.setDate(tactics.getDate()+3);
+    setTacticsDeadline(new Date(tactics.getTime()-tactics.getTimezoneOffset()*60000)
+      .toISOString().slice(0,16));
     const race=new Date();
     race.setDate(race.getDate()+7);
     while(![0,3].includes(race.getDay()))race.setDate(race.getDate()+1);
@@ -58,6 +68,7 @@ export default function RaceCalendarAdmin({ enabled, onCreated }) {
         scheduled_at: new Date(scheduledAt).toISOString(),
         calendar_source: "PELOTONIA",
         race_tier: Number(tier),
+        ...(twoPhase?{tactics_deadline:new Date(tacticsDeadline).toISOString()}:{}),
       };
       const signature = JSON.stringify(input);
       if (request.current?.signature !== signature)
@@ -68,7 +79,7 @@ export default function RaceCalendarAdmin({ enabled, onCreated }) {
         body: JSON.stringify({ ...input, request_id: request.current.id }),
       });
       setMessage(
-        `${result.event_ids.length} ${result.event_ids.length === 1 ? "race is" : "separate races are"} ${result.already_created ? "already created" : "created"}. Entries are open in the calendar.`,
+        `${result.event_ids.length} ${result.event_ids.length === 1 ? "race is" : "separate races are"} ${result.already_created ? "already created" : "created"}. Registration is open in the calendar.`,
       );
       await onCreated();
     } catch (e) {
@@ -119,7 +130,7 @@ export default function RaceCalendarAdmin({ enabled, onCreated }) {
             </select>
           </label>
           <label>
-            Entry deadline · your local time
+            {twoPhase?"Registration deadline":"Entry deadline"} · your local time
             <input
               required
               type="datetime-local"
@@ -127,6 +138,17 @@ export default function RaceCalendarAdmin({ enabled, onCreated }) {
               onChange={(e) => setDeadline(e.target.value)}
             />
           </label>
+          {twoPhaseAvailable && <label>
+            <input type="checkbox" checked={twoPhase}
+              onChange={(e)=>setTwoPhase(e.target.checked)} />
+            Two-phase race: reveal divisions, then allow tactics changes
+          </label>}
+          {twoPhase && <label>
+            Tactics deadline · your local time
+            <input required type="datetime-local" value={tacticsDeadline}
+              onChange={(e)=>setTacticsDeadline(e.target.value)} />
+            <small>Leave time after registration for the daily division reveal.</small>
+          </label>}
           <label>
             Race day · Wednesday or Sunday · your local time
             <input required type="datetime-local" value={scheduledAt}

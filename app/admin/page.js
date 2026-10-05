@@ -87,7 +87,7 @@ function AdminStatus() {
                   disabled={
                     busy ||
                     !counts.game_writes_enabled ||
-                    new Date(e.deadline) > new Date()
+                    new Date(e.registration_deadline ? e.scheduled_at : e.deadline) > new Date()
                   }
                   onClick={() => runEvent(e.id)}
                 >
