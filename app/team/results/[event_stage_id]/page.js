@@ -65,14 +65,14 @@ export default function ResultsPage({ params }) {
   }, [eventId, division, revealed]);
   const mine = data?.teams.find((t) => t.team_id === teamId);
   return (
-    <TeamShell title="Results & points">
+    <TeamShell title="Results & rating gains">
       {!revealed ? (
         <section className="card empty-state">
           <p className="eyebrow">Keep the suspense</p>
           <h2>Watch the race first?</h2>
           <p>
-            The results reveal the winner, the placings, and the points
-            earned.
+            The results reveal the winner, the placings, and the rating
+            gains.
           </p>
           <div className="control-row">
             <Link
@@ -105,8 +105,8 @@ export default function ResultsPage({ params }) {
                   </p>
                   <h2>{data.event.name}</h2>
                   <p className="small">
-                    Your team’s placing follows your captain’s time. Points are adjusted
-                    by division.
+                    Your team's placing follows your captain's time. Rating gains
+                    are adjusted by division.
                   </p>
                 </div>
                 <label>
@@ -140,7 +140,7 @@ export default function ResultsPage({ params }) {
                     <strong>#{mine.position}</strong>
                   </div>
                   <div>
-                    <span>Team points from this race</span>
+                    <span>Team rating gain</span>
                     <strong>+{mine.points}</strong>
                   </div>
                   <div>
@@ -173,7 +173,7 @@ export default function ResultsPage({ params }) {
                             <th scope="col">Pos.</th>
                             <th scope="col">Team</th>
                             <th scope="col">Gap</th>
-                            <th scope="col">Points</th>
+                            <th scope="col">Rating gain</th>
                             <th scope="col">Division multiplier</th>
                           </tr>
                         </thead>
@@ -213,8 +213,8 @@ export default function ResultsPage({ params }) {
                   <section className="card results-table">
                     <h2>Rider results</h2>
                     <p className="small">
-                      The first 20 riders earn rider points. These points
-                      contribute to your team’s rating in this race category.
+                      The first 20 riders gain rating. Team rating uses the
+                      separate team result above.
                     </p>
                     <div className="table-scroll">
                       <table className="table">
@@ -224,7 +224,7 @@ export default function ResultsPage({ params }) {
                             <th scope="col">Rider</th>
                             <th scope="col">Team</th>
                             <th scope="col">Gap</th>
-                            <th scope="col">Points</th>
+                            <th scope="col">Rating gain</th>
                           </tr>
                         </thead>
                         <tbody>

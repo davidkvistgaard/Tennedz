@@ -72,7 +72,7 @@ for(const width of [390,1440])test(`English manager journey from signup to repla
   await fits();await page.screenshot({path:`test-results/journey-replay-${width}.png`,fullPage:true});
   await page.getByRole('slider',{name:'Playback position'}).focus();await page.keyboard.press('End');
   await expect(page.getByText('The race is decided',{exact:true})).toBeVisible();
-  await page.getByRole('link',{name:'View results and points →'}).click();
+  await page.getByRole('link',{name:'View results and rating gains →'}).click();
   await expect(page.getByRole('heading',{name:'Team results',exact:true})).toBeVisible();
   await expect(page.getByRole('heading',{name:'Rider results',exact:true})).toBeVisible();
   await fits();await page.screenshot({path:`test-results/journey-results-${width}.png`,fullPage:true});

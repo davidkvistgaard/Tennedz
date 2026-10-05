@@ -243,7 +243,7 @@ export default function RaceViewer({ run, teamId }) {
               className="btn primary"
               href={`/team/results/${run.event_id}?division=${run.division_index}`}
             >
-              View results and points →
+              View results and rating gains →
             </Link>
           </section>
         )}

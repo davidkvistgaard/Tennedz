@@ -157,16 +157,33 @@ try{
     await page.keyboard.press('End');
     await expect(page.getByText('The race is decided',{exact:true})).toBeVisible();
     const resultsRequest=page.waitForResponse(response=>response.url().includes('/api/event/results?')&&response.status()===200);
-    await page.getByRole('link',{name:/View results and points/}).click();
+    await page.getByRole('link',{name:/View results and rating gains/}).click();
     const results=await (await resultsRequest).json();
-    assert.ok(results.teams.some(row=>row.team_id===team.teamId));
+    const ownResult=results.teams.find(row=>row.team_id===team.teamId);
+    assert.ok(ownResult);
     for(const other of browserTeams.filter(other=>other.teamId!==team.teamId))
       if(divisionByTeam.get(other.teamId)!==ownDivision)
         assert.ok(!results.teams.some(row=>row.team_id===other.teamId));
     await expect(page.getByRole('heading',{name:'Team results'})).toBeVisible();
     await expect(page.getByLabel('Results division')).toContainText('your team');
     await expect(page.getByLabel('Results division')).toHaveValue(String(ownDivision));
-    await expect(page.getByText('Team points from this race')).toBeVisible();
+    const storedTeamResult=await db.from('event_team_results').select('points')
+      .eq('event_id',fixture.eventId).eq('team_id',team.teamId).single();
+    if(storedTeamResult.error)throw storedTeamResult.error;
+    assert.equal(Number(ownResult.points),Number(storedTeamResult.data.points));
+    await expect(page.locator('.result-summary').getByText('Team rating gain')).toBeVisible();
+    await expect(page.locator('.result-summary div').filter({hasText:'Team rating gain'}).locator('strong'))
+      .toHaveText(`+${ownResult.points}`);
+    await expect(page.locator('.results-table').first().locator('tr.own-result td').nth(3))
+      .toHaveText(String(ownResult.points));
+    const ownRider=results.riders.find(row=>row.team_id===team.teamId);
+    assert.ok(ownRider);
+    const storedRiderResult=await db.from('event_rider_results').select('points')
+      .eq('event_id',fixture.eventId).eq('rider_id',ownRider.rider_id).single();
+    if(storedRiderResult.error)throw storedRiderResult.error;
+    assert.equal(Number(ownRider.points),Number(storedRiderResult.data.points));
+    await expect(page.locator('.results-table').nth(1).locator('tr.own-result').first().locator('td').nth(4))
+      .toHaveText(String(ownRider.points));
   }
   assert.deepEqual(errors,[]);
   console.log(`PASS isolated browser: ${participantCount} separate manager sessions, lineups and orders, 45-team ${participantStart?'participant-started':'admin-started'} run, own replays and division results (${new Set(divisionByTeam.values()).size} divisions).`);
