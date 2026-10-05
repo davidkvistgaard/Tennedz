@@ -1,0 +1,5 @@
+# Due division reveal wiring
+
+The opt-in two-phase flow now has two callers for the persisted division reveal. The enabled autopilot cron checks races whose registration deadline has passed and whose tactics window is still open. It calls the idempotent reveal RPC only after that race's automatic-entry job is `COMPLETE` and unleased. A registered manager viewing a pending division can request the same RPC through `/api/event/reveal/prepare`; the page retries while the job is incomplete and reloads the participant-only division summary after success. The RPC still enforces its own deadline, completed-job and entrant checks.
+
+The one-deadline calendar and race flow remain on their existing paths. Both new callers retain the game-write gate. The cron's existing schedule is once daily; a race created shortly before registration closes, or an incomplete autopilot scan, may still miss the reveal window. That scheduling and recovery case needs an isolated end-to-end test before the flow is considered playable. No production cron, database or deployment was changed.

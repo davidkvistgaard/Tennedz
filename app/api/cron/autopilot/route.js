@@ -4,6 +4,7 @@ import {databaseClient,authFailure,privateHeaders,requireGameWrites} from "../..
 import {AuthError} from "../../../../lib/auth/policy.mjs";
 import {rpc} from "../../../../lib/race/server";
 import {runAutopilotBatch} from "../../../../lib/calendar/autopilot-server";
+import {revealDueDivisions} from "../../../../lib/calendar/reveal-server";
 
 export const dynamic="force-dynamic";
 export const maxDuration=60;
@@ -35,7 +36,8 @@ export async function GET(req){
       batches.push({event_id:job.event_id,processed:batch.processed,
         entered:batch.entered,complete});
     }
-    return NextResponse.json({ok:true,enabled:true,batches},
+    const divisions=await revealDueDivisions(db);
+    return NextResponse.json({ok:true,enabled:true,batches,divisions},
       {headers:privateHeaders});
   }catch(error){return authFailure(error);}
 }

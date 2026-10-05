@@ -178,6 +178,21 @@ export default function RunPage() {
     }
     setRevealLoading(true);
     const refresh = () => api(`/api/event/reveal?event_id=${eventId}`, { signal: abort.signal })
+      .then(async (initial) => {
+        if (initial.phase !== "reveal_pending") return initial;
+        try {
+          await api("/api/event/reveal/prepare", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ event_id: eventId }),
+            signal: abort.signal,
+          });
+        } catch (error) {
+          if (error.status !== 409) throw error;
+          return initial;
+        }
+        return api(`/api/event/reveal?event_id=${eventId}`, { signal: abort.signal });
+      })
       .then((data) => {
         if (!abort.signal.aborted) { setReveal(data); setRevealError(""); }
       })

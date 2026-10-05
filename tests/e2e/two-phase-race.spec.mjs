@@ -9,6 +9,8 @@ const selectedRiders = Array.from({ length: 8 }, (_, index) => `fixture-M-${inde
 test("a registered manager sees the saved division and can edit tactics without entering again", async ({ page }) => {
   const pageErrors = [];
   const tacticsPosts = [];
+  const revealPosts = [];
+  let revealCommitted = false;
   page.on("pageerror", (error) => pageErrors.push(error.message));
 
   await page.goto("/login");
@@ -35,13 +37,20 @@ test("a registered manager sees the saved division and can edit tactics without 
     entry: { selected_riders: selectedRiders, captain_id: selectedRiders[0], orders: null },
   } }));
   await page.route("**/api/event/reveal?*", (route) => route.fulfill({ json: {
-    ok: true, event_id: eventId, phase: "preparation", division: { index: 2, total: 3,
+    ok: true, event_id: eventId,
+    phase: revealCommitted ? "preparation" : "reveal_pending",
+    division: revealCommitted ? { index: 2, total: 3,
       teams: [
         { team_id: "team-alice", name: "ALICE Cycling", earned_points_at_lock: 120, seed_rank: 16 },
         { team_id: "team-bob", name: "BOB Cycling", earned_points_at_lock: 110, seed_rank: 17 },
       ],
-    },
+    } : null,
   } }));
+  await page.route("**/api/event/reveal/prepare", async (route) => {
+    revealPosts.push(route.request().postDataJSON());
+    revealCommitted = true;
+    await route.fulfill({ json: { ok: true, already_revealed: false } });
+  });
   await page.route("**/api/event/tactics", async (route) => {
     tacticsPosts.push(route.request().postDataJSON());
     await route.fulfill({ json: { ok: true } });
@@ -53,6 +62,7 @@ test("a registered manager sees the saved division and can edit tactics without 
   );
   await page.goto(`/team/run?event_id=${eventId}`);
   await expect(page.getByRole("heading", { name: "Your division is ready" })).toBeVisible();
+  expect(revealPosts).toEqual([{ event_id: eventId }]);
   await expect(page.getByText("Division 2 of 3", { exact: false })).toBeVisible();
   await expect(page.getByText("BOB Cycling", { exact: false })).toBeVisible();
   await expect(page.getByText("ALICE Cycling (your team)", { exact: false })).toBeVisible();
