@@ -23,6 +23,17 @@ test('readiness is private to the team entry, not the event lifecycle',()=>{
   assert.equal(entryReadiness({...event,status:'FINISHED'},null),'FINISHED');
 });
 
+test('two-phase calendar shows the preparation window only to registered teams',()=>{
+  const now=new Date('2026-10-05T12:00:00Z');
+  const event={status:'OPEN',deadline:'2026-10-05T11:00:00Z',
+    registration_deadline:'2026-10-05T11:00:00Z',
+    tactics_deadline:'2026-10-05T13:00:00Z',teamSize:2};
+  assert.equal(entryReadiness(event,null,now),'REGISTRATION_CLOSED');
+  assert.equal(entryReadiness(event,{selected_riders:['a','b'],captain_id:'a'},now),'TACTICS_WINDOW');
+  assert.equal(entryReadiness({...event,tactics_deadline:'2026-10-05T12:00:00Z'},null,now),'LOCKED');
+  assert.equal(entryReadiness({...event,registration_deadline:null},null,now),'LOCKED');
+});
+
 test('autopilot replaces unavailable defaults deterministically without inventing riders',()=>{
   const roster=[{id:'a',gender:'M',rating:10},{id:'b',gender:'M',rating:50},
     {id:'c',gender:'M',rating:70},{id:'d',gender:'M',rating:60},

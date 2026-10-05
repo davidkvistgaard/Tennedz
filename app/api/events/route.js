@@ -7,7 +7,7 @@ import { pointsForResult } from "../../../lib/calendar/points.mjs";
 // Upcoming entries must not disappear behind an ever-growing race archive.
 // Read each bucket independently, returning only public event metadata.
 const fields =
-  "id,name,kind,gender,country_code,stage_profile_id,entry_fee,status,deadline,calendar_source,race_tier,race_team_size,scheduled_at,source_date,calendar_pair_id";
+  "id,name,kind,gender,country_code,stage_profile_id,entry_fee,status,deadline,registration_deadline,tactics_deadline,calendar_source,race_tier,race_team_size,scheduled_at,source_date,calendar_pair_id";
 async function handler(req, context, auth) {
   const url = new URL(req.url);
   const requested = Number(url.searchParams.get("limit") ?? 50);

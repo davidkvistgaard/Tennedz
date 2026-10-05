@@ -5,6 +5,7 @@ import Image from "next/image";
 import TeamShell from "../../components/TeamShell";
 import StageProfile from "../../components/StageProfile";
 import RiderAvatar from "../../components/RiderAvatar";
+import DivisionReveal from "../../components/DivisionReveal";
 import LineupPresets from "../../components/LineupPresets";
 import { useAuth } from "../../components/AuthProvider";
 import { api } from "../../../lib/api";
@@ -69,6 +70,9 @@ export default function RunPage() {
     [busy, setBusy] = useState(false),
     [notice, setNotice] = useState("");
   const [orderDraft,setOrderDraft]=useState(null);
+  const [reveal,setReveal]=useState(null),
+    [revealLoading,setRevealLoading]=useState(false),
+    [revealError,setRevealError]=useState("");
   const orders=draftOrders(orderDraft,selected,captain);
   const [sortKey, setSortKey] = useState("form"),
     [now, setNow] = useState(Date.now()),
@@ -116,14 +120,19 @@ export default function RunPage() {
     load();
   }, []);
   const event = events.find((e) => e.id === eventId),
-    locked =
-      !event || event.status !== "OPEN" || Date.parse(event.deadline) <= now;
+    twoPhase = Boolean(event?.registration_deadline && event?.tactics_deadline),
+    canRegister = Boolean(event?.status === "OPEN" && Date.parse(event.deadline) > now),
+    canPrepare = Boolean(twoPhase && event?.status === "OPEN" && saved?.event_id === eventId
+      && reveal?.phase === "preparation" && Date.parse(event.tactics_deadline) > now),
+    locked = !event || !(canRegister || canPrepare);
   useEffect(() => {
     const abort = new AbortController();
     setSelected([]);
     setOrderDraft(null);
     setCaptain("");
     setSaved(null);
+    setReveal(null);
+    setRevealError("");
     setStage(null);
     setEntryError("");
     setNotice("");
@@ -139,7 +148,7 @@ export default function RunPage() {
       .then(([profile, entry]) => {
         if (abort.signal.aborted) return;
         setStage(profile.stage);
-        setSaved(entry.entry);
+        setSaved(entry.entry ? { ...entry.entry, event_id: eventId } : null);
         setOrderDraft(entry.entry?.orders || null);
         setSelected(entry.entry?.selected_riders || []);
         setCaptain(entry.entry?.captain_id || "");
@@ -157,6 +166,25 @@ export default function RunPage() {
       });
     return () => abort.abort();
   }, [eventId]);
+  useEffect(() => {
+    const abort = new AbortController();
+    setReveal(null);
+    setRevealError("");
+    if (!twoPhase || saved?.event_id !== eventId) {
+      setRevealLoading(false);
+      return;
+    }
+    setRevealLoading(true);
+    const refresh = () => api(`/api/event/reveal?event_id=${eventId}`, { signal: abort.signal })
+      .then((data) => {
+        if (!abort.signal.aborted) { setReveal(data); setRevealError(""); }
+      })
+      .catch((error) => { if (!abort.signal.aborted) setRevealError(error.message); })
+      .finally(() => { if (!abort.signal.aborted) setRevealLoading(false); });
+    refresh();
+    const timer = setInterval(refresh, 30000);
+    return () => { abort.abort(); clearInterval(timer); };
+  }, [eventId, twoPhase, saved]);
   const list = events.filter(
     (e) =>
       e.gender === gender &&
@@ -204,7 +232,7 @@ export default function RunPage() {
     setBusy(true);
     setNotice("");
     try {
-      await api("/api/event/join", {
+      await api(canPrepare ? "/api/event/tactics" : "/api/event/join", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -215,9 +243,13 @@ export default function RunPage() {
     orders,
         }),
       });
-      setSaved({ selected_riders: [...selected], captain_id: captain, orders });
+      setSaved({ event_id: eventId, selected_riders: [...selected], captain_id: captain, orders });
       setNotice(
-        "Your team is entered. You can change your lineup and orders until the deadline.",
+        canPrepare
+          ? "Your updated lineup and orders are saved until tactics close."
+          : twoPhase
+            ? "Your team is registered. Divisions will be revealed after registration closes."
+            : "Your team is entered. You can change your lineup and orders until the deadline.",
       );
     } catch (e) {
       setNotice(e.message);
@@ -238,7 +270,7 @@ export default function RunPage() {
       <ol className="race-steps" aria-label="Your race plan">
         <li aria-current={!event ? "step" : undefined}><span>01</span><div><strong>Find your race</strong><small>A route to suit your squad.</small></div></li>
         <li aria-current={event && !saved ? "step" : undefined}><span>02</span><div><strong>Choose your eight</strong><small>One captain. A shared ambition.</small></div></li>
-        <li aria-current={saved ? "step" : undefined}><span>03</span><div><strong>Watch it unfold</strong><small>All decisions lock at the deadline.</small></div></li>
+        <li aria-current={saved ? "step" : undefined}><span>03</span><div><strong>Watch it unfold</strong><small>{twoPhase ? "Meet your division, then set final tactics." : "All decisions lock at the deadline."}</small></div></li>
       </ol>
       <div className="calendar-toolbar">
         <div className="segmented" aria-label="Category">
@@ -322,7 +354,9 @@ export default function RunPage() {
                   {e.status === "FINISHED"
                     ? "Ready to watch"
                     : Date.parse(e.deadline) <= now
-                      ? "Entries closed"
+                      ? e.tactics_deadline && Date.parse(e.tactics_deadline) > now
+                        ? "Registration closed · tactics window"
+                        : "Entries closed"
                       : `Deadline in ${countdown(e.deadline, now)}`}
                 </span>
                 <strong>
@@ -349,9 +383,11 @@ export default function RunPage() {
               <h2>{event.name}</h2>
             </div>
             <span className="deadline-badge">
-              {locked
-                ? "Entries closed"
-                : `Deadline in ${countdown(event.deadline, now)}`}
+              {canPrepare
+                ? `Tactics close in ${countdown(event.tactics_deadline, now)}`
+                : locked
+                  ? "Entries closed"
+                  : `Deadline in ${countdown(event.deadline, now)}`}
             </span>
           </div>
           {entryLoading ? (
@@ -363,6 +399,8 @@ export default function RunPage() {
           ) : (
             <>
               {stage && <StageProfile stage={stage} />}
+              {twoPhase && saved && <DivisionReveal view={reveal} error={revealError}
+                loading={revealLoading} myTeamId={team?.id} />}
               {!locked && <a className="lineup-jump" href="#race-lineup">Build your lineup <span aria-hidden="true">↓</span></a>}
               {event.status === "FINISHED" ? (
                 <div className="card race-ready">
@@ -383,7 +421,7 @@ export default function RunPage() {
                 </div>
               ) : (
                 <>
-                  {locked && saved && (
+                  {locked && saved && !twoPhase && (
                     <section className="card race-ready">
                       <h2>Your lineup is locked</h2>
                       <p>
@@ -463,7 +501,8 @@ export default function RunPage() {
                         );
                       })}
                     </div>
-                    <RaceOrders orders={orders} riders={selected.map(id=>riders.find(r=>r.id===id)).filter(Boolean)} onChange={setOrderDraft} disabled={locked || busy || entryLoading} />
+                    <RaceOrders orders={orders} riders={selected.map(id=>riders.find(r=>r.id===id)).filter(Boolean)} onChange={setOrderDraft} disabled={locked || busy || entryLoading}
+                      lockMessage={twoPhase ? "Saved with your lineup and locked when tactics close." : undefined} />
                     <div className="lineup-save">
                       <span>
                         {selected.length}/8 riders ·{" "}
@@ -480,16 +519,22 @@ export default function RunPage() {
                         {busy
                           ? "Saving…"
                           : locked
-                            ? "Deadline passed"
+                            ? twoPhase ? "Tactics unavailable" : "Deadline passed"
                             : saved
                               ? "Save changes"
                               : "Enter team"}
                       </button>
                     </div>
                     <p className="small">
-                      {locked
-                        ? "Your saved lineup is locked. The race can run once at least two teams have entered."
-                        : "The entry fee is paid only once. Changes before the deadline cost nothing extra."}
+                      {twoPhase
+                        ? canPrepare
+                          ? "Your division is set. You can change this lineup and these orders until tactics close, at no extra cost."
+                          : canRegister
+                            ? "The entry fee is paid only once. Registration closes before divisions are revealed."
+                            : "Changes are closed until your division is revealed, or after the tactics deadline."
+                        : locked
+                          ? "Your saved lineup is locked. The race can run once at least two teams have entered."
+                          : "The entry fee is paid only once. Changes before the deadline cost nothing extra."}
                     </p>
                     {notice && (
                       <p role="status" className="form-message">
