@@ -24,8 +24,13 @@ assert.ok(['pending-browser','entered'].includes(fixture.phase));
 const db=createClient(config.url,config.serviceKey,{auth:{persistSession:false,autoRefreshToken:false}});
 const browser=await chromium.launch({headless:true,channel:process.platform==='win32'?'msedge':undefined});
 const participantCount=fixture.browserEntries||1;
-const participantStart=process.argv[2]==='participant';
-if(process.argv[2]&&!participantStart)throw Error('Use no argument or participant.');
+const startMode=process.argv[2]??'admin';
+if(!['admin','participant','participant-concurrent'].includes(startMode))
+  throw Error('Use no argument, participant or participant-concurrent.');
+const participantStart=startMode!=='admin';
+const concurrentStart=startMode==='participant-concurrent';
+if(concurrentStart&&participantCount<3)
+  throw Error('Concurrent participant start requires at least three browser managers.');
 const browserTeams=(fixture.browserTeamIds||[teams[0].teamId]).map(id=>{
   const team=teams.find(candidate=>candidate.teamId===id);
   if(!team)throw Error('A reserved browser team is missing from the fixture.');
@@ -112,16 +117,33 @@ try{
     const cutoff=await db.from('events').update({deadline:new Date(Date.now()-5000).toISOString()})
       .eq('id',fixture.eventId);
     if(cutoff.error)throw cutoff.error;
-    const firstPage=pages[0];
-    await firstPage.reload();
-    await expect(firstPage.getByRole('heading',{name:'Your lineup is locked'})).toBeVisible();
-    const preparation=firstPage.waitForResponse(response=>
-      response.url().includes('/api/event/prepare')&&response.request().method()==='POST');
-    await firstPage.getByRole('link',{name:/Watch the race/}).first().click();
-    const prepared=await preparation;
-    assert.equal(prepared.status(),200,await prepared.text());
-    assert.equal((await prepared.json()).already_finished,false);
-    await expect(firstPage.getByRole('heading',{name:'Race commentary'})).toBeVisible();
+    const starters=concurrentStart?pages.slice(0,3):pages.slice(0,1);
+    await Promise.all(starters.map(async page=>{
+      await page.reload();
+      await expect(page.getByRole('heading',{name:'Your lineup is locked'})).toBeVisible();
+    }));
+    if(concurrentStart){
+      const responses=await Promise.all(starters.map(page=>page.context().request.post(
+        '/api/event/prepare',{
+          data:{event_id:fixture.eventId},headers:{Origin:'http://localhost:3100'},
+        })));
+      const outcomes=[];
+      for(const response of responses){
+        assert.equal(response.status(),200,await response.text());
+        outcomes.push(await response.json());
+      }
+      assert.equal(outcomes.filter(outcome=>outcome.already_finished===false).length,1);
+      assert.equal(outcomes.filter(outcome=>outcome.already_finished===true).length,2);
+    }else{
+      const firstPage=pages[0];
+      const preparation=firstPage.waitForResponse(response=>
+        response.url().includes('/api/event/prepare')&&response.request().method()==='POST');
+      await firstPage.getByRole('link',{name:/Watch the race/}).first().click();
+      const prepared=await preparation;
+      assert.equal(prepared.status(),200,await prepared.text());
+      assert.equal((await prepared.json()).already_finished,false);
+      await expect(firstPage.getByRole('heading',{name:'Race commentary'})).toBeVisible();
+    }
     const commits=await db.from('recovery_race_commits').select('event_id').eq('event_id',fixture.eventId);
     if(commits.error)throw commits.error;
     assert.equal(commits.data.length,1);
@@ -238,7 +260,7 @@ try{
   await expect(rankingPage.locator('.rankings-list li').filter({hasText:ranking.name}))
     .toContainText(`${expectedSportingPoints.toLocaleString('en-GB')} pts`);
   assert.deepEqual(errors,[]);
-  console.log(`PASS isolated browser: ${participantCount} separate manager sessions, lineups and orders, 45-team ${participantStart?'participant-started':'admin-started'} run, own replays and division results (${new Set(divisionByTeam.values()).size} divisions), sporting leaderboard matches the award ledger.`);
+  console.log(`PASS isolated browser: ${participantCount} separate manager sessions, lineups and orders, 45-team ${startMode} run, own replays and division results (${new Set(divisionByTeam.values()).size} divisions), sporting leaderboard matches the award ledger.`);
 }finally{
   await browser.close();
 }
