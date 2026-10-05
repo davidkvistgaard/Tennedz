@@ -17,7 +17,7 @@ export default function DivisionReveal({ view, error, loading, myTeamId }) {
     {view.phase === "reveal_pending" &&
       <p>Registration has closed. Your opponents will appear when the division reveal is saved.</p>}
     {view.phase === "reveal_overdue" &&
-      <p>The division reveal was not saved before tactics closed. An administrator needs to review the automatic entry scan before this race can continue.</p>}
+      <p>The division reveal was not saved before tactics closed. This race cannot be recorded without it. An administrator must review the missed deadline; a no-contest decision means no result or points.</p>}
     {view.phase === "preparation" &&
       <p>You can adjust your lineup and orders until the tactics deadline.</p>}
     {view.phase === "tactics_lock_pending" &&

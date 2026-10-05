@@ -217,7 +217,7 @@ test("an overdue division reveal explains the delay and keeps tactics closed", a
   );
   await page.goto(`/team/run?event_id=${eventId}`);
   await expect(page.getByRole("heading", { name: "Race preparation is delayed" })).toBeVisible();
-  await expect(page.getByText("An administrator needs to review the automatic entry scan", { exact: false })).toBeVisible();
+  await expect(page.getByText("This race cannot be recorded without it", { exact: false })).toBeVisible();
   await expect(page.getByRole("button", { name: "Tactics unavailable" })).toBeDisabled();
   expect(prepareCalls).toBe(0);
 });
