@@ -47,13 +47,13 @@ function EventCard({event,filter,now}){
     <div className="agenda-readiness"><span>Team <strong>{event.team_count}/{event.team_size}</strong></span>
       <span>Orders <strong>{event.orders_ready?"Ready":"Missing"}</strong></span>
       <span className="agenda-state">{status}</span></div>
-    <div className="agenda-card-bottom"><span>{event.winner_points===null?"Ranking points not set":`Winner · ${event.winner_points.toLocaleString("en-GB")} pts`}</span>
+    <div className="agenda-card-bottom"><span>{event.status==="CANCELLED"?"No points awarded":event.winner_points===null?"Ranking points not set":`Winner · ${event.winner_points.toLocaleString("en-GB")} pts`}</span>
       {replayReady?<Link className="btn primary"
         href={`/team/view/${encodeURIComponent(event.id)}`}>Watch again →</Link>:
         setup&&action?<Link className="btn primary" href={href}>{action} →</Link>:
         setup?<span className="agenda-muted">Registration closed</span>:
         <span className="agenda-muted">{event.status==="CANCELLED"?"Cancelled · no results or points":event.kind==="stage_race"?"Stage setup is in development":event.status==="FINISHED"?"Finished":"Locked"}</span>}</div>
-    {event.race_tier&&<details className="agenda-points"><summary>Points table</summary>
+    {event.status!=="CANCELLED"&&event.race_tier&&<details className="agenda-points"><summary>Points table</summary>
       <p>Tier {event.race_tier} · points by placing</p>
       {event.kind==="one_day"?<PointsList values={PLACING_PERCENT.map(percent=>
         Math.round(TIER_WINNER_POINTS[event.race_tier]*percent/100))}/>:

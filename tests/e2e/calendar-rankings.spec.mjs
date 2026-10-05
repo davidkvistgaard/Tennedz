@@ -346,6 +346,9 @@ test("a cancelled race remains visible on the calendar without a race action", a
   await page.goto("/team/calendar");
   const card = page.getByRole("article").filter({ hasText: "Cancelled preview race" });
   await expect(card.getByText("Cancelled · no results or points")).toBeVisible();
+  await expect(card.getByText("No points awarded")).toBeVisible();
+  await expect(card.getByText("Winner · 200 pts")).toHaveCount(0);
+  await expect(card.getByText("Points table")).toHaveCount(0);
   await expect(card.getByRole("link", { name: /Watch race|Review tactics|Set up/ })).toHaveCount(0);
   await page.route("**/api/stage-profile?*", route => route.fulfill({ json: {
     stage: { name: "Cancelled route", distance_km: 100, profile_points: [[0, 0], [100, 0]] },
