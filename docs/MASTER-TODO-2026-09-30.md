@@ -101,6 +101,8 @@ Den første tekniske **endagsløbs-testsløjfe** er nu gennemført isoleret i pu
 
 **Opdatering 6. oktober, manager- og driftsvisning:** Kalenderen leder nu et tilmeldt hold til løbsstatus efter taktikfristen, så en manglende divisionsafsløring ikke præsenteres som et klar-til-afspilning-løb. Løbssiden forklarer en annullering uden resultat eller point. Administratorpanelet skelner mellem en aktiv scan-lease og en afsluttet/udløbet scan; no-contest-knappen vises først, når den aktive scanning ikke længere kører. Disse visninger er verificeret lokalt med browserprøver. Reglen for en reel samtidig claim/annullering håndhæves fortsat af databasen, og produktionsflowet er ikke aktiveret.
 
+**Claim før annullering, isoleret grænseprøve:** Et reelt database-claim fik lease før registreringsfristen; efter fristen afviste no-contest-RPC'en beslutningen, så længe leasen var aktiv. Da prøveleasen blev sat til udløbet, kunne administratorbeslutningen gemmes én gang uden point. Den tilbagerullede SQL-prøve efterlod nul testløb, jobs og beslutninger. Dette tester rækkefølgen af de faktiske RPC'er, men ikke en samtidig belastningstest eller et faktisk schedulerudfald.
+
 ## P1 - atlas og verdenskvalitet
 
 | ID | Opgave / konkret resultat | Timer | Afhænger af |
