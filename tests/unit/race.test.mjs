@@ -69,6 +69,13 @@ test("an explicit locked points snapshot seeds separate races despite later rost
  s.teams.reverse();
  s.teams[0].riders.forEach(r=>{r.flat=100;});
  assert.deepEqual(membership(buildRace(s)),membership(first));
+ s.locked_division_reveal=structuredClone(first.division_reveal);
+ delete s.points_at_registration_lock;
+ const replayed=buildRace(s);
+ assert.deepEqual(membership(replayed),membership(first));
+ assert.deepEqual(replayed.division_reveal,first.division_reveal);
+ s.locked_division_reveal.assignments[0].divisionIndex=3;
+ assert.throws(()=>buildRace(s),/saved division reveal/);
 });
 test("a locked points snapshot must match the exact event, season, gender and entrant set",()=>{
  const s=input();
@@ -83,4 +90,8 @@ test("a locked points snapshot must match the exact event, season, gender and en
   {...points,entrants:[points.entrants[0],points.entrants[0]]},
  ]) assert.throws(()=>buildRace({...s,points_at_registration_lock:invalid}));
  assert.throws(()=>buildRace({...s,event:{...s.event,scheduled_at:null},points_at_registration_lock:points}),/scheduled race season/);
+ assert.throws(()=>buildRace({...s,locked_division_reveal:false}),/saved division reveal is invalid/);
+ const saved=buildRace({...s,points_at_registration_lock:points}).division_reveal;
+ const changedPoints={...points,entrants:points.entrants.map(row=>({...row,earnedPoints:1}))};
+ assert.throws(()=>buildRace({...s,points_at_registration_lock:changedPoints,locked_division_reveal:saved}),/saved division reveal/);
 });
