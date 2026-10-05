@@ -1,0 +1,9 @@
+# Isolated two-phase result commit
+
+The race runner now detects an opted-in two-phase event. At or after its scheduled start it commits the final tactics lock if needed, then simulates from that saved input. The existing one-deadline path remains unchanged. The revised `recovery_race_snapshot` returns the saved tactics input once it exists, so retries cannot silently use later rider or entry changes.
+
+The result-commit trigger permits an opted-in race only after its start, with the exact saved tactics input, complete division runs and replays, and team/rider results matching every saved point-based division assignment. A mismatch rolls back all result, rider, team and ranking writes in the existing atomic transaction. The existing sporting award trigger still runs once after a successful commit.
+
+Migration `20261005074913_locked_two_phase_race_commit.sql` was applied only to isolated Supabase project `nxhvaoonnvmvohqaxfdx`. The rollback-only `tests/support/two-phase-finish-probe.sql` verified frozen input after later entry mutation, rejection before race start, rejection of incomplete and changed division results without partial writes, one successful synthetic two-team commit with recorded replay and 16 ranking awards, and an idempotent retry. Its fixture writes were rolled back. Security and performance advisors showed no new findings from this migration; private RLS tables still have no public policies by design.
+
+This does not yet verify the full two-phase path for 45 real managers and three recorded divisions in a browser. A persistent isolated scenario, complete output from the JavaScript simulator, participant-specific replay checks, and concurrent retry checks remain before a playable milestone can be considered verified. No production database or deployment was changed.
