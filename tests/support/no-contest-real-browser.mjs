@@ -16,6 +16,10 @@ assert.equal(config.url, "https://nxhvaoonnvmvohqaxfdx.supabase.co");
 assert.ok(config.anonKey && config.serviceKey);
 const db = createClient(config.url, config.serviceKey,
   { auth: { persistSession: false, autoRefreshToken: false } });
+const missedReveal = process.argv.includes("--missed-reveal");
+const eventName = missedReveal ? "P03 disposable missed-reveal race" : "P03 disposable no-contest race";
+const reason = missedReveal ? "MISSED_DIVISION_REVEAL" : "INCOMPLETE_ENTRY_SCAN";
+const endpoint = missedReveal ? "/api/admin/autopilot/void-reveal" : "/api/admin/autopilot/void";
 const eventId = randomUUID();
 const email = `p03-void-${randomUUID()}@example.com`;
 const password = randomBytes(24).toString("base64url");
@@ -79,18 +83,18 @@ try {
   while (![0, 3].includes(scheduledAt.getUTCDay()))
     scheduledAt.setUTCDate(scheduledAt.getUTCDate() + 1);
   await ok(db.from("events").insert({
-    id: eventId, name: "P03 disposable no-contest race", kind: "one_day",
+    id: eventId, name: eventName, kind: "one_day",
     gender: "M", country_code: "FR", stage_profile_id: stage.id,
     status: "OPEN", entry_fee: 0, calendar_source: "PELOTONIA", race_tier: 2,
     deadline: new Date(now - 3600000).toISOString(),
     registration_deadline: new Date(now - 3600000).toISOString(),
-    tactics_deadline: new Date(now + 3600000).toISOString(),
+    tactics_deadline: new Date(now + (missedReveal ? -900000 : 3600000)).toISOString(),
     scheduled_at: scheduledAt.toISOString(),
   }));
   eventCreated = true;
   await ok(db.from("event_teams").insert({ event_id: eventId, team_id: teamId }));
   await ok(db.from("recovery_autopilot_jobs").insert({
-    event_id: eventId, status: "PENDING", processed_count: 1,
+    event_id: eventId, status: missedReveal ? "COMPLETE" : "PENDING", processed_count: 1,
   }));
   child = spawn(process.execPath,
     ["node_modules/next/dist/bin/next", "start", "-H", "127.0.0.1", "-p", "31311"],
@@ -115,9 +119,10 @@ try {
   await expect(page).toHaveURL(/\/(onboarding|team)(?:\?|$)/);
   await page.goto("/admin");
   const panel = page.getByRole("region", { name: "Two-phase race health" });
-  await expect(panel.getByText("P03 disposable no-contest race")).toBeVisible();
+  await expect(panel.getByText(eventName)).toBeVisible();
   page.once("dialog", dialog => dialog.accept());
-  await panel.getByRole("button", { name: "Cancel as no contest" }).click();
+  await panel.getByRole("button", { name: missedReveal
+    ? "Cancel missed reveal as no contest" : "Cancel as no contest" }).click();
   await expect(panel.getByRole("heading", { name: "Recent no-contest decisions" })).toBeVisible();
   const event = await ok(db.from("events").select("status").eq("id", eventId).single());
   assert.equal(event.status, "CANCELLED");
@@ -125,10 +130,10 @@ try {
     .select("reason,decided_by,registered_teams,processed_teams")
     .eq("event_id", eventId).single());
   assert.deepEqual(decision, {
-    reason: "INCOMPLETE_ENTRY_SCAN", decided_by: userId,
+    reason, decided_by: userId,
     registered_teams: 1, processed_teams: 1,
   });
-  const repeated = await page.request.post("/api/admin/autopilot/void", {
+  const repeated = await page.request.post(endpoint, {
     headers: { Origin: origin }, data: { event_id: eventId },
   });
   assert.equal(repeated.status(), 200);
@@ -142,7 +147,7 @@ try {
   }
   assert.deepEqual(pageErrors, []);
   await context.close();
-  console.log("PASS: real isolated database no-contest browser flow and idempotent retry.");
+  console.log(`PASS: real isolated database ${reason} browser flow and idempotent retry.`);
 } finally {
   if (browser) await browser.close();
   if (child) { child.kill(); await delay(500); }

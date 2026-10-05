@@ -5,7 +5,7 @@ begin
   foreach relation_name in array array[
     'recovery_default_lineups', 'recovery_team_lifecycle',
     'recovery_ranking_awards', 'recovery_autopilot_jobs',
-    'recovery_autopilot_entries'] loop
+    'recovery_autopilot_entries', 'recovery_two_phase_voids'] loop
     select c.oid into relation_id from pg_class c
       where c.relnamespace = 'public'::regnamespace and c.relname = relation_name;
     if relation_id is null then raise exception 'Missing table: %', relation_name; end if;
@@ -22,7 +22,9 @@ begin
     'recovery_autopilot_join_event', 'recovery_autopilot_claim_job',
     'recovery_autopilot_advance_job', 'recovery_create_scheduled_race_day',
     'recovery_create_scheduled_race_day_safe',
-    'recovery_points_rankings', 'recovery_ranking_seasons'] loop
+    'recovery_points_rankings', 'recovery_ranking_seasons',
+    'recovery_void_incomplete_two_phase_race',
+    'recovery_void_missed_division_reveal'] loop
     select p.oid into function_id from pg_proc p
       where p.pronamespace = 'public'::regnamespace and p.proname = function_name;
     if function_id is null then raise exception 'Missing function: %', function_name; end if;

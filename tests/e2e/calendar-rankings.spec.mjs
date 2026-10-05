@@ -146,6 +146,12 @@ test("automatic entries remain behind the game-write gate", async ({ page }) => 
   });
   expect(cancellation.status()).toBe(503);
   expect((await cancellation.json()).code).toBe("GAME_READ_ONLY");
+  const missedReveal = await page.request.post("/api/admin/autopilot/void-reveal", {
+    headers: { Origin: "http://localhost:3100" },
+    data: { event_id: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa" },
+  });
+  expect(missedReveal.status()).toBe(503);
+  expect((await missedReveal.json()).code).toBe("GAME_READ_ONLY");
 });
 
 test("the scheduled autopilot endpoint rejects ordinary visitors", async ({ page }) => {
@@ -210,24 +216,41 @@ test("administrator sees a blocked registration scan without unsafe retry or rev
   await expect(panel.getByRole("button", { name: /retry|force|reveal/i })).toHaveCount(0);
 });
 
-test("completed scans awaiting reveal do not offer no-contest cancellation", async ({ page }) => {
+test("administrator confirms a missed-reveal no-contest decision", async ({ page }) => {
   await login(page);
   await page.route("**/api/admin/stats", route => route.fulfill({ json: {
     ok: true, teams: 1, riders: 8, race_results: 0,
     game_writes_enabled: true, two_phase_available: true,
   } }));
+  let cancelled = false;
   await page.route("**/api/admin/autopilot/health", route => route.fulfill({ json: {
-    ok: true, enabled: true, decisions: [], races: [{
+    ok: true, enabled: true, decisions: cancelled ? [{
+      event_id: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa", name: "Awaiting reveal race",
+      status: "CANCELLED", reason: "MISSED_DIVISION_REVEAL",
+      decided_by: "admin-id", voided_at: "2026-10-05T15:01:00Z",
+      registered_teams: 8, processed_teams: 20, automatic_entries: 3,
+    }] : [], races: cancelled ? [] : [{
       event_id: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa", name: "Awaiting reveal race",
       registration_deadline: "2026-10-05T12:00:00Z",
       tactics_deadline: "2026-10-05T15:00:00Z",
       state: "OVERDUE", processed: 20, entered: 8, scan_updated_at: null,
     }],
   } }));
+  await page.route("**/api/admin/autopilot/void-reveal", route => {
+    expect(route.request().postDataJSON().event_id).toBe("aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa");
+    cancelled = true;
+    return route.fulfill({ json: { ok: true, already_cancelled: false } });
+  });
   await page.goto("/admin");
   const panel = page.getByRole("region", { name: "Two-phase race health" });
   await expect(panel.getByText("Division reveal overdue", { exact: false })).toBeVisible();
-  await expect(panel.getByRole("button", { name: "Cancel as no contest" })).toHaveCount(0);
+  page.once("dialog", dialog => {
+    expect(dialog.message()).toContain("division reveal missed the tactics deadline");
+    dialog.accept();
+  });
+  await panel.getByRole("button", { name: "Cancel missed reveal as no contest" }).click();
+  await expect(panel.getByText("division reveal missed the tactics deadline", { exact: false })).toBeVisible();
+  expect(cancelled).toBe(true);
 });
 
 test("administrator confirms a no-contest decision and sees the saved outcome", async ({ page }) => {

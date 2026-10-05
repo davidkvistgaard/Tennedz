@@ -36,11 +36,13 @@ export default function TwoPhaseRaceHealth({ onCancelled }) {
   }
 
   async function cancelRace(race) {
-    if (!window.confirm(`Cancel ${race.name} as no contest? Existing entries remain recorded, but this race will have no results or points. Create a replacement race separately.`)) return;
+    const missedReveal = race.state === "OVERDUE";
+    const failure = missedReveal ? "The division reveal missed the tactics deadline." : "The entry scan missed the registration deadline.";
+    if (!window.confirm(`Cancel ${race.name} as no contest? ${failure} Existing entries remain recorded, but this race will have no results or points. Create a replacement race separately.`)) return;
     setVoiding(race.event_id);
     setError("");
     try {
-      await api("/api/admin/autopilot/void", {
+      await api(missedReveal ? "/api/admin/autopilot/void-reveal" : "/api/admin/autopilot/void", {
         method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ event_id: race.event_id }),
       });
@@ -59,7 +61,7 @@ export default function TwoPhaseRaceHealth({ onCancelled }) {
   return (
     <section aria-label="Two-phase race health" style={{ marginTop: 30 }}>
       <h2>Two-phase race health</h2>
-      <p>Review registration, the entry scan and division reveal. A missed scan can be cancelled as no contest; any replacement is a separate race with new deadlines.</p>
+      <p>Review registration, the entry scan and division reveal. A missed scan or reveal can be cancelled as no contest; any replacement is a separate race with new deadlines.</p>
       <button type="button" onClick={refresh} disabled={loading}>
         {loading ? "Checking…" : "Refresh race health"}
       </button>
@@ -73,9 +75,10 @@ export default function TwoPhaseRaceHealth({ onCancelled }) {
           <div>Entry scan: {race.processed} teams checked, {race.entered} entered
             {race.scan_updated_at ? ` · Last updated ${dateLabel(race.scan_updated_at)}` : " · Not started"}
           </div>
-          {race.state === "BLOCKED" && <button type="button"
+          {["BLOCKED", "OVERDUE"].includes(race.state) && <button type="button"
             disabled={voiding !== null} onClick={() => cancelRace(race)}>
-            {voiding === race.event_id ? "Cancelling…" : "Cancel as no contest"}
+            {voiding === race.event_id ? "Cancelling…" :
+              race.state === "OVERDUE" ? "Cancel missed reveal as no contest" : "Cancel as no contest"}
           </button>}
         </div>
       ))}
@@ -83,7 +86,8 @@ export default function TwoPhaseRaceHealth({ onCancelled }) {
         <h3>Recent no-contest decisions</h3>
         {health.decisions.map(decision => <div key={decision.event_id} style={{ marginTop: 12 }}>
           <strong>{decision.name}</strong> · {decision.status} · {dateLabel(decision.voided_at)}
-          <div>Reason: incomplete entry scan. {decision.registered_teams} registered teams;
+          <div>Reason: {decision.reason === "MISSED_DIVISION_REVEAL"
+            ? "division reveal missed the tactics deadline" : "incomplete entry scan"}. {decision.registered_teams} registered teams;
             {` ${decision.processed_teams}`} checked, {decision.automatic_entries} automatic entries.
           </div>
           <div>Decision by administrator {decision.decided_by}</div>
