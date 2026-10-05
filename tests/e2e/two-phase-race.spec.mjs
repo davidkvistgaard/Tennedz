@@ -141,3 +141,42 @@ test("a team that missed registration cannot enter during the tactics window", a
   await expect(card.getByRole("link")).toHaveCount(0);
   expect(pageErrors).toEqual([]);
 });
+
+test("an overdue division reveal explains the delay and keeps tactics closed", async ({ page }) => {
+  let prepareCalls = 0;
+  await page.goto("/login");
+  await page.getByLabel("Email or username").fill("alice");
+  await page.getByLabel("Password").fill("fixture-password");
+  await page.getByRole("button", { name: "Sign in", exact: true }).click();
+  await expect(page).toHaveURL(/\/team$/);
+  await page.route("**/api/events?*", route => route.fulfill({ json: {
+    ok: true, server_time: new Date().toISOString(), events: [{
+      id: eventId, name: "Delayed division fixture", kind: "one_day", gender: "M",
+      status: "OPEN", deadline: registrationDeadline,
+      registration_deadline: registrationDeadline,
+      tactics_deadline: new Date(Date.now() - 30_000).toISOString(),
+      scheduled_at: scheduledAt, entry_fee: 0, calendar_source: "PELOTONIA",
+      race_tier: 3, race_team_size: 8, team_size: 8, team_count: 8,
+      orders_ready: true, readiness: "REVEAL_PENDING", winner_points: 250,
+    }],
+  } }));
+  await page.route("**/api/game-date", route => route.fulfill({ json: { game_date: "2026-01-01" } }));
+  await page.route("**/api/stage-profile?*", route => route.fulfill({ json: {
+    stage: { name: "Delayed fixture route", distance_km: 100, profile_points: [[0, 0], [100, 0]] },
+  } }));
+  await page.route("**/api/event/join?*", route => route.fulfill({ json: {
+    entry: { selected_riders: selectedRiders, captain_id: selectedRiders[0], orders: null },
+  } }));
+  await page.route("**/api/event/reveal?*", route => route.fulfill({ json: {
+    ok: true, event_id: eventId, phase: "reveal_overdue", division: null,
+  } }));
+  await page.route("**/api/event/reveal/prepare", route => {
+    prepareCalls++;
+    return route.fulfill({ status: 409, json: { ok: false } });
+  });
+  await page.goto(`/team/run?event_id=${eventId}`);
+  await expect(page.getByRole("heading", { name: "Race preparation is delayed" })).toBeVisible();
+  await expect(page.getByText("An administrator needs to review the automatic entry scan", { exact: false })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Tactics unavailable" })).toBeDisabled();
+  expect(prepareCalls).toBe(0);
+});

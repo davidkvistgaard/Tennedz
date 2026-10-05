@@ -6,6 +6,7 @@ export default function DivisionReveal({ view, error, loading, myTeamId }) {
   const heading = {
     registration: "Registration is open",
     reveal_pending: "Divisions are being assigned",
+    reveal_overdue: "Race preparation is delayed",
     preparation: "Your division is ready",
     tactics_lock_pending: "Tactics are being locked",
     tactics_locked: "Tactics are locked",
@@ -15,6 +16,8 @@ export default function DivisionReveal({ view, error, loading, myTeamId }) {
     <h2>{heading}</h2>
     {view.phase === "reveal_pending" &&
       <p>Registration has closed. Your opponents will appear when the division reveal is saved.</p>}
+    {view.phase === "reveal_overdue" &&
+      <p>The division reveal was not saved before tactics closed. An administrator needs to review the automatic entry scan before this race can continue.</p>}
     {view.phase === "preparation" &&
       <p>You can adjust your lineup and orders until the tactics deadline.</p>}
     {view.phase === "tactics_lock_pending" &&

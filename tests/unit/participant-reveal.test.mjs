@@ -45,6 +45,10 @@ test("the phase follows saved reveal and tactics commits", () => {
   const base = { event, teamId: "team-20", teamNames };
   assert.equal(participantRevealView({ ...base, assignments: [],
     now: "2026-10-06T09:00:00Z" }).phase, "reveal_pending");
+  const overdue = participantRevealView({ ...base, assignments: [],
+    now: event.tactics_deadline });
+  assert.equal(overdue.phase, "reveal_overdue");
+  assert.equal(overdue.division, null);
   assert.equal(participantRevealView({ ...base, assignments,
     now: event.tactics_deadline }).phase, "tactics_lock_pending");
   assert.equal(participantRevealView({ ...base, assignments,

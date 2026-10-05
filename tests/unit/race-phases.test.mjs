@@ -22,9 +22,9 @@ test("an offset timestamp denotes the same instant as UTC", () => {
 });
 
 test("a missing persisted reveal blocks tactics and race even when deadlines pass", () => {
-  for (const now of [schedule.registrationDeadline, schedule.tacticsDeadline, schedule.scheduledAt, "2026-10-07T12:00:00Z"]) {
-    assert.equal(racePhaseAt(schedule, now), "reveal_pending");
-  }
+  assert.equal(racePhaseAt(schedule, schedule.registrationDeadline), "reveal_pending");
+  for (const now of [schedule.tacticsDeadline, schedule.scheduledAt, "2026-10-07T12:00:00Z"])
+    assert.equal(racePhaseAt(schedule, now), "reveal_overdue");
   assert.throws(() => racePhaseAt(schedule, schedule.scheduledAt, { revealCommitted: "yes" }), /must be a boolean/);
 });
 
