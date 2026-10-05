@@ -76,7 +76,7 @@ function AdminStatus() {
             onCreated={loadEvents}
           />
         )}
-        {counts?.two_phase_available && <TwoPhaseRaceHealth />}
+        {counts?.two_phase_available && <TwoPhaseRaceHealth onCancelled={loadEvents} />}
         <h2 style={{ marginTop: 30 }}>Race processing</h2>
         {counts &&
           events
@@ -87,13 +87,15 @@ function AdminStatus() {
                 {new Date(e.deadline).toLocaleString("en-GB", { timeZone: "UTC", timeZoneName: "short" })}{" "}
                 <button
                   disabled={
-                    busy ||
+                    busy || e.status === "CANCELLED" ||
                     !counts.game_writes_enabled ||
                     new Date(e.registration_deadline ? e.scheduled_at : e.deadline) > new Date()
                   }
                   onClick={() => runEvent(e.id)}
                 >
-                  {e.status === "FINISHED"
+                  {e.status === "CANCELLED"
+                    ? "Cancelled"
+                    : e.status === "FINISHED"
                     ? "Check finished race"
                     : "Run race"}
                 </button>{" "}

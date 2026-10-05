@@ -54,7 +54,7 @@ function EventCard({event,filter,now}){
         href={`/team/view/${encodeURIComponent(event.id)}`}>Watch again →</Link>:
         setup&&action?<Link className="btn primary" href={href}>{action} →</Link>:
         setup?<span className="agenda-muted">Registration closed</span>:
-        <span className="agenda-muted">{event.kind==="stage_race"?"Stage setup is in development":event.status==="FINISHED"?"Finished":"Locked"}</span>}</div>
+        <span className="agenda-muted">{event.status==="CANCELLED"?"Cancelled · no results or points":event.kind==="stage_race"?"Stage setup is in development":event.status==="FINISHED"?"Finished":"Locked"}</span>}</div>
     {event.race_tier&&<details className="agenda-points"><summary>Points table</summary>
       <p>Tier {event.race_tier} · points by placing</p>
       {event.kind==="one_day"?<PointsList values={PLACING_PERCENT.map(percent=>

@@ -179,7 +179,7 @@ test("administrator can opt in to a separate registration and tactics deadline",
   expect(Date.parse(saved.tactics_deadline)).toBeLessThan(Date.parse(saved.scheduled_at));
 });
 
-test("administrator sees a blocked registration scan without a recovery action", async ({ page }) => {
+test("administrator sees a blocked registration scan without unsafe retry or reveal", async ({ page }) => {
   await login(page);
   await page.route("**/api/admin/stats", route => route.fulfill({ json: {
     ok: true, teams: 1, riders: 8, race_results: 0,
@@ -199,4 +199,52 @@ test("administrator sees a blocked registration scan without a recovery action",
   await expect(panel.getByText("Entry scan: 12 teams checked, 3 entered", { exact: false })).toBeVisible();
   await expect(panel.getByRole("button", { name: "Refresh race health" })).toBeVisible();
   await expect(panel.getByRole("button", { name: /retry|force|reveal/i })).toHaveCount(0);
+});
+
+test("administrator confirms a no-contest decision and sees the saved outcome", async ({ page }) => {
+  await login(page);
+  await page.route("**/api/admin/stats", route => route.fulfill({ json: {
+    ok: true, teams: 1, riders: 8, race_results: 0,
+    game_writes_enabled: true, two_phase_available: true,
+  } }));
+  let cancelled = false;
+  await page.route("**/api/admin/autopilot/health", route => route.fulfill({ json: {
+    ok: true, enabled: true, races: cancelled ? [] : [{
+      event_id: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa", name: "Preview phase race",
+      registration_deadline: "2026-10-05T12:00:00Z",
+      tactics_deadline: "2026-10-05T15:00:00Z",
+      state: "BLOCKED", processed: 12, entered: 3, scan_updated_at: null,
+    }],
+  } }));
+  await page.route("**/api/admin/autopilot/void", route => {
+    expect(route.request().postDataJSON().event_id).toBe("aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa");
+    cancelled = true;
+    return route.fulfill({ json: { ok: true, already_cancelled: false } });
+  });
+  await page.goto("/admin");
+  page.once("dialog", dialog => dialog.accept());
+  await page.getByRole("button", { name: "Cancel as no contest" }).click();
+  await expect(page.getByText("Preview phase race was cancelled as no contest", { exact: false })).toBeVisible();
+  expect(cancelled).toBe(true);
+});
+
+test("a cancelled race remains visible on the calendar without a race action", async ({ page }) => {
+  const now = new Date();
+  const scheduled = new Date(now.getTime() + 86400000).toISOString();
+  await page.route("**/api/events?*", route => route.fulfill({ json: {
+    ok: true, server_time: now.toISOString(), events: [{
+      id: "cancelled-race", name: "Cancelled preview race", kind: "one_day",
+      gender: "M", status: "CANCELLED", readiness: "CANCELLED",
+      deadline: new Date(now.getTime() - 86400000).toISOString(),
+      registration_deadline: new Date(now.getTime() - 86400000).toISOString(),
+      tactics_deadline: new Date(now.getTime() + 3600000).toISOString(),
+      scheduled_at: scheduled, calendar_source: "PELOTONIA", race_tier: 2,
+      team_count: 8, team_size: 8, orders_ready: true, winner_points: 200,
+    }],
+  } }));
+  await login(page);
+  await page.goto("/team/calendar");
+  const card = page.getByRole("article").filter({ hasText: "Cancelled preview race" });
+  await expect(card.getByText("Cancelled · no results or points")).toBeVisible();
+  await expect(card.getByRole("link", { name: /Watch race|Review tactics|Set up/ })).toHaveCount(0);
 });

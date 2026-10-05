@@ -21,6 +21,7 @@ test('readiness is private to the team entry, not the event lifecycle',()=>{
   assert.equal(entryReadiness(event,{selected_riders:['a','b'],captain_id:'a'}),'ORDERS_MISSING');
   assert.equal(entryReadiness(event,{selected_riders:['a','b'],captain_id:'a',orders:{version:1}}),'READY');
   assert.equal(entryReadiness({...event,status:'FINISHED'},null),'FINISHED');
+  assert.equal(entryReadiness({...event,status:'CANCELLED'},null),'CANCELLED');
 });
 
 test('two-phase calendar shows the preparation window only to registered teams',()=>{
