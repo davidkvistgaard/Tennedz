@@ -7,10 +7,10 @@ const scheduledAt = new Date(Date.now() + 7_200_000).toISOString();
 const selectedRiders = Array.from({ length: 8 }, (_, index) => `fixture-M-${index}`);
 
 test("separately signed-in managers receive only their own division from the reveal API", async ({ browser }) => {
-  const contexts = await Promise.all([browser.newContext(), browser.newContext()]);
+  const contexts = await Promise.all([browser.newContext(), browser.newContext(), browser.newContext()]);
   try {
     const pages = await Promise.all(contexts.map(context => context.newPage()));
-    for (const [index, name] of ["alice", "bob"].entries()) {
+    for (const [index, name] of ["alice", "bob", "settings"].entries()) {
       const page = pages[index];
       await page.goto("http://localhost:3100/login");
       await page.getByLabel("Email or username").fill(name);
@@ -19,7 +19,7 @@ test("separately signed-in managers receive only their own division from the rev
       await expect(page).toHaveURL(/\/team$/);
     }
 
-    const responses = await Promise.all(pages.map(page =>
+    const responses = await Promise.all(pages.slice(0, 2).map(page =>
       page.request.get(`http://localhost:3100/api/event/reveal?event_id=${eventId}`)));
     for (const response of responses) expect(response.status()).toBe(200);
     const [alice, bob] = await Promise.all(responses.map(response => response.json()));
@@ -31,6 +31,10 @@ test("separately signed-in managers receive only their own division from the rev
     expect(bob.division.total).toBe(3);
     expect(alice.division.teams.map(team => team.team_id)).toEqual(["team-alice", "team-a2"]);
     expect(bob.division.teams.map(team => team.team_id)).toEqual(["team-bob", "team-b2"]);
+    const unregistered = await pages[2].request.get(
+      `http://localhost:3100/api/event/reveal?event_id=${eventId}`);
+    expect(unregistered.status()).toBe(403);
+    expect(JSON.stringify(await unregistered.json())).not.toContain("division_index");
     for (const view of [alice, bob]) {
       expect(JSON.stringify(view)).not.toMatch(/selected_riders|captain_id|orders|rider_id/);
     }
