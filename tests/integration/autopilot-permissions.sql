@@ -24,7 +24,8 @@ begin
     'recovery_create_scheduled_race_day_safe',
     'recovery_points_rankings', 'recovery_ranking_seasons',
     'recovery_void_incomplete_two_phase_race',
-    'recovery_void_missed_division_reveal'] loop
+    'recovery_void_missed_division_reveal',
+    'recovery_overdue_division_reveals'] loop
     select p.oid into function_id from pg_proc p
       where p.pronamespace = 'public'::regnamespace and p.proname = function_name;
     if function_id is null then raise exception 'Missing function: %', function_name; end if;

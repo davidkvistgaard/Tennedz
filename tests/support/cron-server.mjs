@@ -75,6 +75,9 @@ const fixture=http.createServer(async(req,res)=>{
     return send(res,200,state.revealCandidate&&!state.revealed?
       [{event_id:eventId,autopilot_complete:state.complete}]:[]);
   }
+  if(url.pathname==='/rest/v1/rpc/recovery_overdue_division_reveals'){
+    return send(res,200,state.overdueCandidate?[{event_id:eventId}]:[]);
+  }
   if(url.pathname==='/rest/v1/recovery_division_reveals'){
     return send(res,200,state.revealed?[{event_id:eventId}]:[]);
   }
