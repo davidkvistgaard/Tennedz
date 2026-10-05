@@ -89,6 +89,8 @@ Den første tekniske **endagsløbs-testsløjfe** er nu gennemført isoleret i pu
 
 **Status for punkt 16–17, 5. oktober:** Det isolerede udviklingsspor har særskilt tilmeldings- og taktikfrist, gemt pointbaseret divisionsafsløring, begrænset modstandervisning og låst taktik. Et testløb med 45 midlertidige hold og 360 ryttere skrev simulatorens faktiske output atomisk til testdatabasen: tre replays, 45 holdresultater, 360 rytterresultater, 60 pointposter og én commit. Gentagelse gav ikke en ny commit; alle testdata blev fjernet. En kørettelse hindrer, at allerede afslørede løb skjuler senere løb. Kalenderen viser de tre frister. Dette er fortsat ikke en spilbar prøve med 45 uafhængige managers eller en sportslig balancetest. Den daglige cron kan fortsat komme for sent til tilmeldingsfristen; regler for nye hold, fejlgenopretning, pointreversering og produktionskontrol er åbne.
 
+**Opdatering 5. oktober, isoleret preview:** To uafhængige managerkonti tilmeldte sig samme to-fase-løb via kalenderen, så deres frosne pointbaserede division, ændrede hver sin taktik og så det optagne løb i vieweren. Begge fik adgang til resultaterne. Testdatabasen gemte 1 replay, 2 holdresultater, 16 rytterresultater og 16 unikke pointposter; en gentaget spilleranmodning gav `already_finished` uden nye point eller ændrede holdratings. Testløb, ryttere, konti og lokale testnøgler er fjernet. Dette er et to-holds funktionsbevis, ikke belastningstest eller valideret sportslig balance. En 45-holds to-fase-browserprøve, timing af automatisk tilmeldingslukning og genopretning efter afbrudt kø er stadig åbne i punkt 16.
+
 ## P1 - atlas og verdenskvalitet
 
 | ID | Opgave / konkret resultat | Timer | Afhænger af |
