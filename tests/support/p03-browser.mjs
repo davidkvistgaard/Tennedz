@@ -137,6 +137,11 @@ try{
   assert.equal(memberships.data.length,participantCount);
   const divisionByTeam=new Map(memberships.data.map(row=>[row.team_id,Number(row.division_index)]));
   if(participantCount===3)assert.equal(new Set(divisionByTeam.values()).size,3);
+  if(participantCount===9){
+    const managerCounts=[1,2,3].map(division=>
+      [...divisionByTeam.values()].filter(index=>index===division).length);
+    assert.deepEqual(managerCounts,[3,3,3]);
+  }
   for(let index=0;index<pages.length;index++){
     const page=pages[index],team=browserTeams[index];
     const ownDivision=divisionByTeam.get(team.teamId);
