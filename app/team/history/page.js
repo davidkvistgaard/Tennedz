@@ -60,7 +60,7 @@ export default function HistoryPage() {
               checked={reveal}
               onChange={(e) => setReveal(e.target.checked)}
             />{" "}
-            Reveal all placings and points
+            Reveal all placings and rating gains
           </label>
           <div className="history-list">
             {rows.map((r) => (
@@ -75,7 +75,7 @@ export default function HistoryPage() {
                   <h2>{r.event_name}</h2>
                   <p>
                     {reveal || seen[r.event_id]
-                      ? `Position ${r.position} · ${r.points} team points`
+                      ? `Position ${r.position} · +${r.points} team rating gained`
                       : "Race ready — result hidden"}
                   </p>
                 </div>

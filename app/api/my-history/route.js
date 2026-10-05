@@ -4,7 +4,7 @@ import { NextResponse } from "next/server";
 export const POST = protectedRoute(async(req,context,auth)=>{
   const body=await req.json().catch(()=>({})); assertTeamId(body.team_id,auth.team.id);
   const limit=Number(body.limit ?? 25);
-  if (!Number.isInteger(limit) || limit<1 || limit>100) throw new AuthError("INVALID_LIMIT","Ugyldigt antal resultater.",400);
+  if (!Number.isInteger(limit) || limit<1 || limit>100) throw new AuthError("INVALID_LIMIT","Choose a valid result limit.",400);
   const {data,error}=await auth.db.from("event_team_results")
     .select("event_id,team_id,division_index,position,points,created_at,event:events(name)")
     .eq("team_id",auth.team.id).order("created_at",{ascending:false}).limit(limit);

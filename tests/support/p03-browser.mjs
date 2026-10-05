@@ -245,6 +245,16 @@ try{
     assert.equal(Number(ownRider.points),Number(storedRiderResult.data.points));
     await expect(page.locator('.results-table').nth(1).locator('tr.own-result').first().locator('td').nth(4))
       .toHaveText(String(ownRider.points));
+    await page.goto('/team/history');
+    const historyCard=page.locator('article.history-race').filter({
+      has:page.getByRole('heading',{name:'P03 isolated 45-team division probe'})});
+    await expect(historyCard).toHaveCount(1);
+    await expect(historyCard).toContainText(`Division ${ownDivision}`);
+    await expect(historyCard).toContainText(`Position ${ownResult.position} · +${ownResult.points} team rating gained`);
+    await expect(historyCard.getByRole('link',{name:/Watch again/}))
+      .toHaveAttribute('href',`/team/view/${fixture.eventId}?division=${ownDivision}`);
+    await expect(historyCard.getByRole('link',{name:'Result'}))
+      .toHaveAttribute('href',`/team/results/${fixture.eventId}?division=${ownDivision}`);
   }
   const eventAwards=await db.from('recovery_ranking_awards').select('team_id,points')
     .eq('event_id',fixture.eventId);
