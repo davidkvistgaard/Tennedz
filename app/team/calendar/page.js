@@ -8,6 +8,7 @@ import "./calendar.css";
 
 const FILTERS=["All","Men","Women","UCI","Pelotonia","Stage races","My races"];
 const displayDate=value=>new Date(value).toLocaleDateString("en-GB",{weekday:"short",day:"numeric",month:"short",timeZone:"UTC"});
+const displayTime=value=>new Date(value).toLocaleTimeString("en-GB",{hour:"2-digit",minute:"2-digit",timeZone:"UTC"});
 const category=gender=>gender==="F"?"Women":"Men";
 function matches(event,filter){
   if(filter==="Men")return event.gender==="M";
@@ -40,7 +41,11 @@ function EventCard({event,filter,now}){
     <div className="agenda-card-top"><span>{category(event.gender)} · {source} · {tier}</span>
       <strong>{event.kind==="stage_race"?"Stage race":"One-day"}</strong></div>
     <h3>{event.name}</h3>
-    <p className="agenda-muted">{event.scheduled_at?"Race day":"Entry deadline"} · {displayDate(raceDate)}</p>
+    {twoPhase?<ol className="agenda-phases" aria-label="Race deadlines">
+      <li><span>Register</span><strong>{displayDate(event.registration_deadline)} · {displayTime(event.registration_deadline)} UTC</strong></li>
+      <li><span>Final tactics</span><strong>{displayDate(event.tactics_deadline)} · {displayTime(event.tactics_deadline)} UTC</strong></li>
+      <li><span>Race</span><strong>{displayDate(event.scheduled_at)} · {displayTime(event.scheduled_at)} UTC</strong></li>
+    </ol>:<p className="agenda-muted">{event.scheduled_at?"Race day":"Entry deadline"} · {displayDate(raceDate)}</p>}
     <div className="agenda-readiness"><span>Team <strong>{event.team_count}/{event.team_size}</strong></span>
       <span>Orders <strong>{event.orders_ready?"Ready":"Missing"}</strong></span>
       <span className="agenda-state">{status}</span></div>

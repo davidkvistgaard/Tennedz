@@ -57,6 +57,12 @@ test("a registered manager sees the saved division and can edit tactics without 
   });
 
   await page.goto("/team/calendar");
+  const deadlines = page.getByRole("list", { name: "Race deadlines" });
+  await expect(deadlines.getByRole("listitem")).toHaveCount(3);
+  await expect(deadlines.getByText("Register", { exact: true })).toBeVisible();
+  await expect(deadlines.getByText("Final tactics", { exact: true })).toBeVisible();
+  await expect(deadlines.getByText("Race", { exact: true })).toBeVisible();
+  await page.screenshot({ path: "test-results/two-phase-calendar.png", fullPage: true });
   await expect(page.getByRole("link", { name: /Review tactics/ })).toHaveAttribute(
     "href", new RegExp(`/team/run\\?event_id=${eventId}`),
   );
