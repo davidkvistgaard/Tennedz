@@ -1,6 +1,6 @@
 # Pelotonia — samlet to-do og tidsestimat
 
-**Opdateret 4. oktober 2026 med 3D-sporet og lokal integration af punkt 01; øvrig status senest gennemgået 30. september.** Dette er den aktuelle hovedliste for kendte produktønsker. [Produktvisionen](PRODUCT-VISION.md), [kalenderpakken](../../engine-current/docs/CALENDAR_AUTOPILOT_RANKINGS_V0_1.md), [motorprototypen](../../engine-current/docs/design/ENGINE-V2-FOUNDATION.md), [verdensbaselinen](PELOTONIA-WORLD-BASELINE-1.6.2.md) og de enkelte designnoter er baggrund; gamle statusangivelser i dem er ikke en ny leveringsplan. Listen skelner mellem kode i produktion, kode i isolerede udviklingsspor og ubyggede funktioner.
+**Opdateret 5. oktober 2026 efter den isolerede P03-prøve med 45 browserstyrede hold.** Dette er den aktuelle hovedliste for kendte produktønsker. [Produktvisionen](PRODUCT-VISION.md), [kalenderpakken](CALENDAR_AUTOPILOT_RANKINGS_V0_1.md), [motorprototypen](../../engine-current/docs/design/ENGINE-V2-FOUNDATION.md), [verdensbaselinen](PELOTONIA-WORLD-BASELINE-1.6.2.md) og de enkelte designnoter er baggrund; gamle statusangivelser i dem er ikke en ny leveringsplan. Listen skelner mellem kode i produktion, kode i isolerede udviklingsspor og ubyggede funktioner.
 
 ## Sådan læses estimaterne
 
@@ -33,15 +33,15 @@
 
 | Spor | Punkter | Estimat |
 | --- | ---: | ---: |
-| Integration og testgrundlag | 02–03; 01 lokalt verificeret | 20–40 t |
+| Integration og testgrundlag | 01–03 isoleret verificeret | 0 t i dette spor |
 | Ny motor og spilbart løb | 04–12, 41 | 256–512 t |
 | Kalender, autopilot og ranglister | 13–20 | 156–312 t |
 | Atlas og stedoplevelse | 21–26 | 200–400 t |
 | Klubprogression, økonomi og fans | 27–34 | 240–480 t |
 | Portrætter, intro, nye løbsformer og ruter | 35–40 | 200–400 t |
-| **Alle kendte resterende punkter** | **02–41** | **1.072–2.144 t** |
+| **Alle kendte resterende punkter** | **04–41** | **1.052–2.104 t** |
 
-Den første reelle **endagsløbs-testsløjfe** kræver fortsat omtrent punkt 02–09 (152–304 t) før bred balance, etapeløb og release. Det er et planlægningssnit, ikke et løfte om, at de første spillertests først kan begynde efter alle disse timer; en smallere test kan køres undervejs.
+Den første tekniske **endagsløbs-testsløjfe** er nu gennemført isoleret i punkt 03 med 45 browserstyrede hold. En sportsligt realistisk spiltest kræver stadig arbejde med motor, ordrer og viewer i punkt 04–09 samt den tofasede kalender- og pointfordeling i punkt 16–17. Detaljerede timeintervaller står ved hvert punkt; P03-prøven gør ikke de senere punkter færdige.
 
 ## P0 — sammenhæng og testgrundlag
 
@@ -49,9 +49,9 @@ Den første reelle **endagsløbs-testsløjfe** kræver fortsat omtrent punkt 02�
 
 **Punkt 02, isoleret verificeret 4. oktober:** Alle 18 repo-migrationer er afprøvet i en frisk testdatabase oven på det dokumenterede grundskema; repoet indeholder endnu ikke den oprindelige grundskema-migration. Den isolerede database har bestået tests af kalenderoprettelse, ordrer, adgangsrettigheder, manuel prioritet, tidszoner, lease/retry, idempotent optælling og køjobs. To SQL-/regnskabsfejl og to manglende fremmednøgleindekser blev rettet. Lokal HTTP-test dækkede 400 og 1.000 syntetiske hold, herunder genoptagelse efter tidsbudgettet. En beskyttet Vercel-preview med branch-specifikke nøgler til kun testdatabasen afviste forkert cron-autorisation og gennemførte et 207-holds løb over to kald: 200 hold på 35,64 sekunder, de sidste syv på 3,61 sekunder. Der blev oprettet præcis to tilmeldinger og to kvitteringer; gentagelse gav ingen dubletter. Alle midlertidige konti, hold, løb og køposter er fjernet. Se [databasenotatet](INTEGRATION-P02-2026-10-04.md) for målinger og manuel genkørsel. **Punkt 02's isolerede verifikation er færdig, men autopilot er fortsat slået fra:** Målingen viser, at én daglig cron-kørsel ikke garanterer færdiggørelse før tilmeldingsfristen. Automatisk fortsættelse, overvågning og produktionsgrænser skal løses før aktivering i punkt 16.
 
-**Divisions- og fasekrav til den spilbare løbssløjfe:** Først kommer tilmelding. Ved tilmeldingsfristen fryses deltagerne og deres pointgrundlag, hvorefter holdene fordeles og modstanderne vises. En særskilt, senere taktikfrist giver manageren tid til at justere ryttere, kaptajn og ordrer på baggrund af feltet; modstandernes private taktik vises ikke. Først derefter afvikles løbet. 45 tilmeldte hold skal give tre selvstændige divisioner med højst 20 hold og egne replays/resultater. Den isolerede afvikler deler nu 45 hold som 15/15/15, men bruger stadig beregnet holdstyrke og én fælles frist for tilmelding og taktik. Placering efter optjente ranglistepoint pr. køn/sæson, regler for nye hold og den ekstra fase er endnu ikke implementeret. Se [kalendergrænsen](CALENDAR_AUTOPILOT_RANKINGS_V0_1.md).
+**Divisions- og fasekrav til den spilbare løbssløjfe:** Først kommer tilmelding. Ved tilmeldingsfristen fryses deltagerne og deres pointgrundlag, hvorefter holdene fordeles og modstanderne vises. En særskilt, senere taktikfrist giver manageren tid til at justere ryttere, kaptajn og ordrer på baggrund af feltet; modstandernes private taktik vises ikke. Først derefter afvikles løbet. 45 tilmeldte hold skal give tre selvstændige divisioner med højst 20 hold og egne replays/resultater. Den nuværende afvikler deler 45 hold som 15/15/15 og bruger i den eksisterende spillervej stadig beregnet holdstyrke og én fælles frist. Isolerede funktioner kan beregne fasegrænser og pointbaserede divisioner fra et fastlåst øjebliksbillede, og simulatoren kan afprøve denne fordeling. Databaselåsning, modstandervisning, regler for nye hold og den særskilte taktikfase er endnu ikke implementeret. Se [kalendergrænsen](CALENDAR_AUTOPILOT_RANKINGS_V0_1.md).
 
-**Punkt 03, integrationstest 4. oktober:** 45 særskilt ejede hold med 360 midlertidige ryttere blev tilmeldt ét løb i den isolerede database. Den lokale produktionsbuild afviklede løbet i tre divisioner på 15 hold med særskilte replays og resultater. I en ren prøve tilmeldte det 45. hold sig selv i browseren med otte ryttere, kaptajn og ordrer; 44 andre var fixture-tilmeldt. Browseren genindlæste ordrerne og viste eget replay og resultat uden fejl. En additiv migration gav i isoleret test 60 sportslige pointposter efter et klassificeret endagsløb, og holdranglisten svarede til summen af rytternes point. Gentaget afvikling gav hverken ekstra commit eller point. Alle fixtures blev fjernet. [Testnotatet](INTEGRATION-P03-2026-10-04.md) afgrænser resten af den flerholdede browserrejse. Tofaset tilmelding og pointbaseret divisionsfordeling hører fortsat til punkt 16–17; etapeløbspoint og produktionsverifikation er også åbne.
+**Punkt 03, isoleret verificeret 5. oktober:** 45 særskilt ejede hold med 360 midlertidige ryttere gennemførte hver især kalender, udtagelse, kaptajn og ordrer i browseren. Den lokale produktionsbuild afviklede løbet i tre divisioner på 15 hold med hvert holds eget optagede replay, resultat og historik. Tre samtidige spillerkald gav præcis én commit; gentaget afvikling gav hverken ekstra resultater eller point. Den isolerede pointmigration gav 60 sportslige pointposter, og holdranglisten svarede til ledgeren. En sen ordreændring blev afvist. Alle midlertidige data blev fjernet. [Testnotatet](INTEGRATION-P03-2026-10-04.md) beskriver prøven og dens grænser: Den var sekventiel i browseren, ikke en samtidig 45-bruger belastningstest. Tofaset tilmelding, lagret pointbaseret divisionsfordeling og en sportsligt realistisk ny motor hører fortsat til senere punkter; etapeløbspoint og produktionsverifikation er også åbne.
 
 | ID | Opgave / konkret resultat | Timer | Afhænger af |
 | --- | --- | ---: | --- |
@@ -122,7 +122,7 @@ Den første reelle **endagsløbs-testsløjfe** kræver fortsat omtrent punkt 02�
 | 39 | Virkelighedsinspirerede ruter og vejrkilder med kildedato, licens-/navneafklaring, versionering og kvalitetssikret import. Brug samme route-/weather-kontrakt som motoren. | 24–48 | 07, 14 |
 | 40 | Senere spilleroprettede eventlobbyer med eventuel entry fee/præmiepulje, anti-misbrug, betaling/regnskab og klare regler uden køb af sportslig styrke. | 40–80 | 28, 31, 38 |
 
-**Samlet, groft restestimat: cirka 1.100–2.200 aktive timer** for de resterende punkter ovenfor, med P02's isolerede verifikation afsluttet og den udvidede fase-/divisionsopgave indregnet. Det er en størrelsesorden, ikke en deadline; omarbejde efter spiltest, udgifter til illustrationer/tjenester og ejerens svartid kan øge forløbet. Første brugbare testsløjfe er P0 plus motorens og kalenderens nødvendige P1-punkter, ikke hele denne liste. Punkter 21–26 kan udvikles sideløbende med sportsarbejdet, men konkurrerer om samme kapacitet, hvis én person udfører det.
+**Samlet, groft restestimat: cirka 1.050–2.100 aktive timer** for de resterende punkter ovenfor, med P01–P03's isolerede verifikation afsluttet og den udvidede fase-/divisionsopgave indregnet. Det er en størrelsesorden, ikke en deadline; omarbejde efter spiltest, udgifter til illustrationer/tjenester og ejerens svartid kan øge forløbet. Den næste realistiske testsløjfe kræver motorens og kalenderens nødvendige P1-punkter, ikke hele denne liste. Punkter 21–26 kan udvikles sideløbende med sportsarbejdet, men konkurrerer om samme kapacitet, hvis én person udfører det.
 
 ## Beslutninger som bevidst forbliver åbne
 
