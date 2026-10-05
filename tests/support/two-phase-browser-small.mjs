@@ -125,10 +125,11 @@ try {
   await ok(db.rpc("recovery_commit_tactics_lock", { p_event: eventId }));
   await ok(db.from("events").update({ scheduled_at: new Date(Date.now() - 10000).toISOString() })
     .eq("id", eventId));
-  await pages[0].goto(`/team/view/${eventId}`);
-  await expect(pages[0].locator(".replay-layout")).toBeVisible({ timeout: 60000 });
-  await pages[1].goto(`/team/view/${eventId}`);
-  await expect(pages[1].locator(".replay-layout")).toBeVisible({ timeout: 60000 });
+  // Both viewers may arrive before either prepares the race. The database
+  // must still commit one replay and one set of point awards.
+  await Promise.all(pages.map(page => page.goto(`/team/view/${eventId}`)));
+  await Promise.all(pages.map(page => expect(page.locator(".replay-layout"))
+    .toBeVisible({ timeout: 60000 })));
   for (const page of pages) {
     const response = await page.request.get(`/api/event/results?event_id=${eventId}`);
     assert.equal(response.status(), 200, await response.text());
