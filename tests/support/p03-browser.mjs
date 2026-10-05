@@ -27,6 +27,9 @@ const participantCount=fixture.browserEntries||1;
 const startMode=process.argv[2]??'admin';
 if(!['admin','participant','participant-concurrent'].includes(startMode))
   throw Error('Use no argument, participant or participant-concurrent.');
+const viewportMode=process.argv[3]??'desktop';
+if(!['desktop','mobile'].includes(viewportMode))throw Error('Use desktop or mobile viewport.');
+const viewport=viewportMode==='mobile'?{width:390,height:844}:{width:1280,height:900};
 const participantStart=startMode!=='admin';
 const concurrentStart=startMode==='participant-concurrent';
 if(concurrentStart&&participantCount<3)
@@ -42,7 +45,7 @@ const browserStates=[];
 const errors=[];
 const newManagerPage=async index=>{
   const context=await browser.newContext({baseURL:'http://localhost:3100',
-    viewport:{width:1280,height:900},storageState:browserStates[index]});
+    viewport,storageState:browserStates[index]});
   const page=await context.newPage();
   page.on('pageerror',e=>errors.push(e.message));
   return page;
@@ -58,7 +61,7 @@ try{
     const password=randomBytes(24).toString('base64url');
     const reset=await db.auth.admin.updateUserById(team.userId,{password});
     if(reset.error)throw reset.error;
-    const context=await browser.newContext({baseURL:'http://localhost:3100',viewport:{width:1280,height:900}});
+    const context=await browser.newContext({baseURL:'http://localhost:3100',viewport});
     const page=await context.newPage();
     page.on('pageerror',e=>errors.push(e.message));
     await page.goto('/login');
@@ -296,7 +299,7 @@ try{
     .toContainText(`${expectedSportingPoints.toLocaleString('en-GB')} pts`);
   await rankingPage.context().close();
   assert.deepEqual(errors,[]);
-  console.log(`PASS isolated browser: ${participantCount} separate manager sessions, lineups and orders, 45-team ${startMode} run, own replays and division results (${new Set(divisionByTeam.values()).size} divisions), sporting leaderboard matches the award ledger${participantStart?', late order edit rejected':''}.`);
+  console.log(`PASS isolated browser (${viewportMode}): ${participantCount} separate manager sessions, lineups and orders, 45-team ${startMode} run, own replays and division results (${new Set(divisionByTeam.values()).size} divisions), sporting leaderboard matches the award ledger${participantStart?', late order edit rejected':''}.`);
 }finally{
   await browser.close();
 }

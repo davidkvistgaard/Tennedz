@@ -934,7 +934,7 @@ p {
     font-size: 11px;
     padding: 10px 12px;
   }
-  .control-row > .text-button {
+  .replay-controls .control-row > .text-button {
     display: none;
   }
   .control-footnote {
