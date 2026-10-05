@@ -15,7 +15,7 @@ test("race health distinguishes open scanning from a blocked registration close"
   assert.equal(state(pending, "2026-10-05T11:59:59Z").state, "SCANNING");
   assert.equal(state(pending, event.registration_deadline).state, "BLOCKED");
   assert.equal(state(null, event.registration_deadline).state, "BLOCKED");
-  assert.equal(state(pending, event.tactics_deadline).state, "OVERDUE");
+  assert.equal(state(pending, event.tactics_deadline).state, "BLOCKED");
   assert.equal(state(pending, event.tactics_deadline, [{ event_id: "race" }]).state, "REVEALED");
 });
 
@@ -24,6 +24,7 @@ test("completed scans remain visible before reveal without inventing entered tea
   const health = state(complete, event.registration_deadline);
   assert.equal(health.state, "AWAITING_REVEAL");
   assert.equal(health.entered, 3);
+  assert.equal(state(complete, event.tactics_deadline).state, "OVERDUE");
   assert.equal(state(null, "2026-10-05T11:59:59Z").entered, 0);
 });
 

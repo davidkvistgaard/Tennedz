@@ -73,7 +73,7 @@ export default function TwoPhaseRaceHealth({ onCancelled }) {
           <div>Entry scan: {race.processed} teams checked, {race.entered} entered
             {race.scan_updated_at ? ` · Last updated ${dateLabel(race.scan_updated_at)}` : " · Not started"}
           </div>
-          {["BLOCKED", "OVERDUE"].includes(race.state) && <button type="button"
+          {race.state === "BLOCKED" && <button type="button"
             disabled={voiding !== null} onClick={() => cancelRace(race)}>
             {voiding === race.event_id ? "Cancelling…" : "Cancel as no contest"}
           </button>}
