@@ -38,8 +38,15 @@ const browserTeams=(fixture.browserTeamIds||[teams[0].teamId]).map(id=>{
 });
 assert.equal(browserTeams.length,participantCount);
 const plans=['breakaway','captain','conserve'];
-const pages=[];
+const browserStates=[];
 const errors=[];
+const newManagerPage=async index=>{
+  const context=await browser.newContext({baseURL:'http://localhost:3100',
+    viewport:{width:1280,height:900},storageState:browserStates[index]});
+  const page=await context.newPage();
+  page.on('pageerror',e=>errors.push(e.message));
+  return page;
+};
 try{
   for(let index=0;index<participantCount;index++){
     const team=browserTeams[index];
@@ -53,7 +60,6 @@ try{
     if(reset.error)throw reset.error;
     const context=await browser.newContext({baseURL:'http://localhost:3100',viewport:{width:1280,height:900}});
     const page=await context.newPage();
-    pages.push(page);
     page.on('pageerror',e=>errors.push(e.message));
     await page.goto('/login');
     await page.getByLabel('Email or username').fill(email);
@@ -107,6 +113,8 @@ try{
       assert.equal(receipts.data.length,expected);
       assert.equal(entries.data.filter(entry=>entry.team_id===team.teamId).length,1);
     }
+    browserStates.push(await context.storageState());
+    await context.close();
   }
   if(fixture.phase==='pending-browser'){
     fixture.phase='entered';
@@ -114,6 +122,7 @@ try{
   }
 
   if(participantStart){
+    const starters=await Promise.all(Array.from({length:concurrentStart?3:1},(_,index)=>newManagerPage(index)));
     const cutoff=await db.from('events').update({deadline:new Date(Date.now()-5000).toISOString()})
       .eq('id',fixture.eventId);
     if(cutoff.error)throw cutoff.error;
@@ -124,7 +133,7 @@ try{
     if(beforeLock.error)throw beforeLock.error;
     const changedOrders={...beforeLock.data.orders,
       plan:beforeLock.data.orders.plan==='conserve'?'breakaway':'conserve'};
-    const lateChange=await pages[0].context().request.post('/api/event/join',{
+    const lateChange=await starters[0].context().request.post('/api/event/join',{
       data:{event_id:fixture.eventId,team_id:lockedTeam.teamId,
         selected_riders:beforeLock.data.selected_riders,
         captain_id:beforeLock.data.captain_id,orders:changedOrders},
@@ -134,9 +143,8 @@ try{
     const afterLock=await lockedEntry();
     if(afterLock.error)throw afterLock.error;
     assert.deepEqual(afterLock.data,beforeLock.data);
-    const starters=concurrentStart?pages.slice(0,3):pages.slice(0,1);
     await Promise.all(starters.map(async page=>{
-      await page.reload();
+      await page.goto(`/team/run?event_id=${fixture.eventId}`);
       await expect(page.getByRole('heading',{name:'Your lineup is locked'})).toBeVisible();
     }));
     if(concurrentStart){
@@ -152,7 +160,7 @@ try{
       assert.equal(outcomes.filter(outcome=>outcome.already_finished===false).length,1);
       assert.equal(outcomes.filter(outcome=>outcome.already_finished===true).length,2);
     }else{
-      const firstPage=pages[0];
+      const firstPage=starters[0];
       const preparation=firstPage.waitForResponse(response=>
         response.url().includes('/api/event/prepare')&&response.request().method()==='POST');
       await firstPage.getByRole('link',{name:/Watch the race/}).first().click();
@@ -166,6 +174,7 @@ try{
     assert.equal(commits.data.length,1);
     fixture.phase='finished';
     writeFileSync(fixturePath,JSON.stringify(fixture,null,2));
+    await Promise.all(starters.map(page=>page.context().close()));
   }
 
   execFileSync(process.execPath,[fileURLToPath(new URL('./p03-multidivision.mjs',import.meta.url)),'run'],
@@ -181,8 +190,8 @@ try{
       [...divisionByTeam.values()].filter(index=>index===division).length);
     assert.deepEqual(managerCounts,Array(3).fill(participantCount/3));
   }
-  for(let index=0;index<pages.length;index++){
-    const page=pages[index],team=browserTeams[index];
+  for(let index=0;index<participantCount;index++){
+    const page=await newManagerPage(index),team=browserTeams[index];
     const ownDivision=divisionByTeam.get(team.teamId);
     const divisionApi=await page.context().request.get(`/api/event/divisions?event_id=${fixture.eventId}`);
     assert.equal(divisionApi.status(),200,await divisionApi.text());
@@ -201,9 +210,7 @@ try{
         assert.equal((await foreign.json()).code,'ACCESS_DENIED');
       }
     }
-    if(participantStart&&index===0)
-      await page.goto(`/team/run?event_id=${fixture.eventId}`);
-    else await page.reload();
+    await page.goto(`/team/run?event_id=${fixture.eventId}`);
     await expect(page.getByRole('heading',{name:'The race is ready'})).toBeVisible();
     const replayRequest=page.waitForResponse(response=>response.url().includes('/api/event-run?')&&response.status()===200);
     await page.getByRole('link',{name:/Watch the race/}).first().click();
@@ -255,6 +262,7 @@ try{
       .toHaveAttribute('href',`/team/view/${fixture.eventId}?division=${ownDivision}`);
     await expect(historyCard.getByRole('link',{name:'Result'}))
       .toHaveAttribute('href',`/team/results/${fixture.eventId}?division=${ownDivision}`);
+    await page.context().close();
   }
   const eventAwards=await db.from('recovery_ranking_awards').select('team_id,points')
     .eq('event_id',fixture.eventId);
@@ -266,7 +274,7 @@ try{
     .eq('calendar_source','PELOTONIA').eq('event_format','ONE_DAY');
   if(allTeamAwards.error)throw allTeamAwards.error;
   const expectedSportingPoints=allTeamAwards.data.reduce((sum,row)=>sum+Number(row.points),0);
-  const rankingPage=pages[0];
+  const rankingPage=await newManagerPage(0);
   await rankingPage.goto('/team/leaderboards');
   await expect(rankingPage.getByRole('heading',{name:'Earned on the road.'})).toBeVisible();
   await rankingPage.getByLabel('Ranking').selectOption('team');
@@ -286,6 +294,7 @@ try{
   assert.equal(ranking.points,expectedSportingPoints);
   await expect(rankingPage.locator('.rankings-list li').filter({hasText:ranking.name}))
     .toContainText(`${expectedSportingPoints.toLocaleString('en-GB')} pts`);
+  await rankingPage.context().close();
   assert.deepEqual(errors,[]);
   console.log(`PASS isolated browser: ${participantCount} separate manager sessions, lineups and orders, 45-team ${startMode} run, own replays and division results (${new Set(divisionByTeam.values()).size} divisions), sporting leaderboard matches the award ledger${participantStart?', late order edit rejected':''}.`);
 }finally{
