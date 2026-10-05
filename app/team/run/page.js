@@ -124,6 +124,8 @@ export default function RunPage() {
     canRegister = Boolean(event?.status === "OPEN" && Date.parse(event.deadline) > now),
     canPrepare = Boolean(twoPhase && event?.status === "OPEN" && saved?.event_id === eventId
       && reveal?.phase === "preparation" && Date.parse(event.tactics_deadline) > now),
+    canWatchTwoPhase = Boolean(twoPhase && saved?.event_id === eventId
+      && reveal?.phase === "race_due" && Date.parse(event.scheduled_at) <= now),
     locked = !event || !(canRegister || canPrepare);
   useEffect(() => {
     const abort = new AbortController();
@@ -421,9 +423,9 @@ export default function RunPage() {
                 </div>
               ) : (
                 <>
-                  {locked && saved && !twoPhase && (
+                  {locked && saved && (!twoPhase || canWatchTwoPhase) && (
                     <section className="card race-ready">
-                      <h2>Your lineup is locked</h2>
+                      <h2>{twoPhase ? "Race day is here" : "Your lineup is locked"}</h2>
                       <p>
                         Open race day to watch the race. The full race is calculated and
                         saved before playback begins.

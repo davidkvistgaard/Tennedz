@@ -59,5 +59,32 @@ test("a registered manager sees the saved division and can edit tactics without 
   expect(tacticsPosts).toHaveLength(1);
   expect(tacticsPosts[0].event_id).toBe(eventId);
   expect(tacticsPosts[0].orders.plan).toBe("breakaway");
+
+  // Once the server reports a persisted tactics lock and the race is due,
+  // the same registered manager can enter the recorded viewer.
+  await page.unroute("**/api/events?*");
+  await page.route("**/api/events?*", (route) => route.fulfill({ json: {
+    ok: true, server_time: new Date().toISOString(), events: [{
+      id: eventId, name: "Two-phase fixture", kind: "one_day", gender: "M",
+      status: "OPEN", deadline: registrationDeadline, registration_deadline: registrationDeadline,
+      tactics_deadline: new Date(Date.now() - 120_000).toISOString(),
+      scheduled_at: new Date(Date.now() - 60_000).toISOString(), entry_fee: 0,
+      calendar_source: "PELOTONIA", race_tier: 3, race_team_size: 8,
+    }],
+  } }));
+  await page.unroute("**/api/event/reveal?*");
+  await page.route("**/api/event/reveal?*", (route) => route.fulfill({ json: {
+    ok: true, event_id: eventId, phase: "race_due", division: { index: 2, total: 3,
+      teams: [
+        { team_id: "team-alice", name: "ALICE Cycling", earned_points_at_lock: 120, seed_rank: 16 },
+        { team_id: "team-bob", name: "BOB Cycling", earned_points_at_lock: 110, seed_rank: 17 },
+      ],
+    },
+  } }));
+  await page.reload();
+  await expect(page.getByRole("heading", { name: "Race day is here" })).toBeVisible();
+  await expect(page.getByRole("link", { name: /Watch the race/ })).toHaveAttribute(
+    "href", `/team/view/${eventId}`,
+  );
   expect(pageErrors).toEqual([]);
 });
