@@ -115,3 +115,36 @@ test('a larger field resumes at the cursor after one request budget',async({requ
   expect(secondState.maxConcurrentEventReads).toBeLessThanOrEqual(4);
   expect((await second.json()).batches.at(-1)).toMatchObject({processed:0,complete:true});
 });
+
+test('division reveal waits for an incomplete large scan and commits after its retry',async({request})=>{
+  test.setTimeout(130000);
+  const fixture='http://127.0.0.1:54330';
+  await fetch(`${fixture}/__cron_reset`,{method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({teamCount:1000,revealCandidate:true})});
+  const headers={Authorization:'Bearer fixture-cron-secret'};
+  const first=await request.get('/api/cron/autopilot',{headers,timeout:60000});
+  expect(first.status()).toBe(200);
+  const firstResult=await first.json();
+  const firstState=await (await fetch(`${fixture}/__cron_state`)).json();
+  expect(firstState.complete).toBe(false);
+  expect(firstState.revealed).toBe(false);
+  expect(firstResult.divisions.revealed).toEqual([]);
+  expect(firstResult.divisions.pending).toEqual([{
+    event_id:'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
+    reason:'AUTOPILOT_PENDING',
+  }]);
+
+  const second=await request.get('/api/cron/autopilot',{headers,timeout:60000});
+  expect(second.status()).toBe(200);
+  const secondResult=await second.json();
+  const secondState=await (await fetch(`${fixture}/__cron_state`)).json();
+  expect(secondState).toMatchObject({complete:true,revealed:true,
+    processed:1000,entered:50,reportedEntered:50});
+  expect(secondResult.divisions.revealed).toEqual([{
+    event_id:'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',already_revealed:false,
+  }]);
+  const repeated=await request.get('/api/cron/autopilot',{headers,timeout:60000});
+  expect(repeated.status()).toBe(200);
+  expect((await repeated.json()).divisions.revealed).toEqual([]);
+});
