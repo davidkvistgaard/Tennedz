@@ -6,6 +6,39 @@ const tacticsDeadline = new Date(Date.now() + 3_600_000).toISOString();
 const scheduledAt = new Date(Date.now() + 7_200_000).toISOString();
 const selectedRiders = Array.from({ length: 8 }, (_, index) => `fixture-M-${index}`);
 
+test("separately signed-in managers receive only their own division from the reveal API", async ({ browser }) => {
+  const contexts = await Promise.all([browser.newContext(), browser.newContext()]);
+  try {
+    const pages = await Promise.all(contexts.map(context => context.newPage()));
+    for (const [index, name] of ["alice", "bob"].entries()) {
+      const page = pages[index];
+      await page.goto("http://localhost:3100/login");
+      await page.getByLabel("Email or username").fill(name);
+      await page.getByLabel("Password").fill("fixture-password");
+      await page.getByRole("button", { name: "Sign in", exact: true }).click();
+      await expect(page).toHaveURL(/\/team$/);
+    }
+
+    const responses = await Promise.all(pages.map(page =>
+      page.request.get(`http://localhost:3100/api/event/reveal?event_id=${eventId}`)));
+    for (const response of responses) expect(response.status()).toBe(200);
+    const [alice, bob] = await Promise.all(responses.map(response => response.json()));
+    expect(alice.phase).toBe("preparation");
+    expect(bob.phase).toBe("preparation");
+    expect(alice.division.index).toBe(1);
+    expect(bob.division.index).toBe(2);
+    expect(alice.division.total).toBe(3);
+    expect(bob.division.total).toBe(3);
+    expect(alice.division.teams.map(team => team.team_id)).toEqual(["team-alice", "team-a2"]);
+    expect(bob.division.teams.map(team => team.team_id)).toEqual(["team-bob", "team-b2"]);
+    for (const view of [alice, bob]) {
+      expect(JSON.stringify(view)).not.toMatch(/selected_riders|captain_id|orders|rider_id/);
+    }
+  } finally {
+    await Promise.all(contexts.map(context => context.close()));
+  }
+});
+
 test("a registered manager sees the saved division and can edit tactics without entering again", async ({ page }) => {
   const pageErrors = [];
   const tacticsPosts = [];

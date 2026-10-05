@@ -7,6 +7,12 @@ const sessions = new Map();
 const clubKits = new Map();
 const ids = { alice: "11111111-1111-4111-8111-111111111111", bob: "22222222-2222-4222-8222-222222222222", missing: "33333333-3333-4333-8333-333333333333", duplicate: "44444444-4444-4444-8444-444444444444", settings: "55555555-5555-4555-8555-555555555555" };
 const passwords = new Map(Object.keys(ids).map(name => [name, "fixture-password"]));
+const twoPhaseEventId = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
+const divisionTeams = [
+  ["team-alice", "ALICE Cycling", 1], ["team-a2", "ALICE Rival", 1],
+  ["team-bob", "BOB Cycling", 2], ["team-b2", "BOB Rival", 2],
+  ["team-c1", "Third Division One", 3], ["team-c2", "Third Division Two", 3],
+];
 const user = name => ({ id: ids[name], email: `${name}@tennedz.local`, aud: "authenticated", role: "authenticated", app_metadata: {}, user_metadata: {}, created_at: "2026-01-01T00:00:00Z" });
 function token(name) {
   const sid = randomUUID();
@@ -63,12 +69,36 @@ const server = http.createServer(async (req, res) => {
     if (req.method !== "GET" && req.method !== "HEAD") return send(500, { message: "Unexpected database mutation in recovery" });
     const table = url.pathname.split("/").at(-1);
     if (table === "teams") {
+      if (url.searchParams.get("id")?.startsWith("in."))
+        return send(200, divisionTeams.map(([id, name]) => ({ id, name })));
       const uid = url.searchParams.get("user_id")?.replace("eq.", "");
       const name = Object.keys(ids).find(n => ids[n] === uid);
       const teams = !name || name === "missing" ? [] : [{ id: `team-${name}`, user_id: uid, name: `${name.toUpperCase()} Cycling`, budget: 100000, rating: 0 }];
       if (name === "duplicate") teams.push({ ...teams[0], id: "second-team" });
       return send(200, teams);
     }
+    if (table === "event_teams" &&
+      url.searchParams.get("event_id") === `eq.${twoPhaseEventId}`) {
+      const teamId = url.searchParams.get("team_id")?.replace("eq.", "");
+      return send(200, ["team-alice", "team-bob"].includes(teamId)
+        ? { team_id: teamId } : null);
+    }
+    if (table === "events" && url.searchParams.get("id") === `eq.${twoPhaseEventId}`) {
+      return send(200, { id: twoPhaseEventId,
+        registration_deadline: new Date(Date.now() - 60000).toISOString(),
+        tactics_deadline: new Date(Date.now() + 3600000).toISOString(),
+        scheduled_at: new Date(Date.now() + 7200000).toISOString() });
+    }
+    if (table === "recovery_division_reveal_entries" &&
+      url.searchParams.get("event_id") === `eq.${twoPhaseEventId}`) {
+      return send(200, divisionTeams.map(([team_id, , division_index], index) => ({
+        team_id, division_index, seed_rank: index + 1,
+        earned_points_at_lock: 120 - index * 10,
+      })));
+    }
+    if (table === "recovery_tactics_commits" &&
+      url.searchParams.get("event_id") === `eq.${twoPhaseEventId}`)
+      return send(200, null);
     if (table === "team_riders") return send(200, ["M","F"].flatMap((gender,g) => Array.from({length:8},(_,i)=>({rider:{id:`fixture-${gender}-${i}`,name: ["Emil Berg","Louis Morel","Mateo Rojas","Dawit Tesfay","Luca Rossi","Noah Vermeer","Adam Nowak","Elias Holm","Freja Møller","Elin Lind","Femke Visser","Zofia Kowalska","Haruka Mori","Lina Moreau","Sara Costa","Amina Diallo"][g*8+i],gender,country_code:["DK","FR","CO","ER","IT","NL","PL","SE"][i],age:20+i*2,rating:i*11,sprint:40+i*3,flat:52,hills:45+i,mountain:65-i*3,cobbles:40,timetrial:43,endurance:60,strength:45,wind:47,form:85,fatigue:i*2}}))));
     if (table === "game_state") return send(200, { game_date: "2026-01-01" });
     return send(200, []);
