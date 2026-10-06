@@ -469,7 +469,7 @@ test('player viewer projection hides other divisions and rival private plans',()
     /no unique saved division/);
 });
 
-test('private v2 viewer shows only the manager’s own hard bunch work',()=>{
+test('private v2 viewer shows only the manager’s own bunch work',()=>{
   const input=snapshot(2),[steady,hard]=input.teams;
   const orders={
     [steady.id]:{captainId:steady.entry.captain_id,preset:'balanced',
@@ -482,11 +482,19 @@ test('private v2 viewer shows only the manager’s own hard bunch work',()=>{
   const first=contract.divisions[0].recording.frames[0];
   assert.deepEqual(first.hardBunchWorkTeamIds,[hard.id]);
   assert.equal(first.hardBunchWorkRiderIds.length,2);
+  assert.deepEqual(first.steadyBunchWorkTeamIds,[steady.id]);
+  assert.equal(first.steadyBunchWorkRiderIds.length,2);
   const hardView=projectV2RecordedDivisionForTeam(contract,hard.id);
   const steadyView=projectV2RecordedDivisionForTeam(contract,steady.id);
   assert.deepEqual(hardView.recording.frames[0].hardBunchWorkTeamIds,[hard.id]);
   assert.deepEqual(hardView.recording.frames[0].hardBunchWorkRiderIds,
     first.hardBunchWorkRiderIds);
+  assert.deepEqual(steadyView.recording.frames[0].steadyBunchWorkTeamIds,[steady.id]);
+  assert.deepEqual(steadyView.recording.frames[0].steadyBunchWorkRiderIds,
+    first.steadyBunchWorkRiderIds);
+  assert.ok(hardView.recording.frames.every(frame=>
+    frame.steadyBunchWorkTeamIds.length===0&&
+    frame.steadyBunchWorkRiderIds.length===0));
   assert.ok(steadyView.recording.frames.every(frame=>
     frame.hardBunchWorkTeamIds.length===0&&
     frame.hardBunchWorkRiderIds.length===0));

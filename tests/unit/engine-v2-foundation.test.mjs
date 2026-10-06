@@ -1083,7 +1083,7 @@ test('the full tactical trace is deterministic, bounded and makes aggressive ord
   const a=simulateTacticalTour(input);
   assert.deepEqual(a,simulateTacticalTour(input));
   assert.equal(a.frames.length,40);
-  assert.equal(a.tuningVersion,'v2-prototype-78');
+  assert.equal(a.tuningVersion,'v2-prototype-79');
   assert.equal(a.frames.at(-1).km,40);
   assert.ok(a.frames.some(frame=>frame.attackers.length>0));
   assert.ok(a.frames.some(frame=>frame.chasers.length>0));
@@ -1286,6 +1286,8 @@ test('distanced riders do not lower the reference pace of the remaining bunch',(
   assert.deepEqual(states.map(rider=>rider.deficitSeconds),[0,0,0,4,4,4,4,4]);
   assert.throws(()=>updateRiderGroups(states,[],{paceSetterAbility:Infinity}),
     /Invalid bunch pace setter/);
+  assert.throws(()=>updateRiderGroups(states,[],{frontPaceAbility:-1}),
+    /Invalid front pace/);
 });
 
 test('inert extra entrants cannot slow a working team before they are dropped',()=>{
@@ -1339,6 +1341,15 @@ test('a small strong team can set a costly hard tempo in fields of different siz
       row.teamId==='strong'&&row.id!=='strong-0'&&!firstWorkers.has(row.id));
     assert.ok(workerEnergy<restingHelper.energy,
       'a worker must spend more energy than an unselected teammate');
+    const steadyWorkers=new Set(steady.frames[0].steadyBunchWorkRiderIds.filter(id=>
+      id.startsWith('strong-')));
+    assert.equal(steadyWorkers.size,2);
+    const steadyWorkerEnergy=steady.frames[0].riderGroups.find(row=>
+      row.id===[...steadyWorkers][0]).energy;
+    const steadyRestingHelper=steady.frames[0].riderGroups.find(row=>
+      row.teamId==='strong'&&row.id!=='strong-0'&&!steadyWorkers.has(row.id));
+    assert.ok(steadyWorkerEnergy<steadyRestingHelper.energy,
+      'normal pace workers must also spend more than an unselected teammate');
     assert.ok(hard.frames.at(-1).teamEnergy.find(row=>row.teamId==='strong').mean<
       steady.frames.at(-1).teamEnergy.find(row=>row.teamId==='strong').mean);
     assert.equal(validateRecordedTour(hard),true);
@@ -1348,6 +1359,10 @@ test('a small strong team can set a costly hard tempo in fields of different siz
     const fakeWorker=structuredClone(hard);
     fakeWorker.frames[0].hardBunchWorkRiderIds=['weak-1','strong-1'];
     assert.throws(()=>validateRecordedTour(fakeWorker),/Invalid recorded bunch workers/);
+    const fakeSteadyWorker=structuredClone(steady);
+    fakeSteadyWorker.frames[0].steadyBunchWorkRiderIds[0]='strong-0';
+    assert.throws(()=>validateRecordedTour(fakeSteadyWorker),
+      /Invalid recorded steady bunch workers/);
     const priorRecording=structuredClone(hard);
     priorRecording.tuningVersion='v2-prototype-75';
     priorRecording.frames.forEach(frame=>{
@@ -1357,8 +1372,8 @@ test('a small strong team can set a costly hard tempo in fields of different siz
     assert.equal(validateRecordedTour(priorRecording),true);
   }
   const moderate=race(15,90,true);
-  assert.equal(moderate.frames.at(-1).riderGroups.filter(rider=>
-    rider.teamId==='weak'&&rider.group==='dropped').length,0);
+  assert.ok(gap(moderate)<gap(race(15,96,true)),
+    'a moderately stronger team must create a smaller gap');
   const noHelpers=simulateTacticalTour({stage:route,seed:'bunch-work',
     weather:{temp_c:18,wind_kph:5,precipitation_mm:0},
     teams:[makeTeam('weak',80),makeTeam('strong',96,true,false),
@@ -1366,6 +1381,10 @@ test('a small strong team can set a costly hard tempo in fields of different siz
   assert.ok(gap(noHelpers)<10);
   assert.deepEqual(noHelpers.frames[0].hardBunchWorkTeamIds,[]);
   assert.deepEqual(noHelpers.frames[0].hardBunchWorkRiderIds,[]);
+  const lowAbility=simulateTacticalTour({stage:route,seed:'bunch-work',
+    weather:{temp_c:18,wind_kph:5,precipitation_mm:0},
+    teams:[makeTeam('low-a',0),makeTeam('low-b',0)]});
+  assert.equal(validateRecordedTour(lowAbility),true);
 });
 
 test('helpers shelter a protected leader but cannot simultaneously chase',()=>{
