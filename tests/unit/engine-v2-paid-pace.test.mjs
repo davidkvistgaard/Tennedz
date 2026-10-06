@@ -317,7 +317,7 @@ test('v87 paid front shelters followers but leaves exposed workers responsible',
   assert.equal(recorded.tuningVersion,MOTOR_DRAFT_SHELTER_VERSION);
 });
 
-test('v88 adds endurance-dependent load only after a very long distance',()=>{
+test('v88 lowers the recovery ceiling only after a very long distance',()=>{
   const stage={distance_km:200,profile_points:[[0,100],[200,100]]};
   const strong=team('strong',80),weak=team('weak',80);
   for(const rider of strong.riders)rider.endurance=95;
@@ -340,4 +340,12 @@ test('v88 adds endurance-dependent load only after a very long distance',()=>{
     motorVersion:MOTOR_DISTANCE_LOAD_VERSION});
   assert.deepEqual(short88.frames,short87.frames);
   assert.deepEqual(short88.provisionalResults,short87.provisionalResults);
+  const tiredInput={stage,teams:[team('hard',80,{effort:'hard'}),
+    team('quiet',80)],seed:'already-tired-rider'};
+  const tired87=simulateTacticalTour({...tiredInput,
+    motorVersion:MOTOR_DRAFT_SHELTER_VERSION});
+  const tired88=simulateTacticalTour({...tiredInput,
+    motorVersion:MOTOR_DISTANCE_LOAD_VERSION});
+  assert.ok(energy(tired87,200,'hard-7')<80);
+  assert.equal(energy(tired88,200,'hard-7'),energy(tired87,200,'hard-7'));
 });

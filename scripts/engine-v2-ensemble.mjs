@@ -16,6 +16,7 @@ const samples=process.argv[2]===undefined?10:Number(process.argv[2]);
 const fieldTeams=process.argv[3]===undefined?4:Number(process.argv[3]);
 const motorMode=process.argv[4]??'current';
 const paceMode=process.argv[5]??'preset';
+const distanceKm=process.argv[6]===undefined?120:Number(process.argv[6]);
 const motorVersion=motorMode==='distance-load'?MOTOR_DISTANCE_LOAD_VERSION:
   motorMode==='draft-shelter'?MOTOR_DRAFT_SHELTER_VERSION:
   motorMode==='explicit-front'?MOTOR_EXPLICIT_FRONT_VERSION:
@@ -30,6 +31,7 @@ const gapAuditOptions={recoverySecondsPerCapacity:motorMode!=='current'?
   TUNING.chase.recoverySecondsPerCapacity};
 if(!Number.isInteger(samples)||samples<1||samples>100||
   !Number.isInteger(fieldTeams)||fieldTeams<2||fieldTeams>20||
+  ![120,260].includes(distanceKm)||
   !['current','candidate','paid-pace','bounded-finale','bounded-bridge-finale',
     'earned-bridge-finale','neutral-pace','explicit-front','draft-shelter',
     'distance-load']
@@ -38,7 +40,7 @@ if(!Number.isInteger(samples)||samples<1||samples>100||
     'rotate-plans'].includes(paceMode)||
   ['steady-rival','rotate-rival','late-hard-rival','rotate-plans'].includes(paceMode)&&
     !['explicit-front','draft-shelter','distance-load'].includes(motorMode))
-  throw new Error('Usage: node scripts/engine-v2-ensemble.mjs [paired samples: 1-100] [teams: 2-20] [current|candidate|paid-pace|bounded-finale|bounded-bridge-finale|earned-bridge-finale|neutral-pace|explicit-front|draft-shelter|distance-load] [preset|paced-rival|steady-rival|rotate-rival|late-hard-rival|rotate-plans (v86+ only)]');
+  throw new Error('Usage: node scripts/engine-v2-ensemble.mjs [paired samples: 1-100] [teams: 2-20] [current|candidate|paid-pace|bounded-finale|bounded-bridge-finale|earned-bridge-finale|neutral-pace|explicit-front|draft-shelter|distance-load] [preset|paced-rival|steady-rival|rotate-rival|late-hard-rival|rotate-plans (v86+ only)] [120|260 km]');
 
 const ROUTES={
   flat:{distance_km:120,profile_points:[[0,60],[40,60],[80,75],[120,60]],
@@ -47,6 +49,16 @@ const ROUTES={
     surface_segments:[{from_km:38,to_km:43,surface:'cobbles'}]},
   mountain:{distance_km:120,profile_points:[[0,400],[30,700],[50,1500],[70,800],[95,1900],[120,450]],
     surface_segments:[{from_km:75,to_km:80,surface:'gravel'}]},
+};
+const LONG_ROUTES={
+  flat:{distance_km:260,profile_points:[[0,60],[80,60],[160,75],[260,60]],
+    exposed_segments:[{from_km:70,to_km:190}]},
+  rolling:{distance_km:260,profile_points:[[0,90],[40,240],[80,90],[120,300],
+    [160,110],[200,230],[230,80],[260,90]],
+  surface_segments:[{from_km:160,to_km:168,surface:'cobbles'}]},
+  mountain:{distance_km:260,profile_points:[[0,400],[40,700],[70,1500],
+    [100,800],[145,1900],[180,600],[220,1800],[260,450]],
+  surface_segments:[{from_km:180,to_km:188,surface:'gravel'}]},
 };
 const WEATHER={flat:{temp_c:18,wind_kph:22,precipitation_mm:.4},
   rolling:{temp_c:22,wind_kph:16,precipitation_mm:1},
@@ -76,9 +88,9 @@ function fictionalTeams(sample,gender){
   });
 }
 
-const report={pairedSamples:samples,fieldTeams,motorMode,paceMode,
+const report={pairedSamples:samples,fieldTeams,motorMode,paceMode,distanceKm,
   description:'fictional varied riders and routes; no live data',courses:{}};
-for(const [course,stage] of Object.entries(ROUTES)){
+for(const [course,stage] of Object.entries(distanceKm===260?LONG_ROUTES:ROUTES)){
   report.courses[course]={};
   for(const gender of ['M','F']){
     report.courses[course][gender]={};
@@ -94,7 +106,8 @@ for(const [course,stage] of Object.entries(ROUTES)){
         preFinalBreakWinnerRaces:0,finalKmJoinWinnerRaces:0,
         breakWinnerGroupAgeKm:[],
         caughtBreaks:0,finishLineCatches:0,partialFinishCatches:0,
-        finishLineCaughtRiders:0,droppedRiders:0,amberEnergy:0,paidPaceKm:0,
+        finishLineCaughtRiders:0,droppedRiders:0,amberEnergy:0,
+        fieldEnergy:0,winnerEnergy:0,lowEnergyRiders:0,paidPaceKm:0,
         paidWorkerEnergy:0,paidWorkerRaces:0,paidWorkerCount:0,frontConcentration:0,
         finalGaps:[],
         maxGroups:0,multiGroupFinishes:0,chaseGroupAttackMoves:0,
@@ -111,7 +124,7 @@ for(const [course,stage] of Object.entries(ROUTES)){
                 ...(['explicit-front','draft-shelter','distance-load'].includes(motorMode)?
                   {frontWork:'rotate'}:{})},
               ...(paceMode==='late-hard-rival'?{
-                phases:[{atKm:80,effort:'hard'}]}:{})}:{}),
+                phases:[{atKm:distanceKm-40,effort:'hard'}]}:{})}:{}),
             ...(paceMode==='rotate-plans'?{baseline:{frontWork:index%2===0?
               'rotate':'sit_in'}}:{})},
         }));
@@ -184,6 +197,10 @@ for(const [course,stage] of Object.entries(ROUTES)){
           totals.finishLineCaughtRiders+=race.frames.at(-1).caughtBreakawayRiderIds.length;
         totals.droppedRiders+=race.provisionalResults.filter(rider=>rider.group==='dropped').length;
         totals.amberEnergy+=amber.reduce((sum,rider)=>sum+rider.energy,0)/amber.length;
+        totals.fieldEnergy+=race.provisionalResults.reduce((sum,rider)=>
+          sum+rider.energy,0)/race.provisionalResults.length;
+        totals.winnerEnergy+=winner.energy;
+        totals.lowEnergyRiders+=race.provisionalResults.filter(rider=>rider.energy<20).length;
         const paidFrames=race.frames.filter(frame=>frame.paidBunchPace);
         totals.paidPaceKm+=paidFrames.length;
         if(paidFrames.length){
@@ -265,6 +282,9 @@ for(const [course,stage] of Object.entries(ROUTES)){
         meanFinishLineCaughtRiders:+(totals.finishLineCaughtRiders/samples).toFixed(2),
         meanDroppedRiders:+(totals.droppedRiders/samples).toFixed(2),
         amberMeanEnergy:+(totals.amberEnergy/samples).toFixed(2),
+        meanFieldEnergy:+(totals.fieldEnergy/samples).toFixed(2),
+        meanWinnerEnergy:+(totals.winnerEnergy/samples).toFixed(2),
+        meanRidersUnder20Energy:+(totals.lowEnergyRiders/samples).toFixed(2),
         meanPaidPaceKm:+(totals.paidPaceKm/samples).toFixed(2),
         meanPaidWorkerFinalEnergy:totals.paidWorkerRaces?
           +(totals.paidWorkerEnergy/totals.paidWorkerRaces).toFixed(2):null,
