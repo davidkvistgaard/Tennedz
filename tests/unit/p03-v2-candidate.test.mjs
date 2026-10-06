@@ -253,6 +253,20 @@ test('division-only v2 read validates replay, points and reveal without rival re
   const slice={...header,divisionCount:divisions.length,division:divisions[2]};
   const teamId=slice.division.teamIds[0];
   assert.equal(validateV2OneDayDivisionSlice(slice),slice);
+  const persistedReveal=structuredClone(slice);
+  persistedReveal.divisionReveal.revealedAt='2026-10-06T08:28:39.418597+00:00';
+  persistedReveal.divisionReveal.pointsPolicyVersion=
+    'provisional-zero-point-id-tiebreak-v1';
+  assert.equal(validateV2OneDayDivisionSlice(persistedReveal),persistedReveal);
+  const wrongRevealPolicy=structuredClone(persistedReveal);
+  wrongRevealPolicy.divisionReveal.pointsPolicyVersion='unexpected-policy';
+  assert.throws(()=>validateV2OneDayDivisionSlice(wrongRevealPolicy),/saved reveal/);
+  const wrongRevealTimestamp=structuredClone(persistedReveal);
+  wrongRevealTimestamp.divisionReveal.revealedAt='invalid-date';
+  assert.throws(()=>validateV2OneDayDivisionSlice(wrongRevealTimestamp),/saved reveal/);
+  const unexpectedRevealMetadata=structuredClone(persistedReveal);
+  unexpectedRevealMetadata.divisionReveal.extra='surprise';
+  assert.throws(()=>validateV2OneDayDivisionSlice(unexpectedRevealMetadata),/saved reveal/);
   assert.deepEqual(projectV2RecordedDivisionSliceForTeam(slice,teamId),
     projectV2RecordedDivisionForTeam(contract,teamId));
   assert.throws(()=>projectV2RecordedDivisionSliceForTeam(slice,divisions[0].teamIds[0]),
