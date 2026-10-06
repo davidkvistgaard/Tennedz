@@ -18,7 +18,8 @@ const v2LockFixture = process.env.PELOTONIA_E2E_V2_LOCK === "true";
 const v2RecordingFixture = process.env.PELOTONIA_E2E_V2_RECORDING === "true";
 let v2LockedAt = null;
 let v2RecordedAt = null;
-let v2RecordedContract = null;
+let v2RecordedHeader = null;
+let v2RecordedDivisions = [];
 const v2RecordingLock=v2BrowserRecordingLock(v2PreviewEventId);
 let noContestCancelled = false;
 const divisionTeams = [
@@ -80,10 +81,16 @@ const server = http.createServer(async (req, res) => {
           body.p_contract?.divisionReveal?.eventId !== v2PreviewEventId ||
           body.p_contract?.divisions?.[0]?.recording?.version !== 2)
         return send(400, { code: "PT400", message: "The v2 result contract does not match its lock." });
-      if (v2RecordedContract && JSON.stringify(v2RecordedContract) !== JSON.stringify(body.p_contract))
+      const savedContract=v2RecordedHeader?{...v2RecordedHeader,
+        divisions:v2RecordedDivisions}:null;
+      if (savedContract && JSON.stringify(savedContract) !== JSON.stringify(body.p_contract))
         return send(409, { code: "PT409", message: "The saved v2 recording differs from this retry." });
       const alreadyRecorded = v2RecordedAt !== null;
-      v2RecordedContract ??= body.p_contract;
+      if (!v2RecordedHeader) {
+        const {divisions,...header}=body.p_contract;
+        v2RecordedHeader=header;
+        v2RecordedDivisions=divisions;
+      }
       v2RecordedAt ??= new Date().toISOString();
       return send(200,{eventId:v2PreviewEventId,recordedAt:v2RecordedAt,
         alreadyRecorded,resultContract:{private:true}});
@@ -92,11 +99,10 @@ const server = http.createServer(async (req, res) => {
       if (body.p_event !== v2PreviewEventId ||
           ![ids.v2manager,ids.v2rival].includes(body.p_user))
         return send(403,{code:"PT403",message:"The team is not in the revealed race."});
-      if (!v2RecordedContract)
+      if (!v2RecordedHeader)
         return send(404,{code:"PT404",message:"The v2 recording is not ready."});
-      const {divisions,...header}=v2RecordedContract;
-      return send(200,{...header,divisionCount:divisions.length,
-        division:divisions[0],recordedAt:v2RecordedAt});
+      return send(200,{...v2RecordedHeader,divisionCount:v2RecordedDivisions.length,
+        division:v2RecordedDivisions[0],recordedAt:v2RecordedAt});
     }
     if (v2LockFixture && url.pathname === "/rest/v1/rpc/recovery_race_snapshot") {
       if (body.p_event !== v2PreviewEventId)
@@ -247,7 +253,7 @@ const server = http.createServer(async (req, res) => {
       return send(200,v2LockedAt?[{event_id:v2PreviewEventId}]:[]);
     if (v2RecordingFixture && table === "recovery_v2_recorded_candidates")
       return send(200,v2RecordedAt?{recorded_at:v2RecordedAt,
-        result_contract:v2RecordedContract}:null);
+        result_contract:null,contract_header:v2RecordedHeader}:null);
     if (v2RecordingFixture && table === "recovery_v2_tactics_commits")
       return send(200,{input_snapshot:v2RecordingLock});
     if (table === "recovery_division_reveal_entries" &&
