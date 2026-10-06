@@ -108,9 +108,10 @@ const server = http.createServer(async (req, res) => {
       if (req.method !== "POST" || body.p_event !== v2PreviewEventId ||
           body.p_user !== ids.v2manager || body.p_orders?.captainId !== "fixture-M-0")
         return send(403, { code: "PT403", message: "This team is not in the revealed race." });
-      v2Drafts.set(body.p_user, body.p_orders);
+      const savedAt=new Date().toISOString();
+      v2Drafts.set(body.p_user,{orders:body.p_orders,savedAt});
       return send(200, { ok: true, event_id: body.p_event,
-        team_id: "team-v2manager", saved_at: new Date().toISOString(),
+        team_id: "team-v2manager", saved_at: savedAt,
         orders_version: 2, draft_count: v2Drafts.size });
     }
     if (noContestFixture && url.pathname === "/rest/v1/rpc/recovery_void_incomplete_two_phase_race") {
@@ -159,7 +160,9 @@ const server = http.createServer(async (req, res) => {
       url.searchParams.get("event_id") === `eq.${v2PreviewEventId}`) {
       const teamId=url.searchParams.get("team_id")?.replace("eq.", "");
       if (v2RecordingFixture && ["team-v2manager","team-v2rival"].includes(teamId))
-        return send(200,{team_id:teamId});
+        return send(200,{team_id:teamId,
+          selected_riders:Array.from({length:8},(_,i)=>`fixture-${teamId==="team-v2manager"?"M":"R"}-${i}`),
+          captain_id:`fixture-${teamId==="team-v2manager"?"M":"R"}-0`});
       return send(200,teamId==="team-v2manager"?{
         team_id:teamId,selected_riders:Array.from({length:8},(_,i)=>`fixture-M-${i}`),
         captain_id:"fixture-M-0",
@@ -179,7 +182,8 @@ const server = http.createServer(async (req, res) => {
         scheduled_at: new Date(Date.now() + 7200000).toISOString() });
     }
     if (table === "events" && url.searchParams.get("id") === `eq.${v2PreviewEventId}`)
-      return send(200,{id:v2PreviewEventId,kind:"one_day",gender:"M",status:"OPEN",
+      return send(200,{id:v2PreviewEventId,name:"Private v2 tactics fixture",
+        kind:"one_day",gender:"M",status:"OPEN",
         stage_profile_id:twoPhaseStageId,
         registration_deadline:new Date(Date.now()-60000).toISOString(),
         tactics_deadline:new Date(Date.now()+3600000).toISOString()});
@@ -191,6 +195,19 @@ const server = http.createServer(async (req, res) => {
       return send(200,["eq.team-v2manager",
         ...(v2RecordingFixture?["eq.team-v2rival"]:[])].includes(url.searchParams.get("team_id"))
         ?{team_id:url.searchParams.get("team_id").replace("eq.",""),division_index:1}:null);
+    if (v2SaveFixture && table === "recovery_v2_tactics_drafts") {
+      const draft=v2Drafts.get(ids.v2manager);
+      return send(200,url.searchParams.get("team_id")==="eq.team-v2manager"&&draft?
+        {selected_riders:Array.from({length:8},(_,i)=>`fixture-M-${i}`),
+          captain_id:"fixture-M-0",orders:draft.orders,saved_at:draft.savedAt}:null);
+    }
+    if (table === "recovery_tactics_commits" &&
+      url.searchParams.get("event_id") === `eq.${v2PreviewEventId}`)
+      return send(200,null);
+    if (table === "recovery_v2_tactics_commits" &&
+      url.searchParams.get("event_id") === `eq.${v2PreviewEventId}` &&
+      !v2RecordingFixture)
+      return send(200,v2LockedAt?{event_id:v2PreviewEventId}:null);
     if (v2RecordingFixture && table === "recovery_v2_recorded_candidates")
       return send(200,v2RecordedAt?{recorded_at:v2RecordedAt,
         result_contract:v2RecordedContract}:null);

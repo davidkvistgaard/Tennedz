@@ -151,6 +151,8 @@ En ny 15-holds prøve viste også et brat spring: hold med gennemsnitlig færdig
 
 **V2-pointgrænse, isoleret prøve 6. oktober:** Den låste v2-resultatkontrakt kan nu mappes til fulde, entydige rækker i den eksisterende sportslige pointledger, inklusive løb, sæson, køn, kalenderkilde, niveau, placering og pointpolitik. En skrivefri 45-holds prøve giver præcis 60 rækker og afviser manglende metadata eller ændret løbsår. Rækkerne bliver endnu ikke skrevet: en afsluttende transaktion skal gemme resultat, point og øvrige løbseffekter samlet og kunne gentages uden dobbelttildeling.
 
+**Privat v2-taktikside, isoleret prøve 6. oktober:** En tilmeldt manager kan på en særskilt, normalt slukket side hente sin egen udtagelse og gemte v2-kladde, vælge vejkaptajn, hjælperroller, preset, startindsats og planlagte skift ved rutemarkører og gemme via den eksisterende private v2-rute. Serveren returnerer kun egen kladde og lukker redigering ved taktikfristen eller efter lås. Lokal browserprøve dækkede gemning, genindlæsning, fremmed adgang og 390 px layout. Siden er endnu ikke koblet til kalenderens normale navigation; prøvebrowseren og den isolerede DB-prøve er adskilte.
+
 ## P1 - atlas og verdenskvalitet
 
 | ID | Opgave / konkret resultat | Timer | Afhænger af |
