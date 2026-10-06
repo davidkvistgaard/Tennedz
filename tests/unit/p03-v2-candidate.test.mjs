@@ -165,6 +165,12 @@ test('viewer selection exposes only the entered team’s saved division',()=>{
       .map(row=>row.teamId)));
   assert.equal(JSON.stringify(selected).includes(candidate.divisions[0].teamIds[0]),false);
   assert.throws(()=>selectV2RecordedDivision(candidate,'foreign'),/no unique saved division/);
+  assert.throws(()=>selectV2RecordedDivision(null,assignment.teamId),
+    /needs a saved reveal and team identity/);
+  const malformed=structuredClone(candidate);
+  malformed.divisionReveal.assignments[0]=null;
+  assert.throws(()=>selectV2RecordedDivision(malformed,assignment.teamId),
+    /needs a saved reveal and team identity/);
   const tampered=structuredClone(candidate);
   tampered.divisionReveal.assignments.find(row=>row.teamId===assignment.teamId)
     .divisionIndex=2;
