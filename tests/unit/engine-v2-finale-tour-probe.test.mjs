@@ -27,6 +27,7 @@ test('a real 5 km recording supplies rider energy, solo gap and locked orders',(
   const probe=probeFinalePairFromTour(tour,{frontRiderId:'a-2',chaseRiderId:'b-2'});
   assert.equal(probe.sourceKm,35);
   assert.equal(probe.sourceTuningVersion,tour.tuningVersion);
+  assert.deepEqual(probe.sourceWarnings,['residual_gap_after_sufficient_chase']);
   assert.equal(probe.input.initialGapSeconds,snapshot.roadGroups[0].gapSeconds);
   assert.equal(probe.input.front.energy,snapshot.riderGroups.find(r=>r.id==='a-2').energy);
   assert.equal(probe.input.rear.energy,snapshot.riderGroups.find(r=>r.id==='b-2').energy);
@@ -63,6 +64,7 @@ test('two genuinely engaged rival teams supply a reproducible relay probe',()=>{
   const probe=probeFinaleRelayFromTour(tour,{frontRiderId:'a-2',
     chaseRiderIds:['b-2','c-2'],rotation});
   assert.equal(probe.sourceKm,35);
+  assert.deepEqual(probe.sourceWarnings,['residual_gap_after_sufficient_chase']);
   assert.equal(probe.input.initialGapSeconds,frame.roadGroups[0].gapSeconds);
   assert.deepEqual(probe.input.chasers.map(chaser=>chaser.energy),
     ['b-2','c-2'].map(id=>frame.riderGroups.find(rider=>rider.id===id).energy));
@@ -71,4 +73,36 @@ test('two genuinely engaged rival teams supply a reproducible relay probe',()=>{
     chaseRiderIds:['b-2','b-2'],rotation}),/two different/);
   assert.throws(()=>probeFinaleRelayFromTour(tour,{frontRiderId:'a-2',
     chaseRiderIds:['b-2','a-3'],rotation}),/engaged in the bunch chase/);
+});
+
+test('a 300 km recording carries earned fatigue into the read-only finale',()=>{
+  const distance=300;
+  const longStage={distance_km:distance,profile_points:[[0,100],[distance,100]]};
+  const makeLong=(id,late)=>({id,
+    riders:Array.from({length:8},(_,index)=>({id:`${id}-${index}`,
+      gender:'M',flat:late&&index===2?90:70,
+      strength:late&&index===2?90:70,
+      endurance:late&&index===2?90:70,
+      timetrial:late&&index===2?100:70,sprint:50,leadership:50})),
+    orders:{captainId:`${id}-0`,roadCaptainId:`${id}-1`,preset:'protect',
+      baseline:{attack:'none',effort:'conserve',
+        chase:late?'ignore':'selective'},
+      phases:late?[{atKm:270,attack:'repeated',attackRiderId:`${id}-2`,
+        effort:'hard'}]:[]}});
+  const tour=simulateTacticalTour({stage:longStage,
+    teams:[makeLong('a',true),makeLong('b',false)],seed:'late-long'});
+  const frame=tour.frames[294];
+  assert.deepEqual(frame.roadGroups.map(group=>group.riderIds),[['a-2']]);
+  const leader=frame.riderGroups.find(rider=>rider.id==='a-2');
+  assert.ok(leader.energy>0&&leader.energy<50);
+  const probe=probeFinalePairFromTour(tour,{
+    frontRiderId:'a-2',chaseRiderId:'b-2'});
+  assert.equal(probe.sourceKm,295);
+  assert.equal(probe.input.front.energy,leader.energy);
+  assert.deepEqual(probe.sourceWarnings,['residual_gap_after_sufficient_chase']);
+  assert.equal(validateFinalePair(probe.input,probe.recording),true);
+  // The current kilometre engine still leaves a residual positive gap here.
+  // This test preserves the observed input, not its sporting correctness.
+  assert.ok(frame.chasePower>0&&frame.passiveGapDelta>0&&
+    frame.roadGroups[0].gapSeconds>0);
 });
