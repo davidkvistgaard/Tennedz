@@ -1,5 +1,5 @@
 // Read-only diagnostic for the same strong/weak teams in different fields.
-// Run: node tests/support/p03-v2-field-transition-probe.mjs
+// Run: node tests/support/p03-v2-field-transition-probe.mjs [distance 20–400] [seed]
 import {simulateTacticalTour} from '../../lib/engine/v2/tour.mjs';
 
 const skills=['sprint','flat','hills','mountain','cobbles','timetrial',
@@ -14,13 +14,15 @@ function team(id,level,hard=false){
 }
 const distance=Number(process.argv[2]??140);
 if(!Number.isInteger(distance)||distance<20||distance>400)throw new Error('Distance must be 20–400 km.');
+const seed=process.argv[3]??'fixed';
+if(!seed.trim())throw new Error('Seed must not be empty.');
 function run(size,neutralMode='competitive',strongEffort='hard',strongLevel=96){
   const teams=[team('weak',80),team('strong',strongLevel,strongEffort==='hard'),
     ...Array.from({length:size-2},(_,index)=>
       team(`neutral-${index}`,neutralMode==='inert'?30:76+index%13))];
   const recording=simulateTacticalTour({stage:{distance_km:distance,
     profile_points:[[0,0],[distance,0]],tags:['FLAT']},teams,
-  seed:'fixed',weather:{temp_c:18,wind_kph:5,precipitation_mm:0}});
+  seed,weather:{temp_c:18,wind_kph:5,precipitation_mm:0}});
   const firstDrop=recording.frames.find(frame=>frame.riderGroups.some(row=>
     row.teamId==='weak'&&row.group==='dropped'))?.km??null;
   const workKey=strongEffort==='hard'?'hardBunchWorkTeamIds':'steadyBunchWorkTeamIds';
@@ -39,7 +41,8 @@ function run(size,neutralMode='competitive',strongEffort='hard',strongLevel=96){
         neutralDropped:neutral.filter(row=>row.group==='dropped').length,
         weakLeaderGroup:leader.group,
         weakLeaderDeficitSeconds:leader.deficitSeconds,
-        strongMeanEnergy:frame.teamEnergy.find(row=>row.teamId==='strong').mean};
+        strongMeanEnergy:frame.teamEnergy.find(row=>row.teamId==='strong').mean,
+        weakMeanEnergy:frame.teamEnergy.find(row=>row.teamId==='weak').mean};
     }),
     firstWeakGapSeconds:recording.provisionalResults.find(row=>
       row.teamId==='weak').gapSeconds};
@@ -48,7 +51,7 @@ const runs=[
   run(2),run(15),run(15,'inert'),run(2,'competitive','steady'),
   run(15,'competitive','steady'),run(2,'competitive','hard',90),
   run(15,'competitive','hard',90)];
-console.log(JSON.stringify({probe:'v2 field-size transition',distanceKm:distance,runs,
+console.log(JSON.stringify({probe:'v2 field-size transition',distanceKm:distance,seed,runs,
   comparisons:{hardMinusSteadySeconds:{twoTeams:+(runs[0].firstWeakGapSeconds-
     runs[3].firstWeakGapSeconds).toFixed(2),fifteenTeams:+(runs[1].firstWeakGapSeconds-
     runs[4].firstWeakGapSeconds).toFixed(2)},
