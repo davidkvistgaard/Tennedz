@@ -131,6 +131,8 @@ En ny 15-holds prøve viste også et brat spring: hold med gennemsnitlig færdig
 
 **V2-optagelsens størrelse:** En syntetisk 45-holds, 140 km-prøve gav tre særskilte 15-holds-optagelser på tilsammen 6,78 MB rå JSON eller 407 KB med gzip; beregningen tog cirka 0,7 sekunder lokalt uden serialisering. Før punkt 08-09 kan koble den til spillernes løb, skal versionsmærket lagring og hentning af kun spillerens division prøves med faktiske gemte data; den nuværende replay-kolonne accepterer kun v1. Tallene er ikke en måling af database, netværk eller produktionskapacitet.
 
+**V2-taktik, isoleret prøve 6. oktober:** En indlogget manager kan bag to særskilte feature flags sende en foreslået v2-plan til et skrivefrit endpoint. Serveren læser kun managerens egen tilmelding, gemte divisionsrække og rute, kontrollerer forberedelsesfristen og afviser fremmed hold, fremmed rytter og ændret kaptajn. Svaret er mærket `saved:false`. Hele den lokale browserpakke er grøn med særskilt fixture-konto. Næste skridt er en atomisk, spillerkoblet gemning før taktiklåsen; ingen v2-plan bruges endnu i et gemt løb.
+
 ## P1 - atlas og verdenskvalitet
 
 | ID | Opgave / konkret resultat | Timer | Afhænger af |

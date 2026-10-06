@@ -5,9 +5,11 @@ import { randomUUID } from "node:crypto";
 
 const sessions = new Map();
 const clubKits = new Map();
-const ids = { alice: "11111111-1111-4111-8111-111111111111", bob: "22222222-2222-4222-8222-222222222222", missing: "33333333-3333-4333-8333-333333333333", duplicate: "44444444-4444-4444-8444-444444444444", settings: "55555555-5555-4555-8555-555555555555" };
+const ids = { alice: "11111111-1111-4111-8111-111111111111", bob: "22222222-2222-4222-8222-222222222222", missing: "33333333-3333-4333-8333-333333333333", duplicate: "44444444-4444-4444-8444-444444444444", settings: "55555555-5555-4555-8555-555555555555", v2manager:"66666666-6666-4666-8666-666666666666", v2outsider:"77777777-7777-4777-8777-777777777777", unregistered:"88888888-8888-4888-8888-888888888888" };
 const passwords = new Map(Object.keys(ids).map(name => [name, "fixture-password"]));
 const twoPhaseEventId = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
+const twoPhaseStageId = "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb";
+const v2PreviewEventId = "cccccccc-cccc-4ccc-8ccc-cccccccccccc";
 const noContestFixture = process.env.PELOTONIA_E2E_NO_CONTEST === "true";
 let noContestCancelled = false;
 const divisionTeams = [
@@ -106,6 +108,14 @@ const server = http.createServer(async (req, res) => {
       return send(200, teams);
     }
     if (table === "event_teams" &&
+      url.searchParams.get("event_id") === `eq.${v2PreviewEventId}`) {
+      const teamId=url.searchParams.get("team_id")?.replace("eq.", "");
+      return send(200,teamId==="team-v2manager"?{
+        team_id:teamId,selected_riders:Array.from({length:8},(_,i)=>`fixture-M-${i}`),
+        captain_id:"fixture-M-0",
+      }:null);
+    }
+    if (table === "event_teams" &&
       url.searchParams.get("event_id") === `eq.${twoPhaseEventId}`) {
       const teamId = url.searchParams.get("team_id")?.replace("eq.", "");
       return send(200, ["team-alice", "team-bob"].includes(teamId)
@@ -118,6 +128,18 @@ const server = http.createServer(async (req, res) => {
         tactics_deadline: new Date(Date.now() + 3600000).toISOString(),
         scheduled_at: new Date(Date.now() + 7200000).toISOString() });
     }
+    if (table === "events" && url.searchParams.get("id") === `eq.${v2PreviewEventId}`)
+      return send(200,{id:v2PreviewEventId,kind:"one_day",gender:"M",status:"OPEN",
+        stage_profile_id:twoPhaseStageId,
+        registration_deadline:new Date(Date.now()-60000).toISOString(),
+        tactics_deadline:new Date(Date.now()+3600000).toISOString()});
+    if (table === "stage_profiles" &&
+      url.searchParams.get("id") === `eq.${twoPhaseStageId}`)
+      return send(200, {distance_km:20,keypoints:[{km:10}]});
+    if (table === "recovery_division_reveal_entries" &&
+      url.searchParams.get("event_id") === `eq.${v2PreviewEventId}`)
+      return send(200,url.searchParams.get("team_id")==="eq.team-v2manager"
+        ?{team_id:"team-v2manager",division_index:1}:null);
     if (table === "recovery_division_reveal_entries" &&
       url.searchParams.get("event_id") === `eq.${twoPhaseEventId}`) {
       return send(200, divisionTeams.map(([team_id, , division_index], index) => ({
@@ -136,7 +158,8 @@ const server = http.createServer(async (req, res) => {
 });
 server.listen(54329, "127.0.0.1");
 const child = spawn(process.execPath, ["node_modules/next/dist/bin/next", "start", "-p", "3100"], { stdio: "inherit", env: {
-  ...process.env, RACE_LAB_ENABLED: "true", SUPABASE_URL: "http://127.0.0.1:54329", SUPABASE_ANON_KEY: "fixture-anon", SUPABASE_SERVICE_ROLE_KEY: "fixture-service-role",
+  ...process.env, RACE_LAB_ENABLED: "true", PELOTONIA_V2_TACTICS_PREVIEW_ENABLED: "true",
+  SUPABASE_URL: "http://127.0.0.1:54329", SUPABASE_ANON_KEY: "fixture-anon", SUPABASE_SERVICE_ROLE_KEY: "fixture-service-role",
   NEXT_PUBLIC_SUPABASE_URL: "", NEXT_PUBLIC_SUPABASE_ANON_KEY: "", APP_ORIGIN: "http://localhost:3100", ADMIN_USER_IDS: ids.alice,
   RECOVERY_ALLOW_GAME_WRITES: noContestFixture ? "true" : "false",
   PELOTONIA_AUTOPILOT_ENABLED: noContestFixture ? "true" : "false",

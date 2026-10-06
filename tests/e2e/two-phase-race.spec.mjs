@@ -38,7 +38,7 @@ test("separately signed-in managers receive only their own division from the rev
   const contexts = await Promise.all([browser.newContext(), browser.newContext(), browser.newContext()]);
   try {
     const pages = await Promise.all(contexts.map(context => context.newPage()));
-    for (const [index, name] of ["alice", "bob", "settings"].entries()) {
+    for (const [index, name] of ["alice", "bob", "unregistered"].entries()) {
       const page = pages[index];
       await page.goto("http://localhost:3100/login");
       await page.getByLabel("Email or username").fill(name);
