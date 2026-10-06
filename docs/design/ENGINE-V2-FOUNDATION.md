@@ -2,7 +2,9 @@
 
 Status: **development prototype, not wired to the public race cycle**. The existing `recovery-one-day-4-orders` engine, stored race outputs, database schema and live site remain unchanged. This work starts a separate, versioned engine on top of the latest recovery code so the working cycle can remain the comparison baseline while the replacement is built and balanced.
 
-Current balance version: `v2-prototype-74`. The simulator supports ordered independent road groups and records their formation, splits, pursuit, merges and catches. At the finish, a faster rear group can absorb slower riders ahead, and the bunch can catch individual riders from any road group while other groups survive. The final frame and provisional result must agree, and the replay validator checks those transitions. These are deterministic laboratory outcomes, not official race times or a production-ready viewer.
+Current balance version: `v2-prototype-75`. The simulator supports ordered independent road groups and records their formation, splits, pursuit, merges and catches. At the finish, a faster rear group can absorb slower riders ahead, and the bunch can catch individual riders from any road group while other groups survive. The final frame and provisional result must agree, and the replay validator checks those transitions. These are deterministic laboratory outcomes, not official race times or a production-ready viewer.
+
+In version 75, a team ordering hard effort without an attack or chase can lift the bunch's reference pace through two available helpers. A helper already sheltering the captain or performing another action cannot also set this pace. The lift is capped and falls as their energy falls. An ignore-chase order never applies this general pace while a road group is ahead. A 140 km sensitivity test now shows a strong team changing the result in both two-team and 15-team fields; the drop threshold and field-size effect remain too sharp for a sporting sign-off.
 
 ## Product contract
 

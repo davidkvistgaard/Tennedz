@@ -1083,7 +1083,7 @@ test('the full tactical trace is deterministic, bounded and makes aggressive ord
   const a=simulateTacticalTour(input);
   assert.deepEqual(a,simulateTacticalTour(input));
   assert.equal(a.frames.length,40);
-  assert.equal(a.tuningVersion,'v2-prototype-74');
+  assert.equal(a.tuningVersion,'v2-prototype-75');
   assert.equal(a.frames.at(-1).km,40);
   assert.ok(a.frames.some(frame=>frame.attackers.length>0));
   assert.ok(a.frames.some(frame=>frame.chasers.length>0));
@@ -1261,6 +1261,45 @@ test('distanced riders do not lower the reference pace of the remaining bunch',(
   assert.ok(next.filter(rider=>rider.group==='dropped').every(rider=>rider.deficitSeconds>4));
   assert.ok(next.filter(rider=>rider.group==='peloton').every(rider=>rider.deficitSeconds===0));
   assert.deepEqual(states.map(rider=>rider.deficitSeconds),[0,0,0,4,4,4,4,4]);
+  assert.throws(()=>updateRiderGroups(states,[],{paceSetterAbility:Infinity}),
+    /Invalid bunch pace setter/);
+});
+
+test('a small strong team can set a costly hard tempo in fields of different sizes',()=>{
+  const skills=['sprint','flat','hills','mountain','cobbles','timetrial',
+    'endurance','strength','wind'];
+  const makeTeam=(id,level,hard=false,helpers=true)=>({id,
+    riders:Array.from({length:8},(_,index)=>({id:`${id}-${index}`,gender:'M',
+      form:70,fatigue:10,...Object.fromEntries(skills.map(skill=>[skill,level]))})),
+    orders:{captainId:`${id}-0`,preset:'balanced',
+      ...(helpers?{}:{helperIds:[]}),
+      baseline:{effort:hard?'hard':'steady',attack:'none',chase:'ignore'}}});
+  const route={distance_km:140,profile_points:[[0,0],[140,0]]};
+  const race=(size,level,hard)=>simulateTacticalTour({stage:route,seed:'bunch-work',
+    weather:{temp_c:18,wind_kph:5,precipitation_mm:0},
+    teams:[makeTeam('weak',80),makeTeam('strong',level,hard),
+      ...Array.from({length:size-2},(_,index)=>
+        makeTeam(`neutral-${index}`,76+index%13))]});
+  const gap=recording=>{
+    const weak=recording.provisionalResults.find(result=>result.teamId==='weak');
+    const strong=recording.provisionalResults.find(result=>result.teamId==='strong');
+    return weak.timeSeconds-strong.timeSeconds;
+  };
+  for(const size of [2,15]){
+    const steady=race(size,96,false),hard=race(size,96,true);
+    assert.ok(gap(hard)>gap(steady)+40);
+    assert.ok(hard.frames.at(-1).teamEnergy.find(row=>row.teamId==='strong').mean<
+      steady.frames.at(-1).teamEnergy.find(row=>row.teamId==='strong').mean);
+    assert.equal(validateRecordedTour(hard),true);
+  }
+  const moderate=race(15,90,true);
+  assert.equal(moderate.frames.at(-1).riderGroups.filter(rider=>
+    rider.teamId==='weak'&&rider.group==='dropped').length,0);
+  const noHelpers=simulateTacticalTour({stage:route,seed:'bunch-work',
+    weather:{temp_c:18,wind_kph:5,precipitation_mm:0},
+    teams:[makeTeam('weak',80),makeTeam('strong',96,true,false),
+      ...Array.from({length:13},(_,index)=>makeTeam(`neutral-${index}`,76+index%13))]});
+  assert.ok(gap(noHelpers)<10);
 });
 
 test('helpers shelter a protected leader but cannot simultaneously chase',()=>{
