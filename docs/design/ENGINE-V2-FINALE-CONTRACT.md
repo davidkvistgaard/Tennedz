@@ -10,6 +10,8 @@ A separate `v2-finale-pair-2` laboratory runner now connects all eleven slices f
 
 The offline `engine-v2-finale-pair-scenarios.mjs` probe holds a four-second starting gap on fictional 300 km routes and imposes arrival energy with 5 km remaining; it does not simulate the first 295 km. With otherwise equal 75-skill riders and orders, a 35-energy leader survives by 4.14 seconds, while the same leader starting at 12 energy is caught. The same climbing specialist and flatter chaser produce a catch on the flat course but a 4.87-second surviving gap uphill. These directional differences are useful regression signals, not calibrated sporting acceptance: one rider chasing alone cannot stand in for a coordinated bunch or rival teams, and the model does not yet resolve an actual sprint.
 
+The read-only `probeFinalePairFromTour` bridge can now take a validated kilometre recording at exactly 5 km to go. It accepts only one solo rider in the sole road group and a nominated helper from a different team already engaged in the bunch chase. It uses the recording's committed riders and orders, route, measured group gap and individual remaining energies. A real 40 km v2 recording exercises this path in the unit suite, including rejection of a non-chasing rival. This is a counterfactual probe of the final 5 km, not a continuation attached to the official frames: the existing kilometre engine still simulates those five kilometres and owns its result. Its known residual-gap and automatic final-attack defects can already affect the source recording; the bridge must not be used to settle that recording or award points.
+
 ## Distance phases
 
 | Distance remaining | Sporting decision | Recording requirement |
