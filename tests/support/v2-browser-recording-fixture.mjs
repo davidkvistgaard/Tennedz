@@ -2,6 +2,9 @@ import {assignPointDivisions} from '../../lib/calendar/division-reveal.mjs';
 
 export function v2BrowserRecordingLock(eventId){
   const definitions=[['team-v2manager','Manager team','M',57],
+    ...Array.from({length:20},(_,index)=>[
+      `team-v2bot-${index+1}`,`Fixture team ${index+1}`,
+      `B${index+1}`,55+index%5]),
     ['team-v2rival','Rival team','R',60]];
   const teams=definitions.map(([id,name,initial,skill])=>{
     const riders=Array.from({length:8},(_,index)=>({
@@ -15,11 +18,11 @@ export function v2BrowserRecordingLock(eventId){
   });
   const reveal=assignPointDivisions({eventId,seasonYear:2026,gender:'M',
     entrants:teams.map((team,index)=>({teamId:team.id,
-      earnedPoints:index===0?12:10}))});
+      earnedPoints:definitions.length-index}))});
   return {v2_input_version:1,
     v2_orders_by_team_id:Object.fromEntries(teams.map((team,index)=>[
       team.id,{captainId:team.entry.captain_id,
-        preset:index===0?'protect':'aggressive'},
+        preset:index===0?'protect':team.id==='team-v2rival'?'aggressive':'balanced'},
     ])),
     event:{id:eventId,kind:'one_day',gender:'M',race_tier:3,
       scheduled_at:'2026-10-06T12:00:00Z',

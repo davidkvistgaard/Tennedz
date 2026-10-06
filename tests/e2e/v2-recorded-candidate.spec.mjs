@@ -12,7 +12,7 @@ async function signIn(page,name){
   await expect(page).toHaveURL(/\/team$/);
 }
 
-test('two entrants share one private recorded v2 candidate without exposing results',
+test('entrants in separate divisions read only their private v2 recording',
   async({browser})=>{
     test.skip(process.env.PELOTONIA_E2E_V2_RECORDING!=='true',
       'The isolated v2 recording fixture must be enabled explicitly.');
@@ -33,7 +33,7 @@ test('two entrants share one private recorded v2 candidate without exposing resu
       const second=await request(rival,{});
       expect(second.status(),await second.text()).toBe(200);
       expect(await second.json()).toMatchObject({already_recorded:true,
-        recorded_at:saved.recorded_at});
+        recorded_at:saved.recorded_at,division_index:2});
       expect((await request(outsider,{})).status()).toBe(403);
       expect((await request(manager,{team_id:'team-v2rival'})).status()).toBe(403);
       expect((await manager.request.post(endpoint,{
@@ -44,22 +44,29 @@ test('two entrants share one private recorded v2 candidate without exposing resu
       const own=await viewer.json();
       expect(own).toMatchObject({eventId,divisionIndex:1,settled:false,
         focusTeamId:'team-v2manager',recordedAt:saved.recorded_at});
-      expect(own.recording.committedInputs.teams.length).toBe(2);
-      const rivalTeam=own.recording.committedInputs.teams
-        .find(team=>team.id==='team-v2rival');
-      expect(Object.keys(rivalTeam.orders)).toEqual(['captainId']);
-      expect(Object.keys(rivalTeam.riders[0]).sort()).toEqual(['id','name']);
+      expect(own.recording.committedInputs.teams.length).toBe(11);
+      expect(own.recording.committedInputs.teams.some(team=>
+        team.id==='team-v2rival')).toBe(false);
+      const botTeam=own.recording.committedInputs.teams
+        .find(team=>team.id.startsWith('team-v2bot-'));
+      expect(Object.keys(botTeam.orders)).toEqual(['captainId']);
+      expect(Object.keys(botTeam.riders[0]).sort()).toEqual(['id','name']);
       expect(own.recording.frames[0].teamEnergy).toBeUndefined();
       expect(own.recording.frames[0].riderGroups
-        .filter(rider=>rider.teamId==='team-v2rival')
+        .filter(rider=>rider.teamId===botTeam.id)
         .every(rider=>rider.energy===undefined)).toBe(true);
       expect(own.recording.provisionalResults
-        .filter(result=>result.teamId==='team-v2rival')
+        .filter(result=>result.teamId===botTeam.id)
         .every(result=>result.energy===undefined&&result.finaleAbility===undefined))
         .toBe(true);
       const rivalViewer=await rival.request.get(`${endpoint}?event_id=${eventId}`);
       expect(rivalViewer.status(),await rivalViewer.text()).toBe(200);
-      expect((await rivalViewer.json()).focusTeamId).toBe('team-v2rival');
+      const rivalView=await rivalViewer.json();
+      expect(rivalView).toMatchObject({divisionIndex:2,focusTeamId:'team-v2rival',
+        settled:false});
+      expect(rivalView.recording.committedInputs.teams.length).toBe(11);
+      expect(rivalView.recording.committedInputs.teams.some(team=>
+        team.id==='team-v2manager')).toBe(false);
       expect((await outsider.request.get(`${endpoint}?event_id=${eventId}`)).status())
         .toBe(403);
       expect((await manager.request.get(`${endpoint}?event_id=${eventId}&team_id=team-v2rival`))
@@ -71,6 +78,12 @@ test('two entrants share one private recorded v2 candidate without exposing resu
       await manager.getByRole('button',{name:'Skip 10 km'}).click();
       await manager.getByRole('button',{name:'Skip 10 km'}).click();
       await expect(manager.getByText(/Candidate only; no ranking points were awarded/))
+        .toBeVisible();
+      await rival.goto(`/team/v2-race/${eventId}`);
+      await expect(rival.getByRole('heading',{name:/Rival team riders/})).toBeVisible();
+      await rival.getByRole('button',{name:'Skip 10 km'}).click();
+      await rival.getByRole('button',{name:'Skip 10 km'}).click();
+      await expect(rival.getByText(/Candidate only; no ranking points were awarded/))
         .toBeVisible();
       if(process.env.PELOTONIA_VIEWER_SCREENSHOT==='1')
         await manager.screenshot({path:'.recovery-local/v2-private-viewer.png',

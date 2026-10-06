@@ -101,8 +101,12 @@ const server = http.createServer(async (req, res) => {
         return send(403,{code:"PT403",message:"The team is not in the revealed race."});
       if (!v2RecordedHeader)
         return send(404,{code:"PT404",message:"The v2 recording is not ready."});
+      const teamId=body.p_user===ids.v2manager?'team-v2manager':'team-v2rival';
+      const index=v2RecordingLock.locked_division_reveal.assignments
+        .find(row=>row.teamId===teamId).divisionIndex;
       return send(200,{...v2RecordedHeader,divisionCount:v2RecordedDivisions.length,
-        division:v2RecordedDivisions[0],recordedAt:v2RecordedAt});
+        division:v2RecordedDivisions.find(row=>row.index===index),
+        recordedAt:v2RecordedAt});
     }
     if (v2LockFixture && url.pathname === "/rest/v1/rpc/recovery_race_snapshot") {
       if (body.p_event !== v2PreviewEventId)
@@ -230,7 +234,11 @@ const server = http.createServer(async (req, res) => {
       url.searchParams.get("event_id") === `eq.${v2PreviewEventId}`)
       return send(200,["eq.team-v2manager",
         ...(v2RecordingFixture?["eq.team-v2rival"]:[])].includes(url.searchParams.get("team_id"))
-        ?{team_id:url.searchParams.get("team_id").replace("eq.",""),division_index:1}:null);
+        ?{team_id:url.searchParams.get("team_id").replace("eq.",""),
+          division_index:v2RecordingFixture?
+            v2RecordingLock.locked_division_reveal.assignments.find(row=>
+              row.teamId===url.searchParams.get("team_id").replace("eq.",""))
+              .divisionIndex:1}:null);
     if (v2SaveFixture && table === "recovery_division_reveal_entries" &&
       url.searchParams.get("event_id")?.startsWith("in."))
       return send(200,url.searchParams.get("team_id")==="eq.team-v2manager"?

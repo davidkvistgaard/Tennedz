@@ -165,6 +165,8 @@ Et efterfølgende UI-check rettede desuden preset-skift efter genindlæsning, s�
 
 **Opdelt v2-kandidatlagring, 6. oktober:** Nye foreløbige optagelser gemmes atomisk som en lille kontraktheader og én privat, uforanderlig databaserække pr. division. Spillerens GET læser kun den relevante divisionsrække; tidligere kandidater med hele kontrakten i én kolonne kan fortsat læses og gentages uændret. En tilbagerullet SQL-prøve på den isolerede database dækkede begge lagringsformater, ejeradgang, fremmed adgang, fase/identitet, gentagelse og nul ændringer i den eksisterende pointledger. Den fulde kontrakt sendes stadig til gemmefunktionen i ét kald, så storfeltets skrivebelastning er ikke målt eller løst. Browserfixture og databaseprøve er fortsat adskilte, og et faktisk 45-manager v2-forløb samt afsluttende resultat-/pointtransaktion mangler.
 
+**Tværdivisionskontrol af v2-viewer, 6. oktober:** Den lokale protokolfixture har nu 22 hold i to divisioner, med en indlogget manager i hver. Begge kan gentage samme private optagelseskandidat, men læse og afspille kun egen divisions 11 hold; rivaldivisionens hold er ikke i svarene. Begge viewers viser fortsat resultat og point som foreløbige. Dette er en lokal browser/API-prøve, ikke en testdatabase-til-browser-afvikling eller belastningsmåling.
+
 ## P1 - atlas og verdenskvalitet
 
 | ID | Opgave / konkret resultat | Timer | Afhænger af |
