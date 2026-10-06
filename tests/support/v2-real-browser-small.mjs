@@ -167,8 +167,14 @@ try{
       .find(row=>row.id!==team.teamId);
     assert.deepEqual(Object.keys(other.orders),['captainId']);
     await page.goto(`/team/v2-race/${eventId}`);
-    await expect(page.getByText(/PRIVATE V2 RECORDING CANDIDATE/))
-      .toBeVisible();
+    try{
+      await expect(page.getByText(/PRIVATE V2 RECORDING CANDIDATE/))
+        .toBeVisible({timeout:30000});
+    }catch(error){
+      const visibleText=(await page.locator('body').innerText()).slice(0,800);
+      throw new Error(`Manager ${index+1} viewer failed at ${page.url()}: ${
+        visibleText}; page errors: ${pageErrors.join(' | ')}`,{cause:error});
+    }
     await closeManagerPage(index,page);
   }
   const parent=await ok(db.from('recovery_v2_recorded_candidates')
