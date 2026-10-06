@@ -16,6 +16,8 @@ A second read-only readiness check loads the tactics lock by event ID from the d
 
 A later two-manager browser run exposed a storage edge case: the simulator recorded a weather value as JavaScript `-0`, while JSONB returned `0`. Recomputed results are now compared in their persisted JSON representation. The saved recording then passed the read-only readiness check with 16 projected ledger rows and no awarded points; the disposable event, riders and accounts were removed.
 
+The same readiness path then passed two isolated 45-manager browser runs: three separately stored divisions, 45 private viewers, 60 projected ledger rows, an idempotent recording retry and zero final awards. The first recording request took 28.7 seconds locally. Avoiding a second identical simulation during candidate creation reduced the next local run to 25.0 seconds; these different fixtures are a diagnostic measurement, not a performance guarantee. Settlement still independently recomputes the saved candidate from its database lock. Both runs' disposable events, 720 riders in total and all 90 temporary accounts were removed after verification. The recording request remains too slow for a release decision without further load and deployment checks.
+
 ## Product contract
 
 - Managers commit their lineup, captain, optional road captain, preset, detailed phases and contingencies **before the deadline**. The server snapshots that exact input. The complete race is calculated once after the deadline, and everyone views the same recorded replay. No live manager action is required.

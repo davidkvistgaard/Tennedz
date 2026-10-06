@@ -3,7 +3,7 @@ import {protectedRoute,requireGameWrites,databaseClient} from '../../../../../li
 import {AuthError,assertTeamId} from '../../../../../lib/auth/policy.mjs';
 import {rpc,uuid} from '../../../../../lib/race/server';
 import {previewLockedV2RecordedDivisions} from '../../../../../lib/race/v2-candidate.mjs';
-import {buildV2OneDayResultContract,validateV2OneDayResultAgainstLock}
+import {buildV2OneDayResultContract,validateV2OneDayResultContract}
   from '../../../../../lib/race/v2-result-contract.mjs';
 import {projectV2RecordedDivisionSliceForTeam} from '../../../../../lib/race/v2-viewer.mjs';
 
@@ -48,7 +48,10 @@ export const POST=protectedRoute(async(req,context,auth)=>{
   try{
     const candidate=previewLockedV2RecordedDivisions(input);
     contract=buildV2OneDayResultContract(candidate,{tier:input.event.race_tier});
-    validateV2OneDayResultAgainstLock(input,contract);
+    // The candidate was calculated directly from this immutable lock. Check
+    // the full portable result without simulating all divisions a second time.
+    // Settlement will independently recompute from the stored lock and result.
+    validateV2OneDayResultContract(contract);
   }catch(error){
     throw new AuthError('V2_RECORDING_INVALID',error.message,409);
   }
