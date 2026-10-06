@@ -178,6 +178,7 @@ export default function TacticalTourViewer({recording,focusTeamId,awardProjectio
               'Candidate only; no ranking points were awarded.':
               'Sample only; no points were saved.'}</p>}
           <h3>Teams by captain finish</h3>
+          <p>The designated race captain determines each team's place, even if a teammate finishes ahead. Riders earn ranking points from their own places.</p>
           <ol className="tactical-results" aria-label="Teams by captain finish">{captainResults.map(({team,captain},position)=><li key={team.id}>
             <b>{position+1}</b><span>{team.name??team.id}</span>
             <small>{captain.name}</small>
