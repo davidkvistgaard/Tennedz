@@ -19,6 +19,9 @@ const fixtureTeams=JSON.parse(readFileSync(
   new URL('../../.recovery-local/p02-isolated-teams.json',import.meta.url),'utf8'));
 const managerCount=Number(process.argv[2]??2);
 assert.ok([2,22,45].includes(managerCount),'Use 2, 22 or 45 managers.');
+const settle=process.argv[3]==='--settle';
+assert.ok(process.argv[3]===undefined||settle,'Only --settle is supported.');
+if(settle)assert.equal(managerCount,2,'Settle the small race before scaling up.');
 assert.ok(fixtureTeams.length>=managerCount);
 const teams=fixtureTeams.slice(0,managerCount);
 assert.equal(new Set(teams.map(team=>team.userId)).size,managerCount);
@@ -203,10 +206,49 @@ try{
   assert.deepEqual(await loadV2SettlementReadiness(db,eventId),preflight);
   assert.equal((await ok(db.from('recovery_race_commits').select('event_id')
     .eq('event_id',eventId))).length,0);
-  assert.equal((await ok(db.from('recovery_ranking_awards').select('award_key')
-    .eq('event_id',eventId))).length,0);
+  if(settle){
+    const manager=await newManagerPage(0);
+    const firstSettlement=await manager.request.post(
+      '/api/event/v2-recording/settle',{
+        headers:{Origin:baseURL},data:{event_id:eventId},timeout:60000});
+    assert.equal(firstSettlement.status(),200,await firstSettlement.text());
+    assert.deepEqual({...await firstSettlement.json(),settled_at:null},
+      {ok:true,event_id:eventId,division_index:1,settled_at:null,
+        award_count:preflight.ledgerRows.length,already_settled:false});
+    const managerFinal=await manager.request.get(
+      `/api/event/v2-recording/prepare?event_id=${eventId}`);
+    assert.equal(managerFinal.status(),200,await managerFinal.text());
+    assert.equal((await managerFinal.json()).pointsFinal,true);
+    await manager.goto(`/team/v2-race/${eventId}`);
+    await expect(manager.getByText(/PRIVATE V2 FINAL RESULT/)).toBeVisible();
+    await manager.getByRole('button',{name:'See final result'}).click();
+    await expect(manager.getByText(/The points are included in the ranking ledger/))
+      .toBeVisible();
+    await closeManagerPage(0,manager);
+    const rival=await newManagerPage(1);
+    const retry=await rival.request.post('/api/event/v2-recording/settle',{
+      headers:{Origin:baseURL},data:{event_id:eventId},timeout:60000});
+    assert.equal(retry.status(),200,await retry.text());
+    assert.equal((await retry.json()).already_settled,true);
+    await rival.goto(`/team/v2-race/${eventId}`);
+    await expect(rival.getByText(/PRIVATE V2 FINAL RESULT/)).toBeVisible();
+    await closeManagerPage(1,rival);
+    const awards=await ok(db.from('recovery_ranking_awards')
+      .select('award_key,rider_id,team_id,event_id,season_year,gender,calendar_source,event_format,race_tier,result_type,result_place,points,points_policy_version')
+      .eq('event_id',eventId));
+    const byKey=rows=>rows.sort((a,b)=>a.award_key.localeCompare(b.award_key));
+    assert.deepEqual(byKey(awards),byKey(preflight.ledgerRows));
+    assert.equal((await ok(db.from('recovery_v2_settlements')
+      .select('award_count').eq('event_id',eventId).single())).award_count,
+    awards.length);
+    assert.equal((await ok(db.from('events').select('status')
+      .eq('id',eventId).single())).status,'FINISHED');
+  }else{
+    assert.equal((await ok(db.from('recovery_ranking_awards').select('award_key')
+      .eq('event_id',eventId))).length,0);
+  }
   assert.deepEqual(pageErrors,[]);
-  console.log(`${managerCount} real managers completed v2 registration, draft, lock, split recording, private viewer and read-only ${preflight.ledgerRows.length}-row settlement preflight without a final award.`);
+  console.log(`${managerCount} real managers completed v2 registration, draft, lock, split recording, private viewer and ${preflight.ledgerRows.length}-row ${settle?'final settlement':'read-only settlement preflight'}.`);
 }finally{
   await browser.close();
   console.log(`Clean disposable v2 event ${eventId} and its ${8*managerCount} riders with guarded management SQL.`);

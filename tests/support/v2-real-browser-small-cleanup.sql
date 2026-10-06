@@ -29,6 +29,7 @@ begin
     raise exception 'Unexpected v2 fixture ownership; refusing cleanup.';
   end if;
 
+  delete from public.recovery_v2_settlements where event_id = v_event;
   delete from public.recovery_v2_recorded_divisions where event_id = v_event;
   delete from public.recovery_v2_recorded_candidates where event_id = v_event;
   delete from public.recovery_v2_tactics_commits where event_id = v_event;

@@ -47,8 +47,17 @@ settlement, an exact idempotent retry and rejection of changed points and
 schedule without partial writes. A local browser protocol fixture exercised
 two managers in separate divisions, final viewer state on desktop and 390 px
 mobile, retry and outsider rejection, with the settlement flag both on and off.
-The browser fixture simulates the database. A real motor-generated recording
-has **not yet** been finally settled through the HTTP route in isolated
-Supabase. Sporting balance, automatic scheduled finalisation and the full
-independent-manager end-to-end path remain open. Production Supabase and
-deployment were untouched.
+The browser fixture simulates the database. A separate joined run then used
+two independent disposable manager accounts against isolated Supabase project
+`nxhvaoonnvmvohqaxfdx`: both entered the same scheduled race in a browser,
+saved private v2 plans, received the persisted division reveal and tactics
+lock, and opened their private views of the actual engine recording. One
+manager finished the race through the new HTTP route; the other's retry was
+idempotent. The persisted event was `FINISHED` with one v2 settlement marker,
+16 exact sporting point rows, one recorded division and zero legacy race
+commits. Both managers saw the final viewer. The guarded cleanup removed the
+race, 16 riders, two accounts and teams; follow-up counts were zero. This
+proves the small isolated end-to-end path, not the 45-team final settlement
+path, concurrency under load, scheduled automatic finalisation or sporting
+balance. The branch's settlement flag remains off in Vercel preview.
+Production Supabase and deployment were untouched.
