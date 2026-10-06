@@ -12,7 +12,8 @@ const riderIds=teamId=>Array.from({length:8},(_,index)=>
 const state={cursor:null,lease:null,complete:false,processed:0,entered:0,
   reportedEntered:0,claims:0,joined:new Set(),failTeamId:null,failed:false,
   activeEventReads:0,maxConcurrentEventReads:0,
-  revealCandidate:false,revealed:false,overdueCandidate:false,advanceRejected:false};
+  revealCandidate:false,revealed:false,overdueCandidate:false,advanceRejected:false,
+  revealRejected:false};
 const send=(res,status,data)=>{
   res.writeHead(status,{'Content-Type':'application/json','x-supabase-api-version':'2024-01-01'});
   res.end(JSON.stringify(data));
@@ -37,7 +38,8 @@ const fixture=http.createServer(async(req,res)=>{
       activeEventReads:0,maxConcurrentEventReads:0,
       revealCandidate:body.revealCandidate===true,revealed:false,
       overdueCandidate:body.overdueCandidate===true,
-      advanceRejected:body.advanceRejected===true});
+      advanceRejected:body.advanceRejected===true,
+      revealRejected:body.revealRejected===true});
     return send(res,200,{ok:true,teamCount,defaultCount:defaultTeams.size});
   }
   if(url.pathname==='/__cron_expire'&&req.method==='POST'){
@@ -84,6 +86,8 @@ const fixture=http.createServer(async(req,res)=>{
   if(url.pathname==='/rest/v1/rpc/recovery_commit_division_reveal'){
     if(body.p_event!==eventId||!state.complete)
       return send(res,409,{code:'PT409',message:'The autopilot entry scan is incomplete.'});
+    if(state.revealRejected)
+      return send(res,409,{code:'PT409',message:'The division reveal needs manual review.'});
     state.revealed=true;
     return send(res,200,{alreadyRevealed:false});
   }

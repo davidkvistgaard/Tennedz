@@ -80,6 +80,24 @@ test('cron commits an unrevealed due division once after its entry scan',async({
   expect((await repeated.json()).divisions.revealed).toEqual([]);
 });
 
+test('cron reports a rejected division reveal while tactics are still open',async({request})=>{
+  const fixture='http://127.0.0.1:54330';
+  await fetch(`${fixture}/__cron_reset`,{method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({revealCandidate:true,revealRejected:true})});
+  const response=await request.get('/api/cron/autopilot',{
+    headers:{Authorization:'Bearer fixture-cron-secret'},
+  });
+  expect(response.status()).toBe(503);
+  expect(await response.json()).toMatchObject({ok:false,
+    code:'DIVISION_REVEAL_REJECTED',divisions:{pending:[{
+      event_id:'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
+      reason:'REVEAL_PENDING',
+    }]}});
+  const state=await (await fetch(`${fixture}/__cron_state`)).json();
+  expect(state).toMatchObject({complete:true,revealed:false});
+});
+
 test('daily cron processes a 400-team field inside its request budget',async({request})=>{
   test.setTimeout(90000);
   const fixture='http://127.0.0.1:54330';
