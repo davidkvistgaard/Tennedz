@@ -66,6 +66,11 @@ export default function TacticalTourViewer({recording,focusTeamId}){
   const profile=elevation.map((height,i)=>`${i/(elevation.length-1)*100},${100-height/maxElevation*85}`).join(' ');
   const results=recording.provisionalResults;
   const selectedResults=results.filter(result=>result.teamId===selectedTeamId);
+  const captainResults=teams.map(team=>({team,
+    captain:results.find(result=>result.riderId===team.orders.captainId)}))
+    .sort((a,b)=>a.captain.timeSeconds-b.captain.timeSeconds||
+      a.team.id.localeCompare(b.team.id));
+  const firstCaptainTime=captainResults[0].captain.timeSeconds;
   return <div className="tactical-viewer">
     <header className="tactical-hero">
       <p className="tactical-eyebrow">RECORDED TOUR PROTOTYPE · DIVISION 1</p>
@@ -157,6 +162,11 @@ export default function TacticalTourViewer({recording,focusTeamId}){
         <div className="tactical-panel-head"><h2>Provisional finish</h2>
           <span>Shown after the final kilometre</span></div>
         {index===frames.length-1?<>
+          <h3>Teams by captain finish</h3>
+          <ol className="tactical-results" aria-label="Teams by captain finish">{captainResults.map(({team,captain},position)=><li key={team.id}>
+            <b>{position+1}</b><span>{team.name??team.id}</span>
+            <small>{captain.name}</small>
+            <strong>+{(captain.timeSeconds-firstCaptainTime).toFixed(1)} s</strong></li>)}</ol>
           <h3>{focusedTeam?.name??focusedTeam?.id} finish</h3>
           <ol className="tactical-results" aria-label={`${focusedTeam?.name??focusedTeam?.id} finish`}>{selectedResults.map(result=><li key={result.riderId}>
             <b>{result.position}</b><span>{result.name}</span><small>{teamName(result.teamId)}</small>
