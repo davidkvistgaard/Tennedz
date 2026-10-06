@@ -2,6 +2,8 @@
 
 Status: proposed implementation boundary for point 04, not a verified engine rule. The current `v2-prototype-79` resolves the road in kilometre steps and applies one finishing burst after the last step. This cannot express the order of moves, catches and position changes in the final few hundred metres. The existing race path and saved recordings stay unchanged until a new version passes scenario and replay validation.
 
+The first code boundary is a pure `finaleDistanceGrid` schedule: four 1 km finale slices, two 250 m approach slices and five 100 m finish slices. Each slice names its source kilometre and explicitly marks the profile resolution as 1000 m. It does not calculate a rider move, imply precise route geometry, change a result, or enter a saved replay. The motor and recording contract must be extended together before these slices have sporting effect.
+
 ## Distance phases
 
 | Distance remaining | Sporting decision | Recording requirement |

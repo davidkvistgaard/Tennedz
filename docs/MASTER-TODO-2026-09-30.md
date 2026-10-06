@@ -61,6 +61,8 @@ Den første tekniske **endagsløbs-testsløjfe** er nu gennemført isoleret i pu
 
 ## P1 — første virkelig spilbare løbsoplevelse
 
+**Finalens afstandsgrundlag, 6. oktober:** En isoleret, ren afstandsplan opdeler de sidste 5 km i fire hele kilometre, to trin à 250 m og fem trin à 100 m. Hvert trin peger på den eksisterende kilometerrute og angiver åbent dens grove opløsning. Planen ændrer endnu hverken motorberegning, optagelse, resultat eller viewer; den giver punkt 04 og 09 fælles afstandsgrænser til den senere sportslige implementering.
+
 | ID | Opgave / konkret resultat | Timer | Afhænger af |
 | --- | --- | ---: | --- |
 | 04 | Forbedr individuel fart, position, læ, samarbejde, gruppeopdeling/sammenløb og finale i v2. Gør de sidste 5 km til en særskilt taktisk fase og de sidste 500–1000 m til ruteafhængig sprint/slutacceleration med kortere beregningstrin. Scenarier skal vise realistiske brud, genangreb, begrænset jagtkapacitet og forskellige finaletyper; se [finalekontrakten](design/ENGINE-V2-FINALE-CONTRACT.md). | 24–48 | 03 |
