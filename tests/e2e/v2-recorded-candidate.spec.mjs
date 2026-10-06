@@ -47,6 +47,10 @@ test('entrants in separate divisions read only their private v2 recording',
       expect(own.recording.committedInputs.teams.length).toBe(11);
       expect(own.recording.committedInputs.teams.some(team=>
         team.id==='team-v2rival')).toBe(false);
+      const ownDivisionTeams=new Set(own.recording.committedInputs.teams
+        .map(team=>team.id));
+      for(const rows of [own.teamResults,own.riderResults,own.projectedAwards])
+        expect(rows.every(row=>ownDivisionTeams.has(row.teamId))).toBe(true);
       const botTeam=own.recording.committedInputs.teams
         .find(team=>team.id.startsWith('team-v2bot-'));
       expect(Object.keys(botTeam.orders)).toEqual(['captainId']);
@@ -67,6 +71,11 @@ test('entrants in separate divisions read only their private v2 recording',
       expect(rivalView.recording.committedInputs.teams.length).toBe(11);
       expect(rivalView.recording.committedInputs.teams.some(team=>
         team.id==='team-v2manager')).toBe(false);
+      const rivalDivisionTeams=new Set(rivalView.recording.committedInputs.teams
+        .map(team=>team.id));
+      for(const rows of [rivalView.teamResults,rivalView.riderResults,
+        rivalView.projectedAwards])
+        expect(rows.every(row=>rivalDivisionTeams.has(row.teamId))).toBe(true);
       expect((await outsider.request.get(`${endpoint}?event_id=${eventId}`)).status())
         .toBe(403);
       expect((await manager.request.get(`${endpoint}?event_id=${eventId}&team_id=team-v2rival`))
