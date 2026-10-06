@@ -143,6 +143,8 @@ En ny 15-holds prøve viste også et brat spring: hold med gennemsnitlig færdig
 
 **V2-resultat mod låst input, 6. oktober:** Den skrivefri resultatkontrol kan nu genberegne de separate optagelser og point fra den uforanderlige managerlås og afvise forkert løb, pointniveau, vejr eller taktik. Enhedsprøven dækker ændringer i alle fire. Det er en nødvendig kontrol før en fremtidig gemme- og pointtransaktion; den transaktion er endnu ikke bygget.
 
+**Privat v2-optagelseskandidat, isoleret prøve 6. oktober:** En særskilt, normalt slukket deltagerroute kan nu beregne den versionsmærkede v2-resultatkontrakt fra den låste managerplan, validere den imod samme lås og gemme én privat kandidat pr. løb. Databasen afviser forkert løbsidentitet/pointniveau og ændret gentagelse; rollback-prøven efterlod nul kandidater og nul ændringer i de gamle resultat- og pointtabeller. En lokal browserfixture med to tilmeldte konti og en uvedkommende bekræftede adgang, gentagelse og at API-svaret ikke afslører optagelsen. DB-prøven og browserprøven er adskilte; der er endnu ingen samlet prøve med rigtige managerkladder og v2-optagelse i testdatabasen. Kandidaten bliver ikke vist i spillernes viewer, løbet bliver ikke afsluttet, og point bliver ikke tildelt.
+
 ## P1 - atlas og verdenskvalitet
 
 | ID | Opgave / konkret resultat | Timer | Afhænger af |
