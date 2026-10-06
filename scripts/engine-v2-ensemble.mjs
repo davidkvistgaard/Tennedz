@@ -7,7 +7,7 @@ import {SPORTING_SKILLS} from '../lib/engine/v2/physiology.mjs';
 import {hasResidualGapAfterSufficientChase} from '../lib/engine/v2/balance-audit.mjs';
 import {TUNING,TUNING_VERSION,MOTOR_CANDIDATE_VERSION,MOTOR_PAID_PACE_VERSION,
   MOTOR_FINALE_VERSION,MOTOR_BRIDGE_FINALE_VERSION,MOTOR_EARNED_BRIDGE_VERSION,
-  MOTOR_NEUTRAL_PACE_VERSION,
+  MOTOR_NEUTRAL_PACE_VERSION,MOTOR_EXPLICIT_FRONT_VERSION,
   MOTOR_CANDIDATE} from
   '../lib/engine/v2/tuning.mjs';
 
@@ -15,7 +15,8 @@ const samples=process.argv[2]===undefined?10:Number(process.argv[2]);
 const fieldTeams=process.argv[3]===undefined?4:Number(process.argv[3]);
 const motorMode=process.argv[4]??'current';
 const paceMode=process.argv[5]??'preset';
-const motorVersion=motorMode==='neutral-pace'?MOTOR_NEUTRAL_PACE_VERSION:
+const motorVersion=motorMode==='explicit-front'?MOTOR_EXPLICIT_FRONT_VERSION:
+  motorMode==='neutral-pace'?MOTOR_NEUTRAL_PACE_VERSION:
   motorMode==='earned-bridge-finale'?MOTOR_EARNED_BRIDGE_VERSION:
   motorMode==='bounded-bridge-finale'?MOTOR_BRIDGE_FINALE_VERSION:
   motorMode==='bounded-finale'?MOTOR_FINALE_VERSION:
@@ -27,9 +28,10 @@ const gapAuditOptions={recoverySecondsPerCapacity:motorMode!=='current'?
 if(!Number.isInteger(samples)||samples<1||samples>100||
   !Number.isInteger(fieldTeams)||fieldTeams<2||fieldTeams>20||
   !['current','candidate','paid-pace','bounded-finale','bounded-bridge-finale',
-    'earned-bridge-finale','neutral-pace'].includes(motorMode)||
-  !['preset','paced-rival'].includes(paceMode))
-  throw new Error('Usage: node scripts/engine-v2-ensemble.mjs [paired samples: 1-100] [teams: 2-20] [current|candidate|paid-pace|bounded-finale|bounded-bridge-finale|earned-bridge-finale|neutral-pace] [preset|paced-rival]');
+    'earned-bridge-finale','neutral-pace','explicit-front'].includes(motorMode)||
+  !['preset','paced-rival','rotate-rival','rotate-plans'].includes(paceMode)||
+  ['rotate-rival','rotate-plans'].includes(paceMode)&&motorMode!=='explicit-front')
+  throw new Error('Usage: node scripts/engine-v2-ensemble.mjs [paired samples: 1-100] [teams: 2-20] [current|candidate|paid-pace|bounded-finale|bounded-bridge-finale|earned-bridge-finale|neutral-pace|explicit-front] [preset|paced-rival|rotate-rival|rotate-plans (v86 only)]');
 
 const ROUTES={
   flat:{distance_km:120,profile_points:[[0,60],[40,60],[80,75],[120,60]],
@@ -92,8 +94,12 @@ for(const [course,stage] of Object.entries(ROUTES)){
         const teams=fictionalTeams(sample,gender).map((team,index)=>({
           ...team,orders:{captainId:team.riders[0].id,roadCaptainId:team.riders[1].id,
             preset:index===0?strategy:STRATEGIES[(index-1)%STRATEGIES.length],
-            ...(paceMode==='paced-rival'&&index===1?{
-              baseline:{effort:'hard',attack:'none',chase:'ignore'}}:{})},
+            ...(['paced-rival','rotate-rival'].includes(paceMode)&&index===1?{
+              baseline:{effort:paceMode==='paced-rival'?'hard':'conserve',
+                attack:'none',chase:'ignore',
+                ...(motorMode==='explicit-front'?{frontWork:'rotate'}:{})}}:{}),
+            ...(paceMode==='rotate-plans'?{baseline:{frontWork:index%2===0?
+              'rotate':'sit_in'}}:{})},
         }));
         const rng=seedrandom(`v2-ensemble-weather:${course}:${sample}`);
         const base=WEATHER[course];

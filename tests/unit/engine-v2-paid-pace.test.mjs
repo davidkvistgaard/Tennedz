@@ -271,3 +271,18 @@ test('v86 weak front work cannot slow group attachment below its unworked pace',
   assert.equal(afterFour({unworkedFront:true,frontPaceAbility:40}).group,'dropped');
   assert.equal(afterFour({frontPaceAbility:40}).group,'peloton');
 });
+
+test('v86 can rotate between planned attacks without simultaneous work',()=>{
+  const stage={distance_km:40,profile_points:[[0,100],[40,100]]};
+  const teams=[team('flex',90,{frontWork:'rotate',attack:'selective',
+    chase:'selective'}),team('other',50)];
+  const race=simulateTacticalTour({stage,teams,seed:'flexible-front-plan',
+    motorVersion:MOTOR_EXPLICIT_FRONT_VERSION});
+  assert.equal(validateRecordedTour(race),true);
+  assert.equal(race.frames[0].paidBunchPace?.teamId,'flex');
+  assert.ok(race.frames.some(frame=>frame.attackers.includes('flex-7')||
+    frame.attackers.some(id=>id.startsWith('flex-'))));
+  assert.ok(race.frames.every(frame=>!frame.paidBunchPace||
+    !frame.attackers.some(id=>id.startsWith(`${frame.paidBunchPace.teamId}-`))&&
+    !frame.chasers.includes(frame.paidBunchPace.teamId)));
+});
