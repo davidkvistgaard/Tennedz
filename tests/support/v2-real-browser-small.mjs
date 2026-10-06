@@ -183,9 +183,7 @@ try{
   assert.ok(parent.contract_header);
   assert.equal((await ok(db.from('recovery_v2_recorded_divisions')
     .select('division_index').eq('event_id',eventId))).length,divisionCounts.length);
-  const savedLock=await ok(db.from('recovery_v2_tactics_commits')
-    .select('input_snapshot').eq('event_id',eventId).single());
-  const preflight=await loadV2SettlementReadiness(db,savedLock.input_snapshot);
+  const preflight=await loadV2SettlementReadiness(db,eventId);
   assert.equal(preflight.eventId,eventId);
   assert.equal(preflight.contract.divisions.length,divisionCounts.length);
   assert.equal(preflight.ledgerRows.length,

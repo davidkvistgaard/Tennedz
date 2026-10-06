@@ -315,6 +315,24 @@ test('v2 result can only cross the storage boundary with its exact locked manage
     /another locked race or tier/);
 });
 
+test('JSONB weather zeroes still match the immutable v2 recording',()=>{
+  const lock=snapshot(2);
+  lock.event.seed='negative-zero-1';
+  lock.event.weather_locked.temp_c=0;
+  lock.event.race_tier=3;
+  lock.stage={distance_km:140,profile_points:[[0,25],[140,25]]};
+  lock.v2_input_version=1;
+  lock.v2_orders_by_team_id=Object.fromEntries(lock.teams.map(team=>[
+    team.id,{captainId:team.entry.captain_id,preset:'balanced'},
+  ]));
+  const calculated=buildV2OneDayResultContract(
+    previewLockedV2RecordedDivisions(lock),{tier:3});
+  assert.ok(calculated.divisions[0].recording.route.kilometres.some(row=>
+    Object.is(row.weather.temperatureC,-0)));
+  const stored=JSON.parse(JSON.stringify(calculated));
+  assert.equal(validateV2OneDayResultAgainstLock(lock,stored),stored);
+});
+
 test('45-team v2 candidate maps to exact unique sporting-ledger rows without writing them',()=>{
   const lock=snapshot(45);
   lock.event.race_tier=3;
@@ -520,25 +538,30 @@ test('settlement preflight rebuilds saved split or legacy results without writin
   older[0].result_division.recording.tuningVersion='v2-prototype-75';
   await assert.rejects(loadStoredV2SettlementPreflight(fakeDb(splitRow,older),lock),
     /original engine version/);
-  const readinessDb=(event,occupiedTable)=>({from(table){
+  const readinessDb=(event,occupiedTable,storedLock=lock)=>({from(table){
     if(['recovery_v2_recorded_candidates',
       'recovery_v2_recorded_divisions'].includes(table))
       return fakeDb(splitRow,divisionRows).from(table);
     return {select(){return this;},eq(){return this;},
-      maybeSingle:async()=>({data:event,error:null}),
+      maybeSingle:async()=>({data:table==='recovery_v2_tactics_commits'?
+        (storedLock?{event_id:lock.event.id,input_snapshot:storedLock}:null):event,
+      error:null}),
       limit:async()=>({data:table===occupiedTable?[{event_id:lock.event.id}]:[],
         error:null})};
   }});
   const now=Date.parse('2026-10-08T12:01:00Z');
-  const ready=await loadV2SettlementReadiness(readinessDb(lock.event),lock,{now});
+  const ready=await loadV2SettlementReadiness(readinessDb(lock.event),lock.event.id,{now});
   assert.deepEqual(ready,split);
   await assert.rejects(loadV2SettlementReadiness(
-    readinessDb({...lock.event,status:'FINISHED'}),lock,{now}),
+    readinessDb({...lock.event,status:'FINISHED'}),lock.event.id,{now}),
   /not ready for settlement/);
   await assert.rejects(loadV2SettlementReadiness(
-    readinessDb(lock.event,'recovery_ranking_awards'),lock,{now}),
+    readinessDb(lock.event,'recovery_ranking_awards'),lock.event.id,{now}),
   /ranking_awards rows require manual review/);
   await assert.rejects(loadV2SettlementReadiness(
-    readinessDb(lock.event),lock,{now:now-120000}),
+    readinessDb(lock.event),lock.event.id,{now:now-120000}),
   /not ready for settlement/);
+  await assert.rejects(loadV2SettlementReadiness(
+    readinessDb(lock.event,null,null),lock.event.id,{now}),
+  /saved v2 tactics lock/);
 });
