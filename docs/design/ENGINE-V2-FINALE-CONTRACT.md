@@ -20,6 +20,8 @@ A paired trial across fictional flat, rolling and mountain routes exposed a coup
 
 The ensemble now attributes each breakaway winner to a rider already ahead before the final kilometre or one who joined on that kilometre, and reports whether the race had a late residual-gap anomaly. In 10 paired seeds per strategy and category, averaged across those six cells per route, 70% of flat races, 73% of rolling races and 40% of mountain races had a pre-final breakaway winner. A late residual-gap anomaly coincided with a breakaway win in 70%, 70% and 43% respectively. Coincidence does not prove that every such win is false, but it prevents the current break-win rate from serving as a target for a corrected chase model. A further trial capped new final-kilometre gaps at one second while using net chase recovery; automatic final attacks still won two thirds of races, so that trial was also reverted.
 
+The read-only finale bridges and paired ensemble now share one residual-gap audit. It only flags a positive gap in the same continuing rear road group, with no fresh attack and enough recorded chase capacity to cover its previous gap plus passive drift. This prevents a group replacement from being mistaken for an impossible surviving gap. The shared check preserves the measured flat, rolling and mountain anomaly rates; it changes no race frames, orders or provisional results.
+
 ## Distance phases
 
 | Distance remaining | Sporting decision | Recording requirement |

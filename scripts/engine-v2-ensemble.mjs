@@ -4,7 +4,7 @@ import seedrandom from 'seedrandom';
 import {simulateTacticalTour} from '../lib/engine/v2/tour.mjs';
 import {validateRecordedTour} from '../lib/engine/v2/recording.mjs';
 import {SPORTING_SKILLS} from '../lib/engine/v2/physiology.mjs';
-import {TUNING} from '../lib/engine/v2/tuning.mjs';
+import {hasResidualGapAfterSufficientChase} from '../lib/engine/v2/balance-audit.mjs';
 
 const samples=process.argv[2]===undefined?10:Number(process.argv[2]);
 if(!Number.isInteger(samples)||samples<1||samples>100)
@@ -92,13 +92,8 @@ for(const [course,stage] of Object.entries(ROUTES)){
           race.frames.at(-2).breakawayRiderIds.includes(winner.riderId));
         totals.finalKmJoinWinnerRaces+=Number(breakWinner&&
           finalFrame.joinedBreakawayRiderIds.includes(winner.riderId));
-        const lateResidualKm=race.frames.slice(-5).filter((frame,index)=>{
-          const prior=race.frames.at(-6+index).roadGroups.at(-1)?.gapSeconds??0;
-          return frame.roadGroups.length===1&&frame.attackPower===0&&
-            frame.passiveGapDelta>0&&frame.chasePower>0&&
-            frame.chasePower*TUNING.chase.recoverySecondsPerCapacity>=
-              prior+frame.passiveGapDelta&&frame.pelotonGapSeconds>0;
-        }).length;
+        const lateResidualKm=race.frames.slice(-5).filter((_,index)=>
+          hasResidualGapAfterSufficientChase(race.frames,race.frames.length-5+index)).length;
         totals.lateResidualAffectedRaces+=Number(lateResidualKm>0);
         totals.residualAffectedBreakWinRaces+=Number(lateResidualKm>0&&breakWinner);
         const amber=race.provisionalResults.filter(rider=>rider.teamId==='team-0');
