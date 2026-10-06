@@ -1,7 +1,8 @@
 // Read-only long-race specialist counterfactual on the opt-in paid-pace motor.
 // Run: node tests/support/p03-v2-specialist-final-probe.mjs
 //   [--bounded-finale|--bounded-bridge-finale|--earned-bridge-finale] [--neutrals=0..17]
-//   [--chase-at=230|240|250] [--route=flat|hilly|mountain] [seed ...]
+//   [--chase-at=230|240|250] [--route=flat|hilly|mountain]
+//   [--neutral-mode=rotating|weak] [seed ...]
 import assert from 'node:assert/strict';
 import {simulateTacticalTour} from '../../lib/engine/v2/tour.mjs';
 import {validateRecordedTour} from '../../lib/engine/v2/recording.mjs';
@@ -52,8 +53,10 @@ const textOption=(name,fallback)=>{
 };
 const neutralCount=option('neutrals',12),chaseAt=option('chase-at',240);
 const routeName=textOption('route','hilly');
+const neutralMode=textOption('neutral-mode','rotating');
 if(!Number.isInteger(neutralCount)||neutralCount<0||neutralCount>17||
-  ![230,240,250].includes(chaseAt)||!stages[routeName])
+  ![230,240,250].includes(chaseAt)||!stages[routeName]||
+  !['rotating','weak'].includes(neutralMode))
   throw new Error('Invalid specialist probe options.');
 const stage=stages[routeName],weather=weathers[routeName];
 const chasePhases=[{atKm:chaseAt,effort:'hard',chase:'all'}];
@@ -81,8 +84,9 @@ for(const seed of seeds)for(const plan of [
       sprint:66,flat:75,acceleration:99,strength:95},
     plan.finaleAttack?finalePhases:[]),
     ...Array.from({length:neutralCount},(_,index)=>
-      team(`neutral-${index}`,76+index%8,
-        index%3===0?{sprint:90}:index%3===1?{mountain:91}:{timetrial:90})),
+      team(`neutral-${index}`,neutralMode==='weak'?20:76+index%8,
+        neutralMode==='weak'?{}:
+          index%3===0?{sprint:90}:index%3===1?{mountain:91}:{timetrial:90})),
   ];
   const race=simulateTacticalTour({stage,teams,seed,weather,
     motorVersion:earnedBridgeFinale?MOTOR_EARNED_BRIDGE_VERSION:
@@ -100,10 +104,14 @@ for(const seed of seeds)for(const plan of [
   const rider=id=>race.provisionalResults.find(row=>row.riderId===id);
   const beforeFinal=frames.at(-2);
   console.log(JSON.stringify({seed,plan:plan.name,version:race.tuningVersion,
-    teams:teams.length,chaseAt,route:routeName,
+    teams:teams.length,chaseAt,route:routeName,neutralMode,
     winner:race.provisionalResults[0].riderId,
-    gapAt250:frames[249].gapSeconds,gapAt255:frames[254].gapSeconds,
+    gapAt241:frames[240].gapSeconds,gapAt250:frames[249].gapSeconds,
+    gapAt255:frames[254].gapSeconds,
     gapBeforeFinal:beforeFinal.gapSeconds,gapAtFinish:final.gapSeconds,
+    droppedAt250:frames[249].riderGroups.filter(row=>row.group==='dropped').length,
+    neutralInBunchAt250:frames[249].riderGroups.filter(row=>
+      row.id.startsWith('neutral-')&&row.group==='peloton').length,
     chaseKm:frames.filter(frame=>frame.chasers.includes('sprinter')).length,
     paidPaceKm:frames.filter(frame=>frame.paidBunchPace?.teamId==='sprinter').length,
     catchKm:frames.find(frame=>frame.caughtBreakawayRiderIds.includes('rouleur-7'))?.km??null,
