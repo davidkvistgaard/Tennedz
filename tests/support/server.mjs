@@ -13,6 +13,8 @@ const twoPhaseStageId = "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb";
 const v2PreviewEventId = "cccccccc-cccc-4ccc-8ccc-cccccccccccc";
 const noContestFixture = process.env.PELOTONIA_E2E_NO_CONTEST === "true";
 const v2SaveFixture = process.env.PELOTONIA_E2E_V2_SAVE === "true";
+const v2LockFixture = process.env.PELOTONIA_E2E_V2_LOCK === "true";
+let v2LockedAt = null;
 let noContestCancelled = false;
 const divisionTeams = [
   ["team-alice", "ALICE Cycling", 1], ["team-a2", "ALICE Rival", 1],
@@ -67,6 +69,22 @@ const server = http.createServer(async (req, res) => {
   }
   if (url.pathname.startsWith("/rest/v1/")) {
     if (req.headers.apikey !== "fixture-service-role") return send(403, { message: "Bad fixture key" });
+    if (v2LockFixture && url.pathname === "/rest/v1/rpc/recovery_race_snapshot") {
+      if (body.p_event !== v2PreviewEventId)
+        return send(404, { code: "PT404", message: "The race was not found." });
+      return send(200, { event: { id: v2PreviewEventId, kind: "one_day",
+        deadline: "2026-10-05T12:00:00Z", country_code: "DK",
+        weather_locked: null }, game_date: "2026-10-05" });
+    }
+    if (v2LockFixture && url.pathname === "/rest/v1/rpc/recovery_commit_v2_tactics_lock") {
+      if (body.p_event !== v2PreviewEventId || body.p_weather?.source !== "LOCKED_SIM" ||
+          !Number.isFinite(body.p_weather?.temp_c))
+        return send(400, { code: "PT400", message: "Valid locked v2 weather is required." });
+      const alreadyLocked = v2LockedAt !== null;
+      v2LockedAt ??= new Date().toISOString();
+      return send(200, { eventId: v2PreviewEventId, lockedAt: v2LockedAt,
+        inputSnapshot: { v2_orders_by_team_id: { private: true } }, alreadyLocked });
+    }
     if (v2SaveFixture && url.pathname === "/rest/v1/rpc/recovery_save_v2_tactics_draft") {
       if (req.method !== "POST" || body.p_event !== v2PreviewEventId ||
           body.p_user !== ids.v2manager || body.p_orders?.captainId !== "fixture-M-0")
@@ -171,9 +189,10 @@ server.listen(54329, "127.0.0.1");
 const child = spawn(process.execPath, ["node_modules/next/dist/bin/next", "start", "-p", "3100"], { stdio: "inherit", env: {
   ...process.env, RACE_LAB_ENABLED: "true", PELOTONIA_V2_TACTICS_PREVIEW_ENABLED: "true",
   PELOTONIA_V2_TACTICS_SAVE_ENABLED: v2SaveFixture ? "true" : "false",
+  PELOTONIA_V2_TACTICS_LOCK_ENABLED: v2LockFixture ? "true" : "false",
   SUPABASE_URL: "http://127.0.0.1:54329", SUPABASE_ANON_KEY: "fixture-anon", SUPABASE_SERVICE_ROLE_KEY: "fixture-service-role",
   NEXT_PUBLIC_SUPABASE_URL: "", NEXT_PUBLIC_SUPABASE_ANON_KEY: "", APP_ORIGIN: "http://localhost:3100", ADMIN_USER_IDS: ids.alice,
-  RECOVERY_ALLOW_GAME_WRITES: noContestFixture || v2SaveFixture ? "true" : "false",
+  RECOVERY_ALLOW_GAME_WRITES: noContestFixture || v2SaveFixture || v2LockFixture ? "true" : "false",
   PELOTONIA_AUTOPILOT_ENABLED: noContestFixture ? "true" : "false",
 } });
 const stop = () => { child.kill(); server.closeAllConnections(); server.close(); };

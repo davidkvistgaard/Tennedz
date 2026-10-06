@@ -139,6 +139,8 @@ En ny 15-holds prøve viste også et brat spring: hold med gennemsnitlig færdig
 
 **V2-vejr og sportslig balance, 6. oktober:** Den isolerede v2-taktiklås kræver nu et fast vejrinput; den første version kunne ellers låse `weather_locked: null`. Prøven afviser tomt vejr og efterlader ingen rækker. En ny, gentagelig 140 km-prøve fandt en alvorlig feltstørrelseseffekt: 96 mod 80 i færdigheder giver cirka 89 sekunders forskel og otte satte ryttere i et tohåndsløb, men tilføjelse af ét svagere tredje hold fjerner næsten hele forskellen. Pacing af feltet og gruppetærsklen skal redesignes og prøves på forskellige ruter/felter, inden v2 kan godkendes sportsligt. Ingen tuning eller produktionsmotor er ændret.
 
+**V2-taktiklås for tilmeldte, isoleret prøve 6. oktober:** En tilmeldt manager kan nu efter taktikfristen udløse den private, gentagelige v2-lås gennem en særskilt og normalt slukket API-route. Serveren kontrollerer managerens eget hold og gemte divisionsafsløring, fryser vejret og returnerer kun låsestatus; modstandernes ordrer og hele løbsinputtet bliver på serveren. En lokal browserprøve med to managerkonti bestod adgangs- og gentagelseskontroller. Prøven bruger fixtures, mens selve databaselåsen er testet separat i den isolerede database. Den samlede kæde fra rigtige managerkladder til optaget v2-løb, resultat og point er stadig uprøvet og ikke gemt.
+
 ## P1 - atlas og verdenskvalitet
 
 | ID | Opgave / konkret resultat | Timer | Afhænger af |
