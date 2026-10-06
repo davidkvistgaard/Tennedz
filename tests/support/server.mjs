@@ -15,11 +15,14 @@ const v2PreviewEventId = "cccccccc-cccc-4ccc-8ccc-cccccccccccc";
 const noContestFixture = process.env.PELOTONIA_E2E_NO_CONTEST === "true";
 const v2SaveFixture = process.env.PELOTONIA_E2E_V2_SAVE === "true";
 const v2LockFixture = process.env.PELOTONIA_E2E_V2_LOCK === "true";
-const v2RecordingFixture = process.env.PELOTONIA_E2E_V2_RECORDING === "true";
+const v2SettlementFixture = process.env.PELOTONIA_E2E_V2_SETTLEMENT === "true";
+const v2RecordingFixture = process.env.PELOTONIA_E2E_V2_RECORDING === "true" ||
+  v2SettlementFixture;
 let v2LockedAt = null;
 let v2RecordedAt = null;
 let v2RecordedHeader = null;
 let v2RecordedDivisions = [];
+let v2SettledAt = null;
 const v2RecordingLock=v2BrowserRecordingLock(v2PreviewEventId);
 let noContestCancelled = false;
 const divisionTeams = [
@@ -107,6 +110,21 @@ const server = http.createServer(async (req, res) => {
       return send(200,{...v2RecordedHeader,divisionCount:v2RecordedDivisions.length,
         division:v2RecordedDivisions.find(row=>row.index===index),
         recordedAt:v2RecordedAt});
+    }
+    if (v2SettlementFixture &&
+      url.pathname === "/rest/v1/rpc/recovery_settle_v2_one_day") {
+      const stored=v2RecordedHeader?{...v2RecordedHeader,
+        divisions:v2RecordedDivisions}:null;
+      if(body.p_event!==v2PreviewEventId||!stored||
+        JSON.stringify(body.p_contract)!==JSON.stringify(stored)||
+        body.p_ledger?.length!==v2RecordedDivisions.reduce((sum,division)=>
+          sum+division.awards.length,0))
+        return send(409,{code:"PT409",
+          message:"The v2 ranking awards differ from the recording."});
+      const alreadySettled=v2SettledAt!==null;
+      v2SettledAt ??= new Date().toISOString();
+      return send(200,{eventId:v2PreviewEventId,settledAt:v2SettledAt,
+        awardCount:body.p_ledger.length,alreadySettled});
     }
     if (v2LockFixture && url.pathname === "/rest/v1/rpc/recovery_race_snapshot") {
       if (body.p_event !== v2PreviewEventId)
@@ -223,10 +241,11 @@ const server = http.createServer(async (req, res) => {
     }
     if (table === "events" && url.searchParams.get("id") === `eq.${v2PreviewEventId}`)
       return send(200,{id:v2PreviewEventId,name:"Private v2 tactics fixture",
-        kind:"one_day",gender:"M",status:"OPEN",
+        kind:"one_day",gender:"M",status:v2SettledAt?"FINISHED":"OPEN",
         stage_profile_id:twoPhaseStageId,
-        registration_deadline:new Date(Date.now()-60000).toISOString(),
-        tactics_deadline:new Date(Date.now()+3600000).toISOString()});
+        registration_deadline:v2RecordingLock.event.registration_deadline,
+        tactics_deadline:v2RecordingLock.event.tactics_deadline,
+        scheduled_at:v2RecordingLock.event.scheduled_at});
     if (table === "stage_profiles" &&
       url.searchParams.get("id") === `eq.${twoPhaseStageId}`)
       return send(200, {distance_km:20,keypoints:[{km:10}]});
@@ -260,8 +279,22 @@ const server = http.createServer(async (req, res) => {
       url.searchParams.get("event_id")?.startsWith("in."))
       return send(200,v2LockedAt?[{event_id:v2PreviewEventId}]:[]);
     if (v2RecordingFixture && table === "recovery_v2_recorded_candidates")
-      return send(200,v2RecordedAt?{recorded_at:v2RecordedAt,
+      return send(200,v2RecordedAt?{event_id:v2PreviewEventId,
+        recorded_at:v2RecordedAt,
         result_contract:null,contract_header:v2RecordedHeader}:null);
+    if (v2RecordingFixture && table === "recovery_v2_recorded_divisions")
+      return send(200,v2RecordedDivisions.map((division,index)=>({
+        division_index:index+1,result_division:division})));
+    if (v2SettlementFixture && table === "recovery_v2_settlements")
+      return send(200,v2SettledAt?{settled_at:v2SettledAt,
+        award_count:v2RecordedDivisions.reduce((sum,division)=>
+          sum+division.awards.length,0)}:null);
+    if (v2SettlementFixture && table === "recovery_ranking_awards")
+      return send(200,v2SettledAt?v2RecordedDivisions.flatMap(division=>
+        division.awards.map(award=>({award_key:award.awardKey,
+          rider_id:award.riderId,team_id:award.teamId,
+          result_place:award.placing,points:award.points,
+          points_policy_version:v2RecordedHeader.pointsPolicyVersion}))):[]);
     if (v2RecordingFixture && table === "recovery_v2_tactics_commits")
       return send(200,{input_snapshot:v2RecordingLock});
     if (table === "recovery_division_reveal_entries" &&
@@ -286,6 +319,7 @@ const child = spawn(process.execPath, ["node_modules/next/dist/bin/next", "start
   PELOTONIA_V2_TACTICS_SAVE_ENABLED: v2SaveFixture ? "true" : "false",
   PELOTONIA_V2_TACTICS_LOCK_ENABLED: v2LockFixture ? "true" : "false",
   PELOTONIA_V2_RECORDING_ENABLED: v2RecordingFixture ? "true" : "false",
+  PELOTONIA_V2_SETTLEMENT_ENABLED: v2SettlementFixture ? "true" : "false",
   SUPABASE_URL: "http://127.0.0.1:54329", SUPABASE_ANON_KEY: "fixture-anon", SUPABASE_SERVICE_ROLE_KEY: "fixture-service-role",
   NEXT_PUBLIC_SUPABASE_URL: "", NEXT_PUBLIC_SUPABASE_ANON_KEY: "", APP_ORIGIN: "http://localhost:3100", ADMIN_USER_IDS: ids.alice,
   RECOVERY_ALLOW_GAME_WRITES: noContestFixture || v2SaveFixture || v2LockFixture || v2RecordingFixture ? "true" : "false",

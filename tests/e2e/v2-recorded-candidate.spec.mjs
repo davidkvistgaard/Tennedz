@@ -111,6 +111,43 @@ test('entrants in separate divisions read only their private v2 recording',
       if(process.env.PELOTONIA_VIEWER_SCREENSHOT==='1')
         await mobile.screenshot({path:'.recovery-local/v2-private-viewer-390.png',
           fullPage:true});
+      if(process.env.PELOTONIA_E2E_V2_SETTLEMENT==='true'){
+        await expect(manager.getByRole('button',
+          {name:'Finish race and award points'})).toBeVisible();
+        await manager.getByRole('button',
+          {name:'Finish race and award points'}).click();
+        await expect(manager.getByText(/PRIVATE V2 FINAL RESULT/)).toBeVisible();
+        await expect(manager.getByText(/Ranking points have been awarded/))
+          .toBeVisible();
+        await manager.getByRole('button',{name:'See final result'}).click();
+        await expect(manager.getByText(/The points are included in the ranking ledger/))
+          .toBeVisible();
+        await expect(manager.locator('.tactical-own-results li').first().locator('small'))
+          .toContainText(/ranking pts/);
+        const finalView=await manager.request.get(`${endpoint}?event_id=${eventId}`);
+        expect(finalView.status(),await finalView.text()).toBe(200);
+        expect(await finalView.json()).toMatchObject({settled:true,pointsFinal:true,
+          canSettle:false});
+        const retry=await manager.request.post('/api/event/v2-recording/settle',{
+          headers,data:{event_id:eventId}});
+        expect(retry.status(),await retry.text()).toBe(200);
+        expect(await retry.json()).toMatchObject({ok:true,already_settled:true});
+        expect((await outsider.request.post('/api/event/v2-recording/settle',{
+          headers,data:{event_id:eventId}})).status()).toBe(403);
+        await rival.reload();
+        await expect(rival.getByText(/PRIVATE V2 FINAL RESULT/)).toBeVisible();
+        await mobile.reload();
+        await expect(mobile.getByText(/PRIVATE V2 FINAL RESULT/)).toBeVisible();
+        await mobile.getByRole('button',{name:'See final result'}).click();
+        expect(await mobile.evaluate(()=>document.documentElement.scrollWidth))
+          .toBeLessThanOrEqual(390);
+        if(process.env.PELOTONIA_VIEWER_SCREENSHOT==='1'){
+          await manager.screenshot({path:'.recovery-local/v2-final-viewer.png',
+            fullPage:true});
+          await mobile.screenshot({path:'.recovery-local/v2-final-viewer-390.png',
+            fullPage:true});
+        }
+      }
     }finally{
       await Promise.all(contexts.map(context=>context.close()));
     }

@@ -32,7 +32,23 @@ the private page and outsider rejection. The pre-existing synthetic viewer
 passed its desktop and 390 px mobile browser probe after this change. The
 private page was also visually checked at desktop and 390 px mobile widths.
 
-A future final
-transaction must recheck the saved candidate and settle results and points
-exactly once. Sporting balance and the full independent-manager end-to-end
-path remain open. Production Supabase and deployment were untouched.
+The isolated project now has an atomic v2 one-day settlement migration. A
+separately gated `/api/event/v2-recording/settle` route accepts an entered
+manager, reloads and independently re-simulates the saved candidate from the
+immutable tactics lock, then asks the database to recheck the stored contract,
+revealed divisions, entered riders, schedule and exact points under its lock.
+The response contains only the settlement receipt. The private viewer checks
+the settlement marker, event status and awarded rows before replacing
+"projected" points with final ranking points. `PELOTONIA_V2_SETTLEMENT_ENABLED`
+defaults to false and has not been enabled for the preview deployment.
+
+A rollback-only SQL probe in isolated Supabase showed one 16-rider synthetic
+settlement, an exact idempotent retry and rejection of changed points and
+schedule without partial writes. A local browser protocol fixture exercised
+two managers in separate divisions, final viewer state on desktop and 390 px
+mobile, retry and outsider rejection, with the settlement flag both on and off.
+The browser fixture simulates the database. A real motor-generated recording
+has **not yet** been finally settled through the HTTP route in isolated
+Supabase. Sporting balance, automatic scheduled finalisation and the full
+independent-manager end-to-end path remain open. Production Supabase and
+deployment were untouched.

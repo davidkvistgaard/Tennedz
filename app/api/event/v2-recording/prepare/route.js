@@ -94,5 +94,46 @@ export const GET=protectedRoute(async(req,context,auth)=>{
   }
   if(projection.divisionIndex!==reveal.data.division_index)
     throw new AuthError('V2_RECORDING_INVALID','The saved v2 recording needs review.',409);
-  return NextResponse.json({...projection,recordedAt:slice.recordedAt});
+  const [eventState,settlement]=await Promise.all([
+    auth.db.from('events').select('status,scheduled_at').eq('id',eventId)
+      .maybeSingle(),
+    auth.db.from('recovery_v2_settlements')
+      .select('settled_at,award_count').eq('event_id',eventId).maybeSingle(),
+  ]);
+  if(eventState.error||settlement.error||!eventState.data)
+    throw new AuthError('V2_RECORDING_UNAVAILABLE',
+      'Could not check the final race status.',503);
+  let pointsFinal=false;
+  if(settlement.data){
+    const awards=await auth.db.from('recovery_ranking_awards')
+      .select('award_key,rider_id,team_id,result_place,points,points_policy_version')
+      .eq('event_id',eventId);
+    if(awards.error)
+      throw new AuthError('V2_RECORDING_UNAVAILABLE',
+        'Could not check the awarded points.',503);
+    const awardByKey=new Map((awards.data??[]).map(row=>[row.award_key,row]));
+    if(eventState.data.status!=='FINISHED'||
+      awardByKey.size!==settlement.data.award_count||
+      projection.projectedAwards.some(expected=>{
+        const awarded=awardByKey.get(expected.awardKey);
+        return !awarded||awarded.rider_id!==expected.riderId||
+          awarded.team_id!==expected.teamId||
+          awarded.result_place!==expected.placing||
+          awarded.points!==expected.points||
+          awarded.points_policy_version!==slice.pointsPolicyVersion;
+      }))
+      throw new AuthError('V2_RECORDING_INVALID',
+        'The final v2 result needs review.',409);
+    pointsFinal=true;
+  }else if(eventState.data.status!=='OPEN'){
+    throw new AuthError('V2_RECORDING_INVALID',
+      'The recorded race status needs review.',409);
+  }
+  return NextResponse.json({...projection,settled:pointsFinal,
+    recordedAt:slice.recordedAt,
+    settledAt:settlement.data?.settled_at??null,pointsFinal,
+    canSettle:!pointsFinal&&
+      process.env.PELOTONIA_V2_SETTLEMENT_ENABLED==='true'&&
+      eventState.data.status==='OPEN'&&
+      Date.parse(eventState.data.scheduled_at)<=Date.now()});
 });

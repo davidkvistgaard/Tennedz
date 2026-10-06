@@ -8,7 +8,7 @@ const formatSeconds=value=>`${Math.round(value)} s`;
 const title=value=>value.replaceAll('_',' ');
 
 export default function TacticalTourViewer({recording,focusTeamId,awardProjection,
-  playerRecording=false,divisionIndex=1}){
+  playerRecording=false,pointsFinal=false,divisionIndex=1}){
   const [index,setIndex]=useState(0);
   const [playing,setPlaying]=useState(false);
   const [speed,setSpeed]=useState(1);
@@ -79,11 +79,12 @@ export default function TacticalTourViewer({recording,focusTeamId,awardProjectio
   return <div className="tactical-viewer">
     <header className="tactical-hero">
       <p className="tactical-eyebrow">{playerRecording?
-        `PRIVATE V2 RECORDING CANDIDATE · DIVISION ${divisionIndex}`:
+        `PRIVATE V2 ${pointsFinal?'FINAL RESULT':'RECORDING CANDIDATE'} · DIVISION ${divisionIndex}`:
         'RECORDED TOUR PROTOTYPE · DIVISION 1'}</p>
       <h1>Follow the race, kilometre by kilometre</h1>
       <p>{playerRecording?
-        'This private candidate was calculated before playback. The race and ranking points are not final.':
+        pointsFinal?'This recorded result is final. Ranking points have been awarded.':
+          'This private candidate was calculated before playback. The race and ranking points are not final.':
         'This sample was calculated before playback. Scrubbing and play speed only change what you see.'}</p>
       <div className="tactical-facts"><span>{distance} km</span><span>{ascent} m climbing</span>
         <span>{teams.length} teams</span><span>Locked weather: {recording.route.lockedWeather.windKph} km/h wind</span></div>
@@ -108,6 +109,9 @@ export default function TacticalTourViewer({recording,focusTeamId,awardProjectio
         }}>{playing?'Pause':index===frames.length-1?'Watch again':'Play recording'}</button>
         <button type="button" onClick={()=>{setPlaying(false);setIndex(current=>
           clamp(current+10,0,frames.length-1));}}>Skip 10 km</button>
+        {pointsFinal&&<button type="button" onClick={()=>{
+          setPlaying(false);setIndex(frames.length-1);
+        }}>See final result</button>}
         <button type="button" disabled={previousMoment===undefined} onClick={()=>{
           setPlaying(false);setIndex(previousMoment-1);
         }}>Previous moment</button>
@@ -169,12 +173,13 @@ export default function TacticalTourViewer({recording,focusTeamId,awardProjectio
           <b>{moment.km} km</b><span>{moment.text}</span></li>)}</ol>:
           <p>The field is settling in. Move the playback to see attacks and responses.</p>}
       </section>
-      <section className="tactical-panel" aria-label="Provisional results">
-        <div className="tactical-panel-head"><h2>Provisional finish</h2>
+      <section className="tactical-panel" aria-label={pointsFinal?'Final results':'Provisional results'}>
+        <div className="tactical-panel-head"><h2>{pointsFinal?'Final finish':'Provisional finish'}</h2>
           <span>Shown after the final kilometre</span></div>
         {index===frames.length-1?<>
-          {awardProjection&&<p>Projected ranking points for {teamName(selectedTeamId)}:
-            {' '}{selectedTeamPoints}. {playerRecording?
+          {awardProjection&&<p>{pointsFinal?'Ranking points awarded':'Projected ranking points'} for {teamName(selectedTeamId)}:
+            {' '}{selectedTeamPoints}. {pointsFinal?
+              'The points are included in the ranking ledger.':playerRecording?
               'Candidate only; no ranking points were awarded.':
               'Sample only; no points were saved.'}</p>}
           <h3>Teams by captain finish</h3>
@@ -186,7 +191,7 @@ export default function TacticalTourViewer({recording,focusTeamId,awardProjectio
           <h3>{focusedTeam?.name??focusedTeam?.id} finish</h3>
           <ol className="tactical-results tactical-own-results" aria-label={`${focusedTeam?.name??focusedTeam?.id} finish`}>{selectedResults.map(result=><li key={result.riderId}>
             <b>{result.position}</b><span>{result.name}</span>
-            <small>{pointsByRider.get(result.riderId)??0} {playerRecording?'projected':'ranking'} pts</small>
+            <small>{pointsByRider.get(result.riderId)??0} {playerRecording&&!pointsFinal?'projected':'ranking'} pts</small>
             <strong>+{result.gapSeconds.toFixed(1)} s</strong></li>)}</ol>
           <h3>First 12 across the division</h3>
           <ol className="tactical-results" aria-label="First 12 across the division">{results.slice(0,12).map(result=><li key={result.riderId}>

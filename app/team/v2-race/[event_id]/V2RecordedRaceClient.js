@@ -37,16 +37,39 @@ export default function V2RecordedRaceClient({eventId}){
     }catch(cause){setError(cause.message);}
     finally{setBusy(false);}
   }
+  async function settle(){
+    setBusy(true);setError('');
+    try{
+      const response=await fetch('/api/event/v2-recording/settle',{
+        method:'POST',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({event_id:eventId}),
+      });
+      const result=await response.json();
+      if(!response.ok)throw new Error(result.error||'Could not finish the race.');
+      await load();
+    }catch(cause){setError(cause.message);}
+    finally{setBusy(false);}
+  }
   return <TeamShell title="Private race recording" compact>
     <div className="recorded-lab-shell">
       <div className="tactical-back"><Link href="/team/calendar">Back to calendar</Link>
-        <span>Isolated v2 candidate · no final results or ranking points</span></div>
+        <span>{data?.pointsFinal?
+          'Isolated v2 result · ranking points awarded':
+          'Isolated v2 candidate · no final results or ranking points'}</span></div>
       {waiting?<section className="card empty-state" role="status">
         <h1>Loading the recorded race</h1><p>Checking your division.</p>
-      </section>:data?<TacticalTourViewer key={`${data.eventId}:${data.focusTeamId}`}
+      </section>:data?<>
+        {data.canSettle&&<section className="card" aria-label="Finish recorded race">
+          <p>The recording is ready. Finishing the race awards ranking points once for all divisions.</p>
+          <button type="button" className="btn primary" disabled={busy}
+            onClick={settle}>{busy?'Finishing…':'Finish race and award points'}</button>
+        </section>}
+        {error&&<p role="alert">{error}</p>}
+        <TacticalTourViewer key={`${data.eventId}:${data.focusTeamId}`}
         recording={data.recording}
         focusTeamId={data.focusTeamId} divisionIndex={data.divisionIndex}
-        awardProjection={{awards:data.projectedAwards}} playerRecording/>:
+        awardProjection={{awards:data.projectedAwards}}
+        playerRecording pointsFinal={data.pointsFinal}/></>:
         <section className="card empty-state" role="status">
           <h1>{missing?'Recording not prepared':'Recording unavailable'}</h1>
           <p>{error||'A private candidate can be prepared after the scheduled race start.'}</p>
