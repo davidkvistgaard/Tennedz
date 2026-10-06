@@ -16,6 +16,7 @@ const noContestFixture = process.env.PELOTONIA_E2E_NO_CONTEST === "true";
 const v2SaveFixture = process.env.PELOTONIA_E2E_V2_SAVE === "true";
 const v2LockFixture = process.env.PELOTONIA_E2E_V2_LOCK === "true";
 const v2SettlementFixture = process.env.PELOTONIA_E2E_V2_SETTLEMENT === "true";
+const v2FutureSettlementFixture = process.env.PELOTONIA_E2E_V2_SETTLEMENT_FUTURE === "true";
 const v2RecordingFixture = process.env.PELOTONIA_E2E_V2_RECORDING === "true" ||
   v2SettlementFixture;
 let v2LockedAt = null;
@@ -113,6 +114,8 @@ const server = http.createServer(async (req, res) => {
     }
     if (v2SettlementFixture &&
       url.pathname === "/rest/v1/rpc/recovery_settle_v2_one_day") {
+      if (v2FutureSettlementFixture)
+        return send(500,{code:"PT500",message:"Premature settlement reached the write RPC."});
       const stored=v2RecordedHeader?{...v2RecordedHeader,
         divisions:v2RecordedDivisions}:null;
       if(body.p_event!==v2PreviewEventId||!stored||
@@ -245,7 +248,9 @@ const server = http.createServer(async (req, res) => {
         stage_profile_id:twoPhaseStageId,
         registration_deadline:v2RecordingLock.event.registration_deadline,
         tactics_deadline:v2RecordingLock.event.tactics_deadline,
-        scheduled_at:v2RecordingLock.event.scheduled_at});
+        scheduled_at:v2FutureSettlementFixture?
+          new Date(Date.now()+3600000).toISOString():
+          v2RecordingLock.event.scheduled_at});
     if (table === "stage_profiles" &&
       url.searchParams.get("id") === `eq.${twoPhaseStageId}`)
       return send(200, {distance_km:20,keypoints:[{km:10}]});

@@ -5,6 +5,8 @@ import {AuthError,assertTeamId} from '../../../../../lib/auth/policy.mjs';
 import {rpc,uuid} from '../../../../../lib/race/server';
 import {loadStoredV2SettlementPreflight}
   from '../../../../../lib/race/v2-settlement-preflight.mjs';
+import {assertV2SettlementAttemptPhase}
+  from '../../../../../lib/race/v2-settlement-phase.mjs';
 
 // Preview-only. The caller must be in this race; the server independently
 // re-simulates the saved result, and SQL repeats all mutable checks atomically.
@@ -32,14 +34,25 @@ export const POST=protectedRoute(async(req,context,auth)=>{
   if(!entry.data||!reveal.data)
     throw new AuthError('NOT_ENTERED','Your team is not in the revealed race.',403);
   const db=databaseClient({timeoutMs:60000});
-  const locked=await db.from('recovery_v2_tactics_commits')
-    .select('input_snapshot').eq('event_id',eventId).maybeSingle();
-  if(locked.error)
+  const [locked,event]=await Promise.all([
+    db.from('recovery_v2_tactics_commits')
+      .select('input_snapshot').eq('event_id',eventId).maybeSingle(),
+    db.from('events')
+      .select('kind,status,registration_deadline,tactics_deadline,scheduled_at')
+      .eq('id',eventId).maybeSingle(),
+  ]);
+  if(locked.error||event.error||!event.data)
     throw new AuthError('V2_SETTLEMENT_UNAVAILABLE',
-      'Could not load the locked race.',503);
+      'Could not load the race state.',503);
   if(!locked.data)
     throw new AuthError('V2_SETTLEMENT_UNAVAILABLE',
       'The v2 tactics input is not locked.',409);
+  try{
+    assertV2SettlementAttemptPhase(event.data);
+  }catch{
+    throw new AuthError('V2_SETTLEMENT_NOT_READY',
+      'The v2 race is not ready for settlement.',409);
+  }
   let preflight;
   try{
     preflight=await loadStoredV2SettlementPreflight(db,

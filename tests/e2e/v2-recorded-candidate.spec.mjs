@@ -16,6 +16,8 @@ test('entrants in separate divisions read only their private v2 recording',
   async({browser})=>{
     test.skip(process.env.PELOTONIA_E2E_V2_RECORDING!=='true',
       'The isolated v2 recording fixture must be enabled explicitly.');
+    test.skip(process.env.PELOTONIA_E2E_V2_SETTLEMENT_FUTURE==='true',
+      'The future-race fixture tests only the early settlement rejection.');
     const contexts=await Promise.all(Array.from({length:3},()=>browser.newContext()));
     try{
       const [manager,rival,outsider]=await Promise.all(contexts.map(context=>context.newPage()));
@@ -152,3 +154,15 @@ test('entrants in separate divisions read only their private v2 recording',
       await Promise.all(contexts.map(context=>context.close()));
     }
   });
+
+test('a future v2 race rejects settlement before the write RPC',async({page})=>{
+  test.skip(process.env.PELOTONIA_E2E_V2_SETTLEMENT_FUTURE!=='true',
+    'The future-race fixture must be enabled explicitly.');
+  await signIn(page,'v2manager');
+  const recorded=await page.request.post(endpoint,{headers,data:{event_id:eventId}});
+  expect(recorded.status(),await recorded.text()).toBe(200);
+  const response=await page.request.post('/api/event/v2-recording/settle',{
+    headers,data:{event_id:eventId}});
+  expect(response.status(),await response.text()).toBe(409);
+  expect(await response.json()).toMatchObject({code:'V2_SETTLEMENT_NOT_READY'});
+});
