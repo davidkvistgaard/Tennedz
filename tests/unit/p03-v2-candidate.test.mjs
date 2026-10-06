@@ -127,6 +127,8 @@ test('45 distinct v2 plans survive reveal, three recordings and award projection
       ...(index%3===1?{phases:[{atKm:10,effort:'conserve',chase:'selective'}]}:{})},
   ]));
   const candidate=previewRecordedDivisions(input,{v2OrdersByTeamId:orders});
+  const replayed=previewRecordedDivisions(input,{v2OrdersByTeamId:orders});
+  assert.deepEqual(candidate,replayed);
   const balanced=previewRecordedDivisions(input);
   assert.deepEqual(candidate.divisions.map(division=>division.teamIds.length),[15,15,15]);
   const recordedTeams=candidate.divisions.flatMap(division=>division.recording.committedInputs.teams);
@@ -137,6 +139,8 @@ test('45 distinct v2 plans survive reveal, three recordings and award projection
   }
   const awards=projectV2OneDayAwards(candidate,{tier:3}).divisions
     .flatMap(division=>division.awards);
+  assert.deepEqual(projectV2OneDayAwards(candidate,{tier:3}),
+    projectV2OneDayAwards(replayed,{tier:3}));
   assert.equal(awards.length,60);
   assert.equal(new Set(awards.map(award=>award.awardKey)).size,60);
   assert.notDeepEqual(candidate.divisions[0].recording.frames[0].teamEnergy,
