@@ -1,6 +1,6 @@
 // Read-only long-race specialist counterfactual on the opt-in paid-pace motor.
 // Run: node tests/support/p03-v2-specialist-final-probe.mjs
-//   [--bounded-finale|--bounded-bridge-finale|--earned-bridge-finale|--neutral-pace|--explicit-front|--draft-shelter]
+//   [--bounded-finale|--bounded-bridge-finale|--earned-bridge-finale|--neutral-pace|--explicit-front|--draft-shelter|--distance-load]
 //   [--neutrals=0..17]
 //   [--chase-at=230|240|250] [--route=flat|hilly|mountain]
 //   [--neutral-mode=rotating|weak|mixed] [--neutral-level=0..100]
@@ -11,7 +11,8 @@ import {validateRecordedTour} from '../../lib/engine/v2/recording.mjs';
 import {MOTOR_PAID_PACE_VERSION,MOTOR_FINALE_VERSION,
   MOTOR_BRIDGE_FINALE_VERSION,MOTOR_EARNED_BRIDGE_VERSION,
   MOTOR_NEUTRAL_PACE_VERSION,MOTOR_EXPLICIT_FRONT_VERSION,
-  MOTOR_DRAFT_SHELTER_VERSION} from '../../lib/engine/v2/tuning.mjs';
+  MOTOR_DRAFT_SHELTER_VERSION,MOTOR_DISTANCE_LOAD_VERSION} from
+  '../../lib/engine/v2/tuning.mjs';
 
 const keys=['sprint','flat','hills','mountain','cobbles','timetrial',
   'endurance','strength','wind'];
@@ -76,9 +77,10 @@ const earnedBridgeFinale=process.argv.includes('--earned-bridge-finale');
 const neutralPace=process.argv.includes('--neutral-pace');
 const explicitFront=process.argv.includes('--explicit-front');
 const draftShelter=process.argv.includes('--draft-shelter');
-const frontMotor=explicitFront||draftShelter;
+const distanceLoad=process.argv.includes('--distance-load');
+const frontMotor=explicitFront||draftShelter||distanceLoad;
 if([boundedFinale,boundedBridgeFinale,earnedBridgeFinale,neutralPace,
-  explicitFront,draftShelter]
+  explicitFront,draftShelter,distanceLoad]
   .filter(Boolean).length>1)
   throw new Error('Choose one finale motor.');
 if(!frontMotor&&process.argv.some(arg=>arg.startsWith('--front-mode=')))
@@ -117,7 +119,8 @@ for(const seed of seeds)for(const plan of [
     }),
   ];
   const race=simulateTacticalTour({stage,teams,seed,weather,
-    motorVersion:draftShelter?MOTOR_DRAFT_SHELTER_VERSION:
+    motorVersion:distanceLoad?MOTOR_DISTANCE_LOAD_VERSION:
+      draftShelter?MOTOR_DRAFT_SHELTER_VERSION:
       explicitFront?MOTOR_EXPLICIT_FRONT_VERSION:
       neutralPace?MOTOR_NEUTRAL_PACE_VERSION:
       earnedBridgeFinale?MOTOR_EARNED_BRIDGE_VERSION:

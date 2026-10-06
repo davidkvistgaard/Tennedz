@@ -8,7 +8,7 @@ import {hasResidualGapAfterSufficientChase} from '../lib/engine/v2/balance-audit
 import {TUNING,TUNING_VERSION,MOTOR_CANDIDATE_VERSION,MOTOR_PAID_PACE_VERSION,
   MOTOR_FINALE_VERSION,MOTOR_BRIDGE_FINALE_VERSION,MOTOR_EARNED_BRIDGE_VERSION,
   MOTOR_NEUTRAL_PACE_VERSION,MOTOR_EXPLICIT_FRONT_VERSION,
-  MOTOR_DRAFT_SHELTER_VERSION,
+  MOTOR_DRAFT_SHELTER_VERSION,MOTOR_DISTANCE_LOAD_VERSION,
   MOTOR_CANDIDATE} from
   '../lib/engine/v2/tuning.mjs';
 
@@ -16,7 +16,8 @@ const samples=process.argv[2]===undefined?10:Number(process.argv[2]);
 const fieldTeams=process.argv[3]===undefined?4:Number(process.argv[3]);
 const motorMode=process.argv[4]??'current';
 const paceMode=process.argv[5]??'preset';
-const motorVersion=motorMode==='draft-shelter'?MOTOR_DRAFT_SHELTER_VERSION:
+const motorVersion=motorMode==='distance-load'?MOTOR_DISTANCE_LOAD_VERSION:
+  motorMode==='draft-shelter'?MOTOR_DRAFT_SHELTER_VERSION:
   motorMode==='explicit-front'?MOTOR_EXPLICIT_FRONT_VERSION:
   motorMode==='neutral-pace'?MOTOR_NEUTRAL_PACE_VERSION:
   motorMode==='earned-bridge-finale'?MOTOR_EARNED_BRIDGE_VERSION:
@@ -30,13 +31,14 @@ const gapAuditOptions={recoverySecondsPerCapacity:motorMode!=='current'?
 if(!Number.isInteger(samples)||samples<1||samples>100||
   !Number.isInteger(fieldTeams)||fieldTeams<2||fieldTeams>20||
   !['current','candidate','paid-pace','bounded-finale','bounded-bridge-finale',
-    'earned-bridge-finale','neutral-pace','explicit-front','draft-shelter']
+    'earned-bridge-finale','neutral-pace','explicit-front','draft-shelter',
+    'distance-load']
     .includes(motorMode)||
   !['preset','paced-rival','steady-rival','rotate-rival','late-hard-rival',
     'rotate-plans'].includes(paceMode)||
   ['steady-rival','rotate-rival','late-hard-rival','rotate-plans'].includes(paceMode)&&
-    !['explicit-front','draft-shelter'].includes(motorMode))
-  throw new Error('Usage: node scripts/engine-v2-ensemble.mjs [paired samples: 1-100] [teams: 2-20] [current|candidate|paid-pace|bounded-finale|bounded-bridge-finale|earned-bridge-finale|neutral-pace|explicit-front|draft-shelter] [preset|paced-rival|steady-rival|rotate-rival|late-hard-rival|rotate-plans (v86+ only)]');
+    !['explicit-front','draft-shelter','distance-load'].includes(motorMode))
+  throw new Error('Usage: node scripts/engine-v2-ensemble.mjs [paired samples: 1-100] [teams: 2-20] [current|candidate|paid-pace|bounded-finale|bounded-bridge-finale|earned-bridge-finale|neutral-pace|explicit-front|draft-shelter|distance-load] [preset|paced-rival|steady-rival|rotate-rival|late-hard-rival|rotate-plans (v86+ only)]');
 
 const ROUTES={
   flat:{distance_km:120,profile_points:[[0,60],[40,60],[80,75],[120,60]],
@@ -106,7 +108,7 @@ for(const [course,stage] of Object.entries(ROUTES)){
               baseline:{effort:paceMode==='paced-rival'?'hard':
                 paceMode==='steady-rival'?'steady':'conserve',
                 attack:'none',chase:'ignore',
-                ...(['explicit-front','draft-shelter'].includes(motorMode)?
+                ...(['explicit-front','draft-shelter','distance-load'].includes(motorMode)?
                   {frontWork:'rotate'}:{})},
               ...(paceMode==='late-hard-rival'?{
                 phases:[{atKm:80,effort:'hard'}]}:{})}:{}),

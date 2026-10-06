@@ -8,7 +8,8 @@ import {validateRecordedTour} from '../../lib/engine/v2/recording.mjs';
 import {MOTOR_CANDIDATE_VERSION,MOTOR_PAID_PACE_VERSION,
   MOTOR_FINALE_VERSION,MOTOR_BRIDGE_FINALE_VERSION,
   MOTOR_EARNED_BRIDGE_VERSION,MOTOR_NEUTRAL_PACE_VERSION,
-  MOTOR_EXPLICIT_FRONT_VERSION,MOTOR_DRAFT_SHELTER_VERSION} from
+  MOTOR_EXPLICIT_FRONT_VERSION,MOTOR_DRAFT_SHELTER_VERSION,
+  MOTOR_DISTANCE_LOAD_VERSION} from
   '../../lib/engine/v2/tuning.mjs';
 
 function team(id,level,{effort='conserve',attack='none',chase='ignore',
@@ -314,4 +315,29 @@ test('v87 paid front shelters followers but leaves exposed workers responsible',
   assert.equal(validateRecordedTour(recorded),true);
   assert.equal(recorded.frames[0].paidBunchPace?.teamId,'front');
   assert.equal(recorded.tuningVersion,MOTOR_DRAFT_SHELTER_VERSION);
+});
+
+test('v88 adds endurance-dependent load only after a very long distance',()=>{
+  const stage={distance_km:200,profile_points:[[0,100],[200,100]]};
+  const strong=team('strong',80),weak=team('weak',80);
+  for(const rider of strong.riders)rider.endurance=95;
+  for(const rider of weak.riders)rider.endurance=30;
+  const input={stage,teams:[strong,weak],seed:'long-distance-load'};
+  const v87=simulateTacticalTour({...input,motorVersion:MOTOR_DRAFT_SHELTER_VERSION});
+  const v88=simulateTacticalTour({...input,motorVersion:MOTOR_DISTANCE_LOAD_VERSION});
+  assert.equal(validateRecordedTour(v88),true);
+  const energy=(race,km,id)=>race.frames[km-1].riderGroups.find(row=>row.id===id).energy;
+  assert.equal(energy(v88,160,'strong-7'),energy(v87,160,'strong-7'));
+  assert.equal(energy(v88,160,'weak-7'),energy(v87,160,'weak-7'));
+  assert.ok(energy(v88,200,'strong-7')<energy(v87,200,'strong-7'));
+  assert.ok(energy(v88,200,'weak-7')<energy(v88,200,'strong-7'));
+  assert.ok(energy(v88,200,'weak-7')<energy(v87,200,'weak-7'));
+  const shortInput={...input,stage:{distance_km:120,
+    profile_points:[[0,100],[120,100]]}};
+  const short87=simulateTacticalTour({...shortInput,
+    motorVersion:MOTOR_DRAFT_SHELTER_VERSION});
+  const short88=simulateTacticalTour({...shortInput,
+    motorVersion:MOTOR_DISTANCE_LOAD_VERSION});
+  assert.deepEqual(short88.frames,short87.frames);
+  assert.deepEqual(short88.provisionalResults,short87.provisionalResults);
 });
