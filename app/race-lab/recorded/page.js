@@ -7,8 +7,9 @@ import './recorded.css';
 
 const skills=['sprint','flat','hills','mountain','cobbles','timetrial','endurance','strength','wind'];
 const teams=['Amber','Birch','Cedar'].map((name,teamIndex)=>{
+  const id=`sample-${name.toLowerCase()}`;
   const selected=Array.from({length:8},(_,index)=>`${name}-${index}`);
-  return {id:name,name,riders:selected.map((id,index)=>({id,
+  return {id,name,riders:selected.map((id,index)=>({id,
     name:index===0?`${name} Captain`:`${name} Rider ${index+1}`,gender:'M',
     ...Object.fromEntries(skills.map((skill,skillIndex)=>[skill,
       Math.min(100,58+teamIndex*4+(index%3)*3+(skillIndex%3)*2)])),form:65,fatigue:5})),
@@ -32,6 +33,6 @@ export default function RecordedTourPrototype(){
   return <div className="recorded-lab-shell">
     <div className="tactical-back"><Link href="/race-lab">← Back to Race Lab</Link>
       <span>Isolated sample · no saved race or points</span></div>
-    <TacticalTourViewer recording={recording} focusTeamId="Amber"/>
+    <TacticalTourViewer recording={recording} focusTeamId="sample-amber"/>
   </div>;
 }

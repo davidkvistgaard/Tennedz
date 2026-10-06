@@ -16,6 +16,8 @@ export default function TacticalTourViewer({recording,focusTeamId}){
   const distance=recording.route.distanceKm;
   const teams=recording.committedInputs.teams;
   const focusedTeam=teams.find(team=>team.id===selectedTeamId);
+  const teamNames=useMemo(()=>new Map(teams.map(team=>[team.id,team.name??team.id])),[teams]);
+  const teamName=id=>teamNames.get(id)??id;
   const names=useMemo(()=>new Map(teams.flatMap(team=>team.riders.map(rider=>
     [rider.id,rider.name]))),[teams]);
   const moments=useMemo(()=>frames.flatMap((item,index)=>{
@@ -35,9 +37,9 @@ export default function TacticalTourViewer({recording,focusTeamId}){
     if(item.mergedRoadGroupIds.length)events.push({km:item.km,
       text:'Two road groups come back together.'});
     for(const decision of item.decisions)events.push({km:item.km,
-      text:`${teams.find(team=>team.id===decision.teamId)?.id} changes plan: ${title(decision.kind)}.`});
+      text:`${teamNames.get(decision.teamId)??decision.teamId} changes plan: ${title(decision.kind)}.`});
     return events;
-  }),[frames,names,teams]);
+  }),[frames,names,teamNames]);
   useEffect(()=>{
     if(!playing)return;
     const timer=setInterval(()=>setIndex(current=>Math.min(current+speed,frames.length-1)),240);
@@ -113,10 +115,10 @@ export default function TacticalTourViewer({recording,focusTeamId}){
         {dropped>0&&<div className="tactical-road-group"><strong>Off the back</strong><span>{dropped} riders</span></div>}
       </section>
       <section className="tactical-panel" aria-label="Your riders">
-        <div className="tactical-panel-head"><h2>{focusedTeam?.id} riders</h2>
+        <div className="tactical-panel-head"><h2>{focusedTeam?.name??focusedTeam?.id} riders</h2>
           <label htmlFor="tactical-team">Watch team <select id="tactical-team"
             value={selectedTeamId} onChange={event=>setSelectedTeamId(event.target.value)}>
-            {teams.map(team=><option key={team.id} value={team.id}>{team.id}</option>)}
+            {teams.map(team=><option key={team.id} value={team.id}>{team.name??team.id}</option>)}
           </select></label></div>
         <div className="tactical-rider-list">{own.map(rider=><div key={rider.id}>
           <strong>{names.get(rider.id)}</strong><span>{roadGroupByRider.get(rider.id)??title(rider.group)}</span>
@@ -134,13 +136,13 @@ export default function TacticalTourViewer({recording,focusTeamId}){
         <div className="tactical-panel-head"><h2>Provisional finish</h2>
           <span>Shown after the final kilometre</span></div>
         {index===frames.length-1?<>
-          <h3>{focusedTeam?.id} finish</h3>
-          <ol className="tactical-results" aria-label={`${focusedTeam?.id} finish`}>{selectedResults.map(result=><li key={result.riderId}>
-            <b>{result.position}</b><span>{result.name}</span><small>{result.teamId}</small>
+          <h3>{focusedTeam?.name??focusedTeam?.id} finish</h3>
+          <ol className="tactical-results" aria-label={`${focusedTeam?.name??focusedTeam?.id} finish`}>{selectedResults.map(result=><li key={result.riderId}>
+            <b>{result.position}</b><span>{result.name}</span><small>{teamName(result.teamId)}</small>
             <strong>+{result.gapSeconds.toFixed(1)} s</strong></li>)}</ol>
           <h3>First 12 across the division</h3>
           <ol className="tactical-results" aria-label="First 12 across the division">{results.slice(0,12).map(result=><li key={result.riderId}>
-            <b>{result.position}</b><span>{result.name}</span><small>{result.teamId}</small>
+            <b>{result.position}</b><span>{result.name}</span><small>{teamName(result.teamId)}</small>
             <strong>+{result.gapSeconds.toFixed(1)} s</strong></li>)}</ol>
         </>:
           <p>Placings stay hidden during playback. The result has already been recorded.</p>}

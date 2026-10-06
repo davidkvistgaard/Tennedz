@@ -9,7 +9,7 @@ function snapshot(count){
   const teams=Array.from({length:count},(_,index)=>{
     const id=`team-${String(index).padStart(2,'0')}`;
     const selected=Array.from({length:8},(_,rider)=>`${id}-r${rider}`);
-    return {id,name:id,riders:selected.map(riderId=>({id:riderId,name:riderId,gender:'M',
+    return {id,name:`Team ${index+1}`,riders:selected.map(riderId=>({id:riderId,name:riderId,gender:'M',
       flat:40+index,sprint:48,hills:45,mountain:45,cobbles:45,timetrial:45,
       endurance:48,strength:45,wind:45,form:55,fatigue:0})),
       entry:{selected_riders:selected,captain_id:selected[0],orders:defaultOrders(selected,selected[0])}};
@@ -32,11 +32,16 @@ test('saved 45-team reveal produces three separate deterministic v2 recordings w
   assert.equal(new Set(first.divisions.map(division=>division.recording.raceSeed)).size,3);
   for(const division of first.divisions){
     validateRecordedTour(division.recording);
+    assert.ok(division.recording.committedInputs.teams.every(team=>
+      team.name===input.teams.find(source=>source.id===team.id).name));
     assert.equal(division.recording.frames.length,20);
     assert.deepEqual(new Set(division.recording.provisionalResults.map(row=>row.teamId)),
       new Set(division.teamIds));
     assert.equal(division.recording.provisionalResults.length,division.teamIds.length*8);
   }
+  const invalidName=structuredClone(first.divisions[0].recording);
+  invalidName.committedInputs.teams[0].name='';
+  assert.throws(()=>validateRecordedTour(invalidName),/Invalid committed team input/);
 });
 
 test('candidate rejects changed reveal, invalid lineup and unmappable legacy orders',()=>{
