@@ -2,6 +2,32 @@
 
 **Opdateret 6. oktober 2026 efter den isolerede P03-prøve og v2-prøven med 45 managers.** Dette er den aktuelle hovedliste for kendte produktønsker. [Produktvisionen](PRODUCT-VISION.md), [kalenderpakken](CALENDAR_AUTOPILOT_RANKINGS_V0_1.md), [motorprototypen](design/ENGINE-V2-FOUNDATION.md), [verdensbaselinen](PELOTONIA-WORLD-BASELINE-1.6.2.md) og de enkelte designnoter er baggrund; gamle statusangivelser i dem er ikke en ny leveringsplan. Listen skelner mellem kode i produktion, kode i isolerede udviklingsspor og ubyggede funktioner.
 
+## Læsevejledning: færdigt, i gang og endnu ikke begyndt
+
+**✅** betyder, at hele punktets *angivne afgrænsede leverance* er verificeret. For 01–03 er det en isoleret integrations- eller testleverance, **ikke** en produktionsrelease. **🟡** betyder, at der findes konkret arbejde eller en afprøvet del, men at punktets acceptkrav ikke er opfyldt. **⬜** betyder, at implementeringen af punktet ikke er påbegyndt; eksisterende skitser eller et beslægtet gammelt spilmodul tæller ikke som færdiggørelse. Kun ✅ er et checkmark. Hver opgaverække nedenfor har status; markeringen ændres først, når punktets samlede acceptkrav er verificeret.
+
+**Kort status:** 01–03 ✅ isoleret færdige. 04–09, 11–13, 16–18, 21, 30 og 35 🟡 i gang eller kun delvist afprøvet. 10, 14–15, 19–20, 22–29, 31–34 og 36–41 ⬜ mangler som de er beskrevet. Den gamle live-spiloplevelse findes, men den nye v2-motor, tofasede løb og deres afregning er endnu ikke aktiveret i produktion.
+
+### Hvad er lavet siden 30. september?
+
+Tabellen er et **retrospektivt skøn over aktiv arbejdsindsats**, ikke målte timer, fakturering eller en konvertering af automationernes løbetid. Intervallerne er grove, og nært beslægtet fejlretning er lagt i samme række, så de ikke summeres to gange. ✅ i denne tabel gælder kun den *beskrevne delprøve eller leverance*; det gør ikke automatisk hele dens større nummererede punkt færdigt. Det eksisterende live-grundspil og tidligere verdens-/portrætarbejde er ikke tidsmålt og indgår ikke i skønnet. Kolonnen *Rest* længere nede er en grov fremadrettet arbejdsramme, som endnu ikke er genberegnet efter hvert deltrin; den er ikke forskellen mellem et gammelt estimat og denne tabel.
+
+| Dokumenteret leverance | Status og grænse | Skøn udført | Belæg |
+| --- | --- | ---: | --- |
+| Samlet kalender-, autopilot- og motorspor; gammel løbsvej bevaret | ✅ P01 isoleret integration | ca. 3–6 t | [P01](INTEGRATION-P01-2026-10-04.md) |
+| Friske migrationer, adgang, kø, retry og beskyttet preview | ✅ P02 isoleret prøve; autopilot endnu slukket | ca. 8–16 t | [P02](INTEGRATION-P02-2026-10-04.md) |
+| 45 managerkonti gennem kalender, ordrer, tre legacy-løb, replay og point | ✅ P03 isoleret testsløjfe | ca. 8–16 t | [P03](INTEGRATION-P03-2026-10-04.md) |
+| To faser: tilmelding, frosset pointbaseret divisionsafsløring, taktikfrist, lås og regler for no contest | ✅ Isoleret delprøve; driftsgenopretning mangler | ca. 10–20 t | [Divisionsafsløring](INTEGRATION-DIVISION-REVEAL-2026-10-05.md), [taktiklås](INTEGRATION-TWO-PHASE-TACTICS-LOCK-2026-10-05.md) |
+| Motor Lab og v2-kilometermodel med grupper, ordrer, energi, terræn og optagelse | ✅ Prototype 79; sportslig balance mangler | ca. 12–24 t | [Motor Lab](MOTOR-LAB-MILESTONE-1.md), [balanceaudit](MOTOR-LAB-BALANCE-AUDIT.md) |
+| Privat v2-taktikside med rigtige hold/ryttere, ordrer og gemt lås | ✅ Spillertilsluttet preview; ikke live | ca. 6–12 t | [Taktik](INTEGRATION-TWO-PHASE-TACTICS-2026-10-05.md), [v2-optagelse](INTEGRATION-V2-RECORDED-CANDIDATE-2026-10-06.md) |
+| Versionsbundet, divisionsopdelt v2-optagelse, adgangskontrol og privat teknisk viewer | ✅ Rigtige testkonti; ønsket løbsoplevelse mangler | ca. 8–16 t | [V2-optagelse](INTEGRATION-V2-RECORDED-CANDIDATE-2026-10-06.md) |
+| Atomisk v2-resultat og point med idempotent gentagelse i tre divisioner | ✅ 45-manager test bestået; svartid, samtidighed og scheduler åbne | ca. 8–16 t | [V2-afregning](INTEGRATION-V2-RECORDED-CANDIDATE-2026-10-06.md) |
+| Finale- og langdistanceprober, lead-out-kontrakt og residual-gap-diagnose | ✅ Beskrevne prober; endnu ikke koblet til officiel v2-finale | ca. 6–12 t | [Finalekontrakt](design/ENGINE-V2-FINALE-CONTRACT.md), punkt 04 nedenfor |
+
+**Samlet tilbageskuende skøn for disse ni dokumenterede pakker: ca. 69–138 aktive timer.** Det kan ikke bruges som præcis tidsregistrering. Verdensbaseline 1.6.2 findes på et særskilt spor, og 16 starterportrætter, et logo og en personalepreview findes som delresultater; deres historiske tidsforbrug kan ikke udledes troværdigt af dette repo. De er med i status og resterende opgaver nedenfor, men får ikke opfundne timer.
+
+**Det vigtigste, der mangler for et flot spilbart løb:** realistisk og scenarietestet motor/finale (04–06, 11), rigtige versionerede ruter og gennemført spillerordreflade (07–08), en dramatisk men sandfærdig viewer (09), pålidelig automatisk tofaseafvikling og belastningssikker pointafregning (16–17), derefter samlet preview og godkendt release (12). Atlas, portrætter og klubprogression er særskilte spor. Detaljerne og deres restestimater står i opgavetabellerne; den lange log længere nede dokumenterer delprøver uden at sætte checkmark på et helt produktmål.
+
 ## Sådan læses estimaterne
 
 - Alle tal er **aktive udvikler-/agenttimer for implementering, relevante tests og lokal gennemgang**, som et interval. De er ikke kalenderdage eller et løfte om levering. Ventetid på feedback, godkendelser, licenser, billedproduktion hos en ekstern leverandør og eventuelle tjenester/abonnementer er ikke medregnet.
@@ -53,43 +79,43 @@ Den første tekniske **endagsløbs-testsløjfe** er nu gennemført isoleret i pu
 
 **Punkt 03, isoleret verificeret 5. oktober:** 45 særskilt ejede hold med 360 midlertidige ryttere gennemførte hver især kalender, udtagelse, kaptajn og ordrer i browseren. Den lokale produktionsbuild afviklede løbet i tre divisioner på 15 hold med hvert holds eget optagede replay, resultat og historik. Tre samtidige spillerkald gav præcis én commit; gentaget afvikling gav hverken ekstra resultater eller point. Den isolerede pointmigration gav 60 sportslige pointposter, og holdranglisten svarede til ledgeren. En sen ordreændring blev afvist. Alle midlertidige data blev fjernet. [Testnotatet](INTEGRATION-P03-2026-10-04.md) beskriver prøven og dens grænser: Den var sekventiel i browseren, ikke en samtidig 45-bruger belastningstest. Tofaset tilmelding, lagret pointbaseret divisionsfordeling og en sportsligt realistisk ny motor hører fortsat til senere punkter; etapeløbspoint og produktionsverifikation er også åbne.
 
-| ID | Opgave / konkret resultat | Timer | Afhænger af |
-| --- | --- | ---: | --- |
-| 01 | Saml de adskilte kalender- og motorspor i ét integreret udviklingsspor; løs konflikter, bevar gamle løb og kør fuld regression. Verdensdata integreres særskilt i punkt 21. | 12–24 | — |
-| 02 | Kør den nye kalender-/autopilot-/ledger-migration og scheduler i en isoleret database; test rettigheder, samtidighed, retry, tidszoner og kapacitet uden live data. | 12–24 | 01 |
-| 03 | Etabler en reproducerbar ende-til-ende test med flere rigtige testhold: oprettelse → kalender → udtagelse → ordre → afvikling → replay → resultat/point. Medtag 45 tilmeldte hold, tre separate afviklinger, egne replays/resultater og idempotent genkørsel i den nuværende model; dokumentér målinger og fejl før større tuning. Den endelige tofasede, pointbaserede spillerrejse testes efter punkt 16–17. | 8–16 | 01–02 |
+| ID | Status | Opgave / konkret resultat | Rest (skøn) | Afhænger af |
+| --- | :---: | --- | ---: | --- |
+| 01 | ✅ | Saml de adskilte kalender- og motorspor i ét integreret udviklingsspor; løs konflikter, bevar gamle løb og kør fuld regression. Verdensdata integreres særskilt i punkt 21. | 0 | — |
+| 02 | ✅ | Kør den nye kalender-/autopilot-/ledger-migration og scheduler i en isoleret database; test rettigheder, samtidighed, retry, tidszoner og kapacitet uden live data. | 0 | 01 |
+| 03 | ✅ | Etabler en reproducerbar ende-til-ende test med flere rigtige testhold: oprettelse → kalender → udtagelse → ordre → afvikling → replay → resultat/point. Medtag 45 tilmeldte hold, tre separate afviklinger, egne replays/resultater og idempotent genkørsel i den nuværende model; dokumentér målinger og fejl før større tuning. Den endelige tofasede, pointbaserede spillerrejse testes efter punkt 16–17. | 0 | 01–02 |
 
 ## P1 — første virkelig spilbare løbsoplevelse
 
 **Finalens afstandsgrundlag, 6. oktober:** En isoleret, ren afstandsplan opdeler de sidste 5 km i fire hele kilometre, to trin à 250 m og fem trin à 100 m. Hvert trin peger på den eksisterende kilometerrute og angiver åbent dens grove opløsning. Et særskilt laboratorieforløb forbinder nu alle trinene for én forreste rytter og én jagende rytter: optagelsen følger tidsgab, faktisk indhentningssted og resterende energi og afviser arbejde uden energi. Fart og arbejdspris gives dog af testkaldet, ikke af spillets rytter-skills, rute eller låste taktik; vejgrupper, sprint, point og privat replay er ikke forbundet. V79-resultater og den eksisterende viewer er uændrede.
 
-| ID | Opgave / konkret resultat | Timer | Afhænger af |
-| --- | --- | ---: | --- |
-| 04 | Forbedr individuel fart, position, læ, samarbejde, gruppeopdeling/sammenløb og finale i v2. Gør de sidste 5 km til en særskilt taktisk fase og de sidste 500–1000 m til ruteafhængig sprint/slutacceleration med kortere beregningstrin. Scenarier skal vise realistiske brud, genangreb, begrænset jagtkapacitet og forskellige finaletyper; se [finalekontrakten](design/ENGINE-V2-FINALE-CONTRACT.md). | 24–48 | 03 |
-| 05 | Gør holdmål, kaptajn/hjælper, udpeget lead-out-rytter, vejkaptajn/leadership, egen chance og GC-top-10-beslutninger sammenhængende på tværs af grupper. En lead-out skal koste kræfter og kræve samme vejgruppe som den udvalgte afslutter. | 24–48 | 04 |
-| 06 | Afklar de synlige ryttereegenskabers primære virkning og defaults/migration for nye skills; ingen offentliggørelse af skjulte procentvægte. Test især sprint, acceleration, placering, klatring og energi på forskellige finaler og ryttertyper. Afprøv lead-out som kombination af eksisterende skills og løbstilstand, før en særskilt stat overvejes. | 16–32 | 04 |
-| 07 | Gør kilometerrute, hældning, terræn, underlag og vejrlås datadrevet og sammenhængende; profil, ordreflade og viewer skal bruge samme versionerede rute. | 20–40 | 04 |
-| 08 | Byg enkelt preset + ekspertordrer ved 10-km-markører/nøglepunkter, kontingenser og let holdudtagelse i det rigtige spillerflow. Medtag en enkel finaleplan og valgfri navngiven lead-out-rytter med låst mål/launch-timing. Gem og lås ordrer før deadline. | 24–48 | 05–07 |
-| 09 | Gem versionsmærket input, seed, vejr, beslutninger, resultater og replay sikkert, også de kortere finale-trin; idempotent race-run og adgangskontrol. Byg en visuelt og dramaturgisk stærk replay-viewer med journalistisk løbsfortælling og særlig rytme i finalen, ikke kun en teknisk tidslinje. | 56–112 | 04–08 |
-| 10 | Færdiggør etapeløbsafvikling: vedvarende startliste, klassificeret tid, GC, etape-/point-/bjergklassement, udgåede ryttere og energi mellem etaper. Undgå dobbelt resultatskrivning. | 32–64 | 09 |
-| 11 | Balance- og spiltest i større, parrede scenarier for begge køn, forskellige ruter og taktikvalg. Justér centralt, og test med mennesker før accept. | 48–96 | 04–10 |
-| 12 | Isoleret preview af det sammenhængende løb, performance-/sikkerhedstest, migration/rollback og kontrolleret produktionsindføring efter godkendelse. Den gamle motor forbliver fallback indtil da. | 20–40 | 02–11 |
-| 41 | Afprøv en valgfri Three.js-scene til **rute- og løbsreplay** på én versioneret rute. Vis terræn, rute og kameraføring ud fra atlas-/rutedata og afspil de faktisk optagne gruppepositioner; behold kort, tidsforskelle, ordrer og hændelser som læsbar 2D-visning. Mål mobil ydelse, indlæsning og reduced-motion, og stop 3D-sporet hvis rutegeometri eller replay ikke kan bære en sandfærdig visning. | 24–48 | 07, 09, 25 |
+| ID | Status | Opgave / konkret resultat | Rest (skøn) | Afhænger af |
+| --- | :---: | --- | ---: | --- |
+| 04 | 🟡 | Forbedr individuel fart, position, læ, samarbejde, gruppeopdeling/sammenløb og finale i v2. Gør de sidste 5 km til en særskilt taktisk fase og de sidste 500–1000 m til ruteafhængig sprint/slutacceleration med kortere beregningstrin. Scenarier skal vise realistiske brud, genangreb, begrænset jagtkapacitet og forskellige finaletyper; se [finalekontrakten](design/ENGINE-V2-FINALE-CONTRACT.md). | 24–48 | 03 |
+| 05 | 🟡 | Gør holdmål, kaptajn/hjælper, udpeget lead-out-rytter, vejkaptajn/leadership, egen chance og GC-top-10-beslutninger sammenhængende på tværs af grupper. En lead-out skal koste kræfter og kræve samme vejgruppe som den udvalgte afslutter. | 24–48 | 04 |
+| 06 | 🟡 | Afklar de synlige ryttereegenskabers primære virkning og defaults/migration for nye skills; ingen offentliggørelse af skjulte procentvægte. Test især sprint, acceleration, placering, klatring og energi på forskellige finaler og ryttertyper. Afprøv lead-out som kombination af eksisterende skills og løbstilstand, før en særskilt stat overvejes. | 16–32 | 04 |
+| 07 | 🟡 | Gør kilometerrute, hældning, terræn, underlag og vejrlås datadrevet og sammenhængende; profil, ordreflade og viewer skal bruge samme versionerede rute. | 20–40 | 04 |
+| 08 | 🟡 | Byg enkelt preset + ekspertordrer ved 10-km-markører/nøglepunkter, kontingenser og let holdudtagelse i det rigtige spillerflow. Medtag en enkel finaleplan og valgfri navngiven lead-out-rytter med låst mål/launch-timing. Gem og lås ordrer før deadline. | 24–48 | 05–07 |
+| 09 | 🟡 | Gem versionsmærket input, seed, vejr, beslutninger, resultater og replay sikkert, også de kortere finale-trin; idempotent race-run og adgangskontrol. Byg en visuelt og dramaturgisk stærk replay-viewer med journalistisk løbsfortælling og særlig rytme i finalen, ikke kun en teknisk tidslinje. | 56–112 | 04–08 |
+| 10 | ⬜ | Færdiggør etapeløbsafvikling: vedvarende startliste, klassificeret tid, GC, etape-/point-/bjergklassement, udgåede ryttere og energi mellem etaper. Undgå dobbelt resultatskrivning. | 32–64 | 09 |
+| 11 | 🟡 | Balance- og spiltest i større, parrede scenarier for begge køn, forskellige ruter og taktikvalg. Justér centralt, og test med mennesker før accept. | 48–96 | 04–10 |
+| 12 | 🟡 | Isoleret preview af det sammenhængende løb, performance-/sikkerhedstest, migration/rollback og kontrolleret produktionsindføring efter godkendelse. Den gamle motor forbliver fallback indtil da. | 20–40 | 02–11 |
+| 41 | ⬜ | Afprøv en valgfri Three.js-scene til **rute- og løbsreplay** på én versioneret rute. Vis terræn, rute og kameraføring ud fra atlas-/rutedata og afspil de faktisk optagne gruppepositioner; behold kort, tidsforskelle, ordrer og hændelser som læsbar 2D-visning. Mål mobil ydelse, indlæsning og reduced-motion, og stop 3D-sporet hvis rutegeometri eller replay ikke kan bære en sandfærdig visning. | 24–48 | 07, 09, 25 |
 
 **Kvalitetskrav til den rigtige løbsviewer:** Motor Labs nuværende kort, kurver og kilometertidslinje er et teknisk inspektionsværktøj, ikke målestokken for den færdige oplevelse. [Hattricks kampviser](https://wiki.hattrick.org/wiki/Introducing_the_new_Live_Viewer) er inspiration til kombinationen af **løbende, dramatisk tekst og et grafisk overblik, der altid er synligt**. For cykelløbet skal teksten fortælle, hvorfor et angreb, en jagt, en samling eller finalen betyder noget, mens ruten samtidig viser de faktiske grupper, egne ryttere, positioner og tidsgab. Tekst, kort, fokus og tidslinje skal være synkroniseret med samme gemte hændelser; man skal kunne hoppe mellem højdepunkter, pause og ændre hastighed uden at miste overblikket. Vigtige og stille kilometer kræver forskellig fortælleintensitet, så et langt løb hverken drukner i gentagelser eller springer afgørende udvikling over. Den visuelle scene skal afspejle den faktisk gemte rute og optagelse; kameraføring eller 3D må ikke opfinde sportslige hændelser. Bedøm en spilbar prøve med rigtige gemte løb på desktop og mobil for spænding, læsbarhed, indlæsning og tilgængelighed, herunder reduced motion. Punkt 09 er ikke færdigt, blot fordi en replay-fil kan afspilles korrekt. Eventuel Three.js i punkt 41 er et virkemiddel, ikke en forudsætning for kvalitetskravet.
 
 ## P1 — kalender, automatisk deltagelse og ranglister
 
-| ID | Opgave / konkret resultat | Timer | Afhænger af |
-| --- | --- | ---: | --- |
-| 13 | Gør de fire standardtrupper robuste i spillerflowet, inklusive onboarding/redigering, kaptajn og gyldig erstatning ved fravær. | 16–32 | 02, 08 |
-| 14 | Opbyg en kildekontrolleret UCI/Pelotonia-sæson med onsdag/søndag som endagsløbsdage, særskilte kønsløb og sammenhængende etapeløbsdage. Afklar navne-/ruterettigheder. | 24–48 | 07 |
-| 15 | Beslut konfigurerbar prioritet for samtidige løb og rytternes tilgængelighed under overlappende etapeløb. Bevar manuel tilmelding som øverste prioritet. | 16–32 | 10, 13 |
-| 16 | Verificér autopilot-queue efter målt kapacitet. Del løbsforløbet i tilmeldingsfrist → frossen pointbaseret divisionsfordeling og modstandervisning → senere taktikfrist → afvikling. Manuelle og automatiske tilmeldinger deler pulje; regler for nye hold, afbalancerede grupper, ufærdig autopilotkø, sen ordreændring og fallback skal testes, før kalenderløb afvikles live. Vis hvorfor et hold blev tilmeldt, sprunget over eller fik erstatningsryttere. | 32–64 | 02, 13, 15, 17 |
-| 17 | Tilknyt endelige resultater til den ene idempotente pointledger med reversering, sæson, køn, format og tier; bevar eksisterende evnerating som særskilt begreb. | 20–40 | 02, 09–10 |
-| 18 | Færdiggør rangliste-UI og holdhjem: individuelle/hold, UCI/Pelotonia, endags-/etape, sæson/all-time, kombineret hold og ægte bevægelse først når snapshots findes. | 20–40 | 17 |
-| 19 | Gør kalenderkort for etapeløb operationelle: etapetrin, GC-status, udtagelse, ordrestatus og gennemsigtig pointtabel. | 32–64 | 10, 14, 17 |
-| 20 | Gennemgå live release af kalenderpakken, opret først derefter gennemgåede fremtidige løb, og verificér tilmelding/afvikling med rigtige modstandere. | 12–24 | 12, 14, 16–19 |
+| ID | Status | Opgave / konkret resultat | Rest (skøn) | Afhænger af |
+| --- | :---: | --- | ---: | --- |
+| 13 | 🟡 | Gør de fire standardtrupper robuste i spillerflowet, inklusive onboarding/redigering, kaptajn og gyldig erstatning ved fravær. | 16–32 | 02, 08 |
+| 14 | ⬜ | Opbyg en kildekontrolleret UCI/Pelotonia-sæson med onsdag/søndag som endagsløbsdage, særskilte kønsløb og sammenhængende etapeløbsdage. Afklar navne-/ruterettigheder. | 24–48 | 07 |
+| 15 | ⬜ | Beslut konfigurerbar prioritet for samtidige løb og rytternes tilgængelighed under overlappende etapeløb. Bevar manuel tilmelding som øverste prioritet. | 16–32 | 10, 13 |
+| 16 | 🟡 | Verificér autopilot-queue efter målt kapacitet. Del løbsforløbet i tilmeldingsfrist → frossen pointbaseret divisionsfordeling og modstandervisning → senere taktikfrist → afvikling. Manuelle og automatiske tilmeldinger deler pulje; regler for nye hold, afbalancerede grupper, ufærdig autopilotkø, sen ordreændring og fallback skal testes, før kalenderløb afvikles live. Vis hvorfor et hold blev tilmeldt, sprunget over eller fik erstatningsryttere. | 32–64 | 02, 13, 15, 17 |
+| 17 | 🟡 | Tilknyt endelige resultater til den ene idempotente pointledger med reversering, sæson, køn, format og tier; bevar eksisterende evnerating som særskilt begreb. | 20–40 | 02, 09–10 |
+| 18 | 🟡 | Færdiggør rangliste-UI og holdhjem: individuelle/hold, UCI/Pelotonia, endags-/etape, sæson/all-time, kombineret hold og ægte bevægelse først når snapshots findes. | 20–40 | 17 |
+| 19 | ⬜ | Gør kalenderkort for etapeløb operationelle: etapetrin, GC-status, udtagelse, ordrestatus og gennemsigtig pointtabel. | 32–64 | 10, 14, 17 |
+| 20 | ⬜ | Gennemgå live release af kalenderpakken, opret først derefter gennemgåede fremtidige løb, og verificér tilmelding/afvikling med rigtige modstandere. | 12–24 | 12, 14, 16–19 |
 
 **Status for punkt 16–17, 5. oktober:** Det isolerede udviklingsspor har særskilt tilmeldings- og taktikfrist, gemt pointbaseret divisionsafsløring, begrænset modstandervisning og låst taktik. 45 uafhængige midlertidige managers gennemførte sekventielt kalender-tilmelding, 15/15/15 divisionsafsløring, individuel taktik, viewer og eget divisionsresultat i den beskyttede preview. Simulatorens faktiske output gav tre replays, 45 holdresultater, 360 rytterresultater, 60 pointposter og én commit; gentagelse gav ikke ekstra point. Alle testdata blev fjernet. Dette er en funktionel 45-managerprøve, ikke en samtidig belastnings- eller sportslig balancetest. Testen markerede autopilot-scanningen manuelt som fuldført. Den daglige cron kan fortsat komme for sent til tilmeldingsfristen; regler for nye hold, fejlgenopretning, pointreversering og produktionskontrol er åbne.
 
@@ -193,38 +219,38 @@ Et efterfølgende UI-check rettede desuden preset-skift efter genindlæsning, s�
 
 ## P1 - atlas og verdenskvalitet
 
-| ID | Opgave / konkret resultat | Timer | Afhænger af |
-| --- | --- | ---: | --- |
-| 21 | Integrér Baseline 1.6.2 i aktivt udviklingsspor og kontrollér hele objektgrafen, placering, navne og krydsende hydrologi/veje/bane/færger. Fastlæg hvor prototypegeometri skal redesignes. | 20–40 | 01 |
-| 22 | Skab én konsistent, redigerbar geografisk grundtegning fra atlasdata: kyst, højder, biomer, vand og hovedinfrastruktur. Kortbilledet må ikke blive en konkurrerende sandhedskilde. | 60–120 | 21 |
-| 23 | Tegn L0–L4 som sammenhængende, gradvis zoom med læsbare labels, gode overgangsniveauer og høj visuel kvalitet på mobil/desktop. Data udenfor Aurelia skal også være meningsfulde. | 40–80 | 22 |
-| 24 | Katedralen og et repræsentativt udvalg af steder får individuelt bearbejdede lokale udsnit; hver detalje skal stemme med kanoniske ID'er og nabogeografi. | 24–48 | 23 |
-| 25 | Byg først en **afgrænset Three.js-prøve omkring katedralen**: terræn/bygning og en flyvning fra øoversigt til stedet på cirka 4–5 sekunder, genereret fra atlasdata. Sammenlign den med det almindelige 2D-kort på mobil og desktop; test indlæsning, billedhastighed, reduced-motion, geografisk sammenhæng og kunstnerisk kvalitet. Beslut derefter om en valgfri 3D-visning og korte rute-/stedintroer fortjener videre arbejde. Atlasdata forbliver sandheden, og det brugbare 2D-kort bevares. | 40–80 | 23–24 |
-| 26 | Visuel/data-QA: gentagne renderinger skal vise samme geografi; test continuity, zoom, klik, performance, mobil og kunstnerisk gennemgang. Udgiv først efter godkendt kvalitet. | 16–32 | 22–25 |
+| ID | Status | Opgave / konkret resultat | Rest (skøn) | Afhænger af |
+| --- | :---: | --- | ---: | --- |
+| 21 | 🟡 | Integrér Baseline 1.6.2 i aktivt udviklingsspor og kontrollér hele objektgrafen, placering, navne og krydsende hydrologi/veje/bane/færger. Fastlæg hvor prototypegeometri skal redesignes. | 20–40 | 01 |
+| 22 | ⬜ | Skab én konsistent, redigerbar geografisk grundtegning fra atlasdata: kyst, højder, biomer, vand og hovedinfrastruktur. Kortbilledet må ikke blive en konkurrerende sandhedskilde. | 60–120 | 21 |
+| 23 | ⬜ | Tegn L0–L4 som sammenhængende, gradvis zoom med læsbare labels, gode overgangsniveauer og høj visuel kvalitet på mobil/desktop. Data udenfor Aurelia skal også være meningsfulde. | 40–80 | 22 |
+| 24 | ⬜ | Katedralen og et repræsentativt udvalg af steder får individuelt bearbejdede lokale udsnit; hver detalje skal stemme med kanoniske ID'er og nabogeografi. | 24–48 | 23 |
+| 25 | ⬜ | Byg først en **afgrænset Three.js-prøve omkring katedralen**: terræn/bygning og en flyvning fra øoversigt til stedet på cirka 4–5 sekunder, genereret fra atlasdata. Sammenlign den med det almindelige 2D-kort på mobil og desktop; test indlæsning, billedhastighed, reduced-motion, geografisk sammenhæng og kunstnerisk kvalitet. Beslut derefter om en valgfri 3D-visning og korte rute-/stedintroer fortjener videre arbejde. Atlasdata forbliver sandheden, og det brugbare 2D-kort bevares. | 40–80 | 23–24 |
+| 26 | ⬜ | Visuel/data-QA: gentagne renderinger skal vise samme geografi; test continuity, zoom, klik, performance, mobil og kunstnerisk gennemgang. Udgiv først efter godkendt kvalitet. | 16–32 | 22–25 |
 
 ## P2 — vedvarende klub og progression
 
-| ID | Opgave / konkret resultat | Timer | Afhænger af |
-| --- | --- | ---: | --- |
-| 27 | Træning, form, fatigue, skader, alder og 90-dages spilår med én dokumenteret game-tick og forståelige valg uden overdreven mikrostyring. | 32–64 | 10–12 |
-| 28 | Almindelig spiløkonomi: indtægter, løn, træningsomkostninger og budgetværn. Sportslig styrke må ikke købes med premium-valuta. | 40–80 | 27 |
-| 29 | Transfersystem med kontrakter, holdhistorik, marked og transaktionssikkerhed; bevar historiske resultater og tidligere klubber. | 48–96 | 28 |
-| 30 | Personale: konkrete roller, løn/kontrakter og målbare, balancerede effekter på udvikling, form og mentalitet. Samme sportslige muligheder for gratis og betalende hold. | 24–48 | 27–28 |
-| 31 | Supporter: rettigheder, abonnement, kosmetisk trøje/logo, ekstra analyse/skabeloner og UI; kontroller at premium ikke giver direkte sportslig styrke. | 32–64 | 28, 30 |
-| 32 | Inaktive/dormante hold: konfigurerbare faser, fortsat autopilot, arkiv uden sletning og senere rytterfrigivelse gennem transfersystemet. | 16–32 | 16, 29 |
-| 33 | Fans/supporterskare som sportslig klubverden: tilslutning, aktivitet, omdømme og almindelige indtægter. Adskil dette fra det betalte Supporter-abonnement. | 32–64 | 28 |
-| 34 | Sportslige fører-, point-, bjerg-, ungdoms-, verdens- og nationale mestertrøjer som systemstyrede lag oven på holdtrøjen, når de tilhørende resultater findes. | 16–32 | 10, 17 |
+| ID | Status | Opgave / konkret resultat | Rest (skøn) | Afhænger af |
+| --- | :---: | --- | ---: | --- |
+| 27 | ⬜ | Træning, form, fatigue, skader, alder og 90-dages spilår med én dokumenteret game-tick og forståelige valg uden overdreven mikrostyring. | 32–64 | 10–12 |
+| 28 | ⬜ | Almindelig spiløkonomi: indtægter, løn, træningsomkostninger og budgetværn. Sportslig styrke må ikke købes med premium-valuta. | 40–80 | 27 |
+| 29 | ⬜ | Transfersystem med kontrakter, holdhistorik, marked og transaktionssikkerhed; bevar historiske resultater og tidligere klubber. | 48–96 | 28 |
+| 30 | 🟡 | Personale: konkrete roller, løn/kontrakter og målbare, balancerede effekter på udvikling, form og mentalitet. Samme sportslige muligheder for gratis og betalende hold. | 24–48 | 27–28 |
+| 31 | ⬜ | Supporter: rettigheder, abonnement, kosmetisk trøje/logo, ekstra analyse/skabeloner og UI; kontroller at premium ikke giver direkte sportslig styrke. | 32–64 | 28, 30 |
+| 32 | ⬜ | Inaktive/dormante hold: konfigurerbare faser, fortsat autopilot, arkiv uden sletning og senere rytterfrigivelse gennem transfersystemet. | 16–32 | 16, 29 |
+| 33 | ⬜ | Fans/supporterskare som sportslig klubverden: tilslutning, aktivitet, omdømme og almindelige indtægter. Adskil dette fra det betalte Supporter-abonnement. | 32–64 | 28 |
+| 34 | ⬜ | Sportslige fører-, point-, bjerg-, ungdoms-, verdens- og nationale mestertrøjer som systemstyrede lag oven på holdtrøjen, når de tilhørende resultater findes. | 16–32 | 10, 17 |
 
 ## P2/P3 — identitet og nye spilformer
 
-| ID | Opgave / konkret resultat | Timer | Afhænger af |
-| --- | --- | ---: | --- |
-| 35 | Genoptag portrætretningen, når ejeren ønsker det: test 50–100 almindeligt udseende, tydeligt forskellige ryttere; vurder fejl/ligheder, pris, vedvarende ansigt og trøjelag. | 24–48 | — |
-| 36 | Når stilen er godkendt: byg versionsmærket portrætpipeline med lagring, kø, idempotens, dubletkontrol, sikker regenerering og gradvis erstatning af reservevisning. | 40–80 | 35 |
-| 37 | Obligatorisk introløb mod bots, som lærer spilleren udtagelse, simple/avancerede ordrer og gemte presets; introducér derefter standardtrupper. | 24–48 | 08–09, 13 |
-| 38 | 30-minutters draft-lobby: pakke med otte midlertidige randomiserede ryttere, lobbyfrister, fair match, låsning, rute og replay. Hold det adskilt fra den permanente trups økonomi. | 48–96 | 09, 12 |
-| 39 | Virkelighedsinspirerede ruter og vejrkilder med kildedato, licens-/navneafklaring, versionering og kvalitetssikret import. Brug samme route-/weather-kontrakt som motoren. | 24–48 | 07, 14 |
-| 40 | Senere spilleroprettede eventlobbyer med eventuel entry fee/præmiepulje, anti-misbrug, betaling/regnskab og klare regler uden køb af sportslig styrke. | 40–80 | 28, 31, 38 |
+| ID | Status | Opgave / konkret resultat | Rest (skøn) | Afhænger af |
+| --- | :---: | --- | ---: | --- |
+| 35 | 🟡 | Genoptag portrætretningen, når ejeren ønsker det: test 50–100 almindeligt udseende, tydeligt forskellige ryttere; vurder fejl/ligheder, pris, vedvarende ansigt og trøjelag. | 24–48 | — |
+| 36 | ⬜ | Når stilen er godkendt: byg versionsmærket portrætpipeline med lagring, kø, idempotens, dubletkontrol, sikker regenerering og gradvis erstatning af reservevisning. | 40–80 | 35 |
+| 37 | ⬜ | Obligatorisk introløb mod bots, som lærer spilleren udtagelse, simple/avancerede ordrer og gemte presets; introducér derefter standardtrupper. | 24–48 | 08–09, 13 |
+| 38 | ⬜ | 30-minutters draft-lobby: pakke med otte midlertidige randomiserede ryttere, lobbyfrister, fair match, låsning, rute og replay. Hold det adskilt fra den permanente trups økonomi. | 48–96 | 09, 12 |
+| 39 | ⬜ | Virkelighedsinspirerede ruter og vejrkilder med kildedato, licens-/navneafklaring, versionering og kvalitetssikret import. Brug samme route-/weather-kontrakt som motoren. | 24–48 | 07, 14 |
+| 40 | ⬜ | Senere spilleroprettede eventlobbyer med eventuel entry fee/præmiepulje, anti-misbrug, betaling/regnskab og klare regler uden køb af sportslig styrke. | 40–80 | 28, 31, 38 |
 
 **Samlet, groft restestimat: cirka 1.080–2.170 aktive timer** for de resterende punkter ovenfor, med P01–P03's isolerede verifikation afsluttet og den udvidede fase-/divisionsopgave samt et højere kvalitetskrav til løbsvieweren indregnet. Det er en størrelsesorden, ikke en deadline; omarbejde efter spiltest, udgifter til illustrationer/tjenester og ejerens svartid kan øge forløbet. Den næste realistiske testsløjfe kræver motorens og kalenderens nødvendige P1-punkter, ikke hele denne liste. Punkter 21–26 kan udvikles sideløbende med sportsarbejdet, men konkurrerer om samme kapacitet, hvis én person udfører det.
 
