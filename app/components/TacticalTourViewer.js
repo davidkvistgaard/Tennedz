@@ -1,6 +1,7 @@
 "use client";
 
 import {useEffect,useMemo,useState} from "react";
+import {orderAt} from '../../lib/engine/v2/orders.mjs';
 
 const clamp=(value,min,max)=>Math.max(min,Math.min(max,value));
 const formatSeconds=value=>`${Math.round(value)} s`;
@@ -50,6 +51,9 @@ export default function TacticalTourViewer({recording,focusTeamId}){
   const roadGroupByRider=new Map(frame.roadGroups.flatMap((group,groupIndex)=>
     group.riderIds.map(id=>[id,groupIndex===0?'Front group':`Group ${groupIndex+1}`])));
   const own=current.filter(rider=>rider.teamId===selectedTeamId);
+  const selectedOrders=focusedTeam?.orders;
+  const activeOrders=selectedOrders?orderAt(selectedOrders,frame.km-1):null;
+  const activePhase=[...(selectedOrders?.phases??[])].reverse().find(phase=>phase.atKm<frame.km);
   const peloton=current.filter(rider=>rider.group==='peloton').length;
   const dropped=current.filter(rider=>rider.group==='dropped').length;
   const recent=moments.filter(moment=>moment.km<=frame.km).slice(-8).reverse();
@@ -125,6 +129,23 @@ export default function TacticalTourViewer({recording,focusTeamId}){
           <span>{Math.round(rider.energy)} energy</span>
           <span>{rider.deficitSeconds>0?`${formatSeconds(rider.deficitSeconds)} behind`:''}</span>
         </div>)}</div>
+      </section>
+      <section className="tactical-panel" aria-label="Team orders">
+        <div className="tactical-panel-head"><h2>{focusedTeam?.name??focusedTeam?.id} orders</h2>
+          <span>{activePhase?`Active since km ${activePhase.atKm+1}`:'Active from the start'}</span></div>
+        <p>These orders were locked before the race. Playback does not change them.</p>
+        <dl className="tactical-orders">
+          <div><dt>Preset</dt><dd>{title(selectedOrders?.preset??'balanced')}</dd></div>
+          <div><dt>Race captain</dt><dd>{names.get(selectedOrders?.captainId)}</dd></div>
+          <div><dt>Road captain</dt><dd>{names.get(selectedOrders?.roadCaptainId)}</dd></div>
+          <div><dt>Helpers</dt><dd>{selectedOrders?.helperIds.length?
+            selectedOrders.helperIds.map(id=>names.get(id)).join(', '):'None assigned'}</dd></div>
+          <div><dt>Effort</dt><dd>{title(activeOrders?.effort??'steady')}</dd></div>
+          <div><dt>Chase</dt><dd>{title(activeOrders?.chase??'selective')}</dd></div>
+          <div><dt>Attack</dt><dd>{title(activeOrders?.attack??'selective')}
+            {activeOrders?.attackRiderId?` · ${names.get(activeOrders.attackRiderId)}`:''}</dd></div>
+          <div><dt>Break work</dt><dd>{title(activeOrders?.breakWork??'cooperate')}</dd></div>
+        </dl>
       </section>
       <section className="tactical-panel" aria-label="Race moments">
         <div className="tactical-panel-head"><h2>What happened</h2><span>Through km {frame.km}</span></div>

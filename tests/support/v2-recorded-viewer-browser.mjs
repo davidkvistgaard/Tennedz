@@ -20,10 +20,15 @@ try{
     await expect(page.getByRole('heading',{name:'Amber riders'})).toBeVisible();
     await expect(page.getByText('sample-amber')).toHaveCount(0);
     await expect(page.getByRole('region',{name:'Road groups'})).toBeVisible();
+    const orders=page.getByRole('region',{name:'Team orders'});
+    await expect(orders.getByRole('heading',{name:'Amber orders'})).toBeVisible();
+    await expect(orders.getByText('Active from the start')).toBeVisible();
+    await expect(orders.getByText('Amber Captain')).toHaveCount(2);
     if(process.env.PELOTONIA_VIEWER_SCREENSHOT==='1')
       await page.screenshot({path:`.recovery-local/v2-viewer-${viewport.width}.png`,fullPage:true});
     await page.getByLabel('Watch team').selectOption({label:'Birch'});
     await expect(page.getByRole('heading',{name:'Birch riders'})).toBeVisible();
+    await expect(orders.getByRole('heading',{name:'Birch orders'})).toBeVisible();
     await page.getByLabel('Watch team').selectOption({label:'Amber'});
     await expect(page.getByRole('button',{name:'Previous moment'})).toBeDisabled();
     await page.getByRole('button',{name:'Next moment'}).click();

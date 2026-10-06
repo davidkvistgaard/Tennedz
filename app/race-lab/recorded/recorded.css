@@ -3,3 +3,4 @@
 .tactical-panel-head label{color:#5e806e;font-size:.88rem}.tactical-panel-head select{margin-left:.4rem;border:1px solid #5e806e;border-radius:.45rem;background:#f6f4ec;color:#0e2d24;padding:.3rem .5rem}
 .tactical-panel h3{font-size:.94rem;margin:1.2rem 0 .45rem;color:#0e2d24}.tactical-panel h3:first-of-type{margin-top:.2rem}
 .tactical-controls button:disabled{opacity:.45;cursor:not-allowed}
+.tactical-orders{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.7rem;margin:1rem 0 0}.tactical-orders>div{min-width:0;border-top:1px solid #e6efe9;padding-top:.55rem}.tactical-orders dt{color:#5e806e;font-size:.78rem}.tactical-orders dd{margin:.2rem 0 0;font-weight:650;overflow-wrap:anywhere}@media(max-width:480px){.tactical-orders{grid-template-columns:1fr}}
