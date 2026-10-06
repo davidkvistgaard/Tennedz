@@ -3,7 +3,8 @@
 import {performance} from 'node:perf_hooks';
 import {assignPointDivisions} from '../../lib/calendar/division-reveal.mjs';
 import {previewLockedV2RecordedDivisions} from '../../lib/race/v2-candidate.mjs';
-import {buildV2OneDayResultContract} from '../../lib/race/v2-result-contract.mjs';
+import {buildV2OneDayResultContract,validateV2OneDayResultContract}
+  from '../../lib/race/v2-result-contract.mjs';
 import {projectV2RecordedDivisionForTeam} from '../../lib/race/v2-viewer.mjs';
 
 const count=Number(process.argv[2]??45);
@@ -38,6 +39,8 @@ const candidate=previewLockedV2RecordedDivisions(lock);
 const simulatedMs=Math.round(performance.now()-start);
 const contract=buildV2OneDayResultContract(candidate,{tier:3});
 const builtMs=Math.round(performance.now()-start);
+validateV2OneDayResultContract(contract);
+const validatedMs=Math.round(performance.now()-start);
 const divisionBytes=contract.divisions.map(division=>
   Buffer.byteLength(JSON.stringify(division)));
 const contractBytes=Buffer.byteLength(JSON.stringify(contract));
@@ -48,5 +51,5 @@ const viewerBytes=Buffer.byteLength(JSON.stringify(viewer));
 console.log(JSON.stringify({teams:count,distanceKm:distance,divisions:divisionBytes.length,
   divisionBytes,contractBytes,contractMiB:+(contractBytes/1048576).toFixed(2),
   viewerBytes,viewerMiB:+(viewerBytes/1048576).toFixed(2),viewerMs,
-  simulatedMs,builtMs,frames:contract.divisions.reduce((total,division)=>
+  simulatedMs,builtMs,validatedMs,frames:contract.divisions.reduce((total,division)=>
     total+division.recording.frames.length,0)}));

@@ -18,6 +18,10 @@ A later two-manager browser run exposed a storage edge case: the simulator recor
 
 The same readiness path then passed two isolated 45-manager browser runs: three separately stored divisions, 45 private viewers, 60 projected ledger rows, an idempotent recording retry and zero final awards. The first recording request took 28.7 seconds locally. Avoiding a second identical simulation during candidate creation reduced the next local run to 25.0 seconds; these different fixtures are a diagnostic measurement, not a performance guarantee. Settlement still independently recomputes the saved candidate from its database lock. Both runs' disposable events, 720 riders in total and all 90 temporary accounts were removed after verification. The recording request remains too slow for a release decision without further load and deployment checks.
 
+A separate read-only 45-team/130 km synthetic probe measured 0.78 seconds for simulation and 1.16 seconds through full contract validation on this machine. Its serialized result was 5.97 MiB across three divisions, while one private viewer response was 1.57 MiB. This suggests that transport, database storage and request overhead deserve profiling before further physics optimisation; it does not isolate the cause of the 25-second browser request.
+
+The next integration step is the isolated [v2 settlement transaction](V2-SETTLEMENT-BOUNDARY.md), with its own final marker and atomic point award. The legacy finish function and replay-v1 table cannot directly store this versioned result.
+
 ## Product contract
 
 - Managers commit their lineup, captain, optional road captain, preset, detailed phases and contingencies **before the deadline**. The server snapshots that exact input. The complete race is calculated once after the deadline, and everyone views the same recorded replay. No live manager action is required.
