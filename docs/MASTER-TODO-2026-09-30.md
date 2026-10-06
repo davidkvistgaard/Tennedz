@@ -121,6 +121,8 @@ Den første tekniske **endagsløbs-testsløjfe** er nu gennemført isoleret i pu
 
 Med otte ryttere fordelt fra -8 til +8 omkring hvert holds gennemsnit flytter springet sig: 98 mod 80 er fortsat inden for ét sekund til første modstander, mens 100 mod 80 giver cirka 70 sekunder i både fladt og kuperet testprofil. Det peger på rosterafhængighed; test forskellige specialer og større felter, før selve tuning-reglerne ændres.
 
+**Optaget v2-viser, prototype:** Under Race Labs feature flag kan en selvstændig prøveside nu afspille en færdigberegnet v2-optagelse med rute, vejgrupper, egne ryttere, hændelser og resultat ved målstregen. Desktop og 390 px mobil er browserkontrolleret, og ruten giver 404 uden flag. Den bruger et syntetisk treholds-løb; adgang til gemte P03-løb, versionsmærket databaseopbevaring og pointafregning mangler fortsat i punkt 08-09.
+
 ## P1 - atlas og verdenskvalitet
 
 | ID | Opgave / konkret resultat | Timer | Afhænger af |

@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
+import Link from "next/link";
 import { DEFAULT_CONFIG, VERSION } from "../../lib/race-lab/config.mjs";
 import { flatScenario, STRATEGIES } from "../../lib/race-lab/scenario.mjs";
 import { simulateLab } from "../../lib/race-lab/simulate.mjs";
@@ -138,6 +139,7 @@ export default function Lab() {
         production races. Results retain the settings of their last run; editing
         controls does not recalculate them. This is a design laboratory, not the
         live race viewer.
+        <p><Link href="/race-lab/recorded">Open the recorded tour prototype →</Link></p>
       </aside>
       <section className="lab-card">
         <h2>The experiment</h2>
