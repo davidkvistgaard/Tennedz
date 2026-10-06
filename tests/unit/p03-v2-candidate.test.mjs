@@ -12,6 +12,7 @@ import {selectV2RecordedDivision,projectV2RecordedDivisionForTeam}
   from '../../lib/race/v2-viewer.mjs';
 import {normalizeEnteredV2Orders} from '../../lib/race/v2-tactics.mjs';
 import {weatherForV2TacticsLock} from '../../lib/race/v2-lock-weather.mjs';
+import {buildV2OneDayLedgerRows} from '../../lib/race/v2-ledger.mjs';
 import {pointsForDivisionResult} from '../../lib/calendar/points.mjs';
 import {defaultOrders} from '../../lib/race/orders.mjs';
 
@@ -240,6 +241,34 @@ test('v2 result can only cross the storage boundary with its exact locked manage
   otherRace.event.id='other-race';
   assert.throws(()=>validateV2OneDayResultAgainstLock(otherRace,contract),
     /another locked race or tier/);
+});
+
+test('45-team v2 candidate maps to exact unique sporting-ledger rows without writing them',()=>{
+  const lock=snapshot(45);
+  lock.event.race_tier=3;
+  lock.event.calendar_source='PELOTONIA';
+  lock.v2_input_version=1;
+  lock.v2_orders_by_team_id=Object.fromEntries(lock.teams.map(team=>[
+    team.id,{captainId:team.entry.captain_id,preset:'balanced'},
+  ]));
+  const contract=buildV2OneDayResultContract(
+    previewLockedV2RecordedDivisions(lock),{tier:3});
+  const rows=buildV2OneDayLedgerRows(lock,contract);
+  assert.equal(rows.length,60);
+  assert.equal(new Set(rows.map(row=>row.award_key)).size,60);
+  assert.equal(new Set(rows.map(row=>row.rider_id)).size,60);
+  assert.ok(rows.every(row=>row.event_id===lock.event.id&&
+    row.season_year===2026&&row.gender==='M'&&
+    row.calendar_source==='PELOTONIA'&&row.event_format==='ONE_DAY'&&
+    row.race_tier===3&&row.result_type==='ONE_DAY'&&
+    row.points_policy_version==='v0.1'&&row.points>0));
+  const missingSource=structuredClone(lock);
+  delete missingSource.event.calendar_source;
+  assert.throws(()=>buildV2OneDayLedgerRows(missingSource,contract),
+    /sporting-ledger metadata/);
+  const wrongYear=structuredClone(lock);
+  wrongYear.event.scheduled_at='2027-10-08T12:00:00Z';
+  assert.throws(()=>buildV2OneDayLedgerRows(wrongYear,contract));
 });
 
 test('45 distinct v2 plans survive reveal, three recordings and award projection',()=>{
