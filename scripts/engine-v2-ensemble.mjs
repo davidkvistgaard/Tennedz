@@ -5,20 +5,23 @@ import {simulateTacticalTour} from '../lib/engine/v2/tour.mjs';
 import {validateRecordedTour} from '../lib/engine/v2/recording.mjs';
 import {SPORTING_SKILLS} from '../lib/engine/v2/physiology.mjs';
 import {hasResidualGapAfterSufficientChase} from '../lib/engine/v2/balance-audit.mjs';
-import {TUNING,TUNING_VERSION,MOTOR_CANDIDATE_VERSION,MOTOR_CANDIDATE} from
+import {TUNING,TUNING_VERSION,MOTOR_CANDIDATE_VERSION,MOTOR_PAID_PACE_VERSION,MOTOR_CANDIDATE} from
   '../lib/engine/v2/tuning.mjs';
 
 const samples=process.argv[2]===undefined?10:Number(process.argv[2]);
 const fieldTeams=process.argv[3]===undefined?4:Number(process.argv[3]);
 const motorMode=process.argv[4]??'current';
-const motorVersion=motorMode==='candidate'?MOTOR_CANDIDATE_VERSION:TUNING_VERSION;
-const gapAuditOptions={recoverySecondsPerCapacity:motorMode==='candidate'?
+const paceMode=process.argv[5]??'preset';
+const motorVersion=motorMode==='paid-pace'?MOTOR_PAID_PACE_VERSION:
+  motorMode==='candidate'?MOTOR_CANDIDATE_VERSION:TUNING_VERSION;
+const gapAuditOptions={recoverySecondsPerCapacity:motorMode!=='current'?
   MOTOR_CANDIDATE.chaseRecoverySecondsPerCapacity:
   TUNING.chase.recoverySecondsPerCapacity};
 if(!Number.isInteger(samples)||samples<1||samples>100||
   !Number.isInteger(fieldTeams)||fieldTeams<2||fieldTeams>20||
-  !['current','candidate'].includes(motorMode))
-  throw new Error('Usage: node scripts/engine-v2-ensemble.mjs [paired samples: 1–100] [teams: 2–20] [current|candidate]');
+  !['current','candidate','paid-pace'].includes(motorMode)||
+  !['preset','paced-rival'].includes(paceMode))
+  throw new Error('Usage: node scripts/engine-v2-ensemble.mjs [paired samples: 1-100] [teams: 2-20] [current|candidate|paid-pace] [preset|paced-rival]');
 
 const ROUTES={
   flat:{distance_km:120,profile_points:[[0,60],[40,60],[80,75],[120,60]],
@@ -56,7 +59,7 @@ function fictionalTeams(sample,gender){
   });
 }
 
-const report={pairedSamples:samples,fieldTeams,motorMode,
+const report={pairedSamples:samples,fieldTeams,motorMode,paceMode,
   description:'fictional varied riders and routes; no live data',courses:{}};
 for(const [course,stage] of Object.entries(ROUTES)){
   report.courses[course]={};
@@ -74,13 +77,15 @@ for(const [course,stage] of Object.entries(ROUTES)){
         preFinalBreakWinnerRaces:0,finalKmJoinWinnerRaces:0,
         breakWinnerGroupAgeKm:[],
         caughtBreaks:0,finishLineCatches:0,partialFinishCatches:0,
-        finishLineCaughtRiders:0,droppedRiders:0,amberEnergy:0,finalGaps:[],
+        finishLineCaughtRiders:0,droppedRiders:0,amberEnergy:0,paidPaceKm:0,finalGaps:[],
         maxGroups:0,multiGroupFinishes:0,chaseGroupAttackMoves:0,
         bridgesToGroupAhead:0,roadGroupLimitBlocks:0};
       for(let sample=0;sample<samples;sample++){
         const teams=fictionalTeams(sample,gender).map((team,index)=>({
           ...team,orders:{captainId:team.riders[0].id,roadCaptainId:team.riders[1].id,
-            preset:index===0?strategy:STRATEGIES[(index-1)%STRATEGIES.length]},
+            preset:index===0?strategy:STRATEGIES[(index-1)%STRATEGIES.length],
+            ...(paceMode==='paced-rival'&&index===1?{
+              baseline:{effort:'hard',attack:'none',chase:'ignore'}}:{})},
         }));
         const rng=seedrandom(`v2-ensemble-weather:${course}:${sample}`);
         const base=WEATHER[course];
@@ -151,6 +156,7 @@ for(const [course,stage] of Object.entries(ROUTES)){
           totals.finishLineCaughtRiders+=race.frames.at(-1).caughtBreakawayRiderIds.length;
         totals.droppedRiders+=race.provisionalResults.filter(rider=>rider.group==='dropped').length;
         totals.amberEnergy+=amber.reduce((sum,rider)=>sum+rider.energy,0)/amber.length;
+        totals.paidPaceKm+=race.frames.filter(frame=>frame.paidBunchPace).length;
         totals.maxGroups+=Math.max(...race.frames.map(frame=>frame.roadGroups.length));
         totals.multiGroupFinishes+=Number(race.frames.at(-1).roadGroups.length>1);
         for(const [index,frame] of race.frames.entries()){
@@ -215,6 +221,7 @@ for(const [course,stage] of Object.entries(ROUTES)){
         meanFinishLineCaughtRiders:+(totals.finishLineCaughtRiders/samples).toFixed(2),
         meanDroppedRiders:+(totals.droppedRiders/samples).toFixed(2),
         amberMeanEnergy:+(totals.amberEnergy/samples).toFixed(2),
+        meanPaidPaceKm:+(totals.paidPaceKm/samples).toFixed(2),
         meanMaxRoadGroups:+(totals.maxGroups/samples).toFixed(2),
         multiGroupFinishRate:totals.multiGroupFinishes/samples,
         meanChaseGroupAttackMoves:+(totals.chaseGroupAttackMoves/samples).toFixed(2),

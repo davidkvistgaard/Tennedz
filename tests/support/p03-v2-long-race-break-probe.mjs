@@ -1,9 +1,9 @@
 // Read-only 260 km attack/chase diagnostic for the isolated v2 motor.
-// Run: node tests/support/p03-v2-long-race-break-probe.mjs [--candidate] [seed ...]
+// Run: node tests/support/p03-v2-long-race-break-probe.mjs [--candidate|--paid-pace] [seed ...]
 import {simulateTacticalTour} from '../../lib/engine/v2/tour.mjs';
 import {validateRecordedTour} from '../../lib/engine/v2/recording.mjs';
 import assert from 'node:assert/strict';
-import {MOTOR_CANDIDATE_VERSION} from '../../lib/engine/v2/tuning.mjs';
+import {MOTOR_CANDIDATE_VERSION,MOTOR_PAID_PACE_VERSION} from '../../lib/engine/v2/tuning.mjs';
 
 const skills=['sprint','flat','hills','mountain','cobbles','timetrial',
   'endurance','strength','wind'];
@@ -21,6 +21,7 @@ function team(id,level,effort='steady',phases=[],chase='ignore'){
 }
 
 const plans=[
+  {name:'conserve ignore',effort:'conserve',phases:[],chase:'ignore'},
   {name:'conserve-hard ignore',effort:'conserve',
     phases:[{atKm:160,effort:'hard'}],chase:'ignore'},
   {name:'conserve-hard chase',effort:'conserve',
@@ -29,7 +30,9 @@ const plans=[
   {name:'steady chase',effort:'steady',phases:[],chase:'all'},
 ];
 const candidate=process.argv.includes('--candidate');
-const seeds=process.argv.slice(2).filter(value=>value!=='--candidate');
+const paidPace=process.argv.includes('--paid-pace');
+if(candidate&&paidPace)throw new Error('Choose one candidate version.');
+const seeds=process.argv.slice(2).filter(value=>!['--candidate','--paid-pace'].includes(value));
 if(!seeds.length)seeds.push('s1','s2','s3');
 
 for(const seed of seeds){
@@ -45,7 +48,8 @@ for(const seed of seeds){
         team(`neutral-${index}`,76+index%13)),
     ];
     const race=simulateTacticalTour({stage,teams,seed,weather,
-      ...(candidate?{motorVersion:MOTOR_CANDIDATE_VERSION}:{})});
+      ...(candidate?{motorVersion:MOTOR_CANDIDATE_VERSION}:
+        paidPace?{motorVersion:MOTOR_PAID_PACE_VERSION}:{})});
     validateRecordedTour(race);
     const frames=race.frames;
     const results=race.provisionalResults;

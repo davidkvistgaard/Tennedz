@@ -1,0 +1,85 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {resolveTacticalKilometre} from '../../lib/engine/v2/tactics.mjs';
+import {normalizeOrders} from '../../lib/engine/v2/orders.mjs';
+import {simulateTacticalTour} from '../../lib/engine/v2/tour.mjs';
+import {validateRecordedTour} from '../../lib/engine/v2/recording.mjs';
+import {MOTOR_CANDIDATE_VERSION,MOTOR_PAID_PACE_VERSION} from '../../lib/engine/v2/tuning.mjs';
+
+function team(id,level,{effort='conserve',attack='none',chase='ignore',phases=[]}={}){
+  const riders=Array.from({length:8},(_,index)=>({id:`${id}-${index}`,gender:'M',
+    form:70,fatigue:0,...Object.fromEntries(['sprint','flat','hills','mountain',
+      'cobbles','timetrial','endurance','strength','wind'].map(skill=>[skill,level]))}));
+  return {id,riders,orders:{captainId:`${id}-7`,preset:'balanced',
+    baseline:{effort,attack,chase},phases}};
+}
+function prepared(raw,distanceKm=20){
+  return {...raw,orders:normalizeOrders(raw.orders,{riderIds:raw.riders.map(r=>r.id),
+    distanceKm,keypoints:[]}),energy:Object.fromEntries(raw.riders.map(r=>[r.id,100]))};
+}
+
+test('v81 paid bunch pace uses identified helpers and leaves v80 unchanged',()=>{
+  const escape=prepared(team('escape',90));
+  const pacer=prepared(team('pacer',98,{effort:'hard'}));
+  const weak=Array.from({length:13},(_,index)=>prepared(team(`weak-${index}`,55)));
+  const context={km:11,terrain:'flat',gapSeconds:40,breakawayTeamIds:['escape'],
+    breakawayRiderIds:['escape-7'],rearRoadGroupRiderIds:['escape-7'],distanceKm:20};
+  const v80=resolveTacticalKilometre({...context,teams:[escape,pacer,...weak],
+    resolutionVersion:MOTOR_CANDIDATE_VERSION});
+  const v81=resolveTacticalKilometre({...context,teams:[escape,pacer,...weak],
+    resolutionVersion:MOTOR_PAID_PACE_VERSION});
+  const small=resolveTacticalKilometre({...context,teams:[escape,pacer],
+    resolutionVersion:MOTOR_PAID_PACE_VERSION});
+  assert.equal(v80.paidBunchPace,null);
+  assert.equal(v81.paidBunchPace?.teamId,'pacer');
+  assert.equal(v81.paidBunchPace?.riderIds.length,2);
+  assert.ok(v81.passiveGapDelta<v80.passiveGapDelta);
+  assert.equal(v81.passiveGapDelta,small.passiveGapDelta);
+  assert.equal(v81.energyCosts.filter(row=>row.teamId==='pacer'&&row.reason==='cruise').length,2);
+  const quiet=prepared(team('quiet',98));
+  const noWorker=resolveTacticalKilometre({...context,teams:[escape,quiet,...weak],
+    resolutionVersion:MOTOR_PAID_PACE_VERSION});
+  assert.equal(noWorker.paidBunchPace,null);
+  assert.equal(noWorker.energyCosts.some(row=>row.reason==='cruise'),false);
+  const capped=resolveTacticalKilometre({...context,
+    teams:[prepared(team('slow-break',40)),pacer,quiet],
+    breakawayTeamIds:['slow-break'],breakawayRiderIds:['slow-break-7'],
+    rearRoadGroupRiderIds:['slow-break-7'],
+    resolutionVersion:MOTOR_PAID_PACE_VERSION});
+  assert.equal(capped.paidBunchPace,null);
+  assert.equal(capped.energyCosts.some(row=>row.reason==='cruise'),false);
+});
+
+test('v81 recording identifies paid workers and rejects forged pace',()=>{
+  const stage={distance_km:20,profile_points:[[0,100],[20,100]],
+    keypoints:[{km:11,kind:'SPRINT'}]};
+  const teams=[
+    team('escape',90,{phases:[{atKm:10,attack:'selective',attackRiderId:'escape-7'}]}),
+    team('pacer',98,{effort:'hard'}),team('weak',55)];
+  const race=simulateTacticalTour({stage,teams,seed:'paid-pace-proof',
+    motorVersion:MOTOR_PAID_PACE_VERSION});
+  const prior=simulateTacticalTour({stage,teams,seed:'paid-pace-proof',
+    motorVersion:MOTOR_CANDIDATE_VERSION});
+  assert.equal(validateRecordedTour(race),true);
+  const frame=race.frames.find(row=>row.paidBunchPace!==null);
+  assert.ok(frame);
+  const priorFrame=prior.frames[frame.km-1];
+  assert.ok(frame.passiveGapDelta<priorFrame.passiveGapDelta);
+  assert.ok(frame.riderGroups.find(row=>row.id===frame.paidBunchPace.riderIds[0]).energy<
+    priorFrame.riderGroups.find(row=>row.id===frame.paidBunchPace.riderIds[0]).energy);
+  const forged=structuredClone(race);
+  forged.frames[frame.km-1].paidBunchPace.riderIds[0]='escape-7';
+  assert.throws(()=>validateRecordedTour(forged),/paid bunch pace/);
+});
+
+test('v81 keeps an explicitly named final move valid',()=>{
+  const stage={distance_km:40,profile_points:[[0,100],[40,100]],
+    keypoints:[{km:39,kind:'SPRINT'}]};
+  const race=simulateTacticalTour({stage,teams:[
+    team('planned',80,{phases:[{atKm:39,attack:'selective',
+      attackRiderId:'planned-7'}]}),team('quiet',70)],
+  seed:'paid-pace-named-finale',motorVersion:MOTOR_PAID_PACE_VERSION});
+  assert.equal(validateRecordedTour(race),true);
+  assert.deepEqual(race.frames.at(-1).attackReasons,
+    [{riderId:'planned-7',reason:'named_order'}]);
+});

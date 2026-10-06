@@ -4,7 +4,7 @@ import {simulateTacticalTour} from '../../lib/engine/v2/tour.mjs';
 import {resolveTacticalKilometre} from '../../lib/engine/v2/tactics.mjs';
 import {normalizeOrders} from '../../lib/engine/v2/orders.mjs';
 import {validateRecordedTour} from '../../lib/engine/v2/recording.mjs';
-import {MOTOR_CANDIDATE_VERSION} from '../../lib/engine/v2/tuning.mjs';
+import {MOTOR_CANDIDATE_VERSION,MOTOR_PAID_PACE_VERSION} from '../../lib/engine/v2/tuning.mjs';
 
 const skills=['sprint','flat','hills','mountain','cobbles','timetrial',
   'endurance','strength','wind'];
@@ -23,17 +23,18 @@ const rivalPhases=[
   {atKm:150,attack:'selective',attackRiderId:'rival-7',effort:'hard'},
   {atKm:160,attack:'none',attackRiderId:null},
 ];
-function longRace(chase){
-  const strongPhases=[{atKm:160,effort:'hard',...(chase?{chase:'all'}:{})}];
+function longRace(chase,motorVersion=MOTOR_CANDIDATE_VERSION,hardPace=true){
+  const strongPhases=hardPace?
+    [{atKm:160,effort:'hard',...(chase?{chase:'all'}:{})}]:[];
   const teams=[makeTeam('weak',80),
     makeTeam('strong',96,{effort:'conserve',phases:strongPhases}),
     makeTeam('rival',94,{effort:'conserve',phases:rivalPhases}),
     ...Array.from({length:12},(_,index)=>
       makeTeam(`neutral-${index}`,76+index%13))];
   const race=simulateTacticalTour({stage,teams,seed:'net-chase-long',weather,
-    motorVersion:MOTOR_CANDIDATE_VERSION});
+    motorVersion});
   assert.equal(validateRecordedTour(race),true);
-  assert.equal(race.tuningVersion,MOTOR_CANDIDATE_VERSION);
+  assert.equal(race.tuningVersion,motorVersion);
   const attack=race.frames.filter(frame=>frame.attackers.includes('rival-7'));
   assert.equal(attack.length,1);
   assert.equal(attack[0].km,160);
@@ -54,6 +55,17 @@ test('paid pursuit catches a long-race rival while an unchased move survives',()
   const energy=(race,id)=>race.frames.at(-1).riderGroups.find(row=>row.id===id).energy;
   assert.ok(energy(chased,'strong-5')<energy(held,'strong-5'));
   assert.ok(energy(chased,'strong-6')<energy(held,'strong-6'));
+});
+
+test('v81 hard routine pace pays to catch while conserving lets the break survive',()=>{
+  const conserved=longRace(false,MOTOR_PAID_PACE_VERSION,false);
+  const paced=longRace(false,MOTOR_PAID_PACE_VERSION,true);
+  assert.ok(conserved.frames.at(-1).gapSeconds>20);
+  assert.equal(paced.frames.at(-1).gapSeconds,0);
+  assert.equal(paced.frames.filter(frame=>frame.chasers.includes('strong')).length,0);
+  assert.ok(paced.frames.filter(frame=>frame.paidBunchPace?.teamId==='strong').length>0);
+  assert.ok(paced.frames.at(-1).riderGroups.find(row=>row.id==='strong-5').energy<
+    conserved.frames.at(-1).riderGroups.find(row=>row.id==='strong-5').energy);
 });
 
 test('a planned final-kilometre attack survives the cadence guard',()=>{
