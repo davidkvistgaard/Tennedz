@@ -127,6 +127,8 @@ En ny 15-holds prøve viste også et brat spring: hold med gennemsnitlig færdig
 
 **V2-bro, 6. oktober:** Race Lab kan nu prøve et fuldt sæt eksplicitte v2-ordrer for de tilmeldte hold, herunder faseskift, uden at oversætte de gamle personlige ordrer forkert. Den syntetiske viewer viser de låste ordrer på det aktuelle kilometer. En separat læseprojektion beregner sportslige point fra v2-placeringerne med samme divisionsvægt og pointkurve som det eksisterende løb; 45-holdstesten giver 60 entydige pointposter. Ingen v2-ordrer, resultater eller point gemmes endnu. Datakontrakt, spillerkobling og sportslig balance i punkt 04-09 er stadig åbne.
 
+**V2-viserens næste integrationsgrænse:** Den isolerede prøveside viser nu låste faseskift, kaptajnens holdplacering og beregnede ranglistepoint ved målstregen; alt er syntetisk og tydeligt markeret som ikke gemt. En intern læsefunktion finder ét holds division i den låste 45-holds-fordeling og afviser afvigende optagelser. Blandede taktikker ændrede også slutplaceringer i en kontrolleret prøve. Før punkt 08-09 kan kaldes spilbart, mangler en autentificeret spiller-route, lagring af v2-optagelse og resultater, præcis pointtransaktion og sportslig balance.
+
 **V2-optagelsens størrelse:** En syntetisk 45-holds, 140 km-prøve gav tre særskilte 15-holds-optagelser på tilsammen 6,78 MB rå JSON eller 407 KB med gzip; beregningen tog cirka 0,7 sekunder lokalt uden serialisering. Før punkt 08-09 kan koble den til spillernes løb, skal versionsmærket lagring og hentning af kun spillerens division prøves med faktiske gemte data; den nuværende replay-kolonne accepterer kun v1. Tallene er ikke en måling af database, netværk eller produktionskapacitet.
 
 ## P1 - atlas og verdenskvalitet
