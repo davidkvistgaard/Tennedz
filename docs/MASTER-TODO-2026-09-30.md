@@ -111,6 +111,8 @@ Den første tekniske **endagsløbs-testsløjfe** er nu gennemført isoleret i pu
 
 **Cron-køgrænse, 6. oktober:** Den isolerede cron markerer nu en resterende divisionskø som fejl efter højst otte afsløringer i samme kald. En lokal HTTP-prøve med 21 samtidige løb krævede tre kald og gav først succes, da alle afsløringer var gemt. Det synliggør køen, men erstatter ikke en pålidelig gentaget scheduler eller ekstern driftsalarm; punkt 16 er fortsat åbent, og ændringen er ikke i produktion.
 
+**Balancefund før første reelle spiltest:** Punkt 03 bruger endnu den gamle løbssimulator. I en fast 140 km-prøve med to hold og otte ryttere på hvert hold gav ens færdighedsniveauer på 50, 60, 80 og 100 nøjagtig samme vindertid og spredning i feltet. Tidsmodellens færdighedsfaktor rammer sit loft allerede ved normale værdier. Derfor skal den nye motor, ordrernes effekt og den optagede viewer forbindes og scenariebalanceres i punkt 04–09, før vi kan kalde oplevelsen realistisk. Den eksisterende spilmotor er ikke ændret.
+
 ## P1 - atlas og verdenskvalitet
 
 | ID | Opgave / konkret resultat | Timer | Afhænger af |
