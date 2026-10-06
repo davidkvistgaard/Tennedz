@@ -8,7 +8,8 @@ import {validateRecordedTour} from '../../lib/engine/v2/recording.mjs';
 import {MOTOR_CANDIDATE_VERSION,MOTOR_PAID_PACE_VERSION,
   MOTOR_FINALE_VERSION,MOTOR_BRIDGE_FINALE_VERSION,
   MOTOR_EARNED_BRIDGE_VERSION,MOTOR_NEUTRAL_PACE_VERSION,
-  MOTOR_EXPLICIT_FRONT_VERSION} from '../../lib/engine/v2/tuning.mjs';
+  MOTOR_EXPLICIT_FRONT_VERSION,MOTOR_DRAFT_SHELTER_VERSION} from
+  '../../lib/engine/v2/tuning.mjs';
 
 function team(id,level,{effort='conserve',attack='none',chase='ignore',
   frontWork,phases=[]}={}){
@@ -269,6 +270,8 @@ test('v86 weak front work cannot slow group attachment below its unworked pace',
   };
   assert.equal(afterFour({unworkedFront:true}).group,'dropped');
   assert.equal(afterFour({unworkedFront:true,frontPaceAbility:40}).group,'dropped');
+  assert.equal(afterFour({unworkedFront:true,frontPaceAbility:40,
+    shelteredToleranceBonus:10}).group,'dropped');
   assert.equal(afterFour({frontPaceAbility:40}).group,'peloton');
 });
 
@@ -285,4 +288,30 @@ test('v86 can rotate between planned attacks without simultaneous work',()=>{
   assert.ok(race.frames.every(frame=>!frame.paidBunchPace||
     !frame.attackers.some(id=>id.startsWith(`${frame.paidBunchPace.teamId}-`))&&
     !frame.chasers.includes(frame.paidBunchPace.teamId)));
+});
+
+test('v87 paid front shelters followers but leaves exposed workers responsible',()=>{
+  const states=[{id:'follower',ability:60,group:'peloton',lowKilometres:0,
+    deficitSeconds:0},{id:'worker',ability:60,group:'peloton',lowKilometres:0,
+    deficitSeconds:0},{id:'other-follower',ability:60,group:'peloton',
+    lowKilometres:0,deficitSeconds:0},...Array.from({length:5},(_,index)=>({id:`strong-${index}`,
+    ability:78,group:'peloton',lowKilometres:0,deficitSeconds:0}))];
+  const afterTen=options=>{
+    let current=states;
+    for(let km=0;km<10;km++)current=updateRiderGroups(current,[],options);
+    return current;
+  };
+  const v86=afterTen({unworkedFront:true,frontPaceAbility:78});
+  const v87=afterTen({unworkedFront:true,frontPaceAbility:78,
+    shelteredToleranceBonus:10,frontWorkerRiderIds:['worker']});
+  assert.equal(v86.find(row=>row.id==='follower').group,'dropped');
+  assert.equal(v87.find(row=>row.id==='follower').group,'peloton');
+  assert.equal(v87.find(row=>row.id==='worker').group,'dropped');
+  const stage={distance_km:40,profile_points:[[0,100],[40,100]]};
+  const teams=[team('front',90,{effort:'hard',frontWork:'rotate'}),team('other',60)];
+  const recorded=simulateTacticalTour({stage,teams,seed:'v87-shelter',
+    motorVersion:MOTOR_DRAFT_SHELTER_VERSION});
+  assert.equal(validateRecordedTour(recorded),true);
+  assert.equal(recorded.frames[0].paidBunchPace?.teamId,'front');
+  assert.equal(recorded.tuningVersion,MOTOR_DRAFT_SHELTER_VERSION);
 });
