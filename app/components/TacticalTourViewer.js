@@ -186,7 +186,7 @@ export default function TacticalTourViewer({recording,focusTeamId,awardProjectio
           <h3>{focusedTeam?.name??focusedTeam?.id} finish</h3>
           <ol className="tactical-results tactical-own-results" aria-label={`${focusedTeam?.name??focusedTeam?.id} finish`}>{selectedResults.map(result=><li key={result.riderId}>
             <b>{result.position}</b><span>{result.name}</span>
-            <small>{pointsByRider.get(result.riderId)??0} ranking pts</small>
+            <small>{pointsByRider.get(result.riderId)??0} {playerRecording?'projected':'ranking'} pts</small>
             <strong>+{result.gapSeconds.toFixed(1)} s</strong></li>)}</ol>
           <h3>First 12 across the division</h3>
           <ol className="tactical-results" aria-label="First 12 across the division">{results.slice(0,12).map(result=><li key={result.riderId}>
