@@ -2,3 +2,4 @@
 .recorded-lab-shell{min-height:100vh;padding:2rem clamp(1rem,4vw,3rem);background:#f6f4ec}
 .tactical-panel-head label{color:#5e806e;font-size:.88rem}.tactical-panel-head select{margin-left:.4rem;border:1px solid #5e806e;border-radius:.45rem;background:#f6f4ec;color:#0e2d24;padding:.3rem .5rem}
 .tactical-panel h3{font-size:.94rem;margin:1.2rem 0 .45rem;color:#0e2d24}.tactical-panel h3:first-of-type{margin-top:.2rem}
+.tactical-controls button:disabled{opacity:.45;cursor:not-allowed}

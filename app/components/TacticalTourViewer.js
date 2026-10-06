@@ -49,6 +49,8 @@ export default function TacticalTourViewer({recording,focusTeamId}){
   const peloton=current.filter(rider=>rider.group==='peloton').length;
   const dropped=current.filter(rider=>rider.group==='dropped').length;
   const recent=moments.filter(moment=>moment.km<=frame.km).slice(-8).reverse();
+  const previousMoment=[...moments].reverse().find(moment=>moment.km<frame.km)?.km;
+  const nextMoment=moments.find(moment=>moment.km>frame.km)?.km;
   const ascent=Math.round(recording.route.kilometres.reduce((total,segment)=>
     total+Math.max(0,segment.endM-segment.startM),0));
   const elevation=recording.route.kilometres.map(segment=>segment.endM);
@@ -84,6 +86,12 @@ export default function TacticalTourViewer({recording,focusTeamId}){
         }}>{playing?'Pause':index===frames.length-1?'Watch again':'Play recording'}</button>
         <button type="button" onClick={()=>{setPlaying(false);setIndex(current=>
           clamp(current+10,0,frames.length-1));}}>Skip 10 km</button>
+        <button type="button" disabled={previousMoment===undefined} onClick={()=>{
+          setPlaying(false);setIndex(previousMoment-1);
+        }}>Previous moment</button>
+        <button type="button" disabled={nextMoment===undefined} onClick={()=>{
+          setPlaying(false);setIndex(nextMoment-1);
+        }}>Next moment</button>
         <label>Speed <select value={speed} onChange={event=>setSpeed(Number(event.target.value))}>
           <option value={1}>1x</option><option value={3}>3x</option><option value={6}>6x</option>
         </select></label>

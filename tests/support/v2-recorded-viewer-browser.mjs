@@ -23,6 +23,10 @@ try{
     await page.getByLabel('Watch team').selectOption('Birch');
     await expect(page.getByRole('heading',{name:'Birch riders'})).toBeVisible();
     await page.getByLabel('Watch team').selectOption('Amber');
+    await expect(page.getByRole('button',{name:'Previous moment'})).toBeDisabled();
+    await page.getByRole('button',{name:'Next moment'}).click();
+    assert.ok(Number(await page.getByLabel('Playback position').inputValue())>0);
+    await page.getByLabel('Playback position').fill('0');
     await page.getByRole('button',{name:'Skip 10 km'}).click();
     await expect(page.getByText('Km 11 / 60')).toBeVisible();
     await page.getByRole('button',{name:'Play recording'}).click();
@@ -39,6 +43,10 @@ try{
     await page.getByLabel('Watch team').selectOption('Birch');
     await expect(finish.getByRole('list',{name:'Birch finish'}).getByRole('listitem'))
       .toHaveCount(8);
+    await expect(page.getByRole('button',{name:'Next moment'})).toBeDisabled();
+    await page.getByRole('button',{name:'Previous moment'}).click();
+    await expect(finish.getByRole('list',{name:'Birch finish'})).toHaveCount(0);
+    await page.getByLabel('Playback position').fill('59');
     if(process.env.PELOTONIA_VIEWER_SCREENSHOT==='1')
       await page.screenshot({path:`.recovery-local/v2-viewer-finish-${viewport.width}.png`,fullPage:true});
     assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>
