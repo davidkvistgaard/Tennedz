@@ -19,6 +19,7 @@ try{
       .toBeVisible();
     await expect(page.getByRole('heading',{name:'Amber riders'})).toBeVisible();
     await expect(page.getByRole('list',{name:'Teams by captain finish'})).toHaveCount(0);
+    await expect(page.getByText(/Projected ranking points for Amber:/)).toHaveCount(0);
     await expect(page.getByText('sample-amber')).toHaveCount(0);
     await expect(page.getByRole('region',{name:'Road groups'})).toBeVisible();
     const orders=page.getByRole('region',{name:'Team orders'});
@@ -64,12 +65,15 @@ try{
     await page.getByRole('button',{name:'Pause'}).click();
     await page.getByLabel('Playback position').fill('59');
     const finish=page.getByRole('region',{name:'Provisional results'});
+    await expect(finish.getByText(/Projected ranking points for Amber:/)).toBeVisible();
     const teamFinish=finish.getByRole('list',{name:'Teams by captain finish'});
     await expect(teamFinish.getByRole('listitem')).toHaveCount(3);
     await expect(teamFinish.getByRole('listitem').first().getByText('+0.0 s'))
       .toBeVisible();
     await expect(finish.getByRole('list',{name:'Amber finish'}).getByRole('listitem'))
       .toHaveCount(8);
+    await expect(finish.getByRole('list',{name:'Amber finish'})
+      .getByRole('listitem').first().locator('small')).toBeVisible();
     await expect(finish.getByRole('list',{name:'First 12 across the division'})
       .getByRole('listitem')).toHaveCount(12);
     await page.getByLabel('Watch team').selectOption({label:'Birch'});

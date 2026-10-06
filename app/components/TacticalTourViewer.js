@@ -7,7 +7,7 @@ const clamp=(value,min,max)=>Math.max(min,Math.min(max,value));
 const formatSeconds=value=>`${Math.round(value)} s`;
 const title=value=>value.replaceAll('_',' ');
 
-export default function TacticalTourViewer({recording,focusTeamId}){
+export default function TacticalTourViewer({recording,focusTeamId,awardProjection}){
   const [index,setIndex]=useState(0);
   const [playing,setPlaying]=useState(false);
   const [speed,setSpeed]=useState(1);
@@ -66,6 +66,10 @@ export default function TacticalTourViewer({recording,focusTeamId}){
   const profile=elevation.map((height,i)=>`${i/(elevation.length-1)*100},${100-height/maxElevation*85}`).join(' ');
   const results=recording.provisionalResults;
   const selectedResults=results.filter(result=>result.teamId===selectedTeamId);
+  const pointsByRider=new Map((awardProjection?.awards??[]).map(award=>
+    [award.riderId,award.points]));
+  const selectedTeamPoints=selectedResults.reduce((sum,result)=>
+    sum+(pointsByRider.get(result.riderId)??0),0);
   const captainResults=teams.map(team=>({team,
     captain:results.find(result=>result.riderId===team.orders.captainId)}))
     .sort((a,b)=>a.captain.timeSeconds-b.captain.timeSeconds||
@@ -162,14 +166,17 @@ export default function TacticalTourViewer({recording,focusTeamId}){
         <div className="tactical-panel-head"><h2>Provisional finish</h2>
           <span>Shown after the final kilometre</span></div>
         {index===frames.length-1?<>
+          {awardProjection&&<p>Projected ranking points for {teamName(selectedTeamId)}:
+            {' '}{selectedTeamPoints}. Sample only; no points were saved.</p>}
           <h3>Teams by captain finish</h3>
           <ol className="tactical-results" aria-label="Teams by captain finish">{captainResults.map(({team,captain},position)=><li key={team.id}>
             <b>{position+1}</b><span>{team.name??team.id}</span>
             <small>{captain.name}</small>
             <strong>+{(captain.timeSeconds-firstCaptainTime).toFixed(1)} s</strong></li>)}</ol>
           <h3>{focusedTeam?.name??focusedTeam?.id} finish</h3>
-          <ol className="tactical-results" aria-label={`${focusedTeam?.name??focusedTeam?.id} finish`}>{selectedResults.map(result=><li key={result.riderId}>
-            <b>{result.position}</b><span>{result.name}</span><small>{teamName(result.teamId)}</small>
+          <ol className="tactical-results tactical-own-results" aria-label={`${focusedTeam?.name??focusedTeam?.id} finish`}>{selectedResults.map(result=><li key={result.riderId}>
+            <b>{result.position}</b><span>{result.name}</span>
+            <small>{pointsByRider.get(result.riderId)??0} ranking pts</small>
             <strong>+{result.gapSeconds.toFixed(1)} s</strong></li>)}</ol>
           <h3>First 12 across the division</h3>
           <ol className="tactical-results" aria-label="First 12 across the division">{results.slice(0,12).map(result=><li key={result.riderId}>
