@@ -2,7 +2,9 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {simulateTacticalTour} from '../../lib/engine/v2/tour.mjs';
 import {validateFinalePair} from '../../lib/engine/v2/finale-pair.mjs';
-import {probeFinalePairFromTour} from
+import {validateFinaleRelay} from '../../lib/engine/v2/finale-relay.mjs';
+import {finaleDistanceGrid} from '../../lib/engine/v2/finale-grid.mjs';
+import {probeFinalePairFromTour,probeFinaleRelayFromTour} from
   '../../lib/engine/v2/finale-tour-probe.mjs';
 
 const stage={distance_km:40,profile_points:[[0,100],[40,100]]};
@@ -45,4 +47,28 @@ test('a team that ignored the gap cannot be invented as a chasing worker',()=>{
   assert.deepEqual(tour.frames[34].roadGroups.map(group=>group.riderIds),[['a-2']]);
   assert.throws(()=>probeFinalePairFromTour(tour,{
     frontRiderId:'a-2',chaseRiderId:'b-2'}),/engaged in the bunch chase/);
+});
+
+test('two genuinely engaged rival teams supply a reproducible relay probe',()=>{
+  const tour=simulateTacticalTour({...input,seed:'relay-snap',teams:[
+    input.teams[0],
+    team('b','protect',{attack:'none',chase:'selective'}),
+    team('c','protect',{attack:'none',chase:'selective'}),
+  ]});
+  const frame=tour.frames[34];
+  assert.deepEqual(frame.roadGroups.map(group=>group.riderIds),[['a-2']]);
+  assert.deepEqual(frame.engagedChaseTeamIds,['b','c']);
+  const rotation=finaleDistanceGrid(tour.route).map((_,index)=>
+    index%2?'c-2':'b-2');
+  const probe=probeFinaleRelayFromTour(tour,{frontRiderId:'a-2',
+    chaseRiderIds:['b-2','c-2'],rotation});
+  assert.equal(probe.sourceKm,35);
+  assert.equal(probe.input.initialGapSeconds,frame.roadGroups[0].gapSeconds);
+  assert.deepEqual(probe.input.chasers.map(chaser=>chaser.energy),
+    ['b-2','c-2'].map(id=>frame.riderGroups.find(rider=>rider.id===id).energy));
+  assert.equal(validateFinaleRelay(probe.input,probe.recording),true);
+  assert.throws(()=>probeFinaleRelayFromTour(tour,{frontRiderId:'a-2',
+    chaseRiderIds:['b-2','b-2'],rotation}),/two different/);
+  assert.throws(()=>probeFinaleRelayFromTour(tour,{frontRiderId:'a-2',
+    chaseRiderIds:['b-2','a-3'],rotation}),/engaged in the bunch chase/);
 });
