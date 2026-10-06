@@ -56,6 +56,8 @@ for(const [course,stage] of Object.entries(ROUTES)){
         photoFinishBreakWins:0,clearBreakWins:0,breakWinMargins:[],
         photoFinalGaps:[],photoFinaleAbilityDiffs:[],photoBunchDeficits:[],
         photoAllTeamsAhead:0,photoLateChaseKm:[],photoLateResidualKm:[],
+        lateResidualAffectedRaces:0,finalAutoAttackRaces:0,
+        finalAutoJoinedRaces:0,finalAutoWinnerRaces:0,
         breakWinnerGroupAgeKm:[],
         caughtBreaks:0,finishLineCatches:0,partialFinishCatches:0,
         finishLineCaughtRiders:0,droppedRiders:0,amberEnergy:0,finalGaps:[],
@@ -74,6 +76,23 @@ for(const [course,stage] of Object.entries(ROUTES)){
         const race=simulateTacticalTour({stage,teams,weather,seed:`v2-ensemble:${course}:${sample}`});
         validateRecordedTour(race);
         report.tuningVersion??=race.tuningVersion;
+        const finalFrame=race.frames.at(-1);
+        const finalAutoIds=new Set(finalFrame.attackReasons.filter(attack=>
+          ['preset_cadence','keypoint'].includes(attack.reason)).map(attack=>attack.riderId));
+        const finalAutoJoined=new Set(finalFrame.joinedBreakawayRiderIds.filter(id=>
+          finalAutoIds.has(id)));
+        totals.finalAutoAttackRaces+=Number(finalAutoIds.size>0);
+        totals.finalAutoJoinedRaces+=Number(finalAutoJoined.size>0);
+        totals.finalAutoWinnerRaces+=Number(finalAutoJoined.has(race.provisionalResults[0].riderId)&&
+          race.provisionalResults[0].group==='breakaway');
+        const lateResidualKm=race.frames.slice(-5).filter((frame,index)=>{
+          const prior=race.frames.at(-6+index).roadGroups.at(-1)?.gapSeconds??0;
+          return frame.roadGroups.length===1&&frame.attackPower===0&&
+            frame.passiveGapDelta>0&&frame.chasePower>0&&
+            frame.chasePower*TUNING.chase.recoverySecondsPerCapacity>=
+              prior+frame.passiveGapDelta&&frame.pelotonGapSeconds>0;
+        }).length;
+        totals.lateResidualAffectedRaces+=Number(lateResidualKm>0);
         const amber=race.provisionalResults.filter(rider=>rider.teamId==='team-0');
         const best=Math.min(...amber.map(rider=>rider.position));
         totals.amberWins+=Number(best===1);
@@ -99,13 +118,7 @@ for(const [course,stage] of Object.entries(ROUTES)){
             totals.photoAllTeamsAhead+=Number(race.frames.at(-6).breakawayTeamIds.length===4);
             totals.photoLateChaseKm.push(race.frames.slice(-5).filter(frame=>
               frame.engagedChaseTeamIds.length>0).length);
-            totals.photoLateResidualKm.push(race.frames.slice(-5).filter((frame,index)=>{
-              const prior=race.frames.at(-6+index).roadGroups.at(-1)?.gapSeconds??0;
-              return frame.roadGroups.length===1&&frame.attackPower===0&&
-                frame.passiveGapDelta>0&&frame.chasePower>0&&
-                frame.chasePower*TUNING.chase.recoverySecondsPerCapacity>=
-                  prior+frame.passiveGapDelta&&frame.pelotonGapSeconds>0;
-            }).length);
+            totals.photoLateResidualKm.push(lateResidualKm);
           }
           totals.clearBreakWins+=Number(margin>=5);
         }
@@ -161,6 +174,10 @@ for(const [course,stage] of Object.entries(ROUTES)){
           sortedPhotoLateChaseKm[Math.floor((sortedPhotoLateChaseKm.length-1)/2)]:null,
         medianPhotoLateResidualKm:sortedPhotoLateResidualKm.length?
           sortedPhotoLateResidualKm[Math.floor((sortedPhotoLateResidualKm.length-1)/2)]:null,
+        lateResidualAffectedRaceRate:totals.lateResidualAffectedRaces/samples,
+        finalAutoAttackRaceRate:totals.finalAutoAttackRaces/samples,
+        finalAutoJoinedRaceRate:totals.finalAutoJoinedRaces/samples,
+        finalAutoWinnerRaceRate:totals.finalAutoWinnerRaces/samples,
         clearBreakWinRate:totals.clearBreakWins/samples,
         medianBreakWinnerMarginSeconds:sortedWinMargins.length?
           sortedWinMargins[Math.floor((sortedWinMargins.length-1)/2)]:null,
