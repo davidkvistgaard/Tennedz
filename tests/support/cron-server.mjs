@@ -3,6 +3,8 @@ import http from 'node:http';
 import {spawn} from 'node:child_process';
 
 const eventId='aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';
+const revealIds=count=>[eventId,...Array.from({length:count-1},(_,index)=>
+  `dddddddd-dddd-4ddd-8ddd-${String(index+1).padStart(12,'0')}`)];
 const makeTeamIds=count=>Array.from({length:count},(_,index)=>
   `00000000-0000-4000-8000-${String(index+1).padStart(12,'0')}`);
 let teamIds=makeTeamIds(23);
@@ -14,7 +16,7 @@ const state={cursor:null,lease:null,complete:false,processed:0,entered:0,
   activeEventReads:0,maxConcurrentEventReads:0,eventReads:0,
   defaultLookupDelayMs:0,
   revealCandidate:false,revealed:false,overdueCandidate:false,advanceRejected:false,
-  revealRejected:false};
+  revealRejected:false,revealCount:1,revealedIds:new Set()};
 const send=(res,status,data)=>{
   res.writeHead(status,{'Content-Type':'application/json','x-supabase-api-version':'2024-01-01'});
   res.end(JSON.stringify(data));
@@ -41,6 +43,8 @@ const fixture=http.createServer(async(req,res)=>{
       activeEventReads:0,maxConcurrentEventReads:0,eventReads:0,
       defaultLookupDelayMs:body.defaultLookupDelayMs??0,
       revealCandidate:body.revealCandidate===true,revealed:false,
+      revealCount:Number.isInteger(body.revealCount)&&body.revealCount>0&&
+        body.revealCount<=25?body.revealCount:1,revealedIds:new Set(),
       overdueCandidate:body.overdueCandidate===true,
       advanceRejected:body.advanceRejected===true,
       revealRejected:body.revealRejected===true});
@@ -50,7 +54,8 @@ const fixture=http.createServer(async(req,res)=>{
     state.lease=null;state.failTeamId=null;return send(res,200,{ok:true});
   }
   if(url.pathname==='/__cron_state')return send(res,200,{...state,
-    teamCount:teamIds.length,defaultCount:defaultTeams.size});
+    teamCount:teamIds.length,defaultCount:defaultTeams.size,
+    revealedCount:state.revealedIds.size});
   if(req.headers.apikey!=='fixture-service-role')return send(res,403,{message:'Invalid fixture key'});
   if(url.pathname==='/rest/v1/rpc/recovery_autopilot_claim_job'){
     if(state.complete||state.lease)return send(res,200,null);
@@ -78,8 +83,9 @@ const fixture=http.createServer(async(req,res)=>{
     return send(res,200,{ok:true,entered:true});
   }
   if(url.pathname==='/rest/v1/rpc/recovery_due_division_reveals'){
-    return send(res,200,state.revealCandidate&&!state.revealed?
-      [{event_id:eventId,autopilot_complete:state.complete}]:[]);
+    return send(res,200,state.revealCandidate?
+      revealIds(state.revealCount).filter(id=>!state.revealedIds.has(id))
+        .slice(0,20).map(id=>({event_id:id,autopilot_complete:state.complete})):[]);
   }
   if(url.pathname==='/rest/v1/rpc/recovery_overdue_division_reveals'){
     return send(res,200,state.overdueCandidate?[{event_id:eventId}]:[]);
@@ -88,11 +94,12 @@ const fixture=http.createServer(async(req,res)=>{
     return send(res,200,state.revealed?[{event_id:eventId}]:[]);
   }
   if(url.pathname==='/rest/v1/rpc/recovery_commit_division_reveal'){
-    if(body.p_event!==eventId||!state.complete)
+    if(!revealIds(state.revealCount).includes(body.p_event)||!state.complete)
       return send(res,409,{code:'PT409',message:'The autopilot entry scan is incomplete.'});
     if(state.revealRejected)
       return send(res,409,{code:'PT409',message:'The division reveal needs manual review.'});
-    state.revealed=true;
+    state.revealedIds.add(body.p_event);
+    if(body.p_event===eventId)state.revealed=true;
     return send(res,200,{alreadyRevealed:false});
   }
   if(url.pathname==='/rest/v1/teams'){

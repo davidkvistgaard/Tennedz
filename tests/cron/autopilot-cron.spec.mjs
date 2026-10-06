@@ -114,6 +114,33 @@ test('cron reports a rejected division reveal while tactics are still open',asyn
   expect(state).toMatchObject({complete:true,revealed:false});
 });
 
+test('cron reports a reveal backlog across the selector and commit limits',async({request})=>{
+  const fixture='http://127.0.0.1:54330';
+  await fetch(`${fixture}/__cron_reset`,{method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({revealCandidate:true,revealCount:21})});
+  const headers={Authorization:'Bearer fixture-cron-secret'};
+  for(const expected of [8,16]){
+    const response=await request.get('/api/cron/autopilot',{headers});
+    expect(response.status()).toBe(503);
+    const result=await response.json();
+    expect(result).toMatchObject({ok:false,code:'DIVISION_REVEAL_BACKLOG'});
+    expect(result.divisions.revealed).toHaveLength(8);
+    expect(result.divisions.pending).toContainEqual(expect.objectContaining({
+      reason:'BATCH_REMAINING',
+    }));
+    const state=await (await fetch(`${fixture}/__cron_state`)).json();
+    expect(state.revealedCount).toBe(expected);
+  }
+  const final=await request.get('/api/cron/autopilot',{headers});
+  expect(final.status()).toBe(200);
+  expect((await final.json()).divisions.revealed).toHaveLength(5);
+  expect((await (await fetch(`${fixture}/__cron_state`)).json()).revealedCount).toBe(21);
+  const repeated=await request.get('/api/cron/autopilot',{headers});
+  expect(repeated.status()).toBe(200);
+  expect((await repeated.json()).divisions.revealed).toEqual([]);
+});
+
 test('daily cron processes a 400-team field inside its request budget',async({request})=>{
   test.setTimeout(90000);
   const fixture='http://127.0.0.1:54330';

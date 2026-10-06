@@ -109,6 +109,8 @@ Den første tekniske **endagsløbs-testsløjfe** er nu gennemført isoleret i pu
 
 **Køtal ved nyt scan:** Et fuldført autopilot-job kan scannes igen efter seks timer. Den nye isolerede migration nulstiller nu antal kontrollerede hold sammen med markøren ved dette nye gennemløb; et afbrudt forsøg beholder sin delvise optælling, og automatiske tilmeldinger tælles fortsat via unikke kvitteringer. SQL-prøver for rescan, retry, 50 jobs, optælling og rettigheder består. Ændringen er ikke i produktion.
 
+**Cron-køgrænse, 6. oktober:** Den isolerede cron markerer nu en resterende divisionskø som fejl efter højst otte afsløringer i samme kald. En lokal HTTP-prøve med 21 samtidige løb krævede tre kald og gav først succes, da alle afsløringer var gemt. Det synliggør køen, men erstatter ikke en pålidelig gentaget scheduler eller ekstern driftsalarm; punkt 16 er fortsat åbent, og ændringen er ikke i produktion.
+
 ## P1 - atlas og verdenskvalitet
 
 | ID | Opgave / konkret resultat | Timer | Afhænger af |

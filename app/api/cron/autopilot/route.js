@@ -45,7 +45,9 @@ export async function GET(req){
       return NextResponse.json({ok:false,enabled:true,
         code:overdue.length?"DIVISION_REVEAL_OVERDUE":
           divisions.pending.some(item=>item.reason==="AUTOPILOT_PENDING")?
-            "DIVISION_REVEAL_BLOCKED":"DIVISION_REVEAL_REJECTED",
+            "DIVISION_REVEAL_BLOCKED":
+            divisions.pending.some(item=>item.reason==="BATCH_REMAINING")?
+              "DIVISION_REVEAL_BACKLOG":"DIVISION_REVEAL_REJECTED",
         batches,divisions,overdue},
       {status:503,headers:privateHeaders});
     return NextResponse.json({ok:true,enabled:true,batches,divisions,overdue},
