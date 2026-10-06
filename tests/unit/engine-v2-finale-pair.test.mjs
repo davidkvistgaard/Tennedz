@@ -22,6 +22,8 @@ test('a faster chaser catches within a slice and both workers pay only for the r
   assert.ok(frame.endDistanceM>frame.startDistanceM);
   assert.ok(frame.endDistanceM<steps[0].endDistanceM);
   assert.equal(frame.gapSeconds,0);
+  assert.ok(Math.abs(frame.frontElapsedSeconds-frame.rearElapsedSeconds)<1e-9);
+  assert.ok(frame.frontElapsedSeconds>0);
   assert.ok(Math.abs(frame.frontEnergySpent-
     (frame.endDistanceM-frame.startDistanceM)/1000)<1e-9);
   assert.equal(validateFinalePair(input,recording),true);
@@ -43,6 +45,11 @@ test('a stronger break survives all eleven slices with a continuous finite trace
   assert.ok(recording.finishGapSeconds>input.initialGapSeconds);
   assert.ok(recording.frames.every((frame,index)=>index===0||
     frame.startDistanceM===recording.frames[index-1].endDistanceM));
+  assert.ok(recording.frames.every((frame,index)=>index===0||
+    frame.frontElapsedSeconds>recording.frames[index-1].frontElapsedSeconds&&
+    frame.rearElapsedSeconds>recording.frames[index-1].rearElapsedSeconds));
+  assert.ok(Math.abs(recording.frames.at(-1).rearElapsedSeconds-
+    recording.frames.at(-1).frontElapsedSeconds-recording.finishGapSeconds)<1e-9);
   assert.ok(Math.abs(recording.frames.at(-1).frontEnergy-12.5)<1e-9);
   assert.equal(validateFinalePair(input,recording),true);
 });
