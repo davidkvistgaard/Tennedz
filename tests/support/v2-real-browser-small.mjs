@@ -192,6 +192,15 @@ try{
   assert.equal(preflight.contract.divisions.length,divisionCounts.length);
   assert.equal(preflight.ledgerRows.length,
     Math.min(managerCount*8,divisionCounts.length*20));
+  try{
+    await ok(db.from('events').update({scheduled_at:
+      new Date(Date.parse(scheduled)-1000).toISOString()}).eq('id',eventId));
+    await assert.rejects(loadV2SettlementReadiness(db,eventId),
+      /not ready for settlement/);
+  }finally{
+    await ok(db.from('events').update({scheduled_at:scheduled}).eq('id',eventId));
+  }
+  assert.deepEqual(await loadV2SettlementReadiness(db,eventId),preflight);
   assert.equal((await ok(db.from('recovery_race_commits').select('event_id')
     .eq('event_id',eventId))).length,0);
   assert.equal((await ok(db.from('recovery_ranking_awards').select('award_key')
