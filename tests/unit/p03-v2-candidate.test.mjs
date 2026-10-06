@@ -3,6 +3,8 @@ import assert from 'node:assert/strict';
 import {assignPointDivisions} from '../../lib/calendar/division-reveal.mjs';
 import {validateRecordedTour} from '../../lib/engine/v2/recording.mjs';
 import {previewRecordedDivisions} from '../../lib/race/v2-candidate.mjs';
+import {projectV2OneDayAwards} from '../../lib/race/v2-points.mjs';
+import {pointsForDivisionResult} from '../../lib/calendar/points.mjs';
 import {defaultOrders} from '../../lib/race/orders.mjs';
 
 function snapshot(count){
@@ -81,4 +83,27 @@ test('explicit v2 orders are complete, roster-bound and recorded by phase',()=>{
   orders[input.teams[1].id].captainId=input.teams[0].entry.captain_id;
   assert.throws(()=>previewRecordedDivisions(input,{v2OrdersByTeamId:orders}),
     /Both captains must belong/);
+});
+
+test('45-team v2 recording projects unique tier points without writing a ledger',()=>{
+  const candidate=previewRecordedDivisions(snapshot(45));
+  const first=projectV2OneDayAwards(candidate,{tier:3});
+  assert.deepEqual(first,projectV2OneDayAwards(candidate,{tier:3}));
+  assert.equal(first.policyVersion,'v0.1');
+  assert.deepEqual(first.divisions.map(division=>division.awards.length),[20,20,20]);
+  assert.equal(first.divisions[0].multiplier,1);
+  assert.ok(first.divisions[1].multiplier<1);
+  assert.ok(first.divisions[2].multiplier<first.divisions[1].multiplier);
+  const awards=first.divisions.flatMap(division=>division.awards);
+  assert.equal(new Set(awards.map(award=>award.awardKey)).size,60);
+  for(const division of first.divisions){
+    const winner=division.awards.find(award=>award.placing===1);
+    assert.equal(winner.points,pointsForDivisionResult({tier:3,resultType:'ONE_DAY',
+      placing:1,multiplier:division.multiplier}));
+    assert.equal(winner.divisionIndex,division.index);
+  }
+  const foreign=structuredClone(candidate);
+  foreign.divisions[0].teamIds[0]='foreign';
+  assert.throws(()=>projectV2OneDayAwards(foreign,{tier:3}),/differ from the division reveal/);
+  assert.throws(()=>projectV2OneDayAwards(candidate,{tier:7}),/recorded race and tier/);
 });

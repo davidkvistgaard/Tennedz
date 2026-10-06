@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { assignPointDivisions } from "../../lib/calendar/division-reveal.mjs";
+import { assignPointDivisions,divisionMultiplier } from "../../lib/calendar/division-reveal.mjs";
 
 const scope = { eventId: "calendar-race", seasonYear: 2026, gender: "M" };
 const entrants = (count) => Array.from({ length: count }, (_, index) => ({
@@ -28,6 +28,17 @@ test("division sizing stays balanced across the 20-team boundary", () => {
     const { assignments } = assignPointDivisions({ ...scope, entrants: entrants(count) });
     assert.deepEqual(sizes, sizes.map((_, index) => assignments.filter((row) => row.divisionIndex === index + 1).length));
   }
+});
+
+test('shared division weight keeps the existing three-division curve',()=>{
+  assert.equal(divisionMultiplier(1,1),1);
+  assert.equal(divisionMultiplier(1,3),1);
+  for(const index of [1,2,3]){
+    const minimum=Math.max(.62,Math.min(.90,.62+.25*(1-Math.exp(-2/6))));
+    const previous=1-(1-minimum)*Math.pow((index-1)/2,1.35);
+    assert.equal(divisionMultiplier(index,3),previous);
+  }
+  assert.throws(()=>divisionMultiplier(0,3),/Invalid division/);
 });
 
 test("point ties have an input-order-independent team ID tie-breaker", () => {

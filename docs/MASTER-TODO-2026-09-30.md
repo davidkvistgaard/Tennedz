@@ -125,6 +125,8 @@ Med otte ryttere fordelt fra -8 til +8 omkring hvert holds gennemsnit flytter sp
 
 En ny 15-holds prøve viste også et brat spring: hold med gennemsnitlig færdighed 72,5 fik første rytter 222 sekunder efter vinderen, mens 75-holdet var under ét sekund efter. 61 af 120 ryttere var markeret som sat af efter 70 km. En efterfølgende specialistprøve med tre seeds viste, at flad/klatret rute først ændrede vinderen ved en stor forskel på 30 færdighedspoint mellem specialerne; da sprang taberens hul til cirka 135–340 sekunder. Det underbygger, at gruppe- og måltidsbalancen skal afprøves med realistiske hold før motoren kobles til point.
 
+**V2-bro, 6. oktober:** Race Lab kan nu prøve et fuldt sæt eksplicitte v2-ordrer for de tilmeldte hold, herunder faseskift, uden at oversætte de gamle personlige ordrer forkert. Den syntetiske viewer viser de låste ordrer på det aktuelle kilometer. En separat læseprojektion beregner sportslige point fra v2-placeringerne med samme divisionsvægt og pointkurve som det eksisterende løb; 45-holdstesten giver 60 entydige pointposter. Ingen v2-ordrer, resultater eller point gemmes endnu. Datakontrakt, spillerkobling og sportslig balance i punkt 04-09 er stadig åbne.
+
 ## P1 - atlas og verdenskvalitet
 
 | ID | Opgave / konkret resultat | Timer | Afhænger af |
