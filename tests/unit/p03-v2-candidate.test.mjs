@@ -446,3 +446,22 @@ test('player viewer projection hides other divisions and rival private plans',()
   assert.throws(()=>projectV2RecordedDivisionForTeam(contract,'foreign'),
     /no unique saved division/);
 });
+
+test('private v2 viewer shows only the manager’s own hard bunch work',()=>{
+  const input=snapshot(2),[steady,hard]=input.teams;
+  const orders={
+    [steady.id]:{captainId:steady.entry.captain_id,preset:'balanced',
+      baseline:{effort:'steady',attack:'none',chase:'ignore'}},
+    [hard.id]:{captainId:hard.entry.captain_id,preset:'balanced',
+      baseline:{effort:'hard',attack:'none',chase:'ignore'}},
+  };
+  const candidate=previewRecordedDivisions(input,{v2OrdersByTeamId:orders});
+  const contract=buildV2OneDayResultContract(candidate,{tier:3});
+  const first=contract.divisions[0].recording.frames[0];
+  assert.deepEqual(first.hardBunchWorkTeamIds,[hard.id]);
+  const hardView=projectV2RecordedDivisionForTeam(contract,hard.id);
+  const steadyView=projectV2RecordedDivisionForTeam(contract,steady.id);
+  assert.deepEqual(hardView.recording.frames[0].hardBunchWorkTeamIds,[hard.id]);
+  assert.ok(steadyView.recording.frames.every(frame=>
+    frame.hardBunchWorkTeamIds.length===0));
+});

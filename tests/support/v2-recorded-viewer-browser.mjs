@@ -28,6 +28,10 @@ try{
     await expect(orders.getByText('Amber Captain')).toHaveCount(1);
     await expect(orders.getByText('Amber Rider 2')).toBeVisible();
     await expect(orders.getByText('Conserve')).toBeVisible();
+    await page.getByLabel('Watch team').selectOption({label:'Cedar'});
+    await expect(page.getByRole('region',{name:'Road groups'})
+      .getByText(/Cedar's helpers are working hard at the front/)).toBeVisible();
+    await page.getByLabel('Watch team').selectOption({label:'Amber'});
     if(process.env.PELOTONIA_VIEWER_SCREENSHOT==='1')
       await page.screenshot({path:`.recovery-local/v2-viewer-${viewport.width}.png`,fullPage:true});
     await page.getByLabel('Watch team').selectOption({label:'Birch'});

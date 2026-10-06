@@ -130,6 +130,8 @@ export default function TacticalTourViewer({recording,focusTeamId,awardProjectio
             {group.riderIds.length>4?' + more':''}</small>
         </div>)}
         <div className="tactical-road-group"><strong>Peloton</strong><span>{peloton} riders</span></div>
+        {frame.hardBunchWorkTeamIds?.includes(selectedTeamId)&&
+          <p>{playerRecording?'Your':`${teamName(selectedTeamId)}'s`} helpers are working hard at the front. This costs energy and may stretch the bunch.</p>}
         {dropped>0&&<div className="tactical-road-group"><strong>Off the back</strong><span>{dropped} riders</span></div>}
       </section>
       <section className="tactical-panel" aria-label="Your riders">

@@ -29,8 +29,9 @@ const snapshot={event:{id:'recorded-tour-sample',kind:'one_day',gender:'M',
 const v2OrdersByTeamId=Object.fromEntries(teams.map((team,index)=>{
   const selected=team.entry.selected_riders;
   return [team.id,{captainId:selected[0],roadCaptainId:selected[index===0?1:0],
-    helperIds:index===0?[selected[2],selected[3]]:[],
+    helperIds:index===0||index===2?[selected[2],selected[3]]:[],
     preset:index===0?'protect':index===1?'aggressive':'balanced',
+    ...(index===2?{baseline:{effort:'hard',attack:'none',chase:'ignore'}}:{}),
     ...(index===0?{phases:[{atKm:20,effort:'hard',chase:'all',
       attack:'selective',attackRiderId:selected[4],breakWork:'drive'},
       {atKm:50,effort:'steady',chase:'selective',attackRiderId:null}]}:{}),
