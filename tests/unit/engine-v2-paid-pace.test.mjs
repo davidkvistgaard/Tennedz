@@ -6,7 +6,7 @@ import {simulateTacticalTour} from '../../lib/engine/v2/tour.mjs';
 import {validateRecordedTour} from '../../lib/engine/v2/recording.mjs';
 import {MOTOR_CANDIDATE_VERSION,MOTOR_PAID_PACE_VERSION,
   MOTOR_FINALE_VERSION,MOTOR_BRIDGE_FINALE_VERSION,
-  MOTOR_EARNED_BRIDGE_VERSION} from '../../lib/engine/v2/tuning.mjs';
+  MOTOR_EARNED_BRIDGE_VERSION,MOTOR_NEUTRAL_PACE_VERSION} from '../../lib/engine/v2/tuning.mjs';
 
 function team(id,level,{effort='conserve',attack='none',chase='ignore',phases=[]}={}){
   const riders=Array.from({length:8},(_,index)=>({id:`${id}-${index}`,gender:'M',
@@ -174,4 +174,40 @@ test('v84 requires a final attacker to earn the gap before joining a break',()=>
   assert.deepEqual(v84.joinedBreakawayRiderIds,[]);
   assert.deepEqual(v84.failedBridgeRiderIds,['planned-7']);
   assert.ok(v84.gapSeconds<v83.gapSeconds);
+});
+
+test('v85 charges neutral front workers and excludes weak passive passengers',()=>{
+  const escape=prepared(team('escape',90));
+  const pacer=prepared(team('pacer',98));
+  const weak=Array.from({length:13},(_,index)=>prepared(team(`weak-${index}`,20)));
+  const context={km:11,terrain:'flat',gapSeconds:40,breakawayTeamIds:['escape'],
+    breakawayRiderIds:['escape-7'],rearRoadGroupRiderIds:['escape-7'],distanceKm:20,
+    resolutionVersion:MOTOR_NEUTRAL_PACE_VERSION};
+  const small=resolveTacticalKilometre({...context,teams:[escape,pacer]});
+  const large=resolveTacticalKilometre({...context,teams:[escape,pacer,...weak]});
+  assert.equal(small.paidBunchPace,null);
+  assert.equal(large.paidBunchPace?.teamId,'pacer');
+  assert.equal(large.paidBunchPace?.effort,'conserve');
+  assert.ok(Math.abs(large.passiveGapDelta-small.passiveGapDelta)<.5);
+  assert.deepEqual(large.energyCosts.filter(row=>row.reason==='cruise').map(row=>row.cost),
+    [.06,.06]);
+
+  const stage={distance_km:40,profile_points:[[0,100],[40,100]],
+    keypoints:[{km:11,kind:'SPRINT'}]};
+  const teams=[team('escape',95,{phases:[{atKm:10,attack:'selective',
+    attackRiderId:'escape-7'}]}),team('pacer',83),
+  ...Array.from({length:13},(_,index)=>team(`weak-${index}`,20))];
+  const race=simulateTacticalTour({stage,teams,seed:'neutral-front-work',
+    motorVersion:MOTOR_NEUTRAL_PACE_VERSION});
+  const prior=simulateTacticalTour({stage,teams,seed:'neutral-front-work',
+    motorVersion:MOTOR_EARNED_BRIDGE_VERSION});
+  assert.equal(validateRecordedTour(race),true);
+  const frame=race.frames.find(row=>row.paidBunchPace?.effort==='conserve');
+  assert.ok(frame);
+  assert.ok(frame.riderGroups.find(row=>row.id===frame.paidBunchPace.riderIds[0]).energy<
+    prior.frames[frame.km-1].riderGroups.find(row=>
+      row.id===frame.paidBunchPace.riderIds[0]).energy);
+  const forged=structuredClone(race);
+  forged.frames[frame.km-1].paidBunchPace.riderIds[0]='escape-7';
+  assert.throws(()=>validateRecordedTour(forged),/paid bunch pace/);
 });

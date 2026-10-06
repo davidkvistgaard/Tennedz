@@ -1,13 +1,15 @@
 // Read-only long-race specialist counterfactual on the opt-in paid-pace motor.
 // Run: node tests/support/p03-v2-specialist-final-probe.mjs
-//   [--bounded-finale|--bounded-bridge-finale|--earned-bridge-finale] [--neutrals=0..17]
+//   [--bounded-finale|--bounded-bridge-finale|--earned-bridge-finale|--neutral-pace]
+//   [--neutrals=0..17]
 //   [--chase-at=230|240|250] [--route=flat|hilly|mountain]
 //   [--neutral-mode=rotating|weak] [seed ...]
 import assert from 'node:assert/strict';
 import {simulateTacticalTour} from '../../lib/engine/v2/tour.mjs';
 import {validateRecordedTour} from '../../lib/engine/v2/recording.mjs';
 import {MOTOR_PAID_PACE_VERSION,MOTOR_FINALE_VERSION,
-  MOTOR_BRIDGE_FINALE_VERSION,MOTOR_EARNED_BRIDGE_VERSION} from '../../lib/engine/v2/tuning.mjs';
+  MOTOR_BRIDGE_FINALE_VERSION,MOTOR_EARNED_BRIDGE_VERSION,
+  MOTOR_NEUTRAL_PACE_VERSION} from '../../lib/engine/v2/tuning.mjs';
 
 const keys=['sprint','flat','hills','mountain','cobbles','timetrial',
   'endurance','strength','wind'];
@@ -65,7 +67,9 @@ const easePhases=[...chasePhases,{atKm:chaseAt>=250?255:250,
 const boundedFinale=process.argv.includes('--bounded-finale');
 const boundedBridgeFinale=process.argv.includes('--bounded-bridge-finale');
 const earnedBridgeFinale=process.argv.includes('--earned-bridge-finale');
-if([boundedFinale,boundedBridgeFinale,earnedBridgeFinale].filter(Boolean).length>1)
+const neutralPace=process.argv.includes('--neutral-pace');
+if([boundedFinale,boundedBridgeFinale,earnedBridgeFinale,neutralPace]
+  .filter(Boolean).length>1)
   throw new Error('Choose one finale motor.');
 const seeds=process.argv.slice(2).filter(value=>!value.startsWith('--'));
 if(!seeds.length)seeds.push('s1','s2','s3');
@@ -89,7 +93,8 @@ for(const seed of seeds)for(const plan of [
           index%3===0?{sprint:90}:index%3===1?{mountain:91}:{timetrial:90})),
   ];
   const race=simulateTacticalTour({stage,teams,seed,weather,
-    motorVersion:earnedBridgeFinale?MOTOR_EARNED_BRIDGE_VERSION:
+    motorVersion:neutralPace?MOTOR_NEUTRAL_PACE_VERSION:
+      earnedBridgeFinale?MOTOR_EARNED_BRIDGE_VERSION:
       boundedBridgeFinale?MOTOR_BRIDGE_FINALE_VERSION:
       boundedFinale?MOTOR_FINALE_VERSION:MOTOR_PAID_PACE_VERSION});
   assert.equal(validateRecordedTour(race),true);
