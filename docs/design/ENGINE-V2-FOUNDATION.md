@@ -6,6 +6,8 @@ Current balance version: `v2-prototype-75`. The simulator supports ordered indep
 
 In version 75, a team ordering hard effort without an attack or chase can lift the bunch's reference pace through two available helpers. A helper already sheltering the captain or performing another action cannot also set this pace. The lift is capped and falls as their energy falls. An ignore-chase order never applies this general pace while a road group is ahead. A 140 km sensitivity test now shows a strong team changing the result in both two-team and 15-team fields; the drop threshold and field-size effect remain too sharp for a sporting sign-off.
 
+A second read-only probe gives each eight-rider team a skill spread from -8 to +8. On a flat 140 km course, a level-96 team riding hard against level 80 leads the other team's first finisher by about 83 seconds with two teams, 78 seconds with five, but only 3 seconds with fifteen; seven of the eight weaker riders are nevertheless dropped in that last field. The deliberately weakest captain is over 520 seconds behind the strong team's captain in all three fields. The same pattern appears on the hilly profile. This exposes a material distinction between first-rider and captain-based outcomes and shows that the current model still has a sharp contact threshold. The probe is diagnostic, not a sporting acceptance criterion.
+
 ## Product contract
 
 - Managers commit their lineup, captain, optional road captain, preset, detailed phases and contingencies **before the deadline**. The server snapshots that exact input. The complete race is calculated once after the deadline, and everyone views the same recorded replay. No live manager action is required.
