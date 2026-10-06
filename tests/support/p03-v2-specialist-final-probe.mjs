@@ -1,7 +1,7 @@
 // Read-only long-race specialist counterfactual on the opt-in paid-pace motor.
 // Run: node tests/support/p03-v2-specialist-final-probe.mjs
 //   [--bounded-finale|--bounded-bridge-finale|--earned-bridge-finale] [--neutrals=0..17]
-//   [--chase-at=230|240|250] [seed ...]
+//   [--chase-at=230|240|250] [--route=flat|hilly|mountain] [seed ...]
 import assert from 'node:assert/strict';
 import {simulateTacticalTour} from '../../lib/engine/v2/tour.mjs';
 import {validateRecordedTour} from '../../lib/engine/v2/recording.mjs';
@@ -10,10 +10,18 @@ import {MOTOR_PAID_PACE_VERSION,MOTOR_FINALE_VERSION,
 
 const keys=['sprint','flat','hills','mountain','cobbles','timetrial',
   'endurance','strength','wind'];
-const stage={distance_km:260,profile_points:[[0,200],[40,250],[80,800],
-  [120,300],[160,950],[200,400],[230,1200],[255,450],[260,400]],
-  tags:['HILLY']};
-const weather={temp_c:16,wind_kph:12,precipitation_mm:0};
+const stages={
+  flat:{distance_km:260,profile_points:[[0,200],[260,200]],tags:['FLAT']},
+  hilly:{distance_km:260,profile_points:[[0,200],[40,250],[80,800],
+    [120,300],[160,950],[200,400],[230,1200],[255,450],[260,400]],
+  tags:['HILLY']},
+  mountain:{distance_km:260,profile_points:[[0,300],[40,500],[80,1200],
+    [120,500],[160,1600],[200,700],[230,1500],[255,600],[260,1000]],
+  tags:['MOUNTAIN']},
+};
+const weathers={flat:{temp_c:16,wind_kph:12,precipitation_mm:0},
+  hilly:{temp_c:16,wind_kph:12,precipitation_mm:0},
+  mountain:{temp_c:12,wind_kph:10,precipitation_mm:0}};
 const clamp=value=>Math.max(0,Math.min(100,value));
 function team(id,level,role,phases=[]){
   const riders=Array.from({length:8},(_,index)=>{
@@ -37,9 +45,17 @@ const option=(name,fallback)=>{
   if(values.length>1)throw new Error(`Duplicate ${name} option.`);
   return values.length?Number(values[0].split('=')[1]):fallback;
 };
+const textOption=(name,fallback)=>{
+  const values=process.argv.slice(2).filter(arg=>arg.startsWith(`--${name}=`));
+  if(values.length>1)throw new Error(`Duplicate ${name} option.`);
+  return values.length?values[0].slice(name.length+3):fallback;
+};
 const neutralCount=option('neutrals',12),chaseAt=option('chase-at',240);
+const routeName=textOption('route','hilly');
 if(!Number.isInteger(neutralCount)||neutralCount<0||neutralCount>17||
-  ![230,240,250].includes(chaseAt))throw new Error('Invalid specialist probe options.');
+  ![230,240,250].includes(chaseAt)||!stages[routeName])
+  throw new Error('Invalid specialist probe options.');
+const stage=stages[routeName],weather=weathers[routeName];
 const chasePhases=[{atKm:chaseAt,effort:'hard',chase:'all'}];
 const easePhases=[...chasePhases,{atKm:chaseAt>=250?255:250,
   effort:'conserve',chase:'ignore'}];
@@ -84,7 +100,7 @@ for(const seed of seeds)for(const plan of [
   const rider=id=>race.provisionalResults.find(row=>row.riderId===id);
   const beforeFinal=frames.at(-2);
   console.log(JSON.stringify({seed,plan:plan.name,version:race.tuningVersion,
-    teams:teams.length,chaseAt,
+    teams:teams.length,chaseAt,route:routeName,
     winner:race.provisionalResults[0].riderId,
     gapAt250:frames[249].gapSeconds,gapAt255:frames[254].gapSeconds,
     gapBeforeFinal:beforeFinal.gapSeconds,gapAtFinish:final.gapSeconds,
