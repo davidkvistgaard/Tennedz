@@ -7,6 +7,8 @@ import {randomBytes,randomUUID} from 'node:crypto';
 import {readFileSync} from 'node:fs';
 import {createClient} from '@supabase/supabase-js';
 import {chromium,expect} from '@playwright/test';
+import {loadStoredV2SettlementPreflight}
+  from '../../lib/race/v2-settlement-preflight.mjs';
 
 const config=JSON.parse(readFileSync(process.env.PELOTONIA_P03_TEST_CONFIG,'utf8'));
 if(config.url!=='https://nxhvaoonnvmvohqaxfdx.supabase.co'||
@@ -175,12 +177,19 @@ try{
   assert.ok(parent.contract_header);
   assert.equal((await ok(db.from('recovery_v2_recorded_divisions')
     .select('division_index').eq('event_id',eventId))).length,divisionCounts.length);
+  const savedLock=await ok(db.from('recovery_v2_tactics_commits')
+    .select('input_snapshot').eq('event_id',eventId).single());
+  const preflight=await loadStoredV2SettlementPreflight(db,savedLock.input_snapshot);
+  assert.equal(preflight.eventId,eventId);
+  assert.equal(preflight.contract.divisions.length,divisionCounts.length);
+  assert.equal(preflight.ledgerRows.length,
+    Math.min(managerCount*8,divisionCounts.length*20));
   assert.equal((await ok(db.from('recovery_race_commits').select('event_id')
     .eq('event_id',eventId))).length,0);
   assert.equal((await ok(db.from('recovery_ranking_awards').select('award_key')
     .eq('event_id',eventId))).length,0);
   assert.deepEqual(pageErrors,[]);
-  console.log(`${managerCount} real managers completed v2 registration, draft, lock, split recording and private viewer without a final award.`);
+  console.log(`${managerCount} real managers completed v2 registration, draft, lock, split recording, private viewer and read-only ${preflight.ledgerRows.length}-row settlement preflight without a final award.`);
 }finally{
   await browser.close();
   console.log(`Clean disposable v2 event ${eventId} and its ${8*managerCount} riders with guarded management SQL.`);
