@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import {resolveTacticalKilometre} from '../../lib/engine/v2/tactics.mjs';
 import {normalizeOrders} from '../../lib/engine/v2/orders.mjs';
 import {simulateTacticalTour} from '../../lib/engine/v2/tour.mjs';
+import {updateRiderGroups} from '../../lib/engine/v2/groups.mjs';
 import {validateRecordedTour} from '../../lib/engine/v2/recording.mjs';
 import {MOTOR_CANDIDATE_VERSION,MOTOR_PAID_PACE_VERSION,
   MOTOR_FINALE_VERSION,MOTOR_BRIDGE_FINALE_VERSION,
@@ -255,4 +256,18 @@ test('v86 teams that sit in do not create paid pace',()=>{
     [.18,.18]);
   assert.throws(()=>prepared(team('a',90,{frontWork:'free_speed'}),20,true),/front work/);
   assert.throws(()=>prepared(team('a',90,{frontWork:'rotate'})),/baseline fields/);
+});
+
+test('v86 weak front work cannot slow group attachment below its unworked pace',()=>{
+  const states=[{id:'slow',ability:40,group:'peloton',lowKilometres:0,
+    deficitSeconds:0},...Array.from({length:7},(_,index)=>({id:`fast-${index}`,
+    ability:70,group:'peloton',lowKilometres:0,deficitSeconds:0}))];
+  const afterFour=(options)=>{
+    let current=states;
+    for(let km=0;km<4;km++)current=updateRiderGroups(current,[],options);
+    return current.find(state=>state.id==='slow');
+  };
+  assert.equal(afterFour({unworkedFront:true}).group,'dropped');
+  assert.equal(afterFour({unworkedFront:true,frontPaceAbility:40}).group,'dropped');
+  assert.equal(afterFour({frontPaceAbility:40}).group,'peloton');
 });

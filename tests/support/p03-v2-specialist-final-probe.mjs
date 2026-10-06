@@ -3,7 +3,8 @@
 //   [--bounded-finale|--bounded-bridge-finale|--earned-bridge-finale|--neutral-pace|--explicit-front]
 //   [--neutrals=0..17]
 //   [--chase-at=230|240|250] [--route=flat|hilly|mountain]
-//   [--neutral-mode=rotating|weak|mixed] [--neutral-level=0..100] [seed ...]
+//   [--neutral-mode=rotating|weak|mixed] [--neutral-level=0..100]
+//   [--front-mode=none|quarter|all|hard] [seed ...]
 import assert from 'node:assert/strict';
 import {simulateTacticalTour} from '../../lib/engine/v2/tour.mjs';
 import {validateRecordedTour} from '../../lib/engine/v2/recording.mjs';
@@ -57,10 +58,12 @@ const neutralCount=option('neutrals',12),chaseAt=option('chase-at',240);
 const neutralLevel=option('neutral-level',20);
 const routeName=textOption('route','hilly');
 const neutralMode=textOption('neutral-mode','rotating');
+const frontMode=textOption('front-mode','quarter');
 if(!Number.isInteger(neutralCount)||neutralCount<0||neutralCount>17||
   !Number.isInteger(neutralLevel)||neutralLevel<0||neutralLevel>100||
   ![230,240,250].includes(chaseAt)||!stages[routeName]||
-  !['rotating','weak','mixed'].includes(neutralMode))
+  !['rotating','weak','mixed'].includes(neutralMode)||
+  !['none','quarter','all','hard'].includes(frontMode))
   throw new Error('Invalid specialist probe options.');
 const stage=stages[routeName],weather=weathers[routeName];
 const chasePhases=[{atKm:chaseAt,effort:'hard',chase:'all'}];
@@ -74,6 +77,8 @@ const explicitFront=process.argv.includes('--explicit-front');
 if([boundedFinale,boundedBridgeFinale,earnedBridgeFinale,neutralPace,explicitFront]
   .filter(Boolean).length>1)
   throw new Error('Choose one finale motor.');
+if(!explicitFront&&process.argv.some(arg=>arg.startsWith('--front-mode=')))
+  throw new Error('Front mode requires the explicit-front motor.');
 const seeds=process.argv.slice(2).filter(value=>!value.startsWith('--'));
 if(!seeds.length)seeds.push('s1','s2','s3');
 for(const seed of seeds)for(const plan of [
@@ -99,7 +104,11 @@ for(const seed of seeds)for(const plan of [
       if(neutralMode==='mixed')neutral.riders.forEach((rider,riderIndex)=>{
         rider.fatigue=(index*7+riderIndex*3)%31;
       });
-      if(explicitFront)neutral.orders.baseline.frontWork=index%3===0?'rotate':'sit_in';
+      if(explicitFront){
+        const works=frontMode==='all'||frontMode!=='none'&&index%3===0;
+        neutral.orders.baseline.frontWork=works?'rotate':'sit_in';
+        if(works&&frontMode==='hard')neutral.orders.baseline.effort='hard';
+      }
       return neutral;
     }),
   ];
@@ -128,6 +137,13 @@ for(const seed of seeds)for(const plan of [
   const paidPaceByTeam=Object.fromEntries([...new Set(frames.map(frame=>
     frame.paidBunchPace?.teamId).filter(Boolean))].map(teamId=>[
     teamId,frames.filter(frame=>frame.paidBunchPace?.teamId===teamId).length]));
+  const paidWorkerIds=new Set(frames.flatMap(frame=>frame.paidBunchPace?.riderIds??[]));
+  const meanEnergy=ids=>ids.length?+
+    (ids.reduce((sum,id)=>sum+final.riderGroups.find(row=>row.id===id).energy,0)/ids.length)
+      .toFixed(2):null;
+  const paidTeamIds=new Set(Object.keys(paidPaceByTeam));
+  const paidTeamRiders=teams.filter(team=>paidTeamIds.has(team.id))
+    .flatMap(team=>team.riders.map(rider=>rider.id));
   const groupCheckpoints=[1,100,160,168,200,230,250].map(km=>{
     const frame=frames[km-1],attached=frame.riderGroups.filter(row=>
       row.group==='peloton').length;
@@ -136,7 +152,7 @@ for(const seed of seeds)for(const plan of [
       climberEnergy:climber.energy,climberGroup:climber.group};
   });
   console.log(JSON.stringify({seed,plan:plan.name,version:race.tuningVersion,
-    teams:teams.length,chaseAt,route:routeName,neutralMode,neutralLevel,
+    teams:teams.length,chaseAt,route:routeName,neutralMode,neutralLevel,frontMode,
     winner:race.provisionalResults[0].riderId,
     gapAt241:frames[240].gapSeconds,gapAt250:frames[249].gapSeconds,
     gapAt255:frames[254].gapSeconds,
@@ -146,7 +162,9 @@ for(const seed of seeds)for(const plan of [
       row.id.startsWith('neutral-')&&row.group==='peloton').length,
     chaseKm:frames.filter(frame=>frame.chasers.includes('sprinter')).length,
     paidPaceKm:frames.filter(frame=>frame.paidBunchPace?.teamId==='sprinter').length,
-    paidPaceByTeam,groupCheckpoints,
+    paidPaceByTeam,meanFrontWorkerEnergy:meanEnergy([...paidWorkerIds]),
+    meanOtherPaidTeamEnergy:meanEnergy(paidTeamRiders.filter(id=>!paidWorkerIds.has(id))),
+    groupCheckpoints,
     catchKm:frames.find(frame=>frame.caughtBreakawayRiderIds.includes('rouleur-7'))?.km??null,
     plannedFinale:plan.finaleAttack,namedFinale,
     climberFirstDroppedKm:frames.find(frame=>frame.riderGroups.some(row=>
