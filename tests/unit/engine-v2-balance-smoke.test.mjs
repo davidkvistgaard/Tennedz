@@ -25,6 +25,8 @@ test('paired fictional races flag degenerate finale balance before tuning is acc
       `${course}: breakaway winner has no recorded origin`);
       assert.ok(row.finalAutoWinnerRaceRate<=row.finalKmJoinWinnerRaceRate);
       assert.ok(row.residualAffectedBreakWinRaceRate<=row.breakWinRate);
+      assert.ok(row.multiGroupResidualAffectedRaceRate>=0&&
+        row.multiGroupResidualAffectedRaceRate<=1);
     }
     const breakWinRate=rows.reduce((sum,row)=>sum+row.breakWinRate,0)/rows.length;
     const finalAutoWinnerRate=rows.reduce((sum,row)=>

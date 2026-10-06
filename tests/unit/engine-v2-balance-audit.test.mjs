@@ -20,3 +20,15 @@ test('residual warning requires the same surviving group and sufficient chase',(
   assert.throws(()=>hasResidualGapAfterSufficientChase([previous],0),
     /previous recorded frame/);
 });
+
+test('residual warning follows the rear group when several groups are ahead',()=>{
+  const earlier={roadGroups:[{id:'road-1',gapSeconds:20},
+    {id:'road-2',gapSeconds:.5}]};
+  const later={...current,roadGroups:[{id:'road-1',gapSeconds:21},
+    {id:'road-2',gapSeconds:.2}]};
+  assert.equal(hasResidualGapAfterSufficientChase([earlier,later],1),true);
+  assert.equal(hasResidualGapAfterSufficientChase([earlier,
+    {...later,roadGroups:[later.roadGroups[0],{id:'road-3',gapSeconds:.2}]}],1),false);
+  assert.equal(hasResidualGapAfterSufficientChase([earlier,
+    {...later,chasePower:1}],1),false);
+});

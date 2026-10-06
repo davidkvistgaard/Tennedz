@@ -60,6 +60,7 @@ for(const [course,stage] of Object.entries(ROUTES)){
         photoFinalGaps:[],photoFinaleAbilityDiffs:[],photoBunchDeficits:[],
         photoAllTeamsAhead:0,photoLateChaseKm:[],photoLateResidualKm:[],
         lateResidualAffectedRaces:0,residualAffectedBreakWinRaces:0,
+        multiGroupResidualAffectedRaces:0,
         finalAutoAttackRaces:0,
         finalAutoJoinedRaces:0,finalAutoWinnerRaces:0,
         preFinalBreakWinnerRaces:0,finalKmJoinWinnerRaces:0,
@@ -97,6 +98,9 @@ for(const [course,stage] of Object.entries(ROUTES)){
           finalFrame.joinedBreakawayRiderIds.includes(winner.riderId));
         const lateResidualKm=race.frames.slice(-5).filter((_,index)=>
           hasResidualGapAfterSufficientChase(race.frames,race.frames.length-5+index)).length;
+        totals.multiGroupResidualAffectedRaces+=Number(race.frames.some((frame,index)=>
+          index>0&&frame.roadGroups.length>1&&
+          hasResidualGapAfterSufficientChase(race.frames,index)));
         totals.lateResidualAffectedRaces+=Number(lateResidualKm>0);
         totals.residualAffectedBreakWinRaces+=Number(lateResidualKm>0&&breakWinner);
         const amber=race.provisionalResults.filter(rider=>rider.teamId==='team-0');
@@ -181,6 +185,7 @@ for(const [course,stage] of Object.entries(ROUTES)){
         medianPhotoLateResidualKm:sortedPhotoLateResidualKm.length?
           sortedPhotoLateResidualKm[Math.floor((sortedPhotoLateResidualKm.length-1)/2)]:null,
         lateResidualAffectedRaceRate:totals.lateResidualAffectedRaces/samples,
+        multiGroupResidualAffectedRaceRate:totals.multiGroupResidualAffectedRaces/samples,
         residualAffectedBreakWinRaceRate:totals.residualAffectedBreakWinRaces/samples,
         finalAutoAttackRaceRate:totals.finalAutoAttackRaces/samples,
         finalAutoJoinedRaceRate:totals.finalAutoJoinedRaces/samples,
