@@ -16,6 +16,8 @@ An isolated `v2-finale-relay-1` probe now alternates two named chase helpers acc
 
 A 300 km unit scenario now feeds the pair probe with energy actually earned and spent over the first 295 km, rather than imposing an arrival value. Its late solo rider reaches the boundary with about 26 energy. The current kilometre model leaves a 0.84-second lead despite a positive chase capacity large enough to cover the previous gap plus passive drift. Both read-only bridges attach `residual_gap_after_sufficient_chase` to this source and similarly affected 40 km sources. Their counterfactual outcome remains computed for diagnosis, but must not be cited as a valid sporting finish while that source warning is present. A very early 300 km solo move can also arrive with zero reserve; the strict worker planner then refuses to invent unpaid finale work. Both cases need a coherent exhaustion and chase-recovery rule before this model can settle a long race.
 
+A paired trial across fictional flat, rolling and mountain routes exposed a coupled finale failure. Subtracting full chase recovery from the passive gap change removes the artificial residual, but makes automatic final-kilometre attacks win two thirds of sampled races on every route. Also suppressing unnamed automatic attacks in the final 5 km nearly eliminates breakaway wins. Both trial changes were reverted. The deterministic balance smoke test now rejects those two degenerate outcome patterns without treating the current v79 balance as approved; a replacement needs a joint road-group, chase and finale rule.
+
 ## Distance phases
 
 | Distance remaining | Sporting decision | Recording requirement |
