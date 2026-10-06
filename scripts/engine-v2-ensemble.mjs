@@ -4,6 +4,7 @@ import seedrandom from 'seedrandom';
 import {simulateTacticalTour} from '../lib/engine/v2/tour.mjs';
 import {validateRecordedTour} from '../lib/engine/v2/recording.mjs';
 import {SPORTING_SKILLS} from '../lib/engine/v2/physiology.mjs';
+import {TUNING} from '../lib/engine/v2/tuning.mjs';
 
 const samples=process.argv[2]===undefined?10:Number(process.argv[2]);
 if(!Number.isInteger(samples)||samples<1||samples>100)
@@ -53,6 +54,9 @@ for(const [course,stage] of Object.entries(ROUTES)){
     for(const strategy of STRATEGIES){
       const totals={amberWins:0,amberPodiums:0,breakWins:0,positiveFinalGaps:0,
         photoFinishBreakWins:0,clearBreakWins:0,breakWinMargins:[],
+        photoFinalGaps:[],photoFinaleAbilityDiffs:[],photoBunchDeficits:[],
+        photoAllTeamsAhead:0,photoLateChaseKm:[],photoLateResidualKm:[],
+        breakWinnerGroupAgeKm:[],
         caughtBreaks:0,finishLineCatches:0,partialFinishCatches:0,
         finishLineCaughtRiders:0,droppedRiders:0,amberEnergy:0,finalGaps:[],
         maxGroups:0,multiGroupFinishes:0,chaseGroupAttackMoves:0,
@@ -76,11 +80,33 @@ for(const [course,stage] of Object.entries(ROUTES)){
         totals.amberPodiums+=Number(best<=3);
         totals.breakWins+=Number(race.provisionalResults[0].group==='breakaway');
         if(race.provisionalResults[0].group==='breakaway'){
+          const winnerGroupId=race.frames.at(-1).roadGroups.find(group=>
+            group.riderIds.includes(race.provisionalResults[0].riderId))?.id;
+          const firstGroupFrame=race.frames.find(frame=>frame.roadGroups.some(
+            group=>group.id===winnerGroupId));
+          totals.breakWinnerGroupAgeKm.push(stage.distance_km-firstGroupFrame.km);
           const firstBunch=race.provisionalResults.find(rider=>rider.group==='peloton');
           if(!firstBunch)throw new Error('A breakaway win has no bunch finisher to compare.');
           const margin=firstBunch.timeSeconds-race.provisionalResults[0].timeSeconds;
           totals.breakWinMargins.push(margin);
-          totals.photoFinishBreakWins+=Number(margin<1);
+          if(margin<1){
+            totals.photoFinishBreakWins++;
+            totals.photoFinalGaps.push(race.frames.at(-1).gapSeconds);
+            totals.photoFinaleAbilityDiffs.push(
+              race.provisionalResults[0].finaleAbility-firstBunch.finaleAbility);
+            totals.photoBunchDeficits.push(race.frames.at(-1).riderGroups.find(
+              rider=>rider.id===firstBunch.riderId).deficitSeconds);
+            totals.photoAllTeamsAhead+=Number(race.frames.at(-6).breakawayTeamIds.length===4);
+            totals.photoLateChaseKm.push(race.frames.slice(-5).filter(frame=>
+              frame.engagedChaseTeamIds.length>0).length);
+            totals.photoLateResidualKm.push(race.frames.slice(-5).filter((frame,index)=>{
+              const prior=race.frames.at(-6+index).roadGroups.at(-1)?.gapSeconds??0;
+              return frame.roadGroups.length===1&&frame.attackPower===0&&
+                frame.passiveGapDelta>0&&frame.chasePower>0&&
+                frame.chasePower*TUNING.chase.recoverySecondsPerCapacity>=
+                  prior+frame.passiveGapDelta&&frame.pelotonGapSeconds>0;
+            }).length);
+          }
           totals.clearBreakWins+=Number(margin>=5);
         }
         totals.positiveFinalGaps+=Number(race.frames.at(-1).gapSeconds>0);
@@ -109,14 +135,37 @@ for(const [course,stage] of Object.entries(ROUTES)){
       }
       const sortedGaps=[...totals.finalGaps].sort((a,b)=>a-b);
       const sortedWinMargins=[...totals.breakWinMargins].sort((a,b)=>a-b);
+      const sortedPhotoGaps=[...totals.photoFinalGaps].sort((a,b)=>a-b);
+      const sortedPhotoFinaleDiffs=[...totals.photoFinaleAbilityDiffs].sort((a,b)=>a-b);
+      const sortedPhotoBunchDeficits=[...totals.photoBunchDeficits].sort((a,b)=>a-b);
+      const sortedPhotoLateChaseKm=[...totals.photoLateChaseKm].sort((a,b)=>a-b);
+      const sortedPhotoLateResidualKm=[...totals.photoLateResidualKm].sort((a,b)=>a-b);
+      const sortedBreakGroupAges=[...totals.breakWinnerGroupAgeKm].sort((a,b)=>a-b);
       report.courses[course][gender][strategy]={
         amberWinRate:totals.amberWins/samples,
         amberPodiumRate:totals.amberPodiums/samples,
         breakWinRate:totals.breakWins/samples,
         photoFinishBreakWinRate:totals.photoFinishBreakWins/samples,
+        photoBreakWinnerLowerFinaleAbilityRate:totals.photoFinishBreakWins?
+          totals.photoFinaleAbilityDiffs.filter(value=>value<0).length/
+            totals.photoFinishBreakWins:null,
+        medianPhotoFinalGapSeconds:sortedPhotoGaps.length?
+          sortedPhotoGaps[Math.floor((sortedPhotoGaps.length-1)/2)]:null,
+        medianPhotoFinaleAbilityDiff:sortedPhotoFinaleDiffs.length?
+          sortedPhotoFinaleDiffs[Math.floor((sortedPhotoFinaleDiffs.length-1)/2)]:null,
+        medianPhotoBunchDeficitSeconds:sortedPhotoBunchDeficits.length?
+          sortedPhotoBunchDeficits[Math.floor((sortedPhotoBunchDeficits.length-1)/2)]:null,
+        photoAllTeamsAheadRate:totals.photoFinishBreakWins?
+          totals.photoAllTeamsAhead/totals.photoFinishBreakWins:null,
+        medianPhotoLateChaseKm:sortedPhotoLateChaseKm.length?
+          sortedPhotoLateChaseKm[Math.floor((sortedPhotoLateChaseKm.length-1)/2)]:null,
+        medianPhotoLateResidualKm:sortedPhotoLateResidualKm.length?
+          sortedPhotoLateResidualKm[Math.floor((sortedPhotoLateResidualKm.length-1)/2)]:null,
         clearBreakWinRate:totals.clearBreakWins/samples,
         medianBreakWinnerMarginSeconds:sortedWinMargins.length?
           sortedWinMargins[Math.floor((sortedWinMargins.length-1)/2)]:null,
+        medianBreakWinnerGroupAgeKm:sortedBreakGroupAges.length?
+          sortedBreakGroupAges[Math.floor((sortedBreakGroupAges.length-1)/2)]:null,
         finalGapRate:totals.positiveFinalGaps/samples,
         medianFinalGapSeconds:sortedGaps[Math.floor((samples-1)/2)],
         p90FinalGapSeconds:sortedGaps[Math.ceil(samples*.9)-1],
