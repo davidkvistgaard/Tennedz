@@ -142,5 +142,12 @@ test('45 distinct v2 plans survive reveal, three recordings and award projection
     balanced.divisions[0].recording.frames[0].teamEnergy);
   assert.notDeepEqual(candidate.divisions[0].recording.provisionalResults,
     balanced.divisions[0].recording.provisionalResults);
+  const changedPlaces=candidate.divisions.reduce((count,division,index)=>{
+    const prior=new Map(balanced.divisions[index].recording.provisionalResults.map(row=>
+      [row.riderId,row.position]));
+    return count+division.recording.provisionalResults.filter(row=>
+      row.position!==prior.get(row.riderId)).length;
+  },0);
+  assert.ok(changedPlaces>0,`Expected tactical orders to change a placing; changed ${changedPlaces}.`);
   assert.deepEqual(input,original);
 });
