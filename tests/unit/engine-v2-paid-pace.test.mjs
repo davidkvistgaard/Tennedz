@@ -6,18 +6,21 @@ import {simulateTacticalTour} from '../../lib/engine/v2/tour.mjs';
 import {validateRecordedTour} from '../../lib/engine/v2/recording.mjs';
 import {MOTOR_CANDIDATE_VERSION,MOTOR_PAID_PACE_VERSION,
   MOTOR_FINALE_VERSION,MOTOR_BRIDGE_FINALE_VERSION,
-  MOTOR_EARNED_BRIDGE_VERSION,MOTOR_NEUTRAL_PACE_VERSION} from '../../lib/engine/v2/tuning.mjs';
+  MOTOR_EARNED_BRIDGE_VERSION,MOTOR_NEUTRAL_PACE_VERSION,
+  MOTOR_EXPLICIT_FRONT_VERSION} from '../../lib/engine/v2/tuning.mjs';
 
-function team(id,level,{effort='conserve',attack='none',chase='ignore',phases=[]}={}){
+function team(id,level,{effort='conserve',attack='none',chase='ignore',
+  frontWork,phases=[]}={}){
   const riders=Array.from({length:8},(_,index)=>({id:`${id}-${index}`,gender:'M',
     form:70,fatigue:0,...Object.fromEntries(['sprint','flat','hills','mountain',
       'cobbles','timetrial','endurance','strength','wind'].map(skill=>[skill,level]))}));
   return {id,riders,orders:{captainId:`${id}-7`,preset:'balanced',
-    baseline:{effort,attack,chase},phases}};
+    baseline:{effort,attack,chase,...(frontWork===undefined?{}:{frontWork})},phases}};
 }
-function prepared(raw,distanceKm=20){
+function prepared(raw,distanceKm=20,allowFrontWork=false){
   return {...raw,orders:normalizeOrders(raw.orders,{riderIds:raw.riders.map(r=>r.id),
-    distanceKm,keypoints:[]}),energy:Object.fromEntries(raw.riders.map(r=>[r.id,100]))};
+    distanceKm,keypoints:[],allowFrontWork}),
+  energy:Object.fromEntries(raw.riders.map(r=>[r.id,100]))};
 }
 
 test('v81 paid bunch pace uses identified helpers and leaves v80 unchanged',()=>{
@@ -210,4 +213,46 @@ test('v85 charges neutral front workers and excludes weak passive passengers',()
   const forged=structuredClone(race);
   forged.frames[frame.km-1].paidBunchPace.riderIds[0]='escape-7';
   assert.throws(()=>validateRecordedTour(forged),/paid bunch pace/);
+});
+
+test('v86 front work is an explicit phase order and cannot be forged in playback',()=>{
+  const stage={distance_km:40,profile_points:[[0,100],[40,100]]};
+  const teams=[team('alpha',80,{frontWork:'rotate',phases:[
+    {atKm:20,frontWork:'sit_in'}]}),
+  team('beta',80,{frontWork:'rotate'}),team('passenger',50)];
+  const race=simulateTacticalTour({stage,teams,seed:'front-rotation',
+    motorVersion:MOTOR_EXPLICIT_FRONT_VERSION});
+  assert.equal(validateRecordedTour(race),true);
+  assert.deepEqual(race.frames.slice(0,4).map(frame=>frame.paidBunchPace?.teamId),
+    ['alpha','beta','alpha','beta']);
+  assert.ok(race.frames.slice(21).every(frame=>frame.paidBunchPace?.teamId==='beta'));
+  assert.ok(race.frames.every(frame=>frame.paidBunchPace?.riderIds.length===2));
+  const historicalTeams=teams.map(team=>({...team,orders:{...team.orders,
+    baseline:{...team.orders.baseline},phases:team.orders.phases.map(phase=>({...phase}))}}));
+  for(const team of historicalTeams){
+    delete team.orders.baseline.frontWork;
+    for(const phase of team.orders.phases)delete phase.frontWork;
+    team.orders.phases=team.orders.phases.filter(phase=>Object.keys(phase).length>1);
+  }
+  const historical=simulateTacticalTour({stage,teams:historicalTeams,seed:'front-rotation',
+    motorVersion:MOTOR_NEUTRAL_PACE_VERSION});
+  assert.ok(historical.frames.every(frame=>frame.paidBunchPace===null));
+  const forged=structuredClone(race);
+  forged.committedInputs.teams.find(team=>team.id==='alpha').orders.baseline.frontWork='sit_in';
+  assert.throws(()=>validateRecordedTour(forged),/paid bunch pace/);
+});
+
+test('v86 teams that sit in do not create paid pace',()=>{
+  const context={km:1,terrain:'flat',gapSeconds:0,distanceKm:20,
+    resolutionVersion:MOTOR_EXPLICIT_FRONT_VERSION};
+  const quiet=resolveTacticalKilometre({...context,teams:[
+    prepared(team('a',90)),prepared(team('b',50))]});
+  const worked=resolveTacticalKilometre({...context,teams:[
+    prepared(team('a',90,{frontWork:'rotate'}),20,true),prepared(team('b',50))]});
+  assert.equal(quiet.paidBunchPace,null);
+  assert.equal(worked.paidBunchPace?.teamId,'a');
+  assert.deepEqual(worked.energyCosts.filter(row=>row.reason==='cruise').map(row=>row.cost),
+    [.18,.18]);
+  assert.throws(()=>prepared(team('a',90,{frontWork:'free_speed'}),20,true),/front work/);
+  assert.throws(()=>prepared(team('a',90,{frontWork:'rotate'})),/baseline fields/);
 });

@@ -1,6 +1,6 @@
 // Read-only long-race specialist counterfactual on the opt-in paid-pace motor.
 // Run: node tests/support/p03-v2-specialist-final-probe.mjs
-//   [--bounded-finale|--bounded-bridge-finale|--earned-bridge-finale|--neutral-pace]
+//   [--bounded-finale|--bounded-bridge-finale|--earned-bridge-finale|--neutral-pace|--explicit-front]
 //   [--neutrals=0..17]
 //   [--chase-at=230|240|250] [--route=flat|hilly|mountain]
 //   [--neutral-mode=rotating|weak|mixed] [--neutral-level=0..100] [seed ...]
@@ -9,7 +9,7 @@ import {simulateTacticalTour} from '../../lib/engine/v2/tour.mjs';
 import {validateRecordedTour} from '../../lib/engine/v2/recording.mjs';
 import {MOTOR_PAID_PACE_VERSION,MOTOR_FINALE_VERSION,
   MOTOR_BRIDGE_FINALE_VERSION,MOTOR_EARNED_BRIDGE_VERSION,
-  MOTOR_NEUTRAL_PACE_VERSION} from '../../lib/engine/v2/tuning.mjs';
+  MOTOR_NEUTRAL_PACE_VERSION,MOTOR_EXPLICIT_FRONT_VERSION} from '../../lib/engine/v2/tuning.mjs';
 
 const keys=['sprint','flat','hills','mountain','cobbles','timetrial',
   'endurance','strength','wind'];
@@ -70,7 +70,8 @@ const boundedFinale=process.argv.includes('--bounded-finale');
 const boundedBridgeFinale=process.argv.includes('--bounded-bridge-finale');
 const earnedBridgeFinale=process.argv.includes('--earned-bridge-finale');
 const neutralPace=process.argv.includes('--neutral-pace');
-if([boundedFinale,boundedBridgeFinale,earnedBridgeFinale,neutralPace]
+const explicitFront=process.argv.includes('--explicit-front');
+if([boundedFinale,boundedBridgeFinale,earnedBridgeFinale,neutralPace,explicitFront]
   .filter(Boolean).length>1)
   throw new Error('Choose one finale motor.');
 const seeds=process.argv.slice(2).filter(value=>!value.startsWith('--'));
@@ -98,11 +99,13 @@ for(const seed of seeds)for(const plan of [
       if(neutralMode==='mixed')neutral.riders.forEach((rider,riderIndex)=>{
         rider.fatigue=(index*7+riderIndex*3)%31;
       });
+      if(explicitFront)neutral.orders.baseline.frontWork=index%3===0?'rotate':'sit_in';
       return neutral;
     }),
   ];
   const race=simulateTacticalTour({stage,teams,seed,weather,
-    motorVersion:neutralPace?MOTOR_NEUTRAL_PACE_VERSION:
+    motorVersion:explicitFront?MOTOR_EXPLICIT_FRONT_VERSION:
+      neutralPace?MOTOR_NEUTRAL_PACE_VERSION:
       earnedBridgeFinale?MOTOR_EARNED_BRIDGE_VERSION:
       boundedBridgeFinale?MOTOR_BRIDGE_FINALE_VERSION:
       boundedFinale?MOTOR_FINALE_VERSION:MOTOR_PAID_PACE_VERSION});
