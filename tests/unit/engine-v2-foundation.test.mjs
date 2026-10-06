@@ -1200,6 +1200,29 @@ test('a precommitted backup plan is executed by a stronger road captain sooner',
     {riderIds:riders,distanceKm:40}));
 });
 
+test('choosing the stronger road captain changes a locked plan with the same riders',()=>{
+  const base=tacticalTeam('own','balanced');
+  base.riders[0].fatigue=100;
+  base.riders[1].leadership=90;
+  base.riders[2].leadership=0;
+  base.orders={...base.orders,backupId:'own-3',
+    contingency:'backup_if_captain_exhausted',helperIds:['own-4','own-5','own-6','own-7'],
+    baseline:{effort:'hard',chase:'ignore',attack:'none'}};
+  const rival=tacticalTeam('rival','protect');
+  const stage={distance_km:140,profile_points:[[0,100],[140,100]]};
+  const run=roadCaptainId=>simulateTacticalTour({stage,
+    teams:[{...structuredClone(base),orders:{...base.orders,roadCaptainId}},rival],
+    seed:'same-riders-road-captain'});
+  const high=run('own-1'),low=run('own-2');
+  const switchKm=recording=>recording.frames.find(frame=>frame.decisions.some(
+    decision=>decision.teamId==='own'&&decision.kind==='backup_leader'))?.km;
+  assert.ok(switchKm(high)<switchKm(low));
+  assert.equal(high.committedInputs.teams.find(team=>team.id==='own').orders.roadCaptainId,'own-1');
+  assert.equal(low.committedInputs.teams.find(team=>team.id==='own').orders.roadCaptainId,'own-2');
+  assert.equal(validateRecordedTour(high),true);
+  assert.equal(validateRecordedTour(low),true);
+});
+
 test('the tactical model stays bounded across a full-length twenty-team race',()=>{
   const longStage={distance_km:400,profile_points:[[0,100],[120,400],[240,80],[400,100]],
     surface_segments:[{from_km:50,to_km:60,surface:'cobbles'}],exposed_segments:[{from_km:200,to_km:230}]};
