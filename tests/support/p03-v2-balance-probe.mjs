@@ -1,0 +1,51 @@
+// Read-only comparison with the P03 legacy balance probe. No game path or data writes.
+// Run: node tests/support/p03-v2-balance-probe.mjs
+import {assignPointDivisions} from '../../lib/calendar/division-reveal.mjs';
+import {previewRecordedDivisions} from '../../lib/race/v2-candidate.mjs';
+
+const skills=['sprint','flat','hills','mountain','cobbles',
+  'timetrial','endurance','strength','wind'];
+function snapshot(level,opponentLevel=level,seed='fixed'){
+  const teams=['a','b'].map(id=>{
+    const teamLevel=id==='a'?level:opponentLevel;
+    const selected=Array.from({length:8},(_,index)=>`${id}${index}`);
+    return {id,name:id,riders:selected.map(riderId=>({id:riderId,name:riderId,gender:'M',
+      ...Object.fromEntries(skills.map(skill=>[skill,teamLevel])),form:70,fatigue:10})),
+      entry:{selected_riders:selected,captain_id:selected[0]}};
+  });
+  return {event:{id:'balance-probe',seed,kind:'one_day',gender:'M',
+    scheduled_at:'2026-01-01T12:00:00Z',weather_locked:{temp_c:18,wind_kph:5,
+      precipitation_mm:0}},game_date:'2026-01-01',
+    stage:{distance_km:140,tags:['FLAT'],profile_points:[[0,0],[140,0]]},teams,
+    locked_division_reveal:assignPointDivisions({eventId:'balance-probe',seasonYear:2026,
+      gender:'M',entrants:teams.map(team=>({teamId:team.id,earnedPoints:0}))})};
+}
+
+const readings=[30,40,50,60,80,100].map(skill=>{
+  const results=previewRecordedDivisions(snapshot(skill)).divisions[0].recording.provisionalResults;
+  return {skill,winnerTimeSeconds:results[0].timeSeconds,
+    fieldSpreadSeconds:+(results.at(-1).timeSeconds-results[0].timeSeconds).toFixed(2)};
+});
+const mixed=[[60,55],[70,60],[80,70],[90,80],[100,80],[100,30]].map(([strongSkill,opponentSkill])=>{
+  const results=previewRecordedDivisions(snapshot(strongSkill,opponentSkill)).divisions[0]
+    .recording.provisionalResults;
+  return {strongSkill,opponentSkill,winnerTeamId:results[0].teamId,
+    topEightStrong:results.slice(0,8).filter(row=>row.teamId==='a').length,
+    firstOpponentGapSeconds:results.find(row=>row.teamId==='b').gapSeconds};
+});
+const threshold=[90,92,94,96,98,100].map(strongSkill=>{
+  const seeds=['fixed','alternate-1','alternate-2'];
+  return {strongSkill,opponentSkill:80,gapsSeconds:seeds.map(seed=>{
+    const recording=previewRecordedDivisions(snapshot(strongSkill,80,seed)).divisions[0]
+      .recording;
+    return recording.provisionalResults.find(row=>row.teamId==='b').gapSeconds;
+  })};
+});
+const cliffRecording=previewRecordedDivisions(snapshot(96,80)).divisions[0].recording;
+const firstOpponentDrop=cliffRecording.frames.find(frame=>
+  frame.riderGroups.some(row=>row.teamId==='b'&&row.group==='dropped'));
+const cliff={firstOpponentDropKm:firstOpponentDrop?.km??null,
+  finalOpponentDeficitSeconds:cliffRecording.frames.at(-1).riderGroups
+    .find(row=>row.teamId==='b')?.deficitSeconds??null};
+console.log(JSON.stringify({simulator:'P03 v2 candidate',route:'140 km flat',
+  seed:'fixed',uniformSkills:readings,mixedSkills:mixed,threshold,cliff},null,2));

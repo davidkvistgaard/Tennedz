@@ -117,6 +117,8 @@ Den første tekniske **endagsløbs-testsløjfe** er nu gennemført isoleret i pu
 
 **V2-kandidat, 6. oktober:** En ren læseprøve kan nu tage den låste P03-divisionsfordeling og danne tre særskilte kilometeroptagelser for 45 hold. Den accepterer kun standardordrer, fordi de eksisterende personlige ordrer ikke kan oversættes uden at ændre deres sportslige betydning. Den gemmer hverken replay, resultater eller point. Før motoren kan skiftes i den rigtige løbskæde, mangler ordrekontrakt, viewer, pointkobling og scenariebalance i punkt 04-09.
 
+**Balancefund i v2:** En gentagelig flad 140 km-prøve viser et brat spring: med otte ens ryttere på hvert hold giver 90 mod 80 i færdigheder cirka 0,2 sekunder til første modstander, mens 96 mod 80 giver cirka 89 sekunder og 98 mod 80 cirka 349 sekunder. Springet gentager sig med tre seeds, og første svagere rytter falder fra på kilometer 56 i 96-mod-80-prøven. Undersøg gruppens drop-tærskel på flere ruter og felter før balancegodkendelse; ingen live-motor er ændret.
+
 ## P1 - atlas og verdenskvalitet
 
 | ID | Opgave / konkret resultat | Timer | Afhænger af |
