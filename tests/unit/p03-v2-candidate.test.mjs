@@ -515,6 +515,9 @@ test('settlement preflight rebuilds saved split or legacy results without writin
       order:async()=>{
         assert.equal(table,'recovery_v2_recorded_divisions');
         return {data:rows,error:null};
+      },limit:async()=>{
+        assert.equal(table,'recovery_v2_recorded_divisions');
+        return {data:rows.slice(0,1),error:null};
       }};
     assert.ok(['recovery_v2_recorded_candidates',
       'recovery_v2_recorded_divisions'].includes(table));
@@ -528,6 +531,8 @@ test('settlement preflight rebuilds saved split or legacy results without writin
   const legacyRow={...splitRow,contract_header:null,result_contract:contract};
   const legacy=await loadStoredV2SettlementPreflight(fakeDb(legacyRow,[]),lock);
   assert.deepEqual(legacy,split);
+  await assert.rejects(loadStoredV2SettlementPreflight(
+    fakeDb(legacyRow,divisionRows),lock),/ambiguous storage format/);
   await assert.rejects(loadStoredV2SettlementPreflight(fakeDb(splitRow,[]),lock),
     /divisions are incomplete/);
   const changed=structuredClone(divisionRows);
