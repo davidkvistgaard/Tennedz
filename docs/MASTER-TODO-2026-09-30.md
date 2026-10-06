@@ -155,6 +155,8 @@ En ny 15-holds prøve viste også et brat spring: hold med gennemsnitlig færdig
 
 **Ny v2-balanceprobe, 6. oktober:** En skrivefri 140 km-probe over 2, 3, 5 og 15 hold, tre seeds og to ruteprofiler viser fortsat et ustabilt felt. På en flad rute med to hold (færdighed 96 mod 80) er afstanden cirka 177 sekunder ved normal indsats, men cirka 1,4 sekunder, når det stærke hold kører hårdt; otte svagere ryttere bliver sat i første tilfælde, ingen i det andet. Tilføjelse af et tredje hold fjerner ligeledes næsten forskellen. Et forsøg på at knytte feltfart til udvalgte arbejdsryttere brød eksisterende bjerg- og udbrudsscenarier og blev rullet tilbage. Motoren forbliver på prototypeversion 74, og scenariebalance er stadig åben før sportslig godkendelse.
 
+**Udvidede v2-managerordrer, 6. oktober:** Den isolerede taktikside viser nu motorens eksisterende valg for arbejde og finale i udbrud, hjælperes angrebsfrihed, støtte til en sat kaptajn, reaktion på truende rivaludbrud og en falmende egen forreste rytter. Et navngivet engangsangreb og ændret udbrudsarbejde kan lægges på en rutemarkør. Gemning, genindlæsning, adgang for uvedkommende og 390 px-layout bestod den lokale browserprøve mod en frisk produktionsbuild. Den sportslige effekt er fortsat under balancetest, og der er endnu ingen samlet testdatabase-til-browser-afvikling af v2.
+
 ## P1 - atlas og verdenskvalitet
 
 | ID | Opgave / konkret resultat | Timer | Afhænger af |

@@ -12,6 +12,15 @@ const EFFORT=[['','Use preset'],['conserve','Conserve'],['steady','Steady'],['ha
 const CHASE=[['','Use preset'],['ignore','Ignore'],['selective','Selective'],['all','Chase all']];
 const ATTACK=[['','Use preset'],['none','None'],['selective','Selective'],
   ['repeated','Repeated']];
+const BREAK_WORK=[['','Use preset'],['cooperate','Share pulls'],
+  ['sit_on','Save energy'],['drive','Drive the break']];
+const BREAK_FINALE=[['','Use preset'],['hold_group','Hold the group'],
+  ['attack_if_outsprinted','Attack if outsprinted']];
+const HELPER_ATTACK=[['','Use preset'],['open','Allow helpers to attack'],
+  ['hold_for_captain','Hold helpers for captain'],
+  ['release_if_dropped','Release if captain is dropped']];
+const CAPTAIN_SUPPORT=[['','Use preset'],['hold_position','Hold position'],
+  ['drop_back_if_dropped','Wait for dropped captain']];
 const utc=value=>new Date(value).toLocaleString('en-GB',{
   day:'numeric',month:'short',hour:'2-digit',minute:'2-digit',timeZone:'UTC',
   timeZoneName:'short'});
@@ -142,6 +151,13 @@ export default function V2TacticsClient({eventId}){
             <Select label="If captain is exhausted" value={plan.contingency??'hold_plan'}
               options={[["hold_plan","Hold plan"],["backup_if_captain_exhausted","Use backup leader"]]}
               onChange={value=>update('contingency',value)} disabled={!editable}/>
+            <Select label="If a rival break threatens" value={plan.breakResponse??'hold_plan'}
+              options={[["hold_plan","Hold plan"],["chase_if_threatened","Chase the threat"]]}
+              onChange={value=>update('breakResponse',value)} disabled={!editable}/>
+            <Select label="If our forward rider fades" value={plan.forwardResponse??'protect_forward'}
+              options={[["protect_forward","Protect the forward rider"],
+                ["chase_if_fading","Chase if fading"]]}
+              onChange={value=>update('forwardResponse',value)} disabled={!editable}/>
           </div>
           <fieldset className="v2-helpers" disabled={!editable}><legend>Helpers</legend>
             {riderOptions.filter(([id])=>id!==context.entry.captain_id&&id!==roadCaptain)
@@ -162,6 +178,18 @@ export default function V2TacticsClient({eventId}){
             <Select label="Planned attacker" value={plan.baseline?.attackRiderId??''}
               options={[["","Automatic"],...riderOptions]}
               onChange={value=>updateBaseline('attackRiderId',value)} disabled={!editable}/>
+            <Select label="Work in a break" value={plan.baseline?.breakWork??''}
+              options={BREAK_WORK}
+              onChange={value=>updateBaseline('breakWork',value)} disabled={!editable}/>
+            <Select label="Breakaway finale" value={plan.baseline?.breakFinale??''}
+              options={BREAK_FINALE}
+              onChange={value=>updateBaseline('breakFinale',value)} disabled={!editable}/>
+            <Select label="Helper attacks" value={plan.baseline?.helperAttackPolicy??''}
+              options={HELPER_ATTACK}
+              onChange={value=>updateBaseline('helperAttackPolicy',value)} disabled={!editable}/>
+            <Select label="Captain support" value={plan.baseline?.captainSupport??''}
+              options={CAPTAIN_SUPPORT}
+              onChange={value=>updateBaseline('captainSupport',value)} disabled={!editable}/>
           </div>
         </section>
         <section className="card"><h2>Route markers</h2>
@@ -183,6 +211,26 @@ export default function V2TacticsClient({eventId}){
               <Select label="Attack rider" value={phase.attackRiderId??''}
                 options={[["","Keep previous"],...riderOptions]}
                 onChange={value=>updatePhase(index,'attackRiderId',value)} disabled={!editable}/>
+              <Select label={`Change ${index+1} · break move`} value={phase.breakAttackRiderId??''}
+                options={[["","No one-off break move"],...riderOptions]}
+                onChange={value=>updatePhase(index,'breakAttackRiderId',value)}
+                disabled={!editable}/>
+              <Select label={`Change ${index+1} · break work`} value={phase.breakWork??''}
+                options={[["","Keep previous"],...BREAK_WORK.slice(1)]}
+                onChange={value=>updatePhase(index,'breakWork',value)} disabled={!editable}/>
+              <Select label={`Change ${index+1} · finale`} value={phase.breakFinale??''}
+                options={[["","Keep previous"],...BREAK_FINALE.slice(1)]}
+                onChange={value=>updatePhase(index,'breakFinale',value)} disabled={!editable}/>
+              <Select label={`Change ${index+1} · helper attacks`}
+                value={phase.helperAttackPolicy??''}
+                options={[["","Keep previous"],...HELPER_ATTACK.slice(1)]}
+                onChange={value=>updatePhase(index,'helperAttackPolicy',value)}
+                disabled={!editable}/>
+              <Select label={`Change ${index+1} · captain support`}
+                value={phase.captainSupport??''}
+                options={[["","Keep previous"],...CAPTAIN_SUPPORT.slice(1)]}
+                onChange={value=>updatePhase(index,'captainSupport',value)}
+                disabled={!editable}/>
             </div>
             {editable&&<button type="button" className="btn" onClick={()=>
               update('phases',plan.phases.filter((_,i)=>i!==index))}>Remove marker</button>}

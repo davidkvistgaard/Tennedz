@@ -30,8 +30,16 @@ test('entered manager can edit and reload only their own private v2 plan',
       await expect(manager.getByText('No private v2 plan saved yet.')).toBeVisible();
       await manager.getByLabel('Race approach').selectOption('protect');
       await manager.getByLabel('Road captain').selectOption('fixture-M-1');
+      await manager.getByLabel('If a rival break threatens').selectOption('chase_if_threatened');
+      await manager.getByLabel('If our forward rider fades').selectOption('chase_if_fading');
+      await manager.getByLabel('Work in a break').selectOption('sit_on');
+      await manager.getByLabel('Breakaway finale').selectOption('attack_if_outsprinted');
+      await manager.getByLabel('Helper attacks').selectOption('hold_for_captain');
+      await manager.getByLabel('Captain support').selectOption('drop_back_if_dropped');
       await manager.getByRole('button',{name:'Add route marker'}).click();
       await expect(manager.getByLabel('Change 1 · at km')).toHaveValue('10');
+      await manager.getByLabel('Change 1 · break move').selectOption('fixture-M-2');
+      await manager.getByLabel('Change 1 · break work').selectOption('drive');
       await manager.getByRole('button',{name:'Save private v2 plan'}).click();
       await expect(manager.getByText(/Private v2 plan saved/)).toBeVisible();
       const own=await manager.request.get(endpoint);
@@ -39,12 +47,19 @@ test('entered manager can edit and reload only their own private v2 plan',
       const context=await own.json();
       expect(context).toMatchObject({ok:true,team_id:'team-v2manager',
         division_index:1,editable:true,orders:{version:2,preset:'protect',
-          roadCaptainId:'fixture-M-1',phases:[{atKm:10,effort:'hard'}]}});
+          roadCaptainId:'fixture-M-1',breakResponse:'chase_if_threatened',
+          forwardResponse:'chase_if_fading',baseline:{breakWork:'sit_on',
+            breakFinale:'attack_if_outsprinted',helperAttackPolicy:'hold_for_captain',
+            captainSupport:'drop_back_if_dropped'},
+          phases:[{atKm:10,effort:'hard',breakAttackRiderId:'fixture-M-2',
+            breakWork:'drive'}]}});
       expect(JSON.stringify(context)).not.toMatch(/team-v2rival|v2_orders_by_team_id/);
       await manager.reload();
       await expect(manager.getByLabel('Race approach')).toHaveValue('protect');
       await expect(manager.getByLabel('Road captain')).toHaveValue('fixture-M-1');
       await expect(manager.getByLabel('Change 1 · at km')).toHaveValue('10');
+      await expect(manager.getByLabel('Change 1 · break move')).toHaveValue('fixture-M-2');
+      await expect(manager.getByLabel('Work in a break')).toHaveValue('sit_on');
       expect((await outsider.request.get(endpoint)).status()).toBe(403);
       expect((await manager.request.get(`${endpoint}&team_id=team-v2outsider`)).status())
         .toBe(403);
