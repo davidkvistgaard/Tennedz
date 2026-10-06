@@ -4,7 +4,9 @@ import {simulateTacticalTour} from '../../lib/engine/v2/tour.mjs';
 import {validateFinalePair} from '../../lib/engine/v2/finale-pair.mjs';
 import {validateFinaleRelay} from '../../lib/engine/v2/finale-relay.mjs';
 import {finaleDistanceGrid} from '../../lib/engine/v2/finale-grid.mjs';
-import {probeFinalePairFromTour,probeFinaleRelayFromTour} from
+import {validateFinaleLeadOutPull} from '../../lib/engine/v2/finale-lead-out-pull.mjs';
+import {probeFinalePairFromTour,probeFinaleRelayFromTour,
+  probeFinaleLeadOutFromTour} from
   '../../lib/engine/v2/finale-tour-probe.mjs';
 
 const stage={distance_km:40,profile_points:[[0,100],[40,100]]};
@@ -48,6 +50,25 @@ test('a team that ignored the gap cannot be invented as a chasing worker',()=>{
   assert.deepEqual(tour.frames[34].roadGroups.map(group=>group.riderIds),[['a-2']]);
   assert.throws(()=>probeFinalePairFromTour(tour,{
     frontRiderId:'a-2',chaseRiderId:'b-2'}),/engaged in the bunch chase/);
+});
+
+test('a recorded one-kilometre snapshot supplies the actual lead-out group and energy',()=>{
+  const tour=simulateTacticalTour(input);
+  const original=structuredClone(tour);
+  const probe=probeFinaleLeadOutFromTour(tour,{teamId:'b',
+    finisherId:'b-0',nomineeId:'b-2',launchIntent:'standard'});
+  const source=tour.frames[38];
+  assert.equal(probe.sourceKm,39);
+  assert.equal(probe.sourceTuningVersion,tour.tuningVersion);
+  assert.equal(probe.recording.workerRiderId,'b-2');
+  assert.equal(probe.input.riderStates.find(state=>state.riderId==='b-2').energy,
+    source.riderGroups.find(state=>state.id==='b-2').energy);
+  assert.equal(probe.input.riderStates.find(state=>state.riderId==='b-2').roadGroupId,
+    'peloton');
+  assert.equal(validateFinaleLeadOutPull(probe.input,probe.recording),true);
+  assert.deepEqual(tour,original);
+  assert.throws(()=>probeFinaleLeadOutFromTour(tour,{teamId:'b',
+    finisherId:'a-0',launchIntent:'standard'}),/locked team and finisher/);
 });
 
 test('two genuinely engaged rival teams supply a reproducible relay probe',()=>{
