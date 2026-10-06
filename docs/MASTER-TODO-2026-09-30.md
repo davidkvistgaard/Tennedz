@@ -159,6 +159,8 @@ En ny 15-holds prøve viste også et brat spring: hold med gennemsnitlig færdig
 
 Et efterfølgende UI-check rettede desuden preset-skift efter genindlæsning, så gamle normaliserede startordrer ikke overstyrer det nye preset; en rutemarkør kan nu ophæve en tidligere navngiven angriber til automatisk valg. Den fokuserede browserprøve bestod efter frisk build.
 
+**V2-optagelsens størrelse, 6. oktober:** En skrivefri måling med den faktiske resultatkontrakt gav cirka 6,42 MiB for 45 hold på 140 km og 11,34 MiB ved 250 km; 400 hold på 140 km gav 57,17 MiB. Den nuværende private GET læser hele kontrakten fra databasen, selv om spillerens redigerede divisionsvisning kun var 1,69 MiB i 45-holdsprøven og 2,20 MiB i 400-holdsprøven. Lokal beregning af kontrakten tog cirka 1,4 sekunder ved 45 hold og 8,5 sekunder ved 400 hold, og fuld viewer-validering yderligere cirka 0,4/2,1 sekunder. Dette er lokale syntetiske målinger, ikke netværks- eller databasebelastning. Versionsmærket, divisionsopdelt lagring/læsning og en rigtig preview-belastningsprøve bør komme før bred v2-aktivering. Enhedsprøven binder nu alle de nye spillerordrer til den låste v2-optagelse, men resultat- og pointtransaktionen mangler stadig.
+
 ## P1 - atlas og verdenskvalitet
 
 | ID | Opgave / konkret resultat | Timer | Afhænger af |

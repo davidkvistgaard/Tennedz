@@ -111,6 +111,36 @@ test('v2 candidate consumes every manager plan from a separate locked snapshot',
   assert.throws(()=>previewLockedV2RecordedDivisions(input),/saved v2 tactics lock/);
 });
 
+test('player-selectable break and support orders survive the lock into a recording',()=>{
+  const lock=snapshot(2),captain=lock.teams[0].entry.captain_id;
+  lock.v2_input_version=1;
+  lock.v2_orders_by_team_id={
+    [lock.teams[0].id]:{captainId:captain,roadCaptainId:lock.teams[0].riders[1].id,
+      backupId:lock.teams[0].riders[2].id,
+      helperIds:[lock.teams[0].riders[3].id],preset:'protect',
+      baseline:{breakWork:'sit_on',breakFinale:'attack_if_outsprinted',
+        helperAttackPolicy:'hold_for_captain',captainSupport:'drop_back_if_dropped'},
+      contingency:'backup_if_captain_exhausted',breakResponse:'chase_if_threatened',
+      forwardResponse:'chase_if_fading',
+      phases:[{atKm:10,breakAttackRiderId:lock.teams[0].riders[4].id,
+        breakWork:'drive',attackRiderId:null}]},
+    [lock.teams[1].id]:{captainId:lock.teams[1].entry.captain_id,
+      preset:'balanced'},
+  };
+  const candidate=previewLockedV2RecordedDivisions(lock);
+  const recorded=candidate.divisions[0].recording.committedInputs.teams
+    .find(team=>team.id===lock.teams[0].id).orders;
+  assert.equal(recorded.baseline.breakWork,'sit_on');
+  assert.equal(recorded.baseline.breakFinale,'attack_if_outsprinted');
+  assert.equal(recorded.baseline.helperAttackPolicy,'hold_for_captain');
+  assert.equal(recorded.baseline.captainSupport,'drop_back_if_dropped');
+  assert.equal(recorded.breakResponse,'chase_if_threatened');
+  assert.equal(recorded.forwardResponse,'chase_if_fading');
+  assert.deepEqual(recorded.phases,[{atKm:10,attackRiderId:null,
+    breakAttackRiderId:lock.teams[0].riders[4].id,breakWork:'drive'}]);
+  assert.equal(validateRecordedTour(candidate.divisions[0].recording),true);
+});
+
 test('v2 tactics lock fixes deterministic weather without changing the event',()=>{
   const input=snapshot(2);
   input.event.deadline='2026-10-07T12:00:00Z';
