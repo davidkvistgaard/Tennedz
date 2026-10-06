@@ -56,8 +56,10 @@ for(const [course,stage] of Object.entries(ROUTES)){
         photoFinishBreakWins:0,clearBreakWins:0,breakWinMargins:[],
         photoFinalGaps:[],photoFinaleAbilityDiffs:[],photoBunchDeficits:[],
         photoAllTeamsAhead:0,photoLateChaseKm:[],photoLateResidualKm:[],
-        lateResidualAffectedRaces:0,finalAutoAttackRaces:0,
+        lateResidualAffectedRaces:0,residualAffectedBreakWinRaces:0,
+        finalAutoAttackRaces:0,
         finalAutoJoinedRaces:0,finalAutoWinnerRaces:0,
+        preFinalBreakWinnerRaces:0,finalKmJoinWinnerRaces:0,
         breakWinnerGroupAgeKm:[],
         caughtBreaks:0,finishLineCatches:0,partialFinishCatches:0,
         finishLineCaughtRiders:0,droppedRiders:0,amberEnergy:0,finalGaps:[],
@@ -81,10 +83,15 @@ for(const [course,stage] of Object.entries(ROUTES)){
           ['preset_cadence','keypoint'].includes(attack.reason)).map(attack=>attack.riderId));
         const finalAutoJoined=new Set(finalFrame.joinedBreakawayRiderIds.filter(id=>
           finalAutoIds.has(id)));
+        const winner=race.provisionalResults[0];
+        const breakWinner=winner.group==='breakaway';
         totals.finalAutoAttackRaces+=Number(finalAutoIds.size>0);
         totals.finalAutoJoinedRaces+=Number(finalAutoJoined.size>0);
-        totals.finalAutoWinnerRaces+=Number(finalAutoJoined.has(race.provisionalResults[0].riderId)&&
-          race.provisionalResults[0].group==='breakaway');
+        totals.finalAutoWinnerRaces+=Number(finalAutoJoined.has(winner.riderId)&&breakWinner);
+        totals.preFinalBreakWinnerRaces+=Number(breakWinner&&
+          race.frames.at(-2).breakawayRiderIds.includes(winner.riderId));
+        totals.finalKmJoinWinnerRaces+=Number(breakWinner&&
+          finalFrame.joinedBreakawayRiderIds.includes(winner.riderId));
         const lateResidualKm=race.frames.slice(-5).filter((frame,index)=>{
           const prior=race.frames.at(-6+index).roadGroups.at(-1)?.gapSeconds??0;
           return frame.roadGroups.length===1&&frame.attackPower===0&&
@@ -93,6 +100,7 @@ for(const [course,stage] of Object.entries(ROUTES)){
               prior+frame.passiveGapDelta&&frame.pelotonGapSeconds>0;
         }).length;
         totals.lateResidualAffectedRaces+=Number(lateResidualKm>0);
+        totals.residualAffectedBreakWinRaces+=Number(lateResidualKm>0&&breakWinner);
         const amber=race.provisionalResults.filter(rider=>rider.teamId==='team-0');
         const best=Math.min(...amber.map(rider=>rider.position));
         totals.amberWins+=Number(best===1);
@@ -175,9 +183,12 @@ for(const [course,stage] of Object.entries(ROUTES)){
         medianPhotoLateResidualKm:sortedPhotoLateResidualKm.length?
           sortedPhotoLateResidualKm[Math.floor((sortedPhotoLateResidualKm.length-1)/2)]:null,
         lateResidualAffectedRaceRate:totals.lateResidualAffectedRaces/samples,
+        residualAffectedBreakWinRaceRate:totals.residualAffectedBreakWinRaces/samples,
         finalAutoAttackRaceRate:totals.finalAutoAttackRaces/samples,
         finalAutoJoinedRaceRate:totals.finalAutoJoinedRaces/samples,
         finalAutoWinnerRaceRate:totals.finalAutoWinnerRaces/samples,
+        preFinalBreakWinnerRaceRate:totals.preFinalBreakWinnerRaces/samples,
+        finalKmJoinWinnerRaceRate:totals.finalKmJoinWinnerRaces/samples,
         clearBreakWinRate:totals.clearBreakWins/samples,
         medianBreakWinnerMarginSeconds:sortedWinMargins.length?
           sortedWinMargins[Math.floor((sortedWinMargins.length-1)/2)]:null,

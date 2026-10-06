@@ -18,6 +18,13 @@ test('paired fictional races flag degenerate finale balance before tuning is acc
   for(const [course,genders] of Object.entries(report.courses)){
     const rows=Object.values(genders).flatMap(strategies=>Object.values(strategies));
     assert.equal(rows.length,6);
+    for(const row of rows){
+      assert.ok(Math.abs(row.preFinalBreakWinnerRaceRate+
+        row.finalKmJoinWinnerRaceRate-row.breakWinRate)<1e-9,
+      `${course}: breakaway winner has no recorded origin`);
+      assert.ok(row.finalAutoWinnerRaceRate<=row.finalKmJoinWinnerRaceRate);
+      assert.ok(row.residualAffectedBreakWinRaceRate<=row.breakWinRate);
+    }
     const breakWinRate=rows.reduce((sum,row)=>sum+row.breakWinRate,0)/rows.length;
     const finalAutoWinnerRate=rows.reduce((sum,row)=>
       sum+row.finalAutoWinnerRaceRate,0)/rows.length;
