@@ -561,6 +561,12 @@ test('settlement preflight rebuilds saved split or legacy results without writin
     readinessDb({...lock.event,status:'FINISHED'}),lock.event.id,{now}),
   /not ready for settlement/);
   await assert.rejects(loadV2SettlementReadiness(
+    readinessDb({...lock.event,scheduled_at:'2026-10-08T12:00:30Z'}),
+    lock.event.id,{now}),/not ready for settlement/);
+  await assert.rejects(loadV2SettlementReadiness(
+    readinessDb({...lock.event,tactics_deadline:'2026-10-08T11:30:00Z'}),
+    lock.event.id,{now}),/not ready for settlement/);
+  await assert.rejects(loadV2SettlementReadiness(
     readinessDb(lock.event,'recovery_ranking_awards'),lock.event.id,{now}),
   /ranking_awards rows require manual review/);
   await assert.rejects(loadV2SettlementReadiness(
