@@ -65,6 +65,18 @@ A local trial gave simultaneous attackers only 30% of each additional rider's pr
 
 The audit now totals recorded chase decisions by reason. In the default Coast sprint runs, teams contribute an average of **86.0 team-kilometres answering fresh attacks** and **16.0 team-kilometres because the leader exceeded the selective safe gap**; on Ridge the figures are **84.1** and **18.1**. These are sums across teams, so several teams working on one kilometre count several times, including a response to an attack that fails to establish a break. No other chase reasons fire in these default fixtures. The predominance of reactive work is consistent with the regular attack schedule and short breaks; it does not by itself show that chasing causes every catch. A future balance trial should separately vary attack frequency and the decision to respond, then compare episode length, catches and race results.
 
+### Very long effort timing across routes
+
+Run `node tests/support/p03-v2-long-race-tactics-probe.mjs 260 s1 rolling` (or `flat` / `exposed`) for a 260 km, 15-team comparison of the same four precommitted effort plans. The probe now validates every recording, reports the captain's finishing energy and place, and retains the original two-team comparison. It changes no result path. Three paired seeds (`s1`–`s3`) gave the following range for the first weaker rider's time minus the first stronger rider's time in the 15-team field:
+
+| Route | Steady throughout | Hard throughout | Conserve then hard after 160 km |
+| --- | ---: | ---: | ---: |
+| Flat | 14.6–14.8 s | 66.4–66.6 s | 157.7–157.9 s |
+| Rolling | 14.5–14.8 s | 65.5–65.7 s | 160.2–160.5 s |
+| Exposed, 28 km/h wind | 14.6–14.8 s | 66.4–66.6 s | 108.6–123.1 s |
+
+The `hard then conserve` plan produced about the same first-rider margin as `hard throughout` in these fixtures, while retaining more captain energy. The large advantage from holding effort until late survives the rolling profile and remains strong under wind. The synthetic riders have similar skill profiles, and every team orders no attacks and no chase; this is an effort-and-fatigue sensitivity check, not a World Championship simulation. The next acceptance cases need specialist rivals, actual attacks and pursuit, late road position, a 5 km finale and a finish contract before changing energy tuning.
+
 ### Field-size sensitivity before a chase retune
 
 The smaller `node scripts/audit-v2-passive-bunch.mjs` probe isolates one kilometre of the same v79 model. A fixed front rider and a bunch start 30 seconds apart; every team orders neither an attack nor a chase. With two teams, passive motion adds **0.56 seconds** to the break's gap. One weak passive entrant leaves that figure unchanged, but thirteen such entrants raise it to the per-kilometre cap of **1.5 seconds**. A stronger passive entrant changes it to **-0.14 seconds**. Chase power remains zero in every case. This demonstrates a separate field-composition effect in the median bunch reference, without relying on different attack schedules or simulated finishes. It does not explain every difference in the full-race sweep. A trial that replaced the rider median with the fastest team median removed this local dilution but failed five existing scenarios, including a fading-rider response and a partial finish-line catch; that motor change was reverted. The next version needs a coherent bunch-speed rule alongside chase recovery and finale handling.
