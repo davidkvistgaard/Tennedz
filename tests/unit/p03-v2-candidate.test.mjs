@@ -5,7 +5,8 @@ import {validateRecordedTour} from '../../lib/engine/v2/recording.mjs';
 import {previewRecordedDivisions,previewLockedV2RecordedDivisions}
   from '../../lib/race/v2-candidate.mjs';
 import {projectV2OneDayAwards} from '../../lib/race/v2-points.mjs';
-import {buildV2OneDayResultContract,validateV2OneDayResultContract}
+import {buildV2OneDayResultContract,validateV2OneDayResultContract,
+  validateV2OneDayResultAgainstLock}
   from '../../lib/race/v2-result-contract.mjs';
 import {selectV2RecordedDivision} from '../../lib/race/v2-viewer.mjs';
 import {normalizeEnteredV2Orders} from '../../lib/race/v2-tactics.mjs';
@@ -210,6 +211,34 @@ test('one versioned v2 result contract binds each replay, captain placing and aw
   const wrongVersion=structuredClone(contract);
   wrongVersion.schemaVersion=2;
   assert.throws(()=>validateV2OneDayResultContract(wrongVersion),/Unsupported/);
+});
+
+test('v2 result can only cross the storage boundary with its exact locked manager input',()=>{
+  const lock=snapshot(2);
+  lock.event.race_tier=3;
+  lock.v2_input_version=1;
+  lock.v2_orders_by_team_id=Object.fromEntries(lock.teams.map((team,index)=>[
+    team.id,{captainId:team.entry.captain_id,preset:index?'aggressive':'protect'},
+  ]));
+  const candidate=previewLockedV2RecordedDivisions(lock);
+  const contract=buildV2OneDayResultContract(candidate,{tier:3});
+  assert.equal(validateV2OneDayResultAgainstLock(lock,contract),contract);
+  const otherTier=structuredClone(lock);
+  otherTier.event.race_tier=4;
+  assert.throws(()=>validateV2OneDayResultAgainstLock(otherTier,contract),
+    /another locked race or tier/);
+  const otherWeather=structuredClone(lock);
+  otherWeather.event.weather_locked.wind_kph=40;
+  assert.throws(()=>validateV2OneDayResultAgainstLock(otherWeather,contract),
+    /saved manager tactics lock/);
+  const otherOrders=structuredClone(lock);
+  otherOrders.v2_orders_by_team_id[lock.teams[0].id].preset='balanced';
+  assert.throws(()=>validateV2OneDayResultAgainstLock(otherOrders,contract),
+    /saved manager tactics lock/);
+  const otherRace=structuredClone(lock);
+  otherRace.event.id='other-race';
+  assert.throws(()=>validateV2OneDayResultAgainstLock(otherRace,contract),
+    /another locked race or tier/);
 });
 
 test('45 distinct v2 plans survive reveal, three recordings and award projection',()=>{
