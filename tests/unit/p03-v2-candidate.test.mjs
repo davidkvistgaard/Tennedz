@@ -2,6 +2,8 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {assignPointDivisions} from '../../lib/calendar/division-reveal.mjs';
 import {validateRecordedTour} from '../../lib/engine/v2/recording.mjs';
+import {MOTOR_NEUTRAL_PACE_VERSION,TUNING_VERSION}
+  from '../../lib/engine/v2/tuning.mjs';
 import {previewRecordedDivisions,previewLockedV2RecordedDivisions}
   from '../../lib/race/v2-candidate.mjs';
 import {projectV2OneDayAwards} from '../../lib/race/v2-points.mjs';
@@ -211,6 +213,44 @@ test('45-team v2 recording projects unique tier points without writing a ledger'
   wrongEvent.divisionReveal.eventId='other-race';
   assert.throws(()=>projectV2OneDayAwards(wrongEvent,{tier:3}),/saved division reveal/);
   assert.throws(()=>projectV2OneDayAwards(candidate,{tier:7}),/recorded race and tier/);
+});
+
+test('v85 preview carries paid neutral pace through replay and point projection only',()=>{
+  const input=snapshot(15);
+  input.event.race_tier=3;
+  input.event.calendar_source='PELOTONIA';
+  input.stage={distance_km:40,profile_points:[[0,100],[40,100]],
+    keypoints:[{km:11,kind:'SPRINT'}]};
+  input.teams.forEach((team,index)=>team.riders.forEach(rider=>{
+    for(const skill of ['flat','sprint','hills','mountain','cobbles','timetrial',
+      'endurance','strength','wind'])rider[skill]=index===0?95:index===1?83:20;
+  }));
+  const orders=Object.fromEntries(input.teams.map((team,index)=>[
+    team.id,{captainId:team.entry.captain_id,preset:'balanced',
+      baseline:{effort:'conserve',attack:'none',chase:'ignore'},
+      ...(index===0?{phases:[{atKm:10,attack:'selective',
+        attackRiderId:team.riders[7].id}]}:{})},
+  ]));
+  const options={v2OrdersByTeamId:orders,motorVersion:MOTOR_NEUTRAL_PACE_VERSION};
+  const candidate=previewRecordedDivisions(input,options);
+  assert.deepEqual(candidate,previewRecordedDivisions(input,options));
+  const recording=candidate.divisions[0].recording;
+  assert.equal(recording.tuningVersion,MOTOR_NEUTRAL_PACE_VERSION);
+  assert.ok(recording.frames.some(frame=>frame.paidBunchPace?.effort==='conserve'));
+  const contract=buildV2OneDayResultContract(candidate,{tier:3});
+  assert.equal(validateV2OneDayResultContract(contract),contract);
+  assert.equal(contract.divisions[0].awards.length,20);
+  assert.equal(contract.divisions[0].riderResults.length,120);
+  assert.equal(contract.divisions[0].recording.tuningVersion,MOTOR_NEUTRAL_PACE_VERSION);
+  const {divisions,...header}=contract;
+  assert.equal(validateV2OneDayDivisionSlice({...header,divisionCount:1,
+    division:divisions[0]}).division,divisions[0]);
+  input.v2_input_version=1;
+  input.v2_orders_by_team_id=orders;
+  assert.throws(()=>buildV2OneDayLedgerRows(input,contract),
+    /saved manager tactics lock/);
+  assert.equal(previewRecordedDivisions(input,{v2OrdersByTeamId:orders})
+    .divisions[0].recording.tuningVersion,TUNING_VERSION);
 });
 
 test('one versioned v2 result contract binds each replay, captain placing and award',()=>{
