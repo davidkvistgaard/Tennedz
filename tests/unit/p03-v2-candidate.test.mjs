@@ -8,7 +8,8 @@ import {projectV2OneDayAwards} from '../../lib/race/v2-points.mjs';
 import {buildV2OneDayResultContract,validateV2OneDayResultContract,
   validateV2OneDayResultAgainstLock}
   from '../../lib/race/v2-result-contract.mjs';
-import {selectV2RecordedDivision} from '../../lib/race/v2-viewer.mjs';
+import {selectV2RecordedDivision,projectV2RecordedDivisionForTeam}
+  from '../../lib/race/v2-viewer.mjs';
 import {normalizeEnteredV2Orders} from '../../lib/race/v2-tactics.mjs';
 import {weatherForV2TacticsLock} from '../../lib/race/v2-lock-weather.mjs';
 import {pointsForDivisionResult} from '../../lib/calendar/points.mjs';
@@ -315,4 +316,36 @@ test('viewer selection exposes only the entered team’s saved division',()=>{
     .divisionIndex=2;
   assert.throws(()=>selectV2RecordedDivision(tampered,assignment.teamId),
     /differs from the saved reveal/);
+});
+
+test('player viewer projection hides other divisions and rival private plans',()=>{
+  const input=snapshot(45);
+  const candidate=previewRecordedDivisions(input);
+  const contract=buildV2OneDayResultContract(candidate,{tier:3});
+  const teamId=candidate.divisionReveal.assignments
+    .find(row=>row.divisionIndex===3).teamId;
+  const projected=projectV2RecordedDivisionForTeam(contract,teamId);
+  assert.equal(projected.divisionIndex,3);
+  assert.equal(projected.focusTeamId,teamId);
+  assert.equal(projected.settled,false);
+  assert.equal(projected.teamResults.length,15);
+  assert.equal(projected.riderResults.length,120);
+  assert.equal(projected.projectedAwards.length,20);
+  assert.equal(JSON.stringify(projected).includes(candidate.divisions[0].teamIds[0]),false);
+  const teams=projected.recording.committedInputs.teams;
+  assert.equal(teams.length,15);
+  assert.ok(teams.find(team=>team.id===teamId).orders.version===2);
+  assert.ok(teams.filter(team=>team.id!==teamId).every(team=>
+    Object.keys(team.orders).join(',')==='captainId'&&
+    team.riders.every(rider=>Object.keys(rider).every(key=>['id','name'].includes(key)))));
+  assert.ok(projected.recording.frames.every(frame=>
+    !('teamEnergy' in frame)&&!('teamPace' in frame)&&
+    frame.riderGroups.filter(rider=>rider.teamId!==teamId)
+      .every(rider=>!('energy' in rider))));
+  assert.ok(projected.recording.provisionalResults
+    .filter(result=>result.teamId!==teamId)
+    .every(result=>!('energy' in result)&&!('finaleAbility' in result)));
+  assert.equal(contract.divisions[2].recording.committedInputs.teams[1].orders.version,2);
+  assert.throws(()=>projectV2RecordedDivisionForTeam(contract,'foreign'),
+    /no unique saved division/);
 });

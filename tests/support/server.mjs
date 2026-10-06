@@ -192,7 +192,8 @@ const server = http.createServer(async (req, res) => {
         ...(v2RecordingFixture?["eq.team-v2rival"]:[])].includes(url.searchParams.get("team_id"))
         ?{team_id:url.searchParams.get("team_id").replace("eq.",""),division_index:1}:null);
     if (v2RecordingFixture && table === "recovery_v2_recorded_candidates")
-      return send(200,v2RecordedAt?{recorded_at:v2RecordedAt}:null);
+      return send(200,v2RecordedAt?{recorded_at:v2RecordedAt,
+        result_contract:v2RecordedContract}:null);
     if (v2RecordingFixture && table === "recovery_v2_tactics_commits")
       return send(200,{input_snapshot:v2RecordingLock});
     if (table === "recovery_division_reveal_entries" &&

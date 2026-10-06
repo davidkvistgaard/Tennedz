@@ -7,7 +7,8 @@ const clamp=(value,min,max)=>Math.max(min,Math.min(max,value));
 const formatSeconds=value=>`${Math.round(value)} s`;
 const title=value=>value.replaceAll('_',' ');
 
-export default function TacticalTourViewer({recording,focusTeamId,awardProjection}){
+export default function TacticalTourViewer({recording,focusTeamId,awardProjection,
+  playerRecording=false,divisionIndex=1}){
   const [index,setIndex]=useState(0);
   const [playing,setPlaying]=useState(false);
   const [speed,setSpeed]=useState(1);
@@ -77,9 +78,13 @@ export default function TacticalTourViewer({recording,focusTeamId,awardProjectio
   const firstCaptainTime=captainResults[0].captain.timeSeconds;
   return <div className="tactical-viewer">
     <header className="tactical-hero">
-      <p className="tactical-eyebrow">RECORDED TOUR PROTOTYPE · DIVISION 1</p>
+      <p className="tactical-eyebrow">{playerRecording?
+        `PRIVATE V2 RECORDING CANDIDATE · DIVISION ${divisionIndex}`:
+        'RECORDED TOUR PROTOTYPE · DIVISION 1'}</p>
       <h1>Follow the race, kilometre by kilometre</h1>
-      <p>This sample was calculated before playback. Scrubbing and play speed only change what you see.</p>
+      <p>{playerRecording?
+        'This private candidate was calculated before playback. The race and ranking points are not final.':
+        'This sample was calculated before playback. Scrubbing and play speed only change what you see.'}</p>
       <div className="tactical-facts"><span>{distance} km</span><span>{ascent} m climbing</span>
         <span>{teams.length} teams</span><span>Locked weather: {recording.route.lockedWeather.windKph} km/h wind</span></div>
     </header>
@@ -129,10 +134,10 @@ export default function TacticalTourViewer({recording,focusTeamId,awardProjectio
       </section>
       <section className="tactical-panel" aria-label="Your riders">
         <div className="tactical-panel-head"><h2>{focusedTeam?.name??focusedTeam?.id} riders</h2>
-          <label htmlFor="tactical-team">Watch team <select id="tactical-team"
+          {!playerRecording&&<label htmlFor="tactical-team">Watch team <select id="tactical-team"
             value={selectedTeamId} onChange={event=>setSelectedTeamId(event.target.value)}>
             {teams.map(team=><option key={team.id} value={team.id}>{team.name??team.id}</option>)}
-          </select></label></div>
+          </select></label>}</div>
         <div className="tactical-rider-list">{own.map(rider=><div key={rider.id}>
           <strong>{names.get(rider.id)}</strong><span>{roadGroupByRider.get(rider.id)??title(rider.group)}</span>
           <span>{Math.round(rider.energy)} energy</span>
@@ -167,7 +172,9 @@ export default function TacticalTourViewer({recording,focusTeamId,awardProjectio
           <span>Shown after the final kilometre</span></div>
         {index===frames.length-1?<>
           {awardProjection&&<p>Projected ranking points for {teamName(selectedTeamId)}:
-            {' '}{selectedTeamPoints}. Sample only; no points were saved.</p>}
+            {' '}{selectedTeamPoints}. {playerRecording?
+              'Candidate only; no ranking points were awarded.':
+              'Sample only; no points were saved.'}</p>}
           <h3>Teams by captain finish</h3>
           <ol className="tactical-results" aria-label="Teams by captain finish">{captainResults.map(({team,captain},position)=><li key={team.id}>
             <b>{position+1}</b><span>{team.name??team.id}</span>

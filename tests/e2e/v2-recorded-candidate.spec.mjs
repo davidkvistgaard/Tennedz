@@ -39,6 +39,52 @@ test('two entrants share one private recorded v2 candidate without exposing resu
       expect((await manager.request.post(endpoint,{
         headers:{Origin:'https://foreign.invalid'},
         data:{event_id:eventId}})).status()).toBe(403);
+      const viewer=await manager.request.get(`${endpoint}?event_id=${eventId}`);
+      expect(viewer.status(),await viewer.text()).toBe(200);
+      const own=await viewer.json();
+      expect(own).toMatchObject({eventId,divisionIndex:1,settled:false,
+        focusTeamId:'team-v2manager',recordedAt:saved.recorded_at});
+      expect(own.recording.committedInputs.teams.length).toBe(2);
+      const rivalTeam=own.recording.committedInputs.teams
+        .find(team=>team.id==='team-v2rival');
+      expect(Object.keys(rivalTeam.orders)).toEqual(['captainId']);
+      expect(Object.keys(rivalTeam.riders[0]).sort()).toEqual(['id','name']);
+      expect(own.recording.frames[0].teamEnergy).toBeUndefined();
+      expect(own.recording.frames[0].riderGroups
+        .filter(rider=>rider.teamId==='team-v2rival')
+        .every(rider=>rider.energy===undefined)).toBe(true);
+      expect(own.recording.provisionalResults
+        .filter(result=>result.teamId==='team-v2rival')
+        .every(result=>result.energy===undefined&&result.finaleAbility===undefined))
+        .toBe(true);
+      const rivalViewer=await rival.request.get(`${endpoint}?event_id=${eventId}`);
+      expect(rivalViewer.status(),await rivalViewer.text()).toBe(200);
+      expect((await rivalViewer.json()).focusTeamId).toBe('team-v2rival');
+      expect((await outsider.request.get(`${endpoint}?event_id=${eventId}`)).status())
+        .toBe(403);
+      expect((await manager.request.get(`${endpoint}?event_id=${eventId}&team_id=team-v2rival`))
+        .status()).toBe(403);
+      await manager.goto(`/team/v2-race/${eventId}`);
+      await expect(manager.getByText(/PRIVATE V2 RECORDING CANDIDATE/)).toBeVisible();
+      await expect(manager.getByRole('heading',{name:/Manager team riders/})).toBeVisible();
+      await expect(manager.getByLabel('Watch team')).toHaveCount(0);
+      await manager.getByRole('button',{name:'Skip 10 km'}).click();
+      await manager.getByRole('button',{name:'Skip 10 km'}).click();
+      await expect(manager.getByText(/Candidate only; no ranking points were awarded/))
+        .toBeVisible();
+      if(process.env.PELOTONIA_VIEWER_SCREENSHOT==='1')
+        await manager.screenshot({path:'.recovery-local/v2-private-viewer.png',
+          fullPage:true});
+      const mobileContext=await browser.newContext({viewport:{width:390,height:844}});
+      contexts.push(mobileContext);
+      const mobile=await mobileContext.newPage();
+      await signIn(mobile,'v2manager');
+      await mobile.goto(`/team/v2-race/${eventId}`);
+      await expect(mobile.getByText(/PRIVATE V2 RECORDING CANDIDATE/)).toBeVisible();
+      expect(await mobile.evaluate(()=>document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
+      if(process.env.PELOTONIA_VIEWER_SCREENSHOT==='1')
+        await mobile.screenshot({path:'.recovery-local/v2-private-viewer-390.png',
+          fullPage:true});
     }finally{
       await Promise.all(contexts.map(context=>context.close()));
     }
