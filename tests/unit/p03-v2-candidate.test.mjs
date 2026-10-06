@@ -215,36 +215,40 @@ test('45-team v2 recording projects unique tier points without writing a ledger'
   assert.throws(()=>projectV2OneDayAwards(candidate,{tier:7}),/recorded race and tier/);
 });
 
-test('v85 preview carries paid neutral pace through replay and point projection only',()=>{
-  const input=snapshot(15);
+test('v85 preview carries paid neutral pace through three replays and point projection only',()=>{
+  const input=snapshot(45);
   input.event.race_tier=3;
   input.event.calendar_source='PELOTONIA';
   input.stage={distance_km:40,profile_points:[[0,100],[40,100]],
     keypoints:[{km:11,kind:'SPRINT'}]};
   input.teams.forEach((team,index)=>team.riders.forEach(rider=>{
     for(const skill of ['flat','sprint','hills','mountain','cobbles','timetrial',
-      'endurance','strength','wind'])rider[skill]=index===0?95:index===1?83:20;
+      'endurance','strength','wind'])rider[skill]=index%15===0?95:
+        index%15===1?83:20;
   }));
   const orders=Object.fromEntries(input.teams.map((team,index)=>[
     team.id,{captainId:team.entry.captain_id,preset:'balanced',
       baseline:{effort:'conserve',attack:'none',chase:'ignore'},
-      ...(index===0?{phases:[{atKm:10,attack:'selective',
+      ...(index%15===0?{phases:[{atKm:10,attack:'selective',
         attackRiderId:team.riders[7].id}]}:{})},
   ]));
   const options={v2OrdersByTeamId:orders,motorVersion:MOTOR_NEUTRAL_PACE_VERSION};
   const candidate=previewRecordedDivisions(input,options);
   assert.deepEqual(candidate,previewRecordedDivisions(input,options));
-  const recording=candidate.divisions[0].recording;
-  assert.equal(recording.tuningVersion,MOTOR_NEUTRAL_PACE_VERSION);
-  assert.ok(recording.frames.some(frame=>frame.paidBunchPace?.effort==='conserve'));
+  assert.deepEqual(candidate.divisions.map(division=>division.teamIds.length),[15,15,15]);
+  for(const division of candidate.divisions){
+    assert.equal(division.recording.tuningVersion,MOTOR_NEUTRAL_PACE_VERSION);
+    assert.ok(division.recording.frames.some(frame=>
+      frame.paidBunchPace?.effort==='conserve'));
+  }
   const contract=buildV2OneDayResultContract(candidate,{tier:3});
   assert.equal(validateV2OneDayResultContract(contract),contract);
-  assert.equal(contract.divisions[0].awards.length,20);
-  assert.equal(contract.divisions[0].riderResults.length,120);
-  assert.equal(contract.divisions[0].recording.tuningVersion,MOTOR_NEUTRAL_PACE_VERSION);
+  assert.equal(contract.divisions.flatMap(division=>division.awards).length,60);
+  assert.equal(contract.divisions.flatMap(division=>division.riderResults).length,360);
   const {divisions,...header}=contract;
-  assert.equal(validateV2OneDayDivisionSlice({...header,divisionCount:1,
-    division:divisions[0]}).division,divisions[0]);
+  for(const division of divisions)
+    assert.equal(validateV2OneDayDivisionSlice({...header,divisionCount:3,
+      division}).division,division);
   input.v2_input_version=1;
   input.v2_orders_by_team_id=orders;
   assert.throws(()=>buildV2OneDayLedgerRows(input,contract),
