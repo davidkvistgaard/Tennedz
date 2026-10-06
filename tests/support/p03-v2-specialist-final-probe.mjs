@@ -3,7 +3,7 @@
 //   [--bounded-finale|--bounded-bridge-finale|--earned-bridge-finale|--neutral-pace]
 //   [--neutrals=0..17]
 //   [--chase-at=230|240|250] [--route=flat|hilly|mountain]
-//   [--neutral-mode=rotating|weak] [seed ...]
+//   [--neutral-mode=rotating|weak] [--neutral-level=0..100] [seed ...]
 import assert from 'node:assert/strict';
 import {simulateTacticalTour} from '../../lib/engine/v2/tour.mjs';
 import {validateRecordedTour} from '../../lib/engine/v2/recording.mjs';
@@ -54,9 +54,11 @@ const textOption=(name,fallback)=>{
   return values.length?values[0].slice(name.length+3):fallback;
 };
 const neutralCount=option('neutrals',12),chaseAt=option('chase-at',240);
+const neutralLevel=option('neutral-level',20);
 const routeName=textOption('route','hilly');
 const neutralMode=textOption('neutral-mode','rotating');
 if(!Number.isInteger(neutralCount)||neutralCount<0||neutralCount>17||
+  !Number.isInteger(neutralLevel)||neutralLevel<0||neutralLevel>100||
   ![230,240,250].includes(chaseAt)||!stages[routeName]||
   !['rotating','weak'].includes(neutralMode))
   throw new Error('Invalid specialist probe options.');
@@ -88,7 +90,7 @@ for(const seed of seeds)for(const plan of [
       sprint:66,flat:75,acceleration:99,strength:95},
     plan.finaleAttack?finalePhases:[]),
     ...Array.from({length:neutralCount},(_,index)=>
-      team(`neutral-${index}`,neutralMode==='weak'?20:76+index%8,
+      team(`neutral-${index}`,neutralMode==='weak'?neutralLevel:76+index%8,
         neutralMode==='weak'?{}:
           index%3===0?{sprint:90}:index%3===1?{mountain:91}:{timetrial:90})),
   ];
@@ -109,7 +111,7 @@ for(const seed of seeds)for(const plan of [
   const rider=id=>race.provisionalResults.find(row=>row.riderId===id);
   const beforeFinal=frames.at(-2);
   console.log(JSON.stringify({seed,plan:plan.name,version:race.tuningVersion,
-    teams:teams.length,chaseAt,route:routeName,neutralMode,
+    teams:teams.length,chaseAt,route:routeName,neutralMode,neutralLevel,
     winner:race.provisionalResults[0].riderId,
     gapAt241:frames[240].gapSeconds,gapAt250:frames[249].gapSeconds,
     gapAt255:frames[254].gapSeconds,
