@@ -24,12 +24,22 @@ const snapshot={event:{id:'recorded-tour-sample',kind:'one_day',gender:'M',
   locked_division_reveal:assignPointDivisions({eventId:'recorded-tour-sample',
     seasonYear:2026,gender:'M',entrants:teams.map((team,index)=>({
       teamId:team.id,earnedPoints:30-index*4}))})};
+const v2OrdersByTeamId=Object.fromEntries(teams.map((team,index)=>{
+  const selected=team.entry.selected_riders;
+  return [team.id,{captainId:selected[0],roadCaptainId:selected[index===0?1:0],
+    helperIds:index===0?[selected[2],selected[3]]:[],
+    preset:index===0?'protect':index===1?'aggressive':'balanced',
+    ...(index===0?{phases:[{atKm:20,effort:'hard',chase:'all',
+      attack:'selective',attackRiderId:selected[4],breakWork:'drive'},
+      {atKm:50,effort:'steady',chase:'selective',attackRiderId:null}]}:{}),
+  }];
+}));
 export const metadata={title:'Recorded tour prototype | Pelotonia'};
 export const dynamic='force-dynamic';
 
 export default function RecordedTourPrototype(){
   if(process.env.RACE_LAB_ENABLED!=='true')notFound();
-  const recording=previewRecordedDivisions(snapshot).divisions[0].recording;
+  const recording=previewRecordedDivisions(snapshot,{v2OrdersByTeamId}).divisions[0].recording;
   return <div className="recorded-lab-shell">
     <div className="tactical-back"><Link href="/race-lab">← Back to Race Lab</Link>
       <span>Isolated sample · no saved race or points</span></div>

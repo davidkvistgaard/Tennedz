@@ -60,3 +60,25 @@ test('candidate rejects changed reveal, invalid lineup and unmappable legacy ord
   input.teams[0].entry.selected_riders[1]='foreign';
   assert.throws(()=>previewRecordedDivisions(input),/foreign, injured, or duplicate/);
 });
+
+test('explicit v2 orders are complete, roster-bound and recorded by phase',()=>{
+  const input=snapshot(2),original=structuredClone(input);
+  const orders=Object.fromEntries(input.teams.map((team,index)=>[
+    team.id,{captainId:team.entry.captain_id,
+      preset:index===0?'protect':'balanced',
+      ...(index===0?{phases:[{atKm:10,effort:'hard',chase:'all'}]}:{})},
+  ]));
+  const source=structuredClone(orders);
+  const candidate=previewRecordedDivisions(input,{v2OrdersByTeamId:orders});
+  const recorded=candidate.divisions[0].recording.committedInputs.teams
+    .find(team=>team.id===input.teams[0].id).orders;
+  assert.equal(recorded.baseline.effort,'conserve');
+  assert.deepEqual(recorded.phases,[{atKm:10,effort:'hard',chase:'all'}]);
+  assert.deepEqual(input,original);
+  assert.deepEqual(orders,source);
+  assert.throws(()=>previewRecordedDivisions(input,{v2OrdersByTeamId:{[input.teams[0].id]:orders[input.teams[0].id]}}),
+    /cover exactly/);
+  orders[input.teams[1].id].captainId=input.teams[0].entry.captain_id;
+  assert.throws(()=>previewRecordedDivisions(input,{v2OrdersByTeamId:orders}),
+    /Both captains must belong/);
+});

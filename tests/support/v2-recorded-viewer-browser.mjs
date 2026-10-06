@@ -23,7 +23,9 @@ try{
     const orders=page.getByRole('region',{name:'Team orders'});
     await expect(orders.getByRole('heading',{name:'Amber orders'})).toBeVisible();
     await expect(orders.getByText('Active from the start')).toBeVisible();
-    await expect(orders.getByText('Amber Captain')).toHaveCount(2);
+    await expect(orders.getByText('Amber Captain')).toHaveCount(1);
+    await expect(orders.getByText('Amber Rider 2')).toBeVisible();
+    await expect(orders.getByText('Conserve')).toBeVisible();
     if(process.env.PELOTONIA_VIEWER_SCREENSHOT==='1')
       await page.screenshot({path:`.recovery-local/v2-viewer-${viewport.width}.png`,fullPage:true});
     await page.getByLabel('Watch team').selectOption({label:'Birch'});
@@ -44,6 +46,16 @@ try{
     await page.getByLabel('Playback position').fill('0');
     await page.getByRole('button',{name:'Skip 10 km'}).click();
     await expect(page.getByText('Km 11 / 60')).toBeVisible();
+    await expect(orders.getByText('Active from the start')).toBeVisible();
+    await page.getByLabel('Playback position').fill('20');
+    await expect(orders.getByText('Active since km 21')).toBeVisible();
+    await expect(orders.getByText('Hard')).toBeVisible();
+    await expect(orders.getByText('All')).toBeVisible();
+    await expect(orders.getByText('Selective · Amber Rider 5')).toBeVisible();
+    await page.getByLabel('Playback position').fill('50');
+    await expect(orders.getByText('Active since km 51')).toBeVisible();
+    await expect(orders.getByText('Steady')).toBeVisible();
+    await page.getByLabel('Playback position').fill('10');
     await page.getByRole('button',{name:'Play recording'}).click();
     await expect(page.getByRole('button',{name:'Pause'})).toBeVisible();
     await expect.poll(async()=>Number(await page.getByLabel('Playback position').inputValue()))
