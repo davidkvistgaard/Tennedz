@@ -175,6 +175,14 @@ test('viewer selection exposes only the entered team’s saved division',()=>{
   malformed.divisionReveal.assignments[0]=null;
   assert.throws(()=>selectV2RecordedDivision(malformed,assignment.teamId),
     /needs a saved reveal and team identity/);
+  const duplicate=structuredClone(candidate);
+  duplicate.divisionReveal.assignments[0].teamId=assignment.teamId;
+  assert.throws(()=>selectV2RecordedDivision(duplicate,assignment.teamId),
+    /needs a saved reveal and team identity/);
+  const wrongCategory=structuredClone(candidate);
+  wrongCategory.divisionReveal.gender=wrongCategory.divisionReveal.gender==='M'?'F':'M';
+  assert.throws(()=>selectV2RecordedDivision(wrongCategory,assignment.teamId),
+    /differs from the saved reveal/);
   const tampered=structuredClone(candidate);
   tampered.divisionReveal.assignments.find(row=>row.teamId===assignment.teamId)
     .divisionIndex=2;
