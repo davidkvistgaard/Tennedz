@@ -1325,7 +1325,8 @@ test('a small strong team can set a costly hard tempo in fields of different siz
   };
   for(const size of [2,15]){
     const steady=race(size,96,false),hard=race(size,96,true);
-    assert.ok(gap(hard)>gap(steady)+40);
+    assert.ok(gap(hard)>gap(steady)+40,
+      `hard ${gap(hard)} seconds, steady ${gap(steady)} seconds in ${size} teams`);
     assert.deepEqual(hard.frames[0].hardBunchWorkTeamIds,['strong']);
     assert.equal(hard.frames[0].hardBunchWorkRiderIds.length,2);
     assert.ok(hard.frames[0].hardBunchWorkRiderIds.every(id=>id.startsWith('strong-')));
