@@ -5,12 +5,20 @@ import {simulateTacticalTour} from '../lib/engine/v2/tour.mjs';
 import {validateRecordedTour} from '../lib/engine/v2/recording.mjs';
 import {SPORTING_SKILLS} from '../lib/engine/v2/physiology.mjs';
 import {hasResidualGapAfterSufficientChase} from '../lib/engine/v2/balance-audit.mjs';
+import {TUNING,TUNING_VERSION,MOTOR_CANDIDATE_VERSION,MOTOR_CANDIDATE} from
+  '../lib/engine/v2/tuning.mjs';
 
 const samples=process.argv[2]===undefined?10:Number(process.argv[2]);
 const fieldTeams=process.argv[3]===undefined?4:Number(process.argv[3]);
+const motorMode=process.argv[4]??'current';
+const motorVersion=motorMode==='candidate'?MOTOR_CANDIDATE_VERSION:TUNING_VERSION;
+const gapAuditOptions={recoverySecondsPerCapacity:motorMode==='candidate'?
+  MOTOR_CANDIDATE.chaseRecoverySecondsPerCapacity:
+  TUNING.chase.recoverySecondsPerCapacity};
 if(!Number.isInteger(samples)||samples<1||samples>100||
-  !Number.isInteger(fieldTeams)||fieldTeams<2||fieldTeams>20)
-  throw new Error('Usage: node scripts/engine-v2-ensemble.mjs [paired samples: 1–100] [teams: 2–20]');
+  !Number.isInteger(fieldTeams)||fieldTeams<2||fieldTeams>20||
+  !['current','candidate'].includes(motorMode))
+  throw new Error('Usage: node scripts/engine-v2-ensemble.mjs [paired samples: 1–100] [teams: 2–20] [current|candidate]');
 
 const ROUTES={
   flat:{distance_km:120,profile_points:[[0,60],[40,60],[80,75],[120,60]],
@@ -48,7 +56,7 @@ function fictionalTeams(sample,gender){
   });
 }
 
-const report={pairedSamples:samples,fieldTeams,
+const report={pairedSamples:samples,fieldTeams,motorMode,
   description:'fictional varied riders and routes; no live data',courses:{}};
 for(const [course,stage] of Object.entries(ROUTES)){
   report.courses[course]={};
@@ -79,7 +87,7 @@ for(const [course,stage] of Object.entries(ROUTES)){
         const weather={temp_c:base.temp_c+(rng()-.5)*8,
           wind_kph:Math.max(0,base.wind_kph+(rng()-.5)*16),
           precipitation_mm:Math.max(0,base.precipitation_mm+(rng()-.5)*2)};
-        const race=simulateTacticalTour({stage,teams,weather,seed:`v2-ensemble:${course}:${sample}`});
+        const race=simulateTacticalTour({stage,teams,weather,seed:`v2-ensemble:${course}:${sample}`,motorVersion});
         validateRecordedTour(race);
         report.tuningVersion??=race.tuningVersion;
         const finalFrame=race.frames.at(-1);
@@ -97,10 +105,11 @@ for(const [course,stage] of Object.entries(ROUTES)){
         totals.finalKmJoinWinnerRaces+=Number(breakWinner&&
           finalFrame.joinedBreakawayRiderIds.includes(winner.riderId));
         const lateResidualKm=race.frames.slice(-5).filter((_,index)=>
-          hasResidualGapAfterSufficientChase(race.frames,race.frames.length-5+index)).length;
+          hasResidualGapAfterSufficientChase(race.frames,race.frames.length-5+index,
+            gapAuditOptions)).length;
         totals.multiGroupResidualAffectedRaces+=Number(race.frames.some((frame,index)=>
           index>0&&frame.roadGroups.length>1&&
-          hasResidualGapAfterSufficientChase(race.frames,index)));
+          hasResidualGapAfterSufficientChase(race.frames,index,gapAuditOptions)));
         totals.lateResidualAffectedRaces+=Number(lateResidualKm>0);
         totals.residualAffectedBreakWinRaces+=Number(lateResidualKm>0&&breakWinner);
         const amber=race.provisionalResults.filter(rider=>rider.teamId==='team-0');

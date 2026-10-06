@@ -1,8 +1,9 @@
 // Read-only 260 km attack/chase diagnostic for the isolated v2 motor.
-// Run: node tests/support/p03-v2-long-race-break-probe.mjs [seed ...]
+// Run: node tests/support/p03-v2-long-race-break-probe.mjs [--candidate] [seed ...]
 import {simulateTacticalTour} from '../../lib/engine/v2/tour.mjs';
 import {validateRecordedTour} from '../../lib/engine/v2/recording.mjs';
 import assert from 'node:assert/strict';
+import {MOTOR_CANDIDATE_VERSION} from '../../lib/engine/v2/tuning.mjs';
 
 const skills=['sprint','flat','hills','mountain','cobbles','timetrial',
   'endurance','strength','wind'];
@@ -27,7 +28,8 @@ const plans=[
   {name:'hard chase',effort:'hard',phases:[],chase:'all'},
   {name:'steady chase',effort:'steady',phases:[],chase:'all'},
 ];
-const seeds=process.argv.slice(2);
+const candidate=process.argv.includes('--candidate');
+const seeds=process.argv.slice(2).filter(value=>value!=='--candidate');
 if(!seeds.length)seeds.push('s1','s2','s3');
 
 for(const seed of seeds){
@@ -42,7 +44,8 @@ for(const seed of seeds){
       ...Array.from({length:12},(_,index)=>
         team(`neutral-${index}`,76+index%13)),
     ];
-    const race=simulateTacticalTour({stage,teams,seed,weather});
+    const race=simulateTacticalTour({stage,teams,seed,weather,
+      ...(candidate?{motorVersion:MOTOR_CANDIDATE_VERSION}:{})});
     validateRecordedTour(race);
     const frames=race.frames;
     const results=race.provisionalResults;
@@ -53,7 +56,7 @@ for(const seed of seeds){
     assert.ok(attackFrames[0].joinedBreakawayRiderIds.includes('rival-7'));
     const place=id=>results.find(row=>row.riderId===id).position;
     const state=id=>finish.riderGroups.find(row=>row.id===id);
-    console.log(JSON.stringify({seed,plan:plan.name,
+    console.log(JSON.stringify({seed,tuningVersion:race.tuningVersion,plan:plan.name,
       attack:attackFrames
         .map(frame=>({km:frame.km,
           joined:frame.joinedBreakawayRiderIds.includes('rival-7'),
