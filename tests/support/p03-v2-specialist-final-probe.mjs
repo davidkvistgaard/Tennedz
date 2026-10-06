@@ -1,9 +1,12 @@
 // Read-only long-race specialist counterfactual on the opt-in paid-pace motor.
-// Run: node tests/support/p03-v2-specialist-final-probe.mjs [--bounded-finale] [seed ...]
+// Run: node tests/support/p03-v2-specialist-final-probe.mjs
+//   [--bounded-finale|--bounded-bridge-finale|--earned-bridge-finale] [--neutrals=0..17]
+//   [--chase-at=230|240|250] [seed ...]
 import assert from 'node:assert/strict';
 import {simulateTacticalTour} from '../../lib/engine/v2/tour.mjs';
 import {validateRecordedTour} from '../../lib/engine/v2/recording.mjs';
-import {MOTOR_PAID_PACE_VERSION,MOTOR_FINALE_VERSION} from '../../lib/engine/v2/tuning.mjs';
+import {MOTOR_PAID_PACE_VERSION,MOTOR_FINALE_VERSION,
+  MOTOR_BRIDGE_FINALE_VERSION,MOTOR_EARNED_BRIDGE_VERSION} from '../../lib/engine/v2/tuning.mjs';
 
 const keys=['sprint','flat','hills','mountain','cobbles','timetrial',
   'endurance','strength','wind'];
@@ -29,10 +32,23 @@ const breakPhases=[
 ];
 const finalePhases=[{atKm:255,attack:'selective',
   attackRiderId:'climber-7',effort:'hard'}];
-const chasePhases=[{atKm:240,effort:'hard',chase:'all'}];
-const easePhases=[...chasePhases,{atKm:250,effort:'conserve',chase:'ignore'}];
+const option=(name,fallback)=>{
+  const values=process.argv.slice(2).filter(arg=>arg.startsWith(`--${name}=`));
+  if(values.length>1)throw new Error(`Duplicate ${name} option.`);
+  return values.length?Number(values[0].split('=')[1]):fallback;
+};
+const neutralCount=option('neutrals',12),chaseAt=option('chase-at',240);
+if(!Number.isInteger(neutralCount)||neutralCount<0||neutralCount>17||
+  ![230,240,250].includes(chaseAt))throw new Error('Invalid specialist probe options.');
+const chasePhases=[{atKm:chaseAt,effort:'hard',chase:'all'}];
+const easePhases=[...chasePhases,{atKm:chaseAt>=250?255:250,
+  effort:'conserve',chase:'ignore'}];
 const boundedFinale=process.argv.includes('--bounded-finale');
-const seeds=process.argv.slice(2).filter(value=>value!=='--bounded-finale');
+const boundedBridgeFinale=process.argv.includes('--bounded-bridge-finale');
+const earnedBridgeFinale=process.argv.includes('--earned-bridge-finale');
+if([boundedFinale,boundedBridgeFinale,earnedBridgeFinale].filter(Boolean).length>1)
+  throw new Error('Choose one finale motor.');
+const seeds=process.argv.slice(2).filter(value=>!value.startsWith('--'));
 if(!seeds.length)seeds.push('s1','s2','s3');
 for(const seed of seeds)for(const plan of [
   {name:'hold',chase:false,finaleAttack:false},
@@ -48,12 +64,14 @@ for(const seed of seeds)for(const plan of [
     team('climber',82,{mountain:99,hills:95,endurance:91,
       sprint:66,flat:75,acceleration:99,strength:95},
     plan.finaleAttack?finalePhases:[]),
-    ...Array.from({length:12},(_,index)=>
+    ...Array.from({length:neutralCount},(_,index)=>
       team(`neutral-${index}`,76+index%8,
         index%3===0?{sprint:90}:index%3===1?{mountain:91}:{timetrial:90})),
   ];
   const race=simulateTacticalTour({stage,teams,seed,weather,
-    motorVersion:boundedFinale?MOTOR_FINALE_VERSION:MOTOR_PAID_PACE_VERSION});
+    motorVersion:earnedBridgeFinale?MOTOR_EARNED_BRIDGE_VERSION:
+      boundedBridgeFinale?MOTOR_BRIDGE_FINALE_VERSION:
+      boundedFinale?MOTOR_FINALE_VERSION:MOTOR_PAID_PACE_VERSION});
   assert.equal(validateRecordedTour(race),true);
   const frames=race.frames,final=frames.at(-1);
   const namedBreak=frames.filter(frame=>frame.attackReasons.some(row=>
@@ -66,12 +84,17 @@ for(const seed of seeds)for(const plan of [
   const rider=id=>race.provisionalResults.find(row=>row.riderId===id);
   const beforeFinal=frames.at(-2);
   console.log(JSON.stringify({seed,plan:plan.name,version:race.tuningVersion,
+    teams:teams.length,chaseAt,
     winner:race.provisionalResults[0].riderId,
     gapAt250:frames[249].gapSeconds,gapAt255:frames[254].gapSeconds,
     gapBeforeFinal:beforeFinal.gapSeconds,gapAtFinish:final.gapSeconds,
     chaseKm:frames.filter(frame=>frame.chasers.includes('sprinter')).length,
     paidPaceKm:frames.filter(frame=>frame.paidBunchPace?.teamId==='sprinter').length,
-    namedFinale,finaleJoin:final.joinedBreakawayRiderIds.includes('climber-7'),
+    catchKm:frames.find(frame=>frame.caughtBreakawayRiderIds.includes('rouleur-7'))?.km??null,
+    namedFinale,finaleMove:final.joinedBreakawayRiderIds.includes('climber-7'),
+    finaleGroup:final.roadGroups.find(group=>group.riderIds.includes('climber-7'))?.id??null,
+    frontGroup:final.roadGroups[0]?.id??null,
+    formedChaseGroupId:final.formedChaseGroupId,
     specialists:Object.fromEntries(['rouleur-7','sprinter-7','climber-7'].map(id=>[
       id,{place:rider(id).position,group:rider(id).group,
         energy:rider(id).energy,finaleAbility:rider(id).finaleAbility},
