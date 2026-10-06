@@ -71,6 +71,16 @@ test('entered manager can edit and reload only their own private v2 plan',
       await expect(phone.getByLabel('Race approach')).toHaveValue('protect');
       expect(await phone.evaluate(()=>document.documentElement.scrollWidth))
         .toBeLessThanOrEqual(390);
+      await manager.getByLabel('Attack rider').selectOption('fixture-M-2');
+      await manager.getByLabel('Attack rider').selectOption('__automatic');
+      await manager.getByLabel('Race approach').selectOption('aggressive');
+      await expect(manager.getByLabel('Effort').first()).toHaveValue('');
+      await manager.getByRole('button',{name:'Save private v2 plan'}).click();
+      await expect(manager.getByText(/Private v2 plan saved/)).toBeVisible();
+      const switched=await (await manager.request.get(endpoint)).json();
+      expect(switched.orders).toMatchObject({preset:'aggressive',
+        baseline:{effort:'hard',chase:'all',attack:'repeated'},
+        phases:[{atKm:10,attackRiderId:null}]});
     }finally{
       await Promise.all(contexts.map(context=>context.close()));
     }

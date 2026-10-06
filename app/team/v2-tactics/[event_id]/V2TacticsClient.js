@@ -35,6 +35,7 @@ function Select({label,value,options,onChange,disabled}){
 function phaseInput(phase,key,value){
   const changed={...phase};
   if(value==='')delete changed[key];
+  else if(key==='attackRiderId'&&value==='__automatic')changed[key]=null;
   else changed[key]=key==='atKm'?Number(value):value;
   return changed;
 }
@@ -141,7 +142,8 @@ export default function V2TacticsClient({eventId}){
           <p>Entered captain: <strong>{names.get(context.entry.captain_id)??context.entry.captain_id}</strong></p>
           <div className="v2-tactics-fields">
             <Select label="Race approach" value={plan.preset} options={PRESETS}
-              onChange={value=>update('preset',value)} disabled={!editable}/>
+              onChange={value=>setPlan(current=>({...current,preset:value,baseline:{}}))}
+              disabled={!editable}/>
             <Select label="Road captain" value={roadCaptain} options={riderOptions}
               onChange={value=>setPlan(current=>({...current,roadCaptainId:value,
                 helperIds:helpers.filter(id=>id!==value)}))} disabled={!editable}/>
@@ -208,8 +210,10 @@ export default function V2TacticsClient({eventId}){
               <Select label="Attack" value={phase.attack??''}
                 options={[["","Keep previous"],...ATTACK.slice(1)]}
                 onChange={value=>updatePhase(index,'attack',value)} disabled={!editable}/>
-              <Select label="Attack rider" value={phase.attackRiderId??''}
-                options={[["","Keep previous"],...riderOptions]}
+              <Select label="Attack rider" value={phase.attackRiderId===null?
+                '__automatic':phase.attackRiderId??''}
+                options={[["","Keep previous"],["__automatic","Automatic"],
+                  ...riderOptions]}
                 onChange={value=>updatePhase(index,'attackRiderId',value)} disabled={!editable}/>
               <Select label={`Change ${index+1} · break move`} value={phase.breakAttackRiderId??''}
                 options={[["","No one-off break move"],...riderOptions]}

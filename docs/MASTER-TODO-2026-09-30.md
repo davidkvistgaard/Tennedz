@@ -157,6 +157,8 @@ En ny 15-holds prøve viste også et brat spring: hold med gennemsnitlig færdig
 
 **Udvidede v2-managerordrer, 6. oktober:** Den isolerede taktikside viser nu motorens eksisterende valg for arbejde og finale i udbrud, hjælperes angrebsfrihed, støtte til en sat kaptajn, reaktion på truende rivaludbrud og en falmende egen forreste rytter. Et navngivet engangsangreb og ændret udbrudsarbejde kan lægges på en rutemarkør. Gemning, genindlæsning, adgang for uvedkommende og 390 px-layout bestod den lokale browserprøve mod en frisk produktionsbuild. Den sportslige effekt er fortsat under balancetest, og der er endnu ingen samlet testdatabase-til-browser-afvikling af v2.
 
+Et efterfølgende UI-check rettede desuden preset-skift efter genindlæsning, så gamle normaliserede startordrer ikke overstyrer det nye preset; en rutemarkør kan nu ophæve en tidligere navngiven angriber til automatisk valg. Den fokuserede browserprøve bestod efter frisk build.
+
 ## P1 - atlas og verdenskvalitet
 
 | ID | Opgave / konkret resultat | Timer | Afhænger af |
