@@ -4,6 +4,8 @@ Status: proposed implementation boundary for point 04, not a verified engine rul
 
 The first code boundary is a pure `finaleDistanceGrid` schedule: four 1 km finale slices, two 250 m approach slices and five 100 m finish slices. Each slice names its source kilometre and explicitly marks the profile resolution as 1000 m. It does not calculate a rider move, imply precise route geometry, change a result, or enter a saved replay. The motor and recording contract must be extended together before these slices have sporting effect.
 
+An isolated `advanceFinaleGap` step now calculates the relative travel time of a front group and its chaser over one slice. It reports a catch at the calculated distance within that slice rather than preserving a positive residual after the chaser has covered the lead. Work cost scales by the slice's actual length. This is a kinematic unit, not a calibrated race model: the current engine does not provide its speeds, choose workers, spend their energy, merge groups after a catch, or record these steps. The unchanged v79 result remains the only current simulated result.
+
 ## Distance phases
 
 | Distance remaining | Sporting decision | Recording requirement |
