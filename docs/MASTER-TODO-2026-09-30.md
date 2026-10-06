@@ -135,6 +135,8 @@ En ny 15-holds prøve viste også et brat spring: hold med gennemsnitlig færdig
 
 **V2-taktikkladde, isoleret prove 6. oktober:** En separat, normalt slukket gemmerute tager nu managerens validerede v2-ordrer og gemmer dem i en privat tabel. Databasen genkontrollerer ejer, gemt kaptajn/otte ryttere, afsloret division og taktikfrist i samme transaktion. Rollback-proven i den isolerede testdatabase bestod efter en rettelse af `min(uuid)`; to managerkonti i lokal browserfixture viste gemning, gentagelse og afvisning af fremmed hold. De gamle ordrer, lob, replay og point berorers ikke. Naeste graense i punkt 08-09 er en versionsmaerket taktiklas, optagelse, resultat- og pointtransaktion med reelle managerinput; v2 er stadig ikke et spilbart lob.
 
+**V2-taktiklås og resultatkontrakt, isoleret prove 6. oktober:** Efter taktikfristen kan en separat privat DB-funktion fryse alle tilmeldte managers v2-kladder sammen med det gemte divisionsresultat og løbsinput. En prøve med to uafhængige ejere bestod; manglende kladde eller for tidligt kald afvises, og et gentaget kald giver samme input. En versionsmærket, skrivefri resultatkontrakt er testet på 45 hold med tre optagelser, 45 holdplaceringer, 360 rytterresultater og 60 pointposter. Ændrede point eller replay afvises. Denne kæde gemmer endnu ikke v2-replay/resultater og tildeler ingen point. Det er fortsat næste hovedopgave i punkt 08-09, sammen med browserprøve for autentificeret v2-viewer og balancegodkendelse.
+
 ## P1 - atlas og verdenskvalitet
 
 | ID | Opgave / konkret resultat | Timer | Afhænger af |

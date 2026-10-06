@@ -2,8 +2,11 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {assignPointDivisions} from '../../lib/calendar/division-reveal.mjs';
 import {validateRecordedTour} from '../../lib/engine/v2/recording.mjs';
-import {previewRecordedDivisions} from '../../lib/race/v2-candidate.mjs';
+import {previewRecordedDivisions,previewLockedV2RecordedDivisions}
+  from '../../lib/race/v2-candidate.mjs';
 import {projectV2OneDayAwards} from '../../lib/race/v2-points.mjs';
+import {buildV2OneDayResultContract,validateV2OneDayResultContract}
+  from '../../lib/race/v2-result-contract.mjs';
 import {selectV2RecordedDivision} from '../../lib/race/v2-viewer.mjs';
 import {normalizeEnteredV2Orders} from '../../lib/race/v2-tactics.mjs';
 import {pointsForDivisionResult} from '../../lib/calendar/points.mjs';
@@ -87,6 +90,23 @@ test('explicit v2 orders are complete, roster-bound and recorded by phase',()=>{
     /Both captains must belong/);
 });
 
+test('v2 candidate consumes every manager plan from a separate locked snapshot',()=>{
+  const input=snapshot(2),original=structuredClone(input);
+  input.v2_input_version=1;
+  input.v2_orders_by_team_id=Object.fromEntries(input.teams.map((team,index)=>[
+    team.id,{captainId:team.entry.captain_id,preset:index?'aggressive':'protect',
+      phases:[{atKm:10,effort:index?'hard':'conserve'}]},
+  ]));
+  const candidate=previewLockedV2RecordedDivisions(input);
+  assert.deepEqual(candidate.divisions[0].recording.committedInputs.teams
+    .map(team=>team.orders.preset).sort(),['aggressive','protect']);
+  assert.deepEqual(input.teams,original.teams);
+  delete input.v2_orders_by_team_id[input.teams[1].id];
+  assert.throws(()=>previewLockedV2RecordedDivisions(input),/cover exactly/);
+  input.v2_input_version=2;
+  assert.throws(()=>previewLockedV2RecordedDivisions(input),/saved v2 tactics lock/);
+});
+
 test('v2 entry contract binds a phase plan to its saved lineup and captain',()=>{
   const input=snapshot(2),team=input.teams[0],ids=team.entry.selected_riders;
   const orders=normalizeEnteredV2Orders(team.entry,input.stage,{
@@ -136,6 +156,43 @@ test('45-team v2 recording projects unique tier points without writing a ledger'
   wrongEvent.divisionReveal.eventId='other-race';
   assert.throws(()=>projectV2OneDayAwards(wrongEvent,{tier:3}),/saved division reveal/);
   assert.throws(()=>projectV2OneDayAwards(candidate,{tier:7}),/recorded race and tier/);
+});
+
+test('one versioned v2 result contract binds each replay, captain placing and award',()=>{
+  const candidate=previewRecordedDivisions(snapshot(45));
+  const contract=buildV2OneDayResultContract(candidate,{tier:3});
+  assert.equal(contract.schemaVersion,1);
+  assert.equal(contract.engineVersion,2);
+  assert.equal(contract.pointsPolicyVersion,'v0.1');
+  assert.deepEqual(contract.divisions.map(division=>division.teamIds.length),[15,15,15]);
+  assert.equal(contract.divisions.flatMap(division=>division.teamResults).length,45);
+  assert.equal(contract.divisions.flatMap(division=>division.riderResults).length,360);
+  assert.equal(contract.divisions.flatMap(division=>division.awards).length,60);
+  assert.equal(validateV2OneDayResultContract(contract),contract);
+  assert.deepEqual(contract,
+    buildV2OneDayResultContract(previewRecordedDivisions(snapshot(45)),{tier:3}));
+  for(const division of contract.divisions){
+    const awardByRider=new Map(division.awards.map(award=>[award.riderId,award]));
+    for(const result of division.riderResults)
+      assert.equal(result.rankingPoints,awardByRider.get(result.riderId)?.points??0);
+    for(const team of division.teamResults){
+      const captain=division.riderResults.find(result=>result.riderId===team.captainId);
+      assert.equal(captain.teamId,team.teamId);
+      assert.equal(captain.timeSeconds,team.timeSeconds);
+    }
+  }
+  const changedPoints=structuredClone(contract);
+  changedPoints.divisions[1].awards[0].points++;
+  assert.throws(()=>validateV2OneDayResultContract(changedPoints),/disagree/);
+  const changedPlacing=structuredClone(contract);
+  changedPlacing.divisions[2].teamResults[0].position=9;
+  assert.throws(()=>validateV2OneDayResultContract(changedPlacing),/disagree/);
+  const changedRecording=structuredClone(contract);
+  changedRecording.divisions[0].recording.provisionalResults[0].timeSeconds++;
+  assert.throws(()=>validateV2OneDayResultContract(changedRecording));
+  const wrongVersion=structuredClone(contract);
+  wrongVersion.schemaVersion=2;
+  assert.throws(()=>validateV2OneDayResultContract(wrongVersion),/Unsupported/);
 });
 
 test('45 distinct v2 plans survive reveal, three recordings and award projection',()=>{
