@@ -15,6 +15,7 @@ test('paired fictional races flag degenerate finale balance before tuning is acc
     encoding:'utf8',timeout:60_000,maxBuffer:8*1024*1024,
   }));
   assert.equal(report.pairedSamples,5);
+  assert.equal(report.fieldTeams,4);
   for(const [course,genders] of Object.entries(report.courses)){
     const rows=Object.values(genders).flatMap(strategies=>Object.values(strategies));
     assert.equal(rows.length,6);
@@ -31,5 +32,23 @@ test('paired fictional races flag degenerate finale balance before tuning is acc
     assert.ok(breakWinRate>=.1,`${course}: breakaway wins nearly vanished`);
     assert.ok(finalAutoWinnerRate<.5,
       `${course}: automatic final-kilometre attacks dominate winners`);
+  }
+});
+
+test('paired balance audit runs complete recordings for small and division-sized fields',()=>{
+  for(const fieldTeams of [2,15]){
+    const report=JSON.parse(execFileSync(process.execPath,
+      [ensembleScript,'1',String(fieldTeams)],{
+        encoding:'utf8',timeout:60_000,maxBuffer:8*1024*1024,
+      }));
+    assert.equal(report.fieldTeams,fieldTeams);
+    assert.equal(report.pairedSamples,1);
+    for(const genders of Object.values(report.courses))
+      for(const strategies of Object.values(genders))
+        for(const row of Object.values(strategies)){
+          assert.ok(row.breakWinRate>=0&&row.breakWinRate<=1);
+          assert.ok(row.meanDroppedRiders>=0&&row.meanDroppedRiders<=fieldTeams*8);
+          assert.ok(row.meanMaxRoadGroups>=0&&row.meanMaxRoadGroups<=40);
+        }
   }
 });

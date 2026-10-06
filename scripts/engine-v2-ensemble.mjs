@@ -7,8 +7,10 @@ import {SPORTING_SKILLS} from '../lib/engine/v2/physiology.mjs';
 import {hasResidualGapAfterSufficientChase} from '../lib/engine/v2/balance-audit.mjs';
 
 const samples=process.argv[2]===undefined?10:Number(process.argv[2]);
-if(!Number.isInteger(samples)||samples<1||samples>100)
-  throw new Error('Usage: node scripts/engine-v2-ensemble.mjs [paired samples: 1–100]');
+const fieldTeams=process.argv[3]===undefined?4:Number(process.argv[3]);
+if(!Number.isInteger(samples)||samples<1||samples>100||
+  !Number.isInteger(fieldTeams)||fieldTeams<2||fieldTeams>20)
+  throw new Error('Usage: node scripts/engine-v2-ensemble.mjs [paired samples: 1–100] [teams: 2–20]');
 
 const ROUTES={
   flat:{distance_km:120,profile_points:[[0,60],[40,60],[80,75],[120,60]],
@@ -31,7 +33,7 @@ const ROLE_BONUSES=[
 const clamp=value=>Math.max(15,Math.min(95,value));
 
 function fictionalTeams(sample,gender){
-  return Array.from({length:4},(_,teamIndex)=>{
+  return Array.from({length:fieldTeams},(_,teamIndex)=>{
     const id=`team-${teamIndex}`;
     const riders=Array.from({length:8},(_,riderIndex)=>{
       const rng=seedrandom(`v2-ensemble-rider:${sample}:${teamIndex}:${riderIndex}`);
@@ -46,7 +48,8 @@ function fictionalTeams(sample,gender){
   });
 }
 
-const report={pairedSamples:samples,description:'fictional varied riders and routes; no live data',courses:{}};
+const report={pairedSamples:samples,fieldTeams,
+  description:'fictional varied riders and routes; no live data',courses:{}};
 for(const [course,stage] of Object.entries(ROUTES)){
   report.courses[course]={};
   for(const gender of ['M','F']){
@@ -68,7 +71,7 @@ for(const [course,stage] of Object.entries(ROUTES)){
       for(let sample=0;sample<samples;sample++){
         const teams=fictionalTeams(sample,gender).map((team,index)=>({
           ...team,orders:{captainId:team.riders[0].id,roadCaptainId:team.riders[1].id,
-            preset:index===0?strategy:STRATEGIES[index-1]},
+            preset:index===0?strategy:STRATEGIES[(index-1)%STRATEGIES.length]},
         }));
         const rng=seedrandom(`v2-ensemble-weather:${course}:${sample}`);
         const base=WEATHER[course];
@@ -118,7 +121,7 @@ for(const [course,stage] of Object.entries(ROUTES)){
               race.provisionalResults[0].finaleAbility-firstBunch.finaleAbility);
             totals.photoBunchDeficits.push(race.frames.at(-1).riderGroups.find(
               rider=>rider.id===firstBunch.riderId).deficitSeconds);
-            totals.photoAllTeamsAhead+=Number(race.frames.at(-6).breakawayTeamIds.length===4);
+            totals.photoAllTeamsAhead+=Number(race.frames.at(-6).breakawayTeamIds.length===fieldTeams);
             totals.photoLateChaseKm.push(race.frames.slice(-5).filter(frame=>
               frame.engagedChaseTeamIds.length>0).length);
             totals.photoLateResidualKm.push(lateResidualKm);

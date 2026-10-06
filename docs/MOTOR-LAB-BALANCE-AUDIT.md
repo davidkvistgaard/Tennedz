@@ -65,6 +65,18 @@ A local trial gave simultaneous attackers only 30% of each additional rider's pr
 
 The audit now totals recorded chase decisions by reason. In the default Coast sprint runs, teams contribute an average of **86.0 team-kilometres answering fresh attacks** and **16.0 team-kilometres because the leader exceeded the selective safe gap**; on Ridge the figures are **84.1** and **18.1**. These are sums across teams, so several teams working on one kilometre count several times, including a response to an attack that fails to establish a break. No other chase reasons fire in these default fixtures. The predominance of reactive work is consistent with the regular attack schedule and short breaks; it does not by itself show that chasing causes every catch. A future balance trial should separately vary attack frequency and the decision to respond, then compare episode length, catches and race results.
 
+### Field-size sensitivity before a chase retune
+
+The paired `engine-v2-ensemble.mjs` runner now accepts a team count (`node scripts/engine-v2-ensemble.mjs 5 15`), while retaining four teams by default. Each row below averages 30 fictional races: five matched seeds, both categories and three Amber strategies on a 120 km route. The rider generator and route are unchanged across the field-size comparison; additional teams rotate through the three existing presets. `Break win` and `late residual` are race rates, not an estimate of real-world cycling frequencies. `Max groups` is the mean maximum number of simultaneous front road groups; it excludes the bunch.
+
+| Teams | Route | Break win | Late residual anomaly | Max groups |
+| ---: | --- | ---: | ---: | ---: |
+| 2 | Flat / rolling / mountain | 7% / 7% / 0% | 20% / 27% / 20% | 0.67 / 0.67 / 0.67 |
+| 4 | Flat / rolling / mountain | 67% / 73% / 53% | 87% / 93% / 67% | 1.27 / 1.27 / 1.27 |
+| 15 | Flat / rolling / mountain | 80% / 100% / 67% | 100% / 87% / 73% | 1.00 / 1.00 / 1.00 |
+
+This exposes a strong field-size dependency in the current v79 model. The same strategy family yields almost no breakaway winners in two-team fields, but many in division-sized fields; the known residual-gap defect is also common in the latter. A four-team-only chase fix would therefore be unsafe. A trial in this work period combined net gap recovery, a weaker chase factor and suppression of unnamed final-kilometre attacks. At a factor of .025, the residual anomaly disappeared in the small paired sweep and break wins were about 40% across routes, but 17 of 363 broader unit scenarios failed, including recorded splits, chase responses and the 5 km finale bridge. The entire trial was reverted. The sweep is diagnostic only; a new version must preserve those behaviours or replace their fixtures with equally concrete, valid scenarios before any result path changes.
+
 ### Timing a chase order
 
 The audit compares Amber's preset chase contribution, holding helpers throughout, and holding them until an all-out chase after 120 km. In the 20 Coast sprint seeds, these produce **40.0 / 0 / 10.9** mean Amber chase kilometres and **4 / 0 / 4** Amber wins. Ridge sprint gives **42.0 / 0 / 12.9** chase kilometres and the same **4 / 0 / 4** wins. The late order has a visible, bounded consequence in this fixture; it should not be read as a generally superior sprint tactic. In the break preset all three traces have zero Amber chase kilometres because Amber has a rider up the road in these seeded races. The balanced and conserve presets vary: on Coast, late chase restores balanced wins from five to seven, while conserve rises from zero to four. The outcome is sensitive to this small fictional cast, so broader routes and opponents are needed before tuning the phase rule.
