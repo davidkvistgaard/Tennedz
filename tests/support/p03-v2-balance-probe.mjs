@@ -25,11 +25,11 @@ function snapshot(level,opponentLevel=level,seed='fixed',options={}){
       gender:'M',entrants:teams.map(team=>({teamId:team.id,earnedPoints:0}))})};
 }
 
-function divisionSnapshot(seed='fixed',hilly=false){
+function divisionSnapshot(seed='fixed',hilly=false,count=15){
   const spread=[-8,-6,-4,-2,2,4,6,8];
-  const teams=Array.from({length:15},(_,teamIndex)=>{
+  const teams=Array.from({length:count},(_,teamIndex)=>{
     const id=`team-${String(teamIndex+1).padStart(2,'0')}`;
-    const level=65+teamIndex*2.5;
+    const level=count===15?65+teamIndex*2.5:65+teamIndex*.7;
     const selected=spread.map((_,riderIndex)=>`${id}-r${riderIndex+1}`);
     return {id,name:id,riders:selected.map((riderId,riderIndex)=>({
       id:riderId,name:riderId,gender:'M',
@@ -122,6 +122,14 @@ const rankedDivision=[false,true].map(hilly=>{
     droppedAtKm70:recording.frames[69].riderGroups.filter(row=>
       row.group==='dropped').length};
 });
+const fullFieldStarted=performance.now();
+const fullField=previewRecordedDivisions(divisionSnapshot('fixed',false,45));
+const fullFieldMs=Math.round(performance.now()-fullFieldStarted);
+const fullFieldPayload=fullField.divisions.map(division=>{
+  const serialized=JSON.stringify(division.recording);
+  return {division:division.index,teams:division.teamIds.length,
+    jsonBytes:Buffer.byteLength(serialized),gzipBytes:gzipSync(serialized).byteLength};
+});
 const specialists=['flat','mountain'].flatMap(route=>[5,10,15].flatMap(skillDelta=>
   ['fixed','alternate-1','alternate-2'].map(seed=>{
   const recording=previewRecordedDivisions(specialistSnapshot(route,skillDelta,seed)).divisions[0]
@@ -134,4 +142,7 @@ const specialists=['flat','mountain'].flatMap(route=>[5,10,15].flatMap(skillDelt
 })));
 console.log(JSON.stringify({simulator:'P03 v2 candidate',route:'140 km flat and hilly',
   seed:'fixed',uniformSkills:readings,mixedSkills:mixed,threshold,cliff,variedFields,
-  rankedDivision,specialists},null,2));
+  rankedDivision,fullField:{elapsedMs:fullFieldMs,divisions:fullFieldPayload,
+    totalJsonBytes:fullFieldPayload.reduce((sum,row)=>sum+row.jsonBytes,0),
+    totalGzipBytes:fullFieldPayload.reduce((sum,row)=>sum+row.gzipBytes,0)},
+  specialists},null,2));
