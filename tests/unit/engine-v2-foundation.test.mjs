@@ -1387,6 +1387,45 @@ test('a small strong team can set a costly hard tempo in fields of different siz
   assert.equal(validateRecordedTour(lowAbility),true);
 });
 
+test('hard bunch workers eventually exhaust on a long route without erasing earlier gaps',()=>{
+  const skills=['sprint','flat','hills','mountain','cobbles','timetrial',
+    'endurance','strength','wind'];
+  const spread=[-8,-6,-4,-2,2,4,6,8];
+  const makeTeam=(id,level,hard=false)=>({id,
+    riders:spread.map((offset,index)=>({id:`${id}-${index}`,gender:'M',
+      form:70,fatigue:10,...Object.fromEntries(skills.map(skill=>
+        [skill,Math.min(100,level+offset)]))})),
+    orders:{captainId:`${id}-7`,preset:'balanced',
+      baseline:{effort:hard?'hard':'steady',attack:'none',chase:'ignore'}}});
+  const run=extraTeams=>simulateTacticalTour({stage:{distance_km:300,
+    profile_points:[[0,0],[300,0]],tags:['FLAT']},seed:'fixed',
+  weather:{temp_c:18,wind_kph:5,precipitation_mm:0},
+  teams:[makeTeam('weak',80),makeTeam('strong',96,true),...extraTeams]});
+  const recording=run([]);
+  const stopped=recording.frames.findIndex(frame=>
+    !frame.hardBunchWorkTeamIds.includes('strong'));
+  assert.ok(stopped>140&&stopped<recording.frames.length,
+    'hard pacing should end only after sustained work drains the helpers');
+  assert.ok(recording.frames.slice(stopped).every(frame=>
+    !frame.hardBunchWorkTeamIds.includes('strong')),
+  'an exhausted team must not resume hard pacing without recovered helpers');
+  const weakGap=frame=>frame.riderGroups.find(row=>row.id==='weak-7').deficitSeconds;
+  assert.ok(weakGap(recording.frames[stopped])>=
+    weakGap(recording.frames[stopped-1])-1,
+  'the worker handoff must not erase an already earned road deficit');
+  assert.ok(recording.frames[stopped].teamEnergy.find(row=>
+    row.teamId==='strong').mean<recording.frames[140].teamEnergy.find(row=>
+      row.teamId==='strong').mean);
+  assert.equal(validateRecordedTour(recording),true);
+  const expanded=run(Array.from({length:13},(_,index)=>
+    makeTeam(`neutral-${index}`,76+index%13)));
+  const firstWeakGap=race=>race.provisionalResults.find(row=>
+    row.teamId==='weak').gapSeconds;
+  assert.ok(Math.abs(firstWeakGap(expanded)-firstWeakGap(recording))<2,
+    'extra competitive teams must not silently replace the paid front pace');
+  assert.equal(validateRecordedTour(expanded),true);
+});
+
 test('helpers shelter a protected leader but cannot simultaneously chase',()=>{
   const team=tacticalTeam('p','protect');
   team.energy=Object.fromEntries(team.riders.map(rider=>[rider.id,90]));

@@ -10,6 +10,8 @@ A second read-only probe gives each eight-rider team a skill spread from -8 to +
 
 The v2 recording now marks which teams have two free helpers doing hard bunch work on each kilometre. The sample viewer explains this for the watched team. The private player projection retains only the manager's own work marker, so a rival's locked hard order is not exposed in the browser payload.
 
+A 300 km flat-route diagnostic now extends the varied-roster field comparison beyond the original 140 km. The level-96 hard-working team's eligible pair stops setting the pace at km 209; its mean energy falls from about 49 at km 140 to about 6 at the finish. The weaker team's first finisher trails by about 65 seconds in both a two-team and a fifteen-team field, and an earlier road deficit is not erased when the helpers stop. A long-route regression test covers the worker stop, recording validity and field-size comparison. This one seed and route do not establish realistic endurance or season balance.
+
 Version 77 names the two helpers who actually set a hard bunch pace and charges
 them extra energy for that work. As their ability falls, the team rotates to
 other eligible helpers; the recorded worker IDs are checked on replay and only
