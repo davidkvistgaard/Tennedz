@@ -10,6 +10,8 @@ A second read-only probe gives each eight-rider team a skill spread from -8 to +
 
 The v2 recording now marks which teams have two free helpers doing hard bunch work on each kilometre. The sample viewer explains this for the watched team. The private player projection retains only the manager's own work marker, so a rival's locked hard order is not exposed in the browser payload.
 
+For future settlement, a read-only server helper reconstructs the stored candidate from either the split header/division rows or the earlier full JSONB storage format. It validates the whole result against the immutable tactics lock and derives ledger-shaped awards before any writes. This currently requires the candidate's engine tuning version to match the installed engine; older versions fail clearly until version-specific validation is available. The final transaction still needs its own database lock and recheck; this preflight does not award points or finish an event.
+
 ## Product contract
 
 - Managers commit their lineup, captain, optional road captain, preset, detailed phases and contingencies **before the deadline**. The server snapshots that exact input. The complete race is calculated once after the deadline, and everyone views the same recorded replay. No live manager action is required.

@@ -14,6 +14,8 @@ import {selectV2RecordedDivision,projectV2RecordedDivisionForTeam,
 import {normalizeEnteredV2Orders} from '../../lib/race/v2-tactics.mjs';
 import {weatherForV2TacticsLock} from '../../lib/race/v2-lock-weather.mjs';
 import {buildV2OneDayLedgerRows} from '../../lib/race/v2-ledger.mjs';
+import {loadStoredV2SettlementPreflight}
+  from '../../lib/race/v2-settlement-preflight.mjs';
 import {pointsForDivisionResult} from '../../lib/calendar/points.mjs';
 import {defaultOrders} from '../../lib/race/orders.mjs';
 
@@ -464,4 +466,53 @@ test('private v2 viewer shows only the manager’s own hard bunch work',()=>{
   assert.deepEqual(hardView.recording.frames[0].hardBunchWorkTeamIds,[hard.id]);
   assert.ok(steadyView.recording.frames.every(frame=>
     frame.hardBunchWorkTeamIds.length===0));
+});
+
+test('settlement preflight rebuilds saved split or legacy results without writing points',async()=>{
+  const lock=snapshot(45);
+  lock.event.calendar_source='PELOTONIA';
+  lock.event.race_tier=3;
+  lock.v2_input_version=1;
+  lock.v2_orders_by_team_id=Object.fromEntries(lock.teams.map(team=>[
+    team.id,{captainId:team.entry.captain_id,preset:'balanced'},
+  ]));
+  const candidate=previewLockedV2RecordedDivisions(lock);
+  const contract=buildV2OneDayResultContract(candidate,{tier:3});
+  const expectedRows=buildV2OneDayLedgerRows(lock,contract);
+  assert.equal(contract.divisions.length,3);
+  assert.equal(expectedRows.length,60);
+  const recordedAt='2026-10-08T12:01:00Z';
+  const header=structuredClone(contract);
+  delete header.divisions;
+  const divisionRows=contract.divisions.map((division,index)=>({
+    division_index:index+1,result_division:division}));
+  const fakeDb=(candidateRow,rows)=>({from(table){
+    const query={select(){return this;},eq(){return this;},
+      maybeSingle:async()=>({data:candidateRow,error:null}),
+      order:async()=>{
+        assert.equal(table,'recovery_v2_recorded_divisions');
+        return {data:rows,error:null};
+      }};
+    assert.ok(['recovery_v2_recorded_candidates',
+      'recovery_v2_recorded_divisions'].includes(table));
+    return query;
+  }});
+  const splitRow={event_id:lock.event.id,contract_header:header,
+    result_contract:null,recorded_at:recordedAt};
+  const split=await loadStoredV2SettlementPreflight(fakeDb(splitRow,divisionRows),lock);
+  assert.deepEqual(split,{eventId:lock.event.id,recordedAt,
+    contract,ledgerRows:expectedRows});
+  const legacyRow={...splitRow,contract_header:null,result_contract:contract};
+  const legacy=await loadStoredV2SettlementPreflight(fakeDb(legacyRow,[]),lock);
+  assert.deepEqual(legacy,split);
+  await assert.rejects(loadStoredV2SettlementPreflight(fakeDb(splitRow,[]),lock),
+    /divisions are incomplete/);
+  const changed=structuredClone(divisionRows);
+  changed[0].result_division.awards[0].points+=1;
+  await assert.rejects(loadStoredV2SettlementPreflight(fakeDb(splitRow,changed),lock),
+    /recording and awards disagree|result differs/);
+  const older=structuredClone(divisionRows);
+  older[0].result_division.recording.tuningVersion='v2-prototype-75';
+  await assert.rejects(loadStoredV2SettlementPreflight(fakeDb(splitRow,older),lock),
+    /original engine version/);
 });
