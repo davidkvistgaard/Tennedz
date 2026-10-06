@@ -47,6 +47,29 @@ function divisionSnapshot(seed='fixed',hilly=false){
         teamId:team.id,earnedPoints:index}))})};
 }
 
+function specialistSnapshot(route,skillDelta=15,seed='fixed'){
+  const teams=['flat-specialists','climbers'].map(id=>{
+    const selected=Array.from({length:8},(_,index)=>`${id}-${index}`);
+    const flat=id==='flat-specialists';
+    return {id,name:id,riders:selected.map((riderId,index)=>({
+      id:riderId,name:riderId,gender:'M',
+      ...Object.fromEntries(skills.map(skill=>[skill,skill==='flat'?80+(flat?skillDelta:-skillDelta):
+        skill==='hills'||skill==='mountain'?80+(flat?-skillDelta:skillDelta):80])),
+      form:70,fatigue:10,
+    })),entry:{selected_riders:selected,captain_id:selected[0]}};
+  });
+  const profile=route==='mountain'?[[0,0],[20,1200],[40,0],[60,1200],
+    [80,0],[100,1200],[120,0],[140,0]]:[[0,0],[140,0]];
+  return {event:{id:'specialist-balance-probe',seed,kind:'one_day',gender:'M',
+    scheduled_at:'2026-01-01T12:00:00Z',weather_locked:{temp_c:18,wind_kph:5,
+      precipitation_mm:0}},game_date:'2026-01-01',
+    stage:{distance_km:140,tags:[route==='mountain'?'MOUNTAIN':'FLAT'],
+      profile_points:profile},teams,
+    locked_division_reveal:assignPointDivisions({eventId:'specialist-balance-probe',
+      seasonYear:2026,gender:'M',entrants:teams.map(team=>({
+        teamId:team.id,earnedPoints:0}))})};
+}
+
 const readings=[30,40,50,60,80,100].map(skill=>{
   const results=previewRecordedDivisions(snapshot(skill)).divisions[0].recording.provisionalResults;
   return {skill,winnerTimeSeconds:results[0].timeSeconds,
@@ -94,6 +117,16 @@ const rankedDivision=[false,true].map(hilly=>{
     droppedAtKm70:recording.frames[69].riderGroups.filter(row=>
       row.group==='dropped').length};
 });
+const specialists=['flat','mountain'].flatMap(route=>[5,10,15].flatMap(skillDelta=>
+  ['fixed','alternate-1','alternate-2'].map(seed=>{
+  const recording=previewRecordedDivisions(specialistSnapshot(route,skillDelta,seed)).divisions[0]
+    .recording;
+  return {route,skillDelta,seed,firstFinisherByTeam:['flat-specialists','climbers'].map(teamId=>{
+    const first=recording.provisionalResults.find(result=>result.teamId===teamId);
+    return {teamId,position:first.position,gapSeconds:+first.gapSeconds.toFixed(2)};
+  }),droppedAtKm70:recording.frames[69].riderGroups.filter(row=>
+    row.group==='dropped').length};
+})));
 console.log(JSON.stringify({simulator:'P03 v2 candidate',route:'140 km flat and hilly',
   seed:'fixed',uniformSkills:readings,mixedSkills:mixed,threshold,cliff,variedFields,
-  rankedDivision},null,2));
+  rankedDivision,specialists},null,2));
