@@ -29,9 +29,11 @@ if(!Number.isInteger(samples)||samples<1||samples>100||
   !Number.isInteger(fieldTeams)||fieldTeams<2||fieldTeams>20||
   !['current','candidate','paid-pace','bounded-finale','bounded-bridge-finale',
     'earned-bridge-finale','neutral-pace','explicit-front'].includes(motorMode)||
-  !['preset','paced-rival','rotate-rival','rotate-plans'].includes(paceMode)||
-  ['rotate-rival','rotate-plans'].includes(paceMode)&&motorMode!=='explicit-front')
-  throw new Error('Usage: node scripts/engine-v2-ensemble.mjs [paired samples: 1-100] [teams: 2-20] [current|candidate|paid-pace|bounded-finale|bounded-bridge-finale|earned-bridge-finale|neutral-pace|explicit-front] [preset|paced-rival|rotate-rival|rotate-plans (v86 only)]');
+  !['preset','paced-rival','steady-rival','rotate-rival','late-hard-rival',
+    'rotate-plans'].includes(paceMode)||
+  ['steady-rival','rotate-rival','late-hard-rival','rotate-plans'].includes(paceMode)&&
+    motorMode!=='explicit-front')
+  throw new Error('Usage: node scripts/engine-v2-ensemble.mjs [paired samples: 1-100] [teams: 2-20] [current|candidate|paid-pace|bounded-finale|bounded-bridge-finale|earned-bridge-finale|neutral-pace|explicit-front] [preset|paced-rival|steady-rival|rotate-rival|late-hard-rival|rotate-plans (v86 only)]');
 
 const ROUTES={
   flat:{distance_km:120,profile_points:[[0,60],[40,60],[80,75],[120,60]],
@@ -87,17 +89,23 @@ for(const [course,stage] of Object.entries(ROUTES)){
         preFinalBreakWinnerRaces:0,finalKmJoinWinnerRaces:0,
         breakWinnerGroupAgeKm:[],
         caughtBreaks:0,finishLineCatches:0,partialFinishCatches:0,
-        finishLineCaughtRiders:0,droppedRiders:0,amberEnergy:0,paidPaceKm:0,finalGaps:[],
+        finishLineCaughtRiders:0,droppedRiders:0,amberEnergy:0,paidPaceKm:0,
+        paidWorkerEnergy:0,paidWorkerRaces:0,paidWorkerCount:0,frontConcentration:0,
+        finalGaps:[],
         maxGroups:0,multiGroupFinishes:0,chaseGroupAttackMoves:0,
         bridgesToGroupAhead:0,roadGroupLimitBlocks:0};
       for(let sample=0;sample<samples;sample++){
         const teams=fictionalTeams(sample,gender).map((team,index)=>({
           ...team,orders:{captainId:team.riders[0].id,roadCaptainId:team.riders[1].id,
             preset:index===0?strategy:STRATEGIES[(index-1)%STRATEGIES.length],
-            ...(['paced-rival','rotate-rival'].includes(paceMode)&&index===1?{
-              baseline:{effort:paceMode==='paced-rival'?'hard':'conserve',
+            ...(['paced-rival','steady-rival','rotate-rival','late-hard-rival']
+              .includes(paceMode)&&index===1?{
+              baseline:{effort:paceMode==='paced-rival'?'hard':
+                paceMode==='steady-rival'?'steady':'conserve',
                 attack:'none',chase:'ignore',
-                ...(motorMode==='explicit-front'?{frontWork:'rotate'}:{})}}:{}),
+                ...(motorMode==='explicit-front'?{frontWork:'rotate'}:{})},
+              ...(paceMode==='late-hard-rival'?{
+                phases:[{atKm:80,effort:'hard'}]}:{})}:{}),
             ...(paceMode==='rotate-plans'?{baseline:{frontWork:index%2===0?
               'rotate':'sit_in'}}:{})},
         }));
@@ -170,7 +178,23 @@ for(const [course,stage] of Object.entries(ROUTES)){
           totals.finishLineCaughtRiders+=race.frames.at(-1).caughtBreakawayRiderIds.length;
         totals.droppedRiders+=race.provisionalResults.filter(rider=>rider.group==='dropped').length;
         totals.amberEnergy+=amber.reduce((sum,rider)=>sum+rider.energy,0)/amber.length;
-        totals.paidPaceKm+=race.frames.filter(frame=>frame.paidBunchPace).length;
+        const paidFrames=race.frames.filter(frame=>frame.paidBunchPace);
+        totals.paidPaceKm+=paidFrames.length;
+        if(paidFrames.length){
+          const workerIds=new Set(paidFrames.flatMap(frame=>frame.paidBunchPace.riderIds));
+          const finishEnergy=new Map(race.provisionalResults.map(rider=>
+            [rider.riderId,rider.energy]));
+          totals.paidWorkerEnergy+=[...workerIds].reduce((sum,id)=>
+            sum+finishEnergy.get(id),0)/workerIds.size;
+          totals.paidWorkerCount+=workerIds.size;
+          totals.paidWorkerRaces++;
+          const teamKm=new Map();
+          for(const frame of paidFrames){
+            const id=frame.paidBunchPace.teamId;
+            teamKm.set(id,(teamKm.get(id)??0)+1);
+          }
+          totals.frontConcentration+=Math.max(...teamKm.values())/paidFrames.length;
+        }
         totals.maxGroups+=Math.max(...race.frames.map(frame=>frame.roadGroups.length));
         totals.multiGroupFinishes+=Number(race.frames.at(-1).roadGroups.length>1);
         for(const [index,frame] of race.frames.entries()){
@@ -236,6 +260,12 @@ for(const [course,stage] of Object.entries(ROUTES)){
         meanDroppedRiders:+(totals.droppedRiders/samples).toFixed(2),
         amberMeanEnergy:+(totals.amberEnergy/samples).toFixed(2),
         meanPaidPaceKm:+(totals.paidPaceKm/samples).toFixed(2),
+        meanPaidWorkerFinalEnergy:totals.paidWorkerRaces?
+          +(totals.paidWorkerEnergy/totals.paidWorkerRaces).toFixed(2):null,
+        meanDistinctPaidWorkers:totals.paidWorkerRaces?
+          +(totals.paidWorkerCount/totals.paidWorkerRaces).toFixed(2):null,
+        meanLargestFrontTeamShare:totals.paidWorkerRaces?
+          +(totals.frontConcentration/totals.paidWorkerRaces).toFixed(3):null,
         meanMaxRoadGroups:+(totals.maxGroups/samples).toFixed(2),
         multiGroupFinishRate:totals.multiGroupFinishes/samples,
         meanChaseGroupAttackMoves:+(totals.chaseGroupAttackMoves/samples).toFixed(2),
