@@ -105,6 +105,16 @@ test('45-team v2 recording projects unique tier points without writing a ledger'
   const foreign=structuredClone(candidate);
   foreign.divisions[0].teamIds[0]='foreign';
   assert.throws(()=>projectV2OneDayAwards(foreign,{tier:3}),/differ from the division reveal/);
+  const swapped=structuredClone(candidate);
+  const swappedFirst=swapped.divisionReveal.assignments.find(row=>row.divisionIndex===1);
+  const swappedSecond=swapped.divisionReveal.assignments.find(row=>row.divisionIndex===2);
+  [swappedFirst.divisionIndex,swappedSecond.divisionIndex]=
+    [swappedSecond.divisionIndex,swappedFirst.divisionIndex];
+  assert.throws(()=>projectV2OneDayAwards(swapped,{tier:3}),
+    /differ from the division reveal/);
+  const wrongEvent=structuredClone(candidate);
+  wrongEvent.divisionReveal.eventId='other-race';
+  assert.throws(()=>projectV2OneDayAwards(wrongEvent,{tier:3}),/saved division reveal/);
   assert.throws(()=>projectV2OneDayAwards(candidate,{tier:7}),/recorded race and tier/);
 });
 
