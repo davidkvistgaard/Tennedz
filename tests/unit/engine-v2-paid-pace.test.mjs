@@ -5,7 +5,7 @@ import {normalizeOrders} from '../../lib/engine/v2/orders.mjs';
 import {simulateTacticalTour} from '../../lib/engine/v2/tour.mjs';
 import {validateRecordedTour} from '../../lib/engine/v2/recording.mjs';
 import {MOTOR_CANDIDATE_VERSION,MOTOR_PAID_PACE_VERSION,
-  MOTOR_FINALE_VERSION} from '../../lib/engine/v2/tuning.mjs';
+  MOTOR_FINALE_VERSION,MOTOR_BRIDGE_FINALE_VERSION} from '../../lib/engine/v2/tuning.mjs';
 
 function team(id,level,{effort='conserve',attack='none',chase='ignore',phases=[]}={}){
   const riders=Array.from({length:8},(_,index)=>({id:`${id}-${index}`,gender:'M',
@@ -94,8 +94,11 @@ test('v82 bounds a named last-kilometre move without suppressing it',()=>{
     motorVersion:MOTOR_PAID_PACE_VERSION});
   const bounded=simulateTacticalTour({stage,teams,seed:'bounded-finale',
     motorVersion:MOTOR_FINALE_VERSION});
+  const bridgeBounded=simulateTacticalTour({stage,teams,seed:'bounded-finale',
+    motorVersion:MOTOR_BRIDGE_FINALE_VERSION});
   assert.equal(validateRecordedTour(prior),true);
   assert.equal(validateRecordedTour(bounded),true);
+  assert.equal(validateRecordedTour(bridgeBounded),true);
   const before=prior.frames.at(-1),after=bounded.frames.at(-1);
   assert.deepEqual(before.attackReasons,
     [{riderId:'planned-7',reason:'named_order'}]);
@@ -104,6 +107,8 @@ test('v82 bounds a named last-kilometre move without suppressing it',()=>{
   assert.ok(after.gapSeconds>0&&after.gapSeconds<=5);
   assert.ok(before.gapSeconds>after.gapSeconds);
   assert.deepEqual(bounded.frames.slice(0,-1),prior.frames.slice(0,-1));
+  assert.deepEqual(bridgeBounded.frames,bounded.frames);
+  assert.deepEqual(bridgeBounded.provisionalResults,bounded.provisionalResults);
 });
 
 test('v82 retains a full kilometre for a planned five-kilometre finale move',()=>{
@@ -118,4 +123,29 @@ test('v82 retains a full kilometre for a planned five-kilometre finale move',()=
   assert.equal(lastKm.attackers[0].reason,'named_order');
   assert.ok(fiveToGo.gapSeconds>lastKm.gapSeconds);
   assert.ok(lastKm.gapSeconds<=5);
+});
+
+test('v83 also bounds a last-kilometre attack behind a distant break',()=>{
+  const stage={distance_km:40,profile_points:[[0,100],[40,100]],
+    keypoints:[{km:11,kind:'SPRINT'},{km:39,kind:'SPRINT'}]};
+  const teams=[
+    team('escape',95,{phases:[{atKm:10,attack:'selective',attackRiderId:'escape-7'}]}),
+    team('planned',85,{phases:[{atKm:39,attack:'selective',attackRiderId:'planned-7'}]}),
+    team('quiet',60),
+  ];
+  const prior=simulateTacticalTour({stage,teams,seed:'bounded-bridge-finale',
+    motorVersion:MOTOR_FINALE_VERSION});
+  const bounded=simulateTacticalTour({stage,teams,seed:'bounded-bridge-finale',
+    motorVersion:MOTOR_BRIDGE_FINALE_VERSION});
+  assert.equal(validateRecordedTour(prior),true);
+  assert.equal(validateRecordedTour(bounded),true);
+  const before=prior.frames.at(-1),after=bounded.frames.at(-1);
+  assert.ok(prior.frames.at(-2).gapSeconds>12);
+  assert.deepEqual(after.attackReasons,[{riderId:'planned-7',reason:'named_order'}]);
+  assert.deepEqual(after.attackReasons,before.attackReasons);
+  assert.ok(before.formedChaseGroupId);
+  assert.ok(after.formedChaseGroupId);
+  assert.ok(before.pelotonGapSeconds>after.pelotonGapSeconds);
+  assert.ok(after.pelotonGapSeconds>0&&after.pelotonGapSeconds<=5);
+  assert.deepEqual(bounded.frames.slice(0,-1),prior.frames.slice(0,-1));
 });
