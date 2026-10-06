@@ -61,3 +61,18 @@ proves the small isolated end-to-end path, not the 45-team final settlement
 path, concurrency under load, scheduled automatic finalisation or sporting
 balance. The branch's settlement flag remains off in Vercel preview.
 Production Supabase and deployment were untouched.
+
+A later joined 45-manager run completed the larger isolated path across three
+persisted divisions. Every manager entered, saved a private v2 plan and opened
+their own recorded division; the saved candidate independently reconstructed
+60 exact ranking awards. The first settlement attempt exceeded the isolated
+database function's 30-second statement limit and rolled back completely.
+With a scoped 45-second limit, the same candidate settled through the HTTP
+route in 46.8 seconds overall. A second manager's retry returned the existing
+receipt. The database showed one finished event, one settlement, 60 awards,
+three recordings and zero legacy commits. All 45 managers subsequently opened
+the private final viewer and received the final status. Guarded cleanup removed
+the event, riders, accounts and teams; follow-up database counts were zero.
+This was sequential and close to the HTTP time budget. It does not establish
+concurrent capacity, automatic scheduling, sporting balance or production
+readiness. The Vercel preview settlement flag remains off.

@@ -17,6 +17,8 @@ const fixtureTeams=JSON.parse(readFileSync(
   new URL('../../.recovery-local/p02-isolated-teams.json',import.meta.url),'utf8'));
 const managerCount=Number(process.argv[3]??2);
 assert.ok([2,22,45].includes(managerCount));
+const settled=process.argv[4]==='--settled';
+assert.ok(process.argv[4]===undefined||settled);
 assert.ok(fixtureTeams.length>=managerCount);
 const teams=fixtureTeams.slice(0,managerCount);
 const db=createClient(config.url,config.serviceKey,
@@ -65,13 +67,21 @@ try{
     assert.equal(projection.divisionIndex,ownDivision);
     assert.deepEqual(new Set(projection.recording.committedInputs.teams
       .map(row=>row.id)),new Set(divisionTeams));
-    assert.equal(projection.settled,false);
+    assert.equal(projection.settled,settled);
+    assert.equal(projection.pointsFinal,settled);
     const other=projection.recording.committedInputs.teams
       .find(row=>row.id!==team.teamId);
     assert.deepEqual(Object.keys(other.orders),['captainId']);
     await page.goto(`/team/v2-race/${eventId}`);
-    await expect(page.getByText(/PRIVATE V2 RECORDING CANDIDATE/))
-      .toBeVisible();
+    try{
+      await expect(page.getByText(settled?/PRIVATE V2 FINAL RESULT/:
+        /PRIVATE V2 RECORDING CANDIDATE/))
+        .toBeVisible({timeout:30000});
+    }catch(error){
+      throw new Error(`Manager viewer failed: ${
+        (await page.locator('body').innerText()).slice(0,700)}; ${
+        pageErrors.join(' | ')}`,{cause:error});
+    }
     await context.close();
     contexts.pop();
   }
@@ -84,9 +94,12 @@ try{
   assert.equal((await ok(db.from('recovery_race_commits').select('event_id')
     .eq('event_id',eventId))).length,0);
   assert.equal((await ok(db.from('recovery_ranking_awards').select('award_key')
-    .eq('event_id',eventId))).length,0);
+    .eq('event_id',eventId))).length,
+  settled?Math.min(managerCount*8,divisionCount*20):0);
+  assert.equal((await ok(db.from('recovery_v2_settlements').select('event_id')
+    .eq('event_id',eventId))).length,settled?1:0);
   assert.deepEqual(pageErrors,[]);
-  console.log(`${managerCount} independent managers read and viewed isolated v2 event ${eventId} across ${divisionCount} divisions; no award was settled.`);
+  console.log(`${managerCount} independent managers read and viewed isolated v2 event ${eventId} across ${divisionCount} divisions; ${settled?'final awards settled once':'no award was settled'}.`);
 }finally{
   await Promise.all(contexts.map(context=>context.close()));
   await browser.close();
