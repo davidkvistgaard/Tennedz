@@ -3,7 +3,7 @@
 //   [--bounded-finale|--bounded-bridge-finale|--earned-bridge-finale|--neutral-pace]
 //   [--neutrals=0..17]
 //   [--chase-at=230|240|250] [--route=flat|hilly|mountain]
-//   [--neutral-mode=rotating|weak] [--neutral-level=0..100] [seed ...]
+//   [--neutral-mode=rotating|weak|mixed] [--neutral-level=0..100] [seed ...]
 import assert from 'node:assert/strict';
 import {simulateTacticalTour} from '../../lib/engine/v2/tour.mjs';
 import {validateRecordedTour} from '../../lib/engine/v2/recording.mjs';
@@ -60,7 +60,7 @@ const neutralMode=textOption('neutral-mode','rotating');
 if(!Number.isInteger(neutralCount)||neutralCount<0||neutralCount>17||
   !Number.isInteger(neutralLevel)||neutralLevel<0||neutralLevel>100||
   ![230,240,250].includes(chaseAt)||!stages[routeName]||
-  !['rotating','weak'].includes(neutralMode))
+  !['rotating','weak','mixed'].includes(neutralMode))
   throw new Error('Invalid specialist probe options.');
 const stage=stages[routeName],weather=weathers[routeName];
 const chasePhases=[{atKm:chaseAt,effort:'hard',chase:'all'}];
@@ -89,10 +89,17 @@ for(const seed of seeds)for(const plan of [
     team('climber',82,{mountain:99,hills:95,endurance:91,
       sprint:66,flat:75,acceleration:99,strength:95},
     plan.finaleAttack?finalePhases:[]),
-    ...Array.from({length:neutralCount},(_,index)=>
-      team(`neutral-${index}`,neutralMode==='weak'?neutralLevel:76+index%8,
-        neutralMode==='weak'?{}:
-          index%3===0?{sprint:90}:index%3===1?{mountain:91}:{timetrial:90})),
+    ...Array.from({length:neutralCount},(_,index)=>{
+      const neutral=team(`neutral-${index}`,
+        neutralMode==='weak'?neutralLevel:
+          neutralMode==='mixed'?neutralLevel+(index%5-2)*8:76+index%8,
+        neutralMode==='rotating'?
+          index%3===0?{sprint:90}:index%3===1?{mountain:91}:{timetrial:90}:{});
+      if(neutralMode==='mixed')neutral.riders.forEach((rider,riderIndex)=>{
+        rider.fatigue=(index*7+riderIndex*3)%31;
+      });
+      return neutral;
+    }),
   ];
   const race=simulateTacticalTour({stage,teams,seed,weather,
     motorVersion:neutralPace?MOTOR_NEUTRAL_PACE_VERSION:
@@ -105,11 +112,16 @@ for(const seed of seeds)for(const plan of [
     row.riderId==='rouleur-7'&&row.reason==='named_order'));
   assert.equal(namedBreak.length,1);
   assert.equal(namedBreak[0].km,240);
+  const beforeFinal=frames.at(-2);
   const namedFinale=final.attackReasons.some(row=>
     row.riderId==='climber-7'&&row.reason==='named_order');
-  assert.equal(namedFinale,plan.finaleAttack);
+  // In a stronger mixed field the selected rider may already be detached;
+  // the plan remains committed but cannot execute from outside the bunch.
+  if(!plan.finaleAttack||neutralMode!=='mixed')
+    assert.equal(namedFinale,plan.finaleAttack);
+  if(plan.finaleAttack&&beforeFinal.riderGroups.find(row=>
+    row.id==='climber-7')?.group==='dropped')assert.equal(namedFinale,false);
   const rider=id=>race.provisionalResults.find(row=>row.riderId===id);
-  const beforeFinal=frames.at(-2);
   console.log(JSON.stringify({seed,plan:plan.name,version:race.tuningVersion,
     teams:teams.length,chaseAt,route:routeName,neutralMode,neutralLevel,
     winner:race.provisionalResults[0].riderId,
@@ -122,7 +134,10 @@ for(const seed of seeds)for(const plan of [
     chaseKm:frames.filter(frame=>frame.chasers.includes('sprinter')).length,
     paidPaceKm:frames.filter(frame=>frame.paidBunchPace?.teamId==='sprinter').length,
     catchKm:frames.find(frame=>frame.caughtBreakawayRiderIds.includes('rouleur-7'))?.km??null,
-    namedFinale,finaleMove:final.joinedBreakawayRiderIds.includes('climber-7'),
+    plannedFinale:plan.finaleAttack,namedFinale,
+    climberPreFinalGroup:beforeFinal.riderGroups.find(row=>
+      row.id==='climber-7')?.group,
+    finaleMove:final.joinedBreakawayRiderIds.includes('climber-7'),
     finaleGroup:final.roadGroups.find(group=>group.riderIds.includes('climber-7'))?.id??null,
     frontGroup:final.roadGroups[0]?.id??null,
     formedChaseGroupId:final.formedChaseGroupId,
