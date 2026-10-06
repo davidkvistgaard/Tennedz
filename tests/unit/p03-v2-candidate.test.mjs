@@ -481,11 +481,15 @@ test('private v2 viewer shows only the manager’s own hard bunch work',()=>{
   const contract=buildV2OneDayResultContract(candidate,{tier:3});
   const first=contract.divisions[0].recording.frames[0];
   assert.deepEqual(first.hardBunchWorkTeamIds,[hard.id]);
+  assert.equal(first.hardBunchWorkRiderIds.length,2);
   const hardView=projectV2RecordedDivisionForTeam(contract,hard.id);
   const steadyView=projectV2RecordedDivisionForTeam(contract,steady.id);
   assert.deepEqual(hardView.recording.frames[0].hardBunchWorkTeamIds,[hard.id]);
+  assert.deepEqual(hardView.recording.frames[0].hardBunchWorkRiderIds,
+    first.hardBunchWorkRiderIds);
   assert.ok(steadyView.recording.frames.every(frame=>
-    frame.hardBunchWorkTeamIds.length===0));
+    frame.hardBunchWorkTeamIds.length===0&&
+    frame.hardBunchWorkRiderIds.length===0));
 });
 
 test('settlement preflight rebuilds saved split or legacy results without writing points',async()=>{

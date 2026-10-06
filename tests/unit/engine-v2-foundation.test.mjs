@@ -1083,7 +1083,7 @@ test('the full tactical trace is deterministic, bounded and makes aggressive ord
   const a=simulateTacticalTour(input);
   assert.deepEqual(a,simulateTacticalTour(input));
   assert.equal(a.frames.length,40);
-  assert.equal(a.tuningVersion,'v2-prototype-76');
+  assert.equal(a.tuningVersion,'v2-prototype-77');
   assert.equal(a.frames.at(-1).km,40);
   assert.ok(a.frames.some(frame=>frame.attackers.length>0));
   assert.ok(a.frames.some(frame=>frame.chasers.length>0));
@@ -1312,15 +1312,32 @@ test('a small strong team can set a costly hard tempo in fields of different siz
     const steady=race(size,96,false),hard=race(size,96,true);
     assert.ok(gap(hard)>gap(steady)+40);
     assert.deepEqual(hard.frames[0].hardBunchWorkTeamIds,['strong']);
+    assert.equal(hard.frames[0].hardBunchWorkRiderIds.length,2);
+    assert.ok(hard.frames[0].hardBunchWorkRiderIds.every(id=>id.startsWith('strong-')));
+    assert.ok(new Set(hard.frames.flatMap(frame=>frame.hardBunchWorkRiderIds)).size>2,
+      'hard pace should rotate as working helpers lose energy');
+    const firstWorkers=new Set(hard.frames[0].hardBunchWorkRiderIds);
+    const workerEnergy=hard.frames[0].riderGroups.find(row=>
+      row.id===hard.frames[0].hardBunchWorkRiderIds[0]).energy;
+    const restingHelper=hard.frames[0].riderGroups.find(row=>
+      row.teamId==='strong'&&row.id!=='strong-0'&&!firstWorkers.has(row.id));
+    assert.ok(workerEnergy<restingHelper.energy,
+      'a worker must spend more energy than an unselected teammate');
     assert.ok(hard.frames.at(-1).teamEnergy.find(row=>row.teamId==='strong').mean<
       steady.frames.at(-1).teamEnergy.find(row=>row.teamId==='strong').mean);
     assert.equal(validateRecordedTour(hard),true);
     const forged=structuredClone(hard);
     forged.frames[0].hardBunchWorkTeamIds=['weak'];
     assert.throws(()=>validateRecordedTour(forged),/Invalid recorded bunch work/);
+    const fakeWorker=structuredClone(hard);
+    fakeWorker.frames[0].hardBunchWorkRiderIds=['weak-1','strong-1'];
+    assert.throws(()=>validateRecordedTour(fakeWorker),/Invalid recorded bunch workers/);
     const priorRecording=structuredClone(hard);
     priorRecording.tuningVersion='v2-prototype-75';
-    priorRecording.frames.forEach(frame=>{delete frame.hardBunchWorkTeamIds;});
+    priorRecording.frames.forEach(frame=>{
+      delete frame.hardBunchWorkTeamIds;
+      delete frame.hardBunchWorkRiderIds;
+    });
     assert.equal(validateRecordedTour(priorRecording),true);
   }
   const moderate=race(15,90,true);
@@ -1332,6 +1349,7 @@ test('a small strong team can set a costly hard tempo in fields of different siz
       ...Array.from({length:13},(_,index)=>makeTeam(`neutral-${index}`,76+index%13))]});
   assert.ok(gap(noHelpers)<10);
   assert.deepEqual(noHelpers.frames[0].hardBunchWorkTeamIds,[]);
+  assert.deepEqual(noHelpers.frames[0].hardBunchWorkRiderIds,[]);
 });
 
 test('helpers shelter a protected leader but cannot simultaneously chase',()=>{
