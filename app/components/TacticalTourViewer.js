@@ -10,11 +10,12 @@ export default function TacticalTourViewer({recording,focusTeamId}){
   const [index,setIndex]=useState(0);
   const [playing,setPlaying]=useState(false);
   const [speed,setSpeed]=useState(1);
+  const [selectedTeamId,setSelectedTeamId]=useState(focusTeamId);
   const frames=recording.frames;
   const frame=frames[index];
   const distance=recording.route.distanceKm;
   const teams=recording.committedInputs.teams;
-  const focusedTeam=teams.find(team=>team.id===focusTeamId);
+  const focusedTeam=teams.find(team=>team.id===selectedTeamId);
   const names=useMemo(()=>new Map(teams.flatMap(team=>team.riders.map(rider=>
     [rider.id,rider.name]))),[teams]);
   const moments=useMemo(()=>frames.flatMap((item,index)=>{
@@ -44,7 +45,7 @@ export default function TacticalTourViewer({recording,focusTeamId}){
   },[playing,speed,frames.length]);
   useEffect(()=>{if(index===frames.length-1)setPlaying(false);},[index,frames.length]);
   const current=frame.riderGroups;
-  const own=current.filter(rider=>rider.teamId===focusTeamId);
+  const own=current.filter(rider=>rider.teamId===selectedTeamId);
   const peloton=current.filter(rider=>rider.group==='peloton').length;
   const dropped=current.filter(rider=>rider.group==='dropped').length;
   const recent=moments.filter(moment=>moment.km<=frame.km).slice(-8).reverse();
@@ -102,7 +103,10 @@ export default function TacticalTourViewer({recording,focusTeamId}){
       </section>
       <section className="tactical-panel" aria-label="Your riders">
         <div className="tactical-panel-head"><h2>{focusedTeam?.id} riders</h2>
-          <span>Recorded energy and position</span></div>
+          <label htmlFor="tactical-team">Watch team <select id="tactical-team"
+            value={selectedTeamId} onChange={event=>setSelectedTeamId(event.target.value)}>
+            {teams.map(team=><option key={team.id} value={team.id}>{team.id}</option>)}
+          </select></label></div>
         <div className="tactical-rider-list">{own.map(rider=><div key={rider.id}>
           <strong>{names.get(rider.id)}</strong><span>{title(rider.group)}</span>
           <span>{Math.round(rider.energy)} energy</span>

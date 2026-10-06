@@ -20,6 +20,9 @@ try{
     await expect(page.getByRole('region',{name:'Road groups'})).toBeVisible();
     if(process.env.PELOTONIA_VIEWER_SCREENSHOT==='1')
       await page.screenshot({path:`.recovery-local/v2-viewer-${viewport.width}.png`,fullPage:true});
+    await page.getByLabel('Watch team').selectOption('Birch');
+    await expect(page.getByRole('heading',{name:'Birch riders'})).toBeVisible();
+    await page.getByLabel('Watch team').selectOption('Amber');
     await page.getByRole('button',{name:'Skip 10 km'}).click();
     await expect(page.getByText('Km 11 / 60')).toBeVisible();
     await page.getByRole('button',{name:'Play recording'}).click();
