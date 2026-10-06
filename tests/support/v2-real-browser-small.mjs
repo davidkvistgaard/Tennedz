@@ -128,13 +128,17 @@ try{
     .orders.baseline.effort,'hard');
   await ok(db.from('events').update({
     tactics_deadline:new Date(Date.now()-30000).toISOString()}).eq('id',eventId));
+  // Advance the fixture schedule before the immutable tactics lock. Waiting
+  // for the real clock below keeps the event and frozen input in agreement.
+  const scheduled=new Date(Date.now()+15000).toISOString();
+  await ok(db.from('events').update({scheduled_at:scheduled}).eq('id',eventId));
   const starter=await newManagerPage(0);
   const lock=await starter.request.post('/api/event/v2-tactics/prepare',{
     headers:{Origin:baseURL},data:{event_id:eventId}});
   assert.equal(lock.status(),200,await lock.text());
   assert.equal((await lock.json()).already_locked,false);
-  await ok(db.from('events').update({
-    scheduled_at:new Date(Date.now()-10000).toISOString()}).eq('id',eventId));
+  const untilStart=Date.parse(scheduled)-Date.now()+500;
+  if(untilStart>0)await new Promise(resolve=>setTimeout(resolve,untilStart));
   const recordingStarted=performance.now();
   const first=await starter.request.post('/api/event/v2-recording/prepare',{
     headers:{Origin:baseURL},data:{event_id:eventId},timeout:60000});
