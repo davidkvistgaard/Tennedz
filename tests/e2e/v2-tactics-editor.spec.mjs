@@ -38,6 +38,9 @@ test('entered manager can edit and reload only their own private v2 plan',
       await manager.getByLabel('Captain support').selectOption('drop_back_if_dropped');
       await manager.getByRole('button',{name:'Add route marker'}).click();
       await expect(manager.getByLabel('Change 1 · at km')).toHaveValue('10');
+      await expect(manager.getByLabel('Change 1 · at km').locator('option[value="15"]'))
+        .toHaveText('15 km · 5 km to go');
+      await manager.getByLabel('Change 1 · at km').selectOption('15');
       await manager.getByLabel('Change 1 · break move').selectOption('fixture-M-2');
       await manager.getByLabel('Change 1 · break work').selectOption('drive');
       await manager.getByRole('button',{name:'Save private v2 plan'}).click();
@@ -51,13 +54,13 @@ test('entered manager can edit and reload only their own private v2 plan',
           forwardResponse:'chase_if_fading',baseline:{breakWork:'sit_on',
             breakFinale:'attack_if_outsprinted',helperAttackPolicy:'hold_for_captain',
             captainSupport:'drop_back_if_dropped'},
-          phases:[{atKm:10,effort:'hard',breakAttackRiderId:'fixture-M-2',
+          phases:[{atKm:15,effort:'hard',breakAttackRiderId:'fixture-M-2',
             breakWork:'drive'}]}});
       expect(JSON.stringify(context)).not.toMatch(/team-v2rival|v2_orders_by_team_id/);
       await manager.reload();
       await expect(manager.getByLabel('Race approach')).toHaveValue('protect');
       await expect(manager.getByLabel('Road captain')).toHaveValue('fixture-M-1');
-      await expect(manager.getByLabel('Change 1 · at km')).toHaveValue('10');
+      await expect(manager.getByLabel('Change 1 · at km')).toHaveValue('15');
       await expect(manager.getByLabel('Change 1 · break move')).toHaveValue('fixture-M-2');
       await expect(manager.getByLabel('Work in a break')).toHaveValue('sit_on');
       expect((await outsider.request.get(endpoint)).status()).toBe(403);
@@ -80,7 +83,7 @@ test('entered manager can edit and reload only their own private v2 plan',
       const switched=await (await manager.request.get(endpoint)).json();
       expect(switched.orders).toMatchObject({preset:'aggressive',
         baseline:{effort:'hard',chase:'all',attack:'repeated'},
-        phases:[{atKm:10,attackRiderId:null}]});
+        phases:[{atKm:15,attackRiderId:null}]});
     }finally{
       await Promise.all(contexts.map(context=>context.close()));
     }

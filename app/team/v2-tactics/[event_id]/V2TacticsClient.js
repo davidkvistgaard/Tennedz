@@ -4,7 +4,7 @@ import {useCallback,useEffect,useMemo,useState} from 'react';
 import Link from 'next/link';
 import TeamShell from '../../../components/TeamShell';
 import {useAuth} from '../../../components/AuthProvider';
-import {normalizeOrders} from '../../../../lib/engine/v2/orders.mjs';
+import {normalizeOrders,orderMarkers} from '../../../../lib/engine/v2/orders.mjs';
 
 const PRESETS=[['balanced','Balanced'],['protect','Protect the captain'],
   ['aggressive','Attack and chase']];
@@ -76,14 +76,7 @@ export default function V2TacticsClient({eventId}){
     id!==context?.entry.captain_id&&id!==roadCaptain);
   const markers=useMemo(()=>{
     const distance=Number(context?.stage.distance_km);
-    if(!Number.isInteger(distance))return [];
-    const allowed=new Set();
-    for(let km=10;km<distance;km+=10)allowed.add(km);
-    for(const point of context?.stage.keypoints??[]){
-      const km=Number(point.km);
-      if(Number.isInteger(km)&&km>0&&km<distance)allowed.add(km);
-    }
-    return [...allowed].sort((a,b)=>a-b);
+    return orderMarkers({distanceKm:distance,keypoints:context?.stage.keypoints??[]});
   },[context]);
   const editable=Boolean(context?.editable&&
     Date.parse(context.event.tactics_deadline)>now);
@@ -195,11 +188,12 @@ export default function V2TacticsClient({eventId}){
           </div>
         </section>
         <section className="card"><h2>Route markers</h2>
-          <p>Commit a change at a 10 km marker or route keypoint. Earlier kilometres keep their original orders.</p>
+          <p>Commit a change at a 10 km, route or 5 km-to-go marker. The new orders apply from the following kilometre; attack rules keep their selected cadence.</p>
           {(plan.phases??[]).map((phase,index)=><div className="v2-phase" key={index}>
             <div className="v2-tactics-fields">
               <Select label={`Change ${index+1} · at km`} value={phase.atKm}
-                options={markers.map(km=>[km,`${km} km`])}
+                options={markers.map(km=>[km,km===Number(context.stage.distance_km)-5?
+                  `${km} km · 5 km to go`:`${km} km`])}
                 onChange={value=>updatePhase(index,'atKm',value)} disabled={!editable}/>
               <Select label="Effort" value={phase.effort??''}
                 options={[["","Keep previous"],...EFFORT.slice(1)]}

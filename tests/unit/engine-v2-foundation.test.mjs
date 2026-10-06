@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {buildKilometreRoute} from '../../lib/engine/v2/route.mjs';
-import {normalizeOrders,orderAt,breakAttackAt} from '../../lib/engine/v2/orders.mjs';
+import {normalizeOrders,orderMarkers,orderAt,breakAttackAt} from '../../lib/engine/v2/orders.mjs';
 import {resolveTacticalKilometre} from '../../lib/engine/v2/tactics.mjs';
 import {simulateTacticalTour} from '../../lib/engine/v2/tour.mjs';
 import {SPORTING_SKILLS,sportingSkills,riderKilometreEffect} from '../../lib/engine/v2/physiology.mjs';
@@ -115,6 +115,35 @@ test('a precommitted marker changes break cooperation without rewriting earlier 
   {riderIds:riders,distanceKm:40});
   assert.equal(orderAt(orders,19).breakWork,'sit_on');
   assert.equal(orderAt(orders,20).breakWork,'cooperate');
+});
+
+test('the 5 km-to-go marker changes the locked approach only after that marker',()=>{
+  assert.deepEqual(orderMarkers({distanceKm:40}),[10,20,30,35]);
+  assert.deepEqual(orderMarkers({distanceKm:35,keypoints:[{km:30}]}),
+    [10,20,30]);
+  const orders=normalizeOrders({captainId:'r0',phases:[
+    {atKm:35,effort:'hard',chase:'all',attack:'none'}]},
+  {riderIds:riders,distanceKm:40});
+  assert.equal(orderAt(orders,34).effort,'steady');
+  assert.equal(orderAt(orders,34).chase,'selective');
+  assert.equal(orderAt(orders,35).effort,'hard');
+  assert.equal(orderAt(orders,35).chase,'all');
+  assert.equal(orderAt(orders,35).attack,'none');
+  assert.throws(()=>normalizeOrders({captainId:'r0',phases:[
+    {atKm:36,effort:'hard'}]},{riderIds:riders,distanceKm:40}),/marker/);
+});
+
+test('a saved 5 km-to-go effort change affects only the recorded final kilometres',()=>{
+  const amber=tacticalTeam('amber','protect',{baseline:{attack:'none',chase:'ignore'}});
+  const rival=tacticalTeam('rival','protect',{baseline:{attack:'none',chase:'ignore'}});
+  const input={stage,teams:[amber,rival],seed:'five-km-approach'};
+  const baseline=simulateTacticalTour(input);
+  const changed=simulateTacticalTour({...input,teams:[{...amber,orders:{...amber.orders,
+    phases:[{atKm:35,effort:'hard'}]}},rival]});
+  assert.deepEqual(changed.frames.slice(0,35),baseline.frames.slice(0,35));
+  assert.ok(changed.frames.at(-1).teamEnergy.find(team=>team.teamId==='amber').mean<
+    baseline.frames.at(-1).teamEnergy.find(team=>team.teamId==='amber').mean);
+  assert.equal(validateRecordedTour(changed),true);
 });
 
 test('a support order can be precommitted for a later route marker',()=>{

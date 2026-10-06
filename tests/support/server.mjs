@@ -247,8 +247,11 @@ const server = http.createServer(async (req, res) => {
         kind:"one_day",gender:"M",status:v2SettledAt?"FINISHED":"OPEN",
         stage_profile_id:twoPhaseStageId,
         registration_deadline:v2RecordingLock.event.registration_deadline,
-        tactics_deadline:v2RecordingLock.event.tactics_deadline,
-        scheduled_at:v2FutureSettlementFixture?
+        tactics_deadline:v2SaveFixture&&!v2LockFixture&&!v2RecordingFixture?
+          new Date(Date.now()+3600000).toISOString():
+          v2RecordingLock.event.tactics_deadline,
+        scheduled_at:v2SaveFixture&&!v2LockFixture&&!v2RecordingFixture?
+          new Date(Date.now()+7200000).toISOString():v2FutureSettlementFixture?
           new Date(Date.now()+3600000).toISOString():
           v2RecordingLock.event.scheduled_at});
     if (table === "stage_profiles" &&
