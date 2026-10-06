@@ -88,6 +88,16 @@ const server = http.createServer(async (req, res) => {
       return send(200,{eventId:v2PreviewEventId,recordedAt:v2RecordedAt,
         alreadyRecorded,resultContract:{private:true}});
     }
+    if (v2RecordingFixture && url.pathname === "/rest/v1/rpc/recovery_get_v2_recorded_division") {
+      if (body.p_event !== v2PreviewEventId ||
+          ![ids.v2manager,ids.v2rival].includes(body.p_user))
+        return send(403,{code:"PT403",message:"The team is not in the revealed race."});
+      if (!v2RecordedContract)
+        return send(404,{code:"PT404",message:"The v2 recording is not ready."});
+      const {divisions,...header}=v2RecordedContract;
+      return send(200,{...header,divisionCount:divisions.length,
+        division:divisions[0],recordedAt:v2RecordedAt});
+    }
     if (v2LockFixture && url.pathname === "/rest/v1/rpc/recovery_race_snapshot") {
       if (body.p_event !== v2PreviewEventId)
         return send(404, { code: "PT404", message: "The race was not found." });

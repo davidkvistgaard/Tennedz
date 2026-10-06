@@ -14,6 +14,7 @@ declare
   v_contract jsonb;
   v_first jsonb;
   v_repeat jsonb;
+  v_slice jsonb;
   v_registration timestamptz := clock_timestamp() - interval '2 hours';
 begin
   if has_function_privilege('anon',
@@ -23,7 +24,11 @@ begin
     or has_table_privilege('anon',
       'public.recovery_v2_recorded_candidates', 'SELECT')
     or has_table_privilege('authenticated',
-      'public.recovery_v2_recorded_candidates', 'SELECT') then
+      'public.recovery_v2_recorded_candidates', 'SELECT')
+    or has_function_privilege('anon',
+      'public.recovery_get_v2_recorded_division(uuid,uuid)', 'EXECUTE')
+    or has_function_privilege('authenticated',
+      'public.recovery_get_v2_recorded_division(uuid,uuid)', 'EXECUTE') then
     raise exception 'V2 recording permissions are not private.';
   end if;
   select e.id into v_event from public.events e
@@ -90,6 +95,23 @@ begin
           where event_id = v_event) is distinct from v_contract then
       raise exception 'The v2 candidate was not stable on retry.';
     end if;
+    v_slice := public.recovery_get_v2_recorded_division(v_user,v_event);
+    if v_slice->>'eventId' <> v_event::text
+      or v_slice->'divisionCount' <> '1'::jsonb
+      or v_slice->'division'->'index' <> '1'::jsonb
+      or v_slice ? 'divisions'
+      or v_slice->>'recordedAt' <> v_first->>'recordedAt' then
+      raise exception 'The v2 read did not return exactly one saved division.';
+    end if;
+    v_slice := public.recovery_get_v2_recorded_division(v_other_user,v_event);
+    if v_slice->'division'->'index' <> '1'::jsonb then
+      raise exception 'The other entered manager could not read the division.';
+    end if;
+    begin
+      perform public.recovery_get_v2_recorded_division(gen_random_uuid(),v_event);
+      raise exception 'A foreign manager read the v2 division.';
+    exception when sqlstate 'PT403' then null;
+    end;
     begin
       perform public.recovery_save_v2_recorded_candidate(v_event,
         jsonb_set(v_contract,'{divisions,0,index}','2'::jsonb));

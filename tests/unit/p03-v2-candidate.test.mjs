@@ -6,9 +6,10 @@ import {previewRecordedDivisions,previewLockedV2RecordedDivisions}
   from '../../lib/race/v2-candidate.mjs';
 import {projectV2OneDayAwards} from '../../lib/race/v2-points.mjs';
 import {buildV2OneDayResultContract,validateV2OneDayResultContract,
-  validateV2OneDayResultAgainstLock}
+  validateV2OneDayResultAgainstLock,validateV2OneDayDivisionSlice}
   from '../../lib/race/v2-result-contract.mjs';
-import {selectV2RecordedDivision,projectV2RecordedDivisionForTeam}
+import {selectV2RecordedDivision,projectV2RecordedDivisionForTeam,
+  projectV2RecordedDivisionSliceForTeam}
   from '../../lib/race/v2-viewer.mjs';
 import {normalizeEnteredV2Orders} from '../../lib/race/v2-tactics.mjs';
 import {weatherForV2TacticsLock} from '../../lib/race/v2-lock-weather.mjs';
@@ -243,6 +244,29 @@ test('one versioned v2 result contract binds each replay, captain placing and aw
   const wrongVersion=structuredClone(contract);
   wrongVersion.schemaVersion=2;
   assert.throws(()=>validateV2OneDayResultContract(wrongVersion),/Unsupported/);
+});
+
+test('division-only v2 read validates replay, points and reveal without rival recordings',()=>{
+  const contract=buildV2OneDayResultContract(previewRecordedDivisions(snapshot(45)),
+    {tier:3});
+  const {divisions,...header}=contract;
+  const slice={...header,divisionCount:divisions.length,division:divisions[2]};
+  const teamId=slice.division.teamIds[0];
+  assert.equal(validateV2OneDayDivisionSlice(slice),slice);
+  assert.deepEqual(projectV2RecordedDivisionSliceForTeam(slice,teamId),
+    projectV2RecordedDivisionForTeam(contract,teamId));
+  assert.throws(()=>projectV2RecordedDivisionSliceForTeam(slice,divisions[0].teamIds[0]),
+    /not in the selected/);
+  const wrongAward=structuredClone(slice);
+  wrongAward.division.awards[0].points++;
+  assert.throws(()=>validateV2OneDayDivisionSlice(wrongAward),/disagree/);
+  const wrongResult=structuredClone(slice);
+  wrongResult.division.riderResults[0].timeSeconds++;
+  assert.throws(()=>validateV2OneDayDivisionSlice(wrongResult),/disagree/);
+  const wrongReveal=structuredClone(slice);
+  wrongReveal.divisionReveal.assignments.find(row=>row.teamId===teamId)
+    .divisionIndex=1;
+  assert.throws(()=>validateV2OneDayDivisionSlice(wrongReveal),/saved reveal/);
 });
 
 test('v2 result can only cross the storage boundary with its exact locked manager input',()=>{
