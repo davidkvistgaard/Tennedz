@@ -16,14 +16,30 @@ test('enabled cron processes three pages and stays idempotent over HTTP',async({
   expect(result.batches.map(batch=>batch.entered)).toEqual([1,1,1]);
   expect(Date.now()-started).toBeLessThan(35000);
   const state=await (await fetch('http://127.0.0.1:54330/__cron_state')).json();
-  expect(state).toMatchObject({complete:true,processed:23,entered:3,claims:3,lease:null});
-  expect(state.maxConcurrentEventReads).toBeGreaterThan(1);
+  expect(state).toMatchObject({complete:true,processed:23,entered:3,claims:3,
+    lease:null,eventReads:3});
+  expect(state.maxConcurrentEventReads).toBeGreaterThanOrEqual(1);
   expect(state.maxConcurrentEventReads).toBeLessThanOrEqual(4);
   const repeated=await request.get('/api/cron/autopilot',{
     headers:{Authorization:'Bearer fixture-cron-secret'},
   });
   expect(repeated.status()).toBe(200);
   expect((await repeated.json()).batches).toEqual([]);
+});
+
+test('configured teams still enter in bounded parallel groups',async({request})=>{
+  const fixture='http://127.0.0.1:54330';
+  await fetch(`${fixture}/__cron_reset`,{method:'POST',
+    headers:{'Content-Type':'application/json'},body:JSON.stringify({allDefaults:true})});
+  const response=await request.get('/api/cron/autopilot',{
+    headers:{Authorization:'Bearer fixture-cron-secret'},
+  });
+  expect(response.status()).toBe(200);
+  const state=await (await fetch(`${fixture}/__cron_state`)).json();
+  expect(state).toMatchObject({processed:23,entered:23,eventReads:23,
+    complete:true});
+  expect(state.maxConcurrentEventReads).toBeGreaterThan(1);
+  expect(state.maxConcurrentEventReads).toBeLessThanOrEqual(4);
 });
 
 test('cron reports a rejected progress save as a failed run',async({request})=>{
@@ -59,8 +75,8 @@ test('an interrupted page resumes after its lease expires without duplicate entr
   expect(resumed.status()).toBe(200);
   expect((await resumed.json()).batches.map(batch=>batch.processed)).toEqual([10,3]);
   state=await (await fetch(`${fixture}/__cron_state`)).json();
-  expect(state).toMatchObject({complete:true,processed:23,entered:3,claims:4,lease:null});
-  expect(state.reportedEntered).toBe(3);
+  expect(state).toMatchObject({complete:true,processed:23,entered:4,claims:4,lease:null});
+  expect(state.reportedEntered).toBe(4);
 });
 
 test('cron commits an unrevealed due division once after its entry scan',async({request})=>{
@@ -116,8 +132,9 @@ test('daily cron processes a 400-team field inside its request budget',async({re
   expect(result.batches).toHaveLength(41);
   expect(result.batches.at(-1)).toMatchObject({processed:0,complete:true});
   expect(state).toMatchObject({teamCount:400,defaultCount:20,complete:true,
-    processed:400,entered:20,reportedEntered:20,claims:41,lease:null});
-  expect(state.maxConcurrentEventReads).toBeGreaterThan(1);
+    processed:400,entered:20,reportedEntered:20,claims:41,lease:null,
+    eventReads:20});
+  expect(state.maxConcurrentEventReads).toBeGreaterThanOrEqual(1);
   expect(state.maxConcurrentEventReads).toBeLessThanOrEqual(4);
   expect(elapsed).toBeLessThan(35000);
 });
@@ -126,7 +143,8 @@ test('a larger field resumes at the cursor after one request budget',async({requ
   test.setTimeout(130000);
   const fixture='http://127.0.0.1:54330';
   const reset=await fetch(`${fixture}/__cron_reset`,{method:'POST',
-    headers:{'Content-Type':'application/json'},body:JSON.stringify({teamCount:1000})});
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({teamCount:1000,defaultLookupDelayMs:350})});
   expect(await reset.json()).toMatchObject({teamCount:1000,defaultCount:50});
   const headers={Authorization:'Bearer fixture-cron-secret'};
   const first=await request.get('/api/cron/autopilot',{headers,timeout:60000});
@@ -143,7 +161,8 @@ test('a larger field resumes at the cursor after one request budget',async({requ
   expect(second.status()).toBe(200);
   const secondState=await (await fetch(`${fixture}/__cron_state`)).json();
   expect(secondState).toMatchObject({teamCount:1000,defaultCount:50,
-    complete:true,processed:1000,entered:50,reportedEntered:50,lease:null});
+    complete:true,processed:1000,entered:50,reportedEntered:50,lease:null,
+    eventReads:50});
   expect(secondState.maxConcurrentEventReads).toBeLessThanOrEqual(4);
   expect((await second.json()).batches.at(-1)).toMatchObject({processed:0,complete:true});
 });
@@ -153,7 +172,8 @@ test('division reveal waits for an incomplete large scan and commits after its r
   const fixture='http://127.0.0.1:54330';
   await fetch(`${fixture}/__cron_reset`,{method:'POST',
     headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({teamCount:1000,revealCandidate:true})});
+    body:JSON.stringify({teamCount:1000,revealCandidate:true,
+      defaultLookupDelayMs:350})});
   const headers={Authorization:'Bearer fixture-cron-secret'};
   const first=await request.get('/api/cron/autopilot',{headers,timeout:60000});
   expect(first.status()).toBe(503);

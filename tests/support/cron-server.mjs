@@ -11,7 +11,8 @@ const riderIds=teamId=>Array.from({length:8},(_,index)=>
   `cccccccc-cccc-4ccc-8ccc-${String(Number(teamId.slice(-12))*8+index).padStart(12,'0')}`);
 const state={cursor:null,lease:null,complete:false,processed:0,entered:0,
   reportedEntered:0,claims:0,joined:new Set(),failTeamId:null,failed:false,
-  activeEventReads:0,maxConcurrentEventReads:0,
+  activeEventReads:0,maxConcurrentEventReads:0,eventReads:0,
+  defaultLookupDelayMs:0,
   revealCandidate:false,revealed:false,overdueCandidate:false,advanceRejected:false,
   revealRejected:false};
 const send=(res,status,data)=>{
@@ -32,10 +33,13 @@ const fixture=http.createServer(async(req,res)=>{
     defaultTeams=new Set(teamCount===23?
       [teamIds[0],teamIds[10],teamIds[20]]:
       teamIds.filter((_,index)=>index%20===0));
+    if(body.failAfterJoin)defaultTeams.add(teamIds[11]);
+    if(body.allDefaults)defaultTeams=new Set(teamIds);
     Object.assign(state,{cursor:null,lease:null,complete:false,processed:0,entered:0,
       reportedEntered:0,claims:0,joined:new Set(),
       failTeamId:body.failAfterJoin?teamIds[11]:null,failed:false,
-      activeEventReads:0,maxConcurrentEventReads:0,
+      activeEventReads:0,maxConcurrentEventReads:0,eventReads:0,
+      defaultLookupDelayMs:body.defaultLookupDelayMs??0,
       revealCandidate:body.revealCandidate===true,revealed:false,
       overdueCandidate:body.overdueCandidate===true,
       advanceRejected:body.advanceRejected===true,
@@ -110,6 +114,7 @@ const fixture=http.createServer(async(req,res)=>{
     if(!url.searchParams.get('id')?.startsWith('eq.'))
       return send(res,200,state.overdueCandidate?[{id:eventId}]:[]);
     state.activeEventReads++;
+    state.eventReads++;
     state.maxConcurrentEventReads=Math.max(state.maxConcurrentEventReads,
       state.activeEventReads);
     await new Promise(resolve=>setTimeout(resolve,120));
@@ -119,7 +124,14 @@ const fixture=http.createServer(async(req,res)=>{
       deadline:'2099-05-02T12:00:00Z',status:'OPEN'});
   }
   if(url.pathname==='/rest/v1/recovery_default_lineups'){
-    const teamId=url.searchParams.get('team_id')?.replace('eq.','');
+    const filter=url.searchParams.get('team_id')??'';
+    if(filter.startsWith('in.(')){
+      await new Promise(resolve=>setTimeout(resolve,state.defaultLookupDelayMs));
+      const ids=filter.slice(4,-1).split(',');
+      return send(res,200,ids.filter(id=>defaultTeams.has(id))
+        .map(team_id=>({team_id})));
+    }
+    const teamId=filter.replace('eq.','');
     return send(res,200,defaultTeams.has(teamId)?[{gender:'M',event_format:'ONE_DAY',
       selected_riders:riderIds(teamId),captain_id:riderIds(teamId)[0]}]:[]);
   }
