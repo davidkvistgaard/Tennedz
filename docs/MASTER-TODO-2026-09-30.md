@@ -127,6 +127,8 @@ En ny 15-holds prøve viste også et brat spring: hold med gennemsnitlig færdig
 
 **V2-bro, 6. oktober:** Race Lab kan nu prøve et fuldt sæt eksplicitte v2-ordrer for de tilmeldte hold, herunder faseskift, uden at oversætte de gamle personlige ordrer forkert. Den syntetiske viewer viser de låste ordrer på det aktuelle kilometer. En separat læseprojektion beregner sportslige point fra v2-placeringerne med samme divisionsvægt og pointkurve som det eksisterende løb; 45-holdstesten giver 60 entydige pointposter. Ingen v2-ordrer, resultater eller point gemmes endnu. Datakontrakt, spillerkobling og sportslig balance i punkt 04-09 er stadig åbne.
 
+**V2-optagelsens størrelse:** En syntetisk 15-holds, 140 km-optagelse fylder cirka 2,23 MB som JSON eller 155–158 KB med gzip. Tre divisioner er dermed cirka 6,7 MB rå JSON. Før punkt 08-09 kan koble den til spillernes løb, skal versionsmærket lagring og hentning af kun spillerens division prøves med faktiske gemte data; den nuværende replay-kolonne accepterer kun v1.
+
 ## P1 - atlas og verdenskvalitet
 
 | ID | Opgave / konkret resultat | Timer | Afhænger af |

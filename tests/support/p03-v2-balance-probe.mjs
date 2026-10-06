@@ -2,6 +2,7 @@
 // Run: node tests/support/p03-v2-balance-probe.mjs
 import {assignPointDivisions} from '../../lib/calendar/division-reveal.mjs';
 import {previewRecordedDivisions} from '../../lib/race/v2-candidate.mjs';
+import {gzipSync} from 'node:zlib';
 
 const skills=['sprint','flat','hills','mountain','cobbles',
   'timetrial','endurance','strength','wind'];
@@ -110,7 +111,11 @@ const rankedDivision=[false,true].map(hilly=>{
   const firstByTeam=Object.fromEntries(recording.committedInputs.teams.map(team=>[
     team.id,recording.provisionalResults.find(result=>result.teamId===team.id),
   ]));
-  return {route:hilly?'hilly':'flat',firstRiderByTeam:recording.committedInputs.teams
+  const serialized=JSON.stringify(recording);
+  return {route:hilly?'hilly':'flat',recordingSize:{
+    jsonBytes:Buffer.byteLength(serialized),gzipBytes:gzipSync(serialized).byteLength,
+    frames:recording.frames.length,riders:recording.provisionalResults.length,
+  },firstRiderByTeam:recording.committedInputs.teams
     .map((team,index)=>({teamId:team.id,skillLevel:65+index*2.5,
       position:firstByTeam[team.id].position,
       gapSeconds:+firstByTeam[team.id].gapSeconds.toFixed(2)})),
