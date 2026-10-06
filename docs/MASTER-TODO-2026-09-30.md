@@ -34,12 +34,12 @@
 | Spor | Punkter | Estimat |
 | --- | ---: | ---: |
 | Integration og testgrundlag | 01–03 isoleret verificeret | 0 t i dette spor |
-| Ny motor og spilbart løb | 04–12, 41 | 256–512 t |
+| Ny motor og spilbart løb | 04–12, 41 | 288–576 t |
 | Kalender, autopilot og ranglister | 13–20 | 156–312 t |
 | Atlas og stedoplevelse | 21–26 | 200–400 t |
 | Klubprogression, økonomi og fans | 27–34 | 240–480 t |
 | Portrætter, intro, nye løbsformer og ruter | 35–40 | 200–400 t |
-| **Alle kendte resterende punkter** | **04–41** | **1.052–2.104 t** |
+| **Alle kendte resterende punkter** | **04–41** | **1.084–2.168 t** |
 
 Den første tekniske **endagsløbs-testsløjfe** er nu gennemført isoleret i punkt 03 med 45 browserstyrede hold. En sportsligt realistisk spiltest kræver stadig arbejde med motor, ordrer og viewer i punkt 04–09 samt den tofasede kalender- og pointfordeling i punkt 16–17. Detaljerede timeintervaller står ved hvert punkt; P03-prøven gør ikke de senere punkter færdige.
 
@@ -68,11 +68,13 @@ Den første tekniske **endagsløbs-testsløjfe** er nu gennemført isoleret i pu
 | 06 | Afklar de synlige ryttereegenskabers primære virkning og defaults/migration for nye skills; ingen offentliggørelse af skjulte procentvægte. Test virkningen på forskellige ryttertyper. | 16–32 | 04 |
 | 07 | Gør kilometerrute, hældning, terræn, underlag og vejrlås datadrevet og sammenhængende; profil, ordreflade og viewer skal bruge samme versionerede rute. | 20–40 | 04 |
 | 08 | Byg enkelt preset + ekspertordrer ved 10-km-markører/nøglepunkter, kontingenser og let holdudtagelse i det rigtige spillerflow. Gem og lås ordrer før deadline. | 24–48 | 05–07 |
-| 09 | Gem versionsmærket input, seed, vejr, beslutninger, resultater og replay sikkert; idempotent race-run, adgangskontrol, replay-viewer og journalistisk race feed. | 24–48 | 04–08 |
+| 09 | Gem versionsmærket input, seed, vejr, beslutninger, resultater og replay sikkert; idempotent race-run og adgangskontrol. Byg en visuelt og dramaturgisk stærk replay-viewer med journalistisk løbsfortælling, ikke kun en teknisk tidslinje. | 56–112 | 04–08 |
 | 10 | Færdiggør etapeløbsafvikling: vedvarende startliste, klassificeret tid, GC, etape-/point-/bjergklassement, udgåede ryttere og energi mellem etaper. Undgå dobbelt resultatskrivning. | 32–64 | 09 |
 | 11 | Balance- og spiltest i større, parrede scenarier for begge køn, forskellige ruter og taktikvalg. Justér centralt, og test med mennesker før accept. | 48–96 | 04–10 |
 | 12 | Isoleret preview af det sammenhængende løb, performance-/sikkerhedstest, migration/rollback og kontrolleret produktionsindføring efter godkendelse. Den gamle motor forbliver fallback indtil da. | 20–40 | 02–11 |
 | 41 | Afprøv en valgfri Three.js-scene til **rute- og løbsreplay** på én versioneret rute. Vis terræn, rute og kameraføring ud fra atlas-/rutedata og afspil de faktisk optagne gruppepositioner; behold kort, tidsforskelle, ordrer og hændelser som læsbar 2D-visning. Mål mobil ydelse, indlæsning og reduced-motion, og stop 3D-sporet hvis rutegeometri eller replay ikke kan bære en sandfærdig visning. | 24–48 | 07, 09, 25 |
+
+**Kvalitetskrav til den rigtige løbsviewer:** Motor Labs nuværende kort, kurver og kilometertidslinje er et teknisk inspektionsværktøj, ikke målestokken for den færdige oplevelse. Et rigtigt replay skal lade spilleren *opleve* løbets opbygning, angreb, jagt, samling og finale gennem tydelig komposition, bevægelse, skift i fokus og et levende løbsfeed. Spilleren skal kunne følge egne ryttere og de afgørende grupper, forstå hvad ordrerne udløste, og hoppe mellem højdepunkter uden at miste tidsgab eller placering. Den visuelle scene skal afspejle den faktisk gemte rute og optagelse; kameraføring eller 3D må ikke opfinde sportslige hændelser. Bedøm en spilbar prøve med rigtige gemte løb på desktop og mobil for spænding, læsbarhed, indlæsning og tilgængelighed, herunder reduced motion. Punkt 09 er ikke færdigt, blot fordi en replay-fil kan afspilles korrekt. Eventuel Three.js i punkt 41 er et virkemiddel, ikke en forudsætning for kvalitetskravet.
 
 ## P1 — kalender, automatisk deltagelse og ranglister
 
@@ -208,7 +210,7 @@ Et efterfølgende UI-check rettede desuden preset-skift efter genindlæsning, s�
 | 39 | Virkelighedsinspirerede ruter og vejrkilder med kildedato, licens-/navneafklaring, versionering og kvalitetssikret import. Brug samme route-/weather-kontrakt som motoren. | 24–48 | 07, 14 |
 | 40 | Senere spilleroprettede eventlobbyer med eventuel entry fee/præmiepulje, anti-misbrug, betaling/regnskab og klare regler uden køb af sportslig styrke. | 40–80 | 28, 31, 38 |
 
-**Samlet, groft restestimat: cirka 1.050–2.100 aktive timer** for de resterende punkter ovenfor, med P01–P03's isolerede verifikation afsluttet og den udvidede fase-/divisionsopgave indregnet. Det er en størrelsesorden, ikke en deadline; omarbejde efter spiltest, udgifter til illustrationer/tjenester og ejerens svartid kan øge forløbet. Den næste realistiske testsløjfe kræver motorens og kalenderens nødvendige P1-punkter, ikke hele denne liste. Punkter 21–26 kan udvikles sideløbende med sportsarbejdet, men konkurrerer om samme kapacitet, hvis én person udfører det.
+**Samlet, groft restestimat: cirka 1.080–2.170 aktive timer** for de resterende punkter ovenfor, med P01–P03's isolerede verifikation afsluttet og den udvidede fase-/divisionsopgave samt et højere kvalitetskrav til løbsvieweren indregnet. Det er en størrelsesorden, ikke en deadline; omarbejde efter spiltest, udgifter til illustrationer/tjenester og ejerens svartid kan øge forløbet. Den næste realistiske testsløjfe kræver motorens og kalenderens nødvendige P1-punkter, ikke hele denne liste. Punkter 21–26 kan udvikles sideløbende med sportsarbejdet, men konkurrerer om samme kapacitet, hvis én person udfører det.
 
 ## Beslutninger som bevidst forbliver åbne
 
