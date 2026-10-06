@@ -119,6 +119,8 @@ Den første tekniske **endagsløbs-testsløjfe** er nu gennemført isoleret i pu
 
 **Balancefund i v2:** En gentagelig flad 140 km-prøve viser et brat spring: med otte ens ryttere på hvert hold giver 90 mod 80 i færdigheder cirka 0,2 sekunder til første modstander, mens 96 mod 80 giver cirka 89 sekunder og 98 mod 80 cirka 349 sekunder. Springet gentager sig med tre seeds, og første svagere rytter falder fra på kilometer 56 i 96-mod-80-prøven. Undersøg gruppens drop-tærskel på flere ruter og felter før balancegodkendelse; ingen live-motor er ændret.
 
+Med otte ryttere fordelt fra -8 til +8 omkring hvert holds gennemsnit flytter springet sig: 98 mod 80 er fortsat inden for ét sekund til første modstander, mens 100 mod 80 giver cirka 70 sekunder i både fladt og kuperet testprofil. Det peger på rosterafhængighed; test forskellige specialer og større felter, før selve tuning-reglerne ændres.
+
 ## P1 - atlas og verdenskvalitet
 
 | ID | Opgave / konkret resultat | Timer | Afhænger af |

@@ -5,18 +5,21 @@ import {previewRecordedDivisions} from '../../lib/race/v2-candidate.mjs';
 
 const skills=['sprint','flat','hills','mountain','cobbles',
   'timetrial','endurance','strength','wind'];
-function snapshot(level,opponentLevel=level,seed='fixed'){
+function snapshot(level,opponentLevel=level,seed='fixed',options={}){
   const teams=['a','b'].map(id=>{
     const teamLevel=id==='a'?level:opponentLevel;
     const selected=Array.from({length:8},(_,index)=>`${id}${index}`);
-    return {id,name:id,riders:selected.map(riderId=>({id:riderId,name:riderId,gender:'M',
-      ...Object.fromEntries(skills.map(skill=>[skill,teamLevel])),form:70,fatigue:10})),
+    return {id,name:id,riders:selected.map((riderId,index)=>({id:riderId,name:riderId,gender:'M',
+      ...Object.fromEntries(skills.map(skill=>[skill,Math.min(100,teamLevel+
+        (options.varied?[-8,-6,-4,-2,2,4,6,8][index]:0))])),form:70,fatigue:10})),
       entry:{selected_riders:selected,captain_id:selected[0]}};
   });
   return {event:{id:'balance-probe',seed,kind:'one_day',gender:'M',
     scheduled_at:'2026-01-01T12:00:00Z',weather_locked:{temp_c:18,wind_kph:5,
       precipitation_mm:0}},game_date:'2026-01-01',
-    stage:{distance_km:140,tags:['FLAT'],profile_points:[[0,0],[140,0]]},teams,
+    stage:{distance_km:140,tags:[options.hilly?'HILLY':'FLAT'],
+      profile_points:options.hilly?[[0,0],[35,0],[45,600],[55,0],[90,0],[100,600],
+        [110,0],[140,0]]:[[0,0],[140,0]]},teams,
     locked_division_reveal:assignPointDivisions({eventId:'balance-probe',seasonYear:2026,
       gender:'M',entrants:teams.map(team=>({teamId:team.id,earnedPoints:0}))})};
 }
@@ -47,5 +50,13 @@ const firstOpponentDrop=cliffRecording.frames.find(frame=>
 const cliff={firstOpponentDropKm:firstOpponentDrop?.km??null,
   finalOpponentDeficitSeconds:cliffRecording.frames.at(-1).riderGroups
     .find(row=>row.teamId==='b')?.deficitSeconds??null};
-console.log(JSON.stringify({simulator:'P03 v2 candidate',route:'140 km flat',
-  seed:'fixed',uniformSkills:readings,mixedSkills:mixed,threshold,cliff},null,2));
+const variedFields=[false,true].flatMap(hilly=>[90,94,96,98,100].map(strongSkill=>({
+  route:hilly?'hilly':'flat',strongSkill,opponentSkill:80,
+  gapsSeconds:['fixed','alternate-1','alternate-2'].map(seed=>{
+    const results=previewRecordedDivisions(snapshot(strongSkill,80,seed,
+      {varied:true,hilly})).divisions[0].recording.provisionalResults;
+    return results.find(row=>row.teamId==='b').gapSeconds;
+  }),
+})));
+console.log(JSON.stringify({simulator:'P03 v2 candidate',route:'140 km flat and hilly',
+  seed:'fixed',uniformSkills:readings,mixedSkills:mixed,threshold,cliff,variedFields},null,2));
