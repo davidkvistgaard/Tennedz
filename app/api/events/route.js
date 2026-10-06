@@ -48,6 +48,20 @@ async function handler(req, context, auth) {
     .eq("team_id",auth.team.id).in("event_id",ids):{data:[],error:null};
   if(entryError)throw new Error("Entry query failed");
   const entryByEvent=new Map(entries.map(entry=>[entry.event_id,entry]));
+  const v2TacticsEnabled=process.env.RACE_LAB_ENABLED==="true"&&
+    process.env.PELOTONIA_V2_TACTICS_SAVE_ENABLED==="true";
+  const v2RecordingEnabled=process.env.RACE_LAB_ENABLED==="true"&&
+    process.env.PELOTONIA_V2_RECORDING_ENABLED==="true";
+  const [revealed,locked]=await Promise.all([
+    v2TacticsEnabled&&ids.length?auth.db.from("recovery_division_reveal_entries")
+      .select("event_id").eq("team_id",auth.team.id).in("event_id",ids):
+      {data:[],error:null},
+    v2RecordingEnabled&&ids.length?auth.db.from("recovery_v2_tactics_commits")
+      .select("event_id").in("event_id",ids):{data:[],error:null},
+  ]);
+  if(revealed.error||locked.error)throw new Error("Private v2 race status is unavailable");
+  const revealedIds=new Set(revealed.data.map(row=>row.event_id));
+  const lockedIds=new Set(locked.data.map(row=>row.event_id));
   const events=all.map(event=>{
     const teamSize=teamSizeFor(event),entry=entryByEvent.get(event.id);
     const tier=event.race_tier;
@@ -55,11 +69,15 @@ async function handler(req, context, auth) {
       readiness:entryReadiness({...event,teamSize},entry,new Date(now)),
       team_count:entry?.selected_riders?.length??0,
       orders_ready:!!entry?.orders,
+      v2_division_revealed:revealedIds.has(event.id),
+      v2_tactics_locked:lockedIds.has(event.id),
       winner_points:tier?pointsForResult({tier,resultType:event.kind==="one_day"?"ONE_DAY":"GC",placing:1}):null};
   });
   return NextResponse.json({
     ok: true,
     events,
+    v2_tactics_enabled:v2TacticsEnabled,
+    v2_recording_enabled:v2RecordingEnabled,
     server_time: now,
   });
 }

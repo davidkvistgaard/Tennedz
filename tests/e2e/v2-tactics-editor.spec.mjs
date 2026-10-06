@@ -20,7 +20,11 @@ test('entered manager can edit and reload only their own private v2 plan',
       const [manager,outsider]=await Promise.all(contexts.map(context=>context.newPage()));
       await signIn(manager,'v2manager');
       await signIn(outsider,'v2outsider');
-      await manager.goto(`/team/v2-tactics/${eventId}`);
+      await manager.goto('/team/calendar');
+      await expect(manager.getByRole('link',{name:'Private v2 plan'})).toBeVisible();
+      await outsider.goto('/team/calendar');
+      await expect(outsider.getByRole('link',{name:'Private v2 plan'})).toHaveCount(0);
+      await manager.getByRole('link',{name:'Private v2 plan'}).click();
       await expect(manager.getByRole('heading',{name:'Private v2 tactics fixture'}))
         .toBeVisible();
       await expect(manager.getByText('No private v2 plan saved yet.')).toBeVisible();

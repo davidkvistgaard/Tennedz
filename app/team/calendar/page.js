@@ -20,7 +20,7 @@ function matches(event,filter){
   return true;
 }
 
-function EventCard({event,filter,now}){
+function EventCard({event,filter,now,v2TacticsEnabled,v2RecordingEnabled}){
   const raceDate=event.scheduled_at??event.deadline;
   const source=event.calendar_source??"Unclassified";
   const tier=event.race_tier?`T${event.race_tier}`:"Unranked";
@@ -35,6 +35,11 @@ function EventCard({event,filter,now}){
       ?"Check race status":"Review tactics"
     :"Set up";
   const href=`/team/run?event_id=${encodeURIComponent(event.id)}&gender=${event.gender}&return_filter=${encodeURIComponent(filter)}`;
+  const v2PlanReady=v2TacticsEnabled&&setup&&entered&&
+    event.v2_division_revealed&&registrationClosed&&
+    Date.parse(event.tactics_deadline)>now;
+  const v2RecordingReady=v2RecordingEnabled&&setup&&entered&&
+    event.v2_tactics_locked&&Date.parse(event.scheduled_at)<=now;
   return <article className="agenda-card">
     <div className="agenda-card-top"><span>{category(event.gender)} · {source} · {tier}</span>
       <strong>{event.kind==="stage_race"?"Stage race":"One-day"}</strong></div>
@@ -53,6 +58,13 @@ function EventCard({event,filter,now}){
         setup&&action?<Link className="btn primary" href={href}>{action} →</Link>:
         setup?<span className="agenda-muted">Registration closed</span>:
         <span className="agenda-muted">{event.status==="CANCELLED"?"Cancelled · no results or points":event.kind==="stage_race"?"Stage setup is in development":event.status==="FINISHED"?"Finished":"Locked"}</span>}</div>
+    {(v2PlanReady||v2RecordingReady)&&<div className="agenda-v2-actions">
+      {v2PlanReady&&<Link href={`/team/v2-tactics/${encodeURIComponent(event.id)}`}>
+        Private v2 plan ↗</Link>}
+      {v2RecordingReady&&<Link href={`/team/v2-race/${encodeURIComponent(event.id)}`}>
+        Private v2 recording ↗</Link>}
+      <span>Isolated preview · no final v2 points</span>
+    </div>}
     {event.status!=="CANCELLED"&&event.race_tier&&<details className="agenda-points"><summary>Points table</summary>
       <p>Tier {event.race_tier} · points by placing</p>
       {event.kind==="one_day"?<PointsList values={PLACING_PERCENT.map(percent=>
@@ -110,7 +122,9 @@ export default function CalendarPage(){
     {data&&!groups.length&&<section className="card agenda-empty"><h2>No races match this view yet</h2>
       <p>Choose another filter or return when the next events are published.</p></section>}
     {groups.map(([day,events])=><section className="agenda-day" key={day}>
-      <h2>{displayDate(day)}</h2><div className="agenda-grid">{events.map(event=><EventCard key={event.id} event={event} filter={filter} now={now}/>)}</div>
+      <h2>{displayDate(day)}</h2><div className="agenda-grid">{events.map(event=><EventCard key={event.id} event={event} filter={filter} now={now}
+        v2TacticsEnabled={data.v2_tactics_enabled}
+        v2RecordingEnabled={data.v2_recording_enabled}/>)}</div>
     </section>)}
   </div></TeamShell>;
 }

@@ -140,6 +140,19 @@ const server = http.createServer(async (req, res) => {
         registration_deadline: "2026-10-05T12:00:00Z",
         tactics_deadline: "2026-10-05T15:00:00Z",
       }]);
+    if (v2SaveFixture && table === "events" &&
+      url.searchParams.get("status") === "eq.OPEN" &&
+      url.searchParams.has("deadline")) {
+      const event={id:v2PreviewEventId,name:"Private v2 tactics fixture",
+        kind:"one_day",gender:"M",country_code:"DK",
+        stage_profile_id:twoPhaseStageId,entry_fee:0,status:"OPEN",
+        deadline:new Date(Date.now()-60000).toISOString(),
+        registration_deadline:new Date(Date.now()-60000).toISOString(),
+        tactics_deadline:new Date(Date.now()+3600000).toISOString(),
+        scheduled_at:new Date(Date.now()+7200000).toISOString(),
+        calendar_source:"PELOTONIA",race_tier:3,race_team_size:8};
+      return send(200,url.searchParams.get("deadline")?.startsWith("lte.")?[event]:[]);
+    }
     if (noContestFixture && table === "events" && url.searchParams.get("id")?.startsWith("in."))
       return send(200, [{ id: twoPhaseEventId, name: "Disposable no-contest fixture",
         status: noContestCancelled ? "CANCELLED" : "OPEN" }]);
@@ -168,6 +181,13 @@ const server = http.createServer(async (req, res) => {
         captain_id:"fixture-M-0",
       }:null);
     }
+    if (v2SaveFixture && table === "event_teams" &&
+      url.searchParams.get("event_id")?.startsWith("in."))
+      return send(200,url.searchParams.get("team_id")==="eq.team-v2manager"?[{
+        event_id:v2PreviewEventId,
+        selected_riders:Array.from({length:8},(_,i)=>`fixture-M-${i}`),
+        captain_id:"fixture-M-0",orders:{plan:"balanced"},
+      }]:[]);
     if (table === "event_teams" &&
       url.searchParams.get("event_id") === `eq.${twoPhaseEventId}`) {
       const teamId = url.searchParams.get("team_id")?.replace("eq.", "");
@@ -195,6 +215,10 @@ const server = http.createServer(async (req, res) => {
       return send(200,["eq.team-v2manager",
         ...(v2RecordingFixture?["eq.team-v2rival"]:[])].includes(url.searchParams.get("team_id"))
         ?{team_id:url.searchParams.get("team_id").replace("eq.",""),division_index:1}:null);
+    if (v2SaveFixture && table === "recovery_division_reveal_entries" &&
+      url.searchParams.get("event_id")?.startsWith("in."))
+      return send(200,url.searchParams.get("team_id")==="eq.team-v2manager"?
+        [{event_id:v2PreviewEventId}]:[]);
     if (v2SaveFixture && table === "recovery_v2_tactics_drafts") {
       const draft=v2Drafts.get(ids.v2manager);
       return send(200,url.searchParams.get("team_id")==="eq.team-v2manager"&&draft?
@@ -208,6 +232,9 @@ const server = http.createServer(async (req, res) => {
       url.searchParams.get("event_id") === `eq.${v2PreviewEventId}` &&
       !v2RecordingFixture)
       return send(200,v2LockedAt?{event_id:v2PreviewEventId}:null);
+    if (v2SaveFixture && table === "recovery_v2_tactics_commits" &&
+      url.searchParams.get("event_id")?.startsWith("in."))
+      return send(200,v2LockedAt?[{event_id:v2PreviewEventId}]:[]);
     if (v2RecordingFixture && table === "recovery_v2_recorded_candidates")
       return send(200,v2RecordedAt?{recorded_at:v2RecordedAt,
         result_contract:v2RecordedContract}:null);
