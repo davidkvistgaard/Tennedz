@@ -45,6 +45,8 @@ export default function TacticalTourViewer({recording,focusTeamId}){
   },[playing,speed,frames.length]);
   useEffect(()=>{if(index===frames.length-1)setPlaying(false);},[index,frames.length]);
   const current=frame.riderGroups;
+  const roadGroupByRider=new Map(frame.roadGroups.flatMap((group,groupIndex)=>
+    group.riderIds.map(id=>[id,groupIndex===0?'Front group':`Group ${groupIndex+1}`])));
   const own=current.filter(rider=>rider.teamId===selectedTeamId);
   const peloton=current.filter(rider=>rider.group==='peloton').length;
   const dropped=current.filter(rider=>rider.group==='dropped').length;
@@ -117,7 +119,7 @@ export default function TacticalTourViewer({recording,focusTeamId}){
             {teams.map(team=><option key={team.id} value={team.id}>{team.id}</option>)}
           </select></label></div>
         <div className="tactical-rider-list">{own.map(rider=><div key={rider.id}>
-          <strong>{names.get(rider.id)}</strong><span>{title(rider.group)}</span>
+          <strong>{names.get(rider.id)}</strong><span>{roadGroupByRider.get(rider.id)??title(rider.group)}</span>
           <span>{Math.round(rider.energy)} energy</span>
           <span>{rider.deficitSeconds>0?`${formatSeconds(rider.deficitSeconds)} behind`:''}</span>
         </div>)}</div>

@@ -26,6 +26,14 @@ try{
     await expect(page.getByRole('button',{name:'Previous moment'})).toBeDisabled();
     await page.getByRole('button',{name:'Next moment'}).click();
     assert.ok(Number(await page.getByLabel('Playback position').inputValue())>0);
+    const frontNames=await page.getByRole('region',{name:'Road groups'})
+      .locator('.tactical-road-group').first().locator('small').innerText();
+    const frontTeam=frontNames.split(' ')[0];
+    assert.ok(['Amber','Birch','Cedar'].includes(frontTeam));
+    await page.getByLabel('Watch team').selectOption(frontTeam);
+    await expect(page.getByRole('region',{name:'Your riders'}).getByText('Front group'))
+      .toBeVisible();
+    await page.getByLabel('Watch team').selectOption('Amber');
     await page.getByLabel('Playback position').fill('0');
     await page.getByRole('button',{name:'Skip 10 km'}).click();
     await expect(page.getByText('Km 11 / 60')).toBeVisible();
