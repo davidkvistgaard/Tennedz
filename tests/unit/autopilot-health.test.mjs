@@ -39,13 +39,29 @@ test("completed scans remain visible before reveal without inventing entered tea
 });
 
 test("administrator scan rejects truncation instead of reporting a healthy queue", async () => {
-  const query = {
-    select() { return this; }, eq() { return this; }, in() { return this; },
-    not() { return this; }, lte() { return this; }, order() { return this; },
-    async limit() { return { data: Array.from({ length: 101 }, (_, index) => ({ ...event, id: String(index) })), error: null }; },
-  };
-  await assert.rejects(twoPhaseRaceHealth({ from: () => query }, "2026-10-05T12:00:00Z"),
+  const db = { rpc(name, args) {
+    assert.equal(name, "recovery_actionable_two_phase_health");
+    assert.deepEqual(args, { p_now: "2026-10-05T12:00:00Z" });
+    return { data: Array.from({ length: 101 }, (_, index) =>
+      ({ ...event, id: String(index) })), error: null };
+  } };
+  await assert.rejects(twoPhaseRaceHealth(db, "2026-10-05T12:00:00Z"),
     error => error.code === "RACE_HEALTH_TRUNCATED");
+});
+
+test("administrator health joins actionable races to scan and reveal status", async () => {
+  const db = {
+    rpc: () => ({ data: [event], error: null }),
+    from(table) { return {
+      select() { return this; },
+      async in() { return { data: table === "recovery_autopilot_jobs" ? [complete] : [],
+        error: null }; },
+    }; },
+  };
+  const rows = await twoPhaseRaceHealth(db, event.registration_deadline);
+  assert.equal(rows.length, 1);
+  assert.equal(rows[0].state, "AWAITING_REVEAL");
+  assert.equal(rows[0].entered, 3);
 });
 
 test("recent no-contest decisions include their saved counts and race status", async () => {
