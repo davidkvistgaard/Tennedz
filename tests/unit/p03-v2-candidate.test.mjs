@@ -5,6 +5,7 @@ import {validateRecordedTour} from '../../lib/engine/v2/recording.mjs';
 import {previewRecordedDivisions} from '../../lib/race/v2-candidate.mjs';
 import {projectV2OneDayAwards} from '../../lib/race/v2-points.mjs';
 import {selectV2RecordedDivision} from '../../lib/race/v2-viewer.mjs';
+import {normalizeEnteredV2Orders} from '../../lib/race/v2-tactics.mjs';
 import {pointsForDivisionResult} from '../../lib/calendar/points.mjs';
 import {defaultOrders} from '../../lib/race/orders.mjs';
 
@@ -84,6 +85,24 @@ test('explicit v2 orders are complete, roster-bound and recorded by phase',()=>{
   orders[input.teams[1].id].captainId=input.teams[0].entry.captain_id;
   assert.throws(()=>previewRecordedDivisions(input,{v2OrdersByTeamId:orders}),
     /Both captains must belong/);
+});
+
+test('v2 entry contract binds a phase plan to its saved lineup and captain',()=>{
+  const input=snapshot(2),team=input.teams[0],ids=team.entry.selected_riders;
+  const orders=normalizeEnteredV2Orders(team.entry,input.stage,{
+    captainId:ids[0],helperIds:[ids[1]],preset:'protect',
+    phases:[{atKm:10,effort:'hard',attackRiderId:ids[2]}],
+  });
+  assert.equal(orders.version,2);
+  assert.deepEqual(orders.phases,[{atKm:10,effort:'hard',attackRiderId:ids[2]}]);
+  assert.throws(()=>normalizeEnteredV2Orders(team.entry,input.stage,{
+    captainId:ids[1],preset:'protect',
+  }),/differs from the entered captain/);
+  assert.throws(()=>normalizeEnteredV2Orders(team.entry,input.stage,{
+    captainId:ids[0],phases:[{atKm:10,attackRiderId:'foreign'}],
+  }),/planned attacker must belong/);
+  assert.throws(()=>normalizeEnteredV2Orders({...team.entry,selected_riders:ids.slice(1)},
+    input.stage,{captainId:ids[0]}),/eight selected riders/);
 });
 
 test('45-team v2 recording projects unique tier points without writing a ledger',()=>{
