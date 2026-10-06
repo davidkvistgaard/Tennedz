@@ -25,6 +25,10 @@ begin
       'public.recovery_v2_recorded_candidates', 'SELECT')
     or has_table_privilege('authenticated',
       'public.recovery_v2_recorded_candidates', 'SELECT')
+    or has_table_privilege('anon',
+      'public.recovery_v2_recorded_divisions', 'SELECT')
+    or has_table_privilege('authenticated',
+      'public.recovery_v2_recorded_divisions', 'SELECT')
     or has_function_privilege('anon',
       'public.recovery_get_v2_recorded_division(uuid,uuid)', 'EXECUTE')
     or has_function_privilege('authenticated',
@@ -75,7 +79,8 @@ begin
     v_contract := jsonb_build_object('schemaVersion',1,'engineVersion',2,
       'eventId',v_event,'gender','M','tier',3,'pointsPolicyVersion','v0.1',
       'divisionReveal',v_lock->'inputSnapshot'->'locked_division_reveal',
-      'divisions',jsonb_build_array(jsonb_build_object('index',1)));
+      'divisions',jsonb_build_array(jsonb_build_object('index',1,
+        'recordingVersion',2)));
     if v_lock->'inputSnapshot'->'event'->>'gender' <> 'M' then
       v_contract := jsonb_set(v_contract,'{gender}',
         v_lock->'inputSnapshot'->'event'->'gender');
@@ -92,7 +97,12 @@ begin
       or v_repeat->>'alreadyRecorded' <> 'true'
       or v_repeat->>'recordedAt' <> v_first->>'recordedAt'
       or (select result_contract from public.recovery_v2_recorded_candidates
-          where event_id = v_event) is distinct from v_contract then
+          where event_id = v_event) is not null
+      or (select contract_header from public.recovery_v2_recorded_candidates
+          where event_id = v_event) is distinct from v_contract - 'divisions'
+      or (select result_division from public.recovery_v2_recorded_divisions
+          where event_id = v_event and division_index = 1)
+        is distinct from v_contract->'divisions'->0 then
       raise exception 'The v2 candidate was not stable on retry.';
     end if;
     v_slice := public.recovery_get_v2_recorded_division(v_user,v_event);
@@ -118,6 +128,20 @@ begin
       raise exception 'V2 recording accepted a changed retry.';
     exception when sqlstate 'PT409' then null;
     end;
+    -- An already-saved full-column candidate must still support private reads
+    -- and immutable retries after the split-storage migration.
+    delete from public.recovery_v2_recorded_divisions where event_id = v_event;
+    delete from public.recovery_v2_recorded_candidates where event_id = v_event;
+    insert into public.recovery_v2_recorded_candidates(event_id,result_contract)
+      values(v_event,v_contract);
+    v_repeat := public.recovery_save_v2_recorded_candidate(v_event,v_contract);
+    v_slice := public.recovery_get_v2_recorded_division(v_user,v_event);
+    if v_repeat->>'alreadyRecorded' <> 'true'
+      or v_slice->'division' is distinct from v_contract->'divisions'->0
+      or v_slice->'divisionCount' <> '1'::jsonb
+      or v_slice ? 'divisions' then
+      raise exception 'The legacy full-column candidate is not compatible.';
+    end if;
     if exists(select 1 from public.recovery_race_commits c
         where c.event_id = v_event)
       or exists(select 1 from public.recovery_ranking_awards a
@@ -131,6 +155,8 @@ begin
   end;
   if exists(select 1 from public.recovery_v2_recorded_candidates c
       where c.event_id = v_event)
+    or exists(select 1 from public.recovery_v2_recorded_divisions d
+      where d.event_id = v_event)
     or exists(select 1 from public.recovery_v2_tactics_commits c
       where c.event_id = v_event)
     or exists(select 1 from public.recovery_division_reveals r
