@@ -125,6 +125,13 @@ for(const seed of seeds)for(const plan of [
   const paidPaceByTeam=Object.fromEntries([...new Set(frames.map(frame=>
     frame.paidBunchPace?.teamId).filter(Boolean))].map(teamId=>[
     teamId,frames.filter(frame=>frame.paidBunchPace?.teamId===teamId).length]));
+  const groupCheckpoints=[1,100,160,168,200,230,250].map(km=>{
+    const frame=frames[km-1],attached=frame.riderGroups.filter(row=>
+      row.group==='peloton').length;
+    const climber=frame.riderGroups.find(row=>row.id==='climber-7');
+    return {km,attached,climberDeficit:climber.deficitSeconds,
+      climberEnergy:climber.energy,climberGroup:climber.group};
+  });
   console.log(JSON.stringify({seed,plan:plan.name,version:race.tuningVersion,
     teams:teams.length,chaseAt,route:routeName,neutralMode,neutralLevel,
     winner:race.provisionalResults[0].riderId,
@@ -136,7 +143,7 @@ for(const seed of seeds)for(const plan of [
       row.id.startsWith('neutral-')&&row.group==='peloton').length,
     chaseKm:frames.filter(frame=>frame.chasers.includes('sprinter')).length,
     paidPaceKm:frames.filter(frame=>frame.paidBunchPace?.teamId==='sprinter').length,
-    paidPaceByTeam,
+    paidPaceByTeam,groupCheckpoints,
     catchKm:frames.find(frame=>frame.caughtBreakawayRiderIds.includes('rouleur-7'))?.km??null,
     plannedFinale:plan.finaleAttack,namedFinale,
     climberFirstDroppedKm:frames.find(frame=>frame.riderGroups.some(row=>
