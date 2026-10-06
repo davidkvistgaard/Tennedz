@@ -4,7 +4,8 @@ import {resolveTacticalKilometre} from '../../lib/engine/v2/tactics.mjs';
 import {normalizeOrders} from '../../lib/engine/v2/orders.mjs';
 import {simulateTacticalTour} from '../../lib/engine/v2/tour.mjs';
 import {validateRecordedTour} from '../../lib/engine/v2/recording.mjs';
-import {MOTOR_CANDIDATE_VERSION,MOTOR_PAID_PACE_VERSION} from '../../lib/engine/v2/tuning.mjs';
+import {MOTOR_CANDIDATE_VERSION,MOTOR_PAID_PACE_VERSION,
+  MOTOR_FINALE_VERSION} from '../../lib/engine/v2/tuning.mjs';
 
 function team(id,level,{effort='conserve',attack='none',chase='ignore',phases=[]}={}){
   const riders=Array.from({length:8},(_,index)=>({id:`${id}-${index}`,gender:'M',
@@ -82,4 +83,39 @@ test('v81 keeps an explicitly named final move valid',()=>{
   assert.equal(validateRecordedTour(race),true);
   assert.deepEqual(race.frames.at(-1).attackReasons,
     [{riderId:'planned-7',reason:'named_order'}]);
+});
+
+test('v82 bounds a named last-kilometre move without suppressing it',()=>{
+  const stage={distance_km:40,profile_points:[[0,100],[40,100]],
+    keypoints:[{km:39,kind:'SPRINT'}]};
+  const teams=[team('planned',82,{phases:[{atKm:39,
+    attack:'selective',attackRiderId:'planned-7'}]}),team('quiet',70)];
+  const prior=simulateTacticalTour({stage,teams,seed:'bounded-finale',
+    motorVersion:MOTOR_PAID_PACE_VERSION});
+  const bounded=simulateTacticalTour({stage,teams,seed:'bounded-finale',
+    motorVersion:MOTOR_FINALE_VERSION});
+  assert.equal(validateRecordedTour(prior),true);
+  assert.equal(validateRecordedTour(bounded),true);
+  const before=prior.frames.at(-1),after=bounded.frames.at(-1);
+  assert.deepEqual(before.attackReasons,
+    [{riderId:'planned-7',reason:'named_order'}]);
+  assert.deepEqual(after.attackReasons,before.attackReasons);
+  assert.ok(after.joinedBreakawayRiderIds.includes('planned-7'));
+  assert.ok(after.gapSeconds>0&&after.gapSeconds<=5);
+  assert.ok(before.gapSeconds>after.gapSeconds);
+  assert.deepEqual(bounded.frames.slice(0,-1),prior.frames.slice(0,-1));
+});
+
+test('v82 retains a full kilometre for a planned five-kilometre finale move',()=>{
+  const raw=team('attacker',90,{phases:[{atKm:255,attack:'selective',
+    attackRiderId:'attacker-7',effort:'hard'}]});
+  const attacker=prepared(raw,260),quiet=prepared(team('quiet',70),260);
+  const context={teams:[attacker,quiet],distanceKm:260,
+    terrain:'flat',isKeypoint:true,resolutionVersion:MOTOR_FINALE_VERSION};
+  const fiveToGo=resolveTacticalKilometre({...context,km:256});
+  const lastKm=resolveTacticalKilometre({...context,km:260});
+  assert.equal(fiveToGo.attackers[0].reason,'named_order');
+  assert.equal(lastKm.attackers[0].reason,'named_order');
+  assert.ok(fiveToGo.gapSeconds>lastKm.gapSeconds);
+  assert.ok(lastKm.gapSeconds<=5);
 });
