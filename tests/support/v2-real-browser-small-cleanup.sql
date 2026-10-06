@@ -7,6 +7,7 @@ declare
   v_name text;
   v_teams uuid[];
   v_riders uuid[];
+  v_team_count integer;
 begin
   select name into v_name from public.events where id = v_event for update;
   if v_name not in ('Disposable v2 browser probe',
@@ -18,10 +19,11 @@ begin
   select array_agg(distinct tr.team_id) into v_teams
     from public.team_riders tr join public.teams t on t.id = tr.team_id
     where tr.rider_id = any(v_riders) and t.name like 'P02 isolated cron %';
-  if coalesce(array_length(v_teams, 1), 0) <> 2
-    or coalesce(array_length(v_riders, 1), 0) <> 16
+  v_team_count := coalesce(array_length(v_teams, 1), 0);
+  if v_team_count not in (2, 22, 45)
+    or coalesce(array_length(v_riders, 1), 0) <> 8*v_team_count
     or (select count(*) from public.team_riders
-      where rider_id = any(v_riders) and team_id = any(v_teams)) <> 16
+      where rider_id = any(v_riders) and team_id = any(v_teams)) <> 8*v_team_count
     or (select count(*) from public.event_teams
       where event_id = v_event and team_id <> all(v_teams)) <> 0 then
     raise exception 'Unexpected v2 fixture ownership; refusing cleanup.';

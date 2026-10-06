@@ -1,5 +1,5 @@
 import {NextResponse} from 'next/server';
-import {protectedRoute,requireGameWrites} from '../../../../../lib/auth/server';
+import {protectedRoute,requireGameWrites,databaseClient} from '../../../../../lib/auth/server';
 import {AuthError,assertTeamId} from '../../../../../lib/auth/policy.mjs';
 import {rpc,uuid} from '../../../../../lib/race/server';
 import {previewLockedV2RecordedDivisions} from '../../../../../lib/race/v2-candidate.mjs';
@@ -52,7 +52,10 @@ export const POST=protectedRoute(async(req,context,auth)=>{
   }catch(error){
     throw new AuthError('V2_RECORDING_INVALID',error.message,409);
   }
-  const saved=await rpc(auth.db,'recovery_save_v2_recorded_candidate',{
+  // A multi-division recording is larger than the normal 10-second data read.
+  // Keep the extended timeout private to this flag-gated immutable write.
+  const saved=await rpc(databaseClient({timeoutMs:30000}),
+    'recovery_save_v2_recorded_candidate',{
     p_event:eventId,p_contract:contract,
   });
   return NextResponse.json({ok:true,event_id:eventId,
