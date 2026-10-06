@@ -133,6 +133,8 @@ En ny 15-holds prøve viste også et brat spring: hold med gennemsnitlig færdig
 
 **V2-taktik, isoleret prøve 6. oktober:** En indlogget manager kan bag to særskilte feature flags sende en foreslået v2-plan til et skrivefrit endpoint. Serveren læser kun managerens egen tilmelding, gemte divisionsrække og rute, kontrollerer forberedelsesfristen og afviser fremmed hold, fremmed rytter og ændret kaptajn. Svaret er mærket `saved:false`. Hele den lokale browserpakke er grøn med særskilt fixture-konto. Næste skridt er en atomisk, spillerkoblet gemning før taktiklåsen; ingen v2-plan bruges endnu i et gemt løb.
 
+**V2-taktikkladde, isoleret prove 6. oktober:** En separat, normalt slukket gemmerute tager nu managerens validerede v2-ordrer og gemmer dem i en privat tabel. Databasen genkontrollerer ejer, gemt kaptajn/otte ryttere, afsloret division og taktikfrist i samme transaktion. Rollback-proven i den isolerede testdatabase bestod efter en rettelse af `min(uuid)`; to managerkonti i lokal browserfixture viste gemning, gentagelse og afvisning af fremmed hold. De gamle ordrer, lob, replay og point berorers ikke. Naeste graense i punkt 08-09 er en versionsmaerket taktiklas, optagelse, resultat- og pointtransaktion med reelle managerinput; v2 er stadig ikke et spilbart lob.
+
 ## P1 - atlas og verdenskvalitet
 
 | ID | Opgave / konkret resultat | Timer | Afhænger af |

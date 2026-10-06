@@ -1,5 +1,5 @@
 import { defineConfig } from "@playwright/test";
-// package.json runs two serial shards with a fresh local fixture server each time.
+// package.json runs three serial shards with a fresh local fixture server each time.
 // This keeps scripted successful logins below the app's production rate limit.
 export default defineConfig({
   testDir: "./tests/e2e", workers: 1, retries: 0,

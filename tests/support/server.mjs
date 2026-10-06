@@ -5,12 +5,14 @@ import { randomUUID } from "node:crypto";
 
 const sessions = new Map();
 const clubKits = new Map();
+const v2Drafts = new Map();
 const ids = { alice: "11111111-1111-4111-8111-111111111111", bob: "22222222-2222-4222-8222-222222222222", missing: "33333333-3333-4333-8333-333333333333", duplicate: "44444444-4444-4444-8444-444444444444", settings: "55555555-5555-4555-8555-555555555555", v2manager:"66666666-6666-4666-8666-666666666666", v2outsider:"77777777-7777-4777-8777-777777777777", unregistered:"88888888-8888-4888-8888-888888888888" };
 const passwords = new Map(Object.keys(ids).map(name => [name, "fixture-password"]));
 const twoPhaseEventId = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
 const twoPhaseStageId = "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb";
 const v2PreviewEventId = "cccccccc-cccc-4ccc-8ccc-cccccccccccc";
 const noContestFixture = process.env.PELOTONIA_E2E_NO_CONTEST === "true";
+const v2SaveFixture = process.env.PELOTONIA_E2E_V2_SAVE === "true";
 let noContestCancelled = false;
 const divisionTeams = [
   ["team-alice", "ALICE Cycling", 1], ["team-a2", "ALICE Rival", 1],
@@ -65,6 +67,15 @@ const server = http.createServer(async (req, res) => {
   }
   if (url.pathname.startsWith("/rest/v1/")) {
     if (req.headers.apikey !== "fixture-service-role") return send(403, { message: "Bad fixture key" });
+    if (v2SaveFixture && url.pathname === "/rest/v1/rpc/recovery_save_v2_tactics_draft") {
+      if (req.method !== "POST" || body.p_event !== v2PreviewEventId ||
+          body.p_user !== ids.v2manager || body.p_orders?.captainId !== "fixture-M-0")
+        return send(403, { code: "PT403", message: "This team is not in the revealed race." });
+      v2Drafts.set(body.p_user, body.p_orders);
+      return send(200, { ok: true, event_id: body.p_event,
+        team_id: "team-v2manager", saved_at: new Date().toISOString(),
+        orders_version: 2, draft_count: v2Drafts.size });
+    }
     if (noContestFixture && url.pathname === "/rest/v1/rpc/recovery_void_incomplete_two_phase_race") {
       if (req.method !== "POST" || body.p_event !== twoPhaseEventId || body.p_user !== ids.alice)
         return send(409, { code: "PT409", message: "This race cannot be cancelled under the missed-scan rule." });
@@ -159,9 +170,10 @@ const server = http.createServer(async (req, res) => {
 server.listen(54329, "127.0.0.1");
 const child = spawn(process.execPath, ["node_modules/next/dist/bin/next", "start", "-p", "3100"], { stdio: "inherit", env: {
   ...process.env, RACE_LAB_ENABLED: "true", PELOTONIA_V2_TACTICS_PREVIEW_ENABLED: "true",
+  PELOTONIA_V2_TACTICS_SAVE_ENABLED: v2SaveFixture ? "true" : "false",
   SUPABASE_URL: "http://127.0.0.1:54329", SUPABASE_ANON_KEY: "fixture-anon", SUPABASE_SERVICE_ROLE_KEY: "fixture-service-role",
   NEXT_PUBLIC_SUPABASE_URL: "", NEXT_PUBLIC_SUPABASE_ANON_KEY: "", APP_ORIGIN: "http://localhost:3100", ADMIN_USER_IDS: ids.alice,
-  RECOVERY_ALLOW_GAME_WRITES: noContestFixture ? "true" : "false",
+  RECOVERY_ALLOW_GAME_WRITES: noContestFixture || v2SaveFixture ? "true" : "false",
   PELOTONIA_AUTOPILOT_ENABLED: noContestFixture ? "true" : "false",
 } });
 const stop = () => { child.kill(); server.closeAllConnections(); server.close(); };
