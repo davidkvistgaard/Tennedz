@@ -123,6 +123,8 @@ Med otte ryttere fordelt fra -8 til +8 omkring hvert holds gennemsnit flytter sp
 
 **Optaget v2-viser, prototype:** Under Race Labs feature flag kan en selvstændig prøveside nu afspille en færdigberegnet v2-optagelse med rute, vejgrupper, egne ryttere, hændelser og resultat ved målstregen. Desktop og 390 px mobil er browserkontrolleret, og ruten giver 404 uden flag. Den bruger et syntetisk treholds-løb; adgang til gemte P03-løb, versionsmærket databaseopbevaring og pointafregning mangler fortsat i punkt 08-09.
 
+En ny 15-holds prøve viste også et brat spring: hold med gennemsnitlig færdighed 72,5 fik første rytter 222 sekunder efter vinderen, mens 75-holdet var under ét sekund efter. 61 af 120 ryttere var markeret som sat af efter 70 km. Prøven brugte syntetiske allroundryttere, så terrænspecialer og flere feltprofiler mangler stadig.
+
 ## P1 - atlas og verdenskvalitet
 
 | ID | Opgave / konkret resultat | Timer | Afhænger af |

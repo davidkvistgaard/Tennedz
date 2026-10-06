@@ -24,6 +24,29 @@ function snapshot(level,opponentLevel=level,seed='fixed',options={}){
       gender:'M',entrants:teams.map(team=>({teamId:team.id,earnedPoints:0}))})};
 }
 
+function divisionSnapshot(seed='fixed',hilly=false){
+  const spread=[-8,-6,-4,-2,2,4,6,8];
+  const teams=Array.from({length:15},(_,teamIndex)=>{
+    const id=`team-${String(teamIndex+1).padStart(2,'0')}`;
+    const level=65+teamIndex*2.5;
+    const selected=spread.map((_,riderIndex)=>`${id}-r${riderIndex+1}`);
+    return {id,name:id,riders:selected.map((riderId,riderIndex)=>({
+      id:riderId,name:riderId,gender:'M',
+      ...Object.fromEntries(skills.map(skill=>[skill,
+        Math.min(100,level+spread[riderIndex])])),form:70,fatigue:10,
+    })),entry:{selected_riders:selected,captain_id:selected[0]}};
+  });
+  return {event:{id:'division-balance-probe',seed,kind:'one_day',gender:'M',
+    scheduled_at:'2026-01-01T12:00:00Z',weather_locked:{temp_c:18,wind_kph:5,
+      precipitation_mm:0}},game_date:'2026-01-01',
+    stage:{distance_km:140,tags:[hilly?'HILLY':'FLAT'],
+      profile_points:hilly?[[0,0],[35,0],[45,600],[55,0],[90,0],[100,600],
+        [110,0],[140,0]]:[[0,0],[140,0]]},teams,
+    locked_division_reveal:assignPointDivisions({eventId:'division-balance-probe',
+      seasonYear:2026,gender:'M',entrants:teams.map((team,index)=>({
+        teamId:team.id,earnedPoints:index}))})};
+}
+
 const readings=[30,40,50,60,80,100].map(skill=>{
   const results=previewRecordedDivisions(snapshot(skill)).divisions[0].recording.provisionalResults;
   return {skill,winnerTimeSeconds:results[0].timeSeconds,
@@ -58,5 +81,19 @@ const variedFields=[false,true].flatMap(hilly=>[90,94,96,98,100].map(strongSkill
     return results.find(row=>row.teamId==='b').gapSeconds;
   }),
 })));
+const rankedDivision=[false,true].map(hilly=>{
+  const recording=previewRecordedDivisions(divisionSnapshot('fixed',hilly)).divisions[0]
+    .recording;
+  const firstByTeam=Object.fromEntries(recording.committedInputs.teams.map(team=>[
+    team.id,recording.provisionalResults.find(result=>result.teamId===team.id),
+  ]));
+  return {route:hilly?'hilly':'flat',firstRiderByTeam:recording.committedInputs.teams
+    .map((team,index)=>({teamId:team.id,skillLevel:65+index*2.5,
+      position:firstByTeam[team.id].position,
+      gapSeconds:+firstByTeam[team.id].gapSeconds.toFixed(2)})),
+    droppedAtKm70:recording.frames[69].riderGroups.filter(row=>
+      row.group==='dropped').length};
+});
 console.log(JSON.stringify({simulator:'P03 v2 candidate',route:'140 km flat and hilly',
-  seed:'fixed',uniformSkills:readings,mixedSkills:mixed,threshold,cliff,variedFields},null,2));
+  seed:'fixed',uniformSkills:readings,mixedSkills:mixed,threshold,cliff,variedFields,
+  rankedDivision},null,2));
