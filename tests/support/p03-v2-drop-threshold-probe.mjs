@@ -24,7 +24,7 @@ const rows=[];
 for(const [route,profile_points] of Object.entries(routes)){
   for(const size of [2,3,5,15]){
     for(const strongLevel of [90,94,96,98,100]){
-      const gaps=[],droppedAt70=[],finishDropped=[];
+      const gaps=[],droppedAt70=[],finishDropped=[],firstDropKm=[],dropTrace=[];
       for(const seed of ['fixed','alternate-1','alternate-2']){
         const recording=simulateTacticalTour({
           stage:{distance_km:140,profile_points,tags:[route.toUpperCase()]},
@@ -38,9 +38,14 @@ for(const [route,profile_points] of Object.entries(routes)){
           rider.teamId==='weak'&&rider.group==='dropped').length);
         finishDropped.push(recording.frames.at(-1).riderGroups.filter(rider=>
           rider.teamId==='weak'&&rider.group==='dropped').length);
+        const dropped=frame=>frame.riderGroups.filter(rider=>
+          rider.teamId==='weak'&&rider.group==='dropped').length;
+        firstDropKm.push(recording.frames.find(frame=>dropped(frame)>0)?.km??null);
+        dropTrace.push(recording.frames.filter(frame=>frame.km%10===0)
+          .map(frame=>dropped(frame)));
       }
       rows.push({route,teams:size,strongLevel,weakSkill:80,
-        gapSeconds:gaps,droppedAt70,finishDropped});
+        gapSeconds:gaps,droppedAt70,finishDropped,firstDropKm,dropTrace});
     }
   }
 }

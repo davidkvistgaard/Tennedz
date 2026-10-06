@@ -153,6 +153,8 @@ En ny 15-holds prøve viste også et brat spring: hold med gennemsnitlig færdig
 
 **Privat v2-taktikside, isoleret prøve 6. oktober:** En tilmeldt manager kan på en særskilt, normalt slukket side hente sin egen udtagelse og gemte v2-kladde, vælge vejkaptajn, hjælperroller, preset, startindsats og planlagte skift ved rutemarkører og gemme via den eksisterende private v2-rute. Serveren returnerer kun egen kladde og lukker redigering ved taktikfristen eller efter lås. Den eksisterende kalender viser kun linket i preview, når managerens division faktisk er afsløret; en låst v2-optagelse får et særskilt preview-link efter løbsstart. Lokal browserprøve dækkede kalenderlink, gemning, genindlæsning, fremmed adgang og 390 px layout. Prøvebrowseren og den isolerede DB-prøve er stadig adskilte.
 
+**Ny v2-balanceprobe, 6. oktober:** En skrivefri 140 km-probe over 2, 3, 5 og 15 hold, tre seeds og to ruteprofiler viser fortsat et ustabilt felt. På en flad rute med to hold (færdighed 96 mod 80) er afstanden cirka 177 sekunder ved normal indsats, men cirka 1,4 sekunder, når det stærke hold kører hårdt; otte svagere ryttere bliver sat i første tilfælde, ingen i det andet. Tilføjelse af et tredje hold fjerner ligeledes næsten forskellen. Et forsøg på at knytte feltfart til udvalgte arbejdsryttere brød eksisterende bjerg- og udbrudsscenarier og blev rullet tilbage. Motoren forbliver på prototypeversion 74, og scenariebalance er stadig åben før sportslig godkendelse.
+
 ## P1 - atlas og verdenskvalitet
 
 | ID | Opgave / konkret resultat | Timer | Afhænger af |
