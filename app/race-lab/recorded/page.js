@@ -4,6 +4,7 @@ import TacticalTourViewer from '../../components/TacticalTourViewer';
 import {assignPointDivisions} from '../../../lib/calendar/division-reveal.mjs';
 import {previewRecordedDivisions} from '../../../lib/race/v2-candidate.mjs';
 import {projectV2OneDayAwards} from '../../../lib/race/v2-points.mjs';
+import {selectV2RecordedDivision} from '../../../lib/race/v2-viewer.mjs';
 import './recorded.css';
 
 const skills=['sprint','flat','hills','mountain','cobbles','timetrial','endurance','strength','wind'];
@@ -41,7 +42,7 @@ export const dynamic='force-dynamic';
 export default function RecordedTourPrototype(){
   if(process.env.RACE_LAB_ENABLED!=='true')notFound();
   const candidate=previewRecordedDivisions(snapshot,{v2OrdersByTeamId});
-  const recording=candidate.divisions[0].recording;
+  const {recording}=selectV2RecordedDivision(candidate,'sample-amber');
   const awardProjection=projectV2OneDayAwards(candidate,{tier:snapshot.event.race_tier})
     .divisions[0];
   return <div className="recorded-lab-shell">

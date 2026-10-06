@@ -4,6 +4,7 @@ import {assignPointDivisions} from '../../lib/calendar/division-reveal.mjs';
 import {validateRecordedTour} from '../../lib/engine/v2/recording.mjs';
 import {previewRecordedDivisions} from '../../lib/race/v2-candidate.mjs';
 import {projectV2OneDayAwards} from '../../lib/race/v2-points.mjs';
+import {selectV2RecordedDivision} from '../../lib/race/v2-viewer.mjs';
 import {pointsForDivisionResult} from '../../lib/calendar/points.mjs';
 import {defaultOrders} from '../../lib/race/orders.mjs';
 
@@ -150,4 +151,23 @@ test('45 distinct v2 plans survive reveal, three recordings and award projection
   },0);
   assert.ok(changedPlaces>0,`Expected tactical orders to change a placing; changed ${changedPlaces}.`);
   assert.deepEqual(input,original);
+});
+
+test('viewer selection exposes only the entered team’s saved division',()=>{
+  const candidate=previewRecordedDivisions(snapshot(45));
+  const assignment=candidate.divisionReveal.assignments.find(row=>row.divisionIndex===3);
+  const selected=selectV2RecordedDivision(candidate,assignment.teamId);
+  assert.equal(selected.divisionIndex,3);
+  assert.equal(selected.eventId,candidate.eventId);
+  assert.equal(selected.recording.committedInputs.teams.length,15);
+  assert.deepEqual(new Set(selected.recording.committedInputs.teams.map(team=>team.id)),
+    new Set(candidate.divisionReveal.assignments.filter(row=>row.divisionIndex===3)
+      .map(row=>row.teamId)));
+  assert.equal(JSON.stringify(selected).includes(candidate.divisions[0].teamIds[0]),false);
+  assert.throws(()=>selectV2RecordedDivision(candidate,'foreign'),/no unique saved division/);
+  const tampered=structuredClone(candidate);
+  tampered.divisionReveal.assignments.find(row=>row.teamId===assignment.teamId)
+    .divisionIndex=2;
+  assert.throws(()=>selectV2RecordedDivision(tampered,assignment.teamId),
+    /differs from the saved reveal/);
 });
