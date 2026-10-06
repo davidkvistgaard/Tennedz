@@ -115,6 +115,8 @@ Den første tekniske **endagsløbs-testsløjfe** er nu gennemført isoleret i pu
 
 **Administratorens handleliste:** En isoleret databaseprøve viste, at 105 gamle, allerede afslørede men stadig åbne løb kunne fylde administratorens begrænsede sundhedsliste og skjule et overskredet løb. Den nye service-beskyttede udvælgelse fjerner disse gamle afslørede løb før grænsen, men beholder aktive afsløringer og alle uafklarede løb. SQL-prøven blev tilbagerullet uden testdata tilbage. Driftsalarm og automatisk genopretning er fortsat åbne i punkt 16.
 
+**V2-kandidat, 6. oktober:** En ren læseprøve kan nu tage den låste P03-divisionsfordeling og danne tre særskilte kilometeroptagelser for 45 hold. Den accepterer kun standardordrer, fordi de eksisterende personlige ordrer ikke kan oversættes uden at ændre deres sportslige betydning. Den gemmer hverken replay, resultater eller point. Før motoren kan skiftes i den rigtige løbskæde, mangler ordrekontrakt, viewer, pointkobling og scenariebalance i punkt 04-09.
+
 ## P1 - atlas og verdenskvalitet
 
 | ID | Opgave / konkret resultat | Timer | Afhænger af |
