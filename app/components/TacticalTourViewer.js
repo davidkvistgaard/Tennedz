@@ -55,6 +55,7 @@ export default function TacticalTourViewer({recording,focusTeamId}){
   const maxElevation=Math.max(1,...elevation);
   const profile=elevation.map((height,i)=>`${i/(elevation.length-1)*100},${100-height/maxElevation*85}`).join(' ');
   const results=recording.provisionalResults;
+  const selectedResults=results.filter(result=>result.teamId===selectedTeamId);
   return <div className="tactical-viewer">
     <header className="tactical-hero">
       <p className="tactical-eyebrow">RECORDED TOUR PROTOTYPE · DIVISION 1</p>
@@ -122,9 +123,16 @@ export default function TacticalTourViewer({recording,focusTeamId}){
       <section className="tactical-panel" aria-label="Provisional results">
         <div className="tactical-panel-head"><h2>Provisional finish</h2>
           <span>Shown after the final kilometre</span></div>
-        {index===frames.length-1?<ol className="tactical-results">{results.slice(0,12).map(result=><li key={result.riderId}>
-          <b>{result.position}</b><span>{result.name}</span><small>{result.teamId}</small>
-          <strong>+{result.gapSeconds.toFixed(1)} s</strong></li>)}</ol>:
+        {index===frames.length-1?<>
+          <h3>{focusedTeam?.id} finish</h3>
+          <ol className="tactical-results" aria-label={`${focusedTeam?.id} finish`}>{selectedResults.map(result=><li key={result.riderId}>
+            <b>{result.position}</b><span>{result.name}</span><small>{result.teamId}</small>
+            <strong>+{result.gapSeconds.toFixed(1)} s</strong></li>)}</ol>
+          <h3>First 12 across the division</h3>
+          <ol className="tactical-results" aria-label="First 12 across the division">{results.slice(0,12).map(result=><li key={result.riderId}>
+            <b>{result.position}</b><span>{result.name}</span><small>{result.teamId}</small>
+            <strong>+{result.gapSeconds.toFixed(1)} s</strong></li>)}</ol>
+        </>:
           <p>Placings stay hidden during playback. The result has already been recorded.</p>}
       </section>
     </div>

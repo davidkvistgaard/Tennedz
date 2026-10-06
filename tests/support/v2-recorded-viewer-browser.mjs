@@ -31,8 +31,14 @@ try{
       .toBeGreaterThan(10);
     await page.getByRole('button',{name:'Pause'}).click();
     await page.getByLabel('Playback position').fill('59');
-    await expect(page.getByRole('region',{name:'Provisional results'}).getByRole('listitem'))
-      .toHaveCount(12);
+    const finish=page.getByRole('region',{name:'Provisional results'});
+    await expect(finish.getByRole('list',{name:'Amber finish'}).getByRole('listitem'))
+      .toHaveCount(8);
+    await expect(finish.getByRole('list',{name:'First 12 across the division'})
+      .getByRole('listitem')).toHaveCount(12);
+    await page.getByLabel('Watch team').selectOption('Birch');
+    await expect(finish.getByRole('list',{name:'Birch finish'}).getByRole('listitem'))
+      .toHaveCount(8);
     if(process.env.PELOTONIA_VIEWER_SCREENSHOT==='1')
       await page.screenshot({path:`.recovery-local/v2-viewer-finish-${viewport.width}.png`,fullPage:true});
     assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>
