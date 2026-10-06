@@ -6,6 +6,8 @@ The first code boundary is a pure `finaleDistanceGrid` schedule: four 1 km final
 
 An isolated `advanceFinaleGap` step now calculates the relative travel time of a front group and its chaser over one slice. It reports a catch at the calculated distance within that slice rather than preserving a positive residual after the chaser has covered the lead. Work cost scales by the slice's actual length. This is a kinematic unit, not a calibrated race model: the current engine does not provide its speeds, choose workers, spend their energy, merge groups after a catch, or record these steps. The unchanged v79 result remains the only current simulated result.
 
+A separate `v2-finale-pair-1` laboratory runner now connects all eleven slices for one front worker and one pursuing worker. It records their gap and remaining energy after each slice, stops at a calculated catch, charges only the distance actually ridden in that catch slice, and rejects a plan whose work would spend more energy than available. Validation recomputes the trace from the complete input plan. Speeds and work rates are supplied by the test caller; they are **not yet** derived from player-linked riders, route skills, team orders or fatigue. It does not resolve group merges after a catch, sprint ranking, points, or private playback. This is a bounded proof of distance and energy accounting, not a candidate result for a real division.
+
 ## Distance phases
 
 | Distance remaining | Sporting decision | Recording requirement |

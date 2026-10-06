@@ -61,7 +61,7 @@ Den første tekniske **endagsløbs-testsløjfe** er nu gennemført isoleret i pu
 
 ## P1 — første virkelig spilbare løbsoplevelse
 
-**Finalens afstandsgrundlag, 6. oktober:** En isoleret, ren afstandsplan opdeler de sidste 5 km i fire hele kilometre, to trin à 250 m og fem trin à 100 m. Hvert trin peger på den eksisterende kilometerrute og angiver åbent dens grove opløsning. En særskilt ren beregning kan nu flytte et tidsgab gennem ét trin, finde stedet for en faktisk indhentning og fordele arbejdsomkostning efter distance. Hastighed, energitilstand, gruppeændring og optagelse er endnu ikke forbundet; v79-resultater, replay og viewer er uændrede.
+**Finalens afstandsgrundlag, 6. oktober:** En isoleret, ren afstandsplan opdeler de sidste 5 km i fire hele kilometre, to trin à 250 m og fem trin à 100 m. Hvert trin peger på den eksisterende kilometerrute og angiver åbent dens grove opløsning. Et særskilt laboratorieforløb forbinder nu alle trinene for én forreste rytter og én jagende rytter: optagelsen følger tidsgab, faktisk indhentningssted og resterende energi og afviser arbejde uden energi. Fart og arbejdspris gives dog af testkaldet, ikke af spillets rytter-skills, rute eller låste taktik; vejgrupper, sprint, point og privat replay er ikke forbundet. V79-resultater og den eksisterende viewer er uændrede.
 
 | ID | Opgave / konkret resultat | Timer | Afhænger af |
 | --- | --- | ---: | --- |
