@@ -88,12 +88,16 @@ test('entrants in separate divisions read only their private v2 recording',
       await manager.getByRole('button',{name:'Skip 10 km'}).click();
       await expect(manager.getByText(/Candidate only; no ranking points were awarded/))
         .toBeVisible();
+      await expect(manager.locator('.tactical-own-results li').first().locator('small'))
+        .toContainText(/projected pts/);
       await rival.goto(`/team/v2-race/${eventId}`);
       await expect(rival.getByRole('heading',{name:/Rival team riders/})).toBeVisible();
       await rival.getByRole('button',{name:'Skip 10 km'}).click();
       await rival.getByRole('button',{name:'Skip 10 km'}).click();
       await expect(rival.getByText(/Candidate only; no ranking points were awarded/))
         .toBeVisible();
+      await expect(rival.locator('.tactical-own-results li').first().locator('small'))
+        .toContainText(/projected pts/);
       if(process.env.PELOTONIA_VIEWER_SCREENSHOT==='1')
         await manager.screenshot({path:'.recovery-local/v2-private-viewer.png',
           fullPage:true});
