@@ -107,3 +107,25 @@ test('45-team v2 recording projects unique tier points without writing a ledger'
   assert.throws(()=>projectV2OneDayAwards(foreign,{tier:3}),/differ from the division reveal/);
   assert.throws(()=>projectV2OneDayAwards(candidate,{tier:7}),/recorded race and tier/);
 });
+
+test('45 distinct v2 plans survive reveal, three recordings and award projection',()=>{
+  const input=snapshot(45),original=structuredClone(input);
+  const presets=['protect','aggressive','balanced'];
+  const orders=Object.fromEntries(input.teams.map((team,index)=>[
+    team.id,{captainId:team.entry.captain_id,preset:presets[index%3],
+      ...(index%3===1?{phases:[{atKm:10,effort:'conserve',chase:'selective'}]}:{})},
+  ]));
+  const candidate=previewRecordedDivisions(input,{v2OrdersByTeamId:orders});
+  assert.deepEqual(candidate.divisions.map(division=>division.teamIds.length),[15,15,15]);
+  const recordedTeams=candidate.divisions.flatMap(division=>division.recording.committedInputs.teams);
+  assert.equal(recordedTeams.length,45);
+  for(const team of recordedTeams){
+    assert.equal(team.orders.preset,orders[team.id].preset);
+    assert.deepEqual(team.orders.phases,orders[team.id].phases??[]);
+  }
+  const awards=projectV2OneDayAwards(candidate,{tier:3}).divisions
+    .flatMap(division=>division.awards);
+  assert.equal(awards.length,60);
+  assert.equal(new Set(awards.map(award=>award.awardKey)).size,60);
+  assert.deepEqual(input,original);
+});
