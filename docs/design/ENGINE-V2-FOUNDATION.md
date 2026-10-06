@@ -2,7 +2,7 @@
 
 Status: **development prototype, not wired to the public race cycle**. The existing `recovery-one-day-4-orders` engine, stored race outputs, database schema and live site remain unchanged. This work starts a separate, versioned engine on top of the latest recovery code so the working cycle can remain the comparison baseline while the replacement is built and balanced.
 
-Current recording version: `v2-prototype-77`. The simulator supports ordered independent road groups and records their formation, splits, pursuit, merges and catches. At the finish, a faster rear group can absorb slower riders ahead, and the bunch can catch individual riders from any road group while other groups survive. The final frame and provisional result must agree, and the replay validator checks those transitions. These are deterministic laboratory outcomes, not official race times or a production-ready viewer.
+Current recording version: `v2-prototype-78`. The simulator supports ordered independent road groups and records their formation, splits, pursuit, merges and catches. At the finish, a faster rear group can absorb slower riders ahead, and the bunch can catch individual riders from any road group while other groups survive. The final frame and provisional result must agree, and the replay validator checks those transitions. These are deterministic laboratory outcomes, not official race times or a production-ready viewer.
 
 In version 75, a team ordering hard effort without an attack or chase can lift the bunch's reference pace through two available helpers. A helper already sheltering the captain or performing another action cannot also set this pace. The lift is capped and falls as their energy falls. An ignore-chase order never applies this general pace while a road group is ahead. A 140 km sensitivity test now shows a strong team changing the result in both two-team and 15-team fields; the drop threshold and field-size effect remain too sharp for a sporting sign-off.
 
@@ -201,6 +201,8 @@ Replay validation also checks that the first bunch finisher is at least the fina
 All input, event seed, route version, locked weather, order snapshot, tuning version and engine version must be stored with a future committed race. A replay should be rendered from stored simulation events, never rerun with current tuning after a balance change. New sporting stats must get explicit migration/default rules for existing riders; potential caps must remain server-owned and hidden.
 
 ## Next gates
+
+Version 78 removes the field-median cap on a committed hard bunch pace. The cap let dozens of riders who could not hold the front suppress two actual workers' speed for the first kilometres, changing the same strong-versus-weak duel from 25.08 to 2.72 seconds when inert teams were added. The pace now follows the selected workers' bounded ability and their energy cost. A read-only field-transition probe and a unit invariant show that inert extra entrants leave that duel unchanged (25.08 seconds in both fields). Competitive neutral teams still alter it (4.17 seconds), so group cohesion, drafting and large-field sporting balance remain open; this is a targeted consistency repair, not general calibration.
 
 The team-intent, captain-support and rider-autonomy rules to implement after independent road groups are defined in [ENGINE-V2-TEAM-DECISIONS.md](ENGINE-V2-TEAM-DECISIONS.md).
 

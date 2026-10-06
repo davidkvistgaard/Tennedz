@@ -12,10 +12,10 @@ function team(id,level,hard=false){
   return {id,riders,orders:{captainId:`${id}-7`,preset:'balanced',
     baseline:{effort:hard?'hard':'steady',attack:'none',chase:'ignore'}}};
 }
-function run(size){
+function run(size,neutralMode='competitive'){
   const teams=[team('weak',80),team('strong',96,true),
     ...Array.from({length:size-2},(_,index)=>
-      team(`neutral-${index}`,76+index%13))];
+      team(`neutral-${index}`,neutralMode==='inert'?30:76+index%13))];
   const recording=simulateTacticalTour({stage:{distance_km:140,
     profile_points:[[0,0],[140,0]],tags:['FLAT']},teams,
   seed:'fixed',weather:{temp_c:18,wind_kph:5,precipitation_mm:0}});
@@ -23,7 +23,7 @@ function run(size){
     row.teamId==='weak'&&row.group==='dropped'))?.km??null;
   const firstStoppedWork=recording.frames.find(frame=>
     !frame.hardBunchWorkTeamIds.includes('strong'))?.km??null;
-  return {teams:size,firstWeakDropKm:firstDrop,
+  return {teams:size,neutralMode,firstWeakDropKm:firstDrop,
     firstStrongWorkStopKm:firstStoppedWork,
     snapshots:[1,20,40,60,80,100,120,140].map(km=>{
       const frame=recording.frames[km-1];
@@ -40,5 +40,5 @@ function run(size){
     firstWeakGapSeconds:recording.provisionalResults.find(row=>
       row.teamId==='weak').gapSeconds};
 }
-console.log(JSON.stringify({probe:'v2 field-size transition',runs:[run(2),run(15)]},
+console.log(JSON.stringify({probe:'v2 field-size transition',runs:[run(2),run(15),run(15,'inert')]},
   null,2));

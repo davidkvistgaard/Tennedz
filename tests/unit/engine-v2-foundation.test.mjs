@@ -1083,7 +1083,7 @@ test('the full tactical trace is deterministic, bounded and makes aggressive ord
   const a=simulateTacticalTour(input);
   assert.deepEqual(a,simulateTacticalTour(input));
   assert.equal(a.frames.length,40);
-  assert.equal(a.tuningVersion,'v2-prototype-77');
+  assert.equal(a.tuningVersion,'v2-prototype-78');
   assert.equal(a.frames.at(-1).km,40);
   assert.ok(a.frames.some(frame=>frame.attackers.length>0));
   assert.ok(a.frames.some(frame=>frame.chasers.length>0));
@@ -1286,6 +1286,21 @@ test('distanced riders do not lower the reference pace of the remaining bunch',(
   assert.deepEqual(states.map(rider=>rider.deficitSeconds),[0,0,0,4,4,4,4,4]);
   assert.throws(()=>updateRiderGroups(states,[],{paceSetterAbility:Infinity}),
     /Invalid bunch pace setter/);
+});
+
+test('inert extra entrants cannot slow a working team before they are dropped',()=>{
+  const front=[{id:'weak',ability:80,deficitSeconds:0,lowKilometres:0,group:'peloton'},
+    {id:'worker',ability:96,deficitSeconds:0,lowKilometres:0,group:'peloton'}];
+  const inert=Array.from({length:40},(_,index)=>({id:`inert-${index}`,ability:30,
+    deficitSeconds:0,lowKilometres:0,group:'peloton'}));
+  let duel=front,expanded=[...front,...inert];
+  for(let km=0;km<20;km++){
+    duel=updateRiderGroups(duel,[],{paceSetterAbility:96});
+    expanded=updateRiderGroups(expanded,[],{paceSetterAbility:96});
+    assert.deepEqual(expanded.slice(0,2),duel,
+      `weak entrants changed the front's group state at kilometre ${km+1}`);
+  }
+  assert.equal(duel[0].group,'dropped');
 });
 
 test('a small strong team can set a costly hard tempo in fields of different sizes',()=>{
