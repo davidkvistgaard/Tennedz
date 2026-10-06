@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {assignPointDivisions} from '../../lib/calendar/division-reveal.mjs';
 import {validateRecordedTour} from '../../lib/engine/v2/recording.mjs';
-import {MOTOR_NEUTRAL_PACE_VERSION,TUNING_VERSION}
+import {MOTOR_NEUTRAL_PACE_VERSION,MOTOR_DISTANCE_LOAD_VERSION,TUNING_VERSION}
   from '../../lib/engine/v2/tuning.mjs';
 import {previewRecordedDivisions,previewLockedV2RecordedDivisions}
   from '../../lib/race/v2-candidate.mjs';
@@ -255,6 +255,39 @@ test('v85 preview carries paid neutral pace through three replays and point proj
     /saved manager tactics lock/);
   assert.equal(previewRecordedDivisions(input,{v2OrdersByTeamId:orders})
     .divisions[0].recording.tuningVersion,TUNING_VERSION);
+});
+
+test('v88 read-only 45-team preview preserves explicit front plans and long-distance points contract',()=>{
+  const input=snapshot(45);
+  input.event.race_tier=3;
+  input.stage={distance_km:260,profile_points:[[0,90],[130,120],[260,90]]};
+  const original=structuredClone(input);
+  const orders=Object.fromEntries(input.teams.map((team,index)=>[
+    team.id,{captainId:team.entry.captain_id,preset:'balanced',
+      baseline:{effort:'conserve',attack:'none',chase:'ignore',
+        frontWork:index%3===0?'rotate':'sit_in'}},
+  ]));
+  const options={v2OrdersByTeamId:orders,motorVersion:MOTOR_DISTANCE_LOAD_VERSION};
+  const preview=previewRecordedDivisions(input,options);
+  assert.deepEqual(preview,previewRecordedDivisions(input,options));
+  assert.deepEqual(input,original);
+  assert.deepEqual(preview.divisions.map(division=>division.teamIds.length),[15,15,15]);
+  for(const division of preview.divisions){
+    assert.equal(division.recording.tuningVersion,MOTOR_DISTANCE_LOAD_VERSION);
+    assert.equal(validateRecordedTour(division.recording),true);
+    assert.equal(division.recording.frames.length,260);
+    assert.ok(division.recording.committedInputs.teams.some(team=>
+      team.orders.baseline.frontWork==='rotate'));
+    assert.ok(division.recording.frames.some(frame=>frame.paidBunchPace));
+  }
+  const contract=buildV2OneDayResultContract(preview,{tier:3});
+  assert.equal(validateV2OneDayResultContract(contract),contract);
+  assert.deepEqual(contract,buildV2OneDayResultContract(
+    previewRecordedDivisions(input,options),{tier:3}));
+  assert.equal(contract.divisions.flatMap(division=>division.riderResults).length,360);
+  assert.equal(contract.divisions.flatMap(division=>division.awards).length,60);
+  assert.throws(()=>previewRecordedDivisions(input,{v2OrdersByTeamId:orders}),
+    /Invalid baseline fields/);
 });
 
 test('one versioned v2 result contract binds each replay, captain placing and award',()=>{
