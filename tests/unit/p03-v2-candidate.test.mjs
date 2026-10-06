@@ -9,6 +9,7 @@ import {buildV2OneDayResultContract,validateV2OneDayResultContract}
   from '../../lib/race/v2-result-contract.mjs';
 import {selectV2RecordedDivision} from '../../lib/race/v2-viewer.mjs';
 import {normalizeEnteredV2Orders} from '../../lib/race/v2-tactics.mjs';
+import {weatherForV2TacticsLock} from '../../lib/race/v2-lock-weather.mjs';
 import {pointsForDivisionResult} from '../../lib/calendar/points.mjs';
 import {defaultOrders} from '../../lib/race/orders.mjs';
 
@@ -105,6 +106,22 @@ test('v2 candidate consumes every manager plan from a separate locked snapshot',
   assert.throws(()=>previewLockedV2RecordedDivisions(input),/cover exactly/);
   input.v2_input_version=2;
   assert.throws(()=>previewLockedV2RecordedDivisions(input),/saved v2 tactics lock/);
+});
+
+test('v2 tactics lock fixes deterministic weather without changing the event',()=>{
+  const input=snapshot(2);
+  input.event.deadline='2026-10-07T12:00:00Z';
+  input.event.country_code='DK';
+  delete input.event.weather_locked;
+  const original=structuredClone(input);
+  const first=weatherForV2TacticsLock(input);
+  assert.equal(first.source,'LOCKED_SIM');
+  assert.deepEqual(first,weatherForV2TacticsLock(input));
+  assert.deepEqual(input,original);
+  input.event.weather_locked=first;
+  assert.deepEqual(weatherForV2TacticsLock(input),first);
+  input.event.weather_locked={...first,wind_kph:-1};
+  assert.throws(()=>weatherForV2TacticsLock(input),/valid fixed weather/);
 });
 
 test('v2 entry contract binds a phase plan to its saved lineup and captain',()=>{

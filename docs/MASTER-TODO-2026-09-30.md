@@ -137,6 +137,8 @@ En ny 15-holds prøve viste også et brat spring: hold med gennemsnitlig færdig
 
 **V2-taktiklås og resultatkontrakt, isoleret prove 6. oktober:** Efter taktikfristen kan en separat privat DB-funktion fryse alle tilmeldte managers v2-kladder sammen med det gemte divisionsresultat og løbsinput. En prøve med to uafhængige ejere bestod; manglende kladde eller for tidligt kald afvises, og et gentaget kald giver samme input. En versionsmærket, skrivefri resultatkontrakt er testet på 45 hold med tre optagelser, 45 holdplaceringer, 360 rytterresultater og 60 pointposter. Ændrede point eller replay afvises. Denne kæde gemmer endnu ikke v2-replay/resultater og tildeler ingen point. Det er fortsat næste hovedopgave i punkt 08-09, sammen med browserprøve for autentificeret v2-viewer og balancegodkendelse.
 
+**V2-vejr og sportslig balance, 6. oktober:** Den isolerede v2-taktiklås kræver nu et fast vejrinput; den første version kunne ellers låse `weather_locked: null`. Prøven afviser tomt vejr og efterlader ingen rækker. En ny, gentagelig 140 km-prøve fandt en alvorlig feltstørrelseseffekt: 96 mod 80 i færdigheder giver cirka 89 sekunders forskel og otte satte ryttere i et tohåndsløb, men tilføjelse af ét svagere tredje hold fjerner næsten hele forskellen. Pacing af feltet og gruppetærsklen skal redesignes og prøves på forskellige ruter/felter, inden v2 kan godkendes sportsligt. Ingen tuning eller produktionsmotor er ændret.
+
 ## P1 - atlas og verdenskvalitet
 
 | ID | Opgave / konkret resultat | Timer | Afhænger af |

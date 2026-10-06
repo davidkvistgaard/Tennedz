@@ -10,12 +10,15 @@ declare
   v_second_orders jsonb;
   v_locked jsonb;
   v_repeat jsonb;
+  v_weather jsonb := jsonb_build_object('source', 'LOCKED_SIM',
+    'temp_c', 18, 'wind_kph', 5, 'precipitation_mm', 0,
+    'country_code', 'DK', 'condition', 'Clear');
   v_registration timestamptz := clock_timestamp() - interval '1 hour';
 begin
   if has_function_privilege('anon',
-      'public.recovery_commit_v2_tactics_lock(uuid)', 'EXECUTE')
+      'public.recovery_commit_v2_tactics_lock(uuid,jsonb)', 'EXECUTE')
     or has_function_privilege('authenticated',
-      'public.recovery_commit_v2_tactics_lock(uuid)', 'EXECUTE')
+      'public.recovery_commit_v2_tactics_lock(uuid,jsonb)', 'EXECUTE')
     or has_table_privilege('anon', 'public.recovery_v2_tactics_commits', 'SELECT')
     or has_table_privilege('authenticated',
       'public.recovery_v2_tactics_commits', 'SELECT') then
@@ -65,7 +68,7 @@ begin
       values(v_event, 'COMPLETE');
     perform public.recovery_commit_division_reveal(v_event);
     begin
-      perform public.recovery_commit_v2_tactics_lock(v_event);
+      perform public.recovery_commit_v2_tactics_lock(v_event, v_weather);
       raise exception 'V2 lock passed before tactics close.';
     exception when sqlstate 'PT409' then null;
     end;
@@ -74,7 +77,7 @@ begin
     update public.events set tactics_deadline = clock_timestamp() - interval '1 minute'
       where id = v_event;
     begin
-      perform public.recovery_commit_v2_tactics_lock(v_event);
+      perform public.recovery_commit_v2_tactics_lock(v_event, v_weather);
       raise exception 'V2 lock accepted an incomplete field.';
     exception when sqlstate 'PT409' then null;
     end;
@@ -84,13 +87,19 @@ begin
       v_second_user, v_event, v_second_orders);
     update public.events set tactics_deadline = clock_timestamp() - interval '1 minute'
       where id = v_event;
-    v_locked := public.recovery_commit_v2_tactics_lock(v_event);
+    begin
+      perform public.recovery_commit_v2_tactics_lock(v_event, null);
+      raise exception 'V2 lock accepted missing weather.';
+    exception when sqlstate 'PT400' then null;
+    end;
+    v_locked := public.recovery_commit_v2_tactics_lock(v_event, v_weather);
     if v_locked->>'alreadyLocked' <> 'false'
       or v_locked->'inputSnapshot'->'v2_input_version' <> '1'::jsonb
       or v_locked->'inputSnapshot'->'v2_orders_by_team_id'
         ->v_first.team_id::text <> v_first_orders
       or v_locked->'inputSnapshot'->'v2_orders_by_team_id'
         ->v_second.team_id::text <> v_second_orders
+      or v_locked->'inputSnapshot'->'event'->'weather_locked' <> v_weather
       or jsonb_array_length(v_locked->'inputSnapshot'
         ->'locked_division_reveal'->'assignments') <> 2 then
       raise exception 'The v2 lock omitted manager orders or saved reveal.';
@@ -98,7 +107,7 @@ begin
     update public.recovery_v2_tactics_drafts
       set orders = jsonb_set(orders, '{baseline,effort}', '"conserve"'::jsonb)
       where event_id = v_event and team_id = v_first.team_id;
-    v_repeat := public.recovery_commit_v2_tactics_lock(v_event);
+    v_repeat := public.recovery_commit_v2_tactics_lock(v_event, v_weather);
     if v_repeat->>'alreadyLocked' <> 'true'
       or v_repeat->'inputSnapshot' is distinct from v_locked->'inputSnapshot'
       or exists(select 1 from public.recovery_race_commits c
