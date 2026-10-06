@@ -16,6 +16,8 @@ import {weatherForV2TacticsLock} from '../../lib/race/v2-lock-weather.mjs';
 import {buildV2OneDayLedgerRows} from '../../lib/race/v2-ledger.mjs';
 import {loadStoredV2SettlementPreflight}
   from '../../lib/race/v2-settlement-preflight.mjs';
+import {loadV2SettlementReadiness}
+  from '../../lib/race/v2-settlement-readiness.mjs';
 import {pointsForDivisionResult} from '../../lib/calendar/points.mjs';
 import {defaultOrders} from '../../lib/race/orders.mjs';
 
@@ -472,6 +474,9 @@ test('settlement preflight rebuilds saved split or legacy results without writin
   const lock=snapshot(45);
   lock.event.calendar_source='PELOTONIA';
   lock.event.race_tier=3;
+  lock.event.status='OPEN';
+  lock.event.registration_deadline='2026-10-08T10:00:00Z';
+  lock.event.tactics_deadline='2026-10-08T11:00:00Z';
   lock.v2_input_version=1;
   lock.v2_orders_by_team_id=Object.fromEntries(lock.teams.map(team=>[
     team.id,{captainId:team.entry.captain_id,preset:'balanced'},
@@ -515,4 +520,25 @@ test('settlement preflight rebuilds saved split or legacy results without writin
   older[0].result_division.recording.tuningVersion='v2-prototype-75';
   await assert.rejects(loadStoredV2SettlementPreflight(fakeDb(splitRow,older),lock),
     /original engine version/);
+  const readinessDb=(event,occupiedTable)=>({from(table){
+    if(['recovery_v2_recorded_candidates',
+      'recovery_v2_recorded_divisions'].includes(table))
+      return fakeDb(splitRow,divisionRows).from(table);
+    return {select(){return this;},eq(){return this;},
+      maybeSingle:async()=>({data:event,error:null}),
+      limit:async()=>({data:table===occupiedTable?[{event_id:lock.event.id}]:[],
+        error:null})};
+  }});
+  const now=Date.parse('2026-10-08T12:01:00Z');
+  const ready=await loadV2SettlementReadiness(readinessDb(lock.event),lock,{now});
+  assert.deepEqual(ready,split);
+  await assert.rejects(loadV2SettlementReadiness(
+    readinessDb({...lock.event,status:'FINISHED'}),lock,{now}),
+  /not ready for settlement/);
+  await assert.rejects(loadV2SettlementReadiness(
+    readinessDb(lock.event,'recovery_ranking_awards'),lock,{now}),
+  /ranking_awards rows require manual review/);
+  await assert.rejects(loadV2SettlementReadiness(
+    readinessDb(lock.event),lock,{now:now-120000}),
+  /not ready for settlement/);
 });

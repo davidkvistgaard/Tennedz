@@ -7,8 +7,8 @@ import {randomBytes,randomUUID} from 'node:crypto';
 import {readFileSync} from 'node:fs';
 import {createClient} from '@supabase/supabase-js';
 import {chromium,expect} from '@playwright/test';
-import {loadStoredV2SettlementPreflight}
-  from '../../lib/race/v2-settlement-preflight.mjs';
+import {loadV2SettlementReadiness}
+  from '../../lib/race/v2-settlement-readiness.mjs';
 
 const config=JSON.parse(readFileSync(process.env.PELOTONIA_P03_TEST_CONFIG,'utf8'));
 if(config.url!=='https://nxhvaoonnvmvohqaxfdx.supabase.co'||
@@ -185,7 +185,7 @@ try{
     .select('division_index').eq('event_id',eventId))).length,divisionCounts.length);
   const savedLock=await ok(db.from('recovery_v2_tactics_commits')
     .select('input_snapshot').eq('event_id',eventId).single());
-  const preflight=await loadStoredV2SettlementPreflight(db,savedLock.input_snapshot);
+  const preflight=await loadV2SettlementReadiness(db,savedLock.input_snapshot);
   assert.equal(preflight.eventId,eventId);
   assert.equal(preflight.contract.divisions.length,divisionCounts.length);
   assert.equal(preflight.ledgerRows.length,

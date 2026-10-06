@@ -12,6 +12,8 @@ The v2 recording now marks which teams have two free helpers doing hard bunch wo
 
 For future settlement, a read-only server helper reconstructs the stored candidate from either the split header/division rows or the earlier full JSONB storage format. It validates the whole result against the immutable tactics lock and derives ledger-shaped awards before any writes. This currently requires the candidate's engine tuning version to match the installed engine; older versions fail clearly until version-specific validation is available. The final transaction still needs its own database lock and recheck; this preflight does not award points or finish an event.
 
+A second read-only readiness check verifies that the current one-day event is still open, its registration, tactics and race start times have passed, its sporting metadata still matches the lock, and no legacy race commit, result, division, stage or ranking award row already occupies that event. A two-manager isolated browser/database run passed this check after saving a candidate and before any final award. These separate reads can race with another writer. They are only an early rejection path; the final SQL transaction must repeat all checks with the event locked and commit results, status and point awards together.
+
 ## Product contract
 
 - Managers commit their lineup, captain, optional road captain, preset, detailed phases and contingencies **before the deadline**. The server snapshots that exact input. The complete race is calculated once after the deadline, and everyone views the same recorded replay. No live manager action is required.
