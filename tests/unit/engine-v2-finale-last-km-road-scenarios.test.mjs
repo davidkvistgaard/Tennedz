@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import {createHash} from 'node:crypto';
 import {simulateTacticalTour} from '../../lib/engine/v2/tour.mjs';
 import {MOTOR_ATTACK_TRACE_VERSION} from '../../lib/engine/v2/tuning.mjs';
 import {probeLastKmNamedAttackRoadFromTour,
@@ -35,6 +36,8 @@ function team(id,skill,gender,chase,attack){
       breakWork:'cooperate'},phases:attack?[{atKm:39,
       attack:'selective',attackRiderId:`${id}-0`}]:[]}};
 }
+const recordingHash=recording=>createHash('sha256').update(
+  JSON.stringify(recording)).digest('hex');
 
 test('independent v91 managers reach the line with recorded solo and catch branches',()=>{
   for(const gender of ['M','F'])for(const scenario of [
@@ -164,6 +167,10 @@ test('opt-in sprint launch caps effort from a tired recorded 300 km source',()=>
   const original=recordFinaleSprintLaunchFromTour(tour,input);
   const bounded=recordFinaleSprintLaunchFromTour(tour,input,{
     version:FINALE_SPRINT_LAUNCH_FATIGUE_VERSION});
+  assert.equal(recordingHash(original),
+    'd6eb2561defd8b0699fc9fe93acd3de5df65de7c0b0f8d63729ddf74c83fba6b');
+  assert.equal(recordingHash(bounded),
+    '5b78150d65f2d9512037a07a6eab3c56633b07359bda96e655f4904d5180d991');
   const tired=bounded.riderEnergy.find(row=>row.riderId==='b-0');
   const fresh=bounded.riderEnergy.find(row=>row.riderId==='a-0');
   assert.ok(tired.energyAtDecision<30&&tired.energyAtDecision>0);
@@ -182,6 +189,8 @@ test('opt-in sprint launch caps effort from a tired recorded 300 km source',()=>
     /cannot pay/);
   const run=recordFinaleSprintRunFromTour(tour,input,{
     version:FINALE_SPRINT_RUN_FATIGUE_VERSION});
+  assert.equal(recordingHash(run),
+    '09706bb19dddfc4267ed45314f143a891ad01a6f902a78a1057271e9b214afd0');
   assert.equal(run.sourceLaunchVersion,
     FINALE_SPRINT_LAUNCH_FATIGUE_VERSION);
   assert.equal(run.endDistanceM,300000);
@@ -198,6 +207,32 @@ test('opt-in sprint launch caps effort from a tired recorded 300 km source',()=>
   /does not replay/);
 });
 
+test('an exhausted finisher with a timing gain cannot become an invented road group',()=>{
+  const longStage={distance_km:300,
+    profile_points:[[0,100],[300,100]],
+    keypoints:[{km:299,kind:'SPRINT'}]};
+  const a=team('a',40,'M','ignore',true);
+  const b=team('b',60,'M','all',false);
+  a.orders.phases=[{atKm:299,attack:'selective',
+    attackRiderId:'a-0'}];
+  b.orders.baseline.effort='steady';
+  Object.assign(b.riders[0],{flat:100,strength:100,
+    timetrial:100,sprint:100,acceleration:100,fatigue:100});
+  const tour=simulateTacticalTour({stage:longStage,teams:[a,b],
+    seed:'low-energy-finish',motorVersion:MOTOR_ATTACK_TRACE_VERSION});
+  const input={attackTeamId:'a',plans:[
+    {teamId:'a',finisherId:'a-0',leadOutRiderId:'a-2'},
+    {teamId:'b',finisherId:'b-0',leadOutRiderId:'b-2'}]};
+  const launch=recordFinaleSprintLaunchFromTour(tour,input,{
+    version:FINALE_SPRINT_LAUNCH_FATIGUE_VERSION});
+  const leader=launch.riderEnergy.find(row=>row.riderId==='b-0');
+  assert.ok(leader.gainSeconds>0);
+  assert.ok(leader.energyAtDecision<30);
+  assert.throws(()=>recordFinaleSprintRunFromTour(tour,input,{
+    version:FINALE_SPRINT_RUN_FATIGUE_VERSION}),
+  /leading sprint rider needs an exposed coast rule/);
+});
+
 test('sprint continuation carries earned time and pays through the line',()=>{
   const a=team('a',60,'F','ignore',true);
   const b=team('b',80,'F','all',false);
@@ -209,6 +244,8 @@ test('sprint continuation carries earned time and pays through the line',()=>{
     {teamId:'a',finisherId:'a-0',leadOutRiderId:'a-2'},
     {teamId:'b',finisherId:'b-0',leadOutRiderId:'b-2'}]};
   const run=recordFinaleSprintRunFromTour(tour,input);
+  assert.equal(recordingHash(run),
+    'de68e8d41c1d5c9e0e88cdfe9014f3b185b0c90e867fdaa4903875c7e1b51164');
   assert.equal(run.version,'v2-finale-sprint-run-1');
   assert.equal(run.startDistanceM,39700);
   assert.equal(run.endDistanceM,40000);
