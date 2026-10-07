@@ -233,6 +233,44 @@ test('an exhausted finisher with a timing gain cannot become an invented road gr
   /leading sprint rider needs an exposed coast rule/);
 });
 
+test('route and category change the sprint handoff without moving separated helpers',()=>{
+  const routes={
+    flat:[[0,100],[40,100]],
+    uphill:[[0,100],[39,100],[40,150]],
+    rolling:[[0,100],[30,100],[35,175],[40,100]],
+    downhill:[[0,150],[39,150],[40,100]],
+  };
+  for(const [route,profile_points] of Object.entries(routes))
+    for(const gender of ['M','F']){
+      const routeStage={...stage,profile_points};
+      const a=team('a',60,gender,'ignore',true);
+      const b=team('b',80,gender,'all',false);
+      for(const rider of [...a.riders,...b.riders]){
+        rider.hills=rider.flat;
+        rider.mountain=rider.flat;
+      }
+      a.riders[0].sprint=90;
+      b.riders[0].sprint=90;
+      const tour=simulateTacticalTour({stage:routeStage,teams:[a,b],
+        seed:`route-${route}-${gender}`,
+        motorVersion:MOTOR_ATTACK_TRACE_VERSION});
+      const input={attackTeamId:'a',plans:[
+        {teamId:'a',finisherId:'a-0',leadOutRiderId:'a-2'},
+        {teamId:'b',finisherId:'b-0',leadOutRiderId:'b-2'}]};
+      if(route==='downhill'){
+        assert.throws(()=>recordFinaleSprintRunFromTour(tour,input,{
+          version:FINALE_SPRINT_RUN_FATIGUE_VERSION}),
+        /nominated lead-out cannot work beside/);
+        continue;
+      }
+      const run=recordFinaleSprintRunFromTour(tour,input,{
+        version:FINALE_SPRINT_RUN_FATIGUE_VERSION});
+      assert.equal(run.lineRiderEnergy.length,16);
+      assert.equal(run.endDistanceM,40000);
+      assert.equal(validateFinaleSprintRunFromTour(tour,input,run),true);
+    }
+});
+
 test('sprint continuation carries earned time and pays through the line',()=>{
   const a=team('a',60,'F','ignore',true);
   const b=team('b',80,'F','all',false);
