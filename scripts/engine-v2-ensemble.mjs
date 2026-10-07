@@ -296,6 +296,7 @@ for(const [course,stage] of Object.entries(distanceKm===260?LONG_ROUTES:ROUTES))
         photoFinalGaps:[],photoFinaleAbilityDiffs:[],photoBunchDeficits:[],
         photoAllTeamsAhead:0,photoLateChaseKm:[],photoLateResidualKm:[],
         lateResidualAffectedRaces:0,residualAffectedBreakWinRaces:0,
+        lateResidualAuditCandidateKm:0,lateResidualAuditAttackExcludedKm:0,
         multiGroupResidualAffectedRaces:0,
         finalAutoAttackRaces:0,
         finalAutoJoinedRaces:0,finalAutoWinnerRaces:0,
@@ -487,6 +488,18 @@ for(const [course,stage] of Object.entries(distanceKm===260?LONG_ROUTES:ROUTES))
         const lateResidualKm=race.frames.slice(-5).filter((_,index)=>
           hasResidualGapAfterSufficientChase(race.frames,race.frames.length-5+index,
             gapAuditOptions)).length;
+        // The residual warning is deliberately scoped to continuing groups
+        // without a fresh attack. Show how often a candidate late kilometre
+        // falls outside that scope instead of interpreting zero as clearance.
+        for(let index=race.frames.length-5;index<race.frames.length;index++){
+          const frame=race.frames[index],prior=race.frames[index-1];
+          const rear=frame.roadGroups.at(-1);
+          if(!rear||rear.id!==prior.roadGroups.at(-1)?.id||
+            !(frame.chasePower>0)||!(frame.passiveGapDelta>0)||
+            !(rear.gapSeconds>0))continue;
+          totals.lateResidualAuditCandidateKm++;
+          totals.lateResidualAuditAttackExcludedKm+=Number(frame.attackPower>0);
+        }
         totals.multiGroupResidualAffectedRaces+=Number(race.frames.some((frame,index)=>
           index>0&&frame.roadGroups.length>1&&
           hasResidualGapAfterSufficientChase(race.frames,index,gapAuditOptions)));
@@ -645,6 +658,12 @@ for(const [course,stage] of Object.entries(distanceKm===260?LONG_ROUTES:ROUTES))
         medianPhotoLateResidualKm:sortedPhotoLateResidualKm.length?
           sortedPhotoLateResidualKm[Math.floor((sortedPhotoLateResidualKm.length-1)/2)]:null,
         lateResidualAffectedRaceRate:totals.lateResidualAffectedRaces/samples,
+        meanLateResidualAuditCandidateKm:totals.lateResidualAuditCandidateKm/samples,
+        meanLateResidualAuditAttackExcludedKm:
+          totals.lateResidualAuditAttackExcludedKm/samples,
+        lateResidualAuditAttackExcludedShare:totals.lateResidualAuditCandidateKm?
+          totals.lateResidualAuditAttackExcludedKm/
+            totals.lateResidualAuditCandidateKm:null,
         multiGroupResidualAffectedRaceRate:totals.multiGroupResidualAffectedRaces/samples,
         residualAffectedBreakWinRaceRate:totals.residualAffectedBreakWinRaces/samples,
         finalAutoAttackRaceRate:totals.finalAutoAttackRaces/samples,
