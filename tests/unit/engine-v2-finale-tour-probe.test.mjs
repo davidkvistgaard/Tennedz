@@ -128,6 +128,44 @@ test('a shared front group keeps both attacking teams and a rival bunch',()=>{
     'sheltered');
 });
 
+test('two recorded attacking teams pay alternating front pulls',()=>{
+  const teams=[team('a','aggressive',{attack:'none',chase:'ignore'}),
+    team('b','aggressive',{attack:'none',chase:'ignore'}),
+    team('c','protect',{attack:'none',chase:'selective'})];
+  for(const candidate of teams.slice(0,2))candidate.orders.phases=[{atKm:30,
+    attack:'selective',attackRiderId:`${candidate.id}-2`}];
+  const tour=simulateTacticalTour({stage,teams,seed:'shared-front-rotation',
+    motorVersion:MOTOR_ATTACK_TRACE_VERSION});
+  const rotation=finaleDistanceGrid(tour.route).map((_,index)=>
+    index%2?'b-2':'a-2');
+  const options={frontPullRiderId:'a-2',chasePullRiderId:'c-2',
+    frontRotationRiderIds:rotation,
+    paceVersion:FINALE_WORKER_PASSIVE_SLOPE_VERSION};
+  const probe=probeFinaleGroupToLineFromTour(tour,options);
+  assert.equal(probe.recording.version,'v2-finale-group-to-line-5');
+  assert.deepEqual(probe.recording.frontRotationRiderIds,rotation);
+  assert.equal(validateFinaleGroupToLine(probe.input,probe.recording),true);
+  assert.equal(probe.recording.approachFrames[0].frontPullRiderId,'a-2');
+  assert.equal(probe.recording.approachFrames[1].frontPullRiderId,'b-2');
+  const fixed=probeFinaleGroupToLineFromTour(tour,{
+    frontPullRiderId:'a-2',chasePullRiderId:'c-2',
+    paceVersion:FINALE_WORKER_PASSIVE_SLOPE_VERSION}).recording;
+  const remaining=(recording,id)=>recording.finalRiderEnergy.find(row=>
+    row.riderId===id).energy;
+  assert.ok(remaining(probe.recording,'a-2')>remaining(fixed,'a-2'));
+  assert.ok(remaining(probe.recording,'b-2')<remaining(fixed,'b-2'));
+  const forged=structuredClone(probe.recording);
+  forged.frontRotationRiderIds[1]='a-2';
+  assert.throws(()=>validateFinaleGroupToLine(probe.input,forged),/differs/);
+  const sitter=structuredClone(probe.input);
+  sitter.teams.find(candidate=>candidate.id==='b').orders.baseline.breakWork=
+    'sit_on';
+  assert.throws(()=>simulateFinaleGroupRun(sitter),/ordered to sit on/);
+  assert.throws(()=>probeFinaleGroupToLineFromTour(tour,{
+    ...options,frontRotationRiderIds:rotation.map(()=> 'c-2')}),
+  /recorded group riders/);
+});
+
 test('successive group slices carry spent energy until catch or finish',()=>{
   const tour=simulateTacticalTour(input);
   const original=structuredClone(tour);
