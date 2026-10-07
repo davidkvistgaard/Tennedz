@@ -20,7 +20,8 @@ const paceMode=process.argv[5]??'preset';
 const plannedFinale=['planned-finale','planned-finale-open',
   'planned-finale-one-chaser','planned-finale-three-chasers',
   'planned-finale-selective-chaser','planned-finale-allied',
-  'planned-finale-surge','planned-finale-allied-drive'].includes(paceMode);
+  'planned-finale-surge','planned-finale-allied-drive',
+  'planned-finale-own-plans-allied-drive'].includes(paceMode);
 const plannedChasers=['planned-finale-one-chaser','planned-finale-selective-chaser',
   'planned-finale-allied','planned-finale-surge','planned-finale-allied-drive']
   .includes(paceMode)?1:
@@ -54,16 +55,17 @@ if(!Number.isInteger(samples)||samples<1||samples>100||
     'rotate-plans','planned-finale','planned-finale-open',
     'planned-finale-one-chaser','planned-finale-three-chasers',
     'planned-finale-selective-chaser','planned-finale-allied',
-    'planned-finale-surge','planned-finale-allied-drive'].includes(paceMode)||
+    'planned-finale-surge','planned-finale-allied-drive',
+    'planned-finale-own-plans-allied-drive'].includes(paceMode)||
   ['steady-rival','rotate-rival','late-hard-rival','rotate-plans','planned-finale',
     'planned-finale-open','planned-finale-one-chaser',
     'planned-finale-three-chasers','planned-finale-selective-chaser',
     'planned-finale-allied','planned-finale-surge',
-    'planned-finale-allied-drive']
+    'planned-finale-allied-drive','planned-finale-own-plans-allied-drive']
     .includes(paceMode)&&
     !['explicit-front','draft-shelter','distance-load',
       'recovery-ceiling','phase-attack'].includes(motorMode))
-  throw new Error('Usage: node scripts/engine-v2-ensemble.mjs [paired samples: 1-100] [teams: 2-20] [current|candidate|paid-pace|bounded-finale|bounded-bridge-finale|earned-bridge-finale|neutral-pace|explicit-front|draft-shelter|distance-load|recovery-ceiling|phase-attack] [preset|paced-rival|steady-rival|rotate-rival|late-hard-rival|rotate-plans|planned-finale|planned-finale-open|planned-finale-one-chaser|planned-finale-three-chasers|planned-finale-selective-chaser|planned-finale-allied|planned-finale-surge|planned-finale-allied-drive (v86+ only)] [120|260 km] [first chaser skill cap: 20-100]');
+  throw new Error('Usage: node scripts/engine-v2-ensemble.mjs [paired samples: 1-100] [teams: 2-20] [current|candidate|paid-pace|bounded-finale|bounded-bridge-finale|earned-bridge-finale|neutral-pace|explicit-front|draft-shelter|distance-load|recovery-ceiling|phase-attack] [preset|paced-rival|steady-rival|rotate-rival|late-hard-rival|rotate-plans|planned-finale|planned-finale-open|planned-finale-one-chaser|planned-finale-three-chasers|planned-finale-selective-chaser|planned-finale-allied|planned-finale-surge|planned-finale-allied-drive|planned-finale-own-plans-allied-drive (v86+ only)] [120|260 km] [first chaser skill cap: 20-100]');
 
 const ROUTES={
   flat:{distance_km:120,profile_points:[[0,60],[40,60],[80,75],[120,60]],
@@ -113,15 +115,17 @@ function fictionalTeams(sample,gender){
 }
 
 function plannedOpponentOrders(index,team,course){
-  if(paceMode==='planned-finale')return {baseline:{frontWork:index%2===0?
-    'rotate':'sit_in'}};
-  if(['planned-finale-allied','planned-finale-allied-drive']
+  if(['planned-finale-allied','planned-finale-allied-drive',
+    'planned-finale-own-plans-allied-drive']
     .includes(paceMode)&&index===2)return {
     baseline:{effort:'conserve',attack:'none',chase:'ignore',frontWork:'sit_in'},
     phases:[{atKm:distanceKm-5,attack:'selective',
-      ...(paceMode==='planned-finale-allied-drive'?{
+      ...(paceMode.includes('allied-drive')?{
         effort:'hard',breakWork:'drive'}:{}),
       attackRiderId:team.riders[course==='flat'?2:1].id}]};
+  if(['planned-finale','planned-finale-own-plans-allied-drive']
+    .includes(paceMode))return {baseline:{frontWork:index%2===0?
+      'rotate':'sit_in'}};
   const chaser=index<=plannedChasers;
   return {baseline:{effort:'conserve',attack:'none',chase:'ignore',
     frontWork:chaser?'sit_in':index%2===0?'rotate':'sit_in'},
@@ -152,6 +156,7 @@ for(const [course,stage] of Object.entries(distanceKm===260?LONG_ROUTES:ROUTES))
         finishLineCaughtRiders:0,droppedRiders:0,amberEnergy:0,
         fieldEnergy:0,winnerEnergy:0,lowEnergyRiders:0,paidPaceKm:0,
         plannedPhaseAttempt:0,plannedPhaseJoin:0,plannedPhaseFirstKm:0,
+        plannedPhaseChasers:0,plannedPhaseAttackPower:0,plannedPhaseChasePower:0,
         plannedPhaseCaught:0,plannedPhaseBreakKm:0,
         plannedFinalAvailable:0,plannedFinalAttempt:0,plannedFinalJoin:0,
         plannedFinalSurvive:0,plannedFinalCaughtAtLine:0,
@@ -185,7 +190,8 @@ for(const [course,stage] of Object.entries(distanceKm===260?LONG_ROUTES:ROUTES))
             ...(plannedFinale?index===0?{
               baseline:{attack:'none',chase:'ignore',frontWork:'sit_in'},
               phases:[{atKm:distanceKm-5,attack:'selective',
-                ...(['planned-finale-surge','planned-finale-allied-drive']
+                ...(['planned-finale-surge','planned-finale-allied-drive',
+                  'planned-finale-own-plans-allied-drive']
                   .includes(paceMode)?{effort:'hard',breakWork:'drive'}:{}),
                 attackRiderId:team.riders[course==='flat'?2:1].id}],
             }:plannedOpponentOrders(index,team,course):{})},
@@ -211,6 +217,9 @@ for(const [course,stage] of Object.entries(distanceKm===260?LONG_ROUTES:ROUTES))
             row.riderId===plannedId&&row.reason==='named_order'));
           totals.plannedPhaseAttempt+=Number(Boolean(firstPlanned));
           totals.plannedPhaseFirstKm+=firstPlanned?.km??0;
+          totals.plannedPhaseChasers+=firstPlanned?.chasers.length??0;
+          totals.plannedPhaseAttackPower+=firstPlanned?.attackPower??0;
+          totals.plannedPhaseChasePower+=firstPlanned?.chasePower??0;
           totals.plannedPhaseJoin+=Number(lateFrames.some(frame=>
             frame.joinedBreakawayRiderIds.includes(plannedId)));
           totals.plannedPhaseCaught+=Number(lateFrames.some(frame=>
@@ -221,7 +230,8 @@ for(const [course,stage] of Object.entries(distanceKm===260?LONG_ROUTES:ROUTES))
             .find(row=>row.id===plannedId)?.group==='peloton');
           totals.plannedFinalAttempt+=Number(finalFrame.attackReasons.some(row=>
             row.riderId===plannedId&&row.reason==='named_order'));
-          if(['planned-finale-allied','planned-finale-allied-drive']
+          if(['planned-finale-allied','planned-finale-allied-drive',
+            'planned-finale-own-plans-allied-drive']
             .includes(paceMode)){
             const alliedId=teams[2].riders[course==='flat'?2:1].id;
             totals.alliedPhaseAttempt+=Number(lateFrames.some(frame=>
@@ -411,6 +421,12 @@ for(const [course,stage] of Object.entries(distanceKm===260?LONG_ROUTES:ROUTES))
           +(totals.plannedPhaseBreakKm/samples).toFixed(2):null,
         meanPlannedPhaseFirstAttackKm:plannedFinale&&totals.plannedPhaseAttempt?
           +(totals.plannedPhaseFirstKm/totals.plannedPhaseAttempt).toFixed(2):null,
+        meanPhaseChasersAtFirstAttack:plannedFinale&&totals.plannedPhaseAttempt?
+          +(totals.plannedPhaseChasers/totals.plannedPhaseAttempt).toFixed(2):null,
+        meanPhaseAttackPower:plannedFinale&&totals.plannedPhaseAttempt?
+          +(totals.plannedPhaseAttackPower/totals.plannedPhaseAttempt).toFixed(2):null,
+        meanPhaseChasePower:plannedFinale&&totals.plannedPhaseAttempt?
+          +(totals.plannedPhaseChasePower/totals.plannedPhaseAttempt).toFixed(2):null,
         plannedFinalAttemptRate:plannedFinale?
           totals.plannedFinalAttempt/samples:null,
         plannedFinalJoinRate:plannedFinale?
