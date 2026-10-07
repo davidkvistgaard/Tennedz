@@ -313,6 +313,37 @@ test('v90 read-only division preview records a named phase attack and versioned 
   assert.equal(contract.divisions[0].riderResults.length,16);
 });
 
+test('v90 45-team preview keeps three recorded finales and point awards separate',()=>{
+  const input=snapshot(45);
+  input.event.race_tier=3;
+  input.stage={distance_km:260,profile_points:[[0,90],[130,120],[260,90]]};
+  const orders=Object.fromEntries(input.teams.map((team,index)=>[team.id,{
+    captainId:team.entry.captain_id,preset:'balanced',
+    baseline:{effort:'conserve',attack:'none',chase:'ignore',
+      frontWork:index%3===0?'rotate':'sit_in'},
+    ...(index%15===1?{phases:[{atKm:255,attack:'selective',
+      attackRiderId:team.entry.selected_riders[2]}]}:{}),
+  }]));
+  const options={v2OrdersByTeamId:orders,motorVersion:MOTOR_PHASE_ATTACK_VERSION};
+  const preview=previewRecordedDivisions(input,options);
+  assert.deepEqual(preview.divisions.map(division=>division.teamIds.length),[15,15,15]);
+  assert.equal(new Set(preview.divisions.map(division=>division.recording.raceSeed)).size,3);
+  for(const division of preview.divisions){
+    assert.equal(division.recording.tuningVersion,MOTOR_PHASE_ATTACK_VERSION);
+    assert.equal(division.recording.frames.length,260);
+    assert.equal(validateRecordedTour(division.recording),true);
+    assert.ok(division.recording.frames.some(frame=>frame.paidBunchPace));
+    assert.ok(division.recording.frames[255].attackReasons.some(row=>
+      row.reason==='named_order'));
+  }
+  const contract=buildV2OneDayResultContract(preview,{tier:3});
+  assert.equal(validateV2OneDayResultContract(contract),contract);
+  assert.deepEqual(contract,buildV2OneDayResultContract(
+    previewRecordedDivisions(input,options),{tier:3}));
+  assert.equal(contract.divisions.flatMap(division=>division.riderResults).length,360);
+  assert.equal(contract.divisions.flatMap(division=>division.awards).length,60);
+});
+
 test('one versioned v2 result contract binds each replay, captain placing and award',()=>{
   const candidate=previewRecordedDivisions(snapshot(45));
   const contract=buildV2OneDayResultContract(candidate,{tier:3});
