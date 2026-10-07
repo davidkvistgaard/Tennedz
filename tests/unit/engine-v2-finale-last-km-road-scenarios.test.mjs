@@ -13,6 +13,9 @@ import {recordFinaleSprintPlanFromTour,
 import {recordFinaleSprintApproachFromTour,
   validateFinaleSprintApproachFromTour} from
   '../../lib/engine/v2/finale-sprint-approach.mjs';
+import {recordFinaleSprintLaunchFromTour,
+  validateFinaleSprintLaunchFromTour} from
+  '../../lib/engine/v2/finale-sprint-launch.mjs';
 
 const stage={distance_km:40,profile_points:[[0,100],[40,100]],
   keypoints:[{km:10,kind:'SPRINT'},{km:20,kind:'SPRINT'},
@@ -105,6 +108,36 @@ test('nominated lead-outs pay for each 100 m approach slice',()=>{
   assert.throws(()=>recordFinaleSprintApproachFromTour(solo,{
     ...input,plans:[{...input.plans[0],leadOutRiderId:null},
       input.plans[1]]}),/reunited complete bunch/);
+});
+
+test('first 100 m sprint launch costs finishers and earns only faster movement',()=>{
+  const a=team('a',60,'M','ignore',true);
+  const b=team('b',80,'M','all',false);
+  a.riders[0].sprint=100;
+  b.riders[0].sprint=20;
+  const tour=simulateTacticalTour({stage,teams:[a,b],
+    seed:'paid-sprint-approach',motorVersion:MOTOR_ATTACK_TRACE_VERSION});
+  const input={attackTeamId:'a',plans:[
+    {teamId:'a',finisherId:'a-0',leadOutRiderId:'a-2'},
+    {teamId:'b',finisherId:'b-0',leadOutRiderId:'b-2'}]};
+  const launch=recordFinaleSprintLaunchFromTour(tour,input);
+  assert.equal(launch.startDistanceM,39700);
+  assert.equal(launch.endDistanceM,39800);
+  assert.equal(launch.riderEnergy.length,16);
+  assert.equal(launch.riderEnergy.filter(row=>row.role==='sprint').length,2);
+  const fast=launch.riderEnergy.find(row=>row.riderId==='a-0');
+  const slow=launch.riderEnergy.find(row=>row.riderId==='b-0');
+  assert.ok(fast.gainSeconds>0);
+  assert.equal(slow.gainSeconds,0);
+  assert.ok(fast.energySpent>0&&slow.energySpent>0);
+  assert.ok(launch.riderEnergy.every(row=>row.energyAfter<
+    row.energyAtDecision&&row.movementSeconds>0));
+  assert.ok(launch.riderEnergy.filter(row=>row.role==='sheltered').every(
+    row=>row.gainSeconds===0));
+  assert.equal(validateFinaleSprintLaunchFromTour(tour,input,launch),true);
+  assert.throws(()=>validateFinaleSprintLaunchFromTour(tour,input,{
+    ...launch,riderEnergy:launch.riderEnergy.map(row=>row.riderId==='a-0'?
+      {...row,gainSeconds:0}:row)}),/does not replay/);
 });
 
 test('500 m sprint nominations respect locked helpers and actual road contact',()=>{
