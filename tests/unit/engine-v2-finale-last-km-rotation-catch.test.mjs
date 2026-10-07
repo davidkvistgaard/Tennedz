@@ -13,6 +13,9 @@ import {recordFinaleRotationCatchSprintApproachFromTour,
 import {recordFinaleRotationCatchSprintLaunchFromTour,
   validateFinaleRotationCatchSprintLaunchFromTour} from
   '../../lib/engine/v2/finale-sprint-launch.mjs';
+import {recordFinaleRotationCatchSprintRunFromTour,
+  validateFinaleRotationCatchSprintRunFromTour} from
+  '../../lib/engine/v2/finale-sprint-run.mjs';
 import {MOTOR_ATTACK_TRACE_VERSION} from
   '../../lib/engine/v2/tuning.mjs';
 
@@ -123,6 +126,30 @@ test('v91 source links the paid rotating catch to an exact 500 m handoff',()=>{
       tour,input,launch),true);
     assert.throws(()=>validateFinaleRotationCatchSprintLaunchFromTour(
       tour,input,{...launch,bunchElapsedSecondsAt200M:0}),
+    /does not replay/);
+    const run=recordFinaleRotationCatchSprintRunFromTour(tour,input);
+    assert.equal(run.sourceLaunchVersion,launch.version);
+    assert.equal(run.sprintPlanVersion,plan.version);
+    assert.equal(run.startDistanceM,19700);
+    assert.equal(run.endDistanceM,20000);
+    assert.equal(run.frames.length,2);
+    assert.deepEqual(run.launch,launch);
+    assert.equal(run.lineRiderEnergy.length,24);
+    assert.equal(run.sourceBunchElapsedSecondsAt200M,
+      launch.bunchElapsedSecondsAt200M);
+    assert.equal(run.bunchElapsedSecondsAtLine,
+      launch.bunchElapsedSecondsAt200M+
+        run.frames[0].bunchTravelSeconds+
+        run.frames[1].bunchTravelSeconds);
+    for(const frame of run.frames){
+      assert.equal(frame.riderEnergy.length,24);
+      assert.ok(frame.riderEnergy.every(row=>row.energySpent>0&&
+        row.energyAfter>=0&&row.gainSeconds>=0));
+    }
+    assert.equal(validateFinaleRotationCatchSprintRunFromTour(
+      tour,input,run),true);
+    assert.throws(()=>validateFinaleRotationCatchSprintRunFromTour(
+      tour,input,{...run,bunchElapsedSecondsAtLine:0}),
     /does not replay/);
   }
 });
