@@ -1,0 +1,54 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {simulateTacticalTour} from '../../lib/engine/v2/tour.mjs';
+import {MOTOR_ATTACK_TRACE_VERSION} from '../../lib/engine/v2/tuning.mjs';
+import {probeLastKmNamedAttackRoadFromTour,
+  validateLastKmNamedAttackRoadFromTour} from
+  '../../lib/engine/v2/finale-last-km-named-attack.mjs';
+import {recordFinaleSprintApproachFromTour,
+  validateFinaleSprintApproachFromTour} from
+  '../../lib/engine/v2/finale-sprint-approach.mjs';
+
+const stage={distance_km:40,profile_points:[[0,100],[40,100]],
+  keypoints:[{km:10,kind:'SPRINT'},{km:20,kind:'SPRINT'},
+    {km:39,kind:'SPRINT'}]};
+function team(index,gender){
+  const id=`t${String(index).padStart(2,'0')}`;
+  const skill=index===0?57:65+(index*7)%15;
+  return {id,riders:Array.from({length:8},(_,riderIndex)=>({
+    id:`${id}-${riderIndex}`,gender,flat:skill,strength:skill,
+    timetrial:skill,endurance:70,acceleration:index===0?95:70,
+    sprint:55,leadership:60})),orders:{captainId:`${id}-0`,
+    roadCaptainId:`${id}-1`,helperIds:[`${id}-2`],
+    preset:'balanced',baseline:{effort:'conserve',
+      chase:index%3===0?'all':'ignore',attack:'none',
+      breakWork:'cooperate'},phases:index===0?[{atKm:39,
+      attack:'selective',attackRiderId:`${id}-0`}]:[]}};
+}
+
+test('twenty-team v91 source accounts for all riders through catch and paid lead-out',()=>{
+  for(const gender of ['M','F']){
+    const tour=simulateTacticalTour({stage,
+      teams:Array.from({length:20},(_,index)=>team(index,gender)),
+      seed:`twenty-${gender}`,motorVersion:MOTOR_ATTACK_TRACE_VERSION});
+    const road=probeLastKmNamedAttackRoadFromTour(tour,{teamId:'t00'});
+    assert.equal(road.frames[0].attack.status,'split');
+    assert.deepEqual(road.frames.map(frame=>frame.roadGroups.length),
+      [1,0,0,0,0,0,0]);
+    assert.equal(road.linePelotonRiderIds.length,160);
+    assert.equal(road.lineRiderEnergy.length,160);
+    assert.equal(validateLastKmNamedAttackRoadFromTour(tour,
+      {teamId:'t00'},road),true);
+    const input={attackTeamId:'t00',plans:tour.committedInputs.teams
+      .map(row=>({teamId:row.id,finisherId:row.orders.captainId,
+        leadOutRiderId:`${row.id}-2`}))};
+    const approach=recordFinaleSprintApproachFromTour(tour,input);
+    assert.equal(approach.frames.length,2);
+    assert.equal(approach.energyAt300M.length,160);
+    assert.ok(approach.frames.every(frame=>
+      frame.riderEnergy.filter(row=>row.role==='lead_out').length===20&&
+      frame.riderEnergy.every(row=>row.energyAfter>=0)));
+    assert.equal(validateFinaleSprintApproachFromTour(tour,input,
+      approach),true);
+  }
+});
