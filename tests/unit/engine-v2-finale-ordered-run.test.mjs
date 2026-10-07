@@ -33,7 +33,7 @@ test('locked independent teams supply recorded short-step pulls',()=>{
     const tour=source({},gender);
     const original=structuredClone(tour);
     const probe=probeFinaleOrderedGroupToLineFromTour(tour);
-    assert.equal(probe.version,'v2-finale-ordered-run-1');
+    assert.equal(probe.version,'v2-finale-ordered-run-3');
     assert.equal(probe.sourceTuningVersion,MOTOR_ATTACK_TRACE_VERSION);
     assert.equal(probe.schedule.frontPullRiderIds.length,11);
     assert.equal(probe.schedule.chasePullRiderIds.length,11);
@@ -41,9 +41,13 @@ test('locked independent teams supply recorded short-step pulls',()=>{
       ['a-2','b-2','a-2','b-2']);
     assert.deepEqual(probe.schedule.chasePullRiderIds.slice(0,4)
       .map(id=>id.split('-')[0]),['c','d','c','d']);
-    assert.equal(probe.recording.version,'v2-finale-group-to-line-5');
+    assert.equal(probe.recording.version,'v2-finale-group-to-line-7');
     assert.equal(validateFinaleGroupToLine(probe.input,probe.recording),true);
     assert.equal(validateFinaleOrderedGroupToLineFromTour(tour,probe),true);
+    const legacy=probeFinaleOrderedGroupToLineFromTour(tour,{
+      version:'v2-finale-ordered-run-1'});
+    assert.equal(legacy.recording.version,'v2-finale-group-to-line-5');
+    assert.equal(validateFinaleOrderedGroupToLineFromTour(tour,legacy),true);
     const forged=structuredClone(probe);
     forged.schedule.frontPullRiderIds[1]='a-2';
     assert.throws(()=>validateFinaleOrderedGroupToLineFromTour(tour,forged),
@@ -63,11 +67,35 @@ test('a final-phase sit-on or ignored chase cannot nominate unpaid work',()=>{
   const sitOn=source({a:{atKm:35,breakWork:'sit_on'},
     b:{atKm:35,breakWork:'sit_on'}});
   assert.throws(()=>probeFinaleOrderedGroupToLineFromTour(sitOn),
-    /no eligible finale puller/);
+    /no eligible front puller/);
   const noChase=source({c:{atKm:35,chase:'ignore'},
     d:{atKm:35,chase:'ignore'}});
-  assert.throws(()=>probeFinaleOrderedGroupToLineFromTour(noChase),
-    /no eligible finale puller/);
+  const passive=probeFinaleOrderedGroupToLineFromTour(noChase);
+  assert.equal(passive.version,'v2-finale-ordered-run-2');
+  assert.equal(passive.recording.version,'v2-finale-group-to-line-6');
+  assert.equal(passive.recording.passiveBunchVersion,'v2-finale-passive-bunch-1');
+  assert.ok(passive.schedule.chasePullRiderIds.every(id=>id===null));
+  assert.ok(passive.recording.approachFrames.every(frame=>
+    frame.chasePullRiderId===null&&
+    frame.riders.filter(rider=>rider.role==='pull').every(rider=>
+      passive.input.snapshot.roadGroups[0].riderIds.includes(rider.riderId))));
+  assert.equal(validateFinaleOrderedGroupToLineFromTour(noChase,passive),true);
+  const paid=probeFinaleOrderedGroupToLineFromTour(source());
+  assert.deepEqual(paid.input.snapshot,passive.input.snapshot);
+  assert.equal(paid.recording.version,'v2-finale-group-to-line-7');
+  assert.ok(paid.recording.approachFrames[0].pelotonElapsedSeconds<=
+    passive.recording.approachFrames[0].pelotonElapsedSeconds);
+  assert.ok(paid.recording.approachFrames[0].roadGroups[0].gapSeconds<=
+    passive.recording.approachFrames[0].roadGroups[0].gapSeconds);
+  const hard=probeFinaleOrderedGroupToLineFromTour(source({
+    c:{atKm:35,chase:'all',effort:'hard'},
+    d:{atKm:35,chase:'all',effort:'hard'},
+  }));
+  assert.deepEqual(hard.input.snapshot,passive.input.snapshot);
+  assert.ok(hard.recording.approachFrames[0].pelotonElapsedSeconds<
+    passive.recording.approachFrames[0].pelotonElapsedSeconds);
+  assert.ok(hard.recording.finishGapSeconds<
+    passive.recording.finishGapSeconds);
 });
 
 test('a long recorded race supplies depleted workers without free finale energy',()=>{
@@ -99,6 +127,12 @@ test('a long recorded race supplies depleted workers without free finale energy'
     profile_points:[[0,100],[260,100]]},teams:waiting,
   seed:'long-ordered-finale',motorVersion:MOTOR_ATTACK_TRACE_VERSION});
   assert.deepEqual(waitingTour.frames[254].engagedChaseTeamIds,[]);
-  assert.throws(()=>probeFinaleOrderedGroupToLineFromTour(waitingTour),
-    /no eligible finale puller: chase/);
+  const passive=probeFinaleOrderedGroupToLineFromTour(waitingTour);
+  assert.equal(passive.recording.version,'v2-finale-group-to-line-6');
+  assert.ok(passive.schedule.chasePullRiderIds.every(id=>id===null));
+  for(const row of passive.recording.finalRiderEnergy){
+    const atFive=passive.input.snapshot.riders.find(candidate=>
+      candidate.riderId===row.riderId);
+    assert.ok(row.energy<=atFive.energy);
+  }
 });

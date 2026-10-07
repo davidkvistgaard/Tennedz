@@ -265,6 +265,38 @@ test('a caught group keeps travelling from the catch metre through the line',()=
   assert.equal(versioned.workerTuningVersion,TUNING_VERSION);
 });
 
+test('a passive bunch can catch and continue without an unpaid helper',()=>{
+  const tour=simulateTacticalTour(input);
+  const source=probeFinaleGroupRunFromTour(tour,{
+    frontPullRiderId:'a-2',chasePullRiderId:'b-2'}).input;
+  const trial=structuredClone(source);
+  trial.snapshot.roadGroups[0].gapSeconds=1;
+  trial.teams[0].riders.find(rider=>rider.id==='a-2').timetrial=30;
+  for(const rider of trial.teams[1].riders){
+    rider.flat=100;
+    rider.strength=100;
+  }
+  trial.chasePullRiderId=null;
+  trial.paceVersion=FINALE_WORKER_PASSIVE_SLOPE_VERSION;
+  trial.passiveChase=true;
+  const recording=simulateFinaleGroupToLine(trial);
+  assert.equal(recording.version,'v2-finale-group-to-line-6');
+  assert.equal(recording.outcome,'caught_merged');
+  assert.ok(recording.catchDistanceM>trial.snapshot.startDistanceM);
+  assert.ok(recording.catchDistanceM<tour.route.distanceKm*1000);
+  assert.ok(recording.approachFrames.every(frame=>
+    frame.chasePullRiderId===null&&frame.version==='v2-finale-group-step-2'));
+  assert.ok(recording.mergedFrames.every(frame=>
+    frame.pullRiderId===null&&frame.version==='v2-finale-merged-step-2'&&
+    frame.riders.every(rider=>rider.role==='sheltered')));
+  assert.equal(recording.mergedFrames[0].startDistanceM,
+    recording.catchDistanceM);
+  assert.equal(validateFinaleGroupToLine(trial,recording),true);
+  const forged=structuredClone(recording);
+  forged.mergedFrames[0].travelSeconds+=1;
+  assert.throws(()=>validateFinaleGroupToLine(trial,forged),/differs/);
+});
+
 test('a team that ignored the gap cannot be invented as a chasing worker',()=>{
   const quiet=structuredClone(input);
   quiet.teams[1].orders.baseline.chase='ignore';
