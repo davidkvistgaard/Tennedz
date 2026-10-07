@@ -6,6 +6,9 @@ import {validateRecordedTour} from '../lib/engine/v2/recording.mjs';
 import {validateRoadGroupTransition} from '../lib/engine/v2/road-groups.mjs';
 import {SPORTING_SKILLS} from '../lib/engine/v2/physiology.mjs';
 import {orderAt} from '../lib/engine/v2/orders.mjs';
+import {assignPointDivisions} from '../lib/calendar/division-reveal.mjs';
+import {buildV2OneDayResultContract,
+  validateV2OneDayResultContract} from '../lib/race/v2-result-contract.mjs';
 import {hasResidualGapAfterSufficientChase} from '../lib/engine/v2/balance-audit.mjs';
 import {probeFinaleOrderedGroupToLineFromTour,
   validateFinaleOrderedGroupToLineFromTour} from
@@ -69,6 +72,8 @@ const sampleOffset=process.argv[20]===undefined?0:Number(process.argv[20]);
 // Keep specialist team identities fixed when hard-chaser participation varies.
 const managerMixRoleMode=process.argv[21]??'shifted';
 const orderedFinaleCoverage=process.argv[22]??'off';
+// Optional final argument: validate the read-only result and point contract.
+const resultContractAudit=process.argv[23]??'off';
 const motorVersion=motorMode==='attack-trace'?MOTOR_ATTACK_TRACE_VERSION:
   motorMode==='phase-attack'?MOTOR_PHASE_ATTACK_VERSION:
   motorMode==='recovery-ceiling'?MOTOR_RECOVERY_CEILING_VERSION:
@@ -130,6 +135,7 @@ if(!Number.isInteger(samples)||samples<1||samples>100||
   !['shifted','fixed'].includes(managerMixRoleMode)||
   managerMixHardChasers===null&&process.argv[21]!==undefined||
   !['off','ordered'].includes(orderedFinaleCoverage)||
+  !['off','on'].includes(resultContractAudit)||
   !['current','candidate','paid-pace','bounded-finale','bounded-bridge-finale',
     'earned-bridge-finale','neutral-pace','explicit-front','draft-shelter',
     'distance-load','recovery-ceiling','phase-attack','attack-trace']
@@ -294,6 +300,7 @@ function plannedOpponentOrders(index,team,course,sample){
 
 const report={pairedSamples:samples,sampleOffset,fieldTeams,motorMode,paceMode,
   distanceKm,genderSkillMode,managerMixRoleMode,
+  resultContractAudit,
   managerMixRoleAssignments:managerMixHardChasers===null?null:
     Array.from({length:fieldTeams},(_,index)=>index===0||index===2?null:{
       teamId:`team-${index}`,
@@ -329,6 +336,8 @@ for(const [course,stage] of Object.entries(distanceKm===260?LONG_ROUTES:ROUTES))
   for(const gender of ['M','F']){
     report.courses[course][gender]={};
     for(const strategy of STRATEGIES){
+      const resultContracts={version:'v2-ensemble-result-contract-audit-1',
+        validated:0,riderResults:0,awards:0};
       const orderedFinale={noRoadGroup:0,oneRoadGroup:0,
         multipleRoadGroups:0,noBunch:0,accepted:0,
         noRoadGroupWithPaidSourcePace:0,
@@ -444,6 +453,19 @@ for(const [course,stage] of Object.entries(distanceKm===260?LONG_ROUTES:ROUTES))
             previousRoadGroups=frame.roadGroups;
           }
           throw new Error(`Invalid recording: ${course}/${gender}/${strategy}/sample-${sample}, ${paceMode}`,{cause:error});
+        }
+        if(resultContractAudit==='on'){
+          const eventId=`v2-ensemble:${course}:${gender}:${sample}`;
+          const reveal=assignPointDivisions({eventId,seasonYear:2026,
+            gender,entrants:teams.map(team=>({teamId:team.id,earnedPoints:0}))});
+          const candidate={eventId,divisionReveal:reveal,
+            divisions:[{index:1,teamIds:reveal.assignments.map(row=>row.teamId),
+              recording:race}]};
+          const contract=buildV2OneDayResultContract(candidate,{tier:3});
+          validateV2OneDayResultContract(contract);
+          resultContracts.validated++;
+          resultContracts.riderResults+=contract.divisions[0].riderResults.length;
+          resultContracts.awards+=contract.divisions[0].awards.length;
         }
         if(orderedFinaleCoverage==='ordered'){
           const handoff=race.frames[distanceKm-6];
@@ -876,6 +898,11 @@ for(const [course,stage] of Object.entries(distanceKm===260?LONG_ROUTES:ROUTES))
       if(orderedFinale.postAttackCandidates!==
         orderedFinale.postAttackAccepted+classifiedRefusals)
         throw new Error('Post-attack audit lost a candidate.');
+      if(resultContractAudit==='on'&&(
+        resultContracts.validated!==samples||
+        resultContracts.riderResults!==samples*fieldTeams*8||
+        resultContracts.awards!==samples*20))
+        throw new Error('Result contract audit lost riders or awards.');
       const sortedGaps=[...totals.finalGaps].sort((a,b)=>a-b);
       const sortedWinMargins=[...totals.breakWinMargins].sort((a,b)=>a-b);
       const sortedJoinWinnerShares=[...totals.finalKmJoinWinnerAttackShares]
@@ -887,6 +914,7 @@ for(const [course,stage] of Object.entries(distanceKm===260?LONG_ROUTES:ROUTES))
       const sortedPhotoLateResidualKm=[...totals.photoLateResidualKm].sort((a,b)=>a-b);
       const sortedBreakGroupAges=[...totals.breakWinnerGroupAgeKm].sort((a,b)=>a-b);
       report.courses[course][gender][strategy]={
+        ...(resultContractAudit==='on'?{resultContracts}:{}),
         ...(orderedFinaleCoverage==='ordered'?{orderedFinale}:{}),
         amberWinRate:totals.amberWins/samples,
         amberPodiumRate:totals.amberPodiums/samples,
