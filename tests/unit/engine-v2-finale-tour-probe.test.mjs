@@ -5,12 +5,15 @@ import {MOTOR_ATTACK_TRACE_VERSION} from '../../lib/engine/v2/tuning.mjs';
 import {finaleSnapshotFromTour,FINALE_SNAPSHOT_VERSION} from
   '../../lib/engine/v2/finale-snapshot.mjs';
 import {advanceFinaleGroupStep} from '../../lib/engine/v2/finale-group-step.mjs';
+import {simulateFinaleGroupRun,validateFinaleGroupRun} from
+  '../../lib/engine/v2/finale-group-run.mjs';
 import {validateFinalePair} from '../../lib/engine/v2/finale-pair.mjs';
 import {validateFinaleRelay} from '../../lib/engine/v2/finale-relay.mjs';
 import {finaleDistanceGrid} from '../../lib/engine/v2/finale-grid.mjs';
 import {validateFinaleLeadOutPull} from '../../lib/engine/v2/finale-lead-out-pull.mjs';
 import {probeFinalePairFromTour,probeFinaleRelayFromTour,
-  probeFinaleLeadOutFromTour,probeFinaleGroupStepFromTour} from
+  probeFinaleLeadOutFromTour,probeFinaleGroupStepFromTour,
+  probeFinaleGroupRunFromTour} from
   '../../lib/engine/v2/finale-tour-probe.mjs';
 
 const stage={distance_km:40,profile_points:[[0,100],[40,100]]};
@@ -119,6 +122,56 @@ test('a shared front group keeps both attacking teams and a rival bunch',()=>{
     source.riderGroups.find(row=>row.id==='b-2').energy);
   assert.equal(probe.recording.riders.find(row=>row.riderId==='b-2').role,
     'sheltered');
+});
+
+test('successive group slices carry spent energy until catch or finish',()=>{
+  const tour=simulateTacticalTour(input);
+  const original=structuredClone(tour);
+  const probe=probeFinaleGroupRunFromTour(tour,{
+    frontPullRiderId:'a-2',chasePullRiderId:'b-2'});
+  assert.equal(validateFinaleGroupRun(probe.input,probe.recording),true);
+  assert.ok(probe.recording.frames.length>=1);
+  assert.ok(probe.recording.frames.length<=11);
+  for(const [index,frame] of probe.recording.frames.entries()){
+    assert.ok(frame.endDistanceM>frame.startDistanceM);
+    if(index===0)continue;
+    const previous=probe.recording.frames[index-1];
+    assert.equal(frame.startDistanceM,previous.endDistanceM);
+    for(const rider of frame.riders)assert.ok(rider.energy<=
+      previous.riders.find(row=>row.riderId===rider.riderId).energy);
+  }
+  assert.equal(probe.recording.outcome==='caught',
+    probe.recording.endDistanceM<tour.route.distanceKm*1000);
+  assert.deepEqual(tour,original);
+  const forged=structuredClone(probe.recording);
+  forged.frames.at(-1).riders[0].energy+=.1;
+  assert.throws(()=>validateFinaleGroupRun(probe.input,forged),/differs/);
+});
+
+test('an isolated faster rival group earns a catch before the finish',()=>{
+  const tour=simulateTacticalTour(input);
+  const source=probeFinaleGroupRunFromTour(tour,{
+    frontPullRiderId:'a-2',chasePullRiderId:'b-2'}).input;
+  const trial=structuredClone(source);
+  trial.snapshot.roadGroups[0].gapSeconds=1;
+  const front=trial.teams[0].riders.find(rider=>rider.id==='a-2');
+  const rear=trial.teams[1].riders.find(rider=>rider.id==='b-2');
+  front.timetrial=30;
+  rear.strength=100;
+  const recording=simulateFinaleGroupRun(trial);
+  assert.equal(recording.outcome,'caught');
+  assert.ok(recording.endDistanceM<tour.route.distanceKm*1000);
+  assert.equal(recording.frames.at(-1).event.kind,'catch');
+  assert.deepEqual(recording.frames.at(-1).roadGroups,[]);
+  assert.equal(validateFinaleGroupRun(trial,recording),true);
+});
+
+test('the continuous group run refuses unpaid work from an exhausted follower',()=>{
+  const tour=simulateTacticalTour(input);
+  const trial=structuredClone(probeFinaleGroupRunFromTour(tour,{
+    frontPullRiderId:'a-2',chasePullRiderId:'b-2'}).input);
+  trial.snapshot.riders.find(rider=>rider.riderId==='b-3').energy=.001;
+  assert.throws(()=>simulateFinaleGroupRun(trial),/cannot spend energy/);
 });
 
 test('a team that ignored the gap cannot be invented as a chasing worker',()=>{
