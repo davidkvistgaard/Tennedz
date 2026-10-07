@@ -10,7 +10,9 @@ import {advanceFinaleNamedAttackRotationTransition,
   validateFinaleNamedAttackRotationTransition} from
   '../../lib/engine/v2/finale-named-attack-rotation-transition.mjs';
 import {continueFinaleNamedAttackRotationGroup,
-  validateFinaleNamedAttackRotationFollowup} from
+  validateFinaleNamedAttackRotationFollowup,
+  continueFinaleNamedAttackRotationCatch,
+  validateFinaleNamedAttackRotationCatch} from
   '../../lib/engine/v2/finale-named-attack-rotation-followup.mjs';
 import {MOTOR_ATTACK_TRACE_VERSION,TUNING} from
   '../../lib/engine/v2/tuning.mjs';
@@ -95,7 +97,7 @@ test('rotating pair and reactive chaser pay once against a named attack',()=>{
   }
 });
 
-test('a rotating mid-slice catch refuses an unpaid merged remainder',()=>{
+test('a rotating mid-slice catch pays a merged remainder in opt-in v2',()=>{
   const shortStage={distance_km:20,
     profile_points:[[0,100],[20,100]],
     keypoints:[{km:19,kind:'SPRINT'}]};
@@ -119,4 +121,33 @@ test('a rotating mid-slice catch refuses an unpaid merged remainder',()=>{
   assert.throws(()=>continueFinaleNamedAttackRotationGroup({
     launchInput:input,launch,slice:grid[1]}),
   /needs a merged-work continuation rule/);
+  const caught=continueFinaleNamedAttackRotationCatch({
+    launchInput:input,launch,slice:grid[1]});
+  assert.ok(caught.catchDistanceM>grid[1].startDistanceM&&
+    caught.catchDistanceM<grid[1].endDistanceM);
+  assert.equal(caught.roadGroups.length,0);
+  assert.equal(caught.pelotonRiderIds.length,24);
+  assert.equal(caught.riderEnergy.length,24);
+  assert.ok(caught.riderEnergy.every(row=>row.energySpent===
+    row.energyAtDecision-row.energyAfter||
+    Math.abs(row.energySpent-(row.energyAtDecision-
+      row.energyAfter))<1e-9));
+  assert.ok(caught.riderEnergy.some(row=>
+    row.postCatchRole==='front_rotation'&&
+    row.postCatchEnergySpent>0));
+  const beforeWork=caught.beforeCatchRotationPlan.selected.work[0];
+  const paid=caught.riderEnergy.find(row=>
+    row.riderId===beforeWork.riderId);
+  assert.ok(paid.energySpent-paid.postCatchEnergySpent<
+    beforeWork.energySpent);
+  const afterWork=caught.afterCatchRotationPlan.selected.work[0];
+  assert.ok(caught.riderEnergy.find(row=>
+    row.riderId===afterWork.riderId).postCatchEnergySpent<
+      afterWork.energySpent);
+  assert.equal(validateFinaleNamedAttackRotationCatch({
+    launchInput:input,launch,slice:grid[1]},caught),true);
+  assert.throws(()=>validateFinaleNamedAttackRotationCatch({
+    launchInput:input,launch,slice:grid[1]},
+  {...caught,catchDistanceM:grid[1].endDistanceM}),
+  /does not replay/);
 });
