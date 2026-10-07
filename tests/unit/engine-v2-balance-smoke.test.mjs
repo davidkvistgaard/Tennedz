@@ -83,3 +83,14 @@ test('line catch can remove only the bridged rear group',()=>{
   assert.equal(report.sampleOffset,12);
   assert.equal(report.courses.flat.F.aggressive.breakWinRate,1);
 });
+
+test('independent manager audit accepts zero hard chasers with later options',()=>{
+  const report=JSON.parse(execFileSync(process.execPath,[ensembleScript,'1','15',
+    'attack-trace','planned-finale-allied-manager-mix-0','260','100','0',
+    '2','20','4','100','hard','0','80','0','4','0','independent'],{
+    encoding:'utf8',timeout:60_000,maxBuffer:8*1024*1024,
+  }));
+  assert.equal(report.managerMixHardChasers,0);
+  assert.equal(report.chaserSkillCap,null);
+  assert.equal(report.genderSkillMode,'independent');
+});

@@ -79,7 +79,6 @@ if(!Number.isInteger(samples)||samples<1||samples>100||
   managerMixHardChasers!==null&&![15,20].includes(fieldTeams)||
   ![120,260].includes(distanceKm)||
   !Number.isInteger(chaserSkillCap)||chaserSkillCap<20||chaserSkillCap>100||
-  process.argv[7]!==undefined&&plannedChasers===0||
   !Number.isInteger(initialFatigueShift)||initialFatigueShift<0||
     initialFatigueShift>30||
   process.argv[8]!==undefined&&managerMixHardChasers===null||
