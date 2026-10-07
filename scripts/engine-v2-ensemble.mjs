@@ -16,6 +16,12 @@ const samples=process.argv[2]===undefined?10:Number(process.argv[2]);
 const fieldTeams=process.argv[3]===undefined?4:Number(process.argv[3]);
 const motorMode=process.argv[4]??'current';
 const paceMode=process.argv[5]??'preset';
+const plannedFinale=['planned-finale','planned-finale-open',
+  'planned-finale-one-chaser','planned-finale-three-chasers',
+  'planned-finale-selective-chaser'].includes(paceMode);
+const plannedChasers=['planned-finale-one-chaser','planned-finale-selective-chaser']
+  .includes(paceMode)?1:
+  paceMode==='planned-finale-three-chasers'?3:0;
 const distanceKm=process.argv[6]===undefined?120:Number(process.argv[6]);
 const motorVersion=motorMode==='distance-load'?MOTOR_DISTANCE_LOAD_VERSION:
   motorMode==='draft-shelter'?MOTOR_DRAFT_SHELTER_VERSION:
@@ -37,10 +43,15 @@ if(!Number.isInteger(samples)||samples<1||samples>100||
     'distance-load']
     .includes(motorMode)||
   !['preset','paced-rival','steady-rival','rotate-rival','late-hard-rival',
-    'rotate-plans'].includes(paceMode)||
-  ['steady-rival','rotate-rival','late-hard-rival','rotate-plans'].includes(paceMode)&&
+    'rotate-plans','planned-finale','planned-finale-open',
+    'planned-finale-one-chaser','planned-finale-three-chasers',
+    'planned-finale-selective-chaser'].includes(paceMode)||
+  ['steady-rival','rotate-rival','late-hard-rival','rotate-plans','planned-finale',
+    'planned-finale-open','planned-finale-one-chaser',
+    'planned-finale-three-chasers','planned-finale-selective-chaser']
+    .includes(paceMode)&&
     !['explicit-front','draft-shelter','distance-load'].includes(motorMode))
-  throw new Error('Usage: node scripts/engine-v2-ensemble.mjs [paired samples: 1-100] [teams: 2-20] [current|candidate|paid-pace|bounded-finale|bounded-bridge-finale|earned-bridge-finale|neutral-pace|explicit-front|draft-shelter|distance-load] [preset|paced-rival|steady-rival|rotate-rival|late-hard-rival|rotate-plans (v86+ only)] [120|260 km]');
+  throw new Error('Usage: node scripts/engine-v2-ensemble.mjs [paired samples: 1-100] [teams: 2-20] [current|candidate|paid-pace|bounded-finale|bounded-bridge-finale|earned-bridge-finale|neutral-pace|explicit-front|draft-shelter|distance-load] [preset|paced-rival|steady-rival|rotate-rival|late-hard-rival|rotate-plans|planned-finale|planned-finale-open|planned-finale-one-chaser|planned-finale-three-chasers|planned-finale-selective-chaser (v86+ only)] [120|260 km]');
 
 const ROUTES={
   flat:{distance_km:120,profile_points:[[0,60],[40,60],[80,75],[120,60]],
@@ -88,6 +99,17 @@ function fictionalTeams(sample,gender){
   });
 }
 
+function plannedOpponentOrders(index){
+  if(paceMode==='planned-finale')return {baseline:{frontWork:index%2===0?
+    'rotate':'sit_in'}};
+  const chaser=index<=plannedChasers;
+  return {baseline:{effort:'conserve',attack:'none',chase:'ignore',
+    frontWork:chaser?'sit_in':index%2===0?'rotate':'sit_in'},
+  ...(chaser?{phases:[{atKm:distanceKm-10,
+    effort:paceMode==='planned-finale-selective-chaser'?'steady':'hard',
+    chase:paceMode==='planned-finale-selective-chaser'?'selective':'all'}]}:{})};
+}
+
 const report={pairedSamples:samples,fieldTeams,motorMode,paceMode,distanceKm,
   description:'fictional varied riders and routes; no live data',courses:{}};
 for(const [course,stage] of Object.entries(distanceKm===260?LONG_ROUTES:ROUTES)){
@@ -108,6 +130,8 @@ for(const [course,stage] of Object.entries(distanceKm===260?LONG_ROUTES:ROUTES))
         caughtBreaks:0,finishLineCatches:0,partialFinishCatches:0,
         finishLineCaughtRiders:0,droppedRiders:0,amberEnergy:0,
         fieldEnergy:0,winnerEnergy:0,lowEnergyRiders:0,paidPaceKm:0,
+        plannedFinalAvailable:0,plannedFinalAttempt:0,plannedFinalJoin:0,
+        plannedFinalWin:0,plannedFinalPlace:0,plannedFinalEnergy:0,
         paidWorkerEnergy:0,paidWorkerRaces:0,paidWorkerCount:0,frontConcentration:0,
         finalGaps:[],
         maxGroups:0,multiGroupFinishes:0,chaseGroupAttackMoves:0,
@@ -126,7 +150,12 @@ for(const [course,stage] of Object.entries(distanceKm===260?LONG_ROUTES:ROUTES))
               ...(paceMode==='late-hard-rival'?{
                 phases:[{atKm:distanceKm-40,effort:'hard'}]}:{})}:{}),
             ...(paceMode==='rotate-plans'?{baseline:{frontWork:index%2===0?
-              'rotate':'sit_in'}}:{})},
+              'rotate':'sit_in'}}:{}),
+            ...(plannedFinale?index===0?{
+              baseline:{attack:'none',chase:'ignore',frontWork:'sit_in'},
+              phases:[{atKm:distanceKm-5,attack:'selective',
+                attackRiderId:team.riders[course==='flat'?2:1].id}],
+            }:plannedOpponentOrders(index):{})},
         }));
         const rng=seedrandom(`v2-ensemble-weather:${course}:${sample}`);
         const base=WEATHER[course];
@@ -142,6 +171,19 @@ for(const [course,stage] of Object.entries(distanceKm===260?LONG_ROUTES:ROUTES))
         const finalAutoJoined=new Set(finalFrame.joinedBreakawayRiderIds.filter(id=>
           finalAutoIds.has(id)));
         const winner=race.provisionalResults[0];
+        if(plannedFinale){
+          const plannedId=teams[0].riders[course==='flat'?2:1].id;
+          totals.plannedFinalAvailable+=Number(race.frames.at(-2).riderGroups
+            .find(row=>row.id===plannedId)?.group==='peloton');
+          totals.plannedFinalAttempt+=Number(finalFrame.attackReasons.some(row=>
+            row.riderId===plannedId&&row.reason==='named_order'));
+          totals.plannedFinalJoin+=Number(finalFrame.joinedBreakawayRiderIds
+            .includes(plannedId));
+          totals.plannedFinalWin+=Number(winner.riderId===plannedId);
+          const plannedResult=race.provisionalResults.find(row=>row.riderId===plannedId);
+          totals.plannedFinalPlace+=plannedResult.position;
+          totals.plannedFinalEnergy+=plannedResult.energy;
+        }
         const breakWinner=winner.group==='breakaway';
         totals.finalAutoAttackRaces+=Number(finalAutoIds.size>0);
         totals.finalAutoJoinedRaces+=Number(finalAutoJoined.size>0);
@@ -285,6 +327,18 @@ for(const [course,stage] of Object.entries(distanceKm===260?LONG_ROUTES:ROUTES))
         meanFieldEnergy:+(totals.fieldEnergy/samples).toFixed(2),
         meanWinnerEnergy:+(totals.winnerEnergy/samples).toFixed(2),
         meanRidersUnder20Energy:+(totals.lowEnergyRiders/samples).toFixed(2),
+        plannedFinalAvailableRate:plannedFinale?
+          totals.plannedFinalAvailable/samples:null,
+        plannedFinalAttemptRate:plannedFinale?
+          totals.plannedFinalAttempt/samples:null,
+        plannedFinalJoinRate:plannedFinale?
+          totals.plannedFinalJoin/samples:null,
+        plannedFinalWinRate:plannedFinale?
+          totals.plannedFinalWin/samples:null,
+        meanPlannedFinalPlace:plannedFinale?
+          +(totals.plannedFinalPlace/samples).toFixed(2):null,
+        meanPlannedFinalEnergy:plannedFinale?
+          +(totals.plannedFinalEnergy/samples).toFixed(2):null,
         meanPaidPaceKm:+(totals.paidPaceKm/samples).toFixed(2),
         meanPaidWorkerFinalEnergy:totals.paidWorkerRaces?
           +(totals.paidWorkerEnergy/totals.paidWorkerRaces).toFixed(2):null,
