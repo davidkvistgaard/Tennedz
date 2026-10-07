@@ -46,6 +46,7 @@ test('twenty-team v91 source accounts for all riders through catch and paid lead
     const input={attackTeamId:'t00',plans:tour.committedInputs.teams
       .map(row=>({teamId:row.id,finisherId:row.orders.captainId,
         leadOutRiderId:`${row.id}-2`}))};
+    const provisionalBefore=structuredClone(tour.provisionalResults);
     const approach=recordFinaleSprintApproachFromTour(tour,input);
     assert.equal(approach.frames.length,2);
     assert.equal(approach.energyAt300M.length,160);
@@ -68,5 +69,24 @@ test('twenty-team v91 source accounts for all riders through catch and paid lead
       version:FINALE_SPRINT_RUN_FATIGUE_VERSION});
     assert.equal(bounded.lineRiderEnergy.length,160);
     assert.equal(validateFinaleSprintRunFromTour(tour,input,bounded),true);
+    assert.deepEqual(tour.provisionalResults,provisionalBefore);
+    const provisionalById=new Map(tour.provisionalResults.map(row=>
+      [row.riderId,row]));
+    const lineById=new Map(bounded.lineRiderEnergy.map(row=>
+      [row.riderId,row]));
+    const nominated=new Set(input.plans.map(plan=>plan.finisherId));
+    const gainers=bounded.lineRiderEnergy.filter(row=>row.gainSeconds>0);
+    const changedEnergy=bounded.lineRiderEnergy.filter(row=>
+      row.energyAfter!==provisionalById.get(row.riderId).energy);
+    const provisionalTop=tour.provisionalResults[0];
+    // The kilometre result is a different model's placing and energy. It
+    // cannot silently classify this short-step trace or feed its awards.
+    assert.equal(provisionalTop.position,1);
+    assert.equal(nominated.has(provisionalTop.riderId),false);
+    assert.equal(lineById.get(provisionalTop.riderId).gainSeconds,0);
+    assert.equal(gainers.length,12);
+    assert.equal(changedEnergy.length,160);
+    assert.ok(provisionalById.get(gainers.toSorted((a,b)=>
+      b.gainSeconds-a.gainSeconds)[0].riderId).position>1);
   }
 });
