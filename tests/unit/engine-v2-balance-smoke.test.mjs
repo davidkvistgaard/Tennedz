@@ -144,11 +144,8 @@ test('ordered short-step coverage accounts for every independent source state',(
           .reduce((sum,count)=>sum+count,0);
         assert.equal(coverage.accepted+rejected,coverage.oneRoadGroup);
         assert.equal(coverage.survived+coverage.caught,coverage.accepted);
-        for(const example of coverage.rejectionExamples){
-          assert.equal(example.sample,2);
-          assert.ok(example.sourceRider);
-          exhausted++;
-        }
+        exhausted+=coverage.exhaustionDroppedRiders;
+        assert.ok(coverage.racesWithExhaustionDrop<=coverage.accepted);
       }
   assert.ok(exhausted>0);
 });

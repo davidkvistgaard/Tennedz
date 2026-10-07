@@ -34,7 +34,7 @@ test('locked independent teams supply recorded short-step pulls',()=>{
     const tour=source({},gender);
     const original=structuredClone(tour);
     const probe=probeFinaleOrderedGroupToLineFromTour(tour);
-    assert.equal(probe.version,'v2-finale-ordered-run-3');
+    assert.equal(probe.version,'v2-finale-ordered-run-5');
     assert.equal(probe.sourceTuningVersion,MOTOR_ATTACK_TRACE_VERSION);
     assert.equal(probe.schedule.frontPullRiderIds.length,11);
     assert.equal(probe.schedule.chasePullRiderIds.length,11);
@@ -42,13 +42,17 @@ test('locked independent teams supply recorded short-step pulls',()=>{
       ['a-2','b-2','a-2','b-2']);
     assert.deepEqual(probe.schedule.chasePullRiderIds.slice(0,4)
       .map(id=>id.split('-')[0]),['c','d','c','d']);
-    assert.equal(probe.recording.version,'v2-finale-group-to-line-7');
+    assert.equal(probe.recording.version,'v2-finale-group-to-line-9');
     assert.equal(validateFinaleGroupToLine(probe.input,probe.recording),true);
     assert.equal(validateFinaleOrderedGroupToLineFromTour(tour,probe),true);
     const legacy=probeFinaleOrderedGroupToLineFromTour(tour,{
       version:'v2-finale-ordered-run-1'});
     assert.equal(legacy.recording.version,'v2-finale-group-to-line-5');
     assert.equal(validateFinaleOrderedGroupToLineFromTour(tour,legacy),true);
+    const floored=probeFinaleOrderedGroupToLineFromTour(tour,{
+      version:'v2-finale-ordered-run-3'});
+    assert.equal(floored.recording.version,'v2-finale-group-to-line-7');
+    assert.equal(validateFinaleOrderedGroupToLineFromTour(tour,floored),true);
     const forged=structuredClone(probe);
     forged.schedule.frontPullRiderIds[1]='a-2';
     assert.throws(()=>validateFinaleOrderedGroupToLineFromTour(tour,forged),
@@ -72,8 +76,8 @@ test('a final-phase sit-on or ignored chase cannot nominate unpaid work',()=>{
   const noChase=source({c:{atKm:35,chase:'ignore'},
     d:{atKm:35,chase:'ignore'}});
   const passive=probeFinaleOrderedGroupToLineFromTour(noChase);
-  assert.equal(passive.version,'v2-finale-ordered-run-2');
-  assert.equal(passive.recording.version,'v2-finale-group-to-line-6');
+  assert.equal(passive.version,'v2-finale-ordered-run-5');
+  assert.equal(passive.recording.version,'v2-finale-group-to-line-9');
   assert.equal(passive.recording.passiveBunchVersion,'v2-finale-passive-bunch-1');
   assert.ok(passive.schedule.chasePullRiderIds.every(id=>id===null));
   assert.ok(passive.recording.approachFrames.every(frame=>
@@ -81,9 +85,13 @@ test('a final-phase sit-on or ignored chase cannot nominate unpaid work',()=>{
     frame.riders.filter(rider=>rider.role==='pull').every(rider=>
       passive.input.snapshot.roadGroups[0].riderIds.includes(rider.riderId))));
   assert.equal(validateFinaleOrderedGroupToLineFromTour(noChase,passive),true);
+  const oldPassive=probeFinaleOrderedGroupToLineFromTour(noChase,{
+    version:'v2-finale-ordered-run-2'});
+  assert.equal(oldPassive.recording.version,'v2-finale-group-to-line-6');
+  assert.equal(validateFinaleOrderedGroupToLineFromTour(noChase,oldPassive),true);
   const paid=probeFinaleOrderedGroupToLineFromTour(source());
   assert.deepEqual(paid.input.snapshot,passive.input.snapshot);
-  assert.equal(paid.recording.version,'v2-finale-group-to-line-7');
+  assert.equal(paid.recording.version,'v2-finale-group-to-line-9');
   assert.ok(paid.recording.approachFrames[0].pelotonElapsedSeconds<=
     passive.recording.approachFrames[0].pelotonElapsedSeconds);
   assert.ok(paid.recording.approachFrames[0].roadGroups[0].gapSeconds<=
@@ -104,8 +112,8 @@ test('a route marker changes passive and paid chase within the same finale',()=>
   const tour=source({c:{atKm:38,chase:'ignore'},
     d:{atKm:38,chase:'ignore'}},'M',marked);
   const probe=probeFinaleOrderedGroupToLineFromTour(tour);
-  assert.equal(probe.version,'v2-finale-ordered-run-4');
-  assert.equal(probe.recording.version,'v2-finale-group-to-line-8');
+  assert.equal(probe.version,'v2-finale-ordered-run-5');
+  assert.equal(probe.recording.version,'v2-finale-group-to-line-9');
   assert.ok(probe.schedule.chasePullRiderIds.some(id=>id!==null));
   assert.ok(probe.schedule.chasePullRiderIds.some(id=>id===null));
   assert.ok(probe.recording.approachFrames.some(frame=>
@@ -113,6 +121,10 @@ test('a route marker changes passive and paid chase within the same finale',()=>
   assert.ok(probe.recording.approachFrames.some(frame=>
     frame.chasePullRiderId!==null&&frame.version==='v2-finale-group-step-1'));
   assert.equal(validateFinaleOrderedGroupToLineFromTour(tour,probe),true);
+  const oldMixed=probeFinaleOrderedGroupToLineFromTour(tour,{
+    version:'v2-finale-ordered-run-4'});
+  assert.equal(oldMixed.recording.version,'v2-finale-group-to-line-8');
+  assert.equal(validateFinaleOrderedGroupToLineFromTour(tour,oldMixed),true);
   const forged=structuredClone(probe);
   forged.schedule.chasePullRiderIds[0]=null;
   assert.throws(()=>validateFinaleOrderedGroupToLineFromTour(tour,forged),
@@ -130,7 +142,7 @@ test('a route marker changes passive and paid chase within the same finale',()=>
     teams:resumedTeams,seed:'ordered-finale',
     motorVersion:MOTOR_ATTACK_TRACE_VERSION});
   const reverse=probeFinaleOrderedGroupToLineFromTour(resumedTour);
-  assert.equal(reverse.version,'v2-finale-ordered-run-4');
+  assert.equal(reverse.version,'v2-finale-ordered-run-5');
   assert.equal(reverse.schedule.chasePullRiderIds[0],null);
   assert.ok(reverse.schedule.chasePullRiderIds.at(-1)!==null);
   assert.equal(validateFinaleOrderedGroupToLineFromTour(resumedTour,reverse),true);
@@ -181,7 +193,7 @@ test('a long recorded race supplies depleted workers without free finale energy'
   seed:'long-ordered-finale',motorVersion:MOTOR_ATTACK_TRACE_VERSION});
   assert.deepEqual(waitingTour.frames[254].engagedChaseTeamIds,[]);
   const passive=probeFinaleOrderedGroupToLineFromTour(waitingTour);
-  assert.equal(passive.recording.version,'v2-finale-group-to-line-6');
+  assert.equal(passive.recording.version,'v2-finale-group-to-line-9');
   assert.ok(passive.schedule.chasePullRiderIds.every(id=>id===null));
   for(const row of passive.recording.finalRiderEnergy){
     const atFive=passive.input.snapshot.riders.find(candidate=>

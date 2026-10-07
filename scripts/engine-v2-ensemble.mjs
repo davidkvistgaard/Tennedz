@@ -327,7 +327,8 @@ for(const [course,stage] of Object.entries(distanceKm===260?LONG_ROUTES:ROUTES))
     for(const strategy of STRATEGIES){
       const orderedFinale={noRoadGroup:0,oneRoadGroup:0,
         multipleRoadGroups:0,noBunch:0,accepted:0,
-        survived:0,caught:0,readOnlyRejections:{},examples:[],
+        survived:0,caught:0,exhaustionDroppedRiders:0,
+        racesWithExhaustionDrop:0,readOnlyRejections:{},examples:[],
         rejectionExamples:[]};
       const totals={amberWins:0,amberPodiums:0,breakWins:0,positiveFinalGaps:0,
         photoFinishBreakWins:0,clearBreakWins:0,breakWinMargins:[],
@@ -437,12 +438,16 @@ for(const [course,stage] of Object.entries(distanceKm===260?LONG_ROUTES:ROUTES))
               orderedFinale.accepted++;
               orderedFinale[probe.recording.outcome==='survived'?
                 'survived':'caught']++;
+              const drops=probe.recording.exhaustionDrops??[];
+              orderedFinale.exhaustionDroppedRiders+=drops.length;
+              if(drops.length)orderedFinale.racesWithExhaustionDrop++;
               if(orderedFinale.examples.length<2)orderedFinale.examples.push({
                 sample,version:probe.version,
                 initialGapSeconds:probe.input.snapshot.roadGroups[0].gapSeconds,
                 outcome:probe.recording.outcome,
                 finishGapSeconds:probe.recording.finishGapSeconds,
                 catchDistanceM:probe.recording.catchDistanceM,
+                exhaustionDroppedRiderIds:drops.map(drop=>drop.riderId),
               });
             }catch(error){
               const reason=String(error.message);

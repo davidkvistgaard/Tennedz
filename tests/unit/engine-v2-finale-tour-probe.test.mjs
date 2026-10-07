@@ -218,6 +218,32 @@ test('the continuous group run refuses unpaid work from an exhausted follower',(
   assert.throws(()=>simulateFinaleGroupRun(trial),/cannot spend energy/);
 });
 
+test('versioned exhaustion removes a sheltered rider before unpaid travel',()=>{
+  const tour=simulateTacticalTour(input);
+  const trial=structuredClone(probeFinaleGroupRunFromTour(tour,{
+    frontPullRiderId:'a-2',chasePullRiderId:'b-2'}).input);
+  trial.snapshot.riders.find(rider=>rider.riderId==='b-3').energy=0;
+  trial.paceVersion=FINALE_WORKER_PASSIVE_SLOPE_VERSION;
+  trial.bunchPaceFloor=true;
+  trial.exhaustionDrop=true;
+  const recording=simulateFinaleGroupToLine(trial);
+  assert.equal(recording.version,'v2-finale-group-to-line-9');
+  assert.equal(recording.exhaustionDrops.length,1);
+  assert.deepEqual(recording.exhaustionDrops[0],{
+    riderId:'b-3',atDistanceM:35000,remainingEnergy:0,
+    requiredShelteredEnergy:recording.exhaustionDrops[0]
+      .requiredShelteredEnergy,reason:'insufficient_sheltered_energy',
+  });
+  assert.ok(recording.exhaustionDrops[0].requiredShelteredEnergy>0);
+  assert.ok(!recording.approachFrames[0].pelotonRiderIds.includes('b-3'));
+  assert.ok(recording.approachFrames[0].riders.every(row=>
+    row.riderId!=='b-3'));
+  assert.equal(validateFinaleGroupToLine(trial,recording),true);
+  const forged=structuredClone(recording);
+  forged.exhaustionDrops[0].atDistanceM+=100;
+  assert.throws(()=>validateFinaleGroupToLine(trial,forged),/differs/);
+});
+
 test('a caught group keeps travelling from the catch metre through the line',()=>{
   const tour=simulateTacticalTour(input);
   const source=probeFinaleGroupRunFromTour(tour,{
@@ -295,6 +321,33 @@ test('a passive bunch can catch and continue without an unpaid helper',()=>{
   const forged=structuredClone(recording);
   forged.mergedFrames[0].travelSeconds+=1;
   assert.throws(()=>validateFinaleGroupToLine(trial,forged),/differs/);
+});
+
+test('a caught front rider can exhaust after merging without free travel',()=>{
+  const tour=simulateTacticalTour(input);
+  const trial=structuredClone(probeFinaleGroupRunFromTour(tour,{
+    frontPullRiderId:'a-2',chasePullRiderId:'b-2'}).input);
+  trial.snapshot.roadGroups[0].gapSeconds=.1;
+  trial.snapshot.riders.find(row=>row.riderId==='a-2').energy=.2;
+  trial.teams[0].riders.find(rider=>rider.id==='a-2').timetrial=30;
+  for(const rider of trial.teams[1].riders){
+    rider.flat=100;
+    rider.strength=100;
+  }
+  trial.paceVersion=FINALE_WORKER_PASSIVE_SLOPE_VERSION;
+  trial.bunchPaceFloor=true;
+  trial.exhaustionDrop=true;
+  const recording=simulateFinaleGroupToLine(trial);
+  assert.equal(recording.version,'v2-finale-group-to-line-9');
+  assert.equal(recording.outcome,'caught_merged');
+  assert.ok(recording.catchDistanceM>35000&&
+    recording.catchDistanceM<36000);
+  const drop=recording.exhaustionDrops.find(row=>row.riderId==='a-2');
+  assert.equal(drop.atDistanceM,36000);
+  assert.ok(drop.remainingEnergy<drop.requiredShelteredEnergy);
+  assert.ok(recording.mergedFrames[0].riderIds.includes('a-2'));
+  assert.ok(!recording.mergedFrames[1].riderIds.includes('a-2'));
+  assert.equal(validateFinaleGroupToLine(trial,recording),true);
 });
 
 test('a team that ignored the gap cannot be invented as a chasing worker',()=>{
