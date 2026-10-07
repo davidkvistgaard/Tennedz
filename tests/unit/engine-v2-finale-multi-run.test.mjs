@@ -83,6 +83,32 @@ test('one road group with a new selective pursuer records separate paid travel',
     version:'v2-finale-multi-separated-3'}),/multiple road groups/);
 });
 
+test('four-kilometre handoff preserves a valid named attack in the source replay',()=>{
+  const teams=[team('a','M',0),team('c','M',null)];
+  teams[1].orders.phases.push({atKm:35,attack:'selective',
+    attackRiderId:'c-0'});
+  const tour=simulateTacticalTour({stage,teams,seed:'separated-finale',
+    motorVersion:MOTOR_ATTACK_TRACE_VERSION});
+  assert.equal(tour.frames[34].roadGroups.length,1);
+  assert.ok(tour.frames[35].attackReasons.some(row=>
+    row.riderId==='c-0'&&row.reason==='named_order'));
+  assert.equal(tour.frames[35].roadGroups.length,2);
+  assert.throws(()=>probeFinaleSeparatedGroupsFromTour(tour),
+    /needs a recorded peloton attack/);
+  const afterAttack=probeFinaleSeparatedGroupsFromTour(tour,{
+    version:'v2-finale-separated-post-attack-5'});
+  assert.equal(afterAttack.sourceKm,36);
+  assert.equal(afterAttack.sourceSnapshotVersion,'v2-finale-snapshot-2');
+  assert.equal(afterAttack.frames.length,10);
+  assert.deepEqual(afterAttack.sourceRoadGroupIds,
+    tour.frames[35].roadGroups.map(group=>group.id));
+  assert.equal(validateFinaleSeparatedGroupsFromTour(tour,afterAttack),true);
+  const forged=structuredClone(afterAttack);
+  forged.postAttackHandoffKm=35;
+  assert.throws(()=>validateFinaleSeparatedGroupsFromTour(tour,forged),
+    /differs/);
+});
+
 test('separated continuation refuses a source without multiple road groups',()=>{
   const tour=simulateTacticalTour({stage,
     teams:[team('a','M',null),team('b','M',null)],

@@ -185,3 +185,28 @@ test('single-group separated coverage keeps valid selective chase after phase st
       orderedRejected);
   }
 });
+
+test('post-attack handoff never counts an unresolved later attack as travel',()=>{
+  const report=JSON.parse(execFileSync(process.execPath,[ensembleScript,'1','20',
+    'attack-trace','planned-finale-allied-manager-mix-0','260','100','0',
+    '3','5','4','100','hard','0','0','0','4','0','independent','0',
+    'fixed','ordered'],{
+    encoding:'utf8',timeout:60_000,maxBuffer:8*1024*1024,
+  }));
+  const cells=Object.values(report.courses).flatMap(genders=>
+    Object.values(genders).flatMap(strategies=>
+      Object.values(strategies)));
+  assert.ok(cells.some(cell=>cell.orderedFinale.postAttackAccepted>0));
+  let refusedLater=0;
+  for(const cell of cells){
+    const coverage=cell.orderedFinale;
+    const rejected=Object.values(coverage.postAttackRejections)
+      .reduce((sum,count)=>sum+count,0);
+    assert.equal(coverage.postAttackAccepted+rejected,
+      coverage.postAttackCandidates);
+    refusedLater+=Object.entries(coverage.postAttackRejections)
+      .filter(([reason])=>reason.includes('at km 260'))
+      .reduce((sum,[,count])=>sum+count,0);
+  }
+  assert.ok(refusedLater>0);
+});

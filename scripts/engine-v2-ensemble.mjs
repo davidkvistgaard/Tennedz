@@ -340,6 +340,8 @@ for(const [course,stage] of Object.entries(distanceKm===260?LONG_ROUTES:ROUTES))
         multiSeparatedAccepted:0,multiSeparatedRejections:{},
         multiSeparatedRejectionExamples:[],
         oneRoadSeparatedAccepted:0,oneRoadSeparatedRejections:{},
+        postAttackCandidates:0,postAttackAccepted:0,
+        postAttackRejections:{},
         survived:0,caught:0,exhaustionDroppedRiders:0,
         racesWithExhaustionDrop:0,readOnlyRejections:{},examples:[],
         rejectionExamples:[]};
@@ -439,6 +441,21 @@ for(const [course,stage] of Object.entries(distanceKm===260?LONG_ROUTES:ROUTES))
         if(orderedFinaleCoverage==='ordered'){
           const handoff=race.frames[distanceKm-6];
           const groupCount=handoff.roadGroups.length;
+          const tryPostAttack=()=>{
+            if(!race.frames[distanceKm-5].attackReasons.some(row=>
+              row.reason==='named_order'))return;
+            orderedFinale.postAttackCandidates++;
+            try{
+              const probe=probeFinaleSeparatedGroupsFromTour(race,{
+                version:'v2-finale-separated-post-attack-5'});
+              validateFinaleSeparatedGroupsFromTour(race,probe);
+              orderedFinale.postAttackAccepted++;
+            }catch(error){
+              const reason=String(error.message);
+              orderedFinale.postAttackRejections[reason]=
+                (orderedFinale.postAttackRejections[reason]??0)+1;
+            }
+          };
           if(groupCount===0){
             orderedFinale.noRoadGroup++;
             orderedFinale.noRoadGroupWithPaidSourcePace+=
@@ -483,6 +500,7 @@ for(const [course,stage] of Object.entries(distanceKm===260?LONG_ROUTES:ROUTES))
               const reason=String(error.message);
               orderedFinale.multiSeparatedRejections[reason]=
                 (orderedFinale.multiSeparatedRejections[reason]??0)+1;
+              tryPostAttack();
               if(orderedFinale.multiSeparatedRejectionExamples.length<3)
                 orderedFinale.multiSeparatedRejectionExamples.push({sample,
                   reason,sourceGroups:handoff.roadGroups.map(group=>({
@@ -514,6 +532,7 @@ for(const [course,stage] of Object.entries(distanceKm===260?LONG_ROUTES:ROUTES))
               const reason=String(error.message);
               orderedFinale.readOnlyRejections[reason]=
                 (orderedFinale.readOnlyRejections[reason]??0)+1;
+              tryPostAttack();
               try{
                 const separated=probeFinaleSeparatedGroupsFromTour(race);
                 validateFinaleSeparatedGroupsFromTour(race,separated);
