@@ -5,7 +5,8 @@ import {MOTOR_ATTACK_TRACE_VERSION} from '../../lib/engine/v2/tuning.mjs';
 import {finaleSnapshotFromTour,FINALE_SNAPSHOT_VERSION} from
   '../../lib/engine/v2/finale-snapshot.mjs';
 import {advanceFinaleGroupStep} from '../../lib/engine/v2/finale-group-step.mjs';
-import {simulateFinaleGroupRun,validateFinaleGroupRun} from
+import {simulateFinaleGroupRun,validateFinaleGroupRun,
+  simulateFinaleGroupToLine,validateFinaleGroupToLine} from
   '../../lib/engine/v2/finale-group-run.mjs';
 import {validateFinalePair} from '../../lib/engine/v2/finale-pair.mjs';
 import {validateFinaleRelay} from '../../lib/engine/v2/finale-relay.mjs';
@@ -13,7 +14,7 @@ import {finaleDistanceGrid} from '../../lib/engine/v2/finale-grid.mjs';
 import {validateFinaleLeadOutPull} from '../../lib/engine/v2/finale-lead-out-pull.mjs';
 import {probeFinalePairFromTour,probeFinaleRelayFromTour,
   probeFinaleLeadOutFromTour,probeFinaleGroupStepFromTour,
-  probeFinaleGroupRunFromTour} from
+  probeFinaleGroupRunFromTour,probeFinaleGroupToLineFromTour} from
   '../../lib/engine/v2/finale-tour-probe.mjs';
 
 const stage={distance_km:40,profile_points:[[0,100],[40,100]]};
@@ -172,6 +173,46 @@ test('the continuous group run refuses unpaid work from an exhausted follower',(
     frontPullRiderId:'a-2',chasePullRiderId:'b-2'}).input);
   trial.snapshot.riders.find(rider=>rider.riderId==='b-3').energy=.001;
   assert.throws(()=>simulateFinaleGroupRun(trial),/cannot spend energy/);
+});
+
+test('a caught group keeps travelling from the catch metre through the line',()=>{
+  const tour=simulateTacticalTour(input);
+  const source=probeFinaleGroupRunFromTour(tour,{
+    frontPullRiderId:'a-2',chasePullRiderId:'b-2'}).input;
+  const trial=structuredClone(source);
+  trial.snapshot.roadGroups[0].gapSeconds=1;
+  trial.teams[0].riders.find(rider=>rider.id==='a-2').timetrial=30;
+  trial.teams[1].riders.find(rider=>rider.id==='b-2').strength=100;
+  const recording=simulateFinaleGroupToLine(trial);
+  assert.equal(recording.outcome,'caught_merged');
+  assert.ok(recording.catchDistanceM<tour.route.distanceKm*1000);
+  assert.equal(recording.endDistanceM,tour.route.distanceKm*1000);
+  assert.equal(recording.finishGapSeconds,0);
+  assert.ok(recording.mergedFrames.length>0);
+  const catchFrame=recording.approachFrames.at(-1);
+  assert.equal(recording.mergedFrames[0].startDistanceM,catchFrame.endDistanceM);
+  assert.equal(recording.mergedFrames.at(-1).endDistanceM,
+    tour.route.distanceKm*1000);
+  for(const [index,frame] of recording.mergedFrames.entries()){
+    const previous=index===0?catchFrame:recording.mergedFrames[index-1];
+    assert.equal(frame.startDistanceM,previous.endDistanceM);
+    for(const rider of frame.riders)assert.ok(rider.energy<=
+      previous.riders.find(row=>row.riderId===rider.riderId).energy);
+  }
+  assert.deepEqual(recording.finalRiderEnergy.map(row=>row.riderId),
+    catchFrame.pelotonRiderIds);
+  assert.deepEqual(recording.finalRiderEnergy,
+    recording.mergedFrames.at(-1).riders.map(row=>({riderId:row.riderId,
+      energy:row.energy})));
+  assert.equal(validateFinaleGroupToLine(trial,recording),true);
+  const altered=structuredClone(recording);
+  altered.mergedFrames[0].riders[0].energy+=1;
+  assert.throws(()=>validateFinaleGroupToLine(trial,altered),/differs/);
+  const genuine=probeFinaleGroupToLineFromTour(tour,{
+    frontPullRiderId:'a-2',chasePullRiderId:'b-2'});
+  assert.equal(genuine.recording.outcome,'survived');
+  assert.deepEqual(genuine.recording.mergedFrames,[]);
+  assert.equal(validateFinaleGroupToLine(genuine.input,genuine.recording),true);
 });
 
 test('a team that ignored the gap cannot be invented as a chasing worker',()=>{

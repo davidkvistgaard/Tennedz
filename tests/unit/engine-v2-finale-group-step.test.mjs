@@ -1,7 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {advanceFinaleGroupStep,validateFinaleGroupStep,
-  FINALE_GROUP_STEP_VERSION} from
+import {advanceFinaleGroupStep,advanceFinaleMergedStep,
+  validateFinaleGroupStep,FINALE_GROUP_STEP_VERSION,
+  FINALE_MERGED_STEP_VERSION} from
   '../../lib/engine/v2/finale-group-step.mjs';
 
 const slice={startDistanceM:39000,endDistanceM:39250,lengthM:250};
@@ -60,4 +61,29 @@ test('a group step rejects unearned work, absent riders and invented pullers',()
     riderPlans:riderPlans.slice(1)}),/complete distinct riders/);
   assert.throws(()=>advanceFinaleGroupStep({...input,
     frontPull:{riderId:'d-0',speedKph:40}}),/complete distinct riders/);
+});
+
+test('a caught group travels only the unpaid remainder of its catch slice',()=>{
+  const caught=advanceFinaleGroupStep(input);
+  const plans=caught.riders.map(rider=>({riderId:rider.riderId,
+    energy:rider.energy,workCostPerKm:rider.riderId==='c-0'?2.4:.3}));
+  const next=advanceFinaleMergedStep({slice,
+    startDistanceM:caught.endDistanceM,riderIds:caught.pelotonRiderIds,
+    pullRiderId:'c-0',speedKph:50,riderPlans:plans});
+  assert.equal(next.version,FINALE_MERGED_STEP_VERSION);
+  assert.equal(next.startDistanceM,caught.endDistanceM);
+  assert.equal(next.endDistanceM,slice.endDistanceM);
+  assert.deepEqual(next.riderIds,caught.pelotonRiderIds);
+  const remainingM=slice.endDistanceM-caught.endDistanceM;
+  assert.ok(Math.abs(next.travelSeconds-remainingM*3.6/50)<1e-10);
+  assert.ok(Math.abs(next.riders.find(row=>row.riderId==='c-0').energySpent-
+    2.4*remainingM/1000)<1e-10);
+  assert.throws(()=>advanceFinaleMergedStep({slice,startDistanceM:slice.endDistanceM,
+    riderIds:next.riderIds,pullRiderId:'c-0',speedKph:50,riderPlans:plans}),
+  /valid distance/);
+  const exhausted=plans.map(plan=>plan.riderId==='a-0'?{...plan,energy:0}:plan);
+  assert.throws(()=>advanceFinaleMergedStep({slice,
+    startDistanceM:caught.endDistanceM,riderIds:next.riderIds,
+    pullRiderId:'c-0',speedKph:50,riderPlans:exhausted}),
+  /cannot spend energy/);
 });
