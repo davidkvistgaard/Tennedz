@@ -4,6 +4,9 @@ import {simulateTacticalTour} from '../../lib/engine/v2/tour.mjs';
 import {probeLastKmRotationCatchFromTour,
   validateLastKmRotationCatchFromTour} from
   '../../lib/engine/v2/finale-last-km-rotation-catch.mjs';
+import {recordFinaleRotationCatchSprintPlanFromTour,
+  validateFinaleRotationCatchSprintPlanFromTour} from
+  '../../lib/engine/v2/finale-sprint-plan.mjs';
 import {MOTOR_ATTACK_TRACE_VERSION} from
   '../../lib/engine/v2/tuning.mjs';
 
@@ -50,5 +53,23 @@ test('v91 source links the paid rotating catch to an exact 500 m handoff',()=>{
     assert.throws(()=>validateLastKmRotationCatchFromTour(tour,
       {teamId:'a'},{...record,at500M:{...record.at500M,
         bunchElapsedSeconds:0}}),/does not replay/);
+    const input={attackTeamId:'a',plans:['a','b','c'].map(teamId=>({
+      teamId,finisherId:`${teamId}-0`,leadOutRiderId:`${teamId}-2`}))};
+    const plan=recordFinaleRotationCatchSprintPlanFromTour(tour,input);
+    assert.equal(plan.decisionDistanceM,19500);
+    assert.equal(plan.sourceRoadTraceVersion,record.version);
+    assert.deepEqual(plan.decisions.map(row=>row.roadGroupId),
+      ['peloton','peloton','peloton']);
+    assert.ok(plan.decisions.every(row=>row.finisherEnergy>0&&
+      row.leadOutEnergy>=20&&row.leadOutWorkCostPerKm>0));
+    assert.equal(validateFinaleRotationCatchSprintPlanFromTour(tour,
+      input,plan),true);
+    assert.throws(()=>validateFinaleRotationCatchSprintPlanFromTour(tour,
+      input,{...plan,decisions:plan.decisions.map(row=>({
+        ...row,leadOutEnergy:100}))}),/does not replay/);
+    assert.throws(()=>recordFinaleRotationCatchSprintPlanFromTour(tour,{
+      ...input,plans:input.plans.map(row=>row.teamId==='b'?{
+        ...row,leadOutRiderId:'b-4'}:row)}),
+    /distinct locked team riders/);
   }
 });
