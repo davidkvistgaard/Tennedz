@@ -369,4 +369,15 @@ Every `other` refusal is a validated four-kilometre source without the road-grou
 
 The ensemble now adds a versioned **diagnostic only** for a v5 refusal naming a due peloton attack: it compares the team and kilometre with the already validated, full v91 kilometre recording and reports `attempted`, `blocked` or `absent`, plus the block reason. In the same 20-team five-seed matrix, zero/one/two hard chasers have respectively **56/28/0**, **54/26/0** and **10/1/0** attempted/blocked/absent among their pending-attack refusals. All 26 blocked moves in the one-hard cell were recorded as `exhausted`. The refusal is still correct for a short-step candidate that has no attack-attempt or blocked-attempt event: the future v91 kilometre cannot be copied into a differently paced short-step recording. This comparison identifies a concrete event requirement and shows why treating every guard refusal as a successful attack would overstate the threat. Reproduce the preceding command with mix suffix `0`, `1` or `2` and inspect `postAttackKilometreAttackAudit`; no official motor, result or point entry changes.
 
-Of those 26 exhausted blocks in the 20-team/one-hard cell, **25 named riders were already below the motor's 12-energy attack-readiness threshold at the validated four-kilometre source**. This is a possible narrow, monotonic precondition for a future recorded blocked-attempt event; it is not permission to drop their manager orders. The remaining blocked rider crossed the threshold later in the kilometre run, so source-only filtering would not cover that case. The diagnostic compares the named rider's source energy with the current threshold and is labelled `v2-post-attack-audit-2`; no short-step event or classification is inferred from it.
+The `v2-post-attack-audit-2` diagnostic also checks whether a named rider was already below the motor's **12-energy attack-readiness threshold at the validated four-kilometre source**. Across the same five-seed matrix, the counts are:
+
+| Teams | Hard chasers | Attempted in v91 | Blocked in v91 | Blocked and already below 12 at source |
+| ---: | ---: | ---: | ---: | ---: |
+| 15 | 0 | 50 | 28 | 27 |
+| 15 | 1 | 53 | 28 | 27 |
+| 15 | 2 | 11 | 5 | 4 |
+| 20 | 0 | 56 | 28 | 27 |
+| 20 | 1 | 54 | 26 | 25 |
+| 20 | 2 | 10 | 1 | 1 |
+
+No due attack is absent from the full v91 recording in these cells. Almost every blocked named rider was already under the threshold at the handoff, which is a possible narrow, monotonic precondition for a future **recorded** blocked-attempt event; it is not permission to drop the manager order. The remaining blocks lack that source condition and need their later state and reason examined separately; source-only filtering would not cover them. The short-step path still needs to record the block and subsequent travel, and a differently paced path could reach a different energy state. No short-step result, classification or point award is inferred from this comparison.
