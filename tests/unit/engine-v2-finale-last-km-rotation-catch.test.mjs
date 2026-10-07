@@ -10,6 +10,9 @@ import {recordFinaleRotationCatchSprintPlanFromTour,
 import {recordFinaleRotationCatchSprintApproachFromTour,
   validateFinaleRotationCatchSprintApproachFromTour} from
   '../../lib/engine/v2/finale-sprint-approach.mjs';
+import {recordFinaleRotationCatchOrderedApproachFromTour,
+  validateFinaleRotationCatchOrderedApproachFromTour} from
+  '../../lib/engine/v2/finale-rotation-catch-ordered-approach.mjs';
 import {recordFinaleRotationCatchSprintLaunchFromTour,
   validateFinaleRotationCatchSprintLaunchFromTour} from
   '../../lib/engine/v2/finale-sprint-launch.mjs';
@@ -109,6 +112,34 @@ test('v91 source links the paid rotating catch to an exact 500 m handoff',()=>{
     assert.throws(()=>validateFinaleRotationCatchSprintApproachFromTour(
       tour,input,{...approach,bunchElapsedSecondsAt300M:0}),
     /does not replay/);
+    const ordered=recordFinaleRotationCatchOrderedApproachFromTour(
+      tour,input);
+    assert.equal(ordered.sourceRoadTraceVersion,record.version);
+    assert.equal(ordered.frames.length,2);
+    assert.deepEqual(ordered.frames.map(frame=>
+      frame.supersededRotationTeamIds),[['b'],['b']]);
+    assert.ok(ordered.frames.every(frame=>
+      frame.rotation.selected===null&&
+      frame.riderEnergy.filter(row=>row.role==='lead_out').length===3));
+    assert.equal(validateFinaleRotationCatchOrderedApproachFromTour(tour,
+      input,ordered),true);
+    const freeRotationInput={...input,plans:input.plans.map(row=>
+      row.teamId==='b'?{...row,leadOutRiderId:null}:row)};
+    const rotating=recordFinaleRotationCatchOrderedApproachFromTour(
+      tour,freeRotationInput);
+    assert.deepEqual(rotating.frames.map(frame=>
+      frame.rotation.selected?.teamId),['b','b']);
+    assert.ok(rotating.frames.every(frame=>
+      frame.riderEnergy.filter(row=>row.role==='front_rotation')
+        .length===2&&
+      frame.riderEnergy.filter(row=>row.role==='lead_out').length===2));
+    assert.ok(rotating.frames[0].bunchElapsedSeconds<=
+      ordered.frames[0].bunchElapsedSeconds);
+    assert.equal(validateFinaleRotationCatchOrderedApproachFromTour(tour,
+      freeRotationInput,rotating),true);
+    assert.throws(()=>validateFinaleRotationCatchOrderedApproachFromTour(
+      tour,freeRotationInput,{...rotating,frames:rotating.frames.map(frame=>
+        ({...frame,bunchElapsedSeconds:0}))}),/does not replay/);
     const launch=recordFinaleRotationCatchSprintLaunchFromTour(
       tour,input);
     assert.equal(launch.sourceApproachVersion,approach.version);
