@@ -4,12 +4,13 @@ import {simulateTacticalTour} from '../../lib/engine/v2/tour.mjs';
 import {MOTOR_ATTACK_TRACE_VERSION} from '../../lib/engine/v2/tuning.mjs';
 import {finaleSnapshotFromTour,FINALE_SNAPSHOT_VERSION} from
   '../../lib/engine/v2/finale-snapshot.mjs';
+import {advanceFinaleGroupStep} from '../../lib/engine/v2/finale-group-step.mjs';
 import {validateFinalePair} from '../../lib/engine/v2/finale-pair.mjs';
 import {validateFinaleRelay} from '../../lib/engine/v2/finale-relay.mjs';
 import {finaleDistanceGrid} from '../../lib/engine/v2/finale-grid.mjs';
 import {validateFinaleLeadOutPull} from '../../lib/engine/v2/finale-lead-out-pull.mjs';
 import {probeFinalePairFromTour,probeFinaleRelayFromTour,
-  probeFinaleLeadOutFromTour} from
+  probeFinaleLeadOutFromTour,probeFinaleGroupStepFromTour} from
   '../../lib/engine/v2/finale-tour-probe.mjs';
 
 const stage={distance_km:40,profile_points:[[0,100],[40,100]]};
@@ -80,6 +81,44 @@ test('a real 5 km recording supplies rider energy, solo gap and locked orders',(
     frontRiderId:'a-0',chaseRiderId:'b-2'}),/alone ahead/);
   assert.throws(()=>probeFinalePairFromTour(tour,{
     frontRiderId:'a-2',chaseRiderId:'a-3'}),/engaged in the bunch chase/);
+});
+
+test('the first group slice charges actual source riders and named workers',()=>{
+  const tour=simulateTacticalTour(input);
+  const original=structuredClone(tour);
+  const probe=probeFinaleGroupStepFromTour(tour,{
+    frontPullRiderId:'a-2',chasePullRiderId:'b-2'});
+  assert.equal(probe.sourceKm,35);
+  assert.equal(probe.input.frontGroup.id,probe.snapshot.roadGroups[0].id);
+  assert.deepEqual(probe.sourceWarnings,['residual_gap_after_sufficient_chase']);
+  assert.equal(probe.input.riderPlans.length,16);
+  assert.deepEqual(probe.recording,
+    advanceFinaleGroupStep(probe.input));
+  assert.deepEqual(tour,original);
+  assert.throws(()=>probeFinaleGroupStepFromTour(tour,{
+    frontPullRiderId:'b-2',chasePullRiderId:'b-2'}),/front puller/);
+  assert.throws(()=>probeFinaleGroupStepFromTour(tour,{
+    frontPullRiderId:'a-2',chasePullRiderId:'a-3'}),/engaged/);
+});
+
+test('a shared front group keeps both attacking teams and a rival bunch',()=>{
+  const teams=[team('a','aggressive',{attack:'none',chase:'ignore'}),
+    team('b','aggressive',{attack:'none',chase:'ignore'}),
+    team('c','protect',{attack:'none',chase:'selective'})];
+  for(const team of teams.slice(0,2))team.orders.phases=[{atKm:30,
+    attack:'selective',attackRiderId:`${team.id}-2`}];
+  const tour=simulateTacticalTour({stage,teams,seed:'shared-front-finale',
+    motorVersion:MOTOR_ATTACK_TRACE_VERSION});
+  const source=tour.frames[34];
+  assert.ok(source.roadGroups.some(group=>
+    group.riderIds.includes('a-2')&&group.riderIds.includes('b-2')));
+  const probe=probeFinaleGroupStepFromTour(tour,{
+    frontPullRiderId:'a-2',chasePullRiderId:'c-2'});
+  assert.deepEqual(probe.input.frontGroup.riderIds,['a-2','b-2']);
+  assert.equal(probe.input.riderPlans.find(row=>row.riderId==='b-2').energy,
+    source.riderGroups.find(row=>row.id==='b-2').energy);
+  assert.equal(probe.recording.riders.find(row=>row.riderId==='b-2').role,
+    'sheltered');
 });
 
 test('a team that ignored the gap cannot be invented as a chasing worker',()=>{
