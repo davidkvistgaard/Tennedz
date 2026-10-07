@@ -6,6 +6,7 @@ import {finaleSnapshotFromTour} from '../../lib/engine/v2/finale-snapshot.mjs';
 import {pendingFinaleAttacksAt} from '../../lib/engine/v2/finale-attack-guard.mjs';
 import {assertNoFinaleGroupContact,probeFinaleSeparatedGroupsFromTour,
   selectiveFinaleChaseDecision,FINALE_SEPARATED_EXHAUSTED_ATTACK_VERSION,
+  FINALE_SEPARATED_NAMED_BLOCKS_VERSION,
   validateFinaleSeparatedGroupsFromTour} from
   '../../lib/engine/v2/finale-multi-run.mjs';
 
@@ -173,6 +174,47 @@ test('a ready named attacker still refuses the exhausted-only finale version',()
   assert.throws(()=>probeFinaleSeparatedGroupsFromTour(tour,{
     version:FINALE_SEPARATED_EXHAUSTED_ATTACK_VERSION}),
   /needs a recorded peloton attack: c at km 260/);
+  assert.throws(()=>probeFinaleSeparatedGroupsFromTour(tour,{
+    version:FINALE_SEPARATED_NAMED_BLOCKS_VERSION}),
+  /needs a recorded peloton attack: c at km 260/);
+});
+
+test('a dropped named rider has a recorded blocked order in the new version',()=>{
+  const dropped=team('c','M',null);
+  dropped.riders[0].fatigue=100;
+  for(const skill of ['flat','strength','endurance','timetrial'])
+    dropped.riders[0][skill]=20;
+  dropped.orders.baseline.effort='hard';
+  dropped.orders.phases.push({atKm:255,attack:'selective',
+    attackRiderId:'c-0'});
+  const longStage={distance_km:260,profile_points:[[0,100],[260,100]],
+    keypoints:stage.keypoints};
+  const tour=simulateTacticalTour({stage:longStage,
+    teams:[team('a','M',0),team('b','M',20),dropped],
+    seed:'separated-finale',motorVersion:MOTOR_ATTACK_TRACE_VERSION});
+  const source=finaleSnapshotFromTour(tour,{remainingKm:4});
+  assert.equal(source.riders.find(row=>row.riderId==='c-0').status,
+    'dropped');
+  assert.equal(pendingFinaleAttacksAt(tour,source,260).length,0);
+  assert.deepEqual(pendingFinaleAttacksAt(tour,source,260,
+    {includeUnavailable:true}).map(row=>[row.teamId,row.kind]),
+  [['b','named_unavailable'],['c','named_unavailable']]);
+  const old=probeFinaleSeparatedGroupsFromTour(tour,{
+    version:FINALE_SEPARATED_EXHAUSTED_ATTACK_VERSION});
+  assert.equal(old.frames.flatMap(frame=>frame.blockedNamedAttacks).length,0);
+  const run=probeFinaleSeparatedGroupsFromTour(tour,{
+    version:FINALE_SEPARATED_NAMED_BLOCKS_VERSION});
+  const blocked=run.frames.flatMap(frame=>frame.blockedNamedAttacks);
+  assert.deepEqual(blocked.map(row=>[row.riderId,row.reason]),
+    [['b-0','already_ahead'],['c-0','dropped']]);
+  assert.ok(blocked.every(row=>row.sourceKm===260));
+  assert.equal(validateFinaleSeparatedGroupsFromTour(tour,run),true);
+  const forged=structuredClone(run);
+  forged.frames.find(frame=>frame.blockedNamedAttacks.length)
+    .blockedNamedAttacks[0].reason='exhausted';
+  assert.throws(()=>validateFinaleSeparatedGroupsFromTour(tour,forged),
+    /differs/);
+  assert.equal(validateFinaleSeparatedGroupsFromTour(tour,old),true);
 });
 
 test('separated continuation refuses a source without multiple road groups',()=>{
