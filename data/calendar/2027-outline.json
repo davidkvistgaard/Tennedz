@@ -1,0 +1,105 @@
+{
+  "status": "planning",
+  "calendar_year": 2027,
+  "seasons": [
+    {
+      "number": 1,
+      "months": [
+        {
+          "key": "2027-01",
+          "candidates": 7,
+          "one_day": 4,
+          "stage_races": 3,
+          "open_one_day_slots": 14
+        },
+        {
+          "key": "2027-02",
+          "candidates": 9,
+          "one_day": 5,
+          "stage_races": 4,
+          "open_one_day_slots": 11
+        },
+        {
+          "key": "2027-03",
+          "candidates": 16,
+          "one_day": 13,
+          "stage_races": 3,
+          "open_one_day_slots": 5
+        },
+        {
+          "key": "2027-04",
+          "candidates": 17,
+          "one_day": 12,
+          "stage_races": 5,
+          "open_one_day_slots": 4
+        }
+      ]
+    },
+    {
+      "number": 2,
+      "months": [
+        {
+          "key": "2027-05",
+          "candidates": 14,
+          "one_day": 5,
+          "stage_races": 9,
+          "open_one_day_slots": 13
+        },
+        {
+          "key": "2027-06",
+          "candidates": 9,
+          "one_day": 4,
+          "stage_races": 5,
+          "open_one_day_slots": 14
+        },
+        {
+          "key": "2027-07",
+          "candidates": 5,
+          "one_day": 0,
+          "stage_races": 5,
+          "open_one_day_slots": 16
+        },
+        {
+          "key": "2027-08",
+          "candidates": 12,
+          "one_day": 5,
+          "stage_races": 7,
+          "open_one_day_slots": 13
+        }
+      ]
+    },
+    {
+      "number": 3,
+      "months": [
+        {
+          "key": "2027-09",
+          "candidates": 10,
+          "one_day": 6,
+          "stage_races": 4,
+          "open_one_day_slots": 12
+        },
+        {
+          "key": "2027-10",
+          "candidates": 11,
+          "one_day": 7,
+          "stage_races": 4,
+          "open_one_day_slots": 11
+        },
+        {
+          "key": "2027-11",
+          "candidates": 0,
+          "one_day": 0,
+          "stage_races": 0,
+          "open_one_day_slots": 16
+        },
+        {
+          "key": "2027-12",
+          "candidates": 0,
+          "one_day": 0,
+          "stage_races": 0,
+          "open_one_day_slots": 18
+        }
+      ]
+    }
+  ]
+}
