@@ -320,7 +320,7 @@ for(const [course,stage] of Object.entries(distanceKm===260?LONG_ROUTES:ROUTES))
         penultimateGapSeconds:0,finalKmAttackPower:0,finalKmAttackers:0,
         finalKmBlockedAttacks:0,finalKmChasePower:0,finalKmPaidPaceAbility:0,
         finalKmPaidPaceRaces:0,finalKmJoinedRiders:0,finalKmCaughtRiders:0,
-        finalGaps:[],
+        finalGaps:[],finalKmJoinWinnerExamples:[],
         maxGroups:0,multiGroupFinishes:0,chaseGroupAttackMoves:0,
         bridgesToGroupAhead:0,roadGroupLimitBlocks:0};
       for(let sample=0;sample<samples;sample++){
@@ -505,6 +505,30 @@ for(const [course,stage] of Object.entries(distanceKm===260?LONG_ROUTES:ROUTES))
           if(!firstBunch)throw new Error('A breakaway win has no bunch finisher to compare.');
           const margin=firstBunch.timeSeconds-race.provisionalResults[0].timeSeconds;
           totals.breakWinMargins.push(margin);
+          if(finalFrame.joinedBreakawayRiderIds.includes(winner.riderId)&&
+            totals.finalKmJoinWinnerExamples.length<3){
+            const winnerGroup=finalFrame.roadGroups.find(group=>
+              group.riderIds.includes(winner.riderId));
+            const winnerOrders=race.committedInputs.teams.find(team=>
+              team.id===winner.teamId)?.orders;
+            const activeAttackPhase=winnerOrders?.phases.findLast(phase=>
+              phase.atKm<=distanceKm-1&&'attack'in phase);
+            totals.finalKmJoinWinnerExamples.push({sample,riderId:winner.riderId,
+              teamId:winner.teamId,attackReason:finalFrame.attackReasons.find(row=>
+                row.riderId===winner.riderId)?.reason??null,
+              attackPhaseAtKm:activeAttackPhase?.atKm??null,
+              groupAgeKm:stage.distance_km-firstGroupFrame.km,
+              groupGapSeconds:winnerGroup?.gapSeconds??null,
+              marginToFirstBunchSeconds:+margin.toFixed(2),
+              winnerFinaleAbility:winner.finaleAbility,
+              firstBunchRiderId:firstBunch.riderId,
+              firstBunchFinaleAbility:firstBunch.finaleAbility,
+              winnerEnergy:winner.energy,
+              finalKmAttackPower:finalFrame.attackPower,
+              finalKmChasePower:finalFrame.chasePower,
+              finalKmJoinedRiders:finalFrame.joinedBreakawayRiderIds.length,
+              finishLineCatch:finalFrame.finishLineCatch});
+          }
           if(margin<1){
             totals.photoFinishBreakWins++;
             totals.photoFinalGaps.push(race.frames.at(-1).gapSeconds);
@@ -635,6 +659,7 @@ for(const [course,stage] of Object.entries(distanceKm===260?LONG_ROUTES:ROUTES))
           +(totals.finalKmPaidPaceAbility/totals.finalKmPaidPaceRaces).toFixed(2):null,
         meanFinalKmJoinedRiders:+(totals.finalKmJoinedRiders/samples).toFixed(2),
         meanFinalKmCaughtRiders:+(totals.finalKmCaughtRiders/samples).toFixed(2),
+        finalKmJoinWinnerExamples:totals.finalKmJoinWinnerExamples,
         meanDroppedRiders:+(totals.droppedRiders/samples).toFixed(2),
         amberMeanEnergy:+(totals.amberEnergy/samples).toFixed(2),
         meanFieldEnergy:+(totals.fieldEnergy/samples).toFixed(2),
