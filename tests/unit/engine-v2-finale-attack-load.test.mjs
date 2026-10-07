@@ -4,6 +4,8 @@ import {simulateTacticalTour} from '../../lib/engine/v2/tour.mjs';
 import {MOTOR_ATTACK_TRACE_VERSION} from '../../lib/engine/v2/tuning.mjs';
 import {finaleAttackLoadFromTour} from
   '../../lib/engine/v2/finale-attack-load.mjs';
+import {finaleSnapshotFromTour} from
+  '../../lib/engine/v2/finale-snapshot.mjs';
 
 const stage={distance_km:40,profile_points:[[0,100],[40,100]],
   keypoints:[{km:10,kind:'SPRINT'},{km:20,kind:'SPRINT'}]};
@@ -26,6 +28,20 @@ test('a recorded named attack enters the short-step boundary with repeat load',(
   const before=finaleAttackLoadFromTour(tour,35);
   const atHandoff=finaleAttackLoadFromTour(tour,36);
   const next=finaleAttackLoadFromTour(tour,37);
+  const previousSnapshot=finaleSnapshotFromTour(tour,{remainingKm:4});
+  const fiveKmSnapshot=finaleSnapshotFromTour(tour,{
+    remainingKm:5,includeAttackLoad:true});
+  const attackSnapshot=finaleSnapshotFromTour(tour,{
+    remainingKm:4,includeAttackLoad:true});
+  assert.equal(previousSnapshot.version,'v2-finale-snapshot-2');
+  assert.equal(previousSnapshot.riderAttackLoads,undefined);
+  assert.equal(attackSnapshot.version,'v2-finale-snapshot-attack-load-3');
+  assert.equal(attackSnapshot.sourceKm,36);
+  assert.equal(attackSnapshot.attackLoadVersion,
+    'v2-finale-attack-load-handoff-1');
+  assert.deepEqual(attackSnapshot.riderAttackLoads,atHandoff.riderLoads);
+  assert.equal(fiveKmSnapshot.sourceKm,35);
+  assert.deepEqual(fiveKmSnapshot.riderAttackLoads,before.riderLoads);
   assert.equal(atHandoff.version,'v2-finale-attack-load-handoff-1');
   assert.equal(before.riderLoads.find(row=>row.riderId==='a-0').load,0);
   assert.equal(atHandoff.riderLoads.find(row=>row.riderId==='a-0').load,1);
