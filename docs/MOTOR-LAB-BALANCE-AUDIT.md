@@ -400,3 +400,14 @@ The **20-seed** extension (360 source races per row) shows that the small five-s
 | 20 | shifted | 207 / 150 / 3 | 357 | 16 | 232 | 95 |
 
 For 15 teams, role placement changes the accepted travel count from 19 to 32; for 20 teams it leaves that count at 16, although source shape and event mix shift. Among the 385 full-kilometre blocks across these four rows, 381 riders were already below 12 energy at the four-kilometre source and four crossed below before the final-kilometre attempt. No due attack is absent from the full-kilometre recording, but those future events remain **comparisons**, not short-step events. The next short-step version must account for attack readiness at its own decision boundary, real paid work, new road groups and catches before any accepted trace can become a classified finish or point result. Reproduce the two 20-seed one-hard-chaser commands for both field sizes and `fixed`/`shifted` role modes.
+
+Classifying the **first** refusal for each 20-seed four-kilometre candidate gives the narrower implementation order below. A first refusal can mask a later unmodeled event, so the columns do not count every action that a completed race would need.
+
+| Teams | Role placement | Pending attack | Invalid separated-group source | Calculated catch | Accepted travel |
+| ---: | --- | ---: | ---: | ---: | ---: |
+| 15 | fixed | 335 | 3 | 3 | 19 |
+| 15 | shifted | 313 | 7 | 2 | 32 |
+| 20 | fixed | 326 | 12 | 0 | 16 |
+| 20 | shifted | 327 | 14 | 0 | 16 |
+
+The 20-team cells are dominated by the pending final-kilometre attack and source shapes outside the separated-group model. The 15-team cells additionally exercise precise road-group catches; the shifted layout calculates catches at 256576.13 m and 258847.94 m, while the fixed layout has three catches between 256794.23 m and 258907.67 m. None may be converted into a surviving group or a point result without a recorded merge and subsequent travel. Reproduce by aggregating `postAttackRejections` for each 20-seed command. The existing v91 result/point contract remains a separate read-only proof: its 20-manager varied-tactic and 45-manager division tests passed again, but they calculate from the kilometre recording, not from this incomplete short-step finale.
