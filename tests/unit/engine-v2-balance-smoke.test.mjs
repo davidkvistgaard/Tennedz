@@ -144,6 +144,11 @@ test('guarded short-step coverage accounts for every independent source state',(
           .reduce((sum,count)=>sum+count,0);
         assert.equal(coverage.accepted+rejected,coverage.oneRoadGroup);
         assert.equal(coverage.survived+coverage.caught,coverage.accepted);
+        const oneRoadSeparatedRejected=Object.values(
+          coverage.oneRoadSeparatedRejections)
+          .reduce((sum,count)=>sum+count,0);
+        assert.equal(coverage.oneRoadSeparatedAccepted+
+          oneRoadSeparatedRejected,rejected);
         const multiRejected=Object.values(coverage.multiSeparatedRejections)
           .reduce((sum,count)=>sum+count,0);
         assert.equal(coverage.multiSeparatedAccepted+multiRejected,
@@ -155,4 +160,28 @@ test('guarded short-step coverage accounts for every independent source state',(
         assert.ok(coverage.racesWithExhaustionDrop<=coverage.accepted);
       }
   assert.ok(pendingAttacks>0);
+});
+
+test('single-group separated coverage keeps valid selective chase after phase stops',()=>{
+  const report=JSON.parse(execFileSync(process.execPath,[ensembleScript,'1','20',
+    'attack-trace','planned-finale-allied-manager-mix-2','260','100','0',
+    '3','20','4','100','hard','0','80','5','4','0','independent','0',
+    'fixed','ordered'],{
+    encoding:'utf8',timeout:60_000,maxBuffer:8*1024*1024,
+  }));
+  const cells=Object.values(report.courses).flatMap(genders=>
+    Object.values(genders).flatMap(strategies=>
+      Object.values(strategies)));
+  assert.ok(cells.reduce((sum,cell)=>
+    sum+cell.orderedFinale.oneRoadSeparatedAccepted,0)>0);
+  for(const cell of cells){
+    const coverage=cell.orderedFinale;
+    const orderedRejected=Object.values(coverage.readOnlyRejections)
+      .reduce((sum,count)=>sum+count,0);
+    const separatedRejected=Object.values(
+      coverage.oneRoadSeparatedRejections)
+      .reduce((sum,count)=>sum+count,0);
+    assert.equal(coverage.oneRoadSeparatedAccepted+separatedRejected,
+      orderedRejected);
+  }
 });

@@ -35,7 +35,7 @@ test('separated road groups keep their IDs, gaps and paid energy to the line',()
     assert.equal(sourceFrame.roadGroups.length,2);
     const original=structuredClone(tour);
     const run=probeFinaleSeparatedGroupsFromTour(tour);
-    assert.equal(run.version,'v2-finale-multi-separated-3');
+    assert.equal(run.version,'v2-finale-separated-one-or-more-4');
     assert.equal(run.sourceTuningVersion,MOTOR_ATTACK_TRACE_VERSION);
     assert.equal(run.frames.length,11);
     assert.ok(run.frames.every(frame=>frame.roadGroups.length===2&&
@@ -54,12 +54,33 @@ test('separated road groups keep their IDs, gaps and paid energy to the line',()
     const priorAllChase=probeFinaleSeparatedGroupsFromTour(tour,{
       version:'v2-finale-multi-separated-2'});
     assert.equal(validateFinaleSeparatedGroupsFromTour(tour,priorAllChase),true);
+    const priorSelective=probeFinaleSeparatedGroupsFromTour(tour,{
+      version:'v2-finale-multi-separated-3'});
+    assert.equal(validateFinaleSeparatedGroupsFromTour(tour,priorSelective),true);
     const forged=structuredClone(run);
     forged.frames[1].roadGroups[1].gapSeconds+=1;
     assert.throws(()=>validateFinaleSeparatedGroupsFromTour(tour,forged),
       /differs/);
     assert.deepEqual(tour,original);
   }
+});
+
+test('one road group with a new selective pursuer records separate paid travel',()=>{
+  const teams=[team('a','M',0),team('c','M',null)];
+  teams[1].orders.phases.push({atKm:35,chase:'selective',effort:'hard'});
+  const tour=simulateTacticalTour({stage,teams,seed:'separated-finale',
+    motorVersion:MOTOR_ATTACK_TRACE_VERSION});
+  assert.equal(tour.frames[34].roadGroups.length,1);
+  assert.equal(tour.frames[34].engagedChaseTeamIds.length,0);
+  const run=probeFinaleSeparatedGroupsFromTour(tour);
+  assert.equal(run.version,'v2-finale-separated-one-or-more-4');
+  assert.equal(run.sourceRoadGroupIds.length,1);
+  assert.ok(run.frames.every(frame=>frame.roadGroups.length===1&&
+    frame.roadGroups[0].gapSeconds>0));
+  assert.ok(run.frames.some(frame=>frame.bunchPullRiderId?.startsWith('c-')));
+  assert.equal(validateFinaleSeparatedGroupsFromTour(tour,run),true);
+  assert.throws(()=>probeFinaleSeparatedGroupsFromTour(tour,{
+    version:'v2-finale-multi-separated-3'}),/multiple road groups/);
 });
 
 test('separated continuation refuses a source without multiple road groups',()=>{

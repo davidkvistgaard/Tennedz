@@ -339,6 +339,7 @@ for(const [course,stage] of Object.entries(distanceKm===260?LONG_ROUTES:ROUTES))
         noRoadGroupExamples:[],multipleRoadGroupExamples:[],
         multiSeparatedAccepted:0,multiSeparatedRejections:{},
         multiSeparatedRejectionExamples:[],
+        oneRoadSeparatedAccepted:0,oneRoadSeparatedRejections:{},
         survived:0,caught:0,exhaustionDroppedRiders:0,
         racesWithExhaustionDrop:0,readOnlyRejections:{},examples:[],
         rejectionExamples:[]};
@@ -513,6 +514,16 @@ for(const [course,stage] of Object.entries(distanceKm===260?LONG_ROUTES:ROUTES))
               const reason=String(error.message);
               orderedFinale.readOnlyRejections[reason]=
                 (orderedFinale.readOnlyRejections[reason]??0)+1;
+              try{
+                const separated=probeFinaleSeparatedGroupsFromTour(race);
+                validateFinaleSeparatedGroupsFromTour(race,separated);
+                orderedFinale.oneRoadSeparatedAccepted++;
+              }catch(separatedError){
+                const separatedReason=String(separatedError.message);
+                orderedFinale.oneRoadSeparatedRejections[separatedReason]=
+                  (orderedFinale.oneRoadSeparatedRejections[
+                    separatedReason]??0)+1;
+              }
               if(orderedFinale.rejectionExamples.length<3)
                 orderedFinale.rejectionExamples.push({sample,reason,
                   sourceRider:handoff.riderGroups.find(rider=>
