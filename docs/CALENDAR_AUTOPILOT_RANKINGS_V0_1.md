@@ -2,6 +2,14 @@
 
 This package extends the existing `events`, `event_teams`, rider and team records. The new race engine remains isolated. Nothing here deploys a race schedule or changes live data.
 
+## Product rule: three Pelotonia years per calendar year
+
+A Pelotonia year is a game season, not a Gregorian year. Each calendar year contains three successive Pelotonia years (January–April, May–August and September–December in the supplied 2027 planning workbook). This shorter cycle is intended to give rider ageing and renewal a useful pace. Each Pelotonia year needs its own identity, calendar, major races and highlights, rider and team rankings, results archive, and explicit season-close/next-season transition. Historical results and all-time rankings must remain available after a season closes. The exact ageing increment and any other rider progression at the transition remain design decisions; they must not be inferred from the number of seasons.
+
+The real UCI calendar is the anchor for race selection and timing. Review its source dates and the right to use names/routes before publishing a schedule; add original Pelotonia races to fill gaps and create variety in terrain, race format and sporting opportunities. The supplied workbook is a planning input, not a verified or deployed UCI schedule. Every generated event must belong to exactly one explicit Pelotonia season, including a stage race that crosses a season boundary. The ownership rule for such a race must be settled before generation; its stages, GC and awards must remain together. The last week of a calendar year may contain a date in the following Gregorian year, so date-derived `season_year` is not a reliable season key.
+
+The current ledger, ranking filters and v2 event contract use a numeric Gregorian `season_year`. They cannot represent three separate Pelotonia seasons in one year. Introduce and migrate a stable season identifier through event generation, registration/division snapshots, race recordings, points and ranking queries before treating this rule as operational. Keep the existing game and its historical data compatible during that transition. None of the season lifecycle, three-season ranking isolation or ageing rule is implemented by this note.
+
 ## Implemented in this branch
 
 - The Wednesday/Sunday placement utility maps source one-day dates into the same calendar week, retaining source dates as metadata. Stage races remain exempt from the two weekly one-day slots. A shared pair ID can relate distinct men's and women's events without combining their fields.
