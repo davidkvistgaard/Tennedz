@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import {simulateTacticalTour} from '../../lib/engine/v2/tour.mjs';
 import {MOTOR_ATTACK_TRACE_VERSION} from '../../lib/engine/v2/tuning.mjs';
 import {assertNoFinaleGroupContact,probeFinaleSeparatedGroupsFromTour,
+  selectiveFinaleChaseDecision,
   validateFinaleSeparatedGroupsFromTour} from
   '../../lib/engine/v2/finale-multi-run.mjs';
 
@@ -34,7 +35,7 @@ test('separated road groups keep their IDs, gaps and paid energy to the line',()
     assert.equal(sourceFrame.roadGroups.length,2);
     const original=structuredClone(tour);
     const run=probeFinaleSeparatedGroupsFromTour(tour);
-    assert.equal(run.version,'v2-finale-multi-separated-2');
+    assert.equal(run.version,'v2-finale-multi-separated-3');
     assert.equal(run.sourceTuningVersion,MOTOR_ATTACK_TRACE_VERSION);
     assert.equal(run.frames.length,11);
     assert.ok(run.frames.every(frame=>frame.roadGroups.length===2&&
@@ -99,11 +100,38 @@ test('a new all-out bunch chase is not omitted behind separate groups',()=>{
   const selective=simulateTacticalTour({stage,teams,
     seed:'separated-finale',motorVersion:MOTOR_ATTACK_TRACE_VERSION});
   assert.equal(selective.frames[34].engagedChaseTeamIds.length,0);
-  assert.throws(()=>probeFinaleSeparatedGroupsFromTour(selective),
+  const conditional=probeFinaleSeparatedGroupsFromTour(selective);
+  assert.equal(conditional.frames[0].selectiveChaseDecisions.find(row=>
+    row.teamId==='c')?.decision,'engaged');
+  assert.ok(conditional.frames.some(frame=>
+    frame.bunchPullRiderId?.startsWith('c-')));
+  assert.ok(conditional.frames.some(frame=>frame.riders.some(row=>
+    row.riderId===frame.bunchPullRiderId&&row.role==='pull'&&
+    row.energySpent>0)));
+  assert.equal(validateFinaleSeparatedGroupsFromTour(selective,conditional),true);
+  const forged=structuredClone(conditional);
+  forged.frames[0].selectiveChaseDecisions[0].decision='held';
+  assert.throws(()=>validateFinaleSeparatedGroupsFromTour(selective,forged),
+    /differs/);
+  assert.throws(()=>probeFinaleSeparatedGroupsFromTour(selective,{
+    version:'v2-finale-multi-separated-2'}),
     /needs a recorded selective chase/);
   const prior=probeFinaleSeparatedGroupsFromTour(selective,{
     version:'v2-finale-multi-separated-1'});
   assert.equal(validateFinaleSeparatedGroupsFromTour(selective,prior),true);
+});
+
+test('selective chase waits when unaware or safely close, then responds to a visible lead',()=>{
+  const manager=team('c','M',null);
+  assert.equal(selectiveFinaleChaseDecision({team:manager,awareBefore:false,
+    rearGapSeconds:20,leadingGapSeconds:20,remainingKm:5}).decision,
+  'unaware');
+  assert.equal(selectiveFinaleChaseDecision({team:manager,awareBefore:true,
+    rearGapSeconds:.1,leadingGapSeconds:.2,remainingKm:5}).decision,
+  'held');
+  assert.deepEqual(selectiveFinaleChaseDecision({team:manager,
+    awareBefore:false,rearGapSeconds:31,leadingGapSeconds:46,
+    remainingKm:5}),{aware:true,decision:'engaged'});
 });
 
 test('a rear group reaching the front needs a recorded contact distance',()=>{
