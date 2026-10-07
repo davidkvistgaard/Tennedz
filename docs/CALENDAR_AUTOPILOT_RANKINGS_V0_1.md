@@ -10,6 +10,8 @@ The real UCI calendar is the anchor for race selection and timing. Review its so
 
 The current ledger, ranking filters and v2 event contract use a numeric Gregorian `season_year`. They cannot represent three separate Pelotonia seasons in one year. Introduce and migrate a stable season identifier through event generation, registration/division snapshots, race recordings, points and ranking queries before treating this rule as operational. Keep the existing game and its historical data compatible during that transition. None of the season lifecycle, three-season ranking isolation or ageing rule is implemented by this note.
 
+An isolated 2027 planning view now sits beside published races in the existing team calendar. It uses the 110 selected races from the supplied workbook, season/month navigation, selected LEGEND highlights, gender/format filters and counts of still-open Wednesday/Sunday gender slots. It is available only in local development or a Vercel preview environment, never in the production deployment. It labels all names, dates and classes provisional and offers no registration action. This is a visual planning candidate, not a generated live calendar or a working three-season ranking system; the remaining fictional races still need design and review.
+
 ## Implemented in this branch
 
 - The Wednesday/Sunday placement utility maps source one-day dates into the same calendar week, retaining source dates as metadata. Stage races remain exempt from the two weekly one-day slots. A shared pair ID can relate distinct men's and women's events without combining their fields.

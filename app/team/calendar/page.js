@@ -2,6 +2,7 @@
 import {useEffect,useMemo,useState} from "react";
 import Link from "next/link";
 import TeamShell from "../../components/TeamShell";
+import PlanCalendar from "./PlanCalendar";
 import {api} from "../../../lib/api";
 import {PLACING_PERCENT,STAGE_POINTS,TIER_WINNER_POINTS} from "../../../lib/calendar/points.mjs";
 import "./calendar.css";
@@ -86,6 +87,7 @@ function PointsList({values}){
 
 export default function CalendarPage(){
   const [data,setData]=useState(null),[error,setError]=useState(""),[filter,setFilter]=useState("All");
+  const [plan,setPlan]=useState(null),[view,setView]=useState("races");
   const [now,setNow]=useState(Date.now()),[serverOffset,setServerOffset]=useState(0);
   useEffect(()=>{const requested=new URLSearchParams(window.location.search).get("filter");
     if(FILTERS.includes(requested))setFilter(requested);},[]);
@@ -98,6 +100,11 @@ export default function CalendarPage(){
     setData(result);
   }})
     .catch(e=>{if(active)setError(e.message);});return()=>{active=false;};},[]);
+  useEffect(()=>{let active=true;
+    api("/api/calendar-plan").then(result=>{if(active)setPlan(result.plan);})
+      .catch(()=>{});
+    return()=>{active=false;};
+  },[]);
   const visible=useMemo(()=>{
     const end=now+42*86400000;
     return (data?.events??[]).filter(event=>matches(event,filter)&&
@@ -112,6 +119,11 @@ export default function CalendarPage(){
     return [...result];
   },[visible]);
   return <TeamShell title="Race calendar"><div className="agenda-page">
+    {plan&&<nav className="agenda-view-tabs" aria-label="Calendar view">
+      <button type="button" aria-pressed={view==="races"} onClick={()=>setView("races")}>Published races</button>
+      <button type="button" aria-pressed={view==="plan"} onClick={()=>setView("plan")}>2027 season plan <span>Preview</span></button>
+    </nav>}
+    {view==="plan"&&plan?<PlanCalendar plan={plan}/>:<>
     <header className="agenda-hero"><p className="identity-eyebrow">THE SEASON AHEAD</p>
       <h1>Every race begins here.</h1><p>Wednesday and Sunday are one-day race days. Stage races follow their own consecutive calendar.</p>
       <Link className="btn" href="/team/defaults">Set your four default teams →</Link></header>
@@ -126,5 +138,6 @@ export default function CalendarPage(){
         v2TacticsEnabled={data.v2_tactics_enabled}
         v2RecordingEnabled={data.v2_recording_enabled}/>)}</div>
     </section>)}
+    </>}
   </div></TeamShell>;
 }
