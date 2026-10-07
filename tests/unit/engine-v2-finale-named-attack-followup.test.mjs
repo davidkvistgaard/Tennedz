@@ -5,6 +5,7 @@ import {finaleDistanceGrid} from '../../lib/engine/v2/finale-grid.mjs';
 import {advanceFinaleNamedAttackTransition} from
   '../../lib/engine/v2/finale-named-attack-transition.mjs';
 import {continueFinaleNamedAttackGroup,
+  continueFinaleNamedAttackChain,
   validateFinaleNamedAttackFollowup} from
   '../../lib/engine/v2/finale-named-attack-followup.mjs';
 import {MOTOR_ATTACK_TRACE_VERSION} from '../../lib/engine/v2/tuning.mjs';
@@ -74,4 +75,37 @@ test('the adjacent slice continues a verified launch and accounts for catch work
   assert.equal(passive.catchDistanceM,null);
   assert.equal(passive.roadGroups.length,1);
   assert.ok(passive.roadGroups[0].gapSeconds>0);
+  const chained=continueFinaleNamedAttackChain({
+    launchInput:passiveInput,launch:passiveLaunch,followups:[passive],
+    slice:grid[grid.indexOf(slice)+2]});
+  assert.equal(chained.version,'v2-finale-named-attack-followup-2');
+  assert.equal(chained.sourceFrameVersion,passive.version);
+  assert.equal(chained.startDistanceM,passive.endDistanceM);
+  assert.equal(chained.roadGroups[0]?.id,passive.roadGroups[0].id);
+  assert.equal(chained.riderEnergy.length,16);
+  const third=continueFinaleNamedAttackChain({
+    launchInput:passiveInput,launch:passiveLaunch,
+    followups:[passive,chained],slice:grid[grid.indexOf(slice)+3]});
+  assert.equal(third.sourceFrameVersion,chained.version);
+  assert.equal(third.startDistanceM,chained.endDistanceM);
+  assert.equal(third.roadGroups[0]?.id,chained.roadGroups[0].id);
+  const allFollowups=[passive,chained,third];
+  for(const nextSlice of grid.slice(grid.indexOf(slice)+4)){
+    const next=continueFinaleNamedAttackChain({
+      launchInput:passiveInput,launch:passiveLaunch,
+      followups:allFollowups,slice:nextSlice});
+    allFollowups.push(next);
+  }
+  assert.equal(allFollowups.at(-1).endDistanceM,40000);
+  assert.equal(allFollowups.at(-1).roadGroups[0]?.id,
+    passive.roadGroups[0].id);
+  assert.ok(allFollowups.every((row,index)=>
+    index===0||row.startDistanceM===allFollowups[index-1].endDistanceM));
+  assert.throws(()=>continueFinaleNamedAttackChain({
+    launchInput:passiveInput,launch:passiveLaunch,
+    followups:[{...passive,bunchElapsedSeconds:0}],
+    slice:grid[grid.indexOf(slice)+2]}),/does not replay/);
+  assert.throws(()=>continueFinaleNamedAttackChain({
+    launchInput,launch,followups:[followup],
+    slice:grid[grid.indexOf(slice)+2]}),/adjacent/);
 });
