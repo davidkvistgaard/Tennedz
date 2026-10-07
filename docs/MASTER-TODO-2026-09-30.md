@@ -1,6 +1,6 @@
 # Pelotonia — samlet to-do og tidsestimat
 
-**Opdateret 6. oktober 2026 efter den isolerede P03-prøve og v2-prøven med 45 managers.** Dette er den aktuelle hovedliste for kendte produktønsker. [Produktvisionen](PRODUCT-VISION.md), [kalenderpakken](CALENDAR_AUTOPILOT_RANKINGS_V0_1.md), [motorprototypen](design/ENGINE-V2-FOUNDATION.md), [verdensbaselinen](PELOTONIA-WORLD-BASELINE-1.6.2.md) og de enkelte designnoter er baggrund; gamle statusangivelser i dem er ikke en ny leveringsplan. Listen skelner mellem kode i produktion, kode i isolerede udviklingsspor og ubyggede funktioner.
+**Opdateret 7. oktober 2026 efter den isolerede P03-prøve og v2-prøven med 45 managers.** Dette er den aktuelle hovedliste for kendte produktønsker. [Produktvisionen](PRODUCT-VISION.md), [kalenderpakken](CALENDAR_AUTOPILOT_RANKINGS_V0_1.md), [motorprototypen](design/ENGINE-V2-FOUNDATION.md), [verdensbaselinen](PELOTONIA-WORLD-BASELINE-1.6.2.md) og de enkelte designnoter er baggrund; gamle statusangivelser i dem er ikke en ny leveringsplan. Listen skelner mellem kode i produktion, kode i isolerede udviklingsspor og ubyggede funktioner.
 
 ## Læsevejledning: færdigt, i gang og endnu ikke begyndt
 
@@ -18,11 +18,13 @@ Tabellen er et **retrospektivt skøn over aktiv arbejdsindsats**, ikke målte ti
 | Friske migrationer, adgang, kø, retry og beskyttet preview | ✅ P02 isoleret prøve; autopilot endnu slukket | ca. 8–16 t | [P02](INTEGRATION-P02-2026-10-04.md) |
 | 45 managerkonti gennem kalender, ordrer, tre legacy-løb, replay og point | ✅ P03 isoleret testsløjfe | ca. 8–16 t | [P03](INTEGRATION-P03-2026-10-04.md) |
 | To faser: tilmelding, frosset pointbaseret divisionsafsløring, taktikfrist, lås og regler for no contest | ✅ Isoleret delprøve; driftsgenopretning mangler | ca. 10–20 t | [Divisionsafsløring](INTEGRATION-DIVISION-REVEAL-2026-10-05.md), [taktiklås](INTEGRATION-TWO-PHASE-TACTICS-LOCK-2026-10-05.md) |
-| Motor Lab og v2-kilometermodel med grupper, ordrer, energi, terræn og optagelse | ✅ Prototype 79; sportslig balance mangler | ca. 12–24 t | [Motor Lab](MOTOR-LAB-MILESTONE-1.md), [balanceaudit](MOTOR-LAB-BALANCE-AUDIT.md) |
+| Motor Lab og v2-kilometermodel med grupper, ordrer, energi, terræn og optagelse | ✅ Gemt v79; skrivefri v90-kandidat; sportslig balance mangler | ca. 12–24 t | [Motor Lab](MOTOR-LAB-MILESTONE-1.md), [balanceaudit](MOTOR-LAB-BALANCE-AUDIT.md) |
 | Privat v2-taktikside med rigtige hold/ryttere, ordrer og gemt lås | ✅ Spillertilsluttet preview; ikke live | ca. 6–12 t | [Taktik](INTEGRATION-TWO-PHASE-TACTICS-2026-10-05.md), [v2-optagelse](INTEGRATION-V2-RECORDED-CANDIDATE-2026-10-06.md) |
 | Versionsbundet, divisionsopdelt v2-optagelse, adgangskontrol og privat teknisk viewer | ✅ Rigtige testkonti; ønsket løbsoplevelse mangler | ca. 8–16 t | [V2-optagelse](INTEGRATION-V2-RECORDED-CANDIDATE-2026-10-06.md) |
 | Atomisk v2-resultat og point med idempotent gentagelse i tre divisioner | ✅ 45-manager test bestået; svartid, samtidighed og scheduler åbne | ca. 8–16 t | [V2-afregning](INTEGRATION-V2-RECORDED-CANDIDATE-2026-10-06.md) |
 | Finale- og langdistanceprober, lead-out-kontrakt og residual-gap-diagnose | ✅ Beskrevne prober; endnu ikke koblet til officiel v2-finale | ca. 6–12 t | [Finalekontrakt](design/ENGINE-V2-FINALE-CONTRACT.md), punkt 04 nedenfor |
+
+**Aktuel motorgrænse 7. oktober:** Den gemte spillerkæde bruger fortsat v79. V90 er en skrivefri, versionsmærket kandidat med bedre timing for planlagte faseangreb og prøver af jagt, vejgrupper og træthed. Den er prøvet med en 45-holds divisionspreview, men har ikke gennemført gemt løb, replay, resultat og point i den samlede spillerkæde. De seneste balanceprøver viser en skarp forskel mellem selektiv og hård jagt; sportslig accept, realistiske managerordrer og belastningsprøve mangler. Produktion er uændret.
 
 **Samlet tilbageskuende skøn for disse ni dokumenterede pakker: ca. 69–138 aktive timer.** Det kan ikke bruges som præcis tidsregistrering. Verdensbaseline 1.6.2 findes på et særskilt spor, og 16 starterportrætter, et logo og en personalepreview findes som delresultater; deres historiske tidsforbrug kan ikke udledes troværdigt af dette repo. De er med i status og resterende opgaver nedenfor, men får ikke opfundne timer.
 
