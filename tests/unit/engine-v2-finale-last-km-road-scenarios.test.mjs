@@ -7,6 +7,9 @@ import {probeLastKmNamedAttackRoadFromTour,
   '../../lib/engine/v2/finale-last-km-named-attack.mjs';
 import {lastKmLineStateFromTour,validateLastKmLineStateFromTour} from
   '../../lib/engine/v2/finale-last-km-line-state.mjs';
+import {recordFinaleSprintPlanFromTour,
+  validateFinaleSprintPlanFromTour} from
+  '../../lib/engine/v2/finale-sprint-plan.mjs';
 
 const stage={distance_km:40,profile_points:[[0,100],[40,100]],
   keypoints:[{km:10,kind:'SPRINT'},{km:20,kind:'SPRINT'},
@@ -65,5 +68,40 @@ test('independent v91 managers reach the line with recorded solo and catch branc
       assert.ok(trace.frames.some(frame=>frame.riderEnergy.some(row=>
         row.riderId==='b-2'&&row.role==='pull'&&row.energySpent>0)));
     }
+  }
+});
+
+test('500 m sprint nominations respect locked helpers and actual road contact',()=>{
+  for(const {attackerSkill,defenderSkill} of [
+    {attackerSkill:90,defenderSkill:60},
+    {attackerSkill:60,defenderSkill:80},
+  ]){
+    const tour=simulateTacticalTour({stage,teams:[
+      team('a',attackerSkill,'M','ignore',true),
+      team('b',defenderSkill,'M','all',false)],
+    seed:`sprint-lock-${attackerSkill}-${defenderSkill}`,
+    motorVersion:MOTOR_ATTACK_TRACE_VERSION});
+    const input={attackTeamId:'a',plans:[
+      {teamId:'a',finisherId:'a-0',leadOutRiderId:null},
+      {teamId:'b',finisherId:'b-0',leadOutRiderId:'b-2'}]};
+    const recorded=recordFinaleSprintPlanFromTour(tour,input);
+    assert.equal(recorded.decisionDistanceM,39500);
+    assert.equal(recorded.decisions.length,2);
+    assert.equal(recorded.decisions[1].leadOutRiderId,'b-2');
+    assert.ok(recorded.decisions[1].leadOutWorkCostPerKm>0);
+    assert.equal(recorded.decisions[0].roadGroupId==='peloton',
+      attackerSkill===60);
+    assert.equal(validateFinaleSprintPlanFromTour(tour,input,recorded),true);
+    assert.throws(()=>validateFinaleSprintPlanFromTour(tour,input,{
+      ...recorded,decisionDistanceM:39000}),/does not replay/);
+    assert.throws(()=>recordFinaleSprintPlanFromTour(tour,{
+      ...input,plans:input.plans.slice(0,1)}),/Every locked team/);
+    assert.throws(()=>recordFinaleSprintPlanFromTour(tour,{
+      ...input,plans:[input.plans[0],{...input.plans[1],
+        leadOutRiderId:'b-1'}]}),/distinct locked team riders/);
+    if(recorded.decisions[0].roadGroupId!=='peloton')
+      assert.throws(()=>recordFinaleSprintPlanFromTour(tour,{
+        ...input,plans:[{...input.plans[0],leadOutRiderId:'a-2'},
+          input.plans[1]]}),/cannot work beside/);
   }
 });
