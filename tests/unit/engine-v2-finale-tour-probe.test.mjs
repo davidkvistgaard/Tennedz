@@ -1,6 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {simulateTacticalTour} from '../../lib/engine/v2/tour.mjs';
+import {MOTOR_ATTACK_TRACE_VERSION} from '../../lib/engine/v2/tuning.mjs';
+import {finaleSnapshotFromTour,FINALE_SNAPSHOT_VERSION} from
+  '../../lib/engine/v2/finale-snapshot.mjs';
 import {validateFinalePair} from '../../lib/engine/v2/finale-pair.mjs';
 import {validateFinaleRelay} from '../../lib/engine/v2/finale-relay.mjs';
 import {finaleDistanceGrid} from '../../lib/engine/v2/finale-grid.mjs';
@@ -20,6 +23,42 @@ const input={stage,seed:'finale-snapshot',teams:[
   team('a','aggressive',{attackRiderId:'a-2',chase:'ignore'}),
   team('b','protect',{attack:'none',chase:'all'}),
 ]};
+
+test('the five-kilometre handoff retains every actual group and rider energy',()=>{
+  const planned=structuredClone(input);
+  planned.teams[0].orders.phases=[{atKm:30,attack:'selective',attackRiderId:'a-2'}];
+  planned.teams[1].orders.phases=[{atKm:30,attack:'selective',attackRiderId:'b-2'}];
+  const tour=simulateTacticalTour({...planned,motorVersion:MOTOR_ATTACK_TRACE_VERSION});
+  const original=structuredClone(tour);
+  const source=tour.frames[34];
+  const snapshot=finaleSnapshotFromTour(tour);
+  assert.ok(snapshot.roadGroups.some(group=>
+    group.riderIds.includes('a-2')&&group.riderIds.includes('b-2')));
+  assert.equal(snapshot.version,FINALE_SNAPSHOT_VERSION);
+  assert.equal(snapshot.sourceKm,35);
+  assert.equal(snapshot.startDistanceM,35000);
+  assert.equal(snapshot.remainingM,5000);
+  assert.equal(snapshot.sourceTuningVersion,MOTOR_ATTACK_TRACE_VERSION);
+  assert.deepEqual(snapshot.roadGroups,source.roadGroups.map(group=>({
+    id:group.id,gapSeconds:group.gapSeconds,riderIds:group.riderIds,
+    teamIds:group.teamIds})));
+  assert.deepEqual(snapshot.riders.map(rider=>rider.riderId),
+    source.riderGroups.map(rider=>rider.id));
+  for(const rider of snapshot.riders){
+    const state=source.riderGroups.find(row=>row.id===rider.riderId);
+    assert.equal(rider.energy,state.energy);
+    assert.equal(rider.teamId,state.teamId);
+    assert.equal(rider.roadGroupId,state.group==='breakaway'?
+      source.roadGroups.find(group=>group.riderIds.includes(rider.riderId)).id:
+      state.group==='peloton'?'peloton':null);
+  }
+  assert.deepEqual(snapshot.peloton.riderIds,
+    source.riderGroups.filter(rider=>rider.group==='peloton').map(rider=>rider.id));
+  assert.deepEqual(tour,original);
+  const forged=structuredClone(tour);
+  forged.frames[34].riderGroups[0].energy=120;
+  assert.throws(()=>finaleSnapshotFromTour(forged),/rider state/);
+});
 
 test('a real 5 km recording supplies rider energy, solo gap and locked orders',()=>{
   const tour=simulateTacticalTour(input);
