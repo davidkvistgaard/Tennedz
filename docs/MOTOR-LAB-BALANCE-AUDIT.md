@@ -435,3 +435,13 @@ Holding the **three hard-chaser** roles, all seeds, routes, categories, orders a
 | 100 | 0 / 0 / 90 | 0 / 90 |
 
 The steep transition across 40-50 is a **calibration concern**, not a justified coefficient change: each team has eight fictional riders, hard chase persists from 100 km out, and the cap changes all sporting skills of designated chase teams. It is neither a measured real-manager distribution nor independent evidence at every cap, because the same five seeds are paired across rows. At the stronger end, the finale must still process the bunch's paid pace and active attack orders; at the weaker end, it must resolve multiple road groups and contacts. Reproduce the preceding three-hard-chaser command with the argument after `260` set to `40`, `45`, `50`, `65` or `100`. No stored race, ledger or production data changes.
+
+The same recordings show why the win-rate change cannot be attributed to a finish-line tie-break alone. Equal-weight means over the 18 route/category/strategy cells, each containing the same five races, are:
+
+| Chaser skill cap | Chase power at first planned attack | Final-kilometre chase power | Gap before final kilometre |
+| ---: | ---: | ---: | ---: |
+| 40 | 70.55 | 107.32 | 30.32 s |
+| 45 | 87.25 | 137.96 | 2.78 s |
+| 50 | 112.91 | 177.59 | 0.16 s |
+
+The gap mean includes zero-gap races. Increasing only the designated chasers' skills changes their recorded chase power and the road situation inherited by the finale, while the rest of the fictional rosters and orders are paired. This is evidence of a cumulative chase threshold in this fixture, not proof that any particular recovery coefficient is wrong. Reproduce with the same command, setting the final `ordered` and `on` arguments to `off off`, then average `meanPhaseChasePower`, `meanFinalKmChasePower` and `meanPenultimateGapSeconds` equally across the 18 report cells.
