@@ -5,6 +5,8 @@ import {simulateTacticalTour} from '../lib/engine/v2/tour.mjs';
 import {validateRecordedTour} from '../lib/engine/v2/recording.mjs';
 import {validateRoadGroupTransition} from '../lib/engine/v2/road-groups.mjs';
 import {SPORTING_SKILLS} from '../lib/engine/v2/physiology.mjs';
+import {capDiagnosticChaserSkills,CHASER_CAP_SCOPES} from
+  '../lib/engine/v2/diagnostic-chaser-cap.mjs';
 import {orderAt} from '../lib/engine/v2/orders.mjs';
 import {assignPointDivisions} from '../lib/calendar/division-reveal.mjs';
 import {buildV2OneDayResultContract,
@@ -74,6 +76,7 @@ const managerMixRoleMode=process.argv[21]??'shifted';
 const orderedFinaleCoverage=process.argv[22]??'off';
 // Optional final argument: validate the read-only result and point contract.
 const resultContractAudit=process.argv[23]??'off';
+const chaserCapScope=process.argv[24]??'all';
 const motorVersion=motorMode==='attack-trace'?MOTOR_ATTACK_TRACE_VERSION:
   motorMode==='phase-attack'?MOTOR_PHASE_ATTACK_VERSION:
   motorMode==='recovery-ceiling'?MOTOR_RECOVERY_CEILING_VERSION:
@@ -136,6 +139,7 @@ if(!Number.isInteger(samples)||samples<1||samples>100||
   managerMixHardChasers===null&&process.argv[21]!==undefined||
   !['off','ordered'].includes(orderedFinaleCoverage)||
   !['off','on'].includes(resultContractAudit)||
+  !CHASER_CAP_SCOPES[chaserCapScope]||
   !['current','candidate','paid-pace','bounded-finale','bounded-bridge-finale',
     'earned-bridge-finale','neutral-pace','explicit-front','draft-shelter',
     'distance-load','recovery-ceiling','phase-attack','attack-trace']
@@ -221,9 +225,10 @@ function fictionalTeams(sample,gender){
       const rng=seedrandom(`v2-ensemble-rider:${rosterSeed}:${teamIndex}:${riderIndex}`);
       const role=ROLE_BONUSES[riderIndex%ROLE_BONUSES.length];
       const skills=Object.fromEntries(SPORTING_SKILLS.map(skill=>
-        [skill,Math.min(cappedChaser?chaserSkillCap:100,
-          clamp(Math.round(50+(role[skill]??0)+(rng()-.5)*26)))]));
-      return {id:`${id}-${riderIndex}`,gender,...skills,
+        [skill,clamp(Math.round(50+(role[skill]??0)+(rng()-.5)*26))]));
+      const scopedSkills=cappedChaser?capDiagnosticChaserSkills(
+        skills,chaserSkillCap,chaserCapScope):skills;
+      return {id:`${id}-${riderIndex}`,gender,...scopedSkills,
         leadership:clamp(Math.round(35+rng()*50)),form:Math.round(40+rng()*45),
         fatigue:Math.round(rng()*25)+initialFatigueShift};
     });
@@ -328,6 +333,7 @@ const report={pairedSamples:samples,sampleOffset,fieldTeams,motorMode,paceMode,
   managerMixOpportunistStopOffset:managerMixHardChasers===null?null:
     managerMixOpportunistStopOffset,
   chaserSkillCap:plannedChasers>0?chaserSkillCap:null,
+  chaserCapScope:plannedChasers>0?chaserCapScope:null,
   initialFatigueShift,
   ...(orderedFinaleCoverage==='ordered'?{orderedFinaleCoverage}:{}),
   description:'fictional varied riders and routes; no live data',courses:{}};
