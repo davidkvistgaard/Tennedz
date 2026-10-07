@@ -1,7 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {simulateTacticalTour} from '../../lib/engine/v2/tour.mjs';
-import {MOTOR_ATTACK_TRACE_VERSION} from '../../lib/engine/v2/tuning.mjs';
+import {MOTOR_ATTACK_TRACE_VERSION,TUNING_VERSION} from
+  '../../lib/engine/v2/tuning.mjs';
 import {finaleSnapshotFromTour,FINALE_SNAPSHOT_VERSION} from
   '../../lib/engine/v2/finale-snapshot.mjs';
 import {advanceFinaleGroupStep} from '../../lib/engine/v2/finale-group-step.mjs';
@@ -131,6 +132,8 @@ test('successive group slices carry spent energy until catch or finish',()=>{
   const probe=probeFinaleGroupRunFromTour(tour,{
     frontPullRiderId:'a-2',chasePullRiderId:'b-2'});
   assert.equal(validateFinaleGroupRun(probe.input,probe.recording),true);
+  assert.equal(probe.recording.sourceTuningVersion,tour.tuningVersion);
+  assert.equal(probe.recording.workerTuningVersion,TUNING_VERSION);
   assert.ok(probe.recording.frames.length>=1);
   assert.ok(probe.recording.frames.length<=11);
   for(const [index,frame] of probe.recording.frames.entries()){
@@ -184,6 +187,8 @@ test('a caught group keeps travelling from the catch metre through the line',()=
   trial.teams[0].riders.find(rider=>rider.id==='a-2').timetrial=30;
   trial.teams[1].riders.find(rider=>rider.id==='b-2').strength=100;
   const recording=simulateFinaleGroupToLine(trial);
+  assert.equal(recording.workerTuningVersion,TUNING_VERSION);
+  assert.equal(recording.sourceTuningVersion,trial.snapshot.sourceTuningVersion);
   assert.equal(recording.outcome,'caught_merged');
   assert.ok(recording.catchDistanceM<tour.route.distanceKm*1000);
   assert.equal(recording.endDistanceM,tour.route.distanceKm*1000);
@@ -213,6 +218,11 @@ test('a caught group keeps travelling from the catch metre through the line',()=
   assert.equal(genuine.recording.outcome,'survived');
   assert.deepEqual(genuine.recording.mergedFrames,[]);
   assert.equal(validateFinaleGroupToLine(genuine.input,genuine.recording),true);
+  const differentSourceVersion=structuredClone(genuine.input);
+  differentSourceVersion.snapshot.sourceTuningVersion=MOTOR_ATTACK_TRACE_VERSION;
+  const versioned=simulateFinaleGroupToLine(differentSourceVersion);
+  assert.equal(versioned.sourceTuningVersion,MOTOR_ATTACK_TRACE_VERSION);
+  assert.equal(versioned.workerTuningVersion,TUNING_VERSION);
 });
 
 test('a team that ignored the gap cannot be invented as a chasing worker',()=>{
