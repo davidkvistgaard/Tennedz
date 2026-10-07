@@ -2,8 +2,10 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {simulateTacticalTour} from '../../lib/engine/v2/tour.mjs';
 import {MOTOR_ATTACK_TRACE_VERSION} from '../../lib/engine/v2/tuning.mjs';
+import {finaleSnapshotFromTour} from '../../lib/engine/v2/finale-snapshot.mjs';
+import {pendingFinaleAttacksAt} from '../../lib/engine/v2/finale-attack-guard.mjs';
 import {assertNoFinaleGroupContact,probeFinaleSeparatedGroupsFromTour,
-  selectiveFinaleChaseDecision,
+  selectiveFinaleChaseDecision,FINALE_SEPARATED_EXHAUSTED_ATTACK_VERSION,
   validateFinaleSeparatedGroupsFromTour} from
   '../../lib/engine/v2/finale-multi-run.mjs';
 
@@ -107,6 +109,70 @@ test('four-kilometre handoff preserves a valid named attack in the source replay
   forged.postAttackHandoffKm=35;
   assert.throws(()=>validateFinaleSeparatedGroupsFromTour(tour,forged),
     /differs/);
+});
+
+test('an exhausted named finale attack is recorded at its actual decision boundary',()=>{
+  const tired=team('c','M',null);
+  tired.riders[0].fatigue=50;
+  tired.orders.baseline.effort='hard';
+  tired.orders.phases.push({atKm:255,attack:'selective',
+    attackRiderId:'c-0'});
+  const longStage={distance_km:260,profile_points:[[0,100],[260,100]],
+    keypoints:stage.keypoints};
+  const tour=simulateTacticalTour({stage:longStage,
+    teams:[team('a','M',0),team('b','M',20),tired],
+    seed:'separated-finale',motorVersion:MOTOR_ATTACK_TRACE_VERSION});
+  const sourceRider=tour.frames[255].riderGroups.find(row=>row.id==='c-0');
+  assert.equal(sourceRider.group,'peloton');
+  assert.equal(tour.frames[255].roadGroups.length,2);
+  const fullTeamSnapshot=finaleSnapshotFromTour(tour,{remainingKm:4});
+  fullTeamSnapshot.riders.filter(row=>['c-1','c-2'].includes(row.riderId))
+    .forEach(row=>{row.status='breakaway';});
+  assert.equal(pendingFinaleAttacksAt(tour,fullTeamSnapshot,260).length,0);
+  assert.deepEqual(pendingFinaleAttacksAt(tour,fullTeamSnapshot,260,
+    {includeBlocked:true}).map(event=>event.kind),['team_break_limit']);
+  assert.throws(()=>probeFinaleSeparatedGroupsFromTour(tour,{
+    version:'v2-finale-separated-post-attack-5'}),
+  /needs a recorded peloton attack/);
+  const original=structuredClone(tour);
+  const run=probeFinaleSeparatedGroupsFromTour(tour,{
+    version:FINALE_SEPARATED_EXHAUSTED_ATTACK_VERSION});
+  const blocked=run.frames.flatMap(frame=>frame.blockedNamedAttacks);
+  assert.equal(run.attackDecisionVersion,'v2-finale-exhausted-named-attack-1');
+  assert.equal(run.frames.length,10);
+  assert.equal(blocked.length,1);
+  assert.equal(blocked[0].teamId,'c');
+  assert.equal(blocked[0].riderId,'c-0');
+  assert.equal(blocked[0].reason,'exhausted');
+  assert.equal(blocked[0].sourceKm,260);
+  assert.equal(blocked[0].distanceM,259000);
+  assert.ok(blocked[0].energyAtDecision<12);
+  assert.equal(validateFinaleSeparatedGroupsFromTour(tour,run),true);
+  const forged=structuredClone(run);
+  forged.frames.find(frame=>frame.blockedNamedAttacks.length>0)
+    .blockedNamedAttacks[0].energyAtDecision=20;
+  assert.throws(()=>validateFinaleSeparatedGroupsFromTour(tour,forged),
+    /differs/);
+  assert.deepEqual(tour,original);
+});
+
+test('a ready named attacker still refuses the exhausted-only finale version',()=>{
+  const attacker=team('c','M',null);
+  attacker.orders.phases.push({atKm:255,attack:'selective',
+    attackRiderId:'c-0'});
+  const chaser=team('d','M',null);
+  chaser.orders.helperIds=['d-2','d-3'];
+  chaser.orders.phases.push({atKm:255,chase:'all',effort:'hard'});
+  const longStage={distance_km:260,profile_points:[[0,100],[260,100]],
+    keypoints:stage.keypoints};
+  const tour=simulateTacticalTour({stage:longStage,
+    teams:[team('a','M',0),team('b','M',20),attacker,chaser],
+    seed:'separated-finale',motorVersion:MOTOR_ATTACK_TRACE_VERSION});
+  assert.equal(tour.frames[255].riderGroups.find(row=>
+    row.id==='c-0').group,'peloton');
+  assert.throws(()=>probeFinaleSeparatedGroupsFromTour(tour,{
+    version:FINALE_SEPARATED_EXHAUSTED_ATTACK_VERSION}),
+  /needs a recorded peloton attack: c at km 260/);
 });
 
 test('separated continuation refuses a source without multiple road groups',()=>{
