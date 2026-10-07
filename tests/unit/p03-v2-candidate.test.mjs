@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {assignPointDivisions} from '../../lib/calendar/division-reveal.mjs';
 import {validateRecordedTour} from '../../lib/engine/v2/recording.mjs';
 import {MOTOR_NEUTRAL_PACE_VERSION,MOTOR_RECOVERY_CEILING_VERSION,
-  MOTOR_PHASE_ATTACK_VERSION,TUNING_VERSION}
+  MOTOR_PHASE_ATTACK_VERSION,MOTOR_ATTACK_TRACE_VERSION,TUNING_VERSION}
   from '../../lib/engine/v2/tuning.mjs';
 import {previewRecordedDivisions,previewLockedV2RecordedDivisions}
   from '../../lib/race/v2-candidate.mjs';
@@ -348,18 +348,21 @@ test('v90 45-team preview keeps three recorded finales and point awards separate
   assert.equal(contract.divisions.flatMap(division=>division.awards).length,60);
 });
 
-test('varied 20-manager v90 tactics keep both gender results and points read-only',()=>{
-  for(const gender of ['M','F']){
+test('varied 20-manager v90/v91 tactics keep both gender results and points read-only',()=>{
+  for(const motorVersion of [MOTOR_PHASE_ATTACK_VERSION,
+    MOTOR_ATTACK_TRACE_VERSION])for(const gender of ['M','F']){
     const input=snapshot(20,gender);
+    // Same fictional ranges, different category-specific roster draws.
+    const rosterOffset=gender==='F'?17:0;
     input.event.race_tier=3;
     input.stage={distance_km:260,profile_points:[[0,90],[60,240],[130,80],
       [200,310],[260,90]],keypoints:[{km:200,kind:'SPRINT'}]};
     input.teams.forEach((team,index)=>team.riders.forEach((rider,riderIndex)=>{
-      rider.flat=42+(index*3+riderIndex*5)%38;
-      rider.hills=40+(index*7+riderIndex*3)%42;
-      rider.endurance=43+(index*2+riderIndex*6)%35;
-      rider.sprint=38+(index*5+riderIndex*4)%45;
-      rider.fatigue=(index*3+riderIndex*2)%27;
+      rider.flat=42+(index*3+riderIndex*5+rosterOffset)%38;
+      rider.hills=40+(index*7+riderIndex*3+rosterOffset)%42;
+      rider.endurance=43+(index*2+riderIndex*6+rosterOffset)%35;
+      rider.sprint=38+(index*5+riderIndex*4+rosterOffset)%45;
+      rider.fatigue=(index*3+riderIndex*2+rosterOffset)%27;
     }));
     const orders=Object.fromEntries(input.teams.map((team,index)=>[
       team.id,{captainId:team.entry.captain_id,
@@ -374,22 +377,38 @@ test('varied 20-manager v90 tactics keep both gender results and points read-onl
             chase:'all'}]}:index===4||index===5?{
             phases:[{atKm:250,effort:'steady',chase:'selective'}]}:{})},
     ]));
-    const options={v2OrdersByTeamId:orders,motorVersion:MOTOR_PHASE_ATTACK_VERSION};
+    const options={v2OrdersByTeamId:orders,motorVersion};
     const preview=previewRecordedDivisions(input,options);
     assert.equal(preview.divisions.length,1);
     const recording=preview.divisions[0].recording;
     assert.equal(recording.raceCategory,gender);
-    assert.equal(recording.tuningVersion,MOTOR_PHASE_ATTACK_VERSION);
+    assert.equal(recording.tuningVersion,motorVersion);
     assert.equal(validateRecordedTour(recording),true);
     assert.equal(recording.frames.length,260);
-    for(const index of [0,2])assert.ok(recording.frames[240].attackReasons
-      .some(row=>row.riderId===input.teams[index].riders[3].id&&
-        row.reason==='named_order'));
+    for(const index of [0,2]){
+      const riderId=input.teams[index].riders[3].id;
+      const launched=recording.frames[240].attackReasons.some(row=>
+        row.riderId===riderId&&row.reason==='named_order');
+      const blocked=recording.frames[240].blockedAttacks.find(row=>
+        row.riderId===riderId);
+      assert.ok(launched||blocked,
+        `${motorVersion}/${gender}/${riderId}: planned attack is unaccounted for`);
+      if(blocked)assert.equal(blocked.reason,'dropped');
+    }
+    if(motorVersion===MOTOR_ATTACK_TRACE_VERSION)
+      assert.ok(recording.frames[240].attackContributions.length>0);
     assert.ok(recording.frames.some(frame=>frame.paidBunchPace));
     const contract=buildV2OneDayResultContract(preview,{tier:3});
     assert.equal(validateV2OneDayResultContract(contract),contract);
+    if(motorVersion===MOTOR_ATTACK_TRACE_VERSION){
+      const forged=structuredClone(contract);
+      forged.divisions[0].recording.frames[240]
+        .attackContributions[0].pressure+=1;
+      assert.throws(()=>validateV2OneDayResultContract(forged),
+        /contribution|recorded/);
+    }
     assert.equal(contract.divisions[0].recording.tuningVersion,
-      MOTOR_PHASE_ATTACK_VERSION);
+      motorVersion);
     assert.equal(contract.divisions[0].riderResults.length,160);
     assert.equal(contract.divisions[0].awards.length,20);
     assert.equal(new Set(contract.divisions[0].awards.map(row=>row.awardKey)).size,20);

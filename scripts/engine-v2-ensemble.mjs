@@ -57,6 +57,8 @@ const managerMixOpportunistStopTeams=process.argv[17]===undefined?
 const managerMixOpportunistStopOffset=process.argv[18]===undefined?0:
   Number(process.argv[18]);
 const genderSkillMode=process.argv[19]??'mirrored';
+// Reproduce a later paired seed without replaying every preceding field.
+const sampleOffset=process.argv[20]===undefined?0:Number(process.argv[20]);
 const motorVersion=motorMode==='attack-trace'?MOTOR_ATTACK_TRACE_VERSION:
   motorMode==='phase-attack'?MOTOR_PHASE_ATTACK_VERSION:
   motorMode==='recovery-ceiling'?MOTOR_RECOVERY_CEILING_VERSION:
@@ -115,6 +117,7 @@ if(!Number.isInteger(samples)||samples<1||samples>100||
   managerMixOpportunistStopOffset>=Math.max(1,managerMixOpportunists)||
   process.argv[18]!==undefined&&managerMixHardChasers===null||
   !['mirrored','independent'].includes(genderSkillMode)||
+  !Number.isInteger(sampleOffset)||sampleOffset<0||sampleOffset>999||
   !['current','candidate','paid-pace','bounded-finale','bounded-bridge-finale',
     'earned-bridge-finale','neutral-pace','explicit-front','draft-shelter',
     'distance-load','recovery-ceiling','phase-attack','attack-trace']
@@ -265,8 +268,8 @@ function plannedOpponentOrders(index,team,course,sample){
       'selective':'all'}]}:{})};
 }
 
-const report={pairedSamples:samples,fieldTeams,motorMode,paceMode,distanceKm,
-  genderSkillMode,
+const report={pairedSamples:samples,sampleOffset,fieldTeams,motorMode,paceMode,
+  distanceKm,genderSkillMode,
   managerMixHardChasers,
   managerMixSelectiveChasers:managerMixHardChasers===null?null:
     managerMixSelectiveChasers,
@@ -331,7 +334,8 @@ for(const [course,stage] of Object.entries(distanceKm===260?LONG_ROUTES:ROUTES))
         finalKmJoinWinnerAttackShares:[],finalKmJoinWinnerAttackRanks:[],
         maxGroups:0,multiGroupFinishes:0,chaseGroupAttackMoves:0,
         bridgesToGroupAhead:0,roadGroupLimitBlocks:0};
-      for(let sample=0;sample<samples;sample++){
+      for(let index=0;index<samples;index++){
+        const sample=index+sampleOffset;
         const teams=fictionalTeams(sample,gender).map((team,index)=>({
           ...team,orders:{captainId:team.riders[0].id,roadCaptainId:team.riders[1].id,
             preset:index===0?strategy:

@@ -71,3 +71,15 @@ test('independent 20-team finale keeps a line-caught bridge recording valid',()=
   assert.notEqual(report.courses.mountain.M.protect.meanFieldEnergy,
     report.courses.mountain.F.protect.meanFieldEnergy);
 });
+
+test('line catch can remove only the bridged rear group',()=>{
+  // At km 260 in flat/F/aggressive/sample-12, road-5 survives while the
+  // newly bridged road-6 and its fresh joiners are caught at the line.
+  const report=JSON.parse(execFileSync(process.execPath,[ensembleScript,'1','15',
+    'attack-trace','planned-finale-allied-manager-mix-2','260','100','0',
+    '2','20','4','100','hard','0','80','0','4','0','independent','12'],{
+    encoding:'utf8',timeout:60_000,maxBuffer:8*1024*1024,
+  }));
+  assert.equal(report.sampleOffset,12);
+  assert.equal(report.courses.flat.F.aggressive.breakWinRate,1);
+});
