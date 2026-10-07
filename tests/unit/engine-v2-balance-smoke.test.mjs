@@ -57,3 +57,17 @@ test('paired balance audit runs complete recordings for small and division-sized
         }
   }
 });
+
+test('independent 20-team finale keeps a line-caught bridge recording valid',()=>{
+  // Mountain/M/protect/sample-1 bridges into the existing road group at km 260.
+  // The finishing sprint then catches the whole group at the line.
+  const report=JSON.parse(execFileSync(process.execPath,[ensembleScript,'2','20',
+    'attack-trace','planned-finale-allied-manager-mix-2','260','100','0',
+    '2','20','4','100','hard','0','80','5','2','0','independent'],{
+    encoding:'utf8',timeout:120_000,maxBuffer:8*1024*1024,
+  }));
+  assert.equal(report.genderSkillMode,'independent');
+  assert.equal(report.pairedSamples,2);
+  assert.notEqual(report.courses.mountain.M.protect.meanFieldEnergy,
+    report.courses.mountain.F.protect.meanFieldEnergy);
+});
