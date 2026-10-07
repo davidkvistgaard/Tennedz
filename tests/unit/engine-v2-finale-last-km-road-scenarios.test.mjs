@@ -10,6 +10,9 @@ import {lastKmLineStateFromTour,validateLastKmLineStateFromTour} from
 import {recordFinaleSprintPlanFromTour,
   validateFinaleSprintPlanFromTour} from
   '../../lib/engine/v2/finale-sprint-plan.mjs';
+import {recordFinaleSprintApproachFromTour,
+  validateFinaleSprintApproachFromTour} from
+  '../../lib/engine/v2/finale-sprint-approach.mjs';
 
 const stage={distance_km:40,profile_points:[[0,100],[40,100]],
   keypoints:[{km:10,kind:'SPRINT'},{km:20,kind:'SPRINT'},
@@ -69,6 +72,39 @@ test('independent v91 managers reach the line with recorded solo and catch branc
         row.riderId==='b-2'&&row.role==='pull'&&row.energySpent>0)));
     }
   }
+});
+
+test('nominated lead-outs pay for each 100 m approach slice',()=>{
+  const caught=simulateTacticalTour({stage,teams:[
+    team('a',60,'M','ignore',true),team('b',80,'M','all',false)],
+  seed:'paid-sprint-approach',motorVersion:MOTOR_ATTACK_TRACE_VERSION});
+  const input={attackTeamId:'a',plans:[
+    {teamId:'a',finisherId:'a-0',leadOutRiderId:'a-2'},
+    {teamId:'b',finisherId:'b-0',leadOutRiderId:'b-2'}]};
+  const paid=recordFinaleSprintApproachFromTour(caught,input);
+  const passive=recordFinaleSprintApproachFromTour(caught,{
+    ...input,plans:input.plans.map(row=>({...row,leadOutRiderId:null}))});
+  assert.equal(paid.frames.length,2);
+  assert.equal(paid.startDistanceM,39500);
+  assert.equal(paid.endDistanceM,39700);
+  assert.ok(paid.frames.every(frame=>frame.paceSource==='passive_bunch'&&
+    frame.riderEnergy.length===16));
+  for(const helper of ['a-2','b-2']){
+    assert.ok(paid.frames.every(frame=>frame.riderEnergy.find(row=>
+      row.riderId===helper).role==='lead_out'));
+    assert.ok(paid.energyAt300M.find(row=>row.riderId===helper).energy<
+      passive.energyAt300M.find(row=>row.riderId===helper).energy);
+  }
+  assert.equal(validateFinaleSprintApproachFromTour(caught,input,paid),true);
+  assert.throws(()=>validateFinaleSprintApproachFromTour(caught,input,{
+    ...paid,frames:[{...paid.frames[0],bunchElapsedSeconds:0},
+      paid.frames[1]]}),/does not replay/);
+  const solo=simulateTacticalTour({stage,teams:[
+    team('a',90,'M','ignore',true),team('b',60,'M','all',false)],
+  seed:'solo-sprint-approach',motorVersion:MOTOR_ATTACK_TRACE_VERSION});
+  assert.throws(()=>recordFinaleSprintApproachFromTour(solo,{
+    ...input,plans:[{...input.plans[0],leadOutRiderId:null},
+      input.plans[1]]}),/reunited complete bunch/);
 });
 
 test('500 m sprint nominations respect locked helpers and actual road contact',()=>{
