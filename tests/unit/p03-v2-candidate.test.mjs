@@ -308,6 +308,10 @@ test('v90 read-only division preview records a named phase attack and versioned 
     row.riderId===input.teams[0].entry.selected_riders[2]&&
       row.reason==='named_order'),true);
   assert.equal(validateRecordedTour(recording),true);
+  const rescheduled=structuredClone(recording);
+  rescheduled.committedInputs.teams.find(team=>
+    team.id===input.teams[0].id).orders.phases[0].atKm=10;
+  assert.throws(()=>validateRecordedTour(rescheduled),/not scheduled/);
   const contract=buildV2OneDayResultContract(preview,{tier:3});
   assert.equal(validateV2OneDayResultContract(contract),contract);
   assert.equal(contract.divisions[0].riderResults.length,16);
