@@ -42,6 +42,7 @@ const chaserSkillCap=process.argv[7]===undefined?100:Number(process.argv[7]);
 const initialFatigueShift=process.argv[8]===undefined?0:Number(process.argv[8]);
 const managerMixSelectiveChasers=process.argv[9]===undefined?3:Number(process.argv[9]);
 const managerMixAttackKmToGo=process.argv[10]===undefined?5:Number(process.argv[10]);
+const managerMixOpportunists=process.argv[11]===undefined?4:Number(process.argv[11]);
 const motorVersion=motorMode==='phase-attack'?MOTOR_PHASE_ATTACK_VERSION:
   motorMode==='recovery-ceiling'?MOTOR_RECOVERY_CEILING_VERSION:
   motorMode==='distance-load'?MOTOR_DISTANCE_LOAD_VERSION:
@@ -70,6 +71,9 @@ if(!Number.isInteger(samples)||samples<1||samples>100||
   process.argv[9]!==undefined&&managerMixHardChasers===null||
   ![5,10,20].includes(managerMixAttackKmToGo)||
   process.argv[10]!==undefined&&managerMixHardChasers===null||
+  !Number.isInteger(managerMixOpportunists)||managerMixOpportunists<0||
+    managerMixOpportunists>4||
+  process.argv[11]!==undefined&&managerMixHardChasers===null||
   !['current','candidate','paid-pace','bounded-finale','bounded-bridge-finale',
     'earned-bridge-finale','neutral-pace','explicit-front','draft-shelter',
     'distance-load','recovery-ceiling','phase-attack']
@@ -95,7 +99,7 @@ if(!Number.isInteger(samples)||samples<1||samples>100||
     .includes(paceMode))&&
     !['explicit-front','draft-shelter','distance-load',
       'recovery-ceiling','phase-attack'].includes(motorMode))
-  throw new Error('Usage: node scripts/engine-v2-ensemble.mjs [paired samples: 1-100] [teams: 2-20] [current|candidate|paid-pace|bounded-finale|bounded-bridge-finale|earned-bridge-finale|neutral-pace|explicit-front|draft-shelter|distance-load|recovery-ceiling|phase-attack] [preset|paced-rival|steady-rival|rotate-rival|late-hard-rival|rotate-plans|planned-finale|planned-finale-open|planned-finale-one-chaser|planned-finale-three-chasers|planned-finale-selective-chaser|planned-finale-allied|planned-finale-surge|planned-finale-allied-drive|planned-finale-two-chasers-allied-drive|planned-finale-two-selective-chasers-allied-drive|planned-finale-three-chasers-allied-drive|planned-finale-own-plans-allied-drive|planned-finale-allied-manager-mix-[0-3] (v86+ only)] [120|260 km] [chaser skill cap: 20-100] [manager-mix initial fatigue shift: 0-30] [manager-mix selective chasers: 0-3] [manager-mix attack km to go: 5|10|20]');
+  throw new Error('Usage: node scripts/engine-v2-ensemble.mjs [paired samples: 1-100] [teams: 2-20] [current|candidate|paid-pace|bounded-finale|bounded-bridge-finale|earned-bridge-finale|neutral-pace|explicit-front|draft-shelter|distance-load|recovery-ceiling|phase-attack] [preset|paced-rival|steady-rival|rotate-rival|late-hard-rival|rotate-plans|planned-finale|planned-finale-open|planned-finale-one-chaser|planned-finale-three-chasers|planned-finale-selective-chaser|planned-finale-allied|planned-finale-surge|planned-finale-allied-drive|planned-finale-two-chasers-allied-drive|planned-finale-two-selective-chasers-allied-drive|planned-finale-three-chasers-allied-drive|planned-finale-own-plans-allied-drive|planned-finale-allied-manager-mix-[0-3] (v86+ only)] [120|260 km] [chaser skill cap: 20-100] [manager-mix initial fatigue shift: 0-30] [manager-mix selective chasers: 0-3] [manager-mix attack km to go: 5|10|20] [manager-mix opportunists: 0-4]');
 
 const ROUTES={
   flat:{distance_km:120,profile_points:[[0,60],[40,60],[80,75],[120,60]],
@@ -163,8 +167,9 @@ function plannedOpponentOrders(index,team,course,sample){
       managerMixSelectiveChasers?{baseline,
         phases:[{atKm:distanceKm-10,effort:'steady',chase:'selective'}]}:
       {baseline};
-    if(rank<managerMixHardChasers+7)return {baseline:{...baseline,
-      effort:'steady',attack:'selective',frontWork:'rotate'}};
+    if(rank<managerMixHardChasers+7)return rank<managerMixHardChasers+3+
+      managerMixOpportunists?{baseline:{...baseline,effort:'steady',
+        attack:'selective',frontWork:'rotate'}}:{baseline};
     if(rank<managerMixHardChasers+11)return {baseline:{...baseline,
       frontWork:'rotate'}};
     return {baseline};
@@ -204,6 +209,8 @@ const report={pairedSamples:samples,fieldTeams,motorMode,paceMode,distanceKm,
     managerMixSelectiveChasers,
   managerMixAttackKmToGo:managerMixHardChasers===null?null:
     managerMixAttackKmToGo,
+  managerMixOpportunists:managerMixHardChasers===null?null:
+    managerMixOpportunists,
   chaserSkillCap:plannedChasers>0?chaserSkillCap:null,
   initialFatigueShift,
   description:'fictional varied riders and routes; no live data',courses:{}};
