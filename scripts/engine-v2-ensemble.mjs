@@ -342,8 +342,9 @@ for(const [course,stage] of Object.entries(distanceKm===260?LONG_ROUTES:ROUTES))
         oneRoadSeparatedAccepted:0,oneRoadSeparatedRejections:{},
         postAttackCandidates:0,postAttackAccepted:0,
         postAttackRejections:{},
-        postAttackKilometreAttackAudit:{version:'v2-post-attack-audit-1',attempted:0,
-          blocked:0,absent:0,blockedReasons:{},examples:[]},
+        postAttackKilometreAttackAudit:{version:'v2-post-attack-audit-2',attempted:0,
+          blocked:0,absent:0,sourceAlreadyExhausted:0,
+          blockedReasons:{},examples:[]},
         survived:0,caught:0,exhaustionDroppedRiders:0,
         racesWithExhaustionDrop:0,readOnlyRejections:{},examples:[],
         rejectionExamples:[]};
@@ -472,11 +473,19 @@ for(const [course,stage] of Object.entries(distanceKm===260?LONG_ROUTES:ROUTES))
                   riderIds.has(row.riderId))?'attempted':
                   blocked?'blocked':'absent';
                 audit[activity]++;
+                const sourceEnergy=blocked?.riderId?
+                  race.frames[race.route.distanceKm-5]?.riderGroups.find(row=>
+                    row.id===blocked.riderId)?.energy:null;
+                const sourceAlreadyExhausted=activity==='blocked'&&
+                  sourceEnergy!==null&&sourceEnergy!==undefined&&
+                  sourceEnergy<TUNING.attack.minEnergyFraction*100;
+                audit.sourceAlreadyExhausted+=Number(sourceAlreadyExhausted);
                 if(activity==='blocked')audit.blockedReasons[blocked.reason]=
                   (audit.blockedReasons[blocked.reason]??0)+1;
                 if(audit.examples.length<3)audit.examples.push({sample,
                   teamId,km:Number(kmText),activity,
-                  ...(activity==='blocked'?{blockedReason:blocked.reason}:{})});
+                  ...(activity==='blocked'?{blockedReason:blocked.reason,
+                    sourceEnergy,sourceAlreadyExhausted}:{})});
               }
             }
           };
