@@ -342,6 +342,9 @@ for(const [course,stage] of Object.entries(distanceKm===260?LONG_ROUTES:ROUTES))
         oneRoadSeparatedAccepted:0,oneRoadSeparatedRejections:{},
         postAttackCandidates:0,postAttackAccepted:0,
         postAttackRejections:{},
+        postAttackRefusalClasses:{version:'v2-post-attack-refusals-1',
+          pendingPelotonAttack:0,invalidSeparatedSource:0,
+          calculatedCatch:0,groupContact:0,other:0,otherExamples:[]},
         postAttackKilometreAttackAudit:{version:'v2-post-attack-audit-3',attempted:0,
           blocked:0,absent:0,sourceAlreadyExhausted:0,
           becameExhaustedAfterSource:0,blockedDespiteEnergy:0,
@@ -458,6 +461,19 @@ for(const [course,stage] of Object.entries(distanceKm===260?LONG_ROUTES:ROUTES))
               const reason=String(error.message);
               orderedFinale.postAttackRejections[reason]=
                 (orderedFinale.postAttackRejections[reason]??0)+1;
+              const refusals=orderedFinale.postAttackRefusalClasses;
+              const refusalClass=reason.startsWith(
+                'The short-step finale needs a recorded peloton attack:')?
+                'pendingPelotonAttack':reason.startsWith(
+                  'A separated finale needs multiple road groups')?
+                  'invalidSeparatedSource':reason.startsWith(
+                    'The separated finale needs a recorded catch')?
+                    'calculatedCatch':reason.startsWith(
+                      'The separated finale needs a recorded group contact')?
+                      'groupContact':'other';
+              refusals[refusalClass]++;
+              if(refusalClass==='other'&&refusals.otherExamples.length<3)
+                refusals.otherExamples.push({sample,reason});
               // This is a comparison with the validated kilometre outcome,
               // never a substitute event in the counterfactual short steps.
               const pendingAttack=/^The short-step finale needs a recorded peloton attack: (.+) at km (\d+)\.$/
@@ -853,6 +869,13 @@ for(const [course,stage] of Object.entries(distanceKm===260?LONG_ROUTES:ROUTES))
             event.reason==='road_group_limit').length;
         }
       }
+      const refusalCounts=orderedFinale.postAttackRefusalClasses;
+      const classifiedRefusals=refusalCounts.pendingPelotonAttack+
+        refusalCounts.invalidSeparatedSource+refusalCounts.calculatedCatch+
+        refusalCounts.groupContact+refusalCounts.other;
+      if(orderedFinale.postAttackCandidates!==
+        orderedFinale.postAttackAccepted+classifiedRefusals)
+        throw new Error('Post-attack audit lost a candidate.');
       const sortedGaps=[...totals.finalGaps].sort((a,b)=>a-b);
       const sortedWinMargins=[...totals.breakWinMargins].sort((a,b)=>a-b);
       const sortedJoinWinnerShares=[...totals.finalKmJoinWinnerAttackShares]
