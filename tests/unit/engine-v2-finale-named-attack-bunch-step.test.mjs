@@ -4,10 +4,11 @@ import {simulateTacticalTour} from '../../lib/engine/v2/tour.mjs';
 import {finaleDistanceGrid} from '../../lib/engine/v2/finale-grid.mjs';
 import {advanceFinaleNamedAttackTransition} from
   '../../lib/engine/v2/finale-named-attack-transition.mjs';
-import {continueFinaleNamedAttackGroup} from
+import {continueFinaleNamedAttackGroup,continueFinaleNamedAttackChain} from
   '../../lib/engine/v2/finale-named-attack-followup.mjs';
 import {continueFinaleNamedAttackBunch,
   continueFinaleNamedAttackBunchChain,
+  continueFinaleNamedAttackLateCatchBunch,
   validateFinaleNamedAttackBunchStep,
   validateFinaleNamedAttackBunchChain} from
   '../../lib/engine/v2/finale-named-attack-bunch-step.mjs';
@@ -110,4 +111,54 @@ test('a caught or contained named attack enters one paid passive bunch slice',()
     launch:advanceFinaleNamedAttackTransition({...containedInput,
       teams:rotatingTeams}),slice:grid[grid.indexOf(first)+1]}),
   /rotation needs recorded work/);
+});
+
+test('a late catch replays its solo history before the bunch reaches the line',()=>{
+  const chaseTeam=team('b','all');
+  chaseTeam.riders=chaseTeam.riders.map(rider=>({...rider,
+    flat:70,timetrial:70,strength:70}));
+  const tour=simulateTacticalTour({stage,
+    teams:[team('a','ignore',true),chaseTeam],
+    seed:'late-catch-probe',motorVersion:MOTOR_ATTACK_TRACE_VERSION});
+  const teams=tour.committedInputs.teams;
+  const ids=teams.flatMap(row=>row.riders.map(rider=>rider.id));
+  const grid=finaleDistanceGrid(tour.route,{remainingKm:4});
+  const first=grid.find(row=>row.sourceKm===40);
+  const launchInput={slice:first,route:tour.route,teams,
+    pelotonRiderIds:ids,energies:new Map(ids.map(id=>[id,40])),
+    attackerTeamId:'a',attackerRiderId:'a-0',repeatLoad:0};
+  const launch=advanceFinaleNamedAttackTransition(launchInput);
+  assert.equal(launch.roadGroups.length,1);
+  const followups=[];
+  for(const slice of grid.slice(grid.indexOf(first)+1)){
+    const frame=followups.length?continueFinaleNamedAttackChain({
+      launchInput,launch,followups,slice}):continueFinaleNamedAttackGroup({
+      launchInput,launch,slice});
+    followups.push(frame);
+    if(frame.catchDistanceM)break;
+  }
+  assert.equal(followups.length,3);
+  assert.ok(followups.at(-1).catchDistanceM);
+  const frames=[];
+  for(const slice of grid.slice(grid.indexOf(first)+1+followups.length)){
+    const frame=continueFinaleNamedAttackLateCatchBunch({
+      launchInput,launch,followups,frames,slice});
+    frames.push(frame);
+  }
+  assert.equal(frames.at(-1).endDistanceM,40000);
+  assert.deepEqual(frames.at(-1).pelotonRiderIds,
+    followups.at(-1).pelotonRiderIds);
+  assert.deepEqual(new Set(frames.at(-1).pelotonRiderIds),new Set(ids));
+  assert.ok(frames.every(frame=>frame.version===
+    'v2-finale-named-attack-bunch-step-3'));
+  assert.throws(()=>continueFinaleNamedAttackLateCatchBunch({
+    launchInput,launch,followups:[{...followups[0],bunchElapsedSeconds:0},
+      ...followups.slice(1)],frames:frames.slice(0,-1),
+    slice:grid.at(-1)}),/does not replay/);
+  assert.throws(()=>continueFinaleNamedAttackLateCatchBunch({
+    launchInput,launch,followups,frames:[{...frames[0],bunchSpeedKph:0},
+      ...frames.slice(1,-1)],slice:grid.at(-1)}),/does not replay/);
+  assert.throws(()=>continueFinaleNamedAttackLateCatchBunch({
+    launchInput,launch,followups:followups.slice(0,-1),
+    slice:grid.at(-1)}),/not been caught/);
 });
