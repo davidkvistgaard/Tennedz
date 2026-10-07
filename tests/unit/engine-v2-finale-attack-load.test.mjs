@@ -7,7 +7,9 @@ import {finaleAttackLoadFromTour} from
 import {finaleSnapshotFromTour} from
   '../../lib/engine/v2/finale-snapshot.mjs';
 import {probeLastKmNamedAttackFromTour,
-  validateLastKmNamedAttackFromTour} from
+  validateLastKmNamedAttackFromTour,
+  probeLastKmNamedAttackRoadFromTour,
+  validateLastKmNamedAttackRoadFromTour} from
   '../../lib/engine/v2/finale-last-km-named-attack.mjs';
 
 const stage={distance_km:40,profile_points:[[0,100],[40,100]],
@@ -98,6 +100,25 @@ test('last-kilometre handoff uses the actual penultimate frame and carries attac
   assert.equal(probe.transition.riderEnergy.length,16);
   assert.equal(validateLastKmNamedAttackFromTour(tour,
     {teamId:'a'},probe),true);
+  const road=probeLastKmNamedAttackRoadFromTour(tour,{teamId:'a'});
+  assert.equal(road.version,'v2-finale-last-km-named-attack-road-2');
+  assert.equal(road.sourceBridgeVersion,probe.version);
+  assert.deepEqual(road.frames[0],probe.transition);
+  assert.equal(road.frames.length,7);
+  assert.equal(road.frames[0].attack.status,'split');
+  assert.deepEqual(road.frames.map(frame=>frame.roadGroups.length),
+    [1,1,0,0,0,0,0]);
+  assert.ok(road.frames[2].catchDistanceM);
+  assert.equal(road.frames.at(-1).endDistanceM,40000);
+  assert.equal(road.lineRoadGroups.length,0);
+  assert.equal(road.linePelotonRiderIds.length,16);
+  assert.equal(road.lineRiderEnergy.length,16);
+  assert.equal(validateLastKmNamedAttackRoadFromTour(tour,
+    {teamId:'a'},road),true);
+  const forgedRoad=structuredClone(road);
+  forgedRoad.frames[1].bunchElapsedSeconds=0;
+  assert.throws(()=>validateLastKmNamedAttackRoadFromTour(tour,
+    {teamId:'a'},forgedRoad),/does not replay/);
   assert.throws(()=>validateLastKmNamedAttackFromTour(tour,
     {teamId:'a'},{...probe,energyAtDecision:-1}),/does not replay/);
   assert.throws(()=>probeLastKmNamedAttackFromTour(tour,
