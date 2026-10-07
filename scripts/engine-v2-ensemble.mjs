@@ -9,6 +9,7 @@ import {TUNING,TUNING_VERSION,MOTOR_CANDIDATE_VERSION,MOTOR_PAID_PACE_VERSION,
   MOTOR_FINALE_VERSION,MOTOR_BRIDGE_FINALE_VERSION,MOTOR_EARNED_BRIDGE_VERSION,
   MOTOR_NEUTRAL_PACE_VERSION,MOTOR_EXPLICIT_FRONT_VERSION,
   MOTOR_DRAFT_SHELTER_VERSION,MOTOR_DISTANCE_LOAD_VERSION,
+  MOTOR_RECOVERY_CEILING_VERSION,
   MOTOR_CANDIDATE} from
   '../lib/engine/v2/tuning.mjs';
 
@@ -18,12 +19,15 @@ const motorMode=process.argv[4]??'current';
 const paceMode=process.argv[5]??'preset';
 const plannedFinale=['planned-finale','planned-finale-open',
   'planned-finale-one-chaser','planned-finale-three-chasers',
-  'planned-finale-selective-chaser'].includes(paceMode);
-const plannedChasers=['planned-finale-one-chaser','planned-finale-selective-chaser']
+  'planned-finale-selective-chaser','planned-finale-allied'].includes(paceMode);
+const plannedChasers=['planned-finale-one-chaser','planned-finale-selective-chaser',
+  'planned-finale-allied']
   .includes(paceMode)?1:
   paceMode==='planned-finale-three-chasers'?3:0;
 const distanceKm=process.argv[6]===undefined?120:Number(process.argv[6]);
-const motorVersion=motorMode==='distance-load'?MOTOR_DISTANCE_LOAD_VERSION:
+const chaserSkillCap=process.argv[7]===undefined?100:Number(process.argv[7]);
+const motorVersion=motorMode==='recovery-ceiling'?MOTOR_RECOVERY_CEILING_VERSION:
+  motorMode==='distance-load'?MOTOR_DISTANCE_LOAD_VERSION:
   motorMode==='draft-shelter'?MOTOR_DRAFT_SHELTER_VERSION:
   motorMode==='explicit-front'?MOTOR_EXPLICIT_FRONT_VERSION:
   motorMode==='neutral-pace'?MOTOR_NEUTRAL_PACE_VERSION:
@@ -38,20 +42,24 @@ const gapAuditOptions={recoverySecondsPerCapacity:motorMode!=='current'?
 if(!Number.isInteger(samples)||samples<1||samples>100||
   !Number.isInteger(fieldTeams)||fieldTeams<2||fieldTeams>20||
   ![120,260].includes(distanceKm)||
+  !Number.isInteger(chaserSkillCap)||chaserSkillCap<20||chaserSkillCap>100||
+  process.argv[7]!==undefined&&plannedChasers===0||
   !['current','candidate','paid-pace','bounded-finale','bounded-bridge-finale',
     'earned-bridge-finale','neutral-pace','explicit-front','draft-shelter',
-    'distance-load']
+    'distance-load','recovery-ceiling']
     .includes(motorMode)||
   !['preset','paced-rival','steady-rival','rotate-rival','late-hard-rival',
     'rotate-plans','planned-finale','planned-finale-open',
     'planned-finale-one-chaser','planned-finale-three-chasers',
-    'planned-finale-selective-chaser'].includes(paceMode)||
+    'planned-finale-selective-chaser','planned-finale-allied'].includes(paceMode)||
   ['steady-rival','rotate-rival','late-hard-rival','rotate-plans','planned-finale',
     'planned-finale-open','planned-finale-one-chaser',
-    'planned-finale-three-chasers','planned-finale-selective-chaser']
+    'planned-finale-three-chasers','planned-finale-selective-chaser',
+    'planned-finale-allied']
     .includes(paceMode)&&
-    !['explicit-front','draft-shelter','distance-load'].includes(motorMode))
-  throw new Error('Usage: node scripts/engine-v2-ensemble.mjs [paired samples: 1-100] [teams: 2-20] [current|candidate|paid-pace|bounded-finale|bounded-bridge-finale|earned-bridge-finale|neutral-pace|explicit-front|draft-shelter|distance-load] [preset|paced-rival|steady-rival|rotate-rival|late-hard-rival|rotate-plans|planned-finale|planned-finale-open|planned-finale-one-chaser|planned-finale-three-chasers|planned-finale-selective-chaser (v86+ only)] [120|260 km]');
+    !['explicit-front','draft-shelter','distance-load',
+      'recovery-ceiling'].includes(motorMode))
+  throw new Error('Usage: node scripts/engine-v2-ensemble.mjs [paired samples: 1-100] [teams: 2-20] [current|candidate|paid-pace|bounded-finale|bounded-bridge-finale|earned-bridge-finale|neutral-pace|explicit-front|draft-shelter|distance-load|recovery-ceiling] [preset|paced-rival|steady-rival|rotate-rival|late-hard-rival|rotate-plans|planned-finale|planned-finale-open|planned-finale-one-chaser|planned-finale-three-chasers|planned-finale-selective-chaser|planned-finale-allied (v86+ only)] [120|260 km] [first chaser skill cap: 20-100]');
 
 const ROUTES={
   flat:{distance_km:120,profile_points:[[0,60],[40,60],[80,75],[120,60]],
@@ -90,7 +98,8 @@ function fictionalTeams(sample,gender){
       const rng=seedrandom(`v2-ensemble-rider:${sample}:${teamIndex}:${riderIndex}`);
       const role=ROLE_BONUSES[riderIndex%ROLE_BONUSES.length];
       const skills=Object.fromEntries(SPORTING_SKILLS.map(skill=>
-        [skill,clamp(Math.round(50+(role[skill]??0)+(rng()-.5)*26))]));
+        [skill,Math.min(teamIndex===1&&plannedChasers>0?chaserSkillCap:100,
+          clamp(Math.round(50+(role[skill]??0)+(rng()-.5)*26)))]));
       return {id:`${id}-${riderIndex}`,gender,...skills,
         leadership:clamp(Math.round(35+rng()*50)),form:Math.round(40+rng()*45),
         fatigue:Math.round(rng()*25)};
@@ -99,9 +108,13 @@ function fictionalTeams(sample,gender){
   });
 }
 
-function plannedOpponentOrders(index){
+function plannedOpponentOrders(index,team,course){
   if(paceMode==='planned-finale')return {baseline:{frontWork:index%2===0?
     'rotate':'sit_in'}};
+  if(paceMode==='planned-finale-allied'&&index===2)return {
+    baseline:{effort:'conserve',attack:'none',chase:'ignore',frontWork:'sit_in'},
+    phases:[{atKm:distanceKm-5,attack:'selective',
+      attackRiderId:team.riders[course==='flat'?2:1].id}]};
   const chaser=index<=plannedChasers;
   return {baseline:{effort:'conserve',attack:'none',chase:'ignore',
     frontWork:chaser?'sit_in':index%2===0?'rotate':'sit_in'},
@@ -111,6 +124,7 @@ function plannedOpponentOrders(index){
 }
 
 const report={pairedSamples:samples,fieldTeams,motorMode,paceMode,distanceKm,
+  chaserSkillCap:plannedChasers>0?chaserSkillCap:null,
   description:'fictional varied riders and routes; no live data',courses:{}};
 for(const [course,stage] of Object.entries(distanceKm===260?LONG_ROUTES:ROUTES)){
   report.courses[course]={};
@@ -132,6 +146,7 @@ for(const [course,stage] of Object.entries(distanceKm===260?LONG_ROUTES:ROUTES))
         fieldEnergy:0,winnerEnergy:0,lowEnergyRiders:0,paidPaceKm:0,
         plannedFinalAvailable:0,plannedFinalAttempt:0,plannedFinalJoin:0,
         plannedFinalWin:0,plannedFinalPlace:0,plannedFinalEnergy:0,
+        alliedFinalAttempt:0,alliedFinalWin:0,
         paidWorkerEnergy:0,paidWorkerRaces:0,paidWorkerCount:0,frontConcentration:0,
         finalGaps:[],
         maxGroups:0,multiGroupFinishes:0,chaseGroupAttackMoves:0,
@@ -139,13 +154,16 @@ for(const [course,stage] of Object.entries(distanceKm===260?LONG_ROUTES:ROUTES))
       for(let sample=0;sample<samples;sample++){
         const teams=fictionalTeams(sample,gender).map((team,index)=>({
           ...team,orders:{captainId:team.riders[0].id,roadCaptainId:team.riders[1].id,
-            preset:index===0?strategy:STRATEGIES[(index-1)%STRATEGIES.length],
+            preset:index===0?strategy:
+              plannedFinale&&plannedChasers&&index<=plannedChasers?'balanced':
+                STRATEGIES[(index-1)%STRATEGIES.length],
             ...(['paced-rival','steady-rival','rotate-rival','late-hard-rival']
               .includes(paceMode)&&index===1?{
               baseline:{effort:paceMode==='paced-rival'?'hard':
                 paceMode==='steady-rival'?'steady':'conserve',
                 attack:'none',chase:'ignore',
-                ...(['explicit-front','draft-shelter','distance-load'].includes(motorMode)?
+                ...(['explicit-front','draft-shelter','distance-load',
+                  'recovery-ceiling'].includes(motorMode)?
                   {frontWork:'rotate'}:{})},
               ...(paceMode==='late-hard-rival'?{
                 phases:[{atKm:distanceKm-40,effort:'hard'}]}:{})}:{}),
@@ -155,7 +173,7 @@ for(const [course,stage] of Object.entries(distanceKm===260?LONG_ROUTES:ROUTES))
               baseline:{attack:'none',chase:'ignore',frontWork:'sit_in'},
               phases:[{atKm:distanceKm-5,attack:'selective',
                 attackRiderId:team.riders[course==='flat'?2:1].id}],
-            }:plannedOpponentOrders(index):{})},
+            }:plannedOpponentOrders(index,team,course):{})},
         }));
         const rng=seedrandom(`v2-ensemble-weather:${course}:${sample}`);
         const base=WEATHER[course];
@@ -177,6 +195,12 @@ for(const [course,stage] of Object.entries(distanceKm===260?LONG_ROUTES:ROUTES))
             .find(row=>row.id===plannedId)?.group==='peloton');
           totals.plannedFinalAttempt+=Number(finalFrame.attackReasons.some(row=>
             row.riderId===plannedId&&row.reason==='named_order'));
+          if(paceMode==='planned-finale-allied'){
+            const alliedId=teams[2].riders[course==='flat'?2:1].id;
+            totals.alliedFinalAttempt+=Number(finalFrame.attackReasons.some(row=>
+              row.riderId===alliedId&&row.reason==='named_order'));
+            totals.alliedFinalWin+=Number(winner.riderId===alliedId);
+          }
           totals.plannedFinalJoin+=Number(finalFrame.joinedBreakawayRiderIds
             .includes(plannedId));
           totals.plannedFinalWin+=Number(winner.riderId===plannedId);
@@ -339,6 +363,10 @@ for(const [course,stage] of Object.entries(distanceKm===260?LONG_ROUTES:ROUTES))
           +(totals.plannedFinalPlace/samples).toFixed(2):null,
         meanPlannedFinalEnergy:plannedFinale?
           +(totals.plannedFinalEnergy/samples).toFixed(2):null,
+        alliedFinalAttemptRate:paceMode==='planned-finale-allied'?
+          totals.alliedFinalAttempt/samples:null,
+        alliedFinalWinRate:paceMode==='planned-finale-allied'?
+          totals.alliedFinalWin/samples:null,
         meanPaidPaceKm:+(totals.paidPaceKm/samples).toFixed(2),
         meanPaidWorkerFinalEnergy:totals.paidWorkerRaces?
           +(totals.paidWorkerEnergy/totals.paidWorkerRaces).toFixed(2):null,

@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {assignPointDivisions} from '../../lib/calendar/division-reveal.mjs';
 import {validateRecordedTour} from '../../lib/engine/v2/recording.mjs';
-import {MOTOR_NEUTRAL_PACE_VERSION,MOTOR_DISTANCE_LOAD_VERSION,TUNING_VERSION}
+import {MOTOR_NEUTRAL_PACE_VERSION,MOTOR_RECOVERY_CEILING_VERSION,TUNING_VERSION}
   from '../../lib/engine/v2/tuning.mjs';
 import {previewRecordedDivisions,previewLockedV2RecordedDivisions}
   from '../../lib/race/v2-candidate.mjs';
@@ -257,7 +257,7 @@ test('v85 preview carries paid neutral pace through three replays and point proj
     .divisions[0].recording.tuningVersion,TUNING_VERSION);
 });
 
-test('v88 read-only 45-team preview preserves explicit front plans and long-distance points contract',()=>{
+test('v89 read-only 45-team preview preserves explicit front plans and long-distance points contract',()=>{
   const input=snapshot(45);
   input.event.race_tier=3;
   input.stage={distance_km:260,profile_points:[[0,90],[130,120],[260,90]]};
@@ -267,13 +267,13 @@ test('v88 read-only 45-team preview preserves explicit front plans and long-dist
       baseline:{effort:'conserve',attack:'none',chase:'ignore',
         frontWork:index%3===0?'rotate':'sit_in'}},
   ]));
-  const options={v2OrdersByTeamId:orders,motorVersion:MOTOR_DISTANCE_LOAD_VERSION};
+  const options={v2OrdersByTeamId:orders,motorVersion:MOTOR_RECOVERY_CEILING_VERSION};
   const preview=previewRecordedDivisions(input,options);
   assert.deepEqual(preview,previewRecordedDivisions(input,options));
   assert.deepEqual(input,original);
   assert.deepEqual(preview.divisions.map(division=>division.teamIds.length),[15,15,15]);
   for(const division of preview.divisions){
-    assert.equal(division.recording.tuningVersion,MOTOR_DISTANCE_LOAD_VERSION);
+    assert.equal(division.recording.tuningVersion,MOTOR_RECOVERY_CEILING_VERSION);
     assert.equal(validateRecordedTour(division.recording),true);
     assert.equal(division.recording.frames.length,260);
     assert.ok(division.recording.committedInputs.teams.some(team=>
