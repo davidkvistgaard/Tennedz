@@ -34,7 +34,7 @@ test('locked independent teams supply recorded short-step pulls',()=>{
     const tour=source({},gender);
     const original=structuredClone(tour);
     const probe=probeFinaleOrderedGroupToLineFromTour(tour);
-    assert.equal(probe.version,'v2-finale-ordered-run-7');
+    assert.equal(probe.version,'v2-finale-ordered-run-8');
     assert.equal(probe.sourceTuningVersion,MOTOR_ATTACK_TRACE_VERSION);
     assert.equal(probe.schedule.frontPullRiderIds.length,11);
     assert.equal(probe.schedule.chasePullRiderIds.length,11);
@@ -76,7 +76,7 @@ test('a final-phase sit-on or ignored chase cannot nominate unpaid work',()=>{
   const sitOn=source({a:{atKm:35,breakWork:'sit_on'},
     b:{atKm:35,breakWork:'sit_on'}});
   const unworked=probeFinaleOrderedGroupToLineFromTour(sitOn);
-  assert.equal(unworked.version,'v2-finale-ordered-run-7');
+  assert.equal(unworked.version,'v2-finale-ordered-run-8');
   assert.equal(unworked.recording.version,'v2-finale-group-to-line-10');
   assert.ok(unworked.schedule.frontPullRiderIds.every(id=>id===null));
   assert.ok(unworked.recording.approachFrames.every(frame=>
@@ -109,7 +109,7 @@ test('a final-phase sit-on or ignored chase cannot nominate unpaid work',()=>{
   const noChase=source({c:{atKm:35,chase:'ignore'},
     d:{atKm:35,chase:'ignore'}});
   const passive=probeFinaleOrderedGroupToLineFromTour(noChase);
-  assert.equal(passive.version,'v2-finale-ordered-run-7');
+  assert.equal(passive.version,'v2-finale-ordered-run-8');
   assert.equal(passive.recording.version,'v2-finale-group-to-line-9');
   assert.equal(passive.recording.passiveBunchVersion,'v2-finale-passive-bunch-1');
   assert.ok(passive.schedule.chasePullRiderIds.every(id=>id===null));
@@ -145,7 +145,7 @@ test('a route marker changes passive and paid chase within the same finale',()=>
   const tour=source({c:{atKm:38,chase:'ignore'},
     d:{atKm:38,chase:'ignore'}},'M',marked);
   const probe=probeFinaleOrderedGroupToLineFromTour(tour);
-  assert.equal(probe.version,'v2-finale-ordered-run-7');
+  assert.equal(probe.version,'v2-finale-ordered-run-8');
   assert.equal(probe.recording.version,'v2-finale-group-to-line-9');
   assert.ok(probe.schedule.chasePullRiderIds.some(id=>id!==null));
   assert.ok(probe.schedule.chasePullRiderIds.some(id=>id===null));
@@ -175,7 +175,7 @@ test('a route marker changes passive and paid chase within the same finale',()=>
     teams:resumedTeams,seed:'ordered-finale',
     motorVersion:MOTOR_ATTACK_TRACE_VERSION});
   const reverse=probeFinaleOrderedGroupToLineFromTour(resumedTour);
-  assert.equal(reverse.version,'v2-finale-ordered-run-7');
+  assert.equal(reverse.version,'v2-finale-ordered-run-8');
   assert.equal(reverse.schedule.chasePullRiderIds[0],null);
   assert.ok(reverse.schedule.chasePullRiderIds.at(-1)!==null);
   assert.equal(validateFinaleOrderedGroupToLineFromTour(resumedTour,reverse),true);
@@ -201,7 +201,7 @@ test('a locked front sit-on marker leaves a recorded unpaid road group',()=>{
   const tour=source({a:{atKm:38,breakWork:'sit_on'},
     b:{atKm:38,breakWork:'sit_on'}},'F',marked);
   const probe=probeFinaleOrderedGroupToLineFromTour(tour);
-  assert.equal(probe.version,'v2-finale-ordered-run-7');
+  assert.equal(probe.version,'v2-finale-ordered-run-8');
   assert.equal(probe.recording.passiveFrontVersion,
     'v2-finale-passive-front-1');
   assert.ok(probe.schedule.frontPullRiderIds.some(id=>id!==null));
@@ -224,6 +224,22 @@ test('a valid planned bunch attack cannot disappear in the short-step replay',()
   const historical=probeFinaleOrderedGroupToLineFromTour(tour,{
     version:'v2-finale-ordered-run-5'});
   assert.equal(validateFinaleOrderedGroupToLineFromTour(tour,historical),true);
+});
+
+test('a newly committed all-out chase at five kilometres pays a helper',()=>{
+  const teams=['a','b','c','d'].map(id=>team(id,id==='a'||id==='b'));
+  for(const candidate of teams.filter(row=>row.id==='c'||row.id==='d')){
+    candidate.orders.baseline.chase='ignore';
+    candidate.orders.phases.push({atKm:35,chase:'all',effort:'hard'});
+  }
+  const tour=simulateTacticalTour({stage,teams,seed:'ordered-finale',
+    motorVersion:MOTOR_ATTACK_TRACE_VERSION});
+  assert.equal(tour.frames[34].engagedChaseTeamIds.length,0);
+  const probe=probeFinaleOrderedGroupToLineFromTour(tour);
+  assert.ok(probe.schedule.chasePullRiderIds.some(id=>id!==null));
+  assert.ok(probe.recording.approachFrames.some(frame=>
+    frame.chasePullRiderId!==null));
+  assert.equal(validateFinaleOrderedGroupToLineFromTour(tour,probe),true);
 });
 
 test('a long recorded race supplies depleted workers without free finale energy',()=>{
@@ -255,7 +271,10 @@ test('a long recorded race supplies depleted workers without free finale energy'
     profile_points:[[0,100],[260,100]]},teams:waiting,
   seed:'long-ordered-finale',motorVersion:MOTOR_ATTACK_TRACE_VERSION});
   assert.deepEqual(waitingTour.frames[254].engagedChaseTeamIds,[]);
-  const passive=probeFinaleOrderedGroupToLineFromTour(waitingTour);
+  assert.throws(()=>probeFinaleOrderedGroupToLineFromTour(waitingTour),
+    /needs a recorded selective chase/);
+  const passive=probeFinaleOrderedGroupToLineFromTour(waitingTour,{
+    version:'v2-finale-ordered-run-7'});
   assert.equal(passive.recording.version,'v2-finale-group-to-line-9');
   assert.ok(passive.schedule.chasePullRiderIds.every(id=>id===null));
   for(const row of passive.recording.finalRiderEnergy){

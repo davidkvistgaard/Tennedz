@@ -34,7 +34,7 @@ test('separated road groups keep their IDs, gaps and paid energy to the line',()
     assert.equal(sourceFrame.roadGroups.length,2);
     const original=structuredClone(tour);
     const run=probeFinaleSeparatedGroupsFromTour(tour);
-    assert.equal(run.version,'v2-finale-multi-separated-1');
+    assert.equal(run.version,'v2-finale-multi-separated-2');
     assert.equal(run.sourceTuningVersion,MOTOR_ATTACK_TRACE_VERSION);
     assert.equal(run.frames.length,11);
     assert.ok(run.frames.every(frame=>frame.roadGroups.length===2&&
@@ -47,6 +47,9 @@ test('separated road groups keep their IDs, gaps and paid energy to the line',()
     assert.ok(run.frames.every(frame=>frame.riders.every(row=>
       row.energySpent>0&&row.energy>=0)));
     assert.equal(validateFinaleSeparatedGroupsFromTour(tour,run),true);
+    const prior=probeFinaleSeparatedGroupsFromTour(tour,{
+      version:'v2-finale-multi-separated-1'});
+    assert.equal(validateFinaleSeparatedGroupsFromTour(tour,prior),true);
     const forged=structuredClone(run);
     forged.frames[1].roadGroups[1].gapSeconds+=1;
     assert.throws(()=>validateFinaleSeparatedGroupsFromTour(tour,forged),
@@ -81,6 +84,26 @@ test('separated groups refuse future named and break attacks',()=>{
   assert.equal(split.frames[34].roadGroups.length,2);
   assert.throws(()=>probeFinaleSeparatedGroupsFromTour(split),
     /needs a recorded break attack/);
+});
+
+test('a new all-out bunch chase is not omitted behind separate groups',()=>{
+  const teams=[team('a','M',0),team('b','M',20),team('c','M',null)];
+  teams[2].orders.phases.push({atKm:35,chase:'all',effort:'hard'});
+  const tour=simulateTacticalTour({stage,teams,
+    seed:'separated-finale',motorVersion:MOTOR_ATTACK_TRACE_VERSION});
+  assert.equal(tour.frames[34].engagedChaseTeamIds.length,0);
+  const run=probeFinaleSeparatedGroupsFromTour(tour);
+  assert.ok(run.frames.some(frame=>frame.bunchPullRiderId!==null));
+  assert.equal(validateFinaleSeparatedGroupsFromTour(tour,run),true);
+  teams[2].orders.phases[0].chase='selective';
+  const selective=simulateTacticalTour({stage,teams,
+    seed:'separated-finale',motorVersion:MOTOR_ATTACK_TRACE_VERSION});
+  assert.equal(selective.frames[34].engagedChaseTeamIds.length,0);
+  assert.throws(()=>probeFinaleSeparatedGroupsFromTour(selective),
+    /needs a recorded selective chase/);
+  const prior=probeFinaleSeparatedGroupsFromTour(selective,{
+    version:'v2-finale-multi-separated-1'});
+  assert.equal(validateFinaleSeparatedGroupsFromTour(selective,prior),true);
 });
 
 test('a rear group reaching the front needs a recorded contact distance',()=>{
