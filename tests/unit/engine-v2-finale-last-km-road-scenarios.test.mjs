@@ -16,6 +16,9 @@ import {recordFinaleSprintApproachFromTour,
 import {recordFinaleSprintLaunchFromTour,
   validateFinaleSprintLaunchFromTour} from
   '../../lib/engine/v2/finale-sprint-launch.mjs';
+import {recordFinaleSprintRunFromTour,
+  validateFinaleSprintRunFromTour} from
+  '../../lib/engine/v2/finale-sprint-run.mjs';
 
 const stage={distance_km:40,profile_points:[[0,100],[40,100]],
   keypoints:[{km:10,kind:'SPRINT'},{km:20,kind:'SPRINT'},
@@ -138,6 +141,40 @@ test('first 100 m sprint launch costs finishers and earns only faster movement',
   assert.throws(()=>validateFinaleSprintLaunchFromTour(tour,input,{
     ...launch,riderEnergy:launch.riderEnergy.map(row=>row.riderId==='a-0'?
       {...row,gainSeconds:0}:row)}),/does not replay/);
+});
+
+test('sprint continuation carries earned time and pays through the line',()=>{
+  const a=team('a',60,'F','ignore',true);
+  const b=team('b',80,'F','all',false);
+  a.riders[0].sprint=100;
+  b.riders[0].sprint=20;
+  const tour=simulateTacticalTour({stage,teams:[a,b],
+    seed:'paid-sprint-approach',motorVersion:MOTOR_ATTACK_TRACE_VERSION});
+  const input={attackTeamId:'a',plans:[
+    {teamId:'a',finisherId:'a-0',leadOutRiderId:'a-2'},
+    {teamId:'b',finisherId:'b-0',leadOutRiderId:'b-2'}]};
+  const run=recordFinaleSprintRunFromTour(tour,input);
+  assert.equal(run.version,'v2-finale-sprint-run-1');
+  assert.equal(run.startDistanceM,39700);
+  assert.equal(run.endDistanceM,40000);
+  assert.deepEqual(run.frames.map(frame=>frame.endDistanceM),[39900,40000]);
+  assert.equal(run.lineRiderEnergy.length,16);
+  assert.ok(run.frames.every(frame=>frame.riderEnergy.length===16));
+  const first=run.launch.riderEnergy.find(row=>row.riderId==='a-0');
+  const fast=run.lineRiderEnergy.find(row=>row.riderId==='a-0');
+  const slow=run.lineRiderEnergy.find(row=>row.riderId==='b-0');
+  assert.ok(fast.gainSeconds>first.gainSeconds);
+  assert.ok(fast.energyAfter<first.energyAfter);
+  assert.equal(slow.gainSeconds,0);
+  assert.ok(slow.energyAfter<run.launch.riderEnergy.find(row=>
+    row.riderId==='b-0').energyAfter);
+  assert.ok(run.lineRiderEnergy.filter(row=>row.riderId!=='a-0').every(
+    row=>row.gainSeconds===0));
+  assert.equal(validateFinaleSprintRunFromTour(tour,input,run),true);
+  assert.throws(()=>validateFinaleSprintRunFromTour(tour,input,{
+    ...run,lineRiderEnergy:run.lineRiderEnergy.map(row=>
+      row.riderId==='a-0'?{...row,gainSeconds:0}:row)}),
+  /does not replay/);
 });
 
 test('500 m sprint nominations respect locked helpers and actual road contact',()=>{

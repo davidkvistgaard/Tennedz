@@ -8,6 +8,9 @@ import {probeLastKmNamedAttackRoadFromTour,
 import {recordFinaleSprintApproachFromTour,
   validateFinaleSprintApproachFromTour} from
   '../../lib/engine/v2/finale-sprint-approach.mjs';
+import {recordFinaleSprintRunFromTour,
+  validateFinaleSprintRunFromTour} from
+  '../../lib/engine/v2/finale-sprint-run.mjs';
 
 const stage={distance_km:40,profile_points:[[0,100],[40,100]],
   keypoints:[{km:10,kind:'SPRINT'},{km:20,kind:'SPRINT'},
@@ -50,5 +53,12 @@ test('twenty-team v91 source accounts for all riders through catch and paid lead
       frame.riderEnergy.every(row=>row.energyAfter>=0)));
     assert.equal(validateFinaleSprintApproachFromTour(tour,input,
       approach),true);
+    const sprint=recordFinaleSprintRunFromTour(tour,input);
+    assert.equal(sprint.endDistanceM,40000);
+    assert.equal(sprint.lineRiderEnergy.length,160);
+    assert.ok(sprint.frames.every(frame=>
+      frame.riderEnergy.filter(row=>row.role==='sprint').length===20&&
+      frame.riderEnergy.every(row=>row.energyAfter>=0)));
+    assert.equal(validateFinaleSprintRunFromTour(tour,input,sprint),true);
   }
 });
