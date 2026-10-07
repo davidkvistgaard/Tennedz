@@ -24,18 +24,18 @@ import {loadV2SettlementReadiness}
 import {pointsForDivisionResult} from '../../lib/calendar/points.mjs';
 import {defaultOrders} from '../../lib/race/orders.mjs';
 
-function snapshot(count){
+function snapshot(count,gender='M'){
   const teams=Array.from({length:count},(_,index)=>{
     const id=`team-${String(index).padStart(2,'0')}`;
     const selected=Array.from({length:8},(_,rider)=>`${id}-r${rider}`);
-    return {id,name:`Team ${index+1}`,riders:selected.map(riderId=>({id:riderId,name:riderId,gender:'M',
+    return {id,name:`Team ${index+1}`,riders:selected.map(riderId=>({id:riderId,name:riderId,gender,
       flat:40+index,sprint:48,hills:45,mountain:45,cobbles:45,timetrial:45,
       endurance:48,strength:45,wind:45,form:55,fatigue:0})),
       entry:{selected_riders:selected,captain_id:selected[0],orders:defaultOrders(selected,selected[0])}};
   });
-  const reveal=assignPointDivisions({eventId:'candidate-race',seasonYear:2026,gender:'M',
+  const reveal=assignPointDivisions({eventId:'candidate-race',seasonYear:2026,gender,
     entrants:teams.map((team,index)=>({teamId:team.id,earnedPoints:count-index}))});
-  return {event:{id:'candidate-race',kind:'one_day',gender:'M',
+  return {event:{id:'candidate-race',kind:'one_day',gender,
     scheduled_at:'2026-10-08T12:00:00Z',weather_locked:{temp_c:15,wind_kph:10,precipitation_mm:0}},
     stage:{distance_km:20,profile_points:[[0,25],[20,25]]},game_date:'2026-10-08',
     teams,locked_division_reveal:reveal};
@@ -346,6 +346,60 @@ test('v90 45-team preview keeps three recorded finales and point awards separate
     previewRecordedDivisions(input,options),{tier:3}));
   assert.equal(contract.divisions.flatMap(division=>division.riderResults).length,360);
   assert.equal(contract.divisions.flatMap(division=>division.awards).length,60);
+});
+
+test('varied 20-manager v90 tactics keep both gender results and points read-only',()=>{
+  for(const gender of ['M','F']){
+    const input=snapshot(20,gender);
+    input.event.race_tier=3;
+    input.stage={distance_km:260,profile_points:[[0,90],[60,240],[130,80],
+      [200,310],[260,90]],keypoints:[{km:200,kind:'SPRINT'}]};
+    input.teams.forEach((team,index)=>team.riders.forEach((rider,riderIndex)=>{
+      rider.flat=42+(index*3+riderIndex*5)%38;
+      rider.hills=40+(index*7+riderIndex*3)%42;
+      rider.endurance=43+(index*2+riderIndex*6)%35;
+      rider.sprint=38+(index*5+riderIndex*4)%45;
+      rider.fatigue=(index*3+riderIndex*2)%27;
+    }));
+    const orders=Object.fromEntries(input.teams.map((team,index)=>[
+      team.id,{captainId:team.entry.captain_id,
+        roadCaptainId:team.riders[1].id,preset:index%3===0?'protect':
+          index%3===1?'balanced':'aggressive',
+        baseline:{effort:index>=7&&index<=11?'steady':'conserve',
+          attack:index>=7&&index<=10?'selective':'none',chase:'ignore',
+          frontWork:index>=7&&index<=13?'rotate':'sit_in'},
+        ...(index===0||index===2?{phases:[{atKm:240,attack:'selective',
+          effort:'hard',breakWork:'drive',attackRiderId:team.riders[3].id}]}:
+          index===1||index===3?{phases:[{atKm:160,effort:'hard',
+            chase:'all'}]}:index===4||index===5?{
+            phases:[{atKm:250,effort:'steady',chase:'selective'}]}:{})},
+    ]));
+    const options={v2OrdersByTeamId:orders,motorVersion:MOTOR_PHASE_ATTACK_VERSION};
+    const preview=previewRecordedDivisions(input,options);
+    assert.equal(preview.divisions.length,1);
+    const recording=preview.divisions[0].recording;
+    assert.equal(recording.raceCategory,gender);
+    assert.equal(recording.tuningVersion,MOTOR_PHASE_ATTACK_VERSION);
+    assert.equal(validateRecordedTour(recording),true);
+    assert.equal(recording.frames.length,260);
+    for(const index of [0,2])assert.ok(recording.frames[240].attackReasons
+      .some(row=>row.riderId===input.teams[index].riders[3].id&&
+        row.reason==='named_order'));
+    assert.ok(recording.frames.some(frame=>frame.paidBunchPace));
+    const contract=buildV2OneDayResultContract(preview,{tier:3});
+    assert.equal(validateV2OneDayResultContract(contract),contract);
+    assert.equal(contract.divisions[0].recording.tuningVersion,
+      MOTOR_PHASE_ATTACK_VERSION);
+    assert.equal(contract.divisions[0].riderResults.length,160);
+    assert.equal(contract.divisions[0].awards.length,20);
+    assert.equal(new Set(contract.divisions[0].awards.map(row=>row.awardKey)).size,20);
+    assert.deepEqual(contract,buildV2OneDayResultContract(
+      previewRecordedDivisions(input,options),{tier:3}));
+    input.v2_input_version=1;
+    input.v2_orders_by_team_id=orders;
+    assert.throws(()=>buildV2OneDayLedgerRows(input,contract),
+      /Invalid baseline fields/);
+  }
 });
 
 test('one versioned v2 result contract binds each replay, captain placing and award',()=>{
