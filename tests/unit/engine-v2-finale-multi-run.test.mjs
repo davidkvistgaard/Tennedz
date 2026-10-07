@@ -51,6 +51,9 @@ test('separated road groups keep their IDs, gaps and paid energy to the line',()
     const prior=probeFinaleSeparatedGroupsFromTour(tour,{
       version:'v2-finale-multi-separated-1'});
     assert.equal(validateFinaleSeparatedGroupsFromTour(tour,prior),true);
+    const priorAllChase=probeFinaleSeparatedGroupsFromTour(tour,{
+      version:'v2-finale-multi-separated-2'});
+    assert.equal(validateFinaleSeparatedGroupsFromTour(tour,priorAllChase),true);
     const forged=structuredClone(run);
     forged.frames[1].roadGroups[1].gapSeconds+=1;
     assert.throws(()=>validateFinaleSeparatedGroupsFromTour(tour,forged),

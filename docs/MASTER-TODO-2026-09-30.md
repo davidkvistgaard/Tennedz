@@ -10,6 +10,8 @@
 
 ### Hvad er lavet siden 30. september?
 
+**[x] Selektiv jagt for adskilte finalegrupper, 7. oktober (ca. 1-2 aktive timer):** Den nye, skrivefri v3-fortsættelse vurderer i hvert korttrin, om et selektivt jagthold er uopmærksomt, afventer eller sætter en energibetalende hjælper i arbejde. Beslutning og faktisk trækrytter optages og genberegnes; v1/v2 bevares. I to faste 20-holds-seeds accepteres 29/36 adskilte flergruppetilstande uden hårde jagthold og 27/34 med ét. De resterende 14 afvises på grund af planlagte angreb, som endnu mangler korttrinsoptagelse. 434 tests, lint og frisk build bestod. Én-gruppe-jagt, nye angreb, fangst/sammenløb, placering og point er stadig åbne; punkt 04/11 er ikke færdigt. [Finalekontrakt](design/ENGINE-V2-FINALE-CONTRACT.md), [balanceaudit](MOTOR-LAB-BALANCE-AUDIT.md).
+
 Tabellen er et **retrospektivt skøn over aktiv arbejdsindsats**, ikke målte timer, fakturering eller en konvertering af automationernes løbetid. Intervallerne er grove, og nært beslægtet fejlretning er lagt i samme række, så de ikke summeres to gange. ✅ i denne tabel gælder kun den *beskrevne delprøve eller leverance*; det gør ikke automatisk hele dens større nummererede punkt færdigt. Det eksisterende live-grundspil og tidligere verdens-/portrætarbejde er ikke tidsmålt og indgår ikke i skønnet. Kolonnen *Rest* længere nede er en grov fremadrettet arbejdsramme, som endnu ikke er genberegnet efter hvert deltrin; den er ikke forskellen mellem et gammelt estimat og denne tabel.
 
 | Dokumenteret leverance | Status og grænse | Skøn udført | Belæg |
