@@ -261,6 +261,7 @@ for(const [course,stage] of Object.entries(distanceKm===260?LONG_ROUTES:ROUTES))
         multiGroupResidualAffectedRaces:0,
         finalAutoAttackRaces:0,
         finalAutoJoinedRaces:0,finalAutoWinnerRaces:0,
+        finalPhaseCadenceWinnerRaces:0,finalBaselineCadenceWinnerRaces:0,
         preFinalBreakWinnerRaces:0,finalKmJoinWinnerRaces:0,
         breakWinnerGroupAgeKm:[],
         caughtBreaks:0,finishLineCatches:0,partialFinishCatches:0,
@@ -341,6 +342,8 @@ for(const [course,stage] of Object.entries(distanceKm===260?LONG_ROUTES:ROUTES))
         }
         report.tuningVersion??=race.tuningVersion;
         const finalFrame=race.frames.at(-1);
+        // The historical finalAuto report key also includes cadence from an
+        // explicit attack phase; separate its source below for interpretation.
         const finalAutoIds=new Set(finalFrame.attackReasons.filter(attack=>
           ['preset_cadence','keypoint'].includes(attack.reason)).map(attack=>attack.riderId));
         const finalAutoJoined=new Set(finalFrame.joinedBreakawayRiderIds.filter(id=>
@@ -426,6 +429,15 @@ for(const [course,stage] of Object.entries(distanceKm===260?LONG_ROUTES:ROUTES))
         totals.finalAutoAttackRaces+=Number(finalAutoIds.size>0);
         totals.finalAutoJoinedRaces+=Number(finalAutoJoined.size>0);
         totals.finalAutoWinnerRaces+=Number(finalAutoJoined.has(winner.riderId)&&breakWinner);
+        if(finalAutoJoined.has(winner.riderId)&&breakWinner){
+          const winnerOrders=race.committedInputs.teams.find(team=>
+            team.id===winner.teamId)?.orders;
+          if(!winnerOrders)throw new Error('Final winner has no committed orders.');
+          const finalAttackPhase=winnerOrders.phases.findLast(phase=>
+            phase.atKm<=distanceKm-1&&'attack'in phase);
+          if(finalAttackPhase)totals.finalPhaseCadenceWinnerRaces++;
+          else totals.finalBaselineCadenceWinnerRaces++;
+        }
         totals.preFinalBreakWinnerRaces+=Number(breakWinner&&
           race.frames.at(-2).breakawayRiderIds.includes(winner.riderId));
         totals.finalKmJoinWinnerRaces+=Number(breakWinner&&
@@ -546,6 +558,10 @@ for(const [course,stage] of Object.entries(distanceKm===260?LONG_ROUTES:ROUTES))
         finalAutoAttackRaceRate:totals.finalAutoAttackRaces/samples,
         finalAutoJoinedRaceRate:totals.finalAutoJoinedRaces/samples,
         finalAutoWinnerRaceRate:totals.finalAutoWinnerRaces/samples,
+        finalPhaseCadenceWinnerRaceRate:
+          totals.finalPhaseCadenceWinnerRaces/samples,
+        finalBaselineCadenceWinnerRaceRate:
+          totals.finalBaselineCadenceWinnerRaces/samples,
         preFinalBreakWinnerRaceRate:totals.preFinalBreakWinnerRaces/samples,
         finalKmJoinWinnerRaceRate:totals.finalKmJoinWinnerRaces/samples,
         clearBreakWinRate:totals.clearBreakWins/samples,

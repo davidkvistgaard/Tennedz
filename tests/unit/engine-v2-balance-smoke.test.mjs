@@ -24,6 +24,9 @@ test('paired fictional races flag degenerate finale balance before tuning is acc
         row.finalKmJoinWinnerRaceRate-row.breakWinRate)<1e-9,
       `${course}: breakaway winner has no recorded origin`);
       assert.ok(row.finalAutoWinnerRaceRate<=row.finalKmJoinWinnerRaceRate);
+      assert.ok(Math.abs(row.finalPhaseCadenceWinnerRaceRate+
+        row.finalBaselineCadenceWinnerRaceRate-row.finalAutoWinnerRaceRate)<1e-9,
+      `${course}: final cadence winner has no committed order source`);
       assert.ok(row.residualAffectedBreakWinRaceRate<=row.breakWinRate);
       assert.ok(row.multiGroupResidualAffectedRaceRate>=0&&
         row.multiGroupResidualAffectedRaceRate<=1);
