@@ -342,9 +342,10 @@ for(const [course,stage] of Object.entries(distanceKm===260?LONG_ROUTES:ROUTES))
         oneRoadSeparatedAccepted:0,oneRoadSeparatedRejections:{},
         postAttackCandidates:0,postAttackAccepted:0,
         postAttackRejections:{},
-        postAttackKilometreAttackAudit:{version:'v2-post-attack-audit-2',attempted:0,
+        postAttackKilometreAttackAudit:{version:'v2-post-attack-audit-3',attempted:0,
           blocked:0,absent:0,sourceAlreadyExhausted:0,
-          blockedReasons:{},examples:[]},
+          becameExhaustedAfterSource:0,blockedDespiteEnergy:0,
+          blockedReasons:{},examples:[],lateBlockExamples:[]},
         survived:0,caught:0,exhaustionDroppedRiders:0,
         racesWithExhaustionDrop:0,readOnlyRejections:{},examples:[],
         rejectionExamples:[]};
@@ -480,12 +481,30 @@ for(const [course,stage] of Object.entries(distanceKm===260?LONG_ROUTES:ROUTES))
                   sourceEnergy!==null&&sourceEnergy!==undefined&&
                   sourceEnergy<TUNING.attack.minEnergyFraction*100;
                 audit.sourceAlreadyExhausted+=Number(sourceAlreadyExhausted);
+                const preAttackEnergy=blocked?.riderId?
+                  race.frames[Number(kmText)-2]?.riderGroups.find(row=>
+                    row.id===blocked.riderId)?.energy:null;
+                const becameExhaustedAfterSource=activity==='blocked'&&
+                  blocked.reason==='exhausted'&&!sourceAlreadyExhausted&&
+                  preAttackEnergy!==null&&preAttackEnergy!==undefined&&
+                  preAttackEnergy<TUNING.attack.minEnergyFraction*100;
+                const blockedDespiteEnergy=activity==='blocked'&&
+                  blocked.reason==='exhausted'&&!sourceAlreadyExhausted&&
+                  !becameExhaustedAfterSource;
+                audit.becameExhaustedAfterSource+=Number(becameExhaustedAfterSource);
+                audit.blockedDespiteEnergy+=Number(blockedDespiteEnergy);
                 if(activity==='blocked')audit.blockedReasons[blocked.reason]=
                   (audit.blockedReasons[blocked.reason]??0)+1;
                 if(audit.examples.length<3)audit.examples.push({sample,
                   teamId,km:Number(kmText),activity,
                   ...(activity==='blocked'?{blockedReason:blocked.reason,
-                    sourceEnergy,sourceAlreadyExhausted}:{})});
+                    sourceEnergy,preAttackEnergy,sourceAlreadyExhausted}:{})});
+                if((becameExhaustedAfterSource||blockedDespiteEnergy)&&
+                  audit.lateBlockExamples.length<5)
+                  audit.lateBlockExamples.push({sample,teamId,
+                    riderId:blocked.riderId,km:Number(kmText),
+                    sourceEnergy,preAttackEnergy,blockedReason:blocked.reason,
+                    becameExhaustedAfterSource});
               }
             }
           };
