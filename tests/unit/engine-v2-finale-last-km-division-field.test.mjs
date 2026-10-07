@@ -9,7 +9,8 @@ import {recordFinaleSprintApproachFromTour,
   validateFinaleSprintApproachFromTour} from
   '../../lib/engine/v2/finale-sprint-approach.mjs';
 import {recordFinaleSprintRunFromTour,
-  validateFinaleSprintRunFromTour} from
+  validateFinaleSprintRunFromTour,
+  FINALE_SPRINT_RUN_FATIGUE_VERSION} from
   '../../lib/engine/v2/finale-sprint-run.mjs';
 
 const stage={distance_km:40,profile_points:[[0,100],[40,100]],
@@ -63,5 +64,9 @@ test('twenty-team v91 source accounts for all riders through catch and paid lead
     assert.ok(sprint.lineRiderEnergy.some(row=>row.riderId.endsWith('-0')&&
       row.gainSeconds===0));
     assert.equal(validateFinaleSprintRunFromTour(tour,input,sprint),true);
+    const bounded=recordFinaleSprintRunFromTour(tour,input,{
+      version:FINALE_SPRINT_RUN_FATIGUE_VERSION});
+    assert.equal(bounded.lineRiderEnergy.length,160);
+    assert.equal(validateFinaleSprintRunFromTour(tour,input,bounded),true);
   }
 });

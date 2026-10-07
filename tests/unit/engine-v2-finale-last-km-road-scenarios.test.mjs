@@ -14,10 +14,12 @@ import {recordFinaleSprintApproachFromTour,
   validateFinaleSprintApproachFromTour} from
   '../../lib/engine/v2/finale-sprint-approach.mjs';
 import {recordFinaleSprintLaunchFromTour,
-  validateFinaleSprintLaunchFromTour} from
+  validateFinaleSprintLaunchFromTour,
+  FINALE_SPRINT_LAUNCH_FATIGUE_VERSION} from
   '../../lib/engine/v2/finale-sprint-launch.mjs';
 import {recordFinaleSprintRunFromTour,
-  validateFinaleSprintRunFromTour} from
+  validateFinaleSprintRunFromTour,
+  FINALE_SPRINT_RUN_FATIGUE_VERSION} from
   '../../lib/engine/v2/finale-sprint-run.mjs';
 
 const stage={distance_km:40,profile_points:[[0,100],[40,100]],
@@ -141,6 +143,59 @@ test('first 100 m sprint launch costs finishers and earns only faster movement',
   assert.throws(()=>validateFinaleSprintLaunchFromTour(tour,input,{
     ...launch,riderEnergy:launch.riderEnergy.map(row=>row.riderId==='a-0'?
       {...row,gainSeconds:0}:row)}),/does not replay/);
+});
+
+test('opt-in sprint launch caps effort from a tired recorded 300 km source',()=>{
+  const longStage={distance_km:300,
+    profile_points:[[0,100],[300,100]],
+    keypoints:[{km:299,kind:'SPRINT'}]};
+  const a=team('a',60,'M','ignore',true);
+  const b=team('b',95,'M','all',false);
+  a.orders.phases=[{atKm:299,attack:'selective',
+    attackRiderId:'a-0'}];
+  b.orders.baseline.effort='steady';
+  b.riders[0].fatigue=100;
+  b.riders[0].sprint=100;
+  const tour=simulateTacticalTour({stage:longStage,teams:[a,b],
+    seed:'low-energy-finish',motorVersion:MOTOR_ATTACK_TRACE_VERSION});
+  const input={attackTeamId:'a',plans:[
+    {teamId:'a',finisherId:'a-0',leadOutRiderId:'a-2'},
+    {teamId:'b',finisherId:'b-0',leadOutRiderId:'b-2'}]};
+  const original=recordFinaleSprintLaunchFromTour(tour,input);
+  const bounded=recordFinaleSprintLaunchFromTour(tour,input,{
+    version:FINALE_SPRINT_LAUNCH_FATIGUE_VERSION});
+  const tired=bounded.riderEnergy.find(row=>row.riderId==='b-0');
+  const fresh=bounded.riderEnergy.find(row=>row.riderId==='a-0');
+  assert.ok(tired.energyAtDecision<30&&tired.energyAtDecision>0);
+  assert.ok(tired.effortAbilityPoints>0&&tired.effortAbilityPoints<8);
+  assert.equal(fresh.effortAbilityPoints,8);
+  assert.ok(tired.attemptedMovementSeconds>0);
+  assert.ok(!Object.hasOwn(original.riderEnergy.find(row=>
+    row.riderId==='b-0'),'effortAbilityPoints'));
+  assert.equal(validateFinaleSprintLaunchFromTour(tour,input,original),true);
+  assert.equal(validateFinaleSprintLaunchFromTour(tour,input,bounded),true);
+  assert.throws(()=>validateFinaleSprintLaunchFromTour(tour,input,{
+    ...bounded,riderEnergy:bounded.riderEnergy.map(row=>
+      row.riderId==='b-0'?{...row,effortAbilityPoints:8}:row)}),
+  /does not replay/);
+  assert.throws(()=>recordFinaleSprintRunFromTour(tour,input),
+    /cannot pay/);
+  const run=recordFinaleSprintRunFromTour(tour,input,{
+    version:FINALE_SPRINT_RUN_FATIGUE_VERSION});
+  assert.equal(run.sourceLaunchVersion,
+    FINALE_SPRINT_LAUNCH_FATIGUE_VERSION);
+  assert.equal(run.endDistanceM,300000);
+  assert.equal(run.lineRiderEnergy.length,16);
+  assert.equal(run.frames.at(-1).riderEnergy.find(row=>
+    row.riderId==='b-0').role,'exhausted_sprint');
+  assert.equal(run.lineRiderEnergy.find(row=>
+    row.riderId==='b-0').gainSeconds,0);
+  assert.equal(validateFinaleSprintRunFromTour(tour,input,run),true);
+  assert.throws(()=>validateFinaleSprintRunFromTour(tour,input,{
+    ...run,frames:run.frames.map((frame,index)=>index===1?{
+      ...frame,riderEnergy:frame.riderEnergy.map(row=>
+        row.riderId==='b-0'?{...row,energySpent:0}:row)}:frame)}),
+  /does not replay/);
 });
 
 test('sprint continuation carries earned time and pays through the line',()=>{
