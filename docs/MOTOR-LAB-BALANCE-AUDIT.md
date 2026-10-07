@@ -335,3 +335,15 @@ The five-kilometre handoff was also checked across **10 independent, fixed-role 
 | 20 | 3 | 0 (0) | 0 (0) | 180 |
 
 The guard rejects pending recorded attacks and calculated catch/contact events rather than manufacturing their resolution. The separated-path rejection tallies for those two reasons, respectively, are 21/1, 27/5, 14/6 and 0/0 in the 15-team rows, and 21/0, 26/5, 33/9 and 0/0 in the 20-team rows. These counts cannot be interpreted as disjoint race outcomes: one state can be examined by both one-group paths, and a state is classified by its first rejection. Every no-road-group source still requires a paid bunch, chase and attack treatment before an honest short-step finish; zero accepted continuation there is a known boundary, not a failed race. The abrupt shape change at three hard chasers is specific to this coordinated synthetic population and says nothing about likely player tactics. It does show that any finale contract limited to surviving road groups would omit whole plausible manager-order regions. Reproduce each row with `node scripts/engine-v2-ensemble.mjs 10 20 attack-trace planned-finale-allied-manager-mix-2 260 100 0 3 20 4 100 hard 0 80 5 4 0 independent 0 fixed ordered`, changing the field size (`20`) to `15` and the mix suffix (`2`) to `0`, `1`, `2` or `3`.
+
+A five-seed paired sensitivity check holds the same two-hard-chaser manager mix, route, category, focal order and independently drawn roster identities fixed while changing rider strengths or initial fatigue. Each row has 90 five-kilometre sources. The values are multiple groups / one group / no road group, followed by accepted separated-travel counts for the first two states.
+
+| Field | Chaser skill cap | Added starting fatigue | Source states | Accepted separated travel |
+| ---: | ---: | ---: | ---: | ---: |
+| 20 | 100 | 0 | 16 / 32 / 42 | 13 / 17 |
+| 20 | 65 | 0 | 22 / 27 / 41 | 17 / 19 |
+| 20 | 100 | 20 | 22 / 38 / 30 | 18 / 27 |
+| 15 | 100 | 0 | 17 / 32 / 41 | 16 / 25 |
+| 15 | 100 | 20 | 22 / 41 / 27 | 12 / 35 |
+
+Adding fatigue to *every* rider shifts more states away from a fully reassembled bunch in both field sizes; reducing only the designated chasers' cap produces a smaller, mixed shift in the 20-team field. The 15-team fatigued case even accepts fewer multiple-group continuations despite having more multiple-group sources, since event and pending-attack guards remain active. These interventions alter all 260 kilometres, so the table does not isolate final-kilometre fatigue or set a sporting target. No coefficient or official result was changed. Reproduce with the preceding command using sample count `5`, changing the early skill-cap argument (`100` after `260`) to `65` or the following initial-fatigue argument (`0`) to `20`.
