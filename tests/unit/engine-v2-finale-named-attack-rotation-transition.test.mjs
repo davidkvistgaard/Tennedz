@@ -17,6 +17,9 @@ import {continueFinaleNamedAttackRotationGroup,
 import {continueFinaleNamedAttackRotationBunch,
   validateFinaleNamedAttackRotationBunch} from
   '../../lib/engine/v2/finale-named-attack-rotation-bunch.mjs';
+import {probeLastKmRotationContainedFromTour,
+  validateLastKmRotationContainedFromTour} from
+  '../../lib/engine/v2/finale-last-km-rotation-contained.mjs';
 import {MOTOR_ATTACK_TRACE_VERSION,TUNING} from
   '../../lib/engine/v2/tuning.mjs';
 
@@ -194,5 +197,20 @@ test('a contained attack pays once then independent front rotation continues',()
       ...bunch,riderEnergy:bunch.riderEnergy.map(row=>
         row.role==='front_rotation'?{...row,energySpent:0}:row)}),
     /does not replay/);
+    const oldResults=structuredClone(tour.provisionalResults);
+    const linked=probeLastKmRotationContainedFromTour(tour,{teamId:'a'});
+    assert.deepEqual(linked.frames,[launch,bunch]);
+    assert.equal(linked.sourceKm,39);
+    assert.equal(linked.at500M.distanceM,39500);
+    assert.equal(linked.at500M.pelotonRiderIds.length,32);
+    assert.equal(linked.at500M.riderEnergy.length,32);
+    assert.equal(linked.at500M.bunchElapsedSeconds,
+      launch.bunchElapsedSeconds+bunch.bunchElapsedSeconds);
+    assert.equal(validateLastKmRotationContainedFromTour(tour,
+      {teamId:'a'},linked),true);
+    assert.throws(()=>validateLastKmRotationContainedFromTour(tour,
+      {teamId:'a'},{...linked,at500M:{...linked.at500M,
+        bunchElapsedSeconds:0}}),/does not replay/);
+    assert.deepEqual(tour.provisionalResults,oldResults);
   }
 });
