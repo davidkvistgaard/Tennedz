@@ -322,6 +322,7 @@ for(const [course,stage] of Object.entries(distanceKm===260?LONG_ROUTES:ROUTES))
         finalKmBlockedAttacks:0,finalKmChasePower:0,finalKmPaidPaceAbility:0,
         finalKmPaidPaceRaces:0,finalKmJoinedRiders:0,finalKmCaughtRiders:0,
         finalGaps:[],finalKmJoinWinnerExamples:[],
+        finalKmJoinWinnerAttackShares:[],finalKmJoinWinnerAttackRanks:[],
         maxGroups:0,multiGroupFinishes:0,chaseGroupAttackMoves:0,
         bridgesToGroupAhead:0,roadGroupLimitBlocks:0};
       for(let sample=0;sample<samples;sample++){
@@ -507,6 +508,16 @@ for(const [course,stage] of Object.entries(distanceKm===260?LONG_ROUTES:ROUTES))
           const margin=firstBunch.timeSeconds-race.provisionalResults[0].timeSeconds;
           totals.breakWinMargins.push(margin);
           if(finalFrame.joinedBreakawayRiderIds.includes(winner.riderId)&&
+            finalFrame.attackContributions){
+            const ordered=[...finalFrame.attackContributions].sort((a,b)=>
+              b.pressure-a.pressure||a.riderId.localeCompare(b.riderId));
+            const rank=ordered.findIndex(row=>row.riderId===winner.riderId);
+            if(rank<0)throw new Error('A final join winner has no attack contribution.');
+            totals.finalKmJoinWinnerAttackShares.push(
+              ordered[rank].pressure/finalFrame.attackPower);
+            totals.finalKmJoinWinnerAttackRanks.push(rank+1);
+          }
+          if(finalFrame.joinedBreakawayRiderIds.includes(winner.riderId)&&
             totals.finalKmJoinWinnerExamples.length<3){
             const winnerGroup=finalFrame.roadGroups.find(group=>
               group.riderIds.includes(winner.riderId));
@@ -605,6 +616,8 @@ for(const [course,stage] of Object.entries(distanceKm===260?LONG_ROUTES:ROUTES))
       }
       const sortedGaps=[...totals.finalGaps].sort((a,b)=>a-b);
       const sortedWinMargins=[...totals.breakWinMargins].sort((a,b)=>a-b);
+      const sortedJoinWinnerShares=[...totals.finalKmJoinWinnerAttackShares]
+        .sort((a,b)=>a-b);
       const sortedPhotoGaps=[...totals.photoFinalGaps].sort((a,b)=>a-b);
       const sortedPhotoFinaleDiffs=[...totals.photoFinaleAbilityDiffs].sort((a,b)=>a-b);
       const sortedPhotoBunchDeficits=[...totals.photoBunchDeficits].sort((a,b)=>a-b);
@@ -643,6 +656,11 @@ for(const [course,stage] of Object.entries(distanceKm===260?LONG_ROUTES:ROUTES))
           totals.finalBaselineCadenceWinnerRaces/samples,
         preFinalBreakWinnerRaceRate:totals.preFinalBreakWinnerRaces/samples,
         finalKmJoinWinnerRaceRate:totals.finalKmJoinWinnerRaces/samples,
+        medianFinalKmJoinWinnerAttackShare:sortedJoinWinnerShares.length?
+          sortedJoinWinnerShares[Math.floor((sortedJoinWinnerShares.length-1)/2)]:null,
+        finalKmJoinWinnerTopPressureRate:totals.finalKmJoinWinnerAttackRanks.length?
+          totals.finalKmJoinWinnerAttackRanks.filter(rank=>rank===1).length/
+            totals.finalKmJoinWinnerAttackRanks.length:null,
         clearBreakWinRate:totals.clearBreakWins/samples,
         medianBreakWinnerMarginSeconds:sortedWinMargins.length?
           sortedWinMargins[Math.floor((sortedWinMargins.length-1)/2)]:null,
