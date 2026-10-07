@@ -38,6 +38,7 @@ const plannedChasers=managerMixHardChasers??(
     'planned-finale-three-chasers-allied-drive'].includes(paceMode)?3:0);
 const distanceKm=process.argv[6]===undefined?120:Number(process.argv[6]);
 const chaserSkillCap=process.argv[7]===undefined?100:Number(process.argv[7]);
+const initialFatigueShift=process.argv[8]===undefined?0:Number(process.argv[8]);
 const motorVersion=motorMode==='phase-attack'?MOTOR_PHASE_ATTACK_VERSION:
   motorMode==='recovery-ceiling'?MOTOR_RECOVERY_CEILING_VERSION:
   motorMode==='distance-load'?MOTOR_DISTANCE_LOAD_VERSION:
@@ -58,6 +59,9 @@ if(!Number.isInteger(samples)||samples<1||samples>100||
   ![120,260].includes(distanceKm)||
   !Number.isInteger(chaserSkillCap)||chaserSkillCap<20||chaserSkillCap>100||
   process.argv[7]!==undefined&&plannedChasers===0||
+  !Number.isInteger(initialFatigueShift)||initialFatigueShift<0||
+    initialFatigueShift>30||
+  process.argv[8]!==undefined&&managerMixHardChasers===null||
   !['current','candidate','paid-pace','bounded-finale','bounded-bridge-finale',
     'earned-bridge-finale','neutral-pace','explicit-front','draft-shelter',
     'distance-load','recovery-ceiling','phase-attack']
@@ -83,7 +87,7 @@ if(!Number.isInteger(samples)||samples<1||samples>100||
     .includes(paceMode))&&
     !['explicit-front','draft-shelter','distance-load',
       'recovery-ceiling','phase-attack'].includes(motorMode))
-  throw new Error('Usage: node scripts/engine-v2-ensemble.mjs [paired samples: 1-100] [teams: 2-20] [current|candidate|paid-pace|bounded-finale|bounded-bridge-finale|earned-bridge-finale|neutral-pace|explicit-front|draft-shelter|distance-load|recovery-ceiling|phase-attack] [preset|paced-rival|steady-rival|rotate-rival|late-hard-rival|rotate-plans|planned-finale|planned-finale-open|planned-finale-one-chaser|planned-finale-three-chasers|planned-finale-selective-chaser|planned-finale-allied|planned-finale-surge|planned-finale-allied-drive|planned-finale-two-chasers-allied-drive|planned-finale-two-selective-chasers-allied-drive|planned-finale-three-chasers-allied-drive|planned-finale-own-plans-allied-drive|planned-finale-allied-manager-mix-[0-3] (v86+ only)] [120|260 km] [first chaser skill cap: 20-100]');
+  throw new Error('Usage: node scripts/engine-v2-ensemble.mjs [paired samples: 1-100] [teams: 2-20] [current|candidate|paid-pace|bounded-finale|bounded-bridge-finale|earned-bridge-finale|neutral-pace|explicit-front|draft-shelter|distance-load|recovery-ceiling|phase-attack] [preset|paced-rival|steady-rival|rotate-rival|late-hard-rival|rotate-plans|planned-finale|planned-finale-open|planned-finale-one-chaser|planned-finale-three-chasers|planned-finale-selective-chaser|planned-finale-allied|planned-finale-surge|planned-finale-allied-drive|planned-finale-two-chasers-allied-drive|planned-finale-two-selective-chasers-allied-drive|planned-finale-three-chasers-allied-drive|planned-finale-own-plans-allied-drive|planned-finale-allied-manager-mix-[0-3] (v86+ only)] [120|260 km] [chaser skill cap: 20-100] [manager-mix initial fatigue shift: 0-30]');
 
 const ROUTES={
   flat:{distance_km:120,profile_points:[[0,60],[40,60],[80,75],[120,60]],
@@ -114,19 +118,25 @@ const ROLE_BONUSES=[
   {cobbles:17,handling:14,wind:12},
 ];
 const clamp=value=>Math.max(15,Math.min(95,value));
+const managerMixRank=(index,sample)=>index===0||index===2?null:
+  ((index===1?0:index-2)+sample*7)%(fieldTeams-2);
 
 function fictionalTeams(sample,gender){
   return Array.from({length:fieldTeams},(_,teamIndex)=>{
     const id=`team-${teamIndex}`;
+    const managerRank=managerMixHardChasers===null?null:
+      managerMixRank(teamIndex,sample);
+    const cappedChaser=managerRank===null?
+      teamIndex===1&&plannedChasers>0:managerRank<managerMixHardChasers;
     const riders=Array.from({length:8},(_,riderIndex)=>{
       const rng=seedrandom(`v2-ensemble-rider:${sample}:${teamIndex}:${riderIndex}`);
       const role=ROLE_BONUSES[riderIndex%ROLE_BONUSES.length];
       const skills=Object.fromEntries(SPORTING_SKILLS.map(skill=>
-        [skill,Math.min(teamIndex===1&&plannedChasers>0?chaserSkillCap:100,
+        [skill,Math.min(cappedChaser?chaserSkillCap:100,
           clamp(Math.round(50+(role[skill]??0)+(rng()-.5)*26)))]));
       return {id:`${id}-${riderIndex}`,gender,...skills,
         leadership:clamp(Math.round(35+rng()*50)),form:Math.round(40+rng()*45),
-        fatigue:Math.round(rng()*25)};
+        fatigue:Math.round(rng()*25)+initialFatigueShift};
     });
     return {id,riders};
   });
@@ -136,7 +146,7 @@ function plannedOpponentOrders(index,team,course,sample){
   if(managerMixHardChasers!==null&&index!==2){
     // Rotate rival roles between seeds; each chase-count comparison retains
     // the same riders, weather, route and role order for that seed.
-    const rank=((index===1?0:index-2)+sample*7)%(fieldTeams-2);
+    const rank=managerMixRank(index,sample);
     const baseline={effort:'conserve',attack:'none',chase:'ignore',
       frontWork:'sit_in'};
     if(rank<managerMixHardChasers)return {baseline,
@@ -181,6 +191,7 @@ function plannedOpponentOrders(index,team,course,sample){
 const report={pairedSamples:samples,fieldTeams,motorMode,paceMode,distanceKm,
   managerMixHardChasers,
   chaserSkillCap:plannedChasers>0?chaserSkillCap:null,
+  initialFatigueShift,
   description:'fictional varied riders and routes; no live data',courses:{}};
 for(const [course,stage] of Object.entries(distanceKm===260?LONG_ROUTES:ROUTES)){
   report.courses[course]={};
