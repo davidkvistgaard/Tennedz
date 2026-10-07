@@ -71,8 +71,32 @@ test('a final-phase sit-on or ignored chase cannot nominate unpaid work',()=>{
     id.startsWith('d-')));
   const sitOn=source({a:{atKm:35,breakWork:'sit_on'},
     b:{atKm:35,breakWork:'sit_on'}});
-  assert.throws(()=>probeFinaleOrderedGroupToLineFromTour(sitOn),
-    /no eligible front puller/);
+  const unworked=probeFinaleOrderedGroupToLineFromTour(sitOn);
+  assert.equal(unworked.version,'v2-finale-ordered-run-6');
+  assert.equal(unworked.recording.version,'v2-finale-group-to-line-10');
+  assert.ok(unworked.schedule.frontPullRiderIds.every(id=>id===null));
+  assert.ok(unworked.recording.approachFrames.every(frame=>
+    frame.frontPullRiderId===null&&
+    frame.version==='v2-finale-group-step-3'));
+  assert.ok(unworked.recording.approachFrames.every(frame=>
+    frame.riders.filter(rider=>
+      unworked.input.snapshot.roadGroups[0].riderIds.includes(rider.riderId))
+      .every(rider=>rider.role==='sheltered'&&rider.energySpent>0)));
+  assert.equal(validateFinaleOrderedGroupToLineFromTour(sitOn,unworked),true);
+  assert.throws(()=>probeFinaleOrderedGroupToLineFromTour(sitOn,{
+    version:'v2-finale-ordered-run-5'}),/requires a paid front puller/);
+  const forgedFront=structuredClone(unworked);
+  forgedFront.schedule.frontPullRiderIds[0]='a-2';
+  assert.throws(()=>validateFinaleOrderedGroupToLineFromTour(sitOn,
+    forgedFront),/differs/);
+  const nearCatch=structuredClone(unworked.input);
+  nearCatch.snapshot.roadGroups[0].gapSeconds=.05;
+  const caughtPassive=simulateFinaleGroupToLine(nearCatch);
+  assert.equal(caughtPassive.outcome,'caught_merged');
+  assert.equal(caughtPassive.version,'v2-finale-group-to-line-10');
+  assert.equal(caughtPassive.approachFrames[0].frontPullRiderId,null);
+  assert.ok(caughtPassive.mergedFrames.length>0);
+  assert.equal(validateFinaleGroupToLine(nearCatch,caughtPassive),true);
   const noChase=source({c:{atKm:35,chase:'ignore'},
     d:{atKm:35,chase:'ignore'}});
   const passive=probeFinaleOrderedGroupToLineFromTour(noChase);
@@ -161,6 +185,26 @@ test('a route marker changes passive and paid chase within the same finale',()=>
   assert.ok(line.mergedFrames.some(frame=>frame.pullRiderId===null));
   assert.ok(line.mergedFrames.some(frame=>frame.pullRiderId!==null));
   assert.equal(validateFinaleGroupToLine(caught,line),true);
+});
+
+test('a locked front sit-on marker leaves a recorded unpaid road group',()=>{
+  const marked={...stage,keypoints:[{km:38}]};
+  const tour=source({a:{atKm:38,breakWork:'sit_on'},
+    b:{atKm:38,breakWork:'sit_on'}},'F',marked);
+  const probe=probeFinaleOrderedGroupToLineFromTour(tour);
+  assert.equal(probe.version,'v2-finale-ordered-run-6');
+  assert.equal(probe.recording.passiveFrontVersion,
+    'v2-finale-passive-front-1');
+  assert.ok(probe.schedule.frontPullRiderIds.some(id=>id!==null));
+  assert.ok(probe.schedule.frontPullRiderIds.some(id=>id===null));
+  assert.equal(probe.recording.approachFrames[0].version,
+    'v2-finale-group-step-1');
+  assert.ok(probe.recording.approachFrames.some(frame=>
+    frame.version==='v2-finale-group-step-3'&&
+    frame.frontPullRiderId===null));
+  assert.equal(validateFinaleOrderedGroupToLineFromTour(tour,probe),true);
+  assert.throws(()=>probeFinaleOrderedGroupToLineFromTour(tour,{
+    version:'v2-finale-ordered-run-5'}),/requires a paid front puller/);
 });
 
 test('a long recorded race supplies depleted workers without free finale energy',()=>{

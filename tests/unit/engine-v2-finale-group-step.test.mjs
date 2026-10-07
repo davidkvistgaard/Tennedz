@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {advanceFinaleGroupStep,advanceFinaleMergedStep,
   validateFinaleGroupStep,FINALE_GROUP_STEP_VERSION,
+  FINALE_PASSIVE_FRONT_STEP_VERSION,
   FINALE_MERGED_STEP_VERSION} from
   '../../lib/engine/v2/finale-group-step.mjs';
 
@@ -51,6 +52,19 @@ test('a faster leading group preserves the earned gap and distinct memberships',
   assert.deepEqual(result.roadGroups[0].riderIds,['a-0','b-0']);
   assert.deepEqual(result.pelotonRiderIds,['c-0','d-0']);
   assert.equal(result.riders.find(rider=>rider.riderId==='a-0').energySpent,.5);
+});
+
+test('a passive front has no invented puller and still spends travel energy',()=>{
+  const passive={...input,frontPull:{riderId:null,speedKph:40},
+    passiveFront:true};
+  const result=advanceFinaleGroupStep(passive);
+  assert.equal(result.version,FINALE_PASSIVE_FRONT_STEP_VERSION);
+  assert.equal(result.frontPullRiderId,null);
+  assert.equal(result.riders.find(row=>row.riderId==='a-0').role,'sheltered');
+  assert.ok(result.riders.find(row=>row.riderId==='a-0').energySpent>0);
+  assert.equal(validateFinaleGroupStep(passive,result),true);
+  assert.throws(()=>advanceFinaleGroupStep({...passive,passiveFront:false}),
+    /complete distinct riders/);
 });
 
 test('a group step rejects unearned work, absent riders and invented pullers',()=>{

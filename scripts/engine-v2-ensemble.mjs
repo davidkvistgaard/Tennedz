@@ -5,6 +5,7 @@ import {simulateTacticalTour} from '../lib/engine/v2/tour.mjs';
 import {validateRecordedTour} from '../lib/engine/v2/recording.mjs';
 import {validateRoadGroupTransition} from '../lib/engine/v2/road-groups.mjs';
 import {SPORTING_SKILLS} from '../lib/engine/v2/physiology.mjs';
+import {orderAt} from '../lib/engine/v2/orders.mjs';
 import {hasResidualGapAfterSufficientChase} from '../lib/engine/v2/balance-audit.mjs';
 import {probeFinaleOrderedGroupToLineFromTour,
   validateFinaleOrderedGroupToLineFromTour} from
@@ -327,6 +328,12 @@ for(const [course,stage] of Object.entries(distanceKm===260?LONG_ROUTES:ROUTES))
     for(const strategy of STRATEGIES){
       const orderedFinale={noRoadGroup:0,oneRoadGroup:0,
         multipleRoadGroups:0,noBunch:0,accepted:0,
+        noRoadGroupWithPaidSourcePace:0,
+        noRoadGroupWithRotateOrder:0,
+        noRoadGroupWithChaseOrder:0,
+        noRoadGroupWithAttackOrder:0,
+        noRoadGroupWithNamedAttackOrder:0,
+        noRoadGroupExamples:[],multipleRoadGroupExamples:[],
         survived:0,caught:0,exhaustionDroppedRiders:0,
         racesWithExhaustionDrop:0,readOnlyRejections:{},examples:[],
         rejectionExamples:[]};
@@ -426,8 +433,43 @@ for(const [course,stage] of Object.entries(distanceKm===260?LONG_ROUTES:ROUTES))
         if(orderedFinaleCoverage==='ordered'){
           const handoff=race.frames[distanceKm-6];
           const groupCount=handoff.roadGroups.length;
-          if(groupCount===0)orderedFinale.noRoadGroup++;
-          else if(groupCount>1)orderedFinale.multipleRoadGroups++;
+          if(groupCount===0){
+            orderedFinale.noRoadGroup++;
+            orderedFinale.noRoadGroupWithPaidSourcePace+=
+              Number(Boolean(handoff.paidBunchPace));
+            const orders=race.committedInputs.teams.map(team=>({
+              teamId:team.id,
+              order:orderAt(team.orders,distanceKm-5),
+            }));
+            orderedFinale.noRoadGroupWithRotateOrder+=Number(orders.some(
+              row=>row.order.frontWork==='rotate'));
+            orderedFinale.noRoadGroupWithChaseOrder+=Number(orders.some(
+              row=>row.order.chase!=='ignore'));
+            orderedFinale.noRoadGroupWithAttackOrder+=Number(orders.some(
+              row=>row.order.attack!=='none'));
+            orderedFinale.noRoadGroupWithNamedAttackOrder+=Number(orders.some(
+              row=>row.order.attackRiderId));
+            if(orderedFinale.noRoadGroupExamples.length<2)
+              orderedFinale.noRoadGroupExamples.push({sample,
+                paidSourcePace:handoff.paidBunchPace,
+                rotateTeamIds:orders.filter(row=>
+                  row.order.frontWork==='rotate').map(row=>row.teamId),
+                chaseTeamIds:orders.filter(row=>
+                  row.order.chase!=='ignore').map(row=>row.teamId),
+                attackTeamIds:orders.filter(row=>
+                  row.order.attack!=='none').map(row=>row.teamId),
+                namedAttackTeamIds:orders.filter(row=>
+                  row.order.attackRiderId).map(row=>row.teamId)});
+          }else if(groupCount>1){
+            orderedFinale.multipleRoadGroups++;
+            if(orderedFinale.multipleRoadGroupExamples.length<2)
+              orderedFinale.multipleRoadGroupExamples.push({sample,
+                groups:handoff.roadGroups.map(group=>({id:group.id,
+                  gapSeconds:group.gapSeconds,
+                  riderIds:group.riderIds})),
+                pelotonRiderCount:handoff.riderGroups.filter(row=>
+                  row.group==='peloton').length});
+          }
           else if(!handoff.riderGroups.some(rider=>rider.group==='peloton'))
             orderedFinale.noBunch++;
           else{
@@ -459,7 +501,10 @@ for(const [course,stage] of Object.entries(distanceKm===260?LONG_ROUTES:ROUTES))
                     reason.includes(`: ${rider.id} at `))??null,
                   sourceRoadGroups:handoff.roadGroups.map(group=>({
                     id:group.id,gapSeconds:group.gapSeconds,
-                    riderIds:group.riderIds})),
+                    riders:group.riderIds.map(id=>{
+                      const rider=handoff.riderGroups.find(row=>row.id===id);
+                      return {riderId:id,energy:rider?.energy};
+                    })})),
                 });
             }
           }
