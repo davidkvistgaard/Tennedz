@@ -19,9 +19,10 @@ const motorMode=process.argv[4]??'current';
 const paceMode=process.argv[5]??'preset';
 const plannedFinale=['planned-finale','planned-finale-open',
   'planned-finale-one-chaser','planned-finale-three-chasers',
-  'planned-finale-selective-chaser','planned-finale-allied'].includes(paceMode);
+  'planned-finale-selective-chaser','planned-finale-allied',
+  'planned-finale-surge','planned-finale-allied-drive'].includes(paceMode);
 const plannedChasers=['planned-finale-one-chaser','planned-finale-selective-chaser',
-  'planned-finale-allied']
+  'planned-finale-allied','planned-finale-surge','planned-finale-allied-drive']
   .includes(paceMode)?1:
   paceMode==='planned-finale-three-chasers'?3:0;
 const distanceKm=process.argv[6]===undefined?120:Number(process.argv[6]);
@@ -52,15 +53,17 @@ if(!Number.isInteger(samples)||samples<1||samples>100||
   !['preset','paced-rival','steady-rival','rotate-rival','late-hard-rival',
     'rotate-plans','planned-finale','planned-finale-open',
     'planned-finale-one-chaser','planned-finale-three-chasers',
-    'planned-finale-selective-chaser','planned-finale-allied'].includes(paceMode)||
+    'planned-finale-selective-chaser','planned-finale-allied',
+    'planned-finale-surge','planned-finale-allied-drive'].includes(paceMode)||
   ['steady-rival','rotate-rival','late-hard-rival','rotate-plans','planned-finale',
     'planned-finale-open','planned-finale-one-chaser',
     'planned-finale-three-chasers','planned-finale-selective-chaser',
-    'planned-finale-allied']
+    'planned-finale-allied','planned-finale-surge',
+    'planned-finale-allied-drive']
     .includes(paceMode)&&
     !['explicit-front','draft-shelter','distance-load',
       'recovery-ceiling','phase-attack'].includes(motorMode))
-  throw new Error('Usage: node scripts/engine-v2-ensemble.mjs [paired samples: 1-100] [teams: 2-20] [current|candidate|paid-pace|bounded-finale|bounded-bridge-finale|earned-bridge-finale|neutral-pace|explicit-front|draft-shelter|distance-load|recovery-ceiling|phase-attack] [preset|paced-rival|steady-rival|rotate-rival|late-hard-rival|rotate-plans|planned-finale|planned-finale-open|planned-finale-one-chaser|planned-finale-three-chasers|planned-finale-selective-chaser|planned-finale-allied (v86+ only)] [120|260 km] [first chaser skill cap: 20-100]');
+  throw new Error('Usage: node scripts/engine-v2-ensemble.mjs [paired samples: 1-100] [teams: 2-20] [current|candidate|paid-pace|bounded-finale|bounded-bridge-finale|earned-bridge-finale|neutral-pace|explicit-front|draft-shelter|distance-load|recovery-ceiling|phase-attack] [preset|paced-rival|steady-rival|rotate-rival|late-hard-rival|rotate-plans|planned-finale|planned-finale-open|planned-finale-one-chaser|planned-finale-three-chasers|planned-finale-selective-chaser|planned-finale-allied|planned-finale-surge|planned-finale-allied-drive (v86+ only)] [120|260 km] [first chaser skill cap: 20-100]');
 
 const ROUTES={
   flat:{distance_km:120,profile_points:[[0,60],[40,60],[80,75],[120,60]],
@@ -112,9 +115,12 @@ function fictionalTeams(sample,gender){
 function plannedOpponentOrders(index,team,course){
   if(paceMode==='planned-finale')return {baseline:{frontWork:index%2===0?
     'rotate':'sit_in'}};
-  if(paceMode==='planned-finale-allied'&&index===2)return {
+  if(['planned-finale-allied','planned-finale-allied-drive']
+    .includes(paceMode)&&index===2)return {
     baseline:{effort:'conserve',attack:'none',chase:'ignore',frontWork:'sit_in'},
     phases:[{atKm:distanceKm-5,attack:'selective',
+      ...(paceMode==='planned-finale-allied-drive'?{
+        effort:'hard',breakWork:'drive'}:{}),
       attackRiderId:team.riders[course==='flat'?2:1].id}]};
   const chaser=index<=plannedChasers;
   return {baseline:{effort:'conserve',attack:'none',chase:'ignore',
@@ -153,7 +159,7 @@ for(const [course,stage] of Object.entries(distanceKm===260?LONG_ROUTES:ROUTES))
         alliedPhaseAttempt:0,alliedPhaseJoin:0,alliedPhaseCaught:0,
         alliedPhaseBreakKm:0,
         alliedFinalAttempt:0,alliedFinalJoin:0,alliedFinalSurvive:0,
-        alliedFinalCaughtAtLine:0,alliedFinalWin:0,
+        alliedFinalCaughtAtLine:0,alliedFinalWin:0,eitherAlliedWin:0,
         paidWorkerEnergy:0,paidWorkerRaces:0,paidWorkerCount:0,frontConcentration:0,
         finalGaps:[],
         maxGroups:0,multiGroupFinishes:0,chaseGroupAttackMoves:0,
@@ -179,6 +185,8 @@ for(const [course,stage] of Object.entries(distanceKm===260?LONG_ROUTES:ROUTES))
             ...(plannedFinale?index===0?{
               baseline:{attack:'none',chase:'ignore',frontWork:'sit_in'},
               phases:[{atKm:distanceKm-5,attack:'selective',
+                ...(['planned-finale-surge','planned-finale-allied-drive']
+                  .includes(paceMode)?{effort:'hard',breakWork:'drive'}:{}),
                 attackRiderId:team.riders[course==='flat'?2:1].id}],
             }:plannedOpponentOrders(index,team,course):{})},
         }));
@@ -213,7 +221,8 @@ for(const [course,stage] of Object.entries(distanceKm===260?LONG_ROUTES:ROUTES))
             .find(row=>row.id===plannedId)?.group==='peloton');
           totals.plannedFinalAttempt+=Number(finalFrame.attackReasons.some(row=>
             row.riderId===plannedId&&row.reason==='named_order'));
-          if(paceMode==='planned-finale-allied'){
+          if(['planned-finale-allied','planned-finale-allied-drive']
+            .includes(paceMode)){
             const alliedId=teams[2].riders[course==='flat'?2:1].id;
             totals.alliedPhaseAttempt+=Number(lateFrames.some(frame=>
               frame.attackReasons.some(row=>row.riderId===alliedId&&
@@ -233,6 +242,8 @@ for(const [course,stage] of Object.entries(distanceKm===260?LONG_ROUTES:ROUTES))
             totals.alliedFinalCaughtAtLine+=Number(finalFrame.finishLineCatch&&
               finalFrame.caughtBreakawayRiderIds.includes(alliedId));
             totals.alliedFinalWin+=Number(winner.riderId===alliedId);
+            totals.eitherAlliedWin+=Number([plannedId,alliedId]
+              .includes(winner.riderId));
           }
           totals.plannedFinalJoin+=Number(finalFrame.joinedBreakawayRiderIds
             .includes(plannedId));
@@ -414,24 +425,26 @@ for(const [course,stage] of Object.entries(distanceKm===260?LONG_ROUTES:ROUTES))
           +(totals.plannedFinalPlace/samples).toFixed(2):null,
         meanPlannedFinalEnergy:plannedFinale?
           +(totals.plannedFinalEnergy/samples).toFixed(2):null,
-        alliedFinalAttemptRate:paceMode==='planned-finale-allied'?
+        alliedFinalAttemptRate:paceMode.includes('allied')?
           totals.alliedFinalAttempt/samples:null,
-        alliedPhaseAttemptRate:paceMode==='planned-finale-allied'?
+        alliedPhaseAttemptRate:paceMode.includes('allied')?
           totals.alliedPhaseAttempt/samples:null,
-        alliedPhaseJoinRate:paceMode==='planned-finale-allied'?
+        alliedPhaseJoinRate:paceMode.includes('allied')?
           totals.alliedPhaseJoin/samples:null,
-        alliedPhaseCatchRate:paceMode==='planned-finale-allied'?
+        alliedPhaseCatchRate:paceMode.includes('allied')?
           totals.alliedPhaseCaught/samples:null,
-        meanAlliedPhaseBreakKm:paceMode==='planned-finale-allied'?
+        meanAlliedPhaseBreakKm:paceMode.includes('allied')?
           +(totals.alliedPhaseBreakKm/samples).toFixed(2):null,
-        alliedFinalJoinRate:paceMode==='planned-finale-allied'?
+        alliedFinalJoinRate:paceMode.includes('allied')?
           totals.alliedFinalJoin/samples:null,
-        alliedFinalSurvivalRate:paceMode==='planned-finale-allied'?
+        alliedFinalSurvivalRate:paceMode.includes('allied')?
           totals.alliedFinalSurvive/samples:null,
-        alliedFinalFinishLineCatchRate:paceMode==='planned-finale-allied'?
+        alliedFinalFinishLineCatchRate:paceMode.includes('allied')?
           totals.alliedFinalCaughtAtLine/samples:null,
-        alliedFinalWinRate:paceMode==='planned-finale-allied'?
+        alliedFinalWinRate:paceMode.includes('allied')?
           totals.alliedFinalWin/samples:null,
+        eitherAlliedWinRate:paceMode.includes('allied')?
+          totals.eitherAlliedWin/samples:null,
         meanPaidPaceKm:+(totals.paidPaceKm/samples).toFixed(2),
         meanPaidWorkerFinalEnergy:totals.paidWorkerRaces?
           +(totals.paidWorkerEnergy/totals.paidWorkerRaces).toFixed(2):null,
