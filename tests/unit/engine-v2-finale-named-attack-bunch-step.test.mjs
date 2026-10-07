@@ -7,7 +7,9 @@ import {advanceFinaleNamedAttackTransition} from
 import {continueFinaleNamedAttackGroup} from
   '../../lib/engine/v2/finale-named-attack-followup.mjs';
 import {continueFinaleNamedAttackBunch,
-  validateFinaleNamedAttackBunchStep} from
+  continueFinaleNamedAttackBunchChain,
+  validateFinaleNamedAttackBunchStep,
+  validateFinaleNamedAttackBunchChain} from
   '../../lib/engine/v2/finale-named-attack-bunch-step.mjs';
 import {MOTOR_ATTACK_TRACE_VERSION} from '../../lib/engine/v2/tuning.mjs';
 
@@ -58,6 +60,23 @@ test('a caught or contained named attack enters one paid passive bunch slice',()
     ...caught,bunchElapsedSeconds:0}),/does not replay/);
   assert.throws(()=>continueFinaleNamedAttackBunch({...caughtInput,
     followup:{...followup,catchDistanceM:0}}),/does not replay/);
+  const caughtFrames=[caught];
+  for(const nextSlice of grid.slice(grid.indexOf(first)+3)){
+    const next=continueFinaleNamedAttackBunchChain({launchInput,launch,
+      followup,frames:caughtFrames,slice:nextSlice});
+    caughtFrames.push(next);
+  }
+  assert.equal(caughtFrames.at(-1).endDistanceM,40000);
+  assert.equal(caughtFrames.at(-1).pelotonRiderIds.length,16);
+  assert.ok(caughtFrames.slice(1).every(row=>
+    row.version==='v2-finale-named-attack-bunch-step-2'));
+  const lastCatchInput={launchInput,launch,followup,
+    frames:caughtFrames.slice(0,-1),slice:grid.at(-1)};
+  assert.equal(validateFinaleNamedAttackBunchChain(lastCatchInput,
+    caughtFrames.at(-1)),true);
+  assert.throws(()=>continueFinaleNamedAttackBunchChain({
+    ...lastCatchInput,frames:[{...caught,bunchElapsedSeconds:0},
+      ...caughtFrames.slice(1,-1)]}),/does not replay/);
   const weakTeams=teams.map(row=>row.id==='a'?{...row,
     riders:row.riders.map(rider=>({...rider,flat:20,
       timetrial:20,strength:20,acceleration:20}))}:row);
@@ -70,6 +89,16 @@ test('a caught or contained named attack enters one paid passive bunch slice',()
   assert.equal(contained.sourceFrameVersion,containedLaunch.version);
   assert.deepEqual(contained.pelotonRiderIds,pelotonRiderIds);
   assert.equal(contained.riderEnergy.length,16);
+  const containedFrames=[contained];
+  for(const nextSlice of grid.slice(grid.indexOf(first)+2)){
+    const next=continueFinaleNamedAttackBunchChain({
+      launchInput:containedInput,launch:containedLaunch,
+      frames:containedFrames,slice:nextSlice});
+    containedFrames.push(next);
+  }
+  assert.equal(containedFrames.at(-1).endDistanceM,40000);
+  assert.deepEqual(containedFrames.at(-1).pelotonRiderIds,
+    pelotonRiderIds);
   assert.throws(()=>continueFinaleNamedAttackBunch({
     launchInput:containedInput,launch:containedLaunch,
     slice:grid[grid.indexOf(first)+2]}),/adjacent/);
