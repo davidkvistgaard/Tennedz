@@ -9,7 +9,8 @@ import {MOTOR_CANDIDATE_VERSION,MOTOR_PAID_PACE_VERSION,
   MOTOR_FINALE_VERSION,MOTOR_BRIDGE_FINALE_VERSION,
   MOTOR_EARNED_BRIDGE_VERSION,MOTOR_NEUTRAL_PACE_VERSION,
   MOTOR_EXPLICIT_FRONT_VERSION,MOTOR_DRAFT_SHELTER_VERSION,
-  MOTOR_DISTANCE_LOAD_VERSION,MOTOR_RECOVERY_CEILING_VERSION} from
+  MOTOR_DISTANCE_LOAD_VERSION,MOTOR_RECOVERY_CEILING_VERSION,
+  MOTOR_PHASE_ATTACK_VERSION} from
   '../../lib/engine/v2/tuning.mjs';
 
 function team(id,level,{effort='conserve',attack='none',chase='ignore',
@@ -361,4 +362,38 @@ test('v89 lowers the recovery ceiling only after a very long distance',()=>{
     motorVersion:MOTOR_RECOVERY_CEILING_VERSION});
   assert.ok(energy(tired87,200,'hard-7')<80);
   assert.equal(energy(tired89,200,'hard-7'),energy(tired87,200,'hard-7'));
+});
+
+test('v90 starts a named phase attack on its committed kilometre',()=>{
+  const stage={distance_km:40,profile_points:[[0,100],[40,100]]};
+  const attacker=team('planned',90,{phases:[{atKm:35,attack:'selective',
+    attackRiderId:'planned-7'}]});
+  const opponent=team('other',50);
+  const input={stage,teams:[attacker,opponent],seed:'named-phase-boundary'};
+  const prior=simulateTacticalTour({...input,
+    motorVersion:MOTOR_RECOVERY_CEILING_VERSION});
+  const phase=simulateTacticalTour({...input,
+    motorVersion:MOTOR_PHASE_ATTACK_VERSION});
+  assert.equal(prior.frames[35].attackReasons.some(row=>
+    row.riderId==='planned-7'),false);
+  assert.deepEqual(phase.frames[35].attackReasons.filter(row=>
+    row.riderId==='planned-7'),[{riderId:'planned-7',reason:'named_order'}]);
+  assert.equal(phase.frames[36].attackReasons.some(row=>
+    row.riderId==='planned-7'),false);
+  assert.equal(phase.tuningVersion,MOTOR_PHASE_ATTACK_VERSION);
+  assert.equal(validateRecordedTour(prior),true);
+  assert.equal(validateRecordedTour(phase),true);
+  assert.deepEqual(phase,simulateTacticalTour({...input,
+    motorVersion:MOTOR_PHASE_ATTACK_VERSION}));
+  const inherited=team('inherited',90,{phases:[{atKm:35,attack:'selective'}]});
+  inherited.orders.baseline.attackRiderId='inherited-7';
+  const unrelated=team('unrelated',90,{attack:'selective',
+    phases:[{atKm:35,effort:'steady'}]});
+  unrelated.orders.baseline.attackRiderId='unrelated-7';
+  const atBoundary=raw=>resolveTacticalKilometre({
+    teams:[prepared(raw,40,true),prepared(opponent,40,true)],
+    km:36,distanceKm:40,resolutionVersion:MOTOR_PHASE_ATTACK_VERSION});
+  assert.deepEqual(atBoundary(inherited).attackers.map(row=>row.riderId),
+    ['inherited-7']);
+  assert.deepEqual(atBoundary(unrelated).attackers,[]);
 });

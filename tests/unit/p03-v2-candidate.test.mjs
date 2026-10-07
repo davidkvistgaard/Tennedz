@@ -2,7 +2,8 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {assignPointDivisions} from '../../lib/calendar/division-reveal.mjs';
 import {validateRecordedTour} from '../../lib/engine/v2/recording.mjs';
-import {MOTOR_NEUTRAL_PACE_VERSION,MOTOR_RECOVERY_CEILING_VERSION,TUNING_VERSION}
+import {MOTOR_NEUTRAL_PACE_VERSION,MOTOR_RECOVERY_CEILING_VERSION,
+  MOTOR_PHASE_ATTACK_VERSION,TUNING_VERSION}
   from '../../lib/engine/v2/tuning.mjs';
 import {previewRecordedDivisions,previewLockedV2RecordedDivisions}
   from '../../lib/race/v2-candidate.mjs';
@@ -288,6 +289,28 @@ test('v89 read-only 45-team preview preserves explicit front plans and long-dist
   assert.equal(contract.divisions.flatMap(division=>division.awards).length,60);
   assert.throws(()=>previewRecordedDivisions(input,{v2OrdersByTeamId:orders}),
     /Invalid baseline fields/);
+});
+
+test('v90 read-only division preview records a named phase attack and versioned result',()=>{
+  const input=snapshot(2);
+  const orders=Object.fromEntries(input.teams.map((team,index)=>[team.id,{
+    captainId:team.entry.captain_id,preset:'balanced',
+    baseline:{effort:'conserve',attack:'none',chase:'ignore',frontWork:'sit_in'},
+    ...(index===0?{phases:[{atKm:15,attack:'selective',
+      attackRiderId:team.entry.selected_riders[2]}]}:{}),
+  }]));
+  const options={v2OrdersByTeamId:orders,motorVersion:MOTOR_PHASE_ATTACK_VERSION};
+  const preview=previewRecordedDivisions(input,options);
+  assert.deepEqual(preview,previewRecordedDivisions(input,options));
+  const recording=preview.divisions[0].recording;
+  assert.equal(recording.tuningVersion,MOTOR_PHASE_ATTACK_VERSION);
+  assert.equal(recording.frames[15].attackReasons.some(row=>
+    row.riderId===input.teams[0].entry.selected_riders[2]&&
+      row.reason==='named_order'),true);
+  assert.equal(validateRecordedTour(recording),true);
+  const contract=buildV2OneDayResultContract(preview,{tier:3});
+  assert.equal(validateV2OneDayResultContract(contract),contract);
+  assert.equal(contract.divisions[0].riderResults.length,16);
 });
 
 test('one versioned v2 result contract binds each replay, captain placing and award',()=>{
