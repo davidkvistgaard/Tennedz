@@ -22,12 +22,14 @@ const plannedFinale=['planned-finale','planned-finale-open',
   'planned-finale-selective-chaser','planned-finale-allied',
   'planned-finale-surge','planned-finale-allied-drive',
   'planned-finale-two-chasers-allied-drive',
+  'planned-finale-two-selective-chasers-allied-drive',
   'planned-finale-three-chasers-allied-drive',
   'planned-finale-own-plans-allied-drive'].includes(paceMode);
 const plannedChasers=['planned-finale-one-chaser','planned-finale-selective-chaser',
   'planned-finale-allied','planned-finale-surge','planned-finale-allied-drive']
   .includes(paceMode)?1:
-  paceMode==='planned-finale-two-chasers-allied-drive'?2:
+  ['planned-finale-two-chasers-allied-drive',
+    'planned-finale-two-selective-chasers-allied-drive'].includes(paceMode)?2:
   ['planned-finale-three-chasers',
     'planned-finale-three-chasers-allied-drive'].includes(paceMode)?3:0;
 const distanceKm=process.argv[6]===undefined?120:Number(process.argv[6]);
@@ -61,6 +63,7 @@ if(!Number.isInteger(samples)||samples<1||samples>100||
     'planned-finale-selective-chaser','planned-finale-allied',
     'planned-finale-surge','planned-finale-allied-drive',
     'planned-finale-two-chasers-allied-drive',
+    'planned-finale-two-selective-chasers-allied-drive',
     'planned-finale-three-chasers-allied-drive',
     'planned-finale-own-plans-allied-drive'].includes(paceMode)||
   ['steady-rival','rotate-rival','late-hard-rival','rotate-plans','planned-finale',
@@ -69,11 +72,12 @@ if(!Number.isInteger(samples)||samples<1||samples>100||
     'planned-finale-allied','planned-finale-surge',
     'planned-finale-allied-drive','planned-finale-three-chasers-allied-drive',
     'planned-finale-two-chasers-allied-drive',
+    'planned-finale-two-selective-chasers-allied-drive',
     'planned-finale-own-plans-allied-drive']
     .includes(paceMode)&&
     !['explicit-front','draft-shelter','distance-load',
       'recovery-ceiling','phase-attack'].includes(motorMode))
-  throw new Error('Usage: node scripts/engine-v2-ensemble.mjs [paired samples: 1-100] [teams: 2-20] [current|candidate|paid-pace|bounded-finale|bounded-bridge-finale|earned-bridge-finale|neutral-pace|explicit-front|draft-shelter|distance-load|recovery-ceiling|phase-attack] [preset|paced-rival|steady-rival|rotate-rival|late-hard-rival|rotate-plans|planned-finale|planned-finale-open|planned-finale-one-chaser|planned-finale-three-chasers|planned-finale-selective-chaser|planned-finale-allied|planned-finale-surge|planned-finale-allied-drive|planned-finale-two-chasers-allied-drive|planned-finale-three-chasers-allied-drive|planned-finale-own-plans-allied-drive (v86+ only)] [120|260 km] [first chaser skill cap: 20-100]');
+  throw new Error('Usage: node scripts/engine-v2-ensemble.mjs [paired samples: 1-100] [teams: 2-20] [current|candidate|paid-pace|bounded-finale|bounded-bridge-finale|earned-bridge-finale|neutral-pace|explicit-front|draft-shelter|distance-load|recovery-ceiling|phase-attack] [preset|paced-rival|steady-rival|rotate-rival|late-hard-rival|rotate-plans|planned-finale|planned-finale-open|planned-finale-one-chaser|planned-finale-three-chasers|planned-finale-selective-chaser|planned-finale-allied|planned-finale-surge|planned-finale-allied-drive|planned-finale-two-chasers-allied-drive|planned-finale-two-selective-chasers-allied-drive|planned-finale-three-chasers-allied-drive|planned-finale-own-plans-allied-drive (v86+ only)] [120|260 km] [first chaser skill cap: 20-100]');
 
 const ROUTES={
   flat:{distance_km:120,profile_points:[[0,60],[40,60],[80,75],[120,60]],
@@ -126,6 +130,7 @@ function plannedOpponentOrders(index,team,course){
   if(['planned-finale-allied','planned-finale-allied-drive',
     'planned-finale-own-plans-allied-drive',
     'planned-finale-two-chasers-allied-drive',
+    'planned-finale-two-selective-chasers-allied-drive',
     'planned-finale-three-chasers-allied-drive']
     .includes(paceMode)&&index===2)return {
     baseline:{effort:'conserve',attack:'none',chase:'ignore',frontWork:'sit_in'},
@@ -138,12 +143,17 @@ function plannedOpponentOrders(index,team,course){
       'rotate':'sit_in'}};
   const chaser=index<=plannedChasers+
     Number(['planned-finale-two-chasers-allied-drive',
+      'planned-finale-two-selective-chasers-allied-drive',
       'planned-finale-three-chasers-allied-drive'].includes(paceMode));
   return {baseline:{effort:'conserve',attack:'none',chase:'ignore',
     frontWork:chaser?'sit_in':index%2===0?'rotate':'sit_in'},
   ...(chaser?{phases:[{atKm:distanceKm-10,
-    effort:paceMode==='planned-finale-selective-chaser'?'steady':'hard',
-    chase:paceMode==='planned-finale-selective-chaser'?'selective':'all'}]}:{})};
+    effort:['planned-finale-selective-chaser',
+      'planned-finale-two-selective-chasers-allied-drive'].includes(paceMode)?
+      'steady':'hard',
+    chase:['planned-finale-selective-chaser',
+      'planned-finale-two-selective-chasers-allied-drive'].includes(paceMode)?
+      'selective':'all'}]}:{})};
 }
 
 const report={pairedSamples:samples,fieldTeams,motorMode,paceMode,distanceKm,
@@ -204,6 +214,7 @@ for(const [course,stage] of Object.entries(distanceKm===260?LONG_ROUTES:ROUTES))
               phases:[{atKm:distanceKm-5,attack:'selective',
                 ...(['planned-finale-surge','planned-finale-allied-drive',
                   'planned-finale-two-chasers-allied-drive',
+                  'planned-finale-two-selective-chasers-allied-drive',
                   'planned-finale-three-chasers-allied-drive',
                   'planned-finale-own-plans-allied-drive']
                   .includes(paceMode)?{effort:'hard',breakWork:'drive'}:{}),
@@ -246,6 +257,7 @@ for(const [course,stage] of Object.entries(distanceKm===260?LONG_ROUTES:ROUTES))
             row.riderId===plannedId&&row.reason==='named_order'));
           if(['planned-finale-allied','planned-finale-allied-drive',
             'planned-finale-two-chasers-allied-drive',
+            'planned-finale-two-selective-chasers-allied-drive',
             'planned-finale-three-chasers-allied-drive',
             'planned-finale-own-plans-allied-drive']
             .includes(paceMode)){
