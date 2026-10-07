@@ -278,6 +278,58 @@ test('two genuinely engaged rival teams supply a reproducible relay probe',()=>{
     chaseRiderIds:['b-2','a-3'],rotation}),/engaged in the bunch chase/);
 });
 
+test('independent chasing teams rotate paid pulls through a group catch and finish',()=>{
+  const tour=simulateTacticalTour({...input,seed:'group-rotation',teams:[
+    input.teams[0],
+    team('b','protect',{attack:'none',chase:'selective'}),
+    team('c','protect',{attack:'none',chase:'selective'}),
+  ]});
+  assert.deepEqual(tour.frames[34].engagedChaseTeamIds,['b','c']);
+  const rotation=finaleDistanceGrid(tour.route).map((_,index)=>
+    index%2?'c-2':'b-2');
+  const probe=probeFinaleGroupRunFromTour(tour,{
+    frontPullRiderId:'a-2',chasePullRiderId:'b-2',
+    chaseRotationRiderIds:rotation});
+  const fixed=probeFinaleGroupRunFromTour(tour,{
+    frontPullRiderId:'a-2',chasePullRiderId:'b-2'}).recording;
+  assert.equal(probe.recording.version,'v2-finale-group-run-3');
+  assert.deepEqual(probe.recording.chaseRotationRiderIds,rotation);
+  assert.equal(validateFinaleGroupRun(probe.input,probe.recording),true);
+  const remaining=(recording,id)=>recording.frames.at(-1).riders.find(rider=>
+    rider.riderId===id).energy;
+  assert.ok(remaining(probe.recording,'b-2')>remaining(fixed,'b-2'));
+  assert.ok(remaining(probe.recording,'c-2')<remaining(fixed,'c-2'));
+  const first=probe.recording.frames[0];
+  assert.equal(first.chasePullRiderId,'b-2');
+  assert.equal(first.riders.find(rider=>rider.riderId==='c-2').role,
+    'sheltered');
+  const trial=structuredClone(probe.input);
+  trial.snapshot.roadGroups[0].gapSeconds=1;
+  trial.teams[0].riders.find(rider=>rider.id==='a-2').timetrial=30;
+  for(const id of ['b','c'])trial.teams.find(team=>team.id===id)
+    .riders.find(rider=>rider.id===`${id}-2`).strength=100;
+  const recording=simulateFinaleGroupToLine(trial);
+  assert.equal(recording.version,'v2-finale-group-to-line-3');
+  assert.equal(recording.outcome,'caught_merged');
+  assert.equal(recording.mergedFrames.at(-1).endDistanceM,40000);
+  for(const frame of recording.mergedFrames){
+    const index=finaleDistanceGrid(tour.route).findIndex(slice=>
+      slice.startDistanceM<=frame.startDistanceM&&
+      slice.endDistanceM>=frame.endDistanceM);
+    assert.equal(frame.pullRiderId,rotation[index]);
+    assert.ok(frame.riders.find(rider=>rider.riderId===frame.pullRiderId)
+      .energySpent>0);
+  }
+  assert.equal(validateFinaleGroupToLine(trial,recording),true);
+  const altered=structuredClone(recording);
+  altered.mergedFrames.at(-1).pullRiderId='b-0';
+  assert.throws(()=>validateFinaleGroupToLine(trial,altered),/differs/);
+  assert.throws(()=>probeFinaleGroupRunFromTour(tour,{
+    frontPullRiderId:'a-2',chasePullRiderId:'b-2',
+    chaseRotationRiderIds:rotation.map((id,index)=>index===1?'a-3':id),
+  }),/engaged in the bunch chase/);
+});
+
 test('a 300 km recording carries earned fatigue into the read-only finale',()=>{
   const distance=300;
   const longStage={distance_km:distance,profile_points:[[0,100],[distance,100]]};
