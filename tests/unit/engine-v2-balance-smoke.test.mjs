@@ -125,7 +125,7 @@ test('fixed-role finale validates a partial merge and line catch',()=>{
   assert.equal(report.managerMixRoleMode,'fixed');
 });
 
-test('ordered short-step coverage accounts for every independent source state',()=>{
+test('guarded short-step coverage accounts for every independent source state',()=>{
   const report=JSON.parse(execFileSync(process.execPath,[ensembleScript,'1','20',
     'attack-trace','planned-finale-allied-manager-mix-2','260','100','0',
     '2','20','4','100','hard','0','80','0','4','0','independent','2',
@@ -133,7 +133,7 @@ test('ordered short-step coverage accounts for every independent source state',(
     encoding:'utf8',timeout:60_000,maxBuffer:8*1024*1024,
   }));
   assert.equal(report.orderedFinaleCoverage,'ordered');
-  let exhausted=0;
+  let pendingAttacks=0;
   for(const genders of Object.values(report.courses))
     for(const strategies of Object.values(genders))
       for(const cell of Object.values(strategies)){
@@ -144,8 +144,15 @@ test('ordered short-step coverage accounts for every independent source state',(
           .reduce((sum,count)=>sum+count,0);
         assert.equal(coverage.accepted+rejected,coverage.oneRoadGroup);
         assert.equal(coverage.survived+coverage.caught,coverage.accepted);
-        exhausted+=coverage.exhaustionDroppedRiders;
+        const multiRejected=Object.values(coverage.multiSeparatedRejections)
+          .reduce((sum,count)=>sum+count,0);
+        assert.equal(coverage.multiSeparatedAccepted+multiRejected,
+          coverage.multipleRoadGroups);
+        pendingAttacks+=Object.entries({...coverage.readOnlyRejections,
+          ...coverage.multiSeparatedRejections}).filter(([reason])=>
+          reason.includes('needs a recorded peloton attack'))
+          .reduce((sum,[,count])=>sum+count,0);
         assert.ok(coverage.racesWithExhaustionDrop<=coverage.accepted);
       }
-  assert.ok(exhausted>0);
+  assert.ok(pendingAttacks>0);
 });

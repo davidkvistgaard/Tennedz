@@ -10,6 +10,9 @@ import {hasResidualGapAfterSufficientChase} from '../lib/engine/v2/balance-audit
 import {probeFinaleOrderedGroupToLineFromTour,
   validateFinaleOrderedGroupToLineFromTour} from
   '../lib/engine/v2/finale-ordered-run.mjs';
+import {probeFinaleSeparatedGroupsFromTour,
+  validateFinaleSeparatedGroupsFromTour} from
+  '../lib/engine/v2/finale-multi-run.mjs';
 import {TUNING,TUNING_VERSION,MOTOR_CANDIDATE_VERSION,MOTOR_PAID_PACE_VERSION,
   MOTOR_FINALE_VERSION,MOTOR_BRIDGE_FINALE_VERSION,MOTOR_EARNED_BRIDGE_VERSION,
   MOTOR_NEUTRAL_PACE_VERSION,MOTOR_EXPLICIT_FRONT_VERSION,
@@ -334,6 +337,8 @@ for(const [course,stage] of Object.entries(distanceKm===260?LONG_ROUTES:ROUTES))
         noRoadGroupWithAttackOrder:0,
         noRoadGroupWithNamedAttackOrder:0,
         noRoadGroupExamples:[],multipleRoadGroupExamples:[],
+        multiSeparatedAccepted:0,multiSeparatedRejections:{},
+        multiSeparatedRejectionExamples:[],
         survived:0,caught:0,exhaustionDroppedRiders:0,
         racesWithExhaustionDrop:0,readOnlyRejections:{},examples:[],
         rejectionExamples:[]};
@@ -469,6 +474,19 @@ for(const [course,stage] of Object.entries(distanceKm===260?LONG_ROUTES:ROUTES))
                   riderIds:group.riderIds})),
                 pelotonRiderCount:handoff.riderGroups.filter(row=>
                   row.group==='peloton').length});
+            try{
+              const probe=probeFinaleSeparatedGroupsFromTour(race);
+              validateFinaleSeparatedGroupsFromTour(race,probe);
+              orderedFinale.multiSeparatedAccepted++;
+            }catch(error){
+              const reason=String(error.message);
+              orderedFinale.multiSeparatedRejections[reason]=
+                (orderedFinale.multiSeparatedRejections[reason]??0)+1;
+              if(orderedFinale.multiSeparatedRejectionExamples.length<3)
+                orderedFinale.multiSeparatedRejectionExamples.push({sample,
+                  reason,sourceGroups:handoff.roadGroups.map(group=>({
+                    id:group.id,gapSeconds:group.gapSeconds}))});
+            }
           }
           else if(!handoff.riderGroups.some(rider=>rider.group==='peloton'))
             orderedFinale.noBunch++;
