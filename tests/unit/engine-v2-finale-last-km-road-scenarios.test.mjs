@@ -102,6 +102,21 @@ test('independent v91 managers reach the line with recorded solo and catch branc
   }
 });
 
+test('a valid rotating rival is not silently turned into passive finale travel',()=>{
+  const attacker=team('a',60,'M','ignore',true);
+  const rival=team('b',80,'M','ignore',false);
+  rival.orders.helperIds=['b-2','b-3'];
+  rival.orders.baseline.frontWork='rotate';
+  const tour=simulateTacticalTour({stage,teams:[attacker,rival],
+    seed:'frontwork-boundary',motorVersion:MOTOR_ATTACK_TRACE_VERSION});
+  assert.deepEqual(tour.frames.at(-2).paidBunchPace.riderIds,
+    ['b-2','b-3']);
+  assert.deepEqual(tour.frames.at(-1).paidBunchPace.riderIds,
+    ['b-2','b-3']);
+  assert.throws(()=>probeLastKmNamedAttackRoadFromTour(tour,
+    {teamId:'a'}),/needs recorded GC or front work/);
+});
+
 test('nominated lead-outs pay for each 100 m approach slice',()=>{
   const caught=simulateTacticalTour({stage,teams:[
     team('a',60,'M','ignore',true),team('b',80,'M','all',false)],
