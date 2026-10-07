@@ -24,6 +24,7 @@ test('the finale grid covers exactly five kilometres and names its coarse route 
     ...Array(5).fill('finish')]);
   assert.deepEqual(slices.slice(-7).map(slice=>slice.sourceKm),Array(7).fill(40));
   assert.deepEqual(finaleDistanceGrid(route,{remainingKm:4}),slices.slice(1));
+  assert.deepEqual(finaleDistanceGrid(route,{remainingKm:1}),slices.slice(-7));
 });
 
 test('the grid rejects incomplete or unversioned route input',()=>{

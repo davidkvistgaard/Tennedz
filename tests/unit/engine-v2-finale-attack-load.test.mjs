@@ -6,6 +6,9 @@ import {finaleAttackLoadFromTour} from
   '../../lib/engine/v2/finale-attack-load.mjs';
 import {finaleSnapshotFromTour} from
   '../../lib/engine/v2/finale-snapshot.mjs';
+import {probeLastKmNamedAttackFromTour,
+  validateLastKmNamedAttackFromTour} from
+  '../../lib/engine/v2/finale-last-km-named-attack.mjs';
 
 const stage={distance_km:40,profile_points:[[0,100],[40,100]],
   keypoints:[{km:10,kind:'SPRINT'},{km:20,kind:'SPRINT'}]};
@@ -53,4 +56,54 @@ test('a recorded named attack enters the short-step boundary with repeat load',(
   const forged=structuredClone(tour);
   forged.frames[35].attackers=[];
   assert.throws(()=>finaleAttackLoadFromTour(forged,36));
+});
+
+test('last-kilometre handoff uses the actual penultimate frame and carries attack load',()=>{
+  const lateStage={...stage,keypoints:[...stage.keypoints,
+    {km:39,kind:'SPRINT'}]};
+  const lateAttacker=team('a');
+  lateAttacker.orders.phases=[{atKm:39,attack:'selective',
+    attackRiderId:'a-0'}];
+  const tour=simulateTacticalTour({stage:lateStage,
+    teams:[lateAttacker,team('b')],seed:'last-km-handoff',
+    motorVersion:MOTOR_ATTACK_TRACE_VERSION});
+  const source=finaleSnapshotFromTour(tour,{remainingKm:1,
+    includeAttackLoad:true});
+  assert.equal(source.version,'v2-finale-snapshot-last-km-4');
+  assert.equal(source.sourceKm,39);
+  assert.equal(source.startDistanceM,39000);
+  assert.equal(source.remainingM,1000);
+  assert.equal(source.sourceTuningVersion,tour.tuningVersion);
+  assert.equal(source.roadGroups.length,0);
+  assert.equal(source.droppedRiderIds.length,0);
+  assert.equal(source.peloton.riderIds.length,16);
+  assert.deepEqual(source.riderAttackLoads,
+    finaleAttackLoadFromTour(tour,39).riderLoads);
+  assert.deepEqual(source.riders.map(row=>row.energy),
+    tour.frames[38].riderGroups.map(row=>row.energy));
+  assert.equal(source.riderAttackLoads.find(row=>
+    row.riderId==='a-0').load,0);
+  assert.throws(()=>finaleSnapshotFromTour(tour,{remainingKm:1}),
+    /needs recorded attack load/);
+  assert.equal(finaleSnapshotFromTour(tour,{remainingKm:4}).version,
+    'v2-finale-snapshot-2');
+  const probe=probeLastKmNamedAttackFromTour(tour,{teamId:'a'});
+  assert.equal(probe.version,'v2-finale-last-km-named-attack-1');
+  assert.equal(probe.sourceSnapshotVersion,source.version);
+  assert.equal(probe.energyAtDecision,
+    source.riders.find(row=>row.riderId==='a-0').energy);
+  assert.equal(probe.sourceRepeatLoad,0);
+  assert.equal(probe.repeatLoad,0);
+  assert.equal(probe.transition.startDistanceM,39000);
+  assert.equal(probe.transition.riderEnergy.length,16);
+  assert.equal(validateLastKmNamedAttackFromTour(tour,
+    {teamId:'a'},probe),true);
+  assert.throws(()=>validateLastKmNamedAttackFromTour(tour,
+    {teamId:'a'},{...probe,energyAtDecision:-1}),/does not replay/);
+  assert.throws(()=>probeLastKmNamedAttackFromTour(tour,
+    {teamId:'b'}),/needs a named rider/);
+  const olderTour=simulateTacticalTour({stage:lateStage,
+    teams:[lateAttacker,team('b')],seed:'last-km-handoff'});
+  assert.throws(()=>probeLastKmNamedAttackFromTour(olderTour,
+    {teamId:'a'}),/needs a v91 source/);
 });
