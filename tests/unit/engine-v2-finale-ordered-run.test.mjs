@@ -2,7 +2,8 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {simulateTacticalTour} from '../../lib/engine/v2/tour.mjs';
 import {MOTOR_ATTACK_TRACE_VERSION} from '../../lib/engine/v2/tuning.mjs';
-import {validateFinaleGroupToLine} from '../../lib/engine/v2/finale-group-run.mjs';
+import {simulateFinaleGroupToLine,validateFinaleGroupToLine} from
+  '../../lib/engine/v2/finale-group-run.mjs';
 import {probeFinaleOrderedGroupToLineFromTour,
   validateFinaleOrderedGroupToLineFromTour} from
   '../../lib/engine/v2/finale-ordered-run.mjs';
@@ -19,12 +20,12 @@ function team(id,attack,gender='M'){
     phases:attack?[{atKm:30,attack:'selective',
       attackRiderId:`${id}-2`}]:[]}};
 }
-function source(orders={},gender='M'){
+function source(orders={},gender='M',routeStage=stage){
   const teams=['a','b','c','d'].map(id=>
     team(id,id==='a'||id==='b',gender));
   for(const [id,phase] of Object.entries(orders))
     teams.find(team=>team.id===id).orders.phases.push(phase);
-  return simulateTacticalTour({stage,teams,seed:'ordered-finale',
+  return simulateTacticalTour({stage:routeStage,teams,seed:'ordered-finale',
     motorVersion:MOTOR_ATTACK_TRACE_VERSION});
 }
 
@@ -96,6 +97,58 @@ test('a final-phase sit-on or ignored chase cannot nominate unpaid work',()=>{
     passive.recording.approachFrames[0].pelotonElapsedSeconds);
   assert.ok(hard.recording.finishGapSeconds<
     passive.recording.finishGapSeconds);
+});
+
+test('a route marker changes passive and paid chase within the same finale',()=>{
+  const marked={...stage,keypoints:[{km:38}]};
+  const tour=source({c:{atKm:38,chase:'ignore'},
+    d:{atKm:38,chase:'ignore'}},'M',marked);
+  const probe=probeFinaleOrderedGroupToLineFromTour(tour);
+  assert.equal(probe.version,'v2-finale-ordered-run-4');
+  assert.equal(probe.recording.version,'v2-finale-group-to-line-8');
+  assert.ok(probe.schedule.chasePullRiderIds.some(id=>id!==null));
+  assert.ok(probe.schedule.chasePullRiderIds.some(id=>id===null));
+  assert.ok(probe.recording.approachFrames.some(frame=>
+    frame.chasePullRiderId===null&&frame.version==='v2-finale-group-step-2'));
+  assert.ok(probe.recording.approachFrames.some(frame=>
+    frame.chasePullRiderId!==null&&frame.version==='v2-finale-group-step-1'));
+  assert.equal(validateFinaleOrderedGroupToLineFromTour(tour,probe),true);
+  const forged=structuredClone(probe);
+  forged.schedule.chasePullRiderIds[0]=null;
+  assert.throws(()=>validateFinaleOrderedGroupToLineFromTour(tour,forged),
+    /differs/);
+  const resumed=source({
+    c:{atKm:35,chase:'ignore'},
+    d:{atKm:35,chase:'ignore'},
+  },'M',marked);
+  const resumedTeams=structuredClone(resumed.committedInputs.teams);
+  for(const candidate of resumedTeams.filter(team=>
+    team.id==='c'||team.id==='d')){
+    candidate.orders.phases.push({atKm:38,chase:'all',effort:'hard'});
+  }
+  const resumedTour=simulateTacticalTour({stage:marked,
+    teams:resumedTeams,seed:'ordered-finale',
+    motorVersion:MOTOR_ATTACK_TRACE_VERSION});
+  const reverse=probeFinaleOrderedGroupToLineFromTour(resumedTour);
+  assert.equal(reverse.version,'v2-finale-ordered-run-4');
+  assert.equal(reverse.schedule.chasePullRiderIds[0],null);
+  assert.ok(reverse.schedule.chasePullRiderIds.at(-1)!==null);
+  assert.equal(validateFinaleOrderedGroupToLineFromTour(resumedTour,reverse),true);
+  const caught=structuredClone(probe.input);
+  caught.snapshot.roadGroups[0].gapSeconds=.2;
+  for(const team of caught.teams.filter(team=>
+    team.id==='a'||team.id==='b'))team.riders.find(rider=>
+      rider.id===`${team.id}-2`).timetrial=25;
+  for(const team of caught.teams.filter(team=>
+    team.id==='c'||team.id==='d'))for(const rider of team.riders){
+    rider.flat=100;
+    rider.strength=100;
+  }
+  const line=simulateFinaleGroupToLine(caught);
+  assert.equal(line.outcome,'caught_merged');
+  assert.ok(line.mergedFrames.some(frame=>frame.pullRiderId===null));
+  assert.ok(line.mergedFrames.some(frame=>frame.pullRiderId!==null));
+  assert.equal(validateFinaleGroupToLine(caught,line),true);
 });
 
 test('a long recorded race supplies depleted workers without free finale energy',()=>{
