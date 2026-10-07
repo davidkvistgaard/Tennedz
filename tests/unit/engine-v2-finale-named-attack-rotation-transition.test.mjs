@@ -14,6 +14,9 @@ import {continueFinaleNamedAttackRotationGroup,
   continueFinaleNamedAttackRotationCatch,
   validateFinaleNamedAttackRotationCatch} from
   '../../lib/engine/v2/finale-named-attack-rotation-followup.mjs';
+import {continueFinaleNamedAttackRotationBunch,
+  validateFinaleNamedAttackRotationBunch} from
+  '../../lib/engine/v2/finale-named-attack-rotation-bunch.mjs';
 import {MOTOR_ATTACK_TRACE_VERSION,TUNING} from
   '../../lib/engine/v2/tuning.mjs';
 
@@ -150,4 +153,46 @@ test('a rotating mid-slice catch pays a merged remainder in opt-in v2',()=>{
     launchInput:input,launch,slice:grid[1]},
   {...caught,catchDistanceM:grid[1].endDistanceM}),
   /does not replay/);
+});
+
+test('a contained attack pays once then independent front rotation continues',()=>{
+  for(const gender of ['M','F']){
+    const attacker=team('a',56,{attack:true,gender});
+    attacker.orders.baseline.effort='conserve';
+    const tour=simulateTacticalTour({stage,teams:[
+      attacker,
+      team('b',95,{rotate:true,gender}),
+      team('c',95,{chase:'all',gender}),
+      team('d',80,{rotate:true,gender})],
+    seed:`contained-rotation-${gender}`,
+    motorVersion:MOTOR_ATTACK_TRACE_VERSION});
+    const source=finaleSnapshotFromTour(tour,{remainingKm:1,
+      includeAttackLoad:true});
+    const grid=finaleDistanceGrid(tour.route,{remainingKm:1});
+    const launchInput={slice:grid[0],route:tour.route,
+      teams:tour.committedInputs.teams,
+      pelotonRiderIds:source.peloton.riderIds,
+      energies:new Map(source.riders.map(row=>[row.riderId,row.energy])),
+      attackerTeamId:'a',attackerRiderId:'a-0',
+      repeatLoad:Math.max(0,source.riderAttackLoads.find(row=>
+        row.riderId==='a-0').load-TUNING.attack.loadRecoveryPerKm)};
+    const launch=advanceFinaleNamedAttackRotationTransition(launchInput);
+    assert.equal(launch.roadGroups.length,0);
+    const input={launchInput,launch,slice:grid[1]};
+    const bunch=continueFinaleNamedAttackRotationBunch(input);
+    assert.equal(bunch.roadGroups.length,0);
+    assert.equal(bunch.pelotonRiderIds.length,32);
+    assert.equal(bunch.rotation.selected.teamId,'d');
+    assert.equal(bunch.riderEnergy.filter(row=>
+      row.role==='front_rotation').length,2);
+    assert.ok(bunch.riderEnergy.every(row=>
+      row.energySpent>0&&row.energyAfter>=0));
+    assert.equal(validateFinaleNamedAttackRotationBunch(input,bunch),true);
+    assert.throws(()=>validateFinaleNamedAttackRotationBunch(input,{
+      ...bunch,bunchElapsedSeconds:0}),/does not replay/);
+    assert.throws(()=>validateFinaleNamedAttackRotationBunch(input,{
+      ...bunch,riderEnergy:bunch.riderEnergy.map(row=>
+        row.role==='front_rotation'?{...row,energySpent:0}:row)}),
+    /does not replay/);
+  }
 });
