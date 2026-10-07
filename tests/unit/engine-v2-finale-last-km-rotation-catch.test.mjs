@@ -16,6 +16,9 @@ import {recordFinaleRotationCatchSprintLaunchFromTour,
 import {recordFinaleRotationCatchSprintRunFromTour,
   validateFinaleRotationCatchSprintRunFromTour} from
   '../../lib/engine/v2/finale-sprint-run.mjs';
+import {probeFinaleRotationCatchFinishBoundsFromTour,
+  validateFinaleRotationCatchFinishBoundsFromTour} from
+  '../../lib/engine/v2/finale-rotation-catch-finish-bounds.mjs';
 import {MOTOR_ATTACK_TRACE_VERSION} from
   '../../lib/engine/v2/tuning.mjs';
 
@@ -151,5 +154,27 @@ test('v91 source links the paid rotating catch to an exact 500 m handoff',()=>{
     assert.throws(()=>validateFinaleRotationCatchSprintRunFromTour(
       tour,input,{...run,bunchElapsedSecondsAtLine:0}),
     /does not replay/);
+    const bounds=probeFinaleRotationCatchFinishBoundsFromTour(
+      tour,input);
+    assert.equal(bounds.sourceRunVersion,run.version);
+    assert.equal(bounds.lineDistanceM,20000);
+    assert.equal(bounds.roadBands.length,1);
+    assert.equal(bounds.roadBands[0].riderIds.length,24);
+    assert.equal(bounds.riders.length,24);
+    assert.ok(bounds.riders.every(row=>row.firstPossiblePlace===1&&
+      row.lastPossiblePlace===24));
+    const gainers=bounds.riders.filter(row=>
+      row.movementGainSeconds>0);
+    assert.deepEqual(gainers.map(row=>row.riderId),['c-0']);
+    assert.equal(oldResults[0].riderId,'c-5');
+    assert.equal(bounds.riders.find(row=>row.riderId==='c-5')
+      .movementGainSeconds,0);
+    assert.equal(validateFinaleRotationCatchFinishBoundsFromTour(tour,
+      input,bounds),true);
+    assert.throws(()=>validateFinaleRotationCatchFinishBoundsFromTour(tour,
+      input,{...bounds,riders:bounds.riders.map(row=>
+        row.riderId==='c-0'?{...row,firstPossiblePlace:1,
+          lastPossiblePlace:1}:row)}),/do not replay/);
+    assert.deepEqual(tour.provisionalResults,oldResults);
   }
 });
