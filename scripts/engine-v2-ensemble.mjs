@@ -52,6 +52,10 @@ const managerMixOpportunistAttackAtKm=process.argv[15]===undefined?0:
   Number(process.argv[15]);
 const managerMixOpportunistStopKmToGo=process.argv[16]===undefined?0:
   Number(process.argv[16]);
+const managerMixOpportunistStopTeams=process.argv[17]===undefined?
+  managerMixOpportunists:Number(process.argv[17]);
+const managerMixOpportunistStopOffset=process.argv[18]===undefined?0:
+  Number(process.argv[18]);
 const motorVersion=motorMode==='phase-attack'?MOTOR_PHASE_ATTACK_VERSION:
   motorMode==='recovery-ceiling'?MOTOR_RECOVERY_CEILING_VERSION:
   motorMode==='distance-load'?MOTOR_DISTANCE_LOAD_VERSION:
@@ -100,6 +104,14 @@ if(!Number.isInteger(samples)||samples<1||samples>100||
   distanceKm-managerMixOpportunistStopKmToGo<=
     managerMixOpportunistAttackAtKm||
   process.argv[16]!==undefined&&managerMixHardChasers===null||
+  !Number.isInteger(managerMixOpportunistStopTeams)||
+  managerMixOpportunistStopTeams<0||
+  managerMixOpportunistStopTeams>managerMixOpportunists||
+  process.argv[17]!==undefined&&managerMixHardChasers===null||
+  !Number.isInteger(managerMixOpportunistStopOffset)||
+  managerMixOpportunistStopOffset<0||
+  managerMixOpportunistStopOffset>=Math.max(1,managerMixOpportunists)||
+  process.argv[18]!==undefined&&managerMixHardChasers===null||
   !['current','candidate','paid-pace','bounded-finale','bounded-bridge-finale',
     'earned-bridge-finale','neutral-pace','explicit-front','draft-shelter',
     'distance-load','recovery-ceiling','phase-attack']
@@ -125,7 +137,7 @@ if(!Number.isInteger(samples)||samples<1||samples>100||
     .includes(paceMode))&&
     !['explicit-front','draft-shelter','distance-load',
       'recovery-ceiling','phase-attack'].includes(motorMode))
-  throw new Error('Usage: node scripts/engine-v2-ensemble.mjs [paired samples: 1-100] [teams: 2-20] [current|candidate|paid-pace|bounded-finale|bounded-bridge-finale|earned-bridge-finale|neutral-pace|explicit-front|draft-shelter|distance-load|recovery-ceiling|phase-attack] [preset|paced-rival|steady-rival|rotate-rival|late-hard-rival|rotate-plans|planned-finale|planned-finale-open|planned-finale-one-chaser|planned-finale-three-chasers|planned-finale-selective-chaser|planned-finale-allied|planned-finale-surge|planned-finale-allied-drive|planned-finale-two-chasers-allied-drive|planned-finale-two-selective-chasers-allied-drive|planned-finale-three-chasers-allied-drive|planned-finale-own-plans-allied-drive|planned-finale-allied-manager-mix-[0-3] (v86+ only)] [120|260 km] [chaser skill cap: 20-100] [manager-mix initial fatigue shift: 0-30] [manager-mix selective chasers: 0-3] [manager-mix attack km to go: 5|10|20] [manager-mix opportunists: 0-4] [manager-mix chase km to go: 20..<distance] [manager-mix chase effort: steady|hard] [manager-mix hard finish km to go: 0|20|40|60, after steady only] [manager-mix opportunist attack at km: 0|40|80|120] [manager-mix opportunist stop km to go: 0|5|10]');
+  throw new Error('Usage: node scripts/engine-v2-ensemble.mjs [paired samples: 1-100] [teams: 2-20] [current|candidate|paid-pace|bounded-finale|bounded-bridge-finale|earned-bridge-finale|neutral-pace|explicit-front|draft-shelter|distance-load|recovery-ceiling|phase-attack] [preset|paced-rival|steady-rival|rotate-rival|late-hard-rival|rotate-plans|planned-finale|planned-finale-open|planned-finale-one-chaser|planned-finale-three-chasers|planned-finale-selective-chaser|planned-finale-allied|planned-finale-surge|planned-finale-allied-drive|planned-finale-two-chasers-allied-drive|planned-finale-three-chasers-allied-drive|planned-finale-own-plans-allied-drive|planned-finale-allied-manager-mix-[0-3] (v86+ only)] [120|260 km] [chaser skill cap: 20-100] [manager-mix initial fatigue shift: 0-30] [manager-mix selective chasers: 0-3] [manager-mix attack km to go: 5|10|20] [manager-mix opportunists: 0-4] [manager-mix chase km to go: 20..<distance] [manager-mix chase effort: steady|hard] [manager-mix hard finish km to go: 0|20|40|60, after steady only] [manager-mix opportunist attack at km: 0|40|80|120] [manager-mix opportunist stop km to go: 0|5|10] [manager-mix opportunist stop teams: 0..opportunists] [manager-mix stop-rank offset: 0..<opportunists]');
 
 const ROUTES={
   flat:{distance_km:120,profile_points:[[0,60],[40,60],[80,75],[120,60]],
@@ -197,17 +209,24 @@ function plannedOpponentOrders(index,team,course,sample){
       managerMixSelectiveChasers?{baseline,
         phases:[{atKm:distanceKm-10,effort:'steady',chase:'selective'}]}:
       {baseline};
-    if(rank<managerMixHardChasers+7)return rank<managerMixHardChasers+3+
-      managerMixOpportunists?{baseline:{...baseline,effort:'steady',
+    if(rank<managerMixHardChasers+7){
+      const opportunistRank=rank-managerMixHardChasers-3;
+      if(opportunistRank>=managerMixOpportunists)return {baseline};
+      const stopThisTeam=managerMixOpportunistStopKmToGo>0&&
+        (opportunistRank-managerMixOpportunistStopOffset+
+          managerMixOpportunists)%managerMixOpportunists<
+        managerMixOpportunistStopTeams;
+      return {baseline:{...baseline,effort:'steady',
         attack:managerMixOpportunistAttackAtKm===0?'selective':'none',
         frontWork:'rotate'},
       ...((managerMixOpportunistAttackAtKm>0||
-        managerMixOpportunistStopKmToGo>0)?{phases:[
+        stopThisTeam)?{phases:[
         ...(managerMixOpportunistAttackAtKm>0?[{
           atKm:managerMixOpportunistAttackAtKm,attack:'selective'}]:[]),
-        ...(managerMixOpportunistStopKmToGo>0?[{
+        ...(stopThisTeam?[{
           atKm:distanceKm-managerMixOpportunistStopKmToGo,
-          attack:'none'}]:[])]}:{})}:{baseline};
+          attack:'none'}]:[])]}:{})};
+    }
     if(rank<managerMixHardChasers+11)return {baseline:{...baseline,
       frontWork:'rotate'}};
     return {baseline};
@@ -259,6 +278,10 @@ const report={pairedSamples:samples,fieldTeams,motorMode,paceMode,distanceKm,
     managerMixOpportunistAttackAtKm,
   managerMixOpportunistStopKmToGo:managerMixHardChasers===null?null:
     managerMixOpportunistStopKmToGo,
+  managerMixOpportunistStopTeams:managerMixHardChasers===null?null:
+    managerMixOpportunistStopTeams,
+  managerMixOpportunistStopOffset:managerMixHardChasers===null?null:
+    managerMixOpportunistStopOffset,
   chaserSkillCap:plannedChasers>0?chaserSkillCap:null,
   initialFatigueShift,
   description:'fictional varied riders and routes; no live data',courses:{}};
@@ -294,7 +317,8 @@ for(const [course,stage] of Object.entries(distanceKm===260?LONG_ROUTES:ROUTES))
         alliedFinalAttempt:0,alliedFinalJoin:0,alliedFinalSurvive:0,
         alliedFinalCaughtAtLine:0,alliedFinalWin:0,eitherAlliedWin:0,
         paidWorkerEnergy:0,paidWorkerRaces:0,paidWorkerCount:0,frontConcentration:0,
-        penultimateGapSeconds:0,finalKmChasePower:0,finalKmPaidPaceAbility:0,
+        penultimateGapSeconds:0,finalKmAttackPower:0,finalKmAttackers:0,
+        finalKmBlockedAttacks:0,finalKmChasePower:0,finalKmPaidPaceAbility:0,
         finalKmPaidPaceRaces:0,finalKmJoinedRiders:0,finalKmCaughtRiders:0,
         finalGaps:[],
         maxGroups:0,multiGroupFinishes:0,chaseGroupAttackMoves:0,
@@ -500,6 +524,9 @@ for(const [course,stage] of Object.entries(distanceKm===260?LONG_ROUTES:ROUTES))
         totals.caughtBreaks+=race.frames.filter(frame=>frame.caughtBreakawayRiderIds.length>0).length;
         totals.finishLineCatches+=Number(race.frames.at(-1).finishLineCatch);
         totals.penultimateGapSeconds+=race.frames.at(-2).gapSeconds;
+        totals.finalKmAttackPower+=finalFrame.attackPower;
+        totals.finalKmAttackers+=finalFrame.attackers.length;
+        totals.finalKmBlockedAttacks+=finalFrame.blockedAttacks.length;
         totals.finalKmChasePower+=finalFrame.chasePower;
         totals.finalKmPaidPaceAbility+=finalFrame.paidBunchPace?.ability??0;
         totals.finalKmPaidPaceRaces+=Number(Boolean(finalFrame.paidBunchPace));
@@ -599,6 +626,9 @@ for(const [course,stage] of Object.entries(distanceKm===260?LONG_ROUTES:ROUTES))
         partialFinishCatchRate:totals.partialFinishCatches/samples,
         meanFinishLineCaughtRiders:+(totals.finishLineCaughtRiders/samples).toFixed(2),
         meanPenultimateGapSeconds:+(totals.penultimateGapSeconds/samples).toFixed(2),
+        meanFinalKmAttackPower:+(totals.finalKmAttackPower/samples).toFixed(2),
+        meanFinalKmAttackers:+(totals.finalKmAttackers/samples).toFixed(2),
+        meanFinalKmBlockedAttacks:+(totals.finalKmBlockedAttacks/samples).toFixed(2),
         meanFinalKmChasePower:+(totals.finalKmChasePower/samples).toFixed(2),
         finalKmPaidPaceRate:totals.finalKmPaidPaceRaces/samples,
         meanFinalKmPaidPaceAbility:totals.finalKmPaidPaceRaces?
