@@ -10,7 +10,7 @@ import {TUNING,TUNING_VERSION,MOTOR_CANDIDATE_VERSION,MOTOR_PAID_PACE_VERSION,
   MOTOR_FINALE_VERSION,MOTOR_BRIDGE_FINALE_VERSION,MOTOR_EARNED_BRIDGE_VERSION,
   MOTOR_NEUTRAL_PACE_VERSION,MOTOR_EXPLICIT_FRONT_VERSION,
   MOTOR_DRAFT_SHELTER_VERSION,MOTOR_DISTANCE_LOAD_VERSION,
-  MOTOR_RECOVERY_CEILING_VERSION,MOTOR_PHASE_ATTACK_VERSION,
+  MOTOR_RECOVERY_CEILING_VERSION,MOTOR_PHASE_ATTACK_VERSION,MOTOR_ATTACK_TRACE_VERSION,
   MOTOR_CANDIDATE} from
   '../lib/engine/v2/tuning.mjs';
 
@@ -56,7 +56,8 @@ const managerMixOpportunistStopTeams=process.argv[17]===undefined?
   managerMixOpportunists:Number(process.argv[17]);
 const managerMixOpportunistStopOffset=process.argv[18]===undefined?0:
   Number(process.argv[18]);
-const motorVersion=motorMode==='phase-attack'?MOTOR_PHASE_ATTACK_VERSION:
+const motorVersion=motorMode==='attack-trace'?MOTOR_ATTACK_TRACE_VERSION:
+  motorMode==='phase-attack'?MOTOR_PHASE_ATTACK_VERSION:
   motorMode==='recovery-ceiling'?MOTOR_RECOVERY_CEILING_VERSION:
   motorMode==='distance-load'?MOTOR_DISTANCE_LOAD_VERSION:
   motorMode==='draft-shelter'?MOTOR_DRAFT_SHELTER_VERSION:
@@ -114,7 +115,7 @@ if(!Number.isInteger(samples)||samples<1||samples>100||
   process.argv[18]!==undefined&&managerMixHardChasers===null||
   !['current','candidate','paid-pace','bounded-finale','bounded-bridge-finale',
     'earned-bridge-finale','neutral-pace','explicit-front','draft-shelter',
-    'distance-load','recovery-ceiling','phase-attack']
+    'distance-load','recovery-ceiling','phase-attack','attack-trace']
     .includes(motorMode)||
   !managerMixMatch&&!['preset','paced-rival','steady-rival','rotate-rival','late-hard-rival',
     'rotate-plans','planned-finale','planned-finale-open',
@@ -136,8 +137,8 @@ if(!Number.isInteger(samples)||samples<1||samples>100||
     'planned-finale-own-plans-allied-drive']
     .includes(paceMode))&&
     !['explicit-front','draft-shelter','distance-load',
-      'recovery-ceiling','phase-attack'].includes(motorMode))
-  throw new Error('Usage: node scripts/engine-v2-ensemble.mjs [paired samples: 1-100] [teams: 2-20] [current|candidate|paid-pace|bounded-finale|bounded-bridge-finale|earned-bridge-finale|neutral-pace|explicit-front|draft-shelter|distance-load|recovery-ceiling|phase-attack] [preset|paced-rival|steady-rival|rotate-rival|late-hard-rival|rotate-plans|planned-finale|planned-finale-open|planned-finale-one-chaser|planned-finale-three-chasers|planned-finale-selective-chaser|planned-finale-allied|planned-finale-surge|planned-finale-allied-drive|planned-finale-two-chasers-allied-drive|planned-finale-three-chasers-allied-drive|planned-finale-own-plans-allied-drive|planned-finale-allied-manager-mix-[0-3] (v86+ only)] [120|260 km] [chaser skill cap: 20-100] [manager-mix initial fatigue shift: 0-30] [manager-mix selective chasers: 0-3] [manager-mix attack km to go: 5|10|20] [manager-mix opportunists: 0-4] [manager-mix chase km to go: 20..<distance] [manager-mix chase effort: steady|hard] [manager-mix hard finish km to go: 0|20|40|60, after steady only] [manager-mix opportunist attack at km: 0|40|80|120] [manager-mix opportunist stop km to go: 0|5|10] [manager-mix opportunist stop teams: 0..opportunists] [manager-mix stop-rank offset: 0..<opportunists]');
+      'recovery-ceiling','phase-attack','attack-trace'].includes(motorMode))
+  throw new Error('Usage: node scripts/engine-v2-ensemble.mjs [paired samples: 1-100] [teams: 2-20] [current|candidate|paid-pace|bounded-finale|bounded-bridge-finale|earned-bridge-finale|neutral-pace|explicit-front|draft-shelter|distance-load|recovery-ceiling|phase-attack|attack-trace] [preset|paced-rival|steady-rival|rotate-rival|late-hard-rival|rotate-plans|planned-finale|planned-finale-open|planned-finale-one-chaser|planned-finale-three-chasers|planned-finale-selective-chaser|planned-finale-allied|planned-finale-surge|planned-finale-allied-drive|planned-finale-two-chasers-allied-drive|planned-finale-three-chasers-allied-drive|planned-finale-own-plans-allied-drive|planned-finale-allied-manager-mix-[0-3] (v86+ only)] [120|260 km] [chaser skill cap: 20-100] [manager-mix initial fatigue shift: 0-30] [manager-mix selective chasers: 0-3] [manager-mix attack km to go: 5|10|20] [manager-mix opportunists: 0-4] [manager-mix chase km to go: 20..<distance] [manager-mix chase effort: steady|hard] [manager-mix hard finish km to go: 0|20|40|60, after steady only] [manager-mix opportunist attack at km: 0|40|80|120] [manager-mix opportunist stop km to go: 0|5|10] [manager-mix opportunist stop teams: 0..opportunists] [manager-mix stop-rank offset: 0..<opportunists]');
 
 const ROUTES={
   flat:{distance_km:120,profile_points:[[0,60],[40,60],[80,75],[120,60]],
@@ -335,7 +336,7 @@ for(const [course,stage] of Object.entries(distanceKm===260?LONG_ROUTES:ROUTES))
                 paceMode==='steady-rival'?'steady':'conserve',
                 attack:'none',chase:'ignore',
                 ...(['explicit-front','draft-shelter','distance-load',
-                  'recovery-ceiling','phase-attack'].includes(motorMode)?
+                  'recovery-ceiling','phase-attack','attack-trace'].includes(motorMode)?
                   {frontWork:'rotate'}:{})},
               ...(paceMode==='late-hard-rival'?{
                 phases:[{atKm:distanceKm-40,effort:'hard'}]}:{})}:{}),
@@ -525,6 +526,11 @@ for(const [course,stage] of Object.entries(distanceKm===260?LONG_ROUTES:ROUTES))
               firstBunchFinaleAbility:firstBunch.finaleAbility,
               winnerEnergy:winner.energy,
               finalKmAttackPower:finalFrame.attackPower,
+              winnerAttackPressure:finalFrame.attackContributions?.find(row=>
+                row.riderId===winner.riderId)?.pressure??null,
+              winnerShareOfFinalAttackPower:finalFrame.attackPower>0?
+                finalFrame.attackContributions?.find(row=>
+                  row.riderId===winner.riderId)?.pressure/finalFrame.attackPower??null:null,
               finalKmChasePower:finalFrame.chasePower,
               finalKmJoinedRiders:finalFrame.joinedBreakawayRiderIds.length,
               finishLineCatch:finalFrame.finishLineCatch});

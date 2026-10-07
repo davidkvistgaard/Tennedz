@@ -10,7 +10,7 @@ import {MOTOR_CANDIDATE_VERSION,MOTOR_PAID_PACE_VERSION,
   MOTOR_EARNED_BRIDGE_VERSION,MOTOR_NEUTRAL_PACE_VERSION,
   MOTOR_EXPLICIT_FRONT_VERSION,MOTOR_DRAFT_SHELTER_VERSION,
   MOTOR_DISTANCE_LOAD_VERSION,MOTOR_RECOVERY_CEILING_VERSION,
-  MOTOR_PHASE_ATTACK_VERSION} from
+  MOTOR_PHASE_ATTACK_VERSION,MOTOR_ATTACK_TRACE_VERSION} from
   '../../lib/engine/v2/tuning.mjs';
 
 function team(id,level,{effort='conserve',attack='none',chase='ignore',
@@ -396,4 +396,32 @@ test('v90 starts a named phase attack on its committed kilometre',()=>{
   assert.deepEqual(atBoundary(inherited).attackers.map(row=>row.riderId),
     ['inherited-7']);
   assert.deepEqual(atBoundary(unrelated).attackers,[]);
+});
+
+test('v91 records each named attacker pressure without changing v90 outcomes',()=>{
+  const stage={distance_km:40,profile_points:[[0,100],[40,100]]};
+  const teams=[team('strong',90,{phases:[{atKm:35,attack:'selective',
+    attackRiderId:'strong-7'}]}),team('weak',55,{phases:[{atKm:35,
+    attack:'selective',attackRiderId:'weak-7'}]}),team('other',65)];
+  const input={stage,teams,seed:'shared-attack-trace'};
+  const prior=simulateTacticalTour({...input,motorVersion:MOTOR_PHASE_ATTACK_VERSION});
+  const traced=simulateTacticalTour({...input,motorVersion:MOTOR_ATTACK_TRACE_VERSION});
+  assert.equal(validateRecordedTour(prior),true);
+  assert.equal(validateRecordedTour(traced),true);
+  assert.deepEqual(traced.provisionalResults,prior.provisionalResults);
+  assert.deepEqual(traced.frames.map(({attackContributions,...frame})=>frame),prior.frames);
+  const frame=traced.frames[35];
+  assert.equal(frame.attackContributions.length,2);
+  assert.ok(frame.attackContributions[0].pressure>frame.attackContributions[1].pressure);
+  assert.equal(frame.attackContributions.reduce((sum,row)=>sum+row.pressure,0),
+    frame.attackPower);
+  const forged=structuredClone(traced);
+  forged.frames[35].attackContributions[0].pressure+=1;
+  assert.throws(()=>validateRecordedTour(forged),/attack contribution/);
+  const misattributed=structuredClone(traced);
+  misattributed.frames[35].attackContributions[1].teamId='strong';
+  assert.throws(()=>validateRecordedTour(misattributed),/attack contribution/);
+  const missing=structuredClone(traced);
+  delete missing.frames[35].attackContributions;
+  assert.throws(()=>validateRecordedTour(missing),/attack contribution/);
 });
