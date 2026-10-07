@@ -342,6 +342,8 @@ for(const [course,stage] of Object.entries(distanceKm===260?LONG_ROUTES:ROUTES))
         oneRoadSeparatedAccepted:0,oneRoadSeparatedRejections:{},
         postAttackCandidates:0,postAttackAccepted:0,
         postAttackRejections:{},
+        postAttackKilometreAttackAudit:{version:'v2-post-attack-audit-1',attempted:0,
+          blocked:0,absent:0,blockedReasons:{},examples:[]},
         survived:0,caught:0,exhaustionDroppedRiders:0,
         racesWithExhaustionDrop:0,readOnlyRejections:{},examples:[],
         rejectionExamples:[]};
@@ -454,6 +456,28 @@ for(const [course,stage] of Object.entries(distanceKm===260?LONG_ROUTES:ROUTES))
               const reason=String(error.message);
               orderedFinale.postAttackRejections[reason]=
                 (orderedFinale.postAttackRejections[reason]??0)+1;
+              // This is a comparison with the validated kilometre outcome,
+              // never a substitute event in the counterfactual short steps.
+              const pendingAttack=/^The short-step finale needs a recorded peloton attack: (.+) at km (\d+)\.$/
+                .exec(reason);
+              if(pendingAttack){
+                const [,teamId,kmText]=pendingAttack;
+                const frame=race.frames[Number(kmText)-1];
+                const audit=orderedFinale.postAttackKilometreAttackAudit;
+                const team=teams.find(row=>row.id===teamId);
+                const riderIds=new Set(team?.riders.map(row=>row.id)??[]);
+                const blocked=frame?.blockedAttacks?.find(row=>
+                  row.teamId===teamId);
+                const activity=frame?.attackReasons?.some(row=>
+                  riderIds.has(row.riderId))?'attempted':
+                  blocked?'blocked':'absent';
+                audit[activity]++;
+                if(activity==='blocked')audit.blockedReasons[blocked.reason]=
+                  (audit.blockedReasons[blocked.reason]??0)+1;
+                if(audit.examples.length<3)audit.examples.push({sample,
+                  teamId,km:Number(kmText),activity,
+                  ...(activity==='blocked'?{blockedReason:blocked.reason}:{})});
+              }
             }
           };
           if(groupCount===0){
