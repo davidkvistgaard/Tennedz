@@ -9,13 +9,16 @@ import {advanceFinaleNamedAttackTransition} from
 import {advanceFinaleNamedAttackRotationTransition,
   validateFinaleNamedAttackRotationTransition} from
   '../../lib/engine/v2/finale-named-attack-rotation-transition.mjs';
+import {continueFinaleNamedAttackRotationGroup,
+  validateFinaleNamedAttackRotationFollowup} from
+  '../../lib/engine/v2/finale-named-attack-rotation-followup.mjs';
 import {MOTOR_ATTACK_TRACE_VERSION,TUNING} from
   '../../lib/engine/v2/tuning.mjs';
 
 const stage={distance_km:40,profile_points:[[0,100],[40,100]],
   keypoints:[{km:39,kind:'SPRINT'}]};
 function team(id,skill,{attack=false,rotate=false,chase='ignore',
-  gender='M'}={}){
+  gender='M',attackAtKm=39}={}){
   return {id,riders:Array.from({length:8},(_,index)=>({
     id:`${id}-${index}`,gender,flat:skill,strength:skill,
     timetrial:skill,endurance:75,acceleration:id==='a'?90:70,
@@ -24,7 +27,7 @@ function team(id,skill,{attack=false,rotate=false,chase='ignore',
     preset:'balanced',baseline:{effort:'steady',chase,
       attack:'none',breakWork:'cooperate',
       frontWork:rotate?'rotate':'sit_in'},
-    phases:attack?[{atKm:39,attack:'selective',
+    phases:attack?[{atKm:attackAtKm,attack:'selective',
       attackRiderId:`${id}-0`}]:[]}};
 }
 
@@ -64,11 +67,56 @@ test('rotating pair and reactive chaser pay once against a named attack',()=>{
     row.energyAfter>=0));
   assert.ok(rotated.bunchElapsedSeconds<old.bunchElapsedSeconds);
   assert.ok(rotated.attack.earnedGapSeconds<=old.attack.earnedGapSeconds);
+  assert.equal(rotated.roadGroups.length,1);
   assert.equal(validateFinaleNamedAttackRotationTransition(input,
     rotated),true);
   assert.throws(()=>validateFinaleNamedAttackRotationTransition(input,{
     ...rotated,riderEnergy:rotated.riderEnergy.map(row=>
       row.role==='front_rotation'?{...row,energySpent:0}:row)}),
   /does not replay/);
+  const followup=continueFinaleNamedAttackRotationGroup({
+    launchInput:input,launch:rotated,
+    slice:finaleDistanceGrid(tour.route,{remainingKm:1})[1]});
+  assert.equal(followup.riderEnergy.length,32);
+  assert.equal(followup.rotation.selected.teamId,'d');
+  assert.equal(followup.chaseRiderId?.startsWith('c-'),true);
+  assert.ok(followup.riderEnergy.every(row=>row.energySpent>0&&
+    row.energyAfter>=0));
+  assert.ok(followup.roadGroups[0].gapSeconds>0);
+  assert.equal(validateFinaleNamedAttackRotationFollowup({
+    launchInput:input,launch:rotated,
+    slice:finaleDistanceGrid(tour.route,{remainingKm:1})[1]},followup),true);
+  assert.throws(()=>validateFinaleNamedAttackRotationFollowup({
+    launchInput:input,launch:rotated,
+    slice:finaleDistanceGrid(tour.route,{remainingKm:1})[1]},
+  {...followup,riderEnergy:followup.riderEnergy.map(row=>
+    row.role==='front_rotation'?{...row,energySpent:0}:row)}),
+  /does not replay/);
   }
+});
+
+test('a rotating mid-slice catch refuses an unpaid merged remainder',()=>{
+  const shortStage={distance_km:20,
+    profile_points:[[0,100],[20,100]],
+    keypoints:[{km:19,kind:'SPRINT'}]};
+  const tour=simulateTacticalTour({stage:shortStage,teams:[
+    team('a',50,{attack:true,attackAtKm:19}),
+    team('b',75,{rotate:true}),
+    team('c',80,{chase:'all'})],
+  seed:'catch-50-75-80',motorVersion:MOTOR_ATTACK_TRACE_VERSION});
+  const source=finaleSnapshotFromTour(tour,{remainingKm:1,
+    includeAttackLoad:true});
+  const grid=finaleDistanceGrid(tour.route,{remainingKm:1});
+  const input={slice:grid[0],route:tour.route,
+    teams:tour.committedInputs.teams,
+    pelotonRiderIds:source.peloton.riderIds,
+    energies:new Map(source.riders.map(row=>[row.riderId,row.energy])),
+    attackerTeamId:'a',attackerRiderId:'a-0',
+    repeatLoad:Math.max(0,source.riderAttackLoads.find(row=>
+      row.riderId==='a-0').load-TUNING.attack.loadRecoveryPerKm)};
+  const launch=advanceFinaleNamedAttackRotationTransition(input);
+  assert.ok(launch.roadGroups[0].gapSeconds>0);
+  assert.throws(()=>continueFinaleNamedAttackRotationGroup({
+    launchInput:input,launch,slice:grid[1]}),
+  /needs a merged-work continuation rule/);
 });
