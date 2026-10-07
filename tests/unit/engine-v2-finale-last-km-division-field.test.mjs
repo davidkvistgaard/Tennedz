@@ -21,7 +21,7 @@ function team(index,gender){
   return {id,riders:Array.from({length:8},(_,riderIndex)=>({
     id:`${id}-${riderIndex}`,gender,flat:skill,strength:skill,
     timetrial:skill,endurance:70,acceleration:index===0?95:70,
-    sprint:55,leadership:60})),orders:{captainId:`${id}-0`,
+    sprint:50+(index*11)%51,leadership:60})),orders:{captainId:`${id}-0`,
     roadCaptainId:`${id}-1`,helperIds:[`${id}-2`],
     preset:'balanced',baseline:{effort:'conserve',
       chase:index%3===0?'all':'ignore',attack:'none',
@@ -59,6 +59,9 @@ test('twenty-team v91 source accounts for all riders through catch and paid lead
     assert.ok(sprint.frames.every(frame=>
       frame.riderEnergy.filter(row=>row.role==='sprint').length===20&&
       frame.riderEnergy.every(row=>row.energyAfter>=0)));
+    assert.ok(sprint.lineRiderEnergy.some(row=>row.gainSeconds>0));
+    assert.ok(sprint.lineRiderEnergy.some(row=>row.riderId.endsWith('-0')&&
+      row.gainSeconds===0));
     assert.equal(validateFinaleSprintRunFromTour(tour,input,sprint),true);
   }
 });
