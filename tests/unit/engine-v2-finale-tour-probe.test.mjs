@@ -3,6 +3,8 @@ import assert from 'node:assert/strict';
 import {simulateTacticalTour} from '../../lib/engine/v2/tour.mjs';
 import {MOTOR_ATTACK_TRACE_VERSION,TUNING_VERSION} from
   '../../lib/engine/v2/tuning.mjs';
+import {FINALE_WORKER_PASSIVE_SLOPE_VERSION} from
+  '../../lib/engine/v2/finale-worker.mjs';
 import {finaleSnapshotFromTour,FINALE_SNAPSHOT_VERSION} from
   '../../lib/engine/v2/finale-snapshot.mjs';
 import {advanceFinaleGroupStep} from '../../lib/engine/v2/finale-group-step.mjs';
@@ -328,6 +330,35 @@ test('independent chasing teams rotate paid pulls through a group catch and fini
     frontPullRiderId:'a-2',chasePullRiderId:'b-2',
     chaseRotationRiderIds:rotation.map((id,index)=>index===1?'a-3':id),
   }),/engaged in the bunch chase/);
+  const slopeProbe=probeFinaleGroupRunFromTour(tour,{
+    frontPullRiderId:'a-2',chasePullRiderId:'b-2',
+    chaseRotationRiderIds:rotation,
+    paceVersion:FINALE_WORKER_PASSIVE_SLOPE_VERSION});
+  assert.equal(slopeProbe.recording.version,'v2-finale-group-run-4');
+  assert.equal(slopeProbe.recording.workerPaceVersion,
+    FINALE_WORKER_PASSIVE_SLOPE_VERSION);
+  assert.equal(validateFinaleGroupRun(slopeProbe.input,slopeProbe.recording),true);
+  assert.notEqual(slopeProbe.recording.finishGapSeconds,
+    probe.recording.finishGapSeconds);
+  const strongerChase=structuredClone(slopeProbe.input);
+  for(const id of ['b','c'])strongerChase.teams.find(team=>team.id===id)
+    .riders.find(rider=>rider.id===`${id}-2`).strength=100;
+  assert.ok(simulateFinaleGroupRun(strongerChase).finishGapSeconds<
+    slopeProbe.recording.finishGapSeconds);
+  const tiredFront=structuredClone(slopeProbe.input);
+  tiredFront.snapshot.riders.find(rider=>rider.riderId==='a-2').energy=10;
+  assert.ok(simulateFinaleGroupRun(tiredFront).finishGapSeconds<
+    slopeProbe.recording.finishGapSeconds);
+  const slopeTrial=structuredClone(slopeProbe.input);
+  slopeTrial.snapshot.roadGroups[0].gapSeconds=.1;
+  slopeTrial.teams[0].riders.find(rider=>rider.id==='a-2').timetrial=30;
+  for(const id of ['b','c'])slopeTrial.teams.find(team=>team.id===id)
+    .riders.find(rider=>rider.id===`${id}-2`).strength=100;
+  const slopeToLine=simulateFinaleGroupToLine(slopeTrial);
+  assert.equal(slopeToLine.version,'v2-finale-group-to-line-4');
+  assert.equal(slopeToLine.outcome,'caught_merged');
+  assert.equal(slopeToLine.mergedFrames.at(-1).endDistanceM,40000);
+  assert.equal(validateFinaleGroupToLine(slopeTrial,slopeToLine),true);
 });
 
 test('a 300 km recording carries earned fatigue into the read-only finale',()=>{

@@ -2,7 +2,12 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {buildKilometreRoute} from '../../lib/engine/v2/route.mjs';
 import {normalizeOrders} from '../../lib/engine/v2/orders.mjs';
-import {buildFinaleWorkerPlan} from '../../lib/engine/v2/finale-worker.mjs';
+import {buildFinaleWorkerPlan,finaleWorkerStep,
+  FINALE_WORKER_PASSIVE_SLOPE_VERSION} from
+  '../../lib/engine/v2/finale-worker.mjs';
+import {segmentBaseSeconds} from '../../lib/engine/v2/finish.mjs';
+import {riderKilometreEffect} from '../../lib/engine/v2/physiology.mjs';
+import {TUNING} from '../../lib/engine/v2/tuning.mjs';
 import {simulateFinalePair,validateFinalePair} from
   '../../lib/engine/v2/finale-pair.mjs';
 
@@ -36,6 +41,25 @@ test('a locked rider, road profile, energy and effort determine the entire pace 
     profile_points:[[0,100],[35,100],[40,350]]},{seed:'worker'});
   assert.ok(strong.steps[0].speedKph>
     plan({route:uphill}).steps[0].speedKph);
+});
+
+test('the opt-in short-step slope uses the recorded kilometre ability scale',()=>{
+  const segment=route.kilometres[35];
+  const order={effort:'steady',chase:'all'};
+  for(const role of ['front','chase']){
+    const effect=riderKilometreEffect(riders[0],segment,{
+      phase:role==='front'?'solo':'chase',energy:30,
+      exposed:segment.exposed});
+    const expected=segmentBaseSeconds(segment)+(50-effect.ability-
+      (role==='chase'?TUNING.breakaway.bunchDraftAdvantage:0))*
+      TUNING.breakaway.driftSecondsPerAbilityPoint;
+    const step=finaleWorkerStep({rider:riders[0],segment,order,energy:30,
+      role,paceVersion:FINALE_WORKER_PASSIVE_SLOPE_VERSION});
+    assert.ok(Math.abs(3600/step.speedKph-expected)<1e-9);
+    assert.ok(step.workCostPerKm>0);
+  }
+  assert.throws(()=>finaleWorkerStep({rider:riders[0],segment,order,
+    energy:30,role:'front',paceVersion:'unknown'}),/Invalid finale worker/);
 });
 
 test('the plan follows precommitted phase orders at the source kilometre',()=>{
