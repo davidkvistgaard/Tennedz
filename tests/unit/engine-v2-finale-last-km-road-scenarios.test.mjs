@@ -8,6 +8,9 @@ import {probeLastKmNamedAttackRoadFromTour,
   '../../lib/engine/v2/finale-last-km-named-attack.mjs';
 import {lastKmLineStateFromTour,validateLastKmLineStateFromTour} from
   '../../lib/engine/v2/finale-last-km-line-state.mjs';
+import {probeLastKmFinishOrderBoundsFromTour,
+  validateLastKmFinishOrderBoundsFromTour} from
+  '../../lib/engine/v2/finale-finish-order-bounds.mjs';
 import {recordFinaleSprintPlanFromTour,
   validateFinaleSprintPlanFromTour} from
   '../../lib/engine/v2/finale-sprint-plan.mjs';
@@ -75,6 +78,20 @@ test('independent v91 managers reach the line with recorded solo and catch branc
       scenario.survives);
     assert.equal(validateLastKmLineStateFromTour(tour,
       {teamId:'a'},line),true);
+    const bounds=probeLastKmFinishOrderBoundsFromTour(tour,
+      {teamId:'a'});
+    assert.equal(bounds.lineDistanceM,40000);
+    assert.equal(bounds.riders.length,16);
+    assert.deepEqual(bounds.bands.map(band=>
+      [band.firstPossiblePlace,band.lastPossiblePlace]),
+    scenario.survives?[[1,1],[2,16]]:[[1,16]]);
+    assert.equal(bounds.riders.find(row=>row.riderId==='a-0')
+      .lastPossiblePlace,scenario.survives?1:16);
+    assert.equal(validateLastKmFinishOrderBoundsFromTour(tour,
+      {teamId:'a'},bounds),true);
+    assert.throws(()=>validateLastKmFinishOrderBoundsFromTour(tour,
+      {teamId:'a'},{...bounds,bands:bounds.bands.map(band=>
+        ({...band,lastPossiblePlace:1}))}),/do not replay/);
     assert.throws(()=>validateLastKmLineStateFromTour(tour,
       {teamId:'a'},{...line,bunchTravelSeconds:0}),/does not replay/);
     if(scenario.chase==='all'){

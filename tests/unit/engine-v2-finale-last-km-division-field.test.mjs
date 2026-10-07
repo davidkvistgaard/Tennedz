@@ -5,6 +5,8 @@ import {MOTOR_ATTACK_TRACE_VERSION} from '../../lib/engine/v2/tuning.mjs';
 import {probeLastKmNamedAttackRoadFromTour,
   validateLastKmNamedAttackRoadFromTour} from
   '../../lib/engine/v2/finale-last-km-named-attack.mjs';
+import {probeLastKmFinishOrderBoundsFromTour} from
+  '../../lib/engine/v2/finale-finish-order-bounds.mjs';
 import {recordFinaleSprintApproachFromTour,
   validateFinaleSprintApproachFromTour} from
   '../../lib/engine/v2/finale-sprint-approach.mjs';
@@ -76,6 +78,11 @@ test('twenty-team v91 source accounts for all riders through catch and paid lead
       [row.riderId,row]));
     const nominated=new Set(input.plans.map(plan=>plan.finisherId));
     const gainers=bounded.lineRiderEnergy.filter(row=>row.gainSeconds>0);
+    const bounds=probeLastKmFinishOrderBoundsFromTour(tour,{teamId:'t00'});
+    assert.deepEqual(bounds.bands.map(band=>
+      [band.firstPossiblePlace,band.lastPossiblePlace]),[[1,160]]);
+    assert.ok(gainers.every(row=>bounds.riders.find(rider=>
+      rider.riderId===row.riderId).lastPossiblePlace===160));
     const changedEnergy=bounded.lineRiderEnergy.filter(row=>
       row.energyAfter!==provisionalById.get(row.riderId).energy);
     const provisionalTop=tour.provisionalResults[0];
