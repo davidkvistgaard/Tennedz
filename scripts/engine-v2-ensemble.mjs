@@ -3,6 +3,7 @@
 import seedrandom from 'seedrandom';
 import {simulateTacticalTour} from '../lib/engine/v2/tour.mjs';
 import {validateRecordedTour} from '../lib/engine/v2/recording.mjs';
+import {validateRoadGroupTransition} from '../lib/engine/v2/road-groups.mjs';
 import {SPORTING_SKILLS} from '../lib/engine/v2/physiology.mjs';
 import {hasResidualGapAfterSufficientChase} from '../lib/engine/v2/balance-audit.mjs';
 import {TUNING,TUNING_VERSION,MOTOR_CANDIDATE_VERSION,MOTOR_PAID_PACE_VERSION,
@@ -40,6 +41,7 @@ const distanceKm=process.argv[6]===undefined?120:Number(process.argv[6]);
 const chaserSkillCap=process.argv[7]===undefined?100:Number(process.argv[7]);
 const initialFatigueShift=process.argv[8]===undefined?0:Number(process.argv[8]);
 const managerMixSelectiveChasers=process.argv[9]===undefined?3:Number(process.argv[9]);
+const managerMixAttackKmToGo=process.argv[10]===undefined?5:Number(process.argv[10]);
 const motorVersion=motorMode==='phase-attack'?MOTOR_PHASE_ATTACK_VERSION:
   motorMode==='recovery-ceiling'?MOTOR_RECOVERY_CEILING_VERSION:
   motorMode==='distance-load'?MOTOR_DISTANCE_LOAD_VERSION:
@@ -66,6 +68,8 @@ if(!Number.isInteger(samples)||samples<1||samples>100||
   !Number.isInteger(managerMixSelectiveChasers)||
     managerMixSelectiveChasers<0||managerMixSelectiveChasers>3||
   process.argv[9]!==undefined&&managerMixHardChasers===null||
+  ![5,10,20].includes(managerMixAttackKmToGo)||
+  process.argv[10]!==undefined&&managerMixHardChasers===null||
   !['current','candidate','paid-pace','bounded-finale','bounded-bridge-finale',
     'earned-bridge-finale','neutral-pace','explicit-front','draft-shelter',
     'distance-load','recovery-ceiling','phase-attack']
@@ -91,7 +95,7 @@ if(!Number.isInteger(samples)||samples<1||samples>100||
     .includes(paceMode))&&
     !['explicit-front','draft-shelter','distance-load',
       'recovery-ceiling','phase-attack'].includes(motorMode))
-  throw new Error('Usage: node scripts/engine-v2-ensemble.mjs [paired samples: 1-100] [teams: 2-20] [current|candidate|paid-pace|bounded-finale|bounded-bridge-finale|earned-bridge-finale|neutral-pace|explicit-front|draft-shelter|distance-load|recovery-ceiling|phase-attack] [preset|paced-rival|steady-rival|rotate-rival|late-hard-rival|rotate-plans|planned-finale|planned-finale-open|planned-finale-one-chaser|planned-finale-three-chasers|planned-finale-selective-chaser|planned-finale-allied|planned-finale-surge|planned-finale-allied-drive|planned-finale-two-chasers-allied-drive|planned-finale-two-selective-chasers-allied-drive|planned-finale-three-chasers-allied-drive|planned-finale-own-plans-allied-drive|planned-finale-allied-manager-mix-[0-3] (v86+ only)] [120|260 km] [chaser skill cap: 20-100] [manager-mix initial fatigue shift: 0-30] [manager-mix selective chasers: 0-3]');
+  throw new Error('Usage: node scripts/engine-v2-ensemble.mjs [paired samples: 1-100] [teams: 2-20] [current|candidate|paid-pace|bounded-finale|bounded-bridge-finale|earned-bridge-finale|neutral-pace|explicit-front|draft-shelter|distance-load|recovery-ceiling|phase-attack] [preset|paced-rival|steady-rival|rotate-rival|late-hard-rival|rotate-plans|planned-finale|planned-finale-open|planned-finale-one-chaser|planned-finale-three-chasers|planned-finale-selective-chaser|planned-finale-allied|planned-finale-surge|planned-finale-allied-drive|planned-finale-two-chasers-allied-drive|planned-finale-two-selective-chasers-allied-drive|planned-finale-three-chasers-allied-drive|planned-finale-own-plans-allied-drive|planned-finale-allied-manager-mix-[0-3] (v86+ only)] [120|260 km] [chaser skill cap: 20-100] [manager-mix initial fatigue shift: 0-30] [manager-mix selective chasers: 0-3] [manager-mix attack km to go: 5|10|20]');
 
 const ROUTES={
   flat:{distance_km:120,profile_points:[[0,60],[40,60],[80,75],[120,60]],
@@ -172,7 +176,7 @@ function plannedOpponentOrders(index,team,course,sample){
     'planned-finale-three-chasers-allied-drive']
     .includes(paceMode)||managerMixHardChasers!==null)&&index===2)return {
     baseline:{effort:'conserve',attack:'none',chase:'ignore',frontWork:'sit_in'},
-    phases:[{atKm:distanceKm-5,attack:'selective',
+    phases:[{atKm:distanceKm-managerMixAttackKmToGo,attack:'selective',
       ...(paceMode.includes('allied-drive')||managerMixHardChasers!==null?{
         effort:'hard',breakWork:'drive'}:{}),
       attackRiderId:team.riders[course==='flat'?2:1].id}]};
@@ -198,6 +202,8 @@ const report={pairedSamples:samples,fieldTeams,motorMode,paceMode,distanceKm,
   managerMixHardChasers,
   managerMixSelectiveChasers:managerMixHardChasers===null?null:
     managerMixSelectiveChasers,
+  managerMixAttackKmToGo:managerMixHardChasers===null?null:
+    managerMixAttackKmToGo,
   chaserSkillCap:plannedChasers>0?chaserSkillCap:null,
   initialFatigueShift,
   description:'fictional varied riders and routes; no live data',courses:{}};
@@ -253,7 +259,8 @@ for(const [course,stage] of Object.entries(distanceKm===260?LONG_ROUTES:ROUTES))
               'rotate':'sit_in'}}:{}),
             ...(plannedFinale?index===0?{
               baseline:{attack:'none',chase:'ignore',frontWork:'sit_in'},
-              phases:[{atKm:distanceKm-5,attack:'selective',
+              phases:[{atKm:distanceKm-(managerMixHardChasers===null?5:
+                managerMixAttackKmToGo),attack:'selective',
                 ...(['planned-finale-surge','planned-finale-allied-drive',
                   'planned-finale-two-chasers-allied-drive',
                   'planned-finale-two-selective-chasers-allied-drive',
@@ -270,7 +277,25 @@ for(const [course,stage] of Object.entries(distanceKm===260?LONG_ROUTES:ROUTES))
           wind_kph:Math.max(0,base.wind_kph+(rng()-.5)*16),
           precipitation_mm:Math.max(0,base.precipitation_mm+(rng()-.5)*2)};
         const race=simulateTacticalTour({stage,teams,weather,seed:`v2-ensemble:${course}:${sample}`,motorVersion});
-        validateRecordedTour(race);
+        try{validateRecordedTour(race);}catch(error){
+          let previousRoadGroups=[];
+          for(const frame of race.frames){
+            try{validateRoadGroupTransition(previousRoadGroups,frame.roadGroups,{
+              joinedRiderIds:frame.joinedBreakawayRiderIds,
+              caughtRiderIds:frame.caughtBreakawayRiderIds,
+              breakMoves:frame.splitAttacks.filter(attack=>
+                ['split','joined_group_ahead'].includes(attack?.status)),
+              formedChaseGroupId:frame.formedChaseGroupId,
+              mergedGroupIds:frame.mergedRoadGroupIds,
+              finaleCatchMoves:frame.finaleRoadGroupCatches,
+              finishLineCatch:frame.finishLineCatch,
+            });}catch(transitionError){
+              throw new Error(`Invalid recording: ${course}/${gender}/${strategy}/sample-${sample}, km ${frame.km}, attack ${managerMixAttackKmToGo} km to go, formed ${frame.formedChaseGroupId}, joined ${frame.joinedBreakawayRiderIds.join(',')}, caught ${frame.caughtBreakawayRiderIds.join(',')}, old ${previousRoadGroups.map(group=>group.id).join(',')}, new ${frame.roadGroups.map(group=>group.id).join(',')}`,{cause:transitionError});
+            }
+            previousRoadGroups=frame.roadGroups;
+          }
+          throw new Error(`Invalid recording: ${course}/${gender}/${strategy}/sample-${sample}, ${paceMode}`,{cause:error});
+        }
         report.tuningVersion??=race.tuningVersion;
         const finalFrame=race.frames.at(-1);
         const finalAutoIds=new Set(finalFrame.attackReasons.filter(attack=>
@@ -280,7 +305,8 @@ for(const [course,stage] of Object.entries(distanceKm===260?LONG_ROUTES:ROUTES))
         const winner=race.provisionalResults[0];
         if(plannedFinale){
           const plannedId=teams[0].riders[course==='flat'?2:1].id;
-          const lateFrames=race.frames.slice(-5);
+          const lateFrames=race.frames.slice(-(managerMixHardChasers===null?5:
+            managerMixAttackKmToGo));
           const firstPlanned=lateFrames.find(frame=>frame.attackReasons.some(row=>
             row.riderId===plannedId&&row.reason==='named_order'));
           totals.plannedPhaseAttempt+=Number(Boolean(firstPlanned));

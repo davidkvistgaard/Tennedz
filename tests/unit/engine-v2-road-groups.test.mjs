@@ -245,6 +245,19 @@ test('a distant peloton move forms a separate chasing group with its own gap',()
     teamByRiderId:{'b-0':'b'},newGroupId:'road-2',gapSeconds:24}),/chasing/);
 });
 
+test('a finish-line catch may take one newly joined chaser while another survives',()=>{
+  const previous=[{id:'road-1',riderIds:['a-0'],teamIds:['a'],gapSeconds:24}];
+  const current=[previous[0],
+    {id:'road-2',riderIds:['c-0'],teamIds:['c'],gapSeconds:4}];
+  const events={joinedRiderIds:['b-0','c-0'],caughtRiderIds:['b-0'],
+    formedChaseGroupId:'road-2',finishLineCatch:true};
+  assert.equal(validateRoadGroupTransition(previous,current,events),true);
+  assert.throws(()=>validateRoadGroupTransition(previous,current,{
+    ...events,finishLineCatch:false}),/chase group/);
+  assert.throws(()=>validateRoadGroupTransition(previous,current,{
+    ...events,caughtRiderIds:[]}),/kilometre/);
+});
+
 test('a second peloton move can form a third group behind an existing chase',()=>{
   const two=[
     {id:'road-1',riderIds:['a-0','a-1'],teamIds:['a'],gapSeconds:30},
