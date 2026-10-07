@@ -396,3 +396,20 @@ test('the bunch catches a middle group before an independent rear move can pass 
   assert.equal(validateRoadGroupTransition(groups,moved.groups,
     {caughtRiderIds:moved.caughtRiderIds}),true);
 });
+
+test('a middle group may partly merge while its other riders are caught on the line',()=>{
+  const previous=[
+    {id:'road-1',riderIds:['a-0'],teamIds:['a'],gapSeconds:90},
+    {id:'road-2',riderIds:['b-0','b-1'],teamIds:['b'],gapSeconds:1.4},
+    {id:'road-3',riderIds:['c-0','c-1'],teamIds:['c'],gapSeconds:1.08},
+  ];
+  const current=[previous[0],
+    {id:'road-3',riderIds:['c-1','b-0'],teamIds:['b','c'],gapSeconds:.29}];
+  const events={mergedGroupIds:['road-2'],caughtRiderIds:['b-1','c-0'],
+    finishLineCatch:true};
+  assert.equal(validateRoadGroupTransition(previous,current,events),true);
+  assert.throws(()=>validateRoadGroupTransition(previous,current,{
+    ...events,finishLineCatch:false}),/merge/);
+  assert.throws(()=>validateRoadGroupTransition(previous,current,{
+    ...events,caughtRiderIds:['c-0']}),/continue/);
+});

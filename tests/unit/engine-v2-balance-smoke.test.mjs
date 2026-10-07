@@ -94,3 +94,33 @@ test('independent manager audit accepts zero hard chasers with later options',()
   assert.equal(report.chaserSkillCap,null);
   assert.equal(report.genderSkillMode,'independent');
 });
+
+test('fixed-role chase probe changes only nominated hard-chaser teams',()=>{
+  const reports=[0,3].map(chasers=>JSON.parse(execFileSync(process.execPath,
+    [ensembleScript,'1','15','attack-trace',
+      `planned-finale-allied-manager-mix-${chasers}`,'260','100','0',
+      '2','20','4','100','hard','0','80','0','4','0','independent',
+      '0','fixed'],{
+      encoding:'utf8',timeout:60_000,maxBuffer:8*1024*1024,
+    })));
+  const [without,withChase]=reports.map(report=>
+    new Map(report.managerMixRoleAssignments.map(row=>[row.teamId,row.role])));
+  for(const [teamId,role] of without){
+    if(withChase.get(teamId)==='hard')assert.equal(role,'passive');
+    else assert.equal(withChase.get(teamId),role);
+  }
+  assert.equal([...withChase.values()].filter(role=>role==='hard').length,3);
+  for(const report of reports)assert.equal(report.managerMixRoleMode,'fixed');
+});
+
+test('fixed-role finale validates a partial merge and line catch',()=>{
+  // Rolling/M/aggressive/sample-5 merges road-6 into road-7 while several
+  // former road-6 riders and one road-7 rider are caught at the finish.
+  const report=JSON.parse(execFileSync(process.execPath,[ensembleScript,'1','20',
+    'attack-trace','planned-finale-allied-manager-mix-1','260','100','0',
+    '2','20','4','100','hard','0','80','0','4','0','independent','5','fixed'],{
+    encoding:'utf8',timeout:60_000,maxBuffer:8*1024*1024,
+  }));
+  assert.equal(report.sampleOffset,5);
+  assert.equal(report.managerMixRoleMode,'fixed');
+});
