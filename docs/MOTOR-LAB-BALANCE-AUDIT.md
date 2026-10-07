@@ -283,3 +283,22 @@ The corrected `fixed` manager-role mode reserves three possible hard-chaser team
 An opt-in `ordered` final argument now audits the five-kilometre handoff of every ensemble race against the read-only ordered short-step candidate. It counts zero, one or multiple recorded road groups; a one-group source is replay-validated and any refusal is reported with a sample number, rider status and source road membership. Five independent seeds, three focal strategies, both categories and three routes produced 90 races for each of 15 and 20 teams under the **fixed two-hard-chaser role mix**. The 15-team field had 41 no-group, 32 one-group and 17 multiple-group sources; 31 of the 32 one-group sources replayed, with two short-step catches. The 20-team field had 42 no-group, 32 one-group and 16 multiple-group sources; 29 of the 32 replayed, also with two catches. All four refusals came from a source peloton rider whose remaining energy was below even the sheltered cost of the next short slice (one began at zero energy); none was a fabricated chase worker or invalid group ID. The existing kilometre recording can classify an exhausted rider as still in the peloton, so the short-step path must define and record an explicit exhaustion/drop rule before broad integration. No refusal was silently treated as a finish, and no v91 result or point was replaced. Reproduce the 20-team run with `node scripts/engine-v2-ensemble.mjs 5 20 attack-trace planned-finale-allied-manager-mix-2 260 100 0 2 20 4 100 hard 0 80 0 4 0 independent 0 fixed ordered`; replace `20` after the sample count with `15` for the smaller field. These five synthetic seeds measure integration coverage, not realistic winner frequencies or sporting acceptance.
 
 The separately versioned ordered v5 / group-to-line v9 candidate applies an explicit conservative exhaustion rule to sheltered bunch riders before each short slice, including after a catch. The same fixed-role five-seed 15/20-team matrix now replays **all 64 one-road-group sources**: 32/32 at each field size, with two recorded catches in each. Two riders leave the bunch in one 15-team race; five do so across three 20-team races. Every drop names the rider, start distance, actual energy and sheltered energy required. Earlier versions remain available for replay and retain their four refusals. This demonstrates that no exhausted rider is granted unpaid short-step travel in these observed one-group cases; it does not prove a sporting attrition rate, solve exhaustion of a scheduled puller, handle the 83 no-group or 33 multiple-group source states, or validate result and point settlement.
+
+A further **five-seed, fixed-role participation/fatigue/skill boundary** used the same 90-race matrix per row (three correlated focal strategies, both categories, three routes). Counts below are five-kilometre source states, not winner frequencies. `Accepted` means the one-road-group v9 short-step recording and replay validator agreed; it does not mean the race was classified or points settled.
+
+| Teams | Hard chasers | Initial fatigue | Chaser skill cap | No group | One group | Multiple groups | Accepted | Recorded sheltered drops |
+| ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| 15 | 0 | 0 | 100 | 0 | 0 | 90 | 0 | 0 |
+| 15 | 1 | 0 | 100 | 0 | 6 | 84 | 6 | 0 |
+| 15 | 2 | 0 | 100 | 41 | 32 | 17 | 32 | 2 |
+| 15 | 3 | 0 | 100 | 90 | 0 | 0 | 0 | 0 |
+| 20 | 0 | 0 | 100 | 0 | 0 | 90 | 0 | 0 |
+| 20 | 1 | 0 | 100 | 0 | 9 | 81 | 9 | 0 |
+| 20 | 2 | 0 | 100 | 42 | 32 | 16 | 32 | 5 |
+| 20 | 3 | 0 | 100 | 90 | 0 | 0 | 0 | 0 |
+| 15 | 2 | 20 | 100 | 27 | 41 | 22 | 41 | 22 |
+| 20 | 2 | 20 | 100 | 30 | 38 | 22 | 38 | 20 |
+| 15 | 2 | 0 | 70 | 40 | 30 | 20 | 30 | 0 |
+| 20 | 2 | 0 | 70 | 41 | 31 | 18 | 31 | 4 |
+
+The 0-to-3 participation boundary is exceptionally sharp in this deliberately structured manager mix: weaker chase leaves several simultaneous road groups; stronger chase has already assembled a bunch before the short-step handoff. Added starting fatigue changes both source-group coverage and the visible conservative drop count. The skill-cap comparison is not a monotone causal pace calibration because it also changes the kilometre source state. Reproduce each row with the preceding `ordered` command, replacing field size, mix suffix, fatigue argument and skill cap as shown. More independently chosen tactics, full multi-group and bunch-only short-step recordings, and classified finish/point reconciliation remain necessary.
