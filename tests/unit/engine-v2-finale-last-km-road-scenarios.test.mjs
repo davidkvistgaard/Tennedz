@@ -5,6 +5,8 @@ import {MOTOR_ATTACK_TRACE_VERSION} from '../../lib/engine/v2/tuning.mjs';
 import {probeLastKmNamedAttackRoadFromTour,
   validateLastKmNamedAttackRoadFromTour} from
   '../../lib/engine/v2/finale-last-km-named-attack.mjs';
+import {lastKmLineStateFromTour,validateLastKmLineStateFromTour} from
+  '../../lib/engine/v2/finale-last-km-line-state.mjs';
 
 const stage={distance_km:40,profile_points:[[0,100],[40,100]],
   keypoints:[{km:10,kind:'SPRINT'},{km:20,kind:'SPRINT'},
@@ -40,6 +42,24 @@ test('independent v91 managers reach the line with recorded solo and catch branc
     assert.equal(trace.frames.at(-1).endDistanceM,40000);
     assert.equal(validateLastKmNamedAttackRoadFromTour(tour,
       {teamId:'a'},trace),true);
+    const line=lastKmLineStateFromTour(tour,{teamId:'a'});
+    assert.equal(line.version,'v2-finale-last-km-line-state-1');
+    assert.equal(line.roadTraceVersion,trace.version);
+    assert.equal(line.lineDistanceM,40000);
+    assert.ok(line.bunchTravelSeconds>0);
+    assert.equal(line.riders.length,16);
+    assert.equal(line.roadGroups.length,Number(scenario.survives));
+    assert.equal(new Set(line.riders.map(row=>row.riderId)).size,16);
+    assert.deepEqual(line.riders.map(row=>row.energyAtLine).sort((a,b)=>a-b),
+      trace.lineRiderEnergy.map(row=>row.energyAfter).sort((a,b)=>a-b));
+    const attacker=line.riders.find(row=>row.riderId==='a-0');
+    assert.equal(Boolean(attacker.roadGroupId),scenario.survives);
+    assert.equal(attacker.roadBandGapAheadOfBunchSeconds>0,
+      scenario.survives);
+    assert.equal(validateLastKmLineStateFromTour(tour,
+      {teamId:'a'},line),true);
+    assert.throws(()=>validateLastKmLineStateFromTour(tour,
+      {teamId:'a'},{...line,bunchTravelSeconds:0}),/does not replay/);
     if(scenario.chase==='all'){
       assert.ok(trace.frames.some(frame=>frame.chaseRiderId==='b-2'));
       assert.ok(trace.frames.some(frame=>frame.riderEnergy.some(row=>
