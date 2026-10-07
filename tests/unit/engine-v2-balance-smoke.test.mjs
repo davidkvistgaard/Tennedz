@@ -124,3 +124,31 @@ test('fixed-role finale validates a partial merge and line catch',()=>{
   assert.equal(report.sampleOffset,5);
   assert.equal(report.managerMixRoleMode,'fixed');
 });
+
+test('ordered short-step coverage accounts for every independent source state',()=>{
+  const report=JSON.parse(execFileSync(process.execPath,[ensembleScript,'1','20',
+    'attack-trace','planned-finale-allied-manager-mix-2','260','100','0',
+    '2','20','4','100','hard','0','80','0','4','0','independent','2',
+    'fixed','ordered'],{
+    encoding:'utf8',timeout:60_000,maxBuffer:8*1024*1024,
+  }));
+  assert.equal(report.orderedFinaleCoverage,'ordered');
+  let exhausted=0;
+  for(const genders of Object.values(report.courses))
+    for(const strategies of Object.values(genders))
+      for(const cell of Object.values(strategies)){
+        const coverage=cell.orderedFinale;
+        assert.equal(coverage.noRoadGroup+coverage.oneRoadGroup+
+          coverage.multipleRoadGroups+coverage.noBunch,1);
+        const rejected=Object.values(coverage.readOnlyRejections)
+          .reduce((sum,count)=>sum+count,0);
+        assert.equal(coverage.accepted+rejected,coverage.oneRoadGroup);
+        assert.equal(coverage.survived+coverage.caught,coverage.accepted);
+        for(const example of coverage.rejectionExamples){
+          assert.equal(example.sample,2);
+          assert.ok(example.sourceRider);
+          exhausted++;
+        }
+      }
+  assert.ok(exhausted>0);
+});

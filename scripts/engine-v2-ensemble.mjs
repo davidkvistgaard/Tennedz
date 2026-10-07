@@ -6,6 +6,9 @@ import {validateRecordedTour} from '../lib/engine/v2/recording.mjs';
 import {validateRoadGroupTransition} from '../lib/engine/v2/road-groups.mjs';
 import {SPORTING_SKILLS} from '../lib/engine/v2/physiology.mjs';
 import {hasResidualGapAfterSufficientChase} from '../lib/engine/v2/balance-audit.mjs';
+import {probeFinaleOrderedGroupToLineFromTour,
+  validateFinaleOrderedGroupToLineFromTour} from
+  '../lib/engine/v2/finale-ordered-run.mjs';
 import {TUNING,TUNING_VERSION,MOTOR_CANDIDATE_VERSION,MOTOR_PAID_PACE_VERSION,
   MOTOR_FINALE_VERSION,MOTOR_BRIDGE_FINALE_VERSION,MOTOR_EARNED_BRIDGE_VERSION,
   MOTOR_NEUTRAL_PACE_VERSION,MOTOR_EXPLICIT_FRONT_VERSION,
@@ -61,6 +64,7 @@ const genderSkillMode=process.argv[19]??'mirrored';
 const sampleOffset=process.argv[20]===undefined?0:Number(process.argv[20]);
 // Keep specialist team identities fixed when hard-chaser participation varies.
 const managerMixRoleMode=process.argv[21]??'shifted';
+const orderedFinaleCoverage=process.argv[22]??'off';
 const motorVersion=motorMode==='attack-trace'?MOTOR_ATTACK_TRACE_VERSION:
   motorMode==='phase-attack'?MOTOR_PHASE_ATTACK_VERSION:
   motorMode==='recovery-ceiling'?MOTOR_RECOVERY_CEILING_VERSION:
@@ -121,6 +125,7 @@ if(!Number.isInteger(samples)||samples<1||samples>100||
   !Number.isInteger(sampleOffset)||sampleOffset<0||sampleOffset>999||
   !['shifted','fixed'].includes(managerMixRoleMode)||
   managerMixHardChasers===null&&process.argv[21]!==undefined||
+  !['off','ordered'].includes(orderedFinaleCoverage)||
   !['current','candidate','paid-pace','bounded-finale','bounded-bridge-finale',
     'earned-bridge-finale','neutral-pace','explicit-front','draft-shelter',
     'distance-load','recovery-ceiling','phase-attack','attack-trace']
@@ -146,7 +151,7 @@ if(!Number.isInteger(samples)||samples<1||samples>100||
     .includes(paceMode))&&
     !['explicit-front','draft-shelter','distance-load',
       'recovery-ceiling','phase-attack','attack-trace'].includes(motorMode))
-  throw new Error('Usage: node scripts/engine-v2-ensemble.mjs [paired samples: 1-100] [teams: 2-20] [current|candidate|paid-pace|bounded-finale|bounded-bridge-finale|earned-bridge-finale|neutral-pace|explicit-front|draft-shelter|distance-load|recovery-ceiling|phase-attack|attack-trace] [preset|paced-rival|steady-rival|rotate-rival|late-hard-rival|rotate-plans|planned-finale|planned-finale-open|planned-finale-one-chaser|planned-finale-three-chasers|planned-finale-selective-chaser|planned-finale-allied|planned-finale-surge|planned-finale-allied-drive|planned-finale-two-chasers-allied-drive|planned-finale-three-chasers-allied-drive|planned-finale-own-plans-allied-drive|planned-finale-allied-manager-mix-[0-3] (v86+ only)] [120|260 km] [chaser skill cap: 20-100] [manager-mix initial fatigue shift: 0-30] [manager-mix selective chasers: 0-3] [manager-mix attack km to go: 5|10|20] [manager-mix opportunists: 0-4] [manager-mix chase km to go: 20..<distance] [manager-mix chase effort: steady|hard] [manager-mix hard finish km to go: 0|20|40|60, after steady only] [manager-mix opportunist attack at km: 0|40|80|120] [manager-mix opportunist stop km to go: 0|5|10] [manager-mix opportunist stop teams: 0..opportunists] [manager-mix stop-rank offset: 0..<opportunists] [mirrored|independent gender rosters] [sample offset: 0-999] [shifted|fixed manager roles]');
+  throw new Error('Usage: node scripts/engine-v2-ensemble.mjs [paired samples: 1-100] [teams: 2-20] [current|candidate|paid-pace|bounded-finale|bounded-bridge-finale|earned-bridge-finale|neutral-pace|explicit-front|draft-shelter|distance-load|recovery-ceiling|phase-attack|attack-trace] [preset|paced-rival|steady-rival|rotate-rival|late-hard-rival|rotate-plans|planned-finale|planned-finale-open|planned-finale-one-chaser|planned-finale-three-chasers|planned-finale-selective-chaser|planned-finale-allied|planned-finale-surge|planned-finale-allied-drive|planned-finale-two-chasers-allied-drive|planned-finale-three-chasers-allied-drive|planned-finale-own-plans-allied-drive|planned-finale-allied-manager-mix-[0-3] (v86+ only)] [120|260 km] [chaser skill cap: 20-100] [manager-mix initial fatigue shift: 0-30] [manager-mix selective chasers: 0-3] [manager-mix attack km to go: 5|10|20] [manager-mix opportunists: 0-4] [manager-mix chase km to go: 20..<distance] [manager-mix chase effort: steady|hard] [manager-mix hard finish km to go: 0|20|40|60, after steady only] [manager-mix opportunist attack at km: 0|40|80|120] [manager-mix opportunist stop km to go: 0|5|10] [manager-mix opportunist stop teams: 0..opportunists] [manager-mix stop-rank offset: 0..<opportunists] [mirrored|independent gender rosters] [sample offset: 0-999] [shifted|fixed manager roles] [off|ordered short-step coverage]');
 
 const ROUTES={
   flat:{distance_km:120,profile_points:[[0,60],[40,60],[80,75],[120,60]],
@@ -313,12 +318,17 @@ const report={pairedSamples:samples,sampleOffset,fieldTeams,motorMode,paceMode,
     managerMixOpportunistStopOffset,
   chaserSkillCap:plannedChasers>0?chaserSkillCap:null,
   initialFatigueShift,
+  ...(orderedFinaleCoverage==='ordered'?{orderedFinaleCoverage}:{}),
   description:'fictional varied riders and routes; no live data',courses:{}};
 for(const [course,stage] of Object.entries(distanceKm===260?LONG_ROUTES:ROUTES)){
   report.courses[course]={};
   for(const gender of ['M','F']){
     report.courses[course][gender]={};
     for(const strategy of STRATEGIES){
+      const orderedFinale={noRoadGroup:0,oneRoadGroup:0,
+        multipleRoadGroups:0,noBunch:0,accepted:0,
+        survived:0,caught:0,readOnlyRejections:{},examples:[],
+        rejectionExamples:[]};
       const totals={amberWins:0,amberPodiums:0,breakWins:0,positiveFinalGaps:0,
         photoFinishBreakWins:0,clearBreakWins:0,breakWinMargins:[],
         photoFinalGaps:[],photoFinaleAbilityDiffs:[],photoBunchDeficits:[],
@@ -411,6 +421,43 @@ for(const [course,stage] of Object.entries(distanceKm===260?LONG_ROUTES:ROUTES))
             previousRoadGroups=frame.roadGroups;
           }
           throw new Error(`Invalid recording: ${course}/${gender}/${strategy}/sample-${sample}, ${paceMode}`,{cause:error});
+        }
+        if(orderedFinaleCoverage==='ordered'){
+          const handoff=race.frames[distanceKm-6];
+          const groupCount=handoff.roadGroups.length;
+          if(groupCount===0)orderedFinale.noRoadGroup++;
+          else if(groupCount>1)orderedFinale.multipleRoadGroups++;
+          else if(!handoff.riderGroups.some(rider=>rider.group==='peloton'))
+            orderedFinale.noBunch++;
+          else{
+            orderedFinale.oneRoadGroup++;
+            try{
+              const probe=probeFinaleOrderedGroupToLineFromTour(race);
+              validateFinaleOrderedGroupToLineFromTour(race,probe);
+              orderedFinale.accepted++;
+              orderedFinale[probe.recording.outcome==='survived'?
+                'survived':'caught']++;
+              if(orderedFinale.examples.length<2)orderedFinale.examples.push({
+                sample,version:probe.version,
+                initialGapSeconds:probe.input.snapshot.roadGroups[0].gapSeconds,
+                outcome:probe.recording.outcome,
+                finishGapSeconds:probe.recording.finishGapSeconds,
+                catchDistanceM:probe.recording.catchDistanceM,
+              });
+            }catch(error){
+              const reason=String(error.message);
+              orderedFinale.readOnlyRejections[reason]=
+                (orderedFinale.readOnlyRejections[reason]??0)+1;
+              if(orderedFinale.rejectionExamples.length<3)
+                orderedFinale.rejectionExamples.push({sample,reason,
+                  sourceRider:handoff.riderGroups.find(rider=>
+                    reason.includes(`: ${rider.id} at `))??null,
+                  sourceRoadGroups:handoff.roadGroups.map(group=>({
+                    id:group.id,gapSeconds:group.gapSeconds,
+                    riderIds:group.riderIds})),
+                });
+            }
+          }
         }
         report.tuningVersion??=race.tuningVersion;
         const finalFrame=race.frames.at(-1);
@@ -667,6 +714,7 @@ for(const [course,stage] of Object.entries(distanceKm===260?LONG_ROUTES:ROUTES))
       const sortedPhotoLateResidualKm=[...totals.photoLateResidualKm].sort((a,b)=>a-b);
       const sortedBreakGroupAges=[...totals.breakWinnerGroupAgeKm].sort((a,b)=>a-b);
       report.courses[course][gender][strategy]={
+        ...(orderedFinaleCoverage==='ordered'?{orderedFinale}:{}),
         amberWinRate:totals.amberWins/samples,
         amberPodiumRate:totals.amberPodiums/samples,
         breakWinRate:totals.breakWins/samples,
