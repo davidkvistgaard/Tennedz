@@ -7,6 +7,7 @@ import {pendingFinaleAttacksAt} from '../../lib/engine/v2/finale-attack-guard.mj
 import {assertNoFinaleGroupContact,probeFinaleSeparatedGroupsFromTour,
   selectiveFinaleChaseDecision,FINALE_SEPARATED_EXHAUSTED_ATTACK_VERSION,
   FINALE_SEPARATED_NAMED_BLOCKS_VERSION,
+  FINALE_SEPARATED_DROPPED_TRAVEL_VERSION,
   validateFinaleSeparatedGroupsFromTour} from
   '../../lib/engine/v2/finale-multi-run.mjs';
 
@@ -215,6 +216,71 @@ test('a dropped named rider has a recorded blocked order in the new version',()=
   assert.throws(()=>validateFinaleSeparatedGroupsFromTour(tour,forged),
     /differs/);
   assert.equal(validateFinaleSeparatedGroupsFromTour(tour,old),true);
+});
+
+test('separated finale pays and records every source-dropped rider to the line',()=>{
+  for(const gender of ['M','F']){
+    const weak=team('c',gender,null);
+    for(const skill of ['flat','strength','endurance','timetrial'])
+      weak.riders[0][skill]=20;
+    weak.orders.phases.push({atKm:255,attack:'selective',
+      attackRiderId:'c-0'});
+    const longStage={distance_km:260,
+      profile_points:[[0,100],[260,100]],keypoints:stage.keypoints};
+    const tour=simulateTacticalTour({stage:longStage,
+      teams:[team('a',gender,0),team('b',gender,20),weak],
+      seed:'separated-finale',motorVersion:MOTOR_ATTACK_TRACE_VERSION});
+    const source=tour.frames[255];
+    assert.equal(source.roadGroups.length,2);
+    const dropped=source.riderGroups.find(row=>row.id==='c-0');
+    assert.equal(dropped.group,'dropped');
+    assert.ok(dropped.energy>0&&dropped.deficitSeconds>0);
+    const original=structuredClone(tour);
+    const run=probeFinaleSeparatedGroupsFromTour(tour,{
+      version:FINALE_SEPARATED_DROPPED_TRAVEL_VERSION});
+    assert.deepEqual(run.sourceDroppedRiderIds,['c-0']);
+    assert.equal(run.frames.length,10);
+    assert.ok(run.frames.every(frame=>frame.droppedTravel.riders.length===1&&
+      frame.droppedTravel.riders[0].energySpent>0&&
+      frame.riders.some(row=>row.riderId==='c-0'&&row.role==='dropped')));
+    assert.ok(run.frames.every(frame=>frame.droppedTravel.riders[0]
+      .deficitSecondsAfter>0));
+    assert.deepEqual(run.finalDroppedRiderDeficits,[{
+      riderId:'c-0',deficitSeconds:run.frames.at(-1).droppedTravel
+        .riders[0].deficitSecondsAfter}]);
+    assert.equal(new Set(run.finalRiderEnergy.map(row=>row.riderId)).size,
+      source.riderGroups.length);
+    const decision=run.frames.find(frame=>frame.sourceKm===260)
+      .blockedNamedAttacks.find(row=>row.riderId==='c-0');
+    const beforeDecision=run.frames.find(frame=>
+      frame.endDistanceM===decision.distanceM).droppedTravel.riders[0];
+    assert.equal(decision.reason,'dropped');
+    assert.equal(decision.energyAtDecision,beforeDecision.energyAfter);
+    assert.equal(validateFinaleSeparatedGroupsFromTour(tour,run),true);
+    const forged=structuredClone(run);
+    forged.frames[0].droppedTravel.riders[0].energySpent=0;
+    assert.throws(()=>validateFinaleSeparatedGroupsFromTour(tour,forged),
+      /differs/);
+    assert.deepEqual(tour,original);
+  }
+});
+
+test('new dropped-travel version refuses a rider with no energy to reach the line',()=>{
+  const weak=team('c','M',null);
+  weak.riders[0].fatigue=100;
+  for(const skill of ['flat','strength','endurance','timetrial'])
+    weak.riders[0][skill]=20;
+  weak.orders.baseline.effort='hard';
+  const longStage={distance_km:260,
+    profile_points:[[0,100],[260,100]],keypoints:stage.keypoints};
+  const tour=simulateTacticalTour({stage:longStage,
+    teams:[team('a','M',0),team('b','M',20),weak],
+    seed:'separated-finale',motorVersion:MOTOR_ATTACK_TRACE_VERSION});
+  assert.equal(tour.frames[255].riderGroups.find(row=>
+    row.id==='c-0').energy,0);
+  assert.throws(()=>probeFinaleSeparatedGroupsFromTour(tour,{
+    version:FINALE_SEPARATED_DROPPED_TRAVEL_VERSION}),
+  /cannot pay for travel/);
 });
 
 test('separated continuation refuses a source without multiple road groups',()=>{
