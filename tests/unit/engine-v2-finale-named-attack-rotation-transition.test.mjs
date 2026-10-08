@@ -23,6 +23,9 @@ import {probeLastKmRotationContainedFromTour,
 import {probeLastKmRotationSoloFromTour,
   validateLastKmRotationSoloFromTour} from
   '../../lib/engine/v2/finale-last-km-rotation-solo.mjs';
+import {recordFinaleRotationSoloSliceFromTour,
+  validateFinaleRotationSoloSliceFromTour} from
+  '../../lib/engine/v2/finale-rotation-solo-slice.mjs';
 import {recordFinaleRotationContainedSprintPlanFromTour,
   validateFinaleRotationContainedSprintPlanFromTour} from
   '../../lib/engine/v2/finale-sprint-plan.mjs';
@@ -133,6 +136,23 @@ test('rotating pair and reactive chaser pay once against a named attack',()=>{
   assert.throws(()=>validateLastKmRotationSoloFromTour(tour,
     {teamId:'a'},{...solo,at500M:{...solo.at500M,
       roadGroups:[]}}),/does not replay/);
+  const soloStep=recordFinaleRotationSoloSliceFromTour(tour,{
+    attackTeamId:'a'});
+  assert.equal(soloStep.sourceRoadTraceVersion,solo.version);
+  assert.equal(soloStep.startDistanceM,39500);
+  assert.equal(soloStep.endDistanceM,39600);
+  assert.equal(soloStep.riderEnergy.length,32);
+  assert.deepEqual(soloStep.roadGroups[0].riderIds,['a-0']);
+  assert.ok(soloStep.roadGroups[0].gapSeconds>0);
+  assert.equal(soloStep.rotation.selected?.teamId,'b');
+  assert.equal(soloStep.paceSource,'front_rotation');
+  assert.ok(soloStep.riderEnergy.every(row=>
+    row.energySpent>0&&row.energyAfter>=0));
+  assert.equal(validateFinaleRotationSoloSliceFromTour(tour,
+    {attackTeamId:'a'},soloStep),true);
+  assert.throws(()=>validateFinaleRotationSoloSliceFromTour(tour,
+    {attackTeamId:'a'},{...soloStep,bunchTravelSeconds:0}),
+  /does not replay/);
   assert.deepEqual(tour.provisionalResults,oldResults);
   }
 });
@@ -190,6 +210,22 @@ test('a rotating mid-slice catch pays a merged remainder in opt-in v2',()=>{
     launchInput:input,launch,slice:grid[1]},
   {...caught,catchDistanceM:grid[1].endDistanceM}),
   /does not replay/);
+});
+
+test('a surviving 500 m solo source refuses an unrecorded 100 m catch',()=>{
+  for(const gender of ['M','F']){
+    const tour=simulateTacticalTour({stage,teams:[
+      team('a',60,{attack:true,gender}),
+      team('b',88,{rotate:true,gender}),
+      team('c',55,{chase:'all',gender}),
+      team('d',80,{rotate:true,gender})],
+    seed:'attack-with-rotation-M',
+    motorVersion:MOTOR_ATTACK_TRACE_VERSION});
+    const solo=probeLastKmRotationSoloFromTour(tour,{teamId:'a'});
+    assert.ok(solo.at500M.roadGroups[0].gapSeconds>0);
+    assert.throws(()=>recordFinaleRotationSoloSliceFromTour(tour,{
+      attackTeamId:'a'}),/needs an exact catch continuation/);
+  }
 });
 
 test('a contained attack pays once then independent front rotation continues',()=>{
