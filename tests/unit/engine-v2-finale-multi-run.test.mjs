@@ -5,12 +5,14 @@ import {MOTOR_ATTACK_TRACE_VERSION} from '../../lib/engine/v2/tuning.mjs';
 import {finaleSnapshotFromTour} from '../../lib/engine/v2/finale-snapshot.mjs';
 import {pendingFinaleAttacksAt} from '../../lib/engine/v2/finale-attack-guard.mjs';
 import {probeFinaleSeparatedFinishBoundsFromTour,
+  FINALE_SEPARATED_TEAM_LIMIT_BOUNDS_VERSION,
   validateFinaleSeparatedFinishBoundsFromTour} from
   '../../lib/engine/v2/finale-separated-finish-bounds.mjs';
 import {assertNoFinaleGroupContact,probeFinaleSeparatedGroupsFromTour,
   selectiveFinaleChaseDecision,FINALE_SEPARATED_EXHAUSTED_ATTACK_VERSION,
   FINALE_SEPARATED_NAMED_BLOCKS_VERSION,
   FINALE_SEPARATED_DROPPED_TRAVEL_VERSION,
+  FINALE_SEPARATED_TEAM_LIMIT_VERSION,
   validateFinaleSeparatedGroupsFromTour} from
   '../../lib/engine/v2/finale-multi-run.mjs';
 
@@ -345,6 +347,48 @@ test('dropped riders with equal deficits share bounds; distinct deficits retain 
       assert.deepEqual(dropped.map(band=>band.firstPossiblePlace),
         [23,24]);
     }
+  }
+});
+
+test('an unnamed attack blocked by the two-rider break limit records no invented rider or work',()=>{
+  for(const gender of ['M','F']){
+    const front=team('a',gender,null);
+    front.orders.baseline.attack='selective';
+    front.orders.phases.push({atKm:255,attack:'selective'});
+    const weak=team('c',gender,null);
+    for(const skill of ['flat','strength','endurance','timetrial'])
+      weak.riders[0][skill]=20;
+    const longStage={distance_km:260,
+      profile_points:[[0,100],[260,100]],keypoints:stage.keypoints};
+    const tour=simulateTacticalTour({stage:longStage,
+      teams:[front,team('b',gender,20),weak],
+      seed:'separated-finale',motorVersion:MOTOR_ATTACK_TRACE_VERSION});
+    assert.equal(tour.frames[255].riderGroups.filter(row=>
+      row.teamId==='a'&&row.group==='breakaway').length,2);
+    assert.throws(()=>probeFinaleSeparatedGroupsFromTour(tour,{
+      version:FINALE_SEPARATED_DROPPED_TRAVEL_VERSION}),
+    /needs a recorded team break limit/);
+    const original=structuredClone(tour);
+    const run=probeFinaleSeparatedGroupsFromTour(tour,{
+      version:FINALE_SEPARATED_TEAM_LIMIT_VERSION});
+    const blocked=run.frames.flatMap(frame=>frame.blockedNamedAttacks)
+      .filter(row=>row.reason==='team_break_limit');
+    assert.deepEqual(blocked,[{teamId:'a',riderId:null,
+      reason:'team_break_limit',sourceKm:260,
+      distanceM:259000,energyAtDecision:null}]);
+    assert.equal(run.finalRiderEnergy.length,24);
+    assert.equal(validateFinaleSeparatedGroupsFromTour(tour,run),true);
+    const bounds=probeFinaleSeparatedFinishBoundsFromTour(tour,{
+      version:FINALE_SEPARATED_TEAM_LIMIT_BOUNDS_VERSION});
+    assert.equal(bounds.riders.length,24);
+    assert.equal(bounds.pointsStatus,'withheld');
+    assert.equal(validateFinaleSeparatedFinishBoundsFromTour(tour,bounds),true);
+    const forged=structuredClone(run);
+    forged.frames.find(frame=>frame.sourceKm===260)
+      .blockedNamedAttacks[0].riderId='a-2';
+    assert.throws(()=>validateFinaleSeparatedGroupsFromTour(tour,forged),
+      /differs/);
+    assert.deepEqual(tour,original);
   }
 });
 

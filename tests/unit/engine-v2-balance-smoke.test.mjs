@@ -210,3 +210,31 @@ test('post-attack handoff never counts an unresolved later attack as travel',()=
   }
   assert.ok(refusedLater>0);
 });
+
+test('complete separated-field audit records blocked team-limit orders without awarding points',()=>{
+  const report=JSON.parse(execFileSync(process.execPath,[ensembleScript,'1','20',
+    'attack-trace','planned-finale-allied-manager-mix-1','260','100','0',
+    '2','20','4','100','hard','0','80','0','4','0','independent',
+    '0','fixed','ordered'],{
+      encoding:'utf8',timeout:120_000,maxBuffer:8*1024*1024,
+    }));
+  const cells=Object.values(report.courses).flatMap(genders=>
+    Object.values(genders).flatMap(strategies=>
+      Object.values(strategies)));
+  const totals={candidates:0,accepted:0,blocked:0};
+  for(const cell of cells){
+    const audit=cell.orderedFinale.fullFieldSeparated;
+    assert.equal(audit.travelVersion,'v2-finale-separated-team-limit-9');
+    assert.equal(audit.boundsVersion,
+      'v2-finale-separated-finish-bounds-2');
+    const rejected=Object.values(audit.rejections)
+      .reduce((sum,count)=>sum+count,0);
+    assert.equal(audit.accepted+rejected,audit.candidates);
+    totals.candidates+=audit.candidates;
+    totals.accepted+=audit.accepted;
+    totals.blocked+=audit.blockedTeamLimitDecisions;
+  }
+  assert.ok(totals.candidates>0);
+  assert.ok(totals.accepted>0);
+  assert.ok(totals.blocked>0);
+});

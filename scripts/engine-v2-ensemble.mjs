@@ -16,8 +16,13 @@ import {probeFinaleOrderedGroupToLineFromTour,
   validateFinaleOrderedGroupToLineFromTour} from
   '../lib/engine/v2/finale-ordered-run.mjs';
 import {probeFinaleSeparatedGroupsFromTour,
-  validateFinaleSeparatedGroupsFromTour} from
+  validateFinaleSeparatedGroupsFromTour,
+  FINALE_SEPARATED_TEAM_LIMIT_VERSION} from
   '../lib/engine/v2/finale-multi-run.mjs';
+import {probeFinaleSeparatedFinishBoundsFromTour,
+  validateFinaleSeparatedFinishBoundsFromTour,
+  FINALE_SEPARATED_TEAM_LIMIT_BOUNDS_VERSION} from
+  '../lib/engine/v2/finale-separated-finish-bounds.mjs';
 import {recordFinaleRotationV91CandidateFromTour,
   validateFinaleRotationV91CandidateFromTour} from
   '../lib/engine/v2/finale-rotation-v91-candidate.mjs';
@@ -408,6 +413,11 @@ for(const [course,stage] of Object.entries(distanceKm===260?LONG_ROUTES:ROUTES))
         noRoadGroupExamples:[],multipleRoadGroupExamples:[],
         multiSeparatedAccepted:0,multiSeparatedRejections:{},
         multiSeparatedRejectionExamples:[],
+        fullFieldSeparated:{version:'v2-full-field-separated-coverage-1',
+          travelVersion:FINALE_SEPARATED_TEAM_LIMIT_VERSION,
+          boundsVersion:FINALE_SEPARATED_TEAM_LIMIT_BOUNDS_VERSION,
+          candidates:0,accepted:0,blockedTeamLimitDecisions:0,
+          rejections:{}},
         oneRoadSeparatedAccepted:0,oneRoadSeparatedRejections:{},
         postAttackCandidates:0,postAttackAccepted:0,
         postAttackRejections:{},
@@ -675,6 +685,36 @@ for(const [course,stage] of Object.entries(distanceKm===260?LONG_ROUTES:ROUTES))
           resultContracts.awards+=contract.divisions[0].awards.length;
         }
         if(orderedFinaleCoverage==='ordered'){
+          const fullFieldSource=race.frames[distanceKm-5];
+          const fullFieldAudit=orderedFinale.fullFieldSeparated;
+          if(fullFieldSource.roadGroups.length>0&&
+            fullFieldSource.riderGroups.some(row=>row.group==='peloton')&&
+            fullFieldSource.riderGroups.some(row=>row.group==='dropped')){
+            fullFieldAudit.candidates++;
+            try{
+              const travel=probeFinaleSeparatedGroupsFromTour(race,{
+                version:FINALE_SEPARATED_TEAM_LIMIT_VERSION});
+              validateFinaleSeparatedGroupsFromTour(race,travel);
+              const bounds=probeFinaleSeparatedFinishBoundsFromTour(race,{
+                version:FINALE_SEPARATED_TEAM_LIMIT_BOUNDS_VERSION});
+              validateFinaleSeparatedFinishBoundsFromTour(race,bounds);
+              const riderCount=fieldTeams*8;
+              if(travel.finalRiderEnergy.length!==riderCount||
+                bounds.riders.length!==riderCount||
+                bounds.resultStatus!=='unclassified'||
+                bounds.pointsStatus!=='withheld')
+                throw new Error('Complete-field finale audit lost riders or awarded points.');
+              fullFieldAudit.accepted++;
+              fullFieldAudit.blockedTeamLimitDecisions+=travel.frames
+                .flatMap(frame=>frame.blockedNamedAttacks)
+                .filter(row=>row.reason==='team_break_limit'&&
+                  row.riderId===null).length;
+            }catch(error){
+              const reason=String(error.message);
+              fullFieldAudit.rejections[reason]=
+                (fullFieldAudit.rejections[reason]??0)+1;
+            }
+          }
           const handoff=race.frames[distanceKm-6];
           const groupCount=handoff.roadGroups.length;
           const tryPostAttack=()=>{
