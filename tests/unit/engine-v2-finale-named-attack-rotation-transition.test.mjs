@@ -27,6 +27,8 @@ import {recordFinaleRotationSoloSliceFromTour,
   validateFinaleRotationSoloSliceFromTour,
   recordFinaleRotationSoloSecondSliceFromTour,
   validateFinaleRotationSoloSecondSliceFromTour,
+  recordFinaleRotationSoloSecondCatchFromTour,
+  validateFinaleRotationSoloSecondCatchFromTour,
   recordFinaleRotationSoloCatchSliceFromTour,
   validateFinaleRotationSoloCatchSliceFromTour,
   recordFinaleRotationSoloRunFromTour,
@@ -66,6 +68,10 @@ import {projectV2FinalePointBounds,validateV2FinalePointBounds} from
 
 const stage={distance_km:40,profile_points:[[0,100],[40,100]],
   keypoints:[{km:39,kind:'SPRINT'}]};
+function close(actual,expected){
+  assert.ok(Math.abs(actual-expected)<1e-8,
+    `${actual} differs from ${expected}`);
+}
 function team(id,skill,{attack=false,rotate=false,chase='ignore',
   gender='M',attackAtKm=39}={}){
   return {id,riders:Array.from({length:8},(_,index)=>({
@@ -197,12 +203,21 @@ test('rotating pair and reactive chaser pay once against a named attack',()=>{
   assert.equal(lateCatch.frames.length,3);
   assert.equal(lateCatch.frames[2].afterCatchRotationPlan.selected
     ?.teamId,'c');
+  close(lateCatch.frames[2].preCatchBunchTravelSeconds+
+    second.roadGroups[0].gapSeconds,
+  lateCatch.frames[2].frontTravelSeconds);
   const secondEnergy=new Map(second.riderEnergy.map(row=>
     [row.riderId,row.energyAfter]));
   assert.ok(lateCatch.frames[2].riderEnergy.every(row=>
     row.energyAtDecision===secondEnergy.get(row.riderId)&&
     row.energySpent===row.preCatchEnergySpent+
       row.postCatchEnergySpent&&row.energyAfter>=0));
+  for(const row of lateCatch.frames[2].riderEnergy){
+    close(row.energyAtDecision-row.preCatchEnergySpent,
+      row.energyAtCatch);
+    close(row.energyAtCatch-row.postCatchEnergySpent,
+      row.energyAfter);
+  }
   assert.equal(lateCatch.roadGroups.length,0);
   assert.equal(lateCatch.pelotonRiderIds.length,32);
   assert.equal(lateCatch.riderEnergy.length,32);
@@ -260,6 +275,9 @@ test('rotating pair and reactive chaser pay once against a named attack',()=>{
     [row.riderId,row.energy]));
   assert.ok(lateSprint.frames[0].riderEnergy.every(row=>
     row.energyAtDecision===mergeEnergy.get(row.riderId)));
+  for(const frame of lateSprint.frames)
+    for(const row of frame.riderEnergy)
+      close(row.energyAtDecision-row.energySpent,row.energyAfter);
   assert.equal(lateSprint.bunchElapsedSecondsAtLine,
     lateCatch.bunchElapsedSecondsAtMerge+
     lateSprint.frames.reduce((sum,frame)=>
@@ -330,6 +348,13 @@ test('a stronger named solo pays every late slice to a separated line',()=>{
     assert.equal(run.lineRiderEnergy.length,32);
     assert.ok(run.frames.every(frame=>frame.riderEnergy.length===32&&
       frame.roadGroups[0].gapSeconds>0));
+    let gap=road.at500M.roadGroups[0].gapSeconds;
+    for(const frame of run.frames){
+      gap+=frame.bunchTravelSeconds-frame.frontTravelSeconds;
+      close(frame.roadGroups[0].gapSeconds,gap);
+      for(const row of frame.riderEnergy)
+        close(row.energyAtDecision-row.energySpent,row.energyAfter);
+    }
     for(let index=1;index<run.frames.length;index++){
       const before=new Map(run.frames[index-1].riderEnergy.map(row=>
         [row.riderId,row.energyAfter]));
@@ -479,6 +504,58 @@ test('a surviving 500 m solo source refuses an unrecorded 100 m catch',()=>{
     assert.throws(()=>validateFinaleRotationSoloCatchSliceFromTour(tour,
       {attackTeamId:'a'},{...caught,catchDistanceM:39500}),
     /does not replay/);
+  }
+});
+
+test('a 400–300 m contact pays both sides and merges the remaining metres',()=>{
+  const longStage={distance_km:180,
+    profile_points:[[0,100],[180,100]],
+    keypoints:[{km:179,kind:'SPRINT'}]};
+  for(const gender of ['M','F'])for(const chase of ['all','ignore']){
+    const tour=simulateTacticalTour({stage:longStage,teams:[
+      team('a',65,{attack:true,attackAtKm:179,gender}),
+      team('b',88,{rotate:true,gender}),
+      team('c',55,{rotate:true,chase,gender}),
+      team('d',80,{rotate:true,gender})],
+    seed:`second-catch-${gender}-${chase}`,
+    motorVersion:MOTOR_ATTACK_TRACE_VERSION});
+    const input={attackTeamId:'a'};
+    const first=recordFinaleRotationSoloSliceFromTour(tour,input);
+    assert.equal(first.endDistanceM,179600);
+    assert.ok(first.roadGroups[0].gapSeconds>0);
+    assert.throws(()=>recordFinaleRotationSoloSecondSliceFromTour(
+      tour,input),/needs an exact catch continuation/);
+    const caught=recordFinaleRotationSoloSecondCatchFromTour(tour,input);
+    assert.equal(caught.sourceSliceVersion,first.version);
+    assert.ok(caught.catchDistanceM>179600&&
+      caught.catchDistanceM<179700);
+    assert.equal(caught.endDistanceM,179700);
+    assert.deepEqual(caught.roadGroups,[]);
+    assert.equal(caught.pelotonRiderIds.length,32);
+    assert.equal(caught.riderEnergy.length,32);
+    close(caught.preCatchBunchTravelSeconds+
+      first.roadGroups[0].gapSeconds,caught.frontTravelSeconds);
+    close(caught.bunchTravelSeconds,
+      caught.preCatchBunchTravelSeconds+
+      caught.postCatchTravelSeconds);
+    const firstEnergy=new Map(first.riderEnergy.map(row=>
+      [row.riderId,row.energyAfter]));
+    for(const row of caught.riderEnergy){
+      close(row.energyAtDecision,firstEnergy.get(row.riderId));
+      close(row.energyAtDecision-row.preCatchEnergySpent,
+        row.energyAtCatch);
+      close(row.energyAtCatch-row.postCatchEnergySpent,
+        row.energyAfter);
+      close(row.energySpent,row.preCatchEnergySpent+
+        row.postCatchEnergySpent);
+      assert.ok(row.energyAfter>=0);
+    }
+    assert.equal(validateFinaleRotationSoloSecondCatchFromTour(tour,
+      input,JSON.parse(JSON.stringify(caught))),true);
+    assert.throws(()=>validateFinaleRotationSoloSecondCatchFromTour(tour,
+      input,{...caught,catchDistanceM:179600}),/does not replay/);
+    assert.throws(()=>recordFinaleRotationSoloRunFromTour(tour,input),
+      /needs an exact catch continuation/);
   }
 });
 
