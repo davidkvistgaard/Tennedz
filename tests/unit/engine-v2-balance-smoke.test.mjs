@@ -95,6 +95,30 @@ test('independent manager audit accepts zero hard chasers with later options',()
   assert.equal(report.genderSkillMode,'independent');
 });
 
+test('concurrent audit counts every selective chase order in complete bunches',()=>{
+  const report=JSON.parse(execFileSync(process.execPath,[ensembleScript,'1','15',
+    'attack-trace','planned-finale-allied-manager-mix-0','120','100','0',
+    '3','5','0','100','hard','0','0','0','0','0','independent',
+    '100','fixed'],{
+    encoding:'utf8',timeout:60_000,maxBuffer:8*1024*1024,
+    env:{...process.env,PELOTONIA_V91_COVERAGE:'on'},
+  }));
+  const cells=Object.values(report.courses).flatMap(genders=>
+    Object.values(genders).flatMap(strategies=>
+      Object.values(strategies)));
+  let complete=0;
+  for(const cell of cells){
+    const concurrent=cell.v91Finale.concurrent;
+    assert.equal(cell.v91Finale.version,
+      'v2-ensemble-v91-finale-coverage-2');
+    assert.equal(Object.values(concurrent
+      .completeBunchSelectiveChaseOrderCounts).reduce((sum,count)=>
+      sum+count,0),concurrent.completeBunchSources);
+    complete+=concurrent.completeBunchSources;
+  }
+  assert.ok(complete>0);
+});
+
 test('fixed-role chase probe changes only nominated hard-chaser teams',()=>{
   const reports=[0,3].map(chasers=>JSON.parse(execFileSync(process.execPath,
     [ensembleScript,'1','15','attack-trace',

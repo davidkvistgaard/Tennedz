@@ -35,11 +35,14 @@ import {recordFinaleConcurrentNamedRoadContactFromTour} from
   '../lib/engine/v2/finale-concurrent-named-road-contact.mjs';
 import {recordFinaleConcurrentNamedRotationLaunchFromTour} from
   '../lib/engine/v2/finale-concurrent-named-rotation-launch.mjs';
-import {recordFinaleConcurrentNamedChaseRotationFromTour} from
+import {recordFinaleConcurrentNamedChaseRotationFromTour,
+  recordFinaleConcurrentNamedSelectiveRotationFromTour} from
   '../lib/engine/v2/finale-concurrent-named-chase-rotation-launch.mjs';
-import {recordFinaleConcurrentNamedChaseRotationContactFromTour} from
+import {recordFinaleConcurrentNamedChaseRotationContactFromTour,
+  recordFinaleConcurrentNamedSelectiveRotationContactFromTour} from
   '../lib/engine/v2/finale-concurrent-named-chase-rotation-contact.mjs';
-import {recordFinaleConcurrentRelativeArrivalsFromTour} from
+import {recordFinaleConcurrentRelativeArrivalsFromTour,
+  recordFinaleConcurrentSelectiveRelativeArrivalsFromTour} from
   '../lib/engine/v2/finale-concurrent-relative-arrivals.mjs';
 import {recordFinaleConcurrentNamedAllChaseFromTour} from
   '../lib/engine/v2/finale-concurrent-named-all-chase.mjs';
@@ -379,7 +382,7 @@ for(const [course,stage] of Object.entries(distanceKm===260?LONG_ROUTES:ROUTES))
     for(const strategy of STRATEGIES){
       const resultContracts={version:'v2-ensemble-result-contract-audit-1',
         validated:0,riderResults:0,awards:0};
-      const v91Finale={version:'v2-ensemble-v91-finale-coverage-1',
+      const v91Finale={version:'v2-ensemble-v91-finale-coverage-2',
         sourceRaces:0,noNamedAttackOrder:0,namedAttackSources:0,
         sourceWithRoadGroups:0,sourceWithDrops:0,
         sourceCompleteBunch:0,sourceWithRivalAttackOrders:0,
@@ -388,6 +391,8 @@ for(const [course,stage] of Object.entries(distanceKm===260?LONG_ROUTES:ROUTES))
           completeBunchAllNamedEligible:0,
           completeBunchWithOtherPending:0,
           completeBunchWithSelectiveChase:0,
+          completeBunchSelectiveChaseOrderCounts:{},
+          completeBunchWithSelectiveRotationOverlap:0,
           completeBunchWithFrontRotation:0,
           completeBunchWithAllChase:0,
           completeBunchWithAttackerRotation:0,
@@ -400,6 +405,14 @@ for(const [course,stage] of Object.entries(distanceKm===260?LONG_ROUTES:ROUTES))
           relativeArrivals:0,minRelativeSeconds:null,
           maxRelativeSeconds:null,minEstimatedSeparationM:null,
           maxEstimatedSeparationM:null,
+          selectiveRotationLaunch:0,selectiveRotationContact:0,
+          selectiveRotationEngaged:0,selectiveRotationPaid:0,
+          selectiveRotationWithTwoSplit:0,
+          selectiveRelativeArrivals:0,
+          minSelectiveRelativeSeconds:null,
+          maxSelectiveRelativeSeconds:null,
+          minSelectiveSeparationM:null,
+          maxSelectiveSeparationM:null,
           allChaseLaunch:0,allChaseContact:0,
           chasedFollowup:0,chasedCatchMerge:0,
           refusalReasons:{}},
@@ -555,6 +568,15 @@ for(const [course,stage] of Object.entries(distanceKm===260?LONG_ROUTES:ROUTES))
                 intents.unresolvedSelectiveChaseTeamIds.length>0);
               const activeOrders=race.committedInputs.teams.map(team=>
                 orderAt(team.orders,distanceKm-1));
+              const selectiveChaseOrders=activeOrders.filter(order=>
+                order.chase==='selective').length;
+              concurrent.completeBunchSelectiveChaseOrderCounts[
+                selectiveChaseOrders]=(concurrent
+                .completeBunchSelectiveChaseOrderCounts[
+                  selectiveChaseOrders]??0)+1;
+              concurrent.completeBunchWithSelectiveRotationOverlap+=Number(
+                activeOrders.some(order=>order.chase==='selective'&&
+                  order.frontWork==='rotate'));
               concurrent.completeBunchWithFrontRotation+=Number(
                 activeOrders.some(order=>order.frontWork!=='sit_in'));
               concurrent.completeBunchWithAllChase+=Number(
@@ -617,6 +639,37 @@ for(const [course,stage] of Object.entries(distanceKm===260?LONG_ROUTES:ROUTES))
                       relative.estimatedSeparationM);
                     concurrent.maxEstimatedSeparationM=Math.max(
                       concurrent.maxEstimatedSeparationM??0,
+                      relative.estimatedSeparationM);
+                  }
+                }
+              }
+              const selectiveCombined=attempt('selectiveRotationLaunch',
+                recordFinaleConcurrentNamedSelectiveRotationFromTour);
+              if(selectiveCombined){
+                concurrent.selectiveRotationEngaged+=Number(
+                  selectiveCombined.selectiveDecision.decision==='engage');
+                concurrent.selectiveRotationPaid+=Number(
+                  selectiveCombined.rotationDecision==='paid');
+                const twoSplit=selectiveCombined.attacks.filter(row=>
+                  row.status==='split').length===2;
+                concurrent.selectiveRotationWithTwoSplit+=Number(twoSplit);
+                if(!twoSplit)attempt('selectiveRotationContact',
+                  recordFinaleConcurrentNamedSelectiveRotationContactFromTour);
+                if(twoSplit){
+                  const relative=attempt('selectiveRelativeArrivals',
+                    recordFinaleConcurrentSelectiveRelativeArrivalsFromTour);
+                  if(relative){
+                    concurrent.minSelectiveRelativeSeconds=Math.min(
+                      concurrent.minSelectiveRelativeSeconds??Infinity,
+                      relative.separationSeconds);
+                    concurrent.maxSelectiveRelativeSeconds=Math.max(
+                      concurrent.maxSelectiveRelativeSeconds??0,
+                      relative.separationSeconds);
+                    concurrent.minSelectiveSeparationM=Math.min(
+                      concurrent.minSelectiveSeparationM??Infinity,
+                      relative.estimatedSeparationM);
+                    concurrent.maxSelectiveSeparationM=Math.max(
+                      concurrent.maxSelectiveSeparationM??0,
                       relative.estimatedSeparationM);
                   }
                 }
@@ -1168,6 +1221,9 @@ for(const [course,stage] of Object.entries(distanceKm===260?LONG_ROUTES:ROUTES))
           v91Finale.concurrent.sources||
         v91Finale.concurrent.completeBunchAllNamedEligible>
           v91Finale.concurrent.completeBunchSources||
+        Object.values(v91Finale.concurrent
+          .completeBunchSelectiveChaseOrderCounts).reduce((sum,count)=>
+          sum+count,0)!==v91Finale.concurrent.completeBunchSources||
         v91Finale.concurrent.passiveContact>
           v91Finale.concurrent.passiveLaunch||
         v91Finale.concurrent.rotationLaunch>
@@ -1182,6 +1238,16 @@ for(const [course,stage] of Object.entries(distanceKm===260?LONG_ROUTES:ROUTES))
           v91Finale.concurrent.chaseRotationLaunch||
         v91Finale.concurrent.relativeArrivals>
           v91Finale.concurrent.chaseRotationWithTwoSplit||
+        v91Finale.concurrent.selectiveRotationContact>
+          v91Finale.concurrent.selectiveRotationLaunch||
+        v91Finale.concurrent.selectiveRotationEngaged>
+          v91Finale.concurrent.selectiveRotationLaunch||
+        v91Finale.concurrent.selectiveRotationPaid>
+          v91Finale.concurrent.selectiveRotationLaunch||
+        v91Finale.concurrent.selectiveRotationWithTwoSplit>
+          v91Finale.concurrent.selectiveRotationLaunch||
+        v91Finale.concurrent.selectiveRelativeArrivals>
+          v91Finale.concurrent.selectiveRotationWithTwoSplit||
         v91Finale.concurrent.allChaseContact>
           v91Finale.concurrent.allChaseLaunch||
         v91Finale.concurrent.chasedFollowup>
