@@ -44,6 +44,8 @@ The read-only finale bridges and paired ensemble now share one residual-gap audi
 
 ## Distance phases
 
+Sporting acceptance must cover two contrasting late-race situations. In a large, organised bunch on a flat finish heading for a sprint, a last-kilometre solo move may be attempted and must be recorded and paid for, but surviving to win should be exceptional when rival sprint teams still have workers, energy and road position. In a contested breakaway with riders from opposing teams, late attacks are expected as part of the fight for the win; the simulation must produce and record at least one genuine attempt when riders can act, including attempts that are contained. A solo rider, exhausted riders and explicit manager hold orders need separate treatment rather than an invented successful split. The exact timing and exception rules remain open. Test both cases with varied group size, route, team orders, chase participation, remaining energy and sprint strength. Compare attempt frequency separately from escape survival and finishing place; do not tune one flat win-rate number or suppress a valid manager order to manufacture the target. The present kilometre motor and isolated short-step candidates do not yet pass this joint sporting acceptance test.
+
 | Distance remaining | Sporting decision | Recording requirement |
 | --- | --- | --- |
 | More than 5 km | Existing road-group simulation, with fatigue and earlier tactical position carried forward. | Kilometre frames remain the source of truth. |
