@@ -4,10 +4,14 @@ import {simulateTacticalTour} from
   '../../lib/engine/v2/tour.mjs';
 import {MOTOR_ATTACK_TRACE_VERSION} from
   '../../lib/engine/v2/tuning.mjs';
-import {recordFinaleConcurrentNamedChaseRotationFromTour} from
+import {recordFinaleConcurrentNamedChaseRotationFromTour,
+  recordFinaleConcurrentNamedSelectiveRotationFromTour} from
   '../../lib/engine/v2/finale-concurrent-named-chase-rotation-launch.mjs';
 import {recordFinaleConcurrentNamedChaseRotationContactFromTour,
-  validateFinaleConcurrentNamedChaseRotationContactFromTour} from
+  validateFinaleConcurrentNamedChaseRotationContactFromTour,
+  recordFinaleConcurrentNamedSelectiveRotationContactFromTour,
+  validateFinaleConcurrentNamedSelectiveRotationContactFromTour,
+  FINALE_CONCURRENT_NAMED_SELECTIVE_ROTATION_CONTACT_VERSION} from
   '../../lib/engine/v2/finale-concurrent-named-chase-rotation-contact.mjs';
 
 function team(id,skill,gender,{attack=false,
@@ -27,7 +31,7 @@ function team(id,skill,gender,{attack=false,
 }
 
 function source(gender,firstSkill,firstAcceleration=80,
-  firstEffort='steady'){
+  firstEffort='steady',chaseRule='all'){
   const stage={distance_km:40,
     profile_points:[[0,100],[40,100]],
     keypoints:[{km:39,kind:'SPRINT'}]};
@@ -35,11 +39,12 @@ function source(gender,firstSkill,firstAcceleration=80,
     attack:true,captainAcceleration:firstAcceleration,
     effort:firstEffort}),
     team('b',80,gender,{attack:true}),
-    team('c',100,gender,{chase:'all'}),
+    team('c',100,gender,{chase:chaseRule}),
     team('d',95,gender,{rotate:true})];
   return simulateTacticalTour({stage,teams,
     seed:`concurrent-chase-rotation-contact-${gender}-${
-      firstSkill}-${firstAcceleration}-${firstEffort}`,
+      firstSkill}-${firstAcceleration}-${firstEffort}${
+        chaseRule==='all'?'':`-${chaseRule}`}`,
     motorVersion:MOTOR_ATTACK_TRACE_VERSION});
 }
 
@@ -74,6 +79,33 @@ test('paid chase and rotation reach one unambiguous road group',()=>{
   }
 });
 
+test('paid selective chase and independent rotation preserve one road group',()=>{
+  for(const gender of ['M','F']){
+    const tour=source(gender,75,10,'conserve','selective');
+    const launch=recordFinaleConcurrentNamedSelectiveRotationFromTour(tour);
+    assert.deepEqual(launch.attacks.map(row=>row.status),
+      ['contained','split']);
+    const contact=recordFinaleConcurrentNamedSelectiveRotationContactFromTour(
+      tour);
+    assert.equal(contact.version,
+      FINALE_CONCURRENT_NAMED_SELECTIVE_ROTATION_CONTACT_VERSION);
+    assert.equal(contact.selectiveDecision.decision,'engage');
+    assert.deepEqual(contact.containedRiderIds,['a-0']);
+    assert.deepEqual(contact.roadGroups[0].riderIds,['b-0']);
+    assert.equal(contact.riderEnergy.length,32);
+    assert.equal(contact.riderEnergy.filter(row=>row.role==='chase').length,1);
+    assert.equal(contact.riderEnergy.filter(row=>
+      row.role==='front_rotation').length,2);
+    assert.equal(validateFinaleConcurrentNamedSelectiveRotationContactFromTour(
+      tour,JSON.parse(JSON.stringify(contact))),true);
+    const forged=structuredClone(contact);
+    forged.selectiveDecision.decision='wait';
+    assert.throws(()=>
+      validateFinaleConcurrentNamedSelectiveRotationContactFromTour(
+        tour,forged),/does not replay/);
+  }
+});
+
 test('two surviving attacks still need their relative road decision',()=>{
   for(const gender of ['M','F']){
     const tour=source(gender,75);
@@ -82,5 +114,12 @@ test('two surviving attacks still need their relative road decision',()=>{
     assert.throws(()=>
       recordFinaleConcurrentNamedChaseRotationContactFromTour(tour),
     /relative road-contact rule/);
+    const selectiveTour=source(gender,75,80,'steady','selective');
+    const selectiveLaunch=recordFinaleConcurrentNamedSelectiveRotationFromTour(
+      selectiveTour);
+    assert.ok(selectiveLaunch.attacks.every(row=>row.status==='split'));
+    assert.throws(()=>
+      recordFinaleConcurrentNamedSelectiveRotationContactFromTour(
+        selectiveTour),/relative road-contact rule/);
   }
 });
