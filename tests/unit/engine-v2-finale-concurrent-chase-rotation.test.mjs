@@ -5,7 +5,10 @@ import {simulateTacticalTour} from
 import {MOTOR_ATTACK_TRACE_VERSION} from
   '../../lib/engine/v2/tuning.mjs';
 import {recordFinaleConcurrentNamedChaseRotationFromTour,
-  validateFinaleConcurrentNamedChaseRotationFromTour} from
+  validateFinaleConcurrentNamedChaseRotationFromTour,
+  recordFinaleConcurrentNamedSelectiveRotationFromTour,
+  validateFinaleConcurrentNamedSelectiveRotationFromTour,
+  FINALE_CONCURRENT_NAMED_SELECTIVE_ROTATION_VERSION} from
   '../../lib/engine/v2/finale-concurrent-named-chase-rotation-launch.mjs';
 
 function team(id,skill,gender,{attack=false,
@@ -23,14 +26,14 @@ function team(id,skill,gender,{attack=false,
 }
 
 function source(gender,{chaseRotate=false,
-  attackingRotate=false,rotationHelpers=true}={}){
+  attackingRotate=false,rotationHelpers=true,chaseRule='all'}={}){
   const stage={distance_km:40,
     profile_points:[[0,100],[40,100]],
     keypoints:[{km:39,kind:'SPRINT'}]};
   const teams=[team('a',75,gender,{
     attack:true,rotate:attackingRotate}),
   team('b',80,gender,{attack:true}),
-  team('c',100,gender,{chase:'all',rotate:chaseRotate}),
+  team('c',100,gender,{chase:chaseRule,rotate:chaseRotate}),
   team('d',95,gender,{rotate:true,
     helpers:rotationHelpers})];
   return simulateTacticalTour({stage,teams,
@@ -66,6 +69,33 @@ test('independent paid chase and rotation face two named launches',()=>{
     assert.throws(()=>validateFinaleConcurrentNamedChaseRotationFromTour(
       tour,forged),/does not replay/);
     assert.deepEqual(tour.provisionalResults,original);
+  }
+});
+
+test('a selective rival responds to due attacks while another team pays rotation',()=>{
+  for(const gender of ['M','F']){
+    const tour=source(gender,{chaseRule:'selective'});
+    const sourceResult=structuredClone(tour.provisionalResults);
+    const launch=recordFinaleConcurrentNamedSelectiveRotationFromTour(tour);
+    assert.equal(launch.version,FINALE_CONCURRENT_NAMED_SELECTIVE_ROTATION_VERSION);
+    assert.equal(launch.selectiveDecision.teamId,'c');
+    assert.equal(launch.selectiveDecision.decision,'engage');
+    assert.ok(launch.selectiveDecision.attackPressure>=
+      launch.selectiveDecision.awarenessThreshold);
+    assert.equal(launch.chase.teamId,'c');
+    assert.equal(launch.rotation.selected.teamId,'d');
+    assert.equal(launch.riderEnergy.filter(row=>row.role==='chase').length,1);
+    assert.equal(launch.riderEnergy.filter(row=>row.role==='front_rotation').length,2);
+    assert.equal(validateFinaleConcurrentNamedSelectiveRotationFromTour(tour,
+      JSON.parse(JSON.stringify(launch))),true);
+    const forged=structuredClone(launch);
+    forged.selectiveDecision.decision='wait';
+    assert.throws(()=>validateFinaleConcurrentNamedSelectiveRotationFromTour(
+      tour,forged),/does not replay/);
+    assert.throws(()=>recordFinaleConcurrentNamedSelectiveRotationFromTour(
+      source(gender,{chaseRule:'selective',chaseRotate:true})),
+    /separate rotating rivals/);
+    assert.deepEqual(tour.provisionalResults,sourceResult);
   }
 });
 
