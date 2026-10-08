@@ -18,6 +18,9 @@ import {probeFinaleOrderedGroupToLineFromTour,
 import {probeFinaleSeparatedGroupsFromTour,
   validateFinaleSeparatedGroupsFromTour} from
   '../lib/engine/v2/finale-multi-run.mjs';
+import {recordFinaleRotationV91CandidateFromTour,
+  validateFinaleRotationV91CandidateFromTour} from
+  '../lib/engine/v2/finale-rotation-v91-candidate.mjs';
 import {TUNING,TUNING_VERSION,MOTOR_CANDIDATE_VERSION,MOTOR_PAID_PACE_VERSION,
   MOTOR_FINALE_VERSION,MOTOR_BRIDGE_FINALE_VERSION,MOTOR_EARNED_BRIDGE_VERSION,
   MOTOR_NEUTRAL_PACE_VERSION,MOTOR_EXPLICIT_FRONT_VERSION,
@@ -77,6 +80,7 @@ const orderedFinaleCoverage=process.argv[22]??'off';
 // Optional final argument: validate the read-only result and point contract.
 const resultContractAudit=process.argv[23]??'off';
 const chaserCapScope=process.argv[24]??'all';
+const v91Coverage=process.env.PELOTONIA_V91_COVERAGE==='on';
 const motorVersion=motorMode==='attack-trace'?MOTOR_ATTACK_TRACE_VERSION:
   motorMode==='phase-attack'?MOTOR_PHASE_ATTACK_VERSION:
   motorMode==='recovery-ceiling'?MOTOR_RECOVERY_CEILING_VERSION:
@@ -166,6 +170,9 @@ if(!Number.isInteger(samples)||samples<1||samples>100||
     !['explicit-front','draft-shelter','distance-load',
       'recovery-ceiling','phase-attack','attack-trace'].includes(motorMode))
   throw new Error('Usage: node scripts/engine-v2-ensemble.mjs [paired samples: 1-100] [teams: 2-20] [current|candidate|paid-pace|bounded-finale|bounded-bridge-finale|earned-bridge-finale|neutral-pace|explicit-front|draft-shelter|distance-load|recovery-ceiling|phase-attack|attack-trace] [preset|paced-rival|steady-rival|rotate-rival|late-hard-rival|rotate-plans|planned-finale|planned-finale-open|planned-finale-one-chaser|planned-finale-three-chasers|planned-finale-selective-chaser|planned-finale-allied|planned-finale-surge|planned-finale-allied-drive|planned-finale-two-chasers-allied-drive|planned-finale-three-chasers-allied-drive|planned-finale-own-plans-allied-drive|planned-finale-allied-manager-mix-[0-3] (v86+ only)] [120|260 km] [chaser skill cap: 20-100] [manager-mix initial fatigue shift: 0-30] [manager-mix selective chasers: 0-3] [manager-mix attack km to go: 5|10|20] [manager-mix opportunists: 0-4] [manager-mix chase km to go: 20..<distance] [manager-mix chase effort: steady|hard] [manager-mix hard finish km to go: 0|20|40|60, after steady only] [manager-mix opportunist attack at km: 0|40|80|120] [manager-mix opportunist stop km to go: 0|5|10] [manager-mix opportunist stop teams: 0..opportunists] [manager-mix stop-rank offset: 0..<opportunists] [mirrored|independent gender rosters] [sample offset: 0-999] [shifted|fixed manager roles] [off|ordered short-step coverage] [off|on read-only result contract audit]');
+
+if(v91Coverage&&motorMode!=='attack-trace')
+  throw new Error('V91 short-step coverage needs the attack-trace motor.');
 
 const ROUTES={
   flat:{distance_km:120,profile_points:[[0,60],[40,60],[80,75],[120,60]],
@@ -344,6 +351,12 @@ for(const [course,stage] of Object.entries(distanceKm===260?LONG_ROUTES:ROUTES))
     for(const strategy of STRATEGIES){
       const resultContracts={version:'v2-ensemble-result-contract-audit-1',
         validated:0,riderResults:0,awards:0};
+      const v91Finale={version:'v2-ensemble-v91-finale-coverage-1',
+        sourceRaces:0,noNamedAttackOrder:0,namedAttackSources:0,
+        sourceWithRoadGroups:0,sourceWithDrops:0,
+        sourceCompleteBunch:0,sourceWithRivalAttackOrders:0,
+        sourceWithMultipleNamedAttackOrders:0,accepted:0,
+        branches:{},refusalReasons:{},refusalExamples:[]};
       const orderedFinale={noRoadGroup:0,oneRoadGroup:0,
         multipleRoadGroups:0,noBunch:0,accepted:0,
         noRoadGroupWithPaidSourcePace:0,
@@ -459,6 +472,60 @@ for(const [course,stage] of Object.entries(distanceKm===260?LONG_ROUTES:ROUTES))
             previousRoadGroups=frame.roadGroups;
           }
           throw new Error(`Invalid recording: ${course}/${gender}/${strategy}/sample-${sample}, ${paceMode}`,{cause:error});
+        }
+        if(v91Coverage){
+          v91Finale.sourceRaces++;
+          const handoff=race.frames[distanceKm-2];
+          v91Finale.sourceWithRoadGroups+=Number(handoff.roadGroups.length>0);
+          v91Finale.sourceWithDrops+=Number(handoff.riderGroups.some(row=>
+            row.group==='dropped'));
+          v91Finale.sourceCompleteBunch+=Number(
+            !handoff.roadGroups.length&&handoff.riderGroups.every(row=>
+              row.group==='peloton'));
+          const namedTeams=race.committedInputs.teams.filter(team=>
+            orderAt(team.orders,distanceKm-1).attackRiderId);
+          if(!namedTeams.length)v91Finale.noNamedAttackOrder++;
+          else{
+            v91Finale.namedAttackSources++;
+            v91Finale.sourceWithMultipleNamedAttackOrders+=
+              Number(namedTeams.length>1);
+            v91Finale.sourceWithRivalAttackOrders+=Number(
+              race.committedInputs.teams.some(team=>
+                team.id!==namedTeams[0].id&&
+                orderAt(team.orders,distanceKm-1).attack!=='none'));
+            const input={attackTeamId:namedTeams[0].id,tier:3,
+              divisionIndex:1,divisionCount:1,
+              plans:race.committedInputs.teams.map(team=>({
+                teamId:team.id,finisherId:team.orders.captainId,
+                leadOutRiderId:null}))};
+            let candidate=null;
+            try{
+              candidate=recordFinaleRotationV91CandidateFromTour(
+                race,input);
+            }catch(error){
+              if(error instanceof TypeError||!(error instanceof Error))throw error;
+              const reason=String(error.message);
+              v91Finale.refusalReasons[reason]=
+                (v91Finale.refusalReasons[reason]??0)+1;
+              if(v91Finale.refusalExamples.length<3)
+                v91Finale.refusalExamples.push({sample,reason,
+                  namedAttackTeamIds:namedTeams.map(team=>team.id),
+                  roadGroupCount:handoff.roadGroups.length,
+                  droppedRiderCount:handoff.riderGroups.filter(row=>
+                    row.group==='dropped').length});
+            }
+            if(candidate){
+              validateFinaleRotationV91CandidateFromTour(race,input,
+                candidate);
+              if(candidate.line.lineRiderEnergy.length!==fieldTeams*8||
+                candidate.pointBounds.riders.length!==fieldTeams*8||
+                candidate.canCommitAwards)
+                throw new Error('V91 coverage lost riders or committed awards.');
+              v91Finale.accepted++;
+              v91Finale.branches[candidate.branch]=
+                (v91Finale.branches[candidate.branch]??0)+1;
+            }
+          }
         }
         if(resultContractAudit==='on'){
           const eventId=`v2-ensemble:${course}:${gender}:${sample}`;
@@ -909,6 +976,12 @@ for(const [course,stage] of Object.entries(distanceKm===260?LONG_ROUTES:ROUTES))
         resultContracts.riderResults!==samples*fieldTeams*8||
         resultContracts.awards!==samples*20))
         throw new Error('Result contract audit lost riders or awards.');
+      if(v91Coverage&&(v91Finale.sourceRaces!==samples||
+        v91Finale.namedAttackSources+v91Finale.noNamedAttackOrder!==samples||
+        v91Finale.accepted+Object.values(v91Finale.refusalReasons)
+          .reduce((sum,count)=>sum+count,0)!==
+          v91Finale.namedAttackSources))
+        throw new Error('V91 coverage lost source races or decisions.');
       const sortedGaps=[...totals.finalGaps].sort((a,b)=>a-b);
       const sortedWinMargins=[...totals.breakWinMargins].sort((a,b)=>a-b);
       const sortedJoinWinnerShares=[...totals.finalKmJoinWinnerAttackShares]
@@ -921,6 +994,7 @@ for(const [course,stage] of Object.entries(distanceKm===260?LONG_ROUTES:ROUTES))
       const sortedBreakGroupAges=[...totals.breakWinnerGroupAgeKm].sort((a,b)=>a-b);
       report.courses[course][gender][strategy]={
         ...(resultContractAudit==='on'?{resultContracts}:{}),
+        ...(v91Coverage?{v91Finale}:{}),
         ...(orderedFinaleCoverage==='ordered'?{orderedFinale}:{}),
         amberWinRate:totals.amberWins/samples,
         amberPodiumRate:totals.amberPodiums/samples,
