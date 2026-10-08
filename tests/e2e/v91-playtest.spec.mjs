@@ -33,8 +33,10 @@ for(const width of [390,1440])test(`v91 playtest changes conditions at ${width}p
     await expect(page.getByRole('heading',{name:'Recorded race · 120 km exposed'})).toBeVisible();
     await page.getByLabel('Route profile').selectOption('custom');
     await page.getByLabel('20% (m)').fill('600');
+    await page.getByLabel('Rival 1').selectOption('attack');
     await expect(page.getByRole('img',{name:'Your route elevation profile'})).toBeVisible();
     await page.getByRole('button',{name:'Run race'}).click();
     await expect(page.getByRole('heading',{name:'Recorded race · 120 km custom'})).toBeVisible();
+    await expect(page.getByLabel('Rival 1')).toHaveValue('attack');
     expect(errors).toEqual([]);
   });

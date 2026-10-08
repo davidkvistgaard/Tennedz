@@ -38,6 +38,8 @@ test('playtest settings stay bounded to documented synthetic options',()=>{
   assert.throws(()=>createV91Playtest({terrain:'custom',
     profileHeightsM:[0,100,200]}),/valid playtest settings/);
   assert.throws(()=>createV91Playtest({seed:''}),/valid playtest settings/);
+  assert.throws(()=>createV91Playtest({rivalPlans:['chase','unknown','neutral']}),
+    /valid playtest settings/);
 });
 
 test('a custom profile changes recorded gradients without changing roster or seed',()=>{
@@ -50,4 +52,20 @@ test('a custom profile changes recorded gradients without changing roster or see
   assert.notDeepEqual(flat.recording.frames.map(frame=>frame.teamEnergy),
     hill.recording.frames.map(frame=>frame.teamEnergy));
   assert.deepEqual(hill.settings.profileHeightsM,[100,500,100,500,100,100]);
+});
+
+test('one rival may change tactics without replacing the fictional field',()=>{
+  const shared={distanceKm:120,teamCount:4,seed:'paired-rivals'};
+  const chase=createV91Playtest({...shared,rivalPlans:['chase','attack','neutral']});
+  const attack=createV91Playtest({...shared,rivalPlans:['attack','attack','neutral']});
+  const roster=playtest=>playtest.recording.committedInputs.teams.map(team=>team.riders);
+  assert.deepEqual(roster(chase),roster(attack));
+  const ordersFor=(playtest,id)=>playtest.recording.committedInputs.teams
+    .find(team=>team.id===id).orders;
+  for(const id of ['you','rival-2','rival-3'])
+    assert.deepEqual(ordersFor(chase,id),ordersFor(attack,id));
+  const attempts=playtest=>playtest.recording.frames.flatMap(frame=>frame.attackers)
+    .filter(riderId=>riderId.startsWith('rival-1-')).length;
+  assert.equal(attempts(chase),0);
+  assert.ok(attempts(attack)>0);
 });

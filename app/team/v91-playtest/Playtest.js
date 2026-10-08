@@ -5,7 +5,8 @@ import {api} from '../../../lib/api';
 
 const INITIAL={distanceKm:120,terrain:'flat',teamCount:4,gender:'M',fatigue:0,
   effort:'steady',attack:'selective',chase:'selective',seed:'playtest-1',
-  profileHeightsM:[100,350,150,500,180,100]};
+  profileHeightsM:[100,350,150,500,180,100],
+  rivalPlans:['chase','attack','neutral']};
 const OPTIONS={distanceKm:[[40,'40 km — short'],[120,'120 km — medium'],[260,'260 km — long']],
   terrain:[['flat','Flat'],['rolling','Rolling'],['mountain','Mountain'],
     ['exposed','Flat, exposed'],['custom','Draw your own']],
@@ -29,6 +30,8 @@ export default function Playtest(){
     [key]:['distanceKm','teamCount','fatigue'].includes(key)?Number(value):value}));
   const changeHeight=(index,value)=>setSettings(current=>({...current,
     profileHeightsM:current.profileHeightsM.map((height,at)=>at===index?Number(value):height)}));
+  const changeRival=(index,value)=>setSettings(current=>({...current,
+    rivalPlans:current.rivalPlans.map((plan,at)=>at===index?value:plan)}));
   const maxHeight=Math.max(500,...settings.profileHeightsM);
   const profileLine=settings.profileHeightsM.map((height,index)=>
     `${10+index*196},${110-height/maxHeight*100}`).join(' ');
@@ -65,6 +68,18 @@ export default function Playtest(){
           </label>)}</div>
           <small>Each 20% segment is limited to an average gradient of 10%.</small>
         </fieldset>}
+        <fieldset className="v91-profile">
+          <legend>Independent rival plans</legend>
+          <p>Change one rival at a time to compare its chase or attack decision with the same riders and seed. Larger fields also contain fixed background teams.</p>
+          <div className="v91-profile-points">{settings.rivalPlans.map((plan,index)=><label key={index}>
+            Rival {index+1}
+            <select value={plan} onChange={event=>changeRival(index,event.target.value)}>
+              <option value="chase">Hard chase</option>
+              <option value="attack">Seek a break</option>
+              <option value="neutral">Steady / selective</option>
+            </select>
+          </label>)}</div>
+        </fieldset>
         <label>Scenario seed<input value={settings.seed} maxLength={80}
           onChange={event=>change('seed',event.target.value)} /></label>
         <button type="submit" disabled={busy}>{busy?'Running race…':'Run race'}</button>
