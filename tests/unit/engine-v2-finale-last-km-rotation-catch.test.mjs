@@ -19,7 +19,9 @@ import {recordFinaleRotationCatchSprintLaunchFromTour,
   validateFinaleRotationCatchOrderedLaunchFromTour} from
   '../../lib/engine/v2/finale-sprint-launch.mjs';
 import {recordFinaleRotationCatchSprintRunFromTour,
-  validateFinaleRotationCatchSprintRunFromTour} from
+  validateFinaleRotationCatchSprintRunFromTour,
+  recordFinaleRotationCatchOrderedRunFromTour,
+  validateFinaleRotationCatchOrderedRunFromTour} from
   '../../lib/engine/v2/finale-sprint-run.mjs';
 import {probeFinaleRotationCatchFinishBoundsFromTour,
   validateFinaleRotationCatchFinishBoundsFromTour} from
@@ -162,6 +164,31 @@ test('v91 source links the paid rotating catch to an exact 500 m handoff',()=>{
       freeRotationInput,rotatingLaunch),true);
     assert.throws(()=>validateFinaleRotationCatchOrderedLaunchFromTour(
       tour,input,{...orderedLaunch,bunchElapsedSecondsAt200M:0}),
+    /does not replay/);
+    const orderedRun=recordFinaleRotationCatchOrderedRunFromTour(
+      tour,input);
+    const rotatingRun=recordFinaleRotationCatchOrderedRunFromTour(
+      tour,freeRotationInput);
+    assert.deepEqual(orderedRun.launch,orderedLaunch);
+    assert.deepEqual(rotatingRun.launch,rotatingLaunch);
+    assert.equal(orderedRun.sourceLaunchVersion,orderedLaunch.version);
+    assert.equal(rotatingRun.sourceLaunchVersion,rotatingLaunch.version);
+    assert.equal(orderedRun.endDistanceM,20000);
+    assert.equal(orderedRun.frames.length,2);
+    assert.equal(orderedRun.lineRiderEnergy.length,24);
+    assert.equal(rotatingRun.lineRiderEnergy.length,24);
+    assert.notDeepEqual(orderedRun.lineRiderEnergy,
+      rotatingRun.lineRiderEnergy);
+    assert.equal(orderedRun.bunchElapsedSecondsAtLine,
+      orderedLaunch.bunchElapsedSecondsAt200M+
+      orderedRun.frames[0].bunchTravelSeconds+
+      orderedRun.frames[1].bunchTravelSeconds);
+    assert.equal(validateFinaleRotationCatchOrderedRunFromTour(tour,
+      input,orderedRun),true);
+    assert.equal(validateFinaleRotationCatchOrderedRunFromTour(tour,
+      freeRotationInput,rotatingRun),true);
+    assert.throws(()=>validateFinaleRotationCatchOrderedRunFromTour(tour,
+      input,{...orderedRun,bunchElapsedSecondsAtLine:0}),
     /does not replay/);
     const launch=recordFinaleRotationCatchSprintLaunchFromTour(
       tour,input);
