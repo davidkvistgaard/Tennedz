@@ -160,3 +160,38 @@ test('long 20-manager sources retain fatigue and recorded contact',()=>{
     assert.equal(candidate.canCommitAwards,false);
   }
 });
+
+test('the narrow candidate refuses unrecorded rival tactics and solo lead-out',()=>{
+  const stage={distance_km:40,
+    profile_points:[[0,100],[40,100]],
+    keypoints:[{km:39,kind:'SPRINT'}]};
+  const plans=['a','b','c','d'].map(teamId=>({teamId,
+    finisherId:`${teamId}-0`,leadOutRiderId:null}));
+  const input={attackTeamId:'a',tier:3,divisionIndex:1,
+    divisionCount:1,plans};
+  const makeTour=(teams,seed)=>simulateTacticalTour({stage,teams,
+    seed,motorVersion:MOTOR_ATTACK_TRACE_VERSION});
+  const simultaneous=makeTour([
+    team('a',75,{attack:true,attackAtKm:39}),
+    team('b',88,{attack:true,attackAtKm:39,rotate:true}),
+    team('c',55,{chase:'all'}),team('d',80,{rotate:true})],
+  'unrecorded-rival-attack');
+  assert.throws(()=>recordFinaleRotationV91CandidateFromTour(
+    simultaneous,input),/needs one named attack/);
+  const conditional=makeTour([
+    team('a',75,{attack:true,attackAtKm:39}),
+    team('b',88,{rotate:true}),
+    team('c',55,{chase:'selective'}),team('d',80,{rotate:true})],
+  'unrecorded-conditional-chase');
+  assert.throws(()=>recordFinaleRotationV91CandidateFromTour(
+    conditional,input),/selective chase need a recorded decision/);
+  const solo=makeTour([
+    team('a',75,{attack:true,attackAtKm:39}),
+    team('b',88,{rotate:true}),
+    team('c',55,{chase:'all'}),team('d',80,{rotate:true})],
+  'solo-line-M');
+  assert.throws(()=>recordFinaleRotationV91CandidateFromTour(solo,{
+    ...input,plans:plans.map(plan=>plan.teamId==='b'?{
+      ...plan,leadOutRiderId:'b-2'}:plan)}),
+  /Unpaid solo lead-outs/);
+});
