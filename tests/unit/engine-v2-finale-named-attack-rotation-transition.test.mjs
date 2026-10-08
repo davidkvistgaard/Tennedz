@@ -49,7 +49,9 @@ import {recordFinaleRotationSoloLateCatchSprintFromTour,
 import {probeFinaleRotationSoloFinishBoundsFromTour,
   validateFinaleRotationSoloFinishBoundsFromTour,
   probeFinaleRotationSoloLateCatchBoundsFromTour,
-  validateFinaleRotationSoloLateCatchBoundsFromTour} from
+  validateFinaleRotationSoloLateCatchBoundsFromTour,
+  probeFinaleRotationSoloSecondCatchBoundsFromTour,
+  validateFinaleRotationSoloSecondCatchBoundsFromTour} from
   '../../lib/engine/v2/finale-rotation-solo-finish-bounds.mjs';
 import {recordFinaleRotationContainedOrderedApproachFromTour,
   validateFinaleRotationContainedOrderedApproachFromTour} from
@@ -598,6 +600,31 @@ test('a 400–300 m contact pays both sides and merges the remaining metres',()=
       tour,{...sprintInput,plans:sprintInput.plans.map(row=>
         row.teamId==='b'?{...row,leadOutRiderId:'b-2'}:row)}),
     /needs paid work before contact/);
+    const bounds=probeFinaleRotationSoloSecondCatchBoundsFromTour(
+      tour,sprintInput);
+    assert.equal(bounds.sourceRunVersion,sprint.version);
+    assert.equal(bounds.lineDistanceM,180000);
+    assert.equal(bounds.knownFirstPlaceRiderId,null);
+    assert.equal(bounds.pointsStatus,'withheld');
+    assert.equal(bounds.riders.length,32);
+    assert.ok(bounds.riders.every(row=>
+      row.firstPossiblePlace===1&&row.lastPossiblePlace===32));
+    assert.equal(validateFinaleRotationSoloSecondCatchBoundsFromTour(tour,
+      sprintInput,JSON.parse(JSON.stringify(bounds))),true);
+    assert.throws(()=>validateFinaleRotationSoloSecondCatchBoundsFromTour(
+      tour,sprintInput,{...bounds,knownFirstPlaceRiderId:'a-0'}),
+    /do not replay/);
+    const pointInput={...sprintInput,branch:'second_catch',tier:3,
+      divisionIndex:1,divisionCount:1};
+    const pointBounds=projectV2FinalePointBounds(tour,pointInput);
+    assert.equal(pointBounds.sourceBoundsVersion,bounds.version);
+    assert.equal(pointBounds.pointsStatus,'withheld');
+    assert.equal(pointBounds.canCommitAwards,false);
+    assert.deepEqual(pointBounds.awardRows,[]);
+    assert.ok(pointBounds.riders.every(row=>
+      row.minPossiblePoints===0&&row.maxPossiblePoints===250));
+    assert.equal(validateV2FinalePointBounds(tour,pointInput,
+      JSON.parse(JSON.stringify(pointBounds))),true);
   }
 });
 
