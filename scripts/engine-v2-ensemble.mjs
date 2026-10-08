@@ -36,13 +36,15 @@ import {recordFinaleConcurrentNamedRoadContactFromTour} from
 import {recordFinaleConcurrentNamedRotationLaunchFromTour} from
   '../lib/engine/v2/finale-concurrent-named-rotation-launch.mjs';
 import {recordFinaleConcurrentNamedChaseRotationFromTour,
-  recordFinaleConcurrentNamedSelectiveRotationFromTour} from
+  recordFinaleConcurrentNamedSelectiveRotationFromTour,
+  recordFinaleConcurrentNamedMultiSelectiveRotationFromTour} from
   '../lib/engine/v2/finale-concurrent-named-chase-rotation-launch.mjs';
 import {recordFinaleConcurrentNamedChaseRotationContactFromTour,
   recordFinaleConcurrentNamedSelectiveRotationContactFromTour} from
   '../lib/engine/v2/finale-concurrent-named-chase-rotation-contact.mjs';
 import {recordFinaleConcurrentRelativeArrivalsFromTour,
-  recordFinaleConcurrentSelectiveRelativeArrivalsFromTour} from
+  recordFinaleConcurrentSelectiveRelativeArrivalsFromTour,
+  recordFinaleConcurrentMultiSelectiveRelativeArrivalsFromTour} from
   '../lib/engine/v2/finale-concurrent-relative-arrivals.mjs';
 import {recordFinaleConcurrentNamedAllChaseFromTour} from
   '../lib/engine/v2/finale-concurrent-named-all-chase.mjs';
@@ -413,6 +415,11 @@ for(const [course,stage] of Object.entries(distanceKm===260?LONG_ROUTES:ROUTES))
           maxSelectiveRelativeSeconds:null,
           minSelectiveSeparationM:null,
           maxSelectiveSeparationM:null,
+          multiSelectiveLaunch:0,multiSelectivePaid:0,
+          multiSelectiveWithTwoSplit:0,
+          multiSelectiveRelativeArrivals:0,
+          minMultiSelectiveSeparationM:null,
+          maxMultiSelectiveSeparationM:null,
           allChaseLaunch:0,allChaseContact:0,
           chasedFollowup:0,chasedCatchMerge:0,
           refusalReasons:{}},
@@ -670,6 +677,28 @@ for(const [course,stage] of Object.entries(distanceKm===260?LONG_ROUTES:ROUTES))
                       relative.estimatedSeparationM);
                     concurrent.maxSelectiveSeparationM=Math.max(
                       concurrent.maxSelectiveSeparationM??0,
+                      relative.estimatedSeparationM);
+                  }
+                }
+              }
+              const multiSelective=attempt('multiSelectiveLaunch',
+                recordFinaleConcurrentNamedMultiSelectiveRotationFromTour);
+              if(multiSelective){
+                concurrent.multiSelectivePaid+=Number(
+                  Boolean(multiSelective.chase)&&
+                    multiSelective.rotationDecision==='paid');
+                const twoSplit=multiSelective.attacks.length===2&&
+                  multiSelective.attacks.every(row=>row.status==='split');
+                concurrent.multiSelectiveWithTwoSplit+=Number(twoSplit);
+                if(twoSplit){
+                  const relative=attempt('multiSelectiveRelativeArrivals',
+                    recordFinaleConcurrentMultiSelectiveRelativeArrivalsFromTour);
+                  if(relative){
+                    concurrent.minMultiSelectiveSeparationM=Math.min(
+                      concurrent.minMultiSelectiveSeparationM??Infinity,
+                      relative.estimatedSeparationM);
+                    concurrent.maxMultiSelectiveSeparationM=Math.max(
+                      concurrent.maxMultiSelectiveSeparationM??0,
                       relative.estimatedSeparationM);
                   }
                 }
@@ -1248,6 +1277,12 @@ for(const [course,stage] of Object.entries(distanceKm===260?LONG_ROUTES:ROUTES))
           v91Finale.concurrent.selectiveRotationLaunch||
         v91Finale.concurrent.selectiveRelativeArrivals>
           v91Finale.concurrent.selectiveRotationWithTwoSplit||
+        v91Finale.concurrent.multiSelectivePaid>
+          v91Finale.concurrent.multiSelectiveLaunch||
+        v91Finale.concurrent.multiSelectiveWithTwoSplit>
+          v91Finale.concurrent.multiSelectiveLaunch||
+        v91Finale.concurrent.multiSelectiveRelativeArrivals>
+          v91Finale.concurrent.multiSelectiveWithTwoSplit||
         v91Finale.concurrent.allChaseContact>
           v91Finale.concurrent.allChaseLaunch||
         v91Finale.concurrent.chasedFollowup>

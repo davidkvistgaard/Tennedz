@@ -8,7 +8,10 @@ import {recordFinaleConcurrentRelativeArrivalsFromTour,
   validateFinaleConcurrentRelativeArrivalsFromTour,
   recordFinaleConcurrentSelectiveRelativeArrivalsFromTour,
   validateFinaleConcurrentSelectiveRelativeArrivalsFromTour,
-  FINALE_CONCURRENT_SELECTIVE_RELATIVE_ARRIVALS_VERSION} from
+  FINALE_CONCURRENT_SELECTIVE_RELATIVE_ARRIVALS_VERSION,
+  recordFinaleConcurrentMultiSelectiveRelativeArrivalsFromTour,
+  validateFinaleConcurrentMultiSelectiveRelativeArrivalsFromTour,
+  FINALE_CONCURRENT_MULTI_SELECTIVE_RELATIVE_ARRIVALS_VERSION} from
   '../../lib/engine/v2/finale-concurrent-relative-arrivals.mjs';
 
 function team(id,skill,gender,{attack=false,
@@ -36,6 +39,21 @@ function source(gender,firstSkill,secondSkill,chaseRule='all'){
   return simulateTacticalTour({stage,teams,
     seed:`relative-arrivals-${gender}-${firstSkill}-${secondSkill}${
       chaseRule==='all'?'':`-${chaseRule}`}`,
+    motorVersion:MOTOR_ATTACK_TRACE_VERSION});
+}
+
+function multiSource(gender){
+  const stage={distance_km:40,
+    profile_points:[[0,100],[40,100]],
+    keypoints:[{km:39,kind:'SPRINT'}]};
+  const teams=[team('a',75,gender,{attack:true}),
+    team('b',80,gender,{attack:true}),
+    team('c',100,gender,{chase:'selective'}),
+    team('e',90,gender,{chase:'selective'}),
+    team('f',85,gender,{chase:'selective'}),
+    team('d',95,gender,{rotate:true})];
+  return simulateTacticalTour({stage,teams,
+    seed:`multi-relative-arrivals-${gender}`,
     motorVersion:MOTOR_ATTACK_TRACE_VERSION});
 }
 
@@ -89,6 +107,29 @@ test('selective chase retains paid relative arrivals without assigning groups',(
     assert.throws(()=>validateFinaleConcurrentSelectiveRelativeArrivalsFromTour(
       tour,forged),/do not replay/);
     assert.deepEqual(tour.provisionalResults,original);
+  }
+});
+
+test('multiple selective decisions survive two paid arrival measurements',()=>{
+  for(const gender of ['M','F']){
+    const tour=multiSource(gender);
+    const relative=recordFinaleConcurrentMultiSelectiveRelativeArrivalsFromTour(
+      tour);
+    assert.equal(relative.version,
+      FINALE_CONCURRENT_MULTI_SELECTIVE_RELATIVE_ARRIVALS_VERSION);
+    assert.equal(relative.arrivals.length,2);
+    assert.equal(relative.selectiveDecisions.length,3);
+    assert.equal(relative.selectiveDecisions.filter(row=>
+      row.decision==='working').length,1);
+    assert.equal(relative.roadRelationshipStatus,'unresolved');
+    assert.equal(relative.riderEnergy.length,48);
+    assert.equal(validateFinaleConcurrentMultiSelectiveRelativeArrivalsFromTour(
+      tour,JSON.parse(JSON.stringify(relative))),true);
+    const forged=structuredClone(relative);
+    forged.selectiveDecisions[0].candidateRiderId='invented';
+    assert.throws(()=>(
+      validateFinaleConcurrentMultiSelectiveRelativeArrivalsFromTour(
+        tour,forged)),/do not replay/);
   }
 });
 

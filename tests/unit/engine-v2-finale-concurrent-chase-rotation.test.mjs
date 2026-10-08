@@ -8,7 +8,10 @@ import {recordFinaleConcurrentNamedChaseRotationFromTour,
   validateFinaleConcurrentNamedChaseRotationFromTour,
   recordFinaleConcurrentNamedSelectiveRotationFromTour,
   validateFinaleConcurrentNamedSelectiveRotationFromTour,
-  FINALE_CONCURRENT_NAMED_SELECTIVE_ROTATION_VERSION} from
+  FINALE_CONCURRENT_NAMED_SELECTIVE_ROTATION_VERSION,
+  recordFinaleConcurrentNamedMultiSelectiveRotationFromTour,
+  validateFinaleConcurrentNamedMultiSelectiveRotationFromTour,
+  FINALE_CONCURRENT_NAMED_MULTI_SELECTIVE_ROTATION_VERSION} from
   '../../lib/engine/v2/finale-concurrent-named-chase-rotation-launch.mjs';
 
 function team(id,skill,gender,{attack=false,
@@ -38,6 +41,22 @@ function source(gender,{chaseRotate=false,
     helpers:rotationHelpers})];
   return simulateTacticalTour({stage,teams,
     seed:`concurrent-chase-rotation-${gender}`,
+    motorVersion:MOTOR_ATTACK_TRACE_VERSION});
+}
+
+function multiSelectiveSource(gender,{firstChaseHelpers=true}={}){
+  const stage={distance_km:40,
+    profile_points:[[0,100],[40,100]],
+    keypoints:[{km:39,kind:'SPRINT'}]};
+  const teams=[team('a',75,gender,{attack:true}),
+    team('b',80,gender,{attack:true}),
+    team('c',100,gender,{chase:'selective',
+      helpers:firstChaseHelpers}),
+    team('e',90,gender,{chase:'selective'}),
+    team('f',85,gender,{chase:'selective'}),
+    team('d',95,gender,{rotate:true})];
+  return simulateTacticalTour({stage,teams,
+    seed:`concurrent-multi-selective-${gender}-${firstChaseHelpers}`,
     motorVersion:MOTOR_ATTACK_TRACE_VERSION});
 }
 
@@ -72,6 +91,17 @@ test('independent paid chase and rotation face two named launches',()=>{
   }
 });
 
+test('an aware team without a payable helper cannot claim chase work',()=>{
+  for(const gender of ['M','F']){
+    const launch=recordFinaleConcurrentNamedMultiSelectiveRotationFromTour(
+      multiSelectiveSource(gender,{firstChaseHelpers:false}));
+    assert.equal(launch.selectiveDecisions.find(row=>
+      row.teamId==='c').decision,'no_helper');
+    assert.notEqual(launch.chase?.teamId,'c');
+    assert.equal(launch.riderEnergy.filter(row=>row.role==='chase').length,1);
+  }
+});
+
 test('a selective rival responds to due attacks while another team pays rotation',()=>{
   for(const gender of ['M','F']){
     const tour=source(gender,{chaseRule:'selective'});
@@ -96,6 +126,37 @@ test('a selective rival responds to due attacks while another team pays rotation
       source(gender,{chaseRule:'selective',chaseRotate:true})),
     /separate rotating rivals/);
     assert.deepEqual(tour.provisionalResults,sourceResult);
+  }
+});
+
+test('multiple selective rivals record every decision but pay one chase turn',()=>{
+  for(const gender of ['M','F']){
+    const tour=multiSelectiveSource(gender);
+    const original=structuredClone(tour.provisionalResults);
+    const launch=recordFinaleConcurrentNamedMultiSelectiveRotationFromTour(
+      tour);
+    assert.equal(launch.version,
+      FINALE_CONCURRENT_NAMED_MULTI_SELECTIVE_ROTATION_VERSION);
+    assert.equal(launch.selectiveDecisions.length,3);
+    assert.equal(launch.selectiveDecisions.filter(row=>
+      row.decision==='working').length,1);
+    assert.equal(launch.selectiveDecisions.filter(row=>
+      row.decision==='waiting_turn').length,2);
+    assert.equal(launch.chase.teamId,
+      launch.selectiveDecisions.find(row=>
+        row.decision==='working').teamId);
+    assert.equal(launch.rotation.selected.teamId,'d');
+    assert.equal(launch.riderEnergy.length,48);
+    assert.equal(launch.riderEnergy.filter(row=>row.role==='chase').length,1);
+    assert.equal(launch.riderEnergy.filter(row=>
+      row.role==='front_rotation').length,2);
+    assert.equal(validateFinaleConcurrentNamedMultiSelectiveRotationFromTour(
+      tour,JSON.parse(JSON.stringify(launch))),true);
+    const forged=structuredClone(launch);
+    forged.selectiveDecisions[0].decision='wait';
+    assert.throws(()=>validateFinaleConcurrentNamedMultiSelectiveRotationFromTour(
+      tour,forged),/does not replay/);
+    assert.deepEqual(tour.provisionalResults,original);
   }
 });
 
