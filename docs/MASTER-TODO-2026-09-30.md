@@ -1,6 +1,6 @@
 # Pelotonia — samlet to-do og tidsestimat
 
-**Opdateret 8. oktober 2026 efter de isolerede P03- og v91-motorprøver.** Dette er den aktuelle hovedliste for kendte produktønsker. [Produktvisionen](PRODUCT-VISION.md), [kalenderpakken](CALENDAR_AUTOPILOT_RANKINGS_V0_1.md), [motorprototypen](design/ENGINE-V2-FOUNDATION.md), [verdensbaselinen](PELOTONIA-WORLD-BASELINE-1.6.2.md) og de enkelte designnoter er baggrund; gamle statusangivelser i dem er ikke en ny leveringsplan. Listen skelner mellem kode i produktion, kode i isolerede udviklingsspor og ubyggede funktioner.
+**Opdateret 8. oktober 2026 efter de isolerede P03- og v91-motorprøver.** Dette er den aktuelle hovedliste for kendte produktønsker. [Produktvisionen](PRODUCT-VISION.md), [Arena/økonomi/Supporter-handoff](PELOTONIA_ARENA_ECONOMY_SUPPORTER_CODEX_BRIEF_V1.md), [kalenderpakken](CALENDAR_AUTOPILOT_RANKINGS_V0_1.md), [motorprototypen](design/ENGINE-V2-FOUNDATION.md), [verdensbaselinen](PELOTONIA-WORLD-BASELINE-1.6.2.md) og de enkelte designnoter er baggrund; gamle statusangivelser i dem er ikke en ny leveringsplan. Listen skelner mellem kode i produktion, kode i isolerede udviklingsspor og ubyggede funktioner.
 
 ## Læsevejledning: færdigt, i gang og endnu ikke begyndt
 
@@ -297,10 +297,10 @@ Et efterfølgende UI-check rettede desuden preset-skift efter genindlæsning, s�
 | ID | Status | Opgave / konkret resultat | Rest (skøn) | Afhænger af |
 | --- | :---: | --- | ---: | --- |
 | 27 | ⬜ | Træning, form, fatigue, skader, alder og 90-dages spilår med én dokumenteret game-tick og forståelige valg uden overdreven mikrostyring. | 32–64 | 10–12 |
-| 28 | ⬜ | Almindelig spiløkonomi: indtægter, løn, træningsomkostninger og budgetværn. Sportslig styrke må ikke købes med premium-valuta. | 40–80 | 27 |
+| 28 | ⬜ | Gold som almindelig, optjent sportsøkonomi: indtægter, løn, kontrakter, transfers, faciliteter, udvikling og budgetværn. Gold kan ikke købes for penge eller Gems; konkrete satser og inflationsværn er åbne. | 40–80 | 27 |
 | 29 | ⬜ | Transfersystem med kontrakter, holdhistorik, marked og transaktionssikkerhed; bevar historiske resultater og tidligere klubber. | 48–96 | 28 |
 | 30 | 🟡 | Personale: konkrete roller, løn/kontrakter og målbare, balancerede effekter på udvikling, form og mentalitet. Samme sportslige muligheder for gratis og betalende hold. | 24–48 | 27–28 |
-| 31 | ⬜ | Supporter: rettigheder, abonnement, kosmetisk trøje/logo, ekstra analyse/skabeloner og UI; kontroller at premium ikke giver direkte sportslig styrke. | 32–64 | 28, 30 |
+| 31 | ⬜ | Én managerbundet Supporter-rettighed med samme funktioner ved 1/6/12 måneders betaling; bevar skabte designs og historik ved udløb. Afgræns kosmetik, historik og komfort uden stærkere ryttere, nødvendige taktikker eller væsentligt bedre konkurrenceinformation. Endelig pris, fordele og Arena-adgang er åbne. | 32–64 | 28, 30 |
 | 32 | ⬜ | Inaktive/dormante hold: konfigurerbare faser, fortsat autopilot, arkiv uden sletning og senere rytterfrigivelse gennem transfersystemet. | 16–32 | 16, 29 |
 | 33 | ⬜ | Fans/supporterskare som sportslig klubverden: tilslutning, aktivitet, omdømme og almindelige indtægter. Adskil dette fra det betalte Supporter-abonnement. | 32–64 | 28 |
 | 34 | ⬜ | Sportslige fører-, point-, bjerg-, ungdoms-, verdens- og nationale mestertrøjer som systemstyrede lag oven på holdtrøjen, når de tilhørende resultater findes. | 16–32 | 10, 17 |
@@ -312,16 +312,19 @@ Et efterfølgende UI-check rettede desuden preset-skift efter genindlæsning, s�
 | 35 | 🟡 | Genoptag portrætretningen, når ejeren ønsker det: test 50–100 almindeligt udseende, tydeligt forskellige ryttere; vurder fejl/ligheder, pris, vedvarende ansigt og trøjelag. | 24–48 | — |
 | 36 | ⬜ | Når stilen er godkendt: byg versionsmærket portrætpipeline med lagring, kø, idempotens, dubletkontrol, sikker regenerering og gradvis erstatning af reservevisning. | 40–80 | 35 |
 | 37 | ⬜ | Obligatorisk introløb mod bots, som lærer spilleren udtagelse, simple/avancerede ordrer og gemte presets; introducér derefter standardtrupper. | 24–48 | 08–09, 13 |
-| 38 | ⬜ | 30-minutters draft-lobby: pakke med otte midlertidige randomiserede ryttere, lobbyfrister, fair match, låsning, rute og replay. Hold det adskilt fra den permanente trups økonomi. | 48–96 | 09, 12 |
+| 38 | ⬜ | Gratis Arena Sealed v1: opret/tilmeld lobby, individuelle midlertidige rytterpuljer på 8/12/16, vælg otte, vis modstandernes navne/arketyper med begrænset information, genbrug eksisterende ordrer og motor, lås sikkert og afspil én uforanderlig optagelse. Ingen Gold, karrierepoint eller betalte præmier. Shared Draft er senere. | 48–96* | 04, 08–09, 12 |
 | 39 | ⬜ | Virkelighedsinspirerede ruter og vejrkilder med kildedato, licens-/navneafklaring, versionering og kvalitetssikret import. Brug samme route-/weather-kontrakt som motoren. | 24–48 | 07, 14 |
-| 40 | ⬜ | Senere spilleroprettede eventlobbyer med eventuel entry fee/præmiepulje, anti-misbrug, betaling/regnskab og klare regler uden køb af sportslig styrke. | 40–80 | 28, 31, 38 |
+| 40 | ⬜ | Mulig senere Gems-økonomi til valgfrie oplevelser og eventuelt Arena-entry/præmier. Adskilt revisionsspor fra Gold og sportslige point. Faktiske køb, betalt entry, puljer, udbetalinger og indløselige gevinster kræver udtrykkelig produktgodkendelse efter relevant juridisk og betalingsmæssig afklaring; intet af dette indgår i den gratis prototype. | 40–80* | 28, 31, 38 |
+
+**Arena-handoff, 8. oktober:** [Produktbeslutningerne](PELOTONIA_ARENA_ECONOMY_SUPPORTER_CODEX_BRIEF_V1.md) og [integrationsplanen](ARENA-ECONOMY-SUPPORTER-INTEGRATION-2026-10-08.md) ændrer punkt 38 fra en tidlig Draft-idé til gratis Sealed v1. Poolstørrelser 8/12/16, otte startere, én kønskategori, modstanderarketyper uden præcise stats/ordrer, eksisterende taktik/motor og én forudberegnet replay er aftalt. Tolv som standard, konkrete lobby-/distance-/skill-cap-tal og hurtigmatch er foreløbige. En gratis, isoleret domæne- og adgangsprøve kan planlægges nu; en spilbar afvikling afhænger fortsat af motorens punkt 04/11 og optage-/resultatkontrakten. De gamle timeintervaller for 38/40 er **ikke genestimeret** efter denne specifikation. Betaling, Gems-entry og præmiepuljer er en særskilt blokeret senere fase.
 
 **Samlet, groft restestimat: cirka 1.080–2.170 aktive timer** for de resterende punkter ovenfor, med P01–P03's isolerede verifikation afsluttet og den udvidede fase-/divisionsopgave samt et højere kvalitetskrav til løbsvieweren indregnet. Det er en størrelsesorden, ikke en deadline; omarbejde efter spiltest, udgifter til illustrationer/tjenester og ejerens svartid kan øge forløbet. Den næste realistiske testsløjfe kræver motorens og kalenderens nødvendige P1-punkter, ikke hele denne liste. Punkter 21–26 kan udvikles sideløbende med sportsarbejdet, men konkurrerer om samme kapacitet, hvis én person udfører det.
 
 ## Beslutninger som bevidst forbliver åbne
 
 - Præcis prioritet mellem samtidige events, etapeløbsbonusser/tidsgrænser og endelige pointværdier skal prøves og vælges; V0.1-tal er konfiguration.
-- Betalt Supporter, eventvaluta, entry fees/præmiepuljer og sportslige særtrøjers præcise tildelingsregler kræver særskilt produkt-/regelbeslutning før release. Implementeringsarbejdet er særskilt estimeret i punkt 31, 34 og 40.
+- Supporter er besluttet som én konto-bundet rettighed med 1/6/12 måneders betalingsperioder og samme funktioner; eksempelpriserne 39/199/349 DKK er ikke endeligt godkendt. Den præcise featureliste og Arena-adgang er åbne. Gratis klubtrøjevalg bevares; nødvendige taktikker og væsentligt bedre konkurrenceinformation må ikke betalingslåses.
+- Gold er sportsøkonomi uden køb for penge/Gems. Gems er en adskilt mulig premiumressource; ingen Gold↔Gems-veksling eller Arena-belønning i Gold/karrierepoint. Gold-satser, Gems-pakker, entry, præmiekurve og platformandel er åbne. Ingen betalt Arena eller realpengepræmier uden udtrykkelig godkendelse efter juridisk og betalingsmæssig afklaring. Sportslige særtrøjers præcise tildelingsregler er også åbne.
 - En faktisk licenseret UCI-kalender, navne, rutegeometri og live vejr har eksterne kilde-/rettighedsafhængigheder. Listen antager ikke, at de allerede er tilgængelige.
 - Atlasets kunstneriske slutniveau og portrætkvalitet afgøres først ved synlige prøver. Et teknisk grønt build er ikke en visuel godkendelse.
 
