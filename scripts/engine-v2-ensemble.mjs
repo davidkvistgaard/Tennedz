@@ -37,10 +37,13 @@ import {recordFinaleConcurrentNamedRotationLaunchFromTour} from
   '../lib/engine/v2/finale-concurrent-named-rotation-launch.mjs';
 import {recordFinaleConcurrentNamedChaseRotationFromTour,
   recordFinaleConcurrentNamedSelectiveRotationFromTour,
-  recordFinaleConcurrentNamedMultiSelectiveRotationFromTour} from
+  recordFinaleConcurrentNamedMultiSelectiveRotationFromTour,
+  recordFinaleConcurrentNamedMixedSelectiveRotationFromTour,
+  recordFinaleConcurrentNamedInactiveSelectiveRotationFromTour} from
   '../lib/engine/v2/finale-concurrent-named-chase-rotation-launch.mjs';
 import {recordFinaleConcurrentNamedChaseRotationContactFromTour,
-  recordFinaleConcurrentNamedSelectiveRotationContactFromTour} from
+  recordFinaleConcurrentNamedSelectiveRotationContactFromTour,
+  recordFinaleConcurrentNamedInactiveSelectiveRotationContactFromTour} from
   '../lib/engine/v2/finale-concurrent-named-chase-rotation-contact.mjs';
 import {recordFinaleConcurrentRelativeArrivalsFromTour,
   recordFinaleConcurrentSelectiveRelativeArrivalsFromTour,
@@ -418,6 +421,10 @@ for(const [course,stage] of Object.entries(distanceKm===260?LONG_ROUTES:ROUTES))
           minSelectiveSeparationM:null,
           maxSelectiveSeparationM:null,
           multiSelectiveLaunch:0,multiSelectivePaid:0,
+          multiSelectiveMixedLaunch:0,
+          multiSelectiveNonlaunchingNamedCount:0,
+          multiSelectiveInactiveLaunch:0,
+          multiSelectiveInactiveContact:0,
           multiSelectiveWithTwoSplit:0,
           multiSelectiveRelativeArrivals:0,
           multiSelectiveCommonTimeState:0,
@@ -688,6 +695,21 @@ for(const [course,stage] of Object.entries(distanceKm===260?LONG_ROUTES:ROUTES))
               }
               const multiSelective=attempt('multiSelectiveLaunch',
                 recordFinaleConcurrentNamedMultiSelectiveRotationFromTour);
+              const mixedSelective=intents.named.some(row=>
+                row.canEnterRoadContest)&&intents.named.some(row=>
+                !row.canEnterRoadContest)?
+                attempt('multiSelectiveMixedLaunch',
+                  recordFinaleConcurrentNamedMixedSelectiveRotationFromTour):
+                null;
+              if(mixedSelective)
+                concurrent.multiSelectiveNonlaunchingNamedCount+=
+                  mixedSelective.nonlaunchingNamedDecisions.length;
+              if(intents.named.length>=2&&intents.named.every(row=>
+                !row.canEnterRoadContest)&&
+                attempt('multiSelectiveInactiveLaunch',
+                  recordFinaleConcurrentNamedInactiveSelectiveRotationFromTour))
+                attempt('multiSelectiveInactiveContact',
+                  recordFinaleConcurrentNamedInactiveSelectiveRotationContactFromTour);
               if(multiSelective){
                 concurrent.multiSelectivePaid+=Number(
                   Boolean(multiSelective.chase)&&
@@ -1298,6 +1320,12 @@ for(const [course,stage] of Object.entries(distanceKm===260?LONG_ROUTES:ROUTES))
           v91Finale.concurrent.selectiveRotationWithTwoSplit||
         v91Finale.concurrent.multiSelectivePaid>
           v91Finale.concurrent.multiSelectiveLaunch||
+        v91Finale.concurrent.multiSelectiveMixedLaunch>
+          v91Finale.concurrent.completeBunchSources||
+        v91Finale.concurrent.multiSelectiveInactiveContact>
+          v91Finale.concurrent.multiSelectiveInactiveLaunch||
+        v91Finale.concurrent.multiSelectiveInactiveLaunch>
+          v91Finale.concurrent.completeBunchSources||
         v91Finale.concurrent.multiSelectiveWithTwoSplit>
           v91Finale.concurrent.multiSelectiveLaunch||
         v91Finale.concurrent.multiSelectiveRelativeArrivals>

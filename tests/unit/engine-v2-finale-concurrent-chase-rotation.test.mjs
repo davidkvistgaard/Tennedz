@@ -11,8 +11,18 @@ import {recordFinaleConcurrentNamedChaseRotationFromTour,
   FINALE_CONCURRENT_NAMED_SELECTIVE_ROTATION_VERSION,
   recordFinaleConcurrentNamedMultiSelectiveRotationFromTour,
   validateFinaleConcurrentNamedMultiSelectiveRotationFromTour,
-  FINALE_CONCURRENT_NAMED_MULTI_SELECTIVE_ROTATION_VERSION} from
+  FINALE_CONCURRENT_NAMED_MULTI_SELECTIVE_ROTATION_VERSION,
+  recordFinaleConcurrentNamedMixedSelectiveRotationFromTour,
+  validateFinaleConcurrentNamedMixedSelectiveRotationFromTour,
+  FINALE_CONCURRENT_NAMED_MIXED_SELECTIVE_ROTATION_VERSION,
+  recordFinaleConcurrentNamedInactiveSelectiveRotationFromTour,
+  validateFinaleConcurrentNamedInactiveSelectiveRotationFromTour} from
   '../../lib/engine/v2/finale-concurrent-named-chase-rotation-launch.mjs';
+import {recordFinaleConcurrentNamedMixedSelectiveRotationContactFromTour,
+  validateFinaleConcurrentNamedMixedSelectiveRotationContactFromTour,
+  recordFinaleConcurrentNamedInactiveSelectiveRotationContactFromTour,
+  validateFinaleConcurrentNamedInactiveSelectiveRotationContactFromTour} from
+  '../../lib/engine/v2/finale-concurrent-named-chase-rotation-contact.mjs';
 
 function team(id,skill,gender,{attack=false,
   chase='ignore',rotate=false,helpers=true}={}){
@@ -57,6 +67,24 @@ function multiSelectiveSource(gender,{firstChaseHelpers=true}={}){
     team('d',95,gender,{rotate:true})];
   return simulateTacticalTour({stage,teams,
     seed:`concurrent-multi-selective-${gender}-${firstChaseHelpers}`,
+    motorVersion:MOTOR_ATTACK_TRACE_VERSION});
+}
+
+function mixedSelectiveSource(gender,{firstAttackAtKm=40}={}){
+  const stage={distance_km:41,
+    profile_points:[[0,100],[41,100]],
+    keypoints:[{km:40,kind:'SPRINT'}]};
+  const attacker=team('a',75,gender,{attack:true});
+  attacker.orders.phases[0].atKm=firstAttackAtKm;
+  const notDue=team('b',80,gender,{attack:true});
+  notDue.orders.phases[0].atKm=36;
+  const teams=[attacker,notDue,
+    team('c',100,gender,{chase:'selective'}),
+    team('e',90,gender,{chase:'selective'}),
+    team('f',85,gender,{chase:'selective'}),
+    team('d',95,gender,{rotate:true})];
+  return simulateTacticalTour({stage,teams,
+    seed:`concurrent-mixed-selective-${gender}`,
     motorVersion:MOTOR_ATTACK_TRACE_VERSION});
 }
 
@@ -156,6 +184,82 @@ test('multiple selective rivals record every decision but pay one chase turn',()
     forged.selectiveDecisions[0].decision='wait';
     assert.throws(()=>validateFinaleConcurrentNamedMultiSelectiveRotationFromTour(
       tour,forged),/does not replay/);
+    assert.deepEqual(tour.provisionalResults,original);
+  }
+});
+
+test('a non-due named phase does not erase another paid attack',()=>{
+  for(const gender of ['M','F']){
+    const tour=mixedSelectiveSource(gender);
+    const original=structuredClone(tour.provisionalResults);
+    assert.throws(()=>(
+      recordFinaleConcurrentNamedMixedSelectiveRotationFromTour(
+        multiSelectiveSource(gender))),/needs eligible named attacks/);
+    assert.throws(()=>recordFinaleConcurrentNamedMultiSelectiveRotationFromTour(
+      tour),/needs eligible named attacks/);
+    const launch=recordFinaleConcurrentNamedMixedSelectiveRotationFromTour(
+      tour);
+    assert.equal(launch.version,
+      FINALE_CONCURRENT_NAMED_MIXED_SELECTIVE_ROTATION_VERSION);
+    assert.deepEqual(launch.nonlaunchingNamedDecisions.map(row=>
+      [row.riderId,row.decision]),[['b-0','not_due']]);
+    assert.deepEqual(launch.attacks.map(row=>row.riderId),['a-0']);
+    assert.equal(launch.riderEnergy.find(row=>row.riderId==='b-0')
+      .role,'sheltered');
+    assert.equal(launch.riderEnergy.filter(row=>row.role==='attack')
+      .length,1);
+    assert.equal(launch.riderEnergy.length,48);
+    assert.equal(validateFinaleConcurrentNamedMixedSelectiveRotationFromTour(
+      tour,JSON.parse(JSON.stringify(launch))),true);
+    const contact=recordFinaleConcurrentNamedMixedSelectiveRotationContactFromTour(
+      tour);
+    assert.deepEqual(contact.roadGroups.flatMap(row=>row.riderIds),['a-0']);
+    assert.ok(contact.pelotonRiderIds.includes('b-0'));
+    assert.equal(contact.riderEnergy.length,48);
+    assert.equal(validateFinaleConcurrentNamedMixedSelectiveRotationContactFromTour(
+      tour,JSON.parse(JSON.stringify(contact))),true);
+    const forged=structuredClone(contact);
+    forged.nonlaunchingNamedDecisions[0].decision='eligible';
+    assert.throws(()=>(
+      validateFinaleConcurrentNamedMixedSelectiveRotationContactFromTour(
+        tour,forged)),/does not replay/);
+    assert.deepEqual(tour.provisionalResults,original);
+  }
+});
+
+test('no due named attack leaves selective chasers waiting while rotation pays',()=>{
+  for(const gender of ['M','F']){
+    const tour=mixedSelectiveSource(gender,{firstAttackAtKm:36});
+    const original=structuredClone(tour.provisionalResults);
+    assert.throws(()=>(
+      recordFinaleConcurrentNamedInactiveSelectiveRotationFromTour(
+        mixedSelectiveSource(gender))),/needs eligible named attacks/);
+    const launch=recordFinaleConcurrentNamedInactiveSelectiveRotationFromTour(
+      tour);
+    assert.deepEqual(launch.nonlaunchingNamedDecisions.map(row=>
+      [row.riderId,row.decision]),
+    [['a-0','not_due'],['b-0','not_due']]);
+    assert.deepEqual(launch.attacks,[]);
+    assert.equal(launch.chase,null);
+    assert.ok(launch.selectiveDecisions.every(row=>
+      row.decision==='wait'));
+    assert.equal(launch.rotationDecision,'paid');
+    assert.equal(launch.riderEnergy.length,48);
+    assert.equal(launch.riderEnergy.filter(row=>
+      row.role==='front_rotation').length,2);
+    assert.equal(validateFinaleConcurrentNamedInactiveSelectiveRotationFromTour(
+      tour,JSON.parse(JSON.stringify(launch))),true);
+    const contact=recordFinaleConcurrentNamedInactiveSelectiveRotationContactFromTour(
+      tour);
+    assert.deepEqual(contact.roadGroups,[]);
+    assert.equal(contact.pelotonRiderIds.length,48);
+    assert.equal(validateFinaleConcurrentNamedInactiveSelectiveRotationContactFromTour(
+      tour,JSON.parse(JSON.stringify(contact))),true);
+    const forged=structuredClone(contact);
+    forged.riderEnergy[0].energySpent=0;
+    assert.throws(()=>(
+      validateFinaleConcurrentNamedInactiveSelectiveRotationContactFromTour(
+        tour,forged)),/does not replay/);
     assert.deepEqual(tour.provisionalResults,original);
   }
 });
