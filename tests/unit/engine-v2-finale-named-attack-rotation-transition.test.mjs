@@ -705,6 +705,8 @@ test('road contact selects the supported solo branch without a desired result',(
         seed:`second-catch-${gender}-all`,branch:'second_catch'},
       {distanceKm:40,skill:65,chase:'all',
         seed:`attack-with-rotation-${gender}`,branch:'late_catch'},
+      {distanceKm:40,skill:67,chase:'all',
+        seed:'scan-40',branch:'penultimate_catch'},
       {distanceKm:40,skill:75,chase:'all',
         seed:`solo-line-${gender}`,branch:'surviving_solo'}];
     for(const row of cases){
@@ -745,6 +747,14 @@ test('road contact selects the supported solo branch without a desired result',(
       assert.equal(bundle.bounds.sourceRunVersion,bundle.sprint.version);
       assert.equal(bundle.points.sourceBoundsVersion,bundle.bounds.version);
       assert.equal(bundle.sprint.endDistanceM,row.distanceKm*1000);
+      if(row.branch==='penultimate_catch'){
+        assert.equal(bundle.decision.nextDecisionDistanceM,39900);
+        assert.equal(bundle.sprint.frames.length,1);
+        assert.equal(bundle.bounds.knownFirstPlaceRiderId,null);
+        assert.ok(bundle.points.riders.every(rider=>
+          rider.minPossiblePoints===0&&
+          rider.maxPossiblePoints===250));
+      }
       assert.equal(bundle.resultStatus,'unclassified');
       assert.equal(bundle.pointsStatus,'withheld');
       assert.equal(bundle.canCommitAwards,false);
