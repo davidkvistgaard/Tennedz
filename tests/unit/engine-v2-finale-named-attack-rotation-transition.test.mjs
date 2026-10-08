@@ -26,6 +26,12 @@ import {recordFinaleRotationContainedSprintPlanFromTour,
 import {recordFinaleRotationContainedOrderedApproachFromTour,
   validateFinaleRotationContainedOrderedApproachFromTour} from
   '../../lib/engine/v2/finale-rotation-catch-ordered-approach.mjs';
+import {recordFinaleRotationContainedOrderedSprintFromTour,
+  validateFinaleRotationContainedOrderedSprintFromTour} from
+  '../../lib/engine/v2/finale-rotation-catch-ordered-sprint.mjs';
+import {probeFinaleRotationContainedOrderedBoundsFromTour,
+  validateFinaleRotationContainedOrderedBoundsFromTour} from
+  '../../lib/engine/v2/finale-rotation-catch-finish-bounds.mjs';
 import {MOTOR_ATTACK_TRACE_VERSION,TUNING} from
   '../../lib/engine/v2/tuning.mjs';
 
@@ -264,6 +270,50 @@ test('a contained attack pays once then independent front rotation continues',()
       leadOutApproach.energyAt300M);
     assert.equal(validateFinaleRotationContainedOrderedApproachFromTour(
       tour,leadOutInput,leadOutApproach),true);
+    const sprint=recordFinaleRotationContainedOrderedSprintFromTour(tour,
+      planInput);
+    const leadOutSprint=recordFinaleRotationContainedOrderedSprintFromTour(
+      tour,leadOutInput);
+    assert.equal(sprint.sourceApproachVersion,approach.version);
+    assert.equal(sprint.sprintPlanVersion,sprintPlan.version);
+    assert.equal(sprint.endDistanceM,40000);
+    assert.equal(sprint.frames.length,3);
+    assert.deepEqual(sprint.frames.map(frame=>
+      frame.rotation.selected?.teamId),['b','b','b']);
+    assert.ok(sprint.frames.every(frame=>
+      frame.riderEnergy.length===32&&
+      frame.riderEnergy.filter(row=>row.role==='front_rotation')
+        .length===2));
+    assert.deepEqual(leadOutSprint.frames.map(frame=>
+      frame.supersededRotationTeamIds),[['b','d'],['b','d'],['b','d']]);
+    assert.ok(leadOutSprint.frames.every(frame=>
+      frame.rotation.selected===null));
+    assert.notDeepEqual(sprint.lineRiderEnergy,
+      leadOutSprint.lineRiderEnergy);
+    assert.equal(sprint.bunchElapsedSecondsAtLine,
+      approach.bunchElapsedSecondsAt300M+
+      sprint.frames.reduce((sum,frame)=>
+        sum+frame.bunchTravelSeconds,0));
+    assert.equal(validateFinaleRotationContainedOrderedSprintFromTour(tour,
+      planInput,sprint),true);
+    assert.equal(validateFinaleRotationContainedOrderedSprintFromTour(tour,
+      leadOutInput,leadOutSprint),true);
+    assert.throws(()=>validateFinaleRotationContainedOrderedSprintFromTour(
+      tour,planInput,{...sprint,bunchElapsedSecondsAtLine:0}),
+    /does not replay/);
+    const bounds=probeFinaleRotationContainedOrderedBoundsFromTour(tour,
+      planInput);
+    assert.equal(bounds.sourceRunVersion,sprint.version);
+    assert.equal(bounds.lineDistanceM,40000);
+    assert.equal(bounds.riders.length,32);
+    assert.ok(bounds.riders.every(row=>
+      row.firstPossiblePlace===1&&row.lastPossiblePlace===32));
+    assert.equal(validateFinaleRotationContainedOrderedBoundsFromTour(tour,
+      planInput,bounds),true);
+    assert.throws(()=>validateFinaleRotationContainedOrderedBoundsFromTour(
+      tour,planInput,{...bounds,riders:bounds.riders.map(row=>
+        row.riderId==='a-0'?{...row,lastPossiblePlace:1}:row)}),
+    /do not replay/);
     assert.deepEqual(tour.provisionalResults,oldResults);
   }
 });
