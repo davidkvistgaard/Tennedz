@@ -4,6 +4,9 @@ import {simulateTacticalTour} from '../../lib/engine/v2/tour.mjs';
 import {MOTOR_ATTACK_TRACE_VERSION} from '../../lib/engine/v2/tuning.mjs';
 import {finaleSnapshotFromTour} from '../../lib/engine/v2/finale-snapshot.mjs';
 import {pendingFinaleAttacksAt} from '../../lib/engine/v2/finale-attack-guard.mjs';
+import {probeFinaleSeparatedFinishBoundsFromTour,
+  validateFinaleSeparatedFinishBoundsFromTour} from
+  '../../lib/engine/v2/finale-separated-finish-bounds.mjs';
 import {assertNoFinaleGroupContact,probeFinaleSeparatedGroupsFromTour,
   selectiveFinaleChaseDecision,FINALE_SEPARATED_EXHAUSTED_ATTACK_VERSION,
   FINALE_SEPARATED_NAMED_BLOCKS_VERSION,
@@ -281,6 +284,68 @@ test('new dropped-travel version refuses a rider with no energy to reach the lin
   assert.throws(()=>probeFinaleSeparatedGroupsFromTour(tour,{
     version:FINALE_SEPARATED_DROPPED_TRAVEL_VERSION}),
   /cannot pay for travel/);
+});
+
+test('separated finish bounds include front groups, bunch and dropped riders without awarding points',()=>{
+  for(const gender of ['M','F']){
+    const weak=team('c',gender,null);
+    for(const skill of ['flat','strength','endurance','timetrial'])
+      weak.riders[0][skill]=20;
+    const longStage={distance_km:260,
+      profile_points:[[0,100],[260,100]],keypoints:stage.keypoints};
+    const tour=simulateTacticalTour({stage:longStage,
+      teams:[team('a',gender,0),team('b',gender,20),weak],
+      seed:'separated-finale',motorVersion:MOTOR_ATTACK_TRACE_VERSION});
+    const original=structuredClone(tour);
+    const bounds=probeFinaleSeparatedFinishBoundsFromTour(tour);
+    assert.equal(bounds.sourceTraceVersion,
+      FINALE_SEPARATED_DROPPED_TRAVEL_VERSION);
+    assert.deepEqual(bounds.bands.map(band=>band.kind),
+      ['road_group','road_group','peloton','dropped']);
+    assert.equal(bounds.bands[0].firstPossiblePlace,1);
+    assert.equal(bounds.bands[1].firstPossiblePlace,
+      bounds.bands[0].lastPossiblePlace+1);
+    assert.equal(bounds.bands.at(-1).lastPossiblePlace,24);
+    assert.equal(bounds.bands.at(-1).riderIds[0],'c-0');
+    assert.equal(bounds.riders.find(row=>row.riderId==='c-0')
+      .firstPossiblePlace,24);
+    assert.equal(bounds.resultStatus,'unclassified');
+    assert.equal(bounds.pointsStatus,'withheld');
+    assert.equal(validateFinaleSeparatedFinishBoundsFromTour(tour,bounds),true);
+    const forged=structuredClone(bounds);
+    forged.riders.find(row=>row.riderId==='c-0').firstPossiblePlace=1;
+    assert.throws(()=>validateFinaleSeparatedFinishBoundsFromTour(tour,forged),
+      /do not replay/);
+    assert.deepEqual(tour,original);
+  }
+});
+
+test('dropped riders with equal deficits share bounds; distinct deficits retain road order',()=>{
+  const longStage={distance_km:260,
+    profile_points:[[0,100],[260,100]],keypoints:stage.keypoints};
+  for(const secondSkill of [20,30]){
+    const weak=team('c','M',null);
+    for(const index of [0,1])
+      for(const skill of ['flat','strength','endurance','timetrial'])
+        weak.riders[index][skill]=index===0?20:secondSkill;
+    const tour=simulateTacticalTour({stage:longStage,
+      teams:[team('a','M',0),team('b','M',20),weak],
+      seed:'separated-finale',motorVersion:MOTOR_ATTACK_TRACE_VERSION});
+    const bounds=probeFinaleSeparatedFinishBoundsFromTour(tour);
+    const dropped=bounds.bands.filter(band=>band.kind==='dropped');
+    if(secondSkill===20){
+      assert.equal(dropped.length,1);
+      assert.deepEqual(dropped[0].riderIds,['c-0','c-1']);
+      assert.deepEqual([dropped[0].firstPossiblePlace,
+        dropped[0].lastPossiblePlace],[23,24]);
+    }else{
+      assert.equal(dropped.length,2);
+      assert.deepEqual(dropped.map(band=>band.riderIds[0]),
+        ['c-1','c-0']);
+      assert.deepEqual(dropped.map(band=>band.firstPossiblePlace),
+        [23,24]);
+    }
+  }
 });
 
 test('separated continuation refuses a source without multiple road groups',()=>{
