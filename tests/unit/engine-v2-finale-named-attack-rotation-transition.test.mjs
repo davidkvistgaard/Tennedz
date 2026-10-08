@@ -42,7 +42,9 @@ import {recordFinaleRotationContainedSprintPlanFromTour,
   validateFinaleRotationSoloSprintPlanFromTour} from
   '../../lib/engine/v2/finale-sprint-plan.mjs';
 import {recordFinaleRotationSoloLateCatchSprintFromTour,
-  validateFinaleRotationSoloLateCatchSprintFromTour} from
+  validateFinaleRotationSoloLateCatchSprintFromTour,
+  recordFinaleRotationSoloSecondCatchSprintFromTour,
+  validateFinaleRotationSoloSecondCatchSprintFromTour} from
   '../../lib/engine/v2/finale-rotation-solo-late-catch-sprint.mjs';
 import {probeFinaleRotationSoloFinishBoundsFromTour,
   validateFinaleRotationSoloFinishBoundsFromTour,
@@ -556,6 +558,46 @@ test('a 400–300 m contact pays both sides and merges the remaining metres',()=
       input,{...caught,catchDistanceM:179600}),/does not replay/);
     assert.throws(()=>recordFinaleRotationSoloRunFromTour(tour,input),
       /needs an exact catch continuation/);
+    const sprintInput={...input,plans:['a','b','c','d'].map(teamId=>({
+      teamId,finisherId:`${teamId}-0`,leadOutRiderId:null}))};
+    const sprint=recordFinaleRotationSoloSecondCatchSprintFromTour(
+      tour,sprintInput);
+    assert.equal(sprint.sourceCatchVersion,caught.version);
+    assert.equal(sprint.startDistanceM,179700);
+    assert.equal(sprint.endDistanceM,180000);
+    assert.equal(sprint.frames.length,3);
+    assert.equal(sprint.resultStatus,'unclassified');
+    assert.deepEqual(sprint.roadGroups,[]);
+    assert.equal(sprint.lineRiderEnergy.length,32);
+    close(sprint.sourceBunchElapsedSeconds,
+      probeLastKmRotationSoloFromTour(tour,{teamId:'a'})
+        .at500M.bunchElapsedSeconds+
+      first.bunchTravelSeconds+caught.bunchTravelSeconds);
+    const catchEnergy=new Map(caught.riderEnergy.map(row=>
+      [row.riderId,row.energyAfter]));
+    for(const frame of sprint.frames){
+      assert.equal(frame.riderEnergy.length,32);
+      assert.equal(frame.riderEnergy.filter(row=>row.role==='sprint')
+        .length,4);
+      for(const row of frame.riderEnergy){
+        close(row.energyAtDecision,catchEnergy.get(row.riderId));
+        close(row.energyAtDecision-row.energySpent,row.energyAfter);
+        catchEnergy.set(row.riderId,row.energyAfter);
+      }
+    }
+    close(sprint.bunchElapsedSecondsAtLine,
+      sprint.sourceBunchElapsedSeconds+
+      sprint.frames.reduce((sum,frame)=>
+        sum+frame.bunchTravelSeconds,0));
+    assert.equal(validateFinaleRotationSoloSecondCatchSprintFromTour(tour,
+      sprintInput,JSON.parse(JSON.stringify(sprint))),true);
+    assert.throws(()=>validateFinaleRotationSoloSecondCatchSprintFromTour(
+      tour,sprintInput,{...sprint,bunchElapsedSecondsAtLine:0}),
+    /does not replay/);
+    assert.throws(()=>recordFinaleRotationSoloSecondCatchSprintFromTour(
+      tour,{...sprintInput,plans:sprintInput.plans.map(row=>
+        row.teamId==='b'?{...row,leadOutRiderId:'b-2'}:row)}),
+    /needs paid work before contact/);
   }
 });
 
