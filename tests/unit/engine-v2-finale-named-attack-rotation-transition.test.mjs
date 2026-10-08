@@ -61,6 +61,8 @@ import {recordFinaleRotationBranchFromTour,
   '../../lib/engine/v2/finale-rotation-branch-recording.mjs';
 import {MOTOR_ATTACK_TRACE_VERSION,TUNING} from
   '../../lib/engine/v2/tuning.mjs';
+import {projectV2FinalePointBounds,validateV2FinalePointBounds} from
+  '../../lib/race/v2-finale-point-bounds.mjs';
 
 const stage={distance_km:40,profile_points:[[0,100],[40,100]],
   keypoints:[{km:39,kind:'SPRINT'}]};
@@ -292,6 +294,20 @@ test('rotating pair and reactive chaser pay once against a named attack',()=>{
   /do not replay/);
   assert.throws(()=>probeFinaleRotationSoloFinishBoundsFromTour(tour,{
     attackTeamId:'a'}),/needs an exact catch continuation/);
+  const pointInput={...noLeadOutInput,branch:'late_catch',tier:3,
+    divisionIndex:1,divisionCount:1};
+  const pointBounds=projectV2FinalePointBounds(tour,pointInput);
+  assert.equal(pointBounds.sourceBoundsVersion,bounds.version);
+  assert.equal(pointBounds.pointsStatus,'withheld');
+  assert.equal(pointBounds.canCommitAwards,false);
+  assert.deepEqual(pointBounds.awardRows,[]);
+  assert.ok(pointBounds.riders.every(row=>
+    row.minPossiblePoints===0&&row.maxPossiblePoints===250));
+  assert.equal(validateV2FinalePointBounds(tour,pointInput,
+    JSON.parse(JSON.stringify(pointBounds))),true);
+  assert.throws(()=>validateV2FinalePointBounds(tour,pointInput,
+    {...pointBounds,awardRows:[{riderId:'a-0',points:250}]}),
+  /do not replay/);
   assert.deepEqual(tour.provisionalResults,oldResults);
   }
 });
@@ -348,6 +364,31 @@ test('a stronger named solo pays every late slice to a separated line',()=>{
       attackTeamId:'a',plans:['a','b','c','d'].map(teamId=>({
         teamId,finisherId:`${teamId}-0`,leadOutRiderId:null}))}),
     /needs actual road contact/);
+    const pointInput={attackTeamId:'a',branch:'surviving_solo',
+      tier:3,divisionIndex:1,divisionCount:1};
+    const pointBounds=projectV2FinalePointBounds(tour,pointInput);
+    assert.equal(pointBounds.sourceBoundsVersion,bounds.version);
+    assert.equal(pointBounds.riders.find(row=>row.riderId==='a-0')
+      .minPossiblePoints,250);
+    assert.equal(pointBounds.riders.find(row=>row.riderId==='a-0')
+      .maxPossiblePoints,250);
+    assert.ok(pointBounds.riders.filter(row=>row.riderId!=='a-0')
+      .every(row=>row.minPossiblePoints===0&&
+        row.maxPossiblePoints===188));
+    assert.equal(pointBounds.canCommitAwards,false);
+    assert.deepEqual(pointBounds.awardRows,[]);
+    assert.equal(validateV2FinalePointBounds(tour,pointInput,
+      JSON.parse(JSON.stringify(pointBounds))),true);
+    const lowerDivision=projectV2FinalePointBounds(tour,{
+      ...pointInput,divisionIndex:2,divisionCount:3});
+    assert.ok(lowerDivision.multiplier<1&&
+      lowerDivision.riders.find(row=>row.riderId==='a-0')
+        .maxPossiblePoints<250);
+    assert.throws(()=>projectV2FinalePointBounds(tour,{
+      ...pointInput,divisionIndex:4,divisionCount:3}),
+    /Invalid division/);
+    assert.throws(()=>projectV2FinalePointBounds(tour,{
+      ...pointInput,branch:'unknown'}),/supported branch/);
   }
 });
 
