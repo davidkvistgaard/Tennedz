@@ -23,6 +23,9 @@ import {recordFinaleRotationCatchSprintRunFromTour,
   recordFinaleRotationCatchOrderedRunFromTour,
   validateFinaleRotationCatchOrderedRunFromTour} from
   '../../lib/engine/v2/finale-sprint-run.mjs';
+import {recordFinaleRotationCatchOrderedSprintFromTour,
+  validateFinaleRotationCatchOrderedSprintFromTour} from
+  '../../lib/engine/v2/finale-rotation-catch-ordered-sprint.mjs';
 import {probeFinaleRotationCatchFinishBoundsFromTour,
   validateFinaleRotationCatchFinishBoundsFromTour} from
   '../../lib/engine/v2/finale-rotation-catch-finish-bounds.mjs';
@@ -190,6 +193,47 @@ test('v91 source links the paid rotating catch to an exact 500 m handoff',()=>{
     assert.throws(()=>validateFinaleRotationCatchOrderedRunFromTour(tour,
       input,{...orderedRun,bunchElapsedSecondsAtLine:0}),
     /does not replay/);
+    const paidSprint=recordFinaleRotationCatchOrderedSprintFromTour(
+      tour,freeRotationInput);
+    const leadOutSprint=recordFinaleRotationCatchOrderedSprintFromTour(
+      tour,input);
+    assert.equal(paidSprint.sourceApproachVersion,rotating.version);
+    assert.equal(paidSprint.frames.length,3);
+    assert.equal(paidSprint.lineRiderEnergy.length,24);
+    assert.deepEqual(paidSprint.frames.map(frame=>
+      frame.rotation.selected?.teamId),['b','b','b']);
+    assert.ok(paidSprint.frames.every(frame=>
+      frame.riderEnergy.filter(row=>row.role==='front_rotation')
+        .length===2));
+    assert.deepEqual(leadOutSprint.frames.map(frame=>
+      frame.supersededRotationTeamIds),[['b'],['b'],['b']]);
+    assert.ok(leadOutSprint.frames.every(frame=>
+      frame.rotation.selected===null));
+    assert.notDeepEqual(paidSprint.lineRiderEnergy,
+      leadOutSprint.lineRiderEnergy);
+    assert.equal(paidSprint.bunchElapsedSecondsAtLine,
+      rotating.bunchElapsedSecondsAt300M+
+      paidSprint.frames.reduce((sum,frame)=>
+        sum+frame.bunchTravelSeconds,0));
+    assert.equal(validateFinaleRotationCatchOrderedSprintFromTour(tour,
+      freeRotationInput,paidSprint),true);
+    assert.equal(validateFinaleRotationCatchOrderedSprintFromTour(tour,
+      input,leadOutSprint),true);
+    assert.throws(()=>validateFinaleRotationCatchOrderedSprintFromTour(
+      tour,freeRotationInput,{...paidSprint,bunchElapsedSecondsAtLine:0}),
+    /does not replay/);
+    const helperFinisherInput={...freeRotationInput,
+      plans:freeRotationInput.plans.map(row=>row.teamId==='b'?
+        {...row,finisherId:'b-2'}:row)};
+    const helperFinisher=recordFinaleRotationCatchOrderedSprintFromTour(
+      tour,helperFinisherInput);
+    assert.deepEqual(helperFinisher.frames.map(frame=>
+      frame.supersededRotationTeamIds),[['b'],['b'],['b']]);
+    assert.ok(helperFinisher.frames.every(frame=>
+      frame.riderEnergy.find(row=>row.riderId==='b-2').role==='sprint'&&
+      frame.rotation.selected===null));
+    assert.equal(validateFinaleRotationCatchOrderedSprintFromTour(tour,
+      helperFinisherInput,helperFinisher),true);
     const launch=recordFinaleRotationCatchSprintLaunchFromTour(
       tour,input);
     assert.equal(launch.sourceApproachVersion,approach.version);
