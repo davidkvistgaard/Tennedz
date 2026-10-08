@@ -119,6 +119,8 @@ test('concurrent audit counts every selective chase order in complete bunches',(
     concurrent.completeBunchSources);
     assert.equal(concurrent.multiSelectiveInactiveContact,
       concurrent.multiSelectiveInactiveLaunch);
+    assert.equal(concurrent.multiSelectiveInactiveFollowup,
+      concurrent.multiSelectiveInactiveContact);
     complete+=concurrent.completeBunchSources;
   }
   assert.ok(complete>0);

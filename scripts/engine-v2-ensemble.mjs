@@ -45,6 +45,8 @@ import {recordFinaleConcurrentNamedChaseRotationContactFromTour,
   recordFinaleConcurrentNamedSelectiveRotationContactFromTour,
   recordFinaleConcurrentNamedInactiveSelectiveRotationContactFromTour} from
   '../lib/engine/v2/finale-concurrent-named-chase-rotation-contact.mjs';
+import {recordFinaleConcurrentInactiveBunchFollowupFromTour} from
+  '../lib/engine/v2/finale-concurrent-inactive-bunch-followup.mjs';
 import {recordFinaleConcurrentRelativeArrivalsFromTour,
   recordFinaleConcurrentSelectiveRelativeArrivalsFromTour,
   recordFinaleConcurrentMultiSelectiveRelativeArrivalsFromTour} from
@@ -425,6 +427,7 @@ for(const [course,stage] of Object.entries(distanceKm===260?LONG_ROUTES:ROUTES))
           multiSelectiveNonlaunchingNamedCount:0,
           multiSelectiveInactiveLaunch:0,
           multiSelectiveInactiveContact:0,
+          multiSelectiveInactiveFollowup:0,
           multiSelectiveWithTwoSplit:0,
           multiSelectiveRelativeArrivals:0,
           multiSelectiveCommonTimeState:0,
@@ -708,8 +711,10 @@ for(const [course,stage] of Object.entries(distanceKm===260?LONG_ROUTES:ROUTES))
                 !row.canEnterRoadContest)&&
                 attempt('multiSelectiveInactiveLaunch',
                   recordFinaleConcurrentNamedInactiveSelectiveRotationFromTour))
-                attempt('multiSelectiveInactiveContact',
-                  recordFinaleConcurrentNamedInactiveSelectiveRotationContactFromTour);
+                if(attempt('multiSelectiveInactiveContact',
+                  recordFinaleConcurrentNamedInactiveSelectiveRotationContactFromTour))
+                  attempt('multiSelectiveInactiveFollowup',
+                    recordFinaleConcurrentInactiveBunchFollowupFromTour);
               if(multiSelective){
                 concurrent.multiSelectivePaid+=Number(
                   Boolean(multiSelective.chase)&&
@@ -1324,6 +1329,8 @@ for(const [course,stage] of Object.entries(distanceKm===260?LONG_ROUTES:ROUTES))
           v91Finale.concurrent.completeBunchSources||
         v91Finale.concurrent.multiSelectiveInactiveContact>
           v91Finale.concurrent.multiSelectiveInactiveLaunch||
+        v91Finale.concurrent.multiSelectiveInactiveFollowup>
+          v91Finale.concurrent.multiSelectiveInactiveContact||
         v91Finale.concurrent.multiSelectiveInactiveLaunch>
           v91Finale.concurrent.completeBunchSources||
         v91Finale.concurrent.multiSelectiveWithTwoSplit>

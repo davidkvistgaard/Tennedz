@@ -23,6 +23,9 @@ import {recordFinaleConcurrentNamedMixedSelectiveRotationContactFromTour,
   recordFinaleConcurrentNamedInactiveSelectiveRotationContactFromTour,
   validateFinaleConcurrentNamedInactiveSelectiveRotationContactFromTour} from
   '../../lib/engine/v2/finale-concurrent-named-chase-rotation-contact.mjs';
+import {recordFinaleConcurrentInactiveBunchFollowupFromTour,
+  validateFinaleConcurrentInactiveBunchFollowupFromTour} from
+  '../../lib/engine/v2/finale-concurrent-inactive-bunch-followup.mjs';
 
 function team(id,skill,gender,{attack=false,
   chase='ignore',rotate=false,helpers=true}={}){
@@ -70,7 +73,8 @@ function multiSelectiveSource(gender,{firstChaseHelpers=true}={}){
     motorVersion:MOTOR_ATTACK_TRACE_VERSION});
 }
 
-function mixedSelectiveSource(gender,{firstAttackAtKm=40}={}){
+function mixedSelectiveSource(gender,{firstAttackAtKm=40,
+  rotationHelpers=true}={}){
   const stage={distance_km:41,
     profile_points:[[0,100],[41,100]],
     keypoints:[{km:40,kind:'SPRINT'}]};
@@ -82,7 +86,7 @@ function mixedSelectiveSource(gender,{firstAttackAtKm=40}={}){
     team('c',100,gender,{chase:'selective'}),
     team('e',90,gender,{chase:'selective'}),
     team('f',85,gender,{chase:'selective'}),
-    team('d',95,gender,{rotate:true})];
+    team('d',95,gender,{rotate:true,helpers:rotationHelpers})];
   return simulateTacticalTour({stage,teams,
     seed:`concurrent-mixed-selective-${gender}`,
     motorVersion:MOTOR_ATTACK_TRACE_VERSION});
@@ -262,6 +266,48 @@ test('no due named attack leaves selective chasers waiting while rotation pays',
         tour,forged)),/does not replay/);
     assert.deepEqual(tour.provisionalResults,original);
   }
+});
+
+test('inactive complete bunch pays the second 250 metres without chase',()=>{
+  for(const gender of ['M','F']){
+    const tour=mixedSelectiveSource(gender,{firstAttackAtKm:36});
+    const original=structuredClone(tour.provisionalResults);
+    const contact=recordFinaleConcurrentNamedInactiveSelectiveRotationContactFromTour(
+      tour);
+    const followup=recordFinaleConcurrentInactiveBunchFollowupFromTour(tour);
+    assert.equal(followup.startDistanceM,contact.endDistanceM);
+    assert.equal(followup.endDistanceM,40500);
+    assert.equal(followup.roadGroups.length,0);
+    assert.equal(followup.pelotonRiderIds.length,48);
+    assert.equal(followup.rotation.selected.teamId,'d');
+    assert.equal(followup.riderEnergy.filter(row=>
+      row.role==='front_rotation').length,2);
+    for(const row of followup.riderEnergy){
+      assert.equal(row.energyAtDecision,contact.riderEnergy.find(previous=>
+        previous.riderId===row.riderId).energyAfter);
+      assert.ok(row.energyAfter>=0);
+    }
+    assert.deepEqual(followup.riderAttackLoad,contact.riderAttackLoad);
+    assert.equal(followup.pointsStatus,'withheld');
+    assert.equal(validateFinaleConcurrentInactiveBunchFollowupFromTour(tour,
+      JSON.parse(JSON.stringify(followup))),true);
+    const forged=structuredClone(followup);
+    forged.riderEnergy[0].energySpent=0;
+    assert.throws(()=>validateFinaleConcurrentInactiveBunchFollowupFromTour(
+      tour,forged),/does not replay/);
+    assert.deepEqual(tour.provisionalResults,original);
+  }
+});
+
+test('inactive bunch falls back to passive pace when rotation cannot pay',()=>{
+  const tour=mixedSelectiveSource('M',{
+    firstAttackAtKm:36,rotationHelpers:false});
+  const followup=recordFinaleConcurrentInactiveBunchFollowupFromTour(tour);
+  assert.equal(followup.rotation.selected,null);
+  assert.equal(followup.rotation.bunchSpeedKph,
+    followup.rotation.passiveBunchSpeedKph);
+  assert.ok(followup.riderEnergy.every(row=>row.role==='sheltered'));
+  assert.equal(followup.pelotonRiderIds.length,48);
 });
 
 test('one team cannot silently work as both chaser and rotator',()=>{
