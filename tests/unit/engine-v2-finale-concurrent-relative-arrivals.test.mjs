@@ -13,6 +13,10 @@ import {recordFinaleConcurrentRelativeArrivalsFromTour,
   validateFinaleConcurrentMultiSelectiveRelativeArrivalsFromTour,
   FINALE_CONCURRENT_MULTI_SELECTIVE_RELATIVE_ARRIVALS_VERSION} from
   '../../lib/engine/v2/finale-concurrent-relative-arrivals.mjs';
+import {recordFinaleConcurrentCommonTimeStateFromTour,
+  validateFinaleConcurrentCommonTimeStateFromTour,
+  FINALE_CONCURRENT_COMMON_TIME_STATE_VERSION} from
+  '../../lib/engine/v2/finale-concurrent-common-time-state.mjs';
 
 function team(id,skill,gender,{attack=false,
   chase='ignore',rotate=false}={}){
@@ -42,12 +46,12 @@ function source(gender,firstSkill,secondSkill,chaseRule='all'){
     motorVersion:MOTOR_ATTACK_TRACE_VERSION});
 }
 
-function multiSource(gender){
+function multiSource(gender,firstSkill=75,secondSkill=80){
   const stage={distance_km:40,
     profile_points:[[0,100],[40,100]],
     keypoints:[{km:39,kind:'SPRINT'}]};
-  const teams=[team('a',75,gender,{attack:true}),
-    team('b',80,gender,{attack:true}),
+  const teams=[team('a',firstSkill,gender,{attack:true}),
+    team('b',secondSkill,gender,{attack:true}),
     team('c',100,gender,{chase:'selective'}),
     team('e',90,gender,{chase:'selective'}),
     team('f',85,gender,{chase:'selective'}),
@@ -141,5 +145,61 @@ test('equal measured arrival times do not invent an earlier rider',()=>{
     assert.equal(relative.estimatedSeparationM,0);
     assert.equal(relative.earlierRiderId,null);
     assert.equal(relative.roadRelationshipStatus,'unresolved');
+  }
+});
+
+test('multiple selective chasers leave one paid common-time road state',()=>{
+  for(const gender of ['M','F']){
+    const tour=multiSource(gender);
+    const original=structuredClone(tour.provisionalResults);
+    const state=recordFinaleConcurrentCommonTimeStateFromTour(tour);
+    const relative=recordFinaleConcurrentMultiSelectiveRelativeArrivalsFromTour(
+      tour);
+    assert.equal(state.version,FINALE_CONCURRENT_COMMON_TIME_STATE_VERSION);
+    assert.equal(state.eventElapsedSeconds,
+      relative.arrivals[0].elapsedSeconds);
+    assert.equal(state.riders.length,48);
+    assert.equal(state.riderAttackLoad.length,48);
+    assert.equal(state.selectiveDecisions.length,3);
+    assert.equal(state.attackerPositions.length,2);
+    assert.equal(state.attackerPositions[0].positionM,
+      state.plannedEndDistanceM);
+    assert.ok(state.attackerPositions[1].positionM<
+      state.attackerPositions[0].positionM);
+    assert.ok(Math.abs(state.separationM-(
+      state.attackerPositions[0].positionM-
+      state.attackerPositions[1].positionM))<1e-8);
+    assert.ok(state.bunchPositionM<state.plannedEndDistanceM);
+    const attackers=new Set(state.attackerPositions.map(row=>row.riderId));
+    for(const rider of state.riders){
+      assert.ok(rider.positionM<=state.plannedEndDistanceM+1e-9);
+      assert.ok(rider.positionM>=state.startDistanceM);
+      assert.ok(rider.energyAtEvent>=0);
+      assert.ok(Math.abs(rider.energyAtEvent-
+        rider.energyCostRemainingToBoundary-
+        rider.fullSliceEnergyAfter)<1e-8);
+      if(!attackers.has(rider.riderId))
+        assert.equal(rider.positionM,state.bunchPositionM);
+    }
+    assert.equal(state.roadRelationshipStatus,'unresolved');
+    assert.equal(state.pointsStatus,'withheld');
+    assert.equal(validateFinaleConcurrentCommonTimeStateFromTour(tour,
+      JSON.parse(JSON.stringify(state))),true);
+    const forged=structuredClone(state);
+    forged.riders[0].energyAtEvent+=1;
+    assert.throws(()=>validateFinaleConcurrentCommonTimeStateFromTour(
+      tour,forged),/does not replay/);
+    assert.deepEqual(tour.provisionalResults,original);
+  }
+});
+
+test('simultaneous attacker arrivals remain ungrouped on the shared clock',()=>{
+  for(const gender of ['M','F']){
+    const state=recordFinaleConcurrentCommonTimeStateFromTour(
+      multiSource(gender,75,75));
+    assert.equal(state.separationM,0);
+    assert.ok(state.attackerPositions.every(row=>
+      row.positionM===state.plannedEndDistanceM));
+    assert.equal(state.roadRelationshipStatus,'unresolved');
   }
 });

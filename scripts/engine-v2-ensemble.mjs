@@ -46,6 +46,8 @@ import {recordFinaleConcurrentRelativeArrivalsFromTour,
   recordFinaleConcurrentSelectiveRelativeArrivalsFromTour,
   recordFinaleConcurrentMultiSelectiveRelativeArrivalsFromTour} from
   '../lib/engine/v2/finale-concurrent-relative-arrivals.mjs';
+import {recordFinaleConcurrentCommonTimeStateFromTour} from
+  '../lib/engine/v2/finale-concurrent-common-time-state.mjs';
 import {recordFinaleConcurrentNamedAllChaseFromTour} from
   '../lib/engine/v2/finale-concurrent-named-all-chase.mjs';
 import {recordFinaleConcurrentNamedAllChaseContactFromTour} from
@@ -418,8 +420,11 @@ for(const [course,stage] of Object.entries(distanceKm===260?LONG_ROUTES:ROUTES))
           multiSelectiveLaunch:0,multiSelectivePaid:0,
           multiSelectiveWithTwoSplit:0,
           multiSelectiveRelativeArrivals:0,
+          multiSelectiveCommonTimeState:0,
           minMultiSelectiveSeparationM:null,
           maxMultiSelectiveSeparationM:null,
+          minMultiSelectiveBunchBehindM:null,
+          maxMultiSelectiveBunchBehindM:null,
           allChaseLaunch:0,allChaseContact:0,
           chasedFollowup:0,chasedCatchMerge:0,
           refusalReasons:{}},
@@ -700,6 +705,20 @@ for(const [course,stage] of Object.entries(distanceKm===260?LONG_ROUTES:ROUTES))
                     concurrent.maxMultiSelectiveSeparationM=Math.max(
                       concurrent.maxMultiSelectiveSeparationM??0,
                       relative.estimatedSeparationM);
+                    const common=attempt('multiSelectiveCommonTimeState',
+                      recordFinaleConcurrentCommonTimeStateFromTour);
+                    if(common){
+                      const bunch=common.riders.find(row=>
+                        row.role!=='attack');
+                      const behind=common.plannedEndDistanceM-
+                        bunch.positionM;
+                      concurrent.minMultiSelectiveBunchBehindM=Math.min(
+                        concurrent.minMultiSelectiveBunchBehindM??Infinity,
+                        behind);
+                      concurrent.maxMultiSelectiveBunchBehindM=Math.max(
+                        concurrent.maxMultiSelectiveBunchBehindM??0,
+                        behind);
+                    }
                   }
                 }
               }
@@ -1283,6 +1302,8 @@ for(const [course,stage] of Object.entries(distanceKm===260?LONG_ROUTES:ROUTES))
           v91Finale.concurrent.multiSelectiveLaunch||
         v91Finale.concurrent.multiSelectiveRelativeArrivals>
           v91Finale.concurrent.multiSelectiveWithTwoSplit||
+        v91Finale.concurrent.multiSelectiveCommonTimeState>
+          v91Finale.concurrent.multiSelectiveRelativeArrivals||
         v91Finale.concurrent.allChaseContact>
           v91Finale.concurrent.allChaseLaunch||
         v91Finale.concurrent.chasedFollowup>
