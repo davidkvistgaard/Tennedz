@@ -24,7 +24,9 @@ import {probeLastKmRotationSoloFromTour,
   validateLastKmRotationSoloFromTour} from
   '../../lib/engine/v2/finale-last-km-rotation-solo.mjs';
 import {recordFinaleRotationSoloSliceFromTour,
-  validateFinaleRotationSoloSliceFromTour} from
+  validateFinaleRotationSoloSliceFromTour,
+  recordFinaleRotationSoloSecondSliceFromTour,
+  validateFinaleRotationSoloSecondSliceFromTour} from
   '../../lib/engine/v2/finale-rotation-solo-slice.mjs';
 import {recordFinaleRotationContainedSprintPlanFromTour,
   validateFinaleRotationContainedSprintPlanFromTour} from
@@ -152,6 +154,20 @@ test('rotating pair and reactive chaser pay once against a named attack',()=>{
     {attackTeamId:'a'},soloStep),true);
   assert.throws(()=>validateFinaleRotationSoloSliceFromTour(tour,
     {attackTeamId:'a'},{...soloStep,bunchTravelSeconds:0}),
+  /does not replay/);
+  const second=recordFinaleRotationSoloSecondSliceFromTour(tour,{
+    attackTeamId:'a'});
+  assert.equal(second.sourceSliceVersion,soloStep.version);
+  assert.equal(second.startDistanceM,soloStep.endDistanceM);
+  assert.equal(second.endDistanceM,39700);
+  assert.ok(second.roadGroups[0].gapSeconds>0);
+  assert.ok(second.riderEnergy.every(row=>row.energyAtDecision===
+    soloStep.riderEnergy.find(previous=>previous.riderId===row.riderId)
+      .energyAfter));
+  assert.equal(validateFinaleRotationSoloSecondSliceFromTour(tour,
+    {attackTeamId:'a'},JSON.parse(JSON.stringify(second))),true);
+  assert.throws(()=>validateFinaleRotationSoloSecondSliceFromTour(tour,
+    {attackTeamId:'a'},{...second,bunchTravelSeconds:0}),
   /does not replay/);
   assert.deepEqual(tour.provisionalResults,oldResults);
   }
