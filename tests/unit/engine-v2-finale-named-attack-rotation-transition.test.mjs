@@ -35,7 +35,9 @@ import {recordFinaleRotationSoloSliceFromTour,
   validateFinaleRotationSoloLateCatchFromTour} from
   '../../lib/engine/v2/finale-rotation-solo-slice.mjs';
 import {recordFinaleRotationContainedSprintPlanFromTour,
-  validateFinaleRotationContainedSprintPlanFromTour} from
+  validateFinaleRotationContainedSprintPlanFromTour,
+  recordFinaleRotationSoloSprintPlanFromTour,
+  validateFinaleRotationSoloSprintPlanFromTour} from
   '../../lib/engine/v2/finale-sprint-plan.mjs';
 import {recordFinaleRotationContainedOrderedApproachFromTour,
   validateFinaleRotationContainedOrderedApproachFromTour} from
@@ -203,6 +205,25 @@ test('rotating pair and reactive chaser pay once against a named attack',()=>{
     {attackTeamId:'a'},JSON.parse(JSON.stringify(lateCatch))),true);
   assert.throws(()=>validateFinaleRotationSoloLateCatchFromTour(tour,
     {attackTeamId:'a'},{...lateCatch,catchDistanceM:39700}),
+  /does not replay/);
+  const soloPlanInput={attackTeamId:'a',
+    plans:['a','b','c','d'].map(teamId=>({teamId,
+      finisherId:`${teamId}-0`,
+      leadOutRiderId:teamId==='b'?'b-2':null}))};
+  const soloPlan=recordFinaleRotationSoloSprintPlanFromTour(tour,
+    soloPlanInput);
+  assert.equal(soloPlan.sourceRoadTraceVersion,solo.version);
+  assert.equal(soloPlan.decisionDistanceM,39500);
+  assert.notEqual(soloPlan.decisions[0].roadGroupId,'peloton');
+  assert.equal(soloPlan.decisions[1].leadOutRiderId,'b-2');
+  assert.equal(validateFinaleRotationSoloSprintPlanFromTour(tour,
+    soloPlanInput,JSON.parse(JSON.stringify(soloPlan))),true);
+  assert.throws(()=>recordFinaleRotationSoloSprintPlanFromTour(tour,{
+    ...soloPlanInput,plans:soloPlanInput.plans.map(row=>
+      row.teamId==='a'?{...row,leadOutRiderId:'a-2'}:row)}),
+  /cannot work beside the finisher/);
+  assert.throws(()=>validateFinaleRotationSoloSprintPlanFromTour(tour,
+    soloPlanInput,{...soloPlan,decisionDistanceM:0}),
   /does not replay/);
   assert.deepEqual(tour.provisionalResults,oldResults);
   }
