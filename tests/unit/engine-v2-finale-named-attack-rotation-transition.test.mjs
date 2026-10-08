@@ -44,14 +44,18 @@ import {recordFinaleRotationContainedSprintPlanFromTour,
 import {recordFinaleRotationSoloLateCatchSprintFromTour,
   validateFinaleRotationSoloLateCatchSprintFromTour,
   recordFinaleRotationSoloSecondCatchSprintFromTour,
-  validateFinaleRotationSoloSecondCatchSprintFromTour} from
+  validateFinaleRotationSoloSecondCatchSprintFromTour,
+  recordFinaleRotationSoloFirstCatchSprintFromTour,
+  validateFinaleRotationSoloFirstCatchSprintFromTour} from
   '../../lib/engine/v2/finale-rotation-solo-late-catch-sprint.mjs';
 import {probeFinaleRotationSoloFinishBoundsFromTour,
   validateFinaleRotationSoloFinishBoundsFromTour,
   probeFinaleRotationSoloLateCatchBoundsFromTour,
   validateFinaleRotationSoloLateCatchBoundsFromTour,
   probeFinaleRotationSoloSecondCatchBoundsFromTour,
-  validateFinaleRotationSoloSecondCatchBoundsFromTour} from
+  validateFinaleRotationSoloSecondCatchBoundsFromTour,
+  probeFinaleRotationSoloFirstCatchBoundsFromTour,
+  validateFinaleRotationSoloFirstCatchBoundsFromTour} from
   '../../lib/engine/v2/finale-rotation-solo-finish-bounds.mjs';
 import {recordFinaleRotationContainedOrderedApproachFromTour,
   validateFinaleRotationContainedOrderedApproachFromTour} from
@@ -508,6 +512,65 @@ test('a surviving 500 m solo source refuses an unrecorded 100 m catch',()=>{
     assert.throws(()=>validateFinaleRotationSoloCatchSliceFromTour(tour,
       {attackTeamId:'a'},{...caught,catchDistanceM:39500}),
     /does not replay/);
+    const sprintInput={attackTeamId:'a',
+      plans:['a','b','c','d'].map(teamId=>({teamId,
+        finisherId:`${teamId}-0`,leadOutRiderId:null}))};
+    const sprint=recordFinaleRotationSoloFirstCatchSprintFromTour(
+      tour,sprintInput);
+    assert.equal(sprint.sourceCatchVersion,caught.version);
+    assert.equal(sprint.startDistanceM,39600);
+    assert.equal(sprint.endDistanceM,40000);
+    assert.equal(sprint.frames.length,4);
+    assert.deepEqual(sprint.roadGroups,[]);
+    assert.equal(sprint.resultStatus,'unclassified');
+    assert.equal(sprint.lineRiderEnergy.length,32);
+    close(sprint.sourceBunchElapsedSeconds,
+      solo.at500M.bunchElapsedSeconds+caught.bunchTravelSeconds);
+    const energy=new Map(caught.riderEnergy.map(row=>
+      [row.riderId,row.energyAfter]));
+    for(const frame of sprint.frames){
+      assert.equal(frame.riderEnergy.length,32);
+      assert.equal(frame.riderEnergy.filter(row=>row.role==='sprint')
+        .length,4);
+      for(const row of frame.riderEnergy){
+        close(row.energyAtDecision,energy.get(row.riderId));
+        close(row.energyAtDecision-row.energySpent,row.energyAfter);
+        energy.set(row.riderId,row.energyAfter);
+      }
+    }
+    close(sprint.bunchElapsedSecondsAtLine,
+      sprint.sourceBunchElapsedSeconds+
+      sprint.frames.reduce((sum,frame)=>
+        sum+frame.bunchTravelSeconds,0));
+    assert.equal(validateFinaleRotationSoloFirstCatchSprintFromTour(tour,
+      sprintInput,JSON.parse(JSON.stringify(sprint))),true);
+    assert.throws(()=>validateFinaleRotationSoloFirstCatchSprintFromTour(
+      tour,sprintInput,{...sprint,bunchElapsedSecondsAtLine:0}),
+    /does not replay/);
+    const bounds=probeFinaleRotationSoloFirstCatchBoundsFromTour(
+      tour,sprintInput);
+    assert.equal(bounds.sourceRunVersion,sprint.version);
+    assert.equal(bounds.knownFirstPlaceRiderId,null);
+    assert.equal(bounds.pointsStatus,'withheld');
+    assert.equal(bounds.riders.length,32);
+    assert.ok(bounds.riders.every(row=>
+      row.firstPossiblePlace===1&&row.lastPossiblePlace===32));
+    assert.equal(validateFinaleRotationSoloFirstCatchBoundsFromTour(tour,
+      sprintInput,JSON.parse(JSON.stringify(bounds))),true);
+    assert.throws(()=>validateFinaleRotationSoloFirstCatchBoundsFromTour(
+      tour,sprintInput,{...bounds,knownFirstPlaceRiderId:'a-0'}),
+    /do not replay/);
+    const pointInput={...sprintInput,branch:'first_catch',tier:3,
+      divisionIndex:1,divisionCount:1};
+    const pointBounds=projectV2FinalePointBounds(tour,pointInput);
+    assert.equal(pointBounds.sourceBoundsVersion,bounds.version);
+    assert.equal(pointBounds.pointsStatus,'withheld');
+    assert.equal(pointBounds.canCommitAwards,false);
+    assert.deepEqual(pointBounds.awardRows,[]);
+    assert.ok(pointBounds.riders.every(row=>
+      row.minPossiblePoints===0&&row.maxPossiblePoints===250));
+    assert.equal(validateV2FinalePointBounds(tour,pointInput,
+      JSON.parse(JSON.stringify(pointBounds))),true);
   }
 });
 
