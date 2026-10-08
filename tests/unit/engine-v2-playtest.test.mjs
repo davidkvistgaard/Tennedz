@@ -33,6 +33,21 @@ test('changing a manager order changes attacks and paid energy on the same field
 test('playtest settings stay bounded to documented synthetic options',()=>{
   assert.throws(()=>createV91Playtest({distanceKm:401}),/valid playtest settings/);
   assert.throws(()=>createV91Playtest({teamCount:21}),/valid playtest settings/);
-  assert.throws(()=>createV91Playtest({terrain:'custom'}),/valid playtest settings/);
+  assert.throws(()=>createV91Playtest({terrain:'custom',distanceKm:40,
+    profileHeightsM:[0,1000,0,0,0,0]}),/valid playtest settings/);
+  assert.throws(()=>createV91Playtest({terrain:'custom',
+    profileHeightsM:[0,100,200]}),/valid playtest settings/);
   assert.throws(()=>createV91Playtest({seed:''}),/valid playtest settings/);
+});
+
+test('a custom profile changes recorded gradients without changing roster or seed',()=>{
+  const shared={terrain:'custom',distanceKm:40,teamCount:4,seed:'same-field'};
+  const flat=createV91Playtest({...shared,profileHeightsM:[100,100,100,100,100,100]});
+  const hill=createV91Playtest({...shared,profileHeightsM:[100,500,100,500,100,100]});
+  assert.deepEqual(flat.recording.committedInputs.teams,hill.recording.committedInputs.teams);
+  assert.ok(flat.recording.route.kilometres.every(km=>km.terrain==='flat'));
+  assert.ok(hill.recording.route.kilometres.some(km=>km.terrain==='climb'));
+  assert.notDeepEqual(flat.recording.frames.map(frame=>frame.teamEnergy),
+    hill.recording.frames.map(frame=>frame.teamEnergy));
+  assert.deepEqual(hill.settings.profileHeightsM,[100,500,100,500,100,100]);
 });

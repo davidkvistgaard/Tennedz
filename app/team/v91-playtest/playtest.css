@@ -7,6 +7,12 @@
 .v91-controls select,.v91-controls input{min-height:42px;padding:8px 10px;border:1px solid #a6c2b8;border-radius:8px;background:white;color:#17312e}
 .v91-controls button{border:0;border-radius:8px;background:#116e60;color:white;font-weight:800;cursor:pointer;min-height:42px;align-self:end}
 .v91-controls button:disabled{opacity:.6;cursor:wait}
+.v91-profile{grid-column:1/-1;min-width:0;border:1px solid #a6c2b8;border-radius:12px;padding:12px 16px}
+.v91-profile legend{font-weight:800;padding:0 6px}
+.v91-profile p{margin:2px 0 8px;font-size:.9rem}
+.v91-profile svg{display:block;width:100%;height:100px;color:#116e60;background:#f8fcf9;border-radius:8px}
+.v91-profile-points{display:grid;grid-template-columns:repeat(auto-fit,minmax(100px,1fr));gap:8px;margin:10px 0}
+.v91-profile small{color:#526b63}
 .v91-error{color:#9b2525;font-weight:700}
 .v91-results{background:white;border:1px solid #d3e1db;border-radius:16px;padding:24px}
 .v91-results input[type=range]{width:100%;accent-color:#116e60}

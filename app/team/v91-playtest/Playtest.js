@@ -4,9 +4,11 @@ import TeamShell from '../../components/TeamShell';
 import {api} from '../../../lib/api';
 
 const INITIAL={distanceKm:120,terrain:'flat',teamCount:4,gender:'M',fatigue:0,
-  effort:'steady',attack:'selective',chase:'selective',seed:'playtest-1'};
+  effort:'steady',attack:'selective',chase:'selective',seed:'playtest-1',
+  profileHeightsM:[100,350,150,500,180,100]};
 const OPTIONS={distanceKm:[[40,'40 km — short'],[120,'120 km — medium'],[260,'260 km — long']],
-  terrain:[['flat','Flat'],['rolling','Rolling'],['mountain','Mountain'],['exposed','Flat, exposed']],
+  terrain:[['flat','Flat'],['rolling','Rolling'],['mountain','Mountain'],
+    ['exposed','Flat, exposed'],['custom','Draw your own']],
   teamCount:[[4,'4 teams'],[15,'15 teams'],[20,'20 teams']],
   gender:[['M','Men'],['F','Women']],fatigue:[[0,'Fresh'],[15,'Some fatigue'],[30,'Tired']],
   effort:[['conserve','Conserve'],['steady','Steady'],['hard','Hard']],
@@ -25,6 +27,11 @@ export default function Playtest(){
   const frame=result?.frames[selectedKm-1];
   const change=(key,value)=>setSettings(current=>({...current,
     [key]:['distanceKm','teamCount','fatigue'].includes(key)?Number(value):value}));
+  const changeHeight=(index,value)=>setSettings(current=>({...current,
+    profileHeightsM:current.profileHeightsM.map((height,at)=>at===index?Number(value):height)}));
+  const maxHeight=Math.max(500,...settings.profileHeightsM);
+  const profileLine=settings.profileHeightsM.map((height,index)=>
+    `${10+index*196},${110-height/maxHeight*100}`).join(' ');
   async function run(event){
     event.preventDefault();setBusy(true);setError('');
     try{
@@ -45,6 +52,19 @@ export default function Playtest(){
           <select value={settings[key]} onChange={event=>change(key,event.target.value)}>
             {options.map(([value,label])=><option value={value} key={value}>{label}</option>)}
           </select></label>)}
+        {settings.terrain==='custom'&&<fieldset className="v91-profile">
+          <legend>Route elevation profile</legend>
+          <p>Set the height at the start, every 20% of the race, and the finish. The motor calculates the slopes between these points.</p>
+          <svg viewBox="0 0 1000 120" role="img" aria-label="Your route elevation profile">
+            <polyline points={profileLine} fill="none" stroke="currentColor" strokeWidth="4"/>
+          </svg>
+          <div className="v91-profile-points">{settings.profileHeightsM.map((height,index)=><label key={index}>
+            {index===0?'Start':index===5?'Finish':`${index*20}%`} (m)
+            <input type="number" min="0" max="2500" step="1" value={height}
+              onChange={event=>changeHeight(index,event.target.value)}/>
+          </label>)}</div>
+          <small>Each 20% segment is limited to an average gradient of 10%.</small>
+        </fieldset>}
         <label>Scenario seed<input value={settings.seed} maxLength={80}
           onChange={event=>change('seed',event.target.value)} /></label>
         <button type="submit" disabled={busy}>{busy?'Running race…':'Run race'}</button>
