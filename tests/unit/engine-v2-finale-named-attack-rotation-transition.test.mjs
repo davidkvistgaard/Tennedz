@@ -36,7 +36,9 @@ import {recordFinaleRotationSoloSliceFromTour,
   recordFinaleRotationSoloLateCatchFromTour,
   validateFinaleRotationSoloLateCatchFromTour,
   decideFinaleRotationSoloOutcomeFromTour,
-  validateFinaleRotationSoloOutcomeFromTour} from
+  validateFinaleRotationSoloOutcomeFromTour,
+  recordFinaleRotationSoloFinalContactFromTour,
+  validateFinaleRotationSoloFinalContactFromTour} from
   '../../lib/engine/v2/finale-rotation-solo-slice.mjs';
 import {recordFinaleRotationContainedSprintPlanFromTour,
   validateFinaleRotationContainedSprintPlanFromTour,
@@ -57,7 +59,9 @@ import {probeFinaleRotationSoloFinishBoundsFromTour,
   probeFinaleRotationSoloSecondCatchBoundsFromTour,
   validateFinaleRotationSoloSecondCatchBoundsFromTour,
   probeFinaleRotationSoloFirstCatchBoundsFromTour,
-  validateFinaleRotationSoloFirstCatchBoundsFromTour} from
+  validateFinaleRotationSoloFirstCatchBoundsFromTour,
+  probeFinaleRotationSoloFinalContactBoundsFromTour,
+  validateFinaleRotationSoloFinalContactBoundsFromTour} from
   '../../lib/engine/v2/finale-rotation-solo-finish-bounds.mjs';
 import {recordFinaleRotationContainedOrderedApproachFromTour,
   validateFinaleRotationContainedOrderedApproachFromTour} from
@@ -707,6 +711,8 @@ test('road contact selects the supported solo branch without a desired result',(
         seed:`attack-with-rotation-${gender}`,branch:'late_catch'},
       {distanceKm:40,skill:67,chase:'all',
         seed:'scan-40',branch:'penultimate_catch'},
+      {distanceKm:40,skill:68,chase:'all',
+        seed:'scan-40',branch:'final_contact'},
       {distanceKm:40,skill:75,chase:'all',
         seed:`solo-line-${gender}`,branch:'surviving_solo'}];
     for(const row of cases){
@@ -735,7 +741,59 @@ test('road contact selects the supported solo branch without a desired result',(
           teamId,finisherId:`${teamId}-0`,leadOutRiderId:null}))};
       if(row.branch==='surviving_solo'){
         assert.throws(()=>recordFinaleRotationSoloCatchBranchFromTour(
-          tour,bundleInput),/needs measured contact/);
+          tour,bundleInput),/needs a supported post-contact sprint/);
+        continue;
+      }
+      if(row.branch==='final_contact'){
+        assert.throws(()=>recordFinaleRotationSoloCatchBranchFromTour(
+          tour,bundleInput),/needs a supported post-contact sprint/);
+        const line=recordFinaleRotationSoloFinalContactFromTour(tour,input);
+        assert.equal(line.sourceCatchVersion,
+          decision.sourceOutcomeVersion);
+        assert.ok(line.catchDistanceM>row.distanceKm*1000-100);
+        assert.equal(line.endDistanceM,row.distanceKm*1000);
+        assert.equal(line.sprintStatus,'not_modeled_before_contact');
+        assert.equal(line.lineRiderEnergy.length,32);
+        assert.deepEqual(line.roadGroups,[]);
+        const caught=recordFinaleRotationSoloLateCatchFromTour(tour,input);
+        close(line.bunchElapsedSecondsAtLine,
+          caught.bunchElapsedSecondsAtMerge);
+        const caughtEnergy=new Map(caught.riderEnergy.map(rider=>
+          [rider.riderId,rider.energy]));
+        for(const rider of line.lineRiderEnergy)
+          close(rider.energyAfter,caughtEnergy.get(rider.riderId));
+        const contactFrame=caught.frames.at(-1);
+        close(contactFrame.preCatchBunchTravelSeconds+
+          caught.frames.at(-2).roadGroups[0].gapSeconds,
+        contactFrame.frontTravelSeconds);
+        for(const rider of contactFrame.riderEnergy){
+          close(rider.energyAtDecision-rider.preCatchEnergySpent,
+            rider.energyAtCatch);
+          close(rider.energyAtCatch-rider.postCatchEnergySpent,
+            rider.energyAfter);
+        }
+        assert.equal(validateFinaleRotationSoloFinalContactFromTour(tour,
+          input,JSON.parse(JSON.stringify(line))),true);
+        assert.throws(()=>validateFinaleRotationSoloFinalContactFromTour(
+          tour,input,{...line,bunchElapsedSecondsAtLine:0}),
+        /does not replay/);
+        const bounds=probeFinaleRotationSoloFinalContactBoundsFromTour(
+          tour,input);
+        assert.equal(bounds.sourceRunVersion,line.version);
+        assert.equal(bounds.knownFirstPlaceRiderId,null);
+        assert.ok(bounds.riders.every(rider=>
+          rider.firstPossiblePlace===1&&rider.lastPossiblePlace===32));
+        assert.equal(validateFinaleRotationSoloFinalContactBoundsFromTour(
+          tour,input,JSON.parse(JSON.stringify(bounds))),true);
+        const points=projectV2FinalePointBounds(tour,{
+          ...input,branch:'final_contact',tier:3,divisionIndex:1,
+          divisionCount:1});
+        assert.equal(points.sourceBoundsVersion,bounds.version);
+        assert.equal(points.canCommitAwards,false);
+        assert.deepEqual(points.awardRows,[]);
+        assert.ok(points.riders.every(rider=>
+          rider.minPossiblePoints===0&&
+          rider.maxPossiblePoints===250));
         continue;
       }
       const bundle=recordFinaleRotationSoloCatchBranchFromTour(tour,
