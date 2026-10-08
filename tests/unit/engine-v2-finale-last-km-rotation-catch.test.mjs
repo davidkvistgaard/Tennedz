@@ -27,7 +27,9 @@ import {recordFinaleRotationCatchOrderedSprintFromTour,
   validateFinaleRotationCatchOrderedSprintFromTour} from
   '../../lib/engine/v2/finale-rotation-catch-ordered-sprint.mjs';
 import {probeFinaleRotationCatchFinishBoundsFromTour,
-  validateFinaleRotationCatchFinishBoundsFromTour} from
+  validateFinaleRotationCatchFinishBoundsFromTour,
+  probeFinaleRotationCatchOrderedBoundsFromTour,
+  validateFinaleRotationCatchOrderedBoundsFromTour} from
   '../../lib/engine/v2/finale-rotation-catch-finish-bounds.mjs';
 import {MOTOR_ATTACK_TRACE_VERSION} from
   '../../lib/engine/v2/tuning.mjs';
@@ -234,6 +236,26 @@ test('v91 source links the paid rotating catch to an exact 500 m handoff',()=>{
       frame.rotation.selected===null));
     assert.equal(validateFinaleRotationCatchOrderedSprintFromTour(tour,
       helperFinisherInput,helperFinisher),true);
+    const paidBounds=probeFinaleRotationCatchOrderedBoundsFromTour(tour,
+      freeRotationInput);
+    const leadOutBounds=probeFinaleRotationCatchOrderedBoundsFromTour(tour,
+      input);
+    assert.equal(paidBounds.sourceRunVersion,paidSprint.version);
+    assert.equal(paidBounds.elapsedSecondsFromLastKmStart,
+      paidSprint.bunchElapsedSecondsAtLine);
+    assert.equal(paidBounds.riders.length,24);
+    assert.ok(paidBounds.riders.every(row=>
+      row.firstPossiblePlace===1&&row.lastPossiblePlace===24));
+    assert.ok(leadOutBounds.riders.every(row=>
+      row.firstPossiblePlace===1&&row.lastPossiblePlace===24));
+    assert.notDeepEqual(paidBounds.riders.map(row=>row.energyAfter),
+      leadOutBounds.riders.map(row=>row.energyAfter));
+    assert.equal(validateFinaleRotationCatchOrderedBoundsFromTour(tour,
+      freeRotationInput,paidBounds),true);
+    assert.throws(()=>validateFinaleRotationCatchOrderedBoundsFromTour(
+      tour,freeRotationInput,{...paidBounds,riders:paidBounds.riders.map(
+        row=>row.riderId==='b-0'?{...row,lastPossiblePlace:1}:row)}),
+    /do not replay/);
     const launch=recordFinaleRotationCatchSprintLaunchFromTour(
       tour,input);
     assert.equal(launch.sourceApproachVersion,approach.version);
