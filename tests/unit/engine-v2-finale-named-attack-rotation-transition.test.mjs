@@ -329,6 +329,8 @@ test('a contained attack pays once then independent front rotation continues',()
     assert.deepEqual(bundle.bounds,bounds);
     assert.equal(validateFinaleRotationBranchFromTour(tour,
       bundleInput,bundle),true);
+    assert.equal(validateFinaleRotationBranchFromTour(tour,bundleInput,
+      JSON.parse(JSON.stringify(bundle))),true);
     assert.throws(()=>validateFinaleRotationBranchFromTour(tour,
       bundleInput,{...bundle,branch:'caught'}),/does not replay/);
     assert.throws(()=>recordFinaleRotationBranchFromTour(tour,

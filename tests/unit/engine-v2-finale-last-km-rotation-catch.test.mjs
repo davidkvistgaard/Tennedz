@@ -271,6 +271,8 @@ test('v91 source links the paid rotating catch to an exact 500 m handoff',()=>{
     assert.deepEqual(bundle.bounds,paidBounds);
     assert.equal(validateFinaleRotationBranchFromTour(tour,
       bundleInput,bundle),true);
+    assert.equal(validateFinaleRotationBranchFromTour(tour,bundleInput,
+      JSON.parse(JSON.stringify(bundle))),true);
     assert.throws(()=>validateFinaleRotationBranchFromTour(tour,
       bundleInput,{...bundle,branch:'contained'}),/does not replay/);
     assert.throws(()=>validateFinaleRotationBranchFromTour(tour,
