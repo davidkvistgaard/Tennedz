@@ -27,6 +27,12 @@ import {recordFinaleLastKmNamedIntentsFromTour} from
   '../lib/engine/v2/finale-last-km-named-intents.mjs';
 import {recordFinaleConcurrentNamedRoadContactFromTour} from
   '../lib/engine/v2/finale-concurrent-named-road-contact.mjs';
+import {recordFinaleConcurrentNamedRotationLaunchFromTour} from
+  '../lib/engine/v2/finale-concurrent-named-rotation-launch.mjs';
+import {recordFinaleConcurrentNamedChaseRotationFromTour} from
+  '../lib/engine/v2/finale-concurrent-named-chase-rotation-launch.mjs';
+import {recordFinaleConcurrentNamedChaseRotationContactFromTour} from
+  '../lib/engine/v2/finale-concurrent-named-chase-rotation-contact.mjs';
 import {recordFinaleConcurrentNamedAllChaseFromTour} from
   '../lib/engine/v2/finale-concurrent-named-all-chase.mjs';
 import {recordFinaleConcurrentNamedAllChaseContactFromTour} from
@@ -375,9 +381,14 @@ for(const [course,stage] of Object.entries(distanceKm===260?LONG_ROUTES:ROUTES))
           completeBunchWithOtherPending:0,
           completeBunchWithSelectiveChase:0,
           completeBunchWithFrontRotation:0,
+          completeBunchWithAllChase:0,
+          completeBunchWithAttackerRotation:0,
           completeBunchWithMultipleAllChase:0,
           namedDecisions:{},otherPendingKinds:{},
-          passiveLaunch:0,passiveContact:0,
+          passiveLaunch:0,passiveContact:0,rotationLaunch:0,
+          chaseRotationLaunch:0,chaseRotationContact:0,
+          chaseRotationPaid:0,
+          chaseRotationWithTwoSplit:0,
           allChaseLaunch:0,allChaseContact:0,
           chasedFollowup:0,chasedCatchMerge:0,
           refusalReasons:{}},
@@ -526,6 +537,12 @@ for(const [course,stage] of Object.entries(distanceKm===260?LONG_ROUTES:ROUTES))
                 orderAt(team.orders,distanceKm-1));
               concurrent.completeBunchWithFrontRotation+=Number(
                 activeOrders.some(order=>order.frontWork!=='sit_in'));
+              concurrent.completeBunchWithAllChase+=Number(
+                activeOrders.some(order=>order.chase==='all'));
+              concurrent.completeBunchWithAttackerRotation+=Number(
+                namedTeams.some(team=>
+                  orderAt(team.orders,distanceKm-1)
+                    .frontWork!=='sit_in'));
               concurrent.completeBunchWithMultipleAllChase+=Number(
                 activeOrders.filter(order=>order.chase==='all').length>1);
               for(const row of intents.named)
@@ -552,6 +569,19 @@ for(const [course,stage] of Object.entries(distanceKm===260?LONG_ROUTES:ROUTES))
                 recordFinaleConcurrentNamedLaunchFromTour))
                 attempt('passiveContact',
                   recordFinaleConcurrentNamedRoadContactFromTour);
+              attempt('rotationLaunch',
+                recordFinaleConcurrentNamedRotationLaunchFromTour);
+              const combined=attempt('chaseRotationLaunch',
+                recordFinaleConcurrentNamedChaseRotationFromTour);
+              if(combined){
+                concurrent.chaseRotationPaid+=Number(
+                  combined.rotationDecision==='paid');
+                concurrent.chaseRotationWithTwoSplit+=Number(
+                  combined.attacks.filter(row=>row.status==='split')
+                    .length>1);
+                attempt('chaseRotationContact',
+                  recordFinaleConcurrentNamedChaseRotationContactFromTour);
+              }
               if(attempt('allChaseLaunch',
                 recordFinaleConcurrentNamedAllChaseFromTour)&&
                 attempt('allChaseContact',
@@ -1067,6 +1097,16 @@ for(const [course,stage] of Object.entries(distanceKm===260?LONG_ROUTES:ROUTES))
           v91Finale.concurrent.completeBunchSources||
         v91Finale.concurrent.passiveContact>
           v91Finale.concurrent.passiveLaunch||
+        v91Finale.concurrent.rotationLaunch>
+          v91Finale.concurrent.completeBunchSources||
+        v91Finale.concurrent.chaseRotationLaunch>
+          v91Finale.concurrent.completeBunchSources||
+        v91Finale.concurrent.chaseRotationPaid>
+          v91Finale.concurrent.chaseRotationLaunch||
+        v91Finale.concurrent.chaseRotationContact>
+          v91Finale.concurrent.chaseRotationLaunch||
+        v91Finale.concurrent.chaseRotationWithTwoSplit>
+          v91Finale.concurrent.chaseRotationLaunch||
         v91Finale.concurrent.allChaseContact>
           v91Finale.concurrent.allChaseLaunch||
         v91Finale.concurrent.chasedFollowup>
