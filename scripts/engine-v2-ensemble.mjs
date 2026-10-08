@@ -21,6 +21,20 @@ import {probeFinaleSeparatedGroupsFromTour,
 import {recordFinaleRotationV91CandidateFromTour,
   validateFinaleRotationV91CandidateFromTour} from
   '../lib/engine/v2/finale-rotation-v91-candidate.mjs';
+import {recordFinaleConcurrentNamedLaunchFromTour} from
+  '../lib/engine/v2/finale-concurrent-named-launch.mjs';
+import {recordFinaleLastKmNamedIntentsFromTour} from
+  '../lib/engine/v2/finale-last-km-named-intents.mjs';
+import {recordFinaleConcurrentNamedRoadContactFromTour} from
+  '../lib/engine/v2/finale-concurrent-named-road-contact.mjs';
+import {recordFinaleConcurrentNamedAllChaseFromTour} from
+  '../lib/engine/v2/finale-concurrent-named-all-chase.mjs';
+import {recordFinaleConcurrentNamedAllChaseContactFromTour} from
+  '../lib/engine/v2/finale-concurrent-named-all-chase-contact.mjs';
+import {recordFinaleConcurrentChasedFollowupFromTour} from
+  '../lib/engine/v2/finale-concurrent-chased-followup.mjs';
+import {recordFinaleConcurrentChasedCatchMergeFromTour} from
+  '../lib/engine/v2/finale-concurrent-chased-catch-merge.mjs';
 import {TUNING,TUNING_VERSION,MOTOR_CANDIDATE_VERSION,MOTOR_PAID_PACE_VERSION,
   MOTOR_FINALE_VERSION,MOTOR_BRIDGE_FINALE_VERSION,MOTOR_EARNED_BRIDGE_VERSION,
   MOTOR_NEUTRAL_PACE_VERSION,MOTOR_EXPLICIT_FRONT_VERSION,
@@ -356,6 +370,17 @@ for(const [course,stage] of Object.entries(distanceKm===260?LONG_ROUTES:ROUTES))
         sourceWithRoadGroups:0,sourceWithDrops:0,
         sourceCompleteBunch:0,sourceWithRivalAttackOrders:0,
         sourceWithMultipleNamedAttackOrders:0,accepted:0,
+        concurrent:{sources:0,completeBunchSources:0,
+          completeBunchAllNamedEligible:0,
+          completeBunchWithOtherPending:0,
+          completeBunchWithSelectiveChase:0,
+          completeBunchWithFrontRotation:0,
+          completeBunchWithMultipleAllChase:0,
+          namedDecisions:{},otherPendingKinds:{},
+          passiveLaunch:0,passiveContact:0,
+          allChaseLaunch:0,allChaseContact:0,
+          chasedFollowup:0,chasedCatchMerge:0,
+          refusalReasons:{}},
         branches:{},refusalReasons:{},refusalExamples:[]};
       const orderedFinale={noRoadGroup:0,oneRoadGroup:0,
         multipleRoadGroups:0,noBunch:0,accepted:0,
@@ -484,6 +509,61 @@ for(const [course,stage] of Object.entries(distanceKm===260?LONG_ROUTES:ROUTES))
               row.group==='peloton'));
           const namedTeams=race.committedInputs.teams.filter(team=>
             orderAt(team.orders,distanceKm-1).attackRiderId);
+          if(namedTeams.length>1){
+            const concurrent=v91Finale.concurrent;
+            concurrent.sources++;
+            if(!handoff.roadGroups.length&&handoff.riderGroups.every(row=>
+              row.group==='peloton')){
+              concurrent.completeBunchSources++;
+              const intents=recordFinaleLastKmNamedIntentsFromTour(race);
+              concurrent.completeBunchAllNamedEligible+=Number(
+                intents.named.every(row=>row.canEnterRoadContest));
+              concurrent.completeBunchWithOtherPending+=Number(
+                intents.otherPendingActions.length>0);
+              concurrent.completeBunchWithSelectiveChase+=Number(
+                intents.unresolvedSelectiveChaseTeamIds.length>0);
+              const activeOrders=race.committedInputs.teams.map(team=>
+                orderAt(team.orders,distanceKm-1));
+              concurrent.completeBunchWithFrontRotation+=Number(
+                activeOrders.some(order=>order.frontWork!=='sit_in'));
+              concurrent.completeBunchWithMultipleAllChase+=Number(
+                activeOrders.filter(order=>order.chase==='all').length>1);
+              for(const row of intents.named)
+                concurrent.namedDecisions[row.decision]=
+                  (concurrent.namedDecisions[row.decision]??0)+1;
+              for(const action of intents.otherPendingActions)
+                concurrent.otherPendingKinds[action.kind]=
+                  (concurrent.otherPendingKinds[action.kind]??0)+1;
+              const attempt=(key,record)=>{
+                try{
+                  const result=record(race);
+                  concurrent[key]++;
+                  return result;
+                }catch(error){
+                  if(error instanceof TypeError||!(error instanceof Error))
+                    throw error;
+                  const reason=`${key}: ${error.message}`;
+                  concurrent.refusalReasons[reason]=
+                    (concurrent.refusalReasons[reason]??0)+1;
+                  return null;
+                }
+              };
+              if(attempt('passiveLaunch',
+                recordFinaleConcurrentNamedLaunchFromTour))
+                attempt('passiveContact',
+                  recordFinaleConcurrentNamedRoadContactFromTour);
+              if(attempt('allChaseLaunch',
+                recordFinaleConcurrentNamedAllChaseFromTour)&&
+                attempt('allChaseContact',
+                  recordFinaleConcurrentNamedAllChaseContactFromTour)){
+                const followup=attempt('chasedFollowup',
+                  recordFinaleConcurrentChasedFollowupFromTour);
+                if(followup?.outcome==='caught_uncontinued')
+                  attempt('chasedCatchMerge',
+                    recordFinaleConcurrentChasedCatchMergeFromTour);
+              }
+            }
+          }
           if(!namedTeams.length)v91Finale.noNamedAttackOrder++;
           else{
             v91Finale.namedAttackSources++;
@@ -980,7 +1060,19 @@ for(const [course,stage] of Object.entries(distanceKm===260?LONG_ROUTES:ROUTES))
         v91Finale.namedAttackSources+v91Finale.noNamedAttackOrder!==samples||
         v91Finale.accepted+Object.values(v91Finale.refusalReasons)
           .reduce((sum,count)=>sum+count,0)!==
-          v91Finale.namedAttackSources))
+          v91Finale.namedAttackSources||
+        v91Finale.concurrent.completeBunchSources>
+          v91Finale.concurrent.sources||
+        v91Finale.concurrent.completeBunchAllNamedEligible>
+          v91Finale.concurrent.completeBunchSources||
+        v91Finale.concurrent.passiveContact>
+          v91Finale.concurrent.passiveLaunch||
+        v91Finale.concurrent.allChaseContact>
+          v91Finale.concurrent.allChaseLaunch||
+        v91Finale.concurrent.chasedFollowup>
+          v91Finale.concurrent.allChaseContact||
+        v91Finale.concurrent.chasedCatchMerge>
+          v91Finale.concurrent.chasedFollowup))
         throw new Error('V91 coverage lost source races or decisions.');
       const sortedGaps=[...totals.finalGaps].sort((a,b)=>a-b);
       const sortedWinMargins=[...totals.breakWinMargins].sort((a,b)=>a-b);
