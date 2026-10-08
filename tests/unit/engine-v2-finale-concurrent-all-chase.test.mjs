@@ -74,9 +74,12 @@ test('paid all-chase cannot give attackers a larger passive gap',()=>{
       source(gender,{chase:'ignore'}));
     const chased=recordFinaleConcurrentNamedAllChaseFromTour(
       source(gender));
-    assert.ok(chased.bunchSpeedKph>=passive.bunchSpeedKph);
+    assert.ok(chased.bunchSpeedKph>passive.bunchSpeedKph);
     assert.ok(chased.attacks.every((attack,index)=>
       attack.earnedGapSeconds<=
+        passive.attacks[index].earnedGapSeconds));
+    assert.ok(chased.attacks.some((attack,index)=>
+      attack.earnedGapSeconds<
         passive.attacks[index].earnedGapSeconds));
   }
 });
