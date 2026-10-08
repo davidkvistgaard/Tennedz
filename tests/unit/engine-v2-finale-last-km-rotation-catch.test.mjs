@@ -31,6 +31,9 @@ import {probeFinaleRotationCatchFinishBoundsFromTour,
   probeFinaleRotationCatchOrderedBoundsFromTour,
   validateFinaleRotationCatchOrderedBoundsFromTour} from
   '../../lib/engine/v2/finale-rotation-catch-finish-bounds.mjs';
+import {recordFinaleRotationBranchFromTour,
+  validateFinaleRotationBranchFromTour} from
+  '../../lib/engine/v2/finale-rotation-branch-recording.mjs';
 import {MOTOR_ATTACK_TRACE_VERSION} from
   '../../lib/engine/v2/tuning.mjs';
 
@@ -257,6 +260,22 @@ test('v91 source links the paid rotating catch to an exact 500 m handoff',()=>{
       tour,freeRotationInput,{...paidBounds,riders:paidBounds.riders.map(
         row=>row.riderId==='b-0'?{...row,lastPossiblePlace:1}:row)}),
     /do not replay/);
+    const bundleInput={...freeRotationInput,branch:'caught'};
+    const bundle=recordFinaleRotationBranchFromTour(tour,bundleInput);
+    assert.equal(bundle.sourceMotorVersion,tour.tuningVersion);
+    assert.equal(bundle.branch,'caught');
+    assert.equal(bundle.resultStatus,'unclassified');
+    assert.deepEqual(bundle.road,record);
+    assert.deepEqual(bundle.approach,rotating);
+    assert.deepEqual(bundle.sprint,paidSprint);
+    assert.deepEqual(bundle.bounds,paidBounds);
+    assert.equal(validateFinaleRotationBranchFromTour(tour,
+      bundleInput,bundle),true);
+    assert.throws(()=>validateFinaleRotationBranchFromTour(tour,
+      bundleInput,{...bundle,branch:'contained'}),/does not replay/);
+    assert.throws(()=>validateFinaleRotationBranchFromTour(tour,
+      bundleInput,{...bundle,bounds:{...bundle.bounds,
+        elapsedSecondsFromLastKmStart:0}}),/does not replay/);
     const launch=recordFinaleRotationCatchSprintLaunchFromTour(
       tour,input);
     assert.equal(launch.sourceApproachVersion,approach.version);

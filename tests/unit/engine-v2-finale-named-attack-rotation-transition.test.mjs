@@ -32,6 +32,9 @@ import {recordFinaleRotationContainedOrderedSprintFromTour,
 import {probeFinaleRotationContainedOrderedBoundsFromTour,
   validateFinaleRotationContainedOrderedBoundsFromTour} from
   '../../lib/engine/v2/finale-rotation-catch-finish-bounds.mjs';
+import {recordFinaleRotationBranchFromTour,
+  validateFinaleRotationBranchFromTour} from
+  '../../lib/engine/v2/finale-rotation-branch-recording.mjs';
 import {MOTOR_ATTACK_TRACE_VERSION,TUNING} from
   '../../lib/engine/v2/tuning.mjs';
 
@@ -314,6 +317,22 @@ test('a contained attack pays once then independent front rotation continues',()
       tour,planInput,{...bounds,riders:bounds.riders.map(row=>
         row.riderId==='a-0'?{...row,lastPossiblePlace:1}:row)}),
     /do not replay/);
+    const bundleInput={...planInput,branch:'contained'};
+    const bundle=recordFinaleRotationBranchFromTour(tour,bundleInput);
+    assert.equal(bundle.sourceMotorVersion,tour.tuningVersion);
+    assert.equal(bundle.branch,'contained');
+    assert.equal(bundle.resultStatus,'unclassified');
+    assert.deepEqual(bundle.road,linked);
+    assert.deepEqual(bundle.plan,sprintPlan);
+    assert.deepEqual(bundle.approach,approach);
+    assert.deepEqual(bundle.sprint,sprint);
+    assert.deepEqual(bundle.bounds,bounds);
+    assert.equal(validateFinaleRotationBranchFromTour(tour,
+      bundleInput,bundle),true);
+    assert.throws(()=>validateFinaleRotationBranchFromTour(tour,
+      bundleInput,{...bundle,branch:'caught'}),/does not replay/);
+    assert.throws(()=>recordFinaleRotationBranchFromTour(tour,
+      {...bundleInput,branch:'unknown'}),/must be caught or contained/);
     assert.deepEqual(tour.provisionalResults,oldResults);
   }
 });
