@@ -325,3 +325,46 @@ test('v91 source links the paid rotating catch to an exact 500 m handoff',()=>{
     assert.deepEqual(tour.provisionalResults,oldResults);
   }
 });
+
+test('ordered sprint replays on compatible flat and rolling sources and rejects other road states',()=>{
+  const plans=['a','b','c'].map(teamId=>({teamId,
+    finisherId:`${teamId}-0`,
+    leadOutRiderId:teamId==='b'?null:`${teamId}-2`}));
+  for(const gender of ['M','F']){
+    for(const [profile,points] of [
+      ['flat',[[0,100],[20,100]]],
+      ['rolling',[[0,100],[10,180],[20,100]]]]){
+      for(const bSkill of [65,75]){
+        const tour=simulateTacticalTour({stage:{...stage,
+          profile_points:points},teams:[
+          team('a',50,{gender,attack:true}),
+          team('b',bSkill,{gender,rotate:true}),
+          team('c',80,{gender,chase:'all'})],
+        seed:'catch-50-75-80',motorVersion:MOTOR_ATTACK_TRACE_VERSION});
+        const input={attackTeamId:'a',plans};
+        const run=recordFinaleRotationCatchOrderedSprintFromTour(tour,input);
+        assert.deepEqual(run.frames.map(frame=>
+          frame.rotation.selected?.teamId),['b','b','b'],
+        `${gender} ${profile} ${bSkill}`);
+        assert.ok(run.frames.every(frame=>frame.riderEnergy.length===24));
+        assert.equal(validateFinaleRotationCatchOrderedSprintFromTour(tour,
+          input,run),true);
+        const bounds=probeFinaleRotationCatchOrderedBoundsFromTour(tour,input);
+        assert.ok(bounds.riders.every(row=>
+          row.firstPossiblePlace===1&&row.lastPossiblePlace===24));
+      }
+    }
+    for(const [points,bSkill,error] of [
+      [[[0,100],[15,100],[20,260]],75,/actual road contact/],
+      [[[0,100],[20,100]],85,/complete bunch/]]){
+      const tour=simulateTacticalTour({stage:{...stage,
+        profile_points:points},teams:[
+        team('a',50,{gender,attack:true}),
+        team('b',bSkill,{gender,rotate:true}),
+        team('c',80,{gender,chase:'all'})],
+      seed:'catch-50-75-80',motorVersion:MOTOR_ATTACK_TRACE_VERSION});
+      assert.throws(()=>recordFinaleRotationCatchOrderedSprintFromTour(
+        tour,{attackTeamId:'a',plans}),error);
+    }
+  }
+});
