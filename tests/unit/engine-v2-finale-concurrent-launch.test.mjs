@@ -9,11 +9,16 @@ import {recordFinaleConcurrentNamedLaunchFromTour,
   '../../lib/engine/v2/finale-concurrent-named-launch.mjs';
 
 function team(id,skill,gender,{attack=false,
-  chase='ignore',rotate=false}={}){
+  chase='ignore',rotate=false,captainSkill=skill,
+  captainFatigue=0}={}){
   return {id,riders:Array.from({length:8},(_,index)=>({
-    id:`${id}-${index}`,gender,flat:skill,strength:skill,
-    timetrial:skill,endurance:75,acceleration:80,
-    sprint:70,leadership:60,fatigue:0})),orders:{
+    id:`${id}-${index}`,gender,
+    flat:index===0?captainSkill:skill,
+    strength:index===0?captainSkill:skill,
+    timetrial:index===0?captainSkill:skill,
+    endurance:75,acceleration:80,
+    sprint:70,leadership:60,
+    fatigue:index===0?captainFatigue:0})),orders:{
     captainId:`${id}-0`,roadCaptainId:`${id}-1`,
     helperIds:[`${id}-2`,`${id}-3`],preset:'balanced',
     baseline:{effort:'steady',attack:'none',chase,
@@ -22,12 +27,13 @@ function team(id,skill,gender,{attack=false,
       attackRiderId:`${id}-0`}]:[]}};
 }
 
-function source(gender,{chase='ignore',rotate=false}={}){
+function source(gender,{chase='ignore',rotate=false,
+  captainSkill=80,captainFatigue=0}={}){
   const stage={distance_km:40,
     profile_points:[[0,100],[40,100]],
     keypoints:[{km:39,kind:'SPRINT'}]};
   const teams=[team('a',75,gender,{attack:true}),
-    team('b',80,gender,{attack:true}),
+    team('b',80,gender,{attack:true,captainSkill,captainFatigue}),
     team('c',75,gender,{chase}),
     team('d',80,gender,{rotate})];
   return simulateTacticalTour({stage,teams,
@@ -71,4 +77,26 @@ test('unpaid rival work is refused by the passive launch',()=>{
     source('M',{chase:'selective'})),/complete passive bunch/);
   assert.throws(()=>recordFinaleConcurrentNamedLaunchFromTour(
     source('M',{rotate:true})),/complete passive bunch/);
+});
+
+test('paired captain ability and fatigue alter only that named launch',()=>{
+  for(const gender of ['M','F']){
+    const base=recordFinaleConcurrentNamedLaunchFromTour(source(gender));
+    const weaker=recordFinaleConcurrentNamedLaunchFromTour(source(gender,{
+      captainSkill:70}));
+    const tired=recordFinaleConcurrentNamedLaunchFromTour(source(gender,{
+      captainFatigue:40}));
+    assert.equal(base.bunchSpeedKph,weaker.bunchSpeedKph);
+    assert.equal(base.bunchSpeedKph,tired.bunchSpeedKph);
+    assert.equal(base.attacks[0].earnedGapSeconds,
+      weaker.attacks[0].earnedGapSeconds);
+    assert.equal(base.attacks[0].earnedGapSeconds,
+      tired.attacks[0].earnedGapSeconds);
+    assert.ok(base.attacks[1].earnedGapSeconds>
+      weaker.attacks[1].earnedGapSeconds);
+    assert.ok(base.attacks[1].earnedGapSeconds>
+      tired.attacks[1].earnedGapSeconds);
+    assert.ok(tired.attacks[1].energyAtDecision<
+      base.attacks[1].energyAtDecision);
+  }
 });
