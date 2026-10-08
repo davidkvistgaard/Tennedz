@@ -42,6 +42,11 @@ import {recordFinaleRotationContainedSprintPlanFromTour,
 import {recordFinaleRotationSoloLateCatchSprintFromTour,
   validateFinaleRotationSoloLateCatchSprintFromTour} from
   '../../lib/engine/v2/finale-rotation-solo-late-catch-sprint.mjs';
+import {probeFinaleRotationSoloFinishBoundsFromTour,
+  validateFinaleRotationSoloFinishBoundsFromTour,
+  probeFinaleRotationSoloLateCatchBoundsFromTour,
+  validateFinaleRotationSoloLateCatchBoundsFromTour} from
+  '../../lib/engine/v2/finale-rotation-solo-finish-bounds.mjs';
 import {recordFinaleRotationContainedOrderedApproachFromTour,
   validateFinaleRotationContainedOrderedApproachFromTour} from
   '../../lib/engine/v2/finale-rotation-catch-ordered-approach.mjs';
@@ -272,6 +277,21 @@ test('rotating pair and reactive chaser pay once against a named attack',()=>{
     frame.supersededRotationTeamIds.includes('b')));
   assert.notDeepEqual(helperSprint.lineRiderEnergy,
     lateSprint.lineRiderEnergy);
+  const bounds=probeFinaleRotationSoloLateCatchBoundsFromTour(tour,
+    noLeadOutInput);
+  assert.equal(bounds.sourceRunVersion,lateSprint.version);
+  assert.equal(bounds.knownFirstPlaceRiderId,null);
+  assert.equal(bounds.pointsStatus,'withheld');
+  assert.equal(bounds.riders.length,32);
+  assert.ok(bounds.riders.every(row=>
+    row.firstPossiblePlace===1&&row.lastPossiblePlace===32));
+  assert.equal(validateFinaleRotationSoloLateCatchBoundsFromTour(tour,
+    noLeadOutInput,JSON.parse(JSON.stringify(bounds))),true);
+  assert.throws(()=>validateFinaleRotationSoloLateCatchBoundsFromTour(
+    tour,noLeadOutInput,{...bounds,knownFirstPlaceRiderId:'a-0'}),
+  /do not replay/);
+  assert.throws(()=>probeFinaleRotationSoloFinishBoundsFromTour(tour,{
+    attackTeamId:'a'}),/needs an exact catch continuation/);
   assert.deepEqual(tour.provisionalResults,oldResults);
   }
 });
@@ -310,6 +330,24 @@ test('a stronger named solo pays every late slice to a separated line',()=>{
     assert.throws(()=>validateFinaleRotationSoloRunFromTour(tour,
       {attackTeamId:'a'},{...run,bunchElapsedSecondsAtLine:0}),
     /does not replay/);
+    const bounds=probeFinaleRotationSoloFinishBoundsFromTour(tour,{
+      attackTeamId:'a'});
+    assert.equal(bounds.sourceRunVersion,run.version);
+    assert.equal(bounds.knownFirstPlaceRiderId,'a-0');
+    assert.equal(bounds.pointsStatus,'withheld');
+    assert.equal(bounds.riders.length,32);
+    assert.deepEqual(bounds.roadBands.map(band=>[
+      band.firstPossiblePlace,band.lastPossiblePlace]),
+    [[1,1],[2,32]]);
+    assert.equal(validateFinaleRotationSoloFinishBoundsFromTour(tour,
+      {attackTeamId:'a'},JSON.parse(JSON.stringify(bounds))),true);
+    assert.throws(()=>validateFinaleRotationSoloFinishBoundsFromTour(tour,
+      {attackTeamId:'a'},{...bounds,knownFirstPlaceRiderId:'b-0'}),
+    /do not replay/);
+    assert.throws(()=>probeFinaleRotationSoloLateCatchBoundsFromTour(tour,{
+      attackTeamId:'a',plans:['a','b','c','d'].map(teamId=>({
+        teamId,finisherId:`${teamId}-0`,leadOutRiderId:null}))}),
+    /needs actual road contact/);
   }
 });
 
