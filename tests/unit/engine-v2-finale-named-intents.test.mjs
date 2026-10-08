@@ -5,6 +5,7 @@ import {simulateTacticalTour} from
 import {MOTOR_ATTACK_TRACE_VERSION} from
   '../../lib/engine/v2/tuning.mjs';
 import {recordFinaleLastKmNamedIntentsFromTour,
+  FINALE_LAST_KM_ALL_INTENTS_VERSION,
   validateFinaleLastKmNamedIntentsFromTour} from
   '../../lib/engine/v2/finale-last-km-named-intents.mjs';
 import {recordFinaleRotationV91CandidateFromTour} from
@@ -90,4 +91,50 @@ test('a lingering named phase is recorded without inventing a due attack',()=>{
   assert.equal(intents.named[0].decision,'not_due');
   assert.deepEqual(intents.eligibleNamedRiderIds,[]);
   assert.equal(intents.named[0].sourcePendingKind,null);
+});
+
+test('unnamed manager attack selects only a present eligible rider at the final kilometre',()=>{
+  const stage={distance_km:40,profile_points:[[0,100],[40,100]],
+    keypoints:[{km:10,kind:'SPRINT'},{km:20,kind:'SPRINT'}]};
+  for(const gender of ['M','F']){
+    const make=(id,attackAt)=>({id,
+      riders:Array.from({length:8},(_,index)=>({id:`${id}-${index}`,
+        gender,flat:index===0?95:55,strength:index===0?95:55,
+        endurance:index===0?95:55,timetrial:index===0?95:55,
+        acceleration:index===0?95:55,sprint:50,leadership:50})),
+      orders:{captainId:`${id}-0`,roadCaptainId:`${id}-1`,
+        preset:'balanced',baseline:{effort:'conserve',chase:'ignore',
+          attack:attackAt===0?'selective':'none',
+          breakWork:'cooperate'},
+        phases:attackAt===0?[{atKm:10,attack:'none'}]:
+          attackAt===null?[]:[{atKm:attackAt,attack:'selective',
+            ...(id==='c'?{}:{attackRiderId:`${id}-0`})}]}});
+    const teams=[make('a',0),make('b',20),make('c',35)];
+    const tour=simulateTacticalTour({stage,teams,
+      seed:'separated-finale',motorVersion:MOTOR_ATTACK_TRACE_VERSION});
+    const source=tour.frames[38];
+    assert.equal(source.roadGroups.length,2);
+    const previous=recordFinaleLastKmNamedIntentsFromTour(tour);
+    assert.equal(previous.version,'v2-finale-last-km-named-intents-1');
+    assert.ok(previous.otherPendingActions.some(row=>
+      row.teamId==='c'&&row.kind==='peloton_attack'));
+    const intents=recordFinaleLastKmNamedIntentsFromTour(tour,{
+      version:FINALE_LAST_KM_ALL_INTENTS_VERSION});
+    const attempt=intents.unnamed.find(row=>row.teamId==='c');
+    assert.equal(attempt?.decision,'eligible');
+    assert.equal(attempt?.riderId,'c-0');
+    assert.ok(attempt.sourceEnergy>=0);
+    assert.ok(attempt.selectionPressure>0);
+    assert.deepEqual(intents.eligibleUnnamedRiderIds,['c-0']);
+    assert.ok(!intents.otherPendingActions.some(row=>row.teamId==='c'&&
+      row.kind==='peloton_attack'));
+    assert.equal(intents.roadOutcomeStatus,'unresolved');
+    assert.equal(intents.pointsStatus,'withheld');
+    assert.equal(validateFinaleLastKmNamedIntentsFromTour(tour,intents),true);
+    assert.equal(validateFinaleLastKmNamedIntentsFromTour(tour,previous),true);
+    const forged=structuredClone(intents);
+    forged.unnamed.find(row=>row.teamId==='c').riderId='c-1';
+    assert.throws(()=>validateFinaleLastKmNamedIntentsFromTour(tour,
+      forged),/do not replay/);
+  }
 });

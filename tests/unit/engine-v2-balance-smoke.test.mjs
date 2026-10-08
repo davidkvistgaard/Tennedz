@@ -221,20 +221,23 @@ test('complete separated-field audit records blocked team-limit orders without a
   const cells=Object.values(report.courses).flatMap(genders=>
     Object.values(genders).flatMap(strategies=>
       Object.values(strategies)));
-  const totals={candidates:0,accepted:0,blocked:0};
+  const totals={candidates:0,accepted:0,blocked:0,lateAttacks:0};
   for(const cell of cells){
     const audit=cell.orderedFinale.fullFieldSeparated;
     assert.equal(audit.travelVersion,'v2-finale-separated-team-limit-9');
     assert.equal(audit.boundsVersion,
       'v2-finale-separated-finish-bounds-2');
+    assert.equal(audit.intentVersion,'v2-finale-last-km-all-intents-2');
     const rejected=Object.values(audit.rejections)
       .reduce((sum,count)=>sum+count,0);
     assert.equal(audit.accepted+rejected,audit.candidates);
     totals.candidates+=audit.candidates;
     totals.accepted+=audit.accepted;
     totals.blocked+=audit.blockedTeamLimitDecisions;
+    totals.lateAttacks+=audit.lastKmSourceEligibleUnnamedAttacks;
   }
   assert.ok(totals.candidates>0);
   assert.ok(totals.accepted>0);
   assert.ok(totals.blocked>0);
+  assert.ok(totals.lateAttacks>0);
 });

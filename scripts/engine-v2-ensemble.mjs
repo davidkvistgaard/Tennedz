@@ -28,7 +28,8 @@ import {recordFinaleRotationV91CandidateFromTour,
   '../lib/engine/v2/finale-rotation-v91-candidate.mjs';
 import {recordFinaleConcurrentNamedLaunchFromTour} from
   '../lib/engine/v2/finale-concurrent-named-launch.mjs';
-import {recordFinaleLastKmNamedIntentsFromTour} from
+import {recordFinaleLastKmNamedIntentsFromTour,
+  FINALE_LAST_KM_ALL_INTENTS_VERSION} from
   '../lib/engine/v2/finale-last-km-named-intents.mjs';
 import {recordFinaleConcurrentNamedRoadContactFromTour} from
   '../lib/engine/v2/finale-concurrent-named-road-contact.mjs';
@@ -416,7 +417,11 @@ for(const [course,stage] of Object.entries(distanceKm===260?LONG_ROUTES:ROUTES))
         fullFieldSeparated:{version:'v2-full-field-separated-coverage-1',
           travelVersion:FINALE_SEPARATED_TEAM_LIMIT_VERSION,
           boundsVersion:FINALE_SEPARATED_TEAM_LIMIT_BOUNDS_VERSION,
+          intentVersion:FINALE_LAST_KM_ALL_INTENTS_VERSION,
           candidates:0,accepted:0,blockedTeamLimitDecisions:0,
+          // This is the separate kilometre recording at 1 km to go, not
+          // the still-unresolved 4 km short-step road state.
+          lastKmSourceEligibleUnnamedAttacks:0,
           rejections:{}},
         oneRoadSeparatedAccepted:0,oneRoadSeparatedRejections:{},
         postAttackCandidates:0,postAttackAccepted:0,
@@ -692,6 +697,10 @@ for(const [course,stage] of Object.entries(distanceKm===260?LONG_ROUTES:ROUTES))
             fullFieldSource.riderGroups.some(row=>row.group==='dropped')){
             fullFieldAudit.candidates++;
             try{
+              const intents=recordFinaleLastKmNamedIntentsFromTour(race,{
+                version:FINALE_LAST_KM_ALL_INTENTS_VERSION});
+              fullFieldAudit.lastKmSourceEligibleUnnamedAttacks+=
+                intents.eligibleUnnamedRiderIds.length;
               const travel=probeFinaleSeparatedGroupsFromTour(race,{
                 version:FINALE_SEPARATED_TEAM_LIMIT_VERSION});
               validateFinaleSeparatedGroupsFromTour(race,travel);
