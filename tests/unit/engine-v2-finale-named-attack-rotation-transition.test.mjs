@@ -28,7 +28,9 @@ import {recordFinaleRotationSoloSliceFromTour,
   recordFinaleRotationSoloSecondSliceFromTour,
   validateFinaleRotationSoloSecondSliceFromTour,
   recordFinaleRotationSoloCatchSliceFromTour,
-  validateFinaleRotationSoloCatchSliceFromTour} from
+  validateFinaleRotationSoloCatchSliceFromTour,
+  recordFinaleRotationSoloRunFromTour,
+  validateFinaleRotationSoloRunFromTour} from
   '../../lib/engine/v2/finale-rotation-solo-slice.mjs';
 import {recordFinaleRotationContainedSprintPlanFromTour,
   validateFinaleRotationContainedSprintPlanFromTour} from
@@ -171,7 +173,44 @@ test('rotating pair and reactive chaser pay once against a named attack',()=>{
   assert.throws(()=>validateFinaleRotationSoloSecondSliceFromTour(tour,
     {attackTeamId:'a'},{...second,bunchTravelSeconds:0}),
   /does not replay/);
+  assert.throws(()=>recordFinaleRotationSoloRunFromTour(tour,{
+    attackTeamId:'a'}),/needs an exact catch continuation/);
   assert.deepEqual(tour.provisionalResults,oldResults);
+  }
+});
+
+test('a stronger named solo pays every late slice to a separated line',()=>{
+  for(const gender of ['M','F']){
+    const tour=simulateTacticalTour({stage,teams:[
+      team('a',75,{attack:true,gender}),
+      team('b',88,{rotate:true,gender}),
+      team('c',55,{rotate:true,chase:'all',gender}),
+      team('d',80,{rotate:true,gender})],
+    seed:`solo-line-${gender}`,motorVersion:MOTOR_ATTACK_TRACE_VERSION});
+    const road=probeLastKmRotationSoloFromTour(tour,{teamId:'a'});
+    const run=recordFinaleRotationSoloRunFromTour(tour,{
+      attackTeamId:'a'});
+    assert.equal(run.endDistanceM,40000);
+    assert.equal(run.frames.length,5);
+    assert.deepEqual(run.roadGroups[0].riderIds,['a-0']);
+    assert.ok(run.roadGroups[0].gapSeconds>0);
+    assert.equal(run.lineRiderEnergy.length,32);
+    assert.ok(run.frames.every(frame=>frame.riderEnergy.length===32&&
+      frame.roadGroups[0].gapSeconds>0));
+    for(let index=1;index<run.frames.length;index++){
+      const before=new Map(run.frames[index-1].riderEnergy.map(row=>
+        [row.riderId,row.energyAfter]));
+      assert.ok(run.frames[index].riderEnergy.every(row=>
+        row.energyAtDecision===before.get(row.riderId)));
+    }
+    assert.equal(run.bunchElapsedSecondsAtLine,
+      road.at500M.bunchElapsedSeconds+
+      run.frames.reduce((sum,frame)=>sum+frame.bunchTravelSeconds,0));
+    assert.equal(validateFinaleRotationSoloRunFromTour(tour,
+      {attackTeamId:'a'},JSON.parse(JSON.stringify(run))),true);
+    assert.throws(()=>validateFinaleRotationSoloRunFromTour(tour,
+      {attackTeamId:'a'},{...run,bunchElapsedSecondsAtLine:0}),
+    /does not replay/);
   }
 });
 
