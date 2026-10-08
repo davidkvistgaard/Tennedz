@@ -9,13 +9,13 @@ import {recordFinaleConcurrentNamedChaseRotationFromTour,
   '../../lib/engine/v2/finale-concurrent-named-chase-rotation-launch.mjs';
 
 function team(id,skill,gender,{attack=false,
-  chase='ignore',rotate=false}={}){
+  chase='ignore',rotate=false,helpers=true}={}){
   return {id,riders:Array.from({length:8},(_,index)=>({
     id:`${id}-${index}`,gender,flat:skill,strength:skill,
     timetrial:skill,endurance:75,acceleration:80,
     sprint:70,leadership:60,fatigue:0})),orders:{
     captainId:`${id}-0`,roadCaptainId:`${id}-1`,
-    helperIds:[`${id}-2`,`${id}-3`],preset:'balanced',
+    helperIds:helpers?[`${id}-2`,`${id}-3`]:[],preset:'balanced',
     baseline:{effort:'steady',attack:'none',chase,
       breakWork:'cooperate',frontWork:rotate?'rotate':'sit_in'},
     phases:attack?[{atKm:39,attack:'selective',
@@ -23,7 +23,7 @@ function team(id,skill,gender,{attack=false,
 }
 
 function source(gender,{chaseRotate=false,
-  attackingRotate=false}={}){
+  attackingRotate=false,rotationHelpers=true}={}){
   const stage={distance_km:40,
     profile_points:[[0,100],[40,100]],
     keypoints:[{km:39,kind:'SPRINT'}]};
@@ -31,7 +31,8 @@ function source(gender,{chaseRotate=false,
     attack:true,rotate:attackingRotate}),
   team('b',80,gender,{attack:true}),
   team('c',100,gender,{chase:'all',rotate:chaseRotate}),
-  team('d',95,gender,{rotate:true})];
+  team('d',95,gender,{rotate:true,
+    helpers:rotationHelpers})];
   return simulateTacticalTour({stage,teams,
     seed:`concurrent-chase-rotation-${gender}`,
     motorVersion:MOTOR_ATTACK_TRACE_VERSION});
@@ -73,4 +74,19 @@ test('one team cannot silently work as both chaser and rotator',()=>{
     source('M',{chaseRotate:true})),/separate rotating rivals/);
   assert.throws(()=>recordFinaleConcurrentNamedChaseRotationFromTour(
     source('M',{attackingRotate:true})),/separate rotating rivals/);
+});
+
+test('an ordered rotation without a payable pair is recorded unavailable',()=>{
+  for(const gender of ['M','F']){
+    const tour=source(gender,{rotationHelpers:false});
+    const launch=recordFinaleConcurrentNamedChaseRotationFromTour(tour);
+    assert.equal(launch.rotationDecision,'no_eligible_pair');
+    assert.equal(launch.rotation.selected,null);
+    assert.equal(launch.riderEnergy.filter(row=>
+      row.role==='front_rotation').length,0);
+    assert.equal(launch.riderEnergy.filter(row=>row.role==='chase')
+      .length,1);
+    assert.equal(validateFinaleConcurrentNamedChaseRotationFromTour(
+      tour,JSON.parse(JSON.stringify(launch))),true);
+  }
 });
