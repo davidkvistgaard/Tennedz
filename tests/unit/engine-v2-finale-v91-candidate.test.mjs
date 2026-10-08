@@ -87,3 +87,76 @@ test('one read-only candidate binds all measured narrow v91 outcomes',()=>{
     assert.deepEqual(tour.provisionalResults,oldResults);
   }
 });
+
+test('mixed 20-manager fields keep every rider and point bound at line',()=>{
+  for(const gender of ['M','F'])for(const profile of [
+    [[0,100],[40,100]],
+    [[0,100],[20,140],[40,100]]]){
+    const stage={distance_km:40,profile_points:profile,
+      keypoints:[{km:39,kind:'SPRINT'}]};
+    for(const {skill,branch} of [
+      {skill:55,branch:'first_catch'},
+      {skill:58,branch:'second_catch'},
+      {skill:60,branch:'late_catch'},
+      {skill:62,branch:'penultimate_catch'},
+      {skill:63,branch:'final_contact'},
+      {skill:65,branch:'surviving_solo'}]){
+      const teams=[team('a',skill,{attack:true,attackAtKm:39,gender}),
+        team('b',88,{rotate:true,gender}),
+        team('c',55,{rotate:true,chase:'all',gender}),
+        team('d',80,{rotate:true,gender}),
+        ...Array.from({length:16},(_,index)=>team(
+          `t${String(index).padStart(2,'0')}`,60+index%20,{
+            rotate:index%4===0,
+            chase:index%7===0?'all':'ignore',gender}))];
+      const tour=simulateTacticalTour({stage,teams,
+        seed:`scale-20-${profile.length}`,
+        motorVersion:MOTOR_ATTACK_TRACE_VERSION});
+      const input={attackTeamId:'a',tier:3,
+        divisionIndex:1,divisionCount:1,
+        plans:teams.map(manager=>({teamId:manager.id,
+          finisherId:`${manager.id}-0`,leadOutRiderId:null}))};
+      const candidate=recordFinaleRotationV91CandidateFromTour(tour,input);
+      assert.equal(candidate.branch,branch);
+      assert.equal(candidate.line.endDistanceM,40000);
+      assert.equal(candidate.line.lineRiderEnergy.length,160);
+      assert.equal(candidate.bounds.riders.length,160);
+      assert.equal(candidate.pointBounds.riders.length,160);
+      assert.equal(new Set(candidate.line.lineRiderEnergy.map(row=>
+        row.riderId)).size,160);
+      assert.equal(candidate.pointBounds.canCommitAwards,false);
+      assert.deepEqual(candidate.pointBounds.awardRows,[]);
+    }
+  }
+});
+
+test('long 20-manager sources retain fatigue and recorded contact',()=>{
+  for(const gender of ['M','F'])for(const {distanceKm,branch} of [
+    {distanceKm:180,branch:'final_contact'},
+    {distanceKm:300,branch:'late_catch'}]){
+    const stage={distance_km:distanceKm,
+      profile_points:[[0,100],[distanceKm,100]],
+      keypoints:[{km:distanceKm-1,kind:'SPRINT'}]};
+    const teams=[team('a',65,{attack:true,
+      attackAtKm:distanceKm-1,gender}),
+    team('b',88,{rotate:true,gender}),
+    team('c',55,{rotate:true,chase:'all',gender}),
+    team('d',80,{rotate:true,gender}),
+    ...Array.from({length:16},(_,index)=>team(
+      `t${String(index).padStart(2,'0')}`,60+index%20,{
+        rotate:index%4===0,
+        chase:index%7===0?'all':'ignore',gender}))];
+    const tour=simulateTacticalTour({stage,teams,
+      seed:`scale-${distanceKm}`,
+      motorVersion:MOTOR_ATTACK_TRACE_VERSION});
+    const candidate=recordFinaleRotationV91CandidateFromTour(tour,{
+      attackTeamId:'a',tier:3,divisionIndex:1,divisionCount:1,
+      plans:teams.map(manager=>({teamId:manager.id,
+        finisherId:`${manager.id}-0`,leadOutRiderId:null}))});
+    assert.equal(candidate.branch,branch);
+    assert.equal(candidate.line.endDistanceM,distanceKm*1000);
+    assert.equal(candidate.line.lineRiderEnergy.length,160);
+    assert.equal(candidate.pointBounds.riders.length,160);
+    assert.equal(candidate.canCommitAwards,false);
+  }
+});
