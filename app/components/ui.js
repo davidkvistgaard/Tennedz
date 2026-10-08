@@ -43,9 +43,9 @@ export function StatRow({ label, value, highlight = false }) {
 export function RoleTag({ role }) {
   const tone =
     role === "Sprinter" ? "accent" :
-    role === "Klatrer" ? "info" :
+    role === "Climber" ? "info" :
     role === "TT" ? "info" :
-    role === "Brosten" ? "accent" :
+    role === "Cobbles" ? "accent" :
     "default";
 
   return <Pill tone={tone}>{role}</Pill>;

@@ -1,83 +1,86 @@
 "use client";
-
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useAuth } from "./AuthProvider";
+import ClubBadge from "./ClubBadge";
 
-function NavLink({ href, label }) {
-  const pathname = usePathname();
-  const active = pathname === href;
-
-  return (
-    <Link
-      href={href}
-      style={{
-        textDecoration: "none"
-      }}
-    >
-      <span
-        className="pillBtn"
-        style={{
-          background: active ? "linear-gradient(90deg, rgba(124,255,107,0.22), rgba(77,214,255,0.18))" : undefined,
-          borderColor: active ? "rgba(124,255,107,0.35)" : undefined
-        }}
-      >
-        {label}
-      </span>
-    </Link>
-  );
-}
-
-export default function TeamShell({ title, children }) {
+export default function TeamShell({ title, children, compact = false }) {
+  const { session } = useAuth(),
+    pathname = usePathname();
   const [gameDate, setGameDate] = useState(null);
-
   useEffect(() => {
-    let alive = true;
+    let active = true;
     fetch("/api/game-date")
       .then((r) => r.json())
       .then((j) => {
-        if (!alive) return;
-        if (j?.ok) setGameDate(j.game_date);
+        if (active && j.ok) setGameDate(j.game_date);
       })
       .catch(() => {});
-    return () => (alive = false);
+    return () => {
+      active = false;
+    };
   }, []);
-
+  const links = [
+    ["/team", "My team"],
+    ["/team/run", "Calendar & races"],
+    ["/team/portraits", "Riders"],
+    ["/team/identity", "Club identity"],
+    ["/team/leaderboards", "Rankings"],
+    ["/team/history", "History"],
+    ["/team/atlas", "Atlas"],
+  ];
+  if (session?.is_admin) links.push(["/admin", "Admin"]);
   return (
-    <div style={{ display: "grid", gap: 14 }}>
-      <div className="card" style={{ padding: 16 }}>
-        <div style={{ display: "flex", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
-          <div>
-            <div className="badge" style={{ marginBottom: 10 }}>
-              <span style={{ color: "var(--accent)", fontWeight: 1000 }}>TEN</span>
-              <span style={{ color: "var(--muted)" }}>nedz</span>
-              <span style={{ marginLeft: 8, opacity: 0.85 }}>Cycling Manager</span>
-            </div>
-
-            <div className="h1">{title || "Mit hold"}</div>
-            <div className="small" style={{ marginTop: 6 }}>
-              {gameDate ? (
-                <>
-                  Game date: <b style={{ color: "var(--text)" }}>{gameDate}</b> · Year = 90 days
-                </>
-              ) : (
-                "…"
-              )}
-            </div>
-          </div>
-
-          <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center" }}>
-            <NavLink href="/team" label="Hold" />
-            <NavLink href="/team/run" label="Kør løb" />
-            <NavLink href="/team/leaderboards" label="Ranglister" />
-            <NavLink href="/team/presets" label="Presets" />
-            <NavLink href="/team/history" label="Historik" />
-            <NavLink href="/admin" label="Admin" />
-          </div>
+    <div className="game-shell">
+      <a className="studio-skip" href="#team-page-content">Skip to content</a>
+      <header className="game-header">
+        <Link
+          href="/team"
+          className="game-brand"
+          aria-label="Pelotonia – my team"
+        >
+          <span className="brand-mark">
+            <svg viewBox="0 0 32 32" width="28" height="28" aria-hidden="true">
+              <path
+                d="M5 25L14 8H22L13 25M9 17H24"
+                stroke="currentColor"
+                strokeWidth="3"
+                fill="none"
+                strokeLinecap="round"
+              />
+              <circle cx="23" cy="8" r="3" fill="currentColor" />
+            </svg>
+          </span>
+          <span className="brand-word">
+            pelotonia<small>Cycling Manager</small>
+          </span>
+        </Link>
+        <nav className="game-nav" aria-label="Main navigation">
+          {links.map(([href, label]) => (
+            <Link
+              href={href}
+              key={href}
+              aria-current={pathname === href ? "page" : undefined}
+            >
+              {label}
+            </Link>
+          ))}
+        </nav>
+        <div className="game-date"><ClubBadge name={session?.team?.name} decorative/><div>
+          {session?.team?.name}
+          <br />
+          {gameDate
+            ? `Game date ${new Date(gameDate + "T12:00:00Z").toLocaleDateString("en-GB", { timeZone: "UTC" })}`
+            : "Loading game date…"}
+        </div></div>
+      </header>
+      {!compact && (
+        <div className="page-heading">
+          <h1>{title || "My team"}</h1>
         </div>
-      </div>
-
-      <div>{children}</div>
+      )}
+      <div id="team-page-content" tabIndex={-1}>{children}</div>
     </div>
   );
 }

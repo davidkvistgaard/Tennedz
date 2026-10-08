@@ -1,9 +1,10 @@
+import { protectedRoute } from "../../../../lib/auth/server";
 // app/api/weather/forecast/route.js
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { generateForecast } from "../../../../lib/weather/weatherModel";
 
-export async function GET(req) {
+async function handler(req, context, auth) {
   try {
     const url = new URL(req.url);
     const event_id = url.searchParams.get("event_id");
@@ -54,3 +55,5 @@ export async function GET(req) {
     return NextResponse.json({ ok: false, error: e?.message ?? String(e) }, { status: 500 });
   }
 }
+
+export const GET = protectedRoute(handler);

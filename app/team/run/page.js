@@ -1,364 +1,578 @@
 "use client";
-
 import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
+import Image from "next/image";
 import TeamShell from "../../components/TeamShell";
-import Loading from "../../components/Loading";
-import SmallButton from "../../components/SmallButton";
-import { SectionHeader, Pill } from "../../components/ui";
-import RiderCard from "../../components/RiderCard";
 import StageProfile from "../../components/StageProfile";
+import RiderAvatar from "../../components/RiderAvatar";
 import LineupPresets from "../../components/LineupPresets";
-import { supabase } from "../../../lib/supabaseClient";
-import { getOrCreateTeam } from "../../../lib/team";
+import { useAuth } from "../../components/AuthProvider";
+import { api } from "../../../lib/api";
+import { normalizeRoute, routeAdvice } from "../../../lib/race/route.mjs";
 
-function isUuid(x) {
-  return typeof x === "string" && /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(x);
-}
-function fmtTime(ts) {
-  try { return new Date(ts).toLocaleString(); } catch { return String(ts); }
-}
-function getVal(r, k) {
-  const v = Number(r?.[k] ?? 0);
-  return Number.isFinite(v) ? v : 0;
-}
+import RaceOrders from "../../components/RaceOrders";
+import { draftOrders } from "../../../lib/race/orders.mjs";
 
-const SKILLS = [
-  { key: "sprint", label: "Sprint" },
-  { key: "flat", label: "Flat" },
-  { key: "hills", label: "Hills" },
-  { key: "mountain", label: "Mountain" },
-  { key: "cobbles", label: "Cobbles" },
-  { key: "timetrial", label: "Timetrial" },
-  { key: "endurance", label: "Endurance" },
-  { key: "strength", label: "Strength" },
-  { key: "wind", label: "Wind" },
-  { key: "form", label: "Form" },
-  { key: "fatigue", label: "Fatigue" }
-];
+const skills = {
+  sprint: "Sprint",
+  flat: "Flat roads",
+  hills: "Hills",
+  mountain: "Mountains",
+  cobbles: "Cobbles",
+  timetrial: "Time trial",
+  endurance: "Endurance",
+  strength: "Strength",
+  wind: "Wind",
+  form: "Form",
+  fatigue: "Fatigue",
+};
+const date = (ts) =>
+  new Date(ts).toLocaleString("en-GB", {
+    day: "numeric",
+    month: "short",
+    timeZone: "UTC",
+    timeZoneName: "short",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+function countdown(deadline, now) {
+  const sec = Math.max(0, Math.floor((new Date(deadline) - now) / 1000));
+  if (sec >= 86400)
+    return `${Math.floor(sec / 86400)} ${sec < 172800 ? "day" : "days"} · ${Math.floor((sec % 86400) / 3600)} hours`;
+  return `${Math.floor(sec / 3600)}h ${Math.floor((sec % 3600) / 60)}m ${sec % 60}s`;
+}
+const sameLineup = (a, b) =>
+  !!a &&
+  a.captain_id === b.captain_id &&
+  a.selected_riders.length === b.selected_riders.length &&
+  a.selected_riders.every((id) => b.selected_riders.includes(id)) &&
+  JSON.stringify(draftOrders(a.orders,b.selected_riders,b.captain_id)) === JSON.stringify(b.orders);
 
 export default function RunPage() {
-  const [status, setStatus] = useState("Loader…");
-  const [busy, setBusy] = useState(false);
-
-  const [team, setTeam] = useState(null);
-  const [riders, setRiders] = useState([]);
-  const [events, setEvents] = useState([]);
-
-  const [selectedEventId, setSelectedEventId] = useState("");
-  const [selectedRiderIds, setSelectedRiderIds] = useState([]);
-  const [captainId, setCaptainId] = useState("");
-
-  const [genderFilter, setGenderFilter] = useState("ALL");
-  const [sortKey, setSortKey] = useState("form");
-  const [sortDir, setSortDir] = useState("DESC");
-
-  const [stage, setStage] = useState(null);
-
+  const { session } = useAuth(),
+    team = session?.team,
+    riders = session?.riders || [];
+  const [events, setEvents] = useState([]),
+    [loading, setLoading] = useState(true),
+    [error, setError] = useState("");
+  const [gender, setGender] = useState("M"),
+    [bucket, setBucket] = useState("upcoming"),
+    [eventId, setEventId] = useState("");
+  const [stage, setStage] = useState(null),
+    [gameDate, setGameDate] = useState(null),
+    [entryLoading, setEntryLoading] = useState(false),
+    [entryError, setEntryError] = useState("");
+  const [selected, setSelected] = useState([]),
+    [captain, setCaptain] = useState(""),
+    [saved, setSaved] = useState(null),
+    [busy, setBusy] = useState(false),
+    [notice, setNotice] = useState("");
+  const [orderDraft,setOrderDraft]=useState(null);
+  const orders=draftOrders(orderDraft,selected,captain);
+  const [sortKey, setSortKey] = useState("form"),
+    [now, setNow] = useState(Date.now()),
+    [offset, setOffset] = useState(0);
+  useEffect(() => {
+    const timer = setInterval(() => setNow(Date.now() + offset), 1000);
+    return () => clearInterval(timer);
+  }, [offset]);
   async function load() {
-    setStatus("Loader…");
+    setLoading(true);
+    setError("");
     try {
-      const { data: s } = await supabase.auth.getSession();
-      if (!s?.session) {
-        setStatus("Du er ikke logget ind.");
-        setTeam(null);
-        setRiders([]);
-        return;
+      const [data, day] = await Promise.all([
+        api("/api/events?limit=50"),
+        api("/api/game-date"),
+      ]);
+      setEvents(data.events.filter((e) => e.kind === "one_day"));
+      setGameDate(day.game_date);
+      if (data.server_time) {
+        const diff = Date.parse(data.server_time) - Date.now();
+        setOffset(diff);
+        setNow(Date.now() + diff);
       }
-
-      const res = await getOrCreateTeam();
-      setTeam(res.team);
-
-      const { data: tr, error: trErr } = await supabase
-        .from("team_riders")
-        .select("rider:riders(*)")
-        .eq("team_id", res.team.id);
-
-      if (trErr) throw trErr;
-      setRiders((tr ?? []).map(x => x.rider).filter(Boolean));
-
-      const ev = await fetch("/api/events?limit=25").then(r => r.json());
-      if (!ev?.ok) throw new Error(ev?.error || "Could not load events");
-      setEvents(ev.events ?? []);
-
-      setStatus("Klar ✅");
     } catch (e) {
-      setStatus("Fejl: " + (e?.message ?? String(e)));
+      setError(e.message);
+    } finally {
+      setLoading(false);
     }
   }
-
-  useEffect(() => { load(); }, []);
-
-  const selectedEvent = useMemo(
-    () => events.find(e => e.id === selectedEventId) || null,
-    [events, selectedEventId]
+  useEffect(() => {
+    const requestedGender = new URLSearchParams(window.location.search).get("gender");
+    if (requestedGender === "M" || requestedGender === "F") setGender(requestedGender);
+    load();
+  }, []);
+  const event = events.find((e) => e.id === eventId),
+    locked =
+      !event || event.status !== "OPEN" || Date.parse(event.deadline) <= now;
+  useEffect(() => {
+    const abort = new AbortController();
+    setSelected([]);
+    setOrderDraft(null);
+    setCaptain("");
+    setSaved(null);
+    setStage(null);
+    setEntryError("");
+    setNotice("");
+    if (!eventId) {
+      setEntryLoading(false);
+      return;
+    }
+    setEntryLoading(true);
+    Promise.all([
+      api(`/api/stage-profile?event_id=${eventId}`, { signal: abort.signal }),
+      api(`/api/event/join?event_id=${eventId}`, { signal: abort.signal }),
+    ])
+      .then(([profile, entry]) => {
+        if (abort.signal.aborted) return;
+        setStage(profile.stage);
+        setSaved(entry.entry);
+        setOrderDraft(entry.entry?.orders || null);
+        setSelected(entry.entry?.selected_riders || []);
+        setCaptain(entry.entry?.captain_id || "");
+        try {
+          setSortKey(routeAdvice(normalizeRoute(profile.stage)).primary);
+        } catch {
+          setSortKey("form");
+        }
+      })
+      .catch((e) => {
+        if (!abort.signal.aborted) setEntryError(e.message);
+      })
+      .finally(() => {
+        if (!abort.signal.aborted) setEntryLoading(false);
+      });
+    return () => abort.abort();
+  }, [eventId]);
+  const list = events.filter(
+    (e) =>
+      e.gender === gender &&
+      (bucket === "upcoming"
+        ? e.status === "OPEN" && Date.parse(e.deadline) > now
+        : bucket === "pending"
+          ? e.status === "OPEN" && Date.parse(e.deadline) <= now
+          : e.status !== "OPEN"),
   );
-
-  const locked = selectedEvent ? (new Date(selectedEvent.deadline) <= new Date()) : false;
-
-  // Fetch stage profile for selected event
-  useEffect(() => {
-    (async () => {
-      setStage(null);
-      if (!selectedEventId) return;
-      try {
-        const j = await fetch(`/api/stage-profile?event_id=${selectedEventId}`).then(r => r.json());
-        if (j?.ok) setStage(j.stage);
-      } catch {
-        // ignore
-      }
-    })();
-  }, [selectedEventId]);
-
-  const filteredSortedRiders = useMemo(() => {
-    const list = riders
-      .filter(r => genderFilter === "ALL" ? true : r.gender === genderFilter)
-      .slice();
-
-    list.sort((a, b) => {
-      const av = getVal(a, sortKey);
-      const bv = getVal(b, sortKey);
-      return sortDir === "ASC" ? av - bv : bv - av;
-    });
-
-    return list;
-  }, [riders, genderFilter, sortKey, sortDir]);
-
-  function toggleRider(id) {
-    setSelectedRiderIds(prev => {
-      if (prev.includes(id)) return prev.filter(x => x !== id);
-      if (prev.length >= 8) return prev;
-      return [...prev, id];
-    });
+  const eligible = (r) =>
+    !r.injury_until || (!!gameDate && r.injury_until <= gameDate);
+  const available = useMemo(
+    () =>
+      riders
+        .filter((r) => r.gender === event?.gender)
+        .slice()
+        .sort((a, b) =>
+          sortKey === "fatigue"
+            ? Number(a[sortKey]) - Number(b[sortKey])
+            : Number(b[sortKey]) - Number(a[sortKey]),
+        ),
+    [riders, event?.gender, sortKey],
+  );
+  const valid =
+    selected.length === 8 &&
+    selected.includes(captain) &&
+    selected.every((id) => available.some((r) => r.id === id && eligible(r)));
+  const unchanged = sameLineup(saved, {
+    selected_riders: selected,
+    captain_id: captain,
+    orders,
+  });
+  function choose(ids) {
+    if (locked || entryLoading || busy) return;
+    setSelected(ids);
+    if (!ids.includes(captain)) setCaptain("");
+    setNotice("");
   }
-
-  useEffect(() => {
-    if (captainId && !selectedRiderIds.includes(captainId)) setCaptainId("");
-  }, [selectedRiderIds, captainId]);
-
-  function clearSelection() {
-    setSelectedRiderIds([]);
-    setCaptainId("");
+  function toggle(id) {
+    if (selected.includes(id)) choose(selected.filter((x) => x !== id));
+    else if (selected.length < 8) choose([...selected, id]);
   }
-
-  function pickTop8BySkill(skillKey) {
-    const pool = filteredSortedRiders.slice().sort((a, b) => getVal(b, skillKey) - getVal(a, skillKey));
-    const pick = pool.slice(0, 8).map(r => r.id);
-    if (pick.length === 8) {
-      setSelectedRiderIds(pick);
-      setCaptainId(pick[0] || "");
-      setSortKey(skillKey);
-      setSortDir("DESC");
-    }
-  }
-
-  function pickSplit(skillA, skillB) {
-    const pool = filteredSortedRiders.slice();
-    const a = pool.slice().sort((x, y) => getVal(y, skillA) - getVal(x, skillA)).slice(0, 10);
-    const b = pool.slice().sort((x, y) => getVal(y, skillB) - getVal(x, skillB)).slice(0, 10);
-
-    const pick = [];
-    for (const r of a) if (pick.length < 4 && !pick.includes(r.id)) pick.push(r.id);
-    for (const r of b) if (pick.length < 8 && !pick.includes(r.id)) pick.push(r.id);
-
-    if (pick.length === 8) {
-      setSelectedRiderIds(pick);
-      setCaptainId(pick[0] || "");
-    }
-  }
-
-  async function join() {
-    if (!team?.id) return;
-    if (!isUuid(selectedEventId)) return setStatus("Vælg et event.");
-    if (selectedRiderIds.length !== 8) return setStatus("Vælg præcis 8 ryttere.");
-    if (!captainId) return setStatus("Vælg en kaptajn.");
-    if (locked) return setStatus("Deadline er passeret (event locked).");
-
+  async function save() {
+    if (!valid || locked || busy) return;
     setBusy(true);
-    setStatus("Gemmer tilmelding…");
+    setNotice("");
     try {
-      const res = await fetch("/api/event/join", {
+      await api("/api/event/join", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          event_id: selectedEventId,
+          event_id: eventId,
           team_id: team.id,
-          selected_riders: selectedRiderIds,
-          captain_id: captainId
-        })
-      }).then(r => r.json());
-
-      if (!res?.ok) throw new Error(res?.error || "Join failed");
-      setStatus("Tilmeldt ✅ (udtagelse gemt)");
+          selected_riders: selected,
+          captain_id: captain,
+    orders,
+        }),
+      });
+      setSaved({ selected_riders: [...selected], captain_id: captain, orders });
+      setNotice(
+        "Your team is entered. You can change your lineup and orders until the deadline.",
+      );
     } catch (e) {
-      setStatus("Fejl: " + (e?.message ?? String(e)));
+      setNotice(e.message);
+      if (e.status === 409) setNow(Date.now() + offset);
     } finally {
       setBusy(false);
     }
   }
-
-  const selectedCount = selectedRiderIds.length;
-
   return (
-    <TeamShell title="Kør løb">
-      <p className="small">Status: {status}</p>
-
-      {!team ? <Loading text="Loader…" /> : (
-        <div style={{ display: "grid", gap: 14 }}>
-          <div className="card" style={{ padding: 14 }}>
-            <SectionHeader
-              title="Vælg event"
-              subtitle="Etapeprofilen under viser præcis profilen + momenter."
-              right={<SmallButton onClick={load} disabled={busy}>Reload</SmallButton>}
-            />
-
-            <div className="hr" />
-
-            <select
-              value={selectedEventId}
-              onChange={(e) => {
-                setSelectedEventId(e.target.value);
-                clearSelection();
+    <TeamShell compact>
+      <div className="race-calendar">
+      <header className="calendar-hero">
+        <Image src="/images/race-countryside-v1.png" alt="" fill sizes="(max-width: 760px) 100vw, 1200px" priority />
+        <div><p className="eyebrow">THE NEXT CHAPTER</p><h1>Race day starts<br/><em>with you.</em></h1><p>Read the road. Pick your eight. Give your captain a chance to shine.</p></div>
+        <span className="calendar-hero-note">PLAN BEFORE THE DEADLINE · WATCH IT UNFOLD</span>
+      </header>
+      <ol className="race-steps" aria-label="Your race plan">
+        <li aria-current={!event ? "step" : undefined}><span>01</span><div><strong>Find your race</strong><small>A route to suit your squad.</small></div></li>
+        <li aria-current={event && !saved ? "step" : undefined}><span>02</span><div><strong>Choose your eight</strong><small>One captain. A shared ambition.</small></div></li>
+        <li aria-current={saved ? "step" : undefined}><span>03</span><div><strong>Watch it unfold</strong><small>All decisions lock at the deadline.</small></div></li>
+      </ol>
+      <div className="calendar-toolbar">
+        <div className="segmented" aria-label="Category">
+          {[
+            ["M", "Men"],
+            ["F", "Women"],
+          ].map(([value, label]) => (
+            <button
+              key={value}
+              aria-pressed={gender === value}
+              onClick={() => {
+                setGender(value);
+                setEventId("");
               }}
-              style={{ maxWidth: 760 }}
             >
-              <option value="">Vælg event…</option>
-              {events.map(ev => (
-                <option key={ev.id} value={ev.id}>
-                  {ev.name} · {ev.gender} · deadline: {fmtTime(ev.deadline)} · {ev.status}
-                </option>
-              ))}
-            </select>
-
-            {selectedEvent ? (
-              <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 10 }}>
-                <Pill tone={locked ? "danger" : "accent"}>{locked ? "LOCKED" : "OPEN"}</Pill>
-                <Pill tone="info">Deadline: {fmtTime(selectedEvent.deadline)}</Pill>
-                <Pill>Land: {(selectedEvent.country_code || "FR").toUpperCase()}</Pill>
-                <a href={`/team/results/${selectedEvent.id}`} style={{ textDecoration: "none" }}>
-                  <span className="pillBtn">Se resultat</span>
-                </a>
-                <a href={`/team/view/${selectedEvent.id}`} style={{ textDecoration: "none" }}>
-                  <span className="pillBtn">Se løb</span>
-                </a>
-              </div>
-            ) : null}
-          </div>
-
-          {/* Stage profile */}
-          {stage ? (
-            <StageProfile stage={stage} mode="overview" />
-          ) : selectedEventId ? (
-            <Loading text="Loader etapeprofil…" />
-          ) : null}
-
-          {/* Presets */}
-          <LineupPresets
-            teamId={team.id}
-            riders={riders}
-            selectedIds={selectedRiderIds}
-            setSelectedIds={setSelectedRiderIds}
-            captainId={captainId}
-            setCaptainId={setCaptainId}
-          />
-
-          {/* Selection */}
-          <div className="card" style={{ padding: 14 }}>
-            <SectionHeader
-              title="Udtagelse"
-              subtitle="Sortér, filtrér og brug quick-picks."
-              right={<Pill tone="accent">Valgt: {selectedCount}/8</Pill>}
-            />
-
-            <div className="hr" />
-
-            <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center" }}>
-              <div style={{ minWidth: 200 }}>
-                <div className="small" style={{ marginBottom: 6 }}>Køn</div>
-                <select value={genderFilter} onChange={(e) => setGenderFilter(e.target.value)} disabled={locked}>
-                  <option value="ALL">Alle</option>
-                  <option value="M">Mænd</option>
-                  <option value="F">Kvinder</option>
-                </select>
-              </div>
-
-              <div style={{ minWidth: 240 }}>
-                <div className="small" style={{ marginBottom: 6 }}>Sortér efter</div>
-                <select value={sortKey} onChange={(e) => setSortKey(e.target.value)}>
-                  {SKILLS.map(s => <option key={s.key} value={s.key}>{s.label}</option>)}
-                </select>
-              </div>
-
-              <div style={{ minWidth: 180 }}>
-                <div className="small" style={{ marginBottom: 6 }}>Orden</div>
-                <select value={sortDir} onChange={(e) => setSortDir(e.target.value)}>
-                  <option value="DESC">Høj → lav</option>
-                  <option value="ASC">Lav → høj</option>
-                </select>
-              </div>
-
-              <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "end" }}>
-                <SmallButton onClick={() => pickTop8BySkill(sortKey)} disabled={locked}>
-                  Top 8 ({SKILLS.find(x => x.key === sortKey)?.label || sortKey})
-                </SmallButton>
-                <SmallButton onClick={() => pickSplit("mountain", "endurance")} disabled={locked}>
-                  Mountain team (4+4)
-                </SmallButton>
-                <SmallButton onClick={() => pickSplit("wind", "strength")} disabled={locked}>
-                  Wind team (4+4)
-                </SmallButton>
-                <SmallButton className="danger" onClick={clearSelection} disabled={locked}>
-                  Ryd
-                </SmallButton>
-              </div>
-            </div>
-
-            <div className="hr" />
-
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 10 }}>
-              {filteredSortedRiders.map(r => {
-                const selected = selectedRiderIds.includes(r.id);
-                const disabled = (!selected && selectedRiderIds.length >= 8) || locked;
-                return (
-                  <RiderCard
-                    key={r.id}
-                    r={r}
-                    selected={selected}
-                    disabled={disabled}
-                    onClick={() => toggleRider(r.id)}
-                  />
-                );
-              })}
-            </div>
-
-            <div className="hr" />
-
-            <SectionHeader title="Kaptajn" subtitle="Vælg den rytter du vil beskytte/spille for." />
-
-            <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center", marginTop: 10 }}>
-              <select
-                value={captainId}
-                onChange={(e) => setCaptainId(e.target.value)}
-                disabled={selectedRiderIds.length !== 8 || locked}
-                style={{ maxWidth: 520 }}
-              >
-                <option value="">Vælg kaptajn…</option>
-                {riders
-                  .filter(r => selectedRiderIds.includes(r.id))
-                  .sort((a, b) => (getVal(b, "leadership") + getVal(b, "endurance")) - (getVal(a, "leadership") + getVal(a, "endurance")))
-                  .map(r => (
-                    <option key={r.id} value={r.id}>
-                      {r.name} ({r.gender}) – Lead {r.leadership ?? 0} · End {r.endurance ?? 0}
-                    </option>
-                  ))}
-              </select>
-
-              <SmallButton className="primary" disabled={busy || !selectedEventId || locked} onClick={join}>
-                {busy ? "Arbejder…" : locked ? "Deadline passeret" : "Gem tilmelding"}
-              </SmallButton>
-            </div>
-          </div>
+              {label}
+            </button>
+          ))}
+        </div>
+        <div className="calendar-tabs">
+          {[
+            ["upcoming", "Open entries"],
+            ["pending", "Awaiting race"],
+            ["finished", "Finished"],
+          ].map(([value, label]) => (
+            <button
+              key={value}
+              aria-pressed={bucket === value}
+              onClick={() => {
+                setBucket(value);
+                setEventId("");
+              }}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+        <button className="text-button" onClick={load} disabled={loading}>
+          Refresh
+        </button>
+      </div>
+      {error && (
+        <p role="alert" className="form-message error">
+          {error}
+        </p>
+      )}
+      {loading ? (
+        <p role="status">Loading the race calendar…</p>
+      ) : !list.length ? (
+        <div className="card empty-state">
+          <h2>
+            {bucket === "upcoming"
+              ? "Your next race day is on its way"
+              : "No races here yet"}
+          </h2>
+          <p>
+            {bucket === "upcoming"
+              ? "There are no open races in this category yet. Browse past races or get to know your riders."
+              : "Choose another category to see races."}
+          </p>
+          <Link className="btn" href="/team/portraits">
+            Meet your riders →
+          </Link>
+        </div>
+      ) : (
+        <div className="event-grid">
+          {list.map((e) => (
+            <button
+              className={`event-card ${eventId === e.id ? "selected" : ""}`}
+              key={e.id}
+              onClick={() => setEventId(e.id)}
+              aria-pressed={eventId === e.id}
+            >
+              <span className="eyebrow">
+                {e.gender === "F" ? "Women" : "Men"} · One-day race
+              </span>
+              <h2>{e.name}</h2>
+              <span className="event-date">{date(e.deadline)}</span>
+              <span className="event-meta">
+                <span>
+                  {e.status === "FINISHED"
+                    ? "Ready to watch"
+                    : Date.parse(e.deadline) <= now
+                      ? "Entries closed"
+                      : `Deadline in ${countdown(e.deadline, now)}`}
+                </span>
+                <strong>
+                  {Number(e.entry_fee) > 0 ? `${e.entry_fee} coins` : "Free"}
+                </strong>
+              </span>
+              <span className="event-action">
+                {e.status === "FINISHED"
+                  ? "Open race day"
+                  : "View route and select lineup"}{" "}
+                →
+              </span>
+            </button>
+          ))}
         </div>
       )}
+      {event && (
+        <section id="race-preparation" className="race-preparation" aria-label="Race preparation">
+          <div className="page-heading">
+            <div>
+              <p className="eyebrow">
+                {event.gender === "F" ? "Women’s" : "Men’s"} race day
+              </p>
+              <h2>{event.name}</h2>
+            </div>
+            <span className="deadline-badge">
+              {locked
+                ? "Entries closed"
+                : `Deadline in ${countdown(event.deadline, now)}`}
+            </span>
+          </div>
+          {entryLoading ? (
+            <p role="status">Loading the route and your saved lineup…</p>
+          ) : entryError ? (
+            <p role="alert" className="form-message error">
+              {entryError}
+            </p>
+          ) : (
+            <>
+              {stage && <StageProfile stage={stage} />}
+              {!locked && <a className="lineup-jump" href="#race-lineup">Build your lineup <span aria-hidden="true">↓</span></a>}
+              {event.status === "FINISHED" ? (
+                <div className="card race-ready">
+                  <h2>The race is ready</h2>
+                  <p>
+                    Follow your division in the viewer, or go straight to
+                    the results.
+                  </p>
+                  <Link className="btn primary" href={`/team/view/${event.id}`}>
+                    Watch the race →
+                  </Link>
+                  <Link
+                    className="text-button"
+                    href={`/team/results/${event.id}`}
+                  >
+                    Results
+                  </Link>
+                </div>
+              ) : (
+                <>
+                  {locked && saved && (
+                    <section className="card race-ready">
+                      <h2>Your lineup is locked</h2>
+                      <p>
+                        Open race day to watch the race. The full race is calculated and
+                        saved before playback begins.
+                      </p>
+                      <Link
+                        className="btn primary"
+                        href={`/team/view/${event.id}`}
+                      >
+                        Watch the race →
+                      </Link>
+                    </section>
+                  )}
+                  <section id="race-lineup" className="card lineup-summary">
+                    <div className="panel-heading">
+                      <div>
+                        <h2>Your lineup</h2>
+                        <p className="small">
+                          Eight riders and one captain. Your captain’s time determines
+                          your team’s placing.
+                        </p>
+                      </div>
+                      <span
+                        className={`save-badge ${unchanged ? "saved" : ""}`}
+                      >
+                        {saved
+                          ? unchanged
+                            ? "Saved ✓"
+                            : "Unsaved changes"
+                          : "Not entered"}
+                      </span>
+                    </div>
+                    <div className="lineup-slots">
+                      {Array.from({ length: 8 }, (_, i) => {
+                        const rider = riders.find((r) => r.id === selected[i]);
+                        return (
+                          <div
+                            className={`lineup-slot ${rider?.id === captain ? "captain" : ""}`}
+                            key={i}
+                          >
+                            {rider ? (
+                              <>
+                                <RiderAvatar rider={rider} size={56} />
+                                <strong>
+                                  {rider.first_name || rider.name}
+                                </strong>
+                                <button
+                                  className="text-button"
+                                  disabled={locked || busy}
+                                  aria-pressed={captain === rider.id}
+                                  onClick={() => {
+                                    setCaptain(rider.id);
+                                    setNotice("");
+                                  }}
+                                >
+                                  {captain === rider.id
+                                    ? "★ Captain"
+                                    : "Choose captain"}
+                                </button>
+                                <button
+                                  className="remove-rider"
+                                  aria-label={`Remove ${rider.name}`}
+                                  disabled={locked || busy}
+                                  onClick={() => toggle(rider.id)}
+                                >
+                                  ×
+                                </button>
+                              </>
+                            ) : (
+                              <>
+                                <span className="empty-slot">{i + 1}</span>
+                                <span>Available place</span>
+                              </>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                    <RaceOrders orders={orders} riders={selected.map(id=>riders.find(r=>r.id===id)).filter(Boolean)} onChange={setOrderDraft} disabled={locked || busy || entryLoading} />
+                    <div className="lineup-save">
+                      <span>
+                        {selected.length}/8 riders ·{" "}
+                        {captain ? "Captain selected" : "Choose captain"}
+                        {!saved && Number(event.entry_fee) > 0
+                          ? ` · Cost ${event.entry_fee} coins`
+                          : ""}
+                      </span>
+                      <button
+                        className="btn primary"
+                        disabled={locked || !valid || busy || unchanged}
+                        onClick={save}
+                      >
+                        {busy
+                          ? "Saving…"
+                          : locked
+                            ? "Deadline passed"
+                            : saved
+                              ? "Save changes"
+                              : "Enter team"}
+                      </button>
+                    </div>
+                    <p className="small">
+                      {locked
+                        ? "Your saved lineup is locked. The race can run once at least two teams have entered."
+                        : "The entry fee is paid only once. Changes before the deadline cost nothing extra."}
+                    </p>
+                    {notice && (
+                      <p role="status" className="form-message">
+                        {notice}
+                      </p>
+                    )}
+                  </section>
+                  {!locked && (
+                    <>
+                      <div className="rider-selection-toolbar">
+                        <div>
+                          <h2>Choose your riders</h2>
+                          <p className="small">
+                            Injured riders cannot be selected. Low fatigue and high
+                            form are an advantage.
+                          </p>
+                        </div>
+                        <label>
+                          Sort by{" "}
+                          <select
+                            value={sortKey}
+                            onChange={(e) => setSortKey(e.target.value)}
+                          >
+                            {Object.entries(skills).map(([key, label]) => (
+                              <option key={key} value={key}>
+                                {label}
+                              </option>
+                            ))}
+                          </select>
+                        </label>
+                        <button
+                          className="btn"
+                          disabled={busy}
+                          onClick={() =>
+                            choose(
+                              available
+                                .filter(eligible)
+                                .slice(0, 8)
+                                .map((r) => r.id),
+                            )
+                          }
+                        >
+                          Select the first eight
+                        </button>
+                      </div>
+                      <div className="lineup-riders">
+                        {available.map((r) => {
+                          const picked = selected.includes(r.id),
+                            injured = !eligible(r);
+                          return (
+                            <button
+                              key={r.id}
+                              className={`lineup-rider ${picked ? "selected" : ""}`}
+                              aria-pressed={picked}
+                              disabled={
+                                busy ||
+                                injured ||
+                                (!picked && selected.length === 8)
+                              }
+                              onClick={() => toggle(r.id)}
+                            >
+                              <RiderAvatar rider={r} size={64} />
+                              <div>
+                                <strong>{r.name}</strong>
+                                <span>
+                                  {injured
+                                    ? `Injured until ${r.injury_until}`
+                                    : `${skills[sortKey]} ${r[sortKey] ?? 0} · Form ${r.form} · Fatigue ${r.fatigue}`}
+                                </span>
+                              </div>
+                              <span className="selection-mark">
+                                {picked ? "✓" : "+"}
+                              </span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                      <details className="lineup-presets">
+                        <summary>Saved lineups in this browser</summary>
+                        <LineupPresets
+                          teamId={team?.id}
+                          riders={available.filter(eligible)}
+                          selectedIds={selected}
+                          setSelectedIds={choose}
+                          captainId={captain}
+                          setCaptainId={setCaptain}
+                        />
+                      </details>
+                    </>
+                  )}
+                </>
+              )}
+            </>
+          )}
+        </section>
+      )}
+      </div>
     </TeamShell>
   );
 }

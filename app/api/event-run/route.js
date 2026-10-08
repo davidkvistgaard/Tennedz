@@ -1,25 +1,46 @@
-// app/api/event-run/route.js
 import { NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
-
-export async function GET(req) {
-  try {
-    const url = new URL(req.url);
-    const event_id = url.searchParams.get("event_id");
-
-    if (!event_id) return NextResponse.json({ ok: false, error: "Missing event_id" }, { status: 400 });
-
-    const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
-
-    const { data, error } = await supabase
-      .from("event_runs")
-      .select("*")
-      .eq("event_id", event_id)
-      .single();
-
-    if (error) throw new Error(error.message);
-    return NextResponse.json({ ok: true, run: data });
-  } catch (e) {
-    return NextResponse.json({ ok: false, error: e?.message ?? String(e) }, { status: 500 });
-  }
-}
+import { protectedRoute } from "../../../lib/auth/server";
+import { AuthError } from "../../../lib/auth/policy.mjs";
+import { uuid } from "../../../lib/race/server";
+export const GET = protectedRoute(async (req, context, auth) => {
+  const url = new URL(req.url),
+    id = uuid(url.searchParams.get("event_id"));
+  const mine = await auth.db
+    .from("event_divisions")
+    .select("division_index")
+    .eq("event_id", id)
+    .eq("team_id", auth.team.id)
+    .maybeSingle();
+  if (mine.error)
+    throw new AuthError(
+      "RUN_UNAVAILABLE",
+      "Could not load the division.",
+      503,
+    );
+  const index = Number(
+    url.searchParams.get("division_index") || mine.data?.division_index || 1,
+  );
+  if (!Number.isInteger(index) || index < 1)
+    throw new AuthError("INVALID_DIVISION", "Invalid division.", 400);
+  const { data, error } = await auth.db
+    .from("event_division_runs")
+    .select(
+      "event_id,division_index,engine_version,stage_snapshot,feed,replay,created_at",
+    )
+    .eq("event_id", id)
+    .eq("division_index", index)
+    .maybeSingle();
+  if (error)
+    throw new AuthError(
+      "RUN_UNAVAILABLE",
+      "Could not load the race report.",
+      503,
+    );
+  if (!data)
+    throw new AuthError(
+      "RUN_PENDING",
+      "This division has not raced yet.",
+      404,
+    );
+  return NextResponse.json({ ok: true, run: data, team_id: auth.team.id });
+});

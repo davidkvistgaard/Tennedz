@@ -1,12 +1,14 @@
+import { protectedRoute } from "../../../../lib/auth/server";
 // app/api/event/divisions/route.js
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 
-export async function GET(req) {
+async function handler(req, context, auth) {
   try {
     const url = new URL(req.url);
     const event_id = url.searchParams.get("event_id");
-    const team_id = url.searchParams.get("team_id"); // optional
+    const team_id = auth.team.id;
+    if (url.searchParams.get("team_id") && url.searchParams.get("team_id") !== team_id) return NextResponse.json({ error: "Access denied" }, { status: 403 });
 
     if (!event_id) return NextResponse.json({ ok: false, error: "Missing event_id" }, { status: 400 });
 
@@ -42,3 +44,5 @@ export async function GET(req) {
     return NextResponse.json({ ok: false, error: e?.message ?? String(e) }, { status: 500 });
   }
 }
+
+export const GET = protectedRoute(handler);

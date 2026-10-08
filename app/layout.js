@@ -1,4 +1,8 @@
 import "./globals.css";
+import "./experience.css";
+import "./studio.css";
+import { ClubStyleProvider } from "./components/ClubStyle";
+import { AuthProvider } from "./components/AuthProvider";
 
 export const metadata = {
   title: "Pelotonia – Cycling Manager",
@@ -7,9 +11,9 @@ export const metadata = {
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="da">
+    <html lang="en">
       <body>
-        <main>{children}</main>
+        <AuthProvider><ClubStyleProvider><main>{children}</main></ClubStyleProvider></AuthProvider>
       </body>
     </html>
   );
