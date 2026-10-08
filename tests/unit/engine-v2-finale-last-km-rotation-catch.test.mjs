@@ -36,16 +36,17 @@ import {MOTOR_ATTACK_TRACE_VERSION} from
 
 const stage={distance_km:20,profile_points:[[0,100],[20,100]],
   keypoints:[{km:19,kind:'SPRINT'}]};
-function team(id,skill,{gender,attack=false,rotate=false,chase='ignore'}={}){
+function team(id,skill,{gender,attack=false,rotate=false,chase='ignore',
+  effort='steady',attackAtKm=19}={}){
   return {id,riders:Array.from({length:8},(_,index)=>({
     id:`${id}-${index}`,gender,flat:skill,strength:skill,
     timetrial:skill,endurance:75,acceleration:id==='a'?90:70,
     sprint:70,leadership:60})),orders:{captainId:`${id}-0`,
     roadCaptainId:`${id}-1`,helperIds:[`${id}-2`,`${id}-3`],
-    preset:'balanced',baseline:{effort:'steady',chase,
+    preset:'balanced',baseline:{effort,chase,
       attack:'none',breakWork:'cooperate',
       frontWork:rotate?'rotate':'sit_in'},
-    phases:attack?[{atKm:19,attack:'selective',
+    phases:attack?[{atKm:attackAtKm,attack:'selective',
       attackRiderId:`${id}-0`}]:[]}};
 }
 
@@ -366,5 +367,50 @@ test('ordered sprint replays on compatible flat and rolling sources and rejects 
       assert.throws(()=>recordFinaleRotationCatchOrderedSprintFromTour(
         tour,{attackTeamId:'a',plans}),error);
     }
+  }
+});
+
+test('longer source fatigue and stronger front effort remain paid or leave the catch branch',()=>{
+  const plans=['a','b','c'].map(teamId=>({teamId,
+    finisherId:`${teamId}-0`,
+    leadOutRiderId:teamId==='b'?null:`${teamId}-2`}));
+  for(const gender of ['M','F']){
+    for(const effort of ['conserve','steady']){
+      const helperEnergy=[];
+      for(const distanceKm of [20,40,180,300]){
+        const sourceStage={distance_km:distanceKm,
+          profile_points:[[0,100],[distanceKm,100]],
+          keypoints:[{km:distanceKm-1,kind:'SPRINT'}]};
+        const tour=simulateTacticalTour({stage:sourceStage,teams:[
+          team('a',50,{gender,attack:true,attackAtKm:distanceKm-1}),
+          team('b',75,{gender,rotate:true,effort}),
+          team('c',80,{gender,chase:'all'})],
+        seed:'catch-50-75-80',motorVersion:MOTOR_ATTACK_TRACE_VERSION});
+        const input={attackTeamId:'a',plans};
+        const run=recordFinaleRotationCatchOrderedSprintFromTour(tour,input);
+        assert.deepEqual(run.frames.map(frame=>
+          frame.rotation.selected?.teamId),['b','b','b']);
+        assert.ok(run.frames.every(frame=>
+          frame.riderEnergy.filter(row=>row.role==='front_rotation')
+            .length===2));
+        helperEnergy.push(run.lineRiderEnergy.find(row=>
+          row.riderId==='b-2').energyAfter);
+        assert.equal(validateFinaleRotationCatchOrderedSprintFromTour(tour,
+          input,run),true);
+      }
+      assert.ok(helperEnergy.every((energy,index)=>
+        index===0||energy<helperEnergy[index-1]));
+    }
+    const distanceKm=300;
+    const sourceStage={distance_km:distanceKm,
+      profile_points:[[0,100],[distanceKm,100]],
+      keypoints:[{km:distanceKm-1,kind:'SPRINT'}]};
+    const hardTour=simulateTacticalTour({stage:sourceStage,teams:[
+      team('a',50,{gender,attack:true,attackAtKm:distanceKm-1}),
+      team('b',75,{gender,rotate:true,effort:'hard'}),
+      team('c',80,{gender,chase:'all'})],
+    seed:'catch-50-75-80',motorVersion:MOTOR_ATTACK_TRACE_VERSION});
+    assert.throws(()=>recordFinaleRotationCatchOrderedSprintFromTour(
+      hardTour,{attackTeamId:'a',plans}),/complete bunch/);
   }
 });
