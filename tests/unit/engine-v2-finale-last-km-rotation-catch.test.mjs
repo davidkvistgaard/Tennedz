@@ -36,6 +36,9 @@ import {recordFinaleRotationBranchFromTour,
   '../../lib/engine/v2/finale-rotation-branch-recording.mjs';
 import {MOTOR_ATTACK_TRACE_VERSION} from
   '../../lib/engine/v2/tuning.mjs';
+import {projectV2FinalePointBounds,
+  validateV2FinalePointBounds} from
+  '../../lib/race/v2-finale-point-bounds.mjs';
 
 const stage={distance_km:20,profile_points:[[0,100],[20,100]],
   keypoints:[{km:19,kind:'SPRINT'}]};
@@ -256,6 +259,17 @@ test('v91 source links the paid rotating catch to an exact 500 m handoff',()=>{
       leadOutBounds.riders.map(row=>row.energyAfter));
     assert.equal(validateFinaleRotationCatchOrderedBoundsFromTour(tour,
       freeRotationInput,paidBounds),true);
+    const pointInput={...freeRotationInput,branch:'caught',tier:3,
+      divisionIndex:1,divisionCount:1};
+    const points=projectV2FinalePointBounds(tour,pointInput);
+    assert.equal(points.sourceBoundsVersion,paidBounds.version);
+    assert.equal(points.pointsStatus,'withheld');
+    assert.equal(points.canCommitAwards,false);
+    assert.deepEqual(points.awardRows,[]);
+    assert.ok(points.riders.every(row=>
+      row.minPossiblePoints===0&&row.maxPossiblePoints===250));
+    assert.equal(validateV2FinalePointBounds(tour,pointInput,
+      JSON.parse(JSON.stringify(points))),true);
     assert.throws(()=>validateFinaleRotationCatchOrderedBoundsFromTour(
       tour,freeRotationInput,{...paidBounds,riders:paidBounds.riders.map(
         row=>row.riderId==='b-0'?{...row,lastPossiblePlace:1}:row)}),

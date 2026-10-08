@@ -992,6 +992,17 @@ test('a contained attack pays once then independent front rotation continues',()
       row.firstPossiblePlace===1&&row.lastPossiblePlace===32));
     assert.equal(validateFinaleRotationContainedOrderedBoundsFromTour(tour,
       planInput,bounds),true);
+    const pointInput={...planInput,branch:'contained',tier:3,
+      divisionIndex:1,divisionCount:1};
+    const points=projectV2FinalePointBounds(tour,pointInput);
+    assert.equal(points.sourceBoundsVersion,bounds.version);
+    assert.equal(points.pointsStatus,'withheld');
+    assert.equal(points.canCommitAwards,false);
+    assert.deepEqual(points.awardRows,[]);
+    assert.ok(points.riders.every(row=>
+      row.minPossiblePoints===0&&row.maxPossiblePoints===250));
+    assert.equal(validateV2FinalePointBounds(tour,pointInput,
+      JSON.parse(JSON.stringify(points))),true);
     assert.throws(()=>validateFinaleRotationContainedOrderedBoundsFromTour(
       tour,planInput,{...bounds,riders:bounds.riders.map(row=>
         row.riderId==='a-0'?{...row,lastPossiblePlace:1}:row)}),
