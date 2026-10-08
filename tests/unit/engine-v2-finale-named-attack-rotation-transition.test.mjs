@@ -30,7 +30,9 @@ import {recordFinaleRotationSoloSliceFromTour,
   recordFinaleRotationSoloCatchSliceFromTour,
   validateFinaleRotationSoloCatchSliceFromTour,
   recordFinaleRotationSoloRunFromTour,
-  validateFinaleRotationSoloRunFromTour} from
+  validateFinaleRotationSoloRunFromTour,
+  recordFinaleRotationSoloLateCatchFromTour,
+  validateFinaleRotationSoloLateCatchFromTour} from
   '../../lib/engine/v2/finale-rotation-solo-slice.mjs';
 import {recordFinaleRotationContainedSprintPlanFromTour,
   validateFinaleRotationContainedSprintPlanFromTour} from
@@ -175,6 +177,33 @@ test('rotating pair and reactive chaser pay once against a named attack',()=>{
   /does not replay/);
   assert.throws(()=>recordFinaleRotationSoloRunFromTour(tour,{
     attackTeamId:'a'}),/needs an exact catch continuation/);
+  const lateCatch=recordFinaleRotationSoloLateCatchFromTour(tour,{
+    attackTeamId:'a'});
+  assert.ok(lateCatch.catchDistanceM>39700&&
+    lateCatch.catchDistanceM<39800);
+  assert.equal(lateCatch.endDistanceM,39800);
+  assert.equal(lateCatch.frames.length,3);
+  assert.equal(lateCatch.frames[2].afterCatchRotationPlan.selected
+    ?.teamId,'c');
+  const secondEnergy=new Map(second.riderEnergy.map(row=>
+    [row.riderId,row.energyAfter]));
+  assert.ok(lateCatch.frames[2].riderEnergy.every(row=>
+    row.energyAtDecision===secondEnergy.get(row.riderId)&&
+    row.energySpent===row.preCatchEnergySpent+
+      row.postCatchEnergySpent&&row.energyAfter>=0));
+  assert.equal(lateCatch.roadGroups.length,0);
+  assert.equal(lateCatch.pelotonRiderIds.length,32);
+  assert.equal(lateCatch.riderEnergy.length,32);
+  assert.equal(lateCatch.resultStatus,'unclassified');
+  assert.equal(lateCatch.bunchElapsedSecondsAtMerge,
+    solo.at500M.bunchElapsedSeconds+
+    lateCatch.frames.reduce((sum,frame)=>
+      sum+frame.bunchTravelSeconds,0));
+  assert.equal(validateFinaleRotationSoloLateCatchFromTour(tour,
+    {attackTeamId:'a'},JSON.parse(JSON.stringify(lateCatch))),true);
+  assert.throws(()=>validateFinaleRotationSoloLateCatchFromTour(tour,
+    {attackTeamId:'a'},{...lateCatch,catchDistanceM:39700}),
+  /does not replay/);
   assert.deepEqual(tour.provisionalResults,oldResults);
   }
 });
@@ -208,6 +237,8 @@ test('a stronger named solo pays every late slice to a separated line',()=>{
       run.frames.reduce((sum,frame)=>sum+frame.bunchTravelSeconds,0));
     assert.equal(validateFinaleRotationSoloRunFromTour(tour,
       {attackTeamId:'a'},JSON.parse(JSON.stringify(run))),true);
+    assert.throws(()=>recordFinaleRotationSoloLateCatchFromTour(tour,{
+      attackTeamId:'a'}),/needs actual road contact/);
     assert.throws(()=>validateFinaleRotationSoloRunFromTour(tour,
       {attackTeamId:'a'},{...run,bunchElapsedSecondsAtLine:0}),
     /does not replay/);
