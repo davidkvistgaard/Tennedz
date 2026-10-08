@@ -33,6 +33,8 @@ import {recordFinaleConcurrentNamedChaseRotationFromTour} from
   '../lib/engine/v2/finale-concurrent-named-chase-rotation-launch.mjs';
 import {recordFinaleConcurrentNamedChaseRotationContactFromTour} from
   '../lib/engine/v2/finale-concurrent-named-chase-rotation-contact.mjs';
+import {recordFinaleConcurrentRelativeArrivalsFromTour} from
+  '../lib/engine/v2/finale-concurrent-relative-arrivals.mjs';
 import {recordFinaleConcurrentNamedAllChaseFromTour} from
   '../lib/engine/v2/finale-concurrent-named-all-chase.mjs';
 import {recordFinaleConcurrentNamedAllChaseContactFromTour} from
@@ -389,6 +391,9 @@ for(const [course,stage] of Object.entries(distanceKm===260?LONG_ROUTES:ROUTES))
           chaseRotationLaunch:0,chaseRotationContact:0,
           chaseRotationPaid:0,
           chaseRotationWithTwoSplit:0,
+          relativeArrivals:0,minRelativeSeconds:null,
+          maxRelativeSeconds:null,minEstimatedSeparationM:null,
+          maxEstimatedSeparationM:null,
           allChaseLaunch:0,allChaseContact:0,
           chasedFollowup:0,chasedCatchMerge:0,
           refusalReasons:{}},
@@ -581,6 +586,25 @@ for(const [course,stage] of Object.entries(distanceKm===260?LONG_ROUTES:ROUTES))
                     .length>1);
                 attempt('chaseRotationContact',
                   recordFinaleConcurrentNamedChaseRotationContactFromTour);
+                if(combined.attacks.filter(row=>
+                  row.status==='split').length===2){
+                  const relative=attempt('relativeArrivals',
+                    recordFinaleConcurrentRelativeArrivalsFromTour);
+                  if(relative){
+                    concurrent.minRelativeSeconds=Math.min(
+                      concurrent.minRelativeSeconds??Infinity,
+                      relative.separationSeconds);
+                    concurrent.maxRelativeSeconds=Math.max(
+                      concurrent.maxRelativeSeconds??0,
+                      relative.separationSeconds);
+                    concurrent.minEstimatedSeparationM=Math.min(
+                      concurrent.minEstimatedSeparationM??Infinity,
+                      relative.estimatedSeparationM);
+                    concurrent.maxEstimatedSeparationM=Math.max(
+                      concurrent.maxEstimatedSeparationM??0,
+                      relative.estimatedSeparationM);
+                  }
+                }
               }
               if(attempt('allChaseLaunch',
                 recordFinaleConcurrentNamedAllChaseFromTour)&&
@@ -1107,6 +1131,8 @@ for(const [course,stage] of Object.entries(distanceKm===260?LONG_ROUTES:ROUTES))
           v91Finale.concurrent.chaseRotationLaunch||
         v91Finale.concurrent.chaseRotationWithTwoSplit>
           v91Finale.concurrent.chaseRotationLaunch||
+        v91Finale.concurrent.relativeArrivals>
+          v91Finale.concurrent.chaseRotationWithTwoSplit||
         v91Finale.concurrent.allChaseContact>
           v91Finale.concurrent.allChaseLaunch||
         v91Finale.concurrent.chasedFollowup>
