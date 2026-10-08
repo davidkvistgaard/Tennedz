@@ -39,6 +39,9 @@ import {recordFinaleRotationContainedSprintPlanFromTour,
   recordFinaleRotationSoloSprintPlanFromTour,
   validateFinaleRotationSoloSprintPlanFromTour} from
   '../../lib/engine/v2/finale-sprint-plan.mjs';
+import {recordFinaleRotationSoloLateCatchSprintFromTour,
+  validateFinaleRotationSoloLateCatchSprintFromTour} from
+  '../../lib/engine/v2/finale-rotation-solo-late-catch-sprint.mjs';
 import {recordFinaleRotationContainedOrderedApproachFromTour,
   validateFinaleRotationContainedOrderedApproachFromTour} from
   '../../lib/engine/v2/finale-rotation-catch-ordered-approach.mjs';
@@ -225,6 +228,50 @@ test('rotating pair and reactive chaser pay once against a named attack',()=>{
   assert.throws(()=>validateFinaleRotationSoloSprintPlanFromTour(tour,
     soloPlanInput,{...soloPlan,decisionDistanceM:0}),
   /does not replay/);
+  assert.throws(()=>recordFinaleRotationSoloLateCatchSprintFromTour(tour,
+    soloPlanInput),/needs paid work before late contact/);
+  const noLeadOutInput={...soloPlanInput,
+    plans:soloPlanInput.plans.map(row=>({
+      ...row,leadOutRiderId:null}))};
+  const lateSprint=recordFinaleRotationSoloLateCatchSprintFromTour(
+    tour,noLeadOutInput);
+  assert.equal(lateSprint.sourceCatchVersion,lateCatch.version);
+  assert.equal(lateSprint.startDistanceM,39800);
+  assert.equal(lateSprint.endDistanceM,40000);
+  assert.equal(lateSprint.frames.length,2);
+  assert.equal(lateSprint.lineRiderEnergy.length,32);
+  assert.equal(lateSprint.roadGroups.length,0);
+  assert.equal(lateSprint.resultStatus,'unclassified');
+  assert.ok(lateSprint.frames.every(frame=>
+    frame.riderEnergy.length===32&&
+    frame.riderEnergy.filter(row=>row.role==='sprint').length===4&&
+    frame.riderEnergy.every(row=>row.energyAfter>=0)));
+  assert.ok(lateSprint.frames.some(frame=>
+    frame.rotation.selected&&frame.riderEnergy.some(row=>
+      row.role==='front_rotation'&&row.energySpent>0)));
+  const mergeEnergy=new Map(lateCatch.riderEnergy.map(row=>
+    [row.riderId,row.energy]));
+  assert.ok(lateSprint.frames[0].riderEnergy.every(row=>
+    row.energyAtDecision===mergeEnergy.get(row.riderId)));
+  assert.equal(lateSprint.bunchElapsedSecondsAtLine,
+    lateCatch.bunchElapsedSecondsAtMerge+
+    lateSprint.frames.reduce((sum,frame)=>
+      sum+frame.bunchTravelSeconds,0));
+  assert.equal(validateFinaleRotationSoloLateCatchSprintFromTour(tour,
+    noLeadOutInput,JSON.parse(JSON.stringify(lateSprint))),true);
+  assert.throws(()=>validateFinaleRotationSoloLateCatchSprintFromTour(tour,
+    noLeadOutInput,{...lateSprint,bunchElapsedSecondsAtLine:0}),
+  /does not replay/);
+  const helperFinisherInput={...noLeadOutInput,
+    plans:noLeadOutInput.plans.map(row=>row.teamId==='b'?
+      {...row,finisherId:'b-2'}:row)};
+  const helperSprint=recordFinaleRotationSoloLateCatchSprintFromTour(
+    tour,helperFinisherInput);
+  assert.deepEqual(helperSprint.busyTeamIds,['b']);
+  assert.ok(helperSprint.frames.every(frame=>
+    frame.supersededRotationTeamIds.includes('b')));
+  assert.notDeepEqual(helperSprint.lineRiderEnergy,
+    lateSprint.lineRiderEnergy);
   assert.deepEqual(tour.provisionalResults,oldResults);
   }
 });
