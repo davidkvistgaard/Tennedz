@@ -26,7 +26,9 @@ import {probeLastKmRotationSoloFromTour,
 import {recordFinaleRotationSoloSliceFromTour,
   validateFinaleRotationSoloSliceFromTour,
   recordFinaleRotationSoloSecondSliceFromTour,
-  validateFinaleRotationSoloSecondSliceFromTour} from
+  validateFinaleRotationSoloSecondSliceFromTour,
+  recordFinaleRotationSoloCatchSliceFromTour,
+  validateFinaleRotationSoloCatchSliceFromTour} from
   '../../lib/engine/v2/finale-rotation-solo-slice.mjs';
 import {recordFinaleRotationContainedSprintPlanFromTour,
   validateFinaleRotationContainedSprintPlanFromTour} from
@@ -241,6 +243,25 @@ test('a surviving 500 m solo source refuses an unrecorded 100 m catch',()=>{
     assert.ok(solo.at500M.roadGroups[0].gapSeconds>0);
     assert.throws(()=>recordFinaleRotationSoloSliceFromTour(tour,{
       attackTeamId:'a'}),/needs an exact catch continuation/);
+    const caught=recordFinaleRotationSoloCatchSliceFromTour(tour,{
+      attackTeamId:'a'});
+    assert.ok(caught.catchDistanceM>39500&&
+      caught.catchDistanceM<39600);
+    assert.equal(caught.endDistanceM,39600);
+    assert.equal(caught.roadGroups.length,0);
+    assert.equal(caught.pelotonRiderIds.length,32);
+    assert.equal(caught.riderEnergy.length,32);
+    assert.equal(caught.bunchTravelSeconds,
+      caught.preCatchBunchTravelSeconds+
+      caught.postCatchTravelSeconds);
+    assert.ok(caught.riderEnergy.every(row=>row.energySpent===
+      row.preCatchEnergySpent+row.postCatchEnergySpent&&
+      row.energyAfter>=0));
+    assert.equal(validateFinaleRotationSoloCatchSliceFromTour(tour,
+      {attackTeamId:'a'},JSON.parse(JSON.stringify(caught))),true);
+    assert.throws(()=>validateFinaleRotationSoloCatchSliceFromTour(tour,
+      {attackTeamId:'a'},{...caught,catchDistanceM:39500}),
+    /does not replay/);
   }
 });
 
