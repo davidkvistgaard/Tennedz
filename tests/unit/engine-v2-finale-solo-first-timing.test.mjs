@@ -4,9 +4,13 @@ import {simulateTacticalTour} from
   '../../lib/engine/v2/tour.mjs';
 import {MOTOR_ATTACK_TRACE_VERSION} from
   '../../lib/engine/v2/tuning.mjs';
+import {recordFinaleRotationV91CandidateFromTour} from
+  '../../lib/engine/v2/finale-rotation-v91-candidate.mjs';
 import {probeFinaleRotationSoloFirstTimingFromTour,
   validateFinaleRotationSoloFirstTimingFromTour} from
   '../../lib/engine/v2/finale-rotation-solo-first-timing.mjs';
+import {pointsForDivisionResult} from
+  '../../lib/calendar/points.mjs';
 
 function team(id,skill,gender,{attack=false,rotate=false,
   chase='ignore'}={}){
@@ -48,6 +52,17 @@ test('a paid solo line proves only the first rider and relative time',()=>{
     assert.equal(result.remainingRiderCount,31);
     assert.equal(result.remainingPlacesUnresolved,true);
     assert.equal(result.canCommitAwards,false);
+    const candidate=recordFinaleRotationV91CandidateFromTour(tour,input);
+    const firstPoints=candidate.pointBounds.riders.find(row=>
+      row.riderId===result.firstRiderId);
+    assert.equal(firstPoints.firstPossiblePlace,1);
+    assert.equal(firstPoints.lastPossiblePlace,1);
+    assert.equal(firstPoints.minPossiblePoints,
+      pointsForDivisionResult({tier:3,resultType:'ONE_DAY',placing:1,
+        multiplier:candidate.pointBounds.multiplier}));
+    assert.equal(firstPoints.maxPossiblePoints,
+      firstPoints.minPossiblePoints);
+    assert.deepEqual(candidate.pointBounds.awardRows,[]);
     const otherFinisher={...input,plans:input.plans.map(plan=>
       plan.teamId==='a'?{...plan,finisherId:'a-2'}:plan)};
     assert.deepEqual(probeFinaleRotationSoloFirstTimingFromTour(tour,
