@@ -34,7 +34,9 @@ import {recordFinaleRotationSoloSliceFromTour,
   recordFinaleRotationSoloRunFromTour,
   validateFinaleRotationSoloRunFromTour,
   recordFinaleRotationSoloLateCatchFromTour,
-  validateFinaleRotationSoloLateCatchFromTour} from
+  validateFinaleRotationSoloLateCatchFromTour,
+  decideFinaleRotationSoloOutcomeFromTour,
+  validateFinaleRotationSoloOutcomeFromTour} from
   '../../lib/engine/v2/finale-rotation-solo-slice.mjs';
 import {recordFinaleRotationContainedSprintPlanFromTour,
   validateFinaleRotationContainedSprintPlanFromTour,
@@ -73,6 +75,9 @@ import {MOTOR_ATTACK_TRACE_VERSION,TUNING} from
   '../../lib/engine/v2/tuning.mjs';
 import {projectV2FinalePointBounds,validateV2FinalePointBounds} from
   '../../lib/race/v2-finale-point-bounds.mjs';
+import {recordFinaleRotationSoloCatchBranchFromTour,
+  validateFinaleRotationSoloCatchBranchFromTour} from
+  '../../lib/engine/v2/finale-rotation-solo-catch-branch.mjs';
 
 const stage={distance_km:40,profile_points:[[0,100],[40,100]],
   keypoints:[{km:39,kind:'SPRINT'}]};
@@ -688,6 +693,94 @@ test('a 400–300 m contact pays both sides and merges the remaining metres',()=
       row.minPossiblePoints===0&&row.maxPossiblePoints===250));
     assert.equal(validateV2FinalePointBounds(tour,pointInput,
       JSON.parse(JSON.stringify(pointBounds))),true);
+  }
+});
+
+test('road contact selects the supported solo branch without a desired result',()=>{
+  for(const gender of ['M','F']){
+    const cases=[
+      {distanceKm:40,skill:60,chase:'all',
+        seed:'attack-with-rotation-M',branch:'first_catch'},
+      {distanceKm:180,skill:65,chase:'all',
+        seed:`second-catch-${gender}-all`,branch:'second_catch'},
+      {distanceKm:40,skill:65,chase:'all',
+        seed:`attack-with-rotation-${gender}`,branch:'late_catch'},
+      {distanceKm:40,skill:75,chase:'all',
+        seed:`solo-line-${gender}`,branch:'surviving_solo'}];
+    for(const row of cases){
+      const eventStage={distance_km:row.distanceKm,
+        profile_points:[[0,100],[row.distanceKm,100]],
+        keypoints:[{km:row.distanceKm-1,kind:'SPRINT'}]};
+      const tour=simulateTacticalTour({stage:eventStage,teams:[
+        team('a',row.skill,{attack:true,gender,
+          attackAtKm:row.distanceKm-1}),
+        team('b',88,{rotate:true,gender}),
+        team('c',55,{rotate:true,chase:row.chase,gender}),
+        team('d',80,{rotate:true,gender})],
+      seed:row.seed,motorVersion:MOTOR_ATTACK_TRACE_VERSION});
+      const input={attackTeamId:'a'};
+      const decision=decideFinaleRotationSoloOutcomeFromTour(tour,input);
+      assert.equal(decision.branch,row.branch);
+      assert.equal(decision.resultStatus,'unclassified');
+      assert.equal(decision.finishDistanceM,row.distanceKm*1000);
+      assert.equal(validateFinaleRotationSoloOutcomeFromTour(tour,input,
+        JSON.parse(JSON.stringify(decision))),true);
+      assert.throws(()=>validateFinaleRotationSoloOutcomeFromTour(tour,
+        input,{...decision,branch:'surviving_solo',
+          nextDecisionDistanceM:0}),/does not replay/);
+      const bundleInput={...input,tier:3,divisionIndex:1,
+        divisionCount:1,plans:['a','b','c','d'].map(teamId=>({
+          teamId,finisherId:`${teamId}-0`,leadOutRiderId:null}))};
+      if(row.branch==='surviving_solo'){
+        assert.throws(()=>recordFinaleRotationSoloCatchBranchFromTour(
+          tour,bundleInput),/needs measured contact/);
+        continue;
+      }
+      const bundle=recordFinaleRotationSoloCatchBranchFromTour(tour,
+        bundleInput);
+      assert.equal(bundle.branch,row.branch);
+      assert.deepEqual(bundle.decision,decision);
+      assert.equal(bundle.sprint.sourceCatchVersion,
+        decision.sourceOutcomeVersion);
+      assert.equal(bundle.bounds.sourceRunVersion,bundle.sprint.version);
+      assert.equal(bundle.points.sourceBoundsVersion,bundle.bounds.version);
+      assert.equal(bundle.sprint.endDistanceM,row.distanceKm*1000);
+      assert.equal(bundle.resultStatus,'unclassified');
+      assert.equal(bundle.pointsStatus,'withheld');
+      assert.equal(bundle.canCommitAwards,false);
+      assert.equal(validateFinaleRotationSoloCatchBranchFromTour(tour,
+        bundleInput,JSON.parse(JSON.stringify(bundle))),true);
+      assert.throws(()=>validateFinaleRotationSoloCatchBranchFromTour(
+        tour,bundleInput,{...bundle,branch:'surviving_solo'}),
+      /does not replay/);
+    }
+  }
+});
+
+test('paired chase choices retain a replayable long-route contact',()=>{
+  for(const gender of ['M','F'])for(const profile of [
+    [[0,100],[180,100]],
+    [[0,100],[90,140],[180,100]]]){
+    const routeStage={distance_km:180,profile_points:profile,
+      keypoints:[{km:179,kind:'SPRINT'}]};
+    const decisions=[];
+    for(const chase of ['all','ignore']){
+      const tour=simulateTacticalTour({stage:routeStage,teams:[
+        team('a',65,{attack:true,attackAtKm:179,gender}),
+        team('b',88,{rotate:true,gender}),
+        team('c',55,{rotate:true,chase,gender}),
+        team('d',80,{rotate:true,gender})],
+      seed:`paired-180-${gender}-${profile.length}`,
+      motorVersion:MOTOR_ATTACK_TRACE_VERSION});
+      const decision=decideFinaleRotationSoloOutcomeFromTour(tour,{
+        attackTeamId:'a'});
+      assert.equal(decision.branch,'second_catch');
+      assert.ok(decision.catchDistanceM>179600&&
+        decision.catchDistanceM<179700);
+      decisions.push(decision);
+    }
+    assert.notEqual(decisions[0].catchDistanceM,
+      decisions[1].catchDistanceM);
   }
 });
 
