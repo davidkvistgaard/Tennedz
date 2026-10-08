@@ -1,6 +1,6 @@
 # Pelotonia — samlet to-do og tidsestimat
 
-**Opdateret 7. oktober 2026 efter den isolerede P03-prøve og v2-prøven med 45 managers.** Dette er den aktuelle hovedliste for kendte produktønsker. [Produktvisionen](PRODUCT-VISION.md), [kalenderpakken](CALENDAR_AUTOPILOT_RANKINGS_V0_1.md), [motorprototypen](design/ENGINE-V2-FOUNDATION.md), [verdensbaselinen](PELOTONIA-WORLD-BASELINE-1.6.2.md) og de enkelte designnoter er baggrund; gamle statusangivelser i dem er ikke en ny leveringsplan. Listen skelner mellem kode i produktion, kode i isolerede udviklingsspor og ubyggede funktioner.
+**Opdateret 8. oktober 2026 efter de isolerede P03- og v91-motorprøver.** Dette er den aktuelle hovedliste for kendte produktønsker. [Produktvisionen](PRODUCT-VISION.md), [kalenderpakken](CALENDAR_AUTOPILOT_RANKINGS_V0_1.md), [motorprototypen](design/ENGINE-V2-FOUNDATION.md), [verdensbaselinen](PELOTONIA-WORLD-BASELINE-1.6.2.md) og de enkelte designnoter er baggrund; gamle statusangivelser i dem er ikke en ny leveringsplan. Listen skelner mellem kode i produktion, kode i isolerede udviklingsspor og ubyggede funktioner.
 
 ## Læsevejledning: færdigt, i gang og endnu ikke begyndt
 
