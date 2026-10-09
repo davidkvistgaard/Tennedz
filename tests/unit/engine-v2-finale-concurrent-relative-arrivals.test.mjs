@@ -79,6 +79,8 @@ import {twoSplit500NextEvent,
   validateFinaleConcurrentTwoSplit500StepFromTour,
   FINALE_CONCURRENT_TWO_SPLIT_500_STEP_VERSION} from
   '../../lib/engine/v2/finale-concurrent-two-split-500-step.mjs';
+import {recordFinaleConcurrentTwoSplit500RearCatchFromTour} from
+  '../../lib/engine/v2/finale-concurrent-two-split-500-rear-catch.mjs';
 
 function team(id,skill,gender,{attack=false,
   chase='ignore',rotate=false}={}){
@@ -866,5 +868,16 @@ test('two separated attackers and bunch pay one 500 m clock',()=>{
     assert.throws(()=>validateFinaleConcurrentTwoSplit500StepFromTour(
       tour,forged),/does not replay/);
     assert.deepEqual(tour.provisionalResults,original);
+  }
+});
+
+test('500 m rear-catch continuation rejects a still-separated road state',()=>{
+  for(const gender of ['M','F']){
+    const tour=multiSource(gender);
+    assert.notEqual(recordFinaleConcurrentTwoSplit500StepFromTour(tour)
+      .event,'second_attacker_bunch_contact_uncontinued');
+    assert.throws(()=>
+      recordFinaleConcurrentTwoSplit500RearCatchFromTour(tour),
+    /exact rear-bunch contact/);
   }
 });

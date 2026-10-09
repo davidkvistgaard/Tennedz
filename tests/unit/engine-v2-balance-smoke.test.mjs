@@ -157,6 +157,31 @@ test('fixed 20-team source replays paid travel after two exact catches',()=>{
     reason.startsWith('multiSelectiveDoubleCatchMerge:'))));
 });
 
+test('fixed 15-team source pays an exact 500 m rear catch',()=>{
+  const report=JSON.parse(execFileSync(process.execPath,[ensembleScript,
+    '1','15','attack-trace','planned-finale-allied-manager-mix-0',
+    '120','100','0','3','5','0','100','hard','0','0','0','0','0',
+    'independent','100','fixed'],{
+    encoding:'utf8',timeout:300_000,maxBuffer:8*1024*1024,
+    env:{...process.env,PELOTONIA_V91_COVERAGE:'on'},
+  }));
+  const cells=Object.values(report.courses).flatMap(genders=>
+    Object.values(genders).flatMap(strategies=>
+      Object.values(strategies)));
+  const sum=key=>cells.reduce((total,cell)=>total+
+    cell.v91Finale.concurrent[key],0);
+  assert.equal(sum('multiSelectiveTwoSplit500RearCatch'),1);
+  assert.equal(cells.reduce((total,cell)=>total+(
+    cell.v91Finale.concurrent.multiSelectiveTwoSplit500Events
+      .second_attacker_bunch_contact_uncontinued??0),0),1);
+  assert.equal(cells.reduce((total,cell)=>total+Object.values(
+    cell.v91Finale.concurrent.multiSelectiveTwoSplit500RearCatchEvents)
+    .reduce((count,value)=>count+value,0),0),1);
+  assert.ok(cells.every(cell=>!Object.keys(
+    cell.v91Finale.concurrent.refusalReasons).some(reason=>
+    reason.startsWith('multiSelectiveTwoSplit500RearCatch:'))));
+});
+
 test('fixed-role chase probe changes only nominated hard-chaser teams',()=>{
   const reports=[0,3].map(chasers=>JSON.parse(execFileSync(process.execPath,
     [ensembleScript,'1','15','attack-trace',
