@@ -52,6 +52,11 @@ import {twoSplitFollowupEvent,
   validateFinaleConcurrentTwoSplitFollowupFromTour,
   FINALE_CONCURRENT_TWO_SPLIT_FOLLOWUP_VERSION} from
   '../../lib/engine/v2/finale-concurrent-two-split-followup.mjs';
+import {concurrentBunch500Event,
+  recordFinaleConcurrentBunch500ArrivalFromTour,
+  validateFinaleConcurrentBunch500ArrivalFromTour,
+  FINALE_CONCURRENT_BUNCH_500_ARRIVAL_VERSION} from
+  '../../lib/engine/v2/finale-concurrent-bunch-500-arrival.mjs';
 
 function team(id,skill,gender,{attack=false,
   chase='ignore',rotate=false}={}){
@@ -611,6 +616,59 @@ test('two surviving attackers and the bunch continue on one paid clock',()=>{
     const forged=structuredClone(event);
     forged.riders[0].energySpent+=1;
     assert.throws(()=>validateFinaleConcurrentTwoSplitFollowupFromTour(
+      tour,forged),/does not replay/);
+    assert.deepEqual(tour.provisionalResults,original);
+  }
+});
+
+test('bunch-500 solver stops before a new boundary or exact attacker contact',()=>{
+  const positions={firstPositionM:520,secondPositionM:500,
+    bunchPositionM:480,firstNextBoundaryM:600,
+    secondNextBoundaryM:600,bunchNextBoundaryM:500};
+  assert.deepEqual(concurrentBunch500Event({...positions,
+    firstSpeedMps:20,secondSpeedMps:10,bunchSpeedMps:10}),
+  {kind:'bunch_at_500_boundary',seconds:2});
+  assert.deepEqual(concurrentBunch500Event({...positions,
+    firstSpeedMps:20,secondSpeedMps:1,bunchSpeedMps:1}),
+  {kind:'first_at_next_boundary',seconds:4});
+  assert.deepEqual(concurrentBunch500Event({...positions,
+    firstSpeedMps:10,secondSpeedMps:30,bunchSpeedMps:10}),
+  {kind:'attackers_contact_uncontinued',seconds:1});
+  assert.throws(()=>concurrentBunch500Event({...positions,
+    bunchPositionM:500,firstSpeedMps:10,
+    secondSpeedMps:30,bunchSpeedMps:10}),
+  /ordered positive travel/);
+});
+
+test('two split attackers remain paid as their bunch approaches 500 m',()=>{
+  for(const gender of ['M','F']){
+    const tour=multiSource(gender);
+    const original=structuredClone(tour.provisionalResults);
+    const previous=recordFinaleConcurrentTwoSplitFollowupFromTour(tour);
+    assert.equal(previous.event,'second_at_second_slice_boundary');
+    const event=recordFinaleConcurrentBunch500ArrivalFromTour(tour);
+    assert.equal(event.version,
+      FINALE_CONCURRENT_BUNCH_500_ARRIVAL_VERSION);
+    assert.ok(event.elapsedSinceLaunchSeconds>
+      previous.elapsedSinceLaunchSeconds);
+    assert.equal(event.riders.length,previous.riders.length);
+    assert.equal(new Set(event.riders.map(row=>row.riderId)).size,
+      event.riders.length);
+    for(const row of event.riders){
+      const prior=previous.riders.find(source=>
+        source.riderId===row.riderId);
+      assert.equal(row.energyAtPreviousEvent,prior.energyAtEvent);
+      assert.ok(row.energyAtEvent>=0);
+      assert.ok(Math.abs(row.energyAtPreviousEvent-row.energySpent-
+        row.energyAtEvent)<1e-8);
+    }
+    assert.equal(event.roadBands.length,3);
+    assert.equal(event.pointsStatus,'withheld');
+    assert.equal(validateFinaleConcurrentBunch500ArrivalFromTour(tour,
+      JSON.parse(JSON.stringify(event))),true);
+    const forged=structuredClone(event);
+    forged.riders[0].energySpent+=1;
+    assert.throws(()=>validateFinaleConcurrentBunch500ArrivalFromTour(
       tour,forged),/does not replay/);
     assert.deepEqual(tour.provisionalResults,original);
   }
