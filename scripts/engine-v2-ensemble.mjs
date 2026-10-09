@@ -65,6 +65,9 @@ import {recordFinaleConcurrentContactStateFromTour} from
   '../lib/engine/v2/finale-concurrent-contact-state.mjs';
 import {recordFinaleConcurrentRearCatchFollowupFromTour} from
   '../lib/engine/v2/finale-concurrent-rear-catch-followup.mjs';
+import {recordFinaleConcurrentDoubleCatchMergeFromTour,
+  validateFinaleConcurrentDoubleCatchMergeFromTour} from
+  '../lib/engine/v2/finale-concurrent-double-catch-merge.mjs';
 import {recordFinaleConcurrentNamedAllChaseFromTour} from
   '../lib/engine/v2/finale-concurrent-named-all-chase.mjs';
 import {recordFinaleConcurrentNamedAllChaseContactFromTour} from
@@ -452,6 +455,8 @@ for(const [course,stage] of Object.entries(distanceKm===260?LONG_ROUTES:ROUTES))
           multiSelectiveNextEventKinds:{},
           multiSelectiveContactState:0,
           multiSelectiveRearCatchFollowup:0,
+          multiSelectiveRearCatchEvents:{},
+          multiSelectiveDoubleCatchMerge:0,
           minMultiSelectiveSeparationM:null,
           maxMultiSelectiveSeparationM:null,
           minMultiSelectiveBunchBehindM:null,
@@ -788,9 +793,23 @@ for(const [course,stage] of Object.entries(distanceKm===260?LONG_ROUTES:ROUTES))
                               attempt('multiSelectiveContactState',
                                 recordFinaleConcurrentContactStateFromTour);
                             if(next?.event===
-                              'second_attacker_bunch_contact_uncontinued')
-                              attempt('multiSelectiveRearCatchFollowup',
+                              'second_attacker_bunch_contact_uncontinued'){
+                              const rear=attempt(
+                                'multiSelectiveRearCatchFollowup',
                                 recordFinaleConcurrentRearCatchFollowupFromTour);
+                              if(rear)concurrent.multiSelectiveRearCatchEvents[
+                                rear.event]=(concurrent
+                                .multiSelectiveRearCatchEvents[rear.event]??0)+1;
+                              if(rear?.event===
+                                'front_bunch_contact_uncontinued'){
+                                const merged=attempt(
+                                  'multiSelectiveDoubleCatchMerge',
+                                  recordFinaleConcurrentDoubleCatchMergeFromTour);
+                                if(merged)
+                                  validateFinaleConcurrentDoubleCatchMergeFromTour(
+                                    race,JSON.parse(JSON.stringify(merged)));
+                              }
+                            }
                           }
                         }
                       }
@@ -1404,6 +1423,8 @@ for(const [course,stage] of Object.entries(distanceKm===260?LONG_ROUTES:ROUTES))
           v91Finale.concurrent.multiSelectiveNextContactEvents||
         v91Finale.concurrent.multiSelectiveRearCatchFollowup>
           v91Finale.concurrent.multiSelectiveContactState||
+        v91Finale.concurrent.multiSelectiveDoubleCatchMerge>
+          v91Finale.concurrent.multiSelectiveRearCatchFollowup||
         v91Finale.concurrent.allChaseContact>
           v91Finale.concurrent.allChaseLaunch||
         v91Finale.concurrent.chasedFollowup>

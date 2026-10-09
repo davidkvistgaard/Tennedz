@@ -40,6 +40,8 @@ import {rearCatchFollowupEvent,
   recordFinaleConcurrentRearCatchFollowupFromTour,
   validateFinaleConcurrentRearCatchFollowupFromTour} from
   '../../lib/engine/v2/finale-concurrent-rear-catch-followup.mjs';
+import {recordFinaleConcurrentDoubleCatchMergeFromTour} from
+  '../../lib/engine/v2/finale-concurrent-double-catch-merge.mjs';
 
 function team(id,skill,gender,{attack=false,
   chase='ignore',rotate=false}={}){
@@ -489,5 +491,15 @@ test('measured rear contact can carry its already-paid field work',()=>{
     assert.throws(()=>validateFinaleConcurrentRearCatchFollowupFromTour(
       tour,forged),/does not replay/);
     assert.deepEqual(tour.provisionalResults,original);
+  }
+});
+
+test('double-catch continuation refuses a still separated front rider',()=>{
+  for(const gender of ['M','F']){
+    const tour=multiSource(gender,70,75);
+    assert.equal(recordFinaleConcurrentRearCatchFollowupFromTour(tour).event,
+      'front_at_next_boundary');
+    assert.throws(()=>recordFinaleConcurrentDoubleCatchMergeFromTour(tour),
+      /needs both attacks caught/);
   }
 });
