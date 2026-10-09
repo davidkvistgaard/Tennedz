@@ -26,6 +26,14 @@ import {concurrentBunchArrivalEvent,
   validateFinaleConcurrentBunchArrivalFromTour,
   FINALE_CONCURRENT_BUNCH_ARRIVAL_VERSION} from
   '../../lib/engine/v2/finale-concurrent-bunch-arrival.mjs';
+import {recordFinaleConcurrentNextSlicePlanFromTour,
+  validateFinaleConcurrentNextSlicePlanFromTour,
+  FINALE_CONCURRENT_NEXT_SLICE_PLAN_VERSION} from
+  '../../lib/engine/v2/finale-concurrent-next-slice-plan.mjs';
+import {recordFinaleConcurrentNextBoundaryFromTour,
+  validateFinaleConcurrentNextBoundaryFromTour,
+  FINALE_CONCURRENT_NEXT_BOUNDARY_VERSION} from
+  '../../lib/engine/v2/finale-concurrent-next-boundary.mjs';
 
 function team(id,skill,gender,{attack=false,
   chase='ignore',rotate=false}={}){
@@ -323,4 +331,83 @@ test('exact next-event solver stops at the earliest physical contact',()=>{
   assert.throws(()=>concurrentBunchArrivalEvent({...positions,
     secondPositionM:0,firstSpeedMps:10,
     secondSpeedMps:11,bunchSpeedMps:12}),/ordered positions/);
+});
+
+test('next slice reselects ordered chase and rotation before charging travel',()=>{
+  for(const gender of ['M','F']){
+    const tour=multiSource(gender);
+    const original=structuredClone(tour.provisionalResults);
+    const state=recordFinaleConcurrentBunchArrivalFromTour(tour);
+    const plan=recordFinaleConcurrentNextSlicePlanFromTour(tour);
+    assert.equal(plan.version,FINALE_CONCURRENT_NEXT_SLICE_PLAN_VERSION);
+    assert.equal(plan.sourceStateVersion,state.version);
+    assert.equal(plan.startDistanceM,state.bunchPositionM);
+    assert.equal(plan.endDistanceM,state.plannedNextBoundaryM);
+    assert.equal(plan.selectiveDecisions.length,3);
+    assert.equal(plan.selectiveDecisions.filter(row=>
+      row.decision==='working').length,plan.chase?1:0);
+    assert.equal(plan.rotation.turnIndex,1);
+    assert.equal(plan.energyAtDecision.length,state.riders.length);
+    for(const row of plan.energyAtDecision)
+      assert.equal(row.energy,state.riders.find(source=>
+        source.riderId===row.riderId).energyAtEvent);
+    assert.equal(plan.travelStatus,'planned_unpaid');
+    assert.equal(plan.pointsStatus,'withheld');
+    assert.equal(validateFinaleConcurrentNextSlicePlanFromTour(tour,
+      JSON.parse(JSON.stringify(plan))),true);
+    const forged=structuredClone(plan);
+    forged.leadingGapSeconds+=1;
+    assert.throws(()=>validateFinaleConcurrentNextSlicePlanFromTour(tour,
+      forged),/does not replay/);
+    assert.deepEqual(tour.provisionalResults,original);
+  }
+});
+
+test('next boundary charges the exact shared travel or stops at contact',()=>{
+  for(const gender of ['M','F']){
+    const tour=multiSource(gender);
+    const original=structuredClone(tour.provisionalResults);
+    const state=recordFinaleConcurrentBunchArrivalFromTour(tour);
+    const plan=recordFinaleConcurrentNextSlicePlanFromTour(tour);
+    const event=recordFinaleConcurrentNextBoundaryFromTour(tour);
+    assert.equal(event.version,FINALE_CONCURRENT_NEXT_BOUNDARY_VERSION);
+    assert.equal(event.sourcePlanVersion,plan.version);
+    assert.equal(event.riders.length,state.riders.length);
+    assert.equal(new Set(event.riders.map(row=>row.riderId)).size,48);
+    assert.ok(event.elapsedSinceLaunchSeconds>
+      state.elapsedSinceLaunchSeconds);
+    assert.ok(event.riders.every(row=>row.energyAtEvent>=0&&
+      row.positionM<=event.plannedNextBoundaryM+1e-8));
+    for(const row of event.riders){
+      const prior=state.riders.find(source=>source.riderId===row.riderId);
+      assert.equal(row.energyAtDecision,prior.energyAtEvent);
+      assert.ok(Math.abs(row.energyAtDecision-row.energySpent-
+        row.energyAtEvent)<1e-8);
+    }
+    if(plan.chase){
+      const chaser=event.riders.find(row=>row.riderId===
+        plan.chase.riderId);
+      assert.equal(chaser.role,'chase');
+      assert.ok(Math.abs(chaser.energySpent-
+        plan.chase.workCostPerKm*chaser.distanceM/1000)<1e-8);
+    }
+    for(const work of plan.rotation.selected?.work??[]){
+      const worker=event.riders.find(row=>row.riderId===work.riderId);
+      assert.equal(worker.role,'front_rotation');
+      assert.ok(Math.abs(worker.energySpent-
+        work.energySpent*worker.distanceM/
+          (plan.endDistanceM-plan.startDistanceM))<1e-8);
+    }
+    if(event.event==='first_attacker_at_next_boundary')
+      assert.ok(Math.abs(event.firstPositionM-
+        event.plannedNextBoundaryM)<1e-8);
+    assert.equal(event.pointsStatus,'withheld');
+    assert.equal(validateFinaleConcurrentNextBoundaryFromTour(tour,
+      JSON.parse(JSON.stringify(event))),true);
+    const forged=structuredClone(event);
+    forged.riders[0].energySpent+=1;
+    assert.throws(()=>validateFinaleConcurrentNextBoundaryFromTour(tour,
+      forged),/does not replay/);
+    assert.deepEqual(tour.provisionalResults,original);
+  }
 });

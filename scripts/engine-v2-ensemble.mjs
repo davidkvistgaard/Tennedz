@@ -57,6 +57,10 @@ import {recordFinaleConcurrentSecondArrivalFromTour} from
   '../lib/engine/v2/finale-concurrent-second-arrival.mjs';
 import {recordFinaleConcurrentBunchArrivalFromTour} from
   '../lib/engine/v2/finale-concurrent-bunch-arrival.mjs';
+import {recordFinaleConcurrentNextSlicePlanFromTour} from
+  '../lib/engine/v2/finale-concurrent-next-slice-plan.mjs';
+import {recordFinaleConcurrentNextBoundaryFromTour} from
+  '../lib/engine/v2/finale-concurrent-next-boundary.mjs';
 import {recordFinaleConcurrentNamedAllChaseFromTour} from
   '../lib/engine/v2/finale-concurrent-named-all-chase.mjs';
 import {recordFinaleConcurrentNamedAllChaseContactFromTour} from
@@ -438,6 +442,9 @@ for(const [course,stage] of Object.entries(distanceKm===260?LONG_ROUTES:ROUTES))
           multiSelectiveSecondArrival:0,
           multiSelectiveBunchArrival:0,
           multiSelectiveBunchContactEvents:0,
+          multiSelectiveNextSlicePlan:0,
+          multiSelectiveNextBoundary:0,
+          multiSelectiveNextContactEvents:0,
           minMultiSelectiveSeparationM:null,
           maxMultiSelectiveSeparationM:null,
           minMultiSelectiveBunchBehindM:null,
@@ -760,6 +767,14 @@ for(const [course,stage] of Object.entries(distanceKm===260?LONG_ROUTES:ROUTES))
                             recordFinaleConcurrentBunchArrivalFromTour);
                           concurrent.multiSelectiveBunchContactEvents+=Number(
                             bunch?.event?.includes('contact'));
+                          if(bunch?.event==='bunch_at_first_slice_boundary'&&
+                            attempt('multiSelectiveNextSlicePlan',
+                              recordFinaleConcurrentNextSlicePlanFromTour)){
+                            const next=attempt('multiSelectiveNextBoundary',
+                              recordFinaleConcurrentNextBoundaryFromTour);
+                            concurrent.multiSelectiveNextContactEvents+=Number(
+                              next?.event?.includes('contact'));
+                          }
                         }
                       }
                     }
@@ -1362,6 +1377,12 @@ for(const [course,stage] of Object.entries(distanceKm===260?LONG_ROUTES:ROUTES))
           v91Finale.concurrent.multiSelectiveSecondArrival||
         v91Finale.concurrent.multiSelectiveBunchContactEvents>
           v91Finale.concurrent.multiSelectiveBunchArrival||
+        v91Finale.concurrent.multiSelectiveNextSlicePlan>
+          v91Finale.concurrent.multiSelectiveBunchArrival||
+        v91Finale.concurrent.multiSelectiveNextBoundary>
+          v91Finale.concurrent.multiSelectiveNextSlicePlan||
+        v91Finale.concurrent.multiSelectiveNextContactEvents>
+          v91Finale.concurrent.multiSelectiveNextBoundary||
         v91Finale.concurrent.allChaseContact>
           v91Finale.concurrent.allChaseLaunch||
         v91Finale.concurrent.chasedFollowup>
