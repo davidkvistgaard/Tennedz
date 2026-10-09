@@ -77,6 +77,9 @@ import {recordFinaleConcurrentBunch500ArrivalFromTour,
 import {recordFinaleConcurrentSelective500StateFromTour,
   validateFinaleConcurrentSelective500StateFromTour} from
   '../lib/engine/v2/finale-concurrent-selective-500-state.mjs';
+import {recordFinaleConcurrentSelective500PlanFromTour,
+  validateFinaleConcurrentSelective500PlanFromTour} from
+  '../lib/engine/v2/finale-concurrent-selective-500-plan.mjs';
 import {recordFinaleConcurrentDoubleCatchMergeFromTour,
   validateFinaleConcurrentDoubleCatchMergeFromTour} from
   '../lib/engine/v2/finale-concurrent-double-catch-merge.mjs';
@@ -471,6 +474,8 @@ for(const [course,stage] of Object.entries(distanceKm===260?LONG_ROUTES:ROUTES))
           multiSelectiveBunch500Events:{},
           multiSelective500State:0,
           multiSelective500Branches:{},
+          multiSelective500Plan:0,
+          multiSelective500PlanBranches:{},
           multiSelectiveContactState:0,
           multiSelectiveRearCatchFollowup:0,
           multiSelectiveRearCatchEvents:{},
@@ -881,6 +886,19 @@ for(const [course,stage] of Object.entries(distanceKm===260?LONG_ROUTES:ROUTES))
                                 concurrent.multiSelective500Branches[
                                   state.branch]=(concurrent
                                   .multiSelective500Branches[state.branch]??0)+1;
+                                if(state.branch!=='both_caught'){
+                                  const plan500=attempt(
+                                    'multiSelective500Plan',
+                                    recordFinaleConcurrentSelective500PlanFromTour);
+                                  if(plan500){
+                                    validateFinaleConcurrentSelective500PlanFromTour(
+                                      race,JSON.parse(JSON.stringify(plan500)));
+                                    concurrent.multiSelective500PlanBranches[
+                                      plan500.branch]=(concurrent
+                                      .multiSelective500PlanBranches[
+                                        plan500.branch]??0)+1;
+                                  }
+                                }
                               }
                             }
                           }
@@ -1498,6 +1516,8 @@ for(const [course,stage] of Object.entries(distanceKm===260?LONG_ROUTES:ROUTES))
           v91Finale.concurrent.multiSelectiveTwoSplitFollowup||
         v91Finale.concurrent.multiSelective500State>
           v91Finale.concurrent.multiSelectiveNextBoundary||
+        v91Finale.concurrent.multiSelective500Plan>
+          v91Finale.concurrent.multiSelective500State||
         v91Finale.concurrent.multiSelectiveContactState>
           v91Finale.concurrent.multiSelectiveNextContactEvents||
         v91Finale.concurrent.multiSelectiveRearCatchFollowup>

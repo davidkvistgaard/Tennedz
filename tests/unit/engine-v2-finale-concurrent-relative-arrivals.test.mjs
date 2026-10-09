@@ -61,6 +61,10 @@ import {recordFinaleConcurrentSelective500StateFromTour,
   validateFinaleConcurrentSelective500StateFromTour,
   FINALE_CONCURRENT_SELECTIVE_500_STATE_VERSION} from
   '../../lib/engine/v2/finale-concurrent-selective-500-state.mjs';
+import {recordFinaleConcurrentSelective500PlanFromTour,
+  validateFinaleConcurrentSelective500PlanFromTour,
+  FINALE_CONCURRENT_SELECTIVE_500_PLAN_VERSION} from
+  '../../lib/engine/v2/finale-concurrent-selective-500-plan.mjs';
 
 function team(id,skill,gender,{attack=false,
   chase='ignore',rotate=false}={}){
@@ -700,6 +704,39 @@ test('supported selective branches share a replayable paid 500 m handoff',()=>{
       const forged=structuredClone(state);
       forged.riders[0].energyAtBoundary+=1;
       assert.throws(()=>validateFinaleConcurrentSelective500StateFromTour(
+        tour,forged),/does not replay/);
+      assert.deepEqual(tour.provisionalResults,original);
+    }
+  }
+});
+
+test('surviving attackers get only an unpaid next 100 m bunch plan',()=>{
+  for(const gender of ['M','F']){
+    for(const [tour,branch] of [
+      [multiSource(gender),'two_split'],
+      [multiSource(gender,70,75),'solo_ahead']]){
+      const original=structuredClone(tour.provisionalResults);
+      const state=recordFinaleConcurrentSelective500StateFromTour(tour);
+      const plan=recordFinaleConcurrentSelective500PlanFromTour(tour);
+      assert.equal(plan.version,
+        FINALE_CONCURRENT_SELECTIVE_500_PLAN_VERSION);
+      assert.equal(plan.branch,branch);
+      assert.equal(plan.startDistanceM,state.boundaryM);
+      assert.equal(plan.endDistanceM-plan.startDistanceM,100);
+      assert.ok(plan.rearGapSeconds>0);
+      assert.ok(plan.leadingGapSeconds>=plan.rearGapSeconds);
+      assert.equal(plan.selectiveDecisions.length,3);
+      assert.equal(plan.selectiveDecisions.filter(row=>
+        row.decision==='working').length,plan.chase?1:0);
+      assert.equal(plan.rotation.turnIndex,2);
+      assert.equal(plan.energyAtDecision.length,state.riders.length);
+      assert.equal(plan.travelStatus,'planned_unpaid');
+      assert.equal(plan.pointsStatus,'withheld');
+      assert.equal(validateFinaleConcurrentSelective500PlanFromTour(tour,
+        JSON.parse(JSON.stringify(plan))),true);
+      const forged=structuredClone(plan);
+      forged.rearGapSeconds+=1;
+      assert.throws(()=>validateFinaleConcurrentSelective500PlanFromTour(
         tour,forged),/does not replay/);
       assert.deepEqual(tour.provisionalResults,original);
     }
