@@ -74,6 +74,11 @@ import {recordFinaleConcurrentSolo500CatchMergeFromTour,
   validateFinaleConcurrentSolo500CatchMergeFromTour,
   FINALE_CONCURRENT_SOLO_500_CATCH_MERGE_VERSION} from
   '../../lib/engine/v2/finale-concurrent-solo-500-catch-merge.mjs';
+import {twoSplit500NextEvent,
+  recordFinaleConcurrentTwoSplit500StepFromTour,
+  validateFinaleConcurrentTwoSplit500StepFromTour,
+  FINALE_CONCURRENT_TWO_SPLIT_500_STEP_VERSION} from
+  '../../lib/engine/v2/finale-concurrent-two-split-500-step.mjs';
 
 function team(id,skill,gender,{attack=false,
   chase='ignore',rotate=false}={}){
@@ -806,6 +811,59 @@ test('solo and bunch pay one shared 100 m clock from the 500 m handoff',()=>{
     const forged=structuredClone(event);
     forged.riders[0].energySpent+=1;
     assert.throws(()=>validateFinaleConcurrentSolo500StepFromTour(
+      tour,forged),/does not replay/);
+    assert.deepEqual(tour.provisionalResults,original);
+  }
+});
+
+test('two-split 500 m event stops before crossing or boundary',()=>{
+  const positions={frontPositionM:540,rearPositionM:520,
+    bunchPositionM:500,nextBoundaryM:600};
+  assert.deepEqual(twoSplit500NextEvent({...positions,
+    frontSpeedMps:20,rearSpeedMps:15,bunchSpeedMps:10}),
+  {kind:'front_at_400_boundary',seconds:3});
+  assert.deepEqual(twoSplit500NextEvent({...positions,
+    frontSpeedMps:10,rearSpeedMps:20,bunchSpeedMps:10}),
+  {kind:'attackers_contact_uncontinued',seconds:2});
+  assert.deepEqual(twoSplit500NextEvent({...positions,
+    frontSpeedMps:10,rearSpeedMps:10,bunchSpeedMps:20}),
+  {kind:'second_attacker_bunch_contact_uncontinued',seconds:2});
+  assert.deepEqual(twoSplit500NextEvent({...positions,
+    frontSpeedMps:10,rearSpeedMps:20,bunchSpeedMps:30}),
+  {kind:'multiple_contacts_uncontinued',seconds:2});
+  assert.throws(()=>twoSplit500NextEvent({...positions,
+    rearPositionM:500,frontSpeedMps:10,rearSpeedMps:20,
+    bunchSpeedMps:30}),/ordered positive travel/);
+});
+
+test('two separated attackers and bunch pay one 500 m clock',()=>{
+  for(const gender of ['M','F']){
+    const tour=multiSource(gender);
+    const original=structuredClone(tour.provisionalResults);
+    const state=recordFinaleConcurrentSelective500StateFromTour(tour);
+    const event=recordFinaleConcurrentTwoSplit500StepFromTour(tour);
+    assert.equal(state.branch,'two_split');
+    assert.equal(event.version,FINALE_CONCURRENT_TWO_SPLIT_500_STEP_VERSION);
+    assert.ok(event.elapsedSinceLaunchSeconds>
+      state.elapsedSinceLaunchSeconds);
+    assert.equal(event.riders.length,state.riders.length);
+    assert.equal(new Set(event.riders.map(row=>row.riderId)).size,
+      event.riders.length);
+    for(const row of event.riders){
+      const prior=state.riders.find(source=>
+        source.riderId===row.riderId);
+      assert.equal(row.energyAtDecision,prior.energyAtBoundary);
+      assert.ok(row.energyAtEvent>=0);
+      assert.ok(Math.abs(row.energyAtDecision-row.energySpent-
+        row.energyAtEvent)<1e-8);
+    }
+    assert.ok([1,2,3].includes(event.roadBands.length));
+    assert.equal(event.pointsStatus,'withheld');
+    assert.equal(validateFinaleConcurrentTwoSplit500StepFromTour(tour,
+      JSON.parse(JSON.stringify(event))),true);
+    const forged=structuredClone(event);
+    forged.riders[0].energySpent+=1;
+    assert.throws(()=>validateFinaleConcurrentTwoSplit500StepFromTour(
       tour,forged),/does not replay/);
     assert.deepEqual(tour.provisionalResults,original);
   }

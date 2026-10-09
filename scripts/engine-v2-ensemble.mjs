@@ -86,6 +86,9 @@ import {recordFinaleConcurrentSolo500StepFromTour,
 import {recordFinaleConcurrentSolo500CatchMergeFromTour,
   validateFinaleConcurrentSolo500CatchMergeFromTour} from
   '../lib/engine/v2/finale-concurrent-solo-500-catch-merge.mjs';
+import {recordFinaleConcurrentTwoSplit500StepFromTour,
+  validateFinaleConcurrentTwoSplit500StepFromTour} from
+  '../lib/engine/v2/finale-concurrent-two-split-500-step.mjs';
 import {recordFinaleConcurrentDoubleCatchMergeFromTour,
   validateFinaleConcurrentDoubleCatchMergeFromTour} from
   '../lib/engine/v2/finale-concurrent-double-catch-merge.mjs';
@@ -485,6 +488,8 @@ for(const [course,stage] of Object.entries(distanceKm===260?LONG_ROUTES:ROUTES))
           multiSelectiveSolo500Step:0,
           multiSelectiveSolo500Events:{},
           multiSelectiveSolo500CatchMerge:0,
+          multiSelectiveTwoSplit500Step:0,
+          multiSelectiveTwoSplit500Events:{},
           multiSelectiveContactState:0,
           multiSelectiveRearCatchFollowup:0,
           multiSelectiveRearCatchEvents:{},
@@ -926,6 +931,19 @@ for(const [course,stage] of Object.entries(distanceKm===260?LONG_ROUTES:ROUTES))
                                             validateFinaleConcurrentSolo500CatchMergeFromTour(
                                               race,JSON.parse(JSON.stringify(merge)));
                                         }
+                                      }
+                                    }
+                                    if(state.branch==='two_split'){
+                                      const step=attempt(
+                                        'multiSelectiveTwoSplit500Step',
+                                        recordFinaleConcurrentTwoSplit500StepFromTour);
+                                      if(step){
+                                        validateFinaleConcurrentTwoSplit500StepFromTour(
+                                          race,JSON.parse(JSON.stringify(step)));
+                                        concurrent.multiSelectiveTwoSplit500Events[
+                                          step.event]=(concurrent
+                                          .multiSelectiveTwoSplit500Events[
+                                            step.event]??0)+1;
                                       }
                                     }
                                   }
@@ -1553,6 +1571,8 @@ for(const [course,stage] of Object.entries(distanceKm===260?LONG_ROUTES:ROUTES))
           v91Finale.concurrent.multiSelective500Plan||
         v91Finale.concurrent.multiSelectiveSolo500CatchMerge>
           v91Finale.concurrent.multiSelectiveSolo500Step||
+        v91Finale.concurrent.multiSelectiveTwoSplit500Step>
+          v91Finale.concurrent.multiSelective500Plan||
         v91Finale.concurrent.multiSelectiveContactState>
           v91Finale.concurrent.multiSelectiveNextContactEvents||
         v91Finale.concurrent.multiSelectiveRearCatchFollowup>
