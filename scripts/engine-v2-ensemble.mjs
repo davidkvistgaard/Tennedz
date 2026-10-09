@@ -83,6 +83,9 @@ import {recordFinaleConcurrentSelective500PlanFromTour,
 import {recordFinaleConcurrentSolo500StepFromTour,
   validateFinaleConcurrentSolo500StepFromTour} from
   '../lib/engine/v2/finale-concurrent-solo-500-step.mjs';
+import {recordFinaleConcurrentSolo500CatchMergeFromTour,
+  validateFinaleConcurrentSolo500CatchMergeFromTour} from
+  '../lib/engine/v2/finale-concurrent-solo-500-catch-merge.mjs';
 import {recordFinaleConcurrentDoubleCatchMergeFromTour,
   validateFinaleConcurrentDoubleCatchMergeFromTour} from
   '../lib/engine/v2/finale-concurrent-double-catch-merge.mjs';
@@ -481,6 +484,7 @@ for(const [course,stage] of Object.entries(distanceKm===260?LONG_ROUTES:ROUTES))
           multiSelective500PlanBranches:{},
           multiSelectiveSolo500Step:0,
           multiSelectiveSolo500Events:{},
+          multiSelectiveSolo500CatchMerge:0,
           multiSelectiveContactState:0,
           multiSelectiveRearCatchFollowup:0,
           multiSelectiveRearCatchEvents:{},
@@ -913,6 +917,15 @@ for(const [course,stage] of Object.entries(distanceKm===260?LONG_ROUTES:ROUTES))
                                           step.event]=(concurrent
                                           .multiSelectiveSolo500Events[
                                             step.event]??0)+1;
+                                        if(step.event===
+                                          'front_bunch_contact_uncontinued'){
+                                          const merge=attempt(
+                                            'multiSelectiveSolo500CatchMerge',
+                                            recordFinaleConcurrentSolo500CatchMergeFromTour);
+                                          if(merge)
+                                            validateFinaleConcurrentSolo500CatchMergeFromTour(
+                                              race,JSON.parse(JSON.stringify(merge)));
+                                        }
                                       }
                                     }
                                   }
@@ -1538,6 +1551,8 @@ for(const [course,stage] of Object.entries(distanceKm===260?LONG_ROUTES:ROUTES))
           v91Finale.concurrent.multiSelective500State||
         v91Finale.concurrent.multiSelectiveSolo500Step>
           v91Finale.concurrent.multiSelective500Plan||
+        v91Finale.concurrent.multiSelectiveSolo500CatchMerge>
+          v91Finale.concurrent.multiSelectiveSolo500Step||
         v91Finale.concurrent.multiSelectiveContactState>
           v91Finale.concurrent.multiSelectiveNextContactEvents||
         v91Finale.concurrent.multiSelectiveRearCatchFollowup>

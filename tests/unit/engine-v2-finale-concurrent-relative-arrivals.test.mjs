@@ -70,6 +70,10 @@ import {solo500NextEvent,
   validateFinaleConcurrentSolo500StepFromTour,
   FINALE_CONCURRENT_SOLO_500_STEP_VERSION} from
   '../../lib/engine/v2/finale-concurrent-solo-500-step.mjs';
+import {recordFinaleConcurrentSolo500CatchMergeFromTour,
+  validateFinaleConcurrentSolo500CatchMergeFromTour,
+  FINALE_CONCURRENT_SOLO_500_CATCH_MERGE_VERSION} from
+  '../../lib/engine/v2/finale-concurrent-solo-500-catch-merge.mjs';
 
 function team(id,skill,gender,{attack=false,
   chase='ignore',rotate=false}={}){
@@ -785,6 +789,18 @@ test('solo and bunch pay one shared 100 m clock from the 500 m handoff',()=>{
     }
     assert.ok([1,2].includes(event.roadBands.length));
     assert.equal(event.pointsStatus,'withheld');
+    if(event.event==='front_bunch_contact_uncontinued'){
+      const merge=recordFinaleConcurrentSolo500CatchMergeFromTour(tour);
+      assert.equal(merge.version,
+        FINALE_CONCURRENT_SOLO_500_CATCH_MERGE_VERSION);
+      assert.equal(merge.roadBands.length,1);
+      assert.equal(merge.riders.length,event.riders.length);
+      assert.equal(merge.chaseDecision,'stop_no_front_target');
+      assert.equal(validateFinaleConcurrentSolo500CatchMergeFromTour(
+        tour,JSON.parse(JSON.stringify(merge))),true);
+    }else assert.throws(()=>
+      recordFinaleConcurrentSolo500CatchMergeFromTour(tour),
+    /exact catch inside the slice/);
     assert.equal(validateFinaleConcurrentSolo500StepFromTour(tour,
       JSON.parse(JSON.stringify(event))),true);
     const forged=structuredClone(event);
