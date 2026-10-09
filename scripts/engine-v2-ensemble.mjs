@@ -53,6 +53,8 @@ import {recordFinaleConcurrentRelativeArrivalsFromTour,
   '../lib/engine/v2/finale-concurrent-relative-arrivals.mjs';
 import {recordFinaleConcurrentCommonTimeStateFromTour} from
   '../lib/engine/v2/finale-concurrent-common-time-state.mjs';
+import {recordFinaleConcurrentSecondArrivalFromTour} from
+  '../lib/engine/v2/finale-concurrent-second-arrival.mjs';
 import {recordFinaleConcurrentNamedAllChaseFromTour} from
   '../lib/engine/v2/finale-concurrent-named-all-chase.mjs';
 import {recordFinaleConcurrentNamedAllChaseContactFromTour} from
@@ -431,6 +433,7 @@ for(const [course,stage] of Object.entries(distanceKm===260?LONG_ROUTES:ROUTES))
           multiSelectiveWithTwoSplit:0,
           multiSelectiveRelativeArrivals:0,
           multiSelectiveCommonTimeState:0,
+          multiSelectiveSecondArrival:0,
           minMultiSelectiveSeparationM:null,
           maxMultiSelectiveSeparationM:null,
           minMultiSelectiveBunchBehindM:null,
@@ -745,6 +748,10 @@ for(const [course,stage] of Object.entries(distanceKm===260?LONG_ROUTES:ROUTES))
                       concurrent.maxMultiSelectiveBunchBehindM=Math.max(
                         concurrent.maxMultiSelectiveBunchBehindM??0,
                         behind);
+                      if(relative.separationSeconds>0){
+                        attempt('multiSelectiveSecondArrival',
+                          recordFinaleConcurrentSecondArrivalFromTour);
+                      }
                     }
                   }
                 }
@@ -1339,6 +1346,8 @@ for(const [course,stage] of Object.entries(distanceKm===260?LONG_ROUTES:ROUTES))
           v91Finale.concurrent.multiSelectiveWithTwoSplit||
         v91Finale.concurrent.multiSelectiveCommonTimeState>
           v91Finale.concurrent.multiSelectiveRelativeArrivals||
+        v91Finale.concurrent.multiSelectiveSecondArrival>
+          v91Finale.concurrent.multiSelectiveCommonTimeState||
         v91Finale.concurrent.allChaseContact>
           v91Finale.concurrent.allChaseLaunch||
         v91Finale.concurrent.chasedFollowup>

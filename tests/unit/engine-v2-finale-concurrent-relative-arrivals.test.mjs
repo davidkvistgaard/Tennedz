@@ -17,6 +17,10 @@ import {recordFinaleConcurrentCommonTimeStateFromTour,
   validateFinaleConcurrentCommonTimeStateFromTour,
   FINALE_CONCURRENT_COMMON_TIME_STATE_VERSION} from
   '../../lib/engine/v2/finale-concurrent-common-time-state.mjs';
+import {recordFinaleConcurrentSecondArrivalFromTour,
+  validateFinaleConcurrentSecondArrivalFromTour,
+  FINALE_CONCURRENT_SECOND_ARRIVAL_VERSION} from
+  '../../lib/engine/v2/finale-concurrent-second-arrival.mjs';
 
 function team(id,skill,gender,{attack=false,
   chase='ignore',rotate=false}={}){
@@ -202,4 +206,56 @@ test('simultaneous attacker arrivals remain ungrouped on the shared clock',()=>{
       row.positionM===state.plannedEndDistanceM));
     assert.equal(state.roadRelationshipStatus,'unresolved');
   }
+});
+
+test('later attacker reaches the boundary on one paid clock',()=>{
+  for(const gender of ['M','F']){
+    const tour=multiSource(gender);
+    const original=structuredClone(tour.provisionalResults);
+    const first=recordFinaleConcurrentCommonTimeStateFromTour(tour);
+    const next=recordFinaleConcurrentSecondArrivalFromTour(tour);
+    assert.equal(next.version,FINALE_CONCURRENT_SECOND_ARRIVAL_VERSION);
+    assert.ok(next.elapsedSinceFirstSeconds>0);
+    assert.ok(next.elapsedSinceLaunchSeconds>first.eventElapsedSeconds);
+    assert.equal(next.riders.length,first.riders.length);
+    assert.equal(new Set(next.riders.map(row=>row.riderId)).size,48);
+    assert.ok(next.separationM>=0);
+    assert.equal(next.firstRiderId,first.attackerPositions[0].riderId);
+    assert.equal(next.secondRiderId,first.attackerPositions[1].riderId);
+    assert.ok(next.riders.every(row=>row.energyAtEvent>=0));
+    for(const row of next.riders){
+      const previous=first.riders.find(rider=>rider.riderId===row.riderId);
+      assert.equal(row.energyAtFirstEvent,previous.energyAtEvent);
+      assert.ok(Math.abs(row.energyAtFirstEvent-
+        row.energySpentSinceFirst-row.energyAtEvent)<1e-8);
+      if(row.riderId!==next.firstRiderId)
+        assert.ok(row.positionM<=next.plannedFirstBoundaryM+1e-8);
+    }
+    assert.equal(next.event,'second_attacker_at_first_slice_boundary');
+    const second=next.riders.find(row=>row.riderId===next.secondRiderId);
+    const firstAtNext=next.riders.find(row=>row.riderId===next.firstRiderId);
+    assert.ok(Math.abs(second.positionM-
+      next.plannedFirstBoundaryM)<1e-8);
+    assert.ok(Math.abs(second.energyAtEvent-
+      second.committedFirstSliceEnergyAfter)<1e-8);
+    assert.ok(firstAtNext.energyAtEvent<
+      firstAtNext.committedFirstSliceEnergyAfter);
+    assert.ok(Math.abs(next.separationM-(firstAtNext.positionM-
+      next.plannedFirstBoundaryM))<1e-8);
+    assert.equal(next.roadRelationshipStatus,'unresolved');
+    assert.equal(next.pointsStatus,'withheld');
+    assert.equal(validateFinaleConcurrentSecondArrivalFromTour(tour,
+      JSON.parse(JSON.stringify(next))),true);
+    const forged=structuredClone(next);
+    forged.riders[0].energyAtEvent+=1;
+    assert.throws(()=>validateFinaleConcurrentSecondArrivalFromTour(tour,
+      forged),/does not replay/);
+    assert.deepEqual(tour.provisionalResults,original);
+  }
+});
+
+test('a simultaneous boundary needs no fictitious continuation interval',()=>{
+  for(const gender of ['M','F'])
+    assert.throws(()=>recordFinaleConcurrentSecondArrivalFromTour(
+      multiSource(gender,75,75)),/needs distinct paid attacker arrivals/);
 });
