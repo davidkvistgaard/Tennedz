@@ -57,6 +57,10 @@ import {concurrentBunch500Event,
   validateFinaleConcurrentBunch500ArrivalFromTour,
   FINALE_CONCURRENT_BUNCH_500_ARRIVAL_VERSION} from
   '../../lib/engine/v2/finale-concurrent-bunch-500-arrival.mjs';
+import {recordFinaleConcurrentSelective500StateFromTour,
+  validateFinaleConcurrentSelective500StateFromTour,
+  FINALE_CONCURRENT_SELECTIVE_500_STATE_VERSION} from
+  '../../lib/engine/v2/finale-concurrent-selective-500-state.mjs';
 
 function team(id,skill,gender,{attack=false,
   chase='ignore',rotate=false}={}){
@@ -671,5 +675,33 @@ test('two split attackers remain paid as their bunch approaches 500 m',()=>{
     assert.throws(()=>validateFinaleConcurrentBunch500ArrivalFromTour(
       tour,forged),/does not replay/);
     assert.deepEqual(tour.provisionalResults,original);
+  }
+});
+
+test('supported selective branches share a replayable paid 500 m handoff',()=>{
+  for(const gender of ['M','F']){
+    for(const [tour,branch,bands] of [
+      [multiSource(gender),'two_split',3],
+      [multiSource(gender,70,75),'solo_ahead',2]]){
+      const original=structuredClone(tour.provisionalResults);
+      const state=recordFinaleConcurrentSelective500StateFromTour(tour);
+      assert.equal(state.version,
+        FINALE_CONCURRENT_SELECTIVE_500_STATE_VERSION);
+      assert.equal(state.branch,branch);
+      assert.equal(state.roadBands.length,bands);
+      assert.equal(state.roadBands.at(-1).positionM,state.boundaryM);
+      assert.equal(state.riders.length,48);
+      assert.equal(new Set(state.riders.map(row=>row.riderId)).size,48);
+      assert.ok(state.riders.every(row=>
+        row.energyAtBoundary>=0&&row.positionM>=state.boundaryM));
+      assert.equal(state.pointsStatus,'withheld');
+      assert.equal(validateFinaleConcurrentSelective500StateFromTour(tour,
+        JSON.parse(JSON.stringify(state))),true);
+      const forged=structuredClone(state);
+      forged.riders[0].energyAtBoundary+=1;
+      assert.throws(()=>validateFinaleConcurrentSelective500StateFromTour(
+        tour,forged),/does not replay/);
+      assert.deepEqual(tour.provisionalResults,original);
+    }
   }
 });

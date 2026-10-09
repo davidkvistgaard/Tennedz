@@ -100,7 +100,7 @@ test('concurrent audit counts every selective chase order in complete bunches',(
     'attack-trace','planned-finale-allied-manager-mix-0','120','100','0',
     '3','5','0','100','hard','0','0','0','0','0','independent',
     '100','fixed'],{
-    encoding:'utf8',timeout:60_000,maxBuffer:8*1024*1024,
+    encoding:'utf8',timeout:180_000,maxBuffer:8*1024*1024,
     env:{...process.env,PELOTONIA_V91_COVERAGE:'on'},
   }));
   const cells=Object.values(report.courses).flatMap(genders=>
@@ -131,7 +131,7 @@ test('fixed 20-team source replays paid travel after two exact catches',()=>{
     '1','20','attack-trace','planned-finale-allied-manager-mix-0',
     '120','100','0','3','5','0','100','hard','0','0','0','0','0',
     'independent','104','fixed'],{
-    encoding:'utf8',timeout:120_000,maxBuffer:8*1024*1024,
+    encoding:'utf8',timeout:180_000,maxBuffer:8*1024*1024,
     env:{...process.env,PELOTONIA_V91_COVERAGE:'on'},
   }));
   const cells=Object.values(report.courses).flatMap(genders=>
@@ -140,6 +140,9 @@ test('fixed 20-team source replays paid travel after two exact catches',()=>{
   const sum=key=>cells.reduce((total,cell)=>total+
     cell.v91Finale.concurrent[key],0);
   assert.equal(sum('multiSelectiveDoubleCatchMerge'),2);
+  assert.equal(sum('multiSelective500State'),5);
+  assert.equal(cells.reduce((total,cell)=>total+(
+    cell.v91Finale.concurrent.multiSelective500Branches.both_caught??0),0),2);
   assert.equal(sum('multiSelectiveDoubleCatchMerge'),
     cells.reduce((total,cell)=>total+(
       cell.v91Finale.concurrent.multiSelectiveRearCatchEvents
