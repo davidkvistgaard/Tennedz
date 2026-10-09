@@ -68,6 +68,9 @@ import {recordFinaleConcurrentRearCatchFollowupFromTour} from
 import {recordFinaleConcurrentRearBunchArrivalFromTour,
   validateFinaleConcurrentRearBunchArrivalFromTour} from
   '../lib/engine/v2/finale-concurrent-rear-bunch-arrival.mjs';
+import {recordFinaleConcurrentTwoSplitFollowupFromTour,
+  validateFinaleConcurrentTwoSplitFollowupFromTour} from
+  '../lib/engine/v2/finale-concurrent-two-split-followup.mjs';
 import {recordFinaleConcurrentDoubleCatchMergeFromTour,
   validateFinaleConcurrentDoubleCatchMergeFromTour} from
   '../lib/engine/v2/finale-concurrent-double-catch-merge.mjs';
@@ -456,6 +459,8 @@ for(const [course,stage] of Object.entries(distanceKm===260?LONG_ROUTES:ROUTES))
           multiSelectiveNextBoundary:0,
           multiSelectiveNextContactEvents:0,
           multiSelectiveNextEventKinds:{},
+          multiSelectiveTwoSplitFollowup:0,
+          multiSelectiveTwoSplitEvents:{},
           multiSelectiveContactState:0,
           multiSelectiveRearCatchFollowup:0,
           multiSelectiveRearCatchEvents:{},
@@ -794,6 +799,19 @@ for(const [course,stage] of Object.entries(distanceKm===260?LONG_ROUTES:ROUTES))
                             if(next)concurrent.multiSelectiveNextEventKinds[
                               next.event]=(concurrent
                               .multiSelectiveNextEventKinds[next.event]??0)+1;
+                            if(next?.event==='first_attacker_at_next_boundary'){
+                              const followup=attempt(
+                                'multiSelectiveTwoSplitFollowup',
+                                recordFinaleConcurrentTwoSplitFollowupFromTour);
+                              if(followup){
+                                validateFinaleConcurrentTwoSplitFollowupFromTour(
+                                  race,JSON.parse(JSON.stringify(followup)));
+                                concurrent.multiSelectiveTwoSplitEvents[
+                                  followup.event]=(concurrent
+                                  .multiSelectiveTwoSplitEvents[
+                                    followup.event]??0)+1;
+                              }
+                            }
                             if(next?.event?.includes('contact'))
                               attempt('multiSelectiveContactState',
                                 recordFinaleConcurrentContactStateFromTour);
@@ -1436,6 +1454,8 @@ for(const [course,stage] of Object.entries(distanceKm===260?LONG_ROUTES:ROUTES))
         v91Finale.concurrent.multiSelectiveNextBoundary>
           v91Finale.concurrent.multiSelectiveNextSlicePlan||
         v91Finale.concurrent.multiSelectiveNextContactEvents>
+          v91Finale.concurrent.multiSelectiveNextBoundary||
+        v91Finale.concurrent.multiSelectiveTwoSplitFollowup>
           v91Finale.concurrent.multiSelectiveNextBoundary||
         v91Finale.concurrent.multiSelectiveContactState>
           v91Finale.concurrent.multiSelectiveNextContactEvents||

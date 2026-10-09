@@ -47,6 +47,11 @@ import {rearBunchArrivalEvent,
   validateFinaleConcurrentRearBunchArrivalFromTour,
   FINALE_CONCURRENT_REAR_BUNCH_ARRIVAL_VERSION} from
   '../../lib/engine/v2/finale-concurrent-rear-bunch-arrival.mjs';
+import {twoSplitFollowupEvent,
+  recordFinaleConcurrentTwoSplitFollowupFromTour,
+  validateFinaleConcurrentTwoSplitFollowupFromTour,
+  FINALE_CONCURRENT_TWO_SPLIT_FOLLOWUP_VERSION} from
+  '../../lib/engine/v2/finale-concurrent-two-split-followup.mjs';
 
 function team(id,skill,gender,{attack=false,
   chase='ignore',rotate=false}={}){
@@ -553,6 +558,59 @@ test('separated front and rear-caught bunch pay one clock to next event',()=>{
     const forged=structuredClone(event);
     forged.riders[0].distanceM+=1;
     assert.throws(()=>validateFinaleConcurrentRearBunchArrivalFromTour(
+      tour,forged),/does not replay/);
+    assert.deepEqual(tour.provisionalResults,original);
+  }
+});
+
+test('two-split follow-up chooses the earliest boundary or rear contact',()=>{
+  const positions={firstPositionM:500,secondPositionM:480,
+    bunchPositionM:470,firstNextBoundaryM:600,
+    secondNextBoundaryM:500,bunchNextBoundaryM:500};
+  assert.deepEqual(twoSplitFollowupEvent({...positions,
+    firstSpeedMps:20,secondSpeedMps:10,bunchSpeedMps:2}),
+  {kind:'second_at_second_slice_boundary',seconds:2});
+  assert.deepEqual(twoSplitFollowupEvent({...positions,
+    firstSpeedMps:20,secondSpeedMps:1,bunchSpeedMps:1}),
+  {kind:'first_at_next_boundary',seconds:5});
+  assert.deepEqual(twoSplitFollowupEvent({...positions,
+    firstSpeedMps:10,secondSpeedMps:10,bunchSpeedMps:30}),
+  {kind:'second_attacker_bunch_contact_uncontinued',seconds:0.5});
+  assert.throws(()=>twoSplitFollowupEvent({...positions,
+    secondPositionM:470,firstSpeedMps:10,
+    secondSpeedMps:10,bunchSpeedMps:30}),
+  /ordered positive travel/);
+});
+
+test('two surviving attackers and the bunch continue on one paid clock',()=>{
+  for(const gender of ['M','F']){
+    const tour=multiSource(gender);
+    const original=structuredClone(tour.provisionalResults);
+    const previous=recordFinaleConcurrentNextBoundaryFromTour(tour);
+    assert.equal(previous.event,'first_attacker_at_next_boundary');
+    const event=recordFinaleConcurrentTwoSplitFollowupFromTour(tour);
+    assert.equal(event.version,
+      FINALE_CONCURRENT_TWO_SPLIT_FOLLOWUP_VERSION);
+    assert.ok(event.elapsedSinceLaunchSeconds>
+      previous.elapsedSinceLaunchSeconds);
+    assert.equal(event.riders.length,previous.riders.length);
+    assert.equal(new Set(event.riders.map(row=>row.riderId)).size,
+      event.riders.length);
+    for(const row of event.riders){
+      const prior=previous.riders.find(source=>
+        source.riderId===row.riderId);
+      assert.equal(row.energyAtPreviousEvent,prior.energyAtEvent);
+      assert.ok(row.energyAtEvent>=0);
+      assert.ok(Math.abs(row.energyAtPreviousEvent-row.energySpent-
+        row.energyAtEvent)<1e-8);
+    }
+    assert.equal(event.roadBands.length,3);
+    assert.equal(event.pointsStatus,'withheld');
+    assert.equal(validateFinaleConcurrentTwoSplitFollowupFromTour(tour,
+      JSON.parse(JSON.stringify(event))),true);
+    const forged=structuredClone(event);
+    forged.riders[0].energySpent+=1;
+    assert.throws(()=>validateFinaleConcurrentTwoSplitFollowupFromTour(
       tour,forged),/does not replay/);
     assert.deepEqual(tour.provisionalResults,original);
   }
