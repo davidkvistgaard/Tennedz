@@ -142,6 +142,7 @@ test('fixed 20-team source replays paid travel after two exact catches',()=>{
   assert.equal(sum('multiSelectiveDoubleCatchMerge'),2);
   assert.equal(sum('multiSelective500State'),5);
   assert.equal(sum('multiSelective500Plan'),3);
+  assert.equal(sum('multiSelectiveSolo500Step'),1);
   assert.equal(cells.reduce((total,cell)=>total+(
     cell.v91Finale.concurrent.multiSelective500Branches.both_caught??0),0),2);
   assert.equal(sum('multiSelectiveDoubleCatchMerge'),
