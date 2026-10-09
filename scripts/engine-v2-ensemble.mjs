@@ -55,6 +55,8 @@ import {recordFinaleConcurrentCommonTimeStateFromTour} from
   '../lib/engine/v2/finale-concurrent-common-time-state.mjs';
 import {recordFinaleConcurrentSecondArrivalFromTour} from
   '../lib/engine/v2/finale-concurrent-second-arrival.mjs';
+import {recordFinaleConcurrentBunchArrivalFromTour} from
+  '../lib/engine/v2/finale-concurrent-bunch-arrival.mjs';
 import {recordFinaleConcurrentNamedAllChaseFromTour} from
   '../lib/engine/v2/finale-concurrent-named-all-chase.mjs';
 import {recordFinaleConcurrentNamedAllChaseContactFromTour} from
@@ -434,6 +436,8 @@ for(const [course,stage] of Object.entries(distanceKm===260?LONG_ROUTES:ROUTES))
           multiSelectiveRelativeArrivals:0,
           multiSelectiveCommonTimeState:0,
           multiSelectiveSecondArrival:0,
+          multiSelectiveBunchArrival:0,
+          multiSelectiveBunchContactEvents:0,
           minMultiSelectiveSeparationM:null,
           maxMultiSelectiveSeparationM:null,
           minMultiSelectiveBunchBehindM:null,
@@ -749,8 +753,14 @@ for(const [course,stage] of Object.entries(distanceKm===260?LONG_ROUTES:ROUTES))
                         concurrent.maxMultiSelectiveBunchBehindM??0,
                         behind);
                       if(relative.separationSeconds>0){
-                        attempt('multiSelectiveSecondArrival',
+                        const second=attempt('multiSelectiveSecondArrival',
                           recordFinaleConcurrentSecondArrivalFromTour);
+                        if(second){
+                          const bunch=attempt('multiSelectiveBunchArrival',
+                            recordFinaleConcurrentBunchArrivalFromTour);
+                          concurrent.multiSelectiveBunchContactEvents+=Number(
+                            bunch?.event?.includes('contact'));
+                        }
                       }
                     }
                   }
@@ -1348,6 +1358,10 @@ for(const [course,stage] of Object.entries(distanceKm===260?LONG_ROUTES:ROUTES))
           v91Finale.concurrent.multiSelectiveRelativeArrivals||
         v91Finale.concurrent.multiSelectiveSecondArrival>
           v91Finale.concurrent.multiSelectiveCommonTimeState||
+        v91Finale.concurrent.multiSelectiveBunchArrival>
+          v91Finale.concurrent.multiSelectiveSecondArrival||
+        v91Finale.concurrent.multiSelectiveBunchContactEvents>
+          v91Finale.concurrent.multiSelectiveBunchArrival||
         v91Finale.concurrent.allChaseContact>
           v91Finale.concurrent.allChaseLaunch||
         v91Finale.concurrent.chasedFollowup>

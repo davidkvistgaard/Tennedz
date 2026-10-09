@@ -21,6 +21,11 @@ import {recordFinaleConcurrentSecondArrivalFromTour,
   validateFinaleConcurrentSecondArrivalFromTour,
   FINALE_CONCURRENT_SECOND_ARRIVAL_VERSION} from
   '../../lib/engine/v2/finale-concurrent-second-arrival.mjs';
+import {concurrentBunchArrivalEvent,
+  recordFinaleConcurrentBunchArrivalFromTour,
+  validateFinaleConcurrentBunchArrivalFromTour,
+  FINALE_CONCURRENT_BUNCH_ARRIVAL_VERSION} from
+  '../../lib/engine/v2/finale-concurrent-bunch-arrival.mjs';
 
 function team(id,skill,gender,{attack=false,
   chase='ignore',rotate=false}={}){
@@ -258,4 +263,64 @@ test('a simultaneous boundary needs no fictitious continuation interval',()=>{
   for(const gender of ['M','F'])
     assert.throws(()=>recordFinaleConcurrentSecondArrivalFromTour(
       multiSource(gender,75,75)),/needs distinct paid attacker arrivals/);
+});
+
+test('the paid bunch reaches the first boundary on the shared clock',()=>{
+  for(const gender of ['M','F']){
+    const tour=multiSource(gender);
+    const original=structuredClone(tour.provisionalResults);
+    const second=recordFinaleConcurrentSecondArrivalFromTour(tour);
+    const bunch=recordFinaleConcurrentBunchArrivalFromTour(tour);
+    assert.equal(bunch.version,FINALE_CONCURRENT_BUNCH_ARRIVAL_VERSION);
+    assert.equal(bunch.event,'bunch_at_first_slice_boundary');
+    assert.ok(bunch.elapsedSinceLaunchSeconds>
+      second.elapsedSinceLaunchSeconds);
+    assert.ok(Math.abs(bunch.bunchPositionM-
+      bunch.plannedFirstBoundaryM)<1e-8);
+    assert.ok(bunch.firstPositionM>bunch.secondPositionM);
+    assert.ok(bunch.secondPositionM>bunch.bunchPositionM);
+    assert.equal(bunch.contactPositionM,null);
+    assert.equal(bunch.riders.length,48);
+    assert.equal(new Set(bunch.riders.map(row=>row.riderId)).size,48);
+    for(const row of bunch.riders){
+      const previous=second.riders.find(source=>
+        source.riderId===row.riderId);
+      assert.equal(row.energyAtSecondEvent,previous.energyAtEvent);
+      assert.ok(row.energyAtEvent>=0);
+      assert.ok(Math.abs(row.energyAtSecondEvent-
+        row.energySpentSinceSecond-row.energyAtEvent)<1e-8);
+      if(row.riderId!==bunch.firstRiderId&&
+        row.riderId!==bunch.secondRiderId)
+        assert.ok(Math.abs(row.energyAtEvent-
+          row.committedFirstSliceEnergyAfter)<1e-8);
+    }
+    assert.equal(bunch.pointsStatus,'withheld');
+    assert.equal(validateFinaleConcurrentBunchArrivalFromTour(tour,
+      JSON.parse(JSON.stringify(bunch))),true);
+    const forged=structuredClone(bunch);
+    forged.riders[0].energyAtEvent+=1;
+    assert.throws(()=>validateFinaleConcurrentBunchArrivalFromTour(tour,
+      forged),/does not replay/);
+    assert.deepEqual(tour.provisionalResults,original);
+  }
+});
+
+test('exact next-event solver stops at the earliest physical contact',()=>{
+  const positions={firstPositionM:20,secondPositionM:10,
+    bunchPositionM:0,bunchArrivalSeconds:5};
+  assert.deepEqual(concurrentBunchArrivalEvent({...positions,
+    firstSpeedMps:10,secondSpeedMps:13,bunchSpeedMps:11}),
+  {kind:'attackers_contact_uncontinued',seconds:10/3});
+  assert.deepEqual(concurrentBunchArrivalEvent({...positions,
+    firstSpeedMps:13,secondSpeedMps:10,bunchSpeedMps:15}),
+  {kind:'second_attacker_bunch_contact_uncontinued',seconds:2});
+  assert.deepEqual(concurrentBunchArrivalEvent({...positions,
+    firstSpeedMps:13,secondSpeedMps:11,bunchSpeedMps:10}),
+  {kind:'bunch_at_first_slice_boundary',seconds:5});
+  assert.deepEqual(concurrentBunchArrivalEvent({...positions,
+    firstSpeedMps:10,secondSpeedMps:12,bunchSpeedMps:14}),
+  {kind:'multiple_contacts_uncontinued',seconds:5});
+  assert.throws(()=>concurrentBunchArrivalEvent({...positions,
+    secondPositionM:0,firstSpeedMps:10,
+    secondSpeedMps:11,bunchSpeedMps:12}),/ordered positions/);
 });
