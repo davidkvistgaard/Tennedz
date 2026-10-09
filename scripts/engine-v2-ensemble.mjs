@@ -65,6 +65,9 @@ import {recordFinaleConcurrentContactStateFromTour} from
   '../lib/engine/v2/finale-concurrent-contact-state.mjs';
 import {recordFinaleConcurrentRearCatchFollowupFromTour} from
   '../lib/engine/v2/finale-concurrent-rear-catch-followup.mjs';
+import {recordFinaleConcurrentRearBunchArrivalFromTour,
+  validateFinaleConcurrentRearBunchArrivalFromTour} from
+  '../lib/engine/v2/finale-concurrent-rear-bunch-arrival.mjs';
 import {recordFinaleConcurrentDoubleCatchMergeFromTour,
   validateFinaleConcurrentDoubleCatchMergeFromTour} from
   '../lib/engine/v2/finale-concurrent-double-catch-merge.mjs';
@@ -456,6 +459,8 @@ for(const [course,stage] of Object.entries(distanceKm===260?LONG_ROUTES:ROUTES))
           multiSelectiveContactState:0,
           multiSelectiveRearCatchFollowup:0,
           multiSelectiveRearCatchEvents:{},
+          multiSelectiveRearBunchArrival:0,
+          multiSelectiveRearBunchEvents:{},
           multiSelectiveDoubleCatchMerge:0,
           minMultiSelectiveSeparationM:null,
           maxMultiSelectiveSeparationM:null,
@@ -800,6 +805,19 @@ for(const [course,stage] of Object.entries(distanceKm===260?LONG_ROUTES:ROUTES))
                               if(rear)concurrent.multiSelectiveRearCatchEvents[
                                 rear.event]=(concurrent
                                 .multiSelectiveRearCatchEvents[rear.event]??0)+1;
+                              if(rear?.event==='front_at_next_boundary'){
+                                const arrival=attempt(
+                                  'multiSelectiveRearBunchArrival',
+                                  recordFinaleConcurrentRearBunchArrivalFromTour);
+                                if(arrival){
+                                  validateFinaleConcurrentRearBunchArrivalFromTour(
+                                    race,JSON.parse(JSON.stringify(arrival)));
+                                  concurrent.multiSelectiveRearBunchEvents[
+                                    arrival.event]=(concurrent
+                                    .multiSelectiveRearBunchEvents[
+                                      arrival.event]??0)+1;
+                                }
+                              }
                               if(rear?.event===
                                 'front_bunch_contact_uncontinued'){
                                 const merged=attempt(
@@ -1423,6 +1441,8 @@ for(const [course,stage] of Object.entries(distanceKm===260?LONG_ROUTES:ROUTES))
           v91Finale.concurrent.multiSelectiveNextContactEvents||
         v91Finale.concurrent.multiSelectiveRearCatchFollowup>
           v91Finale.concurrent.multiSelectiveContactState||
+        v91Finale.concurrent.multiSelectiveRearBunchArrival>
+          v91Finale.concurrent.multiSelectiveRearCatchFollowup||
         v91Finale.concurrent.multiSelectiveDoubleCatchMerge>
           v91Finale.concurrent.multiSelectiveRearCatchFollowup||
         v91Finale.concurrent.allChaseContact>
