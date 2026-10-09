@@ -34,6 +34,12 @@ import {recordFinaleConcurrentNextBoundaryFromTour,
   validateFinaleConcurrentNextBoundaryFromTour,
   FINALE_CONCURRENT_NEXT_BOUNDARY_VERSION} from
   '../../lib/engine/v2/finale-concurrent-next-boundary.mjs';
+import {concurrentContactRoadBands} from
+  '../../lib/engine/v2/finale-concurrent-contact-state.mjs';
+import {rearCatchFollowupEvent,
+  recordFinaleConcurrentRearCatchFollowupFromTour,
+  validateFinaleConcurrentRearCatchFollowupFromTour} from
+  '../../lib/engine/v2/finale-concurrent-rear-catch-followup.mjs';
 
 function team(id,skill,gender,{attack=false,
   chase='ignore',rotate=false}={}){
@@ -408,6 +414,80 @@ test('next boundary charges the exact shared travel or stops at contact',()=>{
     forged.riders[0].energySpent+=1;
     assert.throws(()=>validateFinaleConcurrentNextBoundaryFromTour(tour,
       forged),/does not replay/);
+    assert.deepEqual(tour.provisionalResults,original);
+  }
+});
+
+test('exact contact identifies road bands without granting draft or travel',()=>{
+  const rows=(first,second,bunch)=>[
+    {riderId:'a',positionM:first,energyAtEvent:40},
+    {riderId:'b',positionM:second,energyAtEvent:35},
+    {riderId:'c',positionM:bunch,energyAtEvent:30},
+    {riderId:'d',positionM:bunch,energyAtEvent:25}];
+  const input={firstRiderId:'a',secondRiderId:'b'};
+  assert.deepEqual(concurrentContactRoadBands({...input,
+    event:'attackers_contact_uncontinued',riders:rows(12,12,5)}),[
+    {kind:'front',positionM:12,riderIds:['a','b']},
+    {kind:'bunch',positionM:5,riderIds:['c','d']}]);
+  assert.deepEqual(concurrentContactRoadBands({...input,
+    event:'second_attacker_bunch_contact_uncontinued',
+    riders:rows(12,5,5)}),[
+    {kind:'front',positionM:12,riderIds:['a']},
+    {kind:'bunch',positionM:5,riderIds:['b','c','d']}]);
+  assert.deepEqual(concurrentContactRoadBands({...input,
+    event:'multiple_contacts_uncontinued',riders:rows(5,5,5)}),[
+    {kind:'bunch',positionM:5,riderIds:['a','b','c','d']}]);
+  assert.throws(()=>concurrentContactRoadBands({...input,
+    event:'attackers_contact_uncontinued',riders:rows(12,11,5)}),
+  /disagree/);
+  assert.throws(()=>concurrentContactRoadBands({...input,
+    event:'first_attacker_at_next_boundary',riders:rows(12,11,5)}),
+  /paid exact-intersection/);
+});
+
+test('rear-catch continuation chooses the next exact event',()=>{
+  const positions={frontPositionM:20,bunchPositionM:10,
+    nextBoundaryM:30,frontSpeedMps:10};
+  assert.deepEqual(rearCatchFollowupEvent({...positions,
+    bunchSpeedMps:25}),
+  {kind:'front_bunch_contact_uncontinued',seconds:2/3});
+  assert.deepEqual(rearCatchFollowupEvent({...positions,
+    bunchSpeedMps:11}),
+  {kind:'front_at_next_boundary',seconds:1});
+  assert.throws(()=>rearCatchFollowupEvent({...positions,
+    bunchPositionM:20,bunchSpeedMps:11}),/ordered positive travel/);
+});
+
+test('measured rear contact can carry its already-paid field work',()=>{
+  for(const gender of ['M','F']){
+    const tour=multiSource(gender,70,75);
+    const original=structuredClone(tour.provisionalResults);
+    const contact=recordFinaleConcurrentNextBoundaryFromTour(tour);
+    assert.equal(contact.event,
+      'second_attacker_bunch_contact_uncontinued');
+    const continued=recordFinaleConcurrentRearCatchFollowupFromTour(tour);
+    assert.ok(continued.elapsedSinceLaunchSeconds>
+      contact.elapsedSinceLaunchSeconds);
+    assert.equal(continued.riders.length,contact.riders.length);
+    assert.equal(new Set(continued.riders.map(row=>row.riderId)).size,
+      continued.riders.length);
+    assert.ok(continued.roadBands.some(row=>
+      row.riderIds.includes(continued.caughtRiderId)));
+    for(const row of continued.riders){
+      const prior=contact.riders.find(source=>
+        source.riderId===row.riderId);
+      assert.equal(row.energyAtContact,prior.energyAtEvent);
+      assert.ok(row.energyAtEvent>=0);
+      assert.ok(Math.abs(row.energyAtContact-row.energySpent-
+        row.energyAtEvent)<1e-8);
+    }
+    assert.equal(continued.pointsStatus,'withheld');
+    assert.equal(validateFinaleConcurrentRearCatchFollowupFromTour(tour,
+      JSON.parse(JSON.stringify(continued))),true);
+    const forged=structuredClone(continued);
+    forged.riders[0].energySpent+=1;
+    assert.throws(()=>validateFinaleConcurrentRearCatchFollowupFromTour(
+      tour,forged),/does not replay/);
     assert.deepEqual(tour.provisionalResults,original);
   }
 });
