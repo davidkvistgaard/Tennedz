@@ -87,6 +87,11 @@ import {recordFinaleConcurrentFront400PlanFromTour,
   '../../lib/engine/v2/finale-concurrent-front-400-plan.mjs';
 import {recordFinaleConcurrentRearCaught400StepFromTour} from
   '../../lib/engine/v2/finale-concurrent-rear-caught-400-step.mjs';
+import {twoSplit400NextEvent,
+  recordFinaleConcurrentTwoSplit400StepFromTour,
+  validateFinaleConcurrentTwoSplit400StepFromTour,
+  FINALE_CONCURRENT_TWO_SPLIT_400_STEP_VERSION} from
+  '../../lib/engine/v2/finale-concurrent-two-split-400-step.mjs';
 
 function team(id,skill,gender,{attack=false,
   chase='ignore',rotate=false}={}){
@@ -924,5 +929,63 @@ test('rear-caught 400 m travel refuses a still-separated pair',()=>{
       .branch,'two_split');
     assert.throws(()=>recordFinaleConcurrentRearCaught400StepFromTour(
       tour),/exact rear-bunch contact/);
+  }
+});
+
+test('two-split 400 m solver stops at the first paid boundary or contact',()=>{
+  const state={frontPositionM:600,rearPositionM:580,
+    bunchPositionM:570,frontNextBoundaryM:700,
+    rearNextBoundaryM:600,bunchNextBoundaryM:600};
+  assert.deepEqual(twoSplit400NextEvent({...state,
+    frontSpeedMps:20,rearSpeedMps:10,bunchSpeedMps:10}),
+  {kind:'rear_at_400_boundary',seconds:2});
+  assert.deepEqual(twoSplit400NextEvent({...state,
+    frontSpeedMps:10,rearSpeedMps:10,bunchSpeedMps:30}),
+  {kind:'second_attacker_bunch_contact_uncontinued',seconds:0.5});
+  assert.deepEqual(twoSplit400NextEvent({...state,
+    frontSpeedMps:100,rearSpeedMps:5,bunchSpeedMps:5}),
+  {kind:'front_at_300_boundary',seconds:1});
+  const contactState={...state,frontNextBoundaryM:800,
+    rearNextBoundaryM:700,bunchNextBoundaryM:700};
+  assert.deepEqual(twoSplit400NextEvent({...contactState,
+    frontSpeedMps:10,rearSpeedMps:30,bunchSpeedMps:20}),
+  {kind:'attackers_contact_uncontinued',seconds:1});
+  assert.deepEqual(twoSplit400NextEvent({...contactState,
+    frontSpeedMps:10,rearSpeedMps:30,bunchSpeedMps:40}),
+  {kind:'multiple_contacts_uncontinued',seconds:1});
+  assert.throws(()=>twoSplit400NextEvent({...state,
+    rearPositionM:570,frontSpeedMps:20,rearSpeedMps:10,
+    bunchSpeedMps:10}),/ordered positive travel/);
+});
+
+test('two split attackers pay one 400 m clock without a free finish',()=>{
+  for(const gender of ['M','F']){
+    const tour=multiSource(gender);
+    const prior=recordFinaleConcurrentTwoSplit500StepFromTour(tour);
+    assert.equal(prior.event,'front_at_400_boundary');
+    const original=structuredClone(tour.provisionalResults);
+    const step=recordFinaleConcurrentTwoSplit400StepFromTour(tour);
+    assert.equal(step.version,FINALE_CONCURRENT_TWO_SPLIT_400_STEP_VERSION);
+    assert.ok(step.elapsedSince400Seconds>0);
+    assert.equal(step.riders.length,prior.riders.length);
+    assert.equal(new Set(step.riders.map(row=>row.riderId)).size,
+      prior.riders.length);
+    for(const row of step.riders){
+      const source=prior.riders.find(previous=>
+        previous.riderId===row.riderId);
+      assert.equal(row.energyAtDecision,source.energyAtEvent);
+      assert.ok(Math.abs(row.energyAtDecision-row.energySpent-
+        row.energyAtEvent)<1e-8);
+      assert.ok(row.positionM>=source.positionM);
+    }
+    assert.equal(step.resultStatus,'unclassified');
+    assert.equal(step.pointsStatus,'withheld');
+    assert.equal(validateFinaleConcurrentTwoSplit400StepFromTour(tour,
+      JSON.parse(JSON.stringify(step))),true);
+    const forged=structuredClone(step);
+    forged.riders[0].energySpent+=1;
+    assert.throws(()=>validateFinaleConcurrentTwoSplit400StepFromTour(
+      tour,forged),/does not replay/);
+    assert.deepEqual(tour.provisionalResults,original);
   }
 });

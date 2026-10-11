@@ -98,6 +98,9 @@ import {recordFinaleConcurrentFront400PlanFromTour,
 import {recordFinaleConcurrentRearCaught400StepFromTour,
   validateFinaleConcurrentRearCaught400StepFromTour} from
   '../lib/engine/v2/finale-concurrent-rear-caught-400-step.mjs';
+import {recordFinaleConcurrentTwoSplit400StepFromTour,
+  validateFinaleConcurrentTwoSplit400StepFromTour} from
+  '../lib/engine/v2/finale-concurrent-two-split-400-step.mjs';
 import {recordFinaleConcurrentDoubleCatchMergeFromTour,
   validateFinaleConcurrentDoubleCatchMergeFromTour} from
   '../lib/engine/v2/finale-concurrent-double-catch-merge.mjs';
@@ -505,6 +508,8 @@ for(const [course,stage] of Object.entries(distanceKm===260?LONG_ROUTES:ROUTES))
           multiSelectiveFront400PlanBranches:{},
           multiSelectiveRearCaught400Step:0,
           multiSelectiveRearCaught400Events:{},
+          multiSelectiveTwoSplit400Step:0,
+          multiSelectiveTwoSplit400Events:{},
           multiSelectiveContactState:0,
           multiSelectiveRearCatchFollowup:0,
           multiSelectiveRearCatchEvents:{},
@@ -959,7 +964,8 @@ for(const [course,stage] of Object.entries(distanceKm===260?LONG_ROUTES:ROUTES))
                                           step.event]=(concurrent
                                           .multiSelectiveTwoSplit500Events[
                                             step.event]??0)+1;
-                                        let frontAt400=false;
+                                        let frontAt400=step.event===
+                                          'front_at_400_boundary';
                                         if(step.event===
                                           'second_attacker_bunch_contact_uncontinued'){
                                           const continued=attempt(
@@ -997,6 +1003,19 @@ for(const [course,stage] of Object.entries(distanceKm===260?LONG_ROUTES:ROUTES))
                                                 concurrent.multiSelectiveRearCaught400Events[
                                                   next.event]=(concurrent
                                                   .multiSelectiveRearCaught400Events[
+                                                    next.event]??0)+1;
+                                              }
+                                            }
+                                            if(frontPlan.branch==='two_split'){
+                                              const next=attempt(
+                                                'multiSelectiveTwoSplit400Step',
+                                                recordFinaleConcurrentTwoSplit400StepFromTour);
+                                              if(next){
+                                                validateFinaleConcurrentTwoSplit400StepFromTour(
+                                                  race,JSON.parse(JSON.stringify(next)));
+                                                concurrent.multiSelectiveTwoSplit400Events[
+                                                  next.event]=(concurrent
+                                                  .multiSelectiveTwoSplit400Events[
                                                     next.event]??0)+1;
                                               }
                                             }
@@ -1634,6 +1653,9 @@ for(const [course,stage] of Object.entries(distanceKm===260?LONG_ROUTES:ROUTES))
         v91Finale.concurrent.multiSelectiveTwoSplit500RearCatch>
           (v91Finale.concurrent.multiSelectiveTwoSplit500Events
             .second_attacker_bunch_contact_uncontinued??0)||
+        v91Finale.concurrent.multiSelectiveTwoSplit400Step>
+          (v91Finale.concurrent.multiSelectiveTwoSplit500Events
+            .front_at_400_boundary??0)||
         v91Finale.concurrent.multiSelectiveContactState>
           v91Finale.concurrent.multiSelectiveNextContactEvents||
         v91Finale.concurrent.multiSelectiveRearCatchFollowup>
