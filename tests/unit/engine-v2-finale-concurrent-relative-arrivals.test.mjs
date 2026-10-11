@@ -92,6 +92,10 @@ import {twoSplit400NextEvent,
   validateFinaleConcurrentTwoSplit400StepFromTour,
   FINALE_CONCURRENT_TWO_SPLIT_400_STEP_VERSION} from
   '../../lib/engine/v2/finale-concurrent-two-split-400-step.mjs';
+import {recordFinaleConcurrentRear400PlanFromTour,
+  validateFinaleConcurrentRear400PlanFromTour,
+  FINALE_CONCURRENT_REAR_400_PLAN_VERSION} from
+  '../../lib/engine/v2/finale-concurrent-rear-400-plan.mjs';
 
 function team(id,skill,gender,{attack=false,
   chase='ignore',rotate=false}={}){
@@ -985,6 +989,36 @@ test('two split attackers pay one 400 m clock without a free finish',()=>{
     const forged=structuredClone(step);
     forged.riders[0].energySpent+=1;
     assert.throws(()=>validateFinaleConcurrentTwoSplit400StepFromTour(
+      tour,forged),/does not replay/);
+    assert.deepEqual(tour.provisionalResults,original);
+  }
+});
+
+test('rear attacker chooses affordable 400 m work without moving the road',()=>{
+  for(const gender of ['M','F']){
+    const tour=multiSource(gender);
+    const previous=recordFinaleConcurrentTwoSplit400StepFromTour(tour);
+    assert.equal(previous.event,'rear_at_400_boundary');
+    const original=structuredClone(tour.provisionalResults);
+    const plan=recordFinaleConcurrentRear400PlanFromTour(tour);
+    assert.equal(plan.version,FINALE_CONCURRENT_REAR_400_PLAN_VERSION);
+    assert.equal(plan.travelStatus,'planned_unpaid');
+    assert.equal(plan.rearEnergyAtDecision,previous.riders.find(row=>
+      row.riderId===plan.rearRiderId).energyAtEvent);
+    assert.equal(plan.elapsedSinceLaunchSeconds,
+      previous.elapsedSinceLaunchSeconds);
+    assert.deepEqual(plan.roadBands,previous.roadBands);
+    assert.deepEqual(plan.riderAttackLoad,previous.riderAttackLoad);
+    assert.deepEqual(plan.riders,previous.riders.map(row=>({
+      riderId:row.riderId,positionM:row.positionM,
+      energyAtDecision:row.energyAtEvent})));
+    assert.equal(plan.resultStatus,'unclassified');
+    assert.equal(plan.pointsStatus,'withheld');
+    assert.equal(validateFinaleConcurrentRear400PlanFromTour(tour,
+      JSON.parse(JSON.stringify(plan))),true);
+    const forged=structuredClone(plan);
+    forged.rearEnergyAtDecision+=1;
+    assert.throws(()=>validateFinaleConcurrentRear400PlanFromTour(
       tour,forged),/does not replay/);
     assert.deepEqual(tour.provisionalResults,original);
   }

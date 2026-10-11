@@ -130,6 +130,7 @@ test('concurrent audit counts every selective chase order in complete bunches',(
   assert.equal(sum('multiSelectiveFront400Plan'),4);
   assert.equal(sum('multiSelectiveRearCaught400Step'),1);
   assert.equal(sum('multiSelectiveTwoSplit400Step'),3);
+  assert.equal(sum('multiSelectiveRear400Plan'),3);
   assert.equal(sum('multiSelectiveTwoSplit400Step'),cells.reduce(
     (total,cell)=>total+(cell.v91Finale.concurrent
       .multiSelectiveTwoSplit500Events.front_at_400_boundary??0),0));
@@ -156,7 +157,8 @@ test('concurrent audit counts every selective chase order in complete bunches',(
     reason.startsWith('multiSelectiveTwoSplit500RearCatch:')||
       reason.startsWith('multiSelectiveFront400Plan:')||
       reason.startsWith('multiSelectiveRearCaught400Step:')||
-      reason.startsWith('multiSelectiveTwoSplit400Step:'))));
+      reason.startsWith('multiSelectiveTwoSplit400Step:')||
+      reason.startsWith('multiSelectiveRear400Plan:'))));
 });
 
 test('fixed 20-team source replays paid travel after two exact catches',()=>{
@@ -164,7 +166,7 @@ test('fixed 20-team source replays paid travel after two exact catches',()=>{
     '1','20','attack-trace','planned-finale-allied-manager-mix-0',
     '120','100','0','3','5','0','100','hard','0','0','0','0','0',
     'independent','104','fixed'],{
-    encoding:'utf8',timeout:480_000,maxBuffer:8*1024*1024,
+    encoding:'utf8',timeout:600_000,maxBuffer:8*1024*1024,
     env:{...process.env,PELOTONIA_V91_COVERAGE:'on'},
   }));
   const cells=Object.values(report.courses).flatMap(genders=>

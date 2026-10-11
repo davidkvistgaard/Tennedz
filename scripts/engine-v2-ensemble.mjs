@@ -101,6 +101,9 @@ import {recordFinaleConcurrentRearCaught400StepFromTour,
 import {recordFinaleConcurrentTwoSplit400StepFromTour,
   validateFinaleConcurrentTwoSplit400StepFromTour} from
   '../lib/engine/v2/finale-concurrent-two-split-400-step.mjs';
+import {recordFinaleConcurrentRear400PlanFromTour,
+  validateFinaleConcurrentRear400PlanFromTour} from
+  '../lib/engine/v2/finale-concurrent-rear-400-plan.mjs';
 import {recordFinaleConcurrentDoubleCatchMergeFromTour,
   validateFinaleConcurrentDoubleCatchMergeFromTour} from
   '../lib/engine/v2/finale-concurrent-double-catch-merge.mjs';
@@ -510,6 +513,7 @@ for(const [course,stage] of Object.entries(distanceKm===260?LONG_ROUTES:ROUTES))
           multiSelectiveRearCaught400Events:{},
           multiSelectiveTwoSplit400Step:0,
           multiSelectiveTwoSplit400Events:{},
+          multiSelectiveRear400Plan:0,
           multiSelectiveContactState:0,
           multiSelectiveRearCatchFollowup:0,
           multiSelectiveRearCatchEvents:{},
@@ -1017,6 +1021,14 @@ for(const [course,stage] of Object.entries(distanceKm===260?LONG_ROUTES:ROUTES))
                                                   next.event]=(concurrent
                                                   .multiSelectiveTwoSplit400Events[
                                                     next.event]??0)+1;
+                                                if(next.event==='rear_at_400_boundary'){
+                                                  const rearPlan=attempt(
+                                                    'multiSelectiveRear400Plan',
+                                                    recordFinaleConcurrentRear400PlanFromTour);
+                                                  if(rearPlan)
+                                                    validateFinaleConcurrentRear400PlanFromTour(
+                                                      race,JSON.parse(JSON.stringify(rearPlan)));
+                                                }
                                               }
                                             }
                                           }
@@ -1656,6 +1668,9 @@ for(const [course,stage] of Object.entries(distanceKm===260?LONG_ROUTES:ROUTES))
         v91Finale.concurrent.multiSelectiveTwoSplit400Step>
           (v91Finale.concurrent.multiSelectiveTwoSplit500Events
             .front_at_400_boundary??0)||
+        v91Finale.concurrent.multiSelectiveRear400Plan>
+          (v91Finale.concurrent.multiSelectiveTwoSplit400Events
+            .rear_at_400_boundary??0)||
         v91Finale.concurrent.multiSelectiveContactState>
           v91Finale.concurrent.multiSelectiveNextContactEvents||
         v91Finale.concurrent.multiSelectiveRearCatchFollowup>
