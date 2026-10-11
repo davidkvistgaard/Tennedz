@@ -81,6 +81,10 @@ import {twoSplit500NextEvent,
   '../../lib/engine/v2/finale-concurrent-two-split-500-step.mjs';
 import {recordFinaleConcurrentTwoSplit500RearCatchFromTour} from
   '../../lib/engine/v2/finale-concurrent-two-split-500-rear-catch.mjs';
+import {recordFinaleConcurrentFront400PlanFromTour,
+  validateFinaleConcurrentFront400PlanFromTour,
+  FINALE_CONCURRENT_FRONT_400_PLAN_VERSION} from
+  '../../lib/engine/v2/finale-concurrent-front-400-plan.mjs';
 
 function team(id,skill,gender,{attack=false,
   chase='ignore',rotate=false}={}){
@@ -879,5 +883,34 @@ test('500 m rear-catch continuation rejects a still-separated road state',()=>{
     assert.throws(()=>
       recordFinaleConcurrentTwoSplit500RearCatchFromTour(tour),
     /exact rear-bunch contact/);
+  }
+});
+
+test('front rider receives only an unpaid, replayable 400 m work plan',()=>{
+  for(const gender of ['M','F']){
+    const tour=multiSource(gender);
+    const step=recordFinaleConcurrentTwoSplit500StepFromTour(tour);
+    assert.equal(step.event,'front_at_400_boundary');
+    const original=structuredClone(tour.provisionalResults);
+    const plan=recordFinaleConcurrentFront400PlanFromTour(tour);
+    assert.equal(plan.version,FINALE_CONCURRENT_FRONT_400_PLAN_VERSION);
+    assert.equal(plan.branch,'two_split');
+    assert.equal(plan.travelStatus,'planned_unpaid');
+    assert.equal(plan.startDistanceM,step.frontPositionM);
+    assert.equal(plan.endDistanceM-plan.startDistanceM,100);
+    assert.equal(plan.riders.length,step.riders.length);
+    for(const row of plan.riders){
+      const previous=step.riders.find(source=>
+        source.riderId===row.riderId);
+      assert.equal(row.positionM,previous.positionM);
+      assert.equal(row.energyAtDecision,previous.energyAtEvent);
+    }
+    assert.equal(validateFinaleConcurrentFront400PlanFromTour(tour,
+      JSON.parse(JSON.stringify(plan))),true);
+    const forged=structuredClone(plan);
+    forged.frontEnergyAtDecision+=1;
+    assert.throws(()=>validateFinaleConcurrentFront400PlanFromTour(
+      tour,forged),/does not replay/);
+    assert.deepEqual(tour.provisionalResults,original);
   }
 });
