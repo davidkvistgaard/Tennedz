@@ -100,7 +100,7 @@ test('concurrent audit counts every selective chase order in complete bunches',(
     'attack-trace','planned-finale-allied-manager-mix-0','120','100','0',
     '3','5','0','100','hard','0','0','0','0','0','independent',
     '100','fixed'],{
-    encoding:'utf8',timeout:600_000,maxBuffer:8*1024*1024,
+    encoding:'utf8',timeout:720_000,maxBuffer:8*1024*1024,
     env:{...process.env,PELOTONIA_V91_COVERAGE:'on'},
   }));
   const cells=Object.values(report.courses).flatMap(genders=>
@@ -131,6 +131,10 @@ test('concurrent audit counts every selective chase order in complete bunches',(
   assert.equal(sum('multiSelectiveRearCaught400Step'),1);
   assert.equal(sum('multiSelectiveTwoSplit400Step'),3);
   assert.equal(sum('multiSelectiveRear400Plan'),3);
+  assert.equal(sum('multiSelectiveRear400Step'),3);
+  assert.equal(sum('multiSelectiveRear400Step'),cells.reduce(
+    (total,cell)=>total+Object.values(cell.v91Finale.concurrent
+      .multiSelectiveRear400Events).reduce((n,value)=>n+value,0),0));
   assert.equal(sum('multiSelectiveTwoSplit400Step'),cells.reduce(
     (total,cell)=>total+(cell.v91Finale.concurrent
       .multiSelectiveTwoSplit500Events.front_at_400_boundary??0),0));
@@ -158,7 +162,8 @@ test('concurrent audit counts every selective chase order in complete bunches',(
       reason.startsWith('multiSelectiveFront400Plan:')||
       reason.startsWith('multiSelectiveRearCaught400Step:')||
       reason.startsWith('multiSelectiveTwoSplit400Step:')||
-      reason.startsWith('multiSelectiveRear400Plan:'))));
+      reason.startsWith('multiSelectiveRear400Plan:')||
+      reason.startsWith('multiSelectiveRear400Step:'))));
 });
 
 test('fixed 20-team source replays paid travel after two exact catches',()=>{
@@ -166,7 +171,7 @@ test('fixed 20-team source replays paid travel after two exact catches',()=>{
     '1','20','attack-trace','planned-finale-allied-manager-mix-0',
     '120','100','0','3','5','0','100','hard','0','0','0','0','0',
     'independent','104','fixed'],{
-    encoding:'utf8',timeout:600_000,maxBuffer:8*1024*1024,
+    encoding:'utf8',timeout:720_000,maxBuffer:8*1024*1024,
     env:{...process.env,PELOTONIA_V91_COVERAGE:'on'},
   }));
   const cells=Object.values(report.courses).flatMap(genders=>
