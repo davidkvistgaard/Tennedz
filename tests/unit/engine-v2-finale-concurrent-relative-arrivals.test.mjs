@@ -85,6 +85,8 @@ import {recordFinaleConcurrentFront400PlanFromTour,
   validateFinaleConcurrentFront400PlanFromTour,
   FINALE_CONCURRENT_FRONT_400_PLAN_VERSION} from
   '../../lib/engine/v2/finale-concurrent-front-400-plan.mjs';
+import {recordFinaleConcurrentRearCaught400StepFromTour} from
+  '../../lib/engine/v2/finale-concurrent-rear-caught-400-step.mjs';
 
 function team(id,skill,gender,{attack=false,
   chase='ignore',rotate=false}={}){
@@ -912,5 +914,15 @@ test('front rider receives only an unpaid, replayable 400 m work plan',()=>{
     assert.throws(()=>validateFinaleConcurrentFront400PlanFromTour(
       tour,forged),/does not replay/);
     assert.deepEqual(tour.provisionalResults,original);
+  }
+});
+
+test('rear-caught 400 m travel refuses a still-separated pair',()=>{
+  for(const gender of ['M','F']){
+    const tour=multiSource(gender);
+    assert.equal(recordFinaleConcurrentFront400PlanFromTour(tour)
+      .branch,'two_split');
+    assert.throws(()=>recordFinaleConcurrentRearCaught400StepFromTour(
+      tour),/exact rear-bunch contact/);
   }
 });

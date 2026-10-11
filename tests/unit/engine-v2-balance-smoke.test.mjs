@@ -100,7 +100,7 @@ test('concurrent audit counts every selective chase order in complete bunches',(
     'attack-trace','planned-finale-allied-manager-mix-0','120','100','0',
     '3','5','0','100','hard','0','0','0','0','0','independent',
     '100','fixed'],{
-    encoding:'utf8',timeout:300_000,maxBuffer:8*1024*1024,
+    encoding:'utf8',timeout:420_000,maxBuffer:8*1024*1024,
     env:{...process.env,PELOTONIA_V91_COVERAGE:'on'},
   }));
   const cells=Object.values(report.courses).flatMap(genders=>
@@ -128,6 +128,10 @@ test('concurrent audit counts every selective chase order in complete bunches',(
     cell.v91Finale.concurrent[key],0);
   assert.equal(sum('multiSelectiveTwoSplit500RearCatch'),1);
   assert.equal(sum('multiSelectiveFront400Plan'),1);
+  assert.equal(sum('multiSelectiveRearCaught400Step'),1);
+  assert.equal(cells.reduce((total,cell)=>total+(
+    cell.v91Finale.concurrent.multiSelectiveRearCaught400Events
+      .bunch_at_second_slice_boundary??0),0),1);
   assert.equal(cells.reduce((total,cell)=>total+(
     cell.v91Finale.concurrent.multiSelectiveFront400PlanBranches
       .rear_caught??0),0),1);
@@ -140,7 +144,8 @@ test('concurrent audit counts every selective chase order in complete bunches',(
   assert.ok(cells.every(cell=>!Object.keys(
     cell.v91Finale.concurrent.refusalReasons).some(reason=>
     reason.startsWith('multiSelectiveTwoSplit500RearCatch:')||
-      reason.startsWith('multiSelectiveFront400Plan:'))));
+      reason.startsWith('multiSelectiveFront400Plan:')||
+      reason.startsWith('multiSelectiveRearCaught400Step:'))));
 });
 
 test('fixed 20-team source replays paid travel after two exact catches',()=>{

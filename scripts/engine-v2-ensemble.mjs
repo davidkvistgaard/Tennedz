@@ -95,6 +95,9 @@ import {recordFinaleConcurrentTwoSplit500RearCatchFromTour,
 import {recordFinaleConcurrentFront400PlanFromTour,
   validateFinaleConcurrentFront400PlanFromTour} from
   '../lib/engine/v2/finale-concurrent-front-400-plan.mjs';
+import {recordFinaleConcurrentRearCaught400StepFromTour,
+  validateFinaleConcurrentRearCaught400StepFromTour} from
+  '../lib/engine/v2/finale-concurrent-rear-caught-400-step.mjs';
 import {recordFinaleConcurrentDoubleCatchMergeFromTour,
   validateFinaleConcurrentDoubleCatchMergeFromTour} from
   '../lib/engine/v2/finale-concurrent-double-catch-merge.mjs';
@@ -500,6 +503,8 @@ for(const [course,stage] of Object.entries(distanceKm===260?LONG_ROUTES:ROUTES))
           multiSelectiveTwoSplit500RearCatchEvents:{},
           multiSelectiveFront400Plan:0,
           multiSelectiveFront400PlanBranches:{},
+          multiSelectiveRearCaught400Step:0,
+          multiSelectiveRearCaught400Events:{},
           multiSelectiveContactState:0,
           multiSelectiveRearCatchFollowup:0,
           multiSelectiveRearCatchEvents:{},
@@ -982,6 +987,19 @@ for(const [course,stage] of Object.entries(distanceKm===260?LONG_ROUTES:ROUTES))
                                               frontPlan.branch]=(concurrent
                                               .multiSelectiveFront400PlanBranches[
                                                 frontPlan.branch]??0)+1;
+                                            if(frontPlan.branch==='rear_caught'){
+                                              const next=attempt(
+                                                'multiSelectiveRearCaught400Step',
+                                                recordFinaleConcurrentRearCaught400StepFromTour);
+                                              if(next){
+                                                validateFinaleConcurrentRearCaught400StepFromTour(
+                                                  race,JSON.parse(JSON.stringify(next)));
+                                                concurrent.multiSelectiveRearCaught400Events[
+                                                  next.event]=(concurrent
+                                                  .multiSelectiveRearCaught400Events[
+                                                    next.event]??0)+1;
+                                              }
+                                            }
                                           }
                                         }
                                       }
