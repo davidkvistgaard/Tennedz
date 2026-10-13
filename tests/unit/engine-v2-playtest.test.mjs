@@ -40,6 +40,13 @@ test('playtest settings stay bounded to documented synthetic options',()=>{
   assert.throws(()=>createV91Playtest({seed:''}),/valid playtest settings/);
   assert.throws(()=>createV91Playtest({rivalPlans:['chase','unknown','neutral']}),
     /valid playtest settings/);
+  assert.throws(()=>createV91Playtest({defaultRivalPlan:'unknown'}),
+    /valid playtest settings/);
+  assert.throws(()=>createV91Playtest({teamCount:4,managerTactics:
+    Array.from({length:4},()=>({effort:'steady',attack:'none',chase:'ignore'}))}),
+  /valid playtest settings/);
+  assert.throws(()=>createV91Playtest({managerTactics:[
+    {effort:'hard',attack:'unknown',chase:'all'}]}),/valid playtest settings/);
 });
 
 test('a custom profile changes recorded gradients without changing roster or seed',()=>{
@@ -68,4 +75,45 @@ test('one rival may change tactics without replacing the fictional field',()=>{
     .filter(riderId=>riderId.startsWith('rival-1-')).length;
   assert.equal(attempts(chase),0);
   assert.ok(attempts(attack)>0);
+});
+
+test('any number of rival managers may override the chosen default tactics',()=>{
+  const shared={distanceKm:40,teamCount:15,seed:'manager-count',
+    defaultRivalPlan:'chase'};
+  const defaults=createV91Playtest(shared);
+  const overrides=[{effort:'conserve',attack:'repeated',chase:'ignore'},
+    {effort:'steady',attack:'selective',chase:'selective'}];
+  const changed=createV91Playtest({...shared,managerTactics:overrides});
+  const teams=playtest=>playtest.recording.committedInputs.teams;
+  assert.deepEqual(teams(defaults).map(team=>team.riders),
+    teams(changed).map(team=>team.riders));
+  const baseline=(playtest,id)=>{
+    const {effort,attack,chase}=teams(playtest).find(team=>team.id===id)
+      .orders.baseline;
+    return {effort,attack,chase};
+  };
+  assert.deepEqual(baseline(changed,'rival-1'),overrides[0]);
+  assert.deepEqual(baseline(changed,'rival-2'),overrides[1]);
+  for(let index=3;index<15;index++)
+    assert.deepEqual(baseline(changed,`rival-${index}`),
+      {effort:'hard',attack:'none',chase:'all'});
+  assert.deepEqual(changed.settings.managerTactics,overrides);
+  assert.deepEqual(changed.recording,createV91Playtest({...shared,
+    managerTactics:overrides}).recording);
+});
+
+test('all 19 rivals may have individual tactics within the request limit',()=>{
+  const managerTactics=Array.from({length:19},(_,index)=>({
+    effort:index%2?'hard':'conserve',
+    attack:index%3?'none':'selective',
+    chase:index%2?'all':'ignore'}));
+  const input={distanceKm:40,teamCount:20,managerTactics};
+  assert.ok(Buffer.byteLength(JSON.stringify(input))<2048);
+  const playtest=createV91Playtest(input);
+  assert.equal(playtest.settings.managerTactics.length,19);
+  for(let index=1;index<20;index++){
+    const {effort,attack,chase}=playtest.recording.committedInputs.teams
+      .find(team=>team.id===`rival-${index}`).orders.baseline;
+    assert.deepEqual({effort,attack,chase},managerTactics[index-1]);
+  }
 });

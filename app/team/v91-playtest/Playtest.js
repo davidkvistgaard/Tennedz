@@ -3,10 +3,24 @@ import {useState} from 'react';
 import TeamShell from '../../components/TeamShell';
 import {api} from '../../../lib/api';
 
+const DEFAULT_PLANS=['chase','attack','neutral'];
+const DEFAULT_BASELINES={chase:{effort:'hard',attack:'none',chase:'all'},
+  attack:{effort:'steady',attack:'selective',chase:'ignore'},
+  neutral:{effort:'steady',attack:'none',chase:'selective'}};
+function defaultTacticFor(index,settings){
+  let plan=settings.defaultRivalPlan;
+  if(plan==='mixed'){
+    const cycle=(index+1)%4;
+    plan=index<3?settings.rivalPlans[index]:
+      cycle===1?'chase':cycle===2?'attack':'neutral';
+  }
+  return {...DEFAULT_BASELINES[plan]};
+}
 const INITIAL={distanceKm:120,terrain:'flat',teamCount:4,gender:'M',fatigue:0,
   effort:'steady',attack:'selective',chase:'selective',seed:'playtest-1',
   profileHeightsM:[100,350,150,500,180,100],
-  rivalPlans:['chase','attack','neutral']};
+  rivalPlans:[...DEFAULT_PLANS],defaultRivalPlan:'mixed',
+  managerTactics:[]};
 const OPTIONS={distanceKm:[[40,'40 km — short'],[120,'120 km — medium'],[260,'260 km — long']],
   terrain:[['flat','Flat'],['rolling','Rolling'],['mountain','Mountain'],
     ['exposed','Flat, exposed'],['custom','Draw your own']],
@@ -21,17 +35,27 @@ const LABELS={distanceKm:'Distance',terrain:'Route profile',teamCount:'Field siz
 
 export default function Playtest(){
   const [settings,setSettings]=useState(INITIAL);
+  const [customRivals,setCustomRivals]=useState(0);
   const [result,setResult]=useState(null);
   const [selectedKm,setSelectedKm]=useState(1);
   const [busy,setBusy]=useState(false);
   const [error,setError]=useState('');
   const frame=result?.frames[selectedKm-1];
-  const change=(key,value)=>setSettings(current=>({...current,
-    [key]:['distanceKm','teamCount','fatigue'].includes(key)?Number(value):value}));
+  const change=(key,value)=>{
+    if(key==='teamCount')setCustomRivals(count=>Math.min(count,Number(value)-1));
+    setSettings(current=>({...current,
+      [key]:['distanceKm','teamCount','fatigue'].includes(key)?Number(value):value}));
+  };
   const changeHeight=(index,value)=>setSettings(current=>({...current,
     profileHeightsM:current.profileHeightsM.map((height,at)=>at===index?Number(value):height)}));
   const changeRival=(index,value)=>setSettings(current=>({...current,
     rivalPlans:current.rivalPlans.map((plan,at)=>at===index?value:plan)}));
+  const changeManager=(index,key,value)=>setSettings(current=>{
+    const managerTactics=[...current.managerTactics];
+    managerTactics[index]={...(managerTactics[index]??defaultTacticFor(index,current)),
+      [key]:value};
+    return {...current,managerTactics};
+  });
   const maxHeight=Math.max(500,...settings.profileHeightsM);
   const profileLine=settings.profileHeightsM.map((height,index)=>
     `${10+index*196},${110-height/maxHeight*100}`).join(' ');
@@ -39,7 +63,9 @@ export default function Playtest(){
     event.preventDefault();setBusy(true);setError('');
     try{
       const response=await api('/api/v91-playtest',{method:'POST',
-        headers:{'Content-Type':'application/json'},body:JSON.stringify(settings)});
+        headers:{'Content-Type':'application/json'},body:JSON.stringify({...settings,
+          managerTactics:Array.from({length:customRivals},(_,index)=>
+            settings.managerTactics[index]??defaultTacticFor(index,settings))})});
       setResult(response.playtest);setSelectedKm(1);
     }catch(cause){setError(cause.message||'The playtest could not run.');}
     finally{setBusy(false);}
@@ -69,16 +95,44 @@ export default function Playtest(){
           <small>Each 20% segment is limited to an average gradient of 10%.</small>
         </fieldset>}
         <fieldset className="v91-profile">
-          <legend>Independent rival plans</legend>
-          <p>Change one rival at a time to compare its chase or attack decision with the same riders and seed. Larger fields also contain fixed background teams.</p>
-          <div className="v91-profile-points">{settings.rivalPlans.map((plan,index)=><label key={index}>
+          <legend>Other managers</legend>
+          <p>Choose default tactics for rivals, then customize as many individual managers as you want. The same seed keeps riders and route comparable.</p>
+          <label>Default tactics for uncustomized managers
+            <select value={settings.defaultRivalPlan} onChange={event=>change('defaultRivalPlan',event.target.value)}>
+              <option value="mixed">Mixed defaults</option>
+              <option value="chase">Hard chase</option>
+              <option value="attack">Seek a break</option>
+              <option value="neutral">Steady / selective</option>
+            </select>
+          </label>
+          {settings.defaultRivalPlan==='mixed'&&<div className="v91-profile-points">{settings.rivalPlans.map((plan,index)=><label key={index}>
             Rival {index+1}
             <select value={plan} onChange={event=>changeRival(index,event.target.value)}>
               <option value="chase">Hard chase</option>
               <option value="attack">Seek a break</option>
               <option value="neutral">Steady / selective</option>
             </select>
-          </label>)}</div>
+          </label>)}</div>}
+          <label>Managers with your own tactics
+            <select value={customRivals} onChange={event=>setCustomRivals(Number(event.target.value))}>
+              {Array.from({length:settings.teamCount},(_,count)=><option key={count} value={count}>
+                {count} of {settings.teamCount-1} rivals
+              </option>)}
+            </select>
+          </label>
+          {customRivals>0&&<div className="v91-manager-tactics">
+            {Array.from({length:customRivals},(_,index)=>
+              settings.managerTactics[index]??defaultTacticFor(index,settings))
+              .map((tactic,index)=><div key={index}>
+              <strong>Rival {index+1}</strong>
+              {['effort','attack','chase'].map(key=><label key={key}>
+                Rival {index+1} {key}
+                <select value={tactic[key]} onChange={event=>changeManager(index,key,event.target.value)}>
+                  {OPTIONS[key].map(([value,label])=><option key={value} value={value}>{label}</option>)}
+                </select>
+              </label>)}
+            </div>)}
+          </div>}
         </fieldset>
         <label>Scenario seed<input value={settings.seed} maxLength={80}
           onChange={event=>change('seed',event.target.value)} /></label>
@@ -87,7 +141,7 @@ export default function Playtest(){
       {error&&<p role="alert" className="v91-error">{error}</p>}
       {result&&<section className="v91-results" aria-label="Playtest recording">
         <h2>Recorded race · {result.settings.distanceKm} km {result.settings.terrain}</h2>
-        <p>{result.tuningVersion} · Your captain: provisional #{result.ownCaptain??'—'}</p>
+        <p>{result.tuningVersion} · {result.settings.managerTactics.length} custom rival managers · Your captain: provisional #{result.ownCaptain??'—'}</p>
         <label>Race kilometre: {selectedKm}
           <input type="range" min="1" max={result.frames.length} value={selectedKm}
             onChange={event=>setSelectedKm(Number(event.target.value))}/>

@@ -38,5 +38,12 @@ for(const width of [390,1440])test(`v91 playtest changes conditions at ${width}p
     await page.getByRole('button',{name:'Run race'}).click();
     await expect(page.getByRole('heading',{name:'Recorded race · 120 km custom'})).toBeVisible();
     await expect(page.getByLabel('Rival 1')).toHaveValue('attack');
+    await page.getByLabel('Field size').selectOption('15');
+    await page.getByLabel('Default tactics for uncustomized managers')
+      .selectOption('chase');
+    await page.getByLabel('Managers with your own tactics').selectOption('4');
+    await page.getByLabel('Rival 4 attack').selectOption('repeated');
+    await page.getByRole('button',{name:'Run race'}).click();
+    await expect(page.getByText('4 custom rival managers')).toBeVisible();
     expect(errors).toEqual([]);
   });
