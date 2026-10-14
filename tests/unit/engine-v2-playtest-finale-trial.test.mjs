@@ -1,7 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {createV91Playtest} from '../../lib/engine/v2/playtest.mjs';
-import {createV91FinaleTrial,validateV91FinaleTrial,
+import {prepareV91FinaleTrial,createV91FinaleTrial,
+  validateV91FinaleTrial,
   createV91FinaleTrialWithSoloBounds,
   validateV91FinaleTrialWithSoloBounds,
   createV91FinaleTrialWithOrderCoverage,
@@ -307,4 +308,21 @@ test('paired tactics comparison stays provisional in larger tired fields',()=>{
     assert.equal(compared.classifiedResults,null);
     assert.equal(compared.canCommitAwards,false);
   }
+});
+
+test('finale preflight exposes locked intent and refuses roles before the race',()=>{
+  const input=request(true);
+  const ready=prepareV91FinaleTrial(settings('M'),input);
+  assert.equal(Object.hasOwn(ready,'recording'),false);
+  assert.deepEqual(ready.attackIntent,{teamId:'you',riderId:'you-0',
+    atKm:39});
+  assert.deepEqual(ready.finalePlans,input.plans);
+  assert.equal(ready.teams.length,4);
+  assert.equal(ready.stage.keypoints.at(-1).km,39);
+  assert.throws(()=>prepareV91FinaleTrial(settings('M'),{
+    ...input,leadOutTiming:'early'}),/supported controlled-finale/);
+  const invalid=input.plans.map(row=>row.teamId==='you'?
+    {...row,finisherId:'you-0',leadOutRiderId:'you-7'}:row);
+  assert.throws(()=>prepareV91FinaleTrial(settings('M'),{
+    ...input,plans:invalid}),/one valid finale plan/);
 });
