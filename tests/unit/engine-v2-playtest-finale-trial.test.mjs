@@ -5,7 +5,8 @@ import {createV91FinaleTrial,validateV91FinaleTrial,
   createV91FinaleTrialWithSoloBounds,
   validateV91FinaleTrialWithSoloBounds,
   createV91FinaleTrialWithOrderCoverage,
-  validateV91FinaleTrialWithOrderCoverage} from
+  validateV91FinaleTrialWithOrderCoverage,compareV91FinalePlans,
+  validateV91FinalePlansComparison} from
   '../../lib/engine/v2/playtest-finale-trial.mjs';
 
 const settings=gender=>({distanceKm:40,terrain:'flat',teamCount:4,
@@ -225,5 +226,49 @@ test('order-aware trial refuses an unpaid solo finisher claim',()=>{
       {attackTeamId:'you',attackRiderId:'you-0',plans:plans(true)});
     assert.equal(bunch.orderCoverage.status,'paid_conditional_line');
     assert.equal(bunch.orderCoverage.appliedFinisherTeamIds.length,4);
+  }
+});
+
+test('paired finale plans expose only paid conditional tactical changes',()=>{
+  for(const gender of ['M','F']){
+    const shared=settings(gender);
+    const before=request(false);
+    const after=request(true);
+    const paired=compareV91FinalePlans(shared,before,after);
+    assert.equal(paired.version,'v91-finale-trial-comparison-1');
+    assert.equal(paired.status,'provisional_conditional_comparison');
+    assert.deepEqual(paired.before.recording,paired.after.recording);
+    assert.equal(paired.lines.length,4);
+    const player=paired.lines.find(row=>row.teamId==='you');
+    assert.equal(player.beforeFinisherId,'you-7');
+    assert.equal(player.afterFinisherId,'you-7');
+    assert.equal(player.beforeLeadOutRiderId,null);
+    assert.equal(player.afterLeadOutRiderId,'you-6');
+    assert.ok(player.elapsedChangeSeconds<0);
+    assert.ok(player.beforePossiblePlace[0]>player.afterPossiblePlace[0]);
+    assert.equal(player.afterPossiblePlace.length,2);
+    assert.equal(paired.classifiedResults,null);
+    assert.equal(paired.pointsStatus,'withheld');
+    assert.equal(paired.canCommitAwards,false);
+    assert.equal(validateV91FinalePlansComparison(shared,before,after,
+      paired),true);
+    assert.throws(()=>validateV91FinalePlansComparison(shared,before,after,
+      {...paired,pointsStatus:'awarded'}),/does not replay/);
+    assert.throws(()=>compareV91FinalePlans(shared,before,
+      {...after,attackRiderId:'you-1'}),/same named attack/);
+    const solo=compareV91FinalePlans(shared,
+      {...before,attackRiderId:'you-7'},
+      {...after,attackRiderId:'you-7'});
+    assert.equal(solo.status,'unsupported_road_comparison');
+    assert.equal(solo.lines,null);
+    const rivalPlans=plans(false).map(row=>row.teamId==='rival-2'?
+      {...row,leadOutRiderId:'rival-2-6'}:row);
+    const rival=compareV91FinalePlans(shared,before,
+      {...before,plans:rivalPlans});
+    assert.equal(rival.status,'provisional_conditional_comparison');
+    assert.equal(rival.lines.find(row=>row.teamId==='rival-2')
+      .afterLeadOutRiderId,'rival-2-6');
+    assert.ok(rival.lines.find(row=>row.teamId==='rival-2')
+      .elapsedChangeSeconds<0);
   }
 });
