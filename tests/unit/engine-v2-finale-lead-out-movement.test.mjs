@@ -19,6 +19,11 @@ import {recordFinaleRotationLeadOutCandidateFromTour,
 import {recordPositionedFinaleLineFromTour,
   validatePositionedFinaleLineFromTour} from
   '../../lib/engine/v2/finale-positioned-line.mjs';
+import {recordLeadOutLongitudinalFromTour,
+  validateLeadOutLongitudinalFromTour,
+  recordLeadOutConditionalLineFromTour,
+  validateLeadOutConditionalLineFromTour} from
+  '../../lib/engine/v2/finale-lead-out-longitudinal.mjs';
 
 const stage={distance_km:20,profile_points:[[0,100],[20,100]],
   keypoints:[{km:19,kind:'SPRINT'}]};
@@ -248,6 +253,12 @@ test('independent lead-out choices account for a 20-manager field',()=>{
     assert.equal(candidate.resultStatus,'unclassified');
     assert.equal(validateFinaleRotationLeadOutCandidateFromTour(tour,
       request,candidate),true);
+    const conditional=recordLeadOutConditionalLineFromTour(tour,request);
+    assert.equal(conditional.line.finishers.length,160);
+    assert.equal(new Set(conditional.line.finishers.map(row=>
+      row.riderId)).size,160);
+    assert.equal(conditional.longitudinal.frames.length,4);
+    assert.equal(conditional.canCommitAwards,false);
   }
 });
 
@@ -314,4 +325,56 @@ test('position changes can reverse a provisional finish without fake points',()=
   assert.equal(tied.resultStatus,'photo_finish_unresolved');
   assert.equal(tied.finishers.find(row=>row.riderId==='a-1').position,null);
   assert.equal(tied.finishers.find(row=>row.riderId==='a-2').position,null);
+});
+
+test('paid lead-out and sprint speeds produce a replayable 100 m handoff',()=>{
+  for(const gender of ['M','F']){
+    const tour=catchTour(gender);
+    const withHelper=recordLeadOutLongitudinalFromTour(tour,input(true));
+    const without=recordLeadOutLongitudinalFromTour(tour,input(false));
+    assert.equal(withHelper.version,
+      'v2-finale-lead-out-longitudinal-candidate-1');
+    assert.equal(withHelper.positionSourceStatus,
+      'collapsed_road_band_candidate');
+    assert.equal(withHelper.frames.length,4);
+    assert.ok(withHelper.frames.every(frame=>frame.riders.length===24));
+    assert.equal(withHelper.positionsAt100M.length,24);
+    assert.ok(withHelper.positionsAt100M.every(row=>
+      row.distanceToLineM>0&&row.distanceToLineM<=100));
+    assert.ok(withHelper.positionsAt100M.find(row=>
+      row.riderId==='c-0').distanceToLineM<
+      without.positionsAt100M.find(row=>
+        row.riderId==='c-0').distanceToLineM);
+    const first=withHelper.frames[0];
+    assert.ok(first.riders.find(row=>row.riderId==='c-2')
+      .paidDistanceM>100);
+    assert.equal(first.riders.find(row=>row.riderId==='c-2')
+      .positionM,first.riders.find(row=>row.riderId==='c-0')
+      .positionM);
+    assert.equal(validateLeadOutLongitudinalFromTour(tour,
+      input(true),withHelper),true);
+    assert.throws(()=>validateLeadOutLongitudinalFromTour(tour,
+      input(true),{...withHelper,positionsAt100M:[]}),
+    /does not replay/);
+    const line=recordPositionedFinaleLineFromTour(tour,input(true),
+      withHelper.positionsAt100M);
+    assert.equal(line.finishers.length,24);
+    assert.equal(line.pointsStatus,'withheld');
+    assert.equal(withHelper.canCommitAwards,false);
+    const coupled=recordLeadOutConditionalLineFromTour(tour,input(true));
+    const control=recordLeadOutConditionalLineFromTour(tour,input(false));
+    assert.deepEqual(coupled.longitudinal,withHelper);
+    assert.deepEqual(coupled.line,line);
+    assert.equal(coupled.resultStatus,'provisional_conditional');
+    assert.equal(coupled.canCommitAwards,false);
+    assert.ok(coupled.line.finishers.find(row=>row.riderId==='c-0')
+      .elapsedSecondsFromLastKmStart<
+      control.line.finishers.find(row=>row.riderId==='c-0')
+        .elapsedSecondsFromLastKmStart);
+    assert.equal(validateLeadOutConditionalLineFromTour(tour,
+      input(true),coupled),true);
+    assert.throws(()=>validateLeadOutConditionalLineFromTour(tour,
+      input(true),{...coupled,pointsStatus:'awarded'}),
+    /does not replay/);
+  }
 });
