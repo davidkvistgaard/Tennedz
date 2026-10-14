@@ -16,6 +16,9 @@ import {recordFinaleRotationCatchLeadOutApproachFromTour,
 import {recordFinaleRotationLeadOutCandidateFromTour,
   validateFinaleRotationLeadOutCandidateFromTour} from
   '../../lib/engine/v2/finale-rotation-lead-out-candidate.mjs';
+import {recordPositionedFinaleLineFromTour,
+  validatePositionedFinaleLineFromTour} from
+  '../../lib/engine/v2/finale-positioned-line.mjs';
 
 const stage={distance_km:20,profile_points:[[0,100],[20,100]],
   keypoints:[{km:19,kind:'SPRINT'}]};
@@ -246,4 +249,69 @@ test('independent lead-out choices account for a 20-manager field',()=>{
     assert.equal(validateFinaleRotationLeadOutCandidateFromTour(tour,
       request,candidate),true);
   }
+});
+
+test('measured final-100 m positions yield individually paid crossings',()=>{
+  for(const gender of ['M','F']){
+    const tour=catchTour(gender);
+    const request=input(true);
+    const candidate=recordFinaleRotationLeadOutCandidateFromTour(tour,
+      request);
+    const positions=candidate.sprint.frames[1].pelotonRiderIds
+      .map((riderId,index)=>({riderId,
+        distanceToLineM:riderId==='a-0'?100:70+index*.1}));
+    const line=recordPositionedFinaleLineFromTour(tour,request,positions);
+    assert.equal(line.finishers.length,24);
+    assert.equal(new Set(line.finishers.map(row=>row.riderId)).size,24);
+    assert.equal(line.resultStatus,'conditional_order');
+    assert.equal(line.positionSourceStatus,'external_unverified');
+    assert.equal(line.pointsStatus,'withheld');
+    assert.ok(line.finishers.every((row,index)=>
+      row.position===index+1&&row.energySpentToLine>0&&
+      row.energyAtLine>=0&&row.distanceToLineM>0));
+    const first=positions.find(row=>row.riderId==='a-1');
+    const firstFinish=line.finishers.find(row=>row.riderId==='a-1');
+    const proposed=candidate.sprint.frames[2].riderEnergy.find(row=>
+      row.riderId==='a-1');
+    assert.ok(Math.abs(firstFinish.energySpentToLine-
+      proposed.energySpent*first.distanceToLineM/100)<1e-9);
+    assert.equal(line.finishers.find(row=>row.riderId==='a-0')
+      .energyAtLine,candidate.sprint.lineRiderEnergy.find(row=>
+      row.riderId==='a-0').energyAfter);
+    assert.equal(validatePositionedFinaleLineFromTour(tour,request,
+      positions,line),true);
+    assert.throws(()=>validatePositionedFinaleLineFromTour(tour,request,
+      positions,{...line,pointsStatus:'awarded'}),/does not replay/);
+    assert.throws(()=>recordPositionedFinaleLineFromTour(tour,request,
+      positions.slice(1)),/every rider/);
+    assert.throws(()=>recordPositionedFinaleLineFromTour(tour,request,
+      positions.map(row=>row.riderId==='a-1'?{
+        ...row,distanceToLineM:101}:row)),/every rider/);
+  }
+});
+
+test('position changes can reverse a provisional finish without fake points',()=>{
+  const tour=catchTour('M');
+  const request=input(true);
+  const candidate=recordFinaleRotationLeadOutCandidateFromTour(tour,
+    request);
+  const positions=candidate.sprint.frames[1].pelotonRiderIds
+    .map((riderId,index)=>({riderId,distanceToLineM:70+index*.1}));
+  const near=recordPositionedFinaleLineFromTour(tour,request,
+    positions.map(row=>row.riderId==='c-0'?{
+      ...row,distanceToLineM:50}:row));
+  const far=recordPositionedFinaleLineFromTour(tour,request,
+    positions.map(row=>row.riderId==='c-0'?{
+      ...row,distanceToLineM:90}:row));
+  assert.equal(near.finishers[0].riderId,'c-0');
+  assert.ok(far.finishers.find(row=>row.riderId==='c-0').position>1);
+  assert.equal(near.canCommitAwards,false);
+  assert.equal(far.canCommitAwards,false);
+  const tied=recordPositionedFinaleLineFromTour(tour,request,
+    positions.map(row=>row.riderId==='a-2'?{
+      ...row,distanceToLineM:positions.find(other=>
+        other.riderId==='a-1').distanceToLineM}:row));
+  assert.equal(tied.resultStatus,'photo_finish_unresolved');
+  assert.equal(tied.finishers.find(row=>row.riderId==='a-1').position,null);
+  assert.equal(tied.finishers.find(row=>row.riderId==='a-2').position,null);
 });
