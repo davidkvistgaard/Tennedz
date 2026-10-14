@@ -108,6 +108,16 @@ test('one independent manager can change catch into an explicit solo',()=>{
     team.riders));
 });
 
+test('a tired multi-group source is refused before the finale branch',()=>{
+  const tired={...settings('M'),distanceKm:260,teamCount:4,
+    fatigue:30,seed:'paired-size-fatigue'};
+  assert.throws(()=>createV91FinaleTrialWithSoloBounds(tired,{
+    attackTeamId:'you',attackRiderId:'you-7'}),
+  /one complete source bunch/);
+  assert.equal(createV91Playtest(tired).recording
+    .committedInputs.teams.length,4);
+});
+
 test('solo-aware trial reuses paid survival and catch bounds without awards',()=>{
   for(const gender of ['M','F']){
     const survived=createV91FinaleTrialWithSoloBounds(settings(gender),{
