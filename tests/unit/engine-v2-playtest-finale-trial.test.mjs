@@ -3,7 +3,9 @@ import assert from 'node:assert/strict';
 import {createV91Playtest} from '../../lib/engine/v2/playtest.mjs';
 import {createV91FinaleTrial,validateV91FinaleTrial,
   createV91FinaleTrialWithSoloBounds,
-  validateV91FinaleTrialWithSoloBounds} from
+  validateV91FinaleTrialWithSoloBounds,
+  createV91FinaleTrialWithOrderCoverage,
+  validateV91FinaleTrialWithOrderCoverage} from
   '../../lib/engine/v2/playtest-finale-trial.mjs';
 
 const settings=gender=>({distanceKm:40,terrain:'flat',teamCount:4,
@@ -178,5 +180,50 @@ test('solo-aware trial reuses paid survival and catch bounds without awards',()=
     assert.equal(unsupported.finaleStatus,
       'unsupported_road_outcome');
     assert.equal(unsupported.soloContinuation,null);
+  }
+});
+
+test('order-aware trial refuses an unpaid solo finisher claim',()=>{
+  for(const gender of ['M','F']){
+    const shared=settings(gender);
+    const request={attackTeamId:'you',attackRiderId:'you-7'};
+    const solo=createV91FinaleTrialWithOrderCoverage(shared,request);
+    assert.equal(solo.version,'v91-finale-trial-3');
+    assert.equal(solo.sourceSoloTrialVersion,'v91-finale-trial-2');
+    assert.equal(solo.soloContinuation.outcome.branch,'surviving_solo');
+    assert.equal(solo.finaleStatus,'unsupported_unpaid_finisher');
+    assert.equal(solo.orderCoverage.status,'recorded_unapplied');
+    assert.equal(solo.orderCoverage.appliedFinisherTeamIds.length,0);
+    assert.equal(solo.orderCoverage.unappliedFinisherTeamIds.length,4);
+    assert.equal(solo.classifiedResults,null);
+    assert.equal(solo.canCommitAwards,false);
+    const soloLeadOut=createV91FinaleTrialWithOrderCoverage(shared,{
+      ...request,plans:plans(true)});
+    assert.equal(soloLeadOut.finaleStatus,'unsupported_road_outcome');
+    assert.equal(soloLeadOut.orderCoverage.status,'recorded_unapplied');
+    assert.equal(validateV91FinaleTrialWithOrderCoverage(shared,request,
+      solo),true);
+    assert.throws(()=>validateV91FinaleTrialWithOrderCoverage(
+      shared,request,{...solo,finaleStatus:'provisional_conditional'}),
+    /does not replay/);
+    const postContact=createV91FinaleTrialWithOrderCoverage({
+      ...shared,managerTactics:[{effort:'steady',attack:'none',
+        chase:'ignore'}]},
+    {attackTeamId:'you',attackRiderId:'you-0'});
+    assert.equal(postContact.soloContinuation.outcome.branch,'first_catch');
+    assert.equal(postContact.orderCoverage.status,'paid_unranked_sprint');
+    assert.equal(postContact.orderCoverage.appliedFinisherTeamIds.length,4);
+    const finalContact=createV91FinaleTrialWithOrderCoverage({...shared,
+      managerTactics:Array.from({length:3},()=>({effort:'hard',
+        attack:'none',chase:'ignore'}))},
+    {attackTeamId:'you',attackRiderId:'you-0'});
+    assert.equal(finalContact.soloContinuation.outcome.branch,
+      'final_contact');
+    assert.equal(finalContact.finaleStatus,'unsupported_unpaid_finisher');
+    assert.equal(finalContact.orderCoverage.status,'recorded_unapplied');
+    const bunch=createV91FinaleTrialWithOrderCoverage(shared,
+      {attackTeamId:'you',attackRiderId:'you-0',plans:plans(true)});
+    assert.equal(bunch.orderCoverage.status,'paid_conditional_line');
+    assert.equal(bunch.orderCoverage.appliedFinisherTeamIds.length,4);
   }
 });
