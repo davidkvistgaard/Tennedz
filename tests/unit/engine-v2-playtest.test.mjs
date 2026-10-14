@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {createV91Playtest,summarizeV91Playtest} from
+import {prepareV91Playtest,createV91Playtest,
+  summarizeV91Playtest} from
   '../../lib/engine/v2/playtest.mjs';
 import {MOTOR_ATTACK_TRACE_VERSION} from '../../lib/engine/v2/tuning.mjs';
 
@@ -116,4 +117,31 @@ test('all 19 rivals may have individual tactics within the request limit',()=>{
       .find(team=>team.id===`rival-${index}`).orders.baseline;
     assert.deepEqual({effort,attack,chase},managerTactics[index-1]);
   }
+});
+
+test('prepared playtest inputs match execution without an eager race',()=>{
+  const input={distanceKm:40,terrain:'custom',teamCount:4,
+    gender:'F',seed:'prepared',attack:'none',
+    profileHeightsM:[100,130,160,135,120,100]};
+  const prepared=prepareV91Playtest(input);
+  const executed=createV91Playtest(input);
+  assert.equal(Object.hasOwn(prepared,'recording'),false);
+  assert.deepEqual(prepared.settings,executed.settings);
+  const byId=new Map(executed.recording.committedInputs.teams.map(team=>
+    [team.id,team]));
+  assert.equal(byId.size,prepared.teams.length);
+  for(const team of prepared.teams){
+    const locked=byId.get(team.id);
+    assert.ok(locked);
+    assert.deepEqual(locked.riders.map(row=>row.id),
+      team.riders.map(row=>row.id));
+    assert.deepEqual(locked.riders.map(row=>row.sprint),
+      team.riders.map(row=>row.sprint));
+    assert.equal(locked.orders.baseline.attack,
+      team.orders.baseline.attack);
+  }
+  assert.equal(prepared.stage.distance_km,40);
+  assert.equal(prepared.weather.wind_kph,10);
+  assert.throws(()=>prepareV91Playtest({...input,teamCount:21}),
+    /valid playtest settings/);
 });

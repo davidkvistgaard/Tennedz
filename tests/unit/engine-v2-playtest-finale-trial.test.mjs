@@ -66,6 +66,8 @@ test('the same trial builder accepts varied routes, fatigue and field sizes',()=
     const result=createV91FinaleTrial({...settings(input.gender),...input},
       {attackTeamId:'you',attackRiderId:'you-0'});
     assert.equal(result.decision.branch,'caught');
+    assert.deepEqual(result.finalePlans.map(plan=>plan.teamId),
+      result.recording.committedInputs.teams.map(team=>team.id));
     assert.equal(result.finale.line.finishers.length,input.teamCount*8);
     assert.equal(new Set(result.finale.line.finishers.map(row=>
       row.riderId)).size,input.teamCount*8);
