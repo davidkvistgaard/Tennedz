@@ -1,7 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {createV91Playtest} from '../../lib/engine/v2/playtest.mjs';
-import {createV91FinaleTrial,validateV91FinaleTrial} from
+import {createV91FinaleTrial,validateV91FinaleTrial,
+  createV91FinaleTrialWithSoloBounds,
+  validateV91FinaleTrialWithSoloBounds} from
   '../../lib/engine/v2/playtest-finale-trial.mjs';
 
 const settings=gender=>({distanceKm:40,terrain:'flat',teamCount:4,
@@ -104,4 +106,43 @@ test('one independent manager can change catch into an explicit solo',()=>{
   assert.deepEqual(chased.recording.committedInputs.teams.map(team=>
     team.riders),inactive.recording.committedInputs.teams.map(team=>
     team.riders));
+});
+
+test('solo-aware trial reuses paid survival and catch bounds without awards',()=>{
+  for(const gender of ['M','F']){
+    const survived=createV91FinaleTrialWithSoloBounds(settings(gender),{
+      attackTeamId:'you',attackRiderId:'you-7'});
+    assert.equal(survived.version,'v91-finale-trial-2');
+    assert.equal(survived.sourceTrialVersion,'v91-finale-trial-1');
+    assert.equal(survived.finaleStatus,'provisional_solo_bounds');
+    assert.equal(survived.soloContinuation.outcome.branch,
+      'surviving_solo');
+    assert.equal(survived.soloContinuation.bounds.knownFirstPlaceRiderId,
+      'you-7');
+    assert.equal(survived.soloContinuation.bounds.riders.length,32);
+    assert.equal(survived.classifiedResults,null);
+    assert.equal(survived.pointsStatus,'withheld');
+    assert.equal(validateV91FinaleTrialWithSoloBounds(settings(gender),{
+      attackTeamId:'you',attackRiderId:'you-7'},survived),true);
+    assert.throws(()=>validateV91FinaleTrialWithSoloBounds(
+      settings(gender),{attackTeamId:'you',attackRiderId:'you-7'},
+      {...survived,classifiedResults:[]}),/does not replay/);
+    const caught=createV91FinaleTrialWithSoloBounds({
+      ...settings(gender),managerTactics:[{effort:'steady',
+        attack:'none',chase:'ignore'}]},
+    {attackTeamId:'you',attackRiderId:'you-0'});
+    assert.equal(caught.finaleStatus,
+      'provisional_post_contact_bounds');
+    assert.equal(caught.soloContinuation.outcome.branch,'first_catch');
+    assert.equal(caught.soloContinuation.bounds.riders.length,32);
+    assert.equal(caught.soloContinuation.bounds.knownFirstPlaceRiderId,
+      null);
+    assert.equal(caught.canCommitAwards,false);
+    const unsupported=createV91FinaleTrialWithSoloBounds(
+      settings(gender),{attackTeamId:'you',attackRiderId:'you-7',
+        plans:plans(true)});
+    assert.equal(unsupported.finaleStatus,
+      'unsupported_road_outcome');
+    assert.equal(unsupported.soloContinuation,null);
+  }
 });
