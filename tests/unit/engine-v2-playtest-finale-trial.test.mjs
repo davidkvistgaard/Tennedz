@@ -108,6 +108,30 @@ test('one independent manager can change catch into an explicit solo',()=>{
     team.riders));
 });
 
+test('a custom profile and one rival decision change paid road coverage',()=>{
+  const shared={...settings('F'),terrain:'custom',
+    profileHeightsM:[100,130,160,135,120,100],
+    seed:'custom-boundary'};
+  const request={attackTeamId:'you',attackRiderId:'you-0'};
+  const chased=createV91FinaleTrialWithSoloBounds(shared,request);
+  const relaxed=createV91FinaleTrialWithSoloBounds({...shared,
+    managerTactics:[{effort:'steady',attack:'none',chase:'ignore'}]},
+  request);
+  assert.equal(chased.decision.branch,'caught');
+  assert.ok(chased.recording.route.kilometres.some(km=>
+    km.gradientPct>0));
+  assert.deepEqual(chased.recording.route,relaxed.recording.route);
+  assert.equal(chased.finale.line.finishers.length,32);
+  assert.equal(relaxed.decision.branch,'solo');
+  assert.equal(relaxed.soloContinuation.outcome.branch,'first_catch');
+  assert.equal(relaxed.soloContinuation.bounds.riders.length,32);
+  assert.deepEqual(chased.recording.committedInputs.teams.map(team=>
+    team.riders),relaxed.recording.committedInputs.teams.map(team=>
+    team.riders));
+  assert.equal(chased.canCommitAwards,false);
+  assert.equal(relaxed.canCommitAwards,false);
+});
+
 test('a tired multi-group source is refused before the finale branch',()=>{
   const tired={...settings('M'),distanceKm:260,teamCount:4,
     fatigue:30,seed:'paired-size-fatigue'};
