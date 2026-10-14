@@ -272,3 +272,30 @@ test('paired finale plans expose only paid conditional tactical changes',()=>{
       .elapsedChangeSeconds<0);
   }
 });
+
+test('paired tactics comparison stays provisional in larger tired fields',()=>{
+  for(const input of [
+    {distanceKm:120,terrain:'mountain',teamCount:15,gender:'M',
+      helperTeamId:'rival-2'},
+    {distanceKm:260,terrain:'rolling',teamCount:20,gender:'F',
+      fatigue:30,helperTeamId:'you'}]){
+    const shared={...settings(input.gender),...input};
+    const managers=Array.from({length:input.teamCount},(_,index)=>
+      index===0?'you':`rival-${index}`);
+    const basePlans=managers.map(teamId=>({teamId,
+      finisherId:`${teamId}-7`,leadOutRiderId:null}));
+    const changedPlans=basePlans.map(plan=>
+      plan.teamId===input.helperTeamId?{...plan,
+        leadOutRiderId:`${plan.teamId}-6`}:plan);
+    const base={attackTeamId:'you',attackRiderId:'you-0',
+      plans:basePlans};
+    const compared=compareV91FinalePlans(shared,base,
+      {...base,plans:changedPlans});
+    assert.equal(compared.status,'provisional_conditional_comparison');
+    assert.equal(compared.lines.length,input.teamCount);
+    assert.ok(compared.lines.find(row=>row.teamId===input.helperTeamId)
+      .elapsedChangeSeconds<0);
+    assert.equal(compared.classifiedResults,null);
+    assert.equal(compared.canCommitAwards,false);
+  }
+});
