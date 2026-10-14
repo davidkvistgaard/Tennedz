@@ -90,6 +90,13 @@ test('a surviving solo and unsupported manager plans remain explicit',()=>{
     attackTeamId:'you',attackRiderId:'you-0',plans:plans(true).map(row=>
       row.teamId==='you'?{...row,hiddenBoost:10}:row)}),
   /one valid finale plan/);
+  for(const invalidHelper of ['you-7','you-1']){
+    const invalidPlans=plans(false).map(row=>row.teamId==='you'?
+      {...row,finisherId:'you-0',leadOutRiderId:invalidHelper}:row);
+    assert.throws(()=>createV91FinaleTrial(settings('M'),{
+      attackTeamId:'you',attackRiderId:'you-0',plans:invalidPlans}),
+    /one valid finale plan/);
+  }
   assert.throws(()=>createV91FinaleTrial(settings('M'),{
     ...request(true),leadOutTiming:'early'}),
   /supported controlled-finale/);
