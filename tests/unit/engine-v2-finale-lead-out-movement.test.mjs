@@ -161,6 +161,16 @@ test('a weaker paid helper gives no free pull advantage',()=>{
       row.riderId==='c-2').energySpent>0));
     assert.equal(approach.finisherGainsAt300M.find(row=>
       row.riderId==='c-0').gainSeconds,0);
+    const weakLine=recordLeadOutConditionalLineFromTour(tour,input(true));
+    const noHelperLine=recordLeadOutConditionalLineFromTour(tour,input(false));
+    assert.equal(weakLine.longitudinal.positionsAt100M.find(row=>
+      row.riderId==='c-0').distanceToLineM,
+    noHelperLine.longitudinal.positionsAt100M.find(row=>
+      row.riderId==='c-0').distanceToLineM);
+    assert.equal(weakLine.line.finishers.find(row=>row.riderId==='c-0')
+      .elapsedSecondsFromLastKmStart,
+    noHelperLine.line.finishers.find(row=>row.riderId==='c-0')
+      .elapsedSecondsFromLastKmStart);
   }
 });
 
@@ -206,6 +216,10 @@ test('longer races carry actual source fatigue into the paid pull',()=>{
       remaining.push(approach.energyAt300M.find(row=>
         row.riderId==='c-2').energy);
       assert.equal(sprint.lineRiderEnergy.length,24);
+      const conditional=recordLeadOutConditionalLineFromTour(tour,
+        input(true));
+      assert.equal(conditional.line.finishers.length,24);
+      assert.equal(conditional.pointsStatus,'withheld');
       assert.ok(approach.frames.every(frame=>
         frame.riderEnergy.find(row=>row.riderId==='c-2')
           .energySpent>0));
@@ -376,5 +390,26 @@ test('paid lead-out and sprint speeds produce a replayable 100 m handoff',()=>{
     assert.throws(()=>validateLeadOutConditionalLineFromTour(tour,
       input(true),{...coupled,pointsStatus:'awarded'}),
     /does not replay/);
+  }
+});
+
+test('the conditional first crossing responds to a chosen helper',()=>{
+  for(const gender of ['M','F']){
+    const b=team('b',75,{gender,rotate:true});
+    b.riders[0].sprint=80;
+    const tour=simulateTacticalTour({stage,teams:[
+      team('a',50,{gender,attack:true}),b,
+      team('c',80,{gender,chase:'all'})],
+    seed:'catch-50-75-80',motorVersion:MOTOR_ATTACK_TRACE_VERSION});
+    const without=recordLeadOutConditionalLineFromTour(tour,
+      input(false));
+    const withHelper=recordLeadOutConditionalLineFromTour(tour,
+      input(true));
+    assert.equal(without.line.finishers[0].riderId,'b-0');
+    assert.equal(without.line.finishers[0].position,1);
+    assert.equal(withHelper.line.finishers[0].riderId,'c-0');
+    assert.equal(withHelper.line.finishers[0].position,1);
+    assert.equal(withHelper.pointsStatus,'withheld');
+    assert.equal(withHelper.canCommitAwards,false);
   }
 });
