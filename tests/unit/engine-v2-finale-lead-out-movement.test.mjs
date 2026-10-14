@@ -19,7 +19,8 @@ import {recordFinaleRotationLeadOutCandidateFromTour,
 import {recordPositionedFinaleLineFromTour,
   validatePositionedFinaleLineFromTour} from
   '../../lib/engine/v2/finale-positioned-line.mjs';
-import {recordLeadOutLongitudinalFromTour,
+import {resolveLeadOutLongitudinal,
+  recordLeadOutLongitudinalFromTour,
   validateLeadOutLongitudinalFromTour,
   recordLeadOutConditionalLineFromTour,
   validateLeadOutConditionalLineFromTour} from
@@ -412,4 +413,24 @@ test('the conditional first crossing responds to a chosen helper',()=>{
     assert.equal(withHelper.pointsStatus,'withheld');
     assert.equal(withHelper.canCommitAwards,false);
   }
+});
+
+test('a forged unpaid helper cannot create a longitudinal lead',()=>{
+  const tour=catchTour('M');
+  const candidate=recordFinaleRotationLeadOutCandidateFromTour(tour,
+    input(true));
+  const frame=candidate.approach.frames[0];
+  const unpaid={...candidate,approach:{...candidate.approach,
+    frames:[{...frame,riderEnergy:frame.riderEnergy.map(row=>
+      row.riderId==='c-2'?{...row,energySpent:0}:row)},
+    candidate.approach.frames[1]]}};
+  assert.throws(()=>resolveLeadOutLongitudinal(unpaid),
+    /paid lead-out pair/);
+  const sprintFrame=candidate.sprint.frames[0];
+  const unpaidSprint={...candidate,sprint:{...candidate.sprint,
+    frames:[{...sprintFrame,riderEnergy:sprintFrame.riderEnergy.map(row=>
+      row.riderId==='c-0'?{...row,energySpent:0}:row)},
+    ...candidate.sprint.frames.slice(1)]}};
+  assert.throws(()=>resolveLeadOutLongitudinal(unpaidSprint),
+    /invalid paid movement/);
 });
