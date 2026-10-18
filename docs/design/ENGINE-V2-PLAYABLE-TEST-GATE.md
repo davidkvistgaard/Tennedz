@@ -322,6 +322,19 @@ mountain men's (20-team) sources all retain their paid helper pulls and reach
 every conditional individual crossing. Earlier contact with a helper still
 pulling remains outside this branch. Neither post-lead-out version creates a
 classified order or point award.
+`v2-finale-chased-partial-active-lead-out-runner-5` covers the narrower
+contact where the player's active helper–finisher pair reaches its own solo
+together, on the measured road, before the final 300 m. It carries both riders'
+prior movement and energy to the next decision, reselects the existing paid
+lead-out only while they remain together and the helper can pay, retains the
+recorded pair group while they ride together, then separates the sprint from
+the helper's work. It does not infer drafting with the caught solo. Constructed
+40 km flat men's (4-team), 120 km rolling women's (15-team) and 260 km
+mountain men's (20-team) sources replay with every individual crossing. In
+the fixed 4-team paired trial, the same locked race with a player lead-out
+changes the selected finisher's conditional line time from 87.911 to 87.755 s;
+this is one fictional seed, not a calibrated benefit or target. Other active
+lead-out contacts, rival pairs and official placing remain outside this scope.
 Each accepted branch keeps its original source recording and riders,
 and every crossing remains conditional: no inferred wheel order becomes an
 official result or point award. Other valid attack combinations and existing
