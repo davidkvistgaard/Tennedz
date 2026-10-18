@@ -4,7 +4,8 @@ import {createV91ConditionalRaceFinal,
   validateV91ConditionalRaceFinal} from
   '../../lib/engine/v2/playtest-race-final.mjs';
 import {recordFinaleChasedPartialContactFromTour,
-  validateFinaleChasedPartialContactFromTour} from
+  validateFinaleChasedPartialContactFromTour,
+  validateFinaleChasedPartialAfterLeadOutFromTour} from
   '../../lib/engine/v2/finale-partial-contact-runner.mjs';
 import {prepareV91FinaleTrial} from
   '../../lib/engine/v2/playtest-finale-trial.mjs';
@@ -164,6 +165,82 @@ test('a chase team can rotate only after its chase target is caught',()=>{
   }
   assert.equal(validateFinaleChasedPartialContactFromTour(
     tour,input,source,continuation),true);
+});
+
+test('a paid lead-out survives later partial solo contact to the line',()=>{
+  const attack={attackTeamId:'you',attackRiderId:'you-4'};
+  const prepared=prepareV91FinaleTrial(settings,attack);
+  const plans=helper=>prepared.finalePlans.map(row=>row.teamId==='you'?{
+    ...row,finisherId:'you-6',leadOutRiderId:helper}:row);
+  const neutral=createV91ConditionalRaceFinal(settings,{
+    ...attack,plans:plans(null)});
+  const withLead=createV91ConditionalRaceFinal(settings,{
+    ...attack,plans:plans('you-5')});
+  assert.deepEqual(withLead.recording,neutral.recording);
+  assert.equal(withLead.paidFinale.version,
+    'v2-finale-chased-partial-after-lead-out-runner-3');
+  assert.ok(withLead.preContactFinale.frames.some(frame=>
+    frame.leadOutRiderIds.includes('you-5')&&
+    frame.riders.some(row=>row.riderId==='you-5'&&
+      row.role==='lead_out'&&row.energySpent>0)));
+  assert.deepEqual(withLead.preContactFinale.frames.at(-1)
+    .leadOutRiderIds,[]);
+  const first=withLead.paidFinale.frames[0];
+  const source=withLead.preContactFinale.frames.at(-1);
+  for(const row of first.riders){
+    const prior=source.riders.find(rider=>
+      rider.riderId===row.riderId);
+    assert.ok(Math.abs(row.positionBeforeM-prior.positionM)<1e-8);
+    assert.ok(Math.abs(row.energyAtDecision-prior.energyAfter)<1e-8);
+  }
+  const line=trial=>trial.paidFinale.finishers.find(row=>
+    row.riderId==='you-6').elapsedSecondsFromLastKmStart;
+  assert.notEqual(line(withLead),line(neutral));
+  assert.equal(withLead.paidFinale.finishers.length,32);
+  assert.equal(withLead.classifiedResults,null);
+  assert.equal(withLead.pointsStatus,'withheld');
+  assert.equal(validateFinaleChasedPartialAfterLeadOutFromTour(
+    withLead.recording,{attackTeamId:'you',plans:withLead.finalePlans},
+    withLead.preContactFinale,withLead.paidFinale),true);
+  assert.equal(validateV91ConditionalRaceFinal(settings,{
+    ...attack,plans:plans('you-5')},withLead),true);
+});
+
+test('post-lead-out contact retains varied fields and route lengths',()=>{
+  const attack={attackTeamId:'you',attackRiderId:'you-4'};
+  for(const variation of [
+    {distanceKm:120,terrain:'rolling',teamCount:15,gender:'F'},
+    {distanceKm:260,terrain:'mountain',teamCount:20,gender:'M'}]){
+    const input={...settings,...variation};
+    const prepared=prepareV91FinaleTrial(input,attack);
+    const plans=prepared.finalePlans.map(row=>row.teamId==='you'?{
+      ...row,finisherId:'you-6',leadOutRiderId:'you-5'}:row);
+    const trial=createV91ConditionalRaceFinal(input,{...attack,plans});
+    assert.equal(trial.paidFinale.version,
+      'v2-finale-chased-partial-after-lead-out-runner-3');
+    assert.equal(trial.paidFinale.finishers.length,
+      variation.teamCount*8);
+    assert.equal(new Set(trial.paidFinale.finishers.map(row=>
+      row.riderId)).size,variation.teamCount*8);
+    assert.ok(trial.paidFinale.finishers.every(row=>
+      Number.isFinite(row.elapsedSecondsFromLastKmStart)));
+    assert.equal(validateV91ConditionalRaceFinal(
+      input,{...attack,plans},trial),true);
+  }
+});
+
+test('a helper still pulling at contact is not granted a free finish',()=>{
+  const attack={attackTeamId:'you',attackRiderId:'you-3'};
+  const prepared=prepareV91FinaleTrial(settings,attack);
+  const plans=prepared.finalePlans.map(row=>row.teamId==='you'?{
+    ...row,finisherId:'you-6',leadOutRiderId:'you-5'}:row);
+  const trial=createV91ConditionalRaceFinal(settings,{...attack,plans});
+  assert.equal(trial.roadStatus,'unsupported_partial_contact');
+  assert.equal(trial.paidFinale.outcome,'contact_uncontinued');
+  assert.ok(trial.paidFinale.frames.at(-1)
+    .leadOutRiderIds.includes('you-5'));
+  assert.equal(trial.classifiedResults,null);
+  assert.equal(trial.pointsStatus,'withheld');
 });
 
 test('passive partial contact pays the same field to each individual line',()=>{

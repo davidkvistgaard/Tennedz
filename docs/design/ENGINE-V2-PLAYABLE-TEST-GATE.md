@@ -290,8 +290,8 @@ are selected from the recorded orders and remaining energy only while the
 named solo remains ahead. After contact, an eligible front-rotation team can
 take a paid turn using the existing rotation rule. A source rotation, lead-out,
 or rival attack remains explicitly unsupported here. This is a conditional
-open-road longitudinal
-trace, not a joined drafting group or a classified finish. In constructed
+open-road longitudinal trace, not a joined drafting group or a classified
+finish. In constructed
 40 km flat (4-team), 120 km rolling (15-team) and 260 km mountain (20-team)
 sources it retains every rider, replays the source contact, and pays energy
 to each individual crossing. The same three route/field combinations exercise
@@ -299,6 +299,21 @@ the active-chase continuation. A separate 40 km case records a chase team
 rotating only after the named solo is caught, with each selected worker's
 measured slice energy matching the continuation. These constructed sources do
 not establish sporting balance.
+
+`v2-finale-chased-partial-after-lead-out-runner-3` also carries a paid
+lead-out through later partial contact when the helper's recorded pull has
+already ended and contact occurs inside the final 300 m sprint. It preserves
+the prior helper work and every rider's exact position and energy at contact,
+then pays the active chase and all individual crossings using the same
+conditional road rules. A fixed paired 40 km source keeps the underlying race
+recording identical while the lead-out spends energy and changes its nominated
+finisher's conditional crossing time. In a constructed 54-case matrix spanning
+40/120/260 km, flat/rolling/mountain, both genders and 4/15/20 teams, all
+54 named player lead-out sources reach this versioned conditional line.
+These sources do not validate how large a sporting lead-out advantage should
+be. A helper still pulling at contact, an earlier partial contact with a
+future lead-out opportunity, and unrecorded positional interactions remain
+unsupported.
 Each accepted branch keeps its original source recording and riders,
 and every crossing remains conditional: no inferred wheel order becomes an
 official result or point award. Other valid attack combinations and existing
