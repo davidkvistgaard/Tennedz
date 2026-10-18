@@ -155,3 +155,22 @@ The solo branch keeps its prior one-clock trace. The next gate is a defensible
 position/passing model and complete contact continuation, then classified
 results and a read-only point projection; this laboratory order alone cannot
 open the player test or settle a race.
+
+`v91-finale-trial-13` corrects one causal flaw in that experiment: the v12
+source moved nominated helpers and finishers onto a shared lane before either
+paid for repositioning. The new independent source assigns the same inferred
+wheels with or without a lead-out order. A helper can pull only when its
+source wheel is already adjacent and no farther than one wheel ahead; a
+distant or rear helper is rejected explicitly. In a paired 40 km fictional
+race, the valid helper changes the finisher's paid line time and spends extra
+energy without changing the locked race or initial positions. This still
+uses provisional wheel geometry and unblocked passing; official places and
+points remain withheld. V12 remains replayable as an earlier lab recording.
+
+Verification on 18 October: the relevant old and new finale tests passed (18
+focused cases), as did the expanded v13 field tests, lint and an isolated
+Next build. The full unit run did **not** pass: its existing concurrent
+15-team balance audit reached its 720-second subprocess limit. The same audit
+also timed out when run alone, with no assertion result; its script imports
+the older ensemble path, not the new bunch runner. This is a test-performance
+failure to diagnose, not evidence that the sporting acceptance gate passed.

@@ -2,10 +2,13 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {createV91FinaleTrialWithUnifiedRoad,
   createV91FinaleTrialWithPositionedBunch,
-  validateV91FinaleTrialWithPositionedBunch} from
+  validateV91FinaleTrialWithPositionedBunch,
+  createV91FinaleTrialWithIndependentBunch,
+  validateV91FinaleTrialWithIndependentBunch} from
   '../../lib/engine/v2/playtest-finale-trial.mjs';
 import {recordFinalePositionedBunchRunnerFromTour,
-  validateFinalePositionedBunchRunnerFromTour} from
+  validateFinalePositionedBunchRunnerFromTour,
+  validateFinaleIndependentBunchRunnerFromTour} from
   '../../lib/engine/v2/finale-paid-bunch-runner.mjs';
 
 const settings={distanceKm:40,terrain:'flat',teamCount:4,
@@ -157,4 +160,58 @@ test('the opt-in player trial exposes the experimental order only for a bunch',(
     assert.equal(validateV91FinaleTrialWithPositionedBunch(
       settings,request,trial),true);
   }
+});
+
+test('a helper changes paid work without changing the locked source wheel',()=>{
+  const plans=helper=>['you','rival-1','rival-2','rival-3']
+    .map(teamId=>({teamId,finisherId:`${teamId}-7`,
+      leadOutRiderId:teamId==='rival-1'?helper:null}));
+  const request=helper=>({attackTeamId:'you',attackRiderId:'you-0',
+    plans:plans(helper)});
+  const without=createV91FinaleTrialWithIndependentBunch(
+    settings,request(null));
+  const withLead=createV91FinaleTrialWithIndependentBunch(
+    settings,request('rival-1-5'));
+  assert.equal(withLead.version,'v91-finale-trial-13');
+  assert.deepEqual(without.recording,withLead.recording);
+  assert.deepEqual(without.paidFinale.positionedSource.slots,
+    withLead.paidFinale.positionedSource.slots);
+  const line=(trial,id)=>trial.paidFinale.lineOrder.find(row=>
+    row.riderId===id);
+  assert.ok(line(withLead,'rival-1-7')
+    .elapsedSecondsFromLastKmStart<line(without,'rival-1-7')
+      .elapsedSecondsFromLastKmStart);
+  assert.ok(line(withLead,'rival-1-5').energyAtLine<
+    line(without,'rival-1-5').energyAtLine);
+  assert.equal(withLead.classifiedResults,null);
+  assert.equal(withLead.pointsStatus,'withheld');
+  assert.equal(validateFinaleIndependentBunchRunnerFromTour(
+    withLead.recording,{attackTeamId:'you',plans:withLead.finalePlans},
+    withLead.paidFinale),true);
+  assert.equal(validateV91FinaleTrialWithIndependentBunch(
+    settings,request('rival-1-5'),withLead),true);
+  assert.throws(()=>createV91FinaleTrialWithIndependentBunch(
+    settings,request('rival-1-6')),/not on the finisher's source wheel/);
+});
+
+test('independent source keeps full tired fields and the solo guard',()=>{
+  for(const input of [
+    {...settings,teamCount:20,gender:'F',seed:'independent-flat'},
+    {...settings,teamCount:20,gender:'M',terrain:'mountain',
+      distanceKm:120,fatigue:15,seed:'independent-mountain'}]){
+    const request={attackTeamId:'you',attackRiderId:'you-0'};
+    const trial=createV91FinaleTrialWithIndependentBunch(input,request);
+    assert.equal(trial.paidFinale.positionedSource.version,
+      'v2-finale-independent-source-lab-2');
+    assert.equal(trial.paidFinale.lineOrder.length,160);
+    assert.equal(trial.paidFinale.finishers.length,160);
+    assert.equal(trial.paidFinale.pointsStatus,'withheld');
+    assert.equal(validateV91FinaleTrialWithIndependentBunch(
+      input,request,trial),true);
+  }
+  const request={attackTeamId:'you',attackRiderId:'you-7'};
+  const trial=createV91FinaleTrialWithIndependentBunch(settings,request);
+  assert.equal(trial.decision.branch,'solo');
+  assert.equal(trial.paidFinaleStatus,'separated_line');
+  assert.equal(trial.classifiedResults,null);
 });
