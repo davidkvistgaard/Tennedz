@@ -339,3 +339,7 @@ Each accepted branch keeps its original source recording and riders,
 and every crossing remains conditional: no inferred wheel order becomes an
 official result or point award. Other valid attack combinations and existing
 separated road groups remain outside this narrow entry.
+The unified entry now checks each purported paid line against the locked
+roster and the final road frame: every rider must appear once at the line
+with matching elapsed time and remaining energy. This is an integrity guard
+over existing recording versions, not a new placing or point rule.
