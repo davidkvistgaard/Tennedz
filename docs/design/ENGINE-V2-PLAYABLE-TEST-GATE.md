@@ -209,3 +209,23 @@ helper case; an ahead-but-distant helper, lateral moves, contested lanes and
 solo partial contact still lack a road model. The inferred source and
 open-road passing remain provisional. `classifiedResults` is null, points
 are withheld and the playable acceptance gate remains open.
+
+The reproducible paired audit `node scripts/engine-v2-assembled-finale-audit.mjs`
+holds each fictional race recording and 500 m wheel source fixed, then tries
+the closest payable rear helper in the same or adjacent provisional lane.
+Its 40 km flat, 120 km rolling and 260 km mountain matrix covers both genders
+and 4/15/20 teams. Sixteen of eighteen sources have the complete bunch this
+runner requires; the two 4-team mountain sources are correctly refused. Of
+the sixteen paired sources, seven helpers reach the nominated finisher's wheel
+by an approach boundary, but only six pull before the sprint. In the 40 km
+flat, 20-team women's source the helper spends work in both approach slices
+and reaches the wheel at 300 m; `assemblyAttempts` says
+`ready_next_boundary`, although the next slice is the sprint and no lead-out
+occurs. That status needs a versioned correction before it can be presented
+as a manager-facing promise. The six actual pulls save 0.08–0.11 seconds for
+the paired finisher under this fixed source and provisional line model. These
+counts are diagnostic of this chosen helper and seed matrix, not a target
+lead-out frequency, calibrated outcome or classified result. All tested
+points remain withheld. The stronger next vertical step is an earlier,
+paid positioning decision and an end-to-end result path, not another isolated
+100 m recording.
