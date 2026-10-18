@@ -73,3 +73,13 @@ next boundary. Four contact timings are covered, from 400 m to 100 m remaining.
 It does not retroactively apply a lead-out order before contact; such an order,
 a surviving solo and last-slice contact remain explicitly unsupported by this
 continuation. No contact path awards points or claims an official placing.
+
+The subsequent `v91-finale-trial-6` guards a missed causal dependency in that
+conditional continuation. A catch in the 300–200 m or 200–100 m slice was
+measured without the nominated finishers' sprint, which can start at 300 m and
+change when contact happens. The current trial therefore withholds the v5
+post-contact runner for those two branches as `unsupported_pre_contact_sprint`.
+Only the 500–400 m and 400–300 m catches can currently hand off before sprint
+launch. V5 remains replayable as an earlier conditional experiment, not proof
+of a late catch under the ordered sprint. The next motor step must move the
+solo, bunch and active sprinters on one clock through contact or survival.

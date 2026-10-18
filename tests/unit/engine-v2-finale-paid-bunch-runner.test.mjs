@@ -4,7 +4,9 @@ import {prepareV91FinaleTrial,
   createV91FinaleTrialWithPhysicalRunner,
   validateV91FinaleTrialWithPhysicalRunner,
   createV91FinaleTrialWithContactRunner,
-  validateV91FinaleTrialWithContactRunner} from
+  validateV91FinaleTrialWithContactRunner,
+  createV91FinaleTrialWithSprintContactGuard,
+  validateV91FinaleTrialWithSprintContactGuard} from
   '../../lib/engine/v2/playtest-finale-trial.mjs';
 import {simulateTacticalTour} from '../../lib/engine/v2/tour.mjs';
 import {MOTOR_ATTACK_TRACE_VERSION} from
@@ -230,5 +232,25 @@ test('larger tired fields retain all riders after exact solo contact',()=>{
     assert.ok(runner.frames.every(frame=>frame.riders.every(row=>
       row.energySpent<=row.energyAtDecision+1e-8)));
     assert.equal(result.pointsStatus,'withheld');
+  }
+});
+
+test('sprint-contact guard keeps only pre-sprint catches as paid handoffs',()=>{
+  for(const gender of ['M','F'])for(const [index,branch,safe] of [
+    [1,'first_catch',true],[2,'second_catch',true],
+    [3,'late_catch',false],[4,'penultimate_catch',false]]){
+    const request={attackTeamId:'you',attackRiderId:`you-${index}`};
+    const result=createV91FinaleTrialWithSprintContactGuard(
+      settings(gender),request);
+    assert.equal(result.version,'v91-finale-trial-6');
+    assert.equal(result.sourceContactTrialVersion,'v91-finale-trial-5');
+    assert.equal(result.soloContinuation.outcome.branch,branch);
+    assert.equal(result.postContactRunnerStatus,safe?
+      'paid_conditional_line':'unsupported_pre_contact_sprint');
+    assert.equal(result.postContactRunner!==null,safe);
+    assert.equal(result.pointsStatus,'withheld');
+    assert.equal(result.canCommitAwards,false);
+    assert.equal(validateV91FinaleTrialWithSprintContactGuard(
+      settings(gender),request,result),true);
   }
 });
