@@ -27,18 +27,29 @@ for(const route of routes)for(const gender of ['M','F'])
       try{
         const trial=createV91ConditionalRaceFinal(settings);
         assert.deepEqual(trial.recording,source.recording);
-        assert.equal(trial.roadStatus,'paid_conditional_line');
-        assert.equal(trial.paidFinale.finishers.length,teamCount*8);
-        assert.equal(new Set(trial.paidFinale.finishers.map(row=>
-          row.riderId)).size,teamCount*8);
+        assert.ok(['paid_conditional_line','paid_group_bands']
+          .includes(trial.roadStatus));
+        if(trial.roadStatus==='paid_conditional_line'){
+          assert.equal(trial.paidFinale.finishers.length,teamCount*8);
+          assert.equal(new Set(trial.paidFinale.finishers.map(row=>
+            row.riderId)).size,teamCount*8);
+        }else{
+          assert.equal(handoff.roadGroups.length,1);
+          assert.equal(handoff.droppedRiderIds.length,0);
+          assert.equal(trial.paidFinale.line.finalRiderEnergy.length,
+            teamCount*8);
+          assert.equal(trial.finalePlanStatus,'unapplied_group_band');
+        }
         assert.equal(trial.pointsStatus,'withheld');
         assert.equal(trial.canCommitAwards,false);
         assert.equal(validateV91ConditionalRaceFinal(
           settings,{},trial),true);
-        status='paid_conditional_line';
+        status=trial.roadStatus;
       }catch(error){
-        if(error.message!==
-          'The inactive-intents bunch has an unresolved road action.')
+        if(![
+          'The inactive-intents bunch has an unresolved road action.',
+          'The cooperative group has an unresolved last-kilometre road action.'
+        ].includes(error.message))
           throw error;
         reason=error.message;
       }
@@ -50,10 +61,12 @@ for(const route of routes)for(const gender of ['M','F'])
     }
 const count=(mode,status)=>rows.filter(row=>row.mode===mode&&
   row.status===status).length;
-console.log(JSON.stringify({version:'v2-conditional-coverage-audit-1',
+console.log(JSON.stringify({version:'v2-conditional-coverage-audit-2',
   seed:'conditional-coverage-1',scenarios:rows.length,
   mixedPaid:count('mixed','paid_conditional_line'),
+  mixedGroupBands:count('mixed','paid_group_bands'),
   mixedRefused:count('mixed','refused'),
   attackPaid:count('attack','paid_conditional_line'),
+  attackGroupBands:count('attack','paid_group_bands'),
   attackRefused:count('attack','refused'),
   rows},null,2));

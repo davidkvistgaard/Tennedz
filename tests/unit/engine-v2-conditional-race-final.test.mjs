@@ -460,9 +460,38 @@ test('an eligible named attack cannot be treated as inactive',()=>{
     plans:prepared.finalePlans}),/unresolved road action/);
 });
 
-test('an existing break cannot enter the inactive-intents bunch path',()=>{
-  assert.throws(()=>createV91ConditionalRaceFinal({
-    ...settings,seed:'source-0',attack:'repeated',chase:'ignore',
-    defaultRivalPlan:'attack'}),
-  /unresolved road action/);
+test('one recorded cooperative group reaches a paid band line without awards',()=>{
+  for(const variation of [
+    {distanceKm:40,terrain:'flat',fatigue:0,gender:'M',teamCount:4},
+    {distanceKm:40,terrain:'flat',fatigue:0,gender:'F',teamCount:20},
+    {distanceKm:120,terrain:'rolling',fatigue:15,gender:'M',teamCount:15},
+    {distanceKm:120,terrain:'rolling',fatigue:15,gender:'F',teamCount:20}]){
+    const input={...variation,seed:'conditional-coverage-1',
+      attack:'repeated',chase:'ignore',defaultRivalPlan:'attack'};
+    const trial=createV91ConditionalRaceFinal(input);
+    assert.equal(trial.version,'v91-conditional-race-final-3');
+    assert.equal(trial.roadStatus,'paid_group_bands');
+    assert.equal(trial.paidFinale.version,
+      'v2-finale-group-common-clock-1');
+    assert.equal(trial.finalePlanStatus,'unapplied_group_band');
+    assert.equal(trial.paidFinale.line.finalRiderEnergy.length,
+      variation.teamCount*8);
+    assert.equal(trial.classifiedResults,null);
+    assert.equal(trial.pointsStatus,'withheld');
+    assert.equal(trial.canCommitAwards,false);
+    assert.equal(validateV91ConditionalRaceFinal(input,{},trial),true);
+  }
+});
+
+test('group branch refuses unpaid manager plans and unresolved road states',()=>{
+  const group={distanceKm:40,terrain:'flat',teamCount:4,gender:'M',
+    seed:'conditional-coverage-1',attack:'repeated',chase:'ignore',
+    defaultRivalPlan:'attack'};
+  assert.throws(()=>createV91ConditionalRaceFinal(group,{plans:[]}),
+    /Finisher and lead-out plans are not paid/);
+  for(const variation of [
+    {...group,chase:'all'},
+    {...group,distanceKm:260,terrain:'mountain',fatigue:30}])
+    assert.throws(()=>createV91ConditionalRaceFinal(variation),
+      /unresolved last-kilometre road action/);
 });

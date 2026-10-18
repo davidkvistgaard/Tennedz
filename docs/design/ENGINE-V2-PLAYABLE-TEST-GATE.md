@@ -63,14 +63,13 @@ launch and no other road action is pending. The fixed 40 km flat men's
 (4 teams), 120 km rolling women's (15 teams), and 260 km mountain men's
 (20 teams) mixed default requests reach a paid conditional individual line
 through the existing full-kilometre bunch runner. The new version records the
-blocked or not-due intents; an eligible named attack or an existing separated
-group is still rejected. This resolves an overly broad order-label guard,
-not the general finale. Existing separated-group recordings can pay some
-earlier road travel, but they stop at group contact or do not apply an
-individual sprint. The next motor integration must carry actual
-last-kilometre groups, dropped riders and valid manager actions on one clock
-through contact and the finish; only then can a general result and point
-projection be assessed against this gate.
+blocked or not-due intents; an eligible named attack is still rejected. A
+single separated group now has a distinct paid-band path under the strict
+conditions below. This resolves an overly broad order-label guard, not the
+general finale. The next motor integration must carry multiple last-kilometre
+groups, dropped riders and valid manager actions on one clock through contact
+and the finish; only then can a general result and point projection be
+assessed against this gate.
 
 The repeatable read-only audit
 `node scripts/engine-v2-conditional-coverage-audit.mjs` fixes one fictional
@@ -80,11 +79,12 @@ teams; mixed and attack-oriented default tactics. It independently replays
 each accepted conditional finish against the same locked kilometre race.
 Sixteen of 18 mixed sources reach a paid conditional individual line; the
 two 4-team mountain sources have a road group and six dropped riders, so
-refuse. All 18 attack-oriented sources refuse because one or two road groups
-already exist at the last-kilometre handoff. None of these counts is a target
-win rate. The group-bearing sources expose the next missing input: an honest
-common-clock physical separation at the kilometre handoff. A time gap alone
-must not be silently converted into a wheel position or an official winner.
+refuse. Twelve of 18 attack-oriented sources now reach a paid group-band line
+through the shared conditional entry. The remaining six have two road groups
+and refuse. Each accepted recording replays against the locked kilometre
+source, retains the complete field and withholds awards. None of these counts
+is a target win rate. A time gap is never converted into an individual wheel
+position or official winner.
 
 The opt-in `v2-finale-group-last-km-to-line-11` now uses the recorded
 one-kilometre snapshot directly when it contains exactly one road group, one
@@ -98,7 +98,7 @@ recording versions remain unchanged. This path reports only aligned
 road-band passage times and withholds results and points. Its time-gap model
 does not establish physical wheel positions or a common-clock individual
 finish, and no manager finisher or lead-out order is applied. It therefore
-cannot yet feed the playable race-final entry.
+cannot yet give the race-final entry an individual classified finish.
 
 The separate opt-in `v2-finale-group-cooperative-to-line-12` addresses one
 missing work contract on that recorded single-break road. Instead of choosing
@@ -128,6 +128,17 @@ reconstructs **group-band** positions only. It does not supply rider wheels,
 passing lanes, a lead-out among break riders, a complete individual finish or
 points. Fixed short flat and tired rolling examples in both categories, plus
 a narrow-gap catch, replay the clock and preserve the paid energy.
+
+`v91-conditional-race-final-3` now joins this group clock to the existing
+read-only conditional race entry. It admits exactly one recorded break group,
+no dropped riders, no eligible final-kilometre attack or other pending road
+action, and no active or ordered chase. It rejects player finisher/lead-out
+plans because this band runner cannot yet pay them. All break workers pay
+their recorded cooperative work, and every rider retains final energy. The
+entry reports `paid_group_bands`, explicitly marks finale plans unapplied and
+withholds individual results and points. The older individual-line v1/v2
+entry versions are unchanged. This is a complete paid road for one narrow
+source class, not a playable tactics-and-results test.
 
 ## Current complete-bunch boundary
 
