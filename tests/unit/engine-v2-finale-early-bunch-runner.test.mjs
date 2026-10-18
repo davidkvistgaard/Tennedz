@@ -11,6 +11,19 @@ const settings={distanceKm:40,terrain:'flat',teamCount:4,
   gender:'M',attack:'none',chase:'ignore',
   defaultRivalPlan:'chase',seed:'early-test'};
 
+test('invalid manager finale plans fail before an unresolved race is run',()=>{
+  const group={...settings,seed:'conditional-coverage-1',
+    attack:'repeated',defaultRivalPlan:'attack'};
+  assert.throws(()=>createV91EarlyBunchTrial(group,{plans:[]}),
+    /Choose one valid finale plan per manager/);
+  const valid=Array.from({length:4},(_,index)=>{
+    const teamId=index===0?'you':`rival-${index}`;
+    return {teamId,finisherId:`${teamId}-7`,leadOutRiderId:null};
+  });
+  assert.throws(()=>createV91EarlyBunchTrial(group,{plans:valid}),
+    /unresolved road action|needs one inactive-attack bunch/);
+});
+
 test('a nominated helper earns position and a pull across the paid kilometre',()=>{
   const before=createV91EarlyBunchTrial(settings);
   const plans=before.finalePlans.map(row=>({...row,

@@ -634,7 +634,11 @@ test('group branch refuses unpaid manager plans and unresolved road states',()=>
   const group={distanceKm:40,terrain:'flat',teamCount:4,gender:'M',
     seed:'conditional-coverage-1',attack:'repeated',chase:'ignore',
     defaultRivalPlan:'attack'};
-  assert.throws(()=>createV91ConditionalRaceFinal(group,{plans:[]}),
+  const plans=Array.from({length:4},(_,index)=>{
+    const teamId=index===0?'you':`rival-${index}`;
+    return {teamId,finisherId:`${teamId}-7`,leadOutRiderId:null};
+  });
+  assert.throws(()=>createV91ConditionalRaceFinal(group,{plans}),
     /Finisher and lead-out plans are not paid/);
   const ownBreakChase=createV91ConditionalRaceFinal({...group,chase:'all'});
   assert.equal(ownBreakChase.version,'v91-conditional-race-final-4');
