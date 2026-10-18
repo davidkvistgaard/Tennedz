@@ -269,8 +269,18 @@ solo meets the entire bunch at an exact contact and no helper was ordered,
 the already measured contact feeds the existing paid bunch continuation;
 that continuation now validates the versioned lead-out-capable solo trace as
 well as the older no-lead-out trace. A separated solo reaches the line on its
-own one-clock recording. Partial contact stops with an explicit unsupported
-status. Each accepted branch keeps its original source recording and riders,
+own one-clock recording. A separate passive partial-contact continuation now
+pays every rider from the exact contact to the line when rivals have no chase
+or attack order, the source has no active chase or front rotation, and no
+lead-out was ordered. It carries the prior velocities and work to the next
+100 m decision, then uses the existing passive, front and sprint work rules.
+Contact with an active chase or rotation, a lead-out, or a non-passive rival
+remains explicitly unsupported. This is a conditional open-road longitudinal
+trace, not a joined drafting group or a classified finish. In constructed
+40 km flat (4-team), 120 km rolling (15-team) and 260 km mountain (20-team)
+sources it retains every rider, replays the source contact, and pays energy
+to each individual crossing. These sources do not establish sporting balance.
+Each accepted branch keeps its original source recording and riders,
 and every crossing remains conditional: no inferred wheel order becomes an
 official result or point award. Other valid attack combinations and existing
 separated road groups remain outside this narrow entry.

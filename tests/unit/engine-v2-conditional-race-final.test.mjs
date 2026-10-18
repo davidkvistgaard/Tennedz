@@ -81,3 +81,53 @@ test('a partial solo catch remains unclassified and cannot award points',()=>{
   assert.throws(()=>createV91ConditionalRaceFinal(settings,
     {leadOutTiming:'early'}),/supported conditional race orders/);
 });
+
+test('passive partial contact pays the same field to each individual line',()=>{
+  for(const variation of [
+    {distanceKm:40,terrain:'flat',teamCount:4,gender:'M'},
+    {distanceKm:120,terrain:'rolling',teamCount:15,gender:'F'},
+    {distanceKm:260,terrain:'mountain',teamCount:20,gender:'M'}]){
+    const input={...settings,...variation,
+      managerTactics:Array.from({length:variation.teamCount-1},()=>({
+        effort:'steady',attack:'none',chase:'ignore'}))};
+    const trial=createV91ConditionalRaceFinal(input,named(0));
+    const source=trial.preContactFinale.frames.at(-1);
+    const continuation=trial.paidFinale;
+    assert.equal(continuation.version,
+      'v2-finale-passive-partial-contact-runner-1');
+    assert.equal(trial.roadStatus,'paid_conditional_line');
+    assert.equal(continuation.pointsStatus,'withheld');
+    assert.equal(continuation.canCommitAwards,false);
+    assert.equal(continuation.finishers.length,
+      variation.teamCount*8);
+    assert.equal(new Set(continuation.finishers.map(row=>
+      row.riderId)).size,variation.teamCount*8);
+    assert.ok(continuation.finishers.every(row=>
+      Number.isFinite(row.elapsedSecondsFromLastKmStart)&&
+      Number.isFinite(row.energyAtLine)&&row.energyAtLine>=0));
+    const first=continuation.frames[0];
+    assert.equal(first.startDistanceM,source.bunchPositionM);
+    assert.equal(first.elapsedSecondsAtStart,
+      trial.preContactFinale.contact.elapsedSeconds);
+    assert.ok(first.durationSeconds>0);
+    for(const row of first.riders){
+      const prior=source.riders.find(rider=>
+        rider.riderId===row.riderId);
+      assert.ok(Math.abs(row.positionBeforeM-prior.positionM)<1e-8);
+      assert.ok(Math.abs(row.energyAtDecision-prior.energyAfter)<1e-8);
+    }
+    for(const frame of continuation.frames){
+      assert.equal(frame.riders.length,variation.teamCount*8);
+      for(const row of frame.riders){
+        assert.ok(row.energySpent>=0);
+        assert.ok(row.energyAfter>=0);
+        assert.ok(Math.abs(row.energyAtDecision-row.energySpent-
+          row.energyAfter)<1e-8);
+        assert.ok(row.positionM>=row.positionBeforeM);
+        assert.ok(row.positionM<=variation.distanceKm*1000);
+      }
+    }
+    assert.equal(validateV91ConditionalRaceFinal(
+      input,named(0),trial),true);
+  }
+});
