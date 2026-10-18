@@ -131,3 +131,10 @@ retain every rider and energy debit. The run still stops at partial contact,
 including a helper and finisher meeting the solo together. It has no passing
 rule, classified result or point award. The no-lead-out v8/v9 recordings keep
 their older versions and behavior.
+
+The opt-in `v91-finale-trial-11` selects the already paid complete-bunch
+runner for a caught or contained named attack and the one-clock lead-out road
+for a surviving solo, using the branch recorded by the same locked v91 race.
+This consolidates those existing physics paths for the player test. A partial
+solo contact remains explicitly uncontinued; a conditional line remains
+unclassified. No branch awards points or reuses the kilometre result.
