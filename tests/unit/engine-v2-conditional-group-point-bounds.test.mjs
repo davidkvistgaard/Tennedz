@@ -61,3 +61,30 @@ test('a surviving group bounds places and policy points without awards',()=>{
   assert.throws(()=>projectV2ConditionalGroupPointBounds(trial.recording,
     altered,context),/does not replay/);
 });
+
+test('a recorded all-out chase keeps place and point bounds tied to paid work',()=>{
+  const settings={...input,managerTactics:[
+    {effort:'steady',attack:'none',chase:'all'}]};
+  const trial=createV91ConditionalRaceFinal(settings);
+  const chasePullRiderId=trial.paidFinale.line.chasePullRiderId;
+  assert.equal(trial.roadPlaceBounds.version,
+    'v2-finale-group-result-bounds-2');
+  assert.equal(validateFinaleGroupResultBounds(trial.recording,
+    trial.paidFinale,trial.roadPlaceBounds,{chasePullRiderId}),true);
+  assert.throws(()=>validateFinaleGroupResultBounds(trial.recording,
+    trial.paidFinale,trial.roadPlaceBounds),/does not replay/);
+  const pointInput={...context,chasePullRiderId};
+  const points=projectV2ConditionalGroupPointBounds(trial.recording,
+    trial.paidFinale,pointInput);
+  assert.equal(points.version,'v2-conditional-group-point-bounds-2');
+  assert.equal(points.sourceBoundsVersion,
+    'v2-finale-group-result-bounds-2');
+  assert.deepEqual(points.awardRows,[]);
+  assert.equal(points.pointsStatus,'withheld');
+  assert.equal(validateV2ConditionalGroupPointBounds(trial.recording,
+    trial.paidFinale,pointInput,points),true);
+  const altered=structuredClone(trial.paidFinale);
+  altered.bunchLineTime++;
+  assert.throws(()=>projectV2ConditionalGroupPointBounds(trial.recording,
+    altered,pointInput),/does not replay/);
+});

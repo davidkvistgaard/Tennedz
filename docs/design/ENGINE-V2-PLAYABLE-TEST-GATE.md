@@ -151,6 +151,22 @@ the source had no chasers. A separate source with a rival's active selective
 chase still refuses. This removes an order-label false refusal, not a paid
 chase model, individual group finish or point award. V3 recordings stay valid.
 
+`v91-conditional-race-final-5` admits one source-recorded `ordered_all`
+chase team outside the break, when its nominated helper is still in the
+bunch and no attack, response or selective chase remains unresolved. It
+selects the fastest eligible helper at the last-kilometre source using the
+existing short-step worker speed, then pays that helper's work on the same
+clock as the cooperative break and sheltered bunch. In eight fixed sources
+across both categories, 4/15/20-team short flat fields and 4-team tired
+rolling fields, the active chase reached a complete paid group-band line.
+Against the same locked source with passive bunch travel, the chase reduced
+the bunch line time by about 0.39–0.50 seconds and cost the helper about 1.00
+additional energy. These are fictional correctness observations, not balance
+targets. `v2-finale-group-result-bounds-2` and
+`v2-conditional-group-point-bounds-2` replay the paid chase before projecting
+possible places and point ranges; all awards remain withheld. Selective,
+multi-team and response chases still require their own paid continuation.
+
 `v2-finale-group-result-bounds-1` now derives only the places that this
 verified paid road can prove. If the front group survives, its members may
 occupy places 1 through the group size and every bunch rider starts after

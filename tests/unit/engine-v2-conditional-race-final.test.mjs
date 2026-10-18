@@ -18,6 +18,12 @@ import {recordFinaleInactiveIntentsSprintPlanFromTour} from
   '../../lib/engine/v2/finale-sprint-plan.mjs';
 import {MOTOR_ATTACK_TRACE_VERSION} from
   '../../lib/engine/v2/tuning.mjs';
+import {finaleSnapshotFromTour} from
+  '../../lib/engine/v2/finale-snapshot.mjs';
+import {simulateFinaleCooperativeGroupCommonClock} from
+  '../../lib/engine/v2/finale-group-common-clock.mjs';
+import {FINALE_WORKER_PASSIVE_SLOPE_VERSION} from
+  '../../lib/engine/v2/finale-worker.mjs';
 
 const settings={distanceKm:40,terrain:'flat',teamCount:4,
   gender:'M',attack:'none',chase:'ignore',
@@ -498,6 +504,41 @@ test('an unengaged order to chase ones own break leaves paid road unchanged',()=
       assert.deepEqual(ordered.roadPlaceBounds,ignored.roadPlaceBounds);
       assert.equal(ordered.pointsStatus,'withheld');
       assert.equal(ordered.canCommitAwards,false);
+    }
+});
+
+test('one recorded all-out chase pays a helper and changes the shared clock',()=>{
+  for(const distanceKm of [40,120])for(const gender of ['M','F'])
+    for(const teamCount of distanceKm===40?[4,15,20]:[4]){
+      const input={distanceKm,terrain:distanceKm===40?'flat':'rolling',
+        fatigue:distanceKm===40?0:15,gender,teamCount,
+        seed:'conditional-coverage-1',attack:'repeated',chase:'ignore',
+        defaultRivalPlan:'attack',managerTactics:[
+          {effort:'steady',attack:'none',chase:'all'}]};
+      const trial=createV91ConditionalRaceFinal(input);
+      assert.equal(trial.version,'v91-conditional-race-final-5');
+      assert.equal(trial.roadStatus,'paid_group_bands');
+      assert.deepEqual(trial.recording.frames[distanceKm-2].chasers,
+        ['rival-1']);
+      assert.equal(trial.paidFinale.line.chasePullRiderId,'rival-1-5');
+      assert.equal(trial.roadPlaceBounds.version,
+        'v2-finale-group-result-bounds-2');
+      const snapshot=finaleSnapshotFromTour(trial.recording,{
+        remainingKm:1,includeAttackLoad:true});
+      const passive=simulateFinaleCooperativeGroupCommonClock({
+        route:trial.recording.route,snapshot,
+        teams:trial.recording.committedInputs.teams,
+        frontPullRiderId:null,chasePullRiderId:null,passiveChase:true,
+        paceVersion:FINALE_WORKER_PASSIVE_SLOPE_VERSION,
+        cooperativeFront:true});
+      const energy=clock=>clock.line.finalRiderEnergy.find(row=>
+        row.riderId==='rival-1-5').energy;
+      assert.ok(trial.paidFinale.bunchLineTime<passive.bunchLineTime);
+      assert.ok(energy(trial.paidFinale)<energy(passive));
+      assert.equal(trial.paidFinale.line.finalRiderEnergy.length,
+        teamCount*8);
+      assert.equal(trial.pointsStatus,'withheld');
+      assert.equal(validateV91ConditionalRaceFinal(input,{},trial),true);
     }
 });
 
