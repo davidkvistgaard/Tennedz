@@ -131,3 +131,36 @@ test('passive partial contact pays the same field to each individual line',()=>{
       input,named(0),trial),true);
   }
 });
+
+test('a player finisher and two manager lead-outs affect one locked race',()=>{
+  const input={...settings,teamCount:15,gender:'F',seed:'early-test'};
+  const defaultTrial=createV91ConditionalRaceFinal(input);
+  const finisherPlans=defaultTrial.finalePlans.map(row=>({...row,
+    finisherId:row.teamId==='you'?'you-6':row.finisherId}));
+  const nominated=createV91ConditionalRaceFinal(input,{
+    plans:finisherPlans});
+  const helperPlans=finisherPlans.map(row=>({...row,
+    leadOutRiderId:row.teamId==='you'?'you-5':
+      row.teamId==='rival-1'?'rival-1-6':null}));
+  const helped=createV91ConditionalRaceFinal(input,{plans:helperPlans});
+  assert.deepEqual(helped.recording,nominated.recording);
+  assert.deepEqual(helped.paidFinale.positionedSource.slots,
+    nominated.paidFinale.positionedSource.slots);
+  assert.equal(helped.finalePlans.find(row=>row.teamId==='you')
+    .finisherId,'you-6');
+  for(const [finisherId,helperId] of [
+    ['you-6','you-5'],['rival-1-7','rival-1-6']]){
+    assert.ok(helped.paidFinale.frames.some(frame=>
+      frame.riders.some(row=>row.riderId===helperId&&
+        row.role==='lead_out'&&row.energySpent>0)));
+    assert.ok(helped.paidFinale.finishers.find(row=>
+      row.riderId===finisherId).elapsedSecondsFromLastKmStart<
+      nominated.paidFinale.finishers.find(row=>
+        row.riderId===finisherId).elapsedSecondsFromLastKmStart);
+  }
+  assert.equal(helped.paidFinale.finishers.length,120);
+  assert.equal(helped.classifiedResults,null);
+  assert.equal(helped.pointsStatus,'withheld');
+  assert.equal(validateV91ConditionalRaceFinal(
+    input,{plans:helperPlans},helped),true);
+});

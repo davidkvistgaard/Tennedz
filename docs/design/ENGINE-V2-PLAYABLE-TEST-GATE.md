@@ -261,6 +261,15 @@ their conditional line crossing; the player's unchanged finisher retains the
 same energy and crossing time. This checks the main-race order-to-finale
 boundary, not sporting calibration or official classification.
 
+The shared conditional race entry also replays a fixed 15-team women's
+40 km race with rider 6 nominated as the player's finisher and rider 5 as
+their helper, while a rival orders its own lead-out. Both helpers pay for
+actual pulls and their finishers' conditional line times change against
+the same recorded race and tactic-independent source wheels. The default
+player captain (rider 7) has no adjacent eligible helper in this particular
+provisional source, so a selected pair can still be refused; the test does
+not establish a generally usable lead-out choice or an official placing.
+
 `v91-conditional-race-final-1` is a single read-only caller for the payable
 branches above. With no named final-kilometre attack, it uses the complete
 one-kilometre bunch path. With one supported named attack, it reuses the
