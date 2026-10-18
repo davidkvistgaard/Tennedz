@@ -182,6 +182,20 @@ reporting possible places or points, with awards withheld. More than two
 chasing teams and selective chase remain outside this entry; a two-team
 contact and individual group order still need direct end-to-end evidence.
 
+A paired 120 km flat, 15-team men's fixture now checks an earlier strategic
+boundary with one locked roster, route and seed. Two conserving `chase all`
+rivals leave one break and two engaged chasers at the last-kilometre marker;
+a third rival changing from its default attack plan to the same chase plan
+closes that break before the marker. The latter source enters the existing
+complete-bunch finale, records a nominated player's lead-out doing paid work,
+and brings all 120 riders to individual conditional line times. Removing only
+that lead-out leaves the kilometre race identical and saves the helper's
+energy. In this fixture the finisher's line time does not improve, so the
+test asserts the paid helper effect, not a promised sprint benefit. The
+two-chaser source still yields group bands, and neither path awards points.
+This validates a route across source chase, finale and replay; it does not
+settle a late two-team catch or group finish order.
+
 `v2-finale-group-result-bounds-1` now derives only the places that this
 verified paid road can prove. If the front group survives, its members may
 occupy places 1 through the group size and every bunch rider starts after

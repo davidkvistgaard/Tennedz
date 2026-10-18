@@ -581,6 +581,47 @@ test('two recorded chase teams rotate paid helpers on the group clock',()=>{
     }
 });
 
+test('one extra manager chase closes the break before a paid lead-out line',()=>{
+  const base={distanceKm:120,terrain:'flat',fatigue:15,teamCount:15,
+    gender:'M',seed:'three-chase-source-1',attack:'repeated',
+    chase:'ignore',defaultRivalPlan:'attack'};
+  const chase={effort:'conserve',attack:'none',chase:'all'};
+  const two={...base,managerTactics:[chase,chase]};
+  const three={...base,managerTactics:[chase,chase,chase]};
+  const open=createV91ConditionalRaceFinal(two);
+  assert.equal(open.version,'v91-conditional-race-final-6');
+  assert.equal(open.recording.frames[118].chasers.length,2);
+  assert.equal(open.recording.frames[118].roadGroups.length,1);
+  assert.equal(open.roadStatus,'paid_group_bands');
+  assert.equal(validateV91ConditionalRaceFinal(two,{},open),true);
+
+  const plans=Array.from({length:15},(_,index)=>{
+    const teamId=index===0?'you':`rival-${index}`;
+    return {teamId,finisherId:`${teamId}-7`,
+      leadOutRiderId:index===0?'you-5':null};
+  });
+  const request={plans};
+  const closed=createV91ConditionalRaceFinal(three,request);
+  const unassisted=createV91ConditionalRaceFinal(three,{plans:plans.map(
+    row=>({...row,leadOutRiderId:null}))});
+  assert.equal(closed.version,'v91-conditional-race-final-2');
+  assert.equal(closed.recording.frames[118].chasers.length,0);
+  assert.equal(closed.recording.frames[118].roadGroups.length,0);
+  assert.equal(closed.roadStatus,'paid_conditional_line');
+  assert.equal(closed.paidFinale.finishers.length,120);
+  assert.deepEqual(closed.recording,unassisted.recording);
+  assert.ok(closed.paidFinale.frames.some(frame=>frame.riders.some(row=>
+    row.riderId==='you-5'&&row.role.startsWith('lead_out')&&
+    row.energySpent>0)));
+  const helper=trial=>trial.paidFinale.finishers.find(row=>
+    row.riderId==='you-5');
+  assert.ok(helper(closed).energyAtLine<helper(unassisted).energyAtLine);
+  assert.equal(closed.classifiedResults,null);
+  assert.equal(closed.pointsStatus,'withheld');
+  assert.equal(closed.canCommitAwards,false);
+  assert.equal(validateV91ConditionalRaceFinal(three,request,closed),true);
+});
+
 test('group branch refuses unpaid manager plans and unresolved road states',()=>{
   const group={distanceKm:40,terrain:'flat',teamCount:4,gender:'M',
     seed:'conditional-coverage-1',attack:'repeated',chase:'ignore',
