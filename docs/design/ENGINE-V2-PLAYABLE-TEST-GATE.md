@@ -54,3 +54,15 @@ rates; sports balance still needs human playtesting.
 The first handoff is a local, opt-in test environment for the user, not a v2
 production release. Calendar, Arena and monetization work are outside this
 motor gate. The existing game and production data stay unchanged.
+
+## Current complete-bunch boundary
+
+The opt-in `v91-finale-trial-4` carries a caught or contained 500 m bunch to
+the line on one clock. It records each rider's actual distance and work rate,
+including a lead-out, sprint, exposed coast and a measured reabsorption into
+the bunch. The old finale recordings remain intact. Its line times remain
+conditional: the 500 m source stores a single bunch band, not wheel positions
+or passing lanes. A surviving solo still uses separate provisional bounds.
+Neither path is a classified result or a point award. The next gate is a road
+position and passing model tied to the locked source, followed by replayable
+individual classification and the read-only point projection.
