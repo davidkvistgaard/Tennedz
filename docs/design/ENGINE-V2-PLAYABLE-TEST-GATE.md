@@ -174,3 +174,20 @@ Next build. The full unit run did **not** pass: its existing concurrent
 also timed out when run alone, with no assertion result; its script imports
 the older ensemble path, not the new bunch runner. This is a test-performance
 failure to diagnose, not evidence that the sporting acceptance gate passed.
+
+An offline paired-tactic audit (`node scripts/engine-v2-positioned-finale-audit.mjs`)
+now measures the v13 helper gate without changing the race or wheel source.
+Its fixed fictional matrix spans 40 km flat, 120 km rolling and 260 km
+mountain races; 4, 15 and 20 teams; and both genders. Sixteen of eighteen
+sources contain the complete bunch required by this trial. The two 4-team
+mountain sources correctly refuse the complete-bunch runner. With rider 7
+nominated for each team, only 9 of 226 team nominations in the sixteen
+accepted sources have any helper already adjacent and within one wheel ahead
+at 500 m; no 20-team nomination has one. In the four 4-team paired trials,
+the eligible helper saves the same finisher 0.217–0.231 seconds on the same
+locked road and wheels, without changing its place. This is a diagnostic of
+the provisional eight-lane source and strict contact gate, not a target
+lead-out rate or a calibrated sporting result. A playable lead-out needs a
+paid way to establish the pair's road position before this handoff; silently
+moving them at 500 m would restore the v12 causal flaw. The current audit
+does not settle group geometry, blocked passing, results or points.
