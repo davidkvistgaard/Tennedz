@@ -248,6 +248,11 @@ test('paired finale plans expose only paid conditional tactical changes',()=>{
     assert.equal(paired.version,'v91-finale-trial-comparison-1');
     assert.equal(paired.status,'provisional_conditional_comparison');
     assert.deepEqual(paired.before.recording,paired.after.recording);
+    assert.strictEqual(paired.before.recording,paired.after.recording);
+    assert.deepEqual(paired.before,
+      createV91FinaleTrialWithOrderCoverage(shared,before));
+    assert.deepEqual(paired.after,
+      createV91FinaleTrialWithOrderCoverage(shared,after));
     assert.equal(paired.lines.length,4);
     const player=paired.lines.find(row=>row.teamId==='you');
     assert.equal(player.beforeFinisherId,'you-7');
