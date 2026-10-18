@@ -119,3 +119,15 @@ routes. A sprinter catching the solo ahead of the field remains a separate
 contact state and is refused rather than flattened into a bunch. The resulting
 line is still conditional on the collapsed source road band; no official
 places or points are projected.
+
+The separate opt-in `v91-finale-trial-10` puts a nominated bunch lead-out on
+the same clock as a surviving solo. The helper and finisher travel together
+while the helper can pay for work, and their paired road group appears only
+when both have actually moved ahead of the bunch. A selected helper cannot
+also chase or rotate in that interval. A paired manager change on the same
+locked 40 km race advances the finisher's conditional line and moves exact
+solo contact earlier; M/F, 4/15/20-team and tired rolling/mountain replays
+retain every rider and energy debit. The run still stops at partial contact,
+including a helper and finisher meeting the solo together. It has no passing
+rule, classified result or point award. The no-lead-out v8/v9 recordings keep
+their older versions and behavior.

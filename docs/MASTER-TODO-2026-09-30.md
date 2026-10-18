@@ -1,6 +1,6 @@
 # Pelotonia — samlet to-do og tidsestimat
 
-**Opdateret 11. oktober 2026 efter de isolerede P03- og v91-motorprøver.** Dette er den aktuelle hovedliste for kendte produktønsker. [Produktvisionen](PRODUCT-VISION.md), [Arena/økonomi/Supporter-handoff](PELOTONIA_ARENA_ECONOMY_SUPPORTER_CODEX_BRIEF_V1.md), [kalenderpakken](CALENDAR_AUTOPILOT_RANKINGS_V0_1.md), [motorprototypen](design/ENGINE-V2-FOUNDATION.md), [verdensbaselinen](PELOTONIA-WORLD-BASELINE-1.6.2.md) og de enkelte designnoter er baggrund; gamle statusangivelser i dem er ikke en ny leveringsplan. Listen skelner mellem kode i produktion, kode i isolerede udviklingsspor og ubyggede funktioner.
+**Opdateret 18. oktober 2026 efter de isolerede P03- og v91-motorprøver.** Dette er den aktuelle hovedliste for kendte produktønsker. [Produktvisionen](PRODUCT-VISION.md), [Arena/økonomi/Supporter-handoff](PELOTONIA_ARENA_ECONOMY_SUPPORTER_CODEX_BRIEF_V1.md), [kalenderpakken](CALENDAR_AUTOPILOT_RANKINGS_V0_1.md), [motorprototypen](design/ENGINE-V2-FOUNDATION.md), [verdensbaselinen](PELOTONIA-WORLD-BASELINE-1.6.2.md) og de enkelte designnoter er baggrund; gamle statusangivelser i dem er ikke en ny leveringsplan. Listen skelner mellem kode i produktion, kode i isolerede udviklingsspor og ubyggede funktioner.
 
 ## Læsevejledning: færdigt, i gang og endnu ikke begyndt
 
@@ -9,6 +9,8 @@
 **Kort status:** 01–03 ✅ isoleret færdige. 04–09, 11–13, 16–18, 21, 30 og 35 🟡 i gang eller kun delvist afprøvet. 10, 14–15, 19–20, 22–29, 31–34 og 36–41 ⬜ mangler som de er beskrevet. Den gamle live-spiloplevelse findes, men den nye v2-motor, tofasede løb og deres afregning er endnu ikke aktiveret i produktion.
 
 ### Hvad er lavet siden 30. september?
+
+**[x] Betalt lead-out mod et soloangreb, 18. oktober (isoleret motorprøve):** Den valgfrie v91-finaleprøve fører den udpegede hjælper og afslutter på samme klokke som solorytteren og feltet. Hjælperens arbejde, parrets vejposition og faktisk energi registreres; samme låste løb viser en ændret afsluttertid og et andet tidspunkt for kontakt med soloen. To konkurrerende lead-outs kan ikke samtidig arbejde i jagt eller rotation. Version 8 og 9 genafspilles fortsat særskilt. Delvis kontakt, feltets hjulplacering, officiel individuel målrækkefølge og point er stadig åbne under punkt 04/11. [Afgrænset acceptkrav](design/ENGINE-V2-PLAYABLE-TEST-GATE.md).
 
 **[x] Fælles kørsel efter begge angriberes 400-meterbeslutninger, 11. oktober (isoleret motortrin):** Den bageste angribers nye betalelige 100-meterarbejde begynder fra den målte 400-meterstilling, mens den førende og feltet fortsætter deres allerede valgte arbejde. Alle ryttere flyttes og betaler på samme klokke frem til den første 300-/400-metergrænse eller præcise kontakt; optagelsen stopper ved kontakten uden at tildele hjul, læ, placering eller point. M/F-genafspilning og kildeprøver kontrollerer de fysiske stillinger og energien. Senere fortsættelse og afregning er stadig åbne under punkt 04/11. [Finalekontrakt](design/ENGINE-V2-FINALE-CONTRACT.md) og [balanceaudit](MOTOR-LAB-BALANCE-AUDIT.md).
 
