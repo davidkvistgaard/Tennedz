@@ -94,3 +94,17 @@ leaves the same solo outcome unresolved against a possible sprint contact.
 This is deliberately a bound from the collapsed 500 m bunch band, not a
 simulated sprint, full placing, official winner or point award. It makes the
 surviving-solo label insufficient by itself to declare victory.
+
+The opt-in `v91-finale-trial-8` tests a single surviving attack from the
+recorded 500 m handoff to the line on one elapsed clock. It aligns the solo's
+earlier 500 m arrival with the bunch's 500 m time by extending and paying its
+measured preceding 250 m pace, then pays every rider's actual travel and work.
+An independently moving finisher's return to the bunch is timestamped.
+The named finishers can accelerate from 300 m, so their choice can change the
+first measured solo contact. That contact stops at its exact distance and time;
+the merged continuation is not yet resolved. If no contact occurs, all riders
+receive an individual paid line time. The source bunch still lacks wheel order
+and passing lanes, so this is a **conditional** line, not a classification or
+point award. The current version excludes pre-contact lead-outs, multiple
+attacks and conditional chase. Those remain explicit motor gates rather than
+silently falling through to an older result.
