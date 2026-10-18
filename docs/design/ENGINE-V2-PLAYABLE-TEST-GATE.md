@@ -187,11 +187,12 @@ boundary with one locked roster, route and seed. Two conserving `chase all`
 rivals leave one break and two engaged chasers at the last-kilometre marker;
 a third rival changing from its default attack plan to the same chase plan
 closes that break before the marker. The latter source enters the existing
-complete-bunch finale, records a nominated player's lead-out doing paid work,
-and brings all 120 riders to individual conditional line times. Removing only
-that lead-out leaves the kilometre race identical and saves the helper's
-energy. In this fixture the finisher's line time does not improve, so the
-test asserts the paid helper effect, not a promised sprint benefit. The
+complete-bunch finale, records a nominated player's helper making a paid
+lead-out assembly attempt, and brings all 120 riders to individual conditional
+line times. The helper never reaches the finisher in this fixture: every
+assembly attempt remains `still_separated`. Removing only that attempt leaves
+the kilometre race and finisher time identical and saves the helper's energy.
+The test therefore asserts a paid failed attempt, not a sprint benefit. The
 two-chaser source still yields group bands, and neither path awards points.
 This validates a route across source chase, finale and replay; it does not
 settle a late two-team catch or group finish order.

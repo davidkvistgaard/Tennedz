@@ -613,9 +613,17 @@ test('one extra manager chase closes the break before a paid lead-out line',()=>
   assert.ok(closed.paidFinale.frames.some(frame=>frame.riders.some(row=>
     row.riderId==='you-5'&&row.role.startsWith('lead_out')&&
     row.energySpent>0)));
+  const attempts=closed.paidFinale.frames.flatMap(frame=>
+    frame.assemblyAttempts??[]).filter(row=>row.teamId==='you');
+  assert.ok(attempts.length>0);
+  assert.ok(attempts.every(row=>row.status==='still_separated'));
   const helper=trial=>trial.paidFinale.finishers.find(row=>
     row.riderId==='you-5');
+  const finisher=trial=>trial.paidFinale.finishers.find(row=>
+    row.riderId==='you-7');
   assert.ok(helper(closed).energyAtLine<helper(unassisted).energyAtLine);
+  assert.equal(finisher(closed).elapsedSecondsFromLastKmStart,
+    finisher(unassisted).elapsedSecondsFromLastKmStart);
   assert.equal(closed.classifiedResults,null);
   assert.equal(closed.pointsStatus,'withheld');
   assert.equal(closed.canCommitAwards,false);
