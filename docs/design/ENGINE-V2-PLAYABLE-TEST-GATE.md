@@ -138,3 +138,20 @@ for a surviving solo, using the branch recorded by the same locked v91 race.
 This consolidates those existing physics paths for the player test. A partial
 solo contact remains explicitly uncontinued; a conditional line remains
 unclassified. No branch awards points or reuses the kilometre result.
+
+The separate `v91-finale-trial-12` probes the missing complete-bunch wheel
+order. The locked 500 m source contains one front coordinate and no rider
+positions. A versioned laboratory projection places every rider at or behind
+that front, orders prior recorded front workers and positioning skill, and
+keeps nominated helper–finisher pairs in one lane. Eight lanes, 2.5 m between
+wheels and slight lane staggering are **provisional assumptions**, not facts
+from the race recording or adopted sporting rules. All inferred wheels pay
+their actual distance and energy to the line; an open-road pass event marks
+each trajectory inversion, and the resulting individual order replays. The
+passing rule does not model blocked lanes, drafting or contact response, and
+the ordering can depend on the assumed grid. Thus `lineOrder` is explicitly
+experimental, `classifiedResults` stays null and points remain withheld.
+The solo branch keeps its prior one-clock trace. The next gate is a defensible
+position/passing model and complete contact continuation, then classified
+results and a read-only point projection; this laboratory order alone cannot
+open the player test or settle a race.
