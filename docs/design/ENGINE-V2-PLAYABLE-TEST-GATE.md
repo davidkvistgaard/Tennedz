@@ -72,6 +72,20 @@ last-kilometre groups, dropped riders and valid manager actions on one clock
 through contact and the finish; only then can a general result and point
 projection be assessed against this gate.
 
+The repeatable read-only audit
+`node scripts/engine-v2-conditional-coverage-audit.mjs` fixes one fictional
+seed across 36 combinations: 40 km flat with no starting fatigue, 120 km
+rolling with 15, and 260 km mountain with 30; both categories; 4, 15 and 20
+teams; mixed and attack-oriented default tactics. It independently replays
+each accepted conditional finish against the same locked kilometre race.
+Sixteen of 18 mixed sources reach a paid conditional individual line; the
+two 4-team mountain sources have a road group and six dropped riders, so
+refuse. All 18 attack-oriented sources refuse because one or two road groups
+already exist at the last-kilometre handoff. None of these counts is a target
+win rate. The group-bearing sources expose the next missing input: an honest
+common-clock physical separation at the kilometre handoff. A time gap alone
+must not be silently converted into a wheel position or an official winner.
+
 ## Current complete-bunch boundary
 
 The opt-in `v91-finale-trial-4` carries a caught or contained 500 m bunch to
