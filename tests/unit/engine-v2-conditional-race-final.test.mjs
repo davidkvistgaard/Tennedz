@@ -14,6 +14,8 @@ import {prepareV91FinaleTrial} from
 import {recordFinaleOneClockSoloWithLeadOutFromTour} from
   '../../lib/engine/v2/finale-one-clock-solo.mjs';
 import {simulateTacticalTour} from '../../lib/engine/v2/tour.mjs';
+import {recordFinaleInactiveIntentsSprintPlanFromTour} from
+  '../../lib/engine/v2/finale-sprint-plan.mjs';
 import {MOTOR_ATTACK_TRACE_VERSION} from
   '../../lib/engine/v2/tuning.mjs';
 
@@ -419,4 +421,48 @@ test('a player finisher and two manager lead-outs affect one locked race',()=>{
   assert.equal(helped.pointsStatus,'withheld');
   assert.equal(validateV91ConditionalRaceFinal(
     input,{plans:helperPlans},helped),true);
+});
+
+test('mixed default orders reach a paid conditional line only when inactive',()=>{
+  for(const variation of [
+    {distanceKm:40,terrain:'flat',teamCount:4,gender:'M'},
+    {distanceKm:120,terrain:'rolling',teamCount:15,gender:'F'},
+    {distanceKm:260,terrain:'mountain',teamCount:20,gender:'M'}]){
+    const input={...variation,seed:'trial'};
+    const trial=createV91ConditionalRaceFinal(input);
+    assert.equal(trial.version,'v91-conditional-race-final-2');
+    assert.equal(trial.paidFinale.version,
+      'v2-finale-inactive-intents-bunch-runner-lab-6');
+    assert.equal(trial.roadStatus,'paid_conditional_line');
+    assert.equal(trial.paidFinale.finishers.length,variation.teamCount*8);
+    assert.equal(new Set(trial.paidFinale.finishers.map(row=>
+      row.riderId)).size,variation.teamCount*8);
+    const ledger=trial.paidFinale.sourceIntentLedger;
+    assert.ok(!ledger.named.some(row=>row.canEnterRoadContest));
+    assert.ok(!ledger.unnamed.some(row=>row.canEnterRoadContest));
+    assert.deepEqual(ledger.otherPendingActions,[]);
+    assert.equal(trial.pointsStatus,'withheld');
+    assert.equal(trial.canCommitAwards,false);
+    assert.equal(validateV91ConditionalRaceFinal(input,{},trial),true);
+  }
+});
+
+test('an eligible named attack cannot be treated as inactive',()=>{
+  const prepared=prepareV91FinaleTrial(settings,named(1));
+  const teams=prepared.teams.map(team=>team.id==='you'?{
+    ...team,orders:{...team.orders,phases:[{
+      atKm:settings.distanceKm-1,attack:'selective',
+      attackRiderId:'you-1'}]}}:team);
+  const tour=simulateTacticalTour({stage:prepared.stage,
+    weather:prepared.weather,teams,seed:prepared.seed,
+    motorVersion:MOTOR_ATTACK_TRACE_VERSION});
+  assert.throws(()=>recordFinaleInactiveIntentsSprintPlanFromTour(tour,{
+    plans:prepared.finalePlans}),/unresolved road action/);
+});
+
+test('an existing break cannot enter the inactive-intents bunch path',()=>{
+  assert.throws(()=>createV91ConditionalRaceFinal({
+    ...settings,seed:'source-0',attack:'repeated',chase:'ignore',
+    defaultRivalPlan:'attack'}),
+  /unresolved road action/);
 });

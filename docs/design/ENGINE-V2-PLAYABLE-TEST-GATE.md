@@ -57,14 +57,17 @@ motor gate. The existing game and production data stay unchanged.
 
 ## Integration priority
 
-The conditional race-final entry currently needs either a single controlled
-last-kilometre attack or an inactive-attack complete bunch. The workbench's
-ordinary mixed default tactics do not meet that restriction: fixed 40 km flat
-men's (4 teams), 120 km rolling women's (15 teams), and 260 km mountain men's
-(20 teams) requests all stop before a paid finale. Existing separated-group
-recordings can pay some earlier road travel, but they stop at group contact or
-do not apply an individual sprint. More isolated partial-contact variants do
-not close this user path. The next motor integration should carry the actual
+The conditional race-final entry now admits a complete bunch with attack
+orders only when the locked last-kilometre intent ledger proves none can
+launch and no other road action is pending. The fixed 40 km flat men's
+(4 teams), 120 km rolling women's (15 teams), and 260 km mountain men's
+(20 teams) mixed default requests reach a paid conditional individual line
+through the existing full-kilometre bunch runner. The new version records the
+blocked or not-due intents; an eligible named attack or an existing separated
+group is still rejected. This resolves an overly broad order-label guard,
+not the general finale. Existing separated-group recordings can pay some
+earlier road travel, but they stop at group contact or do not apply an
+individual sprint. The next motor integration must carry actual
 last-kilometre groups, dropped riders and valid manager actions on one clock
 through contact and the finish; only then can a general result and point
 projection be assessed against this gate.

@@ -175,8 +175,12 @@ test('a rival manager effort choice reaches the paid finale on the same roster',
   assert.equal(hard.pointsStatus,'withheld');
 });
 
-test('an active final-kilometre attack cannot be erased by the bunch path',()=>{
-  assert.throws(()=>createV91EarlyBunchTrial(
-    {...settings,attack:'selective'}),
-  /one inactive-attack bunch/);
+test('an undued attack order retains its intent in the paid bunch path',()=>{
+  const trial=createV91EarlyBunchTrial(
+    {...settings,attack:'selective'});
+  assert.equal(trial.version,'v91-inactive-intents-bunch-trial-2');
+  assert.equal(trial.paidFinale.finishers.length,32);
+  assert.ok(trial.paidFinale.sourceIntentLedger.named
+    .every(row=>!row.canEnterRoadContest));
+  assert.equal(trial.pointsStatus,'withheld');
 });
