@@ -106,6 +106,44 @@ test('paid helper orders affect locked 15- and 20-team fields in both categories
   }
 });
 
+test('two managers can pay simultaneous lead-outs on one race clock',()=>{
+  const input={...settings,teamCount:15};
+  const baseline=createV91EarlyBunchTrial(input);
+  const helpers=new Map([['rival-1','rival-1-6'],
+    ['rival-11','rival-11-5']]);
+  const plans=baseline.finalePlans.map(row=>({...row,
+    leadOutRiderId:helpers.get(row.teamId)??null}));
+  const trial=createV91EarlyBunchTrial(input,{plans});
+  assert.deepEqual(trial.recording,baseline.recording);
+  assert.deepEqual(trial.paidFinale.positionedSource.slots,
+    baseline.paidFinale.positionedSource.slots);
+  for(const [teamId,helperId] of helpers){
+    const finisherId=`${teamId}-7`;
+    assert.ok(trial.paidFinale.frames.some(frame=>
+      frame.riders.find(row=>row.riderId===helperId)?.role===
+        'lead_out'));
+    assert.ok(trial.paidFinale.lineOrder.find(row=>
+      row.riderId===finisherId).elapsedSecondsFromLastKmStart<
+      baseline.paidFinale.lineOrder.find(row=>
+        row.riderId===finisherId).elapsedSecondsFromLastKmStart);
+  }
+  const energyById=new Map(trial.paidFinale.positionedSource.slots
+    .map(slot=>[slot.riderId,trial.paidFinale.frames[0].riders
+      .find(row=>row.riderId===slot.riderId).energyAtDecision]));
+  for(const frame of trial.paidFinale.frames)
+    for(const row of frame.riders){
+      assert.ok(Math.abs(energyById.get(row.riderId)-
+        row.energyAtDecision)<1e-7);
+      assert.ok(Math.abs(row.energyAtDecision-row.energySpent-
+        row.energyAfter)<1e-7);
+      energyById.set(row.riderId,row.energyAfter);
+    }
+  assert.equal(new Set(trial.paidFinale.lineOrder.map(row=>
+    row.riderId)).size,120);
+  assert.equal(validateV91EarlyBunchTrial(input,{plans},trial),true);
+  assert.equal(trial.pointsStatus,'withheld');
+});
+
 test('an active final-kilometre attack cannot be erased by the bunch path',()=>{
   assert.throws(()=>createV91EarlyBunchTrial(
     {...settings,attack:'selective'}),
