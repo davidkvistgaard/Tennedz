@@ -251,3 +251,12 @@ causal work and explicit coverage, not a target win rate. The source still
 infers eight lanes and permits unblocked open-road passing; it has not proved
 a real within-bunch order. `classifiedResults` remains null, points are
 withheld, and attacks or surviving road groups must use their own paid path.
+
+The same fixed 15-team source also accepts two independent manager lead-out
+orders simultaneously: both helpers reach a wheel, pull on the common clock,
+and pay each recorded interval once. In a separate paired 120 km rolling
+source, changing only one rival manager from the neutral default to hard
+effort lowers that team's finisher energy at the kilometre handoff and delays
+their conditional line crossing; the player's unchanged finisher retains the
+same energy and crossing time. This checks the main-race order-to-finale
+boundary, not sporting calibration or official classification.

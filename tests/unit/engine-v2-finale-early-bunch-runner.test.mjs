@@ -144,6 +144,37 @@ test('two managers can pay simultaneous lead-outs on one race clock',()=>{
   assert.equal(trial.pointsStatus,'withheld');
 });
 
+test('a rival manager effort choice reaches the paid finale on the same roster',()=>{
+  const input={...settings,distanceKm:120,terrain:'rolling',
+    teamCount:15,fatigue:15,seed:'paired-effort',
+    defaultRivalPlan:'neutral'};
+  const neutral=createV91EarlyBunchTrial(input);
+  const hard=createV91EarlyBunchTrial({...input,
+    managerTactics:[{effort:'hard',attack:'none',
+      chase:'selective'}]});
+  assert.deepEqual(neutral.recording.committedInputs.stage,
+    hard.recording.committedInputs.stage);
+  assert.deepEqual(neutral.recording.committedInputs.teams.map(row=>
+    row.riders),hard.recording.committedInputs.teams.map(row=>
+    row.riders));
+  const sourceEnergy=(trial,riderId)=>trial.paidFinale.frames[0]
+    .riders.find(row=>row.riderId===riderId).energyAtDecision;
+  const lineTime=(trial,riderId)=>trial.paidFinale.lineOrder.find(row=>
+    row.riderId===riderId).elapsedSecondsFromLastKmStart;
+  assert.ok(sourceEnergy(hard,'rival-1-7')<
+    sourceEnergy(neutral,'rival-1-7'));
+  assert.ok(lineTime(hard,'rival-1-7')>
+    lineTime(neutral,'rival-1-7'));
+  assert.equal(sourceEnergy(hard,'you-7'),
+    sourceEnergy(neutral,'you-7'));
+  assert.equal(lineTime(hard,'you-7'),lineTime(neutral,'you-7'));
+  assert.equal(validateV91EarlyBunchTrial(input,{},neutral),true);
+  assert.equal(validateV91EarlyBunchTrial({...input,
+    managerTactics:[{effort:'hard',attack:'none',
+      chase:'selective'}]}, {},hard),true);
+  assert.equal(hard.pointsStatus,'withheld');
+});
+
 test('an active final-kilometre attack cannot be erased by the bunch path',()=>{
   assert.throws(()=>createV91EarlyBunchTrial(
     {...settings,attack:'selective'}),
