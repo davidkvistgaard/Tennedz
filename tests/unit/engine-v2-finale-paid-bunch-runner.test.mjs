@@ -2,13 +2,16 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {prepareV91FinaleTrial,
   createV91FinaleTrialWithPhysicalRunner,
-  validateV91FinaleTrialWithPhysicalRunner} from
+  validateV91FinaleTrialWithPhysicalRunner,
+  createV91FinaleTrialWithContactRunner,
+  validateV91FinaleTrialWithContactRunner} from
   '../../lib/engine/v2/playtest-finale-trial.mjs';
 import {simulateTacticalTour} from '../../lib/engine/v2/tour.mjs';
 import {MOTOR_ATTACK_TRACE_VERSION} from
   '../../lib/engine/v2/tuning.mjs';
 import {recordFinalePaidBunchRunnerFromTour,
-  validateFinalePaidBunchRunnerFromTour} from
+  validateFinalePaidBunchRunnerFromTour,
+  validateFinalePaidPostContactRunnerFromTour} from
   '../../lib/engine/v2/finale-paid-bunch-runner.mjs';
 
 const settings=gender=>({distanceKm:40,terrain:'flat',teamCount:4,
@@ -158,5 +161,74 @@ test('contained attack uses the paid whole-bunch path without awards',()=>{
     assert.equal(recording.pointsStatus,'withheld');
     assert.equal(validateFinalePaidBunchRunnerFromTour(tour,{
       attackTeamId:'a',plans},recording),true);
+  }
+});
+
+test('measured solo catches hand off to paid individual line travel',()=>{
+  for(const gender of ['M','F'])for(const [index,branch] of [
+    [1,'first_catch'],[2,'second_catch'],[3,'late_catch'],
+    [4,'penultimate_catch']]){
+    const request={attackTeamId:'you',attackRiderId:`you-${index}`};
+    const result=createV91FinaleTrialWithContactRunner(
+      settings(gender),request);
+    const runner=result.postContactRunner;
+    assert.equal(result.version,'v91-finale-trial-5');
+    assert.equal(result.soloContinuation.outcome.branch,branch);
+    assert.equal(result.postContactRunnerStatus,'paid_conditional_line');
+    assert.equal(runner.branch,branch);
+    assert.equal(runner.catchDistanceM,
+      result.soloContinuation.outcome.catchDistanceM);
+    assert.equal(runner.startDistanceM,
+      result.soloContinuation.outcome.nextDecisionDistanceM);
+    assert.equal(runner.frames.length,(runner.lineDistanceM-
+      runner.startDistanceM)/100);
+    assert.equal(runner.finishers.length,32);
+    assert.equal(runner.pointsStatus,'withheld');
+    assert.equal(result.classifiedResults,null);
+    assert.equal(result.canCommitAwards,false);
+    assert.equal(validateFinalePaidPostContactRunnerFromTour(
+      result.recording,{attackTeamId:'you',plans:result.finalePlans},
+      runner),true);
+    assert.equal(validateV91FinaleTrialWithContactRunner(
+      settings(gender),request,result),true);
+  }
+});
+
+test('pre-contact lead-out and surviving solo remain unsupported',()=>{
+  const leadOut=createV91FinaleTrialWithContactRunner(settings('M'),{
+    attackTeamId:'you',attackRiderId:'you-1',plans:plans(true)});
+  assert.equal(leadOut.postContactRunner,null);
+  assert.equal(leadOut.postContactRunnerStatus,
+    'unsupported_pre_contact_lead_out');
+  const surviving=createV91FinaleTrialWithContactRunner(settings('M'),{
+    attackTeamId:'you',attackRiderId:'you-7'});
+  assert.equal(surviving.postContactRunner,null);
+  assert.equal(surviving.postContactRunnerStatus,
+    'unsupported_road_outcome');
+  const bunch=createV91FinaleTrialWithContactRunner(settings('M'),{
+    attackTeamId:'you',attackRiderId:'you-0'});
+  assert.equal(bunch.postContactRunner,null);
+  assert.equal(bunch.postContactRunnerStatus,
+    'not_applicable_complete_bunch');
+  assert.equal(bunch.physicalRunner.finishers.length,32);
+});
+
+test('larger tired fields retain all riders after exact solo contact',()=>{
+  for(const input of [
+    {distanceKm:120,terrain:'rolling',teamCount:15,gender:'M',
+      fatigue:15,attackerIndex:1,branch:'first_catch'},
+    {distanceKm:120,terrain:'rolling',teamCount:20,gender:'F',
+      fatigue:30,attackerIndex:4,branch:'late_catch'}]){
+    const result=createV91FinaleTrialWithContactRunner({
+      ...settings(input.gender),...input},{attackTeamId:'you',
+      attackRiderId:`you-${input.attackerIndex}`});
+    assert.equal(result.soloContinuation.outcome.branch,input.branch);
+    const runner=result.postContactRunner;
+    assert.equal(runner.finishers.length,input.teamCount*8);
+    assert.equal(new Set(runner.finishers.map(row=>
+      row.riderId)).size,input.teamCount*8);
+    assert.ok(runner.frames.every(frame=>frame.riders.every(row=>
+      row.energySpent<=row.energyAtDecision+1e-8)));
+    assert.equal(result.pointsStatus,'withheld');
   }
 });

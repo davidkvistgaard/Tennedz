@@ -66,3 +66,10 @@ or passing lanes. A surviving solo still uses separate provisional bounds.
 Neither path is a classified result or a point award. The next gate is a road
 position and passing model tied to the locked source, followed by replayable
 individual classification and the read-only point projection.
+
+The versioned `v91-finale-trial-5` also resumes that paid individual travel
+after an exact solo catch, using the recorded merged road and energy at the
+next boundary. Four contact timings are covered, from 400 m to 100 m remaining.
+It does not retroactively apply a lead-out order before contact; such an order,
+a surviving solo and last-slice contact remain explicitly unsupported by this
+continuation. No contact path awards points or claims an official placing.
