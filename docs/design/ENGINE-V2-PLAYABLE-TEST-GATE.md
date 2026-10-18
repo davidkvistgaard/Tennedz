@@ -68,7 +68,13 @@ manager's finisher and optional helper while unspecified managers keep their
 captain and no helper. `--full` includes the complete source and finale
 recording for inspection. Output identifies road groups, chasers, energy,
 paid lead-out work and conditional line times, or names an unsupported road
-state. It withholds classification and point awards and has no account,
+state with its recorded group and dropped-rider counts where the unmodified
+kilometre source is available. A fixed 54-case diagnostic across three routes,
+both categories, three field sizes and three tactics modes replayed 32
+conditional individual lines, 12 paid group-band lines and 10 explicit
+refusals, all on the tired mountain source with multiple groups or dropped
+riders. This is coverage evidence, not a sporting success rate. The tool
+withholds classification and point awards and has no account,
 database or production path. This is an engine diagnostic, not the requested
 browser test environment or a completed playable race.
 

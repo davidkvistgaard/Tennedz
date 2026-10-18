@@ -3,7 +3,10 @@
 import {readFileSync} from 'node:fs';
 import {resolve} from 'node:path';
 import {pathToFileURL} from 'node:url';
-import {prepareV91Playtest} from '../lib/engine/v2/playtest.mjs';
+import {createV91Playtest,prepareV91Playtest} from
+  '../lib/engine/v2/playtest.mjs';
+import {finaleSnapshotFromTour} from
+  '../lib/engine/v2/finale-snapshot.mjs';
 import {createV91ConditionalRaceFinal,
   validateV91ConditionalRaceFinal} from
   '../lib/engine/v2/playtest-race-final.mjs';
@@ -95,9 +98,20 @@ export function runV91TestDrive(scenario,{full=false}={}){
   try{trial=createV91ConditionalRaceFinal(scenario.settings,request);}
   catch(error){
     if(!REFUSALS.has(error.message))throw error;
+    const source=request.attackTeamId===undefined?
+      createV91Playtest(scenario.settings):null;
+    const snapshot=source?finaleSnapshotFromTour(source.recording,{
+      remainingKm:1,includeAttackLoad:true}):null;
     return {version:'v91-offline-test-drive-1',status:'unsupported',
       input:prepareV91Playtest(scenario.settings).settings,
-      request,reason:error.message,pointsStatus:'withheld',
+      request,reason:error.message,
+      ...(snapshot?{lastKmSource:{
+        roadGroups:snapshot.roadGroups.map(group=>({
+          id:group.id,gapSeconds:group.gapSeconds,
+          riderIds:group.riderIds})),
+        droppedRiderIds:snapshot.droppedRiderIds,
+        chaserTeamIds:source.recording.frames[snapshot.sourceKm-1].chasers
+      }}:{}),pointsStatus:'withheld',
       canCommitAwards:false};
   }
   validateV91ConditionalRaceFinal(scenario.settings,request,trial);
