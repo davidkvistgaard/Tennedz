@@ -55,6 +55,20 @@ The first handoff is a local, opt-in test environment for the user, not a v2
 production release. Calendar, Arena and monetization work are outside this
 motor gate. The existing game and production data stay unchanged.
 
+## Integration priority
+
+The conditional race-final entry currently needs either a single controlled
+last-kilometre attack or an inactive-attack complete bunch. The workbench's
+ordinary mixed default tactics do not meet that restriction: fixed 40 km flat
+men's (4 teams), 120 km rolling women's (15 teams), and 260 km mountain men's
+(20 teams) requests all stop before a paid finale. Existing separated-group
+recordings can pay some earlier road travel, but they stop at group contact or
+do not apply an individual sprint. More isolated partial-contact variants do
+not close this user path. The next motor integration should carry the actual
+last-kilometre groups, dropped riders and valid manager actions on one clock
+through contact and the finish; only then can a general result and point
+projection be assessed against this gate.
+
 ## Current complete-bunch boundary
 
 The opt-in `v91-finale-trial-4` carries a caught or contained 500 m bunch to
