@@ -108,3 +108,14 @@ and passing lanes, so this is a **conditional** line, not a classification or
 point award. The current version excludes pre-contact lead-outs, multiple
 attacks and conditional chase. Those remain explicit motor gates rather than
 silently falling through to an older result.
+
+The opt-in `v91-finale-trial-9` continues a measured solo catch to the line
+when **every** locked rider meets at the same contact position. It passes the
+exact timestamp, position and remaining energy into the existing paid bunch
+runner, which now accepts an initial partial 100 m interval and charges only
+the distance actually ridden. This covers early full-field catches in M/F
+fictional fields of 4, 15 and 20 teams and varied flat, rolling and mountain
+routes. A sprinter catching the solo ahead of the field remains a separate
+contact state and is refused rather than flattened into a bunch. The resulting
+line is still conditional on the collapsed source road band; no official
+places or points are projected.
