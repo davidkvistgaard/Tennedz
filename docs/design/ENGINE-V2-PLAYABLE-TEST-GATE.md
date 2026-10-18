@@ -140,6 +140,18 @@ withholds individual results and points. The older individual-line v1/v2
 entry versions are unchanged. This is a complete paid road for one narrow
 source class, not a playable tactics-and-results test.
 
+`v2-finale-group-result-bounds-1` now derives only the places that this
+verified paid road can prove. If the front group survives, its members may
+occupy places 1 through the group size and every bunch rider starts after
+them; an exact catch leaves the entire field unordered. The separate
+`v2-conditional-group-point-bounds-1` applies the existing one-day point
+policy to those possible places with an explicit tier and division context.
+It reports minimum and maximum possible points, never award rows. Both
+projections replay from the paid clock, retain `withheld` status and do not
+resolve the order within a road band. In the fixed 4-team flat source the
+front contains five riders, so their possible places are 1–5 while bunch
+riders can only occupy 6–32. No player-facing point award follows.
+
 ## Current complete-bunch boundary
 
 The opt-in `v91-finale-trial-4` carries a caught or contained 500 m bunch to
