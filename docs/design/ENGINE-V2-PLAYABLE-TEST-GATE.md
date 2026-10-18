@@ -58,6 +58,20 @@ The first handoff is a local, opt-in test environment for the user, not a v2
 production release. Calendar, Arena and monetization work are outside this
 motor gate. The existing game and production data stay unchanged.
 
+The offline command `node scripts/engine-v2-test-drive.mjs
+docs/design/engine-v2-test-drive-example.json` now runs one fictional v91
+race through the conditional motor entry and verifies its replay. Copy and
+edit the JSON to choose route, length, category, fatigue, field, seed and
+manager tactics. `managerTactics` supplies orders for the first listed rivals;
+the others use `defaultRivalPlan`. `finalePlans` can override any named
+manager's finisher and optional helper while unspecified managers keep their
+captain and no helper. `--full` includes the complete source and finale
+recording for inspection. Output identifies road groups, chasers, energy,
+paid lead-out work and conditional line times, or names an unsupported road
+state. It withholds classification and point awards and has no account,
+database or production path. This is an engine diagnostic, not the requested
+browser test environment or a completed playable race.
+
 ## Integration priority
 
 The conditional race-final entry now admits a complete bunch with attack
