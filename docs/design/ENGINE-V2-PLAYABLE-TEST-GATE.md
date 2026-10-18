@@ -229,3 +229,25 @@ lead-out frequency, calibrated outcome or classified result. All tested
 points remain withheld. The stronger next vertical step is an earlier,
 paid positioning decision and an end-to-end result path, not another isolated
 100 m recording.
+
+`v91-early-bunch-trial-1` now reuses the paid individual bunch runner for an
+entire last kilometre in the narrower case of one complete bunch and no
+current attack order. It locks manager finishers and optional helpers against
+the recorded one-kilometre road and energy, places all riders in a distinct,
+tactic-independent provisional source, then pays two 250 m approach slices
+and five 100 m finale slices on one clock through every individual crossing.
+The older 500 m runner and source versions remain separate. In a fixed
+40 km men's four-team fixture, rider `rival-3-5` starts behind the nominated
+`rival-3-7`, pays to assemble, pulls on subsequent approach slices, and
+changes that finisher's crossing time from 88.079 to 87.656 seconds from the
+last-kilometre start with the same race tape and initial wheels. In the
+fixed 15- and 20-team sources, paired M/F helper orders likewise pay for
+assembly and a later pull, and change the nominated finisher's line time
+without changing the underlying race or source wheels. In the
+18-source route/category/field-size matrix, sixteen complete sources reach
+all individual crossings; the two four-team mountain sources are refused
+because they do not supply one complete bunch. These figures demonstrate
+causal work and explicit coverage, not a target win rate. The source still
+infers eight lanes and permits unblocked open-road passing; it has not proved
+a real within-bunch order. `classifiedResults` remains null, points are
+withheld, and attacks or surviving road groups must use their own paid path.
