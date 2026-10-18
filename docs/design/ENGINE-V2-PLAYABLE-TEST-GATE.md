@@ -100,6 +100,21 @@ does not establish physical wheel positions or a common-clock individual
 finish, and no manager finisher or lead-out order is applied. It therefore
 cannot yet feed the playable race-final entry.
 
+The separate opt-in `v2-finale-group-cooperative-to-line-12` addresses one
+missing work contract on that recorded single-break road. Instead of choosing
+the first group member as the only puller, each short slice reselects eligible
+workers from the existing break-work orders and current energy. It uses the
+kilometre motor's sit-on, drive, cooperation and shared exposure costs, and
+records every working rider's paid energy. In fixed 40/120 km M/F examples
+with 4, 15 and 20 teams, the source groups have 5–40 eligible workers; all
+12 complete fields replay to a surviving-group band with every rider retained.
+A constructed narrow-gap case records an exact catch and pays the merged
+remainder. This is a new version; the earlier single-puller recording remains
+replayable. The existing short-step ability-to-speed conversion is still an
+experimental pace assumption, and the source still has passage-time gaps,
+not physical wheel positions. This path therefore withholds individual
+classification and points and cannot yet open the player test.
+
 ## Current complete-bunch boundary
 
 The opt-in `v91-finale-trial-4` carries a caught or contained 500 m bunch to
