@@ -115,6 +115,20 @@ experimental pace assumption, and the source still has passage-time gaps,
 not physical wheel positions. This path therefore withholds individual
 classification and points and cannot yet open the player test.
 
+`v2-finale-group-common-clock-1` aligns that paid cooperative kilometre on
+the bunch's passage clock. The source gap is a difference in passage times at
+the same marker; the recorded slice speeds place the break at the bunch's
+decision times without moving a rider for free. At a calculated catch, both
+bands occupy the same position at the same instant, and the merged riders
+continue on the paid road. A large recorded gap can put the break over the
+line before the bunch reaches the kilometre marker; this is represented with
+a negative break line time relative to that marker, not hidden by a fallback.
+The alignment uses the existing constant-speed-within-slice assumption and
+reconstructs **group-band** positions only. It does not supply rider wheels,
+passing lanes, a lead-out among break riders, a complete individual finish or
+points. Fixed short flat and tired rolling examples in both categories, plus
+a narrow-gap catch, replay the clock and preserve the paid energy.
+
 ## Current complete-bunch boundary
 
 The opt-in `v91-finale-trial-4` carries a caught or contained 500 m bunch to
