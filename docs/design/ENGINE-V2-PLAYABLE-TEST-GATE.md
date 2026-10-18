@@ -83,3 +83,14 @@ Only the 500–400 m and 400–300 m catches can currently hand off before sprin
 launch. V5 remains replayable as an earlier conditional experiment, not proof
 of a late catch under the ordered sprint. The next motor step must move the
 solo, bunch and active sprinters on one clock through contact or survival.
+
+The opt-in `v91-finale-trial-7` adds a conservative first-place proof for a
+paid surviving solo without a lead-out order. It compares the recorded solo
+line time against the earliest time *any* locked bunch rider could cover the
+remaining 500 m even with full energy, the best existing riding phase, hard
+finale acceleration and bunch draft throughout. A no-chase fictional field
+proves the solo first in M/F fields of 4, 15 and 20 teams; coordinated chase
+leaves the same solo outcome unresolved against a possible sprint contact.
+This is deliberately a bound from the collapsed 500 m bunch band, not a
+simulated sprint, full placing, official winner or point award. It makes the
+surviving-solo label insufficient by itself to declare victory.
