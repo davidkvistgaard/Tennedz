@@ -86,6 +86,20 @@ win rate. The group-bearing sources expose the next missing input: an honest
 common-clock physical separation at the kilometre handoff. A time gap alone
 must not be silently converted into a wheel position or an official winner.
 
+The opt-in `v2-finale-group-last-km-to-line-11` now uses the recorded
+one-kilometre snapshot directly when it contains exactly one road group, one
+bunch and no dropped riders. The existing paid group runner covers both 250 m
+approach intervals and five 100 m finish intervals; its calculated catch
+continues with the merged bunch to the line. Four source-linked attack-oriented
+40/120 km M/F examples preserve all 32 or 120 riders and their paid energy,
+with one group surviving. A constructed narrow-gap example catches inside the
+first interval and pays the merged remainder. The older five-kilometre
+recording versions remain unchanged. This path reports only aligned
+road-band passage times and withholds results and points. Its time-gap model
+does not establish physical wheel positions or a common-clock individual
+finish, and no manager finisher or lead-out order is applied. It therefore
+cannot yet feed the playable race-final entry.
+
 ## Current complete-bunch boundary
 
 The opt-in `v91-finale-trial-4` carries a caught or contained 500 m bunch to
