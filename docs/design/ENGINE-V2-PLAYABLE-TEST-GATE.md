@@ -191,3 +191,21 @@ lead-out rate or a calibrated sporting result. A playable lead-out needs a
 paid way to establish the pair's road position before this handoff; silently
 moving them at 500 m would restore the v12 causal flaw. The current audit
 does not settle group geometry, blocked passing, results or points.
+
+`v91-finale-trial-14` adds one paid, opt-in response to that gap without
+altering the earlier source or recordings. A nominated helper who starts
+behind the finisher in the same or an adjacent provisional lane can spend
+their existing lead-out work budget to approach on the common bunch clock.
+The speed is limited by the existing hard-effort pace, available energy and
+the wheel-sized target; no rider is moved before travel is paid. A recorded
+`assemblyAttempts` row distinguishes a pair ready at the next boundary from
+one still separated. Only a ready pair pulls on the following approach
+slice. The fixed 4-team M/F source with rider 6 just behind rider 7 records
+paid assembly, then a paid pull and a changed finisher line time on the same
+locked race and starting wheels. A farther-back helper in a 15-team source
+spends work twice but does not catch up before the sprint, so receives no
+lead-out benefit. Nonadjacent lanes are refused. This addresses one rear
+helper case; an ahead-but-distant helper, lateral moves, contested lanes and
+solo partial contact still lack a road model. The inferred source and
+open-road passing remain provisional. `classifiedResults` is null, points
+are withheld and the playable acceptance gate remains open.
