@@ -278,17 +278,27 @@ solo meets the entire bunch at an exact contact and no helper was ordered,
 the already measured contact feeds the existing paid bunch continuation;
 that continuation now validates the versioned lead-out-capable solo trace as
 well as the older no-lead-out trace. A separated solo reaches the line on its
-own one-clock recording. A separate passive partial-contact continuation now
-pays every rider from the exact contact to the line when rivals have no chase
-or attack order, the source has no active chase or front rotation, and no
-lead-out was ordered. It carries the prior velocities and work to the next
-100 m decision, then uses the existing passive, front and sprint work rules.
-Contact with an active chase or rotation, a lead-out, or a non-passive rival
-remains explicitly unsupported. This is a conditional open-road longitudinal
+own one-clock recording. A separate passive partial-contact continuation
+pays every rider from exact contact to the line when rivals have no chase or
+attack order, the source has no active chase or front rotation, and no
+lead-out was ordered. It carries prior velocities and work to the next 100 m
+decision, then uses existing passive, front and sprint work rules. A new
+versioned active-chase continuation pays that same partial-contact boundary
+when the source has a measured chaser and rivals have `ignore` or `all` chase
+orders. The prior chaser's work continues to the next decision; later chasers
+are selected from the recorded orders and remaining energy only while the
+named solo remains ahead. After contact, an eligible front-rotation team can
+take a paid turn using the existing rotation rule. A source rotation, lead-out,
+or rival attack remains explicitly unsupported here. This is a conditional
+open-road longitudinal
 trace, not a joined drafting group or a classified finish. In constructed
 40 km flat (4-team), 120 km rolling (15-team) and 260 km mountain (20-team)
 sources it retains every rider, replays the source contact, and pays energy
-to each individual crossing. These sources do not establish sporting balance.
+to each individual crossing. The same three route/field combinations exercise
+the active-chase continuation. A separate 40 km case records a chase team
+rotating only after the named solo is caught, with each selected worker's
+measured slice energy matching the continuation. These constructed sources do
+not establish sporting balance.
 Each accepted branch keeps its original source recording and riders,
 and every crossing remains conditional: no inferred wheel order becomes an
 official result or point award. Other valid attack combinations and existing
