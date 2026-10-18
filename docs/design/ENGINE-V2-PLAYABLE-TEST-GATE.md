@@ -260,3 +260,17 @@ effort lowers that team's finisher energy at the kilometre handoff and delays
 their conditional line crossing; the player's unchanged finisher retains the
 same energy and crossing time. This checks the main-race order-to-finale
 boundary, not sporting calibration or official classification.
+
+`v91-conditional-race-final-1` is a single read-only caller for the payable
+branches above. With no named final-kilometre attack, it uses the complete
+one-kilometre bunch path. With one supported named attack, it reuses the
+recorded caught/contained 500 m bunch path or the one-clock solo path. If a
+solo meets the entire bunch at an exact contact and no helper was ordered,
+the already measured contact feeds the existing paid bunch continuation;
+that continuation now validates the versioned lead-out-capable solo trace as
+well as the older no-lead-out trace. A separated solo reaches the line on its
+own one-clock recording. Partial contact stops with an explicit unsupported
+status. Each accepted branch keeps its original source recording and riders,
+and every crossing remains conditional: no inferred wheel order becomes an
+official result or point award. Other valid attack combinations and existing
+separated road groups remain outside this narrow entry.
