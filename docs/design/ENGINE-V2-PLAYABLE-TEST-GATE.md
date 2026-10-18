@@ -140,6 +140,17 @@ withholds individual results and points. The older individual-line v1/v2
 entry versions are unchanged. This is a complete paid road for one narrow
 source class, not a playable tactics-and-results test.
 
+`v91-conditional-race-final-4` admits the same paid group road when a team
+ordered to chase has its own riders in that group and the locked kilometre
+recording shows no actual chase, response or other pending road action. The
+main-race chase rule already withholds pursuit of one's own break. In paired
+fictional 40 km flat and 120 km rolling sources, both categories and 4, 15
+and 20 teams, changing only the player's `chase` order from `ignore` to `all`
+left the paid group clock and place/point bounds identical in all 12 cases;
+the source had no chasers. A separate source with a rival's active selective
+chase still refuses. This removes an order-label false refusal, not a paid
+chase model, individual group finish or point award. V3 recordings stay valid.
+
 `v2-finale-group-result-bounds-1` now derives only the places that this
 verified paid road can prove. If the front group survives, its members may
 occupy places 1 through the group size and every bunch rider starts after

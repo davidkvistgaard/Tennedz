@@ -483,15 +483,40 @@ test('one recorded cooperative group reaches a paid band line without awards',()
   }
 });
 
+test('an unengaged order to chase ones own break leaves paid road unchanged',()=>{
+  for(const distanceKm of [40,120])for(const gender of ['M','F'])
+    for(const teamCount of [4,15,20]){
+      const base={distanceKm,terrain:distanceKm===40?'flat':'rolling',
+        fatigue:distanceKm===40?0:15,gender,teamCount,
+        seed:'conditional-coverage-1',attack:'repeated',
+        defaultRivalPlan:'attack'};
+      const ignored=createV91ConditionalRaceFinal({...base,chase:'ignore'});
+      const ordered=createV91ConditionalRaceFinal({...base,chase:'all'});
+      assert.equal(ordered.version,'v91-conditional-race-final-4');
+      assert.deepEqual(ordered.recording.frames[distanceKm-2].chasers,[]);
+      assert.deepEqual(ordered.paidFinale,ignored.paidFinale);
+      assert.deepEqual(ordered.roadPlaceBounds,ignored.roadPlaceBounds);
+      assert.equal(ordered.pointsStatus,'withheld');
+      assert.equal(ordered.canCommitAwards,false);
+    }
+});
+
 test('group branch refuses unpaid manager plans and unresolved road states',()=>{
   const group={distanceKm:40,terrain:'flat',teamCount:4,gender:'M',
     seed:'conditional-coverage-1',attack:'repeated',chase:'ignore',
     defaultRivalPlan:'attack'};
   assert.throws(()=>createV91ConditionalRaceFinal(group,{plans:[]}),
     /Finisher and lead-out plans are not paid/);
-  for(const variation of [
-    {...group,chase:'all'},
-    {...group,distanceKm:260,terrain:'mountain',fatigue:30}])
-    assert.throws(()=>createV91ConditionalRaceFinal(variation),
-      /unresolved last-kilometre road action/);
+  const ownBreakChase=createV91ConditionalRaceFinal({...group,chase:'all'});
+  assert.equal(ownBreakChase.version,'v91-conditional-race-final-4');
+  assert.equal(ownBreakChase.roadStatus,'paid_group_bands');
+  assert.equal(ownBreakChase.recording.frames[group.distanceKm-2].chasers.length,0);
+  assert.equal(validateV91ConditionalRaceFinal(
+    {...group,chase:'all'},{},ownBreakChase),true);
+  assert.throws(()=>createV91ConditionalRaceFinal({...group,
+    managerTactics:[{effort:'steady',attack:'none',chase:'selective'}]}),
+  /unresolved last-kilometre road action/);
+  assert.throws(()=>createV91ConditionalRaceFinal({...group,
+    distanceKm:260,terrain:'mountain',fatigue:30}),
+  /unresolved last-kilometre road action/);
 });
