@@ -88,3 +88,36 @@ test('a recorded all-out chase keeps place and point bounds tied to paid work',(
   assert.throws(()=>projectV2ConditionalGroupPointBounds(trial.recording,
     altered,pointInput),/does not replay/);
 });
+
+test('rotating two chase teams keeps point ranges on their paid clock',()=>{
+  const settings={distanceKm:120,terrain:'flat',fatigue:15,
+    teamCount:15,gender:'M',seed:'two-chase-source-1',
+    defaultRivalPlan:'attack',attack:'repeated',chase:'ignore',
+    managerTactics:[
+      {effort:'conserve',attack:'none',chase:'all'},
+      {effort:'conserve',attack:'none',chase:'all'}]};
+  const trial=createV91ConditionalRaceFinal(settings);
+  const chasePullRiderId=trial.paidFinale.line.chasePullRiderId;
+  const chaseRotationRiderIds=trial.paidFinale.line.chaseRotationRiderIds;
+  const options={chasePullRiderId,chaseRotationRiderIds};
+  assert.equal(trial.roadPlaceBounds.version,
+    'v2-finale-group-result-bounds-3');
+  assert.equal(validateFinaleGroupResultBounds(trial.recording,
+    trial.paidFinale,trial.roadPlaceBounds,options),true);
+  const pointInput={...context,...options};
+  const points=projectV2ConditionalGroupPointBounds(trial.recording,
+    trial.paidFinale,pointInput);
+  assert.equal(points.version,'v2-conditional-group-point-bounds-3');
+  assert.equal(points.sourceBoundsVersion,
+    'v2-finale-group-result-bounds-3');
+  assert.deepEqual(points.awardRows,[]);
+  assert.equal(points.pointsStatus,'withheld');
+  assert.equal(validateV2ConditionalGroupPointBounds(trial.recording,
+    trial.paidFinale,pointInput,points),true);
+  assert.throws(()=>projectV2ConditionalGroupPointBounds(trial.recording,
+    trial.paidFinale,{...pointInput,
+      chaseRotationRiderIds:chaseRotationRiderIds.map((id,index)=>
+        index===chaseRotationRiderIds.length-1?
+          chaseRotationRiderIds[1]:id)}),
+  /does not replay/);
+});

@@ -167,6 +167,21 @@ targets. `v2-finale-group-result-bounds-2` and
 possible places and point ranges; all awards remain withheld. Selective,
 multi-team and response chases still require their own paid continuation.
 
+`v91-conditional-race-final-6` also accepts exactly two source-recorded
+`ordered_all` chase teams outside one break, with no pending attack or
+response. The existing short-step chase rotation alternates one present,
+nominated helper from each team while the cooperative break, bunch and both
+workers share the paid last-kilometre clock. In 12 fixed 120 km flat, rolling
+and mountain examples across both categories and 15/20-team fields, every
+accepted source retained its full 120- or 160-rider field at a surviving-group
+band line. Both helpers spent more energy than on the same locked source with
+a passive bunch; the bunch arrived about 0.02–0.05 seconds earlier. The small
+effect is a property of these fictional fixtures, not a calibrated sporting
+target. Result bounds v3 and point bounds v3 replay the rotation before
+reporting possible places or points, with awards withheld. More than two
+chasing teams and selective chase remain outside this entry; a two-team
+contact and individual group order still need direct end-to-end evidence.
+
 `v2-finale-group-result-bounds-1` now derives only the places that this
 verified paid road can prove. If the front group survives, its members may
 occupy places 1 through the group size and every bunch rider starts after
