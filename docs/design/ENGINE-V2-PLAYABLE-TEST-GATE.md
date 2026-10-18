@@ -314,6 +314,14 @@ These sources do not validate how large a sporting lead-out advantage should
 be. A helper still pulling at contact, an earlier partial contact with a
 future lead-out opportunity, and unrecorded positional interactions remain
 unsupported.
+The companion `v2-finale-passive-partial-after-lead-out-runner-4` applies
+the same paid, already-ended lead-out condition when rivals have no chase
+order and the measured source has no active chaser or rotation. Constructed
+40 km flat men's (4-team), 120 km rolling women's (15-team), and 260 km
+mountain men's (20-team) sources all retain their paid helper pulls and reach
+every conditional individual crossing. Earlier contact with a helper still
+pulling remains outside this branch. Neither post-lead-out version creates a
+classified order or point award.
 Each accepted branch keeps its original source recording and riders,
 and every crossing remains conditional: no inferred wheel order becomes an
 official result or point award. Other valid attack combinations and existing
