@@ -6,6 +6,8 @@ import {recordFinaleConcurrentBandContinuationFromTour,
   validateFinaleConcurrentBandContinuationFromTour,
   recordFinaleConcurrentRearCatchContinuationFromTour,
   validateFinaleConcurrentRearCatchContinuationFromTour,
+  recordFinaleConcurrentFullCatchContinuationFromTour,
+  validateFinaleConcurrentFullCatchContinuationFromTour,
   concurrentBandNextEvent} from
   '../../lib/engine/v2/finale-concurrent-band-continuation.mjs';
 
@@ -31,13 +33,15 @@ test('road event kernel stops at exact contact before the next grid mark',()=>{
     positionM:39600}))),/ordered positive travel/);
 });
 
-function pairedTour(gender='M',teamCount=15,youAttackerSlot=5){
+function pairedTour(gender='M',teamCount=15,youAttackerSlot=5,
+  rivalAttackerSlot=5){
   const ids=['you',...Array.from({length:teamCount-1},(_,index)=>
     `rival-${index+1}`)];
   const managerFinaleOrders=ids.map(teamId=>({teamId,
     attack:['you','rival-2'].includes(teamId)?'selective':'none',
     ...(['you','rival-2'].includes(teamId)?{
-      attackRiderId:`${teamId}-${teamId==='you'?youAttackerSlot:5}`}:{}),
+      attackRiderId:`${teamId}-${teamId==='you'?youAttackerSlot:
+        rivalAttackerSlot}`}:{}),
     chase:['rival-1','rival-4'].includes(teamId)?'selective':'ignore',
     frontWork:teamId==='rival-3'?'rotate':'sit_in'}));
   return createV91Playtest({distanceKm:40,teamCount,gender,
@@ -105,6 +109,53 @@ test('three paid road bands continue on one clock to a finish or exact contact',
     const changed=structuredClone(line);
     changed.finalRiders[0].energyAtStop+=.01;
     assert.throws(()=>validateFinaleConcurrentBandContinuationFromTour(
+      tour,changed),/does not replay/);
+  }
+});
+
+test('two measured catches produce one paid bunch band without a result',()=>{
+  for(const [gender,teamCount] of [['M',15],['F',20]]){
+    const tour=pairedTour(gender,teamCount,2,2);
+    const previous=recordFinaleConcurrentRearCatchContinuationFromTour(tour);
+    assert.equal(previous.status,'stopped_at_exact_contact');
+    assert.equal(previous.contact.aheadKind,'front');
+    assert.equal(previous.contact.behindKind,'bunch');
+    assert.equal(validateFinaleConcurrentRearCatchContinuationFromTour(
+      tour,previous),true);
+    const line=recordFinaleConcurrentFullCatchContinuationFromTour(tour);
+    assert.equal(line.status,'band_crossings_only');
+    assert.equal(line.contact,null);
+    assert.deepEqual(line.contactEvents.map(row=>row.kind),[
+      'rear_attack_bunch_contact','front_bunch_contact']);
+    assert.ok(line.contactEvents[0].positionM<
+      line.contactEvents[1].positionM);
+    assert.ok(Math.abs(line.contactEvents[1].positionM-
+      previous.contact.positionM)<1e-8);
+    assert.equal(line.bandCrossings.length,1);
+    assert.equal(line.bandCrossings[0].kind,'bunch');
+    assert.equal(line.bandCrossings[0].riderIds.length,teamCount*8);
+    assert.equal(line.roadRelationshipStatus,'all_caught_band_crossing');
+    assert.equal(line.resultStatus,'unclassified');
+    assert.equal(line.pointsStatus,'withheld');
+    assert.equal(line.finalRiders.length,teamCount*8);
+    assert.ok(line.finalRiders.every(row=>row.positionM===40000));
+    const debits=new Map();
+    const distances=new Map();
+    for(const frame of line.frames)for(const row of frame.riders){
+      debits.set(row.riderId,(debits.get(row.riderId)??0)+
+        row.energySpent);
+      distances.set(row.riderId,(distances.get(row.riderId)??0)+
+        row.distanceM);
+    }
+    assert.ok(line.finalRiders.every(row=>
+      Math.abs(row.energyAtSource-debits.get(row.riderId)-
+        row.energyAtStop)<1e-8&&
+      Math.abs(row.distanceTravelledM-distances.get(row.riderId))<1e-8));
+    assert.equal(validateFinaleConcurrentFullCatchContinuationFromTour(
+      tour,line),true);
+    const changed=structuredClone(line);
+    changed.contactEvents[1].elapsedSinceLaunchSeconds+=.1;
+    assert.throws(()=>validateFinaleConcurrentFullCatchContinuationFromTour(
       tour,changed),/does not replay/);
   }
 });

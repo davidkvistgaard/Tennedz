@@ -27,7 +27,9 @@ præcise kontakt. Faktisk distance og energi genafspilles i faste 15-holdsprøve
 for begge køn og en 20-holdsprøve. Dette er gruppetider, ikke en individuel
 feltspurt. En nyere opt-in-version lader en indhentet bageste angriber slutte
 sig til feltet ved målt kontakt og betale beskyttet kørsel videre til mål;
-den ældre optagelse standser stadig ved kontakten. Afslutter/lead-out,
+den ældre optagelse standser stadig ved kontakten. En tredje version fører
+også den forreste angriber ind i feltet ved en senere målt kontakt, når begge
+angreb indhentes, og slutter med én betalt feltgruppe. Afslutter/lead-out,
 klassifikation og point er stadig åbne under 04/11; acceptkravet udvides ikke
 af dette deltrin.
 

@@ -145,9 +145,18 @@ then follows the existing bunch work choices at later boundaries. The older
 version still stops at contact and replays unchanged. Fixed men's and women's
 15-team sources catch the rear rider with about 194 m remaining and carry the
 front rider and merged bunch to separate band crossings; every rider's paid
-distance and energy reconcile. Attacker-to-attacker and front-to-bunch contact
-still stop unresolved, and no inferred wheel, individual result or point award
-is added.
+distance and energy reconcile. In this version, attacker-to-attacker and
+front-to-bunch contact still stop unresolved, and no inferred wheel,
+individual result or point award is added.
+
+The next opt-in version also continues a measured front-to-bunch contact after
+the rear attacker was caught. It preserves the already paid chase until the
+next boundary, changes only the caught rider to sheltered cost, and then uses
+the existing front-rotation decision with no remaining attack to chase. A
+fixed 15-team source records rear contact around 315 m remaining, front
+contact around 259 m remaining, and one paid bunch crossing with all 120
+riders. The earlier contact-stopping versions replay unchanged. The bunch
+still has no individual wheel order, sprint or awards.
 
 A fixed 54-case diagnostic across three routes,
 both categories, three field sizes and three tactics modes originally replayed

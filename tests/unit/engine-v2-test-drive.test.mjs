@@ -28,7 +28,7 @@ import {assertConcurrentDoubleCatchLeadOutWheels} from
 import {recordFinaleConcurrentNextBoundaryFromTour,
   validateFinaleConcurrentNextBoundaryFromTour} from
   '../../lib/engine/v2/finale-concurrent-next-boundary.mjs';
-import {validateFinaleConcurrentRearCatchContinuationFromTour} from
+import {validateFinaleConcurrentFullCatchContinuationFromTour} from
   '../../lib/engine/v2/finale-concurrent-band-continuation.mjs';
 
 const example=JSON.parse(readFileSync(new URL(
@@ -134,7 +134,7 @@ test('integrated two-attack refusal exposes the later paid road boundary',()=>{
     'not_applied_to_band_only_road');
   assert.deepEqual(summary.paidBandContinuation.bandCrossings,
     bandContinuation.bandCrossings);
-  assert.equal(validateFinaleConcurrentRearCatchContinuationFromTour(
+  assert.equal(validateFinaleConcurrentFullCatchContinuationFromTour(
     recording.recording,bandContinuation),true);
   assert.equal(summary.latestPaidEvent.event,
     'first_attacker_at_next_boundary');
@@ -179,7 +179,36 @@ test('integrated rear catch keeps the merged rider on the paid bunch road',()=>{
     'you-3');
   assert.equal(bandContinuation.bandCrossings.length,2);
   assert.ok(bandContinuation.bandCrossings[1].riderIds.includes('you-3'));
-  assert.equal(validateFinaleConcurrentRearCatchContinuationFromTour(
+  assert.equal(validateFinaleConcurrentFullCatchContinuationFromTour(
+    recording.recording,bandContinuation),true);
+});
+
+test('integrated double contact reaches one paid bunch band at the line',()=>{
+  const ids=['you',...Array.from({length:14},(_,index)=>
+    `rival-${index+1}`)];
+  const managerFinaleOrders=ids.map(teamId=>({teamId,
+    attack:['you','rival-2'].includes(teamId)?'selective':'none',
+    ...(['you','rival-2'].includes(teamId)?{
+      attackRiderId:`${teamId}-2`}:{}),
+    chase:['rival-1','rival-4'].includes(teamId)?'selective':'ignore',
+    frontWork:teamId==='rival-3'?'rotate':'sit_in'}));
+  const scenario={settings:{distanceKm:40,teamCount:15,terrain:'flat',
+    seed:'paired-final-orders',attack:'none',chase:'ignore',
+    defaultRivalPlan:'neutral',managerFinaleOrders,
+    teamOverrides:ids.map(teamId=>({teamId,
+      level:teamId==='rival-2'?81:teamId==='you'?80:85}))}};
+  const {summary,recording,bandContinuation}=
+    runV91IntegratedTestDrive(scenario,{full:true});
+  assert.equal(summary.status,'unsupported');
+  assert.equal(summary.roadStatus,'concurrent_band_crossings_only');
+  assert.deepEqual(summary.paidBandContinuation.contactEvents.map(row=>
+    row.kind),['rear_attack_bunch_contact','front_bunch_contact']);
+  assert.equal(bandContinuation.roadRelationshipStatus,
+    'all_caught_band_crossing');
+  assert.equal(bandContinuation.bandCrossings.length,1);
+  assert.equal(bandContinuation.bandCrossings[0].riderIds.length,120);
+  assert.equal(bandContinuation.pointsStatus,'withheld');
+  assert.equal(validateFinaleConcurrentFullCatchContinuationFromTour(
     recording.recording,bandContinuation),true);
 });
 
