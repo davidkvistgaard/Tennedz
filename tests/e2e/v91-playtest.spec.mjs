@@ -97,3 +97,39 @@ for(const width of [390,1440])test(`v91 playtest changes conditions at ${width}p
       .textContent()).not.toBe(baselineFinisherTime);
     expect(errors).toEqual([]);
   });
+
+test('a named final-kilometre attack changes the paid road',async({page})=>{
+  const errors=[];page.on('pageerror',error=>errors.push(error.message));
+  await page.goto('/login');
+  await page.getByLabel('Email or username').fill('v2manager');
+  await page.getByLabel('Password',{exact:true}).fill('fixture-password');
+  await page.getByRole('button',{name:'Sign in',exact:true}).click();
+  await expect(page).toHaveURL(/\/team$/);
+  await page.goto('/team/v91-playtest');
+  await page.getByLabel('Distance').selectOption('40');
+  await page.getByLabel('Default tactics for uncustomized managers')
+    .selectOption('neutral');
+  await page.getByLabel('Managers with your own tactics').selectOption('3');
+  for(const rival of [1,2,3])await page.getByLabel(`Rival ${rival} chase`)
+    .selectOption('ignore');
+  await page.getByLabel('Your attack order').selectOption('none');
+  await page.getByLabel('Your chase order').selectOption('ignore');
+  await page.getByLabel('Scenario seed').fill('integrated-probe');
+  await page.getByRole('checkbox',{name:'Continue to a conditional finish'})
+    .check();
+  await page.getByLabel('Named attack manager').selectOption('you');
+  await page.getByLabel('Named attacking rider').selectOption('you-0');
+  await page.getByRole('button',{name:'Run full race preview'}).click();
+  await expect(page.getByRole('heading',{name:'Conditional finish'}))
+    .toBeVisible();
+  await expect(page.getByText(/Named attack: you-0 · launched at 39 km; solo road, 1 group at 39\.5 km/))
+    .toBeVisible();
+  await expect(page.getByText('32 of 32 riders have individual crossing times.'))
+    .toBeVisible();
+  await expect(page.getByText(/A complete rider-by-rider final-kilometre replay is not available/))
+    .toBeVisible();
+  await expect(page.getByText(/Points: withheld/)).toBeVisible();
+  await expect(page.getByRole('slider',{name:/Race kilometre/}))
+    .toHaveAttribute('max','39');
+  expect(errors).toEqual([]);
+});

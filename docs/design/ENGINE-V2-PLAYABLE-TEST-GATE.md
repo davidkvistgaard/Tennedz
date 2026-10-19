@@ -1578,3 +1578,17 @@ long-distance four-team sources retained individual conditional lines but
 did not invent a full trace from their later continuation. The active-rival
 partial contact case likewise keeps its line and contact evidence while the
 missing earlier road segment remains an explicit replay gap.
+
+The opt-in browser preview now also accepts one named final-kilometre
+attacker from any of the selected teams. It submits the existing controlled
+attack order and shows the actual recorded launch, road branch, group count
+and 500 m handoff when the engine pays that road. The UI states the current
+controlled-trial constraint on the other managers' attack and chase orders;
+unsupported combinations remain explicit refusals. In an isolated local
+four-team, 40 km flat fixture with three managers ordered to ignore the
+attack, a player rider launched at 39 km, remained a solo group at 39.5 km,
+and all 32 conditional crossings were recorded with official points withheld.
+The browser correctly kept the kilometre replay at the 39 km handoff; its
+missing full-finale scrubber for this partial road was not filled with an
+unpaid trace. Focused lint, local production build and browser checks for
+this case plus the prior 390/1440 px preview flows passed.

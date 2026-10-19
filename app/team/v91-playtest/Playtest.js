@@ -38,11 +38,13 @@ export default function Playtest(){
   const [customRivals,setCustomRivals]=useState(0);
   const [integratedMode,setIntegratedMode]=useState(false);
   const [finalePlans,setFinalePlans]=useState({});
+  const [namedAttack,setNamedAttack]=useState({teamId:'',riderId:''});
   const [showPointPreview,setShowPointPreview]=useState(false);
   const [pointContext,setPointContext]=useState({tier:2,
     divisionIndex:1,divisionCount:2});
   const [result,setResult]=useState(null);
   const [integrated,setIntegrated]=useState(null);
+  const [attackRoad,setAttackRoad]=useState(null);
   const [finaleReplay,setFinaleReplay]=useState(null);
   const [finaleFrameIndex,setFinaleFrameIndex]=useState(0);
   const [inspectedRiderId,setInspectedRiderId]=useState('you-7');
@@ -51,7 +53,12 @@ export default function Playtest(){
   const [error,setError]=useState('');
   const frame=result?.frames[selectedKm-1];
   const change=(key,value)=>{
-    if(key==='teamCount')setCustomRivals(count=>Math.min(count,Number(value)-1));
+    if(key==='teamCount'){
+      setCustomRivals(count=>Math.min(count,Number(value)-1));
+      setNamedAttack(current=>current.teamId==='you'||
+        Number(current.teamId.split('-').at(-1))<Number(value)?current:
+        {teamId:'',riderId:''});
+    }
     setSettings(current=>({...current,
       [key]:['distanceKm','teamCount','fatigue'].includes(key)?Number(value):value}));
   };
@@ -103,11 +110,13 @@ export default function Playtest(){
         finalePlans:finaleTeams.map(teamId=>({teamId,
           finisherId:finalePlans[teamId]?.finisherId??`${teamId}-7`,
           leadOutRiderId:finalePlans[teamId]?.leadOutRiderId??null})),
+        ...(namedAttack.teamId?{attack:namedAttack}:{}),
         ...(showPointPreview?{pointContext}:{})}:
         raceSettings;
       const response=await api('/api/v91-playtest',{method:'POST',
         headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
       setResult(response.playtest);setIntegrated(response.integrated??null);
+      setAttackRoad(response.attackRoad??null);
       setFinaleReplay(response.finaleReplay??null);
       setFinaleFrameIndex(0);
       setInspectedRiderId(response.integrated?.managerDecisions
@@ -207,6 +216,29 @@ export default function Playtest(){
           })}</div>
         </fieldset>}
         {integratedMode&&<fieldset className="v91-profile">
+          <legend>Named final-kilometre attack</legend>
+          <p>Optionally order one rider to attack at the start of the last kilometre. Other managers keep their chosen tactics. The recorded road decides whether the move survives.</p>
+          <small>For this controlled attack, every other manager must use Attack: None and Chase: Ignore or All helpers. Unsupported orders return an explicit refusal.</small>
+          <div className="v91-profile-points">
+            <label>Named attack manager<select value={namedAttack.teamId}
+              onChange={event=>setNamedAttack(event.target.value?{
+                teamId:event.target.value,riderId:`${event.target.value}-0`}:
+                {teamId:'',riderId:''})}>
+              <option value="">None</option>
+              {Array.from({length:settings.teamCount},(_,index)=>
+                index===0?'you':`rival-${index}`).map(teamId=><option
+                  key={teamId} value={teamId}>{teamId==='you'?'Your team':teamId}</option>)}
+            </select></label>
+            {namedAttack.teamId&&<label>Named attacking rider<select
+              value={namedAttack.riderId}
+              onChange={event=>setNamedAttack(current=>({...current,
+                riderId:event.target.value}))}>
+              {Array.from({length:8},(_,index)=><option key={index}
+                value={`${namedAttack.teamId}-${index}`}>Rider {index+1}</option>)}
+            </select></label>}
+          </div>
+        </fieldset>}
+        {integratedMode&&<fieldset className="v91-profile">
           <legend>Optional points illustration</legend>
           <label className="v91-mode"><input type="checkbox"
             checked={showPointPreview}
@@ -296,6 +328,9 @@ export default function Playtest(){
           <h3>Conditional finish</h3>
           <p>Road: {integrated.roadStatus??integrated.status??'unresolved'} · Individual finish: {integrated.finale?.individualFinishStatus??'unavailable'} · Points: {integrated.pointsStatus}</p>
           {integrated.reason&&<p role="status">{integrated.reason}</p>}
+          {integrated.request?.attackRiderId&&<p>Named attack: {integrated.request.attackRiderId} · {attackRoad?
+            `launched at ${attackRoad.atKm} km; ${attackRoad.branch} road, ${attackRoad.roadGroupCount} group at ${(attackRoad.handoffDistanceM/1000).toFixed(1)} km`:
+            'no paid road decision recorded'}</p>}
           <p>Your nominated finisher: {ownFinisher} · {ownCrossing?
             `${ownCrossing.elapsedSecondsFromLastKmStart.toFixed(3)} s from the last kilometre, ${ownCrossing.energyAtLine.toFixed(1)} energy at the line`:
             'No paid individual crossing'}</p>

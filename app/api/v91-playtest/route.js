@@ -41,8 +41,16 @@ async function handler(request,_context,auth){
         tuningVersion:kilometreReplay.tuningVersion,
         handoffKm:source.route.distanceKm-1,
         frames:kilometreReplay.frames.slice(0,-1)};
+      const decision=output.recording?.roadDecision;
+      const intent=output.recording?.attackIntent;
+      const attackRoad=intent&&decision?{
+        riderId:intent.riderId,atKm:intent.atKm,
+        branch:decision.branch,handoffDistanceM:decision.handoffDistanceM,
+        roadGroupCount:decision.roadGroupCount,
+        pelotonRiderCount:decision.pelotonRiderCount}:null;
       return NextResponse.json({ok:true,playtest,
         integrated:output.summary,
+        attackRoad,
         finaleReplay:summarizeV91PaidFinaleReplay(output.recording)});
     }
     if(input.mode!==undefined)
