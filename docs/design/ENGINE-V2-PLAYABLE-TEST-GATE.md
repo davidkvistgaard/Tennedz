@@ -770,8 +770,8 @@ no recorded rival chaser. A new versioned group fallback records that all
 three rival teams ordered chase but have no helper above the existing energy
 minimum. It pays passive group travel and retains the locked road; it does
 not invent a chase pull or a solo sprint. The opt-in individual-line drive
-marks that singleton continuation unsupported while preserving the paid
-band. In the six 260 km tired contested runs, zero-reserve riders cannot pay
+initially marked that singleton continuation unsupported while preserving
+the paid band. In the six 260 km tired contested runs, zero-reserve riders cannot pay
 even the first passive slice. Those runs now refuse with an explicit unpaid
 travel reason and no result or points. These are coverage and integrity
 observations, not calibrated sporting frequencies.
@@ -781,12 +781,19 @@ single surviving front rider's **already paid** final-500 m passages to their
 individual crossing while the bunch uses its existing nominated-finisher and
 optional lead-out runner. The new recording replays source energy and time,
 audits inferred pre-500 m positions and possible final-500 m cross-band
-contact, and withholds classification and awards. It does not add a sprint
-boost to a lone rider from the older group clock: nominating that rider as
-the finisher explicitly remains unsupported. In the fixed 72-run flat
+contact, and withholds classification and awards. The separately versioned
+lab-2 continuation lets the manager nominate that lone front rider as the
+finisher: the first 200 m retain paid group-clock work, then three individual
+100 m sprint slices use the existing finale ability and energy cost, with no
+shelter or helper. In the fixed 260 km M four-team case, the nomination
+changes the solo crossing from 82.559284 to 82.397773 seconds from the
+last-kilometre bunch marker, spending about 7.292 extra energy. The locked
+kilometre recording remains identical. In the fixed 72-run flat
 boundary probe, the two fresh 260 km M/F four-team contested scenarios now
 have complete conditional individual lines, with no possible longitudinal
 cross-band meeting under the provisional positions. Counts are 38 complete
 bunch, 26 multiband, 2 depleted conditional lines and 6 unpaid-travel
-refusals. These are constructed coverage cases; group contact and an
-official result are still open.
+refusals. Both gender cases also accept a front-finisher nomination and a
+read-only preview through the existing one-day point policy; award rows stay
+empty. These are constructed coverage cases; group contact and an official
+result are still open.

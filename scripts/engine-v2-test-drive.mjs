@@ -294,7 +294,7 @@ export function runV91TestDrive(scenario,{full=false}={}){
         {plans:request.plans??null});
     }catch(error){
       if(!['The nominated lead-out cannot work beside the finisher.',
-        'The singleton front finisher has no paid sprint continuation.']
+        'The singleton cannot pay for the nominated sprint.']
         .includes(error.message))
         throw error;
       const base=summaryFor(trial,request,pointContext);

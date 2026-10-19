@@ -315,9 +315,41 @@ test('a singleton front keeps its paid solo crossing beside a nominated bunch fi
   assert.equal(ordered.roadStatus,'conditional_multiband_line');
   const frontPlan=runV91TestDrive({settings,individualGroupLine:true,
     finalePlans:[{teamId:'you',finisherId:'you-4',
-      leadOutRiderId:null}]});
-  assert.equal(frontPlan.status,'unsupported');
-  assert.match(frontPlan.reason,/no paid sprint continuation/);
+      leadOutRiderId:null}],pointContext:{tier:4,divisionCount:1,
+      divisionIndex:1}},{full:true});
+  assert.equal(frontPlan.summary.roadStatus,'conditional_multiband_line');
+  assert.equal(frontPlan.individualLine.version,
+    'v2-finale-singleton-front-individual-line-lab-2');
+  assert.deepEqual(frontPlan.recording.recording,
+    singleton.recording.recording);
+  const solo=frontPlan.individualLine.bandRunners[0].runner;
+  assert.equal(solo.frames.filter(frame=>
+    frame.riders[0].role==='solo_sprint').length,3);
+  assert.ok(solo.frames.filter(frame=>
+    frame.riders[0].role==='solo_sprint').every(frame=>
+    frame.riders[0].energySpent>0&&
+    frame.riders[0].shelteredDistanceM===0));
+  assert.ok(solo.finishers[0].elapsedSecondsFromLastKmStart<
+    singleton.individualLine.bandRunners[0].runner.finishers[0]
+      .elapsedSecondsFromLastKmStart);
+  assert.ok(solo.finishers[0].energyAtLine<
+    singleton.individualLine.bandRunners[0].runner.finishers[0]
+      .energyAtLine);
+  assert.equal(frontPlan.summary.finale.lineTimes.length,32);
+  assert.equal(frontPlan.summary.provisionalPointPreview
+    .riders[0].riderId,'you-4');
+  assert.equal(frontPlan.summary.provisionalPointPreview
+    .riders[0].previewPoints,400);
+  assert.deepEqual(frontPlan.summary.provisionalPointPreview.awardRows,[]);
+  const alteredSprint=structuredClone(frontPlan.individualLine);
+  alteredSprint.bandRunners[0].runner.frames[2].riders[0]
+    .energySpent+=1;
+  assert.throws(()=>validateFinaleSingletonFrontIndividualLine(
+    frontPlan.recording.recording,frontPlan.recording.paidFinale,
+    {plans:frontPlan.summary.request.plans},alteredSprint),
+  /does not replay/);
+  assert.equal(frontPlan.summary.pointsStatus,'withheld');
+  assert.equal(frontPlan.summary.canCommitAwards,false);
   const unpaid=runV91TestDrive({settings:{...settings,fatigue:30},
     individualGroupLine:true});
   assert.equal(unpaid.status,'unsupported');
