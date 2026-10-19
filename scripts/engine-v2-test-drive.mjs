@@ -91,6 +91,30 @@ function expectedRefusal(message){
       .test(message);
 }
 
+// A helper outside the source lane cannot assemble without an unrecorded
+// lateral move. Keep the manager's request visible, but replay the payable
+// race with only that unavailable helper removed from the applied orders.
+function createWithAvailableEarlyLeadOuts(settings,request){
+  let appliedRequest=request;
+  const unavailableLeadOuts=[];
+  for(;;){
+    try{return {trial:createV91ConditionalRaceFinal(settings,appliedRequest),
+      appliedRequest,unavailableLeadOuts};}
+    catch(error){
+      const teamId=/^An early lead-out helper needs an adjacent lane: ((?:you|rival-[1-9]\d*))\.$/
+        .exec(error.message)?.[1];
+      const plan=appliedRequest.plans?.find(row=>row.teamId===teamId);
+      if(request.attackTeamId!==undefined||!plan?.leadOutRiderId)
+        throw error;
+      unavailableLeadOuts.push({teamId,helperId:plan.leadOutRiderId,
+        finisherId:plan.finisherId,
+        status:'unavailable_source_lane',helperEnergySpent:0});
+      appliedRequest={...appliedRequest,plans:appliedRequest.plans.map(
+        row=>row.teamId===teamId?{...row,leadOutRiderId:null}:row)};
+    }
+  }
+}
+
 function requestFor(scenario){
   const settings=scenario?.settings;
   const {teams}=prepareV91Playtest(settings);
@@ -467,8 +491,11 @@ export function runV91TestDrive(scenario,{full=false}={}){
   if(scenario.namedDroppedRoad===true&&request.attackTeamId===undefined)
     throw new Error('Choose one named attack for the dropped-road trial.');
   let trial;
+  let appliedRequest=request;
+  let unavailableLeadOuts=[];
   let recoveredGroupPlan=false;
-  try{trial=createV91ConditionalRaceFinal(scenario.settings,request);}
+  try{({trial,appliedRequest,unavailableLeadOuts}=
+    createWithAvailableEarlyLeadOuts(scenario.settings,request));}
   catch(error){
     if(!expectedRefusal(error.message))throw error;
     const source=error.cause?.playtestSource??null;
@@ -656,7 +683,7 @@ export function runV91TestDrive(scenario,{full=false}={}){
     }
   }
   validateV91ConditionalRaceFinal(scenario.settings,recoveredGroupPlan?
-    {...request,plans:null}:request,trial);
+    {...request,plans:null}:appliedRequest,trial);
   if(scenario.individualGroupLine===true&&
     ['paid_group_bands','paid_separated_bands',
       'recorded_depleted_bands','recorded_dropped_bands']
@@ -727,7 +754,10 @@ export function runV91TestDrive(scenario,{full=false}={}){
       pointsStatus:'withheld',canCommitAwards:false};
     return full?{summary,recording:trial}:summary;
   }
-  const summary=summaryFor(trial,request,pointContext);
+  const base=summaryFor(trial,request,pointContext);
+  const summary=unavailableLeadOuts.length?{...base,
+    version:'v91-offline-test-drive-12',
+    appliedRequest,unavailableLeadOuts}:base;
   return full?{summary,recording:trial}:summary;
 }
 

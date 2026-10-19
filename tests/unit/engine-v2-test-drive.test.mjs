@@ -519,7 +519,7 @@ test('an unpaid group remains an explicit refusal with a valid nominated finale'
   assert.equal(planned.canCommitAwards,false);
 });
 
-test('competing unavailable lead-outs retain the locked road and withhold results',()=>{
+test('a nonadjacent helper is visible while other paid orders continue',()=>{
   const settings={distanceKm:40,terrain:'flat',fatigue:0,
     gender:'M',teamCount:4,seed:'test-drive-acceptance-1',
     defaultRivalPlan:'chase',attack:'none',chase:'all'};
@@ -528,14 +528,29 @@ test('competing unavailable lead-outs retain the locked road and withhold result
   {teamId:'rival-1',finisherId:'rival-1-7',
     leadOutRiderId:'rival-1-5'}];
   const base=runV91TestDrive({settings,individualGroupLine:true});
-  const refused=runV91TestDrive({settings,individualGroupLine:true,
-    finalePlans:plans});
-  assert.equal(refused.status,'unsupported');
-  assert.equal(refused.reason,
-    'An early lead-out helper needs an adjacent lane: rival-1.');
-  assert.deepEqual(refused.lastKmSource,base.lastKmSource);
-  assert.equal(refused.pointsStatus,'withheld');
-  assert.equal(refused.canCommitAwards,false);
+  const continued=runV91TestDrive({settings,individualGroupLine:true,
+    finalePlans:plans},{full:true});
+  const applied=runV91TestDrive({settings,individualGroupLine:true,
+    finalePlans:[plans[0],{...plans[1],leadOutRiderId:null}]},
+  {full:true});
+  assert.equal(continued.summary.roadStatus,'paid_conditional_line');
+  assert.equal(continued.summary.version,'v91-offline-test-drive-12');
+  assert.deepEqual(continued.recording,applied.recording);
+  assert.deepEqual(continued.summary.lastKmSource,base.lastKmSource);
+  assert.deepEqual(continued.summary.unavailableLeadOuts,[{
+    teamId:'rival-1',helperId:'rival-1-5',
+    finisherId:'rival-1-7',status:'unavailable_source_lane',
+    helperEnergySpent:0}]);
+  assert.equal(continued.summary.request.plans.find(row=>
+    row.teamId==='rival-1').leadOutRiderId,'rival-1-5');
+  assert.equal(continued.summary.appliedRequest.plans.find(row=>
+    row.teamId==='rival-1').leadOutRiderId,null);
+  assert.equal(continued.summary.finale.leadOutWork.some(row=>
+    row.riderId==='rival-1-5'),false);
+  assert.ok(continued.summary.finale.leadOutWork.some(row=>
+    row.riderId==='you-5'&&row.energySpent>0));
+  assert.equal(continued.summary.pointsStatus,'withheld');
+  assert.equal(continued.summary.canCommitAwards,false);
 
   const mountain=runV91TestDrive({settings:{...settings,distanceKm:260,
     terrain:'mountain',fatigue:30,teamCount:15},
@@ -546,6 +561,36 @@ test('competing unavailable lead-outs retain the locked road and withhold result
   assert.equal(mountain.lastKmSource.roadGroups.length,0);
   assert.equal(mountain.pointsStatus,'withheld');
   assert.equal(mountain.canCommitAwards,false);
+});
+
+test('wide bunches replay every unavailable source helper without a free pull',()=>{
+  for(const teamCount of [15,20]){
+    const settings={distanceKm:40,terrain:'flat',fatigue:0,
+      gender:'M',teamCount,seed:'test-drive-acceptance-1',
+      defaultRivalPlan:'chase',attack:'none',chase:'all'};
+    const plans=[{teamId:'you',finisherId:'you-7',
+      leadOutRiderId:'you-5'},
+    {teamId:'rival-1',finisherId:'rival-1-7',
+      leadOutRiderId:'rival-1-4'}];
+    const input={settings,finalePlans:plans,
+      pointContext:{tier:3,divisionCount:1,divisionIndex:1}};
+    const continued=runV91TestDrive(input,{full:true});
+    const applied=runV91TestDrive({...input,finalePlans:
+      continued.summary.appliedRequest.plans},{full:true});
+    assert.equal(continued.summary.roadStatus,'paid_conditional_line');
+    assert.deepEqual(continued.recording,applied.recording);
+    assert.equal(continued.summary.unavailableLeadOuts.length,
+      teamCount===15?1:2);
+    for(const row of continued.summary.unavailableLeadOuts){
+      assert.equal(row.helperEnergySpent,0);
+      assert.equal(continued.summary.finale.leadOutWork.some(work=>
+        work.riderId===row.helperId),false);
+    }
+    assert.equal(continued.summary.finale.lineTimes.length,teamCount*8);
+    assert.deepEqual(continued.summary.provisionalPointPreview,
+      applied.summary.provisionalPointPreview);
+    assert.equal(continued.summary.canCommitAwards,false);
+  }
 });
 
 test('two payable manager lead-outs change one recorded finale',()=>{

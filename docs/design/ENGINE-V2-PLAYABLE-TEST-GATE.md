@@ -1156,3 +1156,17 @@ award rows. The same hard-coded pair is unavailable in
 larger 15/20-team fields because at least one helper lacks an adjacent source
 lane; the existing refusal remains visible. This verifies a real but narrow
 choice effect, not general lead-out availability or a calibrated time gain.
+
+The offline drive now handles that narrow larger-field source-lane refusal
+without discarding the otherwise payable bunch finish. In a new
+`v91-offline-test-drive-12` wrapper, the original manager request remains
+visible, while `appliedRequest` removes only helpers that the existing
+source-lane guard proves unable to assemble. Each such helper is listed in
+`unavailableLeadOuts` with zero lead-out energy and no paid pull. The existing
+race-final and paid-runner recordings remain unchanged and replay against the
+applied orders. In the fixed 40 km men's 15-team case one of the two requested
+helpers is unavailable; in the 20-team case both are. Both finish all riders,
+and their conditional line and read-only point illustration exactly match a
+direct run with the applied orders. This is a visible failed tactical attempt,
+not paid lateral movement, an improved lead-out effect, an official result or
+an award. Cross-band and energy-unpayable plans still refuse where they did.
