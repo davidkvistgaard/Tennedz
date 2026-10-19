@@ -797,3 +797,11 @@ refusals. Both gender cases also accept a front-finisher nomination and a
 read-only preview through the existing one-day point policy; award rows stay
 empty. These are constructed coverage cases; group contact and an official
 result are still open.
+
+The tired 260 km flat contested boundary also checks a valid nominated
+finisher and lead-out against an unpaid group continuation. The opt-in drive
+now returns the same locked last-kilometre road and an explicit unsupported
+reason, with no line or point projection, when that fallback cannot pay the
+rider travel. Previously this second refusal escaped as an exception. The
+fixed M/F and 4/15/20-team probes all retain the group and withhold awards;
+they do not establish a playable result for that road.

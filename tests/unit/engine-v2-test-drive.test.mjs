@@ -358,6 +358,27 @@ test('a singleton front keeps its paid solo crossing beside a nominated bunch fi
   assert.equal(unpaid.pointsStatus,'withheld');
 });
 
+test('an unpaid group remains an explicit refusal with a valid nominated finale',()=>{
+  const settings={distanceKm:260,terrain:'flat',fatigue:30,
+    gender:'M',teamCount:4,seed:'flat-length-boundary-1',
+    defaultRivalPlan:'chase',attack:'repeated',chase:'all'};
+  const base=runV91TestDrive({settings,individualGroupLine:true});
+  const planned=runV91TestDrive({settings,individualGroupLine:true,
+    finalePlans:[{teamId:'you',finisherId:'you-7',
+      leadOutRiderId:'you-5'}],pointContext:{tier:4,
+      divisionCount:1,divisionIndex:1}});
+  assert.equal(base.status,'unsupported');
+  assert.equal(planned.status,'unsupported');
+  assert.equal(planned.reason,
+    'The cooperative group has unpaid last-kilometre rider travel.');
+  assert.deepEqual(planned.lastKmSource,base.lastKmSource);
+  assert.equal(planned.request.plans.find(row=>row.teamId==='you')
+    .leadOutRiderId,'you-5');
+  assert.equal(planned.provisionalPointPreview.status,'unavailable');
+  assert.equal(planned.pointsStatus,'withheld');
+  assert.equal(planned.canCommitAwards,false);
+});
+
 test('paired field strength and fatigue reach the same conditional path with different paid lines',()=>{
   const settings={distanceKm:40,terrain:'flat',teamCount:4,gender:'F',
     seed:'independent-field',attack:'none',chase:'ignore',

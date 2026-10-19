@@ -71,6 +71,26 @@ function requestFor(scenario){
   return request;
 }
 
+function unsupportedRefusal(error,scenario,request,pointContext){
+  const source=request.attackTeamId===undefined?
+    error.cause?.playtestSource??null:null;
+  const snapshot=source?finaleSnapshotFromTour(source.recording,{
+    remainingKm:1,includeAttackLoad:true}):null;
+  return {version:'v91-offline-test-drive-1',status:'unsupported',
+    input:prepareV91Playtest(scenario.settings).settings,
+    request,reason:error.message,
+    ...(snapshot?{lastKmSource:{
+      roadGroups:snapshot.roadGroups.map(group=>({
+        id:group.id,gapSeconds:group.gapSeconds,
+        riderIds:group.riderIds})),
+      droppedRiderIds:snapshot.droppedRiderIds,
+      chaserTeamIds:source.recording.frames[snapshot.sourceKm-1].chasers
+    }}:{}),pointsStatus:'withheld',
+    ...(pointContext?{provisionalPointPreview:{status:'unavailable',
+      reason:'No complete individual line.'}}:{}),
+    canCommitAwards:false};
+}
+
 function summaryFor(trial,request,pointContext){
   const {recording,paidFinale}=trial;
   const lastKm=recording.frames[recording.route.distanceKm-2];
@@ -239,24 +259,14 @@ export function runV91TestDrive(scenario,{full=false}={}){
         'Finisher and lead-out plans are not paid for depleted road bands.',
         'Finisher and lead-out plans are not paid for dropped road bands.']
         .includes(error.message)){
-      trial=createV91GroupFallbackFromLockedRace(source);
+      try{trial=createV91GroupFallbackFromLockedRace(source);}
+      catch(fallbackError){
+        if(!REFUSALS.has(fallbackError.message))throw fallbackError;
+        return unsupportedRefusal(fallbackError,scenario,request,pointContext);
+      }
       recoveredGroupPlan=true;
     }else{
-      const snapshot=source?finaleSnapshotFromTour(source.recording,{
-        remainingKm:1,includeAttackLoad:true}):null;
-      return {version:'v91-offline-test-drive-1',status:'unsupported',
-        input:prepareV91Playtest(scenario.settings).settings,
-        request,reason:error.message,
-        ...(snapshot?{lastKmSource:{
-          roadGroups:snapshot.roadGroups.map(group=>({
-            id:group.id,gapSeconds:group.gapSeconds,
-            riderIds:group.riderIds})),
-          droppedRiderIds:snapshot.droppedRiderIds,
-          chaserTeamIds:source.recording.frames[snapshot.sourceKm-1].chasers
-        }}:{}),pointsStatus:'withheld',
-        ...(pointContext?{provisionalPointPreview:{status:'unavailable',
-          reason:'No complete individual line.'}}:{}),
-        canCommitAwards:false};
+      return unsupportedRefusal(error,scenario,request,pointContext);
     }
   }
   validateV91ConditionalRaceFinal(scenario.settings,recoveredGroupPlan?
