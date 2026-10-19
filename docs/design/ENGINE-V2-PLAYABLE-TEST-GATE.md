@@ -966,3 +966,12 @@ marker; the dropped rider's time is unchanged. The new
 `v91-offline-test-drive-8` preserve the earlier road-only recording and keep
 the inferred wheel order explicitly provisional. A survivor still uses the
 road-only path. Neither path classifies an official result or awards points.
+
+When that new conditional line has 32 distinct, uniquely ordered crossings
+and the signed audit shows no possible active/dropped contact, an optional
+`pointContext` now supplies `v91-provisional-named-dropped-point-preview-1`.
+It replays the full paid road and nominated finale, checks every rider's time,
+energy, team and place, then applies the existing one-day division point
+policy. A surviving attacker, possible contact or tied place gets no such
+projection. The preview has no award rows and cannot commit points; the race
+record still says `classifiedResults:null` and `pointsStatus:'withheld'`.

@@ -32,7 +32,8 @@ import {recordFinaleNamedDroppedIndividualLine,
   validateFinaleNamedDroppedIndividualLine} from
   '../lib/engine/v2/finale-named-dropped-individual-line.mjs';
 import {projectV91ProvisionalPointPreview,
-  projectV91ProvisionalMultibandPointPreview} from
+  projectV91ProvisionalMultibandPointPreview,
+  projectV91ProvisionalNamedDroppedPointPreview} from
   '../lib/engine/v2/playtest-point-preview.mjs';
 
 const REFUSALS=new Set([
@@ -256,6 +257,13 @@ function summaryForNamedDroppedRoad(source,request,pointContext,road,
   individualLine=null){
   const recording=source.recording;
   const lastKm=recording.frames[recording.route.distanceKm-2];
+  const preview=pointContext?individualLine?.provisionalLineOrder
+    ?.every(row=>row.position!==null)?
+      projectV91ProvisionalNamedDroppedPointPreview(recording,road,
+        individualLine,pointContext):
+      {status:'unavailable',reason:individualLine?
+        'Cross-band contact or an ambiguous place remains unresolved.':
+        'No complete individual line.'}:null;
   return {version:individualLine?'v91-offline-test-drive-8':
     'v91-offline-test-drive-7',
     status:individualLine?'conditional_line':'road_only',
@@ -277,9 +285,7 @@ function summaryForNamedDroppedRoad(source,request,pointContext,road,
     droppedRiderIds:lastKm.riderGroups.filter(row=>
       row.group==='dropped').map(row=>row.id),
     chaserTeamIds:lastKm.chasers},
-    ...(pointContext?{provisionalPointPreview:{status:'unavailable',
-      reason:individualLine?'Individual line remains provisional.':
-        'No complete individual line.'}}:{}),
+    ...(pointContext?{provisionalPointPreview:preview}:{}),
     finale:{individualFinishStatus:individualLine?
       'conditional_individual_crossings':
       'unresolved_within_road_bands',
