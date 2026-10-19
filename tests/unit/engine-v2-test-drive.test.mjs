@@ -89,3 +89,21 @@ test('unsupported long race reports its locked road groups and dropped riders',(
   assert.equal(split.lastKmSource.droppedRiderIds.length,0);
   assert.equal(split.pointsStatus,'withheld');
 });
+
+test('paired field strength and fatigue reach the same conditional path with different paid lines',()=>{
+  const settings={distanceKm:40,terrain:'flat',teamCount:4,gender:'F',
+    seed:'independent-field',attack:'none',chase:'ignore',
+    defaultRivalPlan:'chase'};
+  const baseline=runV91TestDrive({settings});
+  const changed=runV91TestDrive({settings:{...settings,
+    teamOverrides:[{teamId:'you',level:76,fatigue:15}]}});
+  assert.equal(baseline.roadStatus,'paid_conditional_line');
+  assert.equal(changed.roadStatus,'paid_conditional_line');
+  assert.deepEqual(changed.managerDecisions,baseline.managerDecisions);
+  assert.deepEqual(changed.input.teamOverrides,[
+    {teamId:'you',level:76,fatigue:15}]);
+  const finisherTime=output=>output.finale.lineTimes.find(row=>
+    row.riderId==='you-7').elapsedSecondsFromLastKmStart;
+  assert.ok(finisherTime(changed)>finisherTime(baseline));
+  assert.equal(changed.pointsStatus,'withheld');
+});

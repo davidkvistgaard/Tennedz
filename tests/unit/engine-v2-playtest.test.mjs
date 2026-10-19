@@ -119,6 +119,49 @@ test('all 19 rivals may have individual tactics within the request limit',()=>{
   }
 });
 
+test('opt-in team profiles change field strength and fatigue without changing orders',()=>{
+  const shared={distanceKm:40,terrain:'flat',teamCount:4,gender:'F',
+    seed:'independent-field',attack:'none',chase:'ignore'};
+  const baseline=createV91Playtest(shared);
+  const input={...shared,teamOverrides:[
+    {teamId:'you',level:62,fatigue:30},
+    {teamId:'rival-1',level:92,fatigue:0}]};
+  const changed=createV91Playtest(input);
+  const byId=playtest=>new Map(playtest.recording.committedInputs.teams
+    .map(team=>[team.id,team]));
+  const before=byId(baseline),after=byId(changed);
+  for(const id of ['you','rival-1']){
+    assert.deepEqual(after.get(id).orders,before.get(id).orders);
+    assert.deepEqual(after.get(id).riders.map(row=>row.id),
+      before.get(id).riders.map(row=>row.id));
+  }
+  assert.deepEqual(after.get('rival-2'),before.get('rival-2'));
+  assert.equal(after.get('you').riders[0].flat,56);
+  assert.equal(after.get('you').riders[0].fatigue,30);
+  assert.equal(after.get('rival-1').riders[0].flat,86);
+  assert.equal(after.get('rival-1').riders[0].fatigue,0);
+  assert.ok(changed.recording.frames[0].teamEnergy.find(row=>
+    row.teamId==='you').mean<baseline.recording.frames[0].teamEnergy
+    .find(row=>row.teamId==='you').mean);
+  assert.deepEqual(changed.recording,createV91Playtest(input).recording);
+  assert.deepEqual(changed.settings.teamOverrides,input.teamOverrides);
+  assert.equal(Object.hasOwn(baseline.settings,'teamOverrides'),false);
+});
+
+test('team profile overrides reject unknown, duplicate and invalid inputs',()=>{
+  for(const teamOverrides of [
+    [{teamId:'rival-4',level:70}],
+    [{teamId:'you',level:70},{teamId:'you',fatigue:30}],
+    [{teamId:'you'}],
+    [{teamId:'you',level:-1}],
+    [{teamId:'you',level:101}],
+    [{teamId:'you',level:72.5}],
+    [{teamId:'you',fatigue:101}],
+    [{teamId:'you',level:70,extra:true}],
+  ])assert.throws(()=>prepareV91Playtest({teamCount:4,teamOverrides}),
+    /valid playtest settings/);
+});
+
 test('prepared playtest inputs match execution without an eager race',()=>{
   const input={distanceKm:40,terrain:'custom',teamCount:4,
     gender:'F',seed:'prepared',attack:'none',

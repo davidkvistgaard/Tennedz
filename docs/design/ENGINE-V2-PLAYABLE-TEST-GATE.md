@@ -78,6 +78,19 @@ withholds classification and point awards and has no account,
 database or production path. This is an engine diagnostic, not the requested
 browser test environment or a completed playable race.
 
+The fictional input also accepts optional `settings.teamOverrides` rows such
+as `{"teamId":"you","level":76,"fatigue":15}`. Each row changes the
+uniform base skill level and/or starting fatigue of one named test team;
+unspecified teams retain the original fixture. This makes paired strength
+and fatigue probes independent of the seed string, which does not create a
+new roster by itself. One fixed 40 km flat women's pair with identical seed
+and orders reaches the same paid conditional bunch path, while the player's
+finisher crosses later after the team changes from its default level and
+fatigue to level 76 and fatigue 15. A more extreme level 62/fatigue 30 input
+leaves eight riders dropped at the last-kilometre source and is correctly
+refused. These inputs are diagnostic field variations, not motor tuning or
+official results.
+
 ## Integration priority
 
 The conditional race-final entry now admits a complete bunch with attack
