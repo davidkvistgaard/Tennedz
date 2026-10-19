@@ -95,6 +95,22 @@ withholds classification and point awards and has no account,
 database or production path. This is an engine diagnostic, not the requested
 browser test environment or a completed playable race.
 
+`node scripts/engine-v2-playable-road-audit.mjs` preserves that 54-case
+matrix as a repeatable read-only check and adds 12 paired four-team cases
+with independent manager orders and three explicitly different team strength
+and starting-fatigue settings. The 66 fixed cases replay as 32 conditional
+individual lines, 12 single-group bands, six separated-group bands, four
+group-plus-dropped bands and 12 bunch-plus-dropped bands, with no unsupported
+source in this chosen matrix. The independent pairs keep route, roster and
+seed fixed while changing orders. On the 120 km rolling route the split-intent
+orders leave four riders dropped versus three under coordinated chase; on the
+260 km mountain route they leave one group and two dropped riders versus no
+group and three dropped riders. These are observations for this fictional
+field, not calibrated sporting probabilities. The audit reports unmet energy
+demand separately: the two independent group-plus-dropped cases have none,
+despite the older `recorded_depleted_bands` status name. Every case still
+withholds classification and points.
+
 `v2-finale-separated-last-km-10` now starts the existing paid multi-group
 worker rules at the locked one-kilometre source, rather than replaying a
 different four- or five-kilometre handoff. It accepts at least two groups,
