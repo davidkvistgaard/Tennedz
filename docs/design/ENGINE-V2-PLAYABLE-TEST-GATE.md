@@ -819,3 +819,12 @@ With the same two fixed helper nominations, a wider 18-case check spanning
 40 km flat, 120 km rolling and 260 km mountain routes, M/F categories and
 4/15/20-team fields returned 18 explicit unsupported outcomes and no award
 path. This is a concrete remaining acceptance gap, not a tuned failure rate.
+It is specific to those two helper IDs, not a blanket failure of competing
+lead-outs. In the same fixed 40 km four-team men's recording, player helper
+`you-5` and rival helper `rival-1-4` each reach an adjacent wheel, pay a
+following pull, and retain an identical kilometre race when the rival helper
+is added. The rival finisher crosses about 0.14 seconds earlier than with
+only the player helper. `rival-1-0` instead spends assembly energy without
+reaching the wheel and gives its finisher no such pull. These outcomes remain
+conditional because source wheels and the passing rule are inferred; awards
+are withheld. The acceptance gate still needs broader paid competing plans.

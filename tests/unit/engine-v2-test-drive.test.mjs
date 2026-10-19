@@ -408,6 +408,36 @@ test('competing unavailable lead-outs retain the locked road and withhold result
   assert.equal(mountain.canCommitAwards,false);
 });
 
+test('two payable manager lead-outs change one recorded finale',()=>{
+  const settings={distanceKm:40,terrain:'flat',fatigue:0,
+    gender:'M',teamCount:4,seed:'test-drive-acceptance-1',
+    defaultRivalPlan:'chase',attack:'none',chase:'all'};
+  const player={teamId:'you',finisherId:'you-7',
+    leadOutRiderId:'you-5'};
+  const rival={teamId:'rival-1',finisherId:'rival-1-7',
+    leadOutRiderId:'rival-1-4'};
+  const one=runV91TestDrive({settings,individualGroupLine:true,
+    finalePlans:[player]},{full:true});
+  const two=runV91TestDrive({settings,individualGroupLine:true,
+    finalePlans:[player,rival]},{full:true});
+  assert.equal(two.summary.roadStatus,'paid_conditional_line');
+  assert.deepEqual(two.recording.recording,one.recording.recording);
+  const frames=two.recording.paidFinale.frames;
+  for(const helper of ['you-5','rival-1-4']){
+    assert.ok(frames.some(frame=>frame.riders.some(row=>
+      row.riderId===helper&&row.role==='lead_out'&&
+      row.energySpent>0&&row.distanceTravelledM>0)));
+    assert.ok(frames.flatMap(frame=>frame.assemblyAttempts??[])
+      .some(row=>row.helperId===helper&&
+        row.status==='paid_pull_next_boundary'));
+  }
+  const time=(trial,id)=>trial.summary.finale.lineTimes.find(row=>
+    row.riderId===id).elapsedSecondsFromLastKmStart;
+  assert.ok(time(two,'rival-1-7')<time(one,'rival-1-7'));
+  assert.equal(two.summary.pointsStatus,'withheld');
+  assert.equal(two.summary.canCommitAwards,false);
+});
+
 test('paired field strength and fatigue reach the same conditional path with different paid lines',()=>{
   const settings={distanceKm:40,terrain:'flat',teamCount:4,gender:'F',
     seed:'independent-field',attack:'none',chase:'ignore',
