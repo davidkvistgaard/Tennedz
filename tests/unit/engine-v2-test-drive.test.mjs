@@ -594,6 +594,52 @@ test('two payable manager lead-outs change one recorded finale',()=>{
   assert.equal(two.summary.canCommitAwards,false);
 });
 
+test('two manager lead-outs pay across short and medium route profiles',()=>{
+  const plans=[
+    {teamId:'you',finisherId:'you-7',leadOutRiderId:'you-5'},
+    {teamId:'rival-1',finisherId:'rival-1-7',
+      leadOutRiderId:'rival-1-4'}];
+  for(const distanceKm of [40,120])for(const terrain of [
+    'flat','rolling','mountain'])for(const gender of ['M','F']){
+    const settings={distanceKm,terrain,gender,teamCount:4,
+      fatigue:distanceKm===40?0:15,
+      seed:'test-drive-acceptance-1',defaultRivalPlan:'chase',
+      attack:'none',chase:'all'};
+    const input={settings,individualGroupLine:true,
+      pointContext:{tier:3,divisionIndex:1,divisionCount:1}};
+    const ordinary=runV91TestDrive(input,{full:true});
+    const planned=runV91TestDrive({...input,finalePlans:plans},
+      {full:true});
+    assert.equal(planned.summary.roadStatus,'paid_conditional_line');
+    assert.deepEqual(planned.recording.recording,
+      ordinary.recording.recording);
+    assert.equal(planned.summary.finale.lineTimes.length,32);
+    for(const [helperId,finisherId] of [
+      ['you-5','you-7'],['rival-1-4','rival-1-7']]){
+      assert.ok(planned.recording.paidFinale.frames.some(frame=>
+        frame.riders.some(row=>row.riderId===helperId&&
+          row.role==='lead_out'&&row.energySpent>0)));
+      assert.ok(planned.summary.finale.leadOutAttempts.some(row=>
+        row.helperId===helperId&&
+          row.status==='paid_pull_next_boundary'));
+      const crossing=trial=>trial.summary.finale.lineTimes.find(row=>
+        row.riderId===finisherId);
+      assert.ok(crossing(planned).elapsedSecondsFromLastKmStart<
+        crossing(ordinary).elapsedSecondsFromLastKmStart);
+    }
+    assert.equal(planned.summary.pointsStatus,'withheld');
+    assert.equal(planned.summary.canCommitAwards,false);
+    assert.equal(planned.summary.provisionalPointPreview.riders.length,32);
+    assert.deepEqual(planned.summary.provisionalPointPreview.awardRows,[]);
+    for(const row of planned.summary.provisionalPointPreview.riders){
+      const crossing=planned.summary.finale.lineTimes.find(value=>
+        value.riderId===row.riderId);
+      assert.equal(row.elapsedSecondsFromLastKmStart,
+        crossing.elapsedSecondsFromLastKmStart);
+    }
+  }
+});
+
 test('a named attack on an already separated mountain road refuses visibly',()=>{
   for(const gender of ['M','F']){
     const settings={distanceKm:260,terrain:'mountain',fatigue:30,

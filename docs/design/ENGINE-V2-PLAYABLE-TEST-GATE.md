@@ -1145,3 +1145,14 @@ the two exhausted four-team mountain sources have unmet energy demand and
 explicitly report the illustration unavailable. This checks bookkeeping and
 withholding across the existing acceptance matrix; inferred wheels still
 prevent these illustrations from becoming official points or results.
+
+A paired two-manager lead-out check now holds each fictional 4-team roster,
+seed and route fixed while adding the same two helper orders. Across 40/120 km,
+flat/rolling/mountain routes and M/F categories, all 12 planned runs pay both
+helpers, record a pull on a later boundary and advance both nominated
+finishers relative to the no-helper run. The conditional line and read-only
+point illustration include all 32 riders with matching crossing times and no
+award rows. The same hard-coded pair is unavailable in
+larger 15/20-team fields because at least one helper lacks an adjacent source
+lane; the existing refusal remains visible. This verifies a real but narrow
+choice effect, not general lead-out availability or a calibrated time gain.
