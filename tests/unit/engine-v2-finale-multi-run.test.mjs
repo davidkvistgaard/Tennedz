@@ -13,6 +13,7 @@ import {assertNoFinaleGroupContact,probeFinaleSeparatedGroupsFromTour,
   FINALE_SEPARATED_NAMED_BLOCKS_VERSION,
   FINALE_SEPARATED_DROPPED_TRAVEL_VERSION,
   FINALE_SEPARATED_TEAM_LIMIT_VERSION,
+  FINALE_SEPARATED_LAST_KM_VERSION,
   validateFinaleSeparatedGroupsFromTour} from
   '../../lib/engine/v2/finale-multi-run.mjs';
 
@@ -418,6 +419,33 @@ test('separated groups refuse future named and break attacks',()=>{
   assert.equal(split.frames[34].roadGroups.length,2);
   assert.throws(()=>probeFinaleSeparatedGroupsFromTour(split),
     /needs a recorded break attack/);
+});
+
+test('last-kilometre separated road refuses a valid new named attack',()=>{
+  const teams=[team('a','M',0),team('b','M',20),team('c','M',null)];
+  teams[2].orders.phases.push({atKm:39,attack:'selective',
+    attackRiderId:'c-0'});
+  const finalStage={...stage,keypoints:[...stage.keypoints,
+    {km:39,kind:'SPRINT'}]};
+  const tour=simulateTacticalTour({stage:finalStage,teams,
+    seed:'separated-finale',motorVersion:MOTOR_ATTACK_TRACE_VERSION});
+  assert.equal(tour.frames[38].roadGroups.length,2);
+  assert.ok(tour.frames[39].attackReasons.some(row=>
+    row.riderId==='c-0'&&row.reason==='named_order'));
+  assert.throws(()=>probeFinaleSeparatedGroupsFromTour(tour,{
+    version:FINALE_SEPARATED_LAST_KM_VERSION}),
+  /needs a recorded peloton attack/);
+});
+
+test('last-kilometre separated road does not ignore a front rotation order',()=>{
+  const teams=[team('a','M',0),team('b','M',20),team('c','M',null)];
+  teams[2].orders.phases.push({atKm:35,frontWork:'rotate'});
+  const tour=simulateTacticalTour({stage,teams,
+    seed:'separated-finale',motorVersion:MOTOR_ATTACK_TRACE_VERSION});
+  assert.equal(tour.frames[38].roadGroups.length,2);
+  assert.throws(()=>probeFinaleSeparatedGroupsFromTour(tour,{
+    version:FINALE_SEPARATED_LAST_KM_VERSION}),
+  /needs recorded response or front rotation/);
 });
 
 test('a new all-out bunch chase is not omitted behind separate groups',()=>{

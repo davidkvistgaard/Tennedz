@@ -649,7 +649,9 @@ test('group branch refuses unpaid manager plans and unresolved road states',()=>
   assert.throws(()=>createV91ConditionalRaceFinal({...group,
     managerTactics:[{effort:'steady',attack:'none',chase:'selective'}]}),
   /unresolved last-kilometre road action/);
-  assert.throws(()=>createV91ConditionalRaceFinal({...group,
-    distanceKm:260,terrain:'mountain',fatigue:30}),
-  /unresolved last-kilometre road action/);
+  const separated=createV91ConditionalRaceFinal({...group,
+    distanceKm:260,terrain:'mountain',fatigue:30});
+  assert.equal(separated.roadStatus,'paid_separated_bands');
+  assert.equal(separated.paidFinale.line.riders.length,32);
+  assert.equal(separated.pointsStatus,'withheld');
 });

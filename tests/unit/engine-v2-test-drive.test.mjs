@@ -74,7 +74,7 @@ test('offline test drive keeps multiple manager orders and visible defaults',()=
   assert.equal(output.finale.lineTimes.length,32);
 });
 
-test('unsupported long race reports its locked road groups and dropped riders',()=>{
+test('long race reports dropped blockers and pays separated groups without ranks',()=>{
   const base={distanceKm:260,terrain:'mountain',fatigue:30,
     teamCount:4,gender:'M',seed:'test-drive-acceptance-1'};
   const mixed=runV91TestDrive({settings:{...base,teamCount:4,
@@ -84,10 +84,19 @@ test('unsupported long race reports its locked road groups and dropped riders',(
   assert.equal(mixed.lastKmSource.droppedRiderIds.length,6);
   const split=runV91TestDrive({settings:{...base,teamCount:15,
     attack:'repeated',chase:'ignore',defaultRivalPlan:'attack'}});
-  assert.equal(split.status,'unsupported');
+  assert.equal(split.roadStatus,'paid_separated_bands');
   assert.equal(split.lastKmSource.roadGroups.length,2);
   assert.equal(split.lastKmSource.droppedRiderIds.length,0);
+  assert.equal(split.finale.bands.length,3);
+  assert.equal(split.finale.finalRiderEnergy.length,120);
+  assert.equal(split.finale.individualFinishStatus,
+    'unresolved_within_road_bands');
   assert.equal(split.pointsStatus,'withheld');
+  const unpaid=runV91TestDrive({settings:{...base,teamCount:15,
+    attack:'repeated',chase:'ignore',defaultRivalPlan:'attack'},
+  finalePlans:[{teamId:'you',finisherId:'you-7',leadOutRiderId:null}]});
+  assert.equal(unpaid.status,'unsupported');
+  assert.match(unpaid.reason,/not paid for road groups/);
 });
 
 test('paired field strength and fatigue reach the same conditional path with different paid lines',()=>{

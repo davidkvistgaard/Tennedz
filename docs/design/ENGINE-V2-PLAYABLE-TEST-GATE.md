@@ -70,13 +70,34 @@ recording for inspection. Output identifies road groups, chasers, energy,
 paid lead-out work and conditional line times, or names an unsupported road
 state with its recorded group and dropped-rider counts where the unmodified
 kilometre source is available. A fixed 54-case diagnostic across three routes,
-both categories, three field sizes and three tactics modes replayed 32
-conditional individual lines, 12 paid group-band lines and 10 explicit
+both categories, three field sizes and three tactics modes originally replayed
+32 conditional individual lines, 12 paid group-band lines and 10 explicit
 refusals, all on the tired mountain source with multiple groups or dropped
-riders. This is coverage evidence, not a sporting success rate. The tool
+riders. The new same-source separated-group path changes that coverage to 32
+conditional lines, 12 single-group band lines, six separated-group band lines
+and four explicit refusals. This is coverage evidence, not a sporting success
+rate. The matrix fixes seed `test-drive-acceptance-1`; its player orders are
+selective attack/selective chase for mixed rivals, repeated attack/ignore chase
+for attack rivals, and no attack/all chase for chase rivals. The tool
 withholds classification and point awards and has no account,
 database or production path. This is an engine diagnostic, not the requested
 browser test environment or a completed playable race.
+
+`v2-finale-separated-last-km-10` now starts the existing paid multi-group
+worker rules at the locked one-kilometre source, rather than replaying a
+different four- or five-kilometre handoff. It accepts at least two groups,
+one bunch and no dropped riders. The companion
+`v2-finale-separated-last-km-clock-1` aligns each paid group passage to the
+bunch's marker clock, verifies every recorded gap at each boundary and gives
+only band-level possible places. Four fixed tired mountain sources (15/20
+teams, M/F) reach all seven slices and retain all 120/160 riders and their
+final energy. The shared conditional entry exposes six matching matrix
+sources as `paid_separated_bands`; manager finisher/lead-out plans remain
+unpaid and are rejected. A valid last-kilometre named attack still refuses
+the separated continuation. Contact between road bands, riders dropped at
+the source, wheel order within a band, individual classification and points
+remain open. The older separated and single-group recordings keep their
+existing versions and replay behavior.
 
 The fictional input also accepts optional `settings.teamOverrides` rows such
 as `{"teamId":"you","level":76,"fatigue":15}`. Each row changes the

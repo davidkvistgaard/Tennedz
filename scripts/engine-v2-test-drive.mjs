@@ -15,6 +15,8 @@ const REFUSALS=new Set([
   'The inactive-intents bunch has an unresolved road action.',
   'The cooperative group has an unresolved last-kilometre road action.',
   'Finisher and lead-out plans are not paid for a road group.',
+  'Finisher and lead-out plans are not paid for road groups.',
+  'The separated last-kilometre finale needs recorded response or front rotation.',
   'An early bunch plan needs one inactive-attack bunch.',
 ]);
 
@@ -77,7 +79,13 @@ function summaryFor(trial,request){
         frontPositionM:frame.frontPositionM,contact:frame.contact})),
       finalRiderEnergy:paidFinale.line.finalRiderEnergy,
       roadPlaceBounds:trial.roadPlaceBounds,
-      individualFinishStatus:'unresolved_within_road_bands'}:{
+      individualFinishStatus:'unresolved_within_road_bands'}:
+      trial.roadStatus==='paid_separated_bands'?{
+        outcome:paidFinale.line.outcome,
+        passageFrames:paidFinale.passageFrames,
+        bands:paidFinale.line.bands,
+        finalRiderEnergy:paidFinale.line.finalRiderEnergy,
+        individualFinishStatus:'unresolved_within_road_bands'}:{
       individualFinishStatus:'conditional_inferred_wheels',
       lineTimes:paidFinale.finishers,
       leadOutWork:paidFinale.frames.flatMap(frame=>frame.riders.filter(
@@ -115,7 +123,7 @@ export function runV91TestDrive(scenario,{full=false}={}){
       canCommitAwards:false};
   }
   validateV91ConditionalRaceFinal(scenario.settings,request,trial);
-  if(!['paid_conditional_line','paid_group_bands']
+  if(!['paid_conditional_line','paid_group_bands','paid_separated_bands']
     .includes(trial.roadStatus)){
     const summary={version:'v91-offline-test-drive-1',
       status:'unsupported',input:trial.settings,request,
