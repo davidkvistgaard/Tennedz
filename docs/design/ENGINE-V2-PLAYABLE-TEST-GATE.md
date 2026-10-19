@@ -1494,3 +1494,11 @@ replayed a queued 160-rider line and a read-only point illustration without
 refusal. A JSON serialization check also now covers the prior lab-11 and
 lab-12 queue recordings: the paid tail omits an absent optional contact field
 instead of writing `undefined`, so saved recordings replay exactly.
+On that same locked road and inferred source wheel order, the paired
+manager lead-out audit now replays the queued line with and without the
+helper. Both valid helpers pay recorded work and leave the contact road and
+starting wheels unchanged. One changes the nominated finisher's crossing;
+the other does not because the finisher records a same-lane wheel block.
+Both outcomes preserve the withheld-awards status. This distinguishes a
+paid but obstructed tactical attempt from a guaranteed sprint benefit;
+the provisional lanes still do not establish an official placing.

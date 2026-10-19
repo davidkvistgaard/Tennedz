@@ -540,6 +540,8 @@ for(const [course,stage] of Object.entries(distanceKm===260?LONG_ROUTES:ROUTES))
           multiSelectiveDoubleCatchLine:0,
           multiSelectiveDoubleCatchLaneQueuedLine:0,
           multiSelectivePairedLeadOut:0,
+          multiSelectivePairedLaneQueuedLeadOut:0,
+          multiSelectivePairedLaneQueuedBlockedLeadOut:0,
           multiSelectivePairedRearAssembly:0,
           minMultiSelectiveSeparationM:null,
           maxMultiSelectiveSeparationM:null,
@@ -1027,6 +1029,46 @@ for(const [course,stage] of Object.entries(distanceKm===260?LONG_ROUTES:ROUTES))
                                           withLead.pointsStatus!=='withheld')
                                           throw new Error('A paired lead-out did not pay for a changed conditional finish on the same road.');
                                         concurrent.multiSelectivePairedLeadOut++;
+                                        if(queued){
+                                          const queuedWithout=
+                                            recordFinaleConcurrentDoubleCatchLaneQueuedLineFromTour(
+                                              race,{plans});
+                                          const queuedWithLead=
+                                            recordFinaleConcurrentDoubleCatchLaneQueuedLineFromTour(
+                                              race,{plans:withPlans});
+                                          validateFinaleConcurrentDoubleCatchLaneQueuedLineFromTour(
+                                            race,{plans:withPlans},
+                                            JSON.parse(JSON.stringify(queuedWithLead)));
+                                          const paidHelper=queuedWithLead.runner.frames
+                                            .flatMap(frame=>frame.riders).filter(row=>
+                                              row.riderId===pair.helperId&&
+                                              row.role==='lead_out');
+                                          const finisherBlocks=queuedWithLead.runner
+                                            .frames.flatMap(frame=>frame.riders)
+                                            .filter(row=>row.riderId===
+                                              pair.finisherId)
+                                            .flatMap(row=>row.laneBlocks??[]);
+                                          if(!isDeepStrictEqual(queuedWithout.road,
+                                            queuedWithLead.road)||
+                                            !isDeepStrictEqual(
+                                              queuedWithout.positionedSource.slots,
+                                              queuedWithLead.positionedSource.slots)||
+                                            !paidHelper.some(row=>
+                                              row.energySpent>0&&
+                                              row.distanceTravelledM>0)||
+                                            queuedWithLead.pointsStatus!==
+                                              'withheld'||
+                                            queuedWithLead.canCommitAwards!==false)
+                                            throw new Error('A queued lead-out lost its paid road or helper work.');
+                                          if(crossing(queuedWithout)===
+                                            crossing(queuedWithLead)){
+                                            if(!finisherBlocks.length)
+                                              throw new Error('An unchanged queued finisher has no recorded wheel block.');
+                                            concurrent
+                                              .multiSelectivePairedLaneQueuedBlockedLeadOut++;
+                                          }else concurrent
+                                            .multiSelectivePairedLaneQueuedLeadOut++;
+                                        }
                                       }
                                       const rearPair=pairs.find(({
                                         helperId,finisherId})=>{
