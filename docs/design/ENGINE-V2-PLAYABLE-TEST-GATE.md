@@ -1663,3 +1663,14 @@ not presented as a full-kilometre replay. A fixed M/F and 4/15/20-team
 matrix of the same 120 km rolling chased attack passed all six paid-approach
 reductions with 32/120/160 riders and the recorded catch before 500 m.
 The existing solo-approach response retains its original shape.
+
+The same caught-road browser case now shows the paid 500 m-to-line bunch
+continuation as a separate scrubber. Its first frame must start at the
+approach's 119.5 km boundary with the same bunch clock and every rider's
+energy; its last frame must match all paid individual crossing times and
+line energy. The UI labels these later positions conditional and does not
+present the group-only opening half-kilometre as positional replay. All six
+fixed M/F and 4/15/20-team chased cases reduced two group-level approach
+frames plus five paid finale frames with 32/120/160 line crossings and
+points withheld. This is a coherent two-part preview trace for that road,
+not an official classification or a full individual-position replay.

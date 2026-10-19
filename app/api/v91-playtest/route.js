@@ -2,6 +2,7 @@ import {NextResponse} from 'next/server';
 import {protectedRoute} from '../../../lib/auth/server';
 import {createV91Playtest,summarizeV91Playtest} from '../../../lib/engine/v2/playtest.mjs';
 import {summarizeV91PaidFinaleReplay,
+  summarizeV91PaidFinaleTail,
   summarizeV91PaidNamedAttackApproach,
   summarizeV91PaidSoloApproach} from
   '../../../lib/engine/v2/playtest-finale-replay.mjs';
@@ -55,7 +56,8 @@ async function handler(request,_context,auth){
         attackRoad,
         attackApproach:summarizeV91PaidNamedAttackApproach(output.recording),
         soloApproach:summarizeV91PaidSoloApproach(output.recording),
-        finaleReplay:summarizeV91PaidFinaleReplay(output.recording)});
+        finaleReplay:summarizeV91PaidFinaleReplay(output.recording),
+        finaleTail:summarizeV91PaidFinaleTail(output.recording)});
     }
     if(input.mode!==undefined)
       return NextResponse.json({ok:false,error:'Invalid playtest mode.'},

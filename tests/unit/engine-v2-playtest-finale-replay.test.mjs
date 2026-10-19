@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import {runV91IntegratedTestDrive} from
   '../../scripts/engine-v2-test-drive.mjs';
 import {summarizeV91PaidFinaleReplay,
+  summarizeV91PaidFinaleTail,
   summarizeV91PaidNamedAttackApproach,
   summarizeV91PaidSoloApproach} from
   '../../lib/engine/v2/playtest-finale-replay.mjs';
@@ -90,6 +91,18 @@ test('coordinated chase catches the same named solo on a fixed route and roster'
   assert.ok(caughtApproach.frames.every(frame=>frame.riders.length===120));
   assert.equal(caughtApproach.frames[1].pelotonRiderCount,120);
   assert.equal(summarizeV91PaidSoloApproach(chase.recording),null);
+  assert.equal(summarizeV91PaidFinaleReplay(chase.recording),null);
+  const tail=summarizeV91PaidFinaleTail(chase.recording);
+  assert.equal(tail.status,'partial_paid_trace');
+  assert.equal(tail.handoffDistanceM,119_500);
+  assert.equal(tail.lineDistanceM,120_000);
+  assert.equal(tail.frames.length,5);
+  assert.ok(tail.frames.every(frame=>frame.riders.length===120));
+  assert.ok(Math.abs(tail.frames[0].elapsedSeconds-
+    caughtApproach.frames.at(-1).elapsedSeconds-
+    chase.recording.paidFinale.frames[0].durationSeconds)<1e-6);
+  assert.ok(tail.frames.at(-1).riders.every(row=>
+    row.positionM===120_000));
   assert.equal(passive.summary.finale.lineTimes.length,120);
   assert.equal(chase.summary.finale.lineTimes.length,120);
   const own=output=>output.summary.finale.lineTimes.find(row=>
@@ -123,6 +136,15 @@ test('a nominated helper pays for a lead-out after the same named solo is caught
     [row.riderId,row.energyAfter]));
   assert.ok(withHelper.recording.paidFinale.frames[0].riders.every(row=>
     Math.abs(row.energyAtDecision-atHandoff.get(row.riderId))<1e-6));
+  const tail=summarizeV91PaidFinaleTail(withHelper.recording);
+  assert.equal(tail.frames.at(-1).riders.find(row=>
+    row.riderId==='you-7').elapsedToLineSeconds,
+  withHelper.summary.finale.lineTimes.find(row=>
+    row.riderId==='you-7').elapsedSecondsFromLastKmStart);
+  withHelper.recording.paidFinale.finishers[0].energyAtLine+=1;
+  assert.throws(()=>summarizeV91PaidFinaleTail(withHelper.recording),
+    /lost its approach or line/);
+  withHelper.recording.paidFinale.finishers[0].energyAtLine-=1;
   withHelper.recording.paidFinale.frames[0].riders[0].energyAtDecision+=1;
   assert.throws(()=>summarizeV91PaidNamedAttackApproach(
     withHelper.recording),/missed the finale handoff/);

@@ -214,6 +214,13 @@ test('passive defaults make a larger-field attack playable without editing every
       .toBeVisible();
     await expect(page.getByText(/119\.5 km · [\d.]+ s on the bunch clock · 120 in the bunch/))
       .toBeVisible();
+    await expect(page.getByRole('heading',{name:'Paid final 500 m'}))
+      .toBeVisible();
+    await expect(page.getByText(/Opening 500 m: groups and energy only/))
+      .toBeVisible();
+    await page.getByRole('slider',{name:/Finale interval/}).fill('4');
+    await expect(page.getByText('All riders have crossed; see the conditional times below.'))
+      .toBeVisible();
     await expect(page.getByText('120 of 120 riders have individual crossing times.'))
       .toBeVisible();
     await expect(page.getByText(
@@ -228,6 +235,8 @@ test('passive defaults make a larger-field attack playable without editing every
     await page.getByLabel('you lead-out helper').selectOption('you-5');
     await page.getByRole('button',{name:'Run full race preview'}).click();
     await expect(page.getByText('Paid lead-out work: 4 recorded rider intervals.'))
+      .toBeVisible();
+    await expect(page.getByRole('heading',{name:'Paid final 500 m'}))
       .toBeVisible();
     await expect(page.getByText(
       'Lead-out: none (0.0 energy paid) → you-5 (4.7 energy paid)'))
