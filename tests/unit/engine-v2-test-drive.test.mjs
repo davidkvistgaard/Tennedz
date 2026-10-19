@@ -64,6 +64,27 @@ test('partial solo contact exposes only replayable crossing bounds',()=>{
     /lost a paid rider/);
 });
 
+test('separated multiband line reports its recorded contact status',()=>{
+  const output=runV91IntegratedTestDrive({settings:{distanceKm:260,
+    terrain:'mountain',fatigue:30,gender:'M',teamCount:15,
+    seed:'test-drive-acceptance-1',attack:'repeated',chase:'ignore',
+    defaultRivalPlan:'attack'},
+  pointContext:{tier:3,divisionIndex:1,divisionCount:1}},
+  {full:true});
+  assert.equal(output.summary.version,'v91-offline-test-drive-13');
+  assert.equal(output.summary.roadStatus,'conditional_multiband_line');
+  assert.equal(output.individualLine.pre500Audit.firstPotentialOverlap,
+    null);
+  assert.equal(output.individualLine.overlapAudit.firstPotentialOverlap,
+    null);
+  assert.equal(output.summary.finale.individualFinishStatus,
+    'conditional_separated_inferred_wheels');
+  assert.equal(output.summary.finale.provisionalLineOrder.length,120);
+  assert.equal(output.summary.provisionalPointPreview.riders.length,120);
+  assert.equal(output.summary.pointsStatus,'withheld');
+  assert.equal(output.summary.canCommitAwards,false);
+});
+
 test('offline test drive pays a manager lead-out on one replayed race',()=>{
   const assisted=runV91TestDrive(example,{full:true});
   const neutral=runV91TestDrive({...example,finalePlans:[]},{full:true});

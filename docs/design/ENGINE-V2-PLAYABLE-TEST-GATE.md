@@ -1209,3 +1209,13 @@ runner as having inferred wheels. The original paid runner and its version are
 unchanged; the projection is not an official classification and still withholds
 the point illustration and awards. No wheel proximity, drafting or tie-breaker
 is inferred from a common timestamp.
+
+The integrated drive's separate multiband summary now distinguishes an
+audited, separated conditional line from a possible cross-band contact. When
+both existing overlap audits find no encounter and every provisional place is
+present, `v91-offline-test-drive-13` reports
+`conditional_separated_inferred_wheels` instead of a contact-unresolved label.
+A fixed 260 km mountain example with three road bands and 120 riders keeps its
+unchanged paid replay and read-only point illustration. The inferred wheel
+positions still require sporting validation; the status does not classify the
+race or award points.

@@ -266,7 +266,13 @@ function summaryForIndividualGroupLine(trial,request,pointContext,line){
   const base=summaryFor(trial,request,pointContext);
   const decisions=new Map(line.sprintPlan.decisions.map(row=>
     [row.teamId,row]));
-  return {...base,version:line.pre500Audit?
+  const separateConditionalLine=!line.pre500ContactStatus&&
+    line.pre500Audit?.firstPotentialOverlap===null&&
+    line.overlapAudit.firstPotentialOverlap===null&&
+    Array.isArray(line.provisionalLineOrder)&&
+    line.provisionalLineOrder.every(row=>row.position!==null);
+  return {...base,version:separateConditionalLine?
+    'v91-offline-test-drive-13':line.pre500Audit?
     'v91-offline-test-drive-4':line.pre500ContactStatus?
       'v91-offline-test-drive-3':'v91-offline-test-drive-2',
     roadStatus:line.pre500ContactStatus?
@@ -305,7 +311,8 @@ function summaryForIndividualGroupLine(trial,request,pointContext,line){
             ...(frame.droppedPassages?{
               droppedPassages:frame.droppedPassages}:{})})),
       individualFinishStatus:
-        line.pre500ContactStatus==='provisional_separated'?
+        line.pre500ContactStatus==='provisional_separated'||
+        separateConditionalLine?
           'conditional_separated_inferred_wheels':
         line.pre500ContactStatus?
           'conditional_dropped_pre500_contact_unresolved':
