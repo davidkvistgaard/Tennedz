@@ -1078,4 +1078,18 @@ work and advances its finisher while leaving the recorded road and all isolated
 crossings unchanged; that same plan triggers possible cross-band contact, so
 the preview becomes unavailable. Official classification and awards remain
 withheld in both cases. Late catches with multiple isolated riders still stop
-at the paid-road boundary; they are not silently classified.
+at the paid-road boundary unless the explicit late-catch option is selected.
+
+The explicit late-catch option now also covers a named attacker caught after
+500 m with **several isolated riders**. The measured contact and remaining
+partial slice stay on the existing paid road. From its merged boundary, the
+existing positioned bunch runner pays every active rider and each isolated
+rider pays independent travel against that bunch clock. The new versioned
+line replays 18 fixed 120 km combinations (4/15/20 teams, M/F and
+flat/rolling/mountain) with 32/120/160 distinct conditional crossings; a
+260 km four-team flat/rolling/mountain sample also reaches conditional lines.
+The point illustration requires an unambiguous signed band audit. A nominated
+solo sprint before contact and a pre-contact lead-out still refuse explicitly
+because that work is not in the road trace. Neither new version settles an
+official result or awards points, and the older one-drop late-catch recording
+remains replayable.

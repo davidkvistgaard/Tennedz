@@ -45,7 +45,10 @@ import {recordFinaleNamedDroppedSurvivorLine,
   '../lib/engine/v2/finale-named-dropped-survivor-line.mjs';
 import {recordFinaleNamedDroppedLateCatchLine,
   validateFinaleNamedDroppedLateCatchLine,
-  FINALE_NAMED_DROPPED_LATE_CATCH_LINE_VERSION} from
+  recordFinaleNamedMultipleDroppedLateCatchLine,
+  validateFinaleNamedMultipleDroppedLateCatchLine,
+  FINALE_NAMED_DROPPED_LATE_CATCH_LINE_VERSION,
+  FINALE_NAMED_MULTIPLE_DROPPED_LATE_CATCH_LINE_VERSION} from
   '../lib/engine/v2/finale-named-dropped-late-catch-line.mjs';
 import {projectV91ProvisionalPointPreview,
   projectV91ProvisionalMultibandPointPreview,
@@ -53,7 +56,8 @@ import {projectV91ProvisionalPointPreview,
   projectV91ProvisionalNamedMultipleDroppedPointPreview,
   projectV91ProvisionalNamedDroppedSurvivorPointPreview,
   projectV91ProvisionalNamedMultipleDroppedSurvivorPointPreview,
-  projectV91ProvisionalNamedDroppedLateCatchPointPreview} from
+  projectV91ProvisionalNamedDroppedLateCatchPointPreview,
+  projectV91ProvisionalNamedMultipleDroppedLateCatchPointPreview} from
   '../lib/engine/v2/playtest-point-preview.mjs';
 
 const REFUSALS=new Set([
@@ -285,13 +289,18 @@ function summaryForNamedDroppedRoad(source,request,pointContext,road,
   const recording=source.recording;
   const lastKm=recording.frames[recording.route.distanceKm-2];
   const lateCatch=individualLine?.version===
-    FINALE_NAMED_DROPPED_LATE_CATCH_LINE_VERSION;
+    FINALE_NAMED_DROPPED_LATE_CATCH_LINE_VERSION||
+    individualLine?.version===
+    FINALE_NAMED_MULTIPLE_DROPPED_LATE_CATCH_LINE_VERSION;
   const multipleDroppedRoad=road.version===
     FINALE_NAMED_ATTACK_MULTIPLE_DROPPED_ROAD_VERSION;
   const multipleDropped=multipleDroppedRoad;
   const preview=pointContext?individualLine?.provisionalLineOrder
     ?.every(row=>row.position!==null)?
-      (lateCatch?
+      (individualLine.version===
+        FINALE_NAMED_MULTIPLE_DROPPED_LATE_CATCH_LINE_VERSION?
+        projectV91ProvisionalNamedMultipleDroppedLateCatchPointPreview:
+        lateCatch?
         projectV91ProvisionalNamedDroppedLateCatchPointPreview:
         individualLine.version===
         FINALE_NAMED_MULTIPLE_DROPPED_SURVIVOR_LINE_VERSION?
@@ -538,7 +547,7 @@ export function runV91TestDrive(scenario,{full=false}={}){
           return unsupportedRefusal(new Error(lineError.message,{
             cause:{playtestSource:source}}),scenario,request,pointContext);
         }
-      }else if(!multipleDropped&&scenario.lateCatchLine===true&&
+      }else if(scenario.lateCatchLine===true&&
         at500?.active.roadGroups.length===1&&
         paidRoad.frames.at(-1).active.roadGroups.length===0){
         const soloId=at500.active.roadGroups[0].riderIds[0];
@@ -551,9 +560,13 @@ export function runV91TestDrive(scenario,{full=false}={}){
             'A nominated solo sprint before contact needs paid road work.',{
               cause:{playtestSource:source}}),scenario,request,pointContext);
         try{
-          individualLine=recordFinaleNamedDroppedLateCatchLine(
+          individualLine=(multipleDropped?
+            recordFinaleNamedMultipleDroppedLateCatchLine:
+            recordFinaleNamedDroppedLateCatchLine)(
             source.recording,paidRoad,{plans:request.plans??null});
-          validateFinaleNamedDroppedLateCatchLine(source.recording,
+          (multipleDropped?
+            validateFinaleNamedMultipleDroppedLateCatchLine:
+            validateFinaleNamedDroppedLateCatchLine)(source.recording,
             paidRoad,{plans:request.plans??null},individualLine);
         }catch(lineError){
           if(![
