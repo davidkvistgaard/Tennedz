@@ -3,7 +3,8 @@ import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {POINT_POLICY_VERSION,pointsForDivisionResult} from
   '../../lib/calendar/points.mjs';
-import {createV91ConditionalRaceFinal} from
+import {createV91ConditionalRaceFinal,
+  createV91LegacyConditionalRaceFinal} from
   '../../lib/engine/v2/playtest-race-final.mjs';
 import {projectV91ProvisionalPointPreview,
   validateV91ProvisionalPointPreview} from
@@ -45,6 +46,10 @@ test('preview points replay a unique line and reject altered or ambiguous order'
   const projection=projectV91ProvisionalPointPreview(trial,context);
   assert.equal(validateV91ProvisionalPointPreview(example.settings,{},
     context,projection),true);
+  const oldTrial=createV91LegacyConditionalRaceFinal(example.settings,{});
+  const oldProjection=projectV91ProvisionalPointPreview(oldTrial,context);
+  assert.equal(validateV91ProvisionalPointPreview(example.settings,{},
+    context,oldProjection),true);
   assert.deepEqual(projection.riders.map(row=>row.riderId),
     trial.paidFinale.lineOrder.map(row=>row.riderId));
   const forged=structuredClone(projection);

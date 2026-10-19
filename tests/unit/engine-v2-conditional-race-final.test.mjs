@@ -32,12 +32,13 @@ const named=id=>({attackTeamId:'you',attackRiderId:`you-${id}`});
 
 test('one opt-in entry chooses existing paid full-field race branches',()=>{
   for(const [request,version] of [
-    [{},'v2-finale-early-bunch-runner-lab-5'],
+    [{},'v2-finale-verified-assembly-bunch-runner-lab-7'],
     [named(0),'v2-finale-paid-bunch-runner-1'],
     [named(1),'v2-finale-paid-one-clock-lead-out-contact-runner-2'],
     [named(7),'v2-finale-one-clock-solo-lead-out-2']]){
     const trial=createV91ConditionalRaceFinal(settings,request);
-    assert.equal(trial.version,'v91-conditional-race-final-1');
+    assert.equal(trial.version,request.attackTeamId?
+      'v91-conditional-race-final-1':'v91-conditional-race-final-10');
     assert.equal(trial.paidFinale.version,version);
     assert.equal(trial.roadStatus,'paid_conditional_line');
     assert.equal(trial.paidFinale.finishers.length,32);
@@ -436,9 +437,9 @@ test('mixed default orders reach a paid conditional line only when inactive',()=
     {distanceKm:260,terrain:'mountain',teamCount:20,gender:'M'}]){
     const input={...variation,seed:'trial'};
     const trial=createV91ConditionalRaceFinal(input);
-    assert.equal(trial.version,'v91-conditional-race-final-2');
+    assert.equal(trial.version,'v91-conditional-race-final-11');
     assert.equal(trial.paidFinale.version,
-      'v2-finale-inactive-intents-bunch-runner-lab-6');
+      'v2-finale-verified-inactive-assembly-bunch-runner-lab-8');
     assert.equal(trial.roadStatus,'paid_conditional_line');
     assert.equal(trial.paidFinale.finishers.length,variation.teamCount*8);
     assert.equal(new Set(trial.paidFinale.finishers.map(row=>
@@ -604,7 +605,7 @@ test('one extra manager chase closes the break before a paid lead-out line',()=>
   const closed=createV91ConditionalRaceFinal(three,request);
   const unassisted=createV91ConditionalRaceFinal(three,{plans:plans.map(
     row=>({...row,leadOutRiderId:null}))});
-  assert.equal(closed.version,'v91-conditional-race-final-2');
+  assert.equal(closed.version,'v91-conditional-race-final-11');
   assert.equal(closed.recording.frames[118].chasers.length,0);
   assert.equal(closed.recording.frames[118].roadGroups.length,0);
   assert.equal(closed.roadStatus,'paid_conditional_line');

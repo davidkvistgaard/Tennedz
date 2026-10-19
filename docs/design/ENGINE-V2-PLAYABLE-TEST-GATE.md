@@ -499,8 +499,10 @@ by an approach boundary, but only six pull before the sprint. In the 40 km
 flat, 20-team women's source the helper spends work in both approach slices
 and reaches the wheel at 300 m; `assemblyAttempts` says
 `ready_next_boundary`, although the next slice is the sprint and no lead-out
-occurs. That status needs a versioned correction before it can be presented
-as a manager-facing promise. The six actual pulls save 0.08–0.11 seconds for
+occurs. The newer conditional entry now records this as
+`ready_without_following_pull`, while a pair that actually pays for the next
+pull records `paid_pull_next_boundary`. The old laboratory recording and
+its replay retain their original label. The six actual pulls save 0.08–0.11 seconds for
 the paired finisher under this fixed source and provisional line model. These
 counts are diagnostic of this chosen helper and seed matrix, not a target
 lead-out frequency, calibrated outcome or classified result. All tested
@@ -621,3 +623,16 @@ The unified entry now checks each purported paid line against the locked
 roster and the final road frame: every rider must appear once at the line
 with matching elapsed time and remaining energy. This is an integrity guard
 over existing recording versions, not a new placing or point rule.
+
+The complete-bunch conditional entry now uses separate verified-assembly
+runner versions 7/8 and race-final versions 10/11. They replay the older
+paid movement exactly and inspect the next recorded interval before
+labelling a newly assembled helper as an actual lead-out. In a fixed
+40 km, 20-team women's case, `rival-8-5` reaches its finisher's wheel at
+the 300 m sprint boundary and receives `ready_without_following_pull`;
+the helper never has a `lead_out` role. In a fixed four-team case, a formed
+pair has `paid_pull_next_boundary` only where the next interval records both
+helper and finisher in lead-out roles. The prior runner and early-bunch trial
+versions remain replayable, including their experimental point previews;
+the changed labels neither move riders nor award points. They do not solve
+lane obstruction or road-group finishing.
