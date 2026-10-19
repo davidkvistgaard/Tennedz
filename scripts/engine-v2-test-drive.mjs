@@ -19,6 +19,9 @@ import {recordFinaleMultibandIndividualLine,
 import {recordFinaleSeparatedIndividualLine,
   validateFinaleSeparatedIndividualLine} from
   '../lib/engine/v2/finale-separated-individual-line.mjs';
+import {recordFinaleDepletedIndividualLine,
+  validateFinaleDepletedIndividualLine} from
+  '../lib/engine/v2/finale-depleted-individual-line.mjs';
 import {projectV91ProvisionalPointPreview,
   projectV91ProvisionalMultibandPointPreview} from
   '../lib/engine/v2/playtest-point-preview.mjs';
@@ -135,16 +138,20 @@ function summaryForIndividualGroupLine(trial,request,pointContext,line){
   const base=summaryFor(trial,request,pointContext);
   const decisions=new Map(line.sprintPlan.decisions.map(row=>
     [row.teamId,row]));
-  return {...base,version:'v91-offline-test-drive-2',
-    roadStatus:'conditional_multiband_line',
+  return {...base,version:line.pre500ContactStatus?
+    'v91-offline-test-drive-3':'v91-offline-test-drive-2',
+    roadStatus:line.pre500ContactStatus?
+      'conditional_depleted_line':'conditional_multiband_line',
     individualLineVersion:line.version,
     ...(pointContext?{provisionalPointPreview:
       line.provisionalLineOrder?.every(row=>row.position!==null)?
         projectV91ProvisionalMultibandPointPreview(
           trial.recording,line,pointContext):
-        {status:'unavailable',reason:line.overlapAudit.firstPotentialOverlap?
-          'Cross-band contact remains unresolved.':
-          'The provisional line contains an unresolved place.'}}:{}),
+        {status:'unavailable',reason:line.pre500ContactStatus?
+          'Dropped-rider contact before 500 m remains unresolved.':
+          line.overlapAudit.firstPotentialOverlap?
+            'Cross-band contact remains unresolved.':
+            'The provisional line contains an unresolved place.'}}:{}),
     managerDecisions:base.managerDecisions.map(row=>({
       ...row,finisherId:decisions.get(row.teamId).finisherId,
       leadOutRiderId:decisions.get(row.teamId).leadOutRiderId})),
@@ -162,9 +169,15 @@ function summaryForIndividualGroupLine(trial,request,pointContext,line){
           .map(frame=>({endDistanceM:frame.distanceM,
             bunchPassageSecondsFromBunchMarker:
               frame.bunchPassageSecondsFromBunchMarker,
-            groups:frame.groups})),
+            groups:frame.groups,
+            ...(frame.droppedPassages?{
+              droppedPassages:frame.droppedPassages}:{})})),
       individualFinishStatus:
-        'conditional_band_local_cross_band_contact_unresolved',
+        line.pre500ContactStatus?
+          'conditional_dropped_pre500_contact_unresolved':
+          'conditional_band_local_cross_band_contact_unresolved',
+      ...(line.pre500ContactStatus?{
+        pre500ContactStatus:line.pre500ContactStatus}:{}),
       overlapAudit:line.overlapAudit,
       lineTimes:line.conditionalCrossings,
       provisionalLineOrder:line.provisionalLineOrder,
@@ -212,7 +225,9 @@ export function runV91TestDrive(scenario,{full=false}={}){
       error.cause?.playtestSource??null:null;
     if(scenario.individualGroupLine===true&&source&&
       ['Finisher and lead-out plans are not paid for a road group.',
-        'Finisher and lead-out plans are not paid for road groups.']
+        'Finisher and lead-out plans are not paid for road groups.',
+        'Finisher and lead-out plans are not paid for depleted road bands.',
+        'Finisher and lead-out plans are not paid for dropped road bands.']
         .includes(error.message)){
       trial=createV91GroupFallbackFromLockedRace(source);
       recoveredGroupPlan=true;
@@ -237,13 +252,23 @@ export function runV91TestDrive(scenario,{full=false}={}){
   validateV91ConditionalRaceFinal(scenario.settings,recoveredGroupPlan?
     {...request,plans:null}:request,trial);
   if(scenario.individualGroupLine===true&&
-    ['paid_group_bands','paid_separated_bands']
+    ['paid_group_bands','paid_separated_bands',
+      'recorded_depleted_bands','recorded_dropped_bands']
       .includes(trial.roadStatus)){
     const separated=trial.roadStatus==='paid_separated_bands';
-    const record=separated?recordFinaleSeparatedIndividualLine:
-      recordFinaleMultibandIndividualLine;
-    const validate=separated?validateFinaleSeparatedIndividualLine:
-      validateFinaleMultibandIndividualLine;
+    const depleted=['recorded_depleted_bands','recorded_dropped_bands']
+      .includes(trial.roadStatus);
+    if(depleted&&trial.paidFinale.passageFrames.some(frame=>
+      frame.droppedPassages.some(row=>row.unmetEnergyDemand>0))){
+      const summary=summaryFor(trial,request,pointContext);
+      return full?{summary,recording:trial}:summary;
+    }
+    const record=depleted?recordFinaleDepletedIndividualLine:
+      separated?recordFinaleSeparatedIndividualLine:
+        recordFinaleMultibandIndividualLine;
+    const validate=depleted?validateFinaleDepletedIndividualLine:
+      separated?validateFinaleSeparatedIndividualLine:
+        validateFinaleMultibandIndividualLine;
     let individualLine;
     try{
       individualLine=record(trial.recording,trial.paidFinale,

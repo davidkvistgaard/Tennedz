@@ -732,3 +732,16 @@ full-field individual finale. Two of the four depleted cases also record
 unmet energy demand after a dropped rider's reserve reaches zero; their
 passages must not be described as fully energy-paid. Inferred wheel order,
 pre-500 m contact, and an official result/award remain open throughout.
+
+The separately versioned `v2-finale-depleted-individual-line-lab-1` now
+continues active groups and the bunch from their recorded 500 m handoff and
+retains each dropped rider's own recorded passage and energy through the
+line. An isolated rider is not turned into a cooperative group, and a
+helper in another band cannot lead out the nominated finisher. The fixed
+66-scenario audit with `--individual-lines` now reaches 32 complete-bunch,
+18 multiband, and 14 depleted conditional individual lines. Its remaining
+two 260 km M/F cases stop at recorded bands because dropped riders have
+unmet energy demand. Four of the 14 depleted continuations have a possible
+longitudinal meeting in their last 500 m. All 14 withhold a combined order
+and point preview because individual contact before the 500 m handoff is
+not audited. This is still a conditional replay, not an official result.

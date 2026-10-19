@@ -3,6 +3,8 @@ import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {spawnSync} from 'node:child_process';
 import {runV91TestDrive} from '../../scripts/engine-v2-test-drive.mjs';
+import {validateFinaleDepletedIndividualLine} from
+  '../../lib/engine/v2/finale-depleted-individual-line.mjs';
 
 const example=JSON.parse(readFileSync(new URL(
   '../../docs/design/engine-v2-test-drive-example.json',import.meta.url),
@@ -218,6 +220,52 @@ test('long race records depleted reserve and separated groups without ranks',()=
   finalePlans:[{teamId:'you',finisherId:'you-7',leadOutRiderId:null}]});
   assert.equal(unpaid.status,'unsupported');
   assert.match(unpaid.reason,/not paid for road groups/);
+});
+
+test('paid dropped travel joins an opt-in individual bunch line without inventing a dropped group',()=>{
+  const settings={distanceKm:260,terrain:'mountain',fatigue:30,
+    teamCount:4,gender:'M',seed:'test-drive-acceptance-1',
+    attack:'none',chase:'all',defaultRivalPlan:'chase'};
+  const base=runV91TestDrive({settings,individualGroupLine:true},
+    {full:true});
+  const helped=runV91TestDrive({settings,individualGroupLine:true,
+    finalePlans:[{teamId:'you',finisherId:'you-7',
+      leadOutRiderId:'you-0'}]},{full:true});
+  assert.equal(base.summary.roadStatus,'conditional_depleted_line');
+  assert.equal(base.summary.finale.lineTimes.length,32);
+  assert.equal(base.summary.finale.pre500ContactStatus,'unresolved');
+  assert.equal(base.summary.finale.provisionalLineOrder,null);
+  assert.equal(base.summary.pointsStatus,'withheld');
+  assert.equal(base.summary.canCommitAwards,false);
+  assert.equal(base.summary.finale.lineTimes.filter(row=>
+    row.roadBandId.startsWith('isolated:')).length,1);
+  assert.ok(helped.summary.finale.leadOutWork.some(row=>
+    row.riderId==='you-0'&&row.energySpent>0));
+  assert.notEqual(helped.summary.finale.lineTimes.find(row=>
+    row.riderId==='you-7').elapsedSecondsFromLastKmStart,
+  base.summary.finale.lineTimes.find(row=>
+    row.riderId==='you-7').elapsedSecondsFromLastKmStart);
+  assert.deepEqual(helped.summary.finale.lineTimes.find(row=>
+    row.riderId==='rival-2-0'),
+  base.summary.finale.lineTimes.find(row=>
+    row.riderId==='rival-2-0'));
+  const tampered=structuredClone(base.individualLine);
+  tampered.conditionalCrossings.find(row=>
+    row.riderId==='rival-2-0').energyAtLine+=1;
+  assert.throws(()=>validateFinaleDepletedIndividualLine(
+    base.recording.recording,base.recording.paidFinale,
+    {plans:null},tampered),/does not replay/);
+  const refused=runV91TestDrive({settings,individualGroupLine:true,
+    finalePlans:[{teamId:'rival-2',finisherId:'rival-2-7',
+      leadOutRiderId:'rival-2-0'}]});
+  assert.equal(refused.status,'unsupported');
+  assert.match(refused.reason,/cannot work beside/);
+  const saturated=runV91TestDrive({settings:{...settings,
+    attack:'selective',chase:'selective',defaultRivalPlan:'mixed'},
+  individualGroupLine:true});
+  assert.equal(saturated.roadStatus,'recorded_depleted_bands');
+  assert.ok(saturated.finale.totalUnmetEnergyDemand>0);
+  assert.equal(saturated.pointsStatus,'withheld');
 });
 
 test('paired field strength and fatigue reach the same conditional path with different paid lines',()=>{

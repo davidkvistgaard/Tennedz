@@ -50,11 +50,13 @@ const rows=scenarios.map(({kind,mode,settings})=>{
   assert.equal(output.pointsStatus,'withheld');
   assert.equal(output.canCommitAwards,false);
   if(status==='paid_conditional_line'||
-    status==='conditional_multiband_line'){
+    status==='conditional_multiband_line'||
+    status==='conditional_depleted_line'){
     assert.equal(output.finale.lineTimes.length,expected);
     assert.equal(new Set(output.finale.lineTimes.map(row=>row.riderId))
       .size,expected);
-    if(status==='conditional_multiband_line'){
+    if(status==='conditional_multiband_line'||
+      status==='conditional_depleted_line'){
       assert.equal(output.finale.overlapAudit!==undefined,true);
       assert.equal(output.finale.lineTimes.every(row=>
         Number.isFinite(row.elapsedSecondsFromLastKmStart)&&
@@ -78,6 +80,12 @@ const rows=scenarios.map(({kind,mode,settings})=>{
         output.finale.overlapAudit.firstPotentialOverlap!==null,
       provisionalUniqueOrder:output.finale.provisionalLineOrder?.every(
         row=>row.position!==null)??false}:{}),
+    ...(status==='conditional_depleted_line'?{
+      potentialCrossBandOverlap:
+        output.finale.overlapAudit.firstPotentialOverlap!==null,
+      pre500ContactStatus:output.finale.pre500ContactStatus,
+      provisionalUniqueOrder:
+        output.finale.provisionalLineOrder!==null}:{}),
     ...(status==='recorded_depleted_bands'||
       status==='recorded_dropped_bands'?{
         totalUnmetEnergyDemand:output.finale.totalUnmetEnergyDemand}: {})};
@@ -85,5 +93,5 @@ const rows=scenarios.map(({kind,mode,settings})=>{
 const counts=Object.fromEntries([...new Set(rows.map(row=>row.status))]
   .sort().map(status=>[status,rows.filter(row=>row.status===status).length]));
 console.log(JSON.stringify({version:individualLines?
-  'v2-playable-road-audit-individual-2':'v2-playable-road-audit-1',
+  'v2-playable-road-audit-individual-3':'v2-playable-road-audit-1',
   seed:'test-drive-acceptance-1',scenarios:rows.length,counts,rows},null,2));
