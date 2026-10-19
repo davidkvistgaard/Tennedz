@@ -1502,3 +1502,14 @@ the other does not because the finisher records a same-lane wheel block.
 Both outcomes preserve the withheld-awards status. This distinguishes a
 paid but obstructed tactical attempt from a guaranteed sprint benefit;
 the provisional lanes still do not establish an official placing.
+
+A separate three-seed, 54-case long-race check varied flat, rolling and
+mountain routes, M/F rosters and starting fatigue 0/15/30 in 20-team fields.
+All 54 no-attack sources replayed 160 unique queued conditional crossings
+and a 160-rider read-only point illustration, with points and awards still
+withheld. This checks completion under the selected inputs, not broader
+attack or sporting balance. In a 260 km tired mountain source, a helper on
+an allowed source wheel has less than the existing 20-energy lead-out
+threshold. The offline refusal now exposes the selector's `exhausted`
+reason and named helper while retaining the locked race and withheld
+points; removing the helper order produces the payable 160-rider line.

@@ -986,6 +986,7 @@ export function runV91LaneQueuedTestDrive(scenario,{full=false}={}){
       !/^Lead-out helper is not on the finisher's source wheel: (?:you|rival-[1-9]\d*)\.$/
         .test(error.message))throw error;
     const summary={...base,status:'unsupported',reason:error.message,
+      ...(error.cause?.helperId?{leadOutUnavailable:error.cause}:{}),
       individualFinishStatus:'unavailable'};
     return full?{summary,recording:tour}:summary;
   }

@@ -58,6 +58,24 @@ test('unpayable source roads and solo attack outcomes stay explicit',()=>{
   /without other finale branch flags/);
 });
 
+test('a tired but correctly placed helper reports its energy refusal',()=>{
+  const settings={...example.settings,distanceKm:260,
+    terrain:'mountain',teamCount:20,gender:'M',fatigue:30,
+    attack:'none',chase:'ignore',seed:'tired-queue'};
+  const baseline=runV91LaneQueuedTestDrive({settings});
+  const attempted=runV91LaneQueuedTestDrive({settings,finalePlans:[{
+    teamId:'rival-1',finisherId:'rival-1-5',
+    leadOutRiderId:'rival-1-6'}]});
+  assert.equal(baseline.status,'conditional');
+  assert.equal(baseline.conditionalLine.length,160);
+  assert.equal(attempted.status,'unsupported');
+  assert.deepEqual(attempted.leadOutUnavailable,{
+    teamId:'rival-1',helperId:'rival-1-6',reason:'exhausted'});
+  assert.deepEqual(attempted.lastKmSource,baseline.lastKmSource);
+  assert.equal(attempted.conditionalLine,undefined);
+  assert.equal(attempted.pointsStatus,'withheld');
+});
+
 test('one caught named attack pays a lane-queued finish and helper on its locked tour',()=>{
   const scenario={settings:{...example.settings,seed:'trial'},
     attack:{teamId:'you',riderId:'you-0'},
