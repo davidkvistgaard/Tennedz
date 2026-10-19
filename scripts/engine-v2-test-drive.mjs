@@ -892,7 +892,8 @@ export function runV91ConcurrentTestDrive(scenario,{full=false}={}){
       plans:request.plans??null});
   }catch(error){
     if(error?.constructor!==Error)throw error;
-    let lateLineRefusal=null,survivorLineRefusal=null;
+    let lateLineRefusal=null,survivorLineRefusal=null,
+      sprintLineRefusal=null;
     if(!assembled){
       try{
         const lateLine=recordFinaleConcurrentLateCatchLineFromTour(tour,{
@@ -987,6 +988,7 @@ export function runV91ConcurrentTestDrive(scenario,{full=false}={}){
             individualLine:sprintLine}:summary;
         }catch(sprintError){
           if(sprintError?.constructor!==Error)throw sprintError;
+          sprintLineRefusal=sprintError.message;
         }
       }
       try{
@@ -1038,6 +1040,7 @@ export function runV91ConcurrentTestDrive(scenario,{full=false}={}){
               'The rear attacker was caught; the surviving solo met the bunch at an exact road contact before individual classification.':
               'The rear attacker was caught; the surviving solo and bunch have paid travel to their next road event, but no individual line.',
           lateLineRefusal,survivorLineRefusal,
+          ...(sprintLineRefusal?{sprintLineRefusal}:{}),
           ...(continuationRefusal?{continuationRefusal}:{}),
           paidRearCaughtEvent:{version:rearCaught.version,
             event:rearCaught.event,
@@ -1109,16 +1112,19 @@ export function runV91ConcurrentTestDrive(scenario,{full=false}={}){
         energyAtDecision:row.energyAtDecision,
         energySpentToEvent:row.energySpentToEvent,
         energyAtEvent:row.energyAtEvent}))}:null;
+    const bandCrossingRefusal=sprintLineRefusal??
+      (survivorLineRefusal?.includes('solo finisher')?
+        survivorLineRefusal:
+        'Road bands reached the line, but individual bunch crossings and finale plans are unresolved.');
     const summary={...base,status:'unsupported',
       roadStatus:bandContinuation?.status==='band_crossings_only'?
         'concurrent_band_crossings_only':'concurrent_road_unresolved',
       reason:bandContinuation?.status==='band_crossings_only'?
-        survivorLineRefusal?.includes('solo finisher')?
-          survivorLineRefusal:
-          'Road bands reached the line, but individual bunch crossings and finale plans are unresolved.':
+        bandCrossingRefusal:
         error.message,
       ...(lateLineRefusal?{lateLineRefusal}:{}),
       ...(survivorLineRefusal?{survivorLineRefusal}:{}),
+      ...(sprintLineRefusal?{sprintLineRefusal}:{}),
       ...(firstPaidEvent?{firstPaidEvent}:{}),
       ...(laterEvent?{latestPaidEvent:{version:laterEvent.version,
         event:laterEvent.event,

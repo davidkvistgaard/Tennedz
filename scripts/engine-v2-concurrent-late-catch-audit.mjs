@@ -2,22 +2,26 @@
 // which paid road states are supported; it is not a balance target.
 import {runV91IntegratedTestDrive} from './engine-v2-test-drive.mjs';
 
-const [seed='paired-final-orders',mode='full',slots='2,2']=
+const [seed='paired-final-orders',mode='full',slots='2,2',finishers='captains']=
   process.argv.slice(2);
 const [youSlot,rivalSlot]=slots.split(',').map(Number);
 if(typeof seed!=='string'||!seed||
-  !['full','quick','one','mountain'].includes(mode)||
-  process.argv.length>5||slots.split(',').length!==2||
+  !['full','quick','one','mountain','one-rolling',
+    'one-mountain','one-long-rolling'].includes(mode)||
+  !['captains','attackers'].includes(finishers)||
+  process.argv.length>6||slots.split(',').length!==2||
   ![youSlot,rivalSlot].every(slot=>Number.isInteger(slot)&&
     slot>=0&&slot<8))
-  throw new Error('Usage: node scripts/engine-v2-concurrent-late-catch-audit.mjs [seed] [full|quick|one|mountain] [youSlot,rivalSlot]');
-const cases=mode==='mountain'?[[260,'mountain',30]]:
+  throw new Error('Usage: node scripts/engine-v2-concurrent-late-catch-audit.mjs [seed] [full|quick|one|mountain|one-rolling|one-mountain|one-long-rolling] [youSlot,rivalSlot] [captains|attackers]');
+const cases=mode==='mountain'||mode==='one-mountain'?
+  [[260,'mountain',30]]:mode==='one-rolling'?[[40,'rolling',0]]:
+    mode==='one-long-rolling'?[[120,'rolling',15]]:
   mode!=='full'?[[40,'flat',0]]:[[40,'flat',0],
   [40,'rolling',0],[40,'mountain',0],[120,'flat',0],
   [120,'rolling',15],[260,'mountain',30]];
 const rows=[];
-for(const gender of mode==='one'?['M']:['M','F'])
-  for(const teamCount of mode==='one'?[15]:[15,20])
+for(const gender of mode.startsWith('one')?['M']:['M','F'])
+  for(const teamCount of mode.startsWith('one')?[15]:[15,20])
   for(const [distanceKm,terrain,fatigue] of cases){
     const ids=['you',...Array.from({length:teamCount-1},(_,index)=>
       `rival-${index+1}`)];
@@ -32,7 +36,11 @@ for(const gender of mode==='one'?['M']:['M','F'])
       seed,attack:'none',chase:'ignore',
       defaultRivalPlan:'neutral',managerFinaleOrders,
       teamOverrides:ids.map(teamId=>({teamId,
-        level:teamId==='rival-2'?81:teamId==='you'?80:85}))}};
+        level:teamId==='rival-2'?81:teamId==='you'?80:85}))},
+      ...(finishers==='attackers'?{finalePlans:[
+        {teamId:'you',finisherId:`you-${youSlot}`},
+        {teamId:'rival-2',finisherId:`rival-2-${rivalSlot}`}
+      ]}:{})};
     const output=runV91IntegratedTestDrive(scenario,{full:true});
     const summary=output.summary;
     if(summary.pointsStatus!=='withheld'||summary.canCommitAwards!==false)
@@ -59,6 +67,16 @@ for(const gender of mode==='one'?['M']:['M','F'])
     const dualSuffix=output.individualLine?.soloSuffix;
     const dualContactAudit=output.individualLine
       ?.crossBandContactAudit;
+    const soloSprintWork=output.individualLine?.soloSprintWork??[];
+    if(summary.individualLineVersion===
+      'v2-finale-concurrent-dual-survivor-line-lab-2'&&
+      (finishers!=='attackers'||soloSprintWork.length!==2||
+      !['you','rival-2'].every(teamId=>soloSprintWork.some(row=>
+        row.riderId===`${teamId}-${teamId==='you'?youSlot:
+          rivalSlot}`&&row.energySpent>0&&
+        row.energySpentToHandoff>0&&
+        row.energySpentAfterHandoff>0))))
+      throw new Error('The dual survivor audit lost a paid solo sprint.');
     if(dualSuffix&&(
       dualSuffix.length!==2||
       lineHandoff?.roadBands.length!==3||
@@ -88,10 +106,11 @@ for(const gender of mode==='one'?['M']:['M','F'])
       new Set(paidRoad.finalRiders.map(row=>row.riderId)).size!==
         teamCount*8))
       throw new Error('The concurrent audit lost a paid road rider.');
-    const row={seed,youSlot,rivalSlot,gender,teamCount,distanceKm,
+    const row={seed,youSlot,rivalSlot,finishers,gender,teamCount,distanceKm,
       terrain,fatigue,
       status:summary.status,roadStatus:summary.roadStatus,
       individualLineVersion:summary.individualLineVersion??null,
+      soloSprintRiderIds:soloSprintWork.map(row=>row.riderId),
       contactKinds:[...(priorContact?[priorContact.kind]:[]),
         ...(output.individualLine?.roadPrefix?.contactEvents??
           paidRoad?.contactEvents??[]).map(event=>event.kind)],
@@ -113,14 +132,15 @@ for(const gender of mode==='one'?['M']:['M','F'])
       frontGapAtBunch200M:bunchAt200?.roadBands.length===2?
         bunchAt200.roadBands[0].positionM-
           bunchAt200.roadBands[1].positionM:null,
-      ...(mode==='one'?{roadEvents:(output.bandContinuation?.frames??
+      ...(mode.startsWith('one')?{roadEvents:(output.bandContinuation?.frames??
         output.individualLine?.roadPrefix?.frames)
         .map(frame=>({event:frame.event,
           positions:frame.roadBands.map(band=>({kind:band.kind,
             positionM:band.positionM}))}))??[]}:{}),
       individualCrossings:crossings?.length??0,
       reason:summary.status==='unsupported'?
-        summary.lateLineRefusal??summary.reason:null};
+        (finishers==='attackers'?summary.sprintLineRefusal:null)??
+          summary.lateLineRefusal??summary.reason:null};
     rows.push(row);
     console.log(JSON.stringify(row));
   }

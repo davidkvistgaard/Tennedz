@@ -226,6 +226,18 @@ also replays. The sprint work is visible and points remain withheld because
 the bunch still uses inferred wheels. These four fictional cases do not prove
 that other road states or official classification are ready.
 
+The same two named finisher orders also reach 120 unique conditional
+crossings on a 40 km rolling route and a 120 km rolling route with 15 starting
+fatigue, with both solo sprint energy debits and positive audited separation.
+The 260 km mountain route with 30 starting fatigue reaches three paid band
+crossings but refuses an individual line: a provisional bunch rider would
+meet a sprinting solo before the line. The offline drive now retains that
+specific solo-sprint refusal alongside its unsupported road status, rather
+than hiding it in the fallback attempt. These are fixed 15-team men's cases
+with one seed and the same manager orders. They show where this version's
+contact boundary lies; they do not settle a catch, inferred wheels, official
+places or points.
+
 The next opt-in version handles one narrower measured contact: when the rear
 attacker reaches the bunch, that rider joins the bunch at the recorded
 position and time, pays sheltered travel for the rest of the current interval,

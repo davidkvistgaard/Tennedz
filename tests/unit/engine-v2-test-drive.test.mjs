@@ -403,6 +403,35 @@ test('two nominated attackers pay their own sprints on one road clock',()=>{
     .every(row=>row.minimumGapM>0));
 });
 
+test('a dual solo sprint contact refuses an individual mountain line visibly',()=>{
+  const teamCount=15;
+  const ids=['you',...Array.from({length:teamCount-1},(_,index)=>
+    `rival-${index+1}`)];
+  const managerFinaleOrders=ids.map(teamId=>({teamId,
+    attack:['you','rival-2'].includes(teamId)?'selective':'none',
+    ...(['you','rival-2'].includes(teamId)?{
+      attackRiderId:`${teamId}-5`}:{}),
+    chase:['rival-1','rival-4'].includes(teamId)?'selective':'ignore',
+    frontWork:teamId==='rival-3'?'rotate':'sit_in'}));
+  const summary=runV91IntegratedTestDrive({settings:{
+    distanceKm:260,teamCount,terrain:'mountain',fatigue:30,gender:'M',
+    seed:'paired-final-orders',attack:'none',chase:'ignore',
+    defaultRivalPlan:'neutral',managerFinaleOrders,
+    teamOverrides:ids.map(teamId=>({teamId,
+      level:teamId==='rival-2'?81:teamId==='you'?80:85}))},
+    finalePlans:[{teamId:'you',finisherId:'you-5'},
+      {teamId:'rival-2',finisherId:'rival-2-5'}]});
+  assert.equal(summary.status,'unsupported');
+  assert.equal(summary.roadStatus,'concurrent_band_crossings_only');
+  assert.equal(summary.sprintLineRefusal,
+    'A provisional rider reached a dual solo before the line.');
+  assert.equal(summary.reason,summary.sprintLineRefusal);
+  assert.equal(summary.paidBandContinuation.bandCrossings.length,3);
+  assert.equal(summary.pointsStatus,'withheld');
+  assert.equal(summary.canCommitAwards,false);
+  assert.equal(summary.finale,undefined);
+});
+
 test('integrated rear catch gives the surviving solo and bunch paid individual lines',()=>{
   const teamCount=15;
   const ids=['you',...Array.from({length:teamCount-1},(_,index)=>
