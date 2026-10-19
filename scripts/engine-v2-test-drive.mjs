@@ -26,7 +26,9 @@ import {recordFinaleConcurrentLateCatchLineFromTour,
   validateFinaleConcurrentLateCatchLineFromTour} from
   '../lib/engine/v2/finale-concurrent-late-catch-line.mjs';
 import {recordFinaleConcurrentSurvivorLineFromTour,
-  validateFinaleConcurrentSurvivorLineFromTour} from
+  validateFinaleConcurrentSurvivorLineFromTour,
+  recordFinaleConcurrentPriorRearCatchSurvivorLineFromTour,
+  validateFinaleConcurrentPriorRearCatchSurvivorLineFromTour} from
   '../lib/engine/v2/finale-concurrent-survivor-line.mjs';
 import {recordFinaleConcurrentRearCaught400StepFromTour,
   validateFinaleConcurrentRearCaught400StepFromTour} from
@@ -928,6 +930,29 @@ export function runV91ConcurrentTestDrive(scenario,{full=false}={}){
       }catch(survivorError){
         if(survivorError?.constructor!==Error)throw survivorError;
         survivorLineRefusal=survivorError.message;
+      }
+      try{
+        const priorRearCatchLine=
+          recordFinaleConcurrentPriorRearCatchSurvivorLineFromTour(tour,{
+            plans:request.plans??null});
+        validateFinaleConcurrentPriorRearCatchSurvivorLineFromTour(tour,{
+          plans:request.plans??null},priorRearCatchLine);
+        const summary={...base,status:'conditional',
+          roadStatus:priorRearCatchLine.roadStatus,
+          individualLineVersion:priorRearCatchLine.version,
+          positionSourceStatus:priorRearCatchLine.positionedSource.status,
+          provisionalLineOrder:priorRearCatchLine.provisionalLineOrder,
+          finale:{individualFinishStatus:'conditional_inferred_wheels',
+            lineTimes:priorRearCatchLine.conditionalCrossings,
+            paidRoad:priorRearCatchLine.roadPrefix,
+            soloRoad:priorRearCatchLine.frontSuffix,
+            crossBandContactAudit:priorRearCatchLine.contactAudit,
+            leadOutWork:[]}};
+        return full?{summary,recording:source,
+          individualLine:priorRearCatchLine}:summary;
+      }catch(priorRearCatchError){
+        if(priorRearCatchError?.constructor!==Error)
+          throw priorRearCatchError;
       }
       try{
         const rearCaught=recordFinaleConcurrentRearCaught400StepFromTour(

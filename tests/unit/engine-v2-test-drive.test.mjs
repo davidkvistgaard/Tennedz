@@ -29,22 +29,25 @@ import {recordFinaleConcurrentNextBoundaryFromTour,
   validateFinaleConcurrentNextBoundaryFromTour} from
   '../../lib/engine/v2/finale-concurrent-next-boundary.mjs';
 import {validateFinaleConcurrentFullCatchContinuationFromTour,
+  recordFinaleConcurrentPriorRearCatchContinuationFromTour,
   validateFinaleConcurrentPriorRearCatchContinuationFromTour} from
   '../../lib/engine/v2/finale-concurrent-band-continuation.mjs';
 import {validateFinaleConcurrentLateCatchLineFromTour} from
   '../../lib/engine/v2/finale-concurrent-late-catch-line.mjs';
 import {recordFinaleConcurrentSurvivorLineFromTour,
   auditFinaleConcurrentSoloAgainstBunch,
-  validateFinaleConcurrentSurvivorLineFromTour} from
+  validateFinaleConcurrentSurvivorLineFromTour,
+  validateFinaleConcurrentPriorRearCatchSurvivorLineFromTour} from
   '../../lib/engine/v2/finale-concurrent-survivor-line.mjs';
-import {validateFinaleConcurrentRearCaught400StepFromTour} from
+import {recordFinaleConcurrentRearCaught400StepFromTour,
+  validateFinaleConcurrentRearCaught400StepFromTour} from
   '../../lib/engine/v2/finale-concurrent-rear-caught-400-step.mjs';
 
 const example=JSON.parse(readFileSync(new URL(
   '../../docs/design/engine-v2-test-drive-example.json',import.meta.url),
 'utf8'));
 
-test('long mountain rear catch exposes the paid two-band road event',()=>{
+test('long mountain rear catch pays a conditional individual solo line',()=>{
   const teamCount=15;
   const ids=['you',...Array.from({length:teamCount-1},(_,index)=>
     `rival-${index+1}`)];
@@ -59,32 +62,33 @@ test('long mountain rear catch exposes the paid two-band road event',()=>{
     defaultRivalPlan:'neutral',managerFinaleOrders,
     teamOverrides:ids.map(teamId=>({teamId,
       level:teamId==='rival-2'?81:teamId==='you'?80:85}))}};
-  const {summary,recording,rearCaught400Step,bandContinuation}=
+  const {summary,recording,individualLine}=
     runV91IntegratedTestDrive(scenario,{full:true});
-  assert.equal(summary.status,'unsupported');
+  const rearCaught400Step=recordFinaleConcurrentRearCaught400StepFromTour(
+    recording.recording);
+  const bandContinuation=
+    recordFinaleConcurrentPriorRearCatchContinuationFromTour(
+      recording.recording);
+  assert.equal(summary.status,'conditional');
   assert.equal(summary.roadStatus,
-    'concurrent_prior_rear_catch_band_crossings_only');
-  assert.equal(summary.paidRearCaughtEvent.event,
+    'paid_surviving_front_conditional_individual_line');
+  assert.equal(rearCaught400Step.event,
     'bunch_at_second_slice_boundary');
-  assert.equal(summary.paidRearCaughtEvent.roadBands.length,2);
-  assert.equal(summary.paidRearCaughtEvent.roadBands[0].riderIds.length,1);
-  assert.equal(summary.paidRearCaughtEvent.roadBands[1].riderIds.length,
+  assert.equal(rearCaught400Step.roadBands.length,2);
+  assert.equal(rearCaught400Step.roadBands[0].riderIds.length,1);
+  assert.equal(rearCaught400Step.roadBands[1].riderIds.length,
     teamCount*8-1);
-  assert.ok(summary.paidRearCaughtEvent.frontPositionM>
-    summary.paidRearCaughtEvent.bunchPositionM);
-  assert.equal(summary.paidRearCaughtEvent.bunchPositionM,259600);
-  assert.deepEqual(summary.paidRearCaughtEvent.riders,
-    rearCaught400Step.riders);
+  assert.ok(rearCaught400Step.frontPositionM>
+    rearCaught400Step.bunchPositionM);
+  assert.equal(rearCaught400Step.bunchPositionM,259600);
   assert.equal(validateFinaleConcurrentRearCaught400StepFromTour(
     recording.recording,rearCaught400Step),true);
   assert.equal(validateFinaleConcurrentPriorRearCatchContinuationFromTour(
     recording.recording,bandContinuation),true);
   assert.equal(bandContinuation.sourceRoadVersion,
     rearCaught400Step.version);
-  assert.equal(summary.paidBandContinuation.version,
+  assert.equal(individualLine.sourceRoadTraceVersion,
     bandContinuation.version);
-  assert.equal(summary.paidBandContinuation.status,
-    bandContinuation.status);
   assert.ok(bandContinuation.frames.length>0);
   assert.equal(bandContinuation.finalRiders.length,teamCount*8);
   assert.ok(bandContinuation.finalRiders.every(row=>
@@ -95,6 +99,14 @@ test('long mountain rear catch exposes the paid two-band road event',()=>{
     'prior_rear_caught_band_crossings');
   assert.ok(bandContinuation.bandCrossings[0].elapsedSinceLaunchSeconds<
     bandContinuation.bandCrossings[1].elapsedSinceLaunchSeconds);
+  assert.equal(validateFinaleConcurrentPriorRearCatchSurvivorLineFromTour(
+    recording.recording,{plans:null},individualLine),true);
+  assert.equal(individualLine.provisionalLineOrder.length,teamCount*8);
+  assert.equal(individualLine.provisionalLineOrder[0].riderId,
+    rearCaught400Step.frontRiderId);
+  assert.ok(individualLine.contactAudit.minimumGapM>0);
+  assert.equal(individualLine.runner.finishers.length,teamCount*8-1);
+  assert.equal(individualLine.classifiedResults,null);
   assert.equal(summary.pointsStatus,'withheld');
   assert.equal(summary.canCommitAwards,false);
 });
