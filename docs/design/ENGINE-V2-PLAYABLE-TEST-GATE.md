@@ -1554,7 +1554,9 @@ The existing flag-gated `/team/v91-playtest` workbench now has an opt-in
 length, gender, field, fatigue, seed and manager tactics to the integrated
 offline runner, together with a nominated finisher and optional helper for
 the player and customized rivals. The API returns the locked kilometre replay
-and conditional finale summary without writing a result. The page shows road
+only through the last-kilometre handoff and the conditional finale summary
+without writing a result. It does not display the kilometre motor's separate
+last frame as if that frame were the paid finale. The page shows road
 groups, rider energy, paid helper work, individual crossing times and finale
 road events, or the explicit refusal when a line cannot be paid. The original
 kilometre-only mode retains its response contract. An isolated local login
@@ -1565,3 +1567,14 @@ tier-2, division-1-of-2 context, the existing policy illustration changed
 the finisher from provisional place 3 / 75 points to place 1 / 125 points;
 both runs saved zero awards and kept official points withheld. This is a hands-on
 diagnostic race preview, not a classified sporting result or point award.
+
+The browser replay now stops the kilometre trace at the locked handoff and
+offers a separate rider-by-rider final-kilometre scrubber only when the paid
+frames span that whole handoff-to-line interval. It checks one clock, the
+locked field, position continuity and energy debits before exposing the
+compact trace. A 54-case no-attack audit across 40/120/260 km, three terrains,
+M/F and 4/15/20 teams exposed 48 complete finale traces; the six tired
+long-distance four-team sources retained individual conditional lines but
+did not invent a full trace from their later continuation. The active-rival
+partial contact case likewise keeps its line and contact evidence while the
+missing earlier road segment remains an explicit replay gap.

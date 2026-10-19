@@ -60,6 +60,19 @@ for(const width of [390,1440])test(`v91 playtest changes conditions at ${width}p
     await page.getByRole('button',{name:'Run full race preview'}).click();
     await expect(page.getByRole('heading',{name:'Conditional finish'}))
       .toBeVisible();
+    await expect(page.getByRole('heading',{name:'Paid final-kilometre replay'}))
+      .toBeVisible();
+    await expect(page.getByRole('slider',{name:/Race kilometre/}))
+      .toHaveAttribute('max','39');
+    await page.getByRole('slider',{name:/Race kilometre/}).fill('39');
+    await expect(page.getByText('Race kilometre: 39')).toBeVisible();
+    await expect(page.getByText('All 32 riders continue from the locked 39 km handoff on one clock.'))
+      .toBeVisible();
+    const finaleSlider=page.getByRole('slider',{name:/Finale interval/});
+    await finaleSlider.fill(await finaleSlider.getAttribute('max'));
+    await expect(page.getByText(/you-7: 0\.0 m to go/)).toBeVisible();
+    await expect(page.getByText('All riders have crossed; see the conditional times below.'))
+      .toBeVisible();
     await expect(page.getByText('32 of 32 riders have individual crossing times.'))
       .toBeVisible();
     await expect(page.getByText(/Your nominated finisher: you-7 · [\d.]+ s/))

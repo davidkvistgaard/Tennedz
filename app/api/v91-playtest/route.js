@@ -1,6 +1,8 @@
 import {NextResponse} from 'next/server';
 import {protectedRoute} from '../../../lib/auth/server';
 import {createV91Playtest,summarizeV91Playtest} from '../../../lib/engine/v2/playtest.mjs';
+import {summarizeV91PaidFinaleReplay} from
+  '../../../lib/engine/v2/playtest-finale-replay.mjs';
 import {runV91IntegratedTestDrive} from '../../../scripts/engine-v2-test-drive.mjs';
 
 export const runtime='nodejs';
@@ -33,10 +35,15 @@ async function handler(request,_context,auth){
       const output=runV91IntegratedTestDrive(scenario,{full:true});
       const source=output.recording?.recording??
         createV91Playtest(scenario.settings).recording;
-      const playtest=summarizeV91Playtest({settings:output.summary.input??
+      const kilometreReplay=summarizeV91Playtest({settings:output.summary.input??
         scenario.settings,recording:source});
+      const playtest={settings:kilometreReplay.settings,
+        tuningVersion:kilometreReplay.tuningVersion,
+        handoffKm:source.route.distanceKm-1,
+        frames:kilometreReplay.frames.slice(0,-1)};
       return NextResponse.json({ok:true,playtest,
-        integrated:output.summary});
+        integrated:output.summary,
+        finaleReplay:summarizeV91PaidFinaleReplay(output.recording)});
     }
     if(input.mode!==undefined)
       return NextResponse.json({ok:false,error:'Invalid playtest mode.'},

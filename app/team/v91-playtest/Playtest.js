@@ -43,6 +43,9 @@ export default function Playtest(){
     divisionIndex:1,divisionCount:2});
   const [result,setResult]=useState(null);
   const [integrated,setIntegrated]=useState(null);
+  const [finaleReplay,setFinaleReplay]=useState(null);
+  const [finaleFrameIndex,setFinaleFrameIndex]=useState(0);
+  const [inspectedRiderId,setInspectedRiderId]=useState('you-7');
   const [selectedKm,setSelectedKm]=useState(1);
   const [busy,setBusy]=useState(false);
   const [error,setError]=useState('');
@@ -80,6 +83,13 @@ export default function Playtest(){
   const ownCrossing=conditionalLine.find(row=>row.riderId===ownFinisher);
   const ownPointPreview=integrated?.provisionalPointPreview?.riders
     ?.find(row=>row.riderId===ownFinisher);
+  const finaleFrame=finaleReplay?.frames[finaleFrameIndex];
+  const inspectedRider=finaleFrame?.riders.find(row=>
+    row.riderId===inspectedRiderId);
+  const roadLeaders=[...(finaleFrame?.riders??[])].sort((a,b)=>
+    b.positionM-a.positionM||a.riderId.localeCompare(b.riderId)).slice(0,5);
+  const allAtLine=finaleFrame?.riders.every(row=>
+    Math.abs(row.positionM-finaleReplay.lineDistanceM)<1e-6);
   const maxHeight=Math.max(500,...settings.profileHeightsM);
   const profileLine=settings.profileHeightsM.map((height,index)=>
     `${10+index*196},${110-height/maxHeight*100}`).join(' ');
@@ -98,6 +108,10 @@ export default function Playtest(){
       const response=await api('/api/v91-playtest',{method:'POST',
         headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
       setResult(response.playtest);setIntegrated(response.integrated??null);
+      setFinaleReplay(response.finaleReplay??null);
+      setFinaleFrameIndex(0);
+      setInspectedRiderId(response.integrated?.managerDecisions
+        ?.find(row=>row.teamId==='you')?.finisherId??'you-7');
       setSelectedKm(1);
     }catch(cause){setError(cause.message||'The playtest could not run.');}
     finally{setBusy(false);}
@@ -228,6 +242,7 @@ export default function Playtest(){
       {result&&<section className="v91-results" aria-label="Playtest recording">
         <h2>Recorded race · {result.settings.distanceKm} km {result.settings.terrain}</h2>
         <p>{result.tuningVersion} · {result.settings.managerTactics.length} custom rival managers{integrated?' · Conditional finale':` · Your captain: provisional #${result.ownCaptain??'—'}`}</p>
+        {integrated&&<p>Replay the locked kilometres through {result.handoffKm} km here. The paid final kilometre continues below.</p>}
         <label>Race kilometre: {selectedKm}
           <input type="range" min="1" max={result.frames.length} value={selectedKm}
             onChange={event=>setSelectedKm(Number(event.target.value))}/>
@@ -253,6 +268,30 @@ export default function Playtest(){
         <div className="v91-riders">{frame?.ownRiders.map(rider=><div key={rider.id}>
           <strong>{rider.id}</strong><span>{rider.group}</span><span>{rider.energy.toFixed(1)} energy</span>
         </div>)}</div>
+        {finaleReplay&&<div className="v91-finish">
+          <h3>Paid final-kilometre replay</h3>
+          <p>All {finaleFrame?.riders.length} riders continue from the locked {result.handoffKm} km handoff on one clock.</p>
+          <label>Finale interval: {finaleFrameIndex+1} of {finaleReplay.frames.length}
+            <input type="range" min="0" max={finaleReplay.frames.length-1}
+              value={finaleFrameIndex}
+              onChange={event=>setFinaleFrameIndex(Number(event.target.value))}/>
+          </label>
+          <p>{finaleFrame?.elapsedSeconds.toFixed(2)} s after the handoff · {finaleFrame?.roadGroups.length?
+            `${finaleFrame.roadGroups.length} groups ahead`:'No recorded groups ahead'}</p>
+          <label>Inspect rider<select value={inspectedRiderId}
+            onChange={event=>setInspectedRiderId(event.target.value)}>
+            {finaleReplay.frames[0].riders.map(row=><option
+              key={row.riderId} value={row.riderId}>{row.riderId}</option>)}
+          </select></label>
+          {inspectedRider&&<p>{inspectedRider.riderId}: {(finaleReplay.lineDistanceM-
+            inspectedRider.positionM).toFixed(1)} m to go · {inspectedRider.energyAfter.toFixed(1)} energy · {inspectedRider.energySpent.toFixed(2)} spent this interval · {inspectedRider.role}</p>}
+          <p>{allAtLine?'All riders have crossed; see the conditional times below.':
+            `Frontmost positions at this boundary: ${roadLeaders.map(row=>
+              `${row.riderId} (${(finaleReplay.lineDistanceM-row.positionM).toFixed(1)} m to go)`).join(', ')}`}</p>
+        </div>}
+        {integrated&&!finaleReplay&&<p className="v91-warning">
+          A complete rider-by-rider final-kilometre replay is not available for this road state. The recorded handoff, conditional line and contact evidence remain below.
+        </p>}
         {integrated?<div className="v91-finish">
           <h3>Conditional finish</h3>
           <p>Road: {integrated.roadStatus??integrated.status??'unresolved'} · Individual finish: {integrated.finale?.individualFinishStatus??'unavailable'} · Points: {integrated.pointsStatus}</p>
