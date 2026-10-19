@@ -117,6 +117,17 @@ remain provisional; the line order is conditional, and classification,
 point illustration and awards stay withheld. This one late-catch source does
 not establish a general two-attack finish or sporting calibration.
 
+`node scripts/engine-v2-concurrent-late-catch-audit.mjs` repeats one fixed
+fictional two-manager setup across M/F, 15/20 teams, short flat/rolling/
+mountain routes, 120 km flat or tired rolling routes and a 260 km tired
+mountain route. All 24 runs replay a conditional individual crossing for
+every locked rider and withhold awards. Twenty use the later paid handoff;
+the four long mountain runs are already caught by the older complete 500 m
+bunch path. The audit checks roster uniqueness and finite crossing time and
+energy. These counts describe coverage of one seed and manager setup, not a
+break survival rate or proof of sporting balance. Other seeds, surviving
+attacks and attacker-to-attacker contact remain open.
+
 The opt-in concurrent double-catch line now has a separate lab-2 continuation
 when a manager nominates a lead-out. It reuses the paid 500 m bunch runner's
 assembly rule: a helper behind the finisher may spend actual distance and
