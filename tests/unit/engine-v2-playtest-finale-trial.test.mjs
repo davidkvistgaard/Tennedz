@@ -103,8 +103,11 @@ test('a surviving solo and unsupported manager plans remain explicit',()=>{
   /supported controlled-finale/);
   assert.throws(()=>createV91FinaleTrial({...settings('M'),
     chase:'selective'},request(true)),/supported controlled-finale/);
+  assert.equal(createV91FinaleTrial({...settings('M'),
+    attack:'repeated'},request(true)).decision.branch,'caught');
   assert.throws(()=>createV91FinaleTrial({...settings('M'),
-    attack:'repeated'},request(true)),/supported controlled-finale/);
+    managerTactics:[{effort:'steady',attack:'repeated',
+      chase:'ignore'}]},request(true)),/supported controlled-finale/);
 });
 
 test('one independent manager can change catch into an explicit solo',()=>{

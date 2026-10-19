@@ -3,6 +3,8 @@ import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {spawnSync} from 'node:child_process';
 import {runV91TestDrive} from '../../scripts/engine-v2-test-drive.mjs';
+import {prepareLastKmRotationFromTour} from
+  '../../lib/engine/v2/finale-last-km-rotation-catch.mjs';
 import {recordFinaleDepletedIndividualLine,
   recordFinaleAuditedDroppedIndividualLine,
   validateFinaleDepletedIndividualLine} from
@@ -567,6 +569,42 @@ test('a named attack on an already separated mountain road refuses visibly',()=>
     assert.equal(output.pointsStatus,'withheld');
     assert.equal(output.canCommitAwards,false);
   }
+});
+
+test('an earlier player attack carries earned load into a paid named finale',()=>{
+  const settings={distanceKm:40,terrain:'flat',fatigue:0,
+    gender:'M',teamCount:4,seed:'test-drive-acceptance-1',
+    chase:'ignore',defaultRivalPlan:'chase'};
+  const request={individualGroupLine:true,
+    attack:{teamId:'you',riderId:'you-4'}};
+  const fresh=runV91TestDrive({settings:{...settings,attack:'none'},
+    ...request},{full:true});
+  const repeated=runV91TestDrive({settings:{...settings,
+    attack:'repeated'},...request},{full:true});
+  const handoff=prepareLastKmRotationFromTour(
+    repeated.recording.recording,{teamId:'you'});
+  assert.equal(fresh.summary.roadStatus,'paid_conditional_line');
+  assert.equal(repeated.summary.roadStatus,'paid_conditional_line');
+  assert.deepEqual(fresh.recording.recording.committedInputs.teams.map(
+    team=>team.riders),repeated.recording.recording.committedInputs.teams.map(
+    team=>team.riders));
+  assert.equal(handoff.sourceRepeatLoad,0.82);
+  assert.equal(handoff.repeatLoad,0.8);
+  assert.equal(repeated.summary.finale.lineTimes.length,32);
+  assert.notEqual(repeated.summary.finale.lineTimes.find(row=>
+    row.riderId==='you-4').elapsedSecondsFromLastKmStart,
+  fresh.summary.finale.lineTimes.find(row=>
+    row.riderId==='you-4').elapsedSecondsFromLastKmStart);
+  assert.equal(repeated.summary.pointsStatus,'withheld');
+  assert.equal(repeated.summary.canCommitAwards,false);
+  const separated=runV91TestDrive({settings:{...settings,
+    distanceKm:260,terrain:'mountain',fatigue:30,
+    attack:'repeated'},...request});
+  assert.equal(separated.status,'unsupported');
+  assert.equal(separated.reason,
+    'The controlled finale trial needs one complete source bunch.');
+  assert.ok(separated.lastKmSource.roadGroups.length>0);
+  assert.equal(separated.canCommitAwards,false);
 });
 
 test('paired field strength and fatigue reach the same conditional path with different paid lines',()=>{

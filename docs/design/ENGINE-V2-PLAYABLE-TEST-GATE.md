@@ -899,3 +899,20 @@ were false contacts. Two other depleted sources still have unpaid energy
 demand. This correction changes no riding speed, energy, team order, official
 classification or award. Source wheel geometry and lane/passing behavior
 remain provisional, so the playable-result acceptance gate stays open.
+
+The controlled late named-attack trial now also accepts an earlier attack
+strategy by that same manager. It uses the actual recorded last-kilometre
+energy and repeat-attack load; the late named phase still selects the same
+locked rider. A paired 40 km flat four-team men's trial keeps the same
+fictional roster but changes the player's earlier strategy from no attack to
+repeated attack. The latter reaches the last-kilometre bunch with `you-4` at
+91.024 energy and 0.82 recorded attack load (0.8 after existing recovery),
+then produces a paid conditional 32-rider line and replay with no awards.
+Independent rival baseline attacks remain outside this one-attack trial.
+When earlier attacks leave a front road group, the actual source is retained
+and the trial refuses a complete-bunch finale instead of rerunning it.
+Across two fixed seeds, three routes, M/F categories and 4/15/20-team
+fields, this player-only earlier repeated strategy reaches 24 paid
+conditional lines and 12 explicit separated-road refusals, with no thrown
+errors. This is coverage of a constrained order combination, not a balance
+claim or support for simultaneous rival attacks.
