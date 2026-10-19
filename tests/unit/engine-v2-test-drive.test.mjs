@@ -275,6 +275,56 @@ test('two separated attackers keep paid roads into a conditional individual line
   assert.deepEqual(runV91IntegratedTestDrive(scenario),summary);
 });
 
+test('one harder manager rotation narrows a paid two-attacker gap',()=>{
+  const teamCount=15;
+  const ids=['you',...Array.from({length:teamCount-1},(_,index)=>
+    `rival-${index+1}`)];
+  const orders=effort=>ids.map(teamId=>({teamId,
+    attack:['you','rival-2'].includes(teamId)?'selective':'none',
+    ...(['you','rival-2'].includes(teamId)?{
+      attackRiderId:`${teamId}-5`}:{}),
+    chase:['rival-1','rival-4'].includes(teamId)?'selective':'ignore',
+    frontWork:teamId==='rival-3'?'rotate':'sit_in',
+    ...(teamId==='rival-3'?{effort}:{})}));
+  const settings={distanceKm:40,teamCount,terrain:'flat',gender:'M',
+    seed:'paired-final-orders',attack:'none',chase:'ignore',
+    defaultRivalPlan:'neutral',
+    teamOverrides:ids.map(teamId=>({teamId,
+      level:teamId==='rival-2'?81:teamId==='you'?80:85}))};
+  const steady=runV91IntegratedTestDrive({settings:{...settings,
+    managerFinaleOrders:orders('steady')}},{full:true});
+  const hard=runV91IntegratedTestDrive({settings:{...settings,
+    managerFinaleOrders:orders('hard')}},{full:true});
+  for(const trial of [steady,hard]){
+    assert.equal(trial.summary.roadStatus,
+      'paid_dual_survivor_conditional_individual_line');
+    assert.equal(trial.summary.finale.lineTimes.length,teamCount*8);
+    assert.equal(trial.summary.pointsStatus,'withheld');
+    assert.equal(validateFinaleConcurrentDualSurvivorLineFromTour(
+      trial.recording.recording,{plans:null},trial.individualLine),true);
+  }
+  assert.deepEqual(steady.recording.recording.committedInputs.teams.map(
+    team=>team.riders),hard.recording.recording.committedInputs.teams.map(
+    team=>team.riders));
+  const decision=trial=>trial.summary.managerDecisions.find(row=>
+    row.teamId==='rival-3').finaleOrder;
+  assert.equal(decision(steady).effort,'steady');
+  assert.equal(decision(hard).effort,'hard');
+  const crossing=(trial,id)=>trial.summary.finale.lineTimes.find(row=>
+    row.riderId===id).elapsedSecondsFromLastKmStart;
+  assert.ok(crossing(hard,'rival-3-7')<
+    crossing(steady,'rival-3-7'));
+  assert.ok(hard.summary.finale.lineTimes.some(row=>
+    row.teamId==='rival-3'&&
+    row.energyAtLine<steady.summary.finale.lineTimes.find(other=>
+      other.riderId===row.riderId).energyAtLine));
+  assert.ok(hard.individualLine.crossBandContactAudit
+    .frontAgainstBunch.minimumGapM<steady.individualLine
+      .crossBandContactAudit.frontAgainstBunch.minimumGapM);
+  assert.ok(hard.individualLine.crossBandContactAudit
+    .frontAgainstBunch.minimumGapM>0);
+});
+
 test('integrated rear catch gives the surviving solo and bunch paid individual lines',()=>{
   const teamCount=15;
   const ids=['you',...Array.from({length:teamCount-1},(_,index)=>

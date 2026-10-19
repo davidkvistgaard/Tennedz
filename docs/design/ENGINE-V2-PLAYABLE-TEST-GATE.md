@@ -203,6 +203,17 @@ bunch wheels, missing helper work, other road states, official results and
 points remain open. The focused replay, full unit suite and lint pass; this
 offline motor increment did not change the browser UI or production build.
 
+A paired run now holds that 40 km men's flat route, seed and all 120 riders
+fixed, changing only rival-3's front-rotation effort from steady to hard.
+Both choices replay the same conditional dual-survivor road state. The harder
+turn advances that manager's captain crossing by about 0.035 seconds, charges
+more energy to at least one rider, and narrows the minimum front-to-bunch gap
+from about 3.84 m to 3.44 m while both attackers remain clear. The solo
+crossings barely change because their paid road speeds are separate from the
+bunch's last turn. This proves one observable tactic consequence in a fixed
+fictional case; it does not establish a calibrated sporting advantage or an
+official classification.
+
 The next opt-in version handles one narrower measured contact: when the rear
 attacker reaches the bunch, that rider joins the bunch at the recorded
 position and time, pays sheltered travel for the rest of the current interval,
