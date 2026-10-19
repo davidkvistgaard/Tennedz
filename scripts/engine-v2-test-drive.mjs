@@ -39,7 +39,14 @@ const REFUSALS=new Set([
   'Finisher and lead-out plans are not paid for dropped road bands.',
   'The separated last-kilometre finale needs recorded response or front rotation.',
   'An early bunch plan needs one inactive-attack bunch.',
+  'The nominated lead-out cannot work beside the finisher.',
 ]);
+
+function expectedRefusal(message){
+  return REFUSALS.has(message)||
+    /^An early lead-out helper needs an adjacent lane: (?:you|rival-[1-9]\d*)\.$/
+      .test(message);
+}
 
 function requestFor(scenario){
   const settings=scenario?.settings;
@@ -250,7 +257,7 @@ export function runV91TestDrive(scenario,{full=false}={}){
   let recoveredGroupPlan=false;
   try{trial=createV91ConditionalRaceFinal(scenario.settings,request);}
   catch(error){
-    if(!REFUSALS.has(error.message))throw error;
+    if(!expectedRefusal(error.message))throw error;
     const source=request.attackTeamId===undefined?
       error.cause?.playtestSource??null:null;
     if(scenario.individualGroupLine===true&&source&&
@@ -261,7 +268,7 @@ export function runV91TestDrive(scenario,{full=false}={}){
         .includes(error.message)){
       try{trial=createV91GroupFallbackFromLockedRace(source);}
       catch(fallbackError){
-        if(!REFUSALS.has(fallbackError.message))throw fallbackError;
+        if(!expectedRefusal(fallbackError.message))throw fallbackError;
         return unsupportedRefusal(fallbackError,scenario,request,pointContext);
       }
       recoveredGroupPlan=true;

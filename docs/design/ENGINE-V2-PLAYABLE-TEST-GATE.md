@@ -805,3 +805,17 @@ reason, with no line or point projection, when that fallback cannot pay the
 rider travel. Previously this second refusal escaped as an exception. The
 fixed M/F and 4/15/20-team probes all retain the group and withhold awards;
 they do not establish a playable result for that road.
+
+A paired competing-lead-out probe also exposes an unavailable-plan boundary
+in the conditional complete-bunch runner. The fixed 40 km four-team race
+cannot place one nominated rival helper beside its finisher on the inferred
+source lanes; the fixed 260 km mountain 15-team race has an unavailable
+helper at the locked handoff. Both now return an explicit unsupported plan
+with the original last-kilometre source and withheld points, rather than an
+uncaught exception. Paid same-band lead-outs and their older recordings are
+unchanged. A general paid lane-change/assembly path for competing plans is
+still required before these cases can count as playable finishes.
+With the same two fixed helper nominations, a wider 18-case check spanning
+40 km flat, 120 km rolling and 260 km mountain routes, M/F categories and
+4/15/20-team fields returned 18 explicit unsupported outcomes and no award
+path. This is a concrete remaining acceptance gap, not a tuned failure rate.

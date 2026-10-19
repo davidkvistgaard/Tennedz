@@ -379,6 +379,35 @@ test('an unpaid group remains an explicit refusal with a valid nominated finale'
   assert.equal(planned.canCommitAwards,false);
 });
 
+test('competing unavailable lead-outs retain the locked road and withhold results',()=>{
+  const settings={distanceKm:40,terrain:'flat',fatigue:0,
+    gender:'M',teamCount:4,seed:'test-drive-acceptance-1',
+    defaultRivalPlan:'chase',attack:'none',chase:'all'};
+  const plans=[{teamId:'you',finisherId:'you-7',
+    leadOutRiderId:'you-5'},
+  {teamId:'rival-1',finisherId:'rival-1-7',
+    leadOutRiderId:'rival-1-5'}];
+  const base=runV91TestDrive({settings,individualGroupLine:true});
+  const refused=runV91TestDrive({settings,individualGroupLine:true,
+    finalePlans:plans});
+  assert.equal(refused.status,'unsupported');
+  assert.equal(refused.reason,
+    'An early lead-out helper needs an adjacent lane: rival-1.');
+  assert.deepEqual(refused.lastKmSource,base.lastKmSource);
+  assert.equal(refused.pointsStatus,'withheld');
+  assert.equal(refused.canCommitAwards,false);
+
+  const mountain=runV91TestDrive({settings:{...settings,distanceKm:260,
+    terrain:'mountain',fatigue:30,teamCount:15},
+  individualGroupLine:true,finalePlans:plans});
+  assert.equal(mountain.status,'unsupported');
+  assert.equal(mountain.reason,
+    'The nominated lead-out cannot work beside the finisher.');
+  assert.equal(mountain.lastKmSource.roadGroups.length,0);
+  assert.equal(mountain.pointsStatus,'withheld');
+  assert.equal(mountain.canCommitAwards,false);
+});
+
 test('paired field strength and fatigue reach the same conditional path with different paid lines',()=>{
   const settings={distanceKm:40,terrain:'flat',teamCount:4,gender:'F',
     seed:'independent-field',attack:'none',chase:'ignore',
