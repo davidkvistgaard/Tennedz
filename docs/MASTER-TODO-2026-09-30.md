@@ -4,6 +4,20 @@
 
 ## Læsevejledning: færdigt, i gang og endnu ikke begyndt
 
+**Tidligere indhentning af bageste angriber, 19. oktober (isoleret motorprøve):**
+Den integrerede testvej viser nu den eksisterende betalte to-gruppetilstand,
+når den bageste af to angribere er indhentet før 400 meter. En ny version af
+den fælles vejgruppe-løkke fører solo og felt videre til mål eller præcis
+kontakt med faktisk energi og én klokke. I den faste fiktive 260 km
+15-holds-bjergkilde når soloen mål 0,13 sekund før feltets vejgruppe. En
+separat foreløbig individuel fortsættelse bruger den betalte 100-meterkilde
+og den eksisterende sprintløber til alle 120 målpassager; kontaktauditten
+finder mindst 0,63 meters afstand inden soloens målpassage. Ældre optagelser
+genafspilles uændret, og hele enhedstestsættet samt lint består. Feltets
+hjulplacering er fortsat udledt, så klassifikation, point og samlet spilbar
+accept under 04/11 er stadig åbne. Flere køn, feltstørrelser og ruter for
+denne særlige gren er endnu ikke kontrolleret.
+
 **Motorrettelse 19. oktober:** Den isolerede kontaktkontrol for allerede
 afsatte ryttere brugte tidligere ID-rækkefølge som vejorden. En ny version
 fjerner fire falske kontaktfund i den faste 66-løbsprøve: alle 14 betalte

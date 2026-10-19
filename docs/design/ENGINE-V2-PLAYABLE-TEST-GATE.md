@@ -1356,3 +1356,17 @@ finale as a direct run with those effective orders. The ordinary replay
 validator still recomputes the requested race to verify the result. The
 original request, zero helper work, refusal reasons and point withholding
 remain visible.
+
+The prior rear-catch branch now has a separate versioned continuation from
+the already paid two-band 400 m state. It reuses the existing band event loop
+for the solo and bunch, preserving one clock, ordered work and earned energy
+until exact contact or both band crossings. In the fixed 260 km tired mountain
+15-team men's source, the solo band crosses 0.13 seconds before the bunch.
+A second new version uses the paid 100 m bunch handoff, the existing
+finisher-only individual runner and the signed cross-band audit. All 120
+riders receive one conditional crossing; the nearest provisional bunch rider
+stays at least 0.63 m behind the solo before its crossing. The old three-band
+and survivor recordings replay unchanged. This establishes one additional
+complete laboratory line, not a calibrated finish or general coverage of the
+other long mountain sources. Wheel positions remain inferred; classified
+results, point illustrations and awards remain withheld.
