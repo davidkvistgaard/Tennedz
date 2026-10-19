@@ -1183,3 +1183,17 @@ all 120 riders, and fixed tired 260 km mountain M/F named attacks both reach
 branch run exactly. A source with unmet energy still withholds its line and
 point illustration. This is a more cohesive offline motor test, not yet the
 browser test flow, official classification or point settlement.
+
+`node scripts/engine-v2-integrated-terrain-audit.mjs` repeats 96 fixed
+fictional integrated runs across custom elevation and exposed flat routes,
+40/120/260 km, M/F categories, 4/20 teams and chase, break, mixed or named
+attack choices. It checks complete field identity, paid crossing time and
+energy against every read-only point illustration, chosen rival orders and
+award withholding. The recorded outcomes are 60 conditional bunch lines,
+24 multiband lines, four depleted conditional lines, four named late-catch
+lines and four depleted road-only bands with unmet energy demand. Twenty-four
+point illustrations are unavailable because their recorded order or energy
+cannot support one; none grants awards. A separate same-roster custom-route
+pair changes only six elevation heights and confirms different source energy
+and finisher crossing time. These counts are coverage evidence from one seed,
+not calibrated frequencies or an official classification.
