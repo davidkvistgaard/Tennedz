@@ -1197,3 +1197,15 @@ cannot support one; none grants awards. A separate same-roster custom-route
 pair changes only six elevation heights and confirms different source energy
 and finisher crossing time. These counts are coverage evidence from one seed,
 not calibrated frequencies or an official classification.
+
+Partial solo contact now has a separate read-only
+`v2-finale-conditional-crossing-bounds-1` projection. It replays the paid
+partial-contact runner's final positions, energy and exact line timestamps,
+then gives a place interval for each shared timestamp. In a fixed custom-route
+40 km four-team case, four separate sprint crossings allow conditional places
+1–4, while the other 28 riders share a recorded crossing and remain in places
+5–32. This exposes the actual unresolved order instead of describing that
+runner as having inferred wheels. The original paid runner and its version are
+unchanged; the projection is not an official classification and still withholds
+the point illustration and awards. No wheel proximity, drafting or tie-breaker
+is inferred from a common timestamp.

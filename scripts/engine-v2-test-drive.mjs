@@ -9,6 +9,10 @@ import {validateRequestedFinalePlans} from
   '../lib/engine/v2/playtest-finale-trial.mjs';
 import {finaleSnapshotFromTour} from
   '../lib/engine/v2/finale-snapshot.mjs';
+import {hasFinaleConditionalCrossingBounds,
+  recordFinaleConditionalCrossingBounds,
+  validateFinaleConditionalCrossingBounds} from
+  '../lib/engine/v2/finale-conditional-crossing-bounds.mjs';
 import {createV91ConditionalRaceFinal,
   createV91GroupFallbackFromLockedRace,
   validateV91ConditionalRaceFinal} from
@@ -168,6 +172,10 @@ function unsupportedRefusal(error,scenario,request,pointContext){
 
 function summaryFor(trial,request,pointContext){
   const {recording,paidFinale}=trial;
+  const crossingBounds=hasFinaleConditionalCrossingBounds(paidFinale)?
+    recordFinaleConditionalCrossingBounds(paidFinale):null;
+  if(crossingBounds)
+    validateFinaleConditionalCrossingBounds(paidFinale,crossingBounds);
   const lastKm=recording.frames[recording.route.distanceKm-2];
   const allTeams=recording.committedInputs.teams;
   const decisions=allTeams.map(team=>({teamId:team.id,
@@ -228,8 +236,10 @@ function summaryFor(trial,request,pointContext){
             .flatMap(frame=>frame.droppedPassages)
             .reduce((sum,row)=>sum+row.unmetEnergyDemand,0)}:{}),
         individualFinishStatus:'unresolved_within_road_bands'}:{
-      individualFinishStatus:'conditional_inferred_wheels',
+      individualFinishStatus:crossingBounds?
+        'conditional_crossing_bounds_only':'conditional_inferred_wheels',
       lineTimes:paidFinale.finishers,
+      ...(crossingBounds?{conditionalCrossingBounds:crossingBounds}:{}),
       provisionalLineOrder:paidFinale.lineOrder??null,
       positionSourceStatus:paidFinale.positionSourceStatus,
       passingRule:paidFinale.passingRule??null,

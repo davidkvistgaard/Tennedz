@@ -18,10 +18,51 @@ import {validateFinaleNamedDroppedLateCatchLine} from
   '../../lib/engine/v2/finale-named-dropped-late-catch-line.mjs';
 import {projectV91ProvisionalNamedDroppedLateCatchPointPreview} from
   '../../lib/engine/v2/playtest-point-preview.mjs';
+import {recordFinaleConditionalCrossingBounds,
+  validateFinaleConditionalCrossingBounds} from
+  '../../lib/engine/v2/finale-conditional-crossing-bounds.mjs';
 
 const example=JSON.parse(readFileSync(new URL(
   '../../docs/design/engine-v2-test-drive-example.json',import.meta.url),
 'utf8'));
+
+test('partial solo contact exposes only replayable crossing bounds',()=>{
+  const output=runV91IntegratedTestDrive({settings:{distanceKm:40,
+    fatigue:0,terrain:'custom',
+    profileHeightsM:[100,300,150,400,180,100],gender:'M',
+    teamCount:4,seed:'test-drive-acceptance-1',attack:'none',
+    chase:'all',defaultRivalPlan:'chase'},
+  attack:{teamId:'you',riderId:'you-4'},
+  pointContext:{tier:3,divisionIndex:1,divisionCount:1}},
+  {full:true});
+  const {summary,recording}=output;
+  const bounds=summary.finale.conditionalCrossingBounds;
+  assert.equal(summary.finale.individualFinishStatus,
+    'conditional_crossing_bounds_only');
+  assert.equal(summary.finale.provisionalLineOrder,null);
+  assert.deepEqual(bounds.bands.map(band=>[
+    band.firstPossiblePlace,band.lastPossiblePlace]),
+  [[1,1],[2,2],[3,3],[4,4],[5,32]]);
+  assert.equal(bounds.riders.length,32);
+  assert.equal(bounds.resultStatus,'conditional_bounds_only');
+  assert.equal(bounds.pointsStatus,'withheld');
+  assert.equal(bounds.canCommitAwards,false);
+  assert.equal(summary.provisionalPointPreview.status,'unavailable');
+  assert.equal(summary.pointsStatus,'withheld');
+  assert.equal(summary.canCommitAwards,false);
+  assert.deepEqual(recordFinaleConditionalCrossingBounds(
+    recording.paidFinale),bounds);
+  assert.equal(validateFinaleConditionalCrossingBounds(
+    recording.paidFinale,bounds),true);
+  const changed=structuredClone(bounds);
+  changed.bands.at(-1).lastPossiblePlace=31;
+  assert.throws(()=>validateFinaleConditionalCrossingBounds(
+    recording.paidFinale,changed),/do not replay/);
+  const unearned=structuredClone(recording.paidFinale);
+  unearned.finishers[0].elapsedSecondsFromLastKmStart+=1;
+  assert.throws(()=>recordFinaleConditionalCrossingBounds(unearned),
+    /lost a paid rider/);
+});
 
 test('offline test drive pays a manager lead-out on one replayed race',()=>{
   const assisted=runV91TestDrive(example,{full:true});
