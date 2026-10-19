@@ -22,6 +22,9 @@ import {recordFinaleSeparatedIndividualLine,
 import {recordFinaleDepletedIndividualLine,
   validateFinaleDepletedIndividualLine} from
   '../lib/engine/v2/finale-depleted-individual-line.mjs';
+import {recordFinaleSingletonFrontIndividualLine,
+  validateFinaleSingletonFrontIndividualLine} from
+  '../lib/engine/v2/finale-singleton-front-individual-line.mjs';
 import {projectV91ProvisionalPointPreview,
   projectV91ProvisionalMultibandPointPreview} from
   '../lib/engine/v2/playtest-point-preview.mjs';
@@ -265,17 +268,10 @@ export function runV91TestDrive(scenario,{full=false}={}){
     const separated=trial.roadStatus==='paid_separated_bands';
     const depleted=['recorded_depleted_bands','recorded_dropped_bands']
       .includes(trial.roadStatus);
-    if(trial.roadStatus==='paid_group_bands'&&
+    const singleton=trial.roadStatus==='paid_group_bands'&&
       trial.paidFinale.line.approachFrames.find(frame=>
         frame.endDistanceM===trial.recording.route.distanceKm*1000-500)
-        ?.roadGroups[0]?.riderIds.length===1){
-      const base=summaryFor(trial,request,pointContext);
-      const summary=request.plans?{...base,status:'unsupported',
-        individualLineStatus:'singleton_front_unresolved',
-        reason:'The single front rider has no paid individual sprint continuation.'}:
-        {...base,individualLineStatus:'singleton_front_unresolved'};
-      return full?{summary,recording:trial}:summary;
-    }
+        ?.roadGroups[0]?.riderIds.length===1;
     if(depleted&&trial.paidFinale.passageFrames.some(frame=>
       frame.droppedPassages.some(row=>row.unmetEnergyDemand>0))){
       const base=summaryFor(trial,request,pointContext);
@@ -284,10 +280,12 @@ export function runV91TestDrive(scenario,{full=false}={}){
         reason:'The nominated finale cannot run with unmet dropped-rider energy demand.'}:base;
       return full?{summary,recording:trial}:summary;
     }
-    const record=depleted?recordFinaleDepletedIndividualLine:
+    const record=singleton?recordFinaleSingletonFrontIndividualLine:
+      depleted?recordFinaleDepletedIndividualLine:
       separated?recordFinaleSeparatedIndividualLine:
         recordFinaleMultibandIndividualLine;
-    const validate=depleted?validateFinaleDepletedIndividualLine:
+    const validate=singleton?validateFinaleSingletonFrontIndividualLine:
+      depleted?validateFinaleDepletedIndividualLine:
       separated?validateFinaleSeparatedIndividualLine:
         validateFinaleMultibandIndividualLine;
     let individualLine;
@@ -295,8 +293,9 @@ export function runV91TestDrive(scenario,{full=false}={}){
       individualLine=record(trial.recording,trial.paidFinale,
         {plans:request.plans??null});
     }catch(error){
-      if(error.message!==
-        'The nominated lead-out cannot work beside the finisher.')
+      if(!['The nominated lead-out cannot work beside the finisher.',
+        'The singleton front finisher has no paid sprint continuation.']
+        .includes(error.message))
         throw error;
       const base=summaryFor(trial,request,pointContext);
       const summary={...base,status:'unsupported',

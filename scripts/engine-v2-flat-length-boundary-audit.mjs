@@ -25,10 +25,6 @@ for(const distanceKm of [40,260])for(const fatigue of [0,30])
         assert.ok(output.finale.lineTimes.every(row=>
           Number.isFinite(row.elapsedSecondsFromLastKmStart)&&
           Number.isFinite(row.energyAtLine)&&row.energyAtLine>=0));
-      }else if(status==='paid_group_bands'){
-        assert.equal(output.finale.finalRiderEnergy.length,expected);
-        assert.equal(output.individualLineStatus,
-          'singleton_front_unresolved');
       }else{
         assert.equal(status,'unsupported');
         assert.ok(output.reason);

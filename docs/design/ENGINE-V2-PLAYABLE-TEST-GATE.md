@@ -775,3 +775,18 @@ band. In the six 260 km tired contested runs, zero-reserve riders cannot pay
 even the first passive slice. Those runs now refuse with an explicit unpaid
 travel reason and no result or points. These are coverage and integrity
 observations, not calibrated sporting frequencies.
+
+The opt-in `v2-finale-singleton-front-individual-line-lab-1` now carries a
+single surviving front rider's **already paid** final-500 m passages to their
+individual crossing while the bunch uses its existing nominated-finisher and
+optional lead-out runner. The new recording replays source energy and time,
+audits inferred pre-500 m positions and possible final-500 m cross-band
+contact, and withholds classification and awards. It does not add a sprint
+boost to a lone rider from the older group clock: nominating that rider as
+the finisher explicitly remains unsupported. In the fixed 72-run flat
+boundary probe, the two fresh 260 km M/F four-team contested scenarios now
+have complete conditional individual lines, with no possible longitudinal
+cross-band meeting under the provisional positions. Counts are 38 complete
+bunch, 26 multiband, 2 depleted conditional lines and 6 unpaid-travel
+refusals. These are constructed coverage cases; group contact and an
+official result are still open.

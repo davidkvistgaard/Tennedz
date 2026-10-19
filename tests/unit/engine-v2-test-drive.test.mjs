@@ -5,6 +5,8 @@ import {spawnSync} from 'node:child_process';
 import {runV91TestDrive} from '../../scripts/engine-v2-test-drive.mjs';
 import {validateFinaleDepletedIndividualLine} from
   '../../lib/engine/v2/finale-depleted-individual-line.mjs';
+import {validateFinaleSingletonFrontIndividualLine} from
+  '../../lib/engine/v2/finale-singleton-front-individual-line.mjs';
 
 const example=JSON.parse(readFileSync(new URL(
   '../../docs/design/engine-v2-test-drive-example.json',import.meta.url),
@@ -279,25 +281,43 @@ test('paid dropped travel joins an opt-in individual bunch line without inventin
   assert.equal(unpaidPlan.pointsStatus,'withheld');
 });
 
-test('a singleton front and unpaid road state stay visible in the offline drive',()=>{
+test('a singleton front keeps its paid solo crossing beside a nominated bunch finale',()=>{
   const settings={distanceKm:260,terrain:'flat',fatigue:0,
     gender:'M',teamCount:4,seed:'flat-length-boundary-1',
     defaultRivalPlan:'chase',attack:'repeated',chase:'all'};
   const singleton=runV91TestDrive({settings,individualGroupLine:true},
     {full:true});
-  assert.equal(singleton.summary.roadStatus,'paid_group_bands');
-  assert.equal(singleton.summary.individualLineStatus,
-    'singleton_front_unresolved');
-  assert.equal(singleton.summary.finale.chaseAvailability
-    .unavailableTeamIds.length,3);
+  assert.equal(singleton.summary.roadStatus,'conditional_multiband_line');
+  assert.equal(singleton.individualLine.version,
+    'v2-finale-singleton-front-individual-line-lab-1');
+  assert.equal(singleton.summary.finale.lineTimes.length,32);
+  assert.equal(singleton.summary.finale.provisionalLineOrder[0].riderId,
+    'you-4');
+  assert.equal(singleton.individualLine.overlapAudit.firstPotentialOverlap,
+    null);
+  assert.equal(singleton.individualLine.pre500Audit.firstPotentialOverlap,
+    null);
+  assert.equal(singleton.recording.chaseAvailability.unavailableTeamIds
+    .length,3);
   assert.equal(singleton.summary.pointsStatus,'withheld');
-  assert.equal(singleton.individualLine,undefined);
+  assert.equal(singleton.summary.canCommitAwards,false);
+  assert.ok(Math.abs(singleton.summary.finale.lineTimes.find(row=>
+    row.riderId==='you-4').elapsedSecondsFromLastKmStart-
+    singleton.recording.paidFinale.frontLineTime)<1e-8);
+  const altered=structuredClone(singleton.individualLine);
+  altered.bandRunners[0].runner.frames[0].riders[0].energySpent+=1;
+  assert.throws(()=>validateFinaleSingletonFrontIndividualLine(
+    singleton.recording.recording,singleton.recording.paidFinale,
+    {plans:null},altered),/does not replay/);
   const ordered=runV91TestDrive({settings,individualGroupLine:true,
     finalePlans:[{teamId:'you',finisherId:'you-7',
       leadOutRiderId:null}]});
-  assert.equal(ordered.status,'unsupported');
-  assert.equal(ordered.individualLineStatus,
-    'singleton_front_unresolved');
+  assert.equal(ordered.roadStatus,'conditional_multiband_line');
+  const frontPlan=runV91TestDrive({settings,individualGroupLine:true,
+    finalePlans:[{teamId:'you',finisherId:'you-4',
+      leadOutRiderId:null}]});
+  assert.equal(frontPlan.status,'unsupported');
+  assert.match(frontPlan.reason,/no paid sprint continuation/);
   const unpaid=runV91TestDrive({settings:{...settings,fatigue:30},
     individualGroupLine:true});
   assert.equal(unpaid.status,'unsupported');
