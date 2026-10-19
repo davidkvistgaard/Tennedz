@@ -119,6 +119,45 @@ test('all 19 rivals may have individual tactics within the request limit',()=>{
   }
 });
 
+test('named rival tactics select a nonconsecutive manager without changing the field',()=>{
+  const shared={distanceKm:40,teamCount:4,seed:'sparse-managers',
+    defaultRivalPlan:'chase',managerTactics:[
+      {effort:'steady',attack:'none',chase:'ignore'}]};
+  const baseline=createV91Playtest(shared);
+  const tactic={teamId:'rival-3',effort:'conserve',attack:'none',
+    chase:'ignore'};
+  const changed=createV91Playtest({...shared,
+    managerTacticOverrides:[tactic]});
+  const teams=playtest=>new Map(playtest.recording.committedInputs.teams
+    .map(team=>[team.id,team]));
+  const before=teams(baseline),after=teams(changed);
+  assert.deepEqual([...before.values()].map(team=>team.riders),
+    [...after.values()].map(team=>team.riders));
+  for(const id of ['you','rival-1','rival-2'])
+    assert.deepEqual(after.get(id).orders,before.get(id).orders);
+  assert.equal(after.get('rival-3').orders.baseline.effort,'conserve');
+  assert.equal(after.get('rival-3').orders.baseline.chase,'ignore');
+  assert.deepEqual(changed.settings.managerTacticOverrides,[tactic]);
+  assert.equal(Object.hasOwn(baseline.settings,'managerTacticOverrides'),false);
+  assert.deepEqual(changed.recording,createV91Playtest({...shared,
+    managerTacticOverrides:[tactic]}).recording);
+});
+
+test('named rival tactics reject overlap, unknown managers and invalid orders',()=>{
+  const valid={teamId:'rival-3',effort:'hard',attack:'none',chase:'all'};
+  for(const managerTacticOverrides of [
+    [{...valid,teamId:'rival-1'}],
+    [valid,valid],
+    [{...valid,teamId:'rival-4'}],
+    [{...valid,teamId:'you'}],
+    [{...valid,effort:'extreme'}],
+    [{teamId:'rival-3',effort:'hard',attack:'none'}],
+    [{...valid,extra:true}],
+  ])assert.throws(()=>prepareV91Playtest({teamCount:4,
+    managerTactics:[{effort:'steady',attack:'none',chase:'ignore'}],
+    managerTacticOverrides}),/valid playtest settings/);
+});
+
 test('opt-in team profiles change field strength and fatigue without changing orders',()=>{
   const shared={distanceKm:40,terrain:'flat',teamCount:4,gender:'F',
     seed:'independent-field',attack:'none',chase:'ignore'};

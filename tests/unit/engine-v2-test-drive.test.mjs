@@ -184,6 +184,33 @@ test('offline test drive keeps multiple manager orders and visible defaults',()=
   assert.equal(output.finale.lineTimes.length,32);
 });
 
+test('one selected rival tactic reaches the paid finale on the same roster',()=>{
+  const shared={settings:example.settings,
+    finalePlans:example.finalePlans};
+  const defaultRun=runV91TestDrive(shared,{full:true});
+  const changed=runV91TestDrive({...shared,settings:{...shared.settings,
+    managerTacticOverrides:[{teamId:'rival-3',effort:'conserve',
+      attack:'none',chase:'ignore'}]}},{full:true});
+  assert.equal(changed.summary.roadStatus,'paid_conditional_line');
+  assert.deepEqual(defaultRun.recording.recording.committedInputs.teams.map(
+    team=>team.riders),changed.recording.recording.committedInputs.teams.map(
+    team=>team.riders));
+  const decisions=output=>new Map(output.summary.managerDecisions.map(row=>
+    [row.teamId,row]));
+  for(const id of ['you','rival-1','rival-2'])
+    assert.deepEqual(decisions(changed).get(id),decisions(defaultRun).get(id));
+  assert.equal(decisions(changed).get('rival-3').baseline.effort,'conserve');
+  const sourceEnergy=output=>output.recording.recording.frames.at(-2)
+    .teamEnergy.find(row=>row.teamId==='rival-3').mean;
+  assert.ok(sourceEnergy(changed)>sourceEnergy(defaultRun));
+  const lineTime=output=>output.summary.finale.lineTimes.find(row=>
+    row.riderId==='rival-3-7').elapsedSecondsFromLastKmStart;
+  assert.notEqual(lineTime(changed),lineTime(defaultRun));
+  assert.equal(changed.summary.finale.lineTimes.length,32);
+  assert.equal(changed.summary.pointsStatus,'withheld');
+  assert.equal(changed.summary.canCommitAwards,false);
+});
+
 test('long race records depleted reserve and separated groups without ranks',()=>{
   const base={distanceKm:260,terrain:'mountain',fatigue:30,
     teamCount:4,gender:'M',seed:'test-drive-acceptance-1'};

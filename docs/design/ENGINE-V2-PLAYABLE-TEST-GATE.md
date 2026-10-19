@@ -64,7 +64,11 @@ docs/design/engine-v2-test-drive-example.json` now runs one fictional v91
 race through the conditional motor entry and verifies its replay. Copy and
 edit the JSON to choose route, length, category, fatigue, field, seed and
 manager tactics. `managerTactics` supplies orders for the first listed rivals;
-the others use `defaultRivalPlan`. `finalePlans` can override any named
+the others use `defaultRivalPlan`. The optional `managerTacticOverrides`
+array names any nonconsecutive rival by `teamId`, so a selected opponent can
+change `effort`, `attack` and `chase` without filling all earlier positions.
+An ID cannot appear in both tactic forms. The default and player orders stay
+visible in the output. `finalePlans` can override any named
 manager's finisher and optional helper while unspecified managers keep their
 captain and no helper. `--full` includes the complete source and finale
 recording for inspection. Output identifies road groups, chasers, energy,
@@ -916,3 +920,12 @@ fields, this player-only earlier repeated strategy reaches 24 paid
 conditional lines and 12 explicit separated-road refusals, with no thrown
 errors. This is coverage of a constrained order combination, not a balance
 claim or support for simultaneous rival attacks.
+
+The offline test drive can now change one chosen rival's baseline tactic by
+team ID while preserving its original fictional field and every other
+manager's orders. In the fixed 40 km four-team flat example, selecting only
+`rival-3` to conserve and ignore chasing raises that team's recorded energy
+before the final kilometre and changes its nominated finisher's paid
+conditional line time. No older input gains a new setting or recording field,
+and this paired observation does not imply an official result or balance
+target.
