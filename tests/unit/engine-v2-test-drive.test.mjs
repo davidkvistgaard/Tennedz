@@ -66,6 +66,18 @@ test('offline test drive rejects unknown managers and accepts stdin JSON',()=>{
     'paid_conditional_line');
 });
 
+test('offline test drive rejects invalid finale riders before a group-road refusal',()=>{
+  const settings={distanceKm:40,terrain:'flat',teamCount:4,
+    gender:'F',seed:'conditional-coverage-1',attack:'repeated',
+    chase:'ignore',defaultRivalPlan:'attack'};
+  assert.throws(()=>runV91TestDrive({settings,finalePlans:[{
+    teamId:'you',finisherId:'rival-1-7',leadOutRiderId:null}]}),
+  /valid finale plan/);
+  assert.throws(()=>runV91TestDrive({settings,finalePlans:[{
+    teamId:'you',finisherId:'you-7',leadOutRiderId:'you-7'}]}),
+  /valid finale plan/);
+});
+
 test('offline test drive keeps multiple manager orders and visible defaults',()=>{
   const scenario={settings:{...example.settings,gender:'F',
     seed:'test-drive-managers-1',managerTactics:[

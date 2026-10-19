@@ -5,6 +5,8 @@ import {resolve} from 'node:path';
 import {pathToFileURL} from 'node:url';
 import {createV91Playtest,prepareV91Playtest} from
   '../lib/engine/v2/playtest.mjs';
+import {validateRequestedFinalePlans} from
+  '../lib/engine/v2/playtest-finale-trial.mjs';
 import {finaleSnapshotFromTour} from
   '../lib/engine/v2/finale-snapshot.mjs';
 import {createV91ConditionalRaceFinal,
@@ -49,6 +51,7 @@ function requestFor(scenario){
     request.plans=teams.map(team=>({teamId:team.id,
       finisherId:byTeam.get(team.id)?.finisherId??team.orders.captainId,
       leadOutRiderId:byTeam.get(team.id)?.leadOutRiderId??null}));
+    validateRequestedFinalePlans(request.plans,teams);
   }
   return request;
 }

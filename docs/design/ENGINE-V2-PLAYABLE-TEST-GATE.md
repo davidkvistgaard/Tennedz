@@ -12,8 +12,9 @@ official result until every item below is verified end to end.
    plans. Each plan can name a finisher, an optional lead-out rider and the
    existing effort, attack and chase choices. Reject invalid or unavailable
    riders before simulation where the locked input already proves that fact.
-   The complete-bunch trial now checks submitted finisher and helper IDs
-   against the prepared fictional roster before running the kilometre tour;
+   The offline test drive checks submitted finisher and helper IDs
+   against the prepared fictional roster before running the kilometre tour,
+   including when the road would later refuse a group finale;
    valid historical recordings keep their prior input and output shapes.
 3. Run exactly the chosen race once. Show the committed choices, road groups,
    catches, actual work and remaining energy in a replay sourced from that run.
