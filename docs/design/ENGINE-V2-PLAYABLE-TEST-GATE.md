@@ -1607,3 +1607,15 @@ The focused 28-test v2 playtest, finale-trial and replay suite passed. A full
 unit-suite attempt and a wider test-drive attempt were interrupted after
 their respective first 39 and 28 passing tests stopped producing output;
 neither is recorded as a pass.
+
+The browser now retains one previous integrated run for a paired comparison
+only when route, custom profile, category, field, fatigue and seed match.
+It shows the named final attack, source group count, the nominated rider's
+conditional crossing and energy at the line, with a time difference only
+when the same rider finishes both runs. The 40 km flat local browser fixture
+ran a baseline and then a named player attack with unchanged conditions:
+the attack launched solo and changed that rider's crossing. Switching the
+route to rolling removed the comparison. All three browser cases passed,
+including the existing 390 and 1440 px flows. A serial full unit-suite
+attempt also stopped after its first 39 passing tests, at the balance-audit
+portion, and was interrupted; the focused suite remains the verified check.

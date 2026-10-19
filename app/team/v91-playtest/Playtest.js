@@ -33,6 +33,28 @@ const LABELS={distanceKm:'Distance',terrain:'Route profile',teamCount:'Field siz
   gender:'Category',fatigue:'Starting fatigue',effort:'Your effort',
   attack:'Your attack order',chase:'Your chase order'};
 
+function comparisonConditions(settings){
+  const {distanceKm,terrain,teamCount,gender,fatigue,seed,
+    profileHeightsM}=settings;
+  return JSON.stringify({distanceKm,terrain,teamCount,gender,fatigue,seed,
+    ...(terrain==='custom'?{profileHeightsM}:{})});
+}
+
+function comparisonRun(settings,response){
+  const summary=response.integrated;
+  const finisherId=summary.managerDecisions?.find(row=>
+    row.teamId==='you')?.finisherId??'you-7';
+  const crossing=summary.finale?.lineTimes?.find(row=>
+    row.riderId===finisherId);
+  return {conditions:comparisonConditions(settings),finisherId,
+    crossingSeconds:crossing?.elapsedSecondsFromLastKmStart??null,
+    energyAtLine:crossing?.energyAtLine??null,
+    sourceGroups:summary.lastKmSource?.roadGroups?.length??0,
+    namedAttack:summary.request?.attackRiderId??
+      summary.request?.namedAttacks?.map(row=>row.riderId).join(', ')??'none',
+    attackRoad:response.attackRoad?.branch??null};
+}
+
 export default function Playtest(){
   const [settings,setSettings]=useState(INITIAL);
   const [customRivals,setCustomRivals]=useState(0);
@@ -52,6 +74,8 @@ export default function Playtest(){
   const [finaleFrameIndex,setFinaleFrameIndex]=useState(0);
   const [inspectedRiderId,setInspectedRiderId]=useState('you-7');
   const [selectedKm,setSelectedKm]=useState(1);
+  const [previousRun,setPreviousRun]=useState(null);
+  const [comparison,setComparison]=useState(null);
   const [busy,setBusy]=useState(false);
   const [error,setError]=useState('');
   const frame=result?.frames[selectedKm-1];
@@ -121,6 +145,14 @@ export default function Playtest(){
         raceSettings;
       const response=await api('/api/v91-playtest',{method:'POST',
         headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+      if(integratedMode){
+        const next=comparisonRun(raceSettings,response);
+        setComparison(previousRun?.conditions===next.conditions?
+          {before:previousRun,after:next}:null);
+        setPreviousRun(next);
+      }else{
+        setComparison(null);setPreviousRun(null);
+      }
       setResult(response.playtest);setIntegrated(response.integrated??null);
       setAttackRoad(response.attackRoad??null);
       setSoloApproach(response.soloApproach??null);
@@ -131,7 +163,8 @@ export default function Playtest(){
       setInspectedRiderId(response.integrated?.managerDecisions
         ?.find(row=>row.teamId==='you')?.finisherId??'you-7');
       setSelectedKm(1);
-    }catch(cause){setError(cause.message||'The playtest could not run.');}
+    }catch(cause){setComparison(null);
+      setError(cause.message||'The playtest could not run.');}
     finally{setBusy(false);}
   }
   return <TeamShell>
@@ -393,6 +426,20 @@ export default function Playtest(){
               {event.passedId?` passes ${event.passedId}`:''}
             </li>)}</ol>
           </details>}
+          {comparison&&<div aria-label="Paired race comparison">
+            <h4>Previous run on the same conditions</h4>
+            <p>Route, profile, category, field, fatigue and seed match. Tactics and finale nominations may differ.</p>
+            <p>Named final attack: {comparison.before.namedAttack} → {comparison.after.namedAttack}
+              {comparison.after.attackRoad?` (${comparison.after.attackRoad} road)`:''}</p>
+            <p>Groups at the last-kilometre handoff: {comparison.before.sourceGroups} → {comparison.after.sourceGroups}</p>
+            <p>Finisher crossing: {comparison.before.finisherId} {comparison.before.crossingSeconds?.toFixed(3)??'unavailable'} s → {comparison.after.finisherId} {comparison.after.crossingSeconds?.toFixed(3)??'unavailable'} s</p>
+            {comparison.before.finisherId===comparison.after.finisherId&&
+              comparison.before.crossingSeconds!==null&&
+              comparison.after.crossingSeconds!==null&&<p>
+                Same finisher time change: {(comparison.after.crossingSeconds-
+                  comparison.before.crossingSeconds).toFixed(3)} s · Energy at line: {comparison.before.energyAtLine?.toFixed(1)??'—'} → {comparison.after.energyAtLine?.toFixed(1)??'—'}
+              </p>}
+          </div>}
         </div>:<p className="v91-warning">{result.warning}</p>}
       </section>}
     </main>

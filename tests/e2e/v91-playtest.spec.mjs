@@ -117,6 +117,11 @@ test('a named final-kilometre attack changes the paid road',async({page})=>{
   await page.getByLabel('Scenario seed').fill('integrated-probe');
   await page.getByRole('checkbox',{name:'Continue to a conditional finish'})
     .check();
+  await page.getByRole('button',{name:'Run full race preview'}).click();
+  await expect(page.getByRole('heading',{name:'Conditional finish'}))
+    .toBeVisible();
+  const baseline=await page.getByText(
+    /Your nominated finisher: you-7 · [\d.]+ s/).textContent();
   await page.getByLabel('Named attack manager').selectOption('you');
   await page.getByLabel('Named attacking rider').selectOption('you-0');
   await page.getByRole('button',{name:'Run full race preview'}).click();
@@ -135,6 +140,14 @@ test('a named final-kilometre attack changes the paid road',async({page})=>{
     .toBeVisible();
   await expect(page.getByText(/you-0: front · [\d.]+ energy · [\d.]+ spent this segment/))
     .toBeVisible();
+  await expect(page.getByRole('heading',{
+    name:'Previous run on the same conditions'})).toBeVisible();
+  await expect(page.getByText('Named final attack: none → you-0 (solo road)'))
+    .toBeVisible();
+  await expect(page.getByText(/Same finisher time change: -?[\d.]+ s · Energy at line:/))
+    .toBeVisible();
+  expect(await page.getByText(/Your nominated finisher: you-7 · [\d.]+ s/)
+    .textContent()).not.toBe(baseline);
   await expect(page.getByText('32 of 32 riders have individual crossing times.'))
     .toBeVisible();
   await expect(page.getByText(/A complete rider-by-rider final-kilometre replay is not available/))
@@ -142,5 +155,11 @@ test('a named final-kilometre attack changes the paid road',async({page})=>{
   await expect(page.getByText(/Points: withheld/)).toBeVisible();
   await expect(page.getByRole('slider',{name:/Race kilometre/}))
     .toHaveAttribute('max','39');
+  await page.getByLabel('Route profile').selectOption('rolling');
+  await page.getByRole('button',{name:'Run full race preview'}).click();
+  await expect(page.getByRole('heading',{name:'Recorded race · 40 km rolling'}))
+    .toBeVisible();
+  await expect(page.getByRole('heading',{
+    name:'Previous run on the same conditions'})).toHaveCount(0);
   expect(errors).toEqual([]);
 });
