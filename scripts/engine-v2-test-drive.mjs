@@ -26,10 +26,16 @@ import {recordFinaleSingletonFrontIndividualLine,
   validateFinaleSingletonFrontIndividualLine} from
   '../lib/engine/v2/finale-singleton-front-individual-line.mjs';
 import {recordFinaleNamedAttackDroppedRoadFromTour,
-  validateFinaleNamedAttackDroppedRoadFromTour} from
+  validateFinaleNamedAttackDroppedRoadFromTour,
+  recordFinaleNamedAttackMultipleDroppedRoadFromTour,
+  validateFinaleNamedAttackMultipleDroppedRoadFromTour,
+  FINALE_NAMED_ATTACK_MULTIPLE_DROPPED_ROAD_VERSION} from
   '../lib/engine/v2/finale-named-attack-dropped-road.mjs';
 import {recordFinaleNamedDroppedIndividualLine,
-  validateFinaleNamedDroppedIndividualLine} from
+  validateFinaleNamedDroppedIndividualLine,
+  recordFinaleNamedMultipleDroppedIndividualLine,
+  validateFinaleNamedMultipleDroppedIndividualLine,
+  FINALE_NAMED_MULTIPLE_DROPPED_INDIVIDUAL_LINE_VERSION} from
   '../lib/engine/v2/finale-named-dropped-individual-line.mjs';
 import {recordFinaleNamedDroppedSurvivorLine,
   validateFinaleNamedDroppedSurvivorLine,
@@ -42,6 +48,7 @@ import {recordFinaleNamedDroppedLateCatchLine,
 import {projectV91ProvisionalPointPreview,
   projectV91ProvisionalMultibandPointPreview,
   projectV91ProvisionalNamedDroppedPointPreview,
+  projectV91ProvisionalNamedMultipleDroppedPointPreview,
   projectV91ProvisionalNamedDroppedSurvivorPointPreview,
   projectV91ProvisionalNamedDroppedLateCatchPointPreview} from
   '../lib/engine/v2/playtest-point-preview.mjs';
@@ -276,10 +283,16 @@ function summaryForNamedDroppedRoad(source,request,pointContext,road,
   const lastKm=recording.frames[recording.route.distanceKm-2];
   const lateCatch=individualLine?.version===
     FINALE_NAMED_DROPPED_LATE_CATCH_LINE_VERSION;
+  const multipleDroppedRoad=road.version===
+    FINALE_NAMED_ATTACK_MULTIPLE_DROPPED_ROAD_VERSION;
+  const multipleDropped=individualLine?.version===
+    FINALE_NAMED_MULTIPLE_DROPPED_INDIVIDUAL_LINE_VERSION;
   const preview=pointContext?individualLine?.provisionalLineOrder
     ?.every(row=>row.position!==null)?
       (lateCatch?
         projectV91ProvisionalNamedDroppedLateCatchPointPreview:
+        multipleDropped?
+        projectV91ProvisionalNamedMultipleDroppedPointPreview:
         individualLine.version===
         FINALE_NAMED_DROPPED_SURVIVOR_LINE_VERSION?
         projectV91ProvisionalNamedDroppedSurvivorPointPreview:
@@ -288,7 +301,8 @@ function summaryForNamedDroppedRoad(source,request,pointContext,road,
       {status:'unavailable',reason:individualLine?
           'Cross-band contact or an ambiguous place remains unresolved.':
           'No complete individual line.'}:null;
-  return {version:lateCatch?'v91-offline-test-drive-9':
+  return {version:multipleDroppedRoad?'v91-offline-test-drive-10':
+    lateCatch?'v91-offline-test-drive-9':
     individualLine?'v91-offline-test-drive-8':
     'v91-offline-test-drive-7',
     status:individualLine?'conditional_line':'road_only',
@@ -335,10 +349,14 @@ function summaryForNamedDroppedRoad(source,request,pointContext,road,
           id:group.id,riderIds:group.riderIds})),{
         id:'peloton',riderIds:road.frames.find(frame=>
           frame.distanceM===individualLine.startDistanceM)
-          .active.pelotonRiderIds},{id:'dropped',
-          riderIds:road.frames.find(frame=>
+          .active.pelotonRiderIds},
+        ...(multipleDropped?road.frames.find(frame=>
+          frame.distanceM===individualLine.startDistanceM)
+          .droppedTravel.riders.map(row=>({
+            id:`isolated:${row.riderId}`,riderIds:[row.riderId]})):
+          [{id:'dropped',riderIds:road.frames.find(frame=>
             frame.distanceM===individualLine.startDistanceM)
-            .droppedTravel.riders.map(row=>row.riderId)}]}:
+            .droppedTravel.riders.map(row=>row.riderId)}])]}:
         {bands:road.line.bands}),
       finalRiderEnergy:individualLine?
         individualLine.conditionalCrossings.map(row=>({
@@ -430,11 +448,14 @@ export function runV91TestDrive(scenario,{full=false}={}){
       }
       recoveredGroupPlan=true;
     }else if(namedSource&&namedSource.roadGroups.length===0&&
-      namedSource.droppedRiderIds.length===1&&error.message===
+      namedSource.droppedRiderIds.length>=1&&error.message===
         'The controlled finale trial needs one complete source bunch.'){
       let paidRoad;
+      const multipleDropped=namedSource.droppedRiderIds.length>1;
       try{
-        paidRoad=recordFinaleNamedAttackDroppedRoadFromTour(
+        paidRoad=(multipleDropped?
+          recordFinaleNamedAttackMultipleDroppedRoadFromTour:
+          recordFinaleNamedAttackDroppedRoadFromTour)(
           source.recording,{teamId:request.attackTeamId});
       }catch(roadError){
         if(![
@@ -448,14 +469,17 @@ export function runV91TestDrive(scenario,{full=false}={}){
         return unsupportedRefusal(new Error(roadError.message,{
           cause:{playtestSource:source}}),scenario,request,pointContext);
       }
-      validateFinaleNamedAttackDroppedRoadFromTour(source.recording,
+      (multipleDropped?
+        validateFinaleNamedAttackMultipleDroppedRoadFromTour:
+        validateFinaleNamedAttackDroppedRoadFromTour)(source.recording,
         {teamId:request.attackTeamId},paidRoad);
       const finishM=source.recording.route.distanceKm*1000;
       const at500=paidRoad.frames.find(frame=>
         frame.distanceM===finishM-500);
       const caughtBefore500=paidRoad.frames.some(frame=>
         frame.distanceM<=finishM-500&&frame.active.catchDistanceM);
-      const isolatedId=at500?.droppedTravel.riders[0]?.riderId;
+      const isolatedIds=new Set(at500?.droppedTravel.riders.map(row=>
+        row.riderId)??[]);
       const paidLineRequested=at500?.active.roadGroups.length===0&&
         caughtBefore500||at500?.active.roadGroups.length===1&&
         (paidRoad.frames.at(-1).active.roadGroups.length===1||
@@ -464,7 +488,7 @@ export function runV91TestDrive(scenario,{full=false}={}){
         .map(team=>({teamId:team.id,
           finisherId:team.orders.captainId,leadOutRiderId:null}));
       if(paidLineRequested&&nominations.some(plan=>
-        plan.finisherId===isolatedId))
+        isolatedIds.has(plan.finisherId)))
         return unsupportedRefusal(new Error(
           'An isolated rider cannot be a paid finisher.',{
             cause:{playtestSource:source}}),scenario,request,pointContext);
@@ -472,18 +496,26 @@ export function runV91TestDrive(scenario,{full=false}={}){
       if(at500?.active.roadGroups.length===0&&
         caughtBefore500){
         try{
-          individualLine=recordFinaleNamedDroppedIndividualLine(
+          individualLine=(multipleDropped?
+            recordFinaleNamedMultipleDroppedIndividualLine:
+            recordFinaleNamedDroppedIndividualLine)(
             source.recording,paidRoad,{plans:request.plans??null});
-          validateFinaleNamedDroppedIndividualLine(source.recording,
+          (multipleDropped?
+            validateFinaleNamedMultipleDroppedIndividualLine:
+            validateFinaleNamedDroppedIndividualLine)(source.recording,
             paidRoad,{plans:request.plans??null},individualLine);
         }catch(lineError){
           if(![
             'The nominated lead-out cannot work beside the finisher.'
-          ].includes(lineError.message))throw lineError;
+          ].includes(lineError.message)&&
+            !(multipleDropped&&
+              /^A positioned rider cannot pay to finish:/.test(
+                lineError.message)))throw lineError;
           return unsupportedRefusal(new Error(lineError.message,{
             cause:{playtestSource:source}}),scenario,request,pointContext);
         }
-      }else if(at500?.active.roadGroups.length===1&&
+      }else if(!multipleDropped&&
+        at500?.active.roadGroups.length===1&&
         paidRoad.frames.at(-1).active.roadGroups.length===1){
         try{
           individualLine=recordFinaleNamedDroppedSurvivorLine(
@@ -498,7 +530,7 @@ export function runV91TestDrive(scenario,{full=false}={}){
           return unsupportedRefusal(new Error(lineError.message,{
             cause:{playtestSource:source}}),scenario,request,pointContext);
         }
-      }else if(scenario.lateCatchLine===true&&
+      }else if(!multipleDropped&&scenario.lateCatchLine===true&&
         at500?.active.roadGroups.length===1&&
         paidRoad.frames.at(-1).active.roadGroups.length===0){
         const soloId=at500.active.roadGroups[0].riderIds[0];

@@ -1044,3 +1044,23 @@ silently omit part of the order. On the same fixed 260 km field, `you-4` is
 caught after that boundary and now reports the unpaid-work refusal; `you-3`
 is caught before it and remains an accepted conditional line. Both retain the
 same earlier versioned road recording and withhold official results and awards.
+
+The separate `v91-offline-test-drive-10` opt-in now follows one named attack
+when **at least two riders are already isolated** and the attacker is caught
+by the paid 500 m boundary. It reuses the named attack/chase road with a new
+source version, pays each isolated rider independently on the same bunch clock,
+then uses the existing nominated bunch runner, signed cross-band contact audit
+and read-only point policy for every individual passage. The earlier one-drop
+road/line versions remain replayable. In the fixed 120 km asymmetric field,
+4/15/20 teams, M/F categories and flat/rolling/mountain routes all replayed
+18 conditional complete-field crossings: 32/120/160 distinct riders,
+respectively. The 4-team source has three isolated riders; 15/20 teams have
+four. Nominating `you-6` to lead out `you-7` pays four helper steps and moves
+that finisher's crossing from 88.616 to 88.507 seconds after the last-km
+marker; all isolated crossings and the recorded attack road stay unchanged.
+Two seeds in a constructed 260 km flat/mountain 4-team field also reached
+eight complete conditional lines across M/F. The corresponding rolling source
+cannot pay one active rider to the line and explicitly withholds a finish and
+point preview. These counts verify replay and energy bookkeeping in fictional
+fields, not calibrated sporting rates. Source wheels and passing remain
+provisional, so no official classification or award follows.
