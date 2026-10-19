@@ -189,6 +189,20 @@ lead-out work, so the integrated drive withholds classification and points.
 In the first version, exact contact stops the continuation without inferring
 a merge or draft.
 
+A separate dual-survivor line now uses those three paid band crossings when
+both attackers remain separated. At the bunch's recorded 100 m boundary it
+retains both attackers' paid solo tapes and runs the remaining bunch once
+through the existing finisher-only individual runner. It checks the two
+solos against each other and both against the inferred bunch positions at
+every relevant motion edge, rejecting any unrecorded contact. In one fixed
+40 km flat order and seed, M/F categories with 15/20 teams all reach
+120/160 unique conditional crossings; the smallest audited separation is
+about 0.88 m. The old three-band recording remains replayable. These close
+four fictional coverage cases, not a calibrated attack success rate. Inferred
+bunch wheels, missing helper work, other road states, official results and
+points remain open. The focused replay, full unit suite and lint pass; this
+offline motor increment did not change the browser UI or production build.
+
 The next opt-in version handles one narrower measured contact: when the rear
 attacker reaches the bunch, that rider joins the bunch at the recorded
 position and time, pays sheltered travel for the rest of the current interval,

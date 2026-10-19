@@ -33,6 +33,9 @@ import {recordFinaleConcurrentSurvivorLineFromTour,
 import {recordFinaleConcurrentRearCaught400StepFromTour,
   validateFinaleConcurrentRearCaught400StepFromTour} from
   '../lib/engine/v2/finale-concurrent-rear-caught-400-step.mjs';
+import {recordFinaleConcurrentDualSurvivorLineFromTour,
+  validateFinaleConcurrentDualSurvivorLineFromTour} from
+  '../lib/engine/v2/finale-concurrent-dual-survivor-line.mjs';
 import {validateRequestedFinalePlans} from
   '../lib/engine/v2/playtest-finale-trial.mjs';
 import {finaleSnapshotFromTour} from
@@ -954,6 +957,27 @@ export function runV91ConcurrentTestDrive(scenario,{full=false}={}){
       }catch(priorRearCatchError){
         if(priorRearCatchError?.constructor!==Error)
           throw priorRearCatchError;
+      }
+      try{
+        const dualLine=recordFinaleConcurrentDualSurvivorLineFromTour(tour,{
+          plans:request.plans??null});
+        validateFinaleConcurrentDualSurvivorLineFromTour(tour,{
+          plans:request.plans??null},dualLine);
+        const summary={...base,status:'conditional',
+          roadStatus:dualLine.roadStatus,
+          individualLineVersion:dualLine.version,
+          positionSourceStatus:dualLine.positionedSource.status,
+          provisionalLineOrder:dualLine.provisionalLineOrder,
+          finale:{individualFinishStatus:'conditional_inferred_wheels',
+            lineTimes:dualLine.conditionalCrossings,
+            paidRoad:dualLine.roadPrefix,
+            soloRoad:dualLine.soloSuffix,
+            crossBandContactAudit:dualLine.crossBandContactAudit,
+            leadOutWork:[]}};
+        return full?{summary,recording:source,
+          individualLine:dualLine}:summary;
+      }catch(dualError){
+        if(dualError?.constructor!==Error)throw dualError;
       }
       try{
         const rearCaught=recordFinaleConcurrentRearCaught400StepFromTour(

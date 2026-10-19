@@ -33,6 +33,18 @@ målpassager. Fokuseret genafspilning, hele enhedssættet og lint består.
 Hjulplacering, officiel klassifikation og
 point er fortsat åbne.
 
+**To overlevende angribere ved mål, 19. oktober (isoleret motorprøve):**
+En særskilt versionsmærket finale bruger den allerede betalte vejoptagelse
+med tre adskilte grupper. Begge angriberes bevægelse og energi beholdes;
+feltet løber den sidste del gennem den eksisterende individuelle sprintløber
+fra sin målte 100-meterposition. Kontaktkontrollen afviser sammenfald mellem
+angriberne eller mellem dem og beregnede feltryttere. Samme fiktive 40 km
+flade ordre og seed giver i M/F med 15/20 hold 120/160 unikke foreløbige
+målpassager; mindste målte afstand er cirka 0,88 meter. Fokuseret
+genafspilning, hele enhedssættet og lint består. Tidligere optagelser
+bevares, og point tilbageholdes. Dette dækker ikke andre seeds, ruter,
+hjælperarbejde eller officiel klassifikation; punkt 04/11 er stadig åbent.
+
 **Motorrettelse 19. oktober:** Den isolerede kontaktkontrol for allerede
 afsatte ryttere brugte tidligere ID-rækkefølge som vejorden. En ny version
 fjerner fire falske kontaktfund i den faste 66-løbsprøve: alle 14 betalte

@@ -56,6 +56,20 @@ for(const gender of mode==='one'?['M']:['M','F'])
       lineHandoff.roadBands[0].positionM<=
         lineHandoff.roadBands[1].positionM))
       throw new Error('The survivor audit lost a paid, separated front.');
+    const dualSuffix=output.individualLine?.soloSuffix;
+    const dualContactAudit=output.individualLine
+      ?.crossBandContactAudit;
+    if(dualSuffix&&(
+      dualSuffix.length!==2||
+      lineHandoff?.roadBands.length!==3||
+      lineHandoff.roadBands[0].positionM<=
+        lineHandoff.roadBands[1].positionM||
+      lineHandoff.roadBands[1].positionM<=
+        lineHandoff.roadBands[2].positionM||
+      !dualContactAudit||
+      Object.values(dualContactAudit).some(row=>
+        !Number.isFinite(row.minimumGapM)||row.minimumGapM<=0)))
+      throw new Error('The dual survivor audit lost separated paid roads.');
     const priorContact=output.individualLine?.priorContact;
     if(priorContact&&(
       priorContact.kind!=='rear_attack_bunch_contact'||
@@ -84,9 +98,14 @@ for(const gender of mode==='one'?['M']:['M','F'])
       bandCrossings:paidRoad?.bandCrossings.map(band=>({
         kind:band.kind,seconds:band.elapsedSinceLaunchSeconds}))??[],
       minimumCrossBandGapM:output.individualLine?.contactAudit
-        ?.minimumGapM??null,
-      survivingFrontId:output.individualLine?.frontSuffix?.riderId??null,
+        ?.minimumGapM??(dualContactAudit?
+          Math.min(...Object.values(dualContactAudit).map(row=>
+            row.minimumGapM)):null),
+      survivingFrontId:output.individualLine?.frontSuffix?.riderId??
+        dualSuffix?.[0]?.riderId??null,
+      survivingRearId:dualSuffix?.[1]?.riderId??null,
       frontCrossingSeconds:output.individualLine?.frontSuffix
+        ?.elapsedAtLineSeconds??dualSuffix?.[0]
         ?.elapsedAtLineSeconds??null,
       handoffFrontGapM:lineHandoff?.roadBands.length===2?
         lineHandoff.roadBands[0].positionM-

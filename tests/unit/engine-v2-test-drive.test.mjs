@@ -28,7 +28,8 @@ import {assertConcurrentDoubleCatchLeadOutWheels} from
 import {recordFinaleConcurrentNextBoundaryFromTour,
   validateFinaleConcurrentNextBoundaryFromTour} from
   '../../lib/engine/v2/finale-concurrent-next-boundary.mjs';
-import {validateFinaleConcurrentFullCatchContinuationFromTour,
+import {recordFinaleConcurrentFullCatchContinuationFromTour,
+  validateFinaleConcurrentFullCatchContinuationFromTour,
   recordFinaleConcurrentPriorRearCatchContinuationFromTour,
   validateFinaleConcurrentPriorRearCatchContinuationFromTour} from
   '../../lib/engine/v2/finale-concurrent-band-continuation.mjs';
@@ -44,6 +45,8 @@ import {recordFinaleConcurrentSurvivorLineFromTour,
 import {recordFinaleConcurrentRearCaught400StepFromTour,
   validateFinaleConcurrentRearCaught400StepFromTour} from
   '../../lib/engine/v2/finale-concurrent-rear-caught-400-step.mjs';
+import {validateFinaleConcurrentDualSurvivorLineFromTour} from
+  '../../lib/engine/v2/finale-concurrent-dual-survivor-line.mjs';
 
 const example=JSON.parse(readFileSync(new URL(
   '../../docs/design/engine-v2-test-drive-example.json',import.meta.url),
@@ -215,7 +218,7 @@ test('a double-catch lead-out cannot jump across an inferred source lane',()=>{
       source.slots[1]]},plan),/source wheel/);
 });
 
-test('integrated two-attack refusal exposes the later paid road boundary',()=>{
+test('two separated attackers keep paid roads into a conditional individual line',()=>{
   const teamCount=15;
   const ids=['you',...Array.from({length:teamCount-1},(_,index)=>
     `rival-${index+1}`)];
@@ -230,36 +233,43 @@ test('integrated two-attack refusal exposes the later paid road boundary',()=>{
     defaultRivalPlan:'neutral',managerFinaleOrders,
     teamOverrides:ids.map(teamId=>({teamId,
       level:teamId==='rival-2'?81:teamId==='you'?80:85}))}};
-  const {summary,recording,bandContinuation}=
+  const {summary,recording,individualLine}=
     runV91IntegratedTestDrive(scenario,{full:true});
   const event=recordFinaleConcurrentNextBoundaryFromTour(
     recording.recording);
-  assert.equal(summary.status,'unsupported');
-  assert.equal(summary.roadStatus,'concurrent_band_crossings_only');
+  const bandContinuation=
+    recordFinaleConcurrentFullCatchContinuationFromTour(
+      recording.recording);
+  assert.equal(summary.status,'conditional');
+  assert.equal(summary.roadStatus,
+    'paid_dual_survivor_conditional_individual_line');
   assert.equal(summary.pointsStatus,'withheld');
-  assert.equal(summary.paidBandContinuation.status,
-    'band_crossings_only');
-  assert.equal(summary.paidBandContinuation.individualFinishStatus,
-    'unavailable');
-  assert.equal(summary.paidBandContinuation.finalePlansStatus,
-    'not_applied_to_band_only_road');
-  assert.deepEqual(summary.paidBandContinuation.bandCrossings,
-    bandContinuation.bandCrossings);
+  assert.equal(summary.canCommitAwards,false);
+  assert.equal(summary.finale.lineTimes.length,teamCount*8);
+  assert.equal(new Set(summary.finale.lineTimes.map(row=>row.riderId))
+    .size,teamCount*8);
+  assert.equal(individualLine.version,
+    'v2-finale-concurrent-dual-survivor-line-lab-1');
+  assert.equal(individualLine.soloSuffix.length,2);
+  assert.deepEqual(individualLine.soloSuffix.map(row=>row.riderId),
+    bandContinuation.bandCrossings.slice(0,2).map(row=>row.riderIds[0]));
+  assert.ok(Object.values(individualLine.crossBandContactAudit)
+    .every(row=>row.minimumGapM>0));
+  assert.equal(individualLine.runner.finishers.length,teamCount*8-2);
+  assert.equal(validateFinaleConcurrentDualSurvivorLineFromTour(
+    recording.recording,{plans:null},individualLine),true);
+  assert.equal(bandContinuation.status,'band_crossings_only');
   assert.equal(validateFinaleConcurrentFullCatchContinuationFromTour(
     recording.recording,bandContinuation),true);
-  assert.equal(summary.latestPaidEvent.event,
+  assert.equal(event.event,
     'first_attacker_at_next_boundary');
-  assert.equal(summary.latestPaidEvent.firstPositionM,39500);
-  assert.ok(summary.latestPaidEvent.secondPositionM<39500);
-  assert.ok(summary.latestPaidEvent.bunchPositionM<
-    summary.latestPaidEvent.secondPositionM);
-  assert.ok(summary.latestPaidEvent.elapsedSinceLaunchSeconds>
-    summary.firstPaidEvent.elapsedSinceLaunchSeconds);
-  assert.equal(summary.latestPaidEvent.riders.length,teamCount*8);
-  assert.ok(summary.latestPaidEvent.riders.every(row=>
+  assert.equal(event.firstPositionM,39500);
+  assert.ok(event.secondPositionM<39500);
+  assert.ok(event.bunchPositionM<event.secondPositionM);
+  assert.equal(event.riders.length,teamCount*8);
+  assert.ok(event.riders.every(row=>
     row.distanceM>0&&row.energySpent>0&&
     row.energyAtEvent<=row.energyAtDecision));
-  assert.deepEqual(summary.latestPaidEvent.riders,event.riders);
   assert.equal(validateFinaleConcurrentNextBoundaryFromTour(
     recording.recording,event),true);
   assert.deepEqual(runV91IntegratedTestDrive(scenario),summary);
