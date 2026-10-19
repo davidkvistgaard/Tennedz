@@ -152,3 +152,27 @@ test('complete lane-queued lines illustrate existing points without awarding the
       pointContext),/unambiguous line/);
   }
 });
+
+test('a later two-attack catch is refused by the 500 m queue entry',()=>{
+  const teamCount=15;
+  const ids=['you',...Array.from({length:teamCount-1},(_,index)=>
+    `rival-${index+1}`)];
+  const scenario={settings:{distanceKm:40,teamCount,terrain:'flat',
+    gender:'M',fatigue:0,seed:'paired-final-orders',attack:'none',
+    chase:'ignore',defaultRivalPlan:'neutral',
+    managerFinaleOrders:ids.map(teamId=>({teamId,
+      attack:['you','rival-2'].includes(teamId)?'selective':'none',
+      ...(['you','rival-2'].includes(teamId)?{
+        attackRiderId:`${teamId}-2`}:{}),
+      chase:['rival-1','rival-4'].includes(teamId)?'selective':'ignore',
+      frontWork:teamId==='rival-3'?'rotate':'sit_in'})),
+    teamOverrides:ids.map(teamId=>({teamId,
+      level:teamId==='rival-2'?81:teamId==='you'?80:85}))},
+  pointContext:{tier:3,divisionIndex:1,divisionCount:2}};
+  const summary=runV91LaneQueuedTestDrive(scenario);
+  assert.equal(summary.status,'unsupported');
+  assert.equal(summary.individualFinishStatus,'unavailable');
+  assert.equal(summary.provisionalPointPreview.status,'unavailable');
+  assert.equal(summary.pointsStatus,'withheld');
+  assert.equal(summary.canCommitAwards,false);
+});

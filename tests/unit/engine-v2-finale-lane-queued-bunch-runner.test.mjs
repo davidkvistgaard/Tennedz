@@ -55,6 +55,8 @@ test('fixed source lanes pay a complete last kilometre without passing through a
       }
       assert.equal(validateFinaleLaneQueuedEarlyBunchRunnerFromTour(
         tour,input,paid),true);
+      assert.equal(validateFinaleLaneQueuedEarlyBunchRunnerFromTour(
+        tour,input,JSON.parse(JSON.stringify(paid))),true);
     }
 });
 

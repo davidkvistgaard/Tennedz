@@ -9,7 +9,9 @@ import {orderAt} from '../lib/engine/v2/orders.mjs';
 import {recordFinaleConcurrentDoubleCatchLineFromTour,
   validateFinaleConcurrentDoubleCatchLineFromTour,
   recordFinaleConcurrentDoubleCatchAssembledLineFromTour,
-  validateFinaleConcurrentDoubleCatchAssembledLineFromTour} from
+  validateFinaleConcurrentDoubleCatchAssembledLineFromTour,
+  recordFinaleConcurrentDoubleCatchLaneQueuedLineFromTour,
+  validateFinaleConcurrentDoubleCatchLaneQueuedLineFromTour} from
   '../lib/engine/v2/finale-concurrent-double-catch-line.mjs';
 import {recordFinaleConcurrentCommonTimeStateFromTour,
   validateFinaleConcurrentCommonTimeStateFromTour} from
@@ -856,6 +858,38 @@ export function runV91IntegratedTestDrive(scenario,{full=false}={}){
 // Separate opt-in laboratory view of the fixed-source-lane bunch finish.
 // It pays the selected full race and either complete-bunch kilometre or
 // caught-attack final 500 m, while refusing unsupported road outcomes.
+function laneQueuedSummary(base,tour,paidFinale,pointContext,extra={}){
+  let pointPreview=null;
+  if(pointContext){
+    try{pointPreview=projectFinaleLaneQueuedPointPreview(tour,
+      paidFinale,pointContext);}
+    catch(error){
+      if(error.message!==
+        'Lane-queued preview points need an unambiguous line.')throw error;
+      pointPreview={status:'unavailable',reason:error.message};
+    }
+  }
+  return {...base,...extra,status:'conditional',
+    individualFinishStatus:'conditional_fixed_source_lanes',
+    finaleVersion:paidFinale.version,
+    passingRule:paidFinale.passingRule,
+    conditionalLine:paidFinale.lineOrder,
+    leadOutAttempts:paidFinale.frames.flatMap(frame=>
+      frame.assemblyAttempts??[]),
+    leadOutWork:paidFinale.frames.flatMap(frame=>
+      frame.riders.filter(row=>row.role?.startsWith('lead_out'))
+        .map(row=>({riderId:row.riderId,role:row.role,
+          energySpent:row.energySpent,
+          distanceTravelledM:row.distanceTravelledM}))),
+    laneBlocks:paidFinale.frames.flatMap(frame=>
+      frame.riders.flatMap(row=>(row.laneBlocks??[]).map(block=>({
+        riderId:row.riderId,...block})))),
+    roadEvents:paidFinale.frames.flatMap(frame=>frame.roadEvents),
+    finalRiderEnergy:paidFinale.finishers.map(row=>({
+      riderId:row.riderId,energy:row.energyAtLine})),
+    ...(pointPreview?{provisionalPointPreview:pointPreview}:{})};
+}
+
 export function runV91LaneQueuedTestDrive(scenario,{full=false}={}){
   validateDriveScenario(scenario);
   if(scenario.individualGroupLine!==undefined||
@@ -903,6 +937,31 @@ export function runV91LaneQueuedTestDrive(scenario,{full=false}={}){
       status:'unavailable',reason:'No classified individual result.'}}:{}),
     ...(roadDecision?{attackRoadOutcome:roadDecision.branch}:{}),
     pointsStatus:'withheld',canCommitAwards:false};
+  const namedOrders=tour.committedInputs.teams.map(team=>({
+    teamId:team.id,order:orderAt(team.orders,tour.route.distanceKm-1)}))
+    .filter(row=>row.order.attackRiderId!==null&&
+      row.order.attackRiderId!==undefined);
+  if(!namedAttack&&namedOrders.length===2){
+    let line;
+    try{
+      line=recordFinaleConcurrentDoubleCatchLaneQueuedLineFromTour(
+        tour,{plans});
+      validateFinaleConcurrentDoubleCatchLaneQueuedLineFromTour(
+        tour,{plans},line);
+    }catch(error){
+      if(error?.constructor!==Error)throw error;
+      const summary={...base,status:'unsupported',reason:error.message,
+        individualFinishStatus:'unavailable'};
+      return full?{summary,recording:tour}:summary;
+    }
+    const paidFinale=line.runner;
+    const summary=laneQueuedSummary(base,tour,paidFinale,
+      scenario.pointContext,{attackRoadOutcome:'double_catch',
+        paidContactRoadVersion:line.road.version,
+        individualLineVersion:line.version});
+    return full?{summary,recording:tour,paidFinale,
+      individualLine:line}:summary;
+  }
   if(sourceRefusal||namedAttack&&
     !['caught','contained'].includes(roadDecision.branch)){
     const summary={...base,status:'unsupported',
@@ -931,35 +990,8 @@ export function runV91LaneQueuedTestDrive(scenario,{full=false}={}){
     return full?{summary,recording:tour}:summary;
   }
   validate(tour,{...request,plans},paidFinale);
-  let pointPreview=null;
-  if(scenario.pointContext){
-    try{pointPreview=projectFinaleLaneQueuedPointPreview(tour,
-      paidFinale,scenario.pointContext);}
-    catch(error){
-      if(error.message!==
-        'Lane-queued preview points need an unambiguous line.')throw error;
-      pointPreview={status:'unavailable',reason:error.message};
-    }
-  }
-  const summary={...base,status:'conditional',
-    individualFinishStatus:'conditional_fixed_source_lanes',
-    finaleVersion:paidFinale.version,
-    passingRule:paidFinale.passingRule,
-    conditionalLine:paidFinale.lineOrder,
-    leadOutAttempts:paidFinale.frames.flatMap(frame=>
-      frame.assemblyAttempts??[]),
-    leadOutWork:paidFinale.frames.flatMap(frame=>
-      frame.riders.filter(row=>row.role?.startsWith('lead_out'))
-        .map(row=>({riderId:row.riderId,role:row.role,
-          energySpent:row.energySpent,
-          distanceTravelledM:row.distanceTravelledM}))),
-    laneBlocks:paidFinale.frames.flatMap(frame=>
-      frame.riders.flatMap(row=>(row.laneBlocks??[]).map(block=>({
-        riderId:row.riderId,...block})))),
-    roadEvents:paidFinale.frames.flatMap(frame=>frame.roadEvents),
-    finalRiderEnergy:paidFinale.finishers.map(row=>({
-      riderId:row.riderId,energy:row.energyAtLine})),
-    ...(pointPreview?{provisionalPointPreview:pointPreview}:{})};
+  const summary=laneQueuedSummary(base,tour,paidFinale,
+    scenario.pointContext);
   return full?{summary,recording:tour,paidFinale}:summary;
 }
 

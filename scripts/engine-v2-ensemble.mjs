@@ -114,8 +114,13 @@ import {recordFinaleConcurrentDoubleCatchMergeFromTour,
 import {recordFinaleConcurrentDoubleCatchLineFromTour,
   validateFinaleConcurrentDoubleCatchLineFromTour,
   recordFinaleConcurrentDoubleCatchAssembledLineFromTour,
-  validateFinaleConcurrentDoubleCatchAssembledLineFromTour} from
+  validateFinaleConcurrentDoubleCatchAssembledLineFromTour,
+  recordFinaleConcurrentDoubleCatchLaneQueuedLineFromTour,
+  validateFinaleConcurrentDoubleCatchLaneQueuedLineFromTour} from
   '../lib/engine/v2/finale-concurrent-double-catch-line.mjs';
+import {projectFinaleLaneQueuedPointPreview,
+  validateFinaleLaneQueuedPointPreview} from
+  '../lib/engine/v2/finale-lane-queued-point-preview.mjs';
 import {recordFinaleConcurrentNamedAllChaseFromTour} from
   '../lib/engine/v2/finale-concurrent-named-all-chase.mjs';
 import {recordFinaleConcurrentNamedAllChaseContactFromTour} from
@@ -533,6 +538,7 @@ for(const [course,stage] of Object.entries(distanceKm===260?LONG_ROUTES:ROUTES))
           multiSelectiveRearBunchEvents:{},
           multiSelectiveDoubleCatchMerge:0,
           multiSelectiveDoubleCatchLine:0,
+          multiSelectiveDoubleCatchLaneQueuedLine:0,
           multiSelectivePairedLeadOut:0,
           multiSelectivePairedRearAssembly:0,
           minMultiSelectiveSeparationM:null,
@@ -932,6 +938,30 @@ for(const [course,stage] of Object.entries(distanceKm===260?LONG_ROUTES:ROUTES))
                                   if(line){
                                     validateFinaleConcurrentDoubleCatchLineFromTour(
                                       race,{},JSON.parse(JSON.stringify(line)));
+                                    const queued=attempt(
+                                      'multiSelectiveDoubleCatchLaneQueuedLine',
+                                      recordFinaleConcurrentDoubleCatchLaneQueuedLineFromTour);
+                                    if(queued){
+                                      validateFinaleConcurrentDoubleCatchLaneQueuedLineFromTour(
+                                        race,{},JSON.parse(JSON.stringify(queued)));
+                                      const pointContext={tier:3,
+                                        divisionIndex:1,divisionCount:2};
+                                      const preview=projectFinaleLaneQueuedPointPreview(
+                                        race,queued.runner,pointContext);
+                                      validateFinaleLaneQueuedPointPreview(race,{},
+                                        pointContext,preview);
+                                      if(queued.runner.passingRule!==
+                                        'fixed-source-lane-queue-lab-1'||
+                                        queued.conditionalCrossings.length!==
+                                          line.conditionalCrossings.length||
+                                        queued.canCommitAwards!==false||
+                                        preview.riders.length!==
+                                          queued.conditionalCrossings.length||
+                                        preview.awardRows.length!==0||
+                                        preview.canCommitAwards!==false)
+                                        throw new Error(
+                                          'A queued double catch lost its paid riders.');
+                                    }
                                     if(line.conditionalCrossings.length!==
                                       race.committedInputs.teams.reduce((sum,team)=>
                                         sum+team.riders.length,0)||

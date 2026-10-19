@@ -50,6 +50,8 @@ test('a caught attack enters a paid fixed-lane bunch finish without an unrecorde
       }
       assert.equal(validateFinaleLaneQueuedCaughtBunchRunnerFromTour(
         trial.recording,request,paid),true);
+      assert.equal(validateFinaleLaneQueuedCaughtBunchRunnerFromTour(
+        trial.recording,request,JSON.parse(JSON.stringify(paid))),true);
     }
 });
 

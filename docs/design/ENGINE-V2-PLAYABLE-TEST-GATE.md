@@ -1480,3 +1480,17 @@ empty `awardRows` array and `canCommitAwards: false`; the drive still reports
 `pointsStatus: withheld`. Ambiguous lines have no illustration. This is a
 read-only policy check on provisional fixed source lanes, not a sporting
 classification or settlement path.
+
+The fixed-lane test also has a separate `v2-finale-concurrent-double-catch-
+line-lab-3` path for two named manager attacks when both measured contacts
+have already reunited all riders at exactly 500 m. It keeps the paid contact
+road, locked rider IDs and 500 m energy, then applies the same paid lane queue
+to every individual crossing. The offline `--lane-queue` entry accepts this
+specific source and exposes its contact road and conditional line versions;
+a later or still separated catch remains an explicit refusal. An unambiguous
+line may carry the same read-only point illustration, never an award.
+The fixed 20-team fictional matrix has two such exact double catches; both
+replayed a queued 160-rider line and a read-only point illustration without
+refusal. A JSON serialization check also now covers the prior lab-11 and
+lab-12 queue recordings: the paid tail omits an absent optional contact field
+instead of writing `undefined`, so saved recordings replay exactly.
