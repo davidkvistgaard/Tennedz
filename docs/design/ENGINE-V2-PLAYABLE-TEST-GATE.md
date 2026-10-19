@@ -1619,3 +1619,16 @@ route to rolling removed the comparison. All three browser cases passed,
 including the existing 390 and 1440 px flows. A serial full unit-suite
 attempt also stopped after its first 39 passing tests, at the balance-audit
 portion, and was interrupted; the focused suite remains the verified check.
+
+The default-rival selector now includes an explicit passive plan: steady
+effort, no attack and no chase. Existing plans and default selections are
+unchanged. It lets a manager launch one controlled final-kilometre attack
+against 15 or 20 rivals without editing every opponent individually; any
+customized manager retains their chosen orders. The opt-in input builder
+accepts this new plan for all field sizes. Fixed fictional 4/15/20-team
+flat women's scenarios recorded a solo branch and 32/120/160 conditional
+crossings; a 120 km rolling, 15-team women's scenario with fatigue 15 also
+recorded all 120 crossings. A 390 px authenticated local browser run used
+that latter setup with zero customized rivals, showed the 119 km launch and
+paid approach, and kept points withheld. The 29 focused motor tests, lint,
+local build and all four preview browser cases passed.

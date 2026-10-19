@@ -6,7 +6,8 @@ import {api} from '../../../lib/api';
 const DEFAULT_PLANS=['chase','attack','neutral'];
 const DEFAULT_BASELINES={chase:{effort:'hard',attack:'none',chase:'all'},
   attack:{effort:'steady',attack:'selective',chase:'ignore'},
-  neutral:{effort:'steady',attack:'none',chase:'selective'}};
+  neutral:{effort:'steady',attack:'none',chase:'selective'},
+  passive:{effort:'steady',attack:'none',chase:'ignore'}};
 function defaultTacticFor(index,settings){
   let plan=settings.defaultRivalPlan;
   if(plan==='mixed'){
@@ -203,6 +204,7 @@ export default function Playtest(){
               <option value="chase">Hard chase</option>
               <option value="attack">Seek a break</option>
               <option value="neutral">Steady / selective</option>
+              <option value="passive">Hold position / no chase</option>
             </select>
           </label>
           {settings.defaultRivalPlan==='mixed'&&<div className="v91-profile-points">{settings.rivalPlans.map((plan,index)=><label key={index}>
@@ -211,6 +213,7 @@ export default function Playtest(){
               <option value="chase">Hard chase</option>
               <option value="attack">Seek a break</option>
               <option value="neutral">Steady / selective</option>
+              <option value="passive">Hold position / no chase</option>
             </select>
           </label>)}</div>}
           <label>Managers with your own tactics

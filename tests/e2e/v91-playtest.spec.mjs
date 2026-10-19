@@ -163,3 +163,42 @@ test('a named final-kilometre attack changes the paid road',async({page})=>{
     name:'Previous run on the same conditions'})).toHaveCount(0);
   expect(errors).toEqual([]);
 });
+
+test('passive defaults make a larger-field attack playable without editing every rival',
+  async({page})=>{
+    await page.setViewportSize({width:390,height:900});
+    const errors=[];page.on('pageerror',error=>errors.push(error.message));
+    await page.goto('/login');
+    await page.getByLabel('Email or username').fill('v2rival');
+    await page.getByLabel('Password',{exact:true}).fill('fixture-password');
+    await page.getByRole('button',{name:'Sign in',exact:true}).click();
+    await expect(page).toHaveURL(/\/team$/);
+    await page.goto('/team/v91-playtest');
+    await page.getByLabel('Distance').selectOption('120');
+    await page.getByLabel('Route profile').selectOption('rolling');
+    await page.getByLabel('Field size').selectOption('15');
+    await page.getByLabel('Category').selectOption('F');
+    await page.getByLabel('Starting fatigue').selectOption('15');
+    await page.getByLabel('Your attack order').selectOption('none');
+    await page.getByLabel('Your chase order').selectOption('ignore');
+    await page.getByLabel('Default tactics for uncustomized managers')
+      .selectOption('passive');
+    await expect(page.getByLabel('Managers with your own tactics'))
+      .toHaveValue('0');
+    await page.getByLabel('Scenario seed').fill('integrated-probe');
+    await page.getByRole('checkbox',{name:'Continue to a conditional finish'})
+      .check();
+    await page.getByLabel('Named attack manager').selectOption('you');
+    await page.getByLabel('Named attacking rider').selectOption('you-0');
+    await page.getByRole('button',{name:'Run full race preview'}).click();
+    await expect(page.getByRole('heading',{
+      name:'Recorded race · 120 km rolling'})).toBeVisible();
+    await expect(page.getByText('120 of 120 riders have individual crossing times.'))
+      .toBeVisible();
+    await expect(page.getByText(/Named attack: you-0 · launched at 119 km; solo road, 1 group at 119\.5 km/))
+      .toBeVisible();
+    await expect(page.getByRole('heading',{name:'Paid solo-attack approach'}))
+      .toBeVisible();
+    await expect(page.getByText(/Points: withheld/)).toBeVisible();
+    expect(errors).toEqual([]);
+  });

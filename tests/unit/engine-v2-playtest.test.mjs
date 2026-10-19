@@ -107,6 +107,22 @@ test('any number of rival managers may override the chosen default tactics',()=>
     managerTactics:overrides}).recording);
 });
 
+test('passive rival preset gives a visible no-attack no-chase plan at every field size',()=>{
+  for(const teamCount of [4,15,20]){
+    const prepared=prepareV91Playtest({distanceKm:40,teamCount,
+      defaultRivalPlan:'passive'});
+    assert.equal(prepared.settings.defaultRivalPlan,'passive');
+    assert.equal(prepared.teams.length,teamCount);
+    for(const team of prepared.teams.slice(1))
+      assert.deepEqual(team.orders.baseline,
+        {effort:'steady',attack:'none',chase:'ignore'});
+  }
+  const mixed=prepareV91Playtest({distanceKm:40,teamCount:4,
+    rivalPlans:['passive','chase','neutral']});
+  assert.deepEqual(mixed.teams[1].orders.baseline,
+    {effort:'steady',attack:'none',chase:'ignore'});
+});
+
 test('all 19 rivals may have individual tactics within the request limit',()=>{
   const managerTactics=Array.from({length:19},(_,index)=>({
     effort:index%2?'hard':'conserve',
