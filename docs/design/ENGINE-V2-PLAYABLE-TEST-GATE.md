@@ -95,6 +95,19 @@ withholds classification and point awards and has no account,
 database or production path. This is an engine diagnostic, not the requested
 browser test environment or a completed playable race.
 
+The offline input may include `"pointContext":{"tier":3,
+"divisionIndex":1,"divisionCount":1}`. For a complete, uniquely ordered
+paid bunch line only, `v91-provisional-point-preview-1` maps the recorded
+experimental line places through the existing one-day division point policy.
+The fixed 40 km four-team lead-out example changes the nominated finisher's
+provisional place from second to first and the tier-three illustration from
+188 to 250 points while the kilometre race tape and initial wheels stay
+fixed. This projection has no award keys or rows, cannot commit awards, and
+does not change `classifiedResults:null` or `pointsStatus:'withheld'` in the
+race final. Its inferred wheel source and open passing rule still need
+sporting validation. Ambiguous places and group-band roads have no preview
+point projection; this is a diagnostic aid, not an official scoring path.
+
 `node scripts/engine-v2-playable-road-audit.mjs` preserves that 54-case
 matrix as a repeatable read-only check and adds 12 paired four-team cases
 with independent manager orders and three explicitly different team strength

@@ -10,6 +10,8 @@ import {finaleSnapshotFromTour} from
 import {createV91ConditionalRaceFinal,
   validateV91ConditionalRaceFinal} from
   '../lib/engine/v2/playtest-race-final.mjs';
+import {projectV91ProvisionalPointPreview} from
+  '../lib/engine/v2/playtest-point-preview.mjs';
 
 const REFUSALS=new Set([
   'The inactive-intents bunch has an unresolved road action.',
@@ -51,7 +53,7 @@ function requestFor(scenario){
   return request;
 }
 
-function summaryFor(trial,request){
+function summaryFor(trial,request,pointContext){
   const {recording,paidFinale}=trial;
   const lastKm=recording.frames[recording.route.distanceKm-2];
   const allTeams=recording.committedInputs.teams;
@@ -67,6 +69,10 @@ function summaryFor(trial,request){
     resultStatus:trial.classifiedResults===null?'unclassified':'classified',
     pointsStatus:trial.pointsStatus,canCommitAwards:trial.canCommitAwards,
     managerDecisions:decisions,
+    ...(pointContext?{provisionalPointPreview:
+      trial.roadStatus==='paid_conditional_line'?
+        projectV91ProvisionalPointPreview(trial,pointContext):
+        {status:'unavailable',reason:'No complete individual line.'}}:{}),
     lastKmSource:{roadGroups:lastKm.roadGroups.map(group=>({
       id:group.id,gapSeconds:group.gapSeconds,
       riderIds:group.riderIds})),
@@ -117,8 +123,21 @@ function summaryFor(trial,request){
 export function runV91TestDrive(scenario,{full=false}={}){
   if(!scenario||typeof scenario!=='object'||Array.isArray(scenario)||
     Object.keys(scenario).some(key=>
-      !['settings','attack','finalePlans'].includes(key)))
+      !['settings','attack','finalePlans','pointContext'].includes(key)))
     throw new Error('Choose settings, an optional attack and finale plans.');
+  const pointContext=scenario.pointContext??null;
+  if(pointContext!==null&&(!pointContext||
+    typeof pointContext!=='object'||Array.isArray(pointContext)||
+    Object.keys(pointContext).sort().join(',')!==
+      'divisionCount,divisionIndex,tier'||
+    !Number.isInteger(pointContext.tier)||pointContext.tier<1||
+    pointContext.tier>6||
+    !Number.isInteger(pointContext.divisionCount)||
+    pointContext.divisionCount<1||
+    !Number.isInteger(pointContext.divisionIndex)||
+    pointContext.divisionIndex<1||
+    pointContext.divisionIndex>pointContext.divisionCount))
+    throw new Error('Choose a valid optional preview point context.');
   const request=requestFor(scenario);
   let trial;
   try{trial=createV91ConditionalRaceFinal(scenario.settings,request);}
@@ -138,6 +157,8 @@ export function runV91TestDrive(scenario,{full=false}={}){
         droppedRiderIds:snapshot.droppedRiderIds,
         chaserTeamIds:source.recording.frames[snapshot.sourceKm-1].chasers
       }}:{}),pointsStatus:'withheld',
+      ...(pointContext?{provisionalPointPreview:{status:'unavailable',
+        reason:'No complete individual line.'}}:{}),
       canCommitAwards:false};
   }
   validateV91ConditionalRaceFinal(scenario.settings,request,trial);
@@ -147,10 +168,12 @@ export function runV91TestDrive(scenario,{full=false}={}){
     const summary={version:'v91-offline-test-drive-1',
       status:'unsupported',input:trial.settings,request,
       engineVersion:trial.version,reason:trial.roadStatus,
+      ...(pointContext?{provisionalPointPreview:{status:'unavailable',
+        reason:'No complete individual line.'}}:{}),
       pointsStatus:'withheld',canCommitAwards:false};
     return full?{summary,recording:trial}:summary;
   }
-  const summary=summaryFor(trial,request);
+  const summary=summaryFor(trial,request,pointContext);
   return full?{summary,recording:trial}:summary;
 }
 
