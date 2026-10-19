@@ -1,6 +1,7 @@
 // Reproducible, offline balance matrix with fictional riders and routes.
 // Every strategy in a paired comparison uses the same roster, route and seed.
 import seedrandom from 'seedrandom';
+import {isDeepStrictEqual} from 'node:util';
 import {simulateTacticalTour} from '../lib/engine/v2/tour.mjs';
 import {validateRecordedTour} from '../lib/engine/v2/recording.mjs';
 import {validateRoadGroupTransition} from '../lib/engine/v2/road-groups.mjs';
@@ -181,6 +182,7 @@ const orderedFinaleCoverage=process.argv[22]??'off';
 const resultContractAudit=process.argv[23]??'off';
 const chaserCapScope=process.argv[24]??'all';
 const v91Coverage=process.env.PELOTONIA_V91_COVERAGE==='on';
+const pairedLeadOutAudit=process.env.PELOTONIA_V91_PAIRED_LEADOUT==='on';
 const motorVersion=motorMode==='attack-trace'?MOTOR_ATTACK_TRACE_VERSION:
   motorMode==='phase-attack'?MOTOR_PHASE_ATTACK_VERSION:
   motorMode==='recovery-ceiling'?MOTOR_RECOVERY_CEILING_VERSION:
@@ -529,6 +531,7 @@ for(const [course,stage] of Object.entries(distanceKm===260?LONG_ROUTES:ROUTES))
           multiSelectiveRearBunchEvents:{},
           multiSelectiveDoubleCatchMerge:0,
           multiSelectiveDoubleCatchLine:0,
+          multiSelectivePairedLeadOut:0,
           minMultiSelectiveSeparationM:null,
           maxMultiSelectiveSeparationM:null,
           minMultiSelectiveBunchBehindM:null,
@@ -934,6 +937,64 @@ for(const [course,stage] of Object.entries(distanceKm===260?LONG_ROUTES:ROUTES))
                                       line.canCommitAwards)
                                       throw new Error(
                                         'A double catch lost conditional riders or awarded points.');
+                                    if(pairedLeadOutAudit){
+                                      const slots=new Map(line.positionedSource.slots
+                                        .map(row=>[row.riderId,row]));
+                                      const energy=new Map(line.road.riders.map(row=>
+                                        [row.riderId,row.energyAtBoundary]));
+                                      const pair=race.committedInputs.teams.flatMap(team=>
+                                        team.orders.helperIds.flatMap(helperId=>
+                                          team.riders.filter(rider=>
+                                            rider.id!==helperId).map(finisher=>({
+                                            team,helperId,finisherId:finisher.id})))).find(
+                                        ({helperId,finisherId})=>{
+                                          const helper=slots.get(helperId);
+                                          const finisher=slots.get(finisherId);
+                                          return energy.get(helperId)>=20&&
+                                            energy.get(finisherId)>0&&
+                                            Math.abs(helper.lane-finisher.lane)<=1&&
+                                            helper.positionM>=finisher.positionM&&
+                                            helper.positionM-finisher.positionM<=
+                                              line.positionedSource.wheelSpacingM;
+                                        });
+                                      if(pair){
+                                        const plans=race.committedInputs.teams.map(team=>({
+                                          teamId:team.id,finisherId:team.id===pair.team.id?
+                                            pair.finisherId:team.orders.captainId,
+                                          leadOutRiderId:null}));
+                                        const without=
+                                          recordFinaleConcurrentDoubleCatchLineFromTour(
+                                            race,{plans});
+                                        const withPlans=plans.map(plan=>
+                                          plan.teamId===pair.team.id?{
+                                            ...plan,leadOutRiderId:pair.helperId}:plan);
+                                        const withLead=
+                                          recordFinaleConcurrentDoubleCatchLineFromTour(
+                                            race,{plans:withPlans});
+                                        validateFinaleConcurrentDoubleCatchLineFromTour(
+                                          race,{plans:withPlans},
+                                          JSON.parse(JSON.stringify(withLead)));
+                                        const helperWork=withLead.runner.frames
+                                          .flatMap(frame=>frame.riders).filter(row=>
+                                            row.riderId===pair.helperId&&
+                                              row.role==='lead_out');
+                                        const crossing=record=>
+                                          record.conditionalCrossings.find(row=>
+                                            row.riderId===pair.finisherId)
+                                            .elapsedSecondsFromLastKmStart;
+                                        if(!isDeepStrictEqual(without.road,withLead.road)||
+                                          !isDeepStrictEqual(
+                                            without.positionedSource.slots,
+                                            withLead.positionedSource.slots)||
+                                          !helperWork.some(row=>row.energySpent>0&&
+                                            row.distanceTravelledM>0)||
+                                          crossing(without)===crossing(withLead)||
+                                          withLead.classifiedResults!==null||
+                                          withLead.pointsStatus!=='withheld')
+                                          throw new Error('A paired lead-out did not pay for a changed conditional finish on the same road.');
+                                        concurrent.multiSelectivePairedLeadOut++;
+                                      }
+                                    }
                                   }
                                 }
                               }

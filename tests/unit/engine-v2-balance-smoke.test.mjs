@@ -172,7 +172,8 @@ test('fixed 20-team source replays paid travel after two exact catches',()=>{
     '120','100','0','3','5','0','100','hard','0','0','0','0','0',
     'independent','104','fixed'],{
     encoding:'utf8',timeout:720_000,maxBuffer:8*1024*1024,
-    env:{...process.env,PELOTONIA_V91_COVERAGE:'on'},
+    env:{...process.env,PELOTONIA_V91_COVERAGE:'on',
+      PELOTONIA_V91_PAIRED_LEADOUT:'on'},
   }));
   const cells=Object.values(report.courses).flatMap(genders=>
     Object.values(genders).flatMap(strategies=>
@@ -181,6 +182,7 @@ test('fixed 20-team source replays paid travel after two exact catches',()=>{
     cell.v91Finale.concurrent[key],0);
   assert.equal(sum('multiSelectiveDoubleCatchMerge'),2);
   assert.equal(sum('multiSelectiveDoubleCatchLine'),2);
+  assert.ok(sum('multiSelectivePairedLeadOut')>0);
   assert.equal(sum('multiSelective500State'),5);
   assert.equal(sum('multiSelective500Plan'),3);
   assert.equal(sum('multiSelectiveSolo500Step'),1);
