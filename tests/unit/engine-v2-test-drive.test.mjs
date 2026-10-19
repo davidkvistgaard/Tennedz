@@ -28,7 +28,8 @@ import {assertConcurrentDoubleCatchLeadOutWheels} from
 import {recordFinaleConcurrentNextBoundaryFromTour,
   validateFinaleConcurrentNextBoundaryFromTour} from
   '../../lib/engine/v2/finale-concurrent-next-boundary.mjs';
-import {validateFinaleConcurrentFullCatchContinuationFromTour} from
+import {validateFinaleConcurrentFullCatchContinuationFromTour,
+  validateFinaleConcurrentPriorRearCatchContinuationFromTour} from
   '../../lib/engine/v2/finale-concurrent-band-continuation.mjs';
 import {validateFinaleConcurrentLateCatchLineFromTour} from
   '../../lib/engine/v2/finale-concurrent-late-catch-line.mjs';
@@ -58,10 +59,11 @@ test('long mountain rear catch exposes the paid two-band road event',()=>{
     defaultRivalPlan:'neutral',managerFinaleOrders,
     teamOverrides:ids.map(teamId=>({teamId,
       level:teamId==='rival-2'?81:teamId==='you'?80:85}))}};
-  const {summary,recording,rearCaught400Step}=
+  const {summary,recording,rearCaught400Step,bandContinuation}=
     runV91IntegratedTestDrive(scenario,{full:true});
   assert.equal(summary.status,'unsupported');
-  assert.equal(summary.roadStatus,'concurrent_rear_caught_paid_event');
+  assert.equal(summary.roadStatus,
+    'concurrent_prior_rear_catch_band_crossings_only');
   assert.equal(summary.paidRearCaughtEvent.event,
     'bunch_at_second_slice_boundary');
   assert.equal(summary.paidRearCaughtEvent.roadBands.length,2);
@@ -75,6 +77,24 @@ test('long mountain rear catch exposes the paid two-band road event',()=>{
     rearCaught400Step.riders);
   assert.equal(validateFinaleConcurrentRearCaught400StepFromTour(
     recording.recording,rearCaught400Step),true);
+  assert.equal(validateFinaleConcurrentPriorRearCatchContinuationFromTour(
+    recording.recording,bandContinuation),true);
+  assert.equal(bandContinuation.sourceRoadVersion,
+    rearCaught400Step.version);
+  assert.equal(summary.paidBandContinuation.version,
+    bandContinuation.version);
+  assert.equal(summary.paidBandContinuation.status,
+    bandContinuation.status);
+  assert.ok(bandContinuation.frames.length>0);
+  assert.equal(bandContinuation.finalRiders.length,teamCount*8);
+  assert.ok(bandContinuation.finalRiders.every(row=>
+    row.energyAtStop>=0&&row.energyAtStop<=row.energyAtSource&&
+    row.distanceTravelledM>=0));
+  assert.equal(bandContinuation.status,'band_crossings_only');
+  assert.equal(bandContinuation.roadRelationshipStatus,
+    'prior_rear_caught_band_crossings');
+  assert.ok(bandContinuation.bandCrossings[0].elapsedSinceLaunchSeconds<
+    bandContinuation.bandCrossings[1].elapsedSinceLaunchSeconds);
   assert.equal(summary.pointsStatus,'withheld');
   assert.equal(summary.canCommitAwards,false);
 });

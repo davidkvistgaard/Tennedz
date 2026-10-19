@@ -18,7 +18,9 @@ import {recordFinaleConcurrentNextBoundaryFromTour,
   validateFinaleConcurrentNextBoundaryFromTour} from
   '../lib/engine/v2/finale-concurrent-next-boundary.mjs';
 import {recordFinaleConcurrentFullCatchContinuationFromTour,
-  validateFinaleConcurrentFullCatchContinuationFromTour} from
+  validateFinaleConcurrentFullCatchContinuationFromTour,
+  recordFinaleConcurrentPriorRearCatchContinuationFromTour,
+  validateFinaleConcurrentPriorRearCatchContinuationFromTour} from
   '../lib/engine/v2/finale-concurrent-band-continuation.mjs';
 import {recordFinaleConcurrentLateCatchLineFromTour,
   validateFinaleConcurrentLateCatchLineFromTour} from
@@ -932,10 +934,30 @@ export function runV91ConcurrentTestDrive(scenario,{full=false}={}){
           tour);
         validateFinaleConcurrentRearCaught400StepFromTour(tour,
           JSON.parse(JSON.stringify(rearCaught)));
+        let continuation=null,continuationRefusal=null;
+        try{
+          continuation=
+            recordFinaleConcurrentPriorRearCatchContinuationFromTour(tour);
+          validateFinaleConcurrentPriorRearCatchContinuationFromTour(tour,
+            JSON.parse(JSON.stringify(continuation)));
+        }catch(continuationError){
+          if(continuationError?.constructor!==Error)
+            throw continuationError;
+          continuationRefusal=continuationError.message;
+        }
         const summary={...base,status:'unsupported',
-          roadStatus:'concurrent_rear_caught_paid_event',
-          reason:'The rear attacker was caught; the surviving solo and bunch have paid travel to their next road event, but no individual line.',
+          roadStatus:continuation?.status==='band_crossings_only'?
+            'concurrent_prior_rear_catch_band_crossings_only':
+            continuation?.status==='stopped_at_exact_contact'?
+              'concurrent_prior_rear_catch_exact_contact':
+              'concurrent_rear_caught_paid_event',
+          reason:continuation?.status==='band_crossings_only'?
+            'The rear attacker was caught and the road bands reached the line, but the bunch has no paid individual finish.':
+            continuation?.status==='stopped_at_exact_contact'?
+              'The rear attacker was caught; the surviving solo met the bunch at an exact road contact before individual classification.':
+              'The rear attacker was caught; the surviving solo and bunch have paid travel to their next road event, but no individual line.',
           lateLineRefusal,survivorLineRefusal,
+          ...(continuationRefusal?{continuationRefusal}:{}),
           paidRearCaughtEvent:{version:rearCaught.version,
             event:rearCaught.event,
             elapsedSinceLaunchSeconds:rearCaught.elapsedSinceLaunchSeconds,
@@ -946,9 +968,21 @@ export function runV91ConcurrentTestDrive(scenario,{full=false}={}){
             roadBands:rearCaught.roadBands,
             riders:rearCaught.riders,
             individualFinishStatus:'unavailable',
-            pointsStatus:'withheld'}};
+            pointsStatus:'withheld'},
+          ...(continuation?{paidBandContinuation:{
+            version:continuation.version,
+            status:continuation.status,
+            roadRelationshipStatus:continuation.roadRelationshipStatus,
+            contact:continuation.contact,
+            contactEvents:continuation.contactEvents,
+            bandCrossings:continuation.bandCrossings,
+            finalRiders:continuation.finalRiders,
+            finalePlansStatus:'not_applied_to_band_only_road',
+            individualFinishStatus:'unavailable',
+            pointsStatus:'withheld'}}:{})};
         return full?{summary,recording:source,
-          rearCaught400Step:rearCaught}:summary;
+          rearCaught400Step:rearCaught,
+          ...(continuation?{bandContinuation:continuation}:{})}:summary;
       }catch(rearCaughtError){
         if(rearCaughtError?.constructor!==Error)throw rearCaughtError;
       }
