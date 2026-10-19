@@ -1718,3 +1718,10 @@ time and energy match every individual line. The nominated finisher's
 crossing changes with the chase. All point previews are explicitly
 unavailable and awards stay withheld because the opening 500 m lacks
 individual wheel positions. The 12-case integrated test and lint passed.
+
+A full local unit-suite run with two test workers completed with exit code 1.
+Only two balance-smoke tests failed, both because their ensemble subprocess
+hit its 720-second timeout: the 15-team selective-chase coverage and the
+20-team exact-double-catch coverage. The runner reported no other failures.
+Those two audits therefore have no verified result from this run; this is
+not evidence of a motor assertion failure or a full-suite pass.
