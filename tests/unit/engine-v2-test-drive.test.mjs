@@ -36,10 +36,48 @@ import {recordFinaleConcurrentSurvivorLineFromTour,
   auditFinaleConcurrentSoloAgainstBunch,
   validateFinaleConcurrentSurvivorLineFromTour} from
   '../../lib/engine/v2/finale-concurrent-survivor-line.mjs';
+import {validateFinaleConcurrentRearCaught400StepFromTour} from
+  '../../lib/engine/v2/finale-concurrent-rear-caught-400-step.mjs';
 
 const example=JSON.parse(readFileSync(new URL(
   '../../docs/design/engine-v2-test-drive-example.json',import.meta.url),
 'utf8'));
+
+test('long mountain rear catch exposes the paid two-band road event',()=>{
+  const teamCount=15;
+  const ids=['you',...Array.from({length:teamCount-1},(_,index)=>
+    `rival-${index+1}`)];
+  const managerFinaleOrders=ids.map(teamId=>({teamId,
+    attack:['you','rival-2'].includes(teamId)?'selective':'none',
+    ...(['you','rival-2'].includes(teamId)?{
+      attackRiderId:`${teamId}-${teamId==='you'?3:5}`}:{}),
+    chase:['rival-1','rival-4'].includes(teamId)?'selective':'ignore',
+    frontWork:teamId==='rival-3'?'rotate':'sit_in'}));
+  const scenario={settings:{distanceKm:260,teamCount,terrain:'mountain',
+    fatigue:30,seed:'paired-final-orders',attack:'none',chase:'ignore',
+    defaultRivalPlan:'neutral',managerFinaleOrders,
+    teamOverrides:ids.map(teamId=>({teamId,
+      level:teamId==='rival-2'?81:teamId==='you'?80:85}))}};
+  const {summary,recording,rearCaught400Step}=
+    runV91IntegratedTestDrive(scenario,{full:true});
+  assert.equal(summary.status,'unsupported');
+  assert.equal(summary.roadStatus,'concurrent_rear_caught_paid_event');
+  assert.equal(summary.paidRearCaughtEvent.event,
+    'bunch_at_second_slice_boundary');
+  assert.equal(summary.paidRearCaughtEvent.roadBands.length,2);
+  assert.equal(summary.paidRearCaughtEvent.roadBands[0].riderIds.length,1);
+  assert.equal(summary.paidRearCaughtEvent.roadBands[1].riderIds.length,
+    teamCount*8-1);
+  assert.ok(summary.paidRearCaughtEvent.frontPositionM>
+    summary.paidRearCaughtEvent.bunchPositionM);
+  assert.equal(summary.paidRearCaughtEvent.bunchPositionM,259600);
+  assert.deepEqual(summary.paidRearCaughtEvent.riders,
+    rearCaught400Step.riders);
+  assert.equal(validateFinaleConcurrentRearCaught400StepFromTour(
+    recording.recording,rearCaught400Step),true);
+  assert.equal(summary.pointsStatus,'withheld');
+  assert.equal(summary.canCommitAwards,false);
+});
 
 test('survivor contact audit catches a mid-step pass missed by line order',()=>{
   const audit=auditFinaleConcurrentSoloAgainstBunch({

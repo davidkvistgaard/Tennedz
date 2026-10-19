@@ -26,6 +26,9 @@ import {recordFinaleConcurrentLateCatchLineFromTour,
 import {recordFinaleConcurrentSurvivorLineFromTour,
   validateFinaleConcurrentSurvivorLineFromTour} from
   '../lib/engine/v2/finale-concurrent-survivor-line.mjs';
+import {recordFinaleConcurrentRearCaught400StepFromTour,
+  validateFinaleConcurrentRearCaught400StepFromTour} from
+  '../lib/engine/v2/finale-concurrent-rear-caught-400-step.mjs';
 import {validateRequestedFinalePlans} from
   '../lib/engine/v2/playtest-finale-trial.mjs';
 import {finaleSnapshotFromTour} from
@@ -923,6 +926,31 @@ export function runV91ConcurrentTestDrive(scenario,{full=false}={}){
       }catch(survivorError){
         if(survivorError?.constructor!==Error)throw survivorError;
         survivorLineRefusal=survivorError.message;
+      }
+      try{
+        const rearCaught=recordFinaleConcurrentRearCaught400StepFromTour(
+          tour);
+        validateFinaleConcurrentRearCaught400StepFromTour(tour,
+          JSON.parse(JSON.stringify(rearCaught)));
+        const summary={...base,status:'unsupported',
+          roadStatus:'concurrent_rear_caught_paid_event',
+          reason:'The rear attacker was caught; the surviving solo and bunch have paid travel to their next road event, but no individual line.',
+          lateLineRefusal,survivorLineRefusal,
+          paidRearCaughtEvent:{version:rearCaught.version,
+            event:rearCaught.event,
+            elapsedSinceLaunchSeconds:rearCaught.elapsedSinceLaunchSeconds,
+            frontRiderId:rearCaught.frontRiderId,
+            caughtRiderId:rearCaught.caughtRiderId,
+            frontPositionM:rearCaught.frontPositionM,
+            bunchPositionM:rearCaught.bunchPositionM,
+            roadBands:rearCaught.roadBands,
+            riders:rearCaught.riders,
+            individualFinishStatus:'unavailable',
+            pointsStatus:'withheld'}};
+        return full?{summary,recording:source,
+          rearCaught400Step:rearCaught}:summary;
+      }catch(rearCaughtError){
+        if(rearCaughtError?.constructor!==Error)throw rearCaughtError;
       }
     }
     let event=null;
