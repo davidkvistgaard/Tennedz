@@ -43,8 +43,10 @@ function comparisonConditions(settings){
 
 function comparisonRun(settings,response){
   const summary=response.integrated;
-  const finisherId=summary.managerDecisions?.find(row=>
-    row.teamId==='you')?.finisherId??'you-7';
+  const ownDecision=summary.managerDecisions?.find(row=>
+    row.teamId==='you');
+  const finisherId=ownDecision?.finisherId??'you-7';
+  const leadOutRiderId=ownDecision?.leadOutRiderId??null;
   const crossing=summary.finale?.lineTimes?.find(row=>
     row.riderId===finisherId);
   return {conditions:comparisonConditions(settings),finisherId,
@@ -53,7 +55,16 @@ function comparisonRun(settings,response){
     sourceGroups:summary.lastKmSource?.roadGroups?.length??0,
     namedAttack:summary.request?.attackRiderId??
       summary.request?.namedAttacks?.map(row=>row.riderId).join(', ')??'none',
-    attackRoad:response.attackRoad?.branch??null};
+    attackRoad:response.attackRoad?.branch??null,
+    leadOutRiderId,
+    leadOutEnergy:(summary.finale?.leadOutWork??[])
+      .filter(row=>row.riderId===leadOutRiderId)
+      .reduce((total,row)=>total+row.energySpent,0)};
+}
+
+function attackDescription(run){
+  return `${run.namedAttack}${run.attackRoad?
+    ` (${run.attackRoad} road)`:''}`;
 }
 
 export default function Playtest(){
@@ -432,9 +443,9 @@ export default function Playtest(){
           {comparison&&<div aria-label="Paired race comparison">
             <h4>Previous run on the same conditions</h4>
             <p>Route, profile, category, field, fatigue and seed match. Tactics and finale nominations may differ.</p>
-            <p>Named final attack: {comparison.before.namedAttack} → {comparison.after.namedAttack}
-              {comparison.after.attackRoad?` (${comparison.after.attackRoad} road)`:''}</p>
+            <p>Named final attack: {attackDescription(comparison.before)} → {attackDescription(comparison.after)}</p>
             <p>Groups at the last-kilometre handoff: {comparison.before.sourceGroups} → {comparison.after.sourceGroups}</p>
+            <p>Lead-out: {comparison.before.leadOutRiderId??'none'} ({comparison.before.leadOutEnergy.toFixed(1)} energy paid) → {comparison.after.leadOutRiderId??'none'} ({comparison.after.leadOutEnergy.toFixed(1)} energy paid)</p>
             <p>Finisher crossing: {comparison.before.finisherId} {comparison.before.crossingSeconds?.toFixed(3)??'unavailable'} s → {comparison.after.finisherId} {comparison.after.crossingSeconds?.toFixed(3)??'unavailable'} s</p>
             {comparison.before.finisherId===comparison.after.finisherId&&
               comparison.before.crossingSeconds!==null&&

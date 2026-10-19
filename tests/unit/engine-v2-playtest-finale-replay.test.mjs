@@ -61,3 +61,52 @@ test('a contact-only tail is not presented as a full final-kilometre replay',()=
   assert.equal(first.energyAfter-second.energySpent,second.energyAfter);
   assert.deepEqual(JSON.parse(JSON.stringify(approach)),approach);
 });
+
+test('coordinated chase catches the same named solo on a fixed route and roster',()=>{
+  const shared={distanceKm:120,terrain:'rolling',teamCount:15,
+    gender:'F',fatigue:15,effort:'steady',attack:'none',chase:'ignore',
+    seed:'integrated-probe'};
+  const scenario=defaultRivalPlan=>({settings:{...shared,
+    defaultRivalPlan},attack:{teamId:'you',riderId:'you-0'}});
+  const passive=runV91IntegratedTestDrive(scenario('passive'),{full:true});
+  const chase=runV91IntegratedTestDrive(scenario('chase'),{full:true});
+  assert.deepEqual(passive.recording.recording.committedInputs.teams
+    .map(team=>team.riders),chase.recording.recording.committedInputs.teams
+    .map(team=>team.riders));
+  assert.equal(passive.recording.roadDecision.branch,'solo');
+  assert.equal(chase.recording.roadDecision.branch,'caught');
+  assert.equal(passive.summary.finale.lineTimes.length,120);
+  assert.equal(chase.summary.finale.lineTimes.length,120);
+  const own=output=>output.summary.finale.lineTimes.find(row=>
+    row.riderId==='you-7');
+  assert.notEqual(own(passive).elapsedSecondsFromLastKmStart,
+    own(chase).elapsedSecondsFromLastKmStart);
+  assert.equal(passive.summary.pointsStatus,'withheld');
+  assert.equal(chase.summary.pointsStatus,'withheld');
+});
+
+test('a nominated helper pays for a lead-out after the same named solo is caught',()=>{
+  const settings={distanceKm:120,terrain:'rolling',teamCount:15,
+    gender:'F',fatigue:15,effort:'steady',attack:'none',chase:'ignore',
+    defaultRivalPlan:'chase',seed:'integrated-probe'};
+  const base={settings,attack:{teamId:'you',riderId:'you-0'}};
+  const without=runV91IntegratedTestDrive(base,{full:true});
+  const withHelper=runV91IntegratedTestDrive({...base,finalePlans:[{
+    teamId:'you',finisherId:'you-7',leadOutRiderId:'you-5'}]},
+  {full:true});
+  assert.equal(without.recording.roadDecision.branch,'caught');
+  assert.equal(withHelper.recording.roadDecision.branch,'caught');
+  assert.deepEqual(without.recording.recording.committedInputs.teams
+    .map(team=>team.riders),withHelper.recording.recording.committedInputs.teams
+    .map(team=>team.riders));
+  const helperWork=withHelper.summary.finale.leadOutWork.filter(row=>
+    row.riderId==='you-5');
+  assert.ok(helperWork.length>0);
+  assert.ok(helperWork.every(row=>row.energySpent>0));
+  assert.equal(withHelper.summary.finale.lineTimes.length,120);
+  const finisher=output=>output.summary.finale.lineTimes.find(row=>
+    row.riderId==='you-7');
+  assert.notEqual(finisher(without).elapsedSecondsFromLastKmStart,
+    finisher(withHelper).elapsedSecondsFromLastKmStart);
+  assert.equal(withHelper.summary.pointsStatus,'withheld');
+});

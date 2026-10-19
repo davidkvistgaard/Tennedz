@@ -200,5 +200,37 @@ test('passive defaults make a larger-field attack playable without editing every
     await expect(page.getByRole('heading',{name:'Paid solo-attack approach'}))
       .toBeVisible();
     await expect(page.getByText(/Points: withheld/)).toBeVisible();
+    const soloCrossing=await page.getByText(
+      /Your nominated finisher: you-7 · [\d.]+ s/).textContent();
+    await page.getByLabel('Default tactics for uncustomized managers')
+      .selectOption('chase');
+    await page.getByRole('button',{name:'Run full race preview'}).click();
+    await expect(page.getByText(/Named attack: you-0 · launched at 119 km; caught road, 0 group at 119\.5 km/))
+      .toBeVisible();
+    await expect(page.getByText('120 of 120 riders have individual crossing times.'))
+      .toBeVisible();
+    await expect(page.getByText(
+      'Named final attack: you-0 (solo road) → you-0 (caught road)'))
+      .toBeVisible();
+    await expect(page.getByText(/Same finisher time change: -?[\d.]+ s · Energy at line:/))
+      .toBeVisible();
+    expect(await page.getByText(/Your nominated finisher: you-7 · [\d.]+ s/)
+      .textContent()).not.toBe(soloCrossing);
+    const caughtCrossing=await page.getByText(
+      /Your nominated finisher: you-7 · [\d.]+ s/).textContent();
+    await page.getByLabel('you lead-out helper').selectOption('you-5');
+    await page.getByRole('button',{name:'Run full race preview'}).click();
+    await expect(page.getByText('Paid lead-out work: 4 recorded rider intervals.'))
+      .toBeVisible();
+    await expect(page.getByText(
+      'Lead-out: none (0.0 energy paid) → you-5 (4.7 energy paid)'))
+      .toBeVisible();
+    await expect(page.getByText(/Named attack: you-0 · launched at 119 km; caught road/))
+      .toBeVisible();
+    await expect(page.getByText('120 of 120 riders have individual crossing times.'))
+      .toBeVisible();
+    expect(await page.getByText(/Your nominated finisher: you-7 · [\d.]+ s/)
+      .textContent()).not.toBe(caughtCrossing);
+    await expect(page.getByText(/Points: withheld/)).toBeVisible();
     expect(errors).toEqual([]);
   });

@@ -1632,3 +1632,20 @@ recorded all 120 crossings. A 390 px authenticated local browser run used
 that latter setup with zero customized rivals, showed the 119 km launch and
 paid approach, and kept points withheld. The 29 focused motor tests, lint,
 local build and all four preview browser cases passed.
+
+A paired passive-versus-hard-chase check held the 120 km rolling route,
+fatigue 15, seed, named attacker and roster fixed while changing only the
+default rivals' tactical plan. Across M/F and 4/15/20-team fields, each
+passive road retained the solo at 500 m and each hard-chase road recorded a
+catch. All 12 runs retained 32/120/160 conditional crossings as appropriate,
+and the nominated player's crossing time changed without awarding points.
+The 15-team mobile browser comparison showed `you-0 (solo road)` becoming
+`you-0 (caught road)` and the changed crossing. These fictional outcomes
+confirm tactical causality for one seed; they do not establish balance.
+The same local browser setup then kept the caught road and nominated a
+player helper. It showed four paid lead-out intervals, 4.7 energy spent by
+the helper, a changed finisher crossing and all 120 conditional lines, while
+points remained withheld. This checks one paid finale tactic after a catch;
+it does not establish official classification or a complete positional
+replay for this road. The 31 focused motor tests, lint, local build and four
+browser cases passed.
