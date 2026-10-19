@@ -1706,3 +1706,15 @@ produce complete paid final-kilometre replays for 32/120/160 riders as
 appropriate, with zero award rows and no classified result. This is a
 regression gate for that bounded bunch path; attacked and separated roads
 retain their separate acceptance scenarios and unresolved position limits.
+
+The same integrated acceptance test now pairs passive rivals with a
+coordinated chase against one named player attacker on a fixed 120 km
+rolling route with fatigue 15. M/F and 4/15/20-team fields all record a
+solo with passive rivals and a measured catch with chasing rivals, while
+the roster and seed remain fixed. All 12 runs have 32/120/160 distinct
+conditional crossings, as appropriate; each caught road has two paid
+group/energy approach frames and five paid final-500 m frames whose last
+time and energy match every individual line. The nominated finisher's
+crossing changes with the chase. All point previews are explicitly
+unavailable and awards stay withheld because the opening 500 m lacks
+individual wheel positions. The 12-case integrated test and lint passed.

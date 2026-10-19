@@ -1,7 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {pointsForDivisionResult} from '../../lib/calendar/points.mjs';
-import {summarizeV91PaidFinaleReplay} from
+import {summarizeV91PaidFinaleReplay,summarizeV91PaidFinaleTail,
+  summarizeV91PaidNamedAttackApproach} from
   '../../lib/engine/v2/playtest-finale-replay.mjs';
 import {runV91IntegratedTestDrive} from
   '../../scripts/engine-v2-test-drive.mjs';
@@ -63,5 +64,67 @@ for(const [distanceKm,terrain,teamCount,gender,fatigue] of cases){
     assert.equal(summary.pointsStatus,'withheld');
     assert.equal(summary.canCommitAwards,false);
     assert.equal(recording.classifiedResults,null);
+  });
+}
+
+for(const gender of ['M','F'])for(const teamCount of [4,15,20]){
+  test(`named attack and coordinated chase connect ${teamCount} teams, ${gender}`,()=>{
+    const base={distanceKm:120,terrain:'rolling',teamCount,gender,
+      fatigue:15,effort:'steady',attack:'none',chase:'ignore',
+      seed:'integrated-probe'};
+    const run=defaultRivalPlan=>runV91IntegratedTestDrive({
+      settings:{...base,defaultRivalPlan},
+      attack:{teamId:'you',riderId:'you-0'},pointContext},
+    {full:true});
+    const passive=run('passive');
+    const chase=run('chase');
+    const riderCount=teamCount*8;
+    assert.deepEqual(passive.recording.recording.committedInputs.teams
+      .map(team=>team.riders),chase.recording.recording.committedInputs.teams
+      .map(team=>team.riders));
+    assert.equal(passive.recording.roadDecision.branch,'solo');
+    assert.equal(chase.recording.roadDecision.branch,'caught');
+    for(const output of [passive,chase]){
+      assert.equal(output.summary.roadStatus,'paid_conditional_line');
+      assert.equal(output.summary.finale.lineTimes.length,riderCount);
+      assert.equal(new Set(output.summary.finale.lineTimes.map(row=>
+        row.riderId)).size,riderCount);
+      assert.equal(output.summary.provisionalPointPreview.status,
+        'unavailable');
+      assert.equal(output.summary.pointsStatus,'withheld');
+      assert.equal(output.summary.canCommitAwards,false);
+      assert.equal(output.recording.classifiedResults,null);
+      assert.equal(summarizeV91PaidFinaleReplay(output.recording),null);
+    }
+    const soloApproach=summarizeV91PaidNamedAttackApproach(
+      passive.recording);
+    const caughtApproach=summarizeV91PaidNamedAttackApproach(
+      chase.recording);
+    assert.deepEqual(soloApproach.frames.map(frame=>
+      frame.roadGroups.length),[1,1]);
+    assert.deepEqual(caughtApproach.frames.map(frame=>
+      frame.roadGroups.length),[1,0]);
+    assert.ok(caughtApproach.frames[1].catchDistanceM>119_250);
+    assert.ok(caughtApproach.frames[1].catchDistanceM<119_500);
+    assert.equal(caughtApproach.frames[1].pelotonRiderCount,riderCount);
+    assert.ok(caughtApproach.frames.every(frame=>
+      frame.riders.length===riderCount));
+    const tail=summarizeV91PaidFinaleTail(chase.recording);
+    assert.equal(tail.status,'partial_paid_trace');
+    assert.equal(tail.handoffDistanceM,119_500);
+    assert.equal(tail.frames.length,5);
+    const lines=new Map(chase.summary.finale.lineTimes.map(row=>
+      [row.riderId,row]));
+    for(const rider of tail.frames.at(-1).riders){
+      const line=lines.get(rider.riderId);
+      assert.ok(line);
+      assert.equal(rider.positionM,120_000);
+      assert.equal(rider.elapsedToLineSeconds,
+        line.elapsedSecondsFromLastKmStart);
+      assert.equal(rider.energyAfter,line.energyAtLine);
+    }
+    const ownTime=output=>output.summary.finale.lineTimes.find(row=>
+      row.riderId==='you-7').elapsedSecondsFromLastKmStart;
+    assert.notEqual(ownTime(passive),ownTime(chase));
   });
 }
