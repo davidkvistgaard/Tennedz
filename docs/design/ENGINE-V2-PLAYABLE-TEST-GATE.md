@@ -844,6 +844,13 @@ that road as `v91-offline-test-drive-6` unsupported, retaining the named rider,
 the actual locked road groups/dropped riders and withheld points. It does not
 run a different race to manufacture a bunch or imply that the named attack
 has been paid. The general separated-road attack remains an acceptance gap.
+In both fixed M/F cases, `you-4` is an eligible peloton attacker with 40.681
+energy; `rival-2-0` is the sole already dropped rider and there is no front
+road group. The existing no-front dropped continuation pays the bunch and
+dropped rider without a new attack, while the named-attack launch requires
+every locked rider in the bunch. A usable continuation must keep the attacker,
+bunch and dropped rider on one clock through any contact and finish; simply
+relaxing the complete-bunch guard would lose the dropped rider's travel.
 On rerun, all 90 requests return a controlled output: 46 conditional bunch
 lines, six depleted conditional lines and 38 explicit refusals, with zero
 uncaught errors and zero award-capable paths.
