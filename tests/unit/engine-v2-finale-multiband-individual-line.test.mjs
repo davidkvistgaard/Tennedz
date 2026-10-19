@@ -36,6 +36,9 @@ test('one paid group and bunch continue to every conditional individual line',()
     assert.equal(line.overlapAudit.status,
       'separated_through_conditional_lines');
     assert.equal(line.overlapAudit.firstPotentialOverlap,null);
+    assert.equal(line.pre500Audit.status,
+      'separated_through_conditional_lines');
+    assert.equal(line.pre500Audit.firstPotentialOverlap,null);
     assert.equal(line.provisionalLineOrder.length,settings.teamCount*8);
     assert.deepEqual(line.provisionalLineOrder.map(row=>row.position),
       Array.from({length:settings.teamCount*8},(_,index)=>index+1));
@@ -59,9 +62,14 @@ test('one paid group and bunch continue to every conditional individual line',()
     }
     assert.equal(validateFinaleMultibandIndividualLine(
       trial.recording,trial.paidFinale,{},line),true);
-    const {overlapAudit,provisionalLineOrder,...legacyRest}=line;
+    const {pre500Audit,overlapAudit,provisionalLineOrder,
+      ...legacyRest}=line;
     const legacy={...legacyRest,
       version:'v2-finale-multiband-individual-line-lab-1'};
+    assert.equal(validateFinaleMultibandIndividualLine(
+      trial.recording,trial.paidFinale,{},
+      {...legacy,overlapAudit,provisionalLineOrder,
+        version:'v2-finale-multiband-individual-line-lab-2'}),true);
     assert.equal(validateFinaleMultibandIndividualLine(
       trial.recording,trial.paidFinale,{},legacy),true);
     assert.equal(validateFinaleMultibandIndividualLine(

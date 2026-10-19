@@ -747,3 +747,15 @@ Four of the 14 depleted continuations have a possible
 longitudinal meeting in their last 500 m. All 14 withhold a combined order
 and point preview because individual contact before the 500 m handoff is
 not audited. This is still a conditional replay, not an official result.
+
+The separately versioned pre-500 active-band audit now carries each inferred
+source wheel through the two already paid 250 m band passages. It records a
+possible longitudinal meeting and withholds the provisional order if one is
+found; it never merges groups or awards points. In the fixed 66-scenario
+`--individual-lines` audit, all 18 active multiband continuations have no
+pre-500 meeting under those inferred wheel positions, alongside their earlier
+no-overlap final-500 check. This narrows the conditional preview's contact
+uncertainty for active bands, but the initial wheel positions, lanes and
+passing remain provisional. Dropped riders have no source wheel position, so
+their pre-500 contact is still unresolved and all 14 depleted combined orders
+remain withheld. The official classification and award gate remains open.

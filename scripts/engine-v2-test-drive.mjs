@@ -138,8 +138,9 @@ function summaryForIndividualGroupLine(trial,request,pointContext,line){
   const base=summaryFor(trial,request,pointContext);
   const decisions=new Map(line.sprintPlan.decisions.map(row=>
     [row.teamId,row]));
-  return {...base,version:line.pre500ContactStatus?
-    'v91-offline-test-drive-3':'v91-offline-test-drive-2',
+  return {...base,version:line.pre500Audit?
+    'v91-offline-test-drive-4':line.pre500ContactStatus?
+      'v91-offline-test-drive-3':'v91-offline-test-drive-2',
     roadStatus:line.pre500ContactStatus?
       'conditional_depleted_line':'conditional_multiband_line',
     individualLineVersion:line.version,
@@ -149,6 +150,8 @@ function summaryForIndividualGroupLine(trial,request,pointContext,line){
           trial.recording,line,pointContext):
         {status:'unavailable',reason:line.pre500ContactStatus?
           'Dropped-rider contact before 500 m remains unresolved.':
+          line.pre500Audit?.firstPotentialOverlap?
+            'Active road bands may meet before 500 m.':
           line.overlapAudit.firstPotentialOverlap?
             'Cross-band contact remains unresolved.':
             'The provisional line contains an unresolved place.'}}:{}),
@@ -178,6 +181,7 @@ function summaryForIndividualGroupLine(trial,request,pointContext,line){
           'conditional_band_local_cross_band_contact_unresolved',
       ...(line.pre500ContactStatus?{
         pre500ContactStatus:line.pre500ContactStatus}:{}),
+      ...(line.pre500Audit?{pre500Audit:line.pre500Audit}:{}),
       overlapAudit:line.overlapAudit,
       lineTimes:line.conditionalCrossings,
       provisionalLineOrder:line.provisionalLineOrder,

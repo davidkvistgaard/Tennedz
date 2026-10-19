@@ -68,6 +68,8 @@ test('opt-in group line pays an individual finish and same-band lead-out',()=>{
   assert.equal(base.summary.roadStatus,'conditional_multiband_line');
   assert.deepEqual(base.summary.finale.overlapAudit,
     base.individualLine.overlapAudit);
+  assert.deepEqual(base.summary.finale.pre500Audit,
+    base.individualLine.pre500Audit);
   assert.equal(helped.summary.finale.lineTimes.length,32);
   assert.deepEqual(helped.summary.finale.paidPassagesTo500
     .map(row=>row.endDistanceM),[39250,39500]);

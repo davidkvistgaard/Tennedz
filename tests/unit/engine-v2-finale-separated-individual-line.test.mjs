@@ -27,6 +27,8 @@ test('several paid groups and bunch reach distinct conditional lines',()=>{
       .size,teamCount*8);
     assert.equal(line.overlapAudit.status,
       'separated_through_conditional_lines');
+    assert.equal(line.pre500Audit.status,
+      'separated_through_conditional_lines');
     assert.deepEqual(line.provisionalLineOrder.map(row=>row.position),
       Array.from({length:teamCount*8},(_,index)=>index+1));
     assert.equal(line.classifiedResults,null);
@@ -46,6 +48,10 @@ test('several paid groups and bunch reach distinct conditional lines',()=>{
       }
     assert.equal(validateFinaleSeparatedIndividualLine(trial.recording,
       trial.paidFinale,{},line),true);
+    const {pre500Audit,...earlier}=line;
+    assert.equal(validateFinaleSeparatedIndividualLine(trial.recording,
+      trial.paidFinale,{}, {...earlier,
+        version:'v2-finale-separated-individual-line-lab-1'}),true);
     const changed=structuredClone(line);
     changed.conditionalCrossings[0].energyAtLine+=1;
     assert.throws(()=>validateFinaleSeparatedIndividualLine(
@@ -78,6 +84,12 @@ test('same-band lead-out affects the selected bunch finisher',()=>{
   assert.equal(preview.riders.length,32);
   assert.equal(preview.canCommitAwards,false);
   assert.deepEqual(preview.awardRows,[]);
+  const ambiguous=structuredClone(helped);
+  ambiguous.pre500Audit.status='potential_longitudinal_overlap';
+  ambiguous.pre500Audit.firstPotentialOverlap={distanceM:259400};
+  assert.throws(()=>projectV91ProvisionalMultibandPointPreview(
+    trial.recording,ambiguous,{tier:3,divisionIndex:1,
+      divisionCount:1}),/separate paid individual bands/);
 });
 
 test('a helper cannot serve a finisher in another separated group',()=>{
