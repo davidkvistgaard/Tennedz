@@ -1649,3 +1649,17 @@ points remained withheld. This checks one paid finale tactic after a catch;
 it does not establish official classification or a complete positional
 replay for this road. The 31 focused motor tests, lint, local build and four
 browser cases passed.
+
+The named-attack browser path now also exposes the paid 250 m launch and
+250 m follow-up when the attacker is caught or contained before 500 m.
+For the fixed 120 km rolling, 15-team women's chase, the recorded solo group
+at 119.25 km was caught at 119.438 km; the 119.5 km handoff has all 120
+riders in the bunch. The compact trace checks group membership, one bunch
+clock and each rider's energy, including work before and after the exact
+catch. It also verifies that the 500 m energy and clock match the paid
+finale's first boundary. The UI still labels individual positions in this
+opening half-kilometre unavailable; the later positioned continuation is
+not presented as a full-kilometre replay. A fixed M/F and 4/15/20-team
+matrix of the same 120 km rolling chased attack passed all six paid-approach
+reductions with 32/120/160 riders and the recorded catch before 500 m.
+The existing solo-approach response retains its original shape.

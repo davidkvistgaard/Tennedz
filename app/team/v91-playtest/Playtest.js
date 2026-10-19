@@ -79,7 +79,7 @@ export default function Playtest(){
   const [result,setResult]=useState(null);
   const [integrated,setIntegrated]=useState(null);
   const [attackRoad,setAttackRoad]=useState(null);
-  const [soloApproach,setSoloApproach]=useState(null);
+  const [attackApproach,setAttackApproach]=useState(null);
   const [approachFrameIndex,setApproachFrameIndex]=useState(0);
   const [approachRiderId,setApproachRiderId]=useState('');
   const [finaleReplay,setFinaleReplay]=useState(null);
@@ -130,7 +130,7 @@ export default function Playtest(){
   const ownPointPreview=integrated?.provisionalPointPreview?.riders
     ?.find(row=>row.riderId===ownFinisher);
   const finaleFrame=finaleReplay?.frames[finaleFrameIndex];
-  const approachFrame=soloApproach?.frames[approachFrameIndex];
+  const approachFrame=attackApproach?.frames[approachFrameIndex];
   const approachRider=approachFrame?.riders.find(row=>
     row.riderId===approachRiderId);
   const inspectedRider=finaleFrame?.riders.find(row=>
@@ -167,9 +167,10 @@ export default function Playtest(){
       }
       setResult(response.playtest);setIntegrated(response.integrated??null);
       setAttackRoad(response.attackRoad??null);
-      setSoloApproach(response.soloApproach??null);
+      setAttackApproach(response.attackApproach??response.soloApproach??null);
       setApproachFrameIndex(0);
-      setApproachRiderId(response.soloApproach?.attackRiderId??'');
+      setApproachRiderId((response.attackApproach??response.soloApproach)
+        ?.attackRiderId??'');
       setFinaleReplay(response.finaleReplay??null);
       setFinaleFrameIndex(0);
       setInspectedRiderId(response.integrated?.managerDecisions
@@ -356,21 +357,22 @@ export default function Playtest(){
         <div className="v91-riders">{frame?.ownRiders.map(rider=><div key={rider.id}>
           <strong>{rider.id}</strong><span>{rider.group}</span><span>{rider.energy.toFixed(1)} energy</span>
         </div>)}</div>
-        {soloApproach&&<div className="v91-finish">
-          <h3>Paid solo-attack approach</h3>
-          <p>The recorded attack and chase run from the locked {result.handoffKm} km handoff to {soloApproach.lastBoundaryM/1000} km. Individual positions in this segment are unavailable.</p>
-          <label>Attack boundary: {approachFrameIndex+1} of {soloApproach.frames.length}
-            <input type="range" min="0" max={soloApproach.frames.length-1}
+        {attackApproach&&<div className="v91-finish">
+          <h3>{attackApproach.branch==='solo'?'Paid solo-attack approach':'Paid named-attack approach'}</h3>
+          <p>The recorded attack and chase run from the locked {result.handoffKm} km handoff to {attackApproach.lastBoundaryM/1000} km. Individual positions in this segment are unavailable.</p>
+          <label>Attack boundary: {approachFrameIndex+1} of {attackApproach.frames.length}
+            <input type="range" min="0" max={attackApproach.frames.length-1}
               value={approachFrameIndex}
               onChange={event=>setApproachFrameIndex(Number(event.target.value))}/>
           </label>
           <p>{approachFrame?.distanceM/1000} km · {approachFrame?.elapsedSeconds.toFixed(2)} s on the bunch clock · {approachFrame?.pelotonRiderCount} in the bunch</p>
+          {approachFrame?.catchDistanceM&&<p>{attackApproach.attackRiderId} was caught at {(approachFrame.catchDistanceM/1000).toFixed(3)} km.</p>}
           {approachFrame?.roadGroups.map(group=><p key={group.id}>
             {group.riderIds.join(', ')} ahead by {group.gapSeconds.toFixed(2)} s
           </p>)}
           <label>Inspect attack rider<select value={approachRiderId}
             onChange={event=>setApproachRiderId(event.target.value)}>
-            {soloApproach.frames[0].riders.map(row=><option
+            {attackApproach.frames[0].riders.map(row=><option
               key={row.riderId} value={row.riderId}>{row.riderId}</option>)}
           </select></label>
           {approachRider&&<p>{approachRider.riderId}: {approachRider.role} · {approachRider.energyAfter.toFixed(1)} energy · {approachRider.energySpent.toFixed(2)} spent this segment</p>}

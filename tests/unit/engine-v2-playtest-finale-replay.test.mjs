@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import {runV91IntegratedTestDrive} from
   '../../scripts/engine-v2-test-drive.mjs';
 import {summarizeV91PaidFinaleReplay,
+  summarizeV91PaidNamedAttackApproach,
   summarizeV91PaidSoloApproach} from
   '../../lib/engine/v2/playtest-finale-replay.mjs';
 
@@ -47,6 +48,8 @@ test('a contact-only tail is not presented as a full final-kilometre replay',()=
   assert.equal(summary.finale.lineTimes.length,32);
   assert.equal(summarizeV91PaidFinaleReplay(recording),null);
   const approach=summarizeV91PaidSoloApproach(recording);
+  assert.deepEqual(Object.keys(approach),['version','attackRiderId',
+    'handoffDistanceM','lastBoundaryM','frames']);
   assert.equal(approach.handoffDistanceM,39_000);
   assert.equal(approach.lastBoundaryM,39_500);
   assert.deepEqual(approach.frames.map(frame=>frame.distanceM),
@@ -75,6 +78,18 @@ test('coordinated chase catches the same named solo on a fixed route and roster'
     .map(team=>team.riders));
   assert.equal(passive.recording.roadDecision.branch,'solo');
   assert.equal(chase.recording.roadDecision.branch,'caught');
+  const caughtApproach=summarizeV91PaidNamedAttackApproach(
+    chase.recording);
+  assert.equal(caughtApproach.branch,'caught');
+  assert.deepEqual(caughtApproach.frames.map(frame=>frame.distanceM),
+    [119_250,119_500]);
+  assert.deepEqual(caughtApproach.frames.map(frame=>
+    frame.roadGroups.length),[1,0]);
+  assert.ok(caughtApproach.frames[1].catchDistanceM>119_250);
+  assert.ok(caughtApproach.frames[1].catchDistanceM<119_500);
+  assert.ok(caughtApproach.frames.every(frame=>frame.riders.length===120));
+  assert.equal(caughtApproach.frames[1].pelotonRiderCount,120);
+  assert.equal(summarizeV91PaidSoloApproach(chase.recording),null);
   assert.equal(passive.summary.finale.lineTimes.length,120);
   assert.equal(chase.summary.finale.lineTimes.length,120);
   const own=output=>output.summary.finale.lineTimes.find(row=>
@@ -103,6 +118,14 @@ test('a nominated helper pays for a lead-out after the same named solo is caught
     row.riderId==='you-5');
   assert.ok(helperWork.length>0);
   assert.ok(helperWork.every(row=>row.energySpent>0));
+  const approach=summarizeV91PaidNamedAttackApproach(withHelper.recording);
+  const atHandoff=new Map(approach.frames.at(-1).riders.map(row=>
+    [row.riderId,row.energyAfter]));
+  assert.ok(withHelper.recording.paidFinale.frames[0].riders.every(row=>
+    Math.abs(row.energyAtDecision-atHandoff.get(row.riderId))<1e-6));
+  withHelper.recording.paidFinale.frames[0].riders[0].energyAtDecision+=1;
+  assert.throws(()=>summarizeV91PaidNamedAttackApproach(
+    withHelper.recording),/missed the finale handoff/);
   assert.equal(withHelper.summary.finale.lineTimes.length,120);
   const finisher=output=>output.summary.finale.lineTimes.find(row=>
     row.riderId==='you-7');

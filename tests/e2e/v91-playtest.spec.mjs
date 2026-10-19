@@ -207,6 +207,13 @@ test('passive defaults make a larger-field attack playable without editing every
     await page.getByRole('button',{name:'Run full race preview'}).click();
     await expect(page.getByText(/Named attack: you-0 · launched at 119 km; caught road, 0 group at 119\.5 km/))
       .toBeVisible();
+    await expect(page.getByRole('heading',{name:'Paid named-attack approach'}))
+      .toBeVisible();
+    await page.getByRole('slider',{name:/Attack boundary/}).fill('1');
+    await expect(page.getByText(/you-0 was caught at 119\.438 km/))
+      .toBeVisible();
+    await expect(page.getByText(/119\.5 km · [\d.]+ s on the bunch clock · 120 in the bunch/))
+      .toBeVisible();
     await expect(page.getByText('120 of 120 riders have individual crossing times.'))
       .toBeVisible();
     await expect(page.getByText(
