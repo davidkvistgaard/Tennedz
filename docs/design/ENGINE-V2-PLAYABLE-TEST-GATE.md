@@ -133,14 +133,17 @@ The repeatable read-only audit
 seed across 36 combinations: 40 km flat with no starting fatigue, 120 km
 rolling with 15, and 260 km mountain with 30; both categories; 4, 15 and 20
 teams; mixed and attack-oriented default tactics. It independently replays
-each accepted conditional finish against the same locked kilometre race.
+each accepted conditional line or road-band recording against the same locked
+kilometre race.
 Sixteen of 18 mixed sources reach a paid conditional individual line; the
 two 4-team mountain sources have a road group and six dropped riders, so
-refuse. Twelve of 18 attack-oriented sources now reach a paid group-band line
-through the shared conditional entry. The remaining six have two road groups
-and refuse. Each accepted recording replays against the locked kilometre
-source, retains the complete field and withholds awards. None of these counts
-is a target win rate. A time gap is never converted into an individual wheel
+refuse. Twelve of 18 attack-oriented sources reach a paid single-group band
+and the other six reach paid separated-group bands. The audit now accepts
+all three read-only road statuses, checks the locked rider count and withheld
+awards, and replays every accepted source. The six separated sources have two
+road groups. Each accepted recording retains the complete field and withholds
+awards. None of these counts is a target win rate. A time gap is never
+converted into an individual wheel
 position or official winner.
 
 The opt-in `v2-finale-group-last-km-to-line-11` now uses the recorded
