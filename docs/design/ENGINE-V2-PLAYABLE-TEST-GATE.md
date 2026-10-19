@@ -1102,3 +1102,24 @@ chase runs record a catch. Each still has a distinct conditional crossing for
 every rider and withholds official points. This checks that a manager order
 changes paid road dynamics; it is a constructed asymmetric field, not a target
 catch rate or evidence for retuning speed coefficients.
+
+The opt-in `v91-offline-test-drive-11` path pays a nominated solo attacker's
+existing sprint work **before** any contact inside the final 300 m. The
+attacker and bunch continue on one clock, so the paid speed and energy can
+change the actual contact distance. It then reuses the existing survivor or
+late-catch individual-line runners, plus an independent passage for every
+previously isolated rider. The sprint-aware road, line and point illustrations
+have new versions; earlier recorded roads and lines still replay unchanged.
+In a fixed fictional 40 km, fresh asymmetric field, both categories, 4/15/20
+teams and flat/mountain terrain give 12 replayed conditional lines with
+32/120/160 distinct rider crossings. On the flat source, the old road caught
+`you-7` with about 159 m left, while the paid solo sprint keeps them clear.
+On the mountain source, the old road caught `you-6` with about 219 m left;
+the sprint-aware road delays contact to about 161 m left and pays the exact
+partial sprint step. This is a measured tactic effect in constructed fields,
+not a calibrated win rate or grounds to change coefficients. A four-team
+source permits a read-only point illustration. Larger-field signed contact
+uncertainty withholds that illustration. Official results and point awards
+remain withheld; a pre-contact lead-out still refuses because its road work
+has not been paid. A nominated solo caught before the final-300 m boundary
+continues through the existing late-catch path.

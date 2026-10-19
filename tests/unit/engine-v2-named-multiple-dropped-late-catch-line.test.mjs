@@ -47,7 +47,7 @@ test('late contact pays merged bunch and every isolated line on one clock',()=>{
     }
 });
 
-test('long road, point preview, unpaid solo sprint and lead-out are gated',()=>{
+test('long road, point preview, paid solo sprint and unpaid lead-out are gated',()=>{
   for(const terrain of ['flat','rolling','mountain']){
     const input=scenario({distanceKm:260,terrain});
     const trial=runV91TestDrive(input,{full:true});
@@ -72,8 +72,9 @@ test('long road, point preview, unpaid solo sprint and lead-out are gated',()=>{
   /does not replay/);
   const solo=runV91TestDrive({...input,finalePlans:[{
     teamId:'you',finisherId:'you-2'}]});
-  assert.equal(solo.status,'unsupported');
-  assert.match(solo.reason,/solo sprint before contact needs paid road work/);
+  assert.equal(solo.status,'conditional_line');
+  assert.equal(solo.version,'v91-offline-test-drive-11');
+  assert.equal(solo.pointsStatus,'withheld');
   const helper=runV91TestDrive({...input,finalePlans:[{
     teamId:'rival-1',finisherId:'rival-1-7',
     leadOutRiderId:'rival-1-6'}]});

@@ -29,7 +29,10 @@ import {recordFinaleNamedAttackDroppedRoadFromTour,
   validateFinaleNamedAttackDroppedRoadFromTour,
   recordFinaleNamedAttackMultipleDroppedRoadFromTour,
   validateFinaleNamedAttackMultipleDroppedRoadFromTour,
-  FINALE_NAMED_ATTACK_MULTIPLE_DROPPED_ROAD_VERSION} from
+  recordFinaleNamedAttackMultipleDroppedSprintRoadFromTour,
+  validateFinaleNamedAttackMultipleDroppedSprintRoadFromTour,
+  FINALE_NAMED_ATTACK_MULTIPLE_DROPPED_ROAD_VERSION,
+  FINALE_NAMED_ATTACK_MULTIPLE_DROPPED_SPRINT_ROAD_VERSION} from
   '../lib/engine/v2/finale-named-attack-dropped-road.mjs';
 import {recordFinaleNamedDroppedIndividualLine,
   validateFinaleNamedDroppedIndividualLine,
@@ -40,15 +43,21 @@ import {recordFinaleNamedDroppedSurvivorLine,
   validateFinaleNamedDroppedSurvivorLine,
   recordFinaleNamedMultipleDroppedSurvivorLine,
   validateFinaleNamedMultipleDroppedSurvivorLine,
+  recordFinaleNamedMultipleDroppedSprintSurvivorLine,
+  validateFinaleNamedMultipleDroppedSprintSurvivorLine,
   FINALE_NAMED_DROPPED_SURVIVOR_LINE_VERSION,
-  FINALE_NAMED_MULTIPLE_DROPPED_SURVIVOR_LINE_VERSION} from
+  FINALE_NAMED_MULTIPLE_DROPPED_SURVIVOR_LINE_VERSION,
+  FINALE_NAMED_MULTIPLE_DROPPED_SPRINT_SURVIVOR_LINE_VERSION} from
   '../lib/engine/v2/finale-named-dropped-survivor-line.mjs';
 import {recordFinaleNamedDroppedLateCatchLine,
   validateFinaleNamedDroppedLateCatchLine,
   recordFinaleNamedMultipleDroppedLateCatchLine,
   validateFinaleNamedMultipleDroppedLateCatchLine,
+  recordFinaleNamedMultipleDroppedSprintLateCatchLine,
+  validateFinaleNamedMultipleDroppedSprintLateCatchLine,
   FINALE_NAMED_DROPPED_LATE_CATCH_LINE_VERSION,
-  FINALE_NAMED_MULTIPLE_DROPPED_LATE_CATCH_LINE_VERSION} from
+  FINALE_NAMED_MULTIPLE_DROPPED_LATE_CATCH_LINE_VERSION,
+  FINALE_NAMED_MULTIPLE_DROPPED_SPRINT_LATE_CATCH_LINE_VERSION} from
   '../lib/engine/v2/finale-named-dropped-late-catch-line.mjs';
 import {projectV91ProvisionalPointPreview,
   projectV91ProvisionalMultibandPointPreview,
@@ -56,8 +65,10 @@ import {projectV91ProvisionalPointPreview,
   projectV91ProvisionalNamedMultipleDroppedPointPreview,
   projectV91ProvisionalNamedDroppedSurvivorPointPreview,
   projectV91ProvisionalNamedMultipleDroppedSurvivorPointPreview,
+  projectV91ProvisionalNamedMultipleDroppedSprintSurvivorPointPreview,
   projectV91ProvisionalNamedDroppedLateCatchPointPreview,
-  projectV91ProvisionalNamedMultipleDroppedLateCatchPointPreview} from
+  projectV91ProvisionalNamedMultipleDroppedLateCatchPointPreview,
+  projectV91ProvisionalNamedMultipleDroppedSprintLateCatchPointPreview} from
   '../lib/engine/v2/playtest-point-preview.mjs';
 
 const REFUSALS=new Set([
@@ -291,13 +302,23 @@ function summaryForNamedDroppedRoad(source,request,pointContext,road,
   const lateCatch=individualLine?.version===
     FINALE_NAMED_DROPPED_LATE_CATCH_LINE_VERSION||
     individualLine?.version===
-    FINALE_NAMED_MULTIPLE_DROPPED_LATE_CATCH_LINE_VERSION;
+    FINALE_NAMED_MULTIPLE_DROPPED_LATE_CATCH_LINE_VERSION||
+    individualLine?.version===
+    FINALE_NAMED_MULTIPLE_DROPPED_SPRINT_LATE_CATCH_LINE_VERSION;
+  const sprintRoad=road.version===
+    FINALE_NAMED_ATTACK_MULTIPLE_DROPPED_SPRINT_ROAD_VERSION;
   const multipleDroppedRoad=road.version===
-    FINALE_NAMED_ATTACK_MULTIPLE_DROPPED_ROAD_VERSION;
+    FINALE_NAMED_ATTACK_MULTIPLE_DROPPED_ROAD_VERSION||sprintRoad;
   const multipleDropped=multipleDroppedRoad;
   const preview=pointContext?individualLine?.provisionalLineOrder
     ?.every(row=>row.position!==null)?
       (individualLine.version===
+        FINALE_NAMED_MULTIPLE_DROPPED_SPRINT_LATE_CATCH_LINE_VERSION?
+        projectV91ProvisionalNamedMultipleDroppedSprintLateCatchPointPreview:
+        individualLine.version===
+        FINALE_NAMED_MULTIPLE_DROPPED_SPRINT_SURVIVOR_LINE_VERSION?
+        projectV91ProvisionalNamedMultipleDroppedSprintSurvivorPointPreview:
+        individualLine.version===
         FINALE_NAMED_MULTIPLE_DROPPED_LATE_CATCH_LINE_VERSION?
         projectV91ProvisionalNamedMultipleDroppedLateCatchPointPreview:
         lateCatch?
@@ -315,7 +336,8 @@ function summaryForNamedDroppedRoad(source,request,pointContext,road,
       {status:'unavailable',reason:individualLine?
           'Cross-band contact or an ambiguous place remains unresolved.':
           'No complete individual line.'}:null;
-  return {version:multipleDroppedRoad?'v91-offline-test-drive-10':
+  return {version:sprintRoad?'v91-offline-test-drive-11':
+    multipleDroppedRoad?'v91-offline-test-drive-10':
     lateCatch?'v91-offline-test-drive-9':
     individualLine?'v91-offline-test-drive-8':
     'v91-offline-test-drive-7',
@@ -501,6 +523,30 @@ export function runV91TestDrive(scenario,{full=false}={}){
       const nominations=request.plans??source.recording.committedInputs.teams
         .map(team=>({teamId:team.id,
           finisherId:team.orders.captainId,leadOutRiderId:null}));
+      const lateContact=paidRoad.frames.find(frame=>
+        frame.active.catchDistanceM>finishM-500)
+        ?.active.catchDistanceM;
+      if(multipleDropped&&scenario.lateCatchLine===true&&
+        at500?.active.roadGroups.length===1&&
+        paidRoad.frames.at(-1).active.roadGroups.length===0&&
+        lateContact>finishM-300&&nominations.some(plan=>
+          plan.finisherId===paidRoad.attackIntent.riderId)){
+        try{
+          paidRoad=recordFinaleNamedAttackMultipleDroppedSprintRoadFromTour(
+            source.recording,{teamId:request.attackTeamId,
+              finisherId:paidRoad.attackIntent.riderId});
+          validateFinaleNamedAttackMultipleDroppedSprintRoadFromTour(
+            source.recording,{teamId:request.attackTeamId,
+              finisherId:paidRoad.attackIntent.riderId},paidRoad);
+        }catch(sprintRoadError){
+          if(!/^A (?:named solo|finale group|merged finale|sheltered) /.test(
+            sprintRoadError.message))throw sprintRoadError;
+          return unsupportedRefusal(new Error(sprintRoadError.message,{
+            cause:{playtestSource:source}}),scenario,request,pointContext);
+        }
+      }
+      const sprintRoad=paidRoad.version===
+        FINALE_NAMED_ATTACK_MULTIPLE_DROPPED_SPRINT_ROAD_VERSION;
       if(paidLineRequested&&nominations.some(plan=>
         isolatedIds.has(plan.finisherId)))
         return unsupportedRefusal(new Error(
@@ -531,11 +577,15 @@ export function runV91TestDrive(scenario,{full=false}={}){
       }else if(at500?.active.roadGroups.length===1&&
         paidRoad.frames.at(-1).active.roadGroups.length===1){
         try{
-          individualLine=(multipleDropped?
+          individualLine=(sprintRoad?
+            recordFinaleNamedMultipleDroppedSprintSurvivorLine:
+            multipleDropped?
             recordFinaleNamedMultipleDroppedSurvivorLine:
             recordFinaleNamedDroppedSurvivorLine)(
             source.recording,paidRoad,{plans:request.plans??null});
-          (multipleDropped?
+          (sprintRoad?
+            validateFinaleNamedMultipleDroppedSprintSurvivorLine:
+            multipleDropped?
             validateFinaleNamedMultipleDroppedSurvivorLine:
             validateFinaleNamedDroppedSurvivorLine)(source.recording,
             paidRoad,{plans:request.plans??null},individualLine);
@@ -554,17 +604,22 @@ export function runV91TestDrive(scenario,{full=false}={}){
         const catchDistanceM=paidRoad.frames.find(frame=>
           frame.active.catchDistanceM>finishM-500)
           ?.active.catchDistanceM;
-        if(catchDistanceM>finishM-300&&nominations.some(plan=>
+        if(!sprintRoad&&catchDistanceM>finishM-300&&
+          nominations.some(plan=>
           plan.finisherId===soloId))
           return unsupportedRefusal(new Error(
             'A nominated solo sprint before contact needs paid road work.',{
               cause:{playtestSource:source}}),scenario,request,pointContext);
         try{
-          individualLine=(multipleDropped?
+          individualLine=(sprintRoad?
+            recordFinaleNamedMultipleDroppedSprintLateCatchLine:
+            multipleDropped?
             recordFinaleNamedMultipleDroppedLateCatchLine:
             recordFinaleNamedDroppedLateCatchLine)(
             source.recording,paidRoad,{plans:request.plans??null});
-          (multipleDropped?
+          (sprintRoad?
+            validateFinaleNamedMultipleDroppedSprintLateCatchLine:
+            multipleDropped?
             validateFinaleNamedMultipleDroppedLateCatchLine:
             validateFinaleNamedDroppedLateCatchLine)(source.recording,
             paidRoad,{plans:request.plans??null},individualLine);
