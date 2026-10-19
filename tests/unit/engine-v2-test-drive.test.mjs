@@ -32,10 +32,29 @@ import {validateFinaleConcurrentFullCatchContinuationFromTour} from
   '../../lib/engine/v2/finale-concurrent-band-continuation.mjs';
 import {validateFinaleConcurrentLateCatchLineFromTour} from
   '../../lib/engine/v2/finale-concurrent-late-catch-line.mjs';
+import {recordFinaleConcurrentSurvivorLineFromTour,
+  auditFinaleConcurrentSoloAgainstBunch,
+  validateFinaleConcurrentSurvivorLineFromTour} from
+  '../../lib/engine/v2/finale-concurrent-survivor-line.mjs';
 
 const example=JSON.parse(readFileSync(new URL(
   '../../docs/design/engine-v2-test-drive-example.json',import.meta.url),
 'utf8'));
+
+test('survivor contact audit catches a mid-step pass missed by line order',()=>{
+  const audit=auditFinaleConcurrentSoloAgainstBunch({
+    handoff:{elapsedSinceLaunchSeconds:0},
+    front:{positionM:95},frontCrossingSeconds:1,finishM:100,
+    bunchRunner:{frames:[{elapsedSecondsAtStart:0,
+      durationSeconds:1,riders:[{riderId:'chaser',
+        role:'sprint',positionBeforeM:94,
+        activeSeconds:.5,activeDistanceM:4,
+        shelteredSeconds:.5,shelteredDistanceM:1}]}]}});
+  assert.equal(audit.nearestRiderId,'chaser');
+  assert.equal(audit.nearestElapsedSeconds,.5);
+  assert.equal(audit.minimumGapM,-.5);
+  assert.equal(audit.status,'provisional_cross_band_contact');
+});
 
 test('integrated drive keeps two manager attacks on the locked road when the finish is open',()=>{
   const ids=['you',...Array.from({length:14},(_,index)=>
@@ -156,7 +175,7 @@ test('integrated two-attack refusal exposes the later paid road boundary',()=>{
   assert.deepEqual(runV91IntegratedTestDrive(scenario),summary);
 });
 
-test('integrated rear catch keeps the merged rider on the paid bunch road',()=>{
+test('integrated rear catch gives the surviving solo and bunch paid individual lines',()=>{
   const teamCount=15;
   const ids=['you',...Array.from({length:teamCount-1},(_,index)=>
     `rival-${index+1}`)];
@@ -171,18 +190,45 @@ test('integrated rear catch keeps the merged rider on the paid bunch road',()=>{
     defaultRivalPlan:'neutral',managerFinaleOrders,
     teamOverrides:ids.map(teamId=>({teamId,
       level:teamId==='rival-2'?81:teamId==='you'?80:85}))}};
-  const {summary,recording,bandContinuation}=
+  const {summary,recording,individualLine}=
     runV91IntegratedTestDrive(scenario,{full:true});
-  assert.equal(summary.status,'unsupported');
-  assert.equal(summary.roadStatus,'concurrent_band_crossings_only');
+  assert.equal(summary.status,'conditional');
+  assert.equal(summary.roadStatus,
+    'paid_surviving_front_conditional_individual_line');
   assert.equal(summary.pointsStatus,'withheld');
-  assert.equal(summary.paidBandContinuation.contactEvents.length,1);
-  assert.equal(summary.paidBandContinuation.contactEvents[0].riderId,
+  assert.equal(summary.canCommitAwards,false);
+  assert.equal(individualLine.roadPrefix.contactEvents.length,1);
+  assert.equal(individualLine.roadPrefix.contactEvents[0].riderId,
     'you-3');
-  assert.equal(bandContinuation.bandCrossings.length,2);
-  assert.ok(bandContinuation.bandCrossings[1].riderIds.includes('you-3'));
-  assert.equal(validateFinaleConcurrentFullCatchContinuationFromTour(
-    recording.recording,bandContinuation),true);
+  assert.equal(individualLine.frontSuffix.riderId,'rival-2-5');
+  assert.equal(individualLine.runner.branch,'late_separated_bunch');
+  assert.equal(individualLine.runner.sourceRunnerVersion,
+    'v2-finale-positioned-late-merged-runner-lab-2');
+  assert.equal(individualLine.provisionalLineOrder[0].riderId,
+    'rival-2-5');
+  assert.equal(individualLine.conditionalCrossings.length,teamCount*8);
+  assert.equal(new Set(individualLine.conditionalCrossings.map(row=>
+    row.riderId)).size,teamCount*8);
+  assert.ok(individualLine.contactAudit.minimumGapM>0);
+  assert.ok(individualLine.roadPrefix.frames.at(-1)
+    .roadBands[1].positionM===scenario.settings.distanceKm*1000-100);
+  assert.ok(individualLine.runner.frames[0].riders.every(row=>
+    row.energySpent>0&&row.positionM>row.positionBeforeM));
+  assert.equal(validateFinaleConcurrentSurvivorLineFromTour(
+    recording.recording,{plans:null},individualLine),true);
+  const withUnpaidHelper=recording.recording.committedInputs.teams
+    .map(team=>({teamId:team.id,
+      finisherId:team.orders.captainId,
+      leadOutRiderId:team.id==='you'?team.orders.helperIds[0]:null}));
+  assert.throws(()=>recordFinaleConcurrentSurvivorLineFromTour(
+    recording.recording,{plans:withUnpaidHelper}),/no lead-out/);
+  const withSoloFinisher=withUnpaidHelper.map(row=>({
+    ...row,leadOutRiderId:null,
+    finisherId:row.teamId==='rival-2'?'rival-2-5':row.finisherId}));
+  assert.throws(()=>recordFinaleConcurrentSurvivorLineFromTour(
+    recording.recording,{plans:withSoloFinisher}),
+  /solo finisher needs its own paid sprint/);
+  assert.deepEqual(runV91IntegratedTestDrive(scenario),summary);
 });
 
 test('integrated double contact reaches a conditional individual line',()=>{

@@ -88,9 +88,11 @@ two managers can now name different eligible attackers on the same road, with
 other managers choosing selective chase or front rotation. The diagnostic
 v91 playtest API still stops at the kilometre handoff. The offline test drive,
 with or without `--integrated`, routes two named manager orders through that
-same committed tour. Only an exact, fully paid double catch that reaches one
+same committed tour. An exact, fully paid double catch that reaches one
 complete bunch at 500 m enters the existing conditional individual runner.
-Other road states expose the locked orders, road groups and precise refusal;
+Later double catches and one narrow surviving-front road can also reach
+separate conditional individual lines, as described below. Other road states
+expose the locked orders, road groups and precise refusal;
 neither a provisional kilometre result nor a point award fills the gap. The
 test drive also exposes the first replayed common-time event, including each
 rider's position and energy paid up to that event, when the source supports
@@ -98,8 +100,8 @@ one. Two attackers at the same position still have unresolved group identity
 until a separately paid contact record proves it. The
 double-catch runner rejects a lead-out helper outside the finisher's adjacent
 source wheel. Its inferred lanes and passing rule remain experimental, so
-even an accepted line is not an official result. Surviving attackers, earlier
-attacker-to-attacker contact and later catches still need paid continuation.
+even an accepted line is not an official result. Most surviving-attacker and
+attacker-to-attacker contact roads still need paid continuation.
 The conditional bunch-to-group fallback and an unsupported group plan reuse
 that same locked kilometre recording instead of simulating the race again.
 This changes no versioned road or result output.
@@ -125,8 +127,33 @@ every locked rider and withhold awards. Twenty use the later paid handoff;
 the four long mountain runs are already caught by the older complete 500 m
 bunch path. The audit checks roster uniqueness and finite crossing time and
 energy. These counts describe coverage of one seed and manager setup, not a
-break survival rate or proof of sporting balance. Other seeds, surviving
-attacks and attacker-to-attacker contact remain open.
+break survival rate or proof of sporting balance. Other seeds and
+attacker-to-attacker contact remain open.
+
+When only the rear attacker is caught and the front rider survives, a
+separate `v2-finale-concurrent-survivor-line-lab-1` can use the paid two-band
+100 m handoff. It retains the front rider's paid solo tape to the line and
+replaces only the bunch's remaining band crossing with the existing individual
+finisher-only runner under a new `late_separated_bunch` recording label. The
+cross-band audit checks every linear frame edge and
+active/sheltered change up to the solo crossing, refusing the line if any
+inferred bunch rider contacts the solo. This avoids treating line timestamps
+alone as proof of no late catch; a synthetic mid-step pass followed by a
+slower line crossing is detected by the audit. One fixed fictional manager
+pair with a
+different nominated attack rider has a 5.20 m front gap at the handoff and a
+3.84 m minimum audited gap before the front crosses. All 120 riders get one
+conditional crossing. The inferred bunch wheels and passing remain
+experimental, so classification, points and awards are withheld. An optional
+lead-out is refused because no earlier helper pull has been paid; nominating
+the solo itself as finisher also refuses until its sprint can be paid. This is a
+separate versioned path; older road and line recordings remain unchanged.
+With attack slots `3,5` and the same fictional seed, the configurable audit
+records 20 complete conditional lines across M/F, 15/20 teams and flat,
+rolling, mountain and tired 120 km routes. The four tired 260 km mountain
+runs stop earlier because their two-split 400 m source has no three-band
+handoff. All 24 withhold points and awards. This is coverage of one chosen
+field and attack pair, not a break survival frequency or motor completion.
 
 The opt-in concurrent double-catch line now has a separate lab-2 continuation
 when a manager nominates a lead-out. It reuses the paid 500 m bunch runner's

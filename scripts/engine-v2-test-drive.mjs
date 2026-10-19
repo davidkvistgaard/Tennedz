@@ -23,6 +23,9 @@ import {recordFinaleConcurrentFullCatchContinuationFromTour,
 import {recordFinaleConcurrentLateCatchLineFromTour,
   validateFinaleConcurrentLateCatchLineFromTour} from
   '../lib/engine/v2/finale-concurrent-late-catch-line.mjs';
+import {recordFinaleConcurrentSurvivorLineFromTour,
+  validateFinaleConcurrentSurvivorLineFromTour} from
+  '../lib/engine/v2/finale-concurrent-survivor-line.mjs';
 import {validateRequestedFinalePlans} from
   '../lib/engine/v2/playtest-finale-trial.mjs';
 import {finaleSnapshotFromTour} from
@@ -877,7 +880,7 @@ export function runV91ConcurrentTestDrive(scenario,{full=false}={}){
       plans:request.plans??null});
   }catch(error){
     if(error?.constructor!==Error)throw error;
-    let lateLineRefusal=null;
+    let lateLineRefusal=null,survivorLineRefusal=null;
     if(!assembled){
       try{
         const lateLine=recordFinaleConcurrentLateCatchLineFromTour(tour,{
@@ -898,6 +901,28 @@ export function runV91ConcurrentTestDrive(scenario,{full=false}={}){
       }catch(lateError){
         if(lateError?.constructor!==Error)throw lateError;
         lateLineRefusal=lateError.message;
+      }
+      try{
+        const survivorLine=recordFinaleConcurrentSurvivorLineFromTour(tour,{
+          plans:request.plans??null});
+        validateFinaleConcurrentSurvivorLineFromTour(tour,{
+          plans:request.plans??null},survivorLine);
+        const summary={...base,status:'conditional',
+          roadStatus:survivorLine.roadStatus,
+          individualLineVersion:survivorLine.version,
+          positionSourceStatus:survivorLine.positionedSource.status,
+          provisionalLineOrder:survivorLine.provisionalLineOrder,
+          finale:{individualFinishStatus:'conditional_inferred_wheels',
+            lineTimes:survivorLine.conditionalCrossings,
+            paidRoad:survivorLine.roadPrefix,
+            soloRoad:survivorLine.frontSuffix,
+            crossBandContactAudit:survivorLine.contactAudit,
+            leadOutWork:[]}};
+        return full?{summary,recording:source,
+          individualLine:survivorLine}:summary;
+      }catch(survivorError){
+        if(survivorError?.constructor!==Error)throw survivorError;
+        survivorLineRefusal=survivorError.message;
       }
     }
     let event=null;
@@ -945,9 +970,12 @@ export function runV91ConcurrentTestDrive(scenario,{full=false}={}){
       roadStatus:bandContinuation?.status==='band_crossings_only'?
         'concurrent_band_crossings_only':'concurrent_road_unresolved',
       reason:bandContinuation?.status==='band_crossings_only'?
-        'Road bands reached the line, but individual bunch crossings and finale plans are unresolved.':
+        survivorLineRefusal?.includes('solo finisher')?
+          survivorLineRefusal:
+          'Road bands reached the line, but individual bunch crossings and finale plans are unresolved.':
         error.message,
       ...(lateLineRefusal?{lateLineRefusal}:{}),
+      ...(survivorLineRefusal?{survivorLineRefusal}:{}),
       ...(firstPaidEvent?{firstPaidEvent}:{}),
       ...(laterEvent?{latestPaidEvent:{version:laterEvent.version,
         event:laterEvent.event,

@@ -2,21 +2,32 @@
 // which paid road states are supported; it is not a balance target.
 import {runV91IntegratedTestDrive} from './engine-v2-test-drive.mjs';
 
+const [seed='paired-final-orders',mode='full',slots='2,2']=
+  process.argv.slice(2);
+const [youSlot,rivalSlot]=slots.split(',').map(Number);
+if(typeof seed!=='string'||!seed||!['full','quick','one'].includes(mode)||
+  process.argv.length>5||slots.split(',').length!==2||
+  ![youSlot,rivalSlot].every(slot=>Number.isInteger(slot)&&
+    slot>=0&&slot<8))
+  throw new Error('Usage: node scripts/engine-v2-concurrent-late-catch-audit.mjs [seed] [full|quick|one] [youSlot,rivalSlot]');
+const cases=mode!=='full'?[[40,'flat',0]]:[[40,'flat',0],
+  [40,'rolling',0],[40,'mountain',0],[120,'flat',0],
+  [120,'rolling',15],[260,'mountain',30]];
 const rows=[];
-for(const gender of ['M','F'])for(const teamCount of [15,20])
-  for(const [distanceKm,terrain,fatigue] of [[40,'flat',0],
-    [40,'rolling',0],[40,'mountain',0],[120,'flat',0],
-    [120,'rolling',15],[260,'mountain',30]]){
+for(const gender of mode==='one'?['M']:['M','F'])
+  for(const teamCount of mode==='one'?[15]:[15,20])
+  for(const [distanceKm,terrain,fatigue] of cases){
     const ids=['you',...Array.from({length:teamCount-1},(_,index)=>
       `rival-${index+1}`)];
     const managerFinaleOrders=ids.map(teamId=>({teamId,
       attack:['you','rival-2'].includes(teamId)?'selective':'none',
       ...(['you','rival-2'].includes(teamId)?{
-        attackRiderId:`${teamId}-2`}:{}),
+        attackRiderId:`${teamId}-${teamId==='you'?youSlot:
+          rivalSlot}`}:{}),
       chase:['rival-1','rival-4'].includes(teamId)?'selective':'ignore',
       frontWork:teamId==='rival-3'?'rotate':'sit_in'}));
     const scenario={settings:{distanceKm,teamCount,gender,terrain,fatigue,
-      seed:'paired-final-orders',attack:'none',chase:'ignore',
+      seed,attack:'none',chase:'ignore',
       defaultRivalPlan:'neutral',managerFinaleOrders,
       teamOverrides:ids.map(teamId=>({teamId,
         level:teamId==='rival-2'?81:teamId==='you'?80:85}))}};
@@ -32,16 +43,49 @@ for(const gender of ['M','F'])for(const teamCount of [15,20])
         !Number.isFinite(row.energyAtLine))))
       throw new Error('The concurrent audit lost an individual crossing.');
     const paidRoad=summary.paidBandContinuation;
+    const lineHandoff=output.individualLine?.roadPrefix?.frames.at(-1);
+    if(output.individualLine?.frontSuffix&&
+      (!Number.isFinite(output.individualLine.contactAudit
+        ?.minimumGapM)||
+      output.individualLine.contactAudit.minimumGapM<=0||
+      !Number.isFinite(output.individualLine.frontSuffix
+        .elapsedAtLineSeconds)||
+      lineHandoff?.roadBands.length!==2||
+      lineHandoff.roadBands[0].positionM<=
+        lineHandoff.roadBands[1].positionM))
+      throw new Error('The survivor audit lost a paid, separated front.');
+    const bunchAt200=output.bandContinuation?.frames.find(frame=>
+      frame.roadBands.some(band=>band.kind==='bunch'&&
+        Math.abs(band.positionM-(distanceKm*1000-200))<1e-7));
     if(paidRoad&&(paidRoad.finalRiders.length!==teamCount*8||
       new Set(paidRoad.finalRiders.map(row=>row.riderId)).size!==
         teamCount*8))
       throw new Error('The concurrent audit lost a paid road rider.');
-    const row={gender,teamCount,distanceKm,terrain,fatigue,
+    const row={seed,youSlot,rivalSlot,gender,teamCount,distanceKm,
+      terrain,fatigue,
       status:summary.status,roadStatus:summary.roadStatus,
       individualLineVersion:summary.individualLineVersion??null,
       contactKinds:output.individualLine?.roadPrefix?.contactEvents
         ?.map(event=>event.kind)??paidRoad?.contactEvents
         ?.map(event=>event.kind)??[],
+      bandCrossings:paidRoad?.bandCrossings.map(band=>({
+        kind:band.kind,seconds:band.elapsedSinceLaunchSeconds}))??[],
+      minimumCrossBandGapM:output.individualLine?.contactAudit
+        ?.minimumGapM??null,
+      survivingFrontId:output.individualLine?.frontSuffix?.riderId??null,
+      frontCrossingSeconds:output.individualLine?.frontSuffix
+        ?.elapsedAtLineSeconds??null,
+      handoffFrontGapM:lineHandoff?.roadBands.length===2?
+        lineHandoff.roadBands[0].positionM-
+          lineHandoff.roadBands[1].positionM:null,
+      frontGapAtBunch200M:bunchAt200?.roadBands.length===2?
+        bunchAt200.roadBands[0].positionM-
+          bunchAt200.roadBands[1].positionM:null,
+      ...(mode==='one'?{roadEvents:(output.bandContinuation?.frames??
+        output.individualLine?.roadPrefix?.frames)
+        .map(frame=>({event:frame.event,
+          positions:frame.roadBands.map(band=>({kind:band.kind,
+            positionM:band.positionM}))}))??[]}:{}),
       individualCrossings:crossings?.length??0,
       reason:summary.status==='unsupported'?
         summary.lateLineRefusal??summary.reason:null};
