@@ -4,6 +4,10 @@ import {prepareV91Playtest,createV91Playtest,
   summarizeV91Playtest} from
   '../../lib/engine/v2/playtest.mjs';
 import {MOTOR_ATTACK_TRACE_VERSION} from '../../lib/engine/v2/tuning.mjs';
+import {orderAt} from '../../lib/engine/v2/orders.mjs';
+import {recordFinaleConcurrentNamedMultiSelectiveRotationFromTour,
+  validateFinaleConcurrentNamedMultiSelectiveRotationFromTour} from
+  '../../lib/engine/v2/finale-concurrent-named-chase-rotation-launch.mjs';
 
 test('a synthetic v91 playtest is deterministic and keeps its versioned recording',()=>{
   const input={distanceKm:40,terrain:'rolling',teamCount:4,gender:'F',seed:'repeat'};
@@ -156,6 +160,78 @@ test('named rival tactics reject overlap, unknown managers and invalid orders',(
   ])assert.throws(()=>prepareV91Playtest({teamCount:4,
     managerTactics:[{effort:'steady',attack:'none',chase:'ignore'}],
     managerTacticOverrides}),/valid playtest settings/);
+});
+
+test('two managers can lock distinct named final-kilometre attacks on one race',()=>{
+  const settings={distanceKm:40,teamCount:4,seed:'paired-final-orders',
+    attack:'none',chase:'ignore',defaultRivalPlan:'neutral',
+    managerFinaleOrders:[
+      {teamId:'you',attack:'selective',attackRiderId:'you-5',
+        chase:'ignore',frontWork:'sit_in'},
+      {teamId:'rival-2',attack:'selective',
+        attackRiderId:'rival-2-6',chase:'ignore',frontWork:'sit_in'},
+      {teamId:'rival-1',attack:'none',chase:'selective',
+        frontWork:'sit_in'},
+      {teamId:'rival-3',attack:'none',frontWork:'rotate'}]};
+  const prepared=prepareV91Playtest(settings);
+  assert.deepEqual(prepared.settings.managerFinaleOrders,
+    settings.managerFinaleOrders);
+  assert.deepEqual(prepared.teams.map(team=>team.orders.phases.length),
+    [1,1,1,1]);
+  const played=createV91Playtest(settings);
+  assert.deepEqual(played.recording,createV91Playtest(settings).recording);
+  const byId=new Map(played.recording.committedInputs.teams.map(team=>
+    [team.id,team]));
+  assert.equal(orderAt(byId.get('you').orders,39).attackRiderId,'you-5');
+  assert.equal(orderAt(byId.get('rival-2').orders,39).attackRiderId,
+    'rival-2-6');
+  assert.equal(orderAt(byId.get('rival-1').orders,39).chase,'selective');
+  assert.equal(orderAt(byId.get('rival-3').orders,39).frontWork,'rotate');
+  assert.equal(played.recording.frames.length,40);
+});
+
+test('named finale orders reject wrong riders and contradictory attack rules',()=>{
+  const valid={teamId:'you',attack:'selective',attackRiderId:'you-5'};
+  for(const managerFinaleOrders of [
+    [valid,valid],
+    [{...valid,teamId:'rival-4'}],
+    [{...valid,attackRiderId:'rival-1-5'}],
+    [{...valid,attack:'none'}],
+    [{...valid,frontWork:'fly'}],
+    [{...valid,atKm:39}],
+    [{teamId:'you'}],
+  ])assert.throws(()=>prepareV91Playtest({teamCount:4,
+    managerFinaleOrders}),/valid playtest settings/);
+});
+
+test('chosen managers enter the existing two-attack paid launch on one road',()=>{
+  const ids=['you',...Array.from({length:14},(_,index)=>
+    `rival-${index+1}`)];
+  const managerFinaleOrders=ids.map(teamId=>({teamId,attack:'none',
+    chase:'ignore',frontWork:'sit_in'}));
+  for(const id of ['you','rival-2']){
+    const row=managerFinaleOrders.find(order=>order.teamId===id);
+    row.attack='selective';
+    row.attackRiderId=`${id}-5`;
+  }
+  for(const id of ['rival-1','rival-3'])
+    managerFinaleOrders.find(row=>row.teamId===id).chase='selective';
+  managerFinaleOrders.find(row=>row.teamId==='rival-4').frontWork='rotate';
+  const {recording}=createV91Playtest({distanceKm:40,teamCount:15,
+    seed:'paired-final-orders',attack:'none',chase:'ignore',
+    defaultRivalPlan:'neutral',
+    teamOverrides:ids.map(teamId=>({teamId,level:80})),
+    managerFinaleOrders});
+  const paid=recordFinaleConcurrentNamedMultiSelectiveRotationFromTour(
+    recording);
+  validateFinaleConcurrentNamedMultiSelectiveRotationFromTour(recording,
+    JSON.parse(JSON.stringify(paid)));
+  assert.deepEqual(new Set(paid.attacks.map(row=>row.riderId)),
+    new Set(['you-5','rival-2-5']));
+  assert.ok(paid.riderEnergy.filter(row=>row.role==='attack').every(row=>
+    row.energySpent>0&&row.energyAfter<row.energyAtDecision));
+  assert.ok(paid.chase?.energySpent>0);
+  assert.ok(paid.rotation.selected?.work.length>0);
 });
 
 test('opt-in team profiles change field strength and fatigue without changing orders',()=>{
