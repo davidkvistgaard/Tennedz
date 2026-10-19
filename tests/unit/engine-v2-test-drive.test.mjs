@@ -56,6 +56,16 @@ test('integrated drive keeps two manager attacks on the locked road when the fin
     row.riderId)),new Set(['you-5','rival-2-5']));
   assert.equal(output.summary.lastKmSource.roadGroups.length,0);
   assert.equal(output.summary.lastKmSource.riderEnergy.length,120);
+  assert.equal(output.summary.firstPaidEvent.event,
+    'first_attacker_at_slice_boundary');
+  assert.equal(output.summary.firstPaidEvent.riders.length,120);
+  assert.equal(output.summary.firstPaidEvent.roadRelationshipStatus,
+    'unresolved');
+  assert.equal(output.summary.firstPaidEvent.attackerPositions[0].positionM,
+    output.summary.firstPaidEvent.attackerPositions[1].positionM);
+  assert.ok(output.summary.firstPaidEvent.riders.filter(row=>
+    row.role==='attack').every(row=>row.energySpentToEvent>0&&
+      row.energyAtEvent<row.energyAtDecision));
   assert.equal(output.summary.pointsStatus,'withheld');
   assert.equal(output.summary.canCommitAwards,false);
   assert.equal(output.recording.recording.frames.length,40);

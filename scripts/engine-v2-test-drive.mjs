@@ -9,6 +9,9 @@ import {orderAt} from '../lib/engine/v2/orders.mjs';
 import {recordFinaleConcurrentDoubleCatchLineFromTour,
   validateFinaleConcurrentDoubleCatchLineFromTour} from
   '../lib/engine/v2/finale-concurrent-double-catch-line.mjs';
+import {recordFinaleConcurrentCommonTimeStateFromTour,
+  validateFinaleConcurrentCommonTimeStateFromTour} from
+  '../lib/engine/v2/finale-concurrent-common-time-state.mjs';
 import {validateRequestedFinalePlans} from
   '../lib/engine/v2/playtest-finale-trial.mjs';
 import {finaleSnapshotFromTour} from
@@ -858,9 +861,29 @@ export function runV91ConcurrentTestDrive(scenario,{full=false}={}){
     line=recordFinaleConcurrentDoubleCatchLineFromTour(tour,{
       plans:request.plans??null});
   }catch(error){
-    if(!(error instanceof Error)||error instanceof TypeError)throw error;
+    if(error?.constructor!==Error)throw error;
+    let event=null;
+    try{
+      event=recordFinaleConcurrentCommonTimeStateFromTour(tour);
+    }catch(eventError){
+      if(eventError?.constructor!==Error)
+        throw eventError;
+    }
+    if(event)validateFinaleConcurrentCommonTimeStateFromTour(tour,
+      JSON.parse(JSON.stringify(event)));
+    const firstPaidEvent=event?{version:event.version,event:event.event,
+      elapsedSinceLaunchSeconds:event.eventElapsedSeconds,
+      attackerPositions:event.attackerPositions,
+      bunchPositionM:event.bunchPositionM,
+      roadRelationshipStatus:event.roadRelationshipStatus,
+      riders:event.riders.map(row=>({riderId:row.riderId,
+        role:row.role,positionM:row.positionM,
+        energyAtDecision:row.energyAtDecision,
+        energySpentToEvent:row.energySpentToEvent,
+        energyAtEvent:row.energyAtEvent}))}:null;
     const summary={...base,status:'unsupported',
-      roadStatus:'concurrent_road_unresolved',reason:error.message};
+      roadStatus:'concurrent_road_unresolved',reason:error.message,
+      ...(firstPaidEvent?{firstPaidEvent}:{})};
     return full?{summary,recording:source}:summary;
   }
   validateFinaleConcurrentDoubleCatchLineFromTour(tour,{

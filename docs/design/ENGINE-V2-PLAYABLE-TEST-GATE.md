@@ -92,6 +92,10 @@ same committed tour. Only an exact, fully paid double catch that reaches one
 complete bunch at 500 m enters the existing conditional individual runner.
 Other road states expose the locked orders, road groups and precise refusal;
 neither a provisional kilometre result nor a point award fills the gap. The
+test drive also exposes the first replayed common-time event, including each
+rider's position and energy paid up to that event, when the source supports
+one. Two attackers at the same position still have unresolved group identity
+until a separately paid contact record proves it. The
 double-catch runner rejects a lead-out helper outside the finisher's adjacent
 source wheel. Its inferred lanes and passing rule remain experimental, so
 even an accepted line is not an official result. Surviving attackers, earlier
