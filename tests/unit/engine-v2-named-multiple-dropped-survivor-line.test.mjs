@@ -79,3 +79,30 @@ test('solo sprint and helper work are paid; unresolved contact withholds points'
     {plans:ordinary.summary.request.plans??null},altered),
   /does not replay/);
 });
+
+test('one rival chase order changes survival on the same locked field',()=>{
+  for(const teamCount of [4,15,20])for(const gender of ['M','F'])
+    for(const distanceKm of [120,260]){
+      const ignoredInput=scenario({teamCount,gender,distanceKm});
+      const chasedInput=structuredClone(ignoredInput);
+      chasedInput.settings.managerTactics[0].chase='all';
+      const ignored=runV91TestDrive(ignoredInput,{full:true});
+      const chased=runV91TestDrive(chasedInput,{full:true});
+      assert.equal(ignored.summary.status,'conditional_line');
+      assert.equal(chased.summary.status,'conditional_line');
+      assert.equal(ignored.paidRoad.attackIntent.riderId,
+        chased.paidRoad.attackIntent.riderId);
+      assert.equal(ignored.summary.engineVersion,
+        chased.summary.engineVersion);
+      assert.equal(ignored.paidRoad.frames.at(-1).active.roadGroups.length,1);
+      assert.equal(chased.paidRoad.frames.at(-1).active.roadGroups.length,0);
+      assert.ok(chased.paidRoad.frames.some(frame=>
+        frame.active.catchDistanceM));
+      assert.equal(ignored.individualLine.conditionalCrossings.length,
+        teamCount*8);
+      assert.equal(chased.individualLine.conditionalCrossings.length,
+        teamCount*8);
+      assert.equal(ignored.summary.pointsStatus,'withheld');
+      assert.equal(chased.summary.pointsStatus,'withheld');
+    }
+});

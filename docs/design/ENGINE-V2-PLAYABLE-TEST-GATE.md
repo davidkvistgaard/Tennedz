@@ -1093,3 +1093,12 @@ solo sprint before contact and a pre-contact lead-out still refuse explicitly
 because that work is not in the road trace. Neither new version settles an
 official result or awards points, and the older one-drop late-catch recording
 remains replayable.
+
+A paired full-race tactic check now holds the fictional route, roster and seed
+fixed and changes only `rival-1` from ignoring to pursuing the named attacker.
+At 120 and 260 km on a flat route, in both categories and 4/15/20-team
+fields, all 12 ignore runs keep that rider separate at the line and all 12
+chase runs record a catch. Each still has a distinct conditional crossing for
+every rider and withholds official points. This checks that a manager order
+changes paid road dynamics; it is a constructed asymmetric field, not a target
+catch rate or evidence for retuning speed coefficients.
