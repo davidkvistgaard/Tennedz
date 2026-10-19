@@ -87,7 +87,8 @@ const rows=scenarios.map(({kind,mode,settings})=>{
         output.finale.overlapAudit.firstPotentialOverlap!==null,
       pre500ContactStatus:output.finale.pre500ContactStatus,
       provisionalUniqueOrder:
-        output.finale.provisionalLineOrder!==null}:{}),
+        output.finale.provisionalLineOrder?.every(row=>
+          row.position!==null)??false}:{}),
     ...(status==='recorded_depleted_bands'||
       status==='recorded_dropped_bands'?{
         totalUnmetEnergyDemand:output.finale.totalUnmetEnergyDemand}: {})};
@@ -95,5 +96,5 @@ const rows=scenarios.map(({kind,mode,settings})=>{
 const counts=Object.fromEntries([...new Set(rows.map(row=>row.status))]
   .sort().map(status=>[status,rows.filter(row=>row.status===status).length]));
 console.log(JSON.stringify({version:individualLines?
-  'v2-playable-road-audit-individual-4':'v2-playable-road-audit-1',
+  'v2-playable-road-audit-individual-5':'v2-playable-road-audit-1',
   seed:'test-drive-acceptance-1',scenarios:rows.length,counts,rows},null,2));

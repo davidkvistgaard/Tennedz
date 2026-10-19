@@ -748,6 +748,26 @@ longitudinal meeting in their last 500 m. All 14 withhold a combined order
 and point preview because individual contact before the 500 m handoff is
 not audited. This is still a conditional replay, not an official result.
 
+The opt-in `v2-finale-depleted-individual-line-lab-2` now audits the paid
+first 500 m as well. It uses each dropped rider's recorded deficit as the
+time at which that rider passes the same last-kilometre marker, alongside
+the already inferred active wheels. It creates no dropped wheel or shared
+dropped group and refuses a provisional order when trajectories might meet.
+In the fixed 260 km four-team mountain chase sources for M and F, the one
+dropped rider stays longitudinally separate through both first-250 m
+passages and the existing final-500 m audit. All 32 individual crossings
+therefore receive a **provisional** order and a read-only projection through
+the existing point policy. The old lab-1 recording still replays, and neither
+version creates an official classification or award. A separate 54-case
+route/category/field/tactics probe found exactly these two newly auditable
+sources, six paths with unmet dropped energy and no thrown errors; this is
+coverage evidence, not a sporting win rate.
+The wider 66-scenario `--individual-lines` audit now finds ten of its 14
+depleted conditional lines longitudinally separate both before and after
+500 m, including a one-group/two-dropped-rider case whose 32-rider preview
+passes the existing point policy. Four retain a potential contact and no
+combined order; two other sources still stop at unmet dropped energy.
+
 The separately versioned pre-500 active-band audit now carries each inferred
 source wheel through the two already paid 250 m band passages. It records a
 possible longitudinal meeting and withholds the provisional order if one is

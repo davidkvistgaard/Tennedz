@@ -3,7 +3,8 @@ import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {spawnSync} from 'node:child_process';
 import {runV91TestDrive} from '../../scripts/engine-v2-test-drive.mjs';
-import {validateFinaleDepletedIndividualLine} from
+import {recordFinaleDepletedIndividualLine,
+  validateFinaleDepletedIndividualLine} from
   '../../lib/engine/v2/finale-depleted-individual-line.mjs';
 import {validateFinaleSingletonFrontIndividualLine} from
   '../../lib/engine/v2/finale-singleton-front-individual-line.mjs';
@@ -230,15 +231,24 @@ test('paid dropped travel joins an opt-in individual bunch line without inventin
   const settings={distanceKm:260,terrain:'mountain',fatigue:30,
     teamCount:4,gender:'M',seed:'test-drive-acceptance-1',
     attack:'none',chase:'all',defaultRivalPlan:'chase'};
-  const base=runV91TestDrive({settings,individualGroupLine:true},
+  const base=runV91TestDrive({settings,individualGroupLine:true,
+    pointContext:{tier:3,divisionIndex:1,divisionCount:1}},
     {full:true});
   const helped=runV91TestDrive({settings,individualGroupLine:true,
     finalePlans:[{teamId:'you',finisherId:'you-7',
       leadOutRiderId:'you-0'}]},{full:true});
   assert.equal(base.summary.roadStatus,'conditional_depleted_line');
   assert.equal(base.summary.finale.lineTimes.length,32);
-  assert.equal(base.summary.finale.pre500ContactStatus,'unresolved');
-  assert.equal(base.summary.finale.provisionalLineOrder,null);
+  assert.equal(base.summary.finale.pre500ContactStatus,
+    'provisional_separated');
+  assert.equal(base.summary.finale.pre500Audit.firstPotentialOverlap,null);
+  assert.equal(base.summary.finale.overlapAudit.firstPotentialOverlap,null);
+  assert.equal(base.summary.finale.provisionalLineOrder.length,32);
+  assert.equal(base.summary.finale.provisionalLineOrder.at(-1).riderId,
+    'rival-2-0');
+  assert.equal(base.summary.provisionalPointPreview.pointsStatus,
+    'experimental_preview_only');
+  assert.deepEqual(base.summary.provisionalPointPreview.awardRows,[]);
   assert.equal(base.summary.pointsStatus,'withheld');
   assert.equal(base.summary.canCommitAwards,false);
   assert.equal(base.summary.finale.lineTimes.filter(row=>
@@ -253,12 +263,24 @@ test('paid dropped travel joins an opt-in individual bunch line without inventin
     row.riderId==='rival-2-0'),
   base.summary.finale.lineTimes.find(row=>
     row.riderId==='rival-2-0'));
+  const legacy=recordFinaleDepletedIndividualLine(
+    base.recording.recording,base.recording.paidFinale,{plans:null});
+  assert.equal(legacy.version,'v2-finale-depleted-individual-line-lab-1');
+  assert.equal(legacy.provisionalLineOrder,null);
+  assert.equal(validateFinaleDepletedIndividualLine(
+    base.recording.recording,base.recording.paidFinale,
+    {plans:null},legacy),true);
   const tampered=structuredClone(base.individualLine);
   tampered.conditionalCrossings.find(row=>
     row.riderId==='rival-2-0').energyAtLine+=1;
   assert.throws(()=>validateFinaleDepletedIndividualLine(
     base.recording.recording,base.recording.paidFinale,
     {plans:null},tampered),/does not replay/);
+  const forgedContact=structuredClone(base.individualLine);
+  forgedContact.pre500Audit.status='potential_longitudinal_overlap';
+  assert.throws(()=>validateFinaleDepletedIndividualLine(
+    base.recording.recording,base.recording.paidFinale,
+    {plans:null},forgedContact),/does not replay/);
   const refused=runV91TestDrive({settings,individualGroupLine:true,
     finalePlans:[{teamId:'rival-2',finisherId:'rival-2-7',
       leadOutRiderId:'rival-2-0'}]});
@@ -279,6 +301,62 @@ test('paid dropped travel joins an opt-in individual bunch line without inventin
   assert.equal(unpaidPlan.finale.individualFinishStatus,
     'unresolved_within_road_bands');
   assert.equal(unpaidPlan.pointsStatus,'withheld');
+});
+
+test('the women dropped-rider road has a replayed provisional line without awards',()=>{
+  const settings={distanceKm:260,terrain:'mountain',fatigue:30,
+    teamCount:4,gender:'F',seed:'test-drive-acceptance-1',
+    attack:'none',chase:'all',defaultRivalPlan:'chase'};
+  const out=runV91TestDrive({settings,individualGroupLine:true,
+    pointContext:{tier:3,divisionIndex:1,divisionCount:1}},
+  {full:true});
+  assert.equal(out.individualLine.pre500Audit.firstPotentialOverlap,null);
+  assert.equal(out.individualLine.overlapAudit.firstPotentialOverlap,null);
+  assert.equal(out.summary.finale.provisionalLineOrder.length,32);
+  assert.equal(out.summary.finale.provisionalLineOrder.at(-1).riderId,
+    'rival-2-0');
+  assert.equal(out.summary.provisionalPointPreview.pointsStatus,
+    'experimental_preview_only');
+  assert.deepEqual(out.summary.provisionalPointPreview.awardRows,[]);
+  assert.equal(out.summary.pointsStatus,'withheld');
+  assert.equal(out.summary.canCommitAwards,false);
+});
+
+test('independent dropped roads project separate bands but withhold possible contact',()=>{
+  const base={gender:'M',teamCount:4,seed:'test-drive-acceptance-1',
+    defaultRivalPlan:'mixed'};
+  const settings=(distanceKm,terrain,fatigue,orders)=>({
+    ...base,distanceKm,terrain,fatigue,...orders,
+    teamOverrides:[{teamId:'you',level:74,fatigue},
+      {teamId:'rival-1',level:88,fatigue:0},
+      {teamId:'rival-2',level:66,fatigue:30}]});
+  const pointContext={tier:3,divisionIndex:1,divisionCount:1};
+  const contact=runV91TestDrive({settings:settings(40,'flat',0,{
+    attack:'none',chase:'all',managerTactics:[
+      {effort:'hard',attack:'none',chase:'all'},
+      {effort:'conserve',attack:'none',chase:'ignore'},
+      {effort:'hard',attack:'none',chase:'all'}]}),
+  individualGroupLine:true,pointContext});
+  assert.equal(contact.finale.pre500Audit.status,
+    'potential_longitudinal_overlap');
+  assert.equal(contact.finale.provisionalLineOrder,null);
+  assert.equal(contact.provisionalPointPreview.status,'unavailable');
+  assert.equal(contact.pointsStatus,'withheld');
+  const separated=runV91TestDrive({settings:settings(260,'mountain',30,{
+    attack:'repeated',chase:'ignore',managerTactics:[
+      {effort:'hard',attack:'none',chase:'all'},
+      {effort:'steady',attack:'repeated',chase:'ignore'},
+      {effort:'conserve',attack:'none',chase:'selective'}]}),
+  individualGroupLine:true,pointContext});
+  assert.equal(separated.lastKmSource.roadGroups.length,1);
+  assert.equal(separated.lastKmSource.droppedRiderIds.length,2);
+  assert.equal(separated.finale.pre500Audit.firstPotentialOverlap,null);
+  assert.equal(separated.finale.overlapAudit.firstPotentialOverlap,null);
+  assert.equal(separated.finale.provisionalLineOrder.length,32);
+  assert.equal(separated.provisionalPointPreview.pointsStatus,
+    'experimental_preview_only');
+  assert.deepEqual(separated.provisionalPointPreview.awardRows,[]);
+  assert.equal(separated.canCommitAwards,false);
 });
 
 test('a singleton front keeps its paid solo crossing beside a nominated bunch finale',()=>{

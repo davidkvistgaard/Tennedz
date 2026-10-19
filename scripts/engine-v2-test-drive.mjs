@@ -19,7 +19,7 @@ import {recordFinaleMultibandIndividualLine,
 import {recordFinaleSeparatedIndividualLine,
   validateFinaleSeparatedIndividualLine} from
   '../lib/engine/v2/finale-separated-individual-line.mjs';
-import {recordFinaleDepletedIndividualLine,
+import {recordFinaleAuditedDroppedIndividualLine,
   validateFinaleDepletedIndividualLine} from
   '../lib/engine/v2/finale-depleted-individual-line.mjs';
 import {recordFinaleSingletonFrontIndividualLine,
@@ -193,12 +193,13 @@ function summaryForIndividualGroupLine(trial,request,pointContext,line){
       line.provisionalLineOrder?.every(row=>row.position!==null)?
         projectV91ProvisionalMultibandPointPreview(
           trial.recording,line,pointContext):
-        {status:'unavailable',reason:line.pre500ContactStatus?
-          'Dropped-rider contact before 500 m remains unresolved.':
+        {status:'unavailable',reason:
           line.pre500Audit?.firstPotentialOverlap?
-            'Active road bands may meet before 500 m.':
+            'Road bands may meet before 500 m.':
           line.overlapAudit.firstPotentialOverlap?
             'Cross-band contact remains unresolved.':
+          line.pre500ContactStatus?
+            'Dropped-rider contact before 500 m remains unresolved.':
             'The provisional line contains an unresolved place.'}}:{}),
     managerDecisions:base.managerDecisions.map(row=>({
       ...row,finisherId:decisions.get(row.teamId).finisherId,
@@ -221,6 +222,8 @@ function summaryForIndividualGroupLine(trial,request,pointContext,line){
             ...(frame.droppedPassages?{
               droppedPassages:frame.droppedPassages}:{})})),
       individualFinishStatus:
+        line.pre500ContactStatus==='provisional_separated'?
+          'conditional_separated_inferred_wheels':
         line.pre500ContactStatus?
           'conditional_dropped_pre500_contact_unresolved':
           'conditional_band_local_cross_band_contact_unresolved',
@@ -310,7 +313,7 @@ export function runV91TestDrive(scenario,{full=false}={}){
       return full?{summary,recording:trial}:summary;
     }
     const record=singleton?recordFinaleSingletonFrontIndividualLine:
-      depleted?recordFinaleDepletedIndividualLine:
+      depleted?recordFinaleAuditedDroppedIndividualLine:
       separated?recordFinaleSeparatedIndividualLine:
         recordFinaleMultibandIndividualLine;
     const validate=singleton?validateFinaleSingletonFrontIndividualLine:
