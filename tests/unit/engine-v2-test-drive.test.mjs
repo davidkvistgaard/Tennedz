@@ -23,10 +23,63 @@ import {createV91ConditionalRaceFinalFromLockedRace} from
 import {recordFinaleConditionalCrossingBounds,
   validateFinaleConditionalCrossingBounds} from
   '../../lib/engine/v2/finale-conditional-crossing-bounds.mjs';
+import {assertConcurrentDoubleCatchLeadOutWheels} from
+  '../../lib/engine/v2/finale-concurrent-double-catch-line.mjs';
 
 const example=JSON.parse(readFileSync(new URL(
   '../../docs/design/engine-v2-test-drive-example.json',import.meta.url),
 'utf8'));
+
+test('integrated drive keeps two manager attacks on the locked road when the finish is open',()=>{
+  const ids=['you',...Array.from({length:14},(_,index)=>
+    `rival-${index+1}`)];
+  const managerFinaleOrders=ids.map(teamId=>({teamId,attack:'none',
+    chase:'ignore',frontWork:'sit_in'}));
+  for(const teamId of ['you','rival-2']){
+    const row=managerFinaleOrders.find(order=>order.teamId===teamId);
+    row.attack='selective';
+    row.attackRiderId=`${teamId}-5`;
+  }
+  for(const teamId of ['rival-1','rival-3'])
+    managerFinaleOrders.find(row=>row.teamId===teamId).chase='selective';
+  managerFinaleOrders.find(row=>row.teamId==='rival-4').frontWork='rotate';
+  const scenario={settings:{distanceKm:40,teamCount:15,
+    seed:'paired-final-orders',attack:'none',chase:'ignore',
+    defaultRivalPlan:'neutral',
+    teamOverrides:ids.map(teamId=>({teamId,level:80})),
+    managerFinaleOrders}};
+  const output=runV91IntegratedTestDrive(scenario,{full:true});
+  assert.equal(output.summary.status,'unsupported');
+  assert.equal(output.summary.roadStatus,'concurrent_road_unresolved');
+  assert.match(output.summary.reason,/distinct paid attacker arrivals/);
+  assert.deepEqual(new Set(output.summary.request.namedAttacks.map(row=>
+    row.riderId)),new Set(['you-5','rival-2-5']));
+  assert.equal(output.summary.lastKmSource.roadGroups.length,0);
+  assert.equal(output.summary.lastKmSource.riderEnergy.length,120);
+  assert.equal(output.summary.pointsStatus,'withheld');
+  assert.equal(output.summary.canCommitAwards,false);
+  assert.equal(output.recording.recording.frames.length,40);
+  assert.deepEqual(runV91IntegratedTestDrive(scenario),output.summary);
+  assert.deepEqual(runV91TestDrive(scenario),output.summary);
+  assert.throws(()=>runV91IntegratedTestDrive({...scenario,
+    pointContext:{tier:1}}),/valid optional preview point context/);
+});
+
+test('a double-catch lead-out cannot jump across an inferred source lane',()=>{
+  const source={wheelSpacingM:2.5,slots:[
+    {riderId:'helper',lane:0,positionM:39500},
+    {riderId:'finisher',lane:1,positionM:39497.58}]};
+  const plan={decisions:[{teamId:'you',finisherId:'finisher',
+    leadOutRiderId:'helper'}]};
+  assert.doesNotThrow(()=>assertConcurrentDoubleCatchLeadOutWheels(
+    source,plan));
+  assert.throws(()=>assertConcurrentDoubleCatchLeadOutWheels({
+    ...source,slots:[source.slots[0],
+      {...source.slots[1],lane:3}]},plan),/source wheel/);
+  assert.throws(()=>assertConcurrentDoubleCatchLeadOutWheels({
+    ...source,slots:[{...source.slots[0],positionM:39496},
+      source.slots[1]]},plan),/source wheel/);
+});
 
 test('partial solo contact exposes only replayable crossing bounds',()=>{
   const output=runV91IntegratedTestDrive({settings:{distanceKm:40,

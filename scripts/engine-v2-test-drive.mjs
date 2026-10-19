@@ -3,8 +3,12 @@
 import {readFileSync} from 'node:fs';
 import {resolve} from 'node:path';
 import {pathToFileURL} from 'node:url';
-import {prepareV91Playtest} from
+import {prepareV91Playtest,createV91Playtest} from
   '../lib/engine/v2/playtest.mjs';
+import {orderAt} from '../lib/engine/v2/orders.mjs';
+import {recordFinaleConcurrentDoubleCatchLineFromTour,
+  validateFinaleConcurrentDoubleCatchLineFromTour} from
+  '../lib/engine/v2/finale-concurrent-double-catch-line.mjs';
 import {validateRequestedFinalePlans} from
   '../lib/engine/v2/playtest-finale-trial.mjs';
 import {finaleSnapshotFromTour} from
@@ -483,7 +487,7 @@ function summaryForNamedDroppedRoad(source,request,pointContext,road,
             distanceTravelledM:row.distanceTravelledM}))))}: {})}};
 }
 
-export function runV91TestDrive(scenario,{full=false}={}){
+function validateDriveScenario(scenario){
   if(!scenario||typeof scenario!=='object'||Array.isArray(scenario)||
     Object.keys(scenario).some(key=>
       !['settings','attack','finalePlans','pointContext',
@@ -510,6 +514,15 @@ export function runV91TestDrive(scenario,{full=false}={}){
     pointContext.divisionIndex<1||
     pointContext.divisionIndex>pointContext.divisionCount))
     throw new Error('Choose a valid optional preview point context.');
+  return pointContext;
+}
+
+export function runV91TestDrive(scenario,{full=false}={}){
+  const pointContext=validateDriveScenario(scenario);
+  if(Array.isArray(scenario.settings?.managerFinaleOrders)&&
+    scenario.settings.managerFinaleOrders.filter(row=>
+      row?.attackRiderId!==undefined).length>=2)
+    return runV91ConcurrentTestDrive(scenario,{full});
   const request=requestFor(scenario);
   if(scenario.namedDroppedRoad===true&&request.attackTeamId===undefined)
     throw new Error('Choose one named attack for the dropped-road trial.');
@@ -788,6 +801,11 @@ export function runV91TestDrive(scenario,{full=false}={}){
 // entry. Each branch still proves its own paid road and replay; unresolved
 // contacts, energy and plans retain their explicit unavailable outcome.
 export function runV91IntegratedTestDrive(scenario,{full=false}={}){
+  const namedOrders=Array.isArray(scenario?.settings?.managerFinaleOrders)?
+    scenario.settings.managerFinaleOrders.filter(row=>
+      row?.attackRiderId!==undefined):[];
+  if(namedOrders.length>=2)
+    return runV91ConcurrentTestDrive(scenario,{full});
   const namedAttack=scenario?.attack!==undefined;
   const selected={...scenario,individualGroupLine:true,
     ...(namedAttack?{namedDroppedRoad:true,lateCatchLine:true}:{})};
@@ -797,6 +815,69 @@ export function runV91IntegratedTestDrive(scenario,{full=false}={}){
     sourceDriveVersion:summary.version});
   return full?{...output,summary:decorate(output.summary)}:
     decorate(output);
+}
+
+// The concurrent path uses the same committed kilometre tour as the other
+// offline drives. Only the already paid exact double catch can enter its
+// conditional individual runner; other contacts stay explicitly unresolved.
+export function runV91ConcurrentTestDrive(scenario,{full=false}={}){
+  validateDriveScenario(scenario);
+  if(scenario?.attack!==undefined)
+    throw new Error('Choose either one legacy attack or manager finale orders.');
+  const request=requestFor(scenario);
+  const source=createV91Playtest(scenario.settings);
+  const tour=source.recording;
+  const namedOrders=tour.committedInputs.teams.map(team=>({
+    teamId:team.id,order:orderAt(team.orders,tour.route.distanceKm-1)}))
+    .filter(row=>row.order.attackRiderId!==null&&
+      row.order.attackRiderId!==undefined);
+  const lastKm=finaleSnapshotFromTour(tour,{remainingKm:1,
+    includeAttackLoad:true});
+  const base={version:'v91-concurrent-test-drive-1',
+    integrationVersion:'v91-integrated-test-drive-2',
+    input:source.settings,request:{namedAttacks:namedOrders.map(row=>({
+      teamId:row.teamId,riderId:row.order.attackRiderId})),
+    ...(request.plans?{plans:request.plans}:{})},
+    managerDecisions:tour.committedInputs.teams.map(team=>({
+      teamId:team.id,baseline:team.orders.baseline,
+      finaleOrder:orderAt(team.orders,tour.route.distanceKm-1)})),
+    lastKmSource:{roadGroups:lastKm.roadGroups.map(group=>({
+      id:group.id,gapSeconds:group.gapSeconds,
+      riderIds:group.riderIds})),
+    droppedRiderIds:lastKm.droppedRiderIds,
+    riderEnergy:lastKm.riders.map(row=>({riderId:row.riderId,
+      energy:row.energy})),
+    chaserTeamIds:tour.frames[lastKm.sourceKm-1].chasers},
+    pointsStatus:'withheld',canCommitAwards:false,
+    ...(scenario.pointContext?{provisionalPointPreview:{
+      status:'unavailable',reason:'No classified individual result.'}}:{})};
+  let line;
+  try{
+    if(namedOrders.length!==2)
+      throw new Error('The concurrent test drive supports exactly two named attack orders.');
+    line=recordFinaleConcurrentDoubleCatchLineFromTour(tour,{
+      plans:request.plans??null});
+  }catch(error){
+    if(!(error instanceof Error)||error instanceof TypeError)throw error;
+    const summary={...base,status:'unsupported',
+      roadStatus:'concurrent_road_unresolved',reason:error.message};
+    return full?{summary,recording:source}:summary;
+  }
+  validateFinaleConcurrentDoubleCatchLineFromTour(tour,{
+    plans:request.plans??null},line);
+  const summary={...base,status:'conditional',
+    roadStatus:line.roadStatus,individualLineVersion:line.version,
+    positionSourceStatus:line.positionedSource.status,
+    provisionalLineOrder:line.provisionalLineOrder,
+    finale:{individualFinishStatus:'conditional_inferred_wheels',
+      lineTimes:line.conditionalCrossings,
+      paidRoad:line.road.roadBands,
+      leadOutWork:line.runner.frames.flatMap(frame=>frame.riders.filter(
+        row=>row.role?.startsWith('lead_out')).map(row=>({
+        riderId:row.riderId,role:row.role,
+        energySpent:row.energySpent,
+        distanceTravelledM:row.distanceTravelledM})))}};
+  return full?{summary,recording:source,individualLine:line}:summary;
 }
 
 if(process.argv[1]&&import.meta.url===pathToFileURL(

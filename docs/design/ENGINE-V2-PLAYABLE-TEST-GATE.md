@@ -86,10 +86,16 @@ An explicit `attackRiderId` requires `attack:"selective"` and a rider on that
 team. These are visible committed orders in the existing kilometre recording;
 two managers can now name different eligible attackers on the same road, with
 other managers choosing selective chase or front rotation. The diagnostic
-v91 playtest API still stops at the kilometre handoff, and the offline
-test-drive finale entry does not yet route these multiple named orders into
-the concurrent individual line. Do not read this input support as a complete
-playable two-attack finish or an official result.
+v91 playtest API still stops at the kilometre handoff. The offline test drive,
+with or without `--integrated`, routes two named manager orders through that
+same committed tour. Only an exact, fully paid double catch that reaches one
+complete bunch at 500 m enters the existing conditional individual runner.
+Other road states expose the locked orders, road groups and precise refusal;
+neither a provisional kilometre result nor a point award fills the gap. The
+double-catch runner rejects a lead-out helper outside the finisher's adjacent
+source wheel. Its inferred lanes and passing rule remain experimental, so
+even an accepted line is not an official result. Surviving attackers, earlier
+attacker-to-attacker contact and later catches still need paid continuation.
 The conditional bunch-to-group fallback and an unsupported group plan reuse
 that same locked kilometre recording instead of simulating the race again.
 This changes no versioned road or result output.
