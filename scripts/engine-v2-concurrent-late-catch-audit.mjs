@@ -5,12 +5,14 @@ import {runV91IntegratedTestDrive} from './engine-v2-test-drive.mjs';
 const [seed='paired-final-orders',mode='full',slots='2,2']=
   process.argv.slice(2);
 const [youSlot,rivalSlot]=slots.split(',').map(Number);
-if(typeof seed!=='string'||!seed||!['full','quick','one'].includes(mode)||
+if(typeof seed!=='string'||!seed||
+  !['full','quick','one','mountain'].includes(mode)||
   process.argv.length>5||slots.split(',').length!==2||
   ![youSlot,rivalSlot].every(slot=>Number.isInteger(slot)&&
     slot>=0&&slot<8))
-  throw new Error('Usage: node scripts/engine-v2-concurrent-late-catch-audit.mjs [seed] [full|quick|one] [youSlot,rivalSlot]');
-const cases=mode!=='full'?[[40,'flat',0]]:[[40,'flat',0],
+  throw new Error('Usage: node scripts/engine-v2-concurrent-late-catch-audit.mjs [seed] [full|quick|one|mountain] [youSlot,rivalSlot]');
+const cases=mode==='mountain'?[[260,'mountain',30]]:
+  mode!=='full'?[[40,'flat',0]]:[[40,'flat',0],
   [40,'rolling',0],[40,'mountain',0],[120,'flat',0],
   [120,'rolling',15],[260,'mountain',30]];
 const rows=[];

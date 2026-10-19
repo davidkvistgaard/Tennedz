@@ -12,11 +12,15 @@ kontakt med faktisk energi og én klokke. I den faste fiktive 260 km
 15-holds-bjergkilde når soloen mål 0,13 sekund før feltets vejgruppe. En
 separat foreløbig individuel fortsættelse bruger den betalte 100-meterkilde
 og den eksisterende sprintløber til alle 120 målpassager; kontaktauditten
-finder mindst 0,63 meters afstand inden soloens målpassage. Ældre optagelser
-genafspilles uændret, og hele enhedstestsættet samt lint består. Feltets
+finder mindst 0,63 meters afstand inden soloens målpassage. Samme fiktive
+ordre og seed er nu gentaget for M/F og 15/20 hold: alle fire forløb når en
+foreløbig individuel mållinje med 120/160 unikke passager og uden registreret
+kontakt mellem solo og felt. Identiske syntetiske tider er ikke selvstændig
+kønsbalance. Ældre optagelser genafspilles uændret, og hele enhedstestsættet
+samt lint består. Feltets
 hjulplacering er fortsat udledt, så klassifikation, point og samlet spilbar
 accept under 04/11 er stadig åbne. Flere køn, feltstørrelser og ruter for
-denne særlige gren er endnu ikke kontrolleret.
+denne særlige gren er endnu ikke kontrolleret på andre ruter, ordrer og seeds.
 
 **Motorrettelse 19. oktober:** Den isolerede kontaktkontrol for allerede
 afsatte ryttere brugte tidligere ID-rækkefølge som vejorden. En ny version

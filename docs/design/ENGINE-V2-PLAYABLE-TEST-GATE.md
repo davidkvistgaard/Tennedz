@@ -1365,8 +1365,12 @@ until exact contact or both band crossings. In the fixed 260 km tired mountain
 A second new version uses the paid 100 m bunch handoff, the existing
 finisher-only individual runner and the signed cross-band audit. All 120
 riders receive one conditional crossing; the nearest provisional bunch rider
-stays at least 0.63 m behind the solo before its crossing. The old three-band
-and survivor recordings replay unchanged. This establishes one additional
-complete laboratory line, not a calibrated finish or general coverage of the
-other long mountain sources. Wheel positions remain inferred; classified
+stays at least 0.63 m behind the solo before its crossing. A focused repeat of
+this same fictional 260 km tired mountain order and seed with M/F categories
+and 15/20 teams reached the conditional individual line in all four cases,
+with 120/160 unique crossings and no cross-band contact. The matching
+synthetic timings do not establish separate gender balance. The old
+three-band and survivor recordings replay unchanged. This establishes one
+additional complete laboratory line, not a calibrated finish or coverage of
+other routes, orders and seeds. Wheel positions remain inferred; classified
 results, point illustrations and awards remain withheld.
