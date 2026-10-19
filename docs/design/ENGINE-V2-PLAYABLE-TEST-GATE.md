@@ -1455,7 +1455,7 @@ kilometre for replay inspection. A source with separated road groups, a
 unresolved last-kilometre attack, or an unavailable helper reports an explicit
 refusal. The lane-queued
 summary gives the conditional individual line, energy, lead-out attempts and
-same-lane blocks. It does not classify a result or award or preview points.
+same-lane blocks. It does not classify a result or award points.
 
 The same opt-in lane-queue rule now also starts from an already paid, measured
 `caught` or `contained` 500 m handoff after one named manager attack. The new
@@ -1471,3 +1471,12 @@ separated road. A valid four-team helper changed its finisher's paid crossing.
 reports `attackRoadOutcome`, paid helper work and line energy. A surviving
 solo or separated source remains explicitly unsupported by this particular
 lane-queued branch; `--integrated` retains the other paid road continuations.
+
+An optional `pointContext` now projects the existing one-day division policy
+from either lane-queued version only when every source rider has a unique,
+replayable paid line time and energy. The `v2-finale-lane-queued-point-preview-
+lab-1` projection retains the source version and fixed-lane rule, and has an
+empty `awardRows` array and `canCommitAwards: false`; the drive still reports
+`pointsStatus: withheld`. Ambiguous lines have no illustration. This is a
+read-only policy check on provisional fixed source lanes, not a sporting
+classification or settlement path.

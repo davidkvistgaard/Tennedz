@@ -8,6 +8,11 @@ import {runV91LaneQueuedTestDrive,runV91IntegratedTestDrive} from
 import {validateFinaleLaneQueuedEarlyBunchRunnerFromTour,
   validateFinaleLaneQueuedCaughtBunchRunnerFromTour} from
   '../../lib/engine/v2/finale-paid-bunch-runner.mjs';
+import {projectFinaleLaneQueuedPointPreview,
+  validateFinaleLaneQueuedPointPreview} from
+  '../../lib/engine/v2/finale-lane-queued-point-preview.mjs';
+import {POINT_POLICY_VERSION,pointsForDivisionResult} from
+  '../../lib/calendar/points.mjs';
 
 const example=JSON.parse(readFileSync(new URL(
   '../../docs/design/engine-v2-test-drive-example.json',import.meta.url),
@@ -106,4 +111,44 @@ test('the CLI selects the opt-in version without changing integrated output',()=
   const integrated=runV91IntegratedTestDrive(example);
   assert.equal(integrated.integrationVersion,
     'v91-integrated-test-drive-1');
+});
+
+test('complete lane-queued lines illustrate existing points without awarding them',()=>{
+  const pointContext={tier:3,divisionIndex:1,divisionCount:2};
+  for(const scenario of [
+    {settings:{...example.settings,seed:'early-matrix',
+      distanceKm:120,terrain:'rolling',teamCount:15,gender:'F'},
+    finalePlans:[],pointContext},
+    {settings:{...example.settings,seed:'trial'},
+    attack:{teamId:'you',riderId:'you-0'},
+    finalePlans:[],pointContext}]){
+    const {summary,recording,paidFinale}=
+      runV91LaneQueuedTestDrive(scenario,{full:true});
+    const preview=summary.provisionalPointPreview;
+    assert.equal(summary.status,'conditional');
+    assert.equal(preview.pointsPolicyVersion,POINT_POLICY_VERSION);
+    assert.equal(preview.pointsStatus,'experimental_preview_only');
+    assert.equal(preview.canCommitAwards,false);
+    assert.deepEqual(preview.awardRows,[]);
+    assert.equal(summary.pointsStatus,'withheld');
+    assert.equal(preview.riders.length,summary.conditionalLine.length);
+    for(const [index,row] of preview.riders.entries()){
+      const line=summary.conditionalLine[index];
+      assert.equal(row.riderId,line.riderId);
+      assert.equal(row.provisionalPlace,line.position);
+      assert.equal(row.energyAtLine,line.energyAtLine);
+      assert.equal(row.previewPoints,pointsForDivisionResult({
+        tier:pointContext.tier,resultType:'ONE_DAY',
+        placing:index+1,multiplier:preview.multiplier}));
+    }
+    assert.equal(validateFinaleLaneQueuedPointPreview(recording,
+      summary.request,pointContext,preview),true);
+    assert.throws(()=>validateFinaleLaneQueuedPointPreview(recording,
+      summary.request,pointContext,{...preview,awardRows:[{}]}),
+    /do not replay/);
+    assert.throws(()=>projectFinaleLaneQueuedPointPreview(recording,
+      {...paidFinale,lineOrder:[{...paidFinale.lineOrder[0],
+        position:null},...paidFinale.lineOrder.slice(1)]},
+      pointContext),/unambiguous line/);
+  }
 });

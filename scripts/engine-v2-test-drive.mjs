@@ -45,6 +45,8 @@ import {recordFinaleLaneQueuedEarlyBunchRunnerFromTour,
   recordFinaleLaneQueuedCaughtBunchRunnerFromTour,
   validateFinaleLaneQueuedCaughtBunchRunnerFromTour} from
   '../lib/engine/v2/finale-paid-bunch-runner.mjs';
+import {projectFinaleLaneQueuedPointPreview} from
+  '../lib/engine/v2/finale-lane-queued-point-preview.mjs';
 import {finaleSnapshotFromTour} from
   '../lib/engine/v2/finale-snapshot.mjs';
 import {hasFinaleConditionalCrossingBounds,
@@ -929,6 +931,16 @@ export function runV91LaneQueuedTestDrive(scenario,{full=false}={}){
     return full?{summary,recording:tour}:summary;
   }
   validate(tour,{...request,plans},paidFinale);
+  let pointPreview=null;
+  if(scenario.pointContext){
+    try{pointPreview=projectFinaleLaneQueuedPointPreview(tour,
+      paidFinale,scenario.pointContext);}
+    catch(error){
+      if(error.message!==
+        'Lane-queued preview points need an unambiguous line.')throw error;
+      pointPreview={status:'unavailable',reason:error.message};
+    }
+  }
   const summary={...base,status:'conditional',
     individualFinishStatus:'conditional_fixed_source_lanes',
     finaleVersion:paidFinale.version,
@@ -946,7 +958,8 @@ export function runV91LaneQueuedTestDrive(scenario,{full=false}={}){
         riderId:row.riderId,...block})))),
     roadEvents:paidFinale.frames.flatMap(frame=>frame.roadEvents),
     finalRiderEnergy:paidFinale.finishers.map(row=>({
-      riderId:row.riderId,energy:row.energyAtLine}))};
+      riderId:row.riderId,energy:row.energyAtLine})),
+    ...(pointPreview?{provisionalPointPreview:pointPreview}:{})};
   return full?{summary,recording:tour,paidFinale}:summary;
 }
 
