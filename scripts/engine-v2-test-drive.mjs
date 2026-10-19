@@ -28,6 +28,9 @@ import {recordFinaleSingletonFrontIndividualLine,
 import {recordFinaleNamedAttackDroppedRoadFromTour,
   validateFinaleNamedAttackDroppedRoadFromTour} from
   '../lib/engine/v2/finale-named-attack-dropped-road.mjs';
+import {recordFinaleNamedDroppedIndividualLine,
+  validateFinaleNamedDroppedIndividualLine} from
+  '../lib/engine/v2/finale-named-dropped-individual-line.mjs';
 import {projectV91ProvisionalPointPreview,
   projectV91ProvisionalMultibandPointPreview} from
   '../lib/engine/v2/playtest-point-preview.mjs';
@@ -249,12 +252,17 @@ function summaryForIndividualGroupLine(trial,request,pointContext,line){
         riderId:row.riderId,energy:row.energyAtLine}))}};
 }
 
-function summaryForNamedDroppedRoad(source,request,pointContext,road){
+function summaryForNamedDroppedRoad(source,request,pointContext,road,
+  individualLine=null){
   const recording=source.recording;
   const lastKm=recording.frames[recording.route.distanceKm-2];
-  return {version:'v91-offline-test-drive-7',
-    status:'road_only',roadStatus:'paid_named_attack_dropped_bands',
+  return {version:individualLine?'v91-offline-test-drive-8':
+    'v91-offline-test-drive-7',
+    status:individualLine?'conditional_line':'road_only',
+    roadStatus:individualLine?.roadStatus??
+      'paid_named_attack_dropped_bands',
     input:source.settings,request,engineVersion:road.version,
+    ...(individualLine?{individualLineVersion:individualLine.version}:{}),
     resultStatus:'unclassified',pointsStatus:'withheld',
     canCommitAwards:false,
     managerDecisions:recording.committedInputs.teams.map(team=>({
@@ -270,11 +278,15 @@ function summaryForNamedDroppedRoad(source,request,pointContext,road){
       row.group==='dropped').map(row=>row.id),
     chaserTeamIds:lastKm.chasers},
     ...(pointContext?{provisionalPointPreview:{status:'unavailable',
-      reason:'No complete individual line.'}}:{}),
-    finale:{individualFinishStatus:'unresolved_within_road_bands',
-      finalePlanStatus:'unapplied',
+      reason:individualLine?'Individual line remains provisional.':
+        'No complete individual line.'}}:{}),
+    finale:{individualFinishStatus:individualLine?
+      'conditional_individual_crossings':
+      'unresolved_within_road_bands',
+      finalePlanStatus:individualLine?'paid_at_500m':'unapplied',
       attackIntent:road.attackIntent,
-      roadFrames:road.frames.map(frame=>({
+      roadFrames:road.frames.filter(frame=>!individualLine||
+        frame.distanceM<=individualLine.startDistanceM).map(frame=>({
         distanceM:frame.distanceM,
         bunchElapsedSecondsFromMarker:frame.bunchElapsedSecondsFromMarker,
         roadGroups:frame.active.roadGroups,
@@ -282,8 +294,36 @@ function summaryForNamedDroppedRoad(source,request,pointContext,road){
         attackWork:frame.active.riderEnergy.filter(row=>
           row.riderId===road.attackIntent.riderId),
         droppedTravel:frame.droppedTravel.riders})),
-      bands:road.line.bands,
-      finalRiderEnergy:road.line.finalRiderEnergy}};
+      ...(individualLine?{bandsAt500M:[{
+        id:'peloton',riderIds:road.frames.find(frame=>
+          frame.distanceM===individualLine.startDistanceM)
+          .active.pelotonRiderIds},{id:'dropped',
+          riderIds:road.frames.find(frame=>
+            frame.distanceM===individualLine.startDistanceM)
+            .droppedTravel.riders.map(row=>row.riderId)}]}:
+        {bands:road.line.bands}),
+      finalRiderEnergy:individualLine?
+        individualLine.conditionalCrossings.map(row=>({
+          riderId:row.riderId,energy:row.energyAtLine})):
+        road.line.finalRiderEnergy,
+      ...(individualLine?{
+        lineTimes:individualLine.conditionalCrossings,
+        provisionalLineOrder:individualLine.provisionalLineOrder,
+        overlapAudit:individualLine.overlapAudit,
+        positionSourceStatus:individualLine.positionedSource.status,
+        passingRule:individualLine.bandRunners[0].runner.passingRule,
+        roadEvents:individualLine.bandRunners[0].runner.frames.flatMap(
+          frame=>frame.roadEvents??[]),
+        sprintWork:individualLine.bandRunners[0].runner.frames.flatMap(
+          frame=>frame.riders.filter(row=>row.role==='sprint').map(row=>({
+            riderId:row.riderId,energySpent:row.energySpent,
+            distanceTravelledM:row.distanceTravelledM}))),
+        leadOutWork:individualLine.bandRunners.flatMap(band=>
+          band.runner.frames.flatMap(frame=>frame.riders.filter(row=>
+            row.role?.startsWith('lead_out')).map(row=>({
+            roadBandId:band.roadBandId,riderId:row.riderId,
+            role:row.role,energySpent:row.energySpent,
+            distanceTravelledM:row.distanceTravelledM}))))}: {})}};
 }
 
 export function runV91TestDrive(scenario,{full=false}={}){
@@ -355,9 +395,31 @@ export function runV91TestDrive(scenario,{full=false}={}){
       }
       validateFinaleNamedAttackDroppedRoadFromTour(source.recording,
         {teamId:request.attackTeamId},paidRoad);
+      const finishM=source.recording.route.distanceKm*1000;
+      const at500=paidRoad.frames.find(frame=>
+        frame.distanceM===finishM-500);
+      const caughtBefore500=paidRoad.frames.some(frame=>
+        frame.distanceM<=finishM-500&&frame.active.catchDistanceM);
+      let individualLine=null;
+      if(at500?.active.roadGroups.length===0&&
+        caughtBefore500){
+        try{
+          individualLine=recordFinaleNamedDroppedIndividualLine(
+            source.recording,paidRoad,{plans:request.plans??null});
+          validateFinaleNamedDroppedIndividualLine(source.recording,
+            paidRoad,{plans:request.plans??null},individualLine);
+        }catch(lineError){
+          if(![
+            'The nominated lead-out cannot work beside the finisher.'
+          ].includes(lineError.message))throw lineError;
+          return unsupportedRefusal(new Error(lineError.message,{
+            cause:{playtestSource:source}}),scenario,request,pointContext);
+        }
+      }
       const summary=summaryForNamedDroppedRoad(source,request,
-        pointContext,paidRoad);
-      return full?{summary,recording:source,paidRoad}:summary;
+        pointContext,paidRoad,individualLine);
+      return full?{summary,recording:source,paidRoad,
+        ...(individualLine?{individualLine}:{})}:summary;
     }else{
       return unsupportedRefusal(error,scenario,request,pointContext);
     }

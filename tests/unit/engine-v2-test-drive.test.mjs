@@ -638,6 +638,50 @@ test('a named attack and existing dropped rider retain one paid road',()=>{
     withoutNamed.recording.recording.frames.slice(0,-1));
 });
 
+test('an early caught named attack feeds paid nominated and isolated lines',()=>{
+  const settings={distanceKm:260,terrain:'flat',fatigue:30,
+    gender:'M',teamCount:4,seed:'test-drive-acceptance-1',
+    attack:'none',chase:'ignore',defaultRivalPlan:'chase'};
+  const base={settings,namedDroppedRoad:true,
+    attack:{teamId:'you',riderId:'you-0'}};
+  const without=runV91TestDrive({...base,finalePlans:[{
+    teamId:'you',finisherId:'you-7',leadOutRiderId:null}]},{
+    full:true});
+  const withLead=runV91TestDrive({...base,finalePlans:[{
+    teamId:'you',finisherId:'you-7',leadOutRiderId:'you-6'}]},
+  {full:true});
+  for(const trial of [without,withLead]){
+    assert.equal(trial.summary.version,'v91-offline-test-drive-8');
+    assert.equal(trial.summary.status,'conditional_line');
+    assert.equal(trial.summary.finale.roadFrames.length,2);
+    assert.equal(trial.summary.finale.lineTimes.length,32);
+    assert.equal(new Set(trial.summary.finale.lineTimes.map(row=>
+      row.riderId)).size,32);
+    assert.equal(trial.summary.finale.finalePlanStatus,'paid_at_500m');
+    assert.equal(trial.summary.finale.overlapAudit.firstPotentialOverlap,
+      null);
+    assert.equal(trial.summary.finale.provisionalLineOrder.length,32);
+    assert.equal(trial.summary.pointsStatus,'withheld');
+    assert.equal(trial.summary.canCommitAwards,false);
+    assert.deepEqual(trial.individualLine.bandRunners[1].runner.frames
+      .map(frame=>frame.riders[0].energySpent>0),
+    [true,true,true,true,true]);
+  }
+  assert.deepEqual(without.summary.finale.roadFrames,
+    withLead.summary.finale.roadFrames);
+  assert.deepEqual(without.individualLine.positionedSource,
+    withLead.individualLine.positionedSource);
+  assert.equal(without.summary.finale.leadOutWork.length,0);
+  assert.ok(withLead.summary.finale.leadOutWork.length>0);
+  const crossing=trial=>trial.summary.finale.lineTimes.find(row=>
+    row.riderId==='you-7').elapsedSecondsFromLastKmStart;
+  assert.ok(crossing(withLead)<crossing(without));
+  assert.equal(withLead.summary.finale.lineTimes.find(row=>
+    row.riderId==='rival-2-0').elapsedSecondsFromLastKmStart,
+  without.summary.finale.lineTimes.find(row=>
+    row.riderId==='rival-2-0').elapsedSecondsFromLastKmStart);
+});
+
 test('an earlier player attack carries earned load into a paid named finale',()=>{
   const settings={distanceKm:40,terrain:'flat',fatigue:0,
     gender:'M',teamCount:4,seed:'test-drive-acceptance-1',

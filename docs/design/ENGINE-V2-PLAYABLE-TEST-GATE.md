@@ -949,3 +949,20 @@ Across two fixed seeds, three routes, M/F categories and 4/15/20-team fields,
 12 of 36 opt-in sources use this new paid road; the other 24 keep the existing
 complete-bunch conditional line. None throws. These constructed counts test
 road coverage, not the rate of successful real-world attacks.
+
+For this same opt-in, a named attacker who is **actually caught by the paid
+500 m boundary** can now feed a conditional individual finale. The first
+500 m retains the measured attack, chase, catch and separately paid dropped
+rider; the remaining 500 m uses the existing tactic-independent provisional
+wheel source and nominated finisher/optional lead-out runner for the bunch.
+The dropped rider continues on an independent paid clock. In the fixed tired
+four-team field, choosing `you-0` or `you-1` as attacker reaches this branch
+on flat, rolling and mountain routes for M/F: all 32 riders cross on recorded
+energy and the signed cross-band audit finds no contact. With `you-0` on the
+flat route, `you-6` works four lead-out steps and changes `you-7`'s
+conditional crossing from 88.619 to 88.415 seconds after the last-kilometre
+marker; the dropped rider's time is unchanged. The new
+`v2-finale-named-dropped-individual-line-lab-1` and
+`v91-offline-test-drive-8` preserve the earlier road-only recording and keep
+the inferred wheel order explicitly provisional. A survivor still uses the
+road-only path. Neither path classifies an official result or awards points.
