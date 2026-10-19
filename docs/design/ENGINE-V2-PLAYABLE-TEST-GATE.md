@@ -1219,3 +1219,13 @@ A fixed 260 km mountain example with three road bands and 120 riders keeps its
 unchanged paid replay and read-only point illustration. The inferred wheel
 positions still require sporting validation; the status does not classify the
 race or award points.
+
+When an early lead-out helper cannot assemble from its recorded source lane,
+the offline drive now retries the effective finale orders against the same
+locked kilometre recording. This avoids rerunning the chosen race for each
+unavailable helper. A 15-team fixed example removes one helper and a 20-team
+example removes two; both produce exactly the same versioned conditional
+finale as a direct run with those effective orders. The ordinary replay
+validator still recomputes the requested race to verify the result. The
+original request, zero helper work, refusal reasons and point withholding
+remain visible.

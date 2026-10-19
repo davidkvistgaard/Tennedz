@@ -18,6 +18,8 @@ import {validateFinaleNamedDroppedLateCatchLine} from
   '../../lib/engine/v2/finale-named-dropped-late-catch-line.mjs';
 import {projectV91ProvisionalNamedDroppedLateCatchPointPreview} from
   '../../lib/engine/v2/playtest-point-preview.mjs';
+import {createV91ConditionalRaceFinalFromLockedRace} from
+  '../../lib/engine/v2/playtest-race-final.mjs';
 import {recordFinaleConditionalCrossingBounds,
   validateFinaleConditionalCrossingBounds} from
   '../../lib/engine/v2/finale-conditional-crossing-bounds.mjs';
@@ -695,6 +697,12 @@ test('wide bunches replay every unavailable source helper without a free pull',(
     const input={settings,finalePlans:plans,
       pointContext:{tier:3,divisionCount:1,divisionIndex:1}};
     const continued=runV91TestDrive(input,{full:true});
+    const lockedRace={settings:continued.recording.settings,
+      recording:continued.recording.recording};
+    const fromLocked=createV91ConditionalRaceFinalFromLockedRace(
+      settings,continued.summary.appliedRequest,lockedRace);
+    assert.strictEqual(fromLocked.recording,lockedRace.recording);
+    assert.deepEqual(fromLocked,continued.recording);
     const applied=runV91TestDrive({...input,finalePlans:
       continued.summary.appliedRequest.plans},{full:true});
     assert.equal(continued.summary.roadStatus,'paid_conditional_line');
@@ -710,6 +718,9 @@ test('wide bunches replay every unavailable source helper without a free pull',(
     assert.deepEqual(continued.summary.provisionalPointPreview,
       applied.summary.provisionalPointPreview);
     assert.equal(continued.summary.canCommitAwards,false);
+    assert.throws(()=>createV91ConditionalRaceFinalFromLockedRace(
+      {...settings,distanceKm:120},continued.summary.appliedRequest,
+      lockedRace),/differs from its request/);
   }
 });
 

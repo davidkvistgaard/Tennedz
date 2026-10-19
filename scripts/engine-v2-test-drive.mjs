@@ -14,6 +14,7 @@ import {hasFinaleConditionalCrossingBounds,
   validateFinaleConditionalCrossingBounds} from
   '../lib/engine/v2/finale-conditional-crossing-bounds.mjs';
 import {createV91ConditionalRaceFinal,
+  createV91ConditionalRaceFinalFromLockedRace,
   createV91GroupFallbackFromLockedRace,
   validateV91ConditionalRaceFinal} from
   '../lib/engine/v2/playtest-race-final.mjs';
@@ -100,9 +101,12 @@ function expectedRefusal(message){
 // race with only that unavailable helper removed from the applied orders.
 function createWithAvailableEarlyLeadOuts(settings,request){
   let appliedRequest=request;
+  let lockedRace=null;
   const unavailableLeadOuts=[];
   for(;;){
-    try{return {trial:createV91ConditionalRaceFinal(settings,appliedRequest),
+    try{return {trial:lockedRace?
+      createV91ConditionalRaceFinalFromLockedRace(settings,appliedRequest,
+        lockedRace):createV91ConditionalRaceFinal(settings,appliedRequest),
       appliedRequest,unavailableLeadOuts};}
     catch(error){
       const teamId=/^An early lead-out helper needs an adjacent lane: ((?:you|rival-[1-9]\d*))\.$/
@@ -110,6 +114,8 @@ function createWithAvailableEarlyLeadOuts(settings,request){
       const plan=appliedRequest.plans?.find(row=>row.teamId===teamId);
       if(request.attackTeamId!==undefined||!plan?.leadOutRiderId)
         throw error;
+      lockedRace??=error.cause?.playtestSource??null;
+      if(!lockedRace)throw error;
       unavailableLeadOuts.push({teamId,helperId:plan.leadOutRiderId,
         finisherId:plan.finisherId,
         status:'unavailable_source_lane',helperEnergySpent:0});
