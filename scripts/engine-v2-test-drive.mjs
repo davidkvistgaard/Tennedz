@@ -88,6 +88,11 @@ function summaryFor(trial,request){
         individualFinishStatus:'unresolved_within_road_bands'}:{
       individualFinishStatus:'conditional_inferred_wheels',
       lineTimes:paidFinale.finishers,
+      provisionalLineOrder:paidFinale.lineOrder??null,
+      positionSourceStatus:paidFinale.positionSourceStatus,
+      passingRule:paidFinale.passingRule??null,
+      roadEvents:paidFinale.frames.flatMap(frame=>
+        frame.roadEvents??[]),
       leadOutWork:paidFinale.frames.flatMap(frame=>frame.riders.filter(
         row=>row.role?.startsWith('lead_out')).map(row=>({
           riderId:row.riderId,role:row.role,

@@ -67,7 +67,11 @@ the others use `defaultRivalPlan`. `finalePlans` can override any named
 manager's finisher and optional helper while unspecified managers keep their
 captain and no helper. `--full` includes the complete source and finale
 recording for inspection. Output identifies road groups, chasers, energy,
-paid lead-out work and conditional line times, or names an unsupported road
+paid lead-out work and conditional line times. Where the already paid bunch
+runner recorded inferred source wheels, it also exposes that runner's
+`provisionalLineOrder`, `positionSourceStatus`, `passingRule` and timestamped
+`roadEvents`; these are laboratory observations, not official placings. The
+tool names an unsupported road
 state with its recorded group and dropped-rider counts where the unmodified
 kilometre source is available. A fixed 54-case diagnostic across three routes,
 both categories, three field sizes and three tactics modes originally replayed

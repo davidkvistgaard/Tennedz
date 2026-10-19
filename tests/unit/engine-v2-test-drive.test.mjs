@@ -13,6 +13,14 @@ test('offline test drive pays a manager lead-out on one replayed race',()=>{
   const neutral=runV91TestDrive({...example,finalePlans:[]},{full:true});
   assert.equal(assisted.summary.roadStatus,'paid_conditional_line');
   assert.equal(assisted.summary.finale.lineTimes.length,32);
+  assert.deepEqual(assisted.summary.finale.provisionalLineOrder,
+    assisted.recording.paidFinale.lineOrder);
+  assert.deepEqual(assisted.summary.finale.roadEvents,
+    assisted.recording.paidFinale.frames.flatMap(frame=>
+      frame.roadEvents??[]));
+  assert.equal(assisted.summary.finale.positionSourceStatus,
+    'provisional_inferred_independent_wheels');
+  assert.equal(assisted.summary.finale.passingRule,'open-road-lab-1');
   assert.deepEqual(assisted.recording.recording,
     neutral.recording.recording);
   assert.ok(assisted.summary.finale.leadOutWork.some(row=>
