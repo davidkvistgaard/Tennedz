@@ -20,6 +20,9 @@ import {recordFinaleConcurrentNextBoundaryFromTour,
 import {recordFinaleConcurrentFullCatchContinuationFromTour,
   validateFinaleConcurrentFullCatchContinuationFromTour} from
   '../lib/engine/v2/finale-concurrent-band-continuation.mjs';
+import {recordFinaleConcurrentLateCatchLineFromTour,
+  validateFinaleConcurrentLateCatchLineFromTour} from
+  '../lib/engine/v2/finale-concurrent-late-catch-line.mjs';
 import {validateRequestedFinalePlans} from
   '../lib/engine/v2/playtest-finale-trial.mjs';
 import {finaleSnapshotFromTour} from
@@ -874,6 +877,29 @@ export function runV91ConcurrentTestDrive(scenario,{full=false}={}){
       plans:request.plans??null});
   }catch(error){
     if(error?.constructor!==Error)throw error;
+    let lateLineRefusal=null;
+    if(!assembled){
+      try{
+        const lateLine=recordFinaleConcurrentLateCatchLineFromTour(tour,{
+          plans:request.plans??null});
+        validateFinaleConcurrentLateCatchLineFromTour(tour,{
+          plans:request.plans??null},lateLine);
+        const summary={...base,status:'conditional',
+          roadStatus:lateLine.roadStatus,
+          individualLineVersion:lateLine.version,
+          positionSourceStatus:lateLine.positionedSource.status,
+          provisionalLineOrder:lateLine.provisionalLineOrder,
+          finale:{individualFinishStatus:'conditional_inferred_wheels',
+            lineTimes:lateLine.conditionalCrossings,
+            paidRoad:lateLine.roadPrefix,
+            leadOutWork:[]}};
+        return full?{summary,recording:source,individualLine:lateLine}:
+          summary;
+      }catch(lateError){
+        if(lateError?.constructor!==Error)throw lateError;
+        lateLineRefusal=lateError.message;
+      }
+    }
     let event=null;
     try{
       event=recordFinaleConcurrentCommonTimeStateFromTour(tour);
@@ -921,6 +947,7 @@ export function runV91ConcurrentTestDrive(scenario,{full=false}={}){
       reason:bandContinuation?.status==='band_crossings_only'?
         'Road bands reached the line, but individual bunch crossings and finale plans are unresolved.':
         error.message,
+      ...(lateLineRefusal?{lateLineRefusal}:{}),
       ...(firstPaidEvent?{firstPaidEvent}:{}),
       ...(laterEvent?{latestPaidEvent:{version:laterEvent.version,
         event:laterEvent.event,

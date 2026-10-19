@@ -30,6 +30,8 @@ import {recordFinaleConcurrentNextBoundaryFromTour,
   '../../lib/engine/v2/finale-concurrent-next-boundary.mjs';
 import {validateFinaleConcurrentFullCatchContinuationFromTour} from
   '../../lib/engine/v2/finale-concurrent-band-continuation.mjs';
+import {validateFinaleConcurrentLateCatchLineFromTour} from
+  '../../lib/engine/v2/finale-concurrent-late-catch-line.mjs';
 
 const example=JSON.parse(readFileSync(new URL(
   '../../docs/design/engine-v2-test-drive-example.json',import.meta.url),
@@ -183,7 +185,7 @@ test('integrated rear catch keeps the merged rider on the paid bunch road',()=>{
     recording.recording,bandContinuation),true);
 });
 
-test('integrated double contact reaches one paid bunch band at the line',()=>{
+test('integrated double contact reaches a conditional individual line',()=>{
   const ids=['you',...Array.from({length:14},(_,index)=>
     `rival-${index+1}`)];
   const managerFinaleOrders=ids.map(teamId=>({teamId,
@@ -197,19 +199,25 @@ test('integrated double contact reaches one paid bunch band at the line',()=>{
     defaultRivalPlan:'neutral',managerFinaleOrders,
     teamOverrides:ids.map(teamId=>({teamId,
       level:teamId==='rival-2'?81:teamId==='you'?80:85}))}};
-  const {summary,recording,bandContinuation}=
+  const {summary,recording,individualLine}=
     runV91IntegratedTestDrive(scenario,{full:true});
-  assert.equal(summary.status,'unsupported');
-  assert.equal(summary.roadStatus,'concurrent_band_crossings_only');
-  assert.deepEqual(summary.paidBandContinuation.contactEvents.map(row=>
+  assert.equal(summary.status,'conditional');
+  assert.equal(summary.roadStatus,
+    'paid_late_double_catch_conditional_individual_line');
+  assert.deepEqual(individualLine.roadPrefix.contactEvents.map(row=>
     row.kind),['rear_attack_bunch_contact','front_bunch_contact']);
-  assert.equal(bandContinuation.roadRelationshipStatus,
-    'all_caught_band_crossing');
-  assert.equal(bandContinuation.bandCrossings.length,1);
-  assert.equal(bandContinuation.bandCrossings[0].riderIds.length,120);
-  assert.equal(bandContinuation.pointsStatus,'withheld');
-  assert.equal(validateFinaleConcurrentFullCatchContinuationFromTour(
-    recording.recording,bandContinuation),true);
+  assert.equal(individualLine.roadPrefix.handoffDistanceM,39800);
+  assert.equal(summary.finale.lineTimes.length,120);
+  assert.equal(summary.finale.paidRoad.frames.at(-1).roadBands[0]
+    .riderIds.length,120);
+  assert.equal(individualLine.runner.startDistanceM,39800);
+  assert.equal(individualLine.runner.lineDistanceM,40000);
+  assert.equal(individualLine.pointsStatus,'withheld');
+  assert.equal(summary.pointsStatus,'withheld');
+  assert.equal(summary.canCommitAwards,false);
+  assert.equal(validateFinaleConcurrentLateCatchLineFromTour(
+    recording.recording,{},individualLine),true);
+  assert.deepEqual(runV91IntegratedTestDrive(scenario),summary);
 });
 
 test('partial solo contact exposes only replayable crossing bounds',()=>{

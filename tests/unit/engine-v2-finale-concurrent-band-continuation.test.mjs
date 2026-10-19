@@ -2,6 +2,9 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {createV91Playtest} from
   '../../lib/engine/v2/playtest.mjs';
+import {recordFinaleConcurrentLateCatchLineFromTour,
+  validateFinaleConcurrentLateCatchLineFromTour} from
+  '../../lib/engine/v2/finale-concurrent-late-catch-line.mjs';
 import {recordFinaleConcurrentBandContinuationFromTour,
   validateFinaleConcurrentBandContinuationFromTour,
   recordFinaleConcurrentRearCatchContinuationFromTour,
@@ -158,6 +161,54 @@ test('two measured catches produce one paid bunch band without a result',()=>{
     assert.throws(()=>validateFinaleConcurrentFullCatchContinuationFromTour(
       tour,changed),/does not replay/);
   }
+});
+
+test('two late catches hand off once to a conditional individual sprint',()=>{
+  const tour=pairedTour('M',15,2,2);
+  const line=recordFinaleConcurrentLateCatchLineFromTour(tour);
+  assert.equal(line.roadPrefix.contactEvents.length,2);
+  assert.equal(line.roadPrefix.handoffDistanceM,39800);
+  assert.equal(line.roadPrefix.frames.at(-1).roadBands.length,1);
+  assert.equal(line.roadPrefix.frames.at(-1).roadBands[0].riderIds.length,
+    120);
+  assert.equal(line.sprintPlan.decisionDistanceM,39800);
+  assert.equal(line.runner.startDistanceM,39800);
+  assert.equal(line.runner.lineDistanceM,40000);
+  assert.equal(line.runner.frames[0].startDistanceM,39800);
+  assert.equal(line.conditionalCrossings.length,120);
+  assert.equal(new Set(line.conditionalCrossings.map(row=>row.riderId))
+    .size,120);
+  assert.ok(line.conditionalCrossings.every(row=>
+    row.elapsedSecondsFromLastKmStart>
+      line.roadPrefix.handoffElapsedSinceLaunchSeconds));
+  assert.equal(line.classifiedResults,null);
+  assert.equal(line.pointsStatus,'withheld');
+  assert.equal(line.canCommitAwards,false);
+  assert.equal(validateFinaleConcurrentLateCatchLineFromTour(tour,{},
+    line),true);
+  const changedFinisher=recordFinaleConcurrentLateCatchLineFromTour(tour,{
+    plans:tour.committedInputs.teams.map(team=>({teamId:team.id,
+      finisherId:team.id==='you'?'you-0':team.orders.captainId,
+      leadOutRiderId:null}))});
+  assert.deepEqual(changedFinisher.roadPrefix,line.roadPrefix);
+  assert.deepEqual(changedFinisher.positionedSource.slots,
+    line.positionedSource.slots);
+  assert.ok(changedFinisher.runner.frames.some(frame=>frame.riders.some(
+    row=>row.riderId==='you-0'&&row.role==='sprint')));
+  assert.ok(changedFinisher.conditionalCrossings.find(row=>
+    row.riderId==='you-0').energyAtLine<
+  line.conditionalCrossings.find(row=>
+    row.riderId==='you-0').energyAtLine);
+  assert.equal(changedFinisher.pointsStatus,'withheld');
+  const changed=structuredClone(line);
+  changed.roadPrefix.riderEnergyAtHandoff[0].energy+=.1;
+  assert.throws(()=>validateFinaleConcurrentLateCatchLineFromTour(
+    tour,{},changed),/does not replay/);
+  const unsupported=structuredClone(line.sprintPlan.decisions.map(row=>({
+    teamId:row.teamId,finisherId:row.finisherId,
+    leadOutRiderId:row.teamId==='you'?'you-4':null})));
+  assert.throws(()=>recordFinaleConcurrentLateCatchLineFromTour(tour,{
+    plans:unsupported}),/without a lead-out/);
 });
 
 test('exact rear catch joins the bunch with paid sheltered continuation',()=>{

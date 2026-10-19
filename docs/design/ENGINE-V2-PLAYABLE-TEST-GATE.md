@@ -104,6 +104,19 @@ The conditional bunch-to-group fallback and an unsupported group plan reuse
 that same locked kilometre recording instead of simulating the race again.
 This changes no versioned road or result output.
 
+When both attackers are caught only after the 500 m handoff, the offline
+drive can now take a separate conditional individual continuation. It uses
+the paid three-band tape only through the first complete bunch boundary
+after the second exact catch; it does not charge the tape's later bunch
+crossing as well. In the fixed 15-team flat source this handoff is at 200 m
+remaining. Each rider starts the existing individual sprint runner with
+the energy earned at that boundary, and a nominated finisher's sprint work
+is recorded. A helper nominated only after this catch is refused because its
+earlier wheel and pull cannot be reconstructed. Wheel slots and passing
+remain provisional; the line order is conditional, and classification,
+point illustration and awards stay withheld. This one late-catch source does
+not establish a general two-attack finish or sporting calibration.
+
 The opt-in concurrent double-catch line now has a separate lab-2 continuation
 when a manager nominates a lead-out. It reuses the paid 500 m bunch runner's
 assembly rule: a helper behind the finisher may spend actual distance and
