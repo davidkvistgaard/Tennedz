@@ -1036,3 +1036,11 @@ in a fixed long women's mountain race, nominating isolated `rival-2-0`
 previously left both their crossing and energy unchanged while the plan named
 them as finisher. The test drive now withholds that conditional line and point
 preview. Its earlier versioned recorder remains replayable.
+
+The opt-in late-catch path also refuses a nominated solo finisher when measured
+contact occurs after the final-300 m sprint boundary. Its paid road has no
+pre-contact solo sprint, so starting that work only in the merged bunch would
+silently omit part of the order. On the same fixed 260 km field, `you-4` is
+caught after that boundary and now reports the unpaid-work refusal; `you-3`
+is caught before it and remains an accepted conditional line. Both retain the
+same earlier versioned road recording and withhold official results and awards.

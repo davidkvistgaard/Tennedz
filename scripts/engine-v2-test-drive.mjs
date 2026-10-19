@@ -501,6 +501,15 @@ export function runV91TestDrive(scenario,{full=false}={}){
       }else if(scenario.lateCatchLine===true&&
         at500?.active.roadGroups.length===1&&
         paidRoad.frames.at(-1).active.roadGroups.length===0){
+        const soloId=at500.active.roadGroups[0].riderIds[0];
+        const catchDistanceM=paidRoad.frames.find(frame=>
+          frame.active.catchDistanceM>finishM-500)
+          ?.active.catchDistanceM;
+        if(catchDistanceM>finishM-300&&nominations.some(plan=>
+          plan.finisherId===soloId))
+          return unsupportedRefusal(new Error(
+            'A nominated solo sprint before contact needs paid road work.',{
+              cause:{playtestSource:source}}),scenario,request,pointContext);
         try{
           individualLine=recordFinaleNamedDroppedLateCatchLine(
             source.recording,paidRoad,{plans:request.plans??null});

@@ -767,6 +767,19 @@ test('a late named catch starts individual sprint work after paid contact',()=>{
     assert.equal(later.summary.provisionalPointPreview.riders.length,32);
     assert.equal(later.summary.canCommitAwards,false);
   }
+  const caughtBeforeSoloSprint=runV91TestDrive({...base,
+    attack:{teamId:'you',riderId:'you-3'},
+    finalePlans:[{teamId:'you',finisherId:'you-3'}]});
+  assert.equal(caughtBeforeSoloSprint.status,'conditional_line');
+  const unpaidSoloSprint=runV91TestDrive({...base,
+    attack:{teamId:'you',riderId:'you-4'},
+    finalePlans:[{teamId:'you',finisherId:'you-4'}]});
+  assert.equal(unpaidSoloSprint.status,'unsupported');
+  assert.equal(unpaidSoloSprint.reason,
+    'A nominated solo sprint before contact needs paid road work.');
+  assert.equal(unpaidSoloSprint.provisionalPointPreview.status,'unavailable');
+  assert.equal(unpaidSoloSprint.pointsStatus,'withheld');
+  assert.equal(unpaidSoloSprint.canCommitAwards,false);
 });
 
 test('an isolated finisher order never disappears inside a paid named finale',()=>{
