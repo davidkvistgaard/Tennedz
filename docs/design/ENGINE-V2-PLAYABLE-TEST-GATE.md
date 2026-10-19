@@ -1123,3 +1123,14 @@ uncertainty withholds that illustration. Official results and point awards
 remain withheld; a pre-contact lead-out still refuses because its road work
 has not been paid. A nominated solo caught before the final-300 m boundary
 continues through the existing late-catch path.
+
+The same sprint-aware road has an exact-line boundary: with the fixed 40 km
+mountain source and the rival team's level set to 87, the old road catches the
+named attacker about 176 m before the line, but the paid solo sprint moves
+contact to about 80 m before it. That contact is inside the final recorded
+100 m slice. The road pays the remainder, but it has no individual wheel order
+at the finish, so the opt-in drive now returns a replayable road-only outcome
+with the measured contact and every rider's final road energy. It explicitly
+withholds an individual order, point illustration and awards in both M/F
+versions. It no longer throws an uncaught line-construction error. The
+source is a correctness probe, not evidence for a sporting coefficient.

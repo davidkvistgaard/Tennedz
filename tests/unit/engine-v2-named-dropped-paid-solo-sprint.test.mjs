@@ -115,3 +115,32 @@ test('separated sprint roads permit read-only points; contact withholds them',
     assert.equal(crowded.provisionalPointPreview.status,'unavailable');
     assert.equal(crowded.pointsStatus,'withheld');
   });
+
+test('a catch inside the final slice keeps the paid road but withholds order',
+  ()=>{
+    for(const gender of ['M','F']){
+      const input=scenario({terrain:'mountain',gender});
+      input.settings.teamOverrides[1].level=87;
+      const trial=runV91TestDrive(input,{full:true});
+      const {summary,recording,paidRoad,individualLine}=trial;
+      assert.equal(summary.version,'v91-offline-test-drive-11');
+      assert.equal(summary.status,'road_only');
+      assert.equal(summary.roadStatus,
+        'paid_named_attack_final_slice_contact_unresolved');
+      assert.equal(summary.finale.individualFinishStatus,
+        'unresolved_at_final_slice_contact');
+      assert.match(summary.reason,/no recorded individual order/);
+      assert.equal(individualLine,null);
+      assert.equal(summary.finale.lineTimes,undefined);
+      assert.equal(summary.provisionalPointPreview.status,'unavailable');
+      assert.equal(summary.pointsStatus,'withheld');
+      assert.equal(summary.canCommitAwards,false);
+      assert.equal(paidRoad.frames.at(-1).distanceM,40000);
+      assert.ok(paidRoad.frames.at(-1).active.catchDistanceM>39900);
+      assert.ok(paidRoad.frames.at(-1).active.catchDistanceM<40000);
+      assert.equal(paidRoad.line.finalRiderEnergy.length,32);
+      assert.equal(validateFinaleNamedAttackMultipleDroppedSprintRoadFromTour(
+        recording.recording,{teamId:'you',finisherId:'you-6'},paidRoad),
+      true);
+    }
+  });

@@ -296,7 +296,7 @@ function summaryForIndividualGroupLine(trial,request,pointContext,line){
 }
 
 function summaryForNamedDroppedRoad(source,request,pointContext,road,
-  individualLine=null){
+  individualLine=null,finishRefusal=null){
   const recording=source.recording;
   const lastKm=recording.frames[recording.route.distanceKm-2];
   const lateCatch=individualLine?.version===
@@ -342,8 +342,11 @@ function summaryForNamedDroppedRoad(source,request,pointContext,road,
     individualLine?'v91-offline-test-drive-8':
     'v91-offline-test-drive-7',
     status:individualLine?'conditional_line':'road_only',
-    roadStatus:individualLine?.roadStatus??
+    roadStatus:finishRefusal?
+      'paid_named_attack_final_slice_contact_unresolved':
+      individualLine?.roadStatus??
       'paid_named_attack_dropped_bands',
+    ...(finishRefusal?{reason:finishRefusal}:{}),
     input:source.settings,request,engineVersion:road.version,
     ...(individualLine?{individualLineVersion:individualLine.version}:{}),
     resultStatus:'unclassified',pointsStatus:'withheld',
@@ -361,7 +364,9 @@ function summaryForNamedDroppedRoad(source,request,pointContext,road,
       row.group==='dropped').map(row=>row.id),
     chaserTeamIds:lastKm.chasers},
     ...(pointContext?{provisionalPointPreview:preview}:{}),
-    finale:{individualFinishStatus:individualLine?.overlapAudit
+    finale:{individualFinishStatus:finishRefusal?
+      'unresolved_at_final_slice_contact':
+      individualLine?.overlapAudit
       .firstPotentialOverlap?
       'conditional_crossings_contact_unresolved':
       individualLine?'conditional_individual_crossings':
@@ -601,9 +606,16 @@ export function runV91TestDrive(scenario,{full=false}={}){
         at500?.active.roadGroups.length===1&&
         paidRoad.frames.at(-1).active.roadGroups.length===0){
         const soloId=at500.active.roadGroups[0].riderIds[0];
-        const catchDistanceM=paidRoad.frames.find(frame=>
-          frame.active.catchDistanceM>finishM-500)
-          ?.active.catchDistanceM;
+        const catchFrame=paidRoad.frames.find(frame=>
+          frame.active.catchDistanceM>finishM-500);
+        const catchDistanceM=catchFrame?.active.catchDistanceM;
+        if(catchFrame?.distanceM===finishM){
+          const summary=summaryForNamedDroppedRoad(source,request,
+            pointContext,paidRoad,null,
+            'A final-slice catch has no recorded individual order at the line.');
+          return full?{summary,recording:source,paidRoad,
+            individualLine:null}:summary;
+        }
         if(!sprintRoad&&catchDistanceM>finishM-300&&
           nominations.some(plan=>
           plan.finisherId===soloId))
