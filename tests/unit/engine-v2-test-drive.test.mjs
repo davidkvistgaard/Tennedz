@@ -561,7 +561,7 @@ test('partial solo contact exposes only replayable crossing bounds',()=>{
     /lost a paid rider/);
 });
 
-test('an unresolved rival lead-out contact exposes its paid road and energy',()=>{
+test('an active rival lead-out contact reaches a paid conditional line',()=>{
   const settings={distanceKm:40,terrain:'flat',teamCount:4,gender:'M',
     fatigue:0,effort:'steady',attack:'none',chase:'ignore',
     defaultRivalPlan:'chase',managerTactics:Array.from({length:3},()=>({
@@ -575,21 +575,21 @@ test('an unresolved rival lead-out contact exposes its paid road and energy',()=
     pointContext:{tier:3,divisionIndex:1,divisionCount:1}},
   {full:true});
   const paid=recording.paidFinale;
-  const last=paid.frames.at(-1);
   assert.equal(baseline.finale.lineTimes.length,32);
-  assert.equal(summary.status,'unsupported');
-  assert.equal(summary.reason,'unsupported_partial_contact');
-  assert.deepEqual(summary.partialContact.contact,paid.contact);
-  assert.deepEqual(summary.partialContact.contact.riderIds,
+  assert.equal(summary.roadStatus,'paid_conditional_line');
+  assert.equal(summary.finale.individualFinishStatus,
+    'conditional_inferred_wheels');
+  assert.equal(summary.finale.lineTimes.length,32);
+  assert.equal(paid.version,
+    'v2-finale-passive-partial-active-rival-lead-out-runner-6');
+  assert.deepEqual(recording.preContactFinale.contact.riderIds,
     ['rival-1-6','rival-1-7']);
-  assert.deepEqual(summary.partialContact.roadGroups,last.roadGroups);
-  assert.deepEqual(summary.partialContact.leadOutRiderIds,
-    ['rival-1-6']);
-  assert.deepEqual(summary.partialContact.riderEnergyAtContact,
-    last.riders.filter(row=>['you-0','rival-1-6','rival-1-7']
-      .includes(row.riderId)).map(row=>({
-      riderId:row.riderId,energy:row.energyAfter})));
-  assert.equal(summary.provisionalPointPreview.status,'unavailable');
+  assert.ok(summary.finale.leadOutWork.some(row=>
+    row.riderId==='rival-1-6'&&row.energySpent>0));
+  assert.ok(summary.finale.lineTimes.find(row=>
+    row.riderId==='rival-1-7').elapsedSecondsFromLastKmStart<
+    baseline.finale.lineTimes.find(row=>
+      row.riderId==='rival-1-7').elapsedSecondsFromLastKmStart);
   assert.equal(summary.pointsStatus,'withheld');
   assert.equal(summary.canCommitAwards,false);
 });

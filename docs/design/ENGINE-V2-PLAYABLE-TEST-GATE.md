@@ -1533,9 +1533,18 @@ dropped-rider path, 36 passive sources retained crossing bounds, and 18
 passive sources reached an inferred-wheel line. None awarded points. A
 different paired manager order in the fixed 40 km passive source makes a
 rival helper and finisher reach the player's solo together at 307 m to go.
-The integrated test drive now exposes that already recorded exact contact,
-the two road groups, active helper and the three riders' energy while still
-reporting `unsupported_partial_contact` and withholding points. Without the
-helper, the same locked race has 32 conditional crossings. Continuing the
-three-rider contact remains an open motor gate; this diagnostic does not
-invent their subsequent positions.
+The integrated test drive exposes that already recorded exact contact, the
+two road groups, active helper and the three riders' energy when this road
+is unsupported. The separate `v2-finale-passive-partial-active-rival-lead-out-
+runner-6` now continues this narrower case: one rival's paid helper–finisher
+pair meets the solo before 300 m to go, with no chase or front rotation.
+It starts from their exact recorded positions and remaining energy, pays the
+helper's unfinished pull, then the sprint, on one clock. The fixed four-team
+paired run keeps the kilometre race unchanged and moves the rival finisher's
+conditional crossing from 87.848 to 87.621 s; these fictional timings are
+not a calibrated sporting benefit. A fixed-seed 54-case check across
+40/120/260 km, flat/rolling/mountain, M/F and 4/15/20 teams replayed all
+32/120/160 conditional crossings under the same rival plan. The older
+passive, spent-helper and chased own-pair versions remain replayable.
+Other multi-rider contact geometry, inferred bunch wheels, official places
+and point awards remain unresolved.
