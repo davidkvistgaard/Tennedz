@@ -652,3 +652,24 @@ new finish. The six fixed 40/120/260 km cases in both categories and at
 4/15/20 teams replay without losing riders; a complete bunch is refused by
 this multiband entry. Group-to-group contact, final individual movement,
 classification and points remain at gate items 4 and 5.
+
+For one surviving front group and a complete bunch, the offline test input
+may now set `"individualGroupLine":true`. The `v2-finale-multiband-
+individual-line-lab-1` branch keeps the paid group work and energy through
+the 500 m passage, then reuses the existing individual sprint and lead-out
+runner separately for each band's remaining road. The optional `finalePlans`
+are checked at that passage: a helper in a different band cannot lead out a
+finisher. The output records every conditional individual crossing and the
+helper's actual work, without changing the old group-band recording or
+running a second kilometre race for a refused plan. The six fixed 40/120 km
+front-group sources in both categories and at 4/15/20 teams have complete
+conditional lines and replay; one four-team paired plan spends helper energy
+and changes its selected finisher's crossing time with the same locked race.
+That example is evidence of an effect, not sporting calibration. Inter-band
+contact and passing still need a common-clock response. The 500 m handoff
+also starts the individual finale: prior group chase and cooperative work are
+paid through the handoff, while later work follows the existing sprint and
+rotation rules rather than extending those group orders automatically. That
+choice is provisional and needs sporting review. Therefore the output
+exposes no combined placing, classification or point projection, and other
+group configurations retain their explicit band-only status.

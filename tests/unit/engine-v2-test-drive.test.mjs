@@ -53,6 +53,38 @@ test('offline test drive exposes a paid break without inventing an order',()=>{
   assert.equal(refused.lastKmSource.roadGroups.length,1);
 });
 
+test('opt-in group line pays an individual finish and same-band lead-out',()=>{
+  const settings={distanceKm:40,terrain:'flat',teamCount:4,
+    gender:'M',seed:'test-drive-acceptance-1',attack:'repeated',
+    chase:'ignore',defaultRivalPlan:'attack'};
+  const base=runV91TestDrive({settings,individualGroupLine:true},
+    {full:true});
+  const helped=runV91TestDrive({settings,individualGroupLine:true,
+    finalePlans:[{teamId:'you',finisherId:'you-7',
+      leadOutRiderId:'you-6'}],pointContext:{tier:3,
+      divisionCount:1,divisionIndex:1}},{full:true});
+  assert.equal(base.summary.roadStatus,'conditional_multiband_line');
+  assert.equal(helped.summary.finale.lineTimes.length,32);
+  assert.deepEqual(helped.summary.finale.paidPassagesTo500
+    .map(row=>row.endDistanceM),[39250,39500]);
+  assert.equal(helped.summary.finale.roadFrames,undefined);
+  assert.deepEqual(base.recording.recording,
+    helped.recording.recording);
+  assert.deepEqual(base.individualLine.positionedSource,
+    helped.individualLine.positionedSource);
+  assert.ok(helped.summary.finale.leadOutWork.some(row=>
+    row.riderId==='you-6'&&row.role==='lead_out'&&
+    row.energySpent>0));
+  const time=output=>output.summary.finale.lineTimes.find(row=>
+    row.riderId==='you-7').elapsedSecondsFromLastKmStart;
+  assert.ok(time(helped)<time(base));
+  assert.equal(helped.summary.finale.provisionalLineOrder,null);
+  assert.equal(helped.summary.provisionalPointPreview.status,'unavailable');
+  assert.equal(helped.summary.resultStatus,'unclassified');
+  assert.equal(helped.summary.pointsStatus,'withheld');
+  assert.equal(helped.summary.canCommitAwards,false);
+});
+
 test('offline test drive rejects unknown managers and accepts stdin JSON',()=>{
   assert.throws(()=>runV91TestDrive({...example,finalePlans:[{
     teamId:'other',finisherId:'other-7',leadOutRiderId:null}]}),

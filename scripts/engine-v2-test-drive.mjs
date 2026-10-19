@@ -10,8 +10,12 @@ import {validateRequestedFinalePlans} from
 import {finaleSnapshotFromTour} from
   '../lib/engine/v2/finale-snapshot.mjs';
 import {createV91ConditionalRaceFinal,
+  createV91GroupFallbackFromLockedRace,
   validateV91ConditionalRaceFinal} from
   '../lib/engine/v2/playtest-race-final.mjs';
+import {recordFinaleMultibandIndividualLine,
+  validateFinaleMultibandIndividualLine} from
+  '../lib/engine/v2/finale-multiband-individual-line.mjs';
 import {projectV91ProvisionalPointPreview} from
   '../lib/engine/v2/playtest-point-preview.mjs';
 
@@ -123,10 +127,50 @@ function summaryFor(trial,request,pointContext){
     }};
 }
 
+function summaryForIndividualGroupLine(trial,request,pointContext,line){
+  const base=summaryFor(trial,request,pointContext);
+  const decisions=new Map(line.sprintPlan.decisions.map(row=>
+    [row.teamId,row]));
+  return {...base,version:'v91-offline-test-drive-2',
+    roadStatus:'conditional_multiband_line',
+    individualLineVersion:line.version,
+    ...(pointContext?{provisionalPointPreview:{status:'unavailable',
+      reason:'Cross-band contact and placing remain unresolved.'}}:{}),
+    managerDecisions:base.managerDecisions.map(row=>({
+      ...row,finisherId:decisions.get(row.teamId).finisherId,
+      leadOutRiderId:decisions.get(row.teamId).leadOutRiderId})),
+    finale:{
+      paidPassagesTo500:trial.paidFinale.line.approachFrames.filter(
+        frame=>frame.endDistanceM<=line.lineDistanceM-500)
+        .map(frame=>({endDistanceM:frame.endDistanceM,
+          frontElapsedSeconds:frame.frontElapsedSeconds,
+          pelotonElapsedSeconds:frame.pelotonElapsedSeconds,
+          frontWorkerRiderIds:frame.frontWorkerRiderIds??[],
+          chasePullRiderId:frame.chasePullRiderId})),
+      individualFinishStatus:
+        'conditional_band_local_cross_band_contact_unresolved',
+      lineTimes:line.conditionalCrossings,
+      provisionalLineOrder:null,
+      positionSourceStatus:line.positionedSource.status,
+      roadEvents:line.bandRunners.flatMap(band=>
+        band.runner.frames.flatMap(frame=>frame.roadEvents??[])),
+      leadOutWork:line.bandRunners.flatMap(band=>
+        band.runner.frames.flatMap(frame=>frame.riders.filter(row=>
+          row.role?.startsWith('lead_out')).map(row=>({
+            roadBandId:band.roadBandId,riderId:row.riderId,
+            role:row.role,energySpent:row.energySpent,
+            distanceTravelledM:row.distanceTravelledM})))),
+      finalRiderEnergy:line.conditionalCrossings.map(row=>({
+        riderId:row.riderId,energy:row.energyAtLine}))}};
+}
+
 export function runV91TestDrive(scenario,{full=false}={}){
   if(!scenario||typeof scenario!=='object'||Array.isArray(scenario)||
     Object.keys(scenario).some(key=>
-      !['settings','attack','finalePlans','pointContext'].includes(key)))
+      !['settings','attack','finalePlans','pointContext',
+        'individualGroupLine'].includes(key))||
+    scenario.individualGroupLine!==undefined&&
+      typeof scenario.individualGroupLine!=='boolean')
     throw new Error('Choose settings, an optional attack and finale plans.');
   const pointContext=scenario.pointContext??null;
   if(pointContext!==null&&(!pointContext||
@@ -143,28 +187,47 @@ export function runV91TestDrive(scenario,{full=false}={}){
     throw new Error('Choose a valid optional preview point context.');
   const request=requestFor(scenario);
   let trial;
+  let recoveredGroupPlan=false;
   try{trial=createV91ConditionalRaceFinal(scenario.settings,request);}
   catch(error){
     if(!REFUSALS.has(error.message))throw error;
     const source=request.attackTeamId===undefined?
       error.cause?.playtestSource??null:null;
-    const snapshot=source?finaleSnapshotFromTour(source.recording,{
-      remainingKm:1,includeAttackLoad:true}):null;
-    return {version:'v91-offline-test-drive-1',status:'unsupported',
-      input:prepareV91Playtest(scenario.settings).settings,
-      request,reason:error.message,
-      ...(snapshot?{lastKmSource:{
-        roadGroups:snapshot.roadGroups.map(group=>({
-          id:group.id,gapSeconds:group.gapSeconds,
-          riderIds:group.riderIds})),
-        droppedRiderIds:snapshot.droppedRiderIds,
-        chaserTeamIds:source.recording.frames[snapshot.sourceKm-1].chasers
-      }}:{}),pointsStatus:'withheld',
-      ...(pointContext?{provisionalPointPreview:{status:'unavailable',
-        reason:'No complete individual line.'}}:{}),
-      canCommitAwards:false};
+    if(scenario.individualGroupLine===true&&source&&
+      error.message===
+        'Finisher and lead-out plans are not paid for a road group.'){
+      trial=createV91GroupFallbackFromLockedRace(source);
+      recoveredGroupPlan=true;
+    }else{
+      const snapshot=source?finaleSnapshotFromTour(source.recording,{
+        remainingKm:1,includeAttackLoad:true}):null;
+      return {version:'v91-offline-test-drive-1',status:'unsupported',
+        input:prepareV91Playtest(scenario.settings).settings,
+        request,reason:error.message,
+        ...(snapshot?{lastKmSource:{
+          roadGroups:snapshot.roadGroups.map(group=>({
+            id:group.id,gapSeconds:group.gapSeconds,
+            riderIds:group.riderIds})),
+          droppedRiderIds:snapshot.droppedRiderIds,
+          chaserTeamIds:source.recording.frames[snapshot.sourceKm-1].chasers
+        }}:{}),pointsStatus:'withheld',
+        ...(pointContext?{provisionalPointPreview:{status:'unavailable',
+          reason:'No complete individual line.'}}:{}),
+        canCommitAwards:false};
+    }
   }
-  validateV91ConditionalRaceFinal(scenario.settings,request,trial);
+  validateV91ConditionalRaceFinal(scenario.settings,recoveredGroupPlan?
+    {...request,plans:null}:request,trial);
+  if(scenario.individualGroupLine===true&&
+    trial.roadStatus==='paid_group_bands'){
+    const individualLine=recordFinaleMultibandIndividualLine(
+      trial.recording,trial.paidFinale,{plans:request.plans??null});
+    validateFinaleMultibandIndividualLine(trial.recording,
+      trial.paidFinale,{plans:request.plans??null},individualLine);
+    const summary=summaryForIndividualGroupLine(trial,request,
+      pointContext,individualLine);
+    return full?{summary,recording:trial,individualLine}:summary;
+  }
   if(!['paid_conditional_line','paid_group_bands','paid_separated_bands',
     'recorded_depleted_bands','recorded_dropped_bands']
     .includes(trial.roadStatus)){
