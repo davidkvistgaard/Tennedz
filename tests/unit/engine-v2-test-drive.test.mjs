@@ -454,6 +454,25 @@ test('two payable manager lead-outs change one recorded finale',()=>{
   assert.equal(two.summary.canCommitAwards,false);
 });
 
+test('a named attack on an already separated mountain road refuses visibly',()=>{
+  for(const gender of ['M','F']){
+    const settings={distanceKm:260,terrain:'mountain',fatigue:30,
+      gender,teamCount:4,seed:'test-drive-acceptance-1',
+      defaultRivalPlan:'chase',attack:'none',chase:'all'};
+    const output=runV91TestDrive({settings,individualGroupLine:true,
+      attack:{teamId:'you',riderId:'you-4'}});
+    assert.equal(output.version,'v91-offline-test-drive-6');
+    assert.equal(output.status,'unsupported');
+    assert.equal(output.reason,
+      'The controlled finale trial needs one complete source bunch.');
+    assert.ok(output.lastKmSource.roadGroups.length+
+      output.lastKmSource.droppedRiderIds.length>0);
+    assert.equal(output.request.attackRiderId,'you-4');
+    assert.equal(output.pointsStatus,'withheld');
+    assert.equal(output.canCommitAwards,false);
+  }
+});
+
 test('paired field strength and fatigue reach the same conditional path with different paid lines',()=>{
   const settings={distanceKm:40,terrain:'flat',teamCount:4,gender:'F',
     seed:'independent-field',attack:'none',chase:'ignore',

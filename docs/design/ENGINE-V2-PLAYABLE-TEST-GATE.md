@@ -833,3 +833,17 @@ includes the recorded `leadOutAttempts` with distance, energy, gap and
 verified status. This exposes a paid but still-separated attempt without
 misstating it as a pull. It changes no underlying motor recording or official
 result contract.
+
+A fixed 90-run manager-order probe across the three acceptance routes, M/F,
+4/15/20 teams, baseline/one-helper/two-helper/alternate-finisher plans and
+a named attack found 46 conditional bunch lines, six depleted conditional
+lines and 36 explicit unavailable-plan outcomes. Two long tired four-team
+mountain cases with a valid named attack still threw because the controlled
+attack trial requires one complete source bunch. The opt-in drive now reports
+that road as `v91-offline-test-drive-6` unsupported, retaining the named rider,
+the actual locked road groups/dropped riders and withheld points. It does not
+run a different race to manufacture a bunch or imply that the named attack
+has been paid. The general separated-road attack remains an acceptance gap.
+On rerun, all 90 requests return a controlled output: 46 conditional bunch
+lines, six depleted conditional lines and 38 explicit refusals, with zero
+uncaught errors and zero award-capable paths.

@@ -40,6 +40,7 @@ const REFUSALS=new Set([
   'The separated last-kilometre finale needs recorded response or front rotation.',
   'An early bunch plan needs one inactive-attack bunch.',
   'The nominated lead-out cannot work beside the finisher.',
+  'The controlled finale trial needs one complete source bunch.',
 ]);
 
 function expectedRefusal(message){
@@ -79,11 +80,12 @@ function requestFor(scenario){
 }
 
 function unsupportedRefusal(error,scenario,request,pointContext){
-  const source=request.attackTeamId===undefined?
-    error.cause?.playtestSource??null:null;
+  const source=error.cause?.playtestSource??null;
   const snapshot=source?finaleSnapshotFromTour(source.recording,{
     remainingKm:1,includeAttackLoad:true}):null;
-  return {version:'v91-offline-test-drive-1',status:'unsupported',
+  return {version:request.attackTeamId!==undefined&&source?
+    'v91-offline-test-drive-6':'v91-offline-test-drive-1',
+    status:'unsupported',
     input:prepareV91Playtest(scenario.settings).settings,
     request,reason:error.message,
     ...(snapshot?{lastKmSource:{
@@ -268,9 +270,9 @@ export function runV91TestDrive(scenario,{full=false}={}){
   try{trial=createV91ConditionalRaceFinal(scenario.settings,request);}
   catch(error){
     if(!expectedRefusal(error.message))throw error;
-    const source=request.attackTeamId===undefined?
-      error.cause?.playtestSource??null:null;
+    const source=error.cause?.playtestSource??null;
     if(scenario.individualGroupLine===true&&source&&
+      request.attackTeamId===undefined&&
       ['Finisher and lead-out plans are not paid for a road group.',
         'Finisher and lead-out plans are not paid for road groups.',
         'Finisher and lead-out plans are not paid for depleted road bands.',
