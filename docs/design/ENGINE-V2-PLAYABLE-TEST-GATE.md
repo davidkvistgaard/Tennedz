@@ -73,8 +73,12 @@ runner recorded inferred source wheels, it also exposes that runner's
 `provisionalLineOrder`, `positionSourceStatus`, `passingRule` and timestamped
 `roadEvents`; these are laboratory observations, not official placings. The
 tool names an unsupported road state with its recorded group and dropped-rider
-counts where the unmodified
-kilometre source is available. A fixed 54-case diagnostic across three routes,
+counts where the unmodified kilometre source is available.
+The conditional bunch-to-group fallback and an unsupported group plan reuse
+that same locked kilometre recording instead of simulating the race again.
+This changes no versioned road or result output.
+
+A fixed 54-case diagnostic across three routes,
 both categories, three field sizes and three tactics modes originally replayed
 32 conditional individual lines, 12 paid group-band lines and 10 explicit
 refusals, all on the tired mountain source with multiple groups or dropped

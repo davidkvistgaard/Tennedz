@@ -3,7 +3,7 @@
 import {readFileSync} from 'node:fs';
 import {resolve} from 'node:path';
 import {pathToFileURL} from 'node:url';
-import {createV91Playtest,prepareV91Playtest} from
+import {prepareV91Playtest} from
   '../lib/engine/v2/playtest.mjs';
 import {validateRequestedFinalePlans} from
   '../lib/engine/v2/playtest-finale-trial.mjs';
@@ -147,7 +147,7 @@ export function runV91TestDrive(scenario,{full=false}={}){
   catch(error){
     if(!REFUSALS.has(error.message))throw error;
     const source=request.attackTeamId===undefined?
-      createV91Playtest(scenario.settings):null;
+      error.cause?.playtestSource??null:null;
     const snapshot=source?finaleSnapshotFromTour(source.recording,{
       remainingKm:1,includeAttackLoad:true}):null;
     return {version:'v91-offline-test-drive-1',status:'unsupported',

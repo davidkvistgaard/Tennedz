@@ -639,8 +639,13 @@ test('group branch refuses unpaid manager plans and unresolved road states',()=>
     const teamId=index===0?'you':`rival-${index}`;
     return {teamId,finisherId:`${teamId}-7`,leadOutRiderId:null};
   });
-  assert.throws(()=>createV91ConditionalRaceFinal(group,{plans}),
+  let refused;
+  try{createV91ConditionalRaceFinal(group,{plans});}
+  catch(error){refused=error;}
+  assert.match(refused?.message??'',
     /Finisher and lead-out plans are not paid/);
+  assert.equal(refused.cause.playtestSource.recording.frames.length,
+    group.distanceKm);
   const ownBreakChase=createV91ConditionalRaceFinal({...group,chase:'all'});
   assert.equal(ownBreakChase.version,'v91-conditional-race-final-4');
   assert.equal(ownBreakChase.roadStatus,'paid_group_bands');
