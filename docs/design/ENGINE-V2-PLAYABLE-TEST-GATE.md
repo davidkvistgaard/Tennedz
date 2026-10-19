@@ -670,9 +670,8 @@ contact and passing still need a common-clock response. The 500 m handoff
 also starts the individual finale: prior group chase and cooperative work are
 paid through the handoff, while later work follows the existing sprint and
 rotation rules rather than extending those group orders automatically. That
-choice is provisional and needs sporting review. Therefore the output
-exposes no combined placing, classification or point projection, and other
-group configurations retain their explicit band-only status.
+choice is provisional and needs sporting review. Other group configurations
+retain their explicit band-only status.
 
 The opt-in individual group line now also carries a replayed cross-band
 overlap audit. It reconstructs each rider's paid active and sheltered motion
@@ -683,3 +682,16 @@ Six fixed 40/120 km, 4/15/20-team M/F source recordings remain longitudinally
 separate to their conditional lines; a synthetic crossing fixture locates its
 first meeting at the exact interpolated time and rejects a tampered replay.
 Neither finding promotes inferred wheels to official placing or points.
+
+The separately versioned multiband line lab-2 now gives a **provisional**
+combined order only when this audit finds no longitudinal overlap and every
+rider has a unique paid crossing time. With an optional point context, that
+read-only order passes through the existing one-day point policy as an
+experimental preview. The test drive still returns no classified result or
+award rows, and `canCommitAwards` remains false. Possible overlap and tied
+places withhold the preview; the earlier lab-1 records (both before and after
+the overlap audit was added) remain replayable. The six fixed M/F, 4/15/20-
+team 40/120 km cases have distinct provisional times; one four-team case
+also verifies that each displayed point value matches the existing policy.
+This provides a consistent test result for clearly separated bands, not a
+contact model or a production settlement path.

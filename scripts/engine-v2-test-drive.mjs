@@ -16,7 +16,8 @@ import {createV91ConditionalRaceFinal,
 import {recordFinaleMultibandIndividualLine,
   validateFinaleMultibandIndividualLine} from
   '../lib/engine/v2/finale-multiband-individual-line.mjs';
-import {projectV91ProvisionalPointPreview} from
+import {projectV91ProvisionalPointPreview,
+  projectV91ProvisionalMultibandPointPreview} from
   '../lib/engine/v2/playtest-point-preview.mjs';
 
 const REFUSALS=new Set([
@@ -134,8 +135,13 @@ function summaryForIndividualGroupLine(trial,request,pointContext,line){
   return {...base,version:'v91-offline-test-drive-2',
     roadStatus:'conditional_multiband_line',
     individualLineVersion:line.version,
-    ...(pointContext?{provisionalPointPreview:{status:'unavailable',
-      reason:'Cross-band contact and placing remain unresolved.'}}:{}),
+    ...(pointContext?{provisionalPointPreview:
+      line.provisionalLineOrder?.every(row=>row.position!==null)?
+        projectV91ProvisionalMultibandPointPreview(
+          trial.recording,line,pointContext):
+        {status:'unavailable',reason:line.overlapAudit.firstPotentialOverlap?
+          'Cross-band contact remains unresolved.':
+          'The provisional line contains an unresolved place.'}}:{}),
     managerDecisions:base.managerDecisions.map(row=>({
       ...row,finisherId:decisions.get(row.teamId).finisherId,
       leadOutRiderId:decisions.get(row.teamId).leadOutRiderId})),
@@ -151,7 +157,7 @@ function summaryForIndividualGroupLine(trial,request,pointContext,line){
         'conditional_band_local_cross_band_contact_unresolved',
       overlapAudit:line.overlapAudit,
       lineTimes:line.conditionalCrossings,
-      provisionalLineOrder:null,
+      provisionalLineOrder:line.provisionalLineOrder,
       positionSourceStatus:line.positionedSource.status,
       roadEvents:line.bandRunners.flatMap(band=>
         band.runner.frames.flatMap(frame=>frame.roadEvents??[])),

@@ -80,8 +80,14 @@ test('opt-in group line pays an individual finish and same-band lead-out',()=>{
   const time=output=>output.summary.finale.lineTimes.find(row=>
     row.riderId==='you-7').elapsedSecondsFromLastKmStart;
   assert.ok(time(helped)<time(base));
-  assert.equal(helped.summary.finale.provisionalLineOrder,null);
-  assert.equal(helped.summary.provisionalPointPreview.status,'unavailable');
+  assert.equal(helped.summary.finale.provisionalLineOrder.length,32);
+  assert.deepEqual(helped.summary.finale.provisionalLineOrder.map(row=>
+    row.position),Array.from({length:32},(_,index)=>index+1));
+  assert.equal(helped.summary.provisionalPointPreview.pointsStatus,
+    'experimental_preview_only');
+  assert.equal(helped.summary.provisionalPointPreview.riders.length,32);
+  assert.deepEqual(helped.summary.provisionalPointPreview.awardRows,[]);
+  assert.equal(helped.summary.provisionalPointPreview.canCommitAwards,false);
   assert.equal(helped.summary.resultStatus,'unclassified');
   assert.equal(helped.summary.pointsStatus,'withheld');
   assert.equal(helped.summary.canCommitAwards,false);
