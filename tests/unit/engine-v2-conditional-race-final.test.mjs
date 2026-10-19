@@ -52,6 +52,40 @@ test('one opt-in entry chooses existing paid full-field race branches',()=>{
   }
 });
 
+test('independent rival chase catches a late flat attack on the same source road',()=>{
+  const base={distanceKm:40,terrain:'flat',fatigue:0,
+    teamCount:20,gender:'M',seed:'late-flat-probe-1',
+    attack:'none',chase:'ignore',defaultRivalPlan:'chase'};
+  const withRivalChase=chase=>({...base,
+    managerTactics:Array.from({length:19},()=>({
+      effort:'steady',attack:'none',chase}))});
+  const request=named(4);
+  const passiveSettings=withRivalChase('ignore');
+  const chasingSettings=withRivalChase('all');
+  const passive=createV91ConditionalRaceFinal(passiveSettings,request);
+  const chasing=createV91ConditionalRaceFinal(chasingSettings,request);
+  assert.deepEqual(passive.recording.frames[38].riderGroups,
+    chasing.recording.frames[38].riderGroups);
+  assert.equal(passive.preContactFinale?.contact??null,null);
+  assert.ok(chasing.preContactFinale.contact.distanceM>39500);
+  assert.ok(chasing.preContactFinale.contact.distanceM<40000);
+  const crossingIndex=trial=>[...trial.paidFinale.finishers]
+    .sort((a,b)=>a.elapsedSecondsFromLastKmStart-
+      b.elapsedSecondsFromLastKmStart)
+    .findIndex(row=>row.riderId==='you-4');
+  assert.equal(crossingIndex(passive),0);
+  assert.ok(crossingIndex(chasing)>0);
+  for(const [input,trial] of [
+    [passiveSettings,passive],[chasingSettings,chasing]]){
+    assert.equal(trial.roadStatus,'paid_conditional_line');
+    assert.equal(trial.paidFinale.finishers.length,160);
+    assert.equal(trial.classifiedResults,null);
+    assert.equal(trial.pointsStatus,'withheld');
+    assert.equal(trial.canCommitAwards,false);
+    assert.equal(validateV91ConditionalRaceFinal(input,request,trial),true);
+  }
+});
+
 test('whole-bunch contact preserves its paid pre-contact source',()=>{
   const trial=createV91ConditionalRaceFinal(settings,named(1));
   const contact=trial.preContactFinale.contact;

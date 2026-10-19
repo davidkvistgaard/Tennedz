@@ -854,3 +854,13 @@ relaxing the complete-bunch guard would lose the dropped rider's travel.
 On rerun, all 90 requests return a controlled output: 46 conditional bunch
 lines, six depleted conditional lines and 38 explicit refusals, with zero
 uncaught errors and zero award-capable paths.
+
+A paired 40 km flat, 20-team men's probe holds the fictional roster, seed,
+route and recorded rider states at the last-kilometre marker fixed while
+changing only the 19 rival managers' chase orders. With all rivals ignoring
+the named `you-4` attack, its conditional individual crossing is first; with
+all rivals chasing, paid contact occurs about 146 m before the line and its
+conditional crossing is 21st. Both complete 160-rider recordings replay and
+withhold classification and points. This verifies tactical sensitivity in
+one constructed field, not a calibrated rate of late attack wins; inferred
+wheel positions still prevent an official result.
