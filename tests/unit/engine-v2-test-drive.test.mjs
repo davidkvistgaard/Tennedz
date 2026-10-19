@@ -266,6 +266,15 @@ test('paid dropped travel joins an opt-in individual bunch line without inventin
   assert.equal(saturated.roadStatus,'recorded_depleted_bands');
   assert.ok(saturated.finale.totalUnmetEnergyDemand>0);
   assert.equal(saturated.pointsStatus,'withheld');
+  const unpaidPlan=runV91TestDrive({settings:{...settings,
+    attack:'selective',chase:'selective',defaultRivalPlan:'mixed'},
+  individualGroupLine:true,finalePlans:[{teamId:'you',
+    finisherId:'you-7',leadOutRiderId:null}]});
+  assert.equal(unpaidPlan.status,'unsupported');
+  assert.equal(unpaidPlan.individualLineStatus,'unpaid_dropped_travel');
+  assert.equal(unpaidPlan.finale.individualFinishStatus,
+    'unresolved_within_road_bands');
+  assert.equal(unpaidPlan.pointsStatus,'withheld');
 });
 
 test('paired field strength and fatigue reach the same conditional path with different paid lines',()=>{

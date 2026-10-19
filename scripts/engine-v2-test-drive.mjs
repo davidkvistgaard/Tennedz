@@ -260,7 +260,10 @@ export function runV91TestDrive(scenario,{full=false}={}){
       .includes(trial.roadStatus);
     if(depleted&&trial.paidFinale.passageFrames.some(frame=>
       frame.droppedPassages.some(row=>row.unmetEnergyDemand>0))){
-      const summary=summaryFor(trial,request,pointContext);
+      const base=summaryFor(trial,request,pointContext);
+      const summary=request.plans?{...base,status:'unsupported',
+        individualLineStatus:'unpaid_dropped_travel',
+        reason:'The nominated finale cannot run with unmet dropped-rider energy demand.'}:base;
       return full?{summary,recording:trial}:summary;
     }
     const record=depleted?recordFinaleDepletedIndividualLine:

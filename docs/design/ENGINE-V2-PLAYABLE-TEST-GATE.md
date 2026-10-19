@@ -741,7 +741,9 @@ helper in another band cannot lead out the nominated finisher. The fixed
 66-scenario audit with `--individual-lines` now reaches 32 complete-bunch,
 18 multiband, and 14 depleted conditional individual lines. Its remaining
 two 260 km M/F cases stop at recorded bands because dropped riders have
-unmet energy demand. Four of the 14 depleted continuations have a possible
+unmet energy demand. An explicit finisher or lead-out plan on those two
+sources is refused against the same locked race instead of appearing to run.
+Four of the 14 depleted continuations have a possible
 longitudinal meeting in their last 500 m. All 14 withhold a combined order
 and point preview because individual contact before the 500 m handoff is
 not audited. This is still a conditional replay, not an official result.
