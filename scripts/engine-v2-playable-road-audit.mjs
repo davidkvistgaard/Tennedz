@@ -11,6 +11,9 @@ const modes={
   mixed:{attack:'selective',chase:'selective'},
   attack:{attack:'repeated',chase:'ignore'},
   chase:{attack:'none',chase:'all'}};
+const individualLines=process.argv.includes('--individual-lines');
+if(process.argv.slice(2).some(arg=>arg!=='--individual-lines'))
+  throw new Error('Usage: node scripts/engine-v2-playable-road-audit.mjs [--individual-lines]');
 const scenarios=[];
 for(const route of routes)for(const gender of ['M','F'])
   for(const teamCount of [4,15,20])
@@ -40,15 +43,23 @@ for(const route of routes)for(const gender of ['M','F']){
 }
 
 const rows=scenarios.map(({kind,mode,settings})=>{
-  const output=runV91TestDrive({settings});
+  const output=runV91TestDrive({settings,
+    ...(individualLines?{individualGroupLine:true}: {})});
   const status=output.roadStatus??output.status;
   const expected=settings.teamCount*8;
   assert.equal(output.pointsStatus,'withheld');
   assert.equal(output.canCommitAwards,false);
-  if(status==='paid_conditional_line'){
+  if(status==='paid_conditional_line'||
+    status==='conditional_multiband_line'){
     assert.equal(output.finale.lineTimes.length,expected);
     assert.equal(new Set(output.finale.lineTimes.map(row=>row.riderId))
       .size,expected);
+    if(status==='conditional_multiband_line'){
+      assert.equal(output.finale.overlapAudit!==undefined,true);
+      assert.equal(output.finale.lineTimes.every(row=>
+        Number.isFinite(row.elapsedSecondsFromLastKmStart)&&
+        Number.isFinite(row.energyAtLine)),true);
+    }
   }else if(status!=='unsupported'){
     assert.equal(output.finale.finalRiderEnergy.length,expected);
     if(status!=='paid_group_bands')
@@ -62,11 +73,17 @@ const rows=scenarios.map(({kind,mode,settings})=>{
     roadGroups:output.lastKmSource?.roadGroups.length??null,
     droppedRiders:output.lastKmSource?.droppedRiderIds.length??null,
     status,...(status==='unsupported'?{reason:output.reason}:{}),
+    ...(status==='conditional_multiband_line'?{
+      potentialCrossBandOverlap:
+        output.finale.overlapAudit.firstPotentialOverlap!==null,
+      provisionalUniqueOrder:output.finale.provisionalLineOrder?.every(
+        row=>row.position!==null)??false}:{}),
     ...(status==='recorded_depleted_bands'||
       status==='recorded_dropped_bands'?{
         totalUnmetEnergyDemand:output.finale.totalUnmetEnergyDemand}: {})};
 });
 const counts=Object.fromEntries([...new Set(rows.map(row=>row.status))]
   .sort().map(status=>[status,rows.filter(row=>row.status===status).length]));
-console.log(JSON.stringify({version:'v2-playable-road-audit-1',
+console.log(JSON.stringify({version:individualLines?
+  'v2-playable-road-audit-individual-2':'v2-playable-road-audit-1',
   seed:'test-drive-acceptance-1',scenarios:rows.length,counts,rows},null,2));

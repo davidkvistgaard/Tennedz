@@ -716,3 +716,19 @@ inferred wheels and open-road passing need sporting review. The provisional
 order and point illustration are read-only, never an award or official
 classification. Dropped-rider bands and physical cross-band contact remain
 outside this path.
+
+The fixed 66-scenario road audit can now also be run with
+`node scripts/engine-v2-playable-road-audit.mjs --individual-lines`.
+Its default output remains the earlier band-level audit. With individual
+lines enabled, the 40/120/260 km, M/F, 4/15/20-team baseline and
+independent-manager matrix gives 32 complete-bunch conditional lines,
+18 conditional multiband lines, 12 dropped-bunch band recordings, and
+four depleted group-plus-dropped band recordings. All 18 multiband
+continuations have complete rider crossings, no potential longitudinal
+cross-band meeting in their final 500 m, and unique provisional orders.
+These fictional cases are a coverage measurement, not a target win rate or
+proof of sporting realism. The 16 dropped-rider cases still lack one
+full-field individual finale. Two of the four depleted cases also record
+unmet energy demand after a dropped rider's reserve reaches zero; their
+passages must not be described as fully energy-paid. Inferred wheel order,
+pre-500 m contact, and an official result/award remain open throughout.
