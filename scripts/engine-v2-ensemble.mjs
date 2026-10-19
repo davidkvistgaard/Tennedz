@@ -110,6 +110,9 @@ import {recordFinaleConcurrentTwoSplitRear400StepFromTour,
 import {recordFinaleConcurrentDoubleCatchMergeFromTour,
   validateFinaleConcurrentDoubleCatchMergeFromTour} from
   '../lib/engine/v2/finale-concurrent-double-catch-merge.mjs';
+import {recordFinaleConcurrentDoubleCatchLineFromTour,
+  validateFinaleConcurrentDoubleCatchLineFromTour} from
+  '../lib/engine/v2/finale-concurrent-double-catch-line.mjs';
 import {recordFinaleConcurrentNamedAllChaseFromTour} from
   '../lib/engine/v2/finale-concurrent-named-all-chase.mjs';
 import {recordFinaleConcurrentNamedAllChaseContactFromTour} from
@@ -525,6 +528,7 @@ for(const [course,stage] of Object.entries(distanceKm===260?LONG_ROUTES:ROUTES))
           multiSelectiveRearBunchArrival:0,
           multiSelectiveRearBunchEvents:{},
           multiSelectiveDoubleCatchMerge:0,
+          multiSelectiveDoubleCatchLine:0,
           minMultiSelectiveSeparationM:null,
           maxMultiSelectiveSeparationM:null,
           minMultiSelectiveBunchBehindM:null,
@@ -913,9 +917,25 @@ for(const [course,stage] of Object.entries(distanceKm===260?LONG_ROUTES:ROUTES))
                                 const merged=attempt(
                                   'multiSelectiveDoubleCatchMerge',
                                   recordFinaleConcurrentDoubleCatchMergeFromTour);
-                                if(merged)
+                                if(merged){
                                   validateFinaleConcurrentDoubleCatchMergeFromTour(
                                     race,JSON.parse(JSON.stringify(merged)));
+                                  const line=attempt(
+                                    'multiSelectiveDoubleCatchLine',
+                                    recordFinaleConcurrentDoubleCatchLineFromTour);
+                                  if(line){
+                                    validateFinaleConcurrentDoubleCatchLineFromTour(
+                                      race,{},JSON.parse(JSON.stringify(line)));
+                                    if(line.conditionalCrossings.length!==
+                                      race.committedInputs.teams.reduce((sum,team)=>
+                                        sum+team.riders.length,0)||
+                                      line.classifiedResults!==null||
+                                      line.pointsStatus!=='withheld'||
+                                      line.canCommitAwards)
+                                      throw new Error(
+                                        'A double catch lost conditional riders or awarded points.');
+                                  }
+                                }
                               }
                             }
                             if(next?.event==='first_attacker_at_next_boundary'||
