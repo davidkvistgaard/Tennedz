@@ -102,7 +102,7 @@ browser test environment or a completed playable race.
 
 The offline input may include `"pointContext":{"tier":3,
 "divisionIndex":1,"divisionCount":1}`. For a complete, uniquely ordered
-paid bunch line only, `v91-provisional-point-preview-1` maps the recorded
+paid bunch line, `v91-provisional-point-preview-1` maps the recorded
 experimental line places through the existing one-day division point policy.
 The fixed 40 km four-team lead-out example changes the nominated finisher's
 provisional place from second to first and the tier-three illustration from
@@ -110,8 +110,11 @@ provisional place from second to first and the tier-three illustration from
 fixed. This projection has no award keys or rows, cannot commit awards, and
 does not change `classifiedResults:null` or `pointsStatus:'withheld'` in the
 race final. Its inferred wheel source and open passing rule still need
-sporting validation. Ambiguous places and group-band roads have no preview
-point projection; this is a diagnostic aid, not an official scoring path.
+sporting validation. The later separately versioned individual-group paths
+offer the same read-only policy illustration only where their paid tracks
+remain longitudinally separate and places are unique. Other group-band
+roads and ambiguous places have no preview projection; this is a diagnostic
+aid, not an official scoring path.
 
 `node scripts/engine-v2-playable-road-audit.mjs` preserves that 54-case
 matrix as a repeatable read-only check and adds 12 paired four-team cases
@@ -695,3 +698,21 @@ team 40/120 km cases have distinct provisional times; one four-team case
 also verifies that each displayed point value matches the existing policy.
 This provides a consistent test result for clearly separated bands, not a
 contact model or a production settlement path.
+
+The opt-in `v2-finale-separated-individual-line-lab-1` extends that same
+500 m handoff and individual runner to the existing paid **multiple-group**
+clock. It uses each recorded group's own passage time and energy, locks
+finisher and helper roles against the actual band, then audits every ordered
+pair of bands for possible longitudinal overlap. Six fixed 260 km mountain
+sources (M/F at 4/15/20 teams) contain two surviving groups plus the bunch;
+all riders reach distinct conditional crossings, with no final-500 m
+longitudinal overlap in those sources. A four-team paired case lets an
+eligible helper in the bunch spend energy and change its nominated finisher's
+time without changing the kilometre recording. A helper across bands is
+refused with the locked race still visible to the offline test drive. The
+older full-kilometre band recording is retained for replay;
+its pre-500 m group-edge separation is still a laboratory premise, and
+inferred wheels and open-road passing need sporting review. The provisional
+order and point illustration are read-only, never an award or official
+classification. Dropped-rider bands and physical cross-band contact remain
+outside this path.

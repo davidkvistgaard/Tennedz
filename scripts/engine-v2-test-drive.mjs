@@ -16,6 +16,9 @@ import {createV91ConditionalRaceFinal,
 import {recordFinaleMultibandIndividualLine,
   validateFinaleMultibandIndividualLine} from
   '../lib/engine/v2/finale-multiband-individual-line.mjs';
+import {recordFinaleSeparatedIndividualLine,
+  validateFinaleSeparatedIndividualLine} from
+  '../lib/engine/v2/finale-separated-individual-line.mjs';
 import {projectV91ProvisionalPointPreview,
   projectV91ProvisionalMultibandPointPreview} from
   '../lib/engine/v2/playtest-point-preview.mjs';
@@ -146,13 +149,20 @@ function summaryForIndividualGroupLine(trial,request,pointContext,line){
       ...row,finisherId:decisions.get(row.teamId).finisherId,
       leadOutRiderId:decisions.get(row.teamId).leadOutRiderId})),
     finale:{
-      paidPassagesTo500:trial.paidFinale.line.approachFrames.filter(
-        frame=>frame.endDistanceM<=line.lineDistanceM-500)
-        .map(frame=>({endDistanceM:frame.endDistanceM,
-          frontElapsedSeconds:frame.frontElapsedSeconds,
-          pelotonElapsedSeconds:frame.pelotonElapsedSeconds,
-          frontWorkerRiderIds:frame.frontWorkerRiderIds??[],
-          chasePullRiderId:frame.chasePullRiderId})),
+      paidPassagesTo500:trial.roadStatus==='paid_group_bands'?
+        trial.paidFinale.line.approachFrames.filter(
+          frame=>frame.endDistanceM<=line.lineDistanceM-500)
+          .map(frame=>({endDistanceM:frame.endDistanceM,
+            frontElapsedSeconds:frame.frontElapsedSeconds,
+            pelotonElapsedSeconds:frame.pelotonElapsedSeconds,
+            frontWorkerRiderIds:frame.frontWorkerRiderIds??[],
+            chasePullRiderId:frame.chasePullRiderId})):
+        trial.paidFinale.passageFrames.filter(frame=>
+          frame.distanceM<=line.lineDistanceM-500)
+          .map(frame=>({endDistanceM:frame.distanceM,
+            bunchPassageSecondsFromBunchMarker:
+              frame.bunchPassageSecondsFromBunchMarker,
+            groups:frame.groups})),
       individualFinishStatus:
         'conditional_band_local_cross_band_contact_unresolved',
       overlapAudit:line.overlapAudit,
@@ -201,8 +211,9 @@ export function runV91TestDrive(scenario,{full=false}={}){
     const source=request.attackTeamId===undefined?
       error.cause?.playtestSource??null:null;
     if(scenario.individualGroupLine===true&&source&&
-      error.message===
-        'Finisher and lead-out plans are not paid for a road group.'){
+      ['Finisher and lead-out plans are not paid for a road group.',
+        'Finisher and lead-out plans are not paid for road groups.']
+        .includes(error.message)){
       trial=createV91GroupFallbackFromLockedRace(source);
       recoveredGroupPlan=true;
     }else{
@@ -226,11 +237,28 @@ export function runV91TestDrive(scenario,{full=false}={}){
   validateV91ConditionalRaceFinal(scenario.settings,recoveredGroupPlan?
     {...request,plans:null}:request,trial);
   if(scenario.individualGroupLine===true&&
-    trial.roadStatus==='paid_group_bands'){
-    const individualLine=recordFinaleMultibandIndividualLine(
-      trial.recording,trial.paidFinale,{plans:request.plans??null});
-    validateFinaleMultibandIndividualLine(trial.recording,
-      trial.paidFinale,{plans:request.plans??null},individualLine);
+    ['paid_group_bands','paid_separated_bands']
+      .includes(trial.roadStatus)){
+    const separated=trial.roadStatus==='paid_separated_bands';
+    const record=separated?recordFinaleSeparatedIndividualLine:
+      recordFinaleMultibandIndividualLine;
+    const validate=separated?validateFinaleSeparatedIndividualLine:
+      validateFinaleMultibandIndividualLine;
+    let individualLine;
+    try{
+      individualLine=record(trial.recording,trial.paidFinale,
+        {plans:request.plans??null});
+    }catch(error){
+      if(error.message!==
+        'The nominated lead-out cannot work beside the finisher.')
+        throw error;
+      const base=summaryFor(trial,request,pointContext);
+      const summary={...base,status:'unsupported',
+        individualLineStatus:'unsupported_plan',reason:error.message};
+      return full?{summary,recording:trial}:summary;
+    }
+    validate(trial.recording,trial.paidFinale,
+      {plans:request.plans??null},individualLine);
     const summary=summaryForIndividualGroupLine(trial,request,
       pointContext,individualLine);
     return full?{summary,recording:trial,individualLine}:summary;

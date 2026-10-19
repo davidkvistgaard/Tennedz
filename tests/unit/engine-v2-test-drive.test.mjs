@@ -93,6 +93,46 @@ test('opt-in group line pays an individual finish and same-band lead-out',()=>{
   assert.equal(helped.summary.canCommitAwards,false);
 });
 
+test('opt-in mountain road retains several groups on one locked race',()=>{
+  const settings={distanceKm:260,terrain:'mountain',fatigue:30,
+    gender:'M',teamCount:4,seed:'test-drive-acceptance-1',
+    defaultRivalPlan:'attack',attack:'repeated',chase:'ignore'};
+  const base=runV91TestDrive({settings,individualGroupLine:true},
+    {full:true});
+  const helped=runV91TestDrive({settings,individualGroupLine:true,
+    finalePlans:[{teamId:'you',finisherId:'you-4',
+      leadOutRiderId:'you-5'}],
+    pointContext:{tier:3,divisionCount:1,divisionIndex:1}},
+  {full:true});
+  assert.equal(base.summary.roadStatus,'conditional_multiband_line');
+  assert.equal(helped.individualLine.bandRunners.length,3);
+  assert.equal(helped.summary.finale.lineTimes.length,32);
+  assert.deepEqual(base.recording.recording,
+    helped.recording.recording);
+  assert.deepEqual(helped.summary.finale.paidPassagesTo500.map(row=>
+    row.endDistanceM),[259250,259500]);
+  assert.equal(helped.summary.provisionalPointPreview.pointsStatus,
+    'experimental_preview_only');
+  assert.equal(helped.summary.canCommitAwards,false);
+});
+
+test('an unavailable cross-band lead-out leaves the locked race visible',()=>{
+  const settings={distanceKm:260,terrain:'mountain',fatigue:30,
+    gender:'M',teamCount:4,seed:'test-drive-acceptance-1',
+    defaultRivalPlan:'attack',attack:'repeated',chase:'ignore'};
+  const refused=runV91TestDrive({settings,individualGroupLine:true,
+    finalePlans:[{teamId:'you',finisherId:'you-7',
+      leadOutRiderId:'you-5'}]},{full:true});
+  assert.equal(refused.summary.status,'unsupported');
+  assert.equal(refused.summary.roadStatus,'paid_separated_bands');
+  assert.equal(refused.summary.individualLineStatus,'unsupported_plan');
+  assert.match(refused.summary.reason,/cannot work beside the finisher/);
+  assert.equal(refused.summary.pointsStatus,'withheld');
+  assert.equal(refused.summary.canCommitAwards,false);
+  assert.equal(refused.individualLine,undefined);
+  assert.ok(refused.recording.recording);
+});
+
 test('offline test drive rejects unknown managers and accepts stdin JSON',()=>{
   assert.throws(()=>runV91TestDrive({...example,finalePlans:[{
     teamId:'other',finisherId:'other-7',leadOutRiderId:null}]}),
