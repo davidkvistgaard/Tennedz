@@ -1524,3 +1524,18 @@ rival tactics to ignore the attack left a surviving solo in all 54 sources;
 all were explicitly refused by this bunch-only queue. These are route and
 tactic boundary checks for one seed, not a catch-rate target or evidence that
 the separated solo road has an official result.
+
+The integrated offline entry was independently checked on the same 108
+route, category, field and rival chase/ignore combinations. Every source
+retained all 32/120/160 individual conditional crossings: 48 chased sources
+used inferred wheels, six chased tired four-team sources used the separate
+dropped-rider path, 36 passive sources retained crossing bounds, and 18
+passive sources reached an inferred-wheel line. None awarded points. A
+different paired manager order in the fixed 40 km passive source makes a
+rival helper and finisher reach the player's solo together at 307 m to go.
+The integrated test drive now exposes that already recorded exact contact,
+the two road groups, active helper and the three riders' energy while still
+reporting `unsupported_partial_contact` and withholding points. Without the
+helper, the same locked race has 32 conditional crossings. Continuing the
+three-rider contact remains an open motor gate; this diagnostic does not
+invent their subsequent positions.

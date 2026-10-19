@@ -820,9 +820,22 @@ export function runV91TestDrive(scenario,{full=false}={}){
   if(!['paid_conditional_line','paid_group_bands','paid_separated_bands',
     'recorded_depleted_bands','recorded_dropped_bands']
     .includes(trial.roadStatus)){
+    const partial=trial.roadStatus==='unsupported_partial_contact'?
+      trial.paidFinale:null;
+    const contactFrame=partial?.frames?.at(-1);
+    const soloId=partial?.frames?.[0]?.roadGroups?.[0]
+      ?.riderIds?.[0];
+    const contactIds=new Set([soloId,...(partial?.contact?.riderIds??[])]);
     const summary={version:'v91-offline-test-drive-1',
       status:'unsupported',input:trial.settings,request,
       engineVersion:trial.version,reason:trial.roadStatus,
+      ...(partial?.contact&&contactFrame?{partialContact:{
+        sourceVersion:partial.version,contact:partial.contact,
+        roadGroups:contactFrame.roadGroups,
+        leadOutRiderIds:contactFrame.leadOutRiderIds,
+        riderEnergyAtContact:contactFrame.riders.filter(row=>
+          contactIds.has(row.riderId)).map(row=>({
+          riderId:row.riderId,energy:row.energyAfter}))}}:{}),
       ...(pointContext?{provisionalPointPreview:{status:'unavailable',
         reason:'No complete individual line.'}}:{}),
       pointsStatus:'withheld',canCommitAwards:false};

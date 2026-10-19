@@ -561,6 +561,39 @@ test('partial solo contact exposes only replayable crossing bounds',()=>{
     /lost a paid rider/);
 });
 
+test('an unresolved rival lead-out contact exposes its paid road and energy',()=>{
+  const settings={distanceKm:40,terrain:'flat',teamCount:4,gender:'M',
+    fatigue:0,effort:'steady',attack:'none',chase:'ignore',
+    defaultRivalPlan:'chase',managerTactics:Array.from({length:3},()=>({
+      effort:'steady',attack:'none',chase:'ignore'})),
+    seed:'integrated-probe'};
+  const attack={teamId:'you',riderId:'you-0'};
+  const baseline=runV91IntegratedTestDrive({settings,attack});
+  const {summary,recording}=runV91IntegratedTestDrive({settings,attack,
+    finalePlans:[{teamId:'rival-1',finisherId:'rival-1-7',
+      leadOutRiderId:'rival-1-6'}],
+    pointContext:{tier:3,divisionIndex:1,divisionCount:1}},
+  {full:true});
+  const paid=recording.paidFinale;
+  const last=paid.frames.at(-1);
+  assert.equal(baseline.finale.lineTimes.length,32);
+  assert.equal(summary.status,'unsupported');
+  assert.equal(summary.reason,'unsupported_partial_contact');
+  assert.deepEqual(summary.partialContact.contact,paid.contact);
+  assert.deepEqual(summary.partialContact.contact.riderIds,
+    ['rival-1-6','rival-1-7']);
+  assert.deepEqual(summary.partialContact.roadGroups,last.roadGroups);
+  assert.deepEqual(summary.partialContact.leadOutRiderIds,
+    ['rival-1-6']);
+  assert.deepEqual(summary.partialContact.riderEnergyAtContact,
+    last.riders.filter(row=>['you-0','rival-1-6','rival-1-7']
+      .includes(row.riderId)).map(row=>({
+      riderId:row.riderId,energy:row.energyAfter})));
+  assert.equal(summary.provisionalPointPreview.status,'unavailable');
+  assert.equal(summary.pointsStatus,'withheld');
+  assert.equal(summary.canCommitAwards,false);
+});
+
 test('separated multiband line reports its recorded contact status',()=>{
   const output=runV91IntegratedTestDrive({settings:{distanceKm:260,
     terrain:'mountain',fatigue:30,gender:'M',teamCount:15,
