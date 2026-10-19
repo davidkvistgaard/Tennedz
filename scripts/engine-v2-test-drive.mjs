@@ -17,8 +17,8 @@ import {recordFinaleConcurrentCommonTimeStateFromTour,
 import {recordFinaleConcurrentNextBoundaryFromTour,
   validateFinaleConcurrentNextBoundaryFromTour} from
   '../lib/engine/v2/finale-concurrent-next-boundary.mjs';
-import {recordFinaleConcurrentBandContinuationFromTour,
-  validateFinaleConcurrentBandContinuationFromTour} from
+import {recordFinaleConcurrentRearCatchContinuationFromTour,
+  validateFinaleConcurrentRearCatchContinuationFromTour} from
   '../lib/engine/v2/finale-concurrent-band-continuation.mjs';
 import {validateRequestedFinalePlans} from
   '../lib/engine/v2/playtest-finale-trial.mjs';
@@ -896,14 +896,14 @@ export function runV91ConcurrentTestDrive(scenario,{full=false}={}){
     let bandContinuation=null;
     if(laterEvent){
       try{
-        bandContinuation=recordFinaleConcurrentBandContinuationFromTour(
+        bandContinuation=recordFinaleConcurrentRearCatchContinuationFromTour(
           tour);
       }catch(bandError){
         if(bandError?.constructor!==Error)throw bandError;
       }
     }
     if(bandContinuation)
-      validateFinaleConcurrentBandContinuationFromTour(tour,
+      validateFinaleConcurrentRearCatchContinuationFromTour(tour,
         JSON.parse(JSON.stringify(bandContinuation)));
     const firstPaidEvent=event?{version:event.version,event:event.event,
       elapsedSinceLaunchSeconds:event.eventElapsedSeconds,
@@ -936,6 +936,7 @@ export function runV91ConcurrentTestDrive(scenario,{full=false}={}){
         version:bandContinuation.version,status:bandContinuation.status,
         roadRelationshipStatus:bandContinuation.roadRelationshipStatus,
         contact:bandContinuation.contact,
+        contactEvents:bandContinuation.contactEvents,
         bandCrossings:bandContinuation.bandCrossings,
         finalRiders:bandContinuation.finalRiders,
         finalePlansStatus:'not_applied_to_band_only_road',

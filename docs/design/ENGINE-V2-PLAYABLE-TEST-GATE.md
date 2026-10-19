@@ -135,7 +135,19 @@ reach three separated band crossings with reconciled distance and energy,
 and the recording replays from the committed tour. This establishes band
 arrival times only. Bunch riders still lack individual sprint positions and
 lead-out work, so the integrated drive withholds classification and points.
-Exact contact stops the continuation without inferring a merge or draft.
+In the first version, exact contact stops the continuation without inferring
+a merge or draft.
+
+The next opt-in version handles one narrower measured contact: when the rear
+attacker reaches the bunch, that rider joins the bunch at the recorded
+position and time, pays sheltered travel for the rest of the current interval,
+then follows the existing bunch work choices at later boundaries. The older
+version still stops at contact and replays unchanged. Fixed men's and women's
+15-team sources catch the rear rider with about 194 m remaining and carry the
+front rider and merged bunch to separate band crossings; every rider's paid
+distance and energy reconcile. Attacker-to-attacker and front-to-bunch contact
+still stop unresolved, and no inferred wheel, individual result or point award
+is added.
 
 A fixed 54-case diagnostic across three routes,
 both categories, three field sizes and three tactics modes originally replayed

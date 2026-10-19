@@ -25,8 +25,11 @@ allerede betalte tre-gruppe-tilstand med 400 m tilbage fører én fælles
 hændelsesløkke begge angribere og feltet til gruppens målpassage eller første
 præcise kontakt. Faktisk distance og energi genafspilles i faste 15-holdsprøver
 for begge køn og en 20-holdsprøve. Dette er gruppetider, ikke en individuel
-feltspurt. Afslutter/lead-out, klassifikation og point er stadig åbne under
-04/11; acceptkravet udvides ikke af dette deltrin.
+feltspurt. En nyere opt-in-version lader en indhentet bageste angriber slutte
+sig til feltet ved målt kontakt og betale beskyttet kørsel videre til mål;
+den ældre optagelse standser stadig ved kontakten. Afslutter/lead-out,
+klassifikation og point er stadig åbne under 04/11; acceptkravet udvides ikke
+af dette deltrin.
 
 **✅** betyder, at hele punktets *angivne afgrænsede leverance* er verificeret. For 01–03 er det en isoleret integrations- eller testleverance, **ikke** en produktionsrelease. **🟡** betyder, at der findes konkret arbejde eller en afprøvet del, men at punktets acceptkrav ikke er opfyldt. **⬜** betyder, at implementeringen af punktet ikke er påbegyndt; eksisterende skitser eller et beslægtet gammelt spilmodul tæller ikke som færdiggørelse. Kun ✅ er et checkmark. Hver opgaverække nedenfor har status; markeringen ændres først, når punktets samlede acceptkrav er verificeret.
 
