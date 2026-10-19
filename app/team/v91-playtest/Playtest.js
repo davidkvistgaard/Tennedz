@@ -36,7 +36,10 @@ const LABELS={distanceKm:'Distance',terrain:'Route profile',teamCount:'Field siz
 export default function Playtest(){
   const [settings,setSettings]=useState(INITIAL);
   const [customRivals,setCustomRivals]=useState(0);
+  const [integratedMode,setIntegratedMode]=useState(false);
+  const [finalePlans,setFinalePlans]=useState({});
   const [result,setResult]=useState(null);
+  const [integrated,setIntegrated]=useState(null);
   const [selectedKm,setSelectedKm]=useState(1);
   const [busy,setBusy]=useState(false);
   const [error,setError]=useState('');
@@ -56,17 +59,40 @@ export default function Playtest(){
       [key]:value};
     return {...current,managerTactics};
   });
+  const changeFinale=(teamId,key,value)=>setFinalePlans(current=>{
+    const plan=current[teamId]??{finisherId:`${teamId}-7`,
+      leadOutRiderId:null};
+    return {...current,[teamId]:{...plan,[key]:value,
+      ...(key==='finisherId'&&plan.leadOutRiderId===value?
+        {leadOutRiderId:null}:{})}};
+  });
+  const finaleTeams=['you',...Array.from({length:customRivals},
+    (_,index)=>`rival-${index+1}`)];
+  const lineTimes=integrated?.finale?.lineTimes??[];
+  const conditionalLine=[...lineTimes].sort((a,b)=>
+    a.elapsedSecondsFromLastKmStart-b.elapsedSecondsFromLastKmStart||
+    a.riderId.localeCompare(b.riderId));
+  const ownFinisher=integrated?.managerDecisions?.find(row=>
+    row.teamId==='you')?.finisherId??'you-7';
+  const ownCrossing=conditionalLine.find(row=>row.riderId===ownFinisher);
   const maxHeight=Math.max(500,...settings.profileHeightsM);
   const profileLine=settings.profileHeightsM.map((height,index)=>
     `${10+index*196},${110-height/maxHeight*100}`).join(' ');
   async function run(event){
     event.preventDefault();setBusy(true);setError('');
     try{
+      const raceSettings={...settings,managerTactics:Array.from(
+        {length:customRivals},(_,index)=>
+          settings.managerTactics[index]??defaultTacticFor(index,settings))};
+      const payload=integratedMode?{mode:'integrated',settings:raceSettings,
+        finalePlans:finaleTeams.map(teamId=>({teamId,
+          finisherId:finalePlans[teamId]?.finisherId??`${teamId}-7`,
+          leadOutRiderId:finalePlans[teamId]?.leadOutRiderId??null}))}:
+        raceSettings;
       const response=await api('/api/v91-playtest',{method:'POST',
-        headers:{'Content-Type':'application/json'},body:JSON.stringify({...settings,
-          managerTactics:Array.from({length:customRivals},(_,index)=>
-            settings.managerTactics[index]??defaultTacticFor(index,settings))})});
-      setResult(response.playtest);setSelectedKm(1);
+        headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+      setResult(response.playtest);setIntegrated(response.integrated??null);
+      setSelectedKm(1);
     }catch(cause){setError(cause.message||'The playtest could not run.');}
     finally{setBusy(false);}
   }
@@ -75,8 +101,11 @@ export default function Playtest(){
       <p className="v91-eyebrow">Experimental motor workbench · v91</p>
       <h1>Try a fictional race</h1>
       <p>Change your orders and the race conditions, then rerun with the same seed to compare what happened on the road.</p>
-      <p className="v91-warning">Diagnostic preview: kilometre-level dynamics only. The short-step finale, official results and points are still in development.</p>
+      <p className="v91-warning">Experimental preview. The full-race option records a conditional individual finish where the road can be paid and replayed; official places and points remain unavailable.</p>
       <form onSubmit={run} className="v91-controls">
+        <label className="v91-mode"><input type="checkbox" checked={integratedMode}
+          onChange={event=>setIntegratedMode(event.target.checked)}/>
+          Continue to a conditional finish</label>
         {Object.entries(OPTIONS).map(([key,options])=><label key={key}>{LABELS[key]}
           <select value={settings[key]} onChange={event=>change(key,event.target.value)}>
             {options.map(([value,label])=><option value={value} key={value}>{label}</option>)}
@@ -134,14 +163,38 @@ export default function Playtest(){
             </div>)}
           </div>}
         </fieldset>
+        {integratedMode&&<fieldset className="v91-profile">
+          <legend>Finale nominations</legend>
+          <p>Choose a finisher and an optional helper for your team and any customized rival manager. Other managers use their captain. A helper works only when the recorded road lets the pair assemble.</p>
+          <div className="v91-manager-tactics">{finaleTeams.map(teamId=>{
+            const plan=finalePlans[teamId]??{finisherId:`${teamId}-7`,
+              leadOutRiderId:null};
+            return <div key={teamId}><strong>{teamId==='you'?'Your team':teamId}</strong>
+              <label>{teamId} finisher<select value={plan.finisherId}
+                onChange={event=>changeFinale(teamId,'finisherId',event.target.value)}>
+                {Array.from({length:8},(_,index)=><option key={index}
+                  value={`${teamId}-${index}`}>Rider {index+1}</option>)}</select>
+              </label>
+              <label>{teamId} lead-out helper<select value={plan.leadOutRiderId??''}
+                onChange={event=>changeFinale(teamId,'leadOutRiderId',
+                  event.target.value||null)}>
+                <option value="">None</option>
+                {Array.from({length:8},(_,index)=>`${teamId}-${index}`)
+                  .filter(id=>id!==plan.finisherId).map(id=><option key={id}
+                    value={id}>Rider {Number(id.split('-').at(-1))+1}</option>)}</select>
+              </label>
+            </div>;
+          })}</div>
+        </fieldset>}
         <label>Scenario seed<input value={settings.seed} maxLength={80}
           onChange={event=>change('seed',event.target.value)} /></label>
-        <button type="submit" disabled={busy}>{busy?'Running race…':'Run race'}</button>
+        <button type="submit" disabled={busy}>{busy?'Running race…':
+          integratedMode?'Run full race preview':'Run race'}</button>
       </form>
       {error&&<p role="alert" className="v91-error">{error}</p>}
       {result&&<section className="v91-results" aria-label="Playtest recording">
         <h2>Recorded race · {result.settings.distanceKm} km {result.settings.terrain}</h2>
-        <p>{result.tuningVersion} · {result.settings.managerTactics.length} custom rival managers · Your captain: provisional #{result.ownCaptain??'—'}</p>
+        <p>{result.tuningVersion} · {result.settings.managerTactics.length} custom rival managers{integrated?' · Conditional finale':` · Your captain: provisional #${result.ownCaptain??'—'}`}</p>
         <label>Race kilometre: {selectedKm}
           <input type="range" min="1" max={result.frames.length} value={selectedKm}
             onChange={event=>setSelectedKm(Number(event.target.value))}/>
@@ -167,7 +220,39 @@ export default function Playtest(){
         <div className="v91-riders">{frame?.ownRiders.map(rider=><div key={rider.id}>
           <strong>{rider.id}</strong><span>{rider.group}</span><span>{rider.energy.toFixed(1)} energy</span>
         </div>)}</div>
-        <p className="v91-warning">{result.warning}</p>
+        {integrated?<div className="v91-finish">
+          <h3>Conditional finish</h3>
+          <p>Road: {integrated.roadStatus??integrated.status??'unresolved'} · Individual finish: {integrated.finale?.individualFinishStatus??'unavailable'} · Points: {integrated.pointsStatus}</p>
+          {integrated.reason&&<p role="status">{integrated.reason}</p>}
+          <p>Your nominated finisher: {ownFinisher} · {ownCrossing?
+            `${ownCrossing.elapsedSecondsFromLastKmStart.toFixed(3)} s from the last kilometre, ${ownCrossing.energyAtLine.toFixed(1)} energy at the line`:
+            'No paid individual crossing'}</p>
+          {integrated.unavailableLeadOuts?.map(row=><p key={row.teamId}>
+            {row.helperId} could not assemble in the source lane; no helper work was charged.
+          </p>)}
+          <p>Paid lead-out work: {integrated.finale?.leadOutWork?.length??0} recorded rider intervals.</p>
+          {integrated.finale?.leadOutWork?.length>0&&<ul>{Object.entries(
+            integrated.finale.leadOutWork.reduce((totals,row)=>({
+              ...totals,[row.riderId]:(totals[row.riderId]??0)+row.energySpent
+            }),{})).map(([riderId,energy])=><li key={riderId}>
+            {riderId}: {energy.toFixed(1)} energy spent</li>)}</ul>}
+          {conditionalLine.length>0&&<><h4>First conditional crossings</h4>
+            <ol>{conditionalLine.slice(0,10).map(row=><li key={row.riderId}>
+              {row.riderId} · {row.elapsedSecondsFromLastKmStart.toFixed(3)} s · {row.energyAtLine.toFixed(1)} energy
+            </li>)}</ol>
+            <p>{conditionalLine.length} of {result.settings.teamCount*8} riders have individual crossing times. Times do not establish official places.</p></>}
+          <p>Last-kilometre source: {integrated.lastKmSource?.roadGroups?.length??0} groups ahead; {integrated.lastKmSource?.droppedRiderIds?.length??0} isolated riders.</p>
+          {integrated.lastKmSource?.roadGroups?.map(group=><p key={group.id}>
+            {group.id}: {group.riderIds.join(', ')} · {group.gapSeconds.toFixed(1)} s ahead
+          </p>)}
+          {integrated.finale?.roadEvents?.length>0&&<details>
+            <summary>Replay finale road events ({integrated.finale.roadEvents.length})</summary>
+            <ol>{integrated.finale.roadEvents.map((event,index)=><li key={index}>
+              {event.elapsedSeconds?.toFixed(2)??'—'} s · {event.kind} · {event.passerId??event.riderId??'field'}
+              {event.passedId?` passes ${event.passedId}`:''}
+            </li>)}</ol>
+          </details>}
+        </div>:<p className="v91-warning">{result.warning}</p>}
       </section>}
     </main>
   </TeamShell>;

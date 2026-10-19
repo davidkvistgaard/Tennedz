@@ -1548,3 +1548,17 @@ not a calibrated sporting benefit. A fixed-seed 54-case check across
 passive, spent-helper and chased own-pair versions remain replayable.
 Other multi-rider contact geometry, inferred bunch wheels, official places
 and point awards remain unresolved.
+
+The existing flag-gated `/team/v91-playtest` workbench now has an opt-in
+"Continue to a conditional finish" mode. It sends the same synthetic route,
+length, gender, field, fatigue, seed and manager tactics to the integrated
+offline runner, together with a nominated finisher and optional helper for
+the player and customized rivals. The API returns the locked kilometre replay
+and conditional finale summary without writing a result. The page shows road
+groups, rider energy, paid helper work, individual crossing times and finale
+road events, or the explicit refusal when a line cannot be paid. The original
+kilometre-only mode retains its response contract. An isolated local login
+fixture passed the full browser flow at 390 and 1440 px: the same 40 km race
+produced 32 crossings, and adding an eligible helper recorded 16.5 energy
+spent and changed the nominated finisher's crossing. This is a hands-on
+diagnostic race preview, not a classified sporting result or point award.

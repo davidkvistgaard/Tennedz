@@ -45,5 +45,34 @@ for(const width of [390,1440])test(`v91 playtest changes conditions at ${width}p
     await page.getByLabel('Rival 4 attack').selectOption('repeated');
     await page.getByRole('button',{name:'Run race'}).click();
     await expect(page.getByText('4 custom rival managers')).toBeVisible();
+    await page.getByLabel('Field size').selectOption('4');
+    await page.getByLabel('Managers with your own tactics').selectOption('0');
+    await page.getByLabel('Route profile').selectOption('flat');
+    await page.getByLabel('Distance').selectOption('40');
+    await page.getByLabel('Your attack order').selectOption('none');
+    await page.getByLabel('Your chase order').selectOption('ignore');
+    await page.getByLabel('Scenario seed').fill('early-test');
+    await page.getByRole('checkbox',{name:'Continue to a conditional finish'})
+      .check();
+    await page.getByLabel('you finisher').selectOption('you-7');
+    await page.getByRole('button',{name:'Run full race preview'}).click();
+    await expect(page.getByRole('heading',{name:'Conditional finish'}))
+      .toBeVisible();
+    await expect(page.getByText('32 of 32 riders have individual crossing times.'))
+      .toBeVisible();
+    await expect(page.getByText(/Your nominated finisher: you-7 · [\d.]+ s/))
+      .toBeVisible();
+    await expect(page.getByText(/Points: withheld/)).toBeVisible();
+    await expect(page.getByText('Paid lead-out work: 0 recorded rider intervals.'))
+      .toBeVisible();
+    const baselineFinisherTime=await page.getByText(
+      /Your nominated finisher: you-7 · [\d.]+ s/).textContent();
+    await page.getByLabel('you lead-out helper').selectOption('you-5');
+    await page.getByRole('button',{name:'Run full race preview'}).click();
+    await expect(page.getByText('Paid lead-out work: 7 recorded rider intervals.'))
+      .toBeVisible();
+    await expect(page.getByText(/you-5: 16\.5 energy spent/)).toBeVisible();
+    expect(await page.getByText(/Your nominated finisher: you-7 · [\d.]+ s/)
+      .textContent()).not.toBe(baselineFinisherTime);
     expect(errors).toEqual([]);
   });
