@@ -40,6 +40,9 @@ import {recordFinaleConcurrentDualSurvivorLineFromTour,
   '../lib/engine/v2/finale-concurrent-dual-survivor-line.mjs';
 import {validateRequestedFinalePlans} from
   '../lib/engine/v2/playtest-finale-trial.mjs';
+import {recordFinaleLaneQueuedEarlyBunchRunnerFromTour,
+  validateFinaleLaneQueuedEarlyBunchRunnerFromTour} from
+  '../lib/engine/v2/finale-paid-bunch-runner.mjs';
 import {finaleSnapshotFromTour} from
   '../lib/engine/v2/finale-snapshot.mjs';
 import {hasFinaleConditionalCrossingBounds,
@@ -846,6 +849,74 @@ export function runV91IntegratedTestDrive(scenario,{full=false}={}){
     decorate(output);
 }
 
+// Separate opt-in laboratory view of the fixed-source-lane bunch finish.
+// It pays the selected full race and kilometre, then refuses any road or
+// attack that the lane-queued runner cannot yet continue honestly.
+export function runV91LaneQueuedTestDrive(scenario,{full=false}={}){
+  validateDriveScenario(scenario);
+  if(scenario.individualGroupLine!==undefined||
+    scenario.namedDroppedRoad!==undefined||
+    scenario.lateCatchLine!==undefined)
+    throw new Error('Choose the lane queue without other finale branch flags.');
+  const request=requestFor(scenario);
+  if(request.attackTeamId!==undefined)
+    throw new Error('A named attack needs the integrated road test drive.');
+  const source=createV91Playtest(scenario.settings);
+  const tour=source.recording;
+  const plans=request.plans??tour.committedInputs.teams.map(team=>({
+    teamId:team.id,finisherId:team.orders.captainId,
+    leadOutRiderId:null}));
+  const handoff=finaleSnapshotFromTour(tour,{remainingKm:1,
+    includeAttackLoad:true});
+  const base={version:'v91-offline-lane-queued-test-drive-1',
+    input:source.settings,request:{...request,plans},
+    lastKmSource:{roadGroups:handoff.roadGroups.map(group=>({
+      id:group.id,gapSeconds:group.gapSeconds,
+      riderIds:group.riderIds})),
+    droppedRiderIds:handoff.droppedRiderIds,
+    riderEnergy:handoff.riders.map(row=>({riderId:row.riderId,
+      energy:row.energy})),
+    chaserTeamIds:tour.frames[handoff.sourceKm-1].chasers},
+    managerDecisions:tour.committedInputs.teams.map(team=>({
+      teamId:team.id,baseline:team.orders.baseline,
+      finaleOrder:orderAt(team.orders,tour.route.distanceKm-1),
+      finisherId:plans.find(plan=>plan.teamId===team.id).finisherId,
+      leadOutRiderId:plans.find(plan=>
+        plan.teamId===team.id).leadOutRiderId})),
+    ...(scenario.pointContext?{provisionalPointPreview:{
+      status:'unavailable',reason:'No classified individual result.'}}:{}),
+    pointsStatus:'withheld',canCommitAwards:false};
+  let paidFinale;
+  try{paidFinale=recordFinaleLaneQueuedEarlyBunchRunnerFromTour(
+    tour,{plans});}
+  catch(error){
+    if(!['An early bunch plan needs one inactive-attack bunch.',
+      'The nominated lead-out cannot work beside the finisher.']
+      .includes(error.message)&&
+      !/^An early lead-out helper needs an adjacent lane: (?:you|rival-[1-9]\d*)\.$/
+        .test(error.message))throw error;
+    const summary={...base,status:'unsupported',reason:error.message,
+      individualFinishStatus:'unavailable'};
+    return full?{summary,recording:tour}:summary;
+  }
+  validateFinaleLaneQueuedEarlyBunchRunnerFromTour(tour,
+    {plans},paidFinale);
+  const summary={...base,status:'conditional',
+    individualFinishStatus:'conditional_fixed_source_lanes',
+    finaleVersion:paidFinale.version,
+    passingRule:paidFinale.passingRule,
+    conditionalLine:paidFinale.lineOrder,
+    leadOutAttempts:paidFinale.frames.flatMap(frame=>
+      frame.assemblyAttempts??[]),
+    laneBlocks:paidFinale.frames.flatMap(frame=>
+      frame.riders.flatMap(row=>(row.laneBlocks??[]).map(block=>({
+        riderId:row.riderId,...block})))),
+    roadEvents:paidFinale.frames.flatMap(frame=>frame.roadEvents),
+    finalRiderEnergy:paidFinale.finishers.map(row=>({
+      riderId:row.riderId,energy:row.energyAtLine}))};
+  return full?{summary,recording:tour,paidFinale}:summary;
+}
+
 // The concurrent path uses the same committed kilometre tour as the other
 // offline drives. Only the already paid exact double catch can enter its
 // conditional individual runner; other contacts stay explicitly unresolved.
@@ -1173,12 +1244,14 @@ if(process.argv[1]&&import.meta.url===pathToFileURL(
   resolve(process.argv[1])).href){
   const [path,...flags]=process.argv.slice(2);
   if(!path||flags.some(flag=>
-    !['--full','--integrated'].includes(flag))||
+    !['--full','--integrated','--lane-queue'].includes(flag))||
+    flags.includes('--integrated')&&flags.includes('--lane-queue')||
     new Set(flags).size!==flags.length)
-    throw new Error('Usage: node scripts/engine-v2-test-drive.mjs input.json [--integrated] [--full]');
+    throw new Error('Usage: node scripts/engine-v2-test-drive.mjs input.json [--integrated | --lane-queue] [--full]');
   const raw=readFileSync(path==='-'?0:path,'utf8').replace(/^\uFEFF/,'');
-  const result=(flags.includes('--integrated')?
-    runV91IntegratedTestDrive:runV91TestDrive)(JSON.parse(raw),
+  const result=(flags.includes('--lane-queue')?
+    runV91LaneQueuedTestDrive:flags.includes('--integrated')?
+      runV91IntegratedTestDrive:runV91TestDrive)(JSON.parse(raw),
   {full:flags.includes('--full')});
   console.log(JSON.stringify(result,null,2));
 }

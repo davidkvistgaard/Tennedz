@@ -1433,3 +1433,26 @@ writes the contact in all four fixed M/F, 15/20-team mountain repetitions,
 each with 120/160 unique provisional crossings. This closes a replay
 visibility gap for this branch, while the inferred bunch
 wheels and withheld official classification still need resolution.
+
+The separate `v2-finale-lane-queued-early-bunch-runner-lab-11` pays a complete
+inactive-attack bunch from the recorded one-kilometre handoff to every
+individual line crossing. It retains each rider's fixed provisional source
+lane and chosen work cost, but limits travel at the next wheel in that lane.
+It records each block, actual distance, spent energy and the resulting line
+time. Across the fixed M/F 4/15/20-team flat and rolling trials and the
+15/20-team mountain trials, all supported fields crossed and no same-lane
+pass was recorded. A four-team nominated lead-out changed its finisher's paid
+crossing on the same source. The older open-road runner and its recordings
+remain unchanged. Fixed lanes are a test constraint, not a validated lateral
+positioning or drafting rule; the line remains conditional and points withheld.
+
+`node scripts/engine-v2-test-drive.mjs
+docs/design/engine-v2-test-drive-example.json --lane-queue` exposes that
+separate version in the offline motor test. Its ordinary input already allows
+route, terrain, distance, field size, manager tactics and optional finisher/
+lead-out overrides. `--full` includes the complete recorded race and paid
+kilometre for replay inspection. A source with separated road groups, a
+last-kilometre attack, or an unavailable helper reports an explicit refusal;
+named attacks belong to the existing `--integrated` drive. The lane-queued
+summary gives the conditional individual line, energy, lead-out attempts and
+same-lane blocks. It does not classify a result or award or preview points.
