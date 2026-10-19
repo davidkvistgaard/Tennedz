@@ -1695,3 +1695,14 @@ This strengthens result/replay consistency without inventing missing wheel
 positions in the caught road's opening 500 m. Seven focused replay/point
 tests, lint, the isolated preview build and all four local browser cases
 passed.
+
+A six-case integrated acceptance matrix now locks one fictional seed across
+40/120/260 km, flat/rolling/mountain routes, M/F categories, 4/15/20-team
+fields and fresh/tired starts with passive rivals and no final attack. Each
+case runs the selected race through its individual conditional bunch line,
+checks every replayed final time and energy against that line, and checks
+every read-only place and point value against the one-day policy. All six
+produce complete paid final-kilometre replays for 32/120/160 riders as
+appropriate, with zero award rows and no classified result. This is a
+regression gate for that bounded bunch path; attacked and separated roads
+retain their separate acceptance scenarios and unresolved position limits.
