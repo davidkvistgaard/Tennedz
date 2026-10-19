@@ -214,6 +214,18 @@ bunch's last turn. This proves one observable tactic consequence in a fixed
 fictional case; it does not establish a calibrated sporting advantage or an
 official classification.
 
+When either of the two separated attackers is nominated as a finisher, a
+separate lab-2 continuation now starts that rider's existing paid solo sprint
+at their own 100 m road boundary. It replaces their later solo position and
+energy on the shared clock, reconciles work on each side of the bunch's 100 m
+handoff, and audits both solo-to-solo and solo-to-bunch contact before
+reporting an individual line. The lab-1 recording remains unchanged. In the
+fixed 40 km flat order and seed, nominating both attackers gives all 120/160
+conditional crossings for M/F and 15/20-team fields; one nominated attacker
+also replays. The sprint work is visible and points remain withheld because
+the bunch still uses inferred wheels. These four fictional cases do not prove
+that other road states or official classification are ready.
+
 The next opt-in version handles one narrower measured contact: when the rear
 attacker reaches the bunch, that rider joins the bunch at the recorded
 position and time, pays sheltered travel for the rest of the current interval,

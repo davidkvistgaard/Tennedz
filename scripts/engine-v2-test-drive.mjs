@@ -34,7 +34,9 @@ import {recordFinaleConcurrentRearCaught400StepFromTour,
   validateFinaleConcurrentRearCaught400StepFromTour} from
   '../lib/engine/v2/finale-concurrent-rear-caught-400-step.mjs';
 import {recordFinaleConcurrentDualSurvivorLineFromTour,
-  validateFinaleConcurrentDualSurvivorLineFromTour} from
+  validateFinaleConcurrentDualSurvivorLineFromTour,
+  recordFinaleConcurrentDualSurvivorSprintLineFromTour,
+  validateFinaleConcurrentDualSurvivorSprintLineFromTour} from
   '../lib/engine/v2/finale-concurrent-dual-survivor-line.mjs';
 import {validateRequestedFinalePlans} from
   '../lib/engine/v2/playtest-finale-trial.mjs';
@@ -957,6 +959,35 @@ export function runV91ConcurrentTestDrive(scenario,{full=false}={}){
       }catch(priorRearCatchError){
         if(priorRearCatchError?.constructor!==Error)
           throw priorRearCatchError;
+      }
+      if(request.plans?.some(plan=>namedOrders.some(order=>
+        order.order.attackRiderId===plan.finisherId))){
+        try{
+          const sprintLine=
+            recordFinaleConcurrentDualSurvivorSprintLineFromTour(tour,{
+              plans:request.plans});
+          validateFinaleConcurrentDualSurvivorSprintLineFromTour(tour,{
+            plans:request.plans},sprintLine);
+          const summary={...base,status:'conditional',
+            roadStatus:sprintLine.roadStatus,
+            individualLineVersion:sprintLine.version,
+            positionSourceStatus:sprintLine.positionedSource.status,
+            provisionalLineOrder:sprintLine.provisionalLineOrder,
+            finale:{individualFinishStatus:'conditional_inferred_wheels',
+              lineTimes:sprintLine.conditionalCrossings,
+              paidRoad:sprintLine.roadPrefix,
+              soloRoad:sprintLine.soloSuffix,
+              sprintWork:sprintLine.soloSprintWork,
+              preHandoffContactAudit:
+                sprintLine.preHandoffContactAudit,
+              crossBandContactAudit:
+                sprintLine.crossBandContactAudit,
+              leadOutWork:[]}};
+          return full?{summary,recording:source,
+            individualLine:sprintLine}:summary;
+        }catch(sprintError){
+          if(sprintError?.constructor!==Error)throw sprintError;
+        }
       }
       try{
         const dualLine=recordFinaleConcurrentDualSurvivorLineFromTour(tour,{

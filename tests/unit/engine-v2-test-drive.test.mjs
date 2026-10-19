@@ -45,7 +45,10 @@ import {recordFinaleConcurrentSurvivorLineFromTour,
 import {recordFinaleConcurrentRearCaught400StepFromTour,
   validateFinaleConcurrentRearCaught400StepFromTour} from
   '../../lib/engine/v2/finale-concurrent-rear-caught-400-step.mjs';
-import {validateFinaleConcurrentDualSurvivorLineFromTour} from
+import {recordFinaleConcurrentDualSurvivorLineFromTour,
+  recordFinaleConcurrentDualSurvivorSprintLineFromTour,
+  validateFinaleConcurrentDualSurvivorLineFromTour,
+  validateFinaleConcurrentDualSurvivorSprintLineFromTour} from
   '../../lib/engine/v2/finale-concurrent-dual-survivor-line.mjs';
 
 const example=JSON.parse(readFileSync(new URL(
@@ -323,6 +326,81 @@ test('one harder manager rotation narrows a paid two-attacker gap',()=>{
       .crossBandContactAudit.frontAgainstBunch.minimumGapM);
   assert.ok(hard.individualLine.crossBandContactAudit
     .frontAgainstBunch.minimumGapM>0);
+});
+
+test('two nominated attackers pay their own sprints on one road clock',()=>{
+  const teamCount=15;
+  const ids=['you',...Array.from({length:teamCount-1},(_,index)=>
+    `rival-${index+1}`)];
+  const managerFinaleOrders=ids.map(teamId=>({teamId,
+    attack:['you','rival-2'].includes(teamId)?'selective':'none',
+    ...(['you','rival-2'].includes(teamId)?{
+      attackRiderId:`${teamId}-5`}:{}),
+    chase:['rival-1','rival-4'].includes(teamId)?'selective':'ignore',
+    frontWork:teamId==='rival-3'?'rotate':'sit_in'}));
+  const settings={distanceKm:40,teamCount,terrain:'flat',gender:'M',
+    seed:'paired-final-orders',attack:'none',chase:'ignore',
+    defaultRivalPlan:'neutral',managerFinaleOrders,
+    teamOverrides:ids.map(teamId=>({teamId,
+      level:teamId==='rival-2'?81:teamId==='you'?80:85}))};
+  const {summary,recording,individualLine}=runV91IntegratedTestDrive({
+    settings,finalePlans:[
+      {teamId:'you',finisherId:'you-5'},
+      {teamId:'rival-2',finisherId:'rival-2-5'}]},
+  {full:true});
+  assert.equal(summary.roadStatus,
+    'paid_dual_survivor_sprint_conditional_individual_line');
+  assert.equal(summary.finale.lineTimes.length,teamCount*8);
+  assert.equal(new Set(summary.finale.lineTimes.map(row=>row.riderId))
+    .size,teamCount*8);
+  assert.equal(summary.pointsStatus,'withheld');
+  assert.equal(summary.canCommitAwards,false);
+  assert.deepEqual(individualLine.soloSprintWork.map(row=>row.riderId),
+    ['rival-2-5','you-5']);
+  const nominal=recordFinaleConcurrentDualSurvivorLineFromTour(
+    recording.recording);
+  for(const sprint of individualLine.soloSprintWork){
+    const crossing=summary.finale.lineTimes.find(row=>
+      row.riderId===sprint.riderId);
+    const old=nominal.conditionalCrossings.find(row=>
+      row.riderId===sprint.riderId);
+    assert.ok(sprint.energySpent>0);
+    assert.ok(sprint.energySpentToHandoff>0);
+    assert.ok(sprint.energySpentAfterHandoff>0);
+    assert.ok(Math.abs(sprint.energyAtHandoff-
+      sprint.energySpentAfterHandoff-sprint.energyAfter)<1e-8);
+    const suffix=individualLine.soloSuffix.find(row=>
+      row.riderId===sprint.riderId);
+    assert.equal(suffix.frames.at(-1).rider.role,'solo_sprint');
+    assert.ok(Math.abs(suffix.frames.at(-1).rider.energySpent-
+      sprint.energySpentAfterHandoff)<1e-8);
+    assert.ok(crossing.elapsedSecondsFromLastKmStart<
+      old.elapsedSecondsFromLastKmStart);
+    assert.ok(crossing.energyAtLine<old.energyAtLine);
+    assert.ok(individualLine.roadPrefix.frames.some(frame=>
+      frame.riders.some(row=>row.riderId===sprint.riderId&&
+        row.role==='solo_sprint'&&row.energySpent>0)));
+  }
+  assert.ok(Object.values(individualLine.crossBandContactAudit)
+    .every(row=>row.minimumGapM>0));
+  assert.ok(individualLine.preHandoffContactAudit
+    .minimumFrontRearGapM>0);
+  assert.equal(validateFinaleConcurrentDualSurvivorSprintLineFromTour(
+    recording.recording,{plans:summary.request.plans},
+    individualLine),true);
+  assert.equal(validateFinaleConcurrentDualSurvivorLineFromTour(
+    recording.recording,{plans:null},nominal),true);
+  const onePlan=summary.request.plans.map(row=>row.teamId==='rival-2'?
+    {...row,finisherId:'rival-2-7'}:row);
+  const one=recordFinaleConcurrentDualSurvivorSprintLineFromTour(
+    recording.recording,{plans:onePlan});
+  assert.deepEqual(one.soloSprintWork.map(row=>row.riderId),['you-5']);
+  assert.equal(one.conditionalCrossings.find(row=>row.riderId===
+    'rival-2-5').elapsedSecondsFromLastKmStart,
+  nominal.conditionalCrossings.find(row=>row.riderId===
+    'rival-2-5').elapsedSecondsFromLastKmStart);
+  assert.ok(Object.values(one.crossBandContactAudit)
+    .every(row=>row.minimumGapM>0));
 });
 
 test('integrated rear catch gives the surviving solo and bunch paid individual lines',()=>{
