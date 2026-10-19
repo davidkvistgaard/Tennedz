@@ -183,6 +183,7 @@ test('fixed 20-team source replays paid travel after two exact catches',()=>{
   assert.equal(sum('multiSelectiveDoubleCatchMerge'),2);
   assert.equal(sum('multiSelectiveDoubleCatchLine'),2);
   assert.ok(sum('multiSelectivePairedLeadOut')>0);
+  assert.ok(sum('multiSelectivePairedRearAssembly')>0);
   assert.equal(sum('multiSelective500State'),5);
   assert.equal(sum('multiSelective500Plan'),3);
   assert.equal(sum('multiSelectiveSolo500Step'),1);

@@ -104,6 +104,18 @@ The conditional bunch-to-group fallback and an unsupported group plan reuse
 that same locked kilometre recording instead of simulating the race again.
 This changes no versioned road or result output.
 
+The opt-in concurrent double-catch line now has a separate lab-2 continuation
+when a manager nominates a lead-out. It reuses the paid 500 m bunch runner's
+assembly rule: a helper behind the finisher may spend actual distance and
+energy to reach an adjacent wheel, and a pull can start only at a later
+recorded boundary. The lab-1 line and runner remain replayable. A paired fixed
+20-team source verifies a rear helper's paid assembly against the unchanged
+road and initial wheel projection. The offline integrated drive exposes the
+assembly attempts and work when this exact double catch is available; an
+unresolved attacker relationship still refuses the line and points. The
+source lanes and passing rule are provisional, so neither line version
+classifies riders or awards points.
+
 A fixed 54-case diagnostic across three routes,
 both categories, three field sizes and three tactics modes originally replayed
 32 conditional individual lines, 12 paid group-band lines and 10 explicit

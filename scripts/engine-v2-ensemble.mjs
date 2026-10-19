@@ -112,7 +112,9 @@ import {recordFinaleConcurrentDoubleCatchMergeFromTour,
   validateFinaleConcurrentDoubleCatchMergeFromTour} from
   '../lib/engine/v2/finale-concurrent-double-catch-merge.mjs';
 import {recordFinaleConcurrentDoubleCatchLineFromTour,
-  validateFinaleConcurrentDoubleCatchLineFromTour} from
+  validateFinaleConcurrentDoubleCatchLineFromTour,
+  recordFinaleConcurrentDoubleCatchAssembledLineFromTour,
+  validateFinaleConcurrentDoubleCatchAssembledLineFromTour} from
   '../lib/engine/v2/finale-concurrent-double-catch-line.mjs';
 import {recordFinaleConcurrentNamedAllChaseFromTour} from
   '../lib/engine/v2/finale-concurrent-named-all-chase.mjs';
@@ -532,6 +534,7 @@ for(const [course,stage] of Object.entries(distanceKm===260?LONG_ROUTES:ROUTES))
           multiSelectiveDoubleCatchMerge:0,
           multiSelectiveDoubleCatchLine:0,
           multiSelectivePairedLeadOut:0,
+          multiSelectivePairedRearAssembly:0,
           minMultiSelectiveSeparationM:null,
           maxMultiSelectiveSeparationM:null,
           minMultiSelectiveBunchBehindM:null,
@@ -942,11 +945,12 @@ for(const [course,stage] of Object.entries(distanceKm===260?LONG_ROUTES:ROUTES))
                                         .map(row=>[row.riderId,row]));
                                       const energy=new Map(line.road.riders.map(row=>
                                         [row.riderId,row.energyAtBoundary]));
-                                      const pair=race.committedInputs.teams.flatMap(team=>
+                                      const pairs=race.committedInputs.teams.flatMap(team=>
                                         team.orders.helperIds.flatMap(helperId=>
                                           team.riders.filter(rider=>
                                             rider.id!==helperId).map(finisher=>({
-                                            team,helperId,finisherId:finisher.id})))).find(
+                                            team,helperId,finisherId:finisher.id}))));
+                                      const pair=pairs.find(
                                         ({helperId,finisherId})=>{
                                           const helper=slots.get(helperId);
                                           const finisher=slots.get(finisherId);
@@ -993,6 +997,45 @@ for(const [course,stage] of Object.entries(distanceKm===260?LONG_ROUTES:ROUTES))
                                           withLead.pointsStatus!=='withheld')
                                           throw new Error('A paired lead-out did not pay for a changed conditional finish on the same road.');
                                         concurrent.multiSelectivePairedLeadOut++;
+                                      }
+                                      const rearPair=pairs.find(({
+                                        helperId,finisherId})=>{
+                                        const helper=slots.get(helperId);
+                                        const finisher=slots.get(finisherId);
+                                        return energy.get(helperId)>=20&&
+                                          energy.get(finisherId)>0&&
+                                          Math.abs(helper.lane-finisher.lane)<=1&&
+                                          helper.positionM<finisher.positionM-1e-8;
+                                      });
+                                      if(rearPair){
+                                        const plans=race.committedInputs.teams.map(team=>({
+                                          teamId:team.id,
+                                          finisherId:team.id===rearPair.team.id?
+                                            rearPair.finisherId:
+                                            team.orders.captainId,
+                                          leadOutRiderId:team.id===rearPair.team.id?
+                                            rearPair.helperId:null}));
+                                        const assembled=
+                                          recordFinaleConcurrentDoubleCatchAssembledLineFromTour(
+                                            race,{plans});
+                                        validateFinaleConcurrentDoubleCatchAssembledLineFromTour(
+                                          race,{plans},
+                                          JSON.parse(JSON.stringify(assembled)));
+                                        const first=assembled.runner.frames[0]
+                                          .riders.find(row=>
+                                            row.riderId===rearPair.helperId);
+                                        if(!isDeepStrictEqual(line.road,
+                                          assembled.road)||
+                                          !isDeepStrictEqual(
+                                            line.positionedSource.slots,
+                                            assembled.positionedSource.slots)||
+                                          first.role!=='lead_out_assembly'||
+                                          first.energySpent<=0||
+                                          first.distanceTravelledM<=0||
+                                          assembled.classifiedResults!==null||
+                                          assembled.pointsStatus!=='withheld')
+                                          throw new Error('A rear helper did not pay to assemble on the unchanged double-catch road.');
+                                        concurrent.multiSelectivePairedRearAssembly++;
                                       }
                                     }
                                   }

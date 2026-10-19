@@ -7,7 +7,9 @@ import {prepareV91Playtest,createV91Playtest} from
   '../lib/engine/v2/playtest.mjs';
 import {orderAt} from '../lib/engine/v2/orders.mjs';
 import {recordFinaleConcurrentDoubleCatchLineFromTour,
-  validateFinaleConcurrentDoubleCatchLineFromTour} from
+  validateFinaleConcurrentDoubleCatchLineFromTour,
+  recordFinaleConcurrentDoubleCatchAssembledLineFromTour,
+  validateFinaleConcurrentDoubleCatchAssembledLineFromTour} from
   '../lib/engine/v2/finale-concurrent-double-catch-line.mjs';
 import {recordFinaleConcurrentCommonTimeStateFromTour,
   validateFinaleConcurrentCommonTimeStateFromTour} from
@@ -855,10 +857,14 @@ export function runV91ConcurrentTestDrive(scenario,{full=false}={}){
     ...(scenario.pointContext?{provisionalPointPreview:{
       status:'unavailable',reason:'No classified individual result.'}}:{})};
   let line;
+  const assembled=Boolean(request.plans?.some(plan=>
+    plan.leadOutRiderId!==null));
   try{
     if(namedOrders.length!==2)
       throw new Error('The concurrent test drive supports exactly two named attack orders.');
-    line=recordFinaleConcurrentDoubleCatchLineFromTour(tour,{
+    line=(assembled?
+      recordFinaleConcurrentDoubleCatchAssembledLineFromTour:
+      recordFinaleConcurrentDoubleCatchLineFromTour)(tour,{
       plans:request.plans??null});
   }catch(error){
     if(error?.constructor!==Error)throw error;
@@ -886,7 +892,8 @@ export function runV91ConcurrentTestDrive(scenario,{full=false}={}){
       ...(firstPaidEvent?{firstPaidEvent}:{})};
     return full?{summary,recording:source}:summary;
   }
-  validateFinaleConcurrentDoubleCatchLineFromTour(tour,{
+  (assembled?validateFinaleConcurrentDoubleCatchAssembledLineFromTour:
+    validateFinaleConcurrentDoubleCatchLineFromTour)(tour,{
     plans:request.plans??null},line);
   const summary={...base,status:'conditional',
     roadStatus:line.roadStatus,individualLineVersion:line.version,
@@ -895,6 +902,8 @@ export function runV91ConcurrentTestDrive(scenario,{full=false}={}){
     finale:{individualFinishStatus:'conditional_inferred_wheels',
       lineTimes:line.conditionalCrossings,
       paidRoad:line.road.roadBands,
+      ...(assembled?{leadOutAttempts:line.runner.frames.flatMap(frame=>
+        frame.assemblyAttempts??[])}:{}),
       leadOutWork:line.runner.frames.flatMap(frame=>frame.riders.filter(
         row=>row.role?.startsWith('lead_out')).map(row=>({
         riderId:row.riderId,role:row.role,

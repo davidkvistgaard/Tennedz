@@ -68,6 +68,14 @@ test('integrated drive keeps two manager attacks on the locked road when the fin
       row.energyAtEvent<row.energyAtDecision));
   assert.equal(output.summary.pointsStatus,'withheld');
   assert.equal(output.summary.canCommitAwards,false);
+  const withHelper=runV91IntegratedTestDrive({...scenario,
+    finalePlans:[{teamId:'you',finisherId:'you-7',
+      leadOutRiderId:'you-6'}]});
+  assert.equal(withHelper.status,'unsupported');
+  assert.deepEqual(withHelper.firstPaidEvent,output.summary.firstPaidEvent);
+  assert.equal(withHelper.request.plans.find(row=>
+    row.teamId==='you').leadOutRiderId,'you-6');
+  assert.equal(withHelper.pointsStatus,'withheld');
   assert.equal(output.recording.recording.frames.length,40);
   assert.deepEqual(runV91IntegratedTestDrive(scenario),output.summary);
   assert.deepEqual(runV91TestDrive(scenario),output.summary);
