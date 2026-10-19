@@ -363,6 +363,15 @@ test('the women dropped-rider road has a replayed provisional line without award
   assert.deepEqual(out.summary.provisionalPointPreview.awardRows,[]);
   assert.equal(out.summary.pointsStatus,'withheld');
   assert.equal(out.summary.canCommitAwards,false);
+  const isolatedPlan=runV91TestDrive({settings,individualGroupLine:true,
+    finalePlans:[{teamId:'rival-2',finisherId:'rival-2-0'}],
+    pointContext:{tier:3,divisionIndex:1,divisionCount:1}});
+  assert.equal(isolatedPlan.status,'unsupported');
+  assert.equal(isolatedPlan.reason,
+    'An isolated rider cannot be a paid finisher.');
+  assert.equal(isolatedPlan.provisionalPointPreview.status,'unavailable');
+  assert.equal(isolatedPlan.pointsStatus,'withheld');
+  assert.equal(isolatedPlan.canCommitAwards,false);
 });
 
 test('independent dropped roads do not invent contact from rider ID order',()=>{

@@ -1031,3 +1031,8 @@ The test-drive boundary now reports `An isolated rider cannot be a paid
 finisher.` and withholds the conditional line. The earlier versioned road and
 line recorders are left available for replay; this is an input refusal in the
 opt-in player path, not a new sporting coefficient.
+The same guard now covers the existing opt-in depleted-band individual line:
+in a fixed long women's mountain race, nominating isolated `rival-2-0`
+previously left both their crossing and energy unchanged while the plan named
+them as finisher. The test drive now withholds that conditional line and point
+preview. Its earlier versioned recorder remains replayable.

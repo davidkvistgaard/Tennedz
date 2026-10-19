@@ -547,6 +547,18 @@ export function runV91TestDrive(scenario,{full=false}={}){
         reason:'The nominated finale cannot run with unmet dropped-rider energy demand.'}:base;
       return full?{summary,recording:trial}:summary;
     }
+    const droppedIds=new Set(depleted?
+      trial.paidFinale.trace.sourceDroppedRiderIds:[]);
+    const nominations=request.plans??trial.recording.committedInputs.teams
+      .map(team=>({teamId:team.id,
+        finisherId:team.orders.captainId,leadOutRiderId:null}));
+    if(nominations.some(plan=>droppedIds.has(plan.finisherId))){
+      const base=summaryFor(trial,request,pointContext);
+      const summary={...base,status:'unsupported',
+        individualLineStatus:'unsupported_plan',
+        reason:'An isolated rider cannot be a paid finisher.'};
+      return full?{summary,recording:trial}:summary;
+    }
     const record=singleton?recordFinaleSingletonFrontIndividualLine:
       depleted?recordFinaleUnorderedDroppedIndividualLine:
       separated?recordFinaleSeparatedIndividualLine:
