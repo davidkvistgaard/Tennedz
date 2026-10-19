@@ -641,3 +641,14 @@ helper and finisher in lead-out roles. The prior runner and early-bunch trial
 versions remain replayable, including their experimental point previews;
 the changed labels neither move riders nor award points. They do not solve
 lane obstruction or road-group finishing.
+
+The opt-in `v2-finale-multiband-positioned-source-lab-1` now prepares a
+provisional individual starting wheel for every rider in the recorded last-
+kilometre road groups and bunch. It keeps each band's measured passage time,
+every rider's locked energy and group membership, and places wheels only
+behind that band's edge using the existing complete-bunch laboratory spacing.
+This is a source for a future shared-clock individual continuation, not a
+new finish. The six fixed 40/120/260 km cases in both categories and at
+4/15/20 teams replay without losing riders; a complete bunch is refused by
+this multiband entry. Group-to-group contact, final individual movement,
+classification and points remain at gate items 4 and 5.
