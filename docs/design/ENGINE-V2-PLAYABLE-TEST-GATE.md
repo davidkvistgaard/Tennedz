@@ -1513,3 +1513,14 @@ an allowed source wheel has less than the existing 20-energy lead-out
 threshold. The offline refusal now exposes the selector's `exhausted`
 reason and named helper while retaining the locked race and withheld
 points; removing the helper order produces the payable 160-rider line.
+
+The offline lane-queue entry was also probed with one named player attack
+across 40/120/260 km, flat/rolling/mountain, M/F and 4/15/20-team fields
+under one fixed fictional seed. When every rival chased, 48 of 54 sources
+recorded a catch and replayed complete conditional crossings; the other six
+were the tired 260 km four-team sources with one already dropped rider at the
+kilometre handoff, so this complete-bunch branch refused them. Changing the
+rival tactics to ignore the attack left a surviving solo in all 54 sources;
+all were explicitly refused by this bunch-only queue. These are route and
+tactic boundary checks for one seed, not a catch-rate target or evidence that
+the separated solo road has an official result.
