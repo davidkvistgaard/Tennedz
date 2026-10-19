@@ -1685,3 +1685,13 @@ unavailable because the road has no unambiguous individual line order.
 The UI therefore does not infer a point change from conditional crossings
 on a caught road. All four local browser cases passed at 390/1440 px and
 for the named-attack scenarios; lint and the isolated preview build passed.
+
+The player-facing paid finale replay now checks every last-frame rider's
+crossing time and line energy against the finale's recorded individual line
+for both a full bunch kilometre and a caught-attack final 500 m. Altering
+either value in a fixed four-team bunch recording makes replay fail closed;
+altering caught-road line energy does the same in the 15-team chase case.
+This strengthens result/replay consistency without inventing missing wheel
+positions in the caught road's opening 500 m. Seven focused replay/point
+tests, lint, the isolated preview build and all four local browser cases
+passed.

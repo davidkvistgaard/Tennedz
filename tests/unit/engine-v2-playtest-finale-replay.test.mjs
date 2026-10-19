@@ -33,6 +33,14 @@ test('browser finale replay connects a paid bunch handoff to every crossing',()=
     row.energySpent>0)));
   assert.deepEqual(JSON.parse(JSON.stringify(replay)),replay);
   assert.equal(summarizeV91PaidSoloApproach(recording),null);
+  recording.paidFinale.finishers[0].elapsedSecondsFromLastKmStart+=1;
+  assert.throws(()=>summarizeV91PaidFinaleReplay(recording),
+    /lost its individual line/);
+  recording.paidFinale.finishers[0].elapsedSecondsFromLastKmStart-=1;
+  recording.paidFinale.finishers[0].energyAtLine+=1;
+  assert.throws(()=>summarizeV91PaidFinaleReplay(recording),
+    /lost its individual line/);
+  recording.paidFinale.finishers[0].energyAtLine-=1;
   recording.paidFinale.frames[1].riders[0].energyAtDecision+=1;
   assert.throws(()=>summarizeV91PaidFinaleReplay(recording),
     /lost rider travel or energy/);
@@ -143,7 +151,7 @@ test('a nominated helper pays for a lead-out after the same named solo is caught
     row.riderId==='you-7').elapsedSecondsFromLastKmStart);
   withHelper.recording.paidFinale.finishers[0].energyAtLine+=1;
   assert.throws(()=>summarizeV91PaidFinaleTail(withHelper.recording),
-    /lost its approach or line/);
+    /lost its individual line/);
   withHelper.recording.paidFinale.finishers[0].energyAtLine-=1;
   withHelper.recording.paidFinale.frames[0].riders[0].energyAtDecision+=1;
   assert.throws(()=>summarizeV91PaidNamedAttackApproach(
