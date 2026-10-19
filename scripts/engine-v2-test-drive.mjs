@@ -149,6 +149,7 @@ function summaryForIndividualGroupLine(trial,request,pointContext,line){
           chasePullRiderId:frame.chasePullRiderId})),
       individualFinishStatus:
         'conditional_band_local_cross_band_contact_unresolved',
+      overlapAudit:line.overlapAudit,
       lineTimes:line.conditionalCrossings,
       provisionalLineOrder:null,
       positionSourceStatus:line.positionedSource.status,

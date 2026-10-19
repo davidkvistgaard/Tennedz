@@ -673,3 +673,13 @@ rotation rules rather than extending those group orders automatically. That
 choice is provisional and needs sporting review. Therefore the output
 exposes no combined placing, classification or point projection, and other
 group configurations retain their explicit band-only status.
+
+The opt-in individual group line now also carries a replayed cross-band
+overlap audit. It reconstructs each rider's paid active and sheltered motion
+on the shared clock and checks every front-group/bunch pair for the first
+longitudinal meeting. This is deliberately a conservative **potential**
+contact: lane interaction and the response to an encounter are not modelled.
+Six fixed 40/120 km, 4/15/20-team M/F source recordings remain longitudinally
+separate to their conditional lines; a synthetic crossing fixture locates its
+first meeting at the exact interpolated time and rejects a tampered replay.
+Neither finding promotes inferred wheels to official placing or points.

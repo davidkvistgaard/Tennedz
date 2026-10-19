@@ -33,6 +33,13 @@ test('one paid group and bunch continue to every conditional individual line',()
     assert.equal(line.classifiedResults,null);
     assert.equal(line.pointsStatus,'withheld');
     assert.equal(line.canCommitAwards,false);
+    assert.equal(line.overlapAudit.status,
+      'separated_through_conditional_lines');
+    assert.equal(line.overlapAudit.firstPotentialOverlap,null);
+    assert.equal(line.overlapAudit.canCommitAwards,false);
+    if(line.overlapAudit.firstPotentialOverlap)
+      assert.ok(line.overlapAudit.firstPotentialOverlap.distanceM<=
+        settings.distanceKm*1000);
     for(const band of line.bandRunners){
       const runner=band.runner;
       const sourceEnergy=new Map(runner.positionedSource.slots.map(

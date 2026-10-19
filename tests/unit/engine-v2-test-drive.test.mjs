@@ -64,6 +64,8 @@ test('opt-in group line pays an individual finish and same-band lead-out',()=>{
       leadOutRiderId:'you-6'}],pointContext:{tier:3,
       divisionCount:1,divisionIndex:1}},{full:true});
   assert.equal(base.summary.roadStatus,'conditional_multiband_line');
+  assert.deepEqual(base.summary.finale.overlapAudit,
+    base.individualLine.overlapAudit);
   assert.equal(helped.summary.finale.lineTimes.length,32);
   assert.deepEqual(helped.summary.finale.paidPassagesTo500
     .map(row=>row.endDistanceM),[39250,39500]);
