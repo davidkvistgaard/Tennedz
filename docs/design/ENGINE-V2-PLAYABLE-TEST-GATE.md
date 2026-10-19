@@ -1021,3 +1021,13 @@ The same request in a constructed 15-team field instead follows the existing
 complete-field branch. When that branch has only a collapsed road band and
 no individual inferred wheels, test-drive reports its point preview as
 unavailable rather than trying to assign places or points.
+
+The opt-in named-attack/dropped-rider test path also rejects a finale plan
+that nominates the isolated rider to finish. The rider's existing dropped
+passage remains paid, but none of the early-catch, surviving-solo or late-catch
+conditional lines supplies sprint work for that rider. All three formerly
+could display an unchanged crossing as though the nomination had been applied.
+The test-drive boundary now reports `An isolated rider cannot be a paid
+finisher.` and withholds the conditional line. The earlier versioned road and
+line recorders are left available for replay; this is an input refusal in the
+opt-in player path, not a new sporting coefficient.

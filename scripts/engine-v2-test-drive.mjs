@@ -455,6 +455,19 @@ export function runV91TestDrive(scenario,{full=false}={}){
         frame.distanceM===finishM-500);
       const caughtBefore500=paidRoad.frames.some(frame=>
         frame.distanceM<=finishM-500&&frame.active.catchDistanceM);
+      const isolatedId=at500?.droppedTravel.riders[0]?.riderId;
+      const paidLineRequested=at500?.active.roadGroups.length===0&&
+        caughtBefore500||at500?.active.roadGroups.length===1&&
+        (paidRoad.frames.at(-1).active.roadGroups.length===1||
+          scenario.lateCatchLine===true);
+      const nominations=request.plans??source.recording.committedInputs.teams
+        .map(team=>({teamId:team.id,
+          finisherId:team.orders.captainId,leadOutRiderId:null}));
+      if(paidLineRequested&&nominations.some(plan=>
+        plan.finisherId===isolatedId))
+        return unsupportedRefusal(new Error(
+          'An isolated rider cannot be a paid finisher.',{
+            cause:{playtestSource:source}}),scenario,request,pointContext);
       let individualLine=null;
       if(at500?.active.roadGroups.length===0&&
         caughtBefore500){

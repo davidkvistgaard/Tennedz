@@ -760,6 +760,29 @@ test('a late named catch starts individual sprint work after paid contact',()=>{
   }
 });
 
+test('an isolated finisher order never disappears inside a paid named finale',()=>{
+  const settings={distanceKm:260,terrain:'flat',fatigue:30,
+    gender:'M',teamCount:4,seed:'test-drive-acceptance-1',
+    attack:'none',chase:'ignore',defaultRivalPlan:'chase'};
+  for(const attacker of ['you-0','you-2','you-5']){
+    const scenario={settings,namedDroppedRoad:true,lateCatchLine:true,
+      attack:{teamId:'you',riderId:attacker},
+      pointContext:{tier:3,divisionIndex:1,divisionCount:1}};
+    const valid=runV91TestDrive(scenario);
+    assert.equal(valid.status,'conditional_line');
+    assert.ok(valid.finale.lineTimes.some(row=>
+      row.riderId==='rival-2-0'));
+    const invalid=runV91TestDrive({...scenario,finalePlans:[{
+      teamId:'rival-2',finisherId:'rival-2-0'}]});
+    assert.equal(invalid.status,'unsupported');
+    assert.equal(invalid.reason,
+      'An isolated rider cannot be a paid finisher.');
+    assert.equal(invalid.provisionalPointPreview.status,'unavailable');
+    assert.equal(invalid.pointsStatus,'withheld');
+    assert.equal(invalid.canCommitAwards,false);
+  }
+});
+
 test('a collapsed larger field withholds point preview without throwing',()=>{
   const settings={distanceKm:260,terrain:'flat',fatigue:30,
     gender:'M',teamCount:15,seed:'test-drive-acceptance-1',
