@@ -35,10 +35,15 @@ import {recordFinaleNamedDroppedSurvivorLine,
   validateFinaleNamedDroppedSurvivorLine,
   FINALE_NAMED_DROPPED_SURVIVOR_LINE_VERSION} from
   '../lib/engine/v2/finale-named-dropped-survivor-line.mjs';
+import {recordFinaleNamedDroppedLateCatchLine,
+  validateFinaleNamedDroppedLateCatchLine,
+  FINALE_NAMED_DROPPED_LATE_CATCH_LINE_VERSION} from
+  '../lib/engine/v2/finale-named-dropped-late-catch-line.mjs';
 import {projectV91ProvisionalPointPreview,
   projectV91ProvisionalMultibandPointPreview,
   projectV91ProvisionalNamedDroppedPointPreview,
-  projectV91ProvisionalNamedDroppedSurvivorPointPreview} from
+  projectV91ProvisionalNamedDroppedSurvivorPointPreview,
+  projectV91ProvisionalNamedDroppedLateCatchPointPreview} from
   '../lib/engine/v2/playtest-point-preview.mjs';
 
 const REFUSALS=new Set([
@@ -130,9 +135,16 @@ function summaryFor(trial,request,pointContext){
     pointsStatus:trial.pointsStatus,canCommitAwards:trial.canCommitAwards,
     managerDecisions:decisions,
     ...(pointContext?{provisionalPointPreview:
-      trial.roadStatus==='paid_conditional_line'?
+      trial.roadStatus==='paid_conditional_line'&&
+        paidFinale.positionSourceStatus===
+          'provisional_inferred_independent_wheels'&&
+        paidFinale.passingRule==='open-road-lab-1'&&
+        Array.isArray(paidFinale.lineOrder)&&
+        paidFinale.lineOrder.every(row=>row.position!==null)?
         projectV91ProvisionalPointPreview(trial,pointContext):
-        {status:'unavailable',reason:'No complete individual line.'}}:{}),
+        {status:'unavailable',reason:trial.roadStatus===
+          'paid_conditional_line'?'No unambiguous individual line.':
+          'No complete individual line.'}}:{}),
     lastKmSource:{roadGroups:lastKm.roadGroups.map(group=>({
       id:group.id,gapSeconds:group.gapSeconds,
       riderIds:group.riderIds})),
@@ -262,9 +274,13 @@ function summaryForNamedDroppedRoad(source,request,pointContext,road,
   individualLine=null){
   const recording=source.recording;
   const lastKm=recording.frames[recording.route.distanceKm-2];
+  const lateCatch=individualLine?.version===
+    FINALE_NAMED_DROPPED_LATE_CATCH_LINE_VERSION;
   const preview=pointContext?individualLine?.provisionalLineOrder
     ?.every(row=>row.position!==null)?
-      (individualLine.version===
+      (lateCatch?
+        projectV91ProvisionalNamedDroppedLateCatchPointPreview:
+        individualLine.version===
         FINALE_NAMED_DROPPED_SURVIVOR_LINE_VERSION?
         projectV91ProvisionalNamedDroppedSurvivorPointPreview:
         projectV91ProvisionalNamedDroppedPointPreview)(
@@ -272,7 +288,8 @@ function summaryForNamedDroppedRoad(source,request,pointContext,road,
       {status:'unavailable',reason:individualLine?
           'Cross-band contact or an ambiguous place remains unresolved.':
           'No complete individual line.'}:null;
-  return {version:individualLine?'v91-offline-test-drive-8':
+  return {version:lateCatch?'v91-offline-test-drive-9':
+    individualLine?'v91-offline-test-drive-8':
     'v91-offline-test-drive-7',
     status:individualLine?'conditional_line':'road_only',
     roadStatus:individualLine?.roadStatus??
@@ -299,7 +316,8 @@ function summaryForNamedDroppedRoad(source,request,pointContext,road,
       'conditional_crossings_contact_unresolved':
       individualLine?'conditional_individual_crossings':
       'unresolved_within_road_bands',
-      finalePlanStatus:individualLine?'paid_at_500m':'unapplied',
+      finalePlanStatus:lateCatch?'paid_after_late_contact':
+        individualLine?'paid_at_500m':'unapplied',
       attackIntent:road.attackIntent,
       roadFrames:road.frames.filter(frame=>!individualLine||
         frame.distanceM<=individualLine.startDistanceM).map(frame=>({
@@ -310,7 +328,8 @@ function summaryForNamedDroppedRoad(source,request,pointContext,road,
         attackWork:frame.active.riderEnergy.filter(row=>
           row.riderId===road.attackIntent.riderId),
         droppedTravel:frame.droppedTravel.riders})),
-      ...(individualLine?{bandsAt500M:[
+      ...(individualLine?{[lateCatch?'bandsAtContactBoundary':
+        'bandsAt500M']:[
         ...road.frames.find(frame=>frame.distanceM===
           individualLine.startDistanceM).active.roadGroups.map(group=>({
           id:group.id,riderIds:group.riderIds})),{
@@ -362,11 +381,15 @@ export function runV91TestDrive(scenario,{full=false}={}){
   if(!scenario||typeof scenario!=='object'||Array.isArray(scenario)||
     Object.keys(scenario).some(key=>
       !['settings','attack','finalePlans','pointContext',
-        'individualGroupLine','namedDroppedRoad'].includes(key))||
+        'individualGroupLine','namedDroppedRoad','lateCatchLine']
+        .includes(key))||
     scenario.individualGroupLine!==undefined&&
       typeof scenario.individualGroupLine!=='boolean'||
     scenario.namedDroppedRoad!==undefined&&
-      typeof scenario.namedDroppedRoad!=='boolean')
+      typeof scenario.namedDroppedRoad!=='boolean'||
+    scenario.lateCatchLine!==undefined&&
+      (typeof scenario.lateCatchLine!=='boolean'||
+        scenario.lateCatchLine&&!scenario.namedDroppedRoad))
     throw new Error('Choose settings, an optional attack and finale plans.');
   const pointContext=scenario.pointContext??null;
   if(pointContext!==null&&(!pointContext||
@@ -459,6 +482,25 @@ export function runV91TestDrive(scenario,{full=false}={}){
             'The nominated lead-out cannot work beside the finisher.',
             'A nominated solo sprint needs separate paid work.'
           ].includes(lineError.message))throw lineError;
+          return unsupportedRefusal(new Error(lineError.message,{
+            cause:{playtestSource:source}}),scenario,request,pointContext);
+        }
+      }else if(scenario.lateCatchLine===true&&
+        at500?.active.roadGroups.length===1&&
+        paidRoad.frames.at(-1).active.roadGroups.length===0){
+        try{
+          individualLine=recordFinaleNamedDroppedLateCatchLine(
+            source.recording,paidRoad,{plans:request.plans??null});
+          validateFinaleNamedDroppedLateCatchLine(source.recording,
+            paidRoad,{plans:request.plans??null},individualLine);
+        }catch(lineError){
+          if(![
+            'A pre-contact lead-out needs separate paid road work.',
+            'The named late catch needs one paid merged boundary and dropped rider.'
+          ].includes(lineError.message)&&
+            !/^A dropped finale rider (?:cannot pay for travel|needs recorded bunch contact):/.test(lineError.message)&&
+            !/^A rider cannot pay for actual finale travel:/.test(
+              lineError.message))throw lineError;
           return unsupportedRefusal(new Error(lineError.message,{
             cause:{playtestSource:source}}),scenario,request,pointContext);
         }

@@ -13,6 +13,10 @@ import {validateFinaleSingletonFrontIndividualLine} from
   '../../lib/engine/v2/finale-singleton-front-individual-line.mjs';
 import {validateFinaleNamedDroppedSurvivorLine} from
   '../../lib/engine/v2/finale-named-dropped-survivor-line.mjs';
+import {validateFinaleNamedDroppedLateCatchLine} from
+  '../../lib/engine/v2/finale-named-dropped-late-catch-line.mjs';
+import {projectV91ProvisionalNamedDroppedLateCatchPointPreview} from
+  '../../lib/engine/v2/playtest-point-preview.mjs';
 
 const example=JSON.parse(readFileSync(new URL(
   '../../docs/design/engine-v2-test-drive-example.json',import.meta.url),
@@ -682,6 +686,91 @@ test('an early caught named attack feeds paid nominated and isolated lines',()=>
     row.riderId==='rival-2-0').elapsedSecondsFromLastKmStart,
   without.summary.finale.lineTimes.find(row=>
     row.riderId==='rival-2-0').elapsedSecondsFromLastKmStart);
+});
+
+test('a late named catch starts individual sprint work after paid contact',()=>{
+  const settings={distanceKm:260,terrain:'flat',fatigue:30,
+    gender:'M',teamCount:4,seed:'test-drive-acceptance-1',
+    attack:'none',chase:'ignore',defaultRivalPlan:'chase'};
+  const base={settings,namedDroppedRoad:true,lateCatchLine:true,
+    attack:{teamId:'you',riderId:'you-2'},
+    pointContext:{tier:3,divisionIndex:1,divisionCount:1}};
+  const ordinary=runV91TestDrive({...base,lateCatchLine:false},
+    {full:true});
+  assert.equal(ordinary.summary.version,'v91-offline-test-drive-7');
+  assert.equal(ordinary.summary.status,'road_only');
+  const nominated=runV91TestDrive(base,{full:true});
+  const other=runV91TestDrive({...base,finalePlans:[{
+    teamId:'you',finisherId:'you-4',leadOutRiderId:null}]},{full:true});
+  assert.equal(nominated.summary.version,'v91-offline-test-drive-9');
+  assert.equal(nominated.summary.status,'conditional_line');
+  assert.deepEqual(nominated.paidRoad,ordinary.paidRoad);
+  assert.deepEqual(nominated.paidRoad,other.paidRoad);
+  assert.equal(nominated.individualLine.catchDistanceM,
+    nominated.paidRoad.frames.find(frame=>
+      frame.active.catchDistanceM).active.catchDistanceM);
+  assert.equal(nominated.individualLine.startDistanceM,259600);
+  assert.equal(nominated.summary.finale.roadFrames.at(-1).distanceM,
+    nominated.individualLine.startDistanceM);
+  assert.equal(nominated.summary.finale.bandsAtContactBoundary[0].id,
+    'peloton');
+  assert.equal(nominated.summary.finale.lineTimes.length,32);
+  assert.equal(nominated.summary.finale.provisionalLineOrder.length,32);
+  assert.equal(nominated.summary.provisionalPointPreview.version,
+    'v91-provisional-named-dropped-point-preview-3');
+  assert.equal(nominated.summary.provisionalPointPreview.riders.length,32);
+  assert.deepEqual(nominated.summary.provisionalPointPreview.awardRows,[]);
+  assert.equal(nominated.summary.pointsStatus,'withheld');
+  assert.equal(nominated.summary.canCommitAwards,false);
+  const crossing=trial=>trial.summary.finale.lineTimes.find(row=>
+    row.riderId==='you-7');
+  assert.ok(crossing(nominated).elapsedSecondsFromLastKmStart<
+    crossing(other).elapsedSecondsFromLastKmStart);
+  assert.ok(crossing(nominated).energyAtLine<
+    crossing(other).energyAtLine);
+  assert.ok(nominated.summary.finale.sprintWork.some(row=>
+    row.riderId==='you-7'&&row.energySpent>0));
+  assert.equal(validateFinaleNamedDroppedLateCatchLine(
+    nominated.recording.recording,nominated.paidRoad,
+    {plans:nominated.summary.request.plans},nominated.individualLine),
+  true);
+  const altered=structuredClone(nominated.individualLine);
+  altered.bandRunners[0].runner.frames[1].riders[0].energySpent+=1;
+  assert.throws(()=>validateFinaleNamedDroppedLateCatchLine(
+    nominated.recording.recording,nominated.paidRoad,
+    {plans:nominated.summary.request.plans},altered),/does not replay/);
+  assert.throws(()=>projectV91ProvisionalNamedDroppedLateCatchPointPreview(
+    nominated.recording.recording,nominated.paidRoad,altered,
+    base.pointContext),/does not replay/);
+  const unearnedLead=runV91TestDrive({...base,finalePlans:[{
+    teamId:'you',finisherId:'you-7',leadOutRiderId:'you-6'}]});
+  assert.equal(unearnedLead.status,'unsupported');
+  assert.match(unearnedLead.reason,/pre-contact lead-out/);
+  assert.throws(()=>runV91TestDrive({...base,
+    namedDroppedRoad:false}),/Choose settings/);
+  for(const [riderId,boundary] of [['you-3',259700],
+    ['you-4',259800]]){
+    const later=runV91TestDrive({...base,
+      attack:{teamId:'you',riderId}},{full:true});
+    assert.equal(later.summary.status,'conditional_line');
+    assert.equal(later.individualLine.startDistanceM,boundary);
+    assert.equal(later.summary.finale.lineTimes.length,32);
+    assert.equal(later.summary.provisionalPointPreview.riders.length,32);
+    assert.equal(later.summary.canCommitAwards,false);
+  }
+});
+
+test('a collapsed larger field withholds point preview without throwing',()=>{
+  const settings={distanceKm:260,terrain:'flat',fatigue:30,
+    gender:'M',teamCount:15,seed:'test-drive-acceptance-1',
+    attack:'none',chase:'ignore',defaultRivalPlan:'chase'};
+  const summary=runV91TestDrive({settings,namedDroppedRoad:true,
+    lateCatchLine:true,attack:{teamId:'you',riderId:'you-2'},
+    pointContext:{tier:3,divisionIndex:1,divisionCount:1}});
+  assert.equal(summary.roadStatus,'paid_conditional_line');
+  assert.equal(summary.provisionalPointPreview.status,'unavailable');
+  assert.equal(summary.pointsStatus,'withheld');
+  assert.equal(summary.canCommitAwards,false);
 });
 
 test('a surviving named solo keeps three paid bands and audits rival lead-out contact',()=>{

@@ -964,8 +964,9 @@ conditional crossing from 88.619 to 88.415 seconds after the last-kilometre
 marker; the dropped rider's time is unchanged. The new
 `v2-finale-named-dropped-individual-line-lab-1` and
 `v91-offline-test-drive-8` preserve the earlier road-only recording and keep
-the inferred wheel order explicitly provisional. A survivor still uses the
-road-only path. Neither path classifies an official result or awards points.
+the inferred wheel order explicitly provisional. This early-catch path does
+not cover a surviving solo. Neither path classifies an official result or
+awards points.
 
 When that new conditional line has 32 distinct, uniquely ordered crossings
 and the signed audit shows no possible active/dropped contact, an optional
@@ -996,5 +997,27 @@ dropped passage and bunch work retain their recorded sources. Contact is
 audited again before a provisional order or read-only point preview appears.
 The same solo nomination reached a separate conditional line in both sexes,
 three route profiles and two fixed seeds of this constructed field.
-A solo caught after 500 m still needs paid contact continuation; no official
-placing or award is inferred from either case.
+Possible contact between tactical bands still needs paid continuation; no
+official placing or award is inferred from these conditional lines.
+
+The separate opt-in `namedDroppedRoad: true, lateCatchLine: true` now covers
+one named solo caught **after** 500 m while the same rider remains dropped.
+The measured catch and remainder of its 100 m road slice replay unchanged.
+At the following paid boundary, the merged bunch starts the existing
+individual sprint runner with its actual remaining energy and a distinct,
+tactic-independent provisional wheel source; the isolated rider pays each
+remaining passage. A signed two-band audit gates the provisional line and
+the read-only point preview. On the fixed tired four-team route, attackers
+`you-2`, `you-3` and `you-4` catch in successive slices and all 32 riders
+cross; nominated sprint work changes the finisher's time and energy. Two
+seeds, three route profiles and M/F categories also replay the `you-2`
+branch with 32 separate conditional crossings and no award rows. An ordered
+lead-out before contact explicitly refuses this branch because that work
+has no individual pre-contact trajectory. Without `lateCatchLine`, the
+existing `v91-offline-test-drive-7` road-only recording remains the result.
+This is still a conditional laboratory line, not an official classification
+or points award.
+The same request in a constructed 15-team field instead follows the existing
+complete-field branch. When that branch has only a collapsed road band and
+no individual inferred wheels, test-drive reports its point preview as
+unavailable rather than trying to assign places or points.
