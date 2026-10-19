@@ -14,6 +14,9 @@ import {recordFinaleConcurrentDoubleCatchLineFromTour,
 import {recordFinaleConcurrentCommonTimeStateFromTour,
   validateFinaleConcurrentCommonTimeStateFromTour} from
   '../lib/engine/v2/finale-concurrent-common-time-state.mjs';
+import {recordFinaleConcurrentNextBoundaryFromTour,
+  validateFinaleConcurrentNextBoundaryFromTour} from
+  '../lib/engine/v2/finale-concurrent-next-boundary.mjs';
 import {validateRequestedFinalePlans} from
   '../lib/engine/v2/playtest-finale-trial.mjs';
 import {finaleSnapshotFromTour} from
@@ -877,6 +880,16 @@ export function runV91ConcurrentTestDrive(scenario,{full=false}={}){
     }
     if(event)validateFinaleConcurrentCommonTimeStateFromTour(tour,
       JSON.parse(JSON.stringify(event)));
+    let laterEvent=null;
+    if(event){
+      try{
+        laterEvent=recordFinaleConcurrentNextBoundaryFromTour(tour);
+      }catch(laterError){
+        if(laterError?.constructor!==Error)throw laterError;
+      }
+    }
+    if(laterEvent)validateFinaleConcurrentNextBoundaryFromTour(tour,
+      JSON.parse(JSON.stringify(laterEvent)));
     const firstPaidEvent=event?{version:event.version,event:event.event,
       elapsedSinceLaunchSeconds:event.eventElapsedSeconds,
       attackerPositions:event.attackerPositions,
@@ -889,7 +902,17 @@ export function runV91ConcurrentTestDrive(scenario,{full=false}={}){
         energyAtEvent:row.energyAtEvent}))}:null;
     const summary={...base,status:'unsupported',
       roadStatus:'concurrent_road_unresolved',reason:error.message,
-      ...(firstPaidEvent?{firstPaidEvent}:{})};
+      ...(firstPaidEvent?{firstPaidEvent}:{}),
+      ...(laterEvent?{latestPaidEvent:{version:laterEvent.version,
+        event:laterEvent.event,
+        elapsedSinceLaunchSeconds:laterEvent.elapsedSinceLaunchSeconds,
+        firstRiderId:laterEvent.firstRiderId,
+        secondRiderId:laterEvent.secondRiderId,
+        firstPositionM:laterEvent.firstPositionM,
+        secondPositionM:laterEvent.secondPositionM,
+        bunchPositionM:laterEvent.bunchPositionM,
+        roadRelationshipStatus:laterEvent.roadRelationshipStatus,
+        riders:laterEvent.riders}}:{})};
     return full?{summary,recording:source}:summary;
   }
   (assembled?validateFinaleConcurrentDoubleCatchAssembledLineFromTour:

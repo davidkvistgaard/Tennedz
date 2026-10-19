@@ -25,6 +25,9 @@ import {recordFinaleConditionalCrossingBounds,
   '../../lib/engine/v2/finale-conditional-crossing-bounds.mjs';
 import {assertConcurrentDoubleCatchLeadOutWheels} from
   '../../lib/engine/v2/finale-concurrent-double-catch-line.mjs';
+import {recordFinaleConcurrentNextBoundaryFromTour,
+  validateFinaleConcurrentNextBoundaryFromTour} from
+  '../../lib/engine/v2/finale-concurrent-next-boundary.mjs';
 
 const example=JSON.parse(readFileSync(new URL(
   '../../docs/design/engine-v2-test-drive-example.json',import.meta.url),
@@ -97,6 +100,44 @@ test('a double-catch lead-out cannot jump across an inferred source lane',()=>{
   assert.throws(()=>assertConcurrentDoubleCatchLeadOutWheels({
     ...source,slots:[{...source.slots[0],positionM:39496},
       source.slots[1]]},plan),/source wheel/);
+});
+
+test('integrated two-attack refusal exposes the later paid road boundary',()=>{
+  const teamCount=15;
+  const ids=['you',...Array.from({length:teamCount-1},(_,index)=>
+    `rival-${index+1}`)];
+  const managerFinaleOrders=ids.map(teamId=>({teamId,
+    attack:['you','rival-2'].includes(teamId)?'selective':'none',
+    ...(['you','rival-2'].includes(teamId)?{
+      attackRiderId:`${teamId}-5`}:{}),
+    chase:['rival-1','rival-4'].includes(teamId)?'selective':'ignore',
+    frontWork:teamId==='rival-3'?'rotate':'sit_in'}));
+  const scenario={settings:{distanceKm:40,teamCount,terrain:'flat',
+    seed:'paired-final-orders',attack:'none',chase:'ignore',
+    defaultRivalPlan:'neutral',managerFinaleOrders,
+    teamOverrides:ids.map(teamId=>({teamId,
+      level:teamId==='rival-2'?81:teamId==='you'?80:85}))}};
+  const {summary,recording}=runV91IntegratedTestDrive(scenario,{full:true});
+  const event=recordFinaleConcurrentNextBoundaryFromTour(
+    recording.recording);
+  assert.equal(summary.status,'unsupported');
+  assert.equal(summary.pointsStatus,'withheld');
+  assert.equal(summary.latestPaidEvent.event,
+    'first_attacker_at_next_boundary');
+  assert.equal(summary.latestPaidEvent.firstPositionM,39500);
+  assert.ok(summary.latestPaidEvent.secondPositionM<39500);
+  assert.ok(summary.latestPaidEvent.bunchPositionM<
+    summary.latestPaidEvent.secondPositionM);
+  assert.ok(summary.latestPaidEvent.elapsedSinceLaunchSeconds>
+    summary.firstPaidEvent.elapsedSinceLaunchSeconds);
+  assert.equal(summary.latestPaidEvent.riders.length,teamCount*8);
+  assert.ok(summary.latestPaidEvent.riders.every(row=>
+    row.distanceM>0&&row.energySpent>0&&
+    row.energyAtEvent<=row.energyAtDecision));
+  assert.deepEqual(summary.latestPaidEvent.riders,event.riders);
+  assert.equal(validateFinaleConcurrentNextBoundaryFromTour(
+    recording.recording,event),true);
+  assert.deepEqual(runV91IntegratedTestDrive(scenario),summary);
 });
 
 test('partial solo contact exposes only replayable crossing bounds',()=>{

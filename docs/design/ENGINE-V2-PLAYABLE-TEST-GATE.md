@@ -116,6 +116,15 @@ unresolved attacker relationship still refuses the line and points. The
 source lanes and passing rule are provisional, so neither line version
 classifies riders or awards points.
 
+For a two-attack run that cannot reach that complete double catch, the same
+offline entry now reports the existing later paid common-clock boundary when
+it can be recorded. A fixed 15-team flat fixture with two distinct manager
+attacks reaches the first attacker's 500 m boundary with the second attacker
+and bunch still behind. The exposed event carries every rider's travelled
+distance, energy debit and road position and replays from the locked tour.
+This is a diagnostic continuation, not an individual finish: the road
+relationship, classification and points remain unresolved.
+
 A fixed 54-case diagnostic across three routes,
 both categories, three field sizes and three tactics modes originally replayed
 32 conditional individual lines, 12 paid group-band lines and 10 explicit
