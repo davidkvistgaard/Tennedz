@@ -1134,3 +1134,14 @@ with the measured contact and every rider's final road energy. It explicitly
 withholds an individual order, point illustration and awards in both M/F
 versions. It no longer throws an uncaught line-construction error. The
 source is a correctness probe, not evidence for a sporting coefficient.
+
+`node scripts/engine-v2-playable-road-audit.mjs --point-preview` reruns the
+existing 66-case M/F, 4/15/20-team, short/medium/long route and mixed/attack/
+chase matrix with a fixed read-only tier-three point context. It verifies that
+every illustrated rider is unique and has exactly the crossing time and final
+energy from the recorded individual line, and that no award row is created.
+All 64 cases with conditional individual lines yield a read-only illustration;
+the two exhausted four-team mountain sources have unmet energy demand and
+explicitly report the illustration unavailable. This checks bookkeeping and
+withholding across the existing acceptance matrix; inferred wheels still
+prevent these illustrations from becoming official points or results.

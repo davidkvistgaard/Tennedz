@@ -1,6 +1,8 @@
 // Reproducible fictional road coverage for the opt-in v91 test drive.
 // A paid line or band is not an official result or a sporting win-rate target.
 import assert from 'node:assert/strict';
+import {POINT_POLICY_VERSION,pointsForDivisionResult} from
+  '../lib/calendar/points.mjs';
 import {runV91TestDrive} from './engine-v2-test-drive.mjs';
 
 const routes=[
@@ -11,9 +13,11 @@ const modes={
   mixed:{attack:'selective',chase:'selective'},
   attack:{attack:'repeated',chase:'ignore'},
   chase:{attack:'none',chase:'all'}};
-const individualLines=process.argv.includes('--individual-lines');
-if(process.argv.slice(2).some(arg=>arg!=='--individual-lines'))
-  throw new Error('Usage: node scripts/engine-v2-playable-road-audit.mjs [--individual-lines]');
+const pointPreview=process.argv.includes('--point-preview');
+const individualLines=pointPreview||process.argv.includes('--individual-lines');
+if(process.argv.slice(2).some(arg=>
+  !['--individual-lines','--point-preview'].includes(arg)))
+  throw new Error('Usage: node scripts/engine-v2-playable-road-audit.mjs [--individual-lines] [--point-preview]');
 const scenarios=[];
 for(const route of routes)for(const gender of ['M','F'])
   for(const teamCount of [4,15,20])
@@ -44,7 +48,9 @@ for(const route of routes)for(const gender of ['M','F']){
 
 const rows=scenarios.map(({kind,mode,settings})=>{
   const output=runV91TestDrive({settings,
-    ...(individualLines?{individualGroupLine:true}: {})});
+    ...(individualLines?{individualGroupLine:true}: {}),
+    ...(pointPreview?{pointContext:{tier:3,divisionIndex:1,
+      divisionCount:1}}:{})});
   const status=output.roadStatus??output.status;
   const expected=settings.teamCount*8;
   assert.equal(output.pointsStatus,'withheld');
@@ -69,12 +75,42 @@ const rows=scenarios.map(({kind,mode,settings})=>{
     assert.equal(output.finale.individualFinishStatus,
       'unresolved_within_road_bands');
   }
+  if(pointPreview){
+    const preview=output.provisionalPointPreview;
+    assert.ok(preview);
+    if(Array.isArray(preview.riders)){
+      assert.equal(preview.riders.length,expected);
+      assert.equal(new Set(preview.riders.map(row=>row.riderId)).size,
+        expected);
+      assert.equal(preview.pointsPolicyVersion,POINT_POLICY_VERSION);
+      assert.equal(preview.canCommitAwards,false);
+      assert.deepEqual(preview.awardRows,[]);
+      const crossings=new Map(output.finale.lineTimes.map(row=>[
+        row.riderId,row]));
+      for(const [index,row] of preview.riders.entries()){
+        const crossing=crossings.get(row.riderId);
+        assert.ok(crossing);
+        assert.equal(row.provisionalPlace,index+1);
+        assert.equal(row.elapsedSecondsFromLastKmStart,
+          crossing.elapsedSecondsFromLastKmStart);
+        assert.equal(row.energyAtLine,crossing.energyAtLine);
+        assert.equal(row.previewPoints,pointsForDivisionResult({
+          tier:3,resultType:'ONE_DAY',placing:index+1,
+          multiplier:preview.multiplier}));
+      }
+    }else{
+      assert.equal(preview.status,'unavailable');
+      assert.ok(preview.reason);
+    }
+  }
   return {kind,mode,distanceKm:settings.distanceKm,
     terrain:settings.terrain,fatigue:settings.fatigue,
     gender:settings.gender,teamCount:settings.teamCount,
     roadGroups:output.lastKmSource?.roadGroups.length??null,
     droppedRiders:output.lastKmSource?.droppedRiderIds.length??null,
     status,...(status==='unsupported'?{reason:output.reason}:{}),
+    ...(pointPreview?{pointPreviewStatus:
+      output.provisionalPointPreview.status??'read_only'}:{}),
     ...(status==='conditional_multiband_line'?{
       potentialPre500ActiveOverlap:
         output.finale.pre500Audit.firstPotentialOverlap!==null,
@@ -95,6 +131,7 @@ const rows=scenarios.map(({kind,mode,settings})=>{
 });
 const counts=Object.fromEntries([...new Set(rows.map(row=>row.status))]
   .sort().map(status=>[status,rows.filter(row=>row.status===status).length]));
-console.log(JSON.stringify({version:individualLines?
-  'v2-playable-road-audit-individual-6':'v2-playable-road-audit-1',
+console.log(JSON.stringify({version:pointPreview?
+  'v2-playable-road-audit-point-preview-7':individualLines?
+    'v2-playable-road-audit-individual-6':'v2-playable-road-audit-1',
   seed:'test-drive-acceptance-1',scenarios:rows.length,counts,rows},null,2));
