@@ -38,6 +38,9 @@ export default function Playtest(){
   const [customRivals,setCustomRivals]=useState(0);
   const [integratedMode,setIntegratedMode]=useState(false);
   const [finalePlans,setFinalePlans]=useState({});
+  const [showPointPreview,setShowPointPreview]=useState(false);
+  const [pointContext,setPointContext]=useState({tier:2,
+    divisionIndex:1,divisionCount:2});
   const [result,setResult]=useState(null);
   const [integrated,setIntegrated]=useState(null);
   const [selectedKm,setSelectedKm]=useState(1);
@@ -75,6 +78,8 @@ export default function Playtest(){
   const ownFinisher=integrated?.managerDecisions?.find(row=>
     row.teamId==='you')?.finisherId??'you-7';
   const ownCrossing=conditionalLine.find(row=>row.riderId===ownFinisher);
+  const ownPointPreview=integrated?.provisionalPointPreview?.riders
+    ?.find(row=>row.riderId===ownFinisher);
   const maxHeight=Math.max(500,...settings.profileHeightsM);
   const profileLine=settings.profileHeightsM.map((height,index)=>
     `${10+index*196},${110-height/maxHeight*100}`).join(' ');
@@ -87,7 +92,8 @@ export default function Playtest(){
       const payload=integratedMode?{mode:'integrated',settings:raceSettings,
         finalePlans:finaleTeams.map(teamId=>({teamId,
           finisherId:finalePlans[teamId]?.finisherId??`${teamId}-7`,
-          leadOutRiderId:finalePlans[teamId]?.leadOutRiderId??null}))}:
+          leadOutRiderId:finalePlans[teamId]?.leadOutRiderId??null})),
+        ...(showPointPreview?{pointContext}:{})}:
         raceSettings;
       const response=await api('/api/v91-playtest',{method:'POST',
         headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
@@ -186,6 +192,33 @@ export default function Playtest(){
             </div>;
           })}</div>
         </fieldset>}
+        {integratedMode&&<fieldset className="v91-profile">
+          <legend>Optional points illustration</legend>
+          <label className="v91-mode"><input type="checkbox"
+            checked={showPointPreview}
+            onChange={event=>setShowPointPreview(event.target.checked)}/>
+            Show read-only point illustration</label>
+          {showPointPreview&&<div className="v91-profile-points">
+            <label>Race tier<select value={pointContext.tier}
+              onChange={event=>setPointContext(current=>({...current,
+                tier:Number(event.target.value)}))}>
+              {Array.from({length:6},(_,index)=><option key={index+1}
+                value={index+1}>Tier {index+1}</option>)}</select></label>
+            <label>Division count<select value={pointContext.divisionCount}
+              onChange={event=>setPointContext(current=>({
+                ...current,divisionCount:Number(event.target.value),
+                divisionIndex:Math.min(current.divisionIndex,
+                  Number(event.target.value))}))}>
+              {Array.from({length:4},(_,index)=><option key={index+1}
+                value={index+1}>{index+1}</option>)}</select></label>
+            <label>Fictional division<select value={pointContext.divisionIndex}
+              onChange={event=>setPointContext(current=>({...current,
+                divisionIndex:Number(event.target.value)}))}>
+              {Array.from({length:pointContext.divisionCount},(_,index)=><option
+                key={index+1} value={index+1}>{index+1}</option>)}</select></label>
+          </div>}
+          <small>Only an unambiguous conditional line can receive a policy illustration. No awards are saved.</small>
+        </fieldset>}
         <label>Scenario seed<input value={settings.seed} maxLength={80}
           onChange={event=>change('seed',event.target.value)} /></label>
         <button type="submit" disabled={busy}>{busy?'Running race…':
@@ -241,6 +274,12 @@ export default function Playtest(){
               {row.riderId} · {row.elapsedSecondsFromLastKmStart.toFixed(3)} s · {row.energyAtLine.toFixed(1)} energy
             </li>)}</ol>
             <p>{conditionalLine.length} of {result.settings.teamCount*8} riders have individual crossing times. Times do not establish official places.</p></>}
+          {integrated.provisionalPointPreview&&<div>
+            <h4>Read-only points illustration</h4>
+            {ownPointPreview?<p>{ownFinisher}: provisional place {ownPointPreview.provisionalPlace}, {ownPointPreview.previewPoints} preview points.</p>:
+              <p>{integrated.provisionalPointPreview.reason??'No unambiguous individual order.'}</p>}
+            <p>Official points: withheld · Awards saved: 0</p>
+          </div>}
           <p>Last-kilometre source: {integrated.lastKmSource?.roadGroups?.length??0} groups ahead; {integrated.lastKmSource?.droppedRiderIds?.length??0} isolated riders.</p>
           {integrated.lastKmSource?.roadGroups?.map(group=><p key={group.id}>
             {group.id}: {group.riderIds.join(', ')} · {group.gapSeconds.toFixed(1)} s ahead

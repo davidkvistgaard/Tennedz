@@ -1560,5 +1560,8 @@ road events, or the explicit refusal when a line cannot be paid. The original
 kilometre-only mode retains its response contract. An isolated local login
 fixture passed the full browser flow at 390 and 1440 px: the same 40 km race
 produced 32 crossings, and adding an eligible helper recorded 16.5 energy
-spent and changed the nominated finisher's crossing. This is a hands-on
+spent and changed the nominated finisher's crossing. With a fixed fictional
+tier-2, division-1-of-2 context, the existing policy illustration changed
+the finisher from provisional place 3 / 75 points to place 1 / 125 points;
+both runs saved zero awards and kept official points withheld. This is a hands-on
 diagnostic race preview, not a classified sporting result or point award.

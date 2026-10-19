@@ -55,6 +55,8 @@ for(const width of [390,1440])test(`v91 playtest changes conditions at ${width}p
     await page.getByRole('checkbox',{name:'Continue to a conditional finish'})
       .check();
     await page.getByLabel('you finisher').selectOption('you-7');
+    await page.getByRole('checkbox',{name:'Show read-only point illustration'})
+      .check();
     await page.getByRole('button',{name:'Run full race preview'}).click();
     await expect(page.getByRole('heading',{name:'Conditional finish'}))
       .toBeVisible();
@@ -63,6 +65,10 @@ for(const width of [390,1440])test(`v91 playtest changes conditions at ${width}p
     await expect(page.getByText(/Your nominated finisher: you-7 · [\d.]+ s/))
       .toBeVisible();
     await expect(page.getByText(/Points: withheld/)).toBeVisible();
+    await expect(page.getByText('you-7: provisional place 3, 75 preview points.'))
+      .toBeVisible();
+    await expect(page.getByText('Official points: withheld · Awards saved: 0'))
+      .toBeVisible();
     await expect(page.getByText('Paid lead-out work: 0 recorded rider intervals.'))
       .toBeVisible();
     const baselineFinisherTime=await page.getByText(
@@ -72,6 +78,8 @@ for(const width of [390,1440])test(`v91 playtest changes conditions at ${width}p
     await expect(page.getByText('Paid lead-out work: 7 recorded rider intervals.'))
       .toBeVisible();
     await expect(page.getByText(/you-5: 16\.5 energy spent/)).toBeVisible();
+    await expect(page.getByText('you-7: provisional place 1, 125 preview points.'))
+      .toBeVisible();
     expect(await page.getByText(/Your nominated finisher: you-7 · [\d.]+ s/)
       .textContent()).not.toBe(baselineFinisherTime);
     expect(errors).toEqual([]);
