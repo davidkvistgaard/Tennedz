@@ -978,8 +978,9 @@ record still says `classifiedResults:null` and `pointsStatus:'withheld'`.
 
 A further separate survivor recording now covers a named rider who remains
 alone ahead through the line while one rider remains dropped. It retains the
-paid solo and dropped trajectories from the same road tape, and runs nominated
-finisher/lead-out work only for the 500 m bunch band. The signed three-band
+paid solo and dropped trajectories from the same road tape when the solo is
+not nominated to sprint, and runs nominated finisher/lead-out work for the
+500 m bunch band. The signed three-band
 audit decides whether the independent trajectories could meet. In the fixed
 long tired four-team example, `you-5` survives and all 32 conditional
 crossings are unique; the read-only `v91-provisional-named-dropped-point-
@@ -988,6 +989,12 @@ preview-2` follows the same existing policy. Nominating `you-4` to lead out
 That paired run keeps its conditional paid paths, removes the provisional
 full-field order and withholds preview points. Two seeds, three routes and
 M/F categories repeat those separate/contact outcomes in this constructed
-field. A nominated solo rider's own sprint and a solo caught after 500 m
-still need paid contact/sprint continuation; no official placing or award is
-inferred from either case.
+field. The same fixed field now also pays a nominated surviving solo rider's
+exposed sprint work over the last 300 m: the solo crosses sooner and with
+less energy than under another finisher nomination, while the first 200 m,
+dropped passage and bunch work retain their recorded sources. Contact is
+audited again before a provisional order or read-only point preview appears.
+The same solo nomination reached a separate conditional line in both sexes,
+three route profiles and two fixed seeds of this constructed field.
+A solo caught after 500 m still needs paid contact continuation; no official
+placing or award is inferred from either case.

@@ -11,6 +11,8 @@ import {recordFinaleDepletedIndividualLine,
   '../../lib/engine/v2/finale-depleted-individual-line.mjs';
 import {validateFinaleSingletonFrontIndividualLine} from
   '../../lib/engine/v2/finale-singleton-front-individual-line.mjs';
+import {validateFinaleNamedDroppedSurvivorLine} from
+  '../../lib/engine/v2/finale-named-dropped-survivor-line.mjs';
 
 const example=JSON.parse(readFileSync(new URL(
   '../../docs/design/engine-v2-test-drive-example.json',import.meta.url),
@@ -717,10 +719,42 @@ test('a surviving named solo keeps three paid bands and audits rival lead-out co
   assert.equal(lead.summary.finale.provisionalLineOrder,null);
   assert.equal(lead.summary.provisionalPointPreview.status,'unavailable');
   assert.equal(lead.summary.canCommitAwards,false);
-  const soloFinisher=runV91TestDrive({...base,
-    attack:{teamId:'you',riderId:'you-7'}});
-  assert.equal(soloFinisher.status,'unsupported');
-  assert.match(soloFinisher.reason,/solo sprint needs separate paid work/);
+  const soloAttack={...base,attack:{teamId:'you',riderId:'you-7'}};
+  const unhurried=runV91TestDrive({...soloAttack,finalePlans:[{
+    teamId:'you',finisherId:'you-4',leadOutRiderId:null}]},
+  {full:true});
+  const soloFinisher=runV91TestDrive(soloAttack,{full:true});
+  assert.equal(soloFinisher.summary.status,'conditional_line');
+  assert.deepEqual(soloFinisher.summary.finale.roadFrames,
+    unhurried.summary.finale.roadFrames);
+  const sprintRunner=soloFinisher.individualLine.bandRunners[0].runner;
+  const plainRunner=unhurried.individualLine.bandRunners[0].runner;
+  assert.deepEqual(sprintRunner.frames.slice(0,2),
+    plainRunner.frames.slice(0,2));
+  assert.deepEqual(sprintRunner.frames.map(frame=>
+    frame.riders[0].role),['solo_front','solo_front',
+    'solo_sprint','solo_sprint','solo_sprint']);
+  assert.ok(sprintRunner.frames.slice(2).every(frame=>
+    frame.riders[0].energySpent>0&&
+    frame.riders[0].shelteredDistanceM===0));
+  assert.ok(sprintRunner.finishers[0].elapsedSecondsFromLastKmStart<
+    plainRunner.finishers[0].elapsedSecondsFromLastKmStart);
+  assert.ok(sprintRunner.finishers[0].energyAtLine<
+    plainRunner.finishers[0].energyAtLine);
+  assert.equal(soloFinisher.summary.finale.sprintWork.filter(row=>
+    row.riderId==='you-7').length,3);
+  assert.equal(soloFinisher.summary.finale.lineTimes.length,32);
+  assert.equal(soloFinisher.summary.finale.provisionalLineOrder.length,32);
+  assert.equal(soloFinisher.summary.provisionalPointPreview.riders.length,32);
+  assert.deepEqual(soloFinisher.summary.provisionalPointPreview.awardRows,[]);
+  assert.equal(soloFinisher.summary.canCommitAwards,false);
+  const alteredSprint=structuredClone(soloFinisher.individualLine);
+  alteredSprint.bandRunners[0].runner.frames[2].riders[0]
+    .energySpent+=1;
+  assert.throws(()=>validateFinaleNamedDroppedSurvivorLine(
+    soloFinisher.recording.recording,soloFinisher.paidRoad,
+    {plans:soloFinisher.summary.request.plans},alteredSprint),
+  /does not replay/);
 });
 
 test('an earlier player attack carries earned load into a paid named finale',()=>{

@@ -336,7 +336,8 @@ function summaryForNamedDroppedRoad(source,request,pointContext,road,
           band.runner.frames.flatMap(frame=>frame.roadEvents??[])),
         sprintWork:individualLine.bandRunners.flatMap(band=>
           band.runner.frames.flatMap(
-          frame=>frame.riders.filter(row=>row.role==='sprint').map(row=>({
+          frame=>frame.riders.filter(row=>row.role==='sprint'||
+            row.role==='solo_sprint').map(row=>({
             riderId:row.riderId,energySpent:row.energySpent,
             distanceTravelledM:row.distanceTravelledM})))),
         separateBandTravel:individualLine.bandRunners.filter(band=>
