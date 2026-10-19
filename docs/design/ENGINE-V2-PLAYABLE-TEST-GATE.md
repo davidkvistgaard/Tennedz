@@ -1064,3 +1064,18 @@ cannot pay one active rider to the line and explicitly withholds a finish and
 point preview. These counts verify replay and energy bookkeeping in fictional
 fields, not calibrated sporting rates. Source wheels and passing remain
 provisional, so no official classification or award follows.
+
+The same opt-in named-attack path now carries a **surviving singleton** through
+the line when several riders were already isolated. It reuses the recorded
+attack road, the existing paid solo sprint and nominated bunch runner, and a
+separate paid passage for each isolated rider. A new line and point-preview
+version preserve older one-drop recordings. In the fixed 120 km asymmetric
+source, all 18 combinations of 4/15/20 teams, M/F and
+flat/rolling/mountain produce 32/120/160 distinct conditional crossings and
+replay. The 4-team flat source with `you-7` surviving has a payable solo
+sprint and a separate provisional point illustration. A rival lead-out pays
+work and advances its finisher while leaving the recorded road and all isolated
+crossings unchanged; that same plan triggers possible cross-band contact, so
+the preview becomes unavailable. Official classification and awards remain
+withheld in both cases. Late catches with multiple isolated riders still stop
+at the paid-road boundary; they are not silently classified.

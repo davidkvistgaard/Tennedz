@@ -34,12 +34,14 @@ import {recordFinaleNamedAttackDroppedRoadFromTour,
 import {recordFinaleNamedDroppedIndividualLine,
   validateFinaleNamedDroppedIndividualLine,
   recordFinaleNamedMultipleDroppedIndividualLine,
-  validateFinaleNamedMultipleDroppedIndividualLine,
-  FINALE_NAMED_MULTIPLE_DROPPED_INDIVIDUAL_LINE_VERSION} from
+  validateFinaleNamedMultipleDroppedIndividualLine} from
   '../lib/engine/v2/finale-named-dropped-individual-line.mjs';
 import {recordFinaleNamedDroppedSurvivorLine,
   validateFinaleNamedDroppedSurvivorLine,
-  FINALE_NAMED_DROPPED_SURVIVOR_LINE_VERSION} from
+  recordFinaleNamedMultipleDroppedSurvivorLine,
+  validateFinaleNamedMultipleDroppedSurvivorLine,
+  FINALE_NAMED_DROPPED_SURVIVOR_LINE_VERSION,
+  FINALE_NAMED_MULTIPLE_DROPPED_SURVIVOR_LINE_VERSION} from
   '../lib/engine/v2/finale-named-dropped-survivor-line.mjs';
 import {recordFinaleNamedDroppedLateCatchLine,
   validateFinaleNamedDroppedLateCatchLine,
@@ -50,6 +52,7 @@ import {projectV91ProvisionalPointPreview,
   projectV91ProvisionalNamedDroppedPointPreview,
   projectV91ProvisionalNamedMultipleDroppedPointPreview,
   projectV91ProvisionalNamedDroppedSurvivorPointPreview,
+  projectV91ProvisionalNamedMultipleDroppedSurvivorPointPreview,
   projectV91ProvisionalNamedDroppedLateCatchPointPreview} from
   '../lib/engine/v2/playtest-point-preview.mjs';
 
@@ -285,12 +288,14 @@ function summaryForNamedDroppedRoad(source,request,pointContext,road,
     FINALE_NAMED_DROPPED_LATE_CATCH_LINE_VERSION;
   const multipleDroppedRoad=road.version===
     FINALE_NAMED_ATTACK_MULTIPLE_DROPPED_ROAD_VERSION;
-  const multipleDropped=individualLine?.version===
-    FINALE_NAMED_MULTIPLE_DROPPED_INDIVIDUAL_LINE_VERSION;
+  const multipleDropped=multipleDroppedRoad;
   const preview=pointContext?individualLine?.provisionalLineOrder
     ?.every(row=>row.position!==null)?
       (lateCatch?
         projectV91ProvisionalNamedDroppedLateCatchPointPreview:
+        individualLine.version===
+        FINALE_NAMED_MULTIPLE_DROPPED_SURVIVOR_LINE_VERSION?
+        projectV91ProvisionalNamedMultipleDroppedSurvivorPointPreview:
         multipleDropped?
         projectV91ProvisionalNamedMultipleDroppedPointPreview:
         individualLine.version===
@@ -514,13 +519,16 @@ export function runV91TestDrive(scenario,{full=false}={}){
           return unsupportedRefusal(new Error(lineError.message,{
             cause:{playtestSource:source}}),scenario,request,pointContext);
         }
-      }else if(!multipleDropped&&
-        at500?.active.roadGroups.length===1&&
+      }else if(at500?.active.roadGroups.length===1&&
         paidRoad.frames.at(-1).active.roadGroups.length===1){
         try{
-          individualLine=recordFinaleNamedDroppedSurvivorLine(
+          individualLine=(multipleDropped?
+            recordFinaleNamedMultipleDroppedSurvivorLine:
+            recordFinaleNamedDroppedSurvivorLine)(
             source.recording,paidRoad,{plans:request.plans??null});
-          validateFinaleNamedDroppedSurvivorLine(source.recording,
+          (multipleDropped?
+            validateFinaleNamedMultipleDroppedSurvivorLine:
+            validateFinaleNamedDroppedSurvivorLine)(source.recording,
             paidRoad,{plans:request.plans??null},individualLine);
         }catch(lineError){
           if(![
