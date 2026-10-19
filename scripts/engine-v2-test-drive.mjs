@@ -761,12 +761,31 @@ export function runV91TestDrive(scenario,{full=false}={}){
   return full?{summary,recording:trial}:summary;
 }
 
+// Select the already recorded individual-line continuations in one offline
+// entry. Each branch still proves its own paid road and replay; unresolved
+// contacts, energy and plans retain their explicit unavailable outcome.
+export function runV91IntegratedTestDrive(scenario,{full=false}={}){
+  const namedAttack=scenario?.attack!==undefined;
+  const selected={...scenario,individualGroupLine:true,
+    ...(namedAttack?{namedDroppedRoad:true,lateCatchLine:true}:{})};
+  const output=runV91TestDrive(selected,{full});
+  const decorate=summary=>({
+    ...summary,integrationVersion:'v91-integrated-test-drive-1',
+    sourceDriveVersion:summary.version});
+  return full?{...output,summary:decorate(output.summary)}:
+    decorate(output);
+}
+
 if(process.argv[1]&&import.meta.url===pathToFileURL(
   resolve(process.argv[1])).href){
-  const [path,flag]=process.argv.slice(2);
-  if(!path||flag!==undefined&&flag!=='--full')
-    throw new Error('Usage: node scripts/engine-v2-test-drive.mjs input.json [--full]');
+  const [path,...flags]=process.argv.slice(2);
+  if(!path||flags.some(flag=>
+    !['--full','--integrated'].includes(flag))||
+    new Set(flags).size!==flags.length)
+    throw new Error('Usage: node scripts/engine-v2-test-drive.mjs input.json [--integrated] [--full]');
   const raw=readFileSync(path==='-'?0:path,'utf8').replace(/^\uFEFF/,'');
-  const result=runV91TestDrive(JSON.parse(raw),{full:flag==='--full'});
+  const result=(flags.includes('--integrated')?
+    runV91IntegratedTestDrive:runV91TestDrive)(JSON.parse(raw),
+  {full:flags.includes('--full')});
   console.log(JSON.stringify(result,null,2));
 }

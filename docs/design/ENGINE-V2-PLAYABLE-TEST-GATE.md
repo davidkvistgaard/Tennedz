@@ -1170,3 +1170,16 @@ and their conditional line and read-only point illustration exactly match a
 direct run with the applied orders. This is a visible failed tactical attempt,
 not paid lateral movement, an improved lead-out effect, an official result or
 an award. Cross-band and energy-unpayable plans still refuse where they did.
+
+`node scripts/engine-v2-test-drive.mjs input.json --integrated` is the
+single opt-in offline entry for the most complete already paid path. It
+selects the existing individual group-line and named dropped-road late-catch
+continuations without asking a player to choose internal branch flags. The
+older command and each underlying versioned recording retain their behavior;
+the output identifies `v91-integrated-test-drive-1` and the selected source
+drive version. A fixed 120 km rolling 15-team women's group source finishes
+all 120 riders, and fixed tired 260 km mountain M/F named attacks both reach
+32-rider late-catch lines. Each recording matches the corresponding explicit
+branch run exactly. A source with unmet energy still withholds its line and
+point illustration. This is a more cohesive offline motor test, not yet the
+browser test flow, official classification or point settlement.

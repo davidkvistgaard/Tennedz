@@ -2,7 +2,8 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {spawnSync} from 'node:child_process';
-import {runV91TestDrive} from '../../scripts/engine-v2-test-drive.mjs';
+import {runV91TestDrive,runV91IntegratedTestDrive} from
+  '../../scripts/engine-v2-test-drive.mjs';
 import {prepareLastKmRotationFromTour} from
   '../../lib/engine/v2/finale-last-km-rotation-catch.mjs';
 import {recordFinaleDepletedIndividualLine,
@@ -160,6 +161,63 @@ test('offline test drive rejects unknown managers and accepts stdin JSON',()=>{
   assert.equal(processResult.status,0,processResult.stderr);
   assert.equal(JSON.parse(processResult.stdout).roadStatus,
     'paid_conditional_line');
+});
+
+test('integrated drive selects paid group and late-catch lines on one race',()=>{
+  const groupSettings={distanceKm:120,terrain:'rolling',fatigue:15,
+    teamCount:15,gender:'F',seed:'test-drive-acceptance-1',
+    attack:'repeated',chase:'ignore',defaultRivalPlan:'attack'};
+  const pointContext={tier:3,divisionIndex:1,divisionCount:1};
+  const groupInput={settings:groupSettings,pointContext};
+  const group=runV91IntegratedTestDrive(groupInput,{full:true});
+  const explicitGroup=runV91TestDrive({...groupInput,
+    individualGroupLine:true},{full:true});
+  assert.deepEqual(group.recording,explicitGroup.recording);
+  assert.deepEqual(group.individualLine,explicitGroup.individualLine);
+  assert.equal(group.summary.integrationVersion,
+    'v91-integrated-test-drive-1');
+  assert.equal(group.summary.roadStatus,'conditional_multiband_line');
+  assert.equal(group.summary.finale.lineTimes.length,120);
+  assert.equal(group.summary.canCommitAwards,false);
+  const cli=spawnSync(process.execPath,
+    ['scripts/engine-v2-test-drive.mjs','-','--integrated'],{
+      cwd:new URL('../..',import.meta.url),
+      input:JSON.stringify(groupInput),encoding:'utf8'});
+  assert.equal(cli.status,0,cli.stderr);
+  assert.deepEqual(JSON.parse(cli.stdout),group.summary);
+
+  for(const gender of ['M','F']){
+    const settings={distanceKm:260,terrain:'mountain',fatigue:30,
+      teamCount:4,gender,seed:'test-drive-acceptance-1',
+      attack:'none',chase:'all',defaultRivalPlan:'chase'};
+    const input={settings,attack:{teamId:'you',riderId:'you-4'},
+      pointContext};
+    const integrated=runV91IntegratedTestDrive(input,{full:true});
+    const explicit=runV91TestDrive({...input,
+      individualGroupLine:true,namedDroppedRoad:true,
+      lateCatchLine:true},{full:true});
+    assert.deepEqual(integrated.recording,explicit.recording);
+    assert.deepEqual(integrated.paidRoad,explicit.paidRoad);
+    assert.deepEqual(integrated.individualLine,explicit.individualLine);
+    assert.equal(integrated.summary.status,'conditional_line');
+    assert.equal(integrated.summary.roadStatus,
+      'conditional_named_late_catch_lines_separated');
+    assert.equal(integrated.summary.finale.lineTimes.length,32);
+    assert.equal(integrated.summary.pointsStatus,'withheld');
+    assert.equal(integrated.summary.canCommitAwards,false);
+  }
+});
+
+test('integrated drive keeps unpayable energy and awards unavailable',()=>{
+  const output=runV91IntegratedTestDrive({settings:{distanceKm:260,
+    terrain:'mountain',fatigue:30,teamCount:4,gender:'M',
+    seed:'test-drive-acceptance-1',attack:'selective',
+    chase:'selective',defaultRivalPlan:'mixed'},
+  pointContext:{tier:3,divisionIndex:1,divisionCount:1}});
+  assert.equal(output.roadStatus,'recorded_depleted_bands');
+  assert.equal(output.provisionalPointPreview.status,'unavailable');
+  assert.ok(output.finale.totalUnmetEnergyDemand>0);
+  assert.equal(output.canCommitAwards,false);
 });
 
 test('offline test drive rejects invalid finale riders before a group-road refusal',()=>{
