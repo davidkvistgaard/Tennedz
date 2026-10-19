@@ -91,7 +91,11 @@ for(const width of [390,1440])test(`v91 playtest changes conditions at ${width}p
     await expect(page.getByText('Paid lead-out work: 7 recorded rider intervals.'))
       .toBeVisible();
     await expect(page.getByText(/you-5: 16\.5 energy spent/)).toBeVisible();
-    await expect(page.getByText('you-7: provisional place 1, 125 preview points.'))
+    await expect(page.getByText('you-7: provisional place 1, 125 preview points.',
+      {exact:true}))
+      .toBeVisible();
+    await expect(page.getByText(
+      'Read-only points: you-7: provisional place 3, 75 preview points → you-7: provisional place 1, 125 preview points. Official points: withheld.'))
       .toBeVisible();
     expect(await page.getByText(/Your nominated finisher: you-7 · [\d.]+ s/)
       .textContent()).not.toBe(baselineFinisherTime);
@@ -188,6 +192,8 @@ test('passive defaults make a larger-field attack playable without editing every
     await page.getByLabel('Scenario seed').fill('integrated-probe');
     await page.getByRole('checkbox',{name:'Continue to a conditional finish'})
       .check();
+    await page.getByRole('checkbox',{name:'Show read-only point illustration'})
+      .check();
     await page.getByLabel('Named attack manager').selectOption('you');
     await page.getByLabel('Named attacking rider').selectOption('you-0');
     await page.getByRole('button',{name:'Run full race preview'}).click();
@@ -223,8 +229,16 @@ test('passive defaults make a larger-field attack playable without editing every
       .toBeVisible();
     await expect(page.getByText('120 of 120 riders have individual crossing times.'))
       .toBeVisible();
+    await expect(page.getByText('No unambiguous individual line.',
+      {exact:true}))
+      .toBeVisible();
+    await expect(page.getByText('Official points: withheld · Awards saved: 0'))
+      .toBeVisible();
     await expect(page.getByText(
       'Named final attack: you-0 (solo road) → you-0 (caught road)'))
+      .toBeVisible();
+    await expect(page.getByText(
+      'Read-only points: unavailable (No unambiguous individual line.) → unavailable (No unambiguous individual line.). Official points: withheld.'))
       .toBeVisible();
     await expect(page.getByText(/Same finisher time change: -?[\d.]+ s · Energy at line:/))
       .toBeVisible();

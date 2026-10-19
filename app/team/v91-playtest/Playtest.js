@@ -41,7 +41,7 @@ function comparisonConditions(settings){
     ...(terrain==='custom'?{profileHeightsM}:{})});
 }
 
-function comparisonRun(settings,response){
+function comparisonRun(settings,response,pointContext){
   const summary=response.integrated;
   const ownDecision=summary.managerDecisions?.find(row=>
     row.teamId==='you');
@@ -49,6 +49,12 @@ function comparisonRun(settings,response){
   const leadOutRiderId=ownDecision?.leadOutRiderId??null;
   const crossing=summary.finale?.lineTimes?.find(row=>
     row.riderId===finisherId);
+  const ownPreview=summary.provisionalPointPreview?.riders?.find(row=>
+    row.riderId===finisherId);
+  const pointLabel=pointContext?
+    ownPreview?`${finisherId}: provisional place ${ownPreview.provisionalPlace}, ${ownPreview.previewPoints} preview points`:
+      `unavailable (${summary.provisionalPointPreview?.reason??'No unambiguous individual line.'})`:
+    null;
   return {conditions:comparisonConditions(settings),finisherId,
     crossingSeconds:crossing?.elapsedSecondsFromLastKmStart??null,
     energyAtLine:crossing?.energyAtLine??null,
@@ -59,7 +65,9 @@ function comparisonRun(settings,response){
     leadOutRiderId,
     leadOutEnergy:(summary.finale?.leadOutWork??[])
       .filter(row=>row.riderId===leadOutRiderId)
-      .reduce((total,row)=>total+row.energySpent,0)};
+      .reduce((total,row)=>total+row.energySpent,0),
+    pointContext:pointContext?JSON.stringify(pointContext):null,
+    pointLabel};
 }
 
 function attackDescription(run){
@@ -158,7 +166,8 @@ export default function Playtest(){
       const response=await api('/api/v91-playtest',{method:'POST',
         headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
       if(integratedMode){
-        const next=comparisonRun(raceSettings,response);
+        const next=comparisonRun(raceSettings,response,
+          showPointPreview?pointContext:null);
         setComparison(previousRun?.conditions===next.conditions?
           {before:previousRun,after:next}:null);
         setPreviousRun(next);
@@ -451,6 +460,9 @@ export default function Playtest(){
             <p>Named final attack: {attackDescription(comparison.before)} → {attackDescription(comparison.after)}</p>
             <p>Groups at the last-kilometre handoff: {comparison.before.sourceGroups} → {comparison.after.sourceGroups}</p>
             <p>Lead-out: {comparison.before.leadOutRiderId??'none'} ({comparison.before.leadOutEnergy.toFixed(1)} energy paid) → {comparison.after.leadOutRiderId??'none'} ({comparison.after.leadOutEnergy.toFixed(1)} energy paid)</p>
+            {comparison.before.pointContext&&
+              comparison.before.pointContext===comparison.after.pointContext&&
+              <p>Read-only points: {comparison.before.pointLabel} → {comparison.after.pointLabel}. Official points: withheld.</p>}
             <p>Finisher crossing: {comparison.before.finisherId} {comparison.before.crossingSeconds?.toFixed(3)??'unavailable'} s → {comparison.after.finisherId} {comparison.after.crossingSeconds?.toFixed(3)??'unavailable'} s</p>
             {comparison.before.finisherId===comparison.after.finisherId&&
               comparison.before.crossingSeconds!==null&&

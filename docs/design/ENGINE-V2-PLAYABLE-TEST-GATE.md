@@ -1674,3 +1674,14 @@ fixed M/F and 4/15/20-team chased cases reduced two group-level approach
 frames plus five paid finale frames with 32/120/160 line crossings and
 points withheld. This is a coherent two-part preview trace for that road,
 not an official classification or a full individual-position replay.
+
+The paired browser comparison now includes the nominated finisher's
+read-only point illustration when both runs use the same point context.
+In the fixed 40 km flat four-team browser case, adding a paid helper changed
+the provisional finisher from place 3/75 preview points to place 1/125;
+the comparison still showed official points withheld. In the fixed 120 km
+rolling, 15-team caught-attack case, both sides instead showed points
+unavailable because the road has no unambiguous individual line order.
+The UI therefore does not infer a point change from conditional crossings
+on a caught road. All four local browser cases passed at 390/1440 px and
+for the named-attack scenarios; lint and the isolated preview build passed.
