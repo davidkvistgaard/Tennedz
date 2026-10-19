@@ -56,6 +56,17 @@ for(const gender of mode==='one'?['M']:['M','F'])
       lineHandoff.roadBands[0].positionM<=
         lineHandoff.roadBands[1].positionM))
       throw new Error('The survivor audit lost a paid, separated front.');
+    const priorContact=output.individualLine?.priorContact;
+    if(priorContact&&(
+      priorContact.kind!=='rear_attack_bunch_contact'||
+      !Number.isFinite(priorContact.positionM)||
+      priorContact.roadBands.map(band=>band.kind).join(',')!==
+        'front,bunch'||
+      !priorContact.roadBands[1].riderIds.includes(
+        priorContact.caughtRiderId)||
+      priorContact.elapsedSinceLaunchSeconds>=
+        output.individualLine.roadPrefix.sourceElapsedSinceLaunchSeconds))
+      throw new Error('The survivor audit lost its prior paid contact.');
     const bunchAt200=output.bandContinuation?.frames.find(frame=>
       frame.roadBands.some(band=>band.kind==='bunch'&&
         Math.abs(band.positionM-(distanceKm*1000-200))<1e-7));
@@ -67,9 +78,9 @@ for(const gender of mode==='one'?['M']:['M','F'])
       terrain,fatigue,
       status:summary.status,roadStatus:summary.roadStatus,
       individualLineVersion:summary.individualLineVersion??null,
-      contactKinds:output.individualLine?.roadPrefix?.contactEvents
-        ?.map(event=>event.kind)??paidRoad?.contactEvents
-        ?.map(event=>event.kind)??[],
+      contactKinds:[...(priorContact?[priorContact.kind]:[]),
+        ...(output.individualLine?.roadPrefix?.contactEvents??
+          paidRoad?.contactEvents??[]).map(event=>event.kind)],
       bandCrossings:paidRoad?.bandCrossings.map(band=>({
         kind:band.kind,seconds:band.elapsedSinceLaunchSeconds}))??[],
       minimumCrossBandGapM:output.individualLine?.contactAudit

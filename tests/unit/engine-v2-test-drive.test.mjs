@@ -37,7 +37,9 @@ import {validateFinaleConcurrentLateCatchLineFromTour} from
 import {recordFinaleConcurrentSurvivorLineFromTour,
   auditFinaleConcurrentSoloAgainstBunch,
   validateFinaleConcurrentSurvivorLineFromTour,
-  validateFinaleConcurrentPriorRearCatchSurvivorLineFromTour} from
+  recordFinaleConcurrentPriorRearCatchSurvivorLineFromTour,
+  validateFinaleConcurrentPriorRearCatchSurvivorLineFromTour,
+  validateFinaleConcurrentPriorRearCatchLedgerLineFromTour} from
   '../../lib/engine/v2/finale-concurrent-survivor-line.mjs';
 import {recordFinaleConcurrentRearCaught400StepFromTour,
   validateFinaleConcurrentRearCaught400StepFromTour} from
@@ -99,8 +101,26 @@ test('long mountain rear catch pays a conditional individual solo line',()=>{
     'prior_rear_caught_band_crossings');
   assert.ok(bandContinuation.bandCrossings[0].elapsedSinceLaunchSeconds<
     bandContinuation.bandCrossings[1].elapsedSinceLaunchSeconds);
-  assert.equal(validateFinaleConcurrentPriorRearCatchSurvivorLineFromTour(
+  assert.equal(validateFinaleConcurrentPriorRearCatchLedgerLineFromTour(
     recording.recording,{plans:null},individualLine),true);
+  assert.equal(individualLine.version,
+    'v2-finale-concurrent-survivor-line-lab-3');
+  assert.equal(individualLine.priorContact.kind,
+    'rear_attack_bunch_contact');
+  assert.equal(individualLine.priorContact.caughtRiderId,
+    rearCaught400Step.caughtRiderId);
+  assert.equal(individualLine.priorContact.positionM,
+    individualLine.priorContact.roadBands[1].positionM);
+  assert.ok(individualLine.priorContact.elapsedSinceLaunchSeconds<
+    individualLine.roadPrefix.sourceElapsedSinceLaunchSeconds);
+  assert.deepEqual(summary.finale.priorContact,individualLine.priorContact);
+  const olderLine=recordFinaleConcurrentPriorRearCatchSurvivorLineFromTour(
+    recording.recording);
+  assert.equal(olderLine.version,
+    'v2-finale-concurrent-survivor-line-lab-2');
+  assert.equal(olderLine.priorContact,undefined);
+  assert.equal(validateFinaleConcurrentPriorRearCatchSurvivorLineFromTour(
+    recording.recording,{plans:null},olderLine),true);
   assert.equal(individualLine.provisionalLineOrder.length,teamCount*8);
   assert.equal(individualLine.provisionalLineOrder[0].riderId,
     rearCaught400Step.frontRiderId);

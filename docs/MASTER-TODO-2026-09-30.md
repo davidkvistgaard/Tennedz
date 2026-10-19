@@ -22,6 +22,17 @@ hjulplacering er fortsat udledt, så klassifikation, point og samlet spilbar
 accept under 04/11 er stadig åbne. Flere køn, feltstørrelser og ruter for
 denne særlige gren er endnu ikke kontrolleret på andre ruter, ordrer og seeds.
 
+**Genafspilning af tidligere indhentning, 19. oktober (isoleret motorprøve):**
+En ny version af den samme foreløbige individuelle mållinje tager den allerede
+betalte indhentning af bageste angriber med i optagelsen: præcis tid,
+vejposition, begge vejgrupper og indhentet rytters energi. Den tidligere
+version kan fortsat genskabes; ingen bevægelse, taktik eller målrækkefølge er
+ændret. Den nye version viser kontakten i alle fire faste M/F- og
+15/20-holds-bjergprøver med henholdsvis 120/160 unikke foreløbige
+målpassager. Fokuseret genafspilning, hele enhedssættet og lint består.
+Hjulplacering, officiel klassifikation og
+point er fortsat åbne.
+
 **Motorrettelse 19. oktober:** Den isolerede kontaktkontrol for allerede
 afsatte ryttere brugte tidligere ID-rækkefølge som vejorden. En ny version
 fjerner fire falske kontaktfund i den faste 66-løbsprøve: alle 14 betalte

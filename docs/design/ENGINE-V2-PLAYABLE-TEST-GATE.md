@@ -1374,3 +1374,13 @@ three-band and survivor recordings replay unchanged. This establishes one
 additional complete laboratory line, not a calibrated finish or coverage of
 other routes, orders and seeds. Wheel positions remain inferred; classified
 results, point illustrations and awards remain withheld.
+
+The next version of that same conditional individual line explicitly carries
+the already paid rear-attacker/bunch contact into the replay. It records the
+exact contact time and road position, the two road bands, the caught rider
+and their energy at contact. The older line version remains reproducible;
+the new event ledger changes no rider motion or provisional order. This
+writes the contact in all four fixed M/F, 15/20-team mountain repetitions,
+each with 120/160 unique provisional crossings. This closes a replay
+visibility gap for this branch, while the inferred bunch
+wheels and withheld official classification still need resolution.

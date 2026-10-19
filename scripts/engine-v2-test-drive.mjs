@@ -27,8 +27,8 @@ import {recordFinaleConcurrentLateCatchLineFromTour,
   '../lib/engine/v2/finale-concurrent-late-catch-line.mjs';
 import {recordFinaleConcurrentSurvivorLineFromTour,
   validateFinaleConcurrentSurvivorLineFromTour,
-  recordFinaleConcurrentPriorRearCatchSurvivorLineFromTour,
-  validateFinaleConcurrentPriorRearCatchSurvivorLineFromTour} from
+  recordFinaleConcurrentPriorRearCatchLedgerLineFromTour,
+  validateFinaleConcurrentPriorRearCatchLedgerLineFromTour} from
   '../lib/engine/v2/finale-concurrent-survivor-line.mjs';
 import {recordFinaleConcurrentRearCaught400StepFromTour,
   validateFinaleConcurrentRearCaught400StepFromTour} from
@@ -933,9 +933,9 @@ export function runV91ConcurrentTestDrive(scenario,{full=false}={}){
       }
       try{
         const priorRearCatchLine=
-          recordFinaleConcurrentPriorRearCatchSurvivorLineFromTour(tour,{
+          recordFinaleConcurrentPriorRearCatchLedgerLineFromTour(tour,{
             plans:request.plans??null});
-        validateFinaleConcurrentPriorRearCatchSurvivorLineFromTour(tour,{
+        validateFinaleConcurrentPriorRearCatchLedgerLineFromTour(tour,{
           plans:request.plans??null},priorRearCatchLine);
         const summary={...base,status:'conditional',
           roadStatus:priorRearCatchLine.roadStatus,
@@ -944,6 +944,7 @@ export function runV91ConcurrentTestDrive(scenario,{full=false}={}){
           provisionalLineOrder:priorRearCatchLine.provisionalLineOrder,
           finale:{individualFinishStatus:'conditional_inferred_wheels',
             lineTimes:priorRearCatchLine.conditionalCrossings,
+            priorContact:priorRearCatchLine.priorContact,
             paidRoad:priorRearCatchLine.roadPrefix,
             soloRoad:priorRearCatchLine.frontSuffix,
             crossBandContactAudit:priorRearCatchLine.contactAudit,
