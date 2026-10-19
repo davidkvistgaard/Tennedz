@@ -828,3 +828,8 @@ only the player helper. `rival-1-0` instead spends assembly energy without
 reaching the wheel and gives its finisher no such pull. These outcomes remain
 conditional because source wheels and the passing rule are inferred; awards
 are withheld. The acceptance gate still needs broader paid competing plans.
+The complete-bunch offline summary is now `v91-offline-test-drive-5` and
+includes the recorded `leadOutAttempts` with distance, energy, gap and
+verified status. This exposes a paid but still-separated attempt without
+misstating it as a pull. It changes no underlying motor recording or official
+result contract.

@@ -421,6 +421,7 @@ test('two payable manager lead-outs change one recorded finale',()=>{
   const two=runV91TestDrive({settings,individualGroupLine:true,
     finalePlans:[player,rival]},{full:true});
   assert.equal(two.summary.roadStatus,'paid_conditional_line');
+  assert.equal(two.summary.version,'v91-offline-test-drive-5');
   assert.deepEqual(two.recording.recording,one.recording.recording);
   const frames=two.recording.paidFinale.frames;
   for(const helper of ['you-5','rival-1-4']){
@@ -430,10 +431,25 @@ test('two payable manager lead-outs change one recorded finale',()=>{
     assert.ok(frames.flatMap(frame=>frame.assemblyAttempts??[])
       .some(row=>row.helperId===helper&&
         row.status==='paid_pull_next_boundary'));
+    assert.ok(two.summary.finale.leadOutAttempts.some(row=>
+      row.helperId===helper&&row.status==='paid_pull_next_boundary'&&
+      row.helperEnergySpent>0));
   }
   const time=(trial,id)=>trial.summary.finale.lineTimes.find(row=>
     row.riderId===id).elapsedSecondsFromLastKmStart;
   assert.ok(time(two,'rival-1-7')<time(one,'rival-1-7'));
+  const unreached=runV91TestDrive({settings,individualGroupLine:true,
+    finalePlans:[player,{...rival,leadOutRiderId:'rival-1-0'}]});
+  assert.equal(unreached.roadStatus,'paid_conditional_line');
+  assert.ok(unreached.finale.leadOutAttempts.some(row=>
+    row.helperId==='rival-1-0'&&row.status==='still_separated'&&
+    row.helperEnergySpent>0));
+  assert.equal(unreached.finale.leadOutAttempts.some(row=>
+    row.helperId==='rival-1-0'&&
+    row.status==='paid_pull_next_boundary'),false);
+  assert.equal(unreached.finale.lineTimes.find(row=>
+    row.riderId==='rival-1-7').elapsedSecondsFromLastKmStart,
+  time(one,'rival-1-7'));
   assert.equal(two.summary.pointsStatus,'withheld');
   assert.equal(two.summary.canCommitAwards,false);
 });

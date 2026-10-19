@@ -108,7 +108,8 @@ function summaryFor(trial,request,pointContext){
       ?.finisherId??null,
     leadOutRiderId:trial.finalePlans?.find(row=>row.teamId===team.id)
       ?.leadOutRiderId??null}));
-  return {version:'v91-offline-test-drive-1',
+  return {version:trial.roadStatus==='paid_conditional_line'?
+    'v91-offline-test-drive-5':'v91-offline-test-drive-1',
     input:trial.settings,request,engineVersion:trial.version,
     roadStatus:trial.roadStatus,
     resultStatus:trial.classifiedResults===null?'unclassified':'classified',
@@ -164,6 +165,15 @@ function summaryFor(trial,request,pointContext){
           riderId:row.riderId,role:row.role,
           energySpent:row.energySpent,
           distanceTravelledM:row.distanceTravelledM}))),
+      leadOutAttempts:paidFinale.frames.flatMap(frame=>
+        (frame.assemblyAttempts??[]).map(attempt=>({
+          endDistanceM:frame.endDistanceM,
+          teamId:attempt.teamId,helperId:attempt.helperId,
+          finisherId:attempt.finisherId,
+          helperEnergySpent:attempt.helperEnergySpent,
+          gapAtStartM:attempt.gapAtStartM,
+          gapAtEndM:attempt.gapAtEndM,
+          status:attempt.status}))),
     }};
 }
 
