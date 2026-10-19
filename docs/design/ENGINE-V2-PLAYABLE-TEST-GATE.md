@@ -759,3 +759,19 @@ uncertainty for active bands, but the initial wheel positions, lanes and
 passing remain provisional. Dropped riders have no source wheel position, so
 their pre-500 contact is still unresolved and all 14 depleted combined orders
 remain withheld. The official classification and award gate remains open.
+
+A separate fixed flat-road boundary probe
+(`node scripts/engine-v2-flat-length-boundary-audit.mjs`) paired 40 and 260 km, fresh and
+30-fatigue fields, M/F, 4/15/20 teams, and no attack, ignored chase, or
+repeated attack against ordered all-team chase (72 fictional runs). The short
+fields reached individual conditional lines in all 36 cases; the 260 km
+fresh four-team contested races exposed a single surviving front rider with
+no recorded rival chaser. A new versioned group fallback records that all
+three rival teams ordered chase but have no helper above the existing energy
+minimum. It pays passive group travel and retains the locked road; it does
+not invent a chase pull or a solo sprint. The opt-in individual-line drive
+marks that singleton continuation unsupported while preserving the paid
+band. In the six 260 km tired contested runs, zero-reserve riders cannot pay
+even the first passive slice. Those runs now refuse with an explicit unpaid
+travel reason and no result or points. These are coverage and integrity
+observations, not calibrated sporting frequencies.

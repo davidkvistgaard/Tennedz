@@ -279,6 +279,33 @@ test('paid dropped travel joins an opt-in individual bunch line without inventin
   assert.equal(unpaidPlan.pointsStatus,'withheld');
 });
 
+test('a singleton front and unpaid road state stay visible in the offline drive',()=>{
+  const settings={distanceKm:260,terrain:'flat',fatigue:0,
+    gender:'M',teamCount:4,seed:'flat-length-boundary-1',
+    defaultRivalPlan:'chase',attack:'repeated',chase:'all'};
+  const singleton=runV91TestDrive({settings,individualGroupLine:true},
+    {full:true});
+  assert.equal(singleton.summary.roadStatus,'paid_group_bands');
+  assert.equal(singleton.summary.individualLineStatus,
+    'singleton_front_unresolved');
+  assert.equal(singleton.summary.finale.chaseAvailability
+    .unavailableTeamIds.length,3);
+  assert.equal(singleton.summary.pointsStatus,'withheld');
+  assert.equal(singleton.individualLine,undefined);
+  const ordered=runV91TestDrive({settings,individualGroupLine:true,
+    finalePlans:[{teamId:'you',finisherId:'you-7',
+      leadOutRiderId:null}]});
+  assert.equal(ordered.status,'unsupported');
+  assert.equal(ordered.individualLineStatus,
+    'singleton_front_unresolved');
+  const unpaid=runV91TestDrive({settings:{...settings,fatigue:30},
+    individualGroupLine:true});
+  assert.equal(unpaid.status,'unsupported');
+  assert.match(unpaid.reason,/unpaid last-kilometre rider travel/);
+  assert.equal(unpaid.lastKmSource.roadGroups.length,1);
+  assert.equal(unpaid.pointsStatus,'withheld');
+});
+
 test('paired field strength and fatigue reach the same conditional path with different paid lines',()=>{
   const settings={distanceKm:40,terrain:'flat',teamCount:4,gender:'F',
     seed:'independent-field',attack:'none',chase:'ignore',

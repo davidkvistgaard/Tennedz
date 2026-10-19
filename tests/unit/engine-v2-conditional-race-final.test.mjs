@@ -490,6 +490,41 @@ test('one recorded cooperative group reaches a paid band line without awards',()
   }
 });
 
+test('unavailable ordered chase pays only a passive band when every rider can travel',()=>{
+  for(const gender of ['M','F']){
+    const input={distanceKm:260,terrain:'flat',fatigue:0,
+      gender,teamCount:4,seed:'flat-length-boundary-1',
+      defaultRivalPlan:'chase',attack:'repeated',chase:'all'};
+    const trial=createV91ConditionalRaceFinal(input);
+    assert.equal(trial.version,'v91-conditional-race-final-12');
+    assert.equal(trial.roadStatus,'paid_group_bands');
+    assert.equal(trial.paidFinale.line.outcome,'survived');
+    assert.equal(trial.paidFinale.line.finalRiderEnergy.length,32);
+    assert.equal(trial.recording.frames.at(-2).chasers.length,0);
+    assert.equal(trial.chaseAvailability.unavailableTeamIds.length,3);
+    assert.equal(trial.paidFinale.line.approachFrames[1]
+      .roadGroups[0].riderIds.length,1);
+    assert.equal(trial.classifiedResults,null);
+    assert.equal(trial.pointsStatus,'withheld');
+    assert.equal(trial.canCommitAwards,false);
+    assert.equal(validateV91ConditionalRaceFinal(input,{},trial),true);
+    const altered=structuredClone(trial);
+    altered.chaseAvailability.unavailableTeamIds.pop();
+    assert.throws(()=>validateV91ConditionalRaceFinal(input,{},altered),
+      /does not replay/);
+  }
+});
+
+test('zero-reserve riders cannot inherit a paid passive finale',()=>{
+  for(const gender of ['M','F'])for(const teamCount of [4,15,20]){
+    const input={distanceKm:260,terrain:'flat',fatigue:30,
+      gender,teamCount,seed:'flat-length-boundary-1',
+      defaultRivalPlan:'chase',attack:'repeated',chase:'all'};
+    assert.throws(()=>createV91ConditionalRaceFinal(input),
+      /unpaid last-kilometre rider travel/);
+  }
+});
+
 test('an unengaged order to chase ones own break leaves paid road unchanged',()=>{
   for(const distanceKm of [40,120])for(const gender of ['M','F'])
     for(const teamCount of [4,15,20]){
