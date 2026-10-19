@@ -38,10 +38,12 @@ import {recordFinaleConcurrentDualSurvivorLineFromTour,
   recordFinaleConcurrentDualSurvivorSprintLineFromTour,
   validateFinaleConcurrentDualSurvivorSprintLineFromTour} from
   '../lib/engine/v2/finale-concurrent-dual-survivor-line.mjs';
-import {validateRequestedFinalePlans} from
+import {validateRequestedFinalePlans,createV91FinaleTrial} from
   '../lib/engine/v2/playtest-finale-trial.mjs';
 import {recordFinaleLaneQueuedEarlyBunchRunnerFromTour,
-  validateFinaleLaneQueuedEarlyBunchRunnerFromTour} from
+  validateFinaleLaneQueuedEarlyBunchRunnerFromTour,
+  recordFinaleLaneQueuedCaughtBunchRunnerFromTour,
+  validateFinaleLaneQueuedCaughtBunchRunnerFromTour} from
   '../lib/engine/v2/finale-paid-bunch-runner.mjs';
 import {finaleSnapshotFromTour} from
   '../lib/engine/v2/finale-snapshot.mjs';
@@ -850,8 +852,8 @@ export function runV91IntegratedTestDrive(scenario,{full=false}={}){
 }
 
 // Separate opt-in laboratory view of the fixed-source-lane bunch finish.
-// It pays the selected full race and kilometre, then refuses any road or
-// attack that the lane-queued runner cannot yet continue honestly.
+// It pays the selected full race and either complete-bunch kilometre or
+// caught-attack final 500 m, while refusing unsupported road outcomes.
 export function runV91LaneQueuedTestDrive(scenario,{full=false}={}){
   validateDriveScenario(scenario);
   if(scenario.individualGroupLine!==undefined||
@@ -859,9 +861,21 @@ export function runV91LaneQueuedTestDrive(scenario,{full=false}={}){
     scenario.lateCatchLine!==undefined)
     throw new Error('Choose the lane queue without other finale branch flags.');
   const request=requestFor(scenario);
-  if(request.attackTeamId!==undefined)
-    throw new Error('A named attack needs the integrated road test drive.');
-  const source=createV91Playtest(scenario.settings);
+  const namedAttack=request.attackTeamId!==undefined;
+  let source,sourceRefusal=null,roadDecision=null;
+  try{
+    if(namedAttack){
+      const trial=createV91FinaleTrial(scenario.settings,request);
+      source={settings:trial.settings,recording:trial.recording};
+      roadDecision=trial.decision;
+    }else source=createV91Playtest(scenario.settings);
+  }catch(error){
+    if(error.message!==
+      'The controlled finale trial needs one complete source bunch.'||
+      !error.cause?.playtestSource)throw error;
+    source=error.cause.playtestSource;
+    sourceRefusal=error.message;
+  }
   const tour=source.recording;
   const plans=request.plans??tour.committedInputs.teams.map(team=>({
     teamId:team.id,finisherId:team.orders.captainId,
@@ -885,22 +899,36 @@ export function runV91LaneQueuedTestDrive(scenario,{full=false}={}){
         plan.teamId===team.id).leadOutRiderId})),
     ...(scenario.pointContext?{provisionalPointPreview:{
       status:'unavailable',reason:'No classified individual result.'}}:{}),
+    ...(roadDecision?{attackRoadOutcome:roadDecision.branch}:{}),
     pointsStatus:'withheld',canCommitAwards:false};
+  if(sourceRefusal||namedAttack&&
+    !['caught','contained'].includes(roadDecision.branch)){
+    const summary={...base,status:'unsupported',
+      reason:sourceRefusal??'The lane-queued finish needs a complete bunch at 500 m.',
+      individualFinishStatus:'unavailable'};
+    return full?{summary,recording:tour}:summary;
+  }
+  const record=namedAttack?
+    recordFinaleLaneQueuedCaughtBunchRunnerFromTour:
+    recordFinaleLaneQueuedEarlyBunchRunnerFromTour;
+  const validate=namedAttack?
+    validateFinaleLaneQueuedCaughtBunchRunnerFromTour:
+    validateFinaleLaneQueuedEarlyBunchRunnerFromTour;
   let paidFinale;
-  try{paidFinale=recordFinaleLaneQueuedEarlyBunchRunnerFromTour(
-    tour,{plans});}
+  try{paidFinale=record(tour,{...request,plans});}
   catch(error){
     if(!['An early bunch plan needs one inactive-attack bunch.',
       'The nominated lead-out cannot work beside the finisher.']
       .includes(error.message)&&
       !/^An early lead-out helper needs an adjacent lane: (?:you|rival-[1-9]\d*)\.$/
+        .test(error.message)&&
+      !/^Lead-out helper is not on the finisher's source wheel: (?:you|rival-[1-9]\d*)\.$/
         .test(error.message))throw error;
     const summary={...base,status:'unsupported',reason:error.message,
       individualFinishStatus:'unavailable'};
     return full?{summary,recording:tour}:summary;
   }
-  validateFinaleLaneQueuedEarlyBunchRunnerFromTour(tour,
-    {plans},paidFinale);
+  validate(tour,{...request,plans},paidFinale);
   const summary={...base,status:'conditional',
     individualFinishStatus:'conditional_fixed_source_lanes',
     finaleVersion:paidFinale.version,
@@ -908,6 +936,11 @@ export function runV91LaneQueuedTestDrive(scenario,{full=false}={}){
     conditionalLine:paidFinale.lineOrder,
     leadOutAttempts:paidFinale.frames.flatMap(frame=>
       frame.assemblyAttempts??[]),
+    leadOutWork:paidFinale.frames.flatMap(frame=>
+      frame.riders.filter(row=>row.role?.startsWith('lead_out'))
+        .map(row=>({riderId:row.riderId,role:row.role,
+          energySpent:row.energySpent,
+          distanceTravelledM:row.distanceTravelledM}))),
     laneBlocks:paidFinale.frames.flatMap(frame=>
       frame.riders.flatMap(row=>(row.laneBlocks??[]).map(block=>({
         riderId:row.riderId,...block})))),

@@ -5,7 +5,8 @@ import {spawnSync} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
 import {runV91LaneQueuedTestDrive,runV91IntegratedTestDrive} from
   '../../scripts/engine-v2-test-drive.mjs';
-import {validateFinaleLaneQueuedEarlyBunchRunnerFromTour} from
+import {validateFinaleLaneQueuedEarlyBunchRunnerFromTour,
+  validateFinaleLaneQueuedCaughtBunchRunnerFromTour} from
   '../../lib/engine/v2/finale-paid-bunch-runner.mjs';
 
 const example=JSON.parse(readFileSync(new URL(
@@ -33,7 +34,7 @@ test('offline lane-queued choice pays a replayable finish from route and manager
   }
 });
 
-test('unpayable source roads and attack requests stay explicit',()=>{
+test('unpayable source roads and solo attack outcomes stay explicit',()=>{
   const separated={settings:{...example.settings,
     distanceKm:260,terrain:'mountain',teamCount:4,
     fatigue:30,seed:'early-matrix'},finalePlans:[]};
@@ -42,12 +43,33 @@ test('unpayable source roads and attack requests stay explicit',()=>{
   assert.match(summary.reason,/one inactive-attack bunch/);
   assert.equal(summary.conditionalLine,undefined);
   assert.equal(summary.pointsStatus,'withheld');
-  assert.throws(()=>runV91LaneQueuedTestDrive({...example,
-    attack:{teamId:'you',riderId:'you-0'}}),
-  /named attack needs the integrated road test drive/);
+  const solo=runV91LaneQueuedTestDrive({settings:{...example.settings,
+    seed:'trial'},attack:{teamId:'you',riderId:'you-7'}});
+  assert.equal(solo.status,'unsupported');
+  assert.equal(solo.attackRoadOutcome,'solo');
+  assert.match(solo.reason,/complete bunch at 500 m/);
   assert.throws(()=>runV91LaneQueuedTestDrive({...example,
     individualGroupLine:true}),
   /without other finale branch flags/);
+});
+
+test('one caught named attack pays a lane-queued finish and helper on its locked tour',()=>{
+  const scenario={settings:{...example.settings,seed:'trial'},
+    attack:{teamId:'you',riderId:'you-0'},
+    finalePlans:[{teamId:'rival-1',finisherId:'rival-1-7',
+      leadOutRiderId:'rival-1-5'}]};
+  const {summary,recording,paidFinale}=
+    runV91LaneQueuedTestDrive(scenario,{full:true});
+  assert.equal(summary.status,'conditional');
+  assert.equal(summary.attackRoadOutcome,'caught');
+  assert.equal(paidFinale.startDistanceM,39500);
+  assert.equal(summary.conditionalLine.length,32);
+  assert.ok(summary.leadOutWork.some(row=>
+    row.riderId==='rival-1-5'&&row.energySpent>0));
+  assert.equal(summary.pointsStatus,'withheld');
+  assert.equal(validateFinaleLaneQueuedCaughtBunchRunnerFromTour(
+    recording,{attackTeamId:'you',plans:summary.request.plans},
+    paidFinale),true);
 });
 
 test('several manager orders and a paid helper survive the offline request',()=>{

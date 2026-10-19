@@ -1452,7 +1452,22 @@ separate version in the offline motor test. Its ordinary input already allows
 route, terrain, distance, field size, manager tactics and optional finisher/
 lead-out overrides. `--full` includes the complete recorded race and paid
 kilometre for replay inspection. A source with separated road groups, a
-last-kilometre attack, or an unavailable helper reports an explicit refusal;
-named attacks belong to the existing `--integrated` drive. The lane-queued
+unresolved last-kilometre attack, or an unavailable helper reports an explicit
+refusal. The lane-queued
 summary gives the conditional individual line, energy, lead-out attempts and
 same-lane blocks. It does not classify a result or award or preview points.
+
+The same opt-in lane-queue rule now also starts from an already paid, measured
+`caught` or `contained` 500 m handoff after one named manager attack. The new
+`v2-finale-lane-queued-caught-bunch-runner-lab-12` preserves the existing
+attack decision, source road trace and every source rider, then pays the
+remaining individual travel and work behind fixed source lanes. The older
+500 m open-road runner is unchanged. In fixed M/F flat, rolling and mountain
+4/15/20-team examples where the controlled source is a complete bunch, all
+eligible caught attacks reached a unique conditional crossing without a
+same-lane pass; the four-team mountain source correctly refused its earlier
+separated road. A valid four-team helper changed its finisher's paid crossing.
+`--lane-queue` now accepts a single named attack that is caught by 500 m and
+reports `attackRoadOutcome`, paid helper work and line energy. A surviving
+solo or separated source remains explicitly unsupported by this particular
+lane-queued branch; `--integrated` retains the other paid road continuations.
