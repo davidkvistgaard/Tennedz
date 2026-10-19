@@ -1,7 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {runV91TestDrive} from '../../scripts/engine-v2-test-drive.mjs';
-import {projectV91ProvisionalNamedDroppedPointPreview} from
+import {projectV91ProvisionalNamedDroppedPointPreview,
+  projectV91ProvisionalNamedDroppedSurvivorPointPreview} from
   '../../lib/engine/v2/playtest-point-preview.mjs';
 import {pointsForDivisionResult} from '../../lib/calendar/points.mjs';
 
@@ -58,4 +59,24 @@ test('named dropped preview rejects contact and ambiguous places',()=>{
   assert.throws(()=>projectV91ProvisionalNamedDroppedPointPreview(
     tour,trial.paidRoad,ambiguous,pointContext),
   /does not replay/);
+});
+
+test('surviving named solo preview uses its three replayed bands',()=>{
+  const trial=source('you-5');
+  const preview=trial.summary.provisionalPointPreview;
+  assert.equal(preview.version,
+    'v91-provisional-named-dropped-point-preview-2');
+  assert.equal(preview.riders.length,32);
+  assert.equal(preview.riders[0].riderId,'you-5');
+  assert.equal(preview.canCommitAwards,false);
+  assert.deepEqual(preview.awardRows,[]);
+  for(const row of preview.riders)
+    assert.equal(row.previewPoints,pointsForDivisionResult({tier:3,
+      resultType:'ONE_DAY',placing:row.provisionalPlace,multiplier:1}));
+  const contact=structuredClone(trial.individualLine);
+  contact.overlapAudit.status='potential_longitudinal_overlap';
+  assert.throws(()=>
+    projectV91ProvisionalNamedDroppedSurvivorPointPreview(
+      trial.recording.recording,trial.paidRoad,contact,pointContext),
+  /separate paid named and dropped lines/);
 });

@@ -682,6 +682,47 @@ test('an early caught named attack feeds paid nominated and isolated lines',()=>
     row.riderId==='rival-2-0').elapsedSecondsFromLastKmStart);
 });
 
+test('a surviving named solo keeps three paid bands and audits rival lead-out contact',()=>{
+  const settings={distanceKm:260,terrain:'flat',fatigue:30,
+    gender:'M',teamCount:4,seed:'test-drive-acceptance-1',
+    attack:'none',chase:'ignore',defaultRivalPlan:'chase'};
+  const base={settings,namedDroppedRoad:true,
+    attack:{teamId:'you',riderId:'you-5'},
+    pointContext:{tier:3,divisionIndex:1,divisionCount:1}};
+  const solo=runV91TestDrive(base,{full:true});
+  assert.equal(solo.summary.version,'v91-offline-test-drive-8');
+  assert.equal(solo.summary.status,'conditional_line');
+  assert.equal(solo.summary.finale.roadFrames.length,2);
+  assert.equal(solo.summary.finale.bandsAt500M.length,3);
+  assert.equal(solo.summary.finale.lineTimes.length,32);
+  assert.equal(solo.summary.finale.separateBandTravel.length,10);
+  assert.equal(solo.summary.finale.provisionalLineOrder.length,32);
+  assert.equal(solo.summary.provisionalPointPreview.riders.length,32);
+  assert.equal(solo.summary.provisionalPointPreview.version,
+    'v91-provisional-named-dropped-point-preview-2');
+  assert.equal(solo.summary.pointsStatus,'withheld');
+  const lead=runV91TestDrive({...base,finalePlans:[{
+    teamId:'you',finisherId:'you-7',leadOutRiderId:'you-4'}]},
+  {full:true});
+  assert.deepEqual(lead.summary.finale.roadFrames,
+    solo.summary.finale.roadFrames);
+  assert.deepEqual(lead.individualLine.positionedSource,
+    solo.individualLine.positionedSource);
+  assert.ok(lead.summary.finale.leadOutWork.length>0);
+  assert.equal(lead.summary.finale.lineTimes.length,32);
+  assert.equal(lead.summary.finale.overlapAudit.status,
+    'potential_longitudinal_overlap');
+  assert.equal(lead.summary.finale.individualFinishStatus,
+    'conditional_crossings_contact_unresolved');
+  assert.equal(lead.summary.finale.provisionalLineOrder,null);
+  assert.equal(lead.summary.provisionalPointPreview.status,'unavailable');
+  assert.equal(lead.summary.canCommitAwards,false);
+  const soloFinisher=runV91TestDrive({...base,
+    attack:{teamId:'you',riderId:'you-7'}});
+  assert.equal(soloFinisher.status,'unsupported');
+  assert.match(soloFinisher.reason,/solo sprint needs separate paid work/);
+});
+
 test('an earlier player attack carries earned load into a paid named finale',()=>{
   const settings={distanceKm:40,terrain:'flat',fatigue:0,
     gender:'M',teamCount:4,seed:'test-drive-acceptance-1',

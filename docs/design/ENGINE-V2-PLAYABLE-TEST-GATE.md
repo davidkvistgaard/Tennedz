@@ -975,3 +975,19 @@ energy, team and place, then applies the existing one-day division point
 policy. A surviving attacker, possible contact or tied place gets no such
 projection. The preview has no award rows and cannot commit points; the race
 record still says `classifiedResults:null` and `pointsStatus:'withheld'`.
+
+A further separate survivor recording now covers a named rider who remains
+alone ahead through the line while one rider remains dropped. It retains the
+paid solo and dropped trajectories from the same road tape, and runs nominated
+finisher/lead-out work only for the 500 m bunch band. The signed three-band
+audit decides whether the independent trajectories could meet. In the fixed
+long tired four-team example, `you-5` survives and all 32 conditional
+crossings are unique; the read-only `v91-provisional-named-dropped-point-
+preview-2` follows the same existing policy. Nominating `you-4` to lead out
+`you-7` records four helper pulls but creates possible bunch/solo contact.
+That paired run keeps its conditional paid paths, removes the provisional
+full-field order and withholds preview points. Two seeds, three routes and
+M/F categories repeat those separate/contact outcomes in this constructed
+field. A nominated solo rider's own sprint and a solo caught after 500 m
+still need paid contact/sprint continuation; no official placing or award is
+inferred from either case.

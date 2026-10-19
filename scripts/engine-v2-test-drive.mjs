@@ -31,9 +31,14 @@ import {recordFinaleNamedAttackDroppedRoadFromTour,
 import {recordFinaleNamedDroppedIndividualLine,
   validateFinaleNamedDroppedIndividualLine} from
   '../lib/engine/v2/finale-named-dropped-individual-line.mjs';
+import {recordFinaleNamedDroppedSurvivorLine,
+  validateFinaleNamedDroppedSurvivorLine,
+  FINALE_NAMED_DROPPED_SURVIVOR_LINE_VERSION} from
+  '../lib/engine/v2/finale-named-dropped-survivor-line.mjs';
 import {projectV91ProvisionalPointPreview,
   projectV91ProvisionalMultibandPointPreview,
-  projectV91ProvisionalNamedDroppedPointPreview} from
+  projectV91ProvisionalNamedDroppedPointPreview,
+  projectV91ProvisionalNamedDroppedSurvivorPointPreview} from
   '../lib/engine/v2/playtest-point-preview.mjs';
 
 const REFUSALS=new Set([
@@ -259,11 +264,14 @@ function summaryForNamedDroppedRoad(source,request,pointContext,road,
   const lastKm=recording.frames[recording.route.distanceKm-2];
   const preview=pointContext?individualLine?.provisionalLineOrder
     ?.every(row=>row.position!==null)?
-      projectV91ProvisionalNamedDroppedPointPreview(recording,road,
-        individualLine,pointContext):
+      (individualLine.version===
+        FINALE_NAMED_DROPPED_SURVIVOR_LINE_VERSION?
+        projectV91ProvisionalNamedDroppedSurvivorPointPreview:
+        projectV91ProvisionalNamedDroppedPointPreview)(
+        recording,road,individualLine,pointContext):
       {status:'unavailable',reason:individualLine?
-        'Cross-band contact or an ambiguous place remains unresolved.':
-        'No complete individual line.'}:null;
+          'Cross-band contact or an ambiguous place remains unresolved.':
+          'No complete individual line.'}:null;
   return {version:individualLine?'v91-offline-test-drive-8':
     'v91-offline-test-drive-7',
     status:individualLine?'conditional_line':'road_only',
@@ -286,8 +294,10 @@ function summaryForNamedDroppedRoad(source,request,pointContext,road,
       row.group==='dropped').map(row=>row.id),
     chaserTeamIds:lastKm.chasers},
     ...(pointContext?{provisionalPointPreview:preview}:{}),
-    finale:{individualFinishStatus:individualLine?
-      'conditional_individual_crossings':
+    finale:{individualFinishStatus:individualLine?.overlapAudit
+      .firstPotentialOverlap?
+      'conditional_crossings_contact_unresolved':
+      individualLine?'conditional_individual_crossings':
       'unresolved_within_road_bands',
       finalePlanStatus:individualLine?'paid_at_500m':'unapplied',
       attackIntent:road.attackIntent,
@@ -300,7 +310,10 @@ function summaryForNamedDroppedRoad(source,request,pointContext,road,
         attackWork:frame.active.riderEnergy.filter(row=>
           row.riderId===road.attackIntent.riderId),
         droppedTravel:frame.droppedTravel.riders})),
-      ...(individualLine?{bandsAt500M:[{
+      ...(individualLine?{bandsAt500M:[
+        ...road.frames.find(frame=>frame.distanceM===
+          individualLine.startDistanceM).active.roadGroups.map(group=>({
+          id:group.id,riderIds:group.riderIds})),{
         id:'peloton',riderIds:road.frames.find(frame=>
           frame.distanceM===individualLine.startDistanceM)
           .active.pelotonRiderIds},{id:'dropped',
@@ -317,13 +330,25 @@ function summaryForNamedDroppedRoad(source,request,pointContext,road,
         provisionalLineOrder:individualLine.provisionalLineOrder,
         overlapAudit:individualLine.overlapAudit,
         positionSourceStatus:individualLine.positionedSource.status,
-        passingRule:individualLine.bandRunners[0].runner.passingRule,
-        roadEvents:individualLine.bandRunners[0].runner.frames.flatMap(
-          frame=>frame.roadEvents??[]),
-        sprintWork:individualLine.bandRunners[0].runner.frames.flatMap(
+        passingRule:individualLine.bandRunners.find(band=>
+          band.roadBandId==='peloton').runner.passingRule,
+        roadEvents:individualLine.bandRunners.flatMap(band=>
+          band.runner.frames.flatMap(frame=>frame.roadEvents??[])),
+        sprintWork:individualLine.bandRunners.flatMap(band=>
+          band.runner.frames.flatMap(
           frame=>frame.riders.filter(row=>row.role==='sprint').map(row=>({
             riderId:row.riderId,energySpent:row.energySpent,
-            distanceTravelledM:row.distanceTravelledM}))),
+            distanceTravelledM:row.distanceTravelledM})))),
+        separateBandTravel:individualLine.bandRunners.filter(band=>
+          band.roadBandId!=='peloton').flatMap(band=>
+          band.runner.frames.map(frame=>({
+            roadBandId:band.roadBandId,
+            startDistanceM:frame.startDistanceM,
+            endDistanceM:frame.endDistanceM,
+            elapsedSecondsAtStart:frame.elapsedSecondsAtStart,
+            durationSeconds:frame.durationSeconds,
+            riderId:frame.riders[0].riderId,
+            energySpent:frame.riders[0].energySpent}))),
         leadOutWork:individualLine.bandRunners.flatMap(band=>
           band.runner.frames.flatMap(frame=>frame.riders.filter(row=>
             row.role?.startsWith('lead_out')).map(row=>({
@@ -417,6 +442,21 @@ export function runV91TestDrive(scenario,{full=false}={}){
         }catch(lineError){
           if(![
             'The nominated lead-out cannot work beside the finisher.'
+          ].includes(lineError.message))throw lineError;
+          return unsupportedRefusal(new Error(lineError.message,{
+            cause:{playtestSource:source}}),scenario,request,pointContext);
+        }
+      }else if(at500?.active.roadGroups.length===1&&
+        paidRoad.frames.at(-1).active.roadGroups.length===1){
+        try{
+          individualLine=recordFinaleNamedDroppedSurvivorLine(
+            source.recording,paidRoad,{plans:request.plans??null});
+          validateFinaleNamedDroppedSurvivorLine(source.recording,
+            paidRoad,{plans:request.plans??null},individualLine);
+        }catch(lineError){
+          if(![
+            'The nominated lead-out cannot work beside the finisher.',
+            'A nominated solo sprint needs separate paid work.'
           ].includes(lineError.message))throw lineError;
           return unsupportedRefusal(new Error(lineError.message,{
             cause:{playtestSource:source}}),scenario,request,pointContext);
