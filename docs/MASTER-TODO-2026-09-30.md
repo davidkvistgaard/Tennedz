@@ -4,6 +4,13 @@
 
 ## Læsevejledning: færdigt, i gang og endnu ikke begyndt
 
+**Motorrettelse 19. oktober:** Den isolerede kontaktkontrol for allerede
+afsatte ryttere brugte tidligere ID-rækkefølge som vejorden. En ny version
+fjerner fire falske kontaktfund i den faste 66-løbsprøve: alle 14 betalte
+finaler med afsatte ryttere viser nu foreløbig individuel målrækkefølge.
+To andre forløb mangler stadig betalt energi, og officiel klassifikation,
+point og spilbar accept under 04/11 er fortsat åbne.
+
 **✅** betyder, at hele punktets *angivne afgrænsede leverance* er verificeret. For 01–03 er det en isoleret integrations- eller testleverance, **ikke** en produktionsrelease. **🟡** betyder, at der findes konkret arbejde eller en afprøvet del, men at punktets acceptkrav ikke er opfyldt. **⬜** betyder, at implementeringen af punktet ikke er påbegyndt; eksisterende skitser eller et beslægtet gammelt spilmodul tæller ikke som færdiggørelse. Kun ✅ er et checkmark. Hver opgaverække nedenfor har status; markeringen ændres først, når punktets samlede acceptkrav er verificeret.
 
 **Kort status:** 01–03 ✅ isoleret færdige. 04–09, 11–13, 16–18, 21, 30 og 35 🟡 i gang eller kun delvist afprøvet. 10, 14–15, 19–20, 22–29, 31–34 og 36–41 ⬜ mangler som de er beskrevet. Den gamle live-spiloplevelse findes, men den nye v2-motor, tofasede løb og deres afregning er endnu ikke aktiveret i produktion.

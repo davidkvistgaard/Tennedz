@@ -884,3 +884,18 @@ conditional crossing is 21st. Both complete 160-rider recordings replay and
 withhold classification and points. This verifies tactical sensitivity in
 one constructed field, not a calibrated rate of late attack wins; inferred
 wheel positions still prevent an official result.
+
+The dropped-rider contact audit previously treated the order of rider IDs as
+the order on the road. In a fixed 40 km four-team source, `rival-2-3` had a
+35.133-second source passage deficit while `rival-2-4` had only 18.788
+seconds; the old audit falsely reported contact at the later rider's marker
+passage. The opt-in depleted individual line is now lab-3. It compares signed
+position on overlapping paid trajectories, regardless of ID order, in both
+the first and final 500 m. The old lab-1/lab-2 recordings still replay. In
+the fixed 66-scenario `--individual-lines` audit, all 14 payable depleted
+lines now have a unique **provisional** individual order and no measured
+longitudinal meeting; the four formerly blocked 40 km independent sources
+were false contacts. Two other depleted sources still have unpaid energy
+demand. This correction changes no riding speed, energy, team order, official
+classification or award. Source wheel geometry and lane/passing behavior
+remain provisional, so the playable-result acceptance gate stays open.

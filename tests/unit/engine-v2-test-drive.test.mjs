@@ -4,6 +4,7 @@ import {readFileSync} from 'node:fs';
 import {spawnSync} from 'node:child_process';
 import {runV91TestDrive} from '../../scripts/engine-v2-test-drive.mjs';
 import {recordFinaleDepletedIndividualLine,
+  recordFinaleAuditedDroppedIndividualLine,
   validateFinaleDepletedIndividualLine} from
   '../../lib/engine/v2/finale-depleted-individual-line.mjs';
 import {validateFinaleSingletonFrontIndividualLine} from
@@ -270,6 +271,13 @@ test('paid dropped travel joins an opt-in individual bunch line without inventin
   assert.equal(validateFinaleDepletedIndividualLine(
     base.recording.recording,base.recording.paidFinale,
     {plans:null},legacy),true);
+  const previous=recordFinaleAuditedDroppedIndividualLine(
+    base.recording.recording,base.recording.paidFinale,{plans:null});
+  assert.equal(previous.version,
+    'v2-finale-depleted-individual-line-lab-2');
+  assert.equal(validateFinaleDepletedIndividualLine(
+    base.recording.recording,base.recording.paidFinale,
+    {plans:null},previous),true);
   const tampered=structuredClone(base.individualLine);
   tampered.conditionalCrossings.find(row=>
     row.riderId==='rival-2-0').energyAtLine+=1;
@@ -322,7 +330,7 @@ test('the women dropped-rider road has a replayed provisional line without award
   assert.equal(out.summary.canCommitAwards,false);
 });
 
-test('independent dropped roads project separate bands but withhold possible contact',()=>{
+test('independent dropped roads do not invent contact from rider ID order',()=>{
   const base={gender:'M',teamCount:4,seed:'test-drive-acceptance-1',
     defaultRivalPlan:'mixed'};
   const settings=(distanceKm,terrain,fatigue,orders)=>({
@@ -336,12 +344,22 @@ test('independent dropped roads project separate bands but withhold possible con
       {effort:'hard',attack:'none',chase:'all'},
       {effort:'conserve',attack:'none',chase:'ignore'},
       {effort:'hard',attack:'none',chase:'all'}]}),
-  individualGroupLine:true,pointContext});
-  assert.equal(contact.finale.pre500Audit.status,
+  individualGroupLine:true,pointContext},{full:true});
+  assert.equal(contact.individualLine.version,
+    'v2-finale-depleted-individual-line-lab-3');
+  assert.equal(contact.individualLine.pre500Audit.firstPotentialOverlap,null);
+  assert.equal(contact.individualLine.overlapAudit.firstPotentialOverlap,null);
+  assert.equal(contact.summary.finale.provisionalLineOrder.length,32);
+  assert.equal(contact.summary.provisionalPointPreview.pointsStatus,
+    'experimental_preview_only');
+  assert.equal(contact.summary.pointsStatus,'withheld');
+  const previousContact=recordFinaleAuditedDroppedIndividualLine(
+    contact.recording.recording,contact.recording.paidFinale,{plans:null});
+  assert.equal(previousContact.pre500Audit.status,
     'potential_longitudinal_overlap');
-  assert.equal(contact.finale.provisionalLineOrder,null);
-  assert.equal(contact.provisionalPointPreview.status,'unavailable');
-  assert.equal(contact.pointsStatus,'withheld');
+  assert.equal(validateFinaleDepletedIndividualLine(
+    contact.recording.recording,contact.recording.paidFinale,
+    {plans:null},previousContact),true);
   const separated=runV91TestDrive({settings:settings(260,'mountain',30,{
     attack:'repeated',chase:'ignore',managerTactics:[
       {effort:'hard',attack:'none',chase:'all'},

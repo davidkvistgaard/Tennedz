@@ -19,7 +19,7 @@ import {recordFinaleMultibandIndividualLine,
 import {recordFinaleSeparatedIndividualLine,
   validateFinaleSeparatedIndividualLine} from
   '../lib/engine/v2/finale-separated-individual-line.mjs';
-import {recordFinaleAuditedDroppedIndividualLine,
+import {recordFinaleUnorderedDroppedIndividualLine,
   validateFinaleDepletedIndividualLine} from
   '../lib/engine/v2/finale-depleted-individual-line.mjs';
 import {recordFinaleSingletonFrontIndividualLine,
@@ -313,7 +313,7 @@ export function runV91TestDrive(scenario,{full=false}={}){
       return full?{summary,recording:trial}:summary;
     }
     const record=singleton?recordFinaleSingletonFrontIndividualLine:
-      depleted?recordFinaleAuditedDroppedIndividualLine:
+      depleted?recordFinaleUnorderedDroppedIndividualLine:
       separated?recordFinaleSeparatedIndividualLine:
         recordFinaleMultibandIndividualLine;
     const validate=singleton?validateFinaleSingletonFrontIndividualLine:

@@ -96,5 +96,5 @@ const rows=scenarios.map(({kind,mode,settings})=>{
 const counts=Object.fromEntries([...new Set(rows.map(row=>row.status))]
   .sort().map(status=>[status,rows.filter(row=>row.status===status).length]));
 console.log(JSON.stringify({version:individualLines?
-  'v2-playable-road-audit-individual-5':'v2-playable-road-audit-1',
+  'v2-playable-road-audit-individual-6':'v2-playable-road-audit-1',
   seed:'test-drive-acceptance-1',scenarios:rows.length,counts,rows},null,2));

@@ -3,7 +3,8 @@ import assert from 'node:assert/strict';
 import {recordFinaleMultibandOverlapAudit,
   validateFinaleMultibandOverlapAudit,
   recordFinaleAllBandOverlapAudit,
-  validateFinaleAllBandOverlapAudit} from
+  validateFinaleAllBandOverlapAudit,
+  recordFinaleUnorderedBandOverlapAudit} from
   '../../lib/engine/v2/finale-multiband-overlap-audit.mjs';
 
 function band(id,riderId,startM,distanceM){
@@ -59,4 +60,19 @@ test('several bands report the earliest potential meeting with both identities',
   altered.firstPotentialOverlap.behindRoadBandId='peloton';
   assert.throws(()=>validateFinaleAllBandOverlapAudit(bands,altered),
     /does not replay/);
+});
+
+test('isolated rider ID order cannot create a longitudinal meeting',()=>{
+  const behind=band('isolated:1','rider-1',90,10);
+  const ahead=band('isolated:2','rider-2',100,10);
+  const reversed=recordFinaleUnorderedBandOverlapAudit([behind,ahead]);
+  assert.equal(reversed.status,'separated_through_conditional_lines');
+  assert.equal(reversed.firstPotentialOverlap,null);
+  assert.deepEqual(recordFinaleUnorderedBandOverlapAudit([ahead,behind])
+    .firstPotentialOverlap,null);
+  const catchAudit=recordFinaleUnorderedBandOverlapAudit([
+    band('isolated:1','rider-1',90,30),ahead]);
+  assert.equal(catchAudit.status,'potential_longitudinal_overlap');
+  assert.ok(Math.abs(catchAudit.firstPotentialOverlap
+    .elapsedSecondsFromLastKmStart-5)<1e-8);
 });
