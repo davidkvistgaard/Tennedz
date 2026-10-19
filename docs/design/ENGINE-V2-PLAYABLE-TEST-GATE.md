@@ -929,3 +929,23 @@ before the final kilometre and changes its nominated finisher's paid
 conditional line time. No older input gains a new setting or recording field,
 and this paired observation does not imply an official result or balance
 target.
+
+The separate opt-in `"namedDroppedRoad":true` path now retains a valid
+last-kilometre named attack when the locked road has one bunch, exactly one
+already dropped rider and no front group. It reuses the existing attack and
+chase steps for the present bunch, pays each dropped rider independently on
+the same elapsed clock, records exact active-road contact and refuses unpaid
+energy or dropped-to-bunch contact. In the fixed 260 km tired four-team field,
+flat, rolling and mountain routes in both M/F categories each replay all
+seven last-kilometre slices with 32 distinct riders. `you-4` splits at the
+first boundary and is caught later; `rival-2-0` stays behind and pays every
+slice. The new `v2-finale-named-attack-dropped-road-1` and
+`v91-offline-test-drive-7` records stop at road bands: nominated finisher and
+lead-out plans have not been applied, individual order is unresolved and
+points remain withheld. The ordinary test-drive request and older opt-in
+recordings retain their existing versions and unsupported outcomes. Sources
+with a front group or insufficient energy still refuse this path.
+Across two fixed seeds, three routes, M/F categories and 4/15/20-team fields,
+12 of 36 opt-in sources use this new paid road; the other 24 keep the existing
+complete-bunch conditional line. None throws. These constructed counts test
+road coverage, not the rate of successful real-world attacks.

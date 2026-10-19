@@ -25,6 +25,9 @@ import {recordFinaleUnorderedDroppedIndividualLine,
 import {recordFinaleSingletonFrontIndividualLine,
   validateFinaleSingletonFrontIndividualLine} from
   '../lib/engine/v2/finale-singleton-front-individual-line.mjs';
+import {recordFinaleNamedAttackDroppedRoadFromTour,
+  validateFinaleNamedAttackDroppedRoadFromTour} from
+  '../lib/engine/v2/finale-named-attack-dropped-road.mjs';
 import {projectV91ProvisionalPointPreview,
   projectV91ProvisionalMultibandPointPreview} from
   '../lib/engine/v2/playtest-point-preview.mjs';
@@ -246,13 +249,52 @@ function summaryForIndividualGroupLine(trial,request,pointContext,line){
         riderId:row.riderId,energy:row.energyAtLine}))}};
 }
 
+function summaryForNamedDroppedRoad(source,request,pointContext,road){
+  const recording=source.recording;
+  const lastKm=recording.frames[recording.route.distanceKm-2];
+  return {version:'v91-offline-test-drive-7',
+    status:'road_only',roadStatus:'paid_named_attack_dropped_bands',
+    input:source.settings,request,engineVersion:road.version,
+    resultStatus:'unclassified',pointsStatus:'withheld',
+    canCommitAwards:false,
+    managerDecisions:recording.committedInputs.teams.map(team=>({
+      teamId:team.id,baseline:team.orders.baseline,
+      finisherId:request.plans?.find(row=>row.teamId===team.id)
+        ?.finisherId??team.orders.captainId,
+      leadOutRiderId:request.plans?.find(row=>row.teamId===team.id)
+        ?.leadOutRiderId??null})),
+    lastKmSource:{roadGroups:lastKm.roadGroups.map(group=>({
+      id:group.id,gapSeconds:group.gapSeconds,
+      riderIds:group.riderIds})),
+    droppedRiderIds:lastKm.riderGroups.filter(row=>
+      row.group==='dropped').map(row=>row.id),
+    chaserTeamIds:lastKm.chasers},
+    ...(pointContext?{provisionalPointPreview:{status:'unavailable',
+      reason:'No complete individual line.'}}:{}),
+    finale:{individualFinishStatus:'unresolved_within_road_bands',
+      finalePlanStatus:'unapplied',
+      attackIntent:road.attackIntent,
+      roadFrames:road.frames.map(frame=>({
+        distanceM:frame.distanceM,
+        bunchElapsedSecondsFromMarker:frame.bunchElapsedSecondsFromMarker,
+        roadGroups:frame.active.roadGroups,
+        catchDistanceM:frame.active.catchDistanceM??null,
+        attackWork:frame.active.riderEnergy.filter(row=>
+          row.riderId===road.attackIntent.riderId),
+        droppedTravel:frame.droppedTravel.riders})),
+      bands:road.line.bands,
+      finalRiderEnergy:road.line.finalRiderEnergy}};
+}
+
 export function runV91TestDrive(scenario,{full=false}={}){
   if(!scenario||typeof scenario!=='object'||Array.isArray(scenario)||
     Object.keys(scenario).some(key=>
       !['settings','attack','finalePlans','pointContext',
-        'individualGroupLine'].includes(key))||
+        'individualGroupLine','namedDroppedRoad'].includes(key))||
     scenario.individualGroupLine!==undefined&&
-      typeof scenario.individualGroupLine!=='boolean')
+      typeof scenario.individualGroupLine!=='boolean'||
+    scenario.namedDroppedRoad!==undefined&&
+      typeof scenario.namedDroppedRoad!=='boolean')
     throw new Error('Choose settings, an optional attack and finale plans.');
   const pointContext=scenario.pointContext??null;
   if(pointContext!==null&&(!pointContext||
@@ -268,12 +310,17 @@ export function runV91TestDrive(scenario,{full=false}={}){
     pointContext.divisionIndex>pointContext.divisionCount))
     throw new Error('Choose a valid optional preview point context.');
   const request=requestFor(scenario);
+  if(scenario.namedDroppedRoad===true&&request.attackTeamId===undefined)
+    throw new Error('Choose one named attack for the dropped-road trial.');
   let trial;
   let recoveredGroupPlan=false;
   try{trial=createV91ConditionalRaceFinal(scenario.settings,request);}
   catch(error){
     if(!expectedRefusal(error.message))throw error;
     const source=error.cause?.playtestSource??null;
+    const namedSource=source&&scenario.namedDroppedRoad===true&&
+      request.attackTeamId!==undefined?finaleSnapshotFromTour(
+        source.recording,{remainingKm:1,includeAttackLoad:true}):null;
     if(scenario.individualGroupLine===true&&source&&
       request.attackTeamId===undefined&&
       ['Finisher and lead-out plans are not paid for a road group.',
@@ -287,6 +334,30 @@ export function runV91TestDrive(scenario,{full=false}={}){
         return unsupportedRefusal(fallbackError,scenario,request,pointContext);
       }
       recoveredGroupPlan=true;
+    }else if(namedSource&&namedSource.roadGroups.length===0&&
+      namedSource.droppedRiderIds.length===1&&error.message===
+        'The controlled finale trial needs one complete source bunch.'){
+      let paidRoad;
+      try{
+        paidRoad=recordFinaleNamedAttackDroppedRoadFromTour(
+          source.recording,{teamId:request.attackTeamId});
+      }catch(roadError){
+        if(![
+          'The named dropped-road attack needs a bunch and one dropped rider.',
+          'The named dropped-road attack needs one payable intent.'
+        ].includes(roadError.message)&&
+          !/^A (?:finale|dropped finale|sheltered) rider cannot pay/.test(
+            roadError.message)&&
+          !/^A dropped finale rider needs recorded bunch contact:/.test(
+            roadError.message))throw roadError;
+        return unsupportedRefusal(new Error(roadError.message,{
+          cause:{playtestSource:source}}),scenario,request,pointContext);
+      }
+      validateFinaleNamedAttackDroppedRoadFromTour(source.recording,
+        {teamId:request.attackTeamId},paidRoad);
+      const summary=summaryForNamedDroppedRoad(source,request,
+        pointContext,paidRoad);
+      return full?{summary,recording:source,paidRoad}:summary;
     }else{
       return unsupportedRefusal(error,scenario,request,pointContext);
     }

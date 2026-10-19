@@ -598,6 +598,46 @@ test('a named attack on an already separated mountain road refuses visibly',()=>
   }
 });
 
+test('a named attack and existing dropped rider retain one paid road',()=>{
+  const settings={distanceKm:260,terrain:'flat',fatigue:30,
+    gender:'M',teamCount:4,seed:'test-drive-acceptance-1',
+    attack:'none',chase:'ignore',defaultRivalPlan:'chase'};
+  const request={settings,attack:{teamId:'you',riderId:'you-4'},
+    pointContext:{tier:3,divisionIndex:1,divisionCount:1}};
+  const old=runV91TestDrive(request);
+  assert.equal(old.status,'unsupported');
+  assert.equal(old.version,'v91-offline-test-drive-6');
+  assert.throws(()=>runV91TestDrive({settings,
+    namedDroppedRoad:true}),/named attack for the dropped-road trial/);
+  const paid=runV91TestDrive({...request,namedDroppedRoad:true},
+    {full:true});
+  assert.equal(paid.summary.version,'v91-offline-test-drive-7');
+  assert.equal(paid.summary.status,'road_only');
+  assert.equal(paid.summary.roadStatus,
+    'paid_named_attack_dropped_bands');
+  assert.equal(paid.summary.finale.roadFrames.length,7);
+  assert.ok(paid.summary.finale.roadFrames.some(frame=>
+    frame.catchDistanceM>259700&&frame.catchDistanceM<259800));
+  assert.deepEqual(paid.summary.finale.bands.map(row=>[
+    row.id,row.firstPossiblePlace,row.lastPossiblePlace]),
+  [['peloton',1,31],['dropped',32,32]]);
+  assert.equal(paid.summary.finale.finalePlanStatus,'unapplied');
+  assert.equal(paid.summary.provisionalPointPreview.status,'unavailable');
+  assert.equal(paid.summary.pointsStatus,'withheld');
+  assert.equal(paid.summary.canCommitAwards,false);
+  const planned=runV91TestDrive({...request,namedDroppedRoad:true,
+    finalePlans:[{teamId:'you',finisherId:'you-7',
+      leadOutRiderId:'you-6'}]},{full:true});
+  assert.deepEqual(planned.paidRoad,paid.paidRoad);
+  assert.equal(planned.summary.managerDecisions.find(row=>
+    row.teamId==='you').leadOutRiderId,'you-6');
+  assert.equal(planned.summary.finale.finalePlanStatus,'unapplied');
+  const withoutNamed=runV91TestDrive({settings,individualGroupLine:true},
+    {full:true});
+  assert.deepEqual(paid.recording.recording.frames.slice(0,-1),
+    withoutNamed.recording.recording.frames.slice(0,-1));
+});
+
 test('an earlier player attack carries earned load into a paid named finale',()=>{
   const settings={distanceKm:40,terrain:'flat',fatigue:0,
     gender:'M',teamCount:4,seed:'test-drive-acceptance-1',
