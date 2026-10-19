@@ -124,6 +124,17 @@ test('a named final-kilometre attack changes the paid road',async({page})=>{
     .toBeVisible();
   await expect(page.getByText(/Named attack: you-0 · launched at 39 km; solo road, 1 group at 39\.5 km/))
     .toBeVisible();
+  await expect(page.getByRole('heading',{name:'Paid solo-attack approach'}))
+    .toBeVisible();
+  await expect(page.getByText(/39\.25 km · [\d.]+ s on the bunch clock · 31 in the bunch/))
+    .toBeVisible();
+  await expect(page.getByText(/you-0: attack · [\d.]+ energy · [\d.]+ spent this segment/))
+    .toBeVisible();
+  await page.getByRole('slider',{name:/Attack boundary/}).fill('1');
+  await expect(page.getByText(/39\.5 km · [\d.]+ s on the bunch clock · 31 in the bunch/))
+    .toBeVisible();
+  await expect(page.getByText(/you-0: front · [\d.]+ energy · [\d.]+ spent this segment/))
+    .toBeVisible();
   await expect(page.getByText('32 of 32 riders have individual crossing times.'))
     .toBeVisible();
   await expect(page.getByText(/A complete rider-by-rider final-kilometre replay is not available/))

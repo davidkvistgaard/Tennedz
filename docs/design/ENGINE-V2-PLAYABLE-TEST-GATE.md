@@ -1592,3 +1592,18 @@ The browser correctly kept the kilometre replay at the 39 km handoff; its
 missing full-finale scrubber for this partial road was not filled with an
 unpaid trace. Focused lint, local production build and browser checks for
 this case plus the prior 390/1440 px preview flows passed.
+
+The surviving-solo browser path now separately replays its already paid
+39–39.5 km approach in two 250 m boundaries. Each boundary shows the bunch
+clock, attacker group and gap, and every rider's recorded role and energy
+debit. The reducer checks the locked field, contiguous distance and clock,
+group membership, per-rider energy continuity and the 500 m handoff. It
+does not claim individual positions for the opening approach or splice the
+later 500 m continuation into a fabricated full-kilometre trace. A fixed
+18-case M/F, flat/rolling/mountain and 40/120/260 km solo matrix retained
+all 32 riders at both paid boundaries; this is correctness evidence for one
+seed and passive rival plan, not attack balance.
+The focused 28-test v2 playtest, finale-trial and replay suite passed. A full
+unit-suite attempt and a wider test-drive attempt were interrupted after
+their respective first 39 and 28 passing tests stopped producing output;
+neither is recorded as a pass.

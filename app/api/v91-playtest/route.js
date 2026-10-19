@@ -1,7 +1,8 @@
 import {NextResponse} from 'next/server';
 import {protectedRoute} from '../../../lib/auth/server';
 import {createV91Playtest,summarizeV91Playtest} from '../../../lib/engine/v2/playtest.mjs';
-import {summarizeV91PaidFinaleReplay} from
+import {summarizeV91PaidFinaleReplay,
+  summarizeV91PaidSoloApproach} from
   '../../../lib/engine/v2/playtest-finale-replay.mjs';
 import {runV91IntegratedTestDrive} from '../../../scripts/engine-v2-test-drive.mjs';
 
@@ -51,6 +52,7 @@ async function handler(request,_context,auth){
       return NextResponse.json({ok:true,playtest,
         integrated:output.summary,
         attackRoad,
+        soloApproach:summarizeV91PaidSoloApproach(output.recording),
         finaleReplay:summarizeV91PaidFinaleReplay(output.recording)});
     }
     if(input.mode!==undefined)
