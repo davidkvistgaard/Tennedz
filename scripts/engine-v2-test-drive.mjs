@@ -17,6 +17,9 @@ import {recordFinaleConcurrentCommonTimeStateFromTour,
 import {recordFinaleConcurrentNextBoundaryFromTour,
   validateFinaleConcurrentNextBoundaryFromTour} from
   '../lib/engine/v2/finale-concurrent-next-boundary.mjs';
+import {recordFinaleConcurrentBandContinuationFromTour,
+  validateFinaleConcurrentBandContinuationFromTour} from
+  '../lib/engine/v2/finale-concurrent-band-continuation.mjs';
 import {validateRequestedFinalePlans} from
   '../lib/engine/v2/playtest-finale-trial.mjs';
 import {finaleSnapshotFromTour} from
@@ -890,6 +893,18 @@ export function runV91ConcurrentTestDrive(scenario,{full=false}={}){
     }
     if(laterEvent)validateFinaleConcurrentNextBoundaryFromTour(tour,
       JSON.parse(JSON.stringify(laterEvent)));
+    let bandContinuation=null;
+    if(laterEvent){
+      try{
+        bandContinuation=recordFinaleConcurrentBandContinuationFromTour(
+          tour);
+      }catch(bandError){
+        if(bandError?.constructor!==Error)throw bandError;
+      }
+    }
+    if(bandContinuation)
+      validateFinaleConcurrentBandContinuationFromTour(tour,
+        JSON.parse(JSON.stringify(bandContinuation)));
     const firstPaidEvent=event?{version:event.version,event:event.event,
       elapsedSinceLaunchSeconds:event.eventElapsedSeconds,
       attackerPositions:event.attackerPositions,
@@ -901,7 +916,11 @@ export function runV91ConcurrentTestDrive(scenario,{full=false}={}){
         energySpentToEvent:row.energySpentToEvent,
         energyAtEvent:row.energyAtEvent}))}:null;
     const summary={...base,status:'unsupported',
-      roadStatus:'concurrent_road_unresolved',reason:error.message,
+      roadStatus:bandContinuation?.status==='band_crossings_only'?
+        'concurrent_band_crossings_only':'concurrent_road_unresolved',
+      reason:bandContinuation?.status==='band_crossings_only'?
+        'Road bands reached the line, but individual bunch crossings and finale plans are unresolved.':
+        error.message,
       ...(firstPaidEvent?{firstPaidEvent}:{}),
       ...(laterEvent?{latestPaidEvent:{version:laterEvent.version,
         event:laterEvent.event,
@@ -912,8 +931,18 @@ export function runV91ConcurrentTestDrive(scenario,{full=false}={}){
         secondPositionM:laterEvent.secondPositionM,
         bunchPositionM:laterEvent.bunchPositionM,
         roadRelationshipStatus:laterEvent.roadRelationshipStatus,
-        riders:laterEvent.riders}}:{})};
-    return full?{summary,recording:source}:summary;
+        riders:laterEvent.riders}}:{}),
+      ...(bandContinuation?{paidBandContinuation:{
+        version:bandContinuation.version,status:bandContinuation.status,
+        roadRelationshipStatus:bandContinuation.roadRelationshipStatus,
+        contact:bandContinuation.contact,
+        bandCrossings:bandContinuation.bandCrossings,
+        finalRiders:bandContinuation.finalRiders,
+        finalePlansStatus:'not_applied_to_band_only_road',
+        individualFinishStatus:'unavailable',
+        pointsStatus:'withheld'}}:{})};
+    return full?{summary,recording:source,
+      ...(bandContinuation?{bandContinuation}:{})}:summary;
   }
   (assembled?validateFinaleConcurrentDoubleCatchAssembledLineFromTour:
     validateFinaleConcurrentDoubleCatchLineFromTour)(tour,{

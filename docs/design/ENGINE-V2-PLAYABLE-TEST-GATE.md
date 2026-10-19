@@ -125,6 +125,18 @@ distance, energy debit and road position and replays from the locked tour.
 This is a diagnostic continuation, not an individual finish: the road
 relationship, classification and points remain unresolved.
 
+From the fully paid three-band state with the bunch at 400 m remaining, one
+event-driven continuation now carries both attackers and the bunch on the
+same clock to their band crossings or the first exact contact. Each band
+retains its paid pace until its own next decision boundary; the existing
+attack, selective chase and front-rotation rules choose the following paid
+interval. Fixed flat 15-team men's and women's and 20-team men's sources
+reach three separated band crossings with reconciled distance and energy,
+and the recording replays from the committed tour. This establishes band
+arrival times only. Bunch riders still lack individual sprint positions and
+lead-out work, so the integrated drive withholds classification and points.
+Exact contact stops the continuation without inferring a merge or draft.
+
 A fixed 54-case diagnostic across three routes,
 both categories, three field sizes and three tactics modes originally replayed
 32 conditional individual lines, 12 paid group-band lines and 10 explicit

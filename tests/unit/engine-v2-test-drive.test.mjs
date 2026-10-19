@@ -28,6 +28,8 @@ import {assertConcurrentDoubleCatchLeadOutWheels} from
 import {recordFinaleConcurrentNextBoundaryFromTour,
   validateFinaleConcurrentNextBoundaryFromTour} from
   '../../lib/engine/v2/finale-concurrent-next-boundary.mjs';
+import {validateFinaleConcurrentBandContinuationFromTour} from
+  '../../lib/engine/v2/finale-concurrent-band-continuation.mjs';
 
 const example=JSON.parse(readFileSync(new URL(
   '../../docs/design/engine-v2-test-drive-example.json',import.meta.url),
@@ -117,11 +119,23 @@ test('integrated two-attack refusal exposes the later paid road boundary',()=>{
     defaultRivalPlan:'neutral',managerFinaleOrders,
     teamOverrides:ids.map(teamId=>({teamId,
       level:teamId==='rival-2'?81:teamId==='you'?80:85}))}};
-  const {summary,recording}=runV91IntegratedTestDrive(scenario,{full:true});
+  const {summary,recording,bandContinuation}=
+    runV91IntegratedTestDrive(scenario,{full:true});
   const event=recordFinaleConcurrentNextBoundaryFromTour(
     recording.recording);
   assert.equal(summary.status,'unsupported');
+  assert.equal(summary.roadStatus,'concurrent_band_crossings_only');
   assert.equal(summary.pointsStatus,'withheld');
+  assert.equal(summary.paidBandContinuation.status,
+    'band_crossings_only');
+  assert.equal(summary.paidBandContinuation.individualFinishStatus,
+    'unavailable');
+  assert.equal(summary.paidBandContinuation.finalePlansStatus,
+    'not_applied_to_band_only_road');
+  assert.deepEqual(summary.paidBandContinuation.bandCrossings,
+    bandContinuation.bandCrossings);
+  assert.equal(validateFinaleConcurrentBandContinuationFromTour(
+    recording.recording,bandContinuation),true);
   assert.equal(summary.latestPaidEvent.event,
     'first_attacker_at_next_boundary');
   assert.equal(summary.latestPaidEvent.firstPositionM,39500);
