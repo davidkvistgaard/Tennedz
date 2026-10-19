@@ -17,6 +17,7 @@ const REFUSALS=new Set([
   'Finisher and lead-out plans are not paid for a road group.',
   'Finisher and lead-out plans are not paid for road groups.',
   'Finisher and lead-out plans are not paid for depleted road bands.',
+  'Finisher and lead-out plans are not paid for dropped road bands.',
   'The separated last-kilometre finale needs recorded response or front rotation.',
   'An early bunch plan needs one inactive-attack bunch.',
 ]);
@@ -82,13 +83,18 @@ function summaryFor(trial,request){
       roadPlaceBounds:trial.roadPlaceBounds,
       individualFinishStatus:'unresolved_within_road_bands'}:
       trial.roadStatus==='paid_separated_bands'||
-      trial.roadStatus==='recorded_depleted_bands'?{
+      trial.roadStatus==='recorded_depleted_bands'||
+      trial.roadStatus==='recorded_dropped_bands'?{
         outcome:paidFinale.line.outcome,
         passageFrames:paidFinale.passageFrames,
         bands:paidFinale.line.bands,
         finalRiderEnergy:paidFinale.line.finalRiderEnergy,
-        ...(trial.roadStatus==='recorded_depleted_bands'?{
-          reserveStatus:'energy_demand_saturated_at_zero',
+        ...(['recorded_depleted_bands','recorded_dropped_bands']
+          .includes(trial.roadStatus)?{
+          reserveStatus:paidFinale.passageFrames
+            .flatMap(frame=>frame.droppedPassages)
+            .some(row=>row.unmetEnergyDemand>0)?
+              'energy_demand_saturated_at_zero':'energy_demand_paid',
           totalUnmetEnergyDemand:paidFinale.passageFrames
             .flatMap(frame=>frame.droppedPassages)
             .reduce((sum,row)=>sum+row.unmetEnergyDemand,0)}:{}),
@@ -136,7 +142,7 @@ export function runV91TestDrive(scenario,{full=false}={}){
   }
   validateV91ConditionalRaceFinal(scenario.settings,request,trial);
   if(!['paid_conditional_line','paid_group_bands','paid_separated_bands',
-    'recorded_depleted_bands']
+    'recorded_depleted_bands','recorded_dropped_bands']
     .includes(trial.roadStatus)){
     const summary={version:'v91-offline-test-drive-1',
       status:'unsupported',input:trial.settings,request,

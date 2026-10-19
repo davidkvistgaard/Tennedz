@@ -4,7 +4,9 @@ import {createV91Playtest} from '../../lib/engine/v2/playtest.mjs';
 import {recordFinaleSeparatedLastKmClock,
   validateFinaleSeparatedLastKmClock,
   recordFinaleDepletedLastKmClock,
-  validateFinaleDepletedLastKmClock} from
+  validateFinaleDepletedLastKmClock,
+  recordFinaleNoFrontDroppedLastKmClock,
+  validateFinaleNoFrontDroppedLastKmClock} from
   '../../lib/engine/v2/finale-separated-last-km.mjs';
 
 test('two recorded road groups reach the line on the bunch marker clock',()=>{
@@ -88,4 +90,50 @@ test('a forged group passage cannot replay as a paid finish',()=>{
   forged.passageFrames[0].groups[0].passageSecondsFromBunchMarker+=1;
   assert.throws(()=>validateFinaleSeparatedLastKmClock(recording,forged),
     /does not replay/);
+});
+
+test('no-front dropped rider follows the passive bunch on one clock',()=>{
+  for(const gender of ['M','F']){
+    const {recording}=createV91Playtest({distanceKm:260,
+      terrain:'mountain',teamCount:4,gender,fatigue:30,
+      attack:'none',chase:'all',defaultRivalPlan:'chase',
+      seed:'test-drive-acceptance-1'});
+    const original=structuredClone(recording);
+    const paid=recordFinaleNoFrontDroppedLastKmClock(recording);
+    assert.equal(paid.trace.outcome,'bunch_with_dropped');
+    assert.equal(paid.passageFrames.length,7);
+    assert.deepEqual(paid.line.bands.map(row=>[
+      row.id,row.firstPossiblePlace,row.lastPossiblePlace]),
+    [['peloton',1,31],['dropped',32,32]]);
+    const energy=new Map(recording.frames[258].riderGroups.map(row=>[
+      row.id,row.energy]));
+    for(const frame of paid.trace.frames){
+      assert.equal(frame.bunchPullRiderId,null);
+      assert.equal(frame.roadGroups.length,0);
+      assert.equal(frame.riders.length,32);
+      for(const row of frame.riders){
+        assert.ok(Math.abs(energy.get(row.riderId)-row.energy-
+          row.energySpent)<1e-7);
+        energy.set(row.riderId,row.energy);
+      }
+    }
+    for(const frame of paid.passageFrames){
+      assert.equal(frame.droppedPassages.length,1);
+      const row=frame.droppedPassages[0];
+      assert.ok(row.deficitSeconds>0);
+      assert.equal(row.unmetEnergyDemand,0);
+      assert.ok(Math.abs(row.passageSecondsFromBunchMarker-
+        frame.bunchPassageSecondsFromBunchMarker-
+        row.deficitSeconds)<1e-7);
+    }
+    assert.equal(paid.classifiedResults,null);
+    assert.equal(paid.pointsStatus,'withheld');
+    assert.equal(validateFinaleNoFrontDroppedLastKmClock(recording,
+      paid),true);
+    const forged=structuredClone(paid);
+    forged.passageFrames[0].droppedPassages[0].deficitSeconds+=1;
+    assert.throws(()=>validateFinaleNoFrontDroppedLastKmClock(
+      recording,forged),/does not replay/);
+    assert.deepEqual(recording,original);
+  }
 });

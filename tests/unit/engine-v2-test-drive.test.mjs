@@ -97,9 +97,20 @@ test('long race records depleted reserve and separated groups without ranks',()=
   assert.equal(mixed.pointsStatus,'withheld');
   const noFront=runV91TestDrive({settings:{...base,
     attack:'none',chase:'all',defaultRivalPlan:'chase'}});
-  assert.equal(noFront.status,'unsupported');
+  assert.equal(noFront.roadStatus,'recorded_dropped_bands');
   assert.equal(noFront.lastKmSource.roadGroups.length,0);
   assert.equal(noFront.lastKmSource.droppedRiderIds.length,1);
+  assert.deepEqual(noFront.finale.bands.map(band=>[
+    band.id,band.firstPossiblePlace,band.lastPossiblePlace]),
+  [['peloton',1,31],['dropped',32,32]]);
+  assert.equal(noFront.finale.reserveStatus,'energy_demand_paid');
+  assert.equal(noFront.finale.totalUnmetEnergyDemand,0);
+  assert.equal(noFront.pointsStatus,'withheld');
+  const noFrontPlan=runV91TestDrive({settings:{...base,
+    attack:'none',chase:'all',defaultRivalPlan:'chase'},
+  finalePlans:[{teamId:'you',finisherId:'you-7',leadOutRiderId:null}]});
+  assert.equal(noFrontPlan.status,'unsupported');
+  assert.match(noFrontPlan.reason,/not paid for dropped road bands/);
   const split=runV91TestDrive({settings:{...base,teamCount:15,
     attack:'repeated',chase:'ignore',defaultRivalPlan:'attack'}});
   assert.equal(split.roadStatus,'paid_separated_bands');

@@ -80,8 +80,13 @@ refusals, all on the tired mountain source with multiple groups or dropped
 riders. The same-source separated-group path changed that coverage to 32
 conditional lines, 12 single-group band lines, six separated-group band lines
 and four explicit refusals. The new depleted-reserve path records two of those
-four as unresolved road bands with visible unmet energy demand. The remaining
-two have a bunch and a dropped rider but no front group. This is coverage
+four as unresolved road bands with visible unmet energy demand. A separate
+no-front dropped path now records the remaining two: one bunch, one already
+dropped rider, no actual chasing, and seven last-kilometre slices on a common
+clock. The resulting 54-case matrix has 32 conditional lines, 12 single-group
+band lines, six separated-group band lines, two depleted group-band lines and
+two no-front dropped-band lines, with no explicit refusal for these fixed
+settings. This is coverage
 evidence, not a sporting success rate. The matrix fixes seed
 `test-drive-acceptance-1`; its player orders are
 selective attack/selective chase for mixed rivals, repeated attack/ignore chase
@@ -119,6 +124,15 @@ riders have no defensible internal order or energy reserve to debit. It
 withholds classification and points, and it rejects finisher/lead-out plans.
 The old strict dropped-step recording still refuses zero-reserve travel.
 
+`v2-finale-no-front-dropped-last-km-12` extends the versioned dropped clock
+only when the source has no road group, no recorded chase target and an
+already dropped rider. Both fixed four-team mountain chase sources (M/F,
+fatigue 30) retain all 32 riders: the bunch occupies possible places 1–31,
+the dropped rider possible place 32, all recorded energy demand is paid, and
+the dropped deficit stays positive across seven slices. It does not resolve
+the bunch's internal finish order, so results and points remain withheld and
+finisher/lead-out orders are rejected on this path.
+
 The fictional input also accepts optional `settings.teamOverrides` rows such
 as `{"teamId":"you","level":76,"fatigue":15}`. Each row changes the
 uniform base skill level and/or starting fatigue of one named test team;
@@ -144,8 +158,8 @@ blocked or not-due intents; an eligible named attack is still rejected. A
 single separated group now has a distinct paid-band path under the strict
 conditions below. This resolves an overly broad order-label guard, not the
 general finale. The next motor integration must resolve group contact,
-valid manager actions on separated roads, the no-front dropped state and
-individual order on the common clock. Only then can a general result and
+valid manager actions on separated roads and individual order on the common
+clock. Only then can a general result and
 point projection be assessed against this gate.
 
 The repeatable read-only audit
