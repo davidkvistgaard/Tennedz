@@ -82,14 +82,24 @@ test('offline test drive keeps multiple manager orders and visible defaults',()=
   assert.equal(output.finale.lineTimes.length,32);
 });
 
-test('long race reports dropped blockers and pays separated groups without ranks',()=>{
+test('long race records depleted reserve and separated groups without ranks',()=>{
   const base={distanceKm:260,terrain:'mountain',fatigue:30,
     teamCount:4,gender:'M',seed:'test-drive-acceptance-1'};
   const mixed=runV91TestDrive({settings:{...base,teamCount:4,
     attack:'selective',chase:'selective',defaultRivalPlan:'mixed'}});
-  assert.equal(mixed.status,'unsupported');
+  assert.equal(mixed.roadStatus,'recorded_depleted_bands');
   assert.equal(mixed.lastKmSource.roadGroups.length,1);
   assert.equal(mixed.lastKmSource.droppedRiderIds.length,6);
+  assert.equal(mixed.finale.reserveStatus,
+    'energy_demand_saturated_at_zero');
+  assert.ok(mixed.finale.totalUnmetEnergyDemand>0);
+  assert.equal(mixed.finale.bands.at(-1).lastPossiblePlace,32);
+  assert.equal(mixed.pointsStatus,'withheld');
+  const noFront=runV91TestDrive({settings:{...base,
+    attack:'none',chase:'all',defaultRivalPlan:'chase'}});
+  assert.equal(noFront.status,'unsupported');
+  assert.equal(noFront.lastKmSource.roadGroups.length,0);
+  assert.equal(noFront.lastKmSource.droppedRiderIds.length,1);
   const split=runV91TestDrive({settings:{...base,teamCount:15,
     attack:'repeated',chase:'ignore',defaultRivalPlan:'attack'}});
   assert.equal(split.roadStatus,'paid_separated_bands');

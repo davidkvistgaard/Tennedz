@@ -655,3 +655,22 @@ test('group branch refuses unpaid manager plans and unresolved road states',()=>
   assert.equal(separated.paidFinale.line.riders.length,32);
   assert.equal(separated.pointsStatus,'withheld');
 });
+
+test('depleted group branch exposes reserve shortfall without classification',()=>{
+  const settings={distanceKm:260,terrain:'mountain',fatigue:30,
+    teamCount:4,gender:'M',seed:'test-drive-acceptance-1',
+    attack:'selective',chase:'selective',defaultRivalPlan:'mixed'};
+  const result=createV91ConditionalRaceFinal(settings);
+  assert.equal(result.roadStatus,'recorded_depleted_bands');
+  assert.equal(result.paidFinale.line.riders.length,32);
+  assert.equal(result.paidFinale.line.bands.length,3);
+  assert.equal(result.classifiedResults,null);
+  assert.equal(result.pointsStatus,'withheld');
+  assert.equal(result.canCommitAwards,false);
+  assert.equal(validateV91ConditionalRaceFinal(settings,{},result),true);
+  const plans=result.recording.committedInputs.teams.map(team=>({
+    teamId:team.id,finisherId:team.orders.captainId,
+    leadOutRiderId:null}));
+  assert.throws(()=>createV91ConditionalRaceFinal(settings,{plans}),
+    /not paid for depleted road bands/);
+});

@@ -71,16 +71,19 @@ paid lead-out work and conditional line times. Where the already paid bunch
 runner recorded inferred source wheels, it also exposes that runner's
 `provisionalLineOrder`, `positionSourceStatus`, `passingRule` and timestamped
 `roadEvents`; these are laboratory observations, not official placings. The
-tool names an unsupported road
-state with its recorded group and dropped-rider counts where the unmodified
+tool names an unsupported road state with its recorded group and dropped-rider
+counts where the unmodified
 kilometre source is available. A fixed 54-case diagnostic across three routes,
 both categories, three field sizes and three tactics modes originally replayed
 32 conditional individual lines, 12 paid group-band lines and 10 explicit
 refusals, all on the tired mountain source with multiple groups or dropped
-riders. The new same-source separated-group path changes that coverage to 32
+riders. The same-source separated-group path changed that coverage to 32
 conditional lines, 12 single-group band lines, six separated-group band lines
-and four explicit refusals. This is coverage evidence, not a sporting success
-rate. The matrix fixes seed `test-drive-acceptance-1`; its player orders are
+and four explicit refusals. The new depleted-reserve path records two of those
+four as unresolved road bands with visible unmet energy demand. The remaining
+two have a bunch and a dropped rider but no front group. This is coverage
+evidence, not a sporting success rate. The matrix fixes seed
+`test-drive-acceptance-1`; its player orders are
 selective attack/selective chase for mixed rivals, repeated attack/ignore chase
 for attack rivals, and no attack/all chase for chase rivals. The tool
 withholds classification and point awards and has no account,
@@ -102,6 +105,19 @@ the separated continuation. Contact between road bands, riders dropped at
 the source, wheel order within a band, individual classification and points
 remain open. The older separated and single-group recordings keep their
 existing versions and replay behavior.
+
+`v2-finale-depleted-last-km-11` is separate from that fully paid path. The
+kilometre motor clamps reserve at zero yet continues an exhausted rider at a
+reduced ability. Its companion dropped-step v2 records the same saturation:
+energy actually spent, energy demanded beyond the available reserve, and the
+resulting deficit behind the bunch. The clock aligns the existing group,
+bunch and dropped riders over all seven last-kilometre slices. Both fixed
+four-team mountain mixed sources (M/F, fatigue 30) retain all 32 riders and
+replay as `recorded_depleted_bands`, with six depleted riders and explicit
+unmet demand. This is **not** a fully paid individual finish: the dropped
+riders have no defensible internal order or energy reserve to debit. It
+withholds classification and points, and it rejects finisher/lead-out plans.
+The old strict dropped-step recording still refuses zero-reserve travel.
 
 The fictional input also accepts optional `settings.teamOverrides` rows such
 as `{"teamId":"you","level":76,"fatigue":15}`. Each row changes the
@@ -127,10 +143,10 @@ through the existing full-kilometre bunch runner. The new version records the
 blocked or not-due intents; an eligible named attack is still rejected. A
 single separated group now has a distinct paid-band path under the strict
 conditions below. This resolves an overly broad order-label guard, not the
-general finale. The next motor integration must carry multiple last-kilometre
-groups, dropped riders and valid manager actions on one clock through contact
-and the finish; only then can a general result and point projection be
-assessed against this gate.
+general finale. The next motor integration must resolve group contact,
+valid manager actions on separated roads, the no-front dropped state and
+individual order on the common clock. Only then can a general result and
+point projection be assessed against this gate.
 
 The repeatable read-only audit
 `node scripts/engine-v2-conditional-coverage-audit.mjs` fixes one fictional
@@ -141,9 +157,10 @@ each accepted conditional line or road-band recording against the same locked
 kilometre race.
 Sixteen of 18 mixed sources reach a paid conditional individual line; the
 two 4-team mountain sources have a road group and six dropped riders, so
-refuse. Twelve of 18 attack-oriented sources reach a paid single-group band
+record depleted bands rather than a fully paid result. Twelve of 18
+attack-oriented sources reach a paid single-group band
 and the other six reach paid separated-group bands. The audit now accepts
-all three read-only road statuses, checks the locked rider count and withheld
+all four read-only road statuses, checks the locked rider count and withheld
 awards, and replays every accepted source. The six separated sources have two
 road groups. Each accepted recording retains the complete field and withholds
 awards. None of these counts is a target win rate. A time gap is never

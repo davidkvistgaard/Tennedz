@@ -3,7 +3,8 @@ import assert from 'node:assert/strict';
 import {buildKilometreRoute} from '../../lib/engine/v2/route.mjs';
 import {finaleDistanceGrid} from '../../lib/engine/v2/finale-grid.mjs';
 import {advanceFinaleDroppedStep,validateFinaleDroppedStep,
-  FINALE_DROPPED_STEP_VERSION} from
+  FINALE_DROPPED_STEP_VERSION,
+  FINALE_DEPLETED_DROPPED_STEP_VERSION} from
   '../../lib/engine/v2/finale-dropped-step.mjs';
 
 const route=buildKilometreRoute({distance_km:40,
@@ -56,4 +57,19 @@ test('a dropped rider cannot coast for free or silently rejoin the bunch',()=>{
   assert.throws(()=>advanceFinaleDroppedStep({...input,
     droppedRiders:[input.droppedRiders[0],input.droppedRiders[0]]}),
   /complete source riders/);
+});
+
+test('versioned depleted reserve records unmet work without negative energy',()=>{
+  const depleted={...input,
+    version:FINALE_DEPLETED_DROPPED_STEP_VERSION,
+    droppedRiders:[{...input.droppedRiders[0],energy:0}]};
+  const recorded=advanceFinaleDroppedStep(depleted);
+  assert.equal(recorded.version,FINALE_DEPLETED_DROPPED_STEP_VERSION);
+  assert.equal(recorded.riders[0].energySpent,0);
+  assert.equal(recorded.riders[0].energyAfter,0);
+  assert.ok(recorded.riders[0].energyDemand>0);
+  assert.equal(recorded.riders[0].unmetEnergyDemand,
+    recorded.riders[0].energyDemand);
+  assert.ok(recorded.riders[0].elapsedSeconds>0);
+  assert.equal(validateFinaleDroppedStep(depleted,recorded),true);
 });

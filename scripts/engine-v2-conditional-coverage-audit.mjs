@@ -28,7 +28,7 @@ for(const route of routes)for(const gender of ['M','F'])
         const trial=createV91ConditionalRaceFinal(settings);
         assert.deepEqual(trial.recording,source.recording);
         assert.ok(['paid_conditional_line','paid_group_bands',
-          'paid_separated_bands']
+          'paid_separated_bands','recorded_depleted_bands']
           .includes(trial.roadStatus));
         if(trial.roadStatus==='paid_conditional_line'){
           assert.equal(trial.paidFinale.finishers.length,teamCount*8);
@@ -40,7 +40,7 @@ for(const route of routes)for(const gender of ['M','F'])
           assert.equal(trial.paidFinale.line.finalRiderEnergy.length,
             teamCount*8);
           assert.equal(trial.finalePlanStatus,'unapplied_group_band');
-        }else{
+        }else if(trial.roadStatus==='paid_separated_bands'){
           assert.ok(handoff.roadGroups.length>=2);
           assert.equal(handoff.droppedRiderIds.length,0);
           assert.equal(trial.paidFinale.line.riders.length,teamCount*8);
@@ -50,6 +50,19 @@ for(const route of routes)for(const gender of ['M','F'])
             .lastPossiblePlace,teamCount*8);
           assert.equal(trial.finalePlanStatus,
             'unapplied_group_bands');
+        }else{
+          assert.ok(handoff.roadGroups.length>=1);
+          assert.ok(handoff.droppedRiderIds.length>=1);
+          assert.equal(trial.paidFinale.line.riders.length,teamCount*8);
+          assert.equal(trial.paidFinale.line.finalRiderEnergy.length,
+            teamCount*8);
+          assert.equal(trial.paidFinale.line.bands.at(-1)
+            .lastPossiblePlace,teamCount*8);
+          assert.ok(trial.paidFinale.passageFrames.some(frame=>
+            frame.droppedPassages.some(row=>
+              row.unmetEnergyDemand>0)));
+          assert.equal(trial.finalePlanStatus,
+            'unapplied_depleted_bands');
         }
         assert.equal(trial.classifiedResults,null);
         assert.equal(trial.pointsStatus,'withheld');
@@ -73,14 +86,16 @@ for(const route of routes)for(const gender of ['M','F'])
     }
 const count=(mode,status)=>rows.filter(row=>row.mode===mode&&
   row.status===status).length;
-console.log(JSON.stringify({version:'v2-conditional-coverage-audit-3',
+console.log(JSON.stringify({version:'v2-conditional-coverage-audit-4',
   seed:'conditional-coverage-1',scenarios:rows.length,
   mixedPaid:count('mixed','paid_conditional_line'),
   mixedGroupBands:count('mixed','paid_group_bands'),
   mixedSeparatedBands:count('mixed','paid_separated_bands'),
+  mixedDepletedBands:count('mixed','recorded_depleted_bands'),
   mixedRefused:count('mixed','refused'),
   attackPaid:count('attack','paid_conditional_line'),
   attackGroupBands:count('attack','paid_group_bands'),
   attackSeparatedBands:count('attack','paid_separated_bands'),
+  attackDepletedBands:count('attack','recorded_depleted_bands'),
   attackRefused:count('attack','refused'),
   rows},null,2));

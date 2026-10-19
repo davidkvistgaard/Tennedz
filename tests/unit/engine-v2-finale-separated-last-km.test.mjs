@@ -2,7 +2,9 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {createV91Playtest} from '../../lib/engine/v2/playtest.mjs';
 import {recordFinaleSeparatedLastKmClock,
-  validateFinaleSeparatedLastKmClock} from
+  validateFinaleSeparatedLastKmClock,
+  recordFinaleDepletedLastKmClock,
+  validateFinaleDepletedLastKmClock} from
   '../../lib/engine/v2/finale-separated-last-km.mjs';
 
 test('two recorded road groups reach the line on the bunch marker clock',()=>{
@@ -39,6 +41,40 @@ test('two recorded road groups reach the line on the bunch marker clock',()=>{
     assert.equal(paid.pointsStatus,'withheld');
     assert.equal(paid.canCommitAwards,false);
     assert.equal(validateFinaleSeparatedLastKmClock(recording,paid),true);
+    assert.deepEqual(recording,original);
+  }
+});
+
+test('depleted source riders retain measured deficits and explicit reserve shortfall',()=>{
+  for(const gender of ['M','F']){
+    const {recording}=createV91Playtest({distanceKm:260,
+      terrain:'mountain',teamCount:4,gender,fatigue:30,
+      attack:'selective',chase:'selective',defaultRivalPlan:'mixed',
+      seed:'test-drive-acceptance-1'});
+    const original=structuredClone(recording);
+    const trace=recordFinaleDepletedLastKmClock(recording);
+    assert.equal(trace.passageFrames.length,7);
+    assert.deepEqual(trace.line.bands.map(row=>row.riderIds.length),
+      [4,22,6]);
+    assert.equal(trace.line.riders.length,32);
+    assert.equal(trace.line.finalRiderEnergy.length,32);
+    assert.equal(trace.line.bands.at(-1).lastPossiblePlace,32);
+    for(const frame of trace.passageFrames){
+      assert.equal(frame.droppedPassages.length,6);
+      for(const row of frame.droppedPassages){
+        assert.ok(row.unmetEnergyDemand>0);
+        assert.ok(Math.abs(row.passageSecondsFromBunchMarker-
+          frame.bunchPassageSecondsFromBunchMarker-
+          row.deficitSeconds)<1e-7);
+      }
+    }
+    assert.equal(trace.classifiedResults,null);
+    assert.equal(trace.pointsStatus,'withheld');
+    assert.equal(validateFinaleDepletedLastKmClock(recording,trace),true);
+    const forged=structuredClone(trace);
+    forged.passageFrames[0].droppedPassages[0].unmetEnergyDemand=0;
+    assert.throws(()=>validateFinaleDepletedLastKmClock(recording,
+      forged),/does not replay/);
     assert.deepEqual(recording,original);
   }
 });
