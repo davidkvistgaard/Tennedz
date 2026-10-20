@@ -2610,3 +2610,10 @@ API's actual provisional order after removing two lead-outs; all fourteen
 v93 local browser flows, lint and the isolated build pass. Placing ranges
 for unresolved roads retain their separate display path, and official
 results and awards remain withheld.
+
+The result table now joins provisional places to conditional crossings by
+`riderId`, not by their array index. Where a unique provisional order exists,
+rows follow that order; otherwise they remain sorted by conditional time.
+The browser check compares every displayed rider and place with the API's
+provisional order after changing two managers' lead-outs. The isolated
+build, lint and all fourteen local v93 browser flows pass.

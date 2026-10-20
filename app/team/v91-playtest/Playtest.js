@@ -171,7 +171,11 @@ export default function Playtest(){
     row.riderId===coastedRiderId);
   const coastedReplayResult=coasted?.lineTimes.find(row=>
     row.riderId===coastedRiderId);
+  const coastedProvisionalPlaces=new Map((coasted?.provisionalLineOrder??[])
+    .map(row=>[row.riderId,row]));
   const coastedOrder=[...(coasted?.lineTimes??[])].sort((a,b)=>
+    (coastedProvisionalPlaces.get(a.riderId)?.position??0)-
+      (coastedProvisionalPlaces.get(b.riderId)?.position??0)||
     a.elapsedSecondsFromLastKmStart-b.elapsedSecondsFromLastKmStart||
     a.riderId.localeCompare(b.riderId));
   const coastedRoadBounds=new Map((coasted?.roadPlaceBounds?.riders??[])
@@ -601,8 +605,8 @@ export default function Playtest(){
               <th scope="col">Energy at line</th><th scope="col">Preview points</th>
               <th scope="col">Replay</th>
             </tr></thead>
-            <tbody>{coastedOrder.map((row,index)=>{
-              const place=coasted.provisionalLineOrder?.[index]??
+            <tbody>{coastedOrder.map(row=>{
+              const place=coastedProvisionalPlaces.get(row.riderId)??
                 coastedRoadBounds.get(row.riderId);
               const points=coasted.pointPreview?.riders?.find(value=>
                 value.riderId===row.riderId)?.previewPoints;

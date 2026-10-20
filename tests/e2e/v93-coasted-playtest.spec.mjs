@@ -97,6 +97,13 @@ test('exhausted v93 road pays two manager lead-outs and shows conditional line',
       name:'V93 individual conditional results'}).getByRole('row',{
       name:new RegExp(`^${unassistedPlace} you-4 `)}))
       .toBeVisible();
+    const displayedOrder=await page.getByRole('table',{
+      name:'V93 individual conditional results'})
+      .locator('tbody tr').evaluateAll(rows=>rows.map(row=>({
+        position:Number(row.cells[0].textContent),
+        riderId:row.cells[1].textContent})));
+    expect(displayedOrder).toEqual(unassisted.provisionalLineOrder
+      .map(row=>({position:row.position,riderId:row.riderId})));
     await expect(page.getByText('Official points: withheld · Awards saved: 0'))
       .toBeVisible();
     expect(errors).toEqual([]);
