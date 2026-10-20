@@ -2532,3 +2532,14 @@ shows the same time and energy as the individual conditional result. A
 and then switches to a bunch rider through the result table. All fourteen
 v93 browser flows, lint and an isolated production build pass. This is a
 replay inspection path, not an official result or award action.
+
+For the single-front road with two newly coasted leavers, a read-only
+projection now narrows the conditional road ranges without changing the
+versioned race recording. Every paid passage after the split must keep the
+38-rider front ahead of both leavers and both leavers ahead of the
+120-rider bunch; the individual crossings must preserve those three band
+separations. The result table then shows ranges 1–38, 39–40 and 41–160.
+Order within each band and contact at the split remain unresolved, so
+the provisional individual order stays null and point illustration and
+official awards remain unavailable. Both categories on all five route
+profiles replay the projection, and a tampered crossing is rejected.

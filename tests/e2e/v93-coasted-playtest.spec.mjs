@@ -691,9 +691,16 @@ test('20-team rolling front drops finish ahead as separate solo passages',
     expect(coasted.managerDecisions.find(row=>row.teamId==='you')
       .finisherId).toBe('you-6');
     expect(coasted.pointPreview.status).toBe('unavailable');
+    expect(coasted.roadPlaceBounds.bands.map(band=>[
+      band.firstPossiblePlace,band.lastPossiblePlace]))
+      .toEqual([[1,38],[39,40],[41,160]]);
     await expect(page.getByRole('table',{
       name:'V93 individual conditional results'}).getByRole('row'))
       .toHaveCount(161);
+    await expect(page.getByRole('table',{
+      name:'V93 individual conditional results'}).getByRole('row')
+      .filter({hasText:'you-6'}).getByRole('cell').first())
+      .toHaveText('39–40');
     const ownLine=coasted.lineTimes.find(row=>row.riderId==='you-6');
     await page.getByRole('button',{name:'Replay you-6'}).click();
     await expect(page.getByRole('combobox',{name:'Rider'}))

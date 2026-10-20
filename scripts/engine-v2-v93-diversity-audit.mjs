@@ -66,6 +66,16 @@ for(let index=0;index<audit.scenarios;index++){
     }
   }
   assert.equal(replayedRiders.size,crossings.size);
+  if(summary.roadPlaceBounds){
+    assert.equal(summary.roadPlaceBounds.pointsStatus,'withheld');
+    assert.equal(summary.roadPlaceBounds.canCommitAwards,false);
+    assert.equal(summary.roadPlaceBounds.bands.at(-1).lastPossiblePlace,
+      crossings.size);
+    for(const rider of summary.roadPlaceBounds.riders){
+      assert.ok(crossings.has(rider.riderId));
+      assert.ok(rider.firstPossiblePlace<=rider.lastPossiblePlace);
+    }
+  }
   assert.equal(race.canCommitAwards,false);
   assert.equal(race.pointsStatus,'withheld');
   assert.equal(race.pointPreview.canCommitAwards,false);

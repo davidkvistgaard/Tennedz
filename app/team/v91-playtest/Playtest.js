@@ -159,6 +159,8 @@ export default function Playtest(){
   const coastedOrder=[...(coasted?.lineTimes??[])].sort((a,b)=>
     a.elapsedSecondsFromLastKmStart-b.elapsedSecondsFromLastKmStart||
     a.riderId.localeCompare(b.riderId));
+  const coastedRoadBounds=new Map((coasted?.roadPlaceBounds?.riders??[])
+    .map(row=>[row.riderId,row]));
   const conditionalLine=[...lineTimes].sort((a,b)=>
     a.elapsedSecondsFromLastKmStart-b.elapsedSecondsFromLastKmStart||
     a.riderId.localeCompare(b.riderId));
@@ -547,6 +549,9 @@ export default function Playtest(){
         </div>
         <div className="v91-finish">
           <h3>Individual conditional results</h3>
+          {coasted.roadPlaceBounds&&<p>Road ranges follow the paid front,
+            leaver and bunch passages after the split. Wheel order and
+            contact at the split remain unresolved; points are withheld.</p>}
           <div className="v91-result-scroll"><table className="v91-result-table"
             aria-label="V93 individual conditional results">
             <thead><tr><th scope="col">Possible place</th><th scope="col">Rider</th>
@@ -555,7 +560,8 @@ export default function Playtest(){
               <th scope="col">Replay</th>
             </tr></thead>
             <tbody>{coastedOrder.map((row,index)=>{
-              const place=coasted.provisionalLineOrder?.[index];
+              const place=coasted.provisionalLineOrder?.[index]??
+                coastedRoadBounds.get(row.riderId);
               const points=coasted.pointPreview?.riders?.find(value=>
                 value.riderId===row.riderId)?.previewPoints;
               return <tr key={row.riderId}><td>{place?

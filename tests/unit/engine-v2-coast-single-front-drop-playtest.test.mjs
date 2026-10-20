@@ -5,6 +5,9 @@ import {createV93PlayableTest,summarizeV93CoastedPlaytest,
   '../../lib/engine/v2/playtest-v93-coasted.mjs';
 import {recordFinaleSingleGroupLastKmClock} from
   '../../lib/engine/v2/finale-separated-last-km.mjs';
+import {projectFinaleDynamicSingleRoadBounds,
+  validateFinaleDynamicSingleRoadBounds} from
+  '../../lib/engine/v2/finale-dynamic-single-road-bounds.mjs';
 
 const context={tier:3,divisionIndex:1,divisionCount:1};
 const settings=(gender,terrain)=>({distanceKm:260,teamCount:20,
@@ -38,6 +41,15 @@ test('zero-reserve front members get separate coasted crossings',()=>{
         'unresolved_contact');
       assert.equal(summary.bandReplays.length,4);
       assert.equal(summary.lineTimes.length,160);
+      assert.deepEqual(summary.roadPlaceBounds.bands.map(band=>[
+        band.kind,band.firstPossiblePlace,band.lastPossiblePlace]),[
+        ['front',1,38],['unresolved_leavers',39,40],
+        ['bunch',41,160]]);
+      assert.deepEqual(summary.roadPlaceBounds.riders.find(row=>
+        row.riderId==='you-6'),{riderId:'you-6',
+        firstPossiblePlace:39,lastPossiblePlace:40});
+      assert.equal(validateFinaleDynamicSingleRoadBounds(race.clock,
+        race.individualLine,summary.roadPlaceBounds),true);
       assert.ok(['you-6','you-7'].every(id=>summary.lineTimes
         .find(row=>row.riderId===id)?.energyAtLine===0));
       assert.equal(race.individualLine.provisionalLineOrder,null);
@@ -45,6 +57,23 @@ test('zero-reserve front members get separate coasted crossings',()=>{
       assert.equal(race.canCommitAwards,false);
       assert.equal(validateV93CoastedPlaytest(input,options,race),true);
     }
+});
+
+test('conditional front road bounds reject a changed line crossing',()=>{
+  const race=createV93PlayableTest(settings('M','rolling'));
+  const crossings=race.individualLine.conditionalCrossings.map(row=>
+    row.roadBandId==='isolated:you-6'?{
+      ...row,elapsedSecondsFromLastKmStart:200}:row);
+  assert.throws(()=>projectFinaleDynamicSingleRoadBounds(race.clock,{
+    ...race.individualLine,conditionalCrossings:crossings}),
+  /contradict the paid road bands/);
+  const passageFrames=race.clock.passageFrames.map(frame=>({
+    ...frame,droppedPassages:frame.droppedPassages.map(row=>({...row}))}));
+  passageFrames.at(-1).droppedPassages[0]
+    .passageSecondsFromBunchMarker=200;
+  assert.throws(()=>projectFinaleDynamicSingleRoadBounds({
+    ...race.clock,passageFrames},race.individualLine),
+  /lack separate paid passages/);
 });
 
 test('an isolated nominee remains unassisted while a bunch helper can work',()=>{
