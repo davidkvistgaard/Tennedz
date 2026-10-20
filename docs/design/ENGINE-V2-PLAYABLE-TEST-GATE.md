@@ -1741,5 +1741,11 @@ Twenty focused unit tests, lint, a local Next build and all five isolated
 playtest browser cases passed. The two earlier ensemble audits completed
 in isolation in 497.07 and 595.22 seconds respectively, below their
 720-second per-test limit. Their earlier simultaneous full-suite timeouts
-are therefore consistent with CPU contention; the full suite has not yet
-been rerun serially and remains unverified as a whole.
+are therefore consistent with CPU contention rather than a motor assertion
+failure.
+
+The complete local unit suite was then rerun with one test worker and the
+dot reporter. It finished with exit code 0 in about 52 minutes, including
+both formerly timing-out ensemble tests. The serial run establishes a
+passing full-suite baseline for this preview commit; it does not shorten
+the expensive audits or establish an official v2 result path.
