@@ -31,7 +31,7 @@ const settingsFor=index=>({
 
 const audit={scenarios:48,finished:0,refusals:[],versions:{},
   projectedPoints:0,unavailablePoints:0,replayedVersions:[],
-  conditionalCrossings:0};
+  conditionalCrossings:0,replayMatchedCrossings:0};
 const replayed=new Set();
 for(let index=0;index<audit.scenarios;index++){
   const settings=settingsFor(index);
@@ -45,6 +45,27 @@ for(let index=0;index<audit.scenarios;index++){
   assert.equal(summary.lineTimes.length,settings.teamCount*8);
   assert.equal(new Set(summary.lineTimes.map(row=>row.riderId)).size,
     settings.teamCount*8);
+  const crossings=new Map(summary.lineTimes.map(row=>[row.riderId,row]));
+  const replayedRiders=new Set();
+  for(const band of summary.bandReplays){
+    const finalFrame=band.frames.at(-1);
+    assert.ok(finalFrame);
+    assert.equal(finalFrame.riders.length,band.riderIds.length);
+    for(const rider of finalFrame.riders){
+      assert.equal(replayedRiders.has(rider.riderId),false);
+      replayedRiders.add(rider.riderId);
+      assert.ok(band.riderIds.includes(rider.riderId));
+      const crossing=crossings.get(rider.riderId);
+      assert.ok(crossing);
+      assert.equal(crossing.roadBandId,band.id);
+      assert.equal(rider.positionM,race.individualLine.lineDistanceM);
+      assert.equal(rider.elapsedToLineSeconds,
+        crossing.elapsedSecondsFromLastKmStart);
+      assert.equal(rider.energyAfter,crossing.energyAtLine);
+      audit.replayMatchedCrossings++;
+    }
+  }
+  assert.equal(replayedRiders.size,crossings.size);
   assert.equal(race.canCommitAwards,false);
   assert.equal(race.pointsStatus,'withheld');
   assert.equal(race.pointPreview.canCommitAwards,false);
@@ -52,11 +73,20 @@ for(let index=0;index<audit.scenarios;index++){
     audit.unavailablePoints++;
   else{
     assert.equal(race.pointPreview.riders.length,settings.teamCount*8);
-    for(const rider of race.pointPreview.riders)
+    assert.equal(summary.provisionalLineOrder.length,crossings.size);
+    const order=new Map(summary.provisionalLineOrder.map(row=>
+      [row.riderId,row]));
+    assert.equal(order.size,crossings.size);
+    for(const rider of race.pointPreview.riders){
+      assert.equal(order.get(rider.riderId)?.position,
+        rider.provisionalPlace);
+      assert.equal(crossings.get(rider.riderId)?.energyAtLine,
+        order.get(rider.riderId)?.energyAtLine);
       assert.equal(rider.previewPoints,pointsForDivisionResult({
         tier:pointContext.tier,resultType:'ONE_DAY',
         placing:rider.provisionalPlace,
         multiplier:race.pointPreview.multiplier}));
+    }
     audit.projectedPoints++;
   }
   if(!replayed.has(race.version)){

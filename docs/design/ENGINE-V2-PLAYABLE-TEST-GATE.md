@@ -2515,3 +2515,11 @@ versions replays exactly. Twenty-three focused and adjacent unit tests,
 lint, isolated build and all fourteen local v93 browser flows pass. This
 still does not supply a classified result or a resolved contact order for
 every finale, and the full unit suite has not completed.
+
+The same 48-case audit now checks every displayed conditional crossing
+against its own final road-band replay: rider identity and road band,
+recorded line position, timestamp and energy must agree. All 4,776
+crossings match. For the 44 scenarios with illustrative points, the
+audited placing and line energy must also match the provisional order
+used by the one-day point policy. This checks the full result/replay
+surface without treating conditional times as official classifications.
