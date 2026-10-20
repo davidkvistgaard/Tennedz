@@ -2811,3 +2811,10 @@ tests/unit/*.test.mjs`. The standard four-worker `pnpm test` run timed out
 in its existing 720-second selective-chase child audit under contention;
 that exact audit passed alone in 469 seconds and within the two-worker
 suite. The four-worker run is not counted as a pass for this revision.
+
+The standard `pnpm test` command now uses one worker after the same
+720-second child audits timed out in a subsequent two-worker run under
+contention. The earlier direct two-worker full suite passed; that later
+standard-command attempt did not. The serial `pnpm test` command passed
+all 962 tests with zero failures in 3,761 seconds. This only limits test
+file concurrency; it changes no motor behavior, recording or assertion.
