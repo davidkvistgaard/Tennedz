@@ -2629,3 +2629,13 @@ recording, and a tampered crossing is rejected. The 15-team women and 20-team
 men fixtures replay the bounds; the 48-case audit still has 4,776 matched
 crossings, 44 point illustrations and four unavailable ones. Focused tests,
 lint, an isolated build and all fifteen local v93 browser flows pass.
+
+The remaining 4-team flat audit case now identifies the first potential
+contact that blocks an illustrative point order: two isolated riders' paid
+paths can meet at 259.020 km, during the first 500 m of the finale. The
+v93 result page reports the time, distance and rider IDs from the existing
+contact audit, with links to each rider's paid replay. This is a possible
+longitudinal overlap on inferred source wheels, not a resolved meeting or
+passing rule. The provisional order remains null and points and awards stay
+withheld. The focused replay test, lint, isolated build and all sixteen
+local v93 browser flows pass.

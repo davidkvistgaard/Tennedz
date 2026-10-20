@@ -806,3 +806,49 @@ test('20-team rolling front drops finish ahead as separate solo passages',
     await expect(page.getByText('Official points: withheld · Awards saved: 0'))
       .toBeVisible();
   });
+
+test('possible isolated-rider contact links both paid replays',
+  async({page})=>{
+    await page.goto('/login');
+    await page.getByLabel('Email or username').fill('alice');
+    await page.getByLabel('Password',{exact:true}).fill('fixture-password');
+    await page.getByRole('button',{name:'Sign in',exact:true}).click();
+    await expect(page).toHaveURL(/\/team$/);
+    await page.goto('/team/v91-playtest');
+    await page.getByRole('checkbox',{
+      name:'Continue to a conditional finish'}).check();
+    await page.getByRole('checkbox',{
+      name:'Try v93 road-to-line preview'}).check();
+    await page.getByLabel('Distance').selectOption('260');
+    await page.getByLabel('Starting fatigue').selectOption('15');
+    await page.getByLabel('Scenario seed').fill('v93-diversity-1');
+    await page.getByLabel('Default tactics for uncustomized managers')
+      .selectOption('mixed');
+    await page.getByLabel('Your attack').selectOption('selective');
+    await page.getByLabel('Your chase').selectOption('all');
+    await page.getByRole('checkbox',{
+      name:'Show read-only point illustration'}).check();
+    const responsePromise=page.waitForResponse(response=>
+      response.url().endsWith('/api/v91-playtest')&&
+      response.request().method()==='POST');
+    await page.getByRole('button',{name:'Run v93 race preview'}).click();
+    const response=await responsePromise;
+    expect(response.status()).toBe(200);
+    const {coasted}=await response.json();
+    expect(coasted.pointPreview.status).toBe('unavailable');
+    expect(coasted.potentialRoadContact.riderIds)
+      .toEqual(['rival-1-3','rival-1-4']);
+    const note=page.getByRole('note',{name:'Potential road contact'});
+    await expect(note).toContainText('Potential contact at 259.020 km');
+    await expect(note).toContainText('contact and passing remain unresolved');
+    for(const id of coasted.potentialRoadContact.riderIds){
+      await note.getByRole('button',{
+        name:`Inspect contact rider ${id}`}).click();
+      await expect(page.getByRole('combobox',{name:'Rider'}))
+        .toHaveValue(id);
+      await expect(page.getByLabel('Selected rider finale replay'))
+        .toContainText(id);
+    }
+    await expect(page.getByText('Official points: withheld · Awards saved: 0'))
+      .toBeVisible();
+  });

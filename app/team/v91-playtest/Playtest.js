@@ -601,6 +601,28 @@ export default function Playtest(){
               'The paid front stays separate through the finale. Contact between the bunch and new leavers remains unresolved; these are conditional ranges and points are withheld.':
               'Road ranges follow the paid front, leaver and bunch passages after the split. Wheel order and contact at the split remain unresolved; points are withheld.'
           }</p>}
+          {coasted.potentialRoadContact&&<div role="note"
+            aria-label="Potential road contact">
+            <p>Potential contact at {' '}
+              {(coasted.potentialRoadContact.distanceM/1000).toFixed(3)} km
+              {' '}· {' '}
+              {coasted.potentialRoadContact.elapsedSecondsFromLastKmStart
+                .toFixed(3)} s, during the {' '}
+              {coasted.potentialRoadContact.sourcePhase===
+                'paid_first_500m'?'first 500 m':'final 500 m'}.
+              {' '}The paid paths overlap; contact and passing remain
+              unresolved.</p>
+            {coasted.potentialRoadContact.riderIds.map((id,index)=><button
+              key={id} type="button"
+              onClick={()=>{
+                setCoastedBandId(
+                  coasted.potentialRoadContact.roadBandIds[index]);
+                setCoastedRiderId(id);setCoastedBandIndex(0);
+                document.getElementById('v93-paid-finale-replay')
+                  ?.scrollIntoView();
+              }} aria-label={`Inspect contact rider ${id}`}>
+              Inspect {id}</button>)}
+          </div>}
           <div className="v91-result-scroll"><table className="v91-result-table"
             aria-label="V93 individual conditional results">
             <thead><tr><th scope="col">Possible place</th><th scope="col">Rider</th>
