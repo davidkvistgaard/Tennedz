@@ -2086,3 +2086,18 @@ continuation. Ten 120 km terrain/category combinations retain matching
 individual crossings, replay energy and read-only points. This is an opt-in
 preview recording; official awards remain withheld. The separate 260 km
 zero-reserve refusal remains.
+
+The 120 km browser path now also selects `you-6` as the front-group lead-out
+for nominated finisher `you-7`. The paid runner records four lead-out rider
+intervals and changes the finisher's crossing on the identical locked road.
+That check exposed a replay-summary error: when every front-group rider had
+already crossed in the final 100 m slice, its positioned tail was a valid
+zero-time, zero-distance ledger frame. The multiband replay previously
+rejected every zero-duration frame, returning a service error despite a
+complete paid line. It now accepts only an all-finished final tail whose
+positions and energy remain unchanged. A forged work debit in that tail is
+rejected. The full 25-case multiband replay suite, lint, isolated build and
+both local browser paths pass; the official awards remain withheld.
+Four additional 120 km flat runs at starting fatigue 15 verify the same new
+selective decision in 120- and 160-rider M/F fields, with complete crossings,
+replay energy and read-only point agreement.

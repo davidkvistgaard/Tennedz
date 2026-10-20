@@ -80,8 +80,21 @@ test('a newly engaged selective chase reaches a paid 120 km replay',
     await expect(page.getByRole('table',{
       name:'Individual conditional results'}).getByRole('row'))
       .toHaveCount(33);
-    await expect(page.getByText(/Your nominated finisher: you-7 · [\d.]+ s/))
+    const finisher=page.getByText(/Your nominated finisher: you-7 · [\d.]+ s/);
+    await expect(finisher).toBeVisible();
+    const unassisted=await finisher.textContent();
+    await expect(page.getByText('Official points: withheld · Awards saved: 0'))
       .toBeVisible();
+    await page.getByLabel('you lead-out helper').selectOption('you-6');
+    await page.getByRole('button',{name:'Run full race preview'}).click();
+    await expect(page.getByRole('heading',{name:'Paid group-local finale'}))
+      .toBeVisible();
+    await expect(page.getByRole('table',{
+      name:'Individual conditional results'}).getByRole('row'))
+      .toHaveCount(33);
+    await expect(page.getByText(/Paid lead-out work: [1-9]\d* recorded rider intervals/))
+      .toBeVisible();
+    await expect(finisher).not.toHaveText(unassisted);
     await expect(page.getByText('Official points: withheld · Awards saved: 0'))
       .toBeVisible();
     expect(errors).toEqual([]);

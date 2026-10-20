@@ -5,6 +5,44 @@ import {runV91IntegratedTestDrive} from
 import {summarizeV91PaidMultibandReplay} from
   '../../lib/engine/v2/playtest-multiband-replay.mjs';
 
+test('a paid front-group lead-out can finish before its zero-length replay tail',()=>{
+  const settings={distanceKm:120,terrain:'flat',teamCount:4,gender:'M',
+    seed:'conditional-coverage-1',attack:'repeated',chase:'ignore',
+    defaultRivalPlan:'attack',managerTactics:[{effort:'steady',
+      attack:'none',chase:'selective'}]};
+  const without=runV91IntegratedTestDrive({settings},{full:true});
+  const withLead=runV91IntegratedTestDrive({settings,finalePlans:[{
+    teamId:'you',finisherId:'you-7',leadOutRiderId:'you-6'}]},
+  {full:true});
+  assert.deepEqual(withLead.recording.recording,without.recording.recording);
+  assert.ok(withLead.summary.finale.leadOutWork.some(row=>
+    row.riderId==='you-6'&&row.energySpent>0));
+  const crossings=new Map(withLead.summary.finale.lineTimes.map(row=>
+    [row.riderId,row]));
+  assert.ok(crossings.get('you-7').elapsedSecondsFromLastKmStart<
+    without.summary.finale.lineTimes.find(row=>
+      row.riderId==='you-7').elapsedSecondsFromLastKmStart);
+  const replay=summarizeV91PaidMultibandReplay(withLead);
+  assert.equal(replay.bands.length,2);
+  assert.equal(replay.bands.reduce((count,band)=>
+    count+band.riderIds.length,0),32);
+  const front=withLead.individualLine.bandRunners[0].runner.frames;
+  assert.equal(front.at(-1).phase,'positioned_bunch_tail');
+  assert.equal(front.at(-1).durationSeconds,0);
+  for(const band of replay.bands)for(const row of band.frames.at(-1).riders){
+    assert.equal(row.positionM,120000);
+    assert.ok(Math.abs(row.energyAfter-
+      crossings.get(row.riderId).energyAtLine)<1e-6);
+    assert.ok(Math.abs(row.elapsedToLineSeconds-
+      crossings.get(row.riderId).elapsedSecondsFromLastKmStart)<1e-6);
+  }
+  const altered=structuredClone(withLead);
+  altered.individualLine.bandRunners[0].runner.frames.at(-1)
+    .riders[0].energySpent=1;
+  assert.throws(()=>summarizeV91PaidMultibandReplay(altered),
+    /band clock/);
+});
+
 for(const route of [{distanceKm:40,terrain:'flat',fatigue:0},
   {distanceKm:120,terrain:'rolling',fatigue:15},
   {distanceKm:260,terrain:'mountain',fatigue:30}])

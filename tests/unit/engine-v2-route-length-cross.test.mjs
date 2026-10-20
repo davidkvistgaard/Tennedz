@@ -146,6 +146,20 @@ test('new selective chase pays 120 km front-group roads across routes and gender
   }
 });
 
+test('new 120 km selective chase retains paid large fields after starting fatigue',()=>{
+  for(const teamCount of [15,20])for(const gender of ['M','F']){
+    const settings={distanceKm:120,terrain:'flat',gender,teamCount,
+      fatigue:15,seed:'conditional-coverage-1',
+      defaultRivalPlan:'attack',attack:'repeated',chase:'ignore',
+      managerTactics:[{effort:'steady',attack:'none',chase:'selective'}]};
+    const output=runV91IntegratedTestDrive({settings,
+      pointContext:{tier:3,divisionIndex:1,divisionCount:1}},{full:true});
+    assert.equal(output.recording.version,
+      'v91-conditional-race-final-15');
+    assertPaid(output,{distanceKm:120,terrain:'flat',teamCount});
+  }
+});
+
 test('separated singleton keeps a paid individual replay across short routes and genders',()=>{
   for(const terrain of terrains)for(const gender of ['M','F']){
     const settings={distanceKm:40,terrain,gender,teamCount:4,
