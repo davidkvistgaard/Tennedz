@@ -2359,4 +2359,6 @@ multi-manager matrices are direct API-engine probes, not browser replays.
 The targeted new and adjacent unit suites (12 tests), lint, isolated build,
 and all seven v93 local browser fixtures pass. The seventh browser flow
 tests this exact three-isolated-rider point-withholding case. Full unit
-suite status is recorded separately when run.
+suite status is recorded separately when run. A full `pnpm test` attempt
+was stopped after 30 minutes with the existing `engine-v2-test-drive`
+matrix still active; this is not a full-suite pass.
