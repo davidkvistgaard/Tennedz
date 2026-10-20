@@ -2111,3 +2111,16 @@ the final replay, and the provisional point order uses the existing one-day
 policy while official awards stay withheld. This checks an actual manager
 choice through the complete selected race rather than another detached short
 slice. The 260 km zero-reserve mixed-plan refusal remains in the same gate.
+
+The two-manager path is now locked as six more complete 120 km tests: M/F
+fields of 4, 15 and 20 teams choose a front-group helper for `you-7` and a
+bunch helper for `rival-1-7` after rival 1's selective chase. Both helpers pay
+and both finishers improve against the identical race without those orders.
+The band overlap audit keeps the roads separate, every line time and reserve
+matches replay, and the provisional point order remains read-only. A local
+browser run against an isolated build and login fixture also selected both
+orders, received a successful integrated API response with 32 crossings and
+paid replay, and rendered both helpers, both road bands and the conditional
+result with official points withheld. Rival 1's attack must be set to `none`
+for this exact road; leaving its UI default at `selective` creates an extra
+front group and correctly marks the nominated bunch helper unavailable.
