@@ -2492,3 +2492,26 @@ single-group clock cannot pay their first 259 km finale slice. This is a
 specific remaining source-road boundary, not evidence of a complete
 motor. The audit is direct engine coverage; the thirteen local browser
 flows remain the UI evidence.
+
+The last refusal in that audit now has a separately versioned single-front
+coast path. Its 40-rider source front group has two player riders at zero
+reserve. They leave before the 259 km slice, pay independent coasted
+travel, and remain ahead of the bunch at the recorded line while the
+other 38 retain the group identity. The trace and final 500 m replay carry
+all 160 riders to conditional individual crossings. With the relative
+order and possible contact between surviving front riders and the two
+leavers unresolved, the clock assigns one broad unresolved placing band;
+the individual times remain visible, but no provisional placing, point
+illustration or award is invented. Both categories across all five route
+profiles replay this paid shape; nominated isolated finishers and an
+optional bunch lead-out were checked on the same locked road. The 20-team
+rolling case also passes the browser UI with 160 result rows.
+
+Repeating the reproducible 48-case diversity audit now finishes all 48
+roads and 4,776 conditional crossings. Forty-four cases retain
+policy-consistent read-only point illustrations and four explicitly
+withhold them; one representative of each of the seven observed preview
+versions replays exactly. Twenty-three focused and adjacent unit tests,
+lint, isolated build and all fourteen local v93 browser flows pass. This
+still does not supply a classified result or a resolved contact order for
+every finale, and the full unit suite has not completed.
