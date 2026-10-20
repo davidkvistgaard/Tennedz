@@ -2304,3 +2304,15 @@ isolated build, and four local browser fixture flows pass. The full unit
 suite was not repeated after its earlier long run was stopped. Roads with
 no front group but one or more dropped riders still return an explicit
 refusal; all v93 points remain illustrative and non-awarding.
+
+The bunch-only v93 handoff now also accepts a final-kilometre source whose
+last full kilometre recorded chasers before catching the front group. The
+source has no front group or engaged chase target at the boundary; the old
+no-front/dropped version keeps its stricter source guard. A fresh 120-case
+260 km matrix (four teams, both categories, five terrains, four rival plans,
+fatigue 0/15/30) completes and replays every road: 66 bunch-only, 30
+separated, four single-group and 20 coasted. Six of the bunch-only cases
+had a recorded chaser and catch in kilometre 259. A targeted 260 km browser
+fixture follows such a catch through 32 individual crossings. Focused new
+and legacy clock tests, lint, isolated build and all five v93 browser
+fixtures pass.

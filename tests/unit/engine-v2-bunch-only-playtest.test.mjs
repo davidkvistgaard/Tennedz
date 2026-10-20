@@ -76,6 +76,21 @@ test('two bunch managers pay lead-outs on the same source road',()=>{
     /does not replay/);
 });
 
+test('a catch recorded in kilometre 259 leaves a payable bunch at 1 km',()=>{
+  const input={...settings(260,'flat','M'),
+    seed:'coast-matrix',defaultRivalPlan:'mixed'};
+  const race=createV93PlayableTest(input,{pointContext:context});
+  const source=race.recording.frames.at(-2);
+  assert.equal(source.roadGroups.length,0);
+  assert.ok(source.chasers.length>0);
+  assert.ok(source.caughtBreakawayRiderIds.length>0);
+  assert.equal(race.version,V93_BUNCH_ONLY_PLAYTEST_VERSION);
+  assert.equal(race.clock.passageFrames.length,7);
+  assert.equal(race.individualLine.conditionalCrossings.length,32);
+  assert.equal(validateV93CoastedPlaytest(input,
+    {pointContext:context},race),true);
+});
+
 test('bunch-only clock rejects the old motor recording',()=>{
   const prepared=prepareV91Playtest(settings(40,'flat','M'));
   const older=simulateTacticalTour(prepared);
