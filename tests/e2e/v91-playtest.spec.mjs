@@ -326,6 +326,7 @@ test('a paid lead-out remains visible through an exact late contact',
 
 test('a surviving group and bunch each replay paid riders to the conditional line',
   async({page})=>{
+    test.setTimeout(90_000);
     const errors=[];page.on('pageerror',error=>errors.push(error.message));
     await page.goto('/login');
     await page.getByLabel('Email or username').fill('v2rival');
@@ -383,6 +384,39 @@ test('a surviving group and bunch each replay paid riders to the conditional lin
     await expect(page.getByRole('table',{
       name:'Individual conditional results'}).getByRole('row'))
       .toHaveCount(121);
+    await page.getByLabel('you lead-out helper').selectOption('');
+    await page.getByLabel('Distance').selectOption('260');
+    await page.getByLabel('Route profile').selectOption('mountain');
+    await page.getByLabel('Field size').selectOption('4');
+    await page.getByLabel('Starting fatigue').selectOption('30');
+    await page.getByRole('button',{name:'Run full race preview'}).click();
+    await expect(page.getByRole('heading',{
+      name:'Recorded race · 260 km mountain'})).toBeVisible();
+    await expect(page.getByRole('heading',{name:'Paid group-local finale'}))
+      .toBeVisible();
+    await expect(page.getByLabel('Finale road group').locator('option'))
+      .toHaveCount(3);
+    await page.getByLabel('Finale road group').selectOption('road-2');
+    await expect(page.getByText(/5 riders pass the 500 m boundary/))
+      .toBeVisible();
+    await page.getByRole('slider',{name:/Group interval/}).fill('5');
+    await expect(page.getByText(
+      'Every rider in this group has crossed. The full conditional result is below.'))
+      .toBeVisible();
+    await page.getByLabel('Finale road group').selectOption('road-3');
+    await expect(page.getByText(/3 riders pass the 500 m boundary/))
+      .toBeVisible();
+    await page.getByRole('slider',{name:/Group interval/}).fill('5');
+    await expect(page.getByText(
+      'Every rider in this group has crossed. The full conditional result is below.'))
+      .toBeVisible();
+    await page.getByLabel('Finale road group').selectOption('peloton');
+    await expect(page.getByText(/24 riders pass the 500 m boundary/))
+      .toBeVisible();
+    await expect(page.getByRole('table',{
+      name:'Individual conditional results'}).getByRole('row'))
+      .toHaveCount(33);
+    await expect(page.getByText(/Points: withheld/)).toBeVisible();
     expect(errors).toEqual([]);
   });
 

@@ -1822,3 +1822,17 @@ with you-6 as the front-group lead-out records two helper work intervals
 and changes nominated you-7's crossing, while all 120 riders still reach
 the line. Point awards remain withheld;
 cross-band contact and inferred wheels still prevent an official placing.
+
+The same opt-in group-local replay now accepts the separately versioned
+three-band continuation on a tired 260 km mountain route. It takes the two
+surviving groups and bunch from their recorded 500 m passage, checks every
+rider's membership and energy against the paid source, and checks each
+band's interval clock, travel and crossing against the 32/120/160-rider
+conditional result. Eighteen fixed M/F, 4/15/20-team flat, rolling and
+mountain scenarios passed, including the six mountain sources with two
+front groups. A local browser run switched between the 5-rider first group,
+3-rider second group and 24-rider bunch in the four-team mountain race and
+showed all 32 individual times. All seven local v91 browser cases, lint and
+an isolated Next build passed. Separate band clocks remain separate;
+possible cross-band encounters and inferred wheels still withhold official
+places and points.

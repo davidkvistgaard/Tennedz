@@ -6,7 +6,8 @@ import {summarizeV91PaidMultibandReplay} from
   '../../lib/engine/v2/playtest-multiband-replay.mjs';
 
 for(const route of [{distanceKm:40,terrain:'flat',fatigue:0},
-  {distanceKm:120,terrain:'rolling',fatigue:15}])
+  {distanceKm:120,terrain:'rolling',fatigue:15},
+  {distanceKm:260,terrain:'mountain',fatigue:30}])
   for(const gender of ['M','F'])for(const teamCount of [4,15,20]){
     const settings={...route,gender,teamCount};
     test(`${settings.distanceKm} km ${gender}, ${teamCount} teams: paid groups reach every conditional line`,()=>{
@@ -15,7 +16,7 @@ for(const route of [{distanceKm:40,terrain:'flat',fatigue:0},
     attack:'repeated',chase:'ignore'}},{full:true});
   const replay=summarizeV91PaidMultibandReplay(output);
   assert.equal(replay.status,'band_local_paid_trace');
-  assert.equal(replay.bands.length,2);
+  assert.equal(replay.bands.length,route.distanceKm===260?3:2);
   assert.equal(replay.bands.reduce((sum,band)=>
     sum+band.riderIds.length,0),settings.teamCount*8);
   for(const band of replay.bands){
