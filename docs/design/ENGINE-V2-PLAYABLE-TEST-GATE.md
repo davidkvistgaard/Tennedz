@@ -2523,3 +2523,12 @@ crossings match. For the 44 scenarios with illustrative points, the
 audited placing and line energy must also match the provisional order
 used by the one-day point policy. This checks the full result/replay
 surface without treating conditional times as official classifications.
+
+The local v93 result table now opens the selected rider's paid finale
+replay directly. It starts on the rider's road band and shows that rider's
+position and energy after each recorded interval; at the line it also
+shows the same time and energy as the individual conditional result. A
+20-team rolling front-drop fixture checks the nominated isolated rider
+and then switches to a bunch rider through the result table. All fourteen
+v93 browser flows, lint and an isolated production build pass. This is a
+replay inspection path, not an official result or award action.

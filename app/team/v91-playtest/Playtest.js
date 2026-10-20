@@ -85,6 +85,7 @@ export default function Playtest(){
   const [coastedRoadIndex,setCoastedRoadIndex]=useState(0);
   const [coastedBandId,setCoastedBandId]=useState('');
   const [coastedBandIndex,setCoastedBandIndex]=useState(0);
+  const [coastedRiderId,setCoastedRiderId]=useState('');
   const [finalePlans,setFinalePlans]=useState({});
   const [finaleFrontWork,setFinaleFrontWork]=useState({});
   const [namedAttack,setNamedAttack]=useState({teamId:'',riderId:''});
@@ -151,6 +152,10 @@ export default function Playtest(){
   const coastedBand=coasted?.bandReplays.find(band=>
     band.id===coastedBandId);
   const coastedBandFrame=coastedBand?.frames[coastedBandIndex];
+  const coastedReplayRider=coastedBandFrame?.riders.find(row=>
+    row.riderId===coastedRiderId);
+  const coastedReplayResult=coasted?.lineTimes.find(row=>
+    row.riderId===coastedRiderId);
   const coastedOrder=[...(coasted?.lineTimes??[])].sort((a,b)=>
     a.elapsedSecondsFromLastKmStart-b.elapsedSecondsFromLastKmStart||
     a.riderId.localeCompare(b.riderId));
@@ -245,6 +250,8 @@ export default function Playtest(){
         band.riderIds.includes(response.coasted.managerDecisions.find(row=>
           row.teamId==='you')?.finisherId))?.id??'');
       setCoastedBandIndex(0);
+      setCoastedRiderId(response.coasted?.managerDecisions.find(row=>
+        row.teamId==='you')?.finisherId??'');
       setResult(response.playtest??null);
       setIntegrated(response.integrated??null);
       setAttackRoad(response.attackRoad??null);
@@ -505,23 +512,35 @@ export default function Playtest(){
                 ` · bunch passed at ${(row.contactDistanceM/1000).toFixed(3)} km`}`)
             .join(' · ')}</p>
         </div>
-        <div className="v91-finish">
+        <div className="v91-finish" id="v93-paid-finale-replay">
           <h3>Paid individual finale replay</h3>
           <label>Road band<select value={coastedBandId}
             onChange={event=>{setCoastedBandId(event.target.value);
+              setCoastedRiderId(coasted.bandReplays.find(band=>
+                band.id===event.target.value)?.riderIds[0]??'');
               setCoastedBandIndex(0);}}>
             {coasted.bandReplays.map(band=><option key={band.id} value={band.id}>
               {band.id} · {band.riderIds.length} riders</option>)}
           </select></label>
+          {coastedBand&&<label>Rider<select value={coastedRiderId}
+            onChange={event=>setCoastedRiderId(event.target.value)}>
+            {coastedBand.riderIds.map(id=><option key={id} value={id}>
+              {id}</option>)}
+          </select></label>}
           <p>{coastedBand?.riderIds.length} riders · 500 m passage at {coastedBand?.passageAt500Seconds.toFixed(2)} s</p>
           {coastedBand&&<label>Band interval: {coastedBandIndex+1} of {coastedBand.frames.length}
             <input type="range" min="0" max={coastedBand.frames.length-1}
               value={coastedBandIndex}
               onChange={event=>setCoastedBandIndex(Number(event.target.value))}/>
           </label>}
-          <p>{coastedBandFrame?.riders.map(row=>
-            `${row.riderId}: ${row.role}, ${row.energyAfter.toFixed(1)} energy, ${row.energySpent.toFixed(2)} spent`)
-            .join(' · ')}</p>
+          {coastedReplayRider&&<p aria-label="Selected rider finale replay">
+            {coastedRiderId}: {coastedReplayRider.role} after this interval ·
+            {' '}{(coastedReplayRider.positionM/1000).toFixed(3)} km ·
+            {' '}{coastedReplayRider.energyAfter.toFixed(1)} energy,
+            {' '}{coastedReplayRider.energySpent.toFixed(2)} spent.
+            {coastedReplayRider.elapsedToLineSeconds!=null&&
+              ` Crossed at ${coastedReplayRider.elapsedToLineSeconds.toFixed(3)} s; result ${coastedReplayResult?.elapsedSecondsFromLastKmStart.toFixed(3)} s, ${coastedReplayResult?.energyAtLine.toFixed(1)} energy.`}
+          </p>}
           <p>Lead-out work: {coasted.leadOutWork.map(row=>
             `${row.riderId} ${row.energySpent.toFixed(2)} energy`)
             .join(' · ')||'none'}</p>
@@ -533,6 +552,7 @@ export default function Playtest(){
             <thead><tr><th scope="col">Possible place</th><th scope="col">Rider</th>
               <th scope="col">Road band</th><th scope="col">Time</th>
               <th scope="col">Energy at line</th><th scope="col">Preview points</th>
+              <th scope="col">Replay</th>
             </tr></thead>
             <tbody>{coastedOrder.map((row,index)=>{
               const place=coasted.provisionalLineOrder?.[index];
@@ -545,7 +565,12 @@ export default function Playtest(){
                 <th scope="row">{row.riderId}</th><td>{row.roadBandId}</td>
                 <td>{row.elapsedSecondsFromLastKmStart.toFixed(3)} s</td>
                 <td>{row.energyAtLine.toFixed(1)}</td>
-                <td>{points??'—'}</td></tr>;
+                <td>{points??'—'}</td><td><button type="button"
+                  onClick={()=>{setCoastedBandId(row.roadBandId);
+                    setCoastedRiderId(row.riderId);setCoastedBandIndex(0);
+                    document.getElementById('v93-paid-finale-replay')
+                      ?.scrollIntoView();}}
+                  aria-label={`Replay ${row.riderId}`}>Inspect</button></td></tr>;
             })}</tbody>
           </table></div>
           {coasted.pointPreview?.status==='unavailable'&&<p>

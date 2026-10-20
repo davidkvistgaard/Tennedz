@@ -694,6 +694,22 @@ test('20-team rolling front drops finish ahead as separate solo passages',
     await expect(page.getByRole('table',{
       name:'V93 individual conditional results'}).getByRole('row'))
       .toHaveCount(161);
+    const ownLine=coasted.lineTimes.find(row=>row.riderId==='you-6');
+    await page.getByRole('button',{name:'Replay you-6'}).click();
+    await expect(page.getByRole('combobox',{name:'Rider'}))
+      .toHaveValue('you-6');
+    const interval=page.getByRole('slider',{name:/Band interval/});
+    await interval.fill(await interval.getAttribute('max'));
+    await expect(page.getByLabel('Selected rider finale replay'))
+      .toContainText(`Crossed at ${ownLine.elapsedSecondsFromLastKmStart.toFixed(3)} s; result ${ownLine.elapsedSecondsFromLastKmStart.toFixed(3)} s, ${ownLine.energyAtLine.toFixed(1)} energy.`);
+    const bunchRider=coasted.lineTimes.find(row=>
+      row.roadBandId==='peloton');
+    await page.getByRole('button',{
+      name:`Replay ${bunchRider.riderId}`}).click();
+    await expect(page.getByRole('combobox',{name:'Rider'}))
+      .toHaveValue(bunchRider.riderId);
+    await expect(page.getByLabel('Selected rider finale replay'))
+      .toContainText(bunchRider.riderId);
     await expect(page.getByText(
       'Point illustration unavailable: New front drops remain ahead without a resolved road contact order.'))
       .toBeVisible();
