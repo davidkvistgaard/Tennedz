@@ -2101,3 +2101,13 @@ both local browser paths pass; the official awards remain withheld.
 Four additional 120 km flat runs at starting fatigue 15 verify the same new
 selective decision in 120- and 160-rider M/F fields, with complete crossings,
 replay energy and read-only point agreement.
+
+A committed 14-case full-race acceptance gate now compares the same locked
+120 km recording before and after nominating `you-7` with `you-6` as lead-out.
+It covers every selectable terrain in M/F four-team fields, plus 15- and
+20-team flat fields in both categories. The helper pays recorded work and the
+finisher reaches the line sooner; all riders' crossing times and energy match
+the final replay, and the provisional point order uses the existing one-day
+policy while official awards stay withheld. This checks an actual manager
+choice through the complete selected race rather than another detached short
+slice. The 260 km zero-reserve mixed-plan refusal remains in the same gate.
