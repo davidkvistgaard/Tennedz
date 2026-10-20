@@ -28,6 +28,16 @@ function race({distanceKm,terrain,gender,teamCount,plan}){
 
 function assertPaid(output,{distanceKm,terrain,teamCount}){
   const {summary,recording}=output;
+  // V91 has no rule for paying travel after a rider reaches zero reserve.
+  // Two consecutive zero-energy kilometre frames would mean that an accepted
+  // individual line inherited such an unexplained full-kilometre movement.
+  for(let index=1;index<recording.recording.frames.length-1;index++){
+    const zeroBefore=new Set(recording.recording.frames[index-1]
+      .riderGroups.filter(row=>row.energy===0).map(row=>row.id));
+    assert.ok(!recording.recording.frames[index].riderGroups.some(row=>
+      row.energy===0&&zeroBefore.has(row.id)),
+    'An accepted v91 line inherited sustained zero-reserve travel.');
+  }
   const riders=recording.recording.committedInputs.teams.flatMap(
     team=>team.riders.map(rider=>rider.id));
   const ids=new Set(riders);
@@ -196,6 +206,9 @@ test('long mixed road: depleted four-team fields refuse a fictional finish',()=>
           rider=>rider.id===riderId&&rider.energy===0));
         assert.ok(firstZero>=0&&firstZero<258,
           `${riderId} must have exhausted reserve before the last km`);
+        assert.ok(frames[firstZero+1].riderGroups.some(
+          rider=>rider.id===riderId&&rider.energy===0),
+        `${riderId} must still be depleted after another kilometre`);
       }
       assert.ok(summary.finale.totalUnmetEnergyDemand>0);
       assert.equal(summary.finale.lineTimes,undefined);
