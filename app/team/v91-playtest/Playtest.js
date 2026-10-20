@@ -34,6 +34,15 @@ const LABELS={distanceKm:'Distance',terrain:'Route profile',teamCount:'Field siz
   gender:'Category',fatigue:'Starting fatigue',effort:'Your effort',
   attack:'Your attack order',chase:'Your chase order'};
 
+function conditionalPlace(place,fallback='—'){
+  if(Number.isInteger(place?.position))return place.position;
+  if(!Number.isInteger(place?.firstPossiblePlace)||
+    !Number.isInteger(place?.lastPossiblePlace))return fallback;
+  return place.firstPossiblePlace===place.lastPossiblePlace?
+    place.firstPossiblePlace:
+    `${place.firstPossiblePlace}–${place.lastPossiblePlace}`;
+}
+
 function comparisonConditions(settings){
   const {distanceKm,terrain,teamCount,gender,fatigue,seed,
     profileHeightsM}=settings;
@@ -502,12 +511,8 @@ export default function Playtest(){
             {' '}{coastedOwnLine?.elapsedSecondsFromLastKmStart.toFixed(3)??'—'} s
             from the bunch&apos;s final-kilometre marker ·
             {' '}{coastedOwnLine?.energyAtLine.toFixed(1)??'—'} energy at line.</p>
-          <p>Conditional place: {coastedOwnPlace?
-            coastedOwnPlace.firstPossiblePlace===
-              coastedOwnPlace.lastPossiblePlace?
-              coastedOwnPlace.firstPossiblePlace:
-              `${coastedOwnPlace.firstPossiblePlace}–${coastedOwnPlace.lastPossiblePlace}`:
-            'unresolved'} · Read-only points: {coastedOwnPoints?
+          <p>Conditional place: {conditionalPlace(coastedOwnPlace,
+            'unresolved')} · Read-only points: {coastedOwnPoints?
               coastedOwnPoints.previewPoints:
               coasted?.pointPreview?.status==='unavailable'?
                 'unavailable':'not requested'}.</p>
@@ -601,10 +606,7 @@ export default function Playtest(){
                 coastedRoadBounds.get(row.riderId);
               const points=coasted.pointPreview?.riders?.find(value=>
                 value.riderId===row.riderId)?.previewPoints;
-              return <tr key={row.riderId}><td>{place?
-                place.firstPossiblePlace===place.lastPossiblePlace?
-                  place.firstPossiblePlace:
-                  `${place.firstPossiblePlace}–${place.lastPossiblePlace}`:'—'}</td>
+              return <tr key={row.riderId}><td>{conditionalPlace(place)}</td>
                 <th scope="row">{row.riderId}</th><td>{row.roadBandId}</td>
                 <td>{row.elapsedSecondsFromLastKmStart.toFixed(3)} s</td>
                 <td>{row.energyAtLine.toFixed(1)}</td>

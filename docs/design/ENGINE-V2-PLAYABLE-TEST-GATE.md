@@ -2600,3 +2600,13 @@ Where the road admits a unique provisional order, the recalculated
 read-only points match the existing one-day policy; the three ambiguous
 representatives continue to withhold an illustration. The separate local
 browser flow still verifies optional paid lead-out work for two managers.
+
+The v93 page now reads an unambiguous provisional result's `position` when
+showing the nominated finisher and each conditional-result row. Previously
+it read only the fields used by bounded unresolved finishes, so a valid
+placing could appear as `undefined–undefined` beside a correct point
+illustration. The browser flow asserts the displayed position against the
+API's actual provisional order after removing two lead-outs; all fourteen
+v93 local browser flows, lint and the isolated build pass. Placing ranges
+for unresolved roads retain their separate display path, and official
+results and awards remain withheld.

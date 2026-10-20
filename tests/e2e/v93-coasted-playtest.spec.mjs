@@ -82,6 +82,10 @@ test('exhausted v93 road pays two manager lead-outs and shows conditional line',
       Number.isFinite(row.previewPoints))).toBe(true);
     const unassistedPoints=unassisted.pointPreview.riders.find(row=>
       row.riderId==='you-4');
+    const unassistedPlace=unassisted.provisionalLineOrder.find(row=>
+      row.riderId==='you-4').position;
+    await expect(ownFinish).toContainText(
+      `Conditional place: ${unassistedPlace} ·`);
     await expect(ownFinish).toContainText(
       `Read-only points: ${unassistedPoints.previewPoints}`);
     await expect(ownFinish).toContainText(
@@ -89,6 +93,10 @@ test('exhausted v93 road pays two manager lead-outs and shows conditional line',
     await expect(page.getByRole('table',{
       name:'V93 individual conditional results'}).getByRole('row'))
       .toHaveCount(33);
+    await expect(page.getByRole('table',{
+      name:'V93 individual conditional results'}).getByRole('row',{
+      name:new RegExp(`^${unassistedPlace} you-4 `)}))
+      .toBeVisible();
     await expect(page.getByText('Official points: withheld · Awards saved: 0'))
       .toBeVisible();
     expect(errors).toEqual([]);
