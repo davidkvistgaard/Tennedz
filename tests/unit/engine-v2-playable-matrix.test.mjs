@@ -245,3 +245,77 @@ for(const gender of ['M','F'])for(const teamCount of [4,15,20]){
     }
   });
 }
+
+for(const terrain of ['flat','rolling','mountain','exposed','custom'])
+  for(const gender of ['M','F'])for(const teamCount of [15,20]){
+    test(`260 km ${terrain} ${gender} ${teamCount} teams: two eligible peloton helpers pay the long-race finale`,()=>{
+      const settings={distanceKm:260,terrain,gender,teamCount,
+        fatigue:30,seed:'cross-route-1',defaultRivalPlan:'attack',
+        attack:'repeated',chase:'ignore',managerTactics:[{
+          effort:'steady',attack:'none',chase:'selective'}],
+        ...(terrain==='custom'?{profileHeightsM:
+          [100,350,150,500,180,100]}:{})};
+      const pointContext={tier:3,divisionIndex:1,divisionCount:1};
+      const common={settings,individualGroupLine:true,pointContext};
+      const base=runV91IntegratedTestDrive(common,{full:true});
+      const led=runV91IntegratedTestDrive({...common,finalePlans:[
+        {teamId:'you',finisherId:'you-4',leadOutRiderId:'you-5'},
+        {teamId:'rival-2',finisherId:'rival-2-4',
+          leadOutRiderId:'rival-2-6'}]},{full:true});
+      assert.deepEqual(led.recording.recording,base.recording.recording);
+      assert.equal(led.summary.roadStatus,'conditional_depleted_line');
+      assert.equal(led.summary.finale.lineTimes.length,teamCount*8);
+      assert.equal(led.summary.unavailableLeadOuts,undefined);
+      assert.ok(led.summary.lastKmSource.roadGroups.length>=2);
+      assert.ok(led.summary.lastKmSource.droppedRiderIds.length>0);
+      const crossingById=new Map(led.summary.finale.lineTimes.map(row=>
+        [row.riderId,row]));
+      for(const [finisherId,helperId] of [
+        ['you-4','you-5'],['rival-2-4','rival-2-6']]){
+        const work=led.summary.finale.leadOutWork.filter(row=>
+          row.riderId===helperId);
+        assert.ok(work.length>0&&work.every(row=>
+          row.roadBandId==='peloton'&&row.energySpent>0));
+        assert.ok(crossingById.get(finisherId)
+          .elapsedSecondsFromLastKmStart<
+          base.summary.finale.lineTimes.find(row=>
+            row.riderId===finisherId).elapsedSecondsFromLastKmStart);
+      }
+      const replay=summarizeV91PaidMultibandReplay(led);
+      assert.ok(replay.bands.length>=3);
+      const replayRiders=replay.bands.flatMap(band=>
+        band.frames.at(-1).riders);
+      assert.equal(replayRiders.length,teamCount*8);
+      for(const row of replayRiders){
+        const crossing=crossingById.get(row.riderId);
+        assert.ok(crossing);
+        close(row.positionM,260000);
+        close(row.elapsedToLineSeconds,
+          crossing.elapsedSecondsFromLastKmStart);
+        close(row.energyAfter,crossing.energyAtLine);
+      }
+      const peloton=led.individualLine.bandRunners.find(band=>
+        band.roadBandId==='peloton');
+      assert.ok(peloton);
+      for(const frame of peloton.runner.frames)for(const row of frame.riders.filter(
+        rider=>rider.role==='lead_out')){
+        close(row.energySpent,(row.activeDistanceM*
+          row.activeWorkCostPerKm+row.shelteredDistanceM*
+          row.shelteredWorkCostPerKm)/1000);
+      }
+      const preview=led.summary.provisionalPointPreview;
+      assert.equal(preview.riders.length,teamCount*8);
+      assert.equal(preview.canCommitAwards,false);
+      assert.deepEqual(preview.awardRows,[]);
+      for(const [index,row] of preview.riders.entries()){
+        const crossing=crossingById.get(row.riderId);
+        assert.equal(row.provisionalPlace,index+1);
+        close(row.elapsedSecondsFromLastKmStart,
+          crossing.elapsedSecondsFromLastKmStart);
+        close(row.energyAtLine,crossing.energyAtLine);
+        assert.equal(row.previewPoints,pointsForDivisionResult({tier:3,
+          resultType:'ONE_DAY',placing:index+1,
+          multiplier:preview.multiplier}));
+      }
+    });
+  }
