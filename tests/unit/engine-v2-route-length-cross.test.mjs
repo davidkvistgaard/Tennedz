@@ -128,6 +128,24 @@ test('recorded selective chase pays its helper across short routes and genders',
   }
 });
 
+test('new selective chase pays 120 km front-group roads across routes and genders',()=>{
+  for(const terrain of terrains)for(const gender of ['M','F']){
+    const settings={distanceKm:120,terrain,gender,teamCount:4,
+      seed:'conditional-coverage-1',
+      ...(terrain==='custom'?{profileHeightsM}:{}),
+      defaultRivalPlan:'attack',attack:'repeated',chase:'ignore',
+      managerTactics:[{effort:'steady',attack:'none',chase:'selective'}]};
+    const output=runV91IntegratedTestDrive({settings,
+      pointContext:{tier:3,divisionIndex:1,divisionCount:1}},{full:true});
+    assert.equal(output.recording.version,
+      'v91-conditional-race-final-15');
+    assert.equal(output.recording.selectiveChaseDecision.sourceEngaged,false);
+    assert.ok(output.recording.selectiveChaseDecision.decisions.every(row=>
+      row.decision==='engaged'));
+    assertPaid(output,{distanceKm:120,terrain,teamCount:4});
+  }
+});
+
 test('separated singleton keeps a paid individual replay across short routes and genders',()=>{
   for(const terrain of terrains)for(const gender of ['M','F']){
     const settings={distanceKm:40,terrain,gender,teamCount:4,

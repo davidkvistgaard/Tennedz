@@ -823,21 +823,20 @@ test('integrated drive keeps unpayable energy and awards unavailable',()=>{
   assert.equal(output.canCommitAwards,false);
 });
 
-test('integrated full drive wraps an unsupported cooperative road without crashing',()=>{
-  const settings={distanceKm:120,terrain:'flat',teamCount:4,gender:'M',
-    seed:'conditional-coverage-1',attack:'repeated',chase:'ignore',
-    defaultRivalPlan:'attack',managerTactics:[{effort:'steady',
-      attack:'none',chase:'selective'}]};
+test('integrated full drive wraps unpaid cooperative travel without crashing',()=>{
+  const settings={distanceKm:260,terrain:'flat',fatigue:30,
+    teamCount:4,gender:'M',seed:'flat-length-boundary-1',
+    attack:'repeated',chase:'all',defaultRivalPlan:'chase'};
   const scenario={settings,pointContext:{tier:3,divisionIndex:1,
     divisionCount:1}};
   const source=runV91TestDrive({...scenario,individualGroupLine:true},
     {full:true});
   assert.equal(source.status,'unsupported');
-  assert.match(source.reason,/unresolved last-kilometre road action/);
+  assert.match(source.reason,/unpaid last-kilometre rider travel/);
   const retained=runV91TestDrive({...scenario,individualGroupLine:true},
     {full:true,retainRefusalSource:true});
   assert.deepEqual(retained.summary,source);
-  assert.equal(retained.recording.recording.frames.length,120);
+  assert.equal(retained.recording.recording.frames.length,260);
   const full=runV91IntegratedTestDrive(scenario,{full:true});
   const summary=runV91IntegratedTestDrive(scenario);
   assert.deepEqual(full.summary,summary);
@@ -847,8 +846,8 @@ test('integrated full drive wraps an unsupported cooperative road without crashi
   assert.equal(full.summary.pointsStatus,'withheld');
   assert.equal(full.summary.canCommitAwards,false);
   assert.equal(full.summary.provisionalPointPreview.status,'unavailable');
-  assert.equal(full.recording.recording.frames.length,120);
-  assert.equal(full.recording.recording.route.distanceKm,120);
+  assert.equal(full.recording.recording.frames.length,260);
+  assert.equal(full.recording.recording.route.distanceKm,260);
   assert.deepEqual(full.summary.lastKmSource,source.lastKmSource);
 });
 

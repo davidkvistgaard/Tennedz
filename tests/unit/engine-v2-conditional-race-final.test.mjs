@@ -652,6 +652,34 @@ test('a recorded selective chase stays engaged and pays its helper to the line',
     /does not replay/);
 });
 
+test('a selective chaser re-engages the surviving front group at 120 km',()=>{
+  const input={distanceKm:120,terrain:'flat',teamCount:4,gender:'M',
+    seed:'conditional-coverage-1',attack:'repeated',chase:'ignore',
+    defaultRivalPlan:'attack',managerTactics:[{effort:'steady',
+      attack:'none',chase:'selective'}]};
+  const trial=createV91ConditionalRaceFinal(input);
+  assert.equal(trial.version,'v91-conditional-race-final-15');
+  assert.deepEqual(trial.recording.frames[118].engagedChaseTeamIds,[]);
+  assert.deepEqual(trial.recording.frames[118].chasers,['rival-1']);
+  assert.equal(trial.selectiveChaseDecision.sourceEngaged,false);
+  assert.equal(trial.selectiveChaseDecision.decisions[0].gapSeconds,
+    finaleSnapshotFromTour(trial.recording,{remainingKm:1,
+      includeAttackLoad:true}).roadGroups[0].gapSeconds);
+  assert.ok(trial.selectiveChaseDecision.decisions.every(row=>
+    row.decision==='engaged'));
+  const pull=trial.selectiveChaseDecision.chasePullRiderId;
+  assert.ok(trial.paidFinale.line.approachFrames.every(frame=>
+    frame.chasePullRiderId===pull&&frame.riders.some(row=>
+      row.riderId===pull&&row.energySpent>0)));
+  assert.equal(trial.paidFinale.line.outcome,'survived');
+  assert.equal(trial.paidFinale.line.finalRiderEnergy.length,32);
+  assert.equal(validateV91ConditionalRaceFinal(input,{},trial),true);
+  const altered=structuredClone(trial);
+  altered.selectiveChaseDecision.sourceEngaged=true;
+  assert.throws(()=>validateV91ConditionalRaceFinal(input,{},altered),
+    /does not replay/);
+});
+
 test('zero-reserve riders cannot inherit a paid passive finale',()=>{
   for(const gender of ['M','F'])for(const teamCount of [4,15,20]){
     const input={distanceKm:260,terrain:'flat',fatigue:30,
@@ -803,7 +831,7 @@ test('one extra manager chase closes the break before a paid lead-out line',()=>
   assert.equal(validateV91ConditionalRaceFinal(three,request,closed),true);
 });
 
-test('group branch refuses unpaid manager plans and unresolved road states',()=>{
+test('group branch refuses unpaid manager plans',()=>{
   const group={distanceKm:40,terrain:'flat',teamCount:4,gender:'M',
     seed:'conditional-coverage-1',attack:'repeated',chase:'ignore',
     defaultRivalPlan:'attack'};
@@ -826,8 +854,8 @@ test('group branch refuses unpaid manager plans and unresolved road states',()=>
     {...group,chase:'all'},{},ownBreakChase),true);
   assert.throws(()=>createV91ConditionalRaceFinal({...group,
     distanceKm:120,
-    managerTactics:[{effort:'steady',attack:'none',chase:'selective'}]}),
-  /unresolved last-kilometre road action/);
+    managerTactics:[{effort:'steady',attack:'none',chase:'selective'}]},
+  {plans}),/Finisher and lead-out plans are not paid/);
   const separated=createV91ConditionalRaceFinal({...group,
     distanceKm:260,terrain:'mountain',fatigue:30});
   assert.equal(separated.roadStatus,'paid_separated_bands');

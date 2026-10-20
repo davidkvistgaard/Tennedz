@@ -46,7 +46,7 @@ test('a rejected race resets the paired comparison before another run',
     expect(errors).toEqual([]);
   });
 
-test('an unsupported cooperative road stays visible in the full-race preview',
+test('a newly engaged selective chase reaches a paid 120 km replay',
   async({page})=>{
     const errors=[];page.on('pageerror',error=>errors.push(error.message));
     await page.goto('/login');
@@ -71,18 +71,55 @@ test('an unsupported cooperative road stays visible in the full-race preview',
     await page.getByRole('checkbox',{
       name:'Show read-only point illustration'}).check();
     await page.getByRole('button',{name:'Run full race preview'}).click();
-    await expect(page.getByRole('heading',{name:'Conditional finish'}))
+    await expect(page.getByRole('heading',{name:'Paid group-local finale'}))
       .toBeVisible();
     await expect(page.getByRole('slider',{name:/Race kilometre/}))
       .toHaveAttribute('max','119');
-    await expect(page.getByRole('status')).toContainText(
-      'The cooperative group has an unresolved last-kilometre road action.');
-    await expect(page.getByText(/Your nominated finisher:.*No paid individual crossing/))
+    const slider=page.getByRole('slider',{name:/Band interval/});
+    await slider.fill(await slider.getAttribute('max'));
+    await expect(page.getByRole('table',{
+      name:'Individual conditional results'}).getByRole('row'))
+      .toHaveCount(33);
+    await expect(page.getByText(/Your nominated finisher: you-7 · [\d.]+ s/))
       .toBeVisible();
     await expect(page.getByText('Official points: withheld · Awards saved: 0'))
       .toBeVisible();
+    expect(errors).toEqual([]);
+  });
+
+test('an unpaid cooperative road retains its locked source in the preview',
+  async({page})=>{
+    const errors=[];page.on('pageerror',error=>errors.push(error.message));
+    await page.goto('/login');
+    await page.getByLabel('Email or username').fill('settings');
+    await page.getByLabel('Password',{exact:true}).fill('fixture-password');
+    await page.getByRole('button',{name:'Sign in',exact:true}).click();
+    await expect(page).toHaveURL(/\/team$/);
+    await page.goto('/team/v91-playtest');
+    await page.getByLabel('Distance').selectOption('260');
+    await page.getByLabel('Route profile').selectOption('flat');
+    await page.getByLabel('Starting fatigue').selectOption('30');
+    await page.getByLabel('Field size').selectOption('4');
+    await page.getByLabel('Default tactics for uncustomized managers')
+      .selectOption('chase');
+    await page.getByLabel('Your attack order').selectOption('repeated');
+    await page.getByLabel('Your chase order').selectOption('all');
+    await page.getByLabel('Scenario seed').fill('flat-length-boundary-1');
+    await page.getByRole('checkbox',{
+      name:'Continue to a conditional finish'}).check();
+    await page.getByRole('checkbox',{
+      name:'Show read-only point illustration'}).check();
+    await page.getByRole('button',{name:'Run full race preview'}).click();
+    await expect(page.getByRole('heading',{name:'Conditional finish'}))
+      .toBeVisible();
+    await expect(page.getByRole('slider',{name:/Race kilometre/}))
+      .toHaveAttribute('max','259');
+    await expect(page.getByRole('status')).toContainText(
+      'The cooperative group has unpaid last-kilometre rider travel.');
     await expect(page.getByRole('table',{
       name:'Individual conditional results'})).toHaveCount(0);
+    await expect(page.getByText('Official points: withheld · Awards saved: 0'))
+      .toBeVisible();
     expect(errors).toEqual([]);
   });
 

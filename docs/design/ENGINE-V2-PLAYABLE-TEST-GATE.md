@@ -2072,3 +2072,17 @@ frames and read-only point values agree in ten 40 km route/category cases
 (five terrains, M/F); cross-band contact stays gated and official awards
 stay withheld. The older separated line versions remain replayable for
 their original non-singleton roads.
+
+The 120 km selective-chase handoff has a separate version,
+`v91-conditional-race-final-15`. In the locked kilometre source, rival 1
+chased a nearer group that was caught while another group remained 46.26
+seconds ahead. The source therefore lists the chaser but no active
+engagement with the surviving front group. At 119 km the selective order is
+decided afresh against that recorded front gap, including the captain's
+awareness and the one-kilometre safe-gap threshold. It engages; the named
+helper spends energy in every subsequent slice, and each slice's decision
+remains engaged. A hold, unawareness or catch still refuses the entire paid
+continuation. Ten 120 km terrain/category combinations retain matching
+individual crossings, replay energy and read-only points. This is an opt-in
+preview recording; official awards remain withheld. The separate 260 km
+zero-reserve refusal remains.
