@@ -6,6 +6,7 @@ import {summarizeV91PaidFinaleReplay,
   summarizeV91PaidFinaleTail,
   summarizeV91PaidPartialContactReplay,
   summarizeV91PaidConcurrentLateCatchReplay,
+  summarizeV91PaidConcurrentDoubleCatchReplay,
   summarizeV91PaidNamedAttackApproach,
   summarizeV91PaidSoloApproach} from
   '../../lib/engine/v2/playtest-finale-replay.mjs';
@@ -51,6 +52,38 @@ test('two manager catches replay paid bands into a conditional individual line',
   changedLine.individualLine.runner.finishers[0].energyAtLine+=1;
   assert.throws(()=>summarizeV91PaidConcurrentLateCatchReplay(changedLine),
     /individual line/);
+});
+
+test('two early catches retain contact energy into the paid final 500 m',()=>{
+  const ids=['you',...Array.from({length:14},(_,index)=>
+    `rival-${index+1}`)];
+  const managerFinaleOrders=ids.map(teamId=>({teamId,
+    attack:['you','rival-2'].includes(teamId)?'selective':'none',
+    ...(['you','rival-2'].includes(teamId)?{
+      attackRiderId:`${teamId}-2`}:{}),
+    chase:['rival-1','rival-4'].includes(teamId)?'selective':'ignore',
+    frontWork:teamId==='rival-3'?'rotate':'sit_in'}));
+  const output=runV91IntegratedTestDrive({settings:{distanceKm:260,
+    teamCount:15,terrain:'mountain',gender:'M',fatigue:30,
+    seed:'paired-final-orders',attack:'none',chase:'ignore',
+    defaultRivalPlan:'neutral',managerFinaleOrders,
+    teamOverrides:ids.map(teamId=>({teamId,
+      level:teamId==='rival-2'?81:teamId==='you'?80:85}))}},
+  {full:true});
+  const replay=summarizeV91PaidConcurrentDoubleCatchReplay(output);
+  assert.equal(replay.status,'concurrent_double_catch_paid_trace');
+  assert.equal(replay.handoffDistanceM,259_500);
+  assert.deepEqual(replay.contactEvents.map(row=>row.kind),
+    ['rear_attack_bunch_contact','front_bunch_contact']);
+  assert.equal(replay.roadFrames[0].riders[0].energySpent,null);
+  assert.equal(replay.roadFrames.at(-1).roadGroups[0].riderIds.length,
+    120);
+  assert.ok(replay.frames.at(-1).riders.every(row=>
+    row.positionM===260_000&&Number.isFinite(row.elapsedToLineSeconds)));
+  const changed=structuredClone(output);
+  changed.individualLine.road.riders[0].energyAtBoundary+=1;
+  assert.throws(()=>summarizeV91PaidConcurrentDoubleCatchReplay(changed),
+    /rider energy/);
 });
 
 const settings={distanceKm:40,terrain:'flat',teamCount:4,gender:'M',

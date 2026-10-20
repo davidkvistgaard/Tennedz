@@ -208,7 +208,8 @@ export default function Playtest(){
       setApproachRiderId((response.attackApproach??response.soloApproach)
         ?.attackRiderId??'');
       setFinaleReplay(response.finaleReplay??response.finaleTail??
-        response.finaleContactReplay??response.concurrentLateCatchReplay??null);
+        response.finaleContactReplay??response.concurrentLateCatchReplay??
+        response.concurrentDoubleCatchReplay??null);
       setFinaleFrameIndex(0);
       setConcurrentRoadIndex(0);
       setInspectedRiderId(response.integrated?.managerDecisions
@@ -447,12 +448,12 @@ export default function Playtest(){
           {approachRider&&<p>{approachRider.riderId}: {approachRider.role} · {approachRider.energyAfter.toFixed(1)} energy · {approachRider.energySpent.toFixed(2)} spent this segment</p>}
         </div>}
         {finaleReplay&&<div className="v91-finish">
-          <h3>{finaleReplay.status==='concurrent_late_catch_paid_trace'?
+          <h3>{finaleReplay.status?.startsWith('concurrent_')?
             'Paid double-catch finale':finaleReplay.status==='partial_paid_trace'?
             'Paid final 500 m':finaleReplay.status===
               'partial_contact_paid_trace'?
               'Paid finale through contact':'Paid final-kilometre replay'}</h3>
-          {finaleReplay.status==='concurrent_late_catch_paid_trace'?
+          {finaleReplay.status?.startsWith('concurrent_')?
             <p>Two named attacks meet the bunch at recorded contacts. Road bands and energy are paid until {finaleReplay.handoffDistanceM/1000} km; individual positions begin there and the finish order remains conditional.</p>:
             finaleReplay.status==='partial_paid_trace'?
             <p>All {finaleFrame?.riders.length} riders continue from the recorded {finaleReplay.handoffDistanceM/1000} km boundary on one clock. Opening 500 m: groups and energy only. These later positions are conditional bunch positions, not an official order.</p>:
@@ -471,7 +472,7 @@ export default function Playtest(){
             </label>
             <p>{concurrentRoadFrame?.elapsedSeconds.toFixed(2)} s after launch · {concurrentRoadFrame?.roadGroups.map(group=>
               `${group.kind}: ${group.riderIds.length} riders at ${(group.positionM/1000).toFixed(3)} km`).join(' · ')}</p>
-            {concurrentRoadRider&&<p>{concurrentRoadRider.riderId}: {concurrentRoadRider.energyAfter.toFixed(1)} energy · {concurrentRoadRider.energySpent.toFixed(2)} spent this segment · {concurrentRoadRider.role}</p>}
+            {concurrentRoadRider&&<p>{concurrentRoadRider.riderId}: {concurrentRoadRider.energyAfter.toFixed(1)} energy · {concurrentRoadRider.energySpent===null?'contact observation':`${concurrentRoadRider.energySpent.toFixed(2)} spent this segment`} · {concurrentRoadRider.role}</p>}
           </div>}
           <label>Finale interval: {finaleFrameIndex+1} of {finaleReplay.frames.length}
             <input type="range" min="0" max={finaleReplay.frames.length-1}

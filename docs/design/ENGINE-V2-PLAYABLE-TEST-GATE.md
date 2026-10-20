@@ -1777,3 +1777,20 @@ before 39.8 km. Official places and awards remain withheld. This is one
 playable two-manager configuration, not coverage of every attack/chase
 combination or a classified result. The local browser case, replay unit
 tests, lint and an isolated `.next-v91-preview` build passed.
+
+The same two-manager browser flow now also replays a 260 km mountain race
+with fatigue 30. In this branch both attackers meet the bunch before the
+500 m boundary. Two exact contacts and the paid energy ledger are shown
+through that boundary; the positioned runner then supplies each rider's
+individual conditional crossing. The first contact's energy is labelled as
+an observation because this replay excerpt has no preceding interval cost.
+Its recorded contact, later energy debits, 500 m source and final line are
+validated without changing the older road versions. A fixed 24-case audit
+across M/F, 15/20 teams, flat/rolling/mountain routes and fatigue 0/15/30
+returned 20 late-catch and four 500 m double-catch conditional lines, each
+with 120 or 160 distinct crossings and points withheld. The replay audit
+passed for all 20 late cases; a separate rerun passed for all four early
+mountain cases after the new replay was added. Seven focused replay tests,
+lint, an isolated Next build and the local browser flow through both roads
+passed. These are still inferred source wheels and conditional results, not
+an official classification or sporting-balance proof.

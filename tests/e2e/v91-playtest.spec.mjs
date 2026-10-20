@@ -351,5 +351,18 @@ test('two managers can attack and inspect their paid double catch',
     await expect(page.getByText('All riders have crossed; see the conditional times below.'))
       .toBeVisible();
     await expect(page.getByText(/Points: withheld/)).toBeVisible();
+    await page.getByLabel('Distance').selectOption('260');
+    await page.getByLabel('Route profile').selectOption('mountain');
+    await page.getByLabel('Starting fatigue').selectOption('30');
+    await page.getByRole('button',{name:'Run full race preview'}).click();
+    await expect(page.getByRole('heading',{
+      name:'Recorded race · 260 km mountain'}))
+      .toBeVisible({timeout:60_000});
+    await expect(page.getByRole('heading',{name:'Paid double-catch finale'}))
+      .toBeVisible({timeout:60_000});
+    await expect(page.getByText(/paid until 259\.5 km/)).toBeVisible();
+    await expect(page.getByText(/contact observation/)).toBeVisible();
+    await expect(page.getByText(/120 of 120 riders have individual crossing times/))
+      .toBeVisible();
     expect(errors).toEqual([]);
   });

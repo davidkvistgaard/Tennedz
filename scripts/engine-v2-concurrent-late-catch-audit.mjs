@@ -1,6 +1,9 @@
 // Fixed fictional coverage for the opt-in two-manager finale. This records
 // which paid road states are supported; it is not a balance target.
 import {runV91IntegratedTestDrive} from './engine-v2-test-drive.mjs';
+import {summarizeV91PaidConcurrentLateCatchReplay,
+  summarizeV91PaidConcurrentDoubleCatchReplay} from
+  '../lib/engine/v2/playtest-finale-replay.mjs';
 
 const [seed='paired-final-orders',mode='full',slots='2,2',finishers='captains']=
   process.argv.slice(2);
@@ -43,6 +46,17 @@ for(const gender of mode.startsWith('one')?['M']:['M','F'])
       ]}:{})};
     const output=runV91IntegratedTestDrive(scenario,{full:true});
     const summary=output.summary;
+    const replay=summarizeV91PaidConcurrentLateCatchReplay(output)??
+      summarizeV91PaidConcurrentDoubleCatchReplay(output);
+    if(['paid_late_double_catch_conditional_individual_line',
+      'paid_double_catch_conditional_individual_line'].includes(
+      summary.roadStatus)&&
+      (replay?.contactEvents.length!==2||
+      replay.roadFrames.at(-1).roadGroups.length!==1||
+      replay.frames.at(-1).riders.length!==teamCount*8||
+      replay.frames.at(-1).riders.some(row=>
+        row.positionM!==distanceKm*1000)))
+      throw new Error('The concurrent audit lost its paid replay.');
     if(summary.pointsStatus!=='withheld'||summary.canCommitAwards!==false)
       throw new Error('The concurrent audit encountered an award path.');
     const crossings=summary.finale?.lineTimes;
@@ -110,6 +124,7 @@ for(const gender of mode.startsWith('one')?['M']:['M','F'])
       terrain,fatigue,
       status:summary.status,roadStatus:summary.roadStatus,
       individualLineVersion:summary.individualLineVersion??null,
+      paidReplayFrames:replay?.frames.length??0,
       soloSprintRiderIds:soloSprintWork.map(row=>row.riderId),
       contactKinds:[...(priorContact?[priorContact.kind]:[]),
         ...(output.individualLine?.roadPrefix?.contactEvents??

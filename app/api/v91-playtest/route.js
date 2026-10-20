@@ -5,6 +5,7 @@ import {summarizeV91PaidFinaleReplay,
   summarizeV91PaidFinaleTail,
   summarizeV91PaidPartialContactReplay,
   summarizeV91PaidConcurrentLateCatchReplay,
+  summarizeV91PaidConcurrentDoubleCatchReplay,
   summarizeV91PaidNamedAttackApproach,
   summarizeV91PaidSoloApproach} from
   '../../../lib/engine/v2/playtest-finale-replay.mjs';
@@ -63,7 +64,9 @@ async function handler(request,_context,auth){
         finaleContactReplay:summarizeV91PaidPartialContactReplay(
           output.recording),
         concurrentLateCatchReplay:
-          summarizeV91PaidConcurrentLateCatchReplay(output)});
+          summarizeV91PaidConcurrentLateCatchReplay(output),
+        concurrentDoubleCatchReplay:
+          summarizeV91PaidConcurrentDoubleCatchReplay(output)});
     }
     if(input.mode!==undefined)
       return NextResponse.json({ok:false,error:'Invalid playtest mode.'},
