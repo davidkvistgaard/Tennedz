@@ -3,8 +3,9 @@
 .v91-eyebrow{font-size:.78rem;text-transform:uppercase;letter-spacing:.14em;font-weight:800;color:#287d72}
 .v91-warning{padding:14px 18px;background:#fff4d8;border-left:4px solid #c8871c;border-radius:8px}
 .v91-controls{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px;padding:20px;background:#e8f2ee;border-radius:16px;margin:22px 0}
-.v91-controls label,.v91-results label{display:grid;gap:7px;font-weight:700;font-size:.88rem}
+.v91-controls label,.v91-results label{display:grid;gap:7px;min-width:0;font-weight:700;font-size:.88rem}
 .v91-controls select,.v91-controls input{min-height:42px;padding:8px 10px;border:1px solid #a6c2b8;border-radius:8px;background:white;color:#17312e}
+.v91-controls select,.v91-controls input:not([type=checkbox]){width:100%;min-width:0}
 .v91-controls button{border:0;border-radius:8px;background:#116e60;color:white;font-weight:800;cursor:pointer;min-height:42px;align-self:end}
 .v91-controls button:disabled{opacity:.6;cursor:wait}
 .v91-mode{grid-column:1/-1;display:flex!important;align-items:center;gap:10px!important;font-size:1rem!important}

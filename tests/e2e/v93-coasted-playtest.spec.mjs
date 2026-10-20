@@ -5,6 +5,78 @@ test.skip(process.env.PELOTONIA_V91_PLAYTEST_ENABLED!=='true'||
   process.env.PELOTONIA_V93_COASTED_PLAYTEST_ENABLED!=='true',
 'The isolated v93 workbench is disabled.');
 
+test('a mobile manager plays a medium women race with a distant rival',
+  async({page})=>{
+    const errors=[];page.on('pageerror',error=>errors.push(error.message));
+    await page.setViewportSize({width:390,height:844});
+    await page.goto('/login');
+    await page.getByLabel('Email or username').fill('bob');
+    await page.getByLabel('Password',{exact:true}).fill('fixture-password');
+    await page.getByRole('button',{name:'Sign in',exact:true}).click();
+    await expect(page).toHaveURL(/\/team$/);
+    await page.goto('/team/v91-playtest');
+    await page.getByRole('checkbox',{
+      name:'Continue to a conditional finish'}).check();
+    await page.getByRole('checkbox',{
+      name:'Try v93 road-to-line preview'}).check();
+    await page.getByLabel('Distance').selectOption('120');
+    await page.getByLabel('Route profile').selectOption('rolling');
+    await page.getByLabel('Category').selectOption('F');
+    await page.getByLabel('Field size').selectOption('15');
+    await page.getByLabel('Starting fatigue').selectOption('15');
+    await page.getByLabel('Scenario seed').fill('mobile-rolling');
+    await page.getByLabel('Choose another rival manager')
+      .selectOption('rival-14');
+    await page.getByRole('button',{name:'Add rival manager'}).click();
+    await page.getByLabel('rival-14 effort').selectOption('hard');
+    await page.getByLabel('rival-14 attack').selectOption('none');
+    await page.getByLabel('rival-14 chase').selectOption('all');
+    await page.getByLabel('rival-14 finisher').selectOption('rival-14-3');
+    await page.getByRole('checkbox',{
+      name:'Show read-only point illustration'}).check();
+    const setupWidth=await page.evaluate(()=>({width:
+      document.documentElement.scrollWidth,
+      offenders:[...document.querySelectorAll('body *')].filter(element=>
+        element.getBoundingClientRect().right>window.innerWidth+1)
+        .slice(0,15).map(element=>({tag:element.tagName,
+          className:element.className,
+          label:element.closest('label')?.textContent,
+          width:element.getBoundingClientRect().width,
+          right:element.getBoundingClientRect().right}))}));
+    expect(setupWidth.width,JSON.stringify(setupWidth.offenders))
+      .toBeLessThanOrEqual(390);
+    const responsePromise=page.waitForResponse(response=>
+      response.url().endsWith('/api/v91-playtest')&&
+      response.request().method()==='POST');
+    await page.getByRole('button',{name:'Run v93 race preview'}).click();
+    const response=await responsePromise;
+    expect(response.status()).toBe(200);
+    const {coasted}=await response.json();
+    expect(coasted.lineTimes).toHaveLength(120);
+    expect(coasted.lastKmRoad.at(-1).distanceM).toBe(120000);
+    expect(coasted.managerOrders).toHaveLength(15);
+    expect(coasted.managerOrders.find(row=>row.teamId==='rival-14'))
+      .toMatchObject({effort:'hard',attack:'none',chase:'all'});
+    expect(coasted.managerDecisions.find(row=>row.teamId==='rival-14'))
+      .toMatchObject({finisherId:'rival-14-3'});
+    expect(coasted.pointPreview.riders).toHaveLength(120);
+    expect(coasted.pointPreview.awardRows).toEqual([]);
+    await expect(page.getByRole('heading',{
+      name:'V93 race preview · 120 km rolling'})).toBeVisible();
+    await expect(page.getByRole('table',{
+      name:'V93 individual conditional results'}).getByRole('row'))
+      .toHaveCount(121);
+    const rider=coasted.lineTimes.find(row=>row.riderId==='rival-14-3');
+    await page.getByRole('button',{name:'Replay rival-14-3'}).click();
+    const interval=page.getByRole('slider',{name:/Band interval/});
+    await interval.fill(await interval.getAttribute('max'));
+    await expect(page.getByLabel('Selected rider finale replay'))
+      .toContainText(`Crossed at ${rider.elapsedSecondsFromLastKmStart.toFixed(3)} s; result ${rider.elapsedSecondsFromLastKmStart.toFixed(3)} s, ${rider.energyAtLine.toFixed(1)} energy.`);
+    expect(await page.evaluate(()=>document.documentElement.scrollWidth))
+      .toBeLessThanOrEqual(390);
+    expect(errors).toEqual([]);
+  });
+
 test('a named distant rival keeps its tactics and finisher through the road replay',
   async({page})=>{
     const errors=[];page.on('pageerror',error=>errors.push(error.message));

@@ -2851,3 +2851,15 @@ drop (20-team M rolling) and one 260 km possible road-band contact (four-team
 M flat). Their contact and wheel order remain unresolved; no official
 classification or award is inferred or written. No production environment
 was accessed for this audit.
+
+A 390 px mobile browser run now completes a 120 km rolling women's race with
+15 teams, fatigue 15 and a separately selected `rival-14` manager. Its hard
+pace, all-rider chase and nominated `rival-14-3` reach the locked recording;
+all 120 individual crossings, the read-only no-award point preview and the
+nominated rider's paid replay render without page-level horizontal overflow.
+The form previously widened to 408 px because a default rival-tactic select
+exceeded its grid track; controls and result labels now allow their fields to
+shrink inside that track. A fresh isolated build and all 23 local v93 browser
+cases pass. A separate v91 browser regression probe passed its first two
+cases, then hit the local fixture's HTTP 429 request limit; it is not counted
+as a complete v91 pass. No production environment was accessed.
