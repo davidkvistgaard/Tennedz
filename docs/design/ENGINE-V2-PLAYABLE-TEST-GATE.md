@@ -2415,3 +2415,29 @@ route seed-diversity refusal remains because its new drop is on a front
 road shape. These checks do not establish a complete playable motor or
 an official point result; the earlier full unit-suite attempt did not
 complete.
+
+A further opt-in front-drop version carries the remaining four-team
+multi-manager refusals to a conditional individual line. In these 260 km
+cases, two zero-reserve riders leave a four-rider front group at the
+259 km boundary. The two remaining riders retain the recorded group ID;
+each leaver coasts independently from the group's measured gap. The clock
+records the peloton passing the isolated riders about 32 m into the first
+mountain interval or 59 m into the first flat interval. It does not grant
+them the bunch's shelter or silently place them back in the group. Because
+the contact response and wheel order remain unresolved, illustrative and
+official points are withheld for this version, while all 32 riders still
+receive conditional energy-backed crossings and a replayable line. A
+nominated zero-reserve rival can finish alone while an optional player
+lead-out pays work in the surviving front group.
+
+The same 108-case four-team multi-manager matrix now completes without
+errors: 78 existing no-front, 18 dynamic no-front and 12 dynamic front
+finishes. Fifty-two cases produce policy-consistent read-only point
+illustrations and 56 explicitly withhold them; the 12 front cases record
+24 solo/bunch passage events. Male and female flat/mountain replay checks,
+the prior coasted/no-front/bunch checks (16 focused tests), lint, an
+isolated build, and all eleven local browser flows pass. The 15-team
+custom-route seed-diversity case still refuses when a rider newly leaves
+the bunch while two front groups remain; that road shape and the contact
+response remain open. No official results or awards are committed, and
+the full unit suite has not completed.

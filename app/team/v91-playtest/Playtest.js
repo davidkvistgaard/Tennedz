@@ -500,7 +500,9 @@ export default function Playtest(){
             {group.id}: {group.riderIds.length} riders · {group.passageSecondsFromBunchMarker.toFixed(2)} s · {group.gapSeconds.toFixed(2)} s ahead
           </p>)}
           <p>Isolated passages: {coastedRoad?.droppedPassages.map(row=>
-            `${row.riderId} ${row.passageSecondsFromBunchMarker.toFixed(2)} s (+${row.deficitSeconds.toFixed(2)} s)`)
+            `${row.riderId} ${row.passageSecondsFromBunchMarker.toFixed(2)} s (+${row.deficitSeconds.toFixed(2)} s)${
+              row.contactDistanceM==null?'':
+                ` · bunch passed at ${(row.contactDistanceM/1000).toFixed(3)} km`}`)
             .join(' · ')}</p>
         </div>
         <div className="v91-finish">

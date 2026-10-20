@@ -481,3 +481,63 @@ test('newly exhausted rider has a solo road replay and withheld points',
     await expect(page.getByText('Official points: withheld · Awards saved: 0'))
       .toBeVisible();
   });
+
+test('front leavers pass the bunch while a nominated helper works',
+  async({page})=>{
+    await page.goto('/login');
+    await page.getByLabel('Email or username').fill('bob');
+    await page.getByLabel('Password',{exact:true}).fill('fixture-password');
+    await page.getByRole('button',{name:'Sign in',exact:true}).click();
+    await expect(page).toHaveURL(/\/team$/);
+    await page.goto('/team/v91-playtest');
+    await page.getByRole('checkbox',{
+      name:'Continue to a conditional finish'}).check();
+    await page.getByRole('checkbox',{
+      name:'Try v93 road-to-line preview'}).check();
+    await page.getByLabel('Distance').selectOption('260');
+    await page.getByLabel('Route profile').selectOption('mountain');
+    await page.getByLabel('Field size').selectOption('4');
+    await page.getByLabel('Starting fatigue').selectOption('30');
+    await page.getByLabel('Scenario seed').fill('multi-manager-audit-1');
+    await page.getByLabel('Default tactics for uncustomized managers')
+      .selectOption('neutral');
+    await page.getByLabel('Your effort').selectOption('conserve');
+    await page.getByLabel('Your attack').selectOption('repeated');
+    await page.getByLabel('Your chase').selectOption('ignore');
+    await page.getByLabel('Managers with your own tactics').selectOption('2');
+    await page.getByLabel('Rival 1 effort').selectOption('hard');
+    await page.getByLabel('Rival 1 attack').selectOption('repeated');
+    await page.getByLabel('Rival 1 chase').selectOption('ignore');
+    await page.getByLabel('Rival 2 effort').selectOption('conserve');
+    await page.getByLabel('Rival 2 attack').selectOption('none');
+    await page.getByLabel('Rival 2 chase').selectOption('all');
+    await page.getByLabel('you finisher').selectOption('you-4');
+    await page.getByLabel('you lead-out helper').selectOption('you-5');
+    await page.getByLabel('rival-1 finisher').selectOption('rival-1-7');
+    await page.getByRole('checkbox',{
+      name:'Show read-only point illustration'}).check();
+    const responsePromise=page.waitForResponse(response=>
+      response.url().endsWith('/api/v91-playtest')&&
+      response.request().method()==='POST');
+    await page.getByRole('button',{name:'Run v93 race preview'}).click();
+    const response=await responsePromise;
+    expect(response.status()).toBe(200);
+    const {coasted}=await response.json();
+    expect(coasted.version).toBe('v93-dynamic-front-playtest-1');
+    expect(coasted.kilometreFrames.at(-1).roadGroups[0].riderIds)
+      .toHaveLength(4);
+    expect(coasted.lastKmRoad[0].groups[0].riderIds).toHaveLength(2);
+    expect(coasted.lastKmRoad[0].droppedPassages.filter(row=>
+      row.contactDistanceM!==null)).toHaveLength(2);
+    expect(coasted.lastKmRoad.at(-1).droppedPassages).toHaveLength(3);
+    expect(coasted.lineTimes).toHaveLength(32);
+    expect(coasted.leadOutWork.some(row=>row.riderId==='you-5'))
+      .toBe(true);
+    expect(coasted.lineTimes.find(row=>row.riderId==='rival-1-7'))
+      .toMatchObject({roadBandId:'isolated:rival-1-7',energyAtLine:0});
+    expect(coasted.pointPreview.status).toBe('unavailable');
+    await expect(page.getByText(
+      /bunch passed at 259\.032 km/)).toBeVisible();
+    await expect(page.getByText('Official points: withheld · Awards saved: 0'))
+      .toBeVisible();
+  });
