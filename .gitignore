@@ -1,7 +1,7 @@
 node_modules/
 .next/
 .next-v91-*/
-.next-v93-local/
+.next-v93-*/
 .env*
 !.env.example
 .vercel/

@@ -595,9 +595,12 @@ export default function Playtest(){
         </div>
         <div className="v91-finish">
           <h3>Individual conditional results</h3>
-          {coasted.roadPlaceBounds&&<p>Road ranges follow the paid front,
-            leaver and bunch passages after the split. Wheel order and
-            contact at the split remain unresolved; points are withheld.</p>}
+          {coasted.roadPlaceBounds&&<p>{
+            coasted.roadPlaceBounds.status===
+              'conditional_front_separated_rear_contact_unresolved'?
+              'The paid front stays separate through the finale. Contact between the bunch and new leavers remains unresolved; these are conditional ranges and points are withheld.':
+              'Road ranges follow the paid front, leaver and bunch passages after the split. Wheel order and contact at the split remain unresolved; points are withheld.'
+          }</p>}
           <div className="v91-result-scroll"><table className="v91-result-table"
             aria-label="V93 individual conditional results">
             <thead><tr><th scope="col">Possible place</th><th scope="col">Rider</th>

@@ -2617,3 +2617,15 @@ rows follow that order; otherwise they remain sorted by conditional time.
 The browser check compares every displayed rider and place with the API's
 provisional order after changing two managers' lead-outs. The isolated
 build, lint and all fourteen local v93 browser flows pass.
+
+Two of the 48 audit roads have one paid two-rider front and newly isolated
+bunch riders whose contact with the bunch before 500 m remains unresolved.
+The v93 summary now checks both paid first-half-kilometre passages, every
+later front-to-rear band passage and the individual line crossings before
+showing a conditional 1–2 range for that front. All other riders retain a
+single unresolved 3–120 or 3–160 range; no individual rear order or point
+illustration is inferred. The projection does not change the versioned race
+recording, and a tampered crossing is rejected. The 15-team women and 20-team
+men fixtures replay the bounds; the 48-case audit still has 4,776 matched
+crossings, 44 point illustrations and four unavailable ones. Focused tests,
+lint, an isolated build and all fifteen local v93 browser flows pass.

@@ -625,6 +625,53 @@ test('15-team custom road replays newly isolated bunch riders beneath two fronts
       .toBeVisible();
   });
 
+test('one paid front retains a conditional range above new bunch drops',
+  async({page})=>{
+    await page.goto('/login');
+    await page.getByLabel('Email or username').fill('alice');
+    await page.getByLabel('Password',{exact:true}).fill('fixture-password');
+    await page.getByRole('button',{name:'Sign in',exact:true}).click();
+    await expect(page).toHaveURL(/\/team$/);
+    await page.goto('/team/v91-playtest');
+    await page.getByRole('checkbox',{
+      name:'Continue to a conditional finish'}).check();
+    await page.getByRole('checkbox',{
+      name:'Try v93 road-to-line preview'}).check();
+    await page.getByLabel('Distance').selectOption('260');
+    await page.getByLabel('Route profile').selectOption('custom');
+    await page.getByLabel('Category').selectOption('F');
+    await page.getByLabel('Field size').selectOption('15');
+    await page.getByLabel('Starting fatigue').selectOption('15');
+    await page.getByLabel('Scenario seed').fill('v93-diversity-1');
+    await page.getByLabel('Default tactics for uncustomized managers')
+      .selectOption('chase');
+    await page.getByLabel('Your attack').selectOption('repeated');
+    await page.getByLabel('Your chase').selectOption('all');
+    await page.getByRole('checkbox',{
+      name:'Show read-only point illustration'}).check();
+    const responsePromise=page.waitForResponse(response=>
+      response.url().endsWith('/api/v91-playtest')&&
+      response.request().method()==='POST');
+    await page.getByRole('button',{name:'Run v93 race preview'}).click();
+    const response=await responsePromise;
+    expect(response.status()).toBe(200);
+    const {coasted}=await response.json();
+    expect(coasted.version).toBe('v93-dynamic-active-playtest-1');
+    expect(coasted.roadPlaceBounds.bands.map(row=>[
+      row.firstPossiblePlace,row.lastPossiblePlace]))
+      .toEqual([[1,2],[3,120]]);
+    expect(coasted.pointPreview.status).toBe('unavailable');
+    const frontId=coasted.roadPlaceBounds.bands[0].riderIds[0];
+    const table=page.getByRole('table',{
+      name:'V93 individual conditional results'});
+    await expect(table.getByRole('row',{
+      name:new RegExp(`^1–2 ${frontId} `)})).toBeVisible();
+    await expect(page.getByText(
+      /The paid front stays separate through the finale/)).toBeVisible();
+    await expect(page.getByText('Official points: withheld · Awards saved: 0'))
+      .toBeVisible();
+  });
+
 test('flat 15-team road keeps two nominated singleton fronts on the line',
   async({page})=>{
     await page.goto('/login');
