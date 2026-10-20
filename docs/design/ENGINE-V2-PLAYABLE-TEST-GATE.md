@@ -2687,3 +2687,13 @@ reason and absence of a saved preview, then removes that helper and replays
 the same race with 32 individual times, a 31-rider peloton and the rider's
 separate paid solo band. All 18 v93 local browser scenarios, lint and the
 isolated build pass. No recording, point policy or production path changes.
+
+A paired 260 km flat, four-team, tired-field browser scenario now holds the
+route, seed, riders and all tactics constant except rival 1's chase order
+(`ignore` to `all`). The recorded front-group IDs change; the nominated
+`you-7` moves from `road-2` to the peloton and from conditional place 3 to
+9. Both API responses retain 32 individual line times, the page shows the
+paired place change, and the final rider replay matches the second paid
+crossing time and energy. The read-only point illustration creates no award
+rows; official points remain withheld. This is a tactical end-to-end check
+of a road change reaching the result and replay, not a new tuning rule.
