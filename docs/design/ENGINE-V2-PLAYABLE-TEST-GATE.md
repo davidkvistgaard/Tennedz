@@ -1948,3 +1948,12 @@ the replay boundary after rival 1 switches to hard chase. The nominated
 finisher's crossing changes, all 32 conditional lines remain visible, and
 official points stay withheld. This ties the paired motor evidence to the
 actual manager controls and replay rather than only an offline test call.
+
+A second deterministic full-race gate varies five seeds per route and
+category, rotating mixed, attack and chase defaults across 4- and 15-team
+fields. In 48 of 50 runs, all riders have paid individual crossings whose
+replay time and energy match the result, and every available point value
+matches the one-day policy without saving awards. Only the two already known
+four-team M mountain mixed runs have unmet energy and no line, replay or point
+illustration. The seed gate replays these expectations from locked fictional
+inputs rather than treating an unexpected refusal as a passing case.
