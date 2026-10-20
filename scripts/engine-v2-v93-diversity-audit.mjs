@@ -36,7 +36,7 @@ const settingsFor=index=>({
 
 const audit={scenarios:48,finished:0,refusals:[],versions:{},
   projectedPoints:0,unavailablePoints:0,unavailableCases:[],
-  replayedVersions:[],
+  replayedVersions:[],tacticalVariants:[],
   conditionalCrossings:0,replayMatchedCrossings:0,
   pointTiers:[],divisionMultipliers:[]};
 const replayed=new Set();
@@ -126,6 +126,53 @@ for(let index=0;index<audit.scenarios;index++){
   if(!replayed.has(race.version)){
     assert.equal(validateV93CoastedPlaytest(settings,{pointContext},race),
       true);
+    const plans=race.recording.committedInputs.teams.map(team=>({
+      teamId:team.id,
+      finisherId:team.riders.find(rider=>rider.id!==
+        race.appliedPlans.find(plan=>plan.teamId===team.id).finisherId).id,
+      leadOutRiderId:null}));
+    const variant=createV93PlayableTest(settings,{pointContext,plans});
+    const variantSummary=summarizeV93CoastedPlaytest(variant);
+    assert.deepEqual(variant.recording,race.recording);
+    assert.deepEqual(variant.clock,race.clock);
+    assert.deepEqual(variant.appliedPlans.map(row=>row.finisherId),
+      plans.map(row=>row.finisherId));
+    assert.equal(variantSummary.lineTimes.length,crossings.size);
+    const changedCrossings=variantSummary.lineTimes.filter(row=>{
+      const previous=crossings.get(row.riderId);
+      return row.elapsedSecondsFromLastKmStart!==
+        previous.elapsedSecondsFromLastKmStart||
+        row.energyAtLine!==previous.energyAtLine;
+    }).length;
+    assert.ok(changedCrossings>0);
+    assert.equal(validateV93CoastedPlaytest(settings,{pointContext,plans},
+      variant),true);
+    const variantCrossings=new Map(variantSummary.lineTimes.map(row=>
+      [row.riderId,row]));
+    assert.equal(variantCrossings.size,crossings.size);
+    for(const band of variantSummary.bandReplays)
+      for(const rider of band.frames.at(-1).riders){
+        const crossing=variantCrossings.get(rider.riderId);
+        assert.equal(crossing.roadBandId,band.id);
+        assert.equal(crossing.elapsedSecondsFromLastKmStart,
+          rider.elapsedToLineSeconds);
+        assert.equal(crossing.energyAtLine,rider.energyAfter);
+      }
+    if(variant.pointPreview.status!=='unavailable'){
+      const variantOrder=new Map(variantSummary.provisionalLineOrder
+        .map(row=>[row.riderId,row.position]));
+      for(const rider of variant.pointPreview.riders){
+        assert.equal(rider.provisionalPlace,
+          variantOrder.get(rider.riderId));
+        assert.equal(rider.previewPoints,pointsForDivisionResult({
+          tier:pointContext.tier,resultType:'ONE_DAY',
+          placing:rider.provisionalPlace,
+          multiplier:variant.pointPreview.multiplier}));
+      }
+    }
+    audit.tacticalVariants.push({version:race.version,
+      managerCount:plans.length,changedCrossings,
+      pointStatus:variant.pointPreview.status??'illustrative'});
     replayed.add(race.version);
     audit.replayedVersions.push(race.version);
   }

@@ -2589,3 +2589,14 @@ front leavers with only a defensible 39–40 placing range. The clock's broad
 bands for the new bunch dropouts cannot be promoted to individual places:
 their contact with the active bunch before 500 m has not been resolved. The
 audit still finishes all 48 roads and matches all 4,776 crossings to replay.
+
+For one representative of each of the seven observed v93 preview versions,
+the diversity audit now also changes the nominated finisher for every
+manager, leaves lead-outs off, and runs the whole road-to-line preview again.
+All seven variants retain their exact locked recording and kilometre clock,
+but change conditional crossings (6–158 riders, depending on the road).
+Every variant's line time and energy still match its final replay frame.
+Where the road admits a unique provisional order, the recalculated
+read-only points match the existing one-day policy; the three ambiguous
+representatives continue to withhold an illustration. The separate local
+browser flow still verifies optional paid lead-out work for two managers.
