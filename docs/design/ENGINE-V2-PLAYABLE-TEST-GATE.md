@@ -1941,3 +1941,10 @@ catch before 500 m. The locked route and all rider inputs stay identical,
 while the approach groups and nominated finisher's crossing time change.
 Both runs still record all 32 individual conditional lines and withhold
 official places and points. All 19 integrated acceptance cases pass.
+
+The local browser comparison now exercises the same one-rival change on the
+40 km exposed route. It shows the solo road, then the paid 39.462 km catch on
+the replay boundary after rival 1 switches to hard chase. The nominated
+finisher's crossing changes, all 32 conditional lines remain visible, and
+official points stay withheld. This ties the paired motor evidence to the
+actual manager controls and replay rather than only an offline test call.

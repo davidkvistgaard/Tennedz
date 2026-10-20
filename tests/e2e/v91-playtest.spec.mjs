@@ -173,6 +173,60 @@ test('exposed and custom routes reach their paid full-race replays',
     expect(errors).toEqual([]);
   });
 
+test('one rival chase changes an exposed attack in the playable comparison',
+  async({page})=>{
+    const errors=[];page.on('pageerror',error=>errors.push(error.message));
+    await page.goto('/login');
+    await page.getByLabel('Email or username').fill('v2outsider');
+    await page.getByLabel('Password',{exact:true}).fill('fixture-password');
+    await page.getByRole('button',{name:'Sign in',exact:true}).click();
+    await expect(page).toHaveURL(/\/team$/);
+    await page.goto('/team/v91-playtest');
+    await page.getByLabel('Distance').selectOption('40');
+    await page.getByLabel('Route profile').selectOption('exposed');
+    await page.getByLabel('Starting fatigue').selectOption('15');
+    await page.getByLabel('Default tactics for uncustomized managers')
+      .selectOption('passive');
+    await page.getByLabel('Managers with your own tactics').selectOption('1');
+    await page.getByLabel('Your attack order').selectOption('none');
+    await page.getByLabel('Your chase order').selectOption('ignore');
+    await page.getByLabel('Scenario seed').fill('integrated-probe');
+    await page.getByRole('checkbox',{
+      name:'Continue to a conditional finish'}).check();
+    await page.getByRole('checkbox',{
+      name:'Show read-only point illustration'}).check();
+    await page.getByLabel('Named attack manager').selectOption('you');
+    await page.getByLabel('Named attacking rider').selectOption('you-0');
+    await page.getByRole('button',{name:'Run full race preview'}).click();
+    await expect(page.getByText(/Named attack: you-0 · launched at 39 km; solo road, 1 group at 39\.5 km/))
+      .toBeVisible();
+    await expect(page.getByRole('heading',{name:'Paid solo-attack approach'}))
+      .toBeVisible();
+    const soloTime=await page.getByText(
+      /Your nominated finisher: you-7 · [\d.]+ s/).textContent();
+    await page.getByLabel('Rival 1 effort').selectOption('hard');
+    await page.getByLabel('Rival 1 chase').selectOption('all');
+    await page.getByRole('button',{name:'Run full race preview'}).click();
+    await expect(page.getByText(/Named attack: you-0 · launched at 39 km; caught road, 0 group at 39\.5 km/))
+      .toBeVisible();
+    await page.getByRole('slider',{name:/Attack boundary/}).fill('1');
+    await expect(page.getByText(/you-0 was caught at 39\.462 km/))
+      .toBeVisible();
+    await expect(page.getByText(
+      'Named final attack: you-0 (solo road) → you-0 (caught road)'))
+      .toBeVisible();
+    await expect(page.getByText(/Same finisher time change: -?[\d.]+ s · Energy at line:/))
+      .toBeVisible();
+    expect(await page.getByText(/Your nominated finisher: you-7 · [\d.]+ s/)
+      .textContent()).not.toBe(soloTime);
+    await expect(page.getByRole('table',{
+      name:'Individual conditional results'}).getByRole('row'))
+      .toHaveCount(33);
+    await expect(page.getByText('Official points: withheld · Awards saved: 0'))
+      .toBeVisible();
+    expect(errors).toEqual([]);
+  });
+
 test('a named final-kilometre attack changes the paid road',async({page})=>{
   const errors=[];page.on('pageerror',error=>errors.push(error.message));
   await page.goto('/login');
