@@ -35,7 +35,8 @@ const settingsFor=index=>({
   profileHeightsM:[100,350,150,500,180,100]});
 
 const audit={scenarios:48,finished:0,refusals:[],versions:{},
-  projectedPoints:0,unavailablePoints:0,replayedVersions:[],
+  projectedPoints:0,unavailablePoints:0,unavailableCases:[],
+  replayedVersions:[],
   conditionalCrossings:0,replayMatchedCrossings:0,
   pointTiers:[],divisionMultipliers:[]};
 const replayed=new Set();
@@ -86,9 +87,16 @@ for(let index=0;index<audit.scenarios;index++){
   assert.equal(race.canCommitAwards,false);
   assert.equal(race.pointsStatus,'withheld');
   assert.equal(race.pointPreview.canCommitAwards,false);
-  if(race.pointPreview.status==='unavailable')
+  if(race.pointPreview.status==='unavailable'){
     audit.unavailablePoints++;
-  else{
+    audit.unavailableCases.push({index,version:race.version,
+      reason:race.pointPreview.reason,settings,
+      clockBands:race.clock.line.bands.map(band=>({kind:band.kind,
+        size:band.riderIds.length,firstPossiblePlace:band.firstPossiblePlace,
+        lastPossiblePlace:band.lastPossiblePlace})),
+      finalDroppedCount:race.clock.passageFrames.at(-1)
+        .droppedPassages.length});
+  }else{
     assert.equal(race.pointPreview.tier,pointContext.tier);
     assert.equal(race.pointPreview.divisionCount,
       pointContext.divisionCount);

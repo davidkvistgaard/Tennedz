@@ -2580,3 +2580,12 @@ unresolved contact can show a placing range and no point illustration.
 The new command completed the isolated build and served a 200 login page;
 all fourteen v93 browser scenarios passed against its build and the
 localhost-only fixture server. Lint and the launcher syntax check passed.
+
+The 48-road diversity audit now identifies its four withheld illustrations
+by index, preview version, reason and recorded road-band sizes. Cases 14 and
+44 form 15- and 20-team fields with new bunch dropouts before 500 m; case
+20 has possible contact between already separated bands; case 26 has two
+front leavers with only a defensible 39–40 placing range. The clock's broad
+bands for the new bunch dropouts cannot be promoted to individual places:
+their contact with the active bunch before 500 m has not been resolved. The
+audit still finishes all 48 roads and matches all 4,776 crossings to replay.
