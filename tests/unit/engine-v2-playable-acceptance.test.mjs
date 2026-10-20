@@ -230,3 +230,59 @@ for(const [distanceKm,terrain,teamCount,gender] of [
     assert.equal(helped.recording.classifiedResults,null);
   });
 }
+
+test('two managers can pay competing lead-outs on one replayed road',()=>{
+  const settings={distanceKm:40,terrain:'flat',teamCount:4,gender:'M',
+    fatigue:0,seed:'playable-acceptance-1',defaultRivalPlan:'passive',
+    effort:'steady',attack:'none',chase:'ignore'};
+  const own={teamId:'you',finisherId:'you-3',leadOutRiderId:'you-5'};
+  const rival={teamId:'rival-1',finisherId:'rival-1-1',
+    leadOutRiderId:'rival-1-3'};
+  const run=finalePlans=>runV91IntegratedTestDrive({settings,finalePlans,
+    pointContext},{full:true});
+  const plain=run([]),ownOnly=run([own]),rivalOnly=run([rival]);
+  const both=run([own,rival]);
+  const line=(output,riderId)=>output.summary.finale.lineTimes.find(row=>
+    row.riderId===riderId);
+  assert.deepEqual(plain.recording.recording,both.recording.recording);
+  assert.deepEqual(both.summary.unavailableLeadOuts??[],[]);
+  assert.deepEqual(both.recording.finalePlans.filter(row=>
+    row.leadOutRiderId!==null),[own,rival]);
+  for(const output of [plain,ownOnly,rivalOnly,both]){
+    assert.equal(output.summary.roadStatus,'paid_conditional_line');
+    assert.equal(output.summary.finale.lineTimes.length,32);
+    assert.equal(output.summary.provisionalPointPreview.riders.length,32);
+    assert.equal(output.summary.pointsStatus,'withheld');
+    assert.equal(output.recording.classifiedResults,null);
+  }
+  assert.ok(line(ownOnly,'you-3').elapsedSecondsFromLastKmStart<
+    line(plain,'you-3').elapsedSecondsFromLastKmStart);
+  assert.ok(line(rivalOnly,'rival-1-1').elapsedSecondsFromLastKmStart<
+    line(plain,'rival-1-1').elapsedSecondsFromLastKmStart);
+  for(const riderId of ['you-3','rival-1-1']){
+    const alone=riderId==='you-3'?ownOnly:rivalOnly;
+    assert.equal(line(both,riderId).elapsedSecondsFromLastKmStart,
+      line(alone,riderId).elapsedSecondsFromLastKmStart);
+  }
+  const replay=summarizeV91PaidFinaleReplay(both.recording);
+  assert.equal(replay.status,'complete_paid_trace');
+  const helperIds=new Set(['you-5','rival-1-3']);
+  const paidHelpers=both.summary.finale.leadOutWork.filter(row=>
+    row.role==='lead_out');
+  assert.deepEqual(new Set(paidHelpers.map(row=>row.riderId)),helperIds);
+  assert.ok(paidHelpers.every(row=>row.energySpent>0&&
+    row.distanceTravelledM>0));
+  assert.deepEqual(new Set(both.recording.paidFinale.frames.flatMap(frame=>
+    frame.riders.filter(row=>row.role==='lead_out'&&row.energySpent>0)
+      .map(row=>row.riderId))),helperIds);
+  const lines=new Map(both.summary.finale.lineTimes.map(row=>
+    [row.riderId,row]));
+  for(const row of replay.frames.at(-1).riders){
+    const result=lines.get(row.riderId);
+    assert.ok(result);
+    assert.equal(row.positionM,40_000);
+    assert.equal(row.elapsedToLineSeconds,
+      result.elapsedSecondsFromLastKmStart);
+    assert.equal(row.energyAfter,result.energyAtLine);
+  }
+});

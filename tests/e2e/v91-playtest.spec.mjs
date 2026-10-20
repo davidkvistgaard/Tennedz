@@ -3,6 +3,53 @@ import {test,expect} from '@playwright/test';
 test.skip(process.env.PELOTONIA_V91_PLAYTEST_ENABLED!=='true',
   'The isolated v91 workbench is disabled.');
 
+test('two managers can order paid competing lead-outs in a full race',
+  async({page})=>{
+    const errors=[];page.on('pageerror',error=>errors.push(error.message));
+    await page.goto('/login');
+    await page.getByLabel('Email or username').fill('v2manager');
+    await page.getByLabel('Password',{exact:true}).fill('fixture-password');
+    await page.getByRole('button',{name:'Sign in',exact:true}).click();
+    await expect(page).toHaveURL(/\/team$/);
+    await page.goto('/team/v91-playtest');
+    await page.getByLabel('Distance').selectOption('40');
+    await page.getByLabel('Route profile').selectOption('flat');
+    await page.getByLabel('Field size').selectOption('4');
+    await page.getByLabel('Starting fatigue').selectOption('0');
+    await page.getByLabel('Default tactics for uncustomized managers')
+      .selectOption('passive');
+    await page.getByLabel('Managers with your own tactics').selectOption('1');
+    await page.getByLabel('Your attack order').selectOption('none');
+    await page.getByLabel('Your chase order').selectOption('ignore');
+    await page.getByLabel('Scenario seed').fill('playable-acceptance-1');
+    await page.getByRole('checkbox',{
+      name:'Continue to a conditional finish'}).check();
+    await page.getByRole('checkbox',{
+      name:'Show read-only point illustration'}).check();
+    await page.getByLabel('you finisher').selectOption('you-3');
+    await page.getByLabel('you lead-out helper').selectOption('you-5');
+    await page.getByLabel('rival-1 finisher').selectOption('rival-1-1');
+    await page.getByLabel('rival-1 lead-out helper').selectOption('rival-1-3');
+    await page.getByRole('button',{name:'Run full race preview'}).click();
+    await expect(page.getByRole('heading',{name:'Paid final-kilometre replay'}))
+      .toBeVisible();
+    await expect(page.getByText('Paid lead-out work: 16 recorded rider intervals.'))
+      .toBeVisible();
+    await expect(page.getByText(/you-5: 16\.5 energy spent/))
+      .toBeVisible();
+    await expect(page.getByText(/rival-1-3: 17\.2 energy spent/))
+      .toBeVisible();
+    const slider=page.getByRole('slider',{name:/Finale interval/});
+    await slider.fill(await slider.getAttribute('max'));
+    await expect(page.getByText(/you-3: 0\.0 m to go/)).toBeVisible();
+    await expect(page.getByRole('table',{
+      name:'Individual conditional results'}).getByRole('row'))
+      .toHaveCount(33);
+    await expect(page.getByText('Official points: withheld · Awards saved: 0'))
+      .toBeVisible();
+    expect(errors).toEqual([]);
+  });
+
 for(const width of [390,1440])test(`v91 playtest changes conditions at ${width}px`,
   async({page,context})=>{
     await page.setViewportSize({width,height:900});

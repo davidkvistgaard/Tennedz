@@ -1957,3 +1957,13 @@ matches the one-day policy without saving awards. Only the two already known
 four-team M mountain mixed runs have unmet energy and no line, replay or point
 illustration. The seed gate replays these expectations from locked fictional
 inputs rather than treating an unexpected refusal as a passing case.
+
+The integrated competing-lead-out gate now orders two managers on the same
+40 km flat road. Their source-lane pairs assemble without a fallback; both
+helpers record positive work, both nominated finishers cross earlier than in
+the identical no-helper race, and all 32 line times and energies match the
+paid replay. Turning on either helper alone or both leaves the locked
+kilometre race identical. The local browser exercises both manager controls,
+both helper work totals, the finish replay and withheld official awards.
+All eleven local v91 browser cases and full lint pass. This is still a
+conditional preview, not an official classification.
