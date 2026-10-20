@@ -1933,3 +1933,11 @@ switching the nominated finisher's helper on, then checks paid helper work,
 the altered finisher time, exact-contact replay and all riders' line time and
 energy. Both routes retain a conditional line and withheld official points;
 all 17 integrated acceptance cases pass.
+
+Two further paired full races isolate one rival's manager choice. On 40 km
+exposed M and 120 km custom F roads, changing only rival 1 from passive to
+hard chase turns the named player's attack from a paid solo road into a paid
+catch before 500 m. The locked route and all rider inputs stay identical,
+while the approach groups and nominated finisher's crossing time change.
+Both runs still record all 32 individual conditional lines and withhold
+official places and points. All 19 integrated acceptance cases pass.

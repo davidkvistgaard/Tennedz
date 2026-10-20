@@ -130,6 +130,57 @@ for(const gender of ['M','F'])for(const teamCount of [4,15,20]){
   });
 }
 
+for(const [distanceKm,terrain,gender] of [
+  [40,'exposed','M'],[120,'custom','F']]){
+  test(`one rival chase changes the paid ${distanceKm} km ${terrain} attack road`,()=>{
+    const passive={effort:'steady',attack:'none',chase:'ignore'};
+    const settings={distanceKm,terrain,gender,teamCount:4,fatigue:15,
+      seed:'integrated-probe',defaultRivalPlan:'passive',
+      attack:'none',chase:'ignore',
+      ...(terrain==='custom'?{profileHeightsM:[100,350,150,500,180,100]}:{})};
+    const run=rivalOne=>runV91IntegratedTestDrive({settings:{...settings,
+      managerTactics:[rivalOne,passive,passive]},
+    attack:{teamId:'you',riderId:'you-0'},
+    finalePlans:[{teamId:'you',finisherId:'you-7',leadOutRiderId:null}],
+    pointContext},{full:true});
+    const solo=run(passive);
+    const caught=run({effort:'hard',attack:'none',chase:'all'});
+    assert.deepEqual(solo.recording.recording.route,
+      caught.recording.recording.route);
+    const soloTeams=solo.recording.recording.committedInputs.teams;
+    const caughtTeams=caught.recording.recording.committedInputs.teams;
+    assert.deepEqual(soloTeams.map(team=>team.riders),
+      caughtTeams.map(team=>team.riders));
+    assert.notDeepEqual(soloTeams[0].orders,caughtTeams[0].orders);
+    for(let index=1;index<soloTeams.length;index++)
+      assert.deepEqual(soloTeams[index].orders,caughtTeams[index].orders);
+    assert.equal(solo.recording.roadDecision.branch,'solo');
+    assert.equal(caught.recording.roadDecision.branch,'caught');
+    const soloApproach=summarizeV91PaidNamedAttackApproach(solo.recording);
+    const caughtApproach=summarizeV91PaidNamedAttackApproach(caught.recording);
+    assert.deepEqual(soloApproach.frames.map(frame=>frame.roadGroups.length),
+      [1,1]);
+    assert.deepEqual(caughtApproach.frames.map(frame=>frame.roadGroups.length),
+      [1,0]);
+    assert.ok(caughtApproach.frames[1].catchDistanceM>
+      distanceKm*1000-750);
+    assert.ok(caughtApproach.frames[1].catchDistanceM<
+      distanceKm*1000-500);
+    for(const output of [solo,caught]){
+      assert.equal(output.summary.roadStatus,'paid_conditional_line');
+      assert.equal(output.summary.finale.lineTimes.length,32);
+      assert.equal(output.summary.provisionalPointPreview.status,
+        'unavailable');
+      assert.equal(output.summary.pointsStatus,'withheld');
+      assert.equal(output.summary.canCommitAwards,false);
+      assert.equal(output.recording.classifiedResults,null);
+    }
+    const ownTime=output=>output.summary.finale.lineTimes.find(row=>
+      row.riderId==='you-7').elapsedSecondsFromLastKmStart;
+    assert.notEqual(ownTime(solo),ownTime(caught));
+  });
+}
+
 for(const [distanceKm,terrain,teamCount,gender] of [
   [40,'flat',4,'M'],[40,'exposed',4,'M'],
   [120,'rolling',15,'F'],[120,'custom',15,'F'],
