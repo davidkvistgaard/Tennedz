@@ -117,3 +117,38 @@ test('attacking v93 road keeps separated front groups in the browser replay',
       .toHaveCount(33);
     expect(errors).toEqual([]);
   });
+
+test('short v93 road pays one front group into the individual line',
+  async({page})=>{
+    await page.goto('/login');
+    await page.getByLabel('Email or username').fill('settings');
+    await page.getByLabel('Password',{exact:true}).fill('fixture-password');
+    await page.getByRole('button',{name:'Sign in',exact:true}).click();
+    await expect(page).toHaveURL(/\/team$/);
+    await page.goto('/team/v91-playtest');
+    await page.getByRole('checkbox',{
+      name:'Continue to a conditional finish'}).check();
+    await page.getByRole('checkbox',{
+      name:'Try v93 road-to-line preview'}).check();
+    await page.getByLabel('Distance').selectOption('40');
+    await page.getByLabel('Scenario seed').fill('coast-matrix');
+    await page.getByLabel('Default tactics for uncustomized managers')
+      .selectOption('attack');
+    await page.getByLabel('Your attack').selectOption('repeated');
+    await page.getByLabel('Your chase').selectOption('ignore');
+    const responsePromise=page.waitForResponse(response=>
+      response.url().endsWith('/api/v91-playtest')&&
+      response.request().method()==='POST');
+    await page.getByRole('button',{name:'Run v93 race preview'}).click();
+    const response=await responsePromise;
+    expect(response.status()).toBe(200);
+    const {coasted}=await response.json();
+    expect(coasted.version).toBe('v93-single-group-playtest-1');
+    expect(coasted.kilometreFrames).toHaveLength(39);
+    expect(coasted.lastKmRoad.at(-1).groups).toHaveLength(1);
+    expect(coasted.lastKmRoad.at(-1).distanceM).toBe(40000);
+    expect(coasted.lineTimes).toHaveLength(32);
+    await expect(page.getByRole('table',{
+      name:'V93 individual conditional results'}).getByRole('row'))
+      .toHaveCount(33);
+  });

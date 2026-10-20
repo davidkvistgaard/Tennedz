@@ -2263,3 +2263,22 @@ Focused coasted and separated unit checks, lint, isolated build, and both
 local browser fixture flows pass. A full unit-suite run was stopped after
 roughly 20 minutes while existing long-running balance and test-drive
 simulations were still active; it did not yield a full-suite verdict.
+
+A versioned one-front-group v93 branch now extends the same local workbench
+to short and medium attacking roads. It keeps the existing multi-group
+recording format intact, while a new 100 m trace follows one surviving front
+group and the bunch from the locked final-kilometre handoff. The paid 500 m
+handoff reuses the individual band runner, nominations, lead-out work and
+read-only point policy. Direct runs cover 60 combinations of 40/120 km,
+4/15/20 teams, five terrains and both categories at fresh start; 40 more
+four-team cases at fatigue 15/30 resolve through either this one-group or
+the separated-group branch. The first 40 km flat case pays simultaneous
+lead-outs in the front group and bunch, and both nominated finishers gain
+time compared with the same road without helpers. A bunch-only final-
+kilometre handoff is still unsupported, including the ordinary mixed-plan
+short and medium roads tested here. The new branch remains conditional and
+non-awarding.
+The 20-case four-team short/medium replay matrix, prior v93 coasted and
+separated playtest suites, 12 older separated-clock/line/point checks, lint,
+an isolated build, and three local browser fixture flows pass. The full unit
+suite was not repeated for this branch after its earlier long run was stopped.

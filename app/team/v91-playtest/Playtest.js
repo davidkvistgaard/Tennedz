@@ -290,9 +290,9 @@ export default function Playtest(){
           onChange={event=>setCoastedMode(event.target.checked)}/>
           Try v93 road-to-line preview</label>}
         {integratedMode&&coastedMode&&<p className="v91-warning">
-          This preview currently needs separated road groups or a front road
-          group with dropped riders at the final-kilometre handoff. Other roads
-          return a clear refusal; results and points remain experimental.
+          This preview currently needs at least one front road group at the
+          final-kilometre handoff. Roads without one return a clear refusal;
+          results and points remain experimental.
         </p>}
         {Object.entries(OPTIONS).map(([key,options])=><label key={key}>{LABELS[key]}
           <select value={settings[key]} onChange={event=>change(key,event.target.value)}>
