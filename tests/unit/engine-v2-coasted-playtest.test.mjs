@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {createV93CoastedPlaytest,validateV93CoastedPlaytest,
+import {createV93CoastedPlaytest,createV93PlayableTest,
+  V93_SEPARATED_PLAYTEST_VERSION,validateV93CoastedPlaytest,
   summarizeV93CoastedPlaytest} from
   '../../lib/engine/v2/playtest-v93-coasted.mjs';
 import {pointsForDivisionResult} from '../../lib/calendar/points.mjs';
@@ -85,4 +86,63 @@ test('coasted playtest rejects a cross-road helper and changed replay',()=>{
   altered.individualLine.conditionalCrossings[0].energyAtLine+=1;
   assert.throws(()=>validateV93CoastedPlaytest(input,{},altered),
     /does not replay/);
+});
+
+test('attacking v93 roads keep separated front groups through the playable line',()=>{
+  for(const teamCount of [4,15,20])
+    for(const terrain of ['flat','rolling','mountain','exposed','custom'])
+      for(const gender of ['M','F']){
+        const input={distanceKm:260,terrain,gender,teamCount,
+          fatigue:30,seed:'coast-matrix',defaultRivalPlan:'attack',
+          attack:'repeated',chase:'ignore',
+          ...(terrain==='custom'?{profileHeightsM}:{})};
+        const race=createV93PlayableTest(input,{pointContext:context});
+        const summary=summarizeV93CoastedPlaytest(race);
+        const riderCount=teamCount*8;
+        assert.equal(race.version,V93_SEPARATED_PLAYTEST_VERSION);
+        assert.ok(race.recording.frames.at(-2).roadGroups.length>=2);
+        assert.equal(race.recording.frames.at(-2).riderGroups
+          .filter(row=>row.group==='dropped').length,0);
+        assert.equal(summary.lineTimes.length,riderCount);
+        assert.equal(summary.provisionalLineOrder.length,riderCount);
+        assert.equal(summary.lastKmRoad.at(-1).distanceM,260000);
+        assert.equal(summary.lastKmRoad.at(-1).droppedPassages.length,0);
+        assert.equal(summary.kilometreFrames.length,259);
+        assert.equal(race.pointsStatus,'withheld');
+        assert.equal(race.canCommitAwards,false);
+        if(race.pointPreview.status==='unavailable')
+          assert.equal(race.pointPreview.pointsStatus,'withheld');
+        else{
+          assert.equal(race.pointPreview.riders.length,riderCount);
+          assert.deepEqual(race.pointPreview.awardRows,[]);
+          for(const [index,row] of race.pointPreview.riders.entries())
+            assert.equal(row.previewPoints,pointsForDivisionResult({
+              tier:3,resultType:'ONE_DAY',placing:index+1,multiplier:1}));
+        }
+        assert.equal(validateV93CoastedPlaytest(input,
+          {pointContext:context},race),true);
+      }
+});
+
+test('separated v93 road pays nominated front and peloton helpers',()=>{
+  const input={distanceKm:260,terrain:'flat',gender:'M',teamCount:4,
+    fatigue:30,seed:'coast-matrix',defaultRivalPlan:'attack',
+    attack:'repeated',chase:'ignore'};
+  const base=createV93PlayableTest(input);
+  const plans=base.recording.committedInputs.teams.map(team=>({
+    teamId:team.id,
+    finisherId:team.id==='rival-1'?'rival-1-4':
+      team.orders.captainId,
+    leadOutRiderId:team.id==='you'?'you-6':
+      team.id==='rival-1'?'rival-1-5':null}));
+  const race=createV93PlayableTest(input,{plans});
+  const summary=summarizeV93CoastedPlaytest(race);
+  assert.equal(race.version,V93_SEPARATED_PLAYTEST_VERSION);
+  assert.ok(summary.leadOutWork.some(row=>row.riderId==='you-6'));
+  assert.ok(summary.leadOutWork.some(row=>row.riderId==='rival-1-5'));
+  assert.ok(crossing(race,'you-7').elapsedSecondsFromLastKmStart<
+    crossing(base,'you-7').elapsedSecondsFromLastKmStart);
+  assert.ok(crossing(race,'rival-1-4').elapsedSecondsFromLastKmStart<
+    crossing(base,'rival-1-4').elapsedSecondsFromLastKmStart);
+  assert.equal(validateV93CoastedPlaytest(input,{plans},race),true);
 });

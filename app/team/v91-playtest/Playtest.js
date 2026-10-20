@@ -288,11 +288,11 @@ export default function Playtest(){
         {integratedMode&&<label className="v91-mode"><input type="checkbox"
           checked={coastedMode}
           onChange={event=>setCoastedMode(event.target.checked)}/>
-          Try v93 exhausted-rider preview</label>}
+          Try v93 road-to-line preview</label>}
         {integratedMode&&coastedMode&&<p className="v91-warning">
-          This preview currently needs a front road group, a bunch and dropped
-          riders at the final-kilometre handoff. Other roads return a clear
-          refusal; results and points remain experimental.
+          This preview currently needs separated road groups or a front road
+          group with dropped riders at the final-kilometre handoff. Other roads
+          return a clear refusal; results and points remain experimental.
         </p>}
         {Object.entries(OPTIONS).map(([key,options])=><label key={key}>{LABELS[key]}
           <select value={settings[key]} onChange={event=>change(key,event.target.value)}>

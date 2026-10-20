@@ -2244,3 +2244,18 @@ Rerunning without helpers showed 32 read-only policy point rows where the
 order was unique. Two existing v91 browser flows still passed with the v93
 gate disabled. Other chosen settings may receive an explicit unsupported-road
 response until their v93 finale state is covered.
+
+The next v93 preview increment accepts a second, versioned road shape: at
+the 259 km handoff, at least two separated front groups and no dropped
+riders. It reuses the existing paid separated-group 100 m clock and
+individual finale, but checks the v93 source recording and issues a distinct
+v93 playtest and read-only point-preview version. The coasted branch remains
+unchanged. In a 30-case 260 km attacking-road matrix (4, 15 and 20 teams;
+five terrains; both categories), every rider has a replayable crossing,
+recorded energy, and a road band. The policy projection requires a unique
+placing and never creates award rows. A separate four-team attack case pays
+simultaneous nominated lead-outs in the leading group and peloton; both
+helpers expend recorded energy and both nominated finishers improve on the
+same road without assistance. Shorter and less fragmented roads still
+return explicit refusals. This extends the playable preview without
+promoting either v93 branch to an official result.
