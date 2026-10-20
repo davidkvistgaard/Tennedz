@@ -19,6 +19,16 @@ export const runtime='nodejs';
 export const dynamic='force-dynamic';
 
 const runs=new Map();
+function v93PlanError(error){
+  if(error.message!==
+    'The nominated lead-out cannot work beside the finisher.'||
+    !['different_road_group','exhausted'].includes(error.cause?.reason)||
+    typeof error.cause?.helperId!=='string')return error.message;
+  const reason=error.cause.reason==='different_road_group'?
+    'is in a different road group':'has too little energy';
+  return `${error.cause.helperId} ${reason} at 500 m and cannot lead out. `+
+    'No race preview was recorded. Choose another helper or none and run again.';
+}
 async function handler(request,_context,auth){
   if(process.env.PELOTONIA_V91_PLAYTEST_ENABLED!=='true')
     return NextResponse.json({ok:false,error:'Playtest unavailable.'},{status:404});
@@ -55,7 +65,7 @@ async function handler(request,_context,auth){
         return NextResponse.json({ok:true,
           coasted:summarizeV93CoastedPlaytest(race)});
       }catch(error){
-        return NextResponse.json({ok:false,error:error.message,
+        return NextResponse.json({ok:false,error:v93PlanError(error),
           status:'unsupported_road_or_plan'},{status:422});
       }
     }

@@ -2677,3 +2677,13 @@ checks that a 40-to-120 km switch cannot retain an unrelated comparison.
 All 17 local v93 browser cases and two existing v91 comparison cases pass,
 as do lint and the isolated local build. The motor recording, result contract
 and official withheld-award policy are unchanged.
+
+A v93 nominated lead-out who is already in another road group or has too
+little energy at the paid 500 m boundary still fails closed. The preview API
+now reports the recorded reason and asks for a different helper or none,
+instead of showing only a generic assembly error. The four-team, tired
+mountain browser flow nominates an isolated rival as helper, checks the 422
+reason and absence of a saved preview, then removes that helper and replays
+the same race with 32 individual times, a 31-rider peloton and the rider's
+separate paid solo band. All 18 v93 local browser scenarios, lint and the
+isolated build pass. No recording, point policy or production path changes.

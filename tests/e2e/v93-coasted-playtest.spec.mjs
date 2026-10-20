@@ -340,6 +340,61 @@ test('a tired no-front road keeps its isolated rider through the browser line',
       .toBeVisible();
   });
 
+test('an unavailable v93 lead-out explains the road and can be removed',
+  async({page})=>{
+    await page.goto('/login');
+    await page.getByLabel('Email or username').fill('v2manager');
+    await page.getByLabel('Password',{exact:true}).fill('fixture-password');
+    await page.getByRole('button',{name:'Sign in',exact:true}).click();
+    await expect(page).toHaveURL(/\/team$/);
+    await page.goto('/team/v91-playtest');
+    await page.getByRole('checkbox',{
+      name:'Continue to a conditional finish'}).check();
+    await page.getByRole('checkbox',{
+      name:'Try v93 road-to-line preview'}).check();
+    await page.getByLabel('Distance').selectOption('260');
+    await page.getByLabel('Route profile').selectOption('mountain');
+    await page.getByLabel('Starting fatigue').selectOption('30');
+    await page.getByLabel('Scenario seed').fill('test-drive-acceptance-1');
+    await page.getByLabel('Default tactics for uncustomized managers')
+      .selectOption('chase');
+    await page.getByLabel('Your attack').selectOption('none');
+    await page.getByLabel('Your chase').selectOption('all');
+    await page.getByLabel('Managers with your own tactics')
+      .selectOption('2');
+    await page.getByLabel('rival-2 lead-out helper')
+      .selectOption('rival-2-0');
+    const refusalPromise=page.waitForResponse(response=>
+      response.url().endsWith('/api/v91-playtest')&&
+      response.request().method()==='POST');
+    await page.getByRole('button',{name:'Run v93 race preview'}).click();
+    const refusal=await refusalPromise;
+    expect(refusal.status()).toBe(422);
+    await expect(page.locator('.v91-error')).toContainText(
+      'rival-2-0 is in a different road group at 500 m and cannot lead out.');
+    await expect(page.locator('.v91-error')).toContainText(
+      'No race preview was recorded. Choose another helper or none and run again.');
+    await expect(page.getByRole('heading',{
+      name:/V93 race preview/})).toHaveCount(0);
+    await page.getByLabel('rival-2 lead-out helper').selectOption('');
+    const acceptedPromise=page.waitForResponse(response=>
+      response.url().endsWith('/api/v91-playtest')&&
+      response.request().method()==='POST');
+    await page.getByRole('button',{name:'Run v93 race preview'}).click();
+    const accepted=await acceptedPromise;
+    expect(accepted.status()).toBe(200);
+    const {coasted}=await accepted.json();
+    expect(coasted.lineTimes).toHaveLength(32);
+    expect(coasted.leadOutWork).toEqual([]);
+    expect(coasted.bandReplays.map(band=>band.id))
+      .toEqual(['peloton','isolated:rival-2-0']);
+    expect(coasted.bandReplays[0].riderIds).toHaveLength(31);
+    await expect(page.getByRole('table',{
+      name:'V93 individual conditional results'}).getByRole('row'))
+      .toHaveCount(33);
+    await expect(page.locator('.v91-error')).toHaveCount(0);
+  });
+
 test('three isolated riders finish while uncertain points stay withheld',
   async({page})=>{
     await page.goto('/login');
