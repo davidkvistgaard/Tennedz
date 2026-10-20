@@ -826,8 +826,6 @@ test('possible isolated-rider contact links both paid replays',
       .selectOption('mixed');
     await page.getByLabel('Your attack').selectOption('selective');
     await page.getByLabel('Your chase').selectOption('all');
-    await page.getByRole('checkbox',{
-      name:'Show read-only point illustration'}).check();
     const responsePromise=page.waitForResponse(response=>
       response.url().endsWith('/api/v91-playtest')&&
       response.request().method()==='POST');
@@ -835,7 +833,7 @@ test('possible isolated-rider contact links both paid replays',
     const response=await responsePromise;
     expect(response.status()).toBe(200);
     const {coasted}=await response.json();
-    expect(coasted.pointPreview.status).toBe('unavailable');
+    expect(coasted.pointPreview).toBeNull();
     expect(coasted.potentialRoadContact.riderIds)
       .toEqual(['rival-1-3','rival-1-4']);
     const note=page.getByRole('note',{name:'Potential road contact'});

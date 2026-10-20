@@ -2639,3 +2639,9 @@ longitudinal overlap on inferred source wheels, not a resolved meeting or
 passing rule. The provisional order remains null and points and awards stay
 withheld. The focused replay test, lint, isolated build and all sixteen
 local v93 browser flows pass.
+
+The contact witness is now shown even when the optional read-only point
+illustration is off. Contact is a property of the paid road replay, so the
+same two rider IDs and crossing remain available in the default result
+view. The with-points and without-points unit cases replay identically;
+the local browser check uses the default unchecked point option.
