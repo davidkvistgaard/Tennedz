@@ -241,7 +241,7 @@ export default function Playtest(){
         ?.find(row=>row.teamId==='you')?.finisherId??'you-7');
       setSelectedKm(1);
       setResultsTeam('all');
-    }catch(cause){setComparison(null);
+    }catch(cause){setComparison(null);setResult(null);setIntegrated(null);
       setError(cause.message||'The playtest could not run.');}
     finally{setBusy(false);}
   }

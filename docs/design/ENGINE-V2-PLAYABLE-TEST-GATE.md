@@ -1876,3 +1876,11 @@ acceptance gate (`node --test tests/unit/engine-v2-playable-matrix.test.mjs`)
 for the opt-in preview, not proof of an official classification
 when separate road bands may interact before the finish. The separate
 two-manager and helper tests cover orders outside this compact matrix.
+
+An invalid new scenario no longer leaves the previous race's finish on
+screen beside the rejection. The opt-in workbench clears the stale recording
+and conditional result while showing the API error. A local browser check
+first ran a paid 260 km mountain finish, then submitted a 40 km custom route
+whose first 20% exceeds the allowed gradient; the rejection appeared and the
+old 32-rider result table disappeared. All eight local v91 browser cases,
+the isolated build and full lint pass.

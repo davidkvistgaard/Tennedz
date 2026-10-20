@@ -479,6 +479,16 @@ test('a dropped rider keeps a separate paid mountain finale',async({page})=>{
     name:'Individual conditional results'}).getByRole('row'))
     .toHaveCount(33);
   await expect(page.getByText(/Points: withheld/)).toBeVisible();
+  await page.getByLabel('Distance').selectOption('40');
+  await page.getByLabel('Route profile').selectOption('custom');
+  await page.getByLabel('20% (m)').fill('2500');
+  await page.getByRole('button',{name:'Run full race preview'}).click();
+  await expect(page.locator('.v91-error')).toContainText(
+    'Choose valid playtest settings.');
+  await expect(page.getByRole('heading',{name:'Conditional finish'}))
+    .toHaveCount(0);
+  await expect(page.getByRole('table',{
+    name:'Individual conditional results'})).toHaveCount(0);
   expect(errors).toEqual([]);
 });
 
