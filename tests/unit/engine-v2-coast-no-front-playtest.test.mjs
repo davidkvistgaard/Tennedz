@@ -99,6 +99,28 @@ test('a late catch with several dropped riders keeps crossings but withholds con
     {pointContext:context},race),true);
 });
 
+test('a 20-team coasted road with overlapping isolated riders withholds points',()=>{
+  const input={distanceKm:260,teamCount:20,gender:'M',terrain:'flat',
+    fatigue:15,seed:'v93-seed-audit-0',defaultRivalPlan:'neutral',
+    effort:'hard',attack:'repeated',chase:'ignore'};
+  const race=createV93PlayableTest(input,{pointContext:context});
+  assert.equal(race.version,V93_COAST_NO_FRONT_PLAYTEST_VERSION);
+  assert.equal(race.recording.frames.at(-2).roadGroups.length,0);
+  assert.equal(race.recording.frames.at(-2).riderGroups.filter(row=>
+    row.group==='dropped').length,6);
+  assert.equal(race.individualLine.bandRunners.length,7);
+  assert.equal(race.individualLine.conditionalCrossings.length,160);
+  assert.equal(race.individualLine.pre500Audit.status,
+    'potential_longitudinal_overlap');
+  assert.equal(race.individualLine.overlapAudit.status,
+    'potential_longitudinal_overlap');
+  assert.equal(race.pointPreview.status,'unavailable');
+  assert.equal(race.pointsStatus,'withheld');
+  assert.equal(race.canCommitAwards,false);
+  assert.equal(validateV93CoastedPlaytest(input,
+    {pointContext:context},race),true);
+});
+
 test('the v93 no-front coast clock rejects an older recording',()=>{
   const older=simulateTacticalTour(prepareV91Playtest(
     settings('M','mountain')));

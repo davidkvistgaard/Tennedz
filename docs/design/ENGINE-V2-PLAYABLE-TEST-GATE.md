@@ -2375,3 +2375,18 @@ exposed route with chase defaults: all 160 riders reach the individual
 bunch line, with 160 illustrative point entries. All nine v93 browser
 fixtures pass together; lint and an isolated build pass. This broadens
 playable UI evidence without resolving the 30 extreme energy refusals.
+
+A separate 48-case, four-seed direct acceptance audit varies 40/120/260 km,
+4/15/20 teams, both categories, all five route profiles, fatigue 0/15/30,
+the four rival defaults, and player effort/attack/chase orders. Forty-seven
+full roads finish: 33 bunch-only, eight single-front-group, three separated,
+two coasted-with-front and one coasted-without-front. One 260 km, 15-team
+custom-route case refuses at a newly exhausted rider, matching the known
+unpaid-drop boundary. With point context, 46 successful cases produce
+policy-consistent read-only projections; the remaining 20-team no-front
+road has six isolated riders and potential overlap, so points are explicitly
+unavailable. One representative from each of the five successful road
+versions replays exactly. A fixed unit test now preserves the 20-team
+six-isolated-rider point-withholding behavior; all five focused coasted
+no-front tests and lint pass. This audit did not run through the browser;
+the nine browser acceptance flows above cover the UI separately.
