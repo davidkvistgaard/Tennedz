@@ -2476,3 +2476,19 @@ conditional result. Twenty-one focused and adjacent tests, lint, an
 isolated build and all thirteen local v93 browser flows pass. The old
 versioned coasted roads retain their previous runner and replay output;
 the broader full suite remains unverified.
+
+The reproducible `scripts/engine-v2-v93-diversity-audit.mjs` rotates 48
+synthetic combinations across 40/120/260 km, 4/15/20 teams, both
+categories, five route profiles, three fatigue levels, four seeds and
+different manager defaults and orders. It checks unique individual
+crossings, read-only point values against the policy, award withholding,
+and one exact replay per observed version. With the active-road and
+singleton increments, 47 roads finish with 4,616 conditional crossings:
+44 have policy-consistent point illustrations and three explicitly
+withhold them. One 260 km, 20-team men's rolling road at fatigue 15
+still refuses. Its locked source has one 40-rider front group and a full
+bunch, with two zero-reserve player riders in that front group; the
+single-group clock cannot pay their first 259 km finale slice. This is a
+specific remaining source-road boundary, not evidence of a complete
+motor. The audit is direct engine coverage; the thirteen local browser
+flows remain the UI evidence.
