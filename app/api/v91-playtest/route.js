@@ -12,6 +12,8 @@ import {summarizeV91PaidFinaleReplay,
 import {runV91IntegratedTestDrive} from '../../../scripts/engine-v2-test-drive.mjs';
 import {summarizeV91PaidMultibandReplay} from
   '../../../lib/engine/v2/playtest-multiband-replay.mjs';
+import {createV93CoastedPlaytest,summarizeV93CoastedPlaytest} from
+  '../../../lib/engine/v2/playtest-v93-coasted.mjs';
 
 export const runtime='nodejs';
 export const dynamic='force-dynamic';
@@ -38,6 +40,25 @@ async function handler(request,_context,auth){
   if(!input||typeof input!=='object'||Array.isArray(input))
     return NextResponse.json({ok:false,error:'Invalid request.'},{status:400});
   try{
+    if(input.mode==='v93-coasted'){
+      if(process.env.PELOTONIA_V93_COASTED_PLAYTEST_ENABLED!=='true')
+        return NextResponse.json({ok:false,error:'V93 preview unavailable.'},
+          {status:404});
+      if(Object.keys(input).some(key=>
+        !['mode','settings','plans','pointContext'].includes(key))||
+        !input.settings||!Array.isArray(input.plans))
+        return NextResponse.json({ok:false,error:'Invalid v93 preview request.'},
+          {status:400});
+      try{
+        const race=createV93CoastedPlaytest(input.settings,{
+          plans:input.plans,pointContext:input.pointContext??null});
+        return NextResponse.json({ok:true,
+          coasted:summarizeV93CoastedPlaytest(race)});
+      }catch(error){
+        return NextResponse.json({ok:false,error:error.message,
+          status:'unsupported_road_or_plan'},{status:422});
+      }
+    }
     if(input.mode==='integrated'){
       const {mode,...scenario}=input;
       const output=runV91IntegratedTestDrive(scenario,{full:true});

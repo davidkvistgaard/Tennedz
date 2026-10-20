@@ -79,6 +79,12 @@ export default function Playtest(){
   const [settings,setSettings]=useState(INITIAL);
   const [customRivals,setCustomRivals]=useState(0);
   const [integratedMode,setIntegratedMode]=useState(false);
+  const [coastedMode,setCoastedMode]=useState(false);
+  const [coasted,setCoasted]=useState(null);
+  const [coastedKm,setCoastedKm]=useState(1);
+  const [coastedRoadIndex,setCoastedRoadIndex]=useState(0);
+  const [coastedBandId,setCoastedBandId]=useState('');
+  const [coastedBandIndex,setCoastedBandIndex]=useState(0);
   const [finalePlans,setFinalePlans]=useState({});
   const [finaleFrontWork,setFinaleFrontWork]=useState({});
   const [namedAttack,setNamedAttack]=useState({teamId:'',riderId:''});
@@ -140,6 +146,14 @@ export default function Playtest(){
   const finaleTeams=['you',...Array.from({length:customRivals},
     (_,index)=>`rival-${index+1}`)];
   const lineTimes=integrated?.finale?.lineTimes??[];
+  const coastedFrame=coasted?.kilometreFrames[coastedKm-1];
+  const coastedRoad=coasted?.lastKmRoad[coastedRoadIndex];
+  const coastedBand=coasted?.bandReplays.find(band=>
+    band.id===coastedBandId);
+  const coastedBandFrame=coastedBand?.frames[coastedBandIndex];
+  const coastedOrder=[...(coasted?.lineTimes??[])].sort((a,b)=>
+    a.elapsedSecondsFromLastKmStart-b.elapsedSecondsFromLastKmStart||
+    a.riderId.localeCompare(b.riderId));
   const conditionalLine=[...lineTimes].sort((a,b)=>
     a.elapsedSecondsFromLastKmStart-b.elapsedSecondsFromLastKmStart||
     a.riderId.localeCompare(b.riderId));
@@ -196,9 +210,15 @@ export default function Playtest(){
           chase:'ignore',frontWork:'sit_in'}),attack:'selective',
         attackRiderId:row.riderId});
       const raceSettings={...settings,managerTactics,
-        ...(secondNamedAttack.teamId?{
+        ...(!coastedMode&&secondNamedAttack.teamId?{
           managerFinaleOrders:[...orders.values()]}:{})};
-      const payload=integratedMode?{mode:'integrated',settings:raceSettings,
+      const payload=integratedMode&&coastedMode?{
+        mode:'v93-coasted',settings:raceSettings,
+        plans:allTeams.map(teamId=>({teamId,
+          finisherId:finalePlans[teamId]?.finisherId??`${teamId}-7`,
+          leadOutRiderId:finalePlans[teamId]?.leadOutRiderId??null})),
+        ...(showPointPreview?{pointContext}:{})}:
+        integratedMode?{mode:'integrated',settings:raceSettings,
         finalePlans:finaleTeams.map(teamId=>({teamId,
           finisherId:finalePlans[teamId]?.finisherId??`${teamId}-7`,
           leadOutRiderId:finalePlans[teamId]?.leadOutRiderId??null})),
@@ -208,8 +228,9 @@ export default function Playtest(){
         raceSettings;
       const response=await api('/api/v91-playtest',{method:'POST',
         headers:{'Content-Type':'application/json'},body:JSON.stringify(payload),
-        signal:AbortSignal.timeout(secondNamedAttack.teamId?60_000:15_000)});
-      if(integratedMode){
+        signal:AbortSignal.timeout(coastedMode||secondNamedAttack.teamId?
+          60_000:15_000)});
+      if(integratedMode&&!coastedMode){
         const next=comparisonRun(raceSettings,response,
           showPointPreview?pointContext:null);
         setComparison(previousRun?.conditions===next.conditions?
@@ -218,7 +239,14 @@ export default function Playtest(){
       }else{
         setComparison(null);setPreviousRun(null);
       }
-      setResult(response.playtest);setIntegrated(response.integrated??null);
+      setCoasted(response.coasted??null);
+      setCoastedKm(1);setCoastedRoadIndex(0);
+      setCoastedBandId(response.coasted?.bandReplays.find(band=>
+        band.riderIds.includes(response.coasted.managerDecisions.find(row=>
+          row.teamId==='you')?.finisherId))?.id??'');
+      setCoastedBandIndex(0);
+      setResult(response.playtest??null);
+      setIntegrated(response.integrated??null);
       setAttackRoad(response.attackRoad??null);
       setAttackApproach(response.attackApproach??response.soloApproach??null);
       setApproachFrameIndex(0);
@@ -242,7 +270,7 @@ export default function Playtest(){
       setSelectedKm(1);
       setResultsTeam('all');
     }catch(cause){setComparison(null);setPreviousRun(null);
-      setResult(null);setIntegrated(null);setAttackRoad(null);
+      setResult(null);setIntegrated(null);setCoasted(null);setAttackRoad(null);
       setAttackApproach(null);setFinaleReplay(null);setBandLocalReplay(null);
       setError(cause.message||'The playtest could not run.');}
     finally{setBusy(false);}
@@ -257,6 +285,15 @@ export default function Playtest(){
         <label className="v91-mode"><input type="checkbox" checked={integratedMode}
           onChange={event=>setIntegratedMode(event.target.checked)}/>
           Continue to a conditional finish</label>
+        {integratedMode&&<label className="v91-mode"><input type="checkbox"
+          checked={coastedMode}
+          onChange={event=>setCoastedMode(event.target.checked)}/>
+          Try v93 exhausted-rider preview</label>}
+        {integratedMode&&coastedMode&&<p className="v91-warning">
+          This preview currently needs a front road group, a bunch and dropped
+          riders at the final-kilometre handoff. Other roads return a clear
+          refusal; results and points remain experimental.
+        </p>}
         {Object.entries(OPTIONS).map(([key,options])=><label key={key}>{LABELS[key]}
           <select value={settings[key]} onChange={event=>change(key,event.target.value)}>
             {options.map(([value,label])=><option value={value} key={value}>{label}</option>)}
@@ -347,7 +384,7 @@ export default function Playtest(){
             </div>;
           })}</div>
         </fieldset>}
-        {integratedMode&&<fieldset className="v91-profile">
+        {integratedMode&&!coastedMode&&<fieldset className="v91-profile">
           <legend>Named final-kilometre attack</legend>
           <p>Order one or two managers to attack at the start of the last kilometre. With two named attacks, other managers keep their chosen chase and effort while further attacks are held. The recorded road decides whether either move survives.</p>
           <small>Two named attacks use the concurrent conditional road. Unsupported orders return an explicit refusal.</small>
@@ -423,9 +460,98 @@ export default function Playtest(){
         <label>Scenario seed<input value={settings.seed} maxLength={80}
           onChange={event=>change('seed',event.target.value)} /></label>
         <button type="submit" disabled={busy}>{busy?'Running race…':
-          integratedMode?'Run full race preview':'Run race'}</button>
+          integratedMode&&coastedMode?'Run v93 race preview':
+            integratedMode?'Run full race preview':'Run race'}</button>
       </form>
       {error&&<p role="alert" className="v91-error">{error}</p>}
+      {coasted&&<section className="v91-results" aria-label="V93 coasted race preview">
+        <h2>V93 race preview · {coasted.settings.distanceKm} km {coasted.settings.terrain}</h2>
+        <p>{coasted.tuningVersion} · {coasted.settings.managerTactics.length} custom rival managers · {coasted.roadStatus}</p>
+        <p>Conditional individual line: {coasted.lineTimes.length} riders. Official results and points are withheld.</p>
+        <label>Recorded kilometre: {coastedKm}
+          <input type="range" min="1" max={coasted.kilometreFrames.length}
+            value={coastedKm} onChange={event=>setCoastedKm(Number(event.target.value))}/>
+        </label>
+        <div className="v91-metrics">
+          <div><strong>{coastedFrame?.terrain}</strong><span>Terrain</span></div>
+          <div><strong>{coastedFrame?.roadGroups.length??0}</strong><span>Groups ahead</span></div>
+          <div><strong>{coastedFrame?.droppedRiders.length??0}</strong><span>Dropped riders</span></div>
+          <div><strong>{coastedFrame?.coastedRiders??0}</strong><span>Riders slowed by exhaustion</span></div>
+        </div>
+        <p>Road groups: {coastedFrame?.roadGroups.map(group=>
+          `${group.id} (${group.riderIds.length} riders, ${group.gapSeconds.toFixed(1)} s ahead)`)
+          .join(' · ')||'none'}</p>
+        <p>Dropped: {coastedFrame?.droppedRiders.map(row=>
+          `${row.riderId} (+${row.deficitSeconds.toFixed(1)} s, ${row.energy.toFixed(1)} energy)`)
+          .join(' · ')||'none'}</p>
+        <div className="v91-riders">{coastedFrame?.ownRiders.map(row=><div key={row.riderId}>
+          <strong>{row.riderId}</strong><span>{row.roadGroup}</span>
+          <span>{row.energy.toFixed(1)} energy</span>
+        </div>)}</div>
+        <div className="v91-finish">
+          <h3>Recorded final-kilometre road</h3>
+          <label>Road boundary: {coastedRoadIndex+1} of {coasted.lastKmRoad.length}
+            <input type="range" min="0" max={coasted.lastKmRoad.length-1}
+              value={coastedRoadIndex}
+              onChange={event=>setCoastedRoadIndex(Number(event.target.value))}/>
+          </label>
+          <p>{(coastedRoad?.distanceM/1000).toFixed(3)} km · bunch passage {coastedRoad?.bunchPassageSecondsFromBunchMarker.toFixed(2)} s</p>
+          {coastedRoad?.groups.map(group=><p key={group.id}>
+            {group.id}: {group.riderIds.length} riders · {group.passageSecondsFromBunchMarker.toFixed(2)} s · {group.gapSeconds.toFixed(2)} s ahead
+          </p>)}
+          <p>Isolated passages: {coastedRoad?.droppedPassages.map(row=>
+            `${row.riderId} ${row.passageSecondsFromBunchMarker.toFixed(2)} s (+${row.deficitSeconds.toFixed(2)} s)`)
+            .join(' · ')}</p>
+        </div>
+        <div className="v91-finish">
+          <h3>Paid individual finale replay</h3>
+          <label>Road band<select value={coastedBandId}
+            onChange={event=>{setCoastedBandId(event.target.value);
+              setCoastedBandIndex(0);}}>
+            {coasted.bandReplays.map(band=><option key={band.id} value={band.id}>
+              {band.id} · {band.riderIds.length} riders</option>)}
+          </select></label>
+          <p>{coastedBand?.riderIds.length} riders · 500 m passage at {coastedBand?.passageAt500Seconds.toFixed(2)} s</p>
+          {coastedBand&&<label>Band interval: {coastedBandIndex+1} of {coastedBand.frames.length}
+            <input type="range" min="0" max={coastedBand.frames.length-1}
+              value={coastedBandIndex}
+              onChange={event=>setCoastedBandIndex(Number(event.target.value))}/>
+          </label>}
+          <p>{coastedBandFrame?.riders.map(row=>
+            `${row.riderId}: ${row.role}, ${row.energyAfter.toFixed(1)} energy, ${row.energySpent.toFixed(2)} spent`)
+            .join(' · ')}</p>
+          <p>Lead-out work: {coasted.leadOutWork.map(row=>
+            `${row.riderId} ${row.energySpent.toFixed(2)} energy`)
+            .join(' · ')||'none'}</p>
+        </div>
+        <div className="v91-finish">
+          <h3>Individual conditional results</h3>
+          <div className="v91-result-scroll"><table className="v91-result-table"
+            aria-label="V93 individual conditional results">
+            <thead><tr><th scope="col">Possible place</th><th scope="col">Rider</th>
+              <th scope="col">Road band</th><th scope="col">Time</th>
+              <th scope="col">Energy at line</th><th scope="col">Preview points</th>
+            </tr></thead>
+            <tbody>{coastedOrder.map((row,index)=>{
+              const place=coasted.provisionalLineOrder?.[index];
+              const points=coasted.pointPreview?.riders?.find(value=>
+                value.riderId===row.riderId)?.previewPoints;
+              return <tr key={row.riderId}><td>{place?
+                place.firstPossiblePlace===place.lastPossiblePlace?
+                  place.firstPossiblePlace:
+                  `${place.firstPossiblePlace}–${place.lastPossiblePlace}`:'—'}</td>
+                <th scope="row">{row.riderId}</th><td>{row.roadBandId}</td>
+                <td>{row.elapsedSecondsFromLastKmStart.toFixed(3)} s</td>
+                <td>{row.energyAtLine.toFixed(1)}</td>
+                <td>{points??'—'}</td></tr>;
+            })}</tbody>
+          </table></div>
+          {coasted.pointPreview?.status==='unavailable'&&<p>
+            Point illustration unavailable: {coasted.pointPreview.reason}
+          </p>}
+          <p>Official points: withheld · Awards saved: 0</p>
+        </div>
+      </section>}
       {result&&<section className="v91-results" aria-label="Playtest recording">
         <h2>Recorded race · {result.settings.distanceKm} km {result.settings.terrain}</h2>
         <p>{result.tuningVersion} · {result.settings.managerTactics.length} custom rival managers{integrated?' · Conditional finale':` · Your captain: provisional #${result.ownCaptain??'—'}`}</p>

@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {createV93CoastedPlaytest,validateV93CoastedPlaytest} from
+import {createV93CoastedPlaytest,validateV93CoastedPlaytest,
+  summarizeV93CoastedPlaytest} from
   '../../lib/engine/v2/playtest-v93-coasted.mjs';
 import {pointsForDivisionResult} from '../../lib/calendar/points.mjs';
 
@@ -25,11 +26,19 @@ test('ten exhausted routes yield replayable individual lines and policy points',
           team.id==='rival-2'?'rival-2-5':null}));
       const race=createV93CoastedPlaytest(input,{plans,
         pointContext:context});
+      const summary=summarizeV93CoastedPlaytest(race);
       assert.equal(validateV93CoastedPlaytest(input,{plans,
         pointContext:context},race),true);
       assert.deepEqual(race.recording,base.recording);
       assert.deepEqual(race.clock,base.clock);
       assert.equal(race.individualLine.conditionalCrossings.length,32);
+      assert.equal(summary.kilometreFrames.length,259);
+      assert.equal(summary.lastKmRoad.at(-1).distanceM,260000);
+      assert.equal(summary.lineTimes.length,32);
+      assert.ok(summary.bandReplays.some(band=>band.id==='peloton'));
+      assert.ok(summary.leadOutWork.some(row=>row.riderId==='you-6'));
+      assert.ok(summary.leadOutWork.some(row=>
+        row.riderId==='rival-2-5'));
       assert.equal(race.individualLine.provisionalLineOrder.length,32);
       assert.equal(base.pointPreview.riders.length,32);
       assert.equal(race.pointsStatus,'withheld');

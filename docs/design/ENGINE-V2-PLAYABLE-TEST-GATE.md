@@ -2226,6 +2226,21 @@ The default line receives read-only policy points only when every placing is
 unique. In the two-helper example, two front riders tie; the point preview
 is withheld rather than assigning either an arbitrary place. Cross-road
 helpers and altered replay are rejected. Official classification and awards
-remain withheld. This candidate is not yet exposed through the local browser
-workbench, and broader fields, lengths and attack/chase outcomes still need
+remain withheld. Broader fields, lengths and attack/chase outcomes still need
 end-to-end checks before the motor gate can be considered met.
+
+The v93 line is now available through a separately gated mode in the local
+fictional-race workbench. It reuses route, category, length, manager tactics,
+finisher and helper controls, then shows kilometre road groups and exhaustion,
+the last-kilometre passage clock, band-local paid rider replay and all
+individual conditional crossings. Both `PELOTONIA_V91_PLAYTEST_ENABLED` and
+`PELOTONIA_V93_COASTED_PLAYTEST_ENABLED` must be explicitly true; no production
+endpoint or live event flow calls this candidate. An isolated build and local
+browser login-fixture test selected the 260 km flat, four-team, fatigue-30
+road, customized two rival managers and paid one lead-out in the front group
+and another in the peloton. The API and UI showed 259 locked kilometres,
+the 260 km clock boundary, 32 individual results and withheld official points.
+Rerunning without helpers showed 32 read-only policy point rows where the
+order was unique. Two existing v91 browser flows still passed with the v93
+gate disabled. Other chosen settings may receive an explicit unsupported-road
+response until their v93 finale state is covered.
