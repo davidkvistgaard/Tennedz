@@ -2138,3 +2138,13 @@ the existing one-day policy. The pre-500 m and final-band overlap audits find
 no contact in these sources. Results and points remain explicitly provisional
 and awards withheld; this matrix does not solve a mixed four-team 260 km
 source with sustained zero reserve or contact in other road states.
+
+An isolated local build and Playwright run also exercised the 260 km flat,
+15-team, fatigue-30 case through the signed-in workbench and local API. The
+UI selected two custom managers, default attack tactics for the others, and
+both peloton lead-outs. The API returned 120 individual conditional crossings,
+paid work by both helpers and a road-local replay whose final position, time
+and energy matched every crossing. The browser rendered the helper work, all
+121 table rows including its header, the recorded road-band selector and
+official points withheld. This is one end-to-end case within the 20-case
+motor matrix; it does not make the conditional result official.

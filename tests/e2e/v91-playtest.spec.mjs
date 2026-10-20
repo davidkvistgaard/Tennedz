@@ -285,6 +285,86 @@ test('two managers can order paid competing lead-outs in a full race',
     expect(errors).toEqual([]);
   });
 
+test('two managers pay lead-outs across a long depleted race',
+  async({page})=>{
+    test.setTimeout(120_000);
+    const errors=[];page.on('pageerror',error=>errors.push(error.message));
+    await page.goto('/login');
+    await page.getByLabel('Email or username').fill('settings');
+    await page.getByLabel('Password',{exact:true}).fill('fixture-password');
+    await page.getByRole('button',{name:'Sign in',exact:true}).click();
+    await expect(page).toHaveURL(/\/team$/);
+    await page.goto('/team/v91-playtest');
+    await page.getByLabel('Distance').selectOption('260');
+    await page.getByLabel('Route profile').selectOption('flat');
+    await page.getByLabel('Field size').selectOption('15');
+    await page.getByLabel('Starting fatigue').selectOption('30');
+    await page.getByLabel('Default tactics for uncustomized managers')
+      .selectOption('attack');
+    await page.getByLabel('Managers with your own tactics').selectOption('2');
+    await page.getByLabel('Your attack order').selectOption('repeated');
+    await page.getByLabel('Your chase order').selectOption('ignore');
+    await page.getByLabel('Rival 1 attack').selectOption('none');
+    await page.getByLabel('Rival 1 chase').selectOption('selective');
+    await page.getByLabel('Rival 2 attack').selectOption('selective');
+    await page.getByLabel('Rival 2 chase').selectOption('ignore');
+    await page.getByLabel('Scenario seed').fill('cross-route-1');
+    await page.getByRole('checkbox',{
+      name:'Continue to a conditional finish'}).check();
+    await page.getByRole('checkbox',{
+      name:'Show read-only point illustration'}).check();
+    await page.getByLabel('you finisher').selectOption('you-4');
+    await page.getByLabel('you lead-out helper').selectOption('you-5');
+    await page.getByLabel('rival-2 finisher').selectOption('rival-2-4');
+    await page.getByLabel('rival-2 lead-out helper')
+      .selectOption('rival-2-6');
+    const responsePromise=page.waitForResponse(response=>
+      response.url().endsWith('/api/v91-playtest')&&
+      response.request().method()==='POST');
+    await page.getByRole('button',{name:'Run full race preview'}).click();
+    const response=await responsePromise;
+    expect(response.status()).toBe(200);
+    const body=await response.json();
+    expect(body.integrated.roadStatus).toBe('conditional_depleted_line');
+    expect(body.integrated.finale.lineTimes).toHaveLength(120);
+    expect(body.multibandReplay.status).toBe('band_local_paid_trace');
+    expect(body.integrated.pointsStatus).toBe('withheld');
+    const lineByRider=new Map(body.integrated.finale.lineTimes.map(row=>
+      [row.riderId,row]));
+    const replayFinish=body.multibandReplay.bands.flatMap(band=>
+      band.frames.at(-1).riders);
+    expect(replayFinish).toHaveLength(120);
+    for(const rider of replayFinish){
+      const line=lineByRider.get(rider.riderId);
+      expect(line).toBeDefined();
+      expect(rider.positionM).toBeCloseTo(260000,4);
+      expect(rider.elapsedToLineSeconds)
+        .toBeCloseTo(line.elapsedSecondsFromLastKmStart,4);
+      expect(rider.energyAfter).toBeCloseTo(line.energyAtLine,4);
+    }
+    for(const riderId of ['you-5','rival-2-6'])
+      expect(body.integrated.finale.leadOutWork.some(row=>
+        row.riderId===riderId&&row.energySpent>0)).toBe(true);
+    expect(body.integrated.provisionalPointPreview.riders).toHaveLength(120);
+    expect(body.integrated.provisionalPointPreview.awardRows).toEqual([]);
+    await expect(page.getByRole('heading',{name:'Paid group-local finale'}))
+      .toBeVisible();
+    await expect(page.getByText(/Paid lead-out work: [1-9]\d* recorded rider intervals/))
+      .toBeVisible();
+    await expect(page.getByText(/you-5: [\d.]+ energy spent/))
+      .toBeVisible();
+    await expect(page.getByText(/rival-2-6: [\d.]+ energy spent/))
+      .toBeVisible();
+    await expect(page.getByLabel('Finale road band').locator('option'))
+      .toHaveCount(body.multibandReplay.bands.length);
+    await expect(page.getByRole('table',{
+      name:'Individual conditional results'}).getByRole('row'))
+      .toHaveCount(121);
+    await expect(page.getByText('Official points: withheld · Awards saved: 0'))
+      .toBeVisible();
+    expect(errors).toEqual([]);
+  });
+
 test('two managers can finish separate roads after a 120 km selective chase',
   async({page})=>{
     const errors=[];page.on('pageerror',error=>errors.push(error.message));
