@@ -25,6 +25,7 @@ for(const route of [{distanceKm:40,terrain:'flat',fatigue:0},
       row.positionM===settings.distanceKm*1000&&
       Number.isFinite(row.elapsedToLineSeconds)));
   }
+
   assert.equal(output.summary.pointsStatus,'withheld');
   const changed=structuredClone(output);
   changed.individualLine.bandRunners[0].runner.frames[0]
@@ -37,3 +38,25 @@ for(const route of [{distanceKm:40,terrain:'flat',fatigue:0},
     /individual line/);
     });
   }
+
+for(const gender of ['M','F']){
+  test(`260 km ${gender}: the dropped rider keeps an independent paid line`,()=>{
+    const output=runV91IntegratedTestDrive({settings:{distanceKm:260,
+      terrain:'mountain',fatigue:30,gender,teamCount:4,
+      seed:'test-drive-acceptance-1',defaultRivalPlan:'chase',
+      attack:'none',chase:'all'}},{full:true});
+    const replay=summarizeV91PaidMultibandReplay(output);
+    assert.equal(replay.status,'band_local_paid_trace');
+    assert.deepEqual(replay.bands.map(band=>
+      [band.id,band.riderIds.length,band.frames.length]),
+    [['peloton',31,6],['isolated:rival-2-0',1,5]]);
+    assert.equal(replay.bands[1].frames.at(-1).riders[0].positionM,260000);
+    assert.equal(output.summary.finale.lineTimes.length,32);
+    assert.equal(output.summary.pointsStatus,'withheld');
+    const changed=structuredClone(output);
+    changed.individualLine.bandRunners[1].runner.frames[0]
+      .riders[0].energyAfter+=1;
+    assert.throws(()=>summarizeV91PaidMultibandReplay(changed),
+      /rider travel or energy/);
+  });
+}

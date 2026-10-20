@@ -1836,3 +1836,15 @@ showed all 32 individual times. All seven local v91 browser cases, lint and
 an isolated Next build passed. Separate band clocks remain separate;
 possible cross-band encounters and inferred wheels still withhold official
 places and points.
+
+The fixed 260 km, fatigue-30 chase case adds a different paid road shape:
+31 riders remain in the bunch while rival-2-0 is already isolated. The
+preview now lets the player inspect the bunch and that rider on their own
+recorded 500 m passage clocks through all 32 individual conditional lines.
+It checks the isolated rider's passage time, energy debit in each of five
+100 m intervals, final position and line energy against the paid record;
+the bunch retains its six paid intervals. Both M/F four-team sources and a
+local browser playthrough passed, with an altered recorded energy value
+correctly rejected. The rider is labelled isolated, never made into a
+fictional road group. The earlier half-kilometre contact remains unresolved,
+so the combined order and points remain conditional and withheld.

@@ -520,8 +520,8 @@ export default function Playtest(){
         </div>}
         {bandLocalReplay&&selectedBand&&<div className="v91-finish">
           <h3>Paid group-local finale</h3>
-          <p>Each group passes {bandLocalReplay.handoffDistanceM/1000} km on its own recorded clock. Select a group to follow its paid individual positions and energy to the line. These frames are not one simultaneous road view; the combined order remains conditional.</p>
-          <label>Finale road group<select value={bandId}
+          <p>Each road group or isolated rider passes {bandLocalReplay.handoffDistanceM/1000} km on its own recorded clock. Select a band to follow its paid individual positions and energy to the line. These frames are not one simultaneous road view; the combined order remains conditional.</p>
+          <label>Finale road band<select value={bandId}
             onChange={event=>{
               const next=bandLocalReplay.bands.find(band=>
                 band.id===event.target.value);
@@ -529,15 +529,17 @@ export default function Playtest(){
               setBandRiderId(next?.riderIds[0]??'');
             }}>
             {bandLocalReplay.bands.map(band=><option key={band.id}
-              value={band.id}>{band.id} · {band.riderIds.length} riders</option>)}
+              value={band.id}>{band.id.startsWith('isolated:')?
+                `Isolated rider ${band.riderIds[0]}`:
+                `${band.id} · ${band.riderIds.length} riders`}</option>)}
           </select></label>
-          <p>{selectedBand.riderIds.length} riders pass the 500 m boundary at {selectedBand.passageSecondsFromBunchMarker.toFixed(2)} s from the bunch last-kilometre marker.</p>
-          <label>Group interval: {bandFrameIndex+1} of {selectedBand.frames.length}
+          <p>{selectedBand.riderIds.length} {selectedBand.riderIds.length===1?'rider passes':'riders pass'} the 500 m boundary at {selectedBand.passageSecondsFromBunchMarker.toFixed(2)} s from the bunch last-kilometre marker.</p>
+          <label>Band interval: {bandFrameIndex+1} of {selectedBand.frames.length}
             <input type="range" min="0" max={selectedBand.frames.length-1}
               value={bandFrameIndex}
               onChange={event=>setBandFrameIndex(Number(event.target.value))}/>
           </label>
-          <p>{bandFrame?.elapsedSeconds.toFixed(2)} s from the bunch last-kilometre marker · {bandFrame?.riders.length} riders in this group</p>
+          <p>{bandFrame?.elapsedSeconds.toFixed(2)} s from the bunch last-kilometre marker · {bandFrame?.riders.length} {bandFrame?.riders.length===1?'rider':'riders'} in this band</p>
           <label>Inspect group rider<select value={bandRiderId}
             onChange={event=>setBandRiderId(event.target.value)}>
             {selectedBand.riderIds.map(riderId=><option key={riderId}
@@ -547,7 +549,8 @@ export default function Playtest(){
             bandRider.positionM).toFixed(1)} m to go · {bandRider.energyAfter.toFixed(1)} energy · {bandRider.energySpent.toFixed(2)} spent this interval · {bandRider.role} · {bandSourceRider?.energyAt500.toFixed(1)} energy at 500 m</p>}
           <p>{bandFrame?.riders.every(row=>
             Math.abs(row.positionM-bandLocalReplay.lineDistanceM)<1e-6)?
-              'Every rider in this group has crossed. The full conditional result is below.':
+              `${selectedBand.id.startsWith('isolated:')?
+                'This isolated rider has':'Every rider in this group has'} crossed. The full conditional result is below.`:
               'Other groups follow their own recorded passage clocks.'}</p>
         </div>}
         {integrated&&!finaleReplay&&!bandLocalReplay&&<p className="v91-warning">

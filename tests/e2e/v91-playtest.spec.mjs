@@ -350,18 +350,18 @@ test('a surviving group and bunch each replay paid riders to the conditional lin
       .toBeVisible();
     await expect(page.getByText(/not one simultaneous road view/))
       .toBeVisible();
-    await expect(page.getByLabel('Finale road group')).toHaveValue('road-2');
+    await expect(page.getByLabel('Finale road band')).toHaveValue('road-2');
     await expect(page.getByText(/30 riders pass the 500 m boundary/))
       .toBeVisible();
-    await page.getByRole('slider',{name:/Group interval/}).fill('5');
+    await page.getByRole('slider',{name:/Band interval/}).fill('5');
     await expect(page.getByText(/you-7: 0\.0 m to go/)).toBeVisible();
     await expect(page.getByText(
       'Every rider in this group has crossed. The full conditional result is below.'))
       .toBeVisible();
-    await page.getByLabel('Finale road group').selectOption('peloton');
+    await page.getByLabel('Finale road band').selectOption('peloton');
     await expect(page.getByText(/90 riders pass the 500 m boundary/))
       .toBeVisible();
-    await page.getByRole('slider',{name:/Group interval/}).fill('5');
+    await page.getByRole('slider',{name:/Band interval/}).fill('5');
     await expect(page.getByText(
       'Every rider in this group has crossed. The full conditional result is below.'))
       .toBeVisible();
@@ -394,23 +394,23 @@ test('a surviving group and bunch each replay paid riders to the conditional lin
       name:'Recorded race · 260 km mountain'})).toBeVisible();
     await expect(page.getByRole('heading',{name:'Paid group-local finale'}))
       .toBeVisible();
-    await expect(page.getByLabel('Finale road group').locator('option'))
+    await expect(page.getByLabel('Finale road band').locator('option'))
       .toHaveCount(3);
-    await page.getByLabel('Finale road group').selectOption('road-2');
+    await page.getByLabel('Finale road band').selectOption('road-2');
     await expect(page.getByText(/5 riders pass the 500 m boundary/))
       .toBeVisible();
-    await page.getByRole('slider',{name:/Group interval/}).fill('5');
+    await page.getByRole('slider',{name:/Band interval/}).fill('5');
     await expect(page.getByText(
       'Every rider in this group has crossed. The full conditional result is below.'))
       .toBeVisible();
-    await page.getByLabel('Finale road group').selectOption('road-3');
+    await page.getByLabel('Finale road band').selectOption('road-3');
     await expect(page.getByText(/3 riders pass the 500 m boundary/))
       .toBeVisible();
-    await page.getByRole('slider',{name:/Group interval/}).fill('5');
+    await page.getByRole('slider',{name:/Band interval/}).fill('5');
     await expect(page.getByText(
       'Every rider in this group has crossed. The full conditional result is below.'))
       .toBeVisible();
-    await page.getByLabel('Finale road group').selectOption('peloton');
+    await page.getByLabel('Finale road band').selectOption('peloton');
     await expect(page.getByText(/24 riders pass the 500 m boundary/))
       .toBeVisible();
     await expect(page.getByRole('table',{
@@ -419,6 +419,51 @@ test('a surviving group and bunch each replay paid riders to the conditional lin
     await expect(page.getByText(/Points: withheld/)).toBeVisible();
     expect(errors).toEqual([]);
   });
+
+test('a dropped rider keeps a separate paid mountain finale',async({page})=>{
+  const errors=[];page.on('pageerror',error=>errors.push(error.message));
+  await page.goto('/login');
+  await page.getByLabel('Email or username').fill('settings');
+  await page.getByLabel('Password',{exact:true}).fill('fixture-password');
+  await page.getByRole('button',{name:'Sign in',exact:true}).click();
+  await expect(page).toHaveURL(/\/team$/);
+  await page.goto('/team/v91-playtest');
+  await page.getByLabel('Distance').selectOption('260');
+  await page.getByLabel('Route profile').selectOption('mountain');
+  await page.getByLabel('Field size').selectOption('4');
+  await page.getByLabel('Starting fatigue').selectOption('30');
+  await page.getByLabel('Default tactics for uncustomized managers')
+    .selectOption('chase');
+  await page.getByLabel('Your attack order').selectOption('none');
+  await page.getByLabel('Your chase order').selectOption('all');
+  await page.getByLabel('Scenario seed').fill('test-drive-acceptance-1');
+  await page.getByRole('checkbox',{name:'Continue to a conditional finish'})
+    .check();
+  await page.getByRole('button',{name:'Run full race preview'}).click();
+  await expect(page.getByRole('heading',{name:'Paid group-local finale'}))
+    .toBeVisible();
+  await expect(page.getByLabel('Finale road band').locator('option'))
+    .toHaveCount(2);
+  await page.getByLabel('Finale road band').selectOption('peloton');
+  await expect(page.getByText(/31 riders pass the 500 m boundary/))
+    .toBeVisible();
+  await page.getByLabel('Finale road band')
+    .selectOption('isolated:rival-2-0');
+  await expect(page.getByText(/1 rider passes the 500 m boundary/))
+    .toBeVisible();
+  await expect(page.getByRole('slider',{name:/Band interval/}))
+    .toHaveAttribute('max','4');
+  await page.getByRole('slider',{name:/Band interval/}).fill('4');
+  await expect(page.getByText(/rival-2-0: 0\.0 m to go/)).toBeVisible();
+  await expect(page.getByText(
+    'This isolated rider has crossed. The full conditional result is below.'))
+    .toBeVisible();
+  await expect(page.getByRole('table',{
+    name:'Individual conditional results'}).getByRole('row'))
+    .toHaveCount(33);
+  await expect(page.getByText(/Points: withheld/)).toBeVisible();
+  expect(errors).toEqual([]);
+});
 
 test('two managers can attack and inspect their paid double catch',
   async({page})=>{
