@@ -798,23 +798,46 @@ export function runV91TestDrive(scenario,{full=false}={}){
       separated?validateFinaleSeparatedIndividualLine:
         validateFinaleMultibandIndividualLine;
     let individualLine;
-    try{
-      individualLine=record(trial.recording,trial.paidFinale,
-        {plans:request.plans??null});
-    }catch(error){
-      if(!['The nominated lead-out cannot work beside the finisher.',
-        'The singleton cannot pay for the nominated sprint.']
-        .includes(error.message))
-        throw error;
-      const base=summaryFor(trial,request,pointContext);
-      const summary={...base,status:'unsupported',
-        individualLineStatus:'unsupported_plan',reason:error.message};
-      return full?{summary,recording:trial}:summary;
+    let linePlans=appliedRequest.plans??null;
+    const unavailableAt500=[];
+    for(;;){
+      try{
+        individualLine=record(trial.recording,trial.paidFinale,
+          {plans:linePlans});
+        break;
+      }catch(error){
+        const {teamId,helperId,reason}=error.cause??{};
+        const plan=linePlans?.find(row=>row.teamId===teamId);
+        if(error.message===
+          'The nominated lead-out cannot work beside the finisher.'&&
+          plan?.leadOutRiderId===helperId&&
+          unavailableAt500.length<linePlans.length){
+          unavailableAt500.push({teamId,helperId,
+            finisherId:plan.finisherId,status:'unavailable_at_500m',
+            reason,helperEnergySpent:0});
+          linePlans=linePlans.map(row=>row.teamId===teamId?
+            {...row,leadOutRiderId:null}:row);
+          continue;
+        }
+        if(!['The nominated lead-out cannot work beside the finisher.',
+          'The singleton cannot pay for the nominated sprint.']
+          .includes(error.message))
+          throw error;
+        const base=summaryFor(trial,request,pointContext);
+        const summary={...base,status:'unsupported',
+          individualLineStatus:'unsupported_plan',reason:error.message};
+        return full?{summary,recording:trial}:summary;
+      }
     }
     validate(trial.recording,trial.paidFinale,
-      {plans:request.plans??null},individualLine);
-    const summary=summaryForIndividualGroupLine(trial,request,
+      {plans:linePlans},individualLine);
+    const base=summaryForIndividualGroupLine(trial,request,
       pointContext,individualLine);
+    const unavailable=[...unavailableLeadOuts,...unavailableAt500];
+    const summary=unavailable.length?{...base,
+      version:'v91-offline-test-drive-14',
+      appliedRequest:{...request,plans:linePlans},
+      unavailableLeadOuts:unavailable}:base;
     return full?{summary,recording:trial,individualLine}:summary;
   }
   if(!['paid_conditional_line','paid_group_bands','paid_separated_bands',

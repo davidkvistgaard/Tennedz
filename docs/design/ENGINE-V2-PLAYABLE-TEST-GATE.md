@@ -1848,3 +1848,18 @@ local browser playthrough passed, with an altered recorded energy value
 correctly rejected. The rider is labelled isolated, never made into a
 fictional road group. The earlier half-kilometre contact remains unresolved,
 so the combined order and points remain conditional and withheld.
+
+An optional helper can now fail at the paid 500 m decision without losing
+the otherwise payable individual finish. The integrated preview removes
+only that helper from the applied finale plan, records the rejected helper
+and reason with zero work charged, and continues the same locked road and
+finisher. Fixed M/F four-team 260 km mountain examples cover an exhausted
+front-group helper and a helper isolated from the intended finisher. Their
+32 individual crossings exactly match the corresponding no-helper runs;
+the road recording is unchanged, while official points remain withheld.
+The player can see the reason and the full conditional line in the local
+browser. The 24 focused group/replay tests, the affected depleted-line
+test, all eight local v91 browser cases, lint and an isolated build passed.
+An additional run of the whole test-drive unit file was interrupted after
+extended CPU work without a result; it is not counted as a passing check.
+Older recorded versions and the saved event path are unchanged.

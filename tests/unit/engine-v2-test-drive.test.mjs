@@ -974,11 +974,16 @@ test('paid dropped travel joins an opt-in individual bunch line without inventin
   assert.throws(()=>validateFinaleDepletedIndividualLine(
     base.recording.recording,base.recording.paidFinale,
     {plans:null},forgedContact),/does not replay/);
-  const refused=runV91TestDrive({settings,individualGroupLine:true,
+  const unavailable=runV91TestDrive({settings,individualGroupLine:true,
     finalePlans:[{teamId:'rival-2',finisherId:'rival-2-7',
       leadOutRiderId:'rival-2-0'}]});
-  assert.equal(refused.status,'unsupported');
-  assert.match(refused.reason,/cannot work beside/);
+  assert.equal(unavailable.roadStatus,'conditional_depleted_line');
+  assert.deepEqual(unavailable.unavailableLeadOuts,[{
+    teamId:'rival-2',helperId:'rival-2-0',finisherId:'rival-2-7',
+    status:'unavailable_at_500m',reason:'different_road_group',
+    helperEnergySpent:0}]);
+  assert.equal(unavailable.finale.lineTimes.length,32);
+  assert.deepEqual(unavailable.finale.leadOutWork,[]);
   const saturated=runV91TestDrive({settings:{...settings,
     attack:'selective',chase:'selective',defaultRivalPlan:'mixed'},
   individualGroupLine:true});

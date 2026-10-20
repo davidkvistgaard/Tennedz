@@ -462,6 +462,23 @@ test('a dropped rider keeps a separate paid mountain finale',async({page})=>{
     name:'Individual conditional results'}).getByRole('row'))
     .toHaveCount(33);
   await expect(page.getByText(/Points: withheld/)).toBeVisible();
+  await page.getByLabel('Default tactics for uncustomized managers')
+    .selectOption('attack');
+  await page.getByLabel('Your attack order').selectOption('repeated');
+  await page.getByLabel('Your chase order').selectOption('ignore');
+  await page.getByLabel('you lead-out helper').selectOption('you-6');
+  await page.getByRole('button',{name:'Run full race preview'}).click();
+  await expect(page.getByText(
+    'you-6 had too little energy at 500 m; no helper work was charged.'))
+    .toBeVisible();
+  await expect(page.getByText('Paid lead-out work: 0 recorded rider intervals.'))
+    .toBeVisible();
+  await expect(page.getByLabel('Finale road band').locator('option'))
+    .toHaveCount(3);
+  await expect(page.getByRole('table',{
+    name:'Individual conditional results'}).getByRole('row'))
+    .toHaveCount(33);
+  await expect(page.getByText(/Points: withheld/)).toBeVisible();
   expect(errors).toEqual([]);
 });
 

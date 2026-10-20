@@ -567,7 +567,13 @@ export default function Playtest(){
             `${ownCrossing.elapsedSecondsFromLastKmStart.toFixed(3)} s from the last kilometre, ${ownCrossing.energyAtLine.toFixed(1)} energy at the line`:
             'No paid individual crossing'}</p>
           {integrated.unavailableLeadOuts?.map(row=><p key={row.teamId}>
-            {row.helperId} could not assemble in the source lane; no helper work was charged.
+            {row.helperId} {row.status==='unavailable_at_500m'?
+              row.reason==='exhausted'?
+                'had too little energy at 500 m':
+                row.reason==='different_road_group'?
+                  'was in a different road group at 500 m':
+                  'could not work at 500 m':
+              'could not assemble in the source lane'}; no helper work was charged.
           </p>)}
           <p>Paid lead-out work: {integrated.finale?.leadOutWork?.length??0} recorded rider intervals.</p>
           {integrated.finale?.leadOutWork?.length>0&&<ul>{Object.entries(

@@ -60,3 +60,33 @@ for(const gender of ['M','F']){
       /rider travel or energy/);
   });
 }
+
+for(const gender of ['M','F'])for(const mode of ['attack','chase']){
+  test(`260 km ${gender} ${mode}: an unavailable helper leaves the paid individual road intact`,()=>{
+    const settings={distanceKm:260,terrain:'mountain',fatigue:30,
+      gender,teamCount:4,seed:'test-drive-acceptance-1',
+      defaultRivalPlan:mode,attack:mode==='attack'?'repeated':'none',
+      chase:mode==='attack'?'ignore':'all'};
+    const teamId=mode==='attack'?'you':'rival-2';
+    const finisherId=mode==='attack'?'you-7':'rival-2-7';
+    const helperId=mode==='attack'?'you-6':'rival-2-0';
+    const base=runV91IntegratedTestDrive({settings,finalePlans:[{
+      teamId,finisherId,leadOutRiderId:null}]},{full:true});
+    const unavailable=runV91IntegratedTestDrive({settings,finalePlans:[{
+      teamId,finisherId,leadOutRiderId:helperId}]},{full:true});
+    assert.deepEqual(unavailable.recording.recording,
+      base.recording.recording);
+    assert.deepEqual(unavailable.summary.finale.lineTimes,
+      base.summary.finale.lineTimes);
+    assert.deepEqual(unavailable.summary.finale.leadOutWork,[]);
+    assert.deepEqual(unavailable.summary.unavailableLeadOuts,[{
+      teamId,helperId,finisherId,status:'unavailable_at_500m',
+      reason:mode==='attack'?'exhausted':'different_road_group',
+      helperEnergySpent:0}]);
+    assert.equal(unavailable.summary.appliedRequest.plans.find(row=>
+      row.teamId===teamId).leadOutRiderId,null);
+    assert.equal(unavailable.summary.pointsStatus,'withheld');
+    assert.equal(summarizeV91PaidMultibandReplay(unavailable).bands.length,
+      mode==='attack'?3:2);
+  });
+}
