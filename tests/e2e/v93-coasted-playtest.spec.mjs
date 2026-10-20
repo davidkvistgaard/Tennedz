@@ -152,3 +152,35 @@ test('short v93 road pays one front group into the individual line',
       name:'V93 individual conditional results'}).getByRole('row'))
       .toHaveCount(33);
   });
+
+test('default short v93 road pays the full bunch without a front group',
+  async({page})=>{
+    await page.goto('/login');
+    await page.getByLabel('Email or username').fill('settings');
+    await page.getByLabel('Password',{exact:true}).fill('fixture-password');
+    await page.getByRole('button',{name:'Sign in',exact:true}).click();
+    await expect(page).toHaveURL(/\/team$/);
+    await page.goto('/team/v91-playtest');
+    await page.getByRole('checkbox',{
+      name:'Continue to a conditional finish'}).check();
+    await page.getByRole('checkbox',{
+      name:'Try v93 road-to-line preview'}).check();
+    await page.getByLabel('Distance').selectOption('40');
+    await page.getByLabel('Scenario seed').fill('playtest-1');
+    const responsePromise=page.waitForResponse(response=>
+      response.url().endsWith('/api/v91-playtest')&&
+      response.request().method()==='POST');
+    await page.getByRole('button',{name:'Run v93 race preview'}).click();
+    const response=await responsePromise;
+    expect(response.status()).toBe(200);
+    const {coasted}=await response.json();
+    expect(coasted.version).toBe('v93-bunch-only-playtest-1');
+    expect(coasted.kilometreFrames.at(-1).roadGroups).toEqual([]);
+    expect(coasted.lastKmRoad.at(-1).distanceM).toBe(40000);
+    expect(coasted.bandReplays).toHaveLength(1);
+    expect(coasted.bandReplays[0].id).toBe('peloton');
+    expect(coasted.lineTimes).toHaveLength(32);
+    await expect(page.getByRole('table',{
+      name:'V93 individual conditional results'}).getByRole('row'))
+      .toHaveCount(33);
+  });

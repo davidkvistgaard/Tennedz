@@ -2274,11 +2274,33 @@ read-only point policy. Direct runs cover 60 combinations of 40/120 km,
 four-team cases at fatigue 15/30 resolve through either this one-group or
 the separated-group branch. The first 40 km flat case pays simultaneous
 lead-outs in the front group and bunch, and both nominated finishers gain
-time compared with the same road without helpers. A bunch-only final-
-kilometre handoff is still unsupported, including the ordinary mixed-plan
+time compared with the same road without helpers. At this point, a bunch-only
+final-kilometre handoff remained unsupported, including the ordinary mixed-plan
 short and medium roads tested here. The new branch remains conditional and
 non-awarding.
 The 20-case four-team short/medium replay matrix, prior v93 coasted and
 separated playtest suites, 12 older separated-clock/line/point checks, lint,
 an isolated build, and three local browser fixture flows pass. The full unit
 suite was not repeated for this branch after its earlier long run was stopped.
+
+A separately versioned v93 bunch-only branch now pays the remaining common
+short/medium handoff: no front group, no dropped rider, the entire field in
+the peloton. Seven recorded short-step passages carry its energy to 500 m
+and the line; an inferred but fixed bunch position source feeds one paid
+individual band. The existing nominated finisher and optional helper rules
+then produce crossing times, energy, and a read-only policy projection when
+the order is unique. The branch records no front group or cross-band audit
+where none exists, and it still saves no classification or award rows.
+Direct full-race checks cover 180 fresh 40/120 km combinations across
+4/15/20-team fields, five terrains, both categories, and mixed/chase/neutral
+rival defaults. Forty additional four-team mixed-plan cases at fatigue 15/30
+also finish through this branch. Twenty default four-team cases replay their
+clock, individual results and point illustration; a two-manager bunch test
+pays both lead-outs on the identical locked source road. A changed passage
+and an older motor recording are rejected. The older separated/depleted
+clock, line and point tests remain green.
+The 20-case replay matrix, 12 older separated/depleted checks, lint, an
+isolated build, and four local browser fixture flows pass. The full unit
+suite was not repeated after its earlier long run was stopped. Roads with
+no front group but one or more dropped riders still return an explicit
+refusal; all v93 points remain illustrative and non-awarding.
