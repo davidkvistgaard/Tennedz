@@ -1977,3 +1977,21 @@ local browser. The new four-run browser case and the other eleven v91 cases
 pass on separate fresh fixture servers; all twelve together exceed the
 fixture's race-per-minute limit and return a deliberate rate-limit response.
 Full lint passes. No production race or award path changed.
+
+A cross-product gate now runs the full recorded race for each of the five
+selectable terrains at 40, 120 and 260 km, in M/F fields with both attack and
+chase defaults (60 cases). Each race locks the requested distance and terrain,
+records a crossing for every rider, and matches each rider's final replay time
+and energy to that crossing. The read-only point illustration matches the
+existing one-day policy; official results and awards remain withheld. A
+separate 30-race long-road gate tests mixed/selective plans at 260 km across
+all five terrains, M/F and 4/15/20-team fields. The 15- and 20-team fields
+record paid individual lines; the ten four-team cases consistently record
+unmet energy demand and withhold line, replay and point illustration. These
+are observations for the locked `cross-route-1` fixture, not a rule that every
+four-team or mountain race fails. They clarify the earlier 50-seed audit's
+two mountain exceptions: in that audit the tactic rotation sampled this
+long, small-field mixed combination only twice. The current energy debt is
+thus a long-road, small-field limit in this fixture, not an isolated mountain
+profile bug. No physical crossing or official classification is invented to
+hide it.
