@@ -2124,3 +2124,17 @@ paid replay, and rendered both helpers, both road bands and the conditional
 result with official points withheld. Rival 1's attack must be set to `none`
 for this exact road; leaving its UI default at `selective` creates an extra
 front group and correctly marks the nominated bunch helper unavailable.
+
+The long-race two-manager acceptance matrix now covers 20 complete 260 km
+runs: every selectable terrain, both categories, and 15- and 20-team fields
+at starting fatigue 30. On this locked road, the previously nominated
+front-group and rival-1 helpers cannot work at 500 m; their group or energy
+is unsuitable. Instead, `you-5` leads out `you-4` and `rival-2-6` leads out
+`rival-2-4` in the peloton while two front groups and an isolated rider remain
+separate. Both helpers pay for their actual recorded distance, both finishers
+cross earlier than on the same road without those nominations, all 120 or
+160 rider energies and crossing times match replay, and preview points match
+the existing one-day policy. The pre-500 m and final-band overlap audits find
+no contact in these sources. Results and points remain explicitly provisional
+and awards withheld; this matrix does not solve a mixed four-team 260 km
+source with sustained zero reserve or contact in other road states.
