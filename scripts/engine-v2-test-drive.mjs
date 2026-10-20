@@ -555,13 +555,20 @@ function validateDriveScenario(scenario){
   return pointContext;
 }
 
-export function runV91TestDrive(scenario,{full=false}={}){
+export function runV91TestDrive(scenario,{full=false,
+  retainRefusalSource=false}={}){
   const pointContext=validateDriveScenario(scenario);
   if(Array.isArray(scenario.settings?.managerFinaleOrders)&&
     scenario.settings.managerFinaleOrders.filter(row=>
       row?.attackRiderId!==undefined).length>=2)
     return runV91ConcurrentTestDrive(scenario,{full});
   const request=requestFor(scenario);
+  const refuse=error=>{
+    const summary=unsupportedRefusal(error,scenario,request,pointContext);
+    if(!full||!retainRefusalSource)return summary;
+    const recording=error.cause?.playtestSource;
+    return recording?{summary,recording}:{summary};
+  };
   if(scenario.namedDroppedRoad===true&&request.attackTeamId===undefined)
     throw new Error('Choose one named attack for the dropped-road trial.');
   let trial;
@@ -586,7 +593,7 @@ export function runV91TestDrive(scenario,{full=false}={}){
       try{trial=createV91GroupFallbackFromLockedRace(source);}
       catch(fallbackError){
         if(!expectedRefusal(fallbackError.message))throw fallbackError;
-        return unsupportedRefusal(fallbackError,scenario,request,pointContext);
+        return refuse(fallbackError);
       }
       recoveredGroupPlan=true;
     }else if(namedSource&&namedSource.roadGroups.length===0&&
@@ -608,8 +615,8 @@ export function runV91TestDrive(scenario,{full=false}={}){
             roadError.message)&&
           !/^A dropped finale rider needs recorded bunch contact:/.test(
             roadError.message))throw roadError;
-        return unsupportedRefusal(new Error(roadError.message,{
-          cause:{playtestSource:source}}),scenario,request,pointContext);
+        return refuse(new Error(roadError.message,{
+          cause:{playtestSource:source}}));
       }
       (multipleDropped?
         validateFinaleNamedAttackMultipleDroppedRoadFromTour:
@@ -647,17 +654,17 @@ export function runV91TestDrive(scenario,{full=false}={}){
         }catch(sprintRoadError){
           if(!/^A (?:named solo|finale group|merged finale|sheltered) /.test(
             sprintRoadError.message))throw sprintRoadError;
-          return unsupportedRefusal(new Error(sprintRoadError.message,{
-            cause:{playtestSource:source}}),scenario,request,pointContext);
+          return refuse(new Error(sprintRoadError.message,{
+            cause:{playtestSource:source}}));
         }
       }
       const sprintRoad=paidRoad.version===
         FINALE_NAMED_ATTACK_MULTIPLE_DROPPED_SPRINT_ROAD_VERSION;
       if(paidLineRequested&&nominations.some(plan=>
         isolatedIds.has(plan.finisherId)))
-        return unsupportedRefusal(new Error(
+        return refuse(new Error(
           'An isolated rider cannot be a paid finisher.',{
-            cause:{playtestSource:source}}),scenario,request,pointContext);
+            cause:{playtestSource:source}}));
       let individualLine=null;
       if(at500?.active.roadGroups.length===0&&
         caughtBefore500){
@@ -677,8 +684,8 @@ export function runV91TestDrive(scenario,{full=false}={}){
             !(multipleDropped&&
               /^A positioned rider cannot pay to finish:/.test(
                 lineError.message)))throw lineError;
-          return unsupportedRefusal(new Error(lineError.message,{
-            cause:{playtestSource:source}}),scenario,request,pointContext);
+          return refuse(new Error(lineError.message,{
+            cause:{playtestSource:source}}));
         }
       }else if(at500?.active.roadGroups.length===1&&
         paidRoad.frames.at(-1).active.roadGroups.length===1){
@@ -700,8 +707,8 @@ export function runV91TestDrive(scenario,{full=false}={}){
             'The nominated lead-out cannot work beside the finisher.',
             'A nominated solo sprint needs separate paid work.'
           ].includes(lineError.message))throw lineError;
-          return unsupportedRefusal(new Error(lineError.message,{
-            cause:{playtestSource:source}}),scenario,request,pointContext);
+          return refuse(new Error(lineError.message,{
+            cause:{playtestSource:source}}));
         }
       }else if(scenario.lateCatchLine===true&&
         at500?.active.roadGroups.length===1&&
@@ -720,9 +727,9 @@ export function runV91TestDrive(scenario,{full=false}={}){
         if(!sprintRoad&&catchDistanceM>finishM-300&&
           nominations.some(plan=>
           plan.finisherId===soloId))
-          return unsupportedRefusal(new Error(
+          return refuse(new Error(
             'A nominated solo sprint before contact needs paid road work.',{
-              cause:{playtestSource:source}}),scenario,request,pointContext);
+              cause:{playtestSource:source}}));
         try{
           individualLine=(sprintRoad?
             recordFinaleNamedMultipleDroppedSprintLateCatchLine:
@@ -744,8 +751,8 @@ export function runV91TestDrive(scenario,{full=false}={}){
             !/^A dropped finale rider (?:cannot pay for travel|needs recorded bunch contact):/.test(lineError.message)&&
             !/^A rider cannot pay for actual finale travel:/.test(
               lineError.message))throw lineError;
-          return unsupportedRefusal(new Error(lineError.message,{
-            cause:{playtestSource:source}}),scenario,request,pointContext);
+          return refuse(new Error(lineError.message,{
+            cause:{playtestSource:source}}));
         }
       }
       const summary=summaryForNamedDroppedRoad(source,request,
@@ -753,7 +760,7 @@ export function runV91TestDrive(scenario,{full=false}={}){
       return full?{summary,recording:source,paidRoad,
         ...(individualLine?{individualLine}:{})}:summary;
     }else{
-      return unsupportedRefusal(error,scenario,request,pointContext);
+      return refuse(error);
     }
   }
   validateV91ConditionalRaceFinal(scenario.settings,recoveredGroupPlan?
@@ -883,12 +890,13 @@ export function runV91IntegratedTestDrive(scenario,{full=false}={}){
   const namedAttack=scenario?.attack!==undefined;
   const selected={...scenario,individualGroupLine:true,
     ...(namedAttack?{namedDroppedRoad:true,lateCatchLine:true}:{})};
-  const output=runV91TestDrive(selected,{full});
+  const output=runV91TestDrive(selected,{full,
+    retainRefusalSource:full});
   const decorate=summary=>({
     ...summary,integrationVersion:'v91-integrated-test-drive-1',
     sourceDriveVersion:summary.version});
-  // A refused road returns a summary directly, even for the full offline
-  // drive. Keep the integrated entry's full response shape in that case.
+  // Some refusals cannot carry a source. Keep the integrated full response
+  // shape while retaining the locked source whenever the drive has one.
   if(!full)return decorate(output);
   if(output.summary)return {...output,summary:decorate(output.summary)};
   return {summary:decorate(output)};

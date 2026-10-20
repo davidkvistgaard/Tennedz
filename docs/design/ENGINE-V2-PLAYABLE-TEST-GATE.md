@@ -2023,3 +2023,12 @@ integration tests, full lint, an isolated build and a local browser playthrough
 pass. The broader test-drive file was started but interrupted because its
 expensive legacy scenarios did not finish within the turn; the eight affected
 integration/refusal cases completed successfully in a separate run.
+
+The integrated full drive now retains the original locked kilometre source
+when an expected refusal carries one. In the cooperative-road fixture this
+lets the browser reuse the same 260 recorded frames for its handoff display
+instead of starting a second simulation after the refusal. The older direct
+test-drive refusal remains a plain summary by default; only the integrated
+full caller requests the source. A focused test checks both shapes and the
+source frame count. Refusals without a recoverable source remain explicitly
+unsupported.

@@ -70,6 +70,8 @@ test('an unsupported cooperative road stays visible in the full-race preview',
     await page.getByRole('button',{name:'Run full race preview'}).click();
     await expect(page.getByRole('heading',{name:'Conditional finish'}))
       .toBeVisible();
+    await expect(page.getByRole('slider',{name:/Race kilometre/}))
+      .toHaveAttribute('max','259');
     await expect(page.getByRole('status')).toContainText(
       'The cooperative group has an unresolved last-kilometre road action.');
     await expect(page.getByText(/Your nominated finisher:.*No paid individual crossing/))

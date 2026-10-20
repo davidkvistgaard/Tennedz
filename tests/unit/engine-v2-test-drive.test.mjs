@@ -824,6 +824,10 @@ test('integrated full drive wraps an unsupported cooperative road without crashi
     {full:true});
   assert.equal(source.status,'unsupported');
   assert.match(source.reason,/unresolved last-kilometre road action/);
+  const retained=runV91TestDrive({...scenario,individualGroupLine:true},
+    {full:true,retainRefusalSource:true});
+  assert.deepEqual(retained.summary,source);
+  assert.equal(retained.recording.recording.frames.length,260);
   const full=runV91IntegratedTestDrive(scenario,{full:true});
   const summary=runV91IntegratedTestDrive(scenario);
   assert.deepEqual(full.summary,summary);
@@ -833,7 +837,9 @@ test('integrated full drive wraps an unsupported cooperative road without crashi
   assert.equal(full.summary.pointsStatus,'withheld');
   assert.equal(full.summary.canCommitAwards,false);
   assert.equal(full.summary.provisionalPointPreview.status,'unavailable');
-  assert.equal(full.recording,undefined);
+  assert.equal(full.recording.recording.frames.length,260);
+  assert.equal(full.recording.recording.route.distanceKm,260);
+  assert.deepEqual(full.summary.lastKmSource,source.lastKmSource);
 });
 
 test('offline test drive rejects invalid finale riders before a group-road refusal',()=>{
