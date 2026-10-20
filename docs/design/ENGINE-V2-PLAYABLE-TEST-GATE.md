@@ -2148,3 +2148,7 @@ and energy matched every crossing. The browser rendered the helper work, all
 121 table rows including its header, the recorded road-band selector and
 official points withheld. This is one end-to-end case within the 20-case
 motor matrix; it does not make the conditional result official.
+Changing only rival 2's attack from selective to repeated in the same browser
+run moves its nominated helper to a different road group at 500 m. The API and
+UI then report that helper unavailable and charge it no work, while the other
+team's helper still pays and all 120 conditional crossings remain replayable.

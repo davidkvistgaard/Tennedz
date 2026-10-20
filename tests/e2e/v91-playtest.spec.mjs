@@ -362,6 +362,29 @@ test('two managers pay lead-outs across a long depleted race',
       .toHaveCount(121);
     await expect(page.getByText('Official points: withheld · Awards saved: 0'))
       .toBeVisible();
+    await page.getByLabel('Rival 2 attack').selectOption('repeated');
+    const changedResponsePromise=page.waitForResponse(next=>
+      next.url().endsWith('/api/v91-playtest')&&
+      next.request().method()==='POST');
+    await page.getByRole('button',{name:'Run full race preview'}).click();
+    const changedResponse=await changedResponsePromise;
+    expect(changedResponse.status()).toBe(200);
+    const changed=(await changedResponse.json()).integrated;
+    expect(changed.roadStatus).toBe('conditional_depleted_line');
+    expect(changed.finale.lineTimes).toHaveLength(120);
+    expect(changed.unavailableLeadOuts).toContainEqual(expect.objectContaining({
+      teamId:'rival-2',helperId:'rival-2-6',
+      reason:'different_road_group',helperEnergySpent:0}));
+    expect(changed.finale.leadOutWork.some(row=>
+      row.riderId==='rival-2-6')).toBe(false);
+    expect(changed.finale.leadOutWork.some(row=>
+      row.riderId==='you-5'&&row.energySpent>0)).toBe(true);
+    expect(changed.pointsStatus).toBe('withheld');
+    await expect(page.getByText('rival-2-6 was in a different road group at 500 m; no helper work was charged.'))
+      .toBeVisible();
+    await expect(page.getByRole('table',{
+      name:'Individual conditional results'}).getByRole('row'))
+      .toHaveCount(121);
     expect(errors).toEqual([]);
   });
 
