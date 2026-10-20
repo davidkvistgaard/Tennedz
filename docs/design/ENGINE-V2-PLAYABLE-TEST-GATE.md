@@ -1915,3 +1915,14 @@ run the nominated finisher can be scrubbed to the line, all 32 conditional
 crossings appear, and point values remain read-only. This closes the
 route-selector-to-finish check for the five offered route profiles. All nine
 local v91 browser cases and full lint pass together on the isolated build.
+
+The wider offline road audit now includes the exposed and custom profiles at
+4, 15 and 20 teams in both categories, with mixed, attack and chase defaults
+plus independent manager choices. With a fixed read-only point context, 108
+of 110 fictional full races record an individual line: 56 paid single-group,
+30 conditional multiband and 22 conditional depleted lines. The only two
+unpaid cases are the previously identified four-team mountain mixed plans in
+M/F; both still withhold lines and point illustrations. The audit now fails
+if any other scenario loses its paid line rather than silently counting a new
+unsupported road. Its point illustration continues to match the existing
+one-day policy for every recorded individual place, with no awards saved.

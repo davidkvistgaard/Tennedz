@@ -7,7 +7,10 @@ import {runV91TestDrive} from './engine-v2-test-drive.mjs';
 
 const routes=[
   {distanceKm:40,terrain:'flat',fatigue:0},
+  {distanceKm:40,terrain:'exposed',fatigue:15},
   {distanceKm:120,terrain:'rolling',fatigue:15},
+  {distanceKm:120,terrain:'custom',fatigue:15,
+    profileHeightsM:[100,350,150,500,180,100]},
   {distanceKm:260,terrain:'mountain',fatigue:30}];
 const modes={
   mixed:{attack:'selective',chase:'selective'},
@@ -55,6 +58,9 @@ const rows=scenarios.map(({kind,mode,settings})=>{
   const expected=settings.teamCount*8;
   assert.equal(output.pointsStatus,'withheld');
   assert.equal(output.canCommitAwards,false);
+  assert.ok(['paid_conditional_line','conditional_multiband_line',
+    'conditional_depleted_line','recorded_depleted_bands'].includes(status),
+  `Unexpected unpaid road: ${settings.terrain} ${settings.gender} ${settings.teamCount} ${mode}: ${status}`);
   if(status==='paid_conditional_line'||
     status==='conditional_multiband_line'||
     status==='conditional_depleted_line'){
@@ -68,7 +74,11 @@ const rows=scenarios.map(({kind,mode,settings})=>{
         Number.isFinite(row.elapsedSecondsFromLastKmStart)&&
         Number.isFinite(row.energyAtLine)),true);
     }
-  }else if(status!=='unsupported'){
+  }else{
+    assert.equal(settings.terrain,'mountain');
+    assert.equal(settings.teamCount,4);
+    assert.equal(mode,'mixed');
+    assert.equal(output.finale.lineTimes,undefined);
     assert.equal(output.finale.finalRiderEnergy.length,expected);
     if(status!=='paid_group_bands')
       assert.equal(output.finale.bands.at(-1).lastPossiblePlace,expected);
@@ -132,6 +142,6 @@ const rows=scenarios.map(({kind,mode,settings})=>{
 const counts=Object.fromEntries([...new Set(rows.map(row=>row.status))]
   .sort().map(status=>[status,rows.filter(row=>row.status===status).length]));
 console.log(JSON.stringify({version:pointPreview?
-  'v2-playable-road-audit-point-preview-7':individualLines?
-    'v2-playable-road-audit-individual-6':'v2-playable-road-audit-1',
+  'v2-playable-road-audit-point-preview-8':individualLines?
+    'v2-playable-road-audit-individual-7':'v2-playable-road-audit-2',
   seed:'test-drive-acceptance-1',scenarios:rows.length,counts,rows},null,2));
