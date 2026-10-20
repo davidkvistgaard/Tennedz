@@ -94,6 +94,10 @@ test('two managers play one selected race from orders to road, line and replay',
       'finisher rival-14-3 · lead-out rival-14-5');
     await expect(locked).toContainText('At 115 km: effort: conserve');
     const firstFrame=coasted.kilometreFrames[0];
+    const changes=page.getByLabel('Recorded road changes');
+    await changes.locator('summary').click();
+    await expect(changes).toContainText(
+      'No road-group or isolation changes before the final kilometre.');
     const road=page.getByRole('slider',{name:/Recorded kilometre/});
     await road.fill('1');
     await expect(page.getByText(`Road groups: ${firstFrame.roadGroups.map(
@@ -780,6 +784,25 @@ test('attacking v93 road keeps separated front groups in the browser replay',
     expect(coasted.lastKmRoad.at(-1).droppedPassages).toEqual([]);
     expect(coasted.lineTimes).toHaveLength(32);
     expect(coasted.pointsStatus).toBe('withheld');
+    const changeIndex=coasted.kilometreFrames.findIndex((frame,index)=>
+      index>0&&frame.roadGroups.length!==
+        coasted.kilometreFrames[index-1].roadGroups.length);
+    expect(changeIndex).toBeGreaterThan(0);
+    const changedFrame=coasted.kilometreFrames[changeIndex];
+    const changes=page.getByLabel('Recorded road changes');
+    await changes.locator('summary').click();
+    const jump=changes.getByRole('button',
+      {name:`Jump to recorded km ${changedFrame.km}`});
+    await expect(jump).toBeVisible();
+    await jump.click();
+    await expect(jump).toHaveAttribute('aria-pressed','true');
+    await expect(page.getByRole('slider',
+      {name:/Recorded kilometre/})).toHaveValue(String(changeIndex+1));
+    await expect(page.getByText(`Road groups: ${
+      changedFrame.roadGroups.map(group=>
+        `${group.id} (${group.riderIds.length} riders, ${
+          group.gapSeconds.toFixed(1)} s ahead)`).join(' · ')}`))
+      .toBeVisible();
     await expect(page.getByRole('table',{
       name:'V93 individual conditional results'}).getByRole('row'))
       .toHaveCount(33);

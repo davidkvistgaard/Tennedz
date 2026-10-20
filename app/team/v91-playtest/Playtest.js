@@ -50,6 +50,19 @@ function phaseOrderSummary(phases){
       .map(key=>`${key} ${phase[key]}`).join(', ')}`).join('; '):'none';
 }
 
+function roadComposition(frame){
+  const groups=frame.roadGroups.map(group=>
+    `${group.id}:${[...group.riderIds].sort().join(',')}`).sort();
+  const isolated=frame.droppedRiders.map(row=>row.riderId).sort();
+  return JSON.stringify([groups,isolated]);
+}
+
+function recordedRoadChanges(frames){
+  return frames.flatMap((frame,index)=>index>0&&
+    roadComposition(frame)!==roadComposition(frames[index-1])?
+    [{index,frame}]:[]);
+}
+
 function comparisonConditions(settings){
   const {distanceKm,terrain,teamCount,gender,fatigue,seed,
     profileHeightsM}=settings;
@@ -288,6 +301,8 @@ export default function Playtest(){
     !settings.managerTacticOverrides.some(row=>row.teamId===teamId));
   const lineTimes=integrated?.finale?.lineTimes??[];
   const coastedFrame=coasted?.kilometreFrames[coastedKm-1];
+  const coastedRoadChanges=recordedRoadChanges(
+    coasted?.kilometreFrames??[]);
   const coastedRoad=coasted?.lastKmRoad[coastedRoadIndex];
   const coastedBand=coasted?.bandReplays.find(band=>
     band.id===coastedBandId);
@@ -727,6 +742,19 @@ export default function Playtest(){
           <p>Lead-out helper: {coastedOwnDecision.leadOutRiderId??'none'} ·
             {' '}{coastedOwnHelperWork.toFixed(2)} energy of recorded work.</p>
         </section>}
+        <details aria-label="Recorded road changes" className="v91-road-changes">
+          <summary>Recorded road changes ({coastedRoadChanges.length})</summary>
+          <p>Jump to a kilometre where a road group or the isolated riders changed.</p>
+          {coastedRoadChanges.length?<div className="v91-road-jumps">
+            {coastedRoadChanges.map(({index,frame})=><button type="button"
+              key={frame.km} onClick={()=>setCoastedKm(index+1)}
+              aria-label={`Jump to recorded km ${frame.km}`}
+              aria-pressed={coastedKm===index+1}>
+              Km {frame.km} · {frame.roadGroups.length} ahead ·
+              {' '}{frame.droppedRiders.length} isolated
+            </button>)}
+          </div>:<p>No road-group or isolation changes before the final kilometre.</p>}
+        </details>
         <label>Recorded kilometre: {coastedKm}
           <input type="range" min="1" max={coasted.kilometreFrames.length}
             value={coastedKm} onChange={event=>setCoastedKm(Number(event.target.value))}/>

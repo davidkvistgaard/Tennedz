@@ -22,6 +22,11 @@
 .v91-error{color:#9b2525;font-weight:700}
 .v91-results{background:white;border:1px solid #d3e1db;border-radius:16px;padding:24px}
 .v91-results input[type=range]{width:100%;accent-color:#116e60}
+.v91-road-changes{margin:20px 0}
+.v91-road-changes summary{cursor:pointer;font-weight:700}
+.v91-road-jumps{display:flex;flex-wrap:wrap;gap:8px}
+.v91-road-jumps button{min-height:42px;padding:8px 10px;border:1px solid #a6c2b8;border-radius:8px;background:#f2f7f4;color:#17312e;cursor:pointer}
+.v91-road-jumps button[aria-pressed=true]{background:#116e60;color:white}
 .v91-metrics{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin:20px 0}
 .v91-metrics div{display:grid;gap:4px;padding:16px;border-radius:12px;background:#eaf4f0}
 .v91-metrics strong{font-size:1.4rem;text-transform:capitalize}

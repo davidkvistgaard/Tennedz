@@ -2914,3 +2914,14 @@ and the one-day point function. Official awards remain zero and withheld.
 The fresh isolated build, lint and all 25 v93 browser cases pass. This
 verifies a bounded playable path, while unresolved road contact in other
 scenarios still prevents declaring the motor complete.
+
+The v93 result now offers jumps to kilometres where recorded group
+membership or the isolated-rider set changes. It compares adjacent saved
+frames, so changing gaps or energy alone do not create a false tactical
+event. Each jump selects the original kilometre frame; its group names,
+sizes and gaps still come directly from the race recording. A bunch-only
+race states that no such changes occurred. A separated-front browser case
+checks that a jump updates the selected kilometre and displays the matching
+recorded groups. The fresh isolated build, lint and all 25 v93 browser cases
+pass. This is replay navigation only; versioned motor output, results and
+point policy are unchanged.
