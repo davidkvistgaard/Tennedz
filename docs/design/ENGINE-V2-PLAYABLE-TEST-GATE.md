@@ -2301,9 +2301,10 @@ and an older motor recording are rejected. The older separated/depleted
 clock, line and point tests remain green.
 The 20-case replay matrix, 12 older separated/depleted checks, lint, an
 isolated build, and four local browser fixture flows pass. The full unit
-suite was not repeated after its earlier long run was stopped. Roads with
-no front group but one or more dropped riders still return an explicit
-refusal; all v93 points remain illustrative and non-awarding.
+suite was not repeated after its earlier long run was stopped. At this
+point, roads with no front group but one or more dropped riders still
+returned an explicit refusal; all v93 points remained illustrative and
+non-awarding.
 
 The bunch-only v93 handoff now also accepts a final-kilometre source whose
 last full kilometre recorded chasers before catching the front group. The
@@ -2316,3 +2317,23 @@ had a recorded chaser and catch in kilometre 259. A targeted 260 km browser
 fixture follows such a catch through 32 individual crossings. Focused new
 and legacy clock tests, lint, isolated build and all five v93 browser
 fixtures pass.
+
+A separate v93 coasted no-front branch now covers a bunch with already
+isolated dropped riders at the final-kilometre handoff. It retains each
+recorded source deficit, pays the peloton and dropped passages on one clock,
+and reuses the individual active and isolated runners with pre-500 m and
+final-500 m longitudinal audits. In the fixed 260 km tired four-team source,
+one dropped rider remains behind the peloton across all seven passages and
+all 32 riders obtain replayable individual crossings. The nominated bunch
+helper spends recorded energy and improves its finisher without changing
+that isolated rider's crossing. Ten such sources (both categories, five
+terrains) replay with 32 policy-consistent read-only point illustrations.
+A further 60-case 260 km matrix across 4/15/20 teams, fatigue 15/30, both
+categories and five terrains completes and replays: 50 complete bunches
+and ten no-front/dropped roads, with no errors. Older recording versions
+retain their own validation and the branch saves no award rows.
+The targeted new and prior coasted/no-front, positioned-source,
+individual-line and point-policy unit checks, lint, and an isolated build
+pass. All six v93 local browser fixtures pass in one run. The sixth test
+uses a second local fixture user to remain within the preview API's
+per-user rate limit. The full unit suite was not repeated.
