@@ -93,6 +93,10 @@ export default function Playtest(){
   const [approachFrameIndex,setApproachFrameIndex]=useState(0);
   const [approachRiderId,setApproachRiderId]=useState('');
   const [finaleReplay,setFinaleReplay]=useState(null);
+  const [bandLocalReplay,setBandLocalReplay]=useState(null);
+  const [bandId,setBandId]=useState('');
+  const [bandFrameIndex,setBandFrameIndex]=useState(0);
+  const [bandRiderId,setBandRiderId]=useState('');
   const [finaleFrameIndex,setFinaleFrameIndex]=useState(0);
   const [concurrentRoadIndex,setConcurrentRoadIndex]=useState(0);
   const [inspectedRiderId,setInspectedRiderId]=useState('you-7');
@@ -151,6 +155,12 @@ export default function Playtest(){
   const ownPointPreview=integrated?.provisionalPointPreview?.riders
     ?.find(row=>row.riderId===ownFinisher);
   const finaleFrame=finaleReplay?.frames[finaleFrameIndex];
+  const selectedBand=bandLocalReplay?.bands.find(band=>band.id===bandId);
+  const bandFrame=selectedBand?.frames[bandFrameIndex];
+  const bandRider=bandFrame?.riders.find(row=>
+    row.riderId===bandRiderId);
+  const bandSourceRider=selectedBand?.sourceRiders.find(row=>
+    row.riderId===bandRiderId);
   const concurrentRoadFrame=finaleReplay?.roadFrames?.[concurrentRoadIndex];
   const concurrentRoadRider=concurrentRoadFrame?.riders.find(row=>
     row.riderId===inspectedRiderId);
@@ -217,6 +227,14 @@ export default function Playtest(){
       setFinaleReplay(response.finaleReplay??response.finaleTail??
         response.finaleContactReplay??response.concurrentLateCatchReplay??
         response.concurrentDoubleCatchReplay??null);
+      const bandReplay=response.multibandReplay??null;
+      const finisherId=response.integrated?.managerDecisions
+        ?.find(row=>row.teamId==='you')?.finisherId??'you-7';
+      setBandLocalReplay(bandReplay);
+      setBandId(bandReplay?.bands.find(band=>
+        band.riderIds.includes(finisherId))?.id??'');
+      setBandRiderId(finisherId);
+      setBandFrameIndex(0);
       setFinaleFrameIndex(0);
       setConcurrentRoadIndex(0);
       setInspectedRiderId(response.integrated?.managerDecisions
@@ -500,7 +518,39 @@ export default function Playtest(){
             `Frontmost positions at this boundary: ${roadLeaders.map(row=>
               `${row.riderId} (${(finaleReplay.lineDistanceM-row.positionM).toFixed(1)} m to go)`).join(', ')}`}</p>
         </div>}
-        {integrated&&!finaleReplay&&<p className="v91-warning">
+        {bandLocalReplay&&selectedBand&&<div className="v91-finish">
+          <h3>Paid group-local finale</h3>
+          <p>Each group passes {bandLocalReplay.handoffDistanceM/1000} km on its own recorded clock. Select a group to follow its paid individual positions and energy to the line. These frames are not one simultaneous road view; the combined order remains conditional.</p>
+          <label>Finale road group<select value={bandId}
+            onChange={event=>{
+              const next=bandLocalReplay.bands.find(band=>
+                band.id===event.target.value);
+              setBandId(event.target.value);setBandFrameIndex(0);
+              setBandRiderId(next?.riderIds[0]??'');
+            }}>
+            {bandLocalReplay.bands.map(band=><option key={band.id}
+              value={band.id}>{band.id} · {band.riderIds.length} riders</option>)}
+          </select></label>
+          <p>{selectedBand.riderIds.length} riders pass the 500 m boundary at {selectedBand.passageSecondsFromBunchMarker.toFixed(2)} s from the bunch last-kilometre marker.</p>
+          <label>Group interval: {bandFrameIndex+1} of {selectedBand.frames.length}
+            <input type="range" min="0" max={selectedBand.frames.length-1}
+              value={bandFrameIndex}
+              onChange={event=>setBandFrameIndex(Number(event.target.value))}/>
+          </label>
+          <p>{bandFrame?.elapsedSeconds.toFixed(2)} s from the bunch last-kilometre marker · {bandFrame?.riders.length} riders in this group</p>
+          <label>Inspect group rider<select value={bandRiderId}
+            onChange={event=>setBandRiderId(event.target.value)}>
+            {selectedBand.riderIds.map(riderId=><option key={riderId}
+              value={riderId}>{riderId}</option>)}
+          </select></label>
+          {bandRider&&<p>{bandRider.riderId}: {(bandLocalReplay.lineDistanceM-
+            bandRider.positionM).toFixed(1)} m to go · {bandRider.energyAfter.toFixed(1)} energy · {bandRider.energySpent.toFixed(2)} spent this interval · {bandRider.role} · {bandSourceRider?.energyAt500.toFixed(1)} energy at 500 m</p>}
+          <p>{bandFrame?.riders.every(row=>
+            Math.abs(row.positionM-bandLocalReplay.lineDistanceM)<1e-6)?
+              'Every rider in this group has crossed. The full conditional result is below.':
+              'Other groups follow their own recorded passage clocks.'}</p>
+        </div>}
+        {integrated&&!finaleReplay&&!bandLocalReplay&&<p className="v91-warning">
           A complete rider-by-rider final-kilometre replay is not available for this road state. The recorded handoff, conditional line and contact evidence remain below.
         </p>}
         {integrated?<div className="v91-finish">
@@ -535,7 +585,7 @@ export default function Playtest(){
             <div className="v91-result-scroll"><table className="v91-result-table"
               aria-label="Individual conditional results">
               <thead><tr><th scope="col">Conditional order</th>
-                <th scope="col">Rider</th><th scope="col">Time from final km</th>
+                <th scope="col">Rider</th><th scope="col">Time from bunch's final-km marker</th>
                 <th scope="col">Gap</th><th scope="col">Energy at line</th>
                 {pointRows.size>0&&<th scope="col">Preview points</th>}
               </tr></thead>

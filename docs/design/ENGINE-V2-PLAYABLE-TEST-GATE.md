@@ -1805,3 +1805,20 @@ browser checks cover a 32-rider bunch before and after a paid lead-out,
 a 120-rider solo-to-catch comparison, and the two-manager paid replay at
 mobile and desktop widths. The isolated build and lint passed. This improves
 inspection of a conditional test result; it does not make the order official.
+
+The preview can now follow a surviving front group and the bunch separately
+from their already paid 500 m passages to every rider's conditional crossing.
+The replay checks each group's source membership, 500 m energy, interval
+clock, rider travel and energy, and final time/energy against the full-field
+result. The group clocks are deliberately shown separately: the front may
+pass 500 m before the bunch reaches the last-kilometre marker, and a shared
+slider would imply positions the recording does not contain. Twelve fixed
+40 km flat and 120 km rolling scenarios across M/F and 4/15/20 teams passed
+with 32/120/160 crossings; changing a recorded energy or result value is
+rejected. One 120 km, 15-team local browser run lets the player switch from
+the 30-rider front group to the 90-rider bunch, scrub both paid continuations
+and inspect the full conditional result. Replaying that same locked race
+with you-6 as the front-group lead-out records two helper work intervals
+and changes nominated you-7's crossing, while all 120 riders still reach
+the line. Point awards remain withheld;
+cross-band contact and inferred wheels still prevent an official placing.

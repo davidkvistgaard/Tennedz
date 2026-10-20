@@ -10,6 +10,8 @@ import {summarizeV91PaidFinaleReplay,
   summarizeV91PaidSoloApproach} from
   '../../../lib/engine/v2/playtest-finale-replay.mjs';
 import {runV91IntegratedTestDrive} from '../../../scripts/engine-v2-test-drive.mjs';
+import {summarizeV91PaidMultibandReplay} from
+  '../../../lib/engine/v2/playtest-multiband-replay.mjs';
 
 export const runtime='nodejs';
 export const dynamic='force-dynamic';
@@ -66,7 +68,8 @@ async function handler(request,_context,auth){
         concurrentLateCatchReplay:
           summarizeV91PaidConcurrentLateCatchReplay(output),
         concurrentDoubleCatchReplay:
-          summarizeV91PaidConcurrentDoubleCatchReplay(output)});
+          summarizeV91PaidConcurrentDoubleCatchReplay(output),
+        multibandReplay:summarizeV91PaidMultibandReplay(output)});
     }
     if(input.mode!==undefined)
       return NextResponse.json({ok:false,error:'Invalid playtest mode.'},
