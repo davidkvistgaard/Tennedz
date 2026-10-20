@@ -2731,3 +2731,10 @@ still applies to the same `ac0e7a5` code; this verification makes no motor
 or recording change. The conditional result and point-award gate remains
 open until the end-to-end playable road is accepted across its supported
 cases.
+
+The repository's `pnpm test` command now uses the same four-worker limit
+that passed the unchanged full suite. Running that standard command after
+the change passed all 961 unit tests with zero failures in 1,816 seconds;
+`pnpm lint` also passed. This only schedules unit test files; it changes
+neither the motor nor the assertions. The default-parallelism timeout above
+remains part of the evidence for why this limit is set.
