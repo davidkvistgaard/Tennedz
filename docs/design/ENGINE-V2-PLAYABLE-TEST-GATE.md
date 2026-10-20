@@ -2212,5 +2212,20 @@ without an unrecorded catch or new drop; tampered passages and a v92 source
 are rejected. The older depleted-reserve recording keeps its original
 unmet-work fields and replay. This is still a road-band clock: it does not
 pay nominated finisher or lead-out orders, rank riders within a front group
-or bunch, or unlock points. The next vertical step must join those orders
-to the v93 source and produce a complete individually replayable line.
+or bunch, or unlock points on its own.
+
+An opt-in v93 offline playtest now joins the locked 260 km source, coasted
+last-kilometre clock, 500 m nominations and full-field individual line.
+On ten mixed-plan four-team roads spanning every terrain and both categories,
+all 32 riders receive replayable crossing times and line energy. Two
+managers can simultaneously nominate different finishers and lead-out
+helpers in the front group and peloton; both helpers pay for recorded work,
+and both finishers gain time relative to the identical road without those
+orders. Road-group identity and dropped rider deficits are preserved.
+The default line receives read-only policy points only when every placing is
+unique. In the two-helper example, two front riders tie; the point preview
+is withheld rather than assigning either an arbitrary place. Cross-road
+helpers and altered replay are rejected. Official classification and awards
+remain withheld. This candidate is not yet exposed through the local browser
+workbench, and broader fields, lengths and attack/chase outcomes still need
+end-to-end checks before the motor gate can be considered met.
