@@ -61,8 +61,38 @@ test('a named distant rival keeps its tactics and finisher through the road repl
     await interval.fill(await interval.getAttribute('max'));
     await expect(page.getByLabel('Selected rider finale replay'))
       .toContainText(`Crossed at ${finisher.elapsedSecondsFromLastKmStart.toFixed(3)} s; result ${finisher.elapsedSecondsFromLastKmStart.toFixed(3)} s, ${finisher.energyAtLine.toFixed(1)} energy.`);
+    await page.getByLabel('rival-3 effort').selectOption('hard');
+    const afterResponsePromise=page.waitForResponse(result=>
+      result.url().endsWith('/api/v91-playtest')&&
+      result.request().method()==='POST');
+    await page.getByRole('button',{name:'Run v93 race preview'}).click();
+    const afterResponse=await afterResponsePromise;
+    expect(afterResponse.status()).toBe(200);
+    const after=(await afterResponse.json()).coasted;
+    const afterFinisher=after.lineTimes.find(row=>
+      row.riderId==='rival-3-4');
+    expect(after.managerOrders.find(row=>row.teamId==='rival-3'))
+      .toMatchObject({effort:'hard',chase:'ignore'});
+    expect(after.lineTimes).toHaveLength(32);
+    expect(after.pointsStatus).toBe('withheld');
+    expect(after.pointPreview?.awardRows??[]).toEqual([]);
+    const changedRivals=page.getByLabel('Changed rival manager outcomes');
+    await changedRivals.locator('summary').click();
+    await expect(changedRivals).toContainText(
+      'rival-3 · Effort: conserve → hard');
+    await expect(changedRivals).toContainText(
+      `Road band: ${finisher.roadBandId} → ${afterFinisher.roadBandId}`);
+    await expect(changedRivals).toContainText(
+      `Crossing: ${finisher.elapsedSecondsFromLastKmStart.toFixed(3)} s → ${afterFinisher.elapsedSecondsFromLastKmStart.toFixed(3)} s`);
+    await expect(changedRivals).toContainText(
+      `Energy at line: ${finisher.energyAtLine.toFixed(1)} → ${afterFinisher.energyAtLine.toFixed(1)}`);
+    await expect(changedRivals).toContainText('Conditional place:');
+    const previewPoints=race=>race.pointPreview?.riders?.find(row=>
+      row.riderId==='rival-3-4')?.previewPoints??'unavailable';
+    await expect(changedRivals).toContainText(
+      `Read-only points: ${previewPoints(coasted)} → ${previewPoints(after)}`);
     await page.getByLabel('Managers with your own tactics').selectOption('3');
-    await expect(page.getByLabel('Rival 3 effort')).toHaveValue('conserve');
+    await expect(page.getByLabel('Rival 3 effort')).toHaveValue('hard');
     await expect(page.getByLabel('Rival 3 chase')).toHaveValue('ignore');
     await expect(page.getByLabel('rival-3 effort',{exact:true}))
       .toHaveCount(0);

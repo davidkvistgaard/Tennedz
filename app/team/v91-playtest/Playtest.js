@@ -43,6 +43,13 @@ function conditionalPlace(place,fallback='—'){
     `${place.firstPossiblePlace}–${place.lastPossiblePlace}`;
 }
 
+function phaseOrderSummary(phases){
+  return phases.length?phases.map(phase=>
+    `at ${phase.atKm} km: ${['effort','attack','attackRiderId',
+      'chase','frontWork'].filter(key=>phase[key]!=null)
+      .map(key=>`${key} ${phase[key]}`).join(', ')}`).join('; '):'none';
+}
+
 function comparisonConditions(settings){
   const {distanceKm,terrain,teamCount,gender,fatigue,seed,
     profileHeightsM}=settings;
@@ -90,6 +97,27 @@ function coastedComparisonRun(settings,summary,pointContext){
     row.riderId===finisherId);
   const ownPoints=summary.pointPreview?.riders?.find(row=>
     row.riderId===finisherId);
+  const rivalOutcomes=summary.managerOrders.filter(order=>
+    order.teamId!=='you').map(order=>{
+    const decision=summary.managerDecisions.find(row=>
+      row.teamId===order.teamId);
+    const riderId=decision?.finisherId;
+    const line=summary.lineTimes.find(row=>row.riderId===riderId);
+    const rivalPlace=summary.provisionalLineOrder?.find(row=>
+      row.riderId===riderId)??summary.roadPlaceBounds?.riders.find(row=>
+      row.riderId===riderId);
+    const preview=summary.pointPreview?.riders?.find(row=>
+      row.riderId===riderId);
+    return {teamId:order.teamId,effort:order.effort,
+      attack:order.attack,chase:order.chase,
+      phaseOrders:order.phaseOrders,finisherId:riderId,
+      leadOutRiderId:decision?.leadOutRiderId??null,
+      roadBandId:line?.roadBandId??null,
+      crossingSeconds:line?.elapsedSecondsFromLastKmStart??null,
+      energyAtLine:line?.energyAtLine??null,
+      place:conditionalPlace(rivalPlace,'unresolved'),
+      previewPoints:pointContext?preview?.previewPoints??null:null};
+  });
   return {conditions:comparisonConditions(settings),finisherId,
     crossingSeconds:crossing?.elapsedSecondsFromLastKmStart??null,
     energyAtLine:crossing?.energyAtLine??null,
@@ -101,6 +129,7 @@ function coastedComparisonRun(settings,summary,pointContext){
     leadOutEnergy:summary.leadOutWork.filter(row=>
       row.riderId===leadOutRiderId).reduce((sum,row)=>
       sum+row.energySpent,0),
+    rivalOutcomes,
     pointContext:pointContext?JSON.stringify(pointContext):null,
     pointLabel:pointContext?ownPoints?
       `${ownPoints.previewPoints} (place ${conditionalPlace(place)})`:
@@ -160,6 +189,21 @@ export default function Playtest(){
   const [coastedComparison,setCoastedComparison]=useState(null);
   const [busy,setBusy]=useState(false);
   const [error,setError]=useState('');
+  const changedRivalOutcomes=coastedComparison?
+    coastedComparison.after.rivalOutcomes.flatMap(after=>{
+      const before=coastedComparison.before.rivalOutcomes.find(row=>
+        row.teamId===after.teamId);
+      return before&&JSON.stringify({effort:before.effort,
+        attack:before.attack,chase:before.chase,
+        phaseOrders:before.phaseOrders,
+        finisherId:before.finisherId,
+        leadOutRiderId:before.leadOutRiderId})!==
+        JSON.stringify({effort:after.effort,attack:after.attack,
+          chase:after.chase,phaseOrders:after.phaseOrders,
+          finisherId:after.finisherId,
+          leadOutRiderId:after.leadOutRiderId})?
+        [{before,after}]:[];
+    }):[];
   const frame=result?.frames[selectedKm-1];
   const change=(key,value)=>{
     if(key==='teamCount'){
@@ -841,6 +885,42 @@ export default function Playtest(){
               {' '}{coastedComparison.after.pointLabel}.
               {' '}Official points remain withheld.
             </p>}
+          {changedRivalOutcomes.length>0&&<details
+            aria-label="Changed rival manager outcomes">
+            <summary>Changed rival managers ({changedRivalOutcomes.length})</summary>
+            {changedRivalOutcomes.map(({before,after})=><div
+              key={after.teamId}>
+              <p><strong>{after.teamId}</strong> · Effort:
+                {' '}{before.effort} → {after.effort} · Attack:
+                {' '}{before.attack} → {after.attack} · Chase:
+                {' '}{before.chase} → {after.chase}.</p>
+              <p>Finisher: {before.finisherId} → {after.finisherId} ·
+                {' '}Lead-out: {before.leadOutRiderId??'none'} →
+                {' '}{after.leadOutRiderId??'none'} · Road band:
+                {' '}{before.roadBandId??'unavailable'} →
+                {' '}{after.roadBandId??'unavailable'}.</p>
+              {JSON.stringify(before.phaseOrders)!==
+                JSON.stringify(after.phaseOrders)&&<p>
+                Final-kilometre orders:
+                {' '}{phaseOrderSummary(before.phaseOrders)} →
+                {' '}{phaseOrderSummary(after.phaseOrders)}.
+              </p>}
+              <p>Crossing: {before.crossingSeconds?.toFixed(3)??'unavailable'} s
+                {' '}→ {after.crossingSeconds?.toFixed(3)??'unavailable'} s ·
+                {' '}Energy at line:
+                {' '}{before.energyAtLine?.toFixed(1)??'—'} →
+                {' '}{after.energyAtLine?.toFixed(1)??'—'} ·
+                {' '}Conditional place: {before.place} → {after.place}.
+                {coastedComparison.before.pointContext&&
+                  coastedComparison.before.pointContext===
+                    coastedComparison.after.pointContext&&<>
+                    {' '}Read-only points:
+                    {' '}{before.previewPoints??'unavailable'} →
+                    {' '}{after.previewPoints??'unavailable'}.
+                  </>}
+              </p>
+            </div>)}
+          </details>}
         </section>}
       </section>}
       {result&&<section className="v91-results" aria-label="Playtest recording">
