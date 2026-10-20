@@ -2441,3 +2441,22 @@ custom-route seed-diversity case still refuses when a rider newly leaves
 the bunch while two front groups remain; that road shape and the contact
 response remain open. No official results or awards are committed, and
 the full unit suite has not completed.
+
+The 15-team custom-route seed-diversity refusal now has its own opt-in
+active-road drop version. In the 260 km chase-default road at fatigue 15,
+two singleton front groups remain ahead while 12 riders are already
+isolated. Six bunch riders exhaust at 259 km and four more at 259.25 km;
+the final road has two front singletons, 96 bunch riders and 22 separately
+coasted riders. All 120 riders have conditional individual crossings in
+25 replay bands, with the first and final half-kilometre positions and
+energy accounted for. The old coasted clock still refuses this shape,
+preserving its recorded version. This version explicitly withholds point
+illustration and awards because contact with the ten new isolated riders
+before 500 m has not been resolved. Male/female custom and mountain
+variants replay exactly; the custom case also passes through the local
+browser with a 120-row result table. Nineteen focused and adjacent unit
+tests, lint, an isolated build, and all twelve v93 browser flows pass.
+This does not resolve every road shape: the same seed on a flat route has
+two singleton fronts but no new bunch drops, and the older coasted line
+still refuses that singleton handoff. The full unit suite has not
+completed, and no official result or award has been committed.
