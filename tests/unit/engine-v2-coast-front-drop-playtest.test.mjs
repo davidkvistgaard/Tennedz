@@ -5,6 +5,8 @@ import {createV93PlayableTest,summarizeV93CoastedPlaytest,
   '../../lib/engine/v2/playtest-v93-coasted.mjs';
 import {recordFinaleCoastDroppedLastKmClock} from
   '../../lib/engine/v2/finale-separated-last-km.mjs';
+import {validateFinaleDynamicFrontRoadBounds} from
+  '../../lib/engine/v2/finale-dynamic-front-road-bounds.mjs';
 
 const context={tier:3,divisionIndex:1,divisionCount:1};
 const settings=(gender,terrain)=>({distanceKm:260,teamCount:4,
@@ -42,6 +44,16 @@ test('exhausted front riders pass through the bunch on a paid solo road',()=>{
       assert.equal(summary.lastKmRoad.at(-1).droppedPassages.length,3);
       assert.equal(summary.bandReplays.length,5);
       assert.equal(summary.lineTimes.length,32);
+      assert.deepEqual(summary.roadPlaceBounds.bands.map(row=>[
+        row.firstPossiblePlace,row.lastPossiblePlace]),[[1,2],[3,32]]);
+      assert.equal(summary.roadPlaceBounds.riders.length,32);
+      assert.equal(summary.roadPlaceBounds.pointsStatus,'withheld');
+      assert.equal(validateFinaleDynamicFrontRoadBounds(race.recording,
+        race.clock,race.individualLine,summary.roadPlaceBounds),true);
+      assert.throws(()=>validateFinaleDynamicFrontRoadBounds(
+        race.recording,race.clock,race.individualLine,{
+          ...summary.roadPlaceBounds,canCommitAwards:true}),
+      /do not replay/);
       assert.deepEqual(summary.managerOrders,
         race.recording.committedInputs.teams.map(team=>({
           teamId:team.id,...team.orders.baseline,

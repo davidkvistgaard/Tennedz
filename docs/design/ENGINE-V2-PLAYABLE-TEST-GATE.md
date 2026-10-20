@@ -2793,3 +2793,21 @@ closes a misleading baseline-only label for API callers that submit phase
 orders. Seven focused bunch/front-drop unit checks, lint, a fresh isolated
 build and all 21 local v93 browser cases pass. The UI still does not offer
 v93 phase-order editing, and official awards remain withheld.
+
+The dynamic-front full-race preview now shows a conditional range when one
+surviving front stays ahead of the bunch and every isolated rider at all paid
+last-kilometre markers and its line crossings remain ahead. Four 260 km,
+four-manager fatigue-30 scenarios (M/F, flat/mountain) retain the two-rider
+front at places 1–2 and bound the other 30 riders at 3–32. The race still
+records the two front leavers being passed by the bunch, so their wheel order
+and any contact response are unresolved; these ranges are not an official
+classification and points remain withheld. A nominated front helper's paid
+lead-out and an isolated rider's own final-500 m replay remain visible in the
+browser result. Focused unit checks, lint, a fresh isolated build and all 21
+local v93 browser cases pass. The 48-race diversity audit still matches all
+4,776 individual crossings to their paid replays. The full unit suite also
+passes with `node --test --test-concurrency=2 --test-reporter=dot
+tests/unit/*.test.mjs`. The standard four-worker `pnpm test` run timed out
+in its existing 720-second selective-chase child audit under contention;
+that exact audit passed alone in 469 seconds and within the two-worker
+suite. The four-worker run is not counted as a pass for this revision.

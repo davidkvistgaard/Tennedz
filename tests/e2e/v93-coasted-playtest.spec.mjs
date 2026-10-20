@@ -903,6 +903,12 @@ test('front leavers pass the bunch while a nominated helper works',
     expect(coasted.lineTimes).toHaveLength(32);
     expect(coasted.leadOutWork.some(row=>row.riderId==='you-5'))
       .toBe(true);
+    expect(coasted.roadPlaceBounds.bands.map(row=>[
+      row.firstPossiblePlace,row.lastPossiblePlace]))
+      .toEqual([[1,2],[3,32]]);
+    await expect(page.getByRole('table',{
+      name:'V93 individual conditional results'}).getByRole('row',{
+      name:/^1–2 you-5 /})).toBeVisible();
     expect(coasted.lineTimes.find(row=>row.riderId==='rival-1-7'))
       .toMatchObject({roadBandId:'isolated:rival-1-7',energyAtLine:0});
     expect(coasted.pointPreview.status).toBe('unavailable');
