@@ -5,6 +5,123 @@ test.skip(process.env.PELOTONIA_V91_PLAYTEST_ENABLED!=='true'||
   process.env.PELOTONIA_V93_COASTED_PLAYTEST_ENABLED!=='true',
 'The isolated v93 workbench is disabled.');
 
+test('two managers play one selected race from orders to road, line and replay',
+  async({page})=>{
+    const errors=[];page.on('pageerror',error=>errors.push(error.message));
+    await page.goto('/login');
+    await page.getByLabel('Email or username').fill('bob');
+    await page.getByLabel('Password',{exact:true}).fill('fixture-password');
+    await page.getByRole('button',{name:'Sign in',exact:true}).click();
+    await expect(page).toHaveURL(/\/team$/);
+    await page.goto('/team/v91-playtest');
+    await page.getByRole('checkbox',
+      {name:'Continue to a conditional finish'}).check();
+    await page.getByRole('checkbox',
+      {name:'Try v93 road-to-line preview'}).check();
+    await page.getByLabel('Distance').selectOption('120');
+    await page.getByLabel('Route profile').selectOption('rolling');
+    await page.getByLabel('Category').selectOption('F');
+    await page.getByLabel('Field size').selectOption('15');
+    await page.getByLabel('Starting fatigue').selectOption('15');
+    await page.getByLabel('Scenario seed').fill('late-phase-6');
+    await page.getByLabel('Your attack').selectOption('none');
+    await page.getByLabel('Choose another rival manager')
+      .selectOption('rival-14');
+    await page.getByRole('button',{name:'Add rival manager'}).click();
+    await page.getByLabel('rival-14 effort').selectOption('hard');
+    await page.getByLabel('rival-14 attack').selectOption('none');
+    await page.getByLabel('rival-14 chase').selectOption('all');
+    await page.getByLabel('5 km to go effort for you').selectOption('hard');
+    await page.getByLabel('5 km to go effort for rival-14')
+      .selectOption('conserve');
+    await page.getByLabel('you lead-out helper').selectOption('you-6');
+    await page.getByLabel('rival-14 finisher').selectOption('rival-14-3');
+    await page.getByLabel('rival-14 lead-out helper')
+      .selectOption('rival-14-5');
+    await page.getByRole('checkbox',
+      {name:'Show read-only point illustration'}).check();
+    await page.getByLabel('Race tier').selectOption('2');
+    await page.getByLabel('Division count').selectOption('2');
+    const responsePromise=page.waitForResponse(response=>
+      response.url().endsWith('/api/v91-playtest')&&
+      response.request().method()==='POST');
+    await page.getByRole('button',{name:'Run v93 race preview'}).click();
+    const response=await responsePromise;
+    expect(response.status()).toBe(200);
+    const {coasted}=await response.json();
+    expect(coasted.settings).toMatchObject({distanceKm:120,terrain:'rolling',
+      gender:'F',teamCount:15,fatigue:15,seed:'late-phase-6'});
+    expect(coasted.managerOrders).toHaveLength(15);
+    expect(coasted.managerOrders.find(row=>row.teamId==='you')
+      .phaseOrders).toEqual([{atKm:115,effort:'hard'}]);
+    expect(coasted.managerOrders.find(row=>row.teamId==='rival-14'))
+      .toMatchObject({effort:'hard',attack:'none',chase:'all',
+        phaseOrders:[{atKm:115,effort:'conserve'}]});
+    expect(coasted.managerDecisions.find(row=>row.teamId==='you'))
+      .toMatchObject({finisherId:'you-7',leadOutRiderId:'you-6'});
+    expect(coasted.managerDecisions.find(row=>row.teamId==='rival-14'))
+      .toMatchObject({finisherId:'rival-14-3',
+        leadOutRiderId:'rival-14-5'});
+    expect(coasted.kilometreFrames).toHaveLength(119);
+    expect(coasted.lastKmRoad.at(-1).distanceM).toBe(120000);
+    expect(coasted.lineTimes).toHaveLength(120);
+    expect(coasted.leadOutWork.filter(row=>row.riderId==='you-6'))
+      .toHaveLength(2);
+    expect(coasted.leadOutWork.filter(row=>row.riderId==='rival-14-5'))
+      .toHaveLength(2);
+    expect(coasted.leadOutWork.every(row=>row.energySpent>0)).toBe(true);
+    expect(coasted.pointsStatus).toBe('withheld');
+    expect(coasted.pointPreview.awardRows).toEqual([]);
+    expect(coasted.pointPreview.riders).toHaveLength(120);
+    const ownLine=coasted.lineTimes.find(row=>row.riderId==='you-7');
+    const ownPreview=coasted.pointPreview.riders.find(row=>
+      row.riderId==='you-7');
+    const ownPlace=coasted.provisionalLineOrder.find(row=>
+      row.riderId==='you-7').position;
+    expect(ownPreview.provisionalPlace).toBe(ownPlace);
+    expect(ownPreview.previewPoints).toBe(pointsForDivisionResult({
+      tier:coasted.pointPreview.tier,resultType:'ONE_DAY',
+      placing:ownPlace,multiplier:coasted.pointPreview.multiplier}));
+    await expect(page.getByRole('heading',
+      {name:'V93 race preview · 120 km rolling'})).toBeVisible();
+    const locked=page.getByLabel('Locked v93 manager orders');
+    await locked.locator('summary').click();
+    await expect(locked).toContainText('you: steady effort · none attack');
+    await expect(locked).toContainText('finisher you-7 · lead-out you-6');
+    await expect(locked).toContainText('At 115 km: effort: hard');
+    await expect(locked).toContainText('rival-14: hard effort · none attack · all chase');
+    await expect(locked).toContainText(
+      'finisher rival-14-3 · lead-out rival-14-5');
+    await expect(locked).toContainText('At 115 km: effort: conserve');
+    const firstFrame=coasted.kilometreFrames[0];
+    const road=page.getByRole('slider',{name:/Recorded kilometre/});
+    await road.fill('1');
+    await expect(page.getByText(`Road groups: ${firstFrame.roadGroups.map(
+      group=>`${group.id} (${group.riderIds.length} riders, ${
+        group.gapSeconds.toFixed(1)} s ahead)`).join(' · ')||'none'}`))
+      .toBeVisible();
+    await expect(page.getByRole('region',{name:'Your v93 finish'}))
+      .toContainText(`Conditional place: ${ownPlace} · Read-only points: ${
+        ownPreview.previewPoints}`);
+    await expect(page.getByRole('table',
+      {name:'V93 individual conditional results'}).getByRole('row'))
+      .toHaveCount(121);
+    for(const riderId of ['you-7','rival-14-3']){
+      const line=coasted.lineTimes.find(row=>row.riderId===riderId);
+      await page.getByRole('button',{name:`Replay ${riderId}`}).click();
+      const interval=page.getByRole('slider',{name:/Band interval/});
+      await interval.fill(await interval.getAttribute('max'));
+      await expect(page.getByLabel('Selected rider finale replay'))
+        .toContainText(`Crossed at ${
+          line.elapsedSecondsFromLastKmStart.toFixed(3)} s; result ${
+          line.elapsedSecondsFromLastKmStart.toFixed(3)} s, ${
+          line.energyAtLine.toFixed(1)} energy.`);
+    }
+    await expect(page.getByText(
+      'Official points: withheld · Awards saved: 0')).toBeVisible();
+    expect(errors).toEqual([]);
+  });
+
 test('a five-kilometre effort change reaches the paid line and points',
   async({page})=>{
     const errors=[];page.on('pageerror',error=>errors.push(error.message));

@@ -2899,3 +2899,18 @@ kilometre; the app already exposes that witness and both replays. Their
 passing, drafting and wheel order are not recorded, so the points remain
 withheld rather than assigning an inferred result. Neither audit accessed
 production data or services.
+
+One cohesive authenticated browser acceptance case now follows a selected
+120 km rolling women's race with 15 teams and starting fatigue 15 from the
+form through the local fixture API, locked orders, recorded road, individual
+line, two rider replays and read-only points. The player names `you-7` with
+`you-6` as helper and changes effort to hard at 115 km. A separately chosen
+`rival-14` starts hard with an all-rider chase, changes to conserve at 115 km,
+and names `rival-14-3` with `rival-14-5` as helper. Both helpers pay positive
+energy in two recorded intervals. The response contains all 119 kilometre
+frames and 120 individual line crossings; the selected road-group display,
+both finish replays and the player's preview points agree with that response
+and the one-day point function. Official awards remain zero and withheld.
+The fresh isolated build, lint and all 25 v93 browser cases pass. This
+verifies a bounded playable path, while unresolved road contact in other
+scenarios still prevents declaring the motor complete.
