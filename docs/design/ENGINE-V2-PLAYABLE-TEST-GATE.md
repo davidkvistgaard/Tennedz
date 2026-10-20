@@ -2753,3 +2753,10 @@ invalid-helper case; that case passed alone. Running the full 21-case
 suite as four fresh, fully parallel Playwright shards passed 6+5+5+5
 cases. The new check extends end-to-end tactical evidence without
 changing the v93 recording or resolving its provisional road geometry.
+
+The full local browser gate is now repeatable with `pnpm test:v93:local`.
+That command builds the opt-in workbench in `.next-v93-local` with fixed
+fixture-only Supabase values, then runs the v93 browser file in four fresh
+per-test shards. The command passed its isolated build and all 21 cases
+(6+5+5+5), and full lint passed. The regular production build and
+production services are not used by this verification command.
