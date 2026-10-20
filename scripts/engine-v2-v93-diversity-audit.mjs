@@ -15,7 +15,12 @@ const rivalPlans=['neutral','mixed','attack','chase'];
 const attacks=['none','selective','repeated'];
 const chases=['ignore','selective','all'];
 const efforts=['conserve','steady','hard'];
-const pointContext={tier:3,divisionIndex:1,divisionCount:1};
+const pointContextFor=index=>{
+  const divisionCount=[1,2,4][index%3];
+  return {tier:1+Math.floor(index/3)%6,
+    divisionCount,
+    divisionIndex:1+Math.floor(index/6)%divisionCount};
+};
 const settingsFor=index=>({
   distanceKm:distances[index%3],
   teamCount:teamCounts[Math.floor(index/3)%3],
@@ -31,10 +36,12 @@ const settingsFor=index=>({
 
 const audit={scenarios:48,finished:0,refusals:[],versions:{},
   projectedPoints:0,unavailablePoints:0,replayedVersions:[],
-  conditionalCrossings:0,replayMatchedCrossings:0};
+  conditionalCrossings:0,replayMatchedCrossings:0,
+  pointTiers:[],divisionMultipliers:[]};
 const replayed=new Set();
 for(let index=0;index<audit.scenarios;index++){
   const settings=settingsFor(index);
+  const pointContext=pointContextFor(index);
   let race;
   try{race=createV93PlayableTest(settings,{pointContext});}
   catch(error){
@@ -82,6 +89,15 @@ for(let index=0;index<audit.scenarios;index++){
   if(race.pointPreview.status==='unavailable')
     audit.unavailablePoints++;
   else{
+    assert.equal(race.pointPreview.tier,pointContext.tier);
+    assert.equal(race.pointPreview.divisionCount,
+      pointContext.divisionCount);
+    assert.equal(race.pointPreview.divisionIndex,
+      pointContext.divisionIndex);
+    if(!audit.pointTiers.includes(pointContext.tier))
+      audit.pointTiers.push(pointContext.tier);
+    if(!audit.divisionMultipliers.includes(race.pointPreview.multiplier))
+      audit.divisionMultipliers.push(race.pointPreview.multiplier);
     assert.equal(race.pointPreview.riders.length,settings.teamCount*8);
     assert.equal(summary.provisionalLineOrder.length,crossings.size);
     const order=new Map(summary.provisionalLineOrder.map(row=>
@@ -109,4 +125,7 @@ for(let index=0;index<audit.scenarios;index++){
   audit.conditionalCrossings+=summary.lineTimes.length;
   audit.versions[race.version]=(audit.versions[race.version]??0)+1;
 }
+assert.deepEqual([...audit.pointTiers].sort((a,b)=>a-b),
+  [1,2,3,4,5,6]);
+assert.ok(audit.divisionMultipliers.some(value=>value<1));
 console.log(JSON.stringify(audit,null,2));

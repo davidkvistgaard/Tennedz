@@ -2549,3 +2549,10 @@ the bunch as “ahead of bunch” or “behind bunch”. A rider who has left th
 front but remains in front is therefore no longer displayed with a
 misleading `+-` deficit. The 160-rider rolling browser fixture checks the
 ahead case against its recorded paid passage.
+
+The 48-road diversity audit now rotates all six calendar point tiers and
+one-, two- and four-division contexts, including reduced division
+multipliers. All 44 available point illustrations still equal the
+existing one-day policy for each provisional placing; the other four
+remain explicitly unavailable. The audit retains its 4,776
+replay-matched crossings and seven exactly replayed preview versions.
