@@ -812,6 +812,30 @@ test('integrated drive keeps unpayable energy and awards unavailable',()=>{
   assert.equal(output.canCommitAwards,false);
 });
 
+test('integrated full drive wraps an unsupported cooperative road without crashing',()=>{
+  const settings={distanceKm:260,terrain:'flat',fatigue:30,
+    teamCount:4,gender:'M',seed:'cross-route-1',
+    attack:'selective',chase:'selective',defaultRivalPlan:'mixed',
+    managerTacticOverrides:[{teamId:'rival-1',effort:'conserve',
+      attack:'none',chase:'ignore'}]};
+  const scenario={settings,pointContext:{tier:3,divisionIndex:1,
+    divisionCount:1}};
+  const source=runV91TestDrive({...scenario,individualGroupLine:true},
+    {full:true});
+  assert.equal(source.status,'unsupported');
+  assert.match(source.reason,/unresolved last-kilometre road action/);
+  const full=runV91IntegratedTestDrive(scenario,{full:true});
+  const summary=runV91IntegratedTestDrive(scenario);
+  assert.deepEqual(full.summary,summary);
+  assert.equal(full.summary.integrationVersion,'v91-integrated-test-drive-1');
+  assert.equal(full.summary.sourceDriveVersion,source.version);
+  assert.equal(full.summary.status,'unsupported');
+  assert.equal(full.summary.pointsStatus,'withheld');
+  assert.equal(full.summary.canCommitAwards,false);
+  assert.equal(full.summary.provisionalPointPreview.status,'unavailable');
+  assert.equal(full.recording,undefined);
+});
+
 test('offline test drive rejects invalid finale riders before a group-road refusal',()=>{
   const settings={distanceKm:40,terrain:'flat',teamCount:4,
     gender:'F',seed:'conditional-coverage-1',attack:'repeated',

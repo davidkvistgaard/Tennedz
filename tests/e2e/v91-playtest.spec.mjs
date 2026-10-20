@@ -46,6 +46,41 @@ test('a rejected race resets the paired comparison before another run',
     expect(errors).toEqual([]);
   });
 
+test('an unsupported cooperative road stays visible in the full-race preview',
+  async({page})=>{
+    const errors=[];page.on('pageerror',error=>errors.push(error.message));
+    await page.goto('/login');
+    await page.getByLabel('Email or username').fill('settings');
+    await page.getByLabel('Password',{exact:true}).fill('fixture-password');
+    await page.getByRole('button',{name:'Sign in',exact:true}).click();
+    await expect(page).toHaveURL(/\/team$/);
+    await page.goto('/team/v91-playtest');
+    await page.getByLabel('Distance').selectOption('260');
+    await page.getByLabel('Route profile').selectOption('flat');
+    await page.getByLabel('Starting fatigue').selectOption('30');
+    await page.getByLabel('Field size').selectOption('4');
+    await page.getByLabel('Managers with your own tactics').selectOption('1');
+    await page.getByLabel('Rival 1 effort').selectOption('conserve');
+    await page.getByLabel('Rival 1 chase').selectOption('ignore');
+    await page.getByLabel('Scenario seed').fill('cross-route-1');
+    await page.getByRole('checkbox',{
+      name:'Continue to a conditional finish'}).check();
+    await page.getByRole('checkbox',{
+      name:'Show read-only point illustration'}).check();
+    await page.getByRole('button',{name:'Run full race preview'}).click();
+    await expect(page.getByRole('heading',{name:'Conditional finish'}))
+      .toBeVisible();
+    await expect(page.getByRole('status')).toContainText(
+      'The cooperative group has an unresolved last-kilometre road action.');
+    await expect(page.getByText(/Your nominated finisher:.*No paid individual crossing/))
+      .toBeVisible();
+    await expect(page.getByText('Official points: withheld · Awards saved: 0'))
+      .toBeVisible();
+    await expect(page.getByRole('table',{
+      name:'Individual conditional results'})).toHaveCount(0);
+    expect(errors).toEqual([]);
+  });
+
 test('two managers can order paid competing lead-outs in a full race',
   async({page})=>{
     const errors=[];page.on('pageerror',error=>errors.push(error.message));

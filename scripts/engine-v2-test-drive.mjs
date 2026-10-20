@@ -887,8 +887,11 @@ export function runV91IntegratedTestDrive(scenario,{full=false}={}){
   const decorate=summary=>({
     ...summary,integrationVersion:'v91-integrated-test-drive-1',
     sourceDriveVersion:summary.version});
-  return full?{...output,summary:decorate(output.summary)}:
-    decorate(output);
+  // A refused road returns a summary directly, even for the full offline
+  // drive. Keep the integrated entry's full response shape in that case.
+  if(!full)return decorate(output);
+  if(output.summary)return {...output,summary:decorate(output.summary)};
+  return {summary:decorate(output)};
 }
 
 // Separate opt-in laboratory view of the fixed-source-lane bunch finish.

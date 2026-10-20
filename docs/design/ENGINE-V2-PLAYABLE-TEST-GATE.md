@@ -2008,3 +2008,18 @@ next motor version needs one explicit exhausted-travel rule and ledger from
 the first exhausted kilometre through the line, with matching speed, group,
 replay and result semantics. Preserve the older versioned recording and keep
 the current refusal until that entire path is verified.
+
+The full integrated preview also now keeps the expected response shape when
+the underlying drive refuses an unsupported cooperative road before a paid
+finale is recorded. With a fixed 260 km flat, fatigue-30 four-team source,
+changing only rival 1 from hard chase to conserve/no chase creates one front
+group whose last-kilometre action is unresolved. The workbench shows that
+reason, the locked group, no individual crossing and withheld points instead
+of failing while reading a missing summary. A paired run with the same
+route, seed and roster but a steady chase produces 32 individual lines,
+showing that this is a meaningful manager choice, not a generic long-distance
+failure. The focused refusal and
+integration tests, full lint, an isolated build and a local browser playthrough
+pass. The broader test-drive file was started but interrupted because its
+expensive legacy scenarios did not finish within the turn; the eight affected
+integration/refusal cases completed successfully in a separate run.
