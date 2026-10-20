@@ -2543,3 +2543,9 @@ Order within each band and contact at the split remain unresolved, so
 the provisional individual order stays null and point illustration and
 official awards remain unavailable. Both categories on all five route
 profiles replay the projection, and a tampered crossing is rejected.
+
+The preview road panel now labels signed isolated-rider gaps relative to
+the bunch as “ahead of bunch” or “behind bunch”. A rider who has left the
+front but remains in front is therefore no longer displayed with a
+misleading `+-` deficit. The 160-rider rolling browser fixture checks the
+ahead case against its recorded paid passage.

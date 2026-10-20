@@ -75,6 +75,12 @@ function attackDescription(run){
     ` (${run.attackRoad} road)`:''}`;
 }
 
+function bunchRelativeGap(deficitSeconds,decimals){
+  if(deficitSeconds<0)return `${Math.abs(deficitSeconds).toFixed(decimals)} s ahead of bunch`;
+  if(deficitSeconds>0)return `${deficitSeconds.toFixed(decimals)} s behind bunch`;
+  return 'with bunch';
+}
+
 export default function Playtest(){
   const [settings,setSettings]=useState(INITIAL);
   const [customRivals,setCustomRivals]=useState(0);
@@ -484,14 +490,14 @@ export default function Playtest(){
         <div className="v91-metrics">
           <div><strong>{coastedFrame?.terrain}</strong><span>Terrain</span></div>
           <div><strong>{coastedFrame?.roadGroups.length??0}</strong><span>Groups ahead</span></div>
-          <div><strong>{coastedFrame?.droppedRiders.length??0}</strong><span>Dropped riders</span></div>
+          <div><strong>{coastedFrame?.droppedRiders.length??0}</strong><span>Isolated riders</span></div>
           <div><strong>{coastedFrame?.coastedRiders??0}</strong><span>Riders slowed by exhaustion</span></div>
         </div>
         <p>Road groups: {coastedFrame?.roadGroups.map(group=>
           `${group.id} (${group.riderIds.length} riders, ${group.gapSeconds.toFixed(1)} s ahead)`)
           .join(' · ')||'none'}</p>
-        <p>Dropped: {coastedFrame?.droppedRiders.map(row=>
-          `${row.riderId} (+${row.deficitSeconds.toFixed(1)} s, ${row.energy.toFixed(1)} energy)`)
+        <p>Isolated riders: {coastedFrame?.droppedRiders.map(row=>
+          `${row.riderId} (${bunchRelativeGap(row.deficitSeconds,1)}, ${row.energy.toFixed(1)} energy)`)
           .join(' · ')||'none'}</p>
         <div className="v91-riders">{coastedFrame?.ownRiders.map(row=><div key={row.riderId}>
           <strong>{row.riderId}</strong><span>{row.roadGroup}</span>
@@ -509,7 +515,7 @@ export default function Playtest(){
             {group.id}: {group.riderIds.length} riders · {group.passageSecondsFromBunchMarker.toFixed(2)} s · {group.gapSeconds.toFixed(2)} s ahead
           </p>)}
           <p>Isolated passages: {coastedRoad?.droppedPassages.map(row=>
-            `${row.riderId} ${row.passageSecondsFromBunchMarker.toFixed(2)} s (+${row.deficitSeconds.toFixed(2)} s)${
+            `${row.riderId} ${row.passageSecondsFromBunchMarker.toFixed(2)} s (${bunchRelativeGap(row.deficitSeconds,2)})${
               row.contactDistanceM==null?'':
                 ` · bunch passed at ${(row.contactDistanceM/1000).toFixed(3)} km`}`)
             .join(' · ')}</p>

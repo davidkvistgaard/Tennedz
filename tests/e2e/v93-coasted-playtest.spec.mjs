@@ -694,6 +694,8 @@ test('20-team rolling front drops finish ahead as separate solo passages',
     expect(coasted.roadPlaceBounds.bands.map(band=>[
       band.firstPossiblePlace,band.lastPossiblePlace]))
       .toEqual([[1,38],[39,40],[41,160]]);
+    await expect(page.getByText(/Isolated passages:.*you-6.*ahead of bunch/))
+      .toBeVisible();
     await expect(page.getByRole('table',{
       name:'V93 individual conditional results'}).getByRole('row'))
       .toHaveCount(161);
