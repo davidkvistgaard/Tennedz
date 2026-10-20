@@ -80,7 +80,9 @@ export default function Playtest(){
   const [customRivals,setCustomRivals]=useState(0);
   const [integratedMode,setIntegratedMode]=useState(false);
   const [finalePlans,setFinalePlans]=useState({});
+  const [finaleFrontWork,setFinaleFrontWork]=useState({});
   const [namedAttack,setNamedAttack]=useState({teamId:'',riderId:''});
+  const [secondNamedAttack,setSecondNamedAttack]=useState({teamId:'',riderId:''});
   const [showPointPreview,setShowPointPreview]=useState(false);
   const [pointContext,setPointContext]=useState({tier:2,
     divisionIndex:1,divisionCount:2});
@@ -92,6 +94,7 @@ export default function Playtest(){
   const [approachRiderId,setApproachRiderId]=useState('');
   const [finaleReplay,setFinaleReplay]=useState(null);
   const [finaleFrameIndex,setFinaleFrameIndex]=useState(0);
+  const [concurrentRoadIndex,setConcurrentRoadIndex]=useState(0);
   const [inspectedRiderId,setInspectedRiderId]=useState('you-7');
   const [selectedKm,setSelectedKm]=useState(1);
   const [previousRun,setPreviousRun]=useState(null);
@@ -103,6 +106,9 @@ export default function Playtest(){
     if(key==='teamCount'){
       setCustomRivals(count=>Math.min(count,Number(value)-1));
       setNamedAttack(current=>current.teamId==='you'||
+        Number(current.teamId.split('-').at(-1))<Number(value)?current:
+        {teamId:'',riderId:''});
+      setSecondNamedAttack(current=>current.teamId==='you'||
         Number(current.teamId.split('-').at(-1))<Number(value)?current:
         {teamId:'',riderId:''});
     }
@@ -138,6 +144,9 @@ export default function Playtest(){
   const ownPointPreview=integrated?.provisionalPointPreview?.riders
     ?.find(row=>row.riderId===ownFinisher);
   const finaleFrame=finaleReplay?.frames[finaleFrameIndex];
+  const concurrentRoadFrame=finaleReplay?.roadFrames?.[concurrentRoadIndex];
+  const concurrentRoadRider=concurrentRoadFrame?.riders.find(row=>
+    row.riderId===inspectedRiderId);
   const approachFrame=attackApproach?.frames[approachFrameIndex];
   const approachRider=approachFrame?.riders.find(row=>
     row.riderId===approachRiderId);
@@ -153,18 +162,36 @@ export default function Playtest(){
   async function run(event){
     event.preventDefault();setBusy(true);setError('');
     try{
-      const raceSettings={...settings,managerTactics:Array.from(
+      const managerTactics=Array.from(
         {length:customRivals},(_,index)=>
-          settings.managerTactics[index]??defaultTacticFor(index,settings))};
+          settings.managerTactics[index]??defaultTacticFor(index,settings));
+      const allTeams=['you',...Array.from({length:settings.teamCount-1},
+        (_,index)=>`rival-${index+1}`)];
+      const orders=new Map(allTeams.map((teamId,index)=>[
+        teamId,{teamId,attack:'none',
+          chase:index===0?settings.chase:
+            (managerTactics[index-1]??
+              defaultTacticFor(index-1,settings)).chase,
+          frontWork:finaleFrontWork[teamId]??'sit_in'}]));
+      if(secondNamedAttack.teamId)for(const row of [namedAttack,
+        secondNamedAttack])orders.set(row.teamId,{
+        ...(orders.get(row.teamId)??{teamId:row.teamId,
+          chase:'ignore',frontWork:'sit_in'}),attack:'selective',
+        attackRiderId:row.riderId});
+      const raceSettings={...settings,managerTactics,
+        ...(secondNamedAttack.teamId?{
+          managerFinaleOrders:[...orders.values()]}:{})};
       const payload=integratedMode?{mode:'integrated',settings:raceSettings,
         finalePlans:finaleTeams.map(teamId=>({teamId,
           finisherId:finalePlans[teamId]?.finisherId??`${teamId}-7`,
           leadOutRiderId:finalePlans[teamId]?.leadOutRiderId??null})),
-        ...(namedAttack.teamId?{attack:namedAttack}:{}),
+        ...(namedAttack.teamId&&!secondNamedAttack.teamId?
+          {attack:namedAttack}:{}),
         ...(showPointPreview?{pointContext}:{})}:
         raceSettings;
       const response=await api('/api/v91-playtest',{method:'POST',
-        headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+        headers:{'Content-Type':'application/json'},body:JSON.stringify(payload),
+        signal:AbortSignal.timeout(secondNamedAttack.teamId?60_000:15_000)});
       if(integratedMode){
         const next=comparisonRun(raceSettings,response,
           showPointPreview?pointContext:null);
@@ -181,8 +208,9 @@ export default function Playtest(){
       setApproachRiderId((response.attackApproach??response.soloApproach)
         ?.attackRiderId??'');
       setFinaleReplay(response.finaleReplay??response.finaleTail??
-        response.finaleContactReplay??null);
+        response.finaleContactReplay??response.concurrentLateCatchReplay??null);
       setFinaleFrameIndex(0);
+      setConcurrentRoadIndex(0);
       setInspectedRiderId(response.integrated?.managerDecisions
         ?.find(row=>row.teamId==='you')?.finisherId??'you-7');
       setSelectedKm(1);
@@ -279,18 +307,30 @@ export default function Playtest(){
                   .filter(id=>id!==plan.finisherId).map(id=><option key={id}
                     value={id}>Rider {Number(id.split('-').at(-1))+1}</option>)}</select>
               </label>
+              {secondNamedAttack.teamId&&<label>{teamId} last-kilometre front work
+                <select value={finaleFrontWork[teamId]??'sit_in'}
+                  onChange={event=>setFinaleFrontWork(current=>({
+                    ...current,[teamId]:event.target.value}))}>
+                  <option value="sit_in">Sit in</option>
+                  <option value="rotate">Rotate</option>
+                </select>
+              </label>}
             </div>;
           })}</div>
         </fieldset>}
         {integratedMode&&<fieldset className="v91-profile">
           <legend>Named final-kilometre attack</legend>
-          <p>Optionally order one rider to attack at the start of the last kilometre. Other managers keep their chosen tactics. The recorded road decides whether the move survives.</p>
-          <small>For this controlled attack, every other manager must use Attack: None and Chase: Ignore or All helpers. Unsupported orders return an explicit refusal.</small>
+          <p>Order one or two managers to attack at the start of the last kilometre. With two named attacks, other managers keep their chosen chase and effort while further attacks are held. The recorded road decides whether either move survives.</p>
+          <small>Two named attacks use the concurrent conditional road. Unsupported orders return an explicit refusal.</small>
           <div className="v91-profile-points">
             <label>Named attack manager<select value={namedAttack.teamId}
-              onChange={event=>setNamedAttack(event.target.value?{
-                teamId:event.target.value,riderId:`${event.target.value}-0`}:
-                {teamId:'',riderId:''})}>
+              onChange={event=>{
+                const teamId=event.target.value;
+                setNamedAttack(teamId?{teamId,riderId:`${teamId}-0`}:
+                  {teamId:'',riderId:''});
+                if(!teamId||teamId===secondNamedAttack.teamId)
+                  setSecondNamedAttack({teamId:'',riderId:''});
+              }}>
               <option value="">None</option>
               {Array.from({length:settings.teamCount},(_,index)=>
                 index===0?'you':`rival-${index}`).map(teamId=><option
@@ -302,6 +342,25 @@ export default function Playtest(){
                 riderId:event.target.value}))}>
               {Array.from({length:8},(_,index)=><option key={index}
                 value={`${namedAttack.teamId}-${index}`}>Rider {index+1}</option>)}
+            </select></label>}
+            {namedAttack.teamId&&<label>Second attack manager<select
+              value={secondNamedAttack.teamId}
+              onChange={event=>setSecondNamedAttack(event.target.value?{
+                teamId:event.target.value,riderId:`${event.target.value}-0`}:
+                {teamId:'',riderId:''})}>
+              <option value="">None</option>
+              {Array.from({length:settings.teamCount},(_,index)=>
+                index===0?'you':`rival-${index}`)
+                .filter(teamId=>teamId!==namedAttack.teamId)
+                .map(teamId=><option key={teamId} value={teamId}>
+                  {teamId==='you'?'Your team':teamId}</option>)}
+            </select></label>}
+            {secondNamedAttack.teamId&&<label>Second attacking rider<select
+              value={secondNamedAttack.riderId}
+              onChange={event=>setSecondNamedAttack(current=>({...current,
+                riderId:event.target.value}))}>
+              {Array.from({length:8},(_,index)=><option key={index}
+                value={`${secondNamedAttack.teamId}-${index}`}>Rider {index+1}</option>)}
             </select></label>}
           </div>
         </fieldset>}
@@ -388,15 +447,32 @@ export default function Playtest(){
           {approachRider&&<p>{approachRider.riderId}: {approachRider.role} · {approachRider.energyAfter.toFixed(1)} energy · {approachRider.energySpent.toFixed(2)} spent this segment</p>}
         </div>}
         {finaleReplay&&<div className="v91-finish">
-          <h3>{finaleReplay.status==='partial_paid_trace'?
+          <h3>{finaleReplay.status==='concurrent_late_catch_paid_trace'?
+            'Paid double-catch finale':finaleReplay.status==='partial_paid_trace'?
             'Paid final 500 m':finaleReplay.status===
               'partial_contact_paid_trace'?
               'Paid finale through contact':'Paid final-kilometre replay'}</h3>
-          {finaleReplay.status==='partial_paid_trace'?
+          {finaleReplay.status==='concurrent_late_catch_paid_trace'?
+            <p>Two named attacks meet the bunch at recorded contacts. Road bands and energy are paid until {finaleReplay.handoffDistanceM/1000} km; individual positions begin there and the finish order remains conditional.</p>:
+            finaleReplay.status==='partial_paid_trace'?
             <p>All {finaleFrame?.riders.length} riders continue from the recorded {finaleReplay.handoffDistanceM/1000} km boundary on one clock. Opening 500 m: groups and energy only. These later positions are conditional bunch positions, not an official order.</p>:
             finaleReplay.status==='partial_contact_paid_trace'?
               <p>All {finaleFrame?.riders.length} riders continue from the recorded {finaleReplay.handoffDistanceM/1000} km boundary through the exact catch to the line. Positions and energy follow the paid road; the finish order remains conditional.</p>:
             <p>All {finaleFrame?.riders.length} riders continue from the locked {result.handoffKm} km handoff on one clock.</p>}
+          {finaleReplay.roadFrames&&<div>
+            <p>{finaleReplay.roadFrames.length} paid road boundaries · {finaleReplay.contactEvents.length} exact contacts</p>
+            {finaleReplay.contactEvents.map(event=><p key={event.kind}>
+              {event.riderId}: {event.kind.replaceAll('_',' ')} at {(event.positionM/1000).toFixed(3)} km · {event.elapsedSinceLaunchSeconds.toFixed(2)} s
+            </p>)}
+            <label>Paid road boundary: {concurrentRoadIndex+1} of {finaleReplay.roadFrames.length}
+              <input type="range" min="0" max={finaleReplay.roadFrames.length-1}
+                value={concurrentRoadIndex}
+                onChange={event=>setConcurrentRoadIndex(Number(event.target.value))}/>
+            </label>
+            <p>{concurrentRoadFrame?.elapsedSeconds.toFixed(2)} s after launch · {concurrentRoadFrame?.roadGroups.map(group=>
+              `${group.kind}: ${group.riderIds.length} riders at ${(group.positionM/1000).toFixed(3)} km`).join(' · ')}</p>
+            {concurrentRoadRider&&<p>{concurrentRoadRider.riderId}: {concurrentRoadRider.energyAfter.toFixed(1)} energy · {concurrentRoadRider.energySpent.toFixed(2)} spent this segment · {concurrentRoadRider.role}</p>}
+          </div>}
           <label>Finale interval: {finaleFrameIndex+1} of {finaleReplay.frames.length}
             <input type="range" min="0" max={finaleReplay.frames.length-1}
               value={finaleFrameIndex}

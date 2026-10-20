@@ -302,3 +302,54 @@ test('a paid lead-out remains visible through an exact late contact',
     await expect(page.getByText(/Points: withheld/)).toBeVisible();
     expect(errors).toEqual([]);
   });
+
+test('two managers can attack and inspect their paid double catch',
+  async({page})=>{
+    test.setTimeout(90_000);
+    const errors=[];page.on('pageerror',error=>errors.push(error.message));
+    await page.goto('/login');
+    await page.getByLabel('Email or username').fill('v2manager');
+    await page.getByLabel('Password',{exact:true}).fill('fixture-password');
+    await page.getByRole('button',{name:'Sign in',exact:true}).click();
+    await expect(page).toHaveURL(/\/team$/);
+    await page.goto('/team/v91-playtest');
+    await page.getByLabel('Distance').selectOption('40');
+    await page.getByLabel('Route profile').selectOption('flat');
+    await page.getByLabel('Field size').selectOption('15');
+    await page.getByLabel('Default tactics for uncustomized managers')
+      .selectOption('passive');
+    await page.getByLabel('Managers with your own tactics').selectOption('4');
+    await page.getByLabel('Your attack order').selectOption('none');
+    await page.getByLabel('Your chase order').selectOption('ignore');
+    await page.getByLabel('Rival 1 chase').selectOption('selective');
+    await page.getByLabel('Rival 4 chase').selectOption('selective');
+    await page.getByRole('checkbox',{name:'Continue to a conditional finish'})
+      .check();
+    await page.getByLabel('Named attack manager').selectOption('you');
+    await page.getByLabel('Named attacking rider').selectOption('you-2');
+    await page.getByLabel('Second attack manager').selectOption('rival-2');
+    await page.getByLabel('Second attacking rider')
+      .selectOption('rival-2-2');
+    await page.getByLabel('rival-3 last-kilometre front work')
+      .selectOption('rotate');
+    await page.getByLabel('Scenario seed').fill('paired-final-orders');
+    await page.getByRole('button',{name:'Run full race preview'}).click();
+    await expect(page.getByRole('heading',{name:'Paid double-catch finale'}))
+      .toBeVisible({timeout:60_000});
+    await expect(page.getByText(/2 exact contacts/)).toBeVisible();
+    await expect(page.getByText(/rival-2-2: rear attack bunch contact/))
+      .toBeVisible();
+    await expect(page.getByText(/you-2: front bunch contact/))
+      .toBeVisible();
+    await expect(page.getByText(/120 of 120 riders have individual crossing times/))
+      .toBeVisible();
+    await page.getByRole('slider',{name:/Paid road boundary/}).fill('4');
+    await expect(page.getByText(/bunch: 120 riders at 39\.800 km/))
+      .toBeVisible();
+    await page.getByRole('slider',{name:/Finale interval/})
+      .fill('2');
+    await expect(page.getByText('All riders have crossed; see the conditional times below.'))
+      .toBeVisible();
+    await expect(page.getByText(/Points: withheld/)).toBeVisible();
+    expect(errors).toEqual([]);
+  });

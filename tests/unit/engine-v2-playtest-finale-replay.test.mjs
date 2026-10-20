@@ -5,9 +5,53 @@ import {runV91IntegratedTestDrive} from
 import {summarizeV91PaidFinaleReplay,
   summarizeV91PaidFinaleTail,
   summarizeV91PaidPartialContactReplay,
+  summarizeV91PaidConcurrentLateCatchReplay,
   summarizeV91PaidNamedAttackApproach,
   summarizeV91PaidSoloApproach} from
   '../../lib/engine/v2/playtest-finale-replay.mjs';
+
+test('two manager catches replay paid bands into a conditional individual line',()=>{
+  const ids=['you',...Array.from({length:14},(_,index)=>
+    `rival-${index+1}`)];
+  const managerFinaleOrders=ids.map(teamId=>({teamId,
+    attack:['you','rival-2'].includes(teamId)?'selective':'none',
+    ...(['you','rival-2'].includes(teamId)?{
+      attackRiderId:`${teamId}-2`}:{}),
+    chase:['rival-1','rival-4'].includes(teamId)?'selective':'ignore',
+    frontWork:teamId==='rival-3'?'rotate':'sit_in'}));
+  const output=runV91IntegratedTestDrive({settings:{distanceKm:40,
+    teamCount:15,terrain:'flat',seed:'paired-final-orders',
+    attack:'none',chase:'ignore',defaultRivalPlan:'neutral',
+    managerFinaleOrders,teamOverrides:ids.map(teamId=>({teamId,
+      level:teamId==='rival-2'?81:teamId==='you'?80:85}))}},
+  {full:true});
+  const replay=summarizeV91PaidConcurrentLateCatchReplay(output);
+  assert.equal(replay.status,'concurrent_late_catch_paid_trace');
+  assert.equal(replay.roadStartDistanceM,39_600);
+  assert.equal(replay.handoffDistanceM,39_800);
+  assert.deepEqual(replay.contactEvents.map(row=>row.riderId),
+    ['you-2','rival-2-2']);
+  assert.equal(replay.roadFrames.at(-1).roadGroups.length,1);
+  assert.equal(replay.roadFrames.at(-1).riders.length,120);
+  assert.equal(replay.frames.at(-1).riders.length,120);
+  assert.ok(replay.frames.at(-1).riders.every(row=>
+    row.positionM===40_000&&Number.isFinite(row.elapsedToLineSeconds)));
+  assert.equal(output.summary.pointsStatus,'withheld');
+  const changedRoad=structuredClone(output);
+  changedRoad.individualLine.roadPrefix.frames.at(-1).riders[0]
+    .energyAtEvent+=1;
+  assert.throws(()=>summarizeV91PaidConcurrentLateCatchReplay(changedRoad),
+    /rider energy/);
+  const changedContact=structuredClone(output);
+  changedContact.individualLine.roadPrefix.contactEvents[0]
+    .positionM+=1;
+  assert.throws(()=>summarizeV91PaidConcurrentLateCatchReplay(
+    changedContact),/handoff/);
+  const changedLine=structuredClone(output);
+  changedLine.individualLine.runner.finishers[0].energyAtLine+=1;
+  assert.throws(()=>summarizeV91PaidConcurrentLateCatchReplay(changedLine),
+    /individual line/);
+});
 
 const settings={distanceKm:40,terrain:'flat',teamCount:4,gender:'M',
   fatigue:0,effort:'steady',attack:'none',chase:'ignore',

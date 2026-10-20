@@ -4,6 +4,7 @@ import {createV91Playtest,summarizeV91Playtest} from '../../../lib/engine/v2/pla
 import {summarizeV91PaidFinaleReplay,
   summarizeV91PaidFinaleTail,
   summarizeV91PaidPartialContactReplay,
+  summarizeV91PaidConcurrentLateCatchReplay,
   summarizeV91PaidNamedAttackApproach,
   summarizeV91PaidSoloApproach} from
   '../../../lib/engine/v2/playtest-finale-replay.mjs';
@@ -60,7 +61,9 @@ async function handler(request,_context,auth){
         finaleReplay:summarizeV91PaidFinaleReplay(output.recording),
         finaleTail:summarizeV91PaidFinaleTail(output.recording),
         finaleContactReplay:summarizeV91PaidPartialContactReplay(
-          output.recording)});
+          output.recording),
+        concurrentLateCatchReplay:
+          summarizeV91PaidConcurrentLateCatchReplay(output)});
     }
     if(input.mode!==undefined)
       return NextResponse.json({ok:false,error:'Invalid playtest mode.'},

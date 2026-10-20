@@ -1761,3 +1761,19 @@ they retain recorded depleted bands with 0.62112 unmet energy demand and
 an unavailable point preview. Neither was silently assigned a finish or
 award. This is a bounded coverage result for one fixed seed, not sporting
 balance evidence or complete playable coverage.
+
+The preview workbench now accepts two named last-kilometre attackers with
+independent manager chase choices and optional front rotation. In a fixed
+40 km flat, 15-team local browser scenario, rival-2-2 meets the bunch first
+and you-2 is caught next; five paid road boundaries show the groups and
+each rider's energy through the complete bunch at 39.8 km. A separate
+positioned runner then records 120 individual conditional line times. The
+replay checks the two contact positions against the road bands, every
+rider's energy continuity, the positioned source, and final time and
+energy against the conditional crossings. Tampered energy, contact, or line
+records fail validation. The browser shows the paid road segment and its
+conditional continuation separately; it does not infer individual wheels
+before 39.8 km. Official places and awards remain withheld. This is one
+playable two-manager configuration, not coverage of every attack/chase
+combination or a classified result. The local browser case, replay unit
+tests, lint and an isolated `.next-v91-preview` build passed.
