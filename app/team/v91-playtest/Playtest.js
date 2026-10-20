@@ -167,6 +167,18 @@ export default function Playtest(){
     a.riderId.localeCompare(b.riderId));
   const coastedRoadBounds=new Map((coasted?.roadPlaceBounds?.riders??[])
     .map(row=>[row.riderId,row]));
+  const coastedOwnDecision=coasted?.managerDecisions.find(row=>
+    row.teamId==='you');
+  const coastedOwnLine=coasted?.lineTimes.find(row=>
+    row.riderId===coastedOwnDecision?.finisherId);
+  const coastedOwnPlace=coasted?.provisionalLineOrder?.find(row=>
+    row.riderId===coastedOwnDecision?.finisherId)??
+    coastedRoadBounds.get(coastedOwnDecision?.finisherId);
+  const coastedOwnPoints=coasted?.pointPreview?.riders?.find(row=>
+    row.riderId===coastedOwnDecision?.finisherId);
+  const coastedOwnHelperWork=(coasted?.leadOutWork??[])
+    .filter(row=>row.riderId===coastedOwnDecision?.leadOutRiderId)
+    .reduce((sum,row)=>sum+row.energySpent,0);
   const conditionalLine=[...lineTimes].sort((a,b)=>
     a.elapsedSecondsFromLastKmStart-b.elapsedSecondsFromLastKmStart||
     a.riderId.localeCompare(b.riderId));
@@ -483,6 +495,25 @@ export default function Playtest(){
         <h2>V93 race preview · {coasted.settings.distanceKm} km {coasted.settings.terrain}</h2>
         <p>{coasted.tuningVersion} · {coasted.settings.managerTactics.length} custom rival managers · {coasted.roadStatus}</p>
         <p>Conditional individual line: {coasted.lineTimes.length} riders. Official results and points are withheld.</p>
+        {coastedOwnDecision&&<section className="v91-finish" aria-label="Your v93 finish">
+          <h3>Your finish</h3>
+          <p>Nominated finisher: {coastedOwnDecision.finisherId} ·
+            {' '}{coastedOwnLine?.roadBandId??'no paid road band'} ·
+            {' '}{coastedOwnLine?.elapsedSecondsFromLastKmStart.toFixed(3)??'—'} s
+            from the bunch&apos;s final-kilometre marker ·
+            {' '}{coastedOwnLine?.energyAtLine.toFixed(1)??'—'} energy at line.</p>
+          <p>Conditional place: {coastedOwnPlace?
+            coastedOwnPlace.firstPossiblePlace===
+              coastedOwnPlace.lastPossiblePlace?
+              coastedOwnPlace.firstPossiblePlace:
+              `${coastedOwnPlace.firstPossiblePlace}–${coastedOwnPlace.lastPossiblePlace}`:
+            'unresolved'} · Read-only points: {coastedOwnPoints?
+              coastedOwnPoints.previewPoints:
+              coasted?.pointPreview?.status==='unavailable'?
+                'unavailable':'not requested'}.</p>
+          <p>Lead-out helper: {coastedOwnDecision.leadOutRiderId??'none'} ·
+            {' '}{coastedOwnHelperWork.toFixed(2)} energy of recorded work.</p>
+        </section>}
         <label>Recorded kilometre: {coastedKm}
           <input type="range" min="1" max={coasted.kilometreFrames.length}
             value={coastedKm} onChange={event=>setCoastedKm(Number(event.target.value))}/>

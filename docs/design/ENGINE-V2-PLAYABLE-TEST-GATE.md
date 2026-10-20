@@ -2556,3 +2556,12 @@ multipliers. All 44 available point illustrations still equal the
 existing one-day policy for each provisional placing; the other four
 remain explicitly unavailable. The audit retains its 4,776
 replay-matched crossings and seven exactly replayed preview versions.
+
+The v93 playable page now puts the player's nominated finisher, recorded
+road band, conditional crossing time and line energy in a compact finish
+panel, with the helper's actually paid work and the available placing or
+read-only point illustration. The two-manager 4-team browser fixture
+shows withheld points while its helpers work, then a policy-consistent
+illustration when the helpers are removed. The 20-team front-drop
+fixture shows a 39–40 conditional range and withheld points for the
+nominated isolated rider. Both checks run against an isolated local build.

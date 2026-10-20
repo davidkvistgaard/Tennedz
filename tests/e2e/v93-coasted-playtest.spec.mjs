@@ -47,6 +47,17 @@ test('exhausted v93 road pays two manager lead-outs and shows conditional line',
     expect(coasted.pointsStatus).toBe('withheld');
     await expect(page.getByRole('heading',{
       name:'V93 race preview · 260 km flat'})).toBeVisible();
+    const ownFinish=page.getByRole('region',{name:'Your v93 finish'});
+    const ownLine=coasted.lineTimes.find(row=>row.riderId==='you-4');
+    const helperWork=coasted.leadOutWork.filter(row=>
+      row.riderId==='you-6').reduce((sum,row)=>sum+row.energySpent,0);
+    await expect(ownFinish).toContainText(
+      `Nominated finisher: you-4 · ${ownLine.roadBandId}`);
+    await expect(ownFinish).toContainText(
+      `${ownLine.elapsedSecondsFromLastKmStart.toFixed(3)} s`);
+    await expect(ownFinish).toContainText('Read-only points: unavailable');
+    await expect(ownFinish).toContainText(
+      `Lead-out helper: you-6 · ${helperWork.toFixed(2)} energy`);
     await expect(page.getByRole('table',{
       name:'V93 individual conditional results'}).getByRole('row'))
       .toHaveCount(33);
@@ -69,6 +80,12 @@ test('exhausted v93 road pays two manager lead-outs and shows conditional line',
     expect(unassisted.pointPreview.awardRows).toEqual([]);
     expect(unassisted.pointPreview.riders.every(row=>
       Number.isFinite(row.previewPoints))).toBe(true);
+    const unassistedPoints=unassisted.pointPreview.riders.find(row=>
+      row.riderId==='you-4');
+    await expect(ownFinish).toContainText(
+      `Read-only points: ${unassistedPoints.previewPoints}`);
+    await expect(ownFinish).toContainText(
+      'Lead-out helper: none · 0.00 energy of recorded work.');
     await expect(page.getByRole('table',{
       name:'V93 individual conditional results'}).getByRole('row'))
       .toHaveCount(33);
@@ -694,6 +711,8 @@ test('20-team rolling front drops finish ahead as separate solo passages',
     expect(coasted.roadPlaceBounds.bands.map(band=>[
       band.firstPossiblePlace,band.lastPossiblePlace]))
       .toEqual([[1,38],[39,40],[41,160]]);
+    await expect(page.getByRole('region',{name:'Your v93 finish'}))
+      .toContainText('Conditional place: 39–40 · Read-only points: unavailable');
     await expect(page.getByText(/Isolated passages:.*you-6.*ahead of bunch/))
       .toBeVisible();
     await expect(page.getByRole('table',{
