@@ -223,6 +223,90 @@ test('one rival chase changes the recorded v93 road, line and replay',
     expect(errors).toEqual([]);
   });
 
+test('one player attack changes the recorded front, result and paid replay',
+  async({page})=>{
+    const errors=[];page.on('pageerror',error=>errors.push(error.message));
+    await page.goto('/login');
+    await page.getByLabel('Email or username').fill('v2manager');
+    await page.getByLabel('Password',{exact:true}).fill('fixture-password');
+    await page.getByRole('button',{name:'Sign in',exact:true}).click();
+    await expect(page).toHaveURL(/\/team$/);
+    await page.goto('/team/v91-playtest');
+    await page.getByRole('checkbox',{
+      name:'Continue to a conditional finish'}).check();
+    await page.getByRole('checkbox',{
+      name:'Try v93 road-to-line preview'}).check();
+    await page.getByLabel('Distance').selectOption('260');
+    await page.getByLabel('Route profile').selectOption('flat');
+    await page.getByLabel('Field size').selectOption('4');
+    await page.getByLabel('Starting fatigue').selectOption('30');
+    await page.getByLabel('Scenario seed').fill('coast-matrix');
+    await page.getByLabel('Default tactics for uncustomized managers')
+      .selectOption('attack');
+    await page.getByLabel('Your attack').selectOption('none');
+    await page.getByLabel('Your chase').selectOption('ignore');
+    await page.getByRole('checkbox',{
+      name:'Show read-only point illustration'}).check();
+    const run=async()=>{
+      const responsePromise=page.waitForResponse(response=>
+        response.url().endsWith('/api/v91-playtest')&&
+        response.request().method()==='POST');
+      await page.getByRole('button',{name:'Run v93 race preview'}).click();
+      const response=await responsePromise;
+      expect(response.status()).toBe(200);
+      return (await response.json()).coasted;
+    };
+    const before=await run();
+    expect(before.version).toBe('v93-separated-playtest-1');
+    expect(before.lineTimes).toHaveLength(32);
+    expect(before.kilometreFrames.at(-1).roadGroups).toHaveLength(2);
+    const beforeLine=before.lineTimes.find(row=>row.riderId==='you-7');
+    expect(beforeLine.roadBandId).toBe('peloton');
+    expect(before.provisionalLineOrder.find(row=>row.riderId==='you-7')
+      .position).toBe(7);
+    const beforePoints=before.pointPreview.riders.find(row=>
+      row.riderId==='you-7');
+    expect(beforePoints.previewPoints).toBe(pointsForDivisionResult({
+      tier:before.pointPreview.tier,resultType:'ONE_DAY',placing:7,
+      multiplier:before.pointPreview.multiplier}));
+
+    await page.getByLabel('Your attack').selectOption('repeated');
+    const after=await run();
+    expect(after.version).toBe('v93-separated-playtest-1');
+    expect(after.kilometreFrames.at(-1).roadGroups).toHaveLength(2);
+    expect(after.kilometreFrames.at(-1).roadGroups[0].riderIds)
+      .toContain('you-7');
+    expect(after.lineTimes).toHaveLength(32);
+    const afterLine=after.lineTimes.find(row=>row.riderId==='you-7');
+    expect(afterLine.roadBandId).toBe('road-2');
+    expect(afterLine.elapsedSecondsFromLastKmStart)
+      .toBeLessThan(beforeLine.elapsedSecondsFromLastKmStart);
+    expect(afterLine.energyAtLine).toBeLessThan(beforeLine.energyAtLine);
+    expect(after.provisionalLineOrder.find(row=>row.riderId==='you-7')
+      .position).toBe(3);
+    const afterPoints=after.pointPreview.riders.find(row=>
+      row.riderId==='you-7');
+    expect(afterPoints.previewPoints).toBe(pointsForDivisionResult({
+      tier:after.pointPreview.tier,resultType:'ONE_DAY',placing:3,
+      multiplier:after.pointPreview.multiplier}));
+    expect(afterPoints.previewPoints).toBeGreaterThan(
+      beforePoints.previewPoints);
+    expect(after.pointPreview.awardRows).toEqual([]);
+    await expect(page.getByRole('region',{
+      name:'Paired v93 race comparison'})).toContainText(
+      'Conditional place: 7 → 3');
+    await expect(page.getByRole('region',{name:'Your v93 finish'}))
+      .toContainText(`Read-only points: ${afterPoints.previewPoints}`);
+    await page.getByRole('button',{name:'Replay you-7'}).click();
+    const interval=page.getByRole('slider',{name:/Band interval/});
+    await interval.fill(await interval.getAttribute('max'));
+    await expect(page.getByLabel('Selected rider finale replay'))
+      .toContainText(`Crossed at ${afterLine.elapsedSecondsFromLastKmStart.toFixed(3)} s; result ${afterLine.elapsedSecondsFromLastKmStart.toFixed(3)} s, ${afterLine.energyAtLine.toFixed(1)} energy.`);
+    await expect(page.getByText('Official points: withheld · Awards saved: 0'))
+      .toBeVisible();
+    expect(errors).toEqual([]);
+  });
+
 test('one rival effort changes a women race place and read-only points',
   async({page})=>{
     const errors=[];page.on('pageerror',error=>errors.push(error.message));

@@ -2738,3 +2738,18 @@ the change passed all 961 unit tests with zero failures in 1,816 seconds;
 `pnpm lint` also passed. This only schedules unit test files; it changes
 neither the motor nor the assertions. The default-parallelism timeout above
 remains part of the evidence for why this limit is set.
+
+A paired local browser gate now changes only the player's attack from
+`none` to `repeated` on the same 260 km flat, four-team, fatigue-30 road
+with attacking rival defaults. The nominated `you-7` moves from the
+peloton to a recorded front group, spends more energy (36.4 to 9.5 at
+the line), and changes from conditional place 7 to 3. Both runs retain
+32 individual crossings; their read-only points follow the existing
+one-day policy, and the second UI replay matches its recorded crossing
+and energy. Award rows remain empty. The focused browser case, lint and
+isolated `.next-v93-local` build pass. A single-fixture run of all 21
+browser cases hit the local API's rate limit (429) in the existing
+invalid-helper case; that case passed alone. Running the full 21-case
+suite as four fresh, fully parallel Playwright shards passed 6+5+5+5
+cases. The new check extends end-to-end tactical evidence without
+changing the v93 recording or resolving its provisional road geometry.
