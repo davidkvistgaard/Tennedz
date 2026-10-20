@@ -2025,8 +2025,8 @@ expensive legacy scenarios did not finish within the turn; the eight affected
 integration/refusal cases completed successfully in a separate run.
 
 The integrated full drive now retains the original locked kilometre source
-when an expected refusal carries one. In a 40 km cooperative-road fixture this
-lets the browser reuse the same 40 recorded frames for its handoff display
+when an expected refusal carries one. In a 120 km cooperative-road fixture this
+lets the browser reuse the same 120 recorded frames for its handoff display
 instead of starting a second simulation after the refusal. The older direct
 test-drive refusal remains a plain summary by default; only the integrated
 full caller requests the source. A focused test checks both shapes and the
@@ -2049,3 +2049,17 @@ retains version 12. Focused engine tests, the broader conditional-race gate,
 the route/length gate, lint, an isolated build and both local browser paths
 pass. This does not settle other active selective chases or the 260 km
 zero-reserve debt documented above.
+
+A separate, already engaged selective chase now has a bounded paid path in
+version `v91-conditional-race-final-14`. The locked 39 km source records one
+external team chasing a 17.51-second group under a `gap_over_limit` decision.
+The same named helper pays work in every short slice; the recorded gap remains
+above the selective safe-gap threshold, so every decision stays engaged and
+the group survives. Ten 40 km route/category cases (five terrains, M/F)
+retain all 32 individual lines, matching replayed times and energy and
+read-only one-day point values. A future selective hold or catch is still
+refused until its changed road is recorded. Turning that rival's order to
+ignore in the flat fixture produces a different road with a singleton band
+at 500 m; the integrated preview now reports that missing individual
+continuation explicitly instead of throwing from the band runner. The
+original locked race remains visible and awards remain withheld.

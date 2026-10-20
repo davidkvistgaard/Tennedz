@@ -824,7 +824,7 @@ test('integrated drive keeps unpayable energy and awards unavailable',()=>{
 });
 
 test('integrated full drive wraps an unsupported cooperative road without crashing',()=>{
-  const settings={distanceKm:40,terrain:'flat',teamCount:4,gender:'M',
+  const settings={distanceKm:120,terrain:'flat',teamCount:4,gender:'M',
     seed:'conditional-coverage-1',attack:'repeated',chase:'ignore',
     defaultRivalPlan:'attack',managerTactics:[{effort:'steady',
       attack:'none',chase:'selective'}]};
@@ -837,7 +837,7 @@ test('integrated full drive wraps an unsupported cooperative road without crashi
   const retained=runV91TestDrive({...scenario,individualGroupLine:true},
     {full:true,retainRefusalSource:true});
   assert.deepEqual(retained.summary,source);
-  assert.equal(retained.recording.recording.frames.length,40);
+  assert.equal(retained.recording.recording.frames.length,120);
   const full=runV91IntegratedTestDrive(scenario,{full:true});
   const summary=runV91IntegratedTestDrive(scenario);
   assert.deepEqual(full.summary,summary);
@@ -847,9 +847,42 @@ test('integrated full drive wraps an unsupported cooperative road without crashi
   assert.equal(full.summary.pointsStatus,'withheld');
   assert.equal(full.summary.canCommitAwards,false);
   assert.equal(full.summary.provisionalPointPreview.status,'unavailable');
-  assert.equal(full.recording.recording.frames.length,40);
-  assert.equal(full.recording.recording.route.distanceKm,40);
+  assert.equal(full.recording.recording.frames.length,120);
+  assert.equal(full.recording.recording.route.distanceKm,120);
   assert.deepEqual(full.summary.lastKmSource,source.lastKmSource);
+});
+
+test('recorded selective chase pays the helper and the individual line',()=>{
+  const settings={distanceKm:40,terrain:'flat',teamCount:4,gender:'M',
+    seed:'conditional-coverage-1',attack:'repeated',chase:'ignore',
+    defaultRivalPlan:'attack',managerTactics:[{effort:'steady',
+      attack:'none',chase:'selective'}]};
+  const output=runV91IntegratedTestDrive({settings,pointContext:{tier:3,
+    divisionIndex:1,divisionCount:1}},{full:true});
+  assert.equal(output.recording.version,'v91-conditional-race-final-14');
+  assert.equal(output.summary.roadStatus,'conditional_multiband_line');
+  assert.equal(output.summary.finale.lineTimes.length,32);
+  const pull=output.recording.selectiveChaseDecision.chasePullRiderId;
+  assert.equal(output.recording.selectiveChaseDecision.teamId,'rival-1');
+  assert.ok(output.recording.selectiveChaseDecision.decisions.every(row=>
+    row.decision==='engaged'));
+  assert.ok(output.recording.paidFinale.line.approachFrames.every(frame=>
+    frame.chasePullRiderId===pull&&frame.riders.some(row=>
+      row.riderId===pull&&row.role==='pull'&&row.energySpent>0)));
+  assert.equal(output.summary.provisionalPointPreview.riders.length,32);
+  assert.deepEqual(output.summary.provisionalPointPreview.awardRows,[]);
+  assert.equal(output.summary.pointsStatus,'withheld');
+  assert.equal(output.summary.canCommitAwards,false);
+
+  const ignored=runV91IntegratedTestDrive({settings:{...settings,
+    managerTactics:[{effort:'steady',attack:'none',chase:'ignore'}]},
+  pointContext:{tier:3,divisionIndex:1,divisionCount:1}},{full:true});
+  assert.equal(ignored.summary.status,'unsupported');
+  assert.equal(ignored.summary.individualLineStatus,
+    'unsupported_singleton_band');
+  assert.match(ignored.summary.reason,/one-rider band/);
+  assert.equal(ignored.recording.recording.frames.length,40);
+  assert.equal(ignored.summary.pointsStatus,'withheld');
 });
 
 test('unavailable selective chase pays a complete group road and individual replay',()=>{

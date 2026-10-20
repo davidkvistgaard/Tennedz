@@ -627,6 +627,31 @@ test('unavailable selective chase cannot veto a payable passive group line',()=>
     /does not replay/);
 });
 
+test('a recorded selective chase stays engaged and pays its helper to the line',()=>{
+  const input={distanceKm:40,terrain:'flat',teamCount:4,gender:'M',
+    seed:'conditional-coverage-1',attack:'repeated',chase:'ignore',
+    defaultRivalPlan:'attack',managerTactics:[{effort:'steady',
+      attack:'none',chase:'selective'}]};
+  const trial=createV91ConditionalRaceFinal(input);
+  assert.equal(trial.version,'v91-conditional-race-final-14');
+  assert.equal(trial.roadStatus,'paid_group_bands');
+  assert.equal(trial.paidFinale.line.outcome,'survived');
+  assert.equal(trial.selectiveChaseDecision.teamId,'rival-1');
+  assert.equal(trial.selectiveChaseDecision.sourceReason,'gap_over_limit');
+  assert.ok(trial.selectiveChaseDecision.decisions.every(row=>
+    row.decision==='engaged'));
+  const pull=trial.selectiveChaseDecision.chasePullRiderId;
+  assert.ok(trial.paidFinale.line.approachFrames.every(frame=>
+    frame.chasePullRiderId===pull&&frame.riders.some(row=>
+      row.riderId===pull&&row.energySpent>0)));
+  assert.equal(trial.paidFinale.line.finalRiderEnergy.length,32);
+  assert.equal(validateV91ConditionalRaceFinal(input,{},trial),true);
+  const altered=structuredClone(trial);
+  altered.selectiveChaseDecision.decisions[0].decision='held';
+  assert.throws(()=>validateV91ConditionalRaceFinal(input,{},altered),
+    /does not replay/);
+});
+
 test('zero-reserve riders cannot inherit a paid passive finale',()=>{
   for(const gender of ['M','F'])for(const teamCount of [4,15,20]){
     const input={distanceKm:260,terrain:'flat',fatigue:30,
@@ -800,6 +825,7 @@ test('group branch refuses unpaid manager plans and unresolved road states',()=>
   assert.equal(validateV91ConditionalRaceFinal(
     {...group,chase:'all'},{},ownBreakChase),true);
   assert.throws(()=>createV91ConditionalRaceFinal({...group,
+    distanceKm:120,
     managerTactics:[{effort:'steady',attack:'none',chase:'selective'}]}),
   /unresolved last-kilometre road action/);
   const separated=createV91ConditionalRaceFinal({...group,

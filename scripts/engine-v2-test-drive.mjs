@@ -122,6 +122,7 @@ const REFUSALS=new Set([
   'The inactive-intents bunch has an unresolved road action.',
   'The cooperative group has an unresolved last-kilometre road action.',
   'The cooperative group has unpaid last-kilometre rider travel.',
+  'The selective chase needs a recorded last-kilometre change.',
   'Finisher and lead-out plans are not paid for a road group.',
   'Finisher and lead-out plans are not paid for road groups.',
   'Finisher and lead-out plans are not paid for depleted road bands.',
@@ -794,6 +795,15 @@ export function runV91TestDrive(scenario,{full=false,
       const summary={...base,status:'unsupported',
         individualLineStatus:'unsupported_plan',
         reason:'An isolated rider cannot be a paid finisher.'};
+      return full?{summary,recording:trial}:summary;
+    }
+    const separatedAt500=separated?trial.paidFinale.passageFrames.find(
+      frame=>frame.distanceM===trial.recording.route.distanceKm*1000-500):null;
+    if(separatedAt500?.groups.some(group=>group.riderIds.length===1)){
+      const base=summaryFor(trial,request,pointContext);
+      const summary={...base,status:'unsupported',
+        individualLineStatus:'unsupported_singleton_band',
+        reason:'A separated one-rider band needs a paid individual continuation.'};
       return full?{summary,recording:trial}:summary;
     }
     const record=singleton?recordFinaleSingletonFrontIndividualLine:
