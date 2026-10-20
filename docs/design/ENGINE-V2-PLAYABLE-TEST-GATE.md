@@ -2179,3 +2179,24 @@ The route/length cross matrix, a focused ledger test, lint, an isolated build
 and a local browser refusal test pass. This is evidence of an unresolved
 motor debt: no physical speed or road-group response to that debt has yet
 been paid, so these sources remain unclassified and points are withheld.
+
+The isolated v93 motor candidate tests a whole-kilometre exhaustion rule.
+Energy here is a reserve for the ordered pace, not a rider's total ability to
+move. If a non-breakaway rider cannot pay that pace, the candidate reduces
+the actual work to available reserve and records the curtailed work and a
+slower sustainable pace. The speed loss is bounded at 35%; the resulting
+seconds are added to that rider's road deficit, so a rider unable to hold
+the bunch drops rather than travelling a full kilometre at its speed. The
+same time formula is used to validate the recorded delay, and the final
+individual provisional result retains the final road group and energy.
+Ten 260 km mixed-plan four-team cases across all selectable terrains and
+both categories convert their previously unpaid whole-kilometre work into
+recorded delays with no remaining energy debt. A further 40 long cases with
+15/20 teams, attack/chase plans, both categories and all five terrains retain
+complete, debt-free recordings. A 120 km well-funded comparison reproduces
+the exact v92 road when no rider needs the rule. This candidate has not yet
+been joined to the nominated finisher/lead-out short-step finale; its result
+is provisional and no points are awarded or committed.
+Focused v93 and v92 tests, the existing v91 route/length regression,
+full lint and an isolated build pass. Two local browser regressions confirm
+that the v91 refusal and the paid two-manager lead-out remain unchanged.
