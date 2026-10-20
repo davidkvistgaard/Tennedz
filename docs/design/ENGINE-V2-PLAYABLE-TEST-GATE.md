@@ -1749,3 +1749,15 @@ dot reporter. It finished with exit code 0 in about 52 minutes, including
 both formerly timing-out ensemble tests. The serial run establishes a
 passing full-suite baseline for this preview commit; it does not shorten
 the expensive audits or establish an official v2 result path.
+
+The offline `engine-v2-playable-road-audit.mjs --individual-lines
+--point-preview` matrix subsequently covered 66 fictional settings across
+40/120/260 km routes, both categories, 4/15/20-team fields, baseline
+manager modes and independent tactics. It returned 32 paid conditional
+bunch lines, 18 conditional multiband lines and 14 conditional depleted
+lines; all 64 have an individual line with points withheld. The remaining
+two are the 260 km mountain, fatigue-30, four-team mixed-mode M/F cases:
+they retain recorded depleted bands with 0.62112 unmet energy demand and
+an unavailable point preview. Neither was silently assigned a finish or
+award. This is a bounded coverage result for one fixed seed, not sporting
+balance evidence or complete playable coverage.
