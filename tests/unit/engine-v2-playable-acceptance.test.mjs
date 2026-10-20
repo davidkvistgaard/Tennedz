@@ -131,10 +131,13 @@ for(const gender of ['M','F'])for(const teamCount of [4,15,20]){
 }
 
 for(const [distanceKm,terrain,teamCount,gender] of [
-  [40,'flat',4,'M'],[120,'rolling',15,'F'],[260,'mountain',20,'M']]){
+  [40,'flat',4,'M'],[40,'exposed',4,'M'],
+  [120,'rolling',15,'F'],[120,'custom',15,'F'],
+  [260,'mountain',20,'M']]){
   test(`lead-out and exact contact replay connect ${distanceKm} km ${terrain}, ${teamCount} teams, ${gender}`,()=>{
     const settings={distanceKm,terrain,teamCount,gender,
-      attack:'none',chase:'ignore',defaultRivalPlan:'chase',seed:'trial'};
+      attack:'none',chase:'ignore',defaultRivalPlan:'chase',seed:'trial',
+      ...(terrain==='custom'?{profileHeightsM:[100,350,150,500,180,100]}:{})};
     const run=leadOutRiderId=>runV91IntegratedTestDrive({settings,
       attack:{teamId:'you',riderId:'you-4'},
       finalePlans:[{teamId:'you',finisherId:'you-6',leadOutRiderId}],

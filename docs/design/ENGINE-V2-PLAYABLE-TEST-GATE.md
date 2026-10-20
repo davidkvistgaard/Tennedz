@@ -1926,3 +1926,10 @@ M/F; both still withhold lines and point illustrations. The audit now fails
 if any other scenario loses its paid line rather than silently counting a new
 unsupported road. Its point illustration continues to match the existing
 one-day policy for every recorded individual place, with no awards saved.
+
+The paired integrated lead-out gate also now covers the 40 km exposed and
+120 km custom routes. It holds the full kilometre recording fixed while
+switching the nominated finisher's helper on, then checks paid helper work,
+the altered finisher time, exact-contact replay and all riders' line time and
+energy. Both routes retain a conditional line and withheld official points;
+all 17 integrated acceptance cases pass.
