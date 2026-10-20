@@ -1908,3 +1908,10 @@ times are relative to the bunch's last-kilometre marker; a negative front
 time means that rider crossed before the bunch reached the marker. The older
 kilometre recording has no paid whole-race clock, so a total elapsed stage
 time is intentionally not fabricated from its separate provisional result.
+The local browser now also runs both route choices as full opt-in races: a
+40 km exposed chase with one paid final-kilometre replay and a 120 km custom
+profile with an attack, two paid road bands and a group-local replay. In each
+run the nominated finisher can be scrubbed to the line, all 32 conditional
+crossings appear, and point values remain read-only. This closes the
+route-selector-to-finish check for the five offered route profiles. All nine
+local v91 browser cases and full lint pass together on the isolated build.

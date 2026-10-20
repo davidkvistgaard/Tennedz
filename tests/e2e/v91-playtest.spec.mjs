@@ -114,6 +114,65 @@ for(const width of [390,1440])test(`v91 playtest changes conditions at ${width}p
     expect(errors).toEqual([]);
   });
 
+test('exposed and custom routes reach their paid full-race replays',
+  async({page})=>{
+    const errors=[];page.on('pageerror',error=>errors.push(error.message));
+    await page.goto('/login');
+    await page.getByLabel('Email or username').fill('v2outsider');
+    await page.getByLabel('Password',{exact:true}).fill('fixture-password');
+    await page.getByRole('button',{name:'Sign in',exact:true}).click();
+    await expect(page).toHaveURL(/\/team$/);
+    await page.goto('/team/v91-playtest');
+    await page.getByLabel('Distance').selectOption('40');
+    await page.getByLabel('Route profile').selectOption('exposed');
+    await page.getByLabel('Starting fatigue').selectOption('15');
+    await page.getByLabel('Default tactics for uncustomized managers')
+      .selectOption('chase');
+    await page.getByLabel('Your attack order').selectOption('none');
+    await page.getByLabel('Your chase order').selectOption('all');
+    await page.getByLabel('Scenario seed').fill('test-drive-acceptance-1');
+    await page.getByRole('checkbox',{
+      name:'Continue to a conditional finish'}).check();
+    await page.getByRole('checkbox',{
+      name:'Show read-only point illustration'}).check();
+    await page.getByRole('button',{name:'Run full race preview'}).click();
+    await expect(page.getByRole('heading',{
+      name:'Recorded race · 40 km exposed'})).toBeVisible();
+    await expect(page.getByRole('heading',{
+      name:'Paid final-kilometre replay'})).toBeVisible();
+    const exposedSlider=page.getByRole('slider',{name:/Finale interval/});
+    await exposedSlider.fill(await exposedSlider.getAttribute('max'));
+    await expect(page.getByText(/you-7: 0\.0 m to go/)).toBeVisible();
+    await expect(page.getByRole('table',{
+      name:'Individual conditional results'}).getByRole('row'))
+      .toHaveCount(33);
+    await page.getByLabel('Distance').selectOption('120');
+    await page.getByLabel('Route profile').selectOption('custom');
+    await page.getByLabel('20% (m)').fill('350');
+    await page.getByLabel('Default tactics for uncustomized managers')
+      .selectOption('attack');
+    await page.getByLabel('Your attack order').selectOption('repeated');
+    await page.getByLabel('Your chase order').selectOption('ignore');
+    await page.getByRole('button',{name:'Run full race preview'}).click();
+    await expect(page.getByRole('heading',{
+      name:'Recorded race · 120 km custom'})).toBeVisible();
+    await expect(page.getByRole('heading',{
+      name:'Paid group-local finale'})).toBeVisible();
+    await expect(page.getByLabel('Finale road band').locator('option'))
+      .toHaveCount(2);
+    const customSlider=page.getByRole('slider',{name:/Band interval/});
+    await customSlider.fill(await customSlider.getAttribute('max'));
+    await expect(page.getByText(/you-7: 0\.0 m to go/)).toBeVisible();
+    await expect(page.getByRole('table',{
+      name:'Individual conditional results'}).getByRole('row'))
+      .toHaveCount(33);
+    await expect(page.getByRole('columnheader',{
+      name:'Preview points'})).toBeVisible();
+    await expect(page.getByText('Official points: withheld · Awards saved: 0'))
+      .toBeVisible();
+    expect(errors).toEqual([]);
+  });
+
 test('a named final-kilometre attack changes the paid road',async({page})=>{
   const errors=[];page.on('pageerror',error=>errors.push(error.message));
   await page.goto('/login');
