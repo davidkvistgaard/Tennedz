@@ -2259,3 +2259,7 @@ helpers expend recorded energy and both nominated finishers improve on the
 same road without assistance. Shorter and less fragmented roads still
 return explicit refusals. This extends the playable preview without
 promoting either v93 branch to an official result.
+Focused coasted and separated unit checks, lint, isolated build, and both
+local browser fixture flows pass. A full unit-suite run was stopped after
+roughly 20 minutes while existing long-running balance and test-drive
+simulations were still active; it did not yield a full-suite verdict.
