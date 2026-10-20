@@ -1863,3 +1863,16 @@ test, all eight local v91 browser cases, lint and an isolated build passed.
 An additional run of the whole test-drive unit file was interrupted after
 extended CPU work without a result; it is not counted as a passing check.
 Older recorded versions and the saved event path are unchanged.
+
+The integrated playable acceptance test now runs twelve complete locked
+races: 40 km flat, 120 km rolling and 260 km mountain; M/F; four and twenty
+teams; repeated attacks without chase and no attacks with full chase. Each
+case checks the selected route and full field, conditional individual lines,
+paid replay for every rider, exact line time and energy agreement, distinct
+front-road and dropped-rider membership, and point values computed from the
+calendar policy. It rejects an absent paid replay or missing rider and keeps
+award rows empty. All twelve cases pass. This is a reproducible cross-layer
+acceptance gate (`node --test tests/unit/engine-v2-playable-matrix.test.mjs`)
+for the opt-in preview, not proof of an official classification
+when separate road bands may interact before the finish. The separate
+two-manager and helper tests cover orders outside this compact matrix.
