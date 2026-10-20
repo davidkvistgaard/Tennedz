@@ -1,4 +1,5 @@
 import {test,expect} from '@playwright/test';
+import {pointsForDivisionResult} from '../../lib/calendar/points.mjs';
 
 test.skip(process.env.PELOTONIA_V91_PLAYTEST_ENABLED!=='true'||
   process.env.PELOTONIA_V93_COASTED_PLAYTEST_ENABLED!=='true',
@@ -217,6 +218,77 @@ test('one rival chase changes the recorded v93 road, line and replay',
     await interval.fill(await interval.getAttribute('max'));
     await expect(page.getByLabel('Selected rider finale replay'))
       .toContainText(`Crossed at ${afterLine.elapsedSecondsFromLastKmStart.toFixed(3)} s; result ${afterLine.elapsedSecondsFromLastKmStart.toFixed(3)} s, ${afterLine.energyAtLine.toFixed(1)} energy.`);
+    await expect(page.getByText('Official points: withheld · Awards saved: 0'))
+      .toBeVisible();
+    expect(errors).toEqual([]);
+  });
+
+test('one rival effort changes a women race place and read-only points',
+  async({page})=>{
+    const errors=[];page.on('pageerror',error=>errors.push(error.message));
+    await page.goto('/login');
+    await page.getByLabel('Email or username').fill('v2rival');
+    await page.getByLabel('Password',{exact:true}).fill('fixture-password');
+    await page.getByRole('button',{name:'Sign in',exact:true}).click();
+    await expect(page).toHaveURL(/\/team$/);
+    await page.goto('/team/v91-playtest');
+    await page.getByRole('checkbox',{
+      name:'Continue to a conditional finish'}).check();
+    await page.getByRole('checkbox',{
+      name:'Try v93 road-to-line preview'}).check();
+    await page.getByLabel('Distance').selectOption('260');
+    await page.getByLabel('Category').selectOption('F');
+    await page.getByLabel('Starting fatigue').selectOption('15');
+    await page.getByLabel('Scenario seed').fill('tactic-points-1');
+    await page.getByLabel('Default tactics for uncustomized managers')
+      .selectOption('neutral');
+    await page.getByLabel('Your attack').selectOption('none');
+    await page.getByLabel('Managers with your own tactics').selectOption('1');
+    await page.getByRole('checkbox',{
+      name:'Show read-only point illustration'}).check();
+    const run=async()=>{
+      const responsePromise=page.waitForResponse(response=>
+        response.url().endsWith('/api/v91-playtest')&&
+        response.request().method()==='POST');
+      await page.getByRole('button',{name:'Run v93 race preview'}).click();
+      const response=await responsePromise;
+      expect(response.status()).toBe(200);
+      return (await response.json()).coasted;
+    };
+    const before=await run();
+    await page.getByLabel('Rival 1 effort').selectOption('hard');
+    const after=await run();
+    for(const [race,place,points] of [[before,3,75],[after,2,94]]){
+      expect(race.version).toBe('v93-bunch-only-playtest-1');
+      expect(race.kilometreFrames.at(-1).roadGroups).toHaveLength(0);
+      expect(race.lastKmRoad.at(-1).distanceM).toBe(260000);
+      expect(race.lineTimes).toHaveLength(32);
+      expect(race.provisionalLineOrder.find(row=>row.riderId==='you-7')
+        .position).toBe(place);
+      const preview=race.pointPreview.riders.find(row=>
+        row.riderId==='you-7');
+      expect(preview.provisionalPlace).toBe(place);
+      expect(preview.previewPoints).toBe(points);
+      expect(preview.previewPoints).toBe(pointsForDivisionResult({
+        tier:2,resultType:'ONE_DAY',placing:place,
+        multiplier:race.pointPreview.multiplier}));
+      expect(race.pointPreview.awardRows).toEqual([]);
+      expect(race.pointsStatus).toBe('withheld');
+    }
+    const ownLine=after.lineTimes.find(row=>row.riderId==='you-7');
+    await expect(page.getByRole('region',{
+      name:'Paired v93 race comparison'})).toContainText(
+      'Conditional place: 3 → 2');
+    await expect(page.getByRole('region',{
+      name:'Paired v93 race comparison'})).toContainText(
+      'Read-only points: 75 (place 3) → 94 (place 2)');
+    await expect(page.getByRole('region',{name:'Your v93 finish'}))
+      .toContainText('Conditional place: 2 · Read-only points: 94');
+    await page.getByRole('button',{name:'Replay you-7'}).click();
+    const interval=page.getByRole('slider',{name:/Band interval/});
+    await interval.fill(await interval.getAttribute('max'));
+    await expect(page.getByLabel('Selected rider finale replay'))
+      .toContainText(`Crossed at ${ownLine.elapsedSecondsFromLastKmStart.toFixed(3)} s; result ${ownLine.elapsedSecondsFromLastKmStart.toFixed(3)} s, ${ownLine.energyAtLine.toFixed(1)} energy.`);
     await expect(page.getByText('Official points: withheld · Awards saved: 0'))
       .toBeVisible();
     expect(errors).toEqual([]);

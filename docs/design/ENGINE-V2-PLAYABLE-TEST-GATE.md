@@ -2697,3 +2697,14 @@ paired place change, and the final rider replay matches the second paid
 crossing time and energy. The read-only point illustration creates no award
 rows; official points remain withheld. This is a tactical end-to-end check
 of a road change reaching the result and replay, not a new tuning rule.
+
+A second paired browser acceptance scenario covers a 260 km flat women's
+field with four teams and starting fatigue 15. Holding the roster, seed,
+route and every other tactic fixed, changing rival 1's effort from `steady`
+to `hard` changes the nominated `you-7` from conditional place 3 to 2.
+Both 32-rider runs remain bunch-only; the existing tier-2, two-division
+point policy yields 75 and 94 read-only points for those places. The browser
+comparison, result panel and paid finale replay agree with the second API
+response. Neither run creates an award row, and official points stay
+withheld. This tests the full tactic-to-result-to-point path in the other
+category without treating a provisional preview as a settled race.
