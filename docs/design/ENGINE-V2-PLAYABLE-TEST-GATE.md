@@ -2152,3 +2152,13 @@ Changing only rival 2's attack from selective to repeated in the same browser
 run moves its nominated helper to a different road group at 500 m. The API and
 UI then report that helper unavailable and charge it no work, while the other
 team's helper still pays and all 120 conditional crossings remain replayable.
+
+The full-race refusal now exposes a read-only source energy audit. It scans
+the committed kilometre frames before the finale and lists riders whose
+energy is zero in successive whole-kilometre snapshots, with the first pair
+of kilometre numbers. Across the ten locked 260 km mixed-plan four-team
+refusals, six riders meet that condition; accepted 40/120/260 km cross-route
+cases have no such pair. A local browser run on an isolated build shows this
+earlier exhaustion alongside the last-kilometre unmet demand, with no
+individual result or point illustration. This audit diagnoses the missing
+travel rule; it does not charge energy or change a versioned recording.

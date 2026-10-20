@@ -100,6 +100,48 @@ test('a newly engaged selective chase reaches a paid 120 km replay',
     expect(errors).toEqual([]);
   });
 
+test('a long mixed-field refusal shows earlier zero-reserve travel',
+  async({page})=>{
+    const errors=[];page.on('pageerror',error=>errors.push(error.message));
+    await page.goto('/login');
+    await page.getByLabel('Email or username').fill('settings');
+    await page.getByLabel('Password',{exact:true}).fill('fixture-password');
+    await page.getByRole('button',{name:'Sign in',exact:true}).click();
+    await expect(page).toHaveURL(/\/team$/);
+    await page.goto('/team/v91-playtest');
+    await page.getByLabel('Distance').selectOption('260');
+    await page.getByLabel('Route profile').selectOption('flat');
+    await page.getByLabel('Field size').selectOption('4');
+    await page.getByLabel('Starting fatigue').selectOption('30');
+    await page.getByLabel('Scenario seed').fill('cross-route-1');
+    await page.getByRole('checkbox',{
+      name:'Continue to a conditional finish'}).check();
+    await page.getByRole('checkbox',{
+      name:'Show read-only point illustration'}).check();
+    const responsePromise=page.waitForResponse(response=>
+      response.url().endsWith('/api/v91-playtest')&&
+      response.request().method()==='POST');
+    await page.getByRole('button',{name:'Run full race preview'}).click();
+    const response=await responsePromise;
+    expect(response.status()).toBe(200);
+    const {integrated}=await response.json();
+    expect(integrated.roadStatus).toBe('recorded_depleted_bands');
+    expect(integrated.sourceEnergyAudit.status)
+      .toBe('sustained_zero_reserve');
+    expect(integrated.sourceEnergyAudit.riders).toHaveLength(6);
+    expect(integrated.finale.totalUnmetEnergyDemand).toBeGreaterThan(0);
+    expect(integrated.finale.lineTimes).toBeUndefined();
+    expect(integrated.provisionalPointPreview.status).toBe('unavailable');
+    await expect(page.getByText(/Earlier zero-reserve travel: 6 riders recorded zero energy in successive whole kilometres before the finale/))
+      .toBeVisible();
+    await expect(page.getByText(/Unpaid rider travel:/)).toBeVisible();
+    await expect(page.getByRole('table',{
+      name:'Individual conditional results'})).toHaveCount(0);
+    await expect(page.getByText('Official points: withheld · Awards saved: 0'))
+      .toBeVisible();
+    expect(errors).toEqual([]);
+  });
+
 test('an unpaid cooperative road retains its locked source in the preview',
   async({page})=>{
     const errors=[];page.on('pageerror',error=>errors.push(error.message));

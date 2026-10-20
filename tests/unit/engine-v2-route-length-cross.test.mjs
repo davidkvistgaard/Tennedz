@@ -28,6 +28,7 @@ function race({distanceKm,terrain,gender,teamCount,plan}){
 
 function assertPaid(output,{distanceKm,terrain,teamCount}){
   const {summary,recording}=output;
+  assert.equal(summary.sourceEnergyAudit,undefined);
   // V91 has no rule for paying travel after a rider reaches zero reserve.
   // Two consecutive zero-energy kilometre frames would mean that an accepted
   // individual line inherited such an unexplained full-kilometre movement.
@@ -198,6 +199,11 @@ test('long mixed road: depleted four-team fields refuse a fictional finish',()=>
       }
       const {summary}=output;
       assert.equal(summary.roadStatus,'recorded_depleted_bands');
+      assert.equal(summary.sourceEnergyAudit.status,
+        'sustained_zero_reserve');
+      assert.equal(summary.sourceEnergyAudit.riders.length,6);
+      assert.ok(summary.sourceEnergyAudit.riders.every(row=>
+        row.firstZeroKm>=231&&row.repeatedZeroKm===row.firstZeroKm+1));
       assert.equal(summary.finale.reserveStatus,
         'energy_demand_saturated_at_zero');
       const frames=output.recording.recording.frames;

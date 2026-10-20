@@ -200,6 +200,7 @@ function requestFor(scenario){
 
 function unsupportedRefusal(error,scenario,request,pointContext){
   const source=error.cause?.playtestSource??null;
+  const energyAudit=source?sourceEnergyAudit(source.recording):null;
   const snapshot=source?finaleSnapshotFromTour(source.recording,{
     remainingKm:1,includeAttackLoad:true}):null;
   return {version:request.attackTeamId!==undefined&&source?
@@ -207,6 +208,7 @@ function unsupportedRefusal(error,scenario,request,pointContext){
     status:'unsupported',
     input:prepareV91Playtest(scenario.settings).settings,
     request,reason:error.message,
+    ...(energyAudit?{sourceEnergyAudit:energyAudit}:{}),
     ...(snapshot?{lastKmSource:{
       roadGroups:snapshot.roadGroups.map(group=>({
         id:group.id,gapSeconds:group.gapSeconds,
@@ -219,8 +221,27 @@ function unsupportedRefusal(error,scenario,request,pointContext){
     canCommitAwards:false};
 }
 
+function sourceEnergyAudit(recording){
+  const frames=recording.frames.slice(0,-1);
+  const riders=new Map();
+  for(let index=1;index<frames.length;index++){
+    const previous=new Set(frames[index-1].riderGroups.filter(row=>
+      row.energy===0).map(row=>row.id));
+    for(const row of frames[index].riderGroups){
+      if(row.energy===0&&previous.has(row.id)&&!riders.has(row.id))
+        riders.set(row.id,{riderId:row.id,
+          firstZeroKm:frames[index-1].km,
+          repeatedZeroKm:frames[index].km});
+    }
+  }
+  return riders.size?{status:'sustained_zero_reserve',
+    riders:[...riders.values()].sort((a,b)=>
+      a.firstZeroKm-b.firstZeroKm||a.riderId.localeCompare(b.riderId))}:null;
+}
+
 function summaryFor(trial,request,pointContext){
   const {recording,paidFinale}=trial;
+  const energyAudit=sourceEnergyAudit(recording);
   const crossingBounds=hasFinaleConditionalCrossingBounds(paidFinale)?
     recordFinaleConditionalCrossingBounds(paidFinale):null;
   if(crossingBounds)
@@ -236,6 +257,7 @@ function summaryFor(trial,request,pointContext){
   return {version:trial.roadStatus==='paid_conditional_line'?
     'v91-offline-test-drive-5':'v91-offline-test-drive-1',
     input:trial.settings,request,engineVersion:trial.version,
+    ...(energyAudit?{sourceEnergyAudit:energyAudit}:{}),
     roadStatus:trial.roadStatus,
     resultStatus:trial.classifiedResults===null?'unclassified':'classified',
     pointsStatus:trial.pointsStatus,canCommitAwards:trial.canCommitAwards,

@@ -626,6 +626,9 @@ export default function Playtest(){
           {integrated.finale?.totalUnmetEnergyDemand>0&&<p className="v91-warning">
             Unpaid rider travel: {integrated.finale.totalUnmetEnergyDemand.toFixed(3)} energy demand remains after reserve reached zero. No individual finish or point preview can be paid for this road.
           </p>}
+          {integrated.sourceEnergyAudit?.riders.length>0&&<p className="v91-warning">
+            Earlier zero-reserve travel: {integrated.sourceEnergyAudit.riders.length} riders recorded zero energy in successive whole kilometres before the finale. First: {integrated.sourceEnergyAudit.riders[0].riderId} at km {integrated.sourceEnergyAudit.riders[0].firstZeroKm}. This recording has no paid exhaustion rule for that interval.
+          </p>}
           {integrated.lastKmSource?.roadGroups?.map(group=><p key={group.id}>
             {group.id}: {group.riderIds.join(', ')} · {group.gapSeconds.toFixed(1)} s ahead
           </p>)}
