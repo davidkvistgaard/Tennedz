@@ -2881,3 +2881,21 @@ Six coasted-playtest unit tests, 21 existing playtest/bunch contract tests,
 lint, a fresh isolated build and all 24 v93 browser cases pass. This closes
 the workbench's phase-effort visibility gap at 5 km; it does not resolve
 contact geometry or make official results and points available.
+
+A reproducible `engine-v2-v93-late-effort-audit.mjs` extends this gate beyond
+the browser's 120 km example. Twelve matched condition sets run both player
+and rival 1 with changed 5 km-to-go effort orders: 24 complete fictional
+races across 40/120/260 km, 4/15/20 teams, M/F, every selectable terrain
+and all three starting fatigue levels. All 2,064 individual crossings match
+their paid replays, with no refusal or saved award. Between paired runs,
+532 crossing times, 239 line-energy values and six conditional places change.
+The existing one-day policy produces 21 read-only point illustrations and
+withholds three: index 20 under `conserve` has potential isolated-rider road
+contact; both index 26 variants retain unresolved front drops. The original
+48-race default audit was rerun unchanged: 48/48 finish, 4,776/4,776 paid
+replays match, 44 illustrative point cases and the same four withheld cases.
+In index 20, two isolated riders' paid paths meet about 19.7 m into the last
+kilometre; the app already exposes that witness and both replays. Their
+passing, drafting and wheel order are not recorded, so the points remain
+withheld rather than assigning an inferred result. Neither audit accessed
+production data or services.
