@@ -100,3 +100,60 @@ test('a helper cannot serve a finisher in another separated group',()=>{
   assert.throws(()=>recordFinaleSeparatedIndividualLine(trial.recording,
     trial.paidFinale,{plans}),/cannot work beside the finisher/);
 });
+
+test('a separated singleton pays a nominated sprint or keeps its road passage',()=>{
+  const trial=createV91ConditionalRaceFinal({distanceKm:40,
+    terrain:'flat',teamCount:4,gender:'M',seed:'conditional-coverage-1',
+    attack:'repeated',chase:'ignore',defaultRivalPlan:'attack',
+    managerTactics:[{effort:'steady',attack:'none',chase:'ignore'}]});
+  const sprint=recordFinaleSeparatedIndividualLine(trial.recording,
+    trial.paidFinale);
+  assert.equal(sprint.version,'v2-finale-separated-individual-line-lab-3');
+  assert.equal(sprint.bandRunners.length,3);
+  assert.equal(sprint.conditionalCrossings.length,32);
+  assert.equal(sprint.overlapAudit.status,
+    'separated_through_conditional_lines');
+  const solo=sprint.bandRunners[0].runner;
+  assert.equal(solo.finishers[0].riderId,'you-7');
+  assert.deepEqual(solo.frames.map(frame=>frame.riders[0].role),
+    ['solo_front','solo_front','solo_sprint','solo_sprint','solo_sprint']);
+  assert.ok(solo.frames.slice(2).every(frame=>
+    frame.riders[0].energySpent>0));
+  assert.ok(solo.finishers[0].elapsedSecondsFromLastKmStart<
+    trial.paidFinale.line.bands[0].passageSecondsFromBunchMarker);
+  assert.equal(validateFinaleSeparatedIndividualLine(trial.recording,
+    trial.paidFinale,{},sprint),true);
+
+  const plans=trial.recording.committedInputs.teams.map(team=>({
+    teamId:team.id,finisherId:team.id==='you'?'you-4':
+      team.orders.captainId,leadOutRiderId:null}));
+  const passive=recordFinaleSeparatedIndividualLine(trial.recording,
+    trial.paidFinale,{plans});
+  assert.ok(passive.bandRunners[0].runner.frames.every(frame=>
+    frame.riders[0].role==='solo_front'));
+  assert.equal(passive.bandRunners[0].runner.finishers[0]
+    .elapsedSecondsFromLastKmStart,
+  trial.paidFinale.line.bands[0].passageSecondsFromBunchMarker);
+  assert.equal(passive.bandRunners[0].runner.finishers[0].energyAtLine,
+    trial.paidFinale.line.finalRiderEnergy.find(row=>
+      row.riderId==='you-7').energy);
+  assert.equal(validateFinaleSeparatedIndividualLine(trial.recording,
+    trial.paidFinale,{plans},passive),true);
+  const withLeadOut=plans.map(plan=>plan.teamId==='you'?{
+    ...plan,leadOutRiderId:'you-5'}:plan);
+  const helped=recordFinaleSeparatedIndividualLine(trial.recording,
+    trial.paidFinale,{plans:withLeadOut});
+  assert.ok(helped.conditionalCrossings.find(row=>row.riderId==='you-4')
+    .elapsedSecondsFromLastKmStart<passive.conditionalCrossings.find(row=>
+      row.riderId==='you-4').elapsedSecondsFromLastKmStart);
+  assert.deepEqual(helped.bandRunners[0],passive.bandRunners[0]);
+  assert.ok(helped.bandRunners.at(-1).runner.frames.flatMap(frame=>
+    frame.riders).some(row=>row.riderId==='you-5'&&
+      row.role==='lead_out'&&row.energySpent>0));
+  assert.equal(validateFinaleSeparatedIndividualLine(trial.recording,
+    trial.paidFinale,{plans:withLeadOut},helped),true);
+  const changed=structuredClone(sprint);
+  changed.bandRunners[0].runner.frames[3].riders[0].energySpent+=1;
+  assert.throws(()=>validateFinaleSeparatedIndividualLine(trial.recording,
+    trial.paidFinale,{},changed),/does not replay/);
+});

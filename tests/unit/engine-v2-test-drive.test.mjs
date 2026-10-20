@@ -877,10 +877,15 @@ test('recorded selective chase pays the helper and the individual line',()=>{
   const ignored=runV91IntegratedTestDrive({settings:{...settings,
     managerTactics:[{effort:'steady',attack:'none',chase:'ignore'}]},
   pointContext:{tier:3,divisionIndex:1,divisionCount:1}},{full:true});
-  assert.equal(ignored.summary.status,'unsupported');
-  assert.equal(ignored.summary.individualLineStatus,
-    'unsupported_singleton_band');
-  assert.match(ignored.summary.reason,/one-rider band/);
+  assert.equal(ignored.recording.version,'v91-conditional-race-final-7');
+  assert.equal(ignored.individualLine.version,
+    'v2-finale-separated-individual-line-lab-3');
+  assert.equal(ignored.summary.roadStatus,'conditional_multiband_line');
+  assert.equal(ignored.summary.finale.lineTimes.length,32);
+  assert.equal(ignored.summary.finale.lineTimes.find(row=>
+    row.riderId==='you-7').roadBandId,'road-1');
+  assert.equal(ignored.summary.provisionalPointPreview.riders.length,32);
+  assert.deepEqual(ignored.summary.provisionalPointPreview.awardRows,[]);
   assert.equal(ignored.recording.recording.frames.length,40);
   assert.equal(ignored.summary.pointsStatus,'withheld');
 });

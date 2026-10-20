@@ -797,15 +797,6 @@ export function runV91TestDrive(scenario,{full=false,
         reason:'An isolated rider cannot be a paid finisher.'};
       return full?{summary,recording:trial}:summary;
     }
-    const separatedAt500=separated?trial.paidFinale.passageFrames.find(
-      frame=>frame.distanceM===trial.recording.route.distanceKm*1000-500):null;
-    if(separatedAt500?.groups.some(group=>group.riderIds.length===1)){
-      const base=summaryFor(trial,request,pointContext);
-      const summary={...base,status:'unsupported',
-        individualLineStatus:'unsupported_singleton_band',
-        reason:'A separated one-rider band needs a paid individual continuation.'};
-      return full?{summary,recording:trial}:summary;
-    }
     const record=singleton?recordFinaleSingletonFrontIndividualLine:
       depleted?recordFinaleUnorderedDroppedIndividualLine:
       separated?recordFinaleSeparatedIndividualLine:
@@ -837,7 +828,9 @@ export function runV91TestDrive(scenario,{full=false,
           continue;
         }
         if(!['The nominated lead-out cannot work beside the finisher.',
-          'The singleton cannot pay for the nominated sprint.']
+          'The singleton cannot pay for the nominated sprint.',
+          'A separated singleton needs a paid 500 m road.',
+          'The separated singleton has unpaid final-500 m travel.']
           .includes(error.message))
           throw error;
         const base=summaryFor(trial,request,pointContext);

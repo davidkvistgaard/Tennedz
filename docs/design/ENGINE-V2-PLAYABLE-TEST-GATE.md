@@ -2058,8 +2058,17 @@ above the selective safe-gap threshold, so every decision stays engaged and
 the group survives. Ten 40 km route/category cases (five terrains, M/F)
 retain all 32 individual lines, matching replayed times and energy and
 read-only one-day point values. A future selective hold or catch is still
-refused until its changed road is recorded. Turning that rival's order to
-ignore in the flat fixture produces a different road with a singleton band
-at 500 m; the integrated preview now reports that missing individual
-continuation explicitly instead of throwing from the band runner. The
-original locked race remains visible and awards remain withheld.
+refused until its changed road is recorded. Official awards remain withheld.
+
+Turning that rival's order to ignore produces a different separated road
+with `you-7` alone in the first band at 500 m. Its paid individual
+continuation is now `v2-finale-separated-individual-line-lab-3`: five
+recorded road slices supply the singleton's passage time and reserve, and a
+nominated solo sprint pays fresh work over the final 300 m. Without that
+nomination it retains its exact road time and energy. The other group and
+bunch keep their existing individual runners; a nominated bunch finisher
+can still receive a paid same-band lead-out. All 32 crossings, replay
+frames and read-only point values agree in ten 40 km route/category cases
+(five terrains, M/F); cross-band contact stays gated and official awards
+stay withheld. The older separated line versions remain replayable for
+their original non-singleton roads.

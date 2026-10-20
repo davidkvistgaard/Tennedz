@@ -128,6 +128,23 @@ test('recorded selective chase pays its helper across short routes and genders',
   }
 });
 
+test('separated singleton keeps a paid individual replay across short routes and genders',()=>{
+  for(const terrain of terrains)for(const gender of ['M','F']){
+    const settings={distanceKm:40,terrain,gender,teamCount:4,
+      seed:'conditional-coverage-1',
+      ...(terrain==='custom'?{profileHeightsM}:{}),
+      defaultRivalPlan:'attack',attack:'repeated',chase:'ignore',
+      managerTactics:[{effort:'steady',attack:'none',chase:'ignore'}]};
+    const output=runV91IntegratedTestDrive({settings,
+      pointContext:{tier:3,divisionIndex:1,divisionCount:1}},{full:true});
+    assert.equal(output.individualLine.version,
+      'v2-finale-separated-individual-line-lab-3');
+    assert.equal(output.individualLine.bandRunners[0].runner.finishers.length,
+      1);
+    assertPaid(output,{distanceKm:40,terrain,teamCount:4});
+  }
+});
+
 test('long mixed road: depleted four-team fields refuse a fictional finish',()=>{
   for(const terrain of terrains)for(const gender of ['M','F'])
     for(const teamCount of [4,15,20]){

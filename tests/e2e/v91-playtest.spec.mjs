@@ -126,10 +126,25 @@ test('a recorded selective chase pays its helper through a short full race',
       .toBeVisible();
     await page.getByLabel('Rival 1 chase').selectOption('ignore');
     await page.getByRole('button',{name:'Run full race preview'}).click();
-    await expect(page.getByRole('status')).toContainText(
-      'A separated one-rider band needs a paid individual continuation.');
+    await expect(page.getByRole('heading',{name:'Paid group-local finale'}))
+      .toBeVisible();
     await expect(page.getByRole('table',{
-      name:'Individual conditional results'})).toHaveCount(0);
+      name:'Individual conditional results'}).getByRole('row'))
+      .toHaveCount(33);
+    await expect(page.getByText(/Your nominated finisher: you-7 · [\d.]+ s/))
+      .toBeVisible();
+    await expect(page.getByText('Official points: withheld · Awards saved: 0'))
+      .toBeVisible();
+    await page.getByLabel('you finisher').selectOption('you-4');
+    await page.getByLabel('you lead-out helper').selectOption('you-5');
+    await page.getByRole('button',{name:'Run full race preview'}).click();
+    await expect(page.getByRole('table',{
+      name:'Individual conditional results'}).getByRole('row'))
+      .toHaveCount(33);
+    await expect(page.getByText(/Your nominated finisher: you-4 · [\d.]+ s/))
+      .toBeVisible();
+    await expect(page.getByText(/Paid lead-out work: [1-9]\d* recorded rider intervals/))
+      .toBeVisible();
     await expect(page.getByText('Official points: withheld · Awards saved: 0'))
       .toBeVisible();
     expect(errors).toEqual([]);
