@@ -106,6 +106,13 @@ test('long mixed road: depleted four-team fields refuse a fictional finish',()=>
       assert.equal(summary.roadStatus,'recorded_depleted_bands');
       assert.equal(summary.finale.reserveStatus,
         'energy_demand_saturated_at_zero');
+      const frames=output.recording.recording.frames;
+      for(const riderId of summary.lastKmSource.droppedRiderIds){
+        const firstZero=frames.findIndex(frame=>frame.riderGroups.some(
+          rider=>rider.id===riderId&&rider.energy===0));
+        assert.ok(firstZero>=0&&firstZero<258,
+          `${riderId} must have exhausted reserve before the last km`);
+      }
       assert.ok(summary.finale.totalUnmetEnergyDemand>0);
       assert.equal(summary.finale.lineTimes,undefined);
       assert.equal(summarizeV91PaidMultibandReplay(output),null);

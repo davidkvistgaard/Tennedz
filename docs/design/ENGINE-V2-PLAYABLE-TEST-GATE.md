@@ -1995,3 +1995,16 @@ long, small-field mixed combination only twice. The current energy debt is
 thus a long-road, small-field limit in this fixture, not an isolated mountain
 profile bug. No physical crossing or official classification is invented to
 hide it.
+
+The source frames locate this debt before the short finale. In all ten
+`cross-route-1` refusals the same six rival-1 riders first reach zero reserve
+between km 231 and 247 (flat/exposed: 242-245; rolling: 240-247;
+mountain: 231-240; custom: 240-246), then continue moving under the older
+kilometre motor's zero-reserve clamp. The 0.62112 unmet demand is only the
+recorded final-kilometre amount; it does not account for the earlier
+zero-reserve kilometres. A fix confined to the final 100 m would therefore
+claim a paid crossing while leaving the rest of that road unexplained. The
+next motor version needs one explicit exhausted-travel rule and ledger from
+the first exhausted kilometre through the line, with matching speed, group,
+replay and result semantics. Preserve the older versioned recording and keep
+the current refusal until that entire path is verified.
