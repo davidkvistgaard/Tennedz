@@ -2200,3 +2200,17 @@ is provisional and no points are awarded or committed.
 Focused v93 and v92 tests, the existing v91 route/length regression,
 full lint and an isolated build pass. Two local browser regressions confirm
 that the v91 refusal and the paid two-manager lead-out remain unchanged.
+
+The next isolated v93 handoff carries those dropped riders from the recorded
+259 km frame through a versioned 100 m last-kilometre clock. Each slice
+starts with the actual rider deficit and reserve, caps reserve spending, and
+reduces sustainable speed by the same bounded 35% unpaid-work fraction used
+by the whole-kilometre v93 motor. Its passage clock, rider deficit and energy
+can be replayed to the 260 km line. All ten locked four-team mixed-plan
+260 km roads (five terrains, both categories, fatigue 30) cross this clock
+without an unrecorded catch or new drop; tampered passages and a v92 source
+are rejected. The older depleted-reserve recording keeps its original
+unmet-work fields and replay. This is still a road-band clock: it does not
+pay nominated finisher or lead-out orders, rank riders within a front group
+or bunch, or unlock points. The next vertical step must join those orders
+to the v93 source and produce a complete individually replayable line.
