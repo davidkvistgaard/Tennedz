@@ -592,3 +592,55 @@ test('15-team custom road replays newly isolated bunch riders beneath two fronts
     await expect(page.getByText('Official points: withheld · Awards saved: 0'))
       .toBeVisible();
   });
+
+test('flat 15-team road keeps two nominated singleton fronts on the line',
+  async({page})=>{
+    await page.goto('/login');
+    await page.getByLabel('Email or username').fill('bob');
+    await page.getByLabel('Password',{exact:true}).fill('fixture-password');
+    await page.getByRole('button',{name:'Sign in',exact:true}).click();
+    await expect(page).toHaveURL(/\/team$/);
+    await page.goto('/team/v91-playtest');
+    await page.getByRole('checkbox',{
+      name:'Continue to a conditional finish'}).check();
+    await page.getByRole('checkbox',{
+      name:'Try v93 road-to-line preview'}).check();
+    await page.getByLabel('Distance').selectOption('260');
+    await page.getByLabel('Route profile').selectOption('flat');
+    await page.getByLabel('Field size').selectOption('15');
+    await page.getByLabel('Starting fatigue').selectOption('15');
+    await page.getByLabel('Scenario seed').fill('v93-seed-audit-2');
+    await page.getByLabel('Default tactics for uncustomized managers')
+      .selectOption('chase');
+    await page.getByLabel('Your effort').selectOption('conserve');
+    await page.getByLabel('Your attack').selectOption('repeated');
+    await page.getByLabel('Your chase').selectOption('all');
+    await page.getByLabel('you finisher').selectOption('you-4');
+    await page.getByRole('checkbox',{
+      name:'Show read-only point illustration'}).check();
+    const responsePromise=page.waitForResponse(response=>
+      response.url().endsWith('/api/v91-playtest')&&
+      response.request().method()==='POST');
+    await page.getByRole('button',{name:'Run v93 race preview'}).click();
+    const response=await responsePromise;
+    expect(response.status()).toBe(200);
+    const {coasted}=await response.json();
+    expect(coasted.version).toBe('v93-coast-singleton-playtest-1');
+    expect(coasted.kilometreFrames.at(-1).roadGroups)
+      .toHaveLength(2);
+    expect(coasted.kilometreFrames.at(-1).droppedRiders)
+      .toHaveLength(14);
+    expect(coasted.lastKmRoad.at(-1).droppedPassages)
+      .toHaveLength(14);
+    expect(coasted.bandReplays).toHaveLength(17);
+    expect(coasted.lineTimes).toHaveLength(120);
+    expect(coasted.managerDecisions.find(row=>row.teamId==='you')
+      .finisherId).toBe('you-4');
+    expect(coasted.pointPreview.status).toBe('unavailable');
+    await expect(page.getByRole('table',{
+      name:'V93 individual conditional results'}).getByRole('row'))
+      .toHaveCount(121);
+    await expect(page.getByText(
+      'Point illustration unavailable: Singleton fronts and isolated riders have unresolved road contact.'))
+      .toBeVisible();
+  });

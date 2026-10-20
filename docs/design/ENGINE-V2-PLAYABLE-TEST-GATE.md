@@ -2460,3 +2460,19 @@ This does not resolve every road shape: the same seed on a flat route has
 two singleton fronts but no new bunch drops, and the older coasted line
 still refuses that singleton handoff. The full unit suite has not
 completed, and no official result or award has been committed.
+
+The remaining flat variant of that seed now uses a separate singleton
+coasted-line version. At the locked 259 km source it has two one-rider
+front groups, 14 already isolated riders, and no new bunch drops. Each
+front singleton receives its own paid 500 m sprint runner instead of an
+unsupported multi-rider wheel position. The 15-team male and female
+roads finish with 17 replay bands and 120 conditional crossings; both
+replay exactly. A player may nominate one front singleton, or nominate a
+bunch rider with an optional bunch lead-out that pays work. The isolated
+riders have potential longitudinal overlap, so this branch explicitly
+withholds the illustrative point table and all official awards. The new
+flat browser fixture displays the nominated singleton in a 120-rider
+conditional result. Twenty-one focused and adjacent tests, lint, an
+isolated build and all thirteen local v93 browser flows pass. The old
+versioned coasted roads retain their previous runner and replay output;
+the broader full suite remains unverified.
