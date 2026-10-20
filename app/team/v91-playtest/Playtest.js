@@ -584,6 +584,7 @@ export default function Playtest(){
           {conditionalLine.length>0&&<div>
             <h4>Individual conditional results</h4>
             <p>{conditionalLine.length} of {result.settings.teamCount*8} riders have individual crossing times. Times do not establish official places.</p>
+            <p>Times use the bunch's last-kilometre marker as zero. A negative time means a front rider crossed before the bunch reached that marker; the gap column is measured from the first crossing. The kilometre recording has no paid whole-race clock.</p>
             <label>Results team<select value={resultsTeam}
               onChange={event=>setResultsTeam(event.target.value)}>
               <option value="all">All teams</option>

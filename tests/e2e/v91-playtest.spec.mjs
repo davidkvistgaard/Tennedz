@@ -416,6 +416,9 @@ test('a surviving group and bunch each replay paid riders to the conditional lin
     await expect(page.getByRole('table',{
       name:'Individual conditional results'}).getByRole('row'))
       .toHaveCount(33);
+    await expect(page.getByText(
+      /A negative time means a front rider crossed before the bunch reached that marker/))
+      .toBeVisible();
     await expect(page.getByText(/Points: withheld/)).toBeVisible();
     expect(errors).toEqual([]);
   });

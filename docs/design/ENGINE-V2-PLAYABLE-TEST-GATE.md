@@ -1895,3 +1895,16 @@ acceptance matrix, and a local browser run checks the refusal between two
 payable mountain races. All fourteen focused matrix cases, full lint, and a
 fresh isolated build pass. This is a documented motor limit, not a completed
 finish for those riders.
+
+The acceptance matrix now includes the other two selectable route profiles:
+40 km exposed flat road and a 120 km custom elevation profile. Across M/F,
+four/twenty teams and attack/chase orders, all eight additional full races
+produce paid individual lines whose final replay time and energy match every
+result row and whose read-only points match the calendar policy. The test
+also checks that exposed kilometres and the submitted custom elevations are
+actually locked into the race. All 22 matrix cases, lint, an isolated build
+and the local front-group browser replay pass. The result view explains that
+times are relative to the bunch's last-kilometre marker; a negative front
+time means that rider crossed before the bunch reached the marker. The older
+kilometre recording has no paid whole-race clock, so a total elapsed stage
+time is intentionally not fabricated from its separate provisional result.

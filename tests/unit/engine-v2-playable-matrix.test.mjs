@@ -11,7 +11,10 @@ import {pointsForDivisionResult} from
 
 const routes=[
   {distanceKm:40,terrain:'flat',fatigue:0},
+  {distanceKm:40,terrain:'exposed',fatigue:15},
   {distanceKm:120,terrain:'rolling',fatigue:15},
+  {distanceKm:120,terrain:'custom',fatigue:15,
+    profileHeightsM:[100,350,150,500,180,100]},
   {distanceKm:260,terrain:'mountain',fatigue:30}];
 const tactics=[
   {name:'attack',attack:'repeated',chase:'ignore'},
@@ -37,6 +40,15 @@ for(const route of routes)for(const gender of ['M','F'])
       assert.equal(summary.input.terrain,route.terrain);
       assert.equal(recording.recording.route.kilometres.length,
         route.distanceKm);
+      if(route.terrain==='custom'){
+        assert.deepEqual(summary.input.profileHeightsM,
+          route.profileHeightsM);
+        assert.ok(recording.recording.route.kilometres.some(km=>
+          Math.abs(km.gradientPct)>0.01));
+      }
+      if(route.terrain==='exposed')
+        assert.ok(recording.recording.route.kilometres.some(km=>
+          km.exposed));
       assert.equal(recording.recording.committedInputs.teams.length,
         teamCount);
       assert.equal(expected.size,teamCount*8);
