@@ -2769,3 +2769,17 @@ and remaining energy against the same API crossing. The road event is
 still a measured longitudinal passage, not a settled wheel/contact
 response, so points remain withheld. Lint, the isolated build and all
 21 local v93 browser cases pass via `pnpm test:v93:local`.
+
+The v93 result now includes the effort, attack, chase, finisher and helper
+locked for every manager in that run, including managers using defaults.
+The order snapshot comes from the validated committed race input, so edits
+in the setup form after a run cannot relabel an older result. A four-team
+browser case changes an unsent effort choice and checks that the displayed
+locked order stays tied to the paid result. The front-drop unit regression,
+lint, a fresh isolated build and all 21 local v93 browser cases pass. On
+this Windows/OneDrive checkout, an existing `.next-v93-local` cache caused
+an `EINVAL` readlink failure before tests began; the local verification and
+manual playtest scripts now accept a safe `.next-v93-*` directory name via
+`PELOTONIA_V93_LOCAL_DIST_DIR`, and a fresh directory passed the full gate.
+This changes the preview summary and test tooling, not the motor recording
+or withheld-award policy.

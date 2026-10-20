@@ -549,6 +549,17 @@ export default function Playtest(){
         <h2>V93 race preview · {coasted.settings.distanceKm} km {coasted.settings.terrain}</h2>
         <p>{coasted.tuningVersion} · {coasted.settings.managerTactics.length} custom rival managers · {coasted.roadStatus}</p>
         <p>Conditional individual line: {coasted.lineTimes.length} riders. Official results and points are withheld.</p>
+        <details aria-label="Locked v93 manager orders">
+          <summary>Locked manager orders for this race</summary>
+          {coasted.managerOrders.map(order=>{
+            const decision=coasted.managerDecisions.find(row=>
+              row.teamId===order.teamId);
+            return <p key={order.teamId}>{order.teamId}: {order.effort} effort ·
+              {' '}{order.attack} attack · {order.chase} chase ·
+              {' '}finisher {decision?.finisherId} ·
+              {' '}lead-out {decision?.leadOutRiderId??'none'}</p>;
+          })}
+        </details>
         {coastedOwnDecision&&<section className="v91-finish" aria-label="Your v93 finish">
           <h3>Your finish</h3>
           <p>Nominated finisher: {coastedOwnDecision.finisherId} ·

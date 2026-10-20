@@ -42,6 +42,9 @@ test('exhausted front riders pass through the bunch on a paid solo road',()=>{
       assert.equal(summary.lastKmRoad.at(-1).droppedPassages.length,3);
       assert.equal(summary.bandReplays.length,5);
       assert.equal(summary.lineTimes.length,32);
+      assert.deepEqual(summary.managerOrders,
+        race.recording.committedInputs.teams.map(team=>({
+          teamId:team.id,...team.orders.baseline})));
       assert.equal(race.individualLine.provisionalLineOrder,null);
       assert.equal(race.pointPreview.status,'unavailable');
       assert.equal(race.pointsStatus,'withheld');

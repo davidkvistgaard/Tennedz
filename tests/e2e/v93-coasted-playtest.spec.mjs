@@ -46,8 +46,22 @@ test('exhausted v93 road pays two manager lead-outs and shows conditional line',
     expect(coasted.leadOutWork.some(row=>row.riderId==='rival-2-5'))
       .toBe(true);
     expect(coasted.pointsStatus).toBe('withheld');
+    expect(coasted.managerOrders).toHaveLength(4);
     await expect(page.getByRole('heading',{
       name:'V93 race preview · 260 km flat'})).toBeVisible();
+    const lockedOrders=page.getByLabel('Locked v93 manager orders');
+    await lockedOrders.locator('summary').click();
+    const ownOrder=coasted.managerOrders.find(row=>row.teamId==='you');
+    await expect(lockedOrders).toContainText(
+      `you: ${ownOrder.effort} effort · ${ownOrder.attack} attack · ${ownOrder.chase} chase · finisher you-4 · lead-out you-6`);
+    const defaultOrder=coasted.managerOrders.find(row=>
+      row.teamId==='rival-3');
+    await expect(lockedOrders).toContainText(
+      `rival-3: ${defaultOrder.effort} effort · ${defaultOrder.attack} attack · ${defaultOrder.chase} chase`);
+    await page.getByLabel('Your effort').selectOption('hard');
+    await expect(lockedOrders).toContainText(
+      `you: ${ownOrder.effort} effort`);
+    await page.getByLabel('Your effort').selectOption(ownOrder.effort);
     const ownFinish=page.getByRole('region',{name:'Your v93 finish'});
     const ownLine=coasted.lineTimes.find(row=>row.riderId==='you-4');
     const helperWork=coasted.leadOutWork.filter(row=>

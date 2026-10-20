@@ -3,9 +3,12 @@ import { spawn } from "node:child_process";
 import { resolve } from "node:path";
 
 const fixtureUrl = "http://127.0.0.1:54329";
+const distDir = process.env.PELOTONIA_V93_LOCAL_DIST_DIR ?? ".next-v93-local";
+if (!/^\.next-v93-[a-z0-9-]+$/.test(distDir))
+  throw new Error("Choose a local .next-v93-* build directory name.");
 const env = {
   ...process.env,
-  PELOTONIA_NEXT_DIST_DIR: ".next-v93-local",
+  PELOTONIA_NEXT_DIST_DIR: distDir,
   PELOTONIA_V91_PLAYTEST_ENABLED: "true",
   PELOTONIA_V93_COASTED_PLAYTEST_ENABLED: "true",
   SUPABASE_URL: fixtureUrl,
