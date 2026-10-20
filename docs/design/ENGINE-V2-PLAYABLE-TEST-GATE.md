@@ -2337,3 +2337,26 @@ individual-line and point-policy unit checks, lint, and an isolated build
 pass. All six v93 local browser fixtures pass in one run. The sixth test
 uses a second local fixture user to remain within the preview API's
 per-user rate limit. The full unit suite was not repeated.
+
+The full-distance audit now includes 160 new 260 km cases in 15/20-team
+fields (fatigue 0/30, both categories, five terrains, and mixed/chase/
+neutral/attack rival defaults). All 160 produce a conditional finish: 120
+complete-bunch and 40 separated roads. A separate 108-case four-team,
+fatigue-30 multi-manager matrix varies the player's effort, attack and
+chase across both categories and flat/mountain routes. It exposed a caught
+front group whose earlier chasers remain in the source recording, plus
+multiple already dropped riders. The v93 no-front coast now accepts that
+historical chase when no chase target remains engaged, records the bunch
+and all three isolated riders through seven passages, and replays all 32
+individual crossings. The earlier version's stricter guard remains intact.
+When the paid individual bands have potential longitudinal contact, the
+read-only point illustration is explicitly unavailable and all awards stay
+withheld rather than inventing a placing. With this increment, 78/108
+multi-manager cases complete, including 52 point projections and 26
+unavailable illustrations; 30 still refuse because an active or newly
+exhausted rider lacks payable final-kilometre travel. The large-field and
+multi-manager matrices are direct API-engine probes, not browser replays.
+The targeted new and adjacent unit suites (12 tests), lint, isolated build,
+and all seven v93 local browser fixtures pass. The seventh browser flow
+tests this exact three-isolated-rider point-withholding case. Full unit
+suite status is recorded separately when run.

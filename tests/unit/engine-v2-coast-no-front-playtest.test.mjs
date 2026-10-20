@@ -73,6 +73,32 @@ test('a nominated bunch helper pays work without moving the isolated rider',()=>
     /does not replay/);
 });
 
+test('a late catch with several dropped riders keeps crossings but withholds contact points',()=>{
+  const input={...settings('M','flat'),seed:'multi-manager-audit-1',
+    defaultRivalPlan:'neutral',effort:'steady',attack:'repeated',
+    chase:'ignore',managerTactics:[
+      {effort:'hard',attack:'repeated',chase:'ignore'},
+      {effort:'conserve',attack:'none',chase:'all'}]};
+  const race=createV93PlayableTest(input,{pointContext:context});
+  const source=race.recording.frames.at(-2);
+  assert.equal(source.roadGroups.length,0);
+  assert.ok(source.chasers.length>0);
+  assert.equal(source.engagedChaseTeamIds.length,0);
+  assert.equal(source.riderGroups.filter(row=>row.group==='dropped').length,3);
+  assert.equal(race.version,V93_COAST_NO_FRONT_PLAYTEST_VERSION);
+  assert.equal(race.clock.passageFrames.at(-1).droppedPassages.length,3);
+  assert.equal(race.individualLine.conditionalCrossings.length,32);
+  assert.equal(race.individualLine.bandRunners.length,4);
+  assert.equal(race.individualLine.pre500Audit.status,
+    'potential_longitudinal_overlap');
+  assert.deepEqual(race.pointPreview,{
+    status:'unavailable',
+    reason:'Potential road-band contact leaves no defensible point order.',
+    pointsStatus:'withheld',canCommitAwards:false});
+  assert.equal(validateV93CoastedPlaytest(input,
+    {pointContext:context},race),true);
+});
+
 test('the v93 no-front coast clock rejects an older recording',()=>{
   const older=simulateTacticalTour(prepareV91Playtest(
     settings('M','mountain')));
