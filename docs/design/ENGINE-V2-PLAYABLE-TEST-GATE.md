@@ -2818,3 +2818,36 @@ contention. The earlier direct two-worker full suite passed; that later
 standard-command attempt did not. The serial `pnpm test` command passed
 all 962 tests with zero failures in 3,761 seconds. This only limits test
 file concurrency; it changes no motor behavior, recording or assertion.
+
+The opt-in v93 form now lets a manager select a nonconsecutive rival without
+customizing every intervening team. The selected rival's effort, attack and
+chase reach the existing named override contract, and that rival appears in
+the finisher and optional helper controls. If the consecutive custom-manager
+count later includes the same rival, its choices move into that row rather
+than creating two conflicting orders. A 40 km, four-team browser race selects
+`rival-3` alongside `rival-1`, nominates `rival-3-4`, then checks the locked
+orders, all 32 individual crossings and that rider's paid replay. The
+isolated build, lint, 16 focused playtest-input tests and all 22 local v93
+browser cases pass. This is a player-facing input change; the versioned
+recording and official point policy are unchanged.
+
+Paired v93 races on the same conditions now also show changed rivals' locked
+baseline and final-kilometre orders, nominated finisher and helper, road
+band, crossing time, energy, conditional place and read-only point change.
+The browser changes only `rival-3`'s effort on the same route and seed and
+compares displayed times, energy and point values with both API results.
+An isolated build, lint and all 22 local v93 browser cases pass. The earlier
+serial full unit suite passed before these UI-only changes; it was not rerun
+for either presentation increment.
+
+A fresh `engine-v2-v93-diversity-audit.mjs` run after those UI changes
+finished all 48 synthetic full-race scenarios, spanning 40/120/260 km,
+4/15/20 teams, M/F, five route types, three fatigue levels and varied
+attacks/chase. All 4,776 individual crossings matched their paid replay;
+44 scenarios produced policy-consistent read-only point illustrations and
+four withheld them. The four withheld cases were two 260 km newly isolated
+bunch roads (15-team F custom and 20-team M custom), one 260 km new-front
+drop (20-team M rolling) and one 260 km possible road-band contact (four-team
+M flat). Their contact and wheel order remain unresolved; no official
+classification or award is inferred or written. No production environment
+was accessed for this audit.
