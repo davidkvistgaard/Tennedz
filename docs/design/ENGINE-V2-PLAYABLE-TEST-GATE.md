@@ -1967,3 +1967,13 @@ kilometre race identical. The local browser exercises both manager controls,
 both helper work totals, the finish replay and withheld official awards.
 All eleven local v91 browser cases and full lint pass. This is still a
 conditional preview, not an official classification.
+
+The playable comparison now resets after a rejected race. A valid 40 km
+finish, an invalid custom profile, and a return to the original route no
+longer compare the last finish against a run that never happened; the next
+two valid runs can form a fresh pair. The failed request also clears its
+replay state. This was checked through the isolated production build and a
+local browser. The new four-run browser case and the other eleven v91 cases
+pass on separate fresh fixture servers; all twelve together exceed the
+fixture's race-per-minute limit and return a deliberate rate-limit response.
+Full lint passes. No production race or award path changed.

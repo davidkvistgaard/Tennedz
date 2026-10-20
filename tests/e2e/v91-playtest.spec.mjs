@@ -3,6 +3,49 @@ import {test,expect} from '@playwright/test';
 test.skip(process.env.PELOTONIA_V91_PLAYTEST_ENABLED!=='true',
   'The isolated v91 workbench is disabled.');
 
+test('a rejected race resets the paired comparison before another run',
+  async({page})=>{
+    const errors=[];page.on('pageerror',error=>errors.push(error.message));
+    await page.goto('/login');
+    await page.getByLabel('Email or username').fill('settings');
+    await page.getByLabel('Password',{exact:true}).fill('fixture-password');
+    await page.getByRole('button',{name:'Sign in',exact:true}).click();
+    await expect(page).toHaveURL(/\/team$/);
+    await page.goto('/team/v91-playtest');
+    await page.getByLabel('Distance').selectOption('40');
+    await page.getByLabel('Route profile').selectOption('flat');
+    await page.getByLabel('Scenario seed').fill('comparison-reset');
+    await page.getByRole('checkbox',{
+      name:'Continue to a conditional finish'}).check();
+    await page.getByRole('checkbox',{
+      name:'Show read-only point illustration'}).check();
+    await page.getByRole('button',{name:'Run full race preview'}).click();
+    await expect(page.getByRole('heading',{name:'Conditional finish'}))
+      .toBeVisible();
+    await expect(page.getByLabel('Paired race comparison')).toHaveCount(0);
+
+    await page.getByLabel('Route profile').selectOption('custom');
+    await page.getByLabel('20% (m)').fill('2500');
+    await page.getByRole('button',{name:'Run full race preview'}).click();
+    await expect(page.locator('.v91-error')).toContainText(
+      'Choose valid playtest settings.');
+    await expect(page.getByRole('heading',{name:'Conditional finish'}))
+      .toHaveCount(0);
+
+    await page.getByLabel('Route profile').selectOption('flat');
+    await page.getByLabel('Your effort').selectOption('hard');
+    await page.getByRole('button',{name:'Run full race preview'}).click();
+    await expect(page.getByRole('heading',{name:'Conditional finish'}))
+      .toBeVisible();
+    await expect(page.getByLabel('Paired race comparison')).toHaveCount(0);
+    await page.getByLabel('Your effort').selectOption('steady');
+    await page.getByRole('button',{name:'Run full race preview'}).click();
+    await expect(page.getByLabel('Paired race comparison')).toBeVisible();
+    await expect(page.getByText('Official points: withheld · Awards saved: 0'))
+      .toBeVisible();
+    expect(errors).toEqual([]);
+  });
+
 test('two managers can order paid competing lead-outs in a full race',
   async({page})=>{
     const errors=[];page.on('pageerror',error=>errors.push(error.message));

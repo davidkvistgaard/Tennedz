@@ -241,7 +241,9 @@ export default function Playtest(){
         ?.find(row=>row.teamId==='you')?.finisherId??'you-7');
       setSelectedKm(1);
       setResultsTeam('all');
-    }catch(cause){setComparison(null);setResult(null);setIntegrated(null);
+    }catch(cause){setComparison(null);setPreviousRun(null);
+      setResult(null);setIntegrated(null);setAttackRoad(null);
+      setAttackApproach(null);setFinaleReplay(null);setBandLocalReplay(null);
       setError(cause.message||'The playtest could not run.');}
     finally{setBusy(false);}
   }
