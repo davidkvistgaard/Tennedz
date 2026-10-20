@@ -2719,3 +2719,15 @@ the adjacent v93 bunch and coasted suites, including valid two-manager
 lead-outs and the established versioned replay, pass. This keeps invalid
 locked input from spending a full long-race simulation or being mistaken for
 an unsupported recorded road.
+
+The full unchanged unit suite also passes with bounded worker parallelism:
+`node --test --test-concurrency=4 --test-reporter=dot tests/unit/*.test.mjs`
+completed with exit code 0 on the preview branch. An earlier `pnpm test`
+attempt at the default parallelism timed out in the 18-race selective-chase
+audit after 720 seconds. That exact audit passed alone in 470 seconds and
+passed again within the bounded full suite, so the default-parallelism run
+is not counted as a pass. Browser, lint and isolated-build evidence above
+still applies to the same `ac0e7a5` code; this verification makes no motor
+or recording change. The conditional result and point-award gate remains
+open until the end-to-end playable road is accepted across its supported
+cases.
