@@ -557,7 +557,13 @@ export default function Playtest(){
             return <p key={order.teamId}>{order.teamId}: {order.effort} effort ·
               {' '}{order.attack} attack · {order.chase} chase ·
               {' '}finisher {decision?.finisherId} ·
-              {' '}lead-out {decision?.leadOutRiderId??'none'}</p>;
+              {' '}lead-out {decision?.leadOutRiderId??'none'}
+              {order.phaseOrders.map(phase=>
+                <span key={phase.atKm}> · At {phase.atKm} km: {' '}
+                  {['effort','attack','attackRiderId','chase','frontWork']
+                    .filter(key=>phase[key]!=null)
+                    .map(key=>`${key}: ${phase[key]}`).join(' · ')}
+                </span>)}</p>;
           })}
         </details>
         {coastedOwnDecision&&<section className="v91-finish" aria-label="Your v93 finish">

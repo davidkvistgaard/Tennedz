@@ -2783,3 +2783,13 @@ manual playtest scripts now accept a safe `.next-v93-*` directory name via
 `PELOTONIA_V93_LOCAL_DIST_DIR`, and a fresh directory passed the full gate.
 This changes the preview summary and test tooling, not the motor recording
 or withheld-award policy.
+
+The locked-order summary now also carries any final-kilometre phase orders
+from the validated recording and displays their specified overrides apart
+from each manager's baseline. A 40 km fictional bunch race locks the player
+to `ignore` chase during the race and `selective` chase at 39 km; its
+32-rider line replays, and the result summary preserves both choices. This
+closes a misleading baseline-only label for API callers that submit phase
+orders. Seven focused bunch/front-drop unit checks, lint, a fresh isolated
+build and all 21 local v93 browser cases pass. The UI still does not offer
+v93 phase-order editing, and official awards remain withheld.

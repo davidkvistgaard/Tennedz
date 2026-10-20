@@ -91,6 +91,20 @@ test('a catch recorded in kilometre 259 leaves a payable bunch at 1 km',()=>{
     {pointContext:context},race),true);
 });
 
+test('result summary retains a final-kilometre order apart from baseline',()=>{
+  const input={...settings(40,'flat','M'),attack:'none',chase:'ignore',
+    defaultRivalPlan:'neutral',managerFinaleOrders:[
+      {teamId:'you',attack:'none',chase:'selective',frontWork:'sit_in'}]};
+  const race=createV93PlayableTest(input);
+  const summary=summarizeV93CoastedPlaytest(race);
+  const locked=summary.managerOrders.find(row=>row.teamId==='you');
+  assert.equal(locked.chase,'ignore');
+  assert.deepEqual(locked.phaseOrders,[{atKm:39,
+    chase:'selective',attack:'none',frontWork:'sit_in'}]);
+  assert.equal(summary.lineTimes.length,32);
+  assert.equal(validateV93CoastedPlaytest(input,{},race),true);
+});
+
 test('bunch-only clock rejects the old motor recording',()=>{
   const prepared=prepareV91Playtest(settings(40,'flat','M'));
   const older=simulateTacticalTour(prepared);
