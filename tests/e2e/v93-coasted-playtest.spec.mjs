@@ -893,7 +893,15 @@ test('front leavers pass the bunch while a nominated helper works',
       .toMatchObject({roadBandId:'isolated:rival-1-7',energyAtLine:0});
     expect(coasted.pointPreview.status).toBe('unavailable');
     await expect(page.getByText(
-      /bunch passed at 259\.032 km/)).toBeVisible();
+      /bunch passed at 259\.032 km/).first()).toBeVisible();
+    const passed=coasted.lastKmRoad[0].droppedPassages.find(row=>
+      row.contactDistanceM!==null);
+    const crossing=coasted.lineTimes.find(row=>
+      row.riderId===passed.riderId);
+    await page.getByRole('button',{
+      name:`Inspect passage rider ${passed.riderId} finale replay`}).click();
+    await expect(page.getByLabel('Selected rider finale replay'))
+      .toContainText(`Crossed at ${crossing.elapsedSecondsFromLastKmStart.toFixed(3)} s; result ${crossing.elapsedSecondsFromLastKmStart.toFixed(3)} s, ${crossing.energyAtLine.toFixed(1)} energy.`);
     await expect(page.getByText('Official points: withheld · Awards saved: 0'))
       .toBeVisible();
   });

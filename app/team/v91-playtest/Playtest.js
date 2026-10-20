@@ -595,11 +595,23 @@ export default function Playtest(){
           {coastedRoad?.groups.map(group=><p key={group.id}>
             {group.id}: {group.riderIds.length} riders · {group.passageSecondsFromBunchMarker.toFixed(2)} s · {group.gapSeconds.toFixed(2)} s ahead
           </p>)}
-          <p>Isolated passages: {coastedRoad?.droppedPassages.map(row=>
-            `${row.riderId} ${row.passageSecondsFromBunchMarker.toFixed(2)} s (${bunchRelativeGap(row.deficitSeconds,2)})${
-              row.contactDistanceM==null?'':
-                ` · bunch passed at ${(row.contactDistanceM/1000).toFixed(3)} km`}`)
-            .join(' · ')}</p>
+          <p>Isolated passages: {coastedRoad?.droppedPassages.map((row,index)=><span
+            key={row.riderId}>{index>0?' · ':''}{row.riderId} {' '}
+            {row.passageSecondsFromBunchMarker.toFixed(2)} s
+            {' '}({bunchRelativeGap(row.deficitSeconds,2)})
+            {row.contactDistanceM!=null&&<>
+              {' '}· bunch passed at {(row.contactDistanceM/1000).toFixed(3)} km
+              {' '}<button type="button"
+                aria-label={`Inspect passage rider ${row.riderId} finale replay`}
+                onClick={()=>{
+                  const band=coasted.bandReplays.find(value=>
+                    value.id===`isolated:${row.riderId}`);
+                  setCoastedBandId(band.id);setCoastedRiderId(row.riderId);
+                  setCoastedBandIndex(band.frames.length-1);
+                  document.getElementById('v93-paid-finale-replay')
+                    ?.scrollIntoView();
+                }}>Inspect finish replay</button>
+            </>}</span>)}</p>
         </div>
         <div className="v91-finish" id="v93-paid-finale-replay">
           <h3>Paid individual finale replay</h3>

@@ -2760,3 +2760,12 @@ fixture-only Supabase values, then runs the v93 browser file in four fresh
 per-test shards. The command passed its isolated build and all 21 cases
 (6+5+5+5), and full lint passed. The regular production build and
 production services are not used by this verification command.
+
+The v93 road-boundary view now links a recorded bunch pass of an isolated
+front rider to that rider's own paid final-500 m replay. The four-team,
+260 km mountain case records two front leavers passed near 259.032 km;
+the browser follows one passage link and checks its displayed line time
+and remaining energy against the same API crossing. The road event is
+still a measured longitudinal passage, not a settled wheel/contact
+response, so points remain withheld. Lint, the isolated build and all
+21 local v93 browser cases pass via `pnpm test:v93:local`.
