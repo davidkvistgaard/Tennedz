@@ -21,7 +21,7 @@ const INITIAL={distanceKm:120,terrain:'flat',teamCount:4,gender:'M',fatigue:0,
   effort:'steady',attack:'selective',chase:'selective',seed:'playtest-1',
   profileHeightsM:[100,350,150,500,180,100],
   rivalPlans:[...DEFAULT_PLANS],defaultRivalPlan:'mixed',
-  managerTactics:[]};
+  managerTactics:[],managerTacticOverrides:[]};
 const OPTIONS={distanceKm:[[40,'40 km — short'],[120,'120 km — medium'],[260,'260 km — long']],
   terrain:[['flat','Flat'],['rolling','Rolling'],['mountain','Mountain'],
     ['exposed','Flat, exposed'],['custom','Draw your own']],
@@ -122,6 +122,7 @@ function bunchRelativeGap(deficitSeconds,decimals){
 export default function Playtest(){
   const [settings,setSettings]=useState(INITIAL);
   const [customRivals,setCustomRivals]=useState(0);
+  const [extraRivalId,setExtraRivalId]=useState('');
   const [integratedMode,setIntegratedMode]=useState(false);
   const [coastedMode,setCoastedMode]=useState(false);
   const [coasted,setCoasted]=useState(null);
@@ -163,6 +164,7 @@ export default function Playtest(){
   const change=(key,value)=>{
     if(key==='teamCount'){
       setCustomRivals(count=>Math.min(count,Number(value)-1));
+      setExtraRivalId('');
       setNamedAttack(current=>current.teamId==='you'||
         Number(current.teamId.split('-').at(-1))<Number(value)?current:
         {teamId:'',riderId:''});
@@ -171,7 +173,26 @@ export default function Playtest(){
         {teamId:'',riderId:''});
     }
     setSettings(current=>({...current,
-      [key]:['distanceKm','teamCount','fatigue'].includes(key)?Number(value):value}));
+      [key]:['distanceKm','teamCount','fatigue'].includes(key)?Number(value):value,
+      ...(key==='teamCount'?{managerTacticOverrides:
+        current.managerTacticOverrides.filter(row=>
+          Number(row.teamId.split('-')[1])<Number(value))}:{})}));
+  };
+  const changeCustomRivals=value=>{
+    const count=Number(value);
+    setCustomRivals(count);
+    setExtraRivalId('');
+    setSettings(current=>{
+      const managerTactics=[...current.managerTactics];
+      for(const row of current.managerTacticOverrides){
+        const index=Number(row.teamId.split('-')[1])-1;
+        if(index<count)managerTactics[index]={effort:row.effort,
+          attack:row.attack,chase:row.chase};
+      }
+      return {...current,managerTactics,managerTacticOverrides:
+        current.managerTacticOverrides.filter(row=>
+          Number(row.teamId.split('-')[1])>count)};
+    });
   };
   const changeHeight=(index,value)=>setSettings(current=>({...current,
     profileHeightsM:current.profileHeightsM.map((height,at)=>at===index?Number(value):height)}));
@@ -183,6 +204,29 @@ export default function Playtest(){
       [key]:value};
     return {...current,managerTactics};
   });
+  const addExtraRival=()=>{
+    if(!extraRivalId)return;
+    const index=Number(extraRivalId.split('-')[1])-1;
+    setSettings(current=>({...current,managerTacticOverrides:[
+      ...current.managerTacticOverrides,
+      {teamId:extraRivalId,...defaultTacticFor(index,current)}]
+      .sort((a,b)=>Number(a.teamId.split('-')[1])-
+        Number(b.teamId.split('-')[1]))}));
+    setExtraRivalId('');
+  };
+  const changeExtraRival=(teamId,key,value)=>setSettings(current=>({...current,
+    managerTacticOverrides:current.managerTacticOverrides.map(row=>
+      row.teamId===teamId?{...row,[key]:value}:row)}));
+  const removeExtraRival=teamId=>{
+    setSettings(current=>({...current,
+      managerTacticOverrides:current.managerTacticOverrides.filter(row=>
+        row.teamId!==teamId)}));
+    setFinalePlans(current=>{
+      const plans={...current};
+      delete plans[teamId];
+      return plans;
+    });
+  };
   const changeFinale=(teamId,key,value)=>setFinalePlans(current=>{
     const plan=current[teamId]??{finisherId:`${teamId}-7`,
       leadOutRiderId:null};
@@ -191,7 +235,12 @@ export default function Playtest(){
         {leadOutRiderId:null}:{})}};
   });
   const finaleTeams=['you',...Array.from({length:customRivals},
-    (_,index)=>`rival-${index+1}`)];
+    (_,index)=>`rival-${index+1}`),
+    ...settings.managerTacticOverrides.map(row=>row.teamId)];
+  const availableExtraRivals=Array.from(
+    {length:settings.teamCount-customRivals-1},
+    (_,index)=>`rival-${customRivals+index+1}`).filter(teamId=>
+    !settings.managerTacticOverrides.some(row=>row.teamId===teamId));
   const lineTimes=integrated?.finale?.lineTimes??[];
   const coastedFrame=coasted?.kilometreFrames[coastedKm-1];
   const coastedRoad=coasted?.lastKmRoad[coastedRoadIndex];
@@ -265,12 +314,14 @@ export default function Playtest(){
       const managerTactics=Array.from(
         {length:customRivals},(_,index)=>
           settings.managerTactics[index]??defaultTacticFor(index,settings));
+      const namedTactics=new Map(settings.managerTacticOverrides.map(row=>
+        [row.teamId,row]));
       const allTeams=['you',...Array.from({length:settings.teamCount-1},
         (_,index)=>`rival-${index+1}`)];
       const orders=new Map(allTeams.map((teamId,index)=>[
         teamId,{teamId,attack:'none',
           chase:index===0?settings.chase:
-            (managerTactics[index-1]??
+            (namedTactics.get(teamId)??managerTactics[index-1]??
               defaultTacticFor(index-1,settings)).chase,
           frontWork:finaleFrontWork[teamId]??'sit_in'}]));
       if(secondNamedAttack.teamId)for(const row of [namedAttack,
@@ -414,7 +465,7 @@ export default function Playtest(){
             </select>
           </label>)}</div>}
           <label>Managers with your own tactics
-            <select value={customRivals} onChange={event=>setCustomRivals(Number(event.target.value))}>
+            <select value={customRivals} onChange={event=>changeCustomRivals(event.target.value)}>
               {Array.from({length:settings.teamCount},(_,count)=><option key={count} value={count}>
                 {count} of {settings.teamCount-1} rivals
               </option>)}
@@ -433,6 +484,37 @@ export default function Playtest(){
               </label>)}
             </div>)}
           </div>}
+          {availableExtraRivals.length>0&&<div>
+            <label>Choose another rival manager
+              <select value={extraRivalId} onChange={event=>
+                setExtraRivalId(event.target.value)}>
+                <option value="">Select a rival</option>
+                {availableExtraRivals.map(teamId=><option key={teamId}
+                  value={teamId}>{teamId}</option>)}
+              </select>
+            </label>
+            <button type="button" disabled={!extraRivalId}
+              onClick={addExtraRival}>Add rival manager</button>
+          </div>}
+          {settings.managerTacticOverrides.length>0&&
+            <div className="v91-manager-tactics">
+              {settings.managerTacticOverrides.map(tactic=><div
+                key={tactic.teamId}>
+                <strong>{tactic.teamId}</strong>
+                {['effort','attack','chase'].map(key=><label key={key}>
+                  {tactic.teamId} {key}
+                  <select value={tactic[key]} onChange={event=>
+                    changeExtraRival(tactic.teamId,key,event.target.value)}>
+                    {OPTIONS[key].map(([value,label])=><option key={value}
+                      value={value}>{label}</option>)}
+                  </select>
+                </label>)}
+                <button type="button" onClick={()=>
+                  removeExtraRival(tactic.teamId)}>
+                  Remove {tactic.teamId}
+                </button>
+              </div>)}
+            </div>}
         </fieldset>
         {integratedMode&&<fieldset className="v91-profile">
           <legend>Finale nominations</legend>
@@ -547,7 +629,8 @@ export default function Playtest(){
       {error&&<p role="alert" className="v91-error">{error}</p>}
       {coasted&&<section className="v91-results" aria-label="V93 coasted race preview">
         <h2>V93 race preview · {coasted.settings.distanceKm} km {coasted.settings.terrain}</h2>
-        <p>{coasted.tuningVersion} · {coasted.settings.managerTactics.length} custom rival managers · {coasted.roadStatus}</p>
+        <p>{coasted.tuningVersion} · {coasted.settings.managerTactics.length+
+          (coasted.settings.managerTacticOverrides?.length??0)} custom rival managers · {coasted.roadStatus}</p>
         <p>Conditional individual line: {coasted.lineTimes.length} riders. Official results and points are withheld.</p>
         <details aria-label="Locked v93 manager orders">
           <summary>Locked manager orders for this race</summary>
@@ -762,7 +845,8 @@ export default function Playtest(){
       </section>}
       {result&&<section className="v91-results" aria-label="Playtest recording">
         <h2>Recorded race · {result.settings.distanceKm} km {result.settings.terrain}</h2>
-        <p>{result.tuningVersion} · {result.settings.managerTactics.length} custom rival managers{integrated?' · Conditional finale':` · Your captain: provisional #${result.ownCaptain??'—'}`}</p>
+        <p>{result.tuningVersion} · {result.settings.managerTactics.length+
+          (result.settings.managerTacticOverrides?.length??0)} custom rival managers{integrated?' · Conditional finale':` · Your captain: provisional #${result.ownCaptain??'—'}`}</p>
         {integrated&&<p>Replay the locked kilometres through {result.handoffKm} km here. The paid final kilometre continues below.</p>}
         <label>Race kilometre: {selectedKm}
           <input type="range" min="1" max={result.frames.length} value={selectedKm}

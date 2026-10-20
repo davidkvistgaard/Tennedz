@@ -5,6 +5,70 @@ test.skip(process.env.PELOTONIA_V91_PLAYTEST_ENABLED!=='true'||
   process.env.PELOTONIA_V93_COASTED_PLAYTEST_ENABLED!=='true',
 'The isolated v93 workbench is disabled.');
 
+test('a named distant rival keeps its tactics and finisher through the road replay',
+  async({page})=>{
+    const errors=[];page.on('pageerror',error=>errors.push(error.message));
+    await page.goto('/login');
+    await page.getByLabel('Email or username').fill('settings');
+    await page.getByLabel('Password',{exact:true}).fill('fixture-password');
+    await page.getByRole('button',{name:'Sign in',exact:true}).click();
+    await expect(page).toHaveURL(/\/team$/);
+    await page.goto('/team/v91-playtest');
+    await page.getByRole('checkbox',{
+      name:'Continue to a conditional finish'}).check();
+    await page.getByRole('checkbox',{
+      name:'Try v93 road-to-line preview'}).check();
+    await page.getByLabel('Distance').selectOption('40');
+    await page.getByLabel('Field size').selectOption('4');
+    await page.getByLabel('Managers with your own tactics').selectOption('1');
+    await page.getByLabel('Rival 1 effort').selectOption('hard');
+    await page.getByLabel('Choose another rival manager')
+      .selectOption('rival-3');
+    await page.getByRole('button',{name:'Add rival manager'}).click();
+    await page.getByLabel('rival-3 effort').selectOption('conserve');
+    await page.getByLabel('rival-3 chase').selectOption('ignore');
+    await page.getByLabel('rival-3 finisher').selectOption('rival-3-4');
+    await page.getByRole('checkbox',{
+      name:'Show read-only point illustration'}).check();
+    const responsePromise=page.waitForResponse(response=>
+      response.url().endsWith('/api/v91-playtest')&&
+      response.request().method()==='POST');
+    await page.getByRole('button',{name:'Run v93 race preview'}).click();
+    const response=await responsePromise;
+    expect(response.status()).toBe(200);
+    const {coasted}=await response.json();
+    expect(coasted.settings.managerTactics).toHaveLength(1);
+    expect(coasted.settings.managerTactics[0].effort).toBe('hard');
+    expect(coasted.settings.managerTacticOverrides).toHaveLength(1);
+    expect(coasted.settings.managerTacticOverrides[0])
+      .toMatchObject({teamId:'rival-3',effort:'conserve',chase:'ignore'});
+    expect(coasted.managerOrders.find(row=>row.teamId==='rival-3'))
+      .toMatchObject({effort:'conserve',chase:'ignore'});
+    expect(coasted.managerDecisions.find(row=>row.teamId==='rival-3'))
+      .toMatchObject({finisherId:'rival-3-4'});
+    expect(coasted.lineTimes).toHaveLength(32);
+    expect(coasted.lastKmRoad.at(-1).distanceM).toBe(40000);
+    expect(coasted.pointsStatus).toBe('withheld');
+    expect(coasted.pointPreview.awardRows).toEqual([]);
+    await expect(page.getByRole('heading',{
+      name:'V93 race preview · 40 km flat'})).toBeVisible();
+    await expect(page.getByText('2 custom rival managers',{
+      exact:false})).toBeVisible();
+    const finisher=coasted.lineTimes.find(row=>
+      row.riderId==='rival-3-4');
+    await page.getByRole('button',{name:'Replay rival-3-4'}).click();
+    const interval=page.getByRole('slider',{name:/Band interval/});
+    await interval.fill(await interval.getAttribute('max'));
+    await expect(page.getByLabel('Selected rider finale replay'))
+      .toContainText(`Crossed at ${finisher.elapsedSecondsFromLastKmStart.toFixed(3)} s; result ${finisher.elapsedSecondsFromLastKmStart.toFixed(3)} s, ${finisher.energyAtLine.toFixed(1)} energy.`);
+    await page.getByLabel('Managers with your own tactics').selectOption('3');
+    await expect(page.getByLabel('Rival 3 effort')).toHaveValue('conserve');
+    await expect(page.getByLabel('Rival 3 chase')).toHaveValue('ignore');
+    await expect(page.getByLabel('rival-3 effort',{exact:true}))
+      .toHaveCount(0);
+    expect(errors).toEqual([]);
+  });
+
 test('exhausted v93 road pays two manager lead-outs and shows conditional line',
   async({page})=>{
     const errors=[];page.on('pageerror',error=>errors.push(error.message));
