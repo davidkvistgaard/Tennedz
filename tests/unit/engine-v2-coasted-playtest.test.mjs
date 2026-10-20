@@ -74,6 +74,52 @@ test('ten exhausted routes yield replayable individual lines and policy points',
     }
 });
 
+test('a five-kilometre effort choice pays energy, line and preview points',()=>{
+  const base={distanceKm:120,terrain:'rolling',teamCount:15,gender:'F',
+    fatigue:15,seed:'late-phase-6',effort:'steady',attack:'none',
+    chase:'selective',defaultRivalPlan:'mixed'};
+  const run=effort=>{
+    const input={...base,managerFinaleOrders:[{teamId:'you',atKm:115,
+      effort}]};
+    const race=createV93PlayableTest(input,{pointContext:{tier:2,
+      divisionIndex:1,divisionCount:2}});
+    assert.equal(validateV93CoastedPlaytest(input,{pointContext:{tier:2,
+      divisionIndex:1,divisionCount:2}},race),true);
+    return summarizeV93CoastedPlaytest(race);
+  };
+  const conserve=run('conserve'),hard=run('hard');
+  for(const [summary,effort] of [[conserve,'conserve'],[hard,'hard']]){
+    assert.deepEqual(summary.managerOrders.find(row=>row.teamId==='you')
+      .phaseOrders,[{atKm:115,effort}]);
+    assert.equal(summary.lineTimes.length,120);
+    assert.equal(summary.lastKmRoad.at(-1).distanceM,120000);
+    assert.equal(summary.pointPreview.awardRows.length,0);
+    assert.equal(summary.pointsStatus,'withheld');
+  }
+  const own=summary=>summary.pointPreview.riders.find(row=>
+    row.riderId==='you-7');
+  assert.equal(own(conserve).provisionalPlace,12);
+  assert.equal(own(hard).provisionalPlace,13);
+  assert.equal(own(conserve).previewPoints,18);
+  assert.equal(own(hard).previewPoints,15);
+  assert.ok(own(conserve).energyAtLine>own(hard).energyAtLine);
+  assert.notEqual(own(conserve).elapsedSecondsFromLastKmStart,
+    own(hard).elapsedSecondsFromLastKmStart);
+  for(const row of [{teamId:'you',atKm:114,effort:'hard'},
+    {teamId:'you',atKm:115}])
+    assert.throws(()=>createV93PlayableTest({...base,
+      managerFinaleOrders:[row]}),/Choose valid playtest settings/);
+  const multi=summarizeV93CoastedPlaytest(createV93PlayableTest({
+    ...base,distanceKm:40,teamCount:4,managerFinaleOrders:[
+      {teamId:'you',atKm:35,effort:'hard'},
+      {teamId:'rival-1',atKm:35,effort:'conserve'}]}));
+  assert.deepEqual(multi.managerOrders.find(row=>row.teamId==='you')
+    .phaseOrders,[{atKm:35,effort:'hard'}]);
+  assert.deepEqual(multi.managerOrders.find(row=>row.teamId==='rival-1')
+    .phaseOrders,[{atKm:35,effort:'conserve'}]);
+  assert.equal(multi.lineTimes.length,32);
+});
+
 test('coasted playtest rejects a cross-road helper and changed replay',()=>{
   const input=settings('flat','M');
   const base=createV93CoastedPlaytest(input);

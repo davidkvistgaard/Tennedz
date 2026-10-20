@@ -5,6 +5,76 @@ test.skip(process.env.PELOTONIA_V91_PLAYTEST_ENABLED!=='true'||
   process.env.PELOTONIA_V93_COASTED_PLAYTEST_ENABLED!=='true',
 'The isolated v93 workbench is disabled.');
 
+test('a five-kilometre effort change reaches the paid line and points',
+  async({page})=>{
+    const errors=[];page.on('pageerror',error=>errors.push(error.message));
+    await page.goto('/login');
+    await page.getByLabel('Email or username').fill('bob');
+    await page.getByLabel('Password',{exact:true}).fill('fixture-password');
+    await page.getByRole('button',{name:'Sign in',exact:true}).click();
+    await expect(page).toHaveURL(/\/team$/);
+    await page.goto('/team/v91-playtest');
+    await page.getByRole('checkbox',{
+      name:'Continue to a conditional finish'}).check();
+    await page.getByRole('checkbox',{
+      name:'Try v93 road-to-line preview'}).check();
+    await page.getByLabel('Distance').selectOption('120');
+    await page.getByLabel('Route profile').selectOption('rolling');
+    await page.getByLabel('Category').selectOption('F');
+    await page.getByLabel('Field size').selectOption('15');
+    await page.getByLabel('Starting fatigue').selectOption('15');
+    await page.getByLabel('Scenario seed').fill('late-phase-6');
+    await page.getByLabel('Your attack').selectOption('none');
+    await page.getByRole('checkbox',{
+      name:'Show read-only point illustration'}).check();
+    const run=async()=>{
+      const responsePromise=page.waitForResponse(response=>
+        response.url().endsWith('/api/v91-playtest')&&
+        response.request().method()==='POST');
+      await page.getByRole('button',{name:'Run v93 race preview'}).click();
+      const response=await responsePromise;
+      expect(response.status()).toBe(200);
+      return (await response.json()).coasted;
+    };
+    await page.getByLabel('5 km to go effort for you')
+      .selectOption('conserve');
+    const before=await run();
+    await page.getByLabel('5 km to go effort for you')
+      .selectOption('hard');
+    const after=await run();
+    for(const [summary,effort] of [[before,'conserve'],[after,'hard']]){
+      expect(summary.managerOrders.find(row=>row.teamId==='you')
+        .phaseOrders).toEqual([{atKm:115,effort}]);
+      expect(summary.lineTimes).toHaveLength(120);
+      expect(summary.lastKmRoad.at(-1).distanceM).toBe(120000);
+      expect(summary.pointPreview.awardRows).toEqual([]);
+      expect(summary.pointsStatus).toBe('withheld');
+    }
+    const own=summary=>summary.pointPreview.riders.find(row=>
+      row.riderId==='you-7');
+    expect(own(before).provisionalPlace).toBe(12);
+    expect(own(after).provisionalPlace).toBe(13);
+    expect(own(before).previewPoints).toBe(18);
+    expect(own(after).previewPoints).toBe(15);
+    expect(own(before).energyAtLine)
+      .toBeGreaterThan(own(after).energyAtLine);
+    await expect(page.getByRole('region',{
+      name:'Paired v93 race comparison'}))
+      .toContainText('Conditional place: 12 → 13');
+    await expect(page.getByRole('region',{
+      name:'Paired v93 race comparison'}))
+      .toContainText('Read-only points: 18 (place 12) → 15 (place 13)');
+    await expect(page.getByRole('table',{
+      name:'V93 individual conditional results'}).getByRole('row'))
+      .toHaveCount(121);
+    const rider=after.lineTimes.find(row=>row.riderId==='you-7');
+    await page.getByRole('button',{name:'Replay you-7'}).click();
+    const interval=page.getByRole('slider',{name:/Band interval/});
+    await interval.fill(await interval.getAttribute('max'));
+    await expect(page.getByLabel('Selected rider finale replay'))
+      .toContainText(`Crossed at ${rider.elapsedSecondsFromLastKmStart.toFixed(3)} s; result ${rider.elapsedSecondsFromLastKmStart.toFixed(3)} s, ${rider.energyAtLine.toFixed(1)} energy.`);
+    expect(errors).toEqual([]);
+  });
 test('a mobile manager plays a medium women race with a distant rival',
   async({page})=>{
     const errors=[];page.on('pageerror',error=>errors.push(error.message));

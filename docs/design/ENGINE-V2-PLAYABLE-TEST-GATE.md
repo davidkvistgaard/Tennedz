@@ -2863,3 +2863,21 @@ shrink inside that track. A fresh isolated build and all 23 local v93 browser
 cases pass. A separate v91 browser regression probe passed its first two
 cases, then hit the local fixture's HTTP 429 request limit; it is not counted
 as a complete v91 pass. No production environment was accessed.
+
+The opt-in v93 workbench now accepts a manager effort change at the existing
+5 km-to-go marker for the player and any customized rival. This is a phase
+order in the same synthetic committed race input; the prior effort remains
+active before that marker. A paired 120 km rolling women's race with 15
+teams, fatigue 15 and unchanged seed changes only the player's marker effort
+from `conserve` to `hard`. The paid line moves the nominated `you-7` from
+conditional place 12 to 13, remaining energy falls, and the tier-2 read-only
+point illustration changes from 18 to 15. Both runs retain 120 individual
+crossings and zero award rows; the browser's locked order, comparison, result
+and selected rider replay agree with the API response. A separate four-team
+unit scenario records distinct player and rival marker orders. Marker-only
+and off-marker input are rejected before simulation. The prior final-km
+orders remain at their original marker, and old recordings are untouched.
+Six coasted-playtest unit tests, 21 existing playtest/bunch contract tests,
+lint, a fresh isolated build and all 24 v93 browser cases pass. This closes
+the workbench's phase-effort visibility gap at 5 km; it does not resolve
+contact geometry or make official results and points available.

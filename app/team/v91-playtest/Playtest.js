@@ -161,6 +161,7 @@ export default function Playtest(){
   const [coastedBandIndex,setCoastedBandIndex]=useState(0);
   const [coastedRiderId,setCoastedRiderId]=useState('');
   const [finalePlans,setFinalePlans]=useState({});
+  const [lateEfforts,setLateEfforts]=useState({});
   const [finaleFrontWork,setFinaleFrontWork]=useState({});
   const [namedAttack,setNamedAttack]=useState({teamId:'',riderId:''});
   const [secondNamedAttack,setSecondNamedAttack]=useState({teamId:'',riderId:''});
@@ -375,7 +376,11 @@ export default function Playtest(){
         attackRiderId:row.riderId});
       const raceSettings={...settings,managerTactics,
         ...(!coastedMode&&secondNamedAttack.teamId?{
-          managerFinaleOrders:[...orders.values()]}:{})};
+          managerFinaleOrders:[...orders.values()]}:{}),
+        ...(integratedMode&&coastedMode?{managerFinaleOrders:finaleTeams
+          .filter(teamId=>lateEfforts[teamId])
+          .map(teamId=>({teamId,atKm:settings.distanceKm-5,
+            effort:lateEfforts[teamId]}))}:{})};
       const payload=integratedMode&&coastedMode?{
         mode:'v93-coasted',settings:raceSettings,
         plans:allTeams.map(teamId=>({teamId,
@@ -560,6 +565,20 @@ export default function Playtest(){
               </div>)}
             </div>}
         </fieldset>
+        {integratedMode&&coastedMode&&<fieldset className="v91-profile">
+          <legend>Five-kilometre effort orders</legend>
+          <p>Choose a new effort at 5 km to go for your team or a customized rival. The previous effort stays in force until that marker.</p>
+          <div className="v91-manager-tactics">{finaleTeams.map(teamId=>
+            <label key={teamId}>5 km to go effort for {teamId}
+              <select value={lateEfforts[teamId]??''} onChange={event=>
+                setLateEfforts(current=>({...current,
+                  [teamId]:event.target.value}))}>
+                <option value="">Keep race effort</option>
+                {OPTIONS.effort.map(([value,label])=><option key={value}
+                  value={value}>{label}</option>)}
+              </select>
+            </label>)}</div>
+        </fieldset>}
         {integratedMode&&<fieldset className="v91-profile">
           <legend>Finale nominations</legend>
           <p>Choose a finisher and an optional helper for your team and any customized rival manager. Other managers use their captain. A helper works only when the recorded road lets the pair assemble.</p>
@@ -901,7 +920,7 @@ export default function Playtest(){
                 {' '}{after.roadBandId??'unavailable'}.</p>
               {JSON.stringify(before.phaseOrders)!==
                 JSON.stringify(after.phaseOrders)&&<p>
-                Final-kilometre orders:
+                Phase orders:
                 {' '}{phaseOrderSummary(before.phaseOrders)} →
                 {' '}{phaseOrderSummary(after.phaseOrders)}.
               </p>}
