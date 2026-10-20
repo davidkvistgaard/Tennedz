@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {createV93PlayableTest,V93_COAST_NO_FRONT_PLAYTEST_VERSION,
+  V93_DYNAMIC_NO_FRONT_PLAYTEST_VERSION,
   validateV93CoastedPlaytest} from
   '../../lib/engine/v2/playtest-v93-coasted.mjs';
 import {pointsForDivisionResult} from '../../lib/calendar/points.mjs';
@@ -126,4 +127,48 @@ test('the v93 no-front coast clock rejects an older recording',()=>{
     settings('M','mountain')));
   assert.throws(()=>recordFinaleCoastNoFrontDroppedLastKmClock(older),
     /needs a v93 source/);
+});
+
+test('a new boundary drop keeps its solo travel, crossing and replay',()=>{
+  for(const gender of ['M','F'])
+    for(const terrain of ['flat','exposed']){
+      const input={distanceKm:260,teamCount:4,gender,terrain,
+        fatigue:30,seed:'multi-manager-audit-1',
+        defaultRivalPlan:'neutral',effort:'conserve',attack:'none',
+        chase:'ignore',managerTactics:[
+          {effort:'hard',attack:'repeated',chase:'ignore'},
+          {effort:'conserve',attack:'none',chase:'all'}]};
+      const race=createV93PlayableTest(input,{pointContext:context});
+      assert.throws(()=>recordFinaleCoastNoFrontDroppedLastKmClock(
+        race.recording),/Newly exhausted finale riders/);
+      const source=race.recording.frames.at(-2);
+      const sourceDrops=source.riderGroups.filter(row=>
+        row.group==='dropped');
+      const newDrops=race.clock.trace.exhaustionDrops;
+      assert.equal(race.version,V93_DYNAMIC_NO_FRONT_PLAYTEST_VERSION);
+      assert.equal(source.roadGroups.length,0);
+      assert.equal(sourceDrops.length,3);
+      assert.equal(newDrops.length,1);
+      assert.equal(newDrops[0].atDistanceM,259000);
+      assert.equal(race.clock.trace.finalDroppedRiderIds.length,4);
+      assert.equal(race.clock.passageFrames.length,7);
+      assert.equal(race.clock.passageFrames.at(-1)
+        .droppedPassages.length,4);
+      assert.equal(race.individualLine.conditionalCrossings.length,32);
+      assert.equal(race.individualLine.bandRunners.length,5);
+      assert.equal(race.individualLine.pre500Audit.status,
+        'unresolved_new_drops');
+      assert.equal(race.individualLine.provisionalLineOrder,null);
+      assert.equal(race.pointPreview.status,'unavailable');
+      const droppedId=newDrops[0].riderId;
+      const solo=race.individualLine.bandRunners.find(band=>
+        band.roadBandId===`isolated:${droppedId}`);
+      assert.equal(solo.runner.frames.length,5);
+      assert.equal(solo.runner.finishers[0].energyAtLine,0);
+      assert.ok(solo.runner.frames.every(frame=>
+        frame.riders[0].energySpent===0&&
+        frame.riders[0].activeDistanceM===100));
+      assert.equal(validateV93CoastedPlaytest(input,
+        {pointContext:context},race),true);
+    }
 });

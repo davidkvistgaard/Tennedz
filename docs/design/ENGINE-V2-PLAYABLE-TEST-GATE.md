@@ -2390,3 +2390,28 @@ versions replays exactly. A fixed unit test now preserves the 20-team
 six-isolated-rider point-withholding behavior; all five focused coasted
 no-front tests and lint pass. This audit did not run through the browser;
 the nine browser acceptance flows above cover the UI separately.
+
+An opt-in, separately versioned no-front finale now records a rider who
+exhausts at the final-kilometre boundary as a new isolated rider. The rider
+leaves the bunch before that slice, pays independent coasted travel on the
+same clock as the bunch, and reaches an individual line with recorded zero
+reserve. The inferred bunch wheel is removed from the 500 m sprint handoff;
+the earlier source recording and its version remain unchanged. Potential
+contact with a newly isolated rider before 500 m is not yet resolved, so
+this branch exposes conditional crossings but withholds even illustrative
+points and all awards.
+
+Repeating the 108-case four-team, fatigue-30 multi-manager matrix with
+three effort, attack and chase choices across both categories and flat and
+mountain routes now completes 96 cases: 52 policy-consistent read-only
+point illustrations and 44 explicit point-unavailable outcomes. The 18
+newly completed cases are all flat roads with recorded boundary drops; the
+12 remaining refusals have a zero-reserve rider in a still-separated front
+group. Four fixed flat/exposed, male/female replay checks cover the new
+32-rider line. Fourteen focused and adjacent unit tests, lint, isolated
+build and all ten local v93 browser flows pass, including the new women's
+260 km multi-manager boundary-drop fixture. The separate 15-team custom
+route seed-diversity refusal remains because its new drop is on a front
+road shape. These checks do not establish a complete playable motor or
+an official point result; the earlier full unit-suite attempt did not
+complete.
