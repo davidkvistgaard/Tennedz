@@ -2708,3 +2708,14 @@ comparison, result panel and paid finale replay agree with the second API
 response. Neither run creates an award row, and official points stay
 withheld. This tests the full tactic-to-result-to-point path in the other
 category without treating a provisional preview as a settled race.
+
+The v93 entry now validates an explicitly submitted complete finale plan
+against the prepared fictional lineup before simulating the kilometre road.
+Unknown or cross-team finishers and helpers, a captain nominated as helper,
+duplicate managers and missing plans fail with the existing plan error.
+The default `plans:null` path and the later road-dependent helper check remain
+unchanged. A focused invalid-plan regression completes before a tour is run;
+the adjacent v93 bunch and coasted suites, including valid two-manager
+lead-outs and the established versioned replay, pass. This keeps invalid
+locked input from spending a full long-race simulation or being mistaken for
+an unsupported recorded road.

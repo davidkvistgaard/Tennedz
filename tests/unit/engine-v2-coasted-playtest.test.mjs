@@ -88,6 +88,21 @@ test('coasted playtest rejects a cross-road helper and changed replay',()=>{
     /does not replay/);
 });
 
+test('v93 validates locked finale rider IDs before simulating a road',()=>{
+  const input=settings('flat','M');
+  const plans=['you','rival-1','rival-2','rival-3'].map(teamId=>({
+    teamId,finisherId:`${teamId}-7`,leadOutRiderId:null}));
+  for(const invalid of [
+    plans.map(row=>row.teamId==='you'?{...row,finisherId:'unknown-7'}:row),
+    plans.map(row=>row.teamId==='you'?{
+      ...row,leadOutRiderId:'rival-1-5'}:row),
+    plans.map(row=>row.teamId==='you'?{
+      ...row,finisherId:'you-4',leadOutRiderId:'you-7'}:row),
+    [...plans.slice(0,-1),plans[0]],plans.slice(0,-1)])
+    assert.throws(()=>createV93CoastedPlaytest(input,{plans:invalid}),
+      /Choose one valid finale plan per manager/);
+});
+
 test('attacking v93 roads keep separated front groups through the playable line',()=>{
   for(const teamCount of [4,15,20])
     for(const terrain of ['flat','rolling','mountain','exposed','custom'])
