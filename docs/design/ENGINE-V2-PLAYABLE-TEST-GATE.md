@@ -1884,3 +1884,14 @@ first ran a paid 260 km mountain finish, then submitted a 40 km custom route
 whose first 20% exceeds the allowed gradient; the rejection appeared and the
 old 32-rider result table disappeared. All eight local v91 browser cases,
 the isolated build and full lint pass.
+
+The two remaining mixed-tactic mountain cases in the 66-scenario road audit
+still cannot pay individual travel: in both categories six isolated riders
+exhaust their reserve and the recorded slices require another 0.621 energy.
+The preview now names those riders and displays the unmet demand instead of
+leaving only a generic missing-replay warning. It keeps the individual result
+and point illustration unavailable. Both cases are pinned in the full-race
+acceptance matrix, and a local browser run checks the refusal between two
+payable mountain races. All fourteen focused matrix cases, full lint, and a
+fresh isolated build pass. This is a documented motor limit, not a completed
+finish for those riders.

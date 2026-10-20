@@ -92,3 +92,24 @@ for(const route of routes)for(const gender of ['M','F'])
       }
     });
   }
+
+for(const gender of ['M','F'])test(`260 km mountain ${gender}: zero reserve cannot create a paid result`,()=>{
+  const output=runV91IntegratedTestDrive({settings:{distanceKm:260,
+    terrain:'mountain',fatigue:30,teamCount:4,gender,
+    seed:'test-drive-acceptance-1',defaultRivalPlan:'mixed',
+    attack:'selective',chase:'selective'},
+  finalePlans:[{teamId:'you',finisherId:'you-7',leadOutRiderId:null}],
+  individualGroupLine:true,
+  pointContext:{tier:3,divisionIndex:1,divisionCount:1}},{full:true});
+  assert.equal(output.summary.status,'unsupported');
+  assert.equal(output.summary.roadStatus,'recorded_depleted_bands');
+  assert.equal(output.summary.finale.reserveStatus,
+    'energy_demand_saturated_at_zero');
+  assert.equal(output.summary.lastKmSource.droppedRiderIds.length,6);
+  assert.ok(output.summary.finale.totalUnmetEnergyDemand>0);
+  assert.equal(output.summary.finale.lineTimes,undefined);
+  assert.equal(summarizeV91PaidMultibandReplay(output),null);
+  assert.equal(output.summary.provisionalPointPreview.status,'unavailable');
+  assert.equal(output.summary.pointsStatus,'withheld');
+  assert.equal(output.summary.canCommitAwards,false);
+});

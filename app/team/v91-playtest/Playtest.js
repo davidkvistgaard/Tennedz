@@ -617,6 +617,12 @@ export default function Playtest(){
             <p>Official points: withheld · Awards saved: 0</p>
           </div>}
           <p>Last-kilometre source: {integrated.lastKmSource?.roadGroups?.length??0} groups ahead; {integrated.lastKmSource?.droppedRiderIds?.length??0} isolated riders.</p>
+          {integrated.lastKmSource?.droppedRiderIds?.length>0&&<p>
+            Isolated riders: {integrated.lastKmSource.droppedRiderIds.join(', ')}
+          </p>}
+          {integrated.finale?.totalUnmetEnergyDemand>0&&<p className="v91-warning">
+            Unpaid rider travel: {integrated.finale.totalUnmetEnergyDemand.toFixed(3)} energy demand remains after reserve reached zero. No individual finish or point preview can be paid for this road.
+          </p>}
           {integrated.lastKmSource?.roadGroups?.map(group=><p key={group.id}>
             {group.id}: {group.riderIds.join(', ')} · {group.gapSeconds.toFixed(1)} s ahead
           </p>)}

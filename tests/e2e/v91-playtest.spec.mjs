@@ -463,6 +463,18 @@ test('a dropped rider keeps a separate paid mountain finale',async({page})=>{
     .toHaveCount(33);
   await expect(page.getByText(/Points: withheld/)).toBeVisible();
   await page.getByLabel('Default tactics for uncustomized managers')
+    .selectOption('mixed');
+  await page.getByLabel('Your attack order').selectOption('selective');
+  await page.getByLabel('Your chase order').selectOption('selective');
+  await page.getByRole('button',{name:'Run full race preview'}).click();
+  await expect(page.getByText(/0\.621 energy demand remains/))
+    .toBeVisible();
+  await expect(page.getByText(/Isolated riders: rival-1-0, rival-1-2/))
+    .toBeVisible();
+  await expect(page.getByRole('table',{
+    name:'Individual conditional results'})).toHaveCount(0);
+  await expect(page.getByText(/Points: withheld/)).toBeVisible();
+  await page.getByLabel('Default tactics for uncustomized managers')
     .selectOption('attack');
   await page.getByLabel('Your attack order').selectOption('repeated');
   await page.getByLabel('Your chase order').selectOption('ignore');
