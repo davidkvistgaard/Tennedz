@@ -2565,3 +2565,18 @@ shows withheld points while its helpers work, then a policy-consistent
 illustration when the helpers are removed. The 20-team front-drop
 fixture shows a 39–40 conditional range and withheld points for the
 nominated isolated rider. Both checks run against an isolated local build.
+
+The local v93 preview can also be opened manually with `pnpm
+playtest:v93:local` from `calendar-release`. This builds the ignored
+`.next-v93-local` directory and serves the existing protocol fixture on
+127.0.0.1; its Supabase endpoint and keys are fixed to fixture values. Open
+`http://localhost:3100/login`, sign in as `settings` or `bob` with
+`fixture-password`, then visit `/team/v91-playtest`. Select the v93
+road-to-line preview, choose a route, terrain and distance, edit tactics
+for the available managers or use defaults, nominate a finisher and
+optionally a lead-out, and run the race. The fixture resets when the
+command stops. This is a read-only conditional preview: a road shape with
+unresolved contact can show a placing range and no point illustration.
+The new command completed the isolated build and served a 200 login page;
+all fourteen v93 browser scenarios passed against its build and the
+localhost-only fixture server. Lint and the launcher syntax check passed.

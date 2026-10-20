@@ -322,7 +322,7 @@ const server = http.createServer(async (req, res) => {
   send(404, { message: "Unknown fixture path" });
 });
 server.listen(54329, "127.0.0.1");
-const child = spawn(process.execPath, ["node_modules/next/dist/bin/next", "start", "-p", "3100"], { stdio: "inherit", env: {
+const child = spawn(process.execPath, ["node_modules/next/dist/bin/next", "start", "-p", "3100", "-H", "127.0.0.1"], { stdio: "inherit", env: {
   ...process.env, RACE_LAB_ENABLED: "true", PELOTONIA_V2_TACTICS_PREVIEW_ENABLED: "true",
   PELOTONIA_V2_TACTICS_SAVE_ENABLED: v2SaveFixture ? "true" : "false",
   PELOTONIA_V2_TACTICS_LOCK_ENABLED: v2LockFixture ? "true" : "false",
