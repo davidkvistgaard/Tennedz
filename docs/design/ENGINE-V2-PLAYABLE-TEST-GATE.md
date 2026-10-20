@@ -2664,3 +2664,16 @@ remained available and four appropriately unavailable. A separate broad
 unit-suite attempt was stopped at 129 completed passing checks with no
 reported failure because long-running finale audits kept it open; it is
 not counted as a full-suite pass.
+
+The v93 preview now compares consecutive runs on the same route, category,
+field, fatigue and seed. It reads both saved responses to show the recorded
+road at the last-kilometre handoff, nominated finisher's paid crossing and
+energy, helper work, conditional place and, when the same point context was
+requested, read-only point illustrations. Different route conditions, a
+failed run or a switch back to v91 clear this comparison. The browser case
+changes two managers' lead-outs on one 260 km road and checks the displayed
+time and point change against both API responses; a separate fixture user
+checks that a 40-to-120 km switch cannot retain an unrelated comparison.
+All 17 local v93 browser cases and two existing v91 comparison cases pass,
+as do lint and the isolated local build. The motor recording, result contract
+and official withheld-award policy are unchanged.

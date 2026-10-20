@@ -90,6 +90,18 @@ test('exhausted v93 road pays two manager lead-outs and shows conditional line',
       `Read-only points: ${unassistedPoints.previewPoints}`);
     await expect(ownFinish).toContainText(
       'Lead-out helper: none · 0.00 energy of recorded work.');
+    const comparison=page.getByRole('region',{
+      name:'Paired v93 race comparison'});
+    await expect(comparison).toContainText(
+      'Previous preview on the same conditions');
+    await expect(comparison).toContainText(
+      `Lead-out: you-6 (${helperWork.toFixed(2)} energy paid) → none (0.00 energy paid)`);
+    await expect(comparison).toContainText(
+      `Nominated finisher crossing: you-4 ${ownLine.elapsedSecondsFromLastKmStart.toFixed(3)} s → you-4 ${unassisted.lineTimes.find(row=>row.riderId==='you-4').elapsedSecondsFromLastKmStart.toFixed(3)} s`);
+    await expect(comparison).toContainText(
+      `Read-only points: unavailable (`);
+    await expect(comparison).toContainText(
+      `${unassistedPoints.previewPoints} (place ${unassistedPlace})`);
     await expect(page.getByRole('table',{
       name:'V93 individual conditional results'}).getByRole('row'))
       .toHaveCount(33);
@@ -108,6 +120,30 @@ test('exhausted v93 road pays two manager lead-outs and shows conditional line',
       .toBeVisible();
     expect(errors).toEqual([]);
   });
+
+test('a changed v93 route does not compare unrelated races',async({page})=>{
+  await page.goto('/login');
+  await page.getByLabel('Email or username').fill('v2manager');
+  await page.getByLabel('Password',{exact:true}).fill('fixture-password');
+  await page.getByRole('button',{name:'Sign in',exact:true}).click();
+  await expect(page).toHaveURL(/\/team$/);
+  await page.goto('/team/v91-playtest');
+  await page.getByRole('checkbox',{
+    name:'Continue to a conditional finish'}).check();
+  await page.getByRole('checkbox',{
+    name:'Try v93 road-to-line preview'}).check();
+  await page.getByLabel('Distance').selectOption('40');
+  await page.getByLabel('Scenario seed').fill('playtest-1');
+  await page.getByRole('button',{name:'Run v93 race preview'}).click();
+  await expect(page.getByRole('heading',{
+    name:'V93 race preview · 40 km flat'})).toBeVisible();
+  await page.getByLabel('Distance').selectOption('120');
+  await page.getByRole('button',{name:'Run v93 race preview'}).click();
+  await expect(page.getByRole('heading',{
+    name:'V93 race preview · 120 km flat'})).toBeVisible();
+  await expect(page.getByRole('region',{
+    name:'Paired v93 race comparison'})).toHaveCount(0);
+});
 
 test('attacking v93 road keeps separated front groups in the browser replay',
   async({page})=>{

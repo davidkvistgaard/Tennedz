@@ -79,6 +79,35 @@ function comparisonRun(settings,response,pointContext){
     pointLabel};
 }
 
+function coastedComparisonRun(settings,summary,pointContext){
+  const ownDecision=summary.managerDecisions.find(row=>
+    row.teamId==='you');
+  const finisherId=ownDecision?.finisherId??'you-7';
+  const leadOutRiderId=ownDecision?.leadOutRiderId??null;
+  const crossing=summary.lineTimes.find(row=>row.riderId===finisherId);
+  const place=summary.provisionalLineOrder?.find(row=>
+    row.riderId===finisherId)??summary.roadPlaceBounds?.riders.find(row=>
+    row.riderId===finisherId);
+  const ownPoints=summary.pointPreview?.riders?.find(row=>
+    row.riderId===finisherId);
+  return {conditions:comparisonConditions(settings),finisherId,
+    crossingSeconds:crossing?.elapsedSecondsFromLastKmStart??null,
+    energyAtLine:crossing?.energyAtLine??null,
+    place:conditionalPlace(place,'unresolved'),
+    roadStatus:summary.roadStatus,
+    sourceGroups:summary.kilometreFrames.at(-1)?.roadGroups.length??0,
+    sourceDropped:summary.kilometreFrames.at(-1)?.droppedRiders.length??0,
+    leadOutRiderId,
+    leadOutEnergy:summary.leadOutWork.filter(row=>
+      row.riderId===leadOutRiderId).reduce((sum,row)=>
+      sum+row.energySpent,0),
+    pointContext:pointContext?JSON.stringify(pointContext):null,
+    pointLabel:pointContext?ownPoints?
+      `${ownPoints.previewPoints} (place ${conditionalPlace(place)})`:
+      `unavailable (${summary.pointPreview?.reason??
+        'No unambiguous individual order.'})`:null};
+}
+
 function attackDescription(run){
   return `${run.namedAttack}${run.attackRoad?
     ` (${run.attackRoad} road)`:''}`;
@@ -126,6 +155,8 @@ export default function Playtest(){
   const [resultsTeam,setResultsTeam]=useState('all');
   const [previousRun,setPreviousRun]=useState(null);
   const [comparison,setComparison]=useState(null);
+  const [previousCoastedRun,setPreviousCoastedRun]=useState(null);
+  const [coastedComparison,setCoastedComparison]=useState(null);
   const [busy,setBusy]=useState(false);
   const [error,setError]=useState('');
   const frame=result?.frames[selectedKm-1];
@@ -274,8 +305,17 @@ export default function Playtest(){
         setComparison(previousRun?.conditions===next.conditions?
           {before:previousRun,after:next}:null);
         setPreviousRun(next);
+        setCoastedComparison(null);setPreviousCoastedRun(null);
+      }else if(integratedMode&&coastedMode){
+        const next=coastedComparisonRun(raceSettings,response.coasted,
+          showPointPreview?pointContext:null);
+        setCoastedComparison(previousCoastedRun?.conditions===next.conditions?
+          {before:previousCoastedRun,after:next}:null);
+        setPreviousCoastedRun(next);
+        setComparison(null);setPreviousRun(null);
       }else{
         setComparison(null);setPreviousRun(null);
+        setCoastedComparison(null);setPreviousCoastedRun(null);
       }
       setCoasted(response.coasted??null);
       setCoastedKm(1);setCoastedRoadIndex(0);
@@ -310,6 +350,7 @@ export default function Playtest(){
       setSelectedKm(1);
       setResultsTeam('all');
     }catch(cause){setComparison(null);setPreviousRun(null);
+      setCoastedComparison(null);setPreviousCoastedRun(null);
       setResult(null);setIntegrated(null);setCoasted(null);setAttackRoad(null);
       setAttackApproach(null);setFinaleReplay(null);setBandLocalReplay(null);
       setError(cause.message||'The playtest could not run.');}
@@ -652,6 +693,43 @@ export default function Playtest(){
           </p>}
           <p>Official points: withheld · Awards saved: 0</p>
         </div>
+        {coastedComparison&&<section className="v91-finish"
+          aria-label="Paired v93 race comparison">
+          <h3>Previous preview on the same conditions</h3>
+          <p>Route, profile, category, field, fatigue and seed match.
+            Manager tactics and finale nominations may differ.</p>
+          <p>Recorded road: {coastedComparison.before.roadStatus} →
+            {' '}{coastedComparison.after.roadStatus} ·
+            {' '}groups at the last-kilometre handoff:
+            {' '}{coastedComparison.before.sourceGroups} →
+            {' '}{coastedComparison.after.sourceGroups} ·
+            {' '}isolated riders:
+            {' '}{coastedComparison.before.sourceDropped} →
+            {' '}{coastedComparison.after.sourceDropped}.</p>
+          <p>Lead-out: {coastedComparison.before.leadOutRiderId??'none'}
+            {' '}({coastedComparison.before.leadOutEnergy.toFixed(2)} energy paid)
+            {' '}→ {coastedComparison.after.leadOutRiderId??'none'}
+            {' '}({coastedComparison.after.leadOutEnergy.toFixed(2)} energy paid).</p>
+          <p>Nominated finisher crossing:
+            {' '}{coastedComparison.before.finisherId}
+            {' '}{coastedComparison.before.crossingSeconds?.toFixed(3)??'unavailable'} s
+            {' '}→ {coastedComparison.after.finisherId}
+            {' '}{coastedComparison.after.crossingSeconds?.toFixed(3)??'unavailable'} s.
+            {' '}Energy at line:
+            {' '}{coastedComparison.before.energyAtLine?.toFixed(1)??'—'}
+            {' '}→ {coastedComparison.after.energyAtLine?.toFixed(1)??'—'}.
+            {' '}Conditional place:
+            {' '}{coastedComparison.before.place} →
+            {' '}{coastedComparison.after.place}.</p>
+          {coastedComparison.before.pointContext&&
+            coastedComparison.before.pointContext===
+              coastedComparison.after.pointContext&&<p>
+              Read-only points:
+              {' '}{coastedComparison.before.pointLabel} →
+              {' '}{coastedComparison.after.pointLabel}.
+              {' '}Official points remain withheld.
+            </p>}
+        </section>}
       </section>}
       {result&&<section className="v91-results" aria-label="Playtest recording">
         <h2>Recorded race · {result.settings.distanceKm} km {result.settings.terrain}</h2>
