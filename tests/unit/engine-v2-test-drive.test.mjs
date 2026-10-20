@@ -4,6 +4,8 @@ import {readFileSync} from 'node:fs';
 import {spawnSync} from 'node:child_process';
 import {runV91TestDrive,runV91IntegratedTestDrive} from
   '../../scripts/engine-v2-test-drive.mjs';
+import {summarizeV91PaidMultibandReplay} from
+  '../../lib/engine/v2/playtest-multiband-replay.mjs';
 import {prepareLastKmRotationFromTour} from
   '../../lib/engine/v2/finale-last-km-rotation-catch.mjs';
 import {recordFinaleDepletedIndividualLine,
@@ -729,17 +731,26 @@ test('an unavailable cross-band lead-out leaves the locked race visible',()=>{
   const settings={distanceKm:260,terrain:'mountain',fatigue:30,
     gender:'M',teamCount:4,seed:'test-drive-acceptance-1',
     defaultRivalPlan:'attack',attack:'repeated',chase:'ignore'};
-  const refused=runV91TestDrive({settings,individualGroupLine:true,
+  const planned=runV91TestDrive({settings,individualGroupLine:true,
     finalePlans:[{teamId:'you',finisherId:'you-7',
       leadOutRiderId:'you-5'}]},{full:true});
-  assert.equal(refused.summary.status,'unsupported');
-  assert.equal(refused.summary.roadStatus,'paid_separated_bands');
-  assert.equal(refused.summary.individualLineStatus,'unsupported_plan');
-  assert.match(refused.summary.reason,/cannot work beside the finisher/);
-  assert.equal(refused.summary.pointsStatus,'withheld');
-  assert.equal(refused.summary.canCommitAwards,false);
-  assert.equal(refused.individualLine,undefined);
-  assert.ok(refused.recording.recording);
+  const withoutHelper=runV91TestDrive({settings,
+    individualGroupLine:true},{full:true});
+  assert.equal(planned.summary.roadStatus,'conditional_multiband_line');
+  assert.equal(planned.summary.finale.lineTimes.length,32);
+  assert.deepEqual(planned.summary.unavailableLeadOuts,[{
+    teamId:'you',helperId:'you-5',finisherId:'you-7',
+    status:'unavailable_at_500m',reason:'different_road_group',
+    helperEnergySpent:0}]);
+  assert.deepEqual(planned.summary.finale.leadOutWork,[]);
+  assert.equal(planned.summary.request.plans[0].leadOutRiderId,'you-5');
+  assert.deepEqual(planned.recording.recording,
+    withoutHelper.recording.recording);
+  assert.deepEqual(planned.summary.finale.lineTimes,
+    withoutHelper.summary.finale.lineTimes);
+  assert.deepEqual(planned.individualLine,withoutHelper.individualLine);
+  assert.equal(planned.summary.pointsStatus,'withheld');
+  assert.equal(planned.summary.canCommitAwards,false);
 });
 
 test('offline test drive rejects unknown managers and accepts stdin JSON',()=>{
@@ -813,11 +824,10 @@ test('integrated drive keeps unpayable energy and awards unavailable',()=>{
 });
 
 test('integrated full drive wraps an unsupported cooperative road without crashing',()=>{
-  const settings={distanceKm:260,terrain:'flat',fatigue:30,
-    teamCount:4,gender:'M',seed:'cross-route-1',
-    attack:'selective',chase:'selective',defaultRivalPlan:'mixed',
-    managerTacticOverrides:[{teamId:'rival-1',effort:'conserve',
-      attack:'none',chase:'ignore'}]};
+  const settings={distanceKm:40,terrain:'flat',teamCount:4,gender:'M',
+    seed:'conditional-coverage-1',attack:'repeated',chase:'ignore',
+    defaultRivalPlan:'attack',managerTactics:[{effort:'steady',
+      attack:'none',chase:'selective'}]};
   const scenario={settings,pointContext:{tier:3,divisionIndex:1,
     divisionCount:1}};
   const source=runV91TestDrive({...scenario,individualGroupLine:true},
@@ -827,7 +837,7 @@ test('integrated full drive wraps an unsupported cooperative road without crashi
   const retained=runV91TestDrive({...scenario,individualGroupLine:true},
     {full:true,retainRefusalSource:true});
   assert.deepEqual(retained.summary,source);
-  assert.equal(retained.recording.recording.frames.length,260);
+  assert.equal(retained.recording.recording.frames.length,40);
   const full=runV91IntegratedTestDrive(scenario,{full:true});
   const summary=runV91IntegratedTestDrive(scenario);
   assert.deepEqual(full.summary,summary);
@@ -837,9 +847,41 @@ test('integrated full drive wraps an unsupported cooperative road without crashi
   assert.equal(full.summary.pointsStatus,'withheld');
   assert.equal(full.summary.canCommitAwards,false);
   assert.equal(full.summary.provisionalPointPreview.status,'unavailable');
-  assert.equal(full.recording.recording.frames.length,260);
-  assert.equal(full.recording.recording.route.distanceKm,260);
+  assert.equal(full.recording.recording.frames.length,40);
+  assert.equal(full.recording.recording.route.distanceKm,40);
   assert.deepEqual(full.summary.lastKmSource,source.lastKmSource);
+});
+
+test('unavailable selective chase pays a complete group road and individual replay',()=>{
+  const settings={distanceKm:260,terrain:'flat',fatigue:30,
+    teamCount:4,gender:'M',seed:'cross-route-1',
+    attack:'selective',chase:'selective',defaultRivalPlan:'mixed',
+    managerTacticOverrides:[{teamId:'rival-1',effort:'conserve',
+      attack:'none',chase:'ignore'}]};
+  const full=runV91IntegratedTestDrive({settings,pointContext:{tier:3,
+    divisionIndex:1,divisionCount:1}},{full:true});
+  const {summary}=full;
+  assert.equal(full.recording.version,
+    'v91-conditional-race-final-13');
+  assert.deepEqual(full.recording.chaseAvailability
+    .unavailableSelectiveTeamIds,['rival-3']);
+  assert.equal(summary.roadStatus,'conditional_multiband_line');
+  assert.equal(summary.finale.lineTimes.length,32);
+  const replay=summarizeV91PaidMultibandReplay(full);
+  const finalRows=new Map(replay.bands.flatMap(band=>
+    band.frames.at(-1).riders).map(row=>[row.riderId,row]));
+  for(const crossing of summary.finale.lineTimes){
+    const final=finalRows.get(crossing.riderId);
+    assert.ok(final);
+    assert.ok(Math.abs(final.positionM-260000)<1e-6);
+    assert.ok(Math.abs(final.energyAfter-crossing.energyAtLine)<1e-6);
+    assert.ok(Math.abs(final.elapsedToLineSeconds-
+      crossing.elapsedSecondsFromLastKmStart)<1e-6);
+  }
+  assert.equal(summary.provisionalPointPreview.riders.length,32);
+  assert.deepEqual(summary.provisionalPointPreview.awardRows,[]);
+  assert.equal(summary.pointsStatus,'withheld');
+  assert.equal(summary.canCommitAwards,false);
 });
 
 test('offline test drive rejects invalid finale riders before a group-road refusal',()=>{

@@ -599,6 +599,34 @@ test('unavailable ordered chase pays only a passive band when every rider can tr
   }
 });
 
+test('unavailable selective chase cannot veto a payable passive group line',()=>{
+  const input={distanceKm:260,terrain:'flat',fatigue:30,
+    teamCount:4,gender:'M',seed:'cross-route-1',
+    attack:'selective',chase:'selective',defaultRivalPlan:'mixed',
+    managerTacticOverrides:[{teamId:'rival-1',effort:'conserve',
+      attack:'none',chase:'ignore'}]};
+  const trial=createV91ConditionalRaceFinal(input);
+  assert.equal(trial.version,'v91-conditional-race-final-13');
+  assert.equal(trial.roadStatus,'paid_group_bands');
+  assert.equal(trial.paidFinale.line.outcome,'survived');
+  assert.deepEqual(trial.chaseAvailability.orderedExternalTeamIds,
+    ['rival-3']);
+  assert.deepEqual(trial.chaseAvailability.unavailableSelectiveTeamIds,
+    ['rival-3']);
+  assert.ok(trial.recording.frames.at(-2).activeLeaders.some(row=>
+    row.teamId==='you'&&trial.paidFinale.roadFrames[0]
+      .frontRiderEnergy.some(rider=>rider.riderId===row.riderId)));
+  assert.equal(trial.recording.frames.at(-2).chasers.length,0);
+  assert.equal(trial.paidFinale.line.finalRiderEnergy.length,32);
+  assert.equal(trial.pointsStatus,'withheld');
+  assert.equal(trial.canCommitAwards,false);
+  assert.equal(validateV91ConditionalRaceFinal(input,{},trial),true);
+  const altered=structuredClone(trial);
+  altered.chaseAvailability.unavailableSelectiveTeamIds.pop();
+  assert.throws(()=>validateV91ConditionalRaceFinal(input,{},altered),
+    /does not replay/);
+});
+
 test('zero-reserve riders cannot inherit a paid passive finale',()=>{
   for(const gender of ['M','F'])for(const teamCount of [4,15,20]){
     const input={distanceKm:260,terrain:'flat',fatigue:30,

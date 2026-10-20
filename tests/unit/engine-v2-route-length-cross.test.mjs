@@ -93,6 +93,24 @@ test('route and length cross: chase and attack retain a paid individual replay',
     }
 });
 
+test('unavailable selective chase retains a paid replay across long routes and genders',()=>{
+  for(const terrain of terrains)for(const gender of ['M','F']){
+    const settings={distanceKm:260,terrain,gender,teamCount:4,
+      fatigue:30,seed:'cross-route-1',
+      ...(terrain==='custom'?{profileHeightsM}:{}),
+      defaultRivalPlan:'mixed',attack:'selective',chase:'selective',
+      managerTacticOverrides:[{teamId:'rival-1',effort:'conserve',
+        attack:'none',chase:'ignore'}]};
+    const output=runV91IntegratedTestDrive({settings,
+      pointContext:{tier:3,divisionIndex:1,divisionCount:1}},{full:true});
+    assert.equal(output.recording.version,
+      'v91-conditional-race-final-13');
+    assert.deepEqual(output.recording.chaseAvailability
+      .unavailableSelectiveTeamIds,['rival-3']);
+    assertPaid(output,{distanceKm:260,terrain,teamCount:4});
+  }
+});
+
 test('long mixed road: depleted four-team fields refuse a fictional finish',()=>{
   for(const terrain of terrains)for(const gender of ['M','F'])
     for(const teamCount of [4,15,20]){
