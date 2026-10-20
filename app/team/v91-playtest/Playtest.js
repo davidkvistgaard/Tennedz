@@ -629,6 +629,9 @@ export default function Playtest(){
           {integrated.sourceEnergyAudit?.riders.length>0&&<p className="v91-warning">
             Earlier zero-reserve travel: {integrated.sourceEnergyAudit.riders.length} riders recorded zero energy in successive whole kilometres before the finale. First: {integrated.sourceEnergyAudit.riders[0].riderId} at km {integrated.sourceEnergyAudit.riders[0].firstZeroKm}. This recording has no paid exhaustion rule for that interval.
           </p>}
+          {integrated.sourceEnergyAudit?.totalUnmetEnergyDemand>0&&<p className="v91-warning">
+            Whole-race energy audit: {integrated.sourceEnergyAudit.totalUnmetEnergyDemand.toFixed(3)} energy demand went unpaid across {integrated.sourceEnergyAudit.unpaidRiderKilometres} rider-kilometres, starting at km {integrated.sourceEnergyAudit.firstUnpaidKm}. Results and points remain withheld until that travel has a paid rule.
+          </p>}
           {integrated.lastKmSource?.roadGroups?.map(group=><p key={group.id}>
             {group.id}: {group.riderIds.join(', ')} · {group.gapSeconds.toFixed(1)} s ahead
           </p>)}

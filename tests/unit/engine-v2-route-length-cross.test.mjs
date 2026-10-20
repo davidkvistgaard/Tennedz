@@ -202,6 +202,9 @@ test('long mixed road: depleted four-team fields refuse a fictional finish',()=>
       assert.equal(summary.sourceEnergyAudit.status,
         'sustained_zero_reserve');
       assert.equal(summary.sourceEnergyAudit.riders.length,6);
+      assert.ok(summary.sourceEnergyAudit.totalUnmetEnergyDemand>0);
+      assert.ok(summary.sourceEnergyAudit.unpaidRiderKilometres>0);
+      assert.ok(summary.sourceEnergyAudit.firstUnpaidKm<259);
       assert.ok(summary.sourceEnergyAudit.riders.every(row=>
         row.firstZeroKm>=231&&row.repeatedZeroKm===row.firstZeroKm+1));
       assert.equal(summary.finale.reserveStatus,

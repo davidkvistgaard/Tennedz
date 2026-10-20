@@ -129,10 +129,14 @@ test('a long mixed-field refusal shows earlier zero-reserve travel',
     expect(integrated.sourceEnergyAudit.status)
       .toBe('sustained_zero_reserve');
     expect(integrated.sourceEnergyAudit.riders).toHaveLength(6);
+    expect(integrated.sourceEnergyAudit.totalUnmetEnergyDemand)
+      .toBeGreaterThan(0);
     expect(integrated.finale.totalUnmetEnergyDemand).toBeGreaterThan(0);
     expect(integrated.finale.lineTimes).toBeUndefined();
     expect(integrated.provisionalPointPreview.status).toBe('unavailable');
     await expect(page.getByText(/Earlier zero-reserve travel: 6 riders recorded zero energy in successive whole kilometres before the finale/))
+      .toBeVisible();
+    await expect(page.getByText(/Whole-race energy audit: .* energy demand went unpaid/))
       .toBeVisible();
     await expect(page.getByText(/Unpaid rider travel:/)).toBeVisible();
     await expect(page.getByRole('table',{

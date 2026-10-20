@@ -3,8 +3,13 @@
 import {readFileSync} from 'node:fs';
 import {resolve} from 'node:path';
 import {pathToFileURL} from 'node:url';
+import {isDeepStrictEqual} from 'node:util';
 import {prepareV91Playtest,createV91Playtest} from
   '../lib/engine/v2/playtest.mjs';
+import {simulateTacticalTour} from '../lib/engine/v2/tour.mjs';
+import {validateRecordedTour} from '../lib/engine/v2/recording.mjs';
+import {MOTOR_ATTACK_TRACE_VERSION,MOTOR_ENERGY_LEDGER_VERSION} from
+  '../lib/engine/v2/tuning.mjs';
 import {orderAt} from '../lib/engine/v2/orders.mjs';
 import {recordFinaleConcurrentDoubleCatchLineFromTour,
   validateFinaleConcurrentDoubleCatchLineFromTour,
@@ -200,7 +205,7 @@ function requestFor(scenario){
 
 function unsupportedRefusal(error,scenario,request,pointContext){
   const source=error.cause?.playtestSource??null;
-  const energyAudit=source?sourceEnergyAudit(source.recording):null;
+  const energyAudit=source?sourceEnergyAudit(source.recording,scenario.settings):null;
   const snapshot=source?finaleSnapshotFromTour(source.recording,{
     remainingKm:1,includeAttackLoad:true}):null;
   return {version:request.attackTeamId!==undefined&&source?
@@ -221,8 +226,24 @@ function unsupportedRefusal(error,scenario,request,pointContext){
     canCommitAwards:false};
 }
 
-function sourceEnergyAudit(recording){
+function matchingEnergyLedger(recording,settings){
+  if(recording.tuningVersion!==MOTOR_ATTACK_TRACE_VERSION)return null;
+  const {stage,weather,teams,seed}=prepareV91Playtest(settings);
+  const replay=simulateTacticalTour({stage,weather,teams,seed,
+    motorVersion:MOTOR_ENERGY_LEDGER_VERSION});
+  validateRecordedTour(replay);
+  const original=structuredClone(replay);
+  original.tuningVersion=MOTOR_ATTACK_TRACE_VERSION;
+  for(const frame of original.frames)delete frame.energyLedger;
+  return isDeepStrictEqual(original,recording)?replay.frames:null;
+}
+
+function sourceEnergyAudit(recording,settings){
   const frames=recording.frames.slice(0,-1);
+  const ledgerFrames=matchingEnergyLedger(recording,settings)?.slice(0,-1);
+  const unpaid=ledgerFrames?.flatMap(frame=>frame.energyLedger
+    .filter(row=>row.unmetEnergyDemand>.000001).map(row=>({
+      riderId:row.riderId,km:frame.km,demand:row.unmetEnergyDemand})))??[];
   const riders=new Map();
   for(let index=1;index<frames.length;index++){
     const previous=new Set(frames[index-1].riderGroups.filter(row=>
@@ -234,14 +255,18 @@ function sourceEnergyAudit(recording){
           repeatedZeroKm:frames[index].km});
     }
   }
-  return riders.size?{status:'sustained_zero_reserve',
+  return riders.size||unpaid.length?{status:riders.size?
+    'sustained_zero_reserve':'unpaid_whole_kilometre_work',
+    ...(ledgerFrames?{ledgerVersion:MOTOR_ENERGY_LEDGER_VERSION,
+      firstUnpaidKm:unpaid[0]?.km??null,unpaidRiderKilometres:unpaid.length,
+      totalUnmetEnergyDemand:+unpaid.reduce((sum,row)=>sum+row.demand,0).toFixed(3)}:{}),
     riders:[...riders.values()].sort((a,b)=>
       a.firstZeroKm-b.firstZeroKm||a.riderId.localeCompare(b.riderId))}:null;
 }
 
 function summaryFor(trial,request,pointContext){
   const {recording,paidFinale}=trial;
-  const energyAudit=sourceEnergyAudit(recording);
+  const energyAudit=sourceEnergyAudit(recording,trial.settings);
   const crossingBounds=hasFinaleConditionalCrossingBounds(paidFinale)?
     recordFinaleConditionalCrossingBounds(paidFinale):null;
   if(crossingBounds)

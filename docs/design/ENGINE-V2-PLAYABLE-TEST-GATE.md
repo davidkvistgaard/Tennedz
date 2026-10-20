@@ -2162,3 +2162,20 @@ cases have no such pair. A local browser run on an isolated build shows this
 earlier exhaustion alongside the last-kilometre unmet demand, with no
 individual result or point illustration. This audit diagnoses the missing
 travel rule; it does not charge energy or change a versioned recording.
+
+The isolated v92 candidate adds a read-only energy ledger for every rider in
+every full kilometre. Each row records starting reserve, demanded work, work
+paid from reserve, unmet demand, recovery, any cap adjustment and ending
+reserve. The recording validator checks the arithmetic, roster coverage and
+continuity with the road frames. Paired tests over 40, 120 and 260 km with
+4, 15 and 20 teams confirm that stripping the new ledger and version marker
+reproduces the exact v91 recording, including road groups and provisional
+finish. The v91 workbench retains its original
+source recording and only uses a v92 diagnostic replay when the complete
+recordings match. In the ten locked 260 km mixed-plan four-team refusals,
+that replay identifies unpaid whole-kilometre work before the finale and
+shows the first affected kilometre and total unmet demand in the local UI.
+The route/length cross matrix, a focused ledger test, lint, an isolated build
+and a local browser refusal test pass. This is evidence of an unresolved
+motor debt: no physical speed or road-group response to that debt has yet
+been paid, so these sources remain unclassified and points are withheld.
