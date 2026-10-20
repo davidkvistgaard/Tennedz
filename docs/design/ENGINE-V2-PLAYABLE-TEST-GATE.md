@@ -2645,3 +2645,22 @@ illustration is off. Contact is a property of the paid road replay, so the
 same two rider IDs and crossing remain available in the default result
 view. The with-points and without-points unit cases replay identically;
 the local browser check uses the default unchecked point option.
+
+A v91 no-front depleted-reserve clock could validate successfully and then
+fail while building its positioned 500 m source: the individual-line path
+passed the v93 coast-only no-front flag instead of the already validated
+no-front condition. The source now receives that same condition. The 260 km
+mountain, four-team chase fixture again shows 31 bunch riders and one
+independent dropped rider, with 32 conditional crossing times and a paid
+solo replay. Seven previously failing integrated scenario assertions pass;
+all 101 focused v91/v93 unit checks, the existing end-to-end browser case,
+full lint and an isolated local build pass. This changes source selection
+only for a valid no-front clock and leaves existing recording versions and
+withheld-point policy intact.
+
+The fresh 48-road v93 audit also finished all scenarios and matched all
+4,776 conditional crossings to replay; 44 read-only point illustrations
+remained available and four appropriately unavailable. A separate broad
+unit-suite attempt was stopped at 129 completed passing checks with no
+reported failure because long-running finale audits kept it open; it is
+not counted as a full-suite pass.
