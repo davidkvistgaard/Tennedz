@@ -2,7 +2,8 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {pointsForDivisionResult} from '../../lib/calendar/points.mjs';
 import {summarizeV91PaidFinaleReplay,summarizeV91PaidFinaleTail,
-  summarizeV91PaidNamedAttackApproach} from
+  summarizeV91PaidNamedAttackApproach,
+  summarizeV91PaidPartialContactReplay} from
   '../../lib/engine/v2/playtest-finale-replay.mjs';
 import {runV91IntegratedTestDrive} from
   '../../scripts/engine-v2-test-drive.mjs';
@@ -126,5 +127,52 @@ for(const gender of ['M','F'])for(const teamCount of [4,15,20]){
     const ownTime=output=>output.summary.finale.lineTimes.find(row=>
       row.riderId==='you-7').elapsedSecondsFromLastKmStart;
     assert.notEqual(ownTime(passive),ownTime(chase));
+  });
+}
+
+for(const [distanceKm,terrain,teamCount,gender] of [
+  [40,'flat',4,'M'],[120,'rolling',15,'F'],[260,'mountain',20,'M']]){
+  test(`lead-out and exact contact replay connect ${distanceKm} km ${terrain}, ${teamCount} teams, ${gender}`,()=>{
+    const settings={distanceKm,terrain,teamCount,gender,
+      attack:'none',chase:'ignore',defaultRivalPlan:'chase',seed:'trial'};
+    const run=leadOutRiderId=>runV91IntegratedTestDrive({settings,
+      attack:{teamId:'you',riderId:'you-4'},
+      finalePlans:[{teamId:'you',finisherId:'you-6',leadOutRiderId}],
+      pointContext},{full:true});
+    const plain=run(null);
+    const helped=run('you-5');
+    assert.deepEqual(plain.recording.recording,
+      helped.recording.recording);
+    assert.equal(helped.summary.roadStatus,'paid_conditional_line');
+    assert.equal(helped.recording.roadDecision.branch,'solo');
+    assert.ok(helped.recording.preContactFinale.frames.some(frame=>
+      frame.riders.some(row=>row.riderId==='you-5'&&
+        row.role==='lead_out'&&row.energySpent>0)));
+    const replay=summarizeV91PaidPartialContactReplay(helped.recording);
+    assert.equal(replay.status,'partial_contact_paid_trace');
+    assert.equal(replay.handoffDistanceM,distanceKm*1000-500);
+    assert.equal(replay.frames.length,
+      helped.recording.preContactFinale.frames.length+
+        helped.recording.paidFinale.frames.length);
+    const lines=new Map(helped.summary.finale.lineTimes.map(row=>
+      [row.riderId,row]));
+    assert.equal(lines.size,teamCount*8);
+    for(const row of replay.frames.at(-1).riders){
+      const line=lines.get(row.riderId);
+      assert.ok(line);
+      assert.equal(row.positionM,distanceKm*1000);
+      assert.equal(row.elapsedToLineSeconds,
+        line.elapsedSecondsFromLastKmStart);
+      assert.equal(row.energyAfter,line.energyAtLine);
+    }
+    const finisher=output=>output.summary.finale.lineTimes.find(row=>
+      row.riderId==='you-6');
+    assert.notEqual(finisher(plain).elapsedSecondsFromLastKmStart,
+      finisher(helped).elapsedSecondsFromLastKmStart);
+    assert.equal(helped.summary.provisionalPointPreview.status,
+      'unavailable');
+    assert.equal(helped.summary.pointsStatus,'withheld');
+    assert.equal(helped.summary.canCommitAwards,false);
+    assert.equal(helped.recording.classifiedResults,null);
   });
 }

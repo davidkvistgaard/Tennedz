@@ -4,6 +4,7 @@ import {runV91IntegratedTestDrive} from
   '../../scripts/engine-v2-test-drive.mjs';
 import {summarizeV91PaidFinaleReplay,
   summarizeV91PaidFinaleTail,
+  summarizeV91PaidPartialContactReplay,
   summarizeV91PaidNamedAttackApproach,
   summarizeV91PaidSoloApproach} from
   '../../lib/engine/v2/playtest-finale-replay.mjs';
@@ -162,4 +163,27 @@ test('a nominated helper pays for a lead-out after the same named solo is caught
   assert.notEqual(finisher(without).elapsedSecondsFromLastKmStart,
     finisher(withHelper).elapsedSecondsFromLastKmStart);
   assert.equal(withHelper.summary.pointsStatus,'withheld');
+});
+
+test('segmented solo-contact replay rejects a changed alignment, contact or line',()=>{
+  const scenario={settings:{...settings,seed:'trial'},
+    attack:{teamId:'you',riderId:'you-4'},
+    finalePlans:[{teamId:'you',finisherId:'you-6',
+      leadOutRiderId:'you-5'}]};
+  const {recording}=runV91IntegratedTestDrive(scenario,{full:true});
+  const replay=summarizeV91PaidPartialContactReplay(recording);
+  assert.equal(replay.status,'partial_contact_paid_trace');
+  assert.equal(replay.frames.at(-1).riders.length,32);
+  const aligned=structuredClone(recording);
+  aligned.preContactFinale.alignment.soloEnergyAtBunch500M+=1;
+  assert.throws(()=>summarizeV91PaidPartialContactReplay(aligned),
+    /lost its 500 m source/);
+  const contact=structuredClone(recording);
+  contact.paidFinale.contact.elapsedSeconds+=1;
+  assert.throws(()=>summarizeV91PaidPartialContactReplay(contact),
+    /lost its exact contact/);
+  const line=structuredClone(recording);
+  line.paidFinale.finishers[0].energyAtLine+=1;
+  assert.throws(()=>summarizeV91PaidPartialContactReplay(line),
+    /lost its individual line/);
 });

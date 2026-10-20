@@ -180,7 +180,8 @@ export default function Playtest(){
       setApproachFrameIndex(0);
       setApproachRiderId((response.attackApproach??response.soloApproach)
         ?.attackRiderId??'');
-      setFinaleReplay(response.finaleReplay??response.finaleTail??null);
+      setFinaleReplay(response.finaleReplay??response.finaleTail??
+        response.finaleContactReplay??null);
       setFinaleFrameIndex(0);
       setInspectedRiderId(response.integrated?.managerDecisions
         ?.find(row=>row.teamId==='you')?.finisherId??'you-7');
@@ -388,9 +389,13 @@ export default function Playtest(){
         </div>}
         {finaleReplay&&<div className="v91-finish">
           <h3>{finaleReplay.status==='partial_paid_trace'?
-            'Paid final 500 m':'Paid final-kilometre replay'}</h3>
+            'Paid final 500 m':finaleReplay.status===
+              'partial_contact_paid_trace'?
+              'Paid finale through contact':'Paid final-kilometre replay'}</h3>
           {finaleReplay.status==='partial_paid_trace'?
             <p>All {finaleFrame?.riders.length} riders continue from the recorded {finaleReplay.handoffDistanceM/1000} km boundary on one clock. Opening 500 m: groups and energy only. These later positions are conditional bunch positions, not an official order.</p>:
+            finaleReplay.status==='partial_contact_paid_trace'?
+              <p>All {finaleFrame?.riders.length} riders continue from the recorded {finaleReplay.handoffDistanceM/1000} km boundary through the exact catch to the line. Positions and energy follow the paid road; the finish order remains conditional.</p>:
             <p>All {finaleFrame?.riders.length} riders continue from the locked {result.handoffKm} km handoff on one clock.</p>}
           <label>Finale interval: {finaleFrameIndex+1} of {finaleReplay.frames.length}
             <input type="range" min="0" max={finaleReplay.frames.length-1}

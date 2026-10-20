@@ -1725,3 +1725,21 @@ hit its 720-second timeout: the 15-team selective-chase coverage and the
 20-team exact-double-catch coverage. The runner reported no other failures.
 Those two audits therefore have no verified result from this run; this is
 not evidence of a motor assertion failure or a full-suite pass.
+
+The integrated preview now joins a named solo's paid 500 m alignment,
+individual pre-contact travel, exact catch and paid continuation to the
+line in one scrubbed replay. A rider ahead at the handoff uses the recorded
+alignment position and energy; every later frame retains that rider's
+physical position and energy on the shared clock, and the last frame is
+checked against every conditional crossing. Paired no-helper/lead-out
+scenarios across 40 km flat M/4 teams, 120 km rolling F/15 teams and
+260 km mountain M/20 teams keep the same full-race recording while the
+helper pays work and changes the nominated finisher's crossing. Tampered
+alignment, contact and line records fail the replay check. The UI keeps
+the conditional-order and withheld-point labels; no award path was added.
+Twenty focused unit tests, lint, a local Next build and all five isolated
+playtest browser cases passed. The two earlier ensemble audits completed
+in isolation in 497.07 and 595.22 seconds respectively, below their
+720-second per-test limit. Their earlier simultaneous full-suite timeouts
+are therefore consistent with CPU contention; the full suite has not yet
+been rerun serially and remains unverified as a whole.

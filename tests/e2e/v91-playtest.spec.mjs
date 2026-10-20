@@ -154,8 +154,8 @@ test('a named final-kilometre attack changes the paid road',async({page})=>{
     .textContent()).not.toBe(baseline);
   await expect(page.getByText('32 of 32 riders have individual crossing times.'))
     .toBeVisible();
-  await expect(page.getByText(/A complete rider-by-rider final-kilometre replay is not available/))
-    .toBeVisible();
+  await expect(page.getByRole('heading',{
+    name:'Paid finale through contact'})).toBeVisible();
   await expect(page.getByText(/Points: withheld/)).toBeVisible();
   await expect(page.getByRole('slider',{name:/Race kilometre/}))
     .toHaveAttribute('max','39');
@@ -261,6 +261,44 @@ test('passive defaults make a larger-field attack playable without editing every
       .toBeVisible();
     expect(await page.getByText(/Your nominated finisher: you-7 · [\d.]+ s/)
       .textContent()).not.toBe(caughtCrossing);
+    await expect(page.getByText(/Points: withheld/)).toBeVisible();
+    expect(errors).toEqual([]);
+  });
+
+test('a paid lead-out remains visible through an exact late contact',
+  async({page})=>{
+    const errors=[];page.on('pageerror',error=>errors.push(error.message));
+    await page.goto('/login');
+    await page.getByLabel('Email or username').fill('v2manager');
+    await page.getByLabel('Password',{exact:true}).fill('fixture-password');
+    await page.getByRole('button',{name:'Sign in',exact:true}).click();
+    await expect(page).toHaveURL(/\/team$/);
+    await page.goto('/team/v91-playtest');
+    await page.getByLabel('Distance').selectOption('40');
+    await page.getByLabel('Route profile').selectOption('flat');
+    await page.getByLabel('Field size').selectOption('4');
+    await page.getByLabel('Default tactics for uncustomized managers')
+      .selectOption('chase');
+    await page.getByLabel('Your attack order').selectOption('none');
+    await page.getByLabel('Your chase order').selectOption('ignore');
+    await page.getByLabel('Scenario seed').fill('trial');
+    await page.getByRole('checkbox',{name:'Continue to a conditional finish'})
+      .check();
+    await page.getByLabel('Named attack manager').selectOption('you');
+    await page.getByLabel('Named attacking rider').selectOption('you-4');
+    await page.getByLabel('you finisher').selectOption('you-6');
+    await page.getByLabel('you lead-out helper').selectOption('you-5');
+    await page.getByRole('button',{name:'Run full race preview'}).click();
+    await expect(page.getByRole('heading',{
+      name:'Paid finale through contact'})).toBeVisible();
+    await expect(page.getByText(/through the exact catch to the line/))
+      .toBeVisible();
+    await page.getByRole('slider',{name:/Finale interval/}).fill('5');
+    await expect(page.getByText(
+      'All riders have crossed; see the conditional times below.'))
+      .toBeVisible();
+    await expect(page.getByText('32 of 32 riders have individual crossing times.'))
+      .toBeVisible();
     await expect(page.getByText(/Points: withheld/)).toBeVisible();
     expect(errors).toEqual([]);
   });
