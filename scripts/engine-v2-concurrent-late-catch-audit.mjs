@@ -148,10 +148,10 @@ for(const gender of mode.startsWith('one')?['M']:['M','F'])
         bunchAt200.roadBands[0].positionM-
           bunchAt200.roadBands[1].positionM:null,
       ...(mode.startsWith('one')?{roadEvents:(output.bandContinuation?.frames??
-        output.individualLine?.roadPrefix?.frames)
+        output.individualLine?.roadPrefix?.frames??[])
         .map(frame=>({event:frame.event,
           positions:frame.roadBands.map(band=>({kind:band.kind,
-            positionM:band.positionM}))}))??[]}:{}),
+            positionM:band.positionM}))}))}:{}),
       individualCrossings:crossings?.length??0,
       reason:summary.status==='unsupported'?
         (finishers==='attackers'?summary.sprintLineRefusal:null)??

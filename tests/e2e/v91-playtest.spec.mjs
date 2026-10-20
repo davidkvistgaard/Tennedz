@@ -75,6 +75,16 @@ for(const width of [390,1440])test(`v91 playtest changes conditions at ${width}p
       .toBeVisible();
     await expect(page.getByText('32 of 32 riders have individual crossing times.'))
       .toBeVisible();
+    const resultTable=page.getByRole('table',{
+      name:'Individual conditional results'});
+    await expect(resultTable.getByRole('row')).toHaveCount(33);
+    await expect(resultTable.getByRole('row',{name:/you-7/})
+      .getByRole('cell',{name:'75',exact:true})).toBeVisible();
+    await page.getByLabel('Results team').selectOption('rival-1');
+    await expect(resultTable.getByRole('row')).toHaveCount(9);
+    await expect(resultTable.getByRole('row',{name:/you-7/})).toHaveCount(0);
+    await page.getByLabel('Results team').selectOption('all');
+    await expect(resultTable.getByRole('row')).toHaveCount(33);
     await expect(page.getByText(/Your nominated finisher: you-7 · [\d.]+ s/))
       .toBeVisible();
     await expect(page.getByText(/Points: withheld/)).toBeVisible();
@@ -94,6 +104,8 @@ for(const width of [390,1440])test(`v91 playtest changes conditions at ${width}p
     await expect(page.getByText('you-7: provisional place 1, 125 preview points.',
       {exact:true}))
       .toBeVisible();
+    await expect(resultTable.getByRole('row',{name:/you-7/})
+      .getByRole('cell',{name:'125',exact:true})).toBeVisible();
     await expect(page.getByText(
       'Read-only points: you-7: provisional place 3, 75 preview points → you-7: provisional place 1, 125 preview points. Official points: withheld.'))
       .toBeVisible();
@@ -201,6 +213,14 @@ test('passive defaults make a larger-field attack playable without editing every
       name:'Recorded race · 120 km rolling'})).toBeVisible();
     await expect(page.getByText('120 of 120 riders have individual crossing times.'))
       .toBeVisible();
+    const largeResults=page.getByRole('table',{
+      name:'Individual conditional results'});
+    await expect(largeResults.getByRole('row')).toHaveCount(121);
+    await expect(largeResults.getByRole('columnheader',{
+      name:'Preview points'})).toHaveCount(0);
+    await page.getByLabel('Results team').selectOption('you');
+    await expect(largeResults.getByRole('row')).toHaveCount(9);
+    await page.getByLabel('Results team').selectOption('all');
     await expect(page.getByText(/Named attack: you-0 · launched at 119 km; solo road, 1 group at 119\.5 km/))
       .toBeVisible();
     await expect(page.getByRole('heading',{name:'Paid solo-attack approach'}))
@@ -229,6 +249,7 @@ test('passive defaults make a larger-field attack playable without editing every
       .toBeVisible();
     await expect(page.getByText('120 of 120 riders have individual crossing times.'))
       .toBeVisible();
+    await expect(largeResults.getByRole('row')).toHaveCount(121);
     await expect(page.getByText('No unambiguous individual line.',
       {exact:true}))
       .toBeVisible();
@@ -343,6 +364,9 @@ test('two managers can attack and inspect their paid double catch',
       .toBeVisible();
     await expect(page.getByText(/120 of 120 riders have individual crossing times/))
       .toBeVisible();
+    await expect(page.getByRole('table',{
+      name:'Individual conditional results'}).getByRole('row'))
+      .toHaveCount(121);
     await page.getByRole('slider',{name:/Paid road boundary/}).fill('4');
     await expect(page.getByText(/bunch: 120 riders at 39\.800 km/))
       .toBeVisible();

@@ -97,6 +97,7 @@ export default function Playtest(){
   const [concurrentRoadIndex,setConcurrentRoadIndex]=useState(0);
   const [inspectedRiderId,setInspectedRiderId]=useState('you-7');
   const [selectedKm,setSelectedKm]=useState(1);
+  const [resultsTeam,setResultsTeam]=useState('all');
   const [previousRun,setPreviousRun]=useState(null);
   const [comparison,setComparison]=useState(null);
   const [busy,setBusy]=useState(false);
@@ -138,6 +139,12 @@ export default function Playtest(){
   const conditionalLine=[...lineTimes].sort((a,b)=>
     a.elapsedSecondsFromLastKmStart-b.elapsedSecondsFromLastKmStart||
     a.riderId.localeCompare(b.riderId));
+  const visibleLine=conditionalLine.map((row,index)=>({...row,
+    conditionalOrder:index+1,teamId:row.riderId.slice(0,
+      row.riderId.lastIndexOf('-'))})).filter(row=>
+    resultsTeam==='all'||row.teamId===resultsTeam);
+  const pointRows=new Map((integrated?.provisionalPointPreview?.riders??[])
+    .map(row=>[row.riderId,row]));
   const ownFinisher=integrated?.managerDecisions?.find(row=>
     row.teamId==='you')?.finisherId??'you-7';
   const ownCrossing=conditionalLine.find(row=>row.riderId===ownFinisher);
@@ -215,6 +222,7 @@ export default function Playtest(){
       setInspectedRiderId(response.integrated?.managerDecisions
         ?.find(row=>row.teamId==='you')?.finisherId??'you-7');
       setSelectedKm(1);
+      setResultsTeam('all');
     }catch(cause){setComparison(null);
       setError(cause.message||'The playtest could not run.');}
     finally{setBusy(false);}
@@ -514,11 +522,35 @@ export default function Playtest(){
               ...totals,[row.riderId]:(totals[row.riderId]??0)+row.energySpent
             }),{})).map(([riderId,energy])=><li key={riderId}>
             {riderId}: {energy.toFixed(1)} energy spent</li>)}</ul>}
-          {conditionalLine.length>0&&<><h4>First conditional crossings</h4>
-            <ol>{conditionalLine.slice(0,10).map(row=><li key={row.riderId}>
-              {row.riderId} · {row.elapsedSecondsFromLastKmStart.toFixed(3)} s · {row.energyAtLine.toFixed(1)} energy
-            </li>)}</ol>
-            <p>{conditionalLine.length} of {result.settings.teamCount*8} riders have individual crossing times. Times do not establish official places.</p></>}
+          {conditionalLine.length>0&&<div>
+            <h4>Individual conditional results</h4>
+            <p>{conditionalLine.length} of {result.settings.teamCount*8} riders have individual crossing times. Times do not establish official places.</p>
+            <label>Results team<select value={resultsTeam}
+              onChange={event=>setResultsTeam(event.target.value)}>
+              <option value="all">All teams</option>
+              {Array.from({length:result.settings.teamCount},(_,index)=>
+                index===0?'you':`rival-${index}`).map(teamId=><option
+                  key={teamId} value={teamId}>{teamId==='you'?'Your team':teamId}</option>)}
+            </select></label>
+            <div className="v91-result-scroll"><table className="v91-result-table"
+              aria-label="Individual conditional results">
+              <thead><tr><th scope="col">Conditional order</th>
+                <th scope="col">Rider</th><th scope="col">Time from final km</th>
+                <th scope="col">Gap</th><th scope="col">Energy at line</th>
+                {pointRows.size>0&&<th scope="col">Preview points</th>}
+              </tr></thead>
+              <tbody>{visibleLine.map(row=><tr key={row.riderId}>
+                <td>{row.conditionalOrder}</td><th scope="row">{row.riderId}</th>
+                <td>{row.elapsedSecondsFromLastKmStart.toFixed(3)} s</td>
+                <td>+{(row.elapsedSecondsFromLastKmStart-
+                  conditionalLine[0].elapsedSecondsFromLastKmStart).toFixed(3)} s</td>
+                <td>{row.energyAtLine.toFixed(1)}</td>
+                {pointRows.size>0&&<td>{pointRows.get(row.riderId)
+                  ?.previewPoints??'—'}</td>}
+              </tr>)}</tbody>
+            </table></div>
+            <p>Showing {visibleLine.length} riders. Point values, when shown, are read-only illustrations; official points remain withheld.</p>
+          </div>}
           {integrated.provisionalPointPreview&&<div>
             <h4>Read-only points illustration</h4>
             {ownPointPreview?<p>{ownFinisher}: provisional place {ownPointPreview.provisionalPlace}, {ownPointPreview.previewPoints} preview points.</p>:

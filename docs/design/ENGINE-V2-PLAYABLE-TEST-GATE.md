@@ -1794,3 +1794,14 @@ mountain cases after the new replay was added. Seven focused replay tests,
 lint, an isolated Next build and the local browser flow through both roads
 passed. These are still inferred source wheels and conditional results, not
 an official classification or sporting-balance proof.
+
+The playable result now exposes every recorded individual conditional
+crossing, rather than stopping after the first ten. A team selector keeps
+the original whole-field conditional order, last-kilometre time, gap and
+line energy visible for each rider. Read-only point values appear on those
+same rows only when the existing point projection supplies them; a caught
+120-rider road with an unavailable projection has no point column. Local
+browser checks cover a 32-rider bunch before and after a paid lead-out,
+a 120-rider solo-to-catch comparison, and the two-manager paid replay at
+mobile and desktop widths. The isolated build and lint passed. This improves
+inspection of a conditional test result; it does not make the order official.
