@@ -325,3 +325,102 @@ test('three isolated riders finish while uncertain points stay withheld',
     await expect(page.getByText('Official points: withheld · Awards saved: 0'))
       .toBeVisible();
   });
+
+test('custom 260 km road carries 15 teams and an isolated nominee to the line',
+  async({page})=>{
+    await page.goto('/login');
+    await page.getByLabel('Email or username').fill('alice');
+    await page.getByLabel('Password',{exact:true}).fill('fixture-password');
+    await page.getByRole('button',{name:'Sign in',exact:true}).click();
+    await expect(page).toHaveURL(/\/team$/);
+    await page.goto('/team/v91-playtest');
+    await page.getByRole('checkbox',{
+      name:'Continue to a conditional finish'}).check();
+    await page.getByRole('checkbox',{
+      name:'Try v93 road-to-line preview'}).check();
+    await page.getByLabel('Distance').selectOption('260');
+    await page.getByLabel('Route profile').selectOption('custom');
+    await page.getByLabel('Field size').selectOption('15');
+    await page.getByLabel('Starting fatigue').selectOption('15');
+    await page.getByLabel('Scenario seed').fill('test-drive-acceptance-1');
+    await page.getByLabel('Default tactics for uncustomized managers')
+      .selectOption('attack');
+    await page.getByLabel('Your attack').selectOption('none');
+    await page.getByLabel('Your chase').selectOption('all');
+    await page.getByLabel('you finisher').selectOption('you-4');
+    await page.getByRole('checkbox',{
+      name:'Show read-only point illustration'}).check();
+    const responsePromise=page.waitForResponse(response=>
+      response.url().endsWith('/api/v91-playtest')&&
+      response.request().method()==='POST');
+    await page.getByRole('button',{name:'Run v93 race preview'}).click();
+    const response=await responsePromise;
+    expect(response.status()).toBe(200);
+    const {coasted}=await response.json();
+    expect(coasted.version).toBe('v93-coasted-playtest-1');
+    expect(coasted.kilometreFrames).toHaveLength(259);
+    expect(coasted.kilometreFrames.at(-1).roadGroups).toHaveLength(1);
+    expect(coasted.kilometreFrames.at(-1).droppedRiders).toHaveLength(6);
+    expect(coasted.bandReplays).toHaveLength(8);
+    expect(coasted.lineTimes).toHaveLength(120);
+    expect(coasted.managerDecisions.find(row=>row.teamId==='you'))
+      .toMatchObject({finisherId:'you-4',
+        roadGroupId:'isolated:you-4'});
+    expect(coasted.lineTimes.find(row=>row.riderId==='you-4'))
+      .toMatchObject({energyAtLine:0,roadBandId:'isolated:you-4'});
+    expect(coasted.pointPreview.riders).toHaveLength(120);
+    await expect(page.getByRole('heading',{
+      name:'V93 race preview · 260 km custom'})).toBeVisible();
+    await expect(page.getByRole('table',{
+      name:'V93 individual conditional results'}).getByRole('row'))
+      .toHaveCount(121);
+    await expect(page.getByText('Official points: withheld · Awards saved: 0'))
+      .toBeVisible();
+  });
+
+test('tired 20-team women field finishes an exposed 260 km road',
+  async({page})=>{
+    await page.goto('/login');
+    await page.getByLabel('Email or username').fill('alice');
+    await page.getByLabel('Password',{exact:true}).fill('fixture-password');
+    await page.getByRole('button',{name:'Sign in',exact:true}).click();
+    await expect(page).toHaveURL(/\/team$/);
+    await page.goto('/team/v91-playtest');
+    await page.getByRole('checkbox',{
+      name:'Continue to a conditional finish'}).check();
+    await page.getByRole('checkbox',{
+      name:'Try v93 road-to-line preview'}).check();
+    await page.getByLabel('Distance').selectOption('260');
+    await page.getByLabel('Route profile').selectOption('exposed');
+    await page.getByLabel('Field size').selectOption('20');
+    await page.getByLabel('Category').selectOption('F');
+    await page.getByLabel('Starting fatigue').selectOption('30');
+    await page.getByLabel('Scenario seed').fill('test-drive-acceptance-1');
+    await page.getByLabel('Default tactics for uncustomized managers')
+      .selectOption('chase');
+    await page.getByLabel('Your attack').selectOption('none');
+    await page.getByLabel('Your chase').selectOption('all');
+    await page.getByRole('checkbox',{
+      name:'Show read-only point illustration'}).check();
+    const responsePromise=page.waitForResponse(response=>
+      response.url().endsWith('/api/v91-playtest')&&
+      response.request().method()==='POST');
+    await page.getByRole('button',{name:'Run v93 race preview'}).click();
+    const response=await responsePromise;
+    expect(response.status()).toBe(200);
+    const {coasted}=await response.json();
+    expect(coasted.version).toBe('v93-bunch-only-playtest-1');
+    expect(coasted.kilometreFrames).toHaveLength(259);
+    expect(coasted.kilometreFrames.at(-1).roadGroups).toEqual([]);
+    expect(coasted.kilometreFrames.at(-1).droppedRiders).toEqual([]);
+    expect(coasted.bandReplays).toHaveLength(1);
+    expect(coasted.lineTimes).toHaveLength(160);
+    expect(coasted.pointPreview.riders).toHaveLength(160);
+    await expect(page.getByRole('heading',{
+      name:'V93 race preview · 260 km exposed'})).toBeVisible();
+    await expect(page.getByRole('table',{
+      name:'V93 individual conditional results'}).getByRole('row'))
+      .toHaveCount(161);
+    await expect(page.getByText('Official points: withheld · Awards saved: 0'))
+      .toBeVisible();
+  });

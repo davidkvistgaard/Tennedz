@@ -2362,3 +2362,16 @@ tests this exact three-isolated-rider point-withholding case. Full unit
 suite status is recorded separately when run. A full `pnpm test` attempt
 was stopped after 30 minutes with the existing `engine-v2-test-drive`
 matrix still active; this is not a full-suite pass.
+
+Two additional local browser acceptance flows now cover larger fields.
+On the default six-point custom elevation route, 15 teams race 260 km with
+fatigue 15 and an attack-minded rival default. The locked road has one
+front group and six isolated riders; the nominated player finisher is one
+of those isolated riders at zero reserve. The preview shows eight replay
+bands, 120 individual crossings and 120 policy-derived read-only point
+entries. The exact settings and nomination also replay through the engine
+validator. A second 260 km flow uses 20 women's teams, fatigue 30 and an
+exposed route with chase defaults: all 160 riders reach the individual
+bunch line, with 160 illustrative point entries. All nine v93 browser
+fixtures pass together; lint and an isolated build pass. This broadens
+playable UI evidence without resolving the 30 extreme energy refusals.
