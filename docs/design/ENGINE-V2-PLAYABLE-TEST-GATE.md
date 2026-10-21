@@ -2962,3 +2962,13 @@ the displayed values against the API response. Six focused v93 motor tests,
 all 26 v93 browser cases, lint and a fresh isolated build pass. This adds
 read-only replay context, with no change to road physics, result positions or
 the withheld official-point policy. The unresolved contact cases remain.
+
+The preview switch now hides the v91-only last-kilometre front-work control
+while v93 is selected. Before this change, a previously selected second named
+attacker left that control visible in v93 even though the v93 request did not
+use its value. A browser case sets two v91 named attackers and rotating front
+work, switches to v93, checks that the inactive controls disappear, completes
+a 40 km flat v93 race with 32 individual line times and no hidden phase order,
+then switches back and confirms the v91 choice remains. Lint, a fresh isolated
+preview build and all 27 v93 browser cases pass. This changes only preview
+form visibility, not motor physics, recorded results or point settlement.

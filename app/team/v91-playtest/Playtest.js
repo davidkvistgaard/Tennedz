@@ -618,7 +618,7 @@ export default function Playtest(){
                   .filter(id=>id!==plan.finisherId).map(id=><option key={id}
                     value={id}>Rider {Number(id.split('-').at(-1))+1}</option>)}</select>
               </label>
-              {secondNamedAttack.teamId&&<label>{teamId} last-kilometre front work
+              {!coastedMode&&secondNamedAttack.teamId&&<label>{teamId} last-kilometre front work
                 <select value={finaleFrontWork[teamId]??'sit_in'}
                   onChange={event=>setFinaleFrontWork(current=>({
                     ...current,[teamId]:event.target.value}))}>

@@ -5,6 +5,45 @@ test.skip(process.env.PELOTONIA_V91_PLAYTEST_ENABLED!=='true'||
   process.env.PELOTONIA_V93_COASTED_PLAYTEST_ENABLED!=='true',
 'The isolated v93 workbench is disabled.');
 
+test('switching previews shows only tactics used by the selected race',
+  async({page})=>{
+    await page.goto('/login');
+    await page.getByLabel('Email or username').fill('v2rival');
+    await page.getByLabel('Password',{exact:true}).fill('fixture-password');
+    await page.getByRole('button',{name:'Sign in',exact:true}).click();
+    await expect(page).toHaveURL(/\/team$/);
+    await page.goto('/team/v91-playtest');
+    await page.getByRole('checkbox',
+      {name:'Continue to a conditional finish'}).check();
+    await page.getByLabel('Named attack manager').selectOption('you');
+    await page.getByLabel('Second attack manager').selectOption('rival-2');
+    await page.getByLabel('you last-kilometre front work')
+      .selectOption('rotate');
+    await page.getByRole('checkbox',
+      {name:'Try v93 road-to-line preview'}).check();
+    await expect(page.getByLabel('Named attack manager')).toHaveCount(0);
+    await expect(page.getByLabel('you last-kilometre front work'))
+      .toHaveCount(0);
+    await page.getByLabel('Distance').selectOption('40');
+    await page.getByLabel('Route profile').selectOption('flat');
+    await page.getByLabel('Your attack').selectOption('none');
+    const responsePromise=page.waitForResponse(response=>
+      response.url().endsWith('/api/v91-playtest')&&
+      response.request().method()==='POST');
+    await page.getByRole('button',{name:'Run v93 race preview'}).click();
+    const response=await responsePromise;
+    expect(response.status()).toBe(200);
+    const {coasted}=await response.json();
+    expect(coasted.settings).toMatchObject({distanceKm:40,terrain:'flat'});
+    expect(coasted.lineTimes).toHaveLength(32);
+    expect(coasted.managerOrders.find(row=>row.teamId==='you')
+      .phaseOrders).toEqual([]);
+    await page.getByRole('checkbox',
+      {name:'Try v93 road-to-line preview'}).uncheck();
+    await expect(page.getByLabel('you last-kilometre front work'))
+      .toHaveValue('rotate');
+  });
+
 test('two managers play one selected race from orders to road, line and replay',
   async({page})=>{
     const errors=[];page.on('pageerror',error=>errors.push(error.message));
