@@ -303,6 +303,10 @@ export default function Playtest(){
   const coastedFrame=coasted?.kilometreFrames[coastedKm-1];
   const coastedRoadChanges=recordedRoadChanges(
     coasted?.kilometreFrames??[]);
+  const coastedTacticalFrames=(coasted?.kilometreFrames??[])
+    .flatMap((frame,index)=>frame.attackAttempts.length||
+      frame.joinedRiderIds.length||frame.caughtRiderIds.length||
+      frame.frontAttacks.length?[{frame,index}]:[]);
   const coastedRoad=coasted?.lastKmRoad[coastedRoadIndex];
   const coastedBand=coasted?.bandReplays.find(band=>
     band.id===coastedBandId);
@@ -755,6 +759,21 @@ export default function Playtest(){
             </button>)}
           </div>:<p>No road-group or isolation changes before the final kilometre.</p>}
         </details>
+        <details aria-label="Recorded tactical moments" className="v91-road-changes">
+          <summary>Recorded tactical moments ({coastedTacticalFrames.length})</summary>
+          <p>Jump to a recorded attack attempt, a rider joining a road group, or a catch.</p>
+          {coastedTacticalFrames.length?<div className="v91-road-jumps">
+            {coastedTacticalFrames.map(({frame,index})=><button type="button"
+              key={frame.km} onClick={()=>setCoastedKm(index+1)}
+              aria-label={`Jump to tactical km ${frame.km}`}
+              aria-pressed={coastedKm===index+1}>
+              Km {frame.km} · {frame.attackAttempts.length} attempts ·
+              {' '}{frame.joinedRiderIds.length} joined ·
+              {' '}{frame.caughtRiderIds.length} caught ·
+              {' '}{frame.frontAttacks.length} front attacks
+            </button>)}
+          </div>:<p>No recorded attacks, joins, or catches before the final kilometre.</p>}
+        </details>
         <label>Recorded kilometre: {coastedKm}
           <input type="range" min="1" max={coasted.kilometreFrames.length}
             value={coastedKm} onChange={event=>setCoastedKm(Number(event.target.value))}/>
@@ -771,6 +790,14 @@ export default function Playtest(){
         <p>Isolated riders: {coastedFrame?.droppedRiders.map(row=>
           `${row.riderId} (${bunchRelativeGap(row.deficitSeconds,1)}, ${row.energy.toFixed(1)} energy)`)
           .join(' · ')||'none'}</p>
+        <div aria-label="Recorded kilometre tactics">
+          <p>Attack attempts: {coastedFrame?.attackAttempts.join(', ')||'none'}</p>
+          <p>Joined road group: {coastedFrame?.joinedRiderIds.join(', ')||'none'}</p>
+          <p>Caught riders: {coastedFrame?.caughtRiderIds.join(', ')||'none'}</p>
+          <p>Front attacks: {coastedFrame?.frontAttacks.map(row=>
+            `${row.riderId} (${row.status.replaceAll('_',' ')})`).join(', ')||'none'}</p>
+          <p>Engaged chase: {coastedFrame?.engagedChaseTeamIds.join(', ')||'none'}</p>
+        </div>
         <div className="v91-riders">{coastedFrame?.ownRiders.map(row=><div key={row.riderId}>
           <strong>{row.riderId}</strong><span>{row.roadGroup}</span>
           <span>{row.energy.toFixed(1)} energy</span>

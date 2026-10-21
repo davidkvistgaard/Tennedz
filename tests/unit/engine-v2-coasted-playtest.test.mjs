@@ -34,6 +34,18 @@ test('ten exhausted routes yield replayable individual lines and policy points',
       assert.deepEqual(race.clock,base.clock);
       assert.equal(race.individualLine.conditionalCrossings.length,32);
       assert.equal(summary.kilometreFrames.length,259);
+      for(const [index,frame] of summary.kilometreFrames.entries()){
+        const recorded=race.recording.frames[index];
+        assert.deepEqual(frame.attackAttempts,recorded.attackers);
+        assert.deepEqual(frame.joinedRiderIds,
+          recorded.joinedBreakawayRiderIds);
+        assert.deepEqual(frame.caughtRiderIds,
+          recorded.caughtBreakawayRiderIds);
+        assert.deepEqual(frame.frontAttacks,recorded.splitAttacks.map(row=>({
+          riderId:row.riderId,status:row.status})));
+        assert.deepEqual(frame.engagedChaseTeamIds,
+          recorded.engagedChaseTeamIds);
+      }
       assert.equal(summary.lastKmRoad.at(-1).distanceM,260000);
       assert.equal(summary.lineTimes.length,32);
       assert.ok(summary.bandReplays.some(band=>band.id==='peloton'));

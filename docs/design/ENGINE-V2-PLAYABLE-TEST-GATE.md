@@ -2950,3 +2950,15 @@ browser cases and lint pass against the existing isolated build. Three
 initial browser cases hit the preview's six-runs-per-manager-per-minute
 limit (HTTP 429); assigning separate local fixture managers to those cases
 removed this test-only contention. No engine or production behavior changed.
+
+The v93 replay now exposes the tactical events already saved in each
+pre-finale kilometre: attack attempts, riders joining a road group, caught
+riders, front-attack decisions and engaged chase teams. A collapsible list
+jumps to kilometres with an attack, join, catch or front decision, while the
+selected kilometre shows its exact recorded IDs and statuses. Ten long
+fictional routes compare every projected frame field with the original
+versioned recording; the browser follows a recorded attack jump and checks
+the displayed values against the API response. Six focused v93 motor tests,
+all 26 v93 browser cases, lint and a fresh isolated build pass. This adds
+read-only replay context, with no change to road physics, result positions or
+the withheld official-point policy. The unresolved contact cases remain.

@@ -860,6 +860,26 @@ test('attacking v93 road keeps separated front groups in the browser replay',
         `${group.id} (${group.riderIds.length} riders, ${
           group.gapSeconds.toFixed(1)} s ahead)`).join(' · ')}`))
       .toBeVisible();
+    const tacticalFrame=coasted.kilometreFrames.find(frame=>
+      frame.attackAttempts.length>0);
+    expect(tacticalFrame).toBeDefined();
+    const tactics=page.getByLabel('Recorded tactical moments');
+    await tactics.locator('summary').click();
+    const tacticalJump=tactics.getByRole('button',{
+      name:`Jump to tactical km ${tacticalFrame.km}`});
+    await tacticalJump.click();
+    await expect(tacticalJump).toHaveAttribute('aria-pressed','true');
+    await expect(page.getByRole('slider',
+      {name:/Recorded kilometre/})).toHaveValue(String(tacticalFrame.km));
+    const recordedTactics=page.getByLabel('Recorded kilometre tactics');
+    await expect(recordedTactics).toContainText(
+      `Attack attempts: ${tacticalFrame.attackAttempts.join(', ')}`);
+    await expect(recordedTactics).toContainText(
+      `Joined road group: ${tacticalFrame.joinedRiderIds.join(', ')||'none'}`);
+    await expect(recordedTactics).toContainText(
+      `Caught riders: ${tacticalFrame.caughtRiderIds.join(', ')||'none'}`);
+    await expect(recordedTactics).toContainText(
+      `Engaged chase: ${tacticalFrame.engagedChaseTeamIds.join(', ')||'none'}`);
     await expect(page.getByRole('table',{
       name:'V93 individual conditional results'}).getByRole('row'))
       .toHaveCount(33);
