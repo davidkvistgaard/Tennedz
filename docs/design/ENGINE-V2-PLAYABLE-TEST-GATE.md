@@ -3053,3 +3053,14 @@ show recorded energy, groups, individual crossing times and rider replays,
 but withhold unique places and policy points. Resolving them requires a
 paid, recorded bunch-exit and relative-order model from each departure
 through the line, or an explicit tie policy accepted by the game contract.
+
+The local v93 result now derives a player-facing bunch-exit note directly
+from those versioned drop events and the paid individual crossings. It
+shows the departure marker, cohort size and number of distinct line times,
+so the two unresolved cases visibly explain their 6+4 and 9+5 equal-time
+waves beside the conditional table. The note validates every new leaver
+against an isolated rider replay; it adds no placement or award rule.
+Focused tests for both categories and field sizes, lint, a fresh isolated
+build and all 27 fixture-only browser cases passed. The full 966-test suite
+passed immediately before this additive summary and display change; it was
+not repeated for this increment.

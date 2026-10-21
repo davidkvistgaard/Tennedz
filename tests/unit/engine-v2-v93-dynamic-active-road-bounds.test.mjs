@@ -29,6 +29,18 @@ test('paid front has a bounded conditional place while new bunch drops remain un
     assert.equal(bounds.pointsStatus,'withheld');
     assert.equal(bounds.canCommitAwards,false);
     assert.equal(race.pointPreview.status,'unavailable');
+    assert.deepEqual(summary.unresolvedBunchExits.map(wave=>({
+      atDistanceM:wave.atDistanceM,
+      riderCount:wave.riderIds.length,
+      distinctLineTimes:wave.distinctLineTimes})),[
+      {atDistanceM:259000,riderCount:teamCount===15?6:9,
+        distinctLineTimes:1},
+      {atDistanceM:259250,riderCount:teamCount===15?4:5,
+        distinctLineTimes:1}]);
+    for(const wave of summary.unresolvedBunchExits)
+      for(const riderId of wave.riderIds)
+        assert.equal(summary.lineTimes.find(row=>row.riderId===riderId)
+          .roadBandId,`isolated:${riderId}`);
     assert.equal(validateFinaleDynamicActiveRoadBounds(race.recording,
       race.clock,race.individualLine,bounds),true);
     assert.equal(validateV93CoastedPlaytest(input,options,race),true);

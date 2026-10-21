@@ -1519,6 +1519,15 @@ test('one paid front retains a conditional range above new bunch drops',
       name:new RegExp(`^1–2 ${frontId} `)})).toBeVisible();
     await expect(page.getByText(
       /The paid front stays separate through the finale/)).toBeVisible();
+    const exits=page.getByRole('note',{
+      name:'Unresolved bunch exits'});
+    expect(coasted.unresolvedBunchExits.map(wave=>[
+      wave.atDistanceM,wave.riderIds.length,
+      wave.distinctLineTimes])).toEqual([
+      [259000,6,1],[259250,4,1]]);
+    await expect(exits).toContainText('10 riders left the bunch in 2 recorded waves');
+    await expect(exits).toContainText('259.000 km: 6 riders · one shared crossing time');
+    await expect(exits).toContainText('259.250 km: 4 riders · one shared crossing time');
     await expect(page.getByText('Official points: withheld · Awards saved: 0'))
       .toBeVisible();
   });

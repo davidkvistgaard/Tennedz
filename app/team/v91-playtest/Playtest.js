@@ -925,6 +925,22 @@ export default function Playtest(){
               'The paid front stays separate through the finale. Contact between the bunch and new leavers remains unresolved; these are conditional ranges and points are withheld.':
               'Road ranges follow the paid front, leaver and bunch passages after the split. Wheel order and contact at the split remain unresolved; points are withheld.'
           }</p>}
+          {coasted.unresolvedBunchExits&&<div role="note"
+            aria-label="Unresolved bunch exits">
+            <p>{coasted.unresolvedBunchExits.reduce((count,wave)=>
+              count+wave.riderIds.length,0)} riders left the bunch in
+              {' '}{coasted.unresolvedBunchExits.length} recorded waves.
+              Their paid crossings remain visible, but the exit has no
+              recorded wheel order; unique places and points are withheld.</p>
+            {coasted.unresolvedBunchExits.map(wave=><p
+              key={wave.atDistanceM}>
+              {(wave.atDistanceM/1000).toFixed(3)} km:
+              {' '}{wave.riderIds.length} riders ·
+              {' '}{wave.distinctLineTimes===1?
+                'one shared crossing time':
+                `${wave.distinctLineTimes} distinct crossing times`}.
+            </p>)}
+          </div>}
           {coasted.potentialRoadContact&&<div role="note"
             aria-label="Potential road contact">
             <p>Potential contact at {' '}
