@@ -89,6 +89,15 @@ for(const distanceKm of distances)for(const teamCount of teamCounts)
       assert.equal(replayed.size,teamCount*8);
       assert.equal(summary.canCommitAwards,false);
       assert.equal(summary.pointsStatus,'withheld');
+      if(summary.pointPreview.status==='unavailable'&&
+        summary.pointPreview.reason===
+          'Potential road-band contact leaves no defensible point order.'){
+        assert.ok(summary.potentialRoadContact);
+        assert.ok(Number.isFinite(
+          summary.potentialRoadContact.distanceM));
+        assert.ok(summary.potentialRoadContact.riderIds.every(id=>
+          crossings.has(id)));
+      }
       if(summary.pointPreview.status!=='unavailable'){
         const places=new Map(summary.provisionalLineOrder.map(row=>
           [row.riderId,row.position]));
@@ -104,7 +113,9 @@ for(const distanceKm of distances)for(const teamCount of teamCounts)
         customManagers,
         helperRefusals,acceptedHelpers:acceptedHelpers.length,
         roadStatus:summary.roadStatus,
-        points:summary.pointPreview.status??'illustrative'});
+        points:summary.pointPreview.status??'illustrative',
+        pointReason:summary.pointPreview.reason??null,
+        potentialRoadContact:summary.potentialRoadContact??null});
     }else cases.push({index,distanceKm,teamCount,gender,terrain,
       customManagers,
       fatigue,helperRefusals,refusal});
@@ -137,6 +148,12 @@ console.log(JSON.stringify({scenarios:cases.length,completed,
   byGender:genders.map(gender=>({gender,
     completed:cases.filter(row=>row.gender===gender&&
       !row.refusal).length})),
+  unavailableCases:cases.filter(row=>row.points==='unavailable')
+    .map(row=>({index:row.index,distanceKm:row.distanceKm,
+      teamCount:row.teamCount,gender:row.gender,terrain:row.terrain,
+      fatigue:row.fatigue,roadStatus:row.roadStatus,
+      reason:row.pointReason,
+      contact:row.potentialRoadContact})),
   byTerrain:terrains.map(terrain=>({terrain,
     completed:cases.filter(row=>row.terrain===terrain&&!row.refusal).length,
     refusals:cases.filter(row=>row.terrain===terrain&&row.refusal).length}))},

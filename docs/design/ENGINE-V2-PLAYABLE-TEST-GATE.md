@@ -3190,3 +3190,12 @@ the existing one-day point policy; the other 15 withheld it. All awards
 remained withheld. These fixed synthetic cases add whole-race coverage;
 they do not remove the separate 300 m late-exit refusal or prove sporting
 balance.
+
+The matrix now records the first paid contact witness for each of its 15
+withheld point cases. All 15 are fatigued 260 km races with two isolated
+riders whose longitudinal paths may meet: 14 witnesses begin in the first
+500 m (several already share the source marker), and one is in the final
+500 m. Every witness names both rider IDs and bands, distance and elapsed
+time, and both IDs have individual paid replays. A single passage-time
+sort would invent a passing lane or tie rule here, so the existing point
+refusal is evidence-based rather than a missed point calculation.
