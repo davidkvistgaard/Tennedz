@@ -342,6 +342,8 @@ export default function Playtest(){
   const coastedOwnHelperWork=(coasted?.leadOutWork??[])
     .filter(row=>row.riderId===coastedOwnDecision?.leadOutRiderId)
     .reduce((sum,row)=>sum+row.energySpent,0);
+  const coastedBunchExitCount=(coasted?.unresolvedBunchExits??[])
+    .reduce((count,wave)=>count+wave.riderIds.length,0);
   const conditionalLine=[...lineTimes].sort((a,b)=>
     a.elapsedSecondsFromLastKmStart-b.elapsedSecondsFromLastKmStart||
     a.riderId.localeCompare(b.riderId));
@@ -931,16 +933,19 @@ export default function Playtest(){
           }</p>}
           {coasted.unresolvedBunchExits&&<div role="note"
             aria-label="Unresolved bunch exits">
-            <p>{coasted.unresolvedBunchExits.reduce((count,wave)=>
-              count+wave.riderIds.length,0)} riders left the bunch in
-              {' '}{coasted.unresolvedBunchExits.length} recorded waves.
+            <p>{coastedBunchExitCount}
+              {' '}{coastedBunchExitCount===1?'rider':'riders'} left the bunch in
+              {' '}{coasted.unresolvedBunchExits.length} recorded
+              {' '}{coasted.unresolvedBunchExits.length===1?'wave':'waves'}.
               Their paid crossings remain visible, but the exit has no
               recorded wheel order; unique places and points are withheld.</p>
             {coasted.unresolvedBunchExits.map(wave=><p
               key={wave.atDistanceM}>
               {(wave.atDistanceM/1000).toFixed(3)} km:
-              {' '}{wave.riderIds.length} riders ·
-              {' '}{wave.distinctLineTimes===1?
+              {' '}{wave.riderIds.length}
+              {' '}{wave.riderIds.length===1?'rider':'riders'} ·
+              {' '}{wave.riderIds.length===1?
+                'one recorded crossing time':wave.distinctLineTimes===1?
                 'one shared crossing time':
                 `${wave.distinctLineTimes} distinct crossing times`}.
             </p>)}

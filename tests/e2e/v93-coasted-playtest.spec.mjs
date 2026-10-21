@@ -1410,6 +1410,16 @@ test('newly exhausted rider has a solo road replay and withheld points',
     await expect(page.getByRole('table',{
       name:'V93 individual conditional results'}).getByRole('row'))
       .toHaveCount(33);
+    expect(coasted.unresolvedBunchExits).toHaveLength(1);
+    const exit=coasted.unresolvedBunchExits[0];
+    expect(exit).toMatchObject({atDistanceM:259000,
+      distinctLineTimes:1});
+    expect(exit.riderIds).toHaveLength(1);
+    const exits=page.getByRole('note',{name:'Unresolved bunch exits'});
+    await expect(exits).toContainText(
+      '1 rider left the bunch in 1 recorded wave');
+    await expect(exits).toContainText(
+      '259.000 km: 1 rider · one recorded crossing time');
     const unorderedIds=await page.getByRole('table',{
       name:'V93 individual conditional results'})
       .locator('tbody th[scope="row"]').allTextContents();

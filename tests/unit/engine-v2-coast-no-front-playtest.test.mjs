@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {createV93PlayableTest,V93_COAST_NO_FRONT_PLAYTEST_VERSION,
+import {createV93PlayableTest,summarizeV93CoastedPlaytest,
+  V93_COAST_NO_FRONT_PLAYTEST_VERSION,
   V93_DYNAMIC_NO_FRONT_PLAYTEST_VERSION,
   validateV93CoastedPlaytest} from
   '../../lib/engine/v2/playtest-v93-coasted.mjs';
@@ -161,6 +162,10 @@ test('a new boundary drop keeps its solo travel, crossing and replay',()=>{
       assert.equal(race.individualLine.provisionalLineOrder,null);
       assert.equal(race.pointPreview.status,'unavailable');
       const droppedId=newDrops[0].riderId;
+      const summary=summarizeV93CoastedPlaytest(race);
+      assert.deepEqual(summary.unresolvedBunchExits,[{
+        atDistanceM:259000,riderIds:[droppedId],
+        distinctLineTimes:1}]);
       const solo=race.individualLine.bandRunners.find(band=>
         band.roadBandId===`isolated:${droppedId}`);
       assert.equal(solo.runner.frames.length,5);

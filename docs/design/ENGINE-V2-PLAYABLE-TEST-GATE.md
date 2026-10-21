@@ -3065,6 +3065,13 @@ build and all 27 fixture-only browser cases passed. The full 966-test suite
 passed immediately before this additive summary and display change; it was
 not repeated for this increment.
 
+The same note now also appears for a no-front race with a newly exhausted
+bunch rider before the 500 m handoff. A fixed 260 km women's flat race shows
+the rider's 259.000 km exit, separate paid replay, and withheld points. The
+summary checks the exit against that rider's conditional crossing. Earlier
+versioned recordings and point policy are unchanged. Focused unit tests,
+lint, a clean local fixture build and all 30 v93 browser cases pass.
+
 A fixed-seed, full-race tactical pair audit now compares 12 synthetic routes
 (40/120/260 km; four, 15 or 20 teams; both genders; flat, rolling, mountain,
 exposed and custom terrain; fatigue 0/15/30). Each scenario runs a passive
