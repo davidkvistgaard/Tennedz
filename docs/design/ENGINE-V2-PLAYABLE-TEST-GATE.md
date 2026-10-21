@@ -2938,3 +2938,15 @@ attack and chase controls were not added from this probe. Separate fictional
 5 km chase pairs completed, but their observed time changes were small and
 did not establish a new useful player decision or point change. Their
 results are exploratory, not a new acceptance claim.
+
+The v93 browser acceptance now edits a custom 40 km elevation profile in the
+player form and runs it twice with the same fictional field, seed and orders.
+Changing only the 20% height from 100 m to 300 m changes recorded first-km
+rider energy; the response retains all six chosen route points, 39 recorded
+kilometres and 32 individual crossings. The displayed nominated-rider replay
+agrees with that rider's recorded line time and energy, while a route-shape
+change does not create a misleading paired-tactics comparison. All 26 v93
+browser cases and lint pass against the existing isolated build. Three
+initial browser cases hit the preview's six-runs-per-manager-per-minute
+limit (HTTP 429); assigning separate local fixture managers to those cases
+removed this test-only contention. No engine or production behavior changed.

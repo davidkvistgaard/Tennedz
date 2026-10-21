@@ -517,6 +517,63 @@ test('a changed v93 route does not compare unrelated races',async({page})=>{
     name:'Paired v93 race comparison'})).toHaveCount(0);
 });
 
+test('edited custom elevation reaches the v93 road, line and replay',
+  async({page})=>{
+    await page.goto('/login');
+    await page.getByLabel('Email or username').fill('v2outsider');
+    await page.getByLabel('Password',{exact:true}).fill('fixture-password');
+    await page.getByRole('button',{name:'Sign in',exact:true}).click();
+    await expect(page).toHaveURL(/\/team$/);
+    await page.goto('/team/v91-playtest');
+    await page.getByRole('checkbox',{
+      name:'Continue to a conditional finish'}).check();
+    await page.getByRole('checkbox',{
+      name:'Try v93 road-to-line preview'}).check();
+    await page.getByLabel('Distance').selectOption('40');
+    await page.getByLabel('Route profile').selectOption('custom');
+    await page.getByLabel('Field size').selectOption('4');
+    await page.getByLabel('Default tactics for uncustomized managers')
+      .selectOption('passive');
+    await page.getByLabel('Your attack').selectOption('none');
+    await page.getByLabel('Scenario seed').fill('custom-elevation-v93');
+    for(const point of ['Start','20%','40%','60%','80%','Finish'])
+      await page.getByLabel(`${point} (m)`).fill('100');
+    const run=async()=>{
+      const responsePromise=page.waitForResponse(response=>
+        response.url().endsWith('/api/v91-playtest')&&
+        response.request().method()==='POST');
+      await page.getByRole('button',{name:'Run v93 race preview'}).click();
+      const response=await responsePromise;
+      expect(response.status()).toBe(200);
+      return (await response.json()).coasted;
+    };
+    const level=await run();
+    expect(level.settings.profileHeightsM).toEqual([100,100,100,100,100,100]);
+    await page.getByLabel('20% (m)').fill('300');
+    const climb=await run();
+    expect(climb.settings.profileHeightsM).toEqual([100,300,100,100,100,100]);
+    expect(climb.kilometreFrames).toHaveLength(39);
+    expect(climb.lineTimes).toHaveLength(32);
+    expect(climb.kilometreFrames[0].ownRiders).not.toEqual(
+      level.kilometreFrames[0].ownRiders);
+    await expect(page.getByRole('heading',{
+      name:'V93 race preview · 40 km custom'})).toBeVisible();
+    await expect(page.getByRole('region',{
+      name:'Paired v93 race comparison'})).toHaveCount(0);
+    const line=climb.lineTimes.find(row=>row.riderId==='you-7');
+    expect(line).toBeDefined();
+    await page.getByRole('button',{name:'Replay you-7'}).click();
+    const interval=page.getByRole('slider',{name:/Band interval/});
+    await interval.fill(await interval.getAttribute('max'));
+    await expect(page.getByLabel('Selected rider finale replay'))
+      .toContainText(`Crossed at ${line.elapsedSecondsFromLastKmStart.toFixed(3)} s; result ${line.elapsedSecondsFromLastKmStart.toFixed(3)} s, ${line.energyAtLine.toFixed(1)} energy.`);
+    await expect(page.getByRole('table',{
+      name:'V93 individual conditional results'}).getByRole('row'))
+      .toHaveCount(33);
+    await expect(page.getByText('Official points: withheld · Awards saved: 0'))
+      .toBeVisible();
+  });
+
 test('one rival chase changes the recorded v93 road, line and replay',
   async({page})=>{
     const errors=[];page.on('pageerror',error=>errors.push(error.message));
@@ -847,7 +904,7 @@ test('short v93 road pays one front group into the individual line',
 test('default short v93 road pays the full bunch without a front group',
   async({page})=>{
     await page.goto('/login');
-    await page.getByLabel('Email or username').fill('settings');
+    await page.getByLabel('Email or username').fill('v2outsider');
     await page.getByLabel('Password',{exact:true}).fill('fixture-password');
     await page.getByRole('button',{name:'Sign in',exact:true}).click();
     await expect(page).toHaveURL(/\/team$/);
@@ -879,7 +936,7 @@ test('default short v93 road pays the full bunch without a front group',
 test('a late catch leaves a playable 260 km bunch in the browser',
   async({page})=>{
     await page.goto('/login');
-    await page.getByLabel('Email or username').fill('settings');
+    await page.getByLabel('Email or username').fill('v2outsider');
     await page.getByLabel('Password',{exact:true}).fill('fixture-password');
     await page.getByRole('button',{name:'Sign in',exact:true}).click();
     await expect(page).toHaveURL(/\/team$/);
@@ -966,7 +1023,7 @@ test('a tired no-front road keeps its isolated rider through the browser line',
 test('an unavailable v93 lead-out explains the road and can be removed',
   async({page})=>{
     await page.goto('/login');
-    await page.getByLabel('Email or username').fill('v2manager');
+    await page.getByLabel('Email or username').fill('v2rival');
     await page.getByLabel('Password',{exact:true}).fill('fixture-password');
     await page.getByRole('button',{name:'Sign in',exact:true}).click();
     await expect(page).toHaveURL(/\/team$/);
