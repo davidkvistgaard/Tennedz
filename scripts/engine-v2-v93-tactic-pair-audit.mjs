@@ -15,7 +15,7 @@ const scenarios=[
   [260,20,'M','exposed',30],[260,20,'F','rolling',15]];
 const pointContext={tier:2,divisionCount:2,divisionIndex:1};
 
-function run(index,{attack,chase}){
+function run(index,{attack,chase,leadOutTeams=[]}){
   const [distanceKm,teamCount,gender,terrain,fatigue]=scenarios[index];
   const settings={distanceKm,teamCount,gender,terrain,fatigue,
     seed:`v93-tactic-pair-${index}`,profileHeightsM:[100,350,150,500,180,100],
@@ -24,12 +24,14 @@ function run(index,{attack,chase}){
       effort:'steady',attack:'none',chase}))};
   const plans=['you',...Array.from({length:teamCount-1},(_row,index)=>
     `rival-${index+1}`)].map(teamId=>({teamId,
-    finisherId:`${teamId}-7`,leadOutRiderId:null}));
+    finisherId:`${teamId}-7`,leadOutRiderId:leadOutTeams.includes(teamId)?
+      `${teamId}-6`:null}));
   let race;
   try{
     race=createV93PlayableTest(settings,{plans,pointContext});
   }catch(error){
-    error.message=`Scenario ${index} ${attack}/${chase}: ${error.message}`;
+    error.message=`Scenario ${index} ${attack}/${chase} helpers ${
+      leadOutTeams.join(',')}: ${error.message}`;
     throw error;
   }
   assert.equal(validateV93CoastedPlaytest(settings,{plans,pointContext},
@@ -103,18 +105,33 @@ for(let index=0;index<scenarios.length;index++){
   const passive=run(index,{attack:'none',chase:'ignore'});
   const attacking=run(index,{attack:'repeated',chase:'ignore'});
   const chased=run(index,{attack:'repeated',chase:'all'});
+  const assisted=run(index,{attack:'none',chase:'ignore',
+    leadOutTeams:['you','rival-1']});
+  assert.deepEqual(assisted.race.recording,passive.race.recording);
+  assert.deepEqual(assisted.race.clock,passive.race.clock);
+  const paidHelpers=new Set(assisted.summary.bandReplays.flatMap(band=>
+    band.frames.flatMap(frame=>frame.riders.filter(row=>
+      row.role==='lead_out'&&row.energySpent>0).map(row=>row.riderId))));
+  assert.ok(paidHelpers.has('you-6'));
+  assert.ok(paidHelpers.has('rival-1-6'));
+  const leadOut=compare(passive,assisted);
+  assert.ok(leadOut.changedCrossings>0);
+  assert.equal(leadOut.changedRoadFrames,0);
   report.push({index,scenario:scenarios[index],
     attack:compare(passive,attacking),
-    chase:compare(attacking,chased)});
+    chase:compare(attacking,chased),
+    leadOut});
 }
 assert.ok(report.some(row=>row.attack.changedRoadFrames>0));
 assert.ok(report.some(row=>row.chase.changedRoadFrames>0));
 console.log(JSON.stringify({scenarios:report.length,
-  runs:report.length*3,
+  runs:report.length*4,
   attackChangedRoad:report.filter(row=>row.attack.changedRoadFrames>0).length,
   chaseChangedRoad:report.filter(row=>row.chase.changedRoadFrames>0).length,
   attackChangedCrossings:report.filter(row=>
     row.attack.changedCrossings>0).length,
   chaseChangedCrossings:report.filter(row=>
     row.chase.changedCrossings>0).length,
+  leadOutChangedCrossings:report.filter(row=>
+    row.leadOut.changedCrossings>0).length,
   report},null,2));

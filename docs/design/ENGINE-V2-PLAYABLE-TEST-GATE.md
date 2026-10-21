@@ -3097,3 +3097,14 @@ the same recording. A focused replay assertion, lint, a fresh isolated build
 and all 28 local browser cases, including this fatigued full-race flow,
 pass. The 967-test full unit suite passed immediately before this display
 increment and was not repeated for the additive summary and UI.
+
+The full-race tactic audit now adds a fourth run to each of its 12 fixed
+scenarios: the same passive road with two managers nominating paid lead-out
+helpers. It checks that both helpers perform positive-energy work, that the
+locked race and kilometre clock stay identical to the unassisted run, and
+that individual crossings change. All 48 whole-race runs replay their
+crossings and energy, and any illustrated points match the existing one-day
+rule; attack, chase and lead-out each affect crossings in all 12 paired
+scenarios. This broadens the playable evidence across both genders, route
+profiles, field sizes and fatigue, without changing the motor or awarding
+official points.
