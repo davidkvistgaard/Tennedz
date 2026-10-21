@@ -3087,3 +3087,13 @@ nominated sprint and earlier versioned recordings retain their prior
 behavior; a focused replay regression fixes the exhausted case. This closes
 one reproducible motor refusal, not the unresolved bunch-exit ordering or
 official result gate above.
+
+The v93 workbench now names that exact outcome beside the nominated
+finisher. An additive summary identifies a selected singleton who stayed on
+the paid solo road without launching the final sprint, based on the
+validated rider replay. The English finish note explains the insufficient
+energy; crossing time, remaining energy and point status still come from
+the same recording. A focused replay assertion, lint, a fresh isolated build
+and all 28 local browser cases, including this fatigued full-race flow,
+pass. The 967-test full unit suite passed immediately before this display
+increment and was not repeated for the additive summary and UI.

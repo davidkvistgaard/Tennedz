@@ -744,6 +744,10 @@ export default function Playtest(){
             {' '}{coastedOwnLine?.elapsedSecondsFromLastKmStart.toFixed(3)??'—'} s
             from the bunch&apos;s final-kilometre marker ·
             {' '}{coastedOwnLine?.energyAtLine.toFixed(1)??'—'} energy at line.</p>
+          {coasted.unlaunchedSoloSprints?.some(row=>
+            row.riderId===coastedOwnDecision.finisherId)&&
+            <p>The nominated rider lacked energy for the full solo sprint
+              and followed their recorded road to the line.</p>}
           <p>Conditional place: {conditionalPlace(coastedOwnPlace,
             'unresolved')} · Read-only points: {coastedOwnPoints?
               coastedOwnPoints.previewPoints:

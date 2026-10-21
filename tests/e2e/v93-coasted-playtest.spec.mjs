@@ -1747,3 +1747,45 @@ test('four paid isolated passes reach line, replay and preview points',
     await expect(page.getByText('Official points: withheld · Awards saved: 0'))
       .toBeVisible();
   });
+
+test('an exhausted solo finisher reaches the paid line without a sprint',
+  async({page})=>{
+    await page.goto('/login');
+    await page.getByLabel('Email or username').fill('alice');
+    await page.getByLabel('Password',{exact:true}).fill('fixture-password');
+    await page.getByRole('button',{name:'Sign in',exact:true}).click();
+    await expect(page).toHaveURL(/\/team$/);
+    await page.goto('/team/v91-playtest');
+    await page.getByRole('checkbox',{
+      name:'Continue to a conditional finish'}).check();
+    await page.getByRole('checkbox',{
+      name:'Try v93 road-to-line preview'}).check();
+    await page.getByLabel('Distance').selectOption('260');
+    await page.getByLabel('Starting fatigue').selectOption('30');
+    await page.getByLabel('Scenario seed').fill('v93-tactic-pair-8');
+    await page.getByLabel('Default tactics for uncustomized managers')
+      .selectOption('passive');
+    await page.getByLabel('Your attack order').selectOption('repeated');
+    await page.getByLabel('Your chase order').selectOption('ignore');
+    const responsePromise=page.waitForResponse(response=>
+      response.url().endsWith('/api/v91-playtest')&&
+      response.request().method()==='POST');
+    await page.getByRole('button',{name:'Run v93 race preview'}).click();
+    const response=await responsePromise;
+    expect(response.status()).toBe(200);
+    const {coasted}=await response.json();
+    expect(coasted.unlaunchedSoloSprints).toContainEqual({
+      riderId:'you-7',roadBandId:expect.any(String),
+      reason:'insufficient_energy'});
+    const finish=page.getByRole('region',{name:'Your v93 finish'});
+    await expect(finish).toContainText(
+      'The nominated rider lacked energy for the full solo sprint');
+    const crossing=coasted.lineTimes.find(row=>row.riderId==='you-7');
+    await page.getByRole('button',{name:'Replay you-7'}).click();
+    const interval=page.getByRole('slider',{name:/Band interval/});
+    await interval.fill(await interval.getAttribute('max'));
+    await expect(page.getByLabel('Selected rider finale replay'))
+      .toContainText(`result ${crossing.elapsedSecondsFromLastKmStart.toFixed(3)} s, ${crossing.energyAtLine.toFixed(1)} energy.`);
+    await expect(page.getByText('Official points: withheld · Awards saved: 0'))
+      .toBeVisible();
+  });

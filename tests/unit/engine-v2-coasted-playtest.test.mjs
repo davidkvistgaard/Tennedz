@@ -100,6 +100,10 @@ test('an exhausted nominated singleton keeps its paid line without a sprint',()=
   assert.equal(runner.frames.length,5);
   assert.ok(runner.frames.every(frame=>
     frame.riders.find(row=>row.riderId==='you-7')?.role==='solo_front'));
+  assert.deepEqual(summarizeV93CoastedPlaytest(race).unlaunchedSoloSprints,
+    [{riderId:'you-7',roadBandId:race.individualLine.bandRunners.find(
+      band=>band.runner===runner).roadBandId,
+    reason:'insufficient_energy'}]);
   assert.equal(validateV93CoastedPlaytest(input,{plans,
     pointContext:context},race),true);
 });
