@@ -3275,3 +3275,9 @@ the validated kilometre road through km 259 for those two boundaries, with
 the recorded groups and rider energy available for inspection. It never
 claims a final-kilometre passage, individual finish, replay or points for
 either. The prior versioned recordings remain unchanged.
+The pinned `pnpm test:v93:extreme` command repeats all twelve complete-race
+inputs: eight have 160 validated rider replays, four have only the validated
+259 km source road, and the four available point illustrations match the
+existing one-day policy. After the handoff-preview change, the full serial
+unit suite passed 973/973, lint passed, and all 33 isolated-build browser
+flows passed.

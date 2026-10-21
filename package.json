@@ -15,7 +15,8 @@
     "test:cron": "playwright test --config=playwright.cron.config.mjs",
     "playtest:v93:local": "node scripts/v93-local-playtest.mjs",
     "test:v93:local": "node scripts/v93-local-verify.mjs",
-    "test:v93:stress": "node scripts/engine-v2-v93-long-field-stress.mjs"
+    "test:v93:stress": "node scripts/engine-v2-v93-long-field-stress.mjs",
+    "test:v93:extreme": "node scripts/engine-v2-v93-extreme-custom.mjs"
   },
   "dependencies": {
     "@supabase/ssr": "0.12.7",

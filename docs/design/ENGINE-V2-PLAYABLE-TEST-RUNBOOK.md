@@ -82,3 +82,7 @@ does not establish sporting balance or remove the late-exit boundary.
 repeated player attacks and mixed rival tactics. It checks every individual
 replay in completed races and validates that every unsupported front catch
 exposes only the earlier recorded road.
+`pnpm test:v93:extreme` pins twelve 260 km custom climbs and descents across
+both categories and three fatigue levels. It checks all 160 rider replays and
+available read-only points in completed races, and checks that unsupported
+handoffs show only the validated road through km 259.
