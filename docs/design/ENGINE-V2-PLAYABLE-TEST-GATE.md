@@ -3038,3 +3038,18 @@ calculation. The 48-race audit was repeated with the same totals. The full
 serial unit suite passed 966/966 tests with no failures (4,044 seconds),
 including the explicitly versioned checks for the earlier dynamic-single
 recording.
+
+The two remaining unavailable diversity cases share a structural boundary,
+not a missing final-line calculation. In index 14 (260 km custom, 15 teams,
+women), six riders leave the bunch at 259 km and four more at 259.25 km.
+In index 44 (the corresponding 20-team men's field), the cohorts contain
+nine and five riders. Each cohort has exactly the same paid passage time for
+all its members at every later marker and at the line: 6+4 tied crossings
+in the first case and 9+5 in the second. The road records no wheel order or
+lane transition for those departures; in the larger field the bunch tail
+has not cleared every leaver by 500 m. A final-500 m pass rule alone cannot
+produce a defensible individual classification. These cases continue to
+show recorded energy, groups, individual crossing times and rider replays,
+but withhold unique places and policy points. Resolving them requires a
+paid, recorded bunch-exit and relative-order model from each departure
+through the line, or an explicit tie policy accepted by the game contract.
