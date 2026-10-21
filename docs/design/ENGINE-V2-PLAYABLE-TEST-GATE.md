@@ -3123,6 +3123,22 @@ recorded road, existing finish versions and official award gate are
 unchanged. A focused fixed-seed unit replay and local API browser case cover
 the refusal; the mixed audit keeps it as one explicit unsupported case.
 
+The additional `node scripts/engine-v2-v93-long-field-audit.mjs` acceptance
+run covers 48 fictional 260 km races with 20 teams, both categories, all
+five selectable terrains, three fatigue levels and mixed manager tactics.
+Every race produced 160 unique individual crossings that matched its paid
+replay time and energy, and validation regenerated the same versioned
+recording. Two managers nominated helpers in each case. The road rejected
+32 helper nominations for exhaustion or a different road group; removing
+only each refused helper left 64 accepted, positively paid helper plans and
+48 complete races. Sixteen races had an unambiguous read-only point
+illustration matching the existing one-day point policy; 32 withheld the
+illustration because road contact remained unresolved. All official points
+and awards remained withheld. These fixed-seed cases provide whole-race
+coverage, not proof that every possible late bunch exit is supported; the
+separate 300 m refusal above still requires a paid exit and wheel-order
+model.
+
 An additional 24 whole-race mixed-tactic probe found two 260 km, 20-team
 front-exit refusals: a men's exposed route at fatigue 15 and a women's
 mountain route at fatigue 30. In both, two exhausted riders leave the first
