@@ -25,7 +25,7 @@ function v93PlanError(error){
     Number.isFinite(error.cause?.metresToGo))
     return `Riders leave the bunch with ${error.cause.metresToGo} m to go. `+
       'Their separate movement cannot yet be reconciled with the bunch '+
-      'replay. No race preview was recorded. '+
+      'replay. The paid road is shown without a finish or points. '+
       'Choose different route conditions or tactics and run again.';
   if(error.message!==
     'The nominated lead-out cannot work beside the finisher.'||
@@ -73,7 +73,9 @@ async function handler(request,_context,auth){
           coasted:summarizeV93CoastedPlaytest(race)});
       }catch(error){
         return NextResponse.json({ok:false,error:v93PlanError(error),
-          status:'unsupported_road_or_plan'},{status:422});
+          status:'unsupported_road_or_plan',
+          ...(error.roadPreview?{roadPreview:error.roadPreview}:{})},
+        {status:422});
       }
     }
     if(input.mode==='integrated'){

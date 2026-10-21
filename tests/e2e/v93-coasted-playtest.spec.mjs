@@ -1160,8 +1160,35 @@ test('late bunch exits refuse a mixed-rival race with a useful boundary',
     const body=await response.json();
     expect(body.status).toBe('unsupported_road_or_plan');
     expect(body.error).toContain('300 m to go');
-    expect(body.error).toContain('No race preview was recorded.');
+    expect(body.error).toContain('paid road is shown');
     expect(body.coasted).toBeUndefined();
+    const road=body.roadPreview;
+    expect(road.version).toBe('v93-unsupported-road-preview-1');
+    expect(road.kilometreFrames).toHaveLength(259);
+    expect(road.lastKmRoad.at(-1).distanceM).toBe(260000);
+    expect(road.exits).toEqual([
+      {riderId:'rival-1-5',atDistanceM:259700},
+      {riderId:'rival-13-5',atDistanceM:259700}]);
+    expect(road.lineTimes).toBeNull();
+    expect(road.bandReplays).toBeNull();
+    expect(road.pointPreview.status).toBe('unavailable');
+    expect(road.canCommitAwards).toBe(false);
+    for(const frame of road.lastKmRoad)
+      for(const row of frame.exitRiderEnergy)
+        expect(row.energy).toBeGreaterThanOrEqual(0);
+    await page.goto('/team/v91-playtest');
+    await page.getByRole('checkbox',{
+      name:'Continue to a conditional finish'}).check();
+    await page.getByRole('checkbox',{
+      name:'Try v93 road-to-line preview'}).check();
+    await page.route('**/api/v91-playtest',route=>route.fulfill({
+      status:422,contentType:'application/json',body:JSON.stringify(body)}));
+    await page.getByRole('button',{name:'Run v93 race preview'}).click();
+    await expect(page.getByRole('region',{
+      name:'Recorded road without individual finish'})).toBeVisible();
+    await expect(page.getByText('Exit at 259.700 km: rival-1-5, rival-13-5.'))
+      .toBeVisible();
+    await expect(page.getByText(/rival-1-5 .* energy/)).toBeVisible();
   });
 
 test('paid front leavers keep a conditional result in a mixed-rival race',

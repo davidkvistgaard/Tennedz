@@ -3162,3 +3162,15 @@ front riders, so unique places, the point illustration and official awards
 remain withheld. This boundary does not address the separate late bunch
 exits at 300 m. Focused unit and local API browser regressions cover the
 paid paths and withheld outcome.
+
+The 300 m late-bunch-exit refusal now returns a separate, versioned
+read-only road preview from the already validated tour and final-kilometre
+clock. The workbench displays the two exit IDs, their recorded energy at
+each boundary, road groups and isolated passage times through the line.
+It explicitly has no individual finale replay, classification or points;
+the unsupported road still returns HTTP 422 and does not become a playable
+finish. The fixed 260 km, 20-team mixed-manager regression checks the road
+projection and the English browser display. Focused tests, lint, an isolated
+fixture build and all 30 v93 browser cases passed. The full 970-test serial
+suite passed after the last motor change and was not repeated for this
+additive refusal display.

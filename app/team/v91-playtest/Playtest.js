@@ -168,6 +168,8 @@ export default function Playtest(){
   const [integratedMode,setIntegratedMode]=useState(false);
   const [coastedMode,setCoastedMode]=useState(false);
   const [coasted,setCoasted]=useState(null);
+  const [roadPreview,setRoadPreview]=useState(null);
+  const [roadPreviewIndex,setRoadPreviewIndex]=useState(0);
   const [coastedKm,setCoastedKm]=useState(1);
   const [coastedRoadIndex,setCoastedRoadIndex]=useState(0);
   const [coastedBandId,setCoastedBandId]=useState('');
@@ -203,6 +205,7 @@ export default function Playtest(){
   const [coastedComparison,setCoastedComparison]=useState(null);
   const [busy,setBusy]=useState(false);
   const [error,setError]=useState('');
+  const roadPreviewFrame=roadPreview?.lastKmRoad[roadPreviewIndex];
   const changedRivalOutcomes=coastedComparison?
     coastedComparison.after.rivalOutcomes.flatMap(after=>{
       const before=coastedComparison.before.rivalOutcomes.find(row=>
@@ -444,6 +447,7 @@ export default function Playtest(){
         setComparison(null);setPreviousRun(null);
         setCoastedComparison(null);setPreviousCoastedRun(null);
       }
+      setRoadPreview(null);
       setCoasted(response.coasted??null);
       setCoastedKm(1);setCoastedRoadIndex(0);
       setCoastedBandId(response.coasted?.bandReplays.find(band=>
@@ -480,6 +484,8 @@ export default function Playtest(){
       setCoastedComparison(null);setPreviousCoastedRun(null);
       setResult(null);setIntegrated(null);setCoasted(null);setAttackRoad(null);
       setAttackApproach(null);setFinaleReplay(null);setBandLocalReplay(null);
+      setRoadPreview(cause.roadPreview??null);
+      setRoadPreviewIndex(cause.roadPreview?.lastKmRoad.length-1??0);
       setError(cause.message||'The playtest could not run.');}
     finally{setBusy(false);}
   }
@@ -717,6 +723,35 @@ export default function Playtest(){
             integratedMode?'Run full race preview':'Run race'}</button>
       </form>
       {error&&<p role="alert" className="v91-error">{error}</p>}
+      {roadPreview&&<section className="v91-results"
+        aria-label="Recorded road without individual finish">
+        <h2>Paid road · {roadPreview.settings.distanceKm} km {' '}
+          {roadPreview.settings.terrain}</h2>
+        <p>The final-kilometre clock is recorded through the line. The late
+          bunch exit has no supported individual finish or replay, so places
+          and points are withheld.</p>
+        <p>Exit at {(roadPreview.exits[0].atDistanceM/1000).toFixed(3)} km:
+          {' '}{roadPreview.exits.map(row=>row.riderId).join(', ')}.</p>
+        <label>Recorded road boundary: {roadPreviewIndex+1} of {' '}
+          {roadPreview.lastKmRoad.length}
+          <input type="range" min="0"
+            max={roadPreview.lastKmRoad.length-1}
+            value={roadPreviewIndex}
+            onChange={event=>setRoadPreviewIndex(Number(event.target.value))}/>
+        </label>
+        <p>{(roadPreviewFrame.distanceM/1000).toFixed(3)} km · bunch passage
+          {' '}{roadPreviewFrame.bunchPassageSecondsFromBunchMarker.toFixed(2)} s
+          {' '}· {roadPreviewFrame.groups.length} groups ahead · {' '}
+          {roadPreviewFrame.droppedPassages.length} isolated riders.</p>
+        <p>Road groups: {roadPreviewFrame.groups.map(group=>
+          `${group.id} (${group.riderIds.length} riders, `+
+          `${group.gapSeconds.toFixed(2)} s ahead)`).join(' · ')||'none'}</p>
+        <p>Exit riders: {roadPreviewFrame.exitRiderEnergy.map(row=>
+          `${row.riderId} ${row.energy.toFixed(3)} energy`).join(' · ')}</p>
+        <p>Isolated passages: {roadPreviewFrame.droppedPassages.map(row=>
+          `${row.riderId} ${row.passageSecondsFromBunchMarker.toFixed(2)} s`
+        ).join(' · ')||'none'}</p>
+      </section>}
       {coasted&&<section className="v91-results" aria-label="V93 coasted race preview">
         <h2>V93 race preview · {coasted.settings.distanceKm} km {coasted.settings.terrain}</h2>
         <p>{coasted.tuningVersion} · {coasted.settings.managerTactics.length+

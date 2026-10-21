@@ -7,6 +7,8 @@ import {MOTOR_EXHAUSTION_COAST_VERSION} from
   '../../lib/engine/v2/tuning.mjs';
 import {recordFinaleCoastDynamicNoFrontLastKmClock} from
   '../../lib/engine/v2/finale-separated-last-km.mjs';
+import {createV93PlayableTest} from
+  '../../lib/engine/v2/playtest-v93-coasted.mjs';
 import {finaleSnapshotFromTour} from
   '../../lib/engine/v2/finale-snapshot.mjs';
 import {resolveFinaleMultibandPositionedSource,
@@ -75,7 +77,7 @@ test('a complete bunch cannot masquerade as a multiband source',()=>{
 });
 
 test('a mixed 260 km road names unsupported late bunch exits',()=>{
-  const prepared=prepareV91Playtest({distanceKm:260,teamCount:20,
+  const settings={distanceKm:260,teamCount:20,
     gender:'F',terrain:'rolling',fatigue:15,seed:'v93-tactic-pair-11',
     effort:'steady',attack:'repeated',chase:'selective',
     defaultRivalPlan:'passive',managerTactics:Array.from({length:19},
@@ -83,7 +85,8 @@ test('a mixed 260 km road names unsupported late bunch exits',()=>{
         {effort:'hard',attack:'none',chase:'all'},
         {effort:'steady',attack:'selective',chase:'ignore'},
         {effort:'conserve',attack:'none',chase:'selective'}]
-        [index%3])});
+        [index%3])};
+  const prepared=prepareV91Playtest(settings);
   const recording=simulateTacticalTour({stage:prepared.stage,
     weather:prepared.weather,teams:prepared.teams,seed:prepared.seed,
     motorVersion:MOTOR_EXHAUSTION_COAST_VERSION});
@@ -95,6 +98,22 @@ test('a mixed 260 km road names unsupported late bunch exits',()=>{
     assert.equal(error.cause.metresToGo,300);
     assert.deepEqual(error.cause.riderIds,
       ['rival-1-5','rival-13-5']);
+    return true;
+  });
+  assert.throws(()=>createV93PlayableTest(settings),error=>{
+    const road=error.roadPreview;
+    assert.equal(road.version,'v93-unsupported-road-preview-1');
+    assert.deepEqual(road.exits,[
+      {riderId:'rival-1-5',atDistanceM:259700},
+      {riderId:'rival-13-5',atDistanceM:259700}]);
+    assert.equal(road.kilometreFrames.length,259);
+    assert.equal(road.lastKmRoad.at(-1).distanceM,260000);
+    assert.equal(road.lineTimes,null);
+    assert.equal(road.pointPreview.status,'unavailable');
+    assert.equal(road.canCommitAwards,false);
+    for(const frame of road.lastKmRoad)
+      for(const row of frame.exitRiderEnergy)
+        assert.ok(Number.isFinite(row.energy)&&row.energy>=0);
     return true;
   });
 });
