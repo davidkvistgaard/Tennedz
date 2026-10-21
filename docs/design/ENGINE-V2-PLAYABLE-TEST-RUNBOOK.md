@@ -40,6 +40,9 @@ and a nominated finisher with an optional helper. A helper who is exhausted
 or in another road group is refused explicitly; choose None and rerun the
 same locked race. An unsupported late bunch exit returns its paid road
 boundaries and a clear refusal instead of an individual result or points.
+A calculated front-group catch without a paid merge shows the earlier
+kilometre road and contact coordinate, with no last-kilometre replay or
+result.
 
 Automated reproduction: `pnpm test:v93:local` builds an isolated fixture and
 runs the local browser suite. `node scripts/engine-v2-v93-playability-matrix.mjs`

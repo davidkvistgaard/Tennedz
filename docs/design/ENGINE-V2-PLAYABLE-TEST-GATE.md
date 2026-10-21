@@ -3202,3 +3202,18 @@ riders whose longitudinal paths may meet: 14 witnesses begin in the first
 time, and both IDs have individual paid replays. A single passage-time
 sort would invent a passing lane or tie rule here, so the existing point
 refusal is evidence-based rather than a missed point calculation.
+
+An exploratory 90-case stress pass held the race at 260 km and 20 teams,
+varied both categories, all five route profiles, three fatigue levels and
+three seeds per combination, and used mixed manager tactics. Eighty-four
+cases reached an individual conditional line. Six calculated a front-group
+catch of the bunch during the last kilometre; the separated clock has no
+paid merge for that contact and correctly refused a finish. This is a
+second explicit boundary in addition to the late bunch exit. The v93 API
+now returns a versioned read-only preview of the validated kilometre road,
+the approaching group and its calculated catch coordinate. It exposes no
+last-kilometre passage, individual result, replay or points for that case.
+The fixed 260 km flat, male, fatigue-15 case has a unit regression and a
+local API/browser regression; the new case and 30 existing browser flows
+passed against an isolated build. The full serial unit suite passed 971/971
+for this change; lint also passed.

@@ -20,6 +20,14 @@ export const dynamic='force-dynamic';
 
 const runs=new Map();
 function v93PlanError(error){
+  if(error.message.startsWith(
+    'The separated finale needs a recorded catch for ')&&
+    Number.isFinite(error.roadPreview?.catch?.metresToGo))
+    return `${error.cause.groupId} is calculated to meet the bunch with ${
+      Math.round(error.roadPreview.catch.metresToGo)} m to go. `+
+      'The merged road cannot yet be paid and replayed. The recorded '+
+      'kilometre road is shown without a finish or points. Choose '+
+      'different route conditions or tactics and run again.';
   if(error.message===
     'The v93 preview cannot continue riders leaving the bunch after 500 m.'&&
     Number.isFinite(error.cause?.metresToGo))
