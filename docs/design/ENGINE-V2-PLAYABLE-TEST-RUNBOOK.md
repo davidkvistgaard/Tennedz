@@ -47,9 +47,12 @@ A calculated front-group catch without a paid merge shows the earlier
 kilometre road and contact coordinate, with no last-kilometre replay or
 result. Its **Recorded kilometre** slider lets you inspect earlier groups
 and your riders' energy before changing tactics or route conditions.
-On an extreme drawn climb, an unpayable front rider or unresolved band
-contact can likewise stop at the last-kilometre handoff. The same slider
-shows the validated earlier road; no later result or points are inferred.
+On an extreme drawn climb, front riders who cannot pay even sheltered work
+at the last-kilometre handoff now leave the group and coast on independently
+recorded passages. Their conditional lines and individual replays are shown,
+while points remain unavailable without a proven order among the former
+front riders. A different extreme climb can still stop for unresolved band
+contact; its slider shows only the validated earlier road.
 
 For a long-field default-tactics point example, choose 260 km, Flat, Men,
 20 teams, zero fatigue, seed `long-default-M-flat-0`, no player attack and
@@ -83,6 +86,7 @@ repeated player attacks and mixed rival tactics. It checks every individual
 replay in completed races and validates that every unsupported front catch
 exposes only the earlier recorded road.
 `pnpm test:v93:extreme` pins twelve 260 km custom climbs and descents across
-both categories and three fatigue levels. It checks all 160 rider replays and
-available read-only points in completed races, and checks that unsupported
-handoffs show only the validated road through km 259.
+both categories and three fatigue levels. Ten complete with all 160 rider
+replays; two stop at unresolved band contact and show only the validated
+road through km 259. Four completed cases have read-only point illustrations
+checked against the existing one-day policy.

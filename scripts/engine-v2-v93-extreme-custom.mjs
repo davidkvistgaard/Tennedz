@@ -23,10 +23,8 @@ for(const gender of ['M','F'])for(const fatigue of [0,15,30])
     try{race=createV93PlayableTest(settings,{pointContext});}
     catch(error){
       const preview=error.roadPreview;
-      const reason=fatigue===0&&profile==='climb'?
-        'unpayable_front_handoff':
-        fatigue===30&&profile==='climb'?
-          'unresolved_band_contact':null;
+      const reason=fatigue===30&&profile==='climb'?
+        'unresolved_band_contact':null;
       assert.ok(reason,`Unexpected refusal in ${JSON.stringify(label)}`);
       assert.equal(preview?.version,V93_UNSUPPORTED_HANDOFF_PREVIEW_VERSION);
       assert.equal(preview.unsupportedReason,reason);
@@ -81,9 +79,8 @@ for(const gender of ['M','F'])for(const fatigue of [0,15,30])
   }
 
 assert.equal(rows.length,12);
-assert.equal(rows.filter(row=>row.status==='conditional_finish').length,8);
-assert.equal(rows.filter(row=>row.status==='unpayable_front_handoff').length,2);
+assert.equal(rows.filter(row=>row.status==='conditional_finish').length,10);
 assert.equal(rows.filter(row=>row.status==='unresolved_band_contact').length,2);
 assert.equal(rows.filter(row=>row.points==='illustrative').length,4);
-console.log(JSON.stringify({scenarios:rows.length,completed:8,
-  readOnlyPoints:4,unsupportedHandoffs:4,rows}));
+console.log(JSON.stringify({scenarios:rows.length,completed:10,
+  readOnlyPoints:4,unsupportedHandoffs:2,rows}));

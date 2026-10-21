@@ -1315,7 +1315,7 @@ test('unpaid front catch shows the recorded road without a false finish',
       name:'V93 individual conditional results'})).toHaveCount(0);
   });
 
-test('extreme custom handoffs show recorded kilometres without false results',
+test('extreme front leavers finish while unresolved contact shows only road',
   async({page})=>{
     await page.goto('/login');
     await page.getByLabel('Email or username').fill('alice');
@@ -1325,9 +1325,8 @@ test('extreme custom handoffs show recorded kilometres without false results',
     const plans=['you',...Array.from({length:19},(_,index)=>
       `rival-${index+1}`)].map(teamId=>({teamId,
       finisherId:`${teamId}-7`,leadOutRiderId:null}));
-    let firstBody;
-    for(const [fatigue,reason] of [[0,'unpayable_front_handoff'],
-      [30,'unresolved_band_contact']]){
+    let refusedBody;
+    for(const fatigue of [0,30]){
       const response=await page.request.post('/api/v91-playtest',{
         headers:{origin:'http://localhost:3100'},data:{
           mode:'v93-coasted',settings:{distanceKm:260,teamCount:20,
@@ -1335,15 +1334,36 @@ test('extreme custom handoffs show recorded kilometres without false results',
             profileHeightsM:[100,600,1200,1800,2300,2500],
             seed:`v93-custom-extreme-M-${fatigue}-climb`,
             defaultRivalPlan:'attack',effort:'hard',attack:'repeated',
-            chase:'ignore'},plans}});
-      expect(response.status()).toBe(422);
+            chase:'ignore'},plans,
+          pointContext:{tier:2,divisionCount:2,divisionIndex:1}}});
+      expect(response.status()).toBe(fatigue===0?200:422);
       const body=await response.json();
-      expect(body.roadPreview.unsupportedReason).toBe(reason);
-      expect(body.roadPreview.kilometreFrames).toHaveLength(259);
-      expect(body.roadPreview.lastKmRoad).toEqual([]);
-      expect(body.roadPreview.lineTimes).toBeNull();
-      expect(body.roadPreview.canCommitAwards).toBe(false);
-      if(fatigue===0)firstBody=body;
+      if(fatigue===0){
+        expect(body.coasted.roadStatus).toBe(
+          'conditional_front_leavers_ahead_of_bunch');
+        expect(body.coasted.lineTimes).toHaveLength(160);
+        expect(body.coasted.pointPreview.status).toBe('unavailable');
+        expect(body.coasted.canCommitAwards).toBe(false);
+        for(const riderId of ['you-6','you-7']){
+          const crossing=body.coasted.lineTimes.find(row=>
+            row.riderId===riderId);
+          const replay=body.coasted.bandReplays.find(row=>
+            row.id===`isolated:${riderId}`);
+          const final=replay.frames.at(-1).riders.find(row=>
+            row.riderId===riderId);
+          expect(crossing.elapsedSecondsFromLastKmStart)
+            .toBe(final.elapsedToLineSeconds);
+          expect(crossing.energyAtLine).toBe(final.energyAfter);
+        }
+      }else{
+        expect(body.roadPreview.unsupportedReason)
+          .toBe('unresolved_band_contact');
+        expect(body.roadPreview.kilometreFrames).toHaveLength(259);
+        expect(body.roadPreview.lastKmRoad).toEqual([]);
+        expect(body.roadPreview.lineTimes).toBeNull();
+        expect(body.roadPreview.canCommitAwards).toBe(false);
+        refusedBody=body;
+      }
     }
     await page.goto('/team/v91-playtest');
     await page.getByRole('checkbox',{
@@ -1352,11 +1372,11 @@ test('extreme custom handoffs show recorded kilometres without false results',
       name:'Try v93 road-to-line preview'}).check();
     await page.route('**/api/v91-playtest',route=>route.fulfill({
       status:422,contentType:'application/json',
-      body:JSON.stringify(firstBody)}));
+      body:JSON.stringify(refusedBody)}));
     await page.getByRole('button',{name:'Run v93 race preview'}).click();
     const preview=page.getByRole('region',{
       name:'Recorded road without individual finish'});
-    await expect(preview).toContainText('you-6 cannot pay for the next road interval');
+    await expect(preview).toContainText('The following front, bunch or isolated paths have unresolved contact.');
     await expect(preview).toContainText('No final-kilometre passage, individual finish, replay or points is shown');
     await expect(preview).toContainText('Recorded kilometre: 259 of 259');
     await preview.getByRole('slider',{name:/Recorded kilometre/}).fill('0');

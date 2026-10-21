@@ -3281,3 +3281,13 @@ inputs: eight have 160 validated rider replays, four have only the validated
 existing one-day policy. After the handoff-preview change, the full serial
 unit suite passed 973/973, lint passed, and all 33 isolated-build browser
 flows passed.
+
+The same pinned extreme inputs now let the two zero-fatigue climbing cases
+continue beyond the 259 km handoff. Each formerly unpayable front rider
+leaves its group at the recorded boundary and follows a paid, slower
+individual passage to the line. Both categories produce 160 replayed
+crossings; the front leavers share a conditional place range with their
+former groups because no wheel order is observed, so their preview points
+stay unavailable. The two fatigue-30 climbing cases still refuse an
+unrecorded band contact. The twelve-case corpus is now ten complete races,
+two explicit refusals and four read-only point illustrations.
