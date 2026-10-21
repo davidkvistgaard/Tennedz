@@ -15,24 +15,46 @@ const scenarios=[
   [260,20,'M','exposed',30],[260,20,'F','rolling',15]];
 const pointContext={tier:2,divisionCount:2,divisionIndex:1};
 
-function run(index,{attack,chase,leadOutTeams=[]}){
+function run(index,{attack,chase,leadOutTeams=[],mixed=false}){
   const [distanceKm,teamCount,gender,terrain,fatigue]=scenarios[index];
   const settings={distanceKm,teamCount,gender,terrain,fatigue,
     seed:`v93-tactic-pair-${index}`,profileHeightsM:[100,350,150,500,180,100],
     defaultRivalPlan:'passive',effort:'steady',attack,chase:'ignore',
-    managerTactics:Array.from({length:teamCount-1},()=>({
-      effort:'steady',attack:'none',chase}))};
+    managerTactics:Array.from({length:teamCount-1},(_row,rivalIndex)=>
+      mixed?[{effort:'hard',attack:'none',chase:'all'},
+        {effort:'steady',attack:'selective',chase:'ignore'},
+        {effort:'conserve',attack:'none',chase:'selective'}]
+        [rivalIndex%3]:{effort:'steady',attack:'none',chase})};
   const plans=['you',...Array.from({length:teamCount-1},(_row,index)=>
     `rival-${index+1}`)].map(teamId=>({teamId,
     finisherId:`${teamId}-7`,leadOutRiderId:leadOutTeams.includes(teamId)?
       `${teamId}-6`:null}));
-  let race;
-  try{
-    race=createV93PlayableTest(settings,{plans,pointContext});
-  }catch(error){
-    error.message=`Scenario ${index} ${attack}/${chase} helpers ${
-      leadOutTeams.join(',')}: ${error.message}`;
-    throw error;
+  let race,helperRefusals=[];
+  for(;;){
+    try{
+      race=createV93PlayableTest(settings,{plans,pointContext});
+      break;
+    }catch(error){
+      if(mixed&&error.message===
+        'The v93 preview cannot continue riders leaving the bunch after 500 m.'&&
+        Number.isFinite(error.cause?.metresToGo))
+        return {race:null,summary:null,settings,helperRefusals,
+          refusal:{reason:'late_bunch_exit',
+            metresToGo:error.cause.metresToGo,
+            riderIds:error.cause.riderIds}};
+      const refused=plans.find(plan=>plan.teamId===error.cause?.teamId&&
+        plan.leadOutRiderId===error.cause?.helperId);
+      if(mixed&&refused&&['different_road_group',
+        'exhausted'].includes(error.cause?.reason)){
+        helperRefusals.push({teamId:refused.teamId,
+          reason:error.cause.reason});
+        refused.leadOutRiderId=null;
+        continue;
+      }
+      error.message=`Scenario ${index} ${attack}/${chase} helpers ${
+        leadOutTeams.join(',')}: ${error.message}`;
+      throw error;
+    }
   }
   assert.equal(validateV93CoastedPlaytest(settings,{plans,pointContext},
     race),true);
@@ -67,7 +89,7 @@ function run(index,{attack,chase,leadOutTeams=[]}){
         multiplier:summary.pointPreview.multiplier}));
     }
   }
-  return {race,summary,settings};
+  return {race,summary,settings,helperRefusals};
 }
 
 function compare(before,after){
@@ -107,6 +129,8 @@ for(let index=0;index<scenarios.length;index++){
   const chased=run(index,{attack:'repeated',chase:'all'});
   const assisted=run(index,{attack:'none',chase:'ignore',
     leadOutTeams:['you','rival-1']});
+  const mixed=run(index,{attack:'repeated',chase:'selective',
+    leadOutTeams:['you','rival-1'],mixed:true});
   assert.deepEqual(assisted.race.recording,passive.race.recording);
   assert.deepEqual(assisted.race.clock,passive.race.clock);
   const paidHelpers=new Set(assisted.summary.bandReplays.flatMap(band=>
@@ -120,12 +144,20 @@ for(let index=0;index<scenarios.length;index++){
   report.push({index,scenario:scenarios[index],
     attack:compare(passive,attacking),
     chase:compare(attacking,chased),
-    leadOut});
+    leadOut,mixed:{helperRefusals:mixed.helperRefusals,
+      ...(mixed.refusal?{refusal:mixed.refusal}:{
+        road:mixed.summary.roadStatus,
+        points:mixed.summary.pointPreview.status??'illustrative'})}});
 }
 assert.ok(report.some(row=>row.attack.changedRoadFrames>0));
 assert.ok(report.some(row=>row.chase.changedRoadFrames>0));
+assert.deepEqual(report.filter(row=>row.mixed.refusal).map(row=>({
+  index:row.index,refusal:row.mixed.refusal})),[{
+  index:11,refusal:{reason:'late_bunch_exit',metresToGo:300,
+    riderIds:['rival-1-5','rival-13-5']}}]);
 console.log(JSON.stringify({scenarios:report.length,
-  runs:report.length*4,
+  runs:report.length*5,
+  completedRuns:report.length*5-report.filter(row=>row.mixed.refusal).length,
   attackChangedRoad:report.filter(row=>row.attack.changedRoadFrames>0).length,
   chaseChangedRoad:report.filter(row=>row.chase.changedRoadFrames>0).length,
   attackChangedCrossings:report.filter(row=>
@@ -134,4 +166,5 @@ console.log(JSON.stringify({scenarios:report.length,
     row.chase.changedCrossings>0).length,
   leadOutChangedCrossings:report.filter(row=>
     row.leadOut.changedCrossings>0).length,
+  mixedRefusals:report.filter(row=>row.mixed.refusal).length,
   report},null,2));

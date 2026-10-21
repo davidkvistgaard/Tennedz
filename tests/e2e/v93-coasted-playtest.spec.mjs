@@ -1134,6 +1134,36 @@ test('an unavailable v93 lead-out explains the road and can be removed',
     await expect(page.locator('.v91-error')).toHaveCount(0);
   });
 
+test('late bunch exits refuse a mixed-rival race with a useful boundary',
+  async({page})=>{
+    await page.goto('/login');
+    await page.getByLabel('Email or username').fill('v2rival');
+    await page.getByLabel('Password',{exact:true}).fill('fixture-password');
+    await page.getByRole('button',{name:'Sign in',exact:true}).click();
+    await expect(page).toHaveURL(/\/team$/);
+    const teams=['you',...Array.from({length:19},(_row,index)=>
+      `rival-${index+1}`)];
+    const response=await page.request.post('/api/v91-playtest',{
+      headers:{origin:'http://localhost:3100'},data:{
+      mode:'v93-coasted',settings:{distanceKm:260,teamCount:20,
+        gender:'F',terrain:'rolling',fatigue:15,
+        seed:'v93-tactic-pair-11',effort:'steady',attack:'repeated',
+        chase:'selective',defaultRivalPlan:'passive',
+        managerTactics:Array.from({length:19},(_row,index)=>[
+          {effort:'hard',attack:'none',chase:'all'},
+          {effort:'steady',attack:'selective',chase:'ignore'},
+          {effort:'conserve',attack:'none',chase:'selective'}]
+          [index%3])},
+      plans:teams.map(teamId=>({teamId,
+        finisherId:`${teamId}-7`,leadOutRiderId:null}))}});
+    expect(response.status()).toBe(422);
+    const body=await response.json();
+    expect(body.status).toBe('unsupported_road_or_plan');
+    expect(body.error).toContain('300 m to go');
+    expect(body.error).toContain('No race preview was recorded.');
+    expect(body.coasted).toBeUndefined();
+  });
+
 test('three isolated riders finish while uncertain points stay withheld',
   async({page})=>{
     await page.goto('/login');

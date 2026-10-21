@@ -3108,3 +3108,17 @@ rule; attack, chase and lead-out each affect crossings in all 12 paired
 scenarios. This broadens the playable evidence across both genders, route
 profiles, field sizes and fatigue, without changing the motor or awarding
 official points.
+
+A combined-tactics pass adds one mixed-manager run per scenario: repeated
+player attacks, selective player chase, three rotating rival tactics and two
+nominated lead-outs. Eleven of the 12 runs finish with paid individual
+replays. An unavailable helper is rejected explicitly and can be removed
+without changing the locked road. The remaining 260 km, 20-team women's
+rolling race records two additional bunch exits with 300 m to go. The
+existing final-500 m positioned runner cannot continue riders who leave its
+source bunch after the handoff, so that race correctly refuses a result.
+The refusal now names the 300 m boundary and asks for different conditions
+or tactics, rather than exposing an internal positioning error. The earlier
+recorded road, existing finish versions and official award gate are
+unchanged. A focused fixed-seed unit replay and local API browser case cover
+the refusal; the mixed audit keeps it as one explicit unsupported case.

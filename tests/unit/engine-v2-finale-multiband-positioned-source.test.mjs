@@ -1,9 +1,16 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {createV91Playtest} from '../../lib/engine/v2/playtest.mjs';
+import {createV91Playtest,prepareV91Playtest} from
+  '../../lib/engine/v2/playtest.mjs';
+import {simulateTacticalTour} from '../../lib/engine/v2/tour.mjs';
+import {MOTOR_EXHAUSTION_COAST_VERSION} from
+  '../../lib/engine/v2/tuning.mjs';
+import {recordFinaleCoastDynamicNoFrontLastKmClock} from
+  '../../lib/engine/v2/finale-separated-last-km.mjs';
 import {finaleSnapshotFromTour} from
   '../../lib/engine/v2/finale-snapshot.mjs';
 import {resolveFinaleMultibandPositionedSource,
+  resolveFinaleDynamicNoFrontPositionedSource,
   validateFinaleMultibandPositionedSource} from
   '../../lib/engine/v2/finale-multiband-positioned-source.mjs';
 
@@ -65,4 +72,29 @@ test('a complete bunch cannot masquerade as a multiband source',()=>{
   const recording=tour({attack:'none',chase:'all'});
   assert.throws(()=>resolveFinaleMultibandPositionedSource(recording),
     /needs road groups/);
+});
+
+test('a mixed 260 km road names unsupported late bunch exits',()=>{
+  const prepared=prepareV91Playtest({distanceKm:260,teamCount:20,
+    gender:'F',terrain:'rolling',fatigue:15,seed:'v93-tactic-pair-11',
+    effort:'steady',attack:'repeated',chase:'selective',
+    defaultRivalPlan:'passive',managerTactics:Array.from({length:19},
+      (_row,index)=>[
+        {effort:'hard',attack:'none',chase:'all'},
+        {effort:'steady',attack:'selective',chase:'ignore'},
+        {effort:'conserve',attack:'none',chase:'selective'}]
+        [index%3])});
+  const recording=simulateTacticalTour({stage:prepared.stage,
+    weather:prepared.weather,teams:prepared.teams,seed:prepared.seed,
+    motorVersion:MOTOR_EXHAUSTION_COAST_VERSION});
+  const clock=recordFinaleCoastDynamicNoFrontLastKmClock(recording);
+  assert.throws(()=>resolveFinaleDynamicNoFrontPositionedSource(
+    recording,clock),error=>{
+    assert.match(error.message,/leaving the bunch after 500 m/);
+    assert.equal(error.cause.firstLateExitDistanceM,259700);
+    assert.equal(error.cause.metresToGo,300);
+    assert.deepEqual(error.cause.riderIds,
+      ['rival-1-5','rival-13-5']);
+    return true;
+  });
 });

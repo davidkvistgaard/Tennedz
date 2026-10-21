@@ -20,6 +20,13 @@ export const dynamic='force-dynamic';
 
 const runs=new Map();
 function v93PlanError(error){
+  if(error.message===
+    'The v93 preview cannot continue riders leaving the bunch after 500 m.'&&
+    Number.isFinite(error.cause?.metresToGo))
+    return `Riders leave the bunch with ${error.cause.metresToGo} m to go. `+
+      'Their separate movement cannot yet be reconciled with the bunch '+
+      'replay. No race preview was recorded. '+
+      'Choose different route conditions or tactics and run again.';
   if(error.message!==
     'The nominated lead-out cannot work beside the finisher.'||
     !['different_road_group','exhausted'].includes(error.cause?.reason)||
