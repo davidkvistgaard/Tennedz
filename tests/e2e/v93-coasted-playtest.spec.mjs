@@ -1164,6 +1164,49 @@ test('late bunch exits refuse a mixed-rival race with a useful boundary',
     expect(body.coasted).toBeUndefined();
   });
 
+test('paid front leavers keep a conditional result in a mixed-rival race',
+  async({page})=>{
+    await page.goto('/login');
+    await page.getByLabel('Email or username').fill('v2rival');
+    await page.getByLabel('Password',{exact:true}).fill('fixture-password');
+    await page.getByRole('button',{name:'Sign in',exact:true}).click();
+    await expect(page).toHaveURL(/\/team$/);
+    const response=await page.request.post('/api/v91-playtest',{
+      headers:{origin:'http://localhost:3100'},data:{
+      mode:'v93-coasted',settings:{distanceKm:260,teamCount:20,
+        gender:'M',terrain:'exposed',fatigue:15,
+        seed:'v93-mixed-probe-8',effort:'hard',attack:'repeated',
+        chase:'all',defaultRivalPlan:'passive',
+        managerTactics:Array.from({length:19},(_row,index)=>[
+          {effort:'hard',attack:'none',chase:'all'},
+          {effort:'steady',attack:'selective',chase:'ignore'},
+          {effort:'conserve',attack:'repeated',chase:'selective'}]
+          [(index+8)%3])},pointContext:{tier:3,divisionIndex:2,
+        divisionCount:4},
+      plans:['you',...Array.from({length:19},(_row,index)=>
+        `rival-${index+1}`)].map(teamId=>({teamId,
+        finisherId:`${teamId}-7`,leadOutRiderId:null}))}});
+    expect(response.status()).toBe(200);
+    const {coasted}=await response.json();
+    expect(coasted.roadStatus).toBe(
+      'conditional_front_leavers_ahead_of_bunch');
+    expect(coasted.lineTimes).toHaveLength(160);
+    expect(coasted.pointPreview.status).toBe('unavailable');
+    expect(coasted.pointPreview.reason).toContain('no recorded wheel order');
+    expect(coasted.canCommitAwards).toBe(false);
+    for(const riderId of ['you-4','you-7']){
+      const crossing=coasted.lineTimes.find(row=>row.riderId===riderId);
+      const replay=coasted.bandReplays.find(row=>
+        row.id===`isolated:${riderId}`);
+      const final=replay.frames.at(-1).riders.find(row=>
+        row.riderId===riderId);
+      expect(crossing.elapsedSecondsFromLastKmStart)
+        .toBe(final.elapsedToLineSeconds);
+      expect(crossing.energyAtLine).toBe(final.energyAfter);
+    }
+    expect(coasted.pointsStatus).toBe('withheld');
+  });
+
 test('three isolated riders finish while uncertain points stay withheld',
   async({page})=>{
     await page.goto('/login');

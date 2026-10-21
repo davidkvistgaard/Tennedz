@@ -3122,3 +3122,19 @@ or tactics, rather than exposing an internal positioning error. The earlier
 recorded road, existing finish versions and official award gate are
 unchanged. A focused fixed-seed unit replay and local API browser case cover
 the refusal; the mixed audit keeps it as one explicit unsupported case.
+
+An additional 24 whole-race mixed-tactic probe found two 260 km, 20-team
+front-exit refusals: a men's exposed route at fatigue 15 and a women's
+mountain route at fatigue 30. In both, two exhausted riders leave the first
+road group at the 259 km marker. Every recorded, paid last-kilometre passage
+keeps both leavers and every surviving front group ahead of the bunch; the
+pre-existing dropped riders remain behind it. The former clock put the
+leavers in the rear dropped band and rejected this valid separation.
+The clock now keeps the front groups and their leavers in one broad,
+unresolved placing range, followed by the bunch and original dropped
+riders. All 160 individual crossings and energy records replay, and both
+fixed-seed races validate. There is no recorded wheel order among those
+front riders, so unique places, the point illustration and official awards
+remain withheld. This boundary does not address the separate late bunch
+exits at 300 m. Focused unit and local API browser regressions cover the
+paid paths and withheld outcome.
