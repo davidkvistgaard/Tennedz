@@ -2925,3 +2925,16 @@ checks that a jump updates the selected kilometre and displays the matching
 recorded groups. The fresh isolated build, lint and all 25 v93 browser cases
 pass. This is replay navigation only; versioned motor output, results and
 point policy are unchanged.
+
+The complete serial `pnpm test` suite was rerun at preview commit `6c2036b`:
+963 passed, zero failed or skipped, in 4,066.8 seconds. This includes the
+current 5 km effort input, old recording compatibility, road/energy replay,
+result and point contracts, and the long balance and contact audits. No motor
+code changed during that run. A synthetic 5 km attack order was also probed
+on a 120 km rolling women's field: the order remained active into the last
+kilometre, where the short-step continuation refused it rather than inventing
+paid attack travel. The UI therefore still exposes 5 km effort only; late
+attack and chase controls were not added from this probe. Separate fictional
+5 km chase pairs completed, but their observed time changes were small and
+did not establish a new useful player decision or point change. Their
+results are exploratory, not a new acceptance claim.
