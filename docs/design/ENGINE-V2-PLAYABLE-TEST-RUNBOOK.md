@@ -42,7 +42,8 @@ same locked race. An unsupported late bunch exit returns its paid road
 boundaries and a clear refusal instead of an individual result or points.
 A calculated front-group catch without a paid merge shows the earlier
 kilometre road and contact coordinate, with no last-kilometre replay or
-result.
+result. Its **Recorded kilometre** slider lets you inspect earlier groups
+and your riders' energy before changing tactics or route conditions.
 
 Automated reproduction: `pnpm test:v93:local` builds an isolated fixture and
 runs the local browser suite. `node scripts/engine-v2-v93-playability-matrix.mjs`

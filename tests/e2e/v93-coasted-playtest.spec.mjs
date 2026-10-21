@@ -1237,6 +1237,11 @@ test('unpaid front catch shows the recorded road without a false finish',
     await expect(preview).toContainText('A front group is calculated to meet');
     await expect(preview).toContainText('Approaching group: road-15');
     await expect(preview).toContainText('individual finish, replay and points are withheld');
+    await expect(preview).toContainText('Recorded kilometre: 259 of 259');
+    await preview.getByRole('slider',{name:/Recorded kilometre/}).fill('0');
+    await expect(preview).toContainText('Recorded kilometre: 1 of 259');
+    await expect(preview).toContainText('At km 1:');
+    await expect(preview).toContainText('Your riders: you-0');
     await expect(page.getByRole('table',{
       name:'V93 individual conditional results'})).toHaveCount(0);
   });

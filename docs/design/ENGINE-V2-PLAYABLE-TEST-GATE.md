@@ -3230,3 +3230,11 @@ defensible point illustration under the present contact rules, so all
 points remain withheld. This pinned repeated-attack corpus has different
 inputs from the earlier exploratory 84/6 stress pass; neither measures
 sporting balance or makes the unsupported merge payable.
+
+The unsupported-front-catch display now lets the manager scrub every
+recorded kilometre before the unpayable last-kilometre merge. Each boundary
+shows the groups ahead, isolated-rider count and the player's rider energy;
+the calculated contact and the final recorded handoff remain explicit.
+The isolated local build and all 31 browser flows passed after this UI
+change, including moving the refused road back to km 1. No passage after
+the 259 km handoff is represented as paid.

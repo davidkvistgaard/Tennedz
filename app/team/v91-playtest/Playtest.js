@@ -208,6 +208,8 @@ export default function Playtest(){
   const roadPreviewFrame=roadPreview?.lastKmRoad[roadPreviewIndex];
   const catchSourceFrame=roadPreview?.unsupportedReason===
     'unpaid_front_catch'?roadPreview.kilometreFrames.at(-1):null;
+  const catchRoadFrame=catchSourceFrame?
+    roadPreview.kilometreFrames[roadPreviewIndex]:null;
   const changedRivalOutcomes=coastedComparison?
     coastedComparison.after.rivalOutcomes.flatMap(after=>{
       const before=coastedComparison.before.rivalOutcomes.find(row=>
@@ -488,7 +490,9 @@ export default function Playtest(){
       setAttackApproach(null);setFinaleReplay(null);setBandLocalReplay(null);
       setRoadPreview(cause.roadPreview??null);
       setRoadPreviewIndex(Math.max(0,
-        (cause.roadPreview?.lastKmRoad.length??1)-1));
+        (cause.roadPreview?.unsupportedReason==='unpaid_front_catch'?
+          cause.roadPreview.kilometreFrames.length:
+          cause.roadPreview?.lastKmRoad.length??1)-1));
       setError(cause.message||'The playtest could not run.');}
     finally{setBusy(false);}
   }
@@ -745,6 +749,22 @@ export default function Playtest(){
           <p>Your riders at that handoff: {catchSourceFrame.ownRiders.map(
             row=>`${row.riderId} ${row.roadGroup}, `+
               `${row.energy.toFixed(1)} energy`).join(' · ')}.</p>
+          <label>Recorded kilometre: {roadPreviewIndex+1} of {' '}
+            {roadPreview.kilometreFrames.length}
+            <input type="range" min="0"
+              max={roadPreview.kilometreFrames.length-1}
+              value={roadPreviewIndex}
+              onChange={event=>setRoadPreviewIndex(Number(event.target.value))}/>
+          </label>
+          <p>At km {catchRoadFrame.km}: {' '}
+            {catchRoadFrame.roadGroups.length} groups ahead · {' '}
+            {catchRoadFrame.droppedRiders.length} isolated riders.</p>
+          <p>Road groups: {catchRoadFrame.roadGroups.map(group=>
+            `${group.id} (${group.riderIds.length} riders, `+
+            `${group.gapSeconds.toFixed(2)} s ahead)`).join(' · ')||'none'}</p>
+          <p>Your riders: {catchRoadFrame.ownRiders.map(row=>
+            `${row.riderId} ${row.roadGroup}, `+
+            `${row.energy.toFixed(1)} energy`).join(' · ')}.</p>
         </>:<>
           <p>The final-kilometre clock is recorded through the line. The late
             bunch exit has no supported individual finish or replay, so places
