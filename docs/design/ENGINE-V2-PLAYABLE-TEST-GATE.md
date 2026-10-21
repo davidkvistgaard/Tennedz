@@ -3174,3 +3174,19 @@ projection and the English browser display. Focused tests, lint, an isolated
 fixture build and all 30 v93 browser cases passed. The full 970-test serial
 suite passed after the last motor change and was not repeated for this
 additive refusal display.
+
+The reproducible `node scripts/engine-v2-v93-playability-matrix.mjs` sweep
+adds 90 complete fictional races: 30 each at 40/120/260 km, 30 each with
+4/15/20 teams, 45 per category, and 18 per selectable terrain. It varies
+fatigue, player attacks and chase, rival tactics, two custom elevation
+profiles, nominated finishers and optional lead-outs. Eighteen cases leave
+some rivals on default tactics. All 90 completed without an unsupported
+road. Every crossing's time, energy and band matched its final paid replay;
+each replay started with its rider's clock-recorded 500 m energy. The run
+accepted 138 helpers that performed positive paid work and explicitly
+declined 42 exhausted or separated helpers before rerunning the same locked
+road. Seventy-five cases produced a read-only point illustration matching
+the existing one-day point policy; the other 15 withheld it. All awards
+remained withheld. These fixed synthetic cases add whole-race coverage;
+they do not remove the separate 300 m late-exit refusal or prove sporting
+balance.
