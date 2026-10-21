@@ -3217,3 +3217,16 @@ The fixed 260 km flat, male, fatigue-15 case has a unit regression and a
 local API/browser regression; the new case and 30 existing browser flows
 passed against an isolated build. The full serial unit suite passed 971/971
 for this change; lint also passed.
+
+A separate pinned 90-case 260 km, 20-team stress corpus repeats player
+attacks against four rotating rival tactics across both categories, all
+five terrains, three fatigue levels and three seeds per combination.
+`pnpm test:v93:stress` replays all 160 individual crossings in each of 78
+complete races and validates that the other 12 expose only the recorded
+kilometre road and a calculated front catch, without a finish or points.
+Both categories complete 39/45 cases. The 12 refusals occur on flat (5),
+exposed (1) and custom (6) roads. None of the 78 long-field results has a
+defensible point illustration under the present contact rules, so all
+points remain withheld. This pinned repeated-attack corpus has different
+inputs from the earlier exploratory 84/6 stress pass; neither measures
+sporting balance or makes the unsupported merge payable.

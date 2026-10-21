@@ -51,3 +51,7 @@ terrains, fatigue and tactics. It verifies line time and energy against each
 rider replay and checks every available point illustration against the
 existing one-day policy. The matrix is synthetic correctness evidence; it
 does not establish sporting balance or remove the late-exit boundary.
+`pnpm test:v93:stress` runs a separate 90-case 260 km, 20-team corpus with
+repeated player attacks and mixed rival tactics. It checks every individual
+replay in completed races and validates that every unsupported front catch
+exposes only the earlier recorded road.
