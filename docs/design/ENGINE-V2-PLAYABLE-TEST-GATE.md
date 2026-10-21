@@ -3238,3 +3238,15 @@ the calculated contact and the final recorded handoff remain explicit.
 The isolated local build and all 31 browser flows passed after this UI
 change, including moving the refused road back to km 1. No passage after
 the 259 km handoff is represented as paid.
+
+A second local end-to-end acceptance flow chooses a 260 km flat route, 20
+men's teams, zero starting fatigue and default rival tactics, then names
+`you-7` as finisher and `you-6` as lead-out. The browser/API record has
+259 kilometre frames, a paid last-kilometre clock, 160 conditional
+individual crossings and positive helper work. The selected rider's
+displayed line time and energy agree with the last replay frame. Its
+160 read-only point illustrations match the existing one-day rule at
+their provisional places; zero awards are saved. This demonstrates a
+long-field point path under quiet tactics without claiming that the
+separate repeated-attack stress cases have resolvable point order.
+An isolated build and all 32 browser flows passed.

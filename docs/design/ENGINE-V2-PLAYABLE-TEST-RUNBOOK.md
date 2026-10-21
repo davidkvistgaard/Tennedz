@@ -45,6 +45,14 @@ kilometre road and contact coordinate, with no last-kilometre replay or
 result. Its **Recorded kilometre** slider lets you inspect earlier groups
 and your riders' energy before changing tactics or route conditions.
 
+For a long-field default-tactics point example, choose 260 km, Flat, Men,
+20 teams, zero fatigue, seed `long-default-M-flat-0`, no player attack and
+Ignore chase. Keep the rival default, nominate `you-7` with `you-6` as
+helper, and enable the read-only point illustration at tier 3, four
+divisions, division 2. The conditional result contains 160 riders; check
+`you-7` against its replay and point illustration. No official points are
+awarded. The local browser suite runs this complete flow.
+
 Automated reproduction: `pnpm test:v93:local` builds an isolated fixture and
 runs the local browser suite. `node scripts/engine-v2-v93-playability-matrix.mjs`
 checks 90 whole fictional races across distances, field sizes, categories,
