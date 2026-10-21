@@ -2972,3 +2972,14 @@ a 40 km flat v93 race with 32 individual line times and no hidden phase order,
 then switches back and confirms the v91 choice remains. Lint, a fresh isolated
 preview build and all 27 v93 browser cases pass. This changes only preview
 form visibility, not motor physics, recorded results or point settlement.
+
+The v93 conditional-results table now avoids implying an unproven finish
+order when the paid road has no individual classification. It groups rows by
+the motor's proved possible-place ranges where available and lists rider IDs
+alphabetically within each range; if no ranges are proved, all rider IDs are
+alphabetical. The displayed conditional crossing time, line energy, replay
+and withheld point status still come from the same recording. Browser cases
+check a 260 km 20-team front with three proved road ranges and a 260 km
+four-team newly isolated contact case with no proved individual range. Lint,
+a fresh isolated build and all 27 v93 browser cases pass. This is a result
+presentation correction, not a contact or wheel-order motor resolution.

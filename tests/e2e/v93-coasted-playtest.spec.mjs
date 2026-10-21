@@ -1337,6 +1337,13 @@ test('newly exhausted rider has a solo road replay and withheld points',
     await expect(page.getByRole('table',{
       name:'V93 individual conditional results'}).getByRole('row'))
       .toHaveCount(33);
+    const unorderedIds=await page.getByRole('table',{
+      name:'V93 individual conditional results'})
+      .locator('tbody th[scope="row"]').allTextContents();
+    expect(unorderedIds).toEqual(coasted.lineTimes.map(row=>row.riderId)
+      .sort());
+    await expect(page.getByText(
+      /row order is not a classified finish/)).toBeVisible();
     await expect(page.getByText(
       'Point illustration unavailable: Newly isolated riders have unresolved pre-500 m road contact.'))
       .toBeVisible();
@@ -1617,6 +1624,19 @@ test('20-team rolling front drops finish ahead as separate solo passages',
     expect(coasted.roadPlaceBounds.bands.map(band=>[
       band.firstPossiblePlace,band.lastPossiblePlace]))
       .toEqual([[1,38],[39,40],[41,160]]);
+    const rangedIds=await page.getByRole('table',{
+      name:'V93 individual conditional results'})
+      .locator('tbody th[scope="row"]').allTextContents();
+    const boundsById=new Map(coasted.roadPlaceBounds.riders.map(row=>[
+      row.riderId,row]));
+    expect(rangedIds).toHaveLength(160);
+    const firstPlaces=rangedIds.map(id=>boundsById.get(id).firstPossiblePlace);
+    expect(firstPlaces).toEqual([...firstPlaces].sort((a,b)=>a-b));
+    expect(rangedIds.slice(0,38)).toEqual(
+      [...coasted.roadPlaceBounds.bands[0].riderIds].sort());
+    await expect(page.getByText(
+      /Within a range, names are alphabetical; row order is not a classified finish/))
+      .toBeVisible();
     await expect(page.getByRole('region',{name:'Your v93 finish'}))
       .toContainText('Conditional place: 39–40 · Read-only points: unavailable');
     await expect(page.getByText(/Isolated passages:.*you-6.*ahead of bunch/))

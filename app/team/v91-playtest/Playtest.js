@@ -317,13 +317,19 @@ export default function Playtest(){
     row.riderId===coastedRiderId);
   const coastedProvisionalPlaces=new Map((coasted?.provisionalLineOrder??[])
     .map(row=>[row.riderId,row]));
-  const coastedOrder=[...(coasted?.lineTimes??[])].sort((a,b)=>
-    (coastedProvisionalPlaces.get(a.riderId)?.position??0)-
-      (coastedProvisionalPlaces.get(b.riderId)?.position??0)||
-    a.elapsedSecondsFromLastKmStart-b.elapsedSecondsFromLastKmStart||
-    a.riderId.localeCompare(b.riderId));
   const coastedRoadBounds=new Map((coasted?.roadPlaceBounds?.riders??[])
     .map(row=>[row.riderId,row]));
+  const coastedOrder=[...(coasted?.lineTimes??[])].sort((a,b)=>
+    coasted?.provisionalLineOrder?
+      (coastedProvisionalPlaces.get(a.riderId)?.position??0)-
+        (coastedProvisionalPlaces.get(b.riderId)?.position??0)||
+      a.elapsedSecondsFromLastKmStart-b.elapsedSecondsFromLastKmStart||
+      a.riderId.localeCompare(b.riderId):
+      (coastedRoadBounds.get(a.riderId)?.firstPossiblePlace??Infinity)-
+        (coastedRoadBounds.get(b.riderId)?.firstPossiblePlace??Infinity)||
+      (coastedRoadBounds.get(a.riderId)?.lastPossiblePlace??Infinity)-
+        (coastedRoadBounds.get(b.riderId)?.lastPossiblePlace??Infinity)||
+      a.riderId.localeCompare(b.riderId));
   const coastedOwnDecision=coasted?.managerDecisions.find(row=>
     row.teamId==='you');
   const coastedOwnLine=coasted?.lineTimes.find(row=>
@@ -866,6 +872,11 @@ export default function Playtest(){
         </div>
         <div className="v91-finish">
           <h3>Individual conditional results</h3>
+          {!coasted.provisionalLineOrder&&<p>
+            Riders are grouped by proven road-place ranges where available.
+            Within a range, names are alphabetical; row order is not a
+            classified finish.
+          </p>}
           {coasted.roadPlaceBounds&&<p>{
             coasted.roadPlaceBounds.status===
               'conditional_front_separated_rear_contact_unresolved'?
