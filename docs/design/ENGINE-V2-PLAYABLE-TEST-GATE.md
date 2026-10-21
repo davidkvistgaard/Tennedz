@@ -3127,11 +3127,12 @@ The additional `node scripts/engine-v2-v93-long-field-audit.mjs` acceptance
 run covers 48 fictional 260 km races with 20 teams, both categories, all
 five selectable terrains, three fatigue levels and mixed manager tactics.
 Every race produced 160 unique individual crossings that matched its paid
-replay time and energy, and validation regenerated the same versioned
-recording. Two managers nominated helpers in each case. The road rejected
-32 helper nominations for exhaustion or a different road group; removing
-only each refused helper left 64 accepted, positively paid helper plans and
-48 complete races. Sixteen races had an unambiguous read-only point
+replay time and energy. Every rider's replay also starts with the energy and
+group passage time recorded at the 500 m handoff; validation regenerated the
+same versioned recording. Two managers nominated helpers in each case. The
+road rejected 32 helper nominations for exhaustion or a different road
+group. Removing only each refused helper left 64 accepted, positively paid
+helper plans and 48 complete races. Sixteen races had an unambiguous read-only point
 illustration matching the existing one-day point policy; 32 withheld the
 illustration because road contact remained unresolved. All official points
 and awards remained withheld. These fixed-seed cases provide whole-race

@@ -76,6 +76,34 @@ for(let index=0;index<48;index++){
   const crossings=new Map(summary.lineTimes.map(row=>
     [row.riderId,row]));
   assert.equal(crossings.size,160);
+  const at500=race.clock.trace.frames.find(frame=>
+    frame.endDistanceM===259500);
+  const passageAt500=race.clock.passageFrames.find(frame=>
+    frame.distanceM===259500);
+  assert.ok(at500&&passageAt500);
+  const roadEnergy=new Map(at500.riders.map(row=>
+    [row.riderId,row.energy]));
+  assert.equal(roadEnergy.size,160);
+  const replayStarts=new Set();
+  for(const band of summary.bandReplays){
+    const passageSeconds=band.id==='peloton'?
+      passageAt500.bunchPassageSecondsFromBunchMarker:
+      band.id.startsWith('isolated:')?
+        passageAt500.droppedPassages.find(row=>
+          row.riderId===band.id.slice('isolated:'.length))
+          ?.passageSecondsFromBunchMarker:
+        passageAt500.groups.find(group=>group.id===band.id)
+          ?.passageSecondsFromBunchMarker;
+    assert.ok(Number.isFinite(passageSeconds));
+    assert.equal(band.passageAt500Seconds,passageSeconds);
+    assert.equal(band.frames[0].elapsedSecondsAtStart,passageSeconds);
+    for(const row of band.frames[0].riders){
+      assert.equal(replayStarts.has(row.riderId),false);
+      replayStarts.add(row.riderId);
+      assert.equal(row.energyAtDecision,roadEnergy.get(row.riderId));
+    }
+  }
+  assert.equal(replayStarts.size,160);
   const replayed=new Set();
   for(const band of summary.bandReplays)
     for(const row of band.frames.at(-1).riders){
