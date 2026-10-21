@@ -86,6 +86,24 @@ test('ten exhausted routes yield replayable individual lines and policy points',
     }
 });
 
+test('an exhausted nominated singleton keeps its paid line without a sprint',()=>{
+  const input={distanceKm:260,teamCount:4,gender:'M',terrain:'flat',
+    fatigue:30,seed:'v93-tactic-pair-8',profileHeightsM,
+    defaultRivalPlan:'passive',effort:'steady',attack:'repeated',
+    chase:'ignore',managerTactics:Array.from({length:3},()=>({
+      effort:'steady',attack:'none',chase:'ignore'}))};
+  const plans=['you','rival-1','rival-2','rival-3'].map(teamId=>({
+    teamId,finisherId:`${teamId}-7`,leadOutRiderId:null}));
+  const race=createV93PlayableTest(input,{plans,pointContext:context});
+  const runner=race.individualLine.bandRunners.find(band=>
+    band.runner.finishers.some(row=>row.riderId==='you-7')).runner;
+  assert.equal(runner.frames.length,5);
+  assert.ok(runner.frames.every(frame=>
+    frame.riders.find(row=>row.riderId==='you-7')?.role==='solo_front'));
+  assert.equal(validateV93CoastedPlaytest(input,{plans,
+    pointContext:context},race),true);
+});
+
 test('a five-kilometre effort choice pays energy, line and preview points',()=>{
   const base={distanceKm:120,terrain:'rolling',teamCount:15,gender:'F',
     fatigue:15,seed:'late-phase-6',effort:'steady',attack:'none',

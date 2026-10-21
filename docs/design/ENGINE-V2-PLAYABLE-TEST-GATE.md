@@ -3064,3 +3064,26 @@ Focused tests for both categories and field sizes, lint, a fresh isolated
 build and all 27 fixture-only browser cases passed. The full 966-test suite
 passed immediately before this additive summary and display change; it was
 not repeated for this increment.
+
+A fixed-seed, full-race tactical pair audit now compares 12 synthetic routes
+(40/120/260 km; four, 15 or 20 teams; both genders; flat, rolling, mountain,
+exposed and custom terrain; fatigue 0/15/30). Each scenario runs a passive
+baseline, the same field with the player's repeated attack, and that attack
+with every rival changing from ignore to all chase. The 36 runs hold roster,
+seed, route and finisher plans fixed within each pair, validate the replayed
+individual crossings and energy, and check any illustrated points against
+the existing one-day rule; no awards are committed. Both tactical changes
+altered recorded road frames and individual crossings in all 12 pairs. These
+are directional synthetic tests, not a balance target or a proof that every
+manager strategy is useful. Reproduce with
+`node scripts/engine-v2-v93-tactic-pair-audit.mjs`.
+
+The pair audit also exposed a 260 km, four-team, fatigued solo whose
+nominated sprint would spend more energy than the rider has. At the paid
+500 m handoff the singleton runner now checks the cost of the whole final
+300 m before launching. When that sprint cannot be paid, the rider follows
+the already recorded solo road and energy to the line. An affordable
+nominated sprint and earlier versioned recordings retain their prior
+behavior; a focused replay regression fixes the exhausted case. This closes
+one reproducible motor refusal, not the unresolved bunch-exit ordering or
+official result gate above.
