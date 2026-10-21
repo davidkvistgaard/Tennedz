@@ -1575,7 +1575,7 @@ test('flat 15-team road keeps two nominated singleton fronts on the line',
       .toBeVisible();
   });
 
-test('20-team rolling front drops finish ahead as separate solo passages',
+test('20-team rolling front exits reach replayed solo lines and preview points',
   async({page})=>{
     await page.goto('/login');
     await page.getByLabel('Email or username').fill('bob');
@@ -1607,7 +1607,7 @@ test('20-team rolling front drops finish ahead as separate solo passages',
     const response=await responsePromise;
     expect(response.status()).toBe(200);
     const {coasted}=await response.json();
-    expect(coasted.version).toBe('v93-dynamic-single-playtest-1');
+    expect(coasted.version).toBe('v93-coast-front-exit-playtest-1');
     expect(coasted.kilometreFrames.at(-1).roadGroups[0].riderIds)
       .toHaveLength(40);
     expect(coasted.lastKmRoad[0].groups[0].riderIds)
@@ -1620,25 +1620,27 @@ test('20-team rolling front drops finish ahead as separate solo passages',
       .toMatchObject({roadBandId:'isolated:you-6',energyAtLine:0});
     expect(coasted.managerDecisions.find(row=>row.teamId==='you')
       .finisherId).toBe('you-6');
-    expect(coasted.pointPreview.status).toBe('unavailable');
-    expect(coasted.roadPlaceBounds.bands.map(band=>[
-      band.firstPossiblePlace,band.lastPossiblePlace]))
-      .toEqual([[1,38],[39,40],[41,160]]);
-    const rangedIds=await page.getByRole('table',{
-      name:'V93 individual conditional results'})
-      .locator('tbody th[scope="row"]').allTextContents();
-    const boundsById=new Map(coasted.roadPlaceBounds.riders.map(row=>[
-      row.riderId,row]));
-    expect(rangedIds).toHaveLength(160);
-    const firstPlaces=rangedIds.map(id=>boundsById.get(id).firstPossiblePlace);
-    expect(firstPlaces).toEqual([...firstPlaces].sort((a,b)=>a-b));
-    expect(rangedIds.slice(0,38)).toEqual(
-      [...coasted.roadPlaceBounds.bands[0].riderIds].sort());
-    await expect(page.getByText(
-      /Within a range, names are alphabetical; row order is not a classified finish/))
-      .toBeVisible();
+    expect(coasted.frontExit.exitRiderIds).toEqual(['you-6','you-7']);
+    expect(coasted.frontExit.frontRiderCount).toBe(38);
+    expect(coasted.frontExit.clearance.every(row=>
+      row.frontClearanceSecondsAt250>0)).toBe(true);
+    expect(coasted.roadPlaceBounds).toBeUndefined();
+    expect(coasted.provisionalLineOrder).toHaveLength(160);
+    expect(coasted.pointPreview.riders).toHaveLength(160);
+    expect(coasted.pointPreview.awardRows).toEqual([]);
+    const note=page.getByRole('note',{name:'Recorded front exit'});
+    await expect(note).toContainText('259.000 km');
+    await expect(note).toContainText('last front wheel was clear by 250 m');
+    await note.getByRole('button',{
+      name:'Inspect front exit rider you-6 finish replay'}).click();
+    await expect(page.getByRole('combobox',{name:'Rider'}))
+      .toHaveValue('you-6');
+    const ownPlace=coasted.provisionalLineOrder.find(row=>
+      row.riderId==='you-6').position;
+    const ownPoints=coasted.pointPreview.riders.find(row=>
+      row.riderId==='you-6').previewPoints;
     await expect(page.getByRole('region',{name:'Your v93 finish'}))
-      .toContainText('Conditional place: 39–40 · Read-only points: unavailable');
+      .toContainText(`Conditional place: ${ownPlace} · Read-only points: ${ownPoints}`);
     await expect(page.getByText(/Isolated passages:.*you-6.*ahead of bunch/))
       .toBeVisible();
     await expect(page.getByRole('table',{
@@ -1647,7 +1649,7 @@ test('20-team rolling front drops finish ahead as separate solo passages',
     await expect(page.getByRole('table',{
       name:'V93 individual conditional results'}).getByRole('row')
       .filter({hasText:'you-6'}).getByRole('cell').first())
-      .toHaveText('39–40');
+      .toHaveText(String(ownPlace));
     const ownLine=coasted.lineTimes.find(row=>row.riderId==='you-6');
     await page.getByRole('button',{name:'Replay you-6'}).click();
     await expect(page.getByRole('combobox',{name:'Rider'}))
@@ -1664,9 +1666,12 @@ test('20-team rolling front drops finish ahead as separate solo passages',
       .toHaveValue(bunchRider.riderId);
     await expect(page.getByLabel('Selected rider finale replay'))
       .toContainText(bunchRider.riderId);
-    await expect(page.getByText(
-      'Point illustration unavailable: New front drops remain ahead without a resolved road contact order.'))
-      .toBeVisible();
+    const preview=coasted.pointPreview.riders.find(row=>
+      row.riderId==='you-6');
+    expect(preview.previewPoints).toBe(pointsForDivisionResult({
+      tier:coasted.pointPreview.tier,resultType:'ONE_DAY',
+      placing:preview.provisionalPlace,
+      multiplier:coasted.pointPreview.multiplier}));
     await expect(page.getByText('Official points: withheld · Awards saved: 0'))
       .toBeVisible();
   });

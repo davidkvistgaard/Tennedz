@@ -20,7 +20,8 @@ test('zero-reserve front members get separate coasted crossings',()=>{
     for(const terrain of ['flat','rolling','mountain','exposed','custom']){
       const input=settings(gender,terrain);
       const options={pointContext:context};
-      const race=createV93PlayableTest(input,options);
+      const race=createV93PlayableTest(input,options,
+        {resolveFrontExits:false});
       const summary=summarizeV93CoastedPlaytest(race);
       const front=race.clock.trace.frames[0].roadGroups[0];
       const solo=race.clock.passageFrames.at(-1).droppedPassages;
@@ -60,7 +61,8 @@ test('zero-reserve front members get separate coasted crossings',()=>{
 });
 
 test('conditional front road bounds reject a changed line crossing',()=>{
-  const race=createV93PlayableTest(settings('M','rolling'));
+  const race=createV93PlayableTest(settings('M','rolling'),{},
+    {resolveFrontExits:false});
   const crossings=race.individualLine.conditionalCrossings.map(row=>
     row.roadBandId==='isolated:you-6'?{
       ...row,elapsedSecondsFromLastKmStart:200}:row);

@@ -872,6 +872,28 @@ export default function Playtest(){
         </div>
         <div className="v91-finish">
           <h3>Individual conditional results</h3>
+          {coasted.frontExit&&<div role="note"
+            aria-label="Recorded front exit">
+            <p>{coasted.frontExit.exitRiderIds.length} exhausted riders left
+              {' '}{coasted.frontExit.fromRoadGroupId} at
+              {' '}{(coasted.frontExit.exitDistanceM/1000).toFixed(3)} km.
+              They took an outside lane while the remaining
+              {' '}{coasted.frontExit.frontRiderCount} front riders passed.
+              The paid paths give no draft or free energy; the last front
+              wheel was clear by 250 m.</p>
+            {coasted.frontExit.clearance.map(row=><p key={row.riderId}>
+              {row.riderId}: front clearance at 250 m
+              {' '}{row.frontClearanceSecondsAt250.toFixed(2)} s.
+              <button type="button"
+                aria-label={`Inspect front exit rider ${row.riderId} finish replay`}
+                onClick={()=>{
+                  setCoastedBandId(`isolated:${row.riderId}`);
+                  setCoastedRiderId(row.riderId);setCoastedBandIndex(0);
+                  document.getElementById('v93-paid-finale-replay')
+                    ?.scrollIntoView();
+                }}>Finish replay {row.riderId}</button>
+            </p>)}
+          </div>}
           {coasted.isolatedPassEvents?.length>0&&<div role="note"
             aria-label="Recorded isolated passes">
             <p>{coasted.isolatedPassEvents.length} isolated-rider passes were

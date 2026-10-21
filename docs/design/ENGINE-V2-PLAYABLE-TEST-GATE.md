@@ -3010,3 +3010,31 @@ The motor implementation did not change during the run. The isolated
 passage's old/new recording replay, full-route line and point contracts
 were also checked in focused tests; lint, a fresh isolated build and the
 27-case v93 browser suite passed before this full run.
+
+An opt-in front-exit lane version now resolves a complete 260 km rolling,
+20-team men's race where two zero-reserve riders leave the same front group
+at the 259 km marker. The recorded group still has 38 riders. Both leavers
+continue on their original paid, zero-reserve coast paths while the front
+passes in an outside exit lane. The last inferred front wheel clears each
+leaver by more than 11.6 seconds at the paid 250 m marker and more than 24
+seconds at 500 m; neither leaver meets the bunch or the other leaver later.
+An unordered trajectory audit finds no contact over the final 500 m. The
+new version therefore exposes the 160 individual conditional crossings and
+a read-only point illustration, with a visible exit record and links to both
+finish replays. The former dynamic-single recording still validates with its
+39–40 place range and withheld illustration. The locked 260 km tour, last-
+kilometre clock, all band runners, individual times and energy are identical
+between versions. Official results and awards remain withheld.
+
+The 48-race synthetic audit now finishes all 48, matches all 4,776 individual
+crossings to their final paid replay frames and illustrates points in 46
+cases. Only indexes 14 and 44, the 15- and 20-team custom-terrain fields
+with new bunch leavers, still withhold the point illustration. A changed
+nomination for every manager in the new front-exit version changed 158
+individual crossings while preserving the locked tour and road clock.
+Focused old/new replay and refusal tests, lint, a fresh isolated build and
+all 27 v93 localhost browser cases passed after the final clearance
+calculation. The 48-race audit was repeated with the same totals. The full
+serial unit suite passed 966/966 tests with no failures (4,044 seconds),
+including the explicitly versioned checks for the earlier dynamic-single
+recording.
