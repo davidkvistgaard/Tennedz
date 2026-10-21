@@ -1,5 +1,8 @@
 # V2 playable motor test gate
 
+For the current opt-in v93 workbench and a reproducible multi-manager race,
+see [the local playable test runbook](ENGINE-V2-PLAYABLE-TEST-RUNBOOK.md).
+
 This is the finite acceptance gate for the opt-in v91 motor test. It does not
 change production race settlement. A passing laboratory recording is not an
 official result until every item below is verified end to end.
