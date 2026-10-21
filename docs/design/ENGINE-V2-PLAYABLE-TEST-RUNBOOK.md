@@ -6,11 +6,14 @@ and rider replay. It does not save a contest result or award points. The
 full acceptance history and unresolved motor boundaries are in
 [the playable test gate](ENGINE-V2-PLAYABLE-TEST-GATE.md).
 
-From `calendar-release`, run `pnpm playtest:v93:local`. The command builds an
-isolated `.next-v93-local` app and serves a localhost fixture. Open
-`http://localhost:3100/login`, sign in as `bob` with `fixture-password`, and
+From `calendar-release`, run `pnpm playtest:v93:local`. The command builds in
+a fresh, temporary `.next-v93-local-*` directory and serves a localhost
+fixture. Open `http://localhost:3100/login`, sign in as `bob` with
+`fixture-password`, and
 visit `/team/v91-playtest`. Check **Continue to a conditional finish** and
 **Try v93 road-to-line preview**. Stop the command to stop the fixture.
+A forced Ctrl+C can leave its generated build directory; remove that specific
+`.next-v93-local-*` directory after the server stops if needed.
 
 For a reproducible multi-manager race, choose 120 km, Rolling, Women,
 15 teams, Some fatigue, and seed `late-phase-6`. Set Your attack to None.
@@ -53,8 +56,9 @@ divisions, division 2. The conditional result contains 160 riders; check
 `you-7` against its replay and point illustration. No official points are
 awarded. The local browser suite runs this complete flow.
 
-Automated reproduction: `pnpm test:v93:local` builds an isolated fixture and
-runs the local browser suite. `node scripts/engine-v2-v93-playability-matrix.mjs`
+Automated reproduction: `pnpm test:v93:local` builds a fresh isolated fixture,
+runs the local browser suite and removes its generated build directory.
+`node scripts/engine-v2-v93-playability-matrix.mjs`
 checks 90 whole fictional races across distances, field sizes, categories,
 terrains, fatigue and tactics. It verifies line time and energy against each
 rider replay and checks every available point illustration against the

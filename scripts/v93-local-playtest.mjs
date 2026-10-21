@@ -1,11 +1,11 @@
 // Build and serve the opt-in v93 workbench against the local protocol fixture only.
 import { spawn } from "node:child_process";
 import { resolve } from "node:path";
+import { v93LocalBuildDirectory } from "./v93-local-build-dir.mjs";
 
 const fixtureUrl = "http://127.0.0.1:54329";
-const distDir = process.env.PELOTONIA_V93_LOCAL_DIST_DIR ?? ".next-v93-local";
-if (!/^\.next-v93-[a-z0-9-]+$/.test(distDir))
-  throw new Error("Choose a local .next-v93-* build directory name.");
+const cwd = resolve(import.meta.dirname, "..");
+const { distDir, cleanup } = await v93LocalBuildDirectory(cwd);
 const env = {
   ...process.env,
   PELOTONIA_NEXT_DIST_DIR: distDir,
@@ -23,8 +23,6 @@ const env = {
   PELOTONIA_E2E_V2_RECORDING: "false",
   PELOTONIA_E2E_V2_SETTLEMENT: "false",
 };
-const cwd = resolve(import.meta.dirname, "..");
-
 function run(command, args) {
   return new Promise((fulfill, reject) => {
     const child = spawn(command, args, { cwd, env, stdio: "inherit" });
@@ -43,4 +41,10 @@ try {
 } catch (error) {
   console.error(error.message);
   process.exitCode = 1;
+} finally {
+  try {
+    await cleanup();
+  } catch (error) {
+    console.warn(`Could not remove local v93 build: ${error.message}`);
+  }
 }

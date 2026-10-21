@@ -3250,3 +3250,12 @@ their provisional places; zero awards are saved. This demonstrates a
 long-field point path under quiet tactics without claiming that the
 separate repeated-attack stress cases have resolvable point order.
 An isolated build and all 32 browser flows passed.
+
+The standard localhost verifier previously failed on a repeated build
+because OneDrive returned an invalid `readlink` for stale Next diagnostics.
+Both local launch commands now choose a fresh, script-owned build directory
+by default and attempt to remove it on normal exit. A forced interruption of
+the manual playtest can leave its generated directory behind. A caller-specified
+`PELOTONIA_V93_LOCAL_DIST_DIR` remains caller-owned. The unmodified
+`pnpm test:v93:local` command then built, passed all 32 browser flows and
+left no generated default build directory behind.
