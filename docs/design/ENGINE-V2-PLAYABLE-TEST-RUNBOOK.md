@@ -26,10 +26,11 @@ Check the **Locked v93 manager orders** against those selections, then use
 energy. **Your finish** shows the nominated rider's road band, conditional
 time, line energy, placing or range, and the helper's actual work. Open the
 individual results and replay each nominated finisher to compare their line
-time and energy with the final replay frame. Any illustrated points are
-derived from an unambiguous conditional order; official points and awards
-stay withheld. This exact 120 km flow is also exercised by the local browser
-test.
+time and energy with the final replay frame: scroll the result table, click
+**Inspect** for that rider, and move **Band interval** to its last step.
+Any illustrated points are derived from an unambiguous conditional order;
+official points and awards stay withheld. This exact 120 km flow is also
+exercised by the local browser test.
 
 Change only one tactic while keeping route, field, fatigue and seed fixed to
 compare what changed on the recorded road and at the line. The form also
