@@ -1671,7 +1671,7 @@ test('20-team rolling front drops finish ahead as separate solo passages',
       .toBeVisible();
   });
 
-test('possible isolated-rider contact links both paid replays',
+test('four paid isolated passes reach line, replay and preview points',
   async({page})=>{
     await page.goto('/login');
     await page.getByLabel('Email or username').fill('alice');
@@ -1690,6 +1690,8 @@ test('possible isolated-rider contact links both paid replays',
       .selectOption('mixed');
     await page.getByLabel('Your attack').selectOption('selective');
     await page.getByLabel('Your chase').selectOption('all');
+    await page.getByRole('checkbox',{
+      name:'Show read-only point illustration'}).check();
     const responsePromise=page.waitForResponse(response=>
       response.url().endsWith('/api/v91-playtest')&&
       response.request().method()==='POST');
@@ -1697,20 +1699,37 @@ test('possible isolated-rider contact links both paid replays',
     const response=await responsePromise;
     expect(response.status()).toBe(200);
     const {coasted}=await response.json();
-    expect(coasted.pointPreview).toBeNull();
-    expect(coasted.potentialRoadContact.riderIds)
-      .toEqual(['rival-1-3','rival-1-4']);
-    const note=page.getByRole('note',{name:'Potential road contact'});
-    await expect(note).toContainText('Potential contact at 259.020 km');
-    await expect(note).toContainText('contact and passing remain unresolved');
-    for(const id of coasted.potentialRoadContact.riderIds){
+    expect(coasted.version).toBe('v93-coast-isolated-pass-playtest-1');
+    expect(coasted.potentialRoadContact).toBeUndefined();
+    expect(coasted.isolatedPassEvents).toHaveLength(4);
+    expect(coasted.provisionalLineOrder).toHaveLength(32);
+    expect(coasted.pointPreview.riders).toHaveLength(32);
+    expect(coasted.pointPreview.awardRows).toEqual([]);
+    const note=page.getByRole('note',{name:'Recorded isolated passes'});
+    await expect(note).toContainText('259.020 km');
+    await expect(note).toContainText('rival-1-3 passed rival-1-4');
+    for(const id of ['rival-1-3','rival-1-4']){
       await note.getByRole('button',{
-        name:`Inspect contact rider ${id}`}).click();
+        name:`Inspect pass rider ${id} finish replay`}).first().click();
       await expect(page.getByRole('combobox',{name:'Rider'}))
         .toHaveValue(id);
       await expect(page.getByLabel('Selected rider finale replay'))
         .toContainText(id);
+      const line=coasted.lineTimes.find(row=>row.riderId===id);
+      const interval=page.getByRole('slider',{name:/Band interval/});
+      await interval.fill(await interval.getAttribute('max'));
+      await expect(page.getByLabel('Selected rider finale replay'))
+        .toContainText(`Crossed at ${line.elapsedSecondsFromLastKmStart.toFixed(3)} s; result ${line.elapsedSecondsFromLastKmStart.toFixed(3)} s, ${line.energyAtLine.toFixed(1)} energy.`);
     }
+    const preview=coasted.pointPreview.riders.find(row=>
+      row.riderId==='rival-1-3');
+    expect(preview.previewPoints).toBe(pointsForDivisionResult({
+      tier:coasted.pointPreview.tier,resultType:'ONE_DAY',
+      placing:preview.provisionalPlace,
+      multiplier:coasted.pointPreview.multiplier}));
+    await expect(page.getByRole('table',{
+      name:'V93 individual conditional results'}).getByRole('row'))
+      .toHaveCount(33);
     await expect(page.getByText('Official points: withheld · Awards saved: 0'))
       .toBeVisible();
   });

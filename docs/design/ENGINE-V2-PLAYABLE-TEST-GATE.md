@@ -2983,3 +2983,30 @@ check a 260 km 20-team front with three proved road ranges and a 260 km
 four-team newly isolated contact case with no proved individual range. Lint,
 a fresh isolated build and all 27 v93 browser cases pass. This is a result
 presentation correction, not a contact or wheel-order motor resolution.
+
+An opt-in v93 isolated-lane pass version now resolves a complete 260 km flat
+four-team men's race whose only first-500 m contacts are among independent
+isolated riders. It verifies every active-versus-active and active-versus-
+isolated paid trajectory stays separate, then records all four isolated
+overtakes on the common clock. Passing riders use a separate open lane with
+no draft, role change or free energy; the existing paid road, band runners,
+individual crossing times and line energy are identical to the prior v93
+recording. The new version derives a 32-rider conditional order and a
+read-only one-day point illustration from those crossings. Its browser
+view lists the pass times and distances and links each rider's paid finish
+replay; no award is saved. The earlier version of the same race still replays
+with its potential-contact witness and withheld illustration.
+
+The 48-race synthetic audit now finishes all 48, matches all 4,776 crossings
+to their paid replays, illustrates points in 45 cases and withholds three.
+The other three contacts remain unresolved. Focused old/new version tests,
+lint, a fresh isolated build and all 27 v93 browser cases pass. This bounded
+lane rule is still a provisional game model; official results and production
+points remain withheld.
+
+The complete serial `pnpm test` suite passed on this preview increment:
+964 passed, zero failed, skipped or cancelled, in 4,721.2 seconds.
+The motor implementation did not change during the run. The isolated
+passage's old/new recording replay, full-route line and point contracts
+were also checked in focused tests; lint, a fresh isolated build and the
+27-case v93 browser suite passed before this full run.

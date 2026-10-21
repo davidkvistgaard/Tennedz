@@ -872,6 +872,26 @@ export default function Playtest(){
         </div>
         <div className="v91-finish">
           <h3>Individual conditional results</h3>
+          {coasted.isolatedPassEvents?.length>0&&<div role="note"
+            aria-label="Recorded isolated passes">
+            <p>{coasted.isolatedPassEvents.length} isolated-rider passes were
+              paid on the common road clock. Each passer uses an open lane;
+              neither rider gains drafting or free energy.</p>
+            {coasted.isolatedPassEvents.map((event,index)=><p key={index}>
+              {(event.distanceM/1000).toFixed(3)} km ·
+              {' '}{event.elapsedSecondsFromLastKmStart.toFixed(3)} s ·
+              {' '}{event.passingRiderId} passed {event.passedRiderId}.
+              {[event.passingRiderId,event.passedRiderId].map(id=><button
+                key={id} type="button"
+                aria-label={`Inspect pass rider ${id} finish replay`}
+                onClick={()=>{
+                  setCoastedBandId(`isolated:${id}`);
+                  setCoastedRiderId(id);setCoastedBandIndex(0);
+                  document.getElementById('v93-paid-finale-replay')
+                    ?.scrollIntoView();
+                }}>Finish replay {id}</button>)}
+            </p>)}
+          </div>}
           {!coasted.provisionalLineOrder&&<p>
             Riders are grouped by proven road-place ranges where available.
             Within a range, names are alphabetical; row order is not a
