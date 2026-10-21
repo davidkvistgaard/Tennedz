@@ -1315,6 +1315,56 @@ test('unpaid front catch shows the recorded road without a false finish',
       name:'V93 individual conditional results'})).toHaveCount(0);
   });
 
+test('extreme custom handoffs show recorded kilometres without false results',
+  async({page})=>{
+    await page.goto('/login');
+    await page.getByLabel('Email or username').fill('alice');
+    await page.getByLabel('Password',{exact:true}).fill('fixture-password');
+    await page.getByRole('button',{name:'Sign in',exact:true}).click();
+    await expect(page).toHaveURL(/\/team$/);
+    const plans=['you',...Array.from({length:19},(_,index)=>
+      `rival-${index+1}`)].map(teamId=>({teamId,
+      finisherId:`${teamId}-7`,leadOutRiderId:null}));
+    let firstBody;
+    for(const [fatigue,reason] of [[0,'unpayable_front_handoff'],
+      [30,'unresolved_band_contact']]){
+      const response=await page.request.post('/api/v91-playtest',{
+        headers:{origin:'http://localhost:3100'},data:{
+          mode:'v93-coasted',settings:{distanceKm:260,teamCount:20,
+            gender:'M',terrain:'custom',fatigue,
+            profileHeightsM:[100,600,1200,1800,2300,2500],
+            seed:`v93-custom-extreme-M-${fatigue}-climb`,
+            defaultRivalPlan:'attack',effort:'hard',attack:'repeated',
+            chase:'ignore'},plans}});
+      expect(response.status()).toBe(422);
+      const body=await response.json();
+      expect(body.roadPreview.unsupportedReason).toBe(reason);
+      expect(body.roadPreview.kilometreFrames).toHaveLength(259);
+      expect(body.roadPreview.lastKmRoad).toEqual([]);
+      expect(body.roadPreview.lineTimes).toBeNull();
+      expect(body.roadPreview.canCommitAwards).toBe(false);
+      if(fatigue===0)firstBody=body;
+    }
+    await page.goto('/team/v91-playtest');
+    await page.getByRole('checkbox',{
+      name:'Continue to a conditional finish'}).check();
+    await page.getByRole('checkbox',{
+      name:'Try v93 road-to-line preview'}).check();
+    await page.route('**/api/v91-playtest',route=>route.fulfill({
+      status:422,contentType:'application/json',
+      body:JSON.stringify(firstBody)}));
+    await page.getByRole('button',{name:'Run v93 race preview'}).click();
+    const preview=page.getByRole('region',{
+      name:'Recorded road without individual finish'});
+    await expect(preview).toContainText('you-6 cannot pay for the next road interval');
+    await expect(preview).toContainText('No final-kilometre passage, individual finish, replay or points is shown');
+    await expect(preview).toContainText('Recorded kilometre: 259 of 259');
+    await preview.getByRole('slider',{name:/Recorded kilometre/}).fill('0');
+    await expect(preview).toContainText('Recorded kilometre: 1 of 259');
+    await expect(page.getByRole('table',{
+      name:'V93 individual conditional results'})).toHaveCount(0);
+  });
+
 test('paid front leavers keep a conditional result in a mixed-rival race',
   async({page})=>{
     await page.goto('/login');

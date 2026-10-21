@@ -3259,3 +3259,19 @@ the manual playtest can leave its generated directory behind. A caller-specified
 `PELOTONIA_V93_LOCAL_DIST_DIR` remains caller-owned. The unmodified
 `pnpm test:v93:local` command then built, passed all 32 browser flows and
 left no generated default build directory behind.
+
+An additional twelve-case whole-race probe used 260 km custom routes with
+elevation points `[100,600,1200,1800,2300,2500]` or
+`[2500,2200,1700,1100,500,100]`, 20 teams, both categories, fatigue
+`0/15/30`, and seeds `v93-custom-extreme-${gender}-${fatigue}-${profile}`.
+The climbing route used Hard/Repeated/Ignore player orders and attack
+defaults; the descending route used Steady/Repeated/All and chase defaults.
+Eight cases produced 160 validated individual crossings, with read-only
+points available in four. Four steep-climb cases exposed two
+distinct unsupported handoffs: an active front rider lacked energy for the
+first final-kilometre interval, or the independent front/bunch/isolated
+passage bands crossed without a paid contact. The preview now returns only
+the validated kilometre road through km 259 for those two boundaries, with
+the recorded groups and rider energy available for inspection. It never
+claims a final-kilometre passage, individual finish, replay or points for
+either. The prior versioned recordings remain unchanged.

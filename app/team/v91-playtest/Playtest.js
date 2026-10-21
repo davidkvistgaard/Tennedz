@@ -206,8 +206,8 @@ export default function Playtest(){
   const [busy,setBusy]=useState(false);
   const [error,setError]=useState('');
   const roadPreviewFrame=roadPreview?.lastKmRoad[roadPreviewIndex];
-  const catchSourceFrame=roadPreview?.unsupportedReason===
-    'unpaid_front_catch'?roadPreview.kilometreFrames.at(-1):null;
+  const catchSourceFrame=roadPreview?.lastKmRoad.length===0?
+    roadPreview.kilometreFrames.at(-1):null;
   const catchRoadFrame=catchSourceFrame?
     roadPreview.kilometreFrames[roadPreviewIndex]:null;
   const changedRivalOutcomes=coastedComparison?
@@ -490,7 +490,7 @@ export default function Playtest(){
       setAttackApproach(null);setFinaleReplay(null);setBandLocalReplay(null);
       setRoadPreview(cause.roadPreview??null);
       setRoadPreviewIndex(Math.max(0,
-        (cause.roadPreview?.unsupportedReason==='unpaid_front_catch'?
+        (cause.roadPreview?.lastKmRoad.length===0?
           cause.roadPreview.kilometreFrames.length:
           cause.roadPreview?.lastKmRoad.length??1)-1));
       setError(cause.message||'The playtest could not run.');}
@@ -735,14 +735,22 @@ export default function Playtest(){
         <h2>Paid road · {roadPreview.settings.distanceKm} km {' '}
           {roadPreview.settings.terrain}</h2>
         {catchSourceFrame?<>
-          <p>The kilometre road is recorded through km {' '}
-            {catchSourceFrame.km}. A front group is calculated to meet the
-            bunch at {(roadPreview.catch.calculatedCatchDistanceM/1000)
-              .toFixed(3)} km ({Math.round(roadPreview.catch.metresToGo)} m
-            to go). That merge has no paid final-kilometre continuation;
-            individual finish, replay and points are withheld.</p>
-          <p>Approaching group: {roadPreview.catch.groupId}. Recorded groups
-            at the last-kilometre handoff: {catchSourceFrame.roadGroups.map(
+          {roadPreview.catch?<>
+            <p>The kilometre road is recorded through km {' '}
+              {catchSourceFrame.km}. A front group is calculated to meet the
+              bunch at {(roadPreview.catch.calculatedCatchDistanceM/1000)
+                .toFixed(3)} km ({Math.round(roadPreview.catch.metresToGo)} m
+              to go). That merge has no paid final-kilometre continuation;
+              individual finish, replay and points are withheld.</p>
+            <p>Approaching group: {roadPreview.catch.groupId}.</p>
+          </>:<p>The kilometre road is recorded through km {' '}
+            {catchSourceFrame.km}. {' '}
+            {roadPreview.unsupportedReason==='unpayable_front_handoff'?
+              `${roadPreview.handoff.riderId} cannot pay for the next road interval.`:
+              'The following front, bunch or isolated paths have unresolved contact.'}
+            {' '}No final-kilometre passage, individual finish, replay or
+            points is shown.</p>}
+          <p>Recorded groups at the last-kilometre handoff: {catchSourceFrame.roadGroups.map(
               group=>`${group.id} (${group.riderIds.length} riders, `+
               `${group.gapSeconds.toFixed(2)} s ahead)`).join(' · ')||'none'}.
           </p>

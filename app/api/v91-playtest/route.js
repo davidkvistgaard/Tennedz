@@ -20,6 +20,16 @@ export const dynamic='force-dynamic';
 
 const runs=new Map();
 function v93PlanError(error){
+  if(error.roadPreview?.unsupportedReason==='unpayable_front_handoff')
+    return `${error.roadPreview.handoff.riderId} cannot pay for travel `+
+      'from the last-kilometre handoff. The validated kilometre road is '+
+      'shown without an individual finish, replay or points. Choose '+
+      'different route conditions or tactics and run again.';
+  if(error.roadPreview?.unsupportedReason==='unresolved_band_contact')
+    return 'The front, bunch or isolated paths meet during the last '+
+      'kilometre without a paid contact model. The validated kilometre '+
+      'road is shown without an individual finish, replay or points. '+
+      'Choose different route conditions or tactics and run again.';
   if(error.message.startsWith(
     'The separated finale needs a recorded catch for ')&&
     Number.isFinite(error.roadPreview?.catch?.metresToGo))

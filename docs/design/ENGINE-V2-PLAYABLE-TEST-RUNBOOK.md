@@ -47,6 +47,9 @@ A calculated front-group catch without a paid merge shows the earlier
 kilometre road and contact coordinate, with no last-kilometre replay or
 result. Its **Recorded kilometre** slider lets you inspect earlier groups
 and your riders' energy before changing tactics or route conditions.
+On an extreme drawn climb, an unpayable front rider or unresolved band
+contact can likewise stop at the last-kilometre handoff. The same slider
+shows the validated earlier road; no later result or points are inferred.
 
 For a long-field default-tactics point example, choose 260 km, Flat, Men,
 20 teams, zero fatigue, seed `long-default-M-flat-0`, no player attack and
