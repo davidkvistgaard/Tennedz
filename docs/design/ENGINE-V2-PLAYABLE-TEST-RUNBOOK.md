@@ -56,6 +56,17 @@ divisions, division 2. The conditional result contains 160 riders; check
 `you-7` against its replay and point illustration. No official points are
 awarded. The local browser suite runs this complete flow.
 
+For an attacking long-field example, choose 260 km, Rolling, 20 teams,
+Some fatigue, and seed `v93-diversity-2`. Set uncustomized rivals to
+**Seek a break**. Choose Hard effort, Repeated attack and Ignore chase for
+your team, nominate `you-6` as finisher, and enable the read-only point
+illustration. The recorded front loses `you-6` and `you-7` to separate
+isolated passages while all 160 riders receive conditional crossings.
+Inspect `you-6` from the **Recorded front exit** note, then compare its
+result time and zero line energy with the last replay frame and its
+illustrated points with its provisional place. The browser suite runs this
+complete flow; no official award is saved.
+
 Automated reproduction: `pnpm test:v93:local` builds a fresh isolated fixture,
 runs the local browser suite and removes its generated build directory.
 `node scripts/engine-v2-v93-playability-matrix.mjs`
