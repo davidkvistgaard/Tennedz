@@ -551,17 +551,16 @@ export default function Playtest(){
       <p>Change your orders and the race conditions, then rerun with the same seed to compare what happened on the road.</p>
       <p className="v91-warning">This is a fictional preview. Results and points are for inspection only; no official result or award is saved.</p>
       <div className="v91-start" aria-label="Start a playable race preview">
-        <div><strong>Start with a race you can inspect.</strong>
-          <p>Choose a 40 km sample or a 120 km two-manager race with custom
-            tactics and lead-outs. Edit either setup, then inspect the road,
-            finish and rider replay.</p>
-        </div>
+        <strong>Start with a race you can inspect.</strong>
         <div className="v91-start-actions">
           <button type="button" onClick={()=>setupExampleRace('sample')}
             disabled={busy}>Set up sample race</button>
           <button type="button" onClick={()=>setupExampleRace('tactical')}
             disabled={busy}>Set up two-manager race</button>
         </div>
+        <p>Choose a 40 km sample or a 120 km two-manager race with custom
+          tactics and lead-outs. Edit either setup, then inspect the road,
+          finish and rider replay.</p>
       </div>
       <form id="v91-race-settings" onSubmit={run} className="v91-controls">
         <label className="v91-mode"><input type="checkbox" checked={integratedMode}
