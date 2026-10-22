@@ -51,9 +51,21 @@ On an extreme drawn climb, front riders who cannot pay even sheltered work
 at the last-kilometre handoff now leave the group and coast on independently
 recorded passages. Their conditional lines and individual replays are shown,
 while points remain unavailable without a proven order among the former
-front riders. The same climb with high starting fatigue also gives conditional lines to
-front leavers while older dropped riders stay behind the bunch. The
-former front members have no proven wheel order, so points stay withheld.
+front riders. The same climb with Tired starting fatigue also gives
+conditional lines to front leavers while older dropped riders stay behind
+the bunch. The former front members have no proven wheel order, so points
+stay withheld.
+
+To replay the pinned high-fatigue example through the form, select 260 km,
+Custom, Women, 20 teams and Tired starting fatigue. Enter elevation points
+`100/600/1200/1800/2300/2500`, seed `v93-custom-extreme-F-30-climb`,
+Seek a break for uncustomized rivals, Hard effort, Repeated attack and Ignore
+chase. Enable the read-only point illustration. The result has 160
+conditional crossings; four isolated passages at the line include two front
+leavers and two older dropped riders. Replay `you-7` to check its line time
+and energy against the result.
+Points and awards remain withheld. The isolated browser suite runs these
+form choices through the actual local API and result page.
 
 For a long-field default-tactics point example, choose 260 km, Flat, Men,
 20 teams, zero fatigue, seed `long-default-M-flat-0`, no player attack and

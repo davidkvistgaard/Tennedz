@@ -1378,6 +1378,67 @@ test('extreme front leavers finish with or without older dropped riders',
     await expect(page.getByText('Official points: withheld · Awards saved: 0'))
       .toBeVisible();
   });
+
+test('selected extreme climb replays a tired front leaver end to end',
+  async({page})=>{
+    await page.goto('/login');
+    await page.getByLabel('Email or username').fill('alice');
+    await page.getByLabel('Password',{exact:true}).fill('fixture-password');
+    await page.getByRole('button',{name:'Sign in',exact:true}).click();
+    await expect(page).toHaveURL(/\/team$/);
+    await page.goto('/team/v91-playtest');
+    await page.getByRole('checkbox',{
+      name:'Continue to a conditional finish'}).check();
+    await page.getByRole('checkbox',{
+      name:'Try v93 road-to-line preview'}).check();
+    await page.getByLabel('Distance').selectOption('260');
+    await page.getByLabel('Route profile').selectOption('custom');
+    await page.getByLabel('Category').selectOption('F');
+    await page.getByLabel('Field size').selectOption('20');
+    await page.getByLabel('Starting fatigue').selectOption('30');
+    await page.getByLabel('Scenario seed')
+      .fill('v93-custom-extreme-F-30-climb');
+    for(const [point,height] of Object.entries({Start:100,'20%':600,
+      '40%':1200,'60%':1800,'80%':2300,Finish:2500}))
+      await page.getByLabel(`${point} (m)`).fill(String(height));
+    await page.getByLabel('Default tactics for uncustomized managers')
+      .selectOption('attack');
+    await page.getByLabel('Your effort').selectOption('hard');
+    await page.getByLabel('Your attack').selectOption('repeated');
+    await page.getByLabel('Your chase').selectOption('ignore');
+    await page.getByRole('checkbox',{
+      name:'Show read-only point illustration'}).check();
+    const responsePromise=page.waitForResponse(response=>
+      response.url().endsWith('/api/v91-playtest')&&
+      response.request().method()==='POST');
+    await page.getByRole('button',{name:'Run v93 race preview'}).click();
+    const response=await responsePromise;
+    expect(response.status()).toBe(200);
+    const {coasted}=await response.json();
+    expect(coasted.settings).toMatchObject({distanceKm:260,
+      terrain:'custom',gender:'F',teamCount:20,fatigue:30,
+      seed:'v93-custom-extreme-F-30-climb',defaultRivalPlan:'attack',
+      effort:'hard',attack:'repeated',chase:'ignore'});
+    expect(coasted.settings.profileHeightsM)
+      .toEqual([100,600,1200,1800,2300,2500]);
+    expect(coasted.roadStatus).toBe(
+      'conditional_front_leavers_ahead_of_bunch');
+    expect(coasted.lineTimes).toHaveLength(160);
+    expect(coasted.lastKmRoad.at(-1).droppedPassages).toHaveLength(4);
+    expect(coasted.pointPreview.status).toBe('unavailable');
+    const crossing=coasted.lineTimes.find(row=>row.riderId==='you-7');
+    expect(crossing).toBeDefined();
+    await expect(page.getByRole('table',{
+      name:'V93 individual conditional results'}).getByRole('row'))
+      .toHaveCount(161);
+    await page.getByRole('button',{name:'Replay you-7'}).click();
+    const interval=page.getByRole('slider',{name:/Band interval/});
+    await interval.fill(await interval.getAttribute('max'));
+    await expect(page.getByLabel('Selected rider finale replay'))
+      .toContainText(`result ${crossing.elapsedSecondsFromLastKmStart.toFixed(3)} s, ${crossing.energyAtLine.toFixed(1)} energy.`);
+    await expect(page.getByText('Official points: withheld · Awards saved: 0'))
+      .toBeVisible();
+  });
 test('paid front leavers keep a conditional result in a mixed-rival race',
   async({page})=>{
     await page.goto('/login');

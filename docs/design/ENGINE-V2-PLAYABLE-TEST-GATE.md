@@ -3304,3 +3304,12 @@ no wheel order was recorded. Thus all twelve pinned extreme custom races
 have 160 validated conditional crossings, four have read-only point
 illustrations, and none saves an award. This is not a general paid merge
 for arbitrary band contact or the separate unpayable front catch.
+
+The local browser gate now also selects the fatigue-30 women's climb through
+the actual form, sends its chosen distance, custom elevation, field, category,
+fatigue and tactics to the local API, then inspects the 160-row result and
+`you-7`'s last replay interval. The displayed time and energy agree with the
+API crossing; the four final isolated passages and withheld points remain
+visible. The isolated build, all 34 browser flows and lint passed. This
+confirms the newly supported path is playable through the workbench rather
+than only through direct engine fixtures.
