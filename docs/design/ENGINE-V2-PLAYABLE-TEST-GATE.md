@@ -8,10 +8,13 @@ see [the local playable test runbook](ENGINE-V2-PLAYABLE-TEST-RUNBOOK.md).
 The local, opt-in v93 workbench has an end-to-end playable path from selected
 route, distance, category, field, fatigue and manager tactics to the recorded
 road, a nominated finisher and optional lead-out, individual conditional
-results and rider replay. The latest isolated build passed all 34 browser
-flows, including a 260 km, 20-team fatigued custom climb selected in the
-form. A 90-case whole-race matrix completed every case and checked each
-crossing against its paid replay; 75 had policy-consistent read-only point
+results and rider replay. A sample race and a 120 km two-manager example
+prepare editable setups; a live plan review lists the orders before a run.
+The latest isolated build passed all 35 browser flows, including both guided
+examples, a 260 km, 20-team fatigued custom climb selected in the form,
+and an unsupported front catch whose recorded road is marked stale when
+choices change. A 90-case whole-race matrix completed every case and checked
+each crossing against its paid replay; 75 had policy-consistent read-only point
 illustrations. All twelve pinned extreme custom races completed with 160
 crossings. No official result or award is saved.
 
