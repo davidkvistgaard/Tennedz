@@ -18,6 +18,11 @@
 .v91-controls select,.v91-controls input:not([type=checkbox]){width:100%;min-width:0}
 .v91-controls button{border:0;border-radius:8px;background:#116e60;color:white;font-weight:800;cursor:pointer;min-height:42px;align-self:end}
 .v91-controls button:disabled{opacity:.6;cursor:wait}
+.v91-run-bar{grid-column:1/-1;position:sticky;bottom:8px;z-index:2;display:flex;align-items:center;justify-content:space-between;gap:16px;padding:12px 16px;border:1px solid #8ab7a8;border-radius:12px;background:#f8fcf9;box-shadow:0 8px 24px #17312e24}
+.v91-run-bar div{display:grid;gap:3px}
+.v91-run-bar span{font-size:.85rem;color:#526b63;text-transform:capitalize}
+.v91-run-bar button{padding:8px 16px}
+@media(max-width:600px){.v91-run-bar{align-items:stretch;flex-direction:column;gap:8px}.v91-run-bar button{align-self:stretch}}
 .v91-mode{grid-column:1/-1;display:flex!important;align-items:center;gap:10px!important;font-size:1rem!important}
 .v91-mode input{min-height:auto;accent-color:#116e60}
 .v91-profile{grid-column:1/-1;min-width:0;border:1px solid #a6c2b8;border-radius:12px;padding:12px 16px}

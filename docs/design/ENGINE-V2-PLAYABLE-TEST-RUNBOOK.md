@@ -19,7 +19,8 @@ For a first run, click **Set up sample race** instead of choosing the two
 preview options manually. It selects a 40 km flat race with four teams,
 default rival tactics, a fixed seed and a read-only point illustration.
 Review or change the settings, then
-click **Run v93 race preview**. The result links jump to **Your finish**,
+click **Run v93 race preview** in the action bar, which remains reachable while
+scrolling the setup on a narrow screen. The result links jump to **Your finish**,
 **Recorded road**, **Individual results** and **Rider replay**. This sample
 path has its own local browser check. In the individual results, choose a team
 to narrow a large field without changing any placing or replay.

@@ -762,9 +762,13 @@ export default function Playtest(){
         </fieldset>}
         <label>Scenario seed<input value={settings.seed} maxLength={80}
           onChange={event=>change('seed',event.target.value)} /></label>
-        <button type="submit" disabled={busy}>{busy?'Running race…':
-          integratedMode&&coastedMode?'Run v93 race preview':
-            integratedMode?'Run full race preview':'Run race'}</button>
+        <div className="v91-run-bar">
+          <div><strong>Ready to race?</strong><span>{settings.distanceKm} km ·
+            {' '}{settings.terrain} · {settings.teamCount} teams</span></div>
+          <button type="submit" disabled={busy}>{busy?'Running race…':
+            integratedMode&&coastedMode?'Run v93 race preview':
+              integratedMode?'Run full race preview':'Run race'}</button>
+        </div>
       </form>
       {error&&<p role="alert" className="v91-error">{error}</p>}
       {roadPreview&&<section className="v91-results"

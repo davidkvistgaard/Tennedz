@@ -7,6 +7,7 @@ test.skip(process.env.PELOTONIA_V91_PLAYTEST_ENABLED!=='true'||
 
 test('sample race opens the playable setup and links the recorded result',
   async({page})=>{
+    await page.setViewportSize({width:390,height:844});
     await page.goto('/login');
     await page.getByLabel('Email or username').fill('bob');
     await page.getByLabel('Password',{exact:true}).fill('fixture-password');
@@ -25,6 +26,8 @@ test('sample race opens the playable setup and links the recorded result',
       .toHaveValue('sample-flat-finish');
     await expect(page.getByRole('checkbox',
       {name:'Show read-only point illustration'})).toBeChecked();
+    await expect(page.getByRole('button',
+      {name:'Run v93 race preview'})).toBeInViewport();
     const responsePromise=page.waitForResponse(response=>
       response.url().endsWith('/api/v91-playtest')&&
       response.request().method()==='POST');
