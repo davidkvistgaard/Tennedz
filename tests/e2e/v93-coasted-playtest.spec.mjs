@@ -5,6 +5,48 @@ test.skip(process.env.PELOTONIA_V91_PLAYTEST_ENABLED!=='true'||
   process.env.PELOTONIA_V93_COASTED_PLAYTEST_ENABLED!=='true',
 'The isolated v93 workbench is disabled.');
 
+test('sample race opens the playable setup and links the recorded result',
+  async({page})=>{
+    await page.goto('/login');
+    await page.getByLabel('Email or username').fill('bob');
+    await page.getByLabel('Password',{exact:true}).fill('fixture-password');
+    await page.getByRole('button',{name:'Sign in',exact:true}).click();
+    await expect(page).toHaveURL(/\/team$/);
+    await page.goto('/team/v91-playtest');
+    await page.getByRole('button',{name:'Set up sample race'}).click();
+    await expect(page.getByRole('checkbox',
+      {name:'Continue to a conditional finish'})).toBeChecked();
+    await expect(page.getByRole('checkbox',
+      {name:'Try v93 road-to-line preview'})).toBeChecked();
+    await expect(page.getByLabel('Distance')).toHaveValue('40');
+    await expect(page.getByLabel('Route profile')).toHaveValue('flat');
+    await expect(page.getByLabel('Your attack')).toHaveValue('none');
+    await expect(page.getByLabel('Scenario seed'))
+      .toHaveValue('sample-flat-finish');
+    const responsePromise=page.waitForResponse(response=>
+      response.url().endsWith('/api/v91-playtest')&&
+      response.request().method()==='POST');
+    await page.getByRole('button',{name:'Run v93 race preview'}).click();
+    const response=await responsePromise;
+    expect(response.status()).toBe(200);
+    const {coasted}=await response.json();
+    expect(coasted.lineTimes).toHaveLength(32);
+    await expect(page.getByRole('region',{name:'Your v93 finish'}))
+      .toContainText('Conditional place:');
+    const navigation=page.getByRole('navigation',{name:'Explore this race'});
+    for(const [name,id] of [
+      ['Your finish','v93-your-finish'],
+      ['Recorded road','v93-recorded-road'],
+      ['Individual results','v93-conditional-results'],
+      ['Rider replay','v93-paid-finale-replay']]){
+      await navigation.getByRole('link',{name}).click();
+      await expect(page).toHaveURL(new RegExp(`#${id}$`));
+      await expect(page.locator(`#${id}`)).toBeVisible();
+    }
+    await expect(page.getByText('Official points: withheld · Awards saved: 0'))
+      .toBeVisible();
+  });
+
 test('switching previews shows only tactics used by the selected race',
   async({page})=>{
     await page.goto('/login');

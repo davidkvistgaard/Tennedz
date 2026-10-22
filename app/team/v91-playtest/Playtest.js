@@ -387,6 +387,21 @@ export default function Playtest(){
   const maxHeight=Math.max(500,...settings.profileHeightsM);
   const profileLine=settings.profileHeightsM.map((height,index)=>
     `${10+index*196},${110-height/maxHeight*100}`).join(' ');
+  const setupSampleRace=()=>{
+    setIntegratedMode(true);setCoastedMode(true);
+    setSettings({...INITIAL,distanceKm:40,attack:'none',
+      seed:'sample-flat-finish'});
+    setCustomRivals(0);setExtraRivalId('');setFinalePlans({});
+    setLateEfforts({});setFinaleFrontWork({});
+    setNamedAttack({teamId:'',riderId:''});
+    setSecondNamedAttack({teamId:'',riderId:''});
+    setShowPointPreview(false);
+    setResult(null);setIntegrated(null);setCoasted(null);
+    setRoadPreview(null);setError('');
+    setComparison(null);setPreviousRun(null);
+    setCoastedComparison(null);setPreviousCoastedRun(null);
+    document.getElementById('v91-race-settings')?.scrollIntoView();
+  };
   async function run(event){
     event.preventDefault();setBusy(true);setError('');
     try{
@@ -498,11 +513,20 @@ export default function Playtest(){
   }
   return <TeamShell>
     <main className="v91-lab">
-      <p className="v91-eyebrow">Experimental motor workbench · v91</p>
+      <p className="v91-eyebrow">Experimental race engine</p>
       <h1>Try a fictional race</h1>
       <p>Change your orders and the race conditions, then rerun with the same seed to compare what happened on the road.</p>
-      <p className="v91-warning">Experimental preview. The full-race option records a conditional individual finish where the road can be paid and replayed; official places and points remain unavailable.</p>
-      <form onSubmit={run} className="v91-controls">
+      <p className="v91-warning">This is a fictional preview. Results and points are for inspection only; no official result or award is saved.</p>
+      <div className="v91-start" aria-label="Start a playable race preview">
+        <div><strong>New here? Start with a sample race.</strong>
+          <p>Set up a 40 km flat race with four teams and default rival tactics.
+            You can change the route, your orders, the finisher and the lead-out
+            before running it. Then inspect the road, finish and rider replay.</p>
+        </div>
+        <button type="button" onClick={setupSampleRace} disabled={busy}>
+          Set up sample race</button>
+      </div>
+      <form id="v91-race-settings" onSubmit={run} className="v91-controls">
         <label className="v91-mode"><input type="checkbox" checked={integratedMode}
           onChange={event=>setIntegratedMode(event.target.checked)}/>
           Continue to a conditional finish</label>
@@ -805,6 +829,12 @@ export default function Playtest(){
         <p>{coasted.tuningVersion} · {coasted.settings.managerTactics.length+
           (coasted.settings.managerTacticOverrides?.length??0)} custom rival managers · {coasted.roadStatus}</p>
         <p>Conditional individual line: {coasted.lineTimes.length} riders. Official results and points are withheld.</p>
+        <nav className="v91-result-nav" aria-label="Explore this race">
+          <a href="#v93-your-finish">Your finish</a>
+          <a href="#v93-recorded-road">Recorded road</a>
+          <a href="#v93-conditional-results">Individual results</a>
+          <a href="#v93-paid-finale-replay">Rider replay</a>
+        </nav>
         <details aria-label="Locked v93 manager orders">
           <summary>Locked manager orders for this race</summary>
           {coasted.managerOrders.map(order=>{
@@ -822,7 +852,7 @@ export default function Playtest(){
                 </span>)}</p>;
           })}
         </details>
-        {coastedOwnDecision&&<section className="v91-finish" aria-label="Your v93 finish">
+        {coastedOwnDecision&&<section className="v91-finish" id="v93-your-finish" aria-label="Your v93 finish">
           <h3>Your finish</h3>
           <p>Nominated finisher: {coastedOwnDecision.finisherId} ·
             {' '}{coastedOwnLine?.roadBandId??'no paid road band'} ·
@@ -898,7 +928,7 @@ export default function Playtest(){
           <span>{row.energy.toFixed(1)} energy</span>
         </div>)}</div>
         <div className="v91-finish">
-          <h3>Recorded final-kilometre road</h3>
+          <h3 id="v93-recorded-road">Recorded final-kilometre road</h3>
           <label>Road boundary: {coastedRoadIndex+1} of {coasted.lastKmRoad.length}
             <input type="range" min="0" max={coasted.lastKmRoad.length-1}
               value={coastedRoadIndex}
@@ -960,7 +990,7 @@ export default function Playtest(){
             .join(' · ')||'none'}</p>
         </div>
         <div className="v91-finish">
-          <h3>Individual conditional results</h3>
+          <h3 id="v93-conditional-results">Individual conditional results</h3>
           {coasted.frontExit&&<div role="note"
             aria-label="Recorded front exit">
             <p>{coasted.frontExit.exitRiderIds.length} exhausted riders left

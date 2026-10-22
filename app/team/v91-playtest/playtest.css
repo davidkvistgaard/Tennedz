@@ -2,6 +2,16 @@
 .v91-lab h1{font-size:clamp(2rem,4vw,3rem);margin:8px 0}
 .v91-eyebrow{font-size:.78rem;text-transform:uppercase;letter-spacing:.14em;font-weight:800;color:#287d72}
 .v91-warning{padding:14px 18px;background:#fff4d8;border-left:4px solid #c8871c;border-radius:8px}
+.v91-start{display:flex;align-items:center;justify-content:space-between;gap:20px;padding:20px;background:#e8f2ee;border-radius:16px}
+.v91-start strong{font-size:1.15rem}
+.v91-start p{margin:7px 0 0;max-width:70ch}
+.v91-start button{min-height:44px;flex-shrink:0;padding:10px 16px;border:0;border-radius:8px;background:#116e60;color:white;font-weight:800;cursor:pointer}
+.v91-start button:disabled{opacity:.6;cursor:wait}
+.v91-result-nav{display:flex;flex-wrap:wrap;gap:8px;margin:18px 0}
+.v91-result-nav a{display:inline-flex;align-items:center;min-height:42px;padding:8px 12px;border:1px solid #a6c2b8;border-radius:8px;color:#17312e;background:#f2f7f4;font-weight:700;text-decoration:none}
+.v91-result-nav a:hover,.v91-result-nav a:focus-visible{background:#d9ebe3;text-decoration:underline}
+#v93-your-finish,#v93-recorded-road,#v93-conditional-results,#v93-paid-finale-replay{scroll-margin-top:24px}
+@media(max-width:600px){.v91-start{align-items:stretch;flex-direction:column}.v91-start button{align-self:stretch}}
 .v91-controls{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px;padding:20px;background:#e8f2ee;border-radius:16px;margin:22px 0}
 .v91-controls label,.v91-results label{display:grid;gap:7px;min-width:0;font-weight:700;font-size:.88rem}
 .v91-controls select,.v91-controls input{min-height:42px;padding:8px 10px;border:1px solid #a6c2b8;border-radius:8px;background:white;color:#17312e}
