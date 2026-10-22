@@ -1386,6 +1386,11 @@ test('unpaid front catch shows the recorded road without a false finish',
     await expect(preview).toContainText('Your riders: you-0');
     await expect(page.getByRole('table',{
       name:'V93 individual conditional results'})).toHaveCount(0);
+    await page.getByLabel('Your effort').selectOption('hard');
+    await expect(preview.getByRole('status')).toContainText(
+      'The paid road below still shows the previous choices.');
+    await page.getByRole('button',{name:'Run v93 race preview'}).click();
+    await expect(preview.getByRole('status')).toHaveCount(0);
   });
 
 test('extreme front leavers finish with or without older dropped riders',

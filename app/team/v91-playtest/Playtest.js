@@ -400,6 +400,8 @@ export default function Playtest(){
       secondNamedAttack}:{})});
   const resultUsesEarlierChoices=Boolean(coasted&&submittedChoices&&
     submittedChoices!==currentChoices);
+  const roadPreviewUsesEarlierChoices=Boolean(roadPreview&&submittedChoices&&
+    submittedChoices!==currentChoices);
   const ownPlan=finalePlans.you??{finisherId:'you-7',
     leadOutRiderId:null};
   const individuallyManagedRivals=new Set([
@@ -534,6 +536,7 @@ export default function Playtest(){
       setResult(null);setIntegrated(null);setCoasted(null);setAttackRoad(null);
       setAttackApproach(null);setFinaleReplay(null);setBandLocalReplay(null);
       setRoadPreview(cause.roadPreview??null);
+      setSubmittedChoices(cause.roadPreview?currentChoices:null);
       setRoadPreviewIndex(Math.max(0,
         (cause.roadPreview?.lastKmRoad.length===0?
           cause.roadPreview.kilometreFrames.length:
@@ -826,6 +829,10 @@ export default function Playtest(){
         aria-label="Recorded road without individual finish">
         <h2>Paid road · {roadPreview.settings.distanceKm} km {' '}
           {roadPreview.settings.terrain}</h2>
+        {roadPreviewUsesEarlierChoices&&<p className="v91-warning"
+          role="status">You changed the setup after this run. The paid road
+          below still shows the previous choices. Run the race again to see
+          the current choices.</p>}
         {catchSourceFrame?<>
           {roadPreview.catch?<>
             <p>The kilometre road is recorded through km {' '}
