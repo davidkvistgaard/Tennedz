@@ -1,8 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {createV93PlayableTest,summarizeV93CoastedPlaytest,
-  validateV93CoastedPlaytest,
-  V93_UNSUPPORTED_HANDOFF_PREVIEW_VERSION} from
+  validateV93CoastedPlaytest} from
   '../../lib/engine/v2/playtest-v93-coasted.mjs';
 
 const pointContext={tier:2,divisionCount:2,divisionIndex:1};
@@ -14,15 +13,17 @@ function settings(gender,fatigue){
     chase:'ignore'};
 }
 
-for(const gender of ['M','F']){
-  test(`extreme ${gender} front leavers coast from 259 km to paid lines`,()=>{
-    const input=settings(gender,0);
+for(const gender of ['M','F'])for(const fatigue of [0,30])
+  test(`extreme ${gender} fatigue ${fatigue} front leavers reach paid lines`,()=>{
+    const input=settings(gender,fatigue);
     const race=createV93PlayableTest(input,{pointContext});
     assert.equal(validateV93CoastedPlaytest(input,{pointContext},race),true);
     const summary=summarizeV93CoastedPlaytest(race);
     assert.equal(summary.roadStatus,
       'conditional_front_leavers_ahead_of_bunch');
     assert.equal(summary.lineTimes.length,160);
+    assert.deepEqual(race.clock.trace.sourceDroppedRiderIds,
+      fatigue===30?['you-0','you-1']:[]);
     assert.equal(summary.pointPreview.status,'unavailable');
     assert.match(summary.pointPreview.reason,/no recorded wheel order/);
     assert.equal(summary.canCommitAwards,false);
@@ -40,26 +41,14 @@ for(const gender of ['M','F']){
         final.elapsedToLineSeconds);
       assert.equal(crossing.energyAtLine,final.energyAfter);
     }
+    if(fatigue===30){
+      assert.deepEqual(race.clock.line.bands.map(row=>row.id),
+        ['front_with_leavers','peloton','dropped']);
+      assert.equal(race.clock.line.bands.at(-1).firstPossiblePlace,159);
+      assert.ok(race.clock.passageFrames.every(frame=>
+        frame.droppedPassages.filter(row=>
+          ['you-0','you-1'].includes(row.riderId)).every(row=>
+          row.passageSecondsFromBunchMarker>
+            frame.bunchPassageSecondsFromBunchMarker)));
+    }
   });
-
-  test(`extreme ${gender} unresolved band contact remains a road refusal`,()=>{
-    assert.throws(()=>createV93PlayableTest(settings(gender,30)),error=>{
-      assert.match(error.message,/bands crossed without contact/);
-      const road=error.roadPreview;
-      assert.equal(road.version,V93_UNSUPPORTED_HANDOFF_PREVIEW_VERSION);
-      assert.equal(road.unsupportedReason,'unresolved_band_contact');
-      assert.equal(road.handoffKm,259);
-      assert.equal(road.kilometreFrames.length,259);
-      assert.equal(road.kilometreFrames.at(-1).km,259);
-      assert.ok(road.kilometreFrames.at(-1).ownRiders.every(row=>
-        Number.isFinite(row.energy)&&row.energy>=0));
-      assert.deepEqual(road.lastKmRoad,[]);
-      assert.equal(road.lineTimes,null);
-      assert.equal(road.bandReplays,null);
-      assert.equal(road.classifiedResults,null);
-      assert.equal(road.pointPreview.status,'unavailable');
-      assert.equal(road.canCommitAwards,false);
-      return true;
-    });
-  });
-}

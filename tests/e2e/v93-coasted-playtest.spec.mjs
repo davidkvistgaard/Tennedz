@@ -1315,7 +1315,7 @@ test('unpaid front catch shows the recorded road without a false finish',
       name:'V93 individual conditional results'})).toHaveCount(0);
   });
 
-test('extreme front leavers finish while unresolved contact shows only road',
+test('extreme front leavers finish with or without older dropped riders',
   async({page})=>{
     await page.goto('/login');
     await page.getByLabel('Email or username').fill('alice');
@@ -1325,7 +1325,7 @@ test('extreme front leavers finish while unresolved contact shows only road',
     const plans=['you',...Array.from({length:19},(_,index)=>
       `rival-${index+1}`)].map(teamId=>({teamId,
       finisherId:`${teamId}-7`,leadOutRiderId:null}));
-    let refusedBody;
+    let tiredBody;
     for(const fatigue of [0,30]){
       const response=await page.request.post('/api/v91-playtest',{
         headers:{origin:'http://localhost:3100'},data:{
@@ -1336,33 +1336,28 @@ test('extreme front leavers finish while unresolved contact shows only road',
             defaultRivalPlan:'attack',effort:'hard',attack:'repeated',
             chase:'ignore'},plans,
           pointContext:{tier:2,divisionCount:2,divisionIndex:1}}});
-      expect(response.status()).toBe(fatigue===0?200:422);
+      expect(response.status()).toBe(200);
       const body=await response.json();
-      if(fatigue===0){
-        expect(body.coasted.roadStatus).toBe(
-          'conditional_front_leavers_ahead_of_bunch');
-        expect(body.coasted.lineTimes).toHaveLength(160);
-        expect(body.coasted.pointPreview.status).toBe('unavailable');
-        expect(body.coasted.canCommitAwards).toBe(false);
-        for(const riderId of ['you-6','you-7']){
-          const crossing=body.coasted.lineTimes.find(row=>
-            row.riderId===riderId);
-          const replay=body.coasted.bandReplays.find(row=>
-            row.id===`isolated:${riderId}`);
-          const final=replay.frames.at(-1).riders.find(row=>
-            row.riderId===riderId);
-          expect(crossing.elapsedSecondsFromLastKmStart)
-            .toBe(final.elapsedToLineSeconds);
-          expect(crossing.energyAtLine).toBe(final.energyAfter);
-        }
-      }else{
-        expect(body.roadPreview.unsupportedReason)
-          .toBe('unresolved_band_contact');
-        expect(body.roadPreview.kilometreFrames).toHaveLength(259);
-        expect(body.roadPreview.lastKmRoad).toEqual([]);
-        expect(body.roadPreview.lineTimes).toBeNull();
-        expect(body.roadPreview.canCommitAwards).toBe(false);
-        refusedBody=body;
+      expect(body.coasted.roadStatus).toBe(
+        'conditional_front_leavers_ahead_of_bunch');
+      expect(body.coasted.lineTimes).toHaveLength(160);
+      expect(body.coasted.pointPreview.status).toBe('unavailable');
+      expect(body.coasted.canCommitAwards).toBe(false);
+      for(const riderId of ['you-6','you-7']){
+        const crossing=body.coasted.lineTimes.find(row=>
+          row.riderId===riderId);
+        const replay=body.coasted.bandReplays.find(row=>
+          row.id===`isolated:${riderId}`);
+        const final=replay.frames.at(-1).riders.find(row=>
+          row.riderId===riderId);
+        expect(crossing.elapsedSecondsFromLastKmStart)
+          .toBe(final.elapsedToLineSeconds);
+        expect(crossing.energyAtLine).toBe(final.energyAfter);
+      }
+      if(fatigue===30){
+        expect(body.coasted.lastKmRoad.at(-1).droppedPassages)
+          .toHaveLength(4);
+        tiredBody=body;
       }
     }
     await page.goto('/team/v91-playtest');
@@ -1371,20 +1366,18 @@ test('extreme front leavers finish while unresolved contact shows only road',
     await page.getByRole('checkbox',{
       name:'Try v93 road-to-line preview'}).check();
     await page.route('**/api/v91-playtest',route=>route.fulfill({
-      status:422,contentType:'application/json',
-      body:JSON.stringify(refusedBody)}));
+      status:200,contentType:'application/json',
+      body:JSON.stringify(tiredBody)}));
     await page.getByRole('button',{name:'Run v93 race preview'}).click();
-    const preview=page.getByRole('region',{
-      name:'Recorded road without individual finish'});
-    await expect(preview).toContainText('The following front, bunch or isolated paths have unresolved contact.');
-    await expect(preview).toContainText('No final-kilometre passage, individual finish, replay or points is shown');
-    await expect(preview).toContainText('Recorded kilometre: 259 of 259');
-    await preview.getByRole('slider',{name:/Recorded kilometre/}).fill('0');
-    await expect(preview).toContainText('Recorded kilometre: 1 of 259');
     await expect(page.getByRole('table',{
-      name:'V93 individual conditional results'})).toHaveCount(0);
+      name:'V93 individual conditional results'}).getByRole('row'))
+      .toHaveCount(161);
+    await expect(page.getByText(
+      'Point illustration unavailable: Front leavers and their former groups have no recorded wheel order.'))
+      .toBeVisible();
+    await expect(page.getByText('Official points: withheld · Awards saved: 0'))
+      .toBeVisible();
   });
-
 test('paid front leavers keep a conditional result in a mixed-rival race',
   async({page})=>{
     await page.goto('/login');

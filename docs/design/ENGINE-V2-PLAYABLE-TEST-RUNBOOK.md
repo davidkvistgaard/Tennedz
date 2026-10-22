@@ -51,8 +51,9 @@ On an extreme drawn climb, front riders who cannot pay even sheltered work
 at the last-kilometre handoff now leave the group and coast on independently
 recorded passages. Their conditional lines and individual replays are shown,
 while points remain unavailable without a proven order among the former
-front riders. A different extreme climb can still stop for unresolved band
-contact; its slider shows only the validated earlier road.
+front riders. The same climb with high starting fatigue also gives conditional lines to
+front leavers while older dropped riders stay behind the bunch. The
+former front members have no proven wheel order, so points stay withheld.
 
 For a long-field default-tactics point example, choose 260 km, Flat, Men,
 20 teams, zero fatigue, seed `long-default-M-flat-0`, no player attack and
@@ -86,7 +87,7 @@ repeated player attacks and mixed rival tactics. It checks every individual
 replay in completed races and validates that every unsupported front catch
 exposes only the earlier recorded road.
 `pnpm test:v93:extreme` pins twelve 260 km custom climbs and descents across
-both categories and three fatigue levels. Ten complete with all 160 rider
-replays; two stop at unresolved band contact and show only the validated
-road through km 259. Four completed cases have read-only point illustrations
-checked against the existing one-day policy.
+both categories and three fatigue levels. All twelve complete with 160 replayed rider
+crossings. Four have read-only point illustrations checked against the
+existing one-day policy. Ambiguous front-leaver order still withholds
+points and every award.

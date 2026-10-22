@@ -3291,3 +3291,16 @@ former groups because no wheel order is observed, so their preview points
 stay unavailable. The two fatigue-30 climbing cases still refuse an
 unrecorded band contact. The twelve-case corpus is now ten complete races,
 two explicit refusals and four read-only point illustrations.
+The final two pinned steep-climb refusals were narrower than their original
+message suggested. At fatigue 30 the 259 km source has one front group and
+two riders already dropped behind the bunch. Two zero-reserve front members
+leave that single group at the handoff, remain ahead of the bunch in every
+paid short slice and reach independently replayed lines. The existing
+front-leaver conditional band now accepts this one-front source only when
+all paid passages prove the surviving front and its leavers ahead, the old
+dropped riders behind, and no new bunch exits or leaver/bunch contact. It
+keeps the front members and leavers in one unresolved place range because
+no wheel order was recorded. Thus all twelve pinned extreme custom races
+have 160 validated conditional crossings, four have read-only point
+illustrations, and none saves an award. This is not a general paid merge
+for arbitrary band contact or the separate unpayable front catch.
