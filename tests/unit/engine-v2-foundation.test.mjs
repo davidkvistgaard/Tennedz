@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {buildKilometreRoute} from '../../lib/engine/v2/route.mjs';
-import {normalizeOrders,orderAt,breakAttackAt} from '../../lib/engine/v2/orders.mjs';
+import {normalizeOrders,orderMarkers,orderAt,breakAttackAt} from '../../lib/engine/v2/orders.mjs';
 import {resolveTacticalKilometre} from '../../lib/engine/v2/tactics.mjs';
 import {simulateTacticalTour} from '../../lib/engine/v2/tour.mjs';
 import {SPORTING_SKILLS,sportingSkills,riderKilometreEffect} from '../../lib/engine/v2/physiology.mjs';
@@ -117,6 +117,35 @@ test('a precommitted marker changes break cooperation without rewriting earlier 
   assert.equal(orderAt(orders,20).breakWork,'cooperate');
 });
 
+test('the 5 km-to-go marker changes the locked approach only after that marker',()=>{
+  assert.deepEqual(orderMarkers({distanceKm:40}),[10,20,30,35]);
+  assert.deepEqual(orderMarkers({distanceKm:35,keypoints:[{km:30}]}),
+    [10,20,30]);
+  const orders=normalizeOrders({captainId:'r0',phases:[
+    {atKm:35,effort:'hard',chase:'all',attack:'none'}]},
+  {riderIds:riders,distanceKm:40});
+  assert.equal(orderAt(orders,34).effort,'steady');
+  assert.equal(orderAt(orders,34).chase,'selective');
+  assert.equal(orderAt(orders,35).effort,'hard');
+  assert.equal(orderAt(orders,35).chase,'all');
+  assert.equal(orderAt(orders,35).attack,'none');
+  assert.throws(()=>normalizeOrders({captainId:'r0',phases:[
+    {atKm:36,effort:'hard'}]},{riderIds:riders,distanceKm:40}),/marker/);
+});
+
+test('a saved 5 km-to-go effort change affects only the recorded final kilometres',()=>{
+  const amber=tacticalTeam('amber','protect',{baseline:{attack:'none',chase:'ignore'}});
+  const rival=tacticalTeam('rival','protect',{baseline:{attack:'none',chase:'ignore'}});
+  const input={stage,teams:[amber,rival],seed:'five-km-approach'};
+  const baseline=simulateTacticalTour(input);
+  const changed=simulateTacticalTour({...input,teams:[{...amber,orders:{...amber.orders,
+    phases:[{atKm:35,effort:'hard'}]}},rival]});
+  assert.deepEqual(changed.frames.slice(0,35),baseline.frames.slice(0,35));
+  assert.ok(changed.frames.at(-1).teamEnergy.find(team=>team.teamId==='amber').mean<
+    baseline.frames.at(-1).teamEnergy.find(team=>team.teamId==='amber').mean);
+  assert.equal(validateRecordedTour(changed),true);
+});
+
 test('a support order can be precommitted for a later route marker',()=>{
   const orders=normalizeOrders({captainId:'r0',phases:[{atKm:20,captainSupport:'drop_back_if_dropped'}]},
     {riderIds:riders,distanceKm:40});
@@ -189,6 +218,8 @@ test('helper freedom protects the captain until dropped without overriding a nam
   Object.assign(team.riders[2],{flat:95,strength:95,acceleration:95});
   const context={teams:[team,rival],km:20};
   assert.equal(resolveTacticalKilometre(context).attackers.find(a=>a.teamId==='a').riderId,'a-2');
+  assert.equal(resolveTacticalKilometre(context).attackers.find(a=>a.teamId==='a').reason,'preset_cadence');
+  assert.equal(resolveTacticalKilometre({...context,isKeypoint:true}).attackers.find(a=>a.teamId==='a').reason,'keypoint');
   team.orders.baseline.helperAttackPolicy='hold_for_captain';
   assert.notEqual(resolveTacticalKilometre(context).attackers.find(a=>a.teamId==='a').riderId,'a-2');
   team.orders.baseline.helperAttackPolicy='release_if_dropped';
@@ -199,6 +230,7 @@ test('helper freedom protects the captain until dropped without overriding a nam
   team.orders.baseline.helperAttackPolicy='hold_for_captain';
   team.orders.baseline.attackRiderId='a-2';
   assert.equal(resolveTacticalKilometre(context).attackers.find(a=>a.teamId==='a').riderId,'a-2');
+  assert.equal(resolveTacticalKilometre(context).attackers.find(a=>a.teamId==='a').reason,'named_order');
   assert.deepEqual(resolveTacticalKilometre(context).releasedHelperAttackRiderIds,[]);
 });
 
@@ -948,6 +980,7 @@ test('selective pursuit waits with a manageable gap but starts as the finish app
   const guard=resolveTacticalKilometre({...context,km:60,gapSeconds:3});
   const late=resolveTacticalKilometre({...context,km:120});
   assert.deepEqual(early.heldChaseTeamIds,['b']);
+  assert.equal(early.selectiveChaseSafeGapSeconds,8.4);
   assert.deepEqual(early.chasers,[]);
   assert.deepEqual(mid.heldChaseTeamIds,['b']);
   assert.deepEqual(mid.chasers,[]);
@@ -963,6 +996,7 @@ test('selective pursuit waits with a manageable gap but starts as the finish app
   assert.ok(early.energyCosts.every(cost=>cost.reason!=='chase'));
   assert.deepEqual(late.heldChaseTeamIds,[]);
   assert.deepEqual(late.chasers.map(chaser=>chaser.teamId),['b']);
+  assert.equal(late.chasers[0].reason,'gap_over_limit');
   assert.ok(late.gapSeconds<early.gapSeconds);
   const stillSafe=resolveTacticalKilometre({...context,km:120,gapSeconds:1});
   const nowUrgent=resolveTacticalKilometre({...context,km:150,gapSeconds:1});
@@ -975,11 +1009,18 @@ test('selective pursuit waits with a manageable gap but starts as the finish app
   assert.throws(()=>resolveTacticalKilometre({...context,km:120,gapSeconds:8,
     leadingGapSeconds:1}),/Invalid tactical kilometre/);
   const all=tacticalTeam('b','protect',{baseline:{attack:'none',chase:'all'}});
-  assert.deepEqual(resolveTacticalKilometre({...context,teams:[ahead,all],km:20}).heldChaseTeamIds,[]);
+  const committed=resolveTacticalKilometre({...context,teams:[ahead,all],km:20});
+  assert.deepEqual(committed.heldChaseTeamIds,[]);
+  assert.equal(committed.chasers[0].reason,'ordered_all');
+  const ignoring=tacticalTeam('b','protect',{baseline:{attack:'none',chase:'ignore'}});
+  const heldBack=resolveTacticalKilometre({...context,teams:[ahead,ignoring],km:20});
+  assert.deepEqual(heldBack.withheldChaseTeamIds,['b']);
+  assert.deepEqual(heldBack.chasers,[]);
   const fresh=tacticalTeam('c','aggressive');
   const reacting=resolveTacticalKilometre({...context,teams:[ahead,defender,fresh],km:20});
   assert.ok(reacting.attackers.length>0);
   assert.ok(!reacting.heldChaseTeamIds.includes('b'));
+  assert.equal(reacting.chasers.find(chaser=>chaser.teamId==='b').reason,'fresh_attack');
 });
 
 test('a waiting chase team stays alert and later works in a recorded race',()=>{
@@ -1000,10 +1041,20 @@ test('a waiting chase team stays alert and later works in a recorded race',()=>{
   const later=race.frames.slice(waiting+3).find(frame=>
     frame.chasers.includes('b')&&frame.attackers.length===0);
   assert.ok(later,'the waiting team should eventually begin the chase');
+  assert.equal(later.chaseReasons.find(item=>item.teamId==='b').reason,'gap_over_limit');
   assert.equal(validateRecordedTour(race),true);
+  const falsifiedReason=structuredClone(race);
+  falsifiedReason.frames[later.km-1].chaseReasons.find(item=>item.teamId==='b').reason='gc_defense';
+  assert.throws(()=>validateRecordedTour(falsifiedReason),/chase reason/);
+  const falsifiedLimit=structuredClone(race);
+  falsifiedLimit.frames[waiting].selectiveChaseSafeGapSeconds=99;
+  assert.throws(()=>validateRecordedTour(falsifiedLimit),/recorded|Invalid/);
   const falsifiedPlan=structuredClone(race);
   falsifiedPlan.committedInputs.teams.find(team=>team.id==='b').orders.baseline.chase='ignore';
   assert.throws(()=>validateRecordedTour(falsifiedPlan),/held chase/);
+  const falsifiedWithholding=structuredClone(race);
+  falsifiedWithholding.frames[waiting].withheldChaseTeamIds=['b'];
+  assert.throws(()=>validateRecordedTour(falsifiedWithholding),/withheld chase/);
 });
 
 test('a solo rider needs sustained ability to keep an early break to the finish',()=>{
@@ -1061,7 +1112,7 @@ test('the full tactical trace is deterministic, bounded and makes aggressive ord
   const a=simulateTacticalTour(input);
   assert.deepEqual(a,simulateTacticalTour(input));
   assert.equal(a.frames.length,40);
-  assert.equal(a.tuningVersion,'v2-prototype-74');
+  assert.equal(a.tuningVersion,'v2-prototype-79');
   assert.equal(a.frames.at(-1).km,40);
   assert.ok(a.frames.some(frame=>frame.attackers.length>0));
   assert.ok(a.frames.some(frame=>frame.chasers.length>0));
@@ -1178,6 +1229,29 @@ test('a precommitted backup plan is executed by a stronger road captain sooner',
     {riderIds:riders,distanceKm:40}));
 });
 
+test('choosing the stronger road captain changes a locked plan with the same riders',()=>{
+  const base=tacticalTeam('own','balanced');
+  base.riders[0].fatigue=100;
+  base.riders[1].leadership=90;
+  base.riders[2].leadership=0;
+  base.orders={...base.orders,backupId:'own-3',
+    contingency:'backup_if_captain_exhausted',helperIds:['own-4','own-5','own-6','own-7'],
+    baseline:{effort:'hard',chase:'ignore',attack:'none'}};
+  const rival=tacticalTeam('rival','protect');
+  const stage={distance_km:140,profile_points:[[0,100],[140,100]]};
+  const run=roadCaptainId=>simulateTacticalTour({stage,
+    teams:[{...structuredClone(base),orders:{...base.orders,roadCaptainId}},rival],
+    seed:'same-riders-road-captain'});
+  const high=run('own-1'),low=run('own-2');
+  const switchKm=recording=>recording.frames.find(frame=>frame.decisions.some(
+    decision=>decision.teamId==='own'&&decision.kind==='backup_leader'))?.km;
+  assert.ok(switchKm(high)<switchKm(low));
+  assert.equal(high.committedInputs.teams.find(team=>team.id==='own').orders.roadCaptainId,'own-1');
+  assert.equal(low.committedInputs.teams.find(team=>team.id==='own').orders.roadCaptainId,'own-2');
+  assert.equal(validateRecordedTour(high),true);
+  assert.equal(validateRecordedTour(low),true);
+});
+
 test('the tactical model stays bounded across a full-length twenty-team race',()=>{
   const longStage={distance_km:400,profile_points:[[0,100],[120,400],[240,80],[400,100]],
     surface_segments:[{from_km:50,to_km:60,surface:'cobbles'}],exposed_segments:[{from_km:200,to_km:230}]};
@@ -1239,6 +1313,146 @@ test('distanced riders do not lower the reference pace of the remaining bunch',(
   assert.ok(next.filter(rider=>rider.group==='dropped').every(rider=>rider.deficitSeconds>4));
   assert.ok(next.filter(rider=>rider.group==='peloton').every(rider=>rider.deficitSeconds===0));
   assert.deepEqual(states.map(rider=>rider.deficitSeconds),[0,0,0,4,4,4,4,4]);
+  assert.throws(()=>updateRiderGroups(states,[],{paceSetterAbility:Infinity}),
+    /Invalid bunch pace setter/);
+  assert.throws(()=>updateRiderGroups(states,[],{frontPaceAbility:-1}),
+    /Invalid front pace/);
+});
+
+test('inert extra entrants cannot slow a working team before they are dropped',()=>{
+  const front=[{id:'weak',ability:80,deficitSeconds:0,lowKilometres:0,group:'peloton'},
+    {id:'worker',ability:96,deficitSeconds:0,lowKilometres:0,group:'peloton'}];
+  const inert=Array.from({length:40},(_,index)=>({id:`inert-${index}`,ability:30,
+    deficitSeconds:0,lowKilometres:0,group:'peloton'}));
+  let duel=front,expanded=[...front,...inert];
+  for(let km=0;km<20;km++){
+    duel=updateRiderGroups(duel,[],{paceSetterAbility:96});
+    expanded=updateRiderGroups(expanded,[],{paceSetterAbility:96});
+    assert.deepEqual(expanded.slice(0,2),duel,
+      `weak entrants changed the front's group state at kilometre ${km+1}`);
+  }
+  assert.equal(duel[0].group,'dropped');
+});
+
+test('a small strong team can set a costly hard tempo in fields of different sizes',()=>{
+  const skills=['sprint','flat','hills','mountain','cobbles','timetrial',
+    'endurance','strength','wind'];
+  const makeTeam=(id,level,hard=false,helpers=true)=>({id,
+    riders:Array.from({length:8},(_,index)=>({id:`${id}-${index}`,gender:'M',
+      form:70,fatigue:10,...Object.fromEntries(skills.map(skill=>[skill,level]))})),
+    orders:{captainId:`${id}-0`,preset:'balanced',
+      ...(helpers?{}:{helperIds:[]}),
+      baseline:{effort:hard?'hard':'steady',attack:'none',chase:'ignore'}}});
+  const route={distance_km:140,profile_points:[[0,0],[140,0]]};
+  const race=(size,level,hard)=>simulateTacticalTour({stage:route,seed:'bunch-work',
+    weather:{temp_c:18,wind_kph:5,precipitation_mm:0},
+    teams:[makeTeam('weak',80),makeTeam('strong',level,hard),
+      ...Array.from({length:size-2},(_,index)=>
+        makeTeam(`neutral-${index}`,76+index%13))]});
+  const gap=recording=>{
+    const weak=recording.provisionalResults.find(result=>result.teamId==='weak');
+    const strong=recording.provisionalResults.find(result=>result.teamId==='strong');
+    return weak.timeSeconds-strong.timeSeconds;
+  };
+  for(const size of [2,15]){
+    const steady=race(size,96,false),hard=race(size,96,true);
+    assert.ok(gap(hard)>gap(steady)+40,
+      `hard ${gap(hard)} seconds, steady ${gap(steady)} seconds in ${size} teams`);
+    assert.deepEqual(hard.frames[0].hardBunchWorkTeamIds,['strong']);
+    assert.equal(hard.frames[0].hardBunchWorkRiderIds.length,2);
+    assert.ok(hard.frames[0].hardBunchWorkRiderIds.every(id=>id.startsWith('strong-')));
+    assert.ok(new Set(hard.frames.flatMap(frame=>frame.hardBunchWorkRiderIds)).size>2,
+      'hard pace should rotate as working helpers lose energy');
+    const firstWorkers=new Set(hard.frames[0].hardBunchWorkRiderIds);
+    const workerEnergy=hard.frames[0].riderGroups.find(row=>
+      row.id===hard.frames[0].hardBunchWorkRiderIds[0]).energy;
+    const restingHelper=hard.frames[0].riderGroups.find(row=>
+      row.teamId==='strong'&&row.id!=='strong-0'&&!firstWorkers.has(row.id));
+    assert.ok(workerEnergy<restingHelper.energy,
+      'a worker must spend more energy than an unselected teammate');
+    const steadyWorkers=new Set(steady.frames[0].steadyBunchWorkRiderIds.filter(id=>
+      id.startsWith('strong-')));
+    assert.equal(steadyWorkers.size,2);
+    const steadyWorkerEnergy=steady.frames[0].riderGroups.find(row=>
+      row.id===[...steadyWorkers][0]).energy;
+    const steadyRestingHelper=steady.frames[0].riderGroups.find(row=>
+      row.teamId==='strong'&&row.id!=='strong-0'&&!steadyWorkers.has(row.id));
+    assert.ok(steadyWorkerEnergy<steadyRestingHelper.energy,
+      'normal pace workers must also spend more than an unselected teammate');
+    assert.ok(hard.frames.at(-1).teamEnergy.find(row=>row.teamId==='strong').mean<
+      steady.frames.at(-1).teamEnergy.find(row=>row.teamId==='strong').mean);
+    assert.equal(validateRecordedTour(hard),true);
+    const forged=structuredClone(hard);
+    forged.frames[0].hardBunchWorkTeamIds=['weak'];
+    assert.throws(()=>validateRecordedTour(forged),/Invalid recorded bunch work/);
+    const fakeWorker=structuredClone(hard);
+    fakeWorker.frames[0].hardBunchWorkRiderIds=['weak-1','strong-1'];
+    assert.throws(()=>validateRecordedTour(fakeWorker),/Invalid recorded bunch workers/);
+    const fakeSteadyWorker=structuredClone(steady);
+    fakeSteadyWorker.frames[0].steadyBunchWorkRiderIds[0]='strong-0';
+    assert.throws(()=>validateRecordedTour(fakeSteadyWorker),
+      /Invalid recorded steady bunch workers/);
+    const priorRecording=structuredClone(hard);
+    priorRecording.tuningVersion='v2-prototype-75';
+    priorRecording.frames.forEach(frame=>{
+      delete frame.hardBunchWorkTeamIds;
+      delete frame.hardBunchWorkRiderIds;
+    });
+    assert.equal(validateRecordedTour(priorRecording),true);
+  }
+  const moderate=race(15,90,true);
+  assert.ok(gap(moderate)<gap(race(15,96,true)),
+    'a moderately stronger team must create a smaller gap');
+  const noHelpers=simulateTacticalTour({stage:route,seed:'bunch-work',
+    weather:{temp_c:18,wind_kph:5,precipitation_mm:0},
+    teams:[makeTeam('weak',80),makeTeam('strong',96,true,false),
+      ...Array.from({length:13},(_,index)=>makeTeam(`neutral-${index}`,76+index%13))]});
+  assert.ok(gap(noHelpers)<10);
+  assert.deepEqual(noHelpers.frames[0].hardBunchWorkTeamIds,[]);
+  assert.deepEqual(noHelpers.frames[0].hardBunchWorkRiderIds,[]);
+  const lowAbility=simulateTacticalTour({stage:route,seed:'bunch-work',
+    weather:{temp_c:18,wind_kph:5,precipitation_mm:0},
+    teams:[makeTeam('low-a',0),makeTeam('low-b',0)]});
+  assert.equal(validateRecordedTour(lowAbility),true);
+});
+
+test('hard bunch workers eventually exhaust on a long route without erasing earlier gaps',()=>{
+  const skills=['sprint','flat','hills','mountain','cobbles','timetrial',
+    'endurance','strength','wind'];
+  const spread=[-8,-6,-4,-2,2,4,6,8];
+  const makeTeam=(id,level,hard=false)=>({id,
+    riders:spread.map((offset,index)=>({id:`${id}-${index}`,gender:'M',
+      form:70,fatigue:10,...Object.fromEntries(skills.map(skill=>
+        [skill,Math.min(100,level+offset)]))})),
+    orders:{captainId:`${id}-7`,preset:'balanced',
+      baseline:{effort:hard?'hard':'steady',attack:'none',chase:'ignore'}}});
+  const run=extraTeams=>simulateTacticalTour({stage:{distance_km:300,
+    profile_points:[[0,0],[300,0]],tags:['FLAT']},seed:'fixed',
+  weather:{temp_c:18,wind_kph:5,precipitation_mm:0},
+  teams:[makeTeam('weak',80),makeTeam('strong',96,true),...extraTeams]});
+  const recording=run([]);
+  const stopped=recording.frames.findIndex(frame=>
+    !frame.hardBunchWorkTeamIds.includes('strong'));
+  assert.ok(stopped>140&&stopped<recording.frames.length,
+    'hard pacing should end only after sustained work drains the helpers');
+  assert.ok(recording.frames.slice(stopped).every(frame=>
+    !frame.hardBunchWorkTeamIds.includes('strong')),
+  'an exhausted team must not resume hard pacing without recovered helpers');
+  const weakGap=frame=>frame.riderGroups.find(row=>row.id==='weak-7').deficitSeconds;
+  assert.ok(weakGap(recording.frames[stopped])>=
+    weakGap(recording.frames[stopped-1])-1,
+  'the worker handoff must not erase an already earned road deficit');
+  assert.ok(recording.frames[stopped].teamEnergy.find(row=>
+    row.teamId==='strong').mean<recording.frames[140].teamEnergy.find(row=>
+      row.teamId==='strong').mean);
+  assert.equal(validateRecordedTour(recording),true);
+  const expanded=run(Array.from({length:13},(_,index)=>
+    makeTeam(`neutral-${index}`,76+index%13)));
+  const firstWeakGap=race=>race.provisionalResults.find(row=>
+    row.teamId==='weak').gapSeconds;
+  assert.ok(Math.abs(firstWeakGap(expanded)-firstWeakGap(recording))<2,
+    'extra competitive teams must not silently replace the paid front pace');
+  assert.equal(validateRecordedTour(expanded),true);
 });
 
 test('helpers shelter a protected leader but cannot simultaneously chase',()=>{
@@ -2121,6 +2335,11 @@ test('recorded playback does not recalculate and rejects a result that differs f
   const wrongAttackFatigue=structuredClone(result);
   wrongAttackFatigue.frames[19].fatiguedAttackRiderIds=['foreign'];
   assert.throws(()=>validateRecordedTour(wrongAttackFatigue),/attack event/);
+  const wrongAttackReason=structuredClone(result);
+  const firstAttacker=wrongAttackReason.frames.find(frame=>frame.attackReasons.length);
+  assert.ok(firstAttacker);
+  firstAttacker.attackReasons[0].reason='named_order';
+  assert.throws(()=>validateRecordedTour(wrongAttackReason),/attack reason/);
   const wrongRoadGroup=structuredClone(result);
   const firstRoadGroup=wrongRoadGroup.frames.find(frame=>frame.roadGroups.length>0);
   firstRoadGroup.roadGroups[0].id='road-99';
@@ -2141,6 +2360,9 @@ test('recorded playback does not recalculate and rejects a result that differs f
   const wrongBreakTeam=structuredClone(result);
   wrongBreakTeam.frames[firstBreak].breakawayTeamIds=[];
   assert.throws(()=>validateRecordedTour(wrongBreakTeam),/breakaway/);
+  const wrongPriorRepresentation=structuredClone(result);
+  wrongPriorRepresentation.frames[firstBreak+1].representedAheadTeamIds=[];
+  assert.throws(()=>validateRecordedTour(wrongPriorRepresentation),/teams ahead before/);
   const missingAttack=structuredClone(result);
   missingAttack.frames[firstBreak].attackers=[];
   assert.throws(()=>validateRecordedTour(missingAttack),/breakaway/);
@@ -2163,6 +2385,16 @@ test('recorded playback does not recalculate and rejects a result that differs f
   const foreignChase=structuredClone(result);
   foreignChase.frames[firstChase].chasers.push('foreign');
   assert.throws(()=>validateRecordedTour(foreignChase),/chase event/);
+  const allOutScenario=flatScenario('sprint');
+  allOutScenario.teams[0].chaseContribution='all';
+  const allOutRace=runKilometreLab({scenario:allOutScenario,seed:'reason-priority'});
+  const allOutFrame=allOutRace.frames.find(frame=>frame.attackPower>0&&
+    frame.chaseReasons.some(item=>item.teamId==='team-0'&&item.reason==='ordered_all'));
+  assert.ok(allOutFrame);
+  const plausibleButWrongReason=structuredClone(allOutRace);
+  plausibleButWrongReason.frames[allOutFrame.km-1].chaseReasons
+    .find(item=>item.teamId==='team-0').reason='fresh_attack';
+  assert.throws(()=>validateRecordedTour(plausibleButWrongReason),/chase reason/);
   const foreignDecision=structuredClone(result);
   foreignDecision.frames[firstChase].decisions.push({teamId:'foreign',kind:'chase_break',riderId:'foreign'});
   assert.throws(()=>validateRecordedTour(foreignDecision),/tactical decision/);

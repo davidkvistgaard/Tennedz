@@ -7,6 +7,7 @@ test('guided preview is deterministic, complete and omits the engine tuning tabl
  const again=createMotorLabPreview({plan:'break',seed:7});
  assert.deepEqual(first,again);
  assert.equal(first.kind,'fictional-motor-lab');
+ assert.equal(first.routeId,'coast');
  assert.equal(first.frames.length,160);
  assert.equal(first.frames.at(-1).km,160);
  assert.equal(first.results.length,32);
@@ -17,6 +18,24 @@ test('guided preview is deterministic, complete and omits the engine tuning tabl
  assert(!JSON.stringify(first).includes('cooperationBonus'));
 });
 
+test('two fixed routes preserve the seed but produce distinct recorded terrain',()=>{
+ const coast=createMotorLabPreview({plan:'sprint',routeId:'coast',seed:1});
+ const ridge=createMotorLabPreview({plan:'sprint',routeId:'ridge',seed:1});
+ assert.equal(ridge.scenarioName,'Ridge Road laboratory');
+ assert.equal(ridge.routeId,'ridge');
+ assert.equal(ridge.frames.length,160);
+ assert(ridge.frames.some(frame=>frame.terrain==='climb'));
+ assert(ridge.frames.some(frame=>frame.terrain==='descent'));
+ assert.equal(ridge.frames[34].elevationM,330);
+ assert.equal(ridge.frames[34].gradientPct,5);
+ assert(ridge.frames.every(frame=>Number.isFinite(frame.elevationM)&&
+  Number.isFinite(frame.gradientPct)));
+ assert(!coast.frames.some(frame=>frame.terrain==='climb'));
+ assert(coast.frames.every(frame=>frame.elevationM<40));
+ assert.notDeepEqual(coast.frames,ridge.frames);
+ assert.deepEqual(ridge,createMotorLabPreview({plan:'sprint',routeId:'ridge',seed:1}));
+});
+
 test('another committed plan can change the same seeded fictional race',()=>{
  const sprint=createMotorLabPreview({plan:'sprint',seed:5});
  const breakPlan=createMotorLabPreview({plan:'break',seed:5});
@@ -25,8 +44,222 @@ test('another committed plan can change the same seeded fictional race',()=>{
  assert.notDeepEqual(sprint.frames,breakPlan.frames);
 });
 
+test('advanced orders are committed and alter the same seeded race',()=>{
+ const standard=createMotorLabPreview({plan:'break',seed:5});
+ const advanced=createMotorLabPreview({plan:'break',seed:5,orders:{
+  breakResponse:'chase_if_threatened',breakWork:'sit_on',lateEffort:'hard',
+  lateChaseContribution:'selective',
+ }});
+ assert.deepEqual(advanced.orders,{chaseContribution:'follow_plan',attackPosture:'follow_plan',
+  lateAttackPosture:'follow_plan',breakResponse:'chase_if_threatened',
+  breakWork:'sit_on',lateEffort:'hard',lateChaseContribution:'selective',
+  breakAttackMarker:'none',roadCaptain:'standard',
+  captainSupport:'hold_position',helperAttackPolicy:'open'});
+ assert(advanced.frames[120].moments.includes('Amber switched to hard effort'));
+ assert(advanced.frames[120].moments.includes('Amber switched to selective chase work'));
+ assert(!standard.frames[120].moments.includes('Amber switched to hard effort'));
+ assert.notDeepEqual(standard.frames,advanced.frames);
+ assert.deepEqual(advanced,createMotorLabPreview({plan:'break',seed:5,orders:advanced.orders}));
+});
+
+test('a committed bunch attack posture changes attempts without changing the fixture seed',()=>{
+ const common={plan:'break',seed:1};
+ const original=createMotorLabPreview(common);
+ const held=createMotorLabPreview({...common,orders:{attackPosture:'none'}});
+ const selective=createMotorLabPreview({...common,orders:{attackPosture:'selective'}});
+ assert.equal(original.amberBunchAttackAttempts,20);
+ assert.equal(held.amberBunchAttackAttempts,0);
+ assert.equal(selective.amberBunchAttackAttempts,8);
+ assert.deepEqual(original,createMotorLabPreview({...common,orders:original.orders}));
+ assert.deepEqual(held,createMotorLabPreview({...common,orders:held.orders}));
+ assert.notDeepEqual(original.frames,held.frames);
+});
+
+test('a timed bunch attack order changes only the late recorded road',()=>{
+ const common={plan:'break',seed:1,orders:{attackPosture:'none'}};
+ const held=createMotorLabPreview(common);
+ const late=createMotorLabPreview({...common,orders:{attackPosture:'none',
+  lateAttackPosture:'selective'}});
+ assert.deepEqual(late.frames.slice(0,120),held.frames.slice(0,120));
+ assert.equal(held.amberBunchAttackAttempts,0);
+ assert.equal(late.amberBunchAttackAttempts,2);
+ assert(late.frames[120].moments.includes('Amber switched to selective bunch attacks'));
+ assert.notDeepEqual(late.frames.slice(120),held.frames.slice(120));
+ assert.deepEqual(late,createMotorLabPreview({...common,orders:late.orders}));
+});
+
+test('a precommitted late chase phase changes road work only after its marker',()=>{
+ const common={plan:'sprint',seed:1,orders:{chaseContribution:'ignore'}};
+ const held=createMotorLabPreview(common);
+ const late=createMotorLabPreview({...common,orders:{chaseContribution:'ignore',
+  lateChaseContribution:'all'}});
+ assert.deepEqual(late.frames.slice(0,120),held.frames.slice(0,120));
+ assert(late.frames[120].moments.includes('Amber switched to all chase work'));
+ assert.equal(held.frames.filter(frame=>frame.chasingTeams.includes('Amber')).length,0);
+ assert.equal(late.frames.slice(120).filter(frame=>frame.chasingTeams.includes('Amber')).length,11);
+ assert.notDeepEqual(late.results,held.results);
+ assert.deepEqual(late,createMotorLabPreview({...common,orders:late.orders}));
+});
+
+test('helper attack policy protects helpers without silently changing the captain order',()=>{
+ const common={plan:'break',seed:1};
+ const open=createMotorLabPreview(common);
+ const held=createMotorLabPreview({...common,orders:{helperAttackPolicy:'hold_for_captain'}});
+ const conditional=createMotorLabPreview({...common,orders:{helperAttackPolicy:'release_if_dropped'}});
+ const attempts=recording=>[...new Set(recording.frames.flatMap(frame=>frame.attackAttempts)
+  .filter(name=>name.startsWith('Amber ')))];
+ assert(attempts(open).includes('Amber Rider 3'));
+ assert.equal(open.amberHelperAttackAttempts,15);
+ assert.equal(open.amberBunchAttackAttempts,20);
+ assert.equal(held.amberBunchAttackAttempts,20);
+ assert.equal(held.amberHelperAttackAttempts,0);
+ assert.equal(conditional.amberHelperAttackAttempts,0);
+ assert(!attempts(held).some(name=>/^Amber Rider [3-8]$/.test(name)));
+ assert(attempts(held).includes('Amber Captain'));
+ assert.deepEqual(conditional.frames,held.frames);
+ assert.notDeepEqual(open.frames,held.frames);
+ assert.deepEqual(held,createMotorLabPreview({...common,orders:held.orders}));
+});
+
+test('a reachable helper can support Amber Captain on the fixed ridge exercise',()=>{
+ const common={plan:'sprint',seed:1,routeId:'ridge'};
+ const alone=createMotorLabPreview(common);
+ const supported=createMotorLabPreview({...common,orders:{captainSupport:'drop_back_if_dropped'}});
+ assert.equal(alone.frames.filter(frame=>frame.amberCaptainDropped).length,7);
+ assert.equal(supported.frames.filter(frame=>frame.amberCaptainDropped).length,2);
+ assert(supported.frames.some(frame=>frame.moments.some(moment=>
+  /helped Amber Captain recover \d+\.\d s/.test(moment))));
+ assert.equal(alone.results.find(result=>result.name==='Amber Captain').position,
+  supported.results.find(result=>result.name==='Amber Captain').position);
+ assert.deepEqual(supported,createMotorLabPreview({...common,orders:supported.orders}));
+ const attackPlan=createMotorLabPreview({...common,plan:'break'});
+ assert.equal(attackPlan.frames.filter(frame=>frame.amberCaptainDropped).length,0);
+});
+
+test('road captain leadership changes a precommitted chase response',()=>{
+ const standard=createMotorLabPreview({plan:'conserve',seed:1,orders:{breakResponse:'chase_if_threatened'}});
+ const experienced=createMotorLabPreview({plan:'conserve',seed:1,orders:{
+  breakResponse:'chase_if_threatened',roadCaptain:'experienced',
+ }});
+ const firstChase=recording=>recording.frames.find(frame=>
+  frame.moments.some(moment=>moment.startsWith('Amber road captain called a chase')))?.km;
+ assert.equal(firstChase(standard),23);
+ assert.equal(firstChase(experienced),22);
+ assert(standard.frames[22].moments.some(moment=>
+  /called a chase with the leader 8\.2 s ahead/.test(moment)));
+ assert(standard.frames[23].moments.includes(
+  'Amber road captain ended the chase after the break was caught'));
+ assert(experienced.frames.filter(frame=>frame.chasingTeams.includes('Amber')).length>
+  standard.frames.filter(frame=>frame.chasingTeams.includes('Amber')).length);
+ assert.deepEqual(experienced,createMotorLabPreview({plan:'conserve',seed:1,orders:{
+  breakResponse:'chase_if_threatened',roadCaptain:'experienced',
+ }}));
+});
+
+test('chase contribution changes Amber work without changing the seeded route',()=>{
+ const common={plan:'sprint',seed:1,routeId:'coast'};
+ const planned=createMotorLabPreview(common);
+ const held=createMotorLabPreview({...common,orders:{chaseContribution:'ignore'}});
+ const committed=createMotorLabPreview({...common,orders:{chaseContribution:'all'}});
+ const amberChaseKm=recording=>recording.frames.filter(frame=>frame.chasingTeams.includes('Amber')).length;
+ assert.equal(held.orders.chaseContribution,'ignore');
+ assert.equal(amberChaseKm(held),0);
+ assert(amberChaseKm(planned)>0);
+ assert(held.frames.filter(frame=>frame.groups.length).length>
+  committed.frames.filter(frame=>frame.groups.length).length);
+ assert(held.frames.at(-1).amberEnergy>planned.frames.at(-1).amberEnergy);
+ assert(planned.frames.at(-1).amberEnergy>committed.frames.at(-1).amberEnergy);
+ assert.equal(held.routeId,committed.routeId);
+ assert.deepEqual(held,createMotorLabPreview({...common,orders:held.orders}));
+});
+
+test('recording distinguishes a deliberate wait from teams represented up the road',()=>{
+ const recording=createMotorLabPreview({plan:'sprint',seed:1});
+ assert.deepEqual(recording.frames[4].chaseReasons,[
+  {team:'Amber',reason:'fresh_attack'},
+  {team:'Birch',reason:'fresh_attack'},
+  {team:'Dune',reason:'fresh_attack'},
+ ]);
+ assert.deepEqual(recording.frames[40].chaseReasons,[
+  {team:'Amber',reason:'gap_over_limit'},
+  {team:'Birch',reason:'gap_over_limit'},
+ ]);
+ const frame=recording.frames[21];
+ assert.equal(frame.km,22);
+ assert.deepEqual(frame.chasingTeams,[]);
+ assert.deepEqual(frame.waitingTeams,['Amber','Birch']);
+ assert.equal(frame.decisionLeadGapSeconds,3.39);
+ assert.equal(frame.selectiveChaseSafeGapSeconds,8.28);
+ assert.deepEqual(frame.teamsUpRoad,['Cedar','Dune']);
+ assert(recording.frames.every(item=>item.groups.length||!item.waitingTeams.length));
+});
+
+test('rounded safe-gap display does not invalidate an exact chase decision',()=>{
+ const recording=createMotorLabPreview({plan:'conserve',seed:9});
+ assert.deepEqual(recording.frames[105].chaseReasons,[
+  {team:'Birch',reason:'gap_over_limit'},
+ ]);
+ assert.equal(recording.frames[105].selectiveChaseSafeGapSeconds,3.24);
+});
+
+test('the viewer names a team that deliberately holds chase helpers',()=>{
+ const recording=createMotorLabPreview({plan:'sprint',seed:1,
+  orders:{chaseContribution:'ignore'}});
+ assert.deepEqual(recording.frames[4].holdingHelpers,['Amber']);
+ assert(!recording.frames[4].chasingTeams.includes('Amber'));
+});
+
+test('break episodes summarize only contiguous recorded kilometres',()=>{
+ const recording=createMotorLabPreview({plan:'sprint',seed:1});
+ assert.deepEqual(recording.episodes[0],{startKm:20,lastKm:25,
+  peakGapSeconds:12.35,chasedKm:3,waitingKm:3,
+  teams:['Cedar','Dune'],caughtAtKm:26,catchChaseState:'earlier_in_move'});
+ assert.equal(recording.episodes[4].catchChaseState,'active_at_catch');
+ assert.deepEqual(recording.frames[25].teamsAheadBeforeKm,['Cedar','Dune']);
+ assert.deepEqual(recording.frames[25].teamsUpRoad,[]);
+ assert.equal(recording.episodes.reduce((total,episode)=>
+  total+episode.lastKm-episode.startKm+1,0),
+ recording.frames.filter(frame=>frame.groups.length).length);
+ assert(recording.episodes.every((episode,index)=>index===0||
+  recording.episodes[index-1].caughtAtKm<episode.startKm));
+ const breakPlan=createMotorLabPreview({plan:'break',seed:1});
+ assert.equal(breakPlan.episodes.at(-1).caughtAtKm,null);
+ assert.equal(breakPlan.episodes.at(-1).catchChaseState,null);
+ assert.equal(breakPlan.episodes.at(-1).lastKm,160);
+});
+
+test('recording distinguishes a failed bunch attack from a rider who got clear',()=>{
+ const recording=createMotorLabPreview({plan:'sprint',seed:1});
+ assert.deepEqual(recording.frames[4].attackAttempts,['Cedar Captain']);
+ assert.deepEqual(recording.frames[4].attackReasons,[
+  {rider:'Cedar Captain',reason:'preset_cadence'},
+ ]);
+ assert.deepEqual(recording.frames[4].attacksWithoutGap,['Cedar Captain']);
+ assert.deepEqual(recording.frames[19].attacksWithoutGap,[]);
+ assert(recording.frames[19].attackAttempts.includes('Cedar Captain'));
+ assert(recording.frames[19].groups.some(group=>group.riders.includes('Cedar Captain')));
+});
+
+test('a committed break attack can split a group or be visibly blocked',()=>{
+ const split=createMotorLabPreview({plan:'break',seed:1,orders:{breakAttackMarker:'40'}});
+ assert.equal(split.frames[40].groups.length,2);
+ assert(split.frames[40].moments.includes('Amber Captain attacked from a break'));
+ assert.deepEqual(split,createMotorLabPreview({plan:'break',seed:1,orders:{breakAttackMarker:'40'}}));
+ const blocked=createMotorLabPreview({plan:'break',seed:1,orders:{breakAttackMarker:'120'}});
+ assert(blocked.frames[120].moments.some(moment=>moment.includes('could not start: not in break')));
+ assert.notDeepEqual(split.frames,blocked.frames);
+});
+
 test('guided preview rejects unbounded or unknown requests',()=>{
  for(const input of [{plan:'unknown',seed:0},{plan:'sprint',seed:-1},
-  {plan:'sprint',seed:10000},{plan:'sprint',seed:'1'}])
-  assert.throws(()=>createMotorLabPreview(input),/valid plan and scenario number/);
+  {plan:'sprint',seed:10000},{plan:'sprint',seed:'1'},
+  {plan:'sprint',seed:1,routeId:'outside'}])
+  assert.throws(()=>createMotorLabPreview(input),/valid plan, route and scenario number/);
+ for(const orders of [null,[],{breakWork:'freewheel'},{lateEffort:120},
+  {breakAttackMarker:'41'},{breakAttackMarker:40},{roadCaptain:'legend'},
+  {chaseContribution:'infinite'},{attackPosture:'infinite'},
+  {lateChaseContribution:'infinite'},{lateAttackPosture:'infinite'},
+  {captainSupport:'teleport'},
+  {helperAttackPolicy:'teleport'},{admin:true}])
+  assert.throws(()=>createMotorLabPreview({plan:'sprint',seed:1,orders}),/valid advanced orders/);
 });

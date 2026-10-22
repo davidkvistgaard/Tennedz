@@ -28,7 +28,8 @@ Verification on this production-base branch:
 - The playable acceptance suite passed 20 route/field/finale cases; the point
   preview suite passed three cases; the focused v93 contact/bounds suites
   passed 13 cases.
-- The full unit suite was not completed on this branch. The unchanged v93
+- The full unit suite passed with two-way concurrency after porting the
+  updated v2 foundation and Motor Lab contract tests. The unchanged v93
   motor was previously verified on the preview branch with 975 passing unit
-  tests. Release readiness still requires a preview deployment check and a
-  production smoke after activation.
+  tests. The Vercel preview build for this selective release reached READY;
+  a production smoke remains required after activation.
