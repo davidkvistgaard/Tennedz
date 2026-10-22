@@ -1,6 +1,22 @@
 # Pelotonia — samlet to-do og tidsestimat
 
-**Opdateret 19. oktober 2026 efter de isolerede P03- og v91-motorprøver.** Dette er den aktuelle hovedliste for kendte produktønsker. [Produktvisionen](PRODUCT-VISION.md), [Arena/økonomi/Supporter-handoff](PELOTONIA_ARENA_ECONOMY_SUPPORTER_CODEX_BRIEF_V1.md), [kalenderpakken](CALENDAR_AUTOPILOT_RANKINGS_V0_1.md), [motorprototypen](design/ENGINE-V2-FOUNDATION.md), [verdensbaselinen](PELOTONIA-WORLD-BASELINE-1.6.2.md) og de enkelte designnoter er baggrund; gamle statusangivelser i dem er ikke en ny leveringsplan. Listen skelner mellem kode i produktion, kode i isolerede udviklingsspor og ubyggede funktioner.
+**Motorstatus opdateret 22. oktober 2026; øvrige produktpunkter senest gennemgået 19. oktober.** Dette er den aktuelle hovedliste for kendte produktønsker. [Produktvisionen](PRODUCT-VISION.md), [Arena/økonomi/Supporter-handoff](PELOTONIA_ARENA_ECONOMY_SUPPORTER_CODEX_BRIEF_V1.md), [kalenderpakken](CALENDAR_AUTOPILOT_RANKINGS_V0_1.md), [motorprototypen](design/ENGINE-V2-FOUNDATION.md), [verdensbaselinen](PELOTONIA-WORLD-BASELINE-1.6.2.md) og de enkelte designnoter er baggrund; gamle statusangivelser i dem er ikke en ny leveringsplan. Listen skelner mellem kode i produktion, kode i isolerede udviklingsspor og ubyggede funktioner.
+
+**Aktuel afgrænset motorprøve, 22. oktober:** Den lokale, opt-in v93-workbench
+fører valg af rute, terræn, længde, felt, træthed og flere manageres taktikker
+til en betalt vej, nomineret afslutter og eventuel lead-out, individuelle
+betingede målpassager og rytternes genafspilning. Alle 90 fiktive hel-løb i
+den brede matrix nåede mål med tid og energi afstemt mod replay; 75 gav en
+skrivefri pointillustration. Tolv ekstreme 260 km-ruter gav hver 160
+målpassager, og 34 isolerede browserforløb bestod. En særskilt gentagen
+angrebsprøve nåede 78/90 mål og afviste tolv indhentninger, hvor en betalt
+gruppesamling mangler. Sen udskilning fra feltet kan også stadig afvise en
+individuel finale; mulig kontakt mellem isolerede ryttere tilbageholder
+point. Dette er en [spilbar, afgrænset test](design/ENGINE-V2-PLAYABLE-TEST-RUNBOOK.md),
+ikke en fuldt klassificeret motor eller produktionsafregning. Punkt 04/11
+forbliver derfor 🟡; [acceptgrænser og evidens](design/ENGINE-V2-PLAYABLE-TEST-GATE.md)
+beskriver præcist, hvad der endnu mangler. Ingen officielle resultater eller
+point gemmes.
 
 ## Læsevejledning: færdigt, i gang og endnu ikke begyndt
 
