@@ -3,6 +3,26 @@
 For the current opt-in v93 workbench and a reproducible multi-manager race,
 see [the local playable test runbook](ENGINE-V2-PLAYABLE-TEST-RUNBOOK.md).
 
+## Current checkpoint (2026-10-22)
+
+The local, opt-in v93 workbench has an end-to-end playable path from selected
+route, distance, category, field, fatigue and manager tactics to the recorded
+road, a nominated finisher and optional lead-out, individual conditional
+results and rider replay. The latest isolated build passed all 34 browser
+flows, including a 260 km, 20-team fatigued custom climb selected in the
+form. A 90-case whole-race matrix completed every case and checked each
+crossing against its paid replay; 75 had policy-consistent read-only point
+illustrations. All twelve pinned extreme custom races completed with 160
+crossings. No official result or award is saved.
+
+This is a bounded playable test, not an unrestricted motor release. A
+separate 90-case repeated-attack stress corpus completed 78 races and
+explicitly refused twelve unpayable front catches. A late bunch exit can
+also expose only its paid road without an individual finish. Fifteen matrix
+cases with potential isolated-band contact correctly withhold points. These
+contacts need paid merge or passing rules before they can yield a defensible
+classification. Production settlement remains unchanged.
+
 This is the finite acceptance gate for the opt-in v91 motor test. It does not
 change production race settlement. A passing laboratory recording is not an
 official result until every item below is verified end to end.
