@@ -23,6 +23,8 @@ test('sample race opens the playable setup and links the recorded result',
     await expect(page.getByLabel('Your attack')).toHaveValue('none');
     await expect(page.getByLabel('Scenario seed'))
       .toHaveValue('sample-flat-finish');
+    await expect(page.getByRole('checkbox',
+      {name:'Show read-only point illustration'})).toBeChecked();
     const responsePromise=page.waitForResponse(response=>
       response.url().endsWith('/api/v91-playtest')&&
       response.request().method()==='POST');
@@ -31,8 +33,17 @@ test('sample race opens the playable setup and links the recorded result',
     expect(response.status()).toBe(200);
     const {coasted}=await response.json();
     expect(coasted.lineTimes).toHaveLength(32);
+    const ownPlace=coasted.provisionalLineOrder.find(row=>
+      row.riderId==='you-7').position;
+    const ownPreview=coasted.pointPreview.riders.find(row=>
+      row.riderId==='you-7');
+    expect(ownPreview.previewPoints).toBe(pointsForDivisionResult({
+      tier:coasted.pointPreview.tier,resultType:'ONE_DAY',
+      placing:ownPlace,multiplier:coasted.pointPreview.multiplier}));
+    expect(coasted.pointPreview.awardRows).toEqual([]);
     await expect(page.getByRole('region',{name:'Your v93 finish'}))
-      .toContainText('Conditional place:');
+      .toContainText(`Conditional place: ${ownPlace} · Read-only points: ${
+        ownPreview.previewPoints}`);
     const results=page.getByRole('table',
       {name:'V93 individual conditional results'});
     await page.getByLabel('Results team').selectOption('you');

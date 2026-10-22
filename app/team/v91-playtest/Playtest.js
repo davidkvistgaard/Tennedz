@@ -406,7 +406,7 @@ export default function Playtest(){
     setLateEfforts({});setFinaleFrontWork({});
     setNamedAttack({teamId:'',riderId:''});
     setSecondNamedAttack({teamId:'',riderId:''});
-    setShowPointPreview(false);
+    setShowPointPreview(true);
     setResult(null);setIntegrated(null);setCoasted(null);
     setRoadPreview(null);setError('');
     setComparison(null);setPreviousRun(null);

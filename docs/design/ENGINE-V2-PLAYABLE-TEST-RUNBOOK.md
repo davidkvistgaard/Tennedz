@@ -17,7 +17,8 @@ A forced Ctrl+C can leave its generated build directory; remove that specific
 
 For a first run, click **Set up sample race** instead of choosing the two
 preview options manually. It selects a 40 km flat race with four teams,
-default rival tactics and a fixed seed. Review or change the settings, then
+default rival tactics, a fixed seed and a read-only point illustration.
+Review or change the settings, then
 click **Run v93 race preview**. The result links jump to **Your finish**,
 **Recorded road**, **Individual results** and **Rider replay**. This sample
 path has its own local browser check. In the individual results, choose a team
