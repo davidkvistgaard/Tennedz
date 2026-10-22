@@ -25,6 +25,14 @@ scrolling the setup on a narrow screen. The result links jump to **Your finish**
 path has its own local browser check. In the individual results, choose a team
 to narrow a large field without changing any placing or replay.
 
+To inspect tactics for two managers without filling every control, click
+**Set up two-manager race**. It prepares the 120 km rolling women's example
+below, including the custom `rival-14` orders, late effort changes, nominated
+finishers, lead-outs and read-only points. The **Your race plan** panel shows
+the selected choices before the run. Edit them if desired, then run the
+race. The local browser check follows this path through road, line, points
+and both rider replays.
+
 For a reproducible multi-manager race, choose 120 km, Rolling, Women,
 15 teams, Some fatigue, and seed `late-phase-6`. Set Your attack to None.
 Add `rival-14` under **Choose another rival manager** and set that manager

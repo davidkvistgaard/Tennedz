@@ -5,6 +5,7 @@
 .v91-start{display:flex;align-items:center;justify-content:space-between;gap:20px;padding:20px;background:#e8f2ee;border-radius:16px}
 .v91-start strong{font-size:1.15rem}
 .v91-start p{margin:7px 0 0;max-width:70ch}
+.v91-start-actions{display:flex;flex-direction:column;gap:8px;flex-shrink:0}
 .v91-start button{min-height:44px;flex-shrink:0;padding:10px 16px;border:0;border-radius:8px;background:#116e60;color:white;font-weight:800;cursor:pointer}
 .v91-start button:disabled{opacity:.6;cursor:wait}
 .v91-result-nav{display:flex;flex-wrap:wrap;gap:8px;margin:18px 0}

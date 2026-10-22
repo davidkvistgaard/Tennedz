@@ -405,15 +405,25 @@ export default function Playtest(){
   const individuallyManagedRivals=new Set([
     ...Array.from({length:customRivals},(_,index)=>`rival-${index+1}`),
     ...settings.managerTacticOverrides.map(row=>row.teamId)]);
-  const setupSampleRace=()=>{
+  const setupExampleRace=(kind)=>{
+    const tactical=kind==='tactical';
     setIntegratedMode(true);setCoastedMode(true);
-    setSettings({...INITIAL,distanceKm:40,attack:'none',
-      seed:'sample-flat-finish'});
-    setCustomRivals(0);setExtraRivalId('');setFinalePlans({});
-    setLateEfforts({});setFinaleFrontWork({});
+    setSettings(tactical?{...INITIAL,distanceKm:120,terrain:'rolling',
+      gender:'F',teamCount:15,fatigue:15,attack:'none',
+      seed:'late-phase-6',managerTacticOverrides:[{teamId:'rival-14',
+        effort:'hard',attack:'none',chase:'all'}]}:
+      {...INITIAL,distanceKm:40,attack:'none',
+        seed:'sample-flat-finish'});
+    setCustomRivals(0);setExtraRivalId('');
+    setFinalePlans(tactical?{'you':{finisherId:'you-7',
+      leadOutRiderId:'you-6'},'rival-14':{finisherId:'rival-14-3',
+      leadOutRiderId:'rival-14-5'}}:{});
+    setLateEfforts(tactical?{'you':'hard','rival-14':'conserve'}:{});
+    setFinaleFrontWork({});
     setNamedAttack({teamId:'',riderId:''});
     setSecondNamedAttack({teamId:'',riderId:''});
     setShowPointPreview(true);
+    setPointContext({tier:2,divisionIndex:1,divisionCount:2});
     setResult(null);setIntegrated(null);setCoasted(null);
     setRoadPreview(null);setError('');
     setComparison(null);setPreviousRun(null);
@@ -538,13 +548,19 @@ export default function Playtest(){
       <p>Change your orders and the race conditions, then rerun with the same seed to compare what happened on the road.</p>
       <p className="v91-warning">This is a fictional preview. Results and points are for inspection only; no official result or award is saved.</p>
       <div className="v91-start" aria-label="Start a playable race preview">
-        <div><strong>New here? Start with a sample race.</strong>
-          <p>Set up a 40 km flat race with four teams and default rival tactics.
-            You can change the route, your orders, the finisher and the lead-out
-            before running it. Then inspect the road, finish and rider replay.</p>
+        <div><strong>Start with a race you can inspect.</strong>
+          <p>The sample is a 40 km flat race with default rivals. The
+            two-manager example is a 120 km rolling race with a custom rival,
+            late effort orders and two nominated lead-outs. You can edit
+            either setup before running, then inspect the recorded road,
+            individual finish and rider replay.</p>
         </div>
-        <button type="button" onClick={setupSampleRace} disabled={busy}>
-          Set up sample race</button>
+        <div className="v91-start-actions">
+          <button type="button" onClick={()=>setupExampleRace('sample')}
+            disabled={busy}>Set up sample race</button>
+          <button type="button" onClick={()=>setupExampleRace('tactical')}
+            disabled={busy}>Set up two-manager race</button>
+        </div>
       </div>
       <form id="v91-race-settings" onSubmit={run} className="v91-controls">
         <label className="v91-mode"><input type="checkbox" checked={integratedMode}

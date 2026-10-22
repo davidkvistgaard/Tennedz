@@ -137,34 +137,23 @@ test('two managers play one selected race from orders to road, line and replay',
     await page.getByRole('button',{name:'Sign in',exact:true}).click();
     await expect(page).toHaveURL(/\/team$/);
     await page.goto('/team/v91-playtest');
-    await page.getByRole('checkbox',
-      {name:'Continue to a conditional finish'}).check();
-    await page.getByRole('checkbox',
-      {name:'Try v93 road-to-line preview'}).check();
-    await page.getByLabel('Distance').selectOption('120');
-    await page.getByLabel('Route profile').selectOption('rolling');
-    await page.getByLabel('Category').selectOption('F');
-    await page.getByLabel('Field size').selectOption('15');
-    await page.getByLabel('Starting fatigue').selectOption('15');
-    await page.getByLabel('Scenario seed').fill('late-phase-6');
-    await page.getByLabel('Your attack').selectOption('none');
-    await page.getByLabel('Choose another rival manager')
-      .selectOption('rival-14');
-    await page.getByRole('button',{name:'Add rival manager'}).click();
-    await page.getByLabel('rival-14 effort').selectOption('hard');
-    await page.getByLabel('rival-14 attack').selectOption('none');
-    await page.getByLabel('rival-14 chase').selectOption('all');
-    await page.getByLabel('5 km to go effort for you').selectOption('hard');
-    await page.getByLabel('5 km to go effort for rival-14')
-      .selectOption('conserve');
-    await page.getByLabel('you lead-out helper').selectOption('you-6');
-    await page.getByLabel('rival-14 finisher').selectOption('rival-14-3');
-    await page.getByLabel('rival-14 lead-out helper')
-      .selectOption('rival-14-5');
-    await page.getByRole('checkbox',
-      {name:'Show read-only point illustration'}).check();
-    await page.getByLabel('Race tier').selectOption('2');
-    await page.getByLabel('Division count').selectOption('2');
+    await page.getByRole('button',{name:'Set up two-manager race'}).click();
+    await expect(page.getByLabel('Distance')).toHaveValue('120');
+    await expect(page.getByLabel('Route profile')).toHaveValue('rolling');
+    await expect(page.getByLabel('Category')).toHaveValue('F');
+    await expect(page.getByLabel('Field size')).toHaveValue('15');
+    await expect(page.getByLabel('Starting fatigue')).toHaveValue('15');
+    await expect(page.getByLabel('Your attack')).toHaveValue('none');
+    await expect(page.getByLabel('rival-14 effort')).toHaveValue('hard');
+    await expect(page.getByLabel('5 km to go effort for rival-14'))
+      .toHaveValue('conserve');
+    await expect(page.getByLabel('you lead-out helper'))
+      .toHaveValue('you-6');
+    await expect(page.getByLabel('rival-14 finisher'))
+      .toHaveValue('rival-14-3');
+    await expect(page.getByRole('region',
+      {name:'Race plan before running'}))
+      .toContainText('1 with your own tactics · 13 use mixed defaults');
     const responsePromise=page.waitForResponse(response=>
       response.url().endsWith('/api/v91-playtest')&&
       response.request().method()==='POST');
