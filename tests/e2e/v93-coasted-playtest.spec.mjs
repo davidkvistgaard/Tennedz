@@ -33,6 +33,15 @@ test('sample race opens the playable setup and links the recorded result',
     expect(coasted.lineTimes).toHaveLength(32);
     await expect(page.getByRole('region',{name:'Your v93 finish'}))
       .toContainText('Conditional place:');
+    const results=page.getByRole('table',
+      {name:'V93 individual conditional results'});
+    await page.getByLabel('Results team').selectOption('you');
+    await expect(results.getByRole('row')).toHaveCount(9);
+    await results.getByRole('button',{name:'Replay you-7'}).click();
+    await expect(page.getByLabel('Selected rider finale replay'))
+      .toContainText('you-7:');
+    await page.getByLabel('Results team').selectOption('all');
+    await expect(results.getByRole('row')).toHaveCount(33);
     const navigation=page.getByRole('navigation',{name:'Explore this race'});
     for(const [name,id] of [
       ['Your finish','v93-your-finish'],

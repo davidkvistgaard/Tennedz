@@ -20,7 +20,8 @@ preview options manually. It selects a 40 km flat race with four teams,
 default rival tactics and a fixed seed. Review or change the settings, then
 click **Run v93 race preview**. The result links jump to **Your finish**,
 **Recorded road**, **Individual results** and **Rider replay**. This sample
-path has its own local browser check.
+path has its own local browser check. In the individual results, choose a team
+to narrow a large field without changing any placing or replay.
 
 For a reproducible multi-manager race, choose 120 km, Rolling, Women,
 15 teams, Some fatigue, and seed `late-phase-6`. Set Your attack to None.

@@ -337,6 +337,8 @@ export default function Playtest(){
       (coastedRoadBounds.get(a.riderId)?.lastPossiblePlace??Infinity)-
         (coastedRoadBounds.get(b.riderId)?.lastPossiblePlace??Infinity)||
       a.riderId.localeCompare(b.riderId));
+  const visibleCoastedOrder=coastedOrder.filter(row=>
+    resultsTeam==='all'||row.riderId.startsWith(`${resultsTeam}-`));
   const coastedOwnDecision=coasted?.managerDecisions.find(row=>
     row.teamId==='you');
   const coastedOwnLine=coasted?.lineTimes.find(row=>
@@ -991,6 +993,15 @@ export default function Playtest(){
         </div>
         <div className="v91-finish">
           <h3 id="v93-conditional-results">Individual conditional results</h3>
+          <label>Results team<select value={resultsTeam}
+            onChange={event=>setResultsTeam(event.target.value)}>
+            <option value="all">All teams ({coastedOrder.length} riders)</option>
+            {Array.from({length:coasted.settings.teamCount},(_,index)=>
+              index===0?'you':`rival-${index}`).map(teamId=><option
+                value={teamId} key={teamId}>
+                {teamId==='you'?'Your team':teamId}
+              </option>)}
+          </select></label>
           {coasted.frontExit&&<div role="note"
             aria-label="Recorded front exit">
             <p>{coasted.frontExit.exitRiderIds.length} exhausted riders left
@@ -1092,7 +1103,7 @@ export default function Playtest(){
               <th scope="col">Energy at line</th><th scope="col">Preview points</th>
               <th scope="col">Replay</th>
             </tr></thead>
-            <tbody>{coastedOrder.map(row=>{
+            <tbody>{visibleCoastedOrder.map(row=>{
               const place=coastedProvisionalPlaces.get(row.riderId)??
                 coastedRoadBounds.get(row.riderId);
               const points=coasted.pointPreview?.riders?.find(value=>
