@@ -203,6 +203,7 @@ export default function Playtest(){
   const [comparison,setComparison]=useState(null);
   const [previousCoastedRun,setPreviousCoastedRun]=useState(null);
   const [coastedComparison,setCoastedComparison]=useState(null);
+  const [submittedChoices,setSubmittedChoices]=useState(null);
   const [busy,setBusy]=useState(false);
   const [error,setError]=useState('');
   const roadPreviewFrame=roadPreview?.lastKmRoad[roadPreviewIndex];
@@ -389,6 +390,14 @@ export default function Playtest(){
   const maxHeight=Math.max(500,...settings.profileHeightsM);
   const profileLine=settings.profileHeightsM.map((height,index)=>
     `${10+index*196},${110-height/maxHeight*100}`).join(' ');
+  const currentChoices=JSON.stringify({settings,customRivals,
+    finalePlans,lateEfforts,showPointPreview,
+    pointContext:showPointPreview?pointContext:null,
+    integratedMode,coastedMode,
+    ...(!coastedMode?{finaleFrontWork,namedAttack,
+      secondNamedAttack}:{})});
+  const resultUsesEarlierChoices=Boolean(coasted&&submittedChoices&&
+    submittedChoices!==currentChoices);
   const setupSampleRace=()=>{
     setIntegratedMode(true);setCoastedMode(true);
     setSettings({...INITIAL,distanceKm:40,attack:'none',
@@ -402,6 +411,7 @@ export default function Playtest(){
     setRoadPreview(null);setError('');
     setComparison(null);setPreviousRun(null);
     setCoastedComparison(null);setPreviousCoastedRun(null);
+    setSubmittedChoices(null);
     document.getElementById('v91-race-settings')?.scrollIntoView();
   };
   async function run(event){
@@ -501,6 +511,7 @@ export default function Playtest(){
         ?.find(row=>row.teamId==='you')?.finisherId??'you-7');
       setSelectedKm(1);
       setResultsTeam('all');
+      setSubmittedChoices(currentChoices);
     }catch(cause){setComparison(null);setPreviousRun(null);
       setCoastedComparison(null);setPreviousCoastedRun(null);
       setResult(null);setIntegrated(null);setCoasted(null);setAttackRoad(null);
@@ -828,6 +839,10 @@ export default function Playtest(){
       </section>}
       {coasted&&<section className="v91-results" aria-label="V93 coasted race preview">
         <h2>V93 race preview · {coasted.settings.distanceKm} km {coasted.settings.terrain}</h2>
+        {resultUsesEarlierChoices&&<p className="v91-warning" role="status">
+          You changed the setup after this race. The road, finish and replay
+          below still show the previous run. Run the race again to see the
+          current choices.</p>}
         <p>{coasted.tuningVersion} · {coasted.settings.managerTactics.length+
           (coasted.settings.managerTacticOverrides?.length??0)} custom rival managers · {coasted.roadStatus}</p>
         <p>Conditional individual line: {coasted.lineTimes.length} riders. Official results and points are withheld.</p>

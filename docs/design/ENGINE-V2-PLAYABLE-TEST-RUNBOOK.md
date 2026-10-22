@@ -45,7 +45,9 @@ exercised by the local browser test.
 
 Change only one tactic while keeping route, field, fatigue and seed fixed to
 compare what changed on the recorded road and at the line. The form also
-offers 40/120/260 km, five route profiles including a drawn elevation
+warns when you edit the setup after a run: the visible road and replay still
+belong to the previous choices until you run again. It offers 40/120/260 km,
+five route profiles including a drawn elevation
 profile, both categories, 4/15/20 teams, rival defaults or custom managers,
 and a nominated finisher with an optional helper. A helper who is exhausted
 or in another road group is refused explicitly; choose None and rerun the

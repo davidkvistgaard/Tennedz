@@ -52,6 +52,19 @@ test('sample race opens the playable setup and links the recorded result',
       await expect(page).toHaveURL(new RegExp(`#${id}$`));
       await expect(page.locator(`#${id}`)).toBeVisible();
     }
+    await page.getByLabel('Your effort').selectOption('hard');
+    const raceResult=page.getByRole('region',
+      {name:'V93 coasted race preview'});
+    await expect(raceResult.getByRole('status')).toContainText(
+      'The road, finish and replay below still show the previous run.');
+    const rerunPromise=page.waitForResponse(response=>
+      response.url().endsWith('/api/v91-playtest')&&
+      response.request().method()==='POST');
+    await page.getByRole('button',{name:'Run v93 race preview'}).click();
+    const rerun=await rerunPromise;
+    expect(rerun.status()).toBe(200);
+    expect((await rerun.json()).coasted.settings.effort).toBe('hard');
+    await expect(raceResult.getByRole('status')).toHaveCount(0);
     await expect(page.getByText('Official points: withheld · Awards saved: 0'))
       .toBeVisible();
   });
