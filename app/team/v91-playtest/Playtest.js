@@ -33,6 +33,8 @@ const OPTIONS={distanceKm:[[40,'40 km — short'],[120,'120 km — medium'],[260
 const LABELS={distanceKm:'Distance',terrain:'Route profile',teamCount:'Field size',
   gender:'Category',fatigue:'Starting fatigue',effort:'Your effort',
   attack:'Your attack order',chase:'Your chase order'};
+const optionLabel=(key,value)=>OPTIONS[key].find(([choice])=>
+  String(choice)===String(value))?.[1]??String(value);
 
 function conditionalPlace(place,fallback='—'){
   if(Number.isInteger(place?.position))return place.position;
@@ -398,6 +400,11 @@ export default function Playtest(){
       secondNamedAttack}:{})});
   const resultUsesEarlierChoices=Boolean(coasted&&submittedChoices&&
     submittedChoices!==currentChoices);
+  const ownPlan=finalePlans.you??{finisherId:'you-7',
+    leadOutRiderId:null};
+  const individuallyManagedRivals=new Set([
+    ...Array.from({length:customRivals},(_,index)=>`rival-${index+1}`),
+    ...settings.managerTacticOverrides.map(row=>row.teamId)]);
   const setupSampleRace=()=>{
     setIntegratedMode(true);setCoastedMode(true);
     setSettings({...INITIAL,distanceKm:40,attack:'none',
@@ -762,6 +769,34 @@ export default function Playtest(){
         </fieldset>}
         <label>Scenario seed<input value={settings.seed} maxLength={80}
           onChange={event=>change('seed',event.target.value)} /></label>
+        {integratedMode&&coastedMode&&<section className="v91-brief"
+          aria-label="Race plan before running">
+          <h2>Your race plan</h2>
+          <p>{settings.distanceKm} km {optionLabel('terrain',settings.terrain)} ·
+            {' '}{optionLabel('gender',settings.gender)} · {' '}
+            {settings.teamCount} teams · {' '}
+            {optionLabel('fatigue',settings.fatigue).toLowerCase()} riders</p>
+          <dl>
+            <div><dt>Your orders</dt><dd>
+              {optionLabel('effort',settings.effort)} effort · {' '}
+              {optionLabel('attack',settings.attack)} attack · {' '}
+              {optionLabel('chase',settings.chase)} chase
+              {lateEfforts.you&&` · ${optionLabel('effort',lateEfforts.you)} effort at 5 km to go`}
+            </dd></div>
+            <div><dt>Your finish</dt><dd>{ownPlan.finisherId} nominated · {' '}
+              {ownPlan.leadOutRiderId?
+                `${ownPlan.leadOutRiderId} leads out`:'no lead-out helper'}</dd></div>
+            <div><dt>Other managers</dt><dd>
+              {individuallyManagedRivals.size} with your own tactics · {' '}
+              {settings.teamCount-1-individuallyManagedRivals.size} use {' '}
+              {settings.defaultRivalPlan==='mixed'?'mixed defaults':
+                settings.defaultRivalPlan+' defaults'}
+            </dd></div>
+            <div><dt>Points</dt><dd>{showPointPreview?
+              `Read-only illustration, tier ${pointContext.tier}`:
+              'No point illustration'} · no awards saved</dd></div>
+          </dl>
+        </section>}
         <div className="v91-run-bar">
           <div><strong>Ready to race?</strong><span>{settings.distanceKm} km ·
             {' '}{settings.terrain} · {settings.teamCount} teams</span></div>

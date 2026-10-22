@@ -26,6 +26,11 @@ test('sample race opens the playable setup and links the recorded result',
       .toHaveValue('sample-flat-finish');
     await expect(page.getByRole('checkbox',
       {name:'Show read-only point illustration'})).toBeChecked();
+    const briefing=page.getByRole('region',
+      {name:'Race plan before running'});
+    await expect(briefing).toContainText('40 km Flat · Men · 4 teams');
+    await expect(briefing).toContainText('you-7 nominated · no lead-out helper');
+    await expect(briefing).toContainText('Read-only illustration, tier 2');
     await expect(page.getByRole('button',
       {name:'Run v93 race preview'})).toBeInViewport();
     const responsePromise=page.waitForResponse(response=>
@@ -67,6 +72,7 @@ test('sample race opens the playable setup and links the recorded result',
       await expect(page.locator(`#${id}`)).toBeVisible();
     }
     await page.getByLabel('Your effort').selectOption('hard');
+    await expect(briefing).toContainText('Hard effort');
     const raceResult=page.getByRole('region',
       {name:'V93 coasted race preview'});
     await expect(raceResult.getByRole('status')).toContainText(
