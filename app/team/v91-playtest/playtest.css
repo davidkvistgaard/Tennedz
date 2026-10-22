@@ -12,7 +12,7 @@
 .v91-result-nav a{display:inline-flex;align-items:center;min-height:42px;padding:8px 12px;border:1px solid #a6c2b8;border-radius:8px;color:#17312e;background:#f2f7f4;font-weight:700;text-decoration:none}
 .v91-result-nav a:hover,.v91-result-nav a:focus-visible{background:#d9ebe3;text-decoration:underline}
 #v93-your-finish,#v93-recorded-road,#v93-conditional-results,#v93-paid-finale-replay{scroll-margin-top:24px}
-@media(max-width:600px){.v91-start{align-items:stretch;flex-direction:column}.v91-start button{align-self:stretch}}
+@media(max-width:600px){.v91-lab{padding:16px 16px 72px}.v91-start{align-items:stretch;flex-direction:column}.v91-start button{align-self:stretch}}
 .v91-controls{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px;padding:20px;background:#e8f2ee;border-radius:16px;margin:22px 0}
 .v91-controls label,.v91-results label{display:grid;gap:7px;min-width:0;font-weight:700;font-size:.88rem}
 .v91-controls select,.v91-controls input{min-height:42px;padding:8px 10px;border:1px solid #a6c2b8;border-radius:8px;background:white;color:#17312e}

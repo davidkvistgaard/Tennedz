@@ -14,6 +14,8 @@ test('sample race opens the playable setup and links the recorded result',
     await page.getByRole('button',{name:'Sign in',exact:true}).click();
     await expect(page).toHaveURL(/\/team$/);
     await page.goto('/team/v91-playtest');
+    await expect(page.getByRole('button',{name:'Set up sample race'}))
+      .toBeInViewport();
     await page.getByRole('button',{name:'Set up sample race'}).click();
     await expect(page.getByRole('checkbox',
       {name:'Continue to a conditional finish'})).toBeChecked();

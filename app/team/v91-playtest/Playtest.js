@@ -544,7 +544,7 @@ export default function Playtest(){
       setError(cause.message||'The playtest could not run.');}
     finally{setBusy(false);}
   }
-  return <TeamShell>
+  return <TeamShell compact>
     <main className="v91-lab">
       <p className="v91-eyebrow">Experimental race engine</p>
       <h1>Try a fictional race</h1>
@@ -552,11 +552,9 @@ export default function Playtest(){
       <p className="v91-warning">This is a fictional preview. Results and points are for inspection only; no official result or award is saved.</p>
       <div className="v91-start" aria-label="Start a playable race preview">
         <div><strong>Start with a race you can inspect.</strong>
-          <p>The sample is a 40 km flat race with default rivals. The
-            two-manager example is a 120 km rolling race with a custom rival,
-            late effort orders and two nominated lead-outs. You can edit
-            either setup before running, then inspect the recorded road,
-            individual finish and rider replay.</p>
+          <p>Choose a 40 km sample or a 120 km two-manager race with custom
+            tactics and lead-outs. Edit either setup, then inspect the road,
+            finish and rider replay.</p>
         </div>
         <div className="v91-start-actions">
           <button type="button" onClick={()=>setupExampleRace('sample')}
