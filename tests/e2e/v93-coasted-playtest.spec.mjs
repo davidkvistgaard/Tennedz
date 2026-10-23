@@ -1429,7 +1429,8 @@ test('early front catch reaches the browser line and replay with points withheld
           finisherId:`${teamId}-7`,leadOutRiderId:null}))}});
     expect(response.status()).toBe(200);
     const body=await response.json();
-    expect(body.coasted.version).toBe('v93-front-catch-playtest-1');
+    expect(body.coasted.version).toBe(
+      'v93-early-front-catch-lane-playtest-1');
     expect(body.coasted.lastKmRoad.at(-1).distanceM).toBe(260000);
     expect(body.coasted.lineTimes).toHaveLength(160);
     expect(body.coasted.bandReplays).toHaveLength(31);
@@ -1450,6 +1451,8 @@ test('early front catch reaches the browser line and replay with points withheld
       .toContainText(`${(body.coasted.frontCatch.atDistanceM/1000).toFixed(3)} km`);
     await expect(page.getByRole('note',{name:'Paid front catch'}))
       .toContainText('points are withheld');
+    await expect(page.getByRole('note',{name:'Paid front catch'}))
+      .toContainText('Inferred lanes keep the front and bunch wheels apart');
     await expect(page.getByRole('table',{
       name:'V93 individual conditional results'}).getByRole('row'))
       .toHaveCount(161);
