@@ -10,6 +10,8 @@ import {probeFinaleSeparatedGroupsFromTour,
   '../../lib/engine/v2/finale-multi-run.mjs';
 import {auditDissolvedFrontContact} from
   '../../lib/engine/v2/finale-dissolved-front-contact.mjs';
+import {auditDissolvedFrontPaidContact} from
+  '../../lib/engine/v2/finale-dissolved-front-paid-contact.mjs';
 
 test('whole-race dissolved front identifies both active overtakes without a result',()=>{
   const prepared=prepareV91Playtest({distanceKm:260,teamCount:4,
@@ -41,6 +43,28 @@ test('whole-race dissolved front identifies both active overtakes without a resu
   assert.equal(trace.classifiedResults,null);
   assert.equal(trace.canCommitAwards,false);
   assert.equal(trace.pointsStatus,'withheld');
+  const paid=auditDissolvedFrontPaidContact(trace);
+  assert.equal(paid.encounters.length,6);
+  assert.equal(paid.contactResolved,false);
+  assert.equal(paid.canCommitAwards,false);
+  assert.equal(paid.pointsStatus,'withheld');
+  assert.deepEqual(paid.encounters.map(row=>row.activeBandId),
+    trace.contactAudit.encounters.map(row=>row.activeBandId));
+  for(const event of paid.encounters){
+    const {solo,activeBand}=event.split;
+    assert.ok(Math.abs(solo.energyBefore-solo.energySpentToContact-
+      solo.energyAtContact)<1e-7);
+    assert.ok(activeBand.riders.every(row=>
+      Math.abs(row.energyBefore-row.energySpentToContact-
+        row.energyAtContact)<1e-7));
+    assert.equal(event.split.unresolvedSliceEndDistanceM,259250);
+    assert.equal(Object.hasOwn(solo,'energyAfter'),false);
+  }
+  assert.ok(paid.encounters.every(row=>
+    row.elapsedSecondsFromLastKmStart>0));
+  assert.ok(paid.encounters.every((row,index)=>!index||
+    row.elapsedSecondsFromLastKmStart>=
+      paid.encounters[index-1].elapsedSecondsFromLastKmStart));
   const altered=structuredClone(trace);
   altered.contactAudit.encounters[0].distanceM+=1;
   assert.throws(()=>validateFinaleSeparatedGroupsFromTour(tour,altered),
@@ -58,4 +82,30 @@ test('dissolved-front contact audit has no encounter on separate paid paths',()=
   assert.equal(result.firstPotentialContact,null);
   assert.deepEqual(result.encounters,[]);
   assert.equal(result.canCommitAwards,false);
+});
+
+test('paid encounter order follows time when different riders meet at different markers',()=>{
+  const trace={version:'synthetic-paid-road',frames:[{
+    startDistanceM:0,endDistanceM:100,bunchElapsedSeconds:10,
+    roadGroups:[{id:'front',gapSeconds:5,elapsedSeconds:15,
+      riderIds:['leader']}],pelotonRiderIds:['bunch'],
+    riders:[{riderId:'leader',role:'sheltered',energy:9,
+      energySpent:1},{riderId:'bunch',role:'sheltered',energy:9,
+      energySpent:1}],
+    droppedTravel:{riders:[{
+      riderId:'solo-1',deficitSecondsBefore:-20,
+      deficitSecondsAfter:5,elapsedSeconds:35,
+      energyBefore:10,energyAfter:9,energySpent:1},{
+      riderId:'solo-2',deficitSecondsBefore:-1,
+      deficitSecondsAfter:19,elapsedSeconds:30,
+      energyBefore:10,energyAfter:9,energySpent:1}]}}]};
+  const paid=auditDissolvedFrontPaidContact(trace);
+  assert.deepEqual(paid.encounters.map(row=>row.riderId),
+    ['solo-1','solo-2','solo-1']);
+  assert.deepEqual(paid.encounters.map(row=>row.activeBandId),
+    ['front','peloton','peloton']);
+  assert.deepEqual(paid.encounters.map(row=>row.distanceM),
+    [50,5,80]);
+  assert.deepEqual(paid.encounters.map(row=>
+    row.elapsedSecondsFromLastKmStart),[-2.5,.5,8]);
 });

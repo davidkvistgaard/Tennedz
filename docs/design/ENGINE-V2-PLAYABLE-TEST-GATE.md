@@ -3773,3 +3773,14 @@ release SHA and holds the `tennedz.eu` alias. The Motor Lab URL returned
 HTTP 200 and no runtime errors were found in the checked window. The prior
 production deployment `dpl_5pL2HjnuFFKQjQJpDtTMXmAphsss` is the rollback
 target. No authenticated production race or live Supabase write was made.
+
+The preview-only `v2-finale-coast-dissolved-front-last-km-22` diagnostic
+continues the same locked race with the three leavers on separate candidate
+paths. Its contact audit finds that `road-13` reaches them at about
+259061.184–259061.398 m and the bunch at about
+259126.318–259126.757 m. A separate paid-contact audit orders encounters
+by race time and splits the first slice at each encounter, preserving each
+rider's work and energy **up to** that instant. It deliberately leaves the
+post-contact road, individual crossings, replay and points unresolved. The
+existing Motor Lab refusal remains in force; this diagnostic is not a
+classified finale or a production release.
