@@ -3,7 +3,7 @@
 // pre-catch road; no fictional result or award is accepted.
 import assert from 'node:assert/strict';
 import {createV93PlayableTest,summarizeV93CoastedPlaytest,
-  validateV93CoastedPlaytest,V93_UNSUPPORTED_CATCH_PREVIEW_VERSION} from
+  validateV93CoastedPlaytest,V93_PAID_LATE_CATCH_ROAD_PREVIEW_VERSION} from
   '../lib/engine/v2/playtest-v93-coasted.mjs';
 
 const tactics=[
@@ -30,8 +30,8 @@ for(const gender of genders)for(const terrain of terrains)
     catch(error){
       assert.match(error.message,/needs a recorded catch for road-/);
       const preview=error.roadPreview;
-      assert.equal(preview?.version,V93_UNSUPPORTED_CATCH_PREVIEW_VERSION);
-      assert.equal(preview.unsupportedReason,'unpaid_front_catch');
+      assert.equal(preview?.version,V93_PAID_LATE_CATCH_ROAD_PREVIEW_VERSION);
+      assert.equal(preview.unsupportedReason,'individual_late_catch');
       assert.equal(preview.kilometreFrames.length,259);
       assert.equal(preview.kilometreFrames.at(-1).km,259);
       assert.ok(preview.kilometreFrames.at(-1).roadGroups.some(group=>
@@ -40,14 +40,18 @@ for(const gender of genders)for(const terrain of terrains)
         error.cause.calculatedCatchDistanceM);
       assert.ok(preview.catch.metresToGo>=0&&
         preview.catch.metresToGo<=1000);
-      assert.deepEqual(preview.lastKmRoad,[]);
+      assert.equal(preview.lastKmRoad.length,7);
+      assert.equal(preview.lastKmRoad.at(-1).distanceM,260000);
+      assert.equal(preview.lastKmRoad.at(-1).contact.groupId,
+        preview.catch.groupId);
+      assert.equal(preview.finalRiderEnergy.length,160);
       assert.deepEqual(preview.exits,[]);
       assert.equal(preview.lineTimes,null);
       assert.equal(preview.bandReplays,null);
       assert.equal(preview.classifiedResults,null);
       assert.equal(preview.pointPreview.status,'unavailable');
       assert.equal(preview.canCommitAwards,false);
-      rows.push({...label,status:'unpaid_front_catch',
+      rows.push({...label,status:'individual_late_catch',
         groupId:preview.catch.groupId,
         metresToGo:preview.catch.metresToGo});
       continue;
@@ -85,7 +89,7 @@ for(const gender of genders)for(const terrain of terrains)
   }
 
 const completed=rows.filter(row=>row.status==='conditional_finish');
-const refused=rows.filter(row=>row.status==='unpaid_front_catch');
+const refused=rows.filter(row=>row.status==='individual_late_catch');
 assert.equal(rows.length,90);
 assert.equal(completed.length,89);
 assert.equal(refused.length,1);

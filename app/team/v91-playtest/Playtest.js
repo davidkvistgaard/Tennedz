@@ -869,6 +869,35 @@ export default function Playtest(){
           <p>Your riders: {catchRoadFrame.ownRiders.map(row=>
             `${row.riderId} ${row.roadGroup}, `+
             `${row.energy.toFixed(1)} energy`).join(' · ')}.</p>
+        </>:roadPreview.catch?<>
+          <p>The full final-kilometre road is paid through the line.
+            {' '}{roadPreview.catch.groupId} meets the bunch at {' '}
+            {(roadPreview.catch.calculatedCatchDistanceM/1000).toFixed(3)} km
+            {' '}({Math.round(roadPreview.catch.metresToGo)} m to go), after {' '}
+            {roadPreview.catch.elapsedSecondsFromLastKmStart.toFixed(2)} s.
+            Individual finish, replay and points are withheld until the
+            post-contact rider order can be resolved.</p>
+          <label>Recorded road boundary: {roadPreviewIndex+1} of {' '}
+            {roadPreview.lastKmRoad.length}
+            <input type="range" min="0"
+              max={roadPreview.lastKmRoad.length-1}
+              value={roadPreviewIndex}
+              onChange={event=>setRoadPreviewIndex(Number(event.target.value))}/>
+          </label>
+          <p>{(roadPreviewFrame.distanceM/1000).toFixed(3)} km · bunch passage
+            {' '}{roadPreviewFrame.bunchPassageSecondsFromBunchMarker.toFixed(2)} s
+            {' '}· {roadPreviewFrame.groups.length} groups ahead · {' '}
+            {roadPreviewFrame.droppedPassages.length} isolated riders.</p>
+          <p>Road groups: {roadPreviewFrame.groups.map(group=>
+            `${group.id} (${group.riderIds.length} riders, `+
+            `${group.gapSeconds.toFixed(2)} s ahead)`).join(' · ')||'none'}</p>
+          {roadPreviewFrame.contact&&<p role="note" aria-label="Paid late catch">
+            Paid catch: {roadPreviewFrame.contact.groupId} joins the bunch at
+            {' '}{(roadPreviewFrame.contact.atDistanceM/1000).toFixed(3)} km.
+          </p>}
+          <p>Your riders: {roadPreviewFrame.ownRiderEnergy.map(row=>
+            `${row.riderId} ${row.roadBandId}, `+
+            `${row.energy.toFixed(1)} energy`).join(' · ')}.</p>
         </>:<>
           <p>The final-kilometre clock is recorded through the line. The late
             bunch exit has no supported individual finish or replay, so places

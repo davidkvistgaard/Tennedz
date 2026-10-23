@@ -30,6 +30,11 @@ function v93PlanError(error){
       'kilometre without a paid contact model. The validated kilometre '+
       'road is shown without an individual finish, replay or points. '+
       'Choose different route conditions or tactics and run again.';
+  if(error.roadPreview?.unsupportedReason==='individual_late_catch')
+    return `${error.cause.groupId} meets the bunch with ${
+      Math.round(error.roadPreview.catch.metresToGo)} m to go. `+
+      'The final-kilometre road and exact contact are paid through the line, '+
+      'but individual places, replay and points remain unresolved.';
   if(error.message.startsWith(
     'The separated finale needs a recorded catch for ')&&
     Number.isFinite(error.roadPreview?.catch?.metresToGo))
