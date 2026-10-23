@@ -1069,8 +1069,10 @@ export default function Playtest({guided=false}){
             {' '}after {coasted.sharedWheelContact.elapsedSecondsFromLastKmStart
               .toFixed(2)} s. {' '}
             {coasted.sharedWheelContact.wheelPairs.length} same-lane wheel
-            {' '}pairs met at the 2.5 m spacing. The merged road, sprint,
-            {' '}individual energy and line crossings are paid on one clock.
+            {' '}pairs met at the 2.5 m spacing.
+            {coasted.sharedWheelContact.phase==='paid_final_500m_sprint'?
+              ' The separate sprint paths are paid to that contact; the merged road, remaining sprint, individual energy and line crossings continue on one clock.':
+              ' The merged road, sprint, individual energy and line crossings are paid on one clock.'}
             {' '}Inferred lanes leave some photo finishes tied, so official
             {' '}places and points are withheld.
           </p>}
@@ -1118,7 +1120,10 @@ export default function Playtest({guided=false}){
                 band.id===event.target.value)?.riderIds[0]??'');
               setCoastedBandIndex(0);}}>
             {coasted.bandReplays.map(band=><option key={band.id} value={band.id}>
-              {band.id} · {band.riderIds.length} riders</option>)}
+              {band.id}{band.mergedIntoRoadBandId&&
+                band.id!==band.mergedIntoRoadBandId?
+                ` → ${band.mergedIntoRoadBandId}`:''}
+              {' '}· {band.riderIds.length} riders</option>)}
           </select></label>
           {coastedBand&&<label>Rider<select value={coastedRiderId}
             onChange={event=>setCoastedRiderId(event.target.value)}>
