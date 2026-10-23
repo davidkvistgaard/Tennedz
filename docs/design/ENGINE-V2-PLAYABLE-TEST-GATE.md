@@ -4161,3 +4161,13 @@ Twenty neighboring unit tests, changed-file lint, an isolated preview
 build and 46/46 local preview browser flows passed, including the
 120-rider API-to-Motor-Lab replay. No new full serial unit-suite pass is
 claimed for this increment.
+
+The same code passed the isolated release build, changed-file lint,
+seven focused release tests and 47/47 release browser flows. The varied
+whole-race matrix completed 90/90 with 76 read-only point illustrations;
+the independent 20-team 260 km stress completed 90/90 with zero refusals.
+Exact release commit `09573e7726b52531cd4d136ad1fdd02543996372`
+deployed as `dpl_DpBQZWMGnAZWXnsW3wP9Pg4w48Qf`, READY at the
+`tennedz.eu` alias. `/team/motor-lab` returned HTTP 200 and the checked
+runtime window had no error/fatal logs. Previous deployment
+`dpl_DRiVnoygr7YLAvrEUtHK9SVrAZTy` remains the rollback target.
