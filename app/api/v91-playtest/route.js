@@ -20,6 +20,13 @@ export const dynamic='force-dynamic';
 
 const runs=new Map();
 function v93PlanError(error){
+  if(error.roadPreview?.unsupportedReason===
+    'depleted_front_dissolution')
+    return `${error.roadPreview.handoff.groupId} has no rider with energy `+
+      'to stay in the front group at the final-kilometre handoff. '+
+      'The recorded road is shown through that point. Its riders need '+
+      'separate paid travel and contact before a finish, replay or points '+
+      'can be shown.';
   if(error.roadPreview?.unsupportedReason==='unpayable_front_handoff')
     return `${error.roadPreview.handoff.riderId} cannot pay for travel `+
       'from the last-kilometre handoff. The validated kilometre road is '+
