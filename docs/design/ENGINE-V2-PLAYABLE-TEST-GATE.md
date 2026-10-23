@@ -4073,10 +4073,21 @@ the road trace, with energy accounted for.
 
 The existing dissolved-front continuation requires the exhausted leavers
 to be behind the bunch in the first paid slice; that rule cannot represent
-this leading isolated quartet. The current workbench correctly withholds
-an individual line, replay and points for the pinned case. The new
-whole-race unit witness locks the source groups, paid split, contact and
-explicit refusal. A future continuation needs separate leading-isolated,
-surviving-front, bunch and rear-isolated bands, a paid 500 m handoff and
-individual replay before it can show a conditional finish. It must not
-borrow the existing rear-shoulder lane rule for riders still ahead.
+this leading isolated quartet. A separate versioned continuation now
+requires exactly two source fronts, no earlier isolated riders, complete
+dissolution of `road-1` at the first marker, no subsequent exits, the four
+leading leavers ahead of surviving `road-2` at every paid marker, `road-2`
+ahead of the bunch, and an explicitly recorded unassisted bunch pass of the
+rear leaver in the first slice. The paid 500 m handoff feeds separate
+leading-isolated, surviving-front, bunch and rear-isolated bands into the
+individual runners. The pinned race has 32 conditional crossings and seven
+replay bands with matching energy, and the Motor Lab shows the bunch pass
+and each leaver's replay. No place within the unresolved leading band or
+official point award is inferred. Other contact geometry keeps the prior
+explicit refusal: the pinned all-hard mountain and exposed cases in both
+genders still refuse. The older versioned dissolved-front recording and
+mixed-exit recording continue to replay. Seven neighboring unit tests,
+targeted lint, isolated preview build, 43/43 browser flows, the varied
+90/90 whole-race playability matrix and 90/90 long-field stress passed.
+The broad `eslint .` scan was stopped without a result after several
+minutes; lint of every changed code and test file passed.
