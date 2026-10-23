@@ -29,6 +29,15 @@ test('early paid front catch reaches every rider line and replay while points st
   assert.equal(summary.pointsStatus,'withheld');
   assert.equal(summary.canCommitAwards,false);
   assert.ok(race.clock.trace.frames[0].contact);
+  assert.deepEqual(summary.frontCatch,{
+    roadGroupId:race.clock.contact.groupId,
+    atDistanceM:race.clock.contact.atDistanceM,
+    elapsedSecondsFromLastKmStart:
+      race.clock.contact.preContactBunchSeconds,
+    caughtRiderIds:race.clock.contact.caughtRiderIds});
+  assert.deepEqual(summary.frontCatch.caughtRiderIds,
+    race.recording.frames.at(-2).roadGroups[0].riderIds);
+  assert.ok(summary.lastKmRoad.every(frame=>frame.groups.length===0));
 });
 
 test('last-100-m front catch exposes only its validated kilometre road',()=>{
