@@ -1287,6 +1287,32 @@ export default function Playtest(){
                   ?.scrollIntoView();
               }}>Finish replay {id}</button>)}
           </div>}
+          {coasted.dissolvedAllFronts&&<div role="note"
+            aria-label="Both leading fronts dissolved">
+            <p>At {(coasted.dissolvedAllFronts.sourceDistanceM/1000)
+              .toFixed(3)} km, both leading groups dissolved from exhaustion.
+              {' '}{coasted.dissolvedAllFronts.leadingRiderIds.length}
+              {' '}riders from {coasted.dissolvedAllFronts.leadingGroupId}
+              {' '}stayed ahead of the bunch. All
+              {' '}{coasted.dissolvedAllFronts.rearRiderIds.length}
+              {' '}riders from {coasted.dissolvedAllFronts.rearGroupId}
+              {' '}were passed by it. Their paid travel, energy and individual
+              finish replays are recorded. Places and points remain
+              unresolved.</p>
+            {coasted.dissolvedAllFronts.bunchPasses.map(event=><p
+              key={event.riderId}>The bunch passed {event.riderId} at
+              {' '}{(event.distanceM/1000).toFixed(3)} km.</p>)}
+            {[...coasted.dissolvedAllFronts.leadingRiderIds,
+              ...coasted.dissolvedAllFronts.rearRiderIds].map(id=><button
+              type="button" key={id}
+              aria-label={`Inspect dissolved all-fronts rider ${id} finish replay`}
+              onClick={()=>{
+                setCoastedBandId(`isolated:${id}`);
+                setCoastedRiderId(id);setCoastedBandIndex(0);
+                document.getElementById('v93-paid-finale-replay')
+                  ?.scrollIntoView();
+              }}>Finish replay {id}</button>)}
+          </div>}
           {coasted.isolatedPassEvents?.length>0&&<div role="note"
             aria-label="Recorded isolated passes">
             <p>{coasted.isolatedPassEvents.length} isolated-rider passes were

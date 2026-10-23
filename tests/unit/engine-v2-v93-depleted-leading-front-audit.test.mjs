@@ -8,7 +8,8 @@ import {probeFinaleSeparatedGroupsFromTour,
   FINALE_COAST_DISSOLVED_FRONT_LAST_KM_VERSION} from
   '../../lib/engine/v2/finale-multi-run.mjs';
 import {createV93PlayableTest,summarizeV93CoastedPlaytest,
-  validateV93CoastedPlaytest,V93_DISSOLVED_LEADING_PLAYTEST_VERSION} from
+  validateV93CoastedPlaytest,V93_DISSOLVED_LEADING_PLAYTEST_VERSION,
+  V93_DISSOLVED_ALL_FRONTS_PLAYTEST_VERSION} from
   '../../lib/engine/v2/playtest-v93-coasted.mjs';
 
 const settings={distanceKm:260,teamCount:4,gender:'M',
@@ -105,17 +106,27 @@ test('the dissolved leading front reaches conditional individual lines and repla
   assert.equal(replayed.size,32);
 });
 
-test('dissolved leading fronts finish or refuse explicitly across gender and terrain',()=>{
+test('dissolved leading fronts finish across gender and terrain',()=>{
   for(const gender of ['M','F'])for(const terrain of
     ['rolling','mountain','exposed']){
     const selected={...settings,gender,terrain,
       seed:`v93-contact-audit-4-${gender}-${terrain}-30-0`};
-    if(terrain!=='mountain'){
       const race=createV93PlayableTest(selected);
-      assert.equal(race.version,V93_DISSOLVED_LEADING_PLAYTEST_VERSION);
+      assert.equal(race.version,terrain==='mountain'?
+        V93_DISSOLVED_ALL_FRONTS_PLAYTEST_VERSION:
+        V93_DISSOLVED_LEADING_PLAYTEST_VERSION);
       assert.equal(validateV93CoastedPlaytest(selected,{},race),true);
       const summary=summarizeV93CoastedPlaytest(race);
       assert.equal(summary.lineTimes.length,32);
+      if(terrain==='mountain'){
+        assert.equal(race.clock.line.outcome,
+          'all_fronts_dissolved_leading_and_rear_isolated');
+        assert.deepEqual(race.clock.line.bands.map(row=>row.riderIds.length),
+          [4,24,4]);
+        assert.equal(summary.bandReplays.length,9);
+        assert.equal(summary.dissolvedAllFronts.bunchPasses.length,4);
+        assert.equal(summary.canCommitAwards,false);
+      }
       if(terrain==='exposed'){
         assert.equal(race.clock.line.outcome,'dissolved_leading_front_clear');
         assert.deepEqual(race.clock.line.bands.map(row=>row.riderIds.length),
@@ -123,12 +134,44 @@ test('dissolved leading fronts finish or refuse explicitly across gender and ter
         assert.deepEqual(summary.dissolvedLeadingFront.rearRiderIds,[]);
         assert.deepEqual(summary.dissolvedLeadingFront.bunchPasses,[]);
       }
-    }else assert.throws(()=>createV93PlayableTest(selected),error=>{
-      assert.match(error.message,/recorded group dissolution/);
-      assert.equal(error.roadPreview?.unsupportedReason,
-        'depleted_front_dissolution');
-      assert.equal(error.roadPreview?.canCommitAwards,false);
-      return true;
-    });
   }
+});
+
+test('both dissolved fronts keep every mountain rider energy and replay',()=>{
+  const selected={...settings,terrain:'mountain',
+    seed:'v93-contact-audit-4-M-mountain-30-0'};
+  assert.throws(()=>createV93PlayableTest(selected,{},
+    {resolveDissolvedFront:false}),error=>{
+    assert.match(error.message,/recorded group dissolution/);
+    assert.equal(error.roadPreview?.unsupportedReason,
+      'depleted_front_dissolution');
+    assert.equal(error.roadPreview?.canCommitAwards,false);
+    return true;
+  });
+  const input={pointContext:{tier:3,divisionCount:4,divisionIndex:2}};
+  const race=createV93PlayableTest(selected,input);
+  assert.equal(validateV93CoastedPlaytest(selected,input,race),true);
+  const summary=summarizeV93CoastedPlaytest(race);
+  assert.equal(summary.pointPreview.status,'unavailable');
+  assert.equal(summary.pointsStatus,'withheld');
+  assert.equal(summary.canCommitAwards,false);
+  const at500=new Map(race.clock.trace.frames.find(row=>
+    row.endDistanceM===259500).riders.map(row=>[
+    row.riderId,row.energy]));
+  const lines=new Map(summary.lineTimes.map(row=>[row.riderId,row]));
+  const replayed=new Set();
+  for(const band of summary.bandReplays){
+    for(const row of band.frames[0].riders)
+      assert.ok(Math.abs(row.energyAtDecision-at500.get(row.riderId))<1e-7);
+    for(const row of band.frames.at(-1).riders){
+      assert.equal(replayed.has(row.riderId),false);
+      replayed.add(row.riderId);
+      assert.equal(lines.get(row.riderId).roadBandId,band.id);
+      assert.equal(lines.get(row.riderId).elapsedSecondsFromLastKmStart,
+        row.elapsedToLineSeconds);
+      assert.ok(Math.abs(lines.get(row.riderId).energyAtLine-
+        row.energyAfter)<1e-7);
+    }
+  }
+  assert.equal(replayed.size,32);
 });
