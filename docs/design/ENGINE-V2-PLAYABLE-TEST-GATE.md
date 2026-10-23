@@ -3790,3 +3790,15 @@ which is why contact selection must use race time. This wheel audit still
 assigns no lane change, merge or draft after contact. The existing Motor
 Lab refusal remains in force; no individual crossing, replay or point is
 claimed, and this diagnostic is not a production release.
+
+An opt-in shoulder-road version tests one explicit response at the 259 km
+boundary: the three exhausted leavers move into distinct outside lanes,
+receive no draft, and retain their separately paid speed and energy. The
+remaining active group and bunch pass without changing their own work.
+This bounded rule requires all leavers to be behind the bunch by the first
+paid 250 m marker, no later rider drop, no solo-order reversal and a
+complete, unique 32-rider road at every marker. The locked race passes
+these guards through 260 km and replays its group clocks and every rider's
+energy. It is still preview-only: the nominated individual sprint, finish
+order, replay and point illustration have not yet been reconciled with this
+new lane rule, and the production refusal is unchanged.

@@ -15,6 +15,9 @@ import {auditDissolvedFrontPaidContact} from
 import {recordDissolvedFrontFirstWheel,
   validateDissolvedFrontFirstWheel} from
   '../../lib/engine/v2/finale-dissolved-front-wheel-audit.mjs';
+import {recordFinaleDissolvedFrontShoulderRoad,
+  validateFinaleDissolvedFrontShoulderRoad} from
+  '../../lib/engine/v2/finale-dissolved-front-shoulder-road.mjs';
 
 test('whole-race dissolved front identifies both active overtakes without a result',()=>{
   const prepared=prepareV91Playtest({distanceKm:260,teamCount:4,
@@ -92,6 +95,31 @@ test('whole-race dissolved front identifies both active overtakes without a resu
   alteredWheel.firstPotentialWheelContact.approachingWheelM+=1;
   assert.throws(()=>validateDissolvedFrontFirstWheel(tour,trace,
     alteredWheel),/does not replay/);
+  const shoulder=recordFinaleDissolvedFrontShoulderRoad(tour);
+  assert.equal(validateFinaleDissolvedFrontShoulderRoad(tour,
+    shoulder),true);
+  assert.equal(shoulder.passages.at(-1).distanceM,260000);
+  assert.equal(shoulder.laneAssignments.length,3);
+  assert.equal(new Set(shoulder.laneAssignments.map(row=>
+    row.outsideLane)).size,3);
+  assert.deepEqual(shoulder.lineRoad.roadGroups.map(row=>row.id),
+    ['road-13']);
+  assert.equal(shoulder.lineRoad.isolated.length,5);
+  assert.equal(shoulder.lineRoad.pelotonRiderIds.length,24);
+  assert.equal(shoulder.lineRoad.riderEnergy.length,32);
+  assert.ok(shoulder.passages.every(frame=>
+    frame.riderEnergy.length===32&&
+    new Set(frame.riderEnergy.map(row=>row.riderId)).size===32));
+  assert.deepEqual(shoulder.lineRoad.riderEnergy.map(row=>({
+    riderId:row.riderId,energy:row.energy})),
+  shoulder.trace.finalRiderEnergy);
+  assert.equal(shoulder.classifiedResults,null);
+  assert.equal(shoulder.pointsStatus,'withheld');
+  assert.equal(shoulder.canCommitAwards,false);
+  const alteredRoad=structuredClone(shoulder);
+  alteredRoad.passages[0].riderEnergy[0].energy+=1;
+  assert.throws(()=>validateFinaleDissolvedFrontShoulderRoad(tour,
+    alteredRoad),/does not replay/);
   const altered=structuredClone(trace);
   altered.contactAudit.encounters[0].distanceM+=1;
   assert.throws(()=>validateFinaleSeparatedGroupsFromTour(tour,altered),
