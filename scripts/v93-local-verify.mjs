@@ -33,6 +33,8 @@ function run(args) {
 
 try {
   await run(["node_modules/next/dist/bin/next", "build"]);
+  // Nine fixture sessions keep the combined release browser suite below
+  // the workbench's six-runs-per-minute limit per user.
   for (let shard = 1; shard <= 9; shard++) {
     await run(["node_modules/@playwright/test/cli.js", "test",
       "tests/e2e/v93-coasted-playtest.spec.mjs",

@@ -2410,6 +2410,75 @@ test('parallel isolated lanes carry a 260 km race into replay and points',
       .toBeVisible();
   });
 
+test('full-kilometre isolated lanes show tied places without point awards',
+  async({page})=>{
+    await page.goto('/login');
+    await page.getByLabel('Email or username').fill('alice');
+    await page.getByLabel('Password',{exact:true}).fill('fixture-password');
+    await page.getByRole('button',{name:'Sign in',exact:true}).click();
+    await expect(page).toHaveURL(/\/team$/);
+    await page.goto('/team/v91-playtest');
+    await page.getByRole('checkbox',{
+      name:'Continue to a conditional finish'}).check();
+    await page.getByRole('checkbox',{
+      name:'Try v93 road-to-line preview'}).check();
+    await page.getByLabel('Distance').selectOption('260');
+    await page.getByLabel('Route profile').selectOption('rolling');
+    await page.getByLabel('Category').selectOption('F');
+    await page.getByLabel('Field size').selectOption('20');
+    await page.getByLabel('Starting fatigue').selectOption('30');
+    await page.getByLabel('Scenario seed').fill('v93-matrix-86');
+    await page.getByLabel('Your effort').selectOption('hard');
+    await page.getByLabel('Your attack').selectOption('selective');
+    await page.getByLabel('Your chase').selectOption('selective');
+    await page.getByLabel('Default tactics for uncustomized managers')
+      .selectOption('passive');
+    await page.getByLabel('Managers with your own tactics')
+      .selectOption('19');
+    const tactics=[['hard','none','all'],
+      ['steady','selective','ignore'],
+      ['conserve','none','selective'],
+      ['steady','repeated','selective']];
+    for(let index=1;index<=19;index++){
+      const [effort,attack,chase]=tactics[(index-1+86)%4];
+      await page.getByLabel(`Rival ${index} effort`).selectOption(effort);
+      await page.getByLabel(`Rival ${index} attack`).selectOption(attack);
+      await page.getByLabel(`Rival ${index} chase`).selectOption(chase);
+      await page.getByLabel(`rival-${index} finisher`)
+        .selectOption(`rival-${index}-4`);
+    }
+    await page.getByLabel('you finisher').selectOption('you-4');
+    await page.getByRole('checkbox',{
+      name:'Show read-only point illustration'}).check();
+    const responsePromise=page.waitForResponse(response=>
+      response.url().endsWith('/api/v91-playtest')&&
+      response.request().method()==='POST');
+    await page.getByRole('button',{name:'Run v93 race preview'}).click();
+    const response=await responsePromise;
+    expect(response.status()).toBe(200);
+    const {coasted}=await response.json();
+    expect(coasted.version)
+      .toBe('v93-coast-full-km-isolated-lanes-playtest-1');
+    expect(coasted.lineTimes).toHaveLength(160);
+    expect(coasted.provisionalLineOrder).toHaveLength(160);
+    expect(coasted.pointPreview.status).toBe('unavailable');
+    const note=page.getByRole('note',{
+      name:'Full-kilometre isolated lanes'});
+    await expect(note).toContainText('no draft or free energy');
+    await expect(note).toContainText('possible place ranges');
+    const first=coasted.isolatedLaneEncounters[0].riderIds[0];
+    await note.getByRole('button',{
+      name:`Inspect isolated lane rider ${first} finish replay`}).first()
+      .click();
+    await expect(page.getByRole('combobox',{name:'Rider'}))
+      .toHaveValue(first);
+    await expect(page.getByRole('table',{
+      name:'V93 individual conditional results'}).getByRole('row'))
+      .toHaveCount(161);
+    await expect(page.getByText('Official points: withheld · Awards saved: 0'))
+      .toBeVisible();
+  });
+
 test('an exhausted solo finisher reaches the paid line without a sprint',
   async({page})=>{
     await page.goto('/login');

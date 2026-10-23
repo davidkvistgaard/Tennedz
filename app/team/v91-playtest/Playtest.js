@@ -958,6 +958,8 @@ export default function Playtest({guided=false}){
           (coasted.settings.managerTacticOverrides?.length??0)} custom rival managers · {' '}
           {coasted.sharedWheelContact?
             'paid shared-road contact and photo-finish ranges':
+            coasted.isolatedLaneEncounters?.length?
+              'paid independent lanes for isolated riders through the final kilometre':
             coasted.roadStatus}</p>
         <p>Conditional individual line: {coasted.lineTimes.length} riders. Official results and points are withheld.</p>
         <nav className="v91-result-nav" aria-label="Explore this race">
@@ -1224,6 +1226,31 @@ export default function Playtest({guided=false}){
                     ?.scrollIntoView();
                 }}>Finish replay {id}</button>)}
             </p>)}
+          </div>}
+          {coasted.isolatedLaneEncounters?.length>0&&<div role="note"
+            aria-label="Full-kilometre isolated lanes">
+            <p>{coasted.isolatedLaneEncounters.length} possible meetings
+              between already isolated riders were checked across the paid
+              final kilometre. They keep separate outside lanes with no
+              draft or free energy. The road groups, crossing times and
+              replays remain recorded; exact ties keep possible place
+              ranges and receive no point illustration.</p>
+            {coasted.isolatedLaneEncounters.slice(0,3).map((event,index)=><p
+              key={index}>
+              {(event.distanceM/1000).toFixed(3)} km ·
+              {' '}{event.riderIds.join(' and ')}.
+              {event.riderIds.map(id=><button key={id} type="button"
+                aria-label={`Inspect isolated lane rider ${id} finish replay`}
+                onClick={()=>{
+                  setCoastedBandId(`isolated:${id}`);
+                  setCoastedRiderId(id);setCoastedBandIndex(0);
+                  document.getElementById('v93-paid-finale-replay')
+                    ?.scrollIntoView();
+                }}>Finish replay {id}</button>)}
+            </p>)}
+            {coasted.isolatedLaneEncounters.length>3&&<p>
+              Showing the first three meetings; all riders remain in the
+              conditional line and replay.</p>}
           </div>}
           {!coasted.provisionalLineOrder&&<p>
             Riders are grouped by proven road-place ranges where available.
