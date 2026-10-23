@@ -3585,3 +3585,26 @@ route returned HTTP 200 and the checked recent runtime-error clusters and
 error/fatal logs were empty. Deployment `dpl_FPs5oShuH7R2ACWhCupK3e58kjZt`
 remains the verified rollback target. No authenticated production race or
 live Supabase write was performed.
+
+### Shared-wheel plan and contact audit (2026-10-23)
+
+The reproducible full-race plan matrix varies the nominated finisher and
+every locked helper for `you`, an active rival, and a rival whose helpers are
+already isolated in the same 260 km shared-wheel race. Of 150 decisions,
+108 finish all 160 riders and reconcile their paid energy, line crossings
+and replay; 84 use positive lead-out work. The other 42 are correctly
+refused because the nominated helper is in a different road group. Every
+accepted plan retains the same paid first wheel contact at 259428.795 m,
+and none fabricates classified results or official awards. The standalone
+matrix script and focused lint passed.
+
+A separate 90-race route/category/field matrix still has 15 conditional
+finishes without a defensible policy-point order. All 15 have possible
+isolated-rider or active-band contact, mostly at the 259 km source marker;
+three first appear later in the final kilometre. In a 20-team flat case,
+`you-2` and `you-7` may meet at 259065.622 m, while later isolated riders
+may meet after the 500 m handoff. A single pre-500 lane-pass rule cannot
+settle both intervals. The early front-catch trace likewise already merges
+inside its first 250 m frame, so applying the late-catch wheel model would
+require a separately paid pre-contact split. These cases remain conditional
+and point awards stay withheld.
