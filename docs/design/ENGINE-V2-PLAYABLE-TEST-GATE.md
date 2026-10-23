@@ -4091,3 +4091,19 @@ targeted lint, isolated preview build, 43/43 browser flows, the varied
 90/90 whole-race playability matrix and 90/90 long-field stress passed.
 The broad `eslint .` scan was stopped without a result after several
 minutes; lint of every changed code and test file passed.
+
+The same whole-race audit then isolated a second paid geometry in exposed
+terrain: all four `road-1` riders leave at the boundary, while all four
+`road-2` riders survive. The leading leavers stay more than 189 seconds
+ahead of the bunch at the line and never contact `road-2`; there is no
+rear leaver or bunch pass to invent. The guarded continuation accepts a
+three-band line (leading isolated, `road-2`, bunch) and carries 32 paid
+individual crossings through six replay bands. Across the 60 all-hard
+four-team 260 km audit races, 40 rolling/exposed cases now complete and
+20 mountain cases still refuse because both source fronts dissolve.
+Both genders and all ten seeds per terrain were included. Official points
+remain withheld. Seven neighboring unit tests, changed-file lint, the
+isolated preview build and 44/44 local browser flows passed, including a
+female exposed-road API-to-replay flow. The previously passed 90-case
+playability and 90-case long-field stress corpora are unchanged inputs;
+they were not repeated for this additional guarded geometry.
