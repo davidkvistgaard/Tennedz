@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {createV93PlayableTest,summarizeV93CoastedPlaytest,
   validateV93CoastedPlaytest,V93_FRONT_CATCH_PLAYTEST_VERSION,
-  V93_UNSUPPORTED_CATCH_PREVIEW_VERSION} from
+  V93_PAID_LATE_CATCH_ROAD_PREVIEW_VERSION} from
   '../../lib/engine/v2/playtest-v93-coasted.mjs';
 
 const tactics=[
@@ -40,15 +40,15 @@ test('early paid front catch reaches every rider line and replay while points st
   assert.ok(summary.lastKmRoad.every(frame=>frame.groups.length===0));
 });
 
-test('last-100-m front catch exposes only its validated kilometre road',()=>{
+test('last-100-m front catch pays the full road but withholds individual places',()=>{
   const late={...settings,terrain:'exposed',fatigue:0,
     seed:'v93-long-stress-M-exposed-0-2'};
   assert.throws(()=>createV93PlayableTest(late),error=>{
     assert.match(error.message,/needs a recorded catch for road-13/);
     assert.equal(error.cause.groupId,'road-13');
     const road=error.roadPreview;
-    assert.equal(road.version,V93_UNSUPPORTED_CATCH_PREVIEW_VERSION);
-    assert.equal(road.unsupportedReason,'unpaid_front_catch');
+    assert.equal(road.version,V93_PAID_LATE_CATCH_ROAD_PREVIEW_VERSION);
+    assert.equal(road.unsupportedReason,'individual_late_catch');
     assert.equal(road.kilometreFrames.length,259);
     assert.equal(road.kilometreFrames.at(-1).km,259);
     assert.ok(road.kilometreFrames.at(-1).roadGroups.some(group=>
@@ -59,7 +59,21 @@ test('last-100-m front catch exposes only its validated kilometre road',()=>{
       road.catch.metresToGo<100);
     assert.ok(road.kilometreFrames.at(-1).ownRiders.every(row=>
       Number.isFinite(row.energy)&&row.energy>=0));
-    assert.deepEqual(road.lastKmRoad,[]);
+    assert.equal(road.lastKmRoad.length,7);
+    assert.equal(road.lastKmRoad[1].distanceM,259500);
+    assert.equal(road.lastKmRoad.at(-1).distanceM,260000);
+    assert.equal(road.lastKmRoad.at(-1).groups.length,0);
+    assert.equal(road.lastKmRoad.at(-1).contact.groupId,'road-13');
+    assert.equal(road.lastKmRoad.at(-1).contact.atDistanceM,
+      road.catch.calculatedCatchDistanceM);
+    assert.equal(road.lastKmRoad.at(-1).contact.caughtRiderIds.length,5);
+    assert.ok(road.lastKmRoad.slice(0,-1).every(frame=>
+      frame.groups.length===1&&frame.droppedPassages.length===30));
+    assert.ok(road.lastKmRoad.every(frame=>
+      frame.ownRiderEnergy.length===8&&
+      frame.ownRiderEnergy.every(row=>row.energy>=0)));
+    assert.equal(road.finalRiderEnergy.length,160);
+    assert.equal(new Set(road.finalRiderEnergy.map(row=>row.riderId)).size,160);
     assert.equal(road.lineTimes,null);
     assert.equal(road.bandReplays,null);
     assert.equal(road.pointPreview.status,'unavailable');
