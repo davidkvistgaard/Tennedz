@@ -3400,3 +3400,13 @@ finisher replay and withheld points. The 12-case extreme corpus remains
 races and explicitly refuses one front catch at 46.85 m to the line.
 That catch requires a separately recorded contact and is not covered by
 this exhausted-tail continuation.
+
+Preview commit `e674f01` was cherry-picked as release commit `2443cdb`.
+The complete serial unit suite passed 977/977 tests; focused release tests,
+lint, the isolated production build, and 38/38 local browser flows passed.
+Production deployment `dpl_Er6ibRzunyZfC9EUSbWCWuCQPcvs` reached READY
+with release commit `2443cdb767e4ed4c2d7847a04b9f3c301685b096`
+and the `tennedz.eu` alias. The Motor Lab route returned HTTP 200, with
+no error or fatal runtime logs in the checked window. The previous
+deployment `dpl_cRDLgNc6dvn6nGrSfn2iqQt6o7hb` remains the rollback
+target. No live Supabase records or official awards were changed.
