@@ -44,7 +44,8 @@ test('early paid front catch reaches every rider line and replay while points st
 test('last-100-m front catch pays the full road but withholds individual places',()=>{
   const late={...settings,terrain:'exposed',fatigue:0,
     seed:'v93-long-stress-M-exposed-0-2'};
-  assert.throws(()=>createV93PlayableTest(late),error=>{
+  assert.throws(()=>createV93PlayableTest(late,{},
+    {resolveWheelContact:false}),error=>{
     assert.match(error.message,/needs a recorded catch for road-13/);
     assert.equal(error.cause.groupId,'road-13');
     const road=error.roadPreview;
@@ -106,7 +107,8 @@ test('a rival finisher choice changes the sprint encounter, not the paid group r
     teamId:team.id,
     finisherId:team.id==='rival-13'?'rival-13-6':team.orders.captainId,
     leadOutRiderId:null}));
-  assert.throws(()=>createV93PlayableTest(late,{plans}),error=>{
+  assert.throws(()=>createV93PlayableTest(late,{plans},
+    {resolveWheelContact:false}),error=>{
     const road=error.roadPreview;
     assert.equal(road.version,V93_PAID_LATE_CATCH_ROAD_PREVIEW_VERSION);
     assert.equal(road.individualContactAudit.status,

@@ -1465,7 +1465,7 @@ test('exhausted final metres retain the whole-road line and rider replay',
       .toBeVisible();
   });
 
-test('last-100-m front catch shows the recorded road without a false finish',
+test('late group catch pays an earlier wheel contact through line and replay',
   async({page})=>{
     await page.goto('/login');
     await page.getByLabel('Email or username').fill('v2rival');
@@ -1479,7 +1479,8 @@ test('last-100-m front catch shows the recorded road without a false finish',
       {effort:'steady',attack:'repeated',chase:'selective'}];
     const response=await page.request.post('/api/v91-playtest',{
       headers:{origin:'http://localhost:3100'},data:{
-      mode:'v93-coasted',settings:{distanceKm:260,teamCount:20,
+      mode:'v93-coasted',pointContext:{tier:3,divisionCount:4,
+        divisionIndex:2},settings:{distanceKm:260,teamCount:20,
         gender:'M',terrain:'exposed',fatigue:0,
         seed:'v93-long-stress-M-exposed-0-2',
         defaultRivalPlan:'passive',effort:'steady',attack:'repeated',
@@ -1488,53 +1489,51 @@ test('last-100-m front catch shows the recorded road without a false finish',
       plans:['you',...Array.from({length:19},(_,index)=>
         `rival-${index+1}`)].map(teamId=>({teamId,
         finisherId:`${teamId}-7`,leadOutRiderId:null}))}});
-    expect(response.status()).toBe(422);
+    expect(response.status()).toBe(200);
     const body=await response.json();
-    expect(body.error).toContain('road-13');
-    expect(body.error).toContain('group-level final-kilometre road and contact are paid');
-    expect(body.roadPreview.version)
-      .toBe('v93-paid-late-catch-road-preview-2');
-    expect(body.roadPreview.kilometreFrames).toHaveLength(259);
-    expect(body.roadPreview.lastKmRoad).toHaveLength(7);
-    expect(body.roadPreview.lastKmRoad.at(-1).distanceM).toBe(260000);
-    expect(body.roadPreview.lastKmRoad.at(-1).contact.groupId)
-      .toBe('road-13');
-    expect(body.roadPreview.individualContactAudit.status)
-      .toBe('possible_earlier_sprint_contact');
-    expect(body.roadPreview.individualContactAudit.firstPotentialOverlap
-      .distanceM).toBeLessThan(body.roadPreview.catch.calculatedCatchDistanceM);
-    expect(body.roadPreview.lineTimes).toBeNull();
-    expect(body.roadPreview.canCommitAwards).toBe(false);
+    expect(body.coasted.version).toBe('v93-wheel-contact-playtest-1');
+    expect(body.coasted.kilometreFrames).toHaveLength(259);
+    expect(body.coasted.lastKmRoad).toHaveLength(8);
+    expect(body.coasted.lastKmRoad.at(-1).distanceM).toBe(260000);
+    expect(body.coasted.sharedWheelContact.roadGroupId).toBe('road-13');
+    expect(body.coasted.sharedWheelContact.atDistanceM)
+      .toBeGreaterThan(259400);
+    expect(body.coasted.sharedWheelContact.atDistanceM)
+      .toBeLessThan(259500);
+    expect(body.coasted.sharedWheelContact.wheelPairs).toHaveLength(5);
+    expect(body.coasted.lineTimes).toHaveLength(160);
+    expect(body.coasted.bandReplays).toHaveLength(31);
+    expect(body.coasted.pointPreview.status).toBe('unavailable');
+    expect(body.coasted.canCommitAwards).toBe(false);
     await page.goto('/team/v91-playtest');
     await page.getByRole('checkbox',{
       name:'Continue to a conditional finish'}).check();
     await page.getByRole('checkbox',{
       name:'Try v93 road-to-line preview'}).check();
     await page.route('**/api/v91-playtest',route=>route.fulfill({
-      status:422,contentType:'application/json',body:JSON.stringify(body)}));
+      status:200,contentType:'application/json',body:JSON.stringify(body)}));
     await page.getByRole('button',{name:'Run v93 race preview'}).click();
     const preview=page.getByRole('region',{
-      name:'Recorded road without individual finish'});
-    await expect(preview).toContainText('group-level final-kilometre road is paid');
-    await expect(preview).toContainText('road-13 meets the bunch');
-    await expect(preview).toContainText('Individual finish, replay and points are withheld');
-    await expect(preview).toContainText('Recorded road boundary: 7 of 7');
-    await expect(preview.getByRole('note',{name:'Paid late catch'}))
-      .toContainText('road-13 joins the bunch');
+      name:'V93 coasted race preview'});
     await expect(preview.getByRole('note',{
-      name:'Individual sprint contact audit'}))
-      .toContainText('individual rider paths may meet sooner');
-    await preview.getByRole('slider',{name:/Recorded road boundary/}).fill('0');
-    await expect(preview).toContainText('Recorded road boundary: 1 of 7');
-    await expect(preview).toContainText('Road groups: road-13');
-    await expect(preview).toContainText('Your riders: you-7 road-13');
+      name:'Paid shared wheel contact'})).toContainText(
+      '5 same-lane wheel pairs met');
+    await expect(preview.getByRole('table',{
+      name:'V93 individual conditional results'}).getByRole('row'))
+      .toHaveCount(161);
+    await expect(preview.getByText('Point illustration unavailable: Photo finishes leave tied provisional places.'))
+      .toBeVisible();
+    await page.getByRole('button',{name:'Replay you-7'}).click();
+    const interval=page.getByRole('slider',{name:/Band interval/});
+    await interval.fill(await interval.getAttribute('max'));
+    const own=body.coasted.lineTimes.find(row=>row.riderId==='you-7');
+    await expect(page.getByLabel('Selected rider finale replay'))
+      .toContainText(`${own.elapsedSecondsFromLastKmStart.toFixed(3)} s, `+
+        `${own.energyAtLine.toFixed(1)} energy.`);
     await expect(page.getByRole('table',{
-      name:'V93 individual conditional results'})).toHaveCount(0);
-    await page.getByLabel('Your effort').selectOption('hard');
-    await expect(preview.getByRole('status')).toContainText(
-      'The paid road below still shows the previous choices.');
-    await page.getByRole('button',{name:'Run v93 race preview'}).click();
-    await expect(preview.getByRole('status')).toHaveCount(0);
+      name:'V93 individual conditional results'})).toHaveCount(1);
+    await expect(page.getByText('Official points: withheld · Awards saved: 0'))
+      .toBeVisible();
   });
 
 test('extreme front leavers finish with or without older dropped riders',
