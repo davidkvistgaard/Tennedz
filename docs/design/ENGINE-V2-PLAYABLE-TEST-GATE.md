@@ -3640,3 +3640,34 @@ SHA and holds the `tennedz.eu` alias. The Motor Lab route returned HTTP 200;
 the checked recent runtime errors and deployment logs were empty. Prior
 deployment `dpl_FGY9dzqbehVH2HQMmc97GsZrm9JV` is the rollback target.
 No authenticated production race or live Supabase write was performed.
+
+### Full-kilometre isolated lane continuation (2026-10-23)
+
+The new opt-in lab-17 rule checks each already isolated rider against the
+active road bands and the other isolated riders in **both** paid halves of the
+final kilometre. It requires the same rider and passage clock at the 500 m
+handoff. Only isolated-to-isolated meetings may use independent outside lanes:
+the rule changes no passage time, road group, helper, energy or replay. Any
+meeting with an active band still refuses. Crossing clocks that remain equal
+retain shared possible-place ranges, so point illustration and official awards
+stay withheld for those races. Old versioned recordings replay through their
+earlier rules.
+
+In the locked 260 km, 20-team women’s rolling case `v93-matrix-86`, the
+first-half marker tie and an overtake at 259.519 km are reconciled on the
+same paid road. All 160 rider crossings match the final replay energy and
+clock. The full 90-case route/category/field matrix completes 90/90 races:
+13 of the former 14 conditional-contact cases now show this full-kilometre
+individual place-range line. They still have exact crossing ties and therefore
+no point illustration; 76/90 point illustrations remain available. The
+remaining case retains an active-band encounter and a contact witness, so it
+is not treated as an isolated lane pass. This is a conditional lab rule, not
+an official classification or a general front-catch solution.
+
+Verification: the new and adjacent focused tests pass (including replay of
+the prior unresolved recording); the six-test no-front suite passes after
+making its older-contact assertion explicitly request the old version. Lint,
+an isolated Next build and 39/39 local browser flows pass, including the
+160-rider line, tied places, replay and zero saved awards. The 90-case long
+field stress corpus completes 90/90 across both genders and five terrain
+profiles. The broad serial unit suite was not rerun for this increment.

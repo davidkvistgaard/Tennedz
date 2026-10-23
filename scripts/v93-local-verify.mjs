@@ -33,10 +33,12 @@ function run(args) {
 
 try {
   await run(["node_modules/next/dist/bin/next", "build"]);
-  for (let shard = 1; shard <= 4; shard++) {
+  // Keep each fixture session below the workbench's six-runs-per-minute
+  // limit while testing the enlarged end-to-end suite.
+  for (let shard = 1; shard <= 8; shard++) {
     await run(["node_modules/@playwright/test/cli.js", "test",
       "tests/e2e/v93-coasted-playtest.spec.mjs", "--fully-parallel",
-      `--shard=${shard}/4`, "--reporter=dot"]);
+      `--shard=${shard}/8`, "--reporter=dot"]);
   }
 } catch (error) {
   console.error(error.message);

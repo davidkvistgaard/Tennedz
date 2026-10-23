@@ -81,7 +81,8 @@ test('a late catch with several dropped riders keeps crossings but withholds con
     chase:'ignore',managerTactics:[
       {effort:'hard',attack:'repeated',chase:'ignore'},
       {effort:'conserve',attack:'none',chase:'all'}]};
-  const race=createV93PlayableTest(input,{pointContext:context});
+  const race=createV93PlayableTest(input,{pointContext:context},
+    {resolveIsolatedPasses:false});
   const source=race.recording.frames.at(-2);
   assert.equal(source.roadGroups.length,0);
   assert.ok(source.chasers.length>0);
