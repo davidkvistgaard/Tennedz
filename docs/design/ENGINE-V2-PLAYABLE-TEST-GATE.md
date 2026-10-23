@@ -3890,3 +3890,22 @@ alias. `/team/motor-lab` returned HTTP 200 and the checked error/fatal
 runtime log window was empty. The prior deployment
 `dpl_7u2Enu7B9pGkNtsNTdM26JuP6ysh` is the rollback target. No live
 Supabase write or official award was made.
+
+### Paid late-bunch-exit shoulders (2026-10-23)
+
+The locked 260 km, 20-team women's rolling race now has an opt-in,
+versioned outside-lane rule for its two bunch exits at 259.700 km.
+Each leaver keeps the existing paid solo time and energy, takes a
+distinct lane outside the eight active lanes, and is 1.358, 6.368 and
+11.377 seconds behind the bunch at the three subsequent 100 m
+boundaries. The new audit checks those passages against the clock and
+individual crossing; the browser opens either rider's paid finish replay
+from the road note. Both solo clocks remain equal at the line, so their
+relative place is unresolved and policy points remain withheld. This
+rule does not classify or award the race.
+
+The prior `v93-late-bunch-exit-playtest-1` recording still regenerates
+when the shoulder option is disabled; failure of the new guards also
+falls back to that older conditional line. The focused three-test suite,
+targeted lint, isolated preview build and 41/41 local browser flows
+passed, including the full 160-rider API response and late-exit replay.

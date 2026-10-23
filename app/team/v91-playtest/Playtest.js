@@ -1096,6 +1096,30 @@ export default function Playtest(){
             the line. The remaining front group and bunch stayed apart; the
             finish order and policy points below are conditional only.
           </p>}
+          {coasted.lateExitShoulder&&<div role="note"
+            aria-label="Paid late bunch exits">
+            <p>{coasted.lateExitShoulder.assignments.length} exhausted riders
+              {' '}left the bunch for separate outside lanes after the 500 m
+              {' '}handoff. Their time and energy are paid to the line. Equal
+              {' '}solo clocks still have no recorded place order, so official
+              {' '}results and points remain withheld.</p>
+            {coasted.lateExitShoulder.assignments.map(row=><p
+              key={row.riderId}>{row.riderId} left at {' '}
+              {(row.atDistanceM/1000).toFixed(3)} km · {' '}
+              {row.passages.at(-1).secondsBehindBunch.toFixed(2)} s behind
+              {' '}the bunch at the line. {' '}
+              <button type="button"
+                aria-label={`Inspect late exit rider ${row.riderId} finale replay`}
+                onClick={()=>{
+                  const band=coasted.bandReplays.find(value=>
+                    value.id===`isolated:${row.riderId}`);
+                  setCoastedBandId(band.id);setCoastedRiderId(row.riderId);
+                  setCoastedBandIndex(band.frames.length-1);
+                  document.getElementById('v93-paid-finale-replay')
+                    ?.scrollIntoView();
+                }}>Inspect finish replay</button>
+            </p>)}
+          </div>}
           <label>Road boundary: {coastedRoadIndex+1} of {coasted.lastKmRoad.length}
             <input type="range" min="0" max={coasted.lastKmRoad.length-1}
               value={coastedRoadIndex}
