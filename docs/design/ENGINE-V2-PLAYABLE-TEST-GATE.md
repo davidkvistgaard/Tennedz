@@ -3576,3 +3576,12 @@ Verification: 18 focused unit tests, focused lint, an isolated preview build,
 long-field stress corpus passed. All 90 stress finales completed; one used
 the shared-wheel continuation. The unchanged long balance ensemble was not
 rerun as a full-suite pass for this increment.
+
+Preview commit `08121dc` and release commit `99e0932` were pushed.
+The release focused tests (10/10), lint, isolated build and all local browser
+shards passed. Production deployment `dpl_FGY9dzqbehVH2HQMmc97GsZrm9JV`
+was READY at the exact release SHA with the `tennedz.eu` alias; the Motor Lab
+route returned HTTP 200 and the checked recent runtime-error clusters and
+error/fatal logs were empty. Deployment `dpl_FPs5oShuH7R2ACWhCupK3e58kjZt`
+remains the verified rollback target. No authenticated production race or
+live Supabase write was performed.
