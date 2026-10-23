@@ -3838,3 +3838,17 @@ individual order while the roster and point policy remain consistent.
 The result is still experimental: `classifiedResults` is null, awards
 remain empty, and Motor Lab keeps the current production refusal until
 the API and browser replay are verified end to end.
+
+The preview branch now exposes this bounded case through the v93 API and
+English Motor Lab. The separate shoulder lanes are checked against the
+paid active-wheel audits; the 500 m individual continuation supplies the
+final road boundaries, energy, rider replay, all 32 conditional line
+times and read-only policy points. Its seven final road bands and the
+three exhausted front leavers are named in the UI. The previous refusal
+can still be selected explicitly in the replay validator and remains the
+fallback when any new guard fails. Focused motor tests, full lint, an
+isolated build and 41/41 local v93 browser flows pass, including a real
+API request for this 260 km case and the Motor Lab result/replay view.
+No official result or point award is created. Other dissolved fronts and
+occupied-lane contacts remain unsupported unless they satisfy these
+guards; this preview change has not been released to production.
