@@ -3763,3 +3763,13 @@ three riders' separate movement after dissolution, detect encounters with
 the remaining group or bunch, and reconcile their energy and individual
 crossings before offering a result. Earlier versioned recordings and
 official point awards remain untouched.
+
+Preview commit `d9a99d4` and trimmed release commit `d62a81a` were pushed.
+The release checkout passed five focused neighboring tests, full lint, an
+isolated production build and 42/42 local browser flows, including the
+four-team dissolution refusal from API through Motor Lab. Production
+deployment `dpl_AphtV1BUHuhEQ8fRMr1kc8M1PnNU` reached READY at the exact
+release SHA and holds the `tennedz.eu` alias. The Motor Lab URL returned
+HTTP 200 and no runtime errors were found in the checked window. The prior
+production deployment `dpl_5pL2HjnuFFKQjQJpDtTMXmAphsss` is the rollback
+target. No authenticated production race or live Supabase write was made.
