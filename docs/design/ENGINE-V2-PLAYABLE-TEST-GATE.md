@@ -3436,5 +3436,16 @@ The 15 neighboring v93 motor tests, lint, isolated Next build, and 37/37
 local browser flows pass. The 90-case 260 km stress corpus still completes 89
 individual finales and reports one paid-road-only late catch, with no saved
 awards. The prior complete 977-test suite covered the previous increment;
-it was not rerun for this isolated preview branch. Production-release evidence
-follows once verified.
+it was not rerun for this isolated preview branch.
+
+Preview commit `9619000` was cherry-picked as release commit `09b7b34`;
+acceptance notes were committed separately as `e9766d8`. The release checkout
+also passed the 15 neighboring v93 motor tests, lint, its isolated production
+build, and 38/38 browser flows including the guided Motor Lab. Vercel
+production deployment `dpl_9v2iAXfgYrPuZtaBhpgtXq5LTUhj` reached READY
+at release SHA `09b7b34ea7bea55bc7fa3030b2be7c35eefe354e`, with the
+`tennedz.eu` alias. `/team/motor-lab` returned HTTP 200, and the checked
+runtime error and error/fatal log windows were empty. Deployment
+`dpl_Er6ibRzunyZfC9EUSbWCWuCQPcvs` is the verified rollback target.
+This check did not run an authenticated race in production or change live
+Supabase data.
