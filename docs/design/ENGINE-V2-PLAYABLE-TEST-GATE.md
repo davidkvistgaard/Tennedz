@@ -3410,3 +3410,31 @@ and the `tennedz.eu` alias. The Motor Lab route returned HTTP 200, with
 no error or fatal runtime logs in the checked window. The previous
 deployment `dpl_cRDLgNc6dvn6nGrSfn2iqQt6o7hb` remains the rollback
 target. No live Supabase records or official awards were changed.
+
+### Final-slice front-catch road (2026-10-23)
+
+The remaining 260 km, 20-team long-field stress refusal catches a five-rider
+front group 46.85 m before the line. The v93 road motor already pays the exact
+pre-contact work, the merged travel after contact, and 30 isolated riders.
+The workbench now exposes that complete seven-interval final-kilometre road,
+including the 259.953 km contact, the bunch and isolated passage clocks, and
+the energy of all 160 riders at the line. It checks every rider's energy
+continuity from the locked 259 km source before showing the road. The
+previous preview showed only the kilometre history and called this catch
+unpaid.
+
+This is a new versioned **road-only** preview. It still returns HTTP 422 and
+withholds individual finish, replay, policy point illustration, and official
+awards. In the final slice there is no post-contact grid boundary from which
+the existing individual sprint runner can restart. Assigning the front riders
+to bunch wheels or inventing a sprint order at contact would turn a paid road
+clock into a false result. Earlier early-catch and successful v93 recordings
+keep their versions and behaviour; other catches retain the older explicit
+refusal if the new road cannot be fully paid and checked.
+
+The 15 neighboring v93 motor tests, lint, isolated Next build, and 37/37
+local browser flows pass. The 90-case 260 km stress corpus still completes 89
+individual finales and reports one paid-road-only late catch, with no saved
+awards. The prior complete 977-test suite covered the previous increment;
+it was not rerun for this isolated preview branch. Production-release evidence
+follows once verified.
