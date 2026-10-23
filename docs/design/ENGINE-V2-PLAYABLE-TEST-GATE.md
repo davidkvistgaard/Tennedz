@@ -4107,3 +4107,36 @@ isolated preview build and 44/44 local browser flows passed, including a
 female exposed-road API-to-replay flow. The previously passed 90-case
 playability and 90-case long-field stress corpora are unchanged inputs;
 they were not repeated for this additional guarded geometry.
+
+The remaining all-hard mountain geometry has a separate versioned paid
+continuation. At 259 km both four-rider source fronts dissolve completely.
+The first paid slice records the bunch passing all four former `road-2`
+riders unassisted between 259119.482 m and 259120.439 m, while the four
+former `road-1` riders stay ahead of the bunch without recorded contact.
+The guard requires exactly those two complete first-boundary dissolutions,
+no old isolated riders or later exits, a recorded first-slice pass for every
+rear leaver, and the same strict front–bunch–rear passage order at all seven
+paid markers. Only then does the 500 m handoff feed a leading isolated band,
+bunch and rear isolated band to the individual runners. In pinned male seed
+`v93-contact-audit-4-M-mountain-30-0`, all 32 riders reach conditional
+individual crossings and nine replay bands with matching energy; the four
+rear riders remain over 45 seconds behind the bunch at the line. All twenty
+previously refusing mountain variants (both genders, ten seeds each) now
+complete with replay. No official place, policy point or saved award is
+claimed for their unresolved wheel order. The pre-existing opt-out still
+refuses explicitly and prior versioned recordings retain their old paths.
+Sixteen neighboring tests, changed-file lint, the isolated preview build
+and 45/45 preview browser flows passed, including an API-to-Motor-Lab
+mountain replay. The independent 90-case whole-race route/category/field
+matrix completed 90/90, with 76 read-only point illustrations and 14
+appropriately withheld. The independent 90-case long-field stress also
+completed 90/90 conditional finishes across both genders and five terrain
+profiles, including one paid shared-wheel contact; points stayed withheld.
+The isolated release build, changed-file lint, four focused release tests
+and 46/46 release browser flows passed. Exact release commit
+`5617bb8c972b9846c6f1df47d0b957cbc268f74b` deployed as
+`dpl_DRiVnoygr7YLAvrEUtHK9SVrAZTy`, READY at the `tennedz.eu` alias;
+`/team/motor-lab` returned HTTP 200 and the checked runtime window had
+no error/fatal logs. Previous deployment
+`dpl_366jmWvFYa6KNCWpRyKb3qsF4Fn5` remains the rollback target. No
+new full serial unit-suite pass was claimed.
