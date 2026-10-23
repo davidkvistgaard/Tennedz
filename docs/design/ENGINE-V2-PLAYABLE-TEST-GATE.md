@@ -3480,3 +3480,14 @@ flows pass, including the API response and English Motor Lab explanation.
 A full serial unit-suite attempt was stopped during the unchanged, long
 balance ensemble; it is not counted as a pass for this increment. The prior
 977-test full-suite pass belongs to the preceding release.
+
+Preview commit `ca83256` was transferred without this internal note to
+release commit `bed3adc78024eb371ea53e397698bd53f82e5699`. The release
+checkout passed the three focused front-catch cases, lint, an isolated
+production build and 38/38 local browser flows, including guided Motor Lab.
+Vercel production deployment `dpl_8DDmZJJRXg1XHnsxEJo1jqKWk89F` is
+READY with the exact release SHA and `tennedz.eu` alias. The Motor Lab URL
+returned HTTP 200; the checked recent runtime-error clusters and error/fatal
+logs were empty. `dpl_9v2iAXfgYrPuZtaBhpgtXq5LTUhj` is the previous
+verified production deployment and rollback target. No authenticated
+production race or live Supabase write was performed.
