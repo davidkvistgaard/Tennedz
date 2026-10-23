@@ -3961,3 +3961,13 @@ catch API, results table, withheld point status and rider replay. The
 no case supplied an unambiguous point illustration. These outcomes
 check surrounding playable paths, not universal front-contact support.
 Preview functional commit: `b345b6b`.
+
+The scoped release cherry-pick `a92d0fe` passed four focused unit
+tests, its isolated build and 42/42 local browser flows, including the
+new lane explanation. Production deployment
+`dpl_FF559dwcKWquNr7jzqxmggVaEzvM` reached READY at exact release
+SHA `a92d0fea71064f00f0f908fa4d6333ac624bab45`; the `tennedz.eu`
+alias points to it and `/team/motor-lab` returned HTTP 200. No error or
+fatal runtime logs appeared in the checked 30-minute window. Previous
+deployment `dpl_5gSim9aAPbdkmtzB3EGLN2upM2jx` is the rollback target.
+No live Supabase write or official award was made.
