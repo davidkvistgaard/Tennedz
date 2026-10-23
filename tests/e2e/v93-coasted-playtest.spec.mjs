@@ -1280,7 +1280,7 @@ test('an unavailable v93 lead-out explains the road and can be removed',
     await expect(page.locator('.v91-error')).toHaveCount(0);
   });
 
-test('late bunch exits refuse a mixed-rival race with a useful boundary',
+test('late bunch exits reach the line with paid replay and withheld points',
   async({page})=>{
     await page.goto('/login');
     await page.getByLabel('Email or username').fill('v2rival');
@@ -1301,40 +1301,50 @@ test('late bunch exits refuse a mixed-rival race with a useful boundary',
           {effort:'conserve',attack:'none',chase:'selective'}]
           [index%3])},
       plans:teams.map(teamId=>({teamId,
-        finisherId:`${teamId}-7`,leadOutRiderId:null}))}});
-    expect(response.status()).toBe(422);
+        finisherId:`${teamId}-7`,leadOutRiderId:null})),
+      pointContext:{tier:2,divisionCount:2,divisionIndex:1}}});
+    expect(response.status()).toBe(200);
     const body=await response.json();
-    expect(body.status).toBe('unsupported_road_or_plan');
-    expect(body.error).toContain('300 m to go');
-    expect(body.error).toContain('paid road is shown');
-    expect(body.coasted).toBeUndefined();
-    const road=body.roadPreview;
-    expect(road.version).toBe('v93-unsupported-road-preview-1');
-    expect(road.kilometreFrames).toHaveLength(259);
-    expect(road.lastKmRoad.at(-1).distanceM).toBe(260000);
-    expect(road.exits).toEqual([
-      {riderId:'rival-1-5',atDistanceM:259700},
-      {riderId:'rival-13-5',atDistanceM:259700}]);
-    expect(road.lineTimes).toBeNull();
-    expect(road.bandReplays).toBeNull();
-    expect(road.pointPreview.status).toBe('unavailable');
-    expect(road.canCommitAwards).toBe(false);
-    for(const frame of road.lastKmRoad)
-      for(const row of frame.exitRiderEnergy)
-        expect(row.energy).toBeGreaterThanOrEqual(0);
+    const race=body.coasted;
+    expect(race.version).toBe('v93-late-bunch-exit-playtest-1');
+    expect(race.kilometreFrames).toHaveLength(259);
+    expect(race.lastKmRoad.at(-1).distanceM).toBe(260000);
+    expect(race.lineTimes).toHaveLength(160);
+    expect(race.bandReplays).toHaveLength(17);
+    expect(race.unresolvedBunchExits).toEqual([
+      {atDistanceM:259250,riderIds:[
+        'rival-16-5','rival-19-5','rival-4-5','rival-7-5'],
+      distinctLineTimes:1},
+      {atDistanceM:259700,riderIds:['rival-1-5','rival-13-5'],
+        distinctLineTimes:1}]);
+    expect(race.pointPreview.status).toBe('unavailable');
+    expect(race.canCommitAwards).toBe(false);
+    for(const id of ['rival-1-5','rival-13-5']){
+      const replay=race.bandReplays.find(band=>band.id===`isolated:${id}`);
+      expect(replay.frames.map(frame=>frame.riders[0].role)).toEqual([
+        'sheltered','sheltered','dropped','dropped','dropped']);
+      expect(race.lineTimes.find(row=>row.riderId===id).energyAtLine).toBe(0);
+    }
     await page.goto('/team/v91-playtest');
     await page.getByRole('checkbox',{
       name:'Continue to a conditional finish'}).check();
     await page.getByRole('checkbox',{
       name:'Try v93 road-to-line preview'}).check();
     await page.route('**/api/v91-playtest',route=>route.fulfill({
-      status:422,contentType:'application/json',body:JSON.stringify(body)}));
+      status:200,contentType:'application/json',body:JSON.stringify(body)}));
     await page.getByRole('button',{name:'Run v93 race preview'}).click();
-    await expect(page.getByRole('region',{
-      name:'Recorded road without individual finish'})).toBeVisible();
-    await expect(page.getByText('Exit at 259.700 km: rival-1-5, rival-13-5.'))
+    await expect(page.getByRole('table',{
+      name:'V93 individual conditional results'}).getByRole('row'))
+      .toHaveCount(161);
+    await expect(page.getByRole('note',{
+      name:'Unresolved bunch exits'})).toContainText('259.700 km');
+    await page.getByLabel('Road band').selectOption('isolated:rival-1-5');
+    await page.locator('#v93-paid-finale-replay input[type=range]')
+      .fill('4');
+    await expect(page.getByLabel('Selected rider finale replay'))
+      .toContainText('Crossed at 100.625 s');
+    await expect(page.getByText('Official points: withheld · Awards saved: 0'))
       .toBeVisible();
-    await expect(page.getByText(/rival-1-5 .* energy/)).toBeVisible();
   });
 
 test('unpaid front catch shows the recorded road without a false finish',

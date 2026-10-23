@@ -7,7 +7,8 @@ import {MOTOR_EXHAUSTION_COAST_VERSION} from
   '../../lib/engine/v2/tuning.mjs';
 import {recordFinaleCoastDynamicNoFrontLastKmClock} from
   '../../lib/engine/v2/finale-separated-last-km.mjs';
-import {createV93PlayableTest} from
+import {createV93PlayableTest,summarizeV93CoastedPlaytest,
+  validateV93CoastedPlaytest,V93_LATE_BUNCH_EXIT_PLAYTEST_VERSION} from
   '../../lib/engine/v2/playtest-v93-coasted.mjs';
 import {finaleSnapshotFromTour} from
   '../../lib/engine/v2/finale-snapshot.mjs';
@@ -76,7 +77,7 @@ test('a complete bunch cannot masquerade as a multiband source',()=>{
     /needs road groups/);
 });
 
-test('a mixed 260 km road names unsupported late bunch exits',()=>{
+test('a mixed 260 km road carries late bunch exits through the line',()=>{
   const settings={distanceKm:260,teamCount:20,
     gender:'F',terrain:'rolling',fatigue:15,seed:'v93-tactic-pair-11',
     effort:'steady',attack:'repeated',chase:'selective',
@@ -91,29 +92,64 @@ test('a mixed 260 km road names unsupported late bunch exits',()=>{
     weather:prepared.weather,teams:prepared.teams,seed:prepared.seed,
     motorVersion:MOTOR_EXHAUSTION_COAST_VERSION});
   const clock=recordFinaleCoastDynamicNoFrontLastKmClock(recording);
-  assert.throws(()=>resolveFinaleDynamicNoFrontPositionedSource(
-    recording,clock),error=>{
-    assert.match(error.message,/leaving the bunch after 500 m/);
-    assert.equal(error.cause.firstLateExitDistanceM,259700);
-    assert.equal(error.cause.metresToGo,300);
-    assert.deepEqual(error.cause.riderIds,
-      ['rival-1-5','rival-13-5']);
-    return true;
-  });
-  assert.throws(()=>createV93PlayableTest(settings),error=>{
-    const road=error.roadPreview;
-    assert.equal(road.version,'v93-unsupported-road-preview-1');
-    assert.deepEqual(road.exits,[
+  const positioned=resolveFinaleDynamicNoFrontPositionedSource(
+    recording,clock);
+  assert.equal(positioned.version,
+    'v2-finale-coast-late-bunch-exit-positioned-source-lab-9');
+  assert.deepEqual(positioned.lateBunchExits,[
       {riderId:'rival-1-5',atDistanceM:259700},
       {riderId:'rival-13-5',atDistanceM:259700}]);
-    assert.equal(road.kilometreFrames.length,259);
-    assert.equal(road.lastKmRoad.at(-1).distanceM,260000);
-    assert.equal(road.lineTimes,null);
-    assert.equal(road.pointPreview.status,'unavailable');
-    assert.equal(road.canCommitAwards,false);
-    for(const frame of road.lastKmRoad)
-      for(const row of frame.exitRiderEnergy)
-        assert.ok(Number.isFinite(row.energy)&&row.energy>=0);
-    return true;
-  });
+  const pointContext={tier:2,divisionCount:2,divisionIndex:1};
+  const race=createV93PlayableTest(settings,{pointContext});
+  assert.equal(race.version,V93_LATE_BUNCH_EXIT_PLAYTEST_VERSION);
+  assert.equal(validateV93CoastedPlaytest(settings,{pointContext},race),true);
+  const summary=summarizeV93CoastedPlaytest(race);
+  assert.equal(summary.lineTimes.length,160);
+  assert.equal(summary.bandReplays.length,17);
+  assert.ok(summary.bandReplays.every(band=>
+    Number.isFinite(band.passageAt500Seconds)));
+  assert.equal(summary.pointPreview.status,'unavailable');
+  assert.equal(summary.pointsStatus,'withheld');
+  assert.equal(summary.canCommitAwards,false);
+  const line=new Map(summary.lineTimes.map(row=>[row.riderId,row]));
+  const replayed=new Set();
+  for(const band of summary.bandReplays)
+    for(const row of band.frames.at(-1).riders){
+      assert.equal(replayed.has(row.riderId),false);
+      replayed.add(row.riderId);
+      assert.equal(row.elapsedToLineSeconds,
+        line.get(row.riderId).elapsedSecondsFromLastKmStart);
+      assert.equal(row.energyAfter,line.get(row.riderId).energyAtLine);
+    }
+  assert.equal(replayed.size,160);
+  for(const id of ['rival-1-5','rival-13-5']){
+    const replay=summary.bandReplays.find(row=>
+      row.id===`isolated:${id}`);
+    assert.deepEqual(replay.frames.map(frame=>
+      frame.riders[0].role),
+    ['sheltered','sheltered','dropped','dropped','dropped']);
+    assert.ok(replay.frames.slice(0,2).every(frame=>
+      frame.riders[0].shelteredSeconds===frame.durationSeconds&&
+      frame.riders[0].shelteredDistanceM===100&&
+      frame.riders[0].activeSeconds===0));
+    for(const frame of replay.frames){
+      const trace=clock.trace.frames.find(row=>
+        row.endDistanceM===frame.endDistanceM);
+      const state=trace.riders.find(row=>row.riderId===id);
+      const passage=clock.passageFrames.find(row=>
+        row.distanceM===frame.endDistanceM);
+      const paidTime=trace.pelotonRiderIds.includes(id)?
+        passage.bunchPassageSecondsFromBunchMarker:
+        passage.droppedPassages.find(row=>row.riderId===id)
+          .passageSecondsFromBunchMarker;
+      assert.equal(frame.elapsedSecondsAtStart+frame.durationSeconds,
+        paidTime);
+      assert.equal(frame.riders[0].energyAfter,state.energy);
+      assert.equal(frame.riders[0].energySpent,state.energySpent);
+    }
+    assert.equal(line.get(id).energyAtLine,0);
+    assert.equal(line.get(id).elapsedSecondsFromLastKmStart,
+      clock.passageFrames.at(-1).droppedPassages.find(row=>
+        row.riderId===id).passageSecondsFromBunchMarker);
+  }
 });

@@ -151,10 +151,8 @@ for(let index=0;index<scenarios.length;index++){
 }
 assert.ok(report.some(row=>row.attack.changedRoadFrames>0));
 assert.ok(report.some(row=>row.chase.changedRoadFrames>0));
-assert.deepEqual(report.filter(row=>row.mixed.refusal).map(row=>({
-  index:row.index,refusal:row.mixed.refusal})),[{
-  index:11,refusal:{reason:'late_bunch_exit',metresToGo:300,
-    riderIds:['rival-1-5','rival-13-5']}}]);
+assert.deepEqual(report.filter(row=>row.mixed.refusal),[]);
+assert.equal(report[11].mixed.points,'unavailable');
 console.log(JSON.stringify({scenarios:report.length,
   runs:report.length*5,
   completedRuns:report.length*5-report.filter(row=>row.mixed.refusal).length,
