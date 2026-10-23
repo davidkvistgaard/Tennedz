@@ -1099,7 +1099,9 @@ export default function Playtest({guided=false}){
             {' '}of paid final-kilometre travel. Their individual paths continue
             {' '}in the line and replays.
             {coasted.frontCatch.inferredLaneQueue?
-              ' Inferred lanes keep the front and bunch wheels apart at the catch. Isolated rider contact and point order remain unresolved, so points are withheld.':
+              coasted.frontCatch.isolatedContactResolved?
+                ' Inferred lanes keep the front and bunch wheels apart at the catch. Isolated riders continue in separate outside lanes after the active field finishes. The conditional place order retains exact ties; policy points are withheld.':
+                ' Inferred lanes keep the front and bunch wheels apart at the catch. Isolated rider contact and point order remain unresolved, so points are withheld.':
               ' Their order within the bunch remains unresolved, so points are withheld.'}
           </p>}
           {coasted.dissolvedFront&&<p role="note"
