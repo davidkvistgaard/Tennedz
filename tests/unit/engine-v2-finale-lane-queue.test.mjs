@@ -52,3 +52,21 @@ test('a rider in another lane keeps its paid independent crossing',()=>{
     102.5/12)<1e-8);
   assert.equal(follower.laneBlocks.length,0);
 });
+
+test('a versioned wheel tolerance absorbs rounding without changing the old queue',()=>{
+  const slots=[{riderId:'leader',lane:0,row:0},
+    {riderId:'follower',lane:0,row:1}];
+  const rows=[row('leader',0,10),
+    row('follower',-2.5+5e-8,10)];
+  const input={durationSeconds:1,elapsedSeconds:0,finishM:100,
+    wheelSpacingM:2.5};
+  assert.throws(()=>queuePaidBunchFrame(rows,slots,input),
+    /overlapping wheels/);
+  const [,follower]=queuePaidBunchFrame(rows,slots,{
+    ...input,wheelToleranceM:1e-7});
+  assert.ok(follower.positionM<10);
+  assert.ok(follower.energySpent>0);
+  assert.throws(()=>queuePaidBunchFrame([
+    row('leader',0,10),row('follower',-2.49,10)],slots,{
+    ...input,wheelToleranceM:1e-7}),/overlapping wheels/);
+});

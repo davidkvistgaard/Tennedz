@@ -1488,7 +1488,8 @@ test('late group catch pays an earlier wheel contact through line and replay',
           (_,index)=>tactics[index%4])},
       plans:['you',...Array.from({length:19},(_,index)=>
         `rival-${index+1}`)].map(teamId=>({teamId,
-        finisherId:`${teamId}-7`,leadOutRiderId:null}))}});
+        finisherId:`${teamId}-7`,
+        leadOutRiderId:teamId==='you'?'you-0':null}))}});
     expect(response.status()).toBe(200);
     const body=await response.json();
     expect(body.coasted.version).toBe('v93-wheel-contact-playtest-1');
@@ -1503,6 +1504,9 @@ test('late group catch pays an earlier wheel contact through line and replay',
     expect(body.coasted.sharedWheelContact.wheelPairs).toHaveLength(5);
     expect(body.coasted.lineTimes).toHaveLength(160);
     expect(body.coasted.bandReplays).toHaveLength(31);
+    expect(body.coasted.leadOutWork.filter(row=>
+      row.riderId==='you-0'&&row.energySpent>0).length)
+      .toBeGreaterThan(0);
     expect(body.coasted.pointPreview.status).toBe('unavailable');
     expect(body.coasted.canCommitAwards).toBe(false);
     await page.goto('/team/v91-playtest');
@@ -1522,6 +1526,8 @@ test('late group catch pays an earlier wheel contact through line and replay',
       name:'V93 individual conditional results'}).getByRole('row'))
       .toHaveCount(161);
     await expect(preview.getByText('Point illustration unavailable: Photo finishes leave tied provisional places.'))
+      .toBeVisible();
+    await expect(preview.getByText(/Lead-out work: you-0/))
       .toBeVisible();
     await page.getByRole('button',{name:'Replay you-7'}).click();
     const interval=page.getByRole('slider',{name:/Band interval/});

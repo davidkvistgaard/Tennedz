@@ -91,6 +91,33 @@ test('a changed rival nomination changes its paid sprint without rewriting conta
   /differs from the locked race/);
 });
 
+test('a nominated lead-out completes the shared road and pays for its work',()=>{
+  const plans=tour.committedInputs.teams.map(team=>({
+    teamId:team.id,finisherId:team.orders.captainId,
+    leadOutRiderId:team.id==='you'?'you-0':null}));
+  const input={plans,pointContext:{tier:3,divisionCount:4,
+    divisionIndex:2}};
+  const race=createV93PlayableTest(settings,input);
+  assert.equal(race.version,V93_WHEEL_CONTACT_PLAYTEST_VERSION);
+  assert.equal(validateV93CoastedPlaytest(settings,input,race),true);
+  const summary=summarizeV93CoastedPlaytest(race);
+  const helperWork=summary.leadOutWork.filter(row=>
+    row.riderId==='you-0');
+  assert.ok(helperWork.length>0&&helperWork.every(row=>
+    row.energySpent>0));
+  assert.equal(summary.lineTimes.length,160);
+  assert.equal(summary.bandReplays.length,31);
+  const helper=summary.lineTimes.find(row=>row.riderId==='you-0');
+  const last=summary.bandReplays.find(row=>row.id==='peloton')
+    .frames.flatMap(frame=>frame.riders).find(row=>
+      row.riderId==='you-0'&&row.elapsedToLineSeconds!==null);
+  assert.equal(last.elapsedToLineSeconds,
+    helper.elapsedSecondsFromLastKmStart);
+  assert.equal(last.energyAfter,helper.energyAtLine);
+  assert.equal(summary.pointPreview.status,'unavailable');
+  assert.equal(summary.canCommitAwards,false);
+});
+
 test('the complete Motor Lab path shows the same road, finish and replays',()=>{
   const input={pointContext:{tier:3,divisionCount:4,
     divisionIndex:2}};

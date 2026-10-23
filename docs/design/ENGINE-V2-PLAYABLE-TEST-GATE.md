@@ -3557,3 +3557,22 @@ returned HTTP 200; the checked recent runtime-error clusters and error/fatal
 logs were empty. Deployment `dpl_8DDmZJJRXg1XHnsxEJo1jqKWk89F` is the
 verified rollback target. No authenticated production race or live Supabase
 write was performed.
+
+### Shared-wheel lead-out precision (2026-10-23)
+
+In the same complete 260 km race, nominating `you-0` as lead-out for
+`you-7` exposed a rounding error in the new fixed-lane continuation. An
+unrelated pair of active riders had a calculated gap of 2.499999953 m at a
+2.5 m wheel boundary. The queue rejected that sub-micrometre difference and
+the workbench misleadingly fell back to its old front-catch refusal. The
+new shared-wheel source now permits at most 0.0000001 m of numerical wheel
+tolerance; older queue versions keep their former default. A 0.01 m real
+overlap remains invalid. With this bounded tolerance, the nominated helper
+pays its effort, all 160 riders cross with matching energy and replay, and
+point awards remain withheld.
+
+Verification: 18 focused unit tests, focused lint, an isolated preview build,
+37/37 local browser flows (including the lead-out path), and the 90-case
+long-field stress corpus passed. All 90 stress finales completed; one used
+the shared-wheel continuation. The unchanged long balance ensemble was not
+rerun as a full-suite pass for this increment.
