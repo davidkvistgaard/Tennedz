@@ -1577,6 +1577,17 @@ test('late group catch pays an earlier wheel contact through line and replay',
       .toHaveCount(161);
     await expect(preview.getByText('Point illustration unavailable: Photo finishes leave tied provisional places.'))
       .toBeVisible();
+    const unresolved=body.coasted.roadPlaceBounds.riders.filter(row=>
+      row.position===null);
+    expect(unresolved.length).toBeGreaterThan(1);
+    const firstTie=unresolved[0];
+    await expect(preview.getByRole('note',{
+      name:'Unresolved photo finishes'})).toContainText(
+      `Places ${firstTie.firstPossiblePlace}–${firstTie.lastPossiblePlace}`);
+    await page.getByRole('button',{
+      name:`Inspect photo finish rider ${firstTie.riderId}`}).click();
+    await expect(page.getByLabel('Selected rider finale replay'))
+      .toContainText(firstTie.riderId);
     await expect(preview.getByText(/Lead-out work: you-0/))
       .toBeVisible();
     await page.getByRole('button',{name:'Replay you-7'}).click();

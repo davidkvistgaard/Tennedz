@@ -330,6 +330,17 @@ export default function Playtest({guided=false}){
     .map(row=>[row.riderId,row]));
   const coastedRoadBounds=new Map((coasted?.roadPlaceBounds?.riders??[])
     .map(row=>[row.riderId,row]));
+  const photoFinishGroups=[...new Map((coasted?.roadPlaceBounds?.riders??[])
+    .filter(row=>row.position===null)
+    .map(row=>[`${row.firstPossiblePlace}-${row.lastPossiblePlace}`,
+      {first:row.firstPossiblePlace,last:row.lastPossiblePlace}]))
+    .values()].map(group=>({...group,riderIds:(coasted?.roadPlaceBounds
+      ?.riders??[]).filter(row=>row.position===null&&
+      row.firstPossiblePlace===group.first&&
+      row.lastPossiblePlace===group.last).map(row=>row.riderId).sort()}))
+    .sort((a,b)=>a.first-b.first||a.last-b.last);
+  const photoFinishRiderCount=photoFinishGroups.reduce((sum,group)=>
+    sum+group.riderIds.length,0);
   const coastedOrder=[...(coasted?.lineTimes??[])].sort((a,b)=>
     coasted?.provisionalLineOrder?
       (coastedProvisionalPlaces.get(a.riderId)?.position??0)-
@@ -1284,6 +1295,31 @@ export default function Playtest({guided=false}){
               'The paid front stays separate through the finale. Contact between the bunch and new leavers remains unresolved; these are conditional ranges and points are withheld.':
               'Road ranges follow the paid front, leaver and bunch passages after the split. Wheel order and contact at the split remain unresolved; points are withheld.'
           }</p>}
+          {photoFinishGroups.length>0&&<div role="note"
+            aria-label="Unresolved photo finishes">
+            <p>{photoFinishRiderCount} riders share
+              {' '}{photoFinishGroups.length} unresolved possible-place
+              {' '}{photoFinishGroups.length===1?'range':'ranges'}.
+              Their crossing times and energy are recorded, but the order
+              within each range has no point illustration.</p>
+            {photoFinishGroups.slice(0,3).map(group=><p
+              key={`${group.first}-${group.last}`}>
+              Places {group.first}–{group.last}:
+              {' '}{group.riderIds.join(', ')}.
+              {group.riderIds.slice(0,3).map(id=><button key={id}
+                type="button" aria-label={`Inspect photo finish rider ${id}`}
+                onClick={()=>{
+                  const line=coasted.lineTimes.find(row=>row.riderId===id);
+                  setCoastedBandId(line.roadBandId);
+                  setCoastedRiderId(id);setCoastedBandIndex(0);
+                  document.getElementById('v93-paid-finale-replay')
+                    ?.scrollIntoView();
+                }}>Finish replay {id}</button>)}
+            </p>)}
+            {photoFinishGroups.length>3&&<p>
+              Showing the first three ranges; every rider is listed in the
+              conditional results table.</p>}
+          </div>}
           {coasted.unresolvedBunchExits&&<div role="note"
             aria-label="Unresolved bunch exits">
             <p>{coastedBunchExitCount}
