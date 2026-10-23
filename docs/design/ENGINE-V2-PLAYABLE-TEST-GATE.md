@@ -3869,3 +3869,24 @@ the checked window. The prior deployment
 Supabase write or official award was made. The bounded shoulder-lane
 result is available in Motor Lab; it does not classify other unsupported
 occupied-lane contacts.
+
+### Inspectable photo-finish ranges (2026-10-23)
+
+The guided English Motor Lab now names the riders in each unresolved
+possible-place range after a paid shared-wheel finale and offers direct
+links to their individual replays. The conditional results table still
+contains every crossing, time and line energy. This makes the reason for
+withheld points inspectable without assigning a place to tied riders or
+changing any versioned recording, point calculation or saved award.
+
+Preview `adc3d08` and release `076ef67` were pushed. Focused lint, an
+isolated preview build and 41/41 local browser flows passed; the browser
+case opens a tied rider's replay from the new range note. The release
+checkout passed its isolated production build and 42/42 local browser
+flows, including the guided route. Production deployment
+`dpl_4A59eW8wZW3D2xZ4B7D92E1h7MxJ` is READY at release SHA
+`076ef67cd1ad16712c35c79c0386d8b6ecb60793` with the `tennedz.eu`
+alias. `/team/motor-lab` returned HTTP 200 and the checked error/fatal
+runtime log window was empty. The prior deployment
+`dpl_7u2Enu7B9pGkNtsNTdM26JuP6ysh` is the rollback target. No live
+Supabase write or official award was made.
