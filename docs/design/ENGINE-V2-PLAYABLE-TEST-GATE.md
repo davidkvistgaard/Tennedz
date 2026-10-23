@@ -3492,24 +3492,26 @@ logs were empty. `dpl_9v2iAXfgYrPuZtaBhpgtXq5LTUhj` is the previous
 verified production deployment and rollback target. No authenticated
 production race or live Supabase write was performed.
 
-### Geometry boundary for the late individual continuation (2026-10-23)
+### Geometry incompatibility at the late-contact handoff (2026-10-23)
 
 A read-only reproduction of the same complete 260 km race shows why the
 longitudinal audit is only a refusal witness. Its first zero-gap candidate
 (`rival-4-1` versus `rival-13-7` at 259750.354 m) uses inferred source
-lanes 4 and 0. Under the existing fixed-lane laboratory assumption, the
-first same-lane **wheel-spacing** closure is instead at 259749.776 m:
-`rival-3-7` reaches 2.5 m behind front rider `rival-8-1` in lane 1 at
-66.913256 s after the last-kilometre marker. A later same-lane zero-gap
-crossing occurs at 259769.502 m. Changing `rival-13`'s nominated finisher
-moves the first cross-lane longitudinal witness, but leaves this first
-same-lane wheel closure unchanged.
+lanes 4 and 0. The front and bunch **assign those lane numbers separately**;
+they are not observed positions on one shared road. A first attempt to
+combine them under the existing 2.5 m fixed-lane wheel rule fails at the
+paid 500 m handoff: `you-7` and `rival-13-7` would share lane 0 and have
+only 2.069 m longitudinal separation. The front band's marker passage is
+44.487393 s after the last-kilometre marker and the bunch's is 44.673063 s.
+Thus the inferred wheel geometry is already incompatible before the new
+queue can begin; a later calculated wheel-gap closure cannot be called the
+first physical contact.
 
 The independent bunch runner also records same-lane open-road passes later
-in this finale (the first at 259878.594 m). Therefore a fixed-lane contact
-continuation must split the paid individual motion at the first wheel-gap
-closure and queue *both* bands thereafter; substituting a group-level catch
-or merely classifying the two independent line orders would miss intervening
-wheel interactions. Lane assignments are inferred laboratory geometry, not
-observed road positions, so even a consistent fixed-lane continuation
-would remain a provisional, non-awarding result pending sporting calibration.
+in this finale (the first at 259878.594 m). A contact-aware continuation
+must reconcile the two band geometries at the handoff and then handle both
+cross-band meetings and within-band passes on one paid clock. Simply
+combining their lane labels, substituting the group-level catch, or
+classifying the independent line orders would invent wheel positions.
+The fixed-lane test therefore remains a local, non-awarding experiment;
+the public road-only refusal and its versioned recordings stay unchanged.
