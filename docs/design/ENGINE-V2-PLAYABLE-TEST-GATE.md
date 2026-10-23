@@ -4027,12 +4027,30 @@ boundary but remain more than 313 seconds ahead of the bunch at the line.
 A third rider leaves `road-2`; the paid motor records the bunch passing him
 unassisted at 259226.210 m. The two surviving road groups remain ahead of
 the bunch through the kilometre, while that third rider finishes behind it.
-The current finish-band guard expects all new isolated riders behind the
+The earlier finish-band guard expected all new isolated riders behind the
 bunch unless every leaver came from the same leading group and stayed ahead.
-It therefore refuses `unresolved_band_contact` and Motor Lab shows only the
-validated 259 km handoff, with no individual finish or points. The paid
-trace has seven 250/100 m frames and energy for all 32 riders, but its mixed
-front and rear exits need separate road bands and a contact-aware individual
-continuation before it can be shown as a classified finale. The matching
-aggressive exposed-road cases completed; eight-team settings were rejected
-by the existing field-size input contract and are not motor refusals.
+It refused `unresolved_band_contact` despite seven paid final-kilometre
+frames and energy for all 32 riders. The matching aggressive exposed-road
+cases completed; eight-team settings were rejected by the existing
+field-size input contract and are not motor refusals.
+
+The guarded mixed-exit continuation now requires exactly two source fronts,
+no previously isolated riders, all exits at the 259 km boundary, both active
+groups ahead of the bunch at every paid marker, each leading leaver strictly
+between those groups throughout, and each rear leaver's unassisted bunch
+pass recorded in the first 250 m. It keeps the leading group and its leavers
+in one unresolved place range, then the second group, bunch and rear leavers
+in separate bands. The existing 500 m nominated sprint and solo runners
+carry every rider's paid energy and replay to the line. It does not infer an
+order within the leading band or award policy points. Cases outside these
+guards retain the earlier explicit refusal. Eight pinned rolling variants
+(four or fifteen teams, both genders, two seeds) replayed 32 or 120 rider
+crossings. Six focused neighboring unit tests, targeted lint, the isolated
+preview build and 42/42 local browser flows passed, including the API and
+Motor Lab replay for the four-team case. The 90/90 full-race playability
+matrix also completed across distance, field, gender, terrain and tactics;
+76 cases had illustrative points and 14 correctly withheld them. The 90/90
+long-field stress completed across both genders and five terrains, including
+one paid shared-wheel contact; all 90 had conditional finishes and withheld
+points where individual places tied. Full lint passed. Release checks are
+still pending at this checkpoint.
