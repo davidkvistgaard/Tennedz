@@ -3992,8 +3992,11 @@ The rule declines races where an active finisher does not precede every
 isolated rider's source passage or where a dropped rider has no continuous
 paid passage. In those cases the earlier lane-queue version remains.
 The older `v93-early-front-catch-lane-playtest-1` still regenerates and
-validates with the new isolated-lane option disabled. The late final-slice
-front catch still has only its paid road and provisional contact audit.
+validates with the new isolated-lane option disabled. The locked late
+final-slice catch has a separate default shared-wheel continuation with
+individual crossings and replays; its paid-road-only contact audit is the
+explicit fallback when that wheel rule is disabled or its guards fail.
+Neither path establishes an official placing for unresolved photo ties.
 
 The four focused motor tests, targeted lint and isolated preview build
 passed. All 41 local browser flows passed, including the front-catch
@@ -4013,3 +4016,23 @@ alias points to it and `/team/motor-lab` returned HTTP 200; no error or
 fatal runtime logs appeared in the checked 30-minute window. Previous
 deployment `dpl_FF559dwcKWquNr7jzqxmggVaEzvM` is the rollback target.
 No live Supabase write or official award was made.
+
+### Mixed front leavers in aggressive rolling races (2026-10-23)
+
+A fresh whole-race probe with hard repeated attacks and active chase found a
+different unsupported geometry in four- and fifteen-team, 260 km rolling
+races for both genders. In the pinned four-team men's case
+`v93-contact-probe-4-M-rolling-0`, two riders leave `road-1` at the 259 km
+boundary but remain more than 313 seconds ahead of the bunch at the line.
+A third rider leaves `road-2`; the paid motor records the bunch passing him
+unassisted at 259226.210 m. The two surviving road groups remain ahead of
+the bunch through the kilometre, while that third rider finishes behind it.
+The current finish-band guard expects all new isolated riders behind the
+bunch unless every leaver came from the same leading group and stayed ahead.
+It therefore refuses `unresolved_band_contact` and Motor Lab shows only the
+validated 259 km handoff, with no individual finish or points. The paid
+trace has seven 250/100 m frames and energy for all 32 riders, but its mixed
+front and rear exits need separate road bands and a contact-aware individual
+continuation before it can be shown as a classified finale. The matching
+aggressive exposed-road cases completed; eight-team settings were rejected
+by the existing field-size input contract and are not motor refusals.
