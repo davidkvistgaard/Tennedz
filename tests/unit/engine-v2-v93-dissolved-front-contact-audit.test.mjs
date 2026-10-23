@@ -12,6 +12,9 @@ import {auditDissolvedFrontContact} from
   '../../lib/engine/v2/finale-dissolved-front-contact.mjs';
 import {auditDissolvedFrontPaidContact} from
   '../../lib/engine/v2/finale-dissolved-front-paid-contact.mjs';
+import {recordDissolvedFrontFirstWheel,
+  validateDissolvedFrontFirstWheel} from
+  '../../lib/engine/v2/finale-dissolved-front-wheel-audit.mjs';
 
 test('whole-race dissolved front identifies both active overtakes without a result',()=>{
   const prepared=prepareV91Playtest({distanceKm:260,teamCount:4,
@@ -65,6 +68,30 @@ test('whole-race dissolved front identifies both active overtakes without a resu
   assert.ok(paid.encounters.every((row,index)=>!index||
     row.elapsedSecondsFromLastKmStart>=
       paid.encounters[index-1].elapsedSecondsFromLastKmStart));
+  const wheels=recordDissolvedFrontFirstWheel(tour,trace);
+  assert.equal(validateDissolvedFrontFirstWheel(tour,trace,wheels),true);
+  assert.equal(wheels.status,'unresolved_occupied_lane_wheel_contact');
+  assert.equal(wheels.firstPotentialWheelContact.leaverRiderId,
+    'rival-2-7');
+  assert.equal(wheels.firstPotentialWheelContact.approachingBandId,
+    'road-13');
+  assert.ok(Math.abs(wheels.firstPotentialWheelContact.approachingWheelM-
+    259054.07065255172)<1e-6);
+  assert.ok(wheels.firstPotentialWheelContact.approachingWheelM<
+    paid.firstPaidSplit.distanceM);
+  assert.ok(wheels.firstPotentialWheelContact.leaverEnergyAtContact>=0);
+  assert.equal(wheels.firstPotentialWheelContact.leaverEnergyAtContact,0);
+  assert.ok(Math.abs(wheels.firstPotentialWheelContact
+    .approachingEnergyAtContact-6.359238231264091)<1e-7);
+  assert.ok(wheels.candidates.every((row,index)=>!index||
+    row.elapsedSecondsFromLastKmStart>=
+      wheels.candidates[index-1].elapsedSecondsFromLastKmStart));
+  assert.equal(wheels.canCommitAwards,false);
+  assert.equal(wheels.classifiedResults,null);
+  const alteredWheel=structuredClone(wheels);
+  alteredWheel.firstPotentialWheelContact.approachingWheelM+=1;
+  assert.throws(()=>validateDissolvedFrontFirstWheel(tour,trace,
+    alteredWheel),/does not replay/);
   const altered=structuredClone(trace);
   altered.contactAudit.encounters[0].distanceM+=1;
   assert.throws(()=>validateFinaleSeparatedGroupsFromTour(tour,altered),

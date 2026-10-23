@@ -3776,11 +3776,17 @@ target. No authenticated production race or live Supabase write was made.
 
 The preview-only `v2-finale-coast-dissolved-front-last-km-22` diagnostic
 continues the same locked race with the three leavers on separate candidate
-paths. Its contact audit finds that `road-13` reaches them at about
+paths. Its **band-marker** audit finds overlaps with `road-13` at about
 259061.184–259061.398 m and the bunch at about
-259126.318–259126.757 m. A separate paid-contact audit orders encounters
-by race time and splits the first slice at each encounter, preserving each
-rider's work and energy **up to** that instant. It deliberately leaves the
-post-contact road, individual crossings, replay and points unresolved. The
-existing Motor Lab refusal remains in force; this diagnostic is not a
-classified finale or a production release.
+259126.318–259126.757 m. A second audit can split candidate work and
+energy at those marker overlaps, but they are not individual wheel
+encounters. With the existing inferred source wheel positions and 2.5 m
+spacing, the first occupied-lane wheel encounter instead occurs at
+259054.071 m, 1.652 s from the last-kilometre marker: `road-13` rider
+`rival-3-2` reaches the wheel spacing behind front leaver `rival-2-7`.
+Its energy is calculated from the paid pre-contact motion. A later,
+smaller-distance encounter with `you-5` occurs slightly later in time,
+which is why contact selection must use race time. This wheel audit still
+assigns no lane change, merge or draft after contact. The existing Motor
+Lab refusal remains in force; no individual crossing, replay or point is
+claimed, and this diagnostic is not a production release.
