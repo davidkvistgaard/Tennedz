@@ -1089,6 +1089,15 @@ export default function Playtest({guided=false}){
             {' '}in the line and replays; their order within the bunch remains
             {' '}unresolved, so points are withheld.
           </p>}
+          {coasted.dissolvedFront&&<p role="note"
+            aria-label="Paid front dissolution">
+            {coasted.dissolvedFront.riderIds.length} exhausted riders left
+            {' '}{coasted.dissolvedFront.fromRoadGroupId} at
+            {' '}{(coasted.dissolvedFront.atDistanceM/1000).toFixed(3)} km.
+            Their separate outside lanes have paid travel and energy through
+            the line. The remaining front group and bunch stayed apart; the
+            finish order and policy points below are conditional only.
+          </p>}
           <label>Road boundary: {coastedRoadIndex+1} of {coasted.lastKmRoad.length}
             <input type="range" min="0" max={coasted.lastKmRoad.length-1}
               value={coastedRoadIndex}

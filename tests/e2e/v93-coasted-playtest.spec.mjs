@@ -5,7 +5,7 @@ test.skip(process.env.PELOTONIA_V91_PLAYTEST_ENABLED!=='true'||
   process.env.PELOTONIA_V93_COASTED_PLAYTEST_ENABLED!=='true',
 'The isolated v93 workbench is disabled.');
 
-test('dissolved front shows only the recorded road without a false finish',
+test('dissolved front shows a paid conditional finish and replay',
   async({page})=>{
     await page.goto('/login');
     await page.getByLabel('Email or username').fill('alice');
@@ -25,27 +25,34 @@ test('dissolved front shows only the recorded road without a false finish',
             {effort:'hard',attack:'selective',chase:'all'},
             {effort:'hard',attack:'repeated',chase:'ignore'}]},
         plans:teamIds.map(teamId=>({teamId,
-          finisherId:`${teamId}-7`,leadOutRiderId:null}))}});
-    expect(response.status()).toBe(422);
+          finisherId:`${teamId}-7`,leadOutRiderId:null})),
+        pointContext:{tier:3,divisionIndex:2,divisionCount:4}}});
+    expect(response.status()).toBe(200);
     const body=await response.json();
-    expect(body.roadPreview.unsupportedReason)
-      .toBe('depleted_front_dissolution');
-    expect(body.roadPreview.kilometreFrames).toHaveLength(259);
-    expect(body.roadPreview.lastKmRoad).toEqual([]);
-    expect(body.roadPreview.lineTimes).toBeNull();
-    expect(body.roadPreview.bandReplays).toBeNull();
-    expect(body.roadPreview.canCommitAwards).toBe(false);
+    const {coasted}=body;
+    expect(coasted.version).toBe('v93-dissolved-front-playtest-1');
+    expect(coasted.kilometreFrames).toHaveLength(259);
+    expect(coasted.lastKmRoad.at(-1).distanceM).toBe(260000);
+    expect(coasted.lineTimes).toHaveLength(32);
+    expect(coasted.bandReplays).toHaveLength(7);
+    expect(coasted.provisionalLineOrder).toHaveLength(32);
+    expect(coasted.pointPreview.riders).toHaveLength(32);
+    expect(coasted.pointPreview.awardRows).toEqual([]);
+    expect(coasted.canCommitAwards).toBe(false);
     await page.goto('/team/v91-playtest');
     await page.getByRole('button',{name:'Set up sample race'}).click();
     await page.route('**/api/v91-playtest',route=>route.fulfill({
-      status:422,contentType:'application/json',body:JSON.stringify(body)}));
+      status:200,contentType:'application/json',body:JSON.stringify(body)}));
     await page.getByRole('button',{name:'Run v93 race preview'}).click();
-    const road=page.getByRole('region',{
-      name:'Recorded road without individual finish'});
-    await expect(road).toContainText('has no rider with energy to stay in the front group');
-    await expect(road).toContainText('No final-kilometre passage, individual finish, replay or points is shown.');
+    await expect(page.getByRole('note',{name:'Paid front dissolution'}))
+      .toContainText('3 exhausted riders left road-2');
     await expect(page.getByRole('table',{
-      name:'V93 individual conditional results'})).toHaveCount(0);
+      name:'V93 individual conditional results'})).toBeVisible();
+    await expect(page.getByRole('region',{name:'Your v93 finish'}))
+      .toContainText('Read-only points:');
+    await page.getByLabel('Road band').selectOption('isolated:you-5');
+    await expect(page.getByLabel('Selected rider finale replay'))
+      .toContainText('you-5');
   });
 
 test('sample race opens the playable setup and links the recorded result',
