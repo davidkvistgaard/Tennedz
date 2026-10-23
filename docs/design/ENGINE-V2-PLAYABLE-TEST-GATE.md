@@ -3681,3 +3681,15 @@ and holds the `tennedz.eu` alias. The Motor Lab URL returned HTTP 200; no
 runtime errors or deployment logs were found in the checked windows. The
 prior deployment `dpl_6SmtNYcyoq9fdmToccbXf5Pyin37` remains the rollback
 target. No authenticated production race or live Supabase write was made.
+
+The remaining matrix case is `v93-matrix-77` (260 km, 15 teams, women's
+mountain route, fatigue 30, repeated attacks and selective chase). On the
+recorded final-500 m sprint, the peloton finisher `rival-1-7` reaches the
+third rider of the three-rider `road-10` group, `rival-11-3`, at
+259774.8152955957 m and 71.2508691275055 s from the final-kilometre
+marker. The paid trajectories put this in the 259700–259800 m slice.
+This is an **active-band encounter**, distinct from the earlier isolated
+marker tie, and needs a contact-aware split and continuation of the
+individual sprint. Treating it as another independent outside-lane pass
+would bypass the occupied front lanes and invent a road order; the current
+conditional line and withheld points remain the honest output.
