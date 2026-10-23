@@ -4002,3 +4002,14 @@ sweep completed 90/90 conditional finales across 45 men's and 45
 women's races, five terrains and three fatigue levels; none provided a
 policy point illustration. This is evidence for the bounded preview,
 not unrestricted contact or official-result support.
+
+Preview functional commit `03ef4fc` and evidence commit `48d98ec`
+were pushed. The scoped release cherry-pick `b3b6189` passed the four
+focused tests, targeted lint, isolated build and 42/42 local browser
+flows. Production deployment `dpl_8JrYUk85DGbESsE79mGMwH6uwihU`
+reached READY at exact release SHA
+`b3b6189a0a0876c38df4a2f2e63e292d10470928`. The `tennedz.eu`
+alias points to it and `/team/motor-lab` returned HTTP 200; no error or
+fatal runtime logs appeared in the checked 30-minute window. Previous
+deployment `dpl_FF559dwcKWquNr7jzqxmggVaEzvM` is the rollback target.
+No live Supabase write or official award was made.
