@@ -19,8 +19,12 @@ import {recordFinaleDissolvedFrontShoulderRoad,
   validateFinaleDissolvedFrontShoulderRoad} from
   '../../lib/engine/v2/finale-dissolved-front-shoulder-road.mjs';
 import {recordFinaleDissolvedFrontConditionalLine,
-  validateFinaleDissolvedFrontConditionalLine} from
+  validateFinaleDissolvedFrontConditionalLine,
+  FINALE_DISSOLVED_FRONT_CONDITIONAL_LINE_VERSION} from
   '../../lib/engine/v2/finale-dissolved-front-conditional-line.mjs';
+import {recordFinaleDissolvedFrontPost500Wheel,
+  validateFinaleDissolvedFrontPost500Wheel} from
+  '../../lib/engine/v2/finale-dissolved-front-post500-wheel.mjs';
 
 test('whole-race dissolved front identifies both active overtakes without a result',()=>{
   const prepared=prepareV91Playtest({distanceKm:260,teamCount:4,
@@ -134,6 +138,22 @@ test('whole-race dissolved front identifies both active overtakes without a resu
   assert.equal(individual.classifiedResults,null);
   assert.equal(individual.pointsStatus,'withheld');
   assert.equal(individual.canCommitAwards,false);
+  const post500=recordFinaleDissolvedFrontPost500Wheel(tour,individual);
+  assert.equal(validateFinaleDissolvedFrontPost500Wheel(tour,individual,
+    post500),true);
+  assert.equal(post500.status,'no_active_cross_band_wheel_contact');
+  assert.equal(post500.firstPotentialWheelContact,null);
+  const alteredWheelRoad=structuredClone(post500);
+  alteredWheelRoad.status='active_cross_band_wheel_contact_unresolved';
+  assert.throws(()=>validateFinaleDissolvedFrontPost500Wheel(tour,
+    individual,alteredWheelRoad),/does not replay/);
+  assert.equal(post500.classifiedResults,null);
+  assert.equal(post500.pointsStatus,'withheld');
+  assert.equal(post500.canCommitAwards,false);
+  assert.ok(post500.candidates.every(row=>
+    (row.atHandoff||Math.abs(row.frontWheelM-row.bunchWheelM-
+      individual.positionedSource.wheelSpacingM)<1e-7)&&
+    row.frontEnergyAtContact>=0&&row.bunchEnergyAtContact>=0));
   const at500=individual.shoulder.passages.find(row=>
     row.distanceM===259500);
   const at500Energy=new Map(at500.riderEnergy.map(row=>
@@ -157,6 +177,27 @@ test('whole-race dissolved front identifies both active overtakes without a resu
     }
   }
   assert.equal(from500.size,32);
+  const different=tour.committedInputs.teams.flatMap(team=>
+    team.riders.filter(rider=>
+      rider.id!==team.orders.captainId&&
+      at500.pelotonRiderIds.includes(rider.id)).map(rider=>({
+        team,finisherId:rider.id})))[0];
+  assert.ok(different);
+  const changedPlans=tour.committedInputs.teams.map(team=>({
+    teamId:team.id,finisherId:team.id===different.team.id?
+      different.finisherId:team.orders.captainId,
+    leadOutRiderId:null}));
+  const changed=recordFinaleDissolvedFrontConditionalLine(tour,{
+    plans:changedPlans});
+  assert.equal(validateFinaleDissolvedFrontConditionalLine(tour,{
+    plans:changedPlans},changed),true);
+  assert.equal(changed.conditionalCrossings.length,32);
+  assert.ok(changed.sprintPlan.decisions.some(row=>
+    row.finisherId===different.finisherId));
+  assert.notDeepEqual(changed.conditionalCrossings,
+    individual.conditionalCrossings);
+  assert.equal(changed.classifiedResults,null);
+  assert.equal(changed.pointsStatus,'withheld');
   for(const row of individual.conditionalCrossings){
     const paid=individual.shoulder.lineRoad.riderEnergy.find(item=>
       item.riderId===row.riderId);
@@ -181,6 +222,42 @@ test('dissolved-front contact audit has no encounter on separate paid paths',()=
   assert.equal(result.firstPotentialContact,null);
   assert.deepEqual(result.encounters,[]);
   assert.equal(result.canCommitAwards,false);
+});
+
+test('post-500 wheel audit catches a paid same-lane approach',()=>{
+  const frame=(riderId,from,speed)=>({
+    elapsedSecondsAtStart:0,durationSeconds:(1000-from)/speed,
+    riders:[{riderId,role:'sprint',positionBeforeM:from,
+      positionM:1000,activeSeconds:(1000-from)/speed,
+      activeDistanceM:1000-from,shelteredSeconds:0,
+      shelteredDistanceM:0,energyAtDecision:10,
+      energySpent:0,energyAfter:10}]});
+  const band=(id,riderId,from,speed)=>({roadBandId:id,
+    runner:{frames:[frame(riderId,from,speed)],
+      finishers:[{riderId,elapsedSecondsFromLastKmStart:
+        (1000-from)/speed}]}});
+  const line={version:FINALE_DISSOLVED_FRONT_CONDITIONAL_LINE_VERSION,
+    positionedSource:{wheelSpacingM:2.5,laneCount:8,roadBands:[
+      {id:'front',slots:[{riderId:'front-rider',lane:0}]},
+      {id:'peloton',slots:[{riderId:'bunch-rider',lane:0}]}]},
+    bandRunners:[band('front','front-rider',520,5),
+      band('peloton','bunch-rider',500,10)],
+    shoulder:{version:'synthetic-shoulder',laneAssignments:[],
+      passages:[{distanceM:500,isolated:[]}]}};
+  const audit=recordFinaleDissolvedFrontPost500Wheel({
+    route:{distanceKm:1}},line);
+  assert.equal(audit.status,'active_cross_band_wheel_contact_unresolved');
+  assert.equal(audit.candidates.length,1);
+  assert.equal(audit.firstPotentialWheelContact.frontRiderId,
+    'front-rider');
+  assert.ok(Math.abs(audit.firstPotentialWheelContact
+    .elapsedSecondsFromLastKmStart-3.5)<1e-7);
+  assert.ok(Math.abs(audit.firstPotentialWheelContact.frontWheelM-
+    audit.firstPotentialWheelContact.bunchWheelM-2.5)<1e-7);
+  const separate=structuredClone(line);
+  separate.positionedSource.roadBands[1].slots[0].lane=1;
+  assert.equal(recordFinaleDissolvedFrontPost500Wheel({
+    route:{distanceKm:1}},separate).firstPotentialWheelContact,null);
 });
 
 test('paid encounter order follows time when different riders meet at different markers',()=>{

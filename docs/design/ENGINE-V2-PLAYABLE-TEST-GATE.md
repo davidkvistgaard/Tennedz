@@ -3813,3 +3813,14 @@ their own final 500 m after the sprint decisions. Cross-band and isolated
 wheel encounters in that individual continuation are still unresolved,
 so the ledger deliberately has no classified result, point illustration
 or saved award. Motor Lab continues to refuse this unsupported case.
+
+The generic post-500 longitudinal audit flags a marker overlap at the
+handoff between two exhausted leavers in different outside lanes. That
+is not an occupied-lane wheel contact. A separate versioned audit now
+checks the paid individual trajectories of the surviving active group
+against the bunch, pairwise on their inferred source lanes and at 2.5 m
+wheel spacing. It finds no active cross-band wheel encounter from 500 m
+to the line in the locked 260 km case. A synthetic same-lane approach
+does trigger at its paid contact time. This removes one false contact
+signal, but does not settle all isolated and within-band passing rules;
+result places, point illustration and awards remain withheld.
