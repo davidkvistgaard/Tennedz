@@ -3851,4 +3851,21 @@ isolated build and 41/41 local v93 browser flows pass, including a real
 API request for this 260 km case and the Motor Lab result/replay view.
 No official result or point award is created. Other dissolved fronts and
 occupied-lane contacts remain unsupported unless they satisfy these
-guards; this preview change has not been released to production.
+guards. At this checkpoint it had not yet been released to production.
+
+Release checkpoint: preview `30dc032` and the scoped release `408dfb1`
+were pushed. The release checkout passed 33 adjacent v93 motor tests, full
+lint, an isolated production build and 42/42 local fixture browser flows,
+including the real 260 km API response and Motor Lab finish/replay. A
+separate 90-case, 20-team, 260 km stress sweep completed 90 conditional
+finales across men/women, five terrains and three fatigue levels. Its
+point illustrations remained unavailable where unique places were not
+established; this sweep is not evidence of universal point support.
+Production deployment `dpl_7u2Enu7B9pGkNtsNTdM26JuP6ysh` reached READY
+at the exact release SHA, acquired the `tennedz.eu` alias, and returned
+HTTP 200 for login and Motor Lab. No error/fatal runtime logs appeared in
+the checked window. The prior deployment
+`dpl_AphtV1BUHuhEQ8fRMr1kc8M1PnNU` is the rollback target. No live
+Supabase write or official award was made. The bounded shoulder-lane
+result is available in Motor Lab; it does not classify other unsupported
+occupied-lane contacts.
