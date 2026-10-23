@@ -3671,3 +3671,13 @@ an isolated Next build and 39/39 local browser flows pass, including the
 160-rider line, tied places, replay and zero saved awards. The 90-case long
 field stress corpus completes 90/90 across both genders and five terrain
 profiles. The broad serial unit suite was not rerun for this increment.
+
+Preview commit `aa3b540` and release commit `4c31dc1` were pushed. The
+trimmed release checkout passed four focused version/replay tests, lint, an
+isolated production build, and 40/40 local browser flows including the
+guided Motor Lab route. Vercel deployment
+`dpl_3QQdHmt4ADwFrKZV4oiTGRmPjxgP` is READY at the exact release SHA
+and holds the `tennedz.eu` alias. The Motor Lab URL returned HTTP 200; no
+runtime errors or deployment logs were found in the checked windows. The
+prior deployment `dpl_6SmtNYcyoq9fdmToccbXf5Pyin37` remains the rollback
+target. No authenticated production race or live Supabase write was made.
