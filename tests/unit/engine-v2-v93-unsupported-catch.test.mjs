@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import {createV93PlayableTest,summarizeV93CoastedPlaytest,
   validateV93CoastedPlaytest,V93_FRONT_CATCH_PLAYTEST_VERSION,
   V93_EARLY_FRONT_CATCH_LANE_PLAYTEST_VERSION,
+  V93_EARLY_FRONT_CATCH_ISOLATED_LANES_PLAYTEST_VERSION,
   V93_PAID_LATE_CATCH_ROAD_PREVIEW_VERSION} from
   '../../lib/engine/v2/playtest-v93-coasted.mjs';
 import {prepareV91Playtest} from '../../lib/engine/v2/playtest.mjs';
@@ -21,13 +22,22 @@ const settings={distanceKm:260,teamCount:20,gender:'M',terrain:'flat',
 test('early paid front catch reaches every rider line and replay while points stay withheld',()=>{
   const race=createV93PlayableTest(settings,{pointContext:{tier:3,
     divisionCount:4,divisionIndex:2}});
-  assert.equal(race.version,V93_EARLY_FRONT_CATCH_LANE_PLAYTEST_VERSION);
+  assert.equal(race.version,
+    V93_EARLY_FRONT_CATCH_ISOLATED_LANES_PLAYTEST_VERSION);
   assert.equal(validateV93CoastedPlaytest(settings,{pointContext:{tier:3,
     divisionCount:4,divisionIndex:2}},race),true);
   assert.equal(race.individualLine.pre500Audit.contactDistanceM,
     race.clock.contact.atDistanceM);
   assert.equal(race.individualLine.pre500Audit.contactResolved,true);
-  assert.equal(race.individualLine.pre500Audit.isolatedContactResolved,false);
+  assert.equal(race.individualLine.pre500Audit.isolatedContactResolved,true);
+  const isolatedAudit=race.individualLine.pre500Audit.isolatedLanes;
+  const bandIds=new Set(race.individualLine.bandRunners.map(row=>
+    row.roadBandId));
+  assert.ok(isolatedAudit.encounters.length>0);
+  assert.ok(isolatedAudit.latestActiveFinishSeconds<
+    isolatedAudit.firstIsolatedSourceSeconds);
+  assert.ok(isolatedAudit.encounters.every(row=>
+    row.riderIds.every(id=>bandIds.has(`isolated:${id}`))));
   assert.ok(race.individualLine.pre500Audit.sourceLeadM>0&&
     race.individualLine.pre500Audit.sourceLeadM<
       race.individualLine.positionedSource.wheelSpacingM);
@@ -54,6 +64,9 @@ test('early paid front catch reaches every rider line and replay while points st
   const summary=summarizeV93CoastedPlaytest(race);
   assert.equal(summary.lineTimes.length,160);
   assert.equal(summary.bandReplays.length,31);
+  assert.equal(summary.provisionalLineOrder.length,160);
+  assert.ok(summary.provisionalLineOrder.some(row=>
+    row.position===null&&row.firstPossiblePlace<row.lastPossiblePlace));
   assert.equal(summary.pointPreview.status,'unavailable');
   assert.equal(summary.pointsStatus,'withheld');
   assert.equal(summary.canCommitAwards,false);
@@ -64,7 +77,7 @@ test('early paid front catch reaches every rider line and replay while points st
     elapsedSecondsFromLastKmStart:
       race.clock.contact.preContactBunchSeconds,
     caughtRiderIds:race.clock.contact.caughtRiderIds,
-    inferredLaneQueue:true,isolatedContactResolved:false});
+    inferredLaneQueue:true,isolatedContactResolved:true});
   assert.deepEqual(summary.frontCatch.caughtRiderIds,
     race.recording.frames.at(-2).roadGroups[0].riderIds);
   assert.ok(summary.lastKmRoad.every(frame=>frame.groups.length===0));
@@ -74,6 +87,13 @@ test('early paid front catch reaches every rider line and replay while points st
   assert.equal(validateV93CoastedPlaytest(settings,{},legacy),true);
   assert.equal(legacy.clock.contact.atDistanceM,
     race.clock.contact.atDistanceM);
+  const prior=createV93PlayableTest(settings,{},
+    {resolveEarlyIsolatedLanes:false});
+  assert.equal(prior.version,V93_EARLY_FRONT_CATCH_LANE_PLAYTEST_VERSION);
+  assert.equal(validateV93CoastedPlaytest(settings,{},prior),true);
+  assert.equal(prior.individualLine.provisionalLineOrder,null);
+  assert.deepEqual(prior.individualLine.conditionalCrossings,
+    race.individualLine.conditionalCrossings);
 });
 
 test('early catch keeps two managers\' finisher and lead-out choices on the paid road',()=>{
@@ -84,7 +104,8 @@ test('early catch keeps two managers\' finisher and lead-out choices on the paid
     leadOutRiderId:team.id==='you'?'you-6':
       team.id==='rival-2'?'rival-2-6':null}));
   const race=createV93PlayableTest(settings,{plans});
-  assert.equal(race.version,V93_EARLY_FRONT_CATCH_LANE_PLAYTEST_VERSION);
+  assert.equal(race.version,
+    V93_EARLY_FRONT_CATCH_ISOLATED_LANES_PLAYTEST_VERSION);
   assert.equal(validateV93CoastedPlaytest(settings,{plans},race),true);
   const summary=summarizeV93CoastedPlaytest(race);
   assert.equal(summary.lineTimes.length,160);
