@@ -4054,3 +4054,29 @@ long-field stress completed across both genders and five terrains, including
 one paid shared-wheel contact; all 90 had conditional finishes and withheld
 points where individual places tied. Full lint passed. Release checks are
 still pending at this checkpoint.
+
+### Depleted leading front under all-manager pressure (2026-10-23)
+
+A further full-race audit varied 260 km routes, genders, fatigue and manager
+orders. Forty-eight aggressive four- and fifteen-team races and sixty
+twenty-team mixed-order races completed, but sixty four-team races with all
+managers ordering hard effort, repeated attacks and full chase explicitly
+refused a depleted-front dissolution. This is a substantive unsupported
+case rather than a slow test: in pinned seed
+`v93-contact-audit-4-M-rolling-30-0`, all four `road-1` riders have zero
+energy at the 259 km handoff, while `road-2` still has three surviving
+riders after its own exit. The paid seven-frame kilometre dissolves
+`road-1` at 259000 m; its four isolated riders finish more than 186 seconds
+ahead of the bunch. The `road-2` leaver is passed by the bunch at
+259209.782 m and finishes over 39 seconds behind. All 32 riders remain in
+the road trace, with energy accounted for.
+
+The existing dissolved-front continuation requires the exhausted leavers
+to be behind the bunch in the first paid slice; that rule cannot represent
+this leading isolated quartet. The current workbench correctly withholds
+an individual line, replay and points for the pinned case. The new
+whole-race unit witness locks the source groups, paid split, contact and
+explicit refusal. A future continuation needs separate leading-isolated,
+surviving-front, bunch and rear-isolated bands, a paid 500 m handoff and
+individual replay before it can show a conditional finish. It must not
+borrow the existing rear-shoulder lane rule for riders still ahead.
