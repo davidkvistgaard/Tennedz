@@ -4140,3 +4140,24 @@ and 46/46 release browser flows passed. Exact release commit
 no error/fatal logs. Previous deployment
 `dpl_366jmWvFYa6KNCWpRyKb3qsF4Fn5` remains the rollback target. No
 new full serial unit-suite pass was claimed.
+
+A separate v93 version now continues a larger prior-dropped mountain road.
+In the locked 260 km, 15-team all-hard seed
+`v93-next-contact-15-M-mountain-30-0`, the 259 km source has fifteen
+zero-energy riders in `road-1`, fifteen surviving riders in `road-3`,
+79 in the bunch, and eleven previously dropped riders. The first paid
+250 m boundary dissolves `road-1`; all fifteen former leaders remain ahead
+of `road-3`, while every prior dropped rider stays behind the bunch at
+each of seven paid markers. The guarded version accepts only this strict
+ordering, a complete first-boundary leading dissolution, no new bunch
+exits or rear-front exits, and no recorded contact. It carries the 500 m
+handoff to four conditional place bands (15/15/79/11), 120 individual
+crossings and 28 replay bands with matching energy. Six locked variants
+across both genders and three seeds at fatigue 30 complete; nearby
+fatigue-15 dissolutions still explicitly refuse. Read-only policy points
+and saved awards remain withheld because wheel order is conditional. The
+older versioned paths and the explicit opt-out refusal remain intact.
+Twenty neighboring unit tests, changed-file lint, an isolated preview
+build and 46/46 local preview browser flows passed, including the
+120-rider API-to-Motor-Lab replay. No new full serial unit-suite pass is
+claimed for this increment.
