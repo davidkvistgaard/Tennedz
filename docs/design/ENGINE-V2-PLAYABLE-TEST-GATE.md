@@ -3541,3 +3541,19 @@ The 90-case 260 km stress corpus now yields 90 conditional finishes, including
 one new shared-wheel case, across both genders, five terrain profiles, three
 fatigue levels and varied attacks and chase orders. Local browser flows check
 the formerly refused race through road, line, replay, and point withholding.
+
+Preview commit `056286a` was pushed to
+`codex/p01-calendar-engine-integration`. The release transfer excludes this
+internal evidence file and the stress script; its code commit is
+`b9169cd77cd708e1c74adc95879e7719ad1af448` on
+`codex/motor-lab-release`. Release validation passed six focused motor tests,
+lint, an isolated Next production build, and 38/38 local browser flows. The
+broad serial unit-suite attempt was stopped in the unchanged long balance
+ensemble, so it is not a pass for this increment.
+
+Vercel production deployment `dpl_FPs5oShuH7R2ACWhCupK3e58kjZt` reached
+READY at that exact release SHA with the `tennedz.eu` alias. The Motor Lab URL
+returned HTTP 200; the checked recent runtime-error clusters and error/fatal
+logs were empty. Deployment `dpl_8DDmZJJRXg1XHnsxEJo1jqKWk89F` is the
+verified rollback target. No authenticated production race or live Supabase
+write was performed.
