@@ -1347,7 +1347,63 @@ test('late bunch exits reach the line with paid replay and withheld points',
       .toBeVisible();
   });
 
-test('unpaid front catch shows the recorded road without a false finish',
+test('early front catch reaches the browser line and replay with points withheld',
+  async({page})=>{
+    await page.goto('/login');
+    await page.getByLabel('Email or username').fill('v2rival');
+    await page.getByLabel('Password',{exact:true}).fill('fixture-password');
+    await page.getByRole('button',{name:'Sign in',exact:true}).click();
+    await expect(page).toHaveURL(/\/team$/);
+    const tactics=[
+      {effort:'hard',attack:'none',chase:'all'},
+      {effort:'steady',attack:'selective',chase:'ignore'},
+      {effort:'conserve',attack:'none',chase:'selective'},
+      {effort:'steady',attack:'repeated',chase:'selective'}];
+    const response=await page.request.post('/api/v91-playtest',{
+      headers:{origin:'http://localhost:3100'},data:{
+        mode:'v93-coasted',pointContext:{tier:3,
+          divisionCount:4,divisionIndex:2},
+        settings:{distanceKm:260,teamCount:20,
+          gender:'M',terrain:'flat',fatigue:15,
+          seed:'v93-long-stress-M-flat-15-0',
+          defaultRivalPlan:'passive',effort:'steady',attack:'repeated',
+          chase:'selective',managerTactics:Array.from({length:19},
+            (_,index)=>tactics[index%4])},
+        plans:['you',...Array.from({length:19},(_,index)=>
+          `rival-${index+1}`)].map(teamId=>({teamId,
+          finisherId:`${teamId}-7`,leadOutRiderId:null}))}});
+    expect(response.status()).toBe(200);
+    const body=await response.json();
+    expect(body.coasted.version).toBe('v93-front-catch-playtest-1');
+    expect(body.coasted.lastKmRoad.at(-1).distanceM).toBe(260000);
+    expect(body.coasted.lineTimes).toHaveLength(160);
+    expect(body.coasted.bandReplays).toHaveLength(31);
+    expect(body.coasted.pointPreview.status).toBe('unavailable');
+    expect(body.coasted.canCommitAwards).toBe(false);
+    await page.goto('/team/v91-playtest');
+    await page.getByRole('checkbox',{
+      name:'Continue to a conditional finish'}).check();
+    await page.getByRole('checkbox',{
+      name:'Try v93 road-to-line preview'}).check();
+    await page.route('**/api/v91-playtest',route=>route.fulfill({
+      status:200,contentType:'application/json',body:JSON.stringify(body)}));
+    await page.getByRole('button',{name:'Run v93 race preview'}).click();
+    await expect(page.getByRole('table',{
+      name:'V93 individual conditional results'}).getByRole('row'))
+      .toHaveCount(161);
+    await page.getByRole('button',{name:'Replay you-7'}).click();
+    const interval=page.getByRole('slider',{name:/Band interval/});
+    await interval.fill(await interval.getAttribute('max'));
+    const own=body.coasted.lineTimes.find(row=>row.riderId==='you-7');
+    await expect(page.getByLabel('Selected rider finale replay'))
+      .toContainText(`result ${
+        own.elapsedSecondsFromLastKmStart.toFixed(3)} s, ${
+        own.energyAtLine.toFixed(1)} energy.`);
+    await expect(page.getByText('Official points: withheld · Awards saved: 0'))
+      .toBeVisible();
+  });
+
+test('last-100-m front catch shows the recorded road without a false finish',
   async({page})=>{
     await page.goto('/login');
     await page.getByLabel('Email or username').fill('v2rival');
@@ -1362,8 +1418,8 @@ test('unpaid front catch shows the recorded road without a false finish',
     const response=await page.request.post('/api/v91-playtest',{
       headers:{origin:'http://localhost:3100'},data:{
       mode:'v93-coasted',settings:{distanceKm:260,teamCount:20,
-        gender:'M',terrain:'flat',fatigue:15,
-        seed:'v93-long-stress-M-flat-15-0',
+        gender:'M',terrain:'exposed',fatigue:0,
+        seed:'v93-long-stress-M-exposed-0-2',
         defaultRivalPlan:'passive',effort:'steady',attack:'repeated',
         chase:'selective',managerTactics:Array.from({length:19},
           (_,index)=>tactics[index%4])},
@@ -1372,7 +1428,7 @@ test('unpaid front catch shows the recorded road without a false finish',
         finisherId:`${teamId}-7`,leadOutRiderId:null}))}});
     expect(response.status()).toBe(422);
     const body=await response.json();
-    expect(body.error).toContain('road-15');
+    expect(body.error).toContain('road-13');
     expect(body.error).toContain('merged road cannot yet be paid');
     expect(body.roadPreview.version)
       .toBe('v93-unsupported-catch-preview-1');
@@ -1391,7 +1447,7 @@ test('unpaid front catch shows the recorded road without a false finish',
     const preview=page.getByRole('region',{
       name:'Recorded road without individual finish'});
     await expect(preview).toContainText('A front group is calculated to meet');
-    await expect(preview).toContainText('Approaching group: road-15');
+    await expect(preview).toContainText('Approaching group: road-13');
     await expect(preview).toContainText('individual finish, replay and points are withheld');
     await expect(preview).toContainText('Recorded kilometre: 259 of 259');
     await preview.getByRole('slider',{name:/Recorded kilometre/}).fill('0');
