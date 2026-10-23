@@ -1005,6 +1005,15 @@ export default function Playtest(){
         </div>)}</div>
         <div className="v91-finish">
           <h3 id="v93-recorded-road">Recorded final-kilometre road</h3>
+          {coasted.frontCatch&&<p role="note" aria-label="Paid front catch">
+            {coasted.frontCatch.roadGroupId} ({coasted.frontCatch.caughtRiderIds.length}
+            {' '}riders) joined the bunch at {' '}
+            {(coasted.frontCatch.atDistanceM/1000).toFixed(3)} km,
+            {' '}after {coasted.frontCatch.elapsedSecondsFromLastKmStart.toFixed(2)} s
+            {' '}of paid final-kilometre travel. Their individual paths continue
+            {' '}in the line and replays; their order within the bunch remains
+            {' '}unresolved, so points are withheld.
+          </p>}
           <label>Road boundary: {coastedRoadIndex+1} of {coasted.lastKmRoad.length}
             <input type="range" min="0" max={coasted.lastKmRoad.length-1}
               value={coastedRoadIndex}

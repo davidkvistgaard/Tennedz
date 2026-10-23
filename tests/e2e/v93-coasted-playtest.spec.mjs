@@ -1378,6 +1378,9 @@ test('early front catch reaches the browser line and replay with points withheld
     expect(body.coasted.lastKmRoad.at(-1).distanceM).toBe(260000);
     expect(body.coasted.lineTimes).toHaveLength(160);
     expect(body.coasted.bandReplays).toHaveLength(31);
+    expect(body.coasted.frontCatch.atDistanceM).toBeGreaterThan(259000);
+    expect(body.coasted.frontCatch.atDistanceM).toBeLessThan(259500);
+    expect(body.coasted.frontCatch.caughtRiderIds.length).toBeGreaterThan(0);
     expect(body.coasted.pointPreview.status).toBe('unavailable');
     expect(body.coasted.canCommitAwards).toBe(false);
     await page.goto('/team/v91-playtest');
@@ -1388,6 +1391,10 @@ test('early front catch reaches the browser line and replay with points withheld
     await page.route('**/api/v91-playtest',route=>route.fulfill({
       status:200,contentType:'application/json',body:JSON.stringify(body)}));
     await page.getByRole('button',{name:'Run v93 race preview'}).click();
+    await expect(page.getByRole('note',{name:'Paid front catch'}))
+      .toContainText(`${(body.coasted.frontCatch.atDistanceM/1000).toFixed(3)} km`);
+    await expect(page.getByRole('note',{name:'Paid front catch'}))
+      .toContainText('points are withheld');
     await expect(page.getByRole('table',{
       name:'V93 individual conditional results'}).getByRole('row'))
       .toHaveCount(161);
