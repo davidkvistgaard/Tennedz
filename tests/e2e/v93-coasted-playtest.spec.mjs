@@ -1709,7 +1709,7 @@ test('paid front leavers keep a conditional result in a mixed-rival race',
     expect(coasted.pointsStatus).toBe('withheld');
   });
 
-test('three isolated riders finish while uncertain points stay withheld',
+test('three isolated riders include a paid parallel start and read-only points',
   async({page})=>{
     await page.goto('/login');
     await page.getByLabel('Email or username').fill('alice');
@@ -1747,18 +1747,24 @@ test('three isolated riders finish while uncertain points stay withheld',
     const response=await responsePromise;
     expect(response.status()).toBe(200);
     const {coasted}=await response.json();
-    expect(coasted.version).toBe('v93-coast-no-front-playtest-1');
+    expect(coasted.version).toBe('v93-coast-isolated-parallel-playtest-1');
     expect(coasted.kilometreFrames.at(-1).droppedRiders).toHaveLength(3);
     expect(coasted.lastKmRoad.at(-1).droppedPassages).toHaveLength(3);
     expect(coasted.bandReplays).toHaveLength(4);
     expect(coasted.lineTimes).toHaveLength(32);
-    expect(coasted.pointPreview.status).toBe('unavailable');
+    expect(coasted.isolatedParallelStarts).toEqual([{
+      riderIds:['rival-1-5','rival-1-7'],distanceM:259000,
+      elapsedSecondsFromLastKmStart:48.484,
+      laneRule:'isolated_parallel_lanes_no_draft'}]);
+    expect(coasted.provisionalLineOrder).toHaveLength(32);
+    expect(coasted.pointPreview.riders).toHaveLength(32);
+    expect(coasted.pointPreview.awardRows).toEqual([]);
     await expect(page.getByRole('table',{
       name:'V93 individual conditional results'}).getByRole('row'))
       .toHaveCount(33);
-    await expect(page.getByText(
-      'Point illustration unavailable: Potential road-band contact leaves no defensible point order.'))
-      .toBeVisible();
+    await expect(page.getByRole('note',{
+      name:'Recorded parallel isolated lanes'}))
+      .toContainText('rival-1-5 and rival-1-7');
     await expect(page.getByText('Official points: withheld · Awards saved: 0'))
       .toBeVisible();
   });
@@ -2326,6 +2332,77 @@ test('four paid isolated passes reach line, replay and preview points',
       tier:coasted.pointPreview.tier,resultType:'ONE_DAY',
       placing:preview.provisionalPlace,
       multiplier:coasted.pointPreview.multiplier}));
+    await expect(page.getByRole('table',{
+      name:'V93 individual conditional results'}).getByRole('row'))
+      .toHaveCount(33);
+    await expect(page.getByText('Official points: withheld · Awards saved: 0'))
+      .toBeVisible();
+  });
+
+test('parallel isolated lanes carry a 260 km race into replay and points',
+  async({page})=>{
+    await page.goto('/login');
+    await page.getByLabel('Email or username').fill('alice');
+    await page.getByLabel('Password',{exact:true}).fill('fixture-password');
+    await page.getByRole('button',{name:'Sign in',exact:true}).click();
+    await expect(page).toHaveURL(/\/team$/);
+    await page.goto('/team/v91-playtest');
+    await page.getByRole('checkbox',{
+      name:'Continue to a conditional finish'}).check();
+    await page.getByRole('checkbox',{
+      name:'Try v93 road-to-line preview'}).check();
+    await page.getByLabel('Distance').selectOption('260');
+    await page.getByLabel('Route profile').selectOption('mountain');
+    await page.getByLabel('Starting fatigue').selectOption('30');
+    await page.getByLabel('Scenario seed').fill('v93-matrix-62');
+    await page.getByLabel('Your effort').selectOption('hard');
+    await page.getByLabel('Your attack').selectOption('selective');
+    await page.getByLabel('Your chase').selectOption('all');
+    await page.getByLabel('Default tactics for uncustomized managers')
+      .selectOption('passive');
+    await page.getByLabel('Managers with your own tactics')
+      .selectOption('3');
+    for(const [index,effort,attack,chase] of [
+      [1,'conserve','none','selective'],
+      [2,'steady','repeated','selective'],
+      [3,'hard','none','all']]){
+      await page.getByLabel(`Rival ${index} effort`).selectOption(effort);
+      await page.getByLabel(`Rival ${index} attack`).selectOption(attack);
+      await page.getByLabel(`Rival ${index} chase`).selectOption(chase);
+    }
+    for(const id of ['you','rival-1','rival-2','rival-3'])
+      await page.getByLabel(`${id} finisher`).selectOption(`${id}-4`);
+    await page.getByLabel('rival-1 lead-out helper')
+      .selectOption('rival-1-6');
+    await page.getByRole('checkbox',{
+      name:'Show read-only point illustration'}).check();
+    const responsePromise=page.waitForResponse(response=>
+      response.url().endsWith('/api/v91-playtest')&&
+      response.request().method()==='POST');
+    await page.getByRole('button',{name:'Run v93 race preview'}).click();
+    const response=await responsePromise;
+    expect(response.status()).toBe(200);
+    const {coasted}=await response.json();
+    expect(coasted.version).toBe('v93-coast-isolated-parallel-playtest-1');
+    expect(coasted.lineTimes).toHaveLength(32);
+    expect(coasted.provisionalLineOrder).toHaveLength(32);
+    expect(coasted.pointPreview.riders).toHaveLength(32);
+    expect(coasted.pointPreview.awardRows).toEqual([]);
+    const note=page.getByRole('note',{
+      name:'Recorded parallel isolated lanes'});
+    await expect(note).toContainText('259.000 km');
+    await expect(note).toContainText('you-1 and you-7');
+    for(const id of ['you-1','you-7']){
+      await note.getByRole('button',{
+        name:`Inspect parallel rider ${id} finish replay`}).click();
+      await expect(page.getByRole('combobox',{name:'Rider'}))
+        .toHaveValue(id);
+      const line=coasted.lineTimes.find(row=>row.riderId===id);
+      const interval=page.getByRole('slider',{name:/Band interval/});
+      await interval.fill(await interval.getAttribute('max'));
+      await expect(page.getByLabel('Selected rider finale replay'))
+        .toContainText(`Crossed at ${line.elapsedSecondsFromLastKmStart.toFixed(3)} s; result ${line.elapsedSecondsFromLastKmStart.toFixed(3)} s, ${line.energyAtLine.toFixed(1)} energy.`);
+    }
     await expect(page.getByRole('table',{
       name:'V93 individual conditional results'}).getByRole('row'))
       .toHaveCount(33);

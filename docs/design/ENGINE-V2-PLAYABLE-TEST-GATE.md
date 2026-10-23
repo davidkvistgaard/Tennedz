@@ -3608,3 +3608,24 @@ settle both intervals. The early front-catch trace likewise already merges
 inside its first 250 m frame, so applying the late-catch wheel model would
 require a separately paid pre-contact split. These cases remain conditional
 and point awards stay withheld.
+
+### Isolated parallel source lanes (2026-10-23)
+
+In a reproducible 260 km, four-team mountain race with fatigue 30, two
+already isolated riders (`you-1` and `you-7`) reach the 259 km marker at the
+same recorded 305.434 seconds. Their separately paid first 250 m passages
+diverge. The opt-in lab-16 line records them in parallel outside lanes,
+without drafting, a group merge, or free energy. It retains all 32 paid
+crossings and matching energy/replay, exposes a conditional individual order
+and policy-point illustration, and saves zero official awards. The prior
+no-front recording of the same race still replays with unresolved contact.
+
+The whole-race 90-case route/category/field matrix completes 90/90 finales
+and now has 76 point illustrations, one more than before; the other 14
+remain explicitly unavailable because their contact paths are not resolved
+by this rule. The 24 neighboring v93 unit tests, lint, isolated build, and
+39/39 local browser flows pass. Browser cases check the Motor Lab
+presentation, both riders' replays, the earlier unresolved sample upgraded
+to paid lanes, and zero saved awards. This does not resolve later
+first-500-metre or final-500-metre
+encounters, and all classifications and official awards remain withheld.

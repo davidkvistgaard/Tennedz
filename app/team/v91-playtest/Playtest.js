@@ -1193,6 +1193,25 @@ export default function Playtest(){
                 }}>Finish replay {id}</button>)}
             </p>)}
           </div>}
+          {coasted.isolatedParallelStarts?.length>0&&<div role="note"
+            aria-label="Recorded parallel isolated lanes">
+            <p>{coasted.isolatedParallelStarts.length} pair of isolated riders
+              entered the final kilometre side by side. Their separately
+              paid passages diverged by 250 m; neither gained a draft or
+              free energy. Times and points below remain illustrative.</p>
+            {coasted.isolatedParallelStarts.map((event,index)=><p key={index}>
+              {(event.distanceM/1000).toFixed(3)} km ·
+              {' '}{event.riderIds.join(' and ')}.
+              {event.riderIds.map(id=><button key={id} type="button"
+                aria-label={`Inspect parallel rider ${id} finish replay`}
+                onClick={()=>{
+                  setCoastedBandId(`isolated:${id}`);
+                  setCoastedRiderId(id);setCoastedBandIndex(0);
+                  document.getElementById('v93-paid-finale-replay')
+                    ?.scrollIntoView();
+                }}>Finish replay {id}</button>)}
+            </p>)}
+          </div>}
           {!coasted.provisionalLineOrder&&<p>
             Riders are grouped by proven road-place ranges where available.
             Within a range, names are alphabetical; row order is not a
