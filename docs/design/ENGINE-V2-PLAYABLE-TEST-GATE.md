@@ -3909,3 +3909,17 @@ when the shoulder option is disabled; failure of the new guards also
 falls back to that older conditional line. The focused three-test suite,
 targeted lint, isolated preview build and 41/41 local browser flows
 passed, including the full 160-rider API response and late-exit replay.
+
+Preview `e6982ea` and scoped release `18a281b` were pushed. The separate
+90-case 260 km long-field sweep completed 90/90 conditional finales: 45
+men's and 45 women's races, 18 per terrain across flat, rolling,
+mountain, exposed and custom profiles. None had an unambiguous point
+illustration, so that sweep does not establish universal point support.
+The release checkout passed its isolated build and 42/42 local browser
+flows, including the guided Motor Lab. Production deployment
+`dpl_5gSim9aAPbdkmtzB3EGLN2upM2jx` reached READY at exact release SHA
+`18a281ba20749313f1c698540910c1f7541713ba`; the `tennedz.eu`
+alias points to it and `/team/motor-lab` returned HTTP 200. The checked
+runtime window contained no logs. Previous deployment
+`dpl_4A59eW8wZW3D2xZ4B7D92E1h7MxJ` is the rollback target. No live
+Supabase write or official award was made.
