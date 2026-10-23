@@ -942,7 +942,10 @@ export default function Playtest(){
           below still show the previous run. Run the race again to see the
           current choices.</p>}
         <p>{coasted.tuningVersion} · {coasted.settings.managerTactics.length+
-          (coasted.settings.managerTacticOverrides?.length??0)} custom rival managers · {coasted.roadStatus}</p>
+          (coasted.settings.managerTacticOverrides?.length??0)} custom rival managers · {' '}
+          {coasted.sharedWheelContact?
+            'paid shared-road contact and photo-finish ranges':
+            coasted.roadStatus}</p>
         <p>Conditional individual line: {coasted.lineTimes.length} riders. Official results and points are withheld.</p>
         <nav className="v91-result-nav" aria-label="Explore this race">
           <a href="#v93-your-finish">Your finish</a>
@@ -1044,6 +1047,18 @@ export default function Playtest(){
         </div>)}</div>
         <div className="v91-finish">
           <h3 id="v93-recorded-road">Recorded final-kilometre road</h3>
+          {coasted.sharedWheelContact&&<p role="note"
+            aria-label="Paid shared wheel contact">
+            {coasted.sharedWheelContact.roadGroupId} met the bunch at {' '}
+            {(coasted.sharedWheelContact.atDistanceM/1000).toFixed(3)} km
+            {' '}after {coasted.sharedWheelContact.elapsedSecondsFromLastKmStart
+              .toFixed(2)} s. {' '}
+            {coasted.sharedWheelContact.wheelPairs.length} same-lane wheel
+            {' '}pairs met at the 2.5 m spacing. The merged road, sprint,
+            {' '}individual energy and line crossings are paid on one clock.
+            {' '}Inferred lanes leave some photo finishes tied, so official
+            {' '}places and points are withheld.
+          </p>}
           {coasted.frontCatch&&<p role="note" aria-label="Paid front catch">
             {coasted.frontCatch.roadGroupId} ({coasted.frontCatch.caughtRiderIds.length}
             {' '}riders) joined the bunch at {' '}
@@ -1184,6 +1199,9 @@ export default function Playtest(){
             classified finish.
           </p>}
           {coasted.roadPlaceBounds&&<p>{
+            coasted.roadPlaceBounds.status===
+              'shared_contact_photo_ranges'?
+              'The shared road records every crossing. Tied times show possible place ranges; no tied rider receives a point illustration.':
             coasted.roadPlaceBounds.status===
               'conditional_front_separated_rear_contact_unresolved'?
               'The paid front stays separate through the finale. Contact between the bunch and new leavers remains unresolved; these are conditional ranges and points are withheld.':

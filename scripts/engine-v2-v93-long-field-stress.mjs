@@ -3,7 +3,8 @@
 // pre-catch road; no fictional result or award is accepted.
 import assert from 'node:assert/strict';
 import {createV93PlayableTest,summarizeV93CoastedPlaytest,
-  validateV93CoastedPlaytest,V93_PAID_LATE_CATCH_ROAD_PREVIEW_VERSION} from
+  validateV93CoastedPlaytest,V93_PAID_LATE_CATCH_ROAD_PREVIEW_VERSION,
+  V93_WHEEL_CONTACT_PLAYTEST_VERSION} from
   '../lib/engine/v2/playtest-v93-coasted.mjs';
 
 const tactics=[
@@ -63,16 +64,22 @@ for(const gender of genders)for(const terrain of terrains)
     assert.equal(summary.pointsStatus,'withheld');
     const crossings=new Map(summary.lineTimes.map(row=>[row.riderId,row]));
     assert.equal(crossings.size,160);
-    const at500=race.clock.trace.frames.find(frame=>
-      frame.endDistanceM===259500);
+    const wheelContact=race.version===V93_WHEEL_CONTACT_PLAYTEST_VERSION;
+    const at500=wheelContact?race.individualLine.at500:
+      race.clock.trace.frames.find(frame=>
+        frame.endDistanceM===259500);
     assert.ok(at500);
-    const energyAt500=new Map(at500.riders.map(row=>
-      [row.riderId,row.energy]));
+    const energyAt500=new Map(wheelContact?[
+      ...at500.slots.map(row=>[row.riderId,row.energy]),
+      ...race.individualLine.isolated.map(row=>
+        [row.riderId,row.frames[1].energy])]:
+      at500.riders.map(row=>[row.riderId,row.energy]));
     const replayed=new Set();
     for(const band of summary.bandReplays){
       for(const rider of band.frames[0].riders)
-        assert.equal(rider.energyAtDecision,
-          energyAt500.get(rider.riderId));
+        if(!wheelContact||band.id==='peloton')
+          assert.equal(rider.energyAtDecision,
+            energyAt500.get(rider.riderId));
       for(const rider of band.frames.at(-1).riders){
         assert.equal(replayed.has(rider.riderId),false);
         replayed.add(rider.riderId);
@@ -85,14 +92,16 @@ for(const gender of genders)for(const terrain of terrains)
     }
     assert.equal(replayed.size,160);
     rows.push({...label,status:'conditional_finish',
+      ...(wheelContact?{sharedWheelContact:
+        summary.sharedWheelContact.atDistanceM}:{}),
       points:summary.pointPreview.status??'illustrative'});
   }
 
 const completed=rows.filter(row=>row.status==='conditional_finish');
 const refused=rows.filter(row=>row.status==='individual_late_catch');
 assert.equal(rows.length,90);
-assert.equal(completed.length,89);
-assert.equal(refused.length,1);
+assert.equal(completed.length,90);
+assert.equal(refused.length,0);
 console.log(JSON.stringify({scenarios:rows.length,completed:completed.length,
   refused:refused.length,
   byGender:genders.map(gender=>({gender,
@@ -103,4 +112,6 @@ console.log(JSON.stringify({scenarios:rows.length,completed:completed.length,
     refused:refused.filter(row=>row.terrain===terrain).length})),
   pointIllustrations:completed.filter(row=>
     row.points==='illustrative').length,
+  sharedWheelContact:completed.filter(row=>
+    row.sharedWheelContact!==undefined),
   refusals:refused},null,2));

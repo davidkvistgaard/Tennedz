@@ -3515,3 +3515,29 @@ combining their lane labels, substituting the group-level catch, or
 classifying the independent line orders would invent wheel positions.
 The fixed-lane test therefore remains a local, non-awarding experiment;
 the public road-only refusal and its versioned recordings stay unchanged.
+
+### Shared-wheel continuation from the full 260 km race (2026-10-23)
+
+The locked 20-team exposed-road race now has a separate, versioned
+experimental continuation. It puts the front and bunch source lanes on one
+clock at 259 km, pays their original separate-band movement to the first
+same-lane wheel encounter, and joins the 130 active riders there. Five wheel
+pairs reach the 2.5 m spacing together at bunch edge 259428.795 m, before the
+500 m sprint handoff and well before the older group-centre catch estimate.
+The merged road pays energy to 500 m, then uses one lane-queued sprint with
+the chosen finishers and lead-outs. Thirty riders already dropped from the
+earlier race remain on individually paid trajectories. Every one of the 160
+riders gets a line crossing and recorded energy; the road, 31 band replays,
+and possible place ranges derive from that same continuation.
+
+This is a conditional laboratory result with inferred lanes and photo-finish
+place ranges. It does not create classified results, policy points, or saved
+official awards. The older group-only preview remains available for
+comparison and as a fallback if the shared-wheel continuation cannot be
+paid or validated. Its earlier versioned recordings are unchanged.
+
+Six focused neighboring tests, lint, and an isolated production build pass.
+The 90-case 260 km stress corpus now yields 90 conditional finishes, including
+one new shared-wheel case, across both genders, five terrain profiles, three
+fatigue levels and varied attacks and chase orders. Local browser flows check
+the formerly refused race through road, line, replay, and point withholding.
