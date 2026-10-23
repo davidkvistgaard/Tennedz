@@ -3374,3 +3374,29 @@ continuation must split movement at that contact, carry energy and elapsed
 time for all 160 riders through the merge, and keep individual finishing
 order and points conditional until their positions are known. Snapping the
 catch to a later grid boundary would invent road history.
+
+### Exhausted final metres (2026-10-23)
+
+A separate 260 km, 20-team exposed-road men's case reached the last few
+metres with a nominated finisher at almost zero energy. Its recorded
+500 m sprint and all earlier road steps were payable, but the previous
+individual tail refused because the final 5.48 m asked for more energy
+than remained. The versioned `v93-coast-tail-playtest-1` continuation now
+uses the existing exhaustion speed-loss cap for that unpaid fraction of
+the final tail. It spends only the available energy, slows the rider,
+records the curtailed demand in the last replay frame, and carries the
+same crossing time and zero line energy into the individual result.
+It runs only for a positioned, no-front, non-dynamic road after the old
+runner has identified a specific unpayable rider. Earlier successful
+recording versions and their line times remain unchanged. Because wheel
+order across bands is still conditional, points remain withheld and no
+official award is saved.
+
+The new whole-race unit case validates all 160 crossings, unique final
+replays, demand, paid energy and slowdown. The isolated browser build
+passed 37/37 flows, including the local API, UI result table, nominated
+finisher replay and withheld points. The 12-case extreme corpus remains
+12/12 complete. A 90-case long-field stress corpus now finishes 89
+races and explicitly refuses one front catch at 46.85 m to the line.
+That catch requires a separately recorded contact and is not covered by
+this exhausted-tail continuation.

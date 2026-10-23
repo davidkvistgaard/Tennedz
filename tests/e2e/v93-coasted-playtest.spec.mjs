@@ -1410,6 +1410,61 @@ test('early front catch reaches the browser line and replay with points withheld
       .toBeVisible();
   });
 
+test('exhausted final metres retain the whole-road line and rider replay',
+  async({page})=>{
+    await page.goto('/login');
+    await page.getByLabel('Email or username').fill('v2rival');
+    await page.getByLabel('Password',{exact:true}).fill('fixture-password');
+    await page.getByRole('button',{name:'Sign in',exact:true}).click();
+    await expect(page).toHaveURL(/\/team$/);
+    const tactics=[
+      {effort:'hard',attack:'none',chase:'all'},
+      {effort:'steady',attack:'selective',chase:'ignore'},
+      {effort:'conserve',attack:'none',chase:'selective'},
+      {effort:'steady',attack:'repeated',chase:'selective'}];
+    const response=await page.request.post('/api/v91-playtest',{
+      headers:{origin:'http://localhost:3100'},data:{
+        mode:'v93-coasted',pointContext:{tier:3,
+          divisionCount:4,divisionIndex:2},
+        settings:{distanceKm:260,teamCount:20,gender:'M',
+          terrain:'exposed',fatigue:0,seed:'v93-broader-probe-83',
+          defaultRivalPlan:'passive',effort:'hard',attack:'repeated',
+          chase:'ignore',managerTactics:Array.from({length:19},
+            (_,index)=>tactics[(index+83)%4])},
+        plans:['you',...Array.from({length:19},(_,index)=>
+          `rival-${index+1}`)].map(teamId=>({teamId,
+          finisherId:`${teamId}-7`,leadOutRiderId:null}))}});
+    expect(response.status()).toBe(200);
+    const body=await response.json();
+    expect(body.coasted.version).toBe('v93-coast-tail-playtest-1');
+    expect(body.coasted.lineTimes).toHaveLength(160);
+    expect(body.coasted.exhaustedTail.map(row=>row.riderId))
+      .toEqual(['you-7']);
+    expect(body.coasted.pointPreview.status).toBe('unavailable');
+    await page.goto('/team/v91-playtest');
+    await page.getByRole('checkbox',{
+      name:'Continue to a conditional finish'}).check();
+    await page.getByRole('checkbox',{
+      name:'Try v93 road-to-line preview'}).check();
+    await page.route('**/api/v91-playtest',route=>route.fulfill({
+      status:200,contentType:'application/json',body:JSON.stringify(body)}));
+    await page.getByRole('button',{name:'Run v93 race preview'}).click();
+    await expect(page.getByRole('note',{name:'Exhausted tail finish'}))
+      .toContainText('you-7');
+    await expect(page.getByRole('table',{
+      name:'V93 individual conditional results'}).getByRole('row'))
+      .toHaveCount(161);
+    await page.getByRole('button',{name:'Replay you-7'}).click();
+    const interval=page.getByRole('slider',{name:/Band interval/});
+    await interval.fill(await interval.getAttribute('max'));
+    const own=body.coasted.lineTimes.find(row=>row.riderId==='you-7');
+    await expect(page.getByLabel('Selected rider finale replay'))
+      .toContainText(`${own.elapsedSecondsFromLastKmStart.toFixed(3)} s, `+
+        `${own.energyAtLine.toFixed(1)} energy.`);
+    await expect(page.getByText('Official points: withheld · Awards saved: 0'))
+      .toBeVisible();
+  });
+
 test('last-100-m front catch shows the recorded road without a false finish',
   async({page})=>{
     await page.goto('/login');

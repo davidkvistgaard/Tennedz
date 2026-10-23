@@ -1076,6 +1076,18 @@ export default function Playtest(){
         </div>
         <div className="v91-finish">
           <h3 id="v93-conditional-results">Individual conditional results</h3>
+          {coasted.exhaustedTail?.length>0&&<div role="note"
+            aria-label="Exhausted tail finish">
+            <p>Exhausted riders slowed in their final metres. Their remaining
+              energy and the curtailed work are recorded in the rider replay;
+              official points remain withheld.</p>
+            {coasted.exhaustedTail.map(row=><p key={row.riderId}>
+              {row.riderId}: slowed after {' '}
+              {(row.fromDistanceM/1000).toFixed(3)} km ·
+              {' '}{row.curtailedEnergyDemand.toFixed(3)} curtailed energy demand ·
+              {' '}crossed at {row.elapsedSecondsFromLastKmStart.toFixed(3)} s.
+            </p>)}
+          </div>}
           <label>Results team<select value={resultsTeam}
             onChange={event=>setResultsTeam(event.target.value)}>
             <option value="all">All teams ({coastedOrder.length} riders)</option>
