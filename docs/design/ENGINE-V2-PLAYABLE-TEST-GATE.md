@@ -3491,3 +3491,25 @@ returned HTTP 200; the checked recent runtime-error clusters and error/fatal
 logs were empty. `dpl_9v2iAXfgYrPuZtaBhpgtXq5LTUhj` is the previous
 verified production deployment and rollback target. No authenticated
 production race or live Supabase write was performed.
+
+### Geometry boundary for the late individual continuation (2026-10-23)
+
+A read-only reproduction of the same complete 260 km race shows why the
+longitudinal audit is only a refusal witness. Its first zero-gap candidate
+(`rival-4-1` versus `rival-13-7` at 259750.354 m) uses inferred source
+lanes 4 and 0. Under the existing fixed-lane laboratory assumption, the
+first same-lane **wheel-spacing** closure is instead at 259749.776 m:
+`rival-3-7` reaches 2.5 m behind front rider `rival-8-1` in lane 1 at
+66.913256 s after the last-kilometre marker. A later same-lane zero-gap
+crossing occurs at 259769.502 m. Changing `rival-13`'s nominated finisher
+moves the first cross-lane longitudinal witness, but leaves this first
+same-lane wheel closure unchanged.
+
+The independent bunch runner also records same-lane open-road passes later
+in this finale (the first at 259878.594 m). Therefore a fixed-lane contact
+continuation must split the paid individual motion at the first wheel-gap
+closure and queue *both* bands thereafter; substituting a group-level catch
+or merely classifying the two independent line orders would miss intervening
+wheel interactions. Lane assignments are inferred laboratory geometry, not
+observed road positions, so even a consistent fixed-lane continuation
+would remain a provisional, non-awarding result pending sporting calibration.
