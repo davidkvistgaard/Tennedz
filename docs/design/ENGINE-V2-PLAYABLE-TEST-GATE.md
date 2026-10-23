@@ -3729,6 +3729,17 @@ saved awards. The whole-race matrix now completes 90/90 varied cases with
 76 read-only point illustrations. The separate 90-case long-field stress
 corpus also completes 90/90 across both genders and five terrain profiles;
 its replay audit follows a rider from a source band into the merged road.
-The broad serial unit suite was not
-repeated for this increment; its prior 977-test baseline and known slow
+The broad serial unit suite was not repeated for this increment; its prior
+977-test baseline and known slow
 balance ensemble are separate evidence.
+
+Preview commit `090ffb7` and trimmed release commit `8ee3b6b` were pushed.
+The release checkout passed eight focused version/replay tests, full lint,
+an isolated production build and 41/41 browser flows, including the guided
+Motor Lab route. Production deployment
+`dpl_5pL2HjnuFFKQjQJpDtTMXmAphsss` reached READY at the exact release
+SHA and holds the `tennedz.eu` alias. The Motor Lab URL returned HTTP 200;
+the checked runtime-error window and recent build events showed no failure.
+Prior deployment `dpl_3QQdHmt4ADwFrKZV4oiTGRmPjxgP` remains the
+rollback target. No authenticated production race or live Supabase write
+was made.
