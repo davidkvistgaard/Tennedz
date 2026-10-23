@@ -3336,3 +3336,41 @@ API crossing; the four final isolated passages and withheld points remain
 visible. The isolated build, all 34 browser flows and lint passed. This
 confirms the newly supported path is playable through the workbench rather
 than only through direct engine fixtures.
+
+### Late bunch exits and the current contact boundary (2026-10-23)
+
+The 260 km, 20-team rolling women's tactic-pair case that previously stopped
+after two riders left the bunch at 259.7 km now carries both riders through
+paid individual passages to the line. The 500 m source, each subsequent
+100 m energy and time step, the 160 individual crossings, and each final
+replay agree. The riders remain sheltered until their recorded exit and
+dropped thereafter. Their wheel order against adjacent bands is unresolved,
+so the provisional point illustration is withheld and no official awards
+are saved. This is a new versioned continuation; older recordings retain
+their original versions and meanings.
+
+The pinned 12-case tactic-pair corpus now completes all 60 whole races.
+The extreme custom corpus completes 12/12, while the separate 90-case
+long-field stress corpus still has 78 complete races and 12 explicit
+front-catch refusals. The release branch passed focused tests, lint, an
+isolated build, and 36/36 local browser flows including the late exit.
+A broader serial unit run passed 790 tests before an unrelated long-running
+test stopped producing output and the run was interrupted; it is not counted
+as a full-suite pass for this increment.
+
+Preview commit `4625d55` was cherry-picked to release commit `7ac0001`.
+Vercel production deployment `dpl_9G8sfLkNqDH12oLXEcexNBgbn2Hy`
+reached READY with the expected commit and the `tennedz.eu` alias; the
+Motor Lab URL returned HTTP 200. The previous production deployment
+`dpl_8xgSzbsU23fKpEAeV9F7i7sk1osE` is the recorded rollback target.
+There were no error or fatal runtime logs for the new deployment in the
+first checked 30-minute window. These checks do not exercise an authenticated
+production race or change live Supabase data.
+
+The next whole-race boundary is the front catch. One pinned 260 km flat,
+male, fatigue-15 refusal has one five-rider front group, 125 bunch riders,
+30 riders already behind, and a calculated catch at 259227.7 m. A paid
+continuation must split movement at that contact, carry energy and elapsed
+time for all 160 riders through the merge, and keep individual finishing
+order and points conditional until their positions are known. Snapping the
+catch to a later grid boundary would invent road history.
