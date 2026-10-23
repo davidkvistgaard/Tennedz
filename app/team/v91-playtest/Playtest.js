@@ -883,13 +883,23 @@ export default function Playtest({guided=false}){
             `${row.riderId} ${row.roadGroup}, `+
             `${row.energy.toFixed(1)} energy`).join(' · ')}.</p>
         </>:roadPreview.catch?<>
-          <p>The full final-kilometre road is paid through the line.
+          <p>The group-level final-kilometre road is paid through the line.
             {' '}{roadPreview.catch.groupId} meets the bunch at {' '}
             {(roadPreview.catch.calculatedCatchDistanceM/1000).toFixed(3)} km
             {' '}({Math.round(roadPreview.catch.metresToGo)} m to go), after {' '}
             {roadPreview.catch.elapsedSecondsFromLastKmStart.toFixed(2)} s.
             Individual finish, replay and points are withheld until the
             post-contact rider order can be resolved.</p>
+          {roadPreview.individualContactAudit?.status===
+            'possible_earlier_sprint_contact'&&<p role="note"
+              aria-label="Individual sprint contact audit">
+              With nominated sprints, individual rider paths may meet sooner,
+              at {' '}
+              {(roadPreview.individualContactAudit.firstPotentialOverlap
+                .distanceM/1000).toFixed(3)} km. That encounter is not yet
+              resolved on the shared road. The group catch does not establish
+              rider places or points.
+            </p>}
           <label>Recorded road boundary: {roadPreviewIndex+1} of {' '}
             {roadPreview.lastKmRoad.length}
             <input type="range" min="0"

@@ -4,6 +4,7 @@ import {createV93PlayableTest,summarizeV93CoastedPlaytest,
   validateV93CoastedPlaytest,V93_FRONT_CATCH_PLAYTEST_VERSION,
   V93_PAID_LATE_CATCH_ROAD_PREVIEW_VERSION} from
   '../../lib/engine/v2/playtest-v93-coasted.mjs';
+import {prepareV91Playtest} from '../../lib/engine/v2/playtest.mjs';
 
 const tactics=[
   {effort:'hard',attack:'none',chase:'all'},
@@ -67,6 +68,22 @@ test('last-100-m front catch pays the full road but withholds individual places'
     assert.equal(road.lastKmRoad.at(-1).contact.atDistanceM,
       road.catch.calculatedCatchDistanceM);
     assert.equal(road.lastKmRoad.at(-1).contact.caughtRiderIds.length,5);
+    assert.equal(road.individualContactAudit.status,
+      'possible_earlier_sprint_contact');
+    assert.ok(road.individualContactAudit.firstPotentialOverlap.distanceM>
+      259700);
+    assert.ok(road.individualContactAudit.firstPotentialOverlap.distanceM<
+      259800);
+    assert.ok(road.individualContactAudit.firstPotentialOverlap.distanceM<
+      road.catch.calculatedCatchDistanceM);
+    assert.equal(road.individualContactAudit.firstPotentialOverlap.frontRiderId,
+      'rival-4-1');
+    assert.equal(road.individualContactAudit.firstPotentialOverlap.bunchRiderId,
+      'rival-13-7');
+    assert.ok(Math.abs(road.individualContactAudit.groupCatchElapsedSeconds-
+      road.catch.elapsedSecondsFromLastKmStart)<1e-7);
+    assert.equal(road.individualContactAudit.contactResolved,false);
+    assert.equal(road.individualContactAudit.classifiedResults,null);
     assert.ok(road.lastKmRoad.slice(0,-1).every(frame=>
       frame.groups.length===1&&frame.droppedPassages.length===30));
     assert.ok(road.lastKmRoad.every(frame=>
@@ -76,6 +93,31 @@ test('last-100-m front catch pays the full road but withholds individual places'
     assert.equal(new Set(road.finalRiderEnergy.map(row=>row.riderId)).size,160);
     assert.equal(road.lineTimes,null);
     assert.equal(road.bandReplays,null);
+    assert.equal(road.pointPreview.status,'unavailable');
+    assert.equal(road.canCommitAwards,false);
+    return true;
+  });
+});
+
+test('a rival finisher choice changes the sprint encounter, not the paid group road',()=>{
+  const late={...settings,terrain:'exposed',fatigue:0,
+    seed:'v93-long-stress-M-exposed-0-2'};
+  const plans=prepareV91Playtest(late).teams.map(team=>({
+    teamId:team.id,
+    finisherId:team.id==='rival-13'?'rival-13-6':team.orders.captainId,
+    leadOutRiderId:null}));
+  assert.throws(()=>createV93PlayableTest(late,{plans}),error=>{
+    const road=error.roadPreview;
+    assert.equal(road.version,V93_PAID_LATE_CATCH_ROAD_PREVIEW_VERSION);
+    assert.equal(road.individualContactAudit.status,
+      'possible_earlier_sprint_contact');
+    assert.equal(road.individualContactAudit.firstPotentialOverlap.bunchRiderId,
+      'rival-15-7');
+    assert.ok(road.individualContactAudit.firstPotentialOverlap.distanceM<
+      road.catch.calculatedCatchDistanceM);
+    assert.equal(road.catch.calculatedCatchDistanceM,
+      road.lastKmRoad.at(-1).contact.atDistanceM);
+    assert.equal(road.lineTimes,null);
     assert.equal(road.pointPreview.status,'unavailable');
     assert.equal(road.canCommitAwards,false);
     return true;

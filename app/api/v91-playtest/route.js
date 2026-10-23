@@ -33,7 +33,7 @@ function v93PlanError(error){
   if(error.roadPreview?.unsupportedReason==='individual_late_catch')
     return `${error.cause.groupId} meets the bunch with ${
       Math.round(error.roadPreview.catch.metresToGo)} m to go. `+
-      'The final-kilometre road and exact contact are paid through the line, '+
+      'The group-level final-kilometre road and contact are paid through the line, '+
       'but individual places, replay and points remain unresolved.';
   if(error.message.startsWith(
     'The separated finale needs a recorded catch for ')&&
