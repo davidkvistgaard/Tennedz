@@ -1280,9 +1280,11 @@ export default function Playtest({guided=false}){
               {' '}{coasted.dissolvedLeadingFront.dissolvedGroupId}.
               They stayed ahead of
               {' '}{coasted.dissolvedLeadingFront.survivingGroupId}.
-              {' '}{coasted.dissolvedLeadingFront.rearRiderIds.length}
-              {' '}rider left the surviving group and was passed by the
-              bunch. Their paid travel, energy and individual finish replays
+              {coasted.dissolvedLeadingFront.rearRiderIds.length>0&&<>
+                {' '}{coasted.dissolvedLeadingFront.rearRiderIds.length}
+                {' '}rider left the surviving group and was passed by the
+                bunch.</>}
+              {' '}Their paid travel, energy and individual finish replays
               are recorded. Places and points remain unresolved.</p>
             {coasted.dissolvedLeadingFront.bunchPasses.map(event=><p
               key={event.riderId}>The bunch passed {event.riderId} at

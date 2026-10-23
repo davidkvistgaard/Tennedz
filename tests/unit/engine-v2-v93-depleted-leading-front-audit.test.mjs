@@ -110,11 +110,19 @@ test('dissolved leading fronts finish or refuse explicitly across gender and ter
     ['rolling','mountain','exposed']){
     const selected={...settings,gender,terrain,
       seed:`v93-contact-audit-4-${gender}-${terrain}-30-0`};
-    if(terrain==='rolling'){
+    if(terrain!=='mountain'){
       const race=createV93PlayableTest(selected);
       assert.equal(race.version,V93_DISSOLVED_LEADING_PLAYTEST_VERSION);
       assert.equal(validateV93CoastedPlaytest(selected,{},race),true);
-      assert.equal(summarizeV93CoastedPlaytest(race).lineTimes.length,32);
+      const summary=summarizeV93CoastedPlaytest(race);
+      assert.equal(summary.lineTimes.length,32);
+      if(terrain==='exposed'){
+        assert.equal(race.clock.line.outcome,'dissolved_leading_front_clear');
+        assert.deepEqual(race.clock.line.bands.map(row=>row.riderIds.length),
+          [4,4,24]);
+        assert.deepEqual(summary.dissolvedLeadingFront.rearRiderIds,[]);
+        assert.deepEqual(summary.dissolvedLeadingFront.bunchPasses,[]);
+      }
     }else assert.throws(()=>createV93PlayableTest(selected),error=>{
       assert.match(error.message,/recorded group dissolution/);
       assert.equal(error.roadPreview?.unsupportedReason,
