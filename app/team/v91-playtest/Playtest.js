@@ -1097,8 +1097,10 @@ export default function Playtest({guided=false}){
             {(coasted.frontCatch.atDistanceM/1000).toFixed(3)} km,
             {' '}after {coasted.frontCatch.elapsedSecondsFromLastKmStart.toFixed(2)} s
             {' '}of paid final-kilometre travel. Their individual paths continue
-            {' '}in the line and replays; their order within the bunch remains
-            {' '}unresolved, so points are withheld.
+            {' '}in the line and replays.
+            {coasted.frontCatch.inferredLaneQueue?
+              ' Inferred lanes keep the front and bunch wheels apart at the catch. Isolated rider contact and point order remain unresolved, so points are withheld.':
+              ' Their order within the bunch remains unresolved, so points are withheld.'}
           </p>}
           {coasted.dissolvedFront&&<p role="note"
             aria-label="Paid front dissolution">

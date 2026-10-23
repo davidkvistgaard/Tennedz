@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {createV93PlayableTest,summarizeV93CoastedPlaytest,
   validateV93CoastedPlaytest,V93_FRONT_CATCH_PLAYTEST_VERSION,
+  V93_EARLY_FRONT_CATCH_LANE_PLAYTEST_VERSION,
   V93_PAID_LATE_CATCH_ROAD_PREVIEW_VERSION} from
   '../../lib/engine/v2/playtest-v93-coasted.mjs';
 import {prepareV91Playtest} from '../../lib/engine/v2/playtest.mjs';
@@ -20,9 +21,36 @@ const settings={distanceKm:260,teamCount:20,gender:'M',terrain:'flat',
 test('early paid front catch reaches every rider line and replay while points stay withheld',()=>{
   const race=createV93PlayableTest(settings,{pointContext:{tier:3,
     divisionCount:4,divisionIndex:2}});
-  assert.equal(race.version,V93_FRONT_CATCH_PLAYTEST_VERSION);
+  assert.equal(race.version,V93_EARLY_FRONT_CATCH_LANE_PLAYTEST_VERSION);
   assert.equal(validateV93CoastedPlaytest(settings,{pointContext:{tier:3,
     divisionCount:4,divisionIndex:2}},race),true);
+  assert.equal(race.individualLine.pre500Audit.contactDistanceM,
+    race.clock.contact.atDistanceM);
+  assert.equal(race.individualLine.pre500Audit.contactResolved,true);
+  assert.equal(race.individualLine.pre500Audit.isolatedContactResolved,false);
+  assert.ok(race.individualLine.pre500Audit.sourceLeadM>0&&
+    race.individualLine.pre500Audit.sourceLeadM<
+      race.individualLine.positionedSource.wheelSpacingM);
+  assert.equal(race.individualLine.bandRunners[0].roadBandId,'peloton');
+  assert.equal(race.individualLine.bandRunners[0].runner.finishers.length,130);
+  const at500=race.clock.trace.frames.find(frame=>
+    frame.endDistanceM===259500);
+  const energyAt500=new Map(at500.riders.map(row=>
+    [row.riderId,row.energy]));
+  const lanes=Array.from({length:8},(_,lane)=>
+    race.individualLine.positionedSource.roadBands[0].slots
+      .filter(slot=>slot.lane===lane).sort((a,b)=>
+        b.positionM-a.positionM));
+  assert.ok(lanes.every(lane=>lane.every((slot,index)=>index===0||
+    lane[index-1].positionM-slot.positionM>=2.5-1e-7)));
+  for(const band of race.individualLine.bandRunners)
+    for(const finisher of band.runner.finishers){
+      const spent=band.runner.frames.reduce((sum,frame)=>sum+
+        frame.riders.find(row=>row.riderId===finisher.riderId)
+          .energySpent,0);
+      assert.ok(Math.abs(energyAt500.get(finisher.riderId)-spent-
+        finisher.energyAtLine)<1e-7);
+    }
   const summary=summarizeV93CoastedPlaytest(race);
   assert.equal(summary.lineTimes.length,160);
   assert.equal(summary.bandReplays.length,31);
@@ -35,10 +63,38 @@ test('early paid front catch reaches every rider line and replay while points st
     atDistanceM:race.clock.contact.atDistanceM,
     elapsedSecondsFromLastKmStart:
       race.clock.contact.preContactBunchSeconds,
-    caughtRiderIds:race.clock.contact.caughtRiderIds});
+    caughtRiderIds:race.clock.contact.caughtRiderIds,
+    inferredLaneQueue:true,isolatedContactResolved:false});
   assert.deepEqual(summary.frontCatch.caughtRiderIds,
     race.recording.frames.at(-2).roadGroups[0].riderIds);
   assert.ok(summary.lastKmRoad.every(frame=>frame.groups.length===0));
+  const legacy=createV93PlayableTest(settings,{},
+    {resolveEarlyFrontCatchLanes:false});
+  assert.equal(legacy.version,V93_FRONT_CATCH_PLAYTEST_VERSION);
+  assert.equal(validateV93CoastedPlaytest(settings,{},legacy),true);
+  assert.equal(legacy.clock.contact.atDistanceM,
+    race.clock.contact.atDistanceM);
+});
+
+test('early catch keeps two managers\' finisher and lead-out choices on the paid road',()=>{
+  const plans=prepareV91Playtest(settings).teams.map(team=>({
+    teamId:team.id,
+    finisherId:['you','rival-2'].includes(team.id)?
+      `${team.id}-5`:team.orders.captainId,
+    leadOutRiderId:team.id==='you'?'you-6':
+      team.id==='rival-2'?'rival-2-6':null}));
+  const race=createV93PlayableTest(settings,{plans});
+  assert.equal(race.version,V93_EARLY_FRONT_CATCH_LANE_PLAYTEST_VERSION);
+  assert.equal(validateV93CoastedPlaytest(settings,{plans},race),true);
+  const summary=summarizeV93CoastedPlaytest(race);
+  assert.equal(summary.lineTimes.length,160);
+  assert.ok(summary.leadOutWork.some(row=>row.riderId==='you-6'));
+  assert.ok(summary.leadOutWork.some(row=>row.riderId==='rival-2-6'));
+  assert.equal(summary.managerDecisions.find(row=>row.teamId==='you')
+    .finisherId,'you-5');
+  assert.equal(summary.managerDecisions.find(row=>row.teamId==='rival-2')
+    .finisherId,'rival-2-5');
+  assert.equal(summary.canCommitAwards,false);
 });
 
 test('last-100-m front catch pays the full road but withholds individual places',()=>{
