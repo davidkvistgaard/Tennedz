@@ -3683,13 +3683,19 @@ prior deployment `dpl_6SmtNYcyoq9fdmToccbXf5Pyin37` remains the rollback
 target. No authenticated production race or live Supabase write was made.
 
 The remaining matrix case is `v93-matrix-77` (260 km, 15 teams, women's
-mountain route, fatigue 30, repeated attacks and selective chase). On the
-recorded final-500 m sprint, the peloton finisher `rival-1-7` reaches the
-third rider of the three-rider `road-10` group, `rival-11-3`, at
-259774.8152955957 m and 71.2508691275055 s from the final-kilometre
-marker. The paid trajectories put this in the 259700–259800 m slice.
-This is an **active-band encounter**, distinct from the earlier isolated
-marker tie, and needs a contact-aware split and continuation of the
-individual sprint. Treating it as another independent outside-lane pass
-would bypass the occupied front lanes and invent a road order; the current
+mountain route, fatigue 30, repeated attacks and selective chase). The
+unqualified longitudinal audit first reports a peloton finisher
+(`rival-1-7`) reaching `road-10` rider `rival-11-3` at
+259774.8152955957 m. That pair occupies different source lanes, but a
+same-lane check finds the **earlier physical contact**: the bunch closes
+to the 2.5 m wheel spacing of all three `road-10` riders at about
+259731.88 m (67.49892746393216 s from the kilometre marker). This is
+within the paid 259700–259800 m sprint slice. The front occupies lanes
+0–2 and corresponding bunch riders reach each of them simultaneously.
+The check offsets each front wheel by the recorded spacing before applying
+the paid trajectory overlap audit; it is diagnostic evidence, not yet a
+versioned continuation. A distinct-lane pass for `rival-1-7` cannot
+settle this **active-band encounter**. The next rule must split paid work
+at the first wheel encounter, reconcile a shared road without overlapping
+wheels, and continue the nominated sprint and lead-outs. The current
 conditional line and withheld points remain the honest output.
