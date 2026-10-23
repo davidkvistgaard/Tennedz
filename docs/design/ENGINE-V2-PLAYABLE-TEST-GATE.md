@@ -3627,5 +3627,16 @@ by this rule. The 24 neighboring v93 unit tests, lint, isolated build, and
 39/39 local browser flows pass. Browser cases check the Motor Lab
 presentation, both riders' replays, the earlier unresolved sample upgraded
 to paid lanes, and zero saved awards. This does not resolve later
-first-500-metre or final-500-metre
-encounters, and all classifications and official awards remain withheld.
+first-500-metre or final-500-metre encounters; classifications and official
+awards remain withheld.
+
+The separate 90-case long-field stress corpus also completed 90/90 across
+both genders and five terrain profiles, with no refusals. Preview commit
+`5a7d95c` and release commit `4a6903b` were pushed. The guided release
+checkout passed focused tests, lint, an isolated production build, and
+39/39 local browser flows. Vercel deployment
+`dpl_6SmtNYcyoq9fdmToccbXf5Pyin37` reached READY at the exact release
+SHA and holds the `tennedz.eu` alias. The Motor Lab route returned HTTP 200;
+the checked recent runtime errors and deployment logs were empty. Prior
+deployment `dpl_FGY9dzqbehVH2HQMmc97GsZrm9JV` is the rollback target.
+No authenticated production race or live Supabase write was performed.
