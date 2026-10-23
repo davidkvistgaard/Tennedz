@@ -1491,14 +1491,18 @@ test('last-100-m front catch shows the recorded road without a false finish',
     expect(response.status()).toBe(422);
     const body=await response.json();
     expect(body.error).toContain('road-13');
-    expect(body.error).toContain('exact contact are paid through the line');
+    expect(body.error).toContain('group-level final-kilometre road and contact are paid');
     expect(body.roadPreview.version)
-      .toBe('v93-paid-late-catch-road-preview-1');
+      .toBe('v93-paid-late-catch-road-preview-2');
     expect(body.roadPreview.kilometreFrames).toHaveLength(259);
     expect(body.roadPreview.lastKmRoad).toHaveLength(7);
     expect(body.roadPreview.lastKmRoad.at(-1).distanceM).toBe(260000);
     expect(body.roadPreview.lastKmRoad.at(-1).contact.groupId)
       .toBe('road-13');
+    expect(body.roadPreview.individualContactAudit.status)
+      .toBe('possible_earlier_sprint_contact');
+    expect(body.roadPreview.individualContactAudit.firstPotentialOverlap
+      .distanceM).toBeLessThan(body.roadPreview.catch.calculatedCatchDistanceM);
     expect(body.roadPreview.lineTimes).toBeNull();
     expect(body.roadPreview.canCommitAwards).toBe(false);
     await page.goto('/team/v91-playtest');
@@ -1511,12 +1515,15 @@ test('last-100-m front catch shows the recorded road without a false finish',
     await page.getByRole('button',{name:'Run v93 race preview'}).click();
     const preview=page.getByRole('region',{
       name:'Recorded road without individual finish'});
-    await expect(preview).toContainText('full final-kilometre road is paid');
+    await expect(preview).toContainText('group-level final-kilometre road is paid');
     await expect(preview).toContainText('road-13 meets the bunch');
     await expect(preview).toContainText('Individual finish, replay and points are withheld');
     await expect(preview).toContainText('Recorded road boundary: 7 of 7');
     await expect(preview.getByRole('note',{name:'Paid late catch'}))
       .toContainText('road-13 joins the bunch');
+    await expect(preview.getByRole('note',{
+      name:'Individual sprint contact audit'}))
+      .toContainText('individual rider paths may meet sooner');
     await preview.getByRole('slider',{name:/Recorded road boundary/}).fill('0');
     await expect(preview).toContainText('Recorded road boundary: 1 of 7');
     await expect(preview).toContainText('Road groups: road-13');

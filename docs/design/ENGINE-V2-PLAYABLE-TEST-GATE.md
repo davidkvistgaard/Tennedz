@@ -3449,3 +3449,34 @@ runtime error and error/fatal log windows were empty. Deployment
 `dpl_Er6ibRzunyZfC9EUSbWCWuCQPcvs` is the verified rollback target.
 This check did not run an authenticated race in production or change live
 Supabase data.
+
+### Individual sprint contact before the group catch (2026-10-23)
+
+The same locked 260 km exposed-road case has a different contact witness
+once the nominated individual sprints begin at the paid 500 m handoff. The
+existing positioned front and bunch runners, using their original rider
+energy and plans, show a **possible longitudinal encounter at 259750.354 m**
+between `rival-4-1` and `rival-13-7`. The passive group-level road does not
+catch `road-13` until 259953.153 m. These are different models, not two
+observations of one settled merge. Neither independent runner may be used
+beyond its first possible encounter to assert a shared finish order.
+
+The new versioned preview audits the independent sprint paths only for a
+possible meeting **before** the paid group catch. It displays that distinction
+beside the complete group-level road and continues to withhold individual
+finish, replay, point illustration and official awards. If this optional
+audit cannot run, the prior road-only preview remains available. Resolving
+the remaining boundary requires one contact-aware individual continuation
+that splits paid movement at the first rider encounter, places both bands on
+one road, and carries all rider energy and crossings through the line.
+
+Changing one rival finisher in the same complete race moves the first
+possible encounter to 259752.900 m with a different bunch rider, while the
+group-level catch remains 259953.153 m. This verifies that the diagnostic
+uses the chosen manager plans. Three focused front-catch tests pass; the
+90-case 260 km stress corpus remains 89 individual finales and one explicit
+road-only refusal. Lint, an isolated Next build and 37/37 local browser
+flows pass, including the API response and English Motor Lab explanation.
+A full serial unit-suite attempt was stopped during the unchanged, long
+balance ensemble; it is not counted as a pass for this increment. The prior
+977-test full-suite pass belongs to the preceding release.
