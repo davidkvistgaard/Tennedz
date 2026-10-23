@@ -2479,6 +2479,92 @@ test('full-kilometre isolated lanes show tied places without point awards',
       .toBeVisible();
   });
 
+test('late occupied-lane contact merges the paid sprint and both replays',
+  async({page})=>{
+    await page.goto('/login');
+    await page.getByLabel('Email or username').fill('alice');
+    await page.getByLabel('Password',{exact:true}).fill('fixture-password');
+    await page.getByRole('button',{name:'Sign in',exact:true}).click();
+    await expect(page).toHaveURL(/\/team$/);
+    const tactics=[
+      {effort:'hard',attack:'none',chase:'all'},
+      {effort:'steady',attack:'selective',chase:'ignore'},
+      {effort:'conserve',attack:'none',chase:'selective'},
+      {effort:'steady',attack:'repeated',chase:'selective'}];
+    const response=await page.request.post('/api/v91-playtest',{
+      headers:{origin:'http://localhost:3100'},data:{
+        mode:'v93-coasted',
+        pointContext:{tier:3,divisionCount:4,divisionIndex:2},
+        settings:{distanceKm:260,teamCount:15,gender:'F',
+          terrain:'mountain',fatigue:30,seed:'v93-matrix-77',
+          defaultRivalPlan:'passive',effort:'hard',
+          attack:'repeated',chase:'selective',
+          profileHeightsM:[500,350,200,400,250,100],
+          managerTactics:Array.from({length:14},(_,index)=>
+            tactics[(index+77)%4])},
+        plans:['you',...Array.from({length:14},(_,index)=>
+          `rival-${index+1}`)].map(teamId=>({
+          teamId,finisherId:`${teamId}-7`,
+          leadOutRiderId:teamId==='rival-1'?
+            'rival-1-6':null}))}});
+    expect(response.status()).toBe(200);
+    const body=await response.json();
+    const coasted=body.coasted;
+    expect(coasted.version)
+      .toBe('v93-late-active-contact-playtest-1');
+    expect(coasted.lineTimes).toHaveLength(120);
+    expect(coasted.bandReplays.reduce((sum,band)=>
+      sum+band.riderIds.length,0)).toBe(120);
+    expect(coasted.lastKmRoad).toHaveLength(8);
+    expect(coasted.lastKmRoad[4].contact.kind)
+      .toBe('shared_active_wheel_contact');
+    expect(coasted.lastKmRoad.slice(4).every(row=>
+      row.groups.length===0)).toBe(true);
+    expect(coasted.sharedWheelContact.wheelPairs).toHaveLength(3);
+    expect(coasted.pointPreview.status).toBe('unavailable');
+    expect(coasted.canCommitAwards).toBe(false);
+    await page.goto('/team/v91-playtest');
+    await page.getByRole('checkbox',{
+      name:'Continue to a conditional finish'}).check();
+    await page.getByRole('checkbox',{
+      name:'Try v93 road-to-line preview'}).check();
+    await page.route('**/api/v91-playtest',route=>route.fulfill({
+      status:200,contentType:'application/json',
+      body:JSON.stringify(body)}));
+    await page.getByRole('button',{
+      name:'Run v93 race preview'}).click();
+    const preview=page.getByRole('region',{
+      name:'V93 coasted race preview'});
+    await expect(preview.getByRole('note',{
+      name:'Paid shared wheel contact'})).toContainText(
+      '3 same-lane wheel pairs met');
+    await expect(preview.getByRole('note',{
+      name:'Paid shared wheel contact'})).toContainText(
+      'separate sprint paths are paid to that contact');
+    await expect(preview.getByRole('table',{
+      name:'V93 individual conditional results'})
+      .getByRole('row')).toHaveCount(121);
+    for(const [bandId,riderId] of [
+      ['road-10','rival-3-3'],
+      ['peloton','rival-1-7']]){
+      await page.getByRole('combobox',{name:'Road band'})
+        .selectOption(bandId);
+      await page.getByRole('combobox',{name:'Rider'})
+        .selectOption(riderId);
+      const interval=page.getByRole('slider',{
+        name:/Band interval/});
+      await interval.fill(await interval.getAttribute('max'));
+      const line=coasted.lineTimes.find(row=>
+        row.riderId===riderId);
+      await expect(page.getByLabel(
+        'Selected rider finale replay')).toContainText(
+        `${line.elapsedSecondsFromLastKmStart.toFixed(3)} s, `+
+        `${line.energyAtLine.toFixed(1)} energy.`);
+    }
+    await expect(page.getByText(
+      'Official points: withheld · Awards saved: 0')).toBeVisible();
+  });
+
 test('an exhausted solo finisher reaches the paid line without a sprint',
   async({page})=>{
     await page.goto('/login');

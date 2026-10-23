@@ -84,7 +84,8 @@ for(const gender of genders)for(const terrain of terrains)
         assert.equal(replayed.has(rider.riderId),false);
         replayed.add(rider.riderId);
         const crossing=crossings.get(rider.riderId);
-        assert.equal(crossing.roadBandId,band.id);
+        assert.equal(crossing.roadBandId,
+          band.mergedIntoRoadBandId??band.id);
         assert.equal(crossing.elapsedSecondsFromLastKmStart,
           rider.elapsedToLineSeconds);
         assert.equal(crossing.energyAtLine,rider.energyAfter);

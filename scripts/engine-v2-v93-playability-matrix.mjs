@@ -80,7 +80,8 @@ for(const distanceKm of distances)for(const teamCount of teamCounts)
           assert.equal(replayed.has(row.riderId),false);
           replayed.add(row.riderId);
           const crossing=crossings.get(row.riderId);
-          assert.equal(crossing?.roadBandId,band.id);
+          assert.equal(crossing?.roadBandId,
+            band.mergedIntoRoadBandId??band.id);
           assert.equal(crossing.elapsedSecondsFromLastKmStart,
             row.elapsedToLineSeconds);
           assert.equal(crossing.energyAtLine,row.energyAfter);

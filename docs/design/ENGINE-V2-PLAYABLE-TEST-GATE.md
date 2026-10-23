@@ -3699,3 +3699,36 @@ settle this **active-band encounter**. The next rule must split paid work
 at the first wheel encounter, reconcile a shared road without overlapping
 wheels, and continue the nominated sprint and lead-outs. The current
 conditional line and withheld points remain the honest output.
+
+### Paid late active wheel contact (2026-10-23)
+
+An opt-in lab-18 continuation now takes the first occupied-lane wheel
+encounter in `v93-matrix-77` as a race event. It checks the paid road before
+the 500 m handoff, pays each source band's nominated sprint and helper work
+to the exact contact at 259731.87761240872 m, then places the riders from
+both active bands on one non-overlapping lane queue and pays that shared
+road to the line. The three simultaneous 2.5 m wheel pairs occupy lanes
+0, 1 and 2. The 29 previously isolated riders retain their separately paid
+outside-lane paths. Active-to-isolated crossings on either side of contact
+still cause an explicit refusal of this rule.
+
+The complete 120-rider conditional line has one crossing and one replay
+per rider. Its eight last-kilometre road frames show the two source groups
+through 700 m, the actual contact, and one merged active group thereafter.
+Every active rider's 500 m energy equals the paid pre-contact work plus
+post-contact work and line energy. Twenty-one riders share possible place
+ranges, so the point illustration is unavailable; classifications and
+official point awards remain withheld. Older unresolved recordings replay
+through their earlier version. This is a bounded conditional continuation,
+not a general solution for every front catch or a ranked photo finish.
+
+The focused new/neighboring unit tests pass 8/8, full lint and the isolated
+Next build pass, and the 40/40 local browser flows pass, including both
+source-band replays, the road event, tied-place point withholding and zero
+saved awards. The whole-race matrix now completes 90/90 varied cases with
+76 read-only point illustrations. The separate 90-case long-field stress
+corpus also completes 90/90 across both genders and five terrain profiles;
+its replay audit follows a rider from a source band into the merged road.
+The broad serial unit suite was not
+repeated for this increment; its prior 977-test baseline and known slow
+balance ensemble are separate evidence.
