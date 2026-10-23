@@ -1245,6 +1245,32 @@ export default function Playtest({guided=false}){
                 }}>Finish replay {row.riderId}</button>
             </p>)}
           </div>}
+          {coasted.mixedFrontLeavers&&<div role="note"
+            aria-label="Mixed front exits">
+            <p>At {(coasted.mixedFrontLeavers.sourceDistanceM/1000)
+              .toFixed(3)} km, {coasted.mixedFrontLeavers.leadingRiderIds.length}
+              {' '}riders left {coasted.mixedFrontLeavers.leadingGroupId} and
+              stayed ahead. {coasted.mixedFrontLeavers.rearRiderIds.length}
+              {' '}left {coasted.mixedFrontLeavers.rearGroupId} and were
+              passed by the bunch. Their individual travel, energy and
+              finish replays are recorded; their places and points remain
+              unresolved.</p>
+            {coasted.mixedFrontLeavers.bunchPasses.map(event=><p
+              key={event.riderId}>
+              The bunch passed {event.riderId} at
+              {' '}{(event.distanceM/1000).toFixed(3)} km.
+            </p>)}
+            {[...coasted.mixedFrontLeavers.leadingRiderIds,
+              ...coasted.mixedFrontLeavers.rearRiderIds].map(id=><button
+              type="button" key={id}
+              aria-label={`Inspect mixed front exit rider ${id} finish replay`}
+              onClick={()=>{
+                setCoastedBandId(`isolated:${id}`);
+                setCoastedRiderId(id);setCoastedBandIndex(0);
+                document.getElementById('v93-paid-finale-replay')
+                  ?.scrollIntoView();
+              }}>Finish replay {id}</button>)}
+          </div>}
           {coasted.isolatedPassEvents?.length>0&&<div role="note"
             aria-label="Recorded isolated passes">
             <p>{coasted.isolatedPassEvents.length} isolated-rider passes were
