@@ -3802,3 +3802,14 @@ these guards through 260 km and replays its group clocks and every rider's
 energy. It is still preview-only: the nominated individual sprint, finish
 order, replay and point illustration have not yet been reconciled with this
 new lane rule, and the production refusal is unchanged.
+
+The preview-only `v2-finale-dissolved-front-conditional-line-1` now takes
+that same 32-rider paid shoulder road into the existing nominated 500 m
+individual sprint runners. Its locked whole-race test verifies a unique
+crossing for every rider, the paid 500 m energy handoff, isolated-rider
+energy conservation through the line, and replay of the versioned ledger.
+The shoulder-road line is a passive reference; the individual runners pay
+their own final 500 m after the sprint decisions. Cross-band and isolated
+wheel encounters in that individual continuation are still unresolved,
+so the ledger deliberately has no classified result, point illustration
+or saved award. Motor Lab continues to refuse this unsupported case.

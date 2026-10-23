@@ -18,6 +18,9 @@ import {recordDissolvedFrontFirstWheel,
 import {recordFinaleDissolvedFrontShoulderRoad,
   validateFinaleDissolvedFrontShoulderRoad} from
   '../../lib/engine/v2/finale-dissolved-front-shoulder-road.mjs';
+import {recordFinaleDissolvedFrontConditionalLine,
+  validateFinaleDissolvedFrontConditionalLine} from
+  '../../lib/engine/v2/finale-dissolved-front-conditional-line.mjs';
 
 test('whole-race dissolved front identifies both active overtakes without a result',()=>{
   const prepared=prepareV91Playtest({distanceKm:260,teamCount:4,
@@ -120,6 +123,47 @@ test('whole-race dissolved front identifies both active overtakes without a resu
   alteredRoad.passages[0].riderEnergy[0].energy+=1;
   assert.throws(()=>validateFinaleDissolvedFrontShoulderRoad(tour,
     alteredRoad),/does not replay/);
+  const individual=recordFinaleDissolvedFrontConditionalLine(tour);
+  assert.equal(validateFinaleDissolvedFrontConditionalLine(tour,{},
+    individual),true);
+  assert.equal(individual.conditionalCrossings.length,32);
+  assert.equal(new Set(individual.conditionalCrossings.map(row=>
+    row.riderId)).size,32);
+  assert.equal(individual.bandRunners.length,7);
+  assert.equal(individual.provisionalLineOrder,null);
+  assert.equal(individual.classifiedResults,null);
+  assert.equal(individual.pointsStatus,'withheld');
+  assert.equal(individual.canCommitAwards,false);
+  const at500=individual.shoulder.passages.find(row=>
+    row.distanceM===259500);
+  const at500Energy=new Map(at500.riderEnergy.map(row=>
+    [row.riderId,row.energy]));
+  const from500=new Set();
+  for(const band of individual.bandRunners){
+    assert.ok(band.runner.frames.length>=5);
+    assert.equal(band.runner.frames[0].startDistanceM,259500);
+    assert.equal(band.runner.frames.at(-1).endDistanceM,260000);
+    for(const row of band.runner.frames[0].riders){
+      from500.add(row.riderId);
+      assert.ok(Math.abs(row.energyAtDecision-
+        at500Energy.get(row.riderId))<1e-7);
+    }
+    for(const frame of band.runner.frames){
+      assert.ok(frame.endDistanceM>frame.startDistanceM);
+      for(const row of frame.riders){
+        assert.ok(Math.abs(row.energyAtDecision-row.energySpent-
+          row.energyAfter)<1e-7);
+      }
+    }
+  }
+  assert.equal(from500.size,32);
+  for(const row of individual.conditionalCrossings){
+    const paid=individual.shoulder.lineRoad.riderEnergy.find(item=>
+      item.riderId===row.riderId);
+    assert.ok(Number.isFinite(row.elapsedSecondsFromLastKmStart));
+    assert.ok(Math.abs(row.energyAtLine-paid.energy)<1e-7||
+      row.roadBandId==='road-13'||row.roadBandId==='peloton');
+  }
   const altered=structuredClone(trace);
   altered.contactAudit.encounters[0].distanceM+=1;
   assert.throws(()=>validateFinaleSeparatedGroupsFromTour(tour,altered),
