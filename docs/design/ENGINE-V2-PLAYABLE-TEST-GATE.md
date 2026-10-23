@@ -3923,3 +3923,41 @@ alias points to it and `/team/motor-lab` returned HTTP 200. The checked
 runtime window contained no logs. Previous deployment
 `dpl_4A59eW8wZW3D2xZ4B7D92E1h7MxJ` is the rollback target. No live
 Supabase write or official award was made.
+
+### Early front catch with inferred lane queue (2026-10-23)
+
+The locked 260 km men's flat race has five riders 0.13 seconds ahead of
+125 bunch riders at 259 km; another 30 riders are already isolated.
+The paid motor catches the front at 259227.703 m. At the source speed,
+the group gap is only 1.464 m, less than the positioned runner's 2.5 m
+same-lane wheel spacing. Its previous conditional continuation placed
+front and bunch riders in overlapping source lanes and therefore withheld
+their wheel order.
+
+The new opt-in `v93-early-front-catch-lane-playtest-1` keeps the five
+front riders in their inferred lanes and places the first three bunch
+riders in the open lanes. The remaining bunch riders queue one or more
+wheel lengths behind. In shared lanes the first wheel encounter then
+occurs at the motor's already paid group contact, with no change to its
+clock, work or energy. The merged active band and all 30 separately paid
+isolated riders continue through the 500 m sprint handoff to individual
+crossings and replays. The older `v93-front-catch-playtest-1` still
+regenerates when the lane rule is disabled. The rule refuses other
+geometries rather than moving a contact or manufacturing a finish.
+
+The pinned 160-rider case checks every line energy against the paid
+500 m energy and replay work. A second test keeps two managers' finisher
+and lead-out choices while preserving the same group contact. The
+isolated riders may still meet each other, so the inferred lanes do not
+establish an official placing: policy points and saved awards remain
+withheld. This is a bounded front-contact improvement, not a general
+solution for late catches or every contact geometry.
+
+The focused four-test suite and targeted lint passed. The isolated
+preview build passed 41/41 local browser flows, including the early
+catch API, results table, withheld point status and rider replay. The
+90-case long-field stress completed 90/90 conditional finales across
+45 men's and 45 women's races, five terrains and three fatigue levels;
+no case supplied an unambiguous point illustration. These outcomes
+check surrounding playable paths, not universal front-contact support.
+Preview functional commit: `b345b6b`.
