@@ -3971,3 +3971,34 @@ alias points to it and `/team/motor-lab` returned HTTP 200. No error or
 fatal runtime logs appeared in the checked 30-minute window. Previous
 deployment `dpl_5gSim9aAPbdkmtzB3EGLN2upM2jx` is the rollback target.
 No live Supabase write or official award was made.
+
+### Early front catch and isolated riders through the full kilometre (2026-10-23)
+
+The opt-in `v93-early-front-catch-isolated-lanes-playtest-2` keeps the
+previous paid group catch and individual sprint. In the locked 260 km
+men's flat race all 130 active riders finish by 91.855 seconds after the
+259 km bunch marker. The first of the 30 already isolated riders does
+not reach that marker until 434.377 seconds. This strict whole-road
+separation rules out an active-to-isolated encounter in this case.
+The new audit reconciles each isolated rider's source, 250 m and 500 m
+passages with the paid individual replay. It records the first encounter
+for each isolated pair across the kilometre and carries those riders in
+separate outside lanes without drafting or extra energy. Sixty pair
+encounters are recorded in the pinned case. The conditional order covers
+all 160 riders and retains possible place ranges for 30 exact ties.
+Official classification, policy points and saved awards remain withheld.
+
+The rule declines races where an active finisher does not precede every
+isolated rider's source passage or where a dropped rider has no continuous
+paid passage. In those cases the earlier lane-queue version remains.
+The older `v93-early-front-catch-lane-playtest-1` still regenerates and
+validates with the new isolated-lane option disabled. The late final-slice
+front catch still has only its paid road and provisional contact audit.
+
+The four focused motor tests, targeted lint and isolated preview build
+passed. All 41 local browser flows passed, including the front-catch
+result table, withheld point status and replay. A 90-case long-field
+sweep completed 90/90 conditional finales across 45 men's and 45
+women's races, five terrains and three fatigue levels; none provided a
+policy point illustration. This is evidence for the bounded preview,
+not unrestricted contact or official-result support.
