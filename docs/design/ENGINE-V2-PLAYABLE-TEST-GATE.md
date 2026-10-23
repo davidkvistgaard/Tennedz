@@ -3824,3 +3824,17 @@ to the line in the locked 260 km case. A synthetic same-lane approach
 does trigger at its paid contact time. This removes one false contact
 signal, but does not settle all isolated and within-band passing rules;
 result places, point illustration and awards remain withheld.
+
+A second active-wheel audit covers the two paid 250 m slices before the
+sprint handoff. It also finds no occupied-lane meeting between `road-13`
+and the bunch in the locked case. The new opt-in provisional result uses
+those two audits, the explicit outside lanes for all five isolated riders,
+and the full individual crossing ledger. It requires the surviving front
+to finish ahead of the bunch, every bunch rider ahead of every isolated
+rider, and unique paid crossings. It records all 32 provisional places,
+the seven final road bands and a read-only illustration using the saved
+one-day point policy. Changing a nominated rival finisher changes the
+individual order while the roster and point policy remain consistent.
+The result is still experimental: `classifiedResults` is null, awards
+remain empty, and Motor Lab keeps the current production refusal until
+the API and browser replay are verified end to end.

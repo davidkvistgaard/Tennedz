@@ -25,6 +25,14 @@ import {recordFinaleDissolvedFrontConditionalLine,
 import {recordFinaleDissolvedFrontPost500Wheel,
   validateFinaleDissolvedFrontPost500Wheel} from
   '../../lib/engine/v2/finale-dissolved-front-post500-wheel.mjs';
+import {recordFinaleDissolvedFrontPre500Wheel,
+  validateFinaleDissolvedFrontPre500Wheel} from
+  '../../lib/engine/v2/finale-dissolved-front-pre500-wheel.mjs';
+import {recordFinaleDissolvedFrontPreviewResult,
+  validateFinaleDissolvedFrontPreviewResult} from
+  '../../lib/engine/v2/finale-dissolved-front-preview-result.mjs';
+import {POINT_POLICY_VERSION,pointsForDivisionResult} from
+  '../../lib/calendar/points.mjs';
 
 test('whole-race dissolved front identifies both active overtakes without a result',()=>{
   const prepared=prepareV91Playtest({distanceKm:260,teamCount:4,
@@ -139,6 +147,11 @@ test('whole-race dissolved front identifies both active overtakes without a resu
   assert.equal(individual.pointsStatus,'withheld');
   assert.equal(individual.canCommitAwards,false);
   const post500=recordFinaleDissolvedFrontPost500Wheel(tour,individual);
+  const pre500=recordFinaleDissolvedFrontPre500Wheel(tour,individual);
+  assert.equal(validateFinaleDissolvedFrontPre500Wheel(tour,individual,
+    pre500),true);
+  assert.equal(pre500.status,'no_active_pre500_wheel_contact');
+  assert.equal(pre500.firstPotentialWheelContact,null);
   assert.equal(validateFinaleDissolvedFrontPost500Wheel(tour,individual,
     post500),true);
   assert.equal(post500.status,'no_active_cross_band_wheel_contact');
@@ -150,6 +163,36 @@ test('whole-race dissolved front identifies both active overtakes without a resu
   assert.equal(post500.classifiedResults,null);
   assert.equal(post500.pointsStatus,'withheld');
   assert.equal(post500.canCommitAwards,false);
+  const preview=recordFinaleDissolvedFrontPreviewResult(tour,{
+    pointContext:{tier:3,divisionCount:4,divisionIndex:2}});
+  assert.equal(validateFinaleDissolvedFrontPreviewResult(tour,{
+    pointContext:{tier:3,divisionCount:4,divisionIndex:2}},
+  preview),true);
+  assert.equal(preview.provisionalLineOrder.length,32);
+  assert.ok(preview.provisionalLineOrder.every((row,index)=>
+    row.position===index+1));
+  assert.deepEqual(preview.finalRoadBands.map(row=>row.riderIds.length),
+    [3,24,1,1,1,1,1]);
+  assert.equal(preview.outsideLaneAssignments.length,5);
+  assert.equal(new Set(preview.outsideLaneAssignments.map(row=>
+    row.outsideLane)).size,5);
+  assert.equal(preview.pointPreview.status,'illustrative');
+  assert.equal(preview.pointPreview.pointsPolicyVersion,
+    POINT_POLICY_VERSION);
+  assert.equal(preview.pointPreview.riders.length,32);
+  assert.deepEqual(preview.pointPreview.awardRows,[]);
+  assert.ok(preview.pointPreview.riders.every(row=>
+    row.previewPoints===pointsForDivisionResult({tier:3,
+      resultType:'ONE_DAY',placing:row.provisionalPlace,
+      multiplier:preview.pointPreview.multiplier})));
+  assert.equal(preview.classifiedResults,null);
+  assert.equal(preview.pointsStatus,'withheld');
+  assert.equal(preview.canCommitAwards,false);
+  const alteredPreview=structuredClone(preview);
+  alteredPreview.pointPreview.riders[0].previewPoints+=1;
+  assert.throws(()=>validateFinaleDissolvedFrontPreviewResult(tour,{
+    pointContext:{tier:3,divisionCount:4,divisionIndex:2}},
+  alteredPreview),/does not replay/);
   assert.ok(post500.candidates.every(row=>
     (row.atHandoff||Math.abs(row.frontWheelM-row.bunchWheelM-
       individual.positionedSource.wheelSpacingM)<1e-7)&&
@@ -198,6 +241,14 @@ test('whole-race dissolved front identifies both active overtakes without a resu
     individual.conditionalCrossings);
   assert.equal(changed.classifiedResults,null);
   assert.equal(changed.pointsStatus,'withheld');
+  const changedPreview=recordFinaleDissolvedFrontPreviewResult(tour,{
+    plans:changedPlans,pointContext:{tier:3,divisionCount:4,
+      divisionIndex:2}});
+  assert.equal(changedPreview.provisionalLineOrder.length,32);
+  assert.notDeepEqual(changedPreview.provisionalLineOrder,
+    preview.provisionalLineOrder);
+  assert.equal(changedPreview.pointPreview.riders.length,32);
+  assert.deepEqual(changedPreview.pointPreview.awardRows,[]);
   for(const row of individual.conditionalCrossings){
     const paid=individual.shoulder.lineRoad.riderEnergy.find(item=>
       item.riderId===row.riderId);
@@ -257,6 +308,36 @@ test('post-500 wheel audit catches a paid same-lane approach',()=>{
   const separate=structuredClone(line);
   separate.positionedSource.roadBands[1].slots[0].lane=1;
   assert.equal(recordFinaleDissolvedFrontPost500Wheel({
+    route:{distanceKm:1}},separate).firstPotentialWheelContact,null);
+});
+
+test('pre-500 wheel audit catches a paid same-lane approach',()=>{
+  const frame=endDistanceM=>({startDistanceM:endDistanceM-250,
+    endDistanceM,
+    bunchElapsedSeconds:250/15,
+    roadGroups:[{id:'front',elapsedSeconds:25}],
+    riders:['front-rider','bunch-rider'].map(riderId=>({
+      riderId,role:'sheltered',energySpent:1,
+      energy:endDistanceM===250?9:8}))});
+  const line={version:FINALE_DISSOLVED_FRONT_CONDITIONAL_LINE_VERSION,
+    positionedSource:{wheelSpacingM:2.5,roadBands:[
+      {id:'front',passageSecondsFromBunchMarker:-5,
+        slots:[{riderId:'front-rider',lane:0,positionM:0,energy:10}]},
+      {id:'peloton',passageSecondsFromBunchMarker:0,
+        slots:[{riderId:'bunch-rider',lane:0,positionM:0,energy:10}]}]},
+    shoulder:{trace:{version:'synthetic-paid-road',
+      frames:[frame(250),frame(500)]}}};
+  const audit=recordFinaleDissolvedFrontPre500Wheel({
+    route:{distanceKm:1}},line);
+  assert.equal(audit.status,'active_pre500_wheel_contact_unresolved');
+  assert.equal(audit.candidates.length,1);
+  assert.ok(Math.abs(audit.firstPotentialWheelContact
+    .elapsedSecondsFromLastKmStart-9.5)<1e-7);
+  assert.ok(Math.abs(audit.firstPotentialWheelContact.frontWheelM-
+    audit.firstPotentialWheelContact.bunchWheelM-2.5)<1e-7);
+  const separate=structuredClone(line);
+  separate.positionedSource.roadBands[1].slots[0].lane=1;
+  assert.equal(recordFinaleDissolvedFrontPre500Wheel({
     route:{distanceKm:1}},separate).firstPotentialWheelContact,null);
 });
 
