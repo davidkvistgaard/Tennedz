@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {createV93PlayableTest,
+import {createV93PlayableTest,summarizeV93CoastedPlaytest,
+  validateV93CoastedPlaytest,V93_FRONT_CATCH_PLAYTEST_VERSION,
   V93_UNSUPPORTED_CATCH_PREVIEW_VERSION} from
   '../../lib/engine/v2/playtest-v93-coasted.mjs';
 
@@ -15,10 +16,27 @@ const settings={distanceKm:260,teamCount:20,gender:'M',terrain:'flat',
   chase:'selective',managerTactics:Array.from({length:19},(_,index)=>
     tactics[index%4])};
 
-test('unpaid front catch exposes only its validated kilometre road',()=>{
-  assert.throws(()=>createV93PlayableTest(settings),error=>{
-    assert.match(error.message,/needs a recorded catch for road-15/);
-    assert.equal(error.cause.groupId,'road-15');
+test('early paid front catch reaches every rider line and replay while points stay withheld',()=>{
+  const race=createV93PlayableTest(settings,{pointContext:{tier:3,
+    divisionCount:4,divisionIndex:2}});
+  assert.equal(race.version,V93_FRONT_CATCH_PLAYTEST_VERSION);
+  assert.equal(validateV93CoastedPlaytest(settings,{pointContext:{tier:3,
+    divisionCount:4,divisionIndex:2}},race),true);
+  const summary=summarizeV93CoastedPlaytest(race);
+  assert.equal(summary.lineTimes.length,160);
+  assert.equal(summary.bandReplays.length,31);
+  assert.equal(summary.pointPreview.status,'unavailable');
+  assert.equal(summary.pointsStatus,'withheld');
+  assert.equal(summary.canCommitAwards,false);
+  assert.ok(race.clock.trace.frames[0].contact);
+});
+
+test('last-100-m front catch exposes only its validated kilometre road',()=>{
+  const late={...settings,terrain:'exposed',fatigue:0,
+    seed:'v93-long-stress-M-exposed-0-2'};
+  assert.throws(()=>createV93PlayableTest(late),error=>{
+    assert.match(error.message,/needs a recorded catch for road-13/);
+    assert.equal(error.cause.groupId,'road-13');
     const road=error.roadPreview;
     assert.equal(road.version,V93_UNSUPPORTED_CATCH_PREVIEW_VERSION);
     assert.equal(road.unsupportedReason,'unpaid_front_catch');
@@ -28,8 +46,8 @@ test('unpaid front catch exposes only its validated kilometre road',()=>{
       group.id===road.catch.groupId));
     assert.equal(road.catch.calculatedCatchDistanceM,
       error.cause.calculatedCatchDistanceM);
-    assert.ok(road.catch.metresToGo>700&&
-      road.catch.metresToGo<800);
+    assert.ok(road.catch.metresToGo>0&&
+      road.catch.metresToGo<100);
     assert.ok(road.kilometreFrames.at(-1).ownRiders.every(row=>
       Number.isFinite(row.energy)&&row.energy>=0));
     assert.deepEqual(road.lastKmRoad,[]);

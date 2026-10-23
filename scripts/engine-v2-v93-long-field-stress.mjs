@@ -87,8 +87,8 @@ for(const gender of genders)for(const terrain of terrains)
 const completed=rows.filter(row=>row.status==='conditional_finish');
 const refused=rows.filter(row=>row.status==='unpaid_front_catch');
 assert.equal(rows.length,90);
-assert.equal(completed.length,78);
-assert.equal(refused.length,12);
+assert.equal(completed.length,89);
+assert.equal(refused.length,1);
 console.log(JSON.stringify({scenarios:rows.length,completed:completed.length,
   refused:refused.length,
   byGender:genders.map(gender=>({gender,
