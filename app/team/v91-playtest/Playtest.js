@@ -843,6 +843,10 @@ export default function Playtest(){
             {catchSourceFrame.km}. {' '}
             {roadPreview.unsupportedReason==='unpayable_front_handoff'?
               `${roadPreview.handoff.riderId} cannot pay for the next road interval.`:
+              roadPreview.unsupportedReason==='depleted_front_dissolution'?
+                `${roadPreview.handoff.groupId} has no rider with energy to `+
+                  'stay in the front group. Its riders need separate paid '+
+                  'travel and contact before a result can be shown.':
               'The following front, bunch or isolated paths have unresolved contact.'}
             {' '}No final-kilometre passage, individual finish, replay or
             points is shown.</p>}

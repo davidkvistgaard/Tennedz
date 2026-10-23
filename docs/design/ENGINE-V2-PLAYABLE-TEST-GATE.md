@@ -3743,3 +3743,23 @@ the checked runtime-error window and recent build events showed no failure.
 Prior deployment `dpl_3QQdHmt4ADwFrKZV4oiTGRmPjxgP` remains the
 rollback target. No authenticated production race or live Supabase write
 was made.
+
+### Depleted front-group dissolution boundary (2026-10-23)
+
+An additional deterministic 90-case whole-race sweep varied route length,
+terrain, gender, field size, fatigue, attacks and chase. It completed 89/90
+conditional finales; the one refusal is a 260 km, four-team men's rolling
+race (`v93-expanded-61-a`). At the recorded 259 km handoff, all three
+riders in `road-2` have zero energy, while `road-13` and the bunch remain
+active. The first 250 m would shed every `road-2` rider. No surviving
+front group can be carried unchanged to the line.
+
+Motor Lab now preserves the validated kilometre road, names the dissolved
+group and its riders, and explicitly withholds the final-kilometre passage,
+individual finish, replay and points. The locked whole-race unit case and
+an API-to-browser regression cover that boundary. This is an intelligible
+refusal, **not** a completed finale. The next motor increment must pay the
+three riders' separate movement after dissolution, detect encounters with
+the remaining group or bunch, and reconcile their energy and individual
+crossings before offering a result. Earlier versioned recordings and
+official point awards remain untouched.

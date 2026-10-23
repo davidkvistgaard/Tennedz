@@ -5,6 +5,49 @@ test.skip(process.env.PELOTONIA_V91_PLAYTEST_ENABLED!=='true'||
   process.env.PELOTONIA_V93_COASTED_PLAYTEST_ENABLED!=='true',
 'The isolated v93 workbench is disabled.');
 
+test('dissolved front shows only the recorded road without a false finish',
+  async({page})=>{
+    await page.goto('/login');
+    await page.getByLabel('Email or username').fill('alice');
+    await page.getByLabel('Password',{exact:true}).fill('fixture-password');
+    await page.getByRole('button',{name:'Sign in',exact:true}).click();
+    await expect(page).toHaveURL(/\/team$/);
+    const teamIds=['you','rival-1','rival-2','rival-3'];
+    const response=await page.request.post('/api/v91-playtest',{
+      headers:{origin:'http://localhost:3100'},data:{
+        mode:'v93-coasted',settings:{distanceKm:260,teamCount:4,
+          gender:'M',terrain:'rolling',fatigue:30,
+          seed:'v93-expanded-61-a',defaultRivalPlan:'passive',
+          effort:'hard',attack:'repeated',chase:'selective',
+          profileHeightsM:[900,700,300,500,200,100],
+          managerTactics:[
+            {effort:'steady',attack:'none',chase:'selective'},
+            {effort:'hard',attack:'selective',chase:'all'},
+            {effort:'hard',attack:'repeated',chase:'ignore'}]},
+        plans:teamIds.map(teamId=>({teamId,
+          finisherId:`${teamId}-7`,leadOutRiderId:null}))}});
+    expect(response.status()).toBe(422);
+    const body=await response.json();
+    expect(body.roadPreview.unsupportedReason)
+      .toBe('depleted_front_dissolution');
+    expect(body.roadPreview.kilometreFrames).toHaveLength(259);
+    expect(body.roadPreview.lastKmRoad).toEqual([]);
+    expect(body.roadPreview.lineTimes).toBeNull();
+    expect(body.roadPreview.bandReplays).toBeNull();
+    expect(body.roadPreview.canCommitAwards).toBe(false);
+    await page.goto('/team/v91-playtest');
+    await page.getByRole('button',{name:'Set up sample race'}).click();
+    await page.route('**/api/v91-playtest',route=>route.fulfill({
+      status:422,contentType:'application/json',body:JSON.stringify(body)}));
+    await page.getByRole('button',{name:'Run v93 race preview'}).click();
+    const road=page.getByRole('region',{
+      name:'Recorded road without individual finish'});
+    await expect(road).toContainText('has no rider with energy to stay in the front group');
+    await expect(road).toContainText('No final-kilometre passage, individual finish, replay or points is shown.');
+    await expect(page.getByRole('table',{
+      name:'V93 individual conditional results'})).toHaveCount(0);
+  });
+
 test('sample race opens the playable setup and links the recorded result',
   async({page})=>{
     await page.setViewportSize({width:390,height:844});
