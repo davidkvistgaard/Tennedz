@@ -8,7 +8,8 @@ import {MOTOR_EXHAUSTION_COAST_VERSION} from
 import {recordFinaleCoastDynamicNoFrontLastKmClock} from
   '../../lib/engine/v2/finale-separated-last-km.mjs';
 import {createV93PlayableTest,summarizeV93CoastedPlaytest,
-  validateV93CoastedPlaytest,V93_LATE_BUNCH_EXIT_PLAYTEST_VERSION} from
+  validateV93CoastedPlaytest,V93_LATE_BUNCH_EXIT_PLAYTEST_VERSION,
+  V93_LATE_BUNCH_EXIT_SHOULDER_PLAYTEST_VERSION} from
   '../../lib/engine/v2/playtest-v93-coasted.mjs';
 import {finaleSnapshotFromTour} from
   '../../lib/engine/v2/finale-snapshot.mjs';
@@ -101,9 +102,24 @@ test('a mixed 260 km road carries late bunch exits through the line',()=>{
       {riderId:'rival-13-5',atDistanceM:259700}]);
   const pointContext={tier:2,divisionCount:2,divisionIndex:1};
   const race=createV93PlayableTest(settings,{pointContext});
-  assert.equal(race.version,V93_LATE_BUNCH_EXIT_PLAYTEST_VERSION);
+  assert.equal(race.version,
+    V93_LATE_BUNCH_EXIT_SHOULDER_PLAYTEST_VERSION);
   assert.equal(validateV93CoastedPlaytest(settings,{pointContext},race),true);
   const summary=summarizeV93CoastedPlaytest(race);
+  assert.equal(summary.lateExitShoulder.assignments.length,2);
+  assert.deepEqual(summary.lateExitShoulder.unresolvedEqualClocks,
+    [['rival-1-5','rival-13-5']]);
+  assert.deepEqual(summary.lateExitShoulder.assignments.map(row=>
+    row.outsideLane),[8,9]);
+  for(const row of summary.lateExitShoulder.assignments){
+    assert.equal(row.atDistanceM,259700);
+    assert.deepEqual(row.passages.map(passage=>passage.distanceM),
+      [259800,259900,260000]);
+    assert.ok(row.passages.every(passage=>
+      passage.secondsBehindBunch>0));
+    assert.ok(row.passages[2].secondsBehindBunch>
+      row.passages[0].secondsBehindBunch);
+  }
   assert.equal(summary.lineTimes.length,160);
   assert.equal(summary.bandReplays.length,17);
   assert.ok(summary.bandReplays.every(band=>
@@ -111,6 +127,11 @@ test('a mixed 260 km road carries late bunch exits through the line',()=>{
   assert.equal(summary.pointPreview.status,'unavailable');
   assert.equal(summary.pointsStatus,'withheld');
   assert.equal(summary.canCommitAwards,false);
+  const old=createV93PlayableTest(settings,{pointContext},
+    {resolveLateBunchExitShoulder:false});
+  assert.equal(old.version,V93_LATE_BUNCH_EXIT_PLAYTEST_VERSION);
+  assert.equal(validateV93CoastedPlaytest(settings,{pointContext},old),true);
+  assert.equal(summarizeV93CoastedPlaytest(old).lateExitShoulder,undefined);
   const line=new Map(summary.lineTimes.map(row=>[row.riderId,row]));
   const replayed=new Set();
   for(const band of summary.bandReplays)

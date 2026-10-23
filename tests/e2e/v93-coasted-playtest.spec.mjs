@@ -1356,11 +1356,15 @@ test('late bunch exits reach the line with paid replay and withheld points',
     expect(response.status()).toBe(200);
     const body=await response.json();
     const race=body.coasted;
-    expect(race.version).toBe('v93-late-bunch-exit-playtest-1');
+    expect(race.version).toBe('v93-late-bunch-exit-shoulder-playtest-1');
     expect(race.kilometreFrames).toHaveLength(259);
     expect(race.lastKmRoad.at(-1).distanceM).toBe(260000);
     expect(race.lineTimes).toHaveLength(160);
     expect(race.bandReplays).toHaveLength(17);
+    expect(race.lateExitShoulder.assignments.map(row=>row.outsideLane))
+      .toEqual([8,9]);
+    expect(race.lateExitShoulder.unresolvedEqualClocks)
+      .toEqual([['rival-1-5','rival-13-5']]);
     expect(race.unresolvedBunchExits).toEqual([
       {atDistanceM:259250,riderIds:[
         'rival-16-5','rival-19-5','rival-4-5','rival-7-5'],
@@ -1388,9 +1392,10 @@ test('late bunch exits reach the line with paid replay and withheld points',
       .toHaveCount(161);
     await expect(page.getByRole('note',{
       name:'Unresolved bunch exits'})).toContainText('259.700 km');
-    await page.getByLabel('Road band').selectOption('isolated:rival-1-5');
-    await page.locator('#v93-paid-finale-replay input[type=range]')
-      .fill('4');
+    await expect(page.getByRole('note',{
+      name:'Paid late bunch exits'})).toContainText('separate outside lanes');
+    await page.getByRole('button',{
+      name:'Inspect late exit rider rival-1-5 finale replay'}).click();
     await expect(page.getByLabel('Selected rider finale replay'))
       .toContainText('Crossed at 100.625 s');
     await expect(page.getByText('Official points: withheld · Awards saved: 0'))
