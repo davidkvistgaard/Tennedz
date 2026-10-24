@@ -4966,6 +4966,22 @@ same-source bunch approaches at exact paid wheels and energies:
 `rival-10-7`/`rival-12-5` at 259940.023 m. It checks all pairwise final
 bands and keeps `contactResolved:false`, classified results null, and
 points/awards withheld. The neighboring women's rolling source has a
-fresh **pre-500 m** approach and cannot use this path. The guided playtest
-still explicitly refuses both rolling cases; the diagnostic alone does
-not authorize a conditional finish or replay.
+fresh **pre-500 m** approach and cannot use this path. The diagnostic
+alone does not authorize a conditional finish or replay.
+
+The men's rolling source now has its own **separate versioned whole-race
+conditional continuation**: the clean first-500 m audit, strict two-event
+final-500 m paid audit, seven road boundaries, 120 individual crossings,
+energy and deterministic replay reconcile. The guided English viewer
+names the two possible approaches and states that occupied lanes and
+official placement remain unresolved. The women's rolling source still
+refuses because it has a fresh pre-500 m encounter that this path does
+not pay. The new path returns no classified results, official points or
+saved awards; disabling it retains the earlier refusal. Four focused
+whole-race units, changed-file lint, isolated preview build and both
+the new rolling and existing flat authenticated browser flows passed.
+The same independent 60-race heterogeneous matrix now reports 46
+conditional finishes and 14 explicit refusals; two races use this new
+version. This bounded gain does not resolve the women's rolling
+pre-500 encounter or the other remaining refusals. No full repository
+serial unit or browser-suite pass is claimed for this increment.

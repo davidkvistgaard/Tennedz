@@ -3,7 +3,8 @@ import assert from 'node:assert/strict';
 import {createV93PlayableTest,validateV93CoastedPlaytest,
   summarizeV93CoastedPlaytest,
   V93_MIXED_TWO_FRONT_DROPPED_LANES_PLAYTEST_VERSION,
-  V93_MIXED_TWO_FRONT_FRESH_LANES_PLAYTEST_VERSION} from
+  V93_MIXED_TWO_FRONT_FRESH_LANES_PLAYTEST_VERSION,
+  V93_MIXED_TWO_FRONT_FINAL_FRESH_LANES_PLAYTEST_VERSION} from
   '../../lib/engine/v2/playtest-v93-coasted.mjs';
 import {prepareV91Playtest} from '../../lib/engine/v2/playtest.mjs';
 import {simulateTacticalTour} from '../../lib/engine/v2/tour.mjs';
@@ -38,6 +39,9 @@ import {recordFinaleMixedTwoFrontDroppedResult,
 import {recordFinaleMixedTwoFrontDroppedFreshResult,
   validateFinaleMixedTwoFrontDroppedFreshResult} from
   '../../lib/engine/v2/finale-mixed-two-front-dropped-fresh-result.mjs';
+import {recordFinaleMixedTwoFrontDroppedCleanPre500FreshFinal500Result,
+  validateFinaleMixedTwoFrontDroppedCleanPre500FreshFinal500Result} from
+  '../../lib/engine/v2/finale-mixed-two-front-dropped-clean-pre500-fresh-final500-result.mjs';
 
 function settingsFor(teamCount,gender,terrain,fatigue){
   return {distanceKm:260,teamCount,gender,terrain,fatigue,
@@ -91,6 +95,31 @@ test('15-team rolling final-wheel approaches remain an internal paid audit',()=>
       row.firstWheelM)<1e-7&&
     Math.abs(row.paidSplit.second.frames.at(-1).riders[0].positionM-
       row.secondWheelM)<1e-7));
+  const result=
+    recordFinaleMixedTwoFrontDroppedCleanPre500FreshFinal500Result(
+      recording);
+  assert.equal(result.line.conditionalCrossings.length,120);
+  assert.equal(result.clock.passageFrames.length,7);
+  assert.equal(result.line.bandRunners.flatMap(row=>row.runner.finishers)
+    .length,120);
+  assert.equal(result.classifiedResults,null);
+  assert.equal(result.pointsStatus,'withheld');
+  assert.equal(validateFinaleMixedTwoFrontDroppedCleanPre500FreshFinal500Result(
+    recording,{},result),true);
+  const settings=settingsFor(15,'M','rolling',30);
+  const playable=createV93PlayableTest(settings);
+  assert.equal(playable.version,
+    V93_MIXED_TWO_FRONT_FINAL_FRESH_LANES_PLAYTEST_VERSION);
+  const summary=summarizeV93CoastedPlaytest(playable);
+  assert.equal(summary.lineTimes.length,120);
+  assert.equal(summary.lastKmRoad.length,7);
+  assert.equal(summary.mixedTwoFrontOlderDrops.freshWheelApproaches.length,2);
+  assert.equal(summary.pointsStatus,'withheld');
+  assert.equal(summary.classifiedResults,null);
+  assert.equal(validateV93CoastedPlaytest(settings,{},playable),true);
+  assert.throws(()=>createV93PlayableTest(settings,{},
+    {resolveMixedTwoFrontFinalFreshLanes:false}),
+  /The depleted line bands crossed without contact/);
   const female=recordingFor(settingsFor(15,'F','rolling',30));
   const femaleClock=recordFinaleCoastMixedTwoFrontDroppedClock(female);
   const femaleLine=recordFinaleCoastedIndividualLine(female,femaleClock);

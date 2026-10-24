@@ -1608,7 +1608,8 @@ export default function Playtest(){
               {' '}within their original groups; occupied wheel order,
               {' '}official places and points remain unresolved.</p>
             {coasted.mixedTwoFrontOlderDrops.freshWheelApproaches?.length>0&&
-              <p>Three possible individual approaches are recorded at
+              <p>{coasted.mixedTwoFrontOlderDrops.freshWheelApproaches.length}
+                {' '}possible individual approaches are recorded at
                 {' '}{coasted.mixedTwoFrontOlderDrops.freshWheelApproaches
                   .map(row=>`${(row.atDistanceM/1000).toFixed(3)} km`)
                   .join(', ')}. Movement and energy are paid at each
