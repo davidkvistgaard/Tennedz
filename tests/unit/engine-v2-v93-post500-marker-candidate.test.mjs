@@ -14,7 +14,8 @@ import {recordFinaleCoastMixedThreeFrontPost500CandidateClock,
   FINALE_COAST_MIXED_THREE_FRONT_STRADDLING_CANDIDATE_VERSION} from
   '../../lib/engine/v2/finale-separated-last-km.mjs';
 import {recordFinaleDepletedIndividualLine,
-  FINALE_POST500_MARKER_CANDIDATE_INDIVIDUAL_LINE_VERSION} from
+  FINALE_POST500_MARKER_CANDIDATE_INDIVIDUAL_LINE_VERSION,
+  FINALE_STRADDLING_MARKER_CANDIDATE_INDIVIDUAL_LINE_VERSION} from
   '../../lib/engine/v2/finale-depleted-individual-line.mjs';
 import {recordFinaleMixedPost500IndividualAudit,
   validateFinaleMixedPost500IndividualAudit,
@@ -31,6 +32,9 @@ import {recordFinaleMixedStraddlingHandoffAudit,
 import {recordFinaleMixedStraddlingIndividualAudit,
   validateFinaleMixedStraddlingIndividualAudit} from
   '../../lib/engine/v2/finale-mixed-straddling-individual-audit.mjs';
+import {recordFinaleMixedStraddlingOutsideLaneAudit,
+  validateFinaleMixedStraddlingOutsideLaneAudit} from
+  '../../lib/engine/v2/finale-mixed-straddling-outside-lane-audit.mjs';
 import {createV93PlayableTest,validateV93CoastedPlaytest,
   summarizeV93CoastedPlaytest,
   V93_MIXED_THREE_FRONT_POST500_LANES_PLAYTEST_VERSION} from
@@ -75,6 +79,23 @@ test('straddling candidate pays both marker sides without resolving wheels',()=>
   assert.equal(clock.classifiedResults,null);
   assert.equal(clock.pointsStatus,'withheld');
   assert.equal(clock.canCommitAwards,false);
+  const line=recordFinaleDepletedIndividualLine(tour,clock);
+  assert.equal(line.version,
+    FINALE_STRADDLING_MARKER_CANDIDATE_INDIVIDUAL_LINE_VERSION);
+  assert.equal(line.conditionalCrossings.length,160);
+  assert.equal(line.classifiedResults,null);
+  assert.equal(line.pointsStatus,'withheld');
+  assert.equal(line.canCommitAwards,false);
+  const outside=recordFinaleMixedStraddlingOutsideLaneAudit(
+    tour,clock,line);
+  assert.equal(outside.approachCount,7);
+  assert.equal(outside.energyContinuity.length,7);
+  assert.equal(outside.contactResolved,false);
+  assert.equal(outside.pre500OtherBandsStatus,'not_audited_no_result');
+  assert.equal(outside.pointsStatus,'withheld');
+  assert.equal(outside.canCommitAwards,false);
+  assert.equal(validateFinaleMixedStraddlingOutsideLaneAudit(
+    tour,clock,line,outside),true);
 });
 
 test('late marker candidates keep road-2 and passing leavers unresolved',()=>{
