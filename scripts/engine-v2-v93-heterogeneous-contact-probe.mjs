@@ -10,6 +10,8 @@ import {recordFinaleCoastMixedTwoFrontDroppedClock} from
   '../lib/engine/v2/finale-separated-last-km.mjs';
 import {recordFinaleCoastedIndividualLine} from
   '../lib/engine/v2/finale-depleted-individual-line.mjs';
+import {recordFinaleMixedTwoFrontDroppedPre500Audit} from
+  '../lib/engine/v2/finale-mixed-two-front-dropped-pre500-audit.mjs';
 import {recordFinaleAllBandOverlapAudit,
   recordFinaleUnorderedBandOverlapAudit} from
   '../lib/engine/v2/finale-multiband-overlap-audit.mjs';
@@ -160,7 +162,13 @@ try{const clock=recordFinaleCoastMixedTwoFrontDroppedClock(recording);
       sourceDropped:line.positionedSource.droppedRiderIds.length,
       final500Overlap:final500.firstPotentialOverlap,
       final500Pairwise:{possible:pairwise.length,
-        crossSourceBand:pairwise.filter(row=>!row.sameSourceBand)}};}
+        crossSourceBand:pairwise.filter(row=>!row.sameSourceBand)}};
+    try{const audit=recordFinaleMixedTwoFrontDroppedPre500Audit(
+      recording,clock,line);
+      candidate.pre500Audit={status:audit.status,
+        sourceAdjacentPairs:audit.sourceAdjacentPairs,
+        paidRiderCount:audit.paidRiderCount};}
+    catch(error){candidate.pre500Audit={reason:error.message};}}
   catch(error){candidate.line={reason:error.message};}}
 catch(error){candidate={reason:error.message};}
 const groupTimes=new Map(source.roadGroups.map(row=>[row.id,
@@ -223,7 +231,8 @@ console.log(JSON.stringify({seed:settings.seed,playable,candidate,
       status:rider.contactStatus}))})),
   paidFirstFrame:{groups:trace.frames[0].roadGroups,
     bunchElapsedSeconds:trace.frames[0].bunchElapsedSeconds,
-    droppedTravel:trace.frames[0].droppedTravel.riders.slice(0,2)},
+    droppedTravel:trace.frames[0].droppedTravel.riders.slice(0,2),
+    riders:trace.frames[0].riders.slice(0,2)},
   paidMarkerEncounters:contact.encounters.map(row=>({rider:row.riderId,
     band:row.activeBandId,distanceM:row.distanceM})),
   markerOrder},null,2));

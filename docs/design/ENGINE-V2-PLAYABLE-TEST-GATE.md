@@ -4863,15 +4863,18 @@ An internal-only versioned two-front older-drop clock now proves the
 four band sizes (4/4/12/12), paid marker order and all 32 energy traces
 for this locked source. Its internal individual runner carries all 32
 conditional crossings and reconciles each rider's energy from the paid
-500 m handoff through the line. The final 500 m longitudinal audit still
-finds possible source-adjacent wheel proximity, and the first 500 m has
-not had an engine-level individual pairwise audit. A read-only diagnostic
-reconstructs all 32 paid first-half trajectories from their source wheels:
-it finds 72 possible 2.5 m proximities, all among riders from the same
-source group at its 259 km boundary, with no fresh reapproach after
-separation and no cross-source-group proximity under a conservative
-leading-marker bound for older drops. This is an audit witness, not an
-occupied-lane response. Neither internal clock nor
+500 m handoff through the line. A separate versioned internal first-500 m
+engine audit reconstructs all 32 paid individual trajectories and energy
+across both 250 m frames and verifies the handoff. It finds 72 possible
+2.5 m proximities, all among riders from the same source group at its
+259 km boundary, with no fresh reapproach after separation and no
+cross-source-group proximity under a conservative leading-marker bound
+for older drops. It assigns distinct inferred no-draft outside lanes to
+the 16 isolated riders, but explicitly leaves occupied-wheel response
+unresolved. The same guard passes the nearby four-team women's flat
+source and refuses a fresh approach in a 15-team men's flat source.
+The final 500 m still needs a comparably guarded individual proximity
+audit before a playable result can be considered. Neither internal clock nor
 line is connected to the playable result: no user-facing road, replay,
 place or point is asserted. The guided Motor Lab retains the explicit
 refusal for this case.
