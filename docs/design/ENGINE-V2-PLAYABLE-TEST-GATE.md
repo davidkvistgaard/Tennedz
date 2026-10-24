@@ -5078,3 +5078,24 @@ exact SHA with the `tennedz.eu` alias; public `/team/motor-lab`
 returned HTTP 200 and the checked error/fatal runtime window was empty.
 Previous deployment `dpl_FKxc6JCA1NMxXeF9gFwxEx4qQF7e` remains
 rollback. No full repository serial unit or browser suite is claimed.
+
+The locked 20-team men's zero-fatigue mountain source has a distinct
+**ten paid first-half / zero fresh final-half** geometry. A new
+versioned whole-race continuation checks all ten exact source-wheel
+approaches and their energy, all 160 rider handoffs and conditional
+crossings, seven paid road boundaries, and deterministic replay. It
+keeps inferred outside lanes, occupied wheel order unresolved, and
+classified places, official points and awards withheld. The earlier
+women's five-plus-one version is unchanged. Both genders passed the
+targeted authenticated local browser flow, showing respectively six
+and ten possible individual approaches and no saved awards. Six
+neighboring whole-race units, changed-file lint and isolated preview
+build passed. The 60-case heterogeneous matrix now has **50
+conditional finishes and 10 explicit refusals**; exactly one case uses
+the new clean-final version. The ten refusals remain 20-team sources
+with unpayable or differently shaped first-half encounters. For
+example, locked flat and rolling high-fatigue probes still fail the
+exact paid-spacing guard; merely sharing a source group does not
+authorize a conditional finish. The read-only probe now reports the
+many-approach audits and their refusal reasons. No full repository
+serial unit or full browser-suite pass is claimed.

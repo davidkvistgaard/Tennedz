@@ -11,9 +11,11 @@ import {recordFinaleCoastMixedTwoFrontDroppedClock} from
 import {recordFinaleCoastedIndividualLine} from
   '../lib/engine/v2/finale-depleted-individual-line.mjs';
 import {recordFinaleMixedTwoFrontDroppedPre500Audit,
-  recordFinaleMixedTwoFrontDroppedFreshPre500Audit} from
+  recordFinaleMixedTwoFrontDroppedFreshPre500Audit,
+  recordFinaleMixedTwoFrontDroppedManyPre500Audit} from
   '../lib/engine/v2/finale-mixed-two-front-dropped-pre500-audit.mjs';
-import {recordFinaleMixedTwoFrontDroppedFreshFinal500Audit} from
+import {recordFinaleMixedTwoFrontDroppedFreshFinal500Audit,
+  recordFinaleMixedTwoFrontDroppedManyPre500Final500Audit} from
   '../lib/engine/v2/finale-mixed-two-front-dropped-final500-audit.mjs';
 import {recordFinaleAllBandOverlapAudit,
   recordFinaleUnorderedBandOverlapAudit} from
@@ -225,6 +227,39 @@ try{const clock=recordFinaleCoastMixedTwoFrontDroppedClock(recording);
                 secondEnergy:row.secondEnergy}))};}
           catch(reason){candidate.freshFinal500Audit={reason:reason.message};}
         }catch(reason){candidate.freshPre500Audit={reason:reason.message};}
+      }
+      if(teamCount===20){
+        try{
+          const many=recordFinaleMixedTwoFrontDroppedManyPre500Audit(
+            recording,clock,line);
+          candidate.manyPre500Audit={status:many.status,
+            sourceAdjacentPairs:many.sourceAdjacentPairs,
+            freshApproaches:many.freshApproaches.map(row=>({
+              firstRiderId:row.firstRiderId,
+              secondRiderId:row.secondRiderId,
+              elapsedSecondsFromLastKmStart:
+                row.elapsedSecondsFromLastKmStart,
+              firstWheelM:row.firstWheelM,
+              secondWheelM:row.secondWheelM,
+              firstEnergy:row.firstEnergy,
+              secondEnergy:row.secondEnergy}))};
+          try{
+            const final=recordFinaleMixedTwoFrontDroppedManyPre500Final500Audit(
+              recording,clock,line,many);
+            candidate.manyFinal500Audit={status:final.status,
+              sourceAdjacentPairs:final.sourceAdjacentPairs,
+              freshApproaches:final.freshApproaches.map(row=>({
+                firstRiderId:row.firstRiderId,
+                secondRiderId:row.secondRiderId,
+                elapsedSecondsFromLastKmStart:
+                  row.elapsedSecondsFromLastKmStart,
+                firstWheelM:row.firstWheelM,
+                secondWheelM:row.secondWheelM,
+                firstEnergy:row.firstEnergy,
+                secondEnergy:row.secondEnergy}))};
+          }catch(reason){candidate.manyFinal500Audit={
+            reason:reason.message};}
+        }catch(reason){candidate.manyPre500Audit={reason:reason.message};}
       }
     }}
   catch(error){candidate.line={reason:error.message};}}
