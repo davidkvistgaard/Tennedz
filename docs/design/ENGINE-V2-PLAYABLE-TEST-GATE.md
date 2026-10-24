@@ -5129,3 +5129,27 @@ A guarded whole-race continuation reconciling road boundaries,
 conditional line, replay and old versioned contracts is still required.
 The 60-case
 completion count remains 50/60.
+
+The multifront audits now feed a **separate versioned whole-race
+continuation**, guarded to 20 teams, 260 km, 6–10 exact paid first-half
+approaches from both surviving fronts, and zero new possible
+second-half approach. It reconciles seven paid road boundaries, the
+160-rider energy handoff, conditional individual crossings and replay.
+Inferred outside lanes remain no-draft and occupied-wheel order is
+unresolved; classified places, official points and awards are withheld.
+Explicit opt-out retains the prior refusal. The independent 60-case
+read-only matrix reports **56 conditional finishes and four explicit
+refusals**, compared with 50/10 before this version. Six cases use the
+new version: both genders flat/high-fatigue, women's rolling and
+mountain/high-fatigue, and both genders custom/high-fatigue. Men's
+rolling and mountain/high-fatigue, and both genders exposed/high-fatigue
+remain refused. All six new cases have 160 conditional line crossings
+and 6–10 paid first-half approaches; the newer final-half audit finds
+no fresh pairwise approach. A focused authenticated browser flow passed
+for the female flat, male flat and female rolling cases. The isolated
+preview Next build and changed-file lint passed; the older live
+20-team mountain version passed its focused regression. The locked
+six-case unit regression, including deterministic replay and an
+explicit opt-out refusal, passed. No full
+repository serial unit or browser-suite pass is claimed. This is
+bounded conditional coverage, not general motor completion.

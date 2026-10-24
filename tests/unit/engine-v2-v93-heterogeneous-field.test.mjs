@@ -6,7 +6,8 @@ import {createV93PlayableTest,validateV93CoastedPlaytest,
   V93_MIXED_TWO_FRONT_FRESH_LANES_PLAYTEST_VERSION,
   V93_MIXED_TWO_FRONT_FINAL_FRESH_LANES_PLAYTEST_VERSION,
   V93_MIXED_TWO_FRONT_MANY_PRE500_LANES_PLAYTEST_VERSION,
-  V93_MIXED_TWO_FRONT_MANY_PRE500_CLEAN_FINAL_LANES_PLAYTEST_VERSION} from
+  V93_MIXED_TWO_FRONT_MANY_PRE500_CLEAN_FINAL_LANES_PLAYTEST_VERSION,
+  V93_MIXED_TWO_FRONT_MULTIFRONT_CLEAN_FINAL_LANES_PLAYTEST_VERSION} from
   '../../lib/engine/v2/playtest-v93-coasted.mjs';
 import {prepareV91Playtest} from '../../lib/engine/v2/playtest.mjs';
 import {simulateTacticalTour} from '../../lib/engine/v2/tour.mjs';
@@ -59,7 +60,10 @@ import {recordFinaleMixedTwoFrontDroppedFreshPre500CleanFinal500Result,
 import {recordFinaleMixedTwoFrontDroppedManyPre500Result,
   validateFinaleMixedTwoFrontDroppedManyPre500Result,
   recordFinaleMixedTwoFrontDroppedManyPre500CleanFinalResult,
-  validateFinaleMixedTwoFrontDroppedManyPre500CleanFinalResult} from
+  validateFinaleMixedTwoFrontDroppedManyPre500CleanFinalResult,
+  recordFinaleMixedTwoFrontDroppedMultifrontCleanFinalResult,
+  validateFinaleMixedTwoFrontDroppedMultifrontCleanFinalResult,
+  FINALE_MIXED_TWO_FRONT_DROPPED_MULTIFRONT_CLEAN_FINAL_RESULT_VERSION} from
   '../../lib/engine/v2/finale-mixed-two-front-dropped-many-pre500-result.mjs';
 
 function settingsFor(teamCount,gender,terrain,fatigue){
@@ -87,8 +91,10 @@ function recordingFor(settings){
 test('two surviving fronts retain separate paid first-half approaches',
   ()=>{
     for(const [gender,terrain,expected] of [
-      ['F','flat',7],['M','flat',10],['F','rolling',6]]){
-      const recording=recordingFor(settingsFor(20,gender,terrain,30));
+      ['F','flat',7],['M','flat',10],['F','rolling',6],
+      ['F','mountain',10],['M','custom',8],['F','custom',8]]){
+      const settings=settingsFor(20,gender,terrain,30);
+      const recording=recordingFor(settings);
       const clock=recordFinaleCoastMixedTwoFrontDroppedClock(recording);
       const line=recordFinaleCoastedIndividualLine(recording,clock);
       assert.throws(()=>recordFinaleMixedTwoFrontDroppedManyPre500Audit(
@@ -122,7 +128,43 @@ test('two surviving fronts retain separate paid first-half approaches',
       assert.equal(final.classifiedResults,null);
       assert.equal(final.pointsStatus,'withheld');
       assert.equal(final.canCommitAwards,false);
+      const result=recordFinaleMixedTwoFrontDroppedMultifrontCleanFinalResult(
+        recording);
+      assert.equal(result.version,
+        FINALE_MIXED_TWO_FRONT_DROPPED_MULTIFRONT_CLEAN_FINAL_RESULT_VERSION);
+      assert.equal(result.line.conditionalCrossings.length,160);
+      assert.equal(result.clock.passageFrames.length,7);
+      assert.equal(result.line.bandRunners.flatMap(band=>
+        band.runner.finishers).length,160);
+      assert.equal(result.classifiedResults,null);
+      assert.equal(result.pointsStatus,'withheld');
+      assert.equal(result.canCommitAwards,false);
+      assert.equal(validateFinaleMixedTwoFrontDroppedMultifrontCleanFinalResult(
+        recording,{},result),true);
+      const race=createV93PlayableTest(settings);
+      assert.equal(race.version,
+        V93_MIXED_TWO_FRONT_MULTIFRONT_CLEAN_FINAL_LANES_PLAYTEST_VERSION);
+      assert.equal(race.mixedTwoFrontResult.line.conditionalCrossings.length,
+        160);
+      const summary=summarizeV93CoastedPlaytest(race);
+      assert.equal(summary.lastKmRoad.length,7);
+      assert.equal(summary.lineTimes.length,160);
+      assert.deepEqual(new Set(summary.mixedTwoFrontOlderDrops
+        .leadingGroupIds),new Set(['road-2','road-4']));
+      assert.equal(summary.mixedTwoFrontOlderDrops.freshWheelApproaches.length,
+        expected);
+      assert.equal(summary.classifiedResults,null);
+      assert.equal(summary.pointsStatus,'withheld');
+      assert.equal(summary.canCommitAwards,false);
+      assert.equal(validateV93CoastedPlaytest(settings,{},race),true);
     }
+    assert.throws(()=>createV93PlayableTest(settingsFor(
+      20,'F','flat',30),{},
+    {resolveMixedTwoFrontMultifrontCleanFinalLanes:false}),
+    /depleted line bands crossed without contact/i);
+    assert.throws(()=>createV93PlayableTest(settingsFor(
+      20,'M','rolling',30)),
+    /depleted line bands crossed without contact/i);
   });
 
 test('20-team mountain pays bounded many-approach conditional finish',
