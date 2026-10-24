@@ -44,7 +44,15 @@ for(const index of indices){
         group.riderIds.includes(finisher));
       const oneDrop=one.droppedRiders.find(row=>
         row.riderId===finisher);
+      const lateFrames=race.recording.frames.filter(frame=>
+        frame.km>settings.distanceKm-5);
       runs.push({effort,summary,finisher,place,
+        ownFrontPaceKm:lateFrames.filter(frame=>
+          frame.paidBunchPace?.teamId==='you').length,
+        ownChaseKm:lateFrames.filter(frame=>
+          frame.chasers.includes('you')).length,
+        ownAttackKm:lateFrames.filter(frame=>
+          frame.attackers.some(id=>id.startsWith('you-'))).length,
         oneRoad:oneFront?.id??(oneDrop?'isolated':'bunch'),
         oneGapSeconds:oneFront?.gapSeconds??
           (oneDrop?-oneDrop.deficitSeconds:0),
@@ -66,8 +74,10 @@ for(const index of indices){
   }
   results.push({index,settings,
     runs:runs.map(({effort,error,finisher,place,oneRoad,oneGapSeconds,
+      ownFrontPaceKm,ownChaseKm,ownAttackKm,
       lineSeconds,lineEnergy,fiveEnergy,oneEnergy})=>({effort,error,
-      finisher,place,oneRoad,oneGapSeconds,lineSeconds,lineEnergy,
+      finisher,place,oneRoad,oneGapSeconds,ownFrontPaceKm,ownChaseKm,
+      ownAttackKm,lineSeconds,lineEnergy,
       fiveEnergy,oneEnergy})),
     ...(conserve.summary&&hard.summary?{hardMinusConserve:{
       place:Number.isInteger(conserve.place)&&Number.isInteger(hard.place)?

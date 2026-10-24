@@ -4629,3 +4629,14 @@ sample does show that choosing `hard` at 5 km is not automatically rewarded,
 and that the viewer must show road position, energy and conditional place
 together before a player can judge the choice. It is a targeted motor
 balance question, not a claim that `conserve` is universally better.
+
+The follow-up work trace explains the narrow result: the player's team had
+zero paid bunch-front kilometres, zero chase kilometres and zero new attacks
+from the 5 km marker in all twelve pairs. The hard order still raised every
+team rider's baseline work demand. These pairs therefore test an **inactive
+late order**, not how hard effort performs during an actual chase or attack.
+The viewer now reports recorded attack, chase, break pull and bunch-front work
+beside a paired effort comparison, and explains that the 5 km setting is a
+team-wide order rather than a last-moment sprint command. The next balance
+audit needs matched whole races with actual paid late work before changing
+motor tuning.

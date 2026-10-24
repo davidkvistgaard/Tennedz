@@ -6,7 +6,8 @@ import {summarizePlaytestRaceStory} from
   '../../lib/engine/v2/playtest-race-story.mjs';
 import {raceViewerCheckpoints,raceViewerEnergySeries,
   raceViewerBreaksAndChase,raceViewerFinale,raceViewerRoad,
-  raceViewerLateEffort,raceViewerEffortInsight,raceViewerTimeline} from
+  raceViewerLateEffort,raceViewerLateTeamWork,
+  raceViewerEffortInsight,raceViewerTimeline} from
   '../../lib/engine/v2/playtest-viewer.mjs';
 
 test('rider guide shows the exact synthetic riders committed to the race',()=>{
@@ -61,6 +62,22 @@ test('late effort snapshot reads the chosen phase and recorded rider road',()=>{
     effort:'hard',atFiveKmEnergy:51,
     atFiveKmRoad:'8.0 s ahead with 1 rider',
     atOneKmEnergy:28,atOneKmRoad:'in the bunch'});
+});
+
+test('late team work counts only paid activity after the 5 km order',()=>{
+  const frames=[{km:35,attackAttempts:['you-1'],
+    chasingTeamIds:['you'],pullRiderIds:['you-2'],
+    paidBunchPaceTeamId:'you'},
+  {km:36,attackAttempts:['you-1','rival-1-2'],
+    chasingTeamIds:['rival-1'],pullRiderIds:['rival-1-3'],
+    paidBunchPaceTeamId:'rival-1'},
+  {km:37,attackAttempts:[],chasingTeamIds:['you'],
+    pullRiderIds:['you-2'],paidBunchPaceTeamId:null},
+  {km:38,attackAttempts:[],chasingTeamIds:[],
+    pullRiderIds:[],paidBunchPaceTeamId:'you'}];
+  assert.deepEqual(raceViewerLateTeamWork({settings:{distanceKm:40},
+    kilometreFrames:frames}),{recordedKm:3,attacks:1,chaseKm:1,
+    breakPullKm:1,bunchPaceKm:1});
 });
 
 test('late effort takeaway only isolates matching plans and finisher',()=>{
