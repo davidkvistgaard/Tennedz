@@ -4518,8 +4518,8 @@ both field sizes on rolling and mountain terrain at fatigue 30, seed 1.
 The locked `v93-next-contact-field-hills-15-M-rolling-30-1` source has
 three fronts (10/15/5 riders), three older isolated riders, and five
 first-front plus one second-front boundary leavers. Seven paid road
-markers preserve all riders and energy. The five first-front leavers
-move through the second front between the 259600 and 259800 m markers;
+markers preserve all riders and energy. The second front passes the five
+first-front leavers between the 259600 and 259800 m markers;
 the current dropped-rider travel reports no front contact and the
 three-front-with-older-drops guard correctly refuses a conditional line.
 Marker interpolation suggests the first overlap at about 259696 m, but
@@ -4539,8 +4539,9 @@ The existing paid contact audit splits each constant-pace solo and
 deliberately leaves occupied-wheel contact unresolved. It locates all
 seven first-front leavers in the locked 20-team men's mountain source at
 259486.358–259490.247 m, and the women's mountain source at
-259487.554–259491.463 m. The 20-team men's rolling source likewise
-passes `road-2` at 259492.284–259496.328 m. These three complete
+259487.554–259491.463 m. `road-2` likewise passes the first-front
+leavers in the 20-team men's rolling source at 259492.284–259496.328 m.
+These three complete
 encounter sets precede the paid 500 m handoff and form a bounded first
 continuation target. The 20-team women's rolling set straddles the
 handoff, while all 15-team rolling/mountain sets occur later; they must
@@ -4548,7 +4549,7 @@ keep refusing until a separate post-handoff rule can reconcile them.
 
 The separate `v93-mixed-three-front-pre500-pass-playtest-1` continuation
 now covers precisely those three 20-team sources. Its versioned clock
-requires all first-front leavers to pass only `road-2` before the 500 m
+requires `road-2` to pass all first-front leavers before the 500 m
 handoff, using the paid common-marker movement and energy split. The
 outside lanes are inferred; occupied-wheel order is unresolved. Seven
 paid markers and the handoff retain three distinct fronts, leading and
@@ -4583,3 +4584,25 @@ at the exact release SHA with the `tennedz.eu` alias. The unauthenticated
 `/team/motor-lab` request returned HTTP 200, and the checked error/fatal
 runtime window had no logs. The previous deployment
 `dpl_HnpqxWt7aaEW2Q1E5XYY3P4iRXQu` is the rollback target.
+
+A direction audit found that the English Motor Lab note had reversed a pass:
+the paid marker order shows `road-2` moving ahead of the exhausted first-front
+leavers. The note, event rows and locked regression now state that direction.
+Two focused tests, changed-file lint, an isolated release build and 56/56
+release browser flows passed. Corrected release
+`6cb29ab32aa9734d33c36553cbd71499c0e1c0f9` is live as production
+deployment `dpl_BUhU62Nm9iw2ZB7uQ2b35as4XTEp`, READY on `tennedz.eu`.
+The unauthenticated Motor Lab request returned HTTP 200 and the checked
+error/fatal runtime window had no logs. The preceding deployment
+`dpl_tzQR2DnmV2uQUviiAZyUFZ45syk1` is the rollback target.
+
+An exploratory wider guard was not retained. Although the five later sources
+yielded conditional lines under it, the group road and nominated individual
+sprint can have different crossing markers after the 500 m handoff. In the
+locked 15-team men's rolling source, the first group marker is at
+259696.006 m while the provisional individual overlap is near 259695.640 m.
+In the 20-team women's rolling source, group markers straddle the handoff at
+259497.694–259501.812 m. These overlaps are audit witnesses, not resolved
+occupied-wheel contacts. All five cases still explicitly refuse pending a
+separate paid post-handoff continuation; no official places, points or awards
+were inferred from them.
