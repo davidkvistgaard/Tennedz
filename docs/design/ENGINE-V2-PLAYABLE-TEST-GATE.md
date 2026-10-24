@@ -5394,3 +5394,16 @@ returned HTTP 200 with assets from that deployment. The checked
 error/fatal runtime log was empty. Prior production deployment
 `dpl_8HcfN1KbF22NbPhgWqSrGJ3fNRe3` remains rollback. No fresh full
 repository unit or browser-suite pass is claimed.
+
+The full read-only 60-case `alternate-1` heterogeneous-field matrix
+subsequently reported **60 conditional finishes and zero explicit
+refusals**. One of those uses the thirteen-plus-zero version. The
+bounded matrix is seed-specific and does not imply official wheel
+order, awards, or unrestricted motor coverage.
+
+The guided viewer now folds the possible individual wheel-spacing
+approaches into a rider-pair list. Each entry names both riders and
+distance and can follow the first rider to the paid finish replay. It
+states that an approach does not confirm a catch. Changed-file lint,
+an isolated preview Next build and the targeted authenticated 13-contact
+browser click flow passed; no fresh full browser suite was run.

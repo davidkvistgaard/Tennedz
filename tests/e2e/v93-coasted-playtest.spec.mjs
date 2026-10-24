@@ -3144,6 +3144,17 @@ for(const [approaches,gender,fatigue,version] of [
       name:'Conditional two-front exits with older drops'});
     await expect(note).toContainText(
       `${approaches} possible individual approaches`);
+    if(approaches===13){
+      const first=body.coasted.mixedTwoFrontOlderDrops
+        .freshWheelApproaches[0];
+      await note.getByText('13 possible individual approaches').click();
+      await expect(note.getByText(`${first.firstRiderId} approached ${
+        first.secondRiderId}`,{exact:false})).toBeVisible();
+      await note.getByRole('button',{name:`Inspect ${
+        first.firstRiderId} conditional finish replay`}).click();
+      await expect(page.getByLabel('Selected rider finale replay'))
+        .toContainText(first.firstRiderId);
+    }
     await expect(page.getByText('Point illustration unavailable:',{
       exact:false})).toBeVisible();
     await expect(page.getByText('Official points: withheld · Awards saved: 0'))
