@@ -3086,7 +3086,10 @@ for(const [gender,terrain,seedSuffix,preCount,firstRider,secondRider] of [
       .toBeVisible();
   });
 
-for(const [approaches,gender] of [[5,'F'],[7,'M']])test(
+for(const [approaches,gender,fatigue,version] of [
+  [5,'F',0,'v93-mixed-two-front-five-pre500-clean-final-lanes-playtest-1'],
+  [7,'M',0,'v93-mixed-two-front-seven-pre500-clean-final-lanes-playtest-1'],
+  [13,'F',30,'v93-mixed-two-front-thirteen-multifront-clean-final-playtest-1']])test(
   `${approaches} early mountain approaches retain a conditional 160-rider line`,
   async({page})=>{
     test.setTimeout(120000);
@@ -3097,8 +3100,8 @@ for(const [approaches,gender] of [[5,'F'],[7,'M']])test(
     await expect(page).toHaveURL(/\/team$/);
     const teamCount=20;
     const settings={distanceKm:260,teamCount,gender,
-      terrain:'mountain',fatigue:0,
-      seed:`v93-heterogeneous-20-${gender}-mountain-0-alternate-1`,
+      terrain:'mountain',fatigue,
+      seed:`v93-heterogeneous-20-${gender}-mountain-${fatigue}-alternate-1`,
       defaultRivalPlan:'passive',effort:'hard',attack:'repeated',
       chase:'all',managerTactics:Array.from({length:teamCount-1},
         (_,index)=>({effort:['hard','steady','conserve'][index%3],
@@ -3119,8 +3122,7 @@ for(const [approaches,gender] of [[5,'F'],[7,'M']])test(
         pointContext:{tier:2,divisionIndex:0,divisionCount:1}}});
     expect(response.status(),await response.text()).toBe(200);
     const body=await response.json();
-    expect(body.coasted.version).toBe(
-      `v93-mixed-two-front-${approaches===5?'five':'seven'}-pre500-clean-final-lanes-playtest-1`);
+    expect(body.coasted.version).toBe(version);
     expect(body.coasted.lineTimes).toHaveLength(160);
     expect(body.coasted.lastKmRoad).toHaveLength(7);
     expect(body.coasted.mixedTwoFrontOlderDrops.freshWheelApproaches)
