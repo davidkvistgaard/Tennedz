@@ -179,6 +179,13 @@ test('mixed front exits reach the conditional finish and rider replay',
     await expect(page.getByRole('table',{
       name:'V93 individual conditional results'}).getByRole('row'))
       .toHaveCount(33);
+    await page.getByRole('button',{
+      name:'Follow race for you-7'}).click();
+    await expect(raceViewer.getByRole('img',{
+      name:'you-7 energy by recorded kilometre and at the line'}))
+      .toBeVisible();
+    await expect(raceViewer.getByLabel('Road groups at km 255'))
+      .toContainText('Following you-7');
     await note.getByRole('button',{
       name:'Inspect mixed front exit rider you-7 finish replay'}).click();
     await expect(page.getByLabel('Selected rider finale replay'))

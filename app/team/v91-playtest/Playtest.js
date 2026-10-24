@@ -1779,7 +1779,15 @@ export default function Playtest({guided=false}){
                     setCoastedRiderId(row.riderId);setCoastedBandIndex(0);
                     document.getElementById('v93-paid-finale-replay')
                       ?.scrollIntoView();}}
-                  aria-label={`Replay ${row.riderId}`}>Inspect</button></td></tr>;
+                  aria-label={`Replay ${row.riderId}`}>Inspect finale</button>
+                  {row.riderId.startsWith('you-')&&<button type="button"
+                    onClick={()=>{
+                      setViewerRiderId(row.riderId);
+                      setCoastedKm(Math.max(1,coasted.settings.distanceKm-5));
+                      document.querySelector('.v91-race-viewer')
+                        ?.scrollIntoView();
+                    }} aria-label={`Follow race for ${row.riderId}`}>
+                    Follow race</button>}</td></tr>;
             })}</tbody>
           </table></div>
           {coasted.pointPreview?.status==='unavailable'&&<p>
