@@ -4195,3 +4195,11 @@ illustrations. The independent 20-team 260 km long-field sweep completed
 90/90 conditional finishes across both genders and five terrain profiles,
 including one paid shared-wheel contact; no official points were awarded.
 No new full serial unit-suite pass is claimed.
+
+The same code passed six focused release tests, changed-file lint, an
+isolated release build and 48/48 release browser flows. Exact release commit
+`a719efe41bc0d68da78e09e8a813949054ebf732` deployed as
+`dpl_9BZxgJXdmhASSprFUtV6dmV8PYpg`, READY at the `tennedz.eu` alias.
+`/team/motor-lab` returned HTTP 200 and the checked ten-minute runtime
+window had no error/fatal logs. Previous deployment
+`dpl_DpBQZWMGnAZWXnsW3wP9Pg4w48Qf` remains the rollback target.
