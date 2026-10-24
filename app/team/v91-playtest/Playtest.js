@@ -1251,15 +1251,16 @@ export default function Playtest(){
               finish replays are recorded; their places and points remain
               unresolved.</p>
             {coasted.mixedFrontLeavers.frontPasses?.length>0&&<p>
-              {coasted.mixedFrontLeavers.frontPasses.length} riders passed
-              {' '}{coasted.mixedFrontLeavers.rearGroupId} on separate
-              inferred outside lanes before the 500 m handoff. Their paid
+              {coasted.mixedFrontLeavers.rearGroupId} passed
+              {' '}{coasted.mixedFrontLeavers.frontPasses.length} former
+              front riders on separate inferred outside lanes before the
+              500 m handoff. Their paid
               road times and energy meet at the recorded pass markers;
               wheel order remains unresolved.
             </p>}
             {coasted.mixedFrontLeavers.frontPasses?.map(event=><p
               key={event.riderId}>
-              {event.riderId} passed {event.groupId} at
+              {event.groupId} passed {event.riderId} at
               {' '}{(event.atDistanceM/1000).toFixed(3)} km.
             </p>)}
             {coasted.mixedFrontLeavers.bunchPasses.length===2&&
