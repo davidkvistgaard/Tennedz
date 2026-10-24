@@ -17,7 +17,8 @@ import {recordFinaleMixedTwoFrontDroppedPre500Audit,
   '../lib/engine/v2/finale-mixed-two-front-dropped-pre500-audit.mjs';
 import {recordFinaleMixedTwoFrontDroppedFreshFinal500Audit,
   recordFinaleMixedTwoFrontDroppedManyPre500Final500Audit,
-  recordFinaleMixedTwoFrontDroppedMultifrontFinal500Audit} from
+  recordFinaleMixedTwoFrontDroppedMultifrontFinal500Audit,
+  recordFinaleMixedTwoFrontDroppedMultifrontParallelFinalAudit} from
   '../lib/engine/v2/finale-mixed-two-front-dropped-final500-audit.mjs';
 import {recordFinaleAllBandOverlapAudit,
   recordFinaleUnorderedBandOverlapAudit} from
@@ -33,6 +34,7 @@ const gender=process.argv[3]??'M';
 const terrain=process.argv[4]??'flat';
 const fatigue=Number(process.argv[5]??30);
 const seedTag=process.argv[6]??'';
+const inspectSourceLanes=process.argv[7]==='source-lanes';
 const settings={distanceKm:260,teamCount,gender,terrain,fatigue,
   seed:`v93-heterogeneous-${teamCount}-${gender}-${terrain}-${fatigue}${
     seedTag?`-${seedTag}`:''}`,
@@ -173,6 +175,21 @@ try{const clock=recordFinaleCoastMixedTwoFrontDroppedClock(recording);
   candidate={version:clock.version,outcome:clock.line.outcome,
     bands:clock.line.bands.map(row=>({id:row.id,
       count:row.riderIds.length}))};
+  if(inspectSourceLanes)try{
+    const queuedLine=recordFinaleCoastedIndividualLine(recording,clock,{
+      laneQueuedBandIds:['road-2']});
+    const queuedPre=recordFinaleMixedTwoFrontDroppedMultifrontPre500Audit(
+      recording,clock,queuedLine);
+    const queuedFinal=
+      recordFinaleMixedTwoFrontDroppedMultifrontParallelFinalAudit(
+        recording,clock,queuedLine,queuedPre);
+    candidate.sourceLaneAudit={pre500Approaches:
+      queuedPre.freshApproaches.length,
+    final500Approaches:queuedFinal.freshApproaches.length,
+    parallelFinalLaneEvidence:queuedFinal.parallelFinalLaneEvidence,
+    conditionalCrossings:queuedLine.conditionalCrossings.length,
+    contactResolved:queuedFinal.contactResolved};
+  }catch(error){candidate.sourceLaneAudit={reason:error.message};}
   try{const line=recordFinaleCoastedIndividualLine(recording,clock);
     const final500=recordFinaleAllBandOverlapAudit(line.bandRunners);
     const sourceBandByRider=new Map(clock.line.bands.flatMap(band=>

@@ -5332,3 +5332,18 @@ those independent checks. Production deployment
 with the `tennedz.eu` alias. Public `/team/motor-lab` returned HTTP 200
 with assets from that deployment, and checked error/fatal runtime logs
 were empty. Prior `dpl_E6wAp7w4o8WnZH6yc4GHCLcBSZ4Z` remains rollback.
+
+The remaining women's exposed/high-fatigue `alternate-1` source has
+eleven paid first-half approaches from both surviving fronts and one
+possible individual approach after the 500 m handoff. A read-only
+source-lane probe found the final pair `rival-17-7`/`rival-3-7` on
+road-2 in distinct fixed source lanes 2 and 3. The existing paid
+parallel-final audit validates their exact split movement and energy,
+and finds no drafting after that approach. A separate opt-in 11+1
+recording/playtest version now uses that audit, with 160 conditional
+individual crossings and replay. Official places, points and awards
+remain withheld; opt-out retains explicit refusal. The women's
+mountain/high-fatigue 13-approach source still refuses. Three focused
+whole-race/refusal/replay unit tests, changed-file lint, isolated preview
+Next build and targeted authenticated API/viewer browser flow passed.
+This is a bounded conditional finish, not resolved wheel order.

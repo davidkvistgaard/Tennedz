@@ -3024,7 +3024,10 @@ test('crowded 20-team exposed exits remain conditional and withhold awards',
       .toBeVisible();
   });
 
-test('mountain final parallel lanes retain a conditional 160-rider line',
+for(const [gender,terrain,seedSuffix,preCount,firstRider,secondRider] of [
+  ['M','mountain','',10,'rival-5-7','rival-9-7'],
+  ['F','exposed','-alternate-1',11,'rival-17-7','rival-3-7']])test(
+  `${preCount} early approaches and one final parallel pass retain a conditional line`,
   async({page})=>{
     test.setTimeout(120000);
     await page.goto('/login');
@@ -3033,9 +3036,9 @@ test('mountain final parallel lanes retain a conditional 160-rider line',
     await page.getByRole('button',{name:'Sign in',exact:true}).click();
     await expect(page).toHaveURL(/\/team$/);
     const teamCount=20;
-    const settings={distanceKm:260,teamCount,gender:'M',
-      terrain:'mountain',fatigue:30,
-      seed:'v93-heterogeneous-20-M-mountain-30',
+    const settings={distanceKm:260,teamCount,gender,
+      terrain,fatigue:30,
+      seed:`v93-heterogeneous-20-${gender}-${terrain}-30${seedSuffix}`,
       defaultRivalPlan:'passive',effort:'hard',attack:'repeated',
       chase:'all',managerTactics:Array.from({length:teamCount-1},
         (_,index)=>({effort:['hard','steady','conserve'][index%3],
@@ -3057,12 +3060,14 @@ test('mountain final parallel lanes retain a conditional 160-rider line',
     expect(response.status(),await response.text()).toBe(200);
     const body=await response.json();
     expect(body.coasted.version).toBe(
-      'v93-mixed-two-front-multifront-parallel-final-playtest-1');
+      `v93-mixed-two-front-${preCount===11?'eleven-':''}multifront-parallel-final-playtest-1`);
     expect(body.coasted.lineTimes).toHaveLength(160);
     expect(body.coasted.lastKmRoad).toHaveLength(7);
     expect(body.coasted.mixedTwoFrontOlderDrops.parallelFinalLaneEvidence)
-      .toMatchObject({firstRiderId:'rival-5-7',
-        secondRiderId:'rival-9-7',firstLane:2,secondLane:3});
+      .toMatchObject({firstRiderId:firstRider,
+        secondRiderId:secondRider,firstLane:2,secondLane:3});
+    expect(body.coasted.mixedTwoFrontOlderDrops.freshWheelApproaches)
+      .toHaveLength(preCount+1);
     expect(body.coasted.classifiedResults).toBeNull();
     expect(body.coasted.canCommitAwards).toBe(false);
     await page.goto('/team/v91-playtest');
