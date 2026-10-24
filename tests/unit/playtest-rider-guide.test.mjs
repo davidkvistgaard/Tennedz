@@ -173,6 +173,24 @@ test('viewer keeps paid chase visible in the kilometre that catches a front',()=
   assert.equal(raceViewerCheckpoints(race,'you-7').at(-1).chasing,true);
 });
 
+test('viewer traces only the selected rival breakaway to its recorded catch',()=>{
+  const base={roadGroups:[],droppedRiders:[],ownRiders:[],
+    attackAttempts:[],joinedRiderIds:[],caughtRiderIds:[],
+    chasingTeamIds:[]};
+  const race={kilometreFrames:[
+    {...base,km:1,attackAttempts:['rival-1-7','rival-10-7']},
+    {...base,km:2,roadGroups:[{id:'road-1',gapSeconds:4,
+      riderIds:['rival-1-7']}],joinedRiderIds:['rival-1-7']},
+    {...base,km:3,caughtRiderIds:['rival-1-7']}],
+  lastKmRoad:[],lineTimes:[]};
+  const rival=raceViewerBreaksAndChase(race,'rival-1');
+  assert.equal(rival.riders.length,1);
+  assert.equal(rival.riders[0].riderId,'rival-1-7');
+  assert.equal(rival.riders[0].fate,'Caught at km 3');
+  assert.equal(rival.riders[0].atOneKm,'in the bunch');
+  assert.deepEqual(raceViewerBreaksAndChase(race).riders,[]);
+});
+
 test('viewer timeline links a paid final catch to its exact recorded road',()=>{
   const frame={km:39,roadGroups:[],droppedRiders:[],attackAttempts:[],
     joinedRiderIds:[],caughtRiderIds:[],engagedChaseTeamIds:[]};
