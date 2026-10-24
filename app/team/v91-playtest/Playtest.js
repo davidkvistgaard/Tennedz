@@ -6,7 +6,8 @@ import {playtestRiderCards} from '../../../lib/engine/v2/playtest-riders.mjs';
 import {summarizePlaytestRaceStory} from
   '../../../lib/engine/v2/playtest-race-story.mjs';
 import {raceViewerCheckpoints,raceViewerEnergySeries,
-  raceViewerBreaksAndChase,raceViewerFinale,raceViewerRoad} from
+  raceViewerBreaksAndChase,raceViewerFinale,raceViewerRoad,
+  raceViewerLateEffort} from
   '../../../lib/engine/v2/playtest-viewer.mjs';
 
 const DEFAULT_PLANS=['chase','attack','neutral'];
@@ -140,6 +141,7 @@ function coastedComparisonRun(settings,summary,pointContext){
       previewPoints:pointContext?preview?.previewPoints??null:null};
   });
   return {conditions:comparisonConditions(settings),finisherId,
+    lateEffort:raceViewerLateEffort(summary,finisherId),
     crossingSeconds:crossing?.elapsedSecondsFromLastKmStart??null,
     energyAtLine:crossing?.energyAtLine??null,
     place:conditionalPlace(place,'unresolved'),
@@ -1666,9 +1668,19 @@ export default function Playtest(){
         </div>
         {coastedComparison&&<section className="v91-finish"
           aria-label="Paired v93 race comparison">
-          <h3>Previous preview on the same conditions</h3>
+          <h3>Compare two runs on the same route</h3>
           <p>Route, profile, category, field, fatigue and seed match.
             Manager tactics and finale nominations may differ.</p>
+          <div className="v91-effort-comparison" aria-label="Late effort comparison">
+            {[['Previous run',coastedComparison.before],
+              ['Current run',coastedComparison.after]].map(([label,run])=><div
+              key={label}>
+              <h4>{label} · {run.lateEffort.effort??'unknown'} at 5 km to go</h4>
+              <p>{run.finisherId} at 5 km: {run.lateEffort.atFiveKmRoad??'unavailable'} · {run.lateEffort.atFiveKmEnergy?.toFixed(1)??'—'} energy.</p>
+              <p>At 1 km: {run.lateEffort.atOneKmRoad??'unavailable'} · {run.lateEffort.atOneKmEnergy?.toFixed(1)??'—'} energy.</p>
+              <p>At the line: {run.energyAtLine?.toFixed(1)??'—'} energy · conditional place {run.place}.</p>
+            </div>)}</div>
+          <p>The recorded road and remaining energy show what changed; matching route and seed alone do not isolate the 5 km effort if other orders or riders changed. Line time below starts at the last kilometre, not the race start.</p>
           <p>Recorded road: {coastedComparison.before.roadStatus} →
             {' '}{coastedComparison.after.roadStatus} ·
             {' '}groups at the last-kilometre handoff:

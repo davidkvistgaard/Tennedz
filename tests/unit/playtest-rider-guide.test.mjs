@@ -5,7 +5,8 @@ import {playtestRiderCards} from '../../lib/engine/v2/playtest-riders.mjs';
 import {summarizePlaytestRaceStory} from
   '../../lib/engine/v2/playtest-race-story.mjs';
 import {raceViewerCheckpoints,raceViewerEnergySeries,
-  raceViewerBreaksAndChase,raceViewerFinale,raceViewerRoad} from
+  raceViewerBreaksAndChase,raceViewerFinale,raceViewerRoad,
+  raceViewerLateEffort} from
   '../../lib/engine/v2/playtest-viewer.mjs';
 
 test('rider guide shows the exact synthetic riders committed to the race',()=>{
@@ -46,6 +47,20 @@ test('viewer road orders recorded fronts, solo riders and bunch without losing r
     ['Bunch',28,0],['you-3 riding alone',1,-3.2]]);
   assert.deepEqual(road.map(row=>row.ownRiderIds),[
     ['you-2'],[],['you-0','you-1','you-4','you-5','you-6','you-7'],['you-3']]);
+});
+
+test('late effort snapshot reads the chosen phase and recorded rider road',()=>{
+  const race={settings:{distanceKm:40},managerOrders:[{teamId:'you',
+    effort:'steady',phaseOrders:[{atKm:35,effort:'hard'}]}],
+  kilometreFrames:[{km:35,roadGroups:[{id:'road-1',gapSeconds:8,
+    riderIds:['you-7']}],droppedRiders:[],
+  ownRiders:[{riderId:'you-7',energy:51}]},
+  {km:39,roadGroups:[],droppedRiders:[],
+    ownRiders:[{riderId:'you-7',energy:28}]}]};
+  assert.deepEqual(raceViewerLateEffort(race,'you-7'),{
+    effort:'hard',atFiveKmEnergy:51,
+    atFiveKmRoad:'8.0 s ahead with 1 rider',
+    atOneKmEnergy:28,atOneKmRoad:'in the bunch'});
 });
 
 test('viewer checkpoints keep recorded attack, catch, position and energy',()=>{
