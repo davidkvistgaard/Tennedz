@@ -4455,3 +4455,51 @@ at that exact release SHA with the `tennedz.eu` alias. The unauthenticated
 `/team/motor-lab` request returned HTTP 200 after redirects; the checked
 error/fatal runtime window had no logs. The previous deployment
 `dpl_4Szu8p5ndPpTcQGrNTmnNMdR4yWK` is the rollback target.
+
+### Three surviving fronts with older isolated riders (2026-10-24)
+
+The extended 72-race synthetic 260 km audit added flat and custom routes
+with mixed manager orders in 15- and 20-team fields. Eight high-fatigue
+cases, both genders in each field and terrain, explicitly refused
+`unresolved_band_contact`. The locked
+`v93-next-contact-field-mixed-15-M-flat-30-2` source has three fronts of
+10, 15 and 5 riders, plus two older dropped riders. At the 259 km boundary,
+one rider leaves the first front and five leave the second. Every paid
+marker retains the leading leaver between fronts one and two, the five
+rear leavers between fronts two and three, the third front ahead of the
+bunch, and the two older isolates behind the bunch. No recorded rider
+contact occurs in the last kilometre. The 20-team women's custom case
+independently has three fronts of 14, 20 and 6 riders with the same
+five separated road spaces.
+
+A new versioned clock and playtest continuation requires those three
+fronts, boundary leavers only from the first two, at least one prior
+dropped rider, no subsequent bunch exit or front dissolution, and strict
+separation without contact at all seven paid markers. The guarded 500 m
+handoff must preserve the finish-band order. The eight former refusals
+now have 120 or 160 conditional individual crossings with matching energy
+and replay. The older isolates remain independent behind the bunch;
+official places, policy points and saved awards stay withheld. Existing
+recording versions and the explicit opt-out refusal retain their earlier
+behavior. The English Motor Lab names the older rear riders in its road
+explanation.
+
+The extended audit now completes 72/72 whole races, up from 64/72: 40
+separated, eight earlier three-front-clear, 16 dynamic-front and eight
+new three-front-with-older-drops. The 58 v93 unit tests, changed-file
+lint, isolated preview build, 54/54 preview browser flows and independent
+90/90 varied playability matrix passed. This bounded acceptance result
+does not establish unrestricted motor completion.
+
+Functional preview commit `13a55e8` was pushed to
+`codex/p01-calendar-engine-integration` and cherry-picked as release
+`bdc9b00fddbfb589b83d72f736cff34438bcf165`. The isolated release
+build, 55/55 release browser flows, and independent 90/90 20-team
+long-field stress passed. The full serial unit suite was not rerun.
+
+Production deployment `dpl_HnpqxWt7aaEW2Q1E5XYY3P4iRXQu` reached READY
+at exact release `bdc9b00fddbfb589b83d72f736cff34438bcf165`, with the
+`tennedz.eu` alias. The unauthenticated `/team/motor-lab` request
+returned HTTP 200 after redirects, and the checked error/fatal runtime
+window had no logs. The previous deployment
+`dpl_49nRtdeUQksbz6Leno8Q8SspPRx3` is the rollback target.
