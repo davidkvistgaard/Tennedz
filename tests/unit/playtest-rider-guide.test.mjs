@@ -4,7 +4,7 @@ import {prepareV91Playtest} from '../../lib/engine/v2/playtest.mjs';
 import {playtestRiderCards} from '../../lib/engine/v2/playtest-riders.mjs';
 import {summarizePlaytestRaceStory} from
   '../../lib/engine/v2/playtest-race-story.mjs';
-import {raceViewerCheckpoints} from
+import {raceViewerCheckpoints,raceViewerEnergySeries} from
   '../../lib/engine/v2/playtest-viewer.mjs';
 
 test('rider guide shows the exact synthetic riders committed to the race',()=>{
@@ -35,6 +35,8 @@ test('viewer checkpoints keep recorded attack, catch, position and energy',()=>{
   assert.equal(checkpoints.find(row=>row.km===6).position,
     '4.2 s ahead with 1 rider');
   assert.equal(checkpoints.at(-1).energy,81);
+  assert.deepEqual(raceViewerEnergySeries({kilometreFrames:frames},'you-7')
+    .map(row=>row.energy),[90,89,88,87,86,85,84,83,82,81]);
 });
 
 test('race story only names events and positions present in the recording',()=>{

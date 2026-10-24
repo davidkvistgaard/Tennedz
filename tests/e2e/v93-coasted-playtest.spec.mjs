@@ -873,6 +873,12 @@ test('sample race opens the playable setup and links the recorded result',
     await viewer.getByRole('button',{name:/Km 39/}).click();
     await expect(page.getByRole('slider',{name:/Recorded kilometre/}))
       .toHaveValue('39');
+    await viewer.getByLabel('Rider to follow').selectOption('you-0');
+    await expect(viewer).toContainText(`you-0: ${coasted.kilometreFrames
+      .find(frame=>frame.km===35).ownRiders.find(row=>
+        row.riderId==='you-0').energy.toFixed(1)} energy at 5 km to go`);
+    await expect(viewer.getByRole('img',{
+      name:'you-0 energy by recorded kilometre'})).toBeVisible();
     await expect(page.getByRole('region',{name:'Your v93 finish'}))
       .toContainText('they are not the rider\'s total race time');
     const ownPlace=coasted.provisionalLineOrder.find(row=>
