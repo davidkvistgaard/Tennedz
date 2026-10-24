@@ -52,6 +52,16 @@
 .v91-race-story ol{margin:0 0 12px;padding-left:22px}
 .v91-race-story li{margin:6px 0}
 .v91-race-story p{margin:0}
+.v91-race-viewer{margin:16px 0;padding:18px;border:1px solid #a6c2b8;border-radius:12px}
+.v91-race-viewer h3{margin:0 0 6px}
+.v91-race-viewer p{margin:0 0 14px;color:#526b63}
+.v91-viewer-track{display:flex;gap:9px;overflow-x:auto;padding:3px 2px 12px;scroll-snap-type:x proximity}
+.v91-viewer-track button{flex:0 0 175px;display:grid;gap:7px;align-content:start;min-height:148px;padding:12px;text-align:left;scroll-snap-align:start;border:1px solid #a6c2b8;border-radius:10px;background:#f2f7f4;color:#17312e;cursor:pointer}
+.v91-viewer-track button[aria-pressed=true]{border:2px solid #116e60;background:#d9ebe3}
+.v91-viewer-track button:focus-visible{outline:3px solid #116e60;outline-offset:2px}
+.v91-viewer-track strong{font-size:1rem}
+.v91-viewer-track span{font-size:.88rem}
+.v91-viewer-track small{color:#526b63}
 .v91-technical{margin:12px 0}
 .v91-technical summary{cursor:pointer;font-weight:700}
 .v91-profile small{color:#526b63}

@@ -5,6 +5,8 @@ import {api} from '../../../lib/api';
 import {playtestRiderCards} from '../../../lib/engine/v2/playtest-riders.mjs';
 import {summarizePlaytestRaceStory} from
   '../../../lib/engine/v2/playtest-race-story.mjs';
+import {raceViewerCheckpoints} from
+  '../../../lib/engine/v2/playtest-viewer.mjs';
 
 const DEFAULT_PLANS=['chase','attack','neutral'];
 const DEFAULT_BASELINES={chase:{effort:'hard',attack:'none',chase:'all'},
@@ -369,6 +371,8 @@ export default function Playtest(){
     .filter(row=>row.riderId===coastedOwnDecision?.leadOutRiderId)
     .reduce((sum,row)=>sum+row.energySpent,0);
   const coastedRaceStory=coasted?summarizePlaytestRaceStory(coasted):[];
+  const coastedViewer=coasted?raceViewerCheckpoints(coasted,
+    coastedOwnDecision?.finisherId??'you-7'):[];
   const coastedBunchExitCount=(coasted?.unresolvedBunchExits??[])
     .reduce((count,wave)=>count+wave.riderIds.length,0);
   const conditionalLine=[...lineTimes].sort((a,b)=>
@@ -981,6 +985,21 @@ export default function Playtest(){
           <ol>{coastedRaceStory.map((moment,index)=><li key={index}>{moment}</li>)}</ol>
           <p>At the line, {coastedOwnDecision?.finisherId??'your finisher'} had a conditional place of {conditionalPlace(coastedOwnPlace,'unresolved')} and {coastedOwnLine?.energyAtLine.toFixed(1)??'—'} of 100 energy remaining. Energy is reserve left after recorded work, not a rider skill or a race time. The order is not an official classification.</p>
         </div>
+        <section className="v91-race-viewer" aria-label="Race viewer">
+          <h3>Follow your finisher through the race</h3>
+          <p>Each card is a recorded checkpoint. Energy is the reserve left at that point; a break only counts as joined or caught when the race recorded that event. Select a card to inspect its road and riders below.</p>
+          <div className="v91-viewer-track">{coastedViewer.map(checkpoint=><button
+            type="button" key={checkpoint.index}
+            aria-pressed={coastedKm===checkpoint.index+1}
+            onClick={()=>setCoastedKm(checkpoint.index+1)}>
+            <strong>Km {checkpoint.km}</strong>
+            <span>{checkpoint.position}</span>
+            <span>{checkpoint.energy?.toFixed(1)??'—'} / 100 energy</span>
+            <small>{checkpoint.moments.length?
+              checkpoint.moments.join(' · '):
+              `${checkpoint.frontCount} groups ahead${checkpoint.chasing?' · your team chased':''}`}</small>
+          </button>)}</div>
+        </section>
         <details className="v91-technical"><summary>Engine status and recording details</summary>
         <p>{coasted.tuningVersion} · {coasted.settings.managerTactics.length+
           (coasted.settings.managerTacticOverrides?.length??0)} custom rival managers · {' '}
