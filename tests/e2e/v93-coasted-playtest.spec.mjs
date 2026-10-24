@@ -2428,6 +2428,14 @@ test('early front catch reaches the browser line and replay with points withheld
       .toContainText(`you-1: `);
     await expect(page.getByLabel('Breakaways and chase'))
       .toContainText(`Caught at ${(body.coasted.frontCatch.atDistanceM/1000).toFixed(3)} km on the paid final road`);
+    const firstOwnBreakKm=body.coasted.kilometreFrames.find(frame=>
+      ['attackAttempts','joinedRiderIds','caughtRiderIds'].some(key=>
+        frame[key].includes('you-1'))).km;
+    await page.getByRole('button',{
+      name:`Follow you-1 from km ${firstOwnBreakKm}`}).click();
+    await expect(page.getByLabel('Rider to follow')).toHaveValue('you-1');
+    await expect(page.getByRole('heading',{
+      name:`Road at km ${firstOwnBreakKm}`})).toBeVisible();
     await page.getByLabel('Recorded race timeline')
       .getByRole('button',{name:new RegExp(`Km ${
         (body.coasted.frontCatch.atDistanceM/1000).toFixed(3)}`)}).first().click();

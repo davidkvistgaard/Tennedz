@@ -1154,6 +1154,11 @@ export default function Playtest({guided=false}){
               key={row.riderId}><strong>{row.riderId}</strong>: {' '}
               {row.events.join(' · ')}. <strong>Outcome:</strong> {row.fate}.
               {' '}With 1 km to go: {row.atOneKm}.
+              {' '}<button type="button" onClick={()=>{
+                setViewerRiderId(row.riderId);
+                setCoastedKm(row.firstKm);
+                document.querySelector('.v91-race-viewer')?.scrollIntoView();
+              }}>Follow {row.riderId} from km {row.firstKm}</button>
             </li>)}</ul>:<p>No attack, breakaway join or catch was recorded for your team.</p>}
           </div>
           {viewerFinale&&<div className="v91-viewer-finale"
