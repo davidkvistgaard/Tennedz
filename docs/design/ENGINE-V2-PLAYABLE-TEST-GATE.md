@@ -4956,3 +4956,16 @@ exact SHA with the `tennedz.eu` alias; unauthenticated Motor Lab returned
 HTTP 200 and the checked production error/fatal window had no logs.
 Deployment `dpl_6EXb45J2jS5Bdac7yeMg7kD9iFMg` remains rollback.
 These are source-wheel encounters, not road-group marker crossings.
+
+The next locked 15-team men's rolling high-fatigue whole race has a
+clean, paid first 500 m source-wheel audit (120 riders, 678 source-adjacent
+pairs, no fresh approach). Its usual final-500 m guard correctly refuses.
+A separately versioned **internal-only** audit splits two fresh
+same-source bunch approaches at exact paid wheels and energies:
+`rival-4-7`/`rival-12-5` at 259914.258 m and
+`rival-10-7`/`rival-12-5` at 259940.023 m. It checks all pairwise final
+bands and keeps `contactResolved:false`, classified results null, and
+points/awards withheld. The neighboring women's rolling source has a
+fresh **pre-500 m** approach and cannot use this path. The guided playtest
+still explicitly refuses both rolling cases; the diagnostic alone does
+not authorize a conditional finish or replay.
