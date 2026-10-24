@@ -42,6 +42,18 @@
 .v91-manager-tactics{display:grid;gap:10px;margin-top:12px}
 .v91-manager-tactics>div{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;align-items:end;padding:12px;background:#f8fcf9;border:1px solid #d3e1db;border-radius:10px}
 .v91-manager-tactics strong{grid-column:1/-1}
+.v91-rider-guide{grid-column:1/-1;min-width:0;margin-top:4px}
+.v91-rider-guide summary{cursor:pointer;font-weight:700}
+.v91-rider-guide .v91-result-scroll{max-height:none}
+.v91-rider-guide .v91-result-table{min-width:440px}
+.v91-rider-guide small{display:block;margin-top:8px}
+.v91-race-story{margin:16px 0;padding:18px;background:#e8f2ee;border-radius:12px}
+.v91-race-story h3{margin:0 0 8px}
+.v91-race-story ol{margin:0 0 12px;padding-left:22px}
+.v91-race-story li{margin:6px 0}
+.v91-race-story p{margin:0}
+.v91-technical{margin:12px 0}
+.v91-technical summary{cursor:pointer;font-weight:700}
 .v91-profile small{color:#526b63}
 .v91-error{color:#9b2525;font-weight:700}
 .v91-results{background:white;border:1px solid #d3e1db;border-radius:16px;padding:24px}

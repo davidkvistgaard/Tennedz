@@ -843,6 +843,12 @@ test('sample race opens the playable setup and links the recorded result',
     await expect(briefing).toContainText('40 km Flat · Men · 4 teams');
     await expect(briefing).toContainText('you-7 nominated · no lead-out helper');
     await expect(briefing).toContainText('Read-only illustration, tier 2');
+    const riderGuide=page.getByText('Your riders: skills before the race');
+    await expect(riderGuide).toBeVisible();
+    await expect(page.getByLabel('you finisher')).toContainText(
+      'Rider 8 · Sprint 100');
+    await expect(page.getByText('This is an optional experiment, not a required finale choice.',
+      {exact:false})).toBeVisible();
     await expect(page.getByRole('button',
       {name:'Run v93 race preview'})).toBeInViewport();
     const responsePromise=page.waitForResponse(response=>
@@ -853,6 +859,16 @@ test('sample race opens the playable setup and links the recorded result',
     expect(response.status()).toBe(200);
     const {coasted}=await response.json();
     expect(coasted.lineTimes).toHaveLength(32);
+    const story=page.getByLabel('What happened in your race');
+    const atOneKm=coasted.kilometreFrames.at(-1).ownRiders.find(row=>
+      row.riderId==='you-7');
+    await expect(story).toContainText(
+      `With 1 km to go, you-7 was in the bunch with ${
+        atOneKm.energy.toFixed(1)} of 100 energy remaining.`);
+    await expect(story).toContainText(
+      'Energy is reserve left after recorded work, not a rider skill or a race time.');
+    await expect(page.getByRole('region',{name:'Your v93 finish'}))
+      .toContainText('they are not the rider\'s total race time');
     const ownPlace=coasted.provisionalLineOrder.find(row=>
       row.riderId==='you-7').position;
     const ownPreview=coasted.pointPreview.riders.find(row=>

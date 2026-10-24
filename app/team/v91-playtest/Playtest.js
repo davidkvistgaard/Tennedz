@@ -2,6 +2,9 @@
 import {useState} from 'react';
 import TeamShell from '../../components/TeamShell';
 import {api} from '../../../lib/api';
+import {playtestRiderCards} from '../../../lib/engine/v2/playtest-riders.mjs';
+import {summarizePlaytestRaceStory} from
+  '../../../lib/engine/v2/playtest-race-story.mjs';
 
 const DEFAULT_PLANS=['chase','attack','neutral'];
 const DEFAULT_BASELINES={chase:{effort:'hard',attack:'none',chase:'all'},
@@ -365,6 +368,7 @@ export default function Playtest(){
   const coastedOwnHelperWork=(coasted?.leadOutWork??[])
     .filter(row=>row.riderId===coastedOwnDecision?.leadOutRiderId)
     .reduce((sum,row)=>sum+row.energySpent,0);
+  const coastedRaceStory=coasted?summarizePlaytestRaceStory(coasted):[];
   const coastedBunchExitCount=(coasted?.unresolvedBunchExits??[])
     .reduce((count,wave)=>count+wave.riderIds.length,0);
   const conditionalLine=[...lineTimes].sort((a,b)=>
@@ -678,7 +682,7 @@ export default function Playtest(){
         </fieldset>
         {integratedMode&&coastedMode&&<fieldset className="v91-profile">
           <legend>Five-kilometre effort orders</legend>
-          <p>Choose a new effort at 5 km to go for your team or a customized rival. The previous effort stays in force until that marker.</p>
+          <p>This is an optional experiment, not a required finale choice. Hard spends more reserve before the sprint; conserving can leave more reserve but may give up road position. Keep race effort for a first run, then rerun the same seed to compare.</p>
           <div className="v91-manager-tactics">{finaleTeams.map(teamId=>
             <label key={teamId}>5 km to go effort for {teamId}
               <select value={lateEfforts[teamId]??''} onChange={event=>
@@ -692,24 +696,40 @@ export default function Playtest(){
         </fieldset>}
         {integratedMode&&<fieldset className="v91-profile">
           <legend>Finale nominations</legend>
-          <p>Choose a finisher and an optional helper for your team and any customized rival manager. Other managers use their captain. A helper works only when the recorded road lets the pair assemble.</p>
+          <p>Choose a finisher and an optional helper for your team and any customized rival manager. Sprint and endurance are the riders&apos; actual synthetic skills for this race. A helper works only if they share the road and have energy left at 500 m.</p>
           <div className="v91-manager-tactics">{finaleTeams.map(teamId=>{
             const plan=finalePlans[teamId]??{finisherId:`${teamId}-7`,
               leadOutRiderId:null};
+            const riders=playtestRiderCards(settings,teamId);
             return <div key={teamId}><strong>{teamId==='you'?'Your team':teamId}</strong>
               <label>{teamId} finisher<select value={plan.finisherId}
                 onChange={event=>changeFinale(teamId,'finisherId',event.target.value)}>
-                {Array.from({length:8},(_,index)=><option key={index}
-                  value={`${teamId}-${index}`}>Rider {index+1}</option>)}</select>
+                {riders.map((rider,index)=><option key={rider.id}
+                  value={rider.id}>Rider {index+1} · Sprint {rider.sprint} · Endurance {rider.endurance}</option>)}</select>
               </label>
               <label>{teamId} lead-out helper<select value={plan.leadOutRiderId??''}
                 onChange={event=>changeFinale(teamId,'leadOutRiderId',
                   event.target.value||null)}>
                 <option value="">None</option>
-                {Array.from({length:8},(_,index)=>`${teamId}-${index}`)
-                  .filter(id=>id!==plan.finisherId).map(id=><option key={id}
-                    value={id}>Rider {Number(id.split('-').at(-1))+1}</option>)}</select>
+                {riders.filter(rider=>rider.id!==plan.finisherId)
+                  .map(rider=><option key={rider.id} value={rider.id}>
+                    Rider {Number(rider.id.split('-').at(-1))+1} · Endurance {rider.endurance}
+                  </option>)}</select>
               </label>
+              <details className="v91-rider-guide" open={teamId==='you'}>
+                <summary>{teamId==='you'?'Your riders':'Rival riders'}: skills before the race</summary>
+                <div className="v91-result-scroll"><table className="v91-result-table">
+                  <thead><tr><th scope="col">Rider</th><th scope="col">Sprint</th>
+                    <th scope="col">Flat</th><th scope="col">Climb</th>
+                    <th scope="col">Endurance</th></tr></thead>
+                  <tbody>{riders.map((rider,index)=><tr key={rider.id}>
+                    <th scope="row">Rider {index+1}{rider.id===plan.finisherId?' · finisher':''}{rider.id===plan.leadOutRiderId?' · helper':''}</th>
+                    <td>{rider.sprint}</td><td>{rider.flat}</td>
+                    <td>{rider.mountain}</td><td>{rider.endurance}</td>
+                  </tr>)}</tbody>
+                </table></div>
+                <small>Skills are out of 100. These are starting abilities, not energy remaining during the race.</small>
+              </details>
               {!coastedMode&&secondNamedAttack.teamId&&<label>{teamId} last-kilometre front work
                 <select value={finaleFrontWork[teamId]??'sit_in'}
                   onChange={event=>setFinaleFrontWork(current=>({
@@ -956,6 +976,12 @@ export default function Playtest(){
           You changed the setup after this race. The road, finish and replay
           below still show the previous run. Run the race again to see the
           current choices.</p>}
+        <div className="v91-race-story" aria-label="What happened in your race">
+          <h3>What happened in your race</h3>
+          <ol>{coastedRaceStory.map((moment,index)=><li key={index}>{moment}</li>)}</ol>
+          <p>At the line, {coastedOwnDecision?.finisherId??'your finisher'} had a conditional place of {conditionalPlace(coastedOwnPlace,'unresolved')} and {coastedOwnLine?.energyAtLine.toFixed(1)??'—'} of 100 energy remaining. Energy is reserve left after recorded work, not a rider skill or a race time. The order is not an official classification.</p>
+        </div>
+        <details className="v91-technical"><summary>Engine status and recording details</summary>
         <p>{coasted.tuningVersion} · {coasted.settings.managerTactics.length+
           (coasted.settings.managerTacticOverrides?.length??0)} custom rival managers · {' '}
           {coasted.sharedWheelContact?
@@ -963,7 +989,7 @@ export default function Playtest(){
             coasted.isolatedLaneEncounters?.length?
               'paid independent lanes for isolated riders through the final kilometre':
             coasted.roadStatus}</p>
-        <p>Conditional individual line: {coasted.lineTimes.length} riders. Official results and points are withheld.</p>
+        <p>Conditional individual line: {coasted.lineTimes.length} riders. Official results and points are withheld.</p></details>
         <nav className="v91-result-nav" aria-label="Explore this race">
           <a href="#v93-your-finish">Your finish</a>
           <a href="#v93-recorded-road">Recorded road</a>
@@ -993,7 +1019,8 @@ export default function Playtest(){
             {' '}{coastedOwnLine?.roadBandId??'no paid road band'} ·
             {' '}{coastedOwnLine?.elapsedSecondsFromLastKmStart.toFixed(3)??'—'} s
             from the bunch&apos;s final-kilometre marker ·
-            {' '}{coastedOwnLine?.energyAtLine.toFixed(1)??'—'} energy at line.</p>
+            {' '}{coastedOwnLine?.energyAtLine.toFixed(1)??'—'} of 100 energy remaining.</p>
+          <p>The seconds are measured from when the bunch reached the 1 km marker; they are not the rider&apos;s total race time. Riders already ahead can cross sooner on this shared clock.</p>
           {coasted.unlaunchedSoloSprints?.some(row=>
             row.riderId===coastedOwnDecision.finisherId)&&
             <p>The nominated rider lacked energy for the full solo sprint
