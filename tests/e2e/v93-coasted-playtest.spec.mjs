@@ -1178,6 +1178,10 @@ test('a five-kilometre effort change reaches the paid line and points',
     await expect(page.getByRole('region',{
       name:'Paired v93 race comparison'}))
       .toContainText('Conditional place: 12 → 13');
+    await expect(page.getByLabel('Late effort takeaway'))
+      .toContainText('Only your 5 km effort changed');
+    await expect(page.getByLabel('Late effort takeaway'))
+      .toContainText('conditional place 13 instead of 12');
     await expect(page.getByRole('region',{
       name:'Paired v93 race comparison'}))
       .toContainText('Read-only points: 18 (place 12) → 15 (place 13)');
@@ -1463,6 +1467,8 @@ test('exhausted v93 road pays two manager lead-outs and shows conditional line',
       name:'Paired v93 race comparison'});
     await expect(comparison).toContainText(
       'Compare two runs on the same route');
+    await expect(comparison.getByLabel('Late effort takeaway'))
+      .toContainText('do not isolate the 5 km effort');
     await expect(comparison.getByLabel('Late effort comparison'))
       .toContainText('at 5 km');
     await expect(comparison).toContainText(
