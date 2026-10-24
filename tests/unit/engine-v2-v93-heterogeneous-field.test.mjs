@@ -2,7 +2,8 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {createV93PlayableTest,validateV93CoastedPlaytest,
   summarizeV93CoastedPlaytest,
-  V93_MIXED_TWO_FRONT_DROPPED_LANES_PLAYTEST_VERSION} from
+  V93_MIXED_TWO_FRONT_DROPPED_LANES_PLAYTEST_VERSION,
+  V93_MIXED_TWO_FRONT_FRESH_LANES_PLAYTEST_VERSION} from
   '../../lib/engine/v2/playtest-v93-coasted.mjs';
 import {prepareV91Playtest} from '../../lib/engine/v2/playtest.mjs';
 import {simulateTacticalTour} from '../../lib/engine/v2/tour.mjs';
@@ -254,7 +255,19 @@ test('15-team fresh source-wheel approach is paid but remains internal',()=>{
       {},candidate),true);
     assert.throws(()=>recordFinaleMixedTwoFrontDroppedPre500Audit(
       recording,clock,line),/new unpaid approach/);
-    assert.throws(()=>createV93PlayableTest(settings),
+    assert.throws(()=>createV93PlayableTest(settings,{},
+      {resolveMixedTwoFrontFreshLanes:false}),
       /depleted line bands crossed without contact/);
+    const playable=createV93PlayableTest(settings);
+    assert.equal(playable.version,
+      V93_MIXED_TWO_FRONT_FRESH_LANES_PLAYTEST_VERSION);
+    assert.equal(validateV93CoastedPlaytest(settings,{},playable),true);
+    const summary=summarizeV93CoastedPlaytest(playable);
+    assert.equal(summary.lineTimes.length,120);
+    assert.equal(summary.lastKmRoad.length,7);
+    assert.equal(summary.mixedTwoFrontOlderDrops
+      .freshWheelApproaches.length,3);
+    assert.equal(summary.classifiedResults,null);
+    assert.equal(summary.pointsStatus,'withheld');
   }
 });

@@ -2664,6 +2664,64 @@ test('unequal-strength two fronts keep older drops on conditional lanes',
       .toBeVisible();
   });
 
+test('fresh 15-team approaches keep conditional line and withheld points',
+  async({page})=>{
+    await page.goto('/login');
+    await page.getByLabel('Email or username').fill('v2rival');
+    await page.getByLabel('Password',{exact:true}).fill('fixture-password');
+    await page.getByRole('button',{name:'Sign in',exact:true}).click();
+    await expect(page).toHaveURL(/\/team$/);
+    const teamCount=15;
+    const settings={distanceKm:260,teamCount,gender:'M',
+      terrain:'flat',fatigue:30,
+      seed:'v93-heterogeneous-15-M-flat-30',
+      defaultRivalPlan:'passive',effort:'hard',attack:'repeated',
+      chase:'all',managerTactics:Array.from({length:teamCount-1},
+        (_,index)=>({
+          effort:['hard','steady','conserve'][index%3],
+          attack:index%3===0?'repeated':'selective',
+          chase:index%3===1?'all':'selective'})),
+      teamOverrides:[{teamId:'you',level:45},
+        ...Array.from({length:teamCount-1},(_,index)=>({
+          teamId:`rival-${index+1}`,level:index%2===0?25:65}))],
+      managerFinaleOrders:[
+        {teamId:'you',atKm:255,effort:'steady',chase:'all'},
+        {teamId:'rival-1',atKm:255,effort:'hard'}]};
+    const response=await page.request.post('/api/v91-playtest',{
+      headers:{origin:'http://localhost:3100'},data:{
+        mode:'v93-coasted',settings,
+        plans:['you',...Array.from({length:teamCount-1},(_,index)=>
+          `rival-${index+1}`)].map(teamId=>({teamId,
+          finisherId:`${teamId}-7`,leadOutRiderId:null})),
+        pointContext:{tier:2,divisionIndex:0,divisionCount:1}}});
+    expect(response.status(),await response.text()).toBe(200);
+    const body=await response.json();
+    const coasted=body.coasted;
+    expect(coasted.version).toBe(
+      'v93-mixed-two-front-fresh-older-drops-lanes-playtest-1');
+    expect(coasted.lineTimes).toHaveLength(120);
+    expect(coasted.lastKmRoad).toHaveLength(7);
+    expect(coasted.mixedTwoFrontOlderDrops.freshWheelApproaches)
+      .toHaveLength(3);
+    expect(coasted.pointPreview.status).toBe('unavailable');
+    expect(coasted.canCommitAwards).toBe(false);
+    await page.goto('/team/v91-playtest');
+    await page.getByRole('checkbox',{
+      name:'Continue to a conditional finish'}).check();
+    await page.getByRole('checkbox',{
+      name:'Try v93 road-to-line preview'}).check();
+    await page.route('**/api/v91-playtest',route=>route.fulfill({
+      status:200,contentType:'application/json',body:JSON.stringify(body)}));
+    await page.getByRole('button',{name:'Run v93 race preview'}).click();
+    const note=page.getByRole('note',{
+      name:'Conditional two-front exits with older drops'});
+    await expect(note).toContainText('24 older dropped riders');
+    await expect(note).toContainText('Three possible individual approaches');
+    await expect(note).toContainText('conditional, not an official placing');
+    await expect(page.getByText('Official points: withheld · Awards saved: 0'))
+      .toBeVisible();
+  });
+
 test('straddling outside lanes keep seven riders separate through the line',
   async({page})=>{
     await page.goto('/login');

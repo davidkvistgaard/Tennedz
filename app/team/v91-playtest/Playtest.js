@@ -1607,6 +1607,14 @@ export default function Playtest(){
               {' '}500 m handoff and finish. Possible wheel proximities stay
               {' '}within their original groups; occupied wheel order,
               {' '}official places and points remain unresolved.</p>
+            {coasted.mixedTwoFrontOlderDrops.freshWheelApproaches?.length>0&&
+              <p>Three possible individual approaches are recorded at
+                {' '}{coasted.mixedTwoFrontOlderDrops.freshWheelApproaches
+                  .map(row=>`${(row.atDistanceM/1000).toFixed(3)} km`)
+                  .join(', ')}. Movement and energy are paid at each
+                {' '}approach, but the riders&apos; occupied lanes and
+                {' '}response are inferred. The crossing order is
+                {' '}conditional, not an official placing.</p>}
           </div>}
           {coasted.mixedFrontLeavers&&<div role="note"
             aria-label="Mixed front exits">
