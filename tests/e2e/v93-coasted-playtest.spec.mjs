@@ -176,6 +176,8 @@ test('mixed front exits reach the conditional finish and rider replay',
       .toContainText('rival-2-7');
     await expect(raceViewer.getByLabel('rival-2 at km 259'))
       .toContainText('Starting orders:');
+    await expect(raceViewer.getByLabel('rival-2 at km 259'))
+      .toContainText('Whole-kilometre record: chased');
     await expect(raceViewer.getByRole('img',{
       name:'you-7 energy by recorded kilometre and at the line'}))
       .toBeVisible();

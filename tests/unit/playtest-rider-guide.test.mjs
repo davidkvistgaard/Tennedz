@@ -52,20 +52,26 @@ test('viewer road orders recorded fronts, solo riders and bunch without losing r
 });
 
 test('rival focus ties a manager to its recorded finisher and road actions',()=>{
-  const race={settings:{teamCount:4},
+  const race={settings:{teamCount:4,distanceKm:40},
     managerDecisions:[{teamId:'rival-2',finisherId:'rival-2-7'}],
     managerOrders:[{teamId:'rival-2',effort:'steady',attack:'selective',
-      chase:'all'}],lineTimes:[{riderId:'rival-2-7',energyAtLine:42}]};
+      chase:'all',phaseOrders:[{atKm:35,effort:'hard'}]}],
+    lineTimes:[{riderId:'rival-2-7',energyAtLine:42}]};
   const frame={roadGroups:[{id:'road-1',gapSeconds:7.5,
     riderIds:['rival-2-7','rival-2-1']}],
     droppedRiders:[{riderId:'rival-2-3',deficitSeconds:2}],
     attackAttempts:['rival-2-7','rival-1-0'],
     joinedRiderIds:['rival-2-7'],caughtRiderIds:[],
     pullRiderIds:['rival-2-1'],chasingTeamIds:['rival-2']};
+  race.kilometreFrames=[{...frame,km:35},{...frame,km:36,
+    attackAttempts:[],joinedRiderIds:[],
+    caughtRiderIds:['rival-2-1'],chasingTeamIds:[]}];
   assert.deepEqual(raceViewerRivalAt(race,frame,'rival-2'),{
     teamId:'rival-2',finisherId:'rival-2-7',
     orders:race.managerOrders[0],
     finisherRoad:'7.5 s ahead with 2 riders',
+    fiveKmEffort:'hard',wholeRaceChaseKm:1,
+    firstAttackKm:35,firstJoinKm:35,lastCatchKm:36,
     frontCount:2,bunchCount:5,droppedCount:1,
     attacks:['rival-2-7'],joins:['rival-2-7'],catches:[],
     pulls:['rival-2-1'],chased:true,lineEnergy:42});
