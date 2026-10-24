@@ -4570,3 +4570,16 @@ pre-handoff continuation, not unrestricted contact resolution.
 
 The complete v93 regression set passed 60/60 tests and changed-file lint
 passed. This is not a fresh pass of the full repository unit suite.
+
+Functional preview commit `802241f` and acceptance commit `578acee` were
+pushed to `codex/p01-calendar-engine-integration`. The functional change
+was cherry-picked to release commit
+`9c7dd4d88bb704f16899c4456aa8d99f9cd616d9`. The isolated release
+build, changed-file lint, two focused tests and all 56/56 release browser
+flows passed. An initial browser pass was interrupted by the local
+environment's `ERR_NETWORK_IO_SUSPENDED`; a complete rerun passed.
+Production deployment `dpl_tzQR2DnmV2uQUviiAZyUFZ45syk1` reached READY
+at the exact release SHA with the `tennedz.eu` alias. The unauthenticated
+`/team/motor-lab` request returned HTTP 200, and the checked error/fatal
+runtime window had no logs. The previous deployment
+`dpl_HnpqxWt7aaEW2Q1E5XYY3P4iRXQu` is the rollback target.
