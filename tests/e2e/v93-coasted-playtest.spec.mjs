@@ -46,8 +46,11 @@ test('mixed front exits reach the conditional finish and rider replay',
     await page.getByRole('button',{name:'Run v93 race preview'}).click();
     const raceViewer=page.getByLabel('Race viewer');
     await expect(raceViewer).toContainText('Breakaways and chase');
+    await expect(raceViewer.getByLabel('Recorded race timeline'))
+      .toContainText('Final kilometre begins');
     await expect(raceViewer).toContainText('Km 259');
-    await raceViewer.getByRole('button',{name:/Km 259/}).click();
+    await raceViewer.locator('.v91-viewer-track')
+      .getByRole('button',{name:/Km 259/}).click();
     await expect(raceViewer.getByLabel('Road groups at km 259'))
       .toContainText('Front group 1');
     await expect(raceViewer.getByRole('img',{
@@ -876,9 +879,12 @@ test('sample race opens the playable setup and links the recorded result',
     await expect(story).toContainText(
       'Energy is reserve left after recorded work, not a rider skill or a race time.');
     const viewer=page.getByLabel('Race viewer');
+    await expect(viewer.getByLabel('Recorded race timeline'))
+      .toContainText('Race recording begins');
     expect(await viewer.getByRole('button').count()).toBeGreaterThanOrEqual(5);
     await expect(viewer).toContainText('Km 39');
-    await viewer.getByRole('button',{name:/Km 39/}).click();
+    await viewer.locator('.v91-viewer-track')
+      .getByRole('button',{name:/Km 39/}).click();
     await expect(viewer.getByLabel('Road groups at km 39'))
       .toContainText('Bunch');
     await expect(page.getByRole('slider',{name:/Recorded kilometre/}))

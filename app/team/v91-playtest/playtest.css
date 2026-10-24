@@ -80,6 +80,15 @@
 .v91-viewer-track strong{font-size:1rem}
 .v91-viewer-track span{font-size:.88rem}
 .v91-viewer-track small{color:#526b63}
+.v91-viewer-timeline{margin-top:12px;padding:14px;background:#e8f2ee;border-radius:10px}
+.v91-viewer-timeline h4{margin:0 0 7px}
+.v91-viewer-timeline p{margin:0 0 9px}
+.v91-viewer-timeline ol{display:grid;gap:6px;margin:0;padding:0;list-style:none}
+.v91-viewer-timeline button{display:flex;gap:9px;width:100%;padding:9px 11px;text-align:left;border:1px solid #a6c2b8;border-radius:7px;background:white;color:#17312e;cursor:pointer}
+.v91-viewer-timeline button[aria-pressed=true]{border:2px solid #116e60}
+.v91-viewer-timeline button strong{white-space:nowrap}
+.v91-viewer-timeline details{margin-top:10px}
+.v91-viewer-timeline summary{cursor:pointer;font-weight:700}
 .v91-viewer-road{margin-top:12px;padding:14px;background:#f2f7f4;border-radius:10px}
 .v91-viewer-road h4{margin:0 0 7px}
 .v91-viewer-road p{margin:0 0 9px}
