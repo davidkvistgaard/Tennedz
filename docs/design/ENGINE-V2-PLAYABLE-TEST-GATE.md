@@ -4873,8 +4873,18 @@ for older drops. It assigns distinct inferred no-draft outside lanes to
 the 16 isolated riders, but explicitly leaves occupied-wheel response
 unresolved. The same guard passes the nearby four-team women's flat
 source and refuses a fresh approach in a 15-team men's flat source.
-The final 500 m still needs a comparably guarded individual proximity
-audit before a playable result can be considered. Neither internal clock nor
+An independent internal final-500 m audit now uses each paid individual
+sprint phase, including sheltered passages, to test 2.5 m proximity all
+the way to the line. The locked four-team men's and women's flat sources
+show only uninterrupted source-group adjacency and no fresh possible
+approach; exact boundary instants are included in the gate. It carries
+the 16 distinct inferred outside lanes and still says contact is
+unresolved. This is not a physical occupied-wheel response. The audit
+and its replay passed the locked whole-race tests; a nearby 15-team
+men's source continues to refuse its fresh first-half approach. A
+separately guarded playable whole-race continuation must still reconcile
+road boundaries, line/replay and read-only point policy before exposure.
+Neither internal clock nor
 line is connected to the playable result: no user-facing road, replay,
 place or point is asserted. The guided Motor Lab retains the explicit
 refusal for this case.
