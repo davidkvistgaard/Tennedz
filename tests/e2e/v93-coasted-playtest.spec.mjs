@@ -50,6 +50,10 @@ test('close-chase preset shows when hard effort catches a late break',
       'Conditional place: 4 → 1');
     await expect(comparison.getByLabel('Late effort takeaway'))
       .toContainText('Only your 5 km effort changed');
+    const timeline=page.getByLabel('Recorded race timeline');
+    await expect(timeline).toContainText(
+      '3 riders were caught: rival-1-7, rival-2-7, rival-3-7');
+    await expect(timeline).not.toContainText('stopped chasing');
   });
 
 test('mixed front exits reach the conditional finish and rider replay',

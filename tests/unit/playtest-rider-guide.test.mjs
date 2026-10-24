@@ -118,6 +118,27 @@ test('viewer timeline reports recorded attacks, chase, road changes and catches'
       'Final kilometre begins']]]);
 });
 
+test('viewer keeps paid chase visible in the kilometre that catches a front',()=>{
+  const base={roadGroups:[],droppedRiders:[],attackAttempts:[],
+    joinedRiderIds:[],caughtRiderIds:[],engagedChaseTeamIds:[],
+    chasingTeamIds:[],ownRiders:[{riderId:'you-7',energy:80}],
+    terrain:'flat'};
+  const race={settings:{distanceKm:40},kilometreFrames:[
+    {...base,km:38,roadGroups:[{id:'road-1',riderIds:[
+      'rival-1-7','rival-2-7','rival-3-7'],gapSeconds:.26}],
+    engagedChaseTeamIds:['you'],chasingTeamIds:['you']},
+    {...base,km:39,caughtRiderIds:[
+      'rival-1-7','rival-2-7','rival-3-7'],
+    chasingTeamIds:['you']}],lastKmRoad:[],lineTimes:[]};
+  assert.equal(raceViewerBreaksAndChase(race).ownChaseKm,2);
+  const catchMoment=raceViewerTimeline(race).at(-1);
+  assert.equal(catchMoment.km,39);
+  assert.match(catchMoment.messages.join(' · '),/3 riders were caught/);
+  assert.doesNotMatch(catchMoment.messages.join(' · '),
+    /stopped chasing/);
+  assert.equal(raceViewerCheckpoints(race,'you-7').at(-1).chasing,true);
+});
+
 test('viewer checkpoints keep recorded attack, catch, position and energy',()=>{
   const frames=Array.from({length:10},(_,index)=>({km:index+1,
     terrain:'flat',attackAttempts:index===2?['you-2']:[],
