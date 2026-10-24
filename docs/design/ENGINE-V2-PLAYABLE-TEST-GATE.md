@@ -4171,3 +4171,27 @@ deployed as `dpl_DpBQZWMGnAZWXnsW3wP9Pg4w48Qf`, READY at the
 `tennedz.eu` alias. `/team/motor-lab` returned HTTP 200 and the checked
 runtime window had no error/fatal logs. Previous deployment
 `dpl_DRiVnoygr7YLAvrEUtHK9SVrAZTy` remains the rollback target.
+
+The fatigue-15 refusal above is superseded by a separate versioned
+single-front continuation. In locked 260 km, 15-team all-hard mountain seed
+`v93-next-contact-15-M-mountain-15-0`, the 259 km source has one front of
+fifteen zero-energy riders 266.69 seconds ahead of the 105-rider bunch, with
+no previous drops. The first 250 m boundary dissolves that entire front.
+All fifteen riders travel in separately paid isolated lanes; their deficits
+remain negative through the seven paid markers (from about 253.7 seconds
+ahead after 250 m to 214.5 seconds ahead at the line). No road contact,
+new bunch exit or surviving front is inferred. The guarded 500 m handoff
+continues to two conditional place bands (15/105), 120 individual crossings
+and sixteen replays with recorded energy. Both genders and three seeds each
+at fatigue 15 complete; the nearby fatigue-0 sources stay on their prior
+separated path. A deliberate opt-out still refuses the dissolved-front road.
+Wheel order, official places, policy points and saved awards remain withheld.
+The earlier versioned recordings retain their original paths.
+Ten neighboring unit tests and changed-file lint passed. The isolated
+preview build and all 47 local browser flows passed, including the API to
+Motor Lab replay and withheld-point display for this new road. The varied
+whole-race matrix again completed 90/90 with 76 read-only point
+illustrations. The independent 20-team 260 km long-field sweep completed
+90/90 conditional finishes across both genders and five terrain profiles,
+including one paid shared-wheel contact; no official points were awarded.
+No new full serial unit-suite pass is claimed.
