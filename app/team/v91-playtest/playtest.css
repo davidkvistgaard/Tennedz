@@ -99,6 +99,11 @@
 .v91-viewer-finale>p{margin:10px 0}
 .v91-viewer-finale button{min-height:42px;padding:8px 12px;border:1px solid #116e60;border-radius:8px;background:white;color:#116e60;font-weight:700;cursor:pointer}
 @media(max-width:600px){.v91-viewer-finale>div{grid-template-columns:1fr}}
+.v91-effort-comparison{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:12px 0}
+.v91-effort-comparison>div{padding:12px;background:#f2f7f4;border-radius:8px}
+.v91-effort-comparison h4{margin:0 0 9px}
+.v91-effort-comparison p{margin:6px 0}
+@media(max-width:600px){.v91-effort-comparison{grid-template-columns:1fr}}
 .v91-technical{margin:12px 0}
 .v91-technical summary{cursor:pointer;font-weight:700}
 .v91-profile small{color:#526b63}

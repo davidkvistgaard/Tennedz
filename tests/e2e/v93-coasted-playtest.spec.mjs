@@ -1153,6 +1153,15 @@ test('a five-kilometre effort change reaches the paid line and points',
     expect(own(after).previewPoints).toBe(15);
     expect(own(before).energyAtLine)
       .toBeGreaterThan(own(after).energyAtLine);
+    const effortComparison=page.getByLabel('Late effort comparison');
+    await expect(effortComparison).toContainText('Previous run · conserve at 5 km to go');
+    await expect(effortComparison).toContainText('Current run · hard at 5 km to go');
+    await expect(effortComparison).toContainText(
+      `${before.kilometreFrames.find(frame=>frame.km===115)
+        .ownRiders.find(row=>row.riderId==='you-7').energy.toFixed(1)} energy`);
+    await expect(effortComparison).toContainText(
+      `${after.kilometreFrames.at(-1).ownRiders
+        .find(row=>row.riderId==='you-7').energy.toFixed(1)} energy`);
     await expect(page.getByRole('region',{
       name:'Paired v93 race comparison'}))
       .toContainText('Conditional place: 12 → 13');
@@ -1439,7 +1448,9 @@ test('exhausted v93 road pays two manager lead-outs and shows conditional line',
     const comparison=page.getByRole('region',{
       name:'Paired v93 race comparison'});
     await expect(comparison).toContainText(
-      'Previous preview on the same conditions');
+      'Compare two runs on the same route');
+    await expect(comparison.getByLabel('Late effort comparison'))
+      .toContainText('at 5 km');
     await expect(comparison).toContainText(
       `Lead-out: you-6 (${helperWork.toFixed(2)} energy paid) → none (0.00 energy paid)`);
     await expect(comparison).toContainText(
