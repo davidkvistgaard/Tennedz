@@ -54,6 +54,18 @@ test('close-chase preset shows when hard effort catches a late break',
     await expect(timeline).toContainText(
       '3 riders were caught: rival-1-7, rival-2-7, rival-3-7');
     await expect(timeline).not.toContainText('stopped chasing');
+    await page.getByLabel('5 km to go effort for you')
+      .selectOption('steady');
+    const steady=await run();
+    expect(steady.lineTimes).toHaveLength(32);
+    expect(steady.bandReplays).toHaveLength(1);
+    expect(steady.sharedWheelContact.atDistanceM)
+      .toBeGreaterThan(39250);
+    expect(steady.sharedWheelContact.atDistanceM)
+      .toBeLessThan(39500);
+    expect(steady.pointsStatus).toBe('withheld');
+    await expect(page.getByLabel('Paid shared wheel contact'))
+      .toContainText('39.279 km');
   });
 
 test('mixed front exits reach the conditional finish and rider replay',
