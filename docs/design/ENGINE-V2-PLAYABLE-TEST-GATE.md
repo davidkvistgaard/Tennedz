@@ -5127,8 +5127,7 @@ withheld policy outputs. These audits do **not** classify riders or
 expose a Motor Lab result; all three sources still explicitly refuse.
 A guarded whole-race continuation reconciling road boundaries,
 conditional line, replay and old versioned contracts is still required.
-The 60-case
-completion count remains 50/60.
+The 60-case completion count remains 50/60 at this audit stage.
 
 The multifront audits now feed a **separate versioned whole-race
 continuation**, guarded to 20 teams, 260 km, 6–10 exact paid first-half
@@ -5150,6 +5149,28 @@ for the female flat, male flat and female rolling cases. The isolated
 preview Next build and changed-file lint passed; the older live
 20-team mountain version passed its focused regression. The locked
 six-case unit regression, including deterministic replay and an
-explicit opt-out refusal, passed. No full
-repository serial unit or browser-suite pass is claimed. This is
+explicit opt-out refusal, passed. No full repository serial unit or
+browser-suite pass is claimed. This is
 bounded conditional coverage, not general motor completion.
+
+Release `445801f341af8dd35e969354fc93e7b3067b4eb9` passed the
+six-case multifront and older 20-team mountain regression, changed-file
+lint, an isolated release build and the authenticated three-case
+browser flow. Production deployment `dpl_HTYEJhB14Xp4KjvVFSYHv71aG9Bb`
+reached READY at that exact SHA with the `tennedz.eu` alias; public
+Motor Lab returned HTTP 200, and the checked error/fatal runtime window
+was empty. The previous `dpl_7g8A827BvPYpF7TRZ967LWvo5Tgc`
+remains rollback. No full repository serial unit or browser suite is
+claimed.
+
+Read-only probes of the four remaining 20-team high-fatigue refusals
+separate the next bounded geometries: men's rolling has 12 paid
+first-half approaches and no fresh final-half approach; men's exposed
+and women's exposed each have 11 first-half approaches and none later.
+Men's mountain has 10 first-half approaches and one new paid possible
+approach in the final 500 m. The multifront **internal audits** can
+record these, but the released result guard intentionally requires
+6–10 approaches and a clean final half. All four therefore remain
+explicit `unresolved_band_contact` refusals. A new version and
+whole-race tests are needed for each shape before any conditional
+result can be shown.
