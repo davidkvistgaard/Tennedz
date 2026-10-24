@@ -4732,3 +4732,13 @@ left the break's fate unconfirmed. The correction requires the rider to be
 in the matching source front, to be named by the paid catch (or a merged
 shared-wheel road), and to have an individual paid line. An unrelated
 front's contact still cannot be reported as that rider's catch.
+
+The race viewer timeline now links a paid final-kilometre contact to the
+recorded road boundary that follows it. In the 40 km close chase, the
+39.279 km shared-wheel contact has its own road row; in the locked 260 km
+early-front catch, the 259.228 km contact falls within the paid slice ending
+at 259.250 km. The timeline displays the exact recorded contact distance
+and selects that subsequent boundary. It adds no contact moment to a
+road-only preview or a race without individual line crossings. Twelve
+focused viewer unit tests, changed-file lint, an isolated Next build and
+both local browser flows passed.

@@ -70,6 +70,11 @@ test('close-chase preset shows when hard effort catches a late break',
     expect(steady.pointsStatus).toBe('withheld');
     await expect(page.getByLabel('Paid shared wheel contact'))
       .toContainText('39.279 km');
+    await page.getByLabel('Recorded race timeline')
+      .getByRole('button',{name:/Km 39\.279/}).first().click();
+    await expect(page.getByRole('slider',{name:/Road boundary/}))
+      .toHaveValue(String(steady.lastKmRoad.findIndex(row=>
+        row.contact?.atDistanceM===steady.sharedWheelContact.atDistanceM)));
   });
 
 test('measured chase shows when steady catches and hard only spends reserve',
@@ -2423,6 +2428,14 @@ test('early front catch reaches the browser line and replay with points withheld
       .toContainText(`you-1: `);
     await expect(page.getByLabel('Breakaways and chase'))
       .toContainText(`Caught at ${(body.coasted.frontCatch.atDistanceM/1000).toFixed(3)} km on the paid final road`);
+    await page.getByLabel('Recorded race timeline')
+      .getByRole('button',{name:new RegExp(`Km ${
+        (body.coasted.frontCatch.atDistanceM/1000).toFixed(3)}`)}).first().click();
+    await expect(page.getByRole('slider',{name:/Road boundary/}))
+      .toHaveValue(String(body.coasted.lastKmRoad.findIndex(row=>
+        row.distanceM>=body.coasted.frontCatch.atDistanceM&&
+        !row.groups.some(group=>
+          group.id===body.coasted.frontCatch.roadGroupId))));
     await expect(page.getByRole('table',{
       name:'V93 individual conditional results'}).getByRole('row'))
       .toHaveCount(161);

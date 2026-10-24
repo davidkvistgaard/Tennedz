@@ -413,6 +413,12 @@ export default function Playtest(){
   const viewerRoad=coasted?raceViewerRoad(coastedFrame,
     coasted.settings.teamCount*8):[];
   const viewerTimeline=coasted?raceViewerTimeline(coasted):[];
+  const selectViewerMoment=moment=>{
+    if(moment.finaleRoadIndex!=null){
+      setCoastedRoadIndex(moment.finaleRoadIndex);
+      document.getElementById('v93-recorded-road')?.scrollIntoView();
+    }else setCoastedKm(moment.index+1);
+  };
   const viewerPlace=coastedProvisionalPlaces.get(viewerRiderId)??
     coastedRoadBounds.get(viewerRiderId);
   const coastedBunchExitCount=(coasted?.unresolvedBunchExits??[])
@@ -1095,16 +1101,20 @@ export default function Playtest(){
             <p>These are recorded attacks, joins, catches, chase changes and road changes. Select a moment to inspect its road; a changing group alone does not prove a catch.</p>
             <ol>{[...viewerTimeline.slice(0,5),
               ...(viewerTimeline.length>10?viewerTimeline.slice(-5):
-                viewerTimeline.slice(5))].map(moment=><li key={moment.index}>
-              <button type="button" onClick={()=>setCoastedKm(moment.index+1)}
-                aria-pressed={coastedKm===moment.index+1}>
+                viewerTimeline.slice(5))].map(moment=><li
+                key={moment.finaleRoadIndex!=null?`final-${moment.finaleRoadIndex}`:moment.index}>
+              <button type="button" onClick={()=>selectViewerMoment(moment)}
+                aria-pressed={moment.finaleRoadIndex!=null?
+                  coastedRoadIndex===moment.finaleRoadIndex:
+                  coastedKm===moment.index+1}>
                 <strong>Km {moment.km}</strong>
                 <span>{moment.messages.join(' · ')}</span>
               </button>
             </li>)}</ol>
             {viewerTimeline.length>10&&<details><summary>Show all {viewerTimeline.length} recorded moments</summary>
-              <ol>{viewerTimeline.map(moment=><li key={moment.index}>
-                <button type="button" onClick={()=>setCoastedKm(moment.index+1)}>
+              <ol>{viewerTimeline.map(moment=><li
+                key={moment.finaleRoadIndex!=null?`final-${moment.finaleRoadIndex}`:moment.index}>
+                <button type="button" onClick={()=>selectViewerMoment(moment)}>
                   <strong>Km {moment.km}</strong> · {moment.messages.join(' · ')}
                 </button>
               </li>)}</ol>
