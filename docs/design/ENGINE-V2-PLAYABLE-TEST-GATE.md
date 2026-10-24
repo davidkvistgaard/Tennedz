@@ -5231,3 +5231,15 @@ regressions also passed with the opt-in queue in place. The read-only
 reproducer is
 `scripts/engine-v2-v93-mountain-final-phase-probe.mjs`. No full
 repository serial unit or browser-suite pass is claimed.
+
+Release `007170983f16d0fc8979041d13a597a256bccec4` passed the focused
+mountain whole-race, direct individual-line/replay and opt-out test,
+changed-file lint, an isolated release Next build, and the targeted
+authenticated release browser flow. Production deployment
+`dpl_3Un2pEm2D6GezexsUZwkdcERsDzs` reached READY at that exact SHA with
+the `tennedz.eu` alias. Fetching `/team/motor-lab` through Vercel returned
+HTTP 200 with assets from that deployment, and the checked 30-minute
+error/fatal runtime log was empty. The prior production deployment
+`dpl_58S33accGEjVbEYbF3onixcXhJKY` remains rollback. The bounded
+60/60 matrix result is not unrestricted motor coverage; no new full
+repository serial unit or browser-suite pass is claimed.
