@@ -4750,3 +4750,10 @@ so the rider's attempt and eventual fate can be inspected together. The
 locked 260 km browser flow verifies this for `you-1` through the paid
 259.228 km catch. Twelve viewer unit tests, changed-file lint, isolated
 Next build and the focused browser flow passed.
+
+At the selected kilometre the viewer now states the followed rider's
+recorded road group, gap to the bunch and remaining energy. Selecting a
+paid final contact also moves the energy graph to its 1 km source before
+opening the contact's final-road boundary. The locked 260 km browser flow
+checks the complete path from following `you-1` to that contact; changed-file
+lint, isolated build and the focused browser flow passed.
