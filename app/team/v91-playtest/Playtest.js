@@ -1614,7 +1614,9 @@ export default function Playtest({guided=false}){
               {' '}official places and points remain unresolved.</p>
             {coasted.mixedTwoFrontOlderDrops.freshWheelApproaches?.length>0&&
               <p>{coasted.mixedTwoFrontOlderDrops.freshWheelApproaches.length}
-                {' '}possible individual approaches are recorded at
+                {' '}possible individual approach
+                {coasted.mixedTwoFrontOlderDrops.freshWheelApproaches.length===
+                  1?' is':'es are'} recorded at
                 {' '}{coasted.mixedTwoFrontOlderDrops.freshWheelApproaches
                   .map(row=>`${(row.atDistanceM/1000).toFixed(3)} km`)
                   .join(', ')}. Movement and energy are paid at each
