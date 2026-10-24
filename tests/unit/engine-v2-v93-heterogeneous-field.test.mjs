@@ -27,6 +27,8 @@ import {recordFinaleMixedTwoFrontDroppedPre500Audit,
   '../../lib/engine/v2/finale-mixed-two-front-dropped-pre500-audit.mjs';
 import {recordFinaleMixedTwoFrontDroppedFinal500Audit,
   recordFinaleMixedTwoFrontDroppedFreshFinal500Audit,
+  recordFinaleMixedTwoFrontDroppedManyFinal500Audit,
+  FINALE_MIXED_TWO_FRONT_DROPPED_MANY_FINAL500_AUDIT_VERSION,
   FINALE_MIXED_TWO_FRONT_DROPPED_FRESH_FINAL500_AUDIT_VERSION,
   validateFinaleMixedTwoFrontDroppedFinal500Audit} from
   '../../lib/engine/v2/finale-mixed-two-front-dropped-final500-audit.mjs';
@@ -58,6 +60,43 @@ function recordingFor(settings){
   return simulateTacticalTour({stage,weather,teams,seed,
     motorVersion:MOTOR_EXHAUSTION_COAST_VERSION});
 }
+
+test('15-team rolling final-wheel approaches remain an internal paid audit',()=>{
+  const recording=recordingFor(settingsFor(15,'M','rolling',30));
+  const clock=recordFinaleCoastMixedTwoFrontDroppedClock(recording);
+  const line=recordFinaleCoastedIndividualLine(recording,clock);
+  const pre500=recordFinaleMixedTwoFrontDroppedPre500Audit(recording,
+    clock,line);
+  assert.throws(()=>recordFinaleMixedTwoFrontDroppedFinal500Audit(
+    recording,clock,line,pre500),/new unpaid approach/);
+  const diagnostic=recordFinaleMixedTwoFrontDroppedManyFinal500Audit(
+    recording,clock,line,pre500);
+  assert.equal(diagnostic.version,
+    FINALE_MIXED_TWO_FRONT_DROPPED_MANY_FINAL500_AUDIT_VERSION);
+  assert.equal(diagnostic.paidRiderCount,120);
+  assert.equal(diagnostic.contactResolved,false);
+  assert.equal(diagnostic.classifiedResults,null);
+  assert.equal(diagnostic.pointsStatus,'withheld');
+  assert.equal(diagnostic.canCommitAwards,false);
+  assert.deepEqual(diagnostic.freshApproaches.map(row=>[
+    row.firstRiderId,row.secondRiderId]),[
+    ['rival-4-7','rival-12-5'],
+    ['rival-10-7','rival-12-5']]);
+  assert.ok(Math.abs(diagnostic.freshApproaches[0].firstWheelM-
+    259914.25844601408)<1e-6);
+  assert.ok(Math.abs(diagnostic.freshApproaches[1].firstWheelM-
+    259940.02262944286)<1e-6);
+  assert.ok(diagnostic.freshApproaches.every(row=>
+    Math.abs(row.paidSplit.first.frames.at(-1).riders[0].positionM-
+      row.firstWheelM)<1e-7&&
+    Math.abs(row.paidSplit.second.frames.at(-1).riders[0].positionM-
+      row.secondWheelM)<1e-7));
+  const female=recordingFor(settingsFor(15,'F','rolling',30));
+  const femaleClock=recordFinaleCoastMixedTwoFrontDroppedClock(female);
+  const femaleLine=recordFinaleCoastedIndividualLine(female,femaleClock);
+  assert.throws(()=>recordFinaleMixedTwoFrontDroppedPre500Audit(female,
+    femaleClock,femaleLine),/new unpaid approach/);
+});
 
 test('unequal-strength whole race pays bounded two-front lanes',()=>{
   const settings=settingsFor(4,'M','flat',30);
