@@ -5,7 +5,7 @@ import {api} from '../../../lib/api';
 import {playtestRiderCards} from '../../../lib/engine/v2/playtest-riders.mjs';
 import {summarizePlaytestRaceStory} from
   '../../../lib/engine/v2/playtest-race-story.mjs';
-import {raceViewerCheckpoints} from
+import {raceViewerCheckpoints,raceViewerEnergySeries} from
   '../../../lib/engine/v2/playtest-viewer.mjs';
 
 const DEFAULT_PLANS=['chase','attack','neutral'];
@@ -183,6 +183,7 @@ export default function Playtest({guided=false}){
   const [coastedBandId,setCoastedBandId]=useState('');
   const [coastedBandIndex,setCoastedBandIndex]=useState(0);
   const [coastedRiderId,setCoastedRiderId]=useState('');
+  const [viewerRiderId,setViewerRiderId]=useState('you-7');
   const [finalePlans,setFinalePlans]=useState({});
   const [lateEfforts,setLateEfforts]=useState({});
   const [finaleFrontWork,setFinaleFrontWork]=useState({});
@@ -373,7 +374,15 @@ export default function Playtest({guided=false}){
     .reduce((sum,row)=>sum+row.energySpent,0);
   const coastedRaceStory=coasted?summarizePlaytestRaceStory(coasted):[];
   const coastedViewer=coasted?raceViewerCheckpoints(coasted,
-    coastedOwnDecision?.finisherId??'you-7'):[];
+    viewerRiderId):[];
+  const viewerEnergy=coasted?raceViewerEnergySeries(coasted,viewerRiderId):[];
+  const viewerFiveKm=viewerEnergy.find(row=>
+    row.km>=coasted.settings.distanceKm-5);
+  const viewerLine=coasted?.lineTimes.find(row=>row.riderId===viewerRiderId);
+  const viewerEnergyPoints=viewerEnergy.map((row,index)=>
+    `${20+index/Math.max(1,viewerEnergy.length-1)*560},${120-row.energy}`)
+    .join(' ');
+  const viewerSelectedEnergy=viewerEnergy[coastedKm-1];
   const coastedBunchExitCount=(coasted?.unresolvedBunchExits??[])
     .reduce((count,wave)=>count+wave.riderIds.length,0);
   const conditionalLine=[...lineTimes].sort((a,b)=>
@@ -526,6 +535,8 @@ export default function Playtest({guided=false}){
       setCoastedBandIndex(0);
       setCoastedRiderId(response.coasted?.managerDecisions.find(row=>
         row.teamId==='you')?.finisherId??'');
+      setViewerRiderId(response.coasted?.managerDecisions.find(row=>
+        row.teamId==='you')?.finisherId??'you-7');
       setResult(response.playtest??null);
       setIntegrated(response.integrated??null);
       setAttackRoad(response.attackRoad??null);
@@ -999,8 +1010,29 @@ export default function Playtest({guided=false}){
           <p>At the line, {coastedOwnDecision?.finisherId??'your finisher'} had a conditional place of {conditionalPlace(coastedOwnPlace,'unresolved')} and {coastedOwnLine?.energyAtLine.toFixed(1)??'—'} of 100 energy remaining. Energy is reserve left after recorded work, not a rider skill or a race time. The order is not an official classification.</p>
         </div>
         <section className="v91-race-viewer" aria-label="Race viewer">
-          <h3>Follow your finisher through the race</h3>
+          <h3>Follow your riders through the race</h3>
           <p>Each card is a recorded checkpoint. Energy is the reserve left at that point; a break only counts as joined or caught when the race recorded that event. Select a card to inspect its road and riders below.</p>
+          <label>Rider to follow<select value={viewerRiderId}
+            onChange={event=>setViewerRiderId(event.target.value)}>
+            {Array.from({length:8},(_,index)=>`you-${index}`).map(id=><option
+              key={id} value={id}>Rider {Number(id.slice(4))+1}{
+                id===coastedOwnDecision?.finisherId?' · nominated finisher':
+                id===coastedOwnDecision?.leadOutRiderId?' · lead-out helper':''}
+            </option>)}</select></label>
+          <div className="v91-energy-view" aria-label={`${viewerRiderId} recorded energy through the race`}>
+            <svg viewBox="0 0 600 145" preserveAspectRatio="none" role="img"
+              aria-label={`${viewerRiderId} energy by recorded kilometre`}>
+              <line x1="20" y1="20" x2="580" y2="20"/>
+              <line x1="20" y1="70" x2="580" y2="70"/>
+              <line x1="20" y1="120" x2="580" y2="120"/>
+              <polyline points={viewerEnergyPoints}/>
+              {viewerSelectedEnergy&&<circle
+                cx={20+(coastedKm-1)/Math.max(1,viewerEnergy.length-1)*560}
+                cy={120-viewerSelectedEnergy.energy} r="5"/>}
+            </svg>
+            <div><span>100</span><span>50</span><span>0</span></div>
+          </div>
+          <p>{viewerRiderId}: {viewerFiveKm?.energy.toFixed(1)??'—'} energy at 5 km to go · {viewerEnergy.at(-1)?.energy.toFixed(1)??'—'} at 1 km to go · {viewerLine?.energyAtLine.toFixed(1)??'—'} at the line. The line is recorded reserve, not speed.</p>
           <div className="v91-viewer-track">{coastedViewer.map(checkpoint=><button
             type="button" key={checkpoint.index}
             aria-pressed={coastedKm===checkpoint.index+1}
