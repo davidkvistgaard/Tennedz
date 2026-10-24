@@ -4419,3 +4419,39 @@ the `tennedz.eu` alias. The unauthenticated `/team/motor-lab` request
 returned HTTP 200 after redirects; the checked error/fatal runtime window
 had no logs. The previous deployment
 `dpl_2vXKXpMamRDrbu23uo5RUvF1CVJK` is the rollback target.
+
+### Simultaneous rear-leaver bunch pass (2026-10-24)
+
+The two remaining four-team, mixed-tactic 260 km mountain races in the
+150-case audit have two rear leavers from the second front. Both are
+passed unassisted by the bunch at the same paid point: at 259609.690 m
+in the locked men's race and about 259606.321 m in the women's race.
+A separate versioned clock and playtest continuation requires exactly
+two fronts, one leading exit and two rear exits at the 259 km boundary,
+no prior dropped riders, no later front dissolution, matching rear
+passage clocks at every paid marker, and identical paid contact distance
+for the two rear riders. The leading leaver, surviving fronts, bunch
+and rear pair remain distinct through the 500 m handoff.
+
+All 32 riders receive conditional individual crossings with matching
+energy and replay. The shared rear contact does not determine wheel
+order, so official places, points and saved awards remain withheld.
+Older recording versions and an explicit opt-out retain their earlier
+behavior. The Motor Lab explains the shared contact to the player.
+
+The targeted whole-race audit now completes 150/150 cases across both
+genders, five terrains and varying fatigue, up from 148/150. This is
+a bounded audit, not unrestricted motor completion. The 57 v93 unit
+tests, changed-file lint, isolated preview and release builds, 53/53
+preview and 54/54 release browser flows passed. The independent varied
+matrix completed 90/90 (76 read-only point illustrations), and the
+20-team long-field stress completed 90/90 without refusal. The full
+serial unit suite was not rerun. Functional preview commit
+`23fa102510109ba3f7decbd052ca79bf01449224` was pushed and
+cherry-picked as release `794ee1e26d8066344b91e024f134846758ba8af0`.
+
+Production deployment `dpl_49nRtdeUQksbz6Leno8Q8SspPRx3` reached READY
+at that exact release SHA with the `tennedz.eu` alias. The unauthenticated
+`/team/motor-lab` request returned HTTP 200 after redirects; the checked
+error/fatal runtime window had no logs. The previous deployment
+`dpl_4Szu8p5ndPpTcQGrNTmnNMdR4yWK` is the rollback target.
