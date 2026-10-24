@@ -886,6 +886,16 @@ test('sample race opens the playable setup and links the recorded result',
       name:'you-0 energy by recorded kilometre'})).toBeVisible();
     await expect(viewer.getByLabel('Breakaways and chase'))
       .toContainText('recorded kilometres');
+    const ownBand=coasted.bandReplays.find(band=>
+      band.riderIds.includes('you-0'));
+    const at500=ownBand.frames[0].riders.find(row=>
+      row.riderId==='you-0');
+    await expect(viewer.getByLabel("Your rider's final kilometre"))
+      .toContainText(`${at500.energyAtDecision.toFixed(1)} energy remaining`);
+    await viewer.getByRole('button',{
+      name:"Inspect this rider's detailed finale replay"}).click();
+    await expect(page.getByLabel('Selected rider finale replay'))
+      .toContainText('you-0:');
     await expect(page.getByRole('region',{name:'Your v93 finish'}))
       .toContainText('they are not the rider\'s total race time');
     const ownPlace=coasted.provisionalLineOrder.find(row=>

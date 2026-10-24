@@ -6,7 +6,7 @@ import {playtestRiderCards} from '../../../lib/engine/v2/playtest-riders.mjs';
 import {summarizePlaytestRaceStory} from
   '../../../lib/engine/v2/playtest-race-story.mjs';
 import {raceViewerCheckpoints,raceViewerEnergySeries,
-  raceViewerBreaksAndChase} from
+  raceViewerBreaksAndChase,raceViewerFinale} from
   '../../../lib/engine/v2/playtest-viewer.mjs';
 
 const DEFAULT_PLANS=['chase','attack','neutral'];
@@ -384,6 +384,9 @@ export default function Playtest(){
     .join(' ');
   const viewerSelectedEnergy=viewerEnergy[coastedKm-1];
   const viewerBreaks=coasted?raceViewerBreaksAndChase(coasted):null;
+  const viewerFinale=coasted?raceViewerFinale(coasted,viewerRiderId):null;
+  const viewerPlace=coastedProvisionalPlaces.get(viewerRiderId)??
+    coastedRoadBounds.get(viewerRiderId);
   const coastedBunchExitCount=(coasted?.unresolvedBunchExits??[])
     .reduce((count,wave)=>count+wave.riderIds.length,0);
   const conditionalLine=[...lineTimes].sort((a,b)=>
@@ -1041,6 +1044,25 @@ export default function Playtest(){
               {row.events.join(' · ')}. With 1 km to go: {row.atOneKm}.
             </li>)}</ul>:<p>No attack, breakaway join or catch was recorded for your team.</p>}
           </div>
+          {viewerFinale&&<div className="v91-viewer-finale"
+            aria-label="Your rider's final kilometre">
+            <h4>From 1 km to the line</h4>
+            <div>
+              <p><strong>1 km to go</strong><span>{viewerFinale.atOneKmEnergy?.toFixed(1)??'—'} energy remaining</span></p>
+              <p><strong>500 m to go</strong><span>{viewerFinale.at500Energy?.toFixed(1)??'—'} energy remaining{viewerFinale.at500Role?` · ${viewerFinale.at500Role.replaceAll('_',' ')}`:''}</span></p>
+              <p><strong>Finish</strong><span>{viewerFinale.atLineEnergy?.toFixed(1)??'—'} energy remaining · conditional place {conditionalPlace(viewerPlace,'unresolved')}</span></p>
+            </div>
+            <p>{viewerFinale.at500Energy===null?
+              'No paid 500 m rider state is available in this recording.':
+              'The 500 m and finish states come from this rider’s paid replay.'} Official results and awards remain withheld.</p>
+            {viewerFinale.roadBandId&&<button type="button" onClick={()=>{
+              setCoastedBandId(viewerFinale.roadBandId);
+              setCoastedRiderId(viewerRiderId);
+              setCoastedBandIndex(0);
+              document.getElementById('v93-paid-finale-replay')
+                ?.scrollIntoView();
+            }}>Inspect this rider&apos;s detailed finale replay</button>}
+          </div>}
         </section>
         <details className="v91-technical"><summary>Engine status and recording details</summary>
         <p>{coasted.tuningVersion} · {coasted.settings.managerTactics.length+

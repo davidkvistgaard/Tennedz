@@ -74,6 +74,14 @@
 .v91-viewer-breaks p{margin:0 0 9px}
 .v91-viewer-breaks ul{margin:0;padding-left:22px}
 .v91-viewer-breaks li{margin:7px 0}
+.v91-viewer-finale{margin-top:12px;padding:14px;background:#e8f2ee;border-radius:10px}
+.v91-viewer-finale h4{margin:0 0 10px}
+.v91-viewer-finale>div{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px}
+.v91-viewer-finale>div p{display:grid;gap:5px;margin:0;padding:10px;background:white;border-radius:8px}
+.v91-viewer-finale>div span{font-size:.86rem}
+.v91-viewer-finale>p{margin:10px 0}
+.v91-viewer-finale button{min-height:42px;padding:8px 12px;border:1px solid #116e60;border-radius:8px;background:white;color:#116e60;font-weight:700;cursor:pointer}
+@media(max-width:600px){.v91-viewer-finale>div{grid-template-columns:1fr}}
 .v91-technical{margin:12px 0}
 .v91-technical summary{cursor:pointer;font-weight:700}
 .v91-profile small{color:#526b63}
