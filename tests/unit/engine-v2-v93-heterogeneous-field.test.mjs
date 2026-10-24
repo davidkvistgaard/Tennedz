@@ -15,6 +15,8 @@ import {recordFinaleCoastMixedTwoFrontDroppedClock,
   validateFinaleCoastMixedTwoFrontDroppedClock,
   FINALE_COAST_MIXED_TWO_FRONT_DROPPED_CLOCK_VERSION} from
   '../../lib/engine/v2/finale-separated-last-km.mjs';
+import {recordFinaleCoastedIndividualLine} from
+  '../../lib/engine/v2/finale-depleted-individual-line.mjs';
 
 test('unequal-strength whole race refuses unresolved two-front exits',()=>{
   const teamCount=4;
@@ -74,4 +76,27 @@ test('unequal-strength whole race refuses unresolved two-front exits',()=>{
   assert.equal(candidate.passageFrames.length,7);
   assert.equal(validateFinaleCoastMixedTwoFrontDroppedClock(recording,
     candidate),true);
+  const line=recordFinaleCoastedIndividualLine(recording,candidate);
+  assert.equal(line.conditionalCrossings.length,32);
+  assert.equal(line.roadStatus,
+    'conditional_mixed_two_front_older_drops_lines');
+  assert.equal(line.pre500Audit.contactResolved,false);
+  assert.equal(line.provisionalLineOrder,null);
+  const at500=new Map(candidate.trace.frames.find(frame=>
+    frame.endDistanceM===259500).riders.map(row=>[
+    row.riderId,row.energy]));
+  const crossings=new Map(line.conditionalCrossings.map(row=>[
+    row.riderId,row]));
+  const finished=new Set();
+  for(const band of line.bandRunners){
+    for(const row of band.runner.frames[0].riders)
+      assert.ok(Math.abs(row.energyAtDecision-at500.get(row.riderId))<1e-7);
+    for(const row of band.runner.finishers){
+      assert.equal(finished.has(row.riderId),false);
+      finished.add(row.riderId);
+      assert.ok(Math.abs(row.energyAtLine-
+        crossings.get(row.riderId).energyAtLine)<1e-7);
+    }
+  }
+  assert.equal(finished.size,32);
 });

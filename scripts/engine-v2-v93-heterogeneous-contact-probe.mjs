@@ -8,6 +8,11 @@ import {auditDissolvedFrontPaidContact} from '../lib/engine/v2/finale-dissolved-
 import {createV93PlayableTest} from '../lib/engine/v2/playtest-v93-coasted.mjs';
 import {recordFinaleCoastMixedTwoFrontDroppedClock} from
   '../lib/engine/v2/finale-separated-last-km.mjs';
+import {recordFinaleCoastedIndividualLine} from
+  '../lib/engine/v2/finale-depleted-individual-line.mjs';
+import {recordFinaleAllBandOverlapAudit,
+  recordFinaleUnorderedBandOverlapAudit} from
+  '../lib/engine/v2/finale-multiband-overlap-audit.mjs';
 
 const teamCount=Number(process.argv[2]??4);
 const gender=process.argv[3]??'M';
@@ -38,7 +43,30 @@ let candidate;
 try{const clock=recordFinaleCoastMixedTwoFrontDroppedClock(recording);
   candidate={version:clock.version,outcome:clock.line.outcome,
     bands:clock.line.bands.map(row=>({id:row.id,
-      count:row.riderIds.length}))};}
+      count:row.riderIds.length}))};
+  try{const line=recordFinaleCoastedIndividualLine(recording,clock);
+    const final500=recordFinaleAllBandOverlapAudit(line.bandRunners);
+    const sourceBandByRider=new Map(clock.line.bands.flatMap(band=>
+      band.riderIds.map(id=>[id,band.id])));
+    const pairwise=[];
+    for(let a=0;a<line.bandRunners.length;a++)
+      for(let b=a+1;b<line.bandRunners.length;b++){
+        const audit=recordFinaleUnorderedBandOverlapAudit([
+          line.bandRunners[a],line.bandRunners[b]]);
+        const event=audit.firstPotentialOverlap;
+        if(event)pairwise.push({first:event.firstRiderId,
+          second:event.secondRiderId,distanceM:event.distanceM,
+          sameSourceBand:sourceBandByRider.get(event.firstRiderId)===
+            sourceBandByRider.get(event.secondRiderId)});
+      }
+    candidate.line={version:line.version,
+      crossings:line.conditionalCrossings.length,
+      replayBands:line.bandRunners.length,
+      status:line.roadStatus,
+      final500Overlap:final500.firstPotentialOverlap,
+      final500Pairwise:{possible:pairwise.length,
+        crossSourceBand:pairwise.filter(row=>!row.sameSourceBand)}};}
+  catch(error){candidate.line={reason:error.message};}}
 catch(error){candidate={reason:error.message};}
 const groupTimes=new Map(source.roadGroups.map(row=>[row.id,
   -row.gapSeconds]));
