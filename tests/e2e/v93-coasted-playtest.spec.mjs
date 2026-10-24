@@ -1304,6 +1304,7 @@ test('a named distant rival keeps its tactics and finisher through the road repl
     expect(coasted.pointPreview.awardRows).toEqual([]);
     await expect(page.getByRole('heading',{
       name:'V93 race preview · 40 km flat'})).toBeVisible();
+    await page.getByText('Engine status and recording details').click();
     await expect(page.getByText('2 custom rival managers',{
       exact:false})).toBeVisible();
     const finisher=coasted.lineTimes.find(row=>
@@ -3131,7 +3132,7 @@ test('20-team rolling front exits reach replayed solo lines and preview points',
     await expect(note).toContainText('last front wheel was clear by 250 m');
     await note.getByRole('button',{
       name:'Inspect front exit rider you-6 finish replay'}).click();
-    await expect(page.getByRole('combobox',{name:'Rider'}))
+    await expect(page.getByRole('combobox',{name:'Rider',exact:true}))
       .toHaveValue('you-6');
     const ownPlace=coasted.provisionalLineOrder.find(row=>
       row.riderId==='you-6').position;
@@ -3150,7 +3151,7 @@ test('20-team rolling front exits reach replayed solo lines and preview points',
       .toHaveText(String(ownPlace));
     const ownLine=coasted.lineTimes.find(row=>row.riderId==='you-6');
     await page.getByRole('button',{name:'Replay you-6'}).click();
-    await expect(page.getByRole('combobox',{name:'Rider'}))
+    await expect(page.getByRole('combobox',{name:'Rider',exact:true}))
       .toHaveValue('you-6');
     const interval=page.getByRole('slider',{name:/Band interval/});
     await interval.fill(await interval.getAttribute('max'));
@@ -3160,7 +3161,7 @@ test('20-team rolling front exits reach replayed solo lines and preview points',
       row.roadBandId==='peloton');
     await page.getByRole('button',{
       name:`Replay ${bunchRider.riderId}`}).click();
-    await expect(page.getByRole('combobox',{name:'Rider'}))
+    await expect(page.getByRole('combobox',{name:'Rider',exact:true}))
       .toHaveValue(bunchRider.riderId);
     await expect(page.getByLabel('Selected rider finale replay'))
       .toContainText(bunchRider.riderId);
@@ -3214,7 +3215,7 @@ test('four paid isolated passes reach line, replay and preview points',
     for(const id of ['rival-1-3','rival-1-4']){
       await note.getByRole('button',{
         name:`Inspect pass rider ${id} finish replay`}).first().click();
-      await expect(page.getByRole('combobox',{name:'Rider'}))
+      await expect(page.getByRole('combobox',{name:'Rider',exact:true}))
         .toHaveValue(id);
       await expect(page.getByLabel('Selected rider finale replay'))
         .toContainText(id);
@@ -3293,7 +3294,7 @@ test('parallel isolated lanes carry a 260 km race into replay and points',
     for(const id of ['you-1','you-7']){
       await note.getByRole('button',{
         name:`Inspect parallel rider ${id} finish replay`}).click();
-      await expect(page.getByRole('combobox',{name:'Rider'}))
+      await expect(page.getByRole('combobox',{name:'Rider',exact:true}))
         .toHaveValue(id);
       const line=coasted.lineTimes.find(row=>row.riderId===id);
       const interval=page.getByRole('slider',{name:/Band interval/});
@@ -3368,7 +3369,7 @@ test('full-kilometre isolated lanes show tied places without point awards',
     await note.getByRole('button',{
       name:`Inspect isolated lane rider ${first} finish replay`}).first()
       .click();
-    await expect(page.getByRole('combobox',{name:'Rider'}))
+    await expect(page.getByRole('combobox',{name:'Rider',exact:true}))
       .toHaveValue(first);
     await expect(page.getByRole('table',{
       name:'V93 individual conditional results'}).getByRole('row'))
@@ -3447,7 +3448,7 @@ test('late occupied-lane contact merges the paid sprint and both replays',
       ['peloton','rival-1-7']]){
       await page.getByRole('combobox',{name:'Road band'})
         .selectOption(bandId);
-      await page.getByRole('combobox',{name:'Rider'})
+      await page.getByRole('combobox',{name:'Rider',exact:true})
         .selectOption(riderId);
       const interval=page.getByRole('slider',{
         name:/Band interval/});
