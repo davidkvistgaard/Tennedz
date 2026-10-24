@@ -56,12 +56,14 @@ test('late effort snapshot reads the chosen phase and recorded rider road',()=>{
   kilometreFrames:[{km:35,roadGroups:[{id:'road-1',gapSeconds:8,
     riderIds:['you-7']}],droppedRiders:[],
   ownRiders:[{riderId:'you-7',energy:51}]},
-  {km:39,roadGroups:[],droppedRiders:[],
+  {km:39,roadGroups:[{id:'road-1',gapSeconds:4.8,
+    riderIds:['rival-1-7']}],droppedRiders:[],
     ownRiders:[{riderId:'you-7',energy:28}]}]};
   assert.deepEqual(raceViewerLateEffort(race,'you-7'),{
     effort:'hard',atFiveKmEnergy:51,
     atFiveKmRoad:'8.0 s ahead with 1 rider',
-    atOneKmEnergy:28,atOneKmRoad:'in the bunch'});
+    atOneKmEnergy:28,atOneKmRoad:'in the bunch',
+    atOneKmFrontGapSeconds:4.8});
 });
 
 test('late team work counts only paid activity after the 5 km order',()=>{

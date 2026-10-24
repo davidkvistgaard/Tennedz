@@ -4640,3 +4640,24 @@ beside a paired effort comparison, and explains that the 5 km setting is a
 team-wide order rather than a last-moment sprint command. The next balance
 audit needs matched whole races with actual paid late work before changing
 motor tuning.
+
+### Active late-chase effort audit
+
+`node scripts/engine-v2-v93-active-late-chase-audit.mjs` pairs twenty
+fictional whole races at 40/120 km, both genders and five terrains. All
+other settings, including an all-out chase against attacking rivals, remain
+fixed; only the player's 5 km effort changes. The player's team chases in
+all five late kilometres in every run. Pre-5-km frames match within each
+pair, all 32 riders have conditional individual crossings, and official
+points and saved awards remain withheld.
+
+In this bounded active-chase sample, `hard` narrows the surviving front's
+gap at the 1 km handoff by 2.02–3.03 s, while the nominated finisher's
+conditional place stays fourth in every pair. It uses 0.82–1.17 more line
+energy and the finisher's time *within the last kilometre* is 0.003–0.009 s
+longer. Thus the hard order does affect paid chase pressure even though it
+does not deliver a catch or better place in these cases. The paired viewer
+now shows the front gap as well as rider energy and conditional place, so
+the player can see that distinction. This sample does not establish the
+best effort for other tactics, fields, or road gaps; it is not a whole-race
+elapsed-time comparison.

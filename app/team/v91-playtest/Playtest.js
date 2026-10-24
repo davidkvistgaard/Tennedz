@@ -1732,6 +1732,9 @@ export default function Playtest(){
               <h4>{label} · {run.lateEffort.effort??'unknown'} at 5 km to go</h4>
               <p>{run.finisherId} at 5 km: {run.lateEffort.atFiveKmRoad??'unavailable'} · {run.lateEffort.atFiveKmEnergy?.toFixed(1)??'—'} energy.</p>
               <p>At 1 km: {run.lateEffort.atOneKmRoad??'unavailable'} · {run.lateEffort.atOneKmEnergy?.toFixed(1)??'—'} energy.</p>
+              {run.lateEffort.atOneKmFrontGapSeconds>0&&<p>
+                Front group at 1 km: {run.lateEffort.atOneKmFrontGapSeconds.toFixed(1)} s ahead of the bunch.
+              </p>}
               <p>Recorded work from 5 km to the 1 km handoff: {run.lateTeamWork.attacks} attacks · {run.lateTeamWork.chaseKm} chase km · {run.lateTeamWork.breakPullKm} break-pull km · {run.lateTeamWork.bunchPaceKm} bunch-front km.</p>
               <p>At the line: {run.energyAtLine?.toFixed(1)??'—'} energy · conditional place {run.place}.</p>
             </div>)}</div>
