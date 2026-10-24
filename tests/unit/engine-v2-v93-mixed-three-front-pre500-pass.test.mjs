@@ -2,7 +2,8 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {createV93PlayableTest,summarizeV93CoastedPlaytest,
   validateV93CoastedPlaytest,
-  V93_MIXED_THREE_FRONT_PRE500_PASS_PLAYTEST_VERSION} from
+  V93_MIXED_THREE_FRONT_PRE500_PASS_PLAYTEST_VERSION,
+  V93_UNRESOLVED_FRONT_MARKER_PREVIEW_VERSION} from
   '../../lib/engine/v2/playtest-v93-coasted.mjs';
 
 function settings(teamCount,gender,terrain){
@@ -87,8 +88,21 @@ test('pre-500 m outside-lane passes retain the whole paid race',()=>{
 test('post-500 m front passes still refuse without a paid continuation',()=>{
   for(const [teamCount,gender,terrain] of [
     [15,'M','rolling'],[15,'F','mountain'],[20,'F','rolling']]){
-    assert.throws(()=>createV93PlayableTest(
-      settings(teamCount,gender,terrain)),
-    /The depleted line bands crossed without contact/);
+    let refusal;
+    try{createV93PlayableTest(settings(teamCount,gender,terrain));}
+    catch(error){refusal=error;}
+    assert.match(refusal?.message??'',
+      /The depleted line bands crossed without contact/);
+    const preview=refusal.roadPreview;
+    assert.equal(preview.version,
+      V93_UNRESOLVED_FRONT_MARKER_PREVIEW_VERSION);
+    assert.equal(preview.unsupportedReason,'unresolved_band_contact');
+    assert.equal(preview.markerAudit.contactResolved,false);
+    assert.equal(preview.markerAudit.pointsStatus,'withheld');
+    assert.ok(preview.markerAudit.encounters.length>=5);
+    assert.ok(preview.markerAudit.encounters.some(row=>
+      row.distanceM>259500));
+    assert.equal(preview.lastKmRoad.length,0);
+    assert.equal(preview.lineTimes,null);
   }
 });

@@ -985,6 +985,18 @@ export default function Playtest({guided=false}){
               group=>`${group.id} (${group.riderIds.length} riders, `+
               `${group.gapSeconds.toFixed(2)} s ahead)`).join(' · ')||'none'}.
           </p>
+          {roadPreview.markerAudit&&<div role="note"
+            aria-label="Unresolved front marker overlaps">
+            <p>The paid solo and {roadPreview.markerAudit.encounters[0].activeBandId}
+              {' '}clocks cross after the last-kilometre handoff:</p>
+            <ul>{roadPreview.markerAudit.encounters.map(row=><li
+              key={row.riderId}>{row.riderId} at {' '}
+              {(row.distanceM/1000).toFixed(3)} km · {' '}
+              {row.energyAtMarker.toFixed(1)} energy</li>)}</ul>
+            <p>These are marker overlaps, not resolved occupied-wheel
+              encounters. No individual finish, replay, place or points
+              follow from them.</p>
+          </div>}
           <p>Your riders at that handoff: {catchSourceFrame.ownRiders.map(
             row=>`${row.riderId} ${row.roadGroup}, `+
               `${row.energy.toFixed(1)} energy`).join(' · ')}.</p>
