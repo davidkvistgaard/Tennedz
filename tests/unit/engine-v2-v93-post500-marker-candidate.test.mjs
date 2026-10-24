@@ -22,9 +22,13 @@ import {recordFinaleMixedPost500OutsideLaneLine,
   validateFinaleMixedPost500OutsideLaneLine,
   FINALE_MIXED_POST500_OUTSIDE_LANE_LINE_VERSION} from
   '../../lib/engine/v2/finale-mixed-post500-outside-lane-line.mjs';
+import {createV93PlayableTest,validateV93CoastedPlaytest,
+  summarizeV93CoastedPlaytest,
+  V93_MIXED_THREE_FRONT_POST500_LANES_PLAYTEST_VERSION} from
+  '../../lib/engine/v2/playtest-v93-coasted.mjs';
 
-function recording(teamCount,gender,terrain){
-  const settings={distanceKm:260,teamCount,gender,terrain,fatigue:30,
+function settings(teamCount,gender,terrain){
+  return {distanceKm:260,teamCount,gender,terrain,fatigue:30,
     seed:`v93-next-contact-field-hills-${teamCount}-${gender}-${terrain}-30-1`,
     defaultRivalPlan:'passive',effort:'hard',attack:'repeated',chase:'all',
     managerTactics:Array.from({length:teamCount-1},(_,index)=>({
@@ -34,7 +38,11 @@ function recording(teamCount,gender,terrain){
     managerFinaleOrders:[
       {teamId:'you',atKm:255,effort:'conserve'},
       {teamId:'rival-1',atKm:255,effort:'hard'}]};
-  const {stage,weather,teams,seed}=prepareV91Playtest(settings);
+}
+
+function recording(teamCount,gender,terrain){
+  const {stage,weather,teams,seed}=prepareV91Playtest(
+    settings(teamCount,gender,terrain));
   return simulateTacticalTour({stage,weather,teams,seed,
     motorVersion:MOTOR_EXHAUSTION_COAST_VERSION});
 }
@@ -141,6 +149,46 @@ test('late marker candidates keep road-2 and passing leavers unresolved',()=>{
     assert.equal(continued.canCommitAwards,false);
     assert.equal(validateFinaleMixedPost500OutsideLaneLine(
       tour,clock,{},continued),true);
+  }
+});
+
+test('post-500 outside lanes continue whole races with conditional viewer road',()=>{
+  for(const [gender,terrain] of [
+    ['M','rolling'],['F','rolling'],['M','mountain'],['F','mountain']]){
+    const input=settings(15,gender,terrain);
+    const race=createV93PlayableTest(input,{pointContext:{tier:2,
+      divisionIndex:0,divisionCount:1}});
+    assert.equal(race.version,
+      V93_MIXED_THREE_FRONT_POST500_LANES_PLAYTEST_VERSION);
+    assert.equal(validateV93CoastedPlaytest(input,
+      {pointContext:{tier:2,divisionIndex:0,divisionCount:1}},
+      race),true);
+    const summary=summarizeV93CoastedPlaytest(race);
+    assert.equal(summary.lineTimes.length,120);
+    assert.equal(summary.lastKmRoad.length,7);
+    assert.deepEqual(summary.lastKmRoad.slice(2).map(row=>
+      row.distanceM),[259600,259700,259800,259900,260000]);
+    assert.ok(summary.lastKmRoad.slice(2).every(row=>
+      row.groups.map(group=>group.id).join(',')===
+        'road-1,road-2,road-3'&&
+      row.droppedPassages.every(pass=>
+        pass.contactDistanceM===null&&
+        pass.contactStatus==='separate_inferred_outside_lane')&&
+      row.ownRiderEnergy.length===8));
+    assert.equal(summary.bandReplays.reduce((sum,band)=>
+      sum+band.riderIds.length,0),120);
+    assert.equal(summary.post500OutsideLanePasses.length,
+      race.post500Result.line.laneAudit.encounters.length);
+    assert.ok(summary.post500OutsideLanePasses.every(row=>
+      row.atDistanceM>259500&&row.atDistanceM<260000&&
+      row.occupiedWheelOrderResolved===false));
+    assert.equal(summary.pointPreview.status,'unavailable');
+    assert.equal(summary.classifiedResults,null);
+    assert.equal(summary.pointsStatus,'withheld');
+    assert.equal(summary.canCommitAwards,false);
+    assert.throws(()=>createV93PlayableTest(input,{},
+      {resolveMixedThreeFrontPost500Pass:false}),
+    /depleted line bands crossed without contact/);
   }
 });
 

@@ -4776,3 +4776,28 @@ point for a road-only preview. A focused unit test checks both cases;
 changed-file lint, an isolated build and short/long local browser flows
 passed. This makes the energy spent in the last kilometre visible in the
 same curve used to inspect the 5 km effort choice.
+
+### Guarded individual post-500 m outside lanes
+
+A separate versioned whole-race continuation now covers four of the five
+previously refusing 260 km, 15/20-team mixed-tactic long-field sources:
+15-team men and women on rolling and mountain routes at fatigue 30. The
+first-front leavers reach road-2 after the paid 500 m sprint handoff. The
+earlier marker crossing remains only a source witness. The new audit finds
+each rider's first individual 2.5 m wheel-spacing approach, splits both
+paid passages and energy at that instant, assigns each isolated rider a
+distinct inferred outside lane with no draft, and rejects any other
+active-band encounter. Its continuation preserves all 120 riders through
+individual crossings, final road bands and replay. The English viewer
+shows these precise approaches and reads later road boundaries from the
+individual paid runners rather than the unresolved group-marker band.
+
+The result is conditional: occupied wheel order is not recorded, so official
+places, policy points and saved awards remain withheld. The 20-team women's
+rolling source with passes straddling the handoff still explicitly refuses.
+The versioned opt-out retains the older refusal and older recordings replay
+on their previous paths. The 72-case whole-race `field-hills` audit improved
+from 67/72 to 71/72 completions, with that one explicit refusal. Five
+neighboring unit tests, changed-file lint, an isolated Next build and a
+targeted authenticated browser flow passed. This is a bounded continuation,
+not unrestricted motor completion.
