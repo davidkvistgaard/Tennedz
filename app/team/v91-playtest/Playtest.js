@@ -6,6 +6,7 @@ import {playtestRiderCards} from '../../../lib/engine/v2/playtest-riders.mjs';
 import {summarizePlaytestRaceStory} from
   '../../../lib/engine/v2/playtest-race-story.mjs';
 import {raceViewerCheckpoints,raceViewerEnergySeries,
+  raceViewerEnergyCurve,
   raceViewerBreaksAndChase,raceViewerFinale,raceViewerRoad,
   raceViewerLateEffort,raceViewerLateTeamWork,
   raceViewerEffortInsight,raceViewerTimeline} from
@@ -405,8 +406,10 @@ export default function Playtest({guided=false}){
   const viewerFiveKm=viewerEnergy.find(row=>
     row.km>=coasted.settings.distanceKm-5);
   const viewerLine=coasted?.lineTimes.find(row=>row.riderId===viewerRiderId);
-  const viewerEnergyPoints=viewerEnergy.map((row,index)=>
-    `${20+index/Math.max(1,viewerEnergy.length-1)*560},${120-row.energy}`)
+  const viewerEnergyCurve=coasted?raceViewerEnergyCurve(coasted,
+    viewerRiderId):[];
+  const viewerEnergyPoints=viewerEnergyCurve.map((row,index)=>
+    `${20+index/Math.max(1,viewerEnergyCurve.length-1)*560},${120-row.energy}`)
     .join(' ');
   const viewerSelectedEnergy=viewerEnergy[coastedKm-1];
   const viewerBreaks=coasted?raceViewerBreaksAndChase(coasted):null;
@@ -1084,18 +1087,21 @@ export default function Playtest({guided=false}){
             </option>)}</select></label>
           <div className="v91-energy-view" aria-label={`${viewerRiderId} recorded energy through the race`}>
             <svg viewBox="0 0 600 145" preserveAspectRatio="none" role="img"
-              aria-label={`${viewerRiderId} energy by recorded kilometre`}>
+              aria-label={`${viewerRiderId} energy by recorded kilometre${
+                viewerLine?' and at the line':''}`}>
               <line x1="20" y1="20" x2="580" y2="20"/>
               <line x1="20" y1="70" x2="580" y2="70"/>
               <line x1="20" y1="120" x2="580" y2="120"/>
               <polyline points={viewerEnergyPoints}/>
               {viewerSelectedEnergy&&<circle
-                cx={20+(coastedKm-1)/Math.max(1,viewerEnergy.length-1)*560}
+                cx={20+(coastedKm-1)/Math.max(1,viewerEnergyCurve.length-1)*560}
                 cy={120-viewerSelectedEnergy.energy} r="5"/>}
+              {viewerLine&&<circle cx="580"
+                cy={120-viewerLine.energyAtLine} r="5"/>}
             </svg>
             <div><span>100</span><span>50</span><span>0</span></div>
           </div>
-          <p>{viewerRiderId}: {viewerFiveKm?.energy.toFixed(1)??'—'} energy at 5 km to go · {viewerEnergy.at(-1)?.energy.toFixed(1)??'—'} at 1 km to go · {viewerLine?.energyAtLine.toFixed(1)??'—'} at the line. The line is recorded reserve, not speed.</p>
+          <p>{viewerRiderId}: {viewerFiveKm?.energy.toFixed(1)??'—'} energy at 5 km to go · {viewerEnergy.at(-1)?.energy.toFixed(1)??'—'} at 1 km to go · {viewerLine?.energyAtLine.toFixed(1)??'—'} at the line. {viewerLine?'The curve ends at the paid line. ':''}The line is recorded reserve, not speed.</p>
           <div className="v91-viewer-navigation" aria-label="Race checkpoint navigation">
             <button type="button" aria-label="Previous checkpoint"
               disabled={!previousCheckpoint}
