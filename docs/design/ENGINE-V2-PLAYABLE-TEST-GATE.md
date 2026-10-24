@@ -5383,3 +5383,14 @@ A read-only rerun of the 20-team `alternate-1` matrix now reports
 scenarios**. Exactly one uses the new thirteen-plus-zero version. This
 finite matrix does not establish unrestricted contact handling across
 other seeds, field sizes, routes or fatigue levels.
+
+Release `6c1c44445bb10df7529ffa1f74cb3fba5100d018` independently
+passed the thirteen-plus-zero and neighboring eleven-plus-one and
+ten-plus-one whole-race/replay tests, changed-file lint, isolated Next
+build and an authenticated browser flow for the new case. Production
+deployment `dpl_HVJ236TLPij3hiqhh6223jtTvq7e` reached READY at the
+exact release SHA with the `tennedz.eu` alias; public `/team/motor-lab`
+returned HTTP 200 with assets from that deployment. The checked
+error/fatal runtime log was empty. Prior production deployment
+`dpl_8HcfN1KbF22NbPhgWqSrGJ3fNRe3` remains rollback. No fresh full
+repository unit or browser-suite pass is claimed.
