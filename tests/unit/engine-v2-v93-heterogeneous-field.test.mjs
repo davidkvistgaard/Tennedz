@@ -20,6 +20,9 @@ import {recordFinaleCoastedIndividualLine} from
 import {recordFinaleMixedTwoFrontDroppedPre500Audit,
   validateFinaleMixedTwoFrontDroppedPre500Audit} from
   '../../lib/engine/v2/finale-mixed-two-front-dropped-pre500-audit.mjs';
+import {recordFinaleMixedTwoFrontDroppedFinal500Audit,
+  validateFinaleMixedTwoFrontDroppedFinal500Audit} from
+  '../../lib/engine/v2/finale-mixed-two-front-dropped-final500-audit.mjs';
 
 function settingsFor(teamCount,gender,terrain,fatigue){
   return {distanceKm:260,teamCount,gender,terrain,fatigue,
@@ -121,6 +124,14 @@ test('unequal-strength whole race refuses unresolved two-front exits',()=>{
   assert.equal(audit.pointsStatus,'withheld');
   assert.equal(validateFinaleMixedTwoFrontDroppedPre500Audit(recording,
     candidate,line,audit),true);
+  const finalAudit=recordFinaleMixedTwoFrontDroppedFinal500Audit(
+    recording,candidate,line,audit);
+  assert.equal(finalAudit.paidRiderCount,32);
+  assert.ok(finalAudit.sourceAdjacentPairs>0);
+  assert.equal(finalAudit.outsideLaneAssignments.length,16);
+  assert.equal(finalAudit.contactResolved,false);
+  assert.equal(validateFinaleMixedTwoFrontDroppedFinal500Audit(recording,
+    candidate,line,audit,finalAudit),true);
 });
 
 test('nearby genders stay bounded and a fresh approach is refused',()=>{
@@ -131,6 +142,10 @@ test('nearby genders stay bounded and a fresh approach is refused',()=>{
     femaleClock,femaleLine);
   assert.equal(femaleAudit.sourceAdjacentPairs,72);
   assert.equal(femaleAudit.paidRiderCount,32);
+  const femaleFinalAudit=recordFinaleMixedTwoFrontDroppedFinal500Audit(
+    female,femaleClock,femaleLine,femaleAudit);
+  assert.equal(femaleFinalAudit.paidRiderCount,32);
+  assert.equal(femaleFinalAudit.contactResolved,false);
   const large=recordingFor(settingsFor(15,'M','flat',30));
   const largeClock=recordFinaleCoastMixedTwoFrontDroppedClock(large);
   const largeLine=recordFinaleCoastedIndividualLine(large,largeClock);
