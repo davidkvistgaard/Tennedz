@@ -25,6 +25,7 @@ import {recordFinaleMixedTwoFrontDroppedPre500Audit,
   validateFinaleMixedTwoFrontDroppedPre500Audit} from
   '../../lib/engine/v2/finale-mixed-two-front-dropped-pre500-audit.mjs';
 import {recordFinaleMixedTwoFrontDroppedFinal500Audit,
+  recordFinaleMixedTwoFrontDroppedFreshFinal500Audit,
   validateFinaleMixedTwoFrontDroppedFinal500Audit} from
   '../../lib/engine/v2/finale-mixed-two-front-dropped-final500-audit.mjs';
 import {recordFinaleMixedTwoFrontDroppedResult,
@@ -221,6 +222,9 @@ test('15-team fresh source-wheel approach is paid but remains internal',()=>{
     assert.equal(audit.contactResolved,false);
     assert.equal(audit.classifiedResults,null);
     assert.equal(audit.pointsStatus,'withheld');
+    assert.throws(()=>
+      recordFinaleMixedTwoFrontDroppedFreshFinal500Audit(recording,clock,
+        line,audit),/final wheels have a new unpaid approach/);
     assert.throws(()=>recordFinaleMixedTwoFrontDroppedPre500Audit(
       recording,clock,line),/new unpaid approach/);
     assert.throws(()=>createV93PlayableTest(settings),

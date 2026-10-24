@@ -4926,6 +4926,9 @@ and have no user-facing line or point award. A separate versioned
 internal audit now accepts exactly one fresh same-source approach in a
 15-team source, splits both riders' paid position and energy, verifies
 all 120 riders' 500 m handoff and conditional line energy, but does not
-authorize a guided result. Three neighboring whole-race tests and
+authorize a guided result. A separate internal final-500 m pairwise
+audit still detects a new unpaid approach in these sources; the
+120-rider diagnostic line cannot yet be routed into the game. The old
+playtest continues to refuse. Three neighboring whole-race tests and
 changed-file lint passed. This is a source-wheel encounter, not a
 road-group marker crossing.
