@@ -109,6 +109,61 @@ test('dissolved leading front reaches paid individual replay without awards',
       .toBeVisible();
   });
 
+test('mixed late orders pay a dissolved front passing a survivor without awards',
+  async({page})=>{
+    await page.goto('/login');
+    await page.getByLabel('Email or username').fill('alice');
+    await page.getByLabel('Password',{exact:true}).fill('fixture-password');
+    await page.getByRole('button',{name:'Sign in',exact:true}).click();
+    await expect(page).toHaveURL(/\/team$/);
+    const response=await page.request.post('/api/v91-playtest',{
+      headers:{origin:'http://localhost:3100'},data:{
+        mode:'v93-coasted',settings:{distanceKm:260,teamCount:4,
+          gender:'M',terrain:'rolling',fatigue:30,
+          seed:'v93-mixed-late-4-M-rolling-30-0',
+          defaultRivalPlan:'passive',effort:'hard',attack:'repeated',
+          chase:'all',managerTactics:[
+            {effort:'hard',attack:'repeated',chase:'all'},
+            {effort:'conserve',attack:'none',chase:'ignore'},
+            {effort:'steady',attack:'selective',chase:'selective'}],
+          managerFinaleOrders:[
+            {teamId:'you',atKm:255,effort:'hard'},
+            {teamId:'rival-1',atKm:255,effort:'conserve'}]},
+        plans:['you','rival-1','rival-2','rival-3'].map(teamId=>({
+          teamId,finisherId:`${teamId}-7`,leadOutRiderId:null})),
+        pointContext:{tier:2,divisionCount:2,divisionIndex:1}}});
+    expect(response.status()).toBe(200);
+    const body=await response.json();
+    expect(body.coasted.version).toBe(
+      'v93-dissolved-survivor-pass-playtest-1');
+    expect(body.coasted.lineTimes).toHaveLength(32);
+    expect(body.coasted.bandReplays).toHaveLength(6);
+    expect(body.coasted.dissolvedLeadingFront.survivorPasses)
+      .toHaveLength(4);
+    expect(body.coasted.pointPreview.status).toBe('unavailable');
+    expect(body.coasted.canCommitAwards).toBe(false);
+    await page.goto('/team/v91-playtest');
+    await page.getByRole('checkbox',{
+      name:'Continue to a conditional finish'}).check();
+    await page.getByRole('checkbox',{
+      name:'Try v93 road-to-line preview'}).check();
+    await page.route('**/api/v91-playtest',route=>route.fulfill({
+      status:200,contentType:'application/json',body:JSON.stringify(body)}));
+    await page.getByRole('button',{name:'Run v93 race preview'}).click();
+    const note=page.getByRole('note',{name:'Dissolved leading front'});
+    await expect(note).toContainText('road-2 passed them unassisted');
+    await expect(note).toContainText('road-2 passed you-7');
+    await expect(page.getByRole('table',{
+      name:'V93 individual conditional results'}).getByRole('row'))
+      .toHaveCount(33);
+    await note.getByRole('button',{
+      name:'Inspect dissolved front rider you-7 finish replay'}).click();
+    await expect(page.getByLabel('Selected rider finale replay'))
+      .toContainText('you-7:');
+    await expect(page.getByText('Official points: withheld · Awards saved: 0'))
+      .toBeVisible();
+  });
+
 test('prior dropped riders stay behind a dissolved 15-team mountain front',
   async({page})=>{
     await page.goto('/login');

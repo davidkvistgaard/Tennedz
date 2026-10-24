@@ -1265,8 +1265,12 @@ export default function Playtest(){
               {' '}{coasted.dissolvedLeadingFront.leadingRiderIds.length}
               {' '}riders exhausted and left
               {' '}{coasted.dissolvedLeadingFront.dissolvedGroupId}.
-              They stayed ahead of
-              {' '}{coasted.dissolvedLeadingFront.survivingGroupId}.
+              {coasted.dissolvedLeadingFront.survivorPasses?.length?
+                <> They used separate outside lanes until
+                  {' '}{coasted.dissolvedLeadingFront.survivingGroupId}
+                  {' '}passed them unassisted.</>:
+                <> They stayed ahead of
+                  {' '}{coasted.dissolvedLeadingFront.survivingGroupId}.</>}
               {coasted.dissolvedLeadingFront.rearRiderIds.length>0&&<>
                 {' '}{coasted.dissolvedLeadingFront.rearRiderIds.length}
                 {' '}rider left the surviving group and was passed by the
@@ -1276,6 +1280,9 @@ export default function Playtest(){
             {coasted.dissolvedLeadingFront.bunchPasses.map(event=><p
               key={event.riderId}>The bunch passed {event.riderId} at
               {' '}{(event.distanceM/1000).toFixed(3)} km.</p>)}
+            {coasted.dissolvedLeadingFront.survivorPasses?.map(event=><p
+              key={event.riderId}>{event.groupId} passed {event.riderId}
+              {' '}unassisted at {(event.atDistanceM/1000).toFixed(3)} km.</p>)}
             {[...coasted.dissolvedLeadingFront.leadingRiderIds,
               ...coasted.dissolvedLeadingFront.rearRiderIds].map(id=><button
               type="button" key={id}
