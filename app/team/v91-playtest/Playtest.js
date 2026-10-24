@@ -1271,6 +1271,9 @@ export default function Playtest(){
                   {' '}passed them unassisted.</>:
                 <> They stayed ahead of
                   {' '}{coasted.dissolvedLeadingFront.survivingGroupId}.</>}
+              {coasted.dissolvedLeadingFront.survivingGroupIds?.length>1&&<>
+                {' '}{coasted.dissolvedLeadingFront.survivingGroupIds[1]}
+                {' '}also stayed behind them and ahead of the bunch.</>}
               {coasted.dissolvedLeadingFront.rearRiderIds.length>0&&<>
                 {' '}{coasted.dissolvedLeadingFront.rearRiderIds.length}
                 {' '}rider left the surviving group and was passed by the
