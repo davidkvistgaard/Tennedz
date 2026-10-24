@@ -25,6 +25,9 @@ import {recordFinaleMixedPost500OutsideLaneLine,
 import {recordFinaleMixedStraddlingHandoffAudit,
   validateFinaleMixedStraddlingHandoffAudit} from
   '../../lib/engine/v2/finale-mixed-straddling-handoff-audit.mjs';
+import {recordFinaleMixedStraddlingIndividualAudit,
+  validateFinaleMixedStraddlingIndividualAudit} from
+  '../../lib/engine/v2/finale-mixed-straddling-individual-audit.mjs';
 import {createV93PlayableTest,validateV93CoastedPlaytest,
   summarizeV93CoastedPlaytest,
   V93_MIXED_THREE_FRONT_POST500_LANES_PLAYTEST_VERSION} from
@@ -208,6 +211,22 @@ test('straddling 500 m marker candidates remain unsupported',()=>{
   assert.equal(audit.classifiedResults,null);
   assert.equal(audit.pointsStatus,'withheld');
   assert.equal(validateFinaleMixedStraddlingHandoffAudit(tour,audit),true);
+  const individual=recordFinaleMixedStraddlingIndividualAudit(tour);
+  assert.equal(individual.approaches.length,7);
+  assert.equal(individual.stillSeparatedAtHandoff.length,0);
+  assert.ok(individual.approaches.every(row=>
+    row.isolatedWheelM>259485&&row.isolatedWheelM<259500&&
+    row.activeRiderId==='rival-5-7'&&
+    row.contactResolved===false&&
+    Math.abs(row.isolatedWheelM-row.activeWheelM-2.5)<1e-7&&
+    Math.abs(row.paidSplit.isolated.frames.at(-1).riders[0]
+      .energyAfter-row.isolatedEnergyAtApproach)<1e-7&&
+    Math.abs(row.paidSplit.active.frames.at(-1).riders[0]
+      .energyAfter-row.activeEnergyAtApproach)<1e-7));
+  assert.equal(individual.classifiedResults,null);
+  assert.equal(individual.pointsStatus,'withheld');
+  assert.equal(validateFinaleMixedStraddlingIndividualAudit(tour,
+    individual),true);
   assert.throws(()=>
     recordFinaleCoastMixedThreeFrontPost500CandidateClock(tour),
     /paid post-500 m candidate clock/);
