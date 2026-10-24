@@ -1,11 +1,13 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {createV93PlayableTest,summarizeV93CoastedPlaytest} from
+import {createV93PlayableTest,summarizeV93CoastedPlaytest,
+  validateV93CoastedPlaytest,
+  V93_NO_DROPS_WHEEL_CONTACT_PLAYTEST_VERSION} from
   '../../lib/engine/v2/playtest-v93-coasted.mjs';
 
 // One whole race, with only the player's 5 km effort changed. The middle
-// choice exposes a contact after the 500 m handoff that has no paid individual
-// continuation yet; it must not be shown as a classified finish.
+// choice exposes an occupied-wheel encounter before the 500 m handoff,
+// despite the group-level catch being projected after it.
 const settings={distanceKm:40,teamCount:4,gender:'M',terrain:'flat',
   fatigue:0,seed:'near-catch',effort:'steady',attack:'none',chase:'all',
   defaultRivalPlan:'attack',teamOverrides:[{teamId:'you',level:40},
@@ -13,12 +15,19 @@ const settings={distanceKm:40,teamCount:4,gender:'M',terrain:'flat',
 const withEffort=effort=>({...settings,managerFinaleOrders:[
   {teamId:'you',atKm:35,effort,chase:'all'}]});
 
-test('close chase keeps a post-handoff steady catch unclassified between two paid outcomes',()=>{
+test('close chase pays the first steady wheel encounter across the whole race',()=>{
   const conserve=createV93PlayableTest(withEffort('conserve'));
+  const steady=createV93PlayableTest(withEffort('steady'));
   const hard=createV93PlayableTest(withEffort('hard'));
   assert.deepEqual(conserve.recording.frames.filter(frame=>frame.km<35),
     hard.recording.frames.filter(frame=>frame.km<35));
-  for(const [race,place] of [[conserve,4],[hard,1]]){
+  assert.deepEqual(steady.recording.frames.filter(frame=>frame.km<35),
+    hard.recording.frames.filter(frame=>frame.km<35));
+  assert.equal(steady.version,
+    V93_NO_DROPS_WHEEL_CONTACT_PLAYTEST_VERSION);
+  assert.equal(validateV93CoastedPlaytest(withEffort('steady'),{},steady),
+    true);
+  for(const [race,place] of [[conserve,4],[steady,4],[hard,1]]){
     const summary=summarizeV93CoastedPlaytest(race);
     const finisherId=summary.managerDecisions.find(row=>
       row.teamId==='you').finisherId;
@@ -28,11 +37,24 @@ test('close chase keeps a post-handoff steady catch unclassified between two pai
     assert.equal(summary.pointsStatus,'withheld');
     assert.equal(summary.canCommitAwards,false);
   }
-  assert.throws(()=>createV93PlayableTest(withEffort('steady')),error=>{
+  const paid=summarizeV93CoastedPlaytest(steady);
+  assert.ok(paid.sharedWheelContact.atDistanceM>39250&&
+    paid.sharedWheelContact.atDistanceM<39500);
+  assert.equal(paid.sharedWheelContact.wheelPairs.length,3);
+  assert.equal(paid.lastKmRoad.at(-1).distanceM,40000);
+  assert.equal(paid.bandReplays.length,1);
+  assert.equal(steady.individualLine.source.droppedRiderIds.length,0);
+  assert.equal(steady.individualLine.finishers.length,32);
+  assert.equal(new Set(steady.individualLine.finishers.map(row=>
+    row.riderId)).size,32);
+  assert.throws(()=>createV93PlayableTest(withEffort('steady'),{},
+    {resolveWheelContact:false}),error=>{
     assert.match(error.message,/needs a recorded catch for road-1/);
     assert.equal(error.cause.groupId,'road-1');
     assert.ok(error.cause.calculatedCatchDistanceM>39500&&
       error.cause.calculatedCatchDistanceM<40000);
+    assert.ok(paid.sharedWheelContact.atDistanceM<
+      error.cause.calculatedCatchDistanceM);
     assert.equal(error.roadPreview?.unsupportedReason,'unpaid_front_catch');
     assert.equal(error.roadPreview?.kilometreFrames.length,39);
     assert.deepEqual(error.roadPreview?.lastKmRoad,[]);
@@ -40,4 +62,31 @@ test('close chase keeps a post-handoff steady catch unclassified between two pai
     assert.equal(error.roadPreview?.canCommitAwards,false);
     return true;
   });
+});
+
+test('no-drops shared wheels pay bounded terrains and retain refusals',()=>{
+  for(const gender of ['M','F'])for(const terrain of
+    ['flat','rolling','custom']){
+    const selected={...withEffort('steady'),gender,terrain};
+    const race=createV93PlayableTest(selected,{pointContext:{tier:3,
+      divisionCount:4,divisionIndex:2}});
+    const summary=summarizeV93CoastedPlaytest(race);
+    assert.equal(race.version,
+      V93_NO_DROPS_WHEEL_CONTACT_PLAYTEST_VERSION);
+    assert.equal(summary.lineTimes.length,32);
+    assert.equal(summary.bandReplays.length,1);
+    assert.ok(summary.sharedWheelContact.atDistanceM>39250&&
+      summary.sharedWheelContact.atDistanceM<39500);
+    assert.equal(summary.pointPreview.status,'unavailable');
+    assert.equal(summary.pointsStatus,'withheld');
+    assert.equal(summary.canCommitAwards,false);
+  }
+  for(const terrain of ['mountain','exposed'])
+    assert.throws(()=>createV93PlayableTest({...withEffort('steady'),
+      terrain}),error=>{
+      assert.equal(error.roadPreview?.unsupportedReason,
+        'unpaid_front_catch');
+      assert.equal(error.roadPreview?.lineTimes,null);
+      return true;
+    });
 });

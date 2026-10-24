@@ -4683,14 +4683,21 @@ paid `chasingTeamIds`, retaining the older field as a fallback for old
 recordings. The catch moment says all three riders were caught without
 falsely claiming the player's team stopped chasing before the catch.
 
-The third `steady` choice in that *same whole race* exposes a remaining
-motor boundary. Its projected road-1 catch is at 39,617.488 m, after the
-500 m sprint handoff. The present v93 front-catch continuations require
-an already isolated rider, but all 32 riders in this source are still in
-the front or bunch. The motor therefore explicitly returns
-`unpaid_front_catch` with 39 recorded kilometre frames, no paid final-km
-road, no individual line, and no awards. The locked whole-race regression
-in `tests/unit/engine-v2-v93-close-chase-effort.test.mjs` verifies this
-refusal alongside the two paid conserve/hard outcomes. A future separate
-version must pay the no-isolated-rider contact and 500 m transition before
-showing a steady result; the projected catch is not a classified finish.
+The third `steady` choice in that *same whole race* exposed a distinct
+contact geometry. The group-level road projected a catch at 39,617.488 m,
+after the 500 m sprint handoff, but all 32 riders still occupied one front
+or the bunch. A separate versioned individual-wheel continuation finds the
+first shared-lane encounter at 39,279.115 m, **before** the handoff. It pays
+the approach, merges the occupied lanes at that encounter, then carries all
+32 riders with energy and replay to conditional crossings. The nominated
+finisher remains conditionally fourth with `steady`; official places, points
+and awards remain withheld. The earlier recording versions are unchanged,
+and turning off wheel-contact resolution still returns the explicit
+`unpaid_front_catch` refusal.
+
+The locked whole-race regression in
+`tests/unit/engine-v2-v93-close-chase-effort.test.mjs` checks all three
+effort choices and the opt-out. Nearby 40 km races across both genders and
+flat, rolling and custom terrain also reach 32 conditional lines; mountain
+and exposed versions still refuse explicitly. This is a guarded contact
+case, not unrestricted final-kilometre completion or an official placing.
