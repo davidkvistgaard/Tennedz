@@ -2,6 +2,15 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {createV93PlayableTest} from
   '../../lib/engine/v2/playtest-v93-coasted.mjs';
+import {prepareV91Playtest} from '../../lib/engine/v2/playtest.mjs';
+import {simulateTacticalTour} from '../../lib/engine/v2/tour.mjs';
+import {MOTOR_EXHAUSTION_COAST_VERSION} from
+  '../../lib/engine/v2/tuning.mjs';
+import {finaleSnapshotFromTour} from
+  '../../lib/engine/v2/finale-snapshot.mjs';
+import {probeFinaleSeparatedGroupsFromTour,
+  FINALE_COAST_DYNAMIC_FRONT_LAST_KM_VERSION} from
+  '../../lib/engine/v2/finale-multi-run.mjs';
 
 test('unequal-strength whole race refuses unresolved two-front exits',()=>{
   const teamCount=4;
@@ -31,4 +40,23 @@ test('unequal-strength whole race refuses unresolved two-front exits',()=>{
   assert.equal(refusal.roadPreview.lineTimes,null);
   assert.equal(refusal.roadPreview.pointsStatus,'withheld');
   assert.equal(refusal.roadPreview.canCommitAwards,false);
+
+  const {stage,weather,teams,seed}=prepareV91Playtest(settings);
+  const recording=simulateTacticalTour({stage,weather,teams,seed,
+    motorVersion:MOTOR_EXHAUSTION_COAST_VERSION});
+  const source=finaleSnapshotFromTour(recording,{remainingKm:1,
+    includeAttackLoad:true});
+  const trace=probeFinaleSeparatedGroupsFromTour(recording,{
+    version:FINALE_COAST_DYNAMIC_FRONT_LAST_KM_VERSION});
+  assert.equal(source.droppedRiderIds.length,12);
+  assert.equal(trace.frames.length,7);
+  const exits=trace.frames.flatMap(frame=>frame.frontExhaustionDrops);
+  assert.equal(exits.length,4);
+  assert.deepEqual([...new Set(exits.map(row=>row.fromRoadGroupId))],
+    ['road-2','road-4']);
+  assert.ok(exits.every(row=>row.atDistanceM===259000));
+  assert.ok(trace.frames.every(frame=>
+    frame.roadGroups.length===2&&
+    !frame.exhaustionDrops.length&&
+    !frame.frontGroupDissolutions?.length));
 });

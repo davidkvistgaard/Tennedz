@@ -4852,6 +4852,13 @@ dropped riders. The paid seven-frame trace sheds two riders from each
 front in its first 250 m. Existing continuations cannot reconcile the
 resulting bands, so the whole race retains its kilometre history but
 exposes no final-kilometre road, individual line, replay or points.
+At every paid marker the two leading leavers are between road-2 and
+road-4, the two rear leavers are between road-4 and the bunch, and all
+older drops stay behind the bunch. The smallest observed gap from a
+front to one of its leavers at a paid marker is 12.23 seconds; this is
+evidence for separated bands, not proof of occupied individual lanes
+between markers. The existing two-front clear continuation requires no
+older drops, while the older-drop continuation requires three fronts.
 `scripts/engine-v2-v93-heterogeneous-contact-probe.mjs 4 M flat 30`
 reproduces the paid source and trace; the locked unit test preserves the
 explicit refusal. A new continuation must audit individual pairwise
