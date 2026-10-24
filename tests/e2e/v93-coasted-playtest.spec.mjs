@@ -2840,18 +2840,23 @@ test('mountain early-only approaches retain conditional lines for both genders',
       .toBeVisible();
   });
 
-test('20-team mountain shows paid possible approaches without awards',
+test('20-team mountain shows bounded approaches for both genders without awards',
   async({page})=>{
-    test.setTimeout(90000);
+    test.setTimeout(150000);
     await page.goto('/login');
     await page.getByLabel('Email or username').fill('v2rival');
     await page.getByLabel('Password',{exact:true}).fill('fixture-password');
     await page.getByRole('button',{name:'Sign in',exact:true}).click();
     await expect(page).toHaveURL(/\/team$/);
     const teamCount=20;
-    const settings={distanceKm:260,teamCount,gender:'F',
+    let body;
+    for(const [gender,version,approaches] of [
+      ['F','v93-mixed-two-front-many-pre500-older-drops-lanes-playtest-1',6],
+      ['M','v93-mixed-two-front-many-pre500-clean-final-lanes-playtest-1',10]
+    ]){
+      const settings={distanceKm:260,teamCount,gender,
       terrain:'mountain',fatigue:0,
-      seed:'v93-heterogeneous-20-F-mountain-0',
+      seed:`v93-heterogeneous-20-${gender}-mountain-0`,
       defaultRivalPlan:'passive',effort:'hard',attack:'repeated',
       chase:'all',managerTactics:Array.from({length:teamCount-1},
         (_,index)=>({
@@ -2864,25 +2869,25 @@ test('20-team mountain shows paid possible approaches without awards',
       managerFinaleOrders:[
         {teamId:'you',atKm:255,effort:'steady',chase:'all'},
         {teamId:'rival-1',atKm:255,effort:'hard'}]};
-    const response=await page.request.post('/api/v91-playtest',{
+      const response=await page.request.post('/api/v91-playtest',{
       headers:{origin:'http://localhost:3100'},data:{
         mode:'v93-coasted',settings,
         plans:['you',...Array.from({length:teamCount-1},(_,index)=>
           `rival-${index+1}`)].map(teamId=>({teamId,
           finisherId:`${teamId}-7`,leadOutRiderId:null})),
         pointContext:{tier:2,divisionIndex:0,divisionCount:1}}});
-    expect(response.status(),await response.text()).toBe(200);
-    const body=await response.json();
-    const coasted=body.coasted;
-    expect(coasted.version).toBe(
-      'v93-mixed-two-front-many-pre500-older-drops-lanes-playtest-1');
-    expect(coasted.lineTimes).toHaveLength(160);
-    expect(coasted.lastKmRoad).toHaveLength(7);
-    expect(coasted.mixedTwoFrontOlderDrops.freshWheelApproaches)
-      .toHaveLength(6);
-    expect(coasted.pointPreview.status).toBe('unavailable');
-    expect(coasted.classifiedResults).toBeNull();
-    expect(coasted.canCommitAwards).toBe(false);
+      expect(response.status(),await response.text()).toBe(200);
+      body=await response.json();
+      const coasted=body.coasted;
+      expect(coasted.version).toBe(version);
+      expect(coasted.lineTimes).toHaveLength(160);
+      expect(coasted.lastKmRoad).toHaveLength(7);
+      expect(coasted.mixedTwoFrontOlderDrops.freshWheelApproaches)
+        .toHaveLength(approaches);
+      expect(coasted.pointPreview.status).toBe('unavailable');
+      expect(coasted.classifiedResults).toBeNull();
+      expect(coasted.canCommitAwards).toBe(false);
+    }
     await page.goto('/team/v91-playtest');
     await page.getByRole('checkbox',{
       name:'Continue to a conditional finish'}).check();
@@ -2893,7 +2898,7 @@ test('20-team mountain shows paid possible approaches without awards',
     await page.getByRole('button',{name:'Run v93 race preview'}).click();
     const note=page.getByRole('note',{
       name:'Conditional two-front exits with older drops'});
-    await expect(note).toContainText('6 possible individual approaches');
+    await expect(note).toContainText('10 possible individual approaches');
     await expect(note).toContainText('official places and points remain');
     await expect(page.getByText('Official points: withheld · Awards saved: 0'))
       .toBeVisible();
