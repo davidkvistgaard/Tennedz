@@ -858,7 +858,7 @@ test('sample race opens the playable setup and links the recorded result',
     await expect(riderGuide).toBeVisible();
     await expect(page.getByLabel('you finisher')).toContainText(
       'Rider 8 · Sprint 100');
-    await expect(page.getByText('This is an optional experiment, not a required finale choice.',
+    await expect(page.getByText('This is a team-wide order from 5 km to go, not a sprint button.',
       {exact:false})).toBeVisible();
     await expect(page.getByRole('button',
       {name:'Run v93 race preview'})).toBeInViewport();
@@ -1167,8 +1167,15 @@ test('a five-kilometre effort change reaches the paid line and points',
     expect(own(before).energyAtLine)
       .toBeGreaterThan(own(after).energyAtLine);
     const effortComparison=page.getByLabel('Late effort comparison');
+    expect(after.kilometreFrames.at(-1))
+      .toHaveProperty('paidBunchPaceTeamId');
+    expect(after.kilometreFrames.at(-1))
+      .toHaveProperty('pullRiderIds');
+    expect(after.kilometreFrames.at(-1))
+      .toHaveProperty('chasingTeamIds');
     await expect(effortComparison).toContainText('Previous run · conserve at 5 km to go');
     await expect(effortComparison).toContainText('Current run · hard at 5 km to go');
+    await expect(effortComparison).toContainText('Recorded work from 5 km to the 1 km handoff');
     await expect(effortComparison).toContainText(
       `${before.kilometreFrames.find(frame=>frame.km===115)
         .ownRiders.find(row=>row.riderId==='you-7').energy.toFixed(1)} energy`);

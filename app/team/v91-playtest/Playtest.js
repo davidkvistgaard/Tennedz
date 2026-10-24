@@ -7,7 +7,8 @@ import {summarizePlaytestRaceStory} from
   '../../../lib/engine/v2/playtest-race-story.mjs';
 import {raceViewerCheckpoints,raceViewerEnergySeries,
   raceViewerBreaksAndChase,raceViewerFinale,raceViewerRoad,
-  raceViewerLateEffort,raceViewerEffortInsight,raceViewerTimeline} from
+  raceViewerLateEffort,raceViewerLateTeamWork,
+  raceViewerEffortInsight,raceViewerTimeline} from
   '../../../lib/engine/v2/playtest-viewer.mjs';
 
 const DEFAULT_PLANS=['chase','attack','neutral'];
@@ -148,6 +149,7 @@ function coastedComparisonRun(settings,summary,pointContext){
       finishers:summary.managerDecisions.map(row=>({teamId:row.teamId,
         finisherId:row.finisherId,leadOutRiderId:row.leadOutRiderId}))}),
     lateEffort:raceViewerLateEffort(summary,finisherId),
+    lateTeamWork:raceViewerLateTeamWork(summary),
     crossingSeconds:crossing?.elapsedSecondsFromLastKmStart??null,
     energyAtLine:crossing?.energyAtLine??null,
     place:conditionalPlace(place,'unresolved'),
@@ -739,7 +741,7 @@ export default function Playtest({guided=false}){
           <summary>Late-race effort <span>Change effort at 5 km to go</span></summary>
           <fieldset className="v91-profile">
           <legend>Five-kilometre effort orders</legend>
-          <p>This is an optional experiment, not a required finale choice. Hard spends more reserve before the sprint; conserving can leave more reserve but may give up road position. Keep race effort for a first run, then rerun the same seed to compare.</p>
+          <p>This is a team-wide order from 5 km to go, not a sprint button. Hard raises every rider&apos;s work demand. It changes attack or chase pressure and bunch-front speed only when that work happens. Keep race effort for a first run, then rerun the same seed to compare the recorded work, road and finish.</p>
           <div className="v91-manager-tactics">{finaleTeams.map(teamId=>
             <label key={teamId}>5 km to go effort for {teamId}
               <select value={lateEfforts[teamId]??''} onChange={event=>
@@ -1743,6 +1745,7 @@ export default function Playtest({guided=false}){
               <h4>{label} · {run.lateEffort.effort??'unknown'} at 5 km to go</h4>
               <p>{run.finisherId} at 5 km: {run.lateEffort.atFiveKmRoad??'unavailable'} · {run.lateEffort.atFiveKmEnergy?.toFixed(1)??'—'} energy.</p>
               <p>At 1 km: {run.lateEffort.atOneKmRoad??'unavailable'} · {run.lateEffort.atOneKmEnergy?.toFixed(1)??'—'} energy.</p>
+              <p>Recorded work from 5 km to the 1 km handoff: {run.lateTeamWork.attacks} attacks · {run.lateTeamWork.chaseKm} chase km · {run.lateTeamWork.breakPullKm} break-pull km · {run.lateTeamWork.bunchPaceKm} bunch-front km.</p>
               <p>At the line: {run.energyAtLine?.toFixed(1)??'—'} energy · conditional place {run.place}.</p>
             </div>)}</div>
           <p aria-label="Late effort takeaway">{raceViewerEffortInsight(
