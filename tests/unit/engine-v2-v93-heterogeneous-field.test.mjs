@@ -13,7 +13,9 @@ import {createV93PlayableTest,validateV93CoastedPlaytest,
   V93_MIXED_TWO_FRONT_CROWDED_MULTIFRONT_LANES_PLAYTEST_VERSION,
   V93_MIXED_TWO_FRONT_MULTIFRONT_PARALLEL_FINAL_PLAYTEST_VERSION,
   V93_MIXED_TWO_FRONT_ELEVEN_MULTIFRONT_PARALLEL_FINAL_PLAYTEST_VERSION,
-  V93_MIXED_TWO_FRONT_THIRTEEN_MULTIFRONT_CLEAN_FINAL_PLAYTEST_VERSION} from
+  V93_MIXED_TWO_FRONT_THIRTEEN_MULTIFRONT_CLEAN_FINAL_PLAYTEST_VERSION,
+  V93_MIXED_TWO_FRONT_BOUNDED_MULTIFRONT_CLEAN_FINAL_PLAYTEST_VERSION,
+  V93_MIXED_TWO_FRONT_BOUNDED_MULTIFRONT_PARALLEL_FINAL_PLAYTEST_VERSION} from
   '../../lib/engine/v2/playtest-v93-coasted.mjs';
 import {prepareV91Playtest} from '../../lib/engine/v2/playtest.mjs';
 import {simulateTacticalTour} from '../../lib/engine/v2/tour.mjs';
@@ -130,6 +132,45 @@ test('thirteen paid two-front exits and a clean fixed-lane final half finish con
     assert.throws(()=>createV93PlayableTest(settings,{},
       {resolveMixedTwoFrontThirteenMultifrontCleanFinal:false}),
     /depleted line bands crossed without contact/i);
+  });
+
+test('bounded two-front exits pay clean and parallel final halves without awards',
+  ()=>{
+    for(const [gender,terrain,fatigue,preCount,finalCount,sources,version] of [
+      ['M','mountain',0,12,0,['road-2'],
+        V93_MIXED_TWO_FRONT_BOUNDED_MULTIFRONT_CLEAN_FINAL_PLAYTEST_VERSION],
+      ['F','mountain',0,9,0,['road-2'],
+        V93_MIXED_TWO_FRONT_BOUNDED_MULTIFRONT_CLEAN_FINAL_PLAYTEST_VERSION],
+      ['F','flat',30,6,1,['road-2','road-4'],
+        V93_MIXED_TWO_FRONT_BOUNDED_MULTIFRONT_PARALLEL_FINAL_PLAYTEST_VERSION]]){
+      const settings=settingsFor(20,gender,terrain,fatigue);
+      settings.seed+='-alternate-2';
+      const race=createV93PlayableTest(settings);
+      assert.equal(race.version,version);
+      const result=race.mixedTwoFrontResult;
+      assert.equal(result.pre500Audit.freshApproaches.length,preCount);
+      assert.deepEqual(new Set(result.pre500Audit.freshApproaches.map(row=>
+        row.sourceRoadGroupId)),new Set(sources));
+      assert.equal(result.final500Audit.freshApproaches.length,finalCount);
+      if(finalCount)assert.equal(result.final500Audit
+        .parallelFinalLaneEvidence.noDraftAfterApproach,true);
+      assert.equal(result.line.conditionalCrossings.length,160);
+      assert.equal(result.clock.passageFrames.length,7);
+      assert.equal(result.line.bandRunners.find(row=>
+        row.roadBandId==='road-2').runner.passingRule,
+      'fixed-source-lane-queue-lab-1');
+      assert.equal(race.classifiedResults,null);
+      assert.equal(race.pointsStatus,'withheld');
+      assert.equal(race.canCommitAwards,false);
+      const summary=summarizeV93CoastedPlaytest(race);
+      assert.equal(summary.lineTimes.length,160);
+      assert.equal(summary.bandReplays.flatMap(row=>row.riderIds).length,160);
+      assert.equal(validateV93CoastedPlaytest(settings,{},race),true);
+      assert.throws(()=>createV93PlayableTest(settings,{},
+        {resolveMixedTwoFrontBoundedMultifrontCleanFinal:false,
+          resolveMixedTwoFrontBoundedMultifrontParallelFinal:false}),
+      /depleted line bands crossed without contact/i);
+    }
   });
 
 test('eleven source exits and one fixed-lane final approach finish conditionally',

@@ -5407,3 +5407,33 @@ distance and can follow the first rider to the paid finish replay. It
 states that an approach does not confirm a catch. Changed-file lint,
 an isolated preview Next build and the targeted authenticated 13-contact
 browser click flow passed; no fresh full browser suite was run.
+
+A second independent seed suffix, `alternate-2`, exposed three
+`unresolved_band_contact` refusals in the read-only 20-team matrix:
+men's mountain/no fatigue, women's mountain/no fatigue, and women's
+flat/high fatigue. Before the fix, 17 of 20 conditional lines completed.
+Paid individual probes found respectively 12+0, 9+0 and 6+1 possible
+first-half/final-half approaches. Every first-half approach stayed
+within its source front; the last case's sole final-half pair used
+distinct fixed road-2 source lanes and had no draft after approach.
+The group-marker order was not treated as occupied-wheel contact.
+
+Two new separately versioned bounded continuations accept only nine or
+twelve paid first-half approaches from one front with no new final-half
+approach, or six first-half approaches across both fronts with exactly
+one audited parallel final-half approach. They
+keep a fixed road-2 source-lane queue, 160 conditional individual
+crossings and replay, paid energy through the 500 m handoff and line,
+and withhold official places, points and awards. Opting out restores
+the explicit refusal. The three locked whole-race/replay unit cases,
+changed-file lint, isolated preview build and three authenticated
+browser flows passed. A nine-test neighboring whole-race/replay suite
+also passed after the final guard, including the older five-, seven-,
+ten-, eleven-, twelve- and thirteen-approach version and opt-out paths.
+This is bounded conditional geometry, not a general wheel-order or
+points resolution.
+
+The read-only 20-team `alternate-2` matrix after this change reports
+**20 conditional finishes and zero explicit refusals**. Two use the
+new clean-final version and one uses the new parallel-final version.
+This finite seed matrix does not establish unrestricted motor coverage.
