@@ -1,5 +1,5 @@
 'use client';
-import {useState} from 'react';
+import {useEffect,useRef,useState} from 'react';
 import TeamShell from '../../components/TeamShell';
 import {api} from '../../../lib/api';
 import {playtestRiderCards} from '../../../lib/engine/v2/playtest-riders.mjs';
@@ -377,6 +377,20 @@ export default function Playtest(){
   const coastedRaceStory=coasted?summarizePlaytestRaceStory(coasted):[];
   const coastedViewer=coasted?raceViewerCheckpoints(coasted,
     viewerRiderId):[];
+  const viewerTrackRef=useRef(null);
+  const previousCheckpoint=[...coastedViewer].reverse()
+    .find(checkpoint=>checkpoint.index<coastedKm-1);
+  const nextCheckpoint=coastedViewer
+    .find(checkpoint=>checkpoint.index>coastedKm-1);
+  useEffect(()=>{
+    const track=viewerTrackRef.current;
+    const closest=[...coastedViewer].reverse()
+      .find(checkpoint=>checkpoint.index<=coastedKm-1);
+    const card=closest&&track?.querySelector(
+      `[data-checkpoint-index="${closest.index}"]`);
+    if(track&&card)track.scrollTo({left:card.offsetLeft-track.offsetLeft,
+      behavior:'smooth'});
+  },[coastedKm,coasted]);
   const viewerEnergy=coasted?raceViewerEnergySeries(coasted,viewerRiderId):[];
   const viewerFiveKm=viewerEnergy.find(row=>
     row.km>=coasted.settings.distanceKm-5);
@@ -1030,8 +1044,18 @@ export default function Playtest(){
             <div><span>100</span><span>50</span><span>0</span></div>
           </div>
           <p>{viewerRiderId}: {viewerFiveKm?.energy.toFixed(1)??'—'} energy at 5 km to go · {viewerEnergy.at(-1)?.energy.toFixed(1)??'—'} at 1 km to go · {viewerLine?.energyAtLine.toFixed(1)??'—'} at the line. The line is recorded reserve, not speed.</p>
-          <div className="v91-viewer-track">{coastedViewer.map(checkpoint=><button
+          <div className="v91-viewer-navigation" aria-label="Race checkpoint navigation">
+            <button type="button" aria-label="Previous checkpoint"
+              disabled={!previousCheckpoint}
+              onClick={()=>setCoastedKm(previousCheckpoint.index+1)}>Previous</button>
+            <span>Viewing km {coastedFrame?.km} of {coasted.settings.distanceKm} · swipe cards for more</span>
+            <button type="button" aria-label="Next checkpoint"
+              disabled={!nextCheckpoint}
+              onClick={()=>setCoastedKm(nextCheckpoint.index+1)}>Next</button>
+          </div>
+          <div className="v91-viewer-track" ref={viewerTrackRef}>{coastedViewer.map(checkpoint=><button
             type="button" key={checkpoint.index}
+            data-checkpoint-index={checkpoint.index}
             aria-pressed={coastedKm===checkpoint.index+1}
             onClick={()=>setCoastedKm(checkpoint.index+1)}>
             <strong>Km {checkpoint.km}</strong>

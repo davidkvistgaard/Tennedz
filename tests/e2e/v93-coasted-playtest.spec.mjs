@@ -881,6 +881,13 @@ test('sample race opens the playable setup and links the recorded result',
     const viewer=page.getByLabel('Race viewer');
     await expect(viewer.getByLabel('Recorded race timeline'))
       .toContainText('Race recording begins');
+    await viewer.getByRole('button',{name:'Next checkpoint'}).click();
+    await expect(viewer).toContainText('Viewing km 11 of 40');
+    await expect(viewer.getByLabel('Road groups at km 11')).toBeVisible();
+    await expect.poll(()=>viewer.locator('.v91-viewer-track')
+      .evaluate(element=>element.scrollLeft)).toBeGreaterThan(0);
+    await viewer.getByRole('button',{name:'Previous checkpoint'}).click();
+    await expect(viewer).toContainText('Viewing km 1 of 40');
     expect(await viewer.getByRole('button').count()).toBeGreaterThanOrEqual(5);
     await expect(viewer).toContainText('Km 39');
     await viewer.locator('.v91-viewer-track')
