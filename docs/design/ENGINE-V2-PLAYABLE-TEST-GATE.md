@@ -4335,3 +4335,43 @@ with the `tennedz.eu` alias at release `d804f42dfeed281e322b9153cdbfedd10cbd6867
 `/team/motor-lab` returned HTTP 200, and the checked error/fatal runtime
 window had no logs. The previous deployment
 `dpl_4uu1VcaJxPRtTsNTxGWdZWJYJ1Eg` remains the rollback target.
+
+### Rear front leaver passed late by the bunch (2026-10-24)
+
+The locked `v93-next-contact-four-mixed-4-M-flat-15-2` full 260 km race
+starts its paid finale with `road-1` and `road-3` ahead of the bunch.
+One rider leaves each at 259 km. The rear leaver is still between `road-3`
+and the bunch at 259800 m; the kilometre motor records an unassisted bunch
+pass at 259874.233 m. Its 259900 m and finish passages are behind the
+bunch, while the leading leaver remains between the two front groups.
+
+A new versioned, non-awarding continuation requires that exact order at
+every paid marker, one rear-leaver pass after the 500 m handoff, no other
+contact or group dissolution, and a consistent individual crossing order
+across the four finish bands. It carries each rider's recorded energy and
+individual replay to the line. The front source still lacks the wheel
+order needed for official places and point awards, so those stay withheld.
+Older recordings regenerate under their original versions and an opt-out
+retains the explicit refusal.
+
+The 150-case four-team mixed-tactic audit now completes 140 races, including
+18 newly covered late-pass cases; ten high-fatigue mountain cases still
+explicitly refuse. Both genders, five terrains and varying fatigue are
+represented. This audit is a bounded whole-race check, not unrestricted
+motor completion.
+
+The 54 v93 unit tests, changed-file lint, isolated preview build and 51/51
+preview browser flows passed. The 90-case varied playability matrix again
+completed 90/90 races with 76 read-only point illustrations. Functional
+preview commit `b641afe` was cherry-picked as release
+`31b42e95996f1710ce2e0c0079d4fd3a0f7354d9`; changed-file lint,
+isolated release build and 52/52 release browser flows passed.
+The independent 90-case 20-team long-field stress completed 90/90 with
+no refusal. The full serial unit suite was not rerun.
+
+Production deployment `dpl_2vXKXpMamRDrbu23uo5RUvF1CVJK` reached READY
+with the `tennedz.eu` alias at exact release
+`31b42e95996f1710ce2e0c0079d4fd3a0f7354d9`. `/team/motor-lab`
+returned HTTP 200, and the checked error/fatal runtime window had no
+logs. The previous deployment `dpl_6in9JxRmVELjs25R856ezxbLFak5`
+remains the rollback target.
