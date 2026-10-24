@@ -2,7 +2,8 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {createV93PlayableTest,summarizeV93CoastedPlaytest,
   validateV93CoastedPlaytest,
-  V93_DISSOLVED_LEADING_DROPPED_PLAYTEST_VERSION} from
+  V93_DISSOLVED_LEADING_DROPPED_PLAYTEST_VERSION,
+  V93_DISSOLVED_SINGLE_PLAYTEST_VERSION} from
   '../../lib/engine/v2/playtest-v93-coasted.mjs';
 
 function settings(gender='M',index=0,fatigue=30){
@@ -64,8 +65,9 @@ test('the guarded continuation covers both genders and three whole-race seeds',(
   }
 });
 
-test('nearby lower-fatigue dissolution remains an explicit refusal',()=>{
-  for(const gender of ['M','F'])
-    assert.throws(()=>createV93PlayableTest(settings(gender,0,15)),
-      /recorded group dissolution/);
+test('nearby lower-fatigue dissolution uses the separate single-front path',()=>{
+  for(const gender of ['M','F']){
+    const race=createV93PlayableTest(settings(gender,0,15));
+    assert.equal(race.version,V93_DISSOLVED_SINGLE_PLAYTEST_VERSION);
+  }
 });
