@@ -6,7 +6,7 @@ import {playtestRiderCards} from '../../../lib/engine/v2/playtest-riders.mjs';
 import {summarizePlaytestRaceStory} from
   '../../../lib/engine/v2/playtest-race-story.mjs';
 import {raceViewerCheckpoints,raceViewerEnergySeries,
-  raceViewerBreaksAndChase,raceViewerFinale} from
+  raceViewerBreaksAndChase,raceViewerFinale,raceViewerRoad} from
   '../../../lib/engine/v2/playtest-viewer.mjs';
 
 const DEFAULT_PLANS=['chase','attack','neutral'];
@@ -385,6 +385,8 @@ export default function Playtest(){
   const viewerSelectedEnergy=viewerEnergy[coastedKm-1];
   const viewerBreaks=coasted?raceViewerBreaksAndChase(coasted):null;
   const viewerFinale=coasted?raceViewerFinale(coasted,viewerRiderId):null;
+  const viewerRoad=coasted?raceViewerRoad(coastedFrame,
+    coasted.settings.teamCount*8):[];
   const viewerPlace=coastedProvisionalPlaces.get(viewerRiderId)??
     coastedRoadBounds.get(viewerRiderId);
   const coastedBunchExitCount=(coasted?.unresolvedBunchExits??[])
@@ -1036,6 +1038,17 @@ export default function Playtest(){
               checkpoint.moments.join(' · '):
               `${checkpoint.frontCount} groups ahead${checkpoint.chasing?' · your team chased':''}`}</small>
           </button>)}</div>
+          <div className="v91-viewer-road" aria-label={`Road groups at km ${coastedFrame?.km}`}>
+            <h4>Road at km {coastedFrame?.km}</h4>
+            <p>Groups are ordered from front to back at this recorded checkpoint. Gaps are measured against the bunch.</p>
+            <ol>{viewerRoad.map(band=><li key={band.key}>
+              <strong>{band.label}</strong>
+              <span>{band.riderCount} {band.riderCount===1?'rider':'riders'} · {band.gapSeconds>0?
+                `${band.gapSeconds.toFixed(1)} s ahead`:band.gapSeconds<0?
+                `${Math.abs(band.gapSeconds).toFixed(1)} s behind`:'with the bunch'}</span>
+              {band.ownRiderIds.length>0&&<small>Your riders: {band.ownRiderIds.join(', ')}</small>}
+            </li>)}</ol>
+          </div>
           <div className="v91-viewer-breaks" aria-label="Breakaways and chase">
             <h4>Breakaways and chase</h4>
             <p>Your team chased in {viewerBreaks?.ownChaseKm??0} recorded kilometres; at least one rival chased in {viewerBreaks?.rivalChaseKm??0}. These counts describe the recorded road, not a guarantee that a break was caught.</p>
