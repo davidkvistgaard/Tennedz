@@ -6,7 +6,7 @@ import {summarizePlaytestRaceStory} from
   '../../lib/engine/v2/playtest-race-story.mjs';
 import {raceViewerCheckpoints,raceViewerEnergySeries,
   raceViewerBreaksAndChase,raceViewerFinale,raceViewerRoad,
-  raceViewerLateEffort} from
+  raceViewerLateEffort,raceViewerTimeline} from
   '../../lib/engine/v2/playtest-viewer.mjs';
 
 test('rider guide shows the exact synthetic riders committed to the race',()=>{
@@ -61,6 +61,25 @@ test('late effort snapshot reads the chosen phase and recorded rider road',()=>{
     effort:'hard',atFiveKmEnergy:51,
     atFiveKmRoad:'8.0 s ahead with 1 rider',
     atOneKmEnergy:28,atOneKmRoad:'in the bunch'});
+});
+
+test('viewer timeline reports recorded attacks, chase, road changes and catches',()=>{
+  const base={roadGroups:[],droppedRiders:[],attackAttempts:[],
+    joinedRiderIds:[],caughtRiderIds:[],engagedChaseTeamIds:[]};
+  const frames=[{...base,km:1},
+    {...base,km:2,attackAttempts:['you-2'],engagedChaseTeamIds:['you']},
+    {...base,km:3,roadGroups:[{id:'road-1',riderIds:['you-2']}],
+      joinedRiderIds:['you-2'],engagedChaseTeamIds:['you']},
+    {...base,km:4,caughtRiderIds:['you-2']}];
+  assert.deepEqual(raceViewerTimeline({kilometreFrames:frames}).map(row=>
+    [row.km,row.messages]),[
+    [1,['Race recording begins']],
+    [2,['1 attack attempt: you-2','Your team chased']],
+    [3,['Road changed: 1 front group, 0 riding alone',
+      'you-2 joined a front group']],
+    [4,['Road changed: 0 front groups, 0 riding alone',
+      'you-2 was caught','Your team stopped chasing',
+      'Final kilometre begins']]]);
 });
 
 test('viewer checkpoints keep recorded attack, catch, position and energy',()=>{

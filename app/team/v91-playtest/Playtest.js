@@ -7,7 +7,7 @@ import {summarizePlaytestRaceStory} from
   '../../../lib/engine/v2/playtest-race-story.mjs';
 import {raceViewerCheckpoints,raceViewerEnergySeries,
   raceViewerBreaksAndChase,raceViewerFinale,raceViewerRoad,
-  raceViewerLateEffort} from
+  raceViewerLateEffort,raceViewerTimeline} from
   '../../../lib/engine/v2/playtest-viewer.mjs';
 
 const DEFAULT_PLANS=['chase','attack','neutral'];
@@ -389,6 +389,7 @@ export default function Playtest(){
   const viewerFinale=coasted?raceViewerFinale(coasted,viewerRiderId):null;
   const viewerRoad=coasted?raceViewerRoad(coastedFrame,
     coasted.settings.teamCount*8):[];
+  const viewerTimeline=coasted?raceViewerTimeline(coasted):[];
   const viewerPlace=coastedProvisionalPlaces.get(viewerRiderId)??
     coastedRoadBounds.get(viewerRiderId);
   const coastedBunchExitCount=(coasted?.unresolvedBunchExits??[])
@@ -1040,6 +1041,26 @@ export default function Playtest(){
               checkpoint.moments.join(' · '):
               `${checkpoint.frontCount} groups ahead${checkpoint.chasing?' · your team chased':''}`}</small>
           </button>)}</div>
+          <div className="v91-viewer-timeline" aria-label="Recorded race timeline">
+            <h4>How the race unfolded</h4>
+            <p>These are recorded attacks, joins, catches, chase changes and road changes. Select a moment to inspect its road; a changing group alone does not prove a catch.</p>
+            <ol>{[...viewerTimeline.slice(0,5),
+              ...(viewerTimeline.length>10?viewerTimeline.slice(-5):
+                viewerTimeline.slice(5))].map(moment=><li key={moment.index}>
+              <button type="button" onClick={()=>setCoastedKm(moment.index+1)}
+                aria-pressed={coastedKm===moment.index+1}>
+                <strong>Km {moment.km}</strong>
+                <span>{moment.messages.join(' · ')}</span>
+              </button>
+            </li>)}</ol>
+            {viewerTimeline.length>10&&<details><summary>Show all {viewerTimeline.length} recorded moments</summary>
+              <ol>{viewerTimeline.map(moment=><li key={moment.index}>
+                <button type="button" onClick={()=>setCoastedKm(moment.index+1)}>
+                  <strong>Km {moment.km}</strong> · {moment.messages.join(' · ')}
+                </button>
+              </li>)}</ol>
+            </details>}
+          </div>
           <div className="v91-viewer-road" aria-label={`Road groups at km ${coastedFrame?.km}`}>
             <h4>Road at km {coastedFrame?.km}</h4>
             <p>Groups are ordered from front to back at this recorded checkpoint. Gaps are measured against the bunch.</p>
