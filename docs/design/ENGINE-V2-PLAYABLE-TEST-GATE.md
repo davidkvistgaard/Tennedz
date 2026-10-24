@@ -5437,3 +5437,13 @@ The read-only 20-team `alternate-2` matrix after this change reports
 **20 conditional finishes and zero explicit refusals**. Two use the
 new clean-final version and one uses the new parallel-final version.
 This finite seed matrix does not establish unrestricted motor coverage.
+
+Release verification: the combined English approach trace and bounded
+alternate-seed continuations were pushed as release `bd85658e54f3b766055f92a8b624ca19dfda4cfd`.
+The independent release branch passed nine neighboring whole-race/replay
+tests, changed-file lint, an isolated Next build and four enabled,
+authenticated local browser flows. Production deployment
+`dpl_41GWDKehMNf3BsSRMgttfHT2u5TE` reached READY at that exact SHA with
+the `tennedz.eu` alias; `/team/motor-lab` returned HTTP 200 from its assets
+and checked error/fatal runtime logs were empty. The previous production
+deployment `dpl_HVJ236TLPij3hiqhh6223jtTvq7e` remains the rollback.
