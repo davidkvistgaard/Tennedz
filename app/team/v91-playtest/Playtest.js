@@ -1260,6 +1260,11 @@ export default function Playtest({guided=false}){
               {' '}Their individual travel, energy and
               finish replays are recorded; their places and points remain
               unresolved.</p>
+            {coasted.mixedFrontLeavers.bunchPasses.length===2&&
+              coasted.mixedFrontLeavers.bunchPasses[0].distanceM===
+                coasted.mixedFrontLeavers.bunchPasses[1].distanceM&&
+              <p>Both riders were passed at the same point. Their wheel
+                order remains unresolved.</p>}
             {coasted.mixedFrontLeavers.bunchPasses.map(event=><p
               key={event.riderId}>
               The bunch passed {event.riderId} at
