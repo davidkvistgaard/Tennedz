@@ -22,6 +22,9 @@ import {recordFinaleMixedPost500OutsideLaneLine,
   validateFinaleMixedPost500OutsideLaneLine,
   FINALE_MIXED_POST500_OUTSIDE_LANE_LINE_VERSION} from
   '../../lib/engine/v2/finale-mixed-post500-outside-lane-line.mjs';
+import {recordFinaleMixedStraddlingHandoffAudit,
+  validateFinaleMixedStraddlingHandoffAudit} from
+  '../../lib/engine/v2/finale-mixed-straddling-handoff-audit.mjs';
 import {createV93PlayableTest,validateV93CoastedPlaytest,
   summarizeV93CoastedPlaytest,
   V93_MIXED_THREE_FRONT_POST500_LANES_PLAYTEST_VERSION} from
@@ -194,6 +197,17 @@ test('post-500 outside lanes continue whole races with conditional viewer road',
 
 test('straddling 500 m marker candidates remain unsupported',()=>{
   const tour=recording(20,'F','rolling');
+  const audit=recordFinaleMixedStraddlingHandoffAudit(tour);
+  assert.equal(audit.paidRiderCount,160);
+  assert.equal(audit.handoffRiderEnergy.length,160);
+  assert.equal(audit.beforeHandoff.length,3);
+  assert.equal(audit.afterHandoff.length,4);
+  assert.ok(audit.beforeHandoff.every(row=>row.distanceM<259500));
+  assert.ok(audit.afterHandoff.every(row=>row.distanceM>259500));
+  assert.equal(audit.contactResolved,false);
+  assert.equal(audit.classifiedResults,null);
+  assert.equal(audit.pointsStatus,'withheld');
+  assert.equal(validateFinaleMixedStraddlingHandoffAudit(tour,audit),true);
   assert.throws(()=>
     recordFinaleCoastMixedThreeFrontPost500CandidateClock(tour),
     /paid post-500 m candidate clock/);
