@@ -5258,3 +5258,14 @@ correctly withheld even the illustrative point preview for unresolved
 pre-500 m road contact. These checks show the existing 60/60 result is
 seed-specific; the four new contacts need paid individual geometry before
 they can be offered as finishes.
+
+The read-only `heterogeneous-contact-probe.mjs` now accepts the same
+optional seed suffix. For the four `alternate-1` refusals it found,
+respectively, 7, 5, 13 and 11 possible fresh individual approaches in
+the first 500 m, with no cross-source-front approach under its paid
+longitudinal trace. The 20-team source has two 20-rider surviving road
+groups in each case and 20–33 older dropped riders. These counts do not
+resolve lane occupation or contact response. The 5-approach women's
+mountain/no-fatigue case has no fresh possible final-half approach in the
+candidate line, while the others need separate exact guards and final-half
+checks. The guided result correctly continues to refuse all four.

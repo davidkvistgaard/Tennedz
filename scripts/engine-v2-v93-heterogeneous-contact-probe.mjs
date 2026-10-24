@@ -32,8 +32,10 @@ const teamCount=Number(process.argv[2]??4);
 const gender=process.argv[3]??'M';
 const terrain=process.argv[4]??'flat';
 const fatigue=Number(process.argv[5]??30);
+const seedTag=process.argv[6]??'';
 const settings={distanceKm:260,teamCount,gender,terrain,fatigue,
-  seed:`v93-heterogeneous-${teamCount}-${gender}-${terrain}-${fatigue}`,
+  seed:`v93-heterogeneous-${teamCount}-${gender}-${terrain}-${fatigue}${
+    seedTag?`-${seedTag}`:''}`,
   defaultRivalPlan:'passive',effort:'hard',attack:'repeated',chase:'all',
   managerTactics:Array.from({length:teamCount-1},(_,index)=>({
     effort:['hard','steady','conserve'][index%3],
