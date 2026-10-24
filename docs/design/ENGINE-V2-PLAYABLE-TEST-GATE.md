@@ -5301,3 +5301,19 @@ that deployment. The checked 30-minute error/fatal runtime log was
 empty. Previous production deployment
 `dpl_3Un2pEm2D6GezexsUZwkdcERsDzs` remains rollback. No new full
 repository serial unit or browser-suite pass is claimed.
+
+A separate seven-approach/clean-final recording version now covers the
+alternate 20-team men's mountain/no-fatigue geometry. The paid
+single-source first-half audit locates exactly seven individual
+approaches; the final-half audit finds no fresh approach. Seven road
+passages and all 160 conditional crossings retain rider energy and
+replay, while official places, points and awards remain withheld.
+Disabling this exact version restores the explicit contact refusal.
+The other two alternate-seed geometries still refuse: women's
+mountain/high fatigue needs a separate 13-approach two-front audit, and
+women's exposed/high fatigue has 11 first-half plus one final-half
+approach. Neither can inherit the seven-plus-zero guard. Three focused
+whole-race/refusal/replay tests, changed-file lint, an isolated preview
+Next build and a targeted authenticated API/viewer browser flow passed.
+This increment is preview-only until independently verified on the
+release branch and production deployment.
