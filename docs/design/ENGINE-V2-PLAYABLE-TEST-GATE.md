@@ -4931,7 +4931,11 @@ audit found two later fresh bunch-rider approaches in each source, around
 259918 and 259944 m. It now splits the paid movement and energy of both
 riders at each exact 2.5 m approach and guards this two-event geometry.
 These inferred outside-lane events do not resolve occupied-wheel order
-or the post-approach response. The 120-rider diagnostic line therefore
-cannot yet be routed into the game, and the old playtest continues to
-refuse. Three neighboring whole-race tests and changed-file lint passed.
+or the post-approach response. A separate versioned INTERNAL result now
+joins the seven paid road boundaries, 500 m handoff, three exact approach
+audits, 120 conditional crossings, energy and replay under strict
+15-team geometry guards. It withholds classified results, policy points
+and awards. It is not yet routed into the guided game; the old playtest
+continues to refuse. Three neighboring whole-race tests and changed-file
+lint passed.
 These are source-wheel encounters, not road-group marker crossings.

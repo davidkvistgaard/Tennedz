@@ -32,6 +32,9 @@ import {recordFinaleMixedTwoFrontDroppedFinal500Audit,
 import {recordFinaleMixedTwoFrontDroppedResult,
   validateFinaleMixedTwoFrontDroppedResult} from
   '../../lib/engine/v2/finale-mixed-two-front-dropped-result.mjs';
+import {recordFinaleMixedTwoFrontDroppedFreshResult,
+  validateFinaleMixedTwoFrontDroppedFreshResult} from
+  '../../lib/engine/v2/finale-mixed-two-front-dropped-fresh-result.mjs';
 
 function settingsFor(teamCount,gender,terrain,fatigue){
   return {distanceKm:260,teamCount,gender,terrain,fatigue,
@@ -242,6 +245,13 @@ test('15-team fresh source-wheel approach is paid but remains internal',()=>{
         assert.ok(Math.abs(row.energyAfter-energy)<1e-7);
       }
     }
+    const candidate=recordFinaleMixedTwoFrontDroppedFreshResult(recording);
+    assert.equal(candidate.line.conditionalCrossings.length,120);
+    assert.equal(candidate.clock.passageFrames.length,7);
+    assert.equal(candidate.classifiedResults,null);
+    assert.equal(candidate.pointsStatus,'withheld');
+    assert.equal(validateFinaleMixedTwoFrontDroppedFreshResult(recording,
+      {},candidate),true);
     assert.throws(()=>recordFinaleMixedTwoFrontDroppedPre500Audit(
       recording,clock,line),/new unpaid approach/);
     assert.throws(()=>createV93PlayableTest(settings),
