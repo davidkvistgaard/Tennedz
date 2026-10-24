@@ -4203,3 +4203,26 @@ isolated release build and 48/48 release browser flows. Exact release commit
 `/team/motor-lab` returned HTTP 200 and the checked ten-minute runtime
 window had no error/fatal logs. Previous deployment
 `dpl_DpBQZWMGnAZWXnsW3wP9Pg4w48Qf` remains the rollback target.
+
+### Mixed five-kilometre orders: unresolved front contact (2026-10-24)
+
+The synthetic 48-race audit in
+`scripts/engine-v2-v93-mixed-late-contact-audit.mjs` varies four or
+fifteen teams, both genders, rolling/mountain/exposed terrain, fatigue
+0/30, two seeds, alternating rival tactics and opposing final-five-kilometre
+efforts. Thirty-six races finish conditionally; twelve four-team races
+explicitly refuse a depleted front dissolution at the 259 km boundary.
+The refusal is a correct safeguard, not an individual result.
+
+Pinned `v93-mixed-late-4-M-rolling-30-0` has four exhausted leaders in
+`road-1` and one surviving rider in `road-2` at 259 km. The paid trace
+dissolves `road-1` into four isolated riders while `road-2` survives.
+At 259500 m those isolated passages are about 10 seconds ahead of
+`road-2`; by 259700 m some have passed its passage time. The trace only
+records `no_contact_in_slice` against the bunch, so it cannot settle
+this isolated-to-front encounter. The existing leading-dissolution guard
+requires the isolated riders to stay ahead of the surviving front at
+every marker and refuses this road. A three-front variant,
+`v93-mixed-late-4-M-mountain-0-0`, also refuses. A future continuation
+must locate and pay the first rider-to-front contact before carrying
+energy, road bands, individual finish, replay and any point illustration.
