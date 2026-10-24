@@ -10,8 +10,11 @@ import {recordFinaleCoastMixedTwoFrontDroppedClock} from
   '../lib/engine/v2/finale-separated-last-km.mjs';
 import {recordFinaleCoastedIndividualLine} from
   '../lib/engine/v2/finale-depleted-individual-line.mjs';
-import {recordFinaleMixedTwoFrontDroppedPre500Audit} from
+import {recordFinaleMixedTwoFrontDroppedPre500Audit,
+  recordFinaleMixedTwoFrontDroppedFreshPre500Audit} from
   '../lib/engine/v2/finale-mixed-two-front-dropped-pre500-audit.mjs';
+import {recordFinaleMixedTwoFrontDroppedFreshFinal500Audit} from
+  '../lib/engine/v2/finale-mixed-two-front-dropped-final500-audit.mjs';
 import {recordFinaleAllBandOverlapAudit,
   recordFinaleUnorderedBandOverlapAudit} from
   '../lib/engine/v2/finale-multiband-overlap-audit.mjs';
@@ -194,7 +197,36 @@ try{const clock=recordFinaleCoastMixedTwoFrontDroppedClock(recording);
       candidate.pre500Audit={status:audit.status,
         sourceAdjacentPairs:audit.sourceAdjacentPairs,
         paidRiderCount:audit.paidRiderCount};}
-    catch(error){candidate.pre500Audit={reason:error.message};}}
+    catch(error){
+      candidate.pre500Audit={reason:error.message};
+      if(teamCount===15){
+        try{
+          const fresh=recordFinaleMixedTwoFrontDroppedFreshPre500Audit(
+            recording,clock,line);
+          candidate.freshPre500Audit={status:fresh.status,
+            firstFreshApproach:{
+              firstRiderId:fresh.firstFreshApproach.firstRiderId,
+              secondRiderId:fresh.firstFreshApproach.secondRiderId,
+              firstWheelM:fresh.firstFreshApproach.firstWheelM,
+              secondWheelM:fresh.firstFreshApproach.secondWheelM,
+              firstEnergy:fresh.firstFreshApproach.firstEnergy,
+              secondEnergy:fresh.firstFreshApproach.secondEnergy}};
+          try{const final=recordFinaleMixedTwoFrontDroppedFreshFinal500Audit(
+            recording,clock,line,fresh);
+            candidate.freshFinal500Audit={status:final.status,
+              freshApproaches:final.freshApproaches.map(row=>({
+                firstRiderId:row.firstRiderId,
+                secondRiderId:row.secondRiderId,
+                elapsedSecondsFromLastKmStart:
+                  row.elapsedSecondsFromLastKmStart,
+                firstWheelM:row.firstWheelM,
+                secondWheelM:row.secondWheelM,
+                firstEnergy:row.firstEnergy,
+                secondEnergy:row.secondEnergy}))};}
+          catch(reason){candidate.freshFinal500Audit={reason:reason.message};}
+        }catch(reason){candidate.freshPre500Audit={reason:reason.message};}
+      }
+    }}
   catch(error){candidate.line={reason:error.message};}}
 catch(error){candidate={reason:error.message};}
 const groupTimes=new Map(source.roadGroups.map(row=>[row.id,

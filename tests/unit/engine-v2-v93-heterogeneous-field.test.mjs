@@ -26,6 +26,7 @@ import {recordFinaleMixedTwoFrontDroppedPre500Audit,
   '../../lib/engine/v2/finale-mixed-two-front-dropped-pre500-audit.mjs';
 import {recordFinaleMixedTwoFrontDroppedFinal500Audit,
   recordFinaleMixedTwoFrontDroppedFreshFinal500Audit,
+  FINALE_MIXED_TWO_FRONT_DROPPED_FRESH_FINAL500_AUDIT_VERSION,
   validateFinaleMixedTwoFrontDroppedFinal500Audit} from
   '../../lib/engine/v2/finale-mixed-two-front-dropped-final500-audit.mjs';
 import {recordFinaleMixedTwoFrontDroppedResult,
@@ -222,9 +223,25 @@ test('15-team fresh source-wheel approach is paid but remains internal',()=>{
     assert.equal(audit.contactResolved,false);
     assert.equal(audit.classifiedResults,null);
     assert.equal(audit.pointsStatus,'withheld');
-    assert.throws(()=>
-      recordFinaleMixedTwoFrontDroppedFreshFinal500Audit(recording,clock,
-        line,audit),/final wheels have a new unpaid approach/);
+    const finalAudit=recordFinaleMixedTwoFrontDroppedFreshFinal500Audit(
+      recording,clock,line,audit);
+    assert.equal(finalAudit.version,
+      FINALE_MIXED_TWO_FRONT_DROPPED_FRESH_FINAL500_AUDIT_VERSION);
+    assert.equal(finalAudit.paidRiderCount,120);
+    assert.equal(finalAudit.freshApproaches.length,2);
+    assert.ok(finalAudit.freshApproaches[0]
+      .elapsedSecondsFromLastKmStart<finalAudit.freshApproaches[1]
+      .elapsedSecondsFromLastKmStart);
+    assert.equal(finalAudit.contactResolved,false);
+    for(const event of finalAudit.freshApproaches){
+      assert.ok(Math.abs(event.firstWheelM-event.secondWheelM-2.5)<1e-7);
+      assert.ok(event.firstWheelM>259500);
+      for(const [key,energy] of [
+        ['first',event.firstEnergy],['second',event.secondEnergy]]){
+        const row=event.paidSplit[key].frames.at(-1).riders[0];
+        assert.ok(Math.abs(row.energyAfter-energy)<1e-7);
+      }
+    }
     assert.throws(()=>recordFinaleMixedTwoFrontDroppedPre500Audit(
       recording,clock,line),/new unpaid approach/);
     assert.throws(()=>createV93PlayableTest(settings),
