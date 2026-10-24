@@ -13,6 +13,8 @@ import {createV93PlayableTest} from
   '../lib/engine/v2/playtest-v93-coasted.mjs';
 import {recordFinaleCoastMixedThreeFrontDroppedClock} from
   '../lib/engine/v2/finale-separated-last-km.mjs';
+import {auditDissolvedFrontPaidContact} from
+  '../lib/engine/v2/finale-dissolved-front-paid-contact.mjs';
 
 const teamCount=Number(process.argv[2]??15);
 const gender=process.argv[3]??'M';
@@ -38,6 +40,7 @@ const source=finaleSnapshotFromTour(recording,{remainingKm:1,
   includeAttackLoad:true});
 const trace=probeFinaleSeparatedGroupsFromTour(recording,{
   version:FINALE_COAST_DYNAMIC_FRONT_LAST_KM_VERSION});
+const paidContact=auditDissolvedFrontPaidContact(trace);
 let refusal=null;
 try{createV93PlayableTest(settings);}
 catch(error){refusal={message:error.message,
@@ -104,4 +107,8 @@ console.log(JSON.stringify({seed:settings.seed,refusal,candidate,
   sourceGroups:source.roadGroups.map(group=>({id:group.id,
     count:group.riderIds.length,gapSeconds:group.gapSeconds})),
   priorDropped:source.droppedRiderIds.length,possibleFrontOverlaps,
+  paidSplits:paidContact.encounters.map(row=>({riderId:row.riderId,
+    activeBandId:row.activeBandId,distanceM:row.distanceM,
+    energyAtContact:row.split.solo.energyAtContact,
+    contactResolved:paidContact.contactResolved})),
   passages},null,2));

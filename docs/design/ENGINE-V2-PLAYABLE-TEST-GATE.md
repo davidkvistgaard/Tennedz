@@ -4533,3 +4533,15 @@ movement at each first encounter with `road-2`, account for the older
 rear riders, and reconcile road groups, energy, 500 m handoff, individual
 crossings and replay. It must retain an explicit refusal wherever that
 contact cannot be paid. No code from this audit was deployed.
+
+The existing paid contact audit splits each constant-pace solo and
+`road-2` movement at the same marker and verifies continuous energy, but
+deliberately leaves occupied-wheel contact unresolved. It locates all
+seven first-front leavers in the locked 20-team men's mountain source at
+259486.358–259490.247 m, and the women's mountain source at
+259487.554–259491.463 m. The 20-team men's rolling source likewise
+passes `road-2` at 259492.284–259496.328 m. These three complete
+encounter sets precede the paid 500 m handoff and form a bounded first
+continuation target. The 20-team women's rolling set straddles the
+handoff, while all 15-team rolling/mountain sets occur later; they must
+keep refusing until a separate post-handoff rule can reconcile them.
