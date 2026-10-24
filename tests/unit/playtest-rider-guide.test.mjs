@@ -70,6 +70,10 @@ test('late effort takeaway only isolates matching plans and finisher',()=>{
     energyAtLine:39,place:'13'};
   assert.equal(raceViewerEffortInsight(before,after),
     'Only your 5 km effort changed. In the current run, you-7 had 9.0 less energy at the line and conditional place 13 instead of 12.');
+  assert.match(raceViewerEffortInsight(before,{...after,place:'12'}),
+    /hard spent more energy without improving the conditional place/);
+  assert.doesNotMatch(raceViewerEffortInsight({...before,place:null},
+    {...after,place:null}),/without improving/);
   assert.match(raceViewerEffortInsight(before,{...after,
     planWithoutLateEffort:'changed'}),/do not isolate/);
   assert.match(raceViewerEffortInsight(before,{...after,
