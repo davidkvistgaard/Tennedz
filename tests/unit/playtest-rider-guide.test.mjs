@@ -307,3 +307,17 @@ test('race story only names events and positions present in the recording',()=>{
     'With 1 km to go, your team had no rider in a front group.',
     'With 1 km to go, you-7 was in the bunch with 46.1 of 100 energy remaining.']);
 });
+
+test('race story keeps different riders recorded first moments in road order',()=>{
+  const race={kilometreFrames:[
+    {km:8,attackAttempts:[],joinedRiderIds:[],
+      caughtRiderIds:['you-1']},
+    {km:12,attackAttempts:['you-2'],joinedRiderIds:[],
+      caughtRiderIds:[]},
+    {km:13,attackAttempts:[],joinedRiderIds:['you-2'],
+      caughtRiderIds:[],roadGroups:[],droppedRiders:[],ownRiders:[]}]};
+  assert.deepEqual(summarizePlaytestRaceStory(race).slice(0,3),[
+    'Km 8: you-1 was caught.',
+    'Km 12: you-2 attempted an attack.',
+    'Km 13: you-2 joined a front group.']);
+});
