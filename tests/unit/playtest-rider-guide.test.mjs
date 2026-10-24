@@ -5,7 +5,7 @@ import {playtestRiderCards} from '../../lib/engine/v2/playtest-riders.mjs';
 import {summarizePlaytestRaceStory} from
   '../../lib/engine/v2/playtest-race-story.mjs';
 import {raceViewerCheckpoints,raceViewerEnergySeries,
-  raceViewerBreaksAndChase,raceViewerFinale} from
+  raceViewerBreaksAndChase,raceViewerFinale,raceViewerRoad} from
   '../../lib/engine/v2/playtest-viewer.mjs';
 
 test('rider guide shows the exact synthetic riders committed to the race',()=>{
@@ -32,6 +32,20 @@ test('viewer finale uses only the selected rider paid 500 m and line state',()=>
     roadBandId:'peloton'});
   race.bandReplays[0].frames[0].startDistanceM=39600;
   assert.equal(raceViewerFinale(race,'you-7').at500Energy,null);
+});
+
+test('viewer road orders recorded fronts, solo riders and bunch without losing riders',()=>{
+  const frame={roadGroups:[
+    {id:'road-1',gapSeconds:12.5,riderIds:['you-2','rival-1-0']},
+    {id:'road-2',gapSeconds:4,riderIds:['rival-2-0']}],
+  droppedRiders:[{riderId:'you-3',deficitSeconds:3.2}],
+  ownRiders:Array.from({length:8},(_,index)=>({riderId:`you-${index}`}))};
+  const road=raceViewerRoad(frame,32);
+  assert.deepEqual(road.map(row=>[row.label,row.riderCount,row.gapSeconds]),[
+    ['Front group 1',2,12.5],['Front group 2',1,4],
+    ['Bunch',28,0],['you-3 riding alone',1,-3.2]]);
+  assert.deepEqual(road.map(row=>row.ownRiderIds),[
+    ['you-2'],[],['you-0','you-1','you-4','you-5','you-6','you-7'],['you-3']]);
 });
 
 test('viewer checkpoints keep recorded attack, catch, position and energy',()=>{
