@@ -5,7 +5,7 @@ import {playtestRiderCards} from '../../lib/engine/v2/playtest-riders.mjs';
 import {summarizePlaytestRaceStory} from
   '../../lib/engine/v2/playtest-race-story.mjs';
 import {raceViewerCheckpoints,raceViewerEnergySeries,
-  raceViewerBreaksAndChase} from
+  raceViewerBreaksAndChase,raceViewerFinale} from
   '../../lib/engine/v2/playtest-viewer.mjs';
 
 test('rider guide shows the exact synthetic riders committed to the race',()=>{
@@ -16,6 +16,22 @@ test('rider guide shows the exact synthetic riders committed to the race',()=>{
   }
   assert.equal(prepared.teams[0].riders[7].sprint,100);
   assert.equal(prepared.teams[0].riders[6].mountain,94);
+});
+
+test('viewer finale uses only the selected rider paid 500 m and line state',()=>{
+  const race={settings:{distanceKm:40},
+    kilometreFrames:[{ownRiders:[{riderId:'you-7',energy:65}]}],
+    bandReplays:[{id:'peloton',riderIds:['you-7'],
+      passageAt500Seconds:44,frames:[{startDistanceM:39500,
+        riders:[{riderId:'you-7',energyAtDecision:60,role:'sheltered'}]}]}],
+    lineTimes:[{riderId:'you-7',energyAtLine:48,
+      elapsedSecondsFromLastKmStart:87}]};
+  assert.deepEqual(raceViewerFinale(race,'you-7'),{
+    atOneKmEnergy:65,at500Energy:60,at500Role:'sheltered',
+    at500Seconds:44,atLineEnergy:48,atLineSeconds:87,
+    roadBandId:'peloton'});
+  race.bandReplays[0].frames[0].startDistanceM=39600;
+  assert.equal(raceViewerFinale(race,'you-7').at500Energy,null);
 });
 
 test('viewer checkpoints keep recorded attack, catch, position and energy',()=>{
