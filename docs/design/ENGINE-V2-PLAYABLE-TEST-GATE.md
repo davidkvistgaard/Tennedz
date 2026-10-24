@@ -4757,3 +4757,10 @@ paid final contact also moves the energy graph to its 1 km source before
 opening the contact's final-road boundary. The locked 260 km browser flow
 checks the complete path from following `you-1` to that contact; changed-file
 lint, isolated build and the focused browser flow passed.
+
+The selected rider's energy curve now extends from the kilometre recording
+to the paid individual line when that line exists. It does not draw a line
+point for a road-only preview. A focused unit test checks both cases;
+changed-file lint, an isolated build and short/long local browser flows
+passed. This makes the energy spent in the last kilometre visible in the
+same curve used to inspect the 5 km effort choice.

@@ -5,6 +5,7 @@ import {playtestRiderCards} from '../../lib/engine/v2/playtest-riders.mjs';
 import {summarizePlaytestRaceStory} from
   '../../lib/engine/v2/playtest-race-story.mjs';
 import {raceViewerCheckpoints,raceViewerEnergySeries,
+  raceViewerEnergyCurve,
   raceViewerBreaksAndChase,raceViewerFinale,raceViewerRoad,
   raceViewerLateEffort,raceViewerLateTeamWork,
   raceViewerEffortInsight,raceViewerTimeline} from
@@ -193,6 +194,18 @@ test('viewer checkpoints keep recorded attack, catch, position and energy',()=>{
   assert.deepEqual(breaks.riders,[{riderId:'you-2',events:[
     'km 3: tried to attack','km 4: joined a break','km 8: was caught'],
   fate:'Caught at km 8',firstKm:3,atOneKm:'in the bunch'}]);
+});
+
+test('viewer energy curve reaches only a paid individual line',()=>{
+  const race={settings:{distanceKm:3},kilometreFrames:[
+    {km:1,ownRiders:[{riderId:'you-7',energy:88}]},
+    {km:2,ownRiders:[{riderId:'you-7',energy:74}]}],
+  lineTimes:[{riderId:'you-7',energyAtLine:42}]};
+  assert.deepEqual(raceViewerEnergyCurve(race,'you-7'),[
+    {km:1,energy:88},{km:2,energy:74},
+    {km:3,energy:42,line:true}]);
+  assert.deepEqual(raceViewerEnergyCurve({...race,lineTimes:null},'you-7'),[
+    {km:1,energy:88},{km:2,energy:74}]);
 });
 
 test('breakaway fate requires a recorded join, catch or clear finish road',()=>{

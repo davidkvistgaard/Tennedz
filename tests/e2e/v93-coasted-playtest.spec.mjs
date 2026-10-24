@@ -171,7 +171,8 @@ test('mixed front exits reach the conditional finish and rider replay',
     await expect(raceViewer.getByLabel('Road groups at km 259'))
       .toContainText('Front group 1');
     await expect(raceViewer.getByRole('img',{
-      name:'you-7 energy by recorded kilometre'})).toBeVisible();
+      name:'you-7 energy by recorded kilometre and at the line'}))
+      .toBeVisible();
     const note=page.getByRole('note',{name:'Mixed front exits'});
     await expect(note).toContainText('riders left road-1 and stayed ahead');
     await expect(note).toContainText('The bunch passed rival-2-6');
@@ -1018,7 +1019,15 @@ test('sample race opens the playable setup and links the recorded result',
       .find(frame=>frame.km===35).ownRiders.find(row=>
         row.riderId==='you-0').energy.toFixed(1)} energy at 5 km to go`);
     await expect(viewer.getByRole('img',{
-      name:'you-0 energy by recorded kilometre'})).toBeVisible();
+      name:'you-0 energy by recorded kilometre and at the line'}))
+      .toBeVisible();
+    const energyPoints=await viewer.getByRole('img',{
+      name:'you-0 energy by recorded kilometre and at the line'})
+      .locator('polyline').getAttribute('points');
+    const lineEnergy=coasted.lineTimes.find(row=>
+      row.riderId==='you-0').energyAtLine;
+    expect(energyPoints.trim().split(' ').at(-1))
+      .toBe(`580,${120-lineEnergy}`);
     await expect(viewer.getByLabel('Breakaways and chase'))
       .toContainText('recorded kilometres');
     const ownBand=coasted.bandReplays.find(band=>
