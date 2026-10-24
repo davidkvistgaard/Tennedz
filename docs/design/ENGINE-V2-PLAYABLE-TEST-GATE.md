@@ -5269,3 +5269,23 @@ resolve lane occupation or contact response. The 5-approach women's
 mountain/no-fatigue case has no fresh possible final-half approach in the
 candidate line, while the others need separate exact guards and final-half
 checks. The guided result correctly continues to refuse all four.
+
+A separate opt-in five-approach/clean-final version now continues
+the alternate 20-team women's mountain/no-fatigue geometry. The five
+first-half source-wheel approaches are paid and audited; no fresh
+individual approach occurs in the final 500 m. All 160 riders have
+conditional crossings and replay through seven paid road passages, with
+energy continuity checked at the 500 m handoff. Occupied-wheel response
+remains inferred and official places, points and awards are withheld.
+Disabling this new version retains the former refusal. The other three
+alternate-seed refusals remain explicit. Focused whole-race/replay and
+opt-out unit tests, changed-file lint, an isolated preview Next build,
+and a targeted authenticated API/viewer browser flow passed. This is
+bounded evidence, not unrestricted motor completion.
+
+The complete 60-case `alternate-1` matrix after this version reports
+**57 conditional finishes and three explicit refusals**. The three
+remaining sources are 20-team men's mountain/no fatigue, women's
+mountain/high fatigue, and women's exposed/high fatigue. No other seed
+in this bounded alternate matrix changed outcome. The existing
+many-approach mountain whole-race/replay regression also passed.
