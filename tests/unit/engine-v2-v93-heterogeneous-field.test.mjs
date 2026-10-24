@@ -23,6 +23,8 @@ import {recordFinaleCoastedIndividualLine} from
   '../../lib/engine/v2/finale-depleted-individual-line.mjs';
 import {recordFinaleMixedTwoFrontDroppedPre500Audit,
   recordFinaleMixedTwoFrontDroppedFreshPre500Audit,
+  recordFinaleMixedTwoFrontDroppedManyPre500Audit,
+  FINALE_MIXED_TWO_FRONT_DROPPED_MANY_PRE500_AUDIT_VERSION,
   FINALE_MIXED_TWO_FRONT_DROPPED_FRESH_PRE500_AUDIT_VERSION,
   validateFinaleMixedTwoFrontDroppedPre500Audit} from
   '../../lib/engine/v2/finale-mixed-two-front-dropped-pre500-audit.mjs';
@@ -30,6 +32,8 @@ import {recordFinaleMixedTwoFrontDroppedFinal500Audit,
   recordFinaleMixedTwoFrontDroppedFreshFinal500Audit,
   recordFinaleMixedTwoFrontDroppedManyFinal500Audit,
   recordFinaleMixedTwoFrontDroppedFreshPre500ManyFinal500Audit,
+  recordFinaleMixedTwoFrontDroppedManyPre500Final500Audit,
+  FINALE_MIXED_TWO_FRONT_DROPPED_MANY_PRE500_FINAL500_AUDIT_VERSION,
   FINALE_MIXED_TWO_FRONT_DROPPED_MANY_FINAL500_AUDIT_VERSION,
   FINALE_MIXED_TWO_FRONT_DROPPED_FRESH_FINAL500_AUDIT_VERSION,
   validateFinaleMixedTwoFrontDroppedFinal500Audit} from
@@ -68,6 +72,83 @@ function recordingFor(settings){
   return simulateTacticalTour({stage,weather,teams,seed,
     motorVersion:MOTOR_EXHAUSTION_COAST_VERSION});
 }
+
+test('20-team mountain keeps many paid first-half wheel approaches internal',
+  ()=>{
+    const settings=settingsFor(20,'F','mountain',0);
+    const recording=recordingFor(settings);
+    const clock=recordFinaleCoastMixedTwoFrontDroppedClock(recording);
+    const line=recordFinaleCoastedIndividualLine(recording,clock);
+    assert.throws(()=>recordFinaleMixedTwoFrontDroppedPre500Audit(
+      recording,clock,line),/new unpaid approach/);
+    const audit=recordFinaleMixedTwoFrontDroppedManyPre500Audit(
+      recording,clock,line);
+    assert.equal(audit.version,
+      FINALE_MIXED_TWO_FRONT_DROPPED_MANY_PRE500_AUDIT_VERSION);
+    assert.equal(audit.paidRiderCount,160);
+    assert.equal(audit.freshApproaches.length,5);
+    assert.deepEqual(audit.freshApproaches.map(row=>[
+      row.firstRiderId,row.secondRiderId]),[
+      ['rival-4-5','rival-17-7'],
+      ['you-5','rival-15-7'],
+      ['rival-16-5','rival-15-7'],
+      ['rival-10-5','rival-15-7'],
+      ['rival-4-5','rival-15-7']]);
+    assert.ok(audit.freshApproaches.every(row=>
+      row.firstEnergy===0&&row.secondEnergy>0&&
+      Math.abs(Math.abs(row.firstWheelM-row.secondWheelM)-2.5)<1e-7&&
+      Math.abs(row.paidSplit.first.frames.at(-1).riders[0].energyAfter-
+        row.firstEnergy)<1e-7&&
+      Math.abs(row.paidSplit.second.frames.at(-1).riders[0].energyAfter-
+        row.secondEnergy)<1e-7&&row.contactResolved===false));
+    assert.equal(audit.contactResolved,false);
+    assert.equal(audit.classifiedResults,null);
+    assert.equal(audit.pointsStatus,'withheld');
+    assert.equal(audit.canCommitAwards,false);
+    const final=recordFinaleMixedTwoFrontDroppedManyPre500Final500Audit(
+      recording,clock,line,audit);
+    assert.equal(final.version,
+      FINALE_MIXED_TWO_FRONT_DROPPED_MANY_PRE500_FINAL500_AUDIT_VERSION);
+    assert.equal(final.paidRiderCount,160);
+    assert.equal(final.freshApproaches.length,1);
+    assert.equal(final.freshApproaches[0].firstRiderId,'rival-5-7');
+    assert.equal(final.freshApproaches[0].secondRiderId,'rival-15-7');
+    assert.ok(Math.abs(final.freshApproaches[0].firstWheelM-
+      259811.80661707695)<1e-6);
+    assert.ok(Math.abs(final.freshApproaches[0].paidSplit.first.frames
+      .at(-1).riders[0].energyAfter-
+      final.freshApproaches[0].firstEnergy)<1e-7);
+    assert.equal(final.contactResolved,false);
+    assert.equal(final.classifiedResults,null);
+    assert.equal(final.pointsStatus,'withheld');
+    assert.equal(final.canCommitAwards,false);
+    const at500=new Map(clock.trace.frames.find(frame=>
+      frame.endDistanceM===259500).riders.map(row=>[
+      row.riderId,row.energy]));
+    const finishers=line.bandRunners.flatMap(band=>band.runner.finishers);
+    assert.equal(line.conditionalCrossings.length,160);
+    assert.equal(new Set(finishers.map(row=>row.riderId)).size,160);
+    assert.ok(line.bandRunners.flatMap(band=>band.runner.frames[0].riders)
+      .every(row=>Math.abs(row.energyAtDecision-
+        at500.get(row.riderId))<1e-7));
+    assert.equal(validateFinaleCoastMixedTwoFrontDroppedClock(
+      recording,clock),true);
+    assert.throws(()=>createV93PlayableTest(settings),
+      /The depleted line bands crossed without contact/);
+    const maleSettings=settingsFor(20,'M','mountain',0);
+    const male=recordingFor(maleSettings);
+    const maleClock=recordFinaleCoastMixedTwoFrontDroppedClock(male);
+    const maleLine=recordFinaleCoastedIndividualLine(male,maleClock);
+    const malePre500=recordFinaleMixedTwoFrontDroppedManyPre500Audit(
+      male,maleClock,maleLine);
+    const maleFinal500=recordFinaleMixedTwoFrontDroppedManyPre500Final500Audit(
+      male,maleClock,maleLine,malePre500);
+    assert.equal(malePre500.freshApproaches.length,10);
+    assert.equal(maleFinal500.paidRiderCount,160);
+    assert.equal(maleFinal500.contactResolved,false);
+    assert.throws(()=>createV93PlayableTest(maleSettings),
+      /The depleted line bands crossed without contact/);
+  });
 
 test('15-team mountain final approaches remain an internal paid audit',()=>{
   for(const [gender,fatigue] of [['M',0],['F',30]]){
