@@ -4701,3 +4701,14 @@ effort choices and the opt-out. Nearby 40 km races across both genders and
 flat, rolling and custom terrain also reach 32 conditional lines; mountain
 and exposed versions still refuse explicitly. This is a guarded contact
 case, not unrestricted final-kilometre completion or an official placing.
+
+The adjacent `steady` mountain and exposed sources are different from that
+paid flat contact. In both genders the road-group catch lands within the
+first 250 m (39,096.793 m mountain; 39,236.332 m exposed), and the inferred
+lead wheels in the front and bunch share a lane with **less than one 2.5 m
+wheel spacing already at the 39 km source**. Thus the source itself has no
+separated occupied wheels to advance into a first contact. The pinned
+whole-race test verifies this geometry and the explicit `unpaid_front_catch`
+refusal with no individual line. A future continuation must reconcile the
+earlier kilometre's occupied positions rather than reuse the later split
+contact path or manufacture a catch at the first 250 m marker.
