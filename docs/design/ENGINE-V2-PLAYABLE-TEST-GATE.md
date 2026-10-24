@@ -4922,5 +4922,10 @@ exhausted rider has 0 energy in both, while the approaching rider has
 28.325 (men) or 5.736 (women). The diagnostic now splits both paid
 movements and energies at that instant. Occupied lane and post-approach
 response remain unresolved, so both whole races still explicitly refuse
-and have no user-facing line or point award. This is a source-wheel
-encounter, not a road-group marker crossing.
+and have no user-facing line or point award. A separate versioned
+internal audit now accepts exactly one fresh same-source approach in a
+15-team source, splits both riders' paid position and energy, verifies
+all 120 riders' 500 m handoff and conditional line energy, but does not
+authorize a guided result. Three neighboring whole-race tests and
+changed-file lint passed. This is a source-wheel encounter, not a
+road-group marker crossing.

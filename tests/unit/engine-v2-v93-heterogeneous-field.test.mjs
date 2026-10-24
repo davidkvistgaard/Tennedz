@@ -20,6 +20,8 @@ import {recordFinaleCoastMixedTwoFrontDroppedClock,
 import {recordFinaleCoastedIndividualLine} from
   '../../lib/engine/v2/finale-depleted-individual-line.mjs';
 import {recordFinaleMixedTwoFrontDroppedPre500Audit,
+  recordFinaleMixedTwoFrontDroppedFreshPre500Audit,
+  FINALE_MIXED_TWO_FRONT_DROPPED_FRESH_PRE500_AUDIT_VERSION,
   validateFinaleMixedTwoFrontDroppedPre500Audit} from
   '../../lib/engine/v2/finale-mixed-two-front-dropped-pre500-audit.mjs';
 import {recordFinaleMixedTwoFrontDroppedFinal500Audit,
@@ -184,4 +186,44 @@ test('nearby genders stay bounded and a fresh approach is refused',()=>{
     largeClock,largeLine),/new unpaid approach/);
   assert.throws(()=>recordFinaleMixedTwoFrontDroppedResult(large),
     /new unpaid approach/);
+});
+
+test('15-team fresh source-wheel approach is paid but remains internal',()=>{
+  for(const [gender,behindId,behindEnergy] of [
+    ['M','rival-9-7',28.324971361861888],
+    ['F','rival-5-7',5.735971361105568]]){
+    const settings=settingsFor(15,gender,'flat',30);
+    const recording=recordingFor(settings);
+    const clock=recordFinaleCoastMixedTwoFrontDroppedClock(recording);
+    const line=recordFinaleCoastedIndividualLine(recording,clock);
+    assert.equal(line.conditionalCrossings.length,120);
+    const audit=recordFinaleMixedTwoFrontDroppedFreshPre500Audit(
+      recording,clock,line);
+    const approach=audit.firstFreshApproach;
+    assert.equal(audit.version,
+      FINALE_MIXED_TWO_FRONT_DROPPED_FRESH_PRE500_AUDIT_VERSION);
+    assert.equal(audit.paidRiderCount,120);
+    assert.equal(approach.firstRiderId,'rival-10-5');
+    assert.equal(approach.secondRiderId,behindId);
+    assert.ok(Math.abs(approach.firstWheelM-
+      approach.secondWheelM-2.5)<1e-7);
+    assert.equal(approach.firstEnergy,0);
+    assert.ok(Math.abs(approach.secondEnergy-behindEnergy)<1e-7);
+    for(const [key,energy,position] of [
+      ['first',approach.firstEnergy,approach.firstWheelM],
+      ['second',approach.secondEnergy,approach.secondWheelM]]){
+      const row=approach.paidSplit[key].frames.at(-1).riders[0];
+      assert.ok(Math.abs(row.positionM-position)<1e-7);
+      assert.ok(Math.abs(row.energyAfter-energy)<1e-7);
+      assert.ok(Math.abs(row.energyAtDecision-row.energySpent-
+        row.energyAfter)<1e-7);
+    }
+    assert.equal(audit.contactResolved,false);
+    assert.equal(audit.classifiedResults,null);
+    assert.equal(audit.pointsStatus,'withheld');
+    assert.throws(()=>recordFinaleMixedTwoFrontDroppedPre500Audit(
+      recording,clock,line),/new unpaid approach/);
+    assert.throws(()=>createV93PlayableTest(settings),
+      /depleted line bands crossed without contact/);
+  }
 });
