@@ -64,7 +64,8 @@ test('three surviving fronts retain paid leaver lanes to individual finish',()=>
   }
 });
 
-test('simultaneous rear-leaver bunch passes still refuse',()=>{
-  assert.throws(()=>createV93PlayableTest(settings('M',2)),
+test('simultaneous rear-leaver pass stays behind its separate option',()=>{
+  assert.throws(()=>createV93PlayableTest(settings('M',2),{},
+    {resolveMixedFrontParallelPass:false}),
     /The depleted line bands crossed without contact/);
 });
