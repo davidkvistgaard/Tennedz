@@ -4682,3 +4682,15 @@ front disappears. The timeline and chase counts now prefer the recorded
 paid `chasingTeamIds`, retaining the older field as a fallback for old
 recordings. The catch moment says all three riders were caught without
 falsely claiming the player's team stopped chasing before the catch.
+
+The third `steady` choice in that *same whole race* exposes a remaining
+motor boundary. Its projected road-1 catch is at 39,617.488 m, after the
+500 m sprint handoff. The present v93 front-catch continuations require
+an already isolated rider, but all 32 riders in this source are still in
+the front or bunch. The motor therefore explicitly returns
+`unpaid_front_catch` with 39 recorded kilometre frames, no paid final-km
+road, no individual line, and no awards. The locked whole-race regression
+in `tests/unit/engine-v2-v93-close-chase-effort.test.mjs` verifies this
+refusal alongside the two paid conserve/hard outcomes. A future separate
+version must pay the no-isolated-rider contact and 500 m transition before
+showing a steady result; the projected catch is not a classified finish.
