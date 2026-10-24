@@ -4204,25 +4204,41 @@ isolated release build and 48/48 release browser flows. Exact release commit
 window had no error/fatal logs. Previous deployment
 `dpl_DpBQZWMGnAZWXnsW3wP9Pg4w48Qf` remains the rollback target.
 
-### Mixed five-kilometre orders: unresolved front contact (2026-10-24)
+### Mixed five-kilometre orders: guarded survivor pass (2026-10-24)
 
 The synthetic 48-race audit in
 `scripts/engine-v2-v93-mixed-late-contact-audit.mjs` varies four or
 fifteen teams, both genders, rolling/mountain/exposed terrain, fatigue
 0/30, two seeds, alternating rival tactics and opposing final-five-kilometre
-efforts. Thirty-six races finish conditionally; twelve four-team races
-explicitly refuse a depleted front dissolution at the 259 km boundary.
-The refusal is a correct safeguard, not an individual result.
+efforts. The baseline had thirty-six conditional finishes and twelve
+explicit four-team depleted-front refusals at the 259 km boundary.
 
 Pinned `v93-mixed-late-4-M-rolling-30-0` has four exhausted leaders in
 `road-1` and one surviving rider in `road-2` at 259 km. The paid trace
 dissolves `road-1` into four isolated riders while `road-2` survives.
 At 259500 m those isolated passages are about 10 seconds ahead of
-`road-2`; by 259700 m some have passed its passage time. The trace only
-records `no_contact_in_slice` against the bunch, so it cannot settle
-this isolated-to-front encounter. The existing leading-dissolution guard
-requires the isolated riders to stay ahead of the surviving front at
-every marker and refuses this road. A three-front variant,
-`v93-mixed-late-4-M-mountain-0-0`, also refuses. A future continuation
-must locate and pay the first rider-to-front contact before carrying
-energy, road bands, individual finish, replay and any point illustration.
+`road-2`; the survivor passes each one unassisted between 259600 and
+259800 m. A separate versioned continuation locates each encounter
+between paid passage markers and keeps the four former leaders in distinct
+outside lanes. It guards the entire paid kilometre: exactly two source
+fronts, a singleton survivor, a complete leading dissolution, no previous
+drops, no bunch contact or later exits, and no repeated or reversing pass.
+The 500 m handoff pays 32 conditional individual crossings, matching energy
+and six replay bands, with road-2 ahead of all four former leaders at the
+line. Both genders of the locked rolling fatigue-30 race complete; an
+explicit opt-out retains the older refusal. Official places, policy points
+and saved awards remain withheld because wheel order is conditional.
+
+The 48-race audit now has 38 conditional finishes and ten explicit
+refusals. The three-front variant `v93-mixed-late-4-M-mountain-0-0`
+still refuses: this separate continuation cannot pay that geometry.
+The pinned tests also replay the new version and verify that all 32 riders
+retain energy and replay through the line.
+Six neighboring release unit tests, changed-file lint, the isolated
+release build and 49/49 release browser flows passed. The preview browser
+suite passed 48/48 before the replay opt-out guard was added; the focused
+replay and opt-out tests passed afterward. The varied whole-race matrix
+completed 90/90 with 76 read-only
+point illustrations, and the independent 20-team long-field sweep completed
+90/90 with one paid shared-wheel contact and no refusals. No new full serial
+unit-suite pass is claimed.
