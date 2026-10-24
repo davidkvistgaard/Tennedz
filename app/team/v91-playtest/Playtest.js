@@ -1179,8 +1179,10 @@ export default function Playtest({guided=false}){
                 {id}</option>)}</select></label>
             {viewerRival&&<div aria-label={`${viewerRival.teamId} at km ${coastedFrame?.km}`}>
               <p>Starting orders: {viewerRival.orders?.effort??'unavailable'} effort · {viewerRival.orders?.attack??'unavailable'} attacks · {viewerRival.orders?.chase??'unavailable'} chase.</p>
+              {viewerRival.fiveKmEffort&&<p>Separate 5 km effort order: {viewerRival.fiveKmEffort}.</p>}
               <p>{viewerRival.finisherId}: {viewerRival.finisherRoad}. At this checkpoint, {viewerRival.frontCount} riders are ahead, {viewerRival.bunchCount} in the bunch and {viewerRival.droppedCount} behind.</p>
               <p>This kilometre: {viewerRival.attacks.length} attack attempts · {viewerRival.joins.length} break joins · {viewerRival.catches.length} caught · {viewerRival.pulls.length} riders taking pulls · {viewerRival.chased?'team chased':'team did not chase'}.</p>
+              <p>Whole-kilometre record: chased {viewerRival.wholeRaceChaseKm} km · first attack {viewerRival.firstAttackKm===null?'none':`km ${viewerRival.firstAttackKm}`} · first break join {viewerRival.firstJoinKm===null?'none':`km ${viewerRival.firstJoinKm}`} · last recorded catch {viewerRival.lastCatchKm===null?'none':`km ${viewerRival.lastCatchKm}`}.</p>
               {viewerRival.lineEnergy!==null&&<p>{viewerRival.finisherId} had {viewerRival.lineEnergy.toFixed(1)} energy at the conditional line. This is recorded reserve, not an official placing.</p>}
             </div>}
           </div>
