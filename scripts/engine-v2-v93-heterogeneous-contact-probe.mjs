@@ -32,6 +32,33 @@ const source=finaleSnapshotFromTour(recording,{remainingKm:1,
 const trace=probeFinaleSeparatedGroupsFromTour(recording,{
   version:FINALE_COAST_DYNAMIC_FRONT_LAST_KM_VERSION});
 const contact=auditDissolvedFrontPaidContact(trace);
+const groupTimes=new Map(source.roadGroups.map(row=>[row.id,
+  -row.gapSeconds]));
+const sourceRows=new Map(recording.frames[source.sourceKm-1]
+  .riderGroups.map(row=>[row.id,row]));
+const droppedTimes=new Map(source.droppedRiderIds.map(id=>[
+  id,sourceRows.get(id)?.deficitSeconds]));
+let bunchTime=0;
+const markerOrder=trace.frames.map(frame=>{
+  const oldBunchTime=bunchTime;
+  bunchTime+=frame.bunchElapsedSeconds;
+  for(const row of frame.frontExhaustionDrops)
+    droppedTimes.set(row.riderId,
+      oldBunchTime+row.initialDeficitSeconds);
+  for(const row of frame.exhaustionDrops)
+    droppedTimes.set(row.riderId,oldBunchTime);
+  for(const group of frame.roadGroups)
+    groupTimes.set(group.id,groupTimes.get(group.id)+group.elapsedSeconds);
+  for(const rider of frame.droppedTravel.riders)
+    droppedTimes.set(rider.riderId,
+      droppedTimes.get(rider.riderId)+rider.elapsedSeconds);
+  const isolated=[...droppedTimes].sort((a,b)=>a[1]-b[1]);
+  return {distanceM:frame.endDistanceM,
+    groups:[...groupTimes].map(([id,time])=>({id,
+      secondsFromBunch:time-bunchTime})),
+    isolated:isolated.map(([id,time])=>({id,
+      secondsFromBunch:time-bunchTime}))};
+});
 let playable;
 try{const race=createV93PlayableTest(settings);
   playable={version:race.version,
@@ -52,4 +79,5 @@ console.log(JSON.stringify({seed:settings.seed,playable,
       contactM:rider.contactDistanceM,
       status:rider.contactStatus}))})),
   paidMarkerEncounters:contact.encounters.map(row=>({rider:row.riderId,
-    band:row.activeBandId,distanceM:row.distanceM}))},null,2));
+    band:row.activeBandId,distanceM:row.distanceM})),
+  markerOrder},null,2));
