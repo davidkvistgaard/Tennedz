@@ -4946,4 +4946,13 @@ refusals, up from 38/22 before this versioned continuation. Six new
 finishes use the guarded fresh-contact version; all 16 unsupported
 sources still refuse. No full repository unit or browser-suite pass is
 claimed for this increment.
+
+Release `cdf310e9680aa8b78f74ac1dbd9115eb945da888` was built from the
+same functional patch in the release worktree. Three focused whole-race
+units, changed-file lint, isolated release Next build, and both the old
+four-team and new 15-team authenticated browser flows passed. Vercel
+deployment `dpl_7y7ErorX1i3mTkdWotMLEN4SSzQT` reached READY at the
+exact SHA with the `tennedz.eu` alias; unauthenticated Motor Lab returned
+HTTP 200 and the checked production error/fatal window had no logs.
+Deployment `dpl_6EXb45J2jS5Bdac7yeMg7kD9iFMg` remains rollback.
 These are source-wheel encounters, not road-group marker crossings.
