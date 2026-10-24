@@ -13,6 +13,10 @@ import {recordFinaleCoastedIndividualLine} from
 import {recordFinaleAllBandOverlapAudit,
   recordFinaleUnorderedBandOverlapAudit} from
   '../lib/engine/v2/finale-multiband-overlap-audit.mjs';
+import {resolveFinaleMultibandPositionedSource} from
+  '../lib/engine/v2/finale-multiband-positioned-source.mjs';
+import {recordFinalePaidCrossBandOverlap} from
+  '../lib/engine/v2/finale-late-active-wheel-contact.mjs';
 
 const teamCount=Number(process.argv[2]??4);
 const gender=process.argv[3]??'M';
@@ -36,9 +40,97 @@ const recording=simulateTacticalTour({stage,weather,teams,seed,
   motorVersion:MOTOR_EXHAUSTION_COAST_VERSION});
 const source=finaleSnapshotFromTour(recording,{remainingKm:1,
   includeAttackLoad:true});
+const sourcePosition=resolveFinaleMultibandPositionedSource(recording,{
+  includeDropped:true});
 const trace=probeFinaleSeparatedGroupsFromTour(recording,{
   version:FINALE_COAST_DYNAMIC_FRONT_LAST_KM_VERSION});
 const contact=auditDissolvedFrontPaidContact(trace);
+const sourceSlots=sourcePosition.roadBands.flatMap(group=>
+  group.slots.map(slot=>({id:slot.riderId,groupId:group.id,
+    offset:source.startDistanceM-slot.positionM})));
+for(const id of source.droppedRiderIds)
+  sourceSlots.push({id,groupId:'older',offset:0});
+const starts=new Map(source.roadGroups.map(row=>[row.id,
+  -row.gapSeconds]));
+let bunchStart=0;
+const paidPre500=new Map(sourceSlots.map(slot=>[slot.id,{
+  sourceGroupId:slot.groupId,roadBandId:`source:${slot.id}`,
+  runner:{frames:[]}}]));
+for(const frame of trace.frames.slice(0,2)){
+  for(const slot of sourceSlots){
+    const solo=frame.droppedTravel.riders.find(row=>
+      row.riderId===slot.id);
+    const group=frame.roadGroups.find(row=>row.id===slot.groupId);
+    const start=solo?bunchStart+solo.deficitSecondsBefore:
+      slot.groupId==='peloton'?bunchStart:starts.get(slot.groupId);
+    const duration=solo?.elapsedSeconds??
+      (slot.groupId==='peloton'?frame.bunchElapsedSeconds:
+        group?.elapsedSeconds);
+    if(!Number.isFinite(start)||!Number.isFinite(duration))
+      throw new Error('An unequal-field rider lacks paid pre-500 travel.');
+    const metres=frame.endDistanceM-frame.startDistanceM;
+    paidPre500.get(slot.id).runner.frames.push({
+      elapsedSecondsAtStart:start,durationSeconds:duration,
+      riders:[{riderId:slot.id,
+        positionBeforeM:frame.startDistanceM-slot.offset,
+        positionM:frame.endDistanceM-slot.offset,
+        activeSeconds:duration,activeDistanceM:metres,
+        shelteredSeconds:0,shelteredDistanceM:0}]});
+  }
+  for(const group of frame.roadGroups)
+    starts.set(group.id,starts.get(group.id)+group.elapsedSeconds);
+  bunchStart+=frame.bunchElapsedSeconds;
+}
+const possiblePre500=[];
+const proximityPre500=[];
+const bands=[...paidPre500.values()];
+const at=(frame,time)=>frame.riders[0].positionBeforeM+
+  (time-frame.elapsedSecondsAtStart)*
+  (frame.riders[0].positionM-frame.riders[0].positionBeforeM)/
+    frame.durationSeconds;
+for(let a=0;a<bands.length;a++)for(let b=a+1;b<bands.length;b++){
+  const event=recordFinalePaidCrossBandOverlap(bands[a],bands[b]);
+  if(event)possiblePre500.push({first:event.firstRiderId,
+    second:event.secondRiderId,distanceM:event.distanceM,
+    sameSourceGroup:bands[a].sourceGroupId===bands[b].sourceGroupId});
+  const intervals=[];
+  for(const left of bands[a].runner.frames)
+    for(const right of bands[b].runner.frames){
+      const start=Math.max(left.elapsedSecondsAtStart,
+        right.elapsedSecondsAtStart);
+      const end=Math.min(left.elapsedSecondsAtStart+left.durationSeconds,
+        right.elapsedSecondsAtStart+right.durationSeconds);
+      if(end<=start+1e-7)continue;
+      const gap=time=>at(left,time)-at(right,time);
+      const before=gap(start),after=gap(end);
+      const cuts=[start,end];
+      for(const edge of [-2.5,2.5]){
+        const share=(edge-before)/(after-before);
+        if(Number.isFinite(share)&&share>1e-7&&share<1-1e-7)
+          cuts.push(start+share*(end-start));
+      }
+      cuts.sort((x,y)=>x-y);
+      for(let index=0;index<cuts.length-1;index++){
+        const from=cuts[index],to=cuts[index+1];
+        if(to-from<=1e-7||Math.abs(gap((from+to)/2))>2.5+1e-7)
+          continue;
+        const last=intervals.at(-1);
+        if(last&&from<=last.to+1e-7)last.to=to;
+        else intervals.push({from,to});
+      }
+    }
+  if(intervals.length){
+    const leftId=bands[a].runner.frames[0].riders[0].riderId;
+    const rightId=bands[b].runner.frames[0].riders[0].riderId;
+    const commonStart=Math.max(...[bands[a],bands[b]].map(row=>
+      row.runner.frames[0].elapsedSecondsAtStart));
+    proximityPre500.push({first:leftId,second:rightId,
+      sourceAdjacent:intervals[0].from<=commonStart+1e-7,
+      freshApproaches:intervals.filter((row,index)=>index>0||
+        row.from>commonStart+1e-7).length,
+      sameSourceGroup:bands[a].sourceGroupId===bands[b].sourceGroupId});
+  }
+}
 let candidate;
 try{const clock=recordFinaleCoastMixedTwoFrontDroppedClock(recording);
   candidate={version:clock.version,outcome:clock.line.outcome,
@@ -63,6 +155,9 @@ try{const clock=recordFinaleCoastMixedTwoFrontDroppedClock(recording);
       crossings:line.conditionalCrossings.length,
       replayBands:line.bandRunners.length,
       status:line.roadStatus,
+      sourceBands:line.positionedSource.roadBands.map(row=>({id:row.id,
+        count:row.slots.length})),
+      sourceDropped:line.positionedSource.droppedRiderIds.length,
       final500Overlap:final500.firstPotentialOverlap,
       final500Pairwise:{possible:pairwise.length,
         crossSourceBand:pairwise.filter(row=>!row.sameSourceBand)}};}
@@ -104,6 +199,18 @@ catch(error){playable={reason:error.roadPreview?.unsupportedReason??
 console.log(JSON.stringify({seed:settings.seed,playable,candidate,
   sourceGroups:source.roadGroups.map(row=>({id:row.id,
     count:row.riderIds.length,gapSeconds:row.gapSeconds})),
+  sourcePositionBands:sourcePosition.roadBands.map(row=>({id:row.id,
+    slots:row.slots.map(slot=>({id:slot.riderId,
+      positionM:slot.positionM}))})),
+  possiblePre500:{count:possiblePre500.length,
+    crossSourceGroup:possiblePre500.filter(row=>
+      !row.sameSourceGroup),
+    sameSourceGroup:possiblePre500.filter(row=>
+      row.sameSourceGroup)},
+  proximityPre500:{count:proximityPre500.length,
+    fresh:proximityPre500.filter(row=>row.freshApproaches>0),
+    crossSourceGroup:proximityPre500.filter(row=>
+      !row.sameSourceGroup)},
   priorDropped:source.droppedRiderIds.length,
   trace:trace.frames.map(row=>({distanceM:row.endDistanceM,
     groups:row.roadGroups.map(group=>({id:group.id,
@@ -114,6 +221,9 @@ console.log(JSON.stringify({seed:settings.seed,playable,candidate,
     isolated:row.droppedTravel.riders.map(rider=>({id:rider.riderId,
       contactM:rider.contactDistanceM,
       status:rider.contactStatus}))})),
+  paidFirstFrame:{groups:trace.frames[0].roadGroups,
+    bunchElapsedSeconds:trace.frames[0].bunchElapsedSeconds,
+    droppedTravel:trace.frames[0].droppedTravel.riders.slice(0,2)},
   paidMarkerEncounters:contact.encounters.map(row=>({rider:row.riderId,
     band:row.activeBandId,distanceM:row.distanceM})),
   markerOrder},null,2));
