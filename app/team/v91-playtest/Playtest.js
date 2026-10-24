@@ -1238,8 +1238,10 @@ export default function Playtest(){
               .toFixed(3)} km, {coasted.mixedFrontLeavers.leadingRiderIds.length}
               {' '}riders left {coasted.mixedFrontLeavers.leadingGroupId} and
               stayed ahead. {coasted.mixedFrontLeavers.rearRiderIds.length}
-              {' '}left {coasted.mixedFrontLeavers.rearGroupId} and were
-              passed by the bunch. Their individual travel, energy and
+              {' '}left {coasted.mixedFrontLeavers.rearGroupId} and
+              {' '}{coasted.mixedFrontLeavers.rearStayedAhead?
+                'stayed ahead of the bunch.':'were passed by the bunch.'}
+              {' '}Their individual travel, energy and
               finish replays are recorded; their places and points remain
               unresolved.</p>
             {coasted.mixedFrontLeavers.bunchPasses.map(event=><p
