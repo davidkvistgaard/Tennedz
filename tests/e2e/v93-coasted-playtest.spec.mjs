@@ -595,6 +595,13 @@ test('unresolved later front markers stay visible without a false finish',
       name:'Unresolved front marker overlaps'});
     await expect(note).toContainText('you-7');
     await expect(note).toContainText('not resolved occupied-wheel encounters');
+    const history=page.getByLabel('Recorded race before the refusal');
+    await expect(history).toContainText('Recorded road changes');
+    const moments=history.getByRole('button');
+    expect(await moments.count()).toBeGreaterThan(0);
+    await moments.last().click();
+    expect(Number(await page.getByRole('slider',{
+      name:/Recorded kilometre/}).inputValue())).toBeGreaterThan(0);
     await expect(page.getByRole('table',{
       name:'V93 individual conditional results'})).toHaveCount(0);
   });
