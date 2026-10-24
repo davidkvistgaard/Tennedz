@@ -5174,3 +5174,24 @@ record these, but the released result guard intentionally requires
 explicit `unresolved_band_contact` refusals. A new version and
 whole-race tests are needed for each shape before any conditional
 result can be shown.
+
+A separate guarded crowded-multifront version now covers the three
+zero-fresh-final-half shapes with **11 or 12** paid first-half individual
+approaches: 20-team men's rolling and men's/women's exposed, all at
+260 km and high fatigue. Both surviving source fronts contribute exact
+paid approach splits. The seven road passages, 500 m energy handoff,
+160 conditional individual crossings and replay are checked against
+the whole recording. Each leaving rider uses a distinct inferred
+no-draft outside lane; occupied-wheel response remains unresolved.
+The result and English viewer therefore remain conditional, and
+classified places, official points and awards are withheld. Explicit
+opt-out keeps the prior refusal. Men's mountain/high-fatigue has one
+fresh possible approach after the 500 m handoff and still explicitly
+refuses; the clean-final guard must not be widened to include it.
+The independent 60-case whole-race matrix now records **59 conditional
+finishes and one explicit refusal**, up from 56/4 before this separate
+version. Three cases use the new crowded version; the sole refusal is
+`v93-heterogeneous-20-M-mountain-30` with a fresh final-half possible
+approach. The three-case whole-race/replay test, changed-file lint,
+isolated preview build and an authenticated exposed-race browser flow
+passed. This is bounded coverage, not general motor completion.
