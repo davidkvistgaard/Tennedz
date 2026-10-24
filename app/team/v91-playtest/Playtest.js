@@ -1787,10 +1787,11 @@ export default function Playtest({guided=false}){
               }} aria-label={`Inspect contact rider ${id}`}>
               Inspect {id}</button>)}
           </div>}
+          <p>Times below start when the bunch reaches the final-kilometre marker, not at the race start. A front rider can cross before that marker and have a negative time. Energy is reserve left out of 100, not speed.</p>
           <div className="v91-result-scroll"><table className="v91-result-table"
             aria-label="V93 individual conditional results">
             <thead><tr><th scope="col">Possible place</th><th scope="col">Rider</th>
-              <th scope="col">Road band</th><th scope="col">Time</th>
+              <th scope="col">Road band</th><th scope="col">Time from bunch's final-km marker</th>
               <th scope="col">Energy at line</th><th scope="col">Preview points</th>
               <th scope="col">Replay</th>
             </tr></thead>
