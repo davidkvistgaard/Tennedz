@@ -4674,3 +4674,11 @@ close-chase preset exposes this pair in the viewer: run conserve first, then
 change only the 5 km effort to hard and rerun the same seed. This is a
 specific case where the extra late work changes the road and the conditional
 outcome, not a general hard-effort recommendation.
+
+The close-chase browser review also found a viewer-only discrepancy at
+km 39: the recording lists the player's team as a paid chaser in the catch
+kilometre, while its carry-over `engagedChaseTeamIds` is empty after the
+front disappears. The timeline and chase counts now prefer the recorded
+paid `chasingTeamIds`, retaining the older field as a fallback for old
+recordings. The catch moment says all three riders were caught without
+falsely claiming the player's team stopped chasing before the catch.
