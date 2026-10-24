@@ -5019,3 +5019,31 @@ two mountain cases use this new early-only version. The remaining
 refusals are twelve 20-team two-front geometries with more crowded
 source wheels. The audit script now accepts optional field, gender,
 terrain and fatigue filters for targeted read-only diagnosis.
+
+Release `3b3efd27a8da221e23589db2c34500d8edf1de2a` was verified
+with five neighboring whole-race units, changed-file lint, isolated
+release build and authenticated mountain browser flows for both genders.
+Production deployment `dpl_FKxc6JCA1NMxXeF9gFwxEx4qQF7e` reached
+READY at that exact SHA on `tennedz.eu`; the public Motor Lab returned
+HTTP 200 and its checked error/fatal runtime window was empty. Prior
+deployment `dpl_3pZkvzYPVQVy3i7sMqPHJNb9v6e3` remains rollback.
+
+Next read-only 20-team mountain probes found why the 12 remaining
+two-front cases cannot use the one-approach 15-team path. The locked
+women's zero-fatigue source has **five** new same-source possible wheel
+approaches in the first 500 m, and the men's zero-fatigue source has
+**ten**. Neither has a possible cross-source pre-500 m approach. A
+separately versioned **internal-only** audit now splits each fresh
+first-half pair's paid position and energy at exact 2.5 m spacing,
+checks all 160 riders at the 500 m handoff, and continues pairwise
+through the final half. The women's final half has one further fresh
+same-source approach, `rival-5-7` / `rival-15-7` at 259811.807 m.
+These source-group and final approaches do not settle occupied lanes
+or the riders' response. Both whole races therefore **still refuse**
+in guided Motor Lab, with no user-facing finish/replay, classified
+places, policy points or awards. The internal audit is evidence for a
+future guarded continuation, not a result or a claim of general
+20-team coverage. All six neighboring heterogeneous whole-race units,
+changed-file lint, and an isolated preview Next build passed. No
+authenticated browser flow was needed for this internal-only audit;
+no full repository unit or browser-suite pass is claimed.
