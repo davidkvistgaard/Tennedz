@@ -5315,8 +5315,7 @@ women's exposed/high fatigue has 11 first-half plus one final-half
 approach. Neither can inherit the seven-plus-zero guard. Three focused
 whole-race/refusal/replay tests, changed-file lint, an isolated preview
 Next build and a targeted authenticated API/viewer browser flow passed.
-This increment is preview-only until independently verified on the
-release branch and production deployment.
+This preview verification preceded the independent release check below.
 
 The read-only `alternate-1` 20-team matrix after this change reports
 18 conditional finishes and exactly two `unresolved_band_contact`
@@ -5326,3 +5325,10 @@ the seven-plus-zero version. The release branch independently passed
 the new whole-race/refusal tests, changed-file lint, isolated build and
 targeted authenticated API/viewer browser flow; this does not claim a
 full repository test-suite pass.
+
+Release `2e601af2664f2d4e9681ce9dc5be147b0aecf016` is pushed after
+those independent checks. Production deployment
+`dpl_D4xex78d3JrYbGJavWPzANHJ67T9` reached READY at the exact SHA
+with the `tennedz.eu` alias. Public `/team/motor-lab` returned HTTP 200
+with assets from that deployment, and checked error/fatal runtime logs
+were empty. Prior `dpl_E6wAp7w4o8WnZH6yc4GHCLcBSZ4Z` remains rollback.
