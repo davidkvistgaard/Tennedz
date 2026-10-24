@@ -4833,3 +4833,27 @@ passes and one straddling outside-lane continuation. No source in this
 specific matrix refused. The viewer also identifies the one fresh
 former-road-1 reapproach and distinguishes it from 38 source-adjacent
 wheel proximities; neither is presented as resolved occupied-wheel order.
+
+### Unequal-strength whole-race audit
+
+`scripts/engine-v2-v93-heterogeneous-field-audit.mjs` varies 4, 15 and
+20 teams, both genders, five terrains and fatigue 0/30 over 60 complete
+260 km sources. The player's synthetic team has level 45 while rival
+teams alternate levels 25 and 65; mixed attacks, chase and 5 km orders
+provide a different source geometry from the `field-hills` matrix.
+Twenty-four sources finish conditionally with all riders and awards
+withheld. The other 36 explicitly refuse `unresolved_band_contact`.
+This is a new coverage gap, not evidence of a paid result or a regression
+in the earlier 72 sources.
+
+The locked `v93-heterogeneous-4-M-flat-30` source starts the final
+kilometre with four riders on each of road-2 and road-4 and twelve older
+dropped riders. The paid seven-frame trace sheds two riders from each
+front in its first 250 m. Existing continuations cannot reconcile the
+resulting bands, so the whole race retains its kilometre history but
+exposes no final-kilometre road, individual line, replay or points.
+`scripts/engine-v2-v93-heterogeneous-contact-probe.mjs 4 M flat 30`
+reproduces the paid source and trace; the locked unit test preserves the
+explicit refusal. A new continuation must audit individual pairwise
+encounters and energy across the full 500 m handoff before exposing a
+conditional line.
