@@ -1326,6 +1326,25 @@ export default function Playtest({guided=false}){
                   ?.scrollIntoView();
               }}>Finish replay {id}</button>)}
           </div>}
+          {coasted.dissolvedSingle&&<div role="note"
+            aria-label="Single leading front dissolved">
+            <p>At {(coasted.dissolvedSingle.sourceDistanceM/1000)
+              .toFixed(3)} km, all
+              {' '}{coasted.dissolvedSingle.leadingRiderIds.length}
+              {' '}riders left {coasted.dissolvedSingle.dissolvedGroupId}
+              {' '}as it dissolved. Their separately paid roads stayed ahead
+              of the bunch through the finish. Individual energy and replays
+              are recorded; places and points remain unresolved.</p>
+            {coasted.dissolvedSingle.leadingRiderIds.map(id=><button
+              type="button" key={id}
+              aria-label={`Inspect dissolved single-front rider ${id} finish replay`}
+              onClick={()=>{
+                setCoastedBandId(`isolated:${id}`);
+                setCoastedRiderId(id);setCoastedBandIndex(0);
+                document.getElementById('v93-paid-finale-replay')
+                  ?.scrollIntoView();
+              }}>Finish replay {id}</button>)}
+          </div>}
           {coasted.isolatedPassEvents?.length>0&&<div role="note"
             aria-label="Recorded isolated passes">
             <p>{coasted.isolatedPassEvents.length} isolated-rider passes were

@@ -159,6 +159,55 @@ test('prior dropped riders stay behind a dissolved 15-team mountain front',
       .toBeVisible();
   });
 
+test('a dissolved single front keeps the whole race replay and withheld points',
+  async({page})=>{
+    await page.goto('/login');
+    await page.getByLabel('Email or username').fill('alice');
+    await page.getByLabel('Password',{exact:true}).fill('fixture-password');
+    await page.getByRole('button',{name:'Sign in',exact:true}).click();
+    await expect(page).toHaveURL(/\/team$/);
+    const response=await page.request.post('/api/v91-playtest',{
+      headers:{origin:'http://localhost:3100'},data:{
+        mode:'v93-coasted',settings:{distanceKm:260,teamCount:15,
+          gender:'M',terrain:'mountain',fatigue:15,
+          seed:'v93-next-contact-15-M-mountain-15-0',
+          defaultRivalPlan:'passive',effort:'hard',attack:'repeated',
+          chase:'all',managerTactics:Array.from({length:14},()=>(
+            {effort:'hard',attack:'repeated',chase:'all'}))},
+        plans:['you',...Array.from({length:14},(_,index)=>
+          `rival-${index+1}`)].map(teamId=>({teamId,
+          finisherId:`${teamId}-7`,leadOutRiderId:null})),
+        pointContext:{tier:3,divisionCount:4,divisionIndex:2}}});
+    expect(response.status()).toBe(200);
+    const body=await response.json();
+    expect(body.coasted.version).toBe('v93-dissolved-single-playtest-1');
+    expect(body.coasted.lineTimes).toHaveLength(120);
+    expect(body.coasted.bandReplays).toHaveLength(16);
+    expect(body.coasted.dissolvedSingle.leadingRiderIds).toHaveLength(15);
+    expect(body.coasted.pointPreview.status).toBe('unavailable');
+    expect(body.coasted.canCommitAwards).toBe(false);
+    await page.goto('/team/v91-playtest');
+    await page.getByRole('checkbox',{
+      name:'Continue to a conditional finish'}).check();
+    await page.getByRole('checkbox',{
+      name:'Try v93 road-to-line preview'}).check();
+    await page.route('**/api/v91-playtest',route=>route.fulfill({
+      status:200,contentType:'application/json',body:JSON.stringify(body)}));
+    await page.getByRole('button',{name:'Run v93 race preview'}).click();
+    const note=page.getByRole('note',{
+      name:'Single leading front dissolved'});
+    await expect(note).toContainText('stayed ahead of the bunch');
+    await expect(page.getByRole('table',{
+      name:'V93 individual conditional results'}).getByRole('row'))
+      .toHaveCount(121);
+    await note.getByRole('button',{
+      name:'Inspect dissolved single-front rider you-7 finish replay'}).click();
+    await expect(page.getByLabel('Selected rider finale replay'))
+      .toContainText('you-7:');
+    await expect(page.getByText('Official points: withheld · Awards saved: 0'))
+      .toBeVisible();
+  });
+
 test('clear dissolved leading front keeps the surviving group and all replays',
   async({page})=>{
     await page.goto('/login');
