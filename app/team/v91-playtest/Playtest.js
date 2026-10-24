@@ -233,6 +233,8 @@ export default function Playtest(){
     roadPreview.kilometreFrames.at(-1):null;
   const catchRoadFrame=catchSourceFrame?
     roadPreview.kilometreFrames[roadPreviewIndex]:null;
+  const refusedRoadChanges=catchSourceFrame?
+    recordedRoadChanges(roadPreview.kilometreFrames):[];
   const changedRivalOutcomes=coastedComparison?
     coastedComparison.after.rivalOutcomes.flatMap(after=>{
       const before=coastedComparison.before.rivalOutcomes.find(row=>
@@ -980,6 +982,20 @@ export default function Playtest(){
               encounters. No individual finish, replay, place or points
               follow from them.</p>
           </div>}
+          <div aria-label="Recorded race before the refusal">
+            <h3>Recorded road changes</h3>
+            <p>This refusal keeps the kilometre-level groups and energy.
+              {' '}It does not retain the detailed attack and catch events
+              {' '}needed for a full race timeline. Select a road change to
+              {' '}inspect its riders below.</p>
+            <ol>{refusedRoadChanges.map(({index,frame})=><li key={index}>
+              <button type="button" onClick={()=>setRoadPreviewIndex(index)}>
+                Km {frame.km}: {frame.roadGroups.length} front
+                {' '}{frame.roadGroups.length===1?'group':'groups'} and
+                {' '}{frame.droppedRiders.length} riding alone
+              </button>
+            </li>)}</ol>
+          </div>
           <p>Your riders at that handoff: {catchSourceFrame.ownRiders.map(
             row=>`${row.riderId} ${row.roadGroup}, `+
               `${row.energy.toFixed(1)} energy`).join(' · ')}.</p>
