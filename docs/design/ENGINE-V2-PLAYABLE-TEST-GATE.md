@@ -4861,10 +4861,14 @@ between markers. The existing two-front clear continuation requires no
 older drops, while the older-drop continuation requires three fronts.
 An internal-only versioned two-front older-drop clock now proves the
 four band sizes (4/4/12/12), paid marker order and all 32 energy traces
-for this locked source. It is not connected to the playable result: the
-individual sprint, pairwise occupied-wheel approaches and replay still
-need a separate guarded continuation. The guided Motor Lab retains the
-explicit refusal for this case.
+for this locked source. Its internal individual runner carries all 32
+conditional crossings and reconciles each rider's energy from the paid
+500 m handoff through the line. The final 500 m longitudinal audit still
+finds possible source-adjacent wheel proximity, and the first 500 m has
+not had a complete individual pairwise audit. Neither internal clock nor
+line is connected to the playable result: no user-facing road, replay,
+place or point is asserted. The guided Motor Lab retains the explicit
+refusal for this case.
 `scripts/engine-v2-v93-heterogeneous-contact-probe.mjs 4 M flat 30`
 reproduces the paid source and trace; the locked unit test preserves the
 explicit refusal. A new continuation must audit individual pairwise
