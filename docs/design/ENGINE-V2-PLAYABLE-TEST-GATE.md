@@ -5205,3 +5205,29 @@ reached READY at that exact SHA with the `tennedz.eu` alias. Public
 error/fatal runtime log was empty. Previous production deployment
 `dpl_HTYEJhB14Xp4KjvVFSYHv71aG9Bb` remains rollback. No full
 repository serial unit or browser-suite pass is claimed.
+
+The remaining heterogeneous `20-M-mountain-30` source needs a different
+final-half treatment. Its ten first-half approaches come from both
+surviving fronts; a further paid 2.5 m longitudinal approach occurs
+after the 500 m handoff between `rival-5-7` and `rival-9-7` on road-2.
+The original open-road individual runner cannot prove their lanes at
+that instant, so its refusal is retained. A separate opt-in version now
+queues road-2 through all five final 100 m passages using the paid
+500 m source lanes (2 and 3 for this pair). The pair remains in distinct
+fixed lanes, has no sheltered/drafting movement after its approach,
+and each rider's split movement and energy reconcile to the line.
+Other road bands and isolated riders retain their paid paths. The
+whole-race result has seven recorded road passages and 160 conditional
+individual crossings with deterministic replay. Pre-500 inferred
+outside-lane responses still leave official places, points and awards
+withheld. An explicit opt-out preserves the original refusal; older
+recordings and versions are untouched. The focused mountain replay test,
+changed-file lint, isolated preview Next build and authenticated browser
+flow passed. The independent 60-case heterogeneous whole-race matrix
+reports **60 conditional finishes and zero refusals within this bounded
+test set**, up from 59/1; it does not establish unrestricted motor
+coverage. The prior six-case multifront and three-case crowded replay
+regressions also passed with the opt-in queue in place. The read-only
+reproducer is
+`scripts/engine-v2-v93-mountain-final-phase-probe.mjs`. No full
+repository serial unit or browser-suite pass is claimed.
