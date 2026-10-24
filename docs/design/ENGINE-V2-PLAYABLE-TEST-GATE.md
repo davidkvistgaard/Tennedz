@@ -4248,3 +4248,45 @@ deployed as `dpl_VTq4sdUx2fXmcBDQZFdGe1WJ43on`, READY at the
 `tennedz.eu` alias. `/team/motor-lab` returned HTTP 200 and the checked
 runtime window had no logs. Previous deployment
 `dpl_9BZxgJXdmhASSprFUtV6dmV8PYpg` remains the rollback target.
+
+### Mixed orders with three source fronts (2026-10-24)
+
+A new synthetic whole-race audit in
+`scripts/engine-v2-v93-three-front-contact-audit.mjs` revisited the ten
+remaining four-team refusals. All ten start with three road fronts at the
+259 km handoff. The four-rider leading front dissolves at that boundary,
+while the other two are singleton fronts. Six races have no encounter:
+the isolated leaders remain ahead of both singleton fronts through the
+paid line. In four races, `road-2` passes all four isolated leaders
+unassisted; two exposed-road encounters have no previous dropped rider,
+and two mountain encounters include one older dropped rider behind the
+bunch. The paid passage windows are 259500–259600 m in mountain terrain
+and 259700–259800 m in exposed terrain, for both genders. `road-3`
+stays separately ahead of the bunch and behind the isolated leaders.
+
+A separate versioned continuation accepts only those measured geometries:
+complete leading dissolution at the first boundary, two surviving
+singleton fronts, no later exits, no contact with `road-3` or the bunch,
+all four leaders either clear of `road-2` or passed once by it, and any
+prior dropped rider behind the bunch at every paid marker. The same
+paid seven-frame road is carried to conditional individual crossings,
+energy, replay and read-only point policy. Official places, points and
+awards remain withheld. Explicit opt-out retains the old refusal; older
+versioned recordings regenerate without selecting this new path.
+
+The 48-race mixed-order audit now completes 48/48 conditional finales,
+including the ten formerly refusing three-front variants across both
+genders, terrain and fatigue. All 50 v93 unit tests, changed-file lint,
+the isolated preview build and 49/49 local browser flows passed. The
+independent 90-case varied playability matrix completed 90/90 races with
+76 read-only point illustrations, and the 90-case long-field stress completed
+90/90 without refusal. This bounded audit does not establish unrestricted
+motor completion.
+
+The functional preview commit `99dfa97` was cherry-picked as release
+`d87a8c42cb307c7370548382c8b9d9e69601b164`. Changed-file lint, the
+isolated release build and 50/50 release browser flows passed. Production
+deployment `dpl_4uu1VcaJxPRtTsNTxGWdZWJYJ1Eg` reached READY with the
+`tennedz.eu` alias at that exact commit; `/team/motor-lab` returned HTTP 200
+and the checked error/fatal runtime window had no logs. The previous
+deployment `dpl_VTq4sdUx2fXmcBDQZFdGe1WJ43on` remains the rollback target.
