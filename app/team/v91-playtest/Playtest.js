@@ -7,7 +7,7 @@ import {summarizePlaytestRaceStory} from
   '../../../lib/engine/v2/playtest-race-story.mjs';
 import {raceViewerCheckpoints,raceViewerEnergySeries,
   raceViewerBreaksAndChase,raceViewerFinale,raceViewerRoad,
-  raceViewerLateEffort,raceViewerTimeline} from
+  raceViewerLateEffort,raceViewerEffortInsight,raceViewerTimeline} from
   '../../../lib/engine/v2/playtest-viewer.mjs';
 
 const DEFAULT_PLANS=['chase','attack','neutral'];
@@ -141,6 +141,12 @@ function coastedComparisonRun(settings,summary,pointContext){
       previewPoints:pointContext?preview?.previewPoints??null:null};
   });
   return {conditions:comparisonConditions(settings),finisherId,
+    planWithoutLateEffort:JSON.stringify({
+      settings:{...settings,managerFinaleOrders:
+        settings.managerFinaleOrders?.filter(order=>
+          order.teamId!=='you'||order.atKm!==settings.distanceKm-5)},
+      finishers:summary.managerDecisions.map(row=>({teamId:row.teamId,
+        finisherId:row.finisherId,leadOutRiderId:row.leadOutRiderId}))}),
     lateEffort:raceViewerLateEffort(summary,finisherId),
     crossingSeconds:crossing?.elapsedSecondsFromLastKmStart??null,
     energyAtLine:crossing?.energyAtLine??null,
@@ -1725,7 +1731,9 @@ export default function Playtest(){
               <p>At 1 km: {run.lateEffort.atOneKmRoad??'unavailable'} · {run.lateEffort.atOneKmEnergy?.toFixed(1)??'—'} energy.</p>
               <p>At the line: {run.energyAtLine?.toFixed(1)??'—'} energy · conditional place {run.place}.</p>
             </div>)}</div>
-          <p>The recorded road and remaining energy show what changed; matching route and seed alone do not isolate the 5 km effort if other orders or riders changed. Line time below starts at the last kilometre, not the race start.</p>
+          <p aria-label="Late effort takeaway">{raceViewerEffortInsight(
+            coastedComparison.before,coastedComparison.after)}</p>
+          <p>The recorded road and remaining energy show what changed. Line time below starts at the last kilometre, not the race start.</p>
           <p>Recorded road: {coastedComparison.before.roadStatus} →
             {' '}{coastedComparison.after.roadStatus} ·
             {' '}groups at the last-kilometre handoff:

@@ -6,7 +6,7 @@ import {summarizePlaytestRaceStory} from
   '../../lib/engine/v2/playtest-race-story.mjs';
 import {raceViewerCheckpoints,raceViewerEnergySeries,
   raceViewerBreaksAndChase,raceViewerFinale,raceViewerRoad,
-  raceViewerLateEffort,raceViewerTimeline} from
+  raceViewerLateEffort,raceViewerEffortInsight,raceViewerTimeline} from
   '../../lib/engine/v2/playtest-viewer.mjs';
 
 test('rider guide shows the exact synthetic riders committed to the race',()=>{
@@ -61,6 +61,19 @@ test('late effort snapshot reads the chosen phase and recorded rider road',()=>{
     effort:'hard',atFiveKmEnergy:51,
     atFiveKmRoad:'8.0 s ahead with 1 rider',
     atOneKmEnergy:28,atOneKmRoad:'in the bunch'});
+});
+
+test('late effort takeaway only isolates matching plans and finisher',()=>{
+  const before={planWithoutLateEffort:'same',finisherId:'you-7',
+    lateEffort:{effort:'conserve'},energyAtLine:48,place:'12'};
+  const after={...before,lateEffort:{effort:'hard'},
+    energyAtLine:39,place:'13'};
+  assert.equal(raceViewerEffortInsight(before,after),
+    'Only your 5 km effort changed. In the current run, you-7 had 9.0 less energy at the line and conditional place 13 instead of 12.');
+  assert.match(raceViewerEffortInsight(before,{...after,
+    planWithoutLateEffort:'changed'}),/do not isolate/);
+  assert.match(raceViewerEffortInsight(before,{...after,
+    finisherId:'you-6'}),/do not isolate/);
 });
 
 test('viewer timeline reports recorded attacks, chase, road changes and catches',()=>{
