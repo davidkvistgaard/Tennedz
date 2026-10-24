@@ -13,11 +13,13 @@ import {recordFinaleCoastedIndividualLine} from
 import {recordFinaleMixedTwoFrontDroppedPre500Audit,
   recordFinaleMixedTwoFrontDroppedFreshPre500Audit,
   recordFinaleMixedTwoFrontDroppedManyPre500Audit,
-  recordFinaleMixedTwoFrontDroppedMultifrontPre500Audit} from
+  recordFinaleMixedTwoFrontDroppedMultifrontPre500Audit,
+  recordFinaleMixedTwoFrontDroppedThirteenMultifrontPre500Audit} from
   '../lib/engine/v2/finale-mixed-two-front-dropped-pre500-audit.mjs';
 import {recordFinaleMixedTwoFrontDroppedFreshFinal500Audit,
   recordFinaleMixedTwoFrontDroppedManyPre500Final500Audit,
   recordFinaleMixedTwoFrontDroppedMultifrontFinal500Audit,
+  recordFinaleMixedTwoFrontDroppedThirteenMultifrontFinal500Audit,
   recordFinaleMixedTwoFrontDroppedMultifrontParallelFinalAudit} from
   '../lib/engine/v2/finale-mixed-two-front-dropped-final500-audit.mjs';
 import {recordFinaleAllBandOverlapAudit,
@@ -178,14 +180,27 @@ try{const clock=recordFinaleCoastMixedTwoFrontDroppedClock(recording);
   if(inspectSourceLanes)try{
     const queuedLine=recordFinaleCoastedIndividualLine(recording,clock,{
       laneQueuedBandIds:['road-2']});
-    const queuedPre=recordFinaleMixedTwoFrontDroppedMultifrontPre500Audit(
-      recording,clock,queuedLine);
-    const queuedFinal=
-      recordFinaleMixedTwoFrontDroppedMultifrontParallelFinalAudit(
+    let queuedPre,queuedFinal;
+    try{
+      queuedPre=recordFinaleMixedTwoFrontDroppedMultifrontPre500Audit(
+        recording,clock,queuedLine);
+      queuedFinal=recordFinaleMixedTwoFrontDroppedMultifrontParallelFinalAudit(
         recording,clock,queuedLine,queuedPre);
+    }catch{
+      queuedPre=recordFinaleMixedTwoFrontDroppedThirteenMultifrontPre500Audit(
+        recording,clock,queuedLine);
+      queuedFinal=recordFinaleMixedTwoFrontDroppedThirteenMultifrontFinal500Audit(
+        recording,clock,queuedLine,queuedPre);
+    }
     candidate.sourceLaneAudit={pre500Approaches:
       queuedPre.freshApproaches.length,
+    pre500SourceGroups:[...new Set(queuedPre.freshApproaches.map(row=>
+      row.sourceRoadGroupId))],
     final500Approaches:queuedFinal.freshApproaches.length,
+    final500Pairs:queuedFinal.freshApproaches.map(row=>({
+      firstRiderId:row.firstRiderId,
+      secondRiderId:row.secondRiderId,
+      firstWheelM:row.firstWheelM,secondWheelM:row.secondWheelM})),
     parallelFinalLaneEvidence:queuedFinal.parallelFinalLaneEvidence,
     conditionalCrossings:queuedLine.conditionalCrossings.length,
     contactResolved:queuedFinal.contactResolved};

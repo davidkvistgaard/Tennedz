@@ -5361,3 +5361,25 @@ isolated Next build and authenticated browser flows for both the new
 with the `tennedz.eu` alias; public `/team/motor-lab` returned HTTP 200
 with assets from that deployment and checked error/fatal runtime logs
 were empty. Prior `dpl_D4xex78d3JrYbGJavWPzANHJ67T9` remains rollback.
+
+The last refusing `alternate-1` 20-team source, women's mountain with
+high fatigue, has a separate opt-in thirteen-approach/clean-final
+recording version. Its two surviving front groups produce exactly 13
+paid first-half individual approaches and no fresh final-half approach
+under a fixed road-2 source-lane queue. The seven paid passage frames,
+all 160 conditional individual crossings, rider energy and replay
+reconcile. Outside-lane occupied-wheel response remains inferred, so
+official places, points and awards are withheld. Disabling this exact
+version retains the explicit `unresolved_band_contact` refusal; the
+older versioned recordings are unchanged. Three focused neighboring
+whole-race/replay unit tests, changed-file lint, an isolated preview
+Next build and the targeted authenticated API/viewer browser flow
+passed. The first browser attempt exposed only an incorrect expected
+version string in the test; the corrected same flow passed. This is a
+bounded conditional finish, not a general contact resolution.
+
+A read-only rerun of the 20-team `alternate-1` matrix now reports
+**20 conditional finishes and zero explicit refusals in those 20
+scenarios**. Exactly one uses the new thirteen-plus-zero version. This
+finite matrix does not establish unrestricted contact handling across
+other seeds, field sizes, routes or fatigue levels.

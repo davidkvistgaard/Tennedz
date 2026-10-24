@@ -12,7 +12,8 @@ import {createV93PlayableTest,validateV93CoastedPlaytest,
   V93_MIXED_TWO_FRONT_MULTIFRONT_CLEAN_FINAL_LANES_PLAYTEST_VERSION,
   V93_MIXED_TWO_FRONT_CROWDED_MULTIFRONT_LANES_PLAYTEST_VERSION,
   V93_MIXED_TWO_FRONT_MULTIFRONT_PARALLEL_FINAL_PLAYTEST_VERSION,
-  V93_MIXED_TWO_FRONT_ELEVEN_MULTIFRONT_PARALLEL_FINAL_PLAYTEST_VERSION} from
+  V93_MIXED_TWO_FRONT_ELEVEN_MULTIFRONT_PARALLEL_FINAL_PLAYTEST_VERSION,
+  V93_MIXED_TWO_FRONT_THIRTEEN_MULTIFRONT_CLEAN_FINAL_PLAYTEST_VERSION} from
   '../../lib/engine/v2/playtest-v93-coasted.mjs';
 import {prepareV91Playtest} from '../../lib/engine/v2/playtest.mjs';
 import {simulateTacticalTour} from '../../lib/engine/v2/tour.mjs';
@@ -103,15 +104,33 @@ function recordingFor(settings){
     motorVersion:MOTOR_EXHAUSTION_COAST_VERSION});
 }
 
-test('alternate multifront seeds retain explicit contact refusals',()=>{
-  for(const [gender,terrain,fatigue] of [
-    ['F','mountain',30]]){
-    const settings=settingsFor(20,gender,terrain,fatigue);
+test('thirteen paid two-front exits and a clean fixed-lane final half finish conditionally',
+  ()=>{
+    const settings=settingsFor(20,'F','mountain',30);
     settings.seed+='-alternate-1';
-    assert.throws(()=>createV93PlayableTest(settings),error=>
-      error.roadPreview?.unsupportedReason==='unresolved_band_contact');
-  }
-});
+    const race=createV93PlayableTest(settings);
+    assert.equal(race.version,
+      V93_MIXED_TWO_FRONT_THIRTEEN_MULTIFRONT_CLEAN_FINAL_PLAYTEST_VERSION);
+    const result=race.mixedTwoFrontResult;
+    assert.equal(result.pre500Audit.freshApproaches.length,13);
+    assert.deepEqual(new Set(result.pre500Audit.freshApproaches.map(row=>
+      row.sourceRoadGroupId)),new Set(['road-2','road-4']));
+    assert.equal(result.final500Audit.freshApproaches.length,0);
+    assert.equal(result.line.conditionalCrossings.length,160);
+    assert.equal(result.clock.passageFrames.length,7);
+    assert.equal(result.line.bandRunners.find(row=>row.roadBandId==='road-2')
+      .runner.passingRule,'fixed-source-lane-queue-lab-1');
+    assert.equal(race.classifiedResults,null);
+    assert.equal(race.pointsStatus,'withheld');
+    assert.equal(race.canCommitAwards,false);
+    const summary=summarizeV93CoastedPlaytest(race);
+    assert.equal(summary.lineTimes.length,160);
+    assert.equal(summary.bandReplays.flatMap(row=>row.riderIds).length,160);
+    assert.equal(validateV93CoastedPlaytest(settings,{},race),true);
+    assert.throws(()=>createV93PlayableTest(settings,{},
+      {resolveMixedTwoFrontThirteenMultifrontCleanFinal:false}),
+    /depleted line bands crossed without contact/i);
+  });
 
 test('eleven source exits and one fixed-lane final approach finish conditionally',
   ()=>{
