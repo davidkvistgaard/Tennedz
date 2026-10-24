@@ -4661,3 +4661,16 @@ now shows the front gap as well as rider energy and conditional place, so
 the player can see that distinction. This sample does not establish the
 best effort for other tactics, fields, or road gaps; it is not a whole-race
 elapsed-time comparison.
+
+A deliberately close 40 km flat case checks the opposite outcome, using
+`seed: near-catch`, the player's synthetic team level 40, three attacking
+rivals at level 20 and the same all-out chase in both runs. At 5 km the
+three-rider front is 1.64 s ahead. With `conserve` it remains 1.39 s ahead
+at the last-kilometre handoff and the nominated rider is conditionally
+fourth. With `hard`, the paid road records all three front riders caught
+at km 39, and the nominated rider is conditionally first. Both runs have
+32 individual crossings and withhold official points and awards. The guided
+close-chase preset exposes this pair in the viewer: run conserve first, then
+change only the 5 km effort to hard and rerun the same seed. This is a
+specific case where the extra late work changes the road and the conditional
+outcome, not a general hard-effort recommendation.

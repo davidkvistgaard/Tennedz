@@ -5,6 +5,53 @@ test.skip(process.env.PELOTONIA_V91_PLAYTEST_ENABLED!=='true'||
   process.env.PELOTONIA_V93_COASTED_PLAYTEST_ENABLED!=='true',
 'The isolated v93 workbench is disabled.');
 
+test('close-chase preset shows when hard effort catches a late break',
+  async({page})=>{
+    await page.goto('/login');
+    await page.getByLabel('Email or username').fill('alice');
+    await page.getByLabel('Password',{exact:true}).fill('fixture-password');
+    await page.getByRole('button',{name:'Sign in',exact:true}).click();
+    await expect(page).toHaveURL(/\/team$/);
+    await page.goto('/team/v91-playtest');
+    await page.getByRole('button',{
+      name:'Set up close-chase race'}).click();
+    await expect(page.getByLabel('Distance')).toHaveValue('40');
+    await expect(page.getByLabel('Your chase order')).toHaveValue('all');
+    const run=async()=>{
+      const request=page.waitForResponse(response=>
+        response.url().endsWith('/api/v91-playtest')&&
+        response.request().method()==='POST');
+      await page.getByRole('button',{
+        name:'Run v93 race preview'}).click();
+      const response=await request;
+      expect(response.status()).toBe(200);
+      return (await response.json()).coasted;
+    };
+    const conserve=await run();
+    await page.getByLabel('5 km to go effort for you')
+      .selectOption('hard');
+    const hard=await run();
+    expect(conserve.kilometreFrames.at(-1).roadGroups)
+      .toHaveLength(1);
+    expect(hard.kilometreFrames.at(-1).roadGroups)
+      .toHaveLength(0);
+    expect(hard.kilometreFrames.at(-1).caughtRiderIds)
+      .toEqual(['rival-1-7','rival-2-7','rival-3-7']);
+    for(const race of [conserve,hard]){
+      expect(race.lineTimes).toHaveLength(32);
+      expect(race.pointsStatus).toBe('withheld');
+      expect(race.pointPreview.awardRows).toEqual([]);
+    }
+    const comparison=page.getByRole('region',{
+      name:'Paired v93 race comparison'});
+    await expect(comparison).toContainText(
+      'Front group at 1 km: 1.4 s ahead of the bunch.');
+    await expect(comparison).toContainText(
+      'Conditional place: 4 → 1');
+    await expect(comparison.getByLabel('Late effort takeaway'))
+      .toContainText('Only your 5 km effort changed');
+  });
+
 test('mixed front exits reach the conditional finish and rider replay',
   async({page})=>{
     await page.goto('/login');
