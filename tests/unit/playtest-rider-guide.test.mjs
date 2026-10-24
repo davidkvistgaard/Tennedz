@@ -145,6 +145,29 @@ test('viewer keeps paid chase visible in the kilometre that catches a front',()=
   assert.equal(raceViewerCheckpoints(race,'you-7').at(-1).chasing,true);
 });
 
+test('viewer timeline links a paid final catch to its exact recorded road',()=>{
+  const frame={km:39,roadGroups:[],droppedRiders:[],attackAttempts:[],
+    joinedRiderIds:[],caughtRiderIds:[],engagedChaseTeamIds:[]};
+  const race={kilometreFrames:[frame],
+    frontCatch:{roadGroupId:'road-1',atDistanceM:39279.115,
+      caughtRiderIds:['you-1','rival-1-7']},
+    lastKmRoad:[{distanceM:39000},
+      {distanceM:39500,contact:{atDistanceM:39279.115}},
+      {distanceM:40000}],lineTimes:[{riderId:'you-1'}]};
+  const moment=raceViewerTimeline(race).at(-1);
+  assert.equal(moment.km,39.279);
+  assert.equal(moment.finaleRoadIndex,1);
+  assert.match(moment.messages[0],/you-1, rival-1-7/);
+  assert.equal(raceViewerTimeline({...race,lineTimes:[]}).length,1);
+  assert.equal(raceViewerTimeline({...race,lastKmRoad:[
+    {distanceM:39000,groups:[{id:'road-1'}]},
+    {distanceM:39500,groups:[]},
+    {distanceM:40000,groups:[]}]}).at(-1).finaleRoadIndex,1);
+  assert.equal(raceViewerTimeline({...race,lastKmRoad:[
+    {distanceM:39000,groups:[{id:'road-1'}]},
+    {distanceM:40000,groups:[{id:'road-1'}]}]}).length,1);
+});
+
 test('viewer checkpoints keep recorded attack, catch, position and energy',()=>{
   const frames=Array.from({length:10},(_,index)=>({km:index+1,
     terrain:'flat',attackAttempts:index===2?['you-2']:[],
