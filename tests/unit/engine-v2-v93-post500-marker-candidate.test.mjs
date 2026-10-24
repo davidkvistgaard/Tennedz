@@ -95,6 +95,20 @@ test('straddling candidate pays both marker sides without resolving wheels',()=>
   assert.ok(outside.pre500OtherActive.checkedRearIsolatedRiders>0);
   assert.ok(outside.pre500OtherActive.encounters.every(row=>
     row.activeRoadBandId==='road-1'));
+  const fresh=outside.pre500OtherActive.encounters.filter(row=>
+    row.laterFreshEncounter);
+  assert.equal(fresh.length,1);
+  assert.equal(fresh[0].isolatedRiderId,'rival-9-7');
+  assert.equal(fresh[0].activeRiderId,'rival-10-7');
+  assert.equal(fresh[0].firstNewEncounter.contactResolved,false);
+  assert.ok(Math.abs(fresh[0].firstNewEncounter.paidSplit.isolated
+    .frames.at(-1).riders[0].energyAfter-
+    fresh[0].firstNewEncounter.isolatedEnergyAtApproach)<1e-7);
+  assert.ok(Math.abs(fresh[0].firstNewEncounter.paidSplit.active
+    .frames.at(-1).riders[0].energyAfter-
+    fresh[0].firstNewEncounter.activeEnergyAtApproach)<1e-7);
+  assert.equal(outside.freshSourceGroupEnergy.length,1);
+  assert.equal(outside.freshSourceGroupEnergy[0].riders.length,2);
   assert.equal(outside.contactResolved,false);
   assert.equal(outside.pre500OtherBandsStatus,
     'former_road1_source_exit_contacts_unresolved');
