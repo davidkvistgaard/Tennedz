@@ -4545,3 +4545,28 @@ encounter sets precede the paid 500 m handoff and form a bounded first
 continuation target. The 20-team women's rolling set straddles the
 handoff, while all 15-team rolling/mountain sets occur later; they must
 keep refusing until a separate post-handoff rule can reconcile them.
+
+The separate `v93-mixed-three-front-pre500-pass-playtest-1` continuation
+now covers precisely those three 20-team sources. Its versioned clock
+requires all first-front leavers to pass only `road-2` before the 500 m
+handoff, using the paid common-marker movement and energy split. The
+outside lanes are inferred; occupied-wheel order is unresolved. Seven
+paid markers and the handoff retain three distinct fronts, leading and
+rear leavers, the bunch, and older dropped riders. Each race has 160
+conditional individual crossings with energy and replay; official places,
+policy points and saved awards remain withheld. The English Motor Lab
+names the passes and their conditional status.
+
+The same 72-case whole-race audit now completes 67 and explicitly refuses
+five `unresolved_band_contact` cases: the four 15-team rolling/mountain
+sources and the 20-team women's rolling source whose passes straddle the
+500 m handoff. The three new completions are the men's and women's
+20-team mountain sources and the men's 20-team rolling source. A pinned
+test retains the opt-out refusal and verifies that older recording
+versions replay unchanged. The isolated preview build and all 55 local
+browser flows passed, including setup, conditional results, road, energy,
+replay and withheld points for a new source. This establishes a bounded
+pre-handoff continuation, not unrestricted contact resolution.
+
+The complete v93 regression set passed 60/60 tests and changed-file lint
+passed. This is not a fresh pass of the full repository unit suite.
