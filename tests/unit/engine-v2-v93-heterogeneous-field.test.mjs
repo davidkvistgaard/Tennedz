@@ -1,6 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {createV93PlayableTest} from
+import {createV93PlayableTest,validateV93CoastedPlaytest,
+  summarizeV93CoastedPlaytest,
+  V93_MIXED_TWO_FRONT_DROPPED_LANES_PLAYTEST_VERSION} from
   '../../lib/engine/v2/playtest-v93-coasted.mjs';
 import {prepareV91Playtest} from '../../lib/engine/v2/playtest.mjs';
 import {simulateTacticalTour} from '../../lib/engine/v2/tour.mjs';
@@ -23,6 +25,9 @@ import {recordFinaleMixedTwoFrontDroppedPre500Audit,
 import {recordFinaleMixedTwoFrontDroppedFinal500Audit,
   validateFinaleMixedTwoFrontDroppedFinal500Audit} from
   '../../lib/engine/v2/finale-mixed-two-front-dropped-final500-audit.mjs';
+import {recordFinaleMixedTwoFrontDroppedResult,
+  validateFinaleMixedTwoFrontDroppedResult} from
+  '../../lib/engine/v2/finale-mixed-two-front-dropped-result.mjs';
 
 function settingsFor(teamCount,gender,terrain,fatigue){
   return {distanceKm:260,teamCount,gender,terrain,fatigue,
@@ -46,10 +51,12 @@ function recordingFor(settings){
     motorVersion:MOTOR_EXHAUSTION_COAST_VERSION});
 }
 
-test('unequal-strength whole race refuses unresolved two-front exits',()=>{
+test('unequal-strength whole race pays bounded two-front lanes',()=>{
   const settings=settingsFor(4,'M','flat',30);
   let refusal;
-  try{createV93PlayableTest(settings);}catch(error){refusal=error;}
+  try{createV93PlayableTest(settings,{},
+    {resolveMixedTwoFrontDroppedLanes:false});}
+  catch(error){refusal=error;}
   assert.match(refusal?.message??'',
     /The depleted line bands crossed without contact/);
   assert.equal(refusal.roadPreview.unsupportedReason,
@@ -61,6 +68,18 @@ test('unequal-strength whole race refuses unresolved two-front exits',()=>{
   assert.equal(refusal.roadPreview.lineTimes,null);
   assert.equal(refusal.roadPreview.pointsStatus,'withheld');
   assert.equal(refusal.roadPreview.canCommitAwards,false);
+  const playable=createV93PlayableTest(settings);
+  assert.equal(playable.version,
+    V93_MIXED_TWO_FRONT_DROPPED_LANES_PLAYTEST_VERSION);
+  assert.equal(validateV93CoastedPlaytest(settings,{},playable),true);
+  const summary=summarizeV93CoastedPlaytest(playable);
+  assert.equal(summary.lineTimes.length,32);
+  assert.equal(summary.lastKmRoad.length,7);
+  assert.equal(summary.bandReplays.flatMap(row=>row.riderIds).length,32);
+  assert.equal(summary.mixedTwoFrontOlderDrops
+    .inferredOutsideLaneCount,16);
+  assert.equal(summary.classifiedResults,null);
+  assert.equal(summary.pointsStatus,'withheld');
 
   const recording=recordingFor(settings);
   const source=finaleSnapshotFromTour(recording,{remainingKm:1,
@@ -132,6 +151,16 @@ test('unequal-strength whole race refuses unresolved two-front exits',()=>{
   assert.equal(finalAudit.contactResolved,false);
   assert.equal(validateFinaleMixedTwoFrontDroppedFinal500Audit(recording,
     candidate,line,audit,finalAudit),true);
+  const result=recordFinaleMixedTwoFrontDroppedResult(recording);
+  assert.equal(result.line.conditionalCrossings.length,32);
+  assert.equal(result.final500Audit.paidRiderCount,32);
+  assert.equal(result.roadStatus,
+    'conditional_mixed_two_front_older_drops_outside_lanes');
+  assert.equal(result.pointPreview,null);
+  assert.equal(result.classifiedResults,null);
+  assert.equal(result.canCommitAwards,false);
+  assert.equal(validateFinaleMixedTwoFrontDroppedResult(recording,{},
+    result),true);
 });
 
 test('nearby genders stay bounded and a fresh approach is refused',()=>{
@@ -146,9 +175,13 @@ test('nearby genders stay bounded and a fresh approach is refused',()=>{
     female,femaleClock,femaleLine,femaleAudit);
   assert.equal(femaleFinalAudit.paidRiderCount,32);
   assert.equal(femaleFinalAudit.contactResolved,false);
+  const femaleResult=recordFinaleMixedTwoFrontDroppedResult(female);
+  assert.equal(femaleResult.line.conditionalCrossings.length,32);
   const large=recordingFor(settingsFor(15,'M','flat',30));
   const largeClock=recordFinaleCoastMixedTwoFrontDroppedClock(large);
   const largeLine=recordFinaleCoastedIndividualLine(large,largeClock);
   assert.throws(()=>recordFinaleMixedTwoFrontDroppedPre500Audit(large,
     largeClock,largeLine),/new unpaid approach/);
+  assert.throws(()=>recordFinaleMixedTwoFrontDroppedResult(large),
+    /new unpaid approach/);
 });
