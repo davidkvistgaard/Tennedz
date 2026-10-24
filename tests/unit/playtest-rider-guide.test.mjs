@@ -68,17 +68,23 @@ test('late effort snapshot reads the chosen phase and recorded rider road',()=>{
 
 test('late team work counts only paid activity after the 5 km order',()=>{
   const frames=[{km:35,attackAttempts:['you-1'],
+    caughtRiderIds:[],
     chasingTeamIds:['you'],pullRiderIds:['you-2'],
     paidBunchPaceTeamId:'you'},
   {km:36,attackAttempts:['you-1','rival-1-2'],
+    caughtRiderIds:[],
     chasingTeamIds:['rival-1'],pullRiderIds:['rival-1-3'],
     paidBunchPaceTeamId:'rival-1'},
   {km:37,attackAttempts:[],chasingTeamIds:['you'],
+    caughtRiderIds:['rival-1-7','rival-2-7'],
     pullRiderIds:['you-2'],paidBunchPaceTeamId:null},
   {km:38,attackAttempts:[],chasingTeamIds:[],
+    caughtRiderIds:[],
     pullRiderIds:[],paidBunchPaceTeamId:'you'}];
   assert.deepEqual(raceViewerLateTeamWork({settings:{distanceKm:40},
-    kilometreFrames:frames}),{recordedKm:3,attacks:1,chaseKm:1,
+    kilometreFrames:frames}),{recordedKm:3,
+    catches:[{km:37,riderIds:['rival-1-7','rival-2-7']}],
+    attacks:1,chaseKm:1,
     breakPullKm:1,bunchPaceKm:1});
 });
 
