@@ -4940,6 +4940,10 @@ identifying the possible approaches. Classified results, policy points
 and awards remain withheld. An explicit opt-out keeps the earlier
 refusal; unsupported neighboring geometry still refuses. The focused
 whole-race test, changed-file lint, isolated preview build and targeted
-authenticated browser flow passed. A fresh 60-case heterogeneous matrix
-is still running and must be checked before release.
+authenticated browser flow passed. The independent 60-case heterogeneous
+whole-race matrix now has 44 conditional finishes and 16 explicit
+refusals, up from 38/22 before this versioned continuation. Six new
+finishes use the guarded fresh-contact version; all 16 unsupported
+sources still refuse. No full repository unit or browser-suite pass is
+claimed for this increment.
 These are source-wheel encounters, not road-group marker crossings.
