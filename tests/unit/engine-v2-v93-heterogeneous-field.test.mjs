@@ -11,6 +11,10 @@ import {finaleSnapshotFromTour} from
 import {probeFinaleSeparatedGroupsFromTour,
   FINALE_COAST_DYNAMIC_FRONT_LAST_KM_VERSION} from
   '../../lib/engine/v2/finale-multi-run.mjs';
+import {recordFinaleCoastMixedTwoFrontDroppedClock,
+  validateFinaleCoastMixedTwoFrontDroppedClock,
+  FINALE_COAST_MIXED_TWO_FRONT_DROPPED_CLOCK_VERSION} from
+  '../../lib/engine/v2/finale-separated-last-km.mjs';
 
 test('unequal-strength whole race refuses unresolved two-front exits',()=>{
   const teamCount=4;
@@ -59,4 +63,15 @@ test('unequal-strength whole race refuses unresolved two-front exits',()=>{
     frame.roadGroups.length===2&&
     !frame.exhaustionDrops.length&&
     !frame.frontGroupDissolutions?.length));
+  const candidate=recordFinaleCoastMixedTwoFrontDroppedClock(recording);
+  assert.equal(candidate.version,
+    FINALE_COAST_MIXED_TWO_FRONT_DROPPED_CLOCK_VERSION);
+  assert.equal(candidate.line.outcome,
+    'mixed_two_front_leavers_with_older_drops_clear');
+  assert.deepEqual(candidate.line.bands.map(row=>row.riderIds.length),
+    [4,4,12,12]);
+  assert.equal(candidate.trace.finalRiderEnergy.length,32);
+  assert.equal(candidate.passageFrames.length,7);
+  assert.equal(validateFinaleCoastMixedTwoFrontDroppedClock(recording,
+    candidate),true);
 });

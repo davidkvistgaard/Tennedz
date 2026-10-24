@@ -6,6 +6,8 @@ import {probeFinaleSeparatedGroupsFromTour,FINALE_COAST_DYNAMIC_FRONT_LAST_KM_VE
 import {finaleSnapshotFromTour} from '../lib/engine/v2/finale-snapshot.mjs';
 import {auditDissolvedFrontPaidContact} from '../lib/engine/v2/finale-dissolved-front-paid-contact.mjs';
 import {createV93PlayableTest} from '../lib/engine/v2/playtest-v93-coasted.mjs';
+import {recordFinaleCoastMixedTwoFrontDroppedClock} from
+  '../lib/engine/v2/finale-separated-last-km.mjs';
 
 const teamCount=Number(process.argv[2]??4);
 const gender=process.argv[3]??'M';
@@ -32,6 +34,12 @@ const source=finaleSnapshotFromTour(recording,{remainingKm:1,
 const trace=probeFinaleSeparatedGroupsFromTour(recording,{
   version:FINALE_COAST_DYNAMIC_FRONT_LAST_KM_VERSION});
 const contact=auditDissolvedFrontPaidContact(trace);
+let candidate;
+try{const clock=recordFinaleCoastMixedTwoFrontDroppedClock(recording);
+  candidate={version:clock.version,outcome:clock.line.outcome,
+    bands:clock.line.bands.map(row=>({id:row.id,
+      count:row.riderIds.length}))};}
+catch(error){candidate={reason:error.message};}
 const groupTimes=new Map(source.roadGroups.map(row=>[row.id,
   -row.gapSeconds]));
 const sourceRows=new Map(recording.frames[source.sourceKm-1]
@@ -65,7 +73,7 @@ try{const race=createV93PlayableTest(settings);
     crossings:race.individualLine?.conditionalCrossings.length};}
 catch(error){playable={reason:error.roadPreview?.unsupportedReason??
   error.message};}
-console.log(JSON.stringify({seed:settings.seed,playable,
+console.log(JSON.stringify({seed:settings.seed,playable,candidate,
   sourceGroups:source.roadGroups.map(row=>({id:row.id,
     count:row.riderIds.length,gapSeconds:row.gapSeconds})),
   priorDropped:source.droppedRiderIds.length,
