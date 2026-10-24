@@ -1594,6 +1594,20 @@ export default function Playtest(){
                   }}>Inspect finish replay</button>
               </p>)}
             </div>}
+          {coasted.mixedTwoFrontOlderDrops&&<div role="note"
+            aria-label="Conditional two-front exits with older drops">
+            <p>Riders left both leading road groups at the final-kilometre
+              {' '}boundary, while
+              {' '}{coasted.mixedTwoFrontOlderDrops.olderDroppedRiderIds.length}
+              {' '}older dropped riders remained behind the bunch. The
+              {' '}departing and older isolated riders use
+              {' '}{coasted.mixedTwoFrontOlderDrops.inferredOutsideLaneCount}
+              {' '}distinct inferred outside lanes without draft. Paid
+              {' '}individual movement and energy are checked through the
+              {' '}500 m handoff and finish. Possible wheel proximities stay
+              {' '}within their original groups; occupied wheel order,
+              {' '}official places and points remain unresolved.</p>
+          </div>}
           {coasted.mixedFrontLeavers&&<div role="note"
             aria-label="Mixed front exits">
             <p>At {(coasted.mixedFrontLeavers.sourceDistanceM/1000)

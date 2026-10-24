@@ -91,7 +91,8 @@ test('remaining late front passes and the explicit opt-out still refuse',()=>{
     [15,'M','mountain'],[15,'F','mountain'],[20,'F','rolling']]){
     let refusal;
     try{createV93PlayableTest(settings(teamCount,gender,terrain),{},
-      {resolveMixedThreeFrontPost500Pass:false});}
+      {resolveMixedThreeFrontPost500Pass:false,
+        resolveMixedThreeFrontStraddlingPass:false});}
     catch(error){refusal=error;}
     assert.match(refusal?.message??'',
       /The depleted line bands crossed without contact/);
@@ -108,6 +109,7 @@ test('remaining late front passes and the explicit opt-out still refuse',()=>{
     assert.equal(preview.lineTimes,null);
   }
   assert.throws(()=>createV93PlayableTest(
-      settings(20,'F','rolling')),
+      settings(20,'F','rolling'),{},
+      {resolveMixedThreeFrontStraddlingPass:false}),
     /The depleted line bands crossed without contact/);
 });

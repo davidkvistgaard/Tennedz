@@ -4882,14 +4882,32 @@ the 16 distinct inferred outside lanes and still says contact is
 unresolved. This is not a physical occupied-wheel response. The audit
 and its replay passed the locked whole-race tests; a nearby 15-team
 men's source continues to refuse its fresh first-half approach. A
-separately guarded playable whole-race continuation must still reconcile
+separately guarded playable whole-race continuation must reconcile
 road boundaries, line/replay and read-only point policy before exposure.
-Neither internal clock nor
-line is connected to the playable result: no user-facing road, replay,
-place or point is asserted. The guided Motor Lab retains the explicit
-refusal for this case.
 `scripts/engine-v2-v93-heterogeneous-contact-probe.mjs 4 M flat 30`
 reproduces the paid source and trace; the locked unit test preserves the
-explicit refusal. A new continuation must audit individual pairwise
-encounters and energy across the full 500 m handoff before exposing a
-conditional line.
+explicit opt-out refusal.
+
+### Bounded unequal-strength two-front finish
+
+A separate versioned whole-race continuation now connects the two-front
+older-drop clock, paid first- and final-500 m individual wheel audits, and
+all 32 individual crossings to the guided playtest. It keeps the two
+surviving fronts, four new leavers, bunch and twelve older dropped riders
+separate through seven paid road boundaries. Sixteen isolated riders take
+distinct inferred no-draft outside lanes. Every rider's energy and replay
+continues across the 500 m handoff to the conditional line. Group-marker
+passages are not promoted to occupied-wheel contact. Official classified
+places, points and awards are withheld; the read-only point illustration
+reports unavailable. The English viewer explains the conditional lanes.
+
+The locked men's and women's four-team flat high-fatigue sources finish;
+the explicit opt-out preserves the earlier refusal. The nearby 15-team
+men's flat source still refuses a fresh unpaid source-wheel approach.
+The independent 60-case unequal-strength whole-race audit improved from
+24 conditional finishes / 36 refusals to 38 finishes / 22 explicit
+refusals, across four-, 15- and 20-team fields, both genders and five
+terrains. This does not imply unrestricted motor coverage. The focused
+whole-race and replay units, changed-file lint, isolated preview build and
+targeted authenticated browser flow passed. Existing versioned recordings
+and saved official awards remain unchanged.
