@@ -394,7 +394,7 @@ test('paid pre-500 m front passes reach line and replay without awards',
     await page.getByRole('button',{name:'Run v93 race preview'}).click();
     const note=page.getByRole('note',{name:'Mixed front exits'});
     await expect(note).toContainText(
-      '7 riders passed road-2 on separate inferred outside lanes');
+      'road-2 passed 7 former front riders on separate inferred outside lanes');
     await expect(note).toContainText('5 earlier isolated riders stayed behind the bunch');
     await expect(page.getByRole('table',{
       name:'V93 individual conditional results'}).getByRole('row'))

@@ -44,6 +44,13 @@ test('pre-500 m outside-lane passes retain the whole paid race',()=>{
     const at500=new Map(race.clock.trace.frames.find(frame=>
       frame.endDistanceM===259500).riders.map(row=>
       [row.riderId,row.energy]));
+    const atStart=race.clock.passageFrames[0];
+    const at500Passage=race.clock.passageFrames.find(frame=>
+      frame.distanceM===259500);
+    const secondStart=atStart.groups.find(row=>row.id==='road-2')
+      .passageSecondsFromBunchMarker;
+    const secondAt500=at500Passage.groups.find(row=>row.id==='road-2')
+      .passageSecondsFromBunchMarker;
     const lines=new Map(summary.lineTimes.map(row=>[row.riderId,row]));
     const seen=new Set();
     for(const event of race.clock.frontPasses){
@@ -51,6 +58,12 @@ test('pre-500 m outside-lane passes retain the whole paid race',()=>{
       assert.ok(event.atDistanceM>259000&&event.atDistanceM<259500);
       assert.equal(event.energyAtContact,0);
       assert.equal(event.wheelOrderResolved,false);
+      assert.ok(atStart.droppedPassages.find(row=>
+        row.riderId===event.riderId).passageSecondsFromBunchMarker<
+        secondStart);
+      assert.ok(at500Passage.droppedPassages.find(row=>
+        row.riderId===event.riderId).passageSecondsFromBunchMarker>
+        secondAt500);
     }
     for(const band of summary.bandReplays){
       for(const row of band.frames[0].riders)
