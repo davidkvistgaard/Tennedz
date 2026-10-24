@@ -413,9 +413,14 @@ export default function Playtest({guided=false}){
   const viewerFinale=coasted?raceViewerFinale(coasted,viewerRiderId):null;
   const viewerRoad=coasted?raceViewerRoad(coastedFrame,
     coasted.settings.teamCount*8):[];
+  const viewerRiderRoad=viewerRoad.find(band=>
+    band.ownRiderIds.includes(viewerRiderId));
+  const viewerCurrentEnergy=coastedFrame?.ownRiders.find(row=>
+    row.riderId===viewerRiderId)?.energy;
   const viewerTimeline=coasted?raceViewerTimeline(coasted):[];
   const selectViewerMoment=moment=>{
     if(moment.finaleRoadIndex!=null){
+      setCoastedKm(coasted.kilometreFrames.length);
       setCoastedRoadIndex(moment.finaleRoadIndex);
       document.getElementById('v93-recorded-road')?.scrollIntoView();
     }else setCoastedKm(moment.index+1);
@@ -1139,6 +1144,14 @@ export default function Playtest({guided=false}){
           <div className="v91-viewer-road" aria-label={`Road groups at km ${coastedFrame?.km}`}>
             <h4>Road at km {coastedFrame?.km}</h4>
             <p>Groups are ordered from front to back at this recorded checkpoint. Gaps are measured against the bunch.</p>
+            {viewerRiderRoad&&<p aria-label="Followed rider at this checkpoint">
+              Following {viewerRiderId}: {viewerRiderRoad.label.toLowerCase()},
+              {' '}{viewerRiderRoad.gapSeconds>0?
+                `${viewerRiderRoad.gapSeconds.toFixed(1)} s ahead of the bunch`:
+                viewerRiderRoad.gapSeconds<0?
+                  `${Math.abs(viewerRiderRoad.gapSeconds).toFixed(1)} s behind the bunch`:
+                  'with the bunch'} · {viewerCurrentEnergy?.toFixed(1)??'—'} energy left.
+            </p>}
             <ol>{viewerRoad.map(band=><li key={band.key}>
               <strong>{band.label}</strong>
               <span>{band.riderCount} {band.riderCount===1?'rider':'riders'} · {band.gapSeconds>0?

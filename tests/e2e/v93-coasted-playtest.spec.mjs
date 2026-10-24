@@ -2436,6 +2436,12 @@ test('early front catch reaches the browser line and replay with points withheld
     await expect(page.getByLabel('Rider to follow')).toHaveValue('you-1');
     await expect(page.getByRole('heading',{
       name:`Road at km ${firstOwnBreakKm}`})).toBeVisible();
+    await expect(page.getByLabel('Followed rider at this checkpoint'))
+      .toContainText(`Following you-1:`);
+    await expect(page.getByLabel('Followed rider at this checkpoint'))
+      .toContainText(`${body.coasted.kilometreFrames[
+        firstOwnBreakKm-1].ownRiders.find(row=>
+        row.riderId==='you-1').energy.toFixed(1)} energy left`);
     await page.getByLabel('Recorded race timeline')
       .getByRole('button',{name:new RegExp(`Km ${
         (body.coasted.frontCatch.atDistanceM/1000).toFixed(3)}`)}).first().click();
@@ -2444,6 +2450,8 @@ test('early front catch reaches the browser line and replay with points withheld
         row.distanceM>=body.coasted.frontCatch.atDistanceM&&
         !row.groups.some(group=>
           group.id===body.coasted.frontCatch.roadGroupId))));
+    await expect(page.getByRole('heading',{
+      name:'Road at km 259'})).toBeVisible();
     await expect(page.getByRole('table',{
       name:'V93 individual conditional results'}).getByRole('row'))
       .toHaveCount(161);
