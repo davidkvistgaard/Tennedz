@@ -8,7 +8,7 @@ import {raceViewerCheckpoints,raceViewerEnergySeries,
   raceViewerEnergyCurve,
   raceViewerBreaksAndChase,raceViewerFinale,raceViewerRoad,
   raceViewerLateEffort,raceViewerLateTeamWork,
-  raceViewerEffortInsight,raceViewerTimeline} from
+  raceViewerEffortInsight,raceViewerTimeline,raceViewerRivalAt} from
   '../../lib/engine/v2/playtest-viewer.mjs';
 
 test('rider guide shows the exact synthetic riders committed to the race',()=>{
@@ -49,6 +49,27 @@ test('viewer road orders recorded fronts, solo riders and bunch without losing r
     ['Bunch',28,0],['you-3 riding alone',1,-3.2]]);
   assert.deepEqual(road.map(row=>row.ownRiderIds),[
     ['you-2'],[],['you-0','you-1','you-4','you-5','you-6','you-7'],['you-3']]);
+});
+
+test('rival focus ties a manager to its recorded finisher and road actions',()=>{
+  const race={settings:{teamCount:4},
+    managerDecisions:[{teamId:'rival-2',finisherId:'rival-2-7'}],
+    managerOrders:[{teamId:'rival-2',effort:'steady',attack:'selective',
+      chase:'all'}],lineTimes:[{riderId:'rival-2-7',energyAtLine:42}]};
+  const frame={roadGroups:[{id:'road-1',gapSeconds:7.5,
+    riderIds:['rival-2-7','rival-2-1']}],
+    droppedRiders:[{riderId:'rival-2-3',deficitSeconds:2}],
+    attackAttempts:['rival-2-7','rival-1-0'],
+    joinedRiderIds:['rival-2-7'],caughtRiderIds:[],
+    pullRiderIds:['rival-2-1'],chasingTeamIds:['rival-2']};
+  assert.deepEqual(raceViewerRivalAt(race,frame,'rival-2'),{
+    teamId:'rival-2',finisherId:'rival-2-7',
+    orders:race.managerOrders[0],
+    finisherRoad:'7.5 s ahead with 2 riders',
+    frontCount:2,bunchCount:5,droppedCount:1,
+    attacks:['rival-2-7'],joins:['rival-2-7'],catches:[],
+    pulls:['rival-2-1'],chased:true,lineEnergy:42});
+  assert.equal(raceViewerRivalAt(race,frame,'rival-4'),null);
 });
 
 test('late effort snapshot reads the chosen phase and recorded rider road',()=>{
