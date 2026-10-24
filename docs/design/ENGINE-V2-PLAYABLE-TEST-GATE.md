@@ -5039,11 +5039,33 @@ checks all 160 riders at the 500 m handoff, and continues pairwise
 through the final half. The women's final half has one further fresh
 same-source approach, `rival-5-7` / `rival-15-7` at 259811.807 m.
 These source-group and final approaches do not settle occupied lanes
-or the riders' response. Both whole races therefore **still refuse**
-in guided Motor Lab, with no user-facing finish/replay, classified
-places, policy points or awards. The internal audit is evidence for a
+or the riders' response. At this audit-only stage, both whole races
+**still refused** in guided Motor Lab, with no user-facing finish/replay,
+classified places, policy points or awards. The internal audit is evidence for a
 future guarded continuation, not a result or a claim of general
 20-team coverage. All six neighboring heterogeneous whole-race units,
 changed-file lint, and an isolated preview Next build passed. No
 authenticated browser flow was needed for this internal-only audit;
 no full repository unit or browser-suite pass is claimed.
+
+The locked 20-team women's zero-fatigue mountain source now has a
+**separate versioned guarded whole-race continuation** after that
+internal audit: exactly five paid same-source possible approaches in
+the first 500 m and one in the final 500 m, seven road boundaries,
+all 160 rider energy handoffs, individual conditional crossings and
+deterministic replay. The English viewer reports all six possible
+approaches and retains the separate inferred no-draft outside lanes.
+The occupied wheel response remains unresolved, so classified places,
+official points and saved awards stay withheld. Disabling this new
+version retains the earlier explicit refusal. The neighboring men's
+zero-fatigue mountain source has ten first-half approaches and still
+refuses, as do ten other 20-team sources. The independent 60-race
+heterogeneous whole-race matrix improved from 48 conditional finishes
+and 12 refusals to **49 conditional finishes and 11 explicit refusals**;
+exactly one race uses this new version. A focused authenticated local
+browser flow showed 160 crossings, six approaches and withheld awards.
+Six neighboring whole-race units, changed-file lint, and an isolated
+preview build also passed. No full repository serial unit or browser
+suite is claimed for this increment.
+The new path is bounded and does not establish general 20-team motor
+coverage.
