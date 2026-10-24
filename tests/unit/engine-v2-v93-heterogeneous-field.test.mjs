@@ -7,6 +7,7 @@ import {createV93PlayableTest,validateV93CoastedPlaytest,
   V93_MIXED_TWO_FRONT_FINAL_FRESH_LANES_PLAYTEST_VERSION,
   V93_MIXED_TWO_FRONT_MANY_PRE500_LANES_PLAYTEST_VERSION,
   V93_MIXED_TWO_FRONT_FIVE_PRE500_CLEAN_FINAL_LANES_PLAYTEST_VERSION,
+  V93_MIXED_TWO_FRONT_SEVEN_PRE500_CLEAN_FINAL_LANES_PLAYTEST_VERSION,
   V93_MIXED_TWO_FRONT_MANY_PRE500_CLEAN_FINAL_LANES_PLAYTEST_VERSION,
   V93_MIXED_TWO_FRONT_MULTIFRONT_CLEAN_FINAL_LANES_PLAYTEST_VERSION,
   V93_MIXED_TWO_FRONT_CROWDED_MULTIFRONT_LANES_PLAYTEST_VERSION,
@@ -103,7 +104,6 @@ function recordingFor(settings){
 
 test('alternate multifront seeds retain explicit contact refusals',()=>{
   for(const [gender,terrain,fatigue] of [
-    ['M','mountain',0],
     ['F','mountain',30],['F','exposed',30]]){
     const settings=settingsFor(20,gender,terrain,fatigue);
     settings.seed+='-alternate-1';
@@ -111,6 +111,29 @@ test('alternate multifront seeds retain explicit contact refusals',()=>{
       error.roadPreview?.unsupportedReason==='unresolved_band_contact');
   }
 });
+
+test('seven paid first-half approaches with a clean final half finish conditionally',
+  ()=>{
+    const settings=settingsFor(20,'M','mountain',0);
+    settings.seed+='-alternate-1';
+    const race=createV93PlayableTest(settings);
+    assert.equal(race.version,
+      V93_MIXED_TWO_FRONT_SEVEN_PRE500_CLEAN_FINAL_LANES_PLAYTEST_VERSION);
+    assert.equal(race.mixedTwoFrontResult.pre500Audit.freshApproaches.length,7);
+    assert.equal(race.mixedTwoFrontResult.final500Audit.freshApproaches.length,0);
+    assert.equal(race.mixedTwoFrontResult.line.conditionalCrossings.length,160);
+    assert.equal(race.mixedTwoFrontResult.clock.passageFrames.length,7);
+    assert.equal(race.classifiedResults,null);
+    assert.equal(race.pointsStatus,'withheld');
+    assert.equal(race.canCommitAwards,false);
+    const summary=summarizeV93CoastedPlaytest(race);
+    assert.equal(summary.lineTimes.length,160);
+    assert.equal(summary.bandReplays.flatMap(row=>row.riderIds).length,160);
+    assert.equal(validateV93CoastedPlaytest(settings,{},race),true);
+    assert.throws(()=>createV93PlayableTest(settings,{},
+      {resolveMixedTwoFrontSevenPre500CleanFinalLanes:false}),
+    /depleted line bands crossed without contact/i);
+  });
 
 test('five paid first-half approaches with a clean final half finish conditionally',
   ()=>{
