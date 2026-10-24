@@ -321,3 +321,19 @@ test('race story keeps different riders recorded first moments in road order',()
     'Km 12: you-2 attempted an attack.',
     'Km 13: you-2 joined a front group.']);
 });
+
+test('race story names an own catch only when the final road and line are paid',()=>{
+  const race={kilometreFrames:[{km:39,attackAttempts:[],
+    joinedRiderIds:[],caughtRiderIds:[],
+    roadGroups:[{id:'road-1',gapSeconds:1.3,riderIds:['you-1']}],
+    droppedRiders:[],ownRiders:[{riderId:'you-1',energy:32}]}],
+  frontCatch:{roadGroupId:'road-1',atDistanceM:39279.115,
+    caughtRiderIds:['you-1','rival-1-2']},
+  lastKmRoad:[{distanceM:39000,groups:[{id:'road-1'}]},
+    {distanceM:39300,groups:[]}],
+  lineTimes:[{riderId:'you-1'}]};
+  assert.match(summarizePlaytestRaceStory(race).at(-1),
+    /39\.279 km on the paid final road, you-1 was caught/);
+  assert.doesNotMatch(summarizePlaytestRaceStory({...race,lineTimes:[]}).join(' '),
+    /on the paid final road/);
+});
