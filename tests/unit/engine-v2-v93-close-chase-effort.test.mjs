@@ -4,6 +4,15 @@ import {createV93PlayableTest,summarizeV93CoastedPlaytest,
   validateV93CoastedPlaytest,
   V93_NO_DROPS_WHEEL_CONTACT_PLAYTEST_VERSION} from
   '../../lib/engine/v2/playtest-v93-coasted.mjs';
+import {prepareV91Playtest} from '../../lib/engine/v2/playtest.mjs';
+import {simulateTacticalTour} from '../../lib/engine/v2/tour.mjs';
+import {MOTOR_EXHAUSTION_COAST_VERSION} from
+  '../../lib/engine/v2/tuning.mjs';
+import {resolveFinaleMultibandPositionedSource} from
+  '../../lib/engine/v2/finale-multiband-positioned-source.mjs';
+import {probeFinaleSeparatedGroupsFromTour,
+  FINALE_SINGLE_LATE_CATCH_LAST_KM_VERSION} from
+  '../../lib/engine/v2/finale-multi-run.mjs';
 
 // One whole race, with only the player's 5 km effort changed. The middle
 // choice exposes an occupied-wheel encounter before the 500 m handoff,
@@ -89,4 +98,38 @@ test('no-drops shared wheels pay bounded terrains and retain refusals',()=>{
       assert.equal(error.roadPreview?.lineTimes,null);
       return true;
     });
+});
+
+test('nearby early catches start with overlapping source wheels',()=>{
+  for(const gender of ['M','F'])for(const terrain of
+    ['mountain','exposed']){
+    const selected={...withEffort('steady'),gender,terrain};
+    const prepared=prepareV91Playtest(selected);
+    const tour=simulateTacticalTour({stage:prepared.stage,
+      weather:prepared.weather,teams:prepared.teams,
+      seed:prepared.seed,motorVersion:MOTOR_EXHAUSTION_COAST_VERSION});
+    const positioned=resolveFinaleMultibandPositionedSource(tour);
+    const trace=probeFinaleSeparatedGroupsFromTour(tour,{
+      version:FINALE_SINGLE_LATE_CATCH_LAST_KM_VERSION});
+    const [front,bunch]=positioned.roadBands;
+    const contact=trace.frames[0].contact;
+    assert.equal(contact?.kind,'front_catch');
+    assert.equal(trace.frames[0].roadGroups.length,0);
+    assert.ok(contact.atDistanceM>positioned.startDistanceM&&
+      contact.atDistanceM<positioned.startDistanceM+250);
+    assert.equal(front.slots[0].lane,bunch.slots[0].lane);
+    const gapSeconds=-front.passageSecondsFromBunchMarker;
+    const frontSpeed=(contact.atDistanceM-positioned.startDistanceM)/
+      (contact.preContactBunchSeconds+gapSeconds);
+    const firstSourceWheelGapM=gapSeconds*frontSpeed+
+      front.slots[0].positionM-bunch.slots[0].positionM;
+    assert.ok(firstSourceWheelGapM>0&&
+      firstSourceWheelGapM<positioned.wheelSpacingM);
+    assert.throws(()=>createV93PlayableTest(selected),error=>{
+      assert.equal(error.roadPreview?.unsupportedReason,
+        'unpaid_front_catch');
+      assert.equal(error.roadPreview?.lineTimes,null);
+      return true;
+    });
+  }
 });
