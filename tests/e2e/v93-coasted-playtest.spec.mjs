@@ -561,12 +561,12 @@ test('unresolved later front markers stay visible without a false finish',
     await page.getByLabel('Password',{exact:true}).fill('fixture-password');
     await page.getByRole('button',{name:'Sign in',exact:true}).click();
     await expect(page).toHaveURL(/\/team$/);
-    const teamCount=15,seedIndex=1;
+    const teamCount=20,seedIndex=1;
     const response=await page.request.post('/api/v91-playtest',{
       headers:{origin:'http://localhost:3100'},data:{
         mode:'v93-coasted',settings:{distanceKm:260,teamCount,
-          gender:'M',terrain:'rolling',fatigue:30,
-          seed:'v93-next-contact-field-hills-15-M-rolling-30-1',
+          gender:'F',terrain:'rolling',fatigue:30,
+          seed:'v93-next-contact-field-hills-20-F-rolling-30-1',
           defaultRivalPlan:'passive',effort:'hard',attack:'repeated',
           chase:'all',managerTactics:Array.from({length:teamCount-1},
             (_,index)=>({
@@ -581,7 +581,11 @@ test('unresolved later front markers stay visible without a false finish',
           finisherId:`${teamId}-7`,leadOutRiderId:null}))}});
     expect(response.status()).toBe(422);
     const body=await response.json();
-    expect(body.roadPreview.markerAudit.encounters).toHaveLength(5);
+    expect(body.roadPreview.markerAudit.encounters).toHaveLength(7);
+    expect(body.roadPreview.markerAudit.encounters.filter(row=>
+      row.distanceM<259500)).toHaveLength(3);
+    expect(body.roadPreview.markerAudit.encounters.filter(row=>
+      row.distanceM>=259500)).toHaveLength(4);
     expect(body.roadPreview.lineTimes).toBeNull();
     await page.goto('/team/v91-playtest');
     await page.getByRole('checkbox',{
@@ -595,6 +599,8 @@ test('unresolved later front markers stay visible without a false finish',
       name:'Unresolved front marker overlaps'});
     await expect(note).toContainText('you-7');
     await expect(note).toContainText('not resolved occupied-wheel encounters');
+    await expect(note).toContainText('3 marker overlaps before');
+    await expect(note).toContainText('4 at or after it');
     const history=page.getByLabel('Recorded race before the refusal');
     await expect(history).toContainText('Recorded road changes');
     const moments=history.getByRole('button');

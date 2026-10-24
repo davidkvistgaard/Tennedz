@@ -974,6 +974,13 @@ export default function Playtest(){
             aria-label="Unresolved front marker overlaps">
             <p>The paid solo and {roadPreview.markerAudit.encounters[0].activeBandId}
               {' '}clocks cross after the last-kilometre handoff:</p>
+            <p>{roadPreview.markerAudit.encounters.filter(row=>
+              row.distanceM<roadPreview.settings.distanceKm*1000-500).length}
+              {' '}marker overlaps before the 500 m sprint handoff and {' '}
+              {roadPreview.markerAudit.encounters.filter(row=>
+                row.distanceM>=roadPreview.settings.distanceKm*1000-500).length}
+              {' '}at or after it. The sprint handoff does not settle these
+              {' '}riders' occupied-wheel order.</p>
             <ul>{roadPreview.markerAudit.encounters.map(row=><li
               key={row.riderId}>{row.riderId} at {' '}
               {(row.distanceM/1000).toFixed(3)} km · {' '}
