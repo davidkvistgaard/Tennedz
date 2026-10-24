@@ -192,7 +192,7 @@ test('viewer checkpoints keep recorded attack, catch, position and energy',()=>{
   assert.equal(breaks.ownChaseKm,1);
   assert.deepEqual(breaks.riders,[{riderId:'you-2',events:[
     'km 3: tried to attack','km 4: joined a break','km 8: was caught'],
-  fate:'Caught at km 8',atOneKm:'in the bunch'}]);
+  fate:'Caught at km 8',firstKm:3,atOneKm:'in the bunch'}]);
 });
 
 test('breakaway fate requires a recorded join, catch or clear finish road',()=>{
@@ -207,6 +207,7 @@ test('breakaway fate requires a recorded join, catch or clear finish road',()=>{
       riderIds:['you-7']}],droppedPassages:[]}],
     lineTimes:[{riderId:'you-7'}]};
   const riders=raceViewerBreaksAndChase(race).riders;
+  assert.equal(riders.find(row=>row.riderId==='you-7').firstKm,3);
   assert.equal(riders.find(row=>row.riderId==='you-7').fate,
     'Still in a recorded front group at the line');
   assert.equal(riders.find(row=>row.riderId==='you-2').fate,

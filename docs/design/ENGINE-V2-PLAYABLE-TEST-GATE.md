@@ -4742,3 +4742,11 @@ and selects that subsequent boundary. It adds no contact moment to a
 road-only preview or a race without individual line crossings. Twelve
 focused viewer unit tests, changed-file lint, an isolated Next build and
 both local browser flows passed.
+
+The breakaway list also provides a direct "Follow" action for each own
+rider with a recorded attack, join or catch. It selects that rider for the
+energy curve and checkpoints and opens the first recorded event's road,
+so the rider's attempt and eventual fate can be inspected together. The
+locked 260 km browser flow verifies this for `you-1` through the paid
+259.228 km catch. Twelve viewer unit tests, changed-file lint, isolated
+Next build and the focused browser flow passed.
