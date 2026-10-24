@@ -1107,7 +1107,8 @@ export default function Playtest(){
             <p>Your team chased in {viewerBreaks?.ownChaseKm??0} recorded kilometres; at least one rival chased in {viewerBreaks?.rivalChaseKm??0}. These counts describe the recorded road, not a guarantee that a break was caught.</p>
             {viewerBreaks?.riders.length?<ul>{viewerBreaks.riders.map(row=><li
               key={row.riderId}><strong>{row.riderId}</strong>: {' '}
-              {row.events.join(' · ')}. With 1 km to go: {row.atOneKm}.
+              {row.events.join(' · ')}. <strong>Outcome:</strong> {row.fate}.
+              {' '}With 1 km to go: {row.atOneKm}.
             </li>)}</ul>:<p>No attack, breakaway join or catch was recorded for your team.</p>}
           </div>
           {viewerFinale&&<div className="v91-viewer-finale"

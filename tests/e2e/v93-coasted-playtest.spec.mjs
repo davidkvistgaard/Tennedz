@@ -1725,6 +1725,10 @@ test('one player attack changes the recorded front, result and paid replay',
     expect(afterPoints.previewPoints).toBeGreaterThan(
       beforePoints.previewPoints);
     expect(after.pointPreview.awardRows).toEqual([]);
+    expect(after.lastKmRoad.at(-1).groups.some(group=>
+      group.gapSeconds>0&&group.riderIds.includes('you-7'))).toBe(true);
+    await expect(page.getByLabel('Breakaways and chase'))
+      .toContainText('Still in a recorded front group at the line');
     await expect(page.getByRole('region',{
       name:'Paired v93 race comparison'})).toContainText(
       'Conditional place: 7 → 3');
