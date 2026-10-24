@@ -171,6 +171,62 @@ test('late bunch pass keeps mixed-front road, line and replay together',
       .toBeVisible();
   });
 
+test('three fronts and both sets of leavers reach conditional replay',
+  async({page})=>{
+    await page.goto('/login');
+    await page.getByLabel('Email or username').fill('alice');
+    await page.getByLabel('Password',{exact:true}).fill('fixture-password');
+    await page.getByRole('button',{name:'Sign in',exact:true}).click();
+    await expect(page).toHaveURL(/\/team$/);
+    const response=await page.request.post('/api/v91-playtest',{
+      headers:{origin:'http://localhost:3100'},data:{
+        mode:'v93-coasted',settings:{distanceKm:260,teamCount:4,
+          gender:'M',terrain:'mountain',fatigue:30,
+          seed:'v93-next-contact-four-mixed-4-M-mountain-30-0',
+          defaultRivalPlan:'passive',effort:'hard',attack:'repeated',
+          chase:'all',managerTactics:[
+            {effort:'hard',attack:'repeated',chase:'all'},
+            {effort:'conserve',attack:'selective',chase:'ignore'},
+            {effort:'steady',attack:'repeated',chase:'all'}],
+          managerFinaleOrders:[
+            {teamId:'you',atKm:255,effort:'conserve'},
+            {teamId:'rival-1',atKm:255,effort:'hard'}]},
+        plans:['you','rival-1','rival-2','rival-3'].map(teamId=>({
+          teamId,finisherId:`${teamId}-7`,leadOutRiderId:null})),
+        pointContext:{tier:2,divisionCount:2,divisionIndex:1}}});
+    expect(response.status()).toBe(200);
+    const body=await response.json();
+    expect(body.coasted.version)
+      .toBe('v93-mixed-three-front-clear-playtest-1');
+    expect(body.coasted.lastKmRoad.at(-1).distanceM).toBe(260000);
+    expect(body.coasted.lineTimes).toHaveLength(32);
+    expect(body.coasted.mixedFrontLeavers.rearStayedAhead).toBe(true);
+    expect(body.coasted.mixedFrontLeavers.bunchPasses).toEqual([]);
+    expect(body.coasted.pointPreview.status).toBe('unavailable');
+    expect(body.coasted.canCommitAwards).toBe(false);
+    await page.goto('/team/v91-playtest');
+    await page.getByRole('checkbox',{
+      name:'Continue to a conditional finish'}).check();
+    await page.getByRole('checkbox',{
+      name:'Try v93 road-to-line preview'}).check();
+    await page.route('**/api/v91-playtest',route=>route.fulfill({
+      status:200,contentType:'application/json',body:JSON.stringify(body)}));
+    await page.getByRole('button',{name:'Run v93 race preview'}).click();
+    const note=page.getByRole('note',{name:'Mixed front exits'});
+    await expect(note).toContainText('left road-3');
+    await expect(note).toContainText('road-5 remained ahead of the bunch');
+    await expect(note).toContainText('stayed ahead of the bunch');
+    await expect(page.getByRole('table',{
+      name:'V93 individual conditional results'}).getByRole('row'))
+      .toHaveCount(33);
+    await note.getByRole('button',{
+      name:'Inspect mixed front exit rider you-6 finish replay'}).click();
+    await expect(page.getByLabel('Selected rider finale replay'))
+      .toContainText('you-6:');
+    await expect(page.getByText('Official points: withheld · Awards saved: 0'))
+      .toBeVisible();
+  });
+
 test('dissolved leading front reaches paid individual replay without awards',
   async({page})=>{
     await page.goto('/login');

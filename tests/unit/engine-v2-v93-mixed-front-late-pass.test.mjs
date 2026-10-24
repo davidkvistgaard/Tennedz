@@ -76,7 +76,7 @@ test('late unassisted bunch pass pays whole mixed-front road and replay',()=>{
     }
 });
 
-test('the fatigue-zero version and unpayable third front stay separate',()=>{
+test('the fatigue-zero version and disabled third-front path stay separate',()=>{
   assert.equal(createV93PlayableTest(settings('M','flat',0)).version,
     V93_MIXED_FRONT_CLEAR_PLAYTEST_VERSION);
   assert.throws(()=>createV93PlayableTest({
@@ -85,6 +85,7 @@ test('the fatigue-zero version and unpayable third front stay separate',()=>{
     managerTactics:Array.from({length:3},(_,index)=>({
       effort:['hard','conserve','steady'][(index+4)%3],
       attack:index%3===1?'selective':'repeated',
-      chase:index%3===1?'ignore':'all'}))}),
+      chase:index%3===1?'ignore':'all'}))},{},
+    {resolveMixedThreeFrontClear:false}),
   /The depleted line bands crossed without contact/);
 });
