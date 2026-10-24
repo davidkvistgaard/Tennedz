@@ -694,6 +694,7 @@ export default function Playtest({guided=false}){
           <small>Each 20% segment is limited to an average gradient of 10%.</small>
         </fieldset>}
         {guided&&<div className="v91-step-heading"><span>02 / TACTICS</span><h2>Give your team orders</h2><p>Effort spends energy; attacks and chasing change where your riders travel.</p></div>}
+        {guided&&<p>Selective attacks are considered every 20 km and at route keypoints; repeated attacks every 5 km and at keypoints. An attempt may fail or be blocked by rider position or energy. Selective chase reacts to the gap and attack pressure; All helpers commits available helpers more strongly and costs more energy. After the race, the viewer shows which orders became recorded actions.</p>}
         {guided&&['effort','attack','chase'].map(key=><label key={key}>{LABELS[key]}
           <select value={settings[key]} onChange={event=>change(key,event.target.value)}>
             {OPTIONS[key].map(([value,label])=><option value={value} key={value}>{label}</option>)}
