@@ -5,7 +5,8 @@ import {api} from '../../../lib/api';
 import {playtestRiderCards} from '../../../lib/engine/v2/playtest-riders.mjs';
 import {summarizePlaytestRaceStory} from
   '../../../lib/engine/v2/playtest-race-story.mjs';
-import {raceViewerCheckpoints,raceViewerEnergySeries} from
+import {raceViewerCheckpoints,raceViewerEnergySeries,
+  raceViewerBreaksAndChase} from
   '../../../lib/engine/v2/playtest-viewer.mjs';
 
 const DEFAULT_PLANS=['chase','attack','neutral'];
@@ -383,6 +384,7 @@ export default function Playtest({guided=false}){
     `${20+index/Math.max(1,viewerEnergy.length-1)*560},${120-row.energy}`)
     .join(' ');
   const viewerSelectedEnergy=viewerEnergy[coastedKm-1];
+  const viewerBreaks=coasted?raceViewerBreaksAndChase(coasted):null;
   const coastedBunchExitCount=(coasted?.unresolvedBunchExits??[])
     .reduce((count,wave)=>count+wave.riderIds.length,0);
   const conditionalLine=[...lineTimes].sort((a,b)=>
@@ -1044,6 +1046,14 @@ export default function Playtest({guided=false}){
               checkpoint.moments.join(' · '):
               `${checkpoint.frontCount} groups ahead${checkpoint.chasing?' · your team chased':''}`}</small>
           </button>)}</div>
+          <div className="v91-viewer-breaks" aria-label="Breakaways and chase">
+            <h4>Breakaways and chase</h4>
+            <p>Your team chased in {viewerBreaks?.ownChaseKm??0} recorded kilometres; at least one rival chased in {viewerBreaks?.rivalChaseKm??0}. These counts describe the recorded road, not a guarantee that a break was caught.</p>
+            {viewerBreaks?.riders.length?<ul>{viewerBreaks.riders.map(row=><li
+              key={row.riderId}><strong>{row.riderId}</strong>: {' '}
+              {row.events.join(' · ')}. With 1 km to go: {row.atOneKm}.
+            </li>)}</ul>:<p>No attack, breakaway join or catch was recorded for your team.</p>}
+          </div>
         </section>
         <details className="v91-technical"><summary>Engine status and recording details</summary>
         <p>{coasted.tuningVersion} · {coasted.settings.managerTactics.length+
