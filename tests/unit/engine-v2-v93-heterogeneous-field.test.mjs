@@ -26,7 +26,9 @@ import {recordFinaleCoastedIndividualLine} from
 import {recordFinaleMixedTwoFrontDroppedPre500Audit,
   recordFinaleMixedTwoFrontDroppedFreshPre500Audit,
   recordFinaleMixedTwoFrontDroppedManyPre500Audit,
+  recordFinaleMixedTwoFrontDroppedMultifrontPre500Audit,
   FINALE_MIXED_TWO_FRONT_DROPPED_MANY_PRE500_AUDIT_VERSION,
+  FINALE_MIXED_TWO_FRONT_DROPPED_MULTIFRONT_PRE500_AUDIT_VERSION,
   FINALE_MIXED_TWO_FRONT_DROPPED_FRESH_PRE500_AUDIT_VERSION,
   validateFinaleMixedTwoFrontDroppedPre500Audit} from
   '../../lib/engine/v2/finale-mixed-two-front-dropped-pre500-audit.mjs';
@@ -79,6 +81,37 @@ function recordingFor(settings){
   return simulateTacticalTour({stage,weather,teams,seed,
     motorVersion:MOTOR_EXHAUSTION_COAST_VERSION});
 }
+
+test('two surviving fronts retain separate paid first-half approaches',
+  ()=>{
+    for(const [gender,terrain,expected] of [
+      ['F','flat',7],['M','flat',10],['F','rolling',6]]){
+      const recording=recordingFor(settingsFor(20,gender,terrain,30));
+      const clock=recordFinaleCoastMixedTwoFrontDroppedClock(recording);
+      const line=recordFinaleCoastedIndividualLine(recording,clock);
+      assert.throws(()=>recordFinaleMixedTwoFrontDroppedManyPre500Audit(
+        recording,clock,line),/lacks paid spacing/);
+      const audit=recordFinaleMixedTwoFrontDroppedMultifrontPre500Audit(
+        recording,clock,line);
+      assert.equal(audit.version,
+        FINALE_MIXED_TWO_FRONT_DROPPED_MULTIFRONT_PRE500_AUDIT_VERSION);
+      assert.equal(audit.paidRiderCount,160);
+      assert.equal(audit.freshApproaches.length,expected);
+      assert.deepEqual(new Set(audit.freshApproaches.map(row=>
+        row.sourceRoadGroupId)),new Set(['road-2','road-4']));
+      assert.ok(audit.freshApproaches.every(row=>
+        row.firstEnergy===0&&row.secondEnergy>0&&
+        Math.abs(Math.abs(row.firstWheelM-row.secondWheelM)-2.5)<1e-7&&
+        Math.abs(row.paidSplit.first.frames.at(-1).riders[0].energyAfter-
+          row.firstEnergy)<1e-7&&
+        Math.abs(row.paidSplit.second.frames.at(-1).riders[0].energyAfter-
+          row.secondEnergy)<1e-7&&row.contactResolved===false));
+      assert.equal(audit.contactResolved,false);
+      assert.equal(audit.classifiedResults,null);
+      assert.equal(audit.pointsStatus,'withheld');
+      assert.equal(audit.canCommitAwards,false);
+    }
+  });
 
 test('20-team mountain pays bounded many-approach conditional finish',
   ()=>{

@@ -5099,3 +5099,28 @@ exact paid-spacing guard; merely sharing a source group does not
 authorize a conditional finish. The read-only probe now reports the
 many-approach audits and their refusal reasons. No full repository
 serial unit or full browser-suite pass is claimed.
+
+Release `b9128981afdc696393a2e35699a793a58d78c45b` passed the six
+neighboring whole-race units, changed-file lint, an isolated release
+build, and the authenticated mountain browser flow for both genders.
+Production deployment `dpl_7g8A827BvPYpF7TRZ967LWvo5Tgc` reached
+READY at that exact SHA with the `tennedz.eu` alias. Public Motor Lab
+returned HTTP 200, and checked error/fatal runtime logs were empty.
+The previous `dpl_8QtGgQmDgnh1TnQWXzkfBQpjtfJX` remains rollback.
+
+Read-only probes of three still-refusing 20-team 260 km high-fatigue
+sources (flat for both genders, rolling for women) identify a distinct
+geometry: **two surviving paid fronts**, road-2 and road-4, both have
+exhausted leavers with new same-source 2.5 m approaches during the
+first 500 m. The earlier many-approach audit correctly rejects the
+road-4 approach because it was scoped to the first surviving front.
+A separate versioned **internal-only** multifront audit now checks
+7, 10 and 6 paid first-half approaches in those locked sources,
+respectively. It splits each pair's paid movement and energy at the
+exact instant, checks all 160 riders at the 500 m handoff, and retains
+distinct source-road-group IDs. One focused three-race unit test,
+changed-file lint and diff check passed. This audit does **not** pay
+the final 500 m, classify riders, or expose a Motor Lab result; all
+three sources still explicitly refuse. A separate pairwise final-half
+audit and guarded whole-race continuation are required. The 60-case
+completion count remains 50/60.

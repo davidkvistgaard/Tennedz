@@ -12,7 +12,8 @@ import {recordFinaleCoastedIndividualLine} from
   '../lib/engine/v2/finale-depleted-individual-line.mjs';
 import {recordFinaleMixedTwoFrontDroppedPre500Audit,
   recordFinaleMixedTwoFrontDroppedFreshPre500Audit,
-  recordFinaleMixedTwoFrontDroppedManyPre500Audit} from
+  recordFinaleMixedTwoFrontDroppedManyPre500Audit,
+  recordFinaleMixedTwoFrontDroppedMultifrontPre500Audit} from
   '../lib/engine/v2/finale-mixed-two-front-dropped-pre500-audit.mjs';
 import {recordFinaleMixedTwoFrontDroppedFreshFinal500Audit,
   recordFinaleMixedTwoFrontDroppedManyPre500Final500Audit} from
@@ -259,7 +260,26 @@ try{const clock=recordFinaleCoastMixedTwoFrontDroppedClock(recording);
                 secondEnergy:row.secondEnergy}))};
           }catch(reason){candidate.manyFinal500Audit={
             reason:reason.message};}
-        }catch(reason){candidate.manyPre500Audit={reason:reason.message};}
+        }catch(reason){
+          candidate.manyPre500Audit={reason:reason.message};
+          try{
+            const multi=recordFinaleMixedTwoFrontDroppedMultifrontPre500Audit(
+              recording,clock,line);
+            candidate.multifrontPre500Audit={version:multi.version,
+              status:multi.status,paidRiderCount:multi.paidRiderCount,
+              approaches:multi.freshApproaches.map(row=>({
+                firstRiderId:row.firstRiderId,
+                secondRiderId:row.secondRiderId,
+                sourceRoadGroupId:row.sourceRoadGroupId,
+                firstWheelM:row.firstWheelM,
+                secondWheelM:row.secondWheelM,
+                firstEnergy:row.firstEnergy,
+                secondEnergy:row.secondEnergy})),
+              contactResolved:multi.contactResolved,
+              pointsStatus:multi.pointsStatus};
+          }catch(next){candidate.multifrontPre500Audit={
+            reason:next.message};}
+        }
       }
     }}
   catch(error){candidate.line={reason:error.message};}}
