@@ -119,7 +119,29 @@ test('viewer checkpoints keep recorded attack, catch, position and energy',()=>{
   assert.equal(breaks.ownChaseKm,1);
   assert.deepEqual(breaks.riders,[{riderId:'you-2',events:[
     'km 3: tried to attack','km 4: joined a break','km 8: was caught'],
-  atOneKm:'in the bunch'}]);
+  fate:'Caught at km 8',atOneKm:'in the bunch'}]);
+});
+
+test('breakaway fate requires a recorded join, catch or clear finish road',()=>{
+  const frames=[{km:3,attackAttempts:['you-2','you-7'],
+    joinedRiderIds:['you-7'],caughtRiderIds:[],engagedChaseTeamIds:[],
+    roadGroups:[],droppedRiders:[],ownRiders:[]},
+  {km:39,attackAttempts:[],joinedRiderIds:[],caughtRiderIds:[],
+    engagedChaseTeamIds:[],roadGroups:[{id:'road-1',gapSeconds:8,
+      riderIds:['you-7']}],droppedRiders:[],ownRiders:[]}];
+  const race={kilometreFrames:frames,
+    lastKmRoad:[{groups:[{id:'road-1',gapSeconds:7,
+      riderIds:['you-7']}],droppedPassages:[]}],
+    lineTimes:[{riderId:'you-7'}]};
+  const riders=raceViewerBreaksAndChase(race).riders;
+  assert.equal(riders.find(row=>row.riderId==='you-7').fate,
+    'Still in a recorded front group at the line');
+  assert.equal(riders.find(row=>row.riderId==='you-2').fate,
+    'No front-group join recorded');
+  race.lastKmRoad[0].groups=[];
+  assert.equal(raceViewerBreaksAndChase(race).riders.find(row=>
+    row.riderId==='you-7').fate,
+  'No catch recorded, but no separate front finish is confirmed');
 });
 
 test('race story only names events and positions present in the recording',()=>{
