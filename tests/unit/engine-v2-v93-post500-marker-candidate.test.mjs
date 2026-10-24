@@ -14,7 +14,9 @@ import {recordFinaleDepletedIndividualLine,
   FINALE_POST500_MARKER_CANDIDATE_INDIVIDUAL_LINE_VERSION} from
   '../../lib/engine/v2/finale-depleted-individual-line.mjs';
 import {recordFinaleMixedPost500IndividualAudit,
-  validateFinaleMixedPost500IndividualAudit} from
+  validateFinaleMixedPost500IndividualAudit,
+  recordFinaleMixedPost500OutsideLaneAudit,
+  validateFinaleMixedPost500OutsideLaneAudit} from
   '../../lib/engine/v2/finale-mixed-post500-individual-audit.mjs';
 
 function recording(teamCount,gender,terrain){
@@ -95,6 +97,32 @@ test('late marker candidates keep road-2 and passing leavers unresolved',()=>{
       tour,clock,line,audit),true);
     assert.equal(audit.classifiedResults,null);
     assert.equal(audit.pointsStatus,'withheld');
+    const lanes=recordFinaleMixedPost500OutsideLaneAudit(tour,
+      clock,line);
+    assert.equal(lanes.laneAssignments.length,
+      line.bandRunners.filter(row=>
+        row.roadBandId.startsWith('isolated:')).length);
+    assert.equal(new Set(lanes.laneAssignments.map(row=>
+      row.lane)).size,lanes.laneAssignments.length);
+    assert.equal(lanes.encounters.length,audit.encounters.length);
+    for(const event of lanes.encounters)
+      for(const side of ['isolated','active']){
+        const paid=event.paidContinuation[side];
+        assert.ok(Math.abs(paid.energyAtApproach-
+          paid.spentAfterApproach-paid.energyAtLine)<1e-7);
+      }
+    assert.ok(lanes.pairwisePasses.some(row=>
+      row.rule==='former_leader_outside_road_2'));
+    assert.equal(lanes.classifiedResults,null);
+    assert.equal(lanes.pointsStatus,'withheld');
+    assert.equal(lanes.contactResolved,false);
+    assert.equal(validateFinaleMixedPost500OutsideLaneAudit(tour,
+      clock,line,lanes),true);
+    const unsafe=structuredClone(line);
+    unsafe.bandRunners[0].runner.frames=
+      unsafe.bandRunners[1].runner.frames;
+    assert.throws(()=>recordFinaleMixedPost500OutsideLaneAudit(
+      tour,clock,unsafe),/unpaid active-band encounter/);
   }
 });
 
