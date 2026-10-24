@@ -87,7 +87,8 @@ test('pre-500 m outside-lane passes retain the whole paid race',()=>{
 
 test('post-500 m front passes still refuse without a paid continuation',()=>{
   for(const [teamCount,gender,terrain] of [
-    [15,'M','rolling'],[15,'F','mountain'],[20,'F','rolling']]){
+    [15,'M','rolling'],[15,'F','rolling'],
+    [15,'M','mountain'],[15,'F','mountain'],[20,'F','rolling']]){
     let refusal;
     try{createV93PlayableTest(settings(teamCount,gender,terrain));}
     catch(error){refusal=error;}
