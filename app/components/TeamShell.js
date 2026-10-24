@@ -28,6 +28,7 @@ export default function TeamShell({ title, children, compact = false }) {
     ["/team/calendar", "Calendar & races"],
     ["/team/defaults", "Default teams"],
     ["/team/motor-lab", "Motor Lab"],
+    ["/team/v91-playtest", "Race viewer"],
     ["/team/portraits", "Riders"],
     ["/team/identity", "Club identity"],
     ["/team/staff", "Staff"],

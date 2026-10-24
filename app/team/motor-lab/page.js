@@ -1,5 +1,6 @@
 "use client";
 import {useEffect,useMemo,useState} from 'react';
+import Link from 'next/link';
 import TeamShell from '../../components/TeamShell';
 import {api} from '../../../lib/api';
 import './motor-lab.css';
@@ -127,6 +128,7 @@ export default function MotorLabPage(){
     </div><span className="motor-tag">Experimental · no live results</span>
    </section>
    <p className="motor-boundary">This laboratory uses fictional riders and two fixed 160 km routes. It reads no team roster, makes no database changes and awards no points. The current live race engine is unchanged.</p>
+   <p className="motor-boundary">Want to follow a whole race, compare 5 km effort and inspect rider energy? <Link href="/team/v91-playtest">Open the race viewer</Link>.</p>
    <section className="motor-panel" aria-labelledby="motor-orders-title">
     <div className="motor-section-heading"><span>01 / COMMIT A PLAN</span><h2 id="motor-orders-title">How should Amber race?</h2></div>
     <div className="motor-plans" role="radiogroup" aria-label="Amber race plan">
