@@ -133,3 +133,34 @@ test('nearby early catches start with overlapping source wheels',()=>{
     });
   }
 });
+
+test('measured chase needs steady but hard spends extra line energy',()=>{
+  const selected={...settings,teamOverrides:[{teamId:'you',level:45},
+    ...['rival-1','rival-2','rival-3'].map(teamId=>(
+      {teamId,level:25}))]};
+  const runs=['conserve','steady','hard'].map(effort=>{
+    const input={...selected,managerFinaleOrders:[{teamId:'you',
+      atKm:35,effort,chase:'all'}]};
+    const race=createV93PlayableTest(input);
+    const summary=summarizeV93CoastedPlaytest(race);
+    const finisherId=summary.managerDecisions.find(row=>
+      row.teamId==='you').finisherId;
+    assert.equal(summary.lineTimes.length,32);
+    assert.equal(summary.pointsStatus,'withheld');
+    assert.equal(summary.canCommitAwards,false);
+    return {summary,finisherId,
+      place:summary.provisionalLineOrder.find(row=>
+        row.riderId===finisherId).position,
+      energy:summary.lineTimes.find(row=>
+        row.riderId===finisherId).energyAtLine,
+      catches:summary.kilometreFrames.filter(frame=>
+        frame.km>35).flatMap(frame=>frame.caughtRiderIds)};
+  });
+  assert.deepEqual(runs.map(row=>row.place),[4,1,1]);
+  assert.deepEqual(runs.map(row=>row.catches.length),[0,3,3]);
+  assert.ok(runs[0].energy>runs[1].energy&&
+    runs[1].energy>runs[2].energy);
+  assert.deepEqual(runs[0].summary.kilometreFrames.filter(frame=>
+    frame.km<35),runs[2].summary.kilometreFrames.filter(frame=>
+    frame.km<35));
+});

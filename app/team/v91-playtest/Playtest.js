@@ -471,7 +471,8 @@ export default function Playtest({guided=false}){
     ...settings.managerTacticOverrides.map(row=>row.teamId)]);
   const setupExampleRace=(kind)=>{
     const tactical=kind==='tactical';
-    const chase=kind==='chase';
+    const measuredChase=kind==='measured-chase';
+    const chase=kind==='chase'||measuredChase;
     setIntegratedMode(true);setCoastedMode(true);
     setSettings(tactical?{...INITIAL,distanceKm:120,terrain:'rolling',
       gender:'F',teamCount:15,fatigue:15,attack:'none',
@@ -479,9 +480,9 @@ export default function Playtest({guided=false}){
         effort:'hard',attack:'none',chase:'all'}]}:chase?
       {...INITIAL,distanceKm:40,terrain:'flat',attack:'none',
         chase:'all',defaultRivalPlan:'attack',seed:'near-catch',
-        teamOverrides:[{teamId:'you',level:40},
+        teamOverrides:[{teamId:'you',level:measuredChase?45:40},
           ...['rival-1','rival-2','rival-3'].map(teamId=>(
-            {teamId,level:20}))]}:
+            {teamId,level:measuredChase?25:20}))]}:
       {...INITIAL,distanceKm:40,attack:'none',
         seed:'sample-flat-finish'});
     setCustomRivals(0);setExtraRivalId('');
@@ -630,6 +631,8 @@ export default function Playtest({guided=false}){
             disabled={busy}>Set up two-manager race</button>
           <button type="button" onClick={()=>setupExampleRace('chase')}
             disabled={busy}>Set up close-chase race</button>
+          <button type="button" onClick={()=>setupExampleRace('measured-chase')}
+            disabled={busy}>Set up measured-chase race</button>
         </div>
         <p>{guided?'A 40 km sample is ready below. Try the 120 km race to control a rival manager too. You can edit either setup before running.':
           'Choose a 40 km sample or a 120 km two-manager race with custom tactics and lead-outs. Edit either setup, then inspect the road, finish and rider replay.'}</p>
@@ -637,7 +640,9 @@ export default function Playtest({guided=false}){
           synthetic team strengths of 40 for your team and 20 for each rival.
           Run it with conserve at 5 km, then try hard with the same seed to
           inspect the catch, energy and conditional finish. You can also try
-          the sample or 120 km two-manager race.</p>
+          the measured chase: conserve leaves the break ahead, while steady
+          and hard both catch it. Compare the energy each choice leaves at
+          the line. The sample and 120 km two-manager races remain available.</p>
       </div>
       <form id="v91-race-settings" onSubmit={run} className="v91-controls">
         {!guided&&<label className="v91-mode"><input type="checkbox" checked={integratedMode}

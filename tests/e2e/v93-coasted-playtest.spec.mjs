@@ -72,6 +72,51 @@ test('close-chase preset shows when hard effort catches a late break',
       .toContainText('39.279 km');
   });
 
+test('measured chase shows when steady catches and hard only spends reserve',
+  async({page})=>{
+    await page.goto('/login');
+    await page.getByLabel('Email or username').fill('alice');
+    await page.getByLabel('Password',{exact:true}).fill('fixture-password');
+    await page.getByRole('button',{name:'Sign in',exact:true}).click();
+    await expect(page).toHaveURL(/\/team$/);
+    await page.goto('/team/v91-playtest');
+    await page.getByRole('button',{
+      name:'Set up measured-chase race'}).click();
+    const run=async()=>{
+      const request=page.waitForResponse(response=>
+        response.url().endsWith('/api/v91-playtest')&&
+        response.request().method()==='POST');
+      await page.getByRole('button',{
+        name:'Run v93 race preview'}).click();
+      const response=await request;
+      expect(response.status()).toBe(200);
+      return (await response.json()).coasted;
+    };
+    const conserve=await run();
+    await page.getByLabel('5 km to go effort for you')
+      .selectOption('steady');
+    const steady=await run();
+    await page.getByLabel('5 km to go effort for you')
+      .selectOption('hard');
+    const hard=await run();
+    const ownPlace=race=>race.provisionalLineOrder.find(row=>
+      row.riderId==='you-7').position;
+    const ownEnergy=race=>race.lineTimes.find(row=>
+      row.riderId==='you-7').energyAtLine;
+    expect([conserve,steady,hard].map(ownPlace)).toEqual([4,1,1]);
+    expect(ownEnergy(steady)).toBeGreaterThan(ownEnergy(hard));
+    for(const race of [conserve,steady,hard]){
+      expect(race.lineTimes).toHaveLength(32);
+      expect(race.pointsStatus).toBe('withheld');
+    }
+    const comparison=page.getByRole('region',{
+      name:'Paired v93 race comparison'});
+    await expect(comparison.getByLabel('Late effort comparison'))
+      .toContainText('km 39: rival-1-7, rival-2-7, rival-3-7');
+    await expect(comparison.getByLabel('Late effort takeaway'))
+      .toContainText('hard spent more energy without improving the conditional place');
+  });
+
 test('mixed front exits reach the conditional finish and rider replay',
   async({page})=>{
     await page.goto('/login');
