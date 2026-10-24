@@ -4375,3 +4375,47 @@ with the `tennedz.eu` alias at exact release
 returned HTTP 200, and the checked error/fatal runtime window had no
 logs. The previous deployment `dpl_6in9JxRmVELjs25R856ezxbLFak5`
 remains the rollback target.
+
+### Three surviving fronts with two sets of leavers (2026-10-24)
+
+The 150-case four-team mixed-tactic audit left ten explicit mountain
+refusals at fatigue 30. In eight of them the 259 km source has three
+surviving fronts. The first two shed riders at the boundary. In locked
+`v93-next-contact-four-mixed-4-M-mountain-30-0`, two former `road-1`
+riders remain between `road-1` and `road-3`, while one former `road-3`
+rider stays between `road-3` and `road-5`. The third front remains ahead
+of the bunch. All seven paid markers retain those strict separations;
+there is no recorded pass. The same geometry holds for four seeds in
+each gender, including cases with two leavers from each of the first
+two fronts.
+
+A separate clock and playtest version now require exactly three surviving
+fronts, boundary exits only from the first two, no prior dropped rider,
+no subsequent exhaustion or dissolution, no contact, and the same strict
+order at every paid marker. The guarded 500 m handoff must also preserve
+the four conditional finish bands. The 32 riders retain individual energy,
+crossings and replay. The source has no wheel order for either set of
+leavers, so official places, points and saved awards remain withheld.
+The English Motor Lab identifies the third front in its exit explanation.
+An opt-out and old versioned recordings keep their earlier behavior.
+
+The targeted audit now completes 148/150 whole 260 km races, up from
+140/150. The two remaining high-fatigue mountain cases record two rear
+leavers passed by the bunch simultaneously near 259609.690 m for men and
+259606.321 m for women; the new no-contact guard explicitly refuses them.
+The 56 v93 unit tests, changed-file lint, isolated preview build and
+52/52 preview browser flows passed. The separate 90-case playability matrix
+completed 90/90, with 76 read-only point illustrations. No full serial
+unit-suite pass is claimed. Functional preview commit `db06072` is pushed
+on `codex/p01-calendar-engine-integration`.
+It was cherry-picked as release `eef2ade1689acabe4ef20e966b0b7a07fbde2e27`;
+the isolated release build, changed-file lint and 53/53 release browser
+flows passed. The independent 90-case long-field stress was not repeated
+for this guarded four-team geometry.
+
+Production deployment `dpl_4Szu8p5ndPpTcQGrNTmnNMdR4yWK` reached READY
+at exact release `eef2ade1689acabe4ef20e966b0b7a07fbde2e27`, with
+the `tennedz.eu` alias. The unauthenticated `/team/motor-lab` request
+returned HTTP 200 after redirects; the checked error/fatal runtime window
+had no logs. The previous deployment
+`dpl_2vXKXpMamRDrbu23uo5RUvF1CVJK` is the rollback target.
