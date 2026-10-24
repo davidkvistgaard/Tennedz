@@ -72,8 +72,9 @@ test('two fronts keep their leavers ahead through paid conditional finish',()=>{
     }
 });
 
-test('later bunch passes and a third front still refuse this clear rule',()=>{
-  assert.throws(()=>createV93PlayableTest(settings('M','flat',15)),
+test('later bunch passes require their separate version; a third front refuses',()=>{
+  assert.throws(()=>createV93PlayableTest(settings('M','flat',15),{},
+    {resolveMixedFrontLatePass:false}),
     /The depleted line bands crossed without contact/);
   assert.throws(()=>createV93PlayableTest(settings('F','mountain',30,4)),
     /The depleted line bands crossed without contact/);
