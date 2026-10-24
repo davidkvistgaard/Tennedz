@@ -345,6 +345,68 @@ test('long field keeps older drops behind three fronts and their leavers',
       .toBeVisible();
   });
 
+test('paid pre-500 m front passes reach line and replay without awards',
+  async({page})=>{
+    await page.goto('/login');
+    await page.getByLabel('Email or username').fill('alice');
+    await page.getByLabel('Password',{exact:true}).fill('fixture-password');
+    await page.getByRole('button',{name:'Sign in',exact:true}).click();
+    await expect(page).toHaveURL(/\/team$/);
+    const teamCount=20,seedIndex=1;
+    const response=await page.request.post('/api/v91-playtest',{
+      headers:{origin:'http://localhost:3100'},data:{
+        mode:'v93-coasted',settings:{distanceKm:260,teamCount,
+          gender:'M',terrain:'mountain',fatigue:30,
+          seed:'v93-next-contact-field-hills-20-M-mountain-30-1',
+          defaultRivalPlan:'passive',effort:'hard',attack:'repeated',
+          chase:'all',managerTactics:Array.from({length:teamCount-1},
+            (_,index)=>({
+              effort:['hard','conserve','steady'][(index+seedIndex)%3],
+              attack:index%3===1?'selective':'repeated',
+              chase:index%3===1?'ignore':'all'})),
+          managerFinaleOrders:[
+            {teamId:'you',atKm:255,effort:'conserve'},
+            {teamId:'rival-1',atKm:255,effort:'hard'}]},
+        plans:['you',...Array.from({length:teamCount-1},(_,index)=>
+          `rival-${index+1}`)].map(teamId=>({teamId,
+          finisherId:`${teamId}-7`,leadOutRiderId:null})),
+        pointContext:{tier:2,divisionCount:2,divisionIndex:1}}});
+    expect(response.status()).toBe(200);
+    const body=await response.json();
+    expect(body.coasted.version)
+      .toBe('v93-mixed-three-front-pre500-pass-playtest-1');
+    expect(body.coasted.lastKmRoad.at(-1).distanceM).toBe(260000);
+    expect(body.coasted.lineTimes).toHaveLength(160);
+    expect(body.coasted.mixedFrontLeavers.frontPasses).toHaveLength(7);
+    expect(body.coasted.mixedFrontLeavers.frontPasses.every(row=>
+      row.atDistanceM<259500&&row.groupId==='road-2')).toBe(true);
+    expect(body.coasted.mixedFrontLeavers.olderDroppedRiderIds)
+      .toHaveLength(5);
+    expect(body.coasted.pointPreview.status).toBe('unavailable');
+    expect(body.coasted.canCommitAwards).toBe(false);
+    await page.goto('/team/v91-playtest');
+    await page.getByRole('checkbox',{
+      name:'Continue to a conditional finish'}).check();
+    await page.getByRole('checkbox',{
+      name:'Try v93 road-to-line preview'}).check();
+    await page.route('**/api/v91-playtest',route=>route.fulfill({
+      status:200,contentType:'application/json',body:JSON.stringify(body)}));
+    await page.getByRole('button',{name:'Run v93 race preview'}).click();
+    const note=page.getByRole('note',{name:'Mixed front exits'});
+    await expect(note).toContainText(
+      '7 riders passed road-2 on separate inferred outside lanes');
+    await expect(note).toContainText('5 earlier isolated riders stayed behind the bunch');
+    await expect(page.getByRole('table',{
+      name:'V93 individual conditional results'}).getByRole('row'))
+      .toHaveCount(161);
+    await note.getByRole('button',{
+      name:'Inspect mixed front exit rider you-7 finish replay'}).click();
+    await expect(page.getByLabel('Selected rider finale replay'))
+      .toContainText('you-7:');
+    await expect(page.getByText('Official points: withheld · Awards saved: 0'))
+      .toBeVisible();
+  });
+
 test('dissolved leading front reaches paid individual replay without awards',
   async({page})=>{
     await page.goto('/login');

@@ -11,7 +11,8 @@ import {finaleSnapshotFromTour} from
   '../lib/engine/v2/finale-snapshot.mjs';
 import {createV93PlayableTest} from
   '../lib/engine/v2/playtest-v93-coasted.mjs';
-import {recordFinaleCoastMixedThreeFrontDroppedClock} from
+import {recordFinaleCoastMixedThreeFrontDroppedClock,
+  recordFinaleCoastMixedThreeFrontPre500PassClock} from
   '../lib/engine/v2/finale-separated-last-km.mjs';
 import {auditDissolvedFrontPaidContact} from
   '../lib/engine/v2/finale-dissolved-front-paid-contact.mjs';
@@ -42,13 +43,26 @@ const trace=probeFinaleSeparatedGroupsFromTour(recording,{
   version:FINALE_COAST_DYNAMIC_FRONT_LAST_KM_VERSION});
 const paidContact=auditDissolvedFrontPaidContact(trace);
 let refusal=null;
-try{createV93PlayableTest(settings);}
+let playable=null;
+try{
+  const race=createV93PlayableTest(settings);
+  playable={version:race.version,
+    crossings:race.individualLine.conditionalCrossings.length,
+    pointsStatus:race.pointsStatus};
+}
 catch(error){refusal={message:error.message,
   reason:error.roadPreview?.unsupportedReason??null};}
 let candidate=null;
 try{candidate=recordFinaleCoastMixedThreeFrontDroppedClock(recording)
   .line.outcome;}
 catch(error){candidate=error.message;}
+let pre500Candidate=null;
+try{
+  const clock=recordFinaleCoastMixedThreeFrontPre500PassClock(recording);
+  pre500Candidate={version:clock.version,outcome:clock.line.outcome,
+    bandSizes:clock.line.bands.map(row=>row.riderIds.length),
+    passes:clock.frontPasses.length};
+}catch(error){pre500Candidate=error.message;}
 const groupTimes=new Map(source.roadGroups.map(group=>[
   group.id,-group.gapSeconds]));
 const sourceRows=new Map(recording.frames[source.sourceKm-1]
@@ -103,7 +117,8 @@ for(let index=1;index<passages.length;index++){
         -priorGap/(nextGap-priorGap)).toFixed(3)});
   }
 }
-console.log(JSON.stringify({seed:settings.seed,refusal,candidate,
+console.log(JSON.stringify({seed:settings.seed,refusal,playable,candidate,
+  pre500Candidate,
   sourceGroups:source.roadGroups.map(group=>({id:group.id,
     count:group.riderIds.length,gapSeconds:group.gapSeconds})),
   priorDropped:source.droppedRiderIds.length,possibleFrontOverlaps,
