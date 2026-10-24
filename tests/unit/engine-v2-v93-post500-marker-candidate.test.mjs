@@ -39,6 +39,9 @@ import {recordFinaleMixedStraddlingOutsideLaneLine,
   validateFinaleMixedStraddlingOutsideLaneLine,
   FINALE_MIXED_STRADDLING_OUTSIDE_LANE_LINE_VERSION} from
   '../../lib/engine/v2/finale-mixed-straddling-outside-lane-line.mjs';
+import {recordFinaleMixedStraddlingOutsideLaneResult,
+  validateFinaleMixedStraddlingOutsideLaneResult} from
+  '../../lib/engine/v2/finale-mixed-straddling-outside-lane-result.mjs';
 import {createV93PlayableTest,validateV93CoastedPlaytest,
   summarizeV93CoastedPlaytest,
   V93_MIXED_THREE_FRONT_POST500_LANES_PLAYTEST_VERSION} from
@@ -135,6 +138,15 @@ test('straddling candidate pays both marker sides without resolving wheels',()=>
   assert.equal(conditional.canCommitAwards,false);
   assert.equal(validateFinaleMixedStraddlingOutsideLaneLine(tour,clock,
     {},conditional),true);
+  const result=recordFinaleMixedStraddlingOutsideLaneResult(tour,
+    {pointContext:{}});
+  assert.equal(result.line.conditionalCrossings.length,160);
+  assert.equal(result.clock.markerPasses.length,7);
+  assert.equal(result.pointPreview.pointsStatus,'withheld');
+  assert.equal(result.classifiedResults,null);
+  assert.equal(result.canCommitAwards,false);
+  assert.equal(validateFinaleMixedStraddlingOutsideLaneResult(tour,
+    {pointContext:{}},result),true);
 });
 
 test('late marker candidates keep road-2 and passing leavers unresolved',()=>{
