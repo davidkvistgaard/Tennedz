@@ -170,6 +170,12 @@ test('mixed front exits reach the conditional finish and rider replay',
       .getByRole('button',{name:/Km 259/}).click();
     await expect(raceViewer.getByLabel('Road groups at km 259'))
       .toContainText('Front group 1');
+    await raceViewer.getByLabel('Selected rival manager')
+      .getByLabel('Rival team').selectOption('rival-2');
+    await expect(raceViewer.getByLabel('rival-2 at km 259'))
+      .toContainText('rival-2-7');
+    await expect(raceViewer.getByLabel('rival-2 at km 259'))
+      .toContainText('Starting orders:');
     await expect(raceViewer.getByRole('img',{
       name:'you-7 energy by recorded kilometre and at the line'}))
       .toBeVisible();

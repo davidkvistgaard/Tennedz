@@ -9,7 +9,7 @@ import {raceViewerCheckpoints,raceViewerEnergySeries,
   raceViewerEnergyCurve,
   raceViewerBreaksAndChase,raceViewerFinale,raceViewerRoad,
   raceViewerLateEffort,raceViewerLateTeamWork,
-  raceViewerEffortInsight,raceViewerTimeline} from
+  raceViewerEffortInsight,raceViewerTimeline,raceViewerRivalAt} from
   '../../../lib/engine/v2/playtest-viewer.mjs';
 
 const DEFAULT_PLANS=['chase','attack','neutral'];
@@ -196,6 +196,7 @@ export default function Playtest(){
   const [coastedBandIndex,setCoastedBandIndex]=useState(0);
   const [coastedRiderId,setCoastedRiderId]=useState('');
   const [viewerRiderId,setViewerRiderId]=useState('you-7');
+  const [viewerRivalId,setViewerRivalId]=useState('rival-1');
   const [finalePlans,setFinalePlans]=useState({});
   const [lateEfforts,setLateEfforts]=useState({});
   const [finaleFrontWork,setFinaleFrontWork]=useState({});
@@ -415,6 +416,7 @@ export default function Playtest(){
   const viewerFinale=coasted?raceViewerFinale(coasted,viewerRiderId):null;
   const viewerRoad=coasted?raceViewerRoad(coastedFrame,
     coasted.settings.teamCount*8):[];
+  const viewerRival=raceViewerRivalAt(coasted,coastedFrame,viewerRivalId);
   const viewerRiderRoad=viewerRoad.find(band=>
     band.ownRiderIds.includes(viewerRiderId));
   const viewerCurrentEnergy=coastedFrame?.ownRiders.find(row=>
@@ -591,6 +593,7 @@ export default function Playtest(){
         row.teamId==='you')?.finisherId??'');
       setViewerRiderId(response.coasted?.managerDecisions.find(row=>
         row.teamId==='you')?.finisherId??'you-7');
+      setViewerRivalId('rival-1');
       setResult(response.playtest??null);
       setIntegrated(response.integrated??null);
       setAttackRoad(response.attackRoad??null);
@@ -687,7 +690,7 @@ export default function Playtest(){
         </fieldset>}
         <fieldset className="v91-profile">
           <legend>Other managers</legend>
-          <p>Choose default tactics for rivals, then customize as many individual managers as you want. The same seed keeps riders and route comparable.</p>
+          <p>Rival 1 controls team rival-1 and its eight riders, rival-1-0 to rival-1-7; Rival 2 controls rival-2, and so on. Choose default tactics or customize a manager. After the race, select a rival in the viewer to see its riders, actions and nominated finisher on the recorded road.</p>
           <label>Default tactics for uncustomized managers
             <select value={settings.defaultRivalPlan} onChange={event=>change('defaultRivalPlan',event.target.value)}>
               <option value="mixed">Mixed defaults</option>
@@ -1149,6 +1152,21 @@ export default function Playtest(){
                 `${Math.abs(band.gapSeconds).toFixed(1)} s behind`:'with the bunch'}</span>
               {band.ownRiderIds.length>0&&<small>Your riders: {band.ownRiderIds.join(', ')}</small>}
             </li>)}</ol>
+          </div>
+          <div className="v91-viewer-road" aria-label="Selected rival manager">
+            <h4>Follow a rival manager</h4>
+            <p>Choose a team to connect its orders with its recorded riders and actions at this kilometre.</p>
+            <label>Rival team<select value={viewerRivalId}
+              onChange={event=>setViewerRivalId(event.target.value)}>
+              {Array.from({length:coasted.settings.teamCount-1},(_,index)=>
+                `rival-${index+1}`).map(id=><option key={id} value={id}>
+                {id}</option>)}</select></label>
+            {viewerRival&&<div aria-label={`${viewerRival.teamId} at km ${coastedFrame?.km}`}>
+              <p>Starting orders: {viewerRival.orders?.effort??'unavailable'} effort · {viewerRival.orders?.attack??'unavailable'} attacks · {viewerRival.orders?.chase??'unavailable'} chase.</p>
+              <p>{viewerRival.finisherId}: {viewerRival.finisherRoad}. At this checkpoint, {viewerRival.frontCount} riders are ahead, {viewerRival.bunchCount} in the bunch and {viewerRival.droppedCount} behind.</p>
+              <p>This kilometre: {viewerRival.attacks.length} attack attempts · {viewerRival.joins.length} break joins · {viewerRival.catches.length} caught · {viewerRival.pulls.length} riders taking pulls · {viewerRival.chased?'team chased':'team did not chase'}.</p>
+              {viewerRival.lineEnergy!==null&&<p>{viewerRival.finisherId} had {viewerRival.lineEnergy.toFixed(1)} energy at the conditional line. This is recorded reserve, not an official placing.</p>}
+            </div>}
           </div>
           <div className="v91-viewer-breaks" aria-label="Breakaways and chase">
             <h4>Breakaways and chase</h4>
