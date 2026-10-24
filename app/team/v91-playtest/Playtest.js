@@ -1620,9 +1620,19 @@ export default function Playtest({guided=false}){
                 {' '}{coasted.mixedTwoFrontOlderDrops.freshWheelApproaches
                   .map(row=>`${(row.atDistanceM/1000).toFixed(3)} km`)
                   .join(', ')}. Movement and energy are paid at each
-                {' '}approach, but the riders&apos; occupied lanes and
-                {' '}response are inferred. The crossing order is
+                {' '}approach. Where outside lanes are inferred, their
+                {' '}contact response remains unresolved. Crossing order is
                 {' '}conditional, not an official placing.</p>}
+            {coasted.mixedTwoFrontOlderDrops.parallelFinalLaneEvidence&&
+              <p>The final close approach between
+                {' '}{coasted.mixedTwoFrontOlderDrops
+                  .parallelFinalLaneEvidence.firstRiderId} and
+                {' '}{coasted.mixedTwoFrontOlderDrops
+                  .parallelFinalLaneEvidence.secondRiderId} runs in
+                {' '}different fixed source lanes. Both riders&apos; movement
+                {' '}and energy are paid to the line without drafting after
+                {' '}that approach. Earlier outside-lane responses remain
+                {' '}conditional, so no official placing or points follow.</p>}
           </div>}
           {coasted.mixedFrontLeavers&&<div role="note"
             aria-label="Mixed front exits">
