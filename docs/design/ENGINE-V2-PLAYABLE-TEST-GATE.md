@@ -4242,3 +4242,9 @@ completed 90/90 with 76 read-only
 point illustrations, and the independent 20-team long-field sweep completed
 90/90 with one paid shared-wheel contact and no refusals. No new full serial
 unit-suite pass is claimed.
+
+Exact release commit `697b01e446e42e8f0d2f8ca274260077b7f251ee`
+deployed as `dpl_VTq4sdUx2fXmcBDQZFdGe1WJ43on`, READY at the
+`tennedz.eu` alias. `/team/motor-lab` returned HTTP 200 and the checked
+runtime window had no logs. Previous deployment
+`dpl_9BZxgJXdmhASSprFUtV6dmV8PYpg` remains the rollback target.
