@@ -2654,6 +2654,8 @@ test('straddling outside lanes keep seven riders separate through the line',
     const note=page.getByRole('note',{
       name:'Conditional straddling outside lanes'});
     await expect(note).toContainText('group marker crossings happened later');
+    await expect(note).toContainText('38 possible wheel proximities');
+    await expect(note).toContainText('rival-9-7 reapproached rival-10-7');
     await expect(note).toContainText('official places');
     await page.getByRole('button',{
       name:'Inspect straddling outside-lane rider rival-9-7 finish replay'})

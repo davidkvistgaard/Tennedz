@@ -163,6 +163,13 @@ test('straddling whole race exposes only separate conditional lanes',()=>{
   assert.equal(summary.lineTimes.length,160);
   assert.equal(summary.lastKmRoad.length,7);
   assert.equal(summary.straddlingOutsideLaneApproaches.length,7);
+  assert.equal(summary.straddlingSourceRoadAdjacencies,38);
+  assert.deepEqual(summary.straddlingSourceRoadReapproaches.map(row=>({
+    isolatedRiderId:row.isolatedRiderId,
+    activeRiderId:row.activeRiderId,
+    occupiedWheelOrderResolved:row.occupiedWheelOrderResolved})),[{
+    isolatedRiderId:'rival-9-7',activeRiderId:'rival-10-7',
+    occupiedWheelOrderResolved:false}]);
   assert.ok(summary.straddlingOutsideLaneApproaches.every(row=>
     row.atDistanceM<259500&&
     row.occupiedWheelOrderResolved===false));

@@ -1564,6 +1564,18 @@ export default function Playtest(){
                 {' '}The 500 m handoff, rider energy and conditional finish
                 {' '}are recorded, but occupied wheel order, official places
                 {' '}and points remain unresolved.</p>
+              <p>{coasted.straddlingSourceRoadAdjacencies}
+                {' '}possible wheel proximities with the departing riders&apos;
+                {' '}former road-1 group were already adjacent at the 259 km
+                {' '}source. They are not new catches. One rider later moved
+                {' '}clear and approached a road-1 rider again; both riders&apos;
+                {' '}travel and energy are split at that possible approach,
+                {' '}while their occupied lanes remain inferred.</p>
+              {coasted.straddlingSourceRoadReapproaches?.map(event=><p
+                key={`${event.isolatedRiderId}:${event.activeRiderId}`}>
+                {event.isolatedRiderId} reapproached {event.activeRiderId}
+                {' '}of road-1 at {(event.atDistanceM/1000).toFixed(3)} km.
+              </p>)}
               {coasted.straddlingOutsideLaneApproaches.map(event=><p
                 key={event.isolatedRiderId}>
                 {event.isolatedRiderId} approached {event.activeRiderId}

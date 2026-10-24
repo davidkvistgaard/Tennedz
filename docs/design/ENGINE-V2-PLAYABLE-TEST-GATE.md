@@ -4825,3 +4825,11 @@ versioned recordings keep their old path. The locked result, full
 neighboring unit file (5/5), changed-file lint, isolated Next build and
 targeted authenticated browser flow passed. This remains a bounded case,
 not general contact resolution.
+
+The repeatable `field-hills` whole-race audit now completes all 72/72
+scenarios: 24 separated, 12 mixed-three-front clear, 16 dynamic front,
+four post-500 outside-lane, 12 mixed-three-front dropped, three pre-500
+passes and one straddling outside-lane continuation. No source in this
+specific matrix refused. The viewer also identifies the one fresh
+former-road-1 reapproach and distinguishes it from 38 source-adjacent
+wheel proximities; neither is presented as resolved occupied-wheel order.
