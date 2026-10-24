@@ -4,7 +4,7 @@ import {createV93PlayableTest,summarizeV93CoastedPlaytest} from
   '../lib/engine/v2/playtest-v93-coasted.mjs';
 
 const rows=[];
-const [fieldFilter,genderFilter,terrainFilter,fatigueFilter]=
+const [fieldFilter,genderFilter,terrainFilter,fatigueFilter,seedTag]=
   process.argv.slice(2);
 for(const teamCount of [4,15,20])for(const gender of ['M','F'])
   for(const terrain of ['flat','rolling','mountain','exposed','custom'])
@@ -14,7 +14,7 @@ for(const teamCount of [4,15,20])for(const gender of ['M','F'])
         terrainFilter&&terrainFilter!==terrain||
         fatigueFilter&&Number(fatigueFilter)!==fatigue)continue;
       const seed=`v93-heterogeneous-${teamCount}-${gender}-${terrain}-${
-        fatigue}`;
+        fatigue}${seedTag?`-${seedTag}`:''}`;
       const settings={distanceKm:260,teamCount,gender,terrain,fatigue,seed,
         defaultRivalPlan:'passive',effort:'hard',attack:'repeated',
         chase:'all',managerTactics:Array.from({length:teamCount-1},

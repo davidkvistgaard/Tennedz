@@ -100,6 +100,17 @@ function recordingFor(settings){
     motorVersion:MOTOR_EXHAUSTION_COAST_VERSION});
 }
 
+test('alternate multifront seeds retain explicit contact refusals',()=>{
+  for(const [gender,terrain,fatigue] of [
+    ['M','mountain',0],['F','mountain',0],
+    ['F','mountain',30],['F','exposed',30]]){
+    const settings=settingsFor(20,gender,terrain,fatigue);
+    settings.seed+='-alternate-1';
+    assert.throws(()=>createV93PlayableTest(settings),error=>
+      error.roadPreview?.unsupportedReason==='unresolved_band_contact');
+  }
+});
+
 test('two surviving fronts retain separate paid first-half approaches',
   ()=>{
     for(const [gender,terrain,expected] of [

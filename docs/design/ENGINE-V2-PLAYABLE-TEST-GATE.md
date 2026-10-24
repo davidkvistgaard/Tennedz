@@ -5243,3 +5243,18 @@ error/fatal runtime log was empty. The prior production deployment
 `dpl_58S33accGEjVbEYbF3onixcXhJKY` remains rollback. The bounded
 60/60 matrix result is not unrestricted motor coverage; no new full
 repository serial unit or browser-suite pass is claimed.
+
+An independent seed variation of that 60-case heterogeneous matrix uses
+the optional `alternate-1` suffix in
+`scripts/engine-v2-v93-heterogeneous-field-audit.mjs`. It produced **56
+conditional finishes and four explicit `unresolved_band_contact`
+refusals**: 20-team men's mountain at fatigue 0, women's mountain at
+fatigue 0 and 30, and women's exposed at fatigue 30. Each refusal has
+surviving road-2 and road-4 groups of 20 riders at the last-kilometre
+source. The audit is read-only and the changed script passed lint. A
+separate 48-case diversity audit still completed 48 conditional lines
+with all 4,776 individual crossings matching replay; two of those races
+correctly withheld even the illustrative point preview for unresolved
+pre-500 m road contact. These checks show the existing 60/60 result is
+seed-specific; the four new contacts need paid individual geometry before
+they can be offered as finishes.
