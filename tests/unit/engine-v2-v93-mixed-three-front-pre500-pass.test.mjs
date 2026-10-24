@@ -85,12 +85,13 @@ test('pre-500 m outside-lane passes retain the whole paid race',()=>{
   }
 });
 
-test('post-500 m front passes still refuse without a paid continuation',()=>{
+test('remaining late front passes and the explicit opt-out still refuse',()=>{
   for(const [teamCount,gender,terrain] of [
     [15,'M','rolling'],[15,'F','rolling'],
     [15,'M','mountain'],[15,'F','mountain'],[20,'F','rolling']]){
     let refusal;
-    try{createV93PlayableTest(settings(teamCount,gender,terrain));}
+    try{createV93PlayableTest(settings(teamCount,gender,terrain),{},
+      {resolveMixedThreeFrontPost500Pass:false});}
     catch(error){refusal=error;}
     assert.match(refusal?.message??'',
       /The depleted line bands crossed without contact/);
@@ -106,4 +107,7 @@ test('post-500 m front passes still refuse without a paid continuation',()=>{
     assert.equal(preview.lastKmRoad.length,0);
     assert.equal(preview.lineTimes,null);
   }
+  assert.throws(()=>createV93PlayableTest(
+      settings(20,'F','rolling')),
+    /The depleted line bands crossed without contact/);
 });

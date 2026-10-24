@@ -1535,6 +1535,35 @@ export default function Playtest({guided=false}){
                 }}>Finish replay {row.riderId}</button>
             </p>)}
           </div>}
+          {coasted.post500OutsideLanePasses?.length>0&&<div role="note"
+            aria-label="Conditional post-500 m outside-lane passes">
+            <p>After the 500 m handoff, former front riders approached
+              {' '}road-2. Each kept its separately paid speed and energy in
+              {' '}an inferred outside lane, without draft. These are exact
+              {' '}first individual wheel-spacing approaches, not the earlier
+              {' '}group-marker crossings. The road boundaries below use paid
+              {' '}individual passages; a group time is its first rider's
+              {' '}passage. Wheel order, official places and points remain
+              {' '}unresolved.</p>
+            {coasted.post500OutsideLanePasses.map(event=><p
+              key={event.isolatedRiderId}>
+              {event.isolatedRiderId} approached
+              {' '}{event.activeRiderId} of {event.roadGroupId} at
+              {' '}{(event.atDistanceM/1000).toFixed(3)} km.
+              <button type="button"
+                aria-label={`Inspect post-500 outside-lane rider ${
+                  event.isolatedRiderId} finish replay`}
+                onClick={()=>{
+                  const band=coasted.bandReplays.find(row=>
+                    row.id===`isolated:${event.isolatedRiderId}`);
+                  setCoastedBandId(band.id);
+                  setCoastedRiderId(event.isolatedRiderId);
+                  setCoastedBandIndex(band.frames.length-1);
+                  document.getElementById('v93-paid-finale-replay')
+                    ?.scrollIntoView();
+                }}>Inspect finish replay</button>
+            </p>)}
+          </div>}
           {coasted.mixedFrontLeavers&&<div role="note"
             aria-label="Mixed front exits">
             <p>At {(coasted.mixedFrontLeavers.sourceDistanceM/1000)
