@@ -17,7 +17,8 @@ import {recordFinaleAllBandOverlapAudit,
   '../lib/engine/v2/finale-multiband-overlap-audit.mjs';
 import {resolveFinaleMultibandPositionedSource} from
   '../lib/engine/v2/finale-multiband-positioned-source.mjs';
-import {recordFinalePaidCrossBandOverlap} from
+import {recordFinalePaidCrossBandOverlap,paidQueuedRiderAt,
+  splitPaidQueuedBandAt} from
   '../lib/engine/v2/finale-late-active-wheel-contact.mjs';
 
 const teamCount=Number(process.argv[2]??4);
@@ -54,6 +55,8 @@ for(const id of source.droppedRiderIds)
   sourceSlots.push({id,groupId:'older',offset:0});
 const starts=new Map(source.roadGroups.map(row=>[row.id,
   -row.gapSeconds]));
+const sourceEnergy=new Map(recording.frames[source.sourceKm-1]
+  .riderGroups.map(row=>[row.id,row.energy]));
 let bunchStart=0;
 const paidPre500=new Map(sourceSlots.map(slot=>[slot.id,{
   sourceGroupId:slot.groupId,roadBandId:`source:${slot.id}`,
@@ -70,6 +73,13 @@ for(const frame of trace.frames.slice(0,2)){
         group?.elapsedSeconds);
     if(!Number.isFinite(start)||!Number.isFinite(duration))
       throw new Error('An unequal-field rider lacks paid pre-500 travel.');
+    const paid=frame.riders.find(row=>row.riderId===slot.id);
+    const before=paid?.energy+paid?.energySpent;
+    const previous=paidPre500.get(slot.id).runner.frames.at(-1);
+    if(![before,paid?.energy,paid?.energySpent].every(Number.isFinite)||
+      Math.abs(before-(previous?.riders[0].energyAfter??
+        sourceEnergy.get(slot.id)))>1e-7)
+      throw new Error('An unequal-field rider lacks paid source energy.');
     const metres=frame.endDistanceM-frame.startDistanceM;
     paidPre500.get(slot.id).runner.frames.push({
       elapsedSecondsAtStart:start,durationSeconds:duration,
@@ -77,7 +87,9 @@ for(const frame of trace.frames.slice(0,2)){
         positionBeforeM:frame.startDistanceM-slot.offset,
         positionM:frame.endDistanceM-slot.offset,
         activeSeconds:duration,activeDistanceM:metres,
-        shelteredSeconds:0,shelteredDistanceM:0}]});
+        shelteredSeconds:0,shelteredDistanceM:0,
+        energyAtDecision:before,energySpent:paid.energySpent,
+        energyAfter:paid.energy}]});
   }
   for(const group of frame.roadGroups)
     starts.set(group.id,starts.get(group.id)+group.elapsedSeconds);
@@ -126,11 +138,25 @@ for(let a=0;a<bands.length;a++)for(let b=a+1;b<bands.length;b++){
     const rightId=bands[b].runner.frames[0].riders[0].riderId;
     const commonStart=Math.max(...[bands[a],bands[b]].map(row=>
       row.runner.frames[0].elapsedSecondsAtStart));
+    const fresh=intervals.find((row,index)=>index>0||
+      row.from>commonStart+1e-7);
+    let firstFreshApproach=null;
+    if(fresh){
+      const time=fresh.from;
+      const first=paidQueuedRiderAt(bands[a],leftId,time);
+      const second=paidQueuedRiderAt(bands[b],rightId,time);
+      firstFreshApproach={time,first,second,
+        spacingM:Math.abs(first.positionM-second.positionM),
+        paidSplit:{first:splitPaidQueuedBandAt(bands[a],time,
+          first.positionM),second:splitPaidQueuedBandAt(bands[b],time,
+          second.positionM)}};
+    }
     proximityPre500.push({first:leftId,second:rightId,
       sourceAdjacent:intervals[0].from<=commonStart+1e-7,
       freshApproaches:intervals.filter((row,index)=>index>0||
         row.from>commonStart+1e-7).length,
-      sameSourceGroup:bands[a].sourceGroupId===bands[b].sourceGroupId});
+      sameSourceGroup:bands[a].sourceGroupId===bands[b].sourceGroupId,
+      firstFreshApproach});
   }
 }
 let candidate;

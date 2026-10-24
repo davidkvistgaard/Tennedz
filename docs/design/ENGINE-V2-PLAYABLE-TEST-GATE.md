@@ -4911,3 +4911,16 @@ terrains. This does not imply unrestricted motor coverage. The focused
 whole-race and replay units, changed-file lint, isolated preview build and
 targeted authenticated browser flow passed. Existing versioned recordings
 and saved official awards remain unchanged.
+
+The next locked 15-team flat high-fatigue refusals were probed across
+both genders with `scripts/engine-v2-v93-heterogeneous-contact-probe.mjs
+15 M flat 30` and `15 F flat 30`. Each has one fresh possible same-source
+road-1 wheel approach within the first few metres after 259 km. The
+men's pair is `rival-10-5` / `rival-9-7`, at 259004.226 m; the women's
+pair is `rival-10-5` / `rival-5-7`. At first 2.5 m spacing, the leading
+exhausted rider has 0 energy in both, while the approaching rider has
+28.325 (men) or 5.736 (women). The diagnostic now splits both paid
+movements and energies at that instant. Occupied lane and post-approach
+response remain unresolved, so both whole races still explicitly refuse
+and have no user-facing line or point award. This is a source-wheel
+encounter, not a road-group marker crossing.
