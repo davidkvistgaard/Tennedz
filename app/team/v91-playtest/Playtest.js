@@ -470,7 +470,8 @@ export default function Playtest(){
     ...settings.managerTacticOverrides.map(row=>row.teamId)]);
   const setupExampleRace=(kind)=>{
     const tactical=kind==='tactical';
-    const chase=kind==='chase';
+    const measuredChase=kind==='measured-chase';
+    const chase=kind==='chase'||measuredChase;
     setIntegratedMode(true);setCoastedMode(true);
     setSettings(tactical?{...INITIAL,distanceKm:120,terrain:'rolling',
       gender:'F',teamCount:15,fatigue:15,attack:'none',
@@ -478,9 +479,9 @@ export default function Playtest(){
         effort:'hard',attack:'none',chase:'all'}]}:chase?
       {...INITIAL,distanceKm:40,terrain:'flat',attack:'none',
         chase:'all',defaultRivalPlan:'attack',seed:'near-catch',
-        teamOverrides:[{teamId:'you',level:40},
+        teamOverrides:[{teamId:'you',level:measuredChase?45:40},
           ...['rival-1','rival-2','rival-3'].map(teamId=>(
-            {teamId,level:20}))]}:
+            {teamId,level:measuredChase?25:20}))]}:
       {...INITIAL,distanceKm:40,attack:'none',
         seed:'sample-flat-finish'});
     setCustomRivals(0);setExtraRivalId('');
@@ -629,12 +630,16 @@ export default function Playtest(){
             disabled={busy}>Set up two-manager race</button>
           <button type="button" onClick={()=>setupExampleRace('chase')}
             disabled={busy}>Set up close-chase race</button>
+          <button type="button" onClick={()=>setupExampleRace('measured-chase')}
+            disabled={busy}>Set up measured-chase race</button>
         </div>
         <p>The 40 km close chase starts with three attacking rivals and
           synthetic team strengths of 40 for your team and 20 for each rival.
           Run it with conserve at 5 km, then try hard with the same seed to
           inspect the catch, energy and conditional finish. You can also try
-          the sample or 120 km two-manager race.</p>
+          the measured chase: conserve leaves the break ahead, while steady
+          and hard both catch it. Compare the energy each choice leaves at
+          the line. The sample and 120 km two-manager races remain available.</p>
       </div>
       <form id="v91-race-settings" onSubmit={run} className="v91-controls">
         <label className="v91-mode"><input type="checkbox" checked={integratedMode}

@@ -4712,3 +4712,14 @@ whole-race test verifies this geometry and the explicit `unpaid_front_catch`
 refusal with no individual line. A future continuation must reconcile the
 earlier kilometre's occupied positions rather than reuse the later split
 contact path or manufacture a catch at the first 250 m marker.
+
+A second locked 40 km flat close chase changes only the fictional strength
+levels to 45 for the player's team and 25 for the three attacking rivals.
+With the same seed and all-out chase, `conserve` leaves the front ahead and
+the nominated finisher conditionally fourth. Both `steady` and `hard`
+record all three rivals caught at km 39 and the finisher conditionally
+first. `Steady` retains 83.896 energy at the line versus 83.344 for `hard`.
+The paired viewer now offers this measured-chase setup alongside the sharper
+40-versus-20 close chase, and names the actual late catches in each run.
+This is a bounded example where hard spends extra reserve without a
+conditional place gain, not a general recommendation about effort.
