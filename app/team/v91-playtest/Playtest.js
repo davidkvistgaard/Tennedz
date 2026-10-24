@@ -1241,6 +1241,9 @@ export default function Playtest(){
               {' '}left {coasted.mixedFrontLeavers.rearGroupId} and
               {' '}{coasted.mixedFrontLeavers.rearStayedAhead?
                 'stayed ahead of the bunch.':'were passed by the bunch.'}
+              {coasted.mixedFrontLeavers.thirdGroupId&&<>
+                {' '}The separate {coasted.mixedFrontLeavers.thirdGroupId}
+                {' '}remained ahead of the bunch.</>}
               {' '}Their individual travel, energy and
               finish replays are recorded; their places and points remain
               unresolved.</p>
