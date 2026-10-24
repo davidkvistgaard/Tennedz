@@ -68,8 +68,11 @@ test('a dissolved front is passed unassisted in four paid outside lanes',()=>{
   }
 });
 
-test('a third surviving front still refuses without a paid crossing rule',()=>{
+test('the three-front road requires its separately versioned continuation',()=>{
   const selected=settings('M','mountain',0,0);
-  assert.throws(()=>createV93PlayableTest(selected),
+  assert.equal(createV93PlayableTest(selected).version,
+    'v93-dissolved-three-front-playtest-1');
+  assert.throws(()=>createV93PlayableTest(selected,{},
+    {resolveDissolvedThreeFront:false}),
     /recorded group dissolution/);
 });
