@@ -5347,3 +5347,9 @@ mountain/high-fatigue 13-approach source still refuses. Three focused
 whole-race/refusal/replay unit tests, changed-file lint, isolated preview
 Next build and targeted authenticated API/viewer browser flow passed.
 This is a bounded conditional finish, not resolved wheel order.
+
+The read-only 20-team `alternate-1` matrix now reports **19 conditional
+finishes and one explicit refusal**, the women's mountain/high-fatigue
+13-approach source. The release branch independently passed the 11+1,
+prior 10+1 and remaining-refusal whole-race/replay regressions and
+changed-file lint. A full repository unit or browser suite was not run.
