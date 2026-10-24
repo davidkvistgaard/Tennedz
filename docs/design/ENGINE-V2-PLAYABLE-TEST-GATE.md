@@ -5195,3 +5195,13 @@ version. Three cases use the new crowded version; the sole refusal is
 approach. The three-case whole-race/replay test, changed-file lint,
 isolated preview build and an authenticated exposed-race browser flow
 passed. This is bounded coverage, not general motor completion.
+
+Release `2130b480756d825f88282727dd61c9c75c5dddeb` passed the new
+three-case and previous six-case whole-race/replay regressions,
+changed-file lint, isolated Next build and the authenticated exposed
+browser flow. Production deployment `dpl_58S33accGEjVbEYbF3onixcXhJKY`
+reached READY at that exact SHA with the `tennedz.eu` alias. Public
+`/team/motor-lab` returned HTTP 200 and the checked 30-minute
+error/fatal runtime log was empty. Previous production deployment
+`dpl_HTYEJhB14Xp4KjvVFSYHv71aG9Bb` remains rollback. No full
+repository serial unit or browser-suite pass is claimed.
