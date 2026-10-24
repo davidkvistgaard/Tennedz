@@ -554,6 +554,51 @@ test('paid pre-500 m front passes reach line and replay without awards',
       .toBeVisible();
   });
 
+test('unresolved later front markers stay visible without a false finish',
+  async({page})=>{
+    await page.goto('/login');
+    await page.getByLabel('Email or username').fill('alice');
+    await page.getByLabel('Password',{exact:true}).fill('fixture-password');
+    await page.getByRole('button',{name:'Sign in',exact:true}).click();
+    await expect(page).toHaveURL(/\/team$/);
+    const teamCount=15,seedIndex=1;
+    const response=await page.request.post('/api/v91-playtest',{
+      headers:{origin:'http://localhost:3100'},data:{
+        mode:'v93-coasted',settings:{distanceKm:260,teamCount,
+          gender:'M',terrain:'rolling',fatigue:30,
+          seed:'v93-next-contact-field-hills-15-M-rolling-30-1',
+          defaultRivalPlan:'passive',effort:'hard',attack:'repeated',
+          chase:'all',managerTactics:Array.from({length:teamCount-1},
+            (_,index)=>({
+              effort:['hard','conserve','steady'][(index+seedIndex)%3],
+              attack:index%3===1?'selective':'repeated',
+              chase:index%3===1?'ignore':'all'})),
+          managerFinaleOrders:[
+            {teamId:'you',atKm:255,effort:'conserve'},
+            {teamId:'rival-1',atKm:255,effort:'hard'}]},
+        plans:['you',...Array.from({length:teamCount-1},(_,index)=>
+          `rival-${index+1}`)].map(teamId=>({teamId,
+          finisherId:`${teamId}-7`,leadOutRiderId:null}))}});
+    expect(response.status()).toBe(422);
+    const body=await response.json();
+    expect(body.roadPreview.markerAudit.encounters).toHaveLength(5);
+    expect(body.roadPreview.lineTimes).toBeNull();
+    await page.goto('/team/v91-playtest');
+    await page.getByRole('checkbox',{
+      name:'Continue to a conditional finish'}).check();
+    await page.getByRole('checkbox',{
+      name:'Try v93 road-to-line preview'}).check();
+    await page.route('**/api/v91-playtest',route=>route.fulfill({
+      status:422,contentType:'application/json',body:JSON.stringify(body)}));
+    await page.getByRole('button',{name:'Run v93 race preview'}).click();
+    const note=page.getByRole('note',{
+      name:'Unresolved front marker overlaps'});
+    await expect(note).toContainText('you-7');
+    await expect(note).toContainText('not resolved occupied-wheel encounters');
+    await expect(page.getByRole('table',{
+      name:'V93 individual conditional results'})).toHaveCount(0);
+  });
+
 test('dissolved leading front reaches paid individual replay without awards',
   async({page})=>{
     await page.goto('/login');

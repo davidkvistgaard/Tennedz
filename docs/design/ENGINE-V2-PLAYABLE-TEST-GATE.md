@@ -4569,6 +4569,18 @@ browser flows passed, including setup, conditional results, road, energy,
 replay and withheld points for a new source. This establishes a bounded
 pre-handoff continuation, not unrestricted contact resolution.
 
+The separate `v93-unresolved-front-marker-preview-2` refusal view now
+exposes the paid marker-overlap audit for three pinned post-handoff or
+straddling sources. The 15-team men's rolling source shows five front-1
+leavers crossing the road-2 marker around 259696–259702 m; each split
+retains its recorded time and energy. The view calls these marker overlaps,
+not occupied-wheel contact. It still returns HTTP 422 with no final-road
+passage, individual line, replay, official place or points. The versioned
+older refusal stays available when the audit cannot prove that bounded
+geometry. Focused whole-race tests, changed-file lint, an isolated build
+and a local browser refusal flow passed. This is evidence for the next
+paid individual-contact continuation, not a finish result.
+
 The complete v93 regression set passed 60/60 tests and changed-file lint
 passed. This is not a fresh pass of the full repository unit suite.
 
