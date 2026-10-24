@@ -4290,3 +4290,48 @@ deployment `dpl_4uu1VcaJxPRtTsNTxGWdZWJYJ1Eg` reached READY with the
 `tennedz.eu` alias at that exact commit; `/team/motor-lab` returned HTTP 200
 and the checked error/fatal runtime window had no logs. The previous
 deployment `dpl_VTq4sdUx2fXmcBDQZFdGe1WJ43on` remains the rollback target.
+
+### Two fronts shed riders who stay ahead (2026-10-24)
+
+A new 150-race synthetic whole-race audit of four-team mixed orders found
+38 explicit `unresolved_band_contact` refusals. The locked
+`v93-next-contact-four-mixed-4-M-flat-0-2` source has three riders in
+`road-1` 348.29 seconds ahead and four in `road-3` 56.42 seconds ahead at
+259 km. One rider leaves each group at the first paid boundary. Seven paid
+markers show the first leaver between the two groups and the second between
+`road-3` and the bunch, with no group or bunch encounter. At the line the
+second leaver is still 6.063 seconds ahead of the bunch. The generic drop
+band had put both leavers behind the bunch and therefore refused the road.
+
+A separate versioned continuation now requires two surviving fronts,
+boundary exits from both, no earlier dropped rider or bunch exit, and the
+same strict group / leading leaver / group / rear leaver / bunch ordering at
+every paid marker. It keeps each front with its former leaver in a separate
+conditional place range because the source recorded no wheel order at the
+split. The guarded 500 m handoff must preserve that band order at individual
+crossing. Energy, rider replays and read-only point policy follow the same
+paid road; official places, points and awards remain withheld. Opt-out and
+older versioned recordings preserve the previous refusal and replay rules.
+
+The new path covers ten previously refusing fatigue-0 races across both
+genders and flat, rolling, mountain, exposed and custom terrain. The 150-race
+audit now completes 122/150, with 28 explicit refusals. At fatigue 15 in the
+locked flat race, the bunch passes the rear leaver unassisted at 259874.233 m;
+this later contact is outside the new clear-path guard. Some high-fatigue
+mountain sources also have a third front. Those geometries still refuse.
+
+The 52 v93 unit tests, changed-file lint, isolated preview build and
+50/50 local browser flows passed after this increment. The independent
+90-case varied matrix completed 90/90, including 76 read-only point
+illustrations, and the 90-case 20-team long-field stress completed 90/90.
+The functional preview commit `8180eb9` was cherry-picked as release
+`d804f42dfeed281e322b9153cdbfedd10cbd6867`; changed-file lint,
+isolated release build and 51/51 release browser flows also passed. These
+checks establish the bounded guarded path, not a general solution for later
+contact.
+
+Production deployment `dpl_6in9JxRmVELjs25R856ezxbLFak5` reached READY
+with the `tennedz.eu` alias at release `d804f42dfeed281e322b9153cdbfedd10cbd6867`.
+`/team/motor-lab` returned HTTP 200, and the checked error/fatal runtime
+window had no logs. The previous deployment
+`dpl_4uu1VcaJxPRtTsNTxGWdZWJYJ1Eg` remains the rollback target.
