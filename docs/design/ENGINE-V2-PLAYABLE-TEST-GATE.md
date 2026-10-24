@@ -4606,3 +4606,26 @@ In the 20-team women's rolling source, group markers straddle the handoff at
 occupied-wheel contacts. All five cases still explicitly refuse pending a
 separate paid post-handoff continuation; no official places, points or awards
 were inferred from them.
+
+### Controlled 5 km effort audit for the viewer
+
+`node scripts/engine-v2-v93-own-effort-tradeoff-audit.mjs` runs twelve paired,
+fictional whole races. Within each pair, the seed, route, teams, all rival
+plans, finisher and earlier kilometre frames are identical; only the player's
+5 km effort changes from `conserve` to `hard`. The cases span 40/120/260 km,
+4/15/20 teams, both genders, five terrains, initial fatigue, attacks and
+chase. All 24 races completed with a full final road, individual crossings,
+energy and conditional results. Official points and saved awards were withheld.
+
+In this bounded sample, `hard` improved the nominated finisher's conditional
+place in zero pairs, worsened it in one and left it unchanged in eleven. It
+spent 0.752–1.202 more energy by the line in every pair. The finisher's road
+membership at 1 km was unchanged in all twelve; the gap against the bunch
+was unchanged in eleven and 0.01 s smaller with `hard` in one. The recorded
+time *from the final-kilometre start to the line* was 0.002–0.013 s longer
+with `hard` in all twelve. This is not a full elapsed race-time comparison;
+the motor does not expose a common whole-race clock in this summary. The
+sample does show that choosing `hard` at 5 km is not automatically rewarded,
+and that the viewer must show road position, energy and conditional place
+together before a player can judge the choice. It is a targeted motor
+balance question, not a claim that `conserve` is universally better.
