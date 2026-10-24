@@ -7,10 +7,12 @@ const rows=[];
 const mode=process.argv[2]??'mixed';
 const allHard=mode==='all-hard';
 const fourMixed=mode==='four-mixed';
+const fieldMixed=mode==='field-mixed';
 const teamCounts=fourMixed?[4]:[15,20];
-const terrains=fourMixed?['flat','rolling','mountain','exposed','custom']:
+const terrains=fieldMixed?['flat','custom']:
+  fourMixed?['flat','rolling','mountain','exposed','custom']:
   ['rolling','mountain','exposed'];
-const seedIndices=fourMixed?[0,1,2,3,4]:[0,1];
+const seedIndices=fourMixed?[0,1,2,3,4]:fieldMixed?[0,1,2]:[0,1];
 for(const teamCount of teamCounts)for(const gender of ['M','F'])
   for(const terrain of terrains)
     for(const fatigue of [0,15,30])for(const seedIndex of seedIndices){
@@ -20,11 +22,12 @@ for(const teamCount of teamCounts)for(const gender of ['M','F'])
       const settings={distanceKm:260,teamCount,gender,terrain,fatigue,seed,
         defaultRivalPlan:'passive',effort:'hard',attack:'repeated',
         chase:'all',managerTactics:Array.from({length:teamCount-1},
-          (_,index)=>({effort:allHard?'hard':fourMixed?
+          (_,index)=>({effort:allHard?'hard':fourMixed||fieldMixed?
             ['hard','conserve','steady'][(index+seedIndex)%3]:
             index%5===0?'conserve':'hard',
-          attack:fourMixed&&index%3===1?'selective':'repeated',
-          chase:fourMixed&&index%3===1?'ignore':'all'})),
+          attack:(fourMixed||fieldMixed)&&index%3===1?
+            'selective':'repeated',
+          chase:(fourMixed||fieldMixed)&&index%3===1?'ignore':'all'})),
         managerFinaleOrders:[
           {teamId:'you',atKm:255,effort:seedIndex?'conserve':'hard'},
           {teamId:'rival-1',atKm:255,

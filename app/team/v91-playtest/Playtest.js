@@ -1257,6 +1257,9 @@ export default function Playtest({guided=false}){
               {coasted.mixedFrontLeavers.thirdGroupId&&<>
                 {' '}The separate {coasted.mixedFrontLeavers.thirdGroupId}
                 {' '}remained ahead of the bunch.</>}
+              {coasted.mixedFrontLeavers.olderDroppedRiderIds?.length>0&&<>
+                {' '}{coasted.mixedFrontLeavers.olderDroppedRiderIds.length}
+                {' '}earlier isolated riders stayed behind the bunch.</>}
               {' '}Their individual travel, energy and
               finish replays are recorded; their places and points remain
               unresolved.</p>
