@@ -4,7 +4,8 @@ import {prepareV91Playtest} from '../../lib/engine/v2/playtest.mjs';
 import {playtestRiderCards} from '../../lib/engine/v2/playtest-riders.mjs';
 import {summarizePlaytestRaceStory} from
   '../../lib/engine/v2/playtest-race-story.mjs';
-import {raceViewerCheckpoints,raceViewerEnergySeries} from
+import {raceViewerCheckpoints,raceViewerEnergySeries,
+  raceViewerBreaksAndChase} from
   '../../lib/engine/v2/playtest-viewer.mjs';
 
 test('rider guide shows the exact synthetic riders committed to the race',()=>{
@@ -37,6 +38,11 @@ test('viewer checkpoints keep recorded attack, catch, position and energy',()=>{
   assert.equal(checkpoints.at(-1).energy,81);
   assert.deepEqual(raceViewerEnergySeries({kilometreFrames:frames},'you-7')
     .map(row=>row.energy),[90,89,88,87,86,85,84,83,82,81]);
+  const breaks=raceViewerBreaksAndChase({kilometreFrames:frames});
+  assert.equal(breaks.ownChaseKm,1);
+  assert.deepEqual(breaks.riders,[{riderId:'you-2',events:[
+    'km 3: tried to attack','km 4: joined a break','km 8: was caught'],
+  atOneKm:'in the bunch'}]);
 });
 
 test('race story only names events and positions present in the recording',()=>{

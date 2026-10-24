@@ -44,6 +44,11 @@ test('mixed front exits reach the conditional finish and rider replay',
     await page.route('**/api/v91-playtest',route=>route.fulfill({
       status:200,contentType:'application/json',body:JSON.stringify(body)}));
     await page.getByRole('button',{name:'Run v93 race preview'}).click();
+    const raceViewer=page.getByLabel('Race viewer');
+    await expect(raceViewer).toContainText('Breakaways and chase');
+    await expect(raceViewer).toContainText('Km 259');
+    await expect(raceViewer.getByRole('img',{
+      name:'you-7 energy by recorded kilometre'})).toBeVisible();
     const note=page.getByRole('note',{name:'Mixed front exits'});
     await expect(note).toContainText('riders left road-1 and stayed ahead');
     await expect(note).toContainText('The bunch passed rival-2-6');
@@ -879,6 +884,8 @@ test('sample race opens the playable setup and links the recorded result',
         row.riderId==='you-0').energy.toFixed(1)} energy at 5 km to go`);
     await expect(viewer.getByRole('img',{
       name:'you-0 energy by recorded kilometre'})).toBeVisible();
+    await expect(viewer.getByLabel('Breakaways and chase'))
+      .toContainText('recorded kilometres');
     await expect(page.getByRole('region',{name:'Your v93 finish'}))
       .toContainText('they are not the rider\'s total race time');
     const ownPlace=coasted.provisionalLineOrder.find(row=>

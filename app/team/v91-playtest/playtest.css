@@ -69,6 +69,11 @@
 .v91-viewer-track strong{font-size:1rem}
 .v91-viewer-track span{font-size:.88rem}
 .v91-viewer-track small{color:#526b63}
+.v91-viewer-breaks{margin-top:12px;padding:14px;background:#f2f7f4;border-radius:10px}
+.v91-viewer-breaks h4{margin:0 0 7px}
+.v91-viewer-breaks p{margin:0 0 9px}
+.v91-viewer-breaks ul{margin:0;padding-left:22px}
+.v91-viewer-breaks li{margin:7px 0}
 .v91-technical{margin:12px 0}
 .v91-technical summary{cursor:pointer;font-weight:700}
 .v91-profile small{color:#526b63}
