@@ -4966,7 +4966,8 @@ same-source bunch approaches at exact paid wheels and energies:
 `rival-10-7`/`rival-12-5` at 259940.023 m. It checks all pairwise final
 bands and keeps `contactResolved:false`, classified results null, and
 points/awards withheld. The neighboring women's rolling source has a
-fresh **pre-500 m** approach and cannot use this path. The diagnostic
+fresh **pre-500 m** approach and uses the earlier guarded fresh-source
+version rather than this final-only path. The diagnostic
 alone does not authorize a conditional finish or replay.
 
 The men's rolling source now has its own **separate versioned whole-race
@@ -4974,14 +4975,47 @@ conditional continuation**: the clean first-500 m audit, strict two-event
 final-500 m paid audit, seven road boundaries, 120 individual crossings,
 energy and deterministic replay reconcile. The guided English viewer
 names the two possible approaches and states that occupied lanes and
-official placement remain unresolved. The women's rolling source still
-refuses because it has a fresh pre-500 m encounter that this path does
-not pay. The new path returns no classified results, official points or
-saved awards; disabling it retains the earlier refusal. Four focused
+official placement remain unresolved. The women's rolling source keeps
+its earlier three-approach conditional path because this new path does
+not pay its pre-500 m encounter. The new path returns no classified
+results, official points or saved awards; disabling it retains the
+earlier refusal. Four focused
 whole-race units, changed-file lint, isolated preview build and both
 the new rolling and existing flat authenticated browser flows passed.
 The same independent 60-race heterogeneous matrix now reports 46
 conditional finishes and 14 explicit refusals; two races use this new
-version. This bounded gain does not resolve the women's rolling
-pre-500 encounter or the other remaining refusals. No full repository
+version. This bounded gain does not resolve the other remaining
+refusals. No full repository
 serial unit or browser-suite pass is claimed for this increment.
+
+Release `da9c3caea9da25568ccab2b079cd70bd74b7eb17` passed four
+neighboring whole-race units, changed-file lint, an isolated release
+Next build and both new rolling and existing flat authenticated browser
+flows. Production deployment `dpl_3pZkvzYPVQVy3i7sMqPHJNb9v6e3`
+reached READY at the exact release SHA with the `tennedz.eu` alias;
+`/team/motor-lab` returned HTTP 200 and the checked error/fatal runtime
+window had no logs. Previous deployment
+`dpl_7y7ErorX1i3mTkdWotMLEN4SSzQT` remains rollback.
+
+Two of the next heterogeneous 15-team mountain refusals (men with no
+added fatigue and women with fatigue 30) have one paid first possible
+individual source-wheel approach near 259000 m, and **no new pairwise
+approach** in the final 500 m. A separate versioned whole-race path
+combines the existing strict one-approach first-half audit with a new
+strict clean final-half audit, seven paid road boundaries, all 120 rider
+energies and conditional crossings, and deterministic replay. The
+guided viewer names the one possible approach. Occupied lanes and wheel
+order remain inferred: classified places, official points and awards
+stay withheld. Disabling the new path retains explicit refusal, and
+unsupported nearby cases still refuse. Five neighboring whole-race
+units, changed-file lint, isolated preview build and an authenticated
+browser flow covering both genders passed. The first browser attempt
+only hit its 30-second harness limit while running two whole races;
+the 90-second rerun passed. No full repository unit or browser suite is
+claimed for this increment.
+The independent 60-case heterogeneous whole-race matrix now has 48
+conditional finishes and 12 explicit refusals, up from 46/14; exactly
+two mountain cases use this new early-only version. The remaining
+refusals are twelve 20-team two-front geometries with more crowded
+source wheels. The audit script now accepts optional field, gender,
+terrain and fatigue filters for targeted read-only diagnosis.
