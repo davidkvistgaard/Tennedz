@@ -75,8 +75,9 @@ function recordedRoadChanges(frames){
 
 function comparisonConditions(settings){
   const {distanceKm,terrain,teamCount,gender,fatigue,seed,
-    profileHeightsM}=settings;
+    profileHeightsM,teamOverrides}=settings;
   return JSON.stringify({distanceKm,terrain,teamCount,gender,fatigue,seed,
+    ...(teamOverrides?.length?{teamOverrides}:{}),
     ...(terrain==='custom'?{profileHeightsM}:{})});
 }
 
@@ -470,18 +471,25 @@ export default function Playtest({guided=false}){
     ...settings.managerTacticOverrides.map(row=>row.teamId)]);
   const setupExampleRace=(kind)=>{
     const tactical=kind==='tactical';
+    const chase=kind==='chase';
     setIntegratedMode(true);setCoastedMode(true);
     setSettings(tactical?{...INITIAL,distanceKm:120,terrain:'rolling',
       gender:'F',teamCount:15,fatigue:15,attack:'none',
       seed:'late-phase-6',managerTacticOverrides:[{teamId:'rival-14',
-        effort:'hard',attack:'none',chase:'all'}]}:
+        effort:'hard',attack:'none',chase:'all'}]}:chase?
+      {...INITIAL,distanceKm:40,terrain:'flat',attack:'none',
+        chase:'all',defaultRivalPlan:'attack',seed:'near-catch',
+        teamOverrides:[{teamId:'you',level:40},
+          ...['rival-1','rival-2','rival-3'].map(teamId=>(
+            {teamId,level:20}))]}:
       {...INITIAL,distanceKm:40,attack:'none',
         seed:'sample-flat-finish'});
     setCustomRivals(0);setExtraRivalId('');
     setFinalePlans(tactical?{'you':{finisherId:'you-7',
       leadOutRiderId:'you-6'},'rival-14':{finisherId:'rival-14-3',
       leadOutRiderId:'rival-14-5'}}:{});
-    setLateEfforts(tactical?{'you':'hard','rival-14':'conserve'}:{});
+    setLateEfforts(tactical?{'you':'hard','rival-14':'conserve'}:
+      chase?{'you':'conserve'}:{});
     setFinaleFrontWork({});
     setNamedAttack({teamId:'',riderId:''});
     setSecondNamedAttack({teamId:'',riderId:''});
@@ -620,9 +628,16 @@ export default function Playtest({guided=false}){
             disabled={busy}>{guided?'Reset sample race':'Set up sample race'}</button>
           <button type="button" onClick={()=>setupExampleRace('tactical')}
             disabled={busy}>Set up two-manager race</button>
+          <button type="button" onClick={()=>setupExampleRace('chase')}
+            disabled={busy}>Set up close-chase race</button>
         </div>
         <p>{guided?'A 40 km sample is ready below. Try the 120 km race to control a rival manager too. You can edit either setup before running.':
           'Choose a 40 km sample or a 120 km two-manager race with custom tactics and lead-outs. Edit either setup, then inspect the road, finish and rider replay.'}</p>
+        <p>The 40 km close chase starts with three attacking rivals and
+          synthetic team strengths of 40 for your team and 20 for each rival.
+          Run it with conserve at 5 km, then try hard with the same seed to
+          inspect the catch, energy and conditional finish. You can also try
+          the sample or 120 km two-manager race.</p>
       </div>
       <form id="v91-race-settings" onSubmit={run} className="v91-controls">
         {!guided&&<label className="v91-mode"><input type="checkbox" checked={integratedMode}
