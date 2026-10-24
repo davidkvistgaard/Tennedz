@@ -8,7 +8,10 @@ import {MOTOR_EXHAUSTION_COAST_VERSION} from
   '../../lib/engine/v2/tuning.mjs';
 import {recordFinaleCoastMixedThreeFrontPost500CandidateClock,
   validateFinaleCoastMixedThreeFrontPost500CandidateClock,
-  FINALE_COAST_MIXED_THREE_FRONT_POST500_CANDIDATE_VERSION} from
+  FINALE_COAST_MIXED_THREE_FRONT_POST500_CANDIDATE_VERSION,
+  recordFinaleCoastMixedThreeFrontStraddlingCandidateClock,
+  validateFinaleCoastMixedThreeFrontStraddlingCandidateClock,
+  FINALE_COAST_MIXED_THREE_FRONT_STRADDLING_CANDIDATE_VERSION} from
   '../../lib/engine/v2/finale-separated-last-km.mjs';
 import {recordFinaleDepletedIndividualLine,
   FINALE_POST500_MARKER_CANDIDATE_INDIVIDUAL_LINE_VERSION} from
@@ -52,6 +55,27 @@ function recording(teamCount,gender,terrain){
   return simulateTacticalTour({stage,weather,teams,seed,
     motorVersion:MOTOR_EXHAUSTION_COAST_VERSION});
 }
+
+test('straddling candidate pays both marker sides without resolving wheels',()=>{
+  const tour=recording(20,'F','rolling');
+  const clock=recordFinaleCoastMixedThreeFrontStraddlingCandidateClock(tour);
+  assert.equal(clock.version,
+    FINALE_COAST_MIXED_THREE_FRONT_STRADDLING_CANDIDATE_VERSION);
+  assert.equal(validateFinaleCoastMixedThreeFrontStraddlingCandidateClock(
+    tour,clock),true);
+  assert.equal(clock.markerPasses.length,7);
+  assert.equal(clock.markerPasses.filter(row=>
+    row.markerDistanceM<259500).length,3);
+  assert.equal(clock.markerPasses.filter(row=>
+    row.markerDistanceM>259500).length,4);
+  assert.ok(clock.markerPasses.every(row=>row.contactResolved===false));
+  assert.equal(clock.passageFrames.length,7);
+  assert.equal(clock.line.bands[1].kind,
+    'unresolved_individual_contact_candidate');
+  assert.equal(clock.classifiedResults,null);
+  assert.equal(clock.pointsStatus,'withheld');
+  assert.equal(clock.canCommitAwards,false);
+});
 
 test('late marker candidates keep road-2 and passing leavers unresolved',()=>{
   for(const [teamCount,gender,terrain] of [
