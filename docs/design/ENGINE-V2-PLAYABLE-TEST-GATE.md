@@ -5289,3 +5289,15 @@ remaining sources are 20-team men's mountain/no fatigue, women's
 mountain/high fatigue, and women's exposed/high fatigue. No other seed
 in this bounded alternate matrix changed outcome. The existing
 many-approach mountain whole-race/replay regression also passed.
+
+Release `f8186c983d1c9ecf1e189ecedeb18935b8681991` independently
+passed the two focused whole-race/replay and refusal tests, changed-file
+lint, an isolated release Next build and the targeted authenticated
+API/viewer browser flow, including the unavailable illustrative point
+preview. Production deployment `dpl_E6wAp7w4o8WnZH6yc4GHCLcBSZ4Z`
+reached READY at the exact SHA with the `tennedz.eu` alias; Vercel's
+public fetch of `/team/motor-lab` returned HTTP 200 with assets from
+that deployment. The checked 30-minute error/fatal runtime log was
+empty. Previous production deployment
+`dpl_3Un2pEm2D6GezexsUZwkdcERsDzs` remains rollback. No new full
+repository serial unit or browser-suite pass is claimed.
