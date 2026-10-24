@@ -37,7 +37,9 @@ import {recordFinaleMixedTwoFrontDroppedFinal500Audit,
   recordFinaleMixedTwoFrontDroppedManyFinal500Audit,
   recordFinaleMixedTwoFrontDroppedFreshPre500ManyFinal500Audit,
   recordFinaleMixedTwoFrontDroppedManyPre500Final500Audit,
+  recordFinaleMixedTwoFrontDroppedMultifrontFinal500Audit,
   FINALE_MIXED_TWO_FRONT_DROPPED_MANY_PRE500_FINAL500_AUDIT_VERSION,
+  FINALE_MIXED_TWO_FRONT_DROPPED_MULTIFRONT_FINAL500_AUDIT_VERSION,
   FINALE_MIXED_TWO_FRONT_DROPPED_MANY_FINAL500_AUDIT_VERSION,
   FINALE_MIXED_TWO_FRONT_DROPPED_FRESH_FINAL500_AUDIT_VERSION,
   validateFinaleMixedTwoFrontDroppedFinal500Audit} from
@@ -110,6 +112,16 @@ test('two surviving fronts retain separate paid first-half approaches',
       assert.equal(audit.classifiedResults,null);
       assert.equal(audit.pointsStatus,'withheld');
       assert.equal(audit.canCommitAwards,false);
+      const final=recordFinaleMixedTwoFrontDroppedMultifrontFinal500Audit(
+        recording,clock,line,audit);
+      assert.equal(final.version,
+        FINALE_MIXED_TWO_FRONT_DROPPED_MULTIFRONT_FINAL500_AUDIT_VERSION);
+      assert.equal(final.paidRiderCount,160);
+      assert.equal(final.freshApproaches.length,0);
+      assert.equal(final.contactResolved,false);
+      assert.equal(final.classifiedResults,null);
+      assert.equal(final.pointsStatus,'withheld');
+      assert.equal(final.canCommitAwards,false);
     }
   });
 

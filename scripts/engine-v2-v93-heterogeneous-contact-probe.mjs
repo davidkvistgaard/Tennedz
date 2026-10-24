@@ -16,7 +16,8 @@ import {recordFinaleMixedTwoFrontDroppedPre500Audit,
   recordFinaleMixedTwoFrontDroppedMultifrontPre500Audit} from
   '../lib/engine/v2/finale-mixed-two-front-dropped-pre500-audit.mjs';
 import {recordFinaleMixedTwoFrontDroppedFreshFinal500Audit,
-  recordFinaleMixedTwoFrontDroppedManyPre500Final500Audit} from
+  recordFinaleMixedTwoFrontDroppedManyPre500Final500Audit,
+  recordFinaleMixedTwoFrontDroppedMultifrontFinal500Audit} from
   '../lib/engine/v2/finale-mixed-two-front-dropped-final500-audit.mjs';
 import {recordFinaleAllBandOverlapAudit,
   recordFinaleUnorderedBandOverlapAudit} from
@@ -277,6 +278,22 @@ try{const clock=recordFinaleCoastMixedTwoFrontDroppedClock(recording);
                 secondEnergy:row.secondEnergy})),
               contactResolved:multi.contactResolved,
               pointsStatus:multi.pointsStatus};
+            try{
+              const final=recordFinaleMixedTwoFrontDroppedMultifrontFinal500Audit(
+                recording,clock,line,multi);
+              candidate.multifrontFinal500Audit={version:final.version,
+                status:final.status,paidRiderCount:final.paidRiderCount,
+                freshApproaches:final.freshApproaches.map(row=>({
+                  firstRiderId:row.firstRiderId,
+                  secondRiderId:row.secondRiderId,
+                  firstWheelM:row.firstWheelM,
+                  secondWheelM:row.secondWheelM,
+                  firstEnergy:row.firstEnergy,
+                  secondEnergy:row.secondEnergy})),
+                contactResolved:final.contactResolved,
+                pointsStatus:final.pointsStatus};
+            }catch(next){candidate.multifrontFinal500Audit={
+              reason:next.message};}
           }catch(next){candidate.multifrontPre500Audit={
             reason:next.message};}
         }

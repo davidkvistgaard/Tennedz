@@ -5119,8 +5119,13 @@ A separate versioned **internal-only** multifront audit now checks
 respectively. It splits each pair's paid movement and energy at the
 exact instant, checks all 160 riders at the 500 m handoff, and retains
 distinct source-road-group IDs. One focused three-race unit test,
-changed-file lint and diff check passed. This audit does **not** pay
-the final 500 m, classify riders, or expose a Motor Lab result; all
-three sources still explicitly refuse. A separate pairwise final-half
-audit and guarded whole-race continuation are required. The 60-case
+changed-file lint and diff check passed. A further separate versioned
+**internal-only** final-500 audit checks every paid rider pair and
+finds **zero new possible longitudinal approaches** after the handoff
+in all three sources. It preserves the 160-rider energy handoff and
+withheld policy outputs. These audits do **not** classify riders or
+expose a Motor Lab result; all three sources still explicitly refuse.
+A guarded whole-race continuation reconciling road boundaries,
+conditional line, replay and old versioned contracts is still required.
+The 60-case
 completion count remains 50/60.
