@@ -18,6 +18,10 @@ import {recordFinaleMixedPost500IndividualAudit,
   recordFinaleMixedPost500OutsideLaneAudit,
   validateFinaleMixedPost500OutsideLaneAudit} from
   '../../lib/engine/v2/finale-mixed-post500-individual-audit.mjs';
+import {recordFinaleMixedPost500OutsideLaneLine,
+  validateFinaleMixedPost500OutsideLaneLine,
+  FINALE_MIXED_POST500_OUTSIDE_LANE_LINE_VERSION} from
+  '../../lib/engine/v2/finale-mixed-post500-outside-lane-line.mjs';
 
 function recording(teamCount,gender,terrain){
   const settings={distanceKm:260,teamCount,gender,terrain,fatigue:30,
@@ -123,6 +127,20 @@ test('late marker candidates keep road-2 and passing leavers unresolved',()=>{
       unsafe.bandRunners[1].runner.frames;
     assert.throws(()=>recordFinaleMixedPost500OutsideLaneAudit(
       tour,clock,unsafe),/unpaid active-band encounter/);
+    const continued=recordFinaleMixedPost500OutsideLaneLine(tour,
+      clock);
+    assert.equal(continued.version,
+      FINALE_MIXED_POST500_OUTSIDE_LANE_LINE_VERSION);
+    assert.equal(continued.provisionalLineOrder.length,teamCount*8);
+    assert.equal(continued.finalRoadBands.reduce((sum,band)=>
+      sum+band.riderIds.length,0),teamCount*8);
+    assert.equal(continued.laneAudit.encounters.length,
+      audit.encounters.length);
+    assert.equal(continued.classifiedResults,null);
+    assert.equal(continued.pointsStatus,'withheld');
+    assert.equal(continued.canCommitAwards,false);
+    assert.equal(validateFinaleMixedPost500OutsideLaneLine(
+      tour,clock,{},continued),true);
   }
 });
 
