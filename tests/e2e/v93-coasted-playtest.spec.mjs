@@ -867,6 +867,12 @@ test('sample race opens the playable setup and links the recorded result',
         atOneKm.energy.toFixed(1)} of 100 energy remaining.`);
     await expect(story).toContainText(
       'Energy is reserve left after recorded work, not a rider skill or a race time.');
+    const viewer=page.getByLabel('Race viewer');
+    expect(await viewer.getByRole('button').count()).toBeGreaterThanOrEqual(5);
+    await expect(viewer).toContainText('Km 39');
+    await viewer.getByRole('button',{name:/Km 39/}).click();
+    await expect(page.getByRole('slider',{name:/Recorded kilometre/}))
+      .toHaveValue('39');
     await expect(page.getByRole('region',{name:'Your v93 finish'}))
       .toContainText('they are not the rider\'s total race time');
     const ownPlace=coasted.provisionalLineOrder.find(row=>
