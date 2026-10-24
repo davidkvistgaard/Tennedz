@@ -3024,9 +3024,14 @@ test('crowded 20-team exposed exits remain conditional and withhold awards',
       .toBeVisible();
   });
 
-for(const [gender,terrain,seedSuffix,preCount,firstRider,secondRider] of [
-  ['M','mountain','',10,'rival-5-7','rival-9-7'],
-  ['F','exposed','-alternate-1',11,'rival-17-7','rival-3-7']])test(
+for(const [gender,terrain,seedSuffix,preCount,firstRider,secondRider,
+  version] of [
+  ['M','mountain','',10,'rival-5-7','rival-9-7',
+    'v93-mixed-two-front-multifront-parallel-final-playtest-1'],
+  ['F','exposed','-alternate-1',11,'rival-17-7','rival-3-7',
+    'v93-mixed-two-front-eleven-multifront-parallel-final-playtest-1'],
+  ['F','flat','-alternate-2',6,'rival-17-7','rival-15-7',
+    'v93-mixed-two-front-bounded-multifront-parallel-final-playtest-1']])test(
   `${preCount} early approaches and one final parallel pass retain a conditional line`,
   async({page})=>{
     test.setTimeout(120000);
@@ -3059,8 +3064,7 @@ for(const [gender,terrain,seedSuffix,preCount,firstRider,secondRider] of [
         pointContext:{tier:2,divisionIndex:0,divisionCount:1}}});
     expect(response.status(),await response.text()).toBe(200);
     const body=await response.json();
-    expect(body.coasted.version).toBe(
-      `v93-mixed-two-front-${preCount===11?'eleven-':''}multifront-parallel-final-playtest-1`);
+    expect(body.coasted.version).toBe(version);
     expect(body.coasted.lineTimes).toHaveLength(160);
     expect(body.coasted.lastKmRoad).toHaveLength(7);
     expect(body.coasted.mixedTwoFrontOlderDrops.parallelFinalLaneEvidence)
@@ -3086,10 +3090,17 @@ for(const [gender,terrain,seedSuffix,preCount,firstRider,secondRider] of [
       .toBeVisible();
   });
 
-for(const [approaches,gender,fatigue,version] of [
-  [5,'F',0,'v93-mixed-two-front-five-pre500-clean-final-lanes-playtest-1'],
-  [7,'M',0,'v93-mixed-two-front-seven-pre500-clean-final-lanes-playtest-1'],
-  [13,'F',30,'v93-mixed-two-front-thirteen-multifront-clean-final-playtest-1']])test(
+for(const [approaches,gender,fatigue,seedSuffix,version] of [
+  [5,'F',0,'alternate-1',
+    'v93-mixed-two-front-five-pre500-clean-final-lanes-playtest-1'],
+  [7,'M',0,'alternate-1',
+    'v93-mixed-two-front-seven-pre500-clean-final-lanes-playtest-1'],
+  [13,'F',30,'alternate-1',
+    'v93-mixed-two-front-thirteen-multifront-clean-final-playtest-1'],
+  [9,'F',0,'alternate-2',
+    'v93-mixed-two-front-bounded-multifront-clean-final-playtest-1'],
+  [12,'M',0,'alternate-2',
+    'v93-mixed-two-front-bounded-multifront-clean-final-playtest-1']])test(
   `${approaches} early mountain approaches retain a conditional 160-rider line`,
   async({page})=>{
     test.setTimeout(120000);
@@ -3101,7 +3112,7 @@ for(const [approaches,gender,fatigue,version] of [
     const teamCount=20;
     const settings={distanceKm:260,teamCount,gender,
       terrain:'mountain',fatigue,
-      seed:`v93-heterogeneous-20-${gender}-mountain-${fatigue}-alternate-1`,
+      seed:`v93-heterogeneous-20-${gender}-mountain-${fatigue}-${seedSuffix}`,
       defaultRivalPlan:'passive',effort:'hard',attack:'repeated',
       chase:'all',managerTactics:Array.from({length:teamCount-1},
         (_,index)=>({effort:['hard','steady','conserve'][index%3],
@@ -3144,6 +3155,17 @@ for(const [approaches,gender,fatigue,version] of [
       name:'Conditional two-front exits with older drops'});
     await expect(note).toContainText(
       `${approaches} possible individual approaches`);
+    if(approaches===13){
+      const first=body.coasted.mixedTwoFrontOlderDrops
+        .freshWheelApproaches[0];
+      await note.getByText('13 possible individual approaches').click();
+      await expect(note.getByText(`${first.firstRiderId} approached ${
+        first.secondRiderId}`,{exact:false})).toBeVisible();
+      await note.getByRole('button',{name:`Inspect ${
+        first.firstRiderId} conditional finish replay`}).click();
+      await expect(page.getByLabel('Selected rider finale replay'))
+        .toContainText(first.firstRiderId);
+    }
     await expect(page.getByText('Point illustration unavailable:',{
       exact:false})).toBeVisible();
     await expect(page.getByText('Official points: withheld · Awards saved: 0'))

@@ -1613,16 +1613,33 @@ export default function Playtest({guided=false}){
               {' '}within their original groups; occupied wheel order,
               {' '}official places and points remain unresolved.</p>
             {coasted.mixedTwoFrontOlderDrops.freshWheelApproaches?.length>0&&
-              <p>{coasted.mixedTwoFrontOlderDrops.freshWheelApproaches.length}
-                {' '}possible individual approach
+              <details><summary>{coasted.mixedTwoFrontOlderDrops
+                .freshWheelApproaches.length} possible individual approach
                 {coasted.mixedTwoFrontOlderDrops.freshWheelApproaches.length===
-                  1?' is':'es are'} recorded at
-                {' '}{coasted.mixedTwoFrontOlderDrops.freshWheelApproaches
-                  .map(row=>`${(row.atDistanceM/1000).toFixed(3)} km`)
-                  .join(', ')}. Movement and energy are paid at each
-                {' '}approach. Where outside lanes are inferred, their
-                {' '}contact response remains unresolved. Crossing order is
-                {' '}conditional, not an official placing.</p>}
+                  1?' is':'es are'} recorded</summary>
+                <p>Movement and energy are paid at each wheel-spacing
+                  {' '}approach. An approach does not confirm a catch: the
+                  {' '}outside-lane response and crossing order remain
+                  {' '}conditional.</p>
+                <ul>{coasted.mixedTwoFrontOlderDrops.freshWheelApproaches
+                  .map((row,index)=><li key={`${row.firstRiderId}:${
+                    row.secondRiderId}:${index}`}>
+                    {row.firstRiderId} approached {row.secondRiderId} at
+                    {' '}{(row.atDistanceM/1000).toFixed(3)} km.
+                    <button type="button" aria-label={`Inspect ${
+                      row.firstRiderId} conditional finish replay`}
+                    onClick={()=>{
+                      const band=coasted.bandReplays.find(entry=>
+                        entry.riderIds.includes(row.firstRiderId));
+                      if(!band)return;
+                      setCoastedBandId(band.id);
+                      setCoastedRiderId(row.firstRiderId);
+                      setCoastedBandIndex(band.frames.length-1);
+                      document.getElementById('v93-paid-finale-replay')
+                        ?.scrollIntoView();
+                    }}>Inspect finish replay</button>
+                  </li>)}</ul>
+              </details>}
             {coasted.mixedTwoFrontOlderDrops.parallelFinalLaneEvidence&&
               <p>The final close approach between
                 {' '}{coasted.mixedTwoFrontOlderDrops
