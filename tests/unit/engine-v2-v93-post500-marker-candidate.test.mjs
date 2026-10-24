@@ -90,8 +90,14 @@ test('straddling candidate pays both marker sides without resolving wheels',()=>
     tour,clock,line);
   assert.equal(outside.approachCount,7);
   assert.equal(outside.energyContinuity.length,7);
+  assert.equal(outside.pre500OtherActive.encounters.length,39);
+  assert.equal(outside.pre500OtherActive.checkedOlderDropMarkerBounds,5);
+  assert.ok(outside.pre500OtherActive.checkedRearIsolatedRiders>0);
+  assert.ok(outside.pre500OtherActive.encounters.every(row=>
+    row.activeRoadBandId==='road-1'));
   assert.equal(outside.contactResolved,false);
-  assert.equal(outside.pre500OtherBandsStatus,'not_audited_no_result');
+  assert.equal(outside.pre500OtherBandsStatus,
+    'former_road1_source_exit_contacts_unresolved');
   assert.equal(outside.pointsStatus,'withheld');
   assert.equal(outside.canCommitAwards,false);
   assert.equal(validateFinaleMixedStraddlingOutsideLaneAudit(
