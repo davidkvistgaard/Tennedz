@@ -3024,14 +3024,16 @@ test('crowded 20-team exposed exits remain conditional and withhold awards',
       .toBeVisible();
   });
 
-for(const [gender,terrain,seedSuffix,preCount,firstRider,secondRider,
+for(const [gender,terrain,fatigue,seedSuffix,preCount,firstRider,secondRider,
   version] of [
-  ['M','mountain','',10,'rival-5-7','rival-9-7',
+  ['M','mountain',30,'',10,'rival-5-7','rival-9-7',
     'v93-mixed-two-front-multifront-parallel-final-playtest-1'],
-  ['F','exposed','-alternate-1',11,'rival-17-7','rival-3-7',
+  ['F','exposed',30,'-alternate-1',11,'rival-17-7','rival-3-7',
     'v93-mixed-two-front-eleven-multifront-parallel-final-playtest-1'],
-  ['F','flat','-alternate-2',6,'rival-17-7','rival-15-7',
-    'v93-mixed-two-front-bounded-multifront-parallel-final-playtest-1']])test(
+  ['F','flat',30,'-alternate-2',6,'rival-17-7','rival-15-7',
+    'v93-mixed-two-front-bounded-multifront-parallel-final-playtest-1'],
+  ['F','mountain',0,'-alternate-3',7,'rival-5-7','rival-15-7',
+    'v93-mixed-two-front-seven-onefront-parallel-final-playtest-1']])test(
   `${preCount} early approaches and one final parallel pass retain a conditional line`,
   async({page})=>{
     test.setTimeout(120000);
@@ -3042,8 +3044,8 @@ for(const [gender,terrain,seedSuffix,preCount,firstRider,secondRider,
     await expect(page).toHaveURL(/\/team$/);
     const teamCount=20;
     const settings={distanceKm:260,teamCount,gender,
-      terrain,fatigue:30,
-      seed:`v93-heterogeneous-20-${gender}-${terrain}-30${seedSuffix}`,
+      terrain,fatigue,
+      seed:`v93-heterogeneous-20-${gender}-${terrain}-${fatigue}${seedSuffix}`,
       defaultRivalPlan:'passive',effort:'hard',attack:'repeated',
       chase:'all',managerTactics:Array.from({length:teamCount-1},
         (_,index)=>({effort:['hard','steady','conserve'][index%3],
@@ -3090,18 +3092,20 @@ for(const [gender,terrain,seedSuffix,preCount,firstRider,secondRider,
       .toBeVisible();
   });
 
-for(const [approaches,gender,fatigue,seedSuffix,version] of [
-  [5,'F',0,'alternate-1',
+for(const [approaches,gender,terrain,fatigue,seedSuffix,version] of [
+  [5,'F','mountain',0,'alternate-1',
     'v93-mixed-two-front-five-pre500-clean-final-lanes-playtest-1'],
-  [7,'M',0,'alternate-1',
+  [7,'M','mountain',0,'alternate-1',
     'v93-mixed-two-front-seven-pre500-clean-final-lanes-playtest-1'],
-  [13,'F',30,'alternate-1',
+  [13,'F','mountain',30,'alternate-1',
     'v93-mixed-two-front-thirteen-multifront-clean-final-playtest-1'],
-  [9,'F',0,'alternate-2',
+  [9,'F','mountain',0,'alternate-2',
     'v93-mixed-two-front-bounded-multifront-clean-final-playtest-1'],
-  [12,'M',0,'alternate-2',
-    'v93-mixed-two-front-bounded-multifront-clean-final-playtest-1']])test(
-  `${approaches} early mountain approaches retain a conditional 160-rider line`,
+  [12,'M','mountain',0,'alternate-2',
+    'v93-mixed-two-front-bounded-multifront-clean-final-playtest-1'],
+  [4,'F','rolling',30,'alternate-3',
+    'v93-mixed-two-front-short-multifront-clean-final-playtest-1']])test(
+  `${approaches} early ${terrain} approaches ${seedSuffix} retain a conditional 160-rider line`,
   async({page})=>{
     test.setTimeout(120000);
     await page.goto('/login');
@@ -3111,8 +3115,8 @@ for(const [approaches,gender,fatigue,seedSuffix,version] of [
     await expect(page).toHaveURL(/\/team$/);
     const teamCount=20;
     const settings={distanceKm:260,teamCount,gender,
-      terrain:'mountain',fatigue,
-      seed:`v93-heterogeneous-20-${gender}-mountain-${fatigue}-${seedSuffix}`,
+      terrain,fatigue,
+      seed:`v93-heterogeneous-20-${gender}-${terrain}-${fatigue}-${seedSuffix}`,
       defaultRivalPlan:'passive',effort:'hard',attack:'repeated',
       chase:'all',managerTactics:Array.from({length:teamCount-1},
         (_,index)=>({effort:['hard','steady','conserve'][index%3],

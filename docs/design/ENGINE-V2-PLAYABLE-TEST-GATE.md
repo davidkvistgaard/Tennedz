@@ -5447,3 +5447,40 @@ authenticated local browser flows. Production deployment
 the `tennedz.eu` alias; `/team/motor-lab` returned HTTP 200 from its assets
 and checked error/fatal runtime logs were empty. The previous production
 deployment `dpl_HVJ236TLPij3hiqhh6223jtTvq7e` remains the rollback.
+
+The complete read-only 60-case `alternate-2` heterogeneous-field matrix
+subsequently reported **60 conditional finishes and zero explicit
+refusals**: 20/20 each for 4, 15 and 20 teams. Three 20-team cases use
+the new bounded versions. This is a finite seed-specific playability
+check; occupied-wheel order, official places, points and awards remain
+unresolved and withheld wherever the result is conditional.
+
+A third independent seed suffix, `alternate-3`, begins with **16
+conditional finishes and four explicit `unresolved_band_contact`
+refusals** among 20-team races. The refused settings are men's rolling
+and custom at fatigue 30, women's rolling at fatigue 30, and women's
+mountain at fatigue 0. Read-only individual-wheel probes found fourteen
+possible first-half approaches in each men's case, four in women's
+rolling and seven in women's mountain. Every first-half approach stayed
+inside its original front, with no cross-front first-half approach.
+Women's rolling has three from road-2 and one from road-4, then zero
+new final-half approaches. Women's mountain has seven from road-2 and
+one paid final-half parallel approach at 259811.670 m, between
+`rival-5-7` and `rival-15-7` in distinct fixed lanes 2 and 3 with no
+draft after the approach. Group marker crossings were not used as
+individual contact evidence. These four cases remain explicit refusals
+in the released motor.
+
+Two new separately versioned guarded continuations pay only the exact
+four-plus-zero approach shape across both fronts and the seven-plus-one
+shape in one front with the audited distinct-lane parallel finish.
+Both preserve all 160 conditional individual crossings, energy across
+the 500 m handoff, replay and withheld official places/points/awards.
+Opting out restores the explicit refusal. The focused five-case
+whole-race/replay/opt-out test, changed-file lint, isolated preview build
+and two authenticated browser flows passed. The read-only 20-team
+`alternate-3` matrix now has **18 conditional finishes and two explicit
+refusals**. The men's rolling and custom fatigue-30 cases, each with
+fourteen possible first-half approaches, still refuse; these new
+versions do not claim to pay their geometry. This is preview-only
+until independent release validation and production verification.
