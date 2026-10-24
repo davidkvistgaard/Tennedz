@@ -37,6 +37,9 @@ test('close-chase preset shows when hard effort catches a late break',
       .toHaveLength(0);
     expect(hard.kilometreFrames.at(-1).caughtRiderIds)
       .toEqual(['rival-1-7','rival-2-7','rival-3-7']);
+    const rivalBreak=page.getByLabel('rival-1 breakaway outcomes');
+    await expect(rivalBreak).toContainText('rival-1-7');
+    await expect(rivalBreak).toContainText('Caught at km 39');
     for(const race of [conserve,hard]){
       expect(race.lineTimes).toHaveLength(32);
       expect(race.pointsStatus).toBe('withheld');

@@ -418,6 +418,8 @@ export default function Playtest({guided=false}){
   const viewerRoad=coasted?raceViewerRoad(coastedFrame,
     coasted.settings.teamCount*8):[];
   const viewerRival=raceViewerRivalAt(coasted,coastedFrame,viewerRivalId);
+  const viewerRivalBreaks=coasted?
+    raceViewerBreaksAndChase(coasted,viewerRivalId).riders:[];
   const viewerRiderRoad=viewerRoad.find(band=>
     band.ownRiderIds.includes(viewerRiderId));
   const viewerCurrentEnergy=coastedFrame?.ownRiders.find(row=>
@@ -1184,6 +1186,12 @@ export default function Playtest({guided=false}){
               <p>{viewerRival.finisherId}: {viewerRival.finisherRoad}. At this checkpoint, {viewerRival.frontCount} riders are ahead, {viewerRival.bunchCount} in the bunch and {viewerRival.droppedCount} behind.</p>
               <p>This kilometre: {viewerRival.attacks.length} attack attempts · {viewerRival.joins.length} break joins · {viewerRival.catches.length} caught · {viewerRival.pulls.length} riders taking pulls · {viewerRival.chased?'team chased':'team did not chase'}.</p>
               <p>Whole-kilometre record: chased {viewerRival.wholeRaceChaseKm} km · first attack {viewerRival.firstAttackKm===null?'none':`km ${viewerRival.firstAttackKm}`} · first break join {viewerRival.firstJoinKm===null?'none':`km ${viewerRival.firstJoinKm}`} · last recorded catch {viewerRival.lastCatchKm===null?'none':`km ${viewerRival.lastCatchKm}`}.</p>
+              {viewerRivalBreaks.length>0&&<div aria-label={`${viewerRivalId} breakaway outcomes`}>
+                <p>Recorded attack and breakaway riders:</p>
+                <ul>{viewerRivalBreaks.map(row=><li key={row.riderId}>
+                  <strong>{row.riderId}</strong>: {row.events.join(' · ')}. Outcome: {row.fate}. With 1 km to go: {row.atOneKm}.
+                </li>)}</ul>
+              </div>}
               {viewerRival.lineEnergy!==null&&<p>{viewerRival.finisherId} had {viewerRival.lineEnergy.toFixed(1)} energy at the conditional line. This is recorded reserve, not an official placing.</p>}
             </div>}
           </div>
