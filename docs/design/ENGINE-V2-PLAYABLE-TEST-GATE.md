@@ -5317,3 +5317,12 @@ whole-race/refusal/replay tests, changed-file lint, an isolated preview
 Next build and a targeted authenticated API/viewer browser flow passed.
 This increment is preview-only until independently verified on the
 release branch and production deployment.
+
+The read-only `alternate-1` 20-team matrix after this change reports
+18 conditional finishes and exactly two `unresolved_band_contact`
+refusals: women's mountain/high fatigue and women's exposed/high
+fatigue. The newly completing men's mountain/no-fatigue case uses only
+the seven-plus-zero version. The release branch independently passed
+the new whole-race/refusal tests, changed-file lint, isolated build and
+targeted authenticated API/viewer browser flow; this does not claim a
+full repository test-suite pass.
