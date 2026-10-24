@@ -4503,3 +4503,33 @@ at exact release `bdc9b00fddbfb589b83d72f736cff34438bcf165`, with the
 returned HTTP 200 after redirects, and the checked error/fatal runtime
 window had no logs. The previous deployment
 `dpl_49nRtdeUQksbz6Leno8Q8SspPRx3` is the rollback target.
+
+### Long-field front encounter after boundary exits (2026-10-24)
+
+The next synthetic whole-race audit varied 40 and 120 km, 15/20 teams,
+both genders, all five terrains, fatigue 0/30, two seeds, mixed manager
+orders and late efforts. All 160 short/medium cases completed on the
+existing separated-road path. This only establishes that bounded matrix.
+
+A separate 72-case 260 km, 15/20-team rolling/mountain/exposed audit at
+fatigue 15/30 completed 64 races and explicitly refused eight with
+`unresolved_band_contact`. The refusal repeats across both genders and
+both field sizes on rolling and mountain terrain at fatigue 30, seed 1.
+The locked `v93-next-contact-field-hills-15-M-rolling-30-1` source has
+three fronts (10/15/5 riders), three older isolated riders, and five
+first-front plus one second-front boundary leavers. Seven paid road
+markers preserve all riders and energy. The five first-front leavers
+move through the second front between the 259600 and 259800 m markers;
+the current dropped-rider travel reports no front contact and the
+three-front-with-older-drops guard correctly refuses a conditional line.
+Marker interpolation suggests the first overlap at about 259696 m, but
+that is a provisional witness, not a paid encounter or finish result.
+
+The same front encounter appears in the women's mountain 15-team case
+near 259686 m and the men's mountain 20-team case near 259486 m. No
+individual finish, replay or policy points are inferred from these
+refused sources. The next guarded continuation needs to split paid rider
+movement at each first encounter with `road-2`, account for the older
+rear riders, and reconcile road groups, energy, 500 m handoff, individual
+crossings and replay. It must retain an explicit refusal wherever that
+contact cannot be paid. No code from this audit was deployed.

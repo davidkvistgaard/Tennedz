@@ -1,4 +1,4 @@
-// Paid whole-race witness for the long-field flat/custom contact refusal.
+// Paid whole-race witness for a long-field mixed-tactic contact refusal.
 // Synthetic riders only; no classification or award is saved.
 import {prepareV91Playtest} from '../lib/engine/v2/playtest.mjs';
 import {simulateTacticalTour} from '../lib/engine/v2/tour.mjs';
@@ -17,9 +17,11 @@ import {recordFinaleCoastMixedThreeFrontDroppedClock} from
 const teamCount=Number(process.argv[2]??15);
 const gender=process.argv[3]??'M';
 const terrain=process.argv[4]??'flat';
-const fatigue=30,seedIndex=2,distanceKm=260;
+const mode=process.argv[5]??'field-mixed';
+const seedIndex=Number(process.argv[6]??2);
+const fatigue=30,distanceKm=260;
 const settings={distanceKm,teamCount,gender,terrain,fatigue,
-  seed:`v93-next-contact-field-mixed-${teamCount}-${gender}-${terrain}-${
+  seed:`v93-next-contact-${mode}-${teamCount}-${gender}-${terrain}-${
     fatigue}-${seedIndex}`,
   defaultRivalPlan:'passive',effort:'hard',attack:'repeated',chase:'all',
   managerTactics:Array.from({length:teamCount-1},(_,index)=>({
@@ -78,8 +80,28 @@ for(const frame of trace.frames){
       from:row.fromRoadGroupId})),
     bunchExits:frame.exhaustionDrops.map(row=>row.riderId)});
 }
+// A marker-order reversal is a contact candidate, not a paid rider pass.
+const possibleFrontOverlaps=[];
+for(let index=1;index<passages.length;index++){
+  const before=passages[index-1],after=passages[index];
+  const beforeSecond=before.groups[1]?.secondsFromBunch;
+  const afterSecond=after.groups[1]?.secondsFromBunch;
+  if(beforeSecond===undefined||afterSecond===undefined)continue;
+  for(const rider of after.isolated){
+    const earlier=before.isolated.find(row=>row.id===rider.id);
+    if(!earlier)continue;
+    const priorGap=earlier.secondsFromBunch-beforeSecond;
+    const nextGap=rider.secondsFromBunch-afterSecond;
+    if(priorGap>=0||nextGap<=0)continue;
+    possibleFrontOverlaps.push({riderId:rider.id,frontId:after.groups[1].id,
+      betweenM:[before.distanceM,after.distanceM],
+      interpolatedM:+(before.distanceM+
+        (after.distanceM-before.distanceM)*
+        -priorGap/(nextGap-priorGap)).toFixed(3)});
+  }
+}
 console.log(JSON.stringify({seed:settings.seed,refusal,candidate,
   sourceGroups:source.roadGroups.map(group=>({id:group.id,
     count:group.riderIds.length,gapSeconds:group.gapSeconds})),
-  priorDropped:source.droppedRiderIds.length,
+  priorDropped:source.droppedRiderIds.length,possibleFrontOverlaps,
   passages},null,2));
