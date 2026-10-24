@@ -46,6 +46,10 @@ test('close-chase preset shows when hard effort catches a late break',
       name:'Paired v93 race comparison'});
     await expect(comparison).toContainText(
       'Front group at 1 km: 1.4 s ahead of the bunch.');
+    await expect(comparison.getByLabel('Late effort comparison'))
+      .toContainText('Recorded catches in those kilometres: none.');
+    await expect(comparison.getByLabel('Late effort comparison'))
+      .toContainText('Recorded catches in those kilometres: km 39: rival-1-7, rival-2-7, rival-3-7.');
     await expect(comparison).toContainText(
       'Conditional place: 4 → 1');
     await expect(comparison.getByLabel('Late effort takeaway'))

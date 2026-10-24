@@ -1764,6 +1764,10 @@ export default function Playtest({guided=false}){
                 Front group at 1 km: {run.lateEffort.atOneKmFrontGapSeconds.toFixed(1)} s ahead of the bunch.
               </p>}
               <p>Recorded work from 5 km to the 1 km handoff: {run.lateTeamWork.attacks} attacks · {run.lateTeamWork.chaseKm} chase km · {run.lateTeamWork.breakPullKm} break-pull km · {run.lateTeamWork.bunchPaceKm} bunch-front km.</p>
+              <p>Recorded catches in those kilometres: {run.lateTeamWork.catches.length?
+                run.lateTeamWork.catches.map(event=>
+                  `km ${event.km}: ${event.riderIds.join(', ')}`).join(' · '):
+                'none'}.</p>
               <p>At the line: {run.energyAtLine?.toFixed(1)??'—'} energy · conditional place {run.place}.</p>
             </div>)}</div>
           <p aria-label="Late effort takeaway">{raceViewerEffortInsight(
