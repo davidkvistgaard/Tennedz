@@ -1554,6 +1554,34 @@ export default function Playtest(){
                 }}>Inspect finish replay</button>
             </p>)}
           </div>}
+          {coasted.straddlingOutsideLaneApproaches?.length>0&&
+            <div role="note" aria-label="Conditional straddling outside lanes">
+              <p>Seven former front riders first came within one wheel
+                {' '}spacing of road-2 before the 500 m handoff. Four group
+                {' '}marker crossings happened later; those markers are not
+                {' '}individual contacts. Each departing rider keeps a
+                {' '}separately paid, inferred outside lane without draft.
+                {' '}The 500 m handoff, rider energy and conditional finish
+                {' '}are recorded, but occupied wheel order, official places
+                {' '}and points remain unresolved.</p>
+              {coasted.straddlingOutsideLaneApproaches.map(event=><p
+                key={event.isolatedRiderId}>
+                {event.isolatedRiderId} approached {event.activeRiderId}
+                {' '}at {(event.atDistanceM/1000).toFixed(3)} km.
+                <button type="button"
+                  aria-label={`Inspect straddling outside-lane rider ${
+                    event.isolatedRiderId} finish replay`}
+                  onClick={()=>{
+                    const band=coasted.bandReplays.find(row=>
+                      row.id===`isolated:${event.isolatedRiderId}`);
+                    setCoastedBandId(band.id);
+                    setCoastedRiderId(event.isolatedRiderId);
+                    setCoastedBandIndex(band.frames.length-1);
+                    document.getElementById('v93-paid-finale-replay')
+                      ?.scrollIntoView();
+                  }}>Inspect finish replay</button>
+              </p>)}
+            </div>}
           {coasted.mixedFrontLeavers&&<div role="note"
             aria-label="Mixed front exits">
             <p>At {(coasted.mixedFrontLeavers.sourceDistanceM/1000)

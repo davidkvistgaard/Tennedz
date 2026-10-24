@@ -44,7 +44,8 @@ import {recordFinaleMixedStraddlingOutsideLaneResult,
   '../../lib/engine/v2/finale-mixed-straddling-outside-lane-result.mjs';
 import {createV93PlayableTest,validateV93CoastedPlaytest,
   summarizeV93CoastedPlaytest,
-  V93_MIXED_THREE_FRONT_POST500_LANES_PLAYTEST_VERSION} from
+  V93_MIXED_THREE_FRONT_POST500_LANES_PLAYTEST_VERSION,
+  V93_MIXED_THREE_FRONT_STRADDLING_LANES_PLAYTEST_VERSION} from
   '../../lib/engine/v2/playtest-v93-coasted.mjs';
 
 function settings(teamCount,gender,terrain){
@@ -147,6 +148,35 @@ test('straddling candidate pays both marker sides without resolving wheels',()=>
   assert.equal(result.canCommitAwards,false);
   assert.equal(validateFinaleMixedStraddlingOutsideLaneResult(tour,
     {pointContext:{}},result),true);
+});
+
+test('straddling whole race exposes only separate conditional lanes',()=>{
+  const input=settings(20,'F','rolling');
+  const race=createV93PlayableTest(input,{pointContext:{}});
+  assert.equal(race.version,
+    V93_MIXED_THREE_FRONT_STRADDLING_LANES_PLAYTEST_VERSION);
+  assert.equal(race.straddlingResult.line.conditionalCrossings.length,160);
+  assert.equal(race.classifiedResults,null);
+  assert.equal(race.pointsStatus,'withheld');
+  assert.equal(race.canCommitAwards,false);
+  const summary=summarizeV93CoastedPlaytest(race);
+  assert.equal(summary.lineTimes.length,160);
+  assert.equal(summary.lastKmRoad.length,7);
+  assert.equal(summary.straddlingOutsideLaneApproaches.length,7);
+  assert.ok(summary.straddlingOutsideLaneApproaches.every(row=>
+    row.atDistanceM<259500&&
+    row.occupiedWheelOrderResolved===false));
+  assert.ok(summary.lastKmRoad.every(frame=>
+    frame.groups.every(group=>
+      !group.riderIds.some(id=>summary.straddlingOutsideLaneApproaches
+        .some(event=>event.isolatedRiderId===id)))));
+  assert.equal(summary.bandReplays.length,
+    race.straddlingResult.line.finalRoadBands.length);
+  assert.equal(summary.pointsStatus,'withheld');
+  assert.equal(validateV93CoastedPlaytest(input,{pointContext:{}},race),true);
+  assert.throws(()=>createV93PlayableTest(input,{},
+    {resolveMixedThreeFrontStraddlingPass:false}),
+  /depleted line bands crossed without contact/);
 });
 
 test('late marker candidates keep road-2 and passing leavers unresolved',()=>{

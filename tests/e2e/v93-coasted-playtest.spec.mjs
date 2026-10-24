@@ -2607,6 +2607,61 @@ test('late three-front outside lanes show paid individual approaches and replay'
       .toBeVisible();
   });
 
+test('straddling outside lanes keep seven riders separate through the line',
+  async({page})=>{
+    await page.goto('/login');
+    await page.getByLabel('Email or username').fill('v2rival');
+    await page.getByLabel('Password',{exact:true}).fill('fixture-password');
+    await page.getByRole('button',{name:'Sign in',exact:true}).click();
+    await expect(page).toHaveURL(/\/team$/);
+    const teamCount=20;
+    const settings={distanceKm:260,teamCount,gender:'F',
+      terrain:'rolling',fatigue:30,
+      seed:'v93-next-contact-field-hills-20-F-rolling-30-1',
+      defaultRivalPlan:'passive',effort:'hard',attack:'repeated',
+      chase:'all',managerTactics:Array.from({length:teamCount-1},
+        (_,index)=>({
+          effort:['hard','conserve','steady'][(index+1)%3],
+          attack:index%3===1?'selective':'repeated',
+          chase:index%3===1?'ignore':'all'})),
+      managerFinaleOrders:[
+        {teamId:'you',atKm:255,effort:'conserve'},
+        {teamId:'rival-1',atKm:255,effort:'hard'}]};
+    const plans=['you',...Array.from({length:19},(_,index)=>
+      `rival-${index+1}`)].map(teamId=>({teamId,
+      finisherId:`${teamId}-7`,leadOutRiderId:null}));
+    const response=await page.request.post('/api/v91-playtest',{
+      headers:{origin:'http://localhost:3100'},data:{
+        mode:'v93-coasted',settings,plans,
+        pointContext:{tier:2,divisionIndex:0,divisionCount:1}}});
+    expect(response.status()).toBe(200);
+    const body=await response.json();
+    expect(body.coasted.version).toBe(
+      'v93-mixed-three-front-straddling-lanes-playtest-1');
+    expect(body.coasted.lineTimes).toHaveLength(160);
+    expect(body.coasted.lastKmRoad).toHaveLength(7);
+    expect(body.coasted.straddlingOutsideLaneApproaches).toHaveLength(7);
+    expect(body.coasted.pointsStatus).toBe('withheld');
+    expect(body.coasted.canCommitAwards).toBe(false);
+    await page.goto('/team/v91-playtest');
+    await page.getByRole('checkbox',{
+      name:'Continue to a conditional finish'}).check();
+    await page.getByRole('checkbox',{
+      name:'Try v93 road-to-line preview'}).check();
+    await page.route('**/api/v91-playtest',route=>route.fulfill({
+      status:200,contentType:'application/json',body:JSON.stringify(body)}));
+    await page.getByRole('button',{name:'Run v93 race preview'}).click();
+    const note=page.getByRole('note',{
+      name:'Conditional straddling outside lanes'});
+    await expect(note).toContainText('group marker crossings happened later');
+    await expect(note).toContainText('official places');
+    await page.getByRole('button',{
+      name:'Inspect straddling outside-lane rider rival-9-7 finish replay'})
+      .click();
+    await expect(page.getByLabel('Selected rider finale replay'))
+      .toContainText('rival-9-7');
+  });
+
 test('exhausted final metres retain the whole-road line and rider replay',
   async({page})=>{
     await page.goto('/login');

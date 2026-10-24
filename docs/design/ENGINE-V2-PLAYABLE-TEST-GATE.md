@@ -4801,3 +4801,27 @@ from 67/72 to 71/72 completions, with that one explicit refusal. Five
 neighboring unit tests, changed-file lint, an isolated Next build and a
 targeted authenticated browser flow passed. This is a bounded continuation,
 not unrestricted motor completion.
+
+### Guarded straddling 500 m outside lanes
+
+The remaining locked 260 km, 20-team women's rolling `field-hills` source
+now has a separate versioned whole-race conditional continuation. Seven
+former road-1 riders have their first possible individual 2.5 m approach
+to road-2 at 259485.154–259496.879 m, all before the 500 m handoff, even
+though four group-marker clocks cross road-2 afterward. The individual
+approach, paid energy split, distinct inferred no-draft outside lane,
+500 m handoff and all 160 individual crossings/replays reconcile. Road-2
+and each isolated rider remain separate in the seven displayed road
+boundaries and final road bands. The English viewer names the approaches
+and explains why the later group markers are not individual contacts.
+
+The source-road-1 proximity audit includes 38 adjacent source pairs and
+one fresh approach after separation; the latter has paid movement and
+energy for both riders. Occupied wheel order and the physical response to
+these possible approaches remain unrecorded. The result therefore labels
+the line conditional and withholds official places, policy points and
+saved awards. An opt-out still gives the old explicit refusal; older
+versioned recordings keep their old path. The locked result, full
+neighboring unit file (5/5), changed-file lint, isolated Next build and
+targeted authenticated browser flow passed. This remains a bounded case,
+not general contact resolution.
