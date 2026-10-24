@@ -11,7 +11,8 @@ import {finaleSnapshotFromTour} from
   '../lib/engine/v2/finale-snapshot.mjs';
 import {createV93PlayableTest} from
   '../lib/engine/v2/playtest-v93-coasted.mjs';
-import {recordFinaleCoastMixedThreeFrontDroppedClock} from
+import {recordFinaleCoastMixedThreeFrontDroppedClock,
+  recordFinaleCoastMixedThreeFrontPre500PassClock} from
   '../lib/engine/v2/finale-separated-last-km.mjs';
 
 const teamCount=Number(process.argv[2]??15);
@@ -37,13 +38,26 @@ const source=finaleSnapshotFromTour(recording,{remainingKm:1,
 const trace=probeFinaleSeparatedGroupsFromTour(recording,{
   version:FINALE_COAST_DYNAMIC_FRONT_LAST_KM_VERSION});
 let refusal=null;
-try{createV93PlayableTest(settings);}
+let playable=null;
+try{
+  const race=createV93PlayableTest(settings);
+  playable={version:race.version,
+    crossings:race.individualLine.conditionalCrossings.length,
+    pointsStatus:race.pointsStatus};
+}
 catch(error){refusal={message:error.message,
   reason:error.roadPreview?.unsupportedReason??null};}
 let candidate=null;
 try{candidate=recordFinaleCoastMixedThreeFrontDroppedClock(recording)
   .line.outcome;}
 catch(error){candidate=error.message;}
+let pre500Candidate=null;
+try{
+  const clock=recordFinaleCoastMixedThreeFrontPre500PassClock(recording);
+  pre500Candidate={version:clock.version,outcome:clock.line.outcome,
+    bandSizes:clock.line.bands.map(row=>row.riderIds.length),
+    passes:clock.frontPasses.length};
+}catch(error){pre500Candidate=error.message;}
 const groupTimes=new Map(source.roadGroups.map(group=>[
   group.id,-group.gapSeconds]));
 const sourceRows=new Map(recording.frames[source.sourceKm-1]
@@ -78,8 +92,29 @@ for(const frame of trace.frames){
       from:row.fromRoadGroupId})),
     bunchExits:frame.exhaustionDrops.map(row=>row.riderId)});
 }
-console.log(JSON.stringify({seed:settings.seed,refusal,candidate,
+// A marker-order reversal is a contact candidate, not a paid rider pass.
+const possibleFrontOverlaps=[];
+for(let index=1;index<passages.length;index++){
+  const before=passages[index-1],after=passages[index];
+  const beforeSecond=before.groups[1]?.secondsFromBunch;
+  const afterSecond=after.groups[1]?.secondsFromBunch;
+  if(beforeSecond===undefined||afterSecond===undefined)continue;
+  for(const rider of after.isolated){
+    const earlier=before.isolated.find(row=>row.id===rider.id);
+    if(!earlier)continue;
+    const priorGap=earlier.secondsFromBunch-beforeSecond;
+    const nextGap=rider.secondsFromBunch-afterSecond;
+    if(priorGap>=0||nextGap<=0)continue;
+    possibleFrontOverlaps.push({riderId:rider.id,frontId:after.groups[1].id,
+      betweenM:[before.distanceM,after.distanceM],
+      interpolatedM:+(before.distanceM+
+        (after.distanceM-before.distanceM)*
+        -priorGap/(nextGap-priorGap)).toFixed(3)});
+  }
+}
+console.log(JSON.stringify({seed:settings.seed,refusal,playable,candidate,
+  pre500Candidate,
   sourceGroups:source.roadGroups.map(group=>({id:group.id,
     count:group.riderIds.length,gapSeconds:group.gapSeconds})),
   priorDropped:source.droppedRiderIds.length,
-  passages},null,2));
+  possibleFrontOverlaps,passages},null,2));

@@ -33,13 +33,13 @@ function run(args) {
 
 try {
   await run(["node_modules/next/dist/bin/next", "build"]);
-  // Nine fixture sessions keep the combined release browser suite below
-  // the workbench's six-runs-per-minute limit per user.
-  for (let shard = 1; shard <= 9; shard++) {
+  // Keep each fixture session below the workbench's six-runs-per-minute
+  // limit while testing the enlarged end-to-end suite.
+  for (let shard = 1; shard <= 10; shard++) {
     await run(["node_modules/@playwright/test/cli.js", "test",
       "tests/e2e/v93-coasted-playtest.spec.mjs",
       "tests/e2e/motor-lab-v93-release.spec.mjs", "--fully-parallel",
-      `--shard=${shard}/9`, "--reporter=dot"]);
+      `--shard=${shard}/10`, "--reporter=dot"]);
   }
 } catch (error) {
   console.error(error.message);
