@@ -5353,3 +5353,11 @@ finishes and one explicit refusal**, the women's mountain/high-fatigue
 13-approach source. The release branch independently passed the 11+1,
 prior 10+1 and remaining-refusal whole-race/replay regressions and
 changed-file lint. A full repository unit or browser suite was not run.
+
+Release `4f1421abba4a7aaf2b07146200388ac18d2b1788` then passed an
+isolated Next build and authenticated browser flows for both the new
+11+1 and existing 10+1 versions. Production deployment
+`dpl_8HcfN1KbF22NbPhgWqSrGJ3fNRe3` reached READY at the exact SHA
+with the `tennedz.eu` alias; public `/team/motor-lab` returned HTTP 200
+with assets from that deployment and checked error/fatal runtime logs
+were empty. Prior `dpl_D4xex78d3JrYbGJavWPzANHJ67T9` remains rollback.
