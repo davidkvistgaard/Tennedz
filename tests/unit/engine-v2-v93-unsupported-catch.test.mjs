@@ -7,6 +7,8 @@ import {createV93PlayableTest,summarizeV93CoastedPlaytest,
   V93_PAID_LATE_CATCH_ROAD_PREVIEW_VERSION} from
   '../../lib/engine/v2/playtest-v93-coasted.mjs';
 import {prepareV91Playtest} from '../../lib/engine/v2/playtest.mjs';
+import {raceViewerBreaksAndChase} from
+  '../../lib/engine/v2/playtest-viewer.mjs';
 
 const tactics=[
   {effort:'hard',attack:'none',chase:'all'},
@@ -80,6 +82,9 @@ test('early paid front catch reaches every rider line and replay while points st
     inferredLaneQueue:true,isolatedContactResolved:true});
   assert.deepEqual(summary.frontCatch.caughtRiderIds,
     race.recording.frames.at(-2).roadGroups[0].riderIds);
+  assert.equal(raceViewerBreaksAndChase(summary).riders.find(row=>
+    row.riderId==='you-1').fate,
+  `Caught at ${(summary.frontCatch.atDistanceM/1000).toFixed(3)} km on the paid final road`);
   assert.ok(summary.lastKmRoad.every(frame=>frame.groups.length===0));
   const legacy=createV93PlayableTest(settings,{},
     {resolveEarlyFrontCatchLanes:false});

@@ -192,6 +192,20 @@ test('breakaway fate requires a recorded join, catch or clear finish road',()=>{
   assert.equal(raceViewerBreaksAndChase(race).riders.find(row=>
     row.riderId==='you-7').fate,
   'No catch recorded, but no separate front finish is confirmed');
+  race.sharedWheelContact={roadGroupId:'road-1',atDistanceM:39750};
+  assert.equal(raceViewerBreaksAndChase(race).riders.find(row=>
+    row.riderId==='you-7').fate,
+  'Caught at 39.750 km on the paid final road');
+  race.sharedWheelContact={roadGroupId:'road-2',atDistanceM:39750};
+  assert.equal(raceViewerBreaksAndChase(race).riders.find(row=>
+    row.riderId==='you-7').fate,
+  'No catch recorded, but no separate front finish is confirmed');
+  delete race.sharedWheelContact;
+  race.frontCatch={roadGroupId:'road-1',atDistanceM:39225,
+    caughtRiderIds:['you-7']};
+  assert.equal(raceViewerBreaksAndChase(race).riders.find(row=>
+    row.riderId==='you-7').fate,
+  'Caught at 39.225 km on the paid final road');
 });
 
 test('race story only names events and positions present in the recording',()=>{

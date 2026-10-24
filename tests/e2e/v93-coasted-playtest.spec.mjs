@@ -2419,6 +2419,10 @@ test('early front catch reaches the browser line and replay with points withheld
       .toContainText('Inferred lanes keep the front and bunch wheels apart');
     await expect(page.getByRole('note',{name:'Paid front catch'}))
       .toContainText('Isolated riders continue in separate outside lanes');
+    await expect(page.getByLabel('Breakaways and chase'))
+      .toContainText(`you-1: `);
+    await expect(page.getByLabel('Breakaways and chase'))
+      .toContainText(`Caught at ${(body.coasted.frontCatch.atDistanceM/1000).toFixed(3)} km on the paid final road`);
     await expect(page.getByRole('table',{
       name:'V93 individual conditional results'}).getByRole('row'))
       .toHaveCount(161);

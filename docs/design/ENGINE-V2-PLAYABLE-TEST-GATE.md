@@ -4723,3 +4723,12 @@ The paired viewer now offers this measured-chase setup alongside the sharper
 40-versus-20 close chase, and names the actual late catches in each run.
 This is a bounded example where hard spends extra reserve without a
 conditional place gain, not a general recommendation about effort.
+
+The viewer's own-breakaway outcome now follows a paid final-kilometre
+contact as well as whole-kilometre catches. In the locked 260 km early-front
+catch, `you-1` joined the front at km 255 and was caught at 259.228 km.
+Earlier viewer logic found no later kilometre-level catch and incorrectly
+left the break's fate unconfirmed. The correction requires the rider to be
+in the matching source front, to be named by the paid catch (or a merged
+shared-wheel road), and to have an individual paid line. An unrelated
+front's contact still cannot be reported as that rider's catch.
