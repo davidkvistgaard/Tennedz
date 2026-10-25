@@ -5808,8 +5808,11 @@ and 160 internal candidate crossings. The first has 14 possible fresh
 first-half proximities. A separate internal audit pays and splits all
 14 as road-2 same-source approaches, carries all 160 conditional
 crossings through the 500 m handoff, and finds no fresh final-half
-approach under the inferred road-2 queue. It still lacks a guarded
-whole-race playtest result. The
+approach under the inferred road-2 queue. A separately versioned
+internal result now reconciles the paid clock, 500 m energy handoff,
+all 160 conditional individual crossings, and withheld point policy.
+It is not routed into the guided playtest or viewer, so that source
+still explicitly refuses. The
 second has nine paid first-half approaches plus one paid final-half
 approach in separate unresolved audits. The third has 11 paid
 first-half approaches and no fresh final-half approach. These are

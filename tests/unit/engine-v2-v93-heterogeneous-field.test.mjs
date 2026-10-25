@@ -107,6 +107,8 @@ import {recordFinaleMixedTwoFrontDroppedManyPre500Result,
   recordFinaleMixedTwoFrontDroppedFifteenMultifrontCleanFinalResult,
   validateFinaleMixedTwoFrontDroppedFifteenMultifrontCleanFinalResult,
   recordFinaleMixedTwoFrontDroppedThirteenOnefrontCleanFinalResult,
+  recordFinaleMixedTwoFrontDroppedFourteenOnefrontCleanFinalResult,
+  validateFinaleMixedTwoFrontDroppedFourteenOnefrontCleanFinalResult,
   validateFinaleMixedTwoFrontDroppedThirteenOnefrontCleanFinalResult,
   recordFinaleMixedTwoFrontDroppedElevenOnefrontCleanFinalResult,
   validateFinaleMixedTwoFrontDroppedElevenOnefrontCleanFinalResult,
@@ -533,6 +535,16 @@ test('alternate-11 mountain first-half approaches stay conditional',()=>{
   assert.equal(line.pointsStatus,'withheld');
   assert.equal(early.pointsStatus,'withheld');
   assert.equal(late.pointsStatus,'withheld');
+  const result=recordFinaleMixedTwoFrontDroppedFourteenOnefrontCleanFinalResult(
+    recording);
+  assert.equal(result.line.conditionalCrossings.length,160);
+  assert.equal(result.pre500Audit.freshApproaches.length,14);
+  assert.equal(result.final500Audit.freshApproaches.length,0);
+  assert.equal(result.classifiedResults,null);
+  assert.equal(result.pointsStatus,'withheld');
+  assert.equal(result.canCommitAwards,false);
+  assert.equal(validateFinaleMixedTwoFrontDroppedFourteenOnefrontCleanFinalResult(
+    recording,{},result),true);
   assert.throws(()=>createV93PlayableTest(settings),
     /depleted line bands crossed without contact/i);
 });
