@@ -5734,3 +5734,26 @@ it does not add a new tactical order during playback. The targeted
 authenticated browser flow, changed-file lint and isolated preview
 build passed. Motor Lab's comparison link also has a readable separator
 between its kilometre and recorded cause.
+
+The hardened read-only `alternate-9` 60-case matrix finished **59/60**
+conditionally. Its only explicit `unresolved_band_contact` refusal is
+`20-M-mountain-0-alternate-9`: two 20-rider source fronts, 20 older
+isolates, eight road-2 and five road-4 exits, and 11 fresh paid
+same-source pre-500 m approaches. The separate pre-500 audit records
+all 11 exact 2.5 m approach splits; the final-500 m audit finds no fresh
+approach under inferred outside lanes. The internal candidate line has
+160 crossings and a 500 m handoff, but no separately guarded whole-race
+11-approach continuation or resolved occupied-wheel response. The
+guided race therefore keeps its explicit refusal and withholds an
+individual finish replay, official places, points and awards.
+
+The hardened read-only `alternate-10` matrix finished **58/60**
+conditionally. Its two explicit `unresolved_band_contact` refusals are
+`20-M-flat-30-alternate-10` and `20-M-mountain-0-alternate-10`, again
+with two 20-rider source fronts. The flat case has 30 older drops,
+eight fresh paid first-half wheel approaches and one fresh paid
+final-half approach. The mountain case has 20 older drops, six fresh
+paid first-half approaches and no fresh final-half approach. Both have
+160 internal candidate crossings; neither has a separately guarded
+whole-race response for its exact approach pattern. They remain
+player-facing refusals with official places, points and awards withheld.
