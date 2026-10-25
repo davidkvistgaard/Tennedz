@@ -5893,3 +5893,14 @@ No fresh final-half approach occurs under the inferred road-2 queue.
 The guided race still refuses because occupied-wheel response and
 official placing remain unresolved; this audit publishes no player
 finish, replay, points or awards.
+
+A read-only 20-team `alternate-14` matrix conditionally finished **18/20**.
+The men's and women's rolling races at fatigue 30 explicitly refuse with
+`unresolved_band_contact`. Both begin with 20-rider road-2 and road-4 fronts,
+30 older drops, eight leavers from each front, and 160 internal candidate
+crossings. The separate multifront audit pays three early individual
+approaches for the men's source (two road-2, one road-4) and two for the
+women's source (one from each front). Its open-road final-half audit finds
+no fresh approach, but the bounded queued-lane result guard does not match
+these sources. Occupied-wheel responses and official places, points and
+awards remain unresolved; the guided races retain explicit refusals.
