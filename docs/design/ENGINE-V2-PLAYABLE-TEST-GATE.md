@@ -5770,3 +5770,13 @@ first-half approaches and no fresh final-half approach. These are
 distinct guarded geometries; none establishes occupied-wheel order or
 an individual player finish. Official places, points and awards remain
 withheld for all three.
+
+The final read-only 20-team `alternate-12` variation finished **17/20**
+conditionally. Three races explicitly refuse with two source fronts:
+`20-M-rolling-30-alternate-12`, `20-F-flat-30-alternate-12`, and
+`20-F-mountain-30-alternate-12`. The first two have 30 older drops and
+five paid first-half approaches each, with no new final-half approach
+under inferred outside lanes. The mountain case has 33 older drops and
+15 possible first-half proximities, but lacks a bounded paid contact
+audit. All have 160 internal candidate crossings; none has a guarded
+player finish or official places, points or awards.
