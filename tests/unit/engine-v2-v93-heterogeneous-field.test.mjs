@@ -369,6 +369,44 @@ test('alternate-10 mountain six road-2 approaches retain an exact conditional li
     /depleted line bands crossed without contact/i);
   });
 
+test('alternate-10 flat late approach depends on the declared road-2 lane rule',
+  ()=>{
+    const settings=settingsFor(20,'M','flat',30);
+    settings.seed+='-alternate-10';
+    const recording=recordingFor(settings);
+    const clock=recordFinaleCoastMixedTwoFrontDroppedClock(recording);
+    const openLine=recordFinaleCoastedIndividualLine(recording,clock);
+    const fixedLine=recordFinaleCoastedIndividualLine(recording,clock,{
+      laneQueuedBandIds:['road-2']});
+    const openEarly=recordFinaleMixedTwoFrontDroppedMultifrontPre500Audit(
+      recording,clock,openLine);
+    const fixedEarly=recordFinaleMixedTwoFrontDroppedMultifrontPre500Audit(
+      recording,clock,fixedLine);
+    const openLate=recordFinaleMixedTwoFrontDroppedMultifrontFinal500Audit(
+      recording,clock,openLine,openEarly);
+    const fixedLate=recordFinaleMixedTwoFrontDroppedMultifrontFinal500Audit(
+      recording,clock,fixedLine,fixedEarly);
+    assert.equal(openEarly.freshApproaches.length,8);
+    assert.equal(fixedEarly.freshApproaches.length,8);
+    assert.deepEqual(new Set(openEarly.freshApproaches.map(row=>
+      row.sourceRoadGroupId)),new Set(['road-2','road-4']));
+    assert.equal(openEarly.olderDroppedRiderIds.length,30);
+    assert.deepEqual(openLate.freshApproaches.map(row=>[
+      row.firstRiderId,row.secondRiderId]),
+    [['rival-11-7','rival-9-7']]);
+    assert.ok(Math.abs(openLate.freshApproaches[0].firstWheelM-
+      259803.49736458782)<1e-6);
+    assert.deepEqual(fixedLate.freshApproaches,[]);
+    assert.equal(openLine.conditionalCrossings.length,160);
+    assert.equal(fixedLine.conditionalCrossings.length,160);
+    assert.equal(openLate.contactResolved,false);
+    assert.equal(fixedLate.contactResolved,false);
+    assert.equal(openLate.pointsStatus,'withheld');
+    assert.equal(fixedLate.pointsStatus,'withheld');
+    assert.throws(()=>createV93PlayableTest(settings),
+      /depleted line bands crossed without contact/i);
+  });
+
 test('alternate-7 women mountain four road-2 approaches finish conditionally',
   ()=>{
     const settings=settingsFor(20,'F','mountain',0);

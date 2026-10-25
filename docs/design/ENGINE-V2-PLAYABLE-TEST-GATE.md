@@ -5783,11 +5783,22 @@ while official classification, points and awards stay withheld. Disabling
 this continuation restores the explicit refusal. The flat alternate-10
 case with one paid final-half approach remains a separate unresolved
 geometry; the historical 58/60 matrix above predates this change.
+
 The hardened post-continuation **20-team** alternate-10 matrix then
 finished **19/20** conditionally, with the flat-fatigue-30 case as its
 sole explicit `unresolved_band_contact` refusal. The six-approach
 mountain version appeared once. This does not settle the remaining paid
 late approach or turn inferred occupied-wheel order into official places.
+
+The remaining alternate-10 men's flat refusal has a lane-policy fork.
+Its eight first-half approaches come from both surviving fronts. The
+open-road line pays a further `rival-11-7` / `rival-9-7` wheel-spacing
+approach at 259803.497 m; a separately inferred fixed road-2 source-lane
+queue instead records no fresh final-half approach. Both alternatives
+carry 160 conditional crossings and withhold awards. A locked comparison
+test retains the differing late-contact evidence and the guided race's
+explicit refusal. Selecting a lane policy solely to erase that possible
+contact would not resolve occupied-wheel response.
 
 The hardened read-only `alternate-11` matrix finished **57/60**
 conditionally. Three 20-team mountain cases explicitly refuse:
@@ -5801,6 +5812,12 @@ first-half approaches and no fresh final-half approach. These are
 distinct guarded geometries; none establishes occupied-wheel order or
 an individual player finish. Official places, points and awards remain
 withheld for all three.
+
+The post-continuation **20-team** alternate-11 matrix finished **18/20**
+conditionally. Its women's mountain fatigue-0 case now follows the
+separate eleven-road-2-approach version; the two men's mountain cases
+still explicitly refuse. This is bounded read-only evidence, not a
+replacement for the historical 57/60 matrix above.
 
 The final read-only 20-team `alternate-12` variation finished **17/20**
 conditionally. Three races explicitly refuse with two source fronts:
