@@ -3033,7 +3033,9 @@ for(const [gender,terrain,fatigue,seedSuffix,preCount,firstRider,secondRider,
   ['F','flat',30,'-alternate-2',6,'rival-17-7','rival-15-7',
     'v93-mixed-two-front-bounded-multifront-parallel-final-playtest-1'],
   ['F','mountain',0,'-alternate-3',7,'rival-5-7','rival-15-7',
-    'v93-mixed-two-front-seven-onefront-parallel-final-playtest-1']])test(
+    'v93-mixed-two-front-seven-onefront-parallel-final-playtest-1'],
+  ['M','custom',30,'-alternate-3',14,'rival-5-7','rival-3-7',
+    'v93-mixed-two-front-fourteen-multifront-parallel-final-playtest-1']])test(
   `${preCount} early approaches and one final parallel pass retain a conditional line`,
   async({page})=>{
     test.setTimeout(120000);
@@ -3104,7 +3106,9 @@ for(const [approaches,gender,terrain,fatigue,seedSuffix,version] of [
   [12,'M','mountain',0,'alternate-2',
     'v93-mixed-two-front-bounded-multifront-clean-final-playtest-1'],
   [4,'F','rolling',30,'alternate-3',
-    'v93-mixed-two-front-short-multifront-clean-final-playtest-1']])test(
+    'v93-mixed-two-front-short-multifront-clean-final-playtest-1'],
+  [14,'M','rolling',30,'alternate-3',
+    'v93-mixed-two-front-fourteen-multifront-clean-final-playtest-1']])test(
   `${approaches} early ${terrain} approaches ${seedSuffix} retain a conditional 160-rider line`,
   async({page})=>{
     test.setTimeout(120000);

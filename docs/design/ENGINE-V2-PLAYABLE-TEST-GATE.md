@@ -5502,5 +5502,22 @@ energy through the 500 m handoff. The rolling case has no new final-half
 approach; the custom case has one possible paid individual approach between
 `rival-5-7` and `rival-3-7` at 259803.138 m. Its occupied lanes and response
 are not yet resolved. The internal final-half audit records these distinct
-shapes, but neither source has a new user-routed conditional result, replay,
-official place, points or awards. Both still explicitly refuse in Motor Lab.
+shapes, but at this audit-only increment neither source had a new
+user-routed conditional result or replay; both explicitly refused in Motor
+Lab. No official place, points or awards were assigned.
+
+The two fourteen-approach shapes now have separately versioned, guarded
+conditional whole-race continuations in preview. Men's rolling fatigue 30
+uses fourteen paid first-half approaches across road-2 and road-4 and a
+clean final half. Men's custom fatigue 30 has the same two-front first-half
+shape and one paid final-half parallel approach; its fixed distinct source
+lanes and no-draft motion after approach are checked before a conditional
+line is exposed. Both carry all 160 individual crossings, energy through
+the 500 m handoff and replay; opting out restores the explicit refusal.
+Neither assigns official places, points or awards. The locked whole-race,
+replay and opt-out test, changed-file lint, isolated preview Next build and
+both authenticated browser flows passed. The read-only 20-team
+`alternate-3` matrix now reports **20 conditional finishes and zero explicit
+refusals**. These are finite synthetic inputs, not unrestricted motor
+coverage or resolved occupied-wheel order. This batch remains preview-only
+until independently validated and released.
