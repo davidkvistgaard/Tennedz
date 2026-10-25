@@ -47,6 +47,9 @@ import {recordFinaleCoastedIndividualLine,
   validateFinaleDepletedIndividualLine,
   FINALE_MULTIFRONT_PARALLEL_FINAL_INDIVIDUAL_LINE_VERSION} from
   '../../lib/engine/v2/finale-depleted-individual-line.mjs';
+import {recordFinaleMixedTwoFrontDroppedNineMultifrontParallelFinalResult,
+  validateFinaleMixedTwoFrontDroppedNineMultifrontParallelFinalResult} from
+  '../../lib/engine/v2/finale-mixed-two-front-dropped-nine-multifront-parallel-final-result.mjs';
 import {recordFinaleMixedTwoFrontDroppedPre500Audit,
   recordFinaleMixedTwoFrontDroppedFreshPre500Audit,
   recordFinaleMixedTwoFrontDroppedManyPre500Audit,
@@ -560,6 +563,28 @@ test('alternate-11 mountain first-half approaches stay conditional',()=>{
   assert.equal(validateV93CoastedPlaytest(settings,{},race),true);
   assert.throws(()=>createV93PlayableTest(settings,{},
     {resolveMixedTwoFrontFourteenOnefrontCleanFinal:false}),
+    /depleted line bands crossed without contact/i);
+});
+
+test('alternate-11 fatigue pays nine first-half and one final-half approaches internally',()=>{
+  const settings=settingsFor(20,'M','mountain',30);
+  settings.seed+='-alternate-11';
+  const recording=recordingFor(settings);
+  const result=recordFinaleMixedTwoFrontDroppedNineMultifrontParallelFinalResult(
+    recording);
+  assert.equal(result.pre500Audit.freshApproaches.length,9);
+  assert.deepEqual(new Set(result.pre500Audit.freshApproaches.map(row=>
+    row.sourceRoadGroupId)),new Set(['road-2','road-4']));
+  assert.equal(result.final500Audit.freshApproaches.length,1);
+  assert.equal(result.final500Audit.parallelFinalLaneEvidence.roadBandId,
+    'road-2');
+  assert.equal(result.line.conditionalCrossings.length,160);
+  assert.equal(result.classifiedResults,null);
+  assert.equal(result.pointsStatus,'withheld');
+  assert.equal(result.canCommitAwards,false);
+  assert.equal(validateFinaleMixedTwoFrontDroppedNineMultifrontParallelFinalResult(
+    recording,{},result),true);
+  assert.throws(()=>createV93PlayableTest(settings),
     /depleted line bands crossed without contact/i);
 });
 

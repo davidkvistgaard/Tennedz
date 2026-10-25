@@ -5844,3 +5844,14 @@ under inferred outside lanes. The mountain case has 33 older drops and
 15 possible first-half proximities, but lacks a bounded paid contact
 audit. All have 160 internal candidate crossings; none has a guarded
 player finish or official places, points or awards.
+
+An internal-only, separately versioned `alternate-11` men's mountain
+fatigue-30 result now reconciles its nine paid and split first-half
+individual approaches (eight from road-2, one from road-4) with one
+paid final-half approach between distinct fixed road-2 lanes. The
+source has eight departures from each front, 33 older drops, seven
+paid 1 km passage frames, an exact 500 m energy handoff, and 160
+conditional individual crossings. Both riders continue without draft
+after the late approach. Occupied-wheel response remains inferred;
+the guided playtest still explicitly refuses this race. The internal
+result exposes no classified places, points, awards or user replay.
