@@ -15,6 +15,8 @@ import {createV93PlayableTest,validateV93CoastedPlaytest,
   V93_MIXED_TWO_FRONT_ELEVEN_MULTIFRONT_PARALLEL_FINAL_PLAYTEST_VERSION,
   V93_MIXED_TWO_FRONT_THIRTEEN_MULTIFRONT_CLEAN_FINAL_PLAYTEST_VERSION,
   V93_MIXED_TWO_FRONT_BOUNDED_MULTIFRONT_CLEAN_FINAL_PLAYTEST_VERSION,
+  V93_MIXED_TWO_FRONT_SHORT_MULTIFRONT_CLEAN_FINAL_PLAYTEST_VERSION,
+  V93_MIXED_TWO_FRONT_SEVEN_ONEFRONT_PARALLEL_FINAL_PLAYTEST_VERSION,
   V93_MIXED_TWO_FRONT_BOUNDED_MULTIFRONT_PARALLEL_FINAL_PLAYTEST_VERSION} from
   '../../lib/engine/v2/playtest-v93-coasted.mjs';
 import {prepareV91Playtest} from '../../lib/engine/v2/playtest.mjs';
@@ -136,15 +138,19 @@ test('thirteen paid two-front exits and a clean fixed-lane final half finish con
 
 test('bounded two-front exits pay clean and parallel final halves without awards',
   ()=>{
-    for(const [gender,terrain,fatigue,preCount,finalCount,sources,version] of [
-      ['M','mountain',0,12,0,['road-2'],
+    for(const [gender,terrain,fatigue,seedTag,preCount,finalCount,sources,version] of [
+      ['M','mountain',0,'alternate-2',12,0,['road-2'],
         V93_MIXED_TWO_FRONT_BOUNDED_MULTIFRONT_CLEAN_FINAL_PLAYTEST_VERSION],
-      ['F','mountain',0,9,0,['road-2'],
+      ['F','mountain',0,'alternate-2',9,0,['road-2'],
         V93_MIXED_TWO_FRONT_BOUNDED_MULTIFRONT_CLEAN_FINAL_PLAYTEST_VERSION],
-      ['F','flat',30,6,1,['road-2','road-4'],
-        V93_MIXED_TWO_FRONT_BOUNDED_MULTIFRONT_PARALLEL_FINAL_PLAYTEST_VERSION]]){
+      ['F','flat',30,'alternate-2',6,1,['road-2','road-4'],
+        V93_MIXED_TWO_FRONT_BOUNDED_MULTIFRONT_PARALLEL_FINAL_PLAYTEST_VERSION],
+      ['F','rolling',30,'alternate-3',4,0,['road-2','road-4'],
+        V93_MIXED_TWO_FRONT_SHORT_MULTIFRONT_CLEAN_FINAL_PLAYTEST_VERSION],
+      ['F','mountain',0,'alternate-3',7,1,['road-2'],
+        V93_MIXED_TWO_FRONT_SEVEN_ONEFRONT_PARALLEL_FINAL_PLAYTEST_VERSION]]){
       const settings=settingsFor(20,gender,terrain,fatigue);
-      settings.seed+='-alternate-2';
+      settings.seed+=`-${seedTag}`;
       const race=createV93PlayableTest(settings);
       assert.equal(race.version,version);
       const result=race.mixedTwoFrontResult;
@@ -168,7 +174,9 @@ test('bounded two-front exits pay clean and parallel final halves without awards
       assert.equal(validateV93CoastedPlaytest(settings,{},race),true);
       assert.throws(()=>createV93PlayableTest(settings,{},
         {resolveMixedTwoFrontBoundedMultifrontCleanFinal:false,
-          resolveMixedTwoFrontBoundedMultifrontParallelFinal:false}),
+          resolveMixedTwoFrontBoundedMultifrontParallelFinal:false,
+          resolveMixedTwoFrontShortMultifrontCleanFinal:false,
+          resolveMixedTwoFrontSevenOnefrontParallelFinal:false}),
       /depleted line bands crossed without contact/i);
     }
   });
