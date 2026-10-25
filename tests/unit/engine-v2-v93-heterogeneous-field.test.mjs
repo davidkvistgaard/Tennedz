@@ -638,6 +638,26 @@ test('alternate-13 women mountain has three paid internal road-2 approaches',()=
     recording,{},result),true);
 });
 
+test('alternate-13 men flat keeps multifront approaches internal',()=>{
+  const settings=settingsFor(20,'M','flat',30);
+  settings.seed+='-alternate-13';
+  const recording=recordingFor(settings);
+  const clock=recordFinaleCoastMixedTwoFrontDroppedClock(recording);
+  const line=recordFinaleCoastedIndividualLine(recording,clock);
+  assert.throws(()=>recordFinaleMixedTwoFrontDroppedManyPre500Audit(
+    recording,clock,line),/rival-4-4\/rival-5-6: source_group/);
+  const audit=recordFinaleMixedTwoFrontDroppedMultifrontPre500Audit(
+    recording,clock,line);
+  assert.deepEqual(audit.freshApproaches.reduce((counts,row)=>{
+    counts[row.sourceRoadGroupId]=(counts[row.sourceRoadGroupId]??0)+1;
+    return counts;
+  },{}),{'road-2':4,'road-4':1});
+  assert.equal(line.conditionalCrossings.length,160);
+  assert.equal(audit.contactResolved,false);
+  assert.throws(()=>createV93PlayableTest(settings),
+    /depleted line bands crossed without contact/i);
+});
+
 test('alternate-4 mountain single-front exits pay conditional individual lines',
   ()=>{
     for(const [gender,earlyCount,lateCount] of [

@@ -5873,9 +5873,11 @@ conditionally. `20-M-flat-30-alternate-13` and
 `20-F-mountain-0-alternate-13` explicitly refuse with
 `unresolved_band_contact`. The men's source has eight leavers from
 each of road-2 and road-4, 30 older drops, and 160 internal candidate
-crossings. Its multifront first-half audit rejects a possible approach
-because exact paid wheel spacing does not reconcile; the clean final-half
-audit alone cannot authorize a result. The women's source has eight
+crossings. The older road-2-only first-half audit rejects a road-4
+approach under its source-group guard. A separate multifront audit pays
+four road-2 and one road-4 approaches with exact individual wheel
+spacing, but occupied-wheel response remains unresolved. The clean
+final-half audit alone cannot authorize a result. The women's source has eight
 road-2 and five road-4 leavers, 20 older drops and three individually
 paid first-half approaches in the internal many-approach audit. Its
 final-half audit finds no fresh approach under inferred lanes and its
