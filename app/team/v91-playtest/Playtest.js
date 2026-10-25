@@ -1621,7 +1621,13 @@ export default function Playtest(){
               <details><summary>{coasted.mixedTwoFrontOlderDrops
                 .freshWheelApproaches.length} possible individual approach
                 {coasted.mixedTwoFrontOlderDrops.freshWheelApproaches.length===
-                  1?' is':'es are'} recorded</summary>
+                  1?' is':'es are'} recorded (
+                {coasted.mixedTwoFrontOlderDrops.freshWheelApproaches
+                  .filter(row=>row.handoffPhase==='before_500m').length}
+                {' '}before and
+                {' '}{coasted.mixedTwoFrontOlderDrops.freshWheelApproaches
+                  .filter(row=>row.handoffPhase==='after_500m').length}
+                {' '}after the 500 m handoff)</summary>
                 <p>Movement and energy are paid at each wheel-spacing
                   {' '}approach. An approach does not confirm a catch: the
                   {' '}outside-lane response and crossing order remain
@@ -1630,7 +1636,10 @@ export default function Playtest(){
                   .map((row,index)=><li key={`${row.firstRiderId}:${
                     row.secondRiderId}:${index}`}>
                     {row.firstRiderId} approached {row.secondRiderId} at
-                    {' '}{(row.atDistanceM/1000).toFixed(3)} km.
+                    {' '}{(row.atDistanceM/1000).toFixed(3)} km
+                    {' '}in {row.sourceRoadGroupId??'its source group'},
+                    {' '}{row.handoffPhase==='after_500m'?'after':'before'}
+                    {' '}the 500 m handoff.
                     <button type="button" aria-label={`Inspect ${
                       row.firstRiderId} finish replay after approaching ${
                       row.secondRiderId} at ${
