@@ -5482,5 +5482,15 @@ and two authenticated browser flows passed. The read-only 20-team
 `alternate-3` matrix now has **18 conditional finishes and two explicit
 refusals**. The men's rolling and custom fatigue-30 cases, each with
 fourteen possible first-half approaches, still refuse; these new
-versions do not claim to pay their geometry. This is preview-only
-until independent release validation and production verification.
+versions do not claim to pay their geometry.
+
+Release verification: the short alternate-seed continuations were pushed
+as release `e1fc5f44a1fef9a5c28846826485ae46b356f126`. The independent
+release branch passed four focused whole-race regression groups (including
+the five-case replay/opt-out test), changed-file lint, an isolated Next
+build, and both new authenticated local browser flows. Production deployment
+`dpl_C4oSPzAY4rbYY4Dm1PUQBSGUL74V` reached READY at the exact SHA with
+the `tennedz.eu` alias; `/team/motor-lab` returned HTTP 200 from that
+deployment and checked error/fatal runtime logs were empty. The previous
+production `dpl_41GWDKehMNf3BsSRMgttfHT2u5TE` remains the rollback.
+No fresh full repository unit or browser suite was claimed.
