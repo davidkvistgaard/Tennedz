@@ -156,13 +156,19 @@ test('mixed front exits reach the conditional finish and rider replay',
       .toBe('rival-2-6');
     expect(coasted.pointPreview.status).toBe('unavailable');
     expect(coasted.canCommitAwards).toBe(false);
+    const viewerBody=structuredClone(body);
+    const chaseFrame=viewerBody.coasted.kilometreFrames[40];
+    chaseFrame.chasingTeamIds=[...new Set([
+      ...(chaseFrame.chasingTeamIds??chaseFrame.engagedChaseTeamIds??[]),
+      'rival-2'])];
     await page.goto('/team/v91-playtest');
     await page.getByRole('checkbox',{
       name:'Continue to a conditional finish'}).check();
     await page.getByRole('checkbox',{
       name:'Try v93 road-to-line preview'}).check();
     await page.route('**/api/v91-playtest',route=>route.fulfill({
-      status:200,contentType:'application/json',body:JSON.stringify(body)}));
+      status:200,contentType:'application/json',
+      body:JSON.stringify(viewerBody)}));
     await page.getByRole('button',{name:'Run v93 race preview'}).click();
     const raceViewer=page.getByLabel('Race viewer');
     await expect(raceViewer).toContainText('Breakaways and chase');
@@ -181,6 +187,16 @@ test('mixed front exits reach the conditional finish and rider replay',
       .toContainText('Starting orders:');
     await expect(raceViewer.getByLabel('rival-2 at km 259'))
       .toContainText('Whole-kilometre record: chased');
+    const rivalChase=viewerBody.coasted.kilometreFrames.flatMap((frame,index)=>(
+      (frame.chasingTeamIds??frame.engagedChaseTeamIds??[])
+        .includes('rival-2')?[{index,km:frame.km}]:[]));
+    expect(rivalChase.length).toBeGreaterThan(0);
+    const firstChaseButton=raceViewer.getByLabel('Selected rival manager')
+      .getByRole('button',{name:new RegExp(`^Km ${rivalChase[0].km}(?:–|$)`)}).first();
+    await expect(firstChaseButton).toBeVisible();
+    await firstChaseButton.click();
+    await expect(raceViewer.getByLabel(`Road groups at km ${rivalChase[0].km}`))
+      .toBeVisible();
     await expect(raceViewer.getByRole('img',{
       name:'you-7 energy by recorded kilometre and at the line'}))
       .toBeVisible();
