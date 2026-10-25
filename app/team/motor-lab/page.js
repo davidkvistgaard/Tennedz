@@ -263,7 +263,7 @@ export default function MotorLabPage(){
       <p>Both runs used scenario {recording.seed}. This comparison is a test signal, not proof that the race balance is final.</p>
       {firstRoadDifference?<p>First recorded road difference: <button type="button"
        onClick={()=>{setPlaying(false);setFrameIndex(firstRoadDifference.km-1);}}>
-       {firstRoadDifference.km} km � {firstRoadDifference.cause}</button></p>:
+       {firstRoadDifference.km} km · {firstRoadDifference.cause}</button></p>:
        <p>No different road state was recorded in this scenario.</p>}
      </div>}
      <div className="motor-scoreboard"><div><small>KILOMETRE</small><strong>{frame.km} / {recording.distanceKm}</strong></div>

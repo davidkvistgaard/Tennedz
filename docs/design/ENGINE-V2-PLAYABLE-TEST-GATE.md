@@ -5697,6 +5697,31 @@ audit. Its final-half pairwise audit finds no new approach; all 160
 individual crossings, 500 m energy handoff, seven paid road boundaries
 and replay reconcile. The opt-out still explicitly refuses. Outside
 lane response is conditional, so official classification, points and
-awards remain withheld. Its focused locked whole-race replay and
-opt-out test passed; neighboring regression, build and browser checks
-follow.
+awards remain withheld. Four neighboring whole-race tests, changed-file
+lint, isolated preview and release builds, and targeted authenticated
+browser flows passed. The exact release is deployed and verified at
+`tennedz.eu`.
+
+The read-only `alternate-8` 20-team audit initially exposed a summary
+dispatch regression: two new version checks had been written as bare
+truthy version strings, sending eight otherwise supported races into
+the two-front summary and causing a missing-result exception. Restoring
+both explicit version comparisons returned those eight to their own
+summary path. A locked mixed-front-clear regression, changed-file lint,
+isolated preview and release builds, and authenticated browser flows
+passed. The repeated 20-team matrix produced **18 conditional finishes
+and two explicit `unresolved_band_contact` refusals**. The refused
+`20-M-mountain-0-alternate-8` source has 15 fresh same-source pre-500 m
+wheel approaches and 20 older drops; `20-F-flat-30-alternate-8` has 16
+fresh approaches and 30 older drops. Both have 160 internal candidate
+crossings, but their occupied-wheel response and bounded paid contact
+continuation remain unresolved. Neither is a player finish or a source
+of official places, points, or awards.
+
+The V93 race viewer now jumps directly to the recorded 5 km effort
+handoff or the 1 km road from its checkpoint controls. This keeps the
+selected road, rider energy and timeline tied to an actual checkpoint;
+it does not add a new tactical order during playback. The targeted
+authenticated browser flow, changed-file lint and isolated preview
+build passed. Motor Lab's comparison link also has a readable separator
+between its kilometre and recorded cause.
