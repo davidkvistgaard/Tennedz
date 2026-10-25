@@ -5593,3 +5593,21 @@ explicit refusal; official places, points and awards remain withheld.
 The focused whole-race, replay and opt-out regression, changed-file
 lint, isolated preview Next build and authenticated local browser flow
 passed. The full seed-family rerun and release verification follow.
+
+The subsequent read-only `alternate-5` heterogeneous-field rerun
+completed **60 conditional finishes and zero explicit refusals** across
+4/15/20 teams, both genders, five terrains and fatigue 0/30. Exactly
+one race used the new `8+1` version. These bounded synthetic inputs do
+not establish unrestricted contact coverage or resolved wheel order.
+
+The combined release batch also corrects the viewer's source-group
+sentence to name the groups from the recording, rather than claim both
+fronts always lost riders. The independently tested release branch
+passed the locked whole-race replay/opt-out regression, changed-file
+lint, isolated Next build and authenticated browser flow. Release
+`2a499bb4d8c35f606ea27cee5d9ae0a2d534cdf2` was pushed; production
+deployment `dpl_4RPaydYP3K3gXaQ8kE2aB1iXAV4b` reached READY at that
+exact SHA with the `tennedz.eu` alias. `/team/motor-lab` returned HTTP
+200 from its assets and checked error/fatal logs were empty. Previous
+deployment `dpl_Go9XzmE4GTLiBS3uwA5QwdMhDJeZ` remains rollback.
+No fresh full repository unit or browser-suite pass is claimed.
