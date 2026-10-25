@@ -5521,6 +5521,28 @@ both authenticated browser flows passed. The read-only 20-team
 refusals**. These are finite synthetic inputs, not unrestricted motor
 coverage or resolved occupied-wheel order.
 
+The next `alternate-4` synthetic seed family exposed two new 20-team,
+260 km mountain cases, one per gender, that explicitly refused while
+58 of 60 cases conditionally finished. Paid internal lines had all 160
+individual crossings in each case. The men's case has ten first-half
+possible individual approaches from one surviving front and one further
+final-half approach between `rival-17-7` and `rival-3-7` at
+259811.702 m. The women's case has eight first-half approaches from
+one surviving front and no new final-half approach. Group marker
+crossings were not treated as individual wheel contact.
+
+These two shapes now have separately versioned guarded conditional
+whole-race continuations. The final-half men's approach requires paid
+distinct fixed source lanes and no drafting after the approach. Both
+cases retain separate road bands, all 160 individual crossings, rider
+energy across the 500 m handoff and replay; opting out restores the
+explicit refusal. Occupied-wheel response remains inferred, so official
+places, points and awards stay withheld. The focused locked whole-race,
+replay and opt-out regression, changed-file lint, isolated preview Next
+build and both enabled authenticated local browser flows passed. A broad
+seed-family audit and release deployment were still pending at this
+evidence checkpoint.
+
 Release verification: the independently tested release branch passed four
 focused whole-race regression groups, changed-file lint, an isolated Next
 build, and both new authenticated local browser flows. The bounded batch
