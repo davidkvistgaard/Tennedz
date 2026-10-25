@@ -5675,3 +5675,16 @@ counts 160 crossings, but its bounded contact audit refuses. Neither
 candidate is a player-facing finish or evidence of resolved occupied
 wheel order. Both guided races retain their explicit refusal, with no
 official places, points, or awards.
+
+A separate guarded `alternate-7` men's mountain continuation now pays
+the 13 first-half approaches from **road-2 only**. Its result version
+requires the exact eight/five front exits, 20 older isolated riders,
+12/15 positioned front survivors, no new final-half approach, seven
+paid road boundaries, all 160 conditional individual crossings and
+500 m energy handoff. Replay re-runs the paid audit; opt-out returns
+the explicit refusal. Official places, points, and awards remain
+withheld because outside-lane occupied-wheel response is inferred.
+The women's mountain source, which has a different four-approach
+pattern, still explicitly refuses. The new and neighboring 13- and
+15-approach whole-race tests (3/3), changed-file lint, isolated Next
+build, and targeted authenticated browser flow passed on preview.

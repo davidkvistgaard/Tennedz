@@ -3119,7 +3119,9 @@ for(const [approaches,gender,terrain,fatigue,seedSuffix,version] of [
   [8,'F','mountain',0,'alternate-4',
     'v93-mixed-two-front-eight-onefront-clean-final-playtest-1'],
   [15,'F','flat',30,'alternate-6',
-    'v93-mixed-two-front-fifteen-multifront-clean-final-playtest-1']])test(
+    'v93-mixed-two-front-fifteen-multifront-clean-final-playtest-1'],
+  [13,'M','mountain',0,'alternate-7',
+    'v93-mixed-two-front-thirteen-onefront-clean-final-playtest-1']])test(
   `${approaches} early ${terrain} approaches ${seedSuffix} retain a conditional 160-rider line`,
   async({page})=>{
     test.setTimeout(120000);
