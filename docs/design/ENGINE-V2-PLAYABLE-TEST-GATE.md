@@ -5783,6 +5783,11 @@ while official classification, points and awards stay withheld. Disabling
 this continuation restores the explicit refusal. The flat alternate-10
 case with one paid final-half approach remains a separate unresolved
 geometry; the historical 58/60 matrix above predates this change.
+The hardened post-continuation **20-team** alternate-10 matrix then
+finished **19/20** conditionally, with the flat-fatigue-30 case as its
+sole explicit `unresolved_band_contact` refusal. The six-approach
+mountain version appeared once. This does not settle the remaining paid
+late approach or turn inferred occupied-wheel order into official places.
 
 The hardened read-only `alternate-11` matrix finished **57/60**
 conditionally. Three 20-team mountain cases explicitly refuse:
