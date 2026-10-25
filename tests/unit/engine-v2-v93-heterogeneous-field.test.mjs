@@ -682,6 +682,30 @@ test('alternate-15 women mountain pays eight early and one late internal approac
   assert.equal(late.contactResolved,false);
 });
 
+test('alternate-16 men exposed pays twelve early and one late internal approaches',()=>{
+  const settings=settingsFor(20,'M','exposed',30);
+  settings.seed+='-alternate-16';
+  const recording=recordingFor(settings);
+  const clock=recordFinaleCoastMixedTwoFrontDroppedClock(recording);
+  const line=recordFinaleCoastedIndividualLine(recording,clock);
+  const early=recordFinaleMixedTwoFrontDroppedMultifrontPre500Audit(
+    recording,clock,line);
+  const late=recordFinaleMixedTwoFrontDroppedMultifrontFinal500Audit(
+    recording,clock,line,early);
+  assert.equal(early.olderDroppedRiderIds.length,30);
+  assert.equal(early.freshApproaches.length,12);
+  assert.deepEqual(early.freshApproaches.reduce((counts,row)=>{
+    counts[row.sourceRoadGroupId]=(counts[row.sourceRoadGroupId]??0)+1;
+    return counts;
+  },{}),{'road-2':11,'road-4':1});
+  assert.deepEqual(late.freshApproaches.map(row=>[
+    row.firstRiderId,row.secondRiderId]),[['rival-17-7','rival-15-7']]);
+  assert.equal(early.paidRiderCount,160);
+  assert.equal(late.paidRiderCount,160);
+  assert.equal(line.conditionalCrossings.length,160);
+  assert.equal(late.contactResolved,false);
+});
+
 test('alternate-4 mountain single-front exits pay conditional individual lines',
   ()=>{
     for(const [gender,earlyCount,lateCount] of [

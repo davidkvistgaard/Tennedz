@@ -5916,3 +5916,14 @@ one road-4), and one paid late rival-11-7/rival-3-7 approach near
 259803.357 m. Its internal line also counts all 160 riders. Occupied-wheel
 response, classified results, points and awards remain unresolved; both
 guided races retain explicit refusals.
+
+A read-only 20-team `alternate-16` matrix conditionally finished **19/20**.
+Its sole explicit refusal is the men's exposed race at fatigue 30. Two
+20-rider fronts lose eight riders each; 30 older isolates remain. The
+multifront audit pays twelve early individual approaches (eleven road-2,
+one road-4) and a later rival-17-7/rival-15-7 approach near 259803.225 m.
+All 160 riders appear in the internal conditional line, and energy is
+paid across both sides of the 500 m handoff. The fixed-source lane audit
+also sees the late approach with no draft, but neither audit resolves
+occupied-wheel response. The guided race still explicitly refuses and
+withholds classification, points and awards.
