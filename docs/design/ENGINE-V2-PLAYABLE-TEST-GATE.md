@@ -5747,6 +5747,18 @@ approach under inferred outside lanes. The internal candidate line has
 guided race therefore keeps its explicit refusal and withholds an
 individual finish replay, official places, points and awards.
 
+A separate `v93-mixed-two-front-eleven-onefront-clean-final-playtest-1`
+continuation now pays that exact alternate-9 source through the guided
+conditional line: eleven fresh road-2 source-wheel approaches, the
+unchanged 8/5 departures from the two fronts and twenty older isolates,
+no fresh final-500 m approach, all 160 individual crossings and rider
+energy/replay. It retains distinct inferred outside lanes and withholds
+official classification, points and awards. A disabled continuation still
+refuses the same source. Its locked whole-race unit, changed-file lint,
+isolated preview build and targeted authenticated viewer flow passed;
+the older 59/60 matrix remains the historical pre-continuation audit,
+not a new full-matrix result.
+
 The hardened read-only `alternate-10` matrix finished **58/60**
 conditionally. Its two explicit `unresolved_band_contact` refusals are
 `20-M-flat-30-alternate-10` and `20-M-mountain-0-alternate-10`, again

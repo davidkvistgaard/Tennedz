@@ -3128,6 +3128,8 @@ for(const [approaches,gender,terrain,fatigue,seedSuffix,version] of [
     'v93-mixed-two-front-fifteen-multifront-clean-final-playtest-1'],
   [13,'M','mountain',0,'alternate-7',
     'v93-mixed-two-front-thirteen-onefront-clean-final-playtest-1'],
+  [11,'M','mountain',0,'alternate-9',
+    'v93-mixed-two-front-eleven-onefront-clean-final-playtest-1'],
   [4,'F','mountain',0,'alternate-7',
     'v93-mixed-two-front-four-onefront-clean-final-playtest-1']])test(
   `${approaches} early ${terrain} approaches ${seedSuffix} retain a conditional 160-rider line`,
@@ -3187,7 +3189,7 @@ for(const [approaches,gender,terrain,fatigue,seedSuffix,version] of [
         row.fromRoadGroupId))].join(' and ')}`);
     await expect(note).toContainText(
       `${approaches} possible individual approaches`);
-    if([13,15].includes(approaches)){
+    if([11,13,15].includes(approaches)){
       const first=body.coasted.mixedTwoFrontOlderDrops
         .freshWheelApproaches[0];
       await note.getByText(`${approaches} possible individual approaches`)
@@ -3195,7 +3197,9 @@ for(const [approaches,gender,terrain,fatigue,seedSuffix,version] of [
       await expect(note.getByText(`${first.firstRiderId} approached ${
         first.secondRiderId}`,{exact:false})).toBeVisible();
       await note.getByRole('button',{name:`Inspect ${
-        first.firstRiderId} conditional finish replay`}).click();
+        first.firstRiderId} finish replay after approaching ${
+        first.secondRiderId} at ${
+        (first.atDistanceM/1000).toFixed(3)} km`}).click();
       await expect(page.getByLabel('Selected rider finale replay'))
         .toContainText(first.firstRiderId);
     }
