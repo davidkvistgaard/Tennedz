@@ -3090,6 +3090,9 @@ for(const [gender,terrain,fatigue,seedSuffix,preCount,firstRider,secondRider,
     await page.getByRole('button',{name:'Run v93 race preview'}).click();
     const note=page.getByRole('note',{
       name:'Conditional two-front exits with older drops'});
+    await expect(note).toContainText(`Riders left ${[...new Set(body.coasted
+      .mixedTwoFrontOlderDrops.formerFrontLeavers.map(row=>
+        row.fromRoadGroupId))].join(' and ')}`);
     await expect(note).toContainText('different fixed source lanes');
     await expect(note).toContainText('without drafting after');
     await expect(page.getByText('Official points: withheld · Awards saved: 0'))
@@ -3165,6 +3168,9 @@ for(const [approaches,gender,terrain,fatigue,seedSuffix,version] of [
     await page.getByRole('button',{name:'Run v93 race preview'}).click();
     const note=page.getByRole('note',{
       name:'Conditional two-front exits with older drops'});
+    await expect(note).toContainText(`Riders left ${[...new Set(body.coasted
+      .mixedTwoFrontOlderDrops.formerFrontLeavers.map(row=>
+        row.fromRoadGroupId))].join(' and ')}`);
     await expect(note).toContainText(
       `${approaches} possible individual approaches`);
     if(approaches===13){

@@ -1596,7 +1596,9 @@ export default function Playtest(){
             </div>}
           {coasted.mixedTwoFrontOlderDrops&&<div role="note"
             aria-label="Conditional two-front exits with older drops">
-            <p>Riders left both leading road groups at the final-kilometre
+            <p>Riders left {Array.from(new Set(coasted.mixedTwoFrontOlderDrops
+              .formerFrontLeavers.map(row=>row.fromRoadGroupId)))
+              .join(' and ')} at the final-kilometre
               {' '}boundary, while
               {' '}{coasted.mixedTwoFrontOlderDrops.olderDroppedRiderIds.length}
               {' '}older dropped riders remained behind the bunch. The
