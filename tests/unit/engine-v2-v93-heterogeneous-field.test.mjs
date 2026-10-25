@@ -638,6 +638,22 @@ test('alternate-13 women mountain has three paid internal road-2 approaches',()=
     recording,{},result),true);
 });
 
+test('alternate-17 women mountain replays three internal road-2 approaches',()=>{
+  const settings=settingsFor(20,'F','mountain',0);
+  settings.seed+='-alternate-17';
+  const recording=recordingFor(settings);
+  const result=recordFinaleMixedTwoFrontDroppedThreeOnefrontInternalResult(
+    recording);
+  assert.equal(result.pre500Audit.freshApproaches.length,3);
+  assert.equal(result.final500Audit.freshApproaches.length,0);
+  assert.equal(result.pre500Audit.olderDroppedRiderIds.length,20);
+  assert.equal(result.line.conditionalCrossings.length,160);
+  assert.equal(result.classifiedResults,null);
+  assert.equal(result.pointsStatus,'withheld');
+  assert.equal(validateFinaleMixedTwoFrontDroppedThreeOnefrontInternalResult(
+    recording,{},result),true);
+});
+
 test('alternate-13 men flat keeps multifront approaches internal',()=>{
   const settings=settingsFor(20,'M','flat',30);
   settings.seed+='-alternate-13';

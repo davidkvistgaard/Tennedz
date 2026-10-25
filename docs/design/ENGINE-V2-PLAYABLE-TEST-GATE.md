@@ -5927,3 +5927,13 @@ paid across both sides of the 500 m handoff. The fixed-source lane audit
 also sees the late approach with no draft, but neither audit resolves
 occupied-wheel response. The guided race still explicitly refuses and
 withholds classification, points and awards.
+
+A read-only 20-team `alternate-17` matrix conditionally finished **19/20**.
+The only explicit refusal is the women's mountain race at fatigue 0.
+It has the same bounded internal geometry as the alternate-13 women's
+mountain audit: eight road-2 and five road-4 leavers, 20 older isolates,
+three paid early road-2 individual approaches, no fresh final-half
+approach under the inferred road-2 queue, and 160 paid conditional
+crossings with replayed energy. The existing internal-only version
+replays this source too. Occupied-wheel response and official results
+remain unresolved, so guided Motor Lab still refuses it.
