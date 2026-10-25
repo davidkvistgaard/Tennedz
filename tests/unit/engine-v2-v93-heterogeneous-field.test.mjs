@@ -20,6 +20,7 @@ import {createV93PlayableTest,validateV93CoastedPlaytest,
   V93_MIXED_TWO_FRONT_FOURTEEN_MULTIFRONT_CLEAN_FINAL_PLAYTEST_VERSION,
   V93_MIXED_TWO_FRONT_FIFTEEN_MULTIFRONT_CLEAN_FINAL_PLAYTEST_VERSION,
   V93_MIXED_TWO_FRONT_THIRTEEN_ONEFRONT_CLEAN_FINAL_PLAYTEST_VERSION,
+  V93_MIXED_TWO_FRONT_FOURTEEN_ONEFRONT_CLEAN_FINAL_PLAYTEST_VERSION,
   V93_MIXED_TWO_FRONT_ELEVEN_ONEFRONT_CLEAN_FINAL_PLAYTEST_VERSION,
   V93_MIXED_TWO_FRONT_SIX_ONEFRONT_CLEAN_FINAL_PLAYTEST_VERSION,
   V93_MIXED_TWO_FRONT_FOUR_ONEFRONT_CLEAN_FINAL_PLAYTEST_VERSION,
@@ -545,7 +546,20 @@ test('alternate-11 mountain first-half approaches stay conditional',()=>{
   assert.equal(result.canCommitAwards,false);
   assert.equal(validateFinaleMixedTwoFrontDroppedFourteenOnefrontCleanFinalResult(
     recording,{},result),true);
-  assert.throws(()=>createV93PlayableTest(settings),
+  const race=createV93PlayableTest(settings);
+  assert.equal(race.version,
+    V93_MIXED_TWO_FRONT_FOURTEEN_ONEFRONT_CLEAN_FINAL_PLAYTEST_VERSION);
+  assert.equal(race.mixedTwoFrontResult.line.conditionalCrossings.length,160);
+  assert.equal(race.classifiedResults,null);
+  assert.equal(race.pointsStatus,'withheld');
+  assert.equal(race.canCommitAwards,false);
+  const summary=summarizeV93CoastedPlaytest(race);
+  assert.equal(summary.lineTimes.length,160);
+  assert.equal(summary.bandReplays.flatMap(row=>row.riderIds).length,160);
+  assert.equal(summary.pointsStatus,'withheld');
+  assert.equal(validateV93CoastedPlaytest(settings,{},race),true);
+  assert.throws(()=>createV93PlayableTest(settings,{},
+    {resolveMixedTwoFrontFourteenOnefrontCleanFinal:false}),
     /depleted line bands crossed without contact/i);
 });
 

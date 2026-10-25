@@ -5811,8 +5811,10 @@ crossings through the 500 m handoff, and finds no fresh final-half
 approach under the inferred road-2 queue. A separately versioned
 internal result now reconciles the paid clock, 500 m energy handoff,
 all 160 conditional individual crossings, and withheld point policy.
-It is not routed into the guided playtest or viewer, so that source
-still explicitly refuses. The
+The separately versioned guarded playtest now routes this bounded
+source into the English viewer with paid road groups, 160 conditional
+crossings and replay, and an unavailable read-only point illustration.
+Official places and awards remain withheld. The
 second has nine paid first-half approaches plus one paid final-half
 approach in separate unresolved audits. The third has 11 paid
 first-half approaches and no fresh final-half approach. These are
@@ -5825,6 +5827,13 @@ conditionally. Its women's mountain fatigue-0 case now follows the
 separate eleven-road-2-approach version; the two men's mountain cases
 still explicitly refuse. This is bounded read-only evidence, not a
 replacement for the historical 57/60 matrix above.
+
+After the separate fourteen-road-2-approach continuation, a fresh
+20-team alternate-11 matrix finished **19/20** conditionally. Only
+`20-M-mountain-30-alternate-11` still explicitly refuses. The new
+fatigue-0 path passed its neighboring whole-race unit, changed-file
+lint, isolated Next build and authenticated browser flow. The broader
+motor still has unsupported contact geometry.
 
 The final read-only 20-team `alternate-12` variation finished **17/20**
 conditionally. Three races explicitly refuse with two source fronts:
