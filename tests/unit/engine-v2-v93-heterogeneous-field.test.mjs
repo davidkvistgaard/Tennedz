@@ -654,6 +654,28 @@ test('alternate-17 women mountain replays three internal road-2 approaches',()=>
     recording,{},result),true);
 });
 
+test('alternate-19 women mountain pays twelve early and one late internal approaches',()=>{
+  const settings=settingsFor(20,'F','mountain',30);
+  settings.seed+='-alternate-19';
+  const recording=recordingFor(settings);
+  const clock=recordFinaleCoastMixedTwoFrontDroppedClock(recording);
+  const line=recordFinaleCoastedIndividualLine(recording,clock);
+  const early=recordFinaleMixedTwoFrontDroppedMultifrontPre500Audit(
+    recording,clock,line);
+  const late=recordFinaleMixedTwoFrontDroppedMultifrontFinal500Audit(
+    recording,clock,line,early);
+  assert.equal(early.olderDroppedRiderIds.length,33);
+  assert.equal(early.freshApproaches.length,12);
+  assert.deepEqual(early.freshApproaches.reduce((counts,row)=>{
+    counts[row.sourceRoadGroupId]=(counts[row.sourceRoadGroupId]??0)+1;
+    return counts;
+  },{}),{'road-2':11,'road-4':1});
+  assert.deepEqual(late.freshApproaches.map(row=>[
+    row.firstRiderId,row.secondRiderId]),[['rival-5-7','rival-9-7']]);
+  assert.equal(line.conditionalCrossings.length,160);
+  assert.equal(late.contactResolved,false);
+});
+
 test('alternate-13 men flat keeps multifront approaches internal',()=>{
   const settings=settingsFor(20,'M','flat',30);
   settings.seed+='-alternate-13';

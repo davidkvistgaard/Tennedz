@@ -5944,3 +5944,15 @@ with zero explicit refusals across genders, five terrains and fatigue
 many-pre500, crowded, fifteen-contact and eleven-onefront paths. This
 seed family adds confidence to those guards; it does not establish a
 universal contact or official classification policy.
+
+A read-only 20-team `alternate-19` matrix conditionally finished **18/20**.
+Men's mountain at fatigue 0 and women's mountain at fatigue 30 remain
+explicit `unresolved_band_contact` refusals. The men's source has the
+same 8/5 front exits, 20 older drops, three paid early road-2 approaches
+and 160 internal conditional crossings seen in the earlier bounded
+three-contact audits. The women's source has eight exits from each
+front, 33 older drops, twelve paid early individual approaches (eleven
+road-2, one road-4), one paid late rival-5-7/rival-9-7 approach near
+259803.344 m, and 160 internal candidate crossings. These paid spacing
+events do not resolve occupied-wheel response, official places, points
+or awards; both guided races still refuse.
