@@ -5576,3 +5576,20 @@ matrix reported **60 conditional finishes and zero explicit refusals**:
 two fatigue levels. The synthetic seed family and these bounded input
 combinations do not establish unrestricted contact coverage. Every
 conditional wheel order still withholds official places, points and awards.
+
+The read-only `alternate-5` heterogeneous-field audit completed 59 of
+60 synthetic 260 km races and kept one explicit refusal: 20-team men's
+custom terrain with fatigue 30. At the 259 km source, road-2 and road-4
+each contain 20 riders. Eight paid first-half possible individual
+approaches originate across both fronts; a ninth between `rival-17-7`
+and `rival-15-7` is paid at 259803.098 m. The internal line has all 160
+riders. Group-marker overlap was not accepted as occupied-wheel contact.
+
+A separately versioned guarded `8+1` continuation now uses the paid
+two-front first-half source-wheel audit and a distinct-lane no-draft
+final-half audit. It carries all 160 conditional individual crossings,
+energy through the 500 m handoff and replay. Opting out restores the
+explicit refusal; official places, points and awards remain withheld.
+The focused whole-race, replay and opt-out regression, changed-file
+lint, isolated preview Next build and authenticated local browser flow
+passed. The full seed-family rerun and release verification follow.
