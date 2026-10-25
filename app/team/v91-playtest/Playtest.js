@@ -1212,6 +1212,16 @@ export default function Playtest(){
               <p>{viewerRival.finisherId}: {viewerRival.finisherRoad}. At this checkpoint, {viewerRival.frontCount} riders are ahead, {viewerRival.bunchCount} in the bunch and {viewerRival.droppedCount} behind.</p>
               <p>This kilometre: {viewerRival.attacks.length} attack attempts · {viewerRival.joins.length} break joins · {viewerRival.catches.length} caught · {viewerRival.pulls.length} riders taking pulls · {viewerRival.chased?'team chased':'team did not chase'}.</p>
               <p>Whole-kilometre record: chased {viewerRival.wholeRaceChaseKm} km · first attack {viewerRival.firstAttackKm===null?'none':`km ${viewerRival.firstAttackKm}`} · first break join {viewerRival.firstJoinKm===null?'none':`km ${viewerRival.firstJoinKm}`} · last recorded catch {viewerRival.lastCatchKm===null?'none':`km ${viewerRival.lastCatchKm}`}.</p>
+              {viewerRival.chasePeriods.length>0&&<div>
+                <p>Recorded chase stretches for {viewerRivalId}; select one to inspect the road at its start:</p>
+                <ul>{viewerRival.chasePeriods.map(period=><li
+                  key={period.startIndex}>
+                  <button type="button" onClick={()=>setCoastedKm(
+                    period.startIndex+1)}>Km {period.startKm}{
+                    period.endKm!==period.startKm?`–${period.endKm}`:''}
+                  </button>
+                </li>)}</ul>
+              </div>}
               {viewerRivalBreaks.length>0&&<div aria-label={`${viewerRivalId} breakaway outcomes`}>
                 <p>Recorded attack and breakaway riders:</p>
                 <ul>{viewerRivalBreaks.map(row=><li key={row.riderId}>

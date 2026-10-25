@@ -71,11 +71,17 @@ test('rival focus ties a manager to its recorded finisher and road actions',()=>
     orders:race.managerOrders[0],
     finisherRoad:'7.5 s ahead with 2 riders',
     fiveKmEffort:'hard',wholeRaceChaseKm:1,
+    chasePeriods:[{startKm:35,endKm:35,startIndex:0,endIndex:0}],
     firstAttackKm:35,firstJoinKm:35,lastCatchKm:36,
     frontCount:2,bunchCount:5,droppedCount:1,
     attacks:['rival-2-7'],joins:['rival-2-7'],catches:[],
     pulls:['rival-2-1'],chased:true,lineEnergy:42});
   assert.equal(raceViewerRivalAt(race,frame,'rival-4'),null);
+  race.kilometreFrames=[{...frame,km:35},{...frame,km:36},
+    {...frame,km:37,chasingTeamIds:[]},{...frame,km:38}];
+  assert.deepEqual(raceViewerRivalAt(race,frame,'rival-2').chasePeriods,[
+    {startKm:35,endKm:36,startIndex:0,endIndex:1},
+    {startKm:38,endKm:38,startIndex:3,endIndex:3}]);
 });
 
 test('late effort snapshot reads the chosen phase and recorded rider road',()=>{
