@@ -5647,3 +5647,31 @@ the 20-rider source fronts from the 12 riders remaining in each
 positioned front after eight exits; the focused whole-race replay and
 opt-out test passed again. The finite matrix does not prove unrestricted
 contact coverage or official wheel order.
+
+Release `e3190aaa5b0a24d2d7183a1dac35df919b9b4598` carried this
+bounded continuation after the focused neighboring unit tests,
+changed-file lint, isolated release build, and authenticated browser
+flow passed. Production deployment `dpl_784DTJfkxXD1Qz3pr1WHqdTHh1aq`
+reached READY at the exact SHA. `tennedz.eu/team/motor-lab` returned
+HTTP 200 from that deployment's assets; the checked runtime-log window
+contained no errors. `dpl_4RPaydYP3K3gXaQ8kE2aB1iXAV4b` remains the
+rollback deployment. No fresh full repository test-suite pass is claimed.
+
+The next read-only `alternate-7` heterogeneous-field audit found **58
+conditional finishes and two explicit `unresolved_band_contact`
+refusals** in 60 synthetic 260 km races across 4/15/20 teams, both
+genders, five terrains, and fatigue 0/30. Both refused races are
+20-team mountain, fatigue-0 cases with two 20-rider source fronts,
+20 earlier isolated riders, eight exits from road-2 and five from
+road-4. Each positioned continuation has 12 and 15 surviving front
+riders plus 33 isolated riders. In the men's race, the separate
+source-wheel probe found 13 fresh first-500 m approaches from road-2,
+160 internal conditional crossings, and no fresh final-500 m approach
+under inferred outside lanes. This differs from the existing
+13-approach version, whose guard requires approaches from both fronts.
+In the women's race, the source-wheel probe found four fresh first-half
+approaches and no cross-source approach. The separate candidate line
+counts 160 crossings, but its bounded contact audit refuses. Neither
+candidate is a player-facing finish or evidence of resolved occupied
+wheel order. Both guided races retain their explicit refusal, with no
+official places, points, or awards.
