@@ -5494,3 +5494,13 @@ the `tennedz.eu` alias; `/team/motor-lab` returned HTTP 200 from that
 deployment and checked error/fatal runtime logs were empty. The previous
 production `dpl_41GWDKehMNf3BsSRMgttfHT2u5TE` remains the rollback.
 No fresh full repository unit or browser suite was claimed.
+
+The two remaining `alternate-3` refusals now have a separate, **internal
+only** fourteen-approach source-wheel audit. Both men's 20-team fatigue-30
+sources pay and split fourteen first-half same-source approaches with rider
+energy through the 500 m handoff. The rolling case has no new final-half
+approach; the custom case has one possible paid individual approach between
+`rival-5-7` and `rival-3-7` at 259803.138 m. Its occupied lanes and response
+are not yet resolved. The internal final-half audit records these distinct
+shapes, but neither source has a new user-routed conditional result, replay,
+official place, points or awards. Both still explicitly refuse in Motor Lab.
