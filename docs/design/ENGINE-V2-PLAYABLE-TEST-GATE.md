@@ -5758,6 +5758,10 @@ refuses the same source. Its locked whole-race unit, changed-file lint,
 isolated preview build and targeted authenticated viewer flow passed;
 the older 59/60 matrix remains the historical pre-continuation audit,
 not a new full-matrix result.
+The hardened post-continuation **20-team** alternate-9 matrix then
+finished **20/20** conditionally with zero explicit refusals. It includes
+the new eleven-approach version exactly once; this is a bounded
+20-team result, not a claim for every field size or seed.
 
 The hardened read-only `alternate-10` matrix finished **58/60**
 conditionally. Its two explicit `unresolved_band_contact` refusals are
