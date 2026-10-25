@@ -54,6 +54,9 @@ import {recordFinaleMixedTwoFrontDroppedFiveMultifrontInternalResult,
   recordFinaleMixedTwoFrontDroppedFifteenOlder33InternalResult,
   validateFinaleMixedTwoFrontDroppedFifteenOlder33InternalResult} from
   '../../lib/engine/v2/finale-mixed-two-front-dropped-alternate12-internal-result.mjs';
+import {recordFinaleMixedTwoFrontDroppedThreeOnefrontInternalResult,
+  validateFinaleMixedTwoFrontDroppedThreeOnefrontInternalResult} from
+  '../../lib/engine/v2/finale-mixed-two-front-dropped-three-onefront-internal-result.mjs';
 import {recordFinaleMixedTwoFrontDroppedPre500Audit,
   recordFinaleMixedTwoFrontDroppedFreshPre500Audit,
   recordFinaleMixedTwoFrontDroppedManyPre500Audit,
@@ -614,6 +617,25 @@ test('alternate-12 dual-front exits retain three internal conditional lines',()=
         validateFinaleMixedTwoFrontDroppedFifteenOlder33InternalResult(
           recording,{},result),true);
   }
+});
+
+test('alternate-13 women mountain has three paid internal road-2 approaches',()=>{
+  const settings=settingsFor(20,'F','mountain',0);
+  settings.seed+='-alternate-13';
+  const recording=recordingFor(settings);
+  const result=recordFinaleMixedTwoFrontDroppedThreeOnefrontInternalResult(
+    recording);
+  assert.equal(result.pre500Audit.freshApproaches.length,3);
+  assert.ok(result.pre500Audit.freshApproaches.every(row=>
+    row.sourceRoadGroupId==='road-2'));
+  assert.equal(result.pre500Audit.olderDroppedRiderIds.length,20);
+  assert.equal(result.final500Audit.freshApproaches.length,0);
+  assert.equal(result.line.conditionalCrossings.length,160);
+  assert.equal(result.classifiedResults,null);
+  assert.equal(result.pointsStatus,'withheld');
+  assert.equal(result.canCommitAwards,false);
+  assert.equal(validateFinaleMixedTwoFrontDroppedThreeOnefrontInternalResult(
+    recording,{},result),true);
 });
 
 test('alternate-4 mountain single-front exits pay conditional individual lines',

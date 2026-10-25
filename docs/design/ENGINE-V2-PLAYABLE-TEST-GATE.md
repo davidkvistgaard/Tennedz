@@ -5882,3 +5882,12 @@ final-half audit finds no fresh approach under inferred lanes and its
 internal candidate line counts 160 riders, but occupied-wheel response
 and a guarded user continuation are absent. Neither refusal offers a
 player finish, replay, official places, points or awards.
+
+A separate internal-only version now guards the women's mountain
+`alternate-13` source: three exact road-2 first-half approaches are
+split and paid, while the 8/5 two-front departures, 20 older drops,
+500 m energy handoff and all 160 conditional crossings reconcile.
+No fresh final-half approach occurs under the inferred road-2 queue.
+The guided race still refuses because occupied-wheel response and
+official placing remain unresolved; this audit publishes no player
+finish, replay, points or awards.
