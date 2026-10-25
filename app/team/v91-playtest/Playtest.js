@@ -1637,7 +1637,9 @@ export default function Playtest({guided=false}){
                     {row.firstRiderId} approached {row.secondRiderId} at
                     {' '}{(row.atDistanceM/1000).toFixed(3)} km.
                     <button type="button" aria-label={`Inspect ${
-                      row.firstRiderId} conditional finish replay`}
+                      row.firstRiderId} finish replay after approaching ${
+                      row.secondRiderId} at ${
+                      (row.atDistanceM/1000).toFixed(3)} km`}
                     onClick={()=>{
                       const band=coasted.bandReplays.find(entry=>
                         entry.riderIds.includes(row.firstRiderId));
