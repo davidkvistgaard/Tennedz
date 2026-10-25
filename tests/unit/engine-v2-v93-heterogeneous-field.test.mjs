@@ -18,6 +18,7 @@ import {createV93PlayableTest,validateV93CoastedPlaytest,
   V93_MIXED_TWO_FRONT_SHORT_MULTIFRONT_CLEAN_FINAL_PLAYTEST_VERSION,
   V93_MIXED_TWO_FRONT_SEVEN_ONEFRONT_PARALLEL_FINAL_PLAYTEST_VERSION,
   V93_MIXED_TWO_FRONT_FOURTEEN_MULTIFRONT_CLEAN_FINAL_PLAYTEST_VERSION,
+  V93_MIXED_TWO_FRONT_FIFTEEN_MULTIFRONT_CLEAN_FINAL_PLAYTEST_VERSION,
   V93_MIXED_TWO_FRONT_FOURTEEN_MULTIFRONT_PARALLEL_FINAL_PLAYTEST_VERSION,
   V93_MIXED_TWO_FRONT_EIGHT_ONEFRONT_CLEAN_FINAL_PLAYTEST_VERSION,
   V93_MIXED_TWO_FRONT_TEN_ONEFRONT_PARALLEL_FINAL_PLAYTEST_VERSION,
@@ -99,6 +100,8 @@ import {recordFinaleMixedTwoFrontDroppedManyPre500Result,
   validateFinaleMixedTwoFrontDroppedMultifrontParallelFinalResult,
   recordFinaleMixedTwoFrontDroppedFourteenMultifrontCleanFinalResult,
   recordFinaleMixedTwoFrontDroppedFourteenMultifrontParallelFinalResult,
+  recordFinaleMixedTwoFrontDroppedFifteenMultifrontCleanFinalResult,
+  validateFinaleMixedTwoFrontDroppedFifteenMultifrontCleanFinalResult,
   recordFinaleMixedTwoFrontDroppedEightOnefrontCleanFinalResult,
   recordFinaleMixedTwoFrontDroppedTenOnefrontParallelFinalResult,
   recordFinaleMixedTwoFrontDroppedEightMultifrontParallelFinalResult,
@@ -127,7 +130,7 @@ function recordingFor(settings){
     motorVersion:MOTOR_EXHAUSTION_COAST_VERSION});
 }
 
-test('alternate-6 crowded dual-front contact remains internal after paid first approaches',()=>{
+test('alternate-6 crowded dual-front contact pays a conditional 160-rider line',()=>{
   const settings=settingsFor(20,'F','flat',30);
   settings.seed+='-alternate-6';
   const recording=recordingFor(settings);
@@ -135,6 +138,10 @@ test('alternate-6 crowded dual-front contact remains internal after paid first a
   const line=recordFinaleCoastedIndividualLine(recording,clock,{
     laneQueuedBandIds:['road-2']});
   assert.equal(line.conditionalCrossings.length,160);
+  assert.deepEqual(line.positionedSource.roadBands.filter(row=>
+    ['road-2','road-4'].includes(row.id)).map(row=>[row.id,row.slots.length]),
+    [['road-2',12],['road-4',12]]);
+  assert.equal(line.positionedSource.droppedRiderIds.length,46);
   assert.deepEqual(clock.trace.frames.flatMap(frame=>
     frame.frontExhaustionDrops).reduce((groups,row)=>{
       groups[row.fromRoadGroupId]=(groups[row.fromRoadGroupId]??0)+1;
@@ -147,6 +154,7 @@ test('alternate-6 crowded dual-front contact remains internal after paid first a
   assert.equal(audit.version,
     FINALE_MIXED_TWO_FRONT_DROPPED_FIFTEEN_MULTIFRONT_PRE500_AUDIT_VERSION);
   assert.equal(audit.paidRiderCount,160);
+  assert.equal(audit.olderDroppedRiderIds.length,30);
   assert.equal(audit.freshApproaches.length,15);
   assert.deepEqual(new Set(audit.freshApproaches.map(row=>
     row.sourceRoadGroupId)),new Set(['road-2','road-4']));
@@ -169,10 +177,38 @@ test('alternate-6 crowded dual-front contact remains internal after paid first a
   assert.equal(final.version,
     FINALE_MIXED_TWO_FRONT_DROPPED_FIFTEEN_MULTIFRONT_FINAL500_AUDIT_VERSION);
   assert.equal(final.paidRiderCount,160);
+  assert.equal(final.freshApproaches.length,0);
   assert.equal(final.contactResolved,false);
   assert.equal(final.classifiedResults,null);
   assert.equal(final.pointsStatus,'withheld');
-  assert.throws(()=>createV93PlayableTest(settings),
+  const candidate=recordFinaleMixedTwoFrontDroppedFifteenMultifrontCleanFinalResult(
+    recording);
+  assert.equal(candidate.line.conditionalCrossings.length,160);
+  assert.equal(candidate.line.bandRunners.flatMap(band=>
+    band.runner.finishers).length,160);
+  assert.equal(candidate.clock.passageFrames.length,7);
+  assert.equal(candidate.pre500Audit.freshApproaches.length,15);
+  assert.equal(candidate.final500Audit.freshApproaches.length,0);
+  assert.equal(candidate.classifiedResults,null);
+  assert.equal(candidate.pointPreview,null);
+  assert.equal(candidate.pointsStatus,'withheld');
+  assert.equal(candidate.canCommitAwards,false);
+  assert.equal(validateFinaleMixedTwoFrontDroppedFifteenMultifrontCleanFinalResult(
+    recording,{},candidate),true);
+  const race=createV93PlayableTest(settings);
+  assert.equal(race.version,
+    V93_MIXED_TWO_FRONT_FIFTEEN_MULTIFRONT_CLEAN_FINAL_PLAYTEST_VERSION);
+  assert.equal(race.classifiedResults,null);
+  assert.equal(race.pointsStatus,'withheld');
+  assert.equal(race.canCommitAwards,false);
+  const summary=summarizeV93CoastedPlaytest(race);
+  assert.equal(summary.lineTimes.length,160);
+  assert.equal(summary.bandReplays.flatMap(band=>band.riderIds).length,160);
+  assert.equal(summary.lastKmRoad.length,7);
+  assert.equal(summary.pointsStatus,'withheld');
+  assert.equal(validateV93CoastedPlaytest(settings,{},race),true);
+  assert.throws(()=>createV93PlayableTest(settings,{},
+    {resolveMixedTwoFrontFifteenMultifrontCleanFinal:false}),
     /depleted line bands crossed without contact/i);
 });
 
