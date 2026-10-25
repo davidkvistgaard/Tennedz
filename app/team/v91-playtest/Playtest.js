@@ -1147,6 +1147,14 @@ export default function Playtest({guided=false}){
             <button type="button" aria-label="Previous checkpoint"
               disabled={!previousCheckpoint}
               onClick={()=>setCoastedKm(previousCheckpoint.index+1)}>Previous</button>
+            <button type="button" aria-pressed={
+              coastedKm===coasted.settings.distanceKm-5}
+              onClick={()=>setCoastedKm(coasted.settings.distanceKm-5)}>
+              5 km effort handoff</button>
+            <button type="button" aria-pressed={
+              coastedKm===coasted.settings.distanceKm-1}
+              onClick={()=>setCoastedKm(coasted.settings.distanceKm-1)}>
+              1 km road</button>
             <span>Viewing km {coastedFrame?.km} of {coasted.settings.distanceKm} · swipe cards for more</span>
             <button type="button" aria-label="Next checkpoint"
               disabled={!nextCheckpoint}

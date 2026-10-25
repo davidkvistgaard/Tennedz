@@ -245,6 +245,12 @@ test('both front leavers stay ahead in paid road, line and replay',
     await page.route('**/api/v91-playtest',route=>route.fulfill({
       status:200,contentType:'application/json',body:JSON.stringify(body)}));
     await page.getByRole('button',{name:'Run v93 race preview'}).click();
+    const checkpoints=page.getByLabel('Race checkpoint navigation');
+    await checkpoints.getByRole('button',{
+      name:'5 km effort handoff'}).click();
+    await expect(checkpoints).toContainText('Viewing km 255 of 260');
+    await checkpoints.getByRole('button',{name:'1 km road'}).click();
+    await expect(checkpoints).toContainText('Viewing km 259 of 260');
     const note=page.getByRole('note',{name:'Mixed front exits'});
     await expect(note).toContainText('stayed ahead of the bunch');
     await expect(page.getByRole('table',{
