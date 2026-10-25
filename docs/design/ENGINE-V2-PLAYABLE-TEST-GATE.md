@@ -5805,7 +5805,11 @@ conditionally. Three 20-team mountain cases explicitly refuse:
 `20-M-mountain-0-alternate-11`, `20-M-mountain-30-alternate-11` and
 `20-F-mountain-0-alternate-11`. All have road-2 and road-4 source fronts
 and 160 internal candidate crossings. The first has 14 possible fresh
-first-half proximities but lacks a bounded paid audit for them. The
+first-half proximities. A separate internal audit pays and splits all
+14 as road-2 same-source approaches, carries all 160 conditional
+crossings through the 500 m handoff, and finds no fresh final-half
+approach under the inferred road-2 queue. It still lacks a guarded
+whole-race playtest result. The
 second has nine paid first-half approaches plus one paid final-half
 approach in separate unresolved audits. The third has 11 paid
 first-half approaches and no fresh final-half approach. These are

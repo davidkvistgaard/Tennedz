@@ -512,6 +512,31 @@ test('fourteen alternate-seed source-wheel approaches remain an internal audit',
     }
   });
 
+test('alternate-11 mountain first-half approaches stay conditional',()=>{
+  const settings=settingsFor(20,'M','mountain',0);
+  settings.seed+='-alternate-11';
+  const recording=recordingFor(settings);
+  const clock=recordFinaleCoastMixedTwoFrontDroppedClock(recording);
+  const line=recordFinaleCoastedIndividualLine(recording,clock,{
+    laneQueuedBandIds:['road-2']});
+  const early=recordFinaleMixedTwoFrontDroppedFourteenMultifrontPre500Audit(
+    recording,clock,line);
+  const late=recordFinaleMixedTwoFrontDroppedFourteenMultifrontFinal500Audit(
+    recording,clock,line,early);
+  assert.equal(early.freshApproaches.length,14);
+  assert.ok(early.freshApproaches.every(row=>
+    row.sourceRoadGroupId==='road-2'&&row.contactResolved===false));
+  assert.equal(late.freshApproaches.length,0);
+  assert.equal(line.conditionalCrossings.length,160);
+  assert.equal(early.paidRiderCount,160);
+  assert.equal(late.paidRiderCount,160);
+  assert.equal(line.pointsStatus,'withheld');
+  assert.equal(early.pointsStatus,'withheld');
+  assert.equal(late.pointsStatus,'withheld');
+  assert.throws(()=>createV93PlayableTest(settings),
+    /depleted line bands crossed without contact/i);
+});
+
 test('alternate-4 mountain single-front exits pay conditional individual lines',
   ()=>{
     for(const [gender,earlyCount,lateCount] of [
