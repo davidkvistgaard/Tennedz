@@ -5757,3 +5757,16 @@ paid first-half approaches and no fresh final-half approach. Both have
 160 internal candidate crossings; neither has a separately guarded
 whole-race response for its exact approach pattern. They remain
 player-facing refusals with official places, points and awards withheld.
+
+The hardened read-only `alternate-11` matrix finished **57/60**
+conditionally. Three 20-team mountain cases explicitly refuse:
+`20-M-mountain-0-alternate-11`, `20-M-mountain-30-alternate-11` and
+`20-F-mountain-0-alternate-11`. All have road-2 and road-4 source fronts
+and 160 internal candidate crossings. The first has 14 possible fresh
+first-half proximities but lacks a bounded paid audit for them. The
+second has nine paid first-half approaches plus one paid final-half
+approach in separate unresolved audits. The third has 11 paid
+first-half approaches and no fresh final-half approach. These are
+distinct guarded geometries; none establishes occupied-wheel order or
+an individual player finish. Official places, points and awards remain
+withheld for all three.
