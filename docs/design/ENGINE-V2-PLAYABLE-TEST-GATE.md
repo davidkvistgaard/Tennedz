@@ -5855,3 +5855,15 @@ conditional individual crossings. Both riders continue without draft
 after the late approach. Occupied-wheel response remains inferred;
 the guided playtest still explicitly refuses this race. The internal
 result exposes no classified places, points, awards or user replay.
+
+Separate internal-only `alternate-12` results now reconcile the three
+remaining two-front fatigue-30 refusals with paid individual movement.
+The men's rolling and women's flat sources each have five first-half
+approaches (four road-2 and one road-4), 30 older drops and no fresh
+final-half approach. The women's mountain source has fifteen first-half
+approaches (fourteen road-2 and one road-4), 33 older drops and no
+fresh final-half approach. Each source has eight departures from each
+front, exact energy at the 500 m handoff and 160 conditional individual
+crossings. These are internal candidate lines only. Occupied-wheel
+response remains unresolved, and all three guided races retain their
+explicit refusals and withhold official places, points and awards.

@@ -50,6 +50,10 @@ import {recordFinaleCoastedIndividualLine,
 import {recordFinaleMixedTwoFrontDroppedNineMultifrontParallelFinalResult,
   validateFinaleMixedTwoFrontDroppedNineMultifrontParallelFinalResult} from
   '../../lib/engine/v2/finale-mixed-two-front-dropped-nine-multifront-parallel-final-result.mjs';
+import {recordFinaleMixedTwoFrontDroppedFiveMultifrontInternalResult,
+  recordFinaleMixedTwoFrontDroppedFifteenOlder33InternalResult,
+  validateFinaleMixedTwoFrontDroppedFifteenOlder33InternalResult} from
+  '../../lib/engine/v2/finale-mixed-two-front-dropped-alternate12-internal-result.mjs';
 import {recordFinaleMixedTwoFrontDroppedPre500Audit,
   recordFinaleMixedTwoFrontDroppedFreshPre500Audit,
   recordFinaleMixedTwoFrontDroppedManyPre500Audit,
@@ -586,6 +590,30 @@ test('alternate-11 fatigue pays nine first-half and one final-half approaches in
     recording,{},result),true);
   assert.throws(()=>createV93PlayableTest(settings),
     /depleted line bands crossed without contact/i);
+});
+
+test('alternate-12 dual-front exits retain three internal conditional lines',()=>{
+  for(const [gender,terrain,count,older] of [
+    ['M','rolling',5,30],['F','flat',5,30],
+    ['F','mountain',15,33]]){
+    const settings=settingsFor(20,gender,terrain,30);
+    settings.seed+='-alternate-12';
+    const recording=recordingFor(settings);
+    const result=(count===15?
+      recordFinaleMixedTwoFrontDroppedFifteenOlder33InternalResult:
+      recordFinaleMixedTwoFrontDroppedFiveMultifrontInternalResult)(recording);
+    assert.equal(result.pre500Audit.freshApproaches.length,count);
+    assert.equal(result.pre500Audit.olderDroppedRiderIds.length,older);
+    assert.equal(result.final500Audit.freshApproaches.length,0);
+    assert.equal(result.line.conditionalCrossings.length,160);
+    assert.equal(result.classifiedResults,null);
+    assert.equal(result.pointsStatus,'withheld');
+    assert.equal(result.canCommitAwards,false);
+    if(count===15)
+      assert.equal(
+        validateFinaleMixedTwoFrontDroppedFifteenOlder33InternalResult(
+          recording,{},result),true);
+  }
 });
 
 test('alternate-4 mountain single-front exits pay conditional individual lines',
