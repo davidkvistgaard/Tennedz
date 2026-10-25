@@ -5688,3 +5688,15 @@ The women's mountain source, which has a different four-approach
 pattern, still explicitly refuses. The new and neighboring 13- and
 15-approach whole-race tests (3/3), changed-file lint, isolated Next
 build, and targeted authenticated browser flow passed on preview.
+
+The separate `alternate-7` women's mountain continuation pays its four
+first-half approaches from road-2 only. It retains the same bounded
+eight/five source exits, 20 older isolates and 12/15 surviving front
+positions, but uses its own result version and the paid four-approach
+audit. Its final-half pairwise audit finds no new approach; all 160
+individual crossings, 500 m energy handoff, seven paid road boundaries
+and replay reconcile. The opt-out still explicitly refuses. Outside
+lane response is conditional, so official classification, points and
+awards remain withheld. Its focused locked whole-race replay and
+opt-out test passed; neighboring regression, build and browser checks
+follow.
