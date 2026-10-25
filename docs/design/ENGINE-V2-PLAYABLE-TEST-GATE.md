@@ -5626,3 +5626,24 @@ lanes. The audit keeps `contactResolved:false`, classified results null,
 and points/awards withheld; the guided Motor Lab still refuses this
 source. The locked focused whole-race test and changed-file lint pass.
 Group marker overlap is not accepted as occupied-wheel contact.
+
+The subsequent guarded `alternate-6` whole-race continuation uses those
+two separately versioned paid audits and a third versioned conditional
+result. It requires exactly 15 first-half same-source approaches from
+both fronts, no fresh final-half approach, separate inferred outside
+lanes, 160 individual crossings and finishers, matching energy at the
+500 m handoff, seven paid road boundaries, and deterministic replay.
+The result keeps classified places null and official points/awards
+withheld; opting out of this exact continuation restores the explicit
+refusal. The focused `alternate-6` and older fourteen-approach tests,
+changed-file lint, isolated preview build and authenticated browser
+flow passed. The broad 60-case rerun and release verification follow.
+
+The read-only `alternate-6` rerun then reported **60 conditional
+finishes and zero explicit refusals** across 4/15/20 teams, both
+genders, five terrains and fatigue 0/30. Exactly one race used the new
+fifteen-approach version. A later guard clarification distinguished
+the 20-rider source fronts from the 12 riders remaining in each
+positioned front after eight exits; the focused whole-race replay and
+opt-out test passed again. The finite matrix does not prove unrestricted
+contact coverage or official wheel order.
