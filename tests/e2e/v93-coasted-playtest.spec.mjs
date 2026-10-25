@@ -3130,6 +3130,8 @@ for(const [approaches,gender,terrain,fatigue,seedSuffix,version] of [
     'v93-mixed-two-front-thirteen-onefront-clean-final-playtest-1'],
   [11,'M','mountain',0,'alternate-9',
     'v93-mixed-two-front-eleven-onefront-clean-final-playtest-1'],
+  [6,'M','mountain',0,'alternate-10',
+    'v93-mixed-two-front-six-onefront-clean-final-playtest-1'],
   [4,'F','mountain',0,'alternate-7',
     'v93-mixed-two-front-four-onefront-clean-final-playtest-1']])test(
   `${approaches} early ${terrain} approaches ${seedSuffix} retain a conditional 160-rider line`,

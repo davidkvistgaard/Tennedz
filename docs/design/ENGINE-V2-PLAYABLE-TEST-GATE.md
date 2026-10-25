@@ -5774,6 +5774,16 @@ paid first-half approaches and no fresh final-half approach. Both have
 whole-race response for its exact approach pattern. They remain
 player-facing refusals with official places, points and awards withheld.
 
+A separately versioned `v93-mixed-two-front-six-onefront-clean-final-playtest-1`
+continuation now covers only the alternate-10 men's mountain source with
+the 8/5 two-front exits, twenty older isolates, six exact paid road-2
+pre-500 m approaches, and no fresh final-half approach. The fixed-lane
+conditional line reconciles all 160 crossings, 500 m energy and replay,
+while official classification, points and awards stay withheld. Disabling
+this continuation restores the explicit refusal. The flat alternate-10
+case with one paid final-half approach remains a separate unresolved
+geometry; the historical 58/60 matrix above predates this change.
+
 The hardened read-only `alternate-11` matrix finished **57/60**
 conditionally. Three 20-team mountain cases explicitly refuse:
 `20-M-mountain-0-alternate-11`, `20-M-mountain-30-alternate-11` and
