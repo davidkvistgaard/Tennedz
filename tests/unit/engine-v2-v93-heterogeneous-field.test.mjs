@@ -40,8 +40,10 @@ import {recordFinaleMixedTwoFrontDroppedPre500Audit,
   recordFinaleMixedTwoFrontDroppedFreshPre500Audit,
   recordFinaleMixedTwoFrontDroppedManyPre500Audit,
   recordFinaleMixedTwoFrontDroppedMultifrontPre500Audit,
+  recordFinaleMixedTwoFrontDroppedFourteenMultifrontPre500Audit,
   FINALE_MIXED_TWO_FRONT_DROPPED_MANY_PRE500_AUDIT_VERSION,
   FINALE_MIXED_TWO_FRONT_DROPPED_MULTIFRONT_PRE500_AUDIT_VERSION,
+  FINALE_MIXED_TWO_FRONT_DROPPED_FOURTEEN_MULTIFRONT_PRE500_AUDIT_VERSION,
   FINALE_MIXED_TWO_FRONT_DROPPED_FRESH_PRE500_AUDIT_VERSION,
   validateFinaleMixedTwoFrontDroppedPre500Audit} from
   '../../lib/engine/v2/finale-mixed-two-front-dropped-pre500-audit.mjs';
@@ -51,9 +53,11 @@ import {recordFinaleMixedTwoFrontDroppedFinal500Audit,
   recordFinaleMixedTwoFrontDroppedFreshPre500ManyFinal500Audit,
   recordFinaleMixedTwoFrontDroppedManyPre500Final500Audit,
   recordFinaleMixedTwoFrontDroppedMultifrontFinal500Audit,
+  recordFinaleMixedTwoFrontDroppedFourteenMultifrontFinal500Audit,
   recordFinaleMixedTwoFrontDroppedMultifrontParallelFinalAudit,
   FINALE_MIXED_TWO_FRONT_DROPPED_MANY_PRE500_FINAL500_AUDIT_VERSION,
   FINALE_MIXED_TWO_FRONT_DROPPED_MULTIFRONT_FINAL500_AUDIT_VERSION,
+  FINALE_MIXED_TWO_FRONT_DROPPED_FOURTEEN_MULTIFRONT_FINAL500_AUDIT_VERSION,
   FINALE_MIXED_TWO_FRONT_DROPPED_MULTIFRONT_PARALLEL_FINAL_AUDIT_VERSION,
   FINALE_MIXED_TWO_FRONT_DROPPED_MANY_FINAL500_AUDIT_VERSION,
   FINALE_MIXED_TWO_FRONT_DROPPED_FRESH_FINAL500_AUDIT_VERSION,
@@ -134,6 +138,51 @@ test('thirteen paid two-front exits and a clean fixed-lane final half finish con
     assert.throws(()=>createV93PlayableTest(settings,{},
       {resolveMixedTwoFrontThirteenMultifrontCleanFinal:false}),
     /depleted line bands crossed without contact/i);
+  });
+
+test('fourteen alternate-seed source-wheel approaches remain an internal audit',
+  ()=>{
+    for(const [terrain,lateCount] of [['rolling',0],['custom',1]]){
+      const settings=settingsFor(20,'M',terrain,30);
+      settings.seed+='-alternate-3';
+      const recording=recordingFor(settings);
+      const clock=recordFinaleCoastMixedTwoFrontDroppedClock(recording);
+      const line=recordFinaleCoastedIndividualLine(recording,clock,{
+        laneQueuedBandIds:['road-2']});
+      assert.throws(()=>recordFinaleMixedTwoFrontDroppedMultifrontPre500Audit(
+        recording,clock,line),/bounded geometry/);
+      const audit=recordFinaleMixedTwoFrontDroppedFourteenMultifrontPre500Audit(
+        recording,clock,line);
+      assert.equal(audit.version,
+        FINALE_MIXED_TWO_FRONT_DROPPED_FOURTEEN_MULTIFRONT_PRE500_AUDIT_VERSION);
+      assert.equal(audit.paidRiderCount,160);
+      assert.equal(audit.freshApproaches.length,14);
+      assert.ok(audit.freshApproaches.every(row=>
+        row.firstEnergy===0&&row.secondEnergy>0&&
+        Math.abs(Math.abs(row.firstWheelM-row.secondWheelM)-2.5)<1e-7&&
+        row.contactResolved===false));
+      assert.equal(audit.contactResolved,false);
+      assert.equal(audit.classifiedResults,null);
+      assert.equal(audit.pointsStatus,'withheld');
+      assert.equal(audit.canCommitAwards,false);
+      const final=recordFinaleMixedTwoFrontDroppedFourteenMultifrontFinal500Audit(
+        recording,clock,line,audit);
+      assert.equal(final.version,
+        FINALE_MIXED_TWO_FRONT_DROPPED_FOURTEEN_MULTIFRONT_FINAL500_AUDIT_VERSION);
+      assert.equal(final.paidRiderCount,160);
+      assert.equal(final.freshApproaches.length,lateCount);
+      if(lateCount){
+        const [event]=final.freshApproaches;
+        assert.equal(event.firstRiderId,'rival-5-7');
+        assert.equal(event.secondRiderId,'rival-3-7');
+        assert.ok(Math.abs(event.firstWheelM-259803.13812325842)<1e-7);
+        assert.equal(event.contactResolved,false);
+      }
+      assert.equal(final.contactResolved,false);
+      assert.equal(final.classifiedResults,null);
+      assert.equal(final.pointsStatus,'withheld');
+      assert.equal(final.canCommitAwards,false);
+    }
   });
 
 test('bounded two-front exits pay clean and parallel final halves without awards',
