@@ -5550,6 +5550,16 @@ terrains and fatigue 0/30. It introduced exactly one conditional finish
 on each new result version. This bounded matrix does not establish
 unrestricted contact coverage or resolved occupied-wheel order.
 
+Release verification: release `5ec350ca458cb0ad5e54bdac8d5e4336e4f63b85`
+was independently tested with the locked whole-race replay/opt-out
+regression, changed-file lint, isolated Next build and both enabled
+authenticated browser flows. Production deployment
+`dpl_Go9XzmE4GTLiBS3uwA5QwdMhDJeZ` reached READY at that exact SHA
+with the `tennedz.eu` alias. `/team/motor-lab` returned HTTP 200 from
+the new deployment, and checked error/fatal runtime logs were empty.
+The previous deployment `dpl_YjwZEeyX4VQTwk7acLVUhGVusnAN` remains
+rollback. No fresh full repository unit or browser-suite pass is claimed.
+
 Release verification: the independently tested release branch passed four
 focused whole-race regression groups, changed-file lint, an isolated Next
 build, and both new authenticated local browser flows. The bounded batch
