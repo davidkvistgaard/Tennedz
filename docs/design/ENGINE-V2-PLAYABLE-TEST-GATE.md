@@ -5867,3 +5867,18 @@ front, exact energy at the 500 m handoff and 160 conditional individual
 crossings. These are internal candidate lines only. Occupied-wheel
 response remains unresolved, and all three guided races retain their
 explicit refusals and withhold official places, points and awards.
+
+A fresh read-only 20-team `alternate-13` matrix finished **18/20**
+conditionally. `20-M-flat-30-alternate-13` and
+`20-F-mountain-0-alternate-13` explicitly refuse with
+`unresolved_band_contact`. The men's source has eight leavers from
+each of road-2 and road-4, 30 older drops, and 160 internal candidate
+crossings. Its multifront first-half audit rejects a possible approach
+because exact paid wheel spacing does not reconcile; the clean final-half
+audit alone cannot authorize a result. The women's source has eight
+road-2 and five road-4 leavers, 20 older drops and three individually
+paid first-half approaches in the internal many-approach audit. Its
+final-half audit finds no fresh approach under inferred lanes and its
+internal candidate line counts 160 riders, but occupied-wheel response
+and a guarded user continuation are absent. Neither refusal offers a
+player finish, replay, official places, points or awards.
