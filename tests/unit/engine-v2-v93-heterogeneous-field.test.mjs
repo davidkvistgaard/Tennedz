@@ -46,9 +46,11 @@ import {recordFinaleMixedTwoFrontDroppedPre500Audit,
   recordFinaleMixedTwoFrontDroppedManyPre500Audit,
   recordFinaleMixedTwoFrontDroppedMultifrontPre500Audit,
   recordFinaleMixedTwoFrontDroppedFourteenMultifrontPre500Audit,
+  recordFinaleMixedTwoFrontDroppedFifteenMultifrontPre500Audit,
   FINALE_MIXED_TWO_FRONT_DROPPED_MANY_PRE500_AUDIT_VERSION,
   FINALE_MIXED_TWO_FRONT_DROPPED_MULTIFRONT_PRE500_AUDIT_VERSION,
   FINALE_MIXED_TWO_FRONT_DROPPED_FOURTEEN_MULTIFRONT_PRE500_AUDIT_VERSION,
+  FINALE_MIXED_TWO_FRONT_DROPPED_FIFTEEN_MULTIFRONT_PRE500_AUDIT_VERSION,
   FINALE_MIXED_TWO_FRONT_DROPPED_FRESH_PRE500_AUDIT_VERSION,
   validateFinaleMixedTwoFrontDroppedPre500Audit} from
   '../../lib/engine/v2/finale-mixed-two-front-dropped-pre500-audit.mjs';
@@ -60,10 +62,12 @@ import {recordFinaleMixedTwoFrontDroppedFinal500Audit,
   recordFinaleMixedTwoFrontDroppedTenOnefrontParallelFinalAudit,
   recordFinaleMixedTwoFrontDroppedMultifrontFinal500Audit,
   recordFinaleMixedTwoFrontDroppedFourteenMultifrontFinal500Audit,
+  recordFinaleMixedTwoFrontDroppedFifteenMultifrontFinal500Audit,
   recordFinaleMixedTwoFrontDroppedMultifrontParallelFinalAudit,
   FINALE_MIXED_TWO_FRONT_DROPPED_MANY_PRE500_FINAL500_AUDIT_VERSION,
   FINALE_MIXED_TWO_FRONT_DROPPED_MULTIFRONT_FINAL500_AUDIT_VERSION,
   FINALE_MIXED_TWO_FRONT_DROPPED_FOURTEEN_MULTIFRONT_FINAL500_AUDIT_VERSION,
+  FINALE_MIXED_TWO_FRONT_DROPPED_FIFTEEN_MULTIFRONT_FINAL500_AUDIT_VERSION,
   FINALE_MIXED_TWO_FRONT_DROPPED_MULTIFRONT_PARALLEL_FINAL_AUDIT_VERSION,
   FINALE_MIXED_TWO_FRONT_DROPPED_MANY_FINAL500_AUDIT_VERSION,
   FINALE_MIXED_TWO_FRONT_DROPPED_FRESH_FINAL500_AUDIT_VERSION,
@@ -122,6 +126,55 @@ function recordingFor(settings){
   return simulateTacticalTour({stage,weather,teams,seed,
     motorVersion:MOTOR_EXHAUSTION_COAST_VERSION});
 }
+
+test('alternate-6 crowded dual-front contact remains internal after paid first approaches',()=>{
+  const settings=settingsFor(20,'F','flat',30);
+  settings.seed+='-alternate-6';
+  const recording=recordingFor(settings);
+  const clock=recordFinaleCoastMixedTwoFrontDroppedClock(recording);
+  const line=recordFinaleCoastedIndividualLine(recording,clock,{
+    laneQueuedBandIds:['road-2']});
+  assert.equal(line.conditionalCrossings.length,160);
+  assert.deepEqual(clock.trace.frames.flatMap(frame=>
+    frame.frontExhaustionDrops).reduce((groups,row)=>{
+      groups[row.fromRoadGroupId]=(groups[row.fromRoadGroupId]??0)+1;
+      return groups;
+    },{}),{'road-2':8,'road-4':8});
+  assert.throws(()=>recordFinaleMixedTwoFrontDroppedMultifrontPre500Audit(
+    recording,clock,line),/bounded geometry/);
+  const audit=recordFinaleMixedTwoFrontDroppedFifteenMultifrontPre500Audit(
+    recording,clock,line);
+  assert.equal(audit.version,
+    FINALE_MIXED_TWO_FRONT_DROPPED_FIFTEEN_MULTIFRONT_PRE500_AUDIT_VERSION);
+  assert.equal(audit.paidRiderCount,160);
+  assert.equal(audit.freshApproaches.length,15);
+  assert.deepEqual(new Set(audit.freshApproaches.map(row=>
+    row.sourceRoadGroupId)),new Set(['road-2','road-4']));
+  assert.ok(audit.freshApproaches.every(row=>
+    row.firstEnergy===0&&row.secondEnergy>0&&
+    Math.abs(Math.abs(row.firstWheelM-row.secondWheelM)-2.5)<1e-7&&
+    row.contactResolved===false&&
+    ['first','second'].every(key=>{
+      const split=row.paidSplit[key].frames.at(-1).riders[0];
+      return Math.abs(split.energyAtDecision-split.energySpent-
+        split.energyAfter)<1e-7;
+    })));
+  assert.equal(audit.outsideLaneAssignments.length,46);
+  assert.equal(audit.contactResolved,false);
+  assert.equal(audit.classifiedResults,null);
+  assert.equal(audit.pointsStatus,'withheld');
+  assert.equal(audit.canCommitAwards,false);
+  const final=recordFinaleMixedTwoFrontDroppedFifteenMultifrontFinal500Audit(
+    recording,clock,line,audit);
+  assert.equal(final.version,
+    FINALE_MIXED_TWO_FRONT_DROPPED_FIFTEEN_MULTIFRONT_FINAL500_AUDIT_VERSION);
+  assert.equal(final.paidRiderCount,160);
+  assert.equal(final.contactResolved,false);
+  assert.equal(final.classifiedResults,null);
+  assert.equal(final.pointsStatus,'withheld');
+  assert.throws(()=>createV93PlayableTest(settings),
+    /depleted line bands crossed without contact/i);
+});
 
 test('thirteen paid two-front exits and a clean fixed-lane final half finish conditionally',
   ()=>{
