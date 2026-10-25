@@ -5543,6 +5543,13 @@ build and both enabled authenticated local browser flows passed. A broad
 seed-family audit and release deployment were still pending at this
 evidence checkpoint.
 
+The subsequent read-only `alternate-4` heterogeneous-field audit
+completed all 60 synthetic 260 km combinations: 60 conditional finishes
+and zero explicit refusals across 4/15/20 teams, both genders, five
+terrains and fatigue 0/30. It introduced exactly one conditional finish
+on each new result version. This bounded matrix does not establish
+unrestricted contact coverage or resolved occupied-wheel order.
+
 Release verification: the independently tested release branch passed four
 focused whole-race regression groups, changed-file lint, an isolated Next
 build, and both new authenticated local browser flows. The bounded batch
