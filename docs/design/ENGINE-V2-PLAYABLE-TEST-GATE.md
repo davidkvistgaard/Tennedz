@@ -5718,6 +5718,15 @@ crossings, but their occupied-wheel response and bounded paid contact
 continuation remain unresolved. Neither is a player finish or a source
 of official places, points, or awards.
 
+The full read-only `alternate-8` matrix across 4/15/20 teams, both
+genders, five terrains and fatigue 0/30 finished **58/60** conditionally;
+the same two 20-team sources were its only refusals. The audit script now
+counts only a motor-provided `unsupportedReason` as an explicit refusal;
+an unrelated runtime exception stops the audit instead of inflating its
+refusal count. Focused clear-road and explicit-refusal runs and script
+lint passed. Full repository lint passed after the motor and viewer
+increments; no full serial unit-suite pass is claimed.
+
 The V93 race viewer now jumps directly to the recorded 5 km effort
 handoff or the 1 km road from its checkpoint controls. This keeps the
 selected road, rider energy and timeline tied to an actual checkpoint;

@@ -39,8 +39,10 @@ for(const teamCount of [4,15,20])for(const gender of ['M','F'])
       }catch(error){
         if(error.message===
           'A conditional race lost riders or award guards.')throw error;
+        const reason=error.roadPreview?.unsupportedReason;
+        if(!reason)throw error;
         rows.push({seed,status:'refused',
-          reason:error.roadPreview?.unsupportedReason??error.message,
+          reason,
           sourceRoadGroups:error.roadPreview?.kilometreFrames.at(-1)
             ?.roadGroups.map(group=>({id:group.id,
               count:group.riderIds.length}))??null});
