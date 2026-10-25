@@ -5519,5 +5519,21 @@ replay and opt-out test, changed-file lint, isolated preview Next build and
 both authenticated browser flows passed. The read-only 20-team
 `alternate-3` matrix now reports **20 conditional finishes and zero explicit
 refusals**. These are finite synthetic inputs, not unrestricted motor
-coverage or resolved occupied-wheel order. This batch remains preview-only
-until independently validated and released.
+coverage or resolved occupied-wheel order.
+
+Release verification: the independently tested release branch passed four
+focused whole-race regression groups, changed-file lint, an isolated Next
+build, and both new authenticated local browser flows. The bounded batch
+was pushed at release `8e84ddd3a1638c0296820f77587ee8f257d635da`.
+Production deployment `dpl_YjwZEeyX4VQTwk7acLVUhGVusnAN` reached READY
+at the exact SHA with the `tennedz.eu` alias; `/team/motor-lab` returned
+HTTP 200 from its assets and checked error/fatal runtime logs were empty.
+Previous deployment `dpl_C4oSPzAY4rbYY4Dm1PUQBSGUL74V` remains rollback.
+No full repository unit or full browser-suite pass was claimed.
+
+The complete subsequent read-only 60-case `alternate-3` heterogeneous-field
+matrix reported **60 conditional finishes and zero explicit refusals**:
+20/20 each at 4, 15 and 20 teams, across both genders, five terrains and
+two fatigue levels. The synthetic seed family and these bounded input
+combinations do not establish unrestricted contact coverage. Every
+conditional wheel order still withholds official places, points and awards.
