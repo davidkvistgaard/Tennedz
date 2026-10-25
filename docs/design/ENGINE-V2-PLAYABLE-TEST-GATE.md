@@ -5937,3 +5937,10 @@ approach under the inferred road-2 queue, and 160 paid conditional
 crossings with replayed energy. The existing internal-only version
 replays this source too. Occupied-wheel response and official results
 remain unresolved, so guided Motor Lab still refuses it.
+
+A read-only 20-team `alternate-18` matrix conditionally finished **20/20**
+with zero explicit refusals across genders, five terrains and fatigue
+0/30. It exercised the already versioned bounded clear, multifront,
+many-pre500, crowded, fifteen-contact and eleven-onefront paths. This
+seed family adds confidence to those guards; it does not establish a
+universal contact or official classification policy.
