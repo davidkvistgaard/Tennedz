@@ -655,6 +655,12 @@ test('alternate-5 custom dual-front exits pay one conditional late passage',
     const summary=summarizeV93CoastedPlaytest(played);
     assert.equal(summary.lineTimes.length,160);
     assert.equal(summary.bandReplays.flatMap(row=>row.riderIds).length,160);
+    assert.equal(summary.mixedTwoFrontOlderDrops.freshWheelApproaches
+      .filter(row=>row.handoffPhase==='before_500m').length,8);
+    assert.equal(summary.mixedTwoFrontOlderDrops.freshWheelApproaches
+      .filter(row=>row.handoffPhase==='after_500m').length,1);
+    assert.ok(summary.mixedTwoFrontOlderDrops.freshWheelApproaches.every(row=>
+      ['road-2','road-4'].includes(row.sourceRoadGroupId)));
     assert.equal(validateV93CoastedPlaytest(settings,{},played),true);
     assert.throws(()=>createV93PlayableTest(settings,{},
       {resolveMixedTwoFrontEightMultifrontParallelFinal:false}),

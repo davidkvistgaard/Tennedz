@@ -3086,6 +3086,10 @@ for(const [gender,terrain,fatigue,seedSuffix,preCount,firstRider,secondRider,
         secondRiderId:secondRider,firstLane:2,secondLane:3});
     expect(body.coasted.mixedTwoFrontOlderDrops.freshWheelApproaches)
       .toHaveLength(preCount+1);
+    const lateApproach=body.coasted.mixedTwoFrontOlderDrops
+      .freshWheelApproaches.at(-1);
+    expect(lateApproach.handoffPhase).toBe('after_500m');
+    expect(lateApproach.sourceRoadGroupId).toBe('road-2');
     expect(body.coasted.classifiedResults).toBeNull();
     expect(body.coasted.canCommitAwards).toBe(false);
     await page.goto('/team/v91-playtest');
@@ -3103,6 +3107,13 @@ for(const [gender,terrain,fatigue,seedSuffix,preCount,firstRider,secondRider,
         row.fromRoadGroupId))].join(' and ')}`);
     await expect(note).toContainText('different fixed source lanes');
     await expect(note).toContainText('without drafting after');
+    await expect(note).toContainText(
+      `${preCount} before and 1 after the 500 m handoff`);
+    await note.getByText(`${preCount+1} possible individual approaches`,{
+      exact:false}).click();
+    await expect(note).toContainText(`${lateApproach.firstRiderId} approached ${
+      lateApproach.secondRiderId} at ${
+      (lateApproach.atDistanceM/1000).toFixed(3)} km in road-2, after the 500 m handoff`);
     await expect(page.getByText('Official points: withheld · Awards saved: 0'))
       .toBeVisible();
   });
