@@ -136,6 +136,17 @@ function recordingFor(settings){
     motorVersion:MOTOR_EXHAUSTION_COAST_VERSION});
 }
 
+test('a mixed-front clear race keeps its own summary path',()=>{
+  const settings=settingsFor(20,'M','flat',0);
+  settings.seed+='-alternate-8';
+  const race=createV93PlayableTest(settings);
+  assert.equal(race.version,'v93-mixed-front-clear-playtest-1');
+  const summary=summarizeV93CoastedPlaytest(race);
+  assert.equal(summary.lineTimes.length,160);
+  assert.equal(summary.pointsStatus,'withheld');
+  assert.equal(summary.canCommitAwards,false);
+});
+
 test('alternate-6 crowded dual-front contact pays a conditional 160-rider line',()=>{
   const settings=settingsFor(20,'F','flat',30);
   settings.seed+='-alternate-6';
