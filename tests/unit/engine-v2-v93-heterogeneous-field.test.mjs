@@ -21,6 +21,7 @@ import {createV93PlayableTest,validateV93CoastedPlaytest,
   V93_MIXED_TWO_FRONT_FOURTEEN_MULTIFRONT_PARALLEL_FINAL_PLAYTEST_VERSION,
   V93_MIXED_TWO_FRONT_EIGHT_ONEFRONT_CLEAN_FINAL_PLAYTEST_VERSION,
   V93_MIXED_TWO_FRONT_TEN_ONEFRONT_PARALLEL_FINAL_PLAYTEST_VERSION,
+  V93_MIXED_TWO_FRONT_EIGHT_MULTIFRONT_PARALLEL_FINAL_PLAYTEST_VERSION,
   V93_MIXED_TWO_FRONT_BOUNDED_MULTIFRONT_PARALLEL_FINAL_PLAYTEST_VERSION} from
   '../../lib/engine/v2/playtest-v93-coasted.mjs';
 import {prepareV91Playtest} from '../../lib/engine/v2/playtest.mjs';
@@ -96,6 +97,7 @@ import {recordFinaleMixedTwoFrontDroppedManyPre500Result,
   recordFinaleMixedTwoFrontDroppedFourteenMultifrontParallelFinalResult,
   recordFinaleMixedTwoFrontDroppedEightOnefrontCleanFinalResult,
   recordFinaleMixedTwoFrontDroppedTenOnefrontParallelFinalResult,
+  recordFinaleMixedTwoFrontDroppedEightMultifrontParallelFinalResult,
   FINALE_MIXED_TWO_FRONT_DROPPED_MULTIFRONT_PARALLEL_FINAL_RESULT_VERSION} from
   '../../lib/engine/v2/finale-mixed-two-front-dropped-many-pre500-result.mjs';
 
@@ -275,6 +277,49 @@ test('alternate-4 mountain single-front exits pay conditional individual lines',
         resolveMixedTwoFrontTenOnefrontParallelFinal:false}),
         /depleted line bands crossed without contact/i);
     }
+  });
+
+test('alternate-5 custom dual-front exits pay one conditional late passage',
+  ()=>{
+    const settings=settingsFor(20,'M','custom',30);
+    settings.seed+='-alternate-5';
+    const recording=recordingFor(settings);
+    const clock=recordFinaleCoastMixedTwoFrontDroppedClock(recording);
+    const line=recordFinaleCoastedIndividualLine(recording,clock,{
+      laneQueuedBandIds:['road-2']});
+    const early=recordFinaleMixedTwoFrontDroppedMultifrontPre500Audit(
+      recording,clock,line);
+    const late=recordFinaleMixedTwoFrontDroppedMultifrontParallelFinalAudit(
+      recording,clock,line,early);
+    assert.equal(line.conditionalCrossings.length,160);
+    assert.equal(early.freshApproaches.length,8);
+    assert.equal(new Set(early.freshApproaches.map(row=>
+      row.sourceRoadGroupId)).size,2);
+    assert.equal(late.freshApproaches.length,1);
+    assert.equal(late.parallelFinalLaneEvidence.fixedSourceLanes,true);
+    assert.equal(late.parallelFinalLaneEvidence.noDraftAfterApproach,true);
+    assert.equal(late.contactResolved,false);
+    assert.equal(late.pointsStatus,'withheld');
+    const result=recordFinaleMixedTwoFrontDroppedEightMultifrontParallelFinalResult(
+      recording);
+    assert.equal(result.line.conditionalCrossings.length,160);
+    assert.equal(result.classifiedResults,null);
+    assert.equal(result.pointsStatus,'withheld');
+    assert.equal(result.canCommitAwards,false);
+    const played=createV93PlayableTest(settings);
+    assert.equal(played.version,
+      V93_MIXED_TWO_FRONT_EIGHT_MULTIFRONT_PARALLEL_FINAL_PLAYTEST_VERSION);
+    assert.equal(played.mixedTwoFrontResult.line.conditionalCrossings.length,160);
+    assert.equal(played.classifiedResults,null);
+    assert.equal(played.pointsStatus,'withheld');
+    assert.equal(played.canCommitAwards,false);
+    const summary=summarizeV93CoastedPlaytest(played);
+    assert.equal(summary.lineTimes.length,160);
+    assert.equal(summary.bandReplays.flatMap(row=>row.riderIds).length,160);
+    assert.equal(validateV93CoastedPlaytest(settings,{},played),true);
+    assert.throws(()=>createV93PlayableTest(settings,{},
+      {resolveMixedTwoFrontEightMultifrontParallelFinal:false}),
+      /depleted line bands crossed without contact/i);
   });
 
 test('bounded two-front exits pay clean and parallel final halves without awards',
