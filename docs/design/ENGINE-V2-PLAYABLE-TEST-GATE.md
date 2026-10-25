@@ -5611,3 +5611,18 @@ exact SHA with the `tennedz.eu` alias. `/team/motor-lab` returned HTTP
 200 from its assets and checked error/fatal logs were empty. Previous
 deployment `dpl_Go9XzmE4GTLiBS3uwA5QwdMhDJeZ` remains rollback.
 No fresh full repository unit or browser-suite pass is claimed.
+
+The read-only `alternate-6` heterogeneous-field audit found **59
+conditional finishes and one explicit `unresolved_band_contact` refusal**
+among 60 synthetic 260 km races. The refused 20-team women's flat,
+fatigue-30 race starts the final kilometre with two 20-rider fronts and
+30 earlier isolated riders. Eight riders leave each front; the separate
+individual line candidate pays all 160 crossings, but does not authorize
+a player-facing result. A new internal-only, separately versioned audit
+checks 15 fresh same-source individual 2.5 m approaches in the first
+500 m, splitting both riders' paid movement and energy at each instant.
+It also checks every final-500 m pair under distinct inferred outside
+lanes. The audit keeps `contactResolved:false`, classified results null,
+and points/awards withheld; the guided Motor Lab still refuses this
+source. The locked focused whole-race test and changed-file lint pass.
+Group marker overlap is not accepted as occupied-wheel contact.
