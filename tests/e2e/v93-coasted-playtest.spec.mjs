@@ -3132,6 +3132,8 @@ for(const [approaches,gender,terrain,fatigue,seedSuffix,version] of [
     'v93-mixed-two-front-eleven-onefront-clean-final-playtest-1'],
   [6,'M','mountain',0,'alternate-10',
     'v93-mixed-two-front-six-onefront-clean-final-playtest-1'],
+  [14,'M','mountain',0,'alternate-11',
+    'v93-mixed-two-front-fourteen-onefront-clean-final-playtest-1'],
   [4,'F','mountain',0,'alternate-7',
     'v93-mixed-two-front-four-onefront-clean-final-playtest-1']])test(
   `${approaches} early ${terrain} approaches ${seedSuffix} retain a conditional 160-rider line`,
@@ -3258,6 +3260,8 @@ test('straddling outside lanes keep seven riders separate through the line',
     const note=page.getByRole('note',{
       name:'Conditional straddling outside lanes'});
     await expect(note).toContainText('group marker crossings happened later');
+    await expect(note).toContainText('38 possible wheel proximities');
+    await expect(note).toContainText('rival-9-7 reapproached rival-10-7');
     await expect(note).toContainText('official places');
     await page.getByRole('button',{
       name:'Inspect straddling outside-lane rider rival-9-7 finish replay'})
