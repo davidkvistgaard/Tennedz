@@ -5904,3 +5904,15 @@ women's source (one from each front). Its open-road final-half audit finds
 no fresh approach, but the bounded queued-lane result guard does not match
 these sources. Occupied-wheel responses and official places, points and
 awards remain unresolved; the guided races retain explicit refusals.
+
+A read-only 20-team `alternate-15` matrix also finished **18/20**
+conditionally. The remaining women's rolling and mountain races at
+fatigue 30 explicitly refuse. Both start with two 20-rider fronts and
+eight leavers from each. The rolling source has 30 older drops, five
+paid early individual approaches (four road-2, one road-4), no fresh
+final-half approach, and 160 internal candidate crossings. The mountain
+source has 33 older drops, eight paid early approaches (seven road-2,
+one road-4), and one paid late rival-11-7/rival-3-7 approach near
+259803.357 m. Its internal line also counts all 160 riders. Occupied-wheel
+response, classified results, points and awards remain unresolved; both
+guided races retain explicit refusals.
