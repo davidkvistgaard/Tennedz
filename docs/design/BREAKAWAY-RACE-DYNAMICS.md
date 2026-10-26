@@ -283,3 +283,23 @@ paid road-group pullers appeared in a different list order after a later
 road-group snapshot. v94 now validates the unique worker and resting rider
 *membership*, including passive road movement, without interpreting array
 order as occupied-wheel position. A changed or duplicated worker still fails.
+
+An internal, separately versioned pre-race workbench experiment now creates
+`prepareV94RivalIntent` from the synthetic roster, declared manager orders,
+route category and race seed. It commits each generated rival role together
+with a matching baseline order and reports whether the choice was generated
+or supplied by a manager. Explicit tactics are left intact; a manager who
+orders both an attack and a chase retains both, rather than being silently
+turned into a protective non-attacker. This is a seeded design proposal, not
+an empirically fitted team-goal model or a guided Motor Lab input.
+
+The `--planned-intent --summary --validate` audit over the same three seeds,
+flat/mountain routes, fatigue 0/30 and one-day/stage formats generated a mean
+four break teams and 2.33 control teams per race. All 24 complete recordings
+passed the v94 consistency validator. But only 2/6 original fronts were
+fully caught in fresh one-day races, 2/6 in fatigued one-day races, and 0/6
+in either stage-race fatigue set. Mean maximum leads were approximately 499,
+490, 580 and 574 seconds respectively. The roles yield a sustained break,
+yet the fresh one-day pursuit remains too weak for the intended experience.
+Do not route this planner to players or tune it from one seed; next audits
+must vary seeds and team goals and inspect actual paid pursuit and energy.

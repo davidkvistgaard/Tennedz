@@ -6,6 +6,7 @@ import {validateRecordedTour} from '../lib/engine/v2/recording.mjs';
 import {MOTOR_RACE_DYNAMICS_VERSION} from '../lib/engine/v2/tuning.mjs';
 import {observedFrontClosingSecondsPerKm} from '../lib/engine/v2/race-context-v1.mjs';
 import {resolveRandomRivalTactics} from '../lib/engine/v2/playtest-rival-random.mjs';
+import {prepareV94RivalIntent} from '../lib/engine/v2/playtest-rival-intent-v94.mjs';
 
 const seeds=['sample-flat-finish','race-dynamics-1','race-dynamics-2'];
 function seededRandom(label){
@@ -18,8 +19,10 @@ function run({seed,terrain,fatigue,format,breakTeams,controlTeams}){
   const teamCount=20;
   const mixedDefaults=process.argv.includes('--mixed-defaults');
   const guidedRandom=process.argv.includes('--guided-random');
+  const plannedIntent=process.argv.includes('--planned-intent');
   const managerTactics=guidedRandom?resolveRandomRivalTactics({teamCount,
-    random:seededRandom(`${seed}:${terrain}:${fatigue}`)}):mixedDefaults?[]:
+    random:seededRandom(`${seed}:${terrain}:${fatigue}`)}):
+    mixedDefaults||plannedIntent?[]:
     Array.from({length:teamCount-1},(_,index)=>{
     const number=index+1;
     return number<=breakTeams?
@@ -30,7 +33,10 @@ function run({seed,terrain,fatigue,format,breakTeams,controlTeams}){
   });
   const prepared=prepareV91Playtest({distanceKm:260,terrain,teamCount,
     fatigue,attack:'none',chase:'ignore',seed,managerTactics});
-  const teamRoles=Object.fromEntries(prepared.teams.map((team,index)=>[
+  const planned=plannedIntent?prepareV94RivalIntent({prepared,format,
+    ...(format==='stage'?{stageNumber:8}:{})}):null;
+  const teams=planned?.teams??prepared.teams;
+  const teamRoles=planned?.raceContext.teamRoles??Object.fromEntries(teams.map((team,index)=>[
     team.id,mixedDefaults||guidedRandom?
       team.orders.baseline.chase==='all'?'control':
         team.orders.baseline.attack!=='none'&&
@@ -38,14 +44,15 @@ function run({seed,terrain,fatigue,format,breakTeams,controlTeams}){
           team.orders.baseline.chase==='selective'?'protect':'opportunistic':
       index===0?'protect':index<=breakTeams?'break':
         index<=breakTeams+controlTeams?'control':'protect']));
-  const intendedBreakTeams=mixedDefaults||guidedRandom?
+  const intendedBreakTeams=mixedDefaults||guidedRandom||plannedIntent?
     Object.values(teamRoles).filter(role=>role==='break').length:breakTeams;
-  const intendedControlTeams=mixedDefaults||guidedRandom?
+  const intendedControlTeams=mixedDefaults||guidedRandom||plannedIntent?
     Object.values(teamRoles).filter(role=>role==='control').length:controlTeams;
   const recording=simulateTacticalTour({stage:prepared.stage,
-    weather:prepared.weather,teams:prepared.teams,seed:prepared.seed,
+    weather:prepared.weather,teams,seed:prepared.seed,
     motorVersion:MOTOR_RACE_DYNAMICS_VERSION,
-    raceContext:{format,...(format==='stage'?{stageNumber:8}:{}),teamRoles}});
+    raceContext:planned?.raceContext??
+      {format,...(format==='stage'?{stageNumber:8}:{}),teamRoles}});
   if(process.argv.includes('--validate'))validateRecordedTour(recording);
   const frames=recording.frames;
   const gaps=frames.map(frame=>frame.gapSeconds);
@@ -131,7 +138,8 @@ function run({seed,terrain,fatigue,format,breakTeams,controlTeams}){
 
 const rows=[];
 const roleMixes=process.argv.includes('--mixed-defaults')||
-  process.argv.includes('--guided-random')?[[0,0]]:
+  process.argv.includes('--guided-random')||
+  process.argv.includes('--planned-intent')?[[0,0]]:
   process.argv.includes('--stress')?
   [[5,0],[5,1],[5,8]]:[[3,2],[5,2],[5,4],[5,6]];
 for(const terrain of ['flat','mountain'])for(const fatigue of [0,30])
