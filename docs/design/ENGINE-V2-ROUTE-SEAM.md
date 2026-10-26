@@ -99,3 +99,13 @@ produce only a positive inter-group gap. If that gap could close, the first
 unpaid slice is refused without charging any member. Internal wheel positions,
 drafting, attacks, recovery, merges, official results and guided routing remain
 unresolved. This calculation has no effect on saved v2 races.
+
+
+The same bounded fixed-two-group clock can now replay a complete synthetic
+integer-kilometre stage, carrying each member's energy and the positive
+inter-group gap across every precise feature/condition boundary. Precommitted
+group-wide 5 km effort changes take effect in the following kilometre. A
+possible group catch stops at the first unpaid slice and returns no classified
+result. Group membership and cooperative work remain fixed throughout; this is
+internal evidence, not a replacement for the v2 whole-race tactics/attack,
+drafting, recovery or contact systems.
