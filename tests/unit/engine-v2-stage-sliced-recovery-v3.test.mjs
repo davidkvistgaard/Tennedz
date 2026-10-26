@@ -2,7 +2,8 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {normalizeStageOverlayV3} from
   '../../lib/engine/v2/stage-overlay-v3.mjs';
-import {projectStageRecoveryKilometreV3} from
+import {projectStageRecoveryKilometreV3,
+  settleStageRecoveryKilometreV3} from
   '../../lib/engine/v2/stage-sliced-recovery-v3.mjs';
 import {recoveryForKilometre} from '../../lib/engine/v2/recovery.mjs';
 
@@ -61,4 +62,35 @@ test('recovery projection refuses unresolved topography and bad baseline',()=>{
   assert.throws(()=>project(stage),/resolved slice topography/);
   assert.throws(()=>project(overlay(),{baseTerrain:'unknown'}),
     /baseline terrain/);
+});
+
+test('recovery settles after paid work under the supplied race capacity',()=>{
+  const projection=project(overlay());
+  const full=settleStageRecoveryKilometreV3({projection,
+    energyAfterPaidWork:50,energyCap:60});
+  assert.equal(full.recoveryApplied,projection.recoveryPotential);
+  assert.equal(full.capAdjustment,0);
+  assert.equal(full.energyAfter,50+projection.recoveryPotential);
+  const capped=settleStageRecoveryKilometreV3({projection,
+    energyAfterPaidWork:59.9,energyCap:60});
+  assert.equal(capped.recoveryApplied,
+    Math.min(projection.recoveryPotential,.1));
+  assert.equal(capped.energyAfter,60);
+  assert.ok(capped.capAdjustment>=0);
+  const blocked=settleStageRecoveryKilometreV3({projection:
+    project(overlay([{id:'climb',kind:'climb',fromKm:10.2,
+      toKm:10.4,gradientPct:8}])),
+  energyAfterPaidWork:50,energyCap:60});
+  assert.equal(blocked.energyAfter,50);
+  assert.equal(blocked.recoveryApplied,0);
+});
+
+test('recovery settlement refuses unearned energy or an invalid cap',()=>{
+  const projection=project(overlay());
+  assert.throws(()=>settleStageRecoveryKilometreV3({projection,
+    energyAfterPaidWork:61,energyCap:60}),/capacity/);
+  assert.throws(()=>settleStageRecoveryKilometreV3({projection,
+    energyAfterPaidWork:50,energyCap:101}),/capacity/);
+  assert.throws(()=>settleStageRecoveryKilometreV3({projection:{},
+    energyAfterPaidWork:50,energyCap:60}),/projection/);
 });

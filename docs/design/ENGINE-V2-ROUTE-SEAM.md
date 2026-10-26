@@ -226,4 +226,7 @@ before awarding the existing once-per-kilometre quiet-bunch recovery. A short
 steep climb or rough exposed stretch anywhere in the kilometre resets the
 quiet counter; a uniformly calm kilometre matches the v2 recovery rule.
 Overlapping topography refuses. This projection applies neither recovered
-energy nor the rider's cap, and does not advance bunch or dropped riders.
+energy nor the rider's cap. A separate settlement accepts paid post-work
+energy and an explicit current capacity, then reports applied recovery and
+the amount lost to the cap. Neither step advances bunch or dropped riders,
+calculates a new cap, or authenticates a saved recording.
