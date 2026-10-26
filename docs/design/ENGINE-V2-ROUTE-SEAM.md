@@ -248,3 +248,12 @@ separated fixed bands: quiet-bunch recovery, attacks, drops, changing group
 membership, occupied wheels, the riders outside the eligible road bands,
 and a whole-race classification remain unresolved. It is internal preview
 evidence, not a guided Motor Lab result or a deployed v3 motor.
+
+A same-run continuation now binds that capacity replay to a v2 recording's
+authenticated paid split and a complete future v3 stage input. It carries
+the issued capacity for each rider in the eligible separated road bands,
+while listing every other source rider and hidden state as unadvanced.
+Copied or ordinary saved recordings are refused because their capacities
+cannot be authenticated from visible frames. The locked 24-rider source
+therefore still has `wholeRaceCovered: false`; the continuation cannot
+produce a whole-race line or awards.

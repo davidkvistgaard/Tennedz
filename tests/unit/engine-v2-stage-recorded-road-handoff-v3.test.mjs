@@ -18,7 +18,9 @@ import {prepareIssuedRoadHandoffV3,
   '../../lib/engine/v2/stage-issued-road-handoff-v3.mjs';
 import {normalizeCompleteStageInputV3,
   continueRecordedRoadWithCompleteStageV3,
-  STAGE_COMPLETE_INPUT_VERSION,STAGE_RECORDED_CONTINUATION_VERSION} from
+  continueIssuedRoadWithCapacityStageV3,
+  STAGE_COMPLETE_INPUT_VERSION,STAGE_RECORDED_CONTINUATION_VERSION,
+  STAGE_ISSUED_CAPACITY_CONTINUATION_VERSION} from
   '../../lib/engine/v2/stage-complete-input-v3.mjs';
 
 function fixture(){
@@ -282,6 +284,39 @@ test('one complete stage input owns terrain and short-slice conditions after pai
   assert.deepEqual(recording,before);
   assert.equal(Object.hasOwn(flat,'places'),false);
   assert.equal(Object.hasOwn(climb,'awards'),false);
+});
+
+test('same-run split carries real capacity only for the bounded road subset',()=>{
+  const {input,overlay}=fixture();
+  const issued=simulateTacticalTourWithHandoffStateV3(input);
+  const stageInput=normalizeCompleteStageInputV3({
+    version:STAGE_COMPLETE_INPUT_VERSION,overlay,
+    kilometreBaselines:issued.recording.route.kilometres.map(segment=>({
+      terrain:segment.terrain,gradientPct:segment.gradientPct,
+      source:'illustrative'}))});
+  const handoff=prepareIssuedRoadHandoffV3({recording:issued.recording,
+    frameIndex:30,overlay});
+  const pullRiderIds=handoff.roadHandoff.bands.flatMap(band=>
+    band.members.map(member=>member.id));
+  const run=recording=>continueIssuedRoadWithCapacityStageV3({recording,
+    frameIndex:30,stageInput,pullRiderIds});
+  const result=run(issued.recording);
+  assert.equal(result.version,STAGE_ISSUED_CAPACITY_CONTINUATION_VERSION);
+  assert.equal(result.startedAtKm,31);
+  assert.equal(result.sourceCoverage.totalRiders,24);
+  assert.equal(result.sourceCoverage.wholeRaceCovered,false);
+  assert.equal(result.sourceCoverage.continuedRiderIds.length+
+    result.sourceCoverage.outsideRiderStates.length,24);
+  assert.ok(result.kilometres[0].frames.length>0);
+  for(const row of result.kilometres[0].capacities){
+    const source=handoff.continuedRiderStates.find(rider=>
+      rider.riderId===row.riderId);
+    assert.ok(source);
+    assert.ok(row.energyCap<=source.energyCap);
+  }
+  assert.equal(Object.hasOwn(result,'places'),false);
+  assert.throws(()=>run(structuredClone(issued.recording)),/same-run issued/);
+  assert.throws(()=>run(simulateTacticalTour(input)),/same-run issued/);
 });
 
 test('complete stage input refuses incomplete or unprovenanced terrain',()=>{
