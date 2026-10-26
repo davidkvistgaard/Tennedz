@@ -596,7 +596,7 @@ test('paid pre-500 m front passes reach line and replay without awards',
       .toBeVisible();
   });
 
-test('unresolved later front markers stay visible without a false finish',
+test('former front-marker refusal now has a conditional no-award line',
   async({page})=>{
     await page.goto('/login');
     await page.getByLabel('Email or username').fill('alice');
@@ -621,37 +621,24 @@ test('unresolved later front markers stay visible without a false finish',
         plans:['you',...Array.from({length:teamCount-1},(_,index)=>
           `rival-${index+1}`)].map(teamId=>({teamId,
           finisherId:`${teamId}-7`,leadOutRiderId:null}))}});
-    expect(response.status()).toBe(422);
+    expect(response.status()).toBe(200);
     const body=await response.json();
-    expect(body.roadPreview.markerAudit.encounters).toHaveLength(7);
-    expect(body.roadPreview.markerAudit.encounters.filter(row=>
-      row.distanceM<259500)).toHaveLength(3);
-    expect(body.roadPreview.markerAudit.encounters.filter(row=>
-      row.distanceM>=259500)).toHaveLength(4);
-    expect(body.roadPreview.lineTimes).toBeNull();
+    expect(body.coasted.lineTimes).toHaveLength(160);
+    expect(body.coasted.pointsStatus).toBe('withheld');
+    expect(body.coasted.pointPreview).toBeNull();
     await page.goto('/team/v91-playtest');
     await page.getByRole('checkbox',{
       name:'Continue to a conditional finish'}).check();
     await page.getByRole('checkbox',{
       name:'Try v93 road-to-line preview'}).check();
     await page.route('**/api/v91-playtest',route=>route.fulfill({
-      status:422,contentType:'application/json',body:JSON.stringify(body)}));
+      status:200,contentType:'application/json',body:JSON.stringify(body)}));
     await page.getByRole('button',{name:'Run v93 race preview'}).click();
-    const note=page.getByRole('note',{
-      name:'Unresolved front marker overlaps'});
-    await expect(note).toContainText('you-7');
-    await expect(note).toContainText('not resolved occupied-wheel encounters');
-    await expect(note).toContainText('3 marker overlaps before');
-    await expect(note).toContainText('4 at or after it');
-    const history=page.getByLabel('Recorded race before the refusal');
-    await expect(history).toContainText('Recorded road changes');
-    const moments=history.getByRole('button');
-    expect(await moments.count()).toBeGreaterThan(0);
-    await moments.last().click();
-    expect(Number(await page.getByRole('slider',{
-      name:/Recorded kilometre/}).inputValue())).toBeGreaterThan(0);
     await expect(page.getByRole('table',{
-      name:'V93 individual conditional results'})).toHaveCount(0);
+      name:'V93 individual conditional results'}).getByRole('row'))
+      .toHaveCount(161);
+    await expect(page.getByText('Official points: withheld · Awards saved: 0'))
+      .toBeVisible();
   });
 
 test('dissolved leading front reaches paid individual replay without awards',

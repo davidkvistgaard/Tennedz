@@ -732,7 +732,8 @@ export default function Playtest({guided=false}){
         <button type="button" disabled={!coasted&&!roadPreview}
           onClick={()=>document.getElementById(coasted?
             'v93-race-viewer':'v91-paid-road')?.scrollIntoView()}>
-          2 · Watch recorded race</button>
+          {coasted?'2 · Watch recorded race':
+            roadPreview?'2 · Inspect paid road':'2 · Watch recorded race'}</button>
         <button type="button" disabled={!coasted?.lineTimes?.length}
           onClick={()=>document.getElementById(
             'v93-your-finish')?.scrollIntoView()}>

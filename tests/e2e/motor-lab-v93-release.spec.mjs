@@ -172,6 +172,47 @@ test('guided Motor Lab applies an effort order after a selected 5 km marker', as
     .toContainText('Conditional place:');
 });
 
+test('guided refusal opens paid road and keeps result unavailable',async({page})=>{
+  test.setTimeout(120000);
+  await page.goto('/login');
+  await page.getByLabel('Email or username').fill('alice');
+  await page.getByLabel('Password',{exact:true}).fill('fixture-password');
+  await page.getByRole('button',{name:'Sign in',exact:true}).click();
+  await expect(page).toHaveURL(/\/team$/);
+  const teamCount=20,gender='M',terrain='mountain',fatigue=30;
+  const settings={distanceKm:260,teamCount,gender,terrain,fatigue,
+    seed:'v93-heterogeneous-20-M-mountain-30-alternate-11',
+    defaultRivalPlan:'passive',effort:'hard',attack:'repeated',chase:'all',
+    managerTactics:Array.from({length:teamCount-1},(_,index)=>({
+      effort:['hard','steady','conserve'][index%3],
+      attack:index%3===0?'repeated':'selective',
+      chase:index%3===1?'all':'selective'})),
+    teamOverrides:[{teamId:'you',level:45},
+      ...Array.from({length:teamCount-1},(_,index)=>({
+        teamId:`rival-${index+1}`,level:index%2===0?25:65}))],
+    managerFinaleOrders:[
+      {teamId:'you',atKm:255,effort:'steady',chase:'all'},
+      {teamId:'rival-1',atKm:255,effort:'hard'}]};
+  const response=await page.request.post('/api/v91-playtest',{
+    headers:{origin:'http://localhost:3100'},data:{mode:'v93-coasted',settings,
+      plans:['you',...Array.from({length:teamCount-1},(_,index)=>
+        `rival-${index+1}`)].map(teamId=>({teamId,
+        finisherId:`${teamId}-7`,leadOutRiderId:null}))}});
+  expect(response.status()).toBe(422);
+  const body=await response.json();
+  expect(body.roadPreview?.lineTimes).toBeNull();
+  await page.goto('/team/motor-lab');
+  const flow=page.getByRole('navigation',{name:'Motor Lab race flow'});
+  await page.route('**/api/v91-playtest',route=>route.fulfill({
+    status:422,contentType:'application/json',body:JSON.stringify(body)}));
+  await page.getByRole('button',{name:'Run the race'}).click();
+  await flow.getByRole('button',{name:'2 · Inspect paid road'}).click();
+  await expect(page.getByRole('region',{
+    name:'Recorded road without individual finish'})).toBeVisible();
+  await expect(flow.getByRole('button',{
+    name:'3 · Inspect conditional result'})).toBeDisabled();
+});
+
 test('guided Motor Lab replays two precommitted 5 km effort changes', async({page}) => {
   await page.setViewportSize({width:390,height:844});
   await page.goto('/login');
