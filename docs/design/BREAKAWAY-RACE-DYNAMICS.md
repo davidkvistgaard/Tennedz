@@ -239,7 +239,8 @@ of roughly 16–18 minutes; it cannot yet pick credible opponent roles or
 claim that a typical race settles near any particular gap. The stress runs
 are synthetic extremes, not evidence for real-world frequencies.
 
-The existing guided test rival plans reveal a different problem. The
+The static `mixed` test rival plans reveal a different problem. They are not
+the guided Motor Lab's random rival generator. The
 read-only `--mixed-defaults --summary --validate` diagnostic infers provisional
 roles from those plans without changing any team orders: five attack/ignore
 teams become `break`, five hard/all-chase teams become `control`, and the rest
@@ -248,9 +249,37 @@ all recordings pass v94 validation but **none records a settled-front rest
 turn**. The mean maximum lead is only 8 s for fresh one-day races, 23 s for
 fatigued one-day races, 8 s for fresh stages and 74 s for fatigued stages.
 The first chase is around kilometre 20; in every case the initial five-rider
-front is caught. This diagnostic is deliberately *not* a default role planner.
-It shows that merely applying v94 to the current guided rival orders would
-reproduce the rapid-fire, short-gap race the user wants to change. Before
+front is caught. This diagnostic is deliberately *not* a default role planner
+or a measurement of the guided default. It shows that merely applying v94 to
+the static mixed orders would reproduce the rapid-fire, short-gap race. Before
 routing v94, rival intent must be generated as a committed pre-race choice
 and the manager must be able to inspect it in the workbench. A team explicitly
 ordered to chase cannot silently be relabelled passive to manufacture a gap.
+
+The separate `--guided-random --summary --validate` diagnostic samples the
+actual guided rival-tactic resolver with the same seeded diagnostic generator
+used for the old v91 baseline, then provisionally maps those recorded orders
+to roles. The live UI draws its rival tactics with a fresh random source, so
+these are reproducible samples of its policy, not the exact next live draw.
+Across 24 seeded flat/mountain 260 km cases, the resolver assigns about 8–9
+attack/ignore teams and 2–3 all-chase teams per race on average. The v94
+candidate records settled-front rest and passes validation in all 24 cases:
+
+| Format | Starting fatigue | Original front fully caught | Mean maximum lead | Mean resting-front rider-km |
+| --- | ---: | ---: | ---: | ---: |
+| One-day | 0 | 2/6 | 295 s | 125 |
+| One-day | 30 | 0/6 | 459 s | 290 |
+| Stage | 0 | 2/6 | 403 s | 125 |
+| Stage | 30 | 0/6 | 595 s | 290 |
+
+This is closer to a sustained break than the static `mixed` case, but the
+original break is rarely fully caught, including in fresh one-day races.
+It does not yet meet the intended end-to-end race dynamics. The inferred
+role map is audit-only; future playable intent must be committed and visible
+before the start, while manager overrides remain authoritative.
+
+That wider rival mix also exposed an internal validation error: the same
+paid road-group pullers appeared in a different list order after a later
+road-group snapshot. v94 now validates the unique worker and resting rider
+*membership*, including passive road movement, without interpreting array
+order as occupied-wheel position. A changed or duplicated worker still fails.

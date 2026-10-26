@@ -5,12 +5,22 @@ import {simulateTacticalTour} from '../lib/engine/v2/tour.mjs';
 import {validateRecordedTour} from '../lib/engine/v2/recording.mjs';
 import {MOTOR_RACE_DYNAMICS_VERSION} from '../lib/engine/v2/tuning.mjs';
 import {observedFrontClosingSecondsPerKm} from '../lib/engine/v2/race-context-v1.mjs';
+import {resolveRandomRivalTactics} from '../lib/engine/v2/playtest-rival-random.mjs';
 
 const seeds=['sample-flat-finish','race-dynamics-1','race-dynamics-2'];
+function seededRandom(label){
+  let state=2166136261;
+  for(const character of label)
+    state=Math.imul(state^character.charCodeAt(0),16777619)>>>0;
+  return ()=>((state=(Math.imul(state,1664525)+1013904223)>>>0)/2**32);
+}
 function run({seed,terrain,fatigue,format,breakTeams,controlTeams}){
   const teamCount=20;
   const mixedDefaults=process.argv.includes('--mixed-defaults');
-  const managerTactics=mixedDefaults?[]:Array.from({length:teamCount-1},(_,index)=>{
+  const guidedRandom=process.argv.includes('--guided-random');
+  const managerTactics=guidedRandom?resolveRandomRivalTactics({teamCount,
+    random:seededRandom(`${seed}:${terrain}:${fatigue}`)}):mixedDefaults?[]:
+    Array.from({length:teamCount-1},(_,index)=>{
     const number=index+1;
     return number<=breakTeams?
       {effort:'steady',attack:'repeated',chase:'ignore'}:
@@ -21,16 +31,16 @@ function run({seed,terrain,fatigue,format,breakTeams,controlTeams}){
   const prepared=prepareV91Playtest({distanceKm:260,terrain,teamCount,
     fatigue,attack:'none',chase:'ignore',seed,managerTactics});
   const teamRoles=Object.fromEntries(prepared.teams.map((team,index)=>[
-    team.id,mixedDefaults?
+    team.id,mixedDefaults||guidedRandom?
       team.orders.baseline.chase==='all'?'control':
         team.orders.baseline.attack!=='none'&&
         team.orders.baseline.chase==='ignore'?'break':
           team.orders.baseline.chase==='selective'?'protect':'opportunistic':
       index===0?'protect':index<=breakTeams?'break':
         index<=breakTeams+controlTeams?'control':'protect']));
-  const intendedBreakTeams=mixedDefaults?
+  const intendedBreakTeams=mixedDefaults||guidedRandom?
     Object.values(teamRoles).filter(role=>role==='break').length:breakTeams;
-  const intendedControlTeams=mixedDefaults?
+  const intendedControlTeams=mixedDefaults||guidedRandom?
     Object.values(teamRoles).filter(role=>role==='control').length:controlTeams;
   const recording=simulateTacticalTour({stage:prepared.stage,
     weather:prepared.weather,teams:prepared.teams,seed:prepared.seed,
@@ -120,7 +130,8 @@ function run({seed,terrain,fatigue,format,breakTeams,controlTeams}){
 }
 
 const rows=[];
-const roleMixes=process.argv.includes('--mixed-defaults')?[[0,0]]:
+const roleMixes=process.argv.includes('--mixed-defaults')||
+  process.argv.includes('--guided-random')?[[0,0]]:
   process.argv.includes('--stress')?
   [[5,0],[5,1],[5,8]]:[[3,2],[5,2],[5,4],[5,6]];
 for(const terrain of ['flat','mountain'])for(const fatigue of [0,30])
@@ -133,7 +144,9 @@ for(const terrain of ['flat','mountain'])for(const fatigue of [0,30])
       const input={seed,terrain,fatigue,format,breakTeams,controlTeams};
       try{rows.push(run(input));}
       catch(error){
-        if(!String(error.message).startsWith('Unresolved front exhaustion'))throw error;
+        if(!String(error.message).startsWith('Unresolved front exhaustion'))
+          throw new Error(`Audit case ${JSON.stringify(input)}: ${error.message}`,
+            {cause:error});
         rows.push({...input,refusal:String(error.message)});
       }
     }
@@ -150,6 +163,8 @@ const summary=process.argv.includes('--summary')?
       .toFixed(2)
       :null;
     return {format,...group,cases:sample.length,
+      meanBreakTeams:average('breakTeams'),
+      meanControlTeams:average('controlTeams'),
       allInitialFrontCaught:completed.filter(row=>row.initialFrontRiders>0&&
         row.initialFrontAtLineRiders===0).length,
       meanMaxGapSeconds:average('maxGapSeconds'),

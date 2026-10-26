@@ -9,6 +9,15 @@ import {simulateTacticalTour} from '../../lib/engine/v2/tour.mjs';
 import {validateRecordedTour} from '../../lib/engine/v2/recording.mjs';
 import {MOTOR_RACE_DYNAMICS_VERSION,MOTOR_EXHAUSTION_COAST_VERSION} from
   '../../lib/engine/v2/tuning.mjs';
+import {resolveRandomRivalTactics} from
+  '../../lib/engine/v2/playtest-rival-random.mjs';
+
+function seededRandom(label){
+  let state=2166136261;
+  for(const character of label)
+    state=Math.imul(state^character.charCodeAt(0),16777619)>>>0;
+  return ()=>((state=(Math.imul(state,1664525)+1013904223)>>>0)/2**32);
+}
 
 test('race format is explicit and stage number cannot leak into a one-day race',()=>{
   assert.deepEqual(normalizeRaceContext({format:'one_day'}),{format:'one_day'});
@@ -255,4 +264,30 @@ test('v94 refuses unpayable front work before exposing an unsupported road clock
   /Unresolved front exhaustion at km 136: you-7/);
   assert.doesNotThrow(()=>simulateTacticalTour({...source,
     motorVersion:MOTOR_EXHAUSTION_COAST_VERSION}));
+});
+
+test('v94 validates paid worker membership without inventing wheel order',()=>{
+  const seed='sample-flat-finish',terrain='flat',fatigue=0;
+  const managerTactics=resolveRandomRivalTactics({teamCount:20,
+    random:seededRandom(`${seed}:${terrain}:${fatigue}`)});
+  const {stage,weather,teams}=prepareV91Playtest({distanceKm:260,terrain,
+    fatigue,teamCount:20,seed,attack:'none',chase:'ignore',managerTactics});
+  const teamRoles=Object.fromEntries(teams.map(team=>[team.id,
+    team.orders.baseline.chase==='all'?'control':
+      team.orders.baseline.attack!=='none'&&
+      team.orders.baseline.chase==='ignore'?'break':
+        team.orders.baseline.chase==='selective'?'protect':'opportunistic']));
+  const recording=simulateTacticalTour({stage,weather,teams,seed,
+    motorVersion:MOTOR_RACE_DYNAMICS_VERSION,
+    raceContext:{format:'one_day',teamRoles}});
+  assert.equal(validateRecordedTour(recording),true);
+  const reordered=structuredClone(recording);
+  assert.ok(reordered.frames[220].pullRiderIds.length>1);
+  reordered.frames[220].pullRiderIds.reverse();
+  reordered.frames[220].roadGroupWorkerRiderIds.reverse();
+  assert.equal(validateRecordedTour(reordered),true);
+  const forged=structuredClone(recording);
+  forged.frames[220].roadGroupWorkerRiderIds[0]=
+    forged.frames[220].roadGroupWorkerRiderIds[1];
+  assert.throws(()=>validateRecordedTour(forged),/settled-front work/);
 });
