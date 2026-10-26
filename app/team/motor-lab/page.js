@@ -77,6 +77,14 @@ export default function MotorLabPage(){
   return {maxM,trace:points.join(' '),area:`20,130 ${points.join(' ')} 980,130`};
  },[recording]);
  const frame=recording?.frames[frameIndex];
+ const previousFrame=recording?.frames[frameIndex-1];
+ const intervalStart=frame?Math.floor((frame.km-1)/5)*5:0;
+ const amberChase=frame?.chaseReasons.filter(item=>item.team==='Amber')??[];
+ const amberAttacks=frame?.attackReasons.filter(item=>item.rider.startsWith('Amber '))??[];
+ const gapChange=frame&&previousFrame?(frame.groups[0]?.gapSeconds??0)-
+  (previousFrame.groups[0]?.gapSeconds??0):null;
+ const energyChange=frame?.amberEnergy!=null&&previousFrame?.amberEnergy!=null?
+  frame.amberEnergy-previousFrame.amberEnergy:null;
  const comparison=previousRecording?.seed===recording?.seed&&
   previousRecording?.routeId===recording?.routeId?previousRecording:null;
  const firstRoadDifference=useMemo(()=>{
@@ -313,6 +321,17 @@ export default function MotorLabPage(){
         <option value="1">Slow</option><option value="2">Normal</option><option value="4">Fast</option>
        </select>
       </label></div>
+     <section className="motor-explainer" aria-label="What happened at this kilometre">
+      <h3>What happened at km {frame.km}?</h3>
+      <p className="motor-hint">Tactical interval {intervalStart}–{Math.min(intervalStart+5,recording.distanceKm)} km. The order is committed before the race; the stage conditions are applied when this kilometre is simulated.</p>
+      <div className="motor-explainer-grid">
+       <div><strong>Stage input</strong><p>{frame.terrain} on {frame.surface}{frame.exposed?', exposed to wind':''}; {frame.gradientPct>=0?'+':''}{frame.gradientPct.toFixed(1)}% gradient, {frame.weather.windKph} km/h wind, {frame.weather.rainMm} mm rain.</p></div>
+       <div><strong>Amber order in force</strong><p>{frame.amberOrder?.effort??'—'} effort · {frame.amberOrder?.chase??'—'} chase · {frame.amberOrder?.attack??'—'} bunch attacks.</p></div>
+       <div><strong>Recorded rider and team actions</strong><p>{amberChase.length?`Amber chased (${amberChase.map(item=>CHASE_REASON_LABELS[item.reason]??item.reason).join(', ')})`:'No Amber chase recorded'}; {amberAttacks.length?`${amberAttacks.map(item=>item.rider).join(', ')} attempted to attack`:'no Amber bunch attack recorded'}.</p></div>
+       <div><strong>Road after this kilometre</strong><p>{frame.groups.length} group{frame.groups.length===1?'':'s'} ahead; lead gap {seconds(frame.groups[0]?.gapSeconds??0)}{gapChange===null?'':` (${gapChange>=0?'+':''}${gapChange.toFixed(1)} s from previous km)`}. Amber mean energy {frame.amberEnergy?.toFixed(1)??'—'}{energyChange===null?'':` (${energyChange>=0?'+':''}${energyChange.toFixed(1)} from previous km)`}.</p></div>
+      </div>
+      <p className="motor-hint">These are recorded inputs, actions and changes. A change in the gap or energy does not by itself prove which action caused it.</p>
+     </section>
      <div className="motor-conditions"><span>{frame.terrain} · {frame.surface}{frame.exposed?' · exposed':''}</span>
       <span>{frame.weather.temperatureC}°C · wind {frame.weather.windKph} km/h · rain {frame.weather.rainMm} mm</span>
       <span>Amber mean energy {frame.amberEnergy?.toFixed(1)??'—'}</span></div>

@@ -187,8 +187,8 @@ export default function V2TacticsClient({eventId}){
               onChange={value=>updateBaseline('captainSupport',value)} disabled={!editable}/>
           </div>
         </section>
-        <section className="card"><h2>Route markers</h2>
-          <p>Commit a change at a 10 km, route or 5 km-to-go marker. The new orders apply from the following kilometre; attack rules keep their selected cadence.</p>
+        <section className="card"><h2>Place orders on the stage</h2>
+          <p>Choose any 5 km marker or an existing route point. A change starts in the next kilometre, so earlier kilometres keep their original orders.</p>
           {(plan.phases??[]).map((phase,index)=><div className="v2-phase" key={index}>
             <div className="v2-tactics-fields">
               <Select label={`Change ${index+1} · at km`} value={phase.atKm}
@@ -235,7 +235,7 @@ export default function V2TacticsClient({eventId}){
           </div>)}
           {editable&&markers.some(km=>!plan.phases.some(phase=>phase.atKm===km))&&
             plan.phases.length<40&&<button type="button" className="btn" onClick={addPhase}>
-              Add route marker</button>}
+              Add timed order</button>}
         </section>
         {error&&<p role="alert" className="v2-error">{error}</p>}
         {notice&&<p role="status" className="v2-notice">{notice}</p>}

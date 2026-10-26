@@ -1,10 +1,13 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {buildKilometreRoute} from '../../lib/engine/v2/route.mjs';
+import {prepareRaceParticipants,commitParticipantsToStage} from
+  '../../lib/engine/v2/participants.mjs';
 import {normalizeOrders,orderMarkers,orderAt,breakAttackAt} from '../../lib/engine/v2/orders.mjs';
 import {resolveTacticalKilometre} from '../../lib/engine/v2/tactics.mjs';
 import {simulateTacticalTour} from '../../lib/engine/v2/tour.mjs';
-import {SPORTING_SKILLS,sportingSkills,riderKilometreEffect} from '../../lib/engine/v2/physiology.mjs';
+import {SPORTING_SKILLS,sportingSkills,prepareRiderReadiness,
+  applyStageConditions,riderKilometreEffect} from '../../lib/engine/v2/physiology.mjs';
 import {runKilometreLab} from '../../lib/engine/v2/lab.mjs';
 import {updateRiderGroups} from '../../lib/engine/v2/groups.mjs';
 import {provisionalFinish,provisionalRoadGroupFinish,
@@ -23,6 +26,21 @@ const stage={distance_km:40,profile_points:[[0,100],[10,100],[20,300],[30,100],[
   surface_segments:[{from_km:12,to_km:15,surface:'cobbles'}],exposed_segments:[{from_km:30,to_km:35}],
   keypoints:[{km:15,kind:'CLIMB'}]};
 const riders=Array.from({length:8},(_,i)=>`r${i}`);
+
+test('the same rider and team settings can be committed to different stages',()=>{
+  const teams=['amber','birch'].map(id=>({id,orders:{captainId:`${id}-0`,
+    phases:[{atKm:20,effort:'hard'}]},riders:Array.from({length:8},(_,index)=>({
+      id:`${id}-${index}`,gender:'M',mountain:70+index,wind:55-index,
+      form:60,fatigue:index})),}));
+  const participants=prepareRaceParticipants(teams);
+  const flat=commitParticipantsToStage(participants,{distanceKm:40,keypoints:[]});
+  const mountain=commitParticipantsToStage(participants,{distanceKm:120,
+    keypoints:[{km:65,kind:'CLIMB'}]});
+  assert.deepEqual(flat.map(team=>team.riders),mountain.map(team=>team.riders));
+  assert.deepEqual(flat.map(team=>team.energy),mountain.map(team=>team.energy));
+  assert.deepEqual(flat.map(team=>team.orders),mountain.map(team=>team.orders));
+  assert.equal(participants.teams[0].riders[0].mountain,70);
+});
 
 test('every kilometre has coherent elevation, terrain, surface and locked-weather variation',()=>{
   const options={seed:'fixed-race',weather:{temp_c:16,wind_kph:22,precipitation_mm:3}};
@@ -54,6 +72,47 @@ test('the same geography with another seed changes only local weather',()=>{
   const a=buildKilometreRoute(stage,{seed:'a'}),b=buildKilometreRoute(stage,{seed:'b'});
   assert.notDeepEqual(a.kilometres.map(k=>k.weather),b.kilometres.map(k=>k.weather));
   assert.deepEqual(a.kilometres.map(({weather,...rest})=>rest),b.kilometres.map(({weather,...rest})=>rest));
+});
+
+test('an approximate 252 km Liège profile loads independently of rider settings and weather',()=>{
+  // Elevations and distances are approximate readings from the supplied
+  // LBL25_Profil.jpg, not a surveyed route or a weather report.
+  const illustrativeStage={distance_km:252,profile_points:[
+    [0,75],[23,128],[46.5,442],[53.5,646],[70.5,448],[85,513],
+    [96.5,429],[119,507],[133.5,641],[148.5,368],[158.5,581],
+    [167,491],[173.5,405],[192,563],[199.5,274],[205.5,374],
+    [218,289],[229,280],[238.5,224],[242,269],[252,65],
+  ]};
+  const route=buildKilometreRoute(illustrativeStage,{seed:'profile-example',
+    weather:{temp_c:17,wind_kph:12,precipitation_mm:0}});
+  assert.equal(route.kilometres.length,252);
+  assert.equal(route.kilometres[0].startM,75);
+  assert.equal(route.kilometres.at(-1).endM,65);
+  // Sparse labelled elevations smooth away the short steep climbs in the
+  // picture: their actual start/end positions need a finer stage contract.
+  assert.equal(route.kilometres.some(segment=>segment.terrain==='climb'),false);
+  assert(route.kilometres.some(segment=>segment.terrain==='hill'));
+  assert(route.kilometres.some(segment=>segment.terrain==='descent'));
+  assert.equal(route.kilometres[53].surface,'road');
+  assert.deepEqual(route.lockedWeather,{temperatureC:17,windKph:12,rainMm:0});
+  assert(orderMarkers({distanceKm:252}).includes(245));
+  assert(orderMarkers({distanceKm:252}).includes(247));
+});
+
+test('rider readiness is route-independent while the stage overlay changes its effect',()=>{
+  const rider={flat:70,hills:65,mountain:82,sprint:50,endurance:74,
+    strength:68,cobbles:58,wind:61,timetrial:63,form:72,fatigue:18};
+  const readiness=prepareRiderReadiness(rider,{phase:'chase',energy:64});
+  const flat={terrain:'flat',surface:'road',weather:{temperatureC:16,windKph:8,rainMm:0}};
+  const climb={terrain:'climb',surface:'cobbles',weather:{temperatureC:30,windKph:28,rainMm:3}};
+  const snapshot=structuredClone(readiness);
+  assert.deepEqual(applyStageConditions(readiness,flat),
+    riderKilometreEffect(rider,flat,{phase:'chase',energy:64}));
+  assert.deepEqual(applyStageConditions(readiness,climb,{exposed:true}),
+    riderKilometreEffect(rider,climb,{phase:'chase',energy:64,exposed:true}));
+  assert.notDeepEqual(applyStageConditions(readiness,flat),
+    applyStageConditions(readiness,climb,{exposed:true}));
+  assert.deepEqual(readiness,snapshot);
 });
 
 test('invalid elevation or overlapping surfaces fail before simulation',()=>{
@@ -117,10 +176,17 @@ test('a precommitted marker changes break cooperation without rewriting earlier 
   assert.equal(orderAt(orders,20).breakWork,'cooperate');
 });
 
-test('the 5 km-to-go marker changes the locked approach only after that marker',()=>{
-  assert.deepEqual(orderMarkers({distanceKm:40}),[10,20,30,35]);
+test('five-kilometre markers change the locked approach only after their marker',()=>{
+  assert.deepEqual(orderMarkers({distanceKm:40}),[5,10,15,20,25,30,35]);
   assert.deepEqual(orderMarkers({distanceKm:35,keypoints:[{km:30}]}),
-    [10,20,30]);
+    [5,10,15,20,25,30]);
+  assert.deepEqual(orderMarkers({distanceKm:40,keypoints:[{km:17}]}),
+    [5,10,15,17,20,25,30,35]);
+  assert.deepEqual(orderMarkers({distanceKm:38}),[5,10,15,20,25,30,33,35]);
+  const early=normalizeOrders({captainId:'r0',phases:[{atKm:15,effort:'hard'}]},
+    {riderIds:riders,distanceKm:40});
+  assert.equal(orderAt(early,14).effort,'steady');
+  assert.equal(orderAt(early,15).effort,'hard');
   const orders=normalizeOrders({captainId:'r0',phases:[
     {atKm:35,effort:'hard',chase:'all',attack:'none'}]},
   {riderIds:riders,distanceKm:40});

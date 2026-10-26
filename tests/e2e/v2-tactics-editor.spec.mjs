@@ -36,8 +36,8 @@ test('entered manager can edit and reload only their own private v2 plan',
       await manager.getByLabel('Breakaway finale').selectOption('attack_if_outsprinted');
       await manager.getByLabel('Helper attacks').selectOption('hold_for_captain');
       await manager.getByLabel('Captain support').selectOption('drop_back_if_dropped');
-      await manager.getByRole('button',{name:'Add route marker'}).click();
-      await expect(manager.getByLabel('Change 1 · at km')).toHaveValue('10');
+      await manager.getByRole('button',{name:'Add timed order'}).click();
+      await expect(manager.getByLabel('Change 1 · at km')).toHaveValue('5');
       await expect(manager.getByLabel('Change 1 · at km').locator('option[value="15"]'))
         .toHaveText('15 km · 5 km to go');
       await manager.getByLabel('Change 1 · at km').selectOption('15');

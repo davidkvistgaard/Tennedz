@@ -55,6 +55,12 @@ export default function TacticalTourViewer({recording,focusTeamId,awardProjectio
   const selectedOrders=focusedTeam?.orders;
   const activeOrders=selectedOrders?orderAt(selectedOrders,frame.km-1):null;
   const activePhase=[...(selectedOrders?.phases??[])].reverse().find(phase=>phase.atKm<frame.km);
+  const captain=own.find(rider=>rider.id===selectedOrders?.captainId);
+  const captainRoad=roadGroupByRider.get(captain?.id)??
+    (captain?.group?title(captain.group):'unavailable');
+  const currentMoments=moments.filter(moment=>moment.km===frame.km);
+  const latestMoment=[...moments].reverse().find(moment=>moment.km<=frame.km);
+  const leadGroup=frame.roadGroups[0];
   const peloton=current.filter(rider=>rider.group==='peloton').length;
   const dropped=current.filter(rider=>rider.group==='dropped').length;
   const recent=moments.filter(moment=>moment.km<=frame.km).slice(-8).reverse();
@@ -122,6 +128,24 @@ export default function TacticalTourViewer({recording,focusTeamId,awardProjectio
           <option value={1}>1x</option><option value={3}>3x</option><option value={6}>6x</option>
         </select></label>
       </div>
+    </section>
+    <section className="tactical-panel tactical-situation" aria-label="Current race situation">
+      <div className="tactical-panel-head"><h2>At km {frame.km}</h2>
+        <span>{distance-frame.km} km remaining</span></div>
+      <div className="tactical-situation-grid">
+        <div><strong>Road</strong><p>{leadGroup?
+          `${leadGroup.riderIds.length} riders ahead, ${formatSeconds(leadGroup.gapSeconds)} clear of the peloton.`:
+          `The peloton is together with ${peloton} riders.`}</p></div>
+        <div><strong>{names.get(selectedOrders?.captainId)??'Your captain'}</strong>
+          <p>{captainRoad}{captain?` · ${Math.round(captain.energy)} energy`:''}</p></div>
+        <div><strong>Committed order</strong><p>{title(activeOrders?.effort??'steady')} effort ·
+          {' '}{title(activeOrders?.chase??'selective')} chase
+          {activePhase?` · active since km ${activePhase.atKm+1}`:' · active from the start'}</p></div>
+      </div>
+      <p className="tactical-situation-story">{currentMoments.length?
+        currentMoments.map(moment=>moment.text).join(' '):latestMoment?
+          `No new road change recorded here. Last moment at km ${latestMoment.km}: ${latestMoment.text}`:
+          'No attack or group change has been recorded yet.'}</p>
     </section>
     <div className="tactical-grid">
       <section className="tactical-panel" aria-label="Road groups">

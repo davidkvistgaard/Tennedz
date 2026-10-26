@@ -83,6 +83,8 @@ test('a timed bunch attack order changes only the late recorded road',()=>{
  assert.deepEqual(late.frames.slice(0,120),held.frames.slice(0,120));
  assert.equal(held.amberBunchAttackAttempts,0);
  assert.equal(late.amberBunchAttackAttempts,2);
+ assert.equal(late.frames[119].amberOrder.attack,'none');
+ assert.equal(late.frames[120].amberOrder.attack,'selective');
  assert(late.frames[120].moments.includes('Amber switched to selective bunch attacks'));
  assert.notDeepEqual(late.frames.slice(120),held.frames.slice(120));
  assert.deepEqual(late,createMotorLabPreview({...common,orders:late.orders}));
@@ -116,7 +118,8 @@ test('helper attack policy protects helpers without silently changing the captai
  assert.equal(conditional.amberHelperAttackAttempts,0);
  assert(!attempts(held).some(name=>/^Amber Rider [3-8]$/.test(name)));
  assert(attempts(held).includes('Amber Captain'));
- assert.deepEqual(conditional.frames,held.frames);
+ assert.deepEqual(conditional.frames.map(({amberOrder,...road})=>road),
+  held.frames.map(({amberOrder,...road})=>road));
  assert.notDeepEqual(open.frames,held.frames);
  assert.deepEqual(held,createMotorLabPreview({...common,orders:held.orders}));
 });

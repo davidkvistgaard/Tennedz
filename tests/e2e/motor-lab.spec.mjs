@@ -31,6 +31,9 @@ for(const width of [390,1440])test(`manager runs a recorded Motor Lab race at ${
  await expect(page.getByRole('heading',{name:'Coast Road laboratory'})).toBeVisible();
  await expect(page.getByText(/Committed orders: chase a threatening break · follow the plan for chase work · follow the plan for bunch attacks · sit on in a break · ride hard after 120 km/)).toBeVisible();
  await expect(page.getByText('1 / 160',{exact:true})).toBeVisible();
+ await expect(page.getByRole('heading',{name:'What happened at km 1?'})).toBeVisible();
+ await expect(page.getByText(/Tactical interval 0–5 km/)).toBeVisible();
+ await expect(page.getByText(/The order is committed before the race/)).toBeVisible();
  await expect(page.locator('.motor-scoreboard strong').nth(2)).toHaveText('Peloton');
  await expect(page.getByText(/The largest recorded gap is/)).toBeVisible();
  await page.getByLabel('Replay speed').selectOption('1');

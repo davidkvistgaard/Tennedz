@@ -246,7 +246,9 @@ const server = http.createServer(async (req, res) => {
       return send(200,{id:v2PreviewEventId,name:"Private v2 tactics fixture",
         kind:"one_day",gender:"M",status:v2SettledAt?"FINISHED":"OPEN",
         stage_profile_id:twoPhaseStageId,
-        registration_deadline:v2RecordingLock.event.registration_deadline,
+        registration_deadline:v2SaveFixture&&!v2LockFixture&&!v2RecordingFixture?
+          new Date(Date.now()-60000).toISOString():
+          v2RecordingLock.event.registration_deadline,
         tactics_deadline:v2SaveFixture&&!v2LockFixture&&!v2RecordingFixture?
           new Date(Date.now()+3600000).toISOString():
           v2RecordingLock.event.tactics_deadline,
