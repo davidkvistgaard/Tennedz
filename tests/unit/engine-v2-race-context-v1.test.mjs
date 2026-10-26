@@ -1,7 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {normalizeRaceContext,projectedCatchKm,breakSituationForTeam,
-  automaticCadenceAttackAllowed,observedFrontClosingSecondsPerKm} from
+  automaticCadenceAttackAllowed,observedFrontClosingSecondsPerKm,
+  settledFrontRotation} from
   '../../lib/engine/v2/race-context-v1.mjs';
 import {prepareV91Playtest} from '../../lib/engine/v2/playtest.mjs';
 import {simulateTacticalTour} from '../../lib/engine/v2/tour.mjs';
@@ -36,6 +37,25 @@ test('observed front closing uses only unchanged completed road groups',()=>{
   assert.equal(observedFrontClosingSecondsPerKm({frames:frames.map((frame,index)=>
     index===2?{roadGroups:[{...front,riderIds:['a','c'],gapSeconds:92}]}:frame),
   frontGroup:front}),null);
+});
+
+test('a stable front shares maintenance turns, but urgent and declared work stays',()=>{
+  const frontGroup={id:'road-1',riderIds:['a','b','c','d','e'],gapSeconds:120};
+  const input={frontGroup,pullRiderIds:['a','b','c','d','e','rear'],
+    driveRiderIds:['e'],km:20,remainingKm:150,
+    observedClosingSecondsPerKm:-1,priorChaserCount:0};
+  const settled=settledFrontRotation(input);
+  assert.equal(settled.pullRiderIds.length,4);
+  assert.equal(settled.restRiderIds.length,2);
+  assert.ok(settled.pullRiderIds.includes('e'));
+  assert.ok(settled.pullRiderIds.includes('rear'));
+  assert.notDeepEqual(settledFrontRotation({...input,km:21}).restRiderIds,
+    settled.restRiderIds);
+  assert.deepEqual(settledFrontRotation({...input,priorChaserCount:1}),
+    {pullRiderIds:input.pullRiderIds,restRiderIds:[]});
+  assert.deepEqual(settledFrontRotation({...input,
+    observedClosingSecondsPerKm:2}),
+  {pullRiderIds:input.pullRiderIds,restRiderIds:[]});
 });
 
 test('break composition records whose interests are affected without declaring a chase',()=>{
@@ -143,6 +163,14 @@ test('measured slow closing alerts one-day protectors despite a small front gap'
   assert.ok(race.frames[209].gapSeconds<30);
   assert.ok(race.frames.slice(210).some(frame=>
     Number.isFinite(frame.observedPriorFront?.closingSecondsPerKm)));
+  const settled=race.frames.find(frame=>frame.settledFrontRestRiderIds.length>0);
+  assert.ok(settled);
+  assert.ok(settled.settledFrontRestRiderIds.every(id=>
+    !settled.roadGroupWorkerRiderIds.includes(id)));
+  const restingRider=settled.settledFrontRestRiderIds[0];
+  assert.ok(settled.energyLedger.find(row=>row.riderId===restingRider).workDemand<
+    race.frames[settled.km-2].energyLedger.find(row=>
+      row.riderId===restingRider).workDemand);
   assert.ok(race.frames.slice(210).some(frame=>frame.chaseReasons.some(row=>
     row.reason==='one_day_captain_pursuit')));
   assert.ok(race.frames.some(frame=>frame.caughtBreakawayRiderIds.length>0));

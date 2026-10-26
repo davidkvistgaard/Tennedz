@@ -69,6 +69,10 @@ function run({seed,terrain,fatigue,format,breakTeams,controlTeams}){
     gapAt210Seconds:frames[209].gapSeconds,
     gapAt220Seconds:frames[219].gapSeconds,
     chasedTeamKilometres:frames.reduce((sum,frame)=>sum+frame.chasers.length,0),
+    settledFrontRestRiderKilometres:frames.reduce((sum,frame)=>
+      sum+frame.settledFrontRestRiderIds.length,0),
+    firstSettledFrontKm:frames.find(frame=>
+      frame.settledFrontRestRiderIds.length>0)?.km??null,
     finaleMeanChasePower:average(finale,'chasePower'),
     finaleMeanPassiveGapDelta:average(finale,'passiveGapDelta'),
     finaleMeasuredClosingKilometres:measuredFinaleClosing.length,

@@ -136,3 +136,24 @@ The nine four-control cases with riders ahead at the line have a *different*
 late front after the original five were caught. The audit does not call those
 official winners. The candidate remains internal pending recording validation,
 larger role/seed sampling, a paid front-exhaustion transition and viewer replay.
+
+The next v94-only phase adds an actual settled-front work transition. Once the
+same leading group has been recorded for five kilometres, there was no chase
+in the prior kilometre, its observed closing does not project a catch before
+the line, and every front rider has a steady effort order, cooperative riders
+alternate maintenance turns. Explicit `drive` pullers stay on duty. The
+non-pullers pay conserve baseline plus sit-on exposure; the active worker
+roster also determines the group's road pace. A renewed chase or a threatening
+closing trend returns the willing riders to full cooperation. No fixed time
+gap is granted to the break. The v94 frame records the active and resting
+rider IDs; older versions remain unchanged.
+
+In the same 96 constructed 260 km cases, the phase produces a mean 47.5
+resting-front rider-kilometres per one-day run and 72.6 per stage run. All
+initial front riders are subsequently caught in 37/48 one-day and 3/48 stage
+runs; an initial rider remains ahead at the line in 11/48 and 45/48
+respectively. Mean maximum leads are 259 s one-day and 337 s stage. No run
+refuses or records unpaid front work. These are synthetic, chosen role mixes,
+not calibration to observed race frequencies or proof of a credible full
+sporting result. The hard-driving exhausted-front refusal still stands, and
+the candidate still lacks validated replay and whole-race official results.
