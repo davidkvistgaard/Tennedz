@@ -1,5 +1,5 @@
 'use client';
-import {useEffect,useRef,useState} from 'react';
+import {useEffect,useMemo,useRef,useState} from 'react';
 import TeamShell from '../../components/TeamShell';
 import {api} from '../../../lib/api';
 import {playtestRiderCards} from '../../../lib/engine/v2/playtest-riders.mjs';
@@ -196,6 +196,7 @@ export default function Playtest({guided=false}){
   const [roadPreview,setRoadPreview]=useState(null);
   const [roadPreviewIndex,setRoadPreviewIndex]=useState(0);
   const [coastedKm,setCoastedKm]=useState(1);
+  const [checkpointPlaying,setCheckpointPlaying]=useState(false);
   const [coastedRoadIndex,setCoastedRoadIndex]=useState(0);
   const [coastedBandId,setCoastedBandId]=useState('');
   const [coastedBandIndex,setCoastedBandIndex]=useState(0);
@@ -414,13 +415,26 @@ export default function Playtest({guided=false}){
     .filter(row=>row.riderId===coastedOwnDecision?.leadOutRiderId)
     .reduce((sum,row)=>sum+row.energySpent,0);
   const coastedRaceStory=coasted?summarizePlaytestRaceStory(coasted):[];
-  const coastedViewer=coasted?raceViewerCheckpoints(coasted,
-    viewerRiderId):[];
+  const coastedViewer=useMemo(()=>coasted?raceViewerCheckpoints(coasted,
+    viewerRiderId):[],[coasted,viewerRiderId]);
   const viewerTrackRef=useRef(null);
   const previousCheckpoint=[...coastedViewer].reverse()
     .find(checkpoint=>checkpoint.index<coastedKm-1);
   const nextCheckpoint=coastedViewer
     .find(checkpoint=>checkpoint.index>coastedKm-1);
+  const selectRecordedKilometre=km=>{
+    setCheckpointPlaying(false);
+    setCoastedKm(km);
+  };
+  useEffect(()=>{
+    if(!checkpointPlaying||!coasted||!nextCheckpoint)return;
+    const timer=window.setTimeout(()=>{
+      setCoastedKm(nextCheckpoint.index+1);
+      if(!coastedViewer.some(checkpoint=>
+        checkpoint.index>nextCheckpoint.index))setCheckpointPlaying(false);
+    },1800);
+    return ()=>window.clearTimeout(timer);
+  },[checkpointPlaying,coasted,coastedKm,nextCheckpoint,coastedViewer]);
   useEffect(()=>{
     const track=viewerTrackRef.current;
     const closest=[...coastedViewer].reverse()
@@ -428,8 +442,8 @@ export default function Playtest({guided=false}){
     const card=closest&&track?.querySelector(
       `[data-checkpoint-index="${closest.index}"]`);
     if(track&&card)track.scrollTo({left:card.offsetLeft-track.offsetLeft,
-      behavior:'smooth'});
-  },[coastedKm,coasted]);
+      behavior:checkpointPlaying?'auto':'smooth'});
+  },[coastedKm,coasted,checkpointPlaying]);
   const viewerEnergy=coasted?raceViewerEnergySeries(coasted,viewerRiderId):[];
   const recordedTimedOrders=coasted?.settings.managerTacticalOrdersV3??
     coasted?.settings.managerTacticalOrdersV2??[];
@@ -473,10 +487,10 @@ export default function Playtest({guided=false}){
     moment.km>coastedKm);
   const selectViewerMoment=moment=>{
     if(moment.finaleRoadIndex!=null){
-      setCoastedKm(coasted.kilometreFrames.length);
+      selectRecordedKilometre(coasted.kilometreFrames.length);
       setCoastedRoadIndex(moment.finaleRoadIndex);
       document.getElementById('v93-recorded-road')?.scrollIntoView();
-    }else setCoastedKm(moment.index+1);
+    }else selectRecordedKilometre(moment.index+1);
   };
   const viewerPlace=coastedProvisionalPlaces.get(viewerRiderId)??
     coastedRoadBounds.get(viewerRiderId);
@@ -673,6 +687,7 @@ export default function Playtest({guided=false}){
       }
       setRoadPreview(null);
       setCoasted(response.coasted??null);
+      setCheckpointPlaying(false);
       setCoastedKm(1);setCoastedRoadIndex(0);
       setCoastedBandId(response.coasted?.bandReplays.find(band=>
         band.riderIds.includes(response.coasted.managerDecisions.find(row=>
@@ -711,6 +726,7 @@ export default function Playtest({guided=false}){
     }catch(cause){setComparison(null);setPreviousRun(null);
       setCoastedComparison(null);setPreviousCoastedRun(null);
       setResult(null);setIntegrated(null);setCoasted(null);setAttackRoad(null);
+      setCheckpointPlaying(false);
       setAttackApproach(null);setFinaleReplay(null);setBandLocalReplay(null);
       setRoadPreview(cause.roadPreview??null);
       setSubmittedChoices(cause.roadPreview?currentChoices:null);
@@ -728,8 +744,10 @@ export default function Playtest({guided=false}){
       <p>{guided?'Choose a route and tactics, run the race, then follow the road to the finish. Start with the sample or change any choice below.':'Change your orders and the race conditions, then rerun with the same seed to compare what happened on the road.'}</p>
       <p className="v91-warning">This is a fictional preview. Results and points are for inspection only; no official result or award is saved.</p>
       {guided&&<nav className="v91-flow-nav" aria-label="Motor Lab race flow">
-        <button type="button" onClick={()=>document.getElementById(
-          'v91-race-settings')?.scrollIntoView()}>
+        <button type="button" onClick={()=>{
+          setCheckpointPlaying(false);
+          document.getElementById('v91-race-settings')?.scrollIntoView();
+        }}>
           1 · Plan tactics</button>
         <button type="button" disabled={!coasted&&!roadPreview}
           onClick={()=>document.getElementById(coasted?
@@ -737,8 +755,10 @@ export default function Playtest({guided=false}){
           {coasted?'2 · Watch recorded race':
             roadPreview?'2 · Inspect paid road':'2 · Watch recorded race'}</button>
         <button type="button" disabled={!coasted?.lineTimes?.length}
-          onClick={()=>document.getElementById(
-            'v93-your-finish')?.scrollIntoView()}>
+          onClick={()=>{
+            setCheckpointPlaying(false);
+            document.getElementById('v93-your-finish')?.scrollIntoView();
+          }}>
           3 · Inspect conditional result</button>
       </nav>}
       <div className="v91-start" aria-label="Start a playable race preview">
@@ -1347,15 +1367,27 @@ export default function Playtest({guided=false}){
           </div>
           <p>{viewerRiderId}: {viewerFiveKm?.energy.toFixed(1)??'—'} energy at 5 km to go · {viewerEnergy.at(-1)?.energy.toFixed(1)??'—'} at 1 km to go · {viewerLine?.energyAtLine.toFixed(1)??'—'} at the line. {viewerLine?'The curve ends at the paid line. ':''}The line is recorded reserve, not speed.</p>
           <div className="v91-viewer-navigation" aria-label="Race checkpoint navigation">
+            <button type="button" aria-pressed={checkpointPlaying}
+              disabled={!coastedViewer.length}
+              onClick={()=>{
+                if(checkpointPlaying){setCheckpointPlaying(false);return;}
+                if(!nextCheckpoint)
+                  setCoastedKm(coastedViewer[0].index+1);
+                setCheckpointPlaying(true);
+              }}>
+              {checkpointPlaying?'Pause checkpoints':
+                nextCheckpoint?'Play checkpoints':'Replay checkpoints'}
+            </button>
             <button type="button" aria-label="Previous checkpoint"
               disabled={!previousCheckpoint}
-              onClick={()=>setCoastedKm(previousCheckpoint.index+1)}>Previous</button>
+              onClick={()=>selectRecordedKilometre(
+                previousCheckpoint.index+1)}>Previous</button>
             {(recordedEffortMarkersKm.length?recordedEffortMarkersKm:
               [recordedEffortMarkerKm]).map((markerKm,index)=>{
               const jumpKm=recordedTimedOrders.length?markerKm+1:effortJumpKm;
               return <button type="button" key={markerKm}
                 aria-pressed={coastedKm===jumpKm}
-                onClick={()=>setCoastedKm(jumpKm)}>
+                onClick={()=>selectRecordedKilometre(jumpKm)}>
                 {recordedTimedOrders.length?
                   'First km after effort marker '+markerKm:
                   index===0?'5 km effort handoff':'Effort marker '+markerKm}
@@ -1363,21 +1395,26 @@ export default function Playtest({guided=false}){
             })}
             <button type="button" aria-pressed={
               coastedKm===coasted.settings.distanceKm-1}
-              onClick={()=>setCoastedKm(coasted.settings.distanceKm-1)}>
+              onClick={()=>selectRecordedKilometre(
+                coasted.settings.distanceKm-1)}>
               1 km road</button>
             <span>Viewing km {coastedFrame?.km} of {coasted.settings.distanceKm} · swipe cards for more</span>
             <button type="button" aria-label="Next checkpoint"
               disabled={!nextCheckpoint}
-              onClick={()=>setCoastedKm(nextCheckpoint.index+1)}>Next</button>
+              onClick={()=>selectRecordedKilometre(
+                nextCheckpoint.index+1)}>Next</button>
           </div>
+          <p>Playback advances through recorded checkpoints every 1.8 seconds.
+            It does not simulate motion between them. Selecting a checkpoint
+            pauses playback.</p>
           <div className="v91-moment-jumps" aria-label="Recorded change navigation">
             <button type="button" disabled={!previousViewerMoment}
-              onClick={()=>setCoastedKm(previousViewerMoment.km)}>
+              onClick={()=>selectRecordedKilometre(previousViewerMoment.km)}>
               Previous recorded change{previousViewerMoment?
                 `: km ${previousViewerMoment.km}`:''}
             </button>
             <button type="button" disabled={!nextViewerMoment}
-              onClick={()=>setCoastedKm(nextViewerMoment.km)}>
+              onClick={()=>selectRecordedKilometre(nextViewerMoment.km)}>
               Next recorded change{nextViewerMoment?
                 `: km ${nextViewerMoment.km}`:''}
             </button>
@@ -1387,7 +1424,7 @@ export default function Playtest({guided=false}){
             type="button" key={checkpoint.index}
             data-checkpoint-index={checkpoint.index}
             aria-pressed={coastedKm===checkpoint.index+1}
-            onClick={()=>setCoastedKm(checkpoint.index+1)}>
+            onClick={()=>selectRecordedKilometre(checkpoint.index+1)}>
             <strong>Km {checkpoint.km}</strong>
             <span>{checkpoint.position}</span>
             <span>{checkpoint.energy?.toFixed(1)??'—'} / 100 energy</span>
@@ -1548,7 +1585,7 @@ export default function Playtest({guided=false}){
                 <p>Recorded chase stretches for {viewerRivalId}; select one to inspect the road at its start:</p>
                 <ul>{viewerRival.chasePeriods.map(period=><li
                   key={period.startIndex}>
-                  <button type="button" onClick={()=>setCoastedKm(
+                  <button type="button" onClick={()=>selectRecordedKilometre(
                     period.startIndex+1)}>Km {period.startKm}{
                     period.endKm!==period.startKm?`–${period.endKm}`:''}
                   </button>
@@ -1572,7 +1609,7 @@ export default function Playtest({guided=false}){
               {' '}With 1 km to go: {row.atOneKm}.
               {' '}<button type="button" onClick={()=>{
                 setViewerRiderId(row.riderId);
-                setCoastedKm(row.firstKm);
+                selectRecordedKilometre(row.firstKm);
                 document.querySelector('.v91-race-viewer')?.scrollIntoView();
               }}>Follow {row.riderId} from km {row.firstKm}</button>
             </li>)}</ul>:<p>No attack, breakaway join or catch was recorded for your team.</p>}
@@ -1654,7 +1691,7 @@ export default function Playtest({guided=false}){
           <p>Jump to a kilometre where a road group or the isolated riders changed.</p>
           {coastedRoadChanges.length?<div className="v91-road-jumps">
             {coastedRoadChanges.map(({index,frame})=><button type="button"
-              key={frame.km} onClick={()=>setCoastedKm(index+1)}
+              key={frame.km} onClick={()=>selectRecordedKilometre(index+1)}
               aria-label={`Jump to recorded km ${frame.km}`}
               aria-pressed={coastedKm===index+1}>
               Km {frame.km} · {frame.roadGroups.length} ahead ·
@@ -1667,7 +1704,7 @@ export default function Playtest({guided=false}){
           <p>Jump to a recorded attack attempt, a rider joining a road group, or a catch.</p>
           {coastedTacticalFrames.length?<div className="v91-road-jumps">
             {coastedTacticalFrames.map(({frame,index})=><button type="button"
-              key={frame.km} onClick={()=>setCoastedKm(index+1)}
+              key={frame.km} onClick={()=>selectRecordedKilometre(index+1)}
               aria-label={`Jump to tactical km ${frame.km}`}
               aria-pressed={coastedKm===index+1}>
               Km {frame.km} · {frame.attackAttempts.length} attempts ·
@@ -1679,7 +1716,8 @@ export default function Playtest({guided=false}){
         </details>
         <label>Recorded kilometre: {coastedKm}
           <input type="range" min="1" max={coasted.kilometreFrames.length}
-            value={coastedKm} onChange={event=>setCoastedKm(Number(event.target.value))}/>
+            value={coastedKm} onChange={event=>selectRecordedKilometre(
+              Number(event.target.value))}/>
         </label>
         <div className="v91-metrics">
           <div><strong>{coastedFrame?.terrain}</strong><span>Terrain</span></div>
@@ -2303,7 +2341,8 @@ export default function Playtest({guided=false}){
                   {row.riderId.startsWith('you-')&&<button type="button"
                     onClick={()=>{
                       setViewerRiderId(row.riderId);
-                      setCoastedKm(Math.max(1,coasted.settings.distanceKm-5));
+                      selectRecordedKilometre(Math.max(1,
+                        coasted.settings.distanceKm-5));
                       document.querySelector('.v91-race-viewer')
                         ?.scrollIntoView();
                     }} aria-label={`Follow race for ${row.riderId}`}>

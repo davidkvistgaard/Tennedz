@@ -51,6 +51,23 @@ test('guided Motor Lab runs a race from setup to rider replay',async({page})=>{
   await expect(stageCard).toContainText('Recorded this kilometre:');
   await expect(stageCard.getByLabel('Followed rider actions at this kilometre'))
     .toContainText('you-7:');
+  const viewer=page.getByRole('region',{name:'Race viewer'});
+  await viewer.getByRole('button',{name:'Play checkpoints'}).click();
+  await expect(viewer).toContainText('Viewing km 11 of 40',
+    {timeout:5000});
+  await viewer.locator('.v91-viewer-navigation').screenshot({
+    path:'test-results/guided-checkpoint-playback.png'});
+  expect(await viewer.locator('.v91-viewer-navigation').evaluate(element=>
+    element.scrollWidth<=element.clientWidth+1)).toBe(true);
+  await viewer.getByRole('button',{name:'Pause checkpoints'}).click();
+  await page.waitForTimeout(2000);
+  await expect(page.getByRole('slider',{name:/Recorded kilometre:/}))
+    .toHaveValue('11');
+  await viewer.getByRole('button',{name:'Previous checkpoint'}).click();
+  await expect(page.getByRole('slider',{name:/Recorded kilometre:/}))
+    .toHaveValue('1');
+  await expect(viewer.getByRole('button',{name:'Play checkpoints'}))
+    .toHaveAttribute('aria-pressed','false');
   await stageCard.locator('summary').filter({hasText:
     'Actions and energy for all 8 of your riders'}).click();
   await expect(stageCard.locator('.v91-rider-actions li')).toHaveCount(8);
