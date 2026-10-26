@@ -71,6 +71,14 @@ test('guided Motor Lab runs a race from setup to rider replay',async({page})=>{
   await stageCard.locator('summary').filter({hasText:
     'Actions and energy for all 8 of your riders'}).click();
   await expect(stageCard.locator('.v91-rider-actions li')).toHaveCount(8);
+  await stageCard.getByRole('button',{name:'Follow you-0'}).click();
+  await expect(page.getByLabel('Rider to follow')).toHaveValue('you-0');
+  await expect(stageCard.getByRole('button',{name:'Follow you-0'}))
+    .toHaveAttribute('aria-pressed','true');
+  await expect(page.getByLabel('Recorded time gaps at km 1')
+    .locator('.v91-road-gap-followed'))
+    .toHaveAttribute('aria-label',/^Following you-0 in /);
+  await page.getByLabel('Rider to follow').selectOption('you-7');
   await stageCard.screenshot({path:'test-results/guided-rider-actions.png'});
   await page.getByRole('slider',{name:/Recorded kilometre:/}).fill('2');
   const comparison=page.getByLabel('Recorded change from km 1 to 2');

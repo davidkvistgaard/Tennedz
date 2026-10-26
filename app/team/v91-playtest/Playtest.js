@@ -1554,7 +1554,10 @@ export default function Playtest({guided=false}){
             {viewerOwnActions.length>0&&<details className="v91-rider-actions">
               <summary>Actions and energy for all {viewerOwnActions.length} of your riders at km {coastedKm}</summary>
               <ul>{viewerOwnActions.map(row=><li key={row.riderId}>
-                <strong>{row.riderId}</strong>: {row.events.join(' · ')}
+                <button type="button" aria-pressed={viewerRiderId===row.riderId}
+                  onClick={()=>setViewerRiderId(row.riderId)}>
+                  Follow {row.riderId}
+                </button>{row.events.join(' · ')}
                 {' '}· {row.road} · {row.energy.toFixed(1)} energy
                 {row.energyChange!==null&&` (${row.energyChange>0?'+':''}${
                   row.energyChange.toFixed(1)} since the previous kilometre)`}
