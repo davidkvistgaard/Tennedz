@@ -13,7 +13,8 @@ import {raceViewerCheckpoints,raceViewerEnergySeries,
   raceViewerBreaksAndChase,raceViewerFinale,raceViewerRoad,
   raceViewerLateEffort,raceViewerLateTeamWork,
   raceViewerEffortInsight,raceViewerTimeline,raceViewerRivalAt,
-  raceViewerOwnRiderActionsAt,raceViewerCheckpointChange} from
+  raceViewerOwnRiderActionsAt,raceViewerCheckpointChange,
+  raceViewerSituationAt} from
   '../../../lib/engine/v2/playtest-viewer.mjs';
 
 const DEFAULT_PLANS=['chase','attack','neutral'];
@@ -486,6 +487,8 @@ export default function Playtest({guided=false}){
   const viewerFinale=coasted?raceViewerFinale(coasted,viewerRiderId):null;
   const viewerRoad=coasted?raceViewerRoad(coastedFrame,
     coasted.settings.teamCount*8):[];
+  const viewerSituation=coasted?raceViewerSituationAt(coasted,coastedFrame,
+    playtestRiderCards(coasted.settings,'you')):null;
   const viewerMaxAbsGap=Math.max(1,...viewerRoad.map(band=>
     Math.abs(band.gapSeconds)));
   const viewerRival=raceViewerRivalAt(coasted,coastedFrame,viewerRivalId);
@@ -1398,7 +1401,58 @@ export default function Playtest({guided=false}){
         <section className="v91-race-viewer" id="v93-race-viewer"
           aria-label="Race viewer">
           <h3>Follow your riders through the race</h3>
-          <p>Each card is a recorded checkpoint. Energy is the reserve left at that point; a break only counts as joined or caught when the race recorded that event. Select a card to inspect its road and riders below.</p>
+          <p>Choose a kilometre to see where the field and your riders were.
+            The race is recorded once per kilometre; the final result follows
+            the paid finish road where available.</p>
+          {viewerSituation&&<div className="v91-race-dashboard"
+            aria-label={`Race situation at km ${viewerSituation.km}`}>
+            <div className="v91-dashboard-progress">
+              <div><span>RACE DISTANCE</span><strong>Km {
+                viewerSituation.km} / {viewerSituation.totalKm}</strong></div>
+              <span>{viewerSituation.remainingKm} km to go</span>
+              <progress value={viewerSituation.km}
+                max={viewerSituation.totalKm}
+                aria-label="Race distance completed"/>
+            </div>
+            <div className="v91-dashboard-road" aria-label="Field situation">
+              <div><strong>{viewerSituation.bunchRiders}</strong><span>in the bunch</span></div>
+              <div><strong>{viewerSituation.frontRiders}</strong><span>ahead in {
+                viewerSituation.frontGroups} {
+                  viewerSituation.frontGroups===1?'group':'groups'}</span></div>
+              <div><strong>{viewerSituation.isolatedRiders}</strong><span>riding alone</span></div>
+              {viewerSituation.frontGroups>0&&<p>Leading front group: {
+                viewerSituation.leadGapSeconds.toFixed(1)} s ahead of the bunch.</p>}
+            </div>
+            <div className="v91-commentary-current" aria-live="polite">
+              <strong>At km {coastedFrame?.km}</strong>
+              {commentaryAtKm.length?<ul>{commentaryAtKm.map((moment,ordinal)=><li
+                key={`${moment.kind}-${ordinal}`}>{moment.text}</li>)}</ul>:
+                <p>No new headline. The road positions and rider reserves
+                  below are the current recorded state.</p>}
+            </div>
+            <div className="v91-dashboard-team"
+              aria-label={`Your riders at km ${viewerSituation.km}`}>
+              <div className="v91-dashboard-team-heading"><h4>Your riders</h4>
+                <p>Energy left changes during the race. Starting fatigue is
+                  the pre-race setting, not a live fatigue reading.</p></div>
+              <div className="v91-dashboard-riders">{viewerSituation.own.map(
+                rider=><button type="button" key={rider.riderId}
+                  aria-pressed={viewerRiderId===rider.riderId}
+                  onClick={()=>setViewerRiderId(rider.riderId)}>
+                  <span><strong>{rider.name.replace(
+                    /^Your test team rider /,'Rider ')}</strong>
+                    <small>{rider.position}</small></span>
+                  <span className="v91-dashboard-rider-state"><strong>{
+                    rider.energy?.toFixed(1)??'—'} / 100</strong>
+                    <small>Energy left</small></span>
+                  <progress className={rider.energy!=null&&rider.energy<25?
+                    'v91-low-energy':''} value={rider.energy??0} max="100"
+                    aria-label={`Energy left for ${rider.name}`}/>
+                  <small>Starting fatigue: {
+                    rider.startingFatigue??'—'}</small>
+                </button>)}</div>
+            </div>
+          </div>}
           <label>Rider to follow<select value={viewerRiderId}
             onChange={event=>setViewerRiderId(event.target.value)}>
             {Array.from({length:8},(_,index)=>`you-${index}`).map(id=><option
@@ -1619,13 +1673,6 @@ export default function Playtest({guided=false}){
             <p>Commentary follows recorded actions and checkpoints. An order is
               a plan; the road and rider energy show what followed. Replaying
               this race keeps the same wording and sequence.</p>
-            <div className="v91-commentary-current" aria-live="polite">
-              <strong>At km {coastedFrame?.km}</strong>
-              {commentaryAtKm.length?<ul>{commentaryAtKm.map((moment,ordinal)=><li
-                key={`${moment.kind}-${ordinal}`}>{moment.text}</li>)}</ul>:
-                <p>No new headline at this checkpoint. Follow the road groups
-                  and rider energy for the recorded state.</p>}
-            </div>
             <ol>{[...viewerCommentary.slice(0,5),
               ...(viewerCommentary.length>10?viewerCommentary.slice(-5):
                 viewerCommentary.slice(5))].map((moment,ordinal)=><li

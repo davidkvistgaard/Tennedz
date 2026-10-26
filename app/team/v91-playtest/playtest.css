@@ -70,6 +70,35 @@
 .v91-race-viewer h3{margin:0 0 6px}
 .v91-race-viewer p{margin:0 0 14px;color:#526b63}
 .v91-race-viewer label{max-width:330px;margin-bottom:12px}
+.v91-race-dashboard{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px;margin:14px 0 18px}
+.v91-dashboard-progress,.v91-dashboard-road,.v91-dashboard-team{min-width:0;padding:14px;border:1px solid #bfd5cb;border-radius:10px;background:#f6faf7}
+.v91-dashboard-progress{display:grid;gap:10px;align-content:center}
+.v91-dashboard-progress>div{display:grid;gap:3px}
+.v91-dashboard-progress span{color:#526b63;font-size:.85rem}
+.v91-dashboard-progress>div>span{font-size:.72rem;font-weight:800;letter-spacing:.08em}
+.v91-dashboard-progress strong{font-size:1.8rem;line-height:1.1;color:#17312e}
+.v91-dashboard-progress progress{width:100%;height:14px;accent-color:#116e60}
+.v91-dashboard-road{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;align-items:start}
+.v91-dashboard-road>div{display:grid;gap:2px}
+.v91-dashboard-road strong{font-size:1.5rem;line-height:1;color:#17312e}
+.v91-dashboard-road span{font-size:.76rem;line-height:1.3;color:#526b63}
+.v91-dashboard-road p{grid-column:1/-1;margin:2px 0 0;font-size:.82rem}
+.v91-race-dashboard .v91-commentary-current{margin:0;padding:14px;border:1px solid #ead7a9;border-left:4px solid #9c762b}
+.v91-dashboard-team{grid-column:1/-1}
+.v91-dashboard-team-heading{display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin-bottom:10px}
+.v91-dashboard-team-heading h4{margin:0;color:#17312e}
+.v91-dashboard-team-heading p{margin:0!important;font-size:.78rem;color:#526b63}
+.v91-dashboard-riders{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.v91-dashboard-riders button{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:5px 12px;align-items:start;min-width:0;padding:10px;text-align:left;border:1px solid #bfd5cb;border-radius:8px;background:white;color:#17312e;cursor:pointer}
+.v91-dashboard-riders button[aria-pressed=true]{border:2px solid #116e60;background:#e7f4ed}
+.v91-dashboard-riders button>span{display:grid;gap:2px;min-width:0}
+.v91-dashboard-riders button strong{font-size:.86rem;overflow-wrap:anywhere}
+.v91-dashboard-riders button small{font-size:.73rem;line-height:1.3;color:#526b63}
+.v91-dashboard-rider-state{text-align:right}
+.v91-dashboard-riders progress{grid-column:1/-1;width:100%;height:9px;accent-color:#116e60}
+.v91-dashboard-riders progress.v91-low-energy{accent-color:#b76e40}
+.v91-dashboard-riders button>small{grid-column:1/-1}
+@media(max-width:700px){.v91-race-dashboard{grid-template-columns:minmax(0,1fr)}.v91-dashboard-team-heading{display:block}.v91-dashboard-team-heading p{margin-top:5px!important}.v91-dashboard-riders{grid-template-columns:minmax(0,1fr)}}
 .v91-stage-profile{margin:0 0 14px;padding:10px;background:#f2f7f4;border-radius:8px}
 .v91-stage-profile svg{display:block;width:100%;height:130px;background:white;border-radius:6px}
 .v91-stage-profile polyline{fill:none;stroke:#598b3b;stroke-width:3;vector-effect:non-scaling-stroke}

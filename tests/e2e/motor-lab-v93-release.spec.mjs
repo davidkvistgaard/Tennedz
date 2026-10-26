@@ -52,8 +52,23 @@ test('guided Motor Lab runs a race from setup to rider replay',async({page})=>{
   await expect(stageCard.getByLabel('Followed rider actions at this kilometre'))
     .toContainText('you-7:');
   const viewer=page.getByRole('region',{name:'Race viewer'});
+  const situation=viewer.getByLabel('Race situation at km 1');
+  await expect(situation).toContainText('Km 1 / 40');
+  await expect(situation).toContainText('39 km to go');
+  await expect(situation.getByRole('progressbar',
+    {name:'Race distance completed'})).toHaveAttribute('value','1');
+  const ownRiders=situation.getByLabel('Your riders at km 1');
+  await expect(ownRiders.locator('button')).toHaveCount(8);
+  await expect(ownRiders).toContainText('Energy left');
+  await expect(ownRiders).toContainText('Starting fatigue: 0');
+  await ownRiders.getByRole('button',{
+    name:/Rider 1/}).click();
+  await expect(page.getByLabel('Rider to follow')).toHaveValue('you-0');
+  await page.getByLabel('Rider to follow').selectOption('you-7');
+  await ownRiders.getByRole('button',{name:/Rider 8/}).focus();
+  await situation.screenshot({path:'test-results/guided-race-situation.png'});
   const commentary=viewer.getByLabel('Race commentary');
-  await expect(commentary).toContainText('At km 1');
+  await expect(situation).toContainText('At km 1');
   await expect(commentary.locator('ol').first().locator('li').first())
     .toContainText('Km 1');
   await expect(commentary).toContainText('Replaying this race keeps');
@@ -90,6 +105,8 @@ test('guided Motor Lab runs a race from setup to rider replay',async({page})=>{
   await page.getByLabel('Rider to follow').selectOption('you-7');
   await stageCard.screenshot({path:'test-results/guided-rider-actions.png'});
   await page.getByRole('slider',{name:/Recorded kilometre:/}).fill('2');
+  await expect(viewer.getByLabel('Race situation at km 2'))
+    .toContainText('38 km to go');
   const comparison=page.getByLabel('Recorded change from km 1 to 2');
   await expect(comparison).toContainText(
     `Front groups: ${coasted.kilometreFrames[0].roadGroups.length} → ${
