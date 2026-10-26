@@ -140,6 +140,13 @@ test('guided race diagram shows paid front-group time gaps',async({page})=>{
   const response=await responsePromise;
   expect(response.status()).toBe(200);
   const {coasted}=await response.json();
+  const ownEventIndices=coasted.kilometreFrames.flatMap((frame,index)=>
+    [...frame.attackAttempts,...frame.joinedRiderIds,...frame.caughtRiderIds]
+      .some(id=>id.startsWith('you-'))?[index]:[]);
+  const checkpointIndices=await page.locator('[data-checkpoint-index]')
+    .evaluateAll(cards=>cards.map(card=>Number(card.dataset.checkpointIndex)));
+  for(const index of ownEventIndices)
+    expect(checkpointIndices).toContain(index);
   const index=coasted.kilometreFrames.findIndex(frame=>
     frame.roadGroups.some(group=>group.gapSeconds>0));
   expect(index).toBeGreaterThanOrEqual(0);

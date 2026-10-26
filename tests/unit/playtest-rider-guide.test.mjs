@@ -297,6 +297,23 @@ test('viewer checkpoints keep recorded attack, catch, position and energy',()=>{
   fate:'Caught at km 8',firstKm:3,atOneKm:'in the bunch'}]);
 });
 
+test('guided playback retains a recorded own-rider event in the middle of a busy race',()=>{
+  const frames=Array.from({length:40},(_,index)=>({
+    km:index+1,terrain:'flat',
+    attackAttempts:index%3===1?['you-2']:[],
+    joinedRiderIds:[],caughtRiderIds:[],engagedChaseTeamIds:[],
+    roadGroups:[],droppedRiders:[],
+    ownRiders:[{riderId:'you-7',energy:95-index*.2}],
+  }));
+  const checkpoints=raceViewerCheckpoints({
+    settings:{distanceKm:41},kilometreFrames:frames},'you-7');
+  assert(checkpoints.length>8);
+  assert.match(checkpoints.find(row=>row.km===20)?.moments.join(' '),
+    /you-2 tried to attack/);
+  assert(checkpoints.some(row=>row.km===2));
+  assert(checkpoints.some(row=>row.km===38));
+});
+
 test('viewer energy curve reaches only a paid individual line',()=>{
   const race={settings:{distanceKm:3},kilometreFrames:[
     {km:1,ownRiders:[{riderId:'you-7',energy:88}]},

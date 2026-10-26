@@ -1404,9 +1404,10 @@ export default function Playtest({guided=false}){
               onClick={()=>selectRecordedKilometre(
                 nextCheckpoint.index+1)}>Next</button>
           </div>
-          <p>Playback advances through recorded checkpoints every 1.8 seconds.
-            It does not simulate motion between them. Selecting a checkpoint
-            pauses playback.</p>
+          <p>Playback advances through recorded checkpoints every 1.8 seconds,
+            including every recorded attack, break join and catch by your riders.
+            It does not simulate motion between checkpoints. Selecting a
+            checkpoint pauses playback.</p>
           <div className="v91-moment-jumps" aria-label="Recorded change navigation">
             <button type="button" disabled={!previousViewerMoment}
               onClick={()=>selectRecordedKilometre(previousViewerMoment.km)}>
