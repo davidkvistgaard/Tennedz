@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {normalizeStageOverlayV3, stageOverlayAtDistanceV3} from '../../lib/engine/v2/stage-overlay-v3.mjs';
+import {normalizeStageOverlayV3, stageOverlayAtDistanceV3, stageOverlaySlicesForKilometreV3} from '../../lib/engine/v2/stage-overlay-v3.mjs';
 import {buildKilometreRoute} from '../../lib/engine/v2/route.mjs';
 
 function fixture() {
@@ -59,4 +59,16 @@ test('v3 data is separate from the existing recorded kilometre route contract', 
   assert.equal(overlay.version, 3);
   assert.equal(before.kilometres[10].terrain, 'flat');
   assert.equal(stageOverlayAtDistanceV3(overlay, 10.5).features[0].kind, 'climb');
+});
+
+
+test('v3 provides paid-step boundaries without averaging away a short feature', () => {
+  const overlay = normalizeStageOverlayV3(fixture());
+  const first = stageOverlaySlicesForKilometreV3(overlay, 10);
+  const second = stageOverlaySlicesForKilometreV3(overlay, 11);
+  assert.deepEqual(first.map(slice => [slice.fromKm, slice.toKm]), [[10, 10.2], [10.2, 11]]);
+  assert.deepEqual(second.map(slice => [slice.fromKm, slice.toKm]), [[11, 11.1], [11.1, 11.2], [11.2, 12]]);
+  assert.deepEqual(first.map(slice => slice.features.map(feature => feature.id)), [[], ['short-climb']]);
+  assert.deepEqual(second.map(slice => slice.features.map(feature => feature.id)), [['short-climb'], ['summit'], []]);
+  assert.ok(Math.abs(first.reduce((sum, slice) => sum + slice.distanceKm, 0) - 1) < 1e-9);
 });

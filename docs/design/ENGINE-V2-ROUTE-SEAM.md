@@ -66,3 +66,8 @@ independently versioned transition and replay evidence before a short climb
 can change a rider's movement. The LBL image illustrates why this matters,
 but does not provide exact feature boundaries, road conditions or weather;
 the v3 unit example is synthetic rather than a claim about Liège 2025.
+
+The v3 contract can also split a single kilometre at each feature boundary
+while conserving total distance. This prepares a future motor step to pay
+movement and energy on the actual short span. It is a data slicing operation,
+not a simulation: no v3 slice currently changes a recorded race.
