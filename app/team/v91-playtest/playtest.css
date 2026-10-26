@@ -155,3 +155,13 @@
 .v91-result-table th,.v91-result-table td{padding:8px 10px;border-bottom:1px solid #dbe8e0;white-space:nowrap}
 .v91-result-table thead{position:sticky;top:0;background:#e9f3ed;z-index:1}
 .v91-result-table tbody tr:nth-child(even){background:#f1f8f3}
+
+.v91-stage-plan{grid-column:1/-1;min-width:0;padding:16px;border:1px solid #a6c2b8;border-radius:12px;background:#f8fcf9}
+.v91-stage-plan h3{margin:0 0 7px}
+.v91-stage-plan p{margin:0 0 12px;color:#526b63}
+.v91-stage-plan>button{padding:8px 14px}
+.v91-stage-intervals{display:flex;gap:9px;overflow-x:auto;margin:12px 0;padding:2px 2px 12px;scroll-snap-type:x proximity}
+.v91-stage-intervals article{display:grid;gap:7px;align-content:start;flex:0 0 230px;padding:12px;border:1px solid #a6c2b8;border-radius:10px;background:#e8f2ee;scroll-snap-align:start}
+.v91-stage-intervals article span{font-size:.85rem}
+.v91-stage-intervals article button{align-self:end;padding:7px;background:white;color:#116e60;border:1px solid #116e60}
+.v91-stage-intervals article button:focus-visible{outline:3px solid #116e60;outline-offset:2px}

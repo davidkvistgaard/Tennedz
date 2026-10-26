@@ -33,3 +33,16 @@ The guided Motor Lab can now choose a second 5 km effort marker for a team, incl
 Before running, the plan lists both selected efforts. The recorded viewer marks both points on its one-kilometre elevation profile, can jump to the first affected kilometre after each, and shows the active order and energy at that checkpoint. Rival inspection lists all of that manager's precommitted effort changes. The old single-effort comparison is suppressed for multi-marker runs because its 5 km-to-go attribution would be misleading.
 
 This adds tactical timing to the guided synthetic race, not named landmarks or precise sub-kilometre terrain. It does not resolve occupied-wheel contact or award official places or points. The preview v3 short-feature engine diagnostics remain separate and internal.
+
+
+### Guided stage inputs before tactics
+
+The guided Motor Lab can load a read-only simulated stage plan before the race. This
+uses the same seeded kilometre route builder as the subsequent recording, so its
+five-kilometre cards summarize the actual five one-kilometre samples for terrain,
+surface, exposure, elevation and simulated wind, temperature and rain. A card's
+end marker can be selected as the first timed-effort marker; selecting it alone
+does not issue a team order. Changing route settings makes the loaded plan stale
+until reloaded. The plan does not run a race, award points or change saved
+recordings. It is versioned as `v93-guided-stage-plan-1`; its 1 km data cannot
+represent the short climbs or named landmarks in the supplied LBL example.

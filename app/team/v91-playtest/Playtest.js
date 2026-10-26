@@ -235,6 +235,9 @@ export default function Playtest({guided=false}){
   const [submittedChoices,setSubmittedChoices]=useState(null);
   const [busy,setBusy]=useState(false);
   const [error,setError]=useState('');
+  const [stagePlan,setStagePlan]=useState(null);
+  const [stagePlanBusy,setStagePlanBusy]=useState(false);
+  const [stagePlanError,setStagePlanError]=useState('');
   const roadPreviewFrame=roadPreview?.lastKmRoad[roadPreviewIndex];
   const catchSourceFrame=roadPreview?.lastKmRoad.length===0?
     roadPreview.kilometreFrames.at(-1):null;
@@ -501,6 +504,13 @@ export default function Playtest({guided=false}){
   const maxHeight=Math.max(500,...settings.profileHeightsM);
   const profileLine=settings.profileHeightsM.map((height,index)=>
     `${10+index*196},${110-height/maxHeight*100}`).join(' ');
+  const stageSettings={distanceKm:settings.distanceKm,terrain:settings.terrain,
+    seed:settings.seed,...(settings.terrain==='custom'?
+      {profileHeightsM:settings.profileHeightsM}:{})};
+  const stagePlanKey=JSON.stringify(stageSettings);
+  const visibleStagePlan=stagePlan?.key===stagePlanKey?stagePlan.data:null;
+  const stageProfile=visibleStagePlan?
+    recordedStageProfile(visibleStagePlan.stageTrace):null;
   const chosenEffortMarkerKm=Math.min(effortMarkerKm??settings.distanceKm-5,settings.distanceKm-5);
   const chosenSecondEffortMarkerKm=Number.isInteger(secondEffortMarkerKm)&&
     secondEffortMarkerKm>=5&&secondEffortMarkerKm<=settings.distanceKm-5&&
@@ -558,6 +568,18 @@ export default function Playtest({guided=false}){
     setSubmittedChoices(null);
     document.getElementById('v91-race-settings')?.scrollIntoView();
   };
+  async function loadStagePlan(){
+    setStagePlanBusy(true);setStagePlanError('');
+    const key=stagePlanKey;
+    try{
+      const response=await api('/api/v91-playtest/stage-plan',{method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({settings:stageSettings})});
+      setStagePlan({key,data:response.stagePlan});
+    }catch(cause){setStagePlanError(cause.message||'The stage could not load.');}
+    finally{setStagePlanBusy(false);}
+  }
+
   async function run(event){
     event.preventDefault();setBusy(true);setError('');
     try{
@@ -745,6 +767,36 @@ export default function Playtest({guided=false}){
           </label>)}</div>
           <small>Each 20% segment is limited to an average gradient of 10%.</small>
         </fieldset>}
+        {guided&&<section className="v91-stage-plan" aria-label="Stage inputs before tactics">
+          <h3>Inspect the stage before giving orders</h3>
+          <p>The stage plan uses the same simulated 1 km route inputs as the race. Each 5 km card summarizes five separate kilometres, including changing wind and weather. This view does not resolve short climbs or landmarks.</p>
+          <button type="button" onClick={loadStagePlan} disabled={stagePlanBusy}>
+            {stagePlanBusy?'Loading stage…':visibleStagePlan?'Reload stage inputs':'Load stage inputs'}
+          </button>
+          {stagePlanError&&<p className="v91-error" role="alert">{stagePlanError}</p>}
+          {stagePlan&&!visibleStagePlan&&<p role="status">Route settings changed. Reload the stage inputs for this route.</p>}
+          {visibleStagePlan&&<div>
+            <div className="v91-stage-profile">
+              <svg viewBox="0 0 600 120" role="img" aria-label="Stage profile before tactics">
+                <polyline points={stageProfile.points}/>
+              </svg>
+              <p>Simulated route · {stageProfile.minElevationM.toFixed(0)}–{stageProfile.maxElevationM.toFixed(0)} m at 1 km resolution. The profile can hide short steep climbs.</p>
+            </div>
+            <div className="v91-stage-intervals">{visibleStagePlan.intervals.map(interval=>
+              <article key={interval.fromKm}>
+                <strong>{interval.fromKm}–{interval.toKm} km</strong>
+                <span>{interval.terrains.join(', ')} · {interval.surfaces.join(', ')}</span>
+                <span>{interval.startM.toFixed(0)} → {interval.endM.toFixed(0)} m · sampled range {interval.minM.toFixed(0)}–{interval.maxM.toFixed(0)} m</span>
+                <span>{interval.exposedKm}/5 km exposed · wind {interval.windKph[0].toFixed(0)}–{interval.windKph[1].toFixed(0)} km/h</span>
+                <span>Temp {interval.temperatureC[0].toFixed(0)}–{interval.temperatureC[1].toFixed(0)} °C · rain {interval.rainMm[0].toFixed(1)}–{interval.rainMm[1].toFixed(1)} mm</span>
+                {interval.toKm<settings.distanceKm&&<button type="button"
+                  onClick={()=>setEffortMarkerKm(interval.toKm)}>
+                  Use {interval.toKm} km as first effort marker
+                </button>}
+              </article>)}</div>
+            <p>Selected first marker: {chosenEffortMarkerKm} km. Open Timed effort below to choose a team effort; selecting a marker alone does not issue an order.</p>
+          </div>}
+        </section>}
         {guided&&<div className="v91-step-heading"><span>02 / TACTICS</span><h2>Give your team orders</h2><p>Effort spends energy; attacks and chasing change where your riders travel.</p></div>}
         {guided&&<p>Selective attacks are considered every 20 km and at route keypoints; repeated attacks every 5 km and at keypoints. An attempt may fail or be blocked by rider position or energy. Selective chase reacts to the gap and attack pressure; All helpers commits available helpers more strongly and costs more energy. After the race, the viewer shows which orders became recorded actions.</p>}
         {guided&&['effort','attack','chase'].map(key=><label key={key}>{LABELS[key]}

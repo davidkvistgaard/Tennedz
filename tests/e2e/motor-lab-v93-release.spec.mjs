@@ -60,8 +60,21 @@ test('guided Motor Lab applies an effort order after a selected 5 km marker', as
   await expect(page).toHaveURL(/\/team$/);
   await page.goto('/team/motor-lab');
   await page.getByLabel('Route profile').selectOption('rolling');
+  const stageResponsePromise=page.waitForResponse(response=>
+    response.url().endsWith('/api/v91-playtest/stage-plan')&&
+    response.request().method()==='POST');
+  await page.getByRole('button',{name:'Load stage inputs'}).click();
+  const stageResponse=await stageResponsePromise;
+  expect(stageResponse.status()).toBe(200);
+  const {stagePlan}=await stageResponse.json();
+  expect(stagePlan.intervals).toHaveLength(8);
+  await expect(page.getByRole('img',{name:'Stage profile before tactics'}))
+    .toBeVisible();
+  await page.getByLabel('Stage inputs before tactics').screenshot({
+    path:'test-results/guided-stage-before-tactics.png'});
+  await page.getByRole('button',{name:'Use 15 km as first effort marker'}).click();
   await page.locator('summary').filter({hasText:'Timed effort'}).click();
-  await page.getByLabel('Start changing effort after').selectOption('15');
+  await expect(page.getByLabel('Start changing effort after')).toHaveValue('15');
   await page.getByLabel('Effort after 15 km for you').selectOption('hard');
   const responsePromise=page.waitForResponse(response=>
     response.url().endsWith('/api/v91-playtest')&&
@@ -70,6 +83,7 @@ test('guided Motor Lab applies an effort order after a selected 5 km marker', as
   const response=await responsePromise;
   expect(response.status()).toBe(200);
   const {coasted}=await response.json();
+  expect(stagePlan.stageTrace).toEqual(coasted.stageTrace);
   expect(coasted.settings.managerTacticalOrdersV2)
     .toEqual([{teamId:'you',atKm:15,effort:'hard'}]);
   await page.getByRole('button',{name:'First km after effort marker 15'}).click();
