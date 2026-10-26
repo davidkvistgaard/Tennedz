@@ -9,7 +9,7 @@ import {raceViewerCheckpoints,raceViewerEnergySeries,
   raceViewerBreaksAndChase,raceViewerFinale,raceViewerRoad,
   raceViewerLateEffort,raceViewerLateTeamWork,
   raceViewerEffortInsight,raceViewerTimeline,raceViewerRivalAt,
-  raceViewerOwnRiderActionsAt} from
+  raceViewerOwnRiderActionsAt,raceViewerCheckpointChange} from
   '../../lib/engine/v2/playtest-viewer.mjs';
 
 test('rider guide shows the exact synthetic riders committed to the race',()=>{
@@ -76,6 +76,29 @@ test('selected-kilometre rider ledger shows named actions without inferring a mo
   assert.equal(result[2].road,'in the bunch');
   assert.equal(result[2].energyChange,-1);
   assert.equal(raceViewerOwnRiderActionsAt(null,frame).length,0);
+});
+
+test('checkpoint comparison reports observed group and rider changes only',()=>{
+  const previous={km:10,roadGroups:[{id:'road-1',gapSeconds:6,
+    riderIds:['rival-1-0','rival-2-0']}],
+  droppedRiders:[{riderId:'rival-3-0',deficitSeconds:2}],
+  ownRiders:[{riderId:'you-7',energy:74}]};
+  const current={km:11,roadGroups:[{id:'road-1',gapSeconds:8,
+    riderIds:['rival-1-0','rival-2-0','you-7']}],
+  droppedRiders:[{riderId:'rival-3-0',deficitSeconds:3},
+    {riderId:'rival-3-1',deficitSeconds:1}],
+  ownRiders:[{riderId:'you-7',energy:71.5}]};
+  const race={kilometreFrames:[previous,current]};
+  assert.deepEqual(raceViewerCheckpointChange(race,current,'you-7'),{
+    fromKm:10,toKm:11,
+    before:{frontGroups:1,frontRiders:2,isolatedRiders:1},
+    after:{frontGroups:1,frontRiders:3,isolatedRiders:2},
+    rider:{id:'you-7',roadBefore:'in the bunch',
+      roadAfter:'8.0 s ahead with 3 riders',energyBefore:74,
+      energyAfter:71.5,energyChange:-2.5}});
+  assert.equal(raceViewerCheckpointChange({kilometreFrames:[current]},
+    current,'you-7'),null);
+  assert.equal(raceViewerCheckpointChange(race,current,'you-0'),null);
 });
 
 test('rival focus ties a manager to its recorded finisher and road actions',()=>{

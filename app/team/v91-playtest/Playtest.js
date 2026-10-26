@@ -11,7 +11,7 @@ import {raceViewerCheckpoints,raceViewerEnergySeries,
   raceViewerBreaksAndChase,raceViewerFinale,raceViewerRoad,
   raceViewerLateEffort,raceViewerLateTeamWork,
   raceViewerEffortInsight,raceViewerTimeline,raceViewerRivalAt,
-  raceViewerOwnRiderActionsAt} from
+  raceViewerOwnRiderActionsAt,raceViewerCheckpointChange} from
   '../../../lib/engine/v2/playtest-viewer.mjs';
 
 const DEFAULT_PLANS=['chase','attack','neutral'];
@@ -347,6 +347,8 @@ export default function Playtest({guided=false}){
   const viewerOwnActions=raceViewerOwnRiderActionsAt(coasted,coastedFrame);
   const viewerSelectedAction=viewerOwnActions.find(row=>
     row.riderId===viewerRiderId);
+  const viewerCheckpointChange=raceViewerCheckpointChange(coasted,
+    coastedFrame,viewerRiderId);
   const coastedStage=coasted?.stageTrace?.kilometres[coastedKm-1];
   const coastedProfile=coasted?.stageTrace?recordedStageProfile(coasted.stageTrace):null;
   const ownRecordedOrder=coasted?.managerOrders.find(order=>
@@ -1437,6 +1439,23 @@ export default function Playtest({guided=false}){
                   row.energyChange.toFixed(1)} since the previous kilometre)`}
               </li>)}</ul>
             </details>}
+            {viewerCheckpointChange&&<div aria-label={
+              `Recorded change from km ${viewerCheckpointChange.fromKm} to ${viewerCheckpointChange.toKm}`}>
+              <h5>Since the previous kilometre</h5>
+              <p>Front groups: {viewerCheckpointChange.before.frontGroups} → {
+                viewerCheckpointChange.after.frontGroups} · riders ahead: {
+                viewerCheckpointChange.before.frontRiders} → {
+                viewerCheckpointChange.after.frontRiders} · isolated behind: {
+                viewerCheckpointChange.before.isolatedRiders} → {
+                viewerCheckpointChange.after.isolatedRiders}.</p>
+              <p>{viewerRiderId}: {viewerCheckpointChange.rider.roadBefore} → {
+                viewerCheckpointChange.rider.roadAfter}; energy {
+                viewerCheckpointChange.rider.energyBefore.toFixed(1)} → {
+                viewerCheckpointChange.rider.energyAfter.toFixed(1)} ({
+                viewerCheckpointChange.rider.energyChange>0?'+':''}{
+                viewerCheckpointChange.rider.energyChange.toFixed(1)}).</p>
+              <p>These are two recorded checkpoints, not a continuous wheel trace or proof of cause.</p>
+            </div>}
             <p>{viewerRiderId} has {viewerCurrentEnergy?.toFixed(1)??'—'}
               {' '}energy at this checkpoint{previousOwnEnergy!=null&&
                 viewerCurrentEnergy!=null?

@@ -55,6 +55,15 @@ test('guided Motor Lab runs a race from setup to rider replay',async({page})=>{
     'Actions and energy for all 8 of your riders'}).click();
   await expect(stageCard.locator('.v91-rider-actions li')).toHaveCount(8);
   await stageCard.screenshot({path:'test-results/guided-rider-actions.png'});
+  await page.getByRole('slider',{name:/Recorded kilometre:/}).fill('2');
+  const comparison=page.getByLabel('Recorded change from km 1 to 2');
+  await expect(comparison).toContainText(
+    `Front groups: ${coasted.kilometreFrames[0].roadGroups.length} → ${
+      coasted.kilometreFrames[1].roadGroups.length}`);
+  await expect(comparison).toContainText('These are two recorded checkpoints');
+  await comparison.screenshot({path:
+    'test-results/guided-checkpoint-comparison.png'});
+  await page.getByRole('slider',{name:/Recorded kilometre:/}).fill('1');
   const nextChange=page.getByRole('button',
     {name:/Next recorded change: km/});
   await expect(nextChange).toBeEnabled();
@@ -124,6 +133,17 @@ test('guided race diagram shows paid front-group time gaps',async({page})=>{
   await expect(diagram.locator('.v91-road-gap-ahead')).not.toHaveCount(0);
   await expect(diagram).toContainText('Bunch');
   await diagram.screenshot({path:'test-results/guided-road-gap-with-front.png'});
+  const comparedIndex=Math.max(index,1);
+  await page.getByRole('slider',{name:/Recorded kilometre:/})
+    .fill(String(comparedIndex+1));
+  const comparison=page.getByLabel(
+    `Recorded change from km ${comparedIndex} to ${comparedIndex+1}`);
+  await expect(comparison).toContainText(
+    `Front groups: ${coasted.kilometreFrames[comparedIndex-1]
+      .roadGroups.length} → ${coasted.kilometreFrames[comparedIndex]
+      .roadGroups.length}`);
+  await comparison.screenshot({path:
+    'test-results/guided-front-checkpoint-comparison.png'});
 });
 
 test('guided Motor Lab applies an effort order after a selected 5 km marker', async({page}) => {
