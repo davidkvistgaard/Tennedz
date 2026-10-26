@@ -505,12 +505,13 @@ test('committed front work stops on the following kilometre',()=>{
   }
 });
 
-test('committed front replay accounts for a passive 20-team field',()=>{
+test('competing front orders account for a passive 20-team field',()=>{
   const input=prepareV91Playtest({distanceKm:40,terrain:'flat',
     teamCount:20,gender:'M',effort:'steady',attack:'none',chase:'ignore',
     defaultRivalPlan:'passive',seed:'front-work-20',
-    managerFinaleOrders:[{teamId:'you',atKm:35,
-      frontWork:'rotate'}]});
+    managerFinaleOrders:[
+      {teamId:'you',atKm:35,frontWork:'rotate'},
+      {teamId:'rival-1',atKm:35,frontWork:'rotate'}]});
   const {recording}=simulateTacticalTourWithHandoffStateV3({...input,
     motorVersion:MOTOR_EXHAUSTION_COAST_VERSION});
   const route=recording.route.kilometres;
@@ -538,12 +539,49 @@ test('committed front replay accounts for a passive 20-team field',()=>{
     assert.equal(frame.riderStates.length,160);
     assert.deepEqual(frame.paidFrontWork.riderIds,
       recording.frames[frame.km-1].paidBunchPace.riderIds);
+    assert.equal(frame.paidFrontWork.teamId,
+      recording.frames[frame.km-1].paidBunchPace.teamId);
     for(const row of frame.riderStates){
       const paid=recording.frames[frame.km-1].riderGroups.find(candidate=>
         candidate.id===row.id);
       assert.equal(row.energy,paid.energy);
       assert.equal(row.group,paid.group);
     }
+  }
+});
+
+test('committed conserve front work prevents recovery for paid helpers',()=>{
+  const {stageInput}=source();
+  const input=prepareV91Playtest({distanceKm:40,terrain:'flat',
+    teamCount:4,gender:'M',effort:'steady',attack:'none',chase:'ignore',
+    defaultRivalPlan:'passive',seed:'front-work-4',
+    managerFinaleOrders:[{teamId:'you',atKm:35,
+      effort:'conserve',frontWork:'rotate'}]});
+  const {recording,handoffStateTrace}=
+    simulateTacticalTourWithHandoffStateV3({...input,
+      motorVersion:MOTOR_EXHAUSTION_COAST_VERSION});
+  stageInput.overlay.conditionSpans=Array.from({length:2},(_,index)=>{
+    const segment=recording.route.kilometres[index+35];
+    return {id:`conserve-front-${index+36}`,fromKm:index+35,
+      toKm:index+36,conditions:{surface:segment.surface,
+        exposed:segment.exposed,source:'simulated',weather:segment.weather}};
+  });
+  const replay=replayCommittedQuietBunchWithFrontWorkV3({recording,
+    frameIndex:34,stageInput,endKm:37});
+  assert.equal(replay.refusal,null);
+  for(const frame of replay.frames){
+    assert.equal(frame.activeEfforts.find(row=>row.teamId==='you')
+      .effort,'conserve');
+    for(const row of frame.riderStates){
+      const paid=recording.frames[frame.km-1].riderGroups.find(candidate=>
+        candidate.id===row.id);
+      const issued=handoffStateTrace.frames[frame.km-1].riders.find(candidate=>
+        candidate.riderId===row.id);
+      assert.equal(row.energy,paid.energy);
+      assert.equal(row.quietKm,issued.quietKm);
+    }
+    for(const id of frame.paidFrontWork.riderIds)
+      assert.equal(frame.riderWork.find(row=>row.id===id).recoveryAward,0);
   }
 });
 

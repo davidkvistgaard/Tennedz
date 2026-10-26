@@ -354,9 +354,12 @@ unchanged in-process recording. The step still refuses any departure or
 unpaid contact; front selection uses the opening slice's stage conditions,
 and the result is internal only, without an occupied-wheel order or finish.
 The same guarded rule also accounts for all 160 riders in a passive 20-team
-40 km field across two post-order kilometres, matching v2 helper selection,
-energy and group state. This is a size check of the attached-field case,
-not evidence that 20-team attacks or separated roads are supported.
+40 km field with two teams competing to rotate at the front. Across two
+post-order kilometres, selected team/helpers, energy and group state match
+v2. A separate committed `conserve` plus `rotate` case matches v2 energy
+and quiet counters: paid front helpers cannot also collect quiet recovery.
+These are checks of the attached-field case, not evidence that 20-team
+attacks or separated roads are supported.
 
 Before routing v3 to guided Motor Lab, verify a complete source field and
 energy ledger at every replay boundary; homogeneous-kilometre parity with
