@@ -358,6 +358,11 @@ The same guarded rule also accounts for all 160 riders in a passive 20-team
 post-order kilometres, selected team/helpers, energy and group state match
 v2. A separate committed `conserve` plus `rotate` case matches v2 energy
 and quiet counters: paid front helpers cannot also collect quiet recovery.
+With an illustrative 400 m climb in the first replayed kilometre, the same
+team and helpers are selected, but all 160 riders pay more work and retain
+less energy through the following kilometre. This tests the route overlay's
+effect on an already attached field; it does not establish a climb-induced
+split or a route-accurate Liège profile.
 These are checks of the attached-field case, not evidence that 20-team
 attacks or separated roads are supported.
 
