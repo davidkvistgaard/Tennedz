@@ -238,7 +238,7 @@ test('guided Motor Lab applies an effort order after a selected 5 km marker', as
     .toBeVisible();
   await page.getByLabel('Stage inputs before tactics').screenshot({
     path:'test-results/guided-stage-before-tactics.png'});
-  await page.getByRole('button',{name:'Use 15 km as first effort marker'}).click();
+  await page.getByRole('button',{name:'Use 15 km as first order marker'}).click();
   await page.locator('summary').filter({hasText:'Timed team orders'}).click();
   await expect(page.getByLabel('First order marker after')).toHaveValue('15');
   await page.getByLabel('Effort after 15 km for you').selectOption('hard');
@@ -254,11 +254,11 @@ test('guided Motor Lab applies an effort order after a selected 5 km marker', as
     .toEqual([{teamId:'you',atKm:15,effort:'hard'}]);
   const startingEffort=coasted.managerOrders.find(row=>
     row.teamId==='you').effort;
-  await page.getByRole('button',{name:'First km after effort marker 15'}).click();
+  await page.getByRole('button',{name:'First km after order marker 15'}).click();
   await expect(page.getByLabel('Stage and orders at km 16'))
     .toContainText('Your active order: hard effort');
   await expect(page.getByLabel('Recorded stage elevation profile'))
-    .toContainText('effort markers at km 15 · solid line: viewing km 16');
+    .toContainText('order markers at km 15 · solid line: viewing km 16');
   await page.getByLabel('Recorded stage elevation profile').screenshot({
     path:'test-results/guided-stage-profile.png'});
   await page.getByRole('slider',{name:/Recorded kilometre/}).focus();
@@ -321,13 +321,13 @@ test('guided Motor Lab replays two precommitted 5 km effort changes', async({pag
   await page.getByRole('button',{name:'Load stage inputs'}).click();
   await expect(page.getByRole('img',{name:'Stage profile before tactics'}))
     .toBeVisible();
-  await page.getByRole('button',{name:'Use 15 km as first effort marker'}).click();
-  await page.getByRole('button',{name:'Use 25 km as second effort marker'}).click();
-  await page.getByRole('button',{name:'Use 25 km as first effort marker'}).click();
+  await page.getByRole('button',{name:'Use 15 km as first order marker'}).click();
+  await page.getByRole('button',{name:'Use 25 km as second order marker'}).click();
+  await page.getByRole('button',{name:'Use 25 km as first order marker'}).click();
   await expect(page.getByLabel('Stage inputs before tactics'))
     .toContainText('Selected markers: 25 km.');
-  await page.getByRole('button',{name:'Use 15 km as first effort marker'}).click();
-  await page.getByRole('button',{name:'Use 25 km as second effort marker'}).click();
+  await page.getByRole('button',{name:'Use 15 km as first order marker'}).click();
+  await page.getByRole('button',{name:'Use 25 km as second order marker'}).click();
   await expect(page.getByLabel('Stage inputs before tactics'))
     .toContainText('Selected markers: 15 km, 25 km');
   await page.getByLabel('Stage inputs before tactics').screenshot({
@@ -356,13 +356,13 @@ test('guided Motor Lab replays two precommitted 5 km effort changes', async({pag
     {teamId:'you',atKm:25,effort:'conserve'},
   ]);
   await expect(page.getByLabel('Recorded stage elevation profile'))
-    .toContainText('effort markers at km 15, 25');
+    .toContainText('order markers at km 15, 25');
   await page.getByLabel('Recorded stage elevation profile').screenshot({
     path:'test-results/guided-two-marker-profile.png'});
-  await page.getByRole('button',{name:'First km after effort marker 15'}).click();
+  await page.getByRole('button',{name:'First km after order marker 15'}).click();
   await expect(page.getByLabel('Stage and orders at km 16'))
     .toContainText('Your active order: hard effort');
-  await page.getByRole('button',{name:'First km after effort marker 25'}).click();
+  await page.getByRole('button',{name:'First km after order marker 25'}).click();
   await expect(page.getByLabel('Stage and orders at km 26'))
     .toContainText('Your active order: conserve effort');
   await page.getByRole('slider',{name:/Recorded kilometre/}).focus();

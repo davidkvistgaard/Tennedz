@@ -874,13 +874,13 @@ export default function Playtest({guided=false}){
                       if(secondEffortMarkerKm===interval.toKm)
                         setSecondEffortMarkerKm(null);
                     }}>
-                    Use {interval.toKm} km as first effort marker
+                    Use {interval.toKm} km as first order marker
                   </button>
                   {interval.toKm!==chosenEffortMarkerKm&&
                     <button type="button"
                       aria-pressed={interval.toKm===chosenSecondEffortMarkerKm}
                       onClick={()=>setSecondEffortMarkerKm(interval.toKm)}>
-                      Use {interval.toKm} km as second effort marker
+                      Use {interval.toKm} km as second order marker
                     </button>}
                 </>}
               </article>)}</div>
@@ -1378,7 +1378,7 @@ export default function Playtest({guided=false}){
           {coastedProfile&&<div className="v91-stage-profile"
             aria-label="Recorded stage elevation profile">
             <svg viewBox="0 0 600 130" preserveAspectRatio="none" role="img"
-              aria-label={`Recorded one-kilometre elevation profile. Viewing km ${coastedKm}; effort markers at km ${recordedEffortMarkersKm.length?recordedEffortMarkersKm.join(', '):recordedEffortMarkerKm}.`}>
+              aria-label={`Recorded one-kilometre elevation profile. Viewing km ${coastedKm}; order markers at km ${recordedEffortMarkersKm.length?recordedEffortMarkersKm.join(', '):recordedEffortMarkerKm}.`}>
               <polyline points={coastedProfile.points}/>
               {(recordedEffortMarkersKm.length?recordedEffortMarkersKm:
                 [recordedEffortMarkerKm]).map(markerKm=><line
@@ -1391,7 +1391,7 @@ export default function Playtest({guided=false}){
                 x2={20+coastedKm/coasted.settings.distanceKm*560}
                 y1="12" y2="115"/>
             </svg>
-            <p>{coastedProfile.minElevationM.toFixed(0)}–{coastedProfile.maxElevationM.toFixed(0)} m recorded elevation · dashed lines: effort markers at km {recordedEffortMarkersKm.length?recordedEffortMarkersKm.join(', '):recordedEffortMarkerKm} · solid line: viewing km {coastedKm}. The profile uses one-kilometre samples; short climbs may be hidden.</p>
+            <p>{coastedProfile.minElevationM.toFixed(0)}–{coastedProfile.maxElevationM.toFixed(0)} m recorded elevation · dashed lines: order markers at km {recordedEffortMarkersKm.length?recordedEffortMarkersKm.join(', '):recordedEffortMarkerKm} · solid line: viewing km {coastedKm}. The profile uses one-kilometre samples; short climbs may be hidden.</p>
           </div>}
           <div className="v91-energy-view" aria-label={`${viewerRiderId} recorded energy through the race`}>
             <svg viewBox="0 0 600 145" preserveAspectRatio="none" role="img"
@@ -1433,8 +1433,8 @@ export default function Playtest({guided=false}){
                 aria-pressed={coastedKm===jumpKm}
                 onClick={()=>selectRecordedKilometre(jumpKm)}>
                 {recordedTimedOrders.length?
-                  'First km after effort marker '+markerKm:
-                  index===0?'5 km effort handoff':'Effort marker '+markerKm}
+                  'First km after order marker '+markerKm:
+                  index===0?'5 km order handoff':'Order marker '+markerKm}
               </button>;
             })}
             <button type="button" aria-pressed={

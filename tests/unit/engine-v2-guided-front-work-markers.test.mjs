@@ -60,3 +60,15 @@ test('front-work phases preserve old order contracts and refuse ambiguous marker
     managerTacticalOrdersV3:[{teamId:'you',atKm:15,effort:'hard'}]}),
   /valid playtest settings/);
 });
+
+test('a front-work-only marker retains the starting team effort',()=>{
+  const input={...base,managerTacticalOrdersV4:[
+    {teamId:'you',atKm:10,frontWork:'rotate'}]};
+  const prepared=prepareV91Playtest(input);
+  const own=prepared.teams.find(team=>team.id==='you');
+  assert.deepEqual(own.orders.phases,[{atKm:10,frontWork:'rotate'}]);
+  assert.equal(orderAt(own.orders,10).effort,base.effort);
+  assert.equal(orderAt(own.orders,10).frontWork,'rotate');
+  assert.throws(()=>createV93CoastedPlaytest(input),
+    /needs recorded response or front rotation/);
+});
