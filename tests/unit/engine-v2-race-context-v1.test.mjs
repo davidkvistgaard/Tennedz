@@ -87,3 +87,29 @@ test('a named manager attack survives a protective team role',()=>{
     motorVersion:MOTOR_RACE_DYNAMICS_VERSION,raceContext});
   assert.ok(race.frames.some(frame=>frame.attackers.includes('you-4')));
 });
+
+test('selective captain teams pursue a one-day finale but can leave a stage break',()=>{
+  const {stage,weather,teams,seed}=prepareV91Playtest({distanceKm:40,
+    teamCount:4,attack:'repeated',chase:'ignore',
+    defaultRivalPlan:'neutral',seed:'v94-format-pursuit'});
+  const teamRoles=Object.fromEntries(teams.map(team=>[team.id,
+    team.id==='you'?'break':'protect']));
+  const input={stage,weather,teams,seed,motorVersion:MOTOR_RACE_DYNAMICS_VERSION};
+  const oneDay=simulateTacticalTour({...input,
+    raceContext:{format:'one_day',teamRoles}});
+  const stageRace=simulateTacticalTour({...input,
+    raceContext:{format:'stage',stageNumber:8,teamRoles}});
+  const firstPursuit=oneDay.frames.find(frame=>frame.chaseReasons.some(row=>
+    row.reason==='one_day_captain_pursuit'));
+  assert.ok(firstPursuit);
+  assert.ok(stageRace.frames.every(frame=>frame.chaseReasons.every(row=>
+    row.reason!=='one_day_captain_pursuit')));
+  const pursuingTeamId=firstPursuit.chaseReasons.find(row=>
+    row.reason==='one_day_captain_pursuit').teamId;
+  const helperIds=oneDay.committedInputs.teams.find(team=>
+    team.id===pursuingTeamId).orders.helperIds;
+  const stageLedger=stageRace.frames[firstPursuit.km-1].energyLedger;
+  assert.ok(helperIds.some(helperId=>
+    firstPursuit.energyLedger.find(row=>row.riderId===helperId).workDemand>
+    stageLedger.find(row=>row.riderId===helperId).workDemand));
+});

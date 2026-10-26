@@ -43,8 +43,8 @@ The first implementation increment should be a separately versioned, opt-in race
 
 ## Internal v94 candidate audit (26 October 2026)
 
-`node scripts/audit-race-dynamics-v94.mjs` varies three seeds, flat/mountain,
-fatigue 0/30, one-day/stage contexts, and three explicit 20-team role mixes
+The first candidate matrix varied three seeds, flat/mountain, fatigue 0/30,
+one-day/stage contexts, and three explicit 20-team role mixes
 (3 break/2 control, 5 break/2 control, 5 break/4 control): **72 synthetic runs**.
 This is a constructed intent matrix, not a random-rival population or an
 observed-race calibration. Roles are required input to the candidate; it is
@@ -61,3 +61,21 @@ assigned five-minute bonus. The conversion and catch decision remain
 uncalibrated. Do not publish the candidate as playable or infer an official
 winner; next compare paid chase capacity with front work and obtain both
 credible catches and survivals across seeds without scripting either result.
+
+The next candidate lets *selective* teams assigned to protect a captain join
+the final 50 km pursuit in a one-day race. They remain free to withhold on a
+stage unless an existing GC/emergency or explicit order applies. The revised
+`node scripts/audit-race-dynamics-v94.mjs` gives protective teams selective
+plans and adds a 5-break/6-control mix: **96 runs** over the same routes,
+seeds and fatigue levels. A front is caught in **33/48 one-day** and **3/48
+stage** scenarios. With five break teams and two control teams, the mean
+maximum lead is about **413 s one-day** and **524 s stage**; one-day catches
+occur in **3/12** of that harder mix. Flat/fresh one-day scenarios catch the
+front in **12/12** across the four role mixes; mountain/fatigued one-day
+scenarios catch it in **9/12**. These numbers illustrate sensitivity to
+explicit team intent and paid chase work, not a realistic race distribution.
+The additional protective teams can spend more helper energy late, while
+stage contexts more often retain a front. The candidate still lacks a
+recording validator, a settled-break pacing decision and proof that a tired
+front's unpayable work changes its road speed correctly; no guided routing or
+official result should follow from this audit.
