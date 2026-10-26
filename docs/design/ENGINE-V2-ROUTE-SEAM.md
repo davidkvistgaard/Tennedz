@@ -293,6 +293,15 @@ climb within that kilometre changes every rider's paid work without adding
 a tactical decision. Saved or copied recordings, a possible drop, and any
 dynamic order refuse. This is **one complete field step**, not a whole-race
 clock, contact resolution, official result, or guided Motor Lab feature.
+The same quiet-field rule now carries all 32 riders across ten interior
+kilometres from one issued checkpoint. When each kilometre's simulated
+conditions match the source race, every rider's energy and group state
+matches the ten paid v2 frames. An illustrative short climb changes later
+energy while earlier frames stay identical. If topography becomes ambiguous,
+the entire unsupported kilometre is rolled back and earlier fully paid
+kilometres remain; partial work within that kilometre is not exposed.
+This replay still has no attacks, front work, shelter, recovery, drop,
+occupied-wheel position, finish or official award, and is preview-only.
 
 Before routing v3 to guided Motor Lab, verify a complete source field and
 energy ledger at every replay boundary; homogeneous-kilometre parity with

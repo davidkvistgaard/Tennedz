@@ -5,7 +5,7 @@ import {simulateTacticalTourWithHandoffStateV3} from '../../lib/engine/v2/tour.m
 import {MOTOR_EXHAUSTION_COAST_VERSION} from '../../lib/engine/v2/tuning.mjs';
 import {STAGE_COMPLETE_INPUT_VERSION} from
   '../../lib/engine/v2/stage-complete-input-v3.mjs';
-import {advanceQuietWholeBunchKilometreV3} from
+import {advanceQuietWholeBunchKilometreV3,replayQuietWholeBunchStageV3} from
   '../../lib/engine/v2/stage-whole-bunch-kilometre-v3.mjs';
 
 function source(seed='front-work-4',attack='none'){
@@ -62,6 +62,63 @@ test('a fractional climb changes paid work for all riders in one decision step',
   assert.ok(climb.riderWork.every(row=>row.slices.length===3));
   assert.ok(climb.riderWork.every(row=>row.slices[1].featureIds
     .includes('illustrative-short-climb')));
+});
+
+test('quiet whole-field replay retains all riders across ten paid kilometres',()=>{
+  const {recording,stageInput}=source();
+  stageInput.overlay.conditionSpans=Array.from({length:10},(_,index)=>{
+    const segment=recording.route.kilometres[index+10];
+    return {id:`km-${index+11}`,fromKm:index+10,toKm:index+11,
+      conditions:{surface:segment.surface,exposed:segment.exposed,
+        source:'simulated',weather:segment.weather}};
+  });
+  const replay=replayQuietWholeBunchStageV3({recording,frameIndex:9,
+    stageInput,endKm:20});
+  assert.equal(replay.refusal,null);
+  assert.equal(replay.frames.length,10);
+  assert.equal(replay.wholeRaceCovered,false);
+  for(const frame of replay.frames){
+    assert.equal(frame.wholeFieldStepCovered,true);
+    assert.equal(frame.riderStates.length,32);
+    const old=recording.frames[frame.km-1];
+    for(const row of frame.riderStates){
+      const saved=old.riderGroups.find(candidate=>candidate.id===row.id);
+      assert.equal(row.energy,saved.energy);
+      assert.equal(row.deficitSeconds,saved.deficitSeconds);
+      assert.equal(row.group,saved.group);
+    }
+  }
+});
+
+test('short climb changes later paid energy without changing earlier frames',()=>{
+  const {recording,stageInput}=source();
+  const flat=replayQuietWholeBunchStageV3({recording,frameIndex:9,
+    stageInput,endKm:16});
+  stageInput.overlay.features=[{id:'illustrative-late-climb',kind:'climb',
+    fromKm:14.2,toKm:14.6,gradientPct:8,label:'Illustrative climb'}];
+  const climbed=replayQuietWholeBunchStageV3({recording,frameIndex:9,
+    stageInput,endKm:16});
+  assert.equal(climbed.refusal,null);
+  assert.deepEqual(climbed.frames.slice(0,4),flat.frames.slice(0,4));
+  assert.ok(climbed.frames[4].riderWork.every((row,index)=>
+    row.work>flat.frames[4].riderWork[index].work));
+  assert.ok(climbed.frames[5].riderStates.every((row,index)=>
+    row.energy<flat.frames[5].riderStates[index].energy));
+});
+
+test('ambiguous kilometre preserves prior fully paid whole-field frames',()=>{
+  const {recording,stageInput}=source();
+  stageInput.overlay.features=[
+    {id:'climb-a',kind:'climb',fromKm:14.2,toKm:14.6,gradientPct:8},
+    {id:'climb-b',kind:'climb',fromKm:14.3,toKm:14.5,gradientPct:9},
+  ];
+  const replay=replayQuietWholeBunchStageV3({recording,frameIndex:9,
+    stageInput,endKm:16});
+  assert.equal(replay.refusedAtKm,15);
+  assert.equal(replay.lastPaidKm,14);
+  assert.equal(replay.frames.length,4);
+  assert.match(replay.refusal,/Overlapping topographic/);
+  assert.equal(replay.frames.at(-1).riderStates.length,32);
 });
 
 test('saved copies, dynamic orders and the finish refuse the bounded step',()=>{
