@@ -194,3 +194,14 @@ the handoff, but only the already separated road-band members advance in v3;
 the remaining rider IDs, source groups and source energy are listed as
 unadvanced. The diagnostic explicitly marks whole-race coverage false. It
 cannot be interpreted as a finish for the field.
+
+The v2 saved frame does not retain the quiet-kilometre counter, energy cap,
+consecutive low-kilometre counter, attack load or active team-response
+state. Reconstructing bunch recovery, dropped-rider movement or the next
+attack from energy and group labels alone would invent motor state. An
+**opt-in internal v3 handoff-state trace** now captures those rider values and
+selected team-response fields at each
+paid kilometre boundary alongside an unchanged v2 recording. The normal
+simulator still returns the original recording shape, and the trace is a
+separate versioned sidecar. It is evidence for future transition work, not a
+v3 bunch clock, a saved recording migration or a whole-race continuation.

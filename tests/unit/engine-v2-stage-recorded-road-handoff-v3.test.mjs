@@ -1,7 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {normalizeOrders} from '../../lib/engine/v2/orders.mjs';
-import {simulateTacticalTour} from '../../lib/engine/v2/tour.mjs';
+import {simulateTacticalTour,simulateTacticalTourWithHandoffStateV3,
+  MOTOR_HANDOFF_STATE_TRACE_VERSION} from '../../lib/engine/v2/tour.mjs';
 import {normalizeStageOverlayV3} from
   '../../lib/engine/v2/stage-overlay-v3.mjs';
 import {evaluateSeparatedRoadBandsKilometreV3} from
@@ -40,15 +41,52 @@ function fixture(){
   const stage={distance_km:40,profile_points:[[0,100],[40,100]],
     keypoints:[{km:10,kind:'SPRINT'},{km:20,kind:'SPRINT'},
       {km:30,kind:'SPRINT'}]};
-  const recording=simulateTacticalTour({stage,
-    teams:[leader,second,third],seed:'chase-break-attack'});
+  const input={stage,teams:[leader,second,third],seed:'chase-break-attack'};
+  const recording=simulateTacticalTour(input);
   const conditions={surface:'road',exposed:false,source:'illustrative',
     weather:{temperatureC:16,windKph:8,rainMm:0}};
   const overlay=normalizeStageOverlayV3({version:3,distanceKm:40,
     tacticalIntervals:Array.from({length:8},(_,index)=>({
       fromKm:index*5,toKm:(index+1)*5,conditions})),features:[]});
-  return {recording,overlay};
+  return {input,recording,overlay};
 }
+
+test('opt-in handoff state is separate from unchanged v2 recording',()=>{
+  const {input,recording}=fixture();
+  const result=simulateTacticalTourWithHandoffStateV3(input);
+  assert.deepEqual(result.recording,recording);
+  assert.equal(result.handoffStateTrace.version,
+    MOTOR_HANDOFF_STATE_TRACE_VERSION);
+  assert.equal(result.handoffStateTrace.frames.length,40);
+  assert.equal(Object.hasOwn(result.recording,'handoffStateTrace'),false);
+  for(let index=0;index<40;index++){
+    const source=recording.frames[index];
+    const trace=result.handoffStateTrace.frames[index];
+    assert.equal(trace.km,source.km);
+    assert.equal(trace.riders.length,source.riderGroups.length);
+    assert.equal(trace.teams.length,3);
+    assert.deepEqual(trace.teams.map(team=>team.activeLeaderId),
+      source.activeLeaders.map(row=>row.riderId));
+    assert.ok(trace.teams.every(team=>typeof team.breakResponseActive===
+      'boolean'&&typeof team.gcResponseActive==='boolean'));
+    for(const rider of trace.riders){
+      const saved=source.riderGroups.find(row=>row.id===rider.riderId);
+      assert.ok(saved);
+      assert.equal(rider.group,saved.group);
+      assert.equal(rider.energy,saved.energy);
+      assert.equal(rider.deficitSeconds,saved.deficitSeconds);
+      assert.ok(Number.isInteger(rider.lowKilometres)&&
+        rider.lowKilometres>=0);
+      assert.ok(Number.isInteger(rider.quietKm)&&rider.quietKm>=0);
+      assert.ok(Number.isFinite(rider.energyCap)&&
+        rider.energyCap>=rider.energy&&rider.energyCap<=100);
+      assert.ok(Number.isFinite(rider.attackLoad)&&
+        rider.attackLoad>=0);
+    }
+  }
+  result.handoffStateTrace.frames[30].riders[0].energy=0;
+  assert.deepEqual(result.recording,recording);
+});
 
 test('validated v2 split hands paid end-of-km energy and gaps to v3',()=>{
   const {recording,overlay}=fixture();
