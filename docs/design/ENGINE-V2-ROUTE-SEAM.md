@@ -109,3 +109,11 @@ possible group catch stops at the first unpaid slice and returns no classified
 result. Group membership and cooperative work remain fixed throughout; this is
 internal evidence, not a replacement for the v2 whole-race tactics/attack,
 drafting, recovery or contact systems.
+
+For a homogeneous one-kilometre road with no short features or condition
+overrides, the v3 fixed-group clock now has a cross-version audit against the
+existing v2 cooperative road-group pace and exposure costs. Two-, three- and
+five-worker groups on flat, climbing and exposed rough roads agree within the
+v2 clock's two-decimal-second rounding. This anchors the slice model to the
+published group coefficients; it does not validate formation, internal wheel
+positions, recovery, attacks or a whole-race result.
