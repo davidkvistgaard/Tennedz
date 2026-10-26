@@ -128,3 +128,15 @@ positive group gaps at every short feature boundary. It stops before the first
 unpaid possible group contact. The caller must supply the actual worker roster:
 this path does not select attacks, position riders inside groups, decide
 drafting, recover energy, merge groups, classify the line or alter guided races.
+
+A further internal, separately versioned slice clock now accepts three to
+eight **already separated** road bands. Each band may contain one to five
+riders, so a solo can be evaluated between two declared-work groups without
+replacing either group's paid roster. The solo must pull, each rider pays once
+at every short feature/condition boundary, and all neighboring gaps advance
+from the same slice. If any neighboring gap might close, every band stops
+before that slice is charged and the possible contact pair is reported. Its
+two-group component agrees exactly with the preceding fixed-group v3 clock
+in a neighboring regression. This does not launch the solo's attack or infer
+an initial split, internal wheel position, draft, catch, recovery, official
+place or full-race result. Guided Motor Lab does not consume it yet.
