@@ -146,6 +146,7 @@ function coastedComparisonRun(settings,summary,pointContext){
   });
   const effortMarkerKm=settings.managerTacticalOrdersV2?.[0]?.atKm??settings.distanceKm-5;
   return {conditions:comparisonConditions(settings),finisherId,effortMarkerKm,
+    multiMarker: Boolean(settings.managerTacticalOrdersV3?.length),
     planWithoutLateEffort:JSON.stringify({
       settings:{...settings,managerFinaleOrders:
         settings.managerFinaleOrders?.filter(order=>
@@ -203,6 +204,8 @@ export default function Playtest({guided=false}){
   const [finalePlans,setFinalePlans]=useState({});
   const [lateEfforts,setLateEfforts]=useState({});
   const [effortMarkerKm,setEffortMarkerKm]=useState(null);
+  const [secondEffortMarkerKm,setSecondEffortMarkerKm]=useState(null);
+  const [secondEfforts,setSecondEfforts]=useState({});
   const [finaleFrontWork,setFinaleFrontWork]=useState({});
   const [namedAttack,setNamedAttack]=useState({teamId:'',riderId:''});
   const [secondNamedAttack,setSecondNamedAttack]=useState({teamId:'',riderId:''});
@@ -419,9 +422,13 @@ export default function Playtest({guided=false}){
       behavior:'smooth'});
   },[coastedKm,coasted]);
   const viewerEnergy=coasted?raceViewerEnergySeries(coasted,viewerRiderId):[];
-  const recordedEffortMarkerKm=coasted?.settings.managerTacticalOrdersV2?.[0]?.atKm??
+  const recordedTimedOrders=coasted?.settings.managerTacticalOrdersV3??
+    coasted?.settings.managerTacticalOrdersV2??[];
+  const recordedEffortMarkersKm=[...new Set(recordedTimedOrders.map(row=>
+    row.atKm))].sort((a,b)=>a-b);
+  const recordedEffortMarkerKm=recordedEffortMarkersKm[0]??
     coasted?.settings.distanceKm-5;
-  const effortJumpKm=coasted?.settings.managerTacticalOrdersV2?.length?
+  const effortJumpKm=recordedTimedOrders.length?
     recordedEffortMarkerKm+1:recordedEffortMarkerKm;
   const viewerFiveKm=viewerEnergy.find(row=>
     row.km>=coasted.settings.distanceKm-5);
@@ -437,6 +444,9 @@ export default function Playtest({guided=false}){
   const viewerRoad=coasted?raceViewerRoad(coastedFrame,
     coasted.settings.teamCount*8):[];
   const viewerRival=raceViewerRivalAt(coasted,coastedFrame,viewerRivalId);
+  const viewerRivalPhases=viewerRival?.orders?.phaseOrders??[];
+  const viewerRivalActivePhase=viewerRivalPhases.filter(phase=>
+    phase.atKm<=coastedKm-1).at(-1);
   const viewerRivalBreaks=coasted?
     raceViewerBreaksAndChase(coasted,viewerRivalId).riders:[];
   const viewerRiderRoad=viewerRoad.find(band=>
@@ -492,8 +502,13 @@ export default function Playtest({guided=false}){
   const profileLine=settings.profileHeightsM.map((height,index)=>
     `${10+index*196},${110-height/maxHeight*100}`).join(' ');
   const chosenEffortMarkerKm=Math.min(effortMarkerKm??settings.distanceKm-5,settings.distanceKm-5);
+  const chosenSecondEffortMarkerKm=Number.isInteger(secondEffortMarkerKm)&&
+    secondEffortMarkerKm>=5&&secondEffortMarkerKm<=settings.distanceKm-5&&
+    secondEffortMarkerKm%5===0&&secondEffortMarkerKm!==chosenEffortMarkerKm?
+      secondEffortMarkerKm:null;
   const currentChoices=JSON.stringify({settings,customRivals,
-    finalePlans,lateEfforts,effortMarkerKm,showPointPreview,
+    finalePlans,lateEfforts,effortMarkerKm,secondEffortMarkerKm,
+    secondEfforts,showPointPreview,
     pointContext:showPointPreview?pointContext:null,
     integratedMode,coastedMode,
     ...(!coastedMode?{finaleFrontWork,namedAttack,
@@ -528,6 +543,7 @@ export default function Playtest({guided=false}){
       leadOutRiderId:'you-6'},'rival-14':{finisherId:'rival-14-3',
       leadOutRiderId:'rival-14-5'}}:{});
     setEffortMarkerKm(null);
+    setSecondEffortMarkerKm(null);setSecondEfforts({});
     setLateEfforts(tactical?{'you':'hard','rival-14':'conserve'}:
       chase?{'you':'conserve'}:{});
     setFinaleFrontWork({});
@@ -566,12 +582,20 @@ export default function Playtest({guided=false}){
       const raceSettings={...settings,managerTactics,
         ...(!coastedMode&&secondNamedAttack.teamId?{
           managerFinaleOrders:[...orders.values()]}:{}),
-        ...(integratedMode&&coastedMode?{
-          [chosenEffortMarkerKm===settings.distanceKm-5?
-            'managerFinaleOrders':'managerTacticalOrdersV2']:finaleTeams
-            .filter(teamId=>lateEfforts[teamId])
-            .map(teamId=>({teamId,atKm:chosenEffortMarkerKm,
-              effort:lateEfforts[teamId]}))}:{})};
+        ...(integratedMode&&coastedMode?chosenSecondEffortMarkerKm!==null&&
+          finaleTeams.some(teamId=>secondEfforts[teamId])?{
+            managerTacticalOrdersV3:[
+              ...finaleTeams.filter(teamId=>lateEfforts[teamId]).map(teamId=>
+                ({teamId,atKm:chosenEffortMarkerKm,effort:lateEfforts[teamId]})),
+              ...finaleTeams.filter(teamId=>secondEfforts[teamId]).map(teamId=>
+                ({teamId,atKm:chosenSecondEffortMarkerKm,
+                  effort:secondEfforts[teamId]})),
+            ]}:{
+            [chosenEffortMarkerKm===settings.distanceKm-5?
+              'managerFinaleOrders':'managerTacticalOrdersV2']:finaleTeams
+              .filter(teamId=>lateEfforts[teamId])
+              .map(teamId=>({teamId,atKm:chosenEffortMarkerKm,
+                effort:lateEfforts[teamId]}))}:{})};
       const payload=integratedMode&&coastedMode?{
         mode:'v93-coasted',settings:raceSettings,
         plans:allTeams.map(teamId=>({teamId,
@@ -601,6 +625,7 @@ export default function Playtest({guided=false}){
         const next=coastedComparisonRun(raceSettings,response.coasted,
           showPointPreview?pointContext:null);
         setCoastedComparison(previousCoastedRun?.conditions===next.conditions&&
+          !previousCoastedRun.multiMarker&&!next.multiMarker&&
           previousCoastedRun.effortMarkerKm===raceSettings.distanceKm-5&&
           next.effortMarkerKm===raceSettings.distanceKm-5?
           {before:previousCoastedRun,after:next}:null);
@@ -803,9 +828,9 @@ export default function Playtest({guided=false}){
         </fieldset>
         </details>
         {integratedMode&&coastedMode&&<details className="v91-optional" open={!guided}>
-          <summary>Timed effort <span>Choose a 5 km marker</span></summary>
+          <summary>Timed effort <span>Plan up to two 5 km markers</span></summary>
           <fieldset className="v91-profile">
-          <legend>Precommitted effort change</legend>
+          <legend>Precommitted effort changes</legend>
           <p>Choose when a team-wide effort change begins. The marker is every 5 km; the order takes effect in the following kilometre. Hard raises work demand, but changes attack or chase pressure and bunch-front speed only when that work happens. Compare the recorded road and energy after a run.</p>
           <label>Start changing effort after
             <select value={chosenEffortMarkerKm} onChange={event=>
@@ -825,6 +850,29 @@ export default function Playtest({guided=false}){
                   value={value}>{label}</option>)}
               </select>
             </label>)}</div>
+          <label>Optional second effort change after
+            <select value={chosenSecondEffortMarkerKm??''} onChange={event=>
+              setSecondEffortMarkerKm(event.target.value?
+                Number(event.target.value):null)}>
+              <option value="">No second change</option>
+              {Array.from({length:settings.distanceKm/5-1},(_,index)=>
+                (index+1)*5).filter(km=>km!==chosenEffortMarkerKm)
+                .map(km=><option key={km} value={km}>
+                  {km} km ({settings.distanceKm-km} km to go)
+                </option>)}
+            </select>
+          </label>
+          {chosenSecondEffortMarkerKm!==null&&
+            <div className="v91-manager-tactics">{finaleTeams.map(teamId=>
+              <label key={teamId}>Effort after {chosenSecondEffortMarkerKm} km for {teamId}
+                <select value={secondEfforts[teamId]??''} onChange={event=>
+                  setSecondEfforts(current=>({...current,
+                    [teamId]:event.target.value}))}>
+                  <option value="">Keep previous effort</option>
+                  {OPTIONS.effort.map(([value,label])=><option key={value}
+                    value={value}>{label}</option>)}
+                </select>
+              </label>)}</div>}
         </fieldset></details>}
         {guided&&<div className="v91-step-heading"><span>03 / FINALE</span><h2>Choose your finisher</h2><p>Nominate a rider and, if you wish, a helper to lead them out. The road decides whether they can work together.</p></div>}
         {integratedMode&&<fieldset className="v91-profile">
@@ -962,6 +1010,8 @@ export default function Playtest({guided=false}){
               {optionLabel('attack',settings.attack)} attack · {' '}
               {optionLabel('chase',settings.chase)} chase
               {lateEfforts.you&&` · ${optionLabel('effort',lateEfforts.you)} effort after ${chosenEffortMarkerKm} km`}
+              {chosenSecondEffortMarkerKm!==null&&secondEfforts.you&&
+                ` · ${optionLabel('effort',secondEfforts.you)} effort after ${chosenSecondEffortMarkerKm} km`}
             </dd></div>
             <div><dt>Your finish</dt><dd>{ownPlan.finisherId} nominated · {' '}
               {ownPlan.leadOutRiderId?
@@ -1160,18 +1210,20 @@ export default function Playtest({guided=false}){
           {coastedProfile&&<div className="v91-stage-profile"
             aria-label="Recorded stage elevation profile">
             <svg viewBox="0 0 600 130" preserveAspectRatio="none" role="img"
-              aria-label={`Recorded one-kilometre elevation profile. Viewing km ${coastedKm}; effort marker at km ${recordedEffortMarkerKm}.`}>
+              aria-label={`Recorded one-kilometre elevation profile. Viewing km ${coastedKm}; effort markers at km ${recordedEffortMarkersKm.length?recordedEffortMarkersKm.join(', '):recordedEffortMarkerKm}.`}>
               <polyline points={coastedProfile.points}/>
-              <line className="v91-stage-marker"
-                x1={20+recordedEffortMarkerKm/coasted.settings.distanceKm*560}
-                x2={20+recordedEffortMarkerKm/coasted.settings.distanceKm*560}
-                y1="12" y2="115"/>
+              {(recordedEffortMarkersKm.length?recordedEffortMarkersKm:
+                [recordedEffortMarkerKm]).map(markerKm=><line
+                key={markerKm} className="v91-stage-marker"
+                x1={20+markerKm/coasted.settings.distanceKm*560}
+                x2={20+markerKm/coasted.settings.distanceKm*560}
+                y1="12" y2="115"/>)}
               <line className="v91-stage-current"
                 x1={20+coastedKm/coasted.settings.distanceKm*560}
                 x2={20+coastedKm/coasted.settings.distanceKm*560}
                 y1="12" y2="115"/>
             </svg>
-            <p>{coastedProfile.minElevationM.toFixed(0)}–{coastedProfile.maxElevationM.toFixed(0)} m recorded elevation · dashed line: effort marker at km {recordedEffortMarkerKm} · solid line: viewing km {coastedKm}. The profile uses one-kilometre samples; short climbs may be hidden.</p>
+            <p>{coastedProfile.minElevationM.toFixed(0)}–{coastedProfile.maxElevationM.toFixed(0)} m recorded elevation · dashed lines: effort markers at km {recordedEffortMarkersKm.length?recordedEffortMarkersKm.join(', '):recordedEffortMarkerKm} · solid line: viewing km {coastedKm}. The profile uses one-kilometre samples; short climbs may be hidden.</p>
           </div>}
           <div className="v91-energy-view" aria-label={`${viewerRiderId} recorded energy through the race`}>
             <svg viewBox="0 0 600 145" preserveAspectRatio="none" role="img"
@@ -1194,12 +1246,17 @@ export default function Playtest({guided=false}){
             <button type="button" aria-label="Previous checkpoint"
               disabled={!previousCheckpoint}
               onClick={()=>setCoastedKm(previousCheckpoint.index+1)}>Previous</button>
-            <button type="button" aria-pressed={
-              coastedKm===effortJumpKm}
-              onClick={()=>setCoastedKm(effortJumpKm)}>
-              {coasted.settings.managerTacticalOrdersV2?.length?
-                'First km after effort marker '+recordedEffortMarkerKm:
-                '5 km effort handoff'}</button>
+            {(recordedEffortMarkersKm.length?recordedEffortMarkersKm:
+              [recordedEffortMarkerKm]).map((markerKm,index)=>{
+              const jumpKm=recordedTimedOrders.length?markerKm+1:effortJumpKm;
+              return <button type="button" key={markerKm}
+                aria-pressed={coastedKm===jumpKm}
+                onClick={()=>setCoastedKm(jumpKm)}>
+                {recordedTimedOrders.length?
+                  'First km after effort marker '+markerKm:
+                  index===0?'5 km effort handoff':'Effort marker '+markerKm}
+              </button>;
+            })}
             <button type="button" aria-pressed={
               coastedKm===coasted.settings.distanceKm-1}
               onClick={()=>setCoastedKm(coasted.settings.distanceKm-1)}>
@@ -1311,7 +1368,13 @@ export default function Playtest({guided=false}){
                 {id}</option>)}</select></label>
             {viewerRival&&<div aria-label={`${viewerRival.teamId} at km ${coastedFrame?.km}`}>
               <p>Starting orders: {viewerRival.orders?.effort??'unavailable'} effort · {viewerRival.orders?.attack??'unavailable'} attacks · {viewerRival.orders?.chase??'unavailable'} chase.</p>
-              {viewerRival.fiveKmEffort&&<p>Separate 5 km effort order: {viewerRival.fiveKmEffort}.</p>}
+              {viewerRivalPhases.length>0&&<p>Precommitted effort changes: {
+                viewerRivalPhases.filter(phase=>phase.effort).map(phase=>
+                  phase.effort+' after km '+phase.atKm).join(' · ')||
+                  'none'}.</p>}
+              <p>Active effort at km {coastedKm}: {
+                viewerRivalActivePhase?.effort??viewerRival.orders?.effort??
+                  'unavailable'}.</p>
               <p>{viewerRival.finisherId}: {viewerRival.finisherRoad}. At this checkpoint, {viewerRival.frontCount} riders are ahead, {viewerRival.bunchCount} in the bunch and {viewerRival.droppedCount} behind.</p>
               <p>This kilometre: {viewerRival.attacks.length} attack attempts · {viewerRival.joins.length} break joins · {viewerRival.catches.length} caught · {viewerRival.pulls.length} riders taking pulls · {viewerRival.chased?'team chased':'team did not chase'}.</p>
               <p>Whole-kilometre record: chased {viewerRival.wholeRaceChaseKm} km · first attack {viewerRival.firstAttackKm===null?'none':`km ${viewerRival.firstAttackKm}`} · first break join {viewerRival.firstJoinKm===null?'none':`km ${viewerRival.firstJoinKm}`} · last recorded catch {viewerRival.lastCatchKm===null?'none':`km ${viewerRival.lastCatchKm}`}.</p>

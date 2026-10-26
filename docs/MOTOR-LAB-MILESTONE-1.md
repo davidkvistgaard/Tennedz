@@ -25,3 +25,11 @@ final wheel contact still refuses or withholds official places and awards.
 ## Recorded stage profile in guided replay
 
 The guided race viewer draws the elevation profile from the route saved with this run, then marks the precommitted 5 km effort point and the selected checkpoint. The elevation trace is sampled once per kilometre; short ramps visible on a detailed stage map can be hidden. The profile is a read-only navigation aid, not a new motor input or evidence that the chosen order caused a gap change. The separate stage trace adds recorded start/end elevations without changing the stored race, road groups, conditional finish or awards policy.
+
+## Two precommitted 5 km effort changes
+
+The guided Motor Lab can now choose a second 5 km effort marker for a team, including an earlier marker when the first remains at 5 km to go. A separate 'managerTacticalOrdersV3' input carries both changes into the existing kilometre motor; it rejects duplicate team/marker entries, off-grid markers and combinations with the older V2 or finale fields. The core order normalizer applies the phases chronologically from the following kilometre. Recordings created with the older input remain versioned as before.
+
+Before running, the plan lists both selected efforts. The recorded viewer marks both points on its one-kilometre elevation profile, can jump to the first affected kilometre after each, and shows the active order and energy at that checkpoint. Rival inspection lists all of that manager's precommitted effort changes. The old single-effort comparison is suppressed for multi-marker runs because its 5 km-to-go attribution would be misleading.
+
+This adds tactical timing to the guided synthetic race, not named landmarks or precise sub-kilometre terrain. It does not resolve occupied-wheel contact or award official places or points. The preview v3 short-feature engine diagnostics remain separate and internal.
