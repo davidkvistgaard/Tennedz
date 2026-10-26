@@ -216,3 +216,25 @@ measured race frequency: the same three seeds, two terrains and four deliberatel
 assigned role mixes appear in each row. The stage/one-day difference also
 reflects explicit team pursuit policy, so these figures do not isolate fatigue
 as the sole cause or justify routing v94 into the guided game.
+
+An additional `--stress --summary --validate` read-only audit holds five
+assigned break teams and varies control teams outside the earlier matrix.
+Each row has twelve 260 km cases (the same three seeds, two terrains and two
+fatigue settings):
+
+| Format | Control teams | Original front fully caught | Mean maximum lead |
+| --- | ---: | ---: | ---: |
+| One-day | 0 | 0/12 | 952 s |
+| One-day | 1 | 0/12 | 567 s |
+| One-day | 8 | 12/12 | 177 s |
+| Stage | 0 | 0/12 | 1077 s |
+| Stage | 1 | 0/12 | 698 s |
+| Stage | 8 | 9/12 | 229 s |
+
+All 72 recordings passed the current v94 consistency validator without a
+refusal. This is a useful sensitivity check: control-team count changes the
+paid lead and catch, rather than a hard-coded target gap. It is also a clear
+limit on readiness. With no control team, the candidate allows a mean lead
+of roughly 16–18 minutes; it cannot yet pick credible opponent roles or
+claim that a typical race settles near any particular gap. The stress runs
+are synthetic extremes, not evidence for real-world frequencies.

@@ -1,5 +1,5 @@
-// Read-only diagnostic for the opt-in candidate. It neither validates a
-// recording nor treats provisional crossings as official race results.
+// Read-only diagnostic for the opt-in candidate. --validate checks recording
+// consistency; provisional crossings are never treated as official results.
 import {prepareV91Playtest} from '../lib/engine/v2/playtest.mjs';
 import {simulateTacticalTour} from '../lib/engine/v2/tour.mjs';
 import {validateRecordedTour} from '../lib/engine/v2/recording.mjs';
@@ -109,9 +109,11 @@ function run({seed,terrain,fatigue,format,breakTeams,controlTeams}){
 }
 
 const rows=[];
+const roleMixes=process.argv.includes('--stress')?
+  [[5,0],[5,1],[5,8]]:[[3,2],[5,2],[5,4],[5,6]];
 for(const terrain of ['flat','mountain'])for(const fatigue of [0,30])
   for(const format of ['one_day','stage'])for(const seed of seeds)
-    for(const [breakTeams,controlTeams] of [[3,2],[5,2],[5,4],[5,6]]){
+    for(const [breakTeams,controlTeams] of roleMixes){
       if(process.argv.includes('--focus-six-control')&&
         !(format==='one_day'&&breakTeams===5&&controlTeams===6))continue;
       if(process.argv.includes('--focus-five-break')&&
@@ -124,13 +126,19 @@ for(const terrain of ['flat','mountain'])for(const fatigue of [0,30])
       }
     }
 const summary=process.argv.includes('--summary')?
-  ['one_day','stage'].flatMap(format=>[0,30].map(fatigue=>{
-    const sample=rows.filter(row=>row.format===format&&row.fatigue===fatigue);
+  ['one_day','stage'].flatMap(format=>(process.argv.includes('--stress')?
+    roleMixes.map(([,controlTeams])=>({controlTeams})):
+    [0,30].map(fatigue=>({fatigue}))).map(group=>{
+    const sample=rows.filter(row=>row.format===format&&
+      Object.entries(group).every(([key,value])=>row[key]===value));
     if(sample.length===0)return null;
-    const average=field=>+(sample.reduce((sum,row)=>sum+row[field],0)/sample.length)
-      .toFixed(2);
-    return {format,fatigue,cases:sample.length,
-      allInitialFrontCaught:sample.filter(row=>row.initialFrontRiders>0&&
+    const completed=sample.filter(row=>!row.refusal);
+    const average=field=>completed.length?
+      +(completed.reduce((sum,row)=>sum+row[field],0)/completed.length)
+      .toFixed(2)
+      :null;
+    return {format,...group,cases:sample.length,
+      allInitialFrontCaught:completed.filter(row=>row.initialFrontRiders>0&&
         row.initialFrontAtLineRiders===0).length,
       meanMaxGapSeconds:average('maxGapSeconds'),
       meanSettledRestRiderKm:average('settledFrontRestRiderKilometres'),
