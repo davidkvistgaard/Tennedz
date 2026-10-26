@@ -31,7 +31,8 @@ test('v3 isolated rider evaluation pays short climb and rough wind section at ex
   assert.deepEqual(result.slices.map(slice => slice.segment.surface),
     ['road', 'road', 'gravel', 'road', 'road']);
   assert.ok(result.slices[2].work > result.slices[0].work);
-  assert.ok(result.slices[2].roadSeconds > result.slices[0].roadSeconds);
+  assert.notEqual(result.slices[0].ability, result.slices[1].ability);
+  assert.ok(result.slices[2].roadBaselineSeconds > result.slices[0].roadBaselineSeconds);
   assert.ok(Math.abs(result.slices.reduce((sum, slice) => sum + slice.distanceKm, 0) - 1) < 1e-9);
   assert.ok(Math.abs(result.energyBefore - result.energyAfter - result.work) < 2e-6);
 });
@@ -42,9 +43,9 @@ test('v3 short geography changes rider work and road time without changing rider
   const climb = evaluateStageSliceKilometreV3({...input, overlay: overlay({rough: false})});
   const combined = evaluateStageSliceKilometreV3({...input, overlay: overlay()});
   assert.ok(climb.work > flat.work);
-  assert.ok(climb.roadSeconds > flat.roadSeconds);
+  assert.ok(climb.roadBaselineSeconds > flat.roadBaselineSeconds);
   assert.ok(combined.work > climb.work);
-  assert.ok(combined.roadSeconds > climb.roadSeconds);
+  assert.ok(combined.roadBaselineSeconds > climb.roadBaselineSeconds);
   assert.deepEqual(rider, before);
 });
 
