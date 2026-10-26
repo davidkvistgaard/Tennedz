@@ -89,3 +89,13 @@ slice without charging any lane for it. Precommitted 5 km effort markers are
 recorded in the stage replay. This is a narrow synthetic evidence path: it does
 not form attacks or groups, model drafting/recovery, resolve wheel contact,
 classify the line, or change guided Motor Lab or old v2 recordings.
+
+
+A separate internal v3 fixed-two-group slice step now uses the existing
+cooperation bonus and rotation-relief coefficients on precise stage slices.
+Both groups start separated, retain the same member rosters, and all members
+work cooperatively. Every worker pays individual energy once; the group clocks
+produce only a positive inter-group gap. If that gap could close, the first
+unpaid slice is refused without charging any member. Internal wheel positions,
+drafting, attacks, recovery, merges, official results and guided routing remain
+unresolved. This calculation has no effect on saved v2 races.
