@@ -537,6 +537,8 @@ test('competing front orders account for a passive 20-team field',()=>{
   assert.equal(replay.frames.length,2);
   for(const frame of replay.frames){
     assert.equal(frame.riderStates.length,160);
+    assert.deepEqual(frame.riderStates.map(row=>row.id).sort(),
+      recording.frames[frame.km-1].riderGroups.map(row=>row.id).sort());
     assert.deepEqual(frame.paidFrontWork.riderIds,
       recording.frames[frame.km-1].paidBunchPace.riderIds);
     assert.equal(frame.paidFrontWork.teamId,
@@ -562,6 +564,8 @@ test('competing front orders account for a passive 20-team field',()=>{
     const flatFrame=replay.frames[frameIndex];
     const climbFrame=shortClimb.frames[frameIndex];
     assert.equal(climbFrame.riderStates.length,160);
+    assert.deepEqual(climbFrame.riderStates.map(row=>row.id).sort(),
+      flatFrame.riderStates.map(row=>row.id).sort());
     for(let riderIndex=0;riderIndex<160;riderIndex++){
       const flat=flatFrame.riderStates[riderIndex];
       const climbed=climbFrame.riderStates[riderIndex];
