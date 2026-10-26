@@ -352,7 +352,7 @@ export default function Playtest({guided=false}){
   const ownRecordedOrder=coasted?.managerOrders.find(order=>
     order.teamId==='you');
   const activeOwnPhase=ownRecordedOrder?.phaseOrders
-    .filter(phase=>phase.atKm<=coastedKm).at(-1);
+    .filter(phase=>phase.atKm<=coastedKm-1).at(-1);
   const activeOwnOrder=ownRecordedOrder?
     {...ownRecordedOrder,...activeOwnPhase}:null;
   const previousOwnEnergy=coasted?.kilometreFrames[coastedKm-2]

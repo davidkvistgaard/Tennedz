@@ -161,6 +161,8 @@ test('guided Motor Lab applies an effort order after a selected 5 km marker', as
   expect(stagePlan.stageTrace).toEqual(coasted.stageTrace);
   expect(coasted.settings.managerTacticalOrdersV2)
     .toEqual([{teamId:'you',atKm:15,effort:'hard'}]);
+  const startingEffort=coasted.managerOrders.find(row=>
+    row.teamId==='you').effort;
   await page.getByRole('button',{name:'First km after effort marker 15'}).click();
   await expect(page.getByLabel('Stage and orders at km 16'))
     .toContainText('Your active order: hard effort');
@@ -168,6 +170,10 @@ test('guided Motor Lab applies an effort order after a selected 5 km marker', as
     .toContainText('effort markers at km 15 · solid line: viewing km 16');
   await page.getByLabel('Recorded stage elevation profile').screenshot({
     path:'test-results/guided-stage-profile.png'});
+  await page.getByRole('slider',{name:/Recorded kilometre/}).focus();
+  await page.keyboard.press('ArrowLeft');
+  await expect(page.getByLabel('Stage and orders at km 15'))
+    .toContainText(`Your active order: ${startingEffort} effort`);
   await expect(page.getByRole('region',{name:'Your v93 finish'}))
     .toContainText('Conditional place:');
 });
@@ -268,6 +274,10 @@ test('guided Motor Lab replays two precommitted 5 km effort changes', async({pag
   await page.getByRole('button',{name:'First km after effort marker 25'}).click();
   await expect(page.getByLabel('Stage and orders at km 26'))
     .toContainText('Your active order: conserve effort');
+  await page.getByRole('slider',{name:/Recorded kilometre/}).focus();
+  await page.keyboard.press('ArrowLeft');
+  await expect(page.getByLabel('Stage and orders at km 25'))
+    .toContainText('Your active order: hard effort');
   await expect(page.getByRole('region',{name:'Your v93 finish'}))
     .toContainText('Conditional place:');
 });
