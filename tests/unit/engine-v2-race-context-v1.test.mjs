@@ -113,3 +113,20 @@ test('selective captain teams pursue a one-day finale but can leave a stage brea
     firstPursuit.energyLedger.find(row=>row.riderId===helperId).workDemand>
     stageLedger.find(row=>row.riderId===helperId).workDemand));
 });
+
+test('v94 refuses unpayable front work before exposing an unsupported road clock',()=>{
+  const {stage,weather,teams,seed}=prepareV91Playtest({distanceKm:260,
+    teamCount:4,terrain:'mountain',fatigue:30,effort:'hard',
+    attack:'repeated',chase:'ignore',defaultRivalPlan:'passive',
+    seed:'front-exhaustion-probe'});
+  teams[0].orders.baseline.breakWork='drive';
+  const source={stage,weather,teams,seed};
+  const teamRoles=Object.fromEntries(teams.map(team=>[team.id,
+    team.id==='you'?'break':'protect']));
+  assert.throws(()=>simulateTacticalTour({...source,
+    motorVersion:MOTOR_RACE_DYNAMICS_VERSION,
+    raceContext:{format:'stage',stageNumber:8,teamRoles}}),
+  /Unresolved front exhaustion at km 136: you-7/);
+  assert.doesNotThrow(()=>simulateTacticalTour({...source,
+    motorVersion:MOTOR_EXHAUSTION_COAST_VERSION}));
+});

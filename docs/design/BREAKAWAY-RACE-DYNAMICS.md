@@ -79,3 +79,12 @@ stage contexts more often retain a front. The candidate still lacks a
 recording validator, a settled-break pacing decision and proof that a tired
 front's unpayable work changes its road speed correctly; no guided routing or
 official result should follow from this audit.
+
+The 96 standard-role runs recorded **zero** front rider-kilometres with
+unpayable energy demand. An intentionally hard-driving, fatigued 260 km
+mountain probe exposed a separate edge case: its first front rider could not
+fund the ordered work at km 136 (20 rider-kilometres of unpaid front demand in
+the prior prototype). The v94 candidate now explicitly refuses that input;
+the older v93 behavior is untouched. This is a safety boundary, not a paid
+slowdown or a complete long-race solution. A front-specific road-clock and
+contact transition remains necessary before broad playable routing.

@@ -27,6 +27,10 @@ function run({seed,terrain,fatigue,format,breakTeams,controlTeams}){
   const frames=recording.frames;
   const gaps=frames.map(frame=>frame.gapSeconds);
   const withFront=frames.filter(frame=>frame.breakawayRiderIds?.length>0);
+  const frontUnmet=frames.flatMap(frame=>frame.energyLedger.filter(row=>
+    frame.breakawayRiderIds.includes(row.riderId)&&row.unmetEnergyDemand>0)
+    .map(row=>({km:frame.km,riderId:row.riderId,
+      unmetEnergyDemand:row.unmetEnergyDemand})));
   const finale=frames.filter(frame=>frame.km>210);
   const finalFrame=frames.at(-1);
   const frontIds=new Set(finalFrame.breakawayRiderIds);
@@ -50,6 +54,10 @@ function run({seed,terrain,fatigue,format,breakTeams,controlTeams}){
       frontIds.has(row.id)),'energy'):null,
     finalBunchMeanEnergy:average(finalFrame.riderGroups.filter(row=>
       row.group==='peloton'),'energy'),
+    frontUnmetRiderKilometres:frontUnmet.length,
+    firstFrontUnmetKm:frontUnmet[0]?.km??null,
+    totalFrontUnmetEnergy:+frontUnmet.reduce((sum,row)=>
+      sum+row.unmetEnergyDemand,0).toFixed(2),
     caughtRiders:frames.reduce((sum,frame)=>
       sum+frame.caughtBreakawayRiderIds.length,0),
     frontPresentKm:withFront.length};
@@ -58,8 +66,14 @@ function run({seed,terrain,fatigue,format,breakTeams,controlTeams}){
 const rows=[];
 for(const terrain of ['flat','mountain'])for(const fatigue of [0,30])
   for(const format of ['one_day','stage'])for(const seed of seeds)
-    for(const [breakTeams,controlTeams] of [[3,2],[5,2],[5,4],[5,6]])
-      rows.push(run({seed,terrain,fatigue,format,breakTeams,controlTeams}));
+    for(const [breakTeams,controlTeams] of [[3,2],[5,2],[5,4],[5,6]]){
+      const input={seed,terrain,fatigue,format,breakTeams,controlTeams};
+      try{rows.push(run(input));}
+      catch(error){
+        if(!String(error.message).startsWith('Unresolved front exhaustion'))throw error;
+        rows.push({...input,refusal:String(error.message)});
+      }
+    }
 console.log(JSON.stringify({version:MOTOR_RACE_DYNAMICS_VERSION,
   note:'Internal opt-in role scenarios, not observed race calibration or official results.',
   rows},null,2));
