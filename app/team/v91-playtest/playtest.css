@@ -100,6 +100,19 @@
 .v91-viewer-track span{font-size:.88rem}
 .v91-viewer-track small{color:#526b63}
 .v91-viewer-timeline{margin-top:12px;padding:14px;background:#e8f2ee;border-radius:10px}
+.v91-viewer-commentary{margin-top:12px;padding:14px;background:#f8f3e6;border:1px solid #ead7a9;border-radius:10px}
+.v91-viewer-commentary h4{margin:0 0 7px}
+.v91-viewer-commentary p{margin:0 0 10px;color:#51482f}
+.v91-commentary-current{margin:0 0 12px;padding:11px 12px;border-left:4px solid #9c762b;border-radius:6px;background:#fffdf7}
+.v91-commentary-current>strong{color:#745319}
+.v91-commentary-current ul{margin:7px 0 0;padding-left:20px;line-height:1.5}
+.v91-commentary-current p{margin:7px 0 0}
+.v91-viewer-commentary ol{display:grid;gap:7px;margin:0;padding:0;list-style:none}
+.v91-viewer-commentary li button{display:flex;gap:10px;width:100%;padding:10px 12px;text-align:left;border:1px solid #dcc894;border-radius:7px;background:#fffdf7;color:#312b1d;cursor:pointer;line-height:1.4}
+.v91-viewer-commentary li button[aria-pressed=true]{border:2px solid #8d6924}
+.v91-viewer-commentary li strong{white-space:nowrap;color:#745319}
+.v91-viewer-commentary details{margin-top:10px}
+.v91-viewer-commentary summary{cursor:pointer;font-weight:700}
 .v91-viewer-timeline h4{margin:0 0 7px}
 .v91-viewer-timeline p{margin:0 0 9px}
 .v91-viewer-timeline ol{display:grid;gap:6px;margin:0;padding:0;list-style:none}

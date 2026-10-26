@@ -3,6 +3,8 @@ import {useEffect,useMemo,useRef,useState} from 'react';
 import TeamShell from '../../components/TeamShell';
 import {api} from '../../../lib/api';
 import {playtestRiderCards} from '../../../lib/engine/v2/playtest-riders.mjs';
+import {raceViewerCommentaryV1} from
+  '../../../lib/engine/v2/playtest-commentary-v1.mjs';
 import {recordedStageProfile} from '../../../lib/engine/v2/playtest-stage-trace.mjs';
 import {summarizePlaytestRaceStory} from
   '../../../lib/engine/v2/playtest-race-story.mjs';
@@ -497,6 +499,20 @@ export default function Playtest({guided=false}){
   const viewerCurrentEnergy=coastedFrame?.ownRiders.find(row=>
     row.riderId===viewerRiderId)?.energy;
   const viewerTimeline=coasted?raceViewerTimeline(coasted):[];
+  const commentaryNames=coasted?{
+    teams:Object.fromEntries(Array.from({length:coasted.settings.teamCount},
+      (_,index)=>{
+        const id=index===0?'you':`rival-${index}`;
+        return [id,index===0?'Your team':`Fictional rival ${index}`];
+      })),
+    riders:Object.fromEntries(Array.from({length:coasted.settings.teamCount},
+      (_,index)=>playtestRiderCards(coasted.settings,
+        index===0?'you':`rival-${index}`)).flat()
+      .map(rider=>[rider.id,rider.name]))}:null;
+  const viewerCommentary=coasted?raceViewerCommentaryV1(coasted,
+    {names:commentaryNames}):[];
+  const commentaryAtKm=viewerCommentary.filter(moment=>
+    moment.index===coastedKm-1);
   const viewerKmMoments=viewerTimeline.filter(moment=>
     moment.finaleRoadIndex==null);
   const previousViewerMoment=[...viewerKmMoments].reverse().find(moment=>
@@ -1598,6 +1614,38 @@ export default function Playtest({guided=false}){
               identify shorter climbs or stage landmarks.
             </p>
           </div>}
+          <div className="v91-viewer-commentary" aria-label="Race commentary">
+            <h4>Race commentary</h4>
+            <p>Commentary follows recorded actions and checkpoints. An order is
+              a plan; the road and rider energy show what followed. Replaying
+              this race keeps the same wording and sequence.</p>
+            <div className="v91-commentary-current" aria-live="polite">
+              <strong>At km {coastedFrame?.km}</strong>
+              {commentaryAtKm.length?<ul>{commentaryAtKm.map((moment,ordinal)=><li
+                key={`${moment.kind}-${ordinal}`}>{moment.text}</li>)}</ul>:
+                <p>No new headline at this checkpoint. Follow the road groups
+                  and rider energy for the recorded state.</p>}
+            </div>
+            <ol>{[...viewerCommentary.slice(0,5),
+              ...(viewerCommentary.length>10?viewerCommentary.slice(-5):
+                viewerCommentary.slice(5))].map((moment,ordinal)=><li
+              key={`${moment.index}-${moment.kind}-${ordinal}`}>
+              <button type="button" onClick={()=>selectRecordedKilometre(
+                moment.index+1)} aria-pressed={coastedKm===moment.index+1}>
+                <strong>Km {moment.km}</strong><span>{moment.text}</span>
+              </button>
+            </li>)}</ol>
+            {viewerCommentary.length>10&&<details><summary>Read all {
+              viewerCommentary.length} commentary lines</summary>
+              <ol>{viewerCommentary.map((moment,ordinal)=><li
+                key={`${moment.index}-${moment.kind}-${ordinal}`}>
+                <button type="button" onClick={()=>selectRecordedKilometre(
+                  moment.index+1)} aria-pressed={coastedKm===moment.index+1}>
+                  <strong>Km {moment.km}</strong><span>{moment.text}</span>
+                </button>
+              </li>)}</ol>
+            </details>}
+          </div>
           <div className="v91-viewer-timeline" aria-label="Recorded race timeline">
             <h4>How the race unfolded</h4>
             <p>These are recorded attacks, joins, catches, chase changes and road changes. Select a moment to inspect its road; a changing group alone does not prove a catch.</p>

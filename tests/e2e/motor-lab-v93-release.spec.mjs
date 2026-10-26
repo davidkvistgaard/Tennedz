@@ -52,6 +52,15 @@ test('guided Motor Lab runs a race from setup to rider replay',async({page})=>{
   await expect(stageCard.getByLabel('Followed rider actions at this kilometre'))
     .toContainText('you-7:');
   const viewer=page.getByRole('region',{name:'Race viewer'});
+  const commentary=viewer.getByLabel('Race commentary');
+  await expect(commentary).toContainText('At km 1');
+  await expect(commentary.locator('ol').first().locator('li').first())
+    .toContainText('Km 1');
+  await expect(commentary).toContainText('Replaying this race keeps');
+  await commentary.getByRole('button',{name:/Km 1/}).first().click();
+  await expect(page.getByRole('slider',{name:/Recorded kilometre:/}))
+    .toHaveValue('1');
+  await commentary.screenshot({path:'test-results/guided-race-commentary.png'});
   await viewer.getByRole('button',{name:'Play checkpoints'}).click();
   await expect(viewer).toContainText('Viewing km 11 of 40',
     {timeout:5000});
