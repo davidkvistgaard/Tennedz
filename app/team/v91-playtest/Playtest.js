@@ -207,6 +207,7 @@ export default function Playtest({guided=false}){
   const [checkpointPlaying,setCheckpointPlaying]=useState(false);
   const [raceScreenOpen,setRaceScreenOpen]=useState(false);
   const [raceScreenPlaying,setRaceScreenPlaying]=useState(false);
+  const [raceLogCopyStatus,setRaceLogCopyStatus]=useState('');
   const [coastedRoadIndex,setCoastedRoadIndex]=useState(0);
   const [coastedBandId,setCoastedBandId]=useState('');
   const [coastedBandIndex,setCoastedBandIndex]=useState(0);
@@ -569,6 +570,18 @@ export default function Playtest({guided=false}){
       .map(rider=>[rider.id,rider.name]))}:null;
   const viewerCommentary=coasted?raceViewerCommentaryV1(coasted,
     {names:commentaryNames}):[];
+  const copyRaceLog=async()=>{
+    if(!coasted)return;
+    const log=[`Pelotonia Motor Lab race log — ${coasted.settings.distanceKm} km ${coasted.settings.terrain} · seed ${coasted.settings.seed}`,
+      '',...viewerCommentary.map(moment=>`Km ${moment.km}: ${moment.text}`)]
+      .join('\n');
+    try{
+      await navigator.clipboard.writeText(log);
+      setRaceLogCopyStatus(`Copied ${viewerCommentary.length} lines`);
+    }catch{
+      setRaceLogCopyStatus('Could not copy. Check clipboard permission.');
+    }
+  };
   const commentaryAtKm=viewerCommentary.filter(moment=>
     moment.index===coastedKm-1);
   const recentRaceCommentary=viewerCommentary.filter(moment=>
@@ -807,6 +820,7 @@ export default function Playtest({guided=false}){
       }
       setRoadPreview(null);
       setCoasted(response.coasted??null);
+      setRaceLogCopyStatus('');
       setCheckpointPlaying(false);
       setRaceScreenPlaying(false);
       setRaceScreenOpen(Boolean(response.coasted));
@@ -1575,9 +1589,14 @@ export default function Playtest({guided=false}){
                 <section className="v91-race-screen-story"
                   aria-label="Recent race events">
                   <div className="v91-race-screen-section-head">
-                    <h3>Recent events</h3><span>Viewing km {coastedKm}</span>
+                    <h3>Recent events</h3>
+                    <button type="button" onClick={copyRaceLog}>
+                      Copy race log</button>
                   </div>
-                  <p>The race keeps moving. Earlier calls remain here to read.</p>
+                  <p>The race keeps moving. Viewing km {coastedKm}. Copy
+                    includes every recorded commentary line.</p>
+                  <span className="v91-race-log-copy-status" role="status">
+                    {raceLogCopyStatus}</span>
                   {recentRaceCommentary.length?<ol
                     aria-label="Recent commentary history"
                     className="v91-race-screen-events">{
@@ -1922,6 +1941,10 @@ export default function Playtest({guided=false}){
           </div>}
           <div className="v91-viewer-commentary" aria-label="Race commentary">
             <h4>Race commentary</h4>
+            <button type="button" onClick={copyRaceLog}>
+              Copy race log</button>
+            <span className="v91-race-log-copy-status" role="status">
+              {raceLogCopyStatus}</span>
             <p>Commentary follows recorded actions and checkpoints. An order is
               a plan; the road and rider energy show what followed. Replaying
               this race keeps the same wording and sequence.</p>

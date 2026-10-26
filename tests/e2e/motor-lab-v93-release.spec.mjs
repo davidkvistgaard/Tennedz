@@ -1,4 +1,6 @@
 import {test,expect} from '@playwright/test';
+import {raceViewerCommentaryV1} from
+  '../../lib/engine/v2/playtest-commentary-v1.mjs';
 
 test.skip(process.env.PELOTONIA_V91_PLAYTEST_ENABLED!=='true'||
   process.env.PELOTONIA_V93_COASTED_PLAYTEST_ENABLED!=='true',
@@ -10,7 +12,7 @@ async function closeDefaultRaceScreen(page){
   await screen.getByRole('button',{name:'Close race screen'}).click();
 }
 
-test('guided Motor Lab runs a race from setup to rider replay',async({page})=>{
+test('guided Motor Lab runs a race from setup to rider replay',async({page,context})=>{
   await page.setViewportSize({width:390,height:844});
   await page.goto('/login');
   await page.getByLabel('Email or username').fill('bob');
@@ -52,6 +54,15 @@ test('guided Motor Lab runs a race from setup to rider replay',async({page})=>{
   expect(coasted.stageTrace.kilometres).toHaveLength(40);
   const raceScreen=page.getByRole('dialog',{name:'Race screen'});
   await expect(raceScreen).toBeVisible();
+  await context.grantPermissions(['clipboard-read','clipboard-write']);
+  await raceScreen.getByRole('button',{name:'Copy race log'}).click();
+  await expect(raceScreen.getByRole('status')).toContainText('Copied');
+  const copiedLog=await page.evaluate(()=>navigator.clipboard.readText());
+  const fullCommentary=raceViewerCommentaryV1(coasted);
+  const copiedLines=copiedLog.split('\n').filter(line=>/^Km \d+: /.test(line));
+  expect(copiedLog).toContain('Pelotonia Motor Lab race log');
+  expect(copiedLines).toHaveLength(fullCommentary.length);
+  expect(copiedLines.at(-1)).toContain(`Km ${fullCommentary.at(-1).km}:`);
   await expect(raceScreen.locator('header h2')).toContainText('Km 1');
   await expect(raceScreen.getByRole('img',{
     name:/Stage profile with the field at km 1/})).toBeVisible();
