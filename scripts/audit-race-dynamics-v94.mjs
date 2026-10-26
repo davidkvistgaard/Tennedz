@@ -2,6 +2,7 @@
 // recording nor treats provisional crossings as official race results.
 import {prepareV91Playtest} from '../lib/engine/v2/playtest.mjs';
 import {simulateTacticalTour} from '../lib/engine/v2/tour.mjs';
+import {validateRecordedTour} from '../lib/engine/v2/recording.mjs';
 import {MOTOR_RACE_DYNAMICS_VERSION} from '../lib/engine/v2/tuning.mjs';
 import {observedFrontClosingSecondsPerKm} from '../lib/engine/v2/race-context-v1.mjs';
 
@@ -25,6 +26,7 @@ function run({seed,terrain,fatigue,format,breakTeams,controlTeams}){
     weather:prepared.weather,teams:prepared.teams,seed:prepared.seed,
     motorVersion:MOTOR_RACE_DYNAMICS_VERSION,
     raceContext:{format,...(format==='stage'?{stageNumber:8}:{}),teamRoles}});
+  if(process.argv.includes('--validate'))validateRecordedTour(recording);
   const frames=recording.frames;
   const gaps=frames.map(frame=>frame.gapSeconds);
   const withFront=frames.filter(frame=>frame.breakawayRiderIds?.length>0);

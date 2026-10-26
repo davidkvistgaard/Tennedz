@@ -6,6 +6,7 @@ import {normalizeRaceContext,projectedCatchKm,breakSituationForTeam,
   '../../lib/engine/v2/race-context-v1.mjs';
 import {prepareV91Playtest} from '../../lib/engine/v2/playtest.mjs';
 import {simulateTacticalTour} from '../../lib/engine/v2/tour.mjs';
+import {validateRecordedTour} from '../../lib/engine/v2/recording.mjs';
 import {MOTOR_RACE_DYNAMICS_VERSION,MOTOR_EXHAUSTION_COAST_VERSION} from
   '../../lib/engine/v2/tuning.mjs';
 
@@ -95,6 +96,7 @@ test('v94 requires a complete declared role map and keeps older motor inputs unc
   /role for every team/);
   const old=simulateTacticalTour({...source,
     motorVersion:MOTOR_EXHAUSTION_COAST_VERSION});
+  assert.equal(validateRecordedTour(old),true);
   assert.equal('raceContext' in old.committedInputs,false);
   assert.ok(old.frames.every(frame=>!('observedPriorFront' in frame)));
   assert.throws(()=>simulateTacticalTour({...source,
@@ -174,6 +176,28 @@ test('measured slow closing alerts one-day protectors despite a small front gap'
   assert.ok(race.frames.slice(210).some(frame=>frame.chaseReasons.some(row=>
     row.reason==='one_day_captain_pursuit')));
   assert.ok(race.frames.some(frame=>frame.caughtBreakawayRiderIds.length>0));
+  assert.equal(validateRecordedTour(race),true);
+  const alteredWork=structuredClone(race);
+  alteredWork.frames[settled.km-1].settledFrontRestRiderIds=[];
+  assert.throws(()=>validateRecordedTour(alteredWork),
+    /settled-front work/);
+  const alteredObservation=structuredClone(race);
+  alteredObservation.frames[settled.km-1].observedPriorFront.closingSecondsPerKm=0;
+  assert.throws(()=>validateRecordedTour(alteredObservation),
+    /front observation/);
+  const alteredEnergy=structuredClone(race);
+  alteredEnergy.frames[settled.km-1].energyLedger.find(row=>
+    row.riderId===restingRider).workDemand=0;
+  assert.throws(()=>validateRecordedTour(alteredEnergy),
+    /energy ledger/);
+  const alteredEase=structuredClone(race);
+  const eased=alteredEase.frames.find(frame=>frame.bunchEaseTeamIds.length>0);
+  assert.ok(eased);
+  eased.bunchEaseTeamIds=[];
+  assert.throws(()=>validateRecordedTour(alteredEase),/bunch easing/);
+  const alteredRoles=structuredClone(race);
+  delete alteredRoles.committedInputs.raceContext.teamRoles['rival-1'];
+  assert.throws(()=>validateRecordedTour(alteredRoles),/race roles/);
 });
 
 test('v94 refuses unpayable front work before exposing an unsupported road clock',()=>{
