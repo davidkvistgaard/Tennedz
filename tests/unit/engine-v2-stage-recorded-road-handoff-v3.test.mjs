@@ -95,6 +95,8 @@ test('handoff refuses unearned, tampered or mismatched recorded split',()=>{
     frameIndex:39,overlay}),/non-final/);
   assert.throws(()=>prepareRecordedRoadHandoffV3({recording,
     frameIndex:30,overlay:{...overlay,distanceKm:41}}),/matching/);
+  assert.throws(()=>prepareRecordedRoadHandoffV3({recording,
+    frameIndex:30,overlay:{version:3,distanceKm:40}}),/tactical intervals/);
   const free=structuredClone(recording);
   free.frames[30].splitAttack.attackSeconds=0;
   assert.throws(()=>prepareRecordedRoadHandoffV3({recording:free,
