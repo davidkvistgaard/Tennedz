@@ -230,3 +230,9 @@ energy nor the rider's cap. A separate settlement accepts paid post-work
 energy and an explicit current capacity, then reports applied recovery and
 the amount lost to the cap. Neither step advances bunch or dropped riders,
 calculates a new cap, or authenticates a saved recording.
+
+A third internal projection applies the existing long-day capacity-decay
+formula after 160 km to each exact stage slice. A short steep or rough section
+changes only its fraction of that kilometre's cap loss; a homogeneous
+kilometre agrees with the v2 rule, and the capacity floor remains in force.
+It does not pay work or recovery, update a rider, or resolve road contact.
