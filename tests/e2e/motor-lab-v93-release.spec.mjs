@@ -4,6 +4,12 @@ test.skip(process.env.PELOTONIA_V91_PLAYTEST_ENABLED!=='true'||
   process.env.PELOTONIA_V93_COASTED_PLAYTEST_ENABLED!=='true',
 'The guided v93 Motor Lab is disabled.');
 
+async function closeDefaultRaceScreen(page){
+  const screen=page.getByRole('dialog',{name:'Race screen'});
+  await expect(screen).toBeVisible();
+  await screen.getByRole('button',{name:'Close race screen'}).click();
+}
+
 test('guided Motor Lab runs a race from setup to rider replay',async({page})=>{
   await page.setViewportSize({width:390,height:844});
   await page.goto('/login');
@@ -37,6 +43,33 @@ test('guided Motor Lab runs a race from setup to rider replay',async({page})=>{
   const {coasted}=await response.json();
   expect(coasted.lineTimes).toHaveLength(32);
   expect(coasted.stageTrace.kilometres).toHaveLength(40);
+  const raceScreen=page.getByRole('dialog',{name:'Race screen'});
+  await expect(raceScreen).toBeVisible();
+  await expect(raceScreen.locator('header h2')).toContainText('Km 1');
+  await expect(raceScreen.getByRole('img',{
+    name:/Stage profile with the field at km 1/})).toBeVisible();
+  await expect(raceScreen.getByLabel('Your riders on the road')
+    .locator('button')).toHaveCount(8);
+  await raceScreen.getByRole('button',{name:'Play',exact:true}).click();
+  await expect(raceScreen.locator('header h2')).toContainText('Km 2');
+  await expect(raceScreen.locator('header h2')).toContainText('Km 3');
+  await raceScreen.getByRole('button',{name:'Pause',exact:true}).click();
+  await page.waitForTimeout(1500);
+  await expect(raceScreen.locator('header h2')).toContainText('Km 3');
+  await raceScreen.getByLabel('Choose recorded kilometre').fill(
+    String(coasted.kilometreFrames.length));
+  await raceScreen.getByRole('button',{name:'Replay'}).click();
+  await expect(raceScreen.locator('header h2')).toContainText('Km 1');
+  await raceScreen.getByRole('button',{name:'Pause'}).click();
+  await raceScreen.getByLabel('Choose recorded kilometre').fill('10');
+  await expect(raceScreen.locator('header h2')).toContainText('Km 10');
+  await expect(raceScreen).toContainText('Latest call, km');
+  await page.screenshot({path:'test-results/guided-race-screen-mobile.png'});
+  await page.setViewportSize({width:1440,height:900});
+  await page.screenshot({path:'test-results/guided-race-screen-desktop.png'});
+  await page.setViewportSize({width:390,height:844});
+  await raceScreen.getByLabel('Choose recorded kilometre').fill('1');
+  await raceScreen.getByRole('button',{name:'Close race screen'}).click();
   await flow.getByRole('button',{name:'2 · Watch recorded race'}).click();
   await expect(page.getByRole('region',{name:'Race viewer'})).toBeVisible();
   await flow.getByRole('button',
@@ -52,24 +85,6 @@ test('guided Motor Lab runs a race from setup to rider replay',async({page})=>{
   await expect(stageCard.getByLabel('Followed rider actions at this kilometre'))
     .toContainText('you-7:');
   const viewer=page.getByRole('region',{name:'Race viewer'});
-  await viewer.getByRole('button',{name:'Open simple race screen'}).click();
-  const raceScreen=page.getByRole('dialog',{name:'Race screen'});
-  await expect(raceScreen).toContainText('Km 1');
-  await expect(raceScreen.getByRole('img',{
-    name:/Stage profile with the field at km 1/})).toBeVisible();
-  await expect(raceScreen.getByLabel('Your riders on the road')
-    .locator('button')).toHaveCount(8);
-  await raceScreen.getByRole('button',{name:'Next km'}).click();
-  await expect(raceScreen).toContainText('Km 2');
-  await raceScreen.getByLabel('Choose recorded kilometre').fill('10');
-  await expect(raceScreen).toContainText('Km 10');
-  await expect(raceScreen).toContainText('Latest call, km');
-  await page.screenshot({path:'test-results/guided-race-screen-mobile.png'});
-  await page.setViewportSize({width:1440,height:900});
-  await page.screenshot({path:'test-results/guided-race-screen-desktop.png'});
-  await page.setViewportSize({width:390,height:844});
-  await raceScreen.getByLabel('Choose recorded kilometre').fill('1');
-  await raceScreen.getByRole('button',{name:'Close race screen'}).click();
   const situation=viewer.getByLabel('Race situation at km 1');
   await expect(situation).toContainText('Km 1 / 40');
   await expect(situation).toContainText('39 km to go');
@@ -200,6 +215,7 @@ test('guided race diagram shows paid front-group time gaps',async({page})=>{
   const response=await responsePromise;
   expect(response.status()).toBe(200);
   const {coasted}=await response.json();
+  await closeDefaultRaceScreen(page);
   const ownEventIndices=coasted.kilometreFrames.flatMap((frame,index)=>
     [...frame.attackAttempts,...frame.joinedRiderIds,...frame.caughtRiderIds]
       .some(id=>id.startsWith('you-'))?[index]:[]);
@@ -279,6 +295,7 @@ test('guided front-work order is paid only after its 5 km marker',async({page})=
   const response=await responsePromise;
   expect(response.status()).toBe(200);
   const {coasted}=await response.json();
+  await closeDefaultRaceScreen(page);
   expect(coasted.settings.managerTacticalOrdersV4).toEqual([
     {teamId:'you',atKm:10,effort:'hard',frontWork:'rotate'},
     {teamId:'you',atKm:20,frontWork:'sit_in'},
@@ -336,6 +353,7 @@ test('guided Motor Lab applies an effort order after a selected 5 km marker', as
   const response=await responsePromise;
   expect(response.status()).toBe(200);
   const {coasted}=await response.json();
+  await closeDefaultRaceScreen(page);
   expect(stagePlan.stageTrace).toEqual(coasted.stageTrace);
   expect(coasted.settings.managerTacticalOrdersV2)
     .toEqual([{teamId:'you',atKm:15,effort:'hard'}]);
@@ -448,6 +466,7 @@ test('guided Motor Lab replays two precommitted 5 km effort changes', async({pag
   const response=await responsePromise;
   expect(response.status()).toBe(200);
   const {coasted}=await response.json();
+  await closeDefaultRaceScreen(page);
   expect(coasted.settings.managerTacticalOrdersV3).toEqual([
     {teamId:'you',atKm:15,effort:'hard'},
     {teamId:'you',atKm:25,effort:'conserve'},

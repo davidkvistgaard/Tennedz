@@ -203,6 +203,7 @@ export default function Playtest({guided=false}){
   const [coastedKm,setCoastedKm]=useState(1);
   const [checkpointPlaying,setCheckpointPlaying]=useState(false);
   const [raceScreenOpen,setRaceScreenOpen]=useState(false);
+  const [raceScreenPlaying,setRaceScreenPlaying]=useState(false);
   const [coastedRoadIndex,setCoastedRoadIndex]=useState(0);
   const [coastedBandId,setCoastedBandId]=useState('');
   const [coastedBandIndex,setCoastedBandIndex]=useState(0);
@@ -438,8 +439,18 @@ export default function Playtest({guided=false}){
     .find(checkpoint=>checkpoint.index>coastedKm-1);
   const selectRecordedKilometre=km=>{
     setCheckpointPlaying(false);
+    setRaceScreenPlaying(false);
     setCoastedKm(km);
   };
+  useEffect(()=>{
+    if(!raceScreenOpen||!raceScreenPlaying||!coasted)return;
+    if(coastedKm>=coasted.kilometreFrames.length){
+      setRaceScreenPlaying(false);
+      return;
+    }
+    const timer=window.setTimeout(()=>setCoastedKm(km=>km+1),1200);
+    return ()=>window.clearTimeout(timer);
+  },[raceScreenOpen,raceScreenPlaying,coasted,coastedKm]);
   useEffect(()=>{
     if(!checkpointPlaying||!coasted||!nextCheckpoint)return;
     const timer=window.setTimeout(()=>{
@@ -776,6 +787,8 @@ export default function Playtest({guided=false}){
       setRoadPreview(null);
       setCoasted(response.coasted??null);
       setCheckpointPlaying(false);
+      setRaceScreenPlaying(false);
+      setRaceScreenOpen(Boolean(response.coasted));
       setCoastedKm(1);setCoastedRoadIndex(0);
       setCoastedBandId(response.coasted?.bandReplays.find(band=>
         band.riderIds.includes(response.coasted.managerDecisions.find(row=>
@@ -815,6 +828,8 @@ export default function Playtest({guided=false}){
       setCoastedComparison(null);setPreviousCoastedRun(null);
       setResult(null);setIntegrated(null);setCoasted(null);setAttackRoad(null);
       setCheckpointPlaying(false);
+      setRaceScreenPlaying(false);
+      setRaceScreenOpen(false);
       setAttackApproach(null);setFinaleReplay(null);setBandLocalReplay(null);
       setRoadPreview(cause.roadPreview??null);
       setSubmittedChoices(cause.roadPreview?currentChoices:null);
@@ -1439,7 +1454,9 @@ export default function Playtest({guided=false}){
             The race is recorded once per kilometre; the final result follows
             the paid finish road where available.</p>
           <button type="button" className="v91-open-race-screen"
-            onClick={()=>setRaceScreenOpen(true)}>
+            onClick={()=>{
+              setCheckpointPlaying(false);setRaceScreenOpen(true);
+            }}>
             Open simple race screen
           </button>
           {raceScreenOpen&&viewerSituation&&coastedProfile&&<div
@@ -1451,7 +1468,9 @@ export default function Playtest({guided=false}){
                 <div><span>RECORDED RACE</span><h2>Km {coastedKm} <small>/ {
                   viewerSituation.totalKm}</small></h2>
                   <p>{viewerSituation.remainingKm} km to go</p></div>
-                <button type="button" onClick={()=>setRaceScreenOpen(false)}>
+                <button type="button" onClick={()=>{
+                  setRaceScreenPlaying(false);setRaceScreenOpen(false);
+                }}>
                   Close race screen</button>
               </header>
               <div className="v91-race-screen-main">
@@ -1489,19 +1508,24 @@ export default function Playtest({guided=false}){
                     <button type="button" disabled={coastedKm<=1}
                       onClick={()=>selectRecordedKilometre(coastedKm-1)}>
                       Previous km</button>
-                    <button type="button" aria-pressed={checkpointPlaying}
+                    <button type="button" aria-pressed={raceScreenPlaying}
                       onClick={()=>{
-                        if(checkpointPlaying){setCheckpointPlaying(false);return;}
-                        if(!nextCheckpoint)
-                          setCoastedKm(coastedViewer[0].index+1);
-                        setCheckpointPlaying(true);
-                      }}>{checkpointPlaying?'Pause':'Play highlights'}</button>
+                        if(raceScreenPlaying){
+                          setRaceScreenPlaying(false);return;
+                        }
+                        if(coastedKm>=coasted.kilometreFrames.length)
+                          setCoastedKm(1);
+                        setRaceScreenPlaying(true);
+                      }}>{raceScreenPlaying?'Pause':
+                        coastedKm>=coasted.kilometreFrames.length?
+                          'Replay':'Play'}</button>
                     <button type="button"
                       disabled={coastedKm>=coasted.kilometreFrames.length}
                       onClick={()=>selectRecordedKilometre(coastedKm+1)}>
                       Next km</button>
                   </div>
-                  <p>All markers use the selected recorded kilometre. Time
+                  <p>Play advances one recorded kilometre every 1.2 seconds.
+                    All markers use the selected recorded kilometre. Time
                     gaps below are group clocks, not measured road distances.
                     Short climbs may be hidden by the 1 km profile.</p>
                 </section>
