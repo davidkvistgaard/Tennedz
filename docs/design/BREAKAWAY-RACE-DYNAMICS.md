@@ -180,3 +180,13 @@ This gives a later commentator a paid basis to name which team actually
 worked in the bunch. It does not by itself prove that the chase accelerated
 the bunch or caught the break; the recorded road-gap transition must support
 those claims separately.
+
+A separate v94-only `paidRearGapSeconds` records the tactical road-clock gap
+before later split, bridge, merge or finish processing. The recording check
+recomputes this from the prior rear-group gap, recorded attack/chase
+contributions, passive movement and the bounded final-kilometre rule. In a
+simple surviving rear group it must also equal the road-group gap. All 96
+constructed races passed the check; changing an attack contribution or this
+paid gap is refused. Passive movement is still a recorded value rather than
+independently recomputed from every rider's state, so this is not yet a
+complete proof of the group's movement or of individual wheel contact.
