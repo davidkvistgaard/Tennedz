@@ -84,6 +84,10 @@
 .v91-viewer-navigation button{flex:none;padding:8px 10px;border:1px solid #116e60;border-radius:7px;background:white;color:#116e60;font-weight:700;cursor:pointer}
 .v91-viewer-navigation button:disabled{border-color:#b8c9bd;color:#7b9387;cursor:default}
 .v91-viewer-navigation span{text-align:center;color:#526b63;font-size:.8rem}
+.v91-moment-jumps{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:4px 0 12px}
+.v91-moment-jumps button{padding:8px 10px;border:1px solid #116e60;border-radius:7px;background:white;color:#116e60;font-weight:700;cursor:pointer}
+.v91-moment-jumps button:disabled{border-color:#b8c9bd;color:#7b9387;cursor:default}
+.v91-moment-jumps span{color:#526b63;font-size:.8rem}
 .v91-viewer-track{display:flex;gap:9px;overflow-x:auto;padding:3px 2px 12px;scroll-snap-type:x proximity}
 .v91-viewer-track button{flex:0 0 175px;display:grid;gap:7px;align-content:start;min-height:148px;padding:12px;text-align:left;scroll-snap-align:start;border:1px solid #a6c2b8;border-radius:10px;background:#f2f7f4;color:#17312e;cursor:pointer}
 .v91-viewer-track button[aria-pressed=true]{border:2px solid #116e60;background:#d9ebe3}

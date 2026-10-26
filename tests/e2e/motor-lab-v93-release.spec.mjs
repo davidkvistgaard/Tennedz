@@ -44,6 +44,14 @@ test('guided Motor Lab runs a race from setup to rider replay',async({page})=>{
     'Actions and energy for all 8 of your riders'}).click();
   await expect(stageCard.locator('.v91-rider-actions li')).toHaveCount(8);
   await stageCard.screenshot({path:'test-results/guided-rider-actions.png'});
+  const nextChange=page.getByRole('button',
+    {name:/Next recorded change: km/});
+  await expect(nextChange).toBeEnabled();
+  await nextChange.click();
+  await expect(stageCard).toHaveCount(0);
+  await page.getByRole('button',
+    {name:'Previous recorded change: km 1'}).click();
+  await expect(stageCard).toBeVisible();
   const roadGapDiagram=page.getByLabel('Recorded time gaps at km 1');
   await expect(roadGapDiagram).toBeVisible();
   await expect(roadGapDiagram).toContainText('Bunch');

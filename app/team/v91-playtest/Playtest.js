@@ -463,6 +463,12 @@ export default function Playtest({guided=false}){
   const viewerCurrentEnergy=coastedFrame?.ownRiders.find(row=>
     row.riderId===viewerRiderId)?.energy;
   const viewerTimeline=coasted?raceViewerTimeline(coasted):[];
+  const viewerKmMoments=viewerTimeline.filter(moment=>
+    moment.finaleRoadIndex==null);
+  const previousViewerMoment=[...viewerKmMoments].reverse().find(moment=>
+    moment.km<coastedKm);
+  const nextViewerMoment=viewerKmMoments.find(moment=>
+    moment.km>coastedKm);
   const selectViewerMoment=moment=>{
     if(moment.finaleRoadIndex!=null){
       setCoastedKm(coasted.kilometreFrames.length);
@@ -1346,6 +1352,19 @@ export default function Playtest({guided=false}){
             <button type="button" aria-label="Next checkpoint"
               disabled={!nextCheckpoint}
               onClick={()=>setCoastedKm(nextCheckpoint.index+1)}>Next</button>
+          </div>
+          <div className="v91-moment-jumps" aria-label="Recorded change navigation">
+            <button type="button" disabled={!previousViewerMoment}
+              onClick={()=>setCoastedKm(previousViewerMoment.km)}>
+              Previous recorded change{previousViewerMoment?
+                `: km ${previousViewerMoment.km}`:''}
+            </button>
+            <button type="button" disabled={!nextViewerMoment}
+              onClick={()=>setCoastedKm(nextViewerMoment.km)}>
+              Next recorded change{nextViewerMoment?
+                `: km ${nextViewerMoment.km}`:''}
+            </button>
+            <span>Jumps between recorded attacks, road changes, chase changes and race boundaries.</span>
           </div>
           <div className="v91-viewer-track" ref={viewerTrackRef}>{coastedViewer.map(checkpoint=><button
             type="button" key={checkpoint.index}
