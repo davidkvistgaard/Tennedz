@@ -1512,6 +1512,9 @@ export default function Playtest({guided=false}){
                   `${coastedFrame.paidBunchPaceTeamId} set the pace`:
                   'no team recorded a paid pace pair'}.
             </p>
+            <p>Paid front work identifies riders who spent energy at the front.
+              It does not by itself prove that the bunch accelerated; compare
+              the recorded road groups and rider energy.</p>
             {coastedFrame?.attackAttempts&&coastedFrame?.joinedRiderIds&&
               coastedFrame?.caughtRiderIds&&coastedFrame?.engagedChaseTeamIds?
               <p>Recorded this kilometre: {coastedFrame.attackAttempts.length}

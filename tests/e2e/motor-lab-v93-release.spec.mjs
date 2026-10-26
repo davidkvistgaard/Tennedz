@@ -211,6 +211,8 @@ test('guided front-work order is paid only after its 5 km marker',async({page})=
   const stage=page.getByLabel('Stage and orders at km 11');
   await expect(stage).toContainText('try bunch-front work');
   await expect(stage).toContainText('your team set the pace with you-');
+  await expect(stage).toContainText(
+    'It does not by itself prove that the bunch accelerated');
   const workers=coasted.kilometreFrames[10].paidBunchPaceRiderIds;
   expect(workers).toHaveLength(2);
   for(const riderId of workers)await expect(stage).toContainText(riderId);

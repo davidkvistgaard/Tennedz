@@ -5,6 +5,8 @@ import {createV93CoastedPlaytest,validateV93CoastedPlaytest,
   summarizeV93CoastedPlaytest} from
   '../../lib/engine/v2/playtest-v93-coasted.mjs';
 import {orderAt} from '../../lib/engine/v2/orders.mjs';
+import {simulateTacticalTour} from '../../lib/engine/v2/tour.mjs';
+import {MOTOR_EXHAUSTION_COAST_VERSION} from '../../lib/engine/v2/tuning.mjs';
 import {raceViewerOwnRiderActionsAt} from
   '../../lib/engine/v2/playtest-viewer.mjs';
 
@@ -71,4 +73,28 @@ test('a front-work-only marker retains the starting team effort',()=>{
   assert.equal(orderAt(own.orders,10).frontWork,'rotate');
   assert.throws(()=>createV93CoastedPlaytest(input),
     /needs recorded response or front rotation/);
+});
+
+test('paid front helpers spend more reserve than an otherwise identical sit-in',()=>{
+  const recorded=frontWork=>{
+    const prepared=prepareV91Playtest({...base,managerTacticalOrdersV4:[
+      {teamId:'you',atKm:10,effort:'hard',frontWork}]});
+    return simulateTacticalTour({...prepared,
+      motorVersion:MOTOR_EXHAUSTION_COAST_VERSION});
+  };
+  const work=recorded('rotate'),sitIn=recorded('sit_in');
+  assert.deepEqual(work.frames.slice(0,10),sitIn.frames.slice(0,10));
+  const paid=work.frames[10].paidBunchPace;
+  assert.equal(paid.teamId,'you');
+  assert.equal(paid.riderIds.length,2);
+  assert.equal(sitIn.frames[10].paidBunchPace,null);
+  for(const riderId of paid.riderIds){
+    const debit=frame=>frame.energyLedger.find(row=>row.riderId===riderId);
+    assert.equal(debit(work.frames[10]).energyBefore,
+      debit(sitIn.frames[10]).energyBefore);
+    assert(debit(work.frames[10]).paidFromReserve>
+      debit(sitIn.frames[10]).paidFromReserve);
+    assert(debit(work.frames[10]).energyAfter<
+      debit(sitIn.frames[10]).energyAfter);
+  }
 });
