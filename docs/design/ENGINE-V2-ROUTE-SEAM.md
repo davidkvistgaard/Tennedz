@@ -140,3 +140,12 @@ two-group component agrees exactly with the preceding fixed-group v3 clock
 in a neighboring regression. This does not launch the solo's attack or infer
 an initial split, internal wheel position, draft, catch, recovery, official
 place or full-race result. Guided Motor Lab does not consume it yet.
+
+The same already-separated mixed bands can now replay a complete synthetic
+integer-kilometre stage. Explicit work-roster and band-effort changes activate
+after their 5 km markers; the replay records the active orders, each short
+slice, per-rider work and energy, and both neighboring group-clock gaps. A
+possible catch stops every rider before the first unpaid slice. This still
+requires a separately paid attack/split handoff before a solo can enter the
+middle lane, and it has no group membership changes, draft, catch resolution,
+classified finish or guided user route.
