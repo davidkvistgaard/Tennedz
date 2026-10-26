@@ -70,6 +70,51 @@
 .v91-race-viewer h3{margin:0 0 6px}
 .v91-race-viewer p{margin:0 0 14px;color:#526b63}
 .v91-race-viewer label{max-width:330px;margin-bottom:12px}
+.v91-open-race-screen{display:block;margin:4px 0 16px;padding:12px 18px;border:0;border-radius:9px;background:#116e60;color:white;font-weight:800;cursor:pointer}
+.v91-race-screen{position:fixed;inset:0;z-index:1000;overflow:auto;background:#e5eee8;color:#17312e}
+.v91-race-screen-inner{display:grid;gap:12px;min-height:100%;max-width:1500px;margin:auto;padding:16px 22px}
+.v91-race-screen-header{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:4px 2px}
+.v91-race-screen-header span{font-size:.72rem;font-weight:800;letter-spacing:.12em;color:#537265}
+.v91-race-screen-header h2{margin:0;font-size:2rem;line-height:1.1}
+.v91-race-screen-header h2 small{font-size:1rem;color:#587065}
+.v91-race-screen-header p{margin:2px 0 0;font-size:.9rem}
+.v91-race-screen button{cursor:pointer}
+.v91-race-screen-header button,.v91-race-screen-controls button{padding:9px 12px;border:1px solid #9bb9a8;border-radius:7px;background:white;color:#17312e;font-weight:700}
+.v91-race-screen-controls button:disabled{opacity:.5;cursor:default}
+.v91-race-screen-main{display:grid;grid-template-columns:minmax(0,1.55fr) minmax(300px,.9fr);gap:12px;min-height:0}
+.v91-race-screen-route,.v91-race-screen-story,.v91-race-screen-team{min-width:0;padding:16px;border:1px solid #bdd2c4;border-radius:12px;background:#f9fcf9}
+.v91-race-screen-section-head{display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin-bottom:10px}
+.v91-race-screen-section-head h3{margin:0;font-size:1.08rem}
+.v91-race-screen-section-head span{font-size:.75rem;color:#60796b;text-align:right}
+.v91-race-screen-route svg{display:block;width:100%;height:180px;border-radius:8px;background:linear-gradient(#e6f2f2,#fff)}
+.v91-race-screen-profile-fill{fill:#a2c983}
+.v91-race-screen-profile{fill:none;stroke:#619b42;stroke-width:3;vector-effect:non-scaling-stroke}
+.v91-race-screen-position{stroke:#116e60;stroke-width:2;stroke-dasharray:5 4;vector-effect:non-scaling-stroke}
+.v91-race-screen-field{fill:#116e60;stroke:white;stroke-width:2;vector-effect:non-scaling-stroke}
+.v91-race-screen-route-labels{display:flex;justify-content:space-between;gap:10px;margin:5px 0;color:#526b63;font-size:.8rem}
+.v91-race-screen-route-labels strong{color:#116e60}
+.v91-race-screen-route input[type=range]{width:100%;accent-color:#116e60}
+.v91-race-screen-controls{display:flex;justify-content:center;gap:8px;margin:8px 0}
+.v91-race-screen-route p{margin:5px 0 0!important;font-size:.75rem;line-height:1.35}
+.v91-race-screen-story{display:flex;flex-direction:column}
+.v91-race-screen-story ul{margin:0;padding-left:20px;line-height:1.45;overflow:auto}
+.v91-race-screen-story li+li{margin-top:8px}
+.v91-race-screen-stage{display:grid;gap:3px;margin-top:auto;padding-top:10px;border-top:1px solid #d4e1d7;font-size:.78rem;color:#526b63}
+.v91-race-screen-stage strong{color:#17312e}
+.v91-race-screen-field-summary{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.v91-race-screen-field-summary>div{display:flex;align-items:baseline;gap:8px;padding:10px 16px;border:1px solid #bdd2c4;border-radius:9px;background:#f9fcf9}
+.v91-race-screen-field-summary strong{font-size:1.4rem}
+.v91-race-screen-field-summary span{font-size:.8rem;color:#526b63}
+.v91-race-screen-riders{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+.v91-race-screen-riders button{display:grid;gap:3px;min-width:0;padding:9px 11px;text-align:left;border:1px solid #bdd2c4;border-radius:8px;background:white;color:#17312e}
+.v91-race-screen-riders button[aria-pressed=true]{border:2px solid #116e60;background:#e7f4ed}
+.v91-race-screen-riders button strong{font-size:.85rem}
+.v91-race-screen-riders button span,.v91-race-screen-riders button small{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:.7rem;color:#526b63}
+.v91-race-screen-riders button div{display:flex;align-items:center;gap:8px}
+.v91-race-screen-riders progress{width:100%;height:8px;accent-color:#116e60}
+.v91-race-screen-riders b{font-size:.78rem}
+@media(max-width:850px){.v91-race-screen-main{grid-template-columns:1fr}.v91-race-screen-riders{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:500px){.v91-race-screen-inner{padding:10px}.v91-race-screen-header h2{font-size:1.6rem}.v91-race-screen-route,.v91-race-screen-story,.v91-race-screen-team{padding:12px}.v91-race-screen-field-summary>div{display:grid;gap:1px;padding:8px}.v91-race-screen-riders{grid-template-columns:repeat(2,minmax(0,1fr))}}
 .v91-race-dashboard{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px;margin:14px 0 18px}
 .v91-dashboard-progress,.v91-dashboard-road,.v91-dashboard-team{min-width:0;padding:14px;border:1px solid #bfd5cb;border-radius:10px;background:#f6faf7}
 .v91-dashboard-progress{display:grid;gap:10px;align-content:center}

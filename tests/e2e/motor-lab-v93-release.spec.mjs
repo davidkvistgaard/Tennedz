@@ -52,6 +52,24 @@ test('guided Motor Lab runs a race from setup to rider replay',async({page})=>{
   await expect(stageCard.getByLabel('Followed rider actions at this kilometre'))
     .toContainText('you-7:');
   const viewer=page.getByRole('region',{name:'Race viewer'});
+  await viewer.getByRole('button',{name:'Open simple race screen'}).click();
+  const raceScreen=page.getByRole('dialog',{name:'Race screen'});
+  await expect(raceScreen).toContainText('Km 1');
+  await expect(raceScreen.getByRole('img',{
+    name:/Stage profile with the field at km 1/})).toBeVisible();
+  await expect(raceScreen.getByLabel('Your riders on the road')
+    .locator('button')).toHaveCount(8);
+  await raceScreen.getByRole('button',{name:'Next km'}).click();
+  await expect(raceScreen).toContainText('Km 2');
+  await raceScreen.getByLabel('Choose recorded kilometre').fill('10');
+  await expect(raceScreen).toContainText('Km 10');
+  await expect(raceScreen).toContainText('Latest call, km');
+  await page.screenshot({path:'test-results/guided-race-screen-mobile.png'});
+  await page.setViewportSize({width:1440,height:900});
+  await page.screenshot({path:'test-results/guided-race-screen-desktop.png'});
+  await page.setViewportSize({width:390,height:844});
+  await raceScreen.getByLabel('Choose recorded kilometre').fill('1');
+  await raceScreen.getByRole('button',{name:'Close race screen'}).click();
   const situation=viewer.getByLabel('Race situation at km 1');
   await expect(situation).toContainText('Km 1 / 40');
   await expect(situation).toContainText('39 km to go');

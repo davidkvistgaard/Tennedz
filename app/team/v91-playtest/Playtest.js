@@ -202,6 +202,7 @@ export default function Playtest({guided=false}){
   const [roadPreviewIndex,setRoadPreviewIndex]=useState(0);
   const [coastedKm,setCoastedKm]=useState(1);
   const [checkpointPlaying,setCheckpointPlaying]=useState(false);
+  const [raceScreenOpen,setRaceScreenOpen]=useState(false);
   const [coastedRoadIndex,setCoastedRoadIndex]=useState(0);
   const [coastedBandId,setCoastedBandId]=useState('');
   const [coastedBandIndex,setCoastedBandIndex]=useState(0);
@@ -430,6 +431,7 @@ export default function Playtest({guided=false}){
   const coastedViewer=useMemo(()=>coasted?raceViewerCheckpoints(coasted,
     viewerRiderId):[],[coasted,viewerRiderId]);
   const viewerTrackRef=useRef(null);
+  const raceScreenRef=useRef(null);
   const previousCheckpoint=[...coastedViewer].reverse()
     .find(checkpoint=>checkpoint.index<coastedKm-1);
   const nextCheckpoint=coastedViewer
@@ -489,6 +491,36 @@ export default function Playtest({guided=false}){
     coasted.settings.teamCount*8):[];
   const viewerSituation=coasted?raceViewerSituationAt(coasted,coastedFrame,
     playtestRiderCards(coasted.settings,'you')):null;
+  const raceScreenElevationY=coastedProfile&&coastedStage?
+    110-(coastedStage.endM-coastedProfile.minElevationM)/Math.max(1,
+      coastedProfile.maxElevationM-coastedProfile.minElevationM)*90:110;
+  useEffect(()=>{
+    if(!raceScreenOpen)return;
+    const previousOverflow=document.body.style.overflow;
+    const previousFocus=document.activeElement;
+    document.body.style.overflow='hidden';
+    raceScreenRef.current?.querySelector('button')?.focus();
+    const handleRaceScreenKeys=event=>{
+      if(event.key==='Escape')setRaceScreenOpen(false);
+      if(event.key!=='Tab')return;
+      if(!raceScreenRef.current)return;
+      const focusable=[...raceScreenRef.current.querySelectorAll(
+        'button:not(:disabled),input:not(:disabled)')];
+      if(!focusable.length)return;
+      if(event.shiftKey&&document.activeElement===focusable[0]){
+        event.preventDefault();focusable.at(-1).focus();
+      }else if(!event.shiftKey&&
+        document.activeElement===focusable.at(-1)){
+        event.preventDefault();focusable[0].focus();
+      }
+    };
+    window.addEventListener('keydown',handleRaceScreenKeys);
+    return ()=>{
+      document.body.style.overflow=previousOverflow;
+      window.removeEventListener('keydown',handleRaceScreenKeys);
+      previousFocus?.focus();
+    };
+  },[raceScreenOpen]);
   const viewerMaxAbsGap=Math.max(1,...viewerRoad.map(band=>
     Math.abs(band.gapSeconds)));
   const viewerRival=raceViewerRivalAt(coasted,coastedFrame,viewerRivalId);
@@ -516,6 +548,8 @@ export default function Playtest({guided=false}){
     {names:commentaryNames}):[];
   const commentaryAtKm=viewerCommentary.filter(moment=>
     moment.index===coastedKm-1);
+  const latestRaceCommentary=viewerCommentary.findLast(moment=>
+    moment.index<coastedKm-1);
   const viewerKmMoments=viewerTimeline.filter(moment=>
     moment.finaleRoadIndex==null);
   const previousViewerMoment=[...viewerKmMoments].reverse().find(moment=>
@@ -1404,6 +1438,129 @@ export default function Playtest({guided=false}){
           <p>Choose a kilometre to see where the field and your riders were.
             The race is recorded once per kilometre; the final result follows
             the paid finish road where available.</p>
+          <button type="button" className="v91-open-race-screen"
+            onClick={()=>setRaceScreenOpen(true)}>
+            Open simple race screen
+          </button>
+          {raceScreenOpen&&viewerSituation&&coastedProfile&&<div
+            ref={raceScreenRef}
+            className="v91-race-screen" role="dialog" aria-modal="true"
+            aria-label="Race screen">
+            <div className="v91-race-screen-inner">
+              <header className="v91-race-screen-header">
+                <div><span>RECORDED RACE</span><h2>Km {coastedKm} <small>/ {
+                  viewerSituation.totalKm}</small></h2>
+                  <p>{viewerSituation.remainingKm} km to go</p></div>
+                <button type="button" onClick={()=>setRaceScreenOpen(false)}>
+                  Close race screen</button>
+              </header>
+              <div className="v91-race-screen-main">
+                <section className="v91-race-screen-route"
+                  aria-label="Route and race progress">
+                  <div className="v91-race-screen-section-head">
+                    <h3>Where the race is</h3>
+                    <span>Recorded profile · 1 km samples</span>
+                  </div>
+                  <svg viewBox="0 0 600 145" preserveAspectRatio="none"
+                    role="img" aria-label={`Stage profile with the field at km ${coastedKm} of ${viewerSituation.totalKm}`}>
+                    <polygon className="v91-race-screen-profile-fill"
+                      points={`20,120 ${coastedProfile.points} 580,120`}/>
+                    <polyline className="v91-race-screen-profile"
+                      points={coastedProfile.points}/>
+                    <line className="v91-race-screen-position"
+                      x1={20+coastedKm/viewerSituation.totalKm*560}
+                      x2={20+coastedKm/viewerSituation.totalKm*560}
+                      y1="8" y2="118"/>
+                    <circle className="v91-race-screen-field"
+                      cx={20+coastedKm/viewerSituation.totalKm*560}
+                      cy={raceScreenElevationY} r="7"/>
+                  </svg>
+                  <div className="v91-race-screen-route-labels">
+                    <span>Start</span><strong>Field at km {coastedKm}</strong>
+                    <span>Finish · {viewerSituation.totalKm} km</span>
+                  </div>
+                  <input type="range" min="1"
+                    max={coasted.kilometreFrames.length}
+                    value={coastedKm}
+                    aria-label="Choose recorded kilometre"
+                    onChange={event=>selectRecordedKilometre(
+                      Number(event.target.value))}/>
+                  <div className="v91-race-screen-controls">
+                    <button type="button" disabled={coastedKm<=1}
+                      onClick={()=>selectRecordedKilometre(coastedKm-1)}>
+                      Previous km</button>
+                    <button type="button" aria-pressed={checkpointPlaying}
+                      onClick={()=>{
+                        if(checkpointPlaying){setCheckpointPlaying(false);return;}
+                        if(!nextCheckpoint)
+                          setCoastedKm(coastedViewer[0].index+1);
+                        setCheckpointPlaying(true);
+                      }}>{checkpointPlaying?'Pause':'Play highlights'}</button>
+                    <button type="button"
+                      disabled={coastedKm>=coasted.kilometreFrames.length}
+                      onClick={()=>selectRecordedKilometre(coastedKm+1)}>
+                      Next km</button>
+                  </div>
+                  <p>All markers use the selected recorded kilometre. Time
+                    gaps below are group clocks, not measured road distances.
+                    Short climbs may be hidden by the 1 km profile.</p>
+                </section>
+                <section className="v91-race-screen-story"
+                  aria-label="Commentary at selected kilometre">
+                  <div className="v91-race-screen-section-head">
+                    <h3>At km {coastedKm}</h3><span>Commentary</span>
+                  </div>
+                  {commentaryAtKm.length?<ul>{commentaryAtKm.map(
+                    (moment,index)=><li key={`${moment.kind}-${index}`}>
+                      {moment.text}</li>)}</ul>:
+                    latestRaceCommentary?<p>No new event at km {coastedKm}.
+                      Latest call, km {latestRaceCommentary.km}: {
+                        latestRaceCommentary.text}</p>:
+                    <p>No recorded event yet. The positions and energy below
+                      still reflect the race.</p>}
+                  <div className="v91-race-screen-stage">
+                    <strong>On the road</strong>
+                    <span>{coastedStage?.terrain??'—'} · {
+                      coastedStage?.gradientPct.toFixed(1)??'—'}% · {
+                      coastedStage?.surface??'—'}</span>
+                    <span>Your order: {activeOwnOrder?.effort??'—'} effort
+                      {activeOwnOrder?.frontWork==='rotate'?
+                        ' · try front work':''}</span>
+                  </div>
+                </section>
+              </div>
+              <section className="v91-race-screen-field-summary"
+                aria-label="Field positions at selected kilometre">
+                <div><strong>{viewerSituation.frontRiders}</strong>
+                  <span>ahead in {viewerSituation.frontGroups} {
+                    viewerSituation.frontGroups===1?'group':'groups'}</span></div>
+                <div><strong>{viewerSituation.bunchRiders}</strong>
+                  <span>in the bunch</span></div>
+                <div><strong>{viewerSituation.isolatedRiders}</strong>
+                  <span>riding alone</span></div>
+              </section>
+              <section className="v91-race-screen-team" aria-label="Your riders on the road">
+                <div className="v91-race-screen-section-head">
+                  <h3>Your riders</h3>
+                  <span>Energy changes · fatigue is the starting setting</span>
+                </div>
+                <div className="v91-race-screen-riders">{
+                  viewerSituation.own.map(rider=><button type="button"
+                    key={rider.riderId}
+                    aria-pressed={viewerRiderId===rider.riderId}
+                    onClick={()=>setViewerRiderId(rider.riderId)}>
+                    <strong>{rider.name.replace(
+                      /^Your test team rider /,'Rider ')}</strong>
+                    <span>{rider.position}</span>
+                    <div><progress value={rider.energy??0} max="100"
+                      aria-label={`Energy left for ${rider.name}`}/>
+                      <b>{rider.energy?.toFixed(0)??'—'}</b></div>
+                    <small>Energy left · starting fatigue {
+                      rider.startingFatigue??'—'}</small>
+                  </button>)}</div>
+              </section>
+            </div>
+          </div>}
           {viewerSituation&&<div className="v91-race-dashboard"
             aria-label={`Race situation at km ${viewerSituation.km}`}>
             <div className="v91-dashboard-progress">
