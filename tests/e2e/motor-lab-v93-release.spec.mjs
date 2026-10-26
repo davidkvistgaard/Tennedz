@@ -170,6 +170,53 @@ test('guided race diagram shows paid front-group time gaps',async({page})=>{
     'test-results/guided-front-checkpoint-comparison.png'});
 });
 
+test('guided front-work order is paid only after its 5 km marker',async({page})=>{
+  await page.setViewportSize({width:390,height:844});
+  await page.goto('/login');
+  await page.getByLabel('Email or username').fill('bob');
+  await page.getByLabel('Password',{exact:true}).fill('fixture-password');
+  await page.getByRole('button',{name:'Sign in',exact:true}).click();
+  await expect(page).toHaveURL(/\/team$/);
+  await page.goto('/team/motor-lab');
+  await page.getByLabel('Your chase order').selectOption('ignore');
+  await page.getByLabel('Scenario seed').fill('front-work-4');
+  await page.locator('summary').filter({hasText:'Other managers'}).click();
+  await page.getByLabel('Default tactics for uncustomized managers')
+    .selectOption('passive');
+  await page.locator('summary').filter({hasText:'Timed team orders'}).click();
+  await page.getByLabel('First order marker after').selectOption('10');
+  await page.getByLabel('Effort after 10 km for you').selectOption('hard');
+  await page.getByLabel('Bunch-front work after 10 km for your team')
+    .selectOption('rotate');
+  await page.getByLabel('Optional second order marker after')
+    .selectOption('20');
+  await page.getByLabel('Bunch-front work after 20 km for your team')
+    .selectOption('sit_in');
+  const responsePromise=page.waitForResponse(response=>
+    response.url().endsWith('/api/v91-playtest')&&
+    response.request().method()==='POST');
+  await page.getByRole('button',{name:'Run the race'}).click();
+  const response=await responsePromise;
+  expect(response.status()).toBe(200);
+  const {coasted}=await response.json();
+  expect(coasted.settings.managerTacticalOrdersV4).toEqual([
+    {teamId:'you',atKm:10,effort:'hard',frontWork:'rotate'},
+    {teamId:'you',atKm:20,frontWork:'sit_in'},
+  ]);
+  expect(coasted.kilometreFrames[9].paidBunchPaceTeamId).toBeNull();
+  expect(coasted.kilometreFrames[10].paidBunchPaceTeamId).toBe('you');
+  expect(coasted.kilometreFrames[19].paidBunchPaceTeamId).toBe('you');
+  expect(coasted.kilometreFrames[20].paidBunchPaceTeamId).toBeNull();
+  await page.getByRole('slider',{name:/Recorded kilometre:/}).fill('11');
+  const stage=page.getByLabel('Stage and orders at km 11');
+  await expect(stage).toContainText('try bunch-front work');
+  await expect(stage).toContainText('your team set the pace with you-');
+  const workers=coasted.kilometreFrames[10].paidBunchPaceRiderIds;
+  expect(workers).toHaveLength(2);
+  for(const riderId of workers)await expect(stage).toContainText(riderId);
+  await stage.screenshot({path:'test-results/guided-front-work-marker.png'});
+});
+
 test('guided Motor Lab applies an effort order after a selected 5 km marker', async({page}) => {
   await page.setViewportSize({width:390,height:844});
   await page.goto('/login');
@@ -192,8 +239,8 @@ test('guided Motor Lab applies an effort order after a selected 5 km marker', as
   await page.getByLabel('Stage inputs before tactics').screenshot({
     path:'test-results/guided-stage-before-tactics.png'});
   await page.getByRole('button',{name:'Use 15 km as first effort marker'}).click();
-  await page.locator('summary').filter({hasText:'Timed effort'}).click();
-  await expect(page.getByLabel('Start changing effort after')).toHaveValue('15');
+  await page.locator('summary').filter({hasText:'Timed team orders'}).click();
+  await expect(page.getByLabel('First order marker after')).toHaveValue('15');
   await page.getByLabel('Effort after 15 km for you').selectOption('hard');
   const responsePromise=page.waitForResponse(response=>
     response.url().endsWith('/api/v91-playtest')&&
@@ -285,10 +332,10 @@ test('guided Motor Lab replays two precommitted 5 km effort changes', async({pag
     .toContainText('Selected markers: 15 km, 25 km');
   await page.getByLabel('Stage inputs before tactics').screenshot({
     path:'test-results/guided-two-stage-markers.png'});
-  await page.locator('summary').filter({hasText:'Timed effort'}).click();
-  await expect(page.getByLabel('Start changing effort after')).toHaveValue('15');
+  await page.locator('summary').filter({hasText:'Timed team orders'}).click();
+  await expect(page.getByLabel('First order marker after')).toHaveValue('15');
   await page.getByLabel('Effort after 15 km for you').selectOption('hard');
-  await expect(page.getByLabel('Optional second effort change after'))
+  await expect(page.getByLabel('Optional second order marker after'))
     .toHaveValue('25');
   await page.getByLabel('Effort after 25 km for you').selectOption('conserve');
   await expect(page.getByLabel('Race plan before running'))

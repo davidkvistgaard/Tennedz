@@ -145,9 +145,11 @@ function coastedComparisonRun(settings,summary,pointContext){
       place:conditionalPlace(rivalPlace,'unresolved'),
       previewPoints:pointContext?preview?.previewPoints??null:null};
   });
-  const effortMarkerKm=settings.managerTacticalOrdersV2?.[0]?.atKm??settings.distanceKm-5;
+  const effortMarkerKm=settings.managerTacticalOrdersV4?.[0]?.atKm??
+    settings.managerTacticalOrdersV2?.[0]?.atKm??settings.distanceKm-5;
   return {conditions:comparisonConditions(settings),finisherId,effortMarkerKm,
-    multiMarker: Boolean(settings.managerTacticalOrdersV3?.length),
+    multiMarker: Boolean(settings.managerTacticalOrdersV4?.length||
+      settings.managerTacticalOrdersV3?.length),
     planWithoutLateEffort:JSON.stringify({
       settings:{...settings,managerFinaleOrders:
         settings.managerFinaleOrders?.filter(order=>
@@ -208,6 +210,8 @@ export default function Playtest({guided=false}){
   const [effortMarkerKm,setEffortMarkerKm]=useState(null);
   const [secondEffortMarkerKm,setSecondEffortMarkerKm]=useState(null);
   const [secondEfforts,setSecondEfforts]=useState({});
+  const [firstFrontWork,setFirstFrontWork]=useState('');
+  const [secondFrontWork,setSecondFrontWork]=useState('');
   const [finaleFrontWork,setFinaleFrontWork]=useState({});
   const [namedAttack,setNamedAttack]=useState({teamId:'',riderId:''});
   const [secondNamedAttack,setSecondNamedAttack]=useState({teamId:'',riderId:''});
@@ -445,7 +449,8 @@ export default function Playtest({guided=false}){
       behavior:checkpointPlaying?'auto':'smooth'});
   },[coastedKm,coasted,checkpointPlaying]);
   const viewerEnergy=coasted?raceViewerEnergySeries(coasted,viewerRiderId):[];
-  const recordedTimedOrders=coasted?.settings.managerTacticalOrdersV3??
+  const recordedTimedOrders=coasted?.settings.managerTacticalOrdersV4??
+    coasted?.settings.managerTacticalOrdersV3??
     coasted?.settings.managerTacticalOrdersV2??[];
   const recordedEffortMarkersKm=[...new Set(recordedTimedOrders.map(row=>
     row.atKm))].sort((a,b)=>a-b);
@@ -546,7 +551,7 @@ export default function Playtest({guided=false}){
       secondEffortMarkerKm:null;
   const currentChoices=JSON.stringify({settings,customRivals,
     finalePlans,lateEfforts,effortMarkerKm,secondEffortMarkerKm,
-    secondEfforts,showPointPreview,
+    secondEfforts,firstFrontWork,secondFrontWork,showPointPreview,
     pointContext:showPointPreview?pointContext:null,
     integratedMode,coastedMode,
     ...(!coastedMode?{finaleFrontWork,namedAttack,
@@ -585,6 +590,7 @@ export default function Playtest({guided=false}){
     setLateEfforts(tactical?{'you':'hard','rival-14':'conserve'}:
       chase?{'you':'conserve'}:{});
     setFinaleFrontWork({});
+    setFirstFrontWork('');setSecondFrontWork('');
     setNamedAttack({teamId:'',riderId:''});
     setSecondNamedAttack({teamId:'',riderId:''});
     setShowPointPreview(true);
@@ -629,10 +635,26 @@ export default function Playtest({guided=false}){
         ...(orders.get(row.teamId)??{teamId:row.teamId,
           chase:'ignore',frontWork:'sit_in'}),attack:'selective',
         attackRiderId:row.riderId});
+      const firstTimedPhases=finaleTeams.flatMap(teamId=>{
+        const effort=lateEfforts[teamId];
+        const frontWork=teamId==='you'?firstFrontWork:'';
+        return effort||frontWork?[{teamId,atKm:chosenEffortMarkerKm,
+          ...(effort?{effort}:{}),...(frontWork?{frontWork}:{})}]:[];
+      });
+      const secondTimedPhases=chosenSecondEffortMarkerKm===null?[]:
+        finaleTeams.flatMap(teamId=>{
+          const effort=secondEfforts[teamId];
+          const frontWork=teamId==='you'?secondFrontWork:'';
+          return effort||frontWork?[{teamId,atKm:chosenSecondEffortMarkerKm,
+            ...(effort?{effort}:{}),...(frontWork?{frontWork}:{})}]:[];
+        });
       const raceSettings={...settings,managerTactics,
         ...(!coastedMode&&secondNamedAttack.teamId?{
           managerFinaleOrders:[...orders.values()]}:{}),
-        ...(integratedMode&&coastedMode?chosenSecondEffortMarkerKm!==null&&
+        ...(integratedMode&&coastedMode&&(firstFrontWork||
+          chosenSecondEffortMarkerKm!==null&&secondFrontWork)?{
+          managerTacticalOrdersV4:[...firstTimedPhases,...secondTimedPhases]}:
+        integratedMode&&coastedMode?chosenSecondEffortMarkerKm!==null&&
           finaleTeams.some(teamId=>secondEfforts[teamId])?{
             managerTacticalOrdersV3:[
               ...finaleTeams.filter(teamId=>lateEfforts[teamId]).map(teamId=>
@@ -862,7 +884,7 @@ export default function Playtest({guided=false}){
                     </button>}
                 </>}
               </article>)}</div>
-            <p>Open Timed effort below to choose a team effort; selecting a marker alone does not issue an order.</p>
+            <p>Open Timed team orders below to choose an effort or bunch-front work; selecting a marker alone does not issue an order.</p>
           </div>}
         </section>}
         {guided&&<div className="v91-step-heading"><span>02 / TACTICS</span><h2>Give your team orders</h2><p>Effort spends energy; attacks and chasing change where your riders travel.</p></div>}
@@ -948,11 +970,11 @@ export default function Playtest({guided=false}){
         </fieldset>
         </details>
         {integratedMode&&coastedMode&&<details className="v91-optional" open={!guided}>
-          <summary>Timed effort <span>Plan up to two 5 km markers</span></summary>
+          <summary>Timed team orders <span>Plan up to two 5 km markers</span></summary>
           <fieldset className="v91-profile">
-          <legend>Precommitted effort changes</legend>
-          <p>Choose when a team-wide effort change begins. The marker is every 5 km; the order takes effect in the following kilometre. Hard raises work demand, but changes attack or chase pressure and bunch-front speed only when that work happens. Compare the recorded road and energy after a run.</p>
-          <label>Start changing effort after
+          <legend>Precommitted effort and bunch-front work</legend>
+          <p>Choose when a team-wide effort or bunch-front work change begins. The marker is every 5 km; the order takes effect in the following kilometre. Hard raises work demand. A front-work order attempts to put two available helpers on the bunch front, but an attack, chase, front rider or low helper energy can prevent that work. Check the recorded road and energy after a run.</p>
+          <label>First order marker after
             <select value={chosenEffortMarkerKm} onChange={event=>{
               const next=Number(event.target.value);
               setEffortMarkerKm(next);
@@ -973,7 +995,15 @@ export default function Playtest({guided=false}){
                   value={value}>{label}</option>)}
               </select>
             </label>)}</div>
-          <label>Optional second effort change after
+          <label>Bunch-front work after {chosenEffortMarkerKm} km for your team
+            <select value={firstFrontWork} onChange={event=>
+              setFirstFrontWork(event.target.value)}>
+              <option value="">Keep current work order</option>
+              <option value="rotate">Try to set pace with two helpers</option>
+              <option value="sit_in">Sit in</option>
+            </select>
+          </label>
+          <label>Optional second order marker after
             <select value={chosenSecondEffortMarkerKm??''} onChange={event=>
               setSecondEffortMarkerKm(event.target.value?
                 Number(event.target.value):null)}>
@@ -996,6 +1026,15 @@ export default function Playtest({guided=false}){
                     value={value}>{label}</option>)}
                 </select>
               </label>)}</div>}
+          {chosenSecondEffortMarkerKm!==null&&
+            <label>Bunch-front work after {chosenSecondEffortMarkerKm} km for your team
+              <select value={secondFrontWork} onChange={event=>
+                setSecondFrontWork(event.target.value)}>
+                <option value="">Keep previous work order</option>
+                <option value="rotate">Try to set pace with two helpers</option>
+                <option value="sit_in">Sit in</option>
+              </select>
+            </label>}
         </fieldset></details>}
         {guided&&<div className="v91-step-heading"><span>03 / FINALE</span><h2>Choose your finisher</h2><p>Nominate a rider and, if you wish, a helper to lead them out. The road decides whether they can work together.</p></div>}
         {integratedMode&&<fieldset className="v91-profile">
@@ -1133,8 +1172,13 @@ export default function Playtest({guided=false}){
               {optionLabel('attack',settings.attack)} attack · {' '}
               {optionLabel('chase',settings.chase)} chase
               {lateEfforts.you&&` · ${optionLabel('effort',lateEfforts.you)} effort after ${chosenEffortMarkerKm} km`}
+              {firstFrontWork&&` · ${firstFrontWork==='rotate'?
+                'try bunch-front work':'sit in'} after ${chosenEffortMarkerKm} km`}
               {chosenSecondEffortMarkerKm!==null&&secondEfforts.you&&
                 ` · ${optionLabel('effort',secondEfforts.you)} effort after ${chosenSecondEffortMarkerKm} km`}
+              {chosenSecondEffortMarkerKm!==null&&secondFrontWork&&
+                ` · ${secondFrontWork==='rotate'?'try bunch-front work':
+                  'sit in'} after ${chosenSecondEffortMarkerKm} km`}
             </dd></div>
             <div><dt>Your finish</dt><dd>{ownPlan.finisherId} nominated · {' '}
               {ownPlan.leadOutRiderId?
@@ -1447,9 +1491,20 @@ export default function Playtest({guided=false}){
             {activeOwnOrder&&<p>Your active order: {activeOwnOrder.effort} effort
               · {activeOwnOrder.attack} attack
               · {activeOwnOrder.chase} chase
+              · {activeOwnOrder.frontWork==='rotate'?
+                'try bunch-front work':'sit in'}
               {activeOwnPhase?' (changed at km '+activeOwnPhase.atKm+')':
                 ' (starting order)'}.
             </p>}
+            <p>Actual bunch-front work this kilometre: {
+              coastedFrame?.paidBunchPaceTeamId==='you'?
+                `your team set the pace with ${
+                  coastedFrame.paidBunchPaceRiderIds?.join(' and ')??
+                  'paid helpers'}`:
+                coastedFrame?.paidBunchPaceTeamId?
+                  `${coastedFrame.paidBunchPaceTeamId} set the pace`:
+                  'no team recorded a paid pace pair'}.
+            </p>
             {coastedFrame?.attackAttempts&&coastedFrame?.joinedRiderIds&&
               coastedFrame?.caughtRiderIds&&coastedFrame?.engagedChaseTeamIds?
               <p>Recorded this kilometre: {coastedFrame.attackAttempts.length}
