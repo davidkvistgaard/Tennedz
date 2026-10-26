@@ -102,6 +102,8 @@ test('guided Motor Lab runs a race from setup to rider replay',async({page})=>{
   await expect(roadGapDiagram).toContainText('Bunch');
   await expect(roadGapDiagram.locator('.v91-road-gap-followed'))
     .toHaveAttribute('aria-label',/^Following you-7 in /);
+  await expect(roadGapDiagram.getByRole('group',
+    {name:/Following you-7 in /})).toBeVisible();
   await page.getByLabel('Rider to follow').selectOption('you-0');
   await expect(roadGapDiagram.locator('.v91-road-gap-followed'))
     .toHaveAttribute('aria-label',/^Following you-0 in /);

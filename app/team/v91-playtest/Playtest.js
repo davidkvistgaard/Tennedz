@@ -1638,6 +1638,7 @@ export default function Playtest({guided=false}){
               {viewerRoad.map(band=><div
                 className={`v91-road-gap-row${band.key===viewerRiderRoad?.key?' v91-road-gap-followed':''}`}
                 key={band.key}
+                role={band.key===viewerRiderRoad?.key?'group':undefined}
                 aria-label={band.key===viewerRiderRoad?.key?`Following ${viewerRiderId} in ${band.label}`:undefined}>
                 <span title={band.label}>{band.key.startsWith('solo:')?
                   band.key.slice(5):band.label.replace('Front group ','Group ')}</span>
