@@ -103,6 +103,28 @@ test('one exhausted rider stops every band before the unpaid slice',()=>{
   assert.equal(Object.hasOwn(result,'places'),false);
 });
 
+test('exhaustion after a paid slice retains its exact prior work and gaps',()=>{
+  const input=fixture();
+  const reference=evaluateSeparatedRoadBandsKilometreV3(input);
+  const firstWork=reference.frames[0].bandClocks[1].members[0].work;
+  const secondWork=reference.frames[1].bandClocks[1].members[0].work;
+  input.bands[1].members[0].energyBefore=firstWork+secondWork/2;
+  const result=evaluateSeparatedRoadBandsKilometreV3(input);
+  assert.equal(result.status,'unresolved_exhaustion');
+  assert.equal(result.exhaustedRiderId,'solo');
+  assert.deepEqual(result.possibleExhaustionSpan,{fromKm:.2,toKm:.8});
+  assert.deepEqual(result.frames.map(frame=>[frame.fromKm,frame.toKm]),
+    [[0,.2]]);
+  assert.deepEqual(result.gapsSeconds,result.frames[0].gaps
+    .map(gap=>gap.afterSeconds));
+  for(const member of input.bands.flatMap(band=>band.members)){
+    const paid=result.frames[0].bandClocks.flatMap(band=>band.members)
+      .find(row=>row.riderId===member.id).work;
+    const after=result.energies.find(row=>row.riderId===member.id).energy;
+    assert.ok(Math.abs(member.energyBefore-after-paid)<2e-6);
+  }
+});
+
 test('mixed bands refuse unearned solo sitting, invalid work and nonseparation',()=>{
   const input=fixture();
   for(const invalid of [
