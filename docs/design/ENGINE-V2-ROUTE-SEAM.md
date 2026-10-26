@@ -340,6 +340,20 @@ of cap loss. A separate committed km 165 `conserve` scenario matches v2 for
 still an internal quiet-bunch replay: no attacks, front-work rotation,
 shelter, drops, inter-group contact, finish or official awards are inferred.
 
+A sixth internal replay version admits committed `rotate` and `sit_in`
+front-work phases. It makes the tactical front selection once at the whole
+kilometre boundary, then charges the selected helpers over every exact
+stage slice. On a homogeneous 40 km case, the selected helpers and all 32
+riders' energy and group states match v2 through the post-order kilometres.
+Another committed plan rotates after km 10 and sits in after km 20: paid
+front work appears in km 11–20 and stops at km 21, with all rider states
+matching the paid v2 frames. An illustrative 400 m climb raises slice work
+without changing the selected helpers or adding a tactical decision. Saved
+copies refuse because the source checkpoint and orders are bound to one
+unchanged in-process recording. The step still refuses any departure or
+unpaid contact; front selection uses the opening slice's stage conditions,
+and the result is internal only, without an occupied-wheel order or finish.
+
 Before routing v3 to guided Motor Lab, verify a complete source field and
 energy ledger at every replay boundary; homogeneous-kilometre parity with
 v2 for work, cap, recovery, bunch/drop state and group clocks; a fractional
