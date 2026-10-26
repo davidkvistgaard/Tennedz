@@ -14,6 +14,8 @@ import {summarizeV91PaidMultibandReplay} from
   '../../../lib/engine/v2/playtest-multiband-replay.mjs';
 import {createV93CoastedPlaytest,summarizeV93CoastedPlaytest} from
   '../../../lib/engine/v2/playtest-v93-coasted.mjs';
+import {summarizeRecordedStageTrace} from
+  '../../../lib/engine/v2/playtest-stage-trace.mjs';
 
 export const runtime='nodejs';
 export const dynamic='force-dynamic';
@@ -100,7 +102,8 @@ async function handler(request,_context,auth){
         const race=createV93CoastedPlaytest(input.settings,{
           plans:input.plans,pointContext:input.pointContext??null});
         return NextResponse.json({ok:true,
-          coasted:summarizeV93CoastedPlaytest(race)});
+          coasted:{...summarizeV93CoastedPlaytest(race),
+            stageTrace:summarizeRecordedStageTrace(race.recording)}});
       }catch(error){
         return NextResponse.json({ok:false,error:v93PlanError(error),
           status:'unsupported_road_or_plan',

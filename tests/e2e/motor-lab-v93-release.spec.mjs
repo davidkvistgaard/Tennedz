@@ -31,6 +31,11 @@ test('guided Motor Lab runs a race from setup to rider replay',async({page})=>{
   expect(response.status()).toBe(200);
   const {coasted}=await response.json();
   expect(coasted.lineTimes).toHaveLength(32);
+  expect(coasted.stageTrace.kilometres).toHaveLength(40);
+  const stageCard=page.getByLabel('Stage and orders at km 1');
+  await expect(stageCard).toContainText('Stage input at km 1:');
+  await expect(stageCard).toContainText('Your active order:');
+  await expect(stageCard).toContainText('Recorded this kilometre:');
   expect(coasted.pointPreview.awardRows).toEqual([]);
   await expect(page.getByRole('region',{name:'Your v93 finish'}))
     .toContainText('Conditional place:');

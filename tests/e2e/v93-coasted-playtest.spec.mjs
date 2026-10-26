@@ -31,6 +31,16 @@ test('close-chase preset shows when hard effort catches a late break',
     await page.getByLabel('5 km to go effort for you')
       .selectOption('hard');
     const hard=await run();
+    expect(hard.stageTrace.version).toBe('v93-stage-trace-1');
+    expect(hard.stageTrace.kilometres).toHaveLength(40);
+    const stageCard=page.getByLabel('Stage and orders at km 1');
+    await expect(stageCard).toContainText('Stage input at km 1:');
+    await expect(stageCard).toContainText('Your active order:');
+    await expect(stageCard).toContainText('Recorded this kilometre:');
+    await expect(stageCard).toContainText('simulated for this test race');
+    await page.getByRole('button',{name:'5 km effort handoff'}).click();
+    await expect(page.getByLabel('Stage and orders at km 35'))
+      .toContainText('changed at km 35');
     expect(conserve.kilometreFrames.at(-1).roadGroups)
       .toHaveLength(1);
     expect(hard.kilometreFrames.at(-1).roadGroups)
@@ -107,6 +117,16 @@ test('measured chase shows when steady catches and hard only spends reserve',
     await page.getByLabel('5 km to go effort for you')
       .selectOption('hard');
     const hard=await run();
+    expect(hard.stageTrace.version).toBe('v93-stage-trace-1');
+    expect(hard.stageTrace.kilometres).toHaveLength(40);
+    const stageCard=page.getByLabel('Stage and orders at km 1');
+    await expect(stageCard).toContainText('Stage input at km 1:');
+    await expect(stageCard).toContainText('Your active order:');
+    await expect(stageCard).toContainText('Recorded this kilometre:');
+    await expect(stageCard).toContainText('simulated for this test race');
+    await page.getByRole('button',{name:'5 km effort handoff'}).click();
+    await expect(page.getByLabel('Stage and orders at km 35'))
+      .toContainText('changed at km 35');
     const ownPlace=race=>race.provisionalLineOrder.find(row=>
       row.riderId==='you-7').position;
     const ownEnergy=race=>race.lineTimes.find(row=>

@@ -5,6 +5,8 @@ import {createV93CoastedPlaytest,createV93PlayableTest,
   summarizeV93CoastedPlaytest} from
   '../../lib/engine/v2/playtest-v93-coasted.mjs';
 import {pointsForDivisionResult} from '../../lib/calendar/points.mjs';
+import {summarizeRecordedStageTrace} from
+  '../../lib/engine/v2/playtest-stage-trace.mjs';
 
 const profileHeightsM=[100,350,150,500,180,100];
 const context={tier:3,divisionIndex:1,divisionCount:1};
@@ -34,6 +36,18 @@ test('ten exhausted routes yield replayable individual lines and policy points',
       assert.deepEqual(race.clock,base.clock);
       assert.equal(race.individualLine.conditionalCrossings.length,32);
       assert.equal(summary.kilometreFrames.length,259);
+      const stageTrace=summarizeRecordedStageTrace(race.recording);
+      assert.equal(stageTrace.version,'v93-stage-trace-1');
+      assert.equal(stageTrace.kilometres.length,260);
+      for(const [index,segment] of stageTrace.kilometres.entries()){
+        const recorded=race.recording.route.kilometres[index];
+        assert.equal(segment.km,index+1);
+        assert.equal(segment.terrain,recorded.terrain);
+        assert.equal(segment.gradientPct,recorded.gradientPct);
+        assert.equal(segment.surface,recorded.surface);
+        assert.equal(segment.exposed,recorded.exposed);
+        assert.deepEqual(segment.weather,recorded.weather);
+      }
       for(const [index,frame] of summary.kilometreFrames.entries()){
         const recorded=race.recording.frames[index];
         assert.deepEqual(frame.attackAttempts,recorded.attackers);
@@ -203,6 +217,18 @@ test('attacking v93 roads keep separated front groups through the playable line'
         assert.equal(summary.lastKmRoad.at(-1).distanceM,260000);
         assert.equal(summary.lastKmRoad.at(-1).droppedPassages.length,0);
         assert.equal(summary.kilometreFrames.length,259);
+      const stageTrace=summarizeRecordedStageTrace(race.recording);
+      assert.equal(stageTrace.version,'v93-stage-trace-1');
+      assert.equal(stageTrace.kilometres.length,260);
+      for(const [index,segment] of stageTrace.kilometres.entries()){
+        const recorded=race.recording.route.kilometres[index];
+        assert.equal(segment.km,index+1);
+        assert.equal(segment.terrain,recorded.terrain);
+        assert.equal(segment.gradientPct,recorded.gradientPct);
+        assert.equal(segment.surface,recorded.surface);
+        assert.equal(segment.exposed,recorded.exposed);
+        assert.deepEqual(segment.weather,recorded.weather);
+      }
         assert.equal(race.pointsStatus,'withheld');
         assert.equal(race.canCommitAwards,false);
         if(race.pointPreview.status==='unavailable')

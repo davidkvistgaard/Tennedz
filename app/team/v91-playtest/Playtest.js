@@ -334,6 +334,15 @@ export default function Playtest({guided=false}){
     !settings.managerTacticOverrides.some(row=>row.teamId===teamId));
   const lineTimes=integrated?.finale?.lineTimes??[];
   const coastedFrame=coasted?.kilometreFrames[coastedKm-1];
+  const coastedStage=coasted?.stageTrace?.kilometres[coastedKm-1];
+  const ownRecordedOrder=coasted?.managerOrders.find(order=>
+    order.teamId==='you');
+  const activeOwnPhase=ownRecordedOrder?.phaseOrders
+    .filter(phase=>phase.atKm<=coastedKm).at(-1);
+  const activeOwnOrder=ownRecordedOrder?
+    {...ownRecordedOrder,...activeOwnPhase}:null;
+  const previousOwnEnergy=coasted?.kilometreFrames[coastedKm-2]
+    ?.ownRiders.find(row=>row.riderId===viewerRiderId)?.energy;
   const coastedRoadChanges=recordedRoadChanges(
     coasted?.kilometreFrames??[]);
   const coastedTacticalFrames=(coasted?.kilometreFrames??[])
@@ -1172,6 +1181,43 @@ export default function Playtest({guided=false}){
               checkpoint.moments.join(' · '):
               `${checkpoint.frontCount} groups ahead${checkpoint.chasing?' · your team chased':''}`}</small>
           </button>)}</div>
+          {coastedStage&&<div className="v91-viewer-road"
+            aria-label={'Stage and orders at km '+coastedKm}>
+            <h4>Stage, orders and recorded actions</h4>
+            <p>Stage input at km {coastedKm}: {coastedStage.terrain}
+              {' '}{coastedStage.gradientPct>=0?'+':''}{coastedStage.gradientPct.toFixed(1)}% gradient
+              · {coastedStage.surface} surface
+              · {coastedStage.exposed?'exposed road':'sheltered road'}
+              · {coastedStage.weather.windKph.toFixed(1)} km/h wind
+              · {coastedStage.weather.rainMm.toFixed(2)} mm rain
+              · {coastedStage.weather.temperatureC.toFixed(1)} °C.
+            </p>
+            {activeOwnOrder&&<p>Your active order: {activeOwnOrder.effort} effort
+              · {activeOwnOrder.attack} attack
+              · {activeOwnOrder.chase} chase
+              {activeOwnPhase?' (changed at km '+activeOwnPhase.atKm+')':
+                ' (starting order)'}.
+            </p>}
+            {coastedFrame?.attackAttempts&&coastedFrame?.joinedRiderIds&&
+              coastedFrame?.caughtRiderIds&&coastedFrame?.engagedChaseTeamIds?
+              <p>Recorded this kilometre: {coastedFrame.attackAttempts.length}
+                {' '}attack attempts · {coastedFrame.joinedRiderIds.length}
+                {' '}break joins · {coastedFrame.caughtRiderIds.length}
+                {' '}catches · {coastedFrame.engagedChaseTeamIds.includes('you')?
+                  'your team engaged the chase':'no new chase engagement by your team'}.
+              </p>:
+              <p>Detailed actions are unavailable for this versioned recording.</p>}
+            <p>{viewerRiderId} has {viewerCurrentEnergy?.toFixed(1)??'—'}
+              {' '}energy at this checkpoint{previousOwnEnergy!=null&&
+                viewerCurrentEnergy!=null?
+                ' ('+(viewerCurrentEnergy-previousOwnEnergy).toFixed(1)+' since km '+(coastedKm-1)+')':''}.
+              {' '}These are recorded inputs and actions; they do not prove that
+              one condition caused a road change. Route conditions here are
+              simulated for this test race, not measured stage weather.
+              The current overlay uses one-kilometre segments and does not
+              identify shorter climbs or stage landmarks.
+            </p>
+          </div>}
           <div className="v91-viewer-timeline" aria-label="Recorded race timeline">
             <h4>How the race unfolded</h4>
             <p>These are recorded attacks, joins, catches, chase changes and road changes. Select a moment to inspect its road; a changing group alone does not prove a catch.</p>
