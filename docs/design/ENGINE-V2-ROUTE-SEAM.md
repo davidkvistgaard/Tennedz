@@ -257,3 +257,35 @@ Copied or ordinary saved recordings are refused because their capacities
 cannot be authenticated from visible frames. The locked 24-rider source
 therefore still has `wholeRaceCovered: false`; the continuation cannot
 produce a whole-race line or awards.
+
+### Gate for a whole-field v3 continuation
+
+The next integration must advance **every** rider from one authenticated
+same-run boundary, or stop without presenting a finish. A road-band clock
+cannot be treated as a race clock while the bunch and older dropped riders
+remain at their source energy and position. The source-side coverage audit
+should be repeated after each paid kilometre and must name any unadvanced
+rider; `wholeRaceCovered` can become true only when the advanced IDs equal
+the committed field exactly once.
+
+The missing transition is more than energy accounting. V2 selects attacks,
+helpers, shelter and team responses at whole-kilometre boundaries; it then
+computes the bunch reference from attached riders and updates each rider's
+consecutive low-kilometre counter and deficit once for that kilometre.
+Recovery and leadership responses also use that whole-kilometre state. A v3
+slice may pay terrain-dependent work and road time, but it must not silently
+run those decisions once per slice or infer them from a saved group label.
+The continuation needs an explicit boundary rule for each decision, paid
+movement and energy for the bunch and every dropped rider, and a refusal at
+the first unpaid slice wherever a road band could meet another band or the bunch.
+The current fixed-band clock cannot supply those rules by increasing its
+five-rider membership limit.
+
+Before routing v3 to guided Motor Lab, verify a complete source field and
+energy ledger at every replay boundary; homogeneous-kilometre parity with
+v2 for work, cap, recovery, bunch/drop state and group clocks; a fractional
+climb that changes paid work without changing the number of tactical
+decisions; atomic rollback on possible contact or exhaustion; and a
+conditional line for every rider with official classification withheld when
+wheel order remains unknown. A stored v2 recording without its issued
+hidden-state sidecar must still refuse this handoff.
