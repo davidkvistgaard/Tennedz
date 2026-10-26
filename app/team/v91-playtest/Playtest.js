@@ -542,6 +542,15 @@ export default function Playtest({guided=false}){
     raceViewerBreaksAndChase(coasted,viewerRivalId).riders:[];
   const viewerRiderRoad=viewerRoad.find(band=>
     band.ownRiderIds.includes(viewerRiderId));
+  const raceScreenRider=viewerSituation?.own.find(rider=>
+    rider.riderId===viewerRiderId);
+  const raceScreenBands=[...new Map([
+    ...viewerRoad.filter(band=>band.gapSeconds>0).slice(0,2),
+    viewerRoad.find(band=>band.key==='bunch'),viewerRiderRoad]
+    .filter(Boolean).map(band=>[band.key,band])).values()]
+    .sort((a,b)=>b.gapSeconds-a.gapSeconds);
+  const raceScreenMarkerX=viewerSituation?
+    20+coastedKm/viewerSituation.totalKm*560:20;
   const viewerCurrentEnergy=coastedFrame?.ownRiders.find(row=>
     row.riderId===viewerRiderId)?.energy;
   const viewerTimeline=coasted?raceViewerTimeline(coasted):[];
@@ -1487,12 +1496,25 @@ export default function Playtest({guided=false}){
                     <polyline className="v91-race-screen-profile"
                       points={coastedProfile.points}/>
                     <line className="v91-race-screen-position"
-                      x1={20+coastedKm/viewerSituation.totalKm*560}
-                      x2={20+coastedKm/viewerSituation.totalKm*560}
+                      x1={raceScreenMarkerX}
+                      x2={raceScreenMarkerX}
                       y1="8" y2="118"/>
                     <circle className="v91-race-screen-field"
-                      cx={20+coastedKm/viewerSituation.totalKm*560}
+                      cx={raceScreenMarkerX}
                       cy={raceScreenElevationY} r="7"/>
+                    {raceScreenRider&&<>
+                      <circle className="v91-race-screen-follow-ring"
+                        cx={raceScreenMarkerX} cy={raceScreenElevationY}
+                        r="13"/>
+                      <text className="v91-race-screen-follow-label"
+                        x={raceScreenMarkerX>450?raceScreenMarkerX-18:
+                          raceScreenMarkerX+18}
+                        y={raceScreenElevationY-11}
+                        textAnchor={raceScreenMarkerX>450?'end':'start'}>
+                        {raceScreenRider.name.replace(
+                          /^Your test team rider /,'Rider ')}
+                      </text>
+                    </>}
                   </svg>
                   <div className="v91-race-screen-route-labels">
                     <span>Start</span><strong>Field at km {coastedKm}</strong>
@@ -1558,21 +1580,44 @@ export default function Playtest({guided=false}){
                   </div>
                 </section>
               </div>
-              <section className="v91-race-screen-field-summary"
-                aria-label="Field positions at selected kilometre">
-                <div><strong>{viewerSituation.frontRiders}</strong>
-                  <span>ahead in {viewerSituation.frontGroups} {
-                    viewerSituation.frontGroups===1?'group':'groups'}</span></div>
-                <div><strong>{viewerSituation.bunchRiders}</strong>
-                  <span>in the bunch</span></div>
-                <div><strong>{viewerSituation.isolatedRiders}</strong>
-                  <span>riding alone</span></div>
+              <section className="v91-race-screen-road"
+                aria-label="Road groups at selected kilometre">
+                <div className="v91-race-screen-section-head">
+                  <h3>On the road at km {coastedKm}</h3>
+                  <span>Time gaps relative to the bunch</span>
+                </div>
+                <div className="v91-race-screen-bands">{
+                  raceScreenBands.map(band=><div key={band.key}
+                    className={band.key===viewerRiderRoad?.key?
+                      'v91-race-screen-band-followed':''}>
+                    <strong>{band.key.startsWith('solo:you-')?
+                      `Rider ${Number(band.key.slice(9))+1} riding alone`:
+                      band.label}</strong>
+                    <span>{band.gapSeconds>0?'+':''}{
+                      band.gapSeconds.toFixed(1)} s · {
+                      band.riderCount} {
+                      band.riderCount===1?'rider':'riders'}</span>
+                    <small>{band.ownRiderIds.length?
+                      band.ownRiderIds.map(id=>`Rider ${Number(
+                        id.slice(4))+1}`).join(', '):
+                      'No riders from your team'}</small>
+                  </div>)}</div>
+                {viewerRoad.length>raceScreenBands.length&&<p>{
+                  viewerRoad.length-raceScreenBands.length} other recorded
+                  road groups. Your riders are listed below.</p>}
               </section>
               <section className="v91-race-screen-team" aria-label="Your riders on the road">
                 <div className="v91-race-screen-section-head">
                   <h3>Your riders</h3>
                   <span>Energy changes · fatigue is the starting setting</span>
                 </div>
+                {raceScreenRider&&<p className="v91-race-screen-followed"
+                  aria-label="Followed rider position">
+                  Following <strong>{raceScreenRider.name.replace(
+                    /^Your test team rider /,'Rider ')}</strong> · {
+                    raceScreenRider.position} · {
+                    raceScreenRider.energy?.toFixed(1)??'—'} energy left
+                </p>}
                 <div className="v91-race-screen-riders">{
                   viewerSituation.own.map(rider=><button type="button"
                     key={rider.riderId}

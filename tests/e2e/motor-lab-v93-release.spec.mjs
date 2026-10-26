@@ -50,6 +50,14 @@ test('guided Motor Lab runs a race from setup to rider replay',async({page})=>{
     name:/Stage profile with the field at km 1/})).toBeVisible();
   await expect(raceScreen.getByLabel('Your riders on the road')
     .locator('button')).toHaveCount(8);
+  await raceScreen.getByLabel('Your riders on the road')
+    .getByRole('button',{name:/Rider 1/}).click();
+  await expect(raceScreen.getByLabel('Followed rider position'))
+    .toContainText('Rider 1');
+  await expect(raceScreen.locator('.v91-race-screen-route svg text'))
+    .toHaveText('Rider 1');
+  await raceScreen.getByLabel('Your riders on the road')
+    .getByRole('button',{name:/Rider 8/}).click();
   await raceScreen.getByRole('button',{name:'Play',exact:true}).click();
   await expect(raceScreen.locator('header h2')).toContainText('Km 2');
   await expect(raceScreen.locator('header h2')).toContainText('Km 3');
@@ -69,6 +77,8 @@ test('guided Motor Lab runs a race from setup to rider replay',async({page})=>{
     name:'Recent commentary history'})).toContainText('Km 1');
   await page.screenshot({path:'test-results/guided-race-screen-mobile.png'});
   await page.setViewportSize({width:1440,height:900});
+  await expect(raceScreen.getByLabel('Your riders on the road')
+    .getByRole('button',{name:/Rider 8/})).toBeInViewport();
   await page.screenshot({path:'test-results/guided-race-screen-desktop.png'});
   await page.setViewportSize({width:390,height:844});
   await raceScreen.getByLabel('Choose recorded kilometre').fill('1');
@@ -227,6 +237,29 @@ test('guided race diagram shows paid front-group time gaps',async({page})=>{
   expect(await recentEvents.locator('li').count()).toBeGreaterThan(1);
   await raceScreen.getByLabel('Choose recorded kilometre').fill('1');
   await expect(recentEvents.locator('li')).toHaveCount(1);
+  const followedFrame=coasted.kilometreFrames.find(frame=>
+    frame.ownRiders.some(row=>frame.roadGroups.some(group=>
+      group.riderIds.includes(row.riderId))||frame.droppedRiders.some(
+      drop=>drop.riderId===row.riderId)));
+  expect(followedFrame).toBeDefined();
+  const followedId=followedFrame.ownRiders.find(row=>
+    followedFrame.roadGroups.some(group=>group.riderIds.includes(row.riderId))||
+    followedFrame.droppedRiders.some(drop=>drop.riderId===row.riderId))
+    .riderId;
+  const followedNumber=Number(followedId.slice(4))+1;
+  await raceScreen.getByLabel('Choose recorded kilometre')
+    .fill(String(followedFrame.km));
+  await raceScreen.getByLabel('Your riders on the road')
+    .getByRole('button',{name:new RegExp(`Rider ${followedNumber}\\b`)})
+    .click();
+  await expect(raceScreen.getByLabel('Followed rider position'))
+    .toContainText(`Rider ${followedNumber}`);
+  await expect(raceScreen.locator('.v91-race-screen-route svg text'))
+    .toHaveText(`Rider ${followedNumber}`);
+  const followedBand=raceScreen.getByLabel('Road groups at selected kilometre')
+    .locator('.v91-race-screen-band-followed');
+  await expect(followedBand).toContainText(`Rider ${followedNumber}`);
+  await expect(followedBand).toContainText(/Front group|riding alone/);
   await closeDefaultRaceScreen(page);
   const ownEventIndices=coasted.kilometreFrames.flatMap((frame,index)=>
     [...frame.attackAttempts,...frame.joinedRiderIds,...frame.caughtRiderIds]
