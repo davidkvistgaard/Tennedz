@@ -187,3 +187,10 @@ case, changing the explicit future terrain changes the paid road clock while
 the saved participants and recording stay unchanged. The bunch and older
 drops are outside this bounded clock; it produces no whole-race result or
 official awards and is not wired to guided Motor Lab.
+
+The continuation now reports exact source-rider coverage as part of that
+boundary. In the locked three-team case, all 24 riders are accounted for at
+the handoff, but only the already separated road-band members advance in v3;
+the remaining rider IDs, source groups and source energy are listed as
+unadvanced. The diagnostic explicitly marks whole-race coverage false. It
+cannot be interpreted as a finish for the field.

@@ -166,6 +166,18 @@ test('one complete stage input owns terrain and short-slice conditions after pai
   assert.equal(flat.source.completedKm,31);
   assert.equal(flat.startedAtKm,31);
   assert.equal(flat.kilometres[0].kilometreIndex,31);
+  assert.equal(flat.sourceCoverage.totalRiders,24);
+  assert.equal(flat.sourceCoverage.wholeRaceCovered,false);
+  assert.deepEqual(flat.sourceCoverage.continuedRiderIds,
+    handoff.bands.flatMap(band=>band.members.map(member=>member.id)));
+  assert.equal(flat.sourceCoverage.continuedRiderIds.length+
+    flat.sourceCoverage.outsideRiders.length,24);
+  for(const outside of flat.sourceCoverage.outsideRiders){
+    const source=recording.frames[30].riderGroups.find(row=>
+      row.id===outside.riderId);
+    assert.equal(outside.sourceGroup,source.group);
+    assert.equal(outside.energyAtHandoff,source.energy);
+  }
   assert.ok(flat.kilometres[0].frames.length>0);
   assert.ok(climb.kilometres[0].frames.length>0);
   assert.notEqual(flat.kilometres[0].frames[0].roadBaselineSeconds,
