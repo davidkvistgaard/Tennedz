@@ -3,6 +3,7 @@
 import {prepareV91Playtest} from '../lib/engine/v2/playtest.mjs';
 import {simulateTacticalTour} from '../lib/engine/v2/tour.mjs';
 import {MOTOR_RACE_DYNAMICS_VERSION} from '../lib/engine/v2/tuning.mjs';
+import {observedFrontClosingSecondsPerKm} from '../lib/engine/v2/race-context-v1.mjs';
 
 const seeds=['sample-flat-finish','race-dynamics-1','race-dynamics-2'];
 function run({seed,terrain,fatigue,format,breakTeams,controlTeams}){
@@ -32,9 +33,18 @@ function run({seed,terrain,fatigue,format,breakTeams,controlTeams}){
     .map(row=>({km:frame.km,riderId:row.riderId,
       unmetEnergyDemand:row.unmetEnergyDemand})));
   const finale=frames.filter(frame=>frame.km>210);
+  const measuredFinaleClosing=finale.map(frame=>{
+    const prior=frames.slice(0,frame.km-1);
+    const frontGroup=prior.at(-1)?.roadGroups[0];
+    return frontGroup?observedFrontClosingSecondsPerKm({frames:prior,frontGroup}):null;
+  }).filter(value=>value!==null);
   const atFinaleStart=frames[209];
   const finalFrame=frames.at(-1);
   const frontIds=new Set(finalFrame.breakawayRiderIds);
+  const initialFront=frames.find(frame=>
+    frame.breakawayRiderIds.length>=breakTeams);
+  const initialFrontIds=initialFront?.breakawayRiderIds??[];
+  const caughtIds=new Set(frames.flatMap(frame=>frame.caughtBreakawayRiderIds));
   const average=(rows,field)=>+(rows.reduce((sum,row)=>sum+row[field],0)/rows.length)
     .toFixed(2);
   const roleEnergyAtFinaleStart=role=>{
@@ -61,6 +71,7 @@ function run({seed,terrain,fatigue,format,breakTeams,controlTeams}){
     chasedTeamKilometres:frames.reduce((sum,frame)=>sum+frame.chasers.length,0),
     finaleMeanChasePower:average(finale,'chasePower'),
     finaleMeanPassiveGapDelta:average(finale,'passiveGapDelta'),
+    finaleMeasuredClosingKilometres:measuredFinaleClosing.length,
     controlEnergyAtFinaleStart:roleEnergyAtFinaleStart('control'),
     protectEnergyAtFinaleStart:roleEnergyAtFinaleStart('protect'),
     breakEnergyAtFinaleStart:roleEnergyAtFinaleStart('break'),
@@ -84,6 +95,10 @@ function run({seed,terrain,fatigue,format,breakTeams,controlTeams}){
       sum+row.unmetEnergyDemand,0).toFixed(2),
     caughtRiders:frames.reduce((sum,frame)=>
       sum+frame.caughtBreakawayRiderIds.length,0),
+    initialFrontFormedKm:initialFront?.km??null,
+    initialFrontRiders:initialFrontIds.length,
+    initialFrontCaughtRiders:initialFrontIds.filter(id=>caughtIds.has(id)).length,
+    initialFrontAtLineRiders:initialFrontIds.filter(id=>frontIds.has(id)).length,
     frontPresentKm:withFront.length};
 }
 
@@ -91,6 +106,10 @@ const rows=[];
 for(const terrain of ['flat','mountain'])for(const fatigue of [0,30])
   for(const format of ['one_day','stage'])for(const seed of seeds)
     for(const [breakTeams,controlTeams] of [[3,2],[5,2],[5,4],[5,6]]){
+      if(process.argv.includes('--focus-six-control')&&
+        !(format==='one_day'&&breakTeams===5&&controlTeams===6))continue;
+      if(process.argv.includes('--focus-five-break')&&
+        !(format==='one_day'&&breakTeams===5))continue;
       const input={seed,terrain,fatigue,format,breakTeams,controlTeams};
       try{rows.push(run(input));}
       catch(error){

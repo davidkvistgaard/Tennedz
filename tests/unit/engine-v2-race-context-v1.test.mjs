@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {normalizeRaceContext,projectedCatchKm,breakSituationForTeam,
-  automaticCadenceAttackAllowed} from
+  automaticCadenceAttackAllowed,observedFrontClosingSecondsPerKm} from
   '../../lib/engine/v2/race-context-v1.mjs';
 import {prepareV91Playtest} from '../../lib/engine/v2/playtest.mjs';
 import {simulateTacticalTour} from '../../lib/engine/v2/tour.mjs';
@@ -24,6 +24,18 @@ test('catch estimate is a consequence of paid relative road speed',()=>{
     frontSecondsPerKm:95,bunchSecondsPerKm:89}),null);
   assert.equal(projectedCatchKm({gapSeconds:300,remainingKm:60,
     frontSecondsPerKm:89,bunchSecondsPerKm:95}),null);
+});
+
+test('observed front closing uses only unchanged completed road groups',()=>{
+  const front={id:'road-1',riderIds:['a','b'],gapSeconds:80};
+  const frames=Array.from({length:6},(_,index)=>({
+    roadGroups:[{...front,gapSeconds:100-index*4}]}));
+  assert.equal(observedFrontClosingSecondsPerKm({frames,frontGroup:front}),4);
+  assert.equal(observedFrontClosingSecondsPerKm({frames:frames.slice(1),
+    frontGroup:front}),null);
+  assert.equal(observedFrontClosingSecondsPerKm({frames:frames.map((frame,index)=>
+    index===2?{roadGroups:[{...front,riderIds:['a','c'],gapSeconds:92}]}:frame),
+  frontGroup:front}),null);
 });
 
 test('break composition records whose interests are affected without declaring a chase',()=>{
@@ -64,6 +76,7 @@ test('v94 requires a complete declared role map and keeps older motor inputs unc
   const old=simulateTacticalTour({...source,
     motorVersion:MOTOR_EXHAUSTION_COAST_VERSION});
   assert.equal('raceContext' in old.committedInputs,false);
+  assert.ok(old.frames.every(frame=>!('observedPriorFront' in frame)));
   assert.throws(()=>simulateTacticalTour({...source,
     motorVersion:MOTOR_EXHAUSTION_COAST_VERSION,raceContext}),
   /explicit race context/);
@@ -73,6 +86,7 @@ test('v94 requires a complete declared role map and keeps older motor inputs unc
   assert.equal(candidate.frames.length,40);
   assert.ok(candidate.frames.every(frame=>
     Array.isArray(frame.bunchEaseTeamIds)));
+  assert.ok(candidate.frames.every(frame=>'observedPriorFront' in frame));
 });
 
 test('a named manager attack survives a protective team role',()=>{
@@ -112,6 +126,26 @@ test('selective captain teams pursue a one-day finale but can leave a stage brea
   assert.ok(helperIds.some(helperId=>
     firstPursuit.energyLedger.find(row=>row.riderId===helperId).workDemand>
     stageLedger.find(row=>row.riderId===helperId).workDemand));
+});
+
+test('measured slow closing alerts one-day protectors despite a small front gap',()=>{
+  const managerTactics=Array.from({length:19},(_,index)=>index<5?
+    {effort:'steady',attack:'repeated',chase:'ignore'}:
+    {effort:'steady',attack:'none',chase:'selective'});
+  const {stage,weather,teams,seed}=prepareV91Playtest({distanceKm:260,
+    terrain:'flat',fatigue:30,teamCount:20,attack:'none',chase:'ignore',
+    seed:'sample-flat-finish',managerTactics});
+  const teamRoles=Object.fromEntries(teams.map((team,index)=>[
+    team.id,index===0?'protect':index<=5?'break':index<=11?'control':'protect']));
+  const race=simulateTacticalTour({stage,weather,teams,seed,
+    motorVersion:MOTOR_RACE_DYNAMICS_VERSION,
+    raceContext:{format:'one_day',teamRoles}});
+  assert.ok(race.frames[209].gapSeconds<30);
+  assert.ok(race.frames.slice(210).some(frame=>
+    Number.isFinite(frame.observedPriorFront?.closingSecondsPerKm)));
+  assert.ok(race.frames.slice(210).some(frame=>frame.chaseReasons.some(row=>
+    row.reason==='one_day_captain_pursuit')));
+  assert.ok(race.frames.some(frame=>frame.caughtBreakawayRiderIds.length>0));
 });
 
 test('v94 refuses unpayable front work before exposing an unsupported road clock',()=>{

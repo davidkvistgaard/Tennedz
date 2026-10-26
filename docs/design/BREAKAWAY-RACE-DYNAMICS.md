@@ -67,12 +67,13 @@ the final 50 km pursuit in a one-day race. They remain free to withhold on a
 stage unless an existing GC/emergency or explicit order applies. The revised
 `node scripts/audit-race-dynamics-v94.mjs` gives protective teams selective
 plans and adds a 5-break/6-control mix: **96 runs** over the same routes,
-seeds and fatigue levels. A front is caught in **33/48 one-day** and **3/48
-stage** scenarios. With five break teams and two control teams, the mean
-maximum lead is about **413 s one-day** and **524 s stage**; one-day catches
-occur in **3/12** of that harder mix. Flat/fresh one-day scenarios catch the
-front in **12/12** across the four role mixes; mountain/fatigued one-day
-scenarios catch it in **9/12**. These numbers illustrate sensitivity to
+seeds and fatigue levels. At least one front rider is recorded caught in
+**33/48 one-day** and **3/48 stage** scenarios; this does not establish that
+the entire original break was caught. With five break teams and two control teams, the mean
+maximum lead is about **413 s one-day** and **524 s stage**; at least one catch
+occurs in **3/12** of that harder mix. Flat/fresh one-day scenarios record at
+least one catch in **12/12** across the four role mixes; mountain/fatigued
+one-day scenarios do so in **9/12**. These numbers illustrate sensitivity to
 explicit team intent and paid chase work, not a realistic race distribution.
 The additional protective teams can spend more helper energy late, while
 stage contexts more often retain a front. The candidate still lacks a
@@ -93,7 +94,7 @@ An expanded read-only audit of the same 96 cases records role-specific helper
 energy, actual team-kilometres in pursuit, and the lead at km 205/210/220.
 For the twelve **one-day, five-break-team** cases per control-team count:
 
-| Control teams | Front caught | Mean lead at km 210 | Mean control-helper energy at km 210 | Mean protective-team pursuit in final 50 km |
+| Control teams | At least one rider caught | Mean lead at km 210 | Mean control-helper energy at km 210 | Mean protective-team pursuit in final 50 km |
 | --- | ---: | ---: | ---: | ---: |
 | 2 | 3/12 | 404 s | 28 | 591 team-km |
 | 4 | 12/12 | 105 s | 29 | 208 team-km |
@@ -109,3 +110,29 @@ Future pursuit decisions should be checked against observed paid closing and
 the remaining distance, with a stable leading front identity, before this
 version can become playable. Do not force a catch by assigning a gap or an
 unpaid speed bonus.
+
+The next internal candidate checks whether the *same leading road group* has
+actually been closing over five completed kilometres. A changed group ID or
+rider roster makes that observation unavailable. In a one-day final 50 km, a
+protective team becomes aware when the observed closing would not catch that
+front comfortably before the line. It still has to supply eligible helpers,
+pay their work, and produce a road-clock catch; no gap is assigned. This
+corrects the previous path where a team could consider its own hypothetical
+speed sufficient and never become aware enough to use it.
+
+Across the same 96 constructed cases, at least one rider is recorded caught in
+39/48 one-day and 3/48 stage runs, with no front exhaustion refusal or unpaid
+front rider-kilometre. That broad count alone does **not** mean the original
+break was wholly caught. A tighter 36-run, one-day, five-break-team audit tracks
+the five riders in the first established front by ID:
+
+| Control teams | Original five all caught | Original rider still ahead at line | Front at line (may be a new move) |
+| --- | ---: | ---: | ---: |
+| 2 | 3/12 | 9/12 | 9/12 |
+| 4 | 12/12 | 0/12 | 9/12 |
+| 6 | 12/12 | 0/12 | 3/12 |
+
+The nine four-control cases with riders ahead at the line have a *different*
+late front after the original five were caught. The audit does not call those
+official winners. The candidate remains internal pending recording validation,
+larger role/seed sampling, a paid front-exhaustion transition and viewer replay.
