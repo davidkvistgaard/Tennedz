@@ -725,6 +725,19 @@ export default function Playtest({guided=false}){
       <h1>{guided?'Motor Lab: plan a race':'Try a fictional race'}</h1>
       <p>{guided?'Choose a route and tactics, run the race, then follow the road to the finish. Start with the sample or change any choice below.':'Change your orders and the race conditions, then rerun with the same seed to compare what happened on the road.'}</p>
       <p className="v91-warning">This is a fictional preview. Results and points are for inspection only; no official result or award is saved.</p>
+      {guided&&<nav className="v91-flow-nav" aria-label="Motor Lab race flow">
+        <button type="button" onClick={()=>document.getElementById(
+          'v91-race-settings')?.scrollIntoView()}>
+          1 · Plan tactics</button>
+        <button type="button" disabled={!coasted&&!roadPreview}
+          onClick={()=>document.getElementById(coasted?
+            'v93-race-viewer':'v91-paid-road')?.scrollIntoView()}>
+          2 · Watch recorded race</button>
+        <button type="button" disabled={!coasted?.lineTimes?.length}
+          onClick={()=>document.getElementById(
+            'v93-your-finish')?.scrollIntoView()}>
+          3 · Inspect conditional result</button>
+      </nav>}
       <div className="v91-start" aria-label="Start a playable race preview">
         <strong>{guided?'Ready-made races':'Start with a race you can inspect.'}</strong>
         <div className="v91-start-actions">
@@ -1123,7 +1136,7 @@ export default function Playtest({guided=false}){
         </div>
       </form>
       {error&&<p role="alert" className="v91-error">{error}</p>}
-      {roadPreview&&<section className="v91-results"
+      {roadPreview&&<section className="v91-results" id="v91-paid-road"
         aria-label="Recorded road without individual finish">
         <h2>Paid road · {roadPreview.settings.distanceKm} km {' '}
           {roadPreview.settings.terrain}</h2>
@@ -1284,7 +1297,8 @@ export default function Playtest({guided=false}){
           <ol>{coastedRaceStory.map((moment,index)=><li key={index}>{moment}</li>)}</ol>
           <p>At the line, {coastedOwnDecision?.finisherId??'your finisher'} had a conditional place of {conditionalPlace(coastedOwnPlace,'unresolved')} and {coastedOwnLine?.energyAtLine.toFixed(1)??'—'} of 100 energy remaining. Energy is reserve left after recorded work, not a rider skill or a race time. The order is not an official classification.</p>
         </div>
-        <section className="v91-race-viewer" aria-label="Race viewer">
+        <section className="v91-race-viewer" id="v93-race-viewer"
+          aria-label="Race viewer">
           <h3>Follow your riders through the race</h3>
           <p>Each card is a recorded checkpoint. Energy is the reserve left at that point; a break only counts as joined or caught when the race recorded that event. Select a card to inspect its road and riders below.</p>
           <label>Rider to follow<select value={viewerRiderId}

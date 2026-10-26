@@ -14,6 +14,11 @@ test('guided Motor Lab runs a race from setup to rider replay',async({page})=>{
   await page.goto('/team/motor-lab');
   await expect(page.getByRole('heading',{name:'Motor Lab: plan a race'}))
     .toBeVisible();
+  const flow=page.getByRole('navigation',{name:'Motor Lab race flow'});
+  await expect(flow.getByRole('button',
+    {name:'2 · Watch recorded race'})).toBeDisabled();
+  await expect(flow.getByRole('button',
+    {name:'3 · Inspect conditional result'})).toBeDisabled();
   await page.screenshot({path:'test-results/guided-motor-lab-start.png',
     fullPage:true});
   await expect(page.getByLabel('Distance')).toHaveValue('40');
@@ -32,6 +37,12 @@ test('guided Motor Lab runs a race from setup to rider replay',async({page})=>{
   const {coasted}=await response.json();
   expect(coasted.lineTimes).toHaveLength(32);
   expect(coasted.stageTrace.kilometres).toHaveLength(40);
+  await flow.getByRole('button',{name:'2 · Watch recorded race'}).click();
+  await expect(page.getByRole('region',{name:'Race viewer'})).toBeVisible();
+  await flow.getByRole('button',
+    {name:'3 · Inspect conditional result'}).click();
+  await expect(page.getByRole('region',{name:'Your v93 finish'}))
+    .toBeVisible();
   const stageCard=page.getByLabel('Stage and orders at km 1');
   await expect(stageCard).toContainText('Stage input at km 1:');
   await expect(page.getByLabel('Recorded stage elevation profile'))
