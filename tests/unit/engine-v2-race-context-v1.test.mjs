@@ -124,6 +124,24 @@ test('a named manager attack survives a protective team role',()=>{
   assert.ok(race.frames.some(frame=>frame.attackers.includes('you-4')));
 });
 
+test('v94 paid bunch pace is checked against the committed front-work order',()=>{
+  const input={distanceKm:40,terrain:'flat',teamCount:4,
+    attack:'none',defaultRivalPlan:'passive',seed:'v94-front-work-recording',
+    managerTacticalOrdersV4:[{teamId:'you',atKm:10,
+      effort:'hard',frontWork:'rotate'}]};
+  const {stage,weather,teams,seed}=prepareV91Playtest(input);
+  const teamRoles=Object.fromEntries(teams.map(team=>[team.id,'protect']));
+  const race=simulateTacticalTour({stage,weather,teams,seed,
+    motorVersion:MOTOR_RACE_DYNAMICS_VERSION,
+    raceContext:{format:'one_day',teamRoles}});
+  const paceFrame=race.frames.find(frame=>frame.paidBunchPace);
+  assert.ok(paceFrame);
+  assert.equal(validateRecordedTour(race),true);
+  const altered=structuredClone(race);
+  altered.frames[paceFrame.km-1].paidBunchPace.riderIds=['you-1','you-2'];
+  assert.throws(()=>validateRecordedTour(altered),/paid bunch pace/);
+});
+
 test('selective captain teams pursue a one-day finale but can leave a stage break',()=>{
   const {stage,weather,teams,seed}=prepareV91Playtest({distanceKm:40,
     teamCount:4,attack:'repeated',chase:'ignore',

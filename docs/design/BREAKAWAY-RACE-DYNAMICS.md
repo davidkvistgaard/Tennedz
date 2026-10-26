@@ -156,7 +156,7 @@ respectively. Mean maximum leads are 259 s one-day and 337 s stage. No run
 refuses or records unpaid front work. These are synthetic, chosen role mixes,
 not calibration to observed race frequencies or proof of a credible full
 sporting result. The hard-driving exhausted-front refusal still stands, and
-the candidate still lacks validated replay and whole-race official results.
+the candidate still lacks independent whole-race replay and official results.
 
 An internal v94 recording check now requires the committed one-day/stage role
 map, reconstructs the prior five-kilometre front observation from completed
@@ -165,7 +165,10 @@ previous road groups and committed orders. It also checks the energy ledger
 against each rider's recorded reserve and verifies which teams qualified for
 bunch easing. A changed observation, work/rest roster, ease roster, energy
 charge or incomplete role map is refused. In a 36-case five-break-team
-synthetic subset, all candidate recordings passed this check. This tests
+synthetic subset, all candidate recordings passed this check. The full
+96-case constructed matrix also passed the internal replay check. A later
+v94-specific check requires paid bunch pace to name eligible helpers from a
+committed front-work order; a forged helper roster is refused. This tests
 internal consistency of paid frames; it does not independently re-simulate
 the whole race, validate every v94 pursuit decision, certify a sporting
 result, or make v94 ready for the guided Motor Lab.
