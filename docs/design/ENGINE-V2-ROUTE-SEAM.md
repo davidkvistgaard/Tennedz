@@ -210,3 +210,13 @@ copy of its state at a paid kilometre boundary during the same process.
 Modified, serialized, copied and ordinary v2 recordings are refused, because their
 hidden counters cannot be authenticated from the saved frames. Editing the
 inspection sidecar cannot change the issued state.
+
+A separate same-run issued-road audit joins that trusted hidden state to a
+validated paid v2 split. It checks each rider's identity, team, road group,
+energy and deficit against the saved frame, and checks the active team
+leaders. Its output accounts for every rider: one list for already separated
+road bands eligible for the bounded v3 clock and another for riders outside
+that clock, with their hidden counters retained but no movement applied.
+The locked 24-rider example still reports `wholeRaceCovered: false`. This
+handoff requires the original in-process recording object; it cannot turn an
+older saved v2 recording into a trusted bunch or dropped-rider continuation.

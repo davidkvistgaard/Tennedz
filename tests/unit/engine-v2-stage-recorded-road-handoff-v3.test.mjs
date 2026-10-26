@@ -13,6 +13,9 @@ import {replaySeparatedRoadBandsStageV3} from
 import {prepareRecordedRoadHandoffV3,
   STAGE_RECORDED_ROAD_HANDOFF_VERSION} from
   '../../lib/engine/v2/stage-recorded-road-handoff-v3.mjs';
+import {prepareIssuedRoadHandoffV3,
+  STAGE_ISSUED_ROAD_HANDOFF_VERSION} from
+  '../../lib/engine/v2/stage-issued-road-handoff-v3.mjs';
 import {normalizeCompleteStageInputV3,
   continueRecordedRoadWithCompleteStageV3,
   STAGE_COMPLETE_INPUT_VERSION,STAGE_RECORDED_CONTINUATION_VERSION} from
@@ -102,6 +105,46 @@ test('opt-in handoff state is separate from unchanged v2 recording',()=>{
   result.recording.frames[30].riderGroups[0].energy=0;
   assert.throws(()=>sameRunHandoffStateAtV3({recording:result.recording,
     frameIndex:30}),/same-run issued/);
+});
+
+test('same-run issued handoff accounts for every source rider without advancing outsiders',()=>{
+  const {input,overlay}=fixture();
+  const issued=simulateTacticalTourWithHandoffStateV3(input);
+  const normal=simulateTacticalTour(input);
+  const handoff=prepareIssuedRoadHandoffV3({recording:issued.recording,
+    frameIndex:30,overlay});
+  assert.equal(handoff.version,STAGE_ISSUED_ROAD_HANDOFF_VERSION);
+  assert.equal(handoff.stateTraceVersion,MOTOR_HANDOFF_STATE_TRACE_VERSION);
+  assert.equal(handoff.totalRiders,24);
+  assert.equal(handoff.continuedRiderStates.length+
+    handoff.outsideRiderStates.length,24);
+  assert.ok(handoff.continuedRiderStates.length>0);
+  assert.ok(handoff.outsideRiderStates.length>0);
+  assert.equal(handoff.wholeRaceCovered,false);
+  const source=issued.recording.frames[30];
+  for(const rider of [...handoff.continuedRiderStates,
+    ...handoff.outsideRiderStates]){
+    const saved=source.riderGroups.find(row=>row.id===rider.riderId);
+    assert.ok(saved);
+    assert.equal(rider.group,saved.group);
+    assert.equal(rider.energy,saved.energy);
+    assert.ok(Number.isInteger(rider.lowKilometres));
+    assert.ok(Number.isInteger(rider.quietKm));
+    assert.ok(Number.isFinite(rider.energyCap));
+  }
+  assert.equal(Object.hasOwn(handoff,'places'),false);
+  assert.deepEqual(issued.recording,normal);
+  issued.handoffStateTrace.frames[30].riders[0].energy=0;
+  assert.deepEqual(prepareIssuedRoadHandoffV3({recording:issued.recording,
+    frameIndex:30,overlay}),handoff);
+  assert.throws(()=>prepareIssuedRoadHandoffV3({recording:normal,
+    frameIndex:30,overlay}),/same-run issued/);
+  assert.throws(()=>prepareIssuedRoadHandoffV3({recording:
+    structuredClone(issued.recording),frameIndex:30,overlay}),
+  /same-run issued/);
+  issued.recording.frames[30].riderGroups[0].energy=0;
+  assert.throws(()=>prepareIssuedRoadHandoffV3({recording:issued.recording,
+    frameIndex:30,overlay}),/recorded rider state|same-run issued/i);
 });
 
 test('validated v2 split hands paid end-of-km energy and gaps to v3',()=>{
