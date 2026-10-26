@@ -29,6 +29,8 @@ test('guided Motor Lab runs a race from setup to rider replay',async({page})=>{
     fullPage:true});
   await expect(page.getByLabel('Distance')).toHaveValue('40');
   await expect(page.getByLabel('Your attack order')).toHaveValue('none');
+  await expect(page.getByLabel('Default tactics for uncustomized managers'))
+    .toHaveValue('random');
   await expect(page.getByRole('checkbox',
     {name:'Continue to a conditional finish'})).toHaveCount(0);
   await page.locator('summary').filter({hasText:'Other managers'}).click();
@@ -41,6 +43,11 @@ test('guided Motor Lab runs a race from setup to rider replay',async({page})=>{
   const response=await responsePromise;
   expect(response.status()).toBe(200);
   const {coasted}=await response.json();
+  expect(coasted.settings.managerTactics).toHaveLength(3);
+  expect(coasted.settings.managerTactics.some(tactic=>
+    tactic.attack==='repeated')).toBe(true);
+  expect(coasted.kilometreFrames.some(frame=>
+    frame.roadGroups.length>0)).toBe(true);
   expect(coasted.lineTimes).toHaveLength(32);
   expect(coasted.stageTrace.kilometres).toHaveLength(40);
   const raceScreen=page.getByRole('dialog',{name:'Race screen'});

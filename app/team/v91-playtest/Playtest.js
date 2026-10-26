@@ -3,6 +3,8 @@ import {useEffect,useMemo,useRef,useState} from 'react';
 import TeamShell from '../../components/TeamShell';
 import {api} from '../../../lib/api';
 import {playtestRiderCards} from '../../../lib/engine/v2/playtest-riders.mjs';
+import {resolveRandomRivalTactics} from
+  '../../../lib/engine/v2/playtest-rival-random.mjs';
 import {raceViewerCommentaryV1} from
   '../../../lib/engine/v2/playtest-commentary-v1.mjs';
 import {recordedStageProfile} from '../../../lib/engine/v2/playtest-stage-trace.mjs';
@@ -24,6 +26,7 @@ const DEFAULT_BASELINES={chase:{effort:'hard',attack:'none',chase:'all'},
   passive:{effort:'steady',attack:'none',chase:'ignore'}};
 function defaultTacticFor(index,settings){
   let plan=settings.defaultRivalPlan;
+  if(plan==='random')plan='neutral';
   if(plan==='mixed'){
     const cycle=(index+1)%4;
     plan=index<3?settings.rivalPlans[index]:
@@ -192,7 +195,7 @@ function bunchRelativeGap(deficitSeconds,decimals){
 
 export default function Playtest({guided=false}){
   const [settings,setSettings]=useState(guided?{...INITIAL,distanceKm:40,
-    attack:'none',seed:'sample-flat-finish'}:INITIAL);
+    attack:'none',seed:'sample-flat-finish',defaultRivalPlan:'random'}:INITIAL);
   const [customRivals,setCustomRivals]=useState(0);
   const [extraRivalId,setExtraRivalId]=useState('');
   const [integratedMode,setIntegratedMode]=useState(guided);
@@ -706,14 +709,20 @@ export default function Playtest({guided=false}){
       const managerTactics=Array.from(
         {length:customRivals},(_,index)=>
           settings.managerTactics[index]??defaultTacticFor(index,settings));
-      const namedTactics=new Map(settings.managerTacticOverrides.map(row=>
+      const randomRivals=guided&&settings.defaultRivalPlan==='random';
+      const resolvedTactics=randomRivals?resolveRandomRivalTactics({
+        teamCount:settings.teamCount,customTactics:managerTactics,
+        overrides:settings.managerTacticOverrides}):managerTactics;
+      const resolvedOverrides=randomRivals?[]:
+        settings.managerTacticOverrides;
+      const namedTactics=new Map(resolvedOverrides.map(row=>
         [row.teamId,row]));
       const allTeams=['you',...Array.from({length:settings.teamCount-1},
         (_,index)=>`rival-${index+1}`)];
       const orders=new Map(allTeams.map((teamId,index)=>[
         teamId,{teamId,attack:'none',
           chase:index===0?settings.chase:
-            (namedTactics.get(teamId)??managerTactics[index-1]??
+            (namedTactics.get(teamId)??resolvedTactics[index-1]??
               defaultTacticFor(index-1,settings)).chase,
           frontWork:finaleFrontWork[teamId]??'sit_in'}]));
       if(secondNamedAttack.teamId)for(const row of [namedAttack,
@@ -734,7 +743,10 @@ export default function Playtest({guided=false}){
           return effort||frontWork?[{teamId,atKm:chosenSecondEffortMarkerKm,
             ...(effort?{effort}:{}),...(frontWork?{frontWork}:{})}]:[];
         });
-      const raceSettings={...settings,managerTactics,
+      const raceSettings={...settings,
+        ...(randomRivals?{defaultRivalPlan:'mixed'}:{}),
+        managerTactics:resolvedTactics,
+        managerTacticOverrides:resolvedOverrides,
         ...(!coastedMode&&secondNamedAttack.teamId?{
           managerFinaleOrders:[...orders.values()]}:{}),
         ...(integratedMode&&coastedMode&&(firstFrontWork||
@@ -984,12 +996,14 @@ export default function Playtest({guided=false}){
             {OPTIONS[key].map(([value,label])=><option value={value} key={value}>{label}</option>)}
           </select></label>)}
         <details className="v91-optional" open={!guided}>
-          <summary>Other managers <span>Use defaults or set rival tactics</span></summary>
+          <summary>Other managers <span>{settings.defaultRivalPlan==='random'?
+            'Random tactics each race':'Use defaults or set rival tactics'}</span></summary>
         <fieldset className="v91-profile">
           <legend>Other managers</legend>
           <p>Rival 1 controls team rival-1 and its eight riders, rival-1-0 to rival-1-7; Rival 2 controls rival-2, and so on. Choose default tactics or customize a manager. After the race, select a rival in the viewer to see its riders, actions and nominated finisher on the recorded road.</p>
           <label>Default tactics for uncustomized managers
             <select value={settings.defaultRivalPlan} onChange={event=>change('defaultRivalPlan',event.target.value)}>
+              {guided&&<option value="random">Random each race</option>}
               <option value="mixed">Mixed defaults</option>
               <option value="chase">Hard chase</option>
               <option value="attack">Seek a break</option>
@@ -997,6 +1011,12 @@ export default function Playtest({guided=false}){
               <option value="passive">Hold position / no chase</option>
             </select>
           </label>
+          {guided&&settings.defaultRivalPlan==='random'&&<p>
+            Uncustomized rivals draw new tactics each run. If two are free,
+            one repeatedly attacks and another looks for selective moves.
+            The chosen orders are locked in the
+            recording. Set a rival's tactics below to keep them fixed.
+          </p>}
           {settings.defaultRivalPlan==='mixed'&&<div className="v91-profile-points">{settings.rivalPlans.map((plan,index)=><label key={index}>
             Rival {index+1}
             <select value={plan} onChange={event=>changeRival(index,event.target.value)}>
@@ -1278,7 +1298,8 @@ export default function Playtest({guided=false}){
             <div><dt>Other managers</dt><dd>
               {individuallyManagedRivals.size} with your own tactics · {' '}
               {settings.teamCount-1-individuallyManagedRivals.size} use {' '}
-              {settings.defaultRivalPlan==='mixed'?'mixed defaults':
+              {settings.defaultRivalPlan==='random'?'random tactics each race':
+                settings.defaultRivalPlan==='mixed'?'mixed defaults':
                 settings.defaultRivalPlan+' defaults'}
             </dd></div>
             <div><dt>Points</dt><dd>{showPointPreview?
@@ -2060,7 +2081,7 @@ export default function Playtest({guided=false}){
         </section>
         <details className="v91-technical"><summary>Engine status and recording details</summary>
         <p>{coasted.tuningVersion} · {coasted.settings.managerTactics.length+
-          (coasted.settings.managerTacticOverrides?.length??0)} custom rival managers · {' '}
+          (coasted.settings.managerTacticOverrides?.length??0)} locked rival tactics · {' '}
           {coasted.sharedWheelContact?
             'paid shared-road contact and photo-finish ranges':
             coasted.isolatedLaneEncounters?.length?
@@ -2875,7 +2896,7 @@ export default function Playtest({guided=false}){
       {result&&<section className="v91-results" aria-label="Playtest recording">
         <h2>Recorded race · {result.settings.distanceKm} km {result.settings.terrain}</h2>
         <p>{result.tuningVersion} · {result.settings.managerTactics.length+
-          (result.settings.managerTacticOverrides?.length??0)} custom rival managers{integrated?' · Conditional finale':` · Your captain: provisional #${result.ownCaptain??'—'}`}</p>
+          (result.settings.managerTacticOverrides?.length??0)} locked rival tactics{integrated?' · Conditional finale':` · Your captain: provisional #${result.ownCaptain??'—'}`}</p>
         {integrated&&<p>Replay the locked kilometres through {result.handoffKm} km here. The paid final kilometre continues below.</p>}
         <label>Race kilometre: {selectedKm}
           <input type="range" min="1" max={result.frames.length} value={selectedKm}
