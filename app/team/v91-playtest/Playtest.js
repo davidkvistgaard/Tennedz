@@ -461,6 +461,14 @@ export default function Playtest({guided=false}){
     row.atKm))].sort((a,b)=>a-b);
   const recordedEffortMarkerKm=recordedEffortMarkersKm[0]??
     coasted?.settings.distanceKm-5;
+  const paidFrontKilometres=coasted?.kilometreFrames.filter(frame=>
+    frame.paidBunchPaceTeamId==='you').map(frame=>frame.km)??[];
+  const paidFrontRanges=paidFrontKilometres.reduce((ranges,km)=>{
+    const last=ranges.at(-1);
+    if(last&&last.toKm===km-1)last.toKm=km;
+    else ranges.push({fromKm:km,toKm:km});
+    return ranges;
+  },[]);
   const effortJumpKm=recordedTimedOrders.length?
     recordedEffortMarkerKm+1:recordedEffortMarkerKm;
   const viewerFiveKm=viewerEnergy.find(row=>
@@ -1393,12 +1401,22 @@ export default function Playtest({guided=false}){
                 x1={20+markerKm/coasted.settings.distanceKm*560}
                 x2={20+markerKm/coasted.settings.distanceKm*560}
                 y1="12" y2="115"/>)}
+              {paidFrontKilometres.map(km=><rect key={`paid-front-${km}`}
+                className="v91-stage-paid-front"
+                x={20+(km-1)/coasted.settings.distanceKm*560}
+                y="119" width={560/coasted.settings.distanceKm}
+                height="7"/>)}
               <line className="v91-stage-current"
                 x1={20+coastedKm/coasted.settings.distanceKm*560}
                 x2={20+coastedKm/coasted.settings.distanceKm*560}
                 y1="12" y2="115"/>
             </svg>
             <p>{coastedProfile.minElevationM.toFixed(0)}–{coastedProfile.maxElevationM.toFixed(0)} m recorded elevation · dashed lines: order markers at km {recordedEffortMarkersKm.length?recordedEffortMarkersKm.join(', '):recordedEffortMarkerKm} · solid line: viewing km {coastedKm}. The profile uses one-kilometre samples; short climbs may be hidden.</p>
+            <p>Blue strip: {paidFrontRanges.length?
+              `your team paid bunch-front work at ${paidFrontRanges.map(range=>
+                `km ${range.fromKm}${range.toKm===range.fromKm?'':
+                  `–${range.toKm}`}`).join(', ')} (${paidFrontKilometres.length} recorded km)`:
+              'no paid bunch-front work by your team'}. An order without paid helpers is not shown as work.</p>
           </div>}
           <div className="v91-energy-view" aria-label={`${viewerRiderId} recorded energy through the race`}>
             <svg viewBox="0 0 600 145" preserveAspectRatio="none" role="img"

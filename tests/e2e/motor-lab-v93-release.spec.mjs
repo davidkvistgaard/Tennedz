@@ -207,6 +207,11 @@ test('guided front-work order is paid only after its 5 km marker',async({page})=
   expect(coasted.kilometreFrames[10].paidBunchPaceTeamId).toBe('you');
   expect(coasted.kilometreFrames[19].paidBunchPaceTeamId).toBe('you');
   expect(coasted.kilometreFrames[20].paidBunchPaceTeamId).toBeNull();
+  await expect(page.getByLabel('Recorded stage elevation profile'))
+    .toContainText('km 11–20 (10 recorded km)');
+  await expect(page.locator('.v91-stage-paid-front')).toHaveCount(10);
+  await page.getByLabel('Recorded stage elevation profile').screenshot({
+    path:'test-results/guided-front-work-timeline.png'});
   await page.getByRole('slider',{name:/Recorded kilometre:/}).fill('11');
   const stage=page.getByLabel('Stage and orders at km 11');
   await expect(stage).toContainText('try bunch-front work');
