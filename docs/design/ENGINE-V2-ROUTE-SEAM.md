@@ -79,3 +79,13 @@ A separate v3 **isolated rider calculation** now evaluates a kilometre one bound
 A separate preview-only v3 step now advances **two distinct cooperating solo bands** through the precise slices of one kilometre. It uses existing solo skill weights and bounded road-group drift tuning, charges each rider for working alone, and records positive separation and energy on each paid slice. A short climb can therefore change their relative gap as well as their energy. If the projected gap closes within a slice, the step stops at that slice’s start and returns an unresolved-contact interval; it does not interpolate an occupied-wheel pass, spend energy beyond the paid boundary, or produce a place. This is a bounded two-rider diagnostic, not the whole-race group motor: drafting, recovery, attacks, multi-rider groups and the finale remain outside it.
 
 A separate preview-only two-solo **stage replay** now composes those paid slices across a complete synthetic stage with explicit baseline terrain for every kilometre. It accepts precommitted effort changes at 5 km markers, applies them from the following kilometre, and records the active effort, road conditions, exact feature ids, positive separation and both riders' energy at each paid slice. The short climb and precise rough section therefore remain visible in the same replay as the effort change. It refuses a possible contact before charging the first unpaid slice and never creates classified places or points. Only two already-separated cooperating solo riders are supported: no attack launch, drafting, recovery, multi-rider group, occupied-wheel response or official finish is inferred. It is not routed to Motor Lab or production.
+
+
+The internal v3 separated-solo replay now carries three to eight already-separated
+cooperating solo lanes simultaneously across the same fractional stage slices.
+Each rider pays energy once per slice; adjacent positive gaps are updated from
+their paid abilities, and any possible adjacent contact refuses the first unpaid
+slice without charging any lane for it. Precommitted 5 km effort markers are
+recorded in the stage replay. This is a narrow synthetic evidence path: it does
+not form attacks or groups, model drafting/recovery, resolve wheel contact,
+classify the line, or change guided Motor Lab or old v2 recordings.
