@@ -220,3 +220,10 @@ that clock, with their hidden counters retained but no movement applied.
 The locked 24-rider example still reports `wholeRaceCovered: false`. This
 handoff requires the original in-process recording object; it cannot turn an
 older saved v2 recording into a trusted bunch or dropped-rider continuation.
+
+The separate internal v3 recovery projection checks every fractional slice
+before awarding the existing once-per-kilometre quiet-bunch recovery. A short
+steep climb or rough exposed stretch anywhere in the kilometre resets the
+quiet counter; a uniformly calm kilometre matches the v2 recovery rule.
+Overlapping topography refuses. This projection applies neither recovered
+energy nor the rider's cap, and does not advance bunch or dropped riders.
