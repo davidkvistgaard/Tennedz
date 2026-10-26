@@ -6,7 +6,8 @@ import {MOTOR_EXHAUSTION_COAST_VERSION} from '../../lib/engine/v2/tuning.mjs';
 import {STAGE_COMPLETE_INPUT_VERSION} from
   '../../lib/engine/v2/stage-complete-input-v3.mjs';
 import {advanceQuietWholeBunchKilometreV3,replayQuietWholeBunchStageV3,
-  replayCommittedQuietWholeBunchStageV3} from
+  replayCommittedQuietWholeBunchStageV3,
+  replayCommittedQuietBunchWithRecoveryV3} from
   '../../lib/engine/v2/stage-whole-bunch-kilometre-v3.mjs';
 
 function source(seed='front-work-4',attack='none'){
@@ -223,6 +224,103 @@ test('committed attack phases stay outside the quiet replay',()=>{
     motorVersion:MOTOR_EXHAUSTION_COAST_VERSION});
   assert.throws(()=>replayCommittedQuietWholeBunchStageV3({recording,
     frameIndex:29,stageInput,endKm:39}),/dynamic team orders/);
+});
+
+test('committed conserve order pays quiet recovery once per km like v2',()=>{
+  const {stageInput}=source();
+  const input=prepareV91Playtest({distanceKm:40,terrain:'flat',
+    teamCount:4,gender:'M',effort:'steady',attack:'none',chase:'ignore',
+    defaultRivalPlan:'passive',seed:'front-work-4'});
+  input.teams.find(team=>team.id==='you').orders.phases=[
+    {atKm:30,effort:'conserve'}];
+  const {recording,handoffStateTrace}=simulateTacticalTourWithHandoffStateV3({
+    ...input,motorVersion:MOTOR_EXHAUSTION_COAST_VERSION});
+  stageInput.overlay.conditionSpans=Array.from({length:9},(_,index)=>{
+    const segment=recording.route.kilometres[index+30];
+    return {id:`recovery-km-${index+31}`,fromKm:index+30,
+      toKm:index+31,conditions:{surface:segment.surface,
+        exposed:segment.exposed,source:'simulated',weather:segment.weather}};
+  });
+  const replay=replayCommittedQuietBunchWithRecoveryV3({recording,
+    frameIndex:29,stageInput,endKm:39});
+  assert.match(replay.version,/committed-recovery-replay-4/);
+  assert.equal(replay.refusal,null);
+  assert.equal(replay.frames.length,9);
+  assert.equal(replay.frames[0].activeEfforts.find(row=>
+    row.teamId==='you').effort,'conserve');
+  assert.equal(replay.frames[0].riderWork.find(row=>row.id==='you-0')
+    .recoveryAward,0);
+  assert.ok(replay.frames[2].riderWork.find(row=>row.id==='you-0')
+    .recoveryAward>0);
+  for(const frame of replay.frames){
+    const paid=recording.frames[frame.km-1];
+    const hidden=handoffStateTrace.frames[frame.km-1];
+    for(const row of frame.riderStates){
+      const actual=paid.riderGroups.find(candidate=>candidate.id===row.id);
+      const state=hidden.riders.find(candidate=>candidate.riderId===row.id);
+      assert.equal(row.energy,actual.energy);
+      assert.equal(row.group,actual.group);
+      assert.equal(row.deficitSeconds,actual.deficitSeconds);
+      assert.equal(row.quietKm,state.quietKm);
+    }
+  }
+});
+
+test('a short climb cancels the full quiet-kilometre recovery award',()=>{
+  const {stageInput}=source();
+  const input=prepareV91Playtest({distanceKm:40,terrain:'flat',
+    teamCount:4,gender:'M',effort:'steady',attack:'none',chase:'ignore',
+    defaultRivalPlan:'passive',seed:'front-work-4'});
+  input.teams.find(team=>team.id==='you').orders.phases=[
+    {atKm:30,effort:'conserve'}];
+  const {recording}=simulateTacticalTourWithHandoffStateV3({...input,
+    motorVersion:MOTOR_EXHAUSTION_COAST_VERSION});
+  const common={recording,frameIndex:29,stageInput,endKm:36};
+  const flat=replayCommittedQuietBunchWithRecoveryV3(common);
+  stageInput.overlay.features=[{id:'short-climb-for-recovery',
+    kind:'climb',fromKm:32.2,toKm:32.6,gradientPct:8}];
+  const climbed=replayCommittedQuietBunchWithRecoveryV3(common);
+  assert.equal(flat.refusal,null);
+  assert.equal(climbed.refusal,null);
+  assert.deepEqual(climbed.frames.slice(0,2),flat.frames.slice(0,2));
+  assert.ok(flat.frames[2].riderWork.find(row=>row.id==='you-0')
+    .recoveryAward>0);
+  assert.equal(climbed.frames[2].riderWork.find(row=>row.id==='you-0')
+    .recoveryAward,0);
+  assert.equal(climbed.frames[2].riderStates.find(row=>row.id==='you-0')
+    .quietKm,0);
+});
+
+test('committed conserve replay respects the 100 reserve ceiling',()=>{
+  const {stageInput}=source();
+  const input=prepareV91Playtest({distanceKm:40,terrain:'flat',
+    teamCount:4,gender:'M',effort:'steady',attack:'none',chase:'ignore',
+    defaultRivalPlan:'passive',seed:'front-work-4'});
+  input.teams.find(team=>team.id==='you').orders.phases=[
+    {atKm:5,effort:'conserve'}];
+  const {recording}=simulateTacticalTourWithHandoffStateV3({...input,
+    motorVersion:MOTOR_EXHAUSTION_COAST_VERSION});
+  stageInput.overlay.conditionSpans=Array.from({length:20},(_,index)=>{
+    const segment=recording.route.kilometres[index+5];
+    return {id:`cap-km-${index+6}`,fromKm:index+5,toKm:index+6,
+      conditions:{surface:segment.surface,exposed:segment.exposed,
+        source:'simulated',weather:segment.weather}};
+  });
+  const replay=replayCommittedQuietBunchWithRecoveryV3({recording,
+    frameIndex:4,stageInput,endKm:25});
+  assert.equal(replay.refusal,null);
+  assert.equal(replay.frames.length,20);
+  assert.ok(recording.frames.slice(5,25).some(frame=>frame.energyLedger
+    .some(row=>row.riderId.startsWith('you-')&&row.capAdjustment>0)));
+  assert.ok(replay.frames.some(frame=>frame.riderWork.some(row=>
+    row.id.startsWith('you-')&&row.capAdjustment>0)));
+  for(const frame of replay.frames)for(const row of frame.riderStates){
+    const paid=recording.frames[frame.km-1].riderGroups.find(candidate=>
+      candidate.id===row.id);
+    assert.equal(row.energy,paid.energy);
+    assert.equal(row.group,paid.group);
+    assert.equal(row.deficitSeconds,paid.deficitSeconds);
+  }
 });
 
 test('ambiguous kilometre preserves prior fully paid whole-field frames',()=>{

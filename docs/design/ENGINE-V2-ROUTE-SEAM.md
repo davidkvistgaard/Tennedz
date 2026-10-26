@@ -319,6 +319,15 @@ km 36 and its 32 rider states match the separately paid v2 ordered race
 through km 39. Copied recordings refuse because the issued hidden state
 cannot be authenticated. This closes the order-commitment gap only for the
 quiet-field case; it does not validate dynamic tactics or a finish.
+A fourth internal replay version admits a committed `conserve` phase. It
+pays every short slice, then decides quiet-bunch recovery **once for the
+whole kilometre** and settles it under the authenticated 100-point reserve
+ceiling. A short climb cancels that entire kilometre's recovery and resets
+the quiet counter. On a homogeneous 40 km route, all 32 rider energies,
+group states and quiet counters match v2 across nine post-order kilometres;
+another 20-kilometre comparison includes the point where recovered energy
+hits the ceiling. This does not yet handle long-day cap decay after 160 km,
+front work, shelter, attacks, any drop, or an official finish.
 
 Before routing v3 to guided Motor Lab, verify a complete source field and
 energy ledger at every replay boundary; homogeneous-kilometre parity with
