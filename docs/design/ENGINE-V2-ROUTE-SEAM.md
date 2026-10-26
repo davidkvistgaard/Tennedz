@@ -46,3 +46,23 @@ precise climb boundaries, so the test supplies illustrative weather and does
 not present itself as an exact 2025 race simulation. A short climb can still
 be blurred by today's one-kilometre segment model; the image is useful for
 exposing that limitation rather than concealing it.
+
+## Stage overlay v3 data contract (preview, not yet paid by motor)
+
+A separate 'stage-overlay-v3.mjs' contract requires explicit surface,
+exposure and weather for every 5 km tactical interval, including a shorter
+final interval. The caller must label the condition source as observed,
+simulated or illustrative. It accepts bounded, fractional-kilometre feature
+spans for climbs, descents, sprints, landmarks and road changes. Looking up a
+position returns its interval and all active feature spans; a 0.9 km climb
+therefore survives a 1 km boundary. These spans and interval conditions are
+stage data, never rider settings.
+
+The contract is deliberately separate from 'buildKilometreRoute' version 2.
+Existing recordings and race movement still use paid 1 km route segments;
+v3 features currently describe input geography only and do not claim to
+alter rider energy, tactics or results. Motor consumption will need an
+independently versioned transition and replay evidence before a short climb
+can change a rider's movement. The LBL image illustrates why this matters,
+but does not provide exact feature boundaries, road conditions or weather;
+the v3 unit example is synthetic rather than a claim about Liège 2025.
