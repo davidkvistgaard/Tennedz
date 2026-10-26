@@ -72,3 +72,45 @@ test('v3 provides paid-step boundaries without averaging away a short feature', 
   assert.deepEqual(second.map(slice => slice.features.map(feature => feature.id)), [['short-climb'], ['summit'], []]);
   assert.ok(Math.abs(first.reduce((sum, slice) => sum + slice.distanceKm, 0) - 1) < 1e-9);
 });
+
+test('v3 sub-5-km condition spans override only their precise distance', () => {
+  const raw = fixture();
+  raw.conditionSpans = [{
+    id: 'exposed-road', fromKm: 10.4, toKm: 10.7,
+    conditions: {
+      surface: 'gravel', exposed: true, source: 'simulated',
+      weather: {temperatureC: 14, windKph: 24, rainMm: 1},
+    },
+  }];
+  const overlay = normalizeStageOverlayV3(raw);
+  const slices = stageOverlaySlicesForKilometreV3(overlay, 10);
+  assert.deepEqual(slices.map(slice => [slice.fromKm, slice.toKm]),
+    [[10, 10.2], [10.2, 10.4], [10.4, 10.7], [10.7, 11]]);
+  assert.deepEqual(slices.map(slice => slice.conditions.surface),
+    ['road', 'road', 'gravel', 'road']);
+  assert.deepEqual(slices.map(slice => slice.features.map(feature => feature.id)),
+    [[], ['short-climb'], ['short-climb'], ['short-climb']]);
+  assert.deepEqual(slices.map(slice => slice.conditionSpanId),
+    [null, null, 'exposed-road', null]);
+  assert.equal(stageOverlayAtDistanceV3(overlay, 10.7).conditions.surface, 'road');
+  assert.ok(Math.abs(slices.reduce((sum, slice) => sum + slice.distanceKm, 0) - 1) < 1e-9);
+});
+
+test('v3 refuses ambiguous, incomplete and unbounded condition spans', () => {
+  const raw = fixture();
+  raw.conditionSpans = [
+    {id: 'a', fromKm: 10.2, toKm: 10.8, conditions: raw.tacticalIntervals[0].conditions},
+    {id: 'b', fromKm: 10.7, toKm: 11, conditions: raw.tacticalIntervals[0].conditions},
+  ];
+  assert.throws(() => normalizeStageOverlayV3(raw), /cannot overlap/);
+  raw.conditionSpans[1].fromKm = 10.8;
+  assert.equal(normalizeStageOverlayV3(raw).conditionSpans.length, 2);
+  raw.conditionSpans[1].toKm = 23;
+  assert.throws(() => normalizeStageOverlayV3(raw), /bounded positive span/);
+  raw.conditionSpans[1].toKm = 11;
+  raw.conditionSpans[1].conditions = {surface: 'road', exposed: false, source: 'illustrative'};
+  assert.throws(() => normalizeStageOverlayV3(raw), /weather/);
+  raw.conditionSpans[1].conditions = raw.tacticalIntervals[0].conditions;
+  raw.conditionSpans[1].id = 'short-climb';
+  assert.throws(() => normalizeStageOverlayV3(raw), /unique/);
+});

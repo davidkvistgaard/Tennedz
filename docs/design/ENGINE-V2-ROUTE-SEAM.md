@@ -71,3 +71,5 @@ The v3 contract can also split a single kilometre at each feature boundary
 while conserving total distance. This prepares a future motor step to pay
 movement and energy on the actual short span. It is a data slicing operation,
 not a simulation: no v3 slice currently changes a recorded race.
+
+Optional, non-overlapping condition spans can replace the five-kilometre baseline on exact fractional-kilometre road sections. Each span supplies its own surface, exposure, weather and provenance; missing weather or overlapping spans are refused. Per-kilometre slices split at both feature and condition boundaries, so a short climb and a short exposed or rough-road section can coexist without losing their distinct lengths. These are still stage input and read-only lookup data: v2 movement, energy and replay do not yet consume these slices.
