@@ -123,6 +123,19 @@ for(const terrain of ['flat','mountain'])for(const fatigue of [0,30])
         rows.push({...input,refusal:String(error.message)});
       }
     }
+const summary=process.argv.includes('--summary')?
+  ['one_day','stage'].flatMap(format=>[0,30].map(fatigue=>{
+    const sample=rows.filter(row=>row.format===format&&row.fatigue===fatigue);
+    if(sample.length===0)return null;
+    const average=field=>+(sample.reduce((sum,row)=>sum+row[field],0)/sample.length)
+      .toFixed(2);
+    return {format,fatigue,cases:sample.length,
+      allInitialFrontCaught:sample.filter(row=>row.initialFrontRiders>0&&
+        row.initialFrontAtLineRiders===0).length,
+      meanMaxGapSeconds:average('maxGapSeconds'),
+      meanSettledRestRiderKm:average('settledFrontRestRiderKilometres'),
+      refusals:sample.filter(row=>row.refusal).length};
+  })).filter(Boolean):null;
 console.log(JSON.stringify({version:MOTOR_RACE_DYNAMICS_VERSION,
   note:'Internal opt-in role scenarios, not observed race calibration or official results.',
-  rows},null,2));
+  ...(summary?{summary}:{rows})},null,2));

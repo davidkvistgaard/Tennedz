@@ -198,3 +198,21 @@ validated bunch-easing decision. It rejects a forged passive gap even if the
 forged final gap is made arithmetically consistent. All 96 constructed cases
 passed. This still uses the version's coarse kilometre road model and does
 not establish a continuous occupied-wheel trace or an official result.
+
+The reproducible `node scripts/audit-race-dynamics-v94.mjs --summary` view
+also separates starting fatigue within those 96 constructed cases:
+
+| Format | Starting fatigue | Original front fully caught | Mean maximum lead | Mean resting-front rider-km |
+| --- | ---: | ---: | ---: | ---: |
+| One-day | 0 | 21/24 | 263 s | 50.1 |
+| One-day | 30 | 16/24 | 255 s | 44.9 |
+| Stage | 0 | 3/24 | 336 s | 75.5 |
+| Stage | 30 | 0/24 | 337 s | 69.8 |
+
+In this role matrix, starting fatigue reduces the number of original fronts
+fully caught in both formats, while the mean maximum lead barely changes.
+That is a useful directional check of the intended fatigue effect, not a
+measured race frequency: the same three seeds, two terrains and four deliberately
+assigned role mixes appear in each row. The stage/one-day difference also
+reflects explicit team pursuit policy, so these figures do not isolate fatigue
+as the sole cause or justify routing v94 into the guided game.
