@@ -7,3 +7,17 @@ The manager chooses one of four simple Amber plans and a bounded scenario number
 The API uses existing authenticated team ownership and same-origin checks, a bounded input and supplemental per-process rate limit. It never reads the manager's riders or writes any database row. The fixture is intentionally simple: flat/coastal terrain, four fictional teams and shared male synthetic profiles. It cannot establish realistic balance, category parity, stage racing or suitability for official events. The richer order workshop, full viewer and real test-race persistence remain later milestones.
 
 Verification: copied v2 engine scenario/unit coverage plus focused guided-preview tests; full unit suite, ESLint, production build and authenticated 390/1440 px browser journeys. Browser checks include anonymous rejection, foreign-Origin rejection, plan selection, server-calculated replay, scrubbing, moment navigation and a same-seed rerun. World Baseline 1.6.2 remains in the same release candidate. Production publication requires a separate deployment check; no migration is needed for this slice.
+
+## Guided 5 km effort markers (versioned input)
+
+The guided v93 Motor Lab can commit one team-wide effort change per manager at
+any 5 km marker from 5 km through 5 km before the finish. The new
+'managerTacticalOrdersV2' input is separate from the older
+'managerFinaleOrders' request. A chosen change applies to the following
+kilometre, and the recorded route, actions and rider energy show what happened
+after it. The 5 km-to-go request retains its existing field and behavior.
+
+This is a pre-race order for a synthetic test field, not a live mid-race
+command or a named stage-feature trigger. It does not supply the short-climb
+stage overlay currently being developed on the preview branch. Unsupported
+final wheel contact still refuses or withholds official places and awards.

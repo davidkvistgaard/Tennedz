@@ -118,9 +118,9 @@ test('a precommitted marker changes break cooperation without rewriting earlier 
 });
 
 test('the 5 km-to-go marker changes the locked approach only after that marker',()=>{
-  assert.deepEqual(orderMarkers({distanceKm:40}),[10,20,30,35]);
+  assert.deepEqual(orderMarkers({distanceKm:40}),[5,10,15,20,25,30,35]);
   assert.deepEqual(orderMarkers({distanceKm:35,keypoints:[{km:30}]}),
-    [10,20,30]);
+    [5,10,15,20,25,30]);
   const orders=normalizeOrders({captainId:'r0',phases:[
     {atKm:35,effort:'hard',chase:'all',attack:'none'}]},
   {riderIds:riders,distanceKm:40});

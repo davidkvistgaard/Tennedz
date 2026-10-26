@@ -48,3 +48,30 @@ test('guided Motor Lab runs a race from setup to rider replay',async({page})=>{
   await expect(page.getByLabel('Selected rider finale replay'))
     .toContainText('you-7:');
 });
+
+test('guided Motor Lab applies an effort order after a selected 5 km marker', async({page}) => {
+  await page.setViewportSize({width:390,height:844});
+  await page.goto('/login');
+  await page.getByLabel('Email or username').fill('bob');
+  await page.getByLabel('Password',{exact:true}).fill('fixture-password');
+  await page.getByRole('button',{name:'Sign in',exact:true}).click();
+  await expect(page).toHaveURL(/\/team$/);
+  await page.goto('/team/motor-lab');
+  await page.locator('summary').filter({hasText:'Timed effort'}).click();
+  await page.getByLabel('Start changing effort after').selectOption('15');
+  await page.getByLabel('Effort after 15 km for you').selectOption('hard');
+  const responsePromise=page.waitForResponse(response=>
+    response.url().endsWith('/api/v91-playtest')&&
+    response.request().method()==='POST');
+  await page.getByRole('button',{name:'Run the race'}).click();
+  const response=await responsePromise;
+  expect(response.status()).toBe(200);
+  const {coasted}=await response.json();
+  expect(coasted.settings.managerTacticalOrdersV2)
+    .toEqual([{teamId:'you',atKm:15,effort:'hard'}]);
+  await page.getByRole('button',{name:'First km after effort marker 15'}).click();
+  await expect(page.getByLabel('Stage and orders at km 16'))
+    .toContainText('Your active order: hard effort');
+  await expect(page.getByRole('region',{name:'Your v93 finish'}))
+    .toContainText('Conditional place:');
+});

@@ -143,7 +143,8 @@ function coastedComparisonRun(settings,summary,pointContext){
       place:conditionalPlace(rivalPlace,'unresolved'),
       previewPoints:pointContext?preview?.previewPoints??null:null};
   });
-  return {conditions:comparisonConditions(settings),finisherId,
+  const effortMarkerKm=settings.managerTacticalOrdersV2?.[0]?.atKm??settings.distanceKm-5;
+  return {conditions:comparisonConditions(settings),finisherId,effortMarkerKm,
     planWithoutLateEffort:JSON.stringify({
       settings:{...settings,managerFinaleOrders:
         settings.managerFinaleOrders?.filter(order=>
@@ -200,6 +201,7 @@ export default function Playtest({guided=false}){
   const [viewerRivalId,setViewerRivalId]=useState('rival-1');
   const [finalePlans,setFinalePlans]=useState({});
   const [lateEfforts,setLateEfforts]=useState({});
+  const [effortMarkerKm,setEffortMarkerKm]=useState(null);
   const [finaleFrontWork,setFinaleFrontWork]=useState({});
   const [namedAttack,setNamedAttack]=useState({teamId:'',riderId:''});
   const [secondNamedAttack,setSecondNamedAttack]=useState({teamId:'',riderId:''});
@@ -415,6 +417,10 @@ export default function Playtest({guided=false}){
       behavior:'smooth'});
   },[coastedKm,coasted]);
   const viewerEnergy=coasted?raceViewerEnergySeries(coasted,viewerRiderId):[];
+  const recordedEffortMarkerKm=coasted?.settings.managerTacticalOrdersV2?.[0]?.atKm??
+    coasted?.settings.distanceKm-5;
+  const effortJumpKm=coasted?.settings.managerTacticalOrdersV2?.length?
+    recordedEffortMarkerKm+1:recordedEffortMarkerKm;
   const viewerFiveKm=viewerEnergy.find(row=>
     row.km>=coasted.settings.distanceKm-5);
   const viewerLine=coasted?.lineTimes.find(row=>row.riderId===viewerRiderId);
@@ -483,8 +489,9 @@ export default function Playtest({guided=false}){
   const maxHeight=Math.max(500,...settings.profileHeightsM);
   const profileLine=settings.profileHeightsM.map((height,index)=>
     `${10+index*196},${110-height/maxHeight*100}`).join(' ');
+  const chosenEffortMarkerKm=Math.min(effortMarkerKm??settings.distanceKm-5,settings.distanceKm-5);
   const currentChoices=JSON.stringify({settings,customRivals,
-    finalePlans,lateEfforts,showPointPreview,
+    finalePlans,lateEfforts,effortMarkerKm,showPointPreview,
     pointContext:showPointPreview?pointContext:null,
     integratedMode,coastedMode,
     ...(!coastedMode?{finaleFrontWork,namedAttack,
@@ -518,6 +525,7 @@ export default function Playtest({guided=false}){
     setFinalePlans(tactical?{'you':{finisherId:'you-7',
       leadOutRiderId:'you-6'},'rival-14':{finisherId:'rival-14-3',
       leadOutRiderId:'rival-14-5'}}:{});
+    setEffortMarkerKm(null);
     setLateEfforts(tactical?{'you':'hard','rival-14':'conserve'}:
       chase?{'you':'conserve'}:{});
     setFinaleFrontWork({});
@@ -556,10 +564,12 @@ export default function Playtest({guided=false}){
       const raceSettings={...settings,managerTactics,
         ...(!coastedMode&&secondNamedAttack.teamId?{
           managerFinaleOrders:[...orders.values()]}:{}),
-        ...(integratedMode&&coastedMode?{managerFinaleOrders:finaleTeams
-          .filter(teamId=>lateEfforts[teamId])
-          .map(teamId=>({teamId,atKm:settings.distanceKm-5,
-            effort:lateEfforts[teamId]}))}:{})};
+        ...(integratedMode&&coastedMode?{
+          [chosenEffortMarkerKm===settings.distanceKm-5?
+            'managerFinaleOrders':'managerTacticalOrdersV2']:finaleTeams
+            .filter(teamId=>lateEfforts[teamId])
+            .map(teamId=>({teamId,atKm:chosenEffortMarkerKm,
+              effort:lateEfforts[teamId]}))}:{})};
       const payload=integratedMode&&coastedMode?{
         mode:'v93-coasted',settings:raceSettings,
         plans:allTeams.map(teamId=>({teamId,
@@ -588,7 +598,9 @@ export default function Playtest({guided=false}){
       }else if(integratedMode&&coastedMode){
         const next=coastedComparisonRun(raceSettings,response.coasted,
           showPointPreview?pointContext:null);
-        setCoastedComparison(previousCoastedRun?.conditions===next.conditions?
+        setCoastedComparison(previousCoastedRun?.conditions===next.conditions&&
+          previousCoastedRun.effortMarkerKm===raceSettings.distanceKm-5&&
+          next.effortMarkerKm===raceSettings.distanceKm-5?
           {before:previousCoastedRun,after:next}:null);
         setPreviousCoastedRun(next);
         setComparison(null);setPreviousRun(null);
@@ -789,12 +801,20 @@ export default function Playtest({guided=false}){
         </fieldset>
         </details>
         {integratedMode&&coastedMode&&<details className="v91-optional" open={!guided}>
-          <summary>Late-race effort <span>Change effort at 5 km to go</span></summary>
+          <summary>Timed effort <span>Choose a 5 km marker</span></summary>
           <fieldset className="v91-profile">
-          <legend>Five-kilometre effort orders</legend>
-          <p>This is a team-wide order from 5 km to go, not a sprint button. Hard raises every rider&apos;s work demand. It changes attack or chase pressure and bunch-front speed only when that work happens. Keep race effort for a first run, then rerun the same seed to compare the recorded work, road and finish.</p>
+          <legend>Precommitted effort change</legend>
+          <p>Choose when a team-wide effort change begins. The marker is every 5 km; the order takes effect in the following kilometre. Hard raises work demand, but changes attack or chase pressure and bunch-front speed only when that work happens. Compare the recorded road and energy after a run.</p>
+          <label>Start changing effort after
+            <select value={chosenEffortMarkerKm} onChange={event=>
+              setEffortMarkerKm(Number(event.target.value))}>
+              {Array.from({length:settings.distanceKm/5-1},(_,index)=>
+                (index+1)*5).map(km=><option key={km} value={km}>
+                {km} km ({settings.distanceKm-km} km to go)</option>)}
+            </select>
+          </label>
           <div className="v91-manager-tactics">{finaleTeams.map(teamId=>
-            <label key={teamId}>5 km to go effort for {teamId}
+            <label key={teamId}>Effort after {chosenEffortMarkerKm} km for {teamId}
               <select value={lateEfforts[teamId]??''} onChange={event=>
                 setLateEfforts(current=>({...current,
                   [teamId]:event.target.value}))}>
@@ -939,7 +959,7 @@ export default function Playtest({guided=false}){
               {optionLabel('effort',settings.effort)} effort · {' '}
               {optionLabel('attack',settings.attack)} attack · {' '}
               {optionLabel('chase',settings.chase)} chase
-              {lateEfforts.you&&` · ${optionLabel('effort',lateEfforts.you)} effort at 5 km to go`}
+              {lateEfforts.you&&` · ${optionLabel('effort',lateEfforts.you)} effort after ${chosenEffortMarkerKm} km`}
             </dd></div>
             <div><dt>Your finish</dt><dd>{ownPlan.finisherId} nominated · {' '}
               {ownPlan.leadOutRiderId?
@@ -1157,9 +1177,11 @@ export default function Playtest({guided=false}){
               disabled={!previousCheckpoint}
               onClick={()=>setCoastedKm(previousCheckpoint.index+1)}>Previous</button>
             <button type="button" aria-pressed={
-              coastedKm===coasted.settings.distanceKm-5}
-              onClick={()=>setCoastedKm(coasted.settings.distanceKm-5)}>
-              5 km effort handoff</button>
+              coastedKm===effortJumpKm}
+              onClick={()=>setCoastedKm(effortJumpKm)}>
+              {coasted.settings.managerTacticalOrdersV2?.length?
+                'First km after effort marker '+recordedEffortMarkerKm:
+                '5 km effort handoff'}</button>
             <button type="button" aria-pressed={
               coastedKm===coasted.settings.distanceKm-1}
               onClick={()=>setCoastedKm(coasted.settings.distanceKm-1)}>
