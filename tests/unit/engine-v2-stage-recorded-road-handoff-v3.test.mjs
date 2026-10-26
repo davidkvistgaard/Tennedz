@@ -11,6 +11,10 @@ import {replaySeparatedRoadBandsStageV3} from
 import {prepareRecordedRoadHandoffV3,
   STAGE_RECORDED_ROAD_HANDOFF_VERSION} from
   '../../lib/engine/v2/stage-recorded-road-handoff-v3.mjs';
+import {normalizeCompleteStageInputV3,
+  continueRecordedRoadWithCompleteStageV3,
+  STAGE_COMPLETE_INPUT_VERSION,STAGE_RECORDED_CONTINUATION_VERSION} from
+  '../../lib/engine/v2/stage-complete-input-v3.mjs';
 
 function fixture(){
   const team=(id,overrides)=>{
@@ -136,4 +140,53 @@ test('one committed rider state can take two distinct future stage overlays',()=
   assert.notEqual(road.frames[0].bandClocks[0].members[0].work,
     gravel.frames[0].bandClocks[0].members[0].work);
   assert.deepEqual(roadHandoff.bands,roughHandoff.bands);
+});
+
+test('one complete stage input owns terrain and short-slice conditions after paid split',()=>{
+  const {recording,overlay}=fixture();
+  const before=structuredClone(recording);
+  const baselines=recording.route.kilometres.map(segment=>({
+    terrain:segment.terrain,gradientPct:segment.gradientPct,
+    source:'illustrative'}));
+  const stageInput=normalizeCompleteStageInputV3({
+    version:STAGE_COMPLETE_INPUT_VERSION,overlay,
+    kilometreBaselines:baselines});
+  const handoff=prepareRecordedRoadHandoffV3({recording,frameIndex:30,
+    overlay});
+  const pulls=handoff.bands.flatMap(band=>band.members.map(member=>member.id));
+  const run=input=>continueRecordedRoadWithCompleteStageV3({recording,
+    frameIndex:30,stageInput:input,pullRiderIds:pulls});
+  const flat=run(stageInput);
+  const climbing=structuredClone(stageInput);
+  climbing.kilometreBaselines[31]={terrain:'climb',gradientPct:8,
+    source:'illustrative'};
+  const climb=run(climbing);
+  assert.equal(flat.version,STAGE_RECORDED_CONTINUATION_VERSION);
+  assert.equal(flat.stageInputVersion,STAGE_COMPLETE_INPUT_VERSION);
+  assert.equal(flat.source.completedKm,31);
+  assert.equal(flat.startedAtKm,31);
+  assert.equal(flat.kilometres[0].kilometreIndex,31);
+  assert.ok(flat.kilometres[0].frames.length>0);
+  assert.ok(climb.kilometres[0].frames.length>0);
+  assert.notEqual(flat.kilometres[0].frames[0].roadBaselineSeconds,
+    climb.kilometres[0].frames[0].roadBaselineSeconds);
+  assert.deepEqual(recording,before);
+  assert.equal(Object.hasOwn(flat,'places'),false);
+  assert.equal(Object.hasOwn(climb,'awards'),false);
+});
+
+test('complete stage input refuses incomplete or unprovenanced terrain',()=>{
+  const {recording,overlay}=fixture();
+  const baselines=recording.route.kilometres.map(segment=>({
+    terrain:segment.terrain,gradientPct:segment.gradientPct,
+    source:'illustrative'}));
+  const raw={version:STAGE_COMPLETE_INPUT_VERSION,overlay,
+    kilometreBaselines:baselines};
+  assert.throws(()=>normalizeCompleteStageInputV3({...raw,
+    kilometreBaselines:baselines.slice(1)}),/Every whole kilometre/);
+  const missing=structuredClone(raw);
+  delete missing.kilometreBaselines[31].source;
+  assert.throws(()=>normalizeCompleteStageInputV3(missing),/provenance/);
+  assert.throws(()=>normalizeCompleteStageInputV3({...raw,
+    version:'v2'}),/versioned complete stage/);
 });

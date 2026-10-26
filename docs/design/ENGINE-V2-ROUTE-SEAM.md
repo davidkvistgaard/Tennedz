@@ -176,3 +176,14 @@ first unpaid span, retains every earlier paid frame, and leaves **all** bands'
 energy and gaps at that span's start. The synthetic stage replay propagates
 that refusal rather than implying a coasting or recovery response. No official
 place or award follows from it.
+
+A separately versioned **complete stage input** now packages the v3 short-slice
+overlay with a terrain, gradient and provenance entry for every whole
+kilometre. A read-only continuation validates a saved v2 split, then passes
+only its already separated road bands to the internal v3 replay using that
+single stage package. This prevents a caller from silently combining one
+stage's terrain with another stage's road and weather. In the locked split
+case, changing the explicit future terrain changes the paid road clock while
+the saved participants and recording stay unchanged. The bunch and older
+drops are outside this bounded clock; it produces no whole-race result or
+official awards and is not wired to guided Motor Lab.
