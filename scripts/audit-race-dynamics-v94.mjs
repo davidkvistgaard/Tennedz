@@ -9,7 +9,8 @@ import {observedFrontClosingSecondsPerKm} from '../lib/engine/v2/race-context-v1
 const seeds=['sample-flat-finish','race-dynamics-1','race-dynamics-2'];
 function run({seed,terrain,fatigue,format,breakTeams,controlTeams}){
   const teamCount=20;
-  const managerTactics=Array.from({length:teamCount-1},(_,index)=>{
+  const mixedDefaults=process.argv.includes('--mixed-defaults');
+  const managerTactics=mixedDefaults?[]:Array.from({length:teamCount-1},(_,index)=>{
     const number=index+1;
     return number<=breakTeams?
       {effort:'steady',attack:'repeated',chase:'ignore'}:
@@ -20,8 +21,17 @@ function run({seed,terrain,fatigue,format,breakTeams,controlTeams}){
   const prepared=prepareV91Playtest({distanceKm:260,terrain,teamCount,
     fatigue,attack:'none',chase:'ignore',seed,managerTactics});
   const teamRoles=Object.fromEntries(prepared.teams.map((team,index)=>[
-    team.id,index===0?'protect':index<=breakTeams?'break':
-      index<=breakTeams+controlTeams?'control':'protect']));
+    team.id,mixedDefaults?
+      team.orders.baseline.chase==='all'?'control':
+        team.orders.baseline.attack!=='none'&&
+        team.orders.baseline.chase==='ignore'?'break':
+          team.orders.baseline.chase==='selective'?'protect':'opportunistic':
+      index===0?'protect':index<=breakTeams?'break':
+        index<=breakTeams+controlTeams?'control':'protect']));
+  const intendedBreakTeams=mixedDefaults?
+    Object.values(teamRoles).filter(role=>role==='break').length:breakTeams;
+  const intendedControlTeams=mixedDefaults?
+    Object.values(teamRoles).filter(role=>role==='control').length:controlTeams;
   const recording=simulateTacticalTour({stage:prepared.stage,
     weather:prepared.weather,teams:prepared.teams,seed:prepared.seed,
     motorVersion:MOTOR_RACE_DYNAMICS_VERSION,
@@ -44,7 +54,7 @@ function run({seed,terrain,fatigue,format,breakTeams,controlTeams}){
   const finalFrame=frames.at(-1);
   const frontIds=new Set(finalFrame.breakawayRiderIds);
   const initialFront=frames.find(frame=>
-    frame.breakawayRiderIds.length>=breakTeams);
+    frame.breakawayRiderIds.length>=intendedBreakTeams);
   const initialFrontIds=initialFront?.breakawayRiderIds??[];
   const caughtIds=new Set(frames.flatMap(frame=>frame.caughtBreakawayRiderIds));
   const average=(rows,field)=>+(rows.reduce((sum,row)=>sum+row[field],0)/rows.length)
@@ -59,7 +69,8 @@ function run({seed,terrain,fatigue,format,breakTeams,controlTeams}){
     const rows=atFinaleStart.riderGroups.filter(row=>ids.has(row.id));
     return rows.length?average(rows,'energy'):null;
   };
-  return {seed,terrain,fatigue,format,breakTeams,controlTeams,
+  return {seed,terrain,fatigue,format,breakTeams:intendedBreakTeams,
+    controlTeams:intendedControlTeams,
     attacks:frames.reduce((sum,frame)=>sum+frame.attackers.length,0),
     maxFrontRiders:Math.max(...frames.map(frame=>frame.breakawayRiderIds?.length??0)),
     maxGapSeconds:Math.max(...gaps),
@@ -109,7 +120,8 @@ function run({seed,terrain,fatigue,format,breakTeams,controlTeams}){
 }
 
 const rows=[];
-const roleMixes=process.argv.includes('--stress')?
+const roleMixes=process.argv.includes('--mixed-defaults')?[[0,0]]:
+  process.argv.includes('--stress')?
   [[5,0],[5,1],[5,8]]:[[3,2],[5,2],[5,4],[5,6]];
 for(const terrain of ['flat','mountain'])for(const fatigue of [0,30])
   for(const format of ['one_day','stage'])for(const seed of seeds)

@@ -238,3 +238,19 @@ limit on readiness. With no control team, the candidate allows a mean lead
 of roughly 16–18 minutes; it cannot yet pick credible opponent roles or
 claim that a typical race settles near any particular gap. The stress runs
 are synthetic extremes, not evidence for real-world frequencies.
+
+The existing guided test rival plans reveal a different problem. The
+read-only `--mixed-defaults --summary --validate` diagnostic infers provisional
+roles from those plans without changing any team orders: five attack/ignore
+teams become `break`, five hard/all-chase teams become `control`, and the rest
+protect or remain opportunistic. Across 24 seeded flat/mountain 260 km cases,
+all recordings pass v94 validation but **none records a settled-front rest
+turn**. The mean maximum lead is only 8 s for fresh one-day races, 23 s for
+fatigued one-day races, 8 s for fresh stages and 74 s for fatigued stages.
+The first chase is around kilometre 20; in every case the initial five-rider
+front is caught. This diagnostic is deliberately *not* a default role planner.
+It shows that merely applying v94 to the current guided rival orders would
+reproduce the rapid-fire, short-gap race the user wants to change. Before
+routing v94, rival intent must be generated as a committed pre-race choice
+and the manager must be able to inspect it in the workbench. A team explicitly
+ordered to chase cannot silently be relabelled passive to manufacture a gap.
