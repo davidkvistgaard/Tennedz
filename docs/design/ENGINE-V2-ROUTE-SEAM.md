@@ -47,7 +47,7 @@ not present itself as an exact 2025 race simulation. A short climb can still
 be blurred by today's one-kilometre segment model; the image is useful for
 exposing that limitation rather than concealing it.
 
-## Stage overlay v3 data contract (preview, not yet paid by motor)
+## Stage overlay v3 data contract (preview, not in the guided race)
 
 A separate 'stage-overlay-v3.mjs' contract requires explicit surface,
 exposure and weather for every 5 km tactical interval, including a shorter
@@ -59,20 +59,21 @@ therefore survives a 1 km boundary. These spans and interval conditions are
 stage data, never rider settings.
 
 The contract is deliberately separate from 'buildKilometreRoute' version 2.
-Existing recordings and race movement still use paid 1 km route segments;
-v3 features currently describe input geography only and do not claim to
-alter rider energy, tactics or results. Motor consumption will need an
-independently versioned transition and replay evidence before a short climb
-can change a rider's movement. The LBL image illustrates why this matters,
+Existing recordings and the guided race still use paid 1 km route segments.
+The separately versioned, bounded internal v3 transitions described below
+now consume exact slices and pay rider work, energy and limited group clocks;
+they do not change an existing recording or issue a player result. The LBL
+image illustrates why this matters,
 but does not provide exact feature boundaries, road conditions or weather;
 the v3 unit example is synthetic rather than a claim about Liège 2025.
 
 The v3 contract can also split a single kilometre at each feature boundary
 while conserving total distance. This prepares a future motor step to pay
-movement and energy on the actual short span. It is a data slicing operation,
-not a simulation: no v3 slice currently changes a recorded race.
+movement and energy on the actual short span. Slicing alone is not a
+simulation; only the guarded internal transitions below pay those slices.
+No v3 slice changes a recorded v2 race.
 
-Optional, non-overlapping condition spans can replace the five-kilometre baseline on exact fractional-kilometre road sections. Each span supplies its own surface, exposure, weather and provenance; missing weather or overlapping spans are refused. Per-kilometre slices split at both feature and condition boundaries, so a short climb and a short exposed or rough-road section can coexist without losing their distinct lengths. These are still stage input and read-only lookup data: v2 movement, energy and replay do not yet consume these slices.
+Optional, non-overlapping condition spans can replace the five-kilometre baseline on exact fractional-kilometre road sections. Each span supplies its own surface, exposure, weather and provenance; missing weather or overlapping spans are refused. Per-kilometre slices split at both feature and condition boundaries, so a short climb and a short exposed or rough-road section can coexist without losing their distinct lengths. These remain stage input and read-only lookup data. Bounded internal v3 transitions consume them; live v2 movement, energy and replay do not.
 
 A separate v3 **isolated rider calculation** now evaluates a kilometre one bounded slice at a time. It applies the existing rider-readiness and stage-condition formulas to each slice, scales effort work and baseline road-clock time by its actual distance, and carries energy into the next slice. A synthetic 0.6 km climb with a 0.2 km rough, exposed section produces different work and baseline road time from a flat kilometre while leaving the stored rider unchanged. It refuses overlapping topographic features, missing or incorrectly signed gradients, and exhausted energy that would need coasting. This diagnostic does **not** run tactics, recovery, drafting, group timing, contact, replay or finishing; it is not yet a whole-race motor continuation or user-facing result.
 
