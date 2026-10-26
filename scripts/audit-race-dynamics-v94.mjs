@@ -32,10 +32,21 @@ function run({seed,terrain,fatigue,format,breakTeams,controlTeams}){
     .map(row=>({km:frame.km,riderId:row.riderId,
       unmetEnergyDemand:row.unmetEnergyDemand})));
   const finale=frames.filter(frame=>frame.km>210);
+  const atFinaleStart=frames[209];
   const finalFrame=frames.at(-1);
   const frontIds=new Set(finalFrame.breakawayRiderIds);
   const average=(rows,field)=>+(rows.reduce((sum,row)=>sum+row[field],0)/rows.length)
     .toFixed(2);
+  const roleEnergyAtFinaleStart=role=>{
+    const rows=atFinaleStart.teamEnergy.filter(row=>teamRoles[row.teamId]===role);
+    return rows.length?average(rows,'mean'):null;
+  };
+  const roleHelperEnergyAtFinaleStart=role=>{
+    const ids=new Set(recording.committedInputs.teams.filter(team=>
+      teamRoles[team.id]===role).flatMap(team=>team.orders.helperIds));
+    const rows=atFinaleStart.riderGroups.filter(row=>ids.has(row.id));
+    return rows.length?average(rows,'energy'):null;
+  };
   return {seed,terrain,fatigue,format,breakTeams,controlTeams,
     attacks:frames.reduce((sum,frame)=>sum+frame.attackers.length,0),
     maxFrontRiders:Math.max(...frames.map(frame=>frame.breakawayRiderIds?.length??0)),
@@ -44,9 +55,22 @@ function run({seed,terrain,fatigue,format,breakTeams,controlTeams}){
     kilometresOverFiveMinutes:gaps.filter(gap=>gap>=300).length,
     firstFiveMinuteKm:frames.find(frame=>frame.gapSeconds>=300)?.km??null,
     firstChaseKm:frames.find(frame=>frame.chasers.length>0)?.km??null,
+    gapAt205Seconds:frames[204].gapSeconds,
+    gapAt210Seconds:frames[209].gapSeconds,
+    gapAt220Seconds:frames[219].gapSeconds,
     chasedTeamKilometres:frames.reduce((sum,frame)=>sum+frame.chasers.length,0),
     finaleMeanChasePower:average(finale,'chasePower'),
     finaleMeanPassiveGapDelta:average(finale,'passiveGapDelta'),
+    controlEnergyAtFinaleStart:roleEnergyAtFinaleStart('control'),
+    protectEnergyAtFinaleStart:roleEnergyAtFinaleStart('protect'),
+    breakEnergyAtFinaleStart:roleEnergyAtFinaleStart('break'),
+    controlHelperEnergyAtFinaleStart:roleHelperEnergyAtFinaleStart('control'),
+    protectHelperEnergyAtFinaleStart:roleHelperEnergyAtFinaleStart('protect'),
+    earlyControlChasedTeamKilometres:frames.filter(frame=>frame.km<=210)
+      .reduce((sum,frame)=>sum+frame.chasers.filter(id=>
+        teamRoles[id]==='control').length,0),
+    finaleProtectChasedTeamKilometres:finale.reduce((sum,frame)=>
+      sum+frame.chasers.filter(id=>teamRoles[id]==='protect').length,0),
     easedTeamKilometres:frames.reduce((sum,frame)=>sum+frame.bunchEaseTeamIds.length,0),
     finalGapSeconds:gaps.at(-1),
     finalFrontRiders:finalFrame.breakawayRiderIds.length,

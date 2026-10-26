@@ -88,3 +88,24 @@ the prior prototype). The v94 candidate now explicitly refuses that input;
 the older v93 behavior is untouched. This is a safety boundary, not a paid
 slowdown or a complete long-race solution. A front-specific road-clock and
 contact transition remains necessary before broad playable routing.
+
+An expanded read-only audit of the same 96 cases records role-specific helper
+energy, actual team-kilometres in pursuit, and the lead at km 205/210/220.
+For the twelve **one-day, five-break-team** cases per control-team count:
+
+| Control teams | Front caught | Mean lead at km 210 | Mean control-helper energy at km 210 | Mean protective-team pursuit in final 50 km |
+| --- | ---: | ---: | ---: | ---: |
+| 2 | 3/12 | 404 s | 28 | 591 team-km |
+| 4 | 12/12 | 105 s | 29 | 208 team-km |
+| 6 | 6/12 | 27 s | 36 | 28 team-km |
+
+Adding a sixth control team does not fail through greater early helper depletion:
+those helpers have *more* energy at km 210 than in the four-control cases.
+Despite a smaller lead, the protective teams contribute much less paid final
+pursuit. Their independent potential-catch decisions appear to free-ride on
+control-team effort; the observed gap then sometimes remains positive at the
+line. This is a candidate-model diagnosis, not a claim about real teams.
+Future pursuit decisions should be checked against observed paid closing and
+the remaining distance, with a stable leading front identity, before this
+version can become playable. Do not force a catch by assigning a gap or an
+unpaid speed bonus.
