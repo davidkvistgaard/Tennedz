@@ -205,3 +205,8 @@ paid kilometre boundary alongside an unchanged v2 recording. The normal
 simulator still returns the original recording shape, and the trace is a
 separate versioned sidecar. It is evidence for future transition work, not a
 v3 bunch clock, a saved recording migration or a whole-race continuation.
+The exact recording object issued by that opt-in run can retrieve a detached
+copy of its state at a paid kilometre boundary during the same process.
+Modified, serialized, copied and ordinary v2 recordings are refused, because their
+hidden counters cannot be authenticated from the saved frames. Editing the
+inspection sidecar cannot change the issued state.

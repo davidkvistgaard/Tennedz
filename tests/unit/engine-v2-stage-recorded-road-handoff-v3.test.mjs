@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {normalizeOrders} from '../../lib/engine/v2/orders.mjs';
 import {simulateTacticalTour,simulateTacticalTourWithHandoffStateV3,
+  sameRunHandoffStateAtV3,
   MOTOR_HANDOFF_STATE_TRACE_VERSION} from '../../lib/engine/v2/tour.mjs';
 import {normalizeStageOverlayV3} from
   '../../lib/engine/v2/stage-overlay-v3.mjs';
@@ -86,6 +87,21 @@ test('opt-in handoff state is separate from unchanged v2 recording',()=>{
   }
   result.handoffStateTrace.frames[30].riders[0].energy=0;
   assert.deepEqual(result.recording,recording);
+  const issued=sameRunHandoffStateAtV3({recording:result.recording,
+    frameIndex:30});
+  assert.notEqual(issued.riders[0].energy,0);
+  issued.riders[0].energy=0;
+  assert.notEqual(sameRunHandoffStateAtV3({recording:result.recording,
+    frameIndex:30}).riders[0].energy,0);
+  assert.throws(()=>sameRunHandoffStateAtV3({recording,
+    frameIndex:30}),/same-run issued/);
+  assert.throws(()=>sameRunHandoffStateAtV3({recording:
+    structuredClone(result.recording),frameIndex:30}),/same-run issued/);
+  assert.throws(()=>sameRunHandoffStateAtV3({recording:result.recording,
+    frameIndex:40}),/same-run issued/);
+  result.recording.frames[30].riderGroups[0].energy=0;
+  assert.throws(()=>sameRunHandoffStateAtV3({recording:result.recording,
+    frameIndex:30}),/same-run issued/);
 });
 
 test('validated v2 split hands paid end-of-km energy and gaps to v3',()=>{
