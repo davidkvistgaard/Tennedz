@@ -46,3 +46,10 @@ does not issue a team order. Changing route settings makes the loaded plan stale
 until reloaded. The plan does not run a race, award points or change saved
 recordings. It is versioned as `v93-guided-stage-plan-1`; its 1 km data cannot
 represent the short climbs or named landmarks in the supplied LBL example.
+
+
+The pre-race stage cards now select either the first or second distinct 5 km
+effort marker, and dashed lines show both selected locations on the profile.
+These are location choices only; team effort remains explicitly chosen under
+Timed effort. Changing the first marker to the second marker's location clears
+the second selection instead of creating duplicate orders.

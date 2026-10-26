@@ -165,3 +165,5 @@
 .v91-stage-intervals article span{font-size:.85rem}
 .v91-stage-intervals article button{align-self:end;padding:7px;background:white;color:#116e60;border:1px solid #116e60}
 .v91-stage-intervals article button:focus-visible{outline:3px solid #116e60;outline-offset:2px}
+
+.v91-stage-intervals article button[aria-pressed=true]{background:#116e60;color:white}

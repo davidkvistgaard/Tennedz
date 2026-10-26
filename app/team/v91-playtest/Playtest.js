@@ -779,7 +779,15 @@ export default function Playtest({guided=false}){
             <div className="v91-stage-profile">
               <svg viewBox="0 0 600 120" role="img" aria-label="Stage profile before tactics">
                 <polyline points={stageProfile.points}/>
+                {[chosenEffortMarkerKm,chosenSecondEffortMarkerKm]
+                  .filter(km=>km!==null).map((km,index)=>
+                  <line key={index} className="v91-stage-marker"
+                    x1={20+km/settings.distanceKm*560}
+                    x2={20+km/settings.distanceKm*560}
+                    y1="12" y2="110"/>)}
               </svg>
+              <p>Selected markers: {chosenEffortMarkerKm} km{chosenSecondEffortMarkerKm!==null?
+                ', '+chosenSecondEffortMarkerKm+' km':''}. Dashed lines are selected tactic locations, not issued orders.</p>
               <p>Simulated route · {stageProfile.minElevationM.toFixed(0)}–{stageProfile.maxElevationM.toFixed(0)} m at 1 km resolution. The profile can hide short steep climbs.</p>
             </div>
             <div className="v91-stage-intervals">{visibleStagePlan.intervals.map(interval=>
@@ -789,12 +797,24 @@ export default function Playtest({guided=false}){
                 <span>{interval.startM.toFixed(0)} → {interval.endM.toFixed(0)} m · sampled range {interval.minM.toFixed(0)}–{interval.maxM.toFixed(0)} m</span>
                 <span>{interval.exposedKm}/5 km exposed · wind {interval.windKph[0].toFixed(0)}–{interval.windKph[1].toFixed(0)} km/h</span>
                 <span>Temp {interval.temperatureC[0].toFixed(0)}–{interval.temperatureC[1].toFixed(0)} °C · rain {interval.rainMm[0].toFixed(1)}–{interval.rainMm[1].toFixed(1)} mm</span>
-                {interval.toKm<settings.distanceKm&&<button type="button"
-                  onClick={()=>setEffortMarkerKm(interval.toKm)}>
-                  Use {interval.toKm} km as first effort marker
-                </button>}
+                {interval.toKm<settings.distanceKm&&<>
+                  <button type="button" aria-pressed={interval.toKm===chosenEffortMarkerKm}
+                    onClick={()=>{
+                      setEffortMarkerKm(interval.toKm);
+                      if(secondEffortMarkerKm===interval.toKm)
+                        setSecondEffortMarkerKm(null);
+                    }}>
+                    Use {interval.toKm} km as first effort marker
+                  </button>
+                  {interval.toKm!==chosenEffortMarkerKm&&
+                    <button type="button"
+                      aria-pressed={interval.toKm===chosenSecondEffortMarkerKm}
+                      onClick={()=>setSecondEffortMarkerKm(interval.toKm)}>
+                      Use {interval.toKm} km as second effort marker
+                    </button>}
+                </>}
               </article>)}</div>
-            <p>Selected first marker: {chosenEffortMarkerKm} km. Open Timed effort below to choose a team effort; selecting a marker alone does not issue an order.</p>
+            <p>Open Timed effort below to choose a team effort; selecting a marker alone does not issue an order.</p>
           </div>}
         </section>}
         {guided&&<div className="v91-step-heading"><span>02 / TACTICS</span><h2>Give your team orders</h2><p>Effort spends energy; attacks and chasing change where your riders travel.</p></div>}
@@ -885,8 +905,11 @@ export default function Playtest({guided=false}){
           <legend>Precommitted effort changes</legend>
           <p>Choose when a team-wide effort change begins. The marker is every 5 km; the order takes effect in the following kilometre. Hard raises work demand, but changes attack or chase pressure and bunch-front speed only when that work happens. Compare the recorded road and energy after a run.</p>
           <label>Start changing effort after
-            <select value={chosenEffortMarkerKm} onChange={event=>
-              setEffortMarkerKm(Number(event.target.value))}>
+            <select value={chosenEffortMarkerKm} onChange={event=>{
+              const next=Number(event.target.value);
+              setEffortMarkerKm(next);
+              if(secondEffortMarkerKm===next)setSecondEffortMarkerKm(null);
+            }}>
               {Array.from({length:settings.distanceKm/5-1},(_,index)=>
                 (index+1)*5).map(km=><option key={km} value={km}>
                 {km} km ({settings.distanceKm-km} km to go)</option>)}

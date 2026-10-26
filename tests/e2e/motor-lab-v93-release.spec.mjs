@@ -105,10 +105,25 @@ test('guided Motor Lab replays two precommitted 5 km effort changes', async({pag
   await page.getByRole('button',{name:'Sign in',exact:true}).click();
   await expect(page).toHaveURL(/\/team$/);
   await page.goto('/team/motor-lab');
+  await page.getByRole('button',{name:'Load stage inputs'}).click();
+  await expect(page.getByRole('img',{name:'Stage profile before tactics'}))
+    .toBeVisible();
+  await page.getByRole('button',{name:'Use 15 km as first effort marker'}).click();
+  await page.getByRole('button',{name:'Use 25 km as second effort marker'}).click();
+  await page.getByRole('button',{name:'Use 25 km as first effort marker'}).click();
+  await expect(page.getByLabel('Stage inputs before tactics'))
+    .toContainText('Selected markers: 25 km.');
+  await page.getByRole('button',{name:'Use 15 km as first effort marker'}).click();
+  await page.getByRole('button',{name:'Use 25 km as second effort marker'}).click();
+  await expect(page.getByLabel('Stage inputs before tactics'))
+    .toContainText('Selected markers: 15 km, 25 km');
+  await page.getByLabel('Stage inputs before tactics').screenshot({
+    path:'test-results/guided-two-stage-markers.png'});
   await page.locator('summary').filter({hasText:'Timed effort'}).click();
-  await page.getByLabel('Start changing effort after').selectOption('15');
+  await expect(page.getByLabel('Start changing effort after')).toHaveValue('15');
   await page.getByLabel('Effort after 15 km for you').selectOption('hard');
-  await page.getByLabel('Optional second effort change after').selectOption('25');
+  await expect(page.getByLabel('Optional second effort change after'))
+    .toHaveValue('25');
   await page.getByLabel('Effort after 25 km for you').selectOption('conserve');
   await expect(page.getByLabel('Race plan before running'))
     .toContainText('Hard effort after 15 km');
