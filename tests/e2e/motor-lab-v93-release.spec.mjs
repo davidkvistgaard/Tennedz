@@ -38,6 +38,22 @@ test('guided Motor Lab runs a race from setup to rider replay',async({page})=>{
     .toContainText('short climbs may be hidden');
   await expect(stageCard).toContainText('Your active order:');
   await expect(stageCard).toContainText('Recorded this kilometre:');
+  const roadGapDiagram=page.getByLabel('Recorded time gaps at km 1');
+  await expect(roadGapDiagram).toBeVisible();
+  await expect(roadGapDiagram).toContainText('Bunch');
+  await expect(roadGapDiagram.locator('.v91-road-gap-track'))
+    .toHaveCount(coasted.kilometreFrames[0].roadGroups.length+
+      coasted.kilometreFrames[0].droppedRiders.length+1);
+  const separatedIndex=coasted.kilometreFrames.findIndex(frame=>
+    frame.roadGroups.length>0||frame.droppedRiders.length>0);
+  if(separatedIndex>=0){
+    await page.getByRole('slider',{name:/Recorded kilometre:/})
+      .fill(String(separatedIndex+1));
+    await expect(page.getByLabel(`Recorded time gaps at km ${separatedIndex+1}`))
+      .toBeVisible();
+  }
+  await page.locator('.v91-road-gap-diagram').screenshot({
+    path:'test-results/guided-road-gap-diagram.png'});
   expect(coasted.pointPreview.awardRows).toEqual([]);
   await expect(page.getByRole('region',{name:'Your v93 finish'}))
     .toContainText('Conditional place:');
@@ -49,6 +65,40 @@ test('guided Motor Lab runs a race from setup to rider replay',async({page})=>{
     .getByRole('button',{name:'Replay you-7'}).click();
   await expect(page.getByLabel('Selected rider finale replay'))
     .toContainText('you-7:');
+});
+
+test('guided race diagram shows paid front-group time gaps',async({page})=>{
+  await page.setViewportSize({width:390,height:844});
+  await page.goto('/login');
+  await page.getByLabel('Email or username').fill('bob');
+  await page.getByLabel('Password',{exact:true}).fill('fixture-password');
+  await page.getByRole('button',{name:'Sign in',exact:true}).click();
+  await expect(page).toHaveURL(/\/team$/);
+  await page.goto('/team/motor-lab');
+  await page.getByLabel('Distance').selectOption('260');
+  await page.getByLabel('Starting fatigue').selectOption('30');
+  await page.getByLabel('Your attack order').selectOption('repeated');
+  await page.getByLabel('Your chase order').selectOption('ignore');
+  await page.locator('summary').filter({hasText:'Other managers'}).click();
+  await page.getByLabel('Default tactics for uncustomized managers')
+    .selectOption('attack');
+  const responsePromise=page.waitForResponse(response=>
+    response.url().endsWith('/api/v91-playtest')&&
+    response.request().method()==='POST');
+  await page.getByRole('button',{name:'Run the race'}).click();
+  const response=await responsePromise;
+  expect(response.status()).toBe(200);
+  const {coasted}=await response.json();
+  const index=coasted.kilometreFrames.findIndex(frame=>
+    frame.roadGroups.some(group=>group.gapSeconds>0));
+  expect(index).toBeGreaterThanOrEqual(0);
+  await page.getByRole('slider',{name:/Recorded kilometre:/})
+    .fill(String(index+1));
+  const diagram=page.getByLabel(`Recorded time gaps at km ${index+1}`);
+  await expect(diagram).toContainText('Group 1');
+  await expect(diagram.locator('.v91-road-gap-ahead')).not.toHaveCount(0);
+  await expect(diagram).toContainText('Bunch');
+  await diagram.screenshot({path:'test-results/guided-road-gap-with-front.png'});
 });
 
 test('guided Motor Lab applies an effort order after a selected 5 km marker', async({page}) => {

@@ -446,6 +446,8 @@ export default function Playtest({guided=false}){
   const viewerFinale=coasted?raceViewerFinale(coasted,viewerRiderId):null;
   const viewerRoad=coasted?raceViewerRoad(coastedFrame,
     coasted.settings.teamCount*8):[];
+  const viewerMaxAbsGap=Math.max(1,...viewerRoad.map(band=>
+    Math.abs(band.gapSeconds)));
   const viewerRival=raceViewerRivalAt(coasted,coastedFrame,viewerRivalId);
   const viewerRivalPhases=viewerRival?.orders?.phaseOrders??[];
   const viewerRivalActivePhase=viewerRivalPhases.filter(phase=>
@@ -1425,6 +1427,20 @@ export default function Playtest({guided=false}){
                   `${Math.abs(viewerRiderRoad.gapSeconds).toFixed(1)} s behind the bunch`:
                   'with the bunch'} · {viewerCurrentEnergy?.toFixed(1)??'—'} energy left.
             </p>}
+            <p>Recorded time-gap diagram, scaled to the largest gap at this checkpoint. It shows group clocks, not road distance or wheel order.</p>
+            <div className="v91-road-gap-diagram" aria-label={`Recorded time gaps at km ${coastedFrame?.km}`}>
+              {viewerRoad.map(band=><div className="v91-road-gap-row" key={band.key}>
+                <span title={band.label}>{band.key.startsWith('solo:')?
+                  band.key.slice(5):band.label.replace('Front group ','Group ')}</span>
+                <div className="v91-road-gap-track" aria-hidden="true">
+                  {band.gapSeconds===0?<i className="v91-road-gap-bunch"/>:
+                    <i className={band.gapSeconds>0?'v91-road-gap-ahead':'v91-road-gap-behind'}
+                      style={{width:`${Math.abs(band.gapSeconds)/viewerMaxAbsGap*45}%`}}/>}
+                </div>
+                <small>{band.gapSeconds>0?`+${band.gapSeconds.toFixed(1)} s`:
+                  band.gapSeconds<0?`${band.gapSeconds.toFixed(1)} s`:'bunch'}</small>
+              </div>)}
+            </div>
             <ol>{viewerRoad.map(band=><li key={band.key}>
               <strong>{band.label}</strong>
               <span>{band.riderCount} {band.riderCount===1?'rider':'riders'} · {band.gapSeconds>0?
