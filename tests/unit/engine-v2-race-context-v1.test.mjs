@@ -166,6 +166,14 @@ test('selective captain teams pursue a one-day finale but can leave a stage brea
   assert.ok(helperIds.some(helperId=>
     firstPursuit.energyLedger.find(row=>row.riderId===helperId).workDemand>
     stageLedger.find(row=>row.riderId===helperId).workDemand));
+  assert.equal(validateRecordedTour(oneDay),true);
+  const changedCapacity=structuredClone(oneDay);
+  changedCapacity.frames[firstPursuit.km-1].chaseContributions[0].capacity+=1;
+  assert.throws(()=>validateRecordedTour(changedCapacity),/chase contribution/);
+  const changedHelpers=structuredClone(oneDay);
+  changedHelpers.frames[firstPursuit.km-1].chaseContributions[0]
+    .riderIds=['you-1'];
+  assert.throws(()=>validateRecordedTour(changedHelpers),/chase contribution/);
 });
 
 test('measured slow closing alerts one-day protectors despite a small front gap',()=>{

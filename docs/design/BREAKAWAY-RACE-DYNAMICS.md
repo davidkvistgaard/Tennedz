@@ -172,3 +172,11 @@ committed front-work order; a forged helper roster is refused. This tests
 internal consistency of paid frames; it does not independently re-simulate
 the whole race, validate every v94 pursuit decision, certify a sporting
 result, or make v94 ready for the guided Motor Lab.
+
+The v94 frame now also retains each chasing team's named helper riders and
+computed capacity. Validation checks team/order eligibility, unique helper
+participation and that the contributions sum to the recorded chase power.
+This gives a later commentator a paid basis to name which team actually
+worked in the bunch. It does not by itself prove that the chase accelerated
+the bunch or caught the break; the recorded road-gap transition must support
+those claims separately.
