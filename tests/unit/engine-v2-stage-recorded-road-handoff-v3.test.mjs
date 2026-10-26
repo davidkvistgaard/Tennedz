@@ -84,6 +84,13 @@ test('validated v2 split hands paid end-of-km energy and gaps to v3',()=>{
   assert.equal(continued.startedAtKm,31);
   assert.equal(continued.kilometres[0].kilometreIndex,31);
   assert.ok(['separate','unresolved_band_contact'].includes(continued.status));
+  for(const member of handoff.bands.flatMap(band=>band.members)){
+    const paid=continued.kilometres.flatMap(km=>km.frames)
+      .reduce((sum,part)=>sum+part.bandClocks.flatMap(band=>
+        band.members).find(row=>row.riderId===member.id).work,0);
+    const after=continued.energies.find(row=>row.riderId===member.id).energy;
+    assert.ok(Math.abs(member.energyBefore-after-paid)<.00005);
+  }
   assert.equal(Object.hasOwn(continued,'places'),false);
 });
 
@@ -101,4 +108,32 @@ test('handoff refuses unearned, tampered or mismatched recorded split',()=>{
   free.frames[30].splitAttack.attackSeconds=0;
   assert.throws(()=>prepareRecordedRoadHandoffV3({recording:free,
     frameIndex:30,overlay}),/break attack route/);
+});
+
+test('one committed rider state can take two distinct future stage overlays',()=>{
+  const {recording,overlay}=fixture();
+  const rough=normalizeStageOverlayV3({version:3,distanceKm:40,
+    tacticalIntervals:Array.from({length:8},(_,index)=>({
+      fromKm:index*5,toKm:(index+1)*5,
+      conditions:{surface:'gravel',exposed:true,source:'illustrative',
+        weather:{temperatureC:16,windKph:28,rainMm:0}}})),
+    features:[]});
+  const roadHandoff=prepareRecordedRoadHandoffV3({recording,
+    frameIndex:30,overlay});
+  const roughHandoff=prepareRecordedRoadHandoffV3({recording,
+    frameIndex:30,overlay:rough});
+  assert.deepEqual(roadHandoff,roughHandoff);
+  const segment=recording.route.kilometres[31];
+  const evaluate=stage=>evaluateSeparatedRoadBandsKilometreV3({
+    overlay:stage,kilometreIndex:roadHandoff.startKilometreIndex,
+    bands:roadHandoff.bands,gapsSeconds:roadHandoff.gapsSeconds,
+    baseTerrain:segment.terrain,baseGradientPct:segment.gradientPct,
+    pullRiderIds:roadHandoff.bands.flatMap(band=>band.members.map(member=>
+      member.id))});
+  const road=evaluate(overlay),gravel=evaluate(rough);
+  assert.equal(road.status,'separate');
+  assert.equal(gravel.status,'separate');
+  assert.notEqual(road.frames[0].bandClocks[0].members[0].work,
+    gravel.frames[0].bandClocks[0].members[0].work);
+  assert.deepEqual(roadHandoff.bands,roughHandoff.bands);
 });

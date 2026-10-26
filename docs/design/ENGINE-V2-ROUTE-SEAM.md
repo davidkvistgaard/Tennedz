@@ -162,3 +162,10 @@ still uses an explicitly supplied v3 overlay for future conditions and an
 explicit future work roster; it does not retroactively locate the attack
 inside the completed v2 kilometre or replace its saved recording. No
 user-facing v3 result is produced.
+
+The handoff regression also reuses the **same** validated rider/energy/gap
+state with two separately supplied illustrative future condition overlays.
+Its committed riders and starting road remain byte-for-byte equal, while
+exact-slice work differs on rough exposed road. That demonstrates the intended
+participant-versus-stage seam for this bounded step, not whole-race route
+independence or verified weather for Liège–Bastogne–Liège.
