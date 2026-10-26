@@ -168,6 +168,26 @@ test('guided race diagram shows paid front-group time gaps',async({page})=>{
       .roadGroups.length}`);
   await comparison.screenshot({path:
     'test-results/guided-front-checkpoint-comparison.png'});
+  const band=(frame,id)=>frame.roadGroups.some(group=>
+    group.riderIds.includes(id))?'front group':
+    frame.droppedRiders.some(row=>row.riderId===id)?'isolated':'bunch';
+  const transition=coasted.kilometreFrames.flatMap((frame,frameIndex)=>{
+    if(frameIndex===0)return [];
+    const previous=coasted.kilometreFrames[frameIndex-1];
+    return frame.ownRiders.flatMap(row=>{
+      const before=band(previous,row.riderId),after=band(frame,row.riderId);
+      return before===after?[]:[{km:frame.km,id:row.riderId,
+        before,after}];
+    });
+  })[0];
+  expect(transition).toBeDefined();
+  await page.getByRole('slider',{name:/Recorded kilometre:/})
+    .fill(String(transition.km));
+  const changed=page.getByLabel(
+    `Recorded change from km ${transition.km-1} to ${transition.km}`);
+  await changed.locator('summary').filter({hasText:'changed road band'}).click();
+  await expect(changed).toContainText(
+    `${transition.id}: ${transition.before} → ${transition.after}`);
 });
 
 test('guided front-work order is paid only after its 5 km marker',async({page})=>{

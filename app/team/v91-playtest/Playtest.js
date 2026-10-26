@@ -1575,6 +1575,13 @@ export default function Playtest({guided=false}){
                 viewerCheckpointChange.rider.energyAfter.toFixed(1)} ({
                 viewerCheckpointChange.rider.energyChange>0?'+':''}{
                 viewerCheckpointChange.rider.energyChange.toFixed(1)}).</p>
+              {viewerCheckpointChange.ownRoadTransitions.length>0&&
+                <details className="v91-rider-actions">
+                  <summary>{viewerCheckpointChange.ownRoadTransitions.length} of your riders changed road band</summary>
+                  <ul>{viewerCheckpointChange.ownRoadTransitions.map(row=><li
+                    key={row.riderId}>{row.riderId}: {row.roadBefore} → {
+                      row.roadAfter}</li>)}</ul>
+                </details>}
               <p>These are two recorded checkpoints, not a continuous wheel trace or proof of cause.</p>
             </div>}
             <p>{viewerRiderId} has {viewerCurrentEnergy?.toFixed(1)??'—'}
