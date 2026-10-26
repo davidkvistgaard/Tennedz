@@ -559,8 +559,8 @@ export default function Playtest({guided=false}){
     {names:commentaryNames}):[];
   const commentaryAtKm=viewerCommentary.filter(moment=>
     moment.index===coastedKm-1);
-  const latestRaceCommentary=viewerCommentary.findLast(moment=>
-    moment.index<coastedKm-1);
+  const recentRaceCommentary=viewerCommentary.filter(moment=>
+    moment.index<=coastedKm-1).slice(-8).reverse();
   const viewerKmMoments=viewerTimeline.filter(moment=>
     moment.finaleRoadIndex==null);
   const previousViewerMoment=[...viewerKmMoments].reverse().find(moment=>
@@ -1530,18 +1530,23 @@ export default function Playtest({guided=false}){
                     Short climbs may be hidden by the 1 km profile.</p>
                 </section>
                 <section className="v91-race-screen-story"
-                  aria-label="Commentary at selected kilometre">
+                  aria-label="Recent race events">
                   <div className="v91-race-screen-section-head">
-                    <h3>At km {coastedKm}</h3><span>Commentary</span>
+                    <h3>Recent events</h3><span>Viewing km {coastedKm}</span>
                   </div>
-                  {commentaryAtKm.length?<ul>{commentaryAtKm.map(
-                    (moment,index)=><li key={`${moment.kind}-${index}`}>
-                      {moment.text}</li>)}</ul>:
-                    latestRaceCommentary?<p>No new event at km {coastedKm}.
-                      Latest call, km {latestRaceCommentary.km}: {
-                        latestRaceCommentary.text}</p>:
-                    <p>No recorded event yet. The positions and energy below
-                      still reflect the race.</p>}
+                  <p>The race keeps moving. Earlier calls remain here to read.</p>
+                  {recentRaceCommentary.length?<ol
+                    aria-label="Recent commentary history"
+                    className="v91-race-screen-events">{
+                    recentRaceCommentary.map((moment,index)=><li
+                      key={`${moment.index}-${moment.kind}-${index}`}
+                      className={moment.km===coastedKm?
+                        'v91-race-screen-event-current':''}>
+                      <strong>Km {moment.km}{moment.km===coastedKm?
+                        ' · Now':''}</strong>
+                      <span>{moment.text}</span>
+                    </li>)}</ol>:
+                    <p>No recorded events yet.</p>}
                   <div className="v91-race-screen-stage">
                     <strong>On the road</strong>
                     <span>{coastedStage?.terrain??'—'} · {

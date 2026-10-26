@@ -53,6 +53,8 @@ test('guided Motor Lab runs a race from setup to rider replay',async({page})=>{
   await raceScreen.getByRole('button',{name:'Play',exact:true}).click();
   await expect(raceScreen.locator('header h2')).toContainText('Km 2');
   await expect(raceScreen.locator('header h2')).toContainText('Km 3');
+  await expect(raceScreen.getByRole('list',{
+    name:'Recent commentary history'})).toContainText('Km 1');
   await raceScreen.getByRole('button',{name:'Pause',exact:true}).click();
   await page.waitForTimeout(1500);
   await expect(raceScreen.locator('header h2')).toContainText('Km 3');
@@ -63,7 +65,8 @@ test('guided Motor Lab runs a race from setup to rider replay',async({page})=>{
   await raceScreen.getByRole('button',{name:'Pause'}).click();
   await raceScreen.getByLabel('Choose recorded kilometre').fill('10');
   await expect(raceScreen.locator('header h2')).toContainText('Km 10');
-  await expect(raceScreen).toContainText('Latest call, km');
+  await expect(raceScreen.getByRole('list',{
+    name:'Recent commentary history'})).toContainText('Km 1');
   await page.screenshot({path:'test-results/guided-race-screen-mobile.png'});
   await page.setViewportSize({width:1440,height:900});
   await page.screenshot({path:'test-results/guided-race-screen-desktop.png'});
@@ -215,6 +218,15 @@ test('guided race diagram shows paid front-group time gaps',async({page})=>{
   const response=await responsePromise;
   expect(response.status()).toBe(200);
   const {coasted}=await response.json();
+  const raceScreen=page.getByRole('dialog',{name:'Race screen'});
+  await expect(raceScreen).toBeVisible();
+  await raceScreen.getByLabel('Choose recorded kilometre').fill(
+    String(coasted.kilometreFrames.length));
+  const recentEvents=raceScreen.getByRole('list',{
+    name:'Recent commentary history'});
+  expect(await recentEvents.locator('li').count()).toBeGreaterThan(1);
+  await raceScreen.getByLabel('Choose recorded kilometre').fill('1');
+  await expect(recentEvents.locator('li')).toHaveCount(1);
   await closeDefaultRaceScreen(page);
   const ownEventIndices=coasted.kilometreFrames.flatMap((frame,index)=>
     [...frame.attackAttempts,...frame.joinedRiderIds,...frame.caughtRiderIds]
