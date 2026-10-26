@@ -40,3 +40,24 @@ The numeric gap range and roughly 50 km pursuit cue come from the manager's desi
 Run the same seeded route and roster under one-day/fresh and stage-race/fatigued contexts. The recorded replay must expose, at every relevant change, who attacked, who joined, who worked or sat on, which teams withheld or began pursuit, the gap, remaining distance, and energy paid by named riders. The viewer should turn those recorded causes into concise race commentary. Compare many seeds and report break size, maximum gap, first sustained pursuit, catch/survival, attack attempts and energy. Include the user's 260 km mountain scenario as a regression case; compare its event counts and gap timeline with the current recording. A short flat race and a mountain race need separate checks. Do not tune a single seed into a predetermined story.
 
 The first implementation increment should be a separately versioned, opt-in race-context/intent path with its own recording contract and focused parity tests for old versions. Do not route it as the guided default until the full race replay and viewer can explain its decisions.
+
+## Internal v94 candidate audit (26 October 2026)
+
+`node scripts/audit-race-dynamics-v94.mjs` varies three seeds, flat/mountain,
+fatigue 0/30, one-day/stage contexts, and three explicit 20-team role mixes
+(3 break/2 control, 5 break/2 control, 5 break/4 control): **72 synthetic runs**.
+This is a constructed intent matrix, not a random-rival population or an
+observed-race calibration. Roles are required input to the candidate; it is
+not routed to guided Motor Lab or validated as a saved recording.
+
+The candidate reduces these scenarios to 3 or 5 early attacks and can pay a
+several-minute lead. But pursuit is still wrong: **all 72 runs retain a front
+group at the line**. Five-break/two-control scenarios average about 479–560 s
+maximum lead and 117–156 km above five minutes. Five-break/four-control
+scenarios stay below five minutes, yet still finish with the front ahead.
+One-day and stage results are also too similar. The gap comes from explicit
+team intent, individual work/energy and a candidate pace conversion, not an
+assigned five-minute bonus. The conversion and catch decision remain
+uncalibrated. Do not publish the candidate as playable or infer an official
+winner; next compare paid chase capacity with front work and obtain both
+credible catches and survivals across seeds without scripting either result.

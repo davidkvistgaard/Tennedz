@@ -1,7 +1,12 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {normalizeRaceContext,projectedCatchKm,breakSituationForTeam} from
+import {normalizeRaceContext,projectedCatchKm,breakSituationForTeam,
+  automaticCadenceAttackAllowed} from
   '../../lib/engine/v2/race-context-v1.mjs';
+import {prepareV91Playtest} from '../../lib/engine/v2/playtest.mjs';
+import {simulateTacticalTour} from '../../lib/engine/v2/tour.mjs';
+import {MOTOR_RACE_DYNAMICS_VERSION,MOTOR_EXHAUSTION_COAST_VERSION} from
+  '../../lib/engine/v2/tuning.mjs';
 
 test('race format is explicit and stage number cannot leak into a one-day race',()=>{
   assert.deepEqual(normalizeRaceContext({format:'one_day'}),{format:'one_day'});
@@ -28,4 +33,57 @@ test('break composition records whose interests are affected without declaring a
   assert.deepEqual(situation,{ownRiderAhead:true,protectedLeaderAhead:true,
     gcThreatAhead:true});
   assert.equal('contentWithComposition' in situation,false);
+});
+
+test('settled front restrains routine attacks while manager orders remain separate',()=>{
+  const base={context:{format:'one_day'},km:60,distanceKm:260,
+    frontRiderCount:3,ownRiderAhead:false};
+  assert.equal(automaticCadenceAttackAllowed(base),false);
+  assert.equal(automaticCadenceAttackAllowed({...base,frontRiderCount:2}),true);
+  assert.equal(automaticCadenceAttackAllowed({...base,km:220}),true);
+  assert.equal(automaticCadenceAttackAllowed({...base,ownRiderAhead:true}),false);
+  assert.equal(automaticCadenceAttackAllowed({...base,
+    context:{format:'stage',stageNumber:8}}),true);
+});
+
+test('v94 requires a complete declared role map and keeps older motor inputs unchanged',()=>{
+  const {stage,weather,teams,seed}=prepareV91Playtest({distanceKm:40,
+    teamCount:4,attack:'none',defaultRivalPlan:'passive',seed:'v94-role-inputs'});
+  const source={stage,weather,teams,seed};
+  const roles=Object.fromEntries(teams.map(team=>[team.id,'protect']));
+  const raceContext={format:'one_day',teamRoles:roles};
+  assert.throws(()=>simulateTacticalTour({...source,
+    motorVersion:MOTOR_RACE_DYNAMICS_VERSION}),/explicit race context/);
+  assert.throws(()=>simulateTacticalTour({...source,
+    motorVersion:MOTOR_RACE_DYNAMICS_VERSION,
+    raceContext:{format:'one_day'}}),/role for every team/);
+  assert.throws(()=>simulateTacticalTour({...source,
+    motorVersion:MOTOR_RACE_DYNAMICS_VERSION,
+    raceContext:{format:'one_day',teamRoles:{...roles,unknown:'control'}}}),
+  /role for every team/);
+  const old=simulateTacticalTour({...source,
+    motorVersion:MOTOR_EXHAUSTION_COAST_VERSION});
+  assert.equal('raceContext' in old.committedInputs,false);
+  assert.throws(()=>simulateTacticalTour({...source,
+    motorVersion:MOTOR_EXHAUSTION_COAST_VERSION,raceContext}),
+  /explicit race context/);
+  const candidate=simulateTacticalTour({...source,
+    motorVersion:MOTOR_RACE_DYNAMICS_VERSION,raceContext});
+  assert.deepEqual(candidate.committedInputs.raceContext,raceContext);
+  assert.equal(candidate.frames.length,40);
+  assert.ok(candidate.frames.every(frame=>
+    Array.isArray(frame.bunchEaseTeamIds)));
+});
+
+test('a named manager attack survives a protective team role',()=>{
+  const input={distanceKm:40,teamCount:4,attack:'none',
+    defaultRivalPlan:'passive',seed:'v94-named-order',
+    managerFinaleOrders:[{teamId:'you',atKm:39,
+      attack:'selective',attackRiderId:'you-4'}]};
+  const {stage,weather,teams,seed}=prepareV91Playtest(input);
+  const raceContext={format:'one_day',teamRoles:Object.fromEntries(
+    teams.map(team=>[team.id,'protect']))};
+  const race=simulateTacticalTour({stage,weather,teams,seed,
+    motorVersion:MOTOR_RACE_DYNAMICS_VERSION,raceContext});
+  assert.ok(race.frames.some(frame=>frame.attackers.includes('you-4')));
 });
