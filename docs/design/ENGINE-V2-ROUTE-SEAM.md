@@ -329,6 +329,17 @@ another 20-kilometre comparison includes the point where recovered energy
 hits the ceiling. This does not yet handle long-day cap decay after 160 km,
 front work, shelter, attacks, any drop, or an official finish.
 
+A fifth internal replay version adds authenticated long-day capacity decay
+to that same quiet-field transition. Work and capacity are paid over exact
+stage slices before the once-per-kilometre recovery settlement. Starting
+from a same-run km 160 checkpoint in a synthetic flat 260 km race, all 32
+riders' energy, capacity, quiet counters and group states match v2 for 99
+interior kilometres; an illustrative 400 m climb increases only its share
+of cap loss. A separate committed km 165 `conserve` scenario matches v2 for
+20 kilometres while recovery and capacity decay operate together. This is
+still an internal quiet-bunch replay: no attacks, front-work rotation,
+shelter, drops, inter-group contact, finish or official awards are inferred.
+
 Before routing v3 to guided Motor Lab, verify a complete source field and
 energy ledger at every replay boundary; homogeneous-kilometre parity with
 v2 for work, cap, recovery, bunch/drop state and group clocks; a fractional
