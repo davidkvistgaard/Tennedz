@@ -3,6 +3,7 @@ import {useEffect,useRef,useState} from 'react';
 import TeamShell from '../../components/TeamShell';
 import {api} from '../../../lib/api';
 import {playtestRiderCards} from '../../../lib/engine/v2/playtest-riders.mjs';
+import {recordedStageProfile} from '../../../lib/engine/v2/playtest-stage-trace.mjs';
 import {summarizePlaytestRaceStory} from
   '../../../lib/engine/v2/playtest-race-story.mjs';
 import {raceViewerCheckpoints,raceViewerEnergySeries,
@@ -337,6 +338,7 @@ export default function Playtest({guided=false}){
   const lineTimes=integrated?.finale?.lineTimes??[];
   const coastedFrame=coasted?.kilometreFrames[coastedKm-1];
   const coastedStage=coasted?.stageTrace?.kilometres[coastedKm-1];
+  const coastedProfile=coasted?.stageTrace?recordedStageProfile(coasted.stageTrace):null;
   const ownRecordedOrder=coasted?.managerOrders.find(order=>
     order.teamId==='you');
   const activeOwnPhase=ownRecordedOrder?.phaseOrders
@@ -1155,6 +1157,22 @@ export default function Playtest({guided=false}){
                 id===coastedOwnDecision?.finisherId?' · nominated finisher':
                 id===coastedOwnDecision?.leadOutRiderId?' · lead-out helper':''}
             </option>)}</select></label>
+          {coastedProfile&&<div className="v91-stage-profile"
+            aria-label="Recorded stage elevation profile">
+            <svg viewBox="0 0 600 130" preserveAspectRatio="none" role="img"
+              aria-label={`Recorded one-kilometre elevation profile. Viewing km ${coastedKm}; effort marker at km ${recordedEffortMarkerKm}.`}>
+              <polyline points={coastedProfile.points}/>
+              <line className="v91-stage-marker"
+                x1={20+recordedEffortMarkerKm/coasted.settings.distanceKm*560}
+                x2={20+recordedEffortMarkerKm/coasted.settings.distanceKm*560}
+                y1="12" y2="115"/>
+              <line className="v91-stage-current"
+                x1={20+coastedKm/coasted.settings.distanceKm*560}
+                x2={20+coastedKm/coasted.settings.distanceKm*560}
+                y1="12" y2="115"/>
+            </svg>
+            <p>{coastedProfile.minElevationM.toFixed(0)}–{coastedProfile.maxElevationM.toFixed(0)} m recorded elevation · dashed line: effort marker at km {recordedEffortMarkerKm} · solid line: viewing km {coastedKm}. The profile uses one-kilometre samples; short climbs may be hidden.</p>
+          </div>}
           <div className="v91-energy-view" aria-label={`${viewerRiderId} recorded energy through the race`}>
             <svg viewBox="0 0 600 145" preserveAspectRatio="none" role="img"
               aria-label={`${viewerRiderId} energy by recorded kilometre${

@@ -67,6 +67,13 @@
 .v91-race-viewer h3{margin:0 0 6px}
 .v91-race-viewer p{margin:0 0 14px;color:#526b63}
 .v91-race-viewer label{max-width:330px;margin-bottom:12px}
+.v91-stage-profile{margin:0 0 14px;padding:10px;background:#f2f7f4;border-radius:8px}
+.v91-stage-profile svg{display:block;width:100%;height:130px;background:white;border-radius:6px}
+.v91-stage-profile polyline{fill:none;stroke:#598b3b;stroke-width:3;vector-effect:non-scaling-stroke}
+.v91-stage-profile line{stroke-width:2;vector-effect:non-scaling-stroke}
+.v91-stage-profile .v91-stage-marker{stroke:#bd7130;stroke-dasharray:5 4}
+.v91-stage-profile .v91-stage-current{stroke:#116e60}
+.v91-stage-profile p{margin:7px 0 0;font-size:.8rem;color:#526b63}
 .v91-energy-view{display:grid;grid-template-columns:minmax(0,1fr) 24px;gap:6px;height:145px;margin-bottom:8px}
 .v91-energy-view svg{display:block;width:100%;height:145px;background:#f2f7f4;border-radius:8px}
 .v91-energy-view line{stroke:#bfd5cb;stroke-width:1}

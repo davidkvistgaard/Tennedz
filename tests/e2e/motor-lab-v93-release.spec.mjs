@@ -34,6 +34,8 @@ test('guided Motor Lab runs a race from setup to rider replay',async({page})=>{
   expect(coasted.stageTrace.kilometres).toHaveLength(40);
   const stageCard=page.getByLabel('Stage and orders at km 1');
   await expect(stageCard).toContainText('Stage input at km 1:');
+  await expect(page.getByLabel('Recorded stage elevation profile'))
+    .toContainText('short climbs may be hidden');
   await expect(stageCard).toContainText('Your active order:');
   await expect(stageCard).toContainText('Recorded this kilometre:');
   expect(coasted.pointPreview.awardRows).toEqual([]);
@@ -57,6 +59,7 @@ test('guided Motor Lab applies an effort order after a selected 5 km marker', as
   await page.getByRole('button',{name:'Sign in',exact:true}).click();
   await expect(page).toHaveURL(/\/team$/);
   await page.goto('/team/motor-lab');
+  await page.getByLabel('Route profile').selectOption('rolling');
   await page.locator('summary').filter({hasText:'Timed effort'}).click();
   await page.getByLabel('Start changing effort after').selectOption('15');
   await page.getByLabel('Effort after 15 km for you').selectOption('hard');
@@ -72,6 +75,10 @@ test('guided Motor Lab applies an effort order after a selected 5 km marker', as
   await page.getByRole('button',{name:'First km after effort marker 15'}).click();
   await expect(page.getByLabel('Stage and orders at km 16'))
     .toContainText('Your active order: hard effort');
+  await expect(page.getByLabel('Recorded stage elevation profile'))
+    .toContainText('effort marker at km 15 · solid line: viewing km 16');
+  await page.getByLabel('Recorded stage elevation profile').screenshot({
+    path:'test-results/guided-stage-profile.png'});
   await expect(page.getByRole('region',{name:'Your v93 finish'}))
     .toContainText('Conditional place:');
 });

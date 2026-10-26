@@ -21,3 +21,7 @@ This is a pre-race order for a synthetic test field, not a live mid-race
 command or a named stage-feature trigger. It does not supply the short-climb
 stage overlay currently being developed on the preview branch. Unsupported
 final wheel contact still refuses or withholds official places and awards.
+
+## Recorded stage profile in guided replay
+
+The guided race viewer draws the elevation profile from the route saved with this run, then marks the precommitted 5 km effort point and the selected checkpoint. The elevation trace is sampled once per kilometre; short ramps visible on a detailed stage map can be hidden. The profile is a read-only navigation aid, not a new motor input or evidence that the chosen order caused a gap change. The separate stage trace adds recorded start/end elevations without changing the stored race, road groups, conditional finish or awards policy.
