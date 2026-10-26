@@ -284,6 +284,11 @@ export default function Playtest({guided=false}){
         current.managerTacticOverrides.filter(row=>
           Number(row.teamId.split('-')[1])<Number(value))}:{})}));
   };
+  const clearSecondTimedOrder=()=>{
+    setSecondEffortMarkerKm(null);
+    setSecondEfforts({});
+    setSecondFrontWork('');
+  };
   const changeCustomRivals=value=>{
     const count=Number(value);
     setCustomRivals(count);
@@ -872,7 +877,7 @@ export default function Playtest({guided=false}){
                     onClick={()=>{
                       setEffortMarkerKm(interval.toKm);
                       if(secondEffortMarkerKm===interval.toKm)
-                        setSecondEffortMarkerKm(null);
+                        clearSecondTimedOrder();
                     }}>
                     Use {interval.toKm} km as first order marker
                   </button>
@@ -978,7 +983,7 @@ export default function Playtest({guided=false}){
             <select value={chosenEffortMarkerKm} onChange={event=>{
               const next=Number(event.target.value);
               setEffortMarkerKm(next);
-              if(secondEffortMarkerKm===next)setSecondEffortMarkerKm(null);
+              if(secondEffortMarkerKm===next)clearSecondTimedOrder();
             }}>
               {Array.from({length:settings.distanceKm/5-1},(_,index)=>
                 (index+1)*5).map(km=><option key={km} value={km}>
@@ -1004,9 +1009,11 @@ export default function Playtest({guided=false}){
             </select>
           </label>
           <label>Optional second order marker after
-            <select value={chosenSecondEffortMarkerKm??''} onChange={event=>
-              setSecondEffortMarkerKm(event.target.value?
-                Number(event.target.value):null)}>
+            <select value={chosenSecondEffortMarkerKm??''} onChange={event=>{
+              if(event.target.value)
+                setSecondEffortMarkerKm(Number(event.target.value));
+              else clearSecondTimedOrder();
+            }}>
               <option value="">No second change</option>
               {Array.from({length:settings.distanceKm/5-1},(_,index)=>
                 (index+1)*5).filter(km=>km!==chosenEffortMarkerKm)

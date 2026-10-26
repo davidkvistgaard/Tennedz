@@ -337,6 +337,16 @@ test('guided Motor Lab replays two precommitted 5 km effort changes', async({pag
   await page.getByLabel('Effort after 15 km for you').selectOption('hard');
   await expect(page.getByLabel('Optional second order marker after'))
     .toHaveValue('25');
+  await page.getByLabel('Effort after 25 km for you').selectOption('steady');
+  await page.getByLabel('Bunch-front work after 25 km for your team')
+    .selectOption('sit_in');
+  await page.getByLabel('Optional second order marker after')
+    .selectOption('');
+  await page.getByLabel('Optional second order marker after')
+    .selectOption('25');
+  await expect(page.getByLabel('Effort after 25 km for you')).toHaveValue('');
+  await expect(page.getByLabel('Bunch-front work after 25 km for your team'))
+    .toHaveValue('');
   await page.getByLabel('Effort after 25 km for you').selectOption('conserve');
   await expect(page.getByLabel('Race plan before running'))
     .toContainText('Hard effort after 15 km');
