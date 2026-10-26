@@ -117,3 +117,14 @@ five-worker groups on flat, climbing and exposed rough roads agree within the
 v2 clock's two-decimal-second rounding. This anchors the slice model to the
 published group coefficients; it does not validate formation, internal wheel
 positions, recovery, attacks or a whole-race result.
+
+Another internal, separately versioned v3 path accepts a declared pull and
+drive roster for each of two fixed road groups. It pays each worker or sitter
+once on every precise slice using the existing v2 rotation, sit-on and drive
+coefficients. A homogeneous one-kilometre case is checked against v2's
+mixed-work group clock. A synthetic 20 km replay can change that declared
+roster after 5 km markers and records condition provenance, work, energy and
+positive group gaps at every short feature boundary. It stops before the first
+unpaid possible group contact. The caller must supply the actual worker roster:
+this path does not select attacks, position riders inside groups, decide
+drafting, recover energy, merge groups, classify the line or alter guided races.
