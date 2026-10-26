@@ -281,6 +281,19 @@ the first unpaid slice wherever a road band could meet another band or the bunch
 The current fixed-band clock cannot supply those rules by increasing its
 five-rider membership limit.
 
+A separately versioned, internal **one-kilometre quiet-bunch step** now
+advances all 32 riders from an authenticated same-run paid checkpoint. It
+requires a single attached bunch, steady/no-attack/no-chase balanced orders,
+no pending team response, no recovery or long-day capacity decay, and no
+group departure. All riders pay every exact short stage slice; the bunch
+reference and low-kilometre state are updated once after those slices.
+Across three homogeneous 40 km seeds, its next-kilometre rider work, energy,
+and group state match the existing paid v2 frame. An illustrative 400 m
+climb within that kilometre changes every rider's paid work without adding
+a tactical decision. Saved or copied recordings, a possible drop, and any
+dynamic order refuse. This is **one complete field step**, not a whole-race
+clock, contact resolution, official result, or guided Motor Lab feature.
+
 Before routing v3 to guided Motor Lab, verify a complete source field and
 energy ledger at every replay boundary; homogeneous-kilometre parity with
 v2 for work, cap, recovery, bunch/drop state and group clocks; a fractional
