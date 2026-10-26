@@ -26,7 +26,7 @@ for(const width of [390,1440])test(`manager runs a recorded Motor Lab race at ${
  await page.getByRole('radio',{name:/Send the captain ahead/}).check();
  await page.getByLabel('React to a dangerous break').selectOption('chase_if_threatened');
  await page.getByLabel('If Amber reaches a break').selectOption('sit_on');
- await page.getByLabel('From the 120 km marker').selectOption('hard');
+ await page.getByLabel('Effort at selected marker').selectOption('hard');
  await page.getByRole('button',{name:'Run the race'}).click();
  await expect(page.getByRole('heading',{name:'Coast Road laboratory'})).toBeVisible();
  await expect(page.getByText(/Committed orders: chase a threatening break · follow the plan for chase work · follow the plan for bunch attacks · sit on in a break · ride hard after 120 km/)).toBeVisible();
@@ -49,7 +49,7 @@ for(const width of [390,1440])test(`manager runs a recorded Motor Lab race at ${
  await expect(page.getByRole('listitem').filter({hasText:'Amber Captain'}).first()).toBeVisible();
  await page.getByLabel('React to a dangerous break').selectOption('hold_plan');
  await page.getByLabel('If Amber reaches a break').selectOption('cooperate');
- await page.getByLabel('From the 120 km marker').selectOption('follow_plan');
+ await page.getByLabel('Effort at selected marker').selectOption('follow_plan');
  await page.getByLabel('If Amber Captain is in a break').selectOption('40');
  await page.getByRole('button',{name:'Run the race'}).click();
  await expect(page.getByText(/attempt an attack from the break after 40 km/)).toBeVisible();
@@ -149,6 +149,13 @@ for(const width of [390,1440])test(`manager runs a recorded Motor Lab race at ${
  await expect(page.getByText(/saving attacks for the final 40 km currently wins unusually often/)).toBeVisible();
  await page.getByRole('slider',{name:'Inspect recorded kilometre'}).fill('120');
  await expect(page.getByText(/Amber switched to selective bunch attacks/).first()).toBeVisible();
+ await page.getByLabel('Effort change after').selectOption('60');
+ await page.getByLabel('Effort at selected marker').selectOption('hard');
+ await page.getByRole('button',{name:'Run the race'}).click();
+ await expect(page.getByText(/ride hard after 60 km/)).toBeVisible();
+ await page.getByRole('slider',{name:'Inspect recorded kilometre'}).fill('60');
+ await expect(page.getByRole('heading',{name:'What happened at km 61?'})).toBeVisible();
+ await expect(page.locator('.motor-explainer-grid').getByText(/hard effort/)).toBeVisible();
  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
  expect(errors).toEqual([]);
 });

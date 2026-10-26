@@ -36,12 +36,12 @@ const lateChaseLabel=choice=>choice==='follow_plan'?'Keep chase order after 120 
 const lateAttackLabel=choice=>choice==='follow_plan'?'Keep bunch attack order after 120 km':
  choice==='none'?'No bunch attacks after 120 km':choice==='selective'?
   'Selective bunch attacks after 120 km':'Repeated bunch attacks after 120 km';
-const orderSummary=recording=>`${recording.orders.breakResponse==='chase_if_threatened'?'Threat chase':'Plan chase'} · ${recording.orders.chaseContribution==='follow_plan'?'Plan chase work':recording.orders.chaseContribution==='ignore'?'Hold chase helpers':'Commit chase helpers'} · ${attackPostureLabel(recording.orders.attackPosture)} · ${recording.orders.breakWork.replace('_',' ')} · ${recording.orders.lateEffort==='follow_plan'?'Plan finish':recording.orders.lateEffort+' finish'} · ${lateChaseLabel(recording.orders.lateChaseContribution)} · ${lateAttackLabel(recording.orders.lateAttackPosture)} · ${recording.orders.breakAttackMarker==='none'?'No planned break attack':'Attack after '+recording.orders.breakAttackMarker+' km'} · ${recording.orders.roadCaptain==='experienced'?'Experienced':'Standard'} road captain · ${recording.orders.captainSupport==='drop_back_if_dropped'?'Help a dropped captain':'Hold helper positions'} · ${helperPolicyLabel(recording.orders.helperAttackPolicy)}`;
+const orderSummary=recording=>`${recording.orders.breakResponse==='chase_if_threatened'?'Threat chase':'Plan chase'} · ${recording.orders.chaseContribution==='follow_plan'?'Plan chase work':recording.orders.chaseContribution==='ignore'?'Hold chase helpers':'Commit chase helpers'} · ${attackPostureLabel(recording.orders.attackPosture)} · ${recording.orders.breakWork.replace('_',' ')} · ${recording.orders.lateEffort==='follow_plan'?'Plan effort':recording.orders.lateEffort+' effort after '+recording.orders.lateEffortMarker+' km'} · ${lateChaseLabel(recording.orders.lateChaseContribution)} · ${lateAttackLabel(recording.orders.lateAttackPosture)} · ${recording.orders.breakAttackMarker==='none'?'No planned break attack':'Attack after '+recording.orders.breakAttackMarker+' km'} · ${recording.orders.roadCaptain==='experienced'?'Experienced':'Standard'} road captain · ${recording.orders.captainSupport==='drop_back_if_dropped'?'Help a dropped captain':'Hold helper positions'} · ${helperPolicyLabel(recording.orders.helperAttackPolicy)}`;
 
 export default function MotorLabPage(){
  const [plan,setPlan]=useState('sprint');
  const [routeId,setRouteId]=useState('coast');
- const [orders,setOrders]=useState({chaseContribution:'follow_plan',attackPosture:'follow_plan',lateAttackPosture:'follow_plan',breakResponse:'hold_plan',breakWork:'cooperate',lateEffort:'follow_plan',lateChaseContribution:'follow_plan',breakAttackMarker:'none',roadCaptain:'standard',captainSupport:'hold_position',helperAttackPolicy:'open'});
+ const [orders,setOrders]=useState({chaseContribution:'follow_plan',attackPosture:'follow_plan',lateAttackPosture:'follow_plan',breakResponse:'hold_plan',breakWork:'cooperate',lateEffort:'follow_plan',lateEffortMarker:'120',lateChaseContribution:'follow_plan',breakAttackMarker:'none',roadCaptain:'standard',captainSupport:'hold_position',helperAttackPolicy:'open'});
  const [seed,setSeed]=useState(1);
  const [recording,setRecording]=useState(null);
  const [previousRecording,setPreviousRecording]=useState(null);
@@ -180,7 +180,12 @@ export default function MotorLabPage(){
         <option value="drive">Drive the break</option>
        </select>
       </label>
-      <label>From the 120 km marker
+      <label>Effort change after
+       <select value={orders.lateEffortMarker} onChange={event=>setOrders({...orders,lateEffortMarker:event.target.value})}>
+        {Array.from({length:31},(_,index)=><option key={index} value={String((index+1)*5)}>km {(index+1)*5}</option>)}
+       </select>
+      </label>
+      <label>Effort at selected marker
        <select value={orders.lateEffort} onChange={event=>setOrders({...orders,lateEffort:event.target.value})}>
         <option value="follow_plan">Keep the plan's effort</option>
         <option value="conserve">Conserve</option>
@@ -252,7 +257,7 @@ export default function MotorLabPage(){
     <section className="motor-panel" aria-labelledby="motor-record-title">
      <div className="motor-section-heading"><span>02 / RECORDED RACE</span><h2 id="motor-record-title">{recording.scenarioName}</h2></div>
      <p>Amber rode <strong>{recording.planLabel}</strong> in scenario {recording.seed}. Birch protected its sprinter, Cedar attacked and Dune raced balanced. The entire result was calculated before this replay opened.</p>
-     <p className="motor-committed">Committed orders: {recording.orders.breakResponse==='chase_if_threatened'?'chase a threatening break':'keep the original chase plan'} · {recording.orders.chaseContribution==='follow_plan'?'follow the plan for chase work':recording.orders.chaseContribution==='ignore'?'hold chase helpers back':'commit chase helpers'} · {attackPostureLabel(recording.orders.attackPosture).toLowerCase()} · {recording.orders.breakWork.replace('_',' ')} in a break · {recording.orders.lateEffort==='follow_plan'?'keep the original effort':'ride '+recording.orders.lateEffort} after 120 km · {lateChaseLabel(recording.orders.lateChaseContribution).toLowerCase()} · {lateAttackLabel(recording.orders.lateAttackPosture).toLowerCase()} · {recording.orders.breakAttackMarker==='none'?'stay in the break':'attempt an attack from the break after '+recording.orders.breakAttackMarker+' km'} · {recording.orders.roadCaptain==='experienced'?'experienced':'standard'} road captain · {recording.orders.captainSupport==='drop_back_if_dropped'?'send a reachable helper back to a dropped captain':'hold helper positions'} · {helperPolicyLabel(recording.orders.helperAttackPolicy).toLowerCase()}.</p>
+     <p className="motor-committed">Committed orders: {recording.orders.breakResponse==='chase_if_threatened'?'chase a threatening break':'keep the original chase plan'} · {recording.orders.chaseContribution==='follow_plan'?'follow the plan for chase work':recording.orders.chaseContribution==='ignore'?'hold chase helpers back':'commit chase helpers'} · {attackPostureLabel(recording.orders.attackPosture).toLowerCase()} · {recording.orders.breakWork.replace('_',' ')} in a break · {recording.orders.lateEffort==='follow_plan'?'keep the original effort':'ride '+recording.orders.lateEffort+' after '+recording.orders.lateEffortMarker+' km'} · {lateChaseLabel(recording.orders.lateChaseContribution).toLowerCase()} · {lateAttackLabel(recording.orders.lateAttackPosture).toLowerCase()} · {recording.orders.breakAttackMarker==='none'?'stay in the break':'attempt an attack from the break after '+recording.orders.breakAttackMarker+' km'} · {recording.orders.roadCaptain==='experienced'?'experienced':'standard'} road captain · {recording.orders.captainSupport==='drop_back_if_dropped'?'send a reachable helper back to a dropped captain':'hold helper positions'} · {helperPolicyLabel(recording.orders.helperAttackPolicy).toLowerCase()}.</p>
      {recording.orders.attackPosture==='none'&&recording.orders.lateAttackPosture==='selective'&&
       <p className="motor-hint">Balance note: in this fictional cast, saving attacks for the final 40 km currently wins unusually often. Use this replay to inspect the road decisions, not to infer an optimal race strategy.</p>}
      {comparison&&<div className="motor-compare" aria-label="Compare two runs of the same scenario">

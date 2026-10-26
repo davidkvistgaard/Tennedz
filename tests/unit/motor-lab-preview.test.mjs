@@ -52,7 +52,7 @@ test('advanced orders are committed and alter the same seeded race',()=>{
  }});
  assert.deepEqual(advanced.orders,{chaseContribution:'follow_plan',attackPosture:'follow_plan',
   lateAttackPosture:'follow_plan',breakResponse:'chase_if_threatened',
-  breakWork:'sit_on',lateEffort:'hard',lateChaseContribution:'selective',
+  breakWork:'sit_on',lateEffort:'hard',lateEffortMarker:'120',lateChaseContribution:'selective',
   breakAttackMarker:'none',roadCaptain:'standard',
   captainSupport:'hold_position',helperAttackPolicy:'open'});
  assert(advanced.frames[120].moments.includes('Amber switched to hard effort'));
@@ -88,6 +88,18 @@ test('a timed bunch attack order changes only the late recorded road',()=>{
  assert(late.frames[120].moments.includes('Amber switched to selective bunch attacks'));
  assert.notDeepEqual(late.frames.slice(120),held.frames.slice(120));
  assert.deepEqual(late,createMotorLabPreview({...common,orders:late.orders}));
+});
+
+test('a manager can move a precommitted effort change to a 5 km marker',()=>{
+ const common={plan:'sprint',seed:3,routeId:'coast'};
+ const baseline=createMotorLabPreview(common);
+ const timed=createMotorLabPreview({...common,orders:{lateEffort:'hard',
+  lateEffortMarker:'60'}});
+ assert.deepEqual(timed.frames.slice(0,60),baseline.frames.slice(0,60));
+ assert.equal(timed.frames[59].amberOrder.effort,'conserve');
+ assert.equal(timed.frames[60].amberOrder.effort,'hard');
+ assert(timed.frames[60].moments.includes('Amber switched to hard effort'));
+ assert.notDeepEqual(timed.frames.slice(60),baseline.frames.slice(60));
 });
 
 test('a precommitted late chase phase changes road work only after its marker',()=>{

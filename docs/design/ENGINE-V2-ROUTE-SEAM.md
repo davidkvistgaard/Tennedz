@@ -26,6 +26,14 @@ explicit named climb start/end spans or sub-kilometre road and weather spans.
 Those belong in a later versioned stage-data contract, with replay evidence
 showing which condition affected each rider decision and movement.
 
+The fictional four-team Motor Lab now lets a manager move its single timed
+effort change to any 5 km marker. Its replay shows the committed order in
+force beside that kilometre's terrain, road surface, wind and rain, recorded
+Amber chase/attack actions, and changes in gap and mean energy. The panel
+reports observations rather than asserting that any one action caused a gap
+change. The other late chase/attack controls still switch at 120 km. Motor
+Lab remains a fixed-route exercise, not a stage editor or a universal finish.
+
 Existing recordings retain their stored route, orders, frames and result
 contracts. The viewer reads those frames; playback never reruns the motor.
 
