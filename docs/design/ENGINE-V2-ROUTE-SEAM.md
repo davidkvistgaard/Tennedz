@@ -236,3 +236,15 @@ formula after 160 km to each exact stage slice. A short steep or rough section
 changes only its fraction of that kilometre's cap loss; a homogeneous
 kilometre agrees with the v2 rule, and the capacity floor remains in force.
 It does not pay work or recovery, update a rider, or resolve road contact.
+
+An opt-in, separately versioned fixed-road-band clock now applies that
+capacity decay **with** each rider's paid work on the same exact slices. The
+bounded stage replay carries both energy and capacity into the next
+kilometre, so long-day capacity loss can change later group gaps. A possible
+contact or exhausted rider stops every band before the first unpaid slice,
+preserving previously paid frames, energy and capacity. The old fixed-band
+clock and replay shapes remain unchanged. This still only advances already
+separated fixed bands: quiet-bunch recovery, attacks, drops, changing group
+membership, occupied wheels, the riders outside the eligible road bands,
+and a whole-race classification remain unresolved. It is internal preview
+evidence, not a guided Motor Lab result or a deployed v3 motor.
