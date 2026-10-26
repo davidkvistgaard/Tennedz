@@ -8,7 +8,8 @@ import {raceViewerCheckpoints,raceViewerEnergySeries,
   raceViewerEnergyCurve,
   raceViewerBreaksAndChase,raceViewerFinale,raceViewerRoad,
   raceViewerLateEffort,raceViewerLateTeamWork,
-  raceViewerEffortInsight,raceViewerTimeline,raceViewerRivalAt} from
+  raceViewerEffortInsight,raceViewerTimeline,raceViewerRivalAt,
+  raceViewerOwnRiderActionsAt} from
   '../../lib/engine/v2/playtest-viewer.mjs';
 
 test('rider guide shows the exact synthetic riders committed to the race',()=>{
@@ -49,6 +50,32 @@ test('viewer road orders recorded fronts, solo riders and bunch without losing r
     ['Bunch',28,0],['you-3 riding alone',1,-3.2]]);
   assert.deepEqual(road.map(row=>row.ownRiderIds),[
     ['you-2'],[],['you-0','you-1','you-4','you-5','you-6','you-7'],['you-3']]);
+});
+
+test('selected-kilometre rider ledger shows named actions without inferring a move',()=>{
+  const previous={km:10,ownRiders:[
+    {riderId:'you-0',energy:75},{riderId:'you-1',energy:70},
+    {riderId:'you-2',energy:65}]};
+  const frame={km:11,roadGroups:[{id:'road-1',gapSeconds:8,
+    riderIds:['you-0','rival-1-0']}],
+  droppedRiders:[{riderId:'you-1',deficitSeconds:3}],
+  ownRiders:[{riderId:'you-0',energy:72},
+    {riderId:'you-1',energy:68},{riderId:'you-2',energy:64}],
+  attackAttempts:['you-0'],frontAttacks:[{riderId:'you-0',status:'split'}],
+  joinedRiderIds:[],caughtRiderIds:[],pullRiderIds:['you-0']};
+  const result=raceViewerOwnRiderActionsAt({kilometreFrames:[previous,frame]},
+    frame);
+  assert.deepEqual(result[0],{riderId:'you-0',
+    road:'8.0 s ahead with 2 riders',
+    events:['attack attempted','split from road group',
+      'took a road-group pull'],energy:72,energyChange:-3});
+  assert.deepEqual(result[1],{riderId:'you-1',
+    road:'3.0 s behind the bunch, alone',
+    events:['no named individual move recorded'],
+    energy:68,energyChange:-2});
+  assert.equal(result[2].road,'in the bunch');
+  assert.equal(result[2].energyChange,-1);
+  assert.equal(raceViewerOwnRiderActionsAt(null,frame).length,0);
 });
 
 test('rival focus ties a manager to its recorded finisher and road actions',()=>{

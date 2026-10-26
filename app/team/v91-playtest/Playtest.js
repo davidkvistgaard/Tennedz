@@ -10,7 +10,8 @@ import {raceViewerCheckpoints,raceViewerEnergySeries,
   raceViewerEnergyCurve,
   raceViewerBreaksAndChase,raceViewerFinale,raceViewerRoad,
   raceViewerLateEffort,raceViewerLateTeamWork,
-  raceViewerEffortInsight,raceViewerTimeline,raceViewerRivalAt} from
+  raceViewerEffortInsight,raceViewerTimeline,raceViewerRivalAt,
+  raceViewerOwnRiderActionsAt} from
   '../../../lib/engine/v2/playtest-viewer.mjs';
 
 const DEFAULT_PLANS=['chase','attack','neutral'];
@@ -343,6 +344,9 @@ export default function Playtest({guided=false}){
     !settings.managerTacticOverrides.some(row=>row.teamId===teamId));
   const lineTimes=integrated?.finale?.lineTimes??[];
   const coastedFrame=coasted?.kilometreFrames[coastedKm-1];
+  const viewerOwnActions=raceViewerOwnRiderActionsAt(coasted,coastedFrame);
+  const viewerSelectedAction=viewerOwnActions.find(row=>
+    row.riderId===viewerRiderId);
   const coastedStage=coasted?.stageTrace?.kilometres[coastedKm-1];
   const coastedProfile=coasted?.stageTrace?recordedStageProfile(coasted.stageTrace):null;
   const ownRecordedOrder=coasted?.managerOrders.find(order=>
@@ -1381,6 +1385,24 @@ export default function Playtest({guided=false}){
                   'your team engaged the chase':'no new chase engagement by your team'}.
               </p>:
               <p>Detailed actions are unavailable for this versioned recording.</p>}
+            {viewerSelectedAction&&<p aria-label="Followed rider actions at this kilometre">
+              {viewerSelectedAction.riderId}: {
+                viewerSelectedAction.events.join(' · ')}.
+              {' '}Recorded road: {viewerSelectedAction.road}.
+              {viewerSelectedAction.energyChange!==null&&
+                ` Energy change since the previous kilometre: ${
+                  viewerSelectedAction.energyChange>0?'+':''}${
+                  viewerSelectedAction.energyChange.toFixed(1)}.`}
+            </p>}
+            {viewerOwnActions.length>0&&<details className="v91-rider-actions">
+              <summary>Actions and energy for all {viewerOwnActions.length} of your riders at km {coastedKm}</summary>
+              <ul>{viewerOwnActions.map(row=><li key={row.riderId}>
+                <strong>{row.riderId}</strong>: {row.events.join(' · ')}
+                {' '}· {row.road} · {row.energy.toFixed(1)} energy
+                {row.energyChange!==null&&` (${row.energyChange>0?'+':''}${
+                  row.energyChange.toFixed(1)} since the previous kilometre)`}
+              </li>)}</ul>
+            </details>}
             <p>{viewerRiderId} has {viewerCurrentEnergy?.toFixed(1)??'—'}
               {' '}energy at this checkpoint{previousOwnEnergy!=null&&
                 viewerCurrentEnergy!=null?

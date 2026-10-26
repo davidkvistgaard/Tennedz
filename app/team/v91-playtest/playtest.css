@@ -103,6 +103,10 @@
 .v91-viewer-road{margin-top:12px;padding:14px;background:#f2f7f4;border-radius:10px}
 .v91-viewer-road h4{margin:0 0 7px}
 .v91-viewer-road p{margin:0 0 9px}
+.v91-rider-actions{margin:0 0 11px;padding:9px 11px;border:1px solid #bfd5cb;border-radius:8px;background:white}
+.v91-rider-actions summary{cursor:pointer;font-weight:700;color:#116e60}
+.v91-rider-actions ul{display:grid;gap:6px;margin:10px 0 0;padding:0;list-style:none}
+.v91-rider-actions li{padding:7px 0;border-top:1px solid #e1ece6;font-size:.88rem;line-height:1.4}
 .v91-viewer-road ol{display:grid;gap:7px;margin:0;padding:0;list-style:none}
 .v91-viewer-road li{display:grid;gap:3px;padding:9px 11px;border-left:4px solid #116e60;border-radius:5px;background:white}
 .v91-viewer-road li span,.v91-viewer-road li small{color:#526b63}

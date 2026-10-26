@@ -38,6 +38,12 @@ test('guided Motor Lab runs a race from setup to rider replay',async({page})=>{
     .toContainText('short climbs may be hidden');
   await expect(stageCard).toContainText('Your active order:');
   await expect(stageCard).toContainText('Recorded this kilometre:');
+  await expect(stageCard.getByLabel('Followed rider actions at this kilometre'))
+    .toContainText('you-7:');
+  await stageCard.locator('summary').filter({hasText:
+    'Actions and energy for all 8 of your riders'}).click();
+  await expect(stageCard.locator('.v91-rider-actions li')).toHaveCount(8);
+  await stageCard.screenshot({path:'test-results/guided-rider-actions.png'});
   const roadGapDiagram=page.getByLabel('Recorded time gaps at km 1');
   await expect(roadGapDiagram).toBeVisible();
   await expect(roadGapDiagram).toContainText('Bunch');
