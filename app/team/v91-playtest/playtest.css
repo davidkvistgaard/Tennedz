@@ -120,6 +120,7 @@
 .v91-viewer-road li span,.v91-viewer-road li small{color:#526b63}
 .v91-road-gap-diagram{display:grid;gap:6px;margin:0 0 12px}
 .v91-road-gap-row{display:grid;grid-template-columns:minmax(95px,1fr) minmax(100px,2fr) 64px;gap:8px;align-items:center;font-size:.8rem}
+.v91-road-gap-followed{padding:5px 7px;margin:-5px -7px;border-radius:6px;outline:2px solid #116e60;background:#e1f3ec;font-weight:700}
 .v91-road-gap-row>span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .v91-road-gap-row>small{text-align:right;color:#526b63;white-space:nowrap}
 .v91-road-gap-track{position:relative;height:14px;border-radius:3px;background:#e5eeea}

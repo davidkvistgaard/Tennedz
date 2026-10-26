@@ -92,6 +92,12 @@ test('guided Motor Lab runs a race from setup to rider replay',async({page})=>{
   const roadGapDiagram=page.getByLabel('Recorded time gaps at km 1');
   await expect(roadGapDiagram).toBeVisible();
   await expect(roadGapDiagram).toContainText('Bunch');
+  await expect(roadGapDiagram.locator('.v91-road-gap-followed'))
+    .toHaveAttribute('aria-label',/^Following you-7 in /);
+  await page.getByLabel('Rider to follow').selectOption('you-0');
+  await expect(roadGapDiagram.locator('.v91-road-gap-followed'))
+    .toHaveAttribute('aria-label',/^Following you-0 in /);
+  await page.getByLabel('Rider to follow').selectOption('you-7');
   await expect(roadGapDiagram.locator('.v91-road-gap-track'))
     .toHaveCount(coasted.kilometreFrames[0].roadGroups.length+
       coasted.kilometreFrames[0].droppedRiders.length+1);

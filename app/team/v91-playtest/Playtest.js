@@ -1632,7 +1632,10 @@ export default function Playtest({guided=false}){
             </p>}
             <p>Recorded time-gap diagram, scaled to the largest gap at this checkpoint. It shows group clocks, not road distance or wheel order.</p>
             <div className="v91-road-gap-diagram" aria-label={`Recorded time gaps at km ${coastedFrame?.km}`}>
-              {viewerRoad.map(band=><div className="v91-road-gap-row" key={band.key}>
+              {viewerRoad.map(band=><div
+                className={`v91-road-gap-row${band.key===viewerRiderRoad?.key?' v91-road-gap-followed':''}`}
+                key={band.key}
+                aria-label={band.key===viewerRiderRoad?.key?`Following ${viewerRiderId} in ${band.label}`:undefined}>
                 <span title={band.label}>{band.key.startsWith('solo:')?
                   band.key.slice(5):band.label.replace('Front group ','Group ')}</span>
                 <div className="v91-road-gap-track" aria-hidden="true">
