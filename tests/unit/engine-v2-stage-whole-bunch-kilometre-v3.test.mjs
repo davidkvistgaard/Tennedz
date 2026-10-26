@@ -5,7 +5,8 @@ import {simulateTacticalTourWithHandoffStateV3} from '../../lib/engine/v2/tour.m
 import {MOTOR_EXHAUSTION_COAST_VERSION} from '../../lib/engine/v2/tuning.mjs';
 import {STAGE_COMPLETE_INPUT_VERSION} from
   '../../lib/engine/v2/stage-complete-input-v3.mjs';
-import {advanceQuietWholeBunchKilometreV3,replayQuietWholeBunchStageV3} from
+import {advanceQuietWholeBunchKilometreV3,replayQuietWholeBunchStageV3,
+  replayCommittedQuietWholeBunchStageV3} from
   '../../lib/engine/v2/stage-whole-bunch-kilometre-v3.mjs';
 
 function source(seed='front-work-4',attack='none'){
@@ -165,6 +166,42 @@ test('late 5 km effort change matches a separately paid v2 order',()=>{
   }
 });
 
+test('same-run committed manager order drives the quiet replay',()=>{
+  const {stageInput}=source();
+  const orderedInput=prepareV91Playtest({distanceKm:40,terrain:'flat',
+    teamCount:4,gender:'M',effort:'steady',attack:'none',chase:'ignore',
+    defaultRivalPlan:'passive',seed:'front-work-4',
+    managerFinaleOrders:[{teamId:'you',atKm:35,effort:'hard'}]});
+  const {recording}=simulateTacticalTourWithHandoffStateV3({...orderedInput,
+    motorVersion:MOTOR_EXHAUSTION_COAST_VERSION});
+  stageInput.overlay.conditionSpans=Array.from({length:9},(_,index)=>{
+    const segment=recording.route.kilometres[index+30];
+    return {id:`committed-km-${index+31}`,fromKm:index+30,
+      toKm:index+31,conditions:{surface:segment.surface,
+        exposed:segment.exposed,source:'simulated',weather:segment.weather}};
+  });
+  const replay=replayCommittedQuietWholeBunchStageV3({recording,
+    frameIndex:29,stageInput,endKm:39});
+  assert.match(replay.version,/committed-effort-replay-3/);
+  assert.equal(replay.refusal,null);
+  assert.equal(replay.frames[4].activeEfforts.find(row=>
+    row.teamId==='you').effort,'steady');
+  assert.equal(replay.frames[5].activeEfforts.find(row=>
+    row.teamId==='you').effort,'hard');
+  for(const frame of replay.frames){
+    const paid=recording.frames[frame.km-1];
+    for(const row of frame.riderStates){
+      const actual=paid.riderGroups.find(candidate=>candidate.id===row.id);
+      assert.equal(row.energy,actual.energy);
+      assert.equal(row.group,actual.group);
+      assert.equal(row.deficitSeconds,actual.deficitSeconds);
+    }
+  }
+  assert.throws(()=>replayCommittedQuietWholeBunchStageV3({
+    recording:structuredClone(recording),frameIndex:29,stageInput,endKm:39}),
+  /same-run issued/);
+});
+
 test('effort replay refuses off-grid or duplicate orders',()=>{
   const {recording,stageInput}=source();
   const input={recording,frameIndex:9,stageInput,endKm:20};
@@ -173,6 +210,19 @@ test('effort replay refuses off-grid or duplicate orders',()=>{
   assert.throws(()=>replayQuietWholeBunchStageV3({...input,
     effortOrders:[{teamId:'you',atKm:10,effort:'hard'},
       {teamId:'you',atKm:10,effort:'steady'}]}),/5 km markers/);
+});
+
+test('committed attack phases stay outside the quiet replay',()=>{
+  const {stageInput}=source();
+  const input=prepareV91Playtest({distanceKm:40,terrain:'flat',
+    teamCount:4,gender:'M',effort:'steady',attack:'none',chase:'ignore',
+    defaultRivalPlan:'passive',seed:'front-work-4',
+    managerFinaleOrders:[{teamId:'you',atKm:35,
+      effort:'hard',attack:'selective'}]});
+  const {recording}=simulateTacticalTourWithHandoffStateV3({...input,
+    motorVersion:MOTOR_EXHAUSTION_COAST_VERSION});
+  assert.throws(()=>replayCommittedQuietWholeBunchStageV3({recording,
+    frameIndex:29,stageInput,endKm:39}),/dynamic team orders/);
 });
 
 test('ambiguous kilometre preserves prior fully paid whole-field frames',()=>{

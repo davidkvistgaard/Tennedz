@@ -311,6 +311,14 @@ return to steady. These hypothetical future orders are **not yet bound to
 the source recording's authenticated manager plan**. Neither replay can
 serve as a player result until the order commitment, dynamic group decisions,
 and finish are integrated and verified.
+A third internal replay version reads only future effort phases already in
+the exact, unchanged same-run v2 recording's committed manager plan. It
+requires each phase to contain only a `steady` or `hard` change at a 5 km
+marker; an attack phase refuses. The locked km 35 hard order activates at
+km 36 and its 32 rider states match the separately paid v2 ordered race
+through km 39. Copied recordings refuse because the issued hidden state
+cannot be authenticated. This closes the order-commitment gap only for the
+quiet-field case; it does not validate dynamic tactics or a finish.
 
 Before routing v3 to guided Motor Lab, verify a complete source field and
 energy ledger at every replay boundary; homogeneous-kilometre parity with
