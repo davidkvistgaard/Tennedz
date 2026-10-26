@@ -505,6 +505,48 @@ test('committed front work stops on the following kilometre',()=>{
   }
 });
 
+test('committed front replay accounts for a passive 20-team field',()=>{
+  const input=prepareV91Playtest({distanceKm:40,terrain:'flat',
+    teamCount:20,gender:'M',effort:'steady',attack:'none',chase:'ignore',
+    defaultRivalPlan:'passive',seed:'front-work-20',
+    managerFinaleOrders:[{teamId:'you',atKm:35,
+      frontWork:'rotate'}]});
+  const {recording}=simulateTacticalTourWithHandoffStateV3({...input,
+    motorVersion:MOTOR_EXHAUSTION_COAST_VERSION});
+  const route=recording.route.kilometres;
+  const stageInput={version:STAGE_COMPLETE_INPUT_VERSION,
+    overlay:{version:3,distanceKm:40,
+      tacticalIntervals:Array.from({length:8},(_,index)=>{
+        const segment=route[index*5];
+        return {fromKm:index*5,toKm:(index+1)*5,
+          conditions:{surface:segment.surface,exposed:segment.exposed,
+            source:'simulated',weather:segment.weather}};
+      }),conditionSpans:Array.from({length:2},(_,index)=>{
+        const segment=route[index+35];
+        return {id:`front-20-${index+36}`,fromKm:index+35,
+          toKm:index+36,conditions:{surface:segment.surface,
+            exposed:segment.exposed,source:'simulated',
+            weather:segment.weather}};
+      }),features:[]},
+    kilometreBaselines:route.map(segment=>({terrain:segment.terrain,
+      gradientPct:segment.gradientPct,source:'simulated'}))};
+  const replay=replayCommittedQuietBunchWithFrontWorkV3({recording,
+    frameIndex:34,stageInput,endKm:37});
+  assert.equal(replay.refusal,null);
+  assert.equal(replay.frames.length,2);
+  for(const frame of replay.frames){
+    assert.equal(frame.riderStates.length,160);
+    assert.deepEqual(frame.paidFrontWork.riderIds,
+      recording.frames[frame.km-1].paidBunchPace.riderIds);
+    for(const row of frame.riderStates){
+      const paid=recording.frames[frame.km-1].riderGroups.find(candidate=>
+        candidate.id===row.id);
+      assert.equal(row.energy,paid.energy);
+      assert.equal(row.group,paid.group);
+    }
+  }
+});
+
 test('ambiguous kilometre preserves prior fully paid whole-field frames',()=>{
   const {recording,stageInput}=source();
   stageInput.overlay.features=[
