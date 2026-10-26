@@ -149,3 +149,16 @@ possible catch stops every rider before the first unpaid slice. This still
 requires a separately paid attack/split handoff before a solo can enter the
 middle lane, and it has no group membership changes, draft, catch resolution,
 classified finish or guided user route.
+
+A bounded v2-to-v3 diagnostic handoff now validates an entire saved v2
+laboratory recording and accepts a checkpoint only **after** a paid, recorded
+road-group split kilometre. It transfers exactly the recorded road groups,
+positive adjacent gaps, committed rider skills, next-kilometre effort and
+post-kilometre energy into the internal mixed-band replay. The old split's
+attack/defense costs are already in that energy and are not charged again;
+the replay starts at the following kilometre. A locked 40 km three-team case
+passes this seam with the attacking solo between two older road bands. It
+still uses an explicitly supplied v3 overlay for future conditions and an
+explicit future work roster; it does not retroactively locate the attack
+inside the completed v2 kilometre or replace its saved recording. No
+user-facing v3 result is produced.
