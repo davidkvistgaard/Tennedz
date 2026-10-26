@@ -169,3 +169,10 @@ Its committed riders and starting road remain byte-for-byte equal, while
 exact-slice work differs on rough exposed road. That demonstrates the intended
 participant-versus-stage seam for this bounded step, not whole-race route
 independence or verified weather for Liège–Bastogne–Liège.
+
+The internal mixed-band clock also treats a rider who cannot pay an exact
+slice as an explicit unresolved exhaustion case. It names the rider and the
+first unpaid span, retains every earlier paid frame, and leaves **all** bands'
+energy and gaps at that span's start. The synthetic stage replay propagates
+that refusal rather than implying a coasting or recovery response. No official
+place or award follows from it.

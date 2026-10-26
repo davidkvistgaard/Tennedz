@@ -88,6 +88,21 @@ test('any possible adjacent contact refuses before charging the whole unpaid sli
   assert.ok(result.gapsSeconds.every(gap=>gap>0));
 });
 
+test('one exhausted rider stops every band before the unpaid slice',()=>{
+  const input=fixture();
+  input.bands[1].members[0].energyBefore=.001;
+  const result=evaluateSeparatedRoadBandsKilometreV3(input);
+  assert.equal(result.status,'unresolved_exhaustion');
+  assert.equal(result.exhaustedRiderId,'solo');
+  assert.deepEqual(result.possibleExhaustionSpan,{fromKm:0,toKm:.2});
+  assert.equal(result.paidUntilKm,0);
+  assert.deepEqual(result.frames,[]);
+  assert.deepEqual(result.gapsSeconds,[5,5]);
+  assert.deepEqual(result.energies,input.bands.flatMap(band=>band.members)
+    .map(member=>({riderId:member.id,energy:member.energyBefore})));
+  assert.equal(Object.hasOwn(result,'places'),false);
+});
+
 test('mixed bands refuse unearned solo sitting, invalid work and nonseparation',()=>{
   const input=fixture();
   for(const invalid of [

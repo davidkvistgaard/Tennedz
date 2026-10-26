@@ -81,6 +81,19 @@ test('mixed-band replay stops all riders at first unpaid possible contact',()=>{
   assert.equal(Object.hasOwn(result,'places'),false);
 });
 
+test('mixed-band replay reports exhausted rider and preserves paid frames',()=>{
+  const input=fixture();
+  input.bands[1].members[0].energyBefore=.001;
+  const result=replaySeparatedRoadBandsStageV3(input);
+  assert.equal(result.status,'unresolved_exhaustion');
+  assert.equal(result.exhaustedRiderId,'solo');
+  assert.deepEqual(result.possibleExhaustionSpan,{fromKm:0,toKm:1});
+  assert.equal(result.paidUntilKm,0);
+  assert.deepEqual(result.kilometres[0].frames,[]);
+  assert.deepEqual(result.gapsSeconds,[100,100]);
+  assert.equal(Object.hasOwn(result,'places'),false);
+});
+
 test('mixed-band replay refuses invalid markers, work and effort',()=>{
   const input=fixture();
   for(const invalid of [
