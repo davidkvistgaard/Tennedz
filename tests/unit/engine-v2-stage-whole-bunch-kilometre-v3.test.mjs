@@ -548,6 +548,28 @@ test('competing front orders account for a passive 20-team field',()=>{
       assert.equal(row.group,paid.group);
     }
   }
+  stageInput.overlay.features=[{id:'illustrative-400m-climb',
+    kind:'climb',fromKm:35.2,toKm:35.6,gradientPct:8}];
+  const shortClimb=replayCommittedQuietBunchWithFrontWorkV3({recording,
+    frameIndex:34,stageInput,endKm:37});
+  assert.equal(shortClimb.refusal,null);
+  assert.deepEqual(shortClimb.frames.map(frame=>({
+    teamId:frame.paidFrontWork.teamId,
+    riderIds:frame.paidFrontWork.riderIds})),
+  replay.frames.map(frame=>({teamId:frame.paidFrontWork.teamId,
+    riderIds:frame.paidFrontWork.riderIds})));
+  for(let frameIndex=0;frameIndex<2;frameIndex++){
+    const flatFrame=replay.frames[frameIndex];
+    const climbFrame=shortClimb.frames[frameIndex];
+    assert.equal(climbFrame.riderStates.length,160);
+    for(let riderIndex=0;riderIndex<160;riderIndex++){
+      const flat=flatFrame.riderStates[riderIndex];
+      const climbed=climbFrame.riderStates[riderIndex];
+      assert.equal(climbed.id,flat.id);
+      assert.ok(climbed.energy<flat.energy);
+      assert.equal(climbed.group,flat.group);
+    }
+  }
 });
 
 test('committed conserve front work prevents recovery for paid helpers',()=>{
