@@ -106,6 +106,75 @@ test('short climb changes later paid energy without changing earlier frames',()=
     row.energy<flat.frames[5].riderStates[index].energy));
 });
 
+test('versioned 5 km effort orders change paid work after each marker',()=>{
+  const {recording,stageInput}=source();
+  const baseline=replayQuietWholeBunchStageV3({recording,frameIndex:9,
+    stageInput,endKm:20});
+  const ordered=replayQuietWholeBunchStageV3({recording,frameIndex:9,
+    stageInput,endKm:20,effortOrders:[
+      {teamId:'you',atKm:10,effort:'hard'},
+      {teamId:'you',atKm:15,effort:'steady'},
+    ]});
+  assert.match(ordered.version,/effort-replay-2/);
+  assert.equal(ordered.refusal,null);
+  assert.equal(ordered.frames[0].activeEfforts.find(row=>
+    row.teamId==='you').effort,'hard');
+  assert.equal(ordered.frames[4].activeEfforts.find(row=>
+    row.teamId==='you').effort,'hard');
+  assert.equal(ordered.frames[5].activeEfforts.find(row=>
+    row.teamId==='you').effort,'steady');
+  const own=ordered.frames[0].riderWork.find(row=>row.id==='you-0');
+  const old=baseline.frames[0].riderWork.find(row=>row.id==='you-0');
+  assert.ok(own.work>old.work);
+  assert.ok(ordered.frames.at(-1).riderStates.find(row=>row.id==='you-0').energy<
+    baseline.frames.at(-1).riderStates.find(row=>row.id==='you-0').energy);
+  assert.equal(ordered.frames[0].riderWork.find(row=>row.id==='rival-1-0').work,
+    baseline.frames[0].riderWork.find(row=>row.id==='rival-1-0').work);
+  assert.equal(baseline.frames[0].activeEfforts,undefined);
+});
+
+test('late 5 km effort change matches a separately paid v2 order',()=>{
+  const {recording,stageInput}=source();
+  const orderedInput=prepareV91Playtest({distanceKm:40,terrain:'flat',
+    teamCount:4,gender:'M',effort:'steady',attack:'none',chase:'ignore',
+    defaultRivalPlan:'passive',seed:'front-work-4',
+    managerFinaleOrders:[{teamId:'you',atKm:35,effort:'hard'}]});
+  const orderedV2=simulateTacticalTourWithHandoffStateV3({...orderedInput,
+    motorVersion:MOTOR_EXHAUSTION_COAST_VERSION}).recording;
+  assert.deepEqual(recording.frames[29].riderGroups,
+    orderedV2.frames[29].riderGroups);
+  stageInput.overlay.conditionSpans=Array.from({length:9},(_,index)=>{
+    const segment=recording.route.kilometres[index+30];
+    return {id:`late-km-${index+31}`,fromKm:index+30,toKm:index+31,
+      conditions:{surface:segment.surface,exposed:segment.exposed,
+        source:'simulated',weather:segment.weather}};
+  });
+  const replay=replayQuietWholeBunchStageV3({recording,frameIndex:29,
+    stageInput,endKm:39,
+    effortOrders:[{teamId:'you',atKm:35,effort:'hard'}]});
+  assert.equal(replay.refusal,null);
+  assert.equal(replay.frames.length,9);
+  for(const frame of replay.frames){
+    const paid=orderedV2.frames[frame.km-1];
+    for(const row of frame.riderStates){
+      const actual=paid.riderGroups.find(candidate=>candidate.id===row.id);
+      assert.equal(row.energy,actual.energy);
+      assert.equal(row.group,actual.group);
+      assert.equal(row.deficitSeconds,actual.deficitSeconds);
+    }
+  }
+});
+
+test('effort replay refuses off-grid or duplicate orders',()=>{
+  const {recording,stageInput}=source();
+  const input={recording,frameIndex:9,stageInput,endKm:20};
+  assert.throws(()=>replayQuietWholeBunchStageV3({...input,
+    effortOrders:[{teamId:'you',atKm:11,effort:'hard'}]}),/5 km markers/);
+  assert.throws(()=>replayQuietWholeBunchStageV3({...input,
+    effortOrders:[{teamId:'you',atKm:10,effort:'hard'},
+      {teamId:'you',atKm:10,effort:'steady'}]}),/5 km markers/);
+});
+
 test('ambiguous kilometre preserves prior fully paid whole-field frames',()=>{
   const {recording,stageInput}=source();
   stageInput.overlay.features=[

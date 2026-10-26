@@ -302,6 +302,15 @@ the entire unsupported kilometre is rolled back and earlier fully paid
 kilometres remain; partial work within that kilometre is not exposed.
 This replay still has no attacks, front work, shelter, recovery, drop,
 occupied-wheel position, finish or official award, and is preview-only.
+An independently versioned replay can also take declared team-wide
+`steady`/`hard` effort changes at future 5 km markers. The marker changes
+the following kilometre, not the marker kilometre. A late 40 km case
+matches a separately paid v2 hard-order recording for all riders through
+the interior kilometres; another case shows a hard order followed by a
+return to steady. These hypothetical future orders are **not yet bound to
+the source recording's authenticated manager plan**. Neither replay can
+serve as a player result until the order commitment, dynamic group decisions,
+and finish are integrated and verified.
 
 Before routing v3 to guided Motor Lab, verify a complete source field and
 energy ledger at every replay boundary; homogeneous-kilometre parity with
