@@ -187,6 +187,14 @@ recomputes this from the prior rear-group gap, recorded attack/chase
 contributions, passive movement and the bounded final-kilometre rule. In a
 simple surviving rear group it must also equal the road-group gap. All 96
 constructed races passed the check; changing an attack contribution or this
-paid gap is refused. Passive movement is still a recorded value rather than
-independently recomputed from every rider's state, so this is not yet a
-complete proof of the group's movement or of individual wheel contact.
+paid gap is refused. The remaining limitation is that the one-kilometre road
+model cannot prove each rider's continuous position or wheel contact.
+
+The passive break/bunch drift calculation is now a shared pure function used
+by both the motor and the v94 recording check. The check reconstructs each
+prior rider's energy and committed skills/orders, the active break pullers,
+the dropped riders, the route kilometre, paid bunch-front pace and the
+validated bunch-easing decision. It rejects a forged passive gap even if the
+forged final gap is made arithmetically consistent. All 96 constructed cases
+passed. This still uses the version's coarse kilometre road model and does
+not establish a continuous occupied-wheel trace or an official result.

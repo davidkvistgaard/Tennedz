@@ -177,6 +177,11 @@ test('selective captain teams pursue a one-day finale but can leave a stage brea
   const changedGap=structuredClone(oneDay);
   changedGap.frames[firstPursuit.km-1].paidRearGapSeconds+=2;
   assert.throws(()=>validateRecordedTour(changedGap),/paid rear gap/);
+  const changedDrift=structuredClone(oneDay);
+  changedDrift.frames[firstPursuit.km-1].passiveGapDelta+=1;
+  changedDrift.frames[firstPursuit.km-1].paidRearGapSeconds+=1;
+  assert.throws(()=>validateRecordedTour(changedDrift),
+    /passive road movement/);
   const changedAttackPower=structuredClone(oneDay);
   const attackFrame=changedAttackPower.frames.find(frame=>frame.attackers.length);
   assert.ok(attackFrame);
