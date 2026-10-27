@@ -1117,3 +1117,19 @@ and road clock, not a target assigned to the group. These synthetic pairs
 do not calibrate either policy to real racing. Active rotation is now the
 single policy in the experimental preview; the comparison remains
 read-only, while the guided motor and saved results remain unchanged.
+
+### Guided Plan & Race route orders
+
+The guided Motor Lab now uses the recorded route profile as the tactic
+timeline. A 5 km slider selects where a change begins; any number of
+effort, chase or bunch-front-work changes may be placed on that route.
+`managerTacticalOrdersV5` commits those changes as explicit phase orders,
+while older V2–V4 inputs and recordings retain their own parsers.
+The guided starting attack order is `none`. A user-selected break window
+commits `selective` at its start and `none` at its end; V5 rejects an
+unclosed, repeated or overlapping attack interval. Selective attempts
+are only considered at the motor's 20 km cadence and route keypoints,
+subject to rider position and available energy. The UI offers windows
+that contain at least one 20 km opportunity. No attack or gap is
+guaranteed. The separate experimental v94 race-dynamics preview is
+unchanged.

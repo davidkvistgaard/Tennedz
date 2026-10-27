@@ -30,7 +30,8 @@ test('guided Motor Lab runs a race from setup to rider replay',async({page,conte
   await page.screenshot({path:'test-results/guided-motor-lab-start.png',
     fullPage:true});
   await expect(page.getByLabel('Distance')).toHaveValue('40');
-  await expect(page.getByLabel('Your attack order')).toHaveValue('none');
+  await expect(page.getByLabel('Plan orders on the route'))
+    .toContainText('starts without an attack order');
   await expect(page.getByLabel('Default tactics for uncustomized managers'))
     .toHaveValue('random');
   await expect(page.getByRole('checkbox',
@@ -243,7 +244,7 @@ test('guided Motor Lab runs a race from setup to rider replay',async({page,conte
   }
   await page.locator('.v91-road-gap-diagram').screenshot({
     path:'test-results/guided-road-gap-diagram.png'});
-  expect(coasted.pointPreview.awardRows).toEqual([]);
+  expect(coasted.pointPreview??null).toBeNull();
   await expect(page.getByRole('region',{name:'Your v93 finish'}))
     .toContainText('Conditional place:');
   await expect(page.getByRole('table',
@@ -266,8 +267,11 @@ test('guided race diagram shows paid front-group time gaps',async({page})=>{
   await page.goto('/team/motor-lab');
   await page.getByLabel('Distance').selectOption('260');
   await page.getByLabel('Starting fatigue').selectOption('30');
-  await page.getByLabel('Your attack order').selectOption('repeated');
-  await page.getByLabel('Your chase order').selectOption('ignore');
+  await page.getByLabel('Starting chase').selectOption('ignore');
+  await page.getByRole('slider',{name:/Choose a place on the route/})
+    .fill('5');
+  await page.locator('.v91-timeline-editor')
+    .getByLabel('Try to get away from the bunch').selectOption('20');
   await page.locator('summary').filter({hasText:'Other managers'}).click();
   await page.getByLabel('Default tactics for uncustomized managers')
     .selectOption('attack');
@@ -390,20 +394,18 @@ test('guided front-work order is paid only after its 5 km marker',async({page})=
   await page.getByRole('button',{name:'Sign in',exact:true}).click();
   await expect(page).toHaveURL(/\/team$/);
   await page.goto('/team/motor-lab');
-  await page.getByLabel('Your chase order').selectOption('ignore');
-  await page.getByLabel('Scenario seed').fill('front-work-4');
+  await page.getByLabel('Starting chase').selectOption('ignore');
+  await page.locator('summary').filter({hasText:'Repeat a race'}).click();
+  await page.getByLabel('Race seed').fill('front-work-4');
   await page.locator('summary').filter({hasText:'Other managers'}).click();
   await page.getByLabel('Default tactics for uncustomized managers')
     .selectOption('passive');
-  await page.locator('summary').filter({hasText:'Timed team orders'}).click();
-  await page.getByLabel('First order marker after').selectOption('10');
-  await page.getByLabel('Effort after 10 km for you').selectOption('hard');
-  await page.getByLabel('Bunch-front work after 10 km for your team')
-    .selectOption('rotate');
-  await page.getByLabel('Optional second order marker after')
-    .selectOption('20');
-  await page.getByLabel('Bunch-front work after 20 km for your team')
-    .selectOption('sit_in');
+  const editor=page.locator('.v91-timeline-editor');
+  await page.getByRole('slider',{name:/Choose a place on the route/}).fill('10');
+  await editor.getByLabel('Effort').selectOption('hard');
+  await editor.getByLabel('Bunch-front work').selectOption('rotate');
+  await page.getByRole('slider',{name:/Choose a place on the route/}).fill('20');
+  await editor.getByLabel('Bunch-front work').selectOption('sit_in');
   const responsePromise=page.waitForResponse(response=>
     response.url().endsWith('/api/v91-playtest')&&
     response.request().method()==='POST');
@@ -412,7 +414,7 @@ test('guided front-work order is paid only after its 5 km marker',async({page})=
   expect(response.status()).toBe(200);
   const {coasted}=await response.json();
   await closeDefaultRaceScreen(page);
-  expect(coasted.settings.managerTacticalOrdersV4).toEqual([
+  expect(coasted.settings.managerTacticalOrdersV5).toEqual([
     {teamId:'you',atKm:10,effort:'hard',frontWork:'rotate'},
     {teamId:'you',atKm:20,frontWork:'sit_in'},
   ]);
@@ -460,22 +462,13 @@ test('guided Motor Lab applies an effort order after a selected 5 km marker', as
   await page.locator('summary').filter({hasText:'Other managers'}).click();
   await page.getByLabel('Default tactics for uncustomized managers')
     .selectOption('passive');
-  const stageResponsePromise=page.waitForResponse(response=>
-    response.url().endsWith('/api/v91-playtest/stage-plan')&&
-    response.request().method()==='POST');
-  await page.getByRole('button',{name:'Load stage inputs'}).click();
-  const stageResponse=await stageResponsePromise;
-  expect(stageResponse.status()).toBe(200);
-  const {stagePlan}=await stageResponse.json();
-  expect(stagePlan.intervals).toHaveLength(8);
-  await expect(page.getByRole('img',{name:'Stage profile before tactics'}))
+  await expect(page.getByRole('img',{name:'Stage profile with planned orders'}))
     .toBeVisible();
-  await page.getByLabel('Stage inputs before tactics').screenshot({
+  await page.getByLabel('Plan orders on the route').screenshot({
     path:'test-results/guided-stage-before-tactics.png'});
-  await page.getByRole('button',{name:'Use 15 km as first order marker'}).click();
-  await page.locator('summary').filter({hasText:'Timed team orders'}).click();
-  await expect(page.getByLabel('First order marker after')).toHaveValue('15');
-  await page.getByLabel('Effort after 15 km for you').selectOption('hard');
+  await page.getByRole('slider',{name:/Choose a place on the route/}).fill('15');
+  await page.locator('.v91-timeline-editor').getByLabel('Effort')
+    .selectOption('hard');
   const responsePromise=page.waitForResponse(response=>
     response.url().endsWith('/api/v91-playtest')&&
     response.request().method()==='POST');
@@ -484,8 +477,7 @@ test('guided Motor Lab applies an effort order after a selected 5 km marker', as
   expect(response.status()).toBe(200);
   const {coasted}=await response.json();
   await closeDefaultRaceScreen(page);
-  expect(stagePlan.stageTrace).toEqual(coasted.stageTrace);
-  expect(coasted.settings.managerTacticalOrdersV2)
+  expect(coasted.settings.managerTacticalOrdersV5)
     .toEqual([{teamId:'you',atKm:15,effort:'hard'}]);
   const startingEffort=coasted.managerOrders.find(row=>
     row.teamId==='you').effort;
@@ -555,40 +547,38 @@ test('guided Motor Lab replays two precommitted 5 km effort changes', async({pag
   await page.getByRole('button',{name:'Sign in',exact:true}).click();
   await expect(page).toHaveURL(/\/team$/);
   await page.goto('/team/motor-lab');
-  await page.getByRole('button',{name:'Load stage inputs'}).click();
-  await expect(page.getByRole('img',{name:'Stage profile before tactics'}))
+  await expect(page.getByRole('img',{name:'Stage profile with planned orders'}))
     .toBeVisible();
-  await page.getByRole('button',{name:'Use 15 km as first order marker'}).click();
-  await page.getByRole('button',{name:'Use 25 km as second order marker'}).click();
-  await page.getByRole('button',{name:'Use 25 km as first order marker'}).click();
-  await expect(page.getByLabel('Stage inputs before tactics'))
-    .toContainText('Selected markers: 25 km.');
-  await page.getByRole('button',{name:'Use 15 km as first order marker'}).click();
-  await page.getByRole('button',{name:'Use 25 km as second order marker'}).click();
-  await expect(page.getByLabel('Stage inputs before tactics'))
-    .toContainText('Selected markers: 15 km, 25 km');
-  await page.getByLabel('Stage inputs before tactics').screenshot({
+  const routeSlider=page.getByRole('slider',
+    {name:/Choose a place on the route/});
+  const editor=page.locator('.v91-timeline-editor');
+  await routeSlider.fill('15');
+  await editor.getByLabel('Effort').selectOption('hard');
+  await routeSlider.fill('25');
+  await editor.getByLabel('Effort').selectOption('conserve');
+  await expect(page.getByLabel('Plan orders on the route'))
+    .toContainText('15 km · effort: hard');
+  await expect(page.getByLabel('Plan orders on the route'))
+    .toContainText('25 km · effort: conserve');
+  await page.getByLabel('Plan orders on the route').screenshot({
     path:'test-results/guided-two-stage-markers.png'});
-  await page.locator('summary').filter({hasText:'Timed team orders'}).click();
-  await expect(page.getByLabel('First order marker after')).toHaveValue('15');
-  await page.getByLabel('Effort after 15 km for you').selectOption('hard');
-  await expect(page.getByLabel('Optional second order marker after'))
-    .toHaveValue('25');
-  await page.getByLabel('Effort after 25 km for you').selectOption('steady');
-  await page.getByLabel('Bunch-front work after 25 km for your team')
-    .selectOption('sit_in');
-  await page.getByLabel('Optional second order marker after')
-    .selectOption('');
-  await page.getByLabel('Optional second order marker after')
-    .selectOption('25');
-  await expect(page.getByLabel('Effort after 25 km for you')).toHaveValue('');
-  await expect(page.getByLabel('Bunch-front work after 25 km for your team'))
-    .toHaveValue('');
-  await page.getByLabel('Effort after 25 km for you').selectOption('conserve');
   await expect(page.getByLabel('Race plan before running'))
-    .toContainText('Hard effort after 15 km');
+    .toContainText('15 km: effort hard');
   await expect(page.getByLabel('Race plan before running'))
-    .toContainText('Conserve effort after 25 km');
+    .toContainText('25 km: effort conserve');
+  await routeSlider.fill('5');
+  await editor.getByLabel('Try to get away from the bunch')
+    .selectOption('20');
+  await expect(page.getByLabel('Plan orders on the route'))
+    .toContainText('Break attempt: after 5 km until 25 km');
+  await expect(page.getByLabel('Plan orders on the route'))
+    .toContainText('5 km · attack: selective');
+  await editor.getByLabel('Try to get away from the bunch')
+    .selectOption('0');
+  await expect(page.getByLabel('Plan orders on the route'))
+    .not.toContainText('5 km · attack: selective');
+  await expect(page.getByText('Optional points illustration'))
+    .toHaveCount(0);
   await page.getByLabel('Race plan before running').screenshot({
     path:'test-results/guided-two-marker-plan.png'});
   const responsePromise=page.waitForResponse(response=>
@@ -599,7 +589,7 @@ test('guided Motor Lab replays two precommitted 5 km effort changes', async({pag
   expect(response.status()).toBe(200);
   const {coasted}=await response.json();
   await closeDefaultRaceScreen(page);
-  expect(coasted.settings.managerTacticalOrdersV3).toEqual([
+  expect(coasted.settings.managerTacticalOrdersV5).toEqual([
     {teamId:'you',atKm:15,effort:'hard'},
     {teamId:'you',atKm:25,effort:'conserve'},
   ]);

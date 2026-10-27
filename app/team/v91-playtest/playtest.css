@@ -292,6 +292,17 @@
 .v91-stage-plan h3{margin:0 0 7px}
 .v91-stage-plan p{margin:0 0 12px;color:#526b63}
 .v91-stage-plan>button{padding:8px 14px}
+.v91-timeline-controls{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;margin:12px 0}
+.v91-timeline-controls label{min-width:0}
+.v91-route-slider{display:block;margin:12px 0;font-weight:700}
+.v91-route-slider input{display:block;width:100%;margin:10px 0;accent-color:#116e60}
+.v91-timeline-editor{padding:14px;border:1px solid #b8cec5;border-radius:10px;background:#fff}
+.v91-timeline-editor h3{margin:0 0 7px}
+.v91-timeline-editor>label{display:block;max-width:360px}
+.v91-planned-orders{margin-top:14px}
+.v91-planned-orders ol{display:flex;flex-wrap:wrap;gap:8px;list-style:none;padding:0;margin:8px 0}
+.v91-planned-orders button{padding:7px 10px;text-align:left;border:1px solid #9ebdb1;border-radius:8px;background:#f5faf7;color:#17312e;font-weight:700}
+.v91-planned-orders button:focus-visible{outline:3px solid #116e60;outline-offset:2px}
 .v91-stage-intervals{display:flex;gap:9px;overflow-x:auto;margin:12px 0;padding:2px 2px 12px;scroll-snap-type:x proximity}
 .v91-stage-intervals article{display:grid;gap:7px;align-content:start;flex:0 0 230px;padding:12px;border:1px solid #a6c2b8;border-radius:10px;background:#e8f2ee;scroll-snap-align:start}
 .v91-stage-intervals article span{font-size:.85rem}

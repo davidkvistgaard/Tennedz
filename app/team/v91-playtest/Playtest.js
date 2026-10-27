@@ -8,6 +8,8 @@ import {resolveRandomRivalTactics} from
 import {raceViewerCommentaryV1} from
   '../../../lib/engine/v2/playtest-commentary-v1.mjs';
 import {recordedStageProfile} from '../../../lib/engine/v2/playtest-stage-trace.mjs';
+import {guidedTimelinePhases} from
+  '../../../lib/engine/v2/playtest-timeline-v1.mjs';
 import {summarizePlaytestRaceStory} from
   '../../../lib/engine/v2/playtest-race-story.mjs';
 import {raceViewerCheckpoints,raceViewerEnergySeries,
@@ -151,10 +153,12 @@ function coastedComparisonRun(settings,summary,pointContext){
       place:conditionalPlace(rivalPlace,'unresolved'),
       previewPoints:pointContext?preview?.previewPoints??null:null};
   });
-  const effortMarkerKm=settings.managerTacticalOrdersV4?.[0]?.atKm??
+  const effortMarkerKm=settings.managerTacticalOrdersV5?.[0]?.atKm??
+    settings.managerTacticalOrdersV4?.[0]?.atKm??
     settings.managerTacticalOrdersV2?.[0]?.atKm??settings.distanceKm-5;
   return {conditions:comparisonConditions(settings),finisherId,effortMarkerKm,
-    multiMarker: Boolean(settings.managerTacticalOrdersV4?.length||
+    multiMarker: Boolean(settings.managerTacticalOrdersV5?.length||
+      settings.managerTacticalOrdersV4?.length||
       settings.managerTacticalOrdersV3?.length),
     planWithoutLateEffort:JSON.stringify({
       settings:{...settings,managerFinaleOrders:
@@ -222,10 +226,13 @@ export default function Playtest({guided=false}){
   const [secondEfforts,setSecondEfforts]=useState({});
   const [firstFrontWork,setFirstFrontWork]=useState('');
   const [secondFrontWork,setSecondFrontWork]=useState('');
+  const [timelineKm,setTimelineKm]=useState(5);
+  const [timelineOrders,setTimelineOrders]=useState([]);
+  const [breakWindow,setBreakWindow]=useState(null);
   const [finaleFrontWork,setFinaleFrontWork]=useState({});
   const [namedAttack,setNamedAttack]=useState({teamId:'',riderId:''});
   const [secondNamedAttack,setSecondNamedAttack]=useState({teamId:'',riderId:''});
-  const [showPointPreview,setShowPointPreview]=useState(guided);
+  const [showPointPreview,setShowPointPreview]=useState(false);
   const [pointContext,setPointContext]=useState({tier:2,
     divisionIndex:1,divisionCount:2});
   const [result,setResult]=useState(null);
@@ -278,6 +285,12 @@ export default function Playtest({guided=false}){
     }):[];
   const frame=result?.frames[selectedKm-1];
   const change=(key,value)=>{
+    if(key==='distanceKm'){
+      const lastMarker=Number(value)-5;
+      setTimelineKm(km=>Math.min(km,lastMarker));
+      setTimelineOrders(orders=>orders.filter(row=>row.atKm<=lastMarker));
+      setBreakWindow(window=>window?.toKm<=lastMarker?window:null);
+    }
     if(key==='teamCount'){
       setCustomRivals(count=>Math.min(count,Number(value)-1));
       setExtraRivalId('');
@@ -482,7 +495,8 @@ export default function Playtest({guided=false}){
       behavior:checkpointPlaying?'auto':'smooth'});
   },[coastedKm,coasted,checkpointPlaying]);
   const viewerEnergy=coasted?raceViewerEnergySeries(coasted,viewerRiderId):[];
-  const recordedTimedOrders=coasted?.settings.managerTacticalOrdersV4??
+  const recordedTimedOrders=coasted?.settings.managerTacticalOrdersV5??
+    coasted?.settings.managerTacticalOrdersV4??
     coasted?.settings.managerTacticalOrdersV3??
     coasted?.settings.managerTacticalOrdersV2??[];
   const recordedEffortMarkersKm=[...new Set(recordedTimedOrders.map(row=>
@@ -659,6 +673,19 @@ export default function Playtest({guided=false}){
   const visibleStagePlan=stagePlan?.key===stagePlanKey?stagePlan.data:null;
   const stageProfile=visibleStagePlan?
     recordedStageProfile(visibleStagePlan.stageTrace):null;
+  const selectedTimelineKm=Math.min(timelineKm,settings.distanceKm-5);
+  const selectedTimelineOrder=timelineOrders.find(row=>
+    row.atKm===selectedTimelineKm)??{};
+  const guidedPhases=guidedTimelinePhases(timelineOrders,breakWindow,
+    settings.distanceKm);
+  const changeTimelineOrder=(key,value)=>setTimelineOrders(current=>{
+    const other=current.filter(row=>row.atKm!==selectedTimelineKm);
+    const previous=current.find(row=>row.atKm===selectedTimelineKm)??
+      {atKm:selectedTimelineKm};
+    const next={...previous,[key]:value};
+    return Object.keys(next).some(field=>field!=='atKm'&&next[field])?
+      [...other,next].sort((a,b)=>a.atKm-b.atKm):other;
+  });
   const chosenEffortMarkerKm=Math.min(effortMarkerKm??settings.distanceKm-5,settings.distanceKm-5);
   const chosenSecondEffortMarkerKm=Number.isInteger(secondEffortMarkerKm)&&
     secondEffortMarkerKm>=5&&secondEffortMarkerKm<=settings.distanceKm-5&&
@@ -666,7 +693,8 @@ export default function Playtest({guided=false}){
       secondEffortMarkerKm:null;
   const currentChoices=JSON.stringify({settings,customRivals,
     finalePlans,lateEfforts,effortMarkerKm,secondEffortMarkerKm,
-    secondEfforts,firstFrontWork,secondFrontWork,showPointPreview,
+    secondEfforts,firstFrontWork,secondFrontWork,timelineOrders,
+    breakWindow,showPointPreview,
     pointContext:showPointPreview?pointContext:null,
     integratedMode,coastedMode,
     ...(!coastedMode?{finaleFrontWork,namedAttack,
@@ -706,9 +734,10 @@ export default function Playtest({guided=false}){
       chase?{'you':'conserve'}:{});
     setFinaleFrontWork({});
     setFirstFrontWork('');setSecondFrontWork('');
+    setTimelineKm(5);setTimelineOrders([]);setBreakWindow(null);
     setNamedAttack({teamId:'',riderId:''});
     setSecondNamedAttack({teamId:'',riderId:''});
-    setShowPointPreview(true);
+    setShowPointPreview(!guided);
     setPointContext({tier:2,divisionIndex:1,divisionCount:2});
     setResult(null);setIntegrated(null);setCoasted(null);
     setRoadPreview(null);setError('');
@@ -728,6 +757,21 @@ export default function Playtest({guided=false}){
     }catch(cause){setStagePlanError(cause.message||'The stage could not load.');}
     finally{setStagePlanBusy(false);}
   }
+
+  useEffect(()=>{
+    if(!guided)return;
+    let active=true;
+    setStagePlanBusy(true);setStagePlanError('');
+    api('/api/v91-playtest/stage-plan',{method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({settings:JSON.parse(stagePlanKey)})})
+      .then(response=>{if(active)setStagePlan({key:stagePlanKey,
+        data:response.stagePlan});})
+      .catch(cause=>{if(active)setStagePlanError(cause.message||
+        'The stage could not load.');})
+      .finally(()=>{if(active)setStagePlanBusy(false);});
+    return ()=>{active=false;};
+  },[guided,stagePlanKey]);
 
   async function run(event){
     event.preventDefault();setBusy(true);setError('');
@@ -775,7 +819,9 @@ export default function Playtest({guided=false}){
         managerTacticOverrides:resolvedOverrides,
         ...(!coastedMode&&secondNamedAttack.teamId?{
           managerFinaleOrders:[...orders.values()]}:{}),
-        ...(integratedMode&&coastedMode&&(firstFrontWork||
+        ...(guided&&integratedMode&&coastedMode?{
+          ...(guidedPhases.length?{managerTacticalOrdersV5:guidedPhases}:{})}:
+        integratedMode&&coastedMode&&(firstFrontWork||
           chosenSecondEffortMarkerKm!==null&&secondFrontWork)?{
           managerTacticalOrdersV4:[...firstTimedPhases,...secondTimedPhases]}:
         integratedMode&&coastedMode?chosenSecondEffortMarkerKm!==null&&
@@ -971,59 +1017,82 @@ export default function Playtest({guided=false}){
           </label>)}</div>
           <small>Each 20% segment is limited to an average gradient of 10%.</small>
         </fieldset>}
-        {guided&&<section className="v91-stage-plan" aria-label="Stage inputs before tactics">
-          <h3>Inspect the stage before giving orders</h3>
-          <p>The stage plan uses the same simulated 1 km route inputs as the race. Each 5 km card summarizes five separate kilometres, including changing wind and weather. This view does not resolve short climbs or landmarks.</p>
-          <button type="button" onClick={loadStagePlan} disabled={stagePlanBusy}>
-            {stagePlanBusy?'Loading stage…':visibleStagePlan?'Reload stage inputs':'Load stage inputs'}
-          </button>
-          {stagePlanError&&<p className="v91-error" role="alert">{stagePlanError}</p>}
-          {stagePlan&&!visibleStagePlan&&<p role="status">Route settings changed. Reload the stage inputs for this route.</p>}
-          {visibleStagePlan&&<div>
-            <div className="v91-stage-profile">
-              <svg viewBox="0 0 600 120" role="img" aria-label="Stage profile before tactics">
-                <polyline points={stageProfile.points}/>
-                {[chosenEffortMarkerKm,chosenSecondEffortMarkerKm]
-                  .filter(km=>km!==null).map((km,index)=>
-                  <line key={index} className="v91-stage-marker"
-                    x1={20+km/settings.distanceKm*560}
-                    x2={20+km/settings.distanceKm*560}
-                    y1="12" y2="110"/>)}
-              </svg>
-              <p>Selected markers: {chosenEffortMarkerKm} km{chosenSecondEffortMarkerKm!==null?
-                ', '+chosenSecondEffortMarkerKm+' km':''}. Dashed lines are selected tactic locations, not issued orders.</p>
-              <p>Simulated route · {stageProfile.minElevationM.toFixed(0)}–{stageProfile.maxElevationM.toFixed(0)} m at 1 km resolution. The profile can hide short steep climbs.</p>
+        {guided&&<section className="v91-stage-plan" aria-label="Plan orders on the route">
+          <div className="v91-step-heading"><span>02 / TACTICS</span><h2>Plan on the route</h2>
+            <p>Set your starting approach, then move along the profile to change orders at specific places.</p></div>
+          <div className="v91-timeline-controls">
+            {['effort','chase'].map(key=><label key={key}>{key==='effort'?'Starting effort':'Starting chase'}
+              <select value={settings[key]} onChange={event=>change(key,event.target.value)}>
+                {OPTIONS[key].map(([value,label])=><option key={value} value={value}>{label}</option>)}
+              </select></label>)}
+          </div>
+          <p>Your team starts without an attack order. A bounded break attempt below only asks riders to look for a move during that part of the route. Position and energy can prevent an attempt.</p>
+          {stagePlanError&&<p className="v91-error" role="alert">{stagePlanError} <button type="button" onClick={loadStagePlan}>Retry route</button></p>}
+          {stagePlanBusy&&!visibleStagePlan&&<p role="status">Loading route profile…</p>}
+          <div className="v91-stage-profile">
+            {stageProfile&&<svg viewBox="0 0 600 120" role="img" aria-label="Stage profile with planned orders">
+              <polyline points={stageProfile.points}/>
+              {guidedPhases.map(phase=><line key={phase.atKm} className="v91-stage-marker"
+                x1={20+phase.atKm/settings.distanceKm*560}
+                x2={20+phase.atKm/settings.distanceKm*560} y1="12" y2="110"/>)}
+              <line className="v91-stage-current"
+                x1={20+selectedTimelineKm/settings.distanceKm*560}
+                x2={20+selectedTimelineKm/settings.distanceKm*560} y1="12" y2="110"/>
+            </svg>}
+            <label className="v91-route-slider">Choose a place on the route · {selectedTimelineKm} km
+              <input type="range" min="5" max={settings.distanceKm-5} step="5"
+                value={selectedTimelineKm} onChange={event=>
+                  setTimelineKm(Number(event.target.value))}/>
+            </label>
+            {stageProfile&&<p>{stageProfile.minElevationM.toFixed(0)}–{stageProfile.maxElevationM.toFixed(0)} m · simulated 1 km route profile. Short climbs may be hidden.</p>}
+          </div>
+          <div className="v91-timeline-editor">
+            <h3>Orders after {selectedTimelineKm} km</h3>
+            <p>Changes take effect in the following kilometre and last until you change them again.</p>
+            <div className="v91-timeline-controls">
+              <label>Effort<select value={selectedTimelineOrder.effort??''}
+                onChange={event=>changeTimelineOrder('effort',event.target.value)}>
+                <option value="">Keep previous effort</option>
+                {OPTIONS.effort.map(([value,label])=><option value={value} key={value}>{label}</option>)}
+              </select></label>
+              <label>Chase<select value={selectedTimelineOrder.chase??''}
+                onChange={event=>changeTimelineOrder('chase',event.target.value)}>
+                <option value="">Keep previous chase order</option>
+                {OPTIONS.chase.map(([value,label])=><option value={value} key={value}>{label}</option>)}
+              </select></label>
+              <label>Bunch-front work<select value={selectedTimelineOrder.frontWork??''}
+                onChange={event=>changeTimelineOrder('frontWork',event.target.value)}>
+                <option value="">Keep previous work order</option>
+                <option value="rotate">Try to set pace with helpers</option>
+                <option value="sit_in">Sit in</option>
+              </select></label>
             </div>
-            <div className="v91-stage-intervals">{visibleStagePlan.intervals.map(interval=>
-              <article key={interval.fromKm}>
-                <strong>{interval.fromKm}–{interval.toKm} km</strong>
-                <span>{interval.terrains.join(', ')} · {interval.surfaces.join(', ')}</span>
-                <span>{interval.startM.toFixed(0)} → {interval.endM.toFixed(0)} m · sampled range {interval.minM.toFixed(0)}–{interval.maxM.toFixed(0)} m</span>
-                <span>{interval.exposedKm}/5 km exposed · wind {interval.windKph[0].toFixed(0)}–{interval.windKph[1].toFixed(0)} km/h</span>
-                <span>Temp {interval.temperatureC[0].toFixed(0)}–{interval.temperatureC[1].toFixed(0)} °C · rain {interval.rainMm[0].toFixed(1)}–{interval.rainMm[1].toFixed(1)} mm</span>
-                {interval.toKm<settings.distanceKm&&<>
-                  <button type="button" aria-pressed={interval.toKm===chosenEffortMarkerKm}
-                    onClick={()=>{
-                      setEffortMarkerKm(interval.toKm);
-                      if(secondEffortMarkerKm===interval.toKm)
-                        clearSecondTimedOrder();
-                    }}>
-                    Use {interval.toKm} km as first order marker
-                  </button>
-                  {interval.toKm!==chosenEffortMarkerKm&&
-                    <button type="button"
-                      aria-pressed={interval.toKm===chosenSecondEffortMarkerKm}
-                      onClick={()=>setSecondEffortMarkerKm(interval.toKm)}>
-                      Use {interval.toKm} km as second order marker
-                    </button>}
-                </>}
-              </article>)}</div>
-            <p>Open Timed team orders below to choose an effort or bunch-front work; selecting a marker alone does not issue an order.</p>
-          </div>}
+            <label>Try to get away from the bunch
+              <select value={breakWindow?.fromKm===selectedTimelineKm?
+                breakWindow.toKm-breakWindow.fromKm:0}
+                onChange={event=>setBreakWindow(Number(event.target.value)?{
+                  fromKm:selectedTimelineKm,
+                  toKm:selectedTimelineKm+Number(event.target.value)}:null)}>
+                <option value="0">No break attempt starting here</option>
+                {[20,40].filter(length=>selectedTimelineKm+length<=
+                  settings.distanceKm-5&&
+                  Math.ceil((selectedTimelineKm+1)/20)*20<
+                    selectedTimelineKm+length).map(length=><option value={length} key={length}>
+                  Look for a break for {length} km</option>)}
+              </select>
+            </label>
+            {breakWindow&&<p>Break attempt: after {breakWindow.fromKm} km until {breakWindow.toKm} km. The engine considers selective attempts every 20 km and at route keypoints during that interval; it does not attack every kilometre. Select another place to move this interval.</p>}
+          </div>
+          <div className="v91-planned-orders"><strong>Planned changes</strong>
+            {guidedPhases.length?<ol>{guidedPhases.map(phase=><li key={phase.atKm}>
+              <button type="button" onClick={()=>setTimelineKm(phase.atKm)}>
+                {phase.atKm} km · {['effort','chase','frontWork','attack']
+                  .filter(key=>phase[key]).map(key=>`${key}: ${phase[key]}`).join(' · ')}
+              </button>
+            </li>)}</ol>:<p>No timed changes yet. Your starting orders apply throughout.</p>}
+          </div>
         </section>}
-        {guided&&<div className="v91-step-heading"><span>02 / TACTICS</span><h2>Give your team orders</h2><p>Effort spends energy; attacks and chasing change where your riders travel.</p></div>}
-        {guided&&<p>Selective attacks are considered every 20 km and at route keypoints; repeated attacks every 5 km and at keypoints. An attempt may fail or be blocked by rider position or energy. Selective chase reacts to the gap and attack pressure; All helpers commits available helpers more strongly and costs more energy. After the race, the viewer shows which orders became recorded actions.</p>}
-        {guided&&['effort','attack','chase'].map(key=><label key={key}>{LABELS[key]}
+        {!guided&&['effort','attack','chase'].map(key=><label key={key}>{LABELS[key]}
           <select value={settings[key]} onChange={event=>change(key,event.target.value)}>
             {OPTIONS[key].map(([value,label])=><option value={value} key={value}>{label}</option>)}
           </select></label>)}
@@ -1111,7 +1180,7 @@ export default function Playtest({guided=false}){
             </div>}
         </fieldset>
         </details>
-        {integratedMode&&coastedMode&&<details className="v91-optional" open={!guided}>
+        {!guided&&integratedMode&&coastedMode&&<details className="v91-optional" open>
           <summary>Timed team orders <span>Plan up to two 5 km markers</span></summary>
           <fieldset className="v91-profile">
           <legend>Precommitted effort and bunch-front work</legend>
@@ -1180,8 +1249,10 @@ export default function Playtest({guided=false}){
               </select>
             </label>}
         </fieldset></details>}
-        {guided&&<div className="v91-step-heading"><span>03 / FINALE</span><h2>Choose your finisher</h2><p>Nominate a rider and, if you wish, a helper to lead them out. The road decides whether they can work together.</p></div>}
-        {integratedMode&&<fieldset className="v91-profile">
+        {guided&&<div className="v91-step-heading"><span>03 / FINALE</span><h2>Finisher</h2><p>Rider {Number(ownPlan.finisherId.split('-').at(-1))+1} is nominated. Change the rider or add a helper if you want.</p></div>}
+        {integratedMode&&<details className="v91-optional" open={!guided}>
+        <summary>Finisher and lead-out <span>{guided?'Optional nomination':'Choose riders'}</span></summary>
+        <fieldset className="v91-profile">
           <legend>Finale nominations</legend>
           <p>Choose a finisher and an optional helper for your team and any customized rival manager. Sprint and endurance are the riders&apos; actual synthetic skills for this race. A helper works only if they share the road and have energy left at 500 m.</p>
           <div className="v91-manager-tactics">{finaleTeams.map(teamId=>{
@@ -1203,7 +1274,7 @@ export default function Playtest({guided=false}){
                     Rider {Number(rider.id.split('-').at(-1))+1} · Endurance {rider.endurance}
                   </option>)}</select>
               </label>
-              <details className="v91-rider-guide" open={teamId==='you'}>
+              <details className="v91-rider-guide" open={!guided&&teamId==='you'}>
                 <summary>{teamId==='you'?'Your riders':'Rival riders'}: skills before the race</summary>
                 <div className="v91-result-scroll"><table className="v91-result-table">
                   <thead><tr><th scope="col">Rider</th><th scope="col">Sprint</th>
@@ -1227,7 +1298,7 @@ export default function Playtest({guided=false}){
               </label>}
             </div>;
           })}</div>
-        </fieldset>}
+        </fieldset></details>}
         {integratedMode&&!coastedMode&&<fieldset className="v91-profile">
           <legend>Named final-kilometre attack</legend>
           <p>Order one or two managers to attack at the start of the last kilometre. With two named attacks, other managers keep their chosen chase and effort while further attacks are held. The recorded road decides whether either move survives.</p>
@@ -1274,7 +1345,7 @@ export default function Playtest({guided=false}){
             </select></label>}
           </div>
         </fieldset>}
-        {integratedMode&&<fieldset className="v91-profile">
+        {!guided&&integratedMode&&<fieldset className="v91-profile">
           <legend>Optional points illustration</legend>
           <label className="v91-mode"><input type="checkbox"
             checked={showPointPreview}
@@ -1301,8 +1372,13 @@ export default function Playtest({guided=false}){
           </div>}
           <small>Only an unambiguous conditional line can receive a policy illustration. No awards are saved.</small>
         </fieldset>}
-        <label>Scenario seed<input value={settings.seed} maxLength={80}
-          onChange={event=>change('seed',event.target.value)} /></label>
+        {guided?<details className="v91-optional">
+          <summary>Repeat a race <span>Optional seed</span></summary>
+          <p>Use the same seed and settings to replay the same simulated conditions. Change it to explore another race.</p>
+          <label>Race seed<input value={settings.seed} maxLength={80}
+            onChange={event=>change('seed',event.target.value)}/></label>
+        </details>:<label>Scenario seed<input value={settings.seed} maxLength={80}
+          onChange={event=>change('seed',event.target.value)} /></label>}
         {integratedMode&&coastedMode&&<section className="v91-brief"
           aria-label="Race plan before running">
           <h2>Your race plan</h2>
@@ -1315,12 +1391,13 @@ export default function Playtest({guided=false}){
               {optionLabel('effort',settings.effort)} effort · {' '}
               {optionLabel('attack',settings.attack)} attack · {' '}
               {optionLabel('chase',settings.chase)} chase
-              {lateEfforts.you&&` · ${optionLabel('effort',lateEfforts.you)} effort after ${chosenEffortMarkerKm} km`}
-              {firstFrontWork&&` · ${firstFrontWork==='rotate'?
+              {guidedPhases.map(phase=>` · ${phase.atKm} km: ${['effort','chase','frontWork','attack'].filter(key=>phase[key]).map(key=>`${key} ${phase[key]}`).join(', ')}`).join('')}
+              {!guided&&lateEfforts.you&&` · ${optionLabel('effort',lateEfforts.you)} effort after ${chosenEffortMarkerKm} km`}
+              {!guided&&firstFrontWork&&` · ${firstFrontWork==='rotate'?
                 'try bunch-front work':'sit in'} after ${chosenEffortMarkerKm} km`}
-              {chosenSecondEffortMarkerKm!==null&&secondEfforts.you&&
+              {!guided&&chosenSecondEffortMarkerKm!==null&&secondEfforts.you&&
                 ` · ${optionLabel('effort',secondEfforts.you)} effort after ${chosenSecondEffortMarkerKm} km`}
-              {chosenSecondEffortMarkerKm!==null&&secondFrontWork&&
+              {!guided&&chosenSecondEffortMarkerKm!==null&&secondFrontWork&&
                 ` · ${secondFrontWork==='rotate'?'try bunch-front work':
                   'sit in'} after ${chosenSecondEffortMarkerKm} km`}
             </dd></div>
@@ -1334,9 +1411,9 @@ export default function Playtest({guided=false}){
                 settings.defaultRivalPlan==='mixed'?'mixed defaults':
                 settings.defaultRivalPlan+' defaults'}
             </dd></div>
-            <div><dt>Points</dt><dd>{showPointPreview?
+            {!guided&&<div><dt>Points</dt><dd>{showPointPreview?
               `Read-only illustration, tier ${pointContext.tier}`:
-              'No point illustration'} · no awards saved</dd></div>
+              'No point illustration'} · no awards saved</dd></div>}
           </dl>
         </section>}
         <div className="v91-run-bar">
