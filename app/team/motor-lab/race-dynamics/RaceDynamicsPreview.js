@@ -42,6 +42,9 @@ export default function RaceDynamicsPreview(){
   const [busy,setBusy]=useState(false);
   const [error,setError]=useState('');
   const frame=preview?.frames[km-1];
+  const controlEnergy=frame?.teamEnergy.filter(row=>
+    preview.teamPlans.some(plan=>plan.teamId===row.teamId&&
+      plan.role==='control'))??[];
   const setChoice=(key,value)=>setSettings(current=>({...current,
     [key]:['distanceKm','teamCount','fatigue',
       'controlWithdrawalVersion'].includes(key)?
@@ -73,7 +76,9 @@ export default function RaceDynamicsPreview(){
         paid work. Individual finishing places, points and awards are not
         determined here or saved as official results.</p>
       <form onSubmit={run} className="v94-form">
-        {Object.entries(OPTIONS).map(([key,options])=><label key={key}>
+        {Object.entries(OPTIONS).map(([key,options])=><label key={key}
+          className={key==='controlWithdrawalVersion'?'v94-policy-choice':
+            undefined}>
           <span>{LABELS[key]}</span><select value={settings[key]}
             onChange={event=>setChoice(key,event.target.value)}>
             {options.map(([value,label])=><option key={value} value={value}>
@@ -95,6 +100,10 @@ export default function RaceDynamicsPreview(){
       {preview&&<>
         <section className="v94-summary" aria-label="Recorded race summary">
           <h2>What the recording shows</h2>
+          <p>Seed <strong>{preview.settings.seed}</strong> · control pursuit:{' '}
+            <strong>{preview.policy.controlWithdrawalVersion===2?
+              'experimental impossible-pursuit withdrawal':
+              'current selective pursuit'}</strong>.</p>
           <p>{preview.story.widestRecordedLead.km>0?<>
             Widest leading-group gap: <strong>{time(
               preview.story.widestRecordedLead.gapSeconds)}</strong> at km {
@@ -130,6 +139,10 @@ export default function RaceDynamicsPreview(){
             <p><strong>Attack attempts:</strong> {riders(preview,frame.attackers)}</p>
             <p><strong>Chasing teams:</strong> {frame.chasers.length?
               frame.chasers.map(id=>teamLabel(preview,id)).join(', '):'None'}</p>
+            {frame.controlWithheld.length>0&&<p><strong>Control teams
+              withholding an uncatchable chase:</strong> {
+              frame.controlWithheld.map(id=>teamLabel(preview,id))
+                .join(', ')}</p>}
             <p><strong>Paid bunch-front work:</strong> {
               frame.paidBunchPace?`${teamLabel(preview,
                 frame.paidBunchPace.teamId)} — ${riders(preview,
@@ -144,6 +157,9 @@ export default function RaceDynamicsPreview(){
               frame.frontCoast.map(row=>`${riderLabel(preview,
                 row.riderId)} delayed ${time(row.delaySeconds)}`).join(', ')}</p>}
           </div>
+          {controlEnergy.length>0&&<p><strong>Control-team mean rider
+            reserve:</strong> {controlEnergy.map(row=>`${teamLabel(preview,
+              row.teamId)} ${row.mean.toFixed(1)}`).join(' · ')}</p>}
           <h3>Your riders</h3>
           <div className="v94-riders">{frame.ownRiders.map(row=><p key={row.id}>
             <strong>{riderLabel(preview,row.id)}</strong> · {row.group} · {

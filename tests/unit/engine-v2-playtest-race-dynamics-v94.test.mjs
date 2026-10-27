@@ -22,6 +22,9 @@ test('experimental race preview exposes committed intent and paid road only',()=
   assert.ok(preview.frames.every((frame,index)=>{
     const source=recording.frames[index];
     return frame.gapSeconds===source.gapSeconds&&
+      frame.teamEnergy.length===source.teamEnergy.length&&
+      frame.teamEnergy.every(row=>source.teamEnergy.some(recorded=>
+        recorded.teamId===row.teamId&&recorded.mean===row.mean))&&
       frame.ownRiders.length===8&&
       frame.ownRiders.every(row=>source.riderGroups.some(rider=>
         rider.id===row.id&&rider.energy===row.energy))&&
@@ -75,6 +78,8 @@ test('withdrawal comparison is explicit and remains a provisional road preview',
     controlWithdrawalVersion:2}).preview;
   assert.equal(current.policy.controlWithdrawalVersion,undefined);
   assert.equal(experimental.policy.controlWithdrawalVersion,2);
+  assert.ok(experimental.frames.every(frame=>
+    Array.isArray(frame.controlWithheld)&&Array.isArray(frame.teamEnergy)));
   assert.deepEqual(experimental.teamPlans,current.teamPlans);
   assert.equal(experimental.resultStatus,'provisional_road_groups_only');
   assert.equal(Object.hasOwn(experimental,'provisionalResults'),false);

@@ -22,6 +22,8 @@ test('experimental v94 race shows committed plans and measured road only',
     await page.getByLabel('Race format').selectOption('stage');
     await page.getByLabel('Fictional rival 1 goal').selectOption('break');
     await page.getByLabel('Control-team pursuit').selectOption('2');
+    expect((await page.getByLabel('Control-team pursuit').boundingBox()).width)
+      .toBeGreaterThan(300);
     const responsePromise=page.waitForResponse(response=>
       response.url().endsWith('/api/v91-playtest')&&
       response.request().postDataJSON()?.mode==='v94-race-dynamics');
@@ -35,6 +37,8 @@ test('experimental v94 race shows committed plans and measured road only',
     expect(raceDynamics.resultStatus).toBe('provisional_road_groups_only');
     expect(raceDynamics.policy.rivalIntentVersion).toBe(4);
     expect(raceDynamics.policy.controlWithdrawalVersion).toBe(2);
+    await expect(page.getByText('experimental impossible-pursuit withdrawal',
+      {exact:false})).toBeVisible();
     expect(raceDynamics.provisionalResults).toBeUndefined();
     expect(raceDynamics.teamPlans.find(plan=>plan.teamId==='rival-1'))
       .toMatchObject({source:'manager_goal',role:'break',
