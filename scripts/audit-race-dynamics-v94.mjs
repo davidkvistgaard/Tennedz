@@ -19,6 +19,10 @@ const holdoutSeeds=Array.from({length:12},(_,index)=>
 const frontRotationVersion=process.argv.includes('--front-rotation-v3')?3:
   process.argv.includes('--front-rotation-v2')?2:1;
 const collectiveControl=process.argv.includes('--collective-control');
+const committedControlTempo=process.argv.includes('--committed-control-tempo');
+if(committedControlTempo&&(!process.argv.includes('--planned-intent')||
+  process.argv.includes('--all-control-tempo')))
+  throw new Error('Committed control tempo requires planned intent only.');
 const frontExhaustionVersion=process.argv.includes('--front-exhaustion-v3')?3:
   process.argv.includes('--front-exhaustion-v2')?2:1;
 const seeds=process.argv.includes('--extended-seeds')?
@@ -50,7 +54,7 @@ function run({seed,terrain,fatigue,format,breakTeams,controlTeams}){
   const prepared=prepareV91Playtest({distanceKm:260,terrain,teamCount,
     fatigue,attack:'none',chase:'ignore',seed,managerTactics});
   const planned=plannedIntent?prepareV94RivalIntent({prepared,format,
-    frontRotationVersion,
+    frontRotationVersion,controlTempoVersion:committedControlTempo?2:1,
     ...(format==='stage'?{stageNumber:8}:{})}):null;
   const teams=planned?.teams??prepared.teams;
   const teamRoles=planned?.raceContext.teamRoles??Object.fromEntries(teams.map((team,index)=>[
@@ -247,4 +251,5 @@ console.log(JSON.stringify({version:MOTOR_RACE_DYNAMICS_VERSION,
   frontExhaustionVersion,
   note:'Internal opt-in role scenarios, not observed race calibration or official results.',
   allControlTempo:process.argv.includes('--all-control-tempo'),
+  committedControlTempo,
   ...(summary?{summary}:{rows})},null,2));

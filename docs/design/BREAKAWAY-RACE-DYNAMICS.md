@@ -449,6 +449,20 @@ much of the race, and no-control extreme role mixes remain implausible.
 Reproduce with `node scripts/audit-race-dynamics-v94.mjs --planned-intent
 --all-control-tempo --validate --summary` and compare the run without
 `--all-control-tempo`.
+An internal opt-in planner `controlTempoVersion: 2` now commits this
+combination as rival intent manifest version 3. It records each team's
+front-work choice along with its role and opening attack/chase/effort orders;
+an explicit manager tactic keeps its own front-work order. The existing
+manifest versions remain replayable. In 24 planned-intent 260 km cases, the
+new manifest, every frame, and deterministic source replay validated. Fresh
+one-day control roles paid a mean 128.17 bunch-front team-km and 144.5 early
+chase team-km instead of zero and 315.83, with km-210 team energy 51.82
+instead of 49.58. Mean maximum lead was 337.11 instead of 397.94 seconds;
+five of six initial fronts were fully caught, versus six of six before.
+Stage controls also divided work between front and chase with modestly
+higher remaining energy, while the initial front usually still survived.
+These are synthetic role-policy cases; a broader holdout and the guided
+full-race flow are still needed. The policy remains internal.
 A second, rejected v94-only control-decision experiment projected whether
 the available control teams together could close a stable front after the
 current route's passive break advantage. It changed only when selective

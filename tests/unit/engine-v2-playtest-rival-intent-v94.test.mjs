@@ -115,6 +115,35 @@ test('a declared rival goal commits a role and matching orders before racing',()
   /Invalid or conflicting/);
 });
 
+test('opt-in control tempo commits paid front work without changing explicit manager tactics',()=>{
+  const prepared=prepareV91Playtest({distanceKm:120,teamCount:4,
+    seed:'control-tempo-intent',attack:'none',chase:'ignore',
+    defaultRivalPlan:'passive',managerTactics:[
+      {effort:'hard',attack:'none',chase:'all'}]});
+  const plan=prepareV94RivalIntent({prepared,format:'one_day',
+    controlTempoVersion:2,rivalGoals:[{teamId:'rival-2',role:'control'}]});
+  assert.equal(plan.teams[1].orders.baseline.frontWork,undefined);
+  assert.equal(plan.teams[2].orders.baseline.frontWork,'rotate');
+  assert.equal(plan.intent[1].baseline.frontWork,null);
+  assert.equal(plan.intent[2].baseline.frontWork,'rotate');
+  const race=simulateTacticalTour({stage:prepared.stage,weather:prepared.weather,
+    teams:plan.teams,seed:prepared.seed,motorVersion:MOTOR_RACE_DYNAMICS_VERSION,
+    raceContext:plan.raceContext,rivalIntent:plan.intent});
+  assert.equal(race.committedInputs.rivalIntentVersion,3);
+  assert.ok(race.frames.some(frame=>frame.paidBunchPace?.teamId==='rival-2'));
+  assert.ok(race.frames.every(frame=>
+    !(frame.chasers.includes('rival-2')&&
+      frame.paidBunchPace?.teamId==='rival-2')));
+  assert.equal(validateRecordedTour(race),true);
+  assert.deepEqual(replayRaceDynamicsRecording(race),race);
+  const forged=structuredClone(race);
+  forged.committedInputs.rivalIntent.find(row=>row.teamId==='rival-2')
+    .baseline.frontWork=null;
+  assert.throws(()=>validateRecordedTour(forged),/intent manifest/);
+  assert.throws(()=>prepareV94RivalIntent({prepared,format:'one_day',
+    controlTempoVersion:3}),/Invalid v94 rival intent inputs/);
+});
+
 test('a paid control chase lets non-working peloton teams rest without easing road pace',()=>{
   const prepared=prepareV91Playtest({distanceKm:260,terrain:'flat',teamCount:20,
     fatigue:0,attack:'none',chase:'ignore',seed:'manager-goal-1',
