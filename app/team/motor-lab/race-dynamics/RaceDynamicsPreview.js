@@ -29,9 +29,12 @@ const LABELS={format:'Race format',distanceKm:'Distance',terrain:'Route',
   ownFrontWork:'Your bunch-front work',
   rivalOneGoal:'Fictional rival 1 goal',
   controlWithdrawalVersion:'Control-team pursuit'};
-const time=seconds=>seconds>=60?
-  `${Math.floor(seconds/60)}m ${Math.round(seconds%60)}s`:
-  `${Number(seconds).toFixed(1)}s`;
+const time=seconds=>{
+  const rounded=Math.round(Number(seconds)*10)/10;
+  if(rounded<60)return `${rounded.toFixed(1)}s`;
+  const totalSeconds=Math.round(rounded);
+  return `${Math.floor(totalSeconds/60)}m ${totalSeconds%60}s`;
+};
 const riderLabel=(preview,id)=>preview.riderNames[id]??id;
 const teamLabel=(preview,id)=>preview.teamPlans.find(row=>
   row.teamId===id)?.teamName??id;
