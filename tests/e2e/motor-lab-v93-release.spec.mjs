@@ -547,6 +547,40 @@ test('guided front-work order is paid only after its 5 km marker',async({page})=
     .toContainText('set bunch-front pace for 10 recorded kilometres');
 });
 
+test('guided route names the helper who pays bunch-front work',async({page})=>{
+  await page.setViewportSize({width:390,height:844});
+  await page.goto('/login');
+  await page.getByLabel('Email or username').fill('bob');
+  await page.getByLabel('Password',{exact:true}).fill('fixture-password');
+  await page.getByRole('button',{name:'Sign in',exact:true}).click();
+  await expect(page).toHaveURL(/\/team$/);
+  await page.goto('/team/motor-lab');
+  await page.getByLabel('Starting chase').selectOption('ignore');
+  await page.locator('summary').filter({hasText:'Repeat a race'}).click();
+  await page.getByLabel('Race seed').fill('front-work-4');
+  await page.locator('summary').filter({hasText:'Other managers'}).click();
+  await page.getByLabel('Default tactics for uncustomized managers')
+    .selectOption('passive');
+  const editor=page.locator('.v91-timeline-editor');
+  await page.getByRole('slider',{name:/Choose a place on the route/}).fill('10');
+  await editor.getByLabel('Effort').selectOption('hard');
+  await editor.getByLabel('Bunch-front work').selectOption('rotate');
+  await editor.getByLabel('Named front worker').selectOption('you-0');
+  await page.getByRole('slider',{name:/Choose a place on the route/}).fill('20');
+  await editor.getByLabel('Bunch-front work').selectOption('sit_in');
+  const responsePromise=page.waitForResponse(response=>
+    response.url().endsWith('/api/v91-playtest')&&
+    response.request().method()==='POST');
+  await page.getByRole('button',{name:'Run the race'}).click();
+  const response=await responsePromise;
+  expect(response.status()).toBe(200);
+  const {coasted}=await response.json();
+  expect(coasted.settings.managerTacticalOrdersV8?.[0].frontWorkRiderId)
+    .toBe('you-0');
+  expect(coasted.kilometreFrames[10].paidBunchPaceRiderIds)
+    .toContain('you-0');
+});
+
 test('guided Motor Lab applies an effort order after a selected 5 km marker', async({page}) => {
   await page.setViewportSize({width:390,height:844});
   await page.goto('/login');

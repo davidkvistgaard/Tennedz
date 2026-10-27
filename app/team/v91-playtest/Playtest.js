@@ -225,13 +225,15 @@ function coastedComparisonRun(settings,summary,pointContext){
       place:conditionalPlace(rivalPlace,'unresolved'),
       previewPoints:pointContext?preview?.previewPoints??null:null};
   });
-  const effortMarkerKm=settings.managerTacticalOrdersV7?.[0]?.atKm??
+  const effortMarkerKm=settings.managerTacticalOrdersV8?.[0]?.atKm??
+    settings.managerTacticalOrdersV7?.[0]?.atKm??
     settings.managerTacticalOrdersV6?.[0]?.atKm??
     settings.managerTacticalOrdersV5?.[0]?.atKm??
     settings.managerTacticalOrdersV4?.[0]?.atKm??
     settings.managerTacticalOrdersV2?.[0]?.atKm??settings.distanceKm-5;
   return {conditions:comparisonConditions(settings),finisherId,effortMarkerKm,
-    multiMarker: Boolean(settings.managerTacticalOrdersV7?.length||
+    multiMarker: Boolean(settings.managerTacticalOrdersV8?.length||
+      settings.managerTacticalOrdersV7?.length||
       settings.managerTacticalOrdersV6?.length||
       settings.managerTacticalOrdersV5?.length||
       settings.managerTacticalOrdersV4?.length||
@@ -585,7 +587,8 @@ export default function Playtest({guided=false}){
   const viewerGapSeries=coasted?raceViewerGapSeries(coasted,viewerRiderId):[];
   const viewerRoadClock=coasted?
     raceViewerRoadClockSnapshot(coasted,coastedKm):null;
-  const recordedTimedOrders=coasted?.settings.managerTacticalOrdersV7??
+  const recordedTimedOrders=coasted?.settings.managerTacticalOrdersV8??
+    coasted?.settings.managerTacticalOrdersV7??
     coasted?.settings.managerTacticalOrdersV6??
     coasted?.settings.managerTacticalOrdersV5??
     coasted?.settings.managerTacticalOrdersV4??
@@ -908,7 +911,9 @@ export default function Playtest({guided=false}){
           managerFinaleOrders:[...orders.values()]}:{}),
         ...(guided&&integratedMode&&coastedMode?{
           ...(guidedPhases.length?{
-            [guidedPhases.some(phase=>Object.hasOwn(phase,'chaseTarget'))?
+            [guidedPhases.some(phase=>Object.hasOwn(phase,'frontWorkRiderId'))?
+              'managerTacticalOrdersV8':guidedPhases.some(phase=>
+                Object.hasOwn(phase,'chaseTarget'))?
               'managerTacticalOrdersV7':guidedPhases.some(phase=>
               phase.attackRiderId)?'managerTacticalOrdersV6':
               'managerTacticalOrdersV5']:
@@ -1168,7 +1173,16 @@ export default function Playtest({guided=false}){
                 <option value="rotate">Try to set pace with helpers</option>
                 <option value="sit_in">Sit in</option>
               </select></label>
+              <label>Named front worker<select
+                value={selectedTimelineOrder.frontWorkRiderId??''}
+                onChange={event=>changeTimelineOrder('frontWorkRiderId',event.target.value)}>
+                <option value="">Keep previous worker</option>
+                <option value="any">Let the team choose helpers</option>
+                {[0,2,3,4,5,6].map(index=><option key={index}
+                  value={`you-${index}`}>Rider {index+1}</option>)}
+              </select></label>
             </div>
+            <p>A named front worker joins your team's next paid bunch-front turns when available. If that helper is away, dropped or exhausted, the team skips its turn. Choose “Try to set pace with helpers” to request front work.</p>
             <details className="v91-optional">
               <summary>Focus a chase on a rival</summary>
               <p>This focus withholds your chase while that rival is not in a recorded group ahead of the bunch or attacking. A GC or emergency response can still trigger a chase. Bunch-front work has its own order and energy cost.</p>
@@ -1215,7 +1229,7 @@ export default function Playtest({guided=false}){
             {guidedPhases.length?<ol>{guidedPhases.map(phase=><li key={phase.atKm}>
               <button type="button" onClick={()=>setTimelineKm(phase.atKm)}>
                 {phase.atKm} km · {['effort','chase','frontWork','attack',
-                  'attackRiderId','chaseTarget']
+                  'attackRiderId','chaseTarget','frontWorkRiderId']
                   .filter(key=>phase[key]!==undefined).map(key=>
                     `${key}: ${phase[key]??'any opponent'}`).join(' · ')}
               </button>

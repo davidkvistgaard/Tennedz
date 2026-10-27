@@ -36,6 +36,10 @@ try {
   if (process.argv.includes("--preview")) {
     await run(["node_modules/@playwright/test/cli.js", "test",
       "tests/e2e/motor-lab-v94-preview.spec.mjs", "--reporter=dot"]);
+  } else if (process.argv.includes("--guided-named-front-worker")) {
+    await run(["node_modules/@playwright/test/cli.js", "test",
+      "tests/e2e/motor-lab-v93-release.spec.mjs", "--grep",
+      "guided route names the helper", "--reporter=dot"]);
   } else if (process.argv.includes("--guided-front-work")) {
     await run(["node_modules/@playwright/test/cli.js", "test",
       "tests/e2e/motor-lab-v93-release.spec.mjs", "--grep",
