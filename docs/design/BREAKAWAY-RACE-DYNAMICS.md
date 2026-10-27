@@ -431,6 +431,18 @@ fell from 51.94 to 45.31. One locked race had zero kilometres with both
 actions charged to the same team. This buys road-clock control, but does not
 solve the long-day energy problem: the team works in nearly every kilometre.
 It should not become an automatic rival order based on this experiment.
+A second, rejected v94-only control-decision experiment projected whether
+the available control teams together could close a stable front after the
+current route's passive break advantage. It changed only when selective
+controls would start chasing; all road gains still had to be paid. The
+same 24 paired cases completed validation, but one-day control chase rose
+from 143.17 to 175.25 team-km, km-200 energy fell from 52.52 to 47.52,
+and mean maximum lead rose from 177.79 to 290.20 seconds. Stage chase was
+166.75 versus 169.42 team-km, with little energy benefit and a larger
+mean maximum lead (279.36 versus 243.86 seconds). The candidate motor,
+planner and audit changes were reverted. Coalition capacity by itself is
+not a sufficient trigger for a sustainable control strategy; it misses the
+cost of sustaining the chase after it starts.
 An optional v94-only, versioned intent manifest can now be committed to the
 race recording. It retains each team's role, opening order and whether the
 planner labelled it generated, manager-goal or explicit-manager input.
