@@ -856,3 +856,23 @@ behavior. Reproduce with `node scripts/audit-race-dynamics-v94.mjs
 The current v94 experiments satisfy parts of the recording and paid-work
 checks but not this whole gate. Until they do, the live guided Motor Lab
 continues to use its existing kilometre motor.
+
+### Isolated experimental whole-race preview
+
+`createV94RaceDynamicsPreview` runs the committed v94 policies behind a
+separate Motor Lab page and API mode. It validates the full recording and
+replays the same committed source before returning each kilometre's road
+groups, rider reserves, paid workers and chase. The page exposes every team's
+committed opening goal and orders. It reports only measured group gaps and a
+conditional group ending; it provides no individual classification, points
+or awards. The existing guided race keeps its older motor and result path.
+
+`node scripts/audit-v94-preview-boundary.mjs --batch=1` (then batches 2
+and 3) exercises twelve new seeds across one-day/stage and flat/fatigued
+mountain 20-team, 260 km races. All 48 recordings validated and replayed
+without refusal. Widest measured lead ranged from 35.59 to 392.61 seconds;
+the range is large and is **not** a calibrated distribution. The page's
+unchanged default seed gave a 93.78-second widest lead and no front group
+at the last kilometre. Other seeds can yield much shorter or longer leads.
+This boundary check supports a truthful experimental preview, not promotion
+of v94 to guided races or a claim that the race-dynamics goal is solved.
