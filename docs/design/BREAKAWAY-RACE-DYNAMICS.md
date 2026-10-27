@@ -497,6 +497,19 @@ through km 100 in these cases. A blanket "accept a helper-only break"
 rule would not alter this pursuit. Any composition-aware decision must
 consider opportunistic intent and the paid later join, while preserving
 explicit named attacks.
+An internal opt-in `opportunisticSpecialistVersion: 2` now lets generated
+and declared opportunistic rivals nominate a noncaptain specialist for
+their automatic opening moves. The manifest is version 4, binds that
+nomination to the committed roster, and leaves explicitly managed and
+named attacks unchanged. Older manifests retain their original attacker
+choice. In 24 paired planned-intent 260 km races with committed control
+tempo, the early opportunistic captain exposure falls to zero. Their mean
+captain energy at km 210 rises from 75.45/63.39 to 84.80/72.80 in
+fresh/tired one-day races, and from 66.65/54.61 to 84.62/72.62 in stages.
+The same-model replay passes. A further 96 new-seed cases pass recording
+validation without refusal; initial-front catch counts and maximum leads
+move only slightly, so this is a captain-reserve and intent correction,
+not a solution to control workload or a player-facing calibration.
 A second, rejected v94-only control-decision experiment projected whether
 the available control teams together could close a stable front after the
 current route's passive break advantage. It changed only when selective

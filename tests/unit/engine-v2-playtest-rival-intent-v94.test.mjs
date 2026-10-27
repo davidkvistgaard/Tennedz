@@ -144,6 +144,36 @@ test('opt-in control tempo commits paid front work without changing explicit man
     controlTempoVersion:3}),/Invalid v94 rival intent inputs/);
 });
 
+test('opt-in opportunistic specialist preserves captains and old manifests',()=>{
+  const prepared=prepareV91Playtest({distanceKm:120,teamCount:4,
+    seed:'opportunistic-specialist-94',attack:'none',chase:'ignore',
+    defaultRivalPlan:'passive',managerTactics:[
+      {effort:'steady',attack:'selective',chase:'ignore'}]});
+  const plan=prepareV94RivalIntent({prepared,format:'stage',stageNumber:8,
+    opportunisticSpecialistVersion:2,rivalGoals:[
+      {teamId:'rival-2',role:'opportunistic'}]});
+  assert.equal(plan.intent[1].source,'manager');
+  assert.equal(plan.intent[1].specialistRiderId,null);
+  assert.equal(plan.intent[2].source,'manager_goal');
+  assert.ok(plan.intent[2].specialistRiderId);
+  assert.notEqual(plan.intent[2].specialistRiderId,
+    plan.teams[2].orders.captainId);
+  assert.ok(plan.intent.every(row=>row.specialistPolicyVersion===2));
+  const race=simulateTacticalTour({stage:prepared.stage,
+    weather:prepared.weather,teams:plan.teams,seed:prepared.seed,
+    motorVersion:MOTOR_RACE_DYNAMICS_VERSION,raceContext:plan.raceContext,
+    rivalIntent:plan.intent});
+  assert.equal(race.committedInputs.rivalIntentVersion,4);
+  const first=race.frames.find(frame=>frame.attackers.some(id=>
+    id.startsWith('rival-2-')));
+  assert.ok(first?.attackers.includes(plan.intent[2].specialistRiderId));
+  assert.equal(validateRecordedTour(race),true);
+  assert.deepEqual(replayRaceDynamicsRecording(race),race);
+  const forged=structuredClone(race);
+  forged.committedInputs.rivalIntent[2].specialistPolicyVersion=1;
+  assert.throws(()=>validateRecordedTour(forged),/intent manifest/);
+});
+
 test('a paid control chase lets non-working peloton teams rest without easing road pace',()=>{
   const prepared=prepareV91Playtest({distanceKm:260,terrain:'flat',teamCount:20,
     fatigue:0,attack:'none',chase:'ignore',seed:'manager-goal-1',

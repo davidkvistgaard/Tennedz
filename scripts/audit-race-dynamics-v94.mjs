@@ -20,6 +20,7 @@ const frontRotationVersion=process.argv.includes('--front-rotation-v3')?3:
   process.argv.includes('--front-rotation-v2')?2:1;
 const collectiveControl=process.argv.includes('--collective-control');
 const committedControlTempo=process.argv.includes('--committed-control-tempo');
+const opportunisticSpecialist=process.argv.includes('--opportunistic-specialist');
 if(committedControlTempo&&(!process.argv.includes('--planned-intent')||
   process.argv.includes('--all-control-tempo')))
   throw new Error('Committed control tempo requires planned intent only.');
@@ -55,6 +56,7 @@ function run({seed,terrain,fatigue,format,breakTeams,controlTeams}){
     fatigue,attack:'none',chase:'ignore',seed,managerTactics});
   const planned=plannedIntent?prepareV94RivalIntent({prepared,format,
     frontRotationVersion,controlTempoVersion:committedControlTempo?2:1,
+    opportunisticSpecialistVersion:opportunisticSpecialist?2:1,
     ...(format==='stage'?{stageNumber:8}:{})}):null;
   const teams=planned?.teams??prepared.teams;
   const teamRoles=planned?.raceContext.teamRoles??Object.fromEntries(teams.map((team,index)=>[
@@ -134,6 +136,11 @@ function run({seed,terrain,fatigue,format,breakTeams,controlTeams}){
     const rows=atFinaleStart.riderGroups.filter(row=>ids.has(row.id));
     return rows.length?average(rows,'energy'):null;
   };
+  const opportunisticCaptainIds=new Set([...teamById.values()]
+    .filter(team=>teamRoles[team.id]==='opportunistic')
+    .map(team=>team.orders.captainId));
+  const opportunisticCaptainRows=atFinaleStart.riderGroups.filter(row=>
+    opportunisticCaptainIds.has(row.id));
   return {seed,terrain,fatigue,format,breakTeams:intendedBreakTeams,
     controlTeams:intendedControlTeams,
     attacks:frames.reduce((sum,frame)=>sum+frame.attackers.length,0),
@@ -178,6 +185,9 @@ function run({seed,terrain,fatigue,format,breakTeams,controlTeams}){
     breakEnergyAtFinaleStart:roleEnergyAtFinaleStart('break'),
     controlHelperEnergyAtFinaleStart:roleHelperEnergyAtFinaleStart('control'),
     protectHelperEnergyAtFinaleStart:roleHelperEnergyAtFinaleStart('protect'),
+    opportunisticCaptainEnergyAtFinaleStart:
+      opportunisticCaptainRows.length?
+        average(opportunisticCaptainRows,'energy'):null,
     earlyControlChasedTeamKilometres:frames.filter(frame=>frame.km<=210)
       .reduce((sum,frame)=>sum+frame.chasers.filter(id=>
         teamRoles[id]==='control').length,0),
@@ -277,6 +287,8 @@ const summary=process.argv.includes('--summary')?
       meanControlChaseAgainstCaptainFrontTeamKm:
         average('controlChaseAgainstCaptainFrontTeamKm'),
       meanBreakEnergyAtFinaleStart:average('breakEnergyAtFinaleStart'),
+      meanOpportunisticCaptainEnergyAtFinaleStart:
+        average('opportunisticCaptainEnergyAtFinaleStart'),
       meanControlEnergyAtFinaleStart:average('controlEnergyAtFinaleStart'),
       meanControlFrontWorkTeamKm:average('controlFrontWorkTeamKilometres'),
       meanFirstControlFrontWorkKm:average('firstControlFrontWorkKm'),
@@ -298,4 +310,5 @@ console.log(JSON.stringify({version:MOTOR_RACE_DYNAMICS_VERSION,
   note:'Internal opt-in role scenarios, not observed race calibration or official results.',
   allControlTempo:process.argv.includes('--all-control-tempo'),
   committedControlTempo,
+  opportunisticSpecialist,
   ...(summary?{summary}:{rows})},null,2));
