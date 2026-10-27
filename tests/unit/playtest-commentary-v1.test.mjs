@@ -76,8 +76,44 @@ test('a surviving front lead is described only from repeated paid checkpoints',(
     {...base,km:5,roadGroups:[{...front,gapSeconds:3.2}]}]};
   const lines=raceViewerCommentaryV1(race);
   assert.equal(lines.filter(row=>row.kind==='join').length,1);
-  assert.equal(lines.filter(row=>row.kind==='ahead').length,1);
-  assert.match(lines.find(row=>row.kind==='ahead').text,/3\.2/);
+  assert.equal(lines.filter(row=>row.kind==='aheadSmall').length,1);
+  assert.match(lines.find(row=>row.kind==='aheadSmall').text,/3\.2/);
+});
+
+test('stable leading group gains and loses recorded time without assigning cause',()=>{
+  const frames=Array.from({length:15},(_,index)=>{
+    const km=index+1;
+    const gapSeconds=km<=5?40:km<=10?40+(km-5)*6:70-(km-10)*4;
+    return {...base,km,roadGroups:[{id:'road-1',
+      riderIds:km%2?['you-2','rival-1-3']:['rival-1-3','you-2'],
+      gapSeconds}]};
+  });
+  const lines=raceViewerCommentaryV1({settings:{seed:'trend'},
+    kilometreFrames:frames},{names:{riders:{'you-2':'Carsten Andersen'}}});
+  const trends=lines.filter(row=>row.evidence.type==='front_gap_trend');
+  assert.deepEqual(trends.map(row=>[row.km,row.kind]),[
+    [10,'leadGrowing'],[15,'leadClosing']]);
+  assert.equal(lines.filter(row=>[10,15].includes(row.km)&&
+    ['ahead','aheadSmall'].includes(row.kind)).length,0);
+  assert.match(trends[0].text,/Carsten Andersen/);
+  assert.match(trends[0].text,/30\.0 s|30 s/);
+  assert.match(trends[0].text,/1m 10s/);
+  assert.match(trends[1].text,/20\.0 s|20 s/);
+  assert.deepEqual(trends[0].evidence,{type:'front_gap_trend',
+    roadGroupId:'road-1',riderIds:['rival-1-3','you-2'],priorKm:5,
+    priorGapSeconds:40,gapSeconds:70});
+  assert.ok(trends.every(row=>!/because|made|ensured|forced/i.test(row.text)));
+});
+
+test('gap commentary refuses changing membership and small fluctuations',()=>{
+  const race={kilometreFrames:Array.from({length:15},(_,index)=>{
+    const km=index+1;
+    return {...base,km,roadGroups:[{id:'road-1',
+      riderIds:km<=5?['you-2']:['you-2','rival-1-3'],
+      gapSeconds:km<=5?40:km<=10?70:75}]};
+  })};
+  const lines=raceViewerCommentaryV1(race);
+  assert.equal(lines.filter(row=>row.evidence.type==='front_gap_trend').length,0);
 });
 
 test('attack outcomes require a recorded status and never infer why a rival chased',()=>{

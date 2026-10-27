@@ -33,13 +33,18 @@ function run(args) {
 
 try {
   await run(["node_modules/next/dist/bin/next", "build"]);
-  // Keep each fixture session below the workbench's six-runs-per-minute
-  // limit while testing the enlarged end-to-end suite.
-  for (let shard = 1; shard <= 10; shard++) {
+  if (process.argv.includes("--guided")) {
     await run(["node_modules/@playwright/test/cli.js", "test",
-      "tests/e2e/v93-coasted-playtest.spec.mjs",
-      "tests/e2e/motor-lab-v93-release.spec.mjs", "--fully-parallel",
-      `--shard=${shard}/10`, "--reporter=dot"]);
+      "tests/e2e/motor-lab-v93-release.spec.mjs", "--reporter=dot"]);
+  } else {
+    // Keep each fixture session below the workbench's six-runs-per-minute
+    // limit while testing the enlarged end-to-end suite.
+    for (let shard = 1; shard <= 10; shard++) {
+      await run(["node_modules/@playwright/test/cli.js", "test",
+        "tests/e2e/v93-coasted-playtest.spec.mjs",
+        "tests/e2e/motor-lab-v93-release.spec.mjs", "--fully-parallel",
+        `--shard=${shard}/10`, "--reporter=dot"]);
+    }
   }
 } catch (error) {
   console.error(error.message);
