@@ -343,3 +343,13 @@ between those rows. The fresh one-day catch remains uncommon under guided
 random orders even though its maximum gap is smaller. Opponent intent, team
 composition and the race clock still need end-to-end work before v94 can be
 offered to players.
+
+v94 recordings now keep a separately versioned copy of their original stage
+and locked weather input. The internal `replayRaceDynamicsRecording` check
+validates the recorded ledger, re-runs the race from those committed inputs,
+and compares the route, every kilometre frame and provisional finish. A
+changed stage source or an unaccounted frame value is refused. The original
+24 planned-intent simulations passed this deterministic source replay. It
+uses the same motor implementation, so it checks repeatability and recording
+integrity rather than providing independent evidence that the sporting model
+or contact handling is correct. Older recording shapes remain unchanged.
