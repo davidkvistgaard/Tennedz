@@ -5,6 +5,7 @@ import {createV94RaceDynamicsPreview} from
 
 const batch=Number(process.argv.find(arg=>arg.startsWith('--batch='))?.split('=')[1]??1);
 if(![1,2,3].includes(batch))throw new Error('Use --batch=1, 2 or 3.');
+const controlWithdrawalVersion=process.argv.includes('--withdrawal-v2')?2:1;
 const seeds=Array.from({length:4},(_,index)=>
   `preview-boundary-${(batch-1)*4+index+1}`);
 const outcomes=[];
@@ -12,7 +13,8 @@ for(const seed of seeds)for(const format of ['one_day','stage'])
   for(const terrain of ['flat','mountain']){
     const scenario={seed,format,terrain};
     try{
-      const {preview,recording}=createV94RaceDynamicsPreview({format,settings:{
+      const {preview,recording}=createV94RaceDynamicsPreview({format,
+        controlWithdrawalVersion,settings:{
         distanceKm:260,terrain,teamCount:20,gender:'M',
         fatigue:terrain==='mountain'?30:0,effort:'steady',
         attack:'none',chase:'selective',seed}});
@@ -23,7 +25,7 @@ for(const seed of seeds)for(const format of ['one_day','stage'])
         plan.role==='control').map(plan=>plan.teamId));
       const controlEnergy=recording.frames[209].riderGroups.filter(row=>
         controls.has(row.teamId)).map(row=>row.energy);
-      outcomes.push({...scenario,ok:true,
+      outcomes.push({...scenario,controlWithdrawalVersion,ok:true,
         roles,controlChaseTeamKm:preview.frames.reduce((sum,frame)=>
           sum+frame.chasers.filter(id=>controls.has(id)).length,0),
         controlFrontTeamKm:preview.frames.filter(frame=>
@@ -36,12 +38,14 @@ for(const seed of seeds)for(const format of ['one_day','stage'])
         oneMinuteLeadKm:preview.story.kilometresAtOrAboveOneMinute,
         finalRoadGroups:preview.story.finalRoadGroups});
     }catch(error){
-      outcomes.push({...scenario,ok:false,error:error.message});
+      outcomes.push({...scenario,controlWithdrawalVersion,ok:false,
+        error:error.message});
     }
     process.stdout.write(`${JSON.stringify(outcomes.at(-1))}\n`);
   }
 const valid=outcomes.filter(row=>row.ok);
-const summary={batch,cases:outcomes.length,valid:valid.length,
+const summary={batch,controlWithdrawalVersion,cases:outcomes.length,
+  valid:valid.length,
   refused:outcomes.length-valid.length,
   widestLeadRangeSeconds:valid.length?[Math.min(...valid.map(row=>
     row.widestLeadSeconds)),Math.max(...valid.map(row=>

@@ -939,3 +939,14 @@ The separate experimental preview therefore keeps its prior pursuit as the
 default and offers withdrawal only as an explicit comparison choice. Its
 response commits the chosen policy, validates and replays the full race,
 and continues to withhold official results. The guided race is unaffected.
+
+The optional choice also passed the same 48 preview-boundary races (twelve
+new seeds, both formats, flat/fatigued mountain), with no refusal and full
+source replay. Against those exact seeds, mean widest lead changed from
+102.61 to 165.93 seconds in one-day races and from 149.62 to 321.24 seconds
+in stages. Mean control-team paid chase fell from 129.00 to 106.08 team-km
+one-day and from 175.08 to 5.04 stage; paid control bunch-front work stayed
+near 200 and 191 team-km respectively. Mean control-rider reserve at km 210
+rose from 49.67 to 55.20 one-day and 50.73 to 59.19 stage. These are
+same-source synthetic comparisons, not evidence that the changed pursuit
+timing or final lead is calibrated.
