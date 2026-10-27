@@ -36,6 +36,18 @@ try {
   if (process.argv.includes("--guided")) {
     await run(["node_modules/@playwright/test/cli.js", "test",
       "tests/e2e/motor-lab-v93-release.spec.mjs", "--reporter=dot"]);
+  } else if (process.argv.includes("--legacy-smoke")) {
+    await run(["node_modules/@playwright/test/cli.js", "test",
+      "tests/e2e/v93-coasted-playtest.spec.mjs", "--grep",
+      "close-chase preset|measured chase",
+      "--reporter=dot"]);
+    // Both chase scenarios make three requests. Let the six-runs-per-minute
+    // fixture window roll over before the next two scenarios.
+    await new Promise(fulfill=>setTimeout(fulfill,65000));
+    await run(["node_modules/@playwright/test/cli.js", "test",
+      "tests/e2e/v93-coasted-playtest.spec.mjs", "--grep",
+      "mixed front exits|both front leavers",
+      "--reporter=dot"]);
   } else {
     // Keep each fixture session below the workbench's six-runs-per-minute
     // limit while testing the enlarged end-to-end suite.

@@ -5,6 +5,15 @@ test.skip(process.env.PELOTONIA_V91_PLAYTEST_ENABLED!=='true'||
   process.env.PELOTONIA_V93_COASTED_PLAYTEST_ENABLED!=='true',
 'The isolated v93 workbench is disabled.');
 
+// These legacy scenarios inspect the detailed workbench after running a race.
+// The newer race screen opens first by default, so close it before interacting
+// with controls underneath. Dedicated guided tests cover the race screen itself.
+test.beforeEach(async({page})=>{
+  await page.addLocatorHandler(page.getByRole('dialog',{name:'Race screen'}),
+    async screen=>screen.getByRole('button',
+      {name:'Close race screen'}).click());
+});
+
 test('close-chase preset shows when hard effort catches a late break',
   async({page})=>{
     await page.goto('/login');
@@ -28,7 +37,7 @@ test('close-chase preset shows when hard effort catches a late break',
       return (await response.json()).coasted;
     };
     const conserve=await run();
-    await page.getByLabel('5 km to go effort for you')
+    await page.getByLabel('Effort after 35 km for you')
       .selectOption('hard');
     const hard=await run();
     expect(hard.stageTrace.version).toBe('v93-stage-trace-1');
@@ -38,9 +47,9 @@ test('close-chase preset shows when hard effort catches a late break',
     await expect(stageCard).toContainText('Your active order:');
     await expect(stageCard).toContainText('Recorded this kilometre:');
     await expect(stageCard).toContainText('simulated for this test race');
-    await page.getByRole('button',{name:'5 km effort handoff'}).click();
+    await page.getByRole('button',{name:'5 km order handoff'}).click();
     await expect(page.getByLabel('Stage and orders at km 35'))
-      .toContainText('changed at km 35');
+      .toContainText('(starting order)');
     expect(conserve.kilometreFrames.at(-1).roadGroups)
       .toHaveLength(1);
     expect(hard.kilometreFrames.at(-1).roadGroups)
@@ -71,7 +80,7 @@ test('close-chase preset shows when hard effort catches a late break',
     await expect(timeline).toContainText(
       '3 riders were caught: rival-1-7, rival-2-7, rival-3-7');
     await expect(timeline).not.toContainText('stopped chasing');
-    await page.getByLabel('5 km to go effort for you')
+    await page.getByLabel('Effort after 35 km for you')
       .selectOption('steady');
     const steady=await run();
     expect(steady.lineTimes).toHaveLength(32);
@@ -111,10 +120,10 @@ test('measured chase shows when steady catches and hard only spends reserve',
       return (await response.json()).coasted;
     };
     const conserve=await run();
-    await page.getByLabel('5 km to go effort for you')
+    await page.getByLabel('Effort after 35 km for you')
       .selectOption('steady');
     const steady=await run();
-    await page.getByLabel('5 km to go effort for you')
+    await page.getByLabel('Effort after 35 km for you')
       .selectOption('hard');
     const hard=await run();
     expect(hard.stageTrace.version).toBe('v93-stage-trace-1');
@@ -124,9 +133,9 @@ test('measured chase shows when steady catches and hard only spends reserve',
     await expect(stageCard).toContainText('Your active order:');
     await expect(stageCard).toContainText('Recorded this kilometre:');
     await expect(stageCard).toContainText('simulated for this test race');
-    await page.getByRole('button',{name:'5 km effort handoff'}).click();
+    await page.getByRole('button',{name:'5 km order handoff'}).click();
     await expect(page.getByLabel('Stage and orders at km 35'))
-      .toContainText('changed at km 35');
+      .toContainText('(starting order)');
     const ownPlace=race=>race.provisionalLineOrder.find(row=>
       row.riderId==='you-7').position;
     const ownEnergy=race=>race.lineTimes.find(row=>
@@ -283,7 +292,7 @@ test('both front leavers stay ahead in paid road, line and replay',
     await page.getByRole('button',{name:'Run v93 race preview'}).click();
     const checkpoints=page.getByLabel('Race checkpoint navigation');
     await checkpoints.getByRole('button',{
-      name:'5 km effort handoff'}).click();
+      name:'5 km order handoff'}).click();
     await expect(checkpoints).toContainText('Viewing km 255 of 260');
     await checkpoints.getByRole('button',{name:'1 km road'}).click();
     await expect(checkpoints).toContainText('Viewing km 259 of 260');
@@ -1375,10 +1384,10 @@ test('a five-kilometre effort change reaches the paid line and points',
       expect(response.status()).toBe(200);
       return (await response.json()).coasted;
     };
-    await page.getByLabel('5 km to go effort for you')
+    await page.getByLabel('Effort after 115 km for you')
       .selectOption('conserve');
     const before=await run();
-    await page.getByLabel('5 km to go effort for you')
+    await page.getByLabel('Effort after 115 km for you')
       .selectOption('hard');
     const after=await run();
     for(const [summary,effort] of [[before,'conserve'],[after,'hard']]){
