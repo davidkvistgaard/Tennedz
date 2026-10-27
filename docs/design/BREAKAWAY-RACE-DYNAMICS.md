@@ -392,6 +392,17 @@ stage-format break attempts per case now come from helpers, with zero captain
 attempts, and all recordings validate and replay. Mean maximum leads changed
 from 556/550 to 534/529 seconds in fresh/tired stages; this is a tactical
 composition change, not evidence of calibrated gaps or official outcomes.
+The twelve-new-seed holdout can be run as three four-seed batches with
+`--extended-seeds --planned-intent --validate --summary` and one
+`--seed-batch=N` flag, with N set to 1, 2 or 3.
+All 96 specialist-plan races validated, with no refusal or unpaid front-rider
+kilometre. Every recorded break-role attack in the stage sets came from a
+helper, while later one-day fallback attempts still included captains.
+Initial fronts were fully caught in 21/24 fresh and 18/24 fatigued one-day
+cases, versus 3/24 fresh and 1/24 fatigued stage cases. Mean maximum leads
+were approximately 281, 266, 394 and 382 seconds in that order. These
+figures are synthetic role-policy diagnostics, not target frequencies; the
+remaining captain fallback and prolonged control chase need further work.
 An optional v94-only, versioned intent manifest can now be committed to the
 race recording. It retains each team's role, opening order and whether the
 planner labelled it generated, manager-goal or explicit-manager input.

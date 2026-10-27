@@ -10,8 +10,15 @@ import {observedFrontClosingSecondsPerKm} from '../lib/engine/v2/race-context-v1
 import {resolveRandomRivalTactics} from '../lib/engine/v2/playtest-rival-random.mjs';
 import {prepareV94RivalIntent} from '../lib/engine/v2/playtest-rival-intent-v94.mjs';
 
+const batchArg=process.argv.find(value=>value.startsWith('--seed-batch='));
+const batchMatch=batchArg?.match(/^--seed-batch=([1-3])$/);
+if(batchArg&&(!batchMatch||!process.argv.includes('--extended-seeds')))
+  throw new Error('Use --seed-batch=1, 2 or 3 with --extended-seeds.');
+const holdoutSeeds=Array.from({length:12},(_,index)=>
+  `race-dynamics-holdout-${index+1}`);
 const seeds=process.argv.includes('--extended-seeds')?
-  Array.from({length:12},(_,index)=>`race-dynamics-holdout-${index+1}`):
+  batchMatch?holdoutSeeds.slice((Number(batchMatch[1])-1)*4,
+    Number(batchMatch[1])*4):holdoutSeeds:
   ['sample-flat-finish','race-dynamics-1','race-dynamics-2'];
 function seededRandom(label){
   let state=2166136261;
@@ -188,10 +195,11 @@ const summary=process.argv.includes('--summary')?
       Object.entries(group).every(([key,value])=>row[key]===value));
     if(sample.length===0)return null;
     const completed=sample.filter(row=>!row.refusal);
-    const average=field=>completed.length?
-      +(completed.reduce((sum,row)=>sum+row[field],0)/completed.length)
-      .toFixed(2)
-      :null;
+    const average=field=>{
+      const values=completed.map(row=>row[field]).filter(Number.isFinite);
+      return values.length?
+        +(values.reduce((sum,value)=>sum+value,0)/values.length).toFixed(2):null;
+    };
     return {format,...group,cases:sample.length,
       meanBreakTeams:average('breakTeams'),
       meanControlTeams:average('controlTeams'),
@@ -199,6 +207,9 @@ const summary=process.argv.includes('--summary')?
       meanBreakRoleCaptainAttempts:average('breakRoleCaptainAttempts'),
       meanBreakRoleHelperAttempts:average('breakRoleHelperAttempts'),
       meanBreakRoleDistinctAttackers:average('breakRoleDistinctAttackers'),
+      meanBreakEnergyAtFinaleStart:average('breakEnergyAtFinaleStart'),
+      meanControlEnergyAtFinaleStart:average('controlEnergyAtFinaleStart'),
+      meanFrontUnmetRiderKm:average('frontUnmetRiderKilometres'),
       allInitialFrontCaught:completed.filter(row=>row.initialFrontRiders>0&&
         row.initialFrontAtLineRiders===0).length,
       meanMaxGapSeconds:average('maxGapSeconds'),
