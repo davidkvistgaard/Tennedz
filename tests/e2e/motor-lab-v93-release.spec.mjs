@@ -500,7 +500,9 @@ test('guided Motor Lab applies an effort order after a selected 5 km marker', as
 });
 
 test('guided refusal opens paid road and keeps result unavailable',async({page})=>{
-  test.setTimeout(120000);
+  // This locked 20-team mountain refusal takes about 115 s in the motor
+  // before the browser receives its expected 422 response.
+  test.setTimeout(180000);
   await page.goto('/login');
   await page.getByLabel('Email or username').fill('alice');
   await page.getByLabel('Password',{exact:true}).fill('fixture-password');
