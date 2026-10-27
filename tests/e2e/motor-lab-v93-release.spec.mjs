@@ -12,6 +12,29 @@ async function closeDefaultRaceScreen(page){
   await screen.getByRole('button',{name:'Close race screen'}).click();
 }
 
+test('guided Motor Lab generates an inspectable route for the chosen length',async({page})=>{
+  await page.setViewportSize({width:390,height:844});
+  await page.goto('/login');
+  await page.getByLabel('Email or username').fill('bob');
+  await page.getByLabel('Password',{exact:true}).fill('fixture-password');
+  await page.getByRole('button',{name:'Sign in',exact:true}).click();
+  await expect(page).toHaveURL(/\/team$/);
+  await page.goto('/team/motor-lab');
+  await page.getByLabel('Route profile').selectOption('mountain');
+  await page.getByRole('button',{name:'Generate a mountain route'}).click();
+  await expect(page.getByLabel('Route profile')).toHaveValue('custom');
+  const heights=page.locator('.v91-profile-points input[type=number]');
+  await expect(heights).toHaveCount(6);
+  const first=await heights.evaluateAll(inputs=>inputs.map(input=>Number(input.value)));
+  expect(first.some((height,index)=>index>0&&height!==first[index-1]))
+    .toBe(true);
+  await page.getByRole('button',{name:'Generate another mountain route'}).click();
+  const second=await heights.evaluateAll(inputs=>inputs.map(input=>Number(input.value)));
+  expect(second).not.toEqual(first);
+  await expect(page.getByRole('img',{name:'Stage profile with planned orders'}))
+    .toBeVisible();
+});
+
 test('guided Motor Lab runs a race from setup to rider replay',async({page,context})=>{
   await page.setViewportSize({width:390,height:844});
   await page.goto('/login');

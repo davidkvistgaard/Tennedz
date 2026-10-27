@@ -8,6 +8,8 @@ import {resolveRandomRivalTactics} from
 import {raceViewerCommentaryV1} from
   '../../../lib/engine/v2/playtest-commentary-v1.mjs';
 import {recordedStageProfile} from '../../../lib/engine/v2/playtest-stage-trace.mjs';
+import {generatePlaytestStageProfile} from
+  '../../../lib/engine/v2/playtest-stage-generator.mjs';
 import {formatMotorLabRaceLog} from
   '../../../lib/engine/v2/playtest-race-log-v1.mjs';
 import {guidedTimelinePhases} from
@@ -45,7 +47,7 @@ const INITIAL={distanceKm:120,terrain:'flat',teamCount:4,gender:'M',fatigue:0,
   managerTactics:[],managerTacticOverrides:[]};
 const OPTIONS={distanceKm:[[40,'40 km — short'],[120,'120 km — medium'],[260,'260 km — long']],
   terrain:[['flat','Flat'],['rolling','Rolling'],['mountain','Mountain'],
-    ['exposed','Flat, exposed'],['custom','Draw your own']],
+    ['exposed','Flat, exposed'],['custom','Custom / generated']],
   teamCount:[[4,'4 teams'],[15,'15 teams'],[20,'20 teams']],
   gender:[['M','Men'],['F','Women']],fatigue:[[0,'Fresh'],[15,'Some fatigue'],[30,'Tired']],
   effort:[['conserve','Conserve'],['steady','Steady'],['hard','Hard']],
@@ -231,6 +233,7 @@ export default function Playtest({guided=false}){
   const [timelineKm,setTimelineKm]=useState(5);
   const [timelineOrders,setTimelineOrders]=useState([]);
   const [breakWindow,setBreakWindow]=useState(null);
+  const [generatedStageStyle,setGeneratedStageStyle]=useState('rolling');
   const [finaleFrontWork,setFinaleFrontWork]=useState({});
   const [namedAttack,setNamedAttack]=useState({teamId:'',riderId:''});
   const [secondNamedAttack,setSecondNamedAttack]=useState({teamId:'',riderId:''});
@@ -287,6 +290,8 @@ export default function Playtest({guided=false}){
     }):[];
   const frame=result?.frames[selectedKm-1];
   const change=(key,value)=>{
+    if(key==='terrain'&&['flat','rolling','mountain'].includes(value))
+      setGeneratedStageStyle(value);
     if(key==='distanceKm'){
       const lastMarker=Number(value)-5;
       setTimelineKm(km=>Math.min(km,lastMarker));
@@ -332,6 +337,13 @@ export default function Playtest({guided=false}){
   };
   const changeHeight=(index,value)=>setSettings(current=>({...current,
     profileHeightsM:current.profileHeightsM.map((height,at)=>at===index?Number(value):height)}));
+  const generateStage=()=>{
+    const style=settings.terrain==='custom'?generatedStageStyle:settings.terrain;
+    const profileHeightsM=generatePlaytestStageProfile({
+      distanceKm:settings.distanceKm,style,seed:crypto.randomUUID()});
+    setGeneratedStageStyle(style);
+    setSettings(current=>({...current,terrain:'custom',profileHeightsM}));
+  };
   const changeRival=(index,value)=>setSettings(current=>({...current,
     rivalPlans:current.rivalPlans.map((plan,at)=>at===index?value:plan)}));
   const changeManager=(index,key,value)=>setSettings(current=>{
@@ -1001,6 +1013,16 @@ export default function Playtest({guided=false}){
           <select value={settings[key]} onChange={event=>change(key,event.target.value)}>
             {options.map(([value,label])=><option value={value} key={value}>{label}</option>)}
           </select></label>)}
+        {guided&&settings.terrain!=='exposed'&&
+        <div className="v91-generated-stage">
+          <button type="button" onClick={generateStage}>
+            Generate {settings.terrain==='custom'?'another':'a'} {
+              settings.terrain==='custom'?generatedStageStyle:
+                settings.terrain} route</button>
+          <p>Uses your chosen distance and route character. The generated
+            elevations are saved with the race, so the same settings and
+            seed replay the same road.</p>
+        </div>}
         {settings.terrain==='custom'&&<fieldset className="v91-profile">
           <legend>Route elevation profile</legend>
           <p>Set the height at the start, every 20% of the race, and the finish. The motor calculates the slopes between these points.</p>
