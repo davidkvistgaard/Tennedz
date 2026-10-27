@@ -932,6 +932,16 @@ The current v94 experiments satisfy parts of the recording and paid-work
 checks but not this whole gate. Until they do, the live guided Motor Lab
 continues to use its existing kilometre motor.
 
+A read-only eight-case compatibility probe tried to feed complete v94
+recordings into the current v93 individual finish path (4 and 20 teams,
+flat and mountain routes, one-day and stage formats). All eight refused:
+the single-group and coasted last-kilometre clocks explicitly require a
+v93 source; the remaining separated stage case lacked a recorded
+last-kilometre response or front rotation. The temporary adapter was
+fully reverted. A player-facing v94 race therefore needs its own paid
+finish handoff and validator, not a version label change or a v93 finale
+attached to the new road clock.
+
 ### Isolated experimental whole-race preview
 
 `createV94RaceDynamicsPreview` runs the committed v94 policies behind a
