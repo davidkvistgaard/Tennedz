@@ -703,6 +703,29 @@ that pays an accepted break, energy and eventual pursuit over the full
 field. It must retain explicit manager orders and be tested end to end before
 routing a new recording version to the viewer.
 
+### Paid solo-front exhaustion experiment
+
+The internal opt-in `raceContext.frontExhaustionVersion: 2` preflights a
+single rider in the only road group before moving it. If that rider is not
+pulling and cannot fund the ordered kilometre, the unpaid fraction reduces
+that solo group's road lead through the existing coast-speed formula. The
+recording names the rider, group and paid delay; energy is capped at the
+available reserve. If the solo rider falls behind the bunch in the same
+kilometre, the remaining delay becomes their recorded deficit. A locked hard,
+fatigued mountain case now pays 21.849, 51.767 and 51.781 seconds of solo
+delay on kilometres 136–138 and is caught and dropped at kilometre 138 instead of
+publishing unsupported front movement. The complete 260 km recording passes
+the simulator-free validator and deterministic source replay. Omitted
+version 1 still refuses at kilometre 136, preserving older recordings.
+
+This is deliberately narrow. An exhausted puller or a rider in a shared
+group still refuses before road movement because the current model cannot
+yet determine an independently paid change of pull roster and group contact.
+The ordinary planned-intent audit may show zero such solo coast events; it
+does not establish their frequency in real racing or solve opponent intent
+and pursuit. Reproduce with `node scripts/audit-race-dynamics-v94.mjs
+--planned-intent --validate --summary --front-exhaustion-v2`.
+
 ### Gate before a player-facing race-dynamics version
 
 - Commit an inspectable pre-race goal and order for every team. Preserve any

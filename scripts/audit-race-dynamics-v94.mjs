@@ -19,6 +19,7 @@ const holdoutSeeds=Array.from({length:12},(_,index)=>
 const frontRotationVersion=process.argv.includes('--front-rotation-v3')?3:
   process.argv.includes('--front-rotation-v2')?2:1;
 const collectiveControl=process.argv.includes('--collective-control');
+const frontExhaustionVersion=process.argv.includes('--front-exhaustion-v2')?2:1;
 const seeds=process.argv.includes('--extended-seeds')?
   batchMatch?holdoutSeeds.slice((Number(batchMatch[1])-1)*4,
     Number(batchMatch[1])*4):holdoutSeeds:
@@ -70,8 +71,10 @@ function run({seed,terrain,fatigue,format,breakTeams,controlTeams}){
     weather:prepared.weather,teams,seed:prepared.seed,
     motorVersion:MOTOR_RACE_DYNAMICS_VERSION,
     rivalIntent:planned?.intent??null,
-    raceContext:collectiveControl?{...baseRaceContext,
-      controlPursuitVersion:2}:baseRaceContext});
+    raceContext:{...baseRaceContext,
+      ...(collectiveControl?{controlPursuitVersion:2}:{}),
+      ...(frontExhaustionVersion===2?{frontExhaustionVersion}:{}),
+    }});
   if(process.argv.includes('--validate'))validateRecordedTour(recording);
   if(process.argv.includes('--replay'))replayRaceDynamicsRecording(recording);
   const frames=recording.frames;
@@ -156,6 +159,8 @@ function run({seed,terrain,fatigue,format,breakTeams,controlTeams}){
     finalBunchMeanEnergy:average(finalFrame.riderGroups.filter(row=>
       row.group==='peloton'),'energy'),
     frontUnmetRiderKilometres:frontUnmet.length,
+    frontCoastRiderKilometres:frames.reduce((sum,frame)=>
+      sum+(frame.frontCoast?.length??0),0),
     firstFrontUnmetKm:frontUnmet[0]?.km??null,
     totalFrontUnmetEnergy:+frontUnmet.reduce((sum,row)=>
       sum+row.unmetEnergyDemand,0).toFixed(2),
@@ -217,6 +222,7 @@ const summary=process.argv.includes('--summary')?
       meanBreakEnergyAtFinaleStart:average('breakEnergyAtFinaleStart'),
       meanControlEnergyAtFinaleStart:average('controlEnergyAtFinaleStart'),
       meanFrontUnmetRiderKm:average('frontUnmetRiderKilometres'),
+      meanFrontCoastRiderKm:average('frontCoastRiderKilometres'),
       allInitialFrontCaught:completed.filter(row=>row.initialFrontRiders>0&&
         row.initialFrontAtLineRiders===0).length,
       meanMaxGapSeconds:average('maxGapSeconds'),
@@ -226,5 +232,6 @@ const summary=process.argv.includes('--summary')?
   })).filter(Boolean):null;
 console.log(JSON.stringify({version:MOTOR_RACE_DYNAMICS_VERSION,
   frontRotationVersion,controlPursuitVersion:collectiveControl?2:1,
+  frontExhaustionVersion,
   note:'Internal opt-in role scenarios, not observed race calibration or official results.',
   ...(summary?{summary}:{rows})},null,2));

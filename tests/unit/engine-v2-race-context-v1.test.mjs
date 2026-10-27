@@ -407,6 +407,59 @@ test('v94 refuses unpayable front work before exposing an unsupported road clock
     motorVersion:MOTOR_EXHAUSTION_COAST_VERSION}));
 });
 
+test('opt-in solo front exhaustion pays road delay and can be caught',()=>{
+  const {stage,weather,teams,seed}=prepareV91Playtest({distanceKm:260,
+    teamCount:4,terrain:'mountain',fatigue:30,effort:'hard',
+    attack:'repeated',chase:'ignore',defaultRivalPlan:'passive',
+    seed:'front-exhaustion-probe'});
+  teams[0].orders.baseline.breakWork='drive';
+  const teamRoles=Object.fromEntries(teams.map(team=>[team.id,
+    team.id==='you'?'break':'protect']));
+  const race=simulateTacticalTour({stage,weather,teams,seed,
+    motorVersion:MOTOR_RACE_DYNAMICS_VERSION,
+    raceContext:{format:'stage',stageNumber:8,teamRoles,
+      frontExhaustionVersion:2}});
+  assert.equal(race.frames.length,260);
+  const first=race.frames[135],last=race.frames[137];
+  assert.deepEqual(first.frontCoast.map(row=>row.riderId),['you-7']);
+  assert.equal(first.roadGroups[0].riderIds.length,1);
+  assert.equal(first.frontCoast[0].groupId,first.roadGroups[0].id);
+  assert.equal(first.gapSeconds,
+    +(first.paidRearGapSeconds-first.frontCoast[0].delaySeconds).toFixed(2));
+  assert.ok(first.frontCoast[0].delaySeconds>0);
+  assert.equal(first.energyLedger.find(row=>row.riderId==='you-7').unmetEnergyDemand,0);
+  assert.ok(last.caughtBreakawayRiderIds.includes('you-7'));
+  assert.equal(last.riderGroups.find(row=>row.id==='you-7').group,'dropped');
+  assert.ok(last.riderGroups.find(row=>row.id==='you-7').deficitSeconds>=
+    last.frontCoast[0].residualSeconds);
+  assert.doesNotThrow(()=>validateRecordedTour(race));
+  assert.doesNotThrow(()=>replayRaceDynamicsRecording(race));
+  const altered=structuredClone(race);
+  altered.frames[135].frontCoast[0].delaySeconds+=1;
+  assert.throws(()=>validateRecordedTour(altered),/front coast/);
+  const forgedResidual=structuredClone(race);
+  forgedResidual.frames[137].frontCoast[0].residualSeconds=0;
+  assert.throws(()=>validateRecordedTour(forgedResidual),/front coast/);
+});
+
+test('front exhaustion opt-in preserves the earlier v94 recording policy',()=>{
+  const source=prepareV91Playtest({distanceKm:40,terrain:'flat',
+    teamCount:4,seed:'front-coast-version-parity'});
+  const teamRoles=Object.fromEntries(source.teams.map(team=>[team.id,
+    team.id==='you'?'protect':'opportunistic']));
+  const base={...source,motorVersion:MOTOR_RACE_DYNAMICS_VERSION};
+  const raceContext={format:'one_day',teamRoles};
+  const earlier=simulateTacticalTour({...base,raceContext});
+  const explicit=simulateTacticalTour({...base,raceContext:{...raceContext,
+    frontExhaustionVersion:1}});
+  assert.deepEqual(earlier.frames,explicit.frames);
+  assert.ok(earlier.frames.every(frame=>!Object.hasOwn(frame,'frontCoast')));
+  assert.doesNotThrow(()=>validateRecordedTour(earlier));
+  assert.doesNotThrow(()=>validateRecordedTour(explicit));
+  assert.throws(()=>simulateTacticalTour({...base,raceContext:{...raceContext,
+    frontExhaustionVersion:3}}),/race context/);
+});
+
 test('v94 validates paid worker membership without inventing wheel order',()=>{
   const seed='sample-flat-finish',terrain='flat',fatigue=0;
   const managerTactics=resolveRandomRivalTactics({teamCount:20,
