@@ -581,6 +581,21 @@ The extreme mixes are not yet credible enough for player-facing defaults.
 No whole-race result, occupied-wheel order or official award follows from
 this bounded motor experiment.
 
+The further opt-in `frontRotationVersion: 3` keeps one cooperative rider on
+the front even when no one chased in the prior kilometre. Version 2 can have
+zero cooperative pullers, which is a poor maintenance model on a flat road;
+versions 1 and 2 remain available for exact replay. The selected worker pays
+the same road-group exposure and the gap is recalculated from that roster.
+All 32 new-seed planned-intent cases in seed batch 1 validated without refusal
+or unpaid front rider-kilometres. Versus version 2 in that *same batch*, mean
+maximum gaps rose from 213/196 to 227/210 seconds for fresh/tired one-day
+races, and from 325/303 to 339/321 seconds for fresh/tired stages. Initial
+front catch counts remained 7/8, 5/8, 0/8 and 0/8 respectively. Control-team
+energy at the finale start fell by about 2.6–3.2 units. Keeping a paid puller
+improves the physical accounting but does not fix prolonged control chasing
+or establish a suitable player-facing race model. Reproduce with
+`node scripts/audit-race-dynamics-v94.mjs --planned-intent --validate --summary --extended-seeds --seed-batch=1 --front-rotation-v3`.
+
 ### Rival intent alone does not repair the live race
 
 `node scripts/audit-v91-rival-intent-counterfactual.mjs` applies two

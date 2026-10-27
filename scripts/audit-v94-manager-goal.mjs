@@ -12,7 +12,8 @@ import {MOTOR_RACE_DYNAMICS_VERSION} from '../lib/engine/v2/tuning.mjs';
 
 const single=process.argv.includes('--single');
 const tempo=process.argv.includes('--control-tempo');
-const frontRotationVersion=process.argv.includes('--front-rotation-v2')?2:1;
+const frontRotationVersion=process.argv.includes('--front-rotation-v3')?3:
+  process.argv.includes('--front-rotation-v2')?2:1;
 const seeds=single?['manager-goal-1']:process.argv.includes('--extended-seeds')?
   Array.from({length:12},(_,index)=>`manager-goal-holdout-${index+1}`):
   ['manager-goal-1','manager-goal-2','manager-goal-3'];

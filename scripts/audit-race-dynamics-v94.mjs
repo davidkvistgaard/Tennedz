@@ -16,7 +16,8 @@ if(batchArg&&(!batchMatch||!process.argv.includes('--extended-seeds')))
   throw new Error('Use --seed-batch=1, 2 or 3 with --extended-seeds.');
 const holdoutSeeds=Array.from({length:12},(_,index)=>
   `race-dynamics-holdout-${index+1}`);
-const frontRotationVersion=process.argv.includes('--front-rotation-v2')?2:1;
+const frontRotationVersion=process.argv.includes('--front-rotation-v3')?3:
+  process.argv.includes('--front-rotation-v2')?2:1;
 const seeds=process.argv.includes('--extended-seeds')?
   batchMatch?holdoutSeeds.slice((Number(batchMatch[1])-1)*4,
     Number(batchMatch[1])*4):holdoutSeeds:

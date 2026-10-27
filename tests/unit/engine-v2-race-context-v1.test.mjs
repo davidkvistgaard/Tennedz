@@ -32,8 +32,10 @@ test('race format is explicit and stage number cannot leak into a one-day race',
     /Invalid race context/);
   assert.deepEqual(normalizeRaceContext({format:'one_day',
     frontRotationVersion:2}),{format:'one_day',frontRotationVersion:2});
+  assert.deepEqual(normalizeRaceContext({format:'one_day',
+    frontRotationVersion:3}),{format:'one_day',frontRotationVersion:3});
   assert.throws(()=>normalizeRaceContext({format:'one_day',
-    frontRotationVersion:3}),/Invalid race context/);
+    frontRotationVersion:4}),/Invalid race context/);
   assert.deepEqual(normalizeRaceContext({format:'one_day',
     frontObservationVersion:2}),{format:'one_day',frontObservationVersion:2});
   assert.throws(()=>normalizeRaceContext({format:'one_day',
@@ -108,6 +110,20 @@ test('opt-in front rotation pays fewer pulls without changing the old policy',()
   assert.equal(settledFrontRotation(input).pullRiderIds.length,4);
 });
 
+test('maintenance rotation keeps one paid front worker even without a chase',()=>{
+  const input={frontGroup:{id:'road-1',riderIds:['a','b','c','d'],
+    gapSeconds:120},pullRiderIds:['a','b','c','d'],driveRiderIds:[],
+    km:20,remainingKm:150,observedClosingSecondsPerKm:-1,
+    priorChaserCount:0};
+  const settled=settledFrontRotation({...input,policyVersion:3});
+  assert.equal(settled.pullRiderIds.length,1);
+  assert.equal(settled.restRiderIds.length,3);
+  assert.deepEqual(settledFrontRotation({...input,policyVersion:2}),{
+    pullRiderIds:[],restRiderIds:['a','b','c','d']});
+  assert.equal(settledFrontRotation({...input,policyVersion:3,km:21})
+    .pullRiderIds.length,1);
+});
+
 test('opt-in front rotation is committed, validated and source-replayable',()=>{
   const prepared=prepareV91Playtest({distanceKm:120,terrain:'flat',
     teamCount:20,attack:'none',chase:'ignore',seed:'v94-rotation-2',
@@ -128,6 +144,29 @@ test('opt-in front rotation is committed, validated and source-replayable',()=>{
   assert.ok(replayRaceDynamicsRecording(race));
   const switched=structuredClone(race);
   switched.committedInputs.raceContext.frontRotationVersion=1;
+  assert.throws(()=>validateRecordedTour(switched),
+    /Invalid recorded settled-front work/);
+});
+
+test('paid maintenance rotation remains bound to its committed policy',()=>{
+  const prepared=prepareV91Playtest({distanceKm:120,terrain:'flat',
+    teamCount:20,attack:'none',chase:'ignore',seed:'v94-rotation-3',
+    defaultRivalPlan:'passive'});
+  const plan=prepareV94RivalIntent({prepared,format:'one_day',
+    rivalGoals:Array.from({length:5},(_,index)=>({teamId:
+      `rival-${index+1}`,role:'break'})),frontRotationVersion:3});
+  const race=simulateTacticalTour({stage:prepared.stage,
+    weather:prepared.weather,teams:plan.teams,seed:prepared.seed,
+    motorVersion:MOTOR_RACE_DYNAMICS_VERSION,
+    raceContext:plan.raceContext,rivalIntent:plan.intent});
+  assert.equal(race.committedInputs.raceContext.frontRotationVersion,3);
+  assert.ok(race.frames.some(frame=>
+    frame.settledFrontRestRiderIds.length>=2&&
+    frame.roadGroupWorkerRiderIds.length>=1));
+  assert.equal(validateRecordedTour(race),true);
+  assert.ok(replayRaceDynamicsRecording(race));
+  const switched=structuredClone(race);
+  switched.committedInputs.raceContext.frontRotationVersion=2;
   assert.throws(()=>validateRecordedTour(switched),
     /Invalid recorded settled-front work/);
 });
