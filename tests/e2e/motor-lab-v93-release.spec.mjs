@@ -384,6 +384,13 @@ test('guided front-work order is paid only after its 5 km marker',async({page})=
   expect(workers).toHaveLength(2);
   for(const riderId of workers)await expect(stage).toContainText(riderId);
   await stage.screenshot({path:'test-results/guided-front-work-marker.png'});
+  const reserveStory=raceViewerCommentaryV1(coasted).find(row=>
+    row.kind==='frontWorkReserve'&&row.km===15);
+  expect(reserveStory?.evidence.riderIds).toEqual(workers);
+  await page.getByRole('slider',{name:/Recorded kilometre:/}).fill('15');
+  await expect(page.getByLabel('Race commentary'))
+    .toContainText(reserveStory.evidence.reserves.map(row=>
+      row.after.toFixed(1)).join(' and '));
 });
 
 test('guided Motor Lab applies an effort order after a selected 5 km marker', async({page}) => {

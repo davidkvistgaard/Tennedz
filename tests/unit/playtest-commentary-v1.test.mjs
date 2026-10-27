@@ -137,6 +137,27 @@ test('continuous paid chase is compared with the same recorded front gap',()=>{
   assert.ok(trends.every(row=>!/caused|ensured|forced|caught/i.test(row.text)));
 });
 
+test('own continuous front work reports only measured reserve change',()=>{
+  const frames=Array.from({length:15},(_,index)=>{
+    const km=index+1;
+    return {...base,km,paidBunchPaceTeamId:km>=6?'you':null,
+      paidBunchPaceRiderIds:km>=6?km===13?['you-5','you-2']:
+        ['you-5','you-6']:[],
+      ownRiders:[{riderId:'you-2',energy:75-km*.1},
+        {riderId:'you-5',energy:80-km},
+        {riderId:'you-6',energy:81-km}]};
+  });
+  const lines=raceViewerCommentaryV1({settings:{seed:'front-spell'},
+    kilometreFrames:frames});
+  const summaries=lines.filter(row=>row.kind==='frontWorkReserve');
+  assert.deepEqual(summaries.map(row=>row.km),[10]);
+  assert.equal(summaries[0].evidence.priorKm,5);
+  assert.deepEqual(summaries[0].evidence.riderIds,['you-5','you-6']);
+  assert.match(summaries[0].text,/75\.0 and 76\.0/);
+  assert.match(summaries[0].text,/70\.0 and 71\.0/);
+  assert.ok(!lines.some(row=>row.kind==='frontWorkReserve'&&row.km===15));
+});
+
 test('interrupted chase or front membership gets no combined chase claim',()=>{
   const frames=Array.from({length:10},(_,index)=>{
     const km=index+1;
