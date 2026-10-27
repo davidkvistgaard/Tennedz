@@ -116,6 +116,45 @@ test('gap commentary refuses changing membership and small fluctuations',()=>{
   assert.equal(lines.filter(row=>row.evidence.type==='front_gap_trend').length,0);
 });
 
+test('continuous paid chase is compared with the same recorded front gap',()=>{
+  const names={teams:{'rival-1':'Team Mana'}};
+  const frames=Array.from({length:15},(_,index)=>{
+    const km=index+1;
+    return {...base,km,chasingTeamIds:km>=6?['rival-1']:[],
+      roadGroups:[{id:'road-1',riderIds:['you-2','rival-2-4'],
+        gapSeconds:km<=5?40:km<=10?40+(km-5)*5:65-(km-10)*4}]};
+  });
+  const lines=raceViewerCommentaryV1({settings:{seed:'paid-chase'},
+    kilometreFrames:frames},{names});
+  const trends=lines.filter(row=>row.evidence.type==='front_gap_trend');
+  assert.deepEqual(trends.map(row=>[row.km,row.kind]),[
+    [10,'chaseNotClosing'],[15,'chaseClosing']]);
+  assert.ok(trends.every(row=>row.text.includes('Team Mana')));
+  assert.ok(trends.every(row=>row.evidence.continuousChasingTeamId===
+    'rival-1'));
+  assert.match(trends[0].text,/gained|grows|further clear/);
+  assert.match(trends[1].text,/fallen|closer|shrinks/);
+  assert.ok(trends.every(row=>!/caused|ensured|forced|caught/i.test(row.text)));
+});
+
+test('interrupted chase or front membership gets no combined chase claim',()=>{
+  const frames=Array.from({length:10},(_,index)=>{
+    const km=index+1;
+    return {...base,km,chasingTeamIds:km===8?[]:['rival-1'],
+      roadGroups:[{id:'road-1',riderIds:['you-2','rival-2-4'],
+        gapSeconds:km<=5?40:40+(km-5)*5}]};
+  });
+  const interrupted=raceViewerCommentaryV1({kilometreFrames:frames});
+  assert.equal(interrupted.find(row=>row.evidence.type==='front_gap_trend')
+    .kind,'leadGrowing');
+  frames[7]={...frames[7],roadGroups:[{...frames[7].roadGroups[0],
+    riderIds:['you-2','rival-3-2']}]};
+  const changedFront=raceViewerCommentaryV1({kilometreFrames:frames.map(
+    frame=>({...frame,chasingTeamIds:['rival-1']}))});
+  assert.equal(changedFront.find(row=>row.evidence.type==='front_gap_trend')
+    .kind,'leadGrowing');
+});
+
 test('a multi-rider break is described once after three continuous recorded frames',()=>{
   const race={settings:{seed:'stable-break'},kilometreFrames:
     Array.from({length:8},(_,index)=>({...base,km:index+1,
