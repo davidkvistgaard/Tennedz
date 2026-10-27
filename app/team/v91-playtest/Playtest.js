@@ -556,6 +556,7 @@ export default function Playtest({guided=false}){
     band.ownRiderIds.includes(viewerRiderId));
   const raceScreenRider=viewerSituation?.own.find(rider=>
     rider.riderId===viewerRiderId);
+  const raceScreenRiderInBunch=raceScreenRider?.position==='Bunch';
   const raceScreenBands=[...new Map([
     ...viewerRoad.filter(band=>band.gapSeconds>0).slice(0,2),
     viewerRoad.find(band=>band.key==='bunch'),viewerRiderRoad]
@@ -1548,7 +1549,7 @@ export default function Playtest({guided=false}){
                     <circle className="v91-race-screen-field"
                       cx={raceScreenMarkerX}
                       cy={raceScreenElevationY} r="7"/>
-                    {raceScreenRider&&<>
+                    {raceScreenRiderInBunch&&<>
                       <circle className="v91-race-screen-follow-ring"
                         cx={raceScreenMarkerX} cy={raceScreenElevationY}
                         r="13"/>
@@ -1562,6 +1563,15 @@ export default function Playtest({guided=false}){
                       </text>
                     </>}
                   </svg>
+                  {raceScreenRider&&!raceScreenRiderInBunch&&<p
+                    className="v91-race-screen-away-note"
+                    aria-label="Followed rider away from the bunch">
+                    <strong>{raceScreenRider.name.replace(
+                      /^Your test team rider /,'Rider ')}</strong> · {
+                      raceScreenRider.position}. The profile marker shows
+                    the bunch at this recorded kilometre; the time gap is
+                    not a measured road distance.
+                  </p>}
                   <div className="v91-race-screen-route-labels">
                     <span>Start</span><strong>Field at km {coastedKm}</strong>
                     <span>Finish · {viewerSituation.totalKm} km</span>

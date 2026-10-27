@@ -93,6 +93,7 @@
 .v91-race-screen-field{fill:#116e60;stroke:white;stroke-width:2;vector-effect:non-scaling-stroke}
 .v91-race-screen-follow-ring{fill:none;stroke:#c06b30;stroke-width:3;vector-effect:non-scaling-stroke}
 .v91-race-screen-follow-label{fill:#784015;font-size:12px;font-weight:800;paint-order:stroke;stroke:white;stroke-width:3px}
+.v91-race-screen-away-note{padding:5px 8px;border-left:3px solid #c06b30;border-radius:4px;background:#fff7ed;color:#513b27}
 .v91-race-screen-route-labels{display:flex;justify-content:space-between;gap:10px;margin:5px 0;color:#526b63;font-size:.8rem}
 .v91-race-screen-route-labels strong{color:#116e60}
 .v91-race-screen-own-moments{display:flex;gap:6px;max-width:100%;overflow-x:auto;padding:2px 0 6px;scrollbar-width:thin}

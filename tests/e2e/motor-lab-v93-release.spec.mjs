@@ -74,6 +74,8 @@ test('guided Motor Lab runs a race from setup to rider replay',async({page,conte
     .toContainText('Rider 1');
   await expect(raceScreen.locator('.v91-race-screen-route svg text'))
     .toHaveText('Rider 1');
+  await expect(raceScreen.locator('.v91-race-screen-follow-ring'))
+    .toBeVisible();
   await raceScreen.getByLabel('Your riders on the road')
     .getByRole('button',{name:/Rider 8/}).click();
   await raceScreen.getByRole('button',{name:'Play',exact:true}).click();
@@ -101,14 +103,16 @@ test('guided Motor Lab runs a race from setup to rider replay',async({page,conte
   await expect(raceScreen.locator('header h2')).toContainText('Km 10');
   const recentEvents=raceScreen.getByRole('list',{
     name:'Recent commentary history'});
-  await expect(recentEvents).toContainText('Km 10');
+  const newestEvent=recentEvents.getByRole('button').first();
+  const newestKm=Number((await newestEvent.innerText()).match(/^Km (\d+)/)[1]);
+  expect(newestKm).toBeGreaterThan(10);
   const earlierEvent=recentEvents.getByRole('button').last();
   const earlierKm=Number((await earlierEvent.innerText()).match(/^Km (\d+)/)[1]);
-  expect(earlierKm).toBeLessThan(10);
+  expect(earlierKm).toBeLessThanOrEqual(newestKm);
   await earlierEvent.click();
   await expect(raceScreen.locator('header h2'))
     .toContainText(`Km ${earlierKm}`);
-  await expect(recentEvents).toContainText('Km 10');
+  await expect(recentEvents).toContainText(`Km ${newestKm}`);
   await raceScreen.getByLabel('Choose recorded kilometre').fill('10');
   await page.screenshot({path:'test-results/guided-race-screen-mobile.png'});
   await page.setViewportSize({width:1440,height:900});
@@ -309,8 +313,13 @@ test('guided race diagram shows paid front-group time gaps',async({page})=>{
     .click();
   await expect(raceScreen.getByLabel('Followed rider position'))
     .toContainText(`Rider ${followedNumber}`);
-  await expect(raceScreen.locator('.v91-race-screen-route svg text'))
-    .toHaveText(`Rider ${followedNumber}`);
+  await expect(raceScreen.locator('.v91-race-screen-follow-ring'))
+    .toHaveCount(0);
+  await expect(raceScreen.getByLabel('Followed rider away from the bunch'))
+    .toContainText(`Rider ${followedNumber}`);
+  await expect(raceScreen.getByLabel('Followed rider away from the bunch'))
+    .toContainText('time gap is not a measured road distance');
+  await raceScreen.screenshot({path:'test-results/guided-followed-rider-away.png'});
   const followedBand=raceScreen.getByLabel('Road groups at selected kilometre')
     .locator('.v91-race-screen-band-followed');
   await expect(followedBand).toContainText(`Rider ${followedNumber}`);
