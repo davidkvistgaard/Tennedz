@@ -152,7 +152,9 @@ test('guided Motor Lab runs a race from setup to rider replay',async({page,conte
   await expect(raceScreen.getByRole('img',{
     name:/Stage profile with the field at km 1/})).toBeVisible();
   await expect(raceScreen.getByRole('img',{
-    name:/Recorded time gaps through km 39/})).toBeVisible();
+    name:/Recorded time gaps through km 1/})).toBeVisible();
+  await expect(raceScreen.getByRole('list',{
+    name:'Road groups at km 1'})).toContainText('Bunch');
   await expect(raceScreen.getByLabel('Your riders on the road')
     .locator('button')).toHaveCount(8);
   await raceScreen.getByLabel('Your riders on the road')
@@ -164,10 +166,18 @@ test('guided Motor Lab runs a race from setup to rider replay',async({page,conte
   await expect(raceScreen.locator('.v91-race-screen-follow-label'))
     .toHaveText('Rider 1');
   await raceScreen.getByRole('img',{
-    name:/Recorded time gaps through km 39/}).scrollIntoViewIfNeeded();
+    name:/Recorded time gaps through km 1/}).scrollIntoViewIfNeeded();
   await page.screenshot({path:'test-results/guided-race-clock.png'});
   await expect(raceScreen.locator('.v91-race-screen-follow-ring'))
     .toBeVisible();
+  const groupKm=coasted.kilometreFrames.find(frame=>
+    frame.roadGroups.length>0).km;
+  await raceScreen.getByLabel('Choose recorded kilometre')
+    .fill(String(groupKm));
+  await expect(raceScreen.getByRole('list',{
+    name:`Road groups at km ${groupKm}`})).toContainText('Group 1');
+  await page.screenshot({path:'test-results/guided-race-groups.png'});
+  await raceScreen.getByLabel('Choose recorded kilometre').fill('1');
   await raceScreen.getByLabel('Your riders on the road')
     .getByRole('button',{name:/Rider 8/}).click();
   await raceScreen.getByRole('button',{name:'Play',exact:true}).click();

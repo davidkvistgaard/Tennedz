@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {raceViewerGapSeries,raceViewerSituationAt} from
+import {raceViewerGapSeries,raceViewerRoadClockSnapshot,
+  raceViewerSituationAt} from
   '../../lib/engine/v2/playtest-viewer.mjs';
 import {playtestRiderCards} from
   '../../lib/engine/v2/playtest-riders.mjs';
@@ -52,4 +53,32 @@ test('group-clock chart derives only recorded checkpoint time gaps',()=>{
     {km:3,leadingGroupSeconds:25,riderSeconds:-7},
   ]);
   assert.deepEqual(raceViewerGapSeries(race,'you-7'),[]);
+});
+
+test('road-clock snapshot follows only current recorded group identities',()=>{
+  const ownRiders=['you-2','you-3','you-7'].map(riderId=>({riderId,
+    energy:70}));
+  const race={kilometreFrames:[
+    {km:1,roadGroups:[{id:'old',gapSeconds:12,riderIds:['you-2']}],
+      droppedRiders:[],ownRiders},
+    {km:2,roadGroups:[{id:'old',gapSeconds:14,riderIds:['you-2']},
+      {id:'new',gapSeconds:5,riderIds:['rival-1-0']}],
+    droppedRiders:[],ownRiders},
+    {km:3,roadGroups:[{id:'new',gapSeconds:7,
+      riderIds:['rival-1-0','you-3']}],
+    droppedRiders:[{riderId:'you-2',deficitSeconds:9}],ownRiders},
+  ]};
+  assert.deepEqual(raceViewerRoadClockSnapshot(race,2),{
+    groups:[
+      {id:'old',gapSeconds:14,riderCount:1,ownRiderIds:['you-2'],
+        trace:[{km:1,gapSeconds:12},{km:2,gapSeconds:14}]},
+      {id:'new',gapSeconds:5,riderCount:1,ownRiderIds:[],
+        trace:[{km:2,gapSeconds:5}]},
+    ],bunchOwnRiderIds:['you-3','you-7'],isolatedOwn:[],
+  });
+  assert.deepEqual(raceViewerRoadClockSnapshot(race,3)?.groups[0].trace,[
+    {km:2,gapSeconds:5},{km:3,gapSeconds:7}]);
+  assert.deepEqual(raceViewerRoadClockSnapshot(race,3)?.isolatedOwn,[
+    {riderId:'you-2',seconds:-9}]);
+  assert.equal(raceViewerRoadClockSnapshot(race,4),null);
 });

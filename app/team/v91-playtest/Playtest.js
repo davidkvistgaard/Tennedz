@@ -20,7 +20,8 @@ import {raceViewerCheckpoints,raceViewerEnergySeries,
   raceViewerEnergyCurve,
   raceViewerBreaksAndChase,raceViewerFinale,raceViewerRoad,
   raceViewerLateEffort,raceViewerLateTeamWork,
-  raceViewerEffortInsight,raceViewerGapSeries,raceViewerTimeline,
+  raceViewerEffortInsight,raceViewerGapSeries,raceViewerRoadClockSnapshot,
+  raceViewerTimeline,
   raceViewerRivalAt,
   raceViewerOwnRiderActionsAt,raceViewerCheckpointChange,
   raceViewerSituationAt} from
@@ -60,24 +61,38 @@ const LABELS={distanceKm:'Distance',terrain:'Route profile',teamCount:'Field siz
 const optionLabel=(key,value)=>OPTIONS[key].find(([choice])=>
   String(choice)===String(value))?.[1]??String(value);
 
-function RecordedGapChart({series,totalKm,km,riderName}){
-  if(!series.length)return null;
-  const maxGap=Math.max(60,...series.flatMap(row=>[
+const GROUP_COLORS=['#136f63','#4365a3','#9b6722','#8c5194',
+  '#a44f36','#447a8e'];
+const readableOwnRiders=ids=>ids.map(id=>`Rider ${Number(id.slice(4))+1}`)
+  .join(', ');
+function RecordedGapChart({series,snapshot,totalKm,km,riderName}){
+  const visible=series.filter(row=>row.km<=km);
+  if(!visible.length)return null;
+  const maxGap=Math.max(60,...visible.flatMap(row=>[
     Math.abs(row.leadingGroupSeconds),Math.abs(row.riderSeconds)]));
   const x=distance=>20+distance/totalKm*560;
   const y=seconds=>90-seconds/maxGap*70;
-  const points=key=>series.map(row=>`${x(row.km).toFixed(1)},${
+  const points=key=>visible.map(row=>`${x(row.km).toFixed(1)},${
     y(row[key]).toFixed(1)}`).join(' ');
-  const current=series.find(row=>row.km===km)??series.at(-1);
+  const current=visible.at(-1);
   return <figure className="v91-recorded-gap-chart">
     <svg viewBox="0 0 600 190" role="img" aria-label={
-      `Recorded time gaps through km ${series.at(-1).km}. `+
+      `Recorded time gaps through km ${current.km}. `+
       `${riderName} at km ${km}: `+
       `${current.riderSeconds.toFixed(1)} seconds relative to the bunch. `+
       'Horizontal position follows route kilometres, not group road distance.'}>
       <line className="v91-gap-zero" x1="20" x2="580" y1="90" y2="90"/>
       <polyline className="v91-gap-leading"
         points={points('leadingGroupSeconds')}/>
+      {snapshot?.groups.map((group,index)=><g key={group.id}>
+        <polyline className="v91-gap-group-track"
+          stroke={GROUP_COLORS[index%GROUP_COLORS.length]}
+          points={group.trace.map(row=>`${x(row.km).toFixed(1)},${
+            y(row.gapSeconds).toFixed(1)}`).join(' ')}/>
+        <circle className="v91-gap-group-marker"
+          fill={GROUP_COLORS[index%GROUP_COLORS.length]}
+          cx={x(km)} cy={y(group.gapSeconds)} r="6"/>
+      </g>)}
       <polyline className="v91-gap-rider"
         points={points('riderSeconds')}/>
       <line className="v91-gap-current" x1={x(km)} x2={x(km)}
@@ -89,10 +104,26 @@ function RecordedGapChart({series,totalKm,km,riderName}){
       <text x="20" y="181">Start</text>
       <text x="580" y="181" textAnchor="end">Finish</text>
     </svg>
-    <figcaption><strong>Recorded group clock</strong> · Green: leading road
-      group · Orange: {riderName} · Dotted: bunch. Above the dotted line is
-      ahead in time; below is behind. The curves share route kilometres with
-      the profile, but do not estimate physical distance between groups.</figcaption>
+    <figcaption><strong>Recorded group clocks through km {km}</strong> · Thin
+      colored lines: groups still ahead at this checkpoint · Green: leading
+      group · Orange: {riderName} · Dotted: bunch. Above is ahead in time;
+      below is behind. Horizontal position is the recorded checkpoint on the
+      profile, not measured distance between groups.</figcaption>
+    {snapshot&&<ul className="v91-gap-group-list" aria-label={
+      `Road groups at km ${km}`}>
+      {snapshot.groups.map((group,index)=><li key={group.id}>
+        <span className="v91-gap-swatch" style={{backgroundColor:
+          GROUP_COLORS[index%GROUP_COLORS.length]}}/>
+        Group {index+1} · +{group.gapSeconds.toFixed(1)} s · {
+          group.riderCount} {group.riderCount===1?'rider':'riders'}
+        {group.ownRiderIds.length>0?` · ${readableOwnRiders(
+          group.ownRiderIds)}`:''}</li>)}
+      <li>Bunch · {snapshot.bunchOwnRiderIds.length} of your riders</li>
+      {snapshot.isolatedOwn.map(row=><li key={row.riderId}>
+        {readableOwnRiders([row.riderId])} · alone {
+          Math.abs(row.seconds).toFixed(1)} s {
+          row.seconds>=0?'ahead of':'behind'} bunch</li>)}
+    </ul>}
   </figure>;
 }
 
@@ -552,6 +583,8 @@ export default function Playtest({guided=false}){
   },[coastedKm,coasted,checkpointPlaying]);
   const viewerEnergy=coasted?raceViewerEnergySeries(coasted,viewerRiderId):[];
   const viewerGapSeries=coasted?raceViewerGapSeries(coasted,viewerRiderId):[];
+  const viewerRoadClock=coasted?
+    raceViewerRoadClockSnapshot(coasted,coastedKm):null;
   const recordedTimedOrders=coasted?.settings.managerTacticalOrdersV7??
     coasted?.settings.managerTacticalOrdersV6??
     coasted?.settings.managerTacticalOrdersV5??
@@ -1746,6 +1779,7 @@ export default function Playtest({guided=false}){
                     </>}
                   </svg>
                   <RecordedGapChart series={viewerGapSeries}
+                    snapshot={viewerRoadClock}
                     totalKm={viewerSituation.totalKm} km={coastedKm}
                     riderName={raceScreenRider?.name.replace(
                       /^Your test team rider /,'Rider ')??'Followed rider'}/>
