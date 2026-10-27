@@ -15,6 +15,7 @@ import {MOTOR_RACE_DYNAMICS_VERSION} from '../lib/engine/v2/tuning.mjs';
 
 const single=process.argv.includes('--single');
 const tempo=process.argv.includes('--control-tempo');
+const collectiveControl=process.argv.includes('--collective-control');
 const delayedControlArg=process.argv.find(arg=>arg.startsWith('--delay-controls-to='));
 const delayedControlKm=delayedControlArg?Number(delayedControlArg.split('=')[1]):null;
 if(delayedControlKm!==null&&(!Number.isInteger(delayedControlKm)||
@@ -61,7 +62,8 @@ for(const seed of seeds)for(const terrain of single?['flat']:['flat','mountain']
         const race=simulateTacticalTour({stage:prepared.stage,
           weather:prepared.weather,teams,seed:prepared.seed,
           motorVersion:MOTOR_RACE_DYNAMICS_VERSION,
-          raceContext:plan.raceContext,
+          raceContext:collectiveControl?{
+            ...plan.raceContext,controlPursuitVersion:2}:plan.raceContext,
           rivalIntent:role==='control_tempo'||delayedControlKm!==null?null:plan.intent});
         validateRecordedTour(race);
         if(process.argv.includes('--replay'))replayRaceDynamicsRecording(race);
@@ -105,6 +107,9 @@ for(const seed of seeds)for(const terrain of single?['flat']:['flat','mountain']
       attackAttempts:race.frames.reduce((sum,frame)=>sum+
         frame.attackers.filter(id=>id.startsWith(selectedTeamId+'-')).length,0),
       chaseTeamKm:race.frames.filter(frame=>frame.chasers.includes(selectedTeamId)).length,
+      chaseEpisodes:race.frames.filter((frame,index)=>
+        frame.chasers.includes(selectedTeamId)&&
+        !race.frames[index-1]?.chasers.includes(selectedTeamId)).length,
       frontWorkKm:race.frames.filter(frame=>frame.paidBunchPace?.teamId===selectedTeamId).length,
       chaseAndFrontSameKm:race.frames.filter(frame=>frame.chasers.includes(selectedTeamId)&&
         frame.paidBunchPace?.teamId===selectedTeamId).length,
@@ -137,6 +142,7 @@ const summary=['one_day','stage'].map(format=>{
     controlAttackAttempts:average(measured('control'),'attackAttempts'),
     breakChaseTeamKm:average(measured('break'),'chaseTeamKm'),
     controlChaseTeamKm:average(measured('control'),'chaseTeamKm'),
+    controlChaseEpisodes:average(measured('control'),'chaseEpisodes'),
     ...(tempo?{
       tempoChaseTeamKm:average(measured('controlTempo'),'chaseTeamKm'),
       tempoFrontWorkKm:average(measured('controlTempo'),'frontWorkKm'),
@@ -159,6 +165,6 @@ const summary=['one_day','stage'].map(format=>{
     refusals:sample.length-completed.length};
 });
 console.log(JSON.stringify({note:'Internal paired synthetic manager-goal audit, not official results.',
-  frontRotationVersion,delayedControlKm,
+  frontRotationVersion,delayedControlKm,collectiveControl,
   summary,...(timeline?{timeline}:{}),
   ...(process.argv.includes('--rows')?{rows}:{})},null,2));

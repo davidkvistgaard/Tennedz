@@ -18,6 +18,7 @@ const holdoutSeeds=Array.from({length:12},(_,index)=>
   `race-dynamics-holdout-${index+1}`);
 const frontRotationVersion=process.argv.includes('--front-rotation-v3')?3:
   process.argv.includes('--front-rotation-v2')?2:1;
+const collectiveControl=process.argv.includes('--collective-control');
 const seeds=process.argv.includes('--extended-seeds')?
   batchMatch?holdoutSeeds.slice((Number(batchMatch[1])-1)*4,
     Number(batchMatch[1])*4):holdoutSeeds:
@@ -62,13 +63,15 @@ function run({seed,terrain,fatigue,format,breakTeams,controlTeams}){
     Object.values(teamRoles).filter(role=>role==='break').length:breakTeams;
   const intendedControlTeams=mixedDefaults||guidedRandom||plannedIntent?
     Object.values(teamRoles).filter(role=>role==='control').length:controlTeams;
+  const baseRaceContext=planned?.raceContext??
+    {format,...(format==='stage'?{stageNumber:8}:{}),teamRoles,
+      ...(frontRotationVersion===1?{}:{frontRotationVersion})};
   const recording=simulateTacticalTour({stage:prepared.stage,
     weather:prepared.weather,teams,seed:prepared.seed,
     motorVersion:MOTOR_RACE_DYNAMICS_VERSION,
     rivalIntent:planned?.intent??null,
-    raceContext:planned?.raceContext??
-      {format,...(format==='stage'?{stageNumber:8}:{}),teamRoles,
-        ...(frontRotationVersion===1?{}:{frontRotationVersion})}});
+    raceContext:collectiveControl?{...baseRaceContext,
+      controlPursuitVersion:2}:baseRaceContext});
   if(process.argv.includes('--validate'))validateRecordedTour(recording);
   if(process.argv.includes('--replay'))replayRaceDynamicsRecording(recording);
   const frames=recording.frames;
@@ -222,6 +225,6 @@ const summary=process.argv.includes('--summary')?
       refusals:sample.filter(row=>row.refusal).length};
   })).filter(Boolean):null;
 console.log(JSON.stringify({version:MOTOR_RACE_DYNAMICS_VERSION,
-  frontRotationVersion,
+  frontRotationVersion,controlPursuitVersion:collectiveControl?2:1,
   note:'Internal opt-in role scenarios, not observed race calibration or official results.',
   ...(summary?{summary}:{rows})},null,2));

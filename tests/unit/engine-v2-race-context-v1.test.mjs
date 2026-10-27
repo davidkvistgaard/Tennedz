@@ -40,6 +40,40 @@ test('race format is explicit and stage number cannot leak into a one-day race',
     frontObservationVersion:2}),{format:'one_day',frontObservationVersion:2});
   assert.throws(()=>normalizeRaceContext({format:'one_day',
     frontObservationVersion:3}),/Invalid race context/);
+  assert.deepEqual(normalizeRaceContext({format:'one_day',
+    controlPursuitVersion:2}),{format:'one_day',controlPursuitVersion:2});
+  assert.throws(()=>normalizeRaceContext({format:'one_day',
+    controlPursuitVersion:3}),/Invalid race context/);
+});
+
+test('committed control coalition delays its first paid chase without cycling off',()=>{
+  const prepared=prepareV91Playtest({distanceKm:260,terrain:'flat',
+    teamCount:20,fatigue:0,attack:'none',chase:'ignore',
+    seed:'manager-goal-1',defaultRivalPlan:'passive'});
+  const plan=prepareV94RivalIntent({prepared,format:'one_day',
+    rivalGoals:[{teamId:'rival-1',role:'control'}]});
+  const run=version=>simulateTacticalTour({stage:prepared.stage,
+    weather:prepared.weather,teams:plan.teams,seed:prepared.seed,
+    motorVersion:MOTOR_RACE_DYNAMICS_VERSION,
+    raceContext:version===1?plan.raceContext:{...plan.raceContext,
+      controlPursuitVersion:version},rivalIntent:plan.intent});
+  const prior=run(1),collective=run(2);
+  const firstChase=race=>race.frames.find(frame=>
+    frame.chasers.includes('rival-1'))?.km;
+  assert.equal(firstChase(prior),44);
+  assert.equal(firstChase(collective),75);
+  assert.equal(collective.frames.filter(frame=>frame.km>100&&frame.km<200&&
+    frame.chasers.includes('rival-1')).length,99);
+  assert.ok(collective.frames[199].teamEnergy.find(row=>
+    row.teamId==='rival-1').mean>prior.frames[199].teamEnergy.find(row=>
+    row.teamId==='rival-1').mean);
+  assert.equal(validateRecordedTour(prior),true);
+  assert.equal(validateRecordedTour(collective),true);
+  assert.ok(replayRaceDynamicsRecording(collective));
+  const switched=structuredClone(collective);
+  switched.committedInputs.raceContext.controlPursuitVersion=1;
+  assert.throws(()=>replayRaceDynamicsRecording(switched),
+    /Race-dynamics replay differs at km/);
 });
 
 test('catch estimate is a consequence of paid relative road speed',()=>{

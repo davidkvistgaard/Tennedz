@@ -637,6 +637,51 @@ figures are negative design evidence only. The next pursuit policy must
 avoid a clock-driven retry cycle and explain how teams judge the cost and
 effect of collective, paid work from information available during the race.
 
+An **internal, separately committed** `controlPursuitVersion: 2` tests a
+different decision. A selective control team estimates possible help from
+other committed control teams using the square root of their squared current
+helper capacities. This discounts uncertain cooperation as more teams are
+counted; it is a decision heuristic, **not** measured sporting behaviour.
+The estimate never changes the road clock or energy. A team begins work only
+when the estimated catch approaches the race distance remaining; after it
+begins, it needs a substantially safer estimate before resting. These two
+distance margins prevent a fixed observation-window retry. An explicit
+manager order, GC response or fresh attack retains its existing precedence.
+Omitted version 1 preserves all earlier v94 recordings.
+
+The 96-case new-seed planned-intent holdout validates with no refusal or
+unpaid front rider-kilometres. The initial front is fully caught in 22/24
+fresh and 19/24 tired one-day races, versus 2/24 fresh and 1/24 tired stages.
+Mean maximum leads are 409/386 seconds one-day and 509/489 seconds stage;
+these are synthetic outcomes, not a target gap. In a separate 72-case
+0/1/8-control stress audit, mean maximum leads are 820/447/447 seconds
+one-day and 1,077/574/506 seconds stage. All 72 validate without refusal
+or unpaid front work; the no-control case remains implausibly wide.
+The 24 original paired manager-goal cases validate: the selected control
+team averages 166 paid chase kilometres one-day and stage, with 3.5 and
+1.58 chase episodes respectively. A locked one-day trace shows continuous
+paid work after its first start at km 75, with no five-kilometre pause cycle.
+The policy still asks a control team to work much of the day and is not a
+complete pursuit solution. Combining it with `frontRotationVersion: 3` in
+the first 32 new-seed planned races also validates without refusal: maximum
+lead means are 347/323 seconds one-day and 454/429 seconds stage, with
+initial fronts fully caught in 7/8, 5/8, 0/8 and 0/8 cases respectively.
+The prior rotation versions remain distinct.
+
+Sampling the **current guided random rival orders** exposes a remaining
+integration problem: in the first 32 new-seed cases, those orders create
+about eight to nine break-role teams and can leave control helpers depleted
+well before the finale (mean control-team energy at the finale start is about
+10 fresh and 7 tired). Every recording validates, but
+changing the pursuit decision alone would not make those rival plans
+credible. Reproduce with `node scripts/audit-race-dynamics-v94.mjs
+--planned-intent --extended-seeds --collective-control --validate --summary`,
+`--stress --collective-control --validate --summary`, or
+`--guided-random --extended-seeds --seed-batch=1 --collective-control
+--validate --summary`. This version remains internal and is not routed to
+Motor Lab; team intent, front exhaustion and full end-to-end behaviour still
+need resolution.
+
 ### Rival intent alone does not repair the live race
 
 `node scripts/audit-v91-rival-intent-counterfactual.mjs` applies two
