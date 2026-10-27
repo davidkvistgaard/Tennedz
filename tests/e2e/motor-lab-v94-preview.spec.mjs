@@ -1,0 +1,67 @@
+import {test,expect} from '@playwright/test';
+
+test.skip(process.env.PELOTONIA_V91_PLAYTEST_ENABLED!=='true'||
+  process.env.PELOTONIA_V93_COASTED_PLAYTEST_ENABLED!=='true',
+'The guided Motor Lab is disabled.');
+
+test('experimental v94 race shows committed plans and measured road only',
+  async({page})=>{
+    await page.setViewportSize({width:390,height:844});
+    await page.goto('/login');
+    await page.getByLabel('Email or username').fill('bob');
+    await page.getByLabel('Password',{exact:true}).fill('fixture-password');
+    await page.getByRole('button',{name:'Sign in',exact:true}).click();
+    await expect(page).toHaveURL(/\/team$/);
+    await page.goto('/team/motor-lab');
+    await page.getByRole('link',
+      {name:/experimental whole-race dynamics preview/}).click();
+    await expect(page.getByRole('heading',
+      {name:'Follow the recorded road'})).toBeVisible();
+    await page.getByLabel('Distance').selectOption('40');
+    await page.getByLabel('Field').selectOption('4');
+    await page.getByLabel('Race format').selectOption('stage');
+    const responsePromise=page.waitForResponse(response=>
+      response.url().endsWith('/api/v91-playtest')&&
+      response.request().postDataJSON()?.mode==='v94-race-dynamics');
+    await page.getByRole('button',
+      {name:'Run experimental race'}).click();
+    const response=await responsePromise;
+    expect(response.status()).toBe(200);
+    const {raceDynamics}=await response.json();
+    expect(raceDynamics.frames).toHaveLength(40);
+    expect(raceDynamics.teamPlans).toHaveLength(4);
+    expect(raceDynamics.resultStatus).toBe('provisional_road_groups_only');
+    expect(raceDynamics.policy.rivalIntentVersion).toBe(4);
+    expect(raceDynamics.provisionalResults).toBeUndefined();
+    await expect(page.getByRole('heading',
+      {name:'What the recording shows'})).toBeVisible();
+    await page.getByRole('button',{name:'Last km'}).click();
+    await expect(page.getByRole('heading',
+      {name:'Road clock at km 40'})).toBeVisible();
+    await expect(page.locator('.v94-riders p')).toHaveCount(8);
+    await page.locator('.v94-plans summary').click();
+    await expect(page.locator('.v94-plan-list article')).toHaveCount(4);
+    await page.screenshot({path:'test-results/v94-race-preview-mobile.png',
+      fullPage:true});
+    await page.getByLabel('Distance').selectOption('260');
+    await page.getByLabel('Field').selectOption('20');
+    await page.getByLabel('Race format').selectOption('one_day');
+    await page.getByLabel('Race seed').fill('race-dynamics-1');
+    const longResponsePromise=page.waitForResponse(response=>
+      response.url().endsWith('/api/v91-playtest')&&
+      response.request().postDataJSON()?.mode==='v94-race-dynamics');
+    await page.getByRole('button',{name:'Run experimental race'}).click();
+    const longResponse=await longResponsePromise;
+    expect(longResponse.status()).toBe(200);
+    const longRace=(await longResponse.json()).raceDynamics;
+    expect(longRace.frames).toHaveLength(260);
+    expect(longRace.teamPlans).toHaveLength(20);
+    expect(longRace.story.widestRecordedLead.gapSeconds).toBeGreaterThan(0);
+    await page.getByRole('button',{name:'Widest lead'}).click();
+    await expect(page.getByRole('heading',
+      {name:`Road clock at km ${longRace.story.widestRecordedLead.km}`}))
+      .toBeVisible();
+    await expect(page.locator('.v94-group').first()).toBeVisible();
+    await page.screenshot({path:'test-results/v94-long-race-mobile.png',
+      fullPage:true});
+  });

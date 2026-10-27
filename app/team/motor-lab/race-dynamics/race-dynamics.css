@@ -1,0 +1,28 @@
+.v94-preview{max-width:1100px;margin:auto;padding:28px 20px 80px;color:#193238}
+.v94-preview h1{font-size:clamp(2rem,5vw,3.4rem);line-height:1.05;margin:10px 0 18px}
+.v94-preview h2{font-size:1.35rem;margin:0 0 12px}
+.v94-preview h3{font-size:1rem;margin:0 0 8px}
+.v94-preview p{line-height:1.5}
+.v94-back{color:#1e6565;font-size:.9rem;text-decoration:none}
+.v94-eyebrow{color:#1e6565;text-transform:uppercase;letter-spacing:.16em;font-size:.75rem;font-weight:700;margin:28px 0 0}
+.v94-caution{border-left:3px solid #e5b26e;background:#2d261d;color:#f3e9d9;padding:12px 16px;border-radius:0 8px 8px 0}
+.v94-form{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:14px;background:#162229;border:1px solid #32424b;border-radius:16px;padding:18px;margin:28px 0}
+.v94-form label{display:flex;flex-direction:column;gap:6px;font-size:.85rem;color:#b9ccd0}
+.v94-form select,.v94-form input{min-width:0;width:100%;box-sizing:border-box;color:#f2f6f5;background:#0e191e;border:1px solid #53666e;border-radius:8px;padding:11px;font:inherit}
+.v94-form button,.v94-jumps button{background:#94d9ca;color:#10252a;border:0;border-radius:8px;padding:11px 16px;font:inherit;font-weight:700;cursor:pointer}
+.v94-form button:disabled{opacity:.6;cursor:wait}
+.v94-error{color:#ffbdbd}
+.v94-summary,.v94-road,.v94-plans{background:#162229;border:1px solid #32424b;border-radius:16px;padding:20px;margin:18px 0;color:#e9edf2}
+.v94-summary strong{color:#bceadf}
+.v94-road input[type=range]{width:100%;accent-color:#95d9d0;margin:18px 0 6px}
+.v94-jumps{display:flex;flex-wrap:wrap;gap:8px}
+.v94-jumps button{background:#2f4e51;color:#e6f5f0;font-size:.85rem;padding:8px 12px}
+.v94-group,.v94-plan-list article{border:1px solid #3d5058;background:#101b21;border-radius:10px;padding:12px 14px;margin:10px 0}
+.v94-group p,.v94-plan-list p{margin:4px 0}
+.v94-evidence{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:4px 20px;border-top:1px solid #435159;border-bottom:1px solid #435159;margin:22px 0;padding:10px 0}
+.v94-evidence p{overflow-wrap:anywhere}
+.v94-riders{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:4px 18px}
+.v94-riders p{margin:5px 0}
+.v94-plans summary{cursor:pointer;font-weight:700}
+.v94-plan-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(275px,1fr));gap:4px 12px;margin-top:16px}
+@media(max-width:600px){.v94-preview{padding:20px 14px 70px}.v94-form{grid-template-columns:1fr 1fr;padding:14px}.v94-seed,.v94-form button{grid-column:1/-1}.v94-summary,.v94-road,.v94-plans{padding:16px}}

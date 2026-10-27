@@ -16,6 +16,8 @@ import {createV93CoastedPlaytest,summarizeV93CoastedPlaytest} from
   '../../../lib/engine/v2/playtest-v93-coasted.mjs';
 import {summarizeRecordedStageTrace} from
   '../../../lib/engine/v2/playtest-stage-trace.mjs';
+import {createV94RaceDynamicsPreview} from
+  '../../../lib/engine/v2/playtest-race-dynamics-v94.mjs';
 
 export const runtime='nodejs';
 export const dynamic='force-dynamic';
@@ -89,6 +91,24 @@ async function handler(request,_context,auth){
   if(!input||typeof input!=='object'||Array.isArray(input))
     return NextResponse.json({ok:false,error:'Invalid request.'},{status:400});
   try{
+    if(input.mode==='v94-race-dynamics'){
+      if(Object.keys(input).some(key=>
+        !['mode','settings','format'].includes(key)))
+        return NextResponse.json({ok:false,error:'Invalid race preview request.'},
+          {status:400});
+      try{
+        const {preview}=createV94RaceDynamicsPreview(input);
+        return NextResponse.json({ok:true,raceDynamics:preview});
+      }catch(error){
+        if(error.message.startsWith('Choose '))
+          return NextResponse.json({ok:false,error:error.message},
+            {status:400});
+        return NextResponse.json({ok:false,
+          error:'The experimental road could not be completed or replayed. '+
+            'Choose another seed or plan and run again.',
+          status:'unsupported_road_or_plan'},{status:422});
+      }
+    }
     if(input.mode==='v93-coasted'){
       if(process.env.PELOTONIA_V93_COASTED_PLAYTEST_ENABLED!=='true')
         return NextResponse.json({ok:false,error:'V93 preview unavailable.'},

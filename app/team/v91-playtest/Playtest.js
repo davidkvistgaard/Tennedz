@@ -891,6 +891,9 @@ export default function Playtest({guided=false}){
       <h1>{guided?'Motor Lab: plan a race':'Try a fictional race'}</h1>
       <p>{guided?'Choose a route and tactics, run the race, then follow the road to the finish. Start with the sample or change any choice below.':'Change your orders and the race conditions, then rerun with the same seed to compare what happened on the road.'}</p>
       <p className="v91-warning">This is a fictional preview. Results and points are for inspection only; no official result or award is saved.</p>
+      {guided&&<p><a href="/team/motor-lab/race-dynamics">Try the separate
+        experimental whole-race dynamics preview</a>. It shows recorded
+        group gaps and work without individual places or awards.</p>}
       {guided&&<nav className="v91-flow-nav" aria-label="Motor Lab race flow">
         <button type="button" onClick={()=>{
           setCheckpointPlaying(false);
