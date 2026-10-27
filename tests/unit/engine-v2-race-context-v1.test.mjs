@@ -15,6 +15,8 @@ import {prepareV94RivalIntent} from
   '../../lib/engine/v2/playtest-rival-intent-v94.mjs';
 import {replayRaceDynamicsRecording} from
   '../../lib/engine/v2/replay-race-dynamics-v94.mjs';
+import {createV94RaceDynamicsPreview} from
+  '../../lib/engine/v2/playtest-race-dynamics-v94.mjs';
 
 function seededRandom(label){
   let state=2166136261;
@@ -515,7 +517,56 @@ test('front exhaustion opt-in preserves the earlier v94 recording policy',()=>{
   assert.doesNotThrow(()=>validateRecordedTour(earlier));
   assert.doesNotThrow(()=>validateRecordedTour(explicit));
   assert.throws(()=>simulateTacticalTour({...base,raceContext:{...raceContext,
-    frontExhaustionVersion:4}}),/race context/);
+    frontExhaustionVersion:5}}),/race context/);
+});
+
+test('opt-in shared coast can contact an existing chase group with paid time',()=>{
+  const settings={distanceKm:260,terrain:'flat',teamCount:20,gender:'M',
+    fatigue:30,seed:'preview-orders-stage-flat-30',effort:'hard',
+    attack:'repeated',chase:'all'};
+  assert.throws(()=>createV94RaceDynamicsPreview({format:'stage',settings,
+    frontExhaustionVersion:3}),/Unresolved front exhaustion at km 222/);
+  const {recording}=createV94RaceDynamicsPreview({format:'stage',settings,
+    frontExhaustionVersion:4});
+  const frame=recording.frames[221];
+  const event=frame.frontCoast.find(row=>row.riderId==='you-7');
+  assert.equal(event.shared,true);
+  assert.equal(event.joinedGroupId,'road-2');
+  assert.equal(event.detachedGroupId,null);
+  assert.ok(frame.roadGroups.find(group=>group.id===event.joinedGroupId)
+    .riderIds.includes('you-7'));
+  assert.ok(!frame.roadGroups.find(group=>group.id===event.groupId)
+    .riderIds.includes('you-7'));
+  assert.equal(frame.energyLedger.find(row=>row.riderId==='you-7')
+    .unmetEnergyDemand,0);
+  assert.doesNotThrow(()=>validateRecordedTour(recording));
+  assert.doesNotThrow(()=>replayRaceDynamicsRecording(recording));
+  const forged=structuredClone(recording);
+  forged.frames[221].frontCoast[0].joinedGroupId='road-forged';
+  assert.throws(()=>validateRecordedTour(forged),/coast contact|front coast/);
+  const freeRoad=structuredClone(recording);
+  freeRoad.frames[221].frontCoast[0].delaySeconds=0;
+  assert.throws(()=>validateRecordedTour(freeRoad),/front coast/);
+});
+
+test('opt-in middle road-group solo coast pays contact before the finish',()=>{
+  const settings={distanceKm:260,terrain:'mountain',teamCount:20,
+    gender:'M',fatigue:30,seed:'preview-orders-stage-mountain-30',
+    effort:'hard',attack:'repeated',chase:'all'};
+  const {recording}=createV94RaceDynamicsPreview({format:'stage',settings,
+    frontExhaustionVersion:4});
+  const frame=recording.frames[226];
+  assert.equal(frame.roadGroups.length,3);
+  assert.equal(frame.frontCoast[0].groupId,'road-3');
+  assert.equal(frame.frontCoast[0].shared,undefined);
+  assert.ok(frame.frontCoast[0].delaySeconds>0);
+  assert.equal(frame.energyLedger.find(row=>row.riderId==='you-7')
+    .unmetEnergyDemand,0);
+  assert.doesNotThrow(()=>validateRecordedTour(recording));
+  assert.doesNotThrow(()=>replayRaceDynamicsRecording(recording));
+  const freeRoad=structuredClone(recording);
+  freeRoad.frames[226].frontCoast[0].residualSeconds+=1;
+  assert.throws(()=>validateRecordedTour(freeRoad),/front coast/);
 });
 
 test('paid solo slowdown and an ordered chase resolve contact in the same road clock',()=>{

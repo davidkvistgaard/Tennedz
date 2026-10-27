@@ -831,6 +831,24 @@ road movement. Omitted version 1 and opt-in version 2 retain their recorded
 behavior. Reproduce with `node scripts/audit-race-dynamics-v94.mjs
 --planned-intent --validate --summary --front-exhaustion-v3`.
 
+The separate internal `frontExhaustionVersion: 4` extends that paid transition
+to one exhausted non-pulling sitter in a larger front group with another
+actually paid puller. If a chasing road group is already present, the sitter's
+delay either creates a named group between them, contacts that group, or
+records a bunch catch and residual drop. A solo rider in the rear or middle
+of up to three road groups can also pay a coast delay against its own clock.
+Only one shared detachment is permitted per kilometre; exhausted active
+pullers, simultaneous unsupported separations and more complex road-group
+arrangements still refuse without publishing a frame. Earlier versions retain their
+recorded behavior. In 32 long 20-team boundary runs spanning format,
+terrain, fatigue and four own opening orders, all 32 recordings validated and
+source-replayed. Under version 3, four extreme hard/repeated/all cases refused
+before movement. The version 4 audit shows paid coast in those cases, including
+contact with an existing chase group and a middle-group solo coast. This is
+internal evidence of bounded accounting, not race calibration or a guided
+release. Reproduce with `node scripts/audit-v94-preview-orders.mjs
+--front-exhaustion-v4`.
+
 ### Gate before a player-facing race-dynamics version
 
 - Commit an inspectable pre-race goal and order for every team. Preserve any
