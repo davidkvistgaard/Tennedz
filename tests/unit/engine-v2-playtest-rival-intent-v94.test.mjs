@@ -5,6 +5,8 @@ import {prepareV94RivalIntent} from
   '../../lib/engine/v2/playtest-rival-intent-v94.mjs';
 import {simulateTacticalTour} from '../../lib/engine/v2/tour.mjs';
 import {validateRecordedTour} from '../../lib/engine/v2/recording.mjs';
+import {replayRaceDynamicsRecording} from
+  '../../lib/engine/v2/replay-race-dynamics-v94.mjs';
 import {MOTOR_RACE_DYNAMICS_VERSION} from '../../lib/engine/v2/tuning.mjs';
 
 test('v94 rival intent is seeded, inspectable and leaves explicit orders intact',()=>{
@@ -29,9 +31,18 @@ test('v94 rival intent is seeded, inspectable and leaves explicit orders intact'
     Object.fromEntries(first.intent.map(row=>[row.teamId,row.role])));
   const recording=simulateTacticalTour({stage:prepared.stage,
     weather:prepared.weather,teams:first.teams,seed:prepared.seed,
-    motorVersion:MOTOR_RACE_DYNAMICS_VERSION,raceContext:first.raceContext});
+    motorVersion:MOTOR_RACE_DYNAMICS_VERSION,raceContext:first.raceContext,
+    rivalIntent:first.intent});
   assert.equal(validateRecordedTour(recording),true);
+  assert.deepEqual(replayRaceDynamicsRecording(recording),recording);
   assert.deepEqual(recording.committedInputs.raceContext,first.raceContext);
+  assert.equal(recording.committedInputs.rivalIntentVersion,1);
+  assert.equal(recording.committedInputs.rivalIntent.find(row=>
+    row.teamId==='rival-3').source,'manager');
+  const forged=structuredClone(recording);
+  forged.committedInputs.rivalIntent.find(row=>
+    row.teamId==='rival-3').role='protect';
+  assert.throws(()=>validateRecordedTour(forged),/intent manifest/);
   const committedRival=recording.committedInputs.teams.find(team=>
     team.id==='rival-1');
   for(const key of ['effort','attack','chase'])
@@ -59,7 +70,8 @@ test('a declared rival goal commits a role and matching orders before racing',()
     {effort:'steady',attack:'none',chase:'selective'});
   const race=plan=>simulateTacticalTour({stage:prepared.stage,
     weather:prepared.weather,teams:plan.teams,seed:prepared.seed,
-    motorVersion:MOTOR_RACE_DYNAMICS_VERSION,raceContext:plan.raceContext});
+    motorVersion:MOTOR_RACE_DYNAMICS_VERSION,raceContext:plan.raceContext,
+    rivalIntent:plan.intent});
   const breakRace=race(breakPlan),controlRace=race(controlPlan);
   assert.ok(breakRace.frames.some(frame=>frame.attackers.some(id=>
     id.startsWith('rival-1-'))));

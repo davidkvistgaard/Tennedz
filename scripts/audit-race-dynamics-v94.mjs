@@ -55,6 +55,7 @@ function run({seed,terrain,fatigue,format,breakTeams,controlTeams}){
   const recording=simulateTacticalTour({stage:prepared.stage,
     weather:prepared.weather,teams,seed:prepared.seed,
     motorVersion:MOTOR_RACE_DYNAMICS_VERSION,
+    rivalIntent:planned?.intent??null,
     raceContext:planned?.raceContext??
       {format,...(format==='stage'?{stageNumber:8}:{}),teamRoles}});
   if(process.argv.includes('--validate'))validateRecordedTour(recording);

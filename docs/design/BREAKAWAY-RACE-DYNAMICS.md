@@ -299,6 +299,13 @@ A locked 40 km comparison verifies that declaring `break` leads to a paid
 attack attempt while declaring `control` leaves that rival out of the attack
 record. This provides a concrete future tactics choice, but it is not yet
 connected to the guided interface.
+An optional v94-only, versioned intent manifest can now be committed to the
+race recording. It retains each team's role, opening order and whether the
+planner labelled it generated, manager-goal or explicit-manager input.
+Validation rejects a manifest that disagrees with the committed roles or
+orders; deterministic source replay retains the same manifest. The label is
+declared provenance inside this internal workbench, not proof of a user's
+identity or a public revelation of rival strategy before the race.
 
 The `--planned-intent --summary --validate` audit over the same three seeds,
 flat/mountain routes, fatigue 0/30 and one-day/stage formats generated a mean
