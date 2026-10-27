@@ -460,6 +460,50 @@ test('front exhaustion opt-in preserves the earlier v94 recording policy',()=>{
     frontExhaustionVersion:3}}),/race context/);
 });
 
+test('paid solo slowdown and an ordered chase resolve contact in the same road clock',()=>{
+  const source=prepareV91Playtest({distanceKm:260,teamCount:4,
+    terrain:'mountain',fatigue:30,effort:'hard',attack:'repeated',
+    chase:'ignore',defaultRivalPlan:'passive',seed:'front-exhaustion-probe'});
+  source.teams[0].orders.baseline.breakWork='drive';
+  source.teams[1].orders.phases=[{atKm:135,chase:'all'}];
+  const teamRoles=Object.fromEntries(source.teams.map(team=>[team.id,
+    team.id==='you'?'break':'protect']));
+  const race=simulateTacticalTour({...source,
+    motorVersion:MOTOR_RACE_DYNAMICS_VERSION,
+    raceContext:{format:'stage',stageNumber:8,teamRoles,
+      frontExhaustionVersion:2}});
+  const caught=race.frames[137];
+  assert.ok(caught.chasers.includes('rival-1'));
+  assert.ok(caught.frontCoast.some(event=>event.riderId==='you-7'&&
+    event.residualSeconds>0));
+  assert.equal(caught.gapSeconds,0);
+  assert.ok(caught.caughtBreakawayRiderIds.includes('you-7'));
+  assert.equal(caught.riderGroups.find(row=>row.id==='you-7').group,'dropped');
+  assert.doesNotThrow(()=>validateRecordedTour(race));
+  assert.doesNotThrow(()=>replayRaceDynamicsRecording(race));
+});
+
+test('shared-front exhaustion still refuses before an unsupported separation',()=>{
+  const source=prepareV91Playtest({distanceKm:260,teamCount:4,
+    terrain:'mountain',fatigue:30,effort:'hard',attack:'repeated',
+    chase:'ignore',defaultRivalPlan:'passive',
+    seed:'front-exhaustion-probe',managerTactics:[
+      {effort:'hard',attack:'repeated',chase:'ignore'}]});
+  source.teams[0].orders.baseline.breakWork='drive';
+  const teamRoles=Object.fromEntries(source.teams.map(team=>[team.id,
+    ['you','rival-1'].includes(team.id)?'break':'protect']));
+  assert.throws(()=>simulateTacticalTour({...source,
+    motorVersion:MOTOR_RACE_DYNAMICS_VERSION,
+    raceContext:{format:'stage',stageNumber:8,teamRoles,
+      frontExhaustionVersion:2}}),error=>{
+    assert.match(error.message,/Unresolved front exhaustion at km 139: you-7/);
+    assert.equal(error.cause?.phase,'before_road_movement');
+    assert.equal(error.cause?.groupRiderCount,2);
+    assert.equal(error.cause?.otherActivePullerCount,1);
+    return true;
+  });
+});
+
 test('v94 validates paid worker membership without inventing wheel order',()=>{
   const seed='sample-flat-finish',terrain='flat',fatigue=0;
   const managerTactics=resolveRandomRivalTactics({teamCount:20,
