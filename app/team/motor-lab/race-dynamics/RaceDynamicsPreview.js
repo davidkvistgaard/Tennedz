@@ -5,7 +5,7 @@ import {api} from '../../../../lib/api';
 
 const INITIAL={format:'one_day',distanceKm:260,terrain:'flat',teamCount:20,
   gender:'M',fatigue:0,effort:'steady',attack:'none',chase:'selective',
-  seed:'race-dynamics-preview-1'};
+  rivalOneGoal:'auto',seed:'race-dynamics-preview-1'};
 const OPTIONS={format:[['one_day','One-day race'],['stage','Stage race']],
   distanceKm:[[40,'40 km'],[120,'120 km'],[260,'260 km']],
   terrain:[['flat','Flat'],['rolling','Rolling'],['mountain','Mountain'],
@@ -14,10 +14,14 @@ const OPTIONS={format:[['one_day','One-day race'],['stage','Stage race']],
   fatigue:[[0,'Fresh'],[15,'Some fatigue'],[30,'Tired']],
   effort:[['conserve','Conserve'],['steady','Steady'],['hard','Hard']],
   attack:[['none','None'],['selective','Selective'],['repeated','Repeated']],
-  chase:[['ignore','Ignore'],['selective','Selective'],['all','All helpers']]};
+  chase:[['ignore','Ignore'],['selective','Selective'],['all','All helpers']],
+  rivalOneGoal:[['auto','Seeded plan'],['break','Break'],
+    ['control','Control'],['protect','Protect'],
+    ['opportunistic','Opportunistic']]};
 const LABELS={format:'Race format',distanceKm:'Distance',terrain:'Route',
   teamCount:'Field',gender:'Category',fatigue:'Starting fatigue',
-  effort:'Your effort',attack:'Your attack order',chase:'Your chase order'};
+  effort:'Your effort',attack:'Your attack order',chase:'Your chase order',
+  rivalOneGoal:'Fictional rival 1 goal'};
 const time=seconds=>seconds>=60?
   `${Math.floor(seconds/60)}m ${Math.round(seconds%60)}s`:
   `${Number(seconds).toFixed(1)}s`;
@@ -40,11 +44,13 @@ export default function RaceDynamicsPreview(){
   async function run(event){
     event.preventDefault();setBusy(true);setError('');setPreview(null);
     try{
-      const {format,...raceSettings}=settings;
+      const {format,rivalOneGoal,...raceSettings}=settings;
       const response=await api('/api/v91-playtest',{method:'POST',
         headers:{'Content-Type':'application/json'},
         body:JSON.stringify({mode:'v94-race-dynamics',format,
-          settings:raceSettings}),signal:AbortSignal.timeout(60_000)});
+          settings:raceSettings,rivalGoals:rivalOneGoal==='auto'?[]:
+            [{teamId:'rival-1',role:rivalOneGoal}]}),
+        signal:AbortSignal.timeout(60_000)});
       setPreview(response.raceDynamics);setKm(1);
     }catch(cause){setError(cause.message||'The race could not run.');}
     finally{setBusy(false);}
@@ -55,7 +61,7 @@ export default function RaceDynamicsPreview(){
       <p className="v94-eyebrow">Experimental race dynamics</p>
       <h1>Follow the recorded road</h1>
       <p>Choose a race and your opening orders. Rival goals are committed
-        before the start; the same seed repeats the same field.</p>
+        before the start; the same seed and settings repeat the same field.</p>
       <p className="v94-caution">This preview records group movement and
         paid work. Individual finishing places, points and awards are not
         determined here or saved as official results.</p>
@@ -66,6 +72,9 @@ export default function RaceDynamicsPreview(){
             {options.map(([value,label])=><option key={value} value={value}>
               {label}</option>)}
           </select></label>)}
+        <p className="v94-goal-note">Rival 1 uses the seeded plan unless you
+          choose a goal. A chosen goal commits its matching opening orders
+          for this preview.</p>
         <label className="v94-seed"><span>Race seed</span><input
           value={settings.seed} maxLength={80}
           onChange={event=>setChoice('seed',event.target.value)}/></label>

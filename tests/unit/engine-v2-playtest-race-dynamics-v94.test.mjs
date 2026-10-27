@@ -38,4 +38,27 @@ test('experimental preview rejects unsupported settings before simulation',()=>{
   assert.throws(()=>createV94RaceDynamicsPreview({format:'stage',
     settings:{distanceKm:40,unknown:true}}),
   /valid experimental race settings/);
+  assert.throws(()=>createV94RaceDynamicsPreview({format:'stage',
+    settings:{distanceKm:40,managerTactics:[]}}),
+  /valid experimental race settings/);
+  assert.throws(()=>createV94RaceDynamicsPreview({format:'stage',
+    settings:{distanceKm:40,teamCount:4},
+    rivalGoals:[{teamId:'rival-20',role:'break'}]}),
+  /valid rival goals/);
+});
+
+test('declared preview goal changes only its rival opening intent',()=>{
+  const input={format:'one_day',settings:{distanceKm:40,teamCount:4,
+    seed:'preview-goal-pair'}};
+  const seeded=createV94RaceDynamicsPreview(input).preview;
+  const declared=createV94RaceDynamicsPreview({...input,rivalGoals:[{
+    teamId:'rival-1',role:'break'}]}).preview;
+  const selected=declared.teamPlans.find(row=>row.teamId==='rival-1');
+  assert.equal(selected.source,'manager_goal');
+  assert.equal(selected.role,'break');
+  assert.equal(selected.baseline.attack,'repeated');
+  assert.equal(selected.baseline.chase,'ignore');
+  assert.deepEqual(declared.teamPlans.filter(row=>row.teamId!=='rival-1'),
+    seeded.teamPlans.filter(row=>row.teamId!=='rival-1'));
+  assert.equal(declared.resultStatus,'provisional_road_groups_only');
 });

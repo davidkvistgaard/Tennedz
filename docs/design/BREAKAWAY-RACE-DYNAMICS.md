@@ -863,7 +863,11 @@ continues to use its existing kilometre motor.
 separate Motor Lab page and API mode. It validates the full recording and
 replays the same committed source before returning each kilometre's road
 groups, rider reserves, paid workers and chase. The page exposes every team's
-committed opening goal and orders. It reports only measured group gaps and a
+committed opening goal and orders. The player can give fictional rival 1 an
+explicit break, control, protect or opportunistic goal for that preview;
+the matching opening orders are committed, while every other rival keeps
+its seeded plan. The preview rejects unlisted tactic inputs rather than
+silently relabeling a manager order. It reports only measured group gaps and a
 conditional group ending; it provides no individual classification, points
 or awards. The existing guided race keeps its older motor and result path.
 
