@@ -43,3 +43,36 @@ test('v94 rival intent rejects incomplete stage context',()=>{
   assert.throws(()=>prepareV94RivalIntent({prepared,format:'stage'}),
     /Invalid race context/);
 });
+
+test('a declared rival goal commits a role and matching orders before racing',()=>{
+  const prepared=prepareV91Playtest({distanceKm:40,teamCount:4,
+    seed:'intent-goal-94',attack:'none',chase:'ignore',
+    defaultRivalPlan:'passive'});
+  const breakPlan=prepareV94RivalIntent({prepared,format:'one_day',
+    rivalGoals:[{teamId:'rival-1',role:'break'}]});
+  const controlPlan=prepareV94RivalIntent({prepared,format:'one_day',
+    rivalGoals:[{teamId:'rival-1',role:'control'}]});
+  assert.equal(breakPlan.intent[1].source,'manager_goal');
+  assert.deepEqual(breakPlan.teams[1].orders.baseline,
+    {effort:'steady',attack:'repeated',chase:'ignore'});
+  assert.deepEqual(controlPlan.teams[1].orders.baseline,
+    {effort:'steady',attack:'none',chase:'selective'});
+  const race=plan=>simulateTacticalTour({stage:prepared.stage,
+    weather:prepared.weather,teams:plan.teams,seed:prepared.seed,
+    motorVersion:MOTOR_RACE_DYNAMICS_VERSION,raceContext:plan.raceContext});
+  const breakRace=race(breakPlan),controlRace=race(controlPlan);
+  assert.ok(breakRace.frames.some(frame=>frame.attackers.some(id=>
+    id.startsWith('rival-1-'))));
+  assert.ok(controlRace.frames.every(frame=>frame.attackers.every(id=>
+    !id.startsWith('rival-1-'))));
+  assert.equal(validateRecordedTour(breakRace),true);
+  assert.equal(validateRecordedTour(controlRace),true);
+  assert.throws(()=>prepareV94RivalIntent({prepared,format:'one_day',
+    rivalGoals:[{teamId:'rival-1',role:'break'},
+      {teamId:'rival-1',role:'control'}]}),/Invalid or conflicting/);
+  const withTactic=prepareV91Playtest({distanceKm:40,teamCount:4,
+    managerTactics:[{effort:'hard',attack:'none',chase:'all'}]});
+  assert.throws(()=>prepareV94RivalIntent({prepared:withTactic,
+    format:'one_day',rivalGoals:[{teamId:'rival-1',role:'break'}]}),
+  /Invalid or conflicting/);
+});

@@ -292,6 +292,13 @@ or supplied by a manager. Explicit tactics are left intact; a manager who
 orders both an attack and a chase retains both, rather than being silently
 turned into a protective non-attacker. This is a seeded design proposal, not
 an empirically fitted team-goal model or a guided Motor Lab input.
+The internal planner also accepts a declared `rivalGoals` list. A goal
+commits both the role and matching opening orders before simulation; a goal
+for a rival whose tactics were explicitly edited is refused as conflicting.
+A locked 40 km comparison verifies that declaring `break` leads to a paid
+attack attempt while declaring `control` leaves that rival out of the attack
+record. This provides a concrete future tactics choice, but it is not yet
+connected to the guided interface.
 
 The `--planned-intent --summary --validate` audit over the same three seeds,
 flat/mountain routes, fatigue 0/30 and one-day/stage formats generated a mean
