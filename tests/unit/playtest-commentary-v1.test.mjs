@@ -116,6 +116,54 @@ test('gap commentary refuses changing membership and small fluctuations',()=>{
   assert.equal(lines.filter(row=>row.evidence.type==='front_gap_trend').length,0);
 });
 
+test('a multi-rider break is described once after three continuous recorded frames',()=>{
+  const race={settings:{seed:'stable-break'},kilometreFrames:
+    Array.from({length:8},(_,index)=>({...base,km:index+1,
+      roadGroups:[{id:'road-1',riderIds:index%2?
+        ['rival-1-3','you-2','rival-2-4']:
+        ['you-2','rival-2-4','rival-1-3'],gapSeconds:34+index}]}))};
+  const names={riders:{'you-2':'Carsten Andersen',
+    'rival-1-3':'Anna Berg','rival-2-4':'Eli Cole'}};
+  const first=raceViewerCommentaryV1(race,{names});
+  const breaks=first.filter(row=>row.kind==='breakEstablished');
+  assert.equal(breaks.length,1);
+  assert.equal(breaks[0].km,3);
+  assert.match(breaks[0].text,/Carsten Andersen/);
+  assert.match(breaks[0].text,/Anna Berg/);
+  assert.match(breaks[0].text,/1 other rider/);
+  assert.deepEqual(breaks[0].evidence,{type:'stable_front_group',
+    roadGroupId:'road-1',riderIds:['you-2','rival-2-4','rival-1-3'],
+    observedFromKm:1,gapSeconds:36});
+  assert.deepEqual(raceViewerCommentaryV1(race,{names}),first);
+});
+
+test('break commentary waits for stable membership and sufficient gap',()=>{
+  const groups=[
+    {riderIds:['you-2','rival-1-3'],gapSeconds:35},
+    {riderIds:['you-2','rival-2-4'],gapSeconds:35},
+    {riderIds:['you-2','rival-2-4'],gapSeconds:29},
+    {riderIds:['you-2','rival-2-4'],gapSeconds:29},
+    {riderIds:['you-2','rival-2-4'],gapSeconds:31}];
+  const race={kilometreFrames:groups.map((group,index)=>({...base,
+    km:index+1,roadGroups:[{id:'road-1',...group}]}))};
+  const lines=raceViewerCommentaryV1(race);
+  assert.deepEqual(lines.filter(row=>row.kind==='breakEstablished')
+    .map(row=>row.km),[5]);
+  const short={kilometreFrames:race.kilometreFrames.slice(0,2)};
+  assert.equal(raceViewerCommentaryV1(short)
+    .filter(row=>row.kind==='breakEstablished').length,0);
+});
+
+test('a later separate break episode can receive its own recorded headline',()=>{
+  const group={id:'road-1',riderIds:['you-2','rival-1-3'],
+    gapSeconds:45};
+  const race={kilometreFrames:Array.from({length:7},(_,index)=>({
+    ...base,km:index+1,roadGroups:index===3?[]:[group]}))};
+  const rows=raceViewerCommentaryV1(race);
+  assert.deepEqual(rows.filter(row=>row.kind==='breakEstablished')
+    .map(row=>row.km),[3,7]);
+});
+
 test('attack outcomes require a recorded status and never infer why a rival chased',()=>{
   const race={kilometreFrames:[
     {...base,km:1,attackAttempts:['you-2'],frontAttacks:[
