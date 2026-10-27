@@ -64,6 +64,28 @@ test('guided Motor Lab commits a named rider for a bounded break attempt',async(
   expect(coasted.kilometreFrames).toHaveLength(39);
 });
 
+test('guided Motor Lab commits an opponent focused chase on the route',async({page})=>{
+  await page.setViewportSize({width:390,height:844});
+  await page.goto('/login');
+  await page.getByLabel('Email or username').fill('bob');
+  await page.getByLabel('Password',{exact:true}).fill('fixture-password');
+  await page.getByRole('button',{name:'Sign in',exact:true}).click();
+  await expect(page).toHaveURL(/\/team$/);
+  await page.goto('/team/motor-lab');
+  await page.locator('summary').filter({hasText:'Focus a chase on a rival'}).click();
+  await page.getByLabel('Chase focus').selectOption('rival-1-2');
+  const responsePromise=page.waitForResponse(response=>
+    response.url().endsWith('/api/v91-playtest')&&
+    response.request().method()==='POST');
+  await page.getByRole('button',{name:'Run the race'}).click();
+  const response=await responsePromise;
+  expect(response.status()).toBe(200);
+  const {coasted}=await response.json();
+  expect(coasted.settings.managerTacticalOrdersV7).toEqual([
+    {teamId:'you',atKm:5,chaseTarget:'rival-1-2'},
+  ]);
+});
+
 test('guided Motor Lab runs a race from setup to rider replay',async({page,context})=>{
   await page.setViewportSize({width:390,height:844});
   await page.goto('/login');

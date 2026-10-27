@@ -194,11 +194,15 @@ function coastedComparisonRun(settings,summary,pointContext){
       place:conditionalPlace(rivalPlace,'unresolved'),
       previewPoints:pointContext?preview?.previewPoints??null:null};
   });
-  const effortMarkerKm=settings.managerTacticalOrdersV5?.[0]?.atKm??
+  const effortMarkerKm=settings.managerTacticalOrdersV7?.[0]?.atKm??
+    settings.managerTacticalOrdersV6?.[0]?.atKm??
+    settings.managerTacticalOrdersV5?.[0]?.atKm??
     settings.managerTacticalOrdersV4?.[0]?.atKm??
     settings.managerTacticalOrdersV2?.[0]?.atKm??settings.distanceKm-5;
   return {conditions:comparisonConditions(settings),finisherId,effortMarkerKm,
-    multiMarker: Boolean(settings.managerTacticalOrdersV5?.length||
+    multiMarker: Boolean(settings.managerTacticalOrdersV7?.length||
+      settings.managerTacticalOrdersV6?.length||
+      settings.managerTacticalOrdersV5?.length||
       settings.managerTacticalOrdersV4?.length||
       settings.managerTacticalOrdersV3?.length),
     planWithoutLateEffort:JSON.stringify({
@@ -440,7 +444,8 @@ export default function Playtest({guided=false}){
   const activeOwnPhase=ownRecordedOrder?.phaseOrders
     .filter(phase=>phase.atKm<=coastedKm-1).at(-1);
   const activeOwnOrder=ownRecordedOrder?
-    {...ownRecordedOrder,...activeOwnPhase}:null;
+    ownRecordedOrder.phaseOrders.filter(phase=>phase.atKm<=coastedKm-1)
+      .reduce((order,phase)=>({...order,...phase}),{...ownRecordedOrder}):null;
   const previousOwnEnergy=coasted?.kilometreFrames[coastedKm-2]
     ?.ownRiders.find(row=>row.riderId===viewerRiderId)?.energy;
   const coastedRoadChanges=recordedRoadChanges(
@@ -547,7 +552,9 @@ export default function Playtest({guided=false}){
   },[coastedKm,coasted,checkpointPlaying]);
   const viewerEnergy=coasted?raceViewerEnergySeries(coasted,viewerRiderId):[];
   const viewerGapSeries=coasted?raceViewerGapSeries(coasted,viewerRiderId):[];
-  const recordedTimedOrders=coasted?.settings.managerTacticalOrdersV5??
+  const recordedTimedOrders=coasted?.settings.managerTacticalOrdersV7??
+    coasted?.settings.managerTacticalOrdersV6??
+    coasted?.settings.managerTacticalOrdersV5??
     coasted?.settings.managerTacticalOrdersV4??
     coasted?.settings.managerTacticalOrdersV3??
     coasted?.settings.managerTacticalOrdersV2??[];
@@ -868,8 +875,10 @@ export default function Playtest({guided=false}){
           managerFinaleOrders:[...orders.values()]}:{}),
         ...(guided&&integratedMode&&coastedMode?{
           ...(guidedPhases.length?{
-            [guidedPhases.some(phase=>phase.attackRiderId)?
-              'managerTacticalOrdersV6':'managerTacticalOrdersV5']:
+            [guidedPhases.some(phase=>Object.hasOwn(phase,'chaseTarget'))?
+              'managerTacticalOrdersV7':guidedPhases.some(phase=>
+              phase.attackRiderId)?'managerTacticalOrdersV6':
+              'managerTacticalOrdersV5']:
               guidedPhases}:{})}:
         integratedMode&&coastedMode&&(firstFrontWork||
           chosenSecondEffortMarkerKm!==null&&secondFrontWork)?{
@@ -1127,6 +1136,21 @@ export default function Playtest({guided=false}){
                 <option value="sit_in">Sit in</option>
               </select></label>
             </div>
+            <details className="v91-optional">
+              <summary>Focus a chase on a rival</summary>
+              <p>This focus withholds your chase while that rival is not in a recorded group ahead of the bunch or attacking. A GC or emergency response can still trigger a chase. Bunch-front work has its own order and energy cost.</p>
+              <label>Chase focus<select value={selectedTimelineOrder.chaseTarget??''}
+                onChange={event=>changeTimelineOrder('chaseTarget',event.target.value)}>
+                <option value="">Keep previous focus</option>
+                <option value="any">Any opponent</option>
+                {Array.from({length:settings.teamCount-1},(_,index)=>
+                  `rival-${index+1}`).flatMap(teamId=>[
+                  <option key={teamId} value={teamId}>{`Fictional rival ${teamId.slice(6)} team`}</option>,
+                  ...Array.from({length:8},(_,index)=><option
+                    key={`${teamId}-${index}`} value={`${teamId}-${index}`}>
+                    {`Rider ${index+1} · rival ${teamId.slice(6)}`}</option>)])}
+              </select></label>
+            </details>
             <label>Try to get away from the bunch
               <select value={breakWindow?.fromKm===selectedTimelineKm?
                 breakWindow.toKm-breakWindow.fromKm:0}
@@ -1158,8 +1182,9 @@ export default function Playtest({guided=false}){
             {guidedPhases.length?<ol>{guidedPhases.map(phase=><li key={phase.atKm}>
               <button type="button" onClick={()=>setTimelineKm(phase.atKm)}>
                 {phase.atKm} km · {['effort','chase','frontWork','attack',
-                  'attackRiderId']
-                  .filter(key=>phase[key]).map(key=>`${key}: ${phase[key]}`).join(' · ')}
+                  'attackRiderId','chaseTarget']
+                  .filter(key=>phase[key]!==undefined).map(key=>
+                    `${key}: ${phase[key]??'any opponent'}`).join(' · ')}
               </button>
             </li>)}</ol>:<p>No timed changes yet. Your starting orders apply throughout.</p>}
           </div>
@@ -1823,7 +1848,9 @@ export default function Playtest({guided=false}){
                       coastedStage?.surface??'—'}</span>
                     <span>Your order: {activeOwnOrder?.effort??'—'} effort
                       {activeOwnOrder?.frontWork==='rotate'?
-                        ' · try front work':''}</span>
+                        ' · try front work':''}
+                      {activeOwnOrder?.chaseTarget?
+                        ` · chase focus ${activeOwnOrder.chaseTarget}`:''}</span>
                   </div>
                 </section>
               </div>
@@ -2064,6 +2091,8 @@ export default function Playtest({guided=false}){
             {activeOwnOrder&&<p>Your active order: {activeOwnOrder.effort} effort
               · {activeOwnOrder.attack} attack
               · {activeOwnOrder.chase} chase
+              {activeOwnOrder.chaseTarget?
+                ` focused on ${activeOwnOrder.chaseTarget}`:''}
               · {activeOwnOrder.frontWork==='rotate'?
                 'try bunch-front work':'sit in'}
               {activeOwnPhase?' (changed at km '+activeOwnPhase.atKm+')':
