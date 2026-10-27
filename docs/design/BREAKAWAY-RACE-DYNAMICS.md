@@ -417,6 +417,20 @@ around km 50–200 while the lead only falls from roughly 181 to 98 seconds;
 the selected team's mean energy falls from about 98 to 51. A larger paid
 coalition joins after km 210. This is evidence to revise the control
 decision, not a licence to award a free catch or a predetermined gap.
+The read-only `--control-tempo` counterfactual adds a standing `rotate`
+front-work order to the selected control team, without changing its roster
+or any other team's plan. This is deliberately outside the committed intent
+planner. All 24 paired 260 km cases validated and replayed. In one-day races
+the team chased for 127.75 km and paid bunch-front work for 132.17 km on
+average, versus 143.17 km of chasing without the front-work order. Its mean
+maximum lead fell from 177.79 to 111.65 seconds, but mean team energy at km
+200 also fell from 52.52 to 42.90. Stage cases were similar: 169.42 chase
+team-km without the order versus 132.67 chase and 127.33 front-work km with
+it; maximum lead fell from 243.86 to 138.76 seconds while km-200 energy
+fell from 51.94 to 45.31. One locked race had zero kilometres with both
+actions charged to the same team. This buys road-clock control, but does not
+solve the long-day energy problem: the team works in nearly every kilometre.
+It should not become an automatic rival order based on this experiment.
 An optional v94-only, versioned intent manifest can now be committed to the
 race recording. It retains each team's role, opening order and whether the
 planner labelled it generated, manager-goal or explicit-manager input.

@@ -1,4 +1,5 @@
 // Read-only paired audit: one declared rival goal changes, all race inputs stay.
+// --control-tempo is a separate unmanifested counterfactual, not planner output.
 // Provisional road outcomes here are not official placements or awards.
 import {isDeepStrictEqual} from 'node:util';
 import {prepareV91Playtest} from '../lib/engine/v2/playtest.mjs';
@@ -10,6 +11,7 @@ import {replayRaceDynamicsRecording} from
 import {MOTOR_RACE_DYNAMICS_VERSION} from '../lib/engine/v2/tuning.mjs';
 
 const single=process.argv.includes('--single');
+const tempo=process.argv.includes('--control-tempo');
 const seeds=single?['manager-goal-1']:process.argv.includes('--extended-seeds')?
   Array.from({length:12},(_,index)=>`manager-goal-holdout-${index+1}`):
   ['manager-goal-1','manager-goal-2','manager-goal-3'];
@@ -29,15 +31,19 @@ for(const seed of seeds)for(const terrain of single?['flat']:['flat','mountain']
       fatigue,attack:'none',chase:'ignore',seed,
       defaultRivalPlan:'passive'});
     const races={};
-    for(const role of ['break','control']){
+    for(const role of tempo?['break','control','control_tempo']:['break','control']){
       const plan=prepareV94RivalIntent({prepared,format,
         ...(format==='stage'?{stageNumber:8}:{}),
-        rivalGoals:[{teamId:selectedTeamId,role}]});
+        rivalGoals:[{teamId:selectedTeamId,role:role==='control_tempo'?'control':role}]});
+      const teams=role==='control_tempo'?plan.teams.map(team=>
+        team.id===selectedTeamId?{...team,orders:{...team.orders,
+          baseline:{...team.orders.baseline,frontWork:'rotate'}}}:team):plan.teams;
       try{
         const race=simulateTacticalTour({stage:prepared.stage,
-          weather:prepared.weather,teams:plan.teams,seed:prepared.seed,
+          weather:prepared.weather,teams,seed:prepared.seed,
           motorVersion:MOTOR_RACE_DYNAMICS_VERSION,
-          raceContext:plan.raceContext,rivalIntent:plan.intent});
+          raceContext:plan.raceContext,
+          rivalIntent:role==='control_tempo'?null:plan.intent});
         validateRecordedTour(race);
         if(process.argv.includes('--replay'))replayRaceDynamicsRecording(race);
         races[role]=race;
@@ -46,13 +52,14 @@ for(const seed of seeds)for(const terrain of single?['flat']:['flat','mountain']
         races[role]={refusal:String(error.message)};
       }
     }
-    if(races.break.refusal||races.control.refusal){
+    if(races.break.refusal||races.control.refusal||races.control_tempo?.refusal){
       rows.push({seed,terrain,fatigue,format,
         breakRefusal:races.break.refusal??null,
-        controlRefusal:races.control.refusal??null});
+        controlRefusal:races.control.refusal??null,
+        ...(tempo?{tempoRefusal:races.control_tempo.refusal??null}:{})});
       continue;
     }
-    const one=races.break,two=races.control;
+    const one=races.break,two=races.control,three=races.control_tempo;
     if(process.argv.includes('--timeline')&&seed===seeds[0]&&
       terrain==='flat'&&fatigue===0&&format==='one_day'){
       timeline=two.frames.filter(frame=>
@@ -79,6 +86,9 @@ for(const seed of seeds)for(const terrain of single?['flat']:['flat','mountain']
       attackAttempts:race.frames.reduce((sum,frame)=>sum+
         frame.attackers.filter(id=>id.startsWith(selectedTeamId+'-')).length,0),
       chaseTeamKm:race.frames.filter(frame=>frame.chasers.includes(selectedTeamId)).length,
+      frontWorkKm:race.frames.filter(frame=>frame.paidBunchPace?.teamId===selectedTeamId).length,
+      chaseAndFrontSameKm:race.frames.filter(frame=>frame.chasers.includes(selectedTeamId)&&
+        frame.paidBunchPace?.teamId===selectedTeamId).length,
       firstChaseKm:race.frames.find(frame=>frame.chasers.includes(selectedTeamId))?.km??null,
       earlyChaseTeamKm:race.frames.filter(frame=>frame.km<=210&&
         frame.chasers.includes(selectedTeamId)).length,
@@ -88,8 +98,13 @@ for(const seed of seeds)for(const terrain of single?['flat']:['flat','mountain']
         row.teamId===selectedTeamId).mean,
       maxGapSeconds:Math.max(...race.frames.map(frame=>frame.gapSeconds)),
     });
+    const tempoMeasure=tempo?measure(three):null;
+    if(tempoMeasure?.chaseAndFrontSameKm!==undefined&&
+      tempoMeasure.chaseAndFrontSameKm!==0)
+      throw new Error('A team both chased and worked the bunch front in one kilometre.');
     rows.push({seed,terrain,fatigue,format,
-      break:measure(one),control:measure(two)});
+      break:measure(one),control:measure(two),
+      ...(tempo?{controlTempo:tempoMeasure}:{})});
   }
 
 const summary=['one_day','stage'].map(format=>{
@@ -101,6 +116,13 @@ const summary=['one_day','stage'].map(format=>{
     controlAttackAttempts:average(measured('control'),'attackAttempts'),
     breakChaseTeamKm:average(measured('break'),'chaseTeamKm'),
     controlChaseTeamKm:average(measured('control'),'chaseTeamKm'),
+    ...(tempo?{
+      tempoChaseTeamKm:average(measured('controlTempo'),'chaseTeamKm'),
+      tempoFrontWorkKm:average(measured('controlTempo'),'frontWorkKm'),
+      tempoChaseAndFrontSameKm:average(measured('controlTempo'),'chaseAndFrontSameKm'),
+      tempoTeamEnergyAt200:average(measured('controlTempo'),'teamEnergyAt200'),
+      tempoMeanMaxGapSeconds:average(measured('controlTempo'),'maxGapSeconds'),
+    }:{}),
     controlMeanFirstChaseKm:average(measured('control'),'firstChaseKm'),
     controlEarlyChaseTeamKm:average(measured('control'),'earlyChaseTeamKm'),
     breakFrontRiderKm:average(measured('break'),'frontRiderKm'),
