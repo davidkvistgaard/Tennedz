@@ -326,6 +326,15 @@ keeps spending because a single team's hypothetical catch projection is
 unsafe. This is the decision failure to address. A candidate pause or shared
 pull must be judged against subsequent *observed* gap movement and all
 teams' charged work, with no free catch or assumed wheel order.
+A discarded v94 experiment let one of three prior chasing control teams rest
+when a stable front was not closing. In the same 24 paired cases, control
+work fell only from 194.5 to 189.5 team-km in one-day races (190.0 to 184.3
+in stages), while mean maximum gaps increased from 199 to 216 seconds
+(281 to 295 in stages). Mean control-team energy at km 200 improved only
+from 41.4 to 42.5 (46.0 to 46.9 in stages). It did not solve the persistent
+ineffective pursuit, so the experiment was removed. A future model needs
+to pay and control the whole bunch/front pace over time, then audit the
+actual gap and rider energy, rather than rotate a cosmetic rest turn.
 An optional v94-only, versioned intent manifest can now be committed to the
 race recording. It retains each team's role, opening order and whether the
 planner labelled it generated, manager-goal or explicit-manager input.
