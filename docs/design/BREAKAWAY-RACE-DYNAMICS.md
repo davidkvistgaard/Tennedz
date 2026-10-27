@@ -923,3 +923,14 @@ mean control reserve at finale start rose by roughly 3–7 points. A separate
 72-case 0/1/8-control stress also validated, but no-control races still show
 implausibly large gaps. These are synthetic checks, not empirical frequency
 or evidence that the player-facing release gate is met.
+
+`node scripts/audit-v94-withdrawal-road.mjs` checks the recorded road-clock
+consequence for the locked seed. From km 100 through 200, the stage control
+previously paid chase on all 101 kilometres with no bunch easing; under
+withdrawal it paid no chase, sat in for all 101 kilometres, and all 101
+recorded kilometre frames carried the committed bunch easing. Mean passive
+gap change rose from 1.60 to 4.41 seconds per kilometre while team reserve
+at km 200 rose from 33.40 to 57.28. The observed lead at km 200 changed
+from 248.86 to 625.76 seconds. The validator and source replay check those
+paid work, energy, easing and gap fields, but this large single-case effect
+requires broader sporting calibration before any preview routing.
