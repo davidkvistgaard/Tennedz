@@ -107,6 +107,8 @@ test('guided Motor Lab runs a race from setup to rider replay',async({page,conte
     {name:'3 · Inspect conditional result'}).click();
   await expect(page.getByRole('region',{name:'Your v93 finish'}))
     .toBeVisible();
+  await expect(page.getByLabel('What happened in your race'))
+    .toContainText(/widest recorded gap|No front road group was recorded/);
   const stageCard=page.getByLabel('Stage and orders at km 1');
   await expect(stageCard).toContainText('Stage input at km 1:');
   await expect(page.getByLabel('Recorded stage elevation profile'))
