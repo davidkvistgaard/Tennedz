@@ -257,6 +257,19 @@ test('guided race diagram shows paid front-group time gaps',async({page})=>{
   expect(await recentEvents.locator('li').count()).toBeGreaterThan(1);
   await raceScreen.getByLabel('Choose recorded kilometre').fill('1');
   await expect(recentEvents.locator('li')).toHaveCount(1);
+  const nextOwnEvent=coasted.kilometreFrames.find(frame=>frame.km>1&&
+    [...frame.attackAttempts,...frame.joinedRiderIds,...frame.caughtRiderIds]
+      .some(id=>id.startsWith('you-')));
+  expect(nextOwnEvent).toBeDefined();
+  const ownMomentNav=raceScreen.getByRole('navigation',{
+    name:"Your riders' recorded race moments"});
+  const ownMomentButton=ownMomentNav.getByRole('button',{
+    name:new RegExp(`^Km ${nextOwnEvent.km} ·`)});
+  await ownMomentButton.click();
+  await expect(ownMomentButton).toHaveAttribute('aria-current','step');
+  await expect(raceScreen.getByLabel('Choose recorded kilometre'))
+    .toHaveValue(String(nextOwnEvent.km));
+  await raceScreen.getByLabel('Choose recorded kilometre').fill('1');
   const followedFrame=coasted.kilometreFrames.find(frame=>
     frame.ownRiders.some(row=>frame.roadGroups.some(group=>
       group.riderIds.includes(row.riderId))||frame.droppedRiders.some(

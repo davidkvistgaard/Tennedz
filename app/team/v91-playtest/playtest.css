@@ -95,6 +95,9 @@
 .v91-race-screen-follow-label{fill:#784015;font-size:12px;font-weight:800;paint-order:stroke;stroke:white;stroke-width:3px}
 .v91-race-screen-route-labels{display:flex;justify-content:space-between;gap:10px;margin:5px 0;color:#526b63;font-size:.8rem}
 .v91-race-screen-route-labels strong{color:#116e60}
+.v91-race-screen-own-moments{display:flex;gap:6px;max-width:100%;overflow-x:auto;padding:2px 0 6px;scrollbar-width:thin}
+.v91-race-screen-own-moments button{flex:none;max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding:5px 8px;border:1px solid #c8d9cd;border-radius:999px;background:#fff;color:#315b4d;font-size:.72rem;font-weight:700}
+.v91-race-screen-own-moments button[aria-current=step]{border-color:#116e60;background:#e7f4ed;color:#116e60}
 .v91-race-screen-route input[type=range]{width:100%;accent-color:#116e60}
 .v91-race-screen-controls{display:flex;justify-content:center;gap:8px;margin:8px 0}
 .v91-race-screen-route p{margin:5px 0 0!important;font-size:.75rem;line-height:1.35}

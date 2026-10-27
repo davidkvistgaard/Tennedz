@@ -435,6 +435,8 @@ export default function Playtest({guided=false}){
   const coastedRaceStory=coasted?summarizePlaytestRaceStory(coasted):[];
   const coastedViewer=useMemo(()=>coasted?raceViewerCheckpoints(coasted,
     viewerRiderId):[],[coasted,viewerRiderId]);
+  const raceScreenOwnMoments=coastedViewer.filter(checkpoint=>
+    checkpoint.moments.length>0);
   const viewerTrackRef=useRef(null);
   const raceScreenRef=useRef(null);
   const previousCheckpoint=[...coastedViewer].reverse()
@@ -1555,6 +1557,19 @@ export default function Playtest({guided=false}){
                     <span>Start</span><strong>Field at km {coastedKm}</strong>
                     <span>Finish · {viewerSituation.totalKm} km</span>
                   </div>
+                  {raceScreenOwnMoments.length>0&&<nav
+                    className="v91-race-screen-own-moments"
+                    aria-label="Your riders' recorded race moments">
+                    {raceScreenOwnMoments.map(checkpoint=><button
+                      type="button" key={checkpoint.km}
+                      aria-current={checkpoint.km===coastedKm?'step':undefined}
+                      title={checkpoint.moments.join(' · ')}
+                      onClick={()=>selectRecordedKilometre(checkpoint.km)}>
+                      Km {checkpoint.km} · {checkpoint.moments.length===1?
+                        checkpoint.moments[0]:
+                        `${checkpoint.moments.length} own events`}
+                    </button>)}
+                  </nav>}
                   <input type="range" min="1"
                     max={coasted.kilometreFrames.length}
                     value={coastedKm}
