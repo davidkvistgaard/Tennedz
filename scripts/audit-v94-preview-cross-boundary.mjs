@@ -6,11 +6,17 @@ import {createV94RaceDynamicsPreview} from
 const outcomes=[];
 const orders=[{effort:'steady',attack:'none',chase:'selective'},
   {effort:'hard',attack:'repeated',chase:'all'}];
+const alternateRoutes=process.argv.includes('--alternate-routes');
+const routes=alternateRoutes?
+  [{terrain:'rolling',fatigue:15,gender:'F'},
+    {terrain:'exposed',fatigue:30,gender:'F'}]:
+  [{terrain:'flat',fatigue:0,gender:'M'},
+    {terrain:'mountain',fatigue:30,gender:'M'}];
 for(const seed of ['preview-cross-1','preview-cross-2'])
   for(const format of ['one_day','stage'])
-    for(const terrain of ['flat','mountain']){
-      const base={distanceKm:260,terrain,teamCount:20,gender:'M',
-        fatigue:terrain==='mountain'?30:0,seed};
+    for(const {terrain,fatigue,gender} of routes){
+      const base={distanceKm:260,terrain,teamCount:20,gender,
+        fatigue,seed};
       const seeded=createV94RaceDynamicsPreview({format,
         settings:{...base,...orders[0]}}).preview;
       const rivals=seeded.teamPlans.filter(plan=>plan.teamId!=='you');
@@ -24,7 +30,7 @@ for(const seed of ['preview-cross-1','preview-cross-2'])
           role:selected.has(plan.teamId)?'control':
             plan.role==='control'?'protect':plan.role}));
         for(const order of orders){
-          const scenario={seed,format,terrain,requestedControls,
+          const scenario={seed,format,terrain,gender,fatigue,requestedControls,
             ownOrder:order.attack};
           try{
             const {preview}=createV94RaceDynamicsPreview({format,

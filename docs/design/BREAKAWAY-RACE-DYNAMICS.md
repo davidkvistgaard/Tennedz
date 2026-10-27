@@ -873,6 +873,15 @@ This fixes a recording precision mismatch, not the extreme role mix: no
 control teams still produced mean maximum leads near 910–918 seconds in
 these synthetic races.
 
+The same audit with `--alternate-routes` holds the seeds, formats, explicit
+role mixes and own orders while using women's fields on rolling (fatigue 15)
+and exposed (fatigue 30) routes. All 48 additional 20-team, 260 km recordings
+validate and source-replay without refusal; 18 hard/repeated cases contain a
+paid coast. Mean widest leads for 0/1/8 control teams were 906/142/85 seconds
+with calm own orders and 909/290/217 seconds with hard repeated own orders.
+This broadens the accounting boundary and again exposes strong role-mix
+sensitivity. It does not establish typical race frequencies or a target gap.
+
 ### Gate before a player-facing race-dynamics version
 
 - Commit an inspectable pre-race goal and order for every team. Preserve any
