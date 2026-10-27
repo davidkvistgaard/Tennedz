@@ -137,7 +137,8 @@ export default function RaceDynamicsPreview(){
         paid work. Individual finishing places, points and awards are not
         determined here or saved as official results. Race dynamics are still
         being calibrated: long chases and unusually large or short leads can
-        occur. Keep the seed when sharing feedback so the run can be repeated.</p>
+        occur. Keep the seed and settings when sharing feedback so the run
+        can be repeated.</p>
       <form onSubmit={run} className="v94-form">
         {Object.entries(OPTIONS).map(([key,options])=><label key={key}
           className={key==='controlWithdrawalVersion'?'v94-policy-choice':
