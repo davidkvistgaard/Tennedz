@@ -15,6 +15,7 @@ const seeds=single?['manager-goal-1']:process.argv.includes('--extended-seeds')?
   ['manager-goal-1','manager-goal-2','manager-goal-3'];
 const selectedTeamId='rival-1';
 const rows=[];
+let timeline=null;
 const average=(rows,key)=>{
   const values=rows.map(row=>row[key]).filter(Number.isFinite);
   return values.length?
@@ -54,7 +55,7 @@ for(const seed of seeds)for(const terrain of single?['flat']:['flat','mountain']
     const one=races.break,two=races.control;
     if(process.argv.includes('--timeline')&&seed===seeds[0]&&
       terrain==='flat'&&fatigue===0&&format==='one_day'){
-      console.log(JSON.stringify({timeline:two.frames.filter(frame=>
+      timeline=two.frames.filter(frame=>
         frame.km%10===0||frame.km===1).map(frame=>({km:frame.km,
         gapSeconds:frame.gapSeconds,
         leadingGapSeconds:frame.roadGroups?.[0]?.gapSeconds??null,
@@ -65,7 +66,7 @@ for(const seed of seeds)for(const terrain of single?['flat']:['flat','mountain']
         chasers:frame.chasers,
         held:frame.heldChaseTeamIds,
         contribution:frame.chaseContributions?.find(row=>row.teamId===selectedTeamId),
-        selectedEnergy:frame.teamEnergy.find(row=>row.teamId===selectedTeamId)?.mean}))},null,2));
+        selectedEnergy:frame.teamEnergy.find(row=>row.teamId===selectedTeamId)?.mean}));
     }
     if(!isDeepStrictEqual(one.route,two.route)||
       !isDeepStrictEqual(one.committedInputs.teams.flatMap(team=>team.riders),
@@ -111,4 +112,5 @@ const summary=['one_day','stage'].map(format=>{
     refusals:sample.length-completed.length};
 });
 console.log(JSON.stringify({note:'Internal paired synthetic manager-goal audit, not official results.',
-  summary,...(process.argv.includes('--rows')?{rows}:{})},null,2));
+  summary,...(timeline?{timeline}:{}),
+  ...(process.argv.includes('--rows')?{rows}:{})},null,2));

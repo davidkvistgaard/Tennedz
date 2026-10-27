@@ -403,6 +403,20 @@ cases, versus 3/24 fresh and 1/24 fatigued stage cases. Mean maximum leads
 were approximately 281, 266, 394 and 382 seconds in that order. These
 figures are synthetic role-policy diagnostics, not target frequencies; the
 remaining captain fallback and prolonged control chase need further work.
+The paired goal audit was rerun after the specialist change, with identical
+courses, rosters and all other team orders in each break/control pair. All
+48 recordings across 24 pairs validated and replayed. In one-day cases the
+selected break-goal team attempted 3.83 attacks and rode 246.75 front
+rider-km on average; under a control goal it made zero attacks, chased for
+143.17 team-km and had mean team energy 52.52 rather than 75.05 at km 200.
+Stage cases had one break attempt and 256 front rider-km versus 169.42
+control chase team-km, with km-200 energy 75.08 versus 51.94. The goal has
+a paid, inspectable effect, but the control team still spends much of the
+day chasing. In one flat fresh one-day control replay, three teams chase
+around km 50–200 while the lead only falls from roughly 181 to 98 seconds;
+the selected team's mean energy falls from about 98 to 51. A larger paid
+coalition joins after km 210. This is evidence to revise the control
+decision, not a licence to award a free catch or a predetermined gap.
 An optional v94-only, versioned intent manifest can now be committed to the
 race recording. It retains each team's role, opening order and whether the
 planner labelled it generated, manager-goal or explicit-manager input.
