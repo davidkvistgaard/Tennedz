@@ -19,7 +19,8 @@ test('v94 recording replays its locked stage, weather and paid race',()=>{
   assert.deepEqual(replayRaceDynamicsRecording(saved),recording);
   const differentStage=structuredClone(saved);
   differentStage.committedInputs.stageSource.profile_points[1][1]+=200;
-  assert.throws(()=>replayRaceDynamicsRecording(differentStage),/replay route/);
+  assert.throws(()=>replayRaceDynamicsRecording(differentStage),
+    /stage source differs/);
   const differentFrame=structuredClone(saved);
   differentFrame.frames[9].teamPace[0].meanAbility+=1;
   assert.throws(()=>replayRaceDynamicsRecording(differentFrame),/replay differs at km 10/);

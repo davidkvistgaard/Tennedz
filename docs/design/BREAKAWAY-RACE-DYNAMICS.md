@@ -353,3 +353,6 @@ changed stage source or an unaccounted frame value is refused. The original
 uses the same motor implementation, so it checks repeatability and recording
 integrity rather than providing independent evidence that the sporting model
 or contact handling is correct. Older recording shapes remain unchanged.
+The simulator-free recording validator also rebuilds the v94 route from its
+committed stage, weather and seed, and refuses a source that disagrees with
+the recorded route before the more expensive source replay begins.
