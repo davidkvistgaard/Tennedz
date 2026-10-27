@@ -92,6 +92,11 @@ test('own paid front-work choice is committed without changing rival plans',()=>
   assert.deepEqual(rotating.teamPlans.filter(plan=>plan.teamId!=='you'),
     seated.teamPlans.filter(plan=>plan.teamId!=='you'));
   assert.ok(rotating.frames.some(frame=>frame.paidBunchPace?.teamId==='you'));
+  assert.ok(rotating.frames.at(-1).teamEnergy.find(row=>row.teamId==='you')
+    .mean<seated.frames.at(-1).teamEnergy.find(row=>row.teamId==='you')
+    .mean);
+  assert.notEqual(rotating.story.widestRecordedLead.gapSeconds,
+    seated.story.widestRecordedLead.gapSeconds);
 });
 
 test('declared preview goals change only those rival opening intents',()=>{
