@@ -397,8 +397,12 @@ test('v94 refuses unpayable front work before exposing an unsupported road clock
     team.id==='you'?'break':'protect']));
   assert.throws(()=>simulateTacticalTour({...source,
     motorVersion:MOTOR_RACE_DYNAMICS_VERSION,
-    raceContext:{format:'stage',stageNumber:8,teamRoles}}),
-  /Unresolved front exhaustion at km 136: you-7/);
+    raceContext:{format:'stage',stageNumber:8,teamRoles}}),error=>{
+    assert.match(error.message,/Unresolved front exhaustion at km 136: you-7/);
+    assert.equal(error.cause?.phase,'before_road_movement');
+    assert.ok(error.cause.workDemand>error.cause.energyBefore);
+    return true;
+  });
   assert.doesNotThrow(()=>simulateTacticalTour({...source,
     motorVersion:MOTOR_EXHAUSTION_COAST_VERSION}));
 });
