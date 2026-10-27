@@ -934,3 +934,8 @@ at km 200 rose from 33.40 to 57.28. The observed lead at km 200 changed
 from 248.86 to 625.76 seconds. The validator and source replay check those
 paid work, energy, easing and gap fields, but this large single-case effect
 requires broader sporting calibration before any preview routing.
+
+The separate experimental preview therefore keeps its prior pursuit as the
+default and offers withdrawal only as an explicit comparison choice. Its
+response commits the chosen policy, validates and replays the full race,
+and continues to withhold official results. The guided race is unaffected.

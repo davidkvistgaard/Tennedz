@@ -14,6 +14,7 @@ test('experimental race preview exposes committed intent and paid road only',()=
   assert.equal(preview.policy.frontRotationVersion,3);
   assert.equal(preview.policy.controlPursuitVersion,2);
   assert.equal(preview.policy.frontExhaustionVersion,3);
+  assert.equal(preview.policy.controlWithdrawalVersion,undefined);
   assert.equal(preview.story.widestRecordedLead.gapSeconds,
     Math.max(...recording.frames.map(frame=>frame.gapSeconds)));
   assert.equal(preview.story.kilometresAtOrAboveOneMinute,
@@ -33,6 +34,9 @@ test('experimental race preview exposes committed intent and paid road only',()=
 });
 
 test('experimental preview rejects unsupported settings before simulation',()=>{
+  assert.throws(()=>createV94RaceDynamicsPreview({format:'stage',
+    controlWithdrawalVersion:3,settings:{distanceKm:40}}),
+  /valid experimental race settings/);
   assert.throws(()=>createV94RaceDynamicsPreview({format:'classic',
     settings:{distanceKm:40}}),/valid experimental race settings/);
   assert.throws(()=>createV94RaceDynamicsPreview({format:'stage',
@@ -61,4 +65,17 @@ test('declared preview goal changes only its rival opening intent',()=>{
   assert.deepEqual(declared.teamPlans.filter(row=>row.teamId!=='rival-1'),
     seeded.teamPlans.filter(row=>row.teamId!=='rival-1'));
   assert.equal(declared.resultStatus,'provisional_road_groups_only');
+});
+
+test('withdrawal comparison is explicit and remains a provisional road preview',()=>{
+  const input={format:'stage',settings:{distanceKm:40,teamCount:4,
+    seed:'preview-withdrawal-option'}};
+  const current=createV94RaceDynamicsPreview(input).preview;
+  const experimental=createV94RaceDynamicsPreview({...input,
+    controlWithdrawalVersion:2}).preview;
+  assert.equal(current.policy.controlWithdrawalVersion,undefined);
+  assert.equal(experimental.policy.controlWithdrawalVersion,2);
+  assert.deepEqual(experimental.teamPlans,current.teamPlans);
+  assert.equal(experimental.resultStatus,'provisional_road_groups_only');
+  assert.equal(Object.hasOwn(experimental,'provisionalResults'),false);
 });

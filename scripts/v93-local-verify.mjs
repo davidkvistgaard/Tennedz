@@ -33,7 +33,10 @@ function run(args) {
 
 try {
   await run(["node_modules/next/dist/bin/next", "build"]);
-  if (process.argv.includes("--guided-front-work")) {
+  if (process.argv.includes("--preview")) {
+    await run(["node_modules/@playwright/test/cli.js", "test",
+      "tests/e2e/motor-lab-v94-preview.spec.mjs", "--reporter=dot"]);
+  } else if (process.argv.includes("--guided-front-work")) {
     await run(["node_modules/@playwright/test/cli.js", "test",
       "tests/e2e/motor-lab-v93-release.spec.mjs", "--grep",
       "guided front-work order", "--reporter=dot"]);

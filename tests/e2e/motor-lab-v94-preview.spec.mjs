@@ -21,6 +21,7 @@ test('experimental v94 race shows committed plans and measured road only',
     await page.getByLabel('Field').selectOption('4');
     await page.getByLabel('Race format').selectOption('stage');
     await page.getByLabel('Fictional rival 1 goal').selectOption('break');
+    await page.getByLabel('Control-team pursuit').selectOption('2');
     const responsePromise=page.waitForResponse(response=>
       response.url().endsWith('/api/v91-playtest')&&
       response.request().postDataJSON()?.mode==='v94-race-dynamics');
@@ -33,6 +34,7 @@ test('experimental v94 race shows committed plans and measured road only',
     expect(raceDynamics.teamPlans).toHaveLength(4);
     expect(raceDynamics.resultStatus).toBe('provisional_road_groups_only');
     expect(raceDynamics.policy.rivalIntentVersion).toBe(4);
+    expect(raceDynamics.policy.controlWithdrawalVersion).toBe(2);
     expect(raceDynamics.provisionalResults).toBeUndefined();
     expect(raceDynamics.teamPlans.find(plan=>plan.teamId==='rival-1'))
       .toMatchObject({source:'manager_goal',role:'break',
@@ -51,6 +53,7 @@ test('experimental v94 race shows committed plans and measured road only',
     await page.getByLabel('Field').selectOption('20');
     await page.getByLabel('Race format').selectOption('one_day');
     await page.getByLabel('Fictional rival 1 goal').selectOption('auto');
+    await page.getByLabel('Control-team pursuit').selectOption('1');
     await page.getByLabel('Race seed').fill('race-dynamics-1');
     const longResponsePromise=page.waitForResponse(response=>
       response.url().endsWith('/api/v91-playtest')&&

@@ -5,7 +5,8 @@ import {api} from '../../../../lib/api';
 
 const INITIAL={format:'one_day',distanceKm:260,terrain:'flat',teamCount:20,
   gender:'M',fatigue:0,effort:'steady',attack:'none',chase:'selective',
-  rivalOneGoal:'auto',seed:'race-dynamics-preview-1'};
+  rivalOneGoal:'auto',controlWithdrawalVersion:1,
+  seed:'race-dynamics-preview-1'};
 const OPTIONS={format:[['one_day','One-day race'],['stage','Stage race']],
   distanceKm:[[40,'40 km'],[120,'120 km'],[260,'260 km']],
   terrain:[['flat','Flat'],['rolling','Rolling'],['mountain','Mountain'],
@@ -17,11 +18,14 @@ const OPTIONS={format:[['one_day','One-day race'],['stage','Stage race']],
   chase:[['ignore','Ignore'],['selective','Selective'],['all','All helpers']],
   rivalOneGoal:[['auto','Seeded plan'],['break','Break'],
     ['control','Control'],['protect','Protect'],
-    ['opportunistic','Opportunistic']]};
+    ['opportunistic','Opportunistic']],
+  controlWithdrawalVersion:[[1,'Current selective pursuit'],
+    [2,'Try impossible-pursuit withdrawal']]};
 const LABELS={format:'Race format',distanceKm:'Distance',terrain:'Route',
   teamCount:'Field',gender:'Category',fatigue:'Starting fatigue',
   effort:'Your effort',attack:'Your attack order',chase:'Your chase order',
-  rivalOneGoal:'Fictional rival 1 goal'};
+  rivalOneGoal:'Fictional rival 1 goal',
+  controlWithdrawalVersion:'Control-team pursuit'};
 const time=seconds=>seconds>=60?
   `${Math.floor(seconds/60)}m ${Math.round(seconds%60)}s`:
   `${Number(seconds).toFixed(1)}s`;
@@ -39,15 +43,18 @@ export default function RaceDynamicsPreview(){
   const [error,setError]=useState('');
   const frame=preview?.frames[km-1];
   const setChoice=(key,value)=>setSettings(current=>({...current,
-    [key]:['distanceKm','teamCount','fatigue'].includes(key)?
+    [key]:['distanceKm','teamCount','fatigue',
+      'controlWithdrawalVersion'].includes(key)?
       Number(value):value}));
   async function run(event){
     event.preventDefault();setBusy(true);setError('');setPreview(null);
     try{
-      const {format,rivalOneGoal,...raceSettings}=settings;
+      const {format,rivalOneGoal,controlWithdrawalVersion,
+        ...raceSettings}=settings;
       const response=await api('/api/v91-playtest',{method:'POST',
         headers:{'Content-Type':'application/json'},
         body:JSON.stringify({mode:'v94-race-dynamics',format,
+          controlWithdrawalVersion,
           settings:raceSettings,rivalGoals:rivalOneGoal==='auto'?[]:
             [{teamId:'rival-1',role:rivalOneGoal}]}),
         signal:AbortSignal.timeout(60_000)});
@@ -75,6 +82,9 @@ export default function RaceDynamicsPreview(){
         <p className="v94-goal-note">Rival 1 uses the seeded plan unless you
           choose a goal. A chosen goal commits its matching opening orders
           for this preview.</p>
+        <p className="v94-goal-note">The optional withdrawal rule lets a
+          control team stop paying for a chase when its recorded catch
+          projection is impossible. The lead may grow much larger.</p>
         <label className="v94-seed"><span>Race seed</span><input
           value={settings.seed} maxLength={80}
           onChange={event=>setChoice('seed',event.target.value)}/></label>
