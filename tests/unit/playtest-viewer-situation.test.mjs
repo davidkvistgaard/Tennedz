@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {raceViewerSituationAt} from
+import {raceViewerGapSeries,raceViewerSituationAt} from
   '../../lib/engine/v2/playtest-viewer.mjs';
 import {playtestRiderCards} from
   '../../lib/engine/v2/playtest-riders.mjs';
@@ -34,4 +34,22 @@ test('situation reports distance, field, own roads, energy and starting fatigue 
 
 test('situation refuses an absent frame rather than inventing rider state',()=>{
   assert.equal(raceViewerSituationAt({settings:{distanceKm:40}},null,[]),null);
+});
+
+test('group-clock chart derives only recorded checkpoint time gaps',()=>{
+  const ownRiders=[{riderId:'you-2',energy:70}];
+  const race={kilometreFrames:[
+    {km:1,roadGroups:[{gapSeconds:18,riderIds:['you-2']}],
+      droppedRiders:[],ownRiders},
+    {km:2,roadGroups:[{gapSeconds:22,riderIds:['rival-1-0']}],
+      droppedRiders:[],ownRiders},
+    {km:3,roadGroups:[{gapSeconds:25,riderIds:['rival-1-0']}],
+      droppedRiders:[{riderId:'you-2',deficitSeconds:7}],ownRiders},
+  ]};
+  assert.deepEqual(raceViewerGapSeries(race,'you-2'),[
+    {km:1,leadingGroupSeconds:18,riderSeconds:18},
+    {km:2,leadingGroupSeconds:22,riderSeconds:0},
+    {km:3,leadingGroupSeconds:25,riderSeconds:-7},
+  ]);
+  assert.deepEqual(raceViewerGapSeries(race,'you-7'),[]);
 });

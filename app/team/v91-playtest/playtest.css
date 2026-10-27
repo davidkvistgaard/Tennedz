@@ -93,6 +93,17 @@
 .v91-race-screen-field{fill:#116e60;stroke:white;stroke-width:2;vector-effect:non-scaling-stroke}
 .v91-race-screen-follow-ring{fill:none;stroke:#c06b30;stroke-width:3;vector-effect:non-scaling-stroke}
 .v91-race-screen-follow-label{fill:#784015;font-size:12px;font-weight:800;paint-order:stroke;stroke:white;stroke-width:3px}
+.v91-recorded-gap-chart{margin:10px 0;padding:8px;border:1px solid #c8d9cd;border-radius:8px;background:#fff}
+.v91-recorded-gap-chart svg{height:auto;aspect-ratio:600/190;background:#fff}
+.v91-recorded-gap-chart line,.v91-recorded-gap-chart polyline{fill:none;vector-effect:non-scaling-stroke}
+.v91-recorded-gap-chart .v91-gap-zero{stroke:#526b63;stroke-width:2;stroke-dasharray:5 5}
+.v91-recorded-gap-chart .v91-gap-leading{stroke:#116e60;stroke-width:3}
+.v91-recorded-gap-chart .v91-gap-rider{stroke:#c06b30;stroke-width:3}
+.v91-recorded-gap-chart .v91-gap-current{stroke:#738b82;stroke-width:1;stroke-dasharray:3 4}
+.v91-recorded-gap-chart .v91-gap-current-leading{fill:#116e60;stroke:#fff;stroke-width:2}
+.v91-recorded-gap-chart .v91-gap-current-rider{fill:#c06b30;stroke:#fff;stroke-width:2}
+.v91-recorded-gap-chart text{fill:#526b63;font-size:15px;font-weight:700}
+.v91-recorded-gap-chart figcaption{margin-top:5px;color:#315b4d;font-size:.76rem;line-height:1.4}
 .v91-race-screen-away-note{padding:5px 8px;border-left:3px solid #c06b30;border-radius:4px;background:#fff7ed;color:#513b27}
 .v91-race-screen-route-labels{display:flex;justify-content:space-between;gap:10px;margin:5px 0;color:#526b63;font-size:.8rem}
 .v91-race-screen-route-labels strong{color:#116e60}

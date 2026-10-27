@@ -129,14 +129,21 @@ test('guided Motor Lab runs a race from setup to rider replay',async({page,conte
   await expect(raceScreen.locator('header h2')).toContainText('Km 1');
   await expect(raceScreen.getByRole('img',{
     name:/Stage profile with the field at km 1/})).toBeVisible();
+  await expect(raceScreen.getByRole('img',{
+    name:/Recorded time gaps through km 39/})).toBeVisible();
   await expect(raceScreen.getByLabel('Your riders on the road')
     .locator('button')).toHaveCount(8);
   await raceScreen.getByLabel('Your riders on the road')
     .getByRole('button',{name:/Rider 1/}).click();
   await expect(raceScreen.getByLabel('Followed rider position'))
     .toContainText('Rider 1');
-  await expect(raceScreen.locator('.v91-race-screen-route svg text'))
+  await expect(raceScreen.getByRole('img',{
+    name:/Rider 1 at km 1/})).toBeVisible();
+  await expect(raceScreen.locator('.v91-race-screen-follow-label'))
     .toHaveText('Rider 1');
+  await raceScreen.getByRole('img',{
+    name:/Recorded time gaps through km 39/}).scrollIntoViewIfNeeded();
+  await page.screenshot({path:'test-results/guided-race-clock.png'});
   await expect(raceScreen.locator('.v91-race-screen-follow-ring'))
     .toBeVisible();
   await raceScreen.getByLabel('Your riders on the road')
