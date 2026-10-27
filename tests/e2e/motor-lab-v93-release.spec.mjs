@@ -426,6 +426,10 @@ test('guided front-work order is paid only after its 5 km marker',async({page})=
   await expect(page.getByLabel('Race commentary'))
     .toContainText(reserveStory.evidence.reserves.map(row=>
       row.after.toFixed(1)).join(' and '));
+  await page.getByRole('navigation',{name:'Motor Lab race flow'})
+    .getByRole('button',{name:'3 · Inspect conditional result'}).click();
+  await expect(page.getByLabel('What happened in your race'))
+    .toContainText('set bunch-front pace for 10 recorded kilometres');
 });
 
 test('guided Motor Lab applies an effort order after a selected 5 km marker', async({page}) => {

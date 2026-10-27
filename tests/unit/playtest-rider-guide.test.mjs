@@ -408,6 +408,22 @@ test('race story measures the front arc without inventing a catch',()=>{
   assert.doesNotMatch(story.join(' '),/was caught|were caught/);
 });
 
+test('race story reports only paid own chase and front-work kilometres',()=>{
+  const frames=[
+    {km:1,chasingTeamIds:['you'],paidBunchPaceTeamId:null},
+    {km:2,chasingTeamIds:['you'],paidBunchPaceTeamId:'rival-1',
+      paidBunchPaceRiderIds:['rival-1-1','rival-1-2']},
+    {km:3,chasingTeamIds:[],paidBunchPaceTeamId:'you',
+      paidBunchPaceRiderIds:['you-1','you-2']},
+    {km:4,chasingTeamIds:[],paidBunchPaceTeamId:'you',
+      paidBunchPaceRiderIds:[]},
+  ].map(frame=>({...frame,attackAttempts:[],joinedRiderIds:[],
+    caughtRiderIds:[],roadGroups:[],ownRiders:[],droppedRiders:[]}));
+  const story=summarizePlaytestRaceStory({kilometreFrames:frames});
+  assert.ok(story.includes('Your team chased for 2 recorded kilometres and set bunch-front pace for 1 recorded kilometre.'));
+  assert.doesNotMatch(story.join(' '),/accelerated|caused|caught by your team/);
+});
+
 test('one-minute recap counts recorded kilometres, not one unchanged group',()=>{
   const frames=[
     {km:1,roadGroups:[{id:'road-a',gapSeconds:64,riderIds:['a']}]},
