@@ -457,7 +457,7 @@ test('front exhaustion opt-in preserves the earlier v94 recording policy',()=>{
   assert.doesNotThrow(()=>validateRecordedTour(earlier));
   assert.doesNotThrow(()=>validateRecordedTour(explicit));
   assert.throws(()=>simulateTacticalTour({...base,raceContext:{...raceContext,
-    frontExhaustionVersion:3}}),/race context/);
+    frontExhaustionVersion:4}}),/race context/);
 });
 
 test('paid solo slowdown and an ordered chase resolve contact in the same road clock',()=>{
@@ -502,6 +502,40 @@ test('shared-front exhaustion still refuses before an unsupported separation',()
     assert.equal(error.cause?.otherActivePullerCount,1);
     return true;
   });
+});
+
+test('opt-in shared-front exhaustion detaches a non-pulling sitter behind a paid worker',()=>{
+  const source=prepareV91Playtest({distanceKm:260,teamCount:4,
+    terrain:'mountain',fatigue:30,effort:'hard',attack:'repeated',
+    chase:'ignore',defaultRivalPlan:'passive',
+    seed:'front-exhaustion-probe',managerTactics:[
+      {effort:'hard',attack:'repeated',chase:'ignore'}]});
+  source.teams[0].orders.baseline.breakWork='drive';
+  const teamRoles=Object.fromEntries(source.teams.map(team=>[team.id,
+    ['you','rival-1'].includes(team.id)?'break':'protect']));
+  const race=simulateTacticalTour({...source,
+    motorVersion:MOTOR_RACE_DYNAMICS_VERSION,
+    raceContext:{format:'stage',stageNumber:8,teamRoles,
+      frontExhaustionVersion:3}});
+  const frame=race.frames[138];
+  const coast=frame.frontCoast.find(event=>event.riderId==='you-7');
+  assert.ok(coast?.shared);
+  assert.equal(frame.roadGroups.length,2);
+  assert.equal(frame.roadGroups[0].riderIds.length,1);
+  assert.equal(frame.roadGroups[1].id,coast.detachedGroupId);
+  assert.deepEqual(frame.roadGroups[1].riderIds,['you-7']);
+  assert.equal(frame.roadGroups[1].gapSeconds,
+    +(frame.roadGroups[0].gapSeconds-coast.delaySeconds).toFixed(2));
+  assert.ok(frame.roadGroupWorkerRiderIds.includes('rival-1-7'));
+  assert.equal(frame.energyLedger.find(row=>row.riderId==='you-7').unmetEnergyDemand,0);
+  assert.ok(race.frames[145].caughtBreakawayRiderIds.includes('you-7'));
+  assert.equal(race.frames[145].riderGroups.find(row=>row.id==='you-7').group,
+    'dropped');
+  assert.doesNotThrow(()=>validateRecordedTour(race));
+  assert.doesNotThrow(()=>replayRaceDynamicsRecording(race));
+  const forged=structuredClone(race);
+  forged.frames[138].frontCoast[0].detachedGroupId='road-forged';
+  assert.throws(()=>validateRecordedTour(forged),/detached coast|front coast/);
 });
 
 test('v94 validates paid worker membership without inventing wheel order',()=>{

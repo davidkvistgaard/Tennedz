@@ -19,7 +19,8 @@ const holdoutSeeds=Array.from({length:12},(_,index)=>
 const frontRotationVersion=process.argv.includes('--front-rotation-v3')?3:
   process.argv.includes('--front-rotation-v2')?2:1;
 const collectiveControl=process.argv.includes('--collective-control');
-const frontExhaustionVersion=process.argv.includes('--front-exhaustion-v2')?2:1;
+const frontExhaustionVersion=process.argv.includes('--front-exhaustion-v3')?3:
+  process.argv.includes('--front-exhaustion-v2')?2:1;
 const seeds=process.argv.includes('--extended-seeds')?
   batchMatch?holdoutSeeds.slice((Number(batchMatch[1])-1)*4,
     Number(batchMatch[1])*4):holdoutSeeds:
@@ -73,7 +74,7 @@ function run({seed,terrain,fatigue,format,breakTeams,controlTeams}){
     rivalIntent:planned?.intent??null,
     raceContext:{...baseRaceContext,
       ...(collectiveControl?{controlPursuitVersion:2}:{}),
-      ...(frontExhaustionVersion===2?{frontExhaustionVersion}:{}),
+      ...(frontExhaustionVersion>=2?{frontExhaustionVersion}:{}),
     }});
   if(process.argv.includes('--validate'))validateRecordedTour(recording);
   if(process.argv.includes('--replay'))replayRaceDynamicsRecording(recording);

@@ -718,13 +718,29 @@ publishing unsupported front movement. The complete 260 km recording passes
 the simulator-free validator and deterministic source replay. Omitted
 version 1 still refuses at kilometre 136, preserving older recordings.
 
-This is deliberately narrow. An exhausted puller or a rider in a shared
-group still refuses before road movement because the current model cannot
-yet determine an independently paid change of pull roster and group contact.
+Version 2 is deliberately narrow. An exhausted puller or a rider in a shared
+group still refuses before road movement because that version cannot
+determine an independently paid change of pull roster and group contact.
 The ordinary planned-intent audit may show zero such solo coast events; it
 does not establish their frequency in real racing or solve opponent intent
 and pursuit. Reproduce with `node scripts/audit-race-dynamics-v94.mjs
 --planned-intent --validate --summary --front-exhaustion-v2`.
+
+The separate internal `frontExhaustionVersion: 3` covers one bounded shared
+case: an exhausted non-puller leaves a two-rider leading group whose other
+rider is actually taking a paid pull. The worker keeps the group's paid road
+clock. The sitter's coast delay places them in a named chasing group behind
+that worker or, if the bunch reaches them, records a catch and any residual
+drop. Subsequent solo coast is paid against that rider's own road clock.
+In the locked 260 km hard mountain case the pair separates at kilometre 139;
+the worker remains ahead while the sitter is caught and dropped at kilometre
+146. The full recording validates and replays, including an independent
+check of the detached group's relative gap. This does not support exhausted
+active pullers, larger shared groups, contested same-kilometre attacks or
+shared-front exhaustion during the final 50 km. Those cases still refuse before
+road movement. Omitted version 1 and opt-in version 2 retain their recorded
+behavior. Reproduce with `node scripts/audit-race-dynamics-v94.mjs
+--planned-intent --validate --summary --front-exhaustion-v3`.
 
 ### Gate before a player-facing race-dynamics version
 
