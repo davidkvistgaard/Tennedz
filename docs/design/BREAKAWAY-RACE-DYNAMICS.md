@@ -621,6 +621,22 @@ manifest for the counterfactual order and does not show that a team could
 make that decision from information available during the race. Reproduce
 with `node scripts/audit-v94-manager-goal.mjs --delay-controls-to=100`.
 
+A separate **rejected** opt-in control-policy experiment used only paid
+observations: after a stable front failed to close during a recent chase,
+one-day control teams paused their selective chase while any paid pursuit
+remained in the previous five recorded kilometres. Across 96 new-seed paired
+cases, all recordings validated and none refused. In the 48 one-day
+control-goal races, the selected team averaged 98.35 paid chase kilometres,
+71.18 mean energy at km 200, a 568.58-second maximum lead and 0.88 riders
+still ahead at the line. The stage races were unchanged by the one-day guard.
+But the locked flat one-day decision trace revealed a repeated **one km
+chase, five km pause** cycle from km 42 into the middle of the race. That
+rhythm is an artefact of the five-kilometre lookback, not a credible tactical
+choice. The motor, context, validator and test changes were reverted; these
+figures are negative design evidence only. The next pursuit policy must
+avoid a clock-driven retry cycle and explain how teams judge the cost and
+effect of collective, paid work from information available during the race.
+
 ### Rival intent alone does not repair the live race
 
 `node scripts/audit-v91-rival-intent-counterfactual.mjs` applies two
