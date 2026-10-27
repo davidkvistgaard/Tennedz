@@ -34,6 +34,16 @@ const teamLabel=(preview,id)=>preview.teamPlans.find(row=>
   row.teamId===id)?.teamName??id;
 const riders=(preview,ids)=>ids.length?
   ids.map(id=>riderLabel(preview,id)).join(', '):'None';
+const coastOutcome=(preview,frame,row)=>{
+  const rider=riderLabel(preview,row.riderId);
+  const outcome=row.joinedGroupId?`joined ${row.joinedGroupId}`:
+    row.detachedGroupId?`formed ${row.detachedGroupId}`:
+      frame.caughtRiders.includes(row.riderId)?
+        `caught by the bunch${row.residualSeconds>0?
+          ` with ${time(row.residualSeconds)} residual delay`:''}`:
+        'stayed on the road';
+  return `${rider} lost ${time(row.delaySeconds)}; ${outcome}`;
+};
 
 export default function RaceDynamicsPreview(){
   const [settings,setSettings]=useState(INITIAL);
@@ -45,6 +55,8 @@ export default function RaceDynamicsPreview(){
   const controlEnergy=frame?.teamEnergy.filter(row=>
     preview.teamPlans.some(plan=>plan.teamId===row.teamId&&
       plan.role==='control'))??[];
+  const coastMoments=preview?.frames.filter(row=>row.frontCoast.length>0)
+    .map(row=>row.km)??[];
   const setChoice=(key,value)=>setSettings(current=>({...current,
     [key]:['distanceKm','teamCount','fatigue',
       'controlWithdrawalVersion'].includes(key)?
@@ -104,6 +116,8 @@ export default function RaceDynamicsPreview(){
             <strong>{preview.policy.controlWithdrawalVersion===2?
               'experimental impossible-pursuit withdrawal':
               'current selective pursuit'}</strong>.</p>
+          <p>Front exhaustion: <strong>paid coast and group contact, version {
+            preview.policy.frontExhaustionVersion}</strong>.</p>
           <p>{preview.story.widestRecordedLead.km>0?<>
             Widest leading-group gap: <strong>{time(
               preview.story.widestRecordedLead.gapSeconds)}</strong> at km {
@@ -125,6 +139,12 @@ export default function RaceDynamicsPreview(){
             <button type="button" onClick={()=>setKm(preview.frames.length)}>
               Last km</button>
           </div>
+          {coastMoments.length>0&&<div className="v94-jumps"
+            aria-label="Recorded paid slowdown moments">
+            {coastMoments.slice(0,12).map(moment=><button key={moment}
+              type="button" onClick={()=>setKm(moment)}>
+              Paid slowdown km {moment}</button>)}
+          </div>}
           <input type="range" min="1" max={preview.frames.length}
             value={km} aria-label="Race kilometre"
             onChange={event=>setKm(Number(event.target.value))}/>
@@ -154,8 +174,8 @@ export default function RaceDynamicsPreview(){
             <p><strong>Caught this km:</strong> {
               riders(preview,frame.caughtRiders)}</p>
             {frame.frontCoast.length>0&&<p><strong>Paid front coast:</strong> {
-              frame.frontCoast.map(row=>`${riderLabel(preview,
-                row.riderId)} delayed ${time(row.delaySeconds)}`).join(', ')}</p>}
+              frame.frontCoast.map(row=>coastOutcome(preview,frame,row))
+                .join(', ')}</p>}
           </div>
           {controlEnergy.length>0&&<p><strong>Control-team mean rider
             reserve:</strong> {controlEnergy.map(row=>`${teamLabel(preview,

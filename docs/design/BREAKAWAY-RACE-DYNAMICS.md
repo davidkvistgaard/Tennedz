@@ -845,9 +845,17 @@ terrain, fatigue and four own opening orders, all 32 recordings validated and
 source-replayed. Under version 3, four extreme hard/repeated/all cases refused
 before movement. The version 4 audit shows paid coast in those cases, including
 contact with an existing chase group and a middle-group solo coast. This is
-internal evidence of bounded accounting, not race calibration or a guided
-release. Reproduce with `node scripts/audit-v94-preview-orders.mjs
---front-exhaustion-v4`.
+evidence of bounded accounting, not race calibration or a guided release.
+The separate experimental whole-race preview now uses version 4 by default,
+while the normal guided race stays on its earlier motor. It names paid coast
+delays and recorded group contact at each affected kilometre, without
+publishing official standings. In a further 48 new-seed 20-team, 260 km
+preview-boundary races, all version 4 recordings validated and source-replayed
+without refusal; batch mean widest leads were 97.15, 165.36 and 115.84 seconds
+(126.11 across all 48), effectively the earlier preview boundary mean. Reproduce
+with `node scripts/audit-v94-preview-orders.mjs --front-exhaustion-v4` and
+`node scripts/audit-v94-preview-boundary.mjs --batch=1 --front-exhaustion-v4`
+(repeat batches 2 and 3).
 
 ### Gate before a player-facing race-dynamics version
 

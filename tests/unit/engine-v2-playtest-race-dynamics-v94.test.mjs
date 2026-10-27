@@ -13,7 +13,7 @@ test('experimental race preview exposes committed intent and paid road only',()=
   assert.equal(preview.policy.rivalIntentVersion,4);
   assert.equal(preview.policy.frontRotationVersion,3);
   assert.equal(preview.policy.controlPursuitVersion,2);
-  assert.equal(preview.policy.frontExhaustionVersion,3);
+  assert.equal(preview.policy.frontExhaustionVersion,4);
   assert.equal(preview.policy.controlWithdrawalVersion,undefined);
   assert.equal(preview.story.widestRecordedLead.gapSeconds,
     Math.max(...recording.frames.map(frame=>frame.gapSeconds)));
@@ -33,6 +33,28 @@ test('experimental race preview exposes committed intent and paid road only',()=
   }));
   assert.ok(preview.teamPlans.every(row=>row.role&&row.source&&row.baseline));
   assert.equal(Object.hasOwn(preview,'provisionalResults'),false);
+  assert.equal(Object.hasOwn(preview,'officialAwards'),false);
+  const earlier=createV94RaceDynamicsPreview({format:'one_day',
+    frontExhaustionVersion:3,settings:{distanceKm:120,terrain:'mountain',
+      teamCount:20,fatigue:30,attack:'none',chase:'selective',
+      seed:'preview-recorded-road-1'}}).recording;
+  assert.deepEqual(recording.frames,earlier.frames);
+});
+
+test('experimental preview shows paid contact for an exhausted front sitter',()=>{
+  const {recording,preview}=createV94RaceDynamicsPreview({format:'stage',
+    settings:{distanceKm:260,terrain:'flat',teamCount:20,gender:'M',
+      fatigue:30,seed:'preview-orders-stage-flat-30',effort:'hard',
+      attack:'repeated',chase:'all'}});
+  const coast=preview.frames[221].frontCoast[0];
+  assert.equal(preview.policy.frontExhaustionVersion,4);
+  assert.equal(coast.riderId,'you-7');
+  assert.ok(coast.delaySeconds>0);
+  assert.equal(coast.joinedGroupId,'road-2');
+  assert.equal(coast.detachedGroupId,null);
+  assert.deepEqual(preview.frames[221].caughtRiders,
+    [...recording.frames[221].caughtBreakawayRiderIds].sort());
+  assert.equal(preview.resultStatus,'provisional_road_groups_only');
   assert.equal(Object.hasOwn(preview,'officialAwards'),false);
 });
 

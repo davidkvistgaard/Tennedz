@@ -76,4 +76,27 @@ test('experimental v94 race shows committed plans and measured road only',
     await expect(page.locator('.v94-group').first()).toBeVisible();
     await page.screenshot({path:'test-results/v94-long-race-mobile.png',
       fullPage:true});
+    await page.getByLabel('Race format').selectOption('stage');
+    await page.getByLabel('Route').selectOption('flat');
+    await page.getByLabel('Starting fatigue').selectOption('30');
+    await page.getByLabel('Your effort').selectOption('hard');
+    await page.getByLabel('Your attack order').selectOption('repeated');
+    await page.getByLabel('Your chase order').selectOption('all');
+    await page.getByLabel('Race seed').fill('preview-orders-stage-flat-30');
+    const coastResponsePromise=page.waitForResponse(response=>
+      response.url().endsWith('/api/v91-playtest')&&
+      response.request().postDataJSON()?.mode==='v94-race-dynamics');
+    await page.getByRole('button',{name:'Run experimental race'}).click();
+    const coastResponse=await coastResponsePromise;
+    expect(coastResponse.status()).toBe(200);
+    const coastRace=(await coastResponse.json()).raceDynamics;
+    expect(coastRace.policy.frontExhaustionVersion).toBe(4);
+    expect(coastRace.frames[221].frontCoast[0]).toMatchObject({
+      riderId:'you-7',joinedGroupId:'road-2'});
+    await page.getByRole('button',{name:'Paid slowdown km 222'}).click();
+    await expect(page.getByRole('heading',
+      {name:'Road clock at km 222'})).toBeVisible();
+    await expect(page.getByText(/joined road-2/)).toBeVisible();
+    await page.screenshot({path:'test-results/v94-paid-contact-mobile.png',
+      fullPage:true});
   });
