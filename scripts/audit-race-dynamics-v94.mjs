@@ -87,6 +87,8 @@ function run({seed,terrain,fatigue,format,breakTeams,controlTeams}){
     rivalIntent:allControlTempo?null:planned?.intent??null,
     raceContext:{...baseRaceContext,
       ...(collectiveControl?{controlPursuitVersion:2}:{}),
+      ...(process.argv.includes('--control-withdrawal-v2')?
+        {controlWithdrawalVersion:2}:{}),
       ...(frontExhaustionVersion>=2?{frontExhaustionVersion}:{}),
     }});
   if(process.argv.includes('--validate'))validateRecordedTour(recording);
@@ -166,6 +168,8 @@ function run({seed,terrain,fatigue,format,breakTeams,controlTeams}){
     gapAt210Seconds:frames[209].gapSeconds,
     gapAt220Seconds:frames[219].gapSeconds,
     chasedTeamKilometres:frames.reduce((sum,frame)=>sum+frame.chasers.length,0),
+    disengagedControlTeamKilometres:frames.reduce((sum,frame)=>
+      sum+(frame.disengagedControlTeamIds?.length??0),0),
     controlFrontWorkTeamKilometres:frames.filter(frame=>
       teamRoles[frame.paidBunchPace?.teamId]==='control').length,
     firstControlFrontWorkKm:frames.find(frame=>
@@ -291,6 +295,8 @@ const summary=process.argv.includes('--summary')?
         average('opportunisticCaptainEnergyAtFinaleStart'),
       meanControlEnergyAtFinaleStart:average('controlEnergyAtFinaleStart'),
       meanControlFrontWorkTeamKm:average('controlFrontWorkTeamKilometres'),
+      meanDisengagedControlTeamKm:
+        average('disengagedControlTeamKilometres'),
       meanFirstControlFrontWorkKm:average('firstControlFrontWorkKm'),
       meanControlFrontWorkBeforeFirstFrontKm:
         average('controlFrontWorkBeforeFirstFrontKm'),
@@ -306,6 +312,7 @@ const summary=process.argv.includes('--summary')?
   })).filter(Boolean):null;
 console.log(JSON.stringify({version:MOTOR_RACE_DYNAMICS_VERSION,
   frontRotationVersion,controlPursuitVersion:collectiveControl?2:1,
+  controlWithdrawalVersion:process.argv.includes('--control-withdrawal-v2')?2:1,
   frontExhaustionVersion,
   note:'Internal opt-in role scenarios, not observed race calibration or official results.',
   allControlTempo:process.argv.includes('--all-control-tempo'),

@@ -893,3 +893,33 @@ four break and five opportunistic roles. Role count alone does not explain
 the road. One generated control can work through almost the entire race;
 the model still needs a credible way to accept a break and preserve helpers
 for later pursuit without an imposed chase kilometre or free movement.
+
+### Opt-in impossible-pursuit withdrawal audit
+
+The `preview-boundary-6` fatigued mountain stage exposed a specific control
+decision error: its only control team chased for 144 recorded kilometres even
+though its projected catch was impossible before the line on every one of
+those kilometres. During km 100–200 it chased continuously while the observed
+gap grew and the team's mean reserve fell. The prior selective rule treated a
+null catch projection as a reason to keep chasing.
+
+Committed `controlWithdrawalVersion:2` lets a selective control team withhold
+work when that same leading group is measurably nonclosing, its projected
+catch remains impossible, and there is no fresh attack. The decision uses
+current paid helper capacity and recorded gap; a new attack or improved
+collective prospect can resume paid pursuit. A named per-kilometre withdrawal
+roster binds the recording and validator. Omitted/version 1 inputs and older
+recordings retain their previous behavior. This is internal opt-in policy,
+not yet enabled by the experimental preview or guided race.
+
+The locked stage case shifts from 144 paid chase kilometres to three under
+the current fresh-attack guard, while the selected team's km-210 reserve rises
+from 30.13 to about 58. The widest gap also grows, about 393 to 813 seconds.
+In a matching one-day case the team resumes chase when other paid pursuit
+appears. Across 96 new-seed planned-intent cases, all recordings validated
+without refusal: mean widest leads rose from about 141/136 to 176/178 seconds
+in fresh/tired one-day races and from 213/210 to 335/339 seconds in stages;
+mean control reserve at finale start rose by roughly 3–7 points. A separate
+72-case 0/1/8-control stress also validated, but no-control races still show
+implausibly large gaps. These are synthetic checks, not empirical frequency
+or evidence that the player-facing release gate is met.

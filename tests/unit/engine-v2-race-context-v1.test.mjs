@@ -44,6 +44,64 @@ test('race format is explicit and stage number cannot leak into a one-day race',
     controlPursuitVersion:2}),{format:'one_day',controlPursuitVersion:2});
   assert.throws(()=>normalizeRaceContext({format:'one_day',
     controlPursuitVersion:3}),/Invalid race context/);
+  assert.deepEqual(normalizeRaceContext({format:'one_day',
+    controlWithdrawalVersion:2}),
+  {format:'one_day',controlWithdrawalVersion:2});
+  assert.throws(()=>normalizeRaceContext({format:'one_day',
+    controlWithdrawalVersion:3}),/Invalid race context/);
+});
+
+test('impossible nonclosing control pursuit withdraws without a retry loop',()=>{
+  const prepared=prepareV91Playtest({distanceKm:260,terrain:'mountain',
+    teamCount:20,fatigue:30,attack:'none',chase:'selective',
+    seed:'preview-boundary-6'});
+  const plan=prepareV94RivalIntent({prepared,format:'stage',stageNumber:8,
+    controlTempoVersion:2,opportunisticSpecialistVersion:2,
+    frontRotationVersion:3});
+  const base={stage:prepared.stage,weather:prepared.weather,
+    teams:plan.teams,seed:prepared.seed,
+    motorVersion:MOTOR_RACE_DYNAMICS_VERSION,rivalIntent:plan.intent};
+  const context={...plan.raceContext,controlPursuitVersion:2,
+    frontObservationVersion:2,frontExhaustionVersion:3};
+  const prior=simulateTacticalTour({...base,raceContext:context});
+  const withdrawn=simulateTacticalTour({...base,raceContext:{...context,
+    controlWithdrawalVersion:2}});
+  const work=withdrawn.frames.filter(frame=>
+    frame.disengagedControlTeamIds.includes('rival-14'));
+  assert.equal(work[0].km,94);
+  assert.equal(work.at(-1).km,260);
+  assert.ok(work.length>=160);
+  assert.equal(prior.frames.filter(frame=>frame.chasers.includes('rival-14'))
+    .length,144);
+  assert.ok(withdrawn.frames.filter(frame=>
+    frame.chasers.includes('rival-14')).length<=3);
+  assert.ok(withdrawn.frames[209].teamEnergy.find(row=>
+    row.teamId==='rival-14').mean>prior.frames[209].teamEnergy.find(row=>
+    row.teamId==='rival-14').mean);
+  assert.equal(validateRecordedTour(prior),true);
+  assert.equal(validateRecordedTour(withdrawn),true);
+  assert.ok(replayRaceDynamicsRecording(withdrawn));
+  const forged=structuredClone(withdrawn);
+  forged.frames[99].disengagedControlTeamIds=['rival-2'];
+  assert.throws(()=>validateRecordedTour(forged),
+    /Invalid recorded control withdrawal/);
+  const switched=structuredClone(withdrawn);
+  switched.committedInputs.raceContext.controlWithdrawalVersion=1;
+  assert.throws(()=>validateRecordedTour(switched),
+    /Unexpected recorded control withdrawal/);
+  const dayPlan=prepareV94RivalIntent({prepared,format:'one_day',
+    controlTempoVersion:2,opportunisticSpecialistVersion:2,
+    frontRotationVersion:3});
+  const day=simulateTacticalTour({...base,teams:dayPlan.teams,
+    rivalIntent:dayPlan.intent,raceContext:{...dayPlan.raceContext,
+      controlPursuitVersion:2,frontObservationVersion:2,
+      frontExhaustionVersion:3,controlWithdrawalVersion:2}});
+  assert.equal(day.frames.find(frame=>frame.disengagedControlTeamIds
+    .includes('rival-14'))?.km,94);
+  assert.equal(day.frames.find(frame=>frame.km>94&&
+    frame.chasers.includes('rival-14'))?.km,167);
+  assert.equal(validateRecordedTour(day),true);
+  assert.ok(replayRaceDynamicsRecording(day));
 });
 
 test('committed control coalition delays its first paid chase without cycling off',()=>{
