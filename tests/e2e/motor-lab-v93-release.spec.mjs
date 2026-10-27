@@ -35,6 +35,35 @@ test('guided Motor Lab generates an inspectable route for the chosen length',asy
     .toBeVisible();
 });
 
+test('guided Motor Lab commits a named rider for a bounded break attempt',async({page})=>{
+  await page.setViewportSize({width:390,height:844});
+  await page.goto('/login');
+  await page.getByLabel('Email or username').fill('bob');
+  await page.getByLabel('Password',{exact:true}).fill('fixture-password');
+  await page.getByRole('button',{name:'Sign in',exact:true}).click();
+  await expect(page).toHaveURL(/\/team$/);
+  await page.goto('/team/motor-lab');
+  await page.locator('summary').filter({hasText:'Other managers'}).click();
+  await page.getByLabel('Default tactics for uncustomized managers')
+    .selectOption('passive');
+  await page.getByLabel('Try to get away from the bunch')
+    .selectOption('20');
+  await page.getByLabel('Rider asked to look for the break')
+    .selectOption('you-2');
+  const responsePromise=page.waitForResponse(response=>
+    response.url().endsWith('/api/v91-playtest')&&
+    response.request().method()==='POST');
+  await page.getByRole('button',{name:'Run the race'}).click();
+  const response=await responsePromise;
+  expect(response.status()).toBe(200);
+  const {coasted}=await response.json();
+  expect(coasted.settings.managerTacticalOrdersV6).toEqual([
+    {teamId:'you',atKm:5,attack:'selective',attackRiderId:'you-2'},
+    {teamId:'you',atKm:25,attack:'none'},
+  ]);
+  expect(coasted.kilometreFrames).toHaveLength(39);
+});
+
 test('guided Motor Lab runs a race from setup to rider replay',async({page,context})=>{
   await page.setViewportSize({width:390,height:844});
   await page.goto('/login');

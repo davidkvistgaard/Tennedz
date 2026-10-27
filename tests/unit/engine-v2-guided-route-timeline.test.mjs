@@ -34,6 +34,42 @@ test('guided route changes and a bounded break form one committed order timeline
   assert.equal(validateV93CoastedPlaytest(input,{},race),true);
 });
 
+test('a named rider can receive one bounded route attack order with replay',()=>{
+  const phases=guidedTimelinePhases([],{fromKm:10,toKm:30,
+    riderId:'you-2'},40);
+  assert.deepEqual(phases,[
+    {teamId:'you',atKm:10,attack:'selective',attackRiderId:'you-2'},
+    {teamId:'you',atKm:30,attack:'none'},
+  ]);
+  const input={...base,managerTacticalOrdersV6:phases};
+  const prepared=prepareV91Playtest(input);
+  const own=prepared.teams.find(team=>team.id==='you');
+  assert.equal(orderAt(own.orders,10).attackRiderId,'you-2');
+  assert.equal(orderAt(own.orders,30).attack,'none');
+  const race=createV93CoastedPlaytest(input);
+  assert.equal(validateV93CoastedPlaytest(input,{},race),true);
+  assert.ok(race.recording.frames.find(frame=>frame.km===11)
+    .attackers.includes('you-2'));
+  assert.deepEqual(race.settings.managerTacticalOrdersV6,phases);
+  assert.equal(prepareV91Playtest(base).settings.managerTacticalOrdersV6,
+    undefined);
+});
+
+test('named route attacks reject foreign riders and older order versions',()=>{
+  for(const attackRiderId of ['rival-1-2','you-8',''])
+    assert.throws(()=>prepareV91Playtest({...base,
+      managerTacticalOrdersV6:[
+        {teamId:'you',atKm:10,attack:'selective',attackRiderId},
+        {teamId:'you',atKm:30,attack:'none'}]}),
+    /valid playtest settings/);
+  assert.throws(()=>prepareV91Playtest({...base,
+    managerTacticalOrdersV5:[{teamId:'you',atKm:5,effort:'hard'}],
+    managerTacticalOrdersV6:[
+      {teamId:'you',atKm:10,attack:'selective',attackRiderId:'you-2'},
+      {teamId:'you',atKm:30,attack:'none'}]}),
+  /valid playtest settings/);
+});
+
 test('timeline rejects invalid markers, duplicate changes and mixed versions',()=>{
   for(const invalid of [
     [{teamId:'you',atKm:7,attack:'selective'}],

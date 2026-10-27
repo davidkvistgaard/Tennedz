@@ -829,7 +829,10 @@ export default function Playtest({guided=false}){
         ...(!coastedMode&&secondNamedAttack.teamId?{
           managerFinaleOrders:[...orders.values()]}:{}),
         ...(guided&&integratedMode&&coastedMode?{
-          ...(guidedPhases.length?{managerTacticalOrdersV5:guidedPhases}:{})}:
+          ...(guidedPhases.length?{
+            [guidedPhases.some(phase=>phase.attackRiderId)?
+              'managerTacticalOrdersV6':'managerTacticalOrdersV5']:
+              guidedPhases}:{})}:
         integratedMode&&coastedMode&&(firstFrontWork||
           chosenSecondEffortMarkerKm!==null&&secondFrontWork)?{
           managerTacticalOrdersV4:[...firstTimedPhases,...secondTimedPhases]}:
@@ -1091,7 +1094,9 @@ export default function Playtest({guided=false}){
                 breakWindow.toKm-breakWindow.fromKm:0}
                 onChange={event=>setBreakWindow(Number(event.target.value)?{
                   fromKm:selectedTimelineKm,
-                  toKm:selectedTimelineKm+Number(event.target.value)}:null)}>
+                  toKm:selectedTimelineKm+Number(event.target.value),
+                  ...(breakWindow?.riderId?{riderId:breakWindow.riderId}:{})}:
+                  null)}>
                 <option value="0">No break attempt starting here</option>
                 {[20,40].filter(length=>selectedTimelineKm+length<=
                   settings.distanceKm-5&&
@@ -1100,12 +1105,22 @@ export default function Playtest({guided=false}){
                   Look for a break for {length} km</option>)}
               </select>
             </label>
-            {breakWindow&&<p>Break attempt: after {breakWindow.fromKm} km until {breakWindow.toKm} km. The engine considers selective attempts every 20 km and at route keypoints during that interval; it does not attack every kilometre. Select another place to move this interval.</p>}
+            {breakWindow&&<label>Rider asked to look for the break
+              <select value={breakWindow.riderId??''}
+                onChange={event=>setBreakWindow(current=>({...current,
+                  riderId:event.target.value||undefined}))}>
+                <option value="">Let the team choose an available rider</option>
+                {Array.from({length:8},(_,index)=><option key={index}
+                  value={`you-${index}`}>Rider {index+1}</option>)}
+              </select>
+            </label>}
+            {breakWindow&&<p>Break attempt: after {breakWindow.fromKm} km until {breakWindow.toKm} km. A named rider gets an attempt after the start marker if available. Further selective attempts depend on the 20 km cadence and route keypoints; no rider attacks every kilometre. Select another place to move this interval.</p>}
           </div>
           <div className="v91-planned-orders"><strong>Planned changes</strong>
             {guidedPhases.length?<ol>{guidedPhases.map(phase=><li key={phase.atKm}>
               <button type="button" onClick={()=>setTimelineKm(phase.atKm)}>
-                {phase.atKm} km · {['effort','chase','frontWork','attack']
+                {phase.atKm} km · {['effort','chase','frontWork','attack',
+                  'attackRiderId']
                   .filter(key=>phase[key]).map(key=>`${key}: ${phase[key]}`).join(' · ')}
               </button>
             </li>)}</ol>:<p>No timed changes yet. Your starting orders apply throughout.</p>}
