@@ -145,6 +145,11 @@ function run({seed,terrain,fatigue,format,breakTeams,controlTeams}){
     chasedTeamKilometres:frames.reduce((sum,frame)=>sum+frame.chasers.length,0),
     controlFrontWorkTeamKilometres:frames.filter(frame=>
       teamRoles[frame.paidBunchPace?.teamId]==='control').length,
+    firstControlFrontWorkKm:frames.find(frame=>
+      teamRoles[frame.paidBunchPace?.teamId]==='control')?.km??null,
+    controlFrontWorkBeforeFirstFrontKm:frames.filter(frame=>
+      teamRoles[frame.paidBunchPace?.teamId]==='control'&&
+      (initialFront?.km===undefined||frame.km<initialFront.km)).length,
     settledFrontRestRiderKilometres:frames.reduce((sum,frame)=>
       sum+frame.settledFrontRestRiderIds.length,0),
     firstSettledFrontKm:frames.find(frame=>
@@ -236,6 +241,9 @@ const summary=process.argv.includes('--summary')?
       meanBreakEnergyAtFinaleStart:average('breakEnergyAtFinaleStart'),
       meanControlEnergyAtFinaleStart:average('controlEnergyAtFinaleStart'),
       meanControlFrontWorkTeamKm:average('controlFrontWorkTeamKilometres'),
+      meanFirstControlFrontWorkKm:average('firstControlFrontWorkKm'),
+      meanControlFrontWorkBeforeFirstFrontKm:
+        average('controlFrontWorkBeforeFirstFrontKm'),
       meanEarlyControlChasedTeamKm:average('earlyControlChasedTeamKilometres'),
       meanFrontUnmetRiderKm:average('frontUnmetRiderKilometres'),
       meanFrontCoastRiderKm:average('frontCoastRiderKilometres'),

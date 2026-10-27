@@ -484,6 +484,11 @@ Across 24 paired planned-intent races it raised mean maximum lead only
 and increased one-day initial-front catches from five to six of six in
 both fatigue groups. The extra rule did not solve premature control work;
 it was reverted. Explicit manager front-work orders were never changed.
+The read-only audit now counts when a generated control team first pays
+bunch-front work. In the original 24-case planned set it starts at km 1,
+but only 2.67 control-team kilometres on average precede the first front
+group. Most paid control tempo occurs after a move has formed; delaying it
+until formation alone cannot address the sustained-work problem.
 A second, rejected v94-only control-decision experiment projected whether
 the available control teams together could close a stable front after the
 current route's passive break advantage. It changed only when selective
