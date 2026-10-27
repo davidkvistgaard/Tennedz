@@ -12,11 +12,25 @@ for(const seed of seeds)for(const format of ['one_day','stage'])
   for(const terrain of ['flat','mountain']){
     const scenario={seed,format,terrain};
     try{
-      const {preview}=createV94RaceDynamicsPreview({format,settings:{
+      const {preview,recording}=createV94RaceDynamicsPreview({format,settings:{
         distanceKm:260,terrain,teamCount:20,gender:'M',
         fatigue:terrain==='mountain'?30:0,effort:'steady',
         attack:'none',chase:'selective',seed}});
+      const roles=Object.fromEntries(['break','control','protect',
+        'opportunistic'].map(role=>[role,preview.teamPlans.filter(plan=>
+        plan.role===role).length]));
+      const controls=new Set(preview.teamPlans.filter(plan=>
+        plan.role==='control').map(plan=>plan.teamId));
+      const controlEnergy=recording.frames[209].riderGroups.filter(row=>
+        controls.has(row.teamId)).map(row=>row.energy);
       outcomes.push({...scenario,ok:true,
+        roles,controlChaseTeamKm:preview.frames.reduce((sum,frame)=>
+          sum+frame.chasers.filter(id=>controls.has(id)).length,0),
+        controlFrontTeamKm:preview.frames.filter(frame=>
+          controls.has(frame.paidBunchPace?.teamId)).length,
+        meanControlEnergyKm210:controlEnergy.length?
+          controlEnergy.reduce((sum,energy)=>sum+energy,0)/
+            controlEnergy.length:null,
         widestLeadSeconds:preview.story.widestRecordedLead.gapSeconds,
         kilometreAtWidestLead:preview.story.widestRecordedLead.km,
         oneMinuteLeadKm:preview.story.kilometresAtOrAboveOneMinute,

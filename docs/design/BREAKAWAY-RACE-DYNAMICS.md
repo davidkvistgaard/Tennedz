@@ -880,3 +880,16 @@ unchanged default seed gave a 93.78-second widest lead and no front group
 at the last kilometre. Other seeds can yield much shorter or longer leads.
 This boundary check supports a truthful experimental preview, not promotion
 of v94 to guided races or a claim that the race-dynamics goal is solved.
+
+The same audit now prints generated role counts, each control team's paid
+chase and bunch-front kilometres, and mean control-rider energy at km 210.
+The seed with the largest lead in this set (`preview-boundary-6`, fatigued
+mountain stage) committed nine break roles and one control. Its control team
+paid 151 chase kilometres and 81 bunch-front kilometres in the matching
+one-day run, with mean reserve 28.73 at km 210; the mountain stage paid 144
+and 93 kilometres, with reserve 30.13. Conversely, `preview-boundary-4`
+had only one control but a maximum one-day lead near 36 seconds, despite
+four break and five opportunistic roles. Role count alone does not explain
+the road. One generated control can work through almost the entire race;
+the model still needs a credible way to accept a break and preserve helpers
+for later pursuit without an imposed chase kilometre or free movement.
