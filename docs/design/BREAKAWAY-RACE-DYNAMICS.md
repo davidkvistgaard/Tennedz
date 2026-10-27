@@ -1177,6 +1177,20 @@ the work, so changing only the first-kilometre attack reaction cannot
 resolve the observed short leads. This labels the paid decisions; it
 does not prove which individual chase kilometre changed the outcome.
 
+The road-scale comparison is also material. In the locked fresh flat
+`sample-flat-finish` run, the front gains a mean 0.45 seconds per kilometre
+from its recorded passive pace while the actually paid chasers have mean
+capacity 303.45 during front kilometres. The v93 chase conversion of
+0.025 seconds per capacity point gives those workers a potential 7.59
+seconds of closing per kilometre, subject to the available gap. This is
+an order-of-magnitude difference between the model's normal front gain
+and paid coalition closing, not evidence that the front should receive
+an artificial time credit. The separate v94 road uses a larger ability
+to seconds conversion and can produce multi-minute leads on the same
+kind of generated rival draw, but its sampled controls can finish with
+very little reserve. A successor must test both road-clock scale and
+actual paid control energy in the same complete race.
+
 A separately versioned v93 *economic selective chase* experiment used
 the current front's unpaid relative pace and the root-sum-square of
 available selective helpers to estimate whether a coalition could catch
