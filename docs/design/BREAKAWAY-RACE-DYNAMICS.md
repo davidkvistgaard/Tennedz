@@ -311,6 +311,11 @@ All 24 complete validation and source replay; no manager attack and chase
 occur on the same kilometre. Mean own paid chase spans 184.1 km with no
 rival controls, 67.9 km with one and 52.4 km with eight. That long solo
 workload is a reason to keep the preview experimental.
+The same audit with `--alternate-routes` validates and source-replays 24
+women's rolling/exposed 260 km cases with the combined order. No same-km
+overlap occurs; mean paid chase is 186.8/64.6/46.6 km for zero/one/eight
+rival controls, respectively. These are synthetic workload checks, not
+observed race frequencies.
 The internal planner also accepts a declared `rivalGoals` list. A goal
 commits both the role and matching opening orders before simulation; a goal
 for a rival whose tactics were explicitly edited is refused as conflicting.
