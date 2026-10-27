@@ -857,6 +857,22 @@ with `node scripts/audit-v94-preview-orders.mjs --front-exhaustion-v4` and
 `node scripts/audit-v94-preview-boundary.mjs --batch=1 --front-exhaustion-v4`
 (repeat batches 2 and 3).
 
+A cross-boundary audit combined two new seeds, both formats, flat/fatigued
+mountain routes, calm or hard/repeated own orders, and 0/1/8 committed control
+teams: `node scripts/audit-v94-preview-cross-boundary.mjs`. An initial run
+refused five of 48 whole recordings at kilometre 226. The pre-movement coast
+used the exact work demand, while the energy ledger stores that demand to six
+decimals; this particular valid 18.624-second coast recalculated as 18.623
+seconds from the rounded ledger. The version-4 validator now checks only
+three-decimal coast times attainable within the ledger's six-decimal rounding
+interval. A forged time outside that interval still fails, and full source
+replay still compares the exact frame. Older coast policies retain their
+previous comparison. All 48 cross-boundary recordings now validate and
+source-replay, with zero refusals; ten hard-order cases record paid coast.
+This fixes a recording precision mismatch, not the extreme role mix: no
+control teams still produced mean maximum leads near 910–918 seconds in
+these synthetic races.
+
 ### Gate before a player-facing race-dynamics version
 
 - Commit an inspectable pre-race goal and order for every team. Preserve any

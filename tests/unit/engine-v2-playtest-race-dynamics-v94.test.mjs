@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {createV94RaceDynamicsPreview} from
   '../../lib/engine/v2/playtest-race-dynamics-v94.mjs';
+import {validateRecordedTour} from '../../lib/engine/v2/recording.mjs';
 
 test('experimental race preview exposes committed intent and paid road only',()=>{
   const {recording,preview}=createV94RaceDynamicsPreview({format:'one_day',
@@ -56,6 +57,28 @@ test('experimental preview shows paid contact for an exhausted front sitter',()=
     [...recording.frames[221].caughtBreakawayRiderIds].sort());
   assert.equal(preview.resultStatus,'provisional_road_groups_only');
   assert.equal(Object.hasOwn(preview,'officialAwards'),false);
+});
+
+test('rounded work ledger preserves an exact paid mountain coast',()=>{
+  const settings={distanceKm:260,terrain:'mountain',teamCount:20,
+    gender:'M',fatigue:30,seed:'preview-cross-2',effort:'hard',
+    attack:'repeated',chase:'all'};
+  const seeded=createV94RaceDynamicsPreview({format:'one_day',
+    settings:{...settings,effort:'steady',attack:'none',
+      chase:'selective'}}).preview;
+  const rivalGoals=seeded.teamPlans.filter(plan=>plan.teamId!=='you')
+    .map(plan=>({teamId:plan.teamId,
+      role:plan.role==='control'?'protect':plan.role}));
+  const {recording,preview}=createV94RaceDynamicsPreview({format:'one_day',
+    settings,rivalGoals});
+  assert.equal(preview.frames[225].frontCoast[0].riderId,'you-7');
+  assert.equal(preview.frames[225].frontCoast[0].delaySeconds,18.624);
+  const forged=structuredClone(recording);
+  forged.frames[225].frontCoast[0].delaySeconds+=.001;
+  forged.frames[225].energyLedger.find(row=>row.riderId==='you-7')
+    .coastDelaySeconds+=.001;
+  assert.throws(()=>validateRecordedTour(forged),
+    /Invalid recorded front coast at km 226/);
 });
 
 test('experimental preview rejects unsupported settings before simulation',()=>{
