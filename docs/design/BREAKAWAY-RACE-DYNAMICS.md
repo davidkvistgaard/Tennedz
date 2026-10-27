@@ -603,6 +603,24 @@ stage; with one, 359 and 515 seconds; with eight, 174 and 226 seconds. These
 are constructed role extremes. Requiring a paid pull alone cannot choose a
 credible opposing-team composition or sustain an economical pursuit.
 
+A read-only pursuit-timing counterfactual imposes a 100 km tactical marker
+on **all** synthetic control teams while leaving the same teams, riders,
+route and declared manager goal in each paired case. They pay no selective
+chase until km 101, then use the ordinary v94 chase and energy rules. Across
+the original 24 pairs, all 48 recordings validate; there are no refusals.
+One-day control-goal cases average a maximum recorded lead of 462.5 seconds,
+150 paid chase team-kilometres for the selected team, mean selected-team
+energy 56.96 at km 200 and 1.08 riders still ahead at the line. The
+corresponding stage cases average a 458.58-second maximum lead, 158.33
+selected-team chase kilometres, energy 56.77 and 6.83 riders still ahead.
+This is evidence that the existing *paid* road and energy clocks can produce
+a substantial lead and a materially different finish when pursuit timing
+changes. It is **not** a proposed km-100 rule or a calibrated 5–8 minute
+target: the audit chooses the marker by hand, omits the generated intent
+manifest for the counterfactual order and does not show that a team could
+make that decision from information available during the race. Reproduce
+with `node scripts/audit-v94-manager-goal.mjs --delay-controls-to=100`.
+
 ### Rival intent alone does not repair the live race
 
 `node scripts/audit-v91-rival-intent-counterfactual.mjs` applies two

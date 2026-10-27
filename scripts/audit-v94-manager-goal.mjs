@@ -1,5 +1,8 @@
 // Read-only paired audit: one declared rival goal changes, all race inputs stay.
 // --control-tempo is a separate unmanifested counterfactual, not planner output.
+// --delay-controls-to=KM is another unmanifested counterfactual: every
+// declared control team sits in until that 5 km marker, then resumes its
+// selective chase. The marker is imposed by the audit, not the motor.
 // Provisional road outcomes here are not official placements or awards.
 import {isDeepStrictEqual} from 'node:util';
 import {prepareV91Playtest} from '../lib/engine/v2/playtest.mjs';
@@ -12,6 +15,11 @@ import {MOTOR_RACE_DYNAMICS_VERSION} from '../lib/engine/v2/tuning.mjs';
 
 const single=process.argv.includes('--single');
 const tempo=process.argv.includes('--control-tempo');
+const delayedControlArg=process.argv.find(arg=>arg.startsWith('--delay-controls-to='));
+const delayedControlKm=delayedControlArg?Number(delayedControlArg.split('=')[1]):null;
+if(delayedControlKm!==null&&(!Number.isInteger(delayedControlKm)||
+  delayedControlKm<5||delayedControlKm>250||delayedControlKm%5!==0))
+  throw new Error('Delayed control must begin at a 5 km marker from 5 to 250.');
 const frontRotationVersion=process.argv.includes('--front-rotation-v3')?3:
   process.argv.includes('--front-rotation-v2')?2:1;
 const seeds=single?['manager-goal-1']:process.argv.includes('--extended-seeds')?
@@ -38,15 +46,23 @@ for(const seed of seeds)for(const terrain of single?['flat']:['flat','mountain']
         ...(format==='stage'?{stageNumber:8}:{}),
         frontRotationVersion,
         rivalGoals:[{teamId:selectedTeamId,role:role==='control_tempo'?'control':role}]});
-      const teams=role==='control_tempo'?plan.teams.map(team=>
+      const tempoTeams=role==='control_tempo'?plan.teams.map(team=>
         team.id===selectedTeamId?{...team,orders:{...team.orders,
           baseline:{...team.orders.baseline,frontWork:'rotate'}}}:team):plan.teams;
+      const teams=delayedControlKm===null?tempoTeams:tempoTeams.map(team=>
+        plan.raceContext.teamRoles[team.id]==='control'&&
+        team.orders.baseline.chase==='selective'?{
+          ...team,orders:{...team.orders,
+            baseline:{...team.orders.baseline,chase:'ignore'},
+            phases:[...(team.orders.phases??[]),{atKm:delayedControlKm,chase:'selective'}]
+              .sort((a,b)=>a.atKm-b.atKm)},
+        }:team);
       try{
         const race=simulateTacticalTour({stage:prepared.stage,
           weather:prepared.weather,teams,seed:prepared.seed,
           motorVersion:MOTOR_RACE_DYNAMICS_VERSION,
           raceContext:plan.raceContext,
-          rivalIntent:role==='control_tempo'?null:plan.intent});
+          rivalIntent:role==='control_tempo'||delayedControlKm!==null?null:plan.intent});
         validateRecordedTour(race);
         if(process.argv.includes('--replay'))replayRaceDynamicsRecording(race);
         races[role]=race;
@@ -100,6 +116,8 @@ for(const seed of seeds)for(const terrain of single?['flat']:['flat','mountain']
       teamEnergyAt200:race.frames[199].teamEnergy.find(row=>
         row.teamId===selectedTeamId).mean,
       maxGapSeconds:Math.max(...race.frames.map(frame=>frame.gapSeconds)),
+      finalLeadingGapSeconds:race.frames.at(-1).roadGroups?.[0]?.gapSeconds??0,
+      finalAheadRiders:race.frames.at(-1).breakawayRiderIds.length,
     });
     const tempoMeasure=tempo?measure(three):null;
     if(tempoMeasure?.chaseAndFrontSameKm!==undefined&&
@@ -134,9 +152,13 @@ const summary=['one_day','stage'].map(format=>{
     controlTeamEnergyAt200:average(measured('control'),'teamEnergyAt200'),
     breakMeanMaxGapSeconds:average(measured('break'),'maxGapSeconds'),
     controlMeanMaxGapSeconds:average(measured('control'),'maxGapSeconds'),
+    breakMeanFinalLeadingGapSeconds:average(measured('break'),'finalLeadingGapSeconds'),
+    controlMeanFinalLeadingGapSeconds:average(measured('control'),'finalLeadingGapSeconds'),
+    breakMeanFinalAheadRiders:average(measured('break'),'finalAheadRiders'),
+    controlMeanFinalAheadRiders:average(measured('control'),'finalAheadRiders'),
     refusals:sample.length-completed.length};
 });
 console.log(JSON.stringify({note:'Internal paired synthetic manager-goal audit, not official results.',
-  frontRotationVersion,
+  frontRotationVersion,delayedControlKm,
   summary,...(timeline?{timeline}:{}),
   ...(process.argv.includes('--rows')?{rows}:{})},null,2));
