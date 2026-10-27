@@ -204,6 +204,7 @@ export default function Playtest({guided=false}){
   const [roadPreview,setRoadPreview]=useState(null);
   const [roadPreviewIndex,setRoadPreviewIndex]=useState(0);
   const [coastedKm,setCoastedKm]=useState(1);
+  const [furthestViewedKm,setFurthestViewedKm]=useState(1);
   const [checkpointPlaying,setCheckpointPlaying]=useState(false);
   const [raceScreenOpen,setRaceScreenOpen]=useState(false);
   const [raceScreenPlaying,setRaceScreenPlaying]=useState(false);
@@ -451,6 +452,9 @@ export default function Playtest({guided=false}){
     setCoastedKm(km);
   };
   useEffect(()=>{
+    if(coasted)setFurthestViewedKm(current=>Math.max(current,coastedKm));
+  },[coasted,coastedKm]);
+  useEffect(()=>{
     if(!raceScreenOpen||!raceScreenPlaying||!coasted)return;
     if(coastedKm>=coasted.kilometreFrames.length){
       setRaceScreenPlaying(false);
@@ -589,7 +593,7 @@ export default function Playtest({guided=false}){
   const commentaryAtKm=viewerCommentary.filter(moment=>
     moment.index===coastedKm-1);
   const recentRaceCommentary=viewerCommentary.filter(moment=>
-    moment.index<=coastedKm-1).slice(-8).reverse();
+    moment.index<=furthestViewedKm-1).slice(-8).reverse();
   const viewerKmMoments=viewerTimeline.filter(moment=>
     moment.finaleRoadIndex==null);
   const previousViewerMoment=[...viewerKmMoments].reverse().find(moment=>
@@ -824,6 +828,7 @@ export default function Playtest({guided=false}){
       }
       setRoadPreview(null);
       setCoasted(response.coasted??null);
+      setFurthestViewedKm(1);
       setRaceLogCopyStatus('');
       setCheckpointPlaying(false);
       setRaceScreenPlaying(false);
@@ -1610,8 +1615,10 @@ export default function Playtest({guided=false}){
                     <button type="button" onClick={copyRaceLog}>
                       Copy race log</button>
                   </div>
-                  <p>The race keeps moving. Viewing km {coastedKm}. Copy
-                    includes every recorded commentary line.</p>
+                  <p>Viewing km {coastedKm}. Recent events stay available
+                    while you inspect an earlier kilometre. Selecting one
+                    pauses local playback. Copy includes every recorded
+                    commentary line.</p>
                   <span className="v91-race-log-copy-status" role="status">
                     {raceLogCopyStatus}</span>
                   {recentRaceCommentary.length?<ol

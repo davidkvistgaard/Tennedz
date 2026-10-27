@@ -99,8 +99,17 @@ test('guided Motor Lab runs a race from setup to rider replay',async({page,conte
   await raceScreen.getByRole('button',{name:'Pause'}).click();
   await raceScreen.getByLabel('Choose recorded kilometre').fill('10');
   await expect(raceScreen.locator('header h2')).toContainText('Km 10');
-  await expect(raceScreen.getByRole('list',{
-    name:'Recent commentary history'})).toContainText('Km 1');
+  const recentEvents=raceScreen.getByRole('list',{
+    name:'Recent commentary history'});
+  await expect(recentEvents).toContainText('Km 10');
+  const earlierEvent=recentEvents.getByRole('button').last();
+  const earlierKm=Number((await earlierEvent.innerText()).match(/^Km (\d+)/)[1]);
+  expect(earlierKm).toBeLessThan(10);
+  await earlierEvent.click();
+  await expect(raceScreen.locator('header h2'))
+    .toContainText(`Km ${earlierKm}`);
+  await expect(recentEvents).toContainText('Km 10');
+  await raceScreen.getByLabel('Choose recorded kilometre').fill('10');
   await page.screenshot({path:'test-results/guided-race-screen-mobile.png'});
   await page.setViewportSize({width:1440,height:900});
   await expect(raceScreen.getByLabel('Your riders on the road')
@@ -262,9 +271,11 @@ test('guided race diagram shows paid front-group time gaps',async({page})=>{
     String(coasted.kilometreFrames.length));
   const recentEvents=raceScreen.getByRole('list',{
     name:'Recent commentary history'});
-  expect(await recentEvents.locator('li').count()).toBeGreaterThan(1);
+  const seenEventCount=await recentEvents.locator('li').count();
+  expect(seenEventCount).toBeGreaterThan(1);
   await raceScreen.getByLabel('Choose recorded kilometre').fill('1');
-  await expect(recentEvents.locator('li')).toHaveCount(1);
+  await expect(recentEvents.locator('li')).toHaveCount(seenEventCount);
+  await expect(raceScreen.locator('header h2')).toContainText('Km 1');
   const nextOwnEvent=coasted.kilometreFrames.find(frame=>frame.km>1&&
     [...frame.attackAttempts,...frame.joinedRiderIds,...frame.caughtRiderIds]
       .some(id=>id.startsWith('you-')));
