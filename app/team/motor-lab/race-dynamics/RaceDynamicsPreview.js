@@ -5,7 +5,7 @@ import {api} from '../../../../lib/api';
 
 const INITIAL={format:'one_day',distanceKm:260,terrain:'flat',teamCount:20,
   gender:'M',fatigue:0,effort:'steady',attack:'none',chase:'selective',
-  rivalOneGoal:'auto',controlWithdrawalVersion:1,
+  rivalOneGoal:'auto',controlWithdrawalVersion:1,ownFrontWork:'none',
   seed:'race-dynamics-preview-1'};
 const OPTIONS={format:[['one_day','One-day race'],['stage','Stage race']],
   distanceKm:[[40,'40 km'],[120,'120 km'],[260,'260 km']],
@@ -16,6 +16,8 @@ const OPTIONS={format:[['one_day','One-day race'],['stage','Stage race']],
   effort:[['conserve','Conserve'],['steady','Steady'],['hard','Hard']],
   attack:[['none','None'],['selective','Selective'],['repeated','Repeated']],
   chase:[['ignore','Ignore'],['selective','Selective'],['all','All helpers']],
+  ownFrontWork:[['none','No standing front-work order'],
+    ['rotate','Rotate paid bunch-front helpers']],
   rivalOneGoal:[['auto','Seeded plan'],['break','Break'],
     ['control','Control'],['protect','Protect'],
     ['opportunistic','Opportunistic']],
@@ -24,6 +26,7 @@ const OPTIONS={format:[['one_day','One-day race'],['stage','Stage race']],
 const LABELS={format:'Race format',distanceKm:'Distance',terrain:'Route',
   teamCount:'Field',gender:'Category',fatigue:'Starting fatigue',
   effort:'Your effort',attack:'Your attack order',chase:'Your chase order',
+  ownFrontWork:'Your bunch-front work',
   rivalOneGoal:'Fictional rival 1 goal',
   controlWithdrawalVersion:'Control-team pursuit'};
 const time=seconds=>seconds>=60?
@@ -73,7 +76,7 @@ export default function RaceDynamicsPreview(){
   async function run(event){
     event.preventDefault();setBusy(true);setError('');setPreview(null);
     try{
-      const {format,rivalOneGoal,controlWithdrawalVersion,
+      const {format,rivalOneGoal,controlWithdrawalVersion,ownFrontWork,
         ...raceSettings}=settings;
       const rivalGoals=[
         ...(rivalOneGoal==='auto'?[]:[{teamId:'rival-1',role:rivalOneGoal}]),
@@ -84,7 +87,7 @@ export default function RaceDynamicsPreview(){
       const response=await api('/api/v91-playtest',{method:'POST',
         headers:{'Content-Type':'application/json'},
         body:JSON.stringify({mode:'v94-race-dynamics',format,
-          controlWithdrawalVersion,
+          controlWithdrawalVersion,ownFrontWork,
           settings:raceSettings,rivalGoals}),
         signal:AbortSignal.timeout(60_000)});
       setPreview(response.raceDynamics);setKm(1);
@@ -133,6 +136,9 @@ export default function RaceDynamicsPreview(){
         <p className="v94-goal-note">The optional withdrawal rule lets a
           control team stop paying for a chase when its recorded catch
           projection is impossible. The lead may grow much larger.</p>
+        <p className="v94-goal-note">A standing bunch-front order spends your
+          eligible helpers' reserve on kilometres when they are selected to
+          pace. Inspect the paid work before treating a long effort as free.</p>
         <p className="v94-goal-note">This workbench allows up to six race runs
           per minute on your account.</p>
         <label className="v94-seed"><span>Race seed</span><input

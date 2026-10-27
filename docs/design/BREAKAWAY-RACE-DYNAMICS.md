@@ -998,3 +998,23 @@ but the sole control team paid bunch-front work on 259 of 260 kilometres
 and chased once. Its mean reserve at km 210 was 43.94. This replaces one
 near-continuous job with another, so the variant was rejected and its motor,
 validator and API changes were reverted. It is not a preview option.
+
+### Explicit own-team bunch-front work
+
+The experimental preview now accepts a separate, explicit standing
+`ownFrontWork:'rotate'` order. It is committed to the user's opening plan,
+validated and source-replayed; leaving the choice at `none` preserves prior
+preview behavior. The UI reports each team's actual paid chase and
+bunch-front kilometres through the selected race kilometre, rather than
+implying that the order itself guarantees a road-clock benefit.
+
+`node scripts/audit-v94-own-front-work.mjs` compares both choices on the
+same three seeds, two formats, and flat/fatigued mountain 20-team, 260 km
+races with the user's attack and chase orders held at none/ignore. All 24
+recordings validated and replayed. The standing order paid a mean 123
+one-day or 124 stage bunch-front team-km, with mean own-team reserve at
+km 210 falling from 78.25 to 54.04/54.26. Mean widest one-day lead stayed
+near 130 seconds; stage lead moved from 171.33 to 156.60 seconds. These
+selected synthetic cases show that taking a paid turn can move work onto
+the user's helpers without proportionate benefit when other teams already
+pace or chase. They do not establish a general effect or a calibrated race.

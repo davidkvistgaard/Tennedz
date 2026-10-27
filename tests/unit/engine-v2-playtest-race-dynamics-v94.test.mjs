@@ -60,6 +60,9 @@ test('experimental preview shows paid contact for an exhausted front sitter',()=
 
 test('experimental preview rejects unsupported settings before simulation',()=>{
   assert.throws(()=>createV94RaceDynamicsPreview({format:'stage',
+    ownFrontWork:'free',settings:{distanceKm:40}}),
+  /valid experimental race settings/);
+  assert.throws(()=>createV94RaceDynamicsPreview({format:'stage',
     controlWithdrawalVersion:3,settings:{distanceKm:40}}),
   /valid experimental race settings/);
   assert.throws(()=>createV94RaceDynamicsPreview({format:'classic',
@@ -74,6 +77,21 @@ test('experimental preview rejects unsupported settings before simulation',()=>{
     settings:{distanceKm:40,teamCount:4},
     rivalGoals:[{teamId:'rival-20',role:'break'}]}),
   /valid rival goals/);
+});
+
+test('own paid front-work choice is committed without changing rival plans',()=>{
+  const input={format:'one_day',settings:{distanceKm:120,teamCount:20,
+    seed:'preview-own-front-work',attack:'none',chase:'ignore'}};
+  const seated=createV94RaceDynamicsPreview(input).preview;
+  const rotating=createV94RaceDynamicsPreview({...input,
+    ownFrontWork:'rotate'}).preview;
+  assert.equal(seated.teamPlans.find(plan=>plan.teamId==='you')
+    .baseline.frontWork,null);
+  assert.equal(rotating.teamPlans.find(plan=>plan.teamId==='you')
+    .baseline.frontWork,'rotate');
+  assert.deepEqual(rotating.teamPlans.filter(plan=>plan.teamId!=='you'),
+    seated.teamPlans.filter(plan=>plan.teamId!=='you'));
+  assert.ok(rotating.frames.some(frame=>frame.paidBunchPace?.teamId==='you'));
 });
 
 test('declared preview goals change only those rival opening intents',()=>{

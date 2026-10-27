@@ -72,6 +72,8 @@ test('experimental v94 race shows committed plans and measured road only',
     await page.getByLabel('Race format').selectOption('one_day');
     await page.getByLabel('Fictional rival 1 goal').selectOption('auto');
     await page.getByLabel('Control-team pursuit').selectOption('1');
+    await page.getByLabel('Your chase order').selectOption('ignore');
+    await page.getByLabel('Your bunch-front work').selectOption('rotate');
     await page.getByLabel('Race seed').fill('race-dynamics-1');
     const longResponsePromise=page.waitForResponse(response=>
       response.url().endsWith('/api/v91-playtest')&&
@@ -82,6 +84,10 @@ test('experimental v94 race shows committed plans and measured road only',
     const longRace=(await longResponse.json()).raceDynamics;
     expect(longRace.frames).toHaveLength(260);
     expect(longRace.teamPlans).toHaveLength(20);
+    expect(longRace.teamPlans.find(plan=>plan.teamId==='you')
+      .baseline.frontWork).toBe('rotate');
+    expect(longRace.frames.filter(frame=>
+      frame.paidBunchPace?.teamId==='you').length).toBeGreaterThan(0);
     expect(longRace.story.widestRecordedLead.gapSeconds).toBeGreaterThan(0);
     await page.getByRole('button',{name:'Widest lead'}).click();
     await expect(page.getByRole('heading',
@@ -96,6 +102,7 @@ test('experimental v94 race shows committed plans and measured road only',
     await page.getByLabel('Your effort').selectOption('hard');
     await page.getByLabel('Your attack order').selectOption('repeated');
     await page.getByLabel('Your chase order').selectOption('all');
+    await page.getByLabel('Your bunch-front work').selectOption('none');
     await page.getByLabel('Race seed').fill('preview-orders-stage-flat-30');
     const coastResponsePromise=page.waitForResponse(response=>
       response.url().endsWith('/api/v91-playtest')&&
