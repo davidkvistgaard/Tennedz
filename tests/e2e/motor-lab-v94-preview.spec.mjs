@@ -54,7 +54,14 @@ test('experimental v94 race shows committed plans and measured road only',
     await expect(page.getByRole('heading',
       {name:'Road clock at km 40'})).toBeVisible();
     await expect(page.locator('.v94-riders p')).toHaveCount(8);
-    await page.locator('.v94-plans summary').click();
+    await page.getByText('Paid team work through km 40').click();
+    await expect(page.locator('.v94-work-list p')).toHaveCount(4);
+    const paidControlKm=raceDynamics.frames.filter(frame=>
+      frame.chasers.includes('rival-2')).length;
+    await expect(page.locator('.v94-work-list p').filter({hasText:'Rival 2'}))
+      .toContainText(`chase ${paidControlKm} km`);
+    await page.getByText('Inspect every team\'s committed opening goal and orders')
+      .click();
     await expect(page.locator('.v94-plan-list article')).toHaveCount(4);
     await page.screenshot({path:'test-results/v94-race-preview-mobile.png',
       fullPage:true});

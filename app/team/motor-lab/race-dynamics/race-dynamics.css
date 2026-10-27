@@ -29,5 +29,7 @@
 .v94-riders{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:4px 18px}
 .v94-riders p{margin:5px 0}
 .v94-plans summary{cursor:pointer;font-weight:700}
+.v94-work-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:4px 12px;margin-top:12px}
+.v94-work-list p{margin:0;border-bottom:1px solid #3d5058;padding:8px 0}
 .v94-plan-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(275px,1fr));gap:4px 12px;margin-top:16px}
 @media(max-width:600px){.v94-preview{padding:20px 14px 70px}.v94-form{grid-template-columns:1fr 1fr;padding:14px}.v94-seed,.v94-form button{grid-column:1/-1}.v94-summary,.v94-road,.v94-plans{padding:16px}}

@@ -56,6 +56,14 @@ export default function RaceDynamicsPreview(){
   const controlEnergy=frame?.teamEnergy.filter(row=>
     preview.teamPlans.some(plan=>plan.teamId===row.teamId&&
       plan.role==='control'))??[];
+  const paidTeamWork=preview?preview.teamPlans.map(plan=>({
+    teamId:plan.teamId,role:plan.role,
+    chaseKm:preview.frames.slice(0,km).filter(row=>
+      row.chasers.includes(plan.teamId)).length,
+    bunchFrontKm:preview.frames.slice(0,km).filter(row=>
+      row.paidBunchPace?.teamId===plan.teamId).length,
+    energy:frame.teamEnergy.find(row=>row.teamId===plan.teamId)?.mean,
+  })):[];
   const coastMoments=preview?.frames.filter(row=>row.frontCoast.length>0)
     .map(row=>row.km)??[];
   const setChoice=(key,value)=>setSettings(current=>({...current,
@@ -211,6 +219,15 @@ export default function RaceDynamicsPreview(){
               row.energy.toFixed(1)} energy{row.deficitSeconds>0?
               ` · ${time(row.deficitSeconds)} behind bunch`:''}</p>)}</div>
         </section>
+        <details className="v94-plans"><summary>Paid team work through km {km}</summary>
+          <p>Each kilometre counts only a recorded chase or a paid bunch-front
+            pace by that team. Reserve is the recorded team mean at km {km}.</p>
+          <div className="v94-work-list">{paidTeamWork.map(row=><p key={row.teamId}>
+            <strong>{teamLabel(preview,row.teamId)}</strong> · {row.role} ·
+            chase {row.chaseKm} km · bunch front {row.bunchFrontKm} km ·
+            reserve {row.energy?.toFixed(1)??'—'}
+          </p>)}</div>
+        </details>
         <details className="v94-plans"><summary>Inspect every team's
           committed opening goal and orders</summary>
           <div className="v94-plan-list">{preview.teamPlans.map(plan=><article
