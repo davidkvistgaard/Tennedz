@@ -22,8 +22,21 @@ function audit(seed,terrain,fatigue){
   const recording=simulateTacticalTour({...prepared,
     motorVersion:MOTOR_EXHAUSTION_COAST_VERSION});
   validateRecordedTour(recording);
+  // This paired limit removes every chase order, including the player's.
+  // It is a diagnostic bound, not an opponent plan proposed for the game.
+  const noChase=prepareV91Playtest({distanceKm:260,terrain,teamCount:20,
+    fatigue,attack:'none',chase:'ignore',seed,
+    managerTactics:managerTactics.map(row=>({...row,chase:'ignore'}))});
+  const noChaseRecording=simulateTacticalTour({...noChase,
+    motorVersion:MOTOR_EXHAUSTION_COAST_VERSION});
+  validateRecordedTour(noChaseRecording);
   const frames=recording.frames;
   const front=frames.filter(frame=>frame.roadGroups.length);
+  const captains=new Set(prepared.teams.map(team=>team.orders.captainId));
+  const frontCaptainFrames=front.filter(frame=>
+    frame.roadGroups.some(group=>group.riderIds.some(id=>captains.has(id))));
+  const frontHelperOnlyFrames=front.filter(frame=>
+    !frame.roadGroups.some(group=>group.riderIds.some(id=>captains.has(id))));
   const rows=front.map(frame=>({
     passiveGapDelta:frame.passiveGapDelta,
     chasePower:frame.chasePower,
@@ -47,11 +60,18 @@ function audit(seed,terrain,fatigue){
     joinedRiders:frames.reduce((sum,frame)=>sum+
       frame.joinedBreakawayRiderIds.length,0),
     frontKm:front.length,frontRuns:frontRuns.length,
+    frontCaptainKm:frontCaptainFrames.length,
+    chaseTeamKmAgainstHelperOnlyFront:frontHelperOnlyFrames.reduce(
+      (sum,frame)=>sum+frame.chasers.length,0),
     shortFrontRuns:frontRuns.filter(row=>row.toKm-row.fromKm<5).length,
     longestFrontKm:Math.max(0,...frontRuns.map(row=>
       row.toKm-row.fromKm+1)),
     maxGapSeconds:Math.max(...frames.map(frame=>frame.gapSeconds)),
     kmOver60:frames.filter(frame=>frame.gapSeconds>=60).length,
+    noChaseMaxGapSeconds:Math.max(...noChaseRecording.frames.map(frame=>
+      frame.gapSeconds)),
+    noChaseKmOver60:noChaseRecording.frames.filter(frame=>
+      frame.gapSeconds>=60).length,
     chaseTeamKm:frames.reduce((sum,frame)=>sum+frame.chasers.length,0),
     frontPullRiderKm:frames.reduce((sum,frame)=>sum+
       frame.pullRiderIds.length,0),

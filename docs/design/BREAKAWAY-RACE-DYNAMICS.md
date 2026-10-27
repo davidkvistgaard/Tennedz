@@ -1150,3 +1150,12 @@ seconds across 219 continuous front kilometres. Thus a draw with no
 selective-chase work and small paid relative-pace gain warrant a systemic
 review. These cases are synthetic diagnostics, not an empirical
 one-minute target or a reason to multiply a road gap after the fact.
+The same-source diagnostic with **all** chase orders changed to `ignore`
+records widest leads of 322.41–460.95 seconds and 209–237 kilometres
+at or above one minute in each race. That artificial all-passive field
+is not a proposed default: it isolates the active chase decision as a
+major cause of the short current leads. In the ordinary guided draw,
+paid chase also targets captain-free road groups (0–529
+team-km across the twelve runs), while other front groups contain
+captains. A rule that merely ignores helper-only fronts would therefore
+leave much of the measured suppression untouched.
