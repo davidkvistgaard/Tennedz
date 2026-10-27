@@ -9,6 +9,9 @@
 .v94-form{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:14px;background:#162229;border:1px solid #32424b;border-radius:16px;padding:18px;margin:28px 0}
 .v94-form label{display:flex;flex-direction:column;gap:6px;font-size:.85rem;color:#b9ccd0}
 .v94-goal-note{grid-column:1/-1;color:#cbdad9;font-size:.85rem;margin:0}
+.v94-more-goals{grid-column:1/-1;color:#cbdad9;font-size:.85rem}
+.v94-more-goals summary{cursor:pointer;font-weight:700;color:#dce9e8}
+.v94-more-goal-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-top:12px}
 .v94-policy-choice{grid-column:1/-1}
 .v94-form select,.v94-form input{min-width:0;width:100%;box-sizing:border-box;color:#f2f6f5;background:#0e191e;border:1px solid #53666e;border-radius:8px;padding:11px;font:inherit}
 .v94-form button,.v94-jumps button{background:#94d9ca;color:#10252a;border:0;border-radius:8px;padding:11px 16px;font:inherit;font-weight:700;cursor:pointer}

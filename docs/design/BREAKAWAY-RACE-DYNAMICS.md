@@ -889,10 +889,10 @@ continues to use its existing kilometre motor.
 separate Motor Lab page and API mode. It validates the full recording and
 replays the same committed source before returning each kilometre's road
 groups, rider reserves, paid workers and chase. The page exposes every team's
-committed opening goal and orders. The player can give fictional rival 1 an
-explicit break, control, protect or opportunistic goal for that preview;
-the matching opening orders are committed, while every other rival keeps
-its seeded plan. The preview rejects unlisted tactic inputs rather than
+committed opening goal and orders. The player can give any fictional rival
+an explicit break, control, protect or opportunistic goal for that preview;
+each chosen goal commits matching opening orders, while unchosen rivals keep
+their seeded plans. The preview rejects unlisted tactic inputs rather than
 silently relabeling a manager order. It reports only measured group gaps and a
 conditional group ending; it provides no individual classification, points
 or awards. The existing guided race keeps its older motor and result path.
@@ -919,6 +919,19 @@ four break and five opportunistic roles. Role count alone does not explain
 the road. One generated control can work through almost the entire race;
 the model still needs a credible way to accept a break and preserve helpers
 for later pursuit without an imposed chase kilometre or free movement.
+
+A separate same-source role-composition boundary deliberately overrides all
+19 fictional rival goals while preserving the route, roster, seed and own
+orders. Across two seeds, both formats and flat/fatigued mountain terrain,
+all 24 whole races validated and source-replayed. With 0/1/8 declared
+control teams, mean widest one-day leads were 766.78/116.04/66.35 seconds;
+stage means were 1013.65/194.56/99.35 seconds. One control team paid about
+88–92 chase team-km plus 164–167 front team-km, reaching mean rider reserve
+near 44 at km 210. With eight controls the paid work was shared and mean
+reserve was near 56. These intentionally extreme synthetic goals show why
+one fixed gap or a hidden role mix cannot define credible races; they are
+not empirical race frequencies. Reproduce with
+`node scripts/audit-v94-preview-role-mix.mjs`.
 
 ### Opt-in impossible-pursuit withdrawal audit
 

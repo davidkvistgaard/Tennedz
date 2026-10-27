@@ -76,19 +76,25 @@ test('experimental preview rejects unsupported settings before simulation',()=>{
   /valid rival goals/);
 });
 
-test('declared preview goal changes only its rival opening intent',()=>{
+test('declared preview goals change only those rival opening intents',()=>{
   const input={format:'one_day',settings:{distanceKm:40,teamCount:4,
     seed:'preview-goal-pair'}};
   const seeded=createV94RaceDynamicsPreview(input).preview;
-  const declared=createV94RaceDynamicsPreview({...input,rivalGoals:[{
-    teamId:'rival-1',role:'break'}]}).preview;
+  const declared=createV94RaceDynamicsPreview({...input,rivalGoals:[
+    {teamId:'rival-1',role:'break'},
+    {teamId:'rival-2',role:'control'}]}).preview;
   const selected=declared.teamPlans.find(row=>row.teamId==='rival-1');
   assert.equal(selected.source,'manager_goal');
   assert.equal(selected.role,'break');
   assert.equal(selected.baseline.attack,'repeated');
   assert.equal(selected.baseline.chase,'ignore');
-  assert.deepEqual(declared.teamPlans.filter(row=>row.teamId!=='rival-1'),
-    seeded.teamPlans.filter(row=>row.teamId!=='rival-1'));
+  const second=declared.teamPlans.find(row=>row.teamId==='rival-2');
+  assert.equal(second.source,'manager_goal');
+  assert.equal(second.role,'control');
+  assert.equal(second.baseline.chase,'selective');
+  assert.deepEqual(declared.teamPlans.filter(row=>
+    !['rival-1','rival-2'].includes(row.teamId)),seeded.teamPlans.filter(row=>
+    !['rival-1','rival-2'].includes(row.teamId)));
   assert.equal(declared.resultStatus,'provisional_road_groups_only');
 });
 

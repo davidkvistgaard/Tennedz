@@ -21,6 +21,8 @@ test('experimental v94 race shows committed plans and measured road only',
     await page.getByLabel('Field').selectOption('4');
     await page.getByLabel('Race format').selectOption('stage');
     await page.getByLabel('Fictional rival 1 goal').selectOption('break');
+    await page.getByText('Set more rival goals').click();
+    await page.getByLabel('Fictional rival 2 goal').selectOption('control');
     await page.getByLabel('Control-team pursuit').selectOption('2');
     expect((await page.getByLabel('Control-team pursuit').boundingBox()).width)
       .toBeGreaterThan(300);
@@ -43,6 +45,9 @@ test('experimental v94 race shows committed plans and measured road only',
     expect(raceDynamics.teamPlans.find(plan=>plan.teamId==='rival-1'))
       .toMatchObject({source:'manager_goal',role:'break',
         baseline:{attack:'repeated',chase:'ignore'}});
+    expect(raceDynamics.teamPlans.find(plan=>plan.teamId==='rival-2'))
+      .toMatchObject({source:'manager_goal',role:'control',
+        baseline:{attack:'none',chase:'selective'}});
     await expect(page.getByRole('heading',
       {name:'What the recording shows'})).toBeVisible();
     await page.getByRole('button',{name:'Last km'}).click();
@@ -53,6 +58,8 @@ test('experimental v94 race shows committed plans and measured road only',
     await expect(page.locator('.v94-plan-list article')).toHaveCount(4);
     await page.screenshot({path:'test-results/v94-race-preview-mobile.png',
       fullPage:true});
+    await page.getByLabel('Fictional rival 2 goal').selectOption('auto');
+    await page.getByText('Set more rival goals').click();
     await page.getByLabel('Distance').selectOption('260');
     await page.getByLabel('Field').selectOption('20');
     await page.getByLabel('Race format').selectOption('one_day');

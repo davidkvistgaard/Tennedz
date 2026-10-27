@@ -47,6 +47,7 @@ const coastOutcome=(preview,frame,row)=>{
 
 export default function RaceDynamicsPreview(){
   const [settings,setSettings]=useState(INITIAL);
+  const [extraGoals,setExtraGoals]=useState({});
   const [preview,setPreview]=useState(null);
   const [km,setKm]=useState(1);
   const [busy,setBusy]=useState(false);
@@ -66,12 +67,17 @@ export default function RaceDynamicsPreview(){
     try{
       const {format,rivalOneGoal,controlWithdrawalVersion,
         ...raceSettings}=settings;
+      const rivalGoals=[
+        ...(rivalOneGoal==='auto'?[]:[{teamId:'rival-1',role:rivalOneGoal}]),
+        ...Object.entries(extraGoals).filter(([number,role])=>
+          Number(number)<settings.teamCount&&role!=='auto')
+          .map(([number,role])=>({teamId:`rival-${number}`,role})),
+      ];
       const response=await api('/api/v91-playtest',{method:'POST',
         headers:{'Content-Type':'application/json'},
         body:JSON.stringify({mode:'v94-race-dynamics',format,
           controlWithdrawalVersion,
-          settings:raceSettings,rivalGoals:rivalOneGoal==='auto'?[]:
-            [{teamId:'rival-1',role:rivalOneGoal}]}),
+          settings:raceSettings,rivalGoals}),
         signal:AbortSignal.timeout(60_000)});
       setPreview(response.raceDynamics);setKm(1);
     }catch(cause){setError(cause.message||'The race could not run.');}
@@ -99,9 +105,28 @@ export default function RaceDynamicsPreview(){
         <p className="v94-goal-note">Rival 1 uses the seeded plan unless you
           choose a goal. A chosen goal commits its matching opening orders
           for this preview.</p>
+        <details className="v94-more-goals">
+          <summary>Set more rival goals</summary>
+          <p>Each changed goal replaces that fictional team's opening orders.
+            Other teams keep their seeded plans.</p>
+          <div className="v94-more-goal-grid">
+            {Array.from({length:settings.teamCount-2},(_,index)=>index+2)
+              .map(number=><label key={number}>
+                <span>Fictional rival {number} goal</span>
+                <select value={extraGoals[number]??'auto'}
+                  onChange={event=>setExtraGoals(current=>({...current,
+                    [number]:event.target.value}))}>
+                  {OPTIONS.rivalOneGoal.map(([value,label])=><option
+                    key={value} value={value}>{label}</option>)}
+                </select>
+              </label>)}
+          </div>
+        </details>
         <p className="v94-goal-note">The optional withdrawal rule lets a
           control team stop paying for a chase when its recorded catch
           projection is impossible. The lead may grow much larger.</p>
+        <p className="v94-goal-note">This workbench allows up to six race runs
+          per minute on your account.</p>
         <label className="v94-seed"><span>Race seed</span><input
           value={settings.seed} maxLength={80}
           onChange={event=>setChoice('seed',event.target.value)}/></label>
