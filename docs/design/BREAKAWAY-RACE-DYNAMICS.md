@@ -702,3 +702,29 @@ facing change needs both a credible, inspectable opponent plan and a motor
 that pays an accepted break, energy and eventual pursuit over the full
 field. It must retain explicit manager orders and be tested end to end before
 routing a new recording version to the viewer.
+
+### Gate before a player-facing race-dynamics version
+
+- Commit an inspectable pre-race goal and order for every team. Preserve any
+  explicit manager tactic exactly. Audit the generated rival mix alongside
+  the orders the guided viewer actually uses; the present guided random mix
+  creates too many break-role teams and can exhaust controls before the
+  finale.
+- Pay every rider's work, recovery, movement and group contact through the
+  same race. An exhausted front rider must either receive a paid slowdown
+  and contact transition or cause an explicit refusal before a frame is
+  published. A late energy correction to an already moved group is invalid.
+- Demonstrate that an accepted break, economical maintenance and a later
+  chase arise from recorded team decisions and road work across varied
+  seeds, routes, fatigue and opponent roles. Inspect both lead and helper
+  energy, the start and duration of pursuit, catches and survivors. Neither
+  a fixed chase kilometre nor a prescribed five-to-eight-minute gap passes
+  this gate.
+- Validate and replay the complete recording, then run the guided tactics
+  through viewer and conditional result in a browser. Commentary may name
+  only recorded actions and measured changes. Keep official places, points
+  and awards withheld until their separate finish contracts are satisfied.
+
+The current v94 experiments satisfy parts of the recording and paid-work
+checks but not this whole gate. Until they do, the live guided Motor Lab
+continues to use its existing kilometre motor.
