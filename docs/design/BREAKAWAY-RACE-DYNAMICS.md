@@ -477,6 +477,13 @@ never charge the same team in one kilometre. The pacing reduces maximum
 leads and some early break opportunities; it may begin front work too early.
 These are synthetic role-policy cases, not an empirical race frequency or a
 player-facing release. The guided full-race flow is still needed.
+An uncommitted follow-up withheld generated control front-work until the
+same leading roster had five prior recorded kilometres with no closing.
+Across 24 paired planned-intent races it raised mean maximum lead only
+8–10 seconds, reduced the control team's km-210 energy by about one unit,
+and increased one-day initial-front catches from five to six of six in
+both fatigue groups. The extra rule did not solve premature control work;
+it was reverted. Explicit manager front-work orders were never changed.
 A second, rejected v94-only control-decision experiment projected whether
 the available control teams together could close a stable front after the
 current route's passive break advantage. It changed only when selective
