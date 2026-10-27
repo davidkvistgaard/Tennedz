@@ -1091,3 +1091,12 @@ while its widest lead was only 212.21 seconds. The paired stage spent 239
 kilometres above one minute and peaked at 227.15 seconds. A persistent
 small lead is therefore possible in this synthetic goal mix; it is not
 evidence that the overall lead size or pursuit is empirically calibrated.
+
+On the identical 16 sources, explicitly enabling
+`--withdrawal-v2` also validated and source-replayed every race. The widest
+lead range became 80.51–584.27 seconds (mean 317.45, versus 165.58 under
+the default policy). In two stage seeds the control coalition paid only
+four or ten chase team-kilometres and recorded roughly 488–584 seconds of
+maximum lead. This optional rule saves pursuit work but can leave a long
+stage break largely unchallenged. It remains an experimental comparison,
+not a new default or a prescribed lead target.
