@@ -510,6 +510,16 @@ The same-model replay passes. A further 96 new-seed cases pass recording
 validation without refusal; initial-front catch counts and maximum leads
 move only slightly, so this is a captain-reserve and intent correction,
 not a solution to control workload or a player-facing calibration.
+Combining the opt-in control pursuit, paid one-worker settled rotation,
+front-exhaustion contact, control tempo, and opportunistic specialist
+policies passed validation and same-model replay in 24 original cases.
+The original seeds averaged maximum leads of 295/283 seconds in
+fresh/tired one-day races and 391/386 seconds in stages. But 96 new-seed
+holdout cases also validated and averaged only 141/136 seconds one-day
+and 213/210 seconds stage; initial fronts were fully caught 22/24 and
+18/24 one-day versus 1/24 and 0/24 stage. The variability is material.
+No target gap was imposed, and this bundle still needs broader role and
+guided-flow checks before players can rely on it.
 A second, rejected v94-only control-decision experiment projected whether
 the available control teams together could close a stable front after the
 current route's passive break advantage. It changed only when selective
