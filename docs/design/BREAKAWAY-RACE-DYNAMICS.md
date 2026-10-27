@@ -299,6 +299,24 @@ A locked 40 km comparison verifies that declaring `break` leads to a paid
 attack attempt while declaring `control` leaves that rival out of the attack
 record. This provides a concrete future tactics choice, but it is not yet
 connected to the guided interface.
+The read-only `scripts/audit-v94-manager-goal.mjs` holds a 260 km course,
+seed, weather, roster and every other team's plan fixed, changing only
+`rival-1` between those two declared goals. Across three seeds, two terrains,
+fatigue 0/30 and both formats, all 24 pairs completed and validated:
+
+| Format | Break-goal attacks | Control-goal chase team-km | First control chase km | Break/control mean energy at km 200 | Break/control mean maximum gap |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| One-day | 1.42 | 194.5 | 42.7 | 60.3 / 41.4 | 298 / 199 s |
+| Stage | 1.00 | 190.0 | 60.7 | 61.6 / 46.0 | 427 / 281 s |
+
+The declared goal materially changes paid actions and energy rather than
+just commentary. It also exposes a problem: the single control team begins
+chasing early and works for roughly 190 km, including about 166 team-km
+before the last 50 km in one-day races. This is not yet convincing manager
+behavior for a peloton that deliberately lets a harmless break settle.
+The next pursuit revision should explain when a control team shares, pauses
+or resumes work using recorded gap, rival contributions and remaining
+energy, not simply weaken chase with an arbitrary distance rule.
 An optional v94-only, versioned intent manifest can now be committed to the
 race recording. It retains each team's role, opening order and whether the
 planner labelled it generated, manager-goal or explicit-manager input.
