@@ -8,7 +8,9 @@ import {observedFrontClosingSecondsPerKm} from '../lib/engine/v2/race-context-v1
 import {resolveRandomRivalTactics} from '../lib/engine/v2/playtest-rival-random.mjs';
 import {prepareV94RivalIntent} from '../lib/engine/v2/playtest-rival-intent-v94.mjs';
 
-const seeds=['sample-flat-finish','race-dynamics-1','race-dynamics-2'];
+const seeds=process.argv.includes('--extended-seeds')?
+  Array.from({length:12},(_,index)=>`race-dynamics-holdout-${index+1}`):
+  ['sample-flat-finish','race-dynamics-1','race-dynamics-2'];
 function seededRandom(label){
   let state=2166136261;
   for(const character of label)

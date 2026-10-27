@@ -319,3 +319,27 @@ seconds. The full 96-case constructed role matrix passes validation without
 refusal; its original front is fully caught in 24/24 fresh and 21/24 fatigued
 one-day races, versus 3/24 and 0/24 in stages. These are synthetic policy
 checks, not empirical frequencies or proof that the chase is calibrated.
+
+A separate `--extended-seeds` holdout uses twelve new seeds, two terrains,
+two starting-fatigue levels and both formats, with no parameter changes after
+seeing the earlier three-seed matrix. Each row below contains 24 validated
+260 km simulations:
+
+| Rival intent | Format | Fatigue | Original front fully caught | Mean maximum lead |
+| --- | --- | ---: | ---: | ---: |
+| Committed synthetic plan | One-day | 0 | 16/24 | 323 s |
+| Committed synthetic plan | One-day | 30 | 13/24 | 308 s |
+| Committed synthetic plan | Stage | 0 | 3/24 | 453 s |
+| Committed synthetic plan | Stage | 30 | 0/24 | 449 s |
+| Sampled guided random orders | One-day | 0 | 6/24 | 207 s |
+| Sampled guided random orders | One-day | 30 | 4/24 | 226 s |
+| Sampled guided random orders | Stage | 0 | 3/24 | 427 s |
+| Sampled guided random orders | Stage | 30 | 4/24 | 476 s |
+
+No run in this holdout refused or failed the current recording validator.
+The sampled guided policy has about nine break-role teams, versus 5.67 in
+the committed synthetic plan, so the formats are not a controlled comparison
+between those rows. The fresh one-day catch remains uncommon under guided
+random orders even though its maximum gap is smaller. Opponent intent, team
+composition and the race clock still need end-to-end work before v94 can be
+offered to players.
