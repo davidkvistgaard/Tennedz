@@ -1176,3 +1176,21 @@ had a GC or road-captain response. The established-gap branch dominates
 the work, so changing only the first-kilometre attack reaction cannot
 resolve the observed short leads. This labels the paid decisions; it
 does not prove which individual chase kilometre changed the outcome.
+
+A separately versioned v93 *economic selective chase* experiment used
+the current front's unpaid relative pace and the root-sum-square of
+available selective helpers to estimate whether a coalition could catch
+later. An already chasing team needed a safer projected catch before
+resting; a captain ahead prompted an earlier response. All road gains
+and rider energy still came from actually paid work. The experiment was
+rejected and its motor, validator and audit code fully reverted: on the
+same twelve guided rival draws, only one race reached a one-minute
+lead (135.76 seconds on the no-`all` fatigued mountain case); the other
+eleven still peaked below 60 seconds. Merely converting every generated
+`all` rival order to `selective` alongside that policy yielded a minute
+in ten cases, but erased dedicated all-out pursuit and is not a credible
+default. Applying the existing synthetic v94 goal planner's opening
+orders on the same v93 road alongside the policy yielded a minute in
+only four cases; some role mixes had no front at all. The next motor
+change needs inspectable team intent and pursuit economics together,
+not another one-dimensional selective-chase threshold.
