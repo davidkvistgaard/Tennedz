@@ -122,6 +122,20 @@ test('own paid front-work choice is committed without changing rival plans',()=>
     seated.story.widestRecordedLead.gapSeconds);
 });
 
+test('a manager-selected selective chase remains active in a stage',()=>{
+  const base={format:'stage',settings:{distanceKm:260,teamCount:20,
+    terrain:'flat',fatigue:0,seed:'preview-boundary-6',effort:'steady',
+    attack:'none',chase:'selective'}};
+  const selected=createV94RaceDynamicsPreview(base).preview;
+  const ignored=createV94RaceDynamicsPreview({...base,
+    settings:{...base.settings,chase:'ignore'}}).preview;
+  assert.equal(selected.teamPlans.find(plan=>plan.teamId==='you').role,
+    'control');
+  assert.ok(selected.frames.some(frame=>frame.chasers.includes('you')));
+  assert.ok(ignored.frames.every(frame=>!frame.chasers.includes('you')));
+  assert.equal(selected.resultStatus,'provisional_road_groups_only');
+});
+
 test('declared preview goals change only those rival opening intents',()=>{
   const input={format:'one_day',settings:{distanceKm:40,teamCount:4,
     seed:'preview-goal-pair'}};

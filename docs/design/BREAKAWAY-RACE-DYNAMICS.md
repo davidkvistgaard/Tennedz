@@ -292,6 +292,13 @@ or supplied by a manager. Explicit tactics are left intact; a manager who
 orders both an attack and a chase retains both, rather than being silently
 turned into a protective non-attacker. This is a seeded design proposal, not
 an empirically fitted team-goal model or a guided Motor Lab input.
+The manager's directly selected `attack:none, chase:selective` order now
+commits a `control` intention, so it can actually pay for a selective pursuit
+in a stage. Previously it was inferred as `protect`, whose stage policy
+withheld that same order on every kilometre in a locked 260 km case.
+Generated or explicitly declared `protect` goals retain their separate
+protective policy. Older recordings that committed the former manager
+`protect` role still validate and source-replay from their saved inputs.
 The internal planner also accepts a declared `rivalGoals` list. A goal
 commits both the role and matching opening orders before simulation; a goal
 for a rival whose tactics were explicitly edited is refused as conflicting.
@@ -931,6 +938,13 @@ unchanged default seed gave a 93.78-second widest lead and no front group
 at the last kilometre. Other seeds can yield much shorter or longer leads.
 This boundary check supports a truthful experimental preview, not promotion
 of v94 to guided races or a claim that the race-dynamics goal is solved.
+
+After correcting the manager's direct selective-chase role, those same 48
+cases still all validate and source-replay. Their widest leads now span
+35.22–307.24 seconds, with a 115.54-second mean instead of the earlier
+126.11-second mean. This is a changed manager policy on the same synthetic
+inputs, not evidence of an empirical improvement. The separately committed
+old protective-manager recordings remain replayable.
 
 The same audit now prints generated role counts, each control team's paid
 chase and bunch-front kilometres, and mean control-rider energy at km 210.

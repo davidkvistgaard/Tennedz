@@ -54,8 +54,9 @@ test('race format is explicit and stage number cannot leak into a one-day race',
 });
 
 test('impossible nonclosing control pursuit withdraws without a retry loop',()=>{
+  // Keep the manager passive so this isolates the rival control decision.
   const prepared=prepareV91Playtest({distanceKm:260,terrain:'mountain',
-    teamCount:20,fatigue:30,attack:'none',chase:'selective',
+    teamCount:20,fatigue:30,attack:'none',chase:'ignore',
     seed:'preview-boundary-6'});
   const plan=prepareV94RivalIntent({prepared,format:'stage',stageNumber:8,
     controlTempoVersion:2,opportunisticSpecialistVersion:2,
@@ -101,7 +102,7 @@ test('impossible nonclosing control pursuit withdraws without a retry loop',()=>
   assert.equal(day.frames.find(frame=>frame.disengagedControlTeamIds
     .includes('rival-14'))?.km,94);
   assert.equal(day.frames.find(frame=>frame.km>94&&
-    frame.chasers.includes('rival-14'))?.km,167);
+    frame.chasers.includes('rival-14'))?.km,159);
   assert.equal(validateRecordedTour(day),true);
   assert.ok(replayRaceDynamicsRecording(day));
 });

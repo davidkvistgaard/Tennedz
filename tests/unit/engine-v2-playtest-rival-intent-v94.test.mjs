@@ -21,6 +21,7 @@ test('v94 rival intent is seeded, inspectable and leaves explicit orders intact'
   assert.deepEqual(first,again);
   assert.deepEqual(prepared.teams,before);
   assert.equal(first.intent.length,4);
+  assert.equal(first.intent[0].role,'control');
   assert.deepEqual(first.intent[1],{teamId:'rival-1',role:'control',
     source:'manager',baseline:{effort:'hard',attack:'none',chase:'all'},
     specialistRiderId:null});
@@ -49,6 +50,22 @@ test('v94 rival intent is seeded, inspectable and leaves explicit orders intact'
     team.id==='rival-1');
   for(const key of ['effort','attack','chase'])
     assert.equal(committedRival.orders.baseline[key],before[1].orders.baseline[key]);
+});
+
+test('a previously committed protective manager still source-replays',()=>{
+  const prepared=prepareV91Playtest({distanceKm:40,teamCount:4,
+    seed:'prior-manager-protective-role',attack:'none',chase:'selective'});
+  const plan=prepareV94RivalIntent({prepared,format:'stage',stageNumber:8});
+  const priorContext={...plan.raceContext,
+    teamRoles:{...plan.raceContext.teamRoles,you:'protect'}};
+  const priorIntent=plan.intent.map(row=>row.teamId==='you'?
+    {...row,role:'protect'}:row);
+  const race=simulateTacticalTour({stage:prepared.stage,
+    weather:prepared.weather,teams:plan.teams,seed:prepared.seed,
+    motorVersion:MOTOR_RACE_DYNAMICS_VERSION,
+    raceContext:priorContext,rivalIntent:priorIntent});
+  assert.equal(validateRecordedTour(race),true);
+  assert.deepEqual(replayRaceDynamicsRecording(race),race);
 });
 
 test('v94 rival intent rejects incomplete stage context',()=>{
