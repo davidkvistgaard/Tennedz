@@ -461,8 +461,22 @@ instead of 49.58. Mean maximum lead was 337.11 instead of 397.94 seconds;
 five of six initial fronts were fully caught, versus six of six before.
 Stage controls also divided work between front and chase with modestly
 higher remaining energy, while the initial front usually still survived.
-These are synthetic role-policy cases; a broader holdout and the guided
-full-race flow are still needed. The policy remains internal.
+The same committed policy passed recording validation in 96 new-seed
+20-team/260 km holdout cases without refusal or unpaid front work. The
+initial front was fully caught in 22/24 fresh and 19/24 fatigued one-day
+cases, versus 4/24 fresh and 2/24 fatigued stage cases. Mean maximum leads
+were 189/185 seconds in the one-day groups and 265/264 seconds in the stage
+groups; no lead target was assigned. Mean control-team energy at km 210 was
+51.54/38.40 for fresh/fatigued one-day and 52.87/39.69 for stages. These
+compare with the same holdout without committed control tempo: zero front
+team-km, 389/409 early chase team-km in one-day races and 381/400 in stages,
+with control energy 49.30/35.89 and 50.06/36.68 respectively. The new plan
+used 168/162 paid front team-km and 155/180 early chase team-km in one-day
+cases, or 171/164 front and 136/162 chase in stage cases. Front and chase
+never charge the same team in one kilometre. The pacing reduces maximum
+leads and some early break opportunities; it may begin front work too early.
+These are synthetic role-policy cases, not an empirical race frequency or a
+player-facing release. The guided full-race flow is still needed.
 A second, rejected v94-only control-decision experiment projected whether
 the available control teams together could close a stable front after the
 current route's passive break advantage. It changed only when selective
