@@ -22,11 +22,13 @@ test('v94 rival intent is seeded, inspectable and leaves explicit orders intact'
   assert.deepEqual(prepared.teams,before);
   assert.equal(first.intent.length,4);
   assert.deepEqual(first.intent[1],{teamId:'rival-1',role:'control',
-    source:'manager',baseline:{effort:'hard',attack:'none',chase:'all'}});
+    source:'manager',baseline:{effort:'hard',attack:'none',chase:'all'},
+    specialistRiderId:null});
   assert.deepEqual(first.teams[1].orders.baseline,before[1].orders.baseline);
   assert.equal(first.intent[2].source,'generated');
   assert.deepEqual(first.intent[3],{teamId:'rival-3',role:'opportunistic',
-    source:'manager',baseline:{effort:'hard',attack:'repeated',chase:'all'}});
+    source:'manager',baseline:{effort:'hard',attack:'repeated',chase:'all'},
+    specialistRiderId:null});
   assert.deepEqual(first.raceContext.teamRoles,
     Object.fromEntries(first.intent.map(row=>[row.teamId,row.role])));
   const recording=simulateTacticalTour({stage:prepared.stage,
@@ -36,7 +38,7 @@ test('v94 rival intent is seeded, inspectable and leaves explicit orders intact'
   assert.equal(validateRecordedTour(recording),true);
   assert.deepEqual(replayRaceDynamicsRecording(recording),recording);
   assert.deepEqual(recording.committedInputs.raceContext,first.raceContext);
-  assert.equal(recording.committedInputs.rivalIntentVersion,1);
+  assert.equal(recording.committedInputs.rivalIntentVersion,2);
   assert.equal(recording.committedInputs.rivalIntent.find(row=>
     row.teamId==='rival-3').source,'manager');
   const forged=structuredClone(recording);
@@ -55,6 +57,20 @@ test('v94 rival intent rejects incomplete stage context',()=>{
     /Invalid race context/);
 });
 
+test('previous v94 intent manifest remains replayable without a specialist',()=>{
+  const prepared=prepareV91Playtest({distanceKm:40,teamCount:4,
+    seed:'intent-v1-compatibility',attack:'none',chase:'ignore'});
+  const plan=prepareV94RivalIntent({prepared,format:'stage',stageNumber:8});
+  const oldIntent=plan.intent.map(({specialistRiderId,...row})=>row);
+  const race=simulateTacticalTour({stage:prepared.stage,weather:prepared.weather,
+    teams:plan.teams,seed:prepared.seed,
+    motorVersion:MOTOR_RACE_DYNAMICS_VERSION,raceContext:plan.raceContext,
+    rivalIntent:oldIntent});
+  assert.equal(race.committedInputs.rivalIntentVersion,1);
+  assert.equal(validateRecordedTour(race),true);
+  assert.deepEqual(replayRaceDynamicsRecording(race),race);
+});
+
 test('a declared rival goal commits a role and matching orders before racing',()=>{
   const prepared=prepareV91Playtest({distanceKm:40,teamCount:4,
     seed:'intent-goal-94',attack:'none',chase:'ignore',
@@ -64,6 +80,9 @@ test('a declared rival goal commits a role and matching orders before racing',()
   const controlPlan=prepareV94RivalIntent({prepared,format:'one_day',
     rivalGoals:[{teamId:'rival-1',role:'control'}]});
   assert.equal(breakPlan.intent[1].source,'manager_goal');
+  assert.ok(breakPlan.intent[1].specialistRiderId);
+  assert.notEqual(breakPlan.intent[1].specialistRiderId,
+    breakPlan.teams[1].orders.captainId);
   assert.deepEqual(breakPlan.teams[1].orders.baseline,
     {effort:'steady',attack:'repeated',chase:'ignore'});
   assert.deepEqual(controlPlan.teams[1].orders.baseline,
@@ -79,6 +98,13 @@ test('a declared rival goal commits a role and matching orders before racing',()
     !id.startsWith('rival-1-'))));
   assert.equal(validateRecordedTour(breakRace),true);
   assert.equal(validateRecordedTour(controlRace),true);
+  const opening=breakRace.frames.find(frame=>frame.attackers.some(id=>
+    breakPlan.teams[1].riders.some(rider=>rider.id===id)));
+  assert.ok(opening.attackers.includes(breakPlan.intent[1].specialistRiderId));
+  const forged=structuredClone(breakRace);
+  forged.committedInputs.rivalIntent[1].specialistRiderId=
+    breakPlan.teams[1].orders.captainId;
+  assert.throws(()=>validateRecordedTour(forged),/intent manifest/);
   assert.throws(()=>prepareV94RivalIntent({prepared,format:'one_day',
     rivalGoals:[{teamId:'rival-1',role:'break'},
       {teamId:'rival-1',role:'control'}]}),/Invalid or conflicting/);

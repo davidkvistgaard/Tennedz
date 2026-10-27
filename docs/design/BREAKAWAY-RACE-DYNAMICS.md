@@ -382,6 +382,16 @@ captains changed the first unpayable-front-work refusal in the locked
 fatigued mountain case from km 136 to km 135, so it was reverted. A future
 break specialist should be a distinct, committed rider choice, with named
 manager attacks and existing exhaustion/contact refusals preserved.
+The internal planner now records a version-2 break-specialist rider for
+generated or declared break goals, chosen before the stage from acceleration,
+endurance and repeatability among noncaptains. Automatic v94 moves try that
+rider if available, then retain the existing candidate fallback; explicit
+manager orders and helper reservations take precedence. Version-1 intent
+recordings remain valid. In the same 24 planned-intent races, all four
+stage-format break attempts per case now come from helpers, with zero captain
+attempts, and all recordings validate and replay. Mean maximum leads changed
+from 556/550 to 534/529 seconds in fresh/tired stages; this is a tactical
+composition change, not evidence of calibrated gaps or official outcomes.
 An optional v94-only, versioned intent manifest can now be committed to the
 race recording. It retains each team's role, opening order and whether the
 planner labelled it generated, manager-goal or explicit-manager input.
