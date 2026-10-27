@@ -95,6 +95,8 @@ function run({seed,terrain,fatigue,format,breakTeams,controlTeams}){
     kilometresOverFiveMinutes:gaps.filter(gap=>gap>=300).length,
     firstFiveMinuteKm:frames.find(frame=>frame.gapSeconds>=300)?.km??null,
     firstChaseKm:frames.find(frame=>frame.chasers.length>0)?.km??null,
+    firstProtectPursuitKm:frames.find(frame=>frame.chaseReasons.some(row=>
+      row.reason==='one_day_captain_pursuit'))?.km??null,
     gapAt205Seconds:frames[204].gapSeconds,
     gapAt210Seconds:frames[209].gapSeconds,
     gapAt220Seconds:frames[219].gapSeconds,
@@ -116,6 +118,9 @@ function run({seed,terrain,fatigue,format,breakTeams,controlTeams}){
         teamRoles[id]==='control').length,0),
     finaleProtectChasedTeamKilometres:finale.reduce((sum,frame)=>
       sum+frame.chasers.filter(id=>teamRoles[id]==='protect').length,0),
+    earlyProtectChasedTeamKilometres:frames.filter(frame=>frame.km<=210)
+      .reduce((sum,frame)=>sum+frame.chasers.filter(id=>
+        teamRoles[id]==='protect').length,0),
     easedTeamKilometres:frames.reduce((sum,frame)=>sum+frame.bunchEaseTeamIds.length,0),
     finalGapSeconds:gaps.at(-1),
     finalFrontRiders:finalFrame.breakawayRiderIds.length,
@@ -177,6 +182,7 @@ const summary=process.argv.includes('--summary')?
         row.initialFrontAtLineRiders===0).length,
       meanMaxGapSeconds:average('maxGapSeconds'),
       meanSettledRestRiderKm:average('settledFrontRestRiderKilometres'),
+      meanEarlyProtectChaseTeamKm:average('earlyProtectChasedTeamKilometres'),
       refusals:sample.filter(row=>row.refusal).length};
   })).filter(Boolean):null;
 console.log(JSON.stringify({version:MOTOR_RACE_DYNAMICS_VERSION,

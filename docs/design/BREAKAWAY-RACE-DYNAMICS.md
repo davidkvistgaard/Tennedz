@@ -303,3 +303,19 @@ in either stage-race fatigue set. Mean maximum leads were approximately 499,
 yet the fresh one-day pursuit remains too weak for the intended experience.
 Do not route this planner to players or tune it from one seed; next audits
 must vary seeds and team goals and inspect actual paid pursuit and energy.
+
+An additional v94-only pursuit experiment asks whether the *eligible
+protective teams together* could close a stable leading gap if they committed
+their available helpers. That projection can advance their decision to chase;
+it never changes the gap directly. The observed same-front trend and an unsafe
+gap are still required before the last 50 km. In the 24 planned-intent cases,
+the original front is now fully caught in 4/6 fresh and 3/6 fatigued one-day
+races, against 0/6 in either stage set. Mean maximum leads are 439, 420, 580
+and 574 seconds respectively. Early protective pursuit costs a mean 201 and
+238 team-km in the two one-day sets, versus zero in stages. A 24-case sample
+of the existing guided random rival policy gives 1/6 fresh and 0/6 fatigued
+one-day original fronts fully caught, with mean maximum leads of 231 and 302
+seconds. The full 96-case constructed role matrix passes validation without
+refusal; its original front is fully caught in 24/24 fresh and 21/24 fatigued
+one-day races, versus 3/24 and 0/24 in stages. These are synthetic policy
+checks, not empirical frequencies or proof that the chase is calibrated.
