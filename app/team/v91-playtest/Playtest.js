@@ -8,6 +8,8 @@ import {resolveRandomRivalTactics} from
 import {raceViewerCommentaryV1} from
   '../../../lib/engine/v2/playtest-commentary-v1.mjs';
 import {recordedStageProfile} from '../../../lib/engine/v2/playtest-stage-trace.mjs';
+import {formatMotorLabRaceLog} from
+  '../../../lib/engine/v2/playtest-race-log-v1.mjs';
 import {guidedTimelinePhases} from
   '../../../lib/engine/v2/playtest-timeline-v1.mjs';
 import {summarizePlaytestRaceStory} from
@@ -595,16 +597,11 @@ export default function Playtest({guided=false}){
     {names:commentaryNames}):[];
   const copyRaceLog=async()=>{
     if(!coasted)return;
-    const finishNote=coasted.lineTimes.length?
-      `${coasted.lineTimes.length} conditional rider crossings are recorded.`:
-      'No supported individual line crossing is available.';
-    const log=[`Pelotonia Motor Lab race log — ${coasted.settings.distanceKm} km ${coasted.settings.terrain} · seed ${coasted.settings.seed}`,
-      '',...viewerCommentary.map(moment=>`Km ${moment.km}: ${moment.text}`),
-      '',`Finish · ${coasted.settings.distanceKm} km: The final kilometre has a separate paid-road recording. ${finishNote} Official results and awards are withheld.`]
-      .join('\n');
+    const log=formatMotorLabRaceLog(coasted,viewerCommentary,
+      submittedChoices?JSON.parse(submittedChoices):null);
     try{
       await navigator.clipboard.writeText(log);
-      setRaceLogCopyStatus(`Copied ${viewerCommentary.length} events and finish note`);
+      setRaceLogCopyStatus(`Copied settings, ${viewerCommentary.length} events and finish note`);
     }catch{
       setRaceLogCopyStatus('Could not copy. Check clipboard permission.');
     }

@@ -64,6 +64,12 @@ test('guided Motor Lab runs a race from setup to rider replay',async({page,conte
   const fullCommentary=raceViewerCommentaryV1(coasted);
   const copiedLines=copiedLog.split('\n').filter(line=>/^Km \d+: /.test(line));
   expect(copiedLog).toContain('Pelotonia Motor Lab race log');
+  expect(copiedLog).toMatch(/Race setup\r?\nDistance: 40 km/);
+  expect(copiedLog).toContain('Selected options at run time (JSON)');
+  expect(copiedLog).toContain('Full committed engine settings (JSON)');
+  expect(copiedLog).toContain('Effective orders for every team (JSON)');
+  expect(copiedLog).toContain('Finisher nominations (JSON)');
+  expect(copiedLog).toContain('Rival option selected: attack');
   expect(copiedLines).toHaveLength(fullCommentary.length);
   expect(copiedLines.at(-1)).toContain(`Km ${fullCommentary.at(-1).km}:`);
   expect(copiedLog).toContain('Finish · 40 km: The final kilometre');
