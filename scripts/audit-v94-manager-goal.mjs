@@ -50,6 +50,17 @@ for(const seed of seeds)for(const terrain of ['flat','mountain'])
       continue;
     }
     const one=races.break,two=races.control;
+    if(process.argv.includes('--timeline')&&seed===seeds[0]&&
+      terrain==='flat'&&fatigue===0&&format==='one_day'){
+      console.log(JSON.stringify({timeline:two.frames.filter(frame=>
+        frame.km%10===0||frame.km===1).map(frame=>({km:frame.km,
+        gapSeconds:frame.gapSeconds,
+        leadingGapSeconds:frame.roadGroups?.[0]?.gapSeconds??null,
+        chasers:frame.chasers,
+        held:frame.heldChaseTeamIds,
+        contribution:frame.chaseContributions?.find(row=>row.teamId===selectedTeamId),
+        selectedEnergy:frame.teamEnergy.find(row=>row.teamId===selectedTeamId)?.mean}))},null,2));
+    }
     if(!isDeepStrictEqual(one.route,two.route)||
       !isDeepStrictEqual(one.committedInputs.teams.flatMap(team=>team.riders),
         two.committedInputs.teams.flatMap(team=>team.riders))||

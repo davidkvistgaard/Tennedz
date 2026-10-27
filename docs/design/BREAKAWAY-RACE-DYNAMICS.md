@@ -317,6 +317,15 @@ behavior for a peloton that deliberately lets a harmless break settle.
 The next pursuit revision should explain when a control team shares, pauses
 or resumes work using recorded gap, rival contributions and remaining
 energy, not simply weaken chase with an arbitrary distance rule.
+The audit's optional `--timeline` trace gives a concrete example in the
+first flat, fresh one-day pair. Three control teams chase continuously from
+about km 50 to km 200, while the recorded lead grows from 187 to 218 seconds.
+The selected control team's mean energy falls from 96.85 to 50.01. The
+recorded chase is paid, but it is not closing; the present selective rule
+keeps spending because a single team's hypothetical catch projection is
+unsafe. This is the decision failure to address. A candidate pause or shared
+pull must be judged against subsequent *observed* gap movement and all
+teams' charged work, with no free catch or assumed wheel order.
 An optional v94-only, versioned intent manifest can now be committed to the
 race recording. It retains each team's role, opening order and whether the
 planner labelled it generated, manager-goal or explicit-manager input.
