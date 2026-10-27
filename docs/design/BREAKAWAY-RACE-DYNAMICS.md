@@ -514,3 +514,27 @@ or contact handling is correct. Older recording shapes remain unchanged.
 The simulator-free recording validator also rebuilds the v94 route from its
 committed stage, weather and seed, and refuses a source that disagrees with
 the recorded route before the more expensive source replay begins.
+
+### Why a later chase decision alone is insufficient
+
+The reproducible `node scripts/audit-v94-manager-goal.mjs --single --timeline`
+case fixes the same 20-team, flat, fresh one-day field and gives `rival-1` a
+declared control goal. Three control teams are already paying chase work from
+km 50 through km 200. The recorded leading gap falls from 180.72 to 98.30
+seconds, but the selected team's mean energy falls from 97.84 to 51.01.
+At km 50 the frame records 150.85 chase-capacity units and a 2.91-second
+passive gap gain; by km 200 these are 83.35 units and 1.91 seconds,
+respectively. These
+are paid frame values, not an inferred wheel trace or a claim that any one
+team caused the change. The 0/1-control stress audit also shows that simply
+postponing all work can let a front reach a mean maximum gap of many minutes
+beyond the intended race experience.
+
+The remaining design problem is to make an accepted break and the peloton's
+maintenance pace economical for the riders doing the work, while preserving
+a later coalition's ability to close on a fresh one-day field. A selective
+control policy should be evaluated together with the resulting road clock,
+helper energy, stable group membership and final catch, across seeds and
+roles. Re-labelling a chase as rest, adding a free gap adjustment, or using
+a fixed desired breakaway lead would not meet that test. Any new policy must
+be separately committed/versioned so existing v94 recordings replay exactly.
