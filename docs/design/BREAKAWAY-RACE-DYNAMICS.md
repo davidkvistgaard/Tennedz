@@ -596,6 +596,13 @@ improves the physical accounting but does not fix prolonged control chasing
 or establish a suitable player-facing race model. Reproduce with
 `node scripts/audit-race-dynamics-v94.mjs --planned-intent --validate --summary --extended-seeds --seed-batch=1 --front-rotation-v3`.
 
+A further 72-case 0/1/8-control-team stress audit for version 3 validated
+without refusal. It also exposed the remaining range: with no declared
+control team, mean maximum leads were 804 seconds one-day and 1,086 seconds
+stage; with one, 359 and 515 seconds; with eight, 174 and 226 seconds. These
+are constructed role extremes. Requiring a paid pull alone cannot choose a
+credible opposing-team composition or sustain an economical pursuit.
+
 ### Rival intent alone does not repair the live race
 
 `node scripts/audit-v91-rival-intent-counterfactual.mjs` applies two
