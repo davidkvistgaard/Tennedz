@@ -581,12 +581,16 @@ export default function Playtest({guided=false}){
     {names:commentaryNames}):[];
   const copyRaceLog=async()=>{
     if(!coasted)return;
+    const finishNote=coasted.lineTimes.length?
+      `${coasted.lineTimes.length} conditional rider crossings are recorded.`:
+      'No supported individual line crossing is available.';
     const log=[`Pelotonia Motor Lab race log — ${coasted.settings.distanceKm} km ${coasted.settings.terrain} · seed ${coasted.settings.seed}`,
-      '',...viewerCommentary.map(moment=>`Km ${moment.km}: ${moment.text}`)]
+      '',...viewerCommentary.map(moment=>`Km ${moment.km}: ${moment.text}`),
+      '',`Finish · ${coasted.settings.distanceKm} km: The final kilometre has a separate paid-road recording. ${finishNote} Official results and awards are withheld.`]
       .join('\n');
     try{
       await navigator.clipboard.writeText(log);
-      setRaceLogCopyStatus(`Copied ${viewerCommentary.length} lines`);
+      setRaceLogCopyStatus(`Copied ${viewerCommentary.length} events and finish note`);
     }catch{
       setRaceLogCopyStatus('Could not copy. Check clipboard permission.');
     }
@@ -1617,6 +1621,12 @@ export default function Playtest({guided=false}){
                       disabled={coastedKm>=coasted.kilometreFrames.length}
                       onClick={()=>selectRecordedKilometre(coastedKm+1)}>
                       Next km</button>
+                    <button type="button" onClick={()=>{
+                      setRaceScreenPlaying(false);
+                      setRaceScreenOpen(false);
+                      requestAnimationFrame(()=>document.getElementById(
+                        'v93-your-finish')?.scrollIntoView({block:'start'}));
+                    }}>{`View finish · ${coasted.settings.distanceKm} km`}</button>
                   </div>
                   <p>Play advances one recorded kilometre every 1.2 seconds.
                     All markers use the selected recorded kilometre. Time

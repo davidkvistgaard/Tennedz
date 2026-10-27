@@ -100,7 +100,7 @@
 .v91-race-screen-own-moments button{flex:none;max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding:5px 8px;border:1px solid #c8d9cd;border-radius:999px;background:#fff;color:#315b4d;font-size:.72rem;font-weight:700}
 .v91-race-screen-own-moments button[aria-current=step]{border-color:#116e60;background:#e7f4ed;color:#116e60}
 .v91-race-screen-route input[type=range]{width:100%;accent-color:#116e60}
-.v91-race-screen-controls{display:flex;justify-content:center;gap:8px;margin:8px 0}
+.v91-race-screen-controls{display:flex;flex-wrap:wrap;justify-content:center;gap:8px;margin:8px 0}
 .v91-race-screen-route p{margin:5px 0 0!important;font-size:.75rem;line-height:1.35}
 .v91-race-screen-story{display:flex;flex-direction:column}
 .v91-race-screen-section-head button,.v91-viewer-commentary>button{padding:7px 10px;border:1px solid #9bb9a8;border-radius:7px;background:white;color:#17312e;font-size:.78rem;font-weight:800;cursor:pointer}

@@ -65,6 +65,8 @@ test('guided Motor Lab runs a race from setup to rider replay',async({page,conte
   expect(copiedLog).toContain('Pelotonia Motor Lab race log');
   expect(copiedLines).toHaveLength(fullCommentary.length);
   expect(copiedLines.at(-1)).toContain(`Km ${fullCommentary.at(-1).km}:`);
+  expect(copiedLog).toContain('Finish · 40 km: The final kilometre');
+  expect(copiedLog).toContain('32 conditional rider crossings');
   await expect(raceScreen.locator('header h2')).toContainText('Km 1');
   await expect(raceScreen.getByRole('img',{
     name:/Stage profile with the field at km 1/})).toBeVisible();
@@ -122,8 +124,10 @@ test('guided Motor Lab runs a race from setup to rider replay',async({page,conte
     .getByRole('button',{name:/Rider 8/})).toBeInViewport();
   await page.screenshot({path:'test-results/guided-race-screen-desktop.png'});
   await page.setViewportSize({width:390,height:844});
-  await raceScreen.getByLabel('Choose recorded kilometre').fill('1');
-  await raceScreen.getByRole('button',{name:'Close race screen'}).click();
+  await raceScreen.getByRole('button',{name:'View finish · 40 km'}).click();
+  await expect(raceScreen).toHaveCount(0);
+  await expect(page.getByRole('region',{name:'Your v93 finish'}))
+    .toBeInViewport();
   await flow.getByRole('button',{name:'2 · Watch recorded race'}).click();
   await expect(page.getByRole('region',{name:'Race viewer'})).toBeVisible();
   await flow.getByRole('button',
@@ -134,6 +138,7 @@ test('guided Motor Lab runs a race from setup to rider replay',async({page,conte
     .toContainText(/widest recorded gap|No front road group was recorded/);
   await expect(page.getByLabel('What happened in your race'))
     .not.toContainText(/you-\d/);
+  await page.getByRole('slider',{name:/Recorded kilometre:/}).fill('1');
   const stageCard=page.getByLabel('Stage and orders at km 1');
   await expect(stageCard).toContainText('Stage input at km 1:');
   await expect(page.getByLabel('Recorded stage elevation profile'))
