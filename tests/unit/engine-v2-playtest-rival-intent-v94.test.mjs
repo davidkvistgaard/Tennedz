@@ -88,3 +88,24 @@ test('a declared rival goal commits a role and matching orders before racing',()
     format:'one_day',rivalGoals:[{teamId:'rival-1',role:'break'}]}),
   /Invalid or conflicting/);
 });
+
+test('a paid control chase lets non-working peloton teams rest without easing road pace',()=>{
+  const prepared=prepareV91Playtest({distanceKm:260,terrain:'flat',teamCount:20,
+    fatigue:0,attack:'none',chase:'ignore',seed:'manager-goal-1',
+    defaultRivalPlan:'passive'});
+  const plan=prepareV94RivalIntent({prepared,format:'one_day',
+    rivalGoals:[{teamId:'rival-1',role:'control'}]});
+  const race=simulateTacticalTour({stage:prepared.stage,weather:prepared.weather,
+    teams:plan.teams,seed:prepared.seed,
+    motorVersion:MOTOR_RACE_DYNAMICS_VERSION,raceContext:plan.raceContext,
+    rivalIntent:plan.intent});
+  const frame=race.frames[99];
+  assert.ok(frame.chasers.includes('rival-1'));
+  assert.deepEqual(frame.bunchEaseTeamIds,[]);
+  assert.ok(frame.pelotonRestTeamIds.length>=10);
+  assert.ok(frame.pelotonRestTeamIds.every(id=>!frame.chasers.includes(id)));
+  assert.equal(validateRecordedTour(race),true);
+  const forged=structuredClone(race);
+  forged.frames[99].pelotonRestTeamIds=[];
+  assert.throws(()=>validateRecordedTour(forged),/peloton rest/);
+});

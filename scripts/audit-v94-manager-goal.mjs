@@ -9,7 +9,8 @@ import {replayRaceDynamicsRecording} from
   '../lib/engine/v2/replay-race-dynamics-v94.mjs';
 import {MOTOR_RACE_DYNAMICS_VERSION} from '../lib/engine/v2/tuning.mjs';
 
-const seeds=process.argv.includes('--extended-seeds')?
+const single=process.argv.includes('--single');
+const seeds=single?['manager-goal-1']:process.argv.includes('--extended-seeds')?
   Array.from({length:12},(_,index)=>`manager-goal-holdout-${index+1}`):
   ['manager-goal-1','manager-goal-2','manager-goal-3'];
 const selectedTeamId='rival-1';
@@ -20,8 +21,9 @@ const average=(rows,key)=>{
     +(values.reduce((sum,value)=>sum+value,0)/values.length).toFixed(2):null;
 };
 
-for(const seed of seeds)for(const terrain of ['flat','mountain'])
-  for(const fatigue of [0,30])for(const format of ['one_day','stage']){
+for(const seed of seeds)for(const terrain of single?['flat']:['flat','mountain'])
+  for(const fatigue of single?[0]:[0,30])
+    for(const format of single?['one_day']:['one_day','stage']){
     const prepared=prepareV91Playtest({distanceKm:260,terrain,teamCount:20,
       fatigue,attack:'none',chase:'ignore',seed,
       defaultRivalPlan:'passive'});
@@ -56,6 +58,10 @@ for(const seed of seeds)for(const terrain of ['flat','mountain'])
         frame.km%10===0||frame.km===1).map(frame=>({km:frame.km,
         gapSeconds:frame.gapSeconds,
         leadingGapSeconds:frame.roadGroups?.[0]?.gapSeconds??null,
+        passiveGapDelta:frame.passiveGapDelta,
+        chasePower:frame.chasePower,
+        bunchEaseTeams:frame.bunchEaseTeamIds?.length??0,
+        frontRestRiders:frame.settledFrontRestRiderIds?.length??0,
         chasers:frame.chasers,
         held:frame.heldChaseTeamIds,
         contribution:frame.chaseContributions?.find(row=>row.teamId===selectedTeamId),

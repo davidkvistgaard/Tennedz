@@ -349,6 +349,30 @@ stages. Mean settled-front rest rose substantially, to 183–204 rider-km per
 case across the four format/fatigue sets. This is paid energy conservation,
 not a scripted lead or proof of realistic front pace. Control teams still
 chase for roughly 190 km in the paired audit, so that separate problem remains.
+The next internal v94 energy step separates *passive riders sitting in* from
+the road-clock easing of the whole bunch. Once the same leading group has
+survived long enough to measure its five-kilometre trend, non-attacking,
+non-chasing steady teams can conserve behind an active paid chase. The
+recording names those `pelotonRestTeamIds` independently of
+`bunchEaseTeamIds`; the latter still changes bunch road pace only when the
+field collectively eases with no chase. Workers, attackers, rotating front
+helpers and explicit all-out orders do not receive this rest. The validator
+derives the eligible teams from committed orders, actions and prior road
+state and rejects a forged rest roster. This is still internal and does not
+authenticate who occupies a particular wheel.
+The 24 paired goal cases all validated and replayed: one-day control-team
+chase fell from 193.7 to 172.3 team-km, with its mean energy at km 200 rising
+from 41.5 to 46.4; stage control chase fell from 189.7 to 173.8 team-km and
+energy rose from 46.1 to 51.1. These teams still spend much of the day
+chasing. In 96 held-out synthetic planned-intent cases, original-front full
+catches were 19/24 fresh and 17/24 tired one-day, versus 2/24 fresh and
+0/24 tired stages; all validated. In 96 held-out samples of current guided
+random rival orders, the counts were 10/24 and 4/24 one-day versus 7/24 and
+4/24 stages. Their mean maximum leads were only about 195–206 seconds in
+one-day cases, with roughly nine break-role teams per sample. This still
+does not establish the intended race experience or an empirically typical
+break. The unresolved work is credible opponent intent and selective
+long-range control, not a prescribed gap target.
 An optional v94-only, versioned intent manifest can now be committed to the
 race recording. It retains each team's role, opening order and whether the
 planner labelled it generated, manager-goal or explicit-manager input.
