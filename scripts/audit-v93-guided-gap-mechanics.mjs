@@ -42,9 +42,18 @@ function audit(seed,terrain,fatigue){
   const paidChaseKmByOrder=Object.fromEntries(['all','selective','ignore'].map(
     chase=>[chase,front.reduce((sum,frame)=>sum+frame.chasers.filter(
       teamId=>chaseOrderByTeam.get(teamId)===chase).length,0)]));
+  const paidSelectiveChaseKmByReason=Object.fromEntries(
+    ['fresh_attack','gap_over_limit','road_captain_response','gc_defense',
+      'gc_counter','fading_teammate','ordered_all'].map(reason=>[reason,
+      front.reduce((sum,frame)=>sum+frame.chaseReasons.filter(row=>
+        chaseOrderByTeam.get(row.teamId)==='selective'&&
+        row.reason===reason).length,0)]));
   if(Object.values(paidChaseKmByOrder).reduce((sum,value)=>sum+value,0)!==
     front.reduce((sum,frame)=>sum+frame.chasers.length,0))
     throw new Error('Unclassified paid chase order in guided audit.');
+  if(Object.values(paidSelectiveChaseKmByReason).reduce((sum,value)=>
+    sum+value,0)!==paidChaseKmByOrder.selective)
+    throw new Error('Unclassified selective chase reason in guided audit.');
   const rows=front.map(frame=>({
     passiveGapDelta:frame.passiveGapDelta,
     chasePower:frame.chasePower,
@@ -82,6 +91,7 @@ function audit(seed,terrain,fatigue){
       frame.gapSeconds>=60).length,
     chaseTeamKm:frames.reduce((sum,frame)=>sum+frame.chasers.length,0),
     paidChaseKmByOrder,
+    paidSelectiveChaseKmByReason,
     frontPullRiderKm:frames.reduce((sum,frame)=>sum+
       frame.pullRiderIds.length,0),
     meanFrontPassiveDelta:mean(rows.map(row=>row.passiveGapDelta)),

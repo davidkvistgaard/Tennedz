@@ -1169,3 +1169,10 @@ roster rather than counting orders as work; the numbers do not imply
 that all selective chases are mistaken. A candidate must change the
 decision to spend energy in response to the observed front and preserve
 direct manager, GC and emergency responses.
+The recorded reason labels split those 4,170 selective chase team-km
+into 1,078 against a fresh attack and 3,092 after the existing gap
+exceeded the current safe guard. None of these twelve synthetic inputs
+had a GC or road-captain response. The established-gap branch dominates
+the work, so changing only the first-kilometre attack reaction cannot
+resolve the observed short leads. This labels the paid decisions; it
+does not prove which individual chase kilometre changed the outcome.
