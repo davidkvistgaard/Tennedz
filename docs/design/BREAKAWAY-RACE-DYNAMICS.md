@@ -1100,3 +1100,20 @@ four or ten chase team-kilometres and recorded roughly 488–584 seconds of
 maximum lead. This optional rule saves pursuit work but can leave a long
 stage break largely unchallenged. It remains an experimental comparison,
 not a new default or a prescribed lead target.
+
+### Paid front-rotation comparison for the Motor Lab preview
+
+`node scripts/audit-v94-front-rotation-choice.mjs` compares the same four
+seeds, two formats and flat/fatigued mountain 20-team, 260 km races under
+two already versioned front-work policies. Each of the 32 complete
+recordings validates and source-replays. Active rotation (version 1) pays
+more cooperative front-rider turns and reaches a measured one-minute lead
+in all 16 paired scenarios; economy rotation (version 3, the previous
+preview default) does so in 11. For `sample-flat-finish` on a fatigued
+mountain one-day route, the active policy pays 1,296 front rider-km,
+reaches 126.85 seconds and is caught by the line; economy pays 672 and
+peaks at 39.2 seconds. The extra lead is an outcome of the paid roster
+and road clock, not a target assigned to the group. These synthetic pairs
+do not calibrate either policy to real racing. The preview now exposes
+both choices explicitly; the guided motor and saved results remain
+unchanged.

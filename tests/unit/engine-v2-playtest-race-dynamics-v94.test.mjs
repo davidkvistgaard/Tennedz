@@ -88,6 +88,9 @@ test('experimental preview rejects unsupported settings before simulation',()=>{
   assert.throws(()=>createV94RaceDynamicsPreview({format:'stage',
     controlWithdrawalVersion:3,settings:{distanceKm:40}}),
   /valid experimental race settings/);
+  assert.throws(()=>createV94RaceDynamicsPreview({format:'stage',
+    frontRotationVersion:2,settings:{distanceKm:40}}),
+  /valid experimental race settings/);
   assert.throws(()=>createV94RaceDynamicsPreview({format:'classic',
     settings:{distanceKm:40}}),/valid experimental race settings/);
   assert.throws(()=>createV94RaceDynamicsPreview({format:'stage',
@@ -100,6 +103,23 @@ test('experimental preview rejects unsupported settings before simulation',()=>{
     settings:{distanceKm:40,teamCount:4},
     rivalGoals:[{teamId:'rival-20',role:'break'}]}),
   /valid rival goals/);
+});
+
+test('paid active break rotation can establish a measured minute lead',()=>{
+  const input={format:'one_day',settings:{distanceKm:260,terrain:'mountain',
+    teamCount:20,gender:'M',fatigue:0,effort:'steady',attack:'none',
+    chase:'selective',seed:'sample-flat-finish'}};
+  const economy=createV94RaceDynamicsPreview(input);
+  const active=createV94RaceDynamicsPreview({...input,
+    frontRotationVersion:1});
+  assert.equal(economy.preview.story.kilometresAtOrAboveOneMinute,0);
+  assert.ok(active.preview.story.kilometresAtOrAboveOneMinute>0);
+  assert.ok(active.recording.frames.reduce((count,frame)=>
+    count+frame.roadGroupWorkerRiderIds.length,0)>
+    economy.recording.frames.reduce((count,frame)=>
+      count+frame.roadGroupWorkerRiderIds.length,0));
+  assert.equal(active.preview.policy.frontRotationVersion,1);
+  assert.equal(active.preview.resultStatus,'provisional_road_groups_only');
 });
 
 test('own paid front-work choice is committed without changing rival plans',()=>{

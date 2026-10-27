@@ -94,7 +94,8 @@ async function handler(request,_context,auth){
     if(input.mode==='v94-race-dynamics'){
       if(Object.keys(input).some(key=>
         !['mode','settings','format','rivalGoals',
-          'controlWithdrawalVersion','ownFrontWork'].includes(key)))
+          'controlWithdrawalVersion','frontRotationVersion',
+          'ownFrontWork'].includes(key)))
         return NextResponse.json({ok:false,error:'Invalid race preview request.'},
           {status:400});
       try{

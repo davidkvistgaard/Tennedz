@@ -24,6 +24,7 @@ test('experimental v94 race shows committed plans and measured road only',
     await page.getByText('Set more rival goals').click();
     await page.getByLabel('Fictional rival 2 goal').selectOption('control');
     await page.getByLabel('Control-team pursuit').selectOption('2');
+    await page.getByLabel('Breakaway front work').selectOption('1');
     expect((await page.getByLabel('Control-team pursuit').boundingBox()).width)
       .toBeGreaterThan(300);
     const responsePromise=page.waitForResponse(response=>
@@ -39,6 +40,9 @@ test('experimental v94 race shows committed plans and measured road only',
     expect(raceDynamics.resultStatus).toBe('provisional_road_groups_only');
     expect(raceDynamics.policy.rivalIntentVersion).toBe(4);
     expect(raceDynamics.policy.controlWithdrawalVersion).toBe(2);
+    expect(raceDynamics.policy.frontRotationVersion).toBe(1);
+    await expect(page.getByText('active paid rotation',
+      {exact:true})).toBeVisible();
     await expect(page.getByText('experimental impossible-pursuit withdrawal',
       {exact:false})).toBeVisible();
     expect(raceDynamics.provisionalResults).toBeUndefined();
@@ -80,6 +84,7 @@ test('experimental v94 race shows committed plans and measured road only',
     await page.getByLabel('Race format').selectOption('one_day');
     await page.getByLabel('Fictional rival 1 goal').selectOption('auto');
     await page.getByLabel('Control-team pursuit').selectOption('1');
+    await page.getByLabel('Breakaway front work').selectOption('3');
     await page.getByLabel('Your chase order').selectOption('ignore');
     await page.getByLabel('Your bunch-front work').selectOption('rotate');
     await page.getByLabel('Race seed').fill('race-dynamics-1');
