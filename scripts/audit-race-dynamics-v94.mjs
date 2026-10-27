@@ -65,13 +65,20 @@ function run({seed,terrain,fatigue,format,breakTeams,controlTeams}){
     Object.values(teamRoles).filter(role=>role==='break').length:breakTeams;
   const intendedControlTeams=mixedDefaults||guidedRandom||plannedIntent?
     Object.values(teamRoles).filter(role=>role==='control').length:controlTeams;
+  // Read-only counterfactual. The planner does not currently commit this
+  // front-work order, so omit its intent manifest rather than misstate source.
+  const allControlTempo=process.argv.includes('--all-control-tempo');
+  const committedTeams=allControlTempo?teams.map(team=>
+    teamRoles[team.id]==='control'&&team.id!=='you'?{...team,
+      orders:{...team.orders,baseline:{...team.orders.baseline,
+        frontWork:'rotate'}}}:team):teams;
   const baseRaceContext=planned?.raceContext??
     {format,...(format==='stage'?{stageNumber:8}:{}),teamRoles,
       ...(frontRotationVersion===1?{}:{frontRotationVersion})};
   const recording=simulateTacticalTour({stage:prepared.stage,
-    weather:prepared.weather,teams,seed:prepared.seed,
+    weather:prepared.weather,teams:committedTeams,seed:prepared.seed,
     motorVersion:MOTOR_RACE_DYNAMICS_VERSION,
-    rivalIntent:planned?.intent??null,
+    rivalIntent:allControlTempo?null:planned?.intent??null,
     raceContext:{...baseRaceContext,
       ...(collectiveControl?{controlPursuitVersion:2}:{}),
       ...(frontExhaustionVersion>=2?{frontExhaustionVersion}:{}),
@@ -132,6 +139,8 @@ function run({seed,terrain,fatigue,format,breakTeams,controlTeams}){
     gapAt210Seconds:frames[209].gapSeconds,
     gapAt220Seconds:frames[219].gapSeconds,
     chasedTeamKilometres:frames.reduce((sum,frame)=>sum+frame.chasers.length,0),
+    controlFrontWorkTeamKilometres:frames.filter(frame=>
+      teamRoles[frame.paidBunchPace?.teamId]==='control').length,
     settledFrontRestRiderKilometres:frames.reduce((sum,frame)=>
       sum+frame.settledFrontRestRiderIds.length,0),
     firstSettledFrontKm:frames.find(frame=>
@@ -222,6 +231,8 @@ const summary=process.argv.includes('--summary')?
       meanBreakRoleDistinctAttackers:average('breakRoleDistinctAttackers'),
       meanBreakEnergyAtFinaleStart:average('breakEnergyAtFinaleStart'),
       meanControlEnergyAtFinaleStart:average('controlEnergyAtFinaleStart'),
+      meanControlFrontWorkTeamKm:average('controlFrontWorkTeamKilometres'),
+      meanEarlyControlChasedTeamKm:average('earlyControlChasedTeamKilometres'),
       meanFrontUnmetRiderKm:average('frontUnmetRiderKilometres'),
       meanFrontCoastRiderKm:average('frontCoastRiderKilometres'),
       allInitialFrontCaught:completed.filter(row=>row.initialFrontRiders>0&&
@@ -235,4 +246,5 @@ console.log(JSON.stringify({version:MOTOR_RACE_DYNAMICS_VERSION,
   frontRotationVersion,controlPursuitVersion:collectiveControl?2:1,
   frontExhaustionVersion,
   note:'Internal opt-in role scenarios, not observed race calibration or official results.',
+  allControlTempo:process.argv.includes('--all-control-tempo'),
   ...(summary?{summary}:{rows})},null,2));

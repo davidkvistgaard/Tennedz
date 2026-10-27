@@ -431,6 +431,24 @@ fell from 51.94 to 45.31. One locked race had zero kilometres with both
 actions charged to the same team. This buys road-clock control, but does not
 solve the long-day energy problem: the team works in nearly every kilometre.
 It should not become an automatic rival order based on this experiment.
+The separate read-only `--all-control-tempo` audit gives every generated
+control-role rival a committed `rotate` bunch-front order while retaining
+its selective-chase order; it omits the rival-intent manifest because the
+planner does not yet generate that combination. Across the same 24
+20-team/260 km planned-intent cases, all recordings validate. Fresh
+one-day controls pay a mean 117.33 bunch-front team-km and 171.83 early
+chase team-km, versus zero front work and 315.83 early chase team-km under
+the existing plan. Mean maximum lead is 367.56 versus 397.94 seconds and
+control-team energy at km 210 is 49.83 versus 49.58. Fatigued one-day
+cases pay 112.83 front and 188 early chase team-km, with energy 36.84
+versus 35.25. Stage cases likewise replace about half the early chase
+with paid rotating front work and slightly improve control energy, while
+the original front still often survives. This is a plausible shared-work
+direction, not a final plan: a collective control team still works through
+much of the race, and no-control extreme role mixes remain implausible.
+Reproduce with `node scripts/audit-race-dynamics-v94.mjs --planned-intent
+--all-control-tempo --validate --summary` and compare the run without
+`--all-control-tempo`.
 A second, rejected v94-only control-decision experiment projected whether
 the available control teams together could close a stable front after the
 current route's passive break advantage. It changed only when selective
