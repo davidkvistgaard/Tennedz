@@ -84,6 +84,14 @@ test('guided Motor Lab runs a race from setup to rider replay',async({page,conte
   await raceScreen.getByRole('button',{name:'Pause',exact:true}).click();
   await page.waitForTimeout(1500);
   await expect(raceScreen.locator('header h2')).toContainText('Km 3');
+  const firstEvent=raceScreen.getByRole('list',{
+    name:'Recent commentary history'}).getByRole('button',{
+    name:/^Km 1 /}).first();
+  await firstEvent.click();
+  await expect(raceScreen.locator('header h2')).toContainText('Km 1');
+  await expect(firstEvent).toHaveAttribute('aria-current','step');
+  await expect(raceScreen.getByLabel('Choose recorded kilometre'))
+    .toHaveValue('1');
   await raceScreen.getByLabel('Choose recorded kilometre').fill(
     String(coasted.kilometreFrames.length));
   await raceScreen.getByRole('button',{name:'Replay'}).click();
@@ -265,6 +273,7 @@ test('guided race diagram shows paid front-group time gaps',async({page})=>{
     name:"Your riders' recorded race moments"});
   const ownMomentButton=ownMomentNav.getByRole('button',{
     name:new RegExp(`^Km ${nextOwnEvent.km} ·`)});
+  await expect(ownMomentButton).toHaveAttribute('title',/Rider \d/);
   await ownMomentButton.click();
   await expect(ownMomentButton).toHaveAttribute('aria-current','step');
   await expect(raceScreen.getByLabel('Choose recorded kilometre'))
@@ -415,6 +424,9 @@ test('guided Motor Lab applies an effort order after a selected 5 km marker', as
   await expect(page).toHaveURL(/\/team$/);
   await page.goto('/team/motor-lab');
   await page.getByLabel('Route profile').selectOption('rolling');
+  await page.locator('summary').filter({hasText:'Other managers'}).click();
+  await page.getByLabel('Default tactics for uncustomized managers')
+    .selectOption('passive');
   const stageResponsePromise=page.waitForResponse(response=>
     response.url().endsWith('/api/v91-playtest/stage-plan')&&
     response.request().method()==='POST');

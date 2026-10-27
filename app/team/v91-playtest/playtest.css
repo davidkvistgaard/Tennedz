@@ -106,8 +106,10 @@
 .v91-race-log-copy-status:not(:empty){display:block;margin:0 0 6px;color:#116e60;font-size:.76rem;font-weight:700}
 .v91-race-screen-story>p{margin:0 0 8px!important;font-size:.78rem}
 .v91-race-screen-events{display:grid;gap:6px;max-height:240px;margin:0;padding:0;list-style:none;overflow:auto}
-.v91-race-screen-events li{display:grid;gap:3px;padding:7px 9px;border:1px solid #d4e1d7;border-radius:7px;background:white;line-height:1.35}
+.v91-race-screen-events li{border:1px solid #d4e1d7;border-radius:7px;background:white;line-height:1.35}
 .v91-race-screen-events li.v91-race-screen-event-current{border-color:#7aa492;background:#e7f4ed}
+.v91-race-screen-events li button{display:grid;gap:3px;width:100%;padding:7px 9px;border:0;background:transparent;color:inherit;text-align:left;cursor:pointer}
+.v91-race-screen-events li button:focus-visible{outline:2px solid #116e60;outline-offset:2px}
 .v91-race-screen-events strong{font-size:.72rem;color:#116e60}
 .v91-race-screen-events span{font-size:.82rem}
 .v91-race-screen-stage{display:grid;gap:3px;margin-top:auto;padding-top:10px;border-top:1px solid #d4e1d7;font-size:.78rem;color:#526b63}

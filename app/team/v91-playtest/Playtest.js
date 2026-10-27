@@ -437,6 +437,8 @@ export default function Playtest({guided=false}){
     viewerRiderId):[],[coasted,viewerRiderId]);
   const raceScreenOwnMoments=coastedViewer.filter(checkpoint=>
     checkpoint.moments.length>0);
+  const readableOwnMoment=message=>message.replace(/\byou-(\d+)\b/g,
+    (_,index)=>`Rider ${Number(index)+1}`);
   const viewerTrackRef=useRef(null);
   const raceScreenRef=useRef(null);
   const previousCheckpoint=[...coastedViewer].reverse()
@@ -1563,10 +1565,10 @@ export default function Playtest({guided=false}){
                     {raceScreenOwnMoments.map(checkpoint=><button
                       type="button" key={checkpoint.km}
                       aria-current={checkpoint.km===coastedKm?'step':undefined}
-                      title={checkpoint.moments.join(' · ')}
+                      title={checkpoint.moments.map(readableOwnMoment).join(' · ')}
                       onClick={()=>selectRecordedKilometre(checkpoint.km)}>
                       Km {checkpoint.km} · {checkpoint.moments.length===1?
-                        checkpoint.moments[0]:
+                        readableOwnMoment(checkpoint.moments[0]):
                         `${checkpoint.moments.length} own events`}
                     </button>)}
                   </nav>}
@@ -1619,9 +1621,13 @@ export default function Playtest({guided=false}){
                       key={`${moment.index}-${moment.kind}-${index}`}
                       className={moment.km===coastedKm?
                         'v91-race-screen-event-current':''}>
-                      <strong>Km {moment.km}{moment.km===coastedKm?
-                        ' · Now':''}</strong>
-                      <span>{moment.text}</span>
+                      <button type="button"
+                        aria-current={moment.km===coastedKm?'step':undefined}
+                        onClick={()=>selectRecordedKilometre(moment.km)}>
+                        <strong>Km {moment.km}{moment.km===coastedKm?
+                          ' · Now':''}</strong>
+                        <span>{moment.text}</span>
+                      </button>
                     </li>)}</ol>:
                     <p>No recorded events yet.</p>}
                   <div className="v91-race-screen-stage">
