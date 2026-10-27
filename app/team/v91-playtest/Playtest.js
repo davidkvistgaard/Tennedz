@@ -897,9 +897,8 @@ export default function Playtest({guided=false}){
       <p className="v91-warning">This is a fictional preview. Results and points are for inspection only; no official result or award is saved.</p>
       {guided&&<p><a href="/team/motor-lab/race-dynamics">Try the separate
         experimental whole-race dynamics preview</a>. It shows recorded
-        group gaps and work without individual places or awards. To compare
-        breakaway behaviour, reuse the seed and choose active paid front
-        rotation there.</p>}
+        group gaps and paid breakaway work without individual places or
+        awards. Reuse the seed to compare the recorded road.</p>}
       {guided&&<nav className="v91-flow-nav" aria-label="Motor Lab race flow">
         <button type="button" onClick={()=>{
           setCheckpointPlaying(false);

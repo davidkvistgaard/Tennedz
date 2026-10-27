@@ -1114,6 +1114,6 @@ mountain one-day route, the active policy pays 1,296 front rider-km,
 reaches 126.85 seconds and is caught by the line; economy pays 672 and
 peaks at 39.2 seconds. The extra lead is an outcome of the paid roster
 and road clock, not a target assigned to the group. These synthetic pairs
-do not calibrate either policy to real racing. The preview now exposes
-both choices explicitly; the guided motor and saved results remain
-unchanged.
+do not calibrate either policy to real racing. Active rotation is now the
+single policy in the experimental preview; the comparison remains
+read-only, while the guided motor and saved results remain unchanged.

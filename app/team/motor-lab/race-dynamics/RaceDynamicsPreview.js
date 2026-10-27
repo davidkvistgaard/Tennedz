@@ -5,8 +5,7 @@ import {api} from '../../../../lib/api';
 
 const INITIAL={format:'one_day',distanceKm:260,terrain:'flat',teamCount:20,
   gender:'M',fatigue:0,effort:'steady',attack:'none',chase:'selective',
-  rivalOneGoal:'auto',controlWithdrawalVersion:1,frontRotationVersion:3,
-  ownFrontWork:'none',
+  rivalOneGoal:'auto',controlWithdrawalVersion:1,ownFrontWork:'none',
   seed:'race-dynamics-preview-1'};
 const OPTIONS={format:[['one_day','One-day race'],['stage','Stage race']],
   distanceKm:[[40,'40 km'],[120,'120 km'],[260,'260 km']],
@@ -23,16 +22,13 @@ const OPTIONS={format:[['one_day','One-day race'],['stage','Stage race']],
     ['control','Control'],['protect','Protect'],
     ['opportunistic','Opportunistic']],
   controlWithdrawalVersion:[[1,'Current selective pursuit'],
-    [2,'Try impossible-pursuit withdrawal']],
-  frontRotationVersion:[[3,'Economy: one paid puller after settling'],
-    [1,'Active: more riders share paid pulls']]};
+    [2,'Try impossible-pursuit withdrawal']]};
 const LABELS={format:'Race format',distanceKm:'Distance',terrain:'Route',
   teamCount:'Field',gender:'Category',fatigue:'Starting fatigue',
   effort:'Your effort',attack:'Your attack order',chase:'Your chase order',
   ownFrontWork:'Your bunch-front work',
   rivalOneGoal:'Fictional rival 1 goal',
-  controlWithdrawalVersion:'Control-team pursuit',
-  frontRotationVersion:'Breakaway front work'};
+  controlWithdrawalVersion:'Control-team pursuit'};
 const time=seconds=>{
   const rounded=Math.round(Number(seconds)*10)/10;
   if(rounded<60)return `${rounded.toFixed(1)}s`;
@@ -107,13 +103,12 @@ export default function RaceDynamicsPreview(){
     .map(row=>row.km)??[];
   const setChoice=(key,value)=>setSettings(current=>({...current,
     [key]:['distanceKm','teamCount','fatigue',
-      'controlWithdrawalVersion','frontRotationVersion'].includes(key)?
+      'controlWithdrawalVersion'].includes(key)?
       Number(value):value}));
   async function run(event){
     event.preventDefault();setBusy(true);setError('');setPreview(null);
     try{
-      const {format,rivalOneGoal,controlWithdrawalVersion,
-        frontRotationVersion,ownFrontWork,
+      const {format,rivalOneGoal,controlWithdrawalVersion,ownFrontWork,
         ...raceSettings}=settings;
       const rivalGoals=[
         ...(rivalOneGoal==='auto'?[]:[{teamId:'rival-1',role:rivalOneGoal}]),
@@ -124,7 +119,7 @@ export default function RaceDynamicsPreview(){
       const response=await api('/api/v91-playtest',{method:'POST',
         headers:{'Content-Type':'application/json'},
         body:JSON.stringify({mode:'v94-race-dynamics',format,
-          controlWithdrawalVersion,frontRotationVersion,ownFrontWork,
+          controlWithdrawalVersion,ownFrontWork,
           settings:raceSettings,rivalGoals}),
         signal:AbortSignal.timeout(60_000)});
       setPreview(response.raceDynamics);setKm(1);
@@ -176,10 +171,9 @@ export default function RaceDynamicsPreview(){
         <p className="v94-goal-note">The optional withdrawal rule lets a
           control team stop paying for a chase when its recorded catch
           projection is impossible. The lead may grow much larger.</p>
-        <p className="v94-goal-note">Active breakaway rotation shares more
-          paid pulls among riders in a settled front group. It can build a
-          larger lead and spend more energy; it does not guarantee a gap or
-          a result. Economy rotation keeps one paid puller.</p>
+        <p className="v94-goal-note">Riders in a settled breakaway share
+          paid pulls. This can build a larger lead and spend more energy;
+          it does not guarantee a gap or a result.</p>
         <p className="v94-goal-note">A standing bunch-front order spends your
           eligible helpers' reserve on kilometres when they are selected to
           pace. Inspect the paid work before treating a long effort as free.</p>
@@ -199,8 +193,7 @@ export default function RaceDynamicsPreview(){
             <strong>{preview.policy.controlWithdrawalVersion===2?
               'experimental impossible-pursuit withdrawal':
               'current selective pursuit'}</strong>.</p>
-          <p>Breakaway work: <strong>{preview.policy.frontRotationVersion===1?
-            'active paid rotation':'economy paid rotation'}</strong>.</p>
+          <p>Breakaway work: <strong>active paid rotation</strong>.</p>
           <p>Front exhaustion: <strong>paid coast and group contact, version {
             preview.policy.frontExhaustionVersion}</strong>.</p>
           <p>{preview.story.widestRecordedLead.km>0?<>

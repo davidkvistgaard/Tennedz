@@ -12,7 +12,7 @@ test('experimental race preview exposes committed intent and paid road only',()=
   assert.equal(preview.teamPlans.length,20);
   assert.equal(preview.resultStatus,'provisional_road_groups_only');
   assert.equal(preview.policy.rivalIntentVersion,4);
-  assert.equal(preview.policy.frontRotationVersion,3);
+  assert.equal(preview.policy.frontRotationVersion,1);
   assert.equal(preview.policy.controlPursuitVersion,2);
   assert.equal(preview.policy.frontExhaustionVersion,4);
   assert.equal(preview.policy.controlWithdrawalVersion,undefined);
@@ -64,13 +64,14 @@ test('rounded work ledger preserves an exact paid mountain coast',()=>{
     gender:'M',fatigue:30,seed:'preview-cross-2',effort:'hard',
     attack:'repeated',chase:'all'};
   const seeded=createV94RaceDynamicsPreview({format:'one_day',
+    frontRotationVersion:3,
     settings:{...settings,effort:'steady',attack:'none',
       chase:'selective'}}).preview;
   const rivalGoals=seeded.teamPlans.filter(plan=>plan.teamId!=='you')
     .map(plan=>({teamId:plan.teamId,
       role:plan.role==='control'?'protect':plan.role}));
   const {recording,preview}=createV94RaceDynamicsPreview({format:'one_day',
-    settings,rivalGoals});
+    frontRotationVersion:3,settings,rivalGoals});
   assert.equal(preview.frames[225].frontCoast[0].riderId,'you-7');
   assert.equal(preview.frames[225].frontCoast[0].delaySeconds,18.624);
   const forged=structuredClone(recording);
@@ -109,9 +110,9 @@ test('paid active break rotation can establish a measured minute lead',()=>{
   const input={format:'one_day',settings:{distanceKm:260,terrain:'mountain',
     teamCount:20,gender:'M',fatigue:0,effort:'steady',attack:'none',
     chase:'selective',seed:'sample-flat-finish'}};
-  const economy=createV94RaceDynamicsPreview(input);
-  const active=createV94RaceDynamicsPreview({...input,
-    frontRotationVersion:1});
+  const economy=createV94RaceDynamicsPreview({...input,
+    frontRotationVersion:3});
+  const active=createV94RaceDynamicsPreview(input);
   assert.equal(economy.preview.story.kilometresAtOrAboveOneMinute,0);
   assert.ok(active.preview.story.kilometresAtOrAboveOneMinute>0);
   assert.ok(active.recording.frames.reduce((count,frame)=>
