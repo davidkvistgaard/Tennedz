@@ -11,6 +11,10 @@ import {MOTOR_RACE_DYNAMICS_VERSION,MOTOR_EXHAUSTION_COAST_VERSION} from
   '../../lib/engine/v2/tuning.mjs';
 import {resolveRandomRivalTactics} from
   '../../lib/engine/v2/playtest-rival-random.mjs';
+import {prepareV94RivalIntent} from
+  '../../lib/engine/v2/playtest-rival-intent-v94.mjs';
+import {replayRaceDynamicsRecording} from
+  '../../lib/engine/v2/replay-race-dynamics-v94.mjs';
 
 function seededRandom(label){
   let state=2166136261;
@@ -26,6 +30,10 @@ test('race format is explicit and stage number cannot leak into a one-day race',
   assert.throws(()=>normalizeRaceContext({format:'stage'}),/Invalid race context/);
   assert.throws(()=>normalizeRaceContext({format:'one_day',stageNumber:1}),
     /Invalid race context/);
+  assert.deepEqual(normalizeRaceContext({format:'one_day',
+    frontRotationVersion:2}),{format:'one_day',frontRotationVersion:2});
+  assert.throws(()=>normalizeRaceContext({format:'one_day',
+    frontRotationVersion:3}),/Invalid race context/);
 });
 
 test('catch estimate is a consequence of paid relative road speed',()=>{
@@ -68,6 +76,45 @@ test('a stable front shares maintenance turns, but urgent and declared work stay
   assert.deepEqual(settledFrontRotation({...input,priorChaserCount:1,
     observedClosingSecondsPerKm:2}),
   {pullRiderIds:input.pullRiderIds,restRiderIds:[]});
+});
+
+test('opt-in front rotation pays fewer pulls without changing the old policy',()=>{
+  const input={frontGroup:{id:'road-1',riderIds:['a','b','c','d','e'],
+    gapSeconds:120},pullRiderIds:['a','b','c','d','e','rear'],
+    driveRiderIds:['e'],km:20,remainingKm:150,
+    observedClosingSecondsPerKm:-1,priorChaserCount:0};
+  assert.deepEqual(settledFrontRotation({...input,policyVersion:2}),{
+    pullRiderIds:['e','rear'],restRiderIds:['a','b','c','d']});
+  const challenged=settledFrontRotation({...input,policyVersion:2,
+    priorChaserCount:1});
+  assert.equal(challenged.pullRiderIds.length,3);
+  assert.ok(challenged.pullRiderIds.includes('e'));
+  assert.deepEqual(settledFrontRotation({...input,policyVersion:2,
+    observedClosingSecondsPerKm:1}),{
+    pullRiderIds:input.pullRiderIds,restRiderIds:[]});
+  assert.equal(settledFrontRotation(input).pullRiderIds.length,4);
+});
+
+test('opt-in front rotation is committed, validated and source-replayable',()=>{
+  const prepared=prepareV91Playtest({distanceKm:120,terrain:'flat',
+    teamCount:20,attack:'none',chase:'ignore',seed:'v94-rotation-2',
+    defaultRivalPlan:'passive'});
+  const plan=prepareV94RivalIntent({prepared,format:'one_day',
+    rivalGoals:Array.from({length:5},(_,index)=>({teamId:
+      `rival-${index+1}`,role:'break'})),frontRotationVersion:2});
+  const race=simulateTacticalTour({stage:prepared.stage,
+    weather:prepared.weather,teams:plan.teams,seed:prepared.seed,
+    motorVersion:MOTOR_RACE_DYNAMICS_VERSION,
+    raceContext:plan.raceContext,rivalIntent:plan.intent});
+  assert.equal(race.committedInputs.raceContext.frontRotationVersion,2);
+  assert.ok(race.frames.some(frame=>
+    frame.settledFrontRestRiderIds.length>=3));
+  assert.equal(validateRecordedTour(race),true);
+  assert.ok(replayRaceDynamicsRecording(race));
+  const switched=structuredClone(race);
+  switched.committedInputs.raceContext.frontRotationVersion=1;
+  assert.throws(()=>validateRecordedTour(switched),
+    /Invalid recorded settled-front work/);
 });
 
 test('break composition records whose interests are affected without declaring a chase',()=>{

@@ -12,6 +12,7 @@ import {MOTOR_RACE_DYNAMICS_VERSION} from '../lib/engine/v2/tuning.mjs';
 
 const single=process.argv.includes('--single');
 const tempo=process.argv.includes('--control-tempo');
+const frontRotationVersion=process.argv.includes('--front-rotation-v2')?2:1;
 const seeds=single?['manager-goal-1']:process.argv.includes('--extended-seeds')?
   Array.from({length:12},(_,index)=>`manager-goal-holdout-${index+1}`):
   ['manager-goal-1','manager-goal-2','manager-goal-3'];
@@ -34,6 +35,7 @@ for(const seed of seeds)for(const terrain of single?['flat']:['flat','mountain']
     for(const role of tempo?['break','control','control_tempo']:['break','control']){
       const plan=prepareV94RivalIntent({prepared,format,
         ...(format==='stage'?{stageNumber:8}:{}),
+        frontRotationVersion,
         rivalGoals:[{teamId:selectedTeamId,role:role==='control_tempo'?'control':role}]});
       const teams=role==='control_tempo'?plan.teams.map(team=>
         team.id===selectedTeamId?{...team,orders:{...team.orders,
@@ -134,5 +136,6 @@ const summary=['one_day','stage'].map(format=>{
     refusals:sample.length-completed.length};
 });
 console.log(JSON.stringify({note:'Internal paired synthetic manager-goal audit, not official results.',
+  frontRotationVersion,
   summary,...(timeline?{timeline}:{}),
   ...(process.argv.includes('--rows')?{rows}:{})},null,2));

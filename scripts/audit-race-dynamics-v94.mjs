@@ -16,6 +16,7 @@ if(batchArg&&(!batchMatch||!process.argv.includes('--extended-seeds')))
   throw new Error('Use --seed-batch=1, 2 or 3 with --extended-seeds.');
 const holdoutSeeds=Array.from({length:12},(_,index)=>
   `race-dynamics-holdout-${index+1}`);
+const frontRotationVersion=process.argv.includes('--front-rotation-v2')?2:1;
 const seeds=process.argv.includes('--extended-seeds')?
   batchMatch?holdoutSeeds.slice((Number(batchMatch[1])-1)*4,
     Number(batchMatch[1])*4):holdoutSeeds:
@@ -45,6 +46,7 @@ function run({seed,terrain,fatigue,format,breakTeams,controlTeams}){
   const prepared=prepareV91Playtest({distanceKm:260,terrain,teamCount,
     fatigue,attack:'none',chase:'ignore',seed,managerTactics});
   const planned=plannedIntent?prepareV94RivalIntent({prepared,format,
+    frontRotationVersion,
     ...(format==='stage'?{stageNumber:8}:{})}):null;
   const teams=planned?.teams??prepared.teams;
   const teamRoles=planned?.raceContext.teamRoles??Object.fromEntries(teams.map((team,index)=>[
@@ -64,7 +66,8 @@ function run({seed,terrain,fatigue,format,breakTeams,controlTeams}){
     motorVersion:MOTOR_RACE_DYNAMICS_VERSION,
     rivalIntent:planned?.intent??null,
     raceContext:planned?.raceContext??
-      {format,...(format==='stage'?{stageNumber:8}:{}),teamRoles}});
+      {format,...(format==='stage'?{stageNumber:8}:{}),teamRoles,
+        ...(frontRotationVersion===1?{}:{frontRotationVersion})}});
   if(process.argv.includes('--validate'))validateRecordedTour(recording);
   if(process.argv.includes('--replay'))replayRaceDynamicsRecording(recording);
   const frames=recording.frames;
@@ -218,5 +221,6 @@ const summary=process.argv.includes('--summary')?
       refusals:sample.filter(row=>row.refusal).length};
   })).filter(Boolean):null;
 console.log(JSON.stringify({version:MOTOR_RACE_DYNAMICS_VERSION,
+  frontRotationVersion,
   note:'Internal opt-in role scenarios, not observed race calibration or official results.',
   ...(summary?{summary}:{rows})},null,2));

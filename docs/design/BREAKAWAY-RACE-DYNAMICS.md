@@ -538,3 +538,36 @@ helper energy, stable group membership and final catch, across seeds and
 roles. Re-labelling a chase as rest, adding a free gap adjustment, or using
 a fixed desired breakaway lead would not meet that test. Any new policy must
 be separately committed/versioned so existing v94 recordings replay exactly.
+
+### Opt-in front rotation experiment
+
+`raceContext.frontRotationVersion: 2` is an internal, separately committed
+experiment. Omission still means version 1 and replays earlier v94 recordings
+unchanged. After five observed kilometres with the same leading group, no
+measured closing and no prior chase, cooperative riders can all sit on for
+one kilometre; an active but non-closing chase leaves one rotating maintenance
+worker. A measured closing gap restores all willing workers. A declared
+`drive` rider never rests. The road-group pace and every rider's energy are
+then recalculated from this actual worker roster; the policy does not assign
+a gap or a catch. It is available only through explicit internal inputs and
+the `--front-rotation-v2` audit flag, not the guided Motor Lab.
+
+In 24 same-source manager-goal pairs with validation and deterministic replay,
+one-day control chase fell from 143.17 to 137.17 team-km, its mean energy at
+km 200 rose from 52.52 to 54.63 and the mean maximum lead fell from 177.79
+to 166.28 seconds. The stage control case moved the other way: chase rose
+from 169.42 to 183.92 team-km and km-200 energy fell from 51.94 to 49.81.
+The original break-goal team's maximum lead fell in both formats. This is not
+a general control solution.
+
+Across 96 *new-seed* planned-intent cases, all recordings validated with no
+unpaid front rider-kilometres. The initial front was fully caught in 21/24
+fresh and 17/24 tired one-day cases, compared with 3/24 fresh and 4/24 tired
+stage cases. Mean maximum gaps were approximately 227, 210, 322 and 304
+seconds respectively. These are synthetic role mixes, not measured cycling
+frequencies. The 72-case 0/1/8-control stress audit also validated without
+refusal, but no-control mean maximum gaps remained 625 seconds one-day and
+909 seconds stage; one-control one-day cases caught the initial front 12/12.
+The extreme mixes are not yet credible enough for player-facing defaults.
+No whole-race result, occupied-wheel order or official award follows from
+this bounded motor experiment.
