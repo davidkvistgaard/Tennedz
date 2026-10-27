@@ -135,7 +135,9 @@ export default function RaceDynamicsPreview(){
         before the start; the same seed and settings repeat the same field.</p>
       <p className="v94-caution">This preview records group movement and
         paid work. Individual finishing places, points and awards are not
-        determined here or saved as official results.</p>
+        determined here or saved as official results. Race dynamics are still
+        being calibrated: long chases and unusually large or short leads can
+        occur. Keep the seed when sharing feedback so the run can be repeated.</p>
       <form onSubmit={run} className="v94-form">
         {Object.entries(OPTIONS).map(([key,options])=><label key={key}
           className={key==='controlWithdrawalVersion'?'v94-policy-choice':
