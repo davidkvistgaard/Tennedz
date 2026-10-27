@@ -1159,3 +1159,13 @@ paid chase also targets captain-free road groups (0–529
 team-km across the twelve runs), while other front groups contain
 captains. A rule that merely ignores helper-only fronts would therefore
 leave much of the measured suppression untouched.
+Separating the actually paid chase team-kilometres during front-group
+kilometres by the teams' committed baseline orders shows why a planner
+change alone is insufficient: `selective` orders account for 21–889
+team-km per race, versus 0–206 from `all`. In the locked fatigued
+mountain case with no `all` chaser, selective teams still pay 332
+team-km while a front exists. The audit classifies the recorded chase
+roster rather than counting orders as work; the numbers do not imply
+that all selective chases are mistaken. A candidate must change the
+decision to spend energy in response to the observed front and preserve
+direct manager, GC and emergency responses.
