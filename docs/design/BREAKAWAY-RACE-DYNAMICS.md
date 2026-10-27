@@ -571,3 +571,24 @@ refusal, but no-control mean maximum gaps remained 625 seconds one-day and
 The extreme mixes are not yet credible enough for player-facing defaults.
 No whole-race result, occupied-wheel order or official award follows from
 this bounded motor experiment.
+
+### Rival intent alone does not repair the live race
+
+`node scripts/audit-v91-rival-intent-counterfactual.mjs` applies two
+pre-race rival plans to the *same live kilometre motor*: the guided random
+orders and the internal v94 intent planner's baseline orders. It holds the
+three seeds, flat/mountain route, fresh/tired field, 20 teams and 260 km
+constant across 12 pairs. The internal motor version and its dynamics are
+not used in either run. The current random plan produces 51–312 attack
+attempts, and the planner's orders produce 150–295; neither produces a
+recorded lead of even 60 seconds in any of the 12 races. In several planned
+cases, no front group establishes a positive lead at all. The planned
+orders are synthetic and sometimes have as many break-role teams as the
+random orders on these particular seeds.
+
+This counterfactual rules out simply switching the guided default to the
+internal intent planner as a solution for sustained modern breaks. A player
+facing change needs both a credible, inspectable opponent plan and a motor
+that pays an accepted break, energy and eventual pursuit over the full
+field. It must retain explicit manager orders and be tested end to end before
+routing a new recording version to the viewer.
