@@ -38,6 +38,10 @@ test('guided Motor Lab runs a race from setup to rider replay',async({page,conte
   await page.locator('summary').filter({hasText:'Other managers'}).click();
   await expect(page.getByLabel('Default tactics for uncustomized managers'))
     .toBeVisible();
+  // Keep the full viewer journey reproducible; random rival draws are
+  // exercised separately by the resolver's unit tests.
+  await page.getByLabel('Default tactics for uncustomized managers')
+    .selectOption('attack');
   const responsePromise=page.waitForResponse(response=>
     response.url().endsWith('/api/v91-playtest')&&
     response.request().method()==='POST');
@@ -45,9 +49,7 @@ test('guided Motor Lab runs a race from setup to rider replay',async({page,conte
   const response=await responsePromise;
   expect(response.status()).toBe(200);
   const {coasted}=await response.json();
-  expect(coasted.settings.managerTactics).toHaveLength(3);
-  expect(coasted.settings.managerTactics.some(tactic=>
-    tactic.attack==='repeated')).toBe(true);
+  expect(coasted.settings.defaultRivalPlan).toBe('attack');
   expect(coasted.kilometreFrames.some(frame=>
     frame.roadGroups.length>0)).toBe(true);
   expect(coasted.lineTimes).toHaveLength(32);

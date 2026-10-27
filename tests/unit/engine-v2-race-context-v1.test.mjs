@@ -304,6 +304,13 @@ test('v94 requires a complete declared role map and keeps older motor inputs unc
   const old=simulateTacticalTour({...source,
     motorVersion:MOTOR_EXHAUSTION_COAST_VERSION});
   assert.equal(validateRecordedTour(old),true);
+  const combinedOld=prepareV91Playtest({distanceKm:40,teamCount:4,
+    attack:'selective',chase:'selective',defaultRivalPlan:'passive',
+    seed:'v94-old-combined-order'});
+  assert.equal(validateRecordedTour(simulateTacticalTour({
+    stage:combinedOld.stage,weather:combinedOld.weather,
+    teams:combinedOld.teams,seed:combinedOld.seed,
+    motorVersion:MOTOR_EXHAUSTION_COAST_VERSION})),true);
   assert.equal('raceContext' in old.committedInputs,false);
   assert.ok(old.frames.every(frame=>!('observedPriorFront' in frame)));
   assert.throws(()=>simulateTacticalTour({...source,

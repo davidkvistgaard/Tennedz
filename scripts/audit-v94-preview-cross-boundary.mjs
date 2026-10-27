@@ -4,8 +4,11 @@ import {createV94RaceDynamicsPreview} from
   '../lib/engine/v2/playtest-race-dynamics-v94.mjs';
 
 const outcomes=[];
-const orders=[{effort:'steady',attack:'none',chase:'selective'},
-  {effort:'hard',attack:'repeated',chase:'all'}];
+const combinedOrder=process.argv.includes('--combined-order');
+const orders=combinedOrder?
+  [{effort:'steady',attack:'selective',chase:'selective'}]:
+  [{effort:'steady',attack:'none',chase:'selective'},
+    {effort:'hard',attack:'repeated',chase:'all'}];
 const alternateRoutes=process.argv.includes('--alternate-routes');
 const routes=alternateRoutes?
   [{terrain:'rolling',fatigue:15,gender:'F'},
@@ -37,6 +40,13 @@ for(const seed of ['preview-cross-1','preview-cross-2'])
               settings:{...base,...order},rivalGoals});
             outcomes.push({...scenario,ok:true,
               widestLeadSeconds:preview.story.widestRecordedLead.gapSeconds,
+              ownAttackKm:preview.frames.filter(frame=>frame.attackers.some(
+                id=>id.startsWith('you-'))).length,
+              ownChaseKm:preview.frames.filter(frame=>
+                frame.chasers.includes('you')).length,
+              ownOverlapKm:preview.frames.filter(frame=>
+                frame.chasers.includes('you')&&frame.attackers.some(
+                  id=>id.startsWith('you-'))).length,
               paidCoastKm:preview.frames.filter(frame=>
                 frame.frontCoast.length>0).length,
               finalRoadGroups:preview.story.finalRoadGroups});
@@ -48,7 +58,7 @@ for(const seed of ['preview-cross-1','preview-cross-2'])
     }
 const failed=outcomes.filter(row=>!row.ok);
 for(const requestedControls of [0,1,8])for(const ownOrder of
-  ['none','repeated']){
+  (combinedOrder?['selective']:['none','repeated'])){
   const rows=outcomes.filter(row=>row.ok&&
     row.requestedControls===requestedControls&&row.ownOrder===ownOrder);
   process.stdout.write(`${JSON.stringify({summary:{requestedControls,
@@ -56,6 +66,11 @@ for(const requestedControls of [0,1,8])for(const ownOrder of
       row.requestedControls===requestedControls&&
       row.ownOrder===ownOrder).length,
     coastCases:rows.filter(row=>row.paidCoastKm>0).length,
+    meanOwnAttackKm:rows.length?rows.reduce((sum,row)=>
+      sum+row.ownAttackKm,0)/rows.length:null,
+    meanOwnChaseKm:rows.length?rows.reduce((sum,row)=>
+      sum+row.ownChaseKm,0)/rows.length:null,
+    ownOverlapKm:rows.reduce((sum,row)=>sum+row.ownOverlapKm,0),
     meanWidestLeadSeconds:rows.length?rows.reduce((sum,row)=>
       sum+row.widestLeadSeconds,0)/rows.length:null}})}\n`);
 }

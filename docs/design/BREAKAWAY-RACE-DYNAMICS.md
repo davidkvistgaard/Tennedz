@@ -299,6 +299,18 @@ withheld that same order on every kilometre in a locked 260 km case.
 Generated or explicitly declared `protect` goals retain their separate
 protective policy. Older recordings that committed the former manager
 `protect` role still validate and source-replay from their saved inputs.
+A direct `attack:selective, chase:selective` order keeps its
+`opportunistic` role and may pay for selective pursuit on kilometres without
+its own attack. A locked stage race records one attack attempt and 110 paid
+chase kilometres for that team, with no same-kilometre overlap. Generated
+opportunistic teams still have `chase:ignore`.
+The read-only `scripts/audit-v94-preview-cross-boundary.mjs
+--combined-order` runs this manager combination across two seeds, both
+formats, flat/fatigued mountain routes and zero/one/eight rival controls.
+All 24 complete validation and source replay; no manager attack and chase
+occur on the same kilometre. Mean own paid chase spans 184.1 km with no
+rival controls, 67.9 km with one and 52.4 km with eight. That long solo
+workload is a reason to keep the preview experimental.
 The internal planner also accepts a declared `rivalGoals` list. A goal
 commits both the role and matching opening orders before simulation; a goal
 for a rival whose tactics were explicitly edited is refused as conflicting.

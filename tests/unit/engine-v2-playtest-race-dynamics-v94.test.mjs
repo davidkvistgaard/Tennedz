@@ -136,6 +136,20 @@ test('a manager-selected selective chase remains active in a stage',()=>{
   assert.equal(selected.resultStatus,'provisional_road_groups_only');
 });
 
+test('a manager attack and chase each act only on paid eligible kilometres',()=>{
+  const preview=createV94RaceDynamicsPreview({format:'stage',settings:{
+    distanceKm:260,teamCount:20,terrain:'flat',fatigue:0,
+    seed:'preview-boundary-6',effort:'steady',attack:'selective',
+    chase:'selective'}}).preview;
+  assert.equal(preview.teamPlans.find(plan=>plan.teamId==='you').role,
+    'opportunistic');
+  assert.ok(preview.frames.some(frame=>frame.attackers.some(id=>
+    id.startsWith('you-'))));
+  assert.ok(preview.frames.some(frame=>frame.chasers.includes('you')));
+  assert.ok(preview.frames.every(frame=>!frame.chasers.includes('you')||
+    !frame.attackers.some(id=>id.startsWith('you-'))));
+});
+
 test('declared preview goals change only those rival opening intents',()=>{
   const input={format:'one_day',settings:{distanceKm:40,teamCount:4,
     seed:'preview-goal-pair'}};
