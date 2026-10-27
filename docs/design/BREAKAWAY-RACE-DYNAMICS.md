@@ -927,8 +927,8 @@ catch remains impossible, and there is no fresh attack. The decision uses
 current paid helper capacity and recorded gap; a new attack or improved
 collective prospect can resume paid pursuit. A named per-kilometre withdrawal
 roster binds the recording and validator. Omitted/version 1 inputs and older
-recordings retain their previous behavior. This is internal opt-in policy,
-not yet enabled by the experimental preview or guided race.
+recordings retain their previous behavior. The experimental preview exposes
+it only as an optional comparison; the guided race does not use it.
 
 The locked stage case shifts from 144 paid chase kilometres to three under
 the current fresh-attack guard, while the selected team's km-210 reserve rises
@@ -968,3 +968,12 @@ near 200 and 191 team-km respectively. Mean control-rider reserve at km 210
 rose from 49.67 to 55.20 one-day and 50.73 to 59.19 stage. These are
 same-source synthetic comparisons, not evidence that the changed pursuit
 timing or final lead is calibrated.
+
+An attempted chase-only withdrawal variant allowed a control team to retain
+its committed paid `frontWork:'rotate'` order when withholding a futile
+selective chase. In the locked `preview-boundary-6` fatigued mountain stage,
+the widest lead fell from 810.36 seconds under full withdrawal to 488.77,
+but the sole control team paid bunch-front work on 259 of 260 kilometres
+and chased once. Its mean reserve at km 210 was 43.94. This replaces one
+near-continuous job with another, so the variant was rejected and its motor,
+validator and API changes were reverted. It is not a preview option.
