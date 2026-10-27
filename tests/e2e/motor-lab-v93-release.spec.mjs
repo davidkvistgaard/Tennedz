@@ -126,6 +126,8 @@ test('guided Motor Lab runs a race from setup to rider replay',async({page,conte
     .toBeVisible();
   await expect(page.getByLabel('What happened in your race'))
     .toContainText(/widest recorded gap|No front road group was recorded/);
+  await expect(page.getByLabel('What happened in your race'))
+    .not.toContainText(/you-\d/);
   const stageCard=page.getByLabel('Stage and orders at km 1');
   await expect(stageCard).toContainText('Stage input at km 1:');
   await expect(page.getByLabel('Recorded stage elevation profile'))

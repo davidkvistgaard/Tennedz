@@ -384,6 +384,7 @@ test('race story only names events and positions present in the recording',()=>{
     'Km 13: you-2 joined a front group.',
     'Km 34: you-2 was caught.',
     'The leading group had its widest recorded gap at km 39: 7.2 s with 1 rider.',
+    'No leading road group reached one full minute over the bunch.',
     'With 1 km to go, your team had no rider in a front group.',
     'With 1 km to go, you-7 was in the bunch with 46.1 of 100 energy remaining.']);
 });
@@ -401,8 +402,21 @@ test('race story measures the front arc without inventing a catch',()=>{
   assert.ok(story.includes(
     'The leading group had its widest recorded gap at km 2: 1m 20s with 2 riders.'));
   assert.ok(story.includes(
+    'A leading group first reached one minute at km 2; at least one group held that much for 1 recorded kilometre.'));
+  assert.ok(story.includes(
     'With 1 km to go, the leading group still had 54.0 s with 2 riders.'));
   assert.doesNotMatch(story.join(' '),/was caught|were caught/);
+});
+
+test('one-minute recap counts recorded kilometres, not one unchanged group',()=>{
+  const frames=[
+    {km:1,roadGroups:[{id:'road-a',gapSeconds:64,riderIds:['a']}]},
+    {km:2,roadGroups:[{id:'road-b',gapSeconds:55,riderIds:['b']}]},
+    {km:3,roadGroups:[{id:'road-b',gapSeconds:72,riderIds:['b']}]}]
+    .map(frame=>({...frame,attackAttempts:[],joinedRiderIds:[],
+      caughtRiderIds:[],ownRiders:[],droppedRiders:[]}));
+  assert.ok(summarizePlaytestRaceStory({kilometreFrames:frames}).includes(
+    'A leading group first reached one minute at km 1; at least one group held that much for 2 recorded kilometres.'));
 });
 
 test('race story keeps different riders recorded first moments in road order',()=>{

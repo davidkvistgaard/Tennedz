@@ -1497,8 +1497,10 @@ export default function Playtest({guided=false}){
           current choices.</p>}
         <div className="v91-race-story" aria-label="What happened in your race">
           <h3>What happened in your race</h3>
-          <ol>{coastedRaceStory.map((moment,index)=><li key={index}>{moment}</li>)}</ol>
-          <p>At the line, {coastedOwnDecision?.finisherId??'your finisher'} had a conditional place of {conditionalPlace(coastedOwnPlace,'unresolved')} and {coastedOwnLine?.energyAtLine.toFixed(1)??'—'} of 100 energy remaining. Energy is reserve left after recorded work, not a rider skill or a race time. The order is not an official classification.</p>
+          <ol>{coastedRaceStory.map((moment,index)=><li key={index}>{
+            readableOwnMoment(moment)}</li>)}</ol>
+          <p>At the line, {readableOwnMoment(
+            coastedOwnDecision?.finisherId??'your finisher')} had a conditional place of {conditionalPlace(coastedOwnPlace,'unresolved')} and {coastedOwnLine?.energyAtLine.toFixed(1)??'—'} of 100 energy remaining. Energy is reserve left after recorded work, not a rider skill or a race time. The order is not an official classification.</p>
         </div>
         <section className="v91-race-viewer" id="v93-race-viewer"
           aria-label="Race viewer">
