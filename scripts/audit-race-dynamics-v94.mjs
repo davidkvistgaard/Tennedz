@@ -110,6 +110,12 @@ function run({seed,terrain,fatigue,format,breakTeams,controlTeams}){
   const initialFrontIds=initialFront?.breakawayRiderIds??[];
   const caughtIds=new Set(frames.flatMap(frame=>frame.caughtBreakawayRiderIds));
   const teamById=new Map(recording.committedInputs.teams.map(team=>[team.id,team]));
+  const captainIds=new Set([...teamById.values()].map(team=>
+    team.orders.captainId));
+  const captainRoleById=new Map([...teamById.values()].map(team=>
+    [team.orders.captainId,teamRoles[team.id]]));
+  const frontCaptainCount=frame=>frame.breakawayRiderIds.filter(id=>
+    captainIds.has(id)).length;
   const breakAttempts=frames.flatMap(frame=>frame.attackers.map(riderId=>{
     const team=[...teamById.values()].find(row=>row.riders.some(rider=>rider.id===riderId));
     if(!team||teamRoles[team.id]!=='break')return null;
@@ -132,6 +138,16 @@ function run({seed,terrain,fatigue,format,breakTeams,controlTeams}){
     controlTeams:intendedControlTeams,
     attacks:frames.reduce((sum,frame)=>sum+frame.attackers.length,0),
     maxFrontRiders:Math.max(...frames.map(frame=>frame.breakawayRiderIds?.length??0)),
+    frontCaptainKilometres:frames.reduce((sum,frame)=>
+      sum+frontCaptainCount(frame),0),
+    frontCaptainKilometresThrough100:frames.filter(frame=>frame.km<=100)
+      .reduce((sum,frame)=>sum+frontCaptainCount(frame),0),
+    frontOpportunisticCaptainKilometresThrough100:frames
+      .filter(frame=>frame.km<=100).reduce((sum,frame)=>sum+
+        frame.breakawayRiderIds.filter(id=>
+          captainRoleById.get(id)==='opportunistic').length,0),
+    initialFrontCaptains:initialFront?frontCaptainCount(initialFront):0,
+    firstFrontCaptainKm:frames.find(frame=>frontCaptainCount(frame)>0)?.km??null,
     maxGapSeconds:Math.max(...gaps),
     kilometresOverOneMinute:gaps.filter(gap=>gap>=60).length,
     kilometresOverFiveMinutes:gaps.filter(gap=>gap>=300).length,
@@ -165,6 +181,16 @@ function run({seed,terrain,fatigue,format,breakTeams,controlTeams}){
     earlyControlChasedTeamKilometres:frames.filter(frame=>frame.km<=210)
       .reduce((sum,frame)=>sum+frame.chasers.filter(id=>
         teamRoles[id]==='control').length,0),
+    controlChaseAgainstHelperOnlyFrontTeamKm:frames.reduce((sum,frame)=>
+      sum+(frame.breakawayRiderIds.length>0&&frontCaptainCount(frame)===0?
+        frame.chasers.filter(id=>teamRoles[id]==='control').length:0),0),
+    controlChaseAgainstHelperOnlyFrontThrough100TeamKm:frames
+      .filter(frame=>frame.km<=100).reduce((sum,frame)=>
+        sum+(frame.breakawayRiderIds.length>0&&frontCaptainCount(frame)===0?
+          frame.chasers.filter(id=>teamRoles[id]==='control').length:0),0),
+    controlChaseAgainstCaptainFrontTeamKm:frames.reduce((sum,frame)=>
+      sum+(frontCaptainCount(frame)>0?
+        frame.chasers.filter(id=>teamRoles[id]==='control').length:0),0),
     finaleProtectChasedTeamKilometres:finale.reduce((sum,frame)=>
       sum+frame.chasers.filter(id=>teamRoles[id]==='protect').length,0),
     earlyProtectChasedTeamKilometres:frames.filter(frame=>frame.km<=210)
@@ -238,6 +264,18 @@ const summary=process.argv.includes('--summary')?
       meanBreakRoleCaptainAttempts:average('breakRoleCaptainAttempts'),
       meanBreakRoleHelperAttempts:average('breakRoleHelperAttempts'),
       meanBreakRoleDistinctAttackers:average('breakRoleDistinctAttackers'),
+      meanFrontCaptainKm:average('frontCaptainKilometres'),
+      meanFrontCaptainKmThrough100:
+        average('frontCaptainKilometresThrough100'),
+      meanFrontOpportunisticCaptainKmThrough100:
+        average('frontOpportunisticCaptainKilometresThrough100'),
+      meanInitialFrontCaptains:average('initialFrontCaptains'),
+      meanControlChaseAgainstHelperOnlyFrontTeamKm:
+        average('controlChaseAgainstHelperOnlyFrontTeamKm'),
+      meanControlChaseAgainstHelperOnlyFrontThrough100TeamKm:
+        average('controlChaseAgainstHelperOnlyFrontThrough100TeamKm'),
+      meanControlChaseAgainstCaptainFrontTeamKm:
+        average('controlChaseAgainstCaptainFrontTeamKm'),
       meanBreakEnergyAtFinaleStart:average('breakEnergyAtFinaleStart'),
       meanControlEnergyAtFinaleStart:average('controlEnergyAtFinaleStart'),
       meanControlFrontWorkTeamKm:average('controlFrontWorkTeamKilometres'),
