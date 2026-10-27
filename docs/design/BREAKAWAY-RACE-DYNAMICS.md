@@ -1077,3 +1077,17 @@ near 130 seconds; stage lead moved from 171.33 to 156.60 seconds. These
 selected synthetic cases show that taking a paid turn can move work onto
 the user's helpers without proportionate benefit when other teams already
 pace or chase. They do not establish a general effect or a calibrated race.
+
+### Additional preview holdout
+
+`node scripts/audit-v94-preview-boundary.mjs --batch=4
+--front-exhaustion-v4` adds four previously unused seeds across both race
+formats and flat/fatigued mountain routes. All 16 whole-race recordings
+validated and source-replayed without refusal. With the preview's default
+pursuit, the widest recorded leads ranged from 80.51 to 227.15 seconds
+(mean 165.58). In one seed with six break-role and five control-role teams,
+the one-day race spent 191 recorded kilometres above a one-minute lead,
+while its widest lead was only 212.21 seconds. The paired stage spent 239
+kilometres above one minute and peaked at 227.15 seconds. A persistent
+small lead is therefore possible in this synthetic goal mix; it is not
+evidence that the overall lead size or pursuit is empirically calibrated.

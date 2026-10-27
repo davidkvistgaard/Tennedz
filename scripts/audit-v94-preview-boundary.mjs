@@ -4,7 +4,7 @@ import {createV94RaceDynamicsPreview} from
   '../lib/engine/v2/playtest-race-dynamics-v94.mjs';
 
 const batch=Number(process.argv.find(arg=>arg.startsWith('--batch='))?.split('=')[1]??1);
-if(![1,2,3].includes(batch))throw new Error('Use --batch=1, 2 or 3.');
+if(![1,2,3,4].includes(batch))throw new Error('Use --batch=1, 2, 3 or 4.');
 const controlWithdrawalVersion=process.argv.includes('--withdrawal-v2')?2:1;
 const frontExhaustionVersion=process.argv.includes('--front-exhaustion-v4')?4:3;
 const seeds=Array.from({length:4},(_,index)=>
