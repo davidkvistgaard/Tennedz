@@ -80,6 +80,13 @@ function run({seed,terrain,fatigue,format,breakTeams,controlTeams}){
     frame.breakawayRiderIds.length>=intendedBreakTeams);
   const initialFrontIds=initialFront?.breakawayRiderIds??[];
   const caughtIds=new Set(frames.flatMap(frame=>frame.caughtBreakawayRiderIds));
+  const teamById=new Map(recording.committedInputs.teams.map(team=>[team.id,team]));
+  const breakAttempts=frames.flatMap(frame=>frame.attackers.map(riderId=>{
+    const team=[...teamById.values()].find(row=>row.riders.some(rider=>rider.id===riderId));
+    if(!team||teamRoles[team.id]!=='break')return null;
+    return {riderId,isCaptain:riderId===team.orders.captainId,
+      isHelper:team.orders.helperIds.includes(riderId)};
+  }).filter(Boolean));
   const average=(rows,field)=>+(rows.reduce((sum,row)=>sum+row[field],0)/rows.length)
     .toFixed(2);
   const roleEnergyAtFinaleStart=role=>{
@@ -144,6 +151,10 @@ function run({seed,terrain,fatigue,format,breakTeams,controlTeams}){
     initialFrontRiders:initialFrontIds.length,
     initialFrontCaughtRiders:initialFrontIds.filter(id=>caughtIds.has(id)).length,
     initialFrontAtLineRiders:initialFrontIds.filter(id=>frontIds.has(id)).length,
+    breakRoleAttackAttempts:breakAttempts.length,
+    breakRoleCaptainAttempts:breakAttempts.filter(row=>row.isCaptain).length,
+    breakRoleHelperAttempts:breakAttempts.filter(row=>row.isHelper).length,
+    breakRoleDistinctAttackers:new Set(breakAttempts.map(row=>row.riderId)).size,
     frontPresentKm:withFront.length};
 }
 
@@ -184,6 +195,10 @@ const summary=process.argv.includes('--summary')?
     return {format,...group,cases:sample.length,
       meanBreakTeams:average('breakTeams'),
       meanControlTeams:average('controlTeams'),
+      meanBreakRoleAttackAttempts:average('breakRoleAttackAttempts'),
+      meanBreakRoleCaptainAttempts:average('breakRoleCaptainAttempts'),
+      meanBreakRoleHelperAttempts:average('breakRoleHelperAttempts'),
+      meanBreakRoleDistinctAttackers:average('breakRoleDistinctAttackers'),
       allInitialFrontCaught:completed.filter(row=>row.initialFrontRiders>0&&
         row.initialFrontAtLineRiders===0).length,
       meanMaxGapSeconds:average('maxGapSeconds'),

@@ -373,6 +373,15 @@ one-day cases, with roughly nine break-role teams per sample. This still
 does not establish the intended race experience or an empirically typical
 break. The unresolved work is credible opponent intent and selective
 long-range control, not a prescribed gap target.
+The read-only planned-intent audit now also counts *which riders* attempt
+break-role attacks. Across its 24 validated races, all four attempts
+in each stage-format set come from team captains; the break teams' later
+one-day attempts include roughly 6–7 helpers and four captains per race.
+This is not a dedicated breakaway-rider role. A quick v94-only exclusion of
+captains changed the first unpayable-front-work refusal in the locked
+fatigued mountain case from km 136 to km 135, so it was reverted. A future
+break specialist should be a distinct, committed rider choice, with named
+manager attacks and existing exhaustion/contact refusals preserved.
 An optional v94-only, versioned intent manifest can now be committed to the
 race recording. It retains each team's role, opening order and whether the
 planner labelled it generated, manager-goal or explicit-manager input.
