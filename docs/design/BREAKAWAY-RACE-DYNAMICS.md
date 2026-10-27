@@ -1214,3 +1214,20 @@ suppressing breaks. A credible field needs differentiated goals and a
 sporting reason for *when* each team spends its helpers, not merely a
 fixed stronger-control mix. These are synthetic comparisons, not a
 claim about real-world race frequencies.
+
+A further opt-in v94 control-duty sharing trial estimated the current
+front's unpaid relative pace and allowed generated control teams to
+withhold a chase turn once already paid chasers covered the projected
+catch need. The first version merely moved the withheld team into
+paid bunch-front work, leaving every widest lead and catch unchanged
+in 24 paired 260 km cases. A corrected trial recorded a separate
+sit-in roster and excluded those teams from the front pace, with
+energy, road work, recording validation and full source replay still
+balanced. It also left every widest lead and catch unchanged:
+fresh/tired one-day maxima averaged 353.27/343.90 seconds, and stages
+450.94/450.43 seconds under both policies. Early control chase fell
+by only about 1.67 team-km in one-day races, with negligible energy
+change. The existing catch-projection policy had already withheld
+almost every turn this rule would save. Both versions were fully
+reverted. More useful work must change a consequential team decision,
+not duplicate an existing hold condition.
