@@ -1133,3 +1133,20 @@ subject to rider position and available energy. The UI offers windows
 that contain at least one 20 km opportunity. No attack or gap is
 guaranteed. The separate experimental v94 race-dynamics preview is
 unchanged.
+
+### Current guided v93 gap diagnostic
+
+`node scripts/audit-v93-guided-gap-mechanics.mjs` replays twelve seeded
+20-team, 260 km guided-style rival draws on the paid v93 road across flat
+and mountain terrain and fresh/tired starts. Every recording validates.
+There are 51–312 attack attempts per race and zero recorded kilometres
+with a lead of at least one minute; the widest leads range from 8.95 to
+45.07 seconds. Ten of the twelve races include many short-lived front
+runs. Even the fatigued mountain case with no rival on an `all` chase
+order records 348 total chasing team-km from other orders, a mean 1.38
+chasing teams during front kilometres, and a widest lead of 43.91
+seconds across 219 continuous front kilometres. Thus a draw with no
+`all` chase team does not mean the bunch is resting. The current
+selective-chase work and small paid relative-pace gain warrant a systemic
+review. These cases are synthetic diagnostics, not an empirical
+one-minute target or a reason to multiply a road gap after the fact.
