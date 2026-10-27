@@ -944,7 +944,10 @@ each chosen goal commits matching opening orders, while unchosen rivals keep
 their seeded plans. The preview rejects unlisted tactic inputs rather than
 silently relabeling a manager order. It reports only measured group gaps and a
 conditional group ending; it provides no individual classification, points
-or awards. The existing guided race keeps its older motor and result path.
+or awards. A responsive gap timeline plots only the recorded leading-group
+time gap at each kilometre, with the one-minute line and inspected kilometre
+marked; it does not imply mapped distance. The existing guided race keeps
+its older motor and result path.
 
 `node scripts/audit-v94-preview-boundary.mjs --batch=1` (then batches 2
 and 3) exercises twelve new seeds across one-day/stage and flat/fatigued

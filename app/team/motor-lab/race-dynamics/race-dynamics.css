@@ -19,6 +19,14 @@
 .v94-error{color:#ffbdbd}
 .v94-summary,.v94-road,.v94-plans{background:#162229;border:1px solid #32424b;border-radius:16px;padding:20px;margin:18px 0;color:#e9edf2}
 .v94-summary strong{color:#bceadf}
+.v94-lead-timeline{margin:20px 0 0}
+.v94-lead-timeline svg{display:block;width:100%;height:auto;background:#101b21;border:1px solid #3d5058;border-radius:10px}
+.v94-lead-timeline svg text{fill:#b9ccd0;font-size:13px}
+.v94-lead-timeline figcaption{color:#b9ccd0;font-size:.85rem;line-height:1.4;margin-top:8px}
+.v94-lead-axis{stroke:#53666e;stroke-width:1}
+.v94-lead-minute{stroke:#e5b26e;stroke-width:1;stroke-dasharray:5 5}
+.v94-lead-line{fill:none;stroke:#94d9ca;stroke-width:3;stroke-linejoin:round;stroke-linecap:round}
+.v94-lead-current{fill:#f7f5ec;stroke:#1e6565;stroke-width:2}
 .v94-road input[type=range]{width:100%;accent-color:#95d9d0;margin:18px 0 6px}
 .v94-jumps{display:flex;flex-wrap:wrap;gap:8px}
 .v94-jumps button{background:#2f4e51;color:#e6f5f0;font-size:.85rem;padding:8px 12px}

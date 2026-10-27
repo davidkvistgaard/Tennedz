@@ -50,6 +50,35 @@ const coastOutcome=(preview,frame,row)=>{
         'stayed on the road';
   return `${rider} lost ${time(row.delaySeconds)}; ${outcome}`;
 };
+const LEAD_CHART={left:26,right:694,top:14,bottom:150};
+function LeadTimeline({preview,km}){
+  const frames=preview.frames;
+  const maxGap=Math.max(60,preview.story.widestRecordedLead.gapSeconds);
+  const x=index=>LEAD_CHART.left+(LEAD_CHART.right-LEAD_CHART.left)*
+    index/Math.max(1,frames.length-1);
+  const y=seconds=>LEAD_CHART.bottom-(LEAD_CHART.bottom-LEAD_CHART.top)*
+    seconds/maxGap;
+  const selected=frames[km-1];
+  const points=frames.map((frame,index)=>
+    `${x(index).toFixed(1)},${y(frame.gapSeconds).toFixed(1)}`).join(' ');
+  return <figure className="v94-lead-timeline">
+    <svg viewBox="0 0 720 185" role="img" aria-label={
+      `Recorded leading-group gap from km 1 to km ${frames.length}; `+
+      `widest ${time(preview.story.widestRecordedLead.gapSeconds)} `+
+      `at km ${preview.story.widestRecordedLead.km}`}>
+      <line className="v94-lead-axis" x1="26" x2="694" y1="150" y2="150"/>
+      <line className="v94-lead-minute" x1="26" x2="694"
+        y1={y(60)} y2={y(60)}/>
+      <polyline className="v94-lead-line" points={points}/>
+      <circle className="v94-lead-current" cx={x(km-1)}
+        cy={y(selected.gapSeconds)} r="5"/>
+      <text x="26" y="174">Km 1</text>
+      <text x="694" y="174" textAnchor="end">Km {frames.length}</text>
+    </svg>
+    <figcaption>Recorded lead in seconds. The dashed line marks one minute;
+      the dot marks km {km}. This is time, not mapped road distance.</figcaption>
+  </figure>;
+}
 
 export default function RaceDynamicsPreview(){
   const [settings,setSettings]=useState(INITIAL);
@@ -171,6 +200,7 @@ export default function RaceDynamicsPreview(){
             preview.story.finalRoadGroups}</strong> group(s) ahead of the
             bunch, with a leading gap of <strong>{time(
               preview.story.finalRecordedLeadSeconds)}</strong>.</p>
+          <LeadTimeline preview={preview} km={km}/>
         </section>
         <section className="v94-road" aria-label="Inspect race kilometre">
           <h2>Road clock at km {km}</h2>

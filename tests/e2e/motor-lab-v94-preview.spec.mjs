@@ -50,7 +50,15 @@ test('experimental v94 race shows committed plans and measured road only',
         baseline:{attack:'none',chase:'selective'}});
     await expect(page.getByRole('heading',
       {name:'What the recording shows'})).toBeVisible();
+    await expect(page.getByRole('img',{
+      name:/Recorded leading-group gap from km 1 to km 40/})).toBeVisible();
+    expect((await page.locator('.v94-lead-line').getAttribute('points'))
+      .split(' ')).toHaveLength(40);
+    await expect(page.locator('.v94-lead-current'))
+      .toHaveAttribute('cx','26');
     await page.getByRole('button',{name:'Last km'}).click();
+    await expect(page.locator('.v94-lead-current'))
+      .toHaveAttribute('cx','694');
     await expect(page.getByRole('heading',
       {name:'Road clock at km 40'})).toBeVisible();
     await expect(page.locator('.v94-riders p')).toHaveCount(8);
