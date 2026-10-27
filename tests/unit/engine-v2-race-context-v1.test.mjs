@@ -61,9 +61,11 @@ test('a stable front shares maintenance turns, but urgent and declared work stay
   assert.ok(settled.pullRiderIds.includes('rear'));
   assert.notDeepEqual(settledFrontRotation({...input,km:21}).restRiderIds,
     settled.restRiderIds);
-  assert.deepEqual(settledFrontRotation({...input,priorChaserCount:1}),
-    {pullRiderIds:input.pullRiderIds,restRiderIds:[]});
+  assert.deepEqual(settledFrontRotation({...input,priorChaserCount:1}),settled);
   assert.deepEqual(settledFrontRotation({...input,
+    observedClosingSecondsPerKm:2}),
+  {pullRiderIds:input.pullRiderIds,restRiderIds:[]});
+  assert.deepEqual(settledFrontRotation({...input,priorChaserCount:1,
     observedClosingSecondsPerKm:2}),
   {pullRiderIds:input.pullRiderIds,restRiderIds:[]});
 });

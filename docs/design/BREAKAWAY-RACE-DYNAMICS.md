@@ -335,6 +335,20 @@ from 41.4 to 42.5 (46.0 to 46.9 in stages). It did not solve the persistent
 ineffective pursuit, so the experiment was removed. A future model needs
 to pay and control the whole bunch/front pace over time, then audit the
 actual gap and rider energy, rather than rotate a cosmetic rest turn.
+The next v94-only change instead lets a stable leading group share its own
+maintenance work while an active chase is *not measurably closing* over the
+same five-kilometre, same-membership front. Once the recorded gap starts
+closing, every puller works again; explicit drive orders always keep working.
+In the 24 paired manager-goal cases, mean maximum lead fell from 298 to 248
+seconds for the one-day break-goal runs and from 427 to 380 in stages. The
+control-goal cases fell from 199 to 181 and 281 to 266 seconds respectively.
+All 48 recordings validated and replayed. The broader 96-case constructed
+role matrix also validated with no refusals: original-front catch counts
+remained 24/24 and 21/24 in fresh/tired one-day cases and 3/24 and 0/24 in
+stages. Mean settled-front rest rose substantially, to 183–204 rider-km per
+case across the four format/fatigue sets. This is paid energy conservation,
+not a scripted lead or proof of realistic front pace. Control teams still
+chase for roughly 190 km in the paired audit, so that separate problem remains.
 An optional v94-only, versioned intent manifest can now be committed to the
 race recording. It retains each team's role, opening order and whether the
 planner labelled it generated, manager-goal or explicit-manager input.
