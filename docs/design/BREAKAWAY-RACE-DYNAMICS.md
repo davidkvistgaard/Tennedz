@@ -541,6 +541,15 @@ be separately committed/versioned so existing v94 recordings replay exactly.
 
 ### Opt-in front rotation experiment
 
+The separately committed internal `raceContext.frontObservationVersion: 2`
+compares the leading group's rider **membership** across completed frames,
+regardless of incidental array order. A reordered roster is not evidence of
+an occupied-wheel change or a new break. Duplicate or changed rider IDs still
+invalidate the five-kilometre observation. Omission retains version 1 so
+earlier v94 recordings replay under their original rule. The recording
+validator derives the observation with the committed version before using it
+for pursuit or settled-front decisions; no gap is awarded by this change.
+
 `raceContext.frontRotationVersion: 2` is an internal, separately committed
 experiment. Omission still means version 1 and replays earlier v94 recordings
 unchanged. After five observed kilometres with the same leading group, no

@@ -34,6 +34,10 @@ test('race format is explicit and stage number cannot leak into a one-day race',
     frontRotationVersion:2}),{format:'one_day',frontRotationVersion:2});
   assert.throws(()=>normalizeRaceContext({format:'one_day',
     frontRotationVersion:3}),/Invalid race context/);
+  assert.deepEqual(normalizeRaceContext({format:'one_day',
+    frontObservationVersion:2}),{format:'one_day',frontObservationVersion:2});
+  assert.throws(()=>normalizeRaceContext({format:'one_day',
+    frontObservationVersion:3}),/Invalid race context/);
 });
 
 test('catch estimate is a consequence of paid relative road speed',()=>{
@@ -55,6 +59,15 @@ test('observed front closing uses only unchanged completed road groups',()=>{
   assert.equal(observedFrontClosingSecondsPerKm({frames:frames.map((frame,index)=>
     index===2?{roadGroups:[{...front,riderIds:['a','c'],gapSeconds:92}]}:frame),
   frontGroup:front}),null);
+  const reordered=frames.map((frame,index)=>index===2?{
+    roadGroups:[{...front,riderIds:['b','a'],gapSeconds:92}]}:frame);
+  assert.equal(observedFrontClosingSecondsPerKm({frames:reordered,
+    frontGroup:front}),null);
+  assert.equal(observedFrontClosingSecondsPerKm({frames:reordered,
+    frontGroup:front,membershipVersion:2}),4);
+  assert.equal(observedFrontClosingSecondsPerKm({frames:frames.map((frame,index)=>
+    index===2?{roadGroups:[{...front,riderIds:['a','a'],gapSeconds:92}]}:
+      frame),frontGroup:front,membershipVersion:2}),null);
 });
 
 test('a stable front shares maintenance turns, but urgent and declared work stays',()=>{
@@ -105,8 +118,10 @@ test('opt-in front rotation is committed, validated and source-replayable',()=>{
   const race=simulateTacticalTour({stage:prepared.stage,
     weather:prepared.weather,teams:plan.teams,seed:prepared.seed,
     motorVersion:MOTOR_RACE_DYNAMICS_VERSION,
-    raceContext:plan.raceContext,rivalIntent:plan.intent});
+    raceContext:{...plan.raceContext,frontObservationVersion:2},
+    rivalIntent:plan.intent});
   assert.equal(race.committedInputs.raceContext.frontRotationVersion,2);
+  assert.equal(race.committedInputs.raceContext.frontObservationVersion,2);
   assert.ok(race.frames.some(frame=>
     frame.settledFrontRestRiderIds.length>=3));
   assert.equal(validateRecordedTour(race),true);
