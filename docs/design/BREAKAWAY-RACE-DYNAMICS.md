@@ -1194,3 +1194,23 @@ orders on the same v93 road alongside the policy yielded a minute in
 only four cases; some role mixes had no front at all. The next motor
 change needs inspectable team intent and pursuit economics together,
 not another one-dimensional selective-chase threshold.
+
+A second isolated `goalPlanVersion:2` experiment ranked generated rivals
+by the captain's terrain-relevant ability, assigned roughly three
+one-day or two stage control goals in a 20-team field, then distributed
+other goals by strength. Explicit manager tactics and rival goals stayed
+intact. The trial was versioned, validated, source-replayed and tested
+for manager-order preservation, but its code was fully reverted after
+the same-source comparison. Across 96 new-seed 260 km races, the
+previous planner's mean maximum leads were 209.64/205.72 seconds for
+fresh/tired one-day and 282.07/276.93 for fresh/tired stages. The
+strength-ranked planner reduced these to 97.37/98.93 and
+173.23/184.35 seconds. All 192 paired recordings validated and
+source-replayed without refusal. One-day control reserve improved by
+roughly four units at km 210, but the large loss of break opportunity
+outweighed it; stage control reserve barely changed. Ranking the
+strongest captains into early control made those teams too effective at
+suppressing breaks. A credible field needs differentiated goals and a
+sporting reason for *when* each team spends its helpers, not merely a
+fixed stronger-control mix. These are synthetic comparisons, not a
+claim about real-world race frequencies.
