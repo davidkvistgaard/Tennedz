@@ -1657,3 +1657,16 @@ This static package remains read-only and uncalibrated; it does not
 justify a guided default or a fixed gap target. A future control
 planner must address both whether any team has a sporting reason to
 control and how its paid tempo, selective pursuit and reserve evolve.
+
+The no-control stage outlier also has a structural decision boundary.
+Generated `protect` teams carry a committed selective-chase baseline,
+but the V94 `protectiveRisk` decision is currently confined to
+`one_day` races. In a stage, a protect team without a separate GC,
+break-response, fading-teammate or manager reason is withheld by the
+role gate even when its helpers are available. The nine-break,
+zero-control holdout therefore cannot be fixed by adjusting control
+tempo alone: there is no generated control team to receive that work,
+and the remaining protect teams do not take up a stage-result pursuit.
+This is a code-path diagnosis, not evidence that every protector should
+chase. A stage response needs an inspectable committed sporting stake
+and a paid work decision that remains viable across the field.
