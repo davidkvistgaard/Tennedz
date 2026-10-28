@@ -1553,3 +1553,19 @@ This identifies substantial paid control-helper load outside the
 recorded chase, and explains why saving that load enables more pursuit.
 It is a ledger partition by observed chase participation, not a causal
 decomposition of the effort coefficient or a calibrated policy.
+
+Splitting that non-chase ledger further by the recorded road at each
+kilometre gives another useful boundary. In fresh races, generated
+hard controls paid a mean 554.96 reserve units from helpers who were
+not chasing on kilometres with **no front group at the frame end**,
+and 410.67 on kilometres with a front. With only their generated
+effort changed to steady, those values were 320.59 and 254.86.
+The corresponding non-chasing helper exposure was 1,857.33/1,540.33
+rider-km under hard and 1,823.67/1,439.33 under steady. Tired starts
+had less no-front exposure: 70.58/401.88 paid under hard, versus
+34.01/311.46 under steady. This shows that the generated hard order
+can charge helpers heavily even when no break is recorded at the end
+of a kilometre. The frame-end classification does not establish
+whether an attack briefly existed within that kilometre, and this
+read-only partition does not justify an uncommitted automatic easing
+rule or predict its whole-race consequences.

@@ -183,7 +183,9 @@ function run({seed,terrain,fatigue,format,breakTeams,controlTeams}){
   const controlHelperIds=new Set([...teamById.values()].filter(team=>
     teamRoles[team.id]==='control').flatMap(team=>team.orders.helperIds));
   const controlHelperWorkThrough210={chasePaid:0,otherPaid:0,
-    chaseRecovery:0,otherRecovery:0,chaseRiderKm:0,otherRiderKm:0};
+    chaseRecovery:0,otherRecovery:0,chaseRiderKm:0,otherRiderKm:0,
+    otherNoFrontPaid:0,otherFrontPaid:0,
+    otherNoFrontRiderKm:0,otherFrontRiderKm:0};
   for(const frame of frames.slice(0,210)){
     const paidChasers=new Set(frame.chaseContributions.filter(row=>
       teamRoles[row.teamId]==='control').flatMap(row=>row.riderIds));
@@ -193,8 +195,21 @@ function run({seed,terrain,fatigue,format,breakTeams,controlTeams}){
       controlHelperWorkThrough210[`${key}Paid`]+=row.paidFromReserve;
       controlHelperWorkThrough210[`${key}Recovery`]+=row.recoveryAward;
       controlHelperWorkThrough210[`${key}RiderKm`]++;
+      if(key==='other'){
+        const roadKey=frame.breakawayRiderIds.length?'otherFront':
+          'otherNoFront';
+        controlHelperWorkThrough210[`${roadKey}Paid`]+=row.paidFromReserve;
+        controlHelperWorkThrough210[`${roadKey}RiderKm`]++;
+      }
     }
   }
+  if(Math.abs(controlHelperWorkThrough210.otherPaid-
+    controlHelperWorkThrough210.otherNoFrontPaid-
+    controlHelperWorkThrough210.otherFrontPaid)>1e-6||
+    controlHelperWorkThrough210.otherRiderKm!==
+      controlHelperWorkThrough210.otherNoFrontRiderKm+
+      controlHelperWorkThrough210.otherFrontRiderKm)
+    throw new Error('Unclassified paid non-chasing control helper work.');
   const controlChaseByTeam=new Map();
   for(const row of controlChase)controlChaseByTeam.set(row.teamId,
     (controlChaseByTeam.get(row.teamId)??0)+1);
@@ -270,6 +285,10 @@ function run({seed,terrain,fatigue,format,breakTeams,controlTeams}){
       +controlHelperWorkThrough210.chasePaid.toFixed(2),
     controlHelperOtherPaidThrough210:
       +controlHelperWorkThrough210.otherPaid.toFixed(2),
+    controlHelperOtherNoFrontPaidThrough210:
+      +controlHelperWorkThrough210.otherNoFrontPaid.toFixed(2),
+    controlHelperOtherFrontPaidThrough210:
+      +controlHelperWorkThrough210.otherFrontPaid.toFixed(2),
     controlHelperChaseRecoveryThrough210:
       +controlHelperWorkThrough210.chaseRecovery.toFixed(2),
     controlHelperOtherRecoveryThrough210:
@@ -278,6 +297,10 @@ function run({seed,terrain,fatigue,format,breakTeams,controlTeams}){
       controlHelperWorkThrough210.chaseRiderKm,
     controlHelperOtherRiderKmThrough210:
       controlHelperWorkThrough210.otherRiderKm,
+    controlHelperOtherNoFrontRiderKmThrough210:
+      controlHelperWorkThrough210.otherNoFrontRiderKm,
+    controlHelperOtherFrontRiderKmThrough210:
+      controlHelperWorkThrough210.otherFrontRiderKm,
     controlChaseDistinctRiders:new Set(controlChase.flatMap(row=>
       row.riderIds)).size,
     busiestControlChaseTeamKilometres:Math.max(0,...controlChaseByTeam.values()),
@@ -411,6 +434,10 @@ const summary=process.argv.includes('--summary')?
         average('controlHelperChasePaidThrough210'),
       meanControlHelperOtherPaidThrough210:
         average('controlHelperOtherPaidThrough210'),
+      meanControlHelperOtherNoFrontPaidThrough210:
+        average('controlHelperOtherNoFrontPaidThrough210'),
+      meanControlHelperOtherFrontPaidThrough210:
+        average('controlHelperOtherFrontPaidThrough210'),
       meanControlHelperChaseRecoveryThrough210:
         average('controlHelperChaseRecoveryThrough210'),
       meanControlHelperOtherRecoveryThrough210:
@@ -419,6 +446,10 @@ const summary=process.argv.includes('--summary')?
         average('controlHelperChaseRiderKmThrough210'),
       meanControlHelperOtherRiderKmThrough210:
         average('controlHelperOtherRiderKmThrough210'),
+      meanControlHelperOtherNoFrontRiderKmThrough210:
+        average('controlHelperOtherNoFrontRiderKmThrough210'),
+      meanControlHelperOtherFrontRiderKmThrough210:
+        average('controlHelperOtherFrontRiderKmThrough210'),
       meanControlChaseDistinctRiders:average('controlChaseDistinctRiders'),
       meanBusiestControlChaseTeamKilometres:
         average('busiestControlChaseTeamKilometres'),
