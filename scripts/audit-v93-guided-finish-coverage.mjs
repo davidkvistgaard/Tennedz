@@ -9,8 +9,11 @@ import {generatePlaytestStageProfile} from
   '../lib/engine/v2/playtest-stage-generator.mjs';
 import {prepareV91Playtest} from '../lib/engine/v2/playtest.mjs';
 import {simulateTacticalTour} from '../lib/engine/v2/tour.mjs';
-import {MOTOR_EXHAUSTION_COAST_VERSION} from
+import {MOTOR_EXHAUSTION_COAST_VERSION,TUNING} from
   '../lib/engine/v2/tuning.mjs';
+import {finaleSnapshotFromTour} from
+  '../lib/engine/v2/finale-snapshot.mjs';
+import {orderAt} from '../lib/engine/v2/orders.mjs';
 
 const countArg=process.argv.find(value=>value.startsWith('--seeds='));
 const count=countArg?Number(countArg.slice('--seeds='.length)):12;
@@ -58,12 +61,28 @@ for(const terrain of namedFrontWork?['rolling','mountain']:
           motorVersion:MOTOR_EXHAUSTION_COAST_VERSION});
       validateRecordedTour(road);
       const handoff=road.frames.at(-2);
+      const snapshot=finaleSnapshotFromTour(road,{remainingKm:1,
+        includeAttackLoad:true});
+      const own=road.committedInputs.teams.find(team=>team.id==='you');
+      const ownOrder=orderAt(own.orders,road.route.distanceKm-1);
+      const present=new Map(snapshot.riders.map(row=>[row.riderId,row]));
+      const eligibleHelpers=own.orders.helperIds.filter(id=>{
+        const row=present.get(id);
+        return row?.status==='peloton'&&
+          row.energy>TUNING.chase.minHelperEnergy;
+      });
       rows.push({seed,terrain,fatigue,status:'validated_refusal',
         reason:error.message,roadKm:road.frames.length,
         handoffKm:handoff?.km??null,
         handoffRoadGroups:handoff?.roadGroups.length??null,
         handoffDroppedRiders:handoff?.riderGroups.filter(row=>
-          row.group==='dropped').length??null});
+          row.group==='dropped').length??null,
+        ownNamedFrontWorker:ownOrder.frontWorkRiderId??null,
+        ownTeamAhead:snapshot.roadGroups.some(group=>
+          group.teamIds.includes('you')),
+        ownEligibleFrontHelpers:eligibleHelpers,
+        ownNamedFrontWorkerAvailable:eligibleHelpers.length>=2&&
+          eligibleHelpers.includes(ownOrder.frontWorkRiderId)});
     }
   }
 

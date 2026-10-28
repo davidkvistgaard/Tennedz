@@ -56,3 +56,9 @@ clock does not pay that order's worker, energy and pace, so the guard
 must remain. A future version needs a recorded paid front-work handoff
 and exact source replay before it can turn those refusals into a
 result. The audit does not change playable behavior or infer a placing.
+
+The follow-up handoff check found the named worker and at least one other
+eligible helper still in the bunch in all eight cases; the player's team
+had no rider ahead. Thus these are genuine available front-work orders,
+not orders that could safely be ignored because the worker was absent.
+The audit now records that availability alongside the road state.
