@@ -2217,7 +2217,12 @@ attack. Across those kilometres, the recorded passive road calculation
 adds 1,663.94 seconds to the gap while the legacy capacity-to-seconds
 formula credits the named chase leaders with only 496.61 seconds. In
 355 of the same kilometres, a separately paid bunch-front pace also
-enters the passive road calculation. The total is diagnostic, not a
+enters the passive road calculation. Recomputing the named chase
+leaders' terrain and energy adjusted `chase` abilities from the
+committed riders shows their turn-weighted ability exceeds that
+separate paid bunch-front ability in all 355 such kilometres. The
+current clock still treats the chase as an additional capacity credit,
+not as that rider's physical pace. The total is diagnostic, not a
 new finish prediction: the terms are capped per kilometre and later
 attacks and contacts are outside this subset. It shows exactly why
 merely paying one rotating chase leader while retaining the old summed
