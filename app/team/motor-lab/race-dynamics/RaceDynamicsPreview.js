@@ -39,6 +39,24 @@ const riders=(preview,ids)=>ids.length?
   ids.map(id=>riderLabel(preview,id)).join(', '):'None';
 const chaseWork=(preview,row)=>`${teamLabel(preview,row.teamId)} (${
   row.reason.replaceAll('_',' ')}; workers: ${riders(preview,row.riderIds)})`;
+function recordedChaseChanges(preview,current,previous){
+  const before=new Map((previous?.paidChase??[]).map(row=>
+    [row.teamId,row.riderIds]));
+  const after=new Map(current.paidChase.map(row=>
+    [row.teamId,row.riderIds]));
+  const messages=[];
+  for(const [teamId,workerIds] of after){
+    const prior=before.get(teamId)??[];
+    const added=workerIds.filter(id=>!prior.includes(id));
+    if(!added.length)continue;
+    const count=`${added.length} rider${added.length===1?'':'s'}`;
+    messages.push(`${teamLabel(preview,teamId)} ${prior.length?
+      'adds':'sends'} ${count} ${prior.length?'to':'into'} the recorded chase.`);
+  }
+  for(const teamId of before.keys())
+    if(!after.has(teamId))messages.push(`${teamLabel(preview,teamId)} stops chasing.`);
+  return messages;
+}
 const coastOutcome=(preview,frame,row)=>{
   const rider=riderLabel(preview,row.riderId);
   const outcome=row.joinedGroupId?`joined ${row.joinedGroupId}`:
@@ -87,6 +105,8 @@ export default function RaceDynamicsPreview(){
   const [busy,setBusy]=useState(false);
   const [error,setError]=useState('');
   const frame=preview?.frames[km-1];
+  const chaseChanges=preview&&frame?
+    recordedChaseChanges(preview,frame,preview.frames[km-2]):[];
   const controlEnergy=frame?.teamEnergy.filter(row=>
     preview.teamPlans.some(plan=>plan.teamId===row.teamId&&
       plan.role==='control'))??[];
@@ -247,9 +267,13 @@ export default function RaceDynamicsPreview(){
           </article>):<p>All recorded road groups are with the bunch.</p>}
           <div className="v94-evidence">
             <p><strong>Attack attempts:</strong> {riders(preview,frame.attackers)}</p>
+            {chaseChanges.length>0&&<p><strong>Chase changes:</strong> {
+              chaseChanges.join(' ')}</p>}
             <p><strong>Paid chase this km:</strong> {frame.paidChase.length?
               frame.paidChase.map(row=>chaseWork(preview,row)).join(' · '):
               'None'}</p>
+            <p>The recording counts paid chase workers. It does not yet
+              identify each individual turn in the wind.</p>
             <p><strong>Selective chase held this km:</strong> {
               frame.heldChase.length?frame.heldChase.map(id=>
                 teamLabel(preview,id)).join(', '):'None'}</p>

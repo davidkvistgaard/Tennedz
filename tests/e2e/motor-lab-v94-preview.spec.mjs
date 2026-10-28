@@ -57,6 +57,22 @@ test('experimental v94 race shows committed plans and measured road only',
       {name:'What the recording shows'})).toBeVisible();
     await expect(page.locator('.v94-evidence'))
       .toContainText('Paid chase this km:');
+    const firstChase=raceDynamics.frames.find(row=>row.paidChase.length>0);
+    if(firstChase){
+      await page.getByRole('slider',{name:'Race kilometre'})
+        .evaluate((element,value)=>{
+        const setter=Object.getOwnPropertyDescriptor(
+          HTMLInputElement.prototype,'value').set;
+        setter.call(element,String(value));
+        element.dispatchEvent(new Event('input',{bubbles:true}));
+        },firstChase.km);
+      await expect(page.locator('.v94-evidence'))
+        .toContainText('Chase changes:');
+      await expect(page.locator('.v94-evidence'))
+        .toContainText('into the recorded chase');
+    }
+    await expect(page.locator('.v94-evidence'))
+      .toContainText('individual turn in the wind');
     await expect(page.locator('.v94-evidence'))
       .toContainText('Selective chase held this km:');
     await expect(page.getByRole('heading',
@@ -67,6 +83,7 @@ test('experimental v94 race shows committed plans and measured road only',
       name:/Recorded leading-group gap from km 1 to km 40/})).toBeVisible();
     expect((await page.locator('.v94-lead-line').getAttribute('points'))
       .split(' ')).toHaveLength(40);
+    await page.getByRole('button',{name:'Start',exact:true}).click();
     await expect(page.locator('.v94-lead-current'))
       .toHaveAttribute('cx','26');
     await page.getByRole('button',{name:'Last km'}).click();
