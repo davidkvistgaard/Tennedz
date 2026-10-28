@@ -1684,6 +1684,31 @@ export default function Playtest({guided=false}){
           <p>Your riders: {catchRoadFrame.ownRiders.map(row=>
             `${row.riderId} ${row.roadGroup}, `+
             `${row.energy.toFixed(1)} energy`).join(' · ')}.</p>
+        </>:roadPreview.unsupportedReason===
+          'individual_pre500_bunch_drop'?<>
+          <p>The two-front group road is paid through the line. Riders leave
+            the bunch before 500 m, but their occupied-wheel handoff is not
+            resolved. The line bands are unordered; individual finish,
+            replay and points remain withheld.</p>
+          <label>Recorded road boundary: {roadPreviewIndex+1} of {' '}
+            {roadPreview.lastKmRoad.length}
+            <input type="range" min="0"
+              max={roadPreview.lastKmRoad.length-1}
+              value={roadPreviewIndex}
+              onChange={event=>setRoadPreviewIndex(Number(event.target.value))}/>
+          </label>
+          <p>{(roadPreviewFrame.distanceM/1000).toFixed(3)} km · bunch passage
+            {' '}{roadPreviewFrame.bunchPassageSecondsFromBunchMarker.toFixed(2)} s
+            {' '}· {roadPreviewFrame.groups.length} groups ahead · {' '}
+            {roadPreviewFrame.droppedPassages.length} isolated riders.</p>
+          <p>Road groups: {roadPreviewFrame.groups.map(group=>
+            `${group.id} (${group.riderIds.length} riders, `+
+            `${group.gapSeconds.toFixed(2)} s ahead)`).join(' · ')||'none'}</p>
+          <p>Your riders: {roadPreviewFrame.ownRiderEnergy.map(row=>
+            `${row.riderId} ${row.roadBandId}, `+
+            `${row.energy.toFixed(1)} energy`).join(' · ')}.</p>
+          <p>Unordered line bands: {roadPreview.lineBands.map(band=>
+            `${band.id} (${band.riderCount} riders)`).join(' · ')}.</p>
         </>:roadPreview.catch?<>
           <p>The group-level final-kilometre road is paid through the line.
             {' '}{roadPreview.catch.groupId} meets the bunch at {' '}

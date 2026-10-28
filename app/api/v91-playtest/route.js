@@ -53,6 +53,11 @@ function v93PlanError(error){
       Math.round(error.roadPreview.catch.metresToGo)} m to go. `+
       'The group-level final-kilometre road and contact are paid through the line, '+
       'but individual places, replay and points remain unresolved.';
+  if(error.roadPreview?.unsupportedReason===
+    'individual_pre500_bunch_drop')
+    return 'The two-front last-kilometre group road is paid through the line. '+
+      'Riders leaving the bunch before 500 m have no resolved wheel handoff, '+
+      'so individual places, replay and points remain unavailable.';
   if(error.message.startsWith(
     'The separated finale needs a recorded catch for ')&&
     Number.isFinite(error.roadPreview?.catch?.metresToGo))

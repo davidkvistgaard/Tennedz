@@ -1,7 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {prepareV91Playtest} from '../../lib/engine/v2/playtest.mjs';
-import {createV93CoastedPlaytest} from
+import {createV93CoastedPlaytest,
+  V93_PAID_PRE500_BUNCH_DROP_ROAD_PREVIEW_VERSION} from
   '../../lib/engine/v2/playtest-v93-coasted.mjs';
 import {resolveRandomRivalTactics} from
   '../../lib/engine/v2/playtest-rival-random.mjs';
@@ -30,8 +31,25 @@ test('pre-500 m bunch drops keep the official finish unavailable',()=>{
     const teamId=index?`rival-${index}`:'you';
     return {teamId,finisherId:`${teamId}-7`,leadOutRiderId:null};
   })};
-  assert.throws(()=>createV93CoastedPlaytest(settings,finishPlan),
-    /Dynamic active positioning needs recorded pre-500 m bunch drops/);
+  assert.throws(()=>createV93CoastedPlaytest(settings,finishPlan),error=>{
+    assert.match(error.message,
+      /Dynamic active positioning needs recorded pre-500 m bunch drops/);
+    const preview=error.roadPreview;
+    assert.equal(preview?.version,
+      V93_PAID_PRE500_BUNCH_DROP_ROAD_PREVIEW_VERSION);
+    assert.equal(preview.unsupportedReason,'individual_pre500_bunch_drop');
+    assert.equal(preview.lastKmRoad.length,7);
+    assert.equal(preview.lastKmRoad.at(-1).distanceM,260000);
+    assert.equal(preview.lastKmRoad.at(-1).groups.length,2);
+    assert.equal(preview.lastKmRoad.at(-1).ownRiderEnergy.length,8);
+    assert.equal(preview.finalRiderEnergy.length,160);
+    assert.equal(preview.lineBands.at(-1).lastPossiblePlace,160);
+    assert.equal(preview.lineTimes,null);
+    assert.equal(preview.classifiedResults,null);
+    assert.equal(preview.pointsStatus,'withheld');
+    assert.equal(preview.canCommitAwards,false);
+    return true;
+  });
   const road=simulateTacticalTour({...prepareV91Playtest(settings),
     motorVersion:MOTOR_EXHAUSTION_COAST_VERSION});
   assert.equal(validateRecordedTour(road),true);

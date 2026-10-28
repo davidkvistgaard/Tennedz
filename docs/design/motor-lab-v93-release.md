@@ -324,3 +324,13 @@ withheld. The existing final-100-m preview retains its version and
 individual contact audit; other unsupported catches retain their
 kilometre-only refusal. This is a group-road explanation, not a
 playable finish or an automatic change to guided tactics.
+
+The remaining `guided-finish-coverage-39` pre-500 m bunch-drop
+refusal also has a narrow paid group-road preview. It requires the
+existing two-front paid-bunch checkpoint to source-replay all 160
+riders and their final energy before showing seven last-kilometre
+passages and unordered line-band counts. The API continues to return
+HTTP 422; individual line times, classification, replay and points
+stay unavailable. If that source checkpoint cannot replay, the
+earlier exact refusal remains. No finish guard or guided default was
+changed.
