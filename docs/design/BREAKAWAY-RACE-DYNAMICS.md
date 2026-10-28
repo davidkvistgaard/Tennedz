@@ -2067,3 +2067,23 @@ kilometre as a recorded break catch. They therefore do not exercise the
 rear-group entry paths requested for exhausted workers or caught break
 riders. The audit counts these paths explicitly rather than claiming
 coverage from a long-race sample that lacks them.
+
+### Isolated rear solo contact step
+
+`rear-solo-contact-v1.mjs` adds an independent, versioned short road
+step for two detached solo riders with ordered, positive time gaps to
+the bunch. Given explicit rider and bunch speeds and per-rider work
+costs for that slice, it charges each solo rider to the exact computed
+meeting point or through the entire slice if they remain separate.
+It records an exact rear-contact marker only when the rear rider closes
+the paid gap; a bunch catch before that contact refuses this branch.
+The standalone validator recalculates the step and rejects a changed
+contact marker or energy. It does not silently grant a common wheel,
+shelter, leader, finish time or time-limit result after contact.
+
+This step is not yet connected to the full race. The current kilometre
+frames do not supply independent short-step speed and position plans
+for detached riders, and a single reference slice cannot establish
+terrain-specific location for riders far apart on the road. Those plans,
+rear-group continuation and full source replay are required before any
+real race can form a gruppetto with this candidate.
