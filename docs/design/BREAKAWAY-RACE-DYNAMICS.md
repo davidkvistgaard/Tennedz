@@ -1487,3 +1487,25 @@ unopposed stage in this sample but compresses the paired one-day break
 below a minute. One extra control goal is therefore too sensitive to
 claim as a general remedy. The temporary audit switch was removed; no
 playable planner or explicit manager order changed.
+
+A separate read-only paired-motor audit now holds the prepared route,
+20 teams, riders, fatigue, seed and every committed order fixed while
+running v93 and v94 (`scripts/audit-v93-v94-same-orders.mjs`). In 48
+paired one-day/stage cases from six seeds across flat/mountain and
+fresh/tired starts, every recording validated and each v94 recording
+source-replayed. V93 means of the widest lead were 34.18/35.95 seconds
+for fresh/tired starts; v94 one-day means were 210.70/265.79 and stage
+means 419.16/522.96. V93 had zero kilometres at or above one minute,
+while v94 averaged about 99–133 per race. No source committed bunch
+front-work orders, so paid bunch-front kilometres were zero in both.
+Although total paid chase fell from roughly 662/725 to 589/650
+team-kilometres in one-day and 314/270 in stages, generated control
+teams paid *more* chase under v94: about 217/199 to 314/270.
+Among races with a generated control team, its helpers' mean energy
+at km 210 fell from 11.90/2.99 to
+3.44/0.37 in one-day and 3.46/0.37 in stages. These are differences
+between complete versioned motors, including road and decision policy;
+they do not isolate one coefficient or establish realistic race gaps.
+They show that a longer front under current rival orders can coexist
+with even less control helper reserve. The guided v93 route and the
+experimental v94 release boundary remain unchanged.
