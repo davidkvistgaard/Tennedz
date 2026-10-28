@@ -1450,3 +1450,18 @@ order. A separately versioned rule that lets *automatically generated*
 control tempo rest on held-chase kilometres is worth a paired audit;
 explicit manager front-work orders must still execute. This is a
 diagnosis, not yet a motor change or a claim about real races.
+
+That versioned trial was run and rejected. It kept explicit manager
+front-work orders, withheld only automatically committed control tempo
+when the same team's selective chase was held, and checked the paid
+worker roster, energy ledger, intent source and full replay. In 24
+same-source 20-team/260 km races, both versions validated with no
+refusals. Fresh/tired one-day mean widest leads rose from 295.16/283.42
+to 462.54/437.83 seconds; stages rose from 403.42/399.01 to
+608.26/596.91. Control front work fell from roughly 145–163 to 3–9
+team-km, but paid chase climbed from 36–108 to 350–386 team-km and
+control reserve at the finale start fell by about 16 points. A binary
+“rest whenever chase is held” rule merely exchanges sustained tempo
+for a longer, more costly pursuit. All trial code and tests were
+reverted; only this diagnostic remains. A useful policy needs a more
+credible way to share work and reassess the break over time.
