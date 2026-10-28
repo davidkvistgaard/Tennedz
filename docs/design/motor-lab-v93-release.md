@@ -138,3 +138,12 @@ rolling/mountain fresh/tired audit covered 96 generated 20-team,
 All six two-front candidate traces and checkpoints replayed with their
 workers charged. This is synthetic coverage of a rare case, not a
 general contact model or a guided race finish.
+
+A larger 48-seed holdout used the same four generated-route combinations
+for 192 synthetic races. The isolated no-front checkpoint replayed in
+58 cases. The one-front checkpoint replayed in 116 of 117 attempted
+handoffs; the remaining mountain/tired handoff had a recorded lead of
+only 0.02 seconds and correctly refused an unmodelled front/bunch catch.
+All 15 two-front attempts replayed. The wider sample therefore tests
+the refusal boundary as well as the paid continuation; it does not
+authorize treating a catch as an unchanged road-group finish.
