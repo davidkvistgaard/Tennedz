@@ -78,6 +78,8 @@ for(const terrain of namedFrontWork?['rolling','mountain']:
         handoffDroppedRiders:handoff?.riderGroups.filter(row=>
           row.group==='dropped').length??null,
         ownNamedFrontWorker:ownOrder.frontWorkRiderId??null,
+        priorKmPaidFrontTeam:handoff?.paidBunchPace?.teamId??null,
+        priorKmPaidFrontRiders:handoff?.paidBunchPace?.riderIds??[],
         ownTeamAhead:snapshot.roadGroups.some(group=>
           group.teamIds.includes('you')),
         ownEligibleFrontHelpers:eligibleHelpers,

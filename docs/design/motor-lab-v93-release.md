@@ -62,3 +62,7 @@ eligible helper still in the bunch in all eight cases; the player's team
 had no rider ahead. Thus these are genuine available front-work orders,
 not orders that could safely be ignored because the worker was absent.
 The audit now records that availability alongside the road state.
+The km 259 ledger also shows the same paid pair, `you-5` and `you-6`, in
+all eight cases. A correct final-kilometre continuation therefore needs
+to carry an actual paid two-rider bunch pace from that source, while
+allowing later availability to change through the short slices.
