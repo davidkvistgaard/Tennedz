@@ -18,6 +18,9 @@ import {probeFinaleSeparatedGroupsFromTour,
   FINALE_COAST_NO_FRONT_DROPPED_LAST_KM_VERSION,
   FINALE_COAST_NO_FRONT_PAID_BUNCH_VERSION} from
   '../../lib/engine/v2/finale-multi-run.mjs';
+import {recordFinaleCoastNoFrontPaidBunchClock,
+  validateFinaleCoastNoFrontPaidBunchClock} from
+  '../../lib/engine/v2/finale-separated-last-km.mjs';
 
 function seededRandom(label){
   let state=2166136261;
@@ -76,6 +79,12 @@ test('opt-in no-front finale pays named front pair and replays the source',()=>{
   const trace=probeFinaleSeparatedGroupsFromTour(tour,{
     version:FINALE_COAST_NO_FRONT_PAID_BUNCH_VERSION});
   assert.equal(validateFinaleSeparatedGroupsFromTour(tour,trace),true);
+  const clock=recordFinaleCoastNoFrontPaidBunchClock(tour);
+  assert.equal(validateFinaleCoastNoFrontPaidBunchClock(tour,clock),true);
+  assert.deepEqual(clock.line.bands.map(band=>band.kind),
+    ['peloton','unresolved_dropped']);
+  assert.equal(clock.pointsStatus,'withheld');
+  assert.equal(clock.canCommitAwards,false);
   assert.equal(trace.frames.length,7);
   assert(trace.frames.every(frame=>frame.bunchFrontWork?.teamId==='you'&&
     frame.bunchFrontWork.riderIds.includes('you-5')));
@@ -90,4 +99,8 @@ test('opt-in no-front finale pays named front pair and replays the source',()=>{
   forged.frames[0].bunchFrontWork.riderIds[0]='you-0';
   assert.throws(()=>validateFinaleSeparatedGroupsFromTour(tour,forged),
     /differs from its locked tour and work/);
+  const forgedClock=structuredClone(clock);
+  forgedClock.trace.frames[0].bunchFrontWork.riderIds[0]='you-0';
+  assert.throws(()=>validateFinaleCoastNoFrontPaidBunchClock(tour,
+    forgedClock),/paid no-front bunch clock does not replay/);
 });

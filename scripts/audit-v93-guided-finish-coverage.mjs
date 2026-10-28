@@ -21,6 +21,9 @@ import {probeFinaleSeparatedGroupsFromTour,
   validateFinaleSeparatedGroupsFromTour,
   FINALE_COAST_NO_FRONT_PAID_BUNCH_VERSION} from
   '../lib/engine/v2/finale-multi-run.mjs';
+import {recordFinaleCoastNoFrontPaidBunchClock,
+  validateFinaleCoastNoFrontPaidBunchClock} from
+  '../lib/engine/v2/finale-separated-last-km.mjs';
 
 const countArg=process.argv.find(value=>value.startsWith('--seeds='));
 const count=countArg?Number(countArg.slice('--seeds='.length)):12;
@@ -88,6 +91,13 @@ for(const terrain of namedFrontWork?['rolling','mountain']:
           const trace=probeFinaleSeparatedGroupsFromTour(road,{
             version:FINALE_COAST_NO_FRONT_PAID_BUNCH_VERSION});
           validateFinaleSeparatedGroupsFromTour(road,trace);
+          const clock=recordFinaleCoastNoFrontPaidBunchClock(road);
+          validateFinaleCoastNoFrontPaidBunchClock(road,clock);
+          if(clock.trace.version!==trace.version||
+            clock.line.bands.at(-1)?.lastPossiblePlace!==
+              road.committedInputs.teams.length*8||
+            clock.canCommitAwards!==false)
+            throw new Error('The candidate line lost its locked riders.');
           for(const frame of trace.frames)
             for(const worker of frame.bunchFrontWork?.workers??[]){
               const paid=frame.riders.find(row=>
@@ -99,7 +109,8 @@ for(const terrain of namedFrontWork?['rolling','mountain']:
           noFrontPaidTrace={status:'replayed',
             paidSlices:trace.frames.filter(frame=>
               frame.bunchFrontWork!==null).length,
-            finalRiderEnergy:trace.finalRiderEnergy};
+            finalRiderEnergy:trace.finalRiderEnergy,
+            lineBands:clock.line.bands.map(band=>band.kind)};
         }catch(candidateError){
           noFrontPaidTrace={status:'refused',reason:candidateError.message};
         }

@@ -92,3 +92,11 @@ candidate traces replayed with each selected worker charged. The other
 30 require separate front-group/contact work. This trace is still an
 internal probe: it is not a playable finish, individual order, point
 award or guided route until the downstream line contract is proven.
+
+The same opt-in no-front trace now has a separate source-replayed line
+checkpoint. It carries the paid worker trace into unordered `peloton` and
+`unresolved_dropped` bands, keeps all 160 riders inside those bands, and
+withholds points and awards. A changed recorded worker fails deep replay.
+All 18 no-front handoffs in the 48-case audit replayed this checkpoint;
+the 30 front-group handoffs remain unsupported. This is still an internal
+candidate and does not change the guided finish or its refusal.
