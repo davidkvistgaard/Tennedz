@@ -1569,3 +1569,16 @@ of a kilometre. The frame-end classification does not establish
 whether an attack briefly existed within that kilometre, and this
 read-only partition does not justify an uncommitted automatic easing
 rule or predict its whole-race consequences.
+
+The no-front partition can be split again at each race's first recorded
+front. For fresh starts under the generated hard order, non-chasing
+control helpers paid 340.73 reserve units before the first front and
+214.22 on later no-front kilometres, across 1,144.67 and 712.67
+helper rider-km respectively. With only the generated effort changed
+to steady, the same seeded cases paid 258.13 and 62.46 units across
+1,476 and 347.67 helper rider-km. Tired starts paid 14.71/55.88
+under hard and 8.65/25.36 under steady. The time spent before the
+first front and after it was caught changes too, so this is not a
+fixed set of kilometre states with only a cheaper effort charge.
+It strengthens the case for auditing a complete, committed control
+work decision over time rather than applying a static cost discount.
