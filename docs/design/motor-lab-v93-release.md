@@ -127,3 +127,14 @@ its line has only `road_group` and `peloton` bands. The legacy dropped
 step still refuses empty source travel. The two-front handoff remains
 outside this version. This is internal
 probe code only; the guided finish and its refusal remain unchanged.
+
+The two-front case now has its own opt-in candidate version, keeping
+the one-front source guard intact. It pays the committed bunch pair
+alongside any selected chase, advances both front groups, and refuses
+an unmodelled catch or contact. The unordered checkpoint withholds
+awards and points and deep-replays the source. An extended 24-seed
+rolling/mountain fresh/tired audit covered 96 generated 20-team,
+260 km sources: 36 no-front, 54 one-front and six two-front handoffs.
+All six two-front candidate traces and checkpoints replayed with their
+workers charged. This is synthetic coverage of a rare case, not a
+general contact model or a guided race finish.

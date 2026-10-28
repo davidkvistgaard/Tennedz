@@ -23,12 +23,15 @@ import {probeFinaleSeparatedGroupsFromTour,
   FINALE_COAST_NO_FRONT_DROPPED_LAST_KM_VERSION,
   FINALE_COAST_DROPPED_LAST_KM_VERSION,
   FINALE_COAST_NO_FRONT_PAID_BUNCH_VERSION,
-  FINALE_COAST_ONE_FRONT_PAID_BUNCH_VERSION} from
+  FINALE_COAST_ONE_FRONT_PAID_BUNCH_VERSION,
+  FINALE_COAST_TWO_FRONT_PAID_BUNCH_VERSION} from
   '../../lib/engine/v2/finale-multi-run.mjs';
 import {recordFinaleCoastNoFrontPaidBunchClock,
   validateFinaleCoastNoFrontPaidBunchClock,
   recordFinaleCoastOneFrontPaidBunchClock,
-  validateFinaleCoastOneFrontPaidBunchClock} from
+  validateFinaleCoastOneFrontPaidBunchClock,
+  recordFinaleCoastTwoFrontPaidBunchClock,
+  validateFinaleCoastTwoFrontPaidBunchClock} from
   '../../lib/engine/v2/finale-separated-last-km.mjs';
 
 function seededRandom(label){
@@ -165,7 +168,7 @@ test('opt-in no-front finale pays named front pair and replays the source',()=>{
     forgedClock),/paid no-front bunch clock does not replay/);
 });
 
-test('one-front candidate keeps unsupported handoffs as refusals',()=>{
+test('paid front versions keep source group counts separate',()=>{
   for(const {index,fatigue,groups,dropped} of [
     {index:3,fatigue:0,groups:2,dropped:36},
     {index:11,fatigue:30,groups:1,dropped:0}]){
@@ -187,11 +190,22 @@ test('one-front candidate keeps unsupported handoffs as refusals',()=>{
       includeAttackLoad:true});
     assert.equal(snapshot.roadGroups.length,groups);
     assert.equal(snapshot.droppedRiderIds.length,dropped);
-    if(groups!==1)
+    if(groups!==1){
       assert.throws(()=>probeFinaleSeparatedGroupsFromTour(tour,{
         version:FINALE_COAST_ONE_FRONT_PAID_BUNCH_VERSION}),
       /needs exactly one leading group/);
-    else{
+      const clock=recordFinaleCoastTwoFrontPaidBunchClock(tour);
+      assert.equal(validateFinaleCoastTwoFrontPaidBunchClock(tour,clock),
+        true);
+      assert.deepEqual(clock.line.bands.map(band=>band.kind),
+        ['road_group','road_group','peloton','unresolved_dropped']);
+      assert.equal(clock.canCommitAwards,false);
+      assert.equal(clock.line.bands.at(-1).lastPossiblePlace,160);
+      const forged=structuredClone(clock);
+      forged.trace.frames[0].bunchFrontWork.riderIds[0]='you-0';
+      assert.throws(()=>validateFinaleCoastTwoFrontPaidBunchClock(tour,
+        forged),/paid two-front bunch clock does not replay/);
+    }else{
       const slice=finaleDistanceGrid(tour.route,{remainingKm:1})[0];
       const droppedInput={slice,
         segment:tour.route.kilometres[slice.sourceKm-1],
