@@ -2131,3 +2131,13 @@ to hold position prevents that optional release. The decision and reason
 can be recalculated from the same source. This isolated decision does
 not yet derive the hold cost from the route and actual pace, move the
 rider, form a rear group, decide a finish time or impose a time limit.
+
+`scripts/audit-v94-rear-entry.mjs` replays 32 generated 20-team,
+260-km V94 cases across eight seeds, flat/mountain routes and fresh/tired
+starts. It found 51 first transitions into the provisional `dropped`
+state. None belonged to a recorded bunch-front worker in that or the
+preceding kilometre, and none was a caught break rider in either
+kilometre. This is a coverage finding, not evidence that those entry
+paths cannot occur: the cases do not exercise them. The provisional
+`deficitSeconds` does not give a physical road coordinate, so these
+51 riders cannot be joined into a rear group from the frames alone.
