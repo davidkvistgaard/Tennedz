@@ -37,6 +37,8 @@ const teamLabel=(preview,id)=>preview.teamPlans.find(row=>
   row.teamId===id)?.teamName??id;
 const riders=(preview,ids)=>ids.length?
   ids.map(id=>riderLabel(preview,id)).join(', '):'None';
+const chaseWork=(preview,row)=>`${teamLabel(preview,row.teamId)} (${
+  row.reason.replaceAll('_',' ')}; workers: ${riders(preview,row.riderIds)})`;
 const coastOutcome=(preview,frame,row)=>{
   const rider=riderLabel(preview,row.riderId);
   const outcome=row.joinedGroupId?`joined ${row.joinedGroupId}`:
@@ -245,8 +247,12 @@ export default function RaceDynamicsPreview(){
           </article>):<p>All recorded road groups are with the bunch.</p>}
           <div className="v94-evidence">
             <p><strong>Attack attempts:</strong> {riders(preview,frame.attackers)}</p>
-            <p><strong>Chasing teams:</strong> {frame.chasers.length?
-              frame.chasers.map(id=>teamLabel(preview,id)).join(', '):'None'}</p>
+            <p><strong>Paid chase this km:</strong> {frame.paidChase.length?
+              frame.paidChase.map(row=>chaseWork(preview,row)).join(' · '):
+              'None'}</p>
+            <p><strong>Selective chase held this km:</strong> {
+              frame.heldChase.length?frame.heldChase.map(id=>
+                teamLabel(preview,id)).join(', '):'None'}</p>
             {frame.controlWithheld.length>0&&<p><strong>Control teams
               withholding an uncatchable chase:</strong> {
               frame.controlWithheld.map(id=>teamLabel(preview,id))

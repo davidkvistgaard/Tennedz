@@ -41,7 +41,14 @@ test('experimental race preview exposes committed intent and paid road only',()=
       frame.ownRiders.every(row=>source.riderGroups.some(rider=>
         rider.id===row.id&&rider.energy===row.energy))&&
       frame.roadGroups.every(group=>source.roadGroups.some(recorded=>
-        recorded.id===group.id&&recorded.gapSeconds===group.gapSeconds));
+        recorded.id===group.id&&recorded.gapSeconds===group.gapSeconds))&&
+      frame.paidChase.length===source.chaseContributions.length&&
+      frame.paidChase.every(row=>source.chaseContributions.some(recorded=>
+        recorded.teamId===row.teamId&&recorded.reason===row.reason&&
+        row.riderIds.length===recorded.riderIds.length&&
+        row.riderIds.every(id=>recorded.riderIds.includes(id))))&&
+      frame.heldChase.length===source.heldChaseTeamIds.length&&
+      frame.heldChase.every(id=>source.heldChaseTeamIds.includes(id));
   }));
   assert.ok(preview.teamPlans.every(row=>row.role&&row.source&&row.baseline));
   assert.equal(Object.hasOwn(preview,'provisionalResults'),false);

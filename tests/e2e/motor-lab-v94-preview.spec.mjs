@@ -34,6 +34,9 @@ test('experimental v94 race shows committed plans and measured road only',
     expect(response.status()).toBe(200);
     const {raceDynamics}=await response.json();
     expect(raceDynamics.frames).toHaveLength(40);
+    expect(raceDynamics.frames.every(frame=>
+      frame.paidChase.map(row=>row.teamId).sort().join(',')===
+      [...frame.chasers].sort().join(','))).toBe(true);
     expect(raceDynamics.teamPlans).toHaveLength(4);
     expect(raceDynamics.resultStatus).toBe('provisional_road_groups_only');
     expect(raceDynamics.policy.rivalIntentVersion).toBe(4);
@@ -52,6 +55,10 @@ test('experimental v94 race shows committed plans and measured road only',
         baseline:{attack:'none',chase:'selective'}});
     await expect(page.getByRole('heading',
       {name:'What the recording shows'})).toBeVisible();
+    await expect(page.locator('.v94-evidence'))
+      .toContainText('Paid chase this km:');
+    await expect(page.locator('.v94-evidence'))
+      .toContainText('Selective chase held this km:');
     await expect(page.getByRole('heading',
       {name:'Finish line · km 40'})).toBeVisible();
     expect(raceDynamics.finish.km).toBe(40);
