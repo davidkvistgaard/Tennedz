@@ -19,10 +19,13 @@ import {planFinaleBunchFrontWork} from
   '../lib/engine/v2/finale-bunch-front-work.mjs';
 import {probeFinaleSeparatedGroupsFromTour,
   validateFinaleSeparatedGroupsFromTour,
-  FINALE_COAST_NO_FRONT_PAID_BUNCH_VERSION} from
+  FINALE_COAST_NO_FRONT_PAID_BUNCH_VERSION,
+  FINALE_COAST_ONE_FRONT_PAID_BUNCH_VERSION} from
   '../lib/engine/v2/finale-multi-run.mjs';
 import {recordFinaleCoastNoFrontPaidBunchClock,
-  validateFinaleCoastNoFrontPaidBunchClock} from
+  validateFinaleCoastNoFrontPaidBunchClock,
+  recordFinaleCoastOneFrontPaidBunchClock,
+  validateFinaleCoastOneFrontPaidBunchClock} from
   '../lib/engine/v2/finale-separated-last-km.mjs';
 
 const countArg=process.argv.find(value=>value.startsWith('--seeds='));
@@ -86,6 +89,7 @@ for(const terrain of namedFrontWork?['rolling','mountain']:
         sourceKm:firstSlice.sourceKm,
         sliceLengthKm:firstSlice.lengthM/1000});
       let noFrontPaidTrace=null;
+      let oneFrontPaidTrace=null;
       if(snapshot.roadGroups.length===0&&snapshot.droppedRiderIds.length)
         try{
           const trace=probeFinaleSeparatedGroupsFromTour(road,{
@@ -113,6 +117,34 @@ for(const terrain of namedFrontWork?['rolling','mountain']:
             lineBands:clock.line.bands.map(band=>band.kind)};
         }catch(candidateError){
           noFrontPaidTrace={status:'refused',reason:candidateError.message};
+        }
+      if(snapshot.roadGroups.length===1)
+        try{
+          const trace=probeFinaleSeparatedGroupsFromTour(road,{
+            version:FINALE_COAST_ONE_FRONT_PAID_BUNCH_VERSION});
+          validateFinaleSeparatedGroupsFromTour(road,trace);
+          const clock=recordFinaleCoastOneFrontPaidBunchClock(road);
+          validateFinaleCoastOneFrontPaidBunchClock(road,clock);
+          if(clock.trace.version!==trace.version||
+            clock.line.bands.at(-1)?.lastPossiblePlace!==
+              road.committedInputs.teams.length*8||
+            clock.canCommitAwards!==false)
+            throw new Error('The one-front line lost its locked riders.');
+          for(const frame of trace.frames)
+            for(const worker of frame.bunchFrontWork?.workers??[]){
+              const paid=frame.riders.find(row=>
+                row.riderId===worker.riderId);
+              if(paid?.role!=='pull'||
+                Math.abs(paid.energySpent-worker.energySpent)>1e-8)
+                throw new Error('A one-front bunch worker was not paid.');
+            }
+          oneFrontPaidTrace={status:'replayed',
+            paidSlices:trace.frames.filter(frame=>
+              frame.bunchFrontWork!==null).length,
+            finalGapSeconds:trace.frames.at(-1).roadGroups[0]?.gapSeconds,
+            lineBands:clock.line.bands.map(band=>band.kind)};
+        }catch(candidateError){
+          oneFrontPaidTrace={status:'refused',reason:candidateError.message};
         }
       const eligibleHelpers=own.orders.helperIds.filter(id=>{
         const row=present.get(id);
@@ -142,6 +174,7 @@ for(const terrain of namedFrontWork?['rolling','mountain']:
             energy:present.get(riderId)?.energy??null})),
         firstSliceFrontWorkCandidate:frontWorkCandidate,
         noFrontPaidTrace,
+        oneFrontPaidTrace,
         ownTeamAhead:snapshot.roadGroups.some(group=>
           group.teamIds.includes('you')),
         ownEligibleFrontHelpers:eligibleHelpers,

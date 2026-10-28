@@ -113,3 +113,15 @@ handoff (median 13.91); seven were at most five seconds. None of the
 engaged chase team. A separate one-front continuation must pay both
 the existing chase and the explicit bunch-front pair, and it must
 record a catch if the group reaches the bunch inside the kilometre.
+
+An isolated one-front paid-bunch candidate now reselects the committed
+front pair on each slice, excludes any team already doing paid chase,
+charges the selected workers, and moves the front group against the
+resulting paid bunch clock. It refuses an unmodelled front catch. The
+separate line checkpoint records unordered `road_group`, `peloton`, and
+`unresolved_dropped` bands with awards and points withheld. In the 48
+case audit, 28 of the 29 one-front handoffs source-replayed this clock;
+one had no initially dropped riders and received an explicit refusal
+because its dropped-travel contract does not cover an empty source.
+The two-front handoff remains outside this version. This is internal
+probe code only; the guided finish and its refusal remain unchanged.
