@@ -1700,8 +1700,10 @@ ahead at the recorded line. A front was present for 256 km; the source
 records 622 paid front-worker rider-km and 398 settled-rest rider-km.
 Mean passive front-gap growth on front kilometres was 3.71 s/km,
 with zero paid chase power, zero protect chase-km and zero control
-chase-km. The extreme is therefore a recorded, partially rotating
-front with no opposing paid work, rather than free or uncharged work
+chase-km. The bunch-easing decision also records 2,652 team-km across
+the race, roughly ten teams per front kilometre. The extreme is
+therefore a recorded, partially rotating front with no opposing paid
+work, rather than free or uncharged work
 by all nine riders. These measurements remain synthetic and do not
 calibrate a realistic lead.
 As an external check on a tempting size-only fix, Brouwer and Potters'
