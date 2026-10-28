@@ -27,6 +27,7 @@ import {probeFinaleSeparatedGroupsFromTour,
   FINALE_COAST_UNAVAILABLE_FRONT_CATCH_VERSION,
   FINALE_COAST_PAYABLE_FRONT_CATCH_VERSION,
   FINALE_PAID_BUNCH_ONLY_VERSION,
+  FINALE_DYNAMIC_NO_FRONT_PAID_BUNCH_VERSION,
   FINALE_COAST_TWO_FRONT_PAID_BUNCH_VERSION,
   FINALE_COAST_THREE_FRONT_PAID_BUNCH_VERSION} from
   '../../lib/engine/v2/finale-multi-run.mjs';
@@ -42,6 +43,8 @@ import {recordFinaleCoastNoFrontPaidBunchClock,
   validateFinaleCoastPayableFrontCatchClock,
   recordFinalePaidBunchOnlyClock,
   validateFinalePaidBunchOnlyClock,
+  recordFinaleDynamicNoFrontPaidBunchClock,
+  validateFinaleDynamicNoFrontPaidBunchClock,
   recordFinaleCoastThreeFrontPaidBunchClock,
   validateFinaleCoastThreeFrontPaidBunchClock} from
   '../../lib/engine/v2/finale-separated-last-km.mjs';
@@ -316,6 +319,48 @@ test('complete bunch pays its named front pair without invented sprint places',(
     assert.throws(()=>validateFinalePaidBunchOnlyClock(tour,forged),
       /paid bunch-only clock does not replay/);
   }
+});
+
+test('new exhaustion drops travel behind a paid no-front bunch',()=>{
+  const seed='guided-finish-coverage-23',terrain='mountain',fatigue=0;
+  const prepared=prepareV91Playtest({distanceKm:260,terrain:'custom',
+    profileHeightsM:generatePlaytestStageProfile({distanceKm:260,
+      style:terrain,seed}),teamCount:20,fatigue,attack:'none',
+    chase:'selective',seed,managerTactics:resolveRandomRivalTactics({
+      teamCount:20,random:seededRandom(`${seed}:${terrain}:${fatigue}`)}),
+    managerTacticalOrdersV8:[{teamId:'you',atKm:5,
+      attack:'selective',attackRiderId:'you-2',
+      chaseTarget:'rival-1-2',frontWork:'rotate',
+      frontWorkRiderId:'you-5',effort:'conserve'},
+    {teamId:'you',atKm:25,attack:'none'}]});
+  const tour=simulateTacticalTour({...prepared,
+    motorVersion:MOTOR_EXHAUSTION_COAST_VERSION});
+  assert.equal(validateRecordedTour(tour),true);
+  const source=finaleSnapshotFromTour(tour,{remainingKm:1,
+    includeAttackLoad:true});
+  assert.equal(source.roadGroups.length,0);
+  assert.equal(source.droppedRiderIds.length,10);
+  assert.throws(()=>probeFinaleSeparatedGroupsFromTour(tour,{
+    version:FINALE_COAST_NO_FRONT_PAID_BUNCH_VERSION}),
+  /Newly exhausted finale riders need recorded drop travel/);
+  const trace=probeFinaleSeparatedGroupsFromTour(tour,{
+    version:FINALE_DYNAMIC_NO_FRONT_PAID_BUNCH_VERSION});
+  assert.equal(validateFinaleSeparatedGroupsFromTour(tour,trace),true);
+  assert(trace.frames.some(frame=>frame.exhaustionDrops.length>0));
+  const clock=recordFinaleDynamicNoFrontPaidBunchClock(tour);
+  assert.equal(validateFinaleDynamicNoFrontPaidBunchClock(tour,clock),true);
+  assert.equal(clock.line.bands.at(-1).lastPossiblePlace,160);
+  assert.equal(clock.canCommitAwards,false);
+  for(const frame of trace.frames)
+    for(const worker of frame.bunchFrontWork?.workers??[]){
+      const paid=frame.riders.find(row=>row.riderId===worker.riderId);
+      assert.equal(paid?.role,'pull');
+      assert.ok(Math.abs(paid.energySpent-worker.energySpent)<1e-8);
+    }
+  const forged=structuredClone(clock);
+  forged.trace.frames[0].bunchFrontWork.riderIds[0]='you-0';
+  assert.throws(()=>validateFinaleDynamicNoFrontPaidBunchClock(tour,
+    forged),/dynamic paid no-front bunch clock does not replay/);
 });
 
 test('opt-in no-front finale pays named front pair and replays the source',()=>{

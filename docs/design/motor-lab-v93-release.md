@@ -241,3 +241,34 @@ zero bunch-front workers; it does not pretend otherwise. Contact between
 any of those groups remains a refusal, and awards and points remain
 withheld. This is synthetic boundary coverage, not a complete guided
 finish.
+
+A separate 24-seed effort audit used the same generated rolling/mountain,
+fresh/tired 20-team 260 km sources with a committed named front-work
+order. Under `hard` effort, all 96 source roads reached an internal,
+source-replayed, non-awarding checkpoint: 30 no-front, 55 one-front,
+seven two-front and one three-front no-contact cases, plus three
+unavailable-pair catches. Under `conserve`, 95 of 96 reached the
+existing checkpoints. The remaining `guided-finish-coverage-23` fresh
+mountain source began the last kilometre with no front group and ten
+dropped riders. Its named front pair could pay, but two more riders
+exhausted during the final seven slices. The earlier paid no-front
+version correctly refused them because it only carries the original
+dropped set.
+
+An isolated, separately versioned *dynamic paid no-front* checkpoint
+now records those new exhaustion drops and their travel behind the
+paid bunch, reselects and charges the committed named workers for each
+slice, and ends with all 160 riders in unordered line bands. It
+withholds individual places, classifications, points and awards.
+The exact conservative source validates and full source replay rejects
+a forged worker. The older no-front version still refuses it. This
+candidate remains internal; the guided finish and its refusal have not
+changed. The effort audit tests contract coverage, not calibrated race
+dynamics or an official finish.
+
+Rerunning the full 96 conservative sources with this separate version
+accounted for every handoff: 35 earlier no-front paid checkpoints,
+53 one-front, four two-front, one three-front, two complete paid
+bunches, and this one dynamic no-front checkpoint. All 96 source
+roads still reach the ordinary guided refusal; the internal checks
+do not award an official result.
