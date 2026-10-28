@@ -1402,3 +1402,14 @@ the immediate energy collapse in these synthetic cases, but does not
 produce a stable believable gap distribution or justify the guided
 release. The audit is a combined-policy comparison, not a hidden
 change to the player's explicit tactics.
+
+The extreme tired-stage holdout (`race-dynamics-holdout-2`, flat) had
+**zero** control-role teams and zero paid control chase; its widest
+lead was 1,037.88 seconds. The paired one-day case on that field also
+had zero controls and reached 396.14 seconds. At the other end,
+`race-dynamics-holdout-4` fresh flat one-day had three controls, only
+36 paid control chase team-km, a front present for 242 km, yet a widest
+lead of just 38.90 seconds. Thus role count explains the largest
+outlier, but the short-lead case cannot be fixed by simply reducing
+control chase. Inspect front and bunch road work in that case before
+changing the motor's economics.
