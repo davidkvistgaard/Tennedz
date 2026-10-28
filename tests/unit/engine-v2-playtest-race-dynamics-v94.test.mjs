@@ -56,12 +56,12 @@ test('experimental race preview exposes committed intent and paid road only',()=
 test('optional v94 road-group scale is committed and preserves the prior replay',()=>{
   const settings={distanceKm:260,terrain:'flat',teamCount:20,
     seed:'road-scale-probe-1'};
-  const previous=createV94RaceDynamicsPreview({format:'stage',settings});
-  const explicitV1=createV94RaceDynamicsPreview({format:'stage',settings,
+  const previous=createV94RaceDynamicsPreview({format:'stage',settings,
     roadGroupPaceVersion:1});
   const aligned=createV94RaceDynamicsPreview({format:'stage',settings,
     roadGroupPaceVersion:2});
-  assert.deepEqual(previous.recording.frames,explicitV1.recording.frames);
+  const current=createV94RaceDynamicsPreview({format:'stage',settings});
+  assert.deepEqual(current.recording.frames,aligned.recording.frames);
   assert.equal(previous.preview.policy.roadGroupPaceVersion,undefined);
   assert.equal(aligned.preview.policy.roadGroupPaceVersion,2);
   assert.ok(previous.preview.frames.filter(frame=>frame.roadGroups.length>1).length>
