@@ -90,6 +90,8 @@ function run({seed,terrain,fatigue,format,breakTeams,controlTeams}){
       ...(process.argv.includes('--control-withdrawal-v2')?
         {controlWithdrawalVersion:2}:{}),
       ...(frontExhaustionVersion>=2?{frontExhaustionVersion}:{}),
+      ...(process.argv.includes('--road-group-pace-v2')?
+        {roadGroupPaceVersion:2}:{}),
     }});
   if(process.argv.includes('--validate'))validateRecordedTour(recording);
   if(process.argv.includes('--replay'))replayRaceDynamicsRecording(recording);
@@ -158,6 +160,7 @@ function run({seed,terrain,fatigue,format,breakTeams,controlTeams}){
     initialFrontCaptains:initialFront?frontCaptainCount(initialFront):0,
     firstFrontCaptainKm:frames.find(frame=>frontCaptainCount(frame)>0)?.km??null,
     maxGapSeconds:Math.max(...gaps),
+    multiRoadGroupKm:frames.filter(frame=>frame.roadGroups.length>1).length,
     kilometresOverOneMinute:gaps.filter(gap=>gap>=60).length,
     kilometresOverFiveMinutes:gaps.filter(gap=>gap>=300).length,
     firstFiveMinuteKm:frames.find(frame=>frame.gapSeconds>=300)?.km??null,
@@ -306,6 +309,10 @@ const summary=process.argv.includes('--summary')?
       allInitialFrontCaught:completed.filter(row=>row.initialFrontRiders>0&&
         row.initialFrontAtLineRiders===0).length,
       meanMaxGapSeconds:average('maxGapSeconds'),
+      maxGapSecondsRange:completed.length?[
+        Math.min(...completed.map(row=>row.maxGapSeconds)),
+        Math.max(...completed.map(row=>row.maxGapSeconds))]:null,
+      meanMultiRoadGroupKm:average('multiRoadGroupKm'),
       meanSettledRestRiderKm:average('settledFrontRestRiderKilometres'),
       meanEarlyProtectChaseTeamKm:average('earlyProtectChasedTeamKilometres'),
       refusals:sample.filter(row=>row.refusal).length};
@@ -314,6 +321,7 @@ console.log(JSON.stringify({version:MOTOR_RACE_DYNAMICS_VERSION,
   frontRotationVersion,controlPursuitVersion:collectiveControl?2:1,
   controlWithdrawalVersion:process.argv.includes('--control-withdrawal-v2')?2:1,
   frontExhaustionVersion,
+  roadGroupPaceVersion:process.argv.includes('--road-group-pace-v2')?2:1,
   note:'Internal opt-in role scenarios, not observed race calibration or official results.',
   allControlTempo:process.argv.includes('--all-control-tempo'),
   committedControlTempo,

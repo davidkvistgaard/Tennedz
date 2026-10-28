@@ -1255,3 +1255,29 @@ change. The existing catch-projection policy had already withheld
 almost every turn this rule would save. Both versions were fully
 reverted. More useful work must change a consequential team decision,
 not duplicate an existing hold condition.
+
+The v94 road clock previously compared a front group with the bunch at
+0.24 seconds per ability point (bounded at 4.5 seconds per kilometre),
+but compared two road groups ahead at the older 0.07 and 1.5 scale.
+`roadGroupPaceVersion:2` is an internal, committed opt-in that uses the
+v94 scale for the latter comparison too. Omitted/version 1 recordings
+retain the exact older calculation. The same paid riders and prior
+energy feed both transitions; validation of coast/contact and full
+source replay use the committed version. This aligns the model's
+relative time units; it does not award a prescribed break gap.
+
+In 96 paired new-seed, 20-team, 260 km planned-intent races, all
+recordings validated and source-replayed without refusal. One-day
+races were effectively unchanged because almost none had two groups
+ahead. Stage mean widest leads rose from 212.95/209.88 to
+243.81/244.15 seconds (fresh/tired), with unchanged mean control-team
+energy near km 210; the initial front was fully caught in 1/0 versus
+2/1 of the 24 fresh/tired stage cases. The earlier 24 planned cases
+also validated and replayed. A separate 72-case 0/1/8-control stress
+matrix had no multi-group kilometres and therefore unchanged outcomes;
+the no-control stage mean still exceeded 1,000 seconds. Forty-eight
+more 260 km cross-boundary races with women's rolling/exposed routes,
+explicit rival goals, calm/hard repeated own orders and the newer
+paid-coast contract all validated and replayed; 18 had paid coast.
+These synthetic checks support an internal clock correction, not
+empirical race calibration or guided release.

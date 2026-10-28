@@ -4,6 +4,8 @@ import {createV94RaceDynamicsPreview} from
   '../../lib/engine/v2/playtest-race-dynamics-v94.mjs';
 import {validateRecordedTour} from '../../lib/engine/v2/recording.mjs';
 import {recordedGroupFinish} from '../../lib/engine/v2/race-group-finish-v94.mjs';
+import {replayRaceDynamicsRecording} from
+  '../../lib/engine/v2/replay-race-dynamics-v94.mjs';
 
 test('experimental race preview exposes committed intent and paid road only',()=>{
   const {recording,preview}=createV94RaceDynamicsPreview({format:'one_day',
@@ -49,6 +51,28 @@ test('experimental race preview exposes committed intent and paid road only',()=
       teamCount:20,fatigue:30,attack:'none',chase:'selective',
       seed:'preview-recorded-road-1'}}).recording;
   assert.deepEqual(recording.frames,earlier.frames);
+});
+
+test('optional v94 road-group scale is committed and preserves the prior replay',()=>{
+  const settings={distanceKm:260,terrain:'flat',teamCount:20,
+    seed:'road-scale-probe-1'};
+  const previous=createV94RaceDynamicsPreview({format:'stage',settings});
+  const explicitV1=createV94RaceDynamicsPreview({format:'stage',settings,
+    roadGroupPaceVersion:1});
+  const aligned=createV94RaceDynamicsPreview({format:'stage',settings,
+    roadGroupPaceVersion:2});
+  assert.deepEqual(previous.recording.frames,explicitV1.recording.frames);
+  assert.equal(previous.preview.policy.roadGroupPaceVersion,undefined);
+  assert.equal(aligned.preview.policy.roadGroupPaceVersion,2);
+  assert.ok(previous.preview.frames.filter(frame=>frame.roadGroups.length>1).length>
+    aligned.preview.frames.filter(frame=>frame.roadGroups.length>1).length);
+  assert.equal(aligned.preview.resultStatus,'provisional_road_groups_only');
+  const forged=structuredClone(aligned.recording);
+  delete forged.committedInputs.raceContext.roadGroupPaceVersion;
+  assert.throws(()=>replayRaceDynamicsRecording(forged),
+    /replay differs at km/);
+  assert.throws(()=>createV94RaceDynamicsPreview({format:'stage',settings,
+    roadGroupPaceVersion:3}),/valid experimental race settings/);
 });
 
 test('experimental preview shows paid contact for an exhausted front sitter',()=>{

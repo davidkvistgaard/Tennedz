@@ -10,6 +10,7 @@ const orders=combinedOrder?
   [{effort:'steady',attack:'none',chase:'selective'},
     {effort:'hard',attack:'repeated',chase:'all'}];
 const alternateRoutes=process.argv.includes('--alternate-routes');
+const roadGroupPaceVersion=process.argv.includes('--road-group-pace-v2')?2:1;
 const routes=alternateRoutes?
   [{terrain:'rolling',fatigue:15,gender:'F'},
     {terrain:'exposed',fatigue:30,gender:'F'}]:
@@ -21,6 +22,7 @@ for(const seed of ['preview-cross-1','preview-cross-2'])
       const base={distanceKm:260,terrain,teamCount:20,gender,
         fatigue,seed};
       const seeded=createV94RaceDynamicsPreview({format,
+        roadGroupPaceVersion,
         settings:{...base,...orders[0]}}).preview;
       const rivals=seeded.teamPlans.filter(plan=>plan.teamId!=='you');
       const candidates=[...rivals.filter(plan=>plan.role==='control'),
@@ -34,9 +36,10 @@ for(const seed of ['preview-cross-1','preview-cross-2'])
             plan.role==='control'?'protect':plan.role}));
         for(const order of orders){
           const scenario={seed,format,terrain,gender,fatigue,requestedControls,
-            ownOrder:order.attack};
+            roadGroupPaceVersion,ownOrder:order.attack};
           try{
             const {preview}=createV94RaceDynamicsPreview({format,
+              roadGroupPaceVersion,
               settings:{...base,...order},rivalGoals});
             outcomes.push({...scenario,ok:true,
               widestLeadSeconds:preview.story.widestRecordedLead.gapSeconds,

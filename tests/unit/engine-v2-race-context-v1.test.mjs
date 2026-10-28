@@ -27,6 +27,10 @@ function seededRandom(label){
 
 test('race format is explicit and stage number cannot leak into a one-day race',()=>{
   assert.deepEqual(normalizeRaceContext({format:'one_day'}),{format:'one_day'});
+  assert.deepEqual(normalizeRaceContext({format:'one_day',
+    roadGroupPaceVersion:2}),{format:'one_day',roadGroupPaceVersion:2});
+  assert.throws(()=>normalizeRaceContext({format:'one_day',
+    roadGroupPaceVersion:3}),/Invalid race context/);
   assert.deepEqual(normalizeRaceContext({format:'stage',stageNumber:12}),
     {format:'stage',stageNumber:12});
   assert.throws(()=>normalizeRaceContext({format:'stage'}),/Invalid race context/);
@@ -653,6 +657,12 @@ test('opt-in shared-front exhaustion detaches a non-pulling sitter behind a paid
   const forged=structuredClone(race);
   forged.frames[138].frontCoast[0].detachedGroupId='road-forged';
   assert.throws(()=>validateRecordedTour(forged),/detached coast|front coast/);
+  const aligned=simulateTacticalTour({...source,
+    motorVersion:MOTOR_RACE_DYNAMICS_VERSION,
+    raceContext:{format:'stage',stageNumber:8,teamRoles,
+      frontExhaustionVersion:3,roadGroupPaceVersion:2}});
+  assert.doesNotThrow(()=>validateRecordedTour(aligned));
+  assert.doesNotThrow(()=>replayRaceDynamicsRecording(aligned));
 });
 
 test('v94 validates paid worker membership without inventing wheel order',()=>{
