@@ -2113,3 +2113,12 @@ supplied inputs rather than derived from the actual V93/V94 stage and
 committed orders. It does not model new joins, splits, terrain-specific
 positions or a whole-race finish. It cannot be shown as a playable
 gruppetto until those parts are source-replayed together.
+
+`rear-group-run-v1.mjs` now chains the paid solo meeting, the first
+common turn and subsequent short-slice turns without allowing an
+unrecorded jump or another rear turn after a bunch rejoin. Its validator
+recalculates the entire supplied chain and rejects changed rider energy
+or leadership. This is still a standalone witness over supplied speed,
+cost and decision plans. It does not establish physical locations or
+sporting decisions from a locked whole-race source, and is not routed
+to the guided motor or viewer.
