@@ -158,3 +158,13 @@ those 31 replayed; two fresh mountain one-front handoffs correctly
 refused a front/bunch catch inside the last kilometre. These results
 show that the contact refusal is reached by a normal committed effort
 choice. The old guided finish and its refusal remain unchanged.
+
+A focused contact probe of the fresh mountain `guided-finish-coverage-2`
+hard-effort source found no payable named bunch-front pair on any of the
+seven final slices. The field still had an engaged rival chase team and
+caught the 0.19-second front lead. A contact variant that simply assumes
+the named pair keeps working would misstate this source. Its temporary
+code and test were removed; the narrow no-contact checkpoint continues
+to refuse this case. Contact must separately record the unavailable
+front-work order and the actual paid chase before a line checkpoint is
+considered.
