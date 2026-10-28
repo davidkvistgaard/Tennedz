@@ -2231,3 +2231,13 @@ derive the chasing group's relative pace from its actual exposed
 leader, terrain and energy, and count any paid bunch-front work only
 once. It must then recompute team pursuit decisions against that same
 road model and validate contact and full source replay.
+
+An isolated `chase-road-pace-v1.mjs` planner now reconstructs each
+named chase leader's terrain- and energy-adjusted ability from the
+committed rider source and kilometre-start reserve, then weights it by
+the exact paid turn length. It rejects a changed rider, reserve or
+incomplete/duplicated turn and assigns no pace without a paid leader.
+It does not yet move the bunch, replace the old capacity credit or
+combine simultaneous chase and front-work leaders into one rotation.
+Doing so directly would double-count exposed road work; this remains
+an internal source-checked building block rather than a race version.
