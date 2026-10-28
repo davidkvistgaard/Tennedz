@@ -147,3 +147,14 @@ only 0.02 seconds and correctly refused an unmodelled front/bunch catch.
 All 15 two-front attempts replayed. The wider sample therefore tests
 the refusal boundary as well as the paid continuation; it does not
 authorize treating a catch as an unchanged road-group finish.
+
+The named-front coverage audit also accepts an explicit `--front-effort`
+(`hard` or `conserve`) at the committed kilometre-five marker. In 32
+same-source generated rolling/mountain, fresh/tired races per effort,
+the conservative order replayed the isolated paid checkpoint in all
+31 handoffs with at most two front groups; one source had three front
+groups and remained outside its contract. Under hard effort, 29 of
+those 31 replayed; two fresh mountain one-front handoffs correctly
+refused a front/bunch catch inside the last kilometre. These results
+show that the contact refusal is reached by a normal committed effort
+choice. The old guided finish and its refusal remain unchanged.

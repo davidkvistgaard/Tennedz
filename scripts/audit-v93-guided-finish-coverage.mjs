@@ -34,8 +34,14 @@ import {recordFinaleCoastNoFrontPaidBunchClock,
 const countArg=process.argv.find(value=>value.startsWith('--seeds='));
 const count=countArg?Number(countArg.slice('--seeds='.length)):12;
 const namedFrontWork=process.argv.includes('--named-front-work');
+const frontEffortArg=process.argv.find(value=>
+  value.startsWith('--front-effort='));
+const frontEffort=frontEffortArg?.slice('--front-effort='.length)??null;
 if(!Number.isInteger(count)||count<1||count>48)
   throw new Error('Use --seeds=1 through 48.');
+if(frontEffort!==null&&(!namedFrontWork||
+  !['hard','conserve'].includes(frontEffort)))
+  throw new Error('Use hard or conserve with --named-front-work.');
 
 function seededRandom(label){
   let state=2166136261;
@@ -60,7 +66,8 @@ for(const terrain of namedFrontWork?['rolling','mountain']:
       ...(namedFrontWork?{managerTacticalOrdersV8:[
         {teamId:'you',atKm:5,attack:'selective',attackRiderId:'you-2',
           chaseTarget:'rival-1-2',frontWork:'rotate',
-          frontWorkRiderId:'you-5'},
+          frontWorkRiderId:'you-5',
+          ...(frontEffort?{effort:frontEffort}:{})},
         {teamId:'you',atKm:25,attack:'none'}]}:{})};
     const input={plans:Array.from({length:20},(_,teamIndex)=>{
       const teamId=teamIndex?`rival-${teamIndex}`:'you';
@@ -222,5 +229,6 @@ const counts=Object.groupBy(rows,row=>row.status==='paid_finish'?
 console.log(JSON.stringify({version:'v93-guided-finish-coverage-audit-1',
   note:'Synthetic seeded 20-team, 260 km guided-random inputs. No official awards.',
   namedFrontWork,
+  frontEffort,
   cases:rows.length,counts:Object.fromEntries(Object.entries(counts).map(
     ([key,items])=>[key,items.length])),rows},null,2));
