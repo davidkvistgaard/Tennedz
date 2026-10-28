@@ -24,6 +24,7 @@ import {probeFinaleSeparatedGroupsFromTour,
   FINALE_COAST_DROPPED_LAST_KM_VERSION,
   FINALE_COAST_NO_FRONT_PAID_BUNCH_VERSION,
   FINALE_COAST_ONE_FRONT_PAID_BUNCH_VERSION,
+  FINALE_COAST_UNAVAILABLE_FRONT_CATCH_VERSION,
   FINALE_COAST_TWO_FRONT_PAID_BUNCH_VERSION} from
   '../../lib/engine/v2/finale-multi-run.mjs';
 import {recordFinaleCoastNoFrontPaidBunchClock,
@@ -31,7 +32,9 @@ import {recordFinaleCoastNoFrontPaidBunchClock,
   recordFinaleCoastOneFrontPaidBunchClock,
   validateFinaleCoastOneFrontPaidBunchClock,
   recordFinaleCoastTwoFrontPaidBunchClock,
-  validateFinaleCoastTwoFrontPaidBunchClock} from
+  validateFinaleCoastTwoFrontPaidBunchClock,
+  recordFinaleCoastUnavailableFrontCatchClock,
+  validateFinaleCoastUnavailableFrontCatchClock} from
   '../../lib/engine/v2/finale-separated-last-km.mjs';
 
 function seededRandom(label){
@@ -91,6 +94,9 @@ test('opt-in one-front finale pays named bunch workers and refuses forged work',
   /needs a bunch and dropped rider only/);
   const trace=probeFinaleSeparatedGroupsFromTour(tour,{
     version:FINALE_COAST_ONE_FRONT_PAID_BUNCH_VERSION});
+  assert.throws(()=>probeFinaleSeparatedGroupsFromTour(tour,{
+    version:FINALE_COAST_UNAVAILABLE_FRONT_CATCH_VERSION}),
+  /has payable bunch-front work/);
   assert.equal(validateFinaleSeparatedGroupsFromTour(tour,trace),true);
   const clock=recordFinaleCoastOneFrontPaidBunchClock(tour);
   assert.equal(validateFinaleCoastOneFrontPaidBunchClock(tour,clock),true);
@@ -115,6 +121,69 @@ test('opt-in one-front finale pays named bunch workers and refuses forged work',
   forgedClock.trace.frames[0].bunchFrontWork.riderIds[0]='you-0';
   assert.throws(()=>validateFinaleCoastOneFrontPaidBunchClock(tour,
     forgedClock),/paid one-front bunch clock does not replay/);
+});
+
+test('unavailable named front records only the actually paid catch',()=>{
+  const seed='guided-finish-coverage-2',terrain='mountain',fatigue=0;
+  const prepared=prepareV91Playtest({distanceKm:260,terrain:'custom',
+    profileHeightsM:generatePlaytestStageProfile({distanceKm:260,
+      style:terrain,seed}),teamCount:20,fatigue,attack:'none',
+    chase:'selective',seed,managerTactics:resolveRandomRivalTactics({
+      teamCount:20,random:seededRandom(`${seed}:${terrain}:${fatigue}`)}),
+    managerTacticalOrdersV8:[{teamId:'you',atKm:5,
+      attack:'selective',attackRiderId:'you-2',
+      chaseTarget:'rival-1-2',frontWork:'rotate',
+      frontWorkRiderId:'you-5',effort:'hard'},
+    {teamId:'you',atKm:25,attack:'none'}]});
+  const tour=simulateTacticalTour({...prepared,
+    motorVersion:MOTOR_EXHAUSTION_COAST_VERSION});
+  assert.equal(validateRecordedTour(tour),true);
+  assert.throws(()=>probeFinaleSeparatedGroupsFromTour(tour,{
+    version:FINALE_COAST_ONE_FRONT_PAID_BUNCH_VERSION}),
+  /needs a recorded catch/);
+  const trace=probeFinaleSeparatedGroupsFromTour(tour,{
+    version:FINALE_COAST_UNAVAILABLE_FRONT_CATCH_VERSION});
+  assert.equal(validateFinaleSeparatedGroupsFromTour(tour,trace),true);
+  assert(trace.frames.every(frame=>frame.bunchFrontWork===null));
+  assert(trace.frames.some(frame=>frame.bunchPullRiderId));
+  const clock=recordFinaleCoastUnavailableFrontCatchClock(tour);
+  assert.equal(validateFinaleCoastUnavailableFrontCatchClock(tour,clock),true);
+  assert.equal(clock.contact.kind,'front_catch');
+  assert.deepEqual(clock.line.bands.map(band=>band.kind),
+    ['unresolved_contact']);
+  assert.equal(clock.line.bands[0].lastPossiblePlace,160);
+  assert.equal(clock.canCommitAwards,false);
+  const forged=structuredClone(trace);
+  forged.frames[0].bunchFrontWork={teamId:'you'};
+  assert.throws(()=>validateFinaleSeparatedGroupsFromTour(tour,forged),
+    /differs from its locked tour and work/);
+  const forgedClock=structuredClone(clock);
+  forgedClock.contact.atDistanceM+=1;
+  assert.throws(()=>validateFinaleCoastUnavailableFrontCatchClock(tour,
+    forgedClock),/unavailable-front catch clock does not replay/);
+});
+
+test('late unavailable-front catch remains provisional',()=>{
+  const seed='guided-finish-coverage-8',terrain='mountain',fatigue=0;
+  const prepared=prepareV91Playtest({distanceKm:260,terrain:'custom',
+    profileHeightsM:generatePlaytestStageProfile({distanceKm:260,
+      style:terrain,seed}),teamCount:20,fatigue,attack:'none',
+    chase:'selective',seed,managerTactics:resolveRandomRivalTactics({
+      teamCount:20,random:seededRandom(`${seed}:${terrain}:${fatigue}`)}),
+    managerTacticalOrdersV8:[{teamId:'you',atKm:5,
+      attack:'selective',attackRiderId:'you-2',
+      chaseTarget:'rival-1-2',frontWork:'rotate',
+      frontWorkRiderId:'you-5',effort:'hard'},
+    {teamId:'you',atKm:25,attack:'none'}]});
+  const tour=simulateTacticalTour({...prepared,
+    motorVersion:MOTOR_EXHAUSTION_COAST_VERSION});
+  assert.equal(validateRecordedTour(tour),true);
+  const clock=recordFinaleCoastUnavailableFrontCatchClock(tour);
+  assert.equal(validateFinaleCoastUnavailableFrontCatchClock(tour,clock),true);
+  assert(clock.contact.atDistanceM>259500);
+  assert.equal(clock.line.bands.length,1);
+  assert.equal(clock.classifiedResults,null);
+  assert.equal(clock.pointsStatus,'withheld');
 });
 
 test('opt-in no-front finale pays named front pair and replays the source',()=>{

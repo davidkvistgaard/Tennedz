@@ -168,3 +168,18 @@ code and test were removed; the narrow no-contact checkpoint continues
 to refuse this case. Contact must separately record the unavailable
 front-work order and the actual paid chase before a line checkpoint is
 considered.
+
+An additional *internal* version now handles a different narrow source:
+the named front-work order remains committed, but no pair can pay even
+one final slice, while an actually engaged chase catches the sole front
+group. The version records the chase-funded contact at its calculated
+route marker, carries all 160 riders to a single `unresolved_contact`
+line band, and withholds classifications, points and awards. It rejects
+any slice that can pay bunch-front work; those sources still require a
+separate mixed-work contact clock. The full source and the checkpoint
+deep-replay, including rejection of a forged contact marker. In a
+96-case hard-effort generated rolling/mountain, fresh/tired holdout,
+30 no-front, 55 one-front and seven two-front no-contact checkpoints
+replayed; all three one-front catches replayed only under this
+unavailable-front version, and one three-front source remained outside
+the contract. The ordinary guided finish and refusal are unchanged.
