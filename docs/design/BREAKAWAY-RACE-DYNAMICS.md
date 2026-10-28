@@ -1714,3 +1714,16 @@ turnover. The inference for this simulator is limited: penalizing this
 outlier solely because it has nine riders would have no direct support
 from that result. Its missing paid opposition and team incentives
 remain the clearer recorded discrepancy.
+
+An independent V93 guided-random check used seed numbers 97–120,
+20 teams, 260 km and each flat/mountain × fresh/tired combination
+(`scripts/audit-v93-guided-finish-coverage.mjs`). All 96 source roads
+validated; 95 paid an individual finish and one kept its honest
+last-kilometre refusal with a source-replayed group-road preview.
+Mean widest recorded leads were 32.23 s on fresh flat, 45.40 s on
+tired flat, 40.31 s on fresh mountain and 37.01 s on tired mountain.
+Only six of 96 races ever reached a one-minute lead. The disjoint
+sample shows somewhat more variation than the first 96-case baseline,
+but confirms that the ordinary guided V93 motor usually compresses
+breaks. It does not validate an isolated chase, tempo or role change;
+the short-lead problem remains open while V94 stays experimental.
