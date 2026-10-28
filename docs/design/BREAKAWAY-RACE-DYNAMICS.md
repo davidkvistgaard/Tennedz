@@ -1296,3 +1296,16 @@ the field dynamics while the few control teams are depleted. A guided
 successor needs credible committed team goals and paid workload across
 the whole race, including the finale. These are synthetic inputs and
 cannot establish real-world calibration.
+
+Adding paid `frontWork:rotate` to all generated control-role rivals in a
+read-only counterfactual on the **same 24 guided random draws** did not
+restore their reserve. All recordings again validated and source-replayed.
+Fresh/tired mean control energy at km 210 changed only 12.55/6.41 to
+12.17/6.40. Control teams took just 48/10.33 additional bunch-front
+team-km on average; early paid chase remained about 300/222 team-km.
+Mean widest leads also barely changed: 193.80/271.61 to
+195.66/276.57 seconds in one-day races, and 364.53/546.82 to
+363.30/553.10 in stages. This uncommitted counterfactual is not a
+planner proposal. It shows that adding front rotation alone cannot
+resolve the existing random field's sustained paid chase and depleted
+control reserves.
