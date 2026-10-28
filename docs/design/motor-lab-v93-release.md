@@ -107,3 +107,9 @@ those groups, so its named bunch-front order remained a real available
 task. These cases need a separate versioned bunch/front relative clock
 and exact contact handling before a paid line can be recorded. The
 no-front checkpoint cannot be applied by changing its group-count guard.
+Their 31 recorded group gaps ranged from 0.13 to 60.63 seconds at the
+handoff (median 13.91); seven were at most five seconds. None of the
+30 handoffs had an active break or GC response, while 25 had an
+engaged chase team. A separate one-front continuation must pay both
+the existing chase and the explicit bunch-front pair, and it must
+record a catch if the group reaches the bunch inside the kilometre.

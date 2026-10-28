@@ -123,6 +123,14 @@ for(const terrain of namedFrontWork?['rolling','mountain']:
         reason:error.message,roadKm:road.frames.length,
         handoffKm:handoff?.km??null,
         handoffRoadGroups:handoff?.roadGroups.length??null,
+        handoffFrontGroups:snapshot.roadGroups.map(group=>({
+          id:group.id,gapSeconds:group.gapSeconds,
+          riderCount:group.riderIds.length,teamIds:group.teamIds})),
+        handoffActiveBreakResponseTeamIds:
+          handoff?.activeBreakResponseTeamIds??[],
+        handoffActiveGcResponseTeamIds:
+          handoff?.activeGcResponseTeamIds??[],
+        handoffEngagedChaseTeamIds:handoff?.engagedChaseTeamIds??[],
         handoffDroppedRiders:handoff?.riderGroups.filter(row=>
           row.group==='dropped').length??null,
         ownNamedFrontWorker:ownOrder.frontWorkRiderId??null,
