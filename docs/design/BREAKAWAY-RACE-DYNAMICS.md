@@ -1704,3 +1704,11 @@ chase-km. The extreme is therefore a recorded, partially rotating
 front with no opposing paid work, rather than free or uncharged work
 by all nine riders. These measurements remain synthetic and do not
 calibrate a realistic lead.
+As an external check on a tempting size-only fix, Brouwer and Potters'
+[professional-race breakaway study](https://pure.uvt.nl/ws/portalfiles/portal/76857262/1-s2.0-S0167487017307596-main.pdf)
+reports a concave benefit from group size, turning negative only above
+26 riders in its sample. A nine-rider front is below that reported
+turnover. The inference for this simulator is limited: penalizing this
+outlier solely because it has nine riders would have no direct support
+from that result. Its missing paid opposition and team incentives
+remain the clearer recorded discrepancy.
