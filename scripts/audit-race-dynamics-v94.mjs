@@ -23,6 +23,17 @@ const committedControlTempo=process.argv.includes('--committed-control-tempo');
 const opportunisticSpecialist=process.argv.includes('--opportunistic-specialist');
 const generatedControlSteadyFlag=process.argv.includes(
   '--generated-control-steady');
+const generatedControlPackage=process.argv.includes(
+  '--generated-control-package');
+if(generatedControlPackage&&(!process.argv.includes('--guided-random')||
+  generatedControlSteadyFlag||
+  process.argv.includes('--generated-control-selective')||
+  process.argv.includes('--all-control-tempo')||
+  process.argv.includes('--guided-role-goals')||
+  process.argv.includes('--planned-intent')||
+  process.argv.includes('--committed-control-tempo')||
+  process.argv.includes('--mixed-defaults')))
+  throw new Error('Control package audit needs only --guided-random.');
 if(generatedControlSteadyFlag&&!process.argv.includes('--guided-random'))
   throw new Error('Generated control effort audit needs --guided-random.');
 if(committedControlTempo&&(!process.argv.includes('--planned-intent')&&
@@ -60,10 +71,12 @@ function run({seed,terrain,fatigue,format,breakTeams,controlTeams}){
         {effort:'steady',attack:'none',chase:'selective'};
   });
   const generatedControlSelective=guidedRandom&&
-    process.argv.includes('--generated-control-selective');
+    (process.argv.includes('--generated-control-selective')||
+      generatedControlPackage);
   const generatedControlSteady=guidedRandom&&
-    generatedControlSteadyFlag;
-  if(generatedControlSelective&&generatedControlSteady)
+    (generatedControlSteadyFlag||generatedControlPackage);
+  if(generatedControlSelective&&generatedControlSteady&&
+    !generatedControlPackage)
     throw new Error('Compare one generated control order change at a time.');
   const managerTactics=seededTactics.map(order=>order.chase==='all'?
     {...order,
@@ -102,7 +115,8 @@ function run({seed,terrain,fatigue,format,breakTeams,controlTeams}){
     Object.values(teamRoles).filter(role=>role==='control').length:controlTeams;
   // Read-only counterfactual. The planner does not currently commit this
   // front-work order, so omit its intent manifest rather than misstate source.
-  const allControlTempo=process.argv.includes('--all-control-tempo');
+  const allControlTempo=process.argv.includes('--all-control-tempo')||
+    generatedControlPackage;
   const committedTeams=allControlTempo?teams.map(team=>
     teamRoles[team.id]==='control'&&team.id!=='you'?{...team,
       orders:{...team.orders,baseline:{...team.orders.baseline,
@@ -544,6 +558,7 @@ console.log(JSON.stringify({version:MOTOR_RACE_DYNAMICS_VERSION,
   allControlTempo:process.argv.includes('--all-control-tempo'),
   generatedControlSelective:process.argv.includes('--generated-control-selective'),
   generatedControlSteady:generatedControlSteadyFlag,
+  generatedControlPackage,
   guidedRoleGoals:process.argv.includes('--guided-role-goals'),
   committedControlTempo,
   opportunisticSpecialist,

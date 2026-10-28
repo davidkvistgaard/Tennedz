@@ -4,6 +4,19 @@ The 260 km Motor Lab mountain recording exposed a systemic problem: attacks recu
 
 A read-only baseline can be reproduced with `node scripts/audit-breakaway-dynamics.mjs`. Across three seeds, flat/mountain terrain, and fatigue 0/30 (twelve 20-team, 260 km runs), it records **51–312 attack attempts**, but no run reaches a one-minute front lead; the maximum lead over the matrix is **45.07 seconds**. These are diagnostic samples, not a calibrated distribution. The user's race log shows the same qualitative pattern.
 
+A broader read-only check of the *current v93 guided motor* used 24
+new synthetic seeds across flat/mountain 260 km routes and fresh/tired
+20-team fields (96 races). The mean widest recorded road lead was
+38.79 seconds on fresh flats, 38.11 on tired flats, 34.31 on fresh
+mountains and 37.56 on tired mountains. Only three of the 96 had any
+kilometre at or above one minute. Ninety-five paid an individual
+finish; the fresh mountain `guided-finish-coverage-19` source road
+validated but refused a last-kilometre contact with `road-14`, so no
+official result is inferred for it. Individual widest leads ranged
+from 1.49 to 94.63 seconds across the matrix. This confirms the
+short-lead problem over more seeds without turning a particular
+gap into a mandatory target.
+
 ## Observed causes in the current implementation
 
 - Uncustomized rival tactics can assign repeated attacks for the whole race. A repeated plan attempts an attack every five kilometres, including after an early break has settled.
@@ -1601,3 +1614,30 @@ per-kilometre causal effect or a safe policy replacement. The
 steady-only counterfactual already produced more chase and shorter
 leads; the generated control workload and pursuit decision must be
 designed and audited together.
+
+A read-only `--generated-control-package` comparison combines three
+*committed generated-control order* changes on the current guided
+random rival draws: hard to steady whole-team effort, all to
+selective chase, and paid `frontWork:rotate`. All other seeded teams,
+routes and riders remain fixed; manager-given orders are outside this
+diagnostic. The 24 original and 96 independent new-seed 20-team,
+260 km V94 recordings validated and full source-replayed without
+refusal. In the 96 new-seed format-paired cases, the unchanged orders
+had mean widest leads of 194.72/205.98 seconds for fresh/tired
+one-day starts and 409.08/468.25 for stages. The generated-control
+package yielded 157.50/141.63 and 227.58/250.09 seconds respectively.
+The control helpers' mean reserve at the final-kilometre handoff
+rose from roughly 1.28/0.85 fresh/tired to 41.07/31.15 in one-day
+races. This is a coupled paid tempo-and-pursuit result, not a claim
+that any individual order change caused it.
+
+The package still failed both ends of a useful distribution. One tired
+one-day case never reached a one-minute widest lead (56.07 seconds),
+while `race-dynamics-holdout-2` tired flat stage retained a 961.88-second
+lead: that field has nine break-role teams, zero control-role teams and
+zero paid control chase, so a control-only package cannot affect it.
+The stage result is a group road recording, not an official winner.
+This static package remains read-only and uncalibrated; it does not
+justify a guided default or a fixed gap target. A future control
+planner must address both whether any team has a sporting reason to
+control and how its paid tempo, selective pursuit and reserve evolve.

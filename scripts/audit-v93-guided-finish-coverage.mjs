@@ -51,6 +51,11 @@ const count=countArg?Number(countArg.slice('--seeds='.length)):12;
 const startArg=process.argv.find(value=>value.startsWith('--seed-start='));
 const seedStart=startArg?Number(startArg.slice('--seed-start='.length)):1;
 const namedFrontWork=process.argv.includes('--named-front-work');
+const terrainArg=process.argv.find(value=>value.startsWith('--terrain='));
+const terrainFilter=terrainArg?.slice('--terrain='.length)??null;
+const fatigueArg=process.argv.find(value=>value.startsWith('--fatigue='));
+const fatigueFilter=fatigueArg===undefined?null:Number(fatigueArg.slice(
+  '--fatigue='.length));
 const frontEffortArg=process.argv.find(value=>
   value.startsWith('--front-effort='));
 const frontEffort=frontEffortArg?.slice('--front-effort='.length)??null;
@@ -60,6 +65,10 @@ if(!Number.isInteger(count)||count<1||count>48||
 if(frontEffort!==null&&(!namedFrontWork||
   !['hard','conserve'].includes(frontEffort)))
   throw new Error('Use hard or conserve with --named-front-work.');
+if(terrainFilter!==null&&!(namedFrontWork?['rolling','mountain']:
+  ['flat','mountain']).includes(terrainFilter)||
+  fatigueFilter!==null&&![0,30].includes(fatigueFilter))
+  throw new Error('Choose an audited terrain and fatigue.');
 
 function seededRandom(label){
   let state=2166136261;
@@ -69,8 +78,10 @@ function seededRandom(label){
 }
 
 const rows=[];
-for(const terrain of namedFrontWork?['rolling','mountain']:
-  ['flat','mountain'])for(const fatigue of [0,30])
+for(const terrain of (namedFrontWork?['rolling','mountain']:
+  ['flat','mountain']).filter(value=>terrainFilter===null||
+  value===terrainFilter))for(const fatigue of [0,30].filter(value=>
+    fatigueFilter===null||value===fatigueFilter))
   for(let index=0;index<count;index++){
     const seed=`guided-finish-coverage-${seedStart+index}`;
     const managerTactics=resolveRandomRivalTactics({teamCount:20,
@@ -94,13 +105,21 @@ for(const terrain of namedFrontWork?['rolling','mountain']:
     try{
       const race=createV93CoastedPlaytest(settings,input);
       validateV93CoastedPlaytest(settings,input,race);
+      const frames=race.recording.frames;
       rows.push({seed,terrain,fatigue,status:'paid_finish',
-        version:race.version,roadKm:race.recording.frames.length});
+        version:race.version,roadKm:frames.length,
+        maxGapSeconds:Math.max(...frames.map(frame=>frame.gapSeconds)),
+        kmAtLeastOneMinute:frames.filter(frame=>
+          frame.gapSeconds>=60).length});
     }catch(error){
       const road=error.cause?.playtestSource?.recording??
         simulateTacticalTour({...prepareV91Playtest(settings),
           motorVersion:MOTOR_EXHAUSTION_COAST_VERSION});
       validateRecordedTour(road);
+      const maxGapSeconds=Math.max(...road.frames.map(frame=>
+        frame.gapSeconds));
+      const kmAtLeastOneMinute=road.frames.filter(frame=>
+        frame.gapSeconds>=60).length;
       const handoff=road.frames.at(-2);
       const snapshot=finaleSnapshotFromTour(road,{remainingKm:1,
         includeAttackLoad:true});
@@ -334,6 +353,7 @@ for(const terrain of namedFrontWork?['rolling','mountain']:
       });
       rows.push({seed,terrain,fatigue,status:'validated_refusal',
         reason:error.message,roadKm:road.frames.length,
+        maxGapSeconds,kmAtLeastOneMinute,
         handoffKm:handoff?.km??null,
         handoffRoadGroups:handoff?.roadGroups.length??null,
         handoffFrontGroups:snapshot.roadGroups.map(group=>({
