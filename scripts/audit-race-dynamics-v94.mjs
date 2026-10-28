@@ -180,6 +180,21 @@ function run({seed,terrain,fatigue,format,breakTeams,controlTeams}){
     opportunisticCaptainIds.has(row.id));
   const controlChase=frames.flatMap(frame=>frame.chaseContributions.filter(row=>
     teamRoles[row.teamId]==='control'));
+  const controlHelperIds=new Set([...teamById.values()].filter(team=>
+    teamRoles[team.id]==='control').flatMap(team=>team.orders.helperIds));
+  const controlHelperWorkThrough210={chasePaid:0,otherPaid:0,
+    chaseRecovery:0,otherRecovery:0,chaseRiderKm:0,otherRiderKm:0};
+  for(const frame of frames.slice(0,210)){
+    const paidChasers=new Set(frame.chaseContributions.filter(row=>
+      teamRoles[row.teamId]==='control').flatMap(row=>row.riderIds));
+    for(const row of frame.energyLedger){
+      if(!controlHelperIds.has(row.riderId))continue;
+      const key=paidChasers.has(row.riderId)?'chase':'other';
+      controlHelperWorkThrough210[`${key}Paid`]+=row.paidFromReserve;
+      controlHelperWorkThrough210[`${key}Recovery`]+=row.recoveryAward;
+      controlHelperWorkThrough210[`${key}RiderKm`]++;
+    }
+  }
   const controlChaseByTeam=new Map();
   for(const row of controlChase)controlChaseByTeam.set(row.teamId,
     (controlChaseByTeam.get(row.teamId)??0)+1);
@@ -251,6 +266,18 @@ function run({seed,terrain,fatigue,format,breakTeams,controlTeams}){
     controlEmergencyChaseTeamKilometres:controlEmergencyChase,
     controlChaseRiderKilometres:controlChase.reduce((sum,row)=>
       sum+row.riderIds.length,0),
+    controlHelperChasePaidThrough210:
+      +controlHelperWorkThrough210.chasePaid.toFixed(2),
+    controlHelperOtherPaidThrough210:
+      +controlHelperWorkThrough210.otherPaid.toFixed(2),
+    controlHelperChaseRecoveryThrough210:
+      +controlHelperWorkThrough210.chaseRecovery.toFixed(2),
+    controlHelperOtherRecoveryThrough210:
+      +controlHelperWorkThrough210.otherRecovery.toFixed(2),
+    controlHelperChaseRiderKmThrough210:
+      controlHelperWorkThrough210.chaseRiderKm,
+    controlHelperOtherRiderKmThrough210:
+      controlHelperWorkThrough210.otherRiderKm,
     controlChaseDistinctRiders:new Set(controlChase.flatMap(row=>
       row.riderIds)).size,
     busiestControlChaseTeamKilometres:Math.max(0,...controlChaseByTeam.values()),
@@ -380,6 +407,18 @@ const summary=process.argv.includes('--summary')?
       meanControlEmergencyChaseTeamKilometres:
         average('controlEmergencyChaseTeamKilometres'),
       meanControlChaseRiderKilometres:average('controlChaseRiderKilometres'),
+      meanControlHelperChasePaidThrough210:
+        average('controlHelperChasePaidThrough210'),
+      meanControlHelperOtherPaidThrough210:
+        average('controlHelperOtherPaidThrough210'),
+      meanControlHelperChaseRecoveryThrough210:
+        average('controlHelperChaseRecoveryThrough210'),
+      meanControlHelperOtherRecoveryThrough210:
+        average('controlHelperOtherRecoveryThrough210'),
+      meanControlHelperChaseRiderKmThrough210:
+        average('controlHelperChaseRiderKmThrough210'),
+      meanControlHelperOtherRiderKmThrough210:
+        average('controlHelperOtherRiderKmThrough210'),
       meanControlChaseDistinctRiders:average('controlChaseDistinctRiders'),
       meanBusiestControlChaseTeamKilometres:
         average('busiestControlChaseTeamKilometres'),

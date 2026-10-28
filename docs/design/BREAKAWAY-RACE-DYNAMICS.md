@@ -1536,3 +1536,20 @@ simply lowering that generated order also intensifies pursuit and
 shortens the front's lead. It is a diagnostic, not a playable default
 or a repair of the coupled work/road balance. Explicit manager orders
 were not changed in this comparison.
+
+The same validated/replayed 24-case comparison now splits the control
+helpers' recorded paid reserve through km 210 by whether each helper was
+named in that kilometre's paid chase contribution. For fresh starts,
+the hard order charged a mean 767.71 energy units on chasing helper
+kilometres and 965.62 on other helper kilometres; steady charged
+852.94 and 575.45 respectively. The paid chasing helper roster grew
+from 592.33 to 727 rider-kilometres, while non-chasing helper exposure
+fell only from 3,397.67 to 3,263. For tired starts, paid chase/other
+charges changed from 579.73/472.46 to 670.54/345.48, with chasing
+helper exposure growing from 444.67 to 568 rider-kilometres. Neither
+order recorded recovery for these helpers. One-day and stage values
+through km 210 match because their route and early orders are identical.
+This identifies substantial paid control-helper load outside the
+recorded chase, and explains why saving that load enables more pursuit.
+It is a ledger partition by observed chase participation, not a causal
+decomposition of the effort coefficient or a calibrated policy.
