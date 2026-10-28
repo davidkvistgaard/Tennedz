@@ -1727,3 +1727,42 @@ sample shows somewhat more variation than the first 96-case baseline,
 but confirms that the ordinary guided V93 motor usually compresses
 breaks. It does not validate an isolated chase, tempo or role change;
 the short-lead problem remains open while V94 stays experimental.
+
+### Break threat matrix, first read-only version
+
+`lib/engine/v2/break-threat-matrix.mjs` now forecasts one named leading
+road group against an explicitly supplied set of teams with a sporting
+reason to consider pursuit. It reports four separate inputs: the number
+and work of front riders, their terrain-specific ability and energy,
+the potentially payable chase helper roster and energy, and every remaining
+route kilometre. It also reports the current gap and the maximum
+closing produced by a shadow continuation of the existing road rules.
+Neither a role label nor a manager order is changed by this module.
+The shadow continuation is not an official clock or a committed chase.
+
+The six focused tests include the two qualitative cases from the user.
+A 30-rider strong flat front with three minutes at 30 km and only one
+chasing team remains ahead in the current clock. A weak-climbing front
+loses more of its lead on a final climb than on a flat road against
+strong climbers. But the existing passive road-gap cap prevents a
+ten-minute lead from being caught over the test climb. The matrix must
+not label that source as a safe catch while the paid road cannot deliver
+it. Terrain-to-time calibration and the coupling of committed team
+intent to this matrix remain open work.
+
+The read-only audit `scripts/audit-break-threat-matrix.mjs` replayed
+24 controlled 20-team, 260-km experimental V94 races across
+flat/mountain, fresh/tired, one-day/stage and zero/two/four explicitly
+goal-directed rival control teams. It assessed the leading group at
+km 80, 160 and 220 when one existed: 71 observations. The all-in
+capacity could catch in 31, while the actual recorded road caught in
+32; the potential and observed outcomes differed in 27 observations.
+Most differences follow from the distinction between ability to chase
+and a decision to pay for a chase. With no nominated rival controls,
+the one-day race can still catch through protector responses, while
+stage teams may hold back even when their control helpers could close
+the gap. The matrix reports *all-in catchable gap* and headroom, not a
+prediction that all nominated teams will commit every kilometre.
+It does not model future attacks, group changes, or a newly justified
+sporting stake for other teams. These discrepancies prevent routing
+this version into automatic guided decisions. No production route uses it.
