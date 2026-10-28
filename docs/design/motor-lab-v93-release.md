@@ -100,3 +100,10 @@ withholds points and awards. A changed recorded worker fails deep replay.
 All 18 no-front handoffs in the 48-case audit replayed this checkpoint;
 the 30 front-group handoffs remain unsupported. This is still an internal
 candidate and does not change the guided finish or its refusal.
+
+Of the other 30 generated-route handoffs in that audit, 29 had one
+leading road group and one had two. The player's team was in none of
+those groups, so its named bunch-front order remained a real available
+task. These cases need a separate versioned bunch/front relative clock
+and exact contact handling before a paid line can be recorded. The
+no-front checkpoint cannot be applied by changing its group-count guard.
