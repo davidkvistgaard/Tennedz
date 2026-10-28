@@ -1509,3 +1509,13 @@ they do not isolate one coefficient or establish realistic race gaps.
 They show that a longer front under current rival orders can coexist
 with even less control helper reserve. The guided v93 route and the
 experimental v94 release boundary remain unchanged.
+
+Extending that exact paired audit to twelve seeds (96 format-paired
+cases) preserved the direction. Mean widest leads were 29.98/37.41
+seconds in v93, 170.89/241.19 in v94 one-day, and 358.59/465.26 in
+v94 stages for fresh/tired starts. V93 still had no kilometre at or
+above a minute. Paid control chase grew from 237/229 to 336/308
+team-kilometres, while the mean km-210 control helper reserve among
+control-bearing fields fell from 14.26/3.58 to 5.99/0.83. The result
+reinforces the coupled gap-and-energy problem; it does not isolate a
+single road or pursuit coefficient.
