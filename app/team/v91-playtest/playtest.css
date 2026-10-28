@@ -19,6 +19,7 @@
 @media(max-width:600px){.v91-lab{padding:16px 16px 72px}.v91-start{grid-template-areas:"heading" "actions" "description";grid-template-columns:1fr;row-gap:12px}.v91-start p{margin:0}.v91-start button{align-self:stretch}}
 .v91-controls{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px;padding:20px;background:#e8f2ee;border-radius:16px;margin:22px 0}
 .v91-guided .v91-controls{grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:16px}
+.v91-finish-note{grid-column:1/-1;margin:0;padding:10px 14px;font-size:.88rem;line-height:1.45}
 .v91-step-heading{grid-column:1/-1;border-top:1px solid #b8d4c7;padding-top:18px}
 .v91-step-heading:first-child{border-top:0;padding-top:0}
 .v91-step-heading span{font-size:.76rem;letter-spacing:.12em;font-weight:800;color:#287d72}

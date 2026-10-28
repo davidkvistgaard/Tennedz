@@ -1068,8 +1068,10 @@ export default function Playtest({guided=false}){
     <main className={`v91-lab${guided?' v91-guided':''}`}>
       <p className="v91-eyebrow">Experimental race engine</p>
       <h1>{guided?'Motor Lab: plan a race':'Try a fictional race'}</h1>
-      <p>{guided?'Choose a route and tactics, run the race, then follow the road to the finish. Start with the sample or change any choice below.':'Change your orders and the race conditions, then rerun with the same seed to compare what happened on the road.'}</p>
-      <p className="v91-warning">This is a fictional preview. Results and points are for inspection only; no official result or award is saved.</p>
+      <p>{guided?'Choose a route and tactics, run the race, then follow the recorded road to the finish.':'Change your orders and the race conditions, then rerun with the same seed to compare what happened on the road.'}</p>
+      {!guided&&<p className="v91-warning">This is a fictional preview.
+        Results and points are for inspection only; no official result or
+        award is saved.</p>}
       {guided&&<p><a href="/team/motor-lab/race-dynamics">Try the separate
         experimental whole-race dynamics preview</a>. It shows recorded
         group gaps and paid breakaway work without individual places or
@@ -1092,11 +1094,12 @@ export default function Playtest({guided=false}){
           }}>
           3 · Inspect conditional result</button>
       </nav>}
-      <div className="v91-start" aria-label="Start a playable race preview">
-        <strong>{guided?'Ready-made races':'Start with a race you can inspect.'}</strong>
+      {!guided&&<div className="v91-start"
+        aria-label="Start a playable race preview">
+        <strong>Start with a race you can inspect.</strong>
         <div className="v91-start-actions">
           <button type="button" onClick={()=>setupExampleRace('sample')}
-            disabled={busy}>{guided?'Reset sample race':'Set up sample race'}</button>
+            disabled={busy}>Set up sample race</button>
           <button type="button" onClick={()=>setupExampleRace('tactical')}
             disabled={busy}>Set up two-manager race</button>
           <button type="button" onClick={()=>setupExampleRace('chase')}
@@ -1104,16 +1107,9 @@ export default function Playtest({guided=false}){
           <button type="button" onClick={()=>setupExampleRace('measured-chase')}
             disabled={busy}>Set up measured-chase race</button>
         </div>
-        <p>{guided?'A 40 km sample is ready below. Try the 120 km race to control a rival manager too. You can edit either setup before running.':
-          'Choose a 40 km sample or a 120 km two-manager race with custom tactics and lead-outs. Edit either setup, then inspect the road, finish and rider replay.'}</p>
-        <p>The 40 km close chase starts with three attacking rivals and
-          synthetic team strengths of 40 for your team and 20 for each rival.
-          Run it with conserve at 5 km, then try hard with the same seed to
-          inspect the catch, energy and conditional finish. You can also try
-          the measured chase: conserve leaves the break ahead, while steady
-          and hard both catch it. Compare the energy each choice leaves at
-          the line. The sample and 120 km two-manager races remain available.</p>
-      </div>
+        <p>Choose a sample, two-manager race or chase comparison, then edit
+          its setup and inspect the recorded road, finish and rider replay.</p>
+      </div>}
       <form id="v91-race-settings" onSubmit={run} className="v91-controls">
         {!guided&&<label className="v91-mode"><input type="checkbox" checked={integratedMode}
           onChange={event=>setIntegratedMode(event.target.checked)}/>
@@ -1122,8 +1118,8 @@ export default function Playtest({guided=false}){
           checked={coastedMode}
           onChange={event=>setCoastedMode(event.target.checked)}/>
           Try v93 road-to-line preview</label>}
-        {integratedMode&&coastedMode&&<p className="v91-warning">
-          {guided?'Some complex finishes cannot yet be calculated. If that happens, you will see the recorded road and a clear explanation, without a made-up result or points.':
+        {integratedMode&&coastedMode&&<p className="v91-warning v91-finish-note">
+          {guided?'Experimental preview: no official result or points are saved. Some complex finishes stop at the recorded road; the reason is shown without an invented result.':
             'This preview pays supported bunch, front-group, and isolated-rider roads from the final-kilometre handoff. Unsupported roads return a clear refusal; results and points remain experimental.'}
         </p>}
         {guided&&<div className="v91-step-heading"><span>01 / RACE</span><h2>Set the scene</h2><p>Pick a route, distance, field and starting condition.</p></div>}

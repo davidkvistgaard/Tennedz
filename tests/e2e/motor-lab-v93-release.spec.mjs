@@ -147,6 +147,15 @@ test('guided Motor Lab runs a race from setup to rider replay',async({page,conte
   await page.goto('/team/motor-lab');
   await expect(page.getByRole('heading',{name:'Motor Lab: plan a race'}))
     .toBeVisible();
+  await page.setViewportSize({width:1390,height:844});
+  await expect(page.locator('.v91-start')).toHaveCount(0);
+  const finishNote=page.locator('#v91-race-settings .v91-finish-note');
+  const formBox=await page.locator('#v91-race-settings').boundingBox();
+  const noteBox=await finishNote.boundingBox();
+  expect(noteBox.width).toBeGreaterThan(formBox.width*.85);
+  await finishNote.scrollIntoViewIfNeeded();
+  await page.screenshot({path:'test-results/guided-settings-desktop.png'});
+  await page.setViewportSize({width:390,height:844});
   const flow=page.getByRole('navigation',{name:'Motor Lab race flow'});
   await expect(flow.getByRole('button',
     {name:'2 · Watch recorded race'})).toBeDisabled();
