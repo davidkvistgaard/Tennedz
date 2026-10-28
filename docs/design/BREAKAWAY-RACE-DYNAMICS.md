@@ -1320,3 +1320,14 @@ average. Yet the control helpers' mean reserve at km 210 was just
 teams. This is a field-wide depletion of actual paid helpers, not just
 one repeatedly selected worker or a display-only energy issue. The
 audit now reports these roster, rider-km and helper-reserve measures.
+
+One accounting mechanism merits a versioned test. During an active v94
+chase, `pelotonRestTeamIds` excludes the entire chasing team, although
+only two helpers normally earn chase capacity and pay its action cost.
+The other riders still pay their steady base effort and cannot receive
+the conservative bunch-rest treatment on that kilometre. This is a
+code-level hypothesis for part of the team-wide depletion, not proof
+that changing it produces a believable race: the active helpers must
+still pay all work, and any saved reserve may alter later decisions and
+road contact. Test a rider-specific rest rule on the same complete
+recordings before changing the experimental preview or guided motor.
