@@ -1670,3 +1670,9 @@ and the remaining protect teams do not take up a stage-result pursuit.
 This is a code-path diagnosis, not evidence that every protector should
 chase. A stage response needs an inspectable committed sporting stake
 and a paid work decision that remains viable across the field.
+These synthetic stage audits pass no completed GC classification to
+`simulateTacticalTour`; its existing contract rejects a GC objective
+without one. Assigning `defend_top_ten` or `target_top_ten` to the
+generated protect teams would therefore fabricate a missing race
+context rather than supply a justified pursuit goal. A stage-result
+response needs its own committed, testable incentive.
