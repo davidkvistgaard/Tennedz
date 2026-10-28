@@ -2210,3 +2210,19 @@ guided racing or infer realistic catch frequency from it. The chase
 decision still uses the prior potential-coalition estimate; the
 physical pace and that decision need joint calibration from paid
 rider/terrain ability and observed contact, not a static multiplier.
+
+A read-only gap-ledger audit of those 16 opt-in races isolates 874
+kilometres with a paid chase turn, an existing front gap and no fresh
+attack. Across those kilometres, the recorded passive road calculation
+adds 1,663.94 seconds to the gap while the legacy capacity-to-seconds
+formula credits the named chase leaders with only 496.61 seconds. In
+355 of the same kilometres, a separately paid bunch-front pace also
+enters the passive road calculation. The total is diagnostic, not a
+new finish prediction: the terms are capped per kilometre and later
+attacks and contacts are outside this subset. It shows exactly why
+merely paying one rotating chase leader while retaining the old summed
+capacity clock makes the front survive. The next motor version should
+derive the chasing group's relative pace from its actual exposed
+leader, terrain and energy, and count any paid bunch-front work only
+once. It must then recompute team pursuit decisions against that same
+road model and validate contact and full source replay.
