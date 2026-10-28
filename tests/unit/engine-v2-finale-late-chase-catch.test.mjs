@@ -23,8 +23,8 @@ function seededRandom(label){
   return ()=>((state=(Math.imul(state,1664525)+1013904223)>>>0)/2**32);
 }
 
-function road(seed){
-  const terrain='mountain',fatigue=0;
+function road(seed,{terrain='mountain'}={}){
+  const fatigue=0;
   const managerTactics=resolveRandomRivalTactics({teamCount:20,
     random:seededRandom(`${seed}:${terrain}:${fatigue}`)});
   const prepared=prepareV91Playtest({distanceKm:260,terrain,
@@ -70,4 +70,17 @@ test('late paid chase catch replays without inventing a sprint order',()=>{
 test('late contact version refuses a source without its paid merge',()=>{
   const tour=road('guided-finish-coverage-18');
   assert.throws(()=>recordFinaleLateChaseCatchClock(tour));
+});
+
+test('late passive contact still carries its earlier paid chase',()=>{
+  const tour=road('guided-finish-coverage-86',{terrain:'flat'});
+  const clock=recordFinaleLateChaseCatchClock(tour);
+  assert.equal(validateFinaleLateChaseCatchClock(tour,clock),true);
+  const contactFrame=clock.trace.frames.find(frame=>frame.contact);
+  assert.equal(contactFrame.bunchPullRiderId,null);
+  assert.equal(clock.trace.frames.filter(frame=>
+    frame.bunchPullRiderId!==null).length,3);
+  assert.equal(clock.line.riders.length,160);
+  assert.equal(clock.line.bands.at(-1).lastPossiblePlace,160);
+  assert.equal(clock.canCommitAwards,false);
 });

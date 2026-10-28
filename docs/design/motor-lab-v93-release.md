@@ -297,3 +297,20 @@ It accounts for all 160 riders in two unordered line bands: 148 in
 the merged contact group and 12 still dropped. Individual places,
 classifications, points and awards remain withheld. The ordinary
 guided result and its refusal are unchanged.
+
+Across independent seed batches 1–48 and 49–96, flat/mountain,
+fresh/tired (384 ordinary guided 20-team 260 km races), 381 paid an
+individual finish and three validated their source road but refused
+the ordinary last-kilometre finish. The new late-contact checkpoint
+source-replayed both `guided-finish-coverage-19` and the independent
+fresh-flat `guided-finish-coverage-86`. In the latter, three slices
+paid chase before contact at 259611.21 m; the contact slice itself
+had no paid chase worker. The checkpoint records contact *after*
+paid chase, without claiming that a worker paid in the contact slice
+or inferring a causal wheel order. The remaining fresh-mountain
+`guided-finish-coverage-39` refusal concerns pre-500 m bunch drops
+in a two-front handoff. Its separate internal two-front paid-road
+checkpoint source-replays unordered road bands, but the ordinary
+positioned finish still refuses because those drops need a truthful
+wheel handoff. None of these internal checkpoints change the guided
+result or grant awards.
