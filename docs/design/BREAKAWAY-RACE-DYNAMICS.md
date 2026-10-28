@@ -1465,3 +1465,14 @@ control reserve at the finale start fell by about 16 points. A binary
 for a longer, more costly pursuit. All trial code and tests were
 reverted; only this diagnostic remains. A useful policy needs a more
 credible way to share work and reassess the break over time.
+
+A second read-only counterfactual kept generated control front work but
+changed its effort from steady to conserve throughout the same 24
+guided-role-goal races. All recordings validated and fully replayed.
+It was an intermediate tempo reduction, but still shifted work into
+pursuit: in the fresh one-day cases, mean widest lead rose from 295.16
+to 329.99 seconds while control chase climbed to 405.67 team-km and
+control front work fell to 101.17 team-km. Fresh stage lead rose from
+403.42 to 444.56 seconds; tired stage lead from 399.01 to 557.87.
+The temporary audit switch was removed. A fixed lower effort order
+does not solve the coupled tempo and chase decision.
