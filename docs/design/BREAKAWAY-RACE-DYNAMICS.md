@@ -2038,7 +2038,19 @@ member's extra lead or shelter cost and a distance-weighted mean leading
 ability, never the sum of worker abilities. A group with no willing
 leader returns `unsupported_unworked`; it does not receive free worked
 pace. A rider unable to pay even the extra planned group charge refuses
-the plan. This is an isolated, opt-in plan, not a paid road transition:
+the plan. The caller may pass the subset actually active after a recorded
+settled-front rest; the planner rejects an active worker who did not
+choose to pull. This is an isolated, opt-in plan, not a paid road transition:
 the baseline riding charge, within-kilometre exhaustion, contact, group
 clock and source replay still need a separately versioned integration.
 No guided race or viewer uses these turns yet.
+
+A read-only `audit-v94-road-group-turns.mjs` replays four 120-km V94
+one-day sources across flat/mountain and fresh/tired. Every one of the
+400 prior forward-group kilometres had an eligible recorded worker and
+the isolated planner could divide its actual worker roster into turns.
+The current aggregate model charged 236.074 extra reserve units across
+those groups; the one-leader shadow planned 154.04. These are summed
+model units, not an observed energy saving or calibrated race result.
+The shadow deliberately leaves baseline cost and road movement unpaid,
+so its lower charge cannot be inserted into the guided motor as-is.

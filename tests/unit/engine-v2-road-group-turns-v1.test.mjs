@@ -32,6 +32,13 @@ test('two willing riders rotate without adding their instantaneous abilities',()
     [[0,500],[500,1000]]);
   assert.deepEqual(plan.extraEnergyCosts.map(row=>row.extraCost),[.11,.11]);
   assert.equal(plan.leadAbility,plan.turns[0].ability);
+  const settled=planRoadGroupTurnsV1({group,riderDecisions:decisions,
+    teams,segment,activePullRiderIds:['b']});
+  assert.deepEqual(settled.turns.map(turn=>turn.leaderRiderId),['b']);
+  assert.deepEqual(settled.extraEnergyCosts.map(row=>row.extraCost),
+    [.04,.18]);
+  assert.throws(()=>planRoadGroupTurnsV1({group,riderDecisions:decisions,
+    teams,segment,activePullRiderIds:['b','b']}),/Active turns/);
   assert.throws(()=>planRoadGroupTurnsV1({group,riderDecisions:decisions,
     teams:[team('a','cooperate',.1),team('b')],segment}),/cannot be paid/);
 });
