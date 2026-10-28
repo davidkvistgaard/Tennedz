@@ -209,6 +209,26 @@ export default function RaceDynamicsPreview(){
               preview.story.finalRecordedLeadSeconds)}</strong>.</p>
           <LeadTimeline preview={preview} km={km}/>
         </section>
+        <section className="v94-summary" aria-label="Recorded finish line">
+          <h2>Finish line · km {preview.finish.km}</h2>
+          <p>These are the recorded groups at the finish checkpoint. Riders
+            within a group have no recorded order or individual placing.</p>
+          {preview.finish.groups.map(group=><article key={group.id}
+            className="v94-group">
+            <h3>{group.id} · {time(group.secondsAheadOfBunch)} ahead of bunch</h3>
+            <p>Unordered riders: {riders(preview,group.riderIds)}</p>
+          </article>)}
+          <details><summary>Bunch · {preview.finish.bunchRiderIds.length}
+            {' '}riders</summary>
+            <p>Unordered riders: {riders(preview,
+              preview.finish.bunchRiderIds)}</p>
+          </details>
+          {preview.finish.dropped.length>0&&<p><strong>Behind bunch:</strong>{' '}
+            {preview.finish.dropped.map(row=>`${riderLabel(preview,
+              row.riderId)} ${time(row.secondsBehindBunch)}`).join(' · ')}</p>}
+          {preview.finish.finishLineCatch&&<p>A leading rider was caught at
+            the finish checkpoint.</p>}
+        </section>
         <section className="v94-road" aria-label="Inspect race kilometre">
           <h2>Road clock at km {km}</h2>
           <div className="v94-jumps">

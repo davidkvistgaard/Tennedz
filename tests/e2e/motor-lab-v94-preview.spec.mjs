@@ -54,6 +54,10 @@ test('experimental v94 race shows committed plans and measured road only',
         baseline:{attack:'none',chase:'selective'}});
     await expect(page.getByRole('heading',
       {name:'What the recording shows'})).toBeVisible();
+    await expect(page.getByRole('heading',
+      {name:'Finish line · km 40'})).toBeVisible();
+    expect(raceDynamics.finish.km).toBe(40);
+    expect(raceDynamics.finish.positions).toBeUndefined();
     await expect(page.getByRole('img',{
       name:/Recorded leading-group gap from km 1 to km 40/})).toBeVisible();
     expect((await page.locator('.v94-lead-line').getAttribute('points'))
@@ -95,6 +99,8 @@ test('experimental v94 race shows committed plans and measured road only',
     expect(longResponse.status()).toBe(200);
     const longRace=(await longResponse.json()).raceDynamics;
     expect(longRace.frames).toHaveLength(260);
+    await expect(page.getByRole('heading',
+      {name:'Finish line · km 260'})).toBeVisible();
     expect(longRace.teamPlans).toHaveLength(20);
     expect(longRace.teamPlans.find(plan=>plan.teamId==='you')
       .baseline.frontWork).toBe('rotate');

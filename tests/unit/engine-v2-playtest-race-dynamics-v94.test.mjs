@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import {createV94RaceDynamicsPreview} from
   '../../lib/engine/v2/playtest-race-dynamics-v94.mjs';
 import {validateRecordedTour} from '../../lib/engine/v2/recording.mjs';
+import {recordedGroupFinish} from '../../lib/engine/v2/race-group-finish-v94.mjs';
 
 test('experimental race preview exposes committed intent and paid road only',()=>{
   const {recording,preview}=createV94RaceDynamicsPreview({format:'one_day',
@@ -11,6 +12,14 @@ test('experimental race preview exposes committed intent and paid road only',()=
   assert.equal(preview.frames.length,120);
   assert.equal(preview.teamPlans.length,20);
   assert.equal(preview.resultStatus,'provisional_road_groups_only');
+  assert.deepEqual(preview.finish,recordedGroupFinish(recording));
+  assert.equal(preview.finish.km,120);
+  assert.equal(preview.finish.groups.length,
+    recording.frames.at(-1).roadGroups.length);
+  assert.equal(preview.finish.bunchRiderIds.length+
+    preview.finish.dropped.length+
+    preview.finish.groups.reduce((sum,group)=>sum+group.riderIds.length,0),
+  160);
   assert.equal(preview.policy.rivalIntentVersion,4);
   assert.equal(preview.policy.frontRotationVersion,1);
   assert.equal(preview.policy.controlPursuitVersion,2);
