@@ -272,3 +272,12 @@ accounted for every handoff: 35 earlier no-front paid checkpoints,
 bunches, and this one dynamic no-front checkpoint. All 96 source
 roads still reach the ordinary guided refusal; the internal checks
 do not award an official result.
+
+An independent conservative-effort holdout using seed numbers 49–96
+(192 generated rolling/mountain, fresh/tired sources) also reached
+internal source-replayed checkpoints in all 192 cases: 44 no-front,
+137 one-front, seven two-front and two three-front no-contact cases,
+plus two complete paid bunches. None needed the dynamic paid no-front
+version in that disjoint sample. This confirms broader coverage of
+the narrow source contracts, without resolving individual placing
+or the guided finish refusal.
