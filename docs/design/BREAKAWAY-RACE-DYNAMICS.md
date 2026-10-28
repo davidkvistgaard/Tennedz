@@ -1387,3 +1387,18 @@ still reached 1,052.08 seconds. This exposes a workable paid workload
 redistribution and less captain-heavy opening, but the large spread
 and short fresh one-day leads fail a calibration claim. It does not
 authorize routing v94 to the guided race or rewriting explicit orders.
+
+Ninety-six additional new-seed 20-team, 260 km cases of that same
+committed-goal counterfactual all validated and source-replayed without
+refusal. Across the three equal holdout batches, mean widest leads
+were about 119/108 seconds in fresh/tired one-day races and 193/200
+seconds in fresh/tired stages. Fresh one-day batch means ranged
+111-124 seconds, but individual one-day cases still peaked below one
+minute (minimum 38.60 seconds); one tired stage reached 1,037.88
+seconds. Control energy near km 210 remained roughly 55-58 fresh and
+42-48 tired across batches. Thus preserving the random role counts
+while committing coherent goals and paid specialist/tempo work solves
+the immediate energy collapse in these synthetic cases, but does not
+produce a stable believable gap distribution or justify the guided
+release. The audit is a combined-policy comparison, not a hidden
+change to the player's explicit tactics.
