@@ -2241,3 +2241,14 @@ It does not yet move the bunch, replace the old capacity credit or
 combine simultaneous chase and front-work leaders into one rotation.
 Doing so directly would double-count exposed road work; this remains
 an internal source-checked building block rather than a race version.
+
+An isolated `peloton-front-turns-v1.mjs` candidate now combines paid
+chase helpers and the separately committed two-worker bunch-front pair
+into one non-overlapping, one-kilometre leader rotation. It reads each
+worker's actual committed rider, energy, terrain and source order,
+charges only their exposed turn, and weights both road ability and
+chase contribution by distance led. A worker cannot occupy both jobs;
+no committed workers means no paid pace. This closes the double-counting
+problem in the candidate plan itself. It is not yet wired to the race
+clock, pursuit decisions, energy ledger or source replay, and has no
+effect on guided races or existing recordings.
