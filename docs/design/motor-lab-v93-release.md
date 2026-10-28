@@ -179,6 +179,17 @@ checkpoints, these candidates account for the 192 synthetic
 named-front handoffs; this does not establish an official finish
 engine or authorize routing the guided default to them.
 
+An independent 48-seed holdout (`--seed-start=49 --seeds=48`) covered
+another 192 generated rolling/mountain, fresh/tired, 20-team 260 km
+named-front sources. Every source road validated; each source reached
+one of the separate internal, source-replayed, non-awarding checkpoints:
+45 no-front with dropped riders, 130 one-front no-contact, 13 two-front,
+one three-front, one payable named-front contact and two complete paid
+bunches. No case needed the unavailable-front catch version and none
+remained outside these narrow candidate contracts in this holdout.
+This broadens synthetic boundary evidence, but does not establish
+individual finish order or calibrated race dynamics.
+
 The named-front coverage audit also accepts an explicit `--front-effort`
 (`hard` or `conserve`) at the committed kilometre-five marker. In 32
 same-source generated rolling/mountain, fresh/tired races per effort,

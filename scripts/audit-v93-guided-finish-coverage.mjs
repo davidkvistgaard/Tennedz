@@ -52,8 +52,8 @@ const frontEffortArg=process.argv.find(value=>
   value.startsWith('--front-effort='));
 const frontEffort=frontEffortArg?.slice('--front-effort='.length)??null;
 if(!Number.isInteger(count)||count<1||count>48||
-  !Number.isInteger(seedStart)||seedStart<1||seedStart+count-1>48)
-  throw new Error('Choose 1–48 seeds inside the first 48 seed numbers.');
+  !Number.isInteger(seedStart)||seedStart<1||seedStart+count-1>96)
+  throw new Error('Choose up to 48 seeds inside the first 96 seed numbers.');
 if(frontEffort!==null&&(!namedFrontWork||
   !['hard','conserve'].includes(frontEffort)))
   throw new Error('Use hard or conserve with --named-front-work.');
