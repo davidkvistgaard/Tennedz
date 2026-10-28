@@ -17,6 +17,10 @@ import {orderAt} from '../lib/engine/v2/orders.mjs';
 import {finaleDistanceGrid} from '../lib/engine/v2/finale-grid.mjs';
 import {planFinaleBunchFrontWork} from
   '../lib/engine/v2/finale-bunch-front-work.mjs';
+import {probeFinaleSeparatedGroupsFromTour,
+  validateFinaleSeparatedGroupsFromTour,
+  FINALE_COAST_NO_FRONT_PAID_BUNCH_VERSION} from
+  '../lib/engine/v2/finale-multi-run.mjs';
 
 const countArg=process.argv.find(value=>value.startsWith('--seeds='));
 const count=countArg?Number(countArg.slice('--seeds='.length)):12;
@@ -78,6 +82,27 @@ for(const terrain of namedFrontWork?['rolling','mountain']:
         segment:road.route.kilometres[firstSlice.sourceKm-1],
         sourceKm:firstSlice.sourceKm,
         sliceLengthKm:firstSlice.lengthM/1000});
+      let noFrontPaidTrace=null;
+      if(snapshot.roadGroups.length===0&&snapshot.droppedRiderIds.length)
+        try{
+          const trace=probeFinaleSeparatedGroupsFromTour(road,{
+            version:FINALE_COAST_NO_FRONT_PAID_BUNCH_VERSION});
+          validateFinaleSeparatedGroupsFromTour(road,trace);
+          for(const frame of trace.frames)
+            for(const worker of frame.bunchFrontWork?.workers??[]){
+              const paid=frame.riders.find(row=>
+                row.riderId===worker.riderId);
+              if(paid?.role!=='pull'||
+                Math.abs(paid.energySpent-worker.energySpent)>1e-8)
+                throw new Error('A planned bunch-front worker was not paid.');
+            }
+          noFrontPaidTrace={status:'replayed',
+            paidSlices:trace.frames.filter(frame=>
+              frame.bunchFrontWork!==null).length,
+            finalRiderEnergy:trace.finalRiderEnergy};
+        }catch(candidateError){
+          noFrontPaidTrace={status:'refused',reason:candidateError.message};
+        }
       const eligibleHelpers=own.orders.helperIds.filter(id=>{
         const row=present.get(id);
         return row?.status==='peloton'&&
@@ -97,6 +122,7 @@ for(const terrain of namedFrontWork?['rolling','mountain']:
           .map(riderId=>({riderId,
             energy:present.get(riderId)?.energy??null})),
         firstSliceFrontWorkCandidate:frontWorkCandidate,
+        noFrontPaidTrace,
         ownTeamAhead:snapshot.roadGroups.some(group=>
           group.teamIds.includes('you')),
         ownEligibleFrontHelpers:eligibleHelpers,

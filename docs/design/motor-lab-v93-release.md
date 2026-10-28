@@ -79,3 +79,16 @@ No final-kilometre road, finish, replay or player-facing route uses this
 candidate yet. The remaining work is to recalculate eligibility and
 energy on each slice, account for bunch speed and any contact, then
 validate the complete source replay before routing it to a finish.
+
+An internal versioned no-front continuation now does that for a narrower
+road: a bunch plus already dropped riders, with no leading road group.
+It reselects and charges the named two-rider pair on each of the seven
+recorded final-kilometre slices, uses the resulting bunch speed for the
+dropped riders' relative clock, and replays exactly from the source.
+The old clock still refuses the same explicit front-work source.
+The focused source/replay/tamper test passed. In 48 new seeded generated
+rolling/mountain variants, 18 reached this no-front handoff and all 18
+candidate traces replayed with each selected worker charged. The other
+30 require separate front-group/contact work. This trace is still an
+internal probe: it is not a playable finish, individual order, point
+award or guided route until the downstream line contract is proven.
