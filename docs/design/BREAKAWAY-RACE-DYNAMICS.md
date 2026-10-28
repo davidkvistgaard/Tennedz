@@ -1356,3 +1356,17 @@ asserts that every paid control chase is classified. A future generated
 team goal must be committed and inspectable, with manager-given `all`
 orders preserved; changing the random order alone on the older v93
 road did not produce a convincing race.
+
+A labelled read-only v94 counterfactual preserved the same random role
+map and teams but changed **generated** `all` control orders to
+`selective`; it did not alter manager orders or the playable planner.
+All 24 same-source 260 km cases validated and replayed. The fresh
+one-day mean widest lead rose from 193.80 to 327.13 seconds and mean
+control reserve at km 210 from 12.55 to 18.90, while paid control chase
+actually increased from 309.83 to 378.67 team-km. Tired stages rose
+from 546.82 to 614.86 seconds, with reserve only 6.41 to 8.78. The
+front also changed substantially: fresh break-role attack attempts
+fell from 81.5 to 9.83, and the resulting front was captain-heavy.
+This demonstrates an interaction between opening attack suppression,
+front composition and pursuit, not a safe default order swap. In
+particular, the controls still had little reserve for a credible finish.

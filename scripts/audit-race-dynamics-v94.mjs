@@ -41,7 +41,7 @@ function run({seed,terrain,fatigue,format,breakTeams,controlTeams}){
   const mixedDefaults=process.argv.includes('--mixed-defaults');
   const guidedRandom=process.argv.includes('--guided-random');
   const plannedIntent=process.argv.includes('--planned-intent');
-  const managerTactics=guidedRandom?resolveRandomRivalTactics({teamCount,
+  const seededTactics=guidedRandom?resolveRandomRivalTactics({teamCount,
     random:seededRandom(`${seed}:${terrain}:${fatigue}`)}):
     mixedDefaults||plannedIntent?[]:
     Array.from({length:teamCount-1},(_,index)=>{
@@ -52,6 +52,10 @@ function run({seed,terrain,fatigue,format,breakTeams,controlTeams}){
         {effort:'steady',attack:'none',chase:'selective'}:
         {effort:'steady',attack:'none',chase:'selective'};
   });
+  const generatedControlSelective=guidedRandom&&
+    process.argv.includes('--generated-control-selective');
+  const managerTactics=generatedControlSelective?seededTactics.map(order=>
+    order.chase==='all'?{...order,chase:'selective'}:order):seededTactics;
   const prepared=prepareV91Playtest({distanceKm:260,terrain,teamCount,
     fatigue,attack:'none',chase:'ignore',seed,managerTactics});
   const planned=plannedIntent?prepareV94RivalIntent({prepared,format,
@@ -59,14 +63,17 @@ function run({seed,terrain,fatigue,format,breakTeams,controlTeams}){
     opportunisticSpecialistVersion:opportunisticSpecialist?2:1,
     ...(format==='stage'?{stageNumber:8}:{})}):null;
   const teams=planned?.teams??prepared.teams;
-  const teamRoles=planned?.raceContext.teamRoles??Object.fromEntries(teams.map((team,index)=>[
-    team.id,mixedDefaults||guidedRandom?
-      team.orders.baseline.chase==='all'?'control':
-        team.orders.baseline.attack!=='none'&&
-        team.orders.baseline.chase==='ignore'?'break':
-          team.orders.baseline.chase==='selective'?'protect':'opportunistic':
+  const teamRoles=planned?.raceContext.teamRoles??Object.fromEntries(teams.map((team,index)=>{
+    const originalOrder=generatedControlSelective&&index>0?
+      seededTactics[index-1]:team.orders.baseline;
+    return [team.id,mixedDefaults||guidedRandom?
+      originalOrder.chase==='all'?'control':
+        originalOrder.attack!=='none'&&
+        originalOrder.chase==='ignore'?'break':
+          originalOrder.chase==='selective'?'protect':'opportunistic':
       index===0?'protect':index<=breakTeams?'break':
-        index<=breakTeams+controlTeams?'control':'protect']));
+        index<=breakTeams+controlTeams?'control':'protect'];
+  }));
   const intendedBreakTeams=mixedDefaults||guidedRandom||plannedIntent?
     Object.values(teamRoles).filter(role=>role==='break').length:breakTeams;
   const intendedControlTeams=mixedDefaults||guidedRandom||plannedIntent?
@@ -365,6 +372,7 @@ console.log(JSON.stringify({version:MOTOR_RACE_DYNAMICS_VERSION,
   roadGroupPaceVersion:process.argv.includes('--road-group-pace-v2')?2:1,
   note:'Internal opt-in role scenarios, not observed race calibration or official results.',
   allControlTempo:process.argv.includes('--all-control-tempo'),
+  generatedControlSelective:process.argv.includes('--generated-control-selective'),
   committedControlTempo,
   opportunisticSpecialist,
   ...(summary?{summary}:{rows})},null,2));
