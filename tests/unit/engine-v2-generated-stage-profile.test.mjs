@@ -4,6 +4,9 @@ import {generatePlaytestStageProfile} from
   '../../lib/engine/v2/playtest-stage-generator.mjs';
 import {prepareV91Playtest} from '../../lib/engine/v2/playtest.mjs';
 import {buildKilometreRoute} from '../../lib/engine/v2/route.mjs';
+import {createV93CoastedPlaytest,validateV93CoastedPlaytest,
+  summarizeV93CoastedPlaytest} from
+  '../../lib/engine/v2/playtest-v93-coasted.mjs';
 
 test('generated routes are reproducible, varied and accepted by the race',()=>{
   for(const distanceKm of [40,120,260]){
@@ -33,4 +36,25 @@ test('stage generator refuses unsupported inputs',()=>{
     {distanceKm:40,style:'unknown',seed:'a'},
     {distanceKm:40,style:'rolling',seed:''}])
     assert.throws(()=>generatePlaytestStageProfile(input));
+});
+
+test('generated long rolling and mountain routes retain a paid finish',()=>{
+  for(const style of ['rolling','mountain']){
+    const seed=`generated-long-${style}-1`;
+    const profileHeightsM=generatePlaytestStageProfile({distanceKm:260,
+      style,seed});
+    const settings={distanceKm:260,terrain:'custom',profileHeightsM,
+      teamCount:20,gender:'M',fatigue:15,effort:'steady',
+      attack:'selective',chase:'selective',seed};
+    const plans=Array.from({length:20},(_,index)=>{
+      const teamId=index?`rival-${index}`:'you';
+      return {teamId,finisherId:`${teamId}-7`,leadOutRiderId:null};
+    });
+    const race=createV93CoastedPlaytest(settings,{plans});
+    validateV93CoastedPlaytest(settings,{plans},race);
+    const summary=summarizeV93CoastedPlaytest(race);
+    assert.deepEqual(summary.settings.profileHeightsM,profileHeightsM);
+    assert.equal(summary.kilometreFrames.length,259);
+    assert.equal(summary.lineTimes.length,160);
+  }
 });
