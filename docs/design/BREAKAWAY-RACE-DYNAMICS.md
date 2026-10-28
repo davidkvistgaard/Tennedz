@@ -1886,7 +1886,10 @@ the break. Dropped riders are tracked individually and do not form a
 cooperative rear group in this version.
 
 `road-group-participation.mjs` is a read-only explanation of the existing
-selection. It returns each selected rider and the strongest order-backed
+selection. The same `decideRoadGroupWork` function now selects the pullers
+used by the road and returns one explicit choice and reason per rider in
+each forward group. The explanation returns each selected rider and the
+strongest order-backed
 or source-backed reason for an exclusion. It does not assign a fictional
 pull duration or infer a private sporting motive. It is not wired into
 paid race frames or viewer commentary.

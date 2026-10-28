@@ -2,6 +2,8 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {explainRoadGroupParticipation} from
   '../../lib/engine/v2/road-group-participation.mjs';
+import {decideRoadGroupWork,selectRoadGroupWork} from
+  '../../lib/engine/v2/road-groups.mjs';
 
 function team(id,count,breakWork='cooperate',reserve=100){
   const riders=Array.from({length:count},(_,index)=>({id:`${id}-${index}`}));
@@ -27,6 +29,11 @@ test('separate groups preserve teammate-ahead, sitter and reciprocal motives',()
   assert.deepEqual(result.pullRiderIds,['a-0','d-0']);
   assert.equal(result.groups[0].pullerCount,1);
   assert.equal(result.groups[1].pullerCount,1);
+  const governing=decideRoadGroupWork(groups,teams,1);
+  assert.deepEqual(governing.riderDecisions.map(row=>row.riderId),
+    groups.flatMap(group=>group.riderIds));
+  assert.deepEqual(governing.riderDecisions.filter(row=>row.choice==='pull')
+    .map(row=>row.riderId),selectRoadGroupWork(groups,teams,1).pullRiderIds);
 });
 
 test('a recorded GC hold withdraws only that team from the pull roster',()=>{
