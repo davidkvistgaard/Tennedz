@@ -1991,7 +1991,7 @@ export default function Playtest({guided=false}){
                 <div className="v91-race-screen-riders">{
                   viewerSituation.own.map(rider=><button type="button"
                     key={rider.riderId}
-                    aria-pressed={viewerRiderId===rider.riderId}
+                    aria-pressed={raceScreenTrackedRiderId===rider.riderId}
                     onClick={()=>{
                       setViewerRiderId(rider.riderId);
                       setRaceScreenTrackedRiderId(rider.riderId);

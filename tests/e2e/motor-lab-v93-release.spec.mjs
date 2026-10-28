@@ -198,10 +198,14 @@ test('guided Motor Lab runs a race from setup to rider replay',async({page,conte
   await expect(raceScreen.getByRole('img',{
     name:/Recorded time gaps through km/})).toHaveAttribute('aria-label',
     new RegExp(`Rival ${rivalInFront.split('-')[1]} Rider`));
+  await expect(raceScreen.getByLabel('Your riders on the road')
+    .locator('button[aria-pressed="true"]')).toHaveCount(0);
   await page.screenshot({path:'test-results/guided-race-groups.png'});
   await raceScreen.getByLabel('Choose recorded kilometre').fill('1');
   await raceScreen.getByLabel('Your riders on the road')
     .getByRole('button',{name:/Rider 8/}).click();
+  await expect(raceScreen.getByLabel('Your riders on the road')
+    .locator('button[aria-pressed="true"]')).toHaveCount(1);
   await raceScreen.getByRole('button',{name:'Play',exact:true}).click();
   await expect(raceScreen.locator('header h2')).toContainText('Km 2');
   await expect(raceScreen.locator('header h2')).toContainText('Km 3');
