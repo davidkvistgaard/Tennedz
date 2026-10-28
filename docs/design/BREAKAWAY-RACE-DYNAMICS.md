@@ -1437,3 +1437,16 @@ the other zero-control case on the same field is its paired one-day race.
 This identifies an uncommon but severe no-control failure mode. It does
 not explain the ten short-lead cases, so simply ensuring one control
 team cannot settle the motor's wider pursuit and tempo balance.
+
+The first 32 fully validated/replayed new-seed guided-role-goals races
+also expose a decision mismatch. Fresh one-day controls paid a mean
+204.5 bunch-front team-km, of which 196 occurred in kilometres when
+their selective chase was explicitly held. Tired one-day: 156.75 and
+150; fresh stage: 193.63 and 189.63; tired stage: 152.63 and 149.13.
+Thus roughly 96–98% of their paid front work took place while the same
+team's catch projection chose to wait. The front work is real and paid,
+but the declared economic wait has no effect on the separate tempo
+order. A separately versioned rule that lets *automatically generated*
+control tempo rest on held-chase kilometres is worth a paired audit;
+explicit manager front-work orders must still execute. This is a
+diagnosis, not yet a motor change or a claim about real races.

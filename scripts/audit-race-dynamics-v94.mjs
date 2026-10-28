@@ -214,6 +214,9 @@ function run({seed,terrain,fatigue,format,breakTeams,controlTeams}){
       sum+(frame.disengagedControlTeamIds?.length??0),0),
     controlFrontWorkTeamKilometres:frames.filter(frame=>
       teamRoles[frame.paidBunchPace?.teamId]==='control').length,
+    controlFrontWorkWhileChaseHeldKm:frames.filter(frame=>
+      teamRoles[frame.paidBunchPace?.teamId]==='control'&&
+      frame.heldChaseTeamIds.includes(frame.paidBunchPace.teamId)).length,
     firstControlFrontWorkKm:frames.find(frame=>
       teamRoles[frame.paidBunchPace?.teamId]==='control')?.km??null,
     controlFrontWorkBeforeFirstFrontKm:frames.filter(frame=>
@@ -371,6 +374,8 @@ const summary=process.argv.includes('--summary')?
       meanBusiestControlChaseTeamKilometres:
         average('busiestControlChaseTeamKilometres'),
       meanControlFrontWorkTeamKm:average('controlFrontWorkTeamKilometres'),
+      meanControlFrontWorkWhileChaseHeldKm:
+        average('controlFrontWorkWhileChaseHeldKm'),
       meanDisengagedControlTeamKm:
         average('disengagedControlTeamKilometres'),
       meanFirstControlFrontWorkKm:average('firstControlFrontWorkKm'),
