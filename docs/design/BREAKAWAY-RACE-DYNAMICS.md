@@ -1331,3 +1331,15 @@ that changing it produces a believable race: the active helpers must
 still pay all work, and any saved reserve may alter later decisions and
 road contact. Test a rider-specific rest rule on the same complete
 recordings before changing the experimental preview or guided motor.
+
+That opt-in `chaseShelterVersion:2` trial was implemented and then
+rejected. It kept the two active chase helpers fully charged for their
+work, allowed only nonworking teammates to receive the existing bunch
+rest treatment, and recorded/validated the team roster with source
+replay. A locked test passed. But in the same 24 guided-random 260 km
+cases, every recording validated and replayed, and mean control energy
+at km 210 stayed 12.55/6.41 for fresh/tired races; helper energy stayed
+4.60/0.38. Mean widest leads moved only 193.80/271.61 to
+193.19/269.50 seconds in one-day races and remained 364.53/546.82 in
+stages. The complete candidate code was reverted. This narrow rest
+eligibility does not solve the field's paid helper workload.
