@@ -1476,3 +1476,14 @@ control front work fell to 101.17 team-km. Fresh stage lead rose from
 403.42 to 444.56 seconds; tired stage lead from 399.01 to 557.87.
 The temporary audit switch was removed. A fixed lower effort order
 does not solve the coupled tempo and chase decision.
+
+A later read-only zero-control coverage counterfactual changed only the
+two no-control races in the first 32 new-seed guided-role-goal cases. It
+gave the strongest already protective generated team a committed control
+goal; all 32 recordings validated and source-replayed. The tired flat
+holdout-2 one-day widest lead fell from 396.14 to 48.52 seconds and its
+stage lead from 1,037.88 to 128.86 seconds. That removes the extreme
+unopposed stage in this sample but compresses the paired one-day break
+below a minute. One extra control goal is therefore too sensitive to
+claim as a general remedy. The temporary audit switch was removed; no
+playable planner or explicit manager order changed.
