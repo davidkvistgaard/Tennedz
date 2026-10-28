@@ -171,8 +171,9 @@ considered.
 
 An additional *internal* version now handles a different narrow source:
 the named front-work order remains committed, but no pair can pay even
-one final slice, while an actually engaged chase catches the sole front
-group. The version records the chase-funded contact at its calculated
+one final slice, while a paid rival chase contributes before the sole
+front group is caught by the continuing relative road clock. The
+version records that contact at its calculated
 route marker, carries all 160 riders to a single `unresolved_contact`
 line band, and withholds classifications, points and awards. It rejects
 any slice that can pay bunch-front work; those sources still require a
@@ -190,5 +191,11 @@ no-front, 64 one-front and seven two-front no-contact checkpoints.
 None needed the unavailable-front catch version or reached a three-front
 handoff. Across both 24-seed batches, the isolated versions therefore
 replayed 55 no-front, 119 one-front, 14 two-front and three
-unavailable-front catches; one three-front source still refused. This
-remains synthetic boundary coverage, not a complete guided finish.
+unavailable-front catches. The one three-front source now has a
+separate, source-replayed no-contact checkpoint with three unordered
+front bands, a bunch band and an unresolved dropped band. Its named
+front pair could pay none of the seven slices, so the checkpoint records
+zero bunch-front workers; it does not pretend otherwise. Contact between
+any of those groups remains a refusal, and awards and points remain
+withheld. This is synthetic boundary coverage, not a complete guided
+finish.

@@ -25,7 +25,8 @@ import {probeFinaleSeparatedGroupsFromTour,
   FINALE_COAST_NO_FRONT_PAID_BUNCH_VERSION,
   FINALE_COAST_ONE_FRONT_PAID_BUNCH_VERSION,
   FINALE_COAST_UNAVAILABLE_FRONT_CATCH_VERSION,
-  FINALE_COAST_TWO_FRONT_PAID_BUNCH_VERSION} from
+  FINALE_COAST_TWO_FRONT_PAID_BUNCH_VERSION,
+  FINALE_COAST_THREE_FRONT_PAID_BUNCH_VERSION} from
   '../../lib/engine/v2/finale-multi-run.mjs';
 import {recordFinaleCoastNoFrontPaidBunchClock,
   validateFinaleCoastNoFrontPaidBunchClock,
@@ -34,7 +35,9 @@ import {recordFinaleCoastNoFrontPaidBunchClock,
   recordFinaleCoastTwoFrontPaidBunchClock,
   validateFinaleCoastTwoFrontPaidBunchClock,
   recordFinaleCoastUnavailableFrontCatchClock,
-  validateFinaleCoastUnavailableFrontCatchClock} from
+  validateFinaleCoastUnavailableFrontCatchClock,
+  recordFinaleCoastThreeFrontPaidBunchClock,
+  validateFinaleCoastThreeFrontPaidBunchClock} from
   '../../lib/engine/v2/finale-separated-last-km.mjs';
 
 function seededRandom(label){
@@ -184,6 +187,43 @@ test('late unavailable-front catch remains provisional',()=>{
   assert.equal(clock.line.bands.length,1);
   assert.equal(clock.classifiedResults,null);
   assert.equal(clock.pointsStatus,'withheld');
+});
+
+test('three-front front-order continuation preserves all source groups',()=>{
+  const seed='guided-finish-coverage-3',terrain='rolling',fatigue=0;
+  const prepared=prepareV91Playtest({distanceKm:260,terrain:'custom',
+    profileHeightsM:generatePlaytestStageProfile({distanceKm:260,
+      style:terrain,seed}),teamCount:20,fatigue,attack:'none',
+    chase:'selective',seed,managerTactics:resolveRandomRivalTactics({
+      teamCount:20,random:seededRandom(`${seed}:${terrain}:${fatigue}`)}),
+    managerTacticalOrdersV8:[{teamId:'you',atKm:5,
+      attack:'selective',attackRiderId:'you-2',
+      chaseTarget:'rival-1-2',frontWork:'rotate',
+      frontWorkRiderId:'you-5',effort:'hard'},
+    {teamId:'you',atKm:25,attack:'none'}]});
+  const tour=simulateTacticalTour({...prepared,
+    motorVersion:MOTOR_EXHAUSTION_COAST_VERSION});
+  assert.equal(validateRecordedTour(tour),true);
+  assert.equal(finaleSnapshotFromTour(tour,{remainingKm:1,
+    includeAttackLoad:true}).roadGroups.length,3);
+  assert.throws(()=>probeFinaleSeparatedGroupsFromTour(tour,{
+    version:FINALE_COAST_TWO_FRONT_PAID_BUNCH_VERSION}),
+  /needs exactly two leading groups/);
+  const trace=probeFinaleSeparatedGroupsFromTour(tour,{
+    version:FINALE_COAST_THREE_FRONT_PAID_BUNCH_VERSION});
+  assert.equal(trace.frames.filter(frame=>frame.bunchFrontWork).length,0);
+  assert.equal(validateFinaleSeparatedGroupsFromTour(tour,trace),true);
+  const clock=recordFinaleCoastThreeFrontPaidBunchClock(tour);
+  assert.equal(validateFinaleCoastThreeFrontPaidBunchClock(tour,clock),true);
+  assert.deepEqual(clock.line.bands.map(band=>band.kind),
+    ['road_group','road_group','road_group','peloton',
+      'unresolved_dropped']);
+  assert.equal(clock.line.bands.at(-1).lastPossiblePlace,160);
+  assert.equal(clock.canCommitAwards,false);
+  const forged=structuredClone(clock);
+  forged.trace.frames[0].bunchFrontWork={teamId:'you'};
+  assert.throws(()=>validateFinaleCoastThreeFrontPaidBunchClock(tour,
+    forged),/paid three-front bunch clock does not replay/);
 });
 
 test('opt-in no-front finale pays named front pair and replays the source',()=>{
