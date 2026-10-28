@@ -117,6 +117,10 @@ function run({seed,terrain,fatigue,format,breakTeams,controlTeams}){
   const frames=recording.frames;
   const gaps=frames.map(frame=>frame.gapSeconds);
   const withFront=frames.filter(frame=>frame.breakawayRiderIds?.length>0);
+  const frontWorkerRiderKilometres=withFront.reduce((sum,frame)=>{
+    const leading=new Set(frame.roadGroups[0]?.riderIds??[]);
+    return sum+frame.roadGroupWorkerRiderIds.filter(id=>leading.has(id)).length;
+  },0);
   const frontUnmet=frames.flatMap(frame=>frame.energyLedger.filter(row=>
     frame.breakawayRiderIds.includes(row.riderId)&&row.unmetEnergyDemand>0)
     .map(row=>({km:frame.km,riderId:row.riderId,
@@ -282,6 +286,14 @@ function run({seed,terrain,fatigue,format,breakTeams,controlTeams}){
     breakRoleCaptainAttempts:breakAttempts.filter(row=>row.isCaptain).length,
     breakRoleHelperAttempts:breakAttempts.filter(row=>row.isHelper).length,
     breakRoleDistinctAttackers:new Set(breakAttempts.map(row=>row.riderId)).size,
+    frontWorkerRiderKilometres,
+    frontMeanPassiveGapDelta:withFront.length?
+      average(withFront,'passiveGapDelta'):null,
+    frontMeanChasePower:withFront.length?average(withFront,'chasePower'):null,
+    frontBunchWorkTeamKilometres:withFront.filter(frame=>
+      frame.paidBunchPace).length,
+    frontProtectChaseTeamKilometres:withFront.reduce((sum,frame)=>
+      sum+frame.chasers.filter(id=>teamRoles[id]==='protect').length,0),
     frontPresentKm:withFront.length};
 }
 
@@ -374,6 +386,12 @@ const summary=process.argv.includes('--summary')?
         Math.min(...completed.map(row=>row.maxGapSeconds)),
         Math.max(...completed.map(row=>row.maxGapSeconds))]:null,
       meanMultiRoadGroupKm:average('multiRoadGroupKm'),
+      meanFrontWorkerRiderKm:average('frontWorkerRiderKilometres'),
+      meanFrontPassiveGapDelta:average('frontMeanPassiveGapDelta'),
+      meanFrontChasePower:average('frontMeanChasePower'),
+      meanFrontBunchWorkTeamKm:average('frontBunchWorkTeamKilometres'),
+      meanFrontProtectChaseTeamKm:
+        average('frontProtectChaseTeamKilometres'),
       meanSettledRestRiderKm:average('settledFrontRestRiderKilometres'),
       meanEarlyProtectChaseTeamKm:average('earlyProtectChasedTeamKilometres'),
       refusals:sample.filter(row=>row.refusal).length};

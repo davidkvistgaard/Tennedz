@@ -1413,3 +1413,18 @@ lead of just 38.90 seconds. Thus role count explains the largest
 outlier, but the short-lead case cannot be fixed by simply reducing
 control chase. Inspect front and bunch road work in that case before
 changing the motor's economics.
+
+A paid-road comparison of four fresh flat one-day holdout seeds clarifies
+that short case. In holdout-4 the front was present for 242 km and paid
+988 leading-worker rider-km, while the bunch paid front work on 230 km.
+Its mean passive relative gain was only 0.26 seconds/km, versus
+1.16-1.38 in the three longer-lead peers. Mean chase power was lower,
+not higher, at 29.67 versus roughly 51-56; paid control chase was only
+36 team-km versus 184-202. The control team's continuous, fully paid
+bunch tempo, rather than its chase, kept this front close. Removing
+generated control `frontWork:rotate` in a read-only paired run raised
+holdout-4's widest lead from 38.90 to 338.31 seconds, but also caused
+462 paid control chase team-km instead of 36 and moved its mean passive
+gain to 2.65 seconds/km. The other three flat fresh leads similarly
+rose from about 125-138 to 294-371 seconds. This is another workload
+tradeoff, not a safe instruction to remove tempo or force a target gap.
