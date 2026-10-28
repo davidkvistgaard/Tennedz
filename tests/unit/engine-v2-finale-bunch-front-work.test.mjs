@@ -26,6 +26,7 @@ import {probeFinaleSeparatedGroupsFromTour,
   FINALE_COAST_ONE_FRONT_PAID_BUNCH_VERSION,
   FINALE_COAST_UNAVAILABLE_FRONT_CATCH_VERSION,
   FINALE_COAST_PAYABLE_FRONT_CATCH_VERSION,
+  FINALE_PAID_BUNCH_ONLY_VERSION,
   FINALE_COAST_TWO_FRONT_PAID_BUNCH_VERSION,
   FINALE_COAST_THREE_FRONT_PAID_BUNCH_VERSION} from
   '../../lib/engine/v2/finale-multi-run.mjs';
@@ -39,6 +40,8 @@ import {recordFinaleCoastNoFrontPaidBunchClock,
   validateFinaleCoastUnavailableFrontCatchClock,
   recordFinaleCoastPayableFrontCatchClock,
   validateFinaleCoastPayableFrontCatchClock,
+  recordFinalePaidBunchOnlyClock,
+  validateFinalePaidBunchOnlyClock,
   recordFinaleCoastThreeFrontPaidBunchClock,
   validateFinaleCoastThreeFrontPaidBunchClock} from
   '../../lib/engine/v2/finale-separated-last-km.mjs';
@@ -276,6 +279,43 @@ test('payable named pair stays paid through a recorded front catch',()=>{
   forged.trace.frames[0].bunchFrontWork.workers[0].energySpent=0;
   assert.throws(()=>validateFinaleCoastPayableFrontCatchClock(tour,
     forged),/payable-front catch clock does not replay/);
+});
+
+test('complete bunch pays its named front pair without invented sprint places',()=>{
+  for(const [number,fatigue] of [[13,30],[14,0]]){
+    const seed=`guided-finish-coverage-${number}`,terrain='rolling';
+    const prepared=prepareV91Playtest({distanceKm:260,terrain:'custom',
+      profileHeightsM:generatePlaytestStageProfile({distanceKm:260,
+        style:terrain,seed}),teamCount:20,fatigue,attack:'none',
+      chase:'selective',seed,managerTactics:resolveRandomRivalTactics({
+        teamCount:20,random:seededRandom(`${seed}:${terrain}:${fatigue}`)}),
+      managerTacticalOrdersV8:[{teamId:'you',atKm:5,
+        attack:'selective',attackRiderId:'you-2',
+        chaseTarget:'rival-1-2',frontWork:'rotate',
+        frontWorkRiderId:'you-5'},
+      {teamId:'you',atKm:25,attack:'none'}]});
+    const tour=simulateTacticalTour({...prepared,
+      motorVersion:MOTOR_EXHAUSTION_COAST_VERSION});
+    assert.equal(validateRecordedTour(tour),true);
+    const source=finaleSnapshotFromTour(tour,{remainingKm:1,
+      includeAttackLoad:true});
+    assert.equal(source.roadGroups.length,0);
+    assert.equal(source.droppedRiderIds.length,0);
+    const trace=probeFinaleSeparatedGroupsFromTour(tour,{
+      version:FINALE_PAID_BUNCH_ONLY_VERSION});
+    assert.equal(validateFinaleSeparatedGroupsFromTour(tour,trace),true);
+    const clock=recordFinalePaidBunchOnlyClock(tour);
+    assert.equal(validateFinalePaidBunchOnlyClock(tour,clock),true);
+    assert(trace.frames.every(frame=>
+      frame.bunchFrontWork?.riderIds.includes('you-5')));
+    assert.deepEqual(clock.line.bands.map(band=>band.kind),['peloton']);
+    assert.equal(clock.line.bands[0].lastPossiblePlace,160);
+    assert.equal(clock.canCommitAwards,false);
+    const forged=structuredClone(clock);
+    forged.trace.frames[0].bunchFrontWork.riderIds[0]='you-0';
+    assert.throws(()=>validateFinalePaidBunchOnlyClock(tour,forged),
+      /paid bunch-only clock does not replay/);
+  }
 });
 
 test('opt-in no-front finale pays named front pair and replays the source',()=>{

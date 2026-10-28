@@ -164,6 +164,21 @@ and a same-seed fresh mountain source with no modeled contact still
 refuses the new contact version. This is a narrow synthetic boundary,
 not a guided default or an individual finish result.
 
+The same 192-case holdout left two further validated source roads
+without a candidate checkpoint: `guided-finish-coverage-13` tired
+rolling and `guided-finish-coverage-14` fresh rolling had no front
+group and no dropped rider at the last-kilometre handoff. Both had a
+payable `you-5`/`you-6` named front pair. A distinct internal
+`paid-bunch-only` version now replays all seven short slices with the
+pair charged, and refuses any newly exhausted rider rather than
+dropping them silently. It records one unordered 160-rider peloton
+band and withholds individual places, classifications, points and
+awards. The two exact source cases validate and replay. Together with
+the earlier no-front, one-front, two-front and payable-contact
+checkpoints, these candidates account for the 192 synthetic
+named-front handoffs; this does not establish an official finish
+engine or authorize routing the guided default to them.
+
 The named-front coverage audit also accepts an explicit `--front-effort`
 (`hard` or `conserve`) at the committed kilometre-five marker. In 32
 same-source generated rolling/mountain, fresh/tired races per effort,
