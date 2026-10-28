@@ -2252,3 +2252,14 @@ no committed workers means no paid pace. This closes the double-counting
 problem in the candidate plan itself. It is not yet wired to the race
 clock, pursuit decisions, energy ledger or source replay, and has no
 effect on guided races or existing recordings.
+
+The read-only combined-turn audit replayed 16 independent 120-km V94
+sources (flat/mountain, fresh/tired, four seeds) through this planner:
+all 1,920 recorded kilometres had exactly one paid exposed leader with
+no overlap or uncovered distance. A chase and a separate team's
+front-work pair were both committed on 359 kilometres; 529 had chase
+only and 1,032 had front work only. This is a structural feasibility
+check, not a race outcome. The existing race still charged and credited
+those two jobs separately. The planner must enter the actual energy
+ledger and relative road clock in a new opt-in version, with full
+source validation, before its effects can be assessed.
