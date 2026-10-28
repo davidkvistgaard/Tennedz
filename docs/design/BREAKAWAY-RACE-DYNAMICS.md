@@ -1643,6 +1643,15 @@ km 210 and in the final 50 km under the current stage-format decision
 path. That identifies an unopposed
 captain-heavy front in this synthetic source; it does not by itself
 justify assigning a control team or making every protector chase.
+In the same seed under the separate committed-role-goal conversion
+(`--guided-role-goals --extended-seeds --seed-batch=1 --validate --replay`),
+the initial nine front riders contain *no* captains, yet the field
+again has zero control teams and records zero protective chase through
+km 210 and in the final 50 km. Its widest recorded lead is 1,092.11
+seconds under that audit's policy settings. The two recordings change
+more than captain selection, so this is not a causal comparison; it
+shows that a captain-only response would leave a no-control failure
+mode unresolved.
 The stage result is a group road recording, not an official winner.
 This static package remains read-only and uncalibrated; it does not
 justify a guided default or a fixed gap target. A future control
