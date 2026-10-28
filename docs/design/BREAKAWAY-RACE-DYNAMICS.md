@@ -1951,3 +1951,41 @@ helpers, late manager orders, and riders dropped behind the bunch. Do
 not route this candidate to guided races until its group speed and
 fatigue are calibrated across those full races. Historical versions
 retain their original contracts and replay results.
+
+### Riders behind the bunch and the unfinished time limit
+
+The current `dropped` state is an individual deficit to the bunch at
+each kilometre checkpoint. It does not contain an intra-kilometre
+contact, a common rear-group clock, an occupied wheel, or a rider who
+leads that rear group. Similar deficits alone are insufficient evidence
+that two riders met. This applies equally to exhausted bunch workers,
+caught break riders who lose the bunch, and riders dropped early on a
+climb. They must all enter the same future rear-road mechanism through
+recorded events rather than receive a category-specific shortcut.
+
+The next version must carry each detached rider's paid road clock and
+energy through shorter steps. A rear group may form only when those
+clocks reach a recorded contact point. It then gets a persistent group
+identity and membership, so riders can leave, join, be dropped again,
+or rejoin the bunch without teleporting or being counted twice. Each
+member's decision at the next step is explicit: seek contact, take a
+turn, shelter, wait for a teammate, or ride alone. At any instant only
+one member leads. The exposed leader pays the lead cost; other members
+pay a lower sheltered cost. Turns are reassigned when the leader is
+spent or another member volunteers. Riding together may conserve
+energy and sustain speed, but the number of members must not simply
+add their abilities to instantaneous pace.
+
+Their shared objective is to reach the finish with the available energy.
+No cut-off time is defined yet: the motor must record their actual finish
+times and group crossings without declaring anyone outside a limit.
+When a separate, explicit time-limit rule is specified, it can compare
+those recorded times against the rule. It must not change the road
+clock retroactively or fabricate a present-day cut-off.
+
+The release gate includes source-replayed cases for the three entry
+paths above, several riders losing contact at different moments, two
+rear groups merging, one rider refusing a turn, exhausted leaders,
+terrain transitions, and a group that catches the bunch. Verify each
+rider's paid work, sheltered energy, membership and finish clock at
+every step before showing named gruppetto commentary or results.
