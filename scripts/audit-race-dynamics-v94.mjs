@@ -42,10 +42,15 @@ if(committedControlTempo&&(!process.argv.includes('--planned-intent')&&
   throw new Error('Committed control tempo requires committed intent.');
 const frontExhaustionVersion=process.argv.includes('--front-exhaustion-v3')?3:
   process.argv.includes('--front-exhaustion-v2')?2:1;
-const seeds=process.argv.includes('--extended-seeds')?
+const selectedSeeds=process.argv.includes('--extended-seeds')?
   batchMatch?holdoutSeeds.slice((Number(batchMatch[1])-1)*4,
     Number(batchMatch[1])*4):holdoutSeeds:
   ['sample-flat-finish','race-dynamics-1','race-dynamics-2'];
+const seedFilterArg=process.argv.find(value=>value.startsWith('--seed='));
+const seedFilter=seedFilterArg?.slice('--seed='.length)??null;
+if(seedFilter!==null&&!selectedSeeds.includes(seedFilter))
+  throw new Error('Choose a seed in the selected audit batch.');
+const seeds=seedFilter===null?selectedSeeds:[seedFilter];
 function seededRandom(label){
   let state=2166136261;
   for(const character of label)

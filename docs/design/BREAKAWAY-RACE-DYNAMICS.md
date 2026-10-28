@@ -1692,3 +1692,15 @@ per fresh/tired stage. The zero-control tired-flat outlier fell from
 the front. This broad response trades an unopposed race for short
 leads and heavy pursuit elsewhere. Its temporary audit code was
 removed; neither generated orders nor the guided/default motor changed.
+
+The same tired-flat zero-control stage was isolated with the audit's
+bounded `--seed=race-dynamics-holdout-2` filter and full source replay.
+Its nine initial front riders were all captains and all nine were still
+ahead at the recorded line. A front was present for 256 km; the source
+records 622 paid front-worker rider-km and 398 settled-rest rider-km.
+Mean passive front-gap growth on front kilometres was 3.71 s/km,
+with zero paid chase power, zero protect chase-km and zero control
+chase-km. The extreme is therefore a recorded, partially rotating
+front with no opposing paid work, rather than free or uncharged work
+by all nine riders. These measurements remain synthetic and do not
+calibrate a realistic lead.
