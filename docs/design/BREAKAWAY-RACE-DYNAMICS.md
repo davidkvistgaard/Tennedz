@@ -1636,6 +1636,13 @@ one-day case never reached a one-minute widest lead (56.07 seconds),
 while `race-dynamics-holdout-2` tired flat stage retained a 961.88-second
 lead: that field has nine break-role teams, zero control-role teams and
 zero paid control chase, so a control-only package cannot affect it.
+All nine initial front riders in this particular guided-random source
+are their teams' captains, and all nine remain ahead in the recorded
+line groups. The audit records zero protective-team chase through
+km 210 and in the final 50 km under the current stage-format decision
+path. That identifies an unopposed
+captain-heavy front in this synthetic source; it does not by itself
+justify assigning a control team or making every protector chase.
 The stage result is a group road recording, not an official winner.
 This static package remains read-only and uncalibrated; it does not
 justify a guided default or a fixed gap target. A future control
