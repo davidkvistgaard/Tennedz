@@ -178,3 +178,18 @@ test('one-kilometre wait can exhaust the calculated chase headroom',()=>{
   assert.equal(decision.deferred.nominated.allInCatchPossible,false);
   assert.equal(decision.nominatedMustStartNow,true);
 });
+
+test('opt-in one-rider rotation trades stacked speed for helper endurance',()=>{
+  const teams=[team(1,{flat:60}),team(2,{flat:80,chase:'all'}),
+    team(3,{flat:75,chase:'all'})];
+  const input={teams,frontRiderIds:[teams[0].riders[0].id],
+    chaseTeamIds:[teams[1].id,teams[2].id],
+    remainingSegments:route('flat',10),gapSeconds:120};
+  const stacked=forecastBreakThreat(input);
+  const rotated=forecastBreakThreat({...input,rotationVersion:2});
+  assert.equal(rotated.rotationVersion,2);
+  assert.equal(rotated.peakConcurrentChaseHelpers,4);
+  assert.ok(rotated.kilometres[0].chasePower<stacked.kilometres[0].chasePower);
+  assert.ok(rotated.chaseEnergySpent<stacked.chaseEnergySpent);
+  assert.ok(rotated.allInCatchableGapSeconds<stacked.allInCatchableGapSeconds);
+});

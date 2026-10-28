@@ -1831,3 +1831,41 @@ shows a stable underestimation delaying the critical chase by one km.
 No random gap or finish is awarded. Full per-kilometre use of the
 remaining-route shadow needs performance and calibration work before
 it can be a playable policy.
+
+### One active peloton pull at a time
+
+The current V94 chase sums the capacities of up to two helpers per
+contributing team in each kilometre and charges both. This does not yet
+represent one rider leading while others sit in the draft. The isolated
+`peloton-chase-rotation.mjs` candidate represents willing, eligible riders
+as successive shares of a kilometre: effective instantaneous chase
+capacity is their share-weighted mean, never their sum. A helper pays an
+extra leading cost only for their share and an explicit lower draft cost
+for their other share. Additional helpers can preserve future energy and
+extend a chase, but cannot multiply instantaneous road speed. Only teams
+that actually commit workers appear in the paid rotation. Expected help
+from other teams belongs in the observer's conditional coalition, not
+the actual road ledger until those teams join.
+
+An opt-in `rotationVersion:2` in the read-only threat matrix pays this
+rotation in its shadow energy and uses its share-weighted speed. The
+V93/V94 paid clock and viewer remain unchanged. A validated/replayed
+260-km V94 source recorded 636 chasing team-km, every one with two
+workers paying reserve; 1,272 worker-km were charged. At km 80, the
+same source's two nominated control teams and four available helpers
+had an all-in catchable-gap budget of 214.82 s under stacked capacity,
+but only 13.86 s under the uncalibrated rotation shadow. At km 160
+the figures were 124.55 s and 14.95 s. This huge difference confirms
+that merely switching to one-rider speed would make the existing
+chase coefficient unsuitable. Neither shadow is an observed catch
+prediction. The separate road clock, energy and source-replay contract
+must be calibrated across whole races before routing or describing
+individual pulls to the viewer. Existing commentary reports a recorded
+chase but cannot claim a particular leader in the wind from current
+V94 frames.
+
+`paidRotationMoments` prepares English viewer lines for a team sending
+one rider, adding a second, a later team joining with two, or leaving.
+It reads only consecutive paid rotation plans. It is deliberately not
+called by the current viewer: current frames record paid chase workers
+but do not record which one occupied the wind at each moment.
