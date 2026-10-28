@@ -1869,3 +1869,41 @@ one rider, adding a second, a later team joining with two, or leaving.
 It reads only consecutive paid rotation plans. It is deliberately not
 called by the current viewer: current frames record paid chase workers
 but do not record which one occupied the wind at each moment.
+
+### Participation in each road group
+
+The current kilometre engine selects eligible pullers separately for each
+recorded group ahead of the bunch. A committed `sit_on` order excludes a
+rider; a cooperating rider may reciprocate when a rival sits on; a rider
+normally protects a teammate in an earlier group; low energy can prevent
+a pull. An explicit drive order or the committed fading-teammate response
+can change those choices. Selected pullers pay extra energy while riders
+in their draft pay less. The cost has a group-size rotation allowance,
+but no source frame records which individual occupied the wind or how
+long each turn lasted. A late attack when outsprinted is a separate
+committed finale order, not an automatic decision to sit on throughout
+the break. Dropped riders are tracked individually and do not form a
+cooperative rear group in this version.
+
+`road-group-participation.mjs` is a read-only explanation of the existing
+selection. It returns each selected rider and the strongest order-backed
+or source-backed reason for an exclusion. It does not assign a fictional
+pull duration or infer a private sporting motive. It is not wired into
+paid race frames or viewer commentary.
+
+A future versioned participation decision should assess every recorded
+group on every relevant kilometre. It needs a sporting stake from an
+actual rider or team order and, for GC, an actual classification; known
+teammates in groups further ahead; terrain-specific *perceived* rival
+strength rather than hidden exact strength; own and rival sprint chances;
+the remaining route; available energy and fatigue; and uncertain help
+from other teams. Its outcome should be an explicit `pull`, `sit_on`, or
+`attack` decision with a recorded reason. A separate physical rotation
+step must then put at most one rider in the wind at a time, charge that
+rider for the actual share, charge sheltering riders less, and advance
+the group from paid work. Re-evaluate when an attack creates a new group,
+when a teammate moves ahead, or when a group is caught. Rear groups need
+recorded group formation and contact before using the same mechanism.
+The viewer may narrate named leads or tactical withholding only after
+those decisions and shares are recorded and source-replayed. The current
+V93/V94 clocks, finish guards and historical recordings remain unchanged.
