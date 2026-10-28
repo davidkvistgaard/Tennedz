@@ -48,7 +48,9 @@ import {recordFinaleCoastNoFrontPaidBunchClock,
   recordFinaleCoastFrontCatchLastKmClock,
   validateFinaleCoastFrontCatchLastKmClock,
   recordFinaleLateChaseCatchClock,
-  validateFinaleLateChaseCatchClock} from
+  validateFinaleLateChaseCatchClock,
+  recordFinaleMidChaseCatchClock,
+  validateFinaleMidChaseCatchClock} from
   '../lib/engine/v2/finale-separated-last-km.mjs';
 
 const countArg=process.argv.find(value=>value.startsWith('--seeds='));
@@ -65,8 +67,8 @@ const frontEffortArg=process.argv.find(value=>
   value.startsWith('--front-effort='));
 const frontEffort=frontEffortArg?.slice('--front-effort='.length)??null;
 if(!Number.isInteger(count)||count<1||count>48||
-  !Number.isInteger(seedStart)||seedStart<1||seedStart+count-1>96)
-  throw new Error('Choose up to 48 seeds inside the first 96 seed numbers.');
+  !Number.isInteger(seedStart)||seedStart<1||seedStart+count-1>192)
+  throw new Error('Choose up to 48 seeds inside the first 192 seed numbers.');
 if(frontEffort!==null&&(!namedFrontWork||
   !['hard','conserve'].includes(frontEffort)))
   throw new Error('Use hard or conserve with --named-front-work.');
@@ -150,6 +152,7 @@ for(const terrain of (namedFrontWork?['rolling','mountain']:
       let dynamicNoFrontPaidTrace=null;
       let ordinaryFrontCatchTrace=null;
       let lateChaseCatchTrace=null;
+      let midChaseCatchTrace=null;
       if(!namedFrontWork&&snapshot.roadGroups.length===1){
         let traceEvidence=null;
         try{
@@ -160,6 +163,10 @@ for(const terrain of (namedFrontWork?['rolling','mountain']:
             frame.contact)?.contact.atDistanceM??null,
           contactPaidChaseRiderId:trace.frames.find(frame=>
             frame.contact)?.bunchPullRiderId??null,
+          contactFrameIndex:trace.frames.findIndex(frame=>frame.contact),
+          priorPaidChaseSlices:trace.frames.slice(0,
+            trace.frames.findIndex(frame=>frame.contact)).filter(frame=>
+            frame.bunchPullRiderId!==null).length,
           paidChaseSlices:trace.frames.filter(frame=>
             frame.bunchPullRiderId!==null).length,
           exhaustionDrops:trace.frames.reduce((sum,frame)=>
@@ -187,6 +194,22 @@ for(const terrain of (namedFrontWork?['rolling','mountain']:
               frame.bunchPullRiderId!==null).length};
         }catch(candidateError){
           lateChaseCatchTrace={status:'refused',
+            reason:candidateError.message};
+        }
+      if(!namedFrontWork&&snapshot.roadGroups.length===1)
+        try{
+          const clock=recordFinaleMidChaseCatchClock(road);
+          validateFinaleMidChaseCatchClock(road,clock);
+          if(clock.line.bands.at(-1)?.lastPossiblePlace!==
+              road.committedInputs.teams.length*8||
+            clock.canCommitAwards!==false)
+            throw new Error('The mid chase catch lost its locked riders.');
+          midChaseCatchTrace={status:'replayed',
+            contactDistanceM:clock.contact.atDistanceM,
+            paidChaseSlices:clock.trace.frames.filter(frame=>
+              frame.bunchPullRiderId!==null).length};
+        }catch(candidateError){
+          midChaseCatchTrace={status:'refused',
             reason:candidateError.message};
         }
       if(snapshot.roadGroups.length===0&&
@@ -423,6 +446,7 @@ for(const terrain of (namedFrontWork?['rolling','mountain']:
         noFrontPaidTrace,
         ordinaryFrontCatchTrace,
         lateChaseCatchTrace,
+        midChaseCatchTrace,
         dynamicNoFrontPaidTrace,
         oneFrontPaidTrace,
         twoFrontPaidTrace,

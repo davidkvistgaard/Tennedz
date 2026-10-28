@@ -106,3 +106,47 @@ test('pre-500 m bunch drops show paid two-front road without a finish',
     await expect(preview.getByRole('slider',{
       name:/Recorded road boundary/})).toHaveValue('6');
   });
+
+test('paid chase contact before 500 m shows road without awards',
+  async({page})=>{
+    test.setTimeout(60000);
+    await page.goto('/login');
+    await page.getByLabel('Email or username').fill('alice');
+    await page.getByLabel('Password',{exact:true}).fill('fixture-password');
+    await page.getByRole('button',{name:'Sign in',exact:true}).click();
+    await expect(page).toHaveURL(/\/team$/);
+    const seed='guided-finish-coverage-134',terrain='mountain',fatigue=30;
+    const settings={distanceKm:260,terrain,teamCount:20,fatigue,
+      attack:'none',chase:'ignore',seed,
+      managerTactics:resolveRandomRivalTactics({teamCount:20,
+        random:seededRandom(`${seed}:${terrain}:${fatigue}`)})};
+    const plans=prepareV91Playtest(settings).teams.map(team=>({
+      teamId:team.id,finisherId:`${team.id}-7`,leadOutRiderId:null}));
+    const response=await page.request.post('/api/v91-playtest',{
+      headers:{origin:'http://localhost:3100'},data:{mode:'v93-coasted',
+        plans,settings}});
+    expect(response.status()).toBe(422);
+    const body=await response.json();
+    expect(body.roadPreview?.version).toBe(
+      'v93-paid-mid-chase-catch-road-preview-1');
+    expect(body.roadPreview.lastKmRoad).toHaveLength(7);
+    expect(body.roadPreview.catch.metresToGo).toBeGreaterThan(500);
+    expect(body.roadPreview.lineTimes).toBeNull();
+    expect(body.roadPreview.canCommitAwards).toBe(false);
+    await page.goto('/team/v91-playtest');
+    await page.getByRole('checkbox',{
+      name:'Continue to a conditional finish'}).check();
+    await page.getByRole('checkbox',{
+      name:'Try v93 road-to-line preview'}).check();
+    await page.route('**/api/v91-playtest',route=>route.fulfill({
+      status:422,contentType:'application/json',
+      body:JSON.stringify(body)}));
+    await page.getByRole('button',{
+      name:'Run v93 race preview'}).click();
+    const preview=page.getByRole('region',{
+      name:'Recorded road without individual finish'});
+    await expect(preview).toContainText(
+      'The group-level final-kilometre road is paid through the line.');
+    await expect(preview).toContainText(
+      'Individual finish, replay and points are withheld');
+  });

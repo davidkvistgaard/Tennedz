@@ -334,3 +334,35 @@ HTTP 422; individual line times, classification, replay and points
 stay unavailable. If that source checkpoint cannot replay, the
 earlier exact refusal remains. No finish guard or guided default was
 changed.
+
+An independent ordinary guided holdout with seed numbers 97–144
+(192 flat/mountain, fresh/tired, 20-team 260 km races) paid 190
+individual finishes and validated two genuine last-kilometre
+refusals. Fresh-flat seed 98 catches one front at 259878.64 m; the
+already versioned late paid-chase checkpoint replays it. Tired-mountain
+seed 134 catches one front at 259449.14 m, in the second short slice,
+after a paid earlier chase pull and with another paid pull in the
+contact slice. It has 14 isolated riders, no new exhaustion drop, and
+no bunch-front order. The older first-slice early-contact contract and
+the after-500-m late-contact contract both correctly refuse it.
+
+A separately versioned *middle-slice paid chase contact* checkpoint
+now uses the exact seven-slice source trace for that latter case. It
+requires one front, existing isolated riders, exactly one contact
+after the first slice but before the final 500 m, at least one recorded
+paid chase pull before contact, no new exhaustion drops or bunch-front
+work, and complete rider energy and unordered line bands. Deep replay
+rejects a forged energy entry. The V93 API exposes only its paid
+group road on a 422 refusal; individual places, finish replay, points
+and awards remain withheld. The old early/late clock versions, finish
+guard and guided default retain their existing contracts.
+
+The second independent holdout, seed numbers 145–192 under the same
+four terrain/fatigue combinations, paid all 192 individual finishes.
+Together, the 768 ordinary guided synthetic races from seeds 1–192
+paid 763 individual finishes and honestly refused five after a
+validated road. Each of those five now has a narrowly source-replayed,
+non-awarding group-road preview: three paid chase contacts beyond
+500 m, this one middle-slice paid chase contact, and one two-front
+pre-500 m bunch drop. This is coverage of these synthetic sources,
+not proof of every possible route, tactic or official finish geometry.
