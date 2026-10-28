@@ -1989,3 +1989,39 @@ rear groups merging, one rider refusing a turn, exhausted leaders,
 terrain transitions, and a group that catches the bunch. Verify each
 rider's paid work, sheltered energy, membership and finish clock at
 every step before showing named gruppetto commentary or results.
+
+### Staying with the bunch versus deliberately letting go
+
+The present `updateRiderGroups` compares each rider's current ability
+with a bunch reference pace and accumulates a deficit after repeated
+shortfalls. Its input has no individual choice to spend more energy to
+hold the wheel. Effort changes that rider's energy charge elsewhere,
+but the group attachment transition itself does not distinguish a
+failed attempt to stay from a deliberate early release. The stage
+handoff can carry fatigue after an isolated stage; the race context
+only knows the current stage number and has no committed upcoming
+route, role or stage objective. Consequently the current motor cannot
+honestly say a rider let go to save energy for a particular future day.
+
+A next-version decision has two separate questions at every relevant
+climb or pace change. First, from the rider's known condition, terrain,
+draft, observed group pace and remaining climb, estimate the extra
+energy needed to stay attached and whether that attempt is physically
+possible. The rider may choose to try and still be dropped; the attempt
+must cost energy and affect the paid road clock. Second, if staying is
+possible, compare the current sporting stake with the explicitly
+committed multi-stage plan and the value of saving energy for later.
+The choice to release must record that strategic reason and the energy
+it actually saves. A leader defending a real classification, a helper
+still assigned to protect that leader, and a rider targeting another
+stage may reach different decisions on the same climb. The rider may
+not know exact rival capacity or a future result in advance.
+
+After either an involuntary drop or a voluntary release, the rider
+enters the paid rear-road/contact model above. Neither branch grants
+instant group shelter. No time-limit result is inferred while the
+cut-off rule is undefined. Replay must distinguish `tried_and_dropped`,
+`chose_to_release`, and `stayed_attached` from recorded decisions and
+paid energy, including early-climb, caught-break and exhausted-worker
+cases across consecutive stages. Do not calibrate a hard-effort bonus
+or future-stage utility from a single illustrative race.
