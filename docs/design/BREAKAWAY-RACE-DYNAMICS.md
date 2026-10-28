@@ -2028,3 +2028,17 @@ cut-off rule is undefined. Replay must distinguish `tried_and_dropped`,
 paid energy, including early-climb, caught-break and exhausted-worker
 cases across consecutive stages. Do not calibrate a hard-effort bonus
 or future-stage utility from a single illustrative race.
+
+### Isolated one-leader road-group turn plan
+
+`road-group-turns-v1.mjs` consumes the executable per-rider pull choices
+for one existing forward group and divides a kilometre into consecutive
+turns. Each metre has one exposed leader. The candidate computes each
+member's extra lead or shelter cost and a distance-weighted mean leading
+ability, never the sum of worker abilities. A group with no willing
+leader returns `unsupported_unworked`; it does not receive free worked
+pace. A rider unable to pay even the extra planned group charge refuses
+the plan. This is an isolated, opt-in plan, not a paid road transition:
+the baseline riding charge, within-kilometre exhaustion, contact, group
+clock and source replay still need a separately versioned integration.
+No guided race or viewer uses these turns yet.
