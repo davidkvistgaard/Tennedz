@@ -1428,3 +1428,12 @@ holdout-4's widest lead from 38.90 to 338.31 seconds, but also caused
 gain to 2.65 seconds/km. The other three flat fresh leads similarly
 rose from about 125-138 to 294-371 seconds. This is another workload
 tradeoff, not a safe instruction to remove tempo or force a target gap.
+
+Across the full 96-case new-seed guided-role-goals holdout, only two
+cases have zero control-role teams and eight have exactly one. Ten cases
+never reach a one-minute lead, while just one exceeds ten minutes. The
+only over-ten-minute case is the tired flat stage with zero controls;
+the other zero-control case on the same field is its paired one-day race.
+This identifies an uncommon but severe no-control failure mode. It does
+not explain the ten short-lead cases, so simply ensuring one control
+team cannot settle the motor's wider pursuit and tempo balance.
