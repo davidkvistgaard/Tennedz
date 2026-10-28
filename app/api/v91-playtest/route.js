@@ -24,6 +24,13 @@ export const dynamic='force-dynamic';
 
 const runs=new Map();
 function v93PlanError(error){
+  if(error.message===
+    'The separated last-kilometre finale needs recorded response or front rotation.')
+    return 'Separate road groups reached the final kilometre, but this '+
+      'recording has no response or front rotation that can carry every '+
+      'group through a paid individual finish. The validated road is '+
+      'available up to that point; individual places and points are '+
+      'unavailable. Choose different route conditions or tactics and run again.';
   if(error.roadPreview?.unsupportedReason===
     'depleted_front_dissolution')
     return `${error.roadPreview.handoff.groupId} has no rider with energy `+

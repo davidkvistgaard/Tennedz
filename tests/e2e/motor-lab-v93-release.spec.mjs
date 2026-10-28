@@ -1,6 +1,8 @@
 import {test,expect} from '@playwright/test';
 import {raceViewerCommentaryV1} from
   '../../lib/engine/v2/playtest-commentary-v1.mjs';
+import {generatePlaytestStageProfile} from
+  '../../lib/engine/v2/playtest-stage-generator.mjs';
 
 test.skip(process.env.PELOTONIA_V91_PLAYTEST_ENABLED!=='true'||
   process.env.PELOTONIA_V93_COASTED_PLAYTEST_ENABLED!=='true',
@@ -43,6 +45,35 @@ test('guided Motor Lab generates an inspectable route for the chosen length',asy
   expect(coasted.settings.terrain).toBe('custom');
   expect(coasted.settings.profileHeightsM).toEqual(second);
   expect(coasted.kilometreFrames).toHaveLength(39);
+});
+
+test('long generated route explains an unresolved separated finale',async({page})=>{
+  await page.goto('/login');
+  await page.getByLabel('Email or username').fill('bob');
+  await page.getByLabel('Password',{exact:true}).fill('fixture-password');
+  await page.getByRole('button',{name:'Sign in',exact:true}).click();
+  await expect(page).toHaveURL(/\/team$/);
+  const seed='release-integrated-long-1';
+  const settings={distanceKm:260,terrain:'custom',
+    profileHeightsM:generatePlaytestStageProfile({distanceKm:260,
+      style:'rolling',seed}),teamCount:20,gender:'M',fatigue:15,
+    effort:'steady',attack:'none',chase:'selective',seed,
+    managerTacticalOrdersV8:[{teamId:'you',atKm:5,
+      attack:'selective',attackRiderId:'you-2',
+      chaseTarget:'rival-1-2',frontWork:'rotate',
+      frontWorkRiderId:'you-5'},
+    {teamId:'you',atKm:25,attack:'none'}]};
+  const plans=Array.from({length:20},(_,index)=>{
+    const teamId=index?`rival-${index}`:'you';
+    return {teamId,finisherId:`${teamId}-7`,leadOutRiderId:null};
+  });
+  const response=await page.request.post('/api/v91-playtest',{
+    headers:{origin:'http://localhost:3100'},
+    data:{mode:'v93-coasted',settings,plans}});
+  expect(response.status()).toBe(422);
+  const body=await response.json();
+  expect(body.error).toContain('Separate road groups reached the final kilometre');
+  expect(body.error).toContain('individual places and points are unavailable');
 });
 
 test('guided Motor Lab commits a named rider for a bounded break attempt',async({page})=>{
