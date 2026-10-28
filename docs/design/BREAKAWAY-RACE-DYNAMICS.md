@@ -1281,3 +1281,18 @@ explicit rival goals, calm/hard repeated own orders and the newer
 paid-coast contract all validated and replayed; 18 had paid coast.
 These synthetic checks support an internal clock correction, not
 empirical race calibration or guided release.
+
+A same-source check with the *current guided random rival orders* and
+the internal v94 road clock, control pursuit, front rotation and paid
+front exhaustion policies gives a different warning. All 24 sampled
+20-team, 260 km recordings validated and source-replayed without
+refusal. The random draw assigned a mean 8.33-9 break teams and only
+2-3.17 control teams. With the existing opening orders, the controls
+had no committed bunch-front work; their mean reserve at km 210 was
+12.55 fresh and 6.41 tired. Mean widest leads were 193.80/271.61
+seconds in one-day races and 364.53/546.82 in stages, with an individual
+stage as high as 965.71 seconds. The longer natural lead does not solve
+the field dynamics while the few control teams are depleted. A guided
+successor needs credible committed team goals and paid workload across
+the whole race, including the finale. These are synthetic inputs and
+cannot establish real-world calibration.
