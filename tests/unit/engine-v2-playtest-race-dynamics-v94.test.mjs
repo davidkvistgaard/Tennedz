@@ -79,7 +79,7 @@ test('optional v94 road-group scale is committed and preserves the prior replay'
   assert.throws(()=>replayRaceDynamicsRecording(forged),
     /replay differs at km/);
   assert.throws(()=>createV94RaceDynamicsPreview({format:'stage',settings,
-    roadGroupPaceVersion:3}),/valid experimental race settings/);
+    roadGroupPaceVersion:4}),/valid experimental race settings/);
 });
 
 test('experimental preview shows paid contact for an exhausted front sitter',()=>{

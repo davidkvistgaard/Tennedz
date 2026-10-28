@@ -2141,3 +2141,22 @@ kilometre. This is a coverage finding, not evidence that those entry
 paths cannot occur: the cases do not exercise them. The provisional
 `deficitSeconds` does not give a physical road coordinate, so these
 51 riders cannot be joined into a rear group from the frames alone.
+
+An internal V94 `roadGroupPaceVersion: 3` now consumes the recorded
+per-rider forward-group work decisions in an actual one-leader-at-a-time
+kilometre turn plan. Each leader's share and every sitter's lower extra
+cost enter the race energy ledger; the turn-weighted ability enters the
+rear-front and front-bunch relative clocks. Driving riders retain their
+committed extra effort and cost. The recording stores decisions, turns
+and cost shares, and the source validator recalculates them before full
+V94 replay. Old V94 versions and guided V93 keep their recorded behavior.
+
+The read-only 16-case same-seed 120-km flat/mountain fresh/tired audit
+replayed both old version 2 and this opt-in version 3 with no refusal.
+Version 3 recorded 244–816 named turns per case, but its maximum lead
+was smaller in every case (for example, 89.75 to 51.65 seconds in the
+first fresh flat case). Removing the old group-size speed bonus while
+charging sequential turns substantially changes race outcomes. This is
+not calibrated and must not become the guided default. Bunch-front and
+chase workers still use their existing pair/capacity models, and dropped
+riders still lack physical road coordinates and group contact.

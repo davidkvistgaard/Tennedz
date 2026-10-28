@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import {decideRoadGroupWork} from '../../lib/engine/v2/road-groups.mjs';
 import {planRoadGroupTurnsV1} from
   '../../lib/engine/v2/road-group-turns-v1.mjs';
+import {TUNING} from '../../lib/engine/v2/tuning.mjs';
 
 const segment={km:1,terrain:'flat',gradientPct:0,surface:'road',exposed:false,
   weather:{temperatureC:16,windKph:0,rainMm:0}};
@@ -21,6 +22,12 @@ test('one leader at a time plans turns while a sitter only shelters',()=>{
     [['b',0,1000]]);
   assert.deepEqual(plan.extraEnergyCosts.map(row=>row.extraCost),[.04,.18,.04]);
   assert.ok(plan.leadAbility>0);
+  const driving=planRoadGroupTurnsV1({group,riderDecisions:decisions,teams,
+    segment,driveRiderIds:['b']});
+  assert.equal(driving.extraEnergyCosts.find(row=>row.riderId==='b').extraCost,
+    .18+TUNING.breakaway.driveExtraCostPerKm);
+  assert.equal(driving.leadAbility,
+    plan.leadAbility+TUNING.breakaway.driveAbilityBonusPoints);
 });
 
 test('two willing riders rotate without adding their instantaneous abilities',()=>{
