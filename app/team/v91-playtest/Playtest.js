@@ -784,7 +784,8 @@ export default function Playtest({guided=false}){
     Math.abs(row.positionM-finaleReplay.lineDistanceM)<1e-6);
   const maxHeight=Math.max(500,...settings.profileHeightsM);
   const profileLine=settings.profileHeightsM.map((height,index)=>
-    `${10+index*196},${110-height/maxHeight*100}`).join(' ');
+    `${10+index*980/(settings.profileHeightsM.length-1)},${
+      110-height/maxHeight*100}`).join(' ');
   const stageSettings={distanceKm:settings.distanceKm,terrain:settings.terrain,
     seed:settings.seed,...(settings.terrain==='custom'?
       {profileHeightsM:settings.profileHeightsM}:{})};
@@ -1144,16 +1145,19 @@ export default function Playtest({guided=false}){
         </div>}
         {settings.terrain==='custom'&&<fieldset className="v91-profile">
           <legend>Route elevation profile</legend>
-          <p>Set the height at the start, every 20% of the race, and the finish. The motor calculates the slopes between these points.</p>
+          <p>Adjust the height at each marked point from start to finish.
+            The motor calculates the slopes between these points.</p>
           <svg viewBox="0 0 1000 120" role="img" aria-label="Your route elevation profile">
             <polyline points={profileLine} fill="none" stroke="currentColor" strokeWidth="4"/>
           </svg>
           <div className="v91-profile-points">{settings.profileHeightsM.map((height,index)=><label key={index}>
-            {index===0?'Start':index===5?'Finish':`${index*20}%`} (m)
+            {index===0?'Start':
+              index===settings.profileHeightsM.length-1?'Finish':
+                `${Math.round(index*100/(settings.profileHeightsM.length-1))}%`} (m)
             <input type="number" min="0" max="2500" step="1" value={height}
               onChange={event=>changeHeight(index,event.target.value)}/>
           </label>)}</div>
-          <small>Each 20% segment is limited to an average gradient of 10%.</small>
+          <small>Each segment is limited to an average gradient of 10%.</small>
         </fieldset>}
         {guided&&<section className="v91-stage-plan" aria-label="Plan orders on the route">
           <div className="v91-step-heading"><span>02 / TACTICS</span><h2>Plan on the route</h2>

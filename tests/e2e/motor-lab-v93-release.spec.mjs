@@ -45,6 +45,16 @@ test('guided Motor Lab generates an inspectable route for the chosen length',asy
   expect(coasted.settings.terrain).toBe('custom');
   expect(coasted.settings.profileHeightsM).toEqual(second);
   expect(coasted.kilometreFrames).toHaveLength(39);
+  await closeDefaultRaceScreen(page);
+  await page.locator('#v91-race-settings select').first()
+    .selectOption('260');
+  await page.getByLabel('Route profile').selectOption('mountain');
+  await page.getByRole('button',{name:'Generate a mountain route'}).click();
+  await expect(page.getByLabel('Route profile')).toHaveValue('custom');
+  await expect(page.locator('.v91-profile-points input[type=number]'))
+    .toHaveCount(13);
+  await expect(page.getByRole('img',{name:'Your route elevation profile'}))
+    .toBeVisible();
 });
 
 test('long generated route explains an unresolved separated finale',async({page})=>{
