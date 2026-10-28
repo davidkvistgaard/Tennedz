@@ -2160,3 +2160,22 @@ charging sequential turns substantially changes race outcomes. This is
 not calibrated and must not become the guided default. Bunch-front and
 chase workers still use their existing pair/capacity models, and dropped
 riders still lack physical road coordinates and group contact.
+
+An independent internal V94 `bunchFrontTurnVersion: 1` now uses two
+named helpers as sequential 500-metre leaders at the bunch front.
+The selected team's front pace remains the turn-weighted average of
+those riders' actual kilometre-start abilities. Only the exposed half
+of each rider's extra front-work cost is charged; their normal riding
+cost remains in the energy ledger. A worker unable to pay the full
+kilometre work refuses instead of receiving a free front pace. The
+recording includes the exact named turns and shares, and the source
+validator rejects changed work or leadership before full replay.
+
+In 16 same-seed, source-replayed 120-km flat/mountain fresh/tired cases,
+the new version recorded 69–116 paid bunch-front kilometres per case
+with no refusal. Maximum break lead changed by roughly -1.8 to +0.2
+seconds compared with the existing pair-cost version; one case changed
+whether a front group survived at the checkpoint. This is not a race
+calibration or a guided release. Chasing helpers still use the older
+capacity/cost model, and the bunch has no independently positioned
+single-wheel contact trace.
