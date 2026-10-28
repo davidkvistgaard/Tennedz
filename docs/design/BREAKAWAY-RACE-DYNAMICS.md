@@ -2179,3 +2179,13 @@ whether a front group survived at the checkpoint. This is not a race
 calibration or a guided release. Chasing helpers still use the older
 capacity/cost model, and the bunch has no independently positioned
 single-wheel contact trace.
+
+`chase-turns-v1.mjs` is an isolated candidate for rotating all committed
+chasing helpers through one exposed position. It divides the kilometre
+into named non-overlapping turns, weights the road contribution by each
+actual turn length, and charges each leader only for their exposed share.
+It refuses an unpayable turn; no committed chase contributes zero power.
+The old V94 chase still sums the separate team capacities, so this
+candidate has not yet changed the race. It needs integration with the
+committed pursuit decisions, full rider work ledger, relative clock and
+independent source validator before it can be assessed as a motor version.
