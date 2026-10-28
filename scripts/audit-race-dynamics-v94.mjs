@@ -21,6 +21,10 @@ const frontRotationVersion=process.argv.includes('--front-rotation-v3')?3:
 const collectiveControl=process.argv.includes('--collective-control');
 const committedControlTempo=process.argv.includes('--committed-control-tempo');
 const opportunisticSpecialist=process.argv.includes('--opportunistic-specialist');
+const generatedControlSteadyFlag=process.argv.includes(
+  '--generated-control-steady');
+if(generatedControlSteadyFlag&&!process.argv.includes('--guided-random'))
+  throw new Error('Generated control effort audit needs --guided-random.');
 if(committedControlTempo&&(!process.argv.includes('--planned-intent')&&
   !process.argv.includes('--guided-role-goals')||
   process.argv.includes('--all-control-tempo')))
@@ -57,8 +61,14 @@ function run({seed,terrain,fatigue,format,breakTeams,controlTeams}){
   });
   const generatedControlSelective=guidedRandom&&
     process.argv.includes('--generated-control-selective');
-  const managerTactics=generatedControlSelective?seededTactics.map(order=>
-    order.chase==='all'?{...order,chase:'selective'}:order):seededTactics;
+  const generatedControlSteady=guidedRandom&&
+    generatedControlSteadyFlag;
+  if(generatedControlSelective&&generatedControlSteady)
+    throw new Error('Compare one generated control order change at a time.');
+  const managerTactics=seededTactics.map(order=>order.chase==='all'?
+    {...order,
+      ...(generatedControlSelective?{chase:'selective'}:{}),
+      ...(generatedControlSteady?{effort:'steady'}:{})}:order);
   const roleForRandomOrder=order=>order.attack!=='none'&&
     order.chase==='ignore'?'break':order.chase==='all'?'control':
       order.chase==='selective'?'protect':'opportunistic';
@@ -409,6 +419,7 @@ console.log(JSON.stringify({version:MOTOR_RACE_DYNAMICS_VERSION,
   note:'Internal opt-in role scenarios, not observed race calibration or official results.',
   allControlTempo:process.argv.includes('--all-control-tempo'),
   generatedControlSelective:process.argv.includes('--generated-control-selective'),
+  generatedControlSteady:generatedControlSteadyFlag,
   guidedRoleGoals:process.argv.includes('--guided-role-goals'),
   committedControlTempo,
   opportunisticSpecialist,

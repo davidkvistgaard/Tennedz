@@ -1519,3 +1519,20 @@ team-kilometres, while the mean km-210 control helper reserve among
 control-bearing fields fell from 14.26/3.58 to 5.99/0.83. The result
 reinforces the coupled gap-and-energy problem; it does not isolate a
 single road or pursuit coefficient.
+
+The random guided rival draw also commits its generated control teams
+to both `chase: all` and `effort: hard` for the entire route. A read-only
+paired audit changed only those generated teams' effort to `steady`,
+retaining their all-out chase order and every seeded role/team/route.
+On the original 24 internal v94 guided-random 20-team, 260 km cases,
+all recordings validated and source-replayed with zero refusal.
+Fresh/tired one-day mean widest leads fell from 193.80/271.61 to
+137.40/223.77 seconds; stage leads fell from 364.53/546.82 to
+280.83/453.63. Control teams paid *more* chase (about 310/223 to
+381/285 team-kilometres) because their helpers could keep working;
+km-210 helper energy rose from 4.60/0.38 to 16.11/3.31. The hard
+whole-team effort is therefore a real contributor to depletion, but
+simply lowering that generated order also intensifies pursuit and
+shortens the front's lead. It is a diagnostic, not a playable default
+or a repair of the coupled work/road balance. Explicit manager orders
+were not changed in this comparison.
