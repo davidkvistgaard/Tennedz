@@ -45,8 +45,17 @@ for(const seed of ['threat-holdout-1'])
           remainingSegments:recording.route.kilometres.slice(km),
           gapSeconds:front.gapSeconds});
         const later=recording.frames.slice(km);
-        const actualCatch=later.some(next=>
+        const catchIndex=later.findIndex(next=>
           !next.roadGroups.some(group=>group.riderIds.some(id=>frontSet.has(id))));
+        const actualCatch=catchIndex>=0;
+        const observedWindow=actualCatch?later.slice(0,catchIndex+1):later;
+        const role=recording.committedInputs.raceContext.teamRoles;
+        const laterControlChaseKm=observedWindow.reduce((sum,next)=>sum+
+          next.chaseContributions.filter(row=>role[row.teamId]==='control').length,0);
+        const laterProtectorChaseKm=observedWindow.reduce((sum,next)=>sum+
+          next.chaseContributions.filter(row=>role[row.teamId]==='protect').length,0);
+        const laterControlHoldKm=observedWindow.reduce((sum,next)=>sum+
+          next.heldChaseTeamIds.filter(id=>role[id]==='control').length,0);
         rows.push({seed,terrain,fatigue,format,controlCount,km,
           gapSeconds:front.gapSeconds,
           frontRiders:matrix.nominated.frontRiderCount,
@@ -59,6 +68,7 @@ for(const seed of ['threat-holdout-1'])
           nominatedBudget:matrix.nominated.allInCatchableGapSeconds,
           expandedBudget:matrix.expanded.allInCatchableGapSeconds,
           capacityBand:matrix.capacityBand,
+          laterControlChaseKm,laterProtectorChaseKm,laterControlHoldKm,
           actualCatch});
       }
     }
@@ -72,6 +82,9 @@ for(const format of ['one_day','stage'])for(const controlCount of [0,2,4]){
     nominatedCapacity:selected.filter(row=>row.capacityBand==='nominated_capacity').length,
     conditionalCapacity:selected.filter(row=>row.capacityBand==='conditional_capacity').length,
     observedCatch:selected.filter(row=>row.actualCatch).length,
+    controlChaseKm:selected.reduce((sum,row)=>sum+row.laterControlChaseKm,0),
+    protectorChaseKm:selected.reduce((sum,row)=>sum+row.laterProtectorChaseKm,0),
+    controlHoldKm:selected.reduce((sum,row)=>sum+row.laterControlHoldKm,0),
     potentialOutcomeDifferenceCount:selected.filter(row=>
       (row.capacityBand!=='beyond_available_capacity')!==row.actualCatch).length});
 }

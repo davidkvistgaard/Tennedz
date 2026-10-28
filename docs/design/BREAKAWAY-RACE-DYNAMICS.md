@@ -1767,6 +1767,17 @@ none actually caught. A team's ability to chase is distinct from its
 decision to pay for a chase. The matrix reports *all-in catchable gap*
 and headroom for both coalitions, not a prediction that either coalition
 will commit every kilometre.
+The audit also separates paid chase from held selective chase in the
+remaining source frames. The 12 stage/four-control observations include
+3,520 paid control team-km and 1,600 held control team-km in their
+overlapping follow-up windows, yet no original leading group was
+caught. This is neither zero pursuit nor proof that a single extra
+control order would solve the road. One-day/zero-control observations
+include 10,153 protector chase team-km in overlapping windows and
+nine recorded catches. These window totals double-count kilometres
+shared by the km 80, 160 and 220 observations and stop when the
+original leading group is first caught; they are diagnostics,
+not race totals.
 It does not model future attacks, group changes, or a newly justified
 sporting stake for other teams. These discrepancies prevent routing
 this version into automatic guided decisions. No production route uses it.
