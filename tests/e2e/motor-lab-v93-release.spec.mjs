@@ -33,6 +33,16 @@ test('guided Motor Lab generates an inspectable route for the chosen length',asy
   expect(second).not.toEqual(first);
   await expect(page.getByRole('img',{name:'Stage profile with planned orders'}))
     .toBeVisible();
+  const responsePromise=page.waitForResponse(response=>
+    response.url().endsWith('/api/v91-playtest')&&
+    response.request().method()==='POST');
+  await page.getByRole('button',{name:'Run the race'}).click();
+  const response=await responsePromise;
+  expect(response.status()).toBe(200);
+  const {coasted}=await response.json();
+  expect(coasted.settings.terrain).toBe('custom');
+  expect(coasted.settings.profileHeightsM).toEqual(second);
+  expect(coasted.kilometreFrames).toHaveLength(39);
 });
 
 test('guided Motor Lab commits a named rider for a bounded break attempt',async({page})=>{
