@@ -145,6 +145,11 @@ function run({seed,terrain,fatigue,format,breakTeams,controlTeams}){
     .map(team=>team.orders.captainId));
   const opportunisticCaptainRows=atFinaleStart.riderGroups.filter(row=>
     opportunisticCaptainIds.has(row.id));
+  const controlChase=frames.flatMap(frame=>frame.chaseContributions.filter(row=>
+    teamRoles[row.teamId]==='control'));
+  const controlChaseByTeam=new Map();
+  for(const row of controlChase)controlChaseByTeam.set(row.teamId,
+    (controlChaseByTeam.get(row.teamId)??0)+1);
   return {seed,terrain,fatigue,format,breakTeams:intendedBreakTeams,
     controlTeams:intendedControlTeams,
     attacks:frames.reduce((sum,frame)=>sum+frame.attackers.length,0),
@@ -191,6 +196,12 @@ function run({seed,terrain,fatigue,format,breakTeams,controlTeams}){
     protectEnergyAtFinaleStart:roleEnergyAtFinaleStart('protect'),
     breakEnergyAtFinaleStart:roleEnergyAtFinaleStart('break'),
     controlHelperEnergyAtFinaleStart:roleHelperEnergyAtFinaleStart('control'),
+    controlChaseTeamKilometres:controlChase.length,
+    controlChaseRiderKilometres:controlChase.reduce((sum,row)=>
+      sum+row.riderIds.length,0),
+    controlChaseDistinctRiders:new Set(controlChase.flatMap(row=>
+      row.riderIds)).size,
+    busiestControlChaseTeamKilometres:Math.max(0,...controlChaseByTeam.values()),
     protectHelperEnergyAtFinaleStart:roleHelperEnergyAtFinaleStart('protect'),
     opportunisticCaptainEnergyAtFinaleStart:
       opportunisticCaptainRows.length?
@@ -297,6 +308,13 @@ const summary=process.argv.includes('--summary')?
       meanOpportunisticCaptainEnergyAtFinaleStart:
         average('opportunisticCaptainEnergyAtFinaleStart'),
       meanControlEnergyAtFinaleStart:average('controlEnergyAtFinaleStart'),
+      meanControlHelperEnergyAtFinaleStart:
+        average('controlHelperEnergyAtFinaleStart'),
+      meanControlChaseTeamKilometres:average('controlChaseTeamKilometres'),
+      meanControlChaseRiderKilometres:average('controlChaseRiderKilometres'),
+      meanControlChaseDistinctRiders:average('controlChaseDistinctRiders'),
+      meanBusiestControlChaseTeamKilometres:
+        average('busiestControlChaseTeamKilometres'),
       meanControlFrontWorkTeamKm:average('controlFrontWorkTeamKilometres'),
       meanDisengagedControlTeamKm:
         average('disengagedControlTeamKilometres'),

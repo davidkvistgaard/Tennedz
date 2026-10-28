@@ -1309,3 +1309,14 @@ Mean widest leads also barely changed: 193.80/271.61 to
 planner proposal. It shows that adding front rotation alone cannot
 resolve the existing random field's sustained paid chase and depleted
 control reserves.
+
+The same 24 original recordings expose the paid chase roster directly.
+Fresh control teams averaged about 310 chase team-km (615 rider-km),
+and the busiest control team worked 115 km; tired controls averaged
+223 team-km (445 rider-km), with the busiest at 97 km. The chase used
+19 distinct control riders per fresh race and 12 per tired race on
+average. Yet the control helpers' mean reserve at km 210 was just
+4.60 fresh and 0.38 tired, versus 12.55 and 6.41 for whole control
+teams. This is a field-wide depletion of actual paid helpers, not just
+one repeatedly selected worker or a display-only energy issue. The
+audit now reports these roster, rider-km and helper-reserve measures.
