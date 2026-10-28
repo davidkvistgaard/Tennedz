@@ -33,3 +33,26 @@ Verification on this production-base branch:
   motor was previously verified on the preview branch with 975 passing unit
   tests. The Vercel preview build for this selective release reached READY;
   a production smoke remains required after activation.
+
+## Later guided finish coverage diagnosis (2026-10-28)
+
+`scripts/audit-v93-guided-finish-coverage.mjs` reruns the guided random
+20-team, 260 km input with named finishers, then validates either the
+paid finish or the complete kilometre road attached to a refusal.
+Across 12 seeds, flat/mountain terrain and fresh/tired starts (48
+synthetic cases), all 48 had a validated paid finish. This is a useful
+baseline for the ordinary order mix, not a measured real-world rate.
+
+The opt-in `--named-front-work` audit instead uses generated long
+rolling/mountain routes and a committed V8 named break, rival chase
+target and named front worker. All eight initial cases (two seeds by
+two styles and two fatigue settings) reached the validated km 259
+road, then refused with `The separated last-kilometre finale needs
+recorded response or front rotation.` The handoff was not always a
+separated front: in the first four inspected cases it included one
+front group or no front, plus 6–47 dropped riders. The common factor
+was the still-active explicit front-work order. The current last-km
+clock does not pay that order's worker, energy and pace, so the guard
+must remain. A future version needs a recorded paid front-work handoff
+and exact source replay before it can turn those refusals into a
+result. The audit does not change playable behavior or infer a placing.
