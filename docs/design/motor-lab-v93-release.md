@@ -70,3 +70,12 @@ The pair's recorded ability at the handoff ranged 70.40–79.38; its
 lower-energy rider retained 13.12–28.91 energy across the eight cases.
 Those values are inputs to a paid continuation, not permission to hold
 the pace constant or waive the energy cost through the final kilometre.
+
+An isolated, opt-in first-slice candidate now selects from the committed
+lineup/order and handoff energies. In all eight audited cases it selected
+the same named `you-5` plus `you-6` for the opening 250 m; each worker
+could pay the slice. Its plan is exposed only in the read-only audit.
+No final-kilometre road, finish, replay or player-facing route uses this
+candidate yet. The remaining work is to recalculate eligibility and
+energy on each slice, account for bunch speed and any contact, then
+validate the complete source replay before routing it to a finish.

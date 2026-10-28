@@ -14,6 +14,9 @@ import {MOTOR_EXHAUSTION_COAST_VERSION,TUNING} from
 import {finaleSnapshotFromTour} from
   '../lib/engine/v2/finale-snapshot.mjs';
 import {orderAt} from '../lib/engine/v2/orders.mjs';
+import {finaleDistanceGrid} from '../lib/engine/v2/finale-grid.mjs';
+import {planFinaleBunchFrontWork} from
+  '../lib/engine/v2/finale-bunch-front-work.mjs';
 
 const countArg=process.argv.find(value=>value.startsWith('--seeds='));
 const count=countArg?Number(countArg.slice('--seeds='.length)):12;
@@ -66,6 +69,15 @@ for(const terrain of namedFrontWork?['rolling','mountain']:
       const own=road.committedInputs.teams.find(team=>team.id==='you');
       const ownOrder=orderAt(own.orders,road.route.distanceKm-1);
       const present=new Map(snapshot.riders.map(row=>[row.riderId,row]));
+      const firstSlice=finaleDistanceGrid(road.route,{remainingKm:1})[0];
+      const frontWorkCandidate=planFinaleBunchFrontWork({
+        teams:road.committedInputs.teams,
+        pelotonRiderIds:snapshot.peloton.riderIds,
+        energies:new Map(snapshot.riders.map(row=>[row.riderId,row.energy])),
+        aheadTeamIds:snapshot.roadGroups.flatMap(group=>group.teamIds),
+        segment:road.route.kilometres[firstSlice.sourceKm-1],
+        sourceKm:firstSlice.sourceKm,
+        sliceLengthKm:firstSlice.lengthM/1000});
       const eligibleHelpers=own.orders.helperIds.filter(id=>{
         const row=present.get(id);
         return row?.status==='peloton'&&
@@ -84,6 +96,7 @@ for(const terrain of namedFrontWork?['rolling','mountain']:
         handoffFrontWorkerEnergy:(handoff?.paidBunchPace?.riderIds??[])
           .map(riderId=>({riderId,
             energy:present.get(riderId)?.energy??null})),
+        firstSliceFrontWorkCandidate:frontWorkCandidate,
         ownTeamAhead:snapshot.roadGroups.some(group=>
           group.teamIds.includes('you')),
         ownEligibleFrontHelpers:eligibleHelpers,
