@@ -2054,3 +2054,16 @@ those groups; the one-leader shadow planned 154.04. These are summed
 model units, not an observed energy saving or calibrated race result.
 The shadow deliberately leaves baseline cost and road movement unpaid,
 so its lower charge cannot be inserted into the guided motor as-is.
+The same four fresh/tired flat/mountain scenarios at 260 km source-replay
+and yield 954 prior forward-group kilometres. All have a recorded active
+worker roster that the candidate can divide into one-leader turns.
+Current aggregate extra cost totals 409.61 model units versus 287.72
+planned shadow units. This larger holdout reinforces the calibration
+need; it does not establish that the shadow reaches the line at the
+same speed or with the same rider energy.
+These four long sources have eight first-time `dropped` events in total,
+none immediately after a recorded bunch-front assignment or on the same
+kilometre as a recorded break catch. They therefore do not exercise the
+rear-group entry paths requested for exhausted workers or caught break
+riders. The audit counts these paths explicitly rather than claiming
+coverage from a long-race sample that lacks them.

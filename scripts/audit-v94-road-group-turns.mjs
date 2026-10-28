@@ -11,16 +11,30 @@ import {planRoadGroupTurnsV1} from
 
 const cases=[{terrain:'flat',fatigue:0},{terrain:'mountain',fatigue:0},
   {terrain:'flat',fatigue:30},{terrain:'mountain',fatigue:30}];
+if(process.argv.slice(2).some(arg=>arg!=='--long'))
+  throw new Error('Use --long for 260-km cases.');
+const distanceKm=process.argv.includes('--long')?260:120;
 const output=[];
 for(const settings of cases){
   const {recording}=createV94RaceDynamicsPreview({format:'one_day',
-    settings:{distanceKm:120,teamCount:20,attack:'none',chase:'selective',
-      seed:`road-turn-audit-${settings.terrain}-${settings.fatigue}`,
+    settings:{distanceKm,teamCount:20,attack:'none',chase:'selective',
+      seed:`road-turn-audit-${distanceKm===120?'':'long-'}${settings.terrain}-${settings.fatigue}`,
       ...settings}});
   replayRaceDynamicsRecording(recording);
   let groups=0,worked=0,unworked=0,turns=0,shadowExtra=0,sourceExtra=0;
+  let newDrops=0,afterFrontWork=0,caughtAndDropped=0;
   for(let index=1;index<recording.frames.length;index++){
     const frame=recording.frames[index],prior=recording.frames[index-1];
+    const priorDropped=new Set(prior.riderGroups.filter(row=>row.group==='dropped')
+      .map(row=>row.id));
+    const priorBunchWorkers=new Set([...(prior.paidBunchPace?.riderIds??[]),
+      ...prior.hardBunchWorkRiderIds,...prior.steadyBunchWorkRiderIds]);
+    for(const rider of frame.riderGroups.filter(row=>row.group==='dropped'&&
+      !priorDropped.has(row.id))){
+      newDrops++;
+      if(priorBunchWorkers.has(rider.id))afterFrontWork++;
+      if(frame.caughtBreakawayRiderIds.includes(rider.id))caughtAndDropped++;
+    }
     const startingGroups=prior.roadGroups;
     if(!startingGroups.length)continue;
     const energyById=new Map(prior.riderGroups.map(row=>[row.id,row.energy]));
@@ -46,7 +60,8 @@ for(const settings of cases){
       }else unworked++;
     }
   }
-  output.push({...settings,groups,worked,unworked,turns,
+  output.push({distanceKm,...settings,groups,worked,unworked,turns,
+    newDrops,afterFrontWork,caughtAndDropped,
     sourceExtra:+sourceExtra.toFixed(3),shadowExtra:+shadowExtra.toFixed(3)});
 }
 console.log(JSON.stringify(output));
