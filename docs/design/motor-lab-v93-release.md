@@ -314,3 +314,13 @@ checkpoint source-replays unordered road bands, but the ordinary
 positioned finish still refuses because those drops need a truthful
 wheel handoff. None of these internal checkpoints change the guided
 result or grant awards.
+
+The V93 refusal preview now exposes the seven paid last-kilometre
+group passages for the two late-chase contacts only when that separate
+source checkpoint can replay exactly. It records the contact marker,
+isolated passages and each own rider's paid energy, while returning
+HTTP 422 with individual line times, classification and points
+withheld. The existing final-100-m preview retains its version and
+individual contact audit; other unsupported catches retain their
+kilometre-only refusal. This is a group-road explanation, not a
+playable finish or an automatic change to guided tactics.
