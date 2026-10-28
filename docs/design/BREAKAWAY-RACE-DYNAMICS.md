@@ -1343,3 +1343,16 @@ at km 210 stayed 12.55/6.41 for fresh/tired races; helper energy stayed
 193.19/269.50 seconds in one-day races and remained 364.53/546.82 in
 stages. The complete candidate code was reverted. This narrow rest
 eligibility does not solve the field's paid helper workload.
+
+The paid chase reasons identify the stronger cause in these guided
+random draws. All mean 309.83 fresh and 223.33 tired control chase
+team-km were recorded as `ordered_all`; **zero** were selective control
+chase or emergency response. The mean 3.17 fresh/2 tired control teams
+were exactly the randomly generated rivals given unconditional `all`
+chase orders. Consequently the v94 selective catch projection never
+governs those teams, and neither a selective hold rule nor extra front
+rotation can fix their workload. The audit records the reason split and
+asserts that every paid control chase is classified. A future generated
+team goal must be committed and inspectable, with manager-given `all`
+orders preserved; changing the random order alone on the older v93
+road did not produce a convincing race.

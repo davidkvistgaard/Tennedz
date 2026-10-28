@@ -150,6 +150,17 @@ function run({seed,terrain,fatigue,format,breakTeams,controlTeams}){
   const controlChaseByTeam=new Map();
   for(const row of controlChase)controlChaseByTeam.set(row.teamId,
     (controlChaseByTeam.get(row.teamId)??0)+1);
+  const controlAllOrderTeams=[...teamById.values()].filter(team=>
+    teamRoles[team.id]==='control'&&
+    team.orders.baseline.chase==='all').length;
+  const controlChaseReasons=['ordered_all','fresh_attack','gap_over_limit'];
+  const controlChaseByReason=Object.fromEntries(controlChaseReasons.map(reason=>
+    [reason,controlChase.filter(row=>row.reason===reason).length]));
+  const controlEmergencyChase=controlChase.filter(row=>
+    !controlChaseReasons.includes(row.reason)).length;
+  if(Object.values(controlChaseByReason).reduce((sum,count)=>sum+count,0)+
+    controlEmergencyChase!==controlChase.length)
+    throw new Error('Unclassified paid control chase.');
   return {seed,terrain,fatigue,format,breakTeams:intendedBreakTeams,
     controlTeams:intendedControlTeams,
     attacks:frames.reduce((sum,frame)=>sum+frame.attackers.length,0),
@@ -197,6 +208,11 @@ function run({seed,terrain,fatigue,format,breakTeams,controlTeams}){
     breakEnergyAtFinaleStart:roleEnergyAtFinaleStart('break'),
     controlHelperEnergyAtFinaleStart:roleHelperEnergyAtFinaleStart('control'),
     controlChaseTeamKilometres:controlChase.length,
+    controlAllOrderTeams,
+    controlOrderedAllChaseTeamKilometres:controlChaseByReason.ordered_all,
+    controlSelectiveChaseTeamKilometres:
+      controlChaseByReason.fresh_attack+controlChaseByReason.gap_over_limit,
+    controlEmergencyChaseTeamKilometres:controlEmergencyChase,
     controlChaseRiderKilometres:controlChase.reduce((sum,row)=>
       sum+row.riderIds.length,0),
     controlChaseDistinctRiders:new Set(controlChase.flatMap(row=>
@@ -311,6 +327,13 @@ const summary=process.argv.includes('--summary')?
       meanControlHelperEnergyAtFinaleStart:
         average('controlHelperEnergyAtFinaleStart'),
       meanControlChaseTeamKilometres:average('controlChaseTeamKilometres'),
+      meanControlAllOrderTeams:average('controlAllOrderTeams'),
+      meanControlOrderedAllChaseTeamKilometres:
+        average('controlOrderedAllChaseTeamKilometres'),
+      meanControlSelectiveChaseTeamKilometres:
+        average('controlSelectiveChaseTeamKilometres'),
+      meanControlEmergencyChaseTeamKilometres:
+        average('controlEmergencyChaseTeamKilometres'),
       meanControlChaseRiderKilometres:average('controlChaseRiderKilometres'),
       meanControlChaseDistinctRiders:average('controlChaseDistinctRiders'),
       meanBusiestControlChaseTeamKilometres:
