@@ -21,9 +21,10 @@ const frontRotationVersion=process.argv.includes('--front-rotation-v3')?3:
 const collectiveControl=process.argv.includes('--collective-control');
 const committedControlTempo=process.argv.includes('--committed-control-tempo');
 const opportunisticSpecialist=process.argv.includes('--opportunistic-specialist');
-if(committedControlTempo&&(!process.argv.includes('--planned-intent')||
+if(committedControlTempo&&(!process.argv.includes('--planned-intent')&&
+  !process.argv.includes('--guided-role-goals')||
   process.argv.includes('--all-control-tempo')))
-  throw new Error('Committed control tempo requires planned intent only.');
+  throw new Error('Committed control tempo requires committed intent.');
 const frontExhaustionVersion=process.argv.includes('--front-exhaustion-v3')?3:
   process.argv.includes('--front-exhaustion-v2')?2:1;
 const seeds=process.argv.includes('--extended-seeds')?
@@ -40,8 +41,10 @@ function run({seed,terrain,fatigue,format,breakTeams,controlTeams}){
   const teamCount=20;
   const mixedDefaults=process.argv.includes('--mixed-defaults');
   const guidedRandom=process.argv.includes('--guided-random');
+  const guidedRoleGoals=process.argv.includes('--guided-role-goals');
   const plannedIntent=process.argv.includes('--planned-intent');
-  const seededTactics=guidedRandom?resolveRandomRivalTactics({teamCount,
+  const seededTactics=guidedRandom||guidedRoleGoals?
+    resolveRandomRivalTactics({teamCount,
     random:seededRandom(`${seed}:${terrain}:${fatigue}`)}):
     mixedDefaults||plannedIntent?[]:
     Array.from({length:teamCount-1},(_,index)=>{
@@ -56,9 +59,16 @@ function run({seed,terrain,fatigue,format,breakTeams,controlTeams}){
     process.argv.includes('--generated-control-selective');
   const managerTactics=generatedControlSelective?seededTactics.map(order=>
     order.chase==='all'?{...order,chase:'selective'}:order):seededTactics;
+  const roleForRandomOrder=order=>order.attack!=='none'&&
+    order.chase==='ignore'?'break':order.chase==='all'?'control':
+      order.chase==='selective'?'protect':'opportunistic';
+  const goals=guidedRoleGoals?seededTactics.map((order,index)=>({
+    teamId:`rival-${index+1}`,role:roleForRandomOrder(order)})):[];
   const prepared=prepareV91Playtest({distanceKm:260,terrain,teamCount,
-    fatigue,attack:'none',chase:'ignore',seed,managerTactics});
-  const planned=plannedIntent?prepareV94RivalIntent({prepared,format,
+    fatigue,attack:'none',chase:'ignore',seed,
+    managerTactics:guidedRoleGoals?[]:managerTactics});
+  const planned=plannedIntent||guidedRoleGoals?prepareV94RivalIntent({
+    prepared,format,rivalGoals:goals,
     frontRotationVersion,controlTempoVersion:committedControlTempo?2:1,
     opportunisticSpecialistVersion:opportunisticSpecialist?2:1,
     ...(format==='stage'?{stageNumber:8}:{})}):null;
@@ -74,9 +84,11 @@ function run({seed,terrain,fatigue,format,breakTeams,controlTeams}){
       index===0?'protect':index<=breakTeams?'break':
         index<=breakTeams+controlTeams?'control':'protect'];
   }));
-  const intendedBreakTeams=mixedDefaults||guidedRandom||plannedIntent?
+  const intendedBreakTeams=mixedDefaults||guidedRandom||plannedIntent||
+    guidedRoleGoals?
     Object.values(teamRoles).filter(role=>role==='break').length:breakTeams;
-  const intendedControlTeams=mixedDefaults||guidedRandom||plannedIntent?
+  const intendedControlTeams=mixedDefaults||guidedRandom||plannedIntent||
+    guidedRoleGoals?
     Object.values(teamRoles).filter(role=>role==='control').length:controlTeams;
   // Read-only counterfactual. The planner does not currently commit this
   // front-work order, so omit its intent manifest rather than misstate source.
@@ -276,6 +288,7 @@ function run({seed,terrain,fatigue,format,breakTeams,controlTeams}){
 const rows=[];
 const roleMixes=process.argv.includes('--mixed-defaults')||
   process.argv.includes('--guided-random')||
+  process.argv.includes('--guided-role-goals')||
   process.argv.includes('--planned-intent')?[[0,0]]:
   process.argv.includes('--stress')?
   [[5,0],[5,1],[5,8]]:[[3,2],[5,2],[5,4],[5,6]];
@@ -373,6 +386,7 @@ console.log(JSON.stringify({version:MOTOR_RACE_DYNAMICS_VERSION,
   note:'Internal opt-in role scenarios, not observed race calibration or official results.',
   allControlTempo:process.argv.includes('--all-control-tempo'),
   generatedControlSelective:process.argv.includes('--generated-control-selective'),
+  guidedRoleGoals:process.argv.includes('--guided-role-goals'),
   committedControlTempo,
   opportunisticSpecialist,
   ...(summary?{summary}:{rows})},null,2));

@@ -1370,3 +1370,20 @@ fell from 81.5 to 9.83, and the resulting front was captain-heavy.
 This demonstrates an interaction between opening attack suppression,
 front composition and pursuit, not a safe default order swap. In
 particular, the controls still had little reserve for a credible finish.
+
+Another read-only comparison retained those same randomly drawn **role
+counts**, but committed each as an inspectable v94 goal and let the
+existing specialist policy nominate noncaptain opening attackers. This
+is a *combined policy* counterfactual: generated baseline orders,
+specialists, paid control tempo and selective pursuit all change
+together. All 24 same-route/seed 260 km recordings validated and
+source-replayed. Fresh one-day controls finished km 210 with mean
+energy 56.59 (helpers 54.59) and paid 93.17 selective chase plus 206
+bunch-front team-km; mean widest lead was 104.23 seconds, with two of
+six original fronts fully caught. Tired one-day mean lead was 153.76
+seconds and control energy 41.86. Stage mean leads were 180.01/356.05
+seconds fresh/tired, with control energy 57.24/43.01; one tired stage
+still reached 1,052.08 seconds. This exposes a workable paid workload
+redistribution and less captain-heavy opening, but the large spread
+and short fresh one-day leads fail a calibration claim. It does not
+authorize routing v94 to the guided race or rewriting explicit orders.
