@@ -80,6 +80,10 @@ for(const terrain of namedFrontWork?['rolling','mountain']:
         ownNamedFrontWorker:ownOrder.frontWorkRiderId??null,
         priorKmPaidFrontTeam:handoff?.paidBunchPace?.teamId??null,
         priorKmPaidFrontRiders:handoff?.paidBunchPace?.riderIds??[],
+        priorKmPaidFrontAbility:handoff?.paidBunchPace?.ability??null,
+        handoffFrontWorkerEnergy:(handoff?.paidBunchPace?.riderIds??[])
+          .map(riderId=>({riderId,
+            energy:present.get(riderId)?.energy??null})),
         ownTeamAhead:snapshot.roadGroups.some(group=>
           group.teamIds.includes('you')),
         ownEligibleFrontHelpers:eligibleHelpers,

@@ -66,3 +66,7 @@ The km 259 ledger also shows the same paid pair, `you-5` and `you-6`, in
 all eight cases. A correct final-kilometre continuation therefore needs
 to carry an actual paid two-rider bunch pace from that source, while
 allowing later availability to change through the short slices.
+The pair's recorded ability at the handoff ranged 70.40–79.38; its
+lower-energy rider retained 13.12–28.91 energy across the eight cases.
+Those values are inputs to a paid continuation, not permission to hold
+the pace constant or waive the energy cost through the final kilometre.
