@@ -148,6 +148,22 @@ All 15 two-front attempts replayed. The wider sample therefore tests
 the refusal boundary as well as the paid continuation; it does not
 authorize treating a catch as an unchanged road-group finish.
 
+That exact `guided-finish-coverage-42` mountain/tired source now has a
+separate *internal* payable-front contact version. Its one front group
+began the final kilometre 0.02 seconds ahead. The committed `you-5`
+front-work order could pay a `you-5`/`you-6` bunch pair. A rival had
+engaged chase at the kilometre-259 handoff, but no rival paid a chase
+pull in the final-kilometre trace. The separate clock calculates
+contact at 259,031.806 m and charges the named pair through both the
+pre-contact and post-contact portions of that slice. All 160 riders
+reach one unordered `unresolved_contact` line band; classifications,
+points and awards are withheld. Source replay rejects a forged worker
+charge. The old one-front no-contact version still refuses this source,
+the unavailable-pair contact version still refuses its payable pair,
+and a same-seed fresh mountain source with no modeled contact still
+refuses the new contact version. This is a narrow synthetic boundary,
+not a guided default or an individual finish result.
+
 The named-front coverage audit also accepts an explicit `--front-effort`
 (`hard` or `conserve`) at the committed kilometre-five marker. In 32
 same-source generated rolling/mountain, fresh/tired races per effort,

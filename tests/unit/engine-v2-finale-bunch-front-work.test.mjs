@@ -25,6 +25,7 @@ import {probeFinaleSeparatedGroupsFromTour,
   FINALE_COAST_NO_FRONT_PAID_BUNCH_VERSION,
   FINALE_COAST_ONE_FRONT_PAID_BUNCH_VERSION,
   FINALE_COAST_UNAVAILABLE_FRONT_CATCH_VERSION,
+  FINALE_COAST_PAYABLE_FRONT_CATCH_VERSION,
   FINALE_COAST_TWO_FRONT_PAID_BUNCH_VERSION,
   FINALE_COAST_THREE_FRONT_PAID_BUNCH_VERSION} from
   '../../lib/engine/v2/finale-multi-run.mjs';
@@ -36,6 +37,8 @@ import {recordFinaleCoastNoFrontPaidBunchClock,
   validateFinaleCoastTwoFrontPaidBunchClock,
   recordFinaleCoastUnavailableFrontCatchClock,
   validateFinaleCoastUnavailableFrontCatchClock,
+  recordFinaleCoastPayableFrontCatchClock,
+  validateFinaleCoastPayableFrontCatchClock,
   recordFinaleCoastThreeFrontPaidBunchClock,
   validateFinaleCoastThreeFrontPaidBunchClock} from
   '../../lib/engine/v2/finale-separated-last-km.mjs';
@@ -144,6 +147,8 @@ test('unavailable named front records only the actually paid catch',()=>{
   assert.throws(()=>probeFinaleSeparatedGroupsFromTour(tour,{
     version:FINALE_COAST_ONE_FRONT_PAID_BUNCH_VERSION}),
   /needs a recorded catch/);
+  assert.throws(()=>recordFinaleCoastPayableFrontCatchClock(tour),
+    /needs one recorded merge and two paid named bunch workers/);
   const trace=probeFinaleSeparatedGroupsFromTour(tour,{
     version:FINALE_COAST_UNAVAILABLE_FRONT_CATCH_VERSION});
   assert.equal(validateFinaleSeparatedGroupsFromTour(tour,trace),true);
@@ -224,6 +229,53 @@ test('three-front front-order continuation preserves all source groups',()=>{
   forged.trace.frames[0].bunchFrontWork={teamId:'you'};
   assert.throws(()=>validateFinaleCoastThreeFrontPaidBunchClock(tour,
     forged),/paid three-front bunch clock does not replay/);
+});
+
+test('payable named pair stays paid through a recorded front catch',()=>{
+  const seed='guided-finish-coverage-42',terrain='mountain',fatigue=30;
+  const prepared=prepareV91Playtest({distanceKm:260,terrain:'custom',
+    profileHeightsM:generatePlaytestStageProfile({distanceKm:260,
+      style:terrain,seed}),teamCount:20,fatigue,attack:'none',
+    chase:'selective',seed,managerTactics:resolveRandomRivalTactics({
+      teamCount:20,random:seededRandom(`${seed}:${terrain}:${fatigue}`)}),
+    managerTacticalOrdersV8:[{teamId:'you',atKm:5,
+      attack:'selective',attackRiderId:'you-2',
+      chaseTarget:'rival-1-2',frontWork:'rotate',
+      frontWorkRiderId:'you-5'},
+    {teamId:'you',atKm:25,attack:'none'}]});
+  const tour=simulateTacticalTour({...prepared,
+    motorVersion:MOTOR_EXHAUSTION_COAST_VERSION});
+  assert.equal(validateRecordedTour(tour),true);
+  const snapshot=finaleSnapshotFromTour(tour,{remainingKm:1,
+    includeAttackLoad:true});
+  assert.equal(snapshot.roadGroups.length,1);
+  assert.equal(snapshot.roadGroups[0].gapSeconds,0.02);
+  assert.throws(()=>probeFinaleSeparatedGroupsFromTour(tour,{
+    version:FINALE_COAST_ONE_FRONT_PAID_BUNCH_VERSION}),
+  /needs a recorded catch/);
+  const trace=probeFinaleSeparatedGroupsFromTour(tour,{
+    version:FINALE_COAST_PAYABLE_FRONT_CATCH_VERSION});
+  assert.equal(validateFinaleSeparatedGroupsFromTour(tour,trace),true);
+  const contact=trace.frames.find(frame=>frame.contact);
+  assert(trace.frames.every(frame=>frame.bunchPullRiderId===null));
+  assert.deepEqual(contact.bunchFrontWork?.riderIds,['you-5','you-6']);
+  assert.ok(contact.contact.atDistanceM>259000);
+  assert.ok(contact.contact.atDistanceM<259100);
+  for(const worker of contact.bunchFrontWork.workers){
+    const paid=contact.riders.find(row=>row.riderId===worker.riderId);
+    assert.equal(paid?.role,'pull');
+    assert.ok(Math.abs(paid.energySpent-worker.energySpent)<1e-8);
+  }
+  const clock=recordFinaleCoastPayableFrontCatchClock(tour);
+  assert.equal(validateFinaleCoastPayableFrontCatchClock(tour,clock),true);
+  assert.deepEqual(clock.line.bands.map(band=>band.kind),
+    ['unresolved_contact']);
+  assert.equal(clock.line.bands[0].lastPossiblePlace,160);
+  assert.equal(clock.canCommitAwards,false);
+  const forged=structuredClone(clock);
+  forged.trace.frames[0].bunchFrontWork.workers[0].energySpent=0;
+  assert.throws(()=>validateFinaleCoastPayableFrontCatchClock(tour,
+    forged),/payable-front catch clock does not replay/);
 });
 
 test('opt-in no-front finale pays named front pair and replays the source',()=>{
