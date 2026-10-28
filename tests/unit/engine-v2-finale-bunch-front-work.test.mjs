@@ -6,6 +6,11 @@ import {MOTOR_EXHAUSTION_COAST_VERSION} from
   '../../lib/engine/v2/tuning.mjs';
 import {finaleSnapshotFromTour} from
   '../../lib/engine/v2/finale-snapshot.mjs';
+import {finaleDistanceGrid} from '../../lib/engine/v2/finale-grid.mjs';
+import {advanceFinaleDroppedStep,
+  FINALE_FRONT_DROP_CONTACT_STEP_VERSION,
+  FINALE_OPTIONAL_FRONT_DROP_CONTACT_STEP_VERSION} from
+  '../../lib/engine/v2/finale-dropped-step.mjs';
 import {planFinaleBunchFrontWork} from
   '../../lib/engine/v2/finale-bunch-front-work.mjs';
 import {generatePlaytestStageProfile} from
@@ -182,9 +187,29 @@ test('one-front candidate keeps unsupported handoffs as refusals',()=>{
       includeAttackLoad:true});
     assert.equal(snapshot.roadGroups.length,groups);
     assert.equal(snapshot.droppedRiderIds.length,dropped);
-    assert.throws(()=>probeFinaleSeparatedGroupsFromTour(tour,{
-      version:FINALE_COAST_ONE_FRONT_PAID_BUNCH_VERSION}),
-    groups!==1?/needs exactly one leading group/:
-      /needs recorded dropped travel/);
+    if(groups!==1)
+      assert.throws(()=>probeFinaleSeparatedGroupsFromTour(tour,{
+        version:FINALE_COAST_ONE_FRONT_PAID_BUNCH_VERSION}),
+      /needs exactly one leading group/);
+    else{
+      const slice=finaleDistanceGrid(tour.route,{remainingKm:1})[0];
+      const droppedInput={slice,
+        segment:tour.route.kilometres[slice.sourceKm-1],
+        bunchElapsedSeconds:20,droppedRiders:[],
+        ridersById:new Map(tour.committedInputs.teams.flatMap(team=>
+          team.riders.map(rider=>[rider.id,rider])))};
+      assert.throws(()=>advanceFinaleDroppedStep({...droppedInput,
+        version:FINALE_FRONT_DROP_CONTACT_STEP_VERSION}),
+      /needs complete source riders and bunch travel/);
+      assert.deepEqual(advanceFinaleDroppedStep({...droppedInput,
+        version:FINALE_OPTIONAL_FRONT_DROP_CONTACT_STEP_VERSION}).riders,[]);
+      const clock=recordFinaleCoastOneFrontPaidBunchClock(tour);
+      assert.equal(validateFinaleCoastOneFrontPaidBunchClock(tour,clock),
+        true);
+      assert.deepEqual(clock.line.bands.map(band=>band.kind),
+        ['road_group','peloton']);
+      assert.equal(clock.line.bands.at(-1).lastPossiblePlace,160);
+      assert.equal(clock.canCommitAwards,false);
+    }
   }
 });
