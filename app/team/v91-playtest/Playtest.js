@@ -1814,6 +1814,32 @@ export default function Playtest({guided=false}){
                         Rider {index+1}</option>)}
                     </select></label>
                   </div>
+                  <div className="v91-race-screen-controls">
+                    <button type="button" disabled={coastedKm<=1}
+                      onClick={()=>selectRecordedKilometre(coastedKm-1)}>
+                      Previous km</button>
+                    <button type="button" aria-pressed={raceScreenPlaying}
+                      onClick={()=>{
+                        if(raceScreenPlaying){
+                          setRaceScreenPlaying(false);return;
+                        }
+                        if(coastedKm>=coasted.kilometreFrames.length)
+                          setCoastedKm(1);
+                        setRaceScreenPlaying(true);
+                      }}>{raceScreenPlaying?'Pause':
+                        coastedKm>=coasted.kilometreFrames.length?
+                          'Replay':'Play'}</button>
+                    <button type="button"
+                      disabled={coastedKm>=coasted.kilometreFrames.length}
+                      onClick={()=>selectRecordedKilometre(coastedKm+1)}>
+                      Next km</button>
+                    <button type="button" onClick={()=>{
+                      setRaceScreenPlaying(false);
+                      setRaceScreenOpen(false);
+                      requestAnimationFrame(()=>document.getElementById(
+                        'v93-your-finish')?.scrollIntoView({block:'start'}));
+                    }}>{`View finish · ${coasted.settings.distanceKm} km`}</button>
+                  </div>
                   <svg viewBox="0 0 600 145" preserveAspectRatio="none"
                     role="img" aria-label={`Stage profile with the field at km ${coastedKm} of ${viewerSituation.totalKm}`}>
                     <polygon className="v91-race-screen-profile-fill"
@@ -1877,32 +1903,6 @@ export default function Playtest({guided=false}){
                     aria-label="Choose recorded kilometre"
                     onChange={event=>selectRecordedKilometre(
                       Number(event.target.value))}/>
-                  <div className="v91-race-screen-controls">
-                    <button type="button" disabled={coastedKm<=1}
-                      onClick={()=>selectRecordedKilometre(coastedKm-1)}>
-                      Previous km</button>
-                    <button type="button" aria-pressed={raceScreenPlaying}
-                      onClick={()=>{
-                        if(raceScreenPlaying){
-                          setRaceScreenPlaying(false);return;
-                        }
-                        if(coastedKm>=coasted.kilometreFrames.length)
-                          setCoastedKm(1);
-                        setRaceScreenPlaying(true);
-                      }}>{raceScreenPlaying?'Pause':
-                        coastedKm>=coasted.kilometreFrames.length?
-                          'Replay':'Play'}</button>
-                    <button type="button"
-                      disabled={coastedKm>=coasted.kilometreFrames.length}
-                      onClick={()=>selectRecordedKilometre(coastedKm+1)}>
-                      Next km</button>
-                    <button type="button" onClick={()=>{
-                      setRaceScreenPlaying(false);
-                      setRaceScreenOpen(false);
-                      requestAnimationFrame(()=>document.getElementById(
-                        'v93-your-finish')?.scrollIntoView({block:'start'}));
-                    }}>{`View finish · ${coasted.settings.distanceKm} km`}</button>
-                  </div>
                   <p>Play advances one recorded kilometre every 1.2 seconds.
                     All markers use the selected recorded kilometre. Time
                     gaps below are group clocks, not measured road distances.

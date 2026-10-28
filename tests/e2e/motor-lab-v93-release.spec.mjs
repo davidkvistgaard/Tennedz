@@ -172,6 +172,22 @@ test('guided Motor Lab runs a race from setup to rider replay',async({page,conte
   expect(coasted.stageTrace.kilometres).toHaveLength(40);
   const raceScreen=page.getByRole('dialog',{name:'Race screen'});
   await expect(raceScreen).toBeVisible();
+  await page.setViewportSize({width:1856,height:844});
+  const playButton=raceScreen.getByRole('button',{name:'Play',exact:true});
+  await expect(playButton).toBeInViewport();
+  expect(await playButton.evaluate(button=>{
+    const rect=button.getBoundingClientRect();
+    const hit=document.elementFromPoint(rect.left+rect.width/2,
+      rect.top+rect.height/2);
+    return button===hit||button.contains(hit);
+  })).toBe(true);
+  const routeBottom=await raceScreen.locator('.v91-race-screen-route')
+    .evaluate(element=>element.getBoundingClientRect().bottom);
+  const roadTop=await raceScreen.locator('.v91-race-screen-road')
+    .evaluate(element=>element.getBoundingClientRect().top);
+  expect(roadTop).toBeGreaterThanOrEqual(routeBottom);
+  await page.screenshot({path:'test-results/guided-race-play-desktop.png'});
+  await page.setViewportSize({width:390,height:844});
   await context.grantPermissions(['clipboard-read','clipboard-write']);
   await raceScreen.getByRole('button',{name:'Copy race log'}).click();
   await expect(raceScreen.getByRole('status')).toContainText('Copied');

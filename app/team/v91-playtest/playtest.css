@@ -150,7 +150,7 @@
 .v91-race-screen-riders button div{display:flex;align-items:center;gap:8px}
 .v91-race-screen-riders progress{width:100%;height:8px;accent-color:#116e60}
 .v91-race-screen-riders b{font-size:.78rem}
-@media(min-width:851px){.v91-race-screen-main{height:320px}.v91-race-screen-story{min-height:0;overflow:hidden}.v91-race-screen-events{min-height:0;flex:1}}
+@media(min-width:851px){.v91-race-screen-main{min-height:320px}.v91-race-screen-story{min-height:0;overflow:hidden}.v91-race-screen-events{min-height:0;flex:1}}
 @media(max-width:850px){.v91-race-screen-main{grid-template-columns:1fr}.v91-race-screen-riders{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:500px){.v91-race-screen-inner{padding:10px}.v91-race-screen-header h2{font-size:1.6rem}.v91-race-screen-route,.v91-race-screen-story,.v91-race-screen-team,.v91-race-screen-road{padding:12px}.v91-race-screen-riders{grid-template-columns:repeat(2,minmax(0,1fr))}}
 .v91-race-dashboard{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px;margin:14px 0 18px}
