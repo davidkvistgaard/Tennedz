@@ -1,6 +1,6 @@
 // Read-only comparison with recorded V94 road. A forecast is not a paid catch.
 import {createV94RaceDynamicsPreview} from '../lib/engine/v2/playtest-race-dynamics-v94.mjs';
-import {forecastBreakThreat} from '../lib/engine/v2/break-threat-matrix.mjs';
+import {assessBreakThreatRange} from '../lib/engine/v2/break-threat-matrix.mjs';
 import {orderAt} from '../lib/engine/v2/orders.mjs';
 import {validateRecordedTour} from '../lib/engine/v2/recording.mjs';
 import {replayRaceDynamicsRecording} from '../lib/engine/v2/replay-race-dynamics-v94.mjs';
@@ -33,8 +33,13 @@ for(const seed of ['threat-holdout-1'])
           !team.riders.some(rider=>frontSet.has(rider.id))&&
           recording.committedInputs.raceContext.teamRoles?.[team.id]==='control'&&
           orderAt(team.orders,km).chase!=='ignore').map(team=>team.id);
-        const forecast=forecastBreakThreat({teams,
-          frontRiderIds:front.riderIds,chaseTeamIds,
+        const conditionalChaseTeamIds=format==='one_day'?
+          teams.filter(team=>!team.riders.some(rider=>frontSet.has(rider.id))&&
+            recording.committedInputs.raceContext.teamRoles?.[team.id]==='protect'&&
+            orderAt(team.orders,km).chase==='selective').map(team=>team.id):[];
+        const matrix=assessBreakThreatRange({teams,
+          frontRiderIds:front.riderIds,
+          nominatedChaseTeamIds:chaseTeamIds,conditionalChaseTeamIds,
           unavailableRiderIds:frame.riderGroups.filter(rider=>
             rider.group==='dropped').map(rider=>rider.id),
           remainingSegments:recording.route.kilometres.slice(km),
@@ -44,30 +49,35 @@ for(const seed of ['threat-holdout-1'])
           !next.roadGroups.some(group=>group.riderIds.some(id=>frontSet.has(id))));
         rows.push({seed,terrain,fatigue,format,controlCount,km,
           gapSeconds:front.gapSeconds,
-          frontRiders:forecast.frontRiderCount,
-          droppedRiders:forecast.unavailableRiderCount,
-          committedControlTeams:forecast.chaseTeamCount,
-          availableHelpers:forecast.potentialChaseHelperCountAtStart,
-          frontWorkReserve:forecast.frontWorkReserveAtStart,
-          chaseWorkReserve:forecast.chaseWorkReserveAtStart,
-          peakHelpers:forecast.peakConcurrentChaseHelpers,
-          allInBudget:forecast.allInCatchableGapSeconds,
-          allInCatchPossible:forecast.allInCatchPossible,actualCatch});
+          frontRiders:matrix.nominated.frontRiderCount,
+          droppedRiders:matrix.nominated.unavailableRiderCount,
+          nominatedTeams:matrix.nominated.chaseTeamCount,
+          conditionalTeams:matrix.conditionalTeamCount,
+          frontWorkReserve:matrix.nominated.frontWorkReserveAtStart,
+          nominatedChaseReserve:matrix.nominated.chaseWorkReserveAtStart,
+          expandedChaseReserve:matrix.expanded.chaseWorkReserveAtStart,
+          nominatedBudget:matrix.nominated.allInCatchableGapSeconds,
+          expandedBudget:matrix.expanded.allInCatchableGapSeconds,
+          capacityBand:matrix.capacityBand,
+          actualCatch});
       }
     }
-const differences=rows.filter(row=>row.allInCatchPossible!==row.actualCatch);
+const differences=rows.filter(row=>
+  (row.capacityBand!=='beyond_available_capacity')!==row.actualCatch);
 const cells=[];
 for(const format of ['one_day','stage'])for(const controlCount of [0,2,4]){
   const selected=rows.filter(row=>row.format===format&&
     row.controlCount===controlCount);
   cells.push({format,controlCount,cases:selected.length,
-    allInCatchPossible:selected.filter(row=>row.allInCatchPossible).length,
+    nominatedCapacity:selected.filter(row=>row.capacityBand==='nominated_capacity').length,
+    conditionalCapacity:selected.filter(row=>row.capacityBand==='conditional_capacity').length,
     observedCatch:selected.filter(row=>row.actualCatch).length,
     potentialOutcomeDifferenceCount:selected.filter(row=>
-      row.allInCatchPossible!==row.actualCatch).length});
+      (row.capacityBand!=='beyond_available_capacity')!==row.actualCatch).length});
 }
 console.log(JSON.stringify({cases:rows.length,
-  allInCatchPossible:rows.filter(row=>row.allInCatchPossible).length,
+  nominatedCapacity:rows.filter(row=>row.capacityBand==='nominated_capacity').length,
+  conditionalCapacity:rows.filter(row=>row.capacityBand==='conditional_capacity').length,
   observedCatch:rows.filter(row=>row.actualCatch).length,
   potentialOutcomeDifferenceCount:differences.length,cells,
   ...(process.argv.includes('--details')?{differences,rows}:{})},null,2));

@@ -1754,15 +1754,19 @@ The read-only audit `scripts/audit-break-threat-matrix.mjs` replayed
 24 controlled 20-team, 260-km experimental V94 races across
 flat/mountain, fresh/tired, one-day/stage and zero/two/four explicitly
 goal-directed rival control teams. It assessed the leading group at
-km 80, 160 and 220 when one existed: 71 observations. The all-in
-capacity could catch in 31, while the actual recorded road caught in
-32; the potential and observed outcomes differed in 27 observations.
-Most differences follow from the distinction between ability to chase
-and a decision to pay for a chase. With no nominated rival controls,
-the one-day race can still catch through protector responses, while
-stage teams may hold back even when their control helpers could close
-the gap. The matrix reports *all-in catchable gap* and headroom, not a
-prediction that all nominated teams will commit every kilometre.
+km 80, 160 and 220 when one existed: 71 observations. The matrix now
+provides two boundaries: nominated control teams and a larger coalition
+including conditional one-day protect teams. The nominated coalition
+could catch in 31 observations; 17 more needed conditional help. The
+actual recorded road caught in 32. Potential and observed outcomes
+differed in 16 observations. With zero nominated rivals, one-day
+protectors supplied conditional capacity in all 12 observed situations
+and the recorded road caught in nine. In the 24 stage observations with
+two or four nominated controls, 13 had sufficient all-in capacity but
+none actually caught. A team's ability to chase is distinct from its
+decision to pay for a chase. The matrix reports *all-in catchable gap*
+and headroom for both coalitions, not a prediction that either coalition
+will commit every kilometre.
 It does not model future attacks, group changes, or a newly justified
 sporting stake for other teams. These discrepancies prevent routing
 this version into automatic guided decisions. No production route uses it.

@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {forecastBreakThreat} from '../../lib/engine/v2/break-threat-matrix.mjs';
+import {forecastBreakThreat,assessBreakThreatRange} from
+  '../../lib/engine/v2/break-threat-matrix.mjs';
 
 function team(index,{flat=50,mountain=50,energy=90,chase='selective',
   breakWork='cooperate'}={}){
@@ -128,4 +129,25 @@ test('all-in headroom is a capacity comparison and does not spend source energy'
   assert.equal(result.allInGapHeadroomSeconds,
     +(result.allInCatchableGapSeconds-100).toFixed(2));
   assert.deepEqual(teams.map(row=>row.energy),energyBefore);
+});
+
+test('threat range distinguishes nominated, conditional and insufficient pursuit',()=>{
+  const teams=[team(1,{flat:75}),team(2,{flat:65,chase:'all'}),
+    team(3,{flat:85,chase:'all'})];
+  const input={teams,frontRiderIds:[teams[0].riders[0].id],
+    nominatedChaseTeamIds:[teams[1].id],
+    conditionalChaseTeamIds:[teams[2].id],
+    remainingSegments:route('flat',30)};
+  const baseline=assessBreakThreatRange({...input,gapSeconds:100});
+  const lower=baseline.nominated.allInCatchableGapSeconds;
+  const upper=baseline.expanded.allInCatchableGapSeconds;
+  assert.ok(upper>lower&&lower>0);
+  assert.equal(assessBreakThreatRange({...input,gapSeconds:lower/2}).capacityBand,
+    'nominated_capacity');
+  assert.equal(assessBreakThreatRange({...input,
+    gapSeconds:(lower+upper)/2}).capacityBand,'conditional_capacity');
+  assert.equal(assessBreakThreatRange({...input,
+    gapSeconds:upper+10}).capacityBand,'beyond_available_capacity');
+  assert.throws(()=>assessBreakThreatRange({...input,
+    conditionalChaseTeamIds:[teams[1].id]}),/coalition/);
 });
