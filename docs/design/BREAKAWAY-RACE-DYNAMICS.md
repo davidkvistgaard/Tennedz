@@ -2122,3 +2122,12 @@ or leadership. This is still a standalone witness over supplied speed,
 cost and decision plans. It does not establish physical locations or
 sporting decisions from a locked whole-race source, and is not routed
 to the guided motor or viewer.
+
+`rider-climb-decision-v1.mjs` separates an inability to pay the
+projected cost of holding a climb from a voluntary release. A voluntary
+release requires an explicit committed plan to finish this stage safely,
+target a later stage and retain a stated energy reserve; a team order
+to hold position prevents that optional release. The decision and reason
+can be recalculated from the same source. This isolated decision does
+not yet derive the hold cost from the route and actual pace, move the
+rider, form a rear group, decide a finish time or impose a time limit.
