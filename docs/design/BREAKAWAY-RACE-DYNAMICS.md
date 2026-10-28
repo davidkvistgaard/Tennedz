@@ -1907,3 +1907,47 @@ recorded group formation and contact before using the same mechanism.
 The viewer may narrate named leads or tactical withholding only after
 those decisions and shares are recorded and source-replayed. The current
 V93/V94 clocks, finish guards and historical recordings remain unchanged.
+
+### Per-rider kilometre contract for the next motor
+
+Updating every rider's energy is not sufficient. Before advancing a
+kilometre, a new motor version must assign **exactly one primary action
+to every active rider** from the rider's current road group and the
+information that rider or team could possess. The decision record needs
+the rider ID, group ID, committed team order, observed threats, available
+energy, chosen action, and a reason. It must not use a rival's hidden exact
+skill in a rider's decision. The paid road may use exact physical skills
+after the choice is committed.
+
+Actions must distinguish attack, exposed lead, sheltered cooperation,
+deliberate sit-on, support of a teammate, conservation in the bunch, and
+isolated riding after a drop. A rider can decline work because a teammate
+is further ahead, because the group's sporting stake does not justify
+spending energy, or because saving energy for a sprint is a committed
+strategy. A GC reason requires a real classification. Uncertain help from
+other teams affects expectations, not the paid work roster until those
+teams actually commit and contribute. If two groups are ahead, each is
+assessed separately. A dropped rider cannot gain drafting or rotation
+benefits from a rear group until a recorded contact creates that group.
+
+For every physical group, the subsequent work step must record no more
+than one exposed leader at any instant and the duration of each turn.
+Other riders receive a lower, explicit sheltered cost. Fatigue and
+availability can end a turn; having more helpers extends the number of
+future turns rather than summing their speeds. The group clock, catches,
+splits, energy ledger and viewer events must all derive from these paid
+turns. A tactical decision is recomputed after each kilometre and after
+each recorded split, catch, or change in available teammates.
+
+The release gate is whole-race source replay, not a plausible isolated
+kilometre: every active rider must have one decision and a matching paid
+energy transition at every kilometre; no rider may work in two groups or
+occupy the wind concurrently; decisions may use only committed orders and
+observed or explicitly uncertain rival information; and the same seed
+must reproduce group membership, contact and finish. Test fresh and tired
+one-day and stage cases, flat and mountain routes, multiple simultaneous
+breaks, no control team, weak and strong sprint interests, missing
+helpers, late manager orders, and riders dropped behind the bunch. Do
+not route this candidate to guided races until its group speed and
+fatigue are calibrated across those full races. Historical versions
+retain their original contracts and replay results.
