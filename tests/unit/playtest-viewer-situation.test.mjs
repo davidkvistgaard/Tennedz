@@ -55,6 +55,22 @@ test('group-clock chart derives only recorded checkpoint time gaps',()=>{
   assert.deepEqual(raceViewerGapSeries(race,'you-7'),[]);
 });
 
+test('group-clock chart can follow a valid rival through recorded group and bunch clocks',()=>{
+  const race={settings:{teamCount:2},kilometreFrames:[
+    {km:1,roadGroups:[{gapSeconds:12,riderIds:['rival-1-3']}],
+      droppedRiders:[],ownRiders:[]},
+    {km:2,roadGroups:[],droppedRiders:[],ownRiders:[]},
+    {km:3,roadGroups:[],droppedRiders:[{riderId:'rival-1-3',
+      deficitSeconds:4}],ownRiders:[]},
+  ]};
+  assert.deepEqual(raceViewerGapSeries(race,'rival-1-3'),[
+    {km:1,leadingGroupSeconds:12,riderSeconds:12},
+    {km:2,leadingGroupSeconds:0,riderSeconds:0},
+    {km:3,leadingGroupSeconds:0,riderSeconds:-4},
+  ]);
+  assert.deepEqual(raceViewerGapSeries(race,'rival-2-3'),[]);
+});
+
 test('road-clock snapshot follows only current recorded group identities',()=>{
   const ownRiders=['you-2','you-3','you-7'].map(riderId=>({riderId,
     energy:70}));

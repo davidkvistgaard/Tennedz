@@ -186,6 +186,18 @@ test('guided Motor Lab runs a race from setup to rider replay',async({page,conte
     .fill(String(groupKm));
   await expect(raceScreen.getByRole('list',{
     name:`Road groups at km ${groupKm}`})).toContainText('Group 1');
+  const rivalInFront=coasted.kilometreFrames.find(frame=>
+    frame.km===groupKm).roadGroups.flatMap(group=>group.riderIds)
+    .find(id=>id.startsWith('rival-'));
+  expect(rivalInFront).toBeTruthy();
+  await raceScreen.getByLabel('Track team').selectOption(
+    rivalInFront.slice(0,rivalInFront.lastIndexOf('-')));
+  await raceScreen.getByLabel('Track rider').selectOption(rivalInFront);
+  await expect(raceScreen.getByLabel('Followed rider position'))
+    .toContainText('Fictional rival');
+  await expect(raceScreen.getByRole('img',{
+    name:/Recorded time gaps through km/})).toHaveAttribute('aria-label',
+    new RegExp(`Rival ${rivalInFront.split('-')[1]} Rider`));
   await page.screenshot({path:'test-results/guided-race-groups.png'});
   await raceScreen.getByLabel('Choose recorded kilometre').fill('1');
   await raceScreen.getByLabel('Your riders on the road')

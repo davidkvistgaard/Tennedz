@@ -296,6 +296,7 @@ export default function Playtest({guided=false}){
   const [coastedBandIndex,setCoastedBandIndex]=useState(0);
   const [coastedRiderId,setCoastedRiderId]=useState('');
   const [viewerRiderId,setViewerRiderId]=useState('you-7');
+  const [raceScreenTrackedRiderId,setRaceScreenTrackedRiderId]=useState('you-7');
   const [viewerRivalId,setViewerRivalId]=useState('rival-1');
   const [finalePlans,setFinalePlans]=useState({});
   const [lateEfforts,setLateEfforts]=useState({});
@@ -584,7 +585,8 @@ export default function Playtest({guided=false}){
       behavior:checkpointPlaying?'auto':'smooth'});
   },[coastedKm,coasted,checkpointPlaying]);
   const viewerEnergy=coasted?raceViewerEnergySeries(coasted,viewerRiderId):[];
-  const viewerGapSeries=coasted?raceViewerGapSeries(coasted,viewerRiderId):[];
+  const viewerGapSeries=coasted?raceViewerGapSeries(coasted,
+    raceScreenTrackedRiderId):[];
   const viewerRoadClock=coasted?
     raceViewerRoadClockSnapshot(coasted,coastedKm):null;
   const recordedTimedOrders=coasted?.settings.managerTacticalOrdersV8??
@@ -637,7 +639,7 @@ export default function Playtest({guided=false}){
       if(event.key!=='Tab')return;
       if(!raceScreenRef.current)return;
       const focusable=[...raceScreenRef.current.querySelectorAll(
-        'button:not(:disabled),input:not(:disabled)')];
+        'button:not(:disabled),input:not(:disabled),select:not(:disabled)')];
       if(!focusable.length)return;
       if(event.shiftKey&&document.activeElement===focusable[0]){
         event.preventDefault();focusable.at(-1).focus();
@@ -663,12 +665,39 @@ export default function Playtest({guided=false}){
     raceViewerBreaksAndChase(coasted,viewerRivalId).riders:[];
   const viewerRiderRoad=viewerRoad.find(band=>
     band.ownRiderIds.includes(viewerRiderId));
-  const raceScreenRider=viewerSituation?.own.find(rider=>
-    rider.riderId===viewerRiderId);
+  const raceScreenTrackedTeamId=raceScreenTrackedRiderId.startsWith('you-')?
+    'you':raceScreenTrackedRiderId.slice(0,
+      raceScreenTrackedRiderId.lastIndexOf('-'));
+  const raceScreenTrackedCards=coasted?playtestRiderCards(coasted.settings,
+    raceScreenTrackedTeamId):[];
+  const raceScreenTrackedCard=raceScreenTrackedCards.find(card=>
+    card.id===raceScreenTrackedRiderId);
+  const raceScreenTrackedName=raceScreenTrackedCard?
+    `${raceScreenTrackedTeamId==='you'?'':
+      `Rival ${raceScreenTrackedTeamId.slice(6)} `}Rider ${
+      Number(raceScreenTrackedRiderId.at(-1))+1}`:'Followed rider';
+  const raceScreenTrackedGroup=coastedFrame?.roadGroups.find(group=>
+    group.riderIds.includes(raceScreenTrackedRiderId));
+  const raceScreenTrackedIsolated=coastedFrame?.droppedRiders.find(row=>
+    row.riderId===raceScreenTrackedRiderId);
+  const raceScreenTrackedPosition=raceScreenTrackedGroup?
+    `${raceScreenTrackedGroup.id} · +${raceScreenTrackedGroup.gapSeconds.toFixed(1)} s`:
+    raceScreenTrackedIsolated?
+      `Alone ${raceScreenTrackedIsolated.deficitSeconds<0?
+        'ahead':'behind'} · ${raceScreenTrackedIsolated.deficitSeconds<0?
+        '+':'−'}${Math.abs(raceScreenTrackedIsolated.deficitSeconds).toFixed(1)} s`:
+      'Bunch';
+  const raceScreenRider=raceScreenTrackedCard?{
+    name:raceScreenTrackedCard.name,position:raceScreenTrackedPosition,
+    energy:coastedFrame?.ownRiders.find(row=>
+      row.riderId===raceScreenTrackedRiderId)?.energy}:null;
   const raceScreenRiderInBunch=raceScreenRider?.position==='Bunch';
+  const raceScreenTrackedBand=viewerRoad.find(band=>band.key===
+    (raceScreenTrackedGroup?.id??(raceScreenTrackedIsolated?
+      `solo:${raceScreenTrackedRiderId}`:'bunch')));
   const raceScreenBands=[...new Map([
     ...viewerRoad.filter(band=>band.gapSeconds>0).slice(0,2),
-    viewerRoad.find(band=>band.key==='bunch'),viewerRiderRoad]
+    viewerRoad.find(band=>band.key==='bunch'),raceScreenTrackedBand]
     .filter(Boolean).map(band=>[band.key,band])).values()]
     .sort((a,b)=>b.gapSeconds-a.gapSeconds);
   const raceScreenMarkerX=viewerSituation?
@@ -989,6 +1018,8 @@ export default function Playtest({guided=false}){
       setCoastedRiderId(response.coasted?.managerDecisions.find(row=>
         row.teamId==='you')?.finisherId??'');
       setViewerRiderId(response.coasted?.managerDecisions.find(row=>
+        row.teamId==='you')?.finisherId??'you-7');
+      setRaceScreenTrackedRiderId(response.coasted?.managerDecisions.find(row=>
         row.teamId==='you')?.finisherId??'you-7');
       setViewerRivalId('rival-1');
       setResult(response.playtest??null);
@@ -1765,6 +1796,24 @@ export default function Playtest({guided=false}){
                     <h3>Where the race is</h3>
                     <span>Recorded profile · 1 km samples</span>
                   </div>
+                  <div className="v91-race-screen-track-picker">
+                    <label>Track team<select value={raceScreenTrackedTeamId}
+                      onChange={event=>setRaceScreenTrackedRiderId(
+                        `${event.target.value}-0`)}>
+                      <option value="you">Your team</option>
+                      {Array.from({length:coasted.settings.teamCount-1},
+                        (_,index)=><option key={index+1}
+                          value={`rival-${index+1}`}>
+                          Fictional rival {index+1}</option>)}
+                    </select></label>
+                    <label>Track rider<select value={raceScreenTrackedRiderId}
+                      onChange={event=>setRaceScreenTrackedRiderId(
+                        event.target.value)}>
+                      {raceScreenTrackedCards.map((rider,index)=><option
+                        key={rider.id} value={rider.id}>
+                        Rider {index+1}</option>)}
+                    </select></label>
+                  </div>
                   <svg viewBox="0 0 600 145" preserveAspectRatio="none"
                     role="img" aria-label={`Stage profile with the field at km ${coastedKm} of ${viewerSituation.totalKm}`}>
                     <polygon className="v91-race-screen-profile-fill"
@@ -1795,8 +1844,7 @@ export default function Playtest({guided=false}){
                   <RecordedGapChart series={viewerGapSeries}
                     snapshot={viewerRoadClock}
                     totalKm={viewerSituation.totalKm} km={coastedKm}
-                    riderName={raceScreenRider?.name.replace(
-                      /^Your test team rider /,'Rider ')??'Followed rider'}/>
+                    riderName={raceScreenTrackedName}/>
                   {raceScreenRider&&!raceScreenRiderInBunch&&<p
                     className="v91-race-screen-away-note"
                     aria-label="Followed rider away from the bunch">
@@ -1910,7 +1958,7 @@ export default function Playtest({guided=false}){
                 </div>
                 <div className="v91-race-screen-bands">{
                   raceScreenBands.map(band=><div key={band.key}
-                    className={band.key===viewerRiderRoad?.key?
+                    className={band.key===raceScreenTrackedBand?.key?
                       'v91-race-screen-band-followed':''}>
                     <strong>{band.key.startsWith('solo:you-')?
                       `Rider ${Number(band.key.slice(9))+1} riding alone`:
@@ -1937,14 +1985,17 @@ export default function Playtest({guided=false}){
                   aria-label="Followed rider position">
                   Following <strong>{raceScreenRider.name.replace(
                     /^Your test team rider /,'Rider ')}</strong> · {
-                    raceScreenRider.position} · {
-                    raceScreenRider.energy?.toFixed(1)??'—'} energy left
+                    raceScreenRider.position}{raceScreenRider.energy!=null?
+                      ` · ${raceScreenRider.energy.toFixed(1)} energy left`:''}
                 </p>}
                 <div className="v91-race-screen-riders">{
                   viewerSituation.own.map(rider=><button type="button"
                     key={rider.riderId}
                     aria-pressed={viewerRiderId===rider.riderId}
-                    onClick={()=>setViewerRiderId(rider.riderId)}>
+                    onClick={()=>{
+                      setViewerRiderId(rider.riderId);
+                      setRaceScreenTrackedRiderId(rider.riderId);
+                    }}>
                     <strong>{rider.name.replace(
                       /^Your test team rider /,'Rider ')}</strong>
                     <span>{rider.position}</span>
