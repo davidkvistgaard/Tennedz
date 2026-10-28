@@ -1,6 +1,8 @@
 // Read-only comparison with recorded V94 road. A forecast is not a paid catch.
 import {createV94RaceDynamicsPreview} from '../lib/engine/v2/playtest-race-dynamics-v94.mjs';
 import {assessBreakThreatRange} from '../lib/engine/v2/break-threat-matrix.mjs';
+import {perceiveRivalStrength} from
+  '../lib/engine/v2/break-threat-perception.mjs';
 import {orderAt} from '../lib/engine/v2/orders.mjs';
 import {validateRecordedTour} from '../lib/engine/v2/recording.mjs';
 import {replayRaceDynamicsRecording} from '../lib/engine/v2/replay-race-dynamics-v94.mjs';
@@ -44,6 +46,16 @@ for(const seed of ['threat-holdout-1'])
             rider.group==='dropped').map(rider=>rider.id),
           remainingSegments:recording.route.kilometres.slice(km),
           gapSeconds:front.gapSeconds});
+        const observerTeamId=chaseTeamIds[0]??conditionalChaseTeamIds[0]??'you';
+        const perceived=perceiveRivalStrength({teams,observerTeamId,
+          raceSeed:recording.raceSeed});
+        const perceivedMatrix=assessBreakThreatRange({teams:perceived.teams,
+          frontRiderIds:front.riderIds,
+          nominatedChaseTeamIds:chaseTeamIds,conditionalChaseTeamIds,
+          unavailableRiderIds:frame.riderGroups.filter(rider=>
+            rider.group==='dropped').map(rider=>rider.id),
+          remainingSegments:recording.route.kilometres.slice(km),
+          gapSeconds:front.gapSeconds});
         const later=recording.frames.slice(km);
         const catchIndex=later.findIndex(next=>
           !next.roadGroups.some(group=>group.riderIds.some(id=>frontSet.has(id))));
@@ -67,7 +79,10 @@ for(const seed of ['threat-holdout-1'])
           expandedChaseReserve:matrix.expanded.chaseWorkReserveAtStart,
           nominatedBudget:matrix.nominated.allInCatchableGapSeconds,
           expandedBudget:matrix.expanded.allInCatchableGapSeconds,
+          perceivedNominatedBudget:perceivedMatrix.nominated.allInCatchableGapSeconds,
+          perceivedExpandedBudget:perceivedMatrix.expanded.allInCatchableGapSeconds,
           capacityBand:matrix.capacityBand,
+          perceivedCapacityBand:perceivedMatrix.capacityBand,
           laterControlChaseKm,laterProtectorChaseKm,laterControlHoldKm,
           actualCatch});
       }
@@ -85,6 +100,13 @@ for(const format of ['one_day','stage'])for(const controlCount of [0,2,4]){
     controlChaseKm:selected.reduce((sum,row)=>sum+row.laterControlChaseKm,0),
     protectorChaseKm:selected.reduce((sum,row)=>sum+row.laterProtectorChaseKm,0),
     controlHoldKm:selected.reduce((sum,row)=>sum+row.laterControlHoldKm,0),
+    beliefBandChanges:selected.filter(row=>
+      row.capacityBand!==row.perceivedCapacityBand).length,
+    meanAbsoluteBeliefBudgetDelta:+(selected.reduce((sum,row)=>sum+
+      Math.abs(row.perceivedExpandedBudget-row.expandedBudget),0)/
+      selected.length).toFixed(2),
+    maxAbsoluteBeliefBudgetDelta:+Math.max(...selected.map(row=>
+      Math.abs(row.perceivedExpandedBudget-row.expandedBudget))).toFixed(2),
     potentialOutcomeDifferenceCount:selected.filter(row=>
       (row.capacityBand!=='beyond_available_capacity')!==row.actualCatch).length});
 }
@@ -92,5 +114,7 @@ console.log(JSON.stringify({cases:rows.length,
   nominatedCapacity:rows.filter(row=>row.capacityBand==='nominated_capacity').length,
   conditionalCapacity:rows.filter(row=>row.capacityBand==='conditional_capacity').length,
   observedCatch:rows.filter(row=>row.actualCatch).length,
+  beliefBandChanges:rows.filter(row=>
+    row.capacityBand!==row.perceivedCapacityBand).length,
   potentialOutcomeDifferenceCount:differences.length,cells,
   ...(process.argv.includes('--details')?{differences,rows}:{})},null,2));

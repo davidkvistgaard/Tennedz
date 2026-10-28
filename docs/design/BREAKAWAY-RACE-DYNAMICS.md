@@ -1781,3 +1781,53 @@ not race totals.
 It does not model future attacks, group changes, or a newly justified
 sporting stake for other teams. These discrepancies prevent routing
 this version into automatic guided decisions. No production route uses it.
+
+### Observer-specific uncertainty and multiple fronts
+
+`lib/engine/v2/break-threat-perception.mjs` adds a separate read-only
+V94 candidate. Each observing team knows its own rider skills and
+energy exactly. Rival sporting skills, form and fatigue receive a
+deterministic observer-specific estimate within five points of the
+source; rival energy is rounded to ten-point steps with a stable
+observer bias and a ten-point uncertainty interval. The bias is keyed
+by race seed, observer, rider and field, so it does not reroll whenever
+the same rider is assessed at another kilometre. The paid road still
+uses exact source values. One focused counterfactual shows an observer
+underestimating a front rider sufficiently to expect a catch that the
+truth-based all-in shadow does not support. This creates a possible
+decision error without altering recorded rider strength or awarding
+time from randomness.
+
+The candidate assesses every recorded road group separately against
+the bunch, excluding other forward groups and dropped riders from the
+available chase roster. A new attack therefore adds a threat rather
+than replacing the old one. A validated and replayed V94 source produced
+40 two-group frames in a 260-km mountain stage. At km 220 the older front
+was 112.2 s ahead and beyond the nominated coalition's calculated
+capacity; the later group was 15.85 s ahead and within that capacity.
+At km 259 both were beyond capacity. The assessment did not mutate paid
+road frames (`scripts/audit-break-threat-perception.mjs`).
+
+The simulated fatigue and absent-helper tests reduce available chase
+capacity substantially. A longitudinal stage race with actual injuries
+and withdrawals is not implemented by this layer; callers must supply
+the recorded unavailable riders. Observer estimates are a synthetic
+information model, not empirical scouting data. No guided-race motor
+or production decision uses these estimates yet.
+
+The broad 71-observation capacity audit found no change in the coarse
+coalition band from the bounded observer estimates. They did change the
+expanded all-in catch budget by up to 46.93 s. A separate one-kilometre
+delay calculation compares starting the nominated chase now with
+giving the same front one further kilometre before paying. In one
+validated/replayed 260-km one-day source, 101 successive km 120–220
+were inspected. The perceived and truth-based `must start now` advice
+differed at two kilometres: the observer saw a critical deadline at
+km 147, while the truth-based shadow reached its critical deadline at
+km 153. The source had already paid both controls from km 143, so
+this is a timing-sensitivity example, not evidence that the alternate
+advice would have changed the winner. A focused counterfactual also
+shows a stable underestimation delaying the critical chase by one km.
+No random gap or finish is awarded. Full per-kilometre use of the
+remaining-route shadow needs performance and calibration work before
+it can be a playable policy.

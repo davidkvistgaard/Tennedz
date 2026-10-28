@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {forecastBreakThreat,assessBreakThreatRange} from
+import {forecastBreakThreat,assessBreakThreatRange,assessOneKmChaseDelay} from
   '../../lib/engine/v2/break-threat-matrix.mjs';
 
 function team(index,{flat=50,mountain=50,energy=90,chase='selective',
@@ -150,4 +150,31 @@ test('threat range distinguishes nominated, conditional and insufficient pursuit
     gapSeconds:upper+10}).capacityBand,'beyond_available_capacity');
   assert.throws(()=>assessBreakThreatRange({...input,
     conditionalChaseTeamIds:[teams[1].id]}),/coalition/);
+});
+
+test('a committed mid-race order changes the chase forecast at its marker',()=>{
+  const front=team(1,{flat:75});
+  const chaser=team(2,{flat:75,chase:'ignore'});
+  chaser.orders.phases=[{atKm:10,chase:'all'}];
+  const result=forecastBreakThreat({teams:[front,chaser],
+    frontRiderIds:[front.riders[0].id],chaseTeamIds:[chaser.id],
+    remainingSegments:route('flat',20),gapSeconds:150});
+  assert.ok(result.kilometres.slice(0,10).every(row=>row.chaseHelpers===0));
+  assert.ok(result.kilometres.slice(10).some(row=>row.chaseHelpers>0));
+});
+
+test('one-kilometre wait can exhaust the calculated chase headroom',()=>{
+  const teams=[team(1,{flat:75}),team(2,{flat:80,chase:'all'})];
+  const base={teams,frontRiderIds:[teams[0].riders[0].id],
+    nominatedChaseTeamIds:[teams[1].id],remainingSegments:route('flat',20)};
+  const now=forecastBreakThreat({...base,chaseTeamIds:[teams[1].id],
+    gapSeconds:100});
+  const later=forecastBreakThreat({...base,chaseTeamIds:[teams[1].id],
+    gapSeconds:100,chaseStartKm:2});
+  assert.ok(now.allInCatchableGapSeconds>later.allInCatchableGapSeconds);
+  const gap=(now.allInCatchableGapSeconds+later.allInCatchableGapSeconds)/2;
+  const decision=assessOneKmChaseDelay({...base,gapSeconds:gap});
+  assert.equal(decision.now.nominated.allInCatchPossible,true);
+  assert.equal(decision.deferred.nominated.allInCatchPossible,false);
+  assert.equal(decision.nominatedMustStartNow,true);
 });
