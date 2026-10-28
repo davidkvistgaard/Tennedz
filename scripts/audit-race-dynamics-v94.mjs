@@ -186,6 +186,8 @@ function run({seed,terrain,fatigue,format,breakTeams,controlTeams}){
     chaseRecovery:0,otherRecovery:0,chaseRiderKm:0,otherRiderKm:0,
     otherNoFrontPaid:0,otherFrontPaid:0,
     otherNoFrontRiderKm:0,otherFrontRiderKm:0,
+    otherNoFrontNoRecordedAttackPaid:0,
+    otherNoFrontNoRecordedAttackRiderKm:0,
     otherBeforeFirstFrontPaid:0,otherAfterFirstFrontNoFrontPaid:0,
     otherBeforeFirstFrontRiderKm:0,
     otherAfterFirstFrontNoFrontRiderKm:0};
@@ -206,6 +208,14 @@ function run({seed,terrain,fatigue,format,breakTeams,controlTeams}){
         controlHelperWorkThrough210[`${roadKey}Paid`]+=row.paidFromReserve;
         controlHelperWorkThrough210[`${roadKey}RiderKm`]++;
         if(roadKey==='otherNoFront'){
+          const prior=frames[frame.km-2];
+          if(!frame.attackers.length&&
+            (!prior||!prior.breakawayRiderIds.length)){
+            controlHelperWorkThrough210
+              .otherNoFrontNoRecordedAttackPaid+=row.paidFromReserve;
+            controlHelperWorkThrough210
+              .otherNoFrontNoRecordedAttackRiderKm++;
+          }
           const timingKey=frame.km<firstAnyFrontKm?
             'otherBeforeFirstFront':'otherAfterFirstFrontNoFront';
           controlHelperWorkThrough210[`${timingKey}Paid`]+=
@@ -307,6 +317,9 @@ function run({seed,terrain,fatigue,format,breakTeams,controlTeams}){
       +controlHelperWorkThrough210.otherNoFrontPaid.toFixed(2),
     controlHelperOtherFrontPaidThrough210:
       +controlHelperWorkThrough210.otherFrontPaid.toFixed(2),
+    controlHelperOtherNoFrontNoRecordedAttackPaidThrough210:
+      +controlHelperWorkThrough210
+        .otherNoFrontNoRecordedAttackPaid.toFixed(2),
     controlHelperOtherBeforeFirstFrontPaidThrough210:
       +controlHelperWorkThrough210.otherBeforeFirstFrontPaid.toFixed(2),
     controlHelperOtherAfterFirstFrontNoFrontPaidThrough210:
@@ -323,6 +336,9 @@ function run({seed,terrain,fatigue,format,breakTeams,controlTeams}){
       controlHelperWorkThrough210.otherNoFrontRiderKm,
     controlHelperOtherFrontRiderKmThrough210:
       controlHelperWorkThrough210.otherFrontRiderKm,
+    controlHelperOtherNoFrontNoRecordedAttackRiderKmThrough210:
+      controlHelperWorkThrough210
+        .otherNoFrontNoRecordedAttackRiderKm,
     controlHelperOtherBeforeFirstFrontRiderKmThrough210:
       controlHelperWorkThrough210.otherBeforeFirstFrontRiderKm,
     controlHelperOtherAfterFirstFrontNoFrontRiderKmThrough210:
@@ -464,6 +480,8 @@ const summary=process.argv.includes('--summary')?
         average('controlHelperOtherNoFrontPaidThrough210'),
       meanControlHelperOtherFrontPaidThrough210:
         average('controlHelperOtherFrontPaidThrough210'),
+      meanControlHelperOtherNoFrontNoRecordedAttackPaidThrough210:
+        average('controlHelperOtherNoFrontNoRecordedAttackPaidThrough210'),
       meanControlHelperOtherBeforeFirstFrontPaidThrough210:
         average('controlHelperOtherBeforeFirstFrontPaidThrough210'),
       meanControlHelperOtherAfterFirstFrontNoFrontPaidThrough210:
@@ -480,6 +498,8 @@ const summary=process.argv.includes('--summary')?
         average('controlHelperOtherNoFrontRiderKmThrough210'),
       meanControlHelperOtherFrontRiderKmThrough210:
         average('controlHelperOtherFrontRiderKmThrough210'),
+      meanControlHelperOtherNoFrontNoRecordedAttackRiderKmThrough210:
+        average('controlHelperOtherNoFrontNoRecordedAttackRiderKmThrough210'),
       meanControlHelperOtherBeforeFirstFrontRiderKmThrough210:
         average('controlHelperOtherBeforeFirstFrontRiderKmThrough210'),
       meanControlHelperOtherAfterFirstFrontNoFrontRiderKmThrough210:

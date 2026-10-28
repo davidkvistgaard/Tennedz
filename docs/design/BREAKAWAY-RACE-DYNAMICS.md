@@ -1582,3 +1582,22 @@ first front and after it was caught changes too, so this is not a
 fixed set of kilometre states with only a cheaper effort charge.
 It strengthens the case for auditing a complete, committed control
 work decision over time rather than applying a static cost discount.
+
+The read-only ledger now isolates an even narrower subset of those
+non-chasing control-helper kilometres: no front group at either the
+start or end of the kilometre, and no recorded attacker during it.
+Across the same 24 validated/replayed guided-random V94 cases, fresh
+starts under the generated hard order paid a mean 469.94 reserve units
+over 1,574 helper rider-km in this subset through km 210. Changing
+only that generated effort to steady paid 270.99 units over 1,543
+helper rider-km. Tired starts paid 54.97 over 178 rider-km under hard,
+versus 25.69 over 142 under steady. One-day and stage early values
+match because their routes and early orders do. This closes the
+within-kilometre attack caveat for this explicitly recorded subset:
+the hard whole-team control order charges helpers even when neither
+a front nor an attacker is recorded. Different road histories still
+change exposure, so these are observed whole-race ledgers, not a
+per-kilometre causal effect or a safe policy replacement. The
+steady-only counterfactual already produced more chase and shorter
+leads; the generated control workload and pursuit decision must be
+designed and audited together.
