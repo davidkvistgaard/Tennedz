@@ -23,10 +23,8 @@ test('experimental v94 race shows committed plans and measured road only',
     await page.getByLabel('Fictional rival 1 goal').selectOption('break');
     await page.getByText('Set more rival goals').click();
     await page.getByLabel('Fictional rival 2 goal').selectOption('control');
-    await page.getByLabel('Control-team pursuit').selectOption('2');
     await expect(page.getByLabel('Breakaway front work')).toHaveCount(0);
-    expect((await page.getByLabel('Control-team pursuit').boundingBox()).width)
-      .toBeGreaterThan(300);
+    await expect(page.getByLabel('Control-team pursuit')).toHaveCount(0);
     const responsePromise=page.waitForResponse(response=>
       response.url().endsWith('/api/v91-playtest')&&
       response.request().postDataJSON()?.mode==='v94-race-dynamics');
@@ -39,12 +37,12 @@ test('experimental v94 race shows committed plans and measured road only',
     expect(raceDynamics.teamPlans).toHaveLength(4);
     expect(raceDynamics.resultStatus).toBe('provisional_road_groups_only');
     expect(raceDynamics.policy.rivalIntentVersion).toBe(4);
-    expect(raceDynamics.policy.controlWithdrawalVersion).toBe(2);
+    expect(raceDynamics.policy.controlWithdrawalVersion).toBeUndefined();
     expect(raceDynamics.policy.frontRotationVersion).toBe(1);
     await expect(page.getByText('active paid rotation',
       {exact:true})).toBeVisible();
-    await expect(page.getByText('experimental impossible-pursuit withdrawal',
-      {exact:false})).toBeVisible();
+    await expect(page.getByText('current selective pursuit',
+      {exact:true})).toBeVisible();
     expect(raceDynamics.provisionalResults).toBeUndefined();
     expect(raceDynamics.teamPlans.find(plan=>plan.teamId==='rival-1'))
       .toMatchObject({source:'manager_goal',role:'break',
@@ -87,7 +85,6 @@ test('experimental v94 race shows committed plans and measured road only',
     await page.getByLabel('Field').selectOption('20');
     await page.getByLabel('Race format').selectOption('one_day');
     await page.getByLabel('Fictional rival 1 goal').selectOption('auto');
-    await page.getByLabel('Control-team pursuit').selectOption('1');
     await page.getByLabel('Your chase order').selectOption('ignore');
     await page.getByLabel('Your bunch-front work').selectOption('rotate');
     await page.getByLabel('Race seed').fill('race-dynamics-1');

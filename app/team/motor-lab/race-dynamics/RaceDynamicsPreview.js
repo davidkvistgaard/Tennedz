@@ -5,7 +5,7 @@ import {api} from '../../../../lib/api';
 
 const INITIAL={format:'one_day',distanceKm:260,terrain:'flat',teamCount:20,
   gender:'M',fatigue:0,effort:'steady',attack:'none',chase:'selective',
-  rivalOneGoal:'auto',controlWithdrawalVersion:1,ownFrontWork:'none',
+  rivalOneGoal:'auto',ownFrontWork:'none',
   seed:'race-dynamics-preview-1'};
 const OPTIONS={format:[['one_day','One-day race'],['stage','Stage race']],
   distanceKm:[[40,'40 km'],[120,'120 km'],[260,'260 km']],
@@ -20,15 +20,12 @@ const OPTIONS={format:[['one_day','One-day race'],['stage','Stage race']],
     ['rotate','Rotate paid bunch-front helpers']],
   rivalOneGoal:[['auto','Seeded plan'],['break','Break'],
     ['control','Control'],['protect','Protect'],
-    ['opportunistic','Opportunistic']],
-  controlWithdrawalVersion:[[1,'Current selective pursuit'],
-    [2,'Try impossible-pursuit withdrawal']]};
+    ['opportunistic','Opportunistic']]};
 const LABELS={format:'Race format',distanceKm:'Distance',terrain:'Route',
   teamCount:'Field',gender:'Category',fatigue:'Starting fatigue',
   effort:'Your effort',attack:'Your attack order',chase:'Your chase order',
   ownFrontWork:'Your bunch-front work',
-  rivalOneGoal:'Fictional rival 1 goal',
-  controlWithdrawalVersion:'Control-team pursuit'};
+  rivalOneGoal:'Fictional rival 1 goal'};
 const time=seconds=>{
   const rounded=Math.round(Number(seconds)*10)/10;
   if(rounded<60)return `${rounded.toFixed(1)}s`;
@@ -102,13 +99,12 @@ export default function RaceDynamicsPreview(){
   const coastMoments=preview?.frames.filter(row=>row.frontCoast.length>0)
     .map(row=>row.km)??[];
   const setChoice=(key,value)=>setSettings(current=>({...current,
-    [key]:['distanceKm','teamCount','fatigue',
-      'controlWithdrawalVersion'].includes(key)?
+    [key]:['distanceKm','teamCount','fatigue'].includes(key)?
       Number(value):value}));
   async function run(event){
     event.preventDefault();setBusy(true);setError('');setPreview(null);
     try{
-      const {format,rivalOneGoal,controlWithdrawalVersion,ownFrontWork,
+      const {format,rivalOneGoal,ownFrontWork,
         ...raceSettings}=settings;
       const rivalGoals=[
         ...(rivalOneGoal==='auto'?[]:[{teamId:'rival-1',role:rivalOneGoal}]),
@@ -119,7 +115,7 @@ export default function RaceDynamicsPreview(){
       const response=await api('/api/v91-playtest',{method:'POST',
         headers:{'Content-Type':'application/json'},
         body:JSON.stringify({mode:'v94-race-dynamics',format,
-          controlWithdrawalVersion,ownFrontWork,
+          ownFrontWork,
           settings:raceSettings,rivalGoals}),
         signal:AbortSignal.timeout(60_000)});
       setPreview(response.raceDynamics);setKm(1);
@@ -140,9 +136,7 @@ export default function RaceDynamicsPreview(){
         occur. Keep the seed and settings when sharing feedback so the run
         can be repeated.</p>
       <form onSubmit={run} className="v94-form">
-        {Object.entries(OPTIONS).map(([key,options])=><label key={key}
-          className={key==='controlWithdrawalVersion'?'v94-policy-choice':
-            undefined}>
+        {Object.entries(OPTIONS).map(([key,options])=><label key={key}>
           <span>{LABELS[key]}</span><select value={settings[key]}
             onChange={event=>setChoice(key,event.target.value)}>
             {options.map(([value,label])=><option key={value} value={value}>
@@ -168,9 +162,6 @@ export default function RaceDynamicsPreview(){
               </label>)}
           </div>
         </details>
-        <p className="v94-goal-note">The optional withdrawal rule lets a
-          control team stop paying for a chase when its recorded catch
-          projection is impossible. The lead may grow much larger.</p>
         <p className="v94-goal-note">Riders in a settled breakaway share
           paid pulls. This can build a larger lead and spend more energy;
           it does not guarantee a gap or a result.</p>
@@ -190,9 +181,7 @@ export default function RaceDynamicsPreview(){
         <section className="v94-summary" aria-label="Recorded race summary">
           <h2>What the recording shows</h2>
           <p>Seed <strong>{preview.settings.seed}</strong> · control pursuit:{' '}
-            <strong>{preview.policy.controlWithdrawalVersion===2?
-              'experimental impossible-pursuit withdrawal':
-              'current selective pursuit'}</strong>.</p>
+            <strong>current selective pursuit</strong>.</p>
           <p>Breakaway work: <strong>active paid rotation</strong>.</p>
           <p>Front exhaustion: <strong>paid coast and group contact, version {
             preview.policy.frontExhaustionVersion}</strong>.</p>
