@@ -26,7 +26,8 @@ import {probeFinaleSeparatedGroupsFromTour,
   FINALE_COAST_UNAVAILABLE_FRONT_CATCH_VERSION,
   FINALE_COAST_PAYABLE_FRONT_CATCH_VERSION,
   FINALE_PAID_BUNCH_ONLY_VERSION,
-  FINALE_DYNAMIC_NO_FRONT_PAID_BUNCH_VERSION} from
+  FINALE_DYNAMIC_NO_FRONT_PAID_BUNCH_VERSION,
+  FINALE_COAST_FRONT_CATCH_LAST_KM_VERSION} from
   '../lib/engine/v2/finale-multi-run.mjs';
 import {recordFinaleCoastNoFrontPaidBunchClock,
   validateFinaleCoastNoFrontPaidBunchClock,
@@ -43,7 +44,11 @@ import {recordFinaleCoastNoFrontPaidBunchClock,
   recordFinalePaidBunchOnlyClock,
   validateFinalePaidBunchOnlyClock,
   recordFinaleDynamicNoFrontPaidBunchClock,
-  validateFinaleDynamicNoFrontPaidBunchClock} from
+  validateFinaleDynamicNoFrontPaidBunchClock,
+  recordFinaleCoastFrontCatchLastKmClock,
+  validateFinaleCoastFrontCatchLastKmClock,
+  recordFinaleLateChaseCatchClock,
+  validateFinaleLateChaseCatchClock} from
   '../lib/engine/v2/finale-separated-last-km.mjs';
 
 const countArg=process.argv.find(value=>value.startsWith('--seeds='));
@@ -143,6 +148,47 @@ for(const terrain of (namedFrontWork?['rolling','mountain']:
       let payableFrontCatch=null;
       let paidBunchOnly=null;
       let dynamicNoFrontPaidTrace=null;
+      let ordinaryFrontCatchTrace=null;
+      let lateChaseCatchTrace=null;
+      if(!namedFrontWork&&snapshot.roadGroups.length===1){
+        let traceEvidence=null;
+        try{
+          const trace=probeFinaleSeparatedGroupsFromTour(road,{
+            version:FINALE_COAST_FRONT_CATCH_LAST_KM_VERSION});
+          validateFinaleSeparatedGroupsFromTour(road,trace);
+          traceEvidence={contactDistanceM:trace.frames.find(frame=>
+            frame.contact)?.contact.atDistanceM??null,
+          contactPaidChaseRiderId:trace.frames.find(frame=>
+            frame.contact)?.bunchPullRiderId??null,
+          paidChaseSlices:trace.frames.filter(frame=>
+            frame.bunchPullRiderId!==null).length,
+          exhaustionDrops:trace.frames.reduce((sum,frame)=>
+            sum+frame.exhaustionDrops.length,0)};
+          const clock=recordFinaleCoastFrontCatchLastKmClock(road);
+          validateFinaleCoastFrontCatchLastKmClock(road,clock);
+          ordinaryFrontCatchTrace={status:'replayed',
+            ...traceEvidence};
+        }catch(candidateError){
+          ordinaryFrontCatchTrace={status:'refused',
+            reason:candidateError.message,...traceEvidence};
+        }
+      }
+      if(!namedFrontWork&&snapshot.roadGroups.length===1)
+        try{
+          const clock=recordFinaleLateChaseCatchClock(road);
+          validateFinaleLateChaseCatchClock(road,clock);
+          if(clock.line.bands.at(-1)?.lastPossiblePlace!==
+              road.committedInputs.teams.length*8||
+            clock.canCommitAwards!==false)
+            throw new Error('The late chase catch lost its locked riders.');
+          lateChaseCatchTrace={status:'replayed',
+            contactDistanceM:clock.contact.atDistanceM,
+            paidChaseSlices:clock.trace.frames.filter(frame=>
+              frame.bunchPullRiderId!==null).length};
+        }catch(candidateError){
+          lateChaseCatchTrace={status:'refused',
+            reason:candidateError.message};
+        }
       if(snapshot.roadGroups.length===0&&
         snapshot.droppedRiderIds.length===0)
         try{
@@ -375,6 +421,8 @@ for(const terrain of (namedFrontWork?['rolling','mountain']:
             energy:present.get(riderId)?.energy??null})),
         firstSliceFrontWorkCandidate:frontWorkCandidate,
         noFrontPaidTrace,
+        ordinaryFrontCatchTrace,
+        lateChaseCatchTrace,
         dynamicNoFrontPaidTrace,
         oneFrontPaidTrace,
         twoFrontPaidTrace,

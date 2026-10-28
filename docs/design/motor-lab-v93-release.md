@@ -281,3 +281,19 @@ plus two complete paid bunches. None needed the dynamic paid no-front
 version in that disjoint sample. This confirms broader coverage of
 the narrow source contracts, without resolving individual placing
 or the guided finish refusal.
+
+The ordinary V93 guided-random 96-case flat/mountain, fresh/tired,
+20-team 260 km baseline has one separate late-contact refusal:
+`guided-finish-coverage-19` (fresh mountain). At km 259 its sole
+four-rider front group is 0.26 s ahead. The existing seven-slice
+separated-road trace pays a chase rider in five slices and catches
+the front at route marker 259774.17 m, with 226 m remaining. The
+older early-contact finish contract correctly refuses that marker.
+A new *internal* late-contact checkpoint requires exactly one front,
+contact within the final 500 m after recorded paid chase, and no
+new exhaustion drops or bunch-front work. It source-replays the
+contact, worker and energy; an altered contact marker fails replay.
+It accounts for all 160 riders in two unordered line bands: 148 in
+the merged contact group and 12 still dropped. Individual places,
+classifications, points and awards remain withheld. The ordinary
+guided result and its refusal are unchanged.
