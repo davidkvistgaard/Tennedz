@@ -36,12 +36,15 @@ import {recordFinaleCoastNoFrontPaidBunchClock,
 
 const countArg=process.argv.find(value=>value.startsWith('--seeds='));
 const count=countArg?Number(countArg.slice('--seeds='.length)):12;
+const startArg=process.argv.find(value=>value.startsWith('--seed-start='));
+const seedStart=startArg?Number(startArg.slice('--seed-start='.length)):1;
 const namedFrontWork=process.argv.includes('--named-front-work');
 const frontEffortArg=process.argv.find(value=>
   value.startsWith('--front-effort='));
 const frontEffort=frontEffortArg?.slice('--front-effort='.length)??null;
-if(!Number.isInteger(count)||count<1||count>48)
-  throw new Error('Use --seeds=1 through 48.');
+if(!Number.isInteger(count)||count<1||count>48||
+  !Number.isInteger(seedStart)||seedStart<1||seedStart+count-1>48)
+  throw new Error('Choose 1–48 seeds inside the first 48 seed numbers.');
 if(frontEffort!==null&&(!namedFrontWork||
   !['hard','conserve'].includes(frontEffort)))
   throw new Error('Use hard or conserve with --named-front-work.');
@@ -57,7 +60,7 @@ const rows=[];
 for(const terrain of namedFrontWork?['rolling','mountain']:
   ['flat','mountain'])for(const fatigue of [0,30])
   for(let index=0;index<count;index++){
-    const seed=`guided-finish-coverage-${index+1}`;
+    const seed=`guided-finish-coverage-${seedStart+index}`;
     const managerTactics=resolveRandomRivalTactics({teamCount:20,
       random:seededRandom(`${seed}:${terrain}:${fatigue}`)});
     const settings={distanceKm:260,
@@ -254,6 +257,7 @@ const counts=Object.groupBy(rows,row=>row.status==='paid_finish'?
 console.log(JSON.stringify({version:'v93-guided-finish-coverage-audit-1',
   note:'Synthetic seeded 20-team, 260 km guided-random inputs. No official awards.',
   namedFrontWork,
+  seedStart,
   frontEffort,
   cases:rows.length,counts:Object.fromEntries(Object.entries(counts).map(
     ([key,items])=>[key,items.length])),rows},null,2));

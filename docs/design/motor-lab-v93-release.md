@@ -183,3 +183,12 @@ deep-replay, including rejection of a forged contact marker. In a
 replayed; all three one-front catches replayed only under this
 unavailable-front version, and one three-front source remained outside
 the contract. The ordinary guided finish and refusal are unchanged.
+
+A disjoint 24-seed hard-effort holdout (seed numbers 25–48, another 96
+generated rolling/mountain fresh/tired races) source-replayed 25
+no-front, 64 one-front and seven two-front no-contact checkpoints.
+None needed the unavailable-front catch version or reached a three-front
+handoff. Across both 24-seed batches, the isolated versions therefore
+replayed 55 no-front, 119 one-front, 14 two-front and three
+unavailable-front catches; one three-front source still refused. This
+remains synthetic boundary coverage, not a complete guided finish.
