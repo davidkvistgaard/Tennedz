@@ -1676,3 +1676,19 @@ without one. Assigning `defend_top_ten` or `target_top_ten` to the
 generated protect teams would therefore fabricate a missing race
 context rather than supply a justified pursuit goal. A stage-result
 response needs its own committed, testable incentive.
+
+A temporary read-only counterfactual tested the existing, explicit
+`chase_if_threatened` road-captain order on **all generated protect
+teams in stages only**, leaving the seeded riders, roles, other orders,
+road and energy model fixed. In 32 format-paired cases from the first
+four holdout seeds (flat/mountain, fresh/tired), all recordings
+validated and fully source-replayed. The 16 one-day controls were
+unchanged. Fresh stage mean widest lead fell from 348.45 to 67.75
+seconds and tired stage mean from 511.15 to 152.56; the stage ranges
+became 40.05–126.95 and 27.14–349.89 seconds. Paid protect-team chase
+on kilometres with a front rose from zero to 299.75/324.63 team-km
+per fresh/tired stage. The zero-control tired-flat outlier fell from
+961.88 to 279.74 seconds, but paid 421 protect-team chase-km against
+the front. This broad response trades an unopposed race for short
+leads and heavy pursuit elsewhere. Its temporary audit code was
+removed; neither generated orders nor the guided/default motor changed.
