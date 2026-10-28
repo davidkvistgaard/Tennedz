@@ -2087,3 +2087,15 @@ for detached riders, and a single reference slice cannot establish
 terrain-specific location for riders far apart on the road. Those plans,
 rear-group continuation and full source replay are required before any
 real race can form a gruppetto with this candidate.
+
+`rear-contact-continuation-v1.mjs` now recalculates that paid solo
+meeting before allowing a two-rider rear group to travel the remaining
+part of the same short slice. One named rider leads and pays the greater
+cost; the other pays a smaller sheltered cost. If their paid common
+speed reaches the bunch, the step stops at the computed rejoin marker.
+The source validator rejects changed energy or contact. No group is
+formed from similar checkpoint deficits, and an unpayable rider or
+missing solo contact refuses. The group speed and costs are explicit
+inputs to this isolated step, not yet derived from a committed
+multi-stage rider policy. Persistent rear-group rotation on later
+slices, changing terrain and full-race replay are still absent.
