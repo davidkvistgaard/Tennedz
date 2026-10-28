@@ -17,6 +17,8 @@ test('a paid meeting forms a rear group with one exposed leader',()=>{
   assert.equal(result.contact.event.atDistanceM,5500);
   assert.equal(result.endDistanceM,6000);
   assert.equal(result.behindBunchSeconds,40);
+  assert.deepEqual(result.rearGroup.riderIds,['a','b']);
+  assert.equal(result.rearGroup.turnCount,1);
   assert.deepEqual(result.riders.map(row=>[row.role,row.energySpent]),
     [['leader',1],['sheltered',.25]]);
   assert.equal(validateRearContactContinuationV1(input,result),true);
@@ -33,6 +35,7 @@ test('a fast shared group stops exactly when it rejoins the bunch',()=>{
   leadCostPerKm:2,shelteredCostPerKm:.5});
   assert.equal(result.event.kind,'rejoin_bunch');
   assert.equal(result.behindBunchSeconds,0);
+  assert.equal(result.rearGroup,null);
   assert.ok(result.endDistanceM<6000);
 });
 

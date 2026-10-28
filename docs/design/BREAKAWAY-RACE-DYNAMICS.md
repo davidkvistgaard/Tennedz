@@ -2097,5 +2097,19 @@ The source validator rejects changed energy or contact. No group is
 formed from similar checkpoint deficits, and an unpayable rider or
 missing solo contact refuses. The group speed and costs are explicit
 inputs to this isolated step, not yet derived from a committed
-multi-stage rider policy. Persistent rear-group rotation on later
-slices, changing terrain and full-race replay are still absent.
+multi-stage rider policy. The contact step alone does not select later
+turns or replay a full race.
+
+`rear-group-step-v1.mjs` continues the explicitly formed group on later
+short slices. Every member supplies a `pull` or `sit_in` decision and a
+reason; the group rotates one willing leader per slice. Only that rider
+pays the higher exposed rate, while companions pay the lower sheltered
+rate. The step refuses an unpayable leader or a group with no willing
+leader, and stops exactly at a paid bunch rejoin. A complete next-group
+state carries membership, clock, turn count and each rider's energy to
+the following slice; its validator recalculates the source decisions.
+This remains isolated: its speed, rider decisions and energy rates are
+supplied inputs rather than derived from the actual V93/V94 stage and
+committed orders. It does not model new joins, splits, terrain-specific
+positions or a whole-race finish. It cannot be shown as a playable
+gruppetto until those parts are source-replayed together.
