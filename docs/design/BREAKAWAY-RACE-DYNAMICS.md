@@ -2189,3 +2189,24 @@ The old V94 chase still sums the separate team capacities, so this
 candidate has not yet changed the race. It needs integration with the
 committed pursuit decisions, full rider work ledger, relative clock and
 independent source validator before it can be assessed as a motor version.
+
+The candidate is now connected behind an opt-in V94
+`chaseTurnVersion: 1`: all selected chasing helpers rotate one exposed
+turn at a time. Their turn-weighted contributions, named shares and
+paid energy enter the actual attack/chase gap clock and recording.
+The source validator checks the complete turn arithmetic and helper
+reserve; full V94 replay rejects changed work. Historical versions and
+guided V93 remain unchanged. A worker unable to pay the full kilometre
+work refuses the experimental race.
+
+This is **not calibrated**. In 16 same-seed, source-replayed 120-km
+flat/mountain fresh/tired cases, all opt-in races replayed, but the
+widest break lead rose from 44–119 seconds under summed team capacity
+to 120–330 seconds under sequential chase. The front survived in all
+16 opt-in cases, versus one of the 16 old races. This demonstrates
+that the old recovery-seconds-per-capacity coefficient cannot simply
+be reused with a single-leader capacity. Do not route this version to
+guided racing or infer realistic catch frequency from it. The chase
+decision still uses the prior potential-coalition estimate; the
+physical pace and that decision need joint calibration from paid
+rider/terrain ability and observed contact, not a static multiplier.
