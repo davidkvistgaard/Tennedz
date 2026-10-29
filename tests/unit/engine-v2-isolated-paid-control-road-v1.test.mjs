@@ -18,6 +18,9 @@ import {advanceIsolatedPaidCooperativeRoadV1,
 import {advancePaidControlChaseHandoffV1,
   validatePaidControlChaseHandoffV1} from
   '../../lib/engine/v2/isolated-paid-control-chase-handoff-v1.mjs';
+import {runIsolatedPaidControlChaseV1,
+  validateIsolatedPaidControlChaseRunV1} from
+  '../../lib/engine/v2/isolated-paid-control-chase-run-v1.mjs';
 
 const team=(id,skill)=>{
   const riders=Array.from({length:8},(_,number)=>({
@@ -241,4 +244,44 @@ test('control and new chase helpers share one exposed bunch position',()=>{
   forgedControl.finalTeams[2].energy['control-2']+=1;
   assert.throws(()=>advancePaidControlChaseHandoffV1({
     controlRunInput,controlRun:forgedControl}),/replayed paid control/);
+});
+
+test('the same road redecides control or chase every kilometre',()=>{
+  const source={commitment,teams,roadGroup:group,
+    observerTeamId:'observer',controlTeamId:'control',
+    raceSeed:'paid-watch-1',
+    nominatedChaseTeamIds:['observer'],
+    frontRiderGoals:[{riderId:'front-0',goal:'cooperate'}],
+    remainingSegments:route};
+  const run=runIsolatedPaidControlChaseV1(source);
+  assert.ok(run.steps.some(step=>step.action==='watch'));
+  assert.ok(run.steps.some(step=>step.action==='commit_now'));
+  assert.ok(run.unresolved,JSON.stringify({
+    steps:run.steps.length,gap:run.finalGapSeconds}));
+  assert.equal(run.unresolved.action,'capacity_shortfall');
+  assert.equal(run.contact,null);
+  assert.equal(run.unresolved.sourceKm,
+    run.steps.at(-1).road.sourceKm+1);
+  assert.ok(run.steps.every(step=>step.action==='watch'?
+    validateIsolatedPaidControlRoadV1(step.paidInput,
+      step.road):
+    validateIsolatedPaidCooperativeRoadV1(step.paidInput,
+      step.road)));
+  for(let index=1;index<run.steps.length;index++){
+    const prior=run.steps[index-1].road;
+    const current=run.steps[index].paidInput.committedChoiceInput;
+    assert.equal(current.roadGroups[0].gapSeconds,
+      prior.gapSeconds);
+    for(const [id,energy] of Object.entries(prior.energyByRider)){
+      const team=current.teams.find(row=>
+        row.riders.some(rider=>rider.id===id));
+      assert.equal(team.energy[id],energy);
+    }
+  }
+  assert.equal(run.officialResults,false);
+  assert.equal(validateIsolatedPaidControlChaseRunV1(source,run),true);
+  const forged=structuredClone(run);
+  forged.steps[1].road.gapSeconds+=1;
+  assert.throws(()=>validateIsolatedPaidControlChaseRunV1(
+    source,forged),/differs/);
 });

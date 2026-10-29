@@ -2845,3 +2845,18 @@ paid gap and energy forward and rejecting a forged control reserve.
 This remains an isolated three-team source trace. Other bunch riders,
 later cooperative kilometres and finish results are unmodeled; neither
 version is routed to guided races.
+
+`isolated-paid-control-chase-run-v1.mjs` now re-evaluates the same
+observer's uncertain threat decision and the front rider's work choice
+each successive kilometre, using the gap and named workers' energy
+paid in the previous one. It chooses the single-worker control road
+for `watch` and the shared control/chase turns for a committed chase.
+In the same weak-controller three-team fixture, the observer waits,
+then commits helpers for several kilometres, but eventually reports
+`capacity_shortfall` with the break still ahead. The run stops **before**
+moving that unsupported next kilometre. Each prior control and
+cooperative road step replays; a forged gap fails validation. A strong
+controller in the same synthetic seed catches the front earlier, while
+fatigue delays that contact. This is a real paid tactical mechanism for
+the modeled riders, not a whole-field result: all other riders' choices,
+energy, additional road groups and the finish remain unmodeled.
