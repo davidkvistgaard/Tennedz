@@ -2667,6 +2667,9 @@ cannot fund a full sheltered turn. The physical wheel ends at the
 precise distance their remaining reserve can pay; the split begins at
 zero gap and records no fictitious seconds behind the bunch. An
 unpayable *named leader* still refuses as an inconsistent source.
+The energy-loss road now checks every scheduled front-turn name before
+movement, including turns after the loss marker. An unnamed later
+leader cannot be hidden by stopping the first turn early.
 At that increment, the road stopped at the split marker.
 `rear-exhausted-solo-v1.mjs` replays that exact energy-loss marker and
 uses the existing exhaustion-coast clock for the remaining solo road.
@@ -2771,13 +2774,15 @@ under one versioned clock before the onset can enter the whole race.
 Across the same 444 first positive climbing deficits, every alternate
 paid split begins at the first metre of its kilometre; none of the
 source bunch plans has only one turn. `rear-pace-climb-split-v2.mjs`
-now prices each solo slice against its own named bunch turn with the
+now prices each solo slice against its own bunch-turn ability with the
 route's terrain load and a route-derived capacity ceiling. Fresh and
-tired focused witnesses replay two paid turns and spend more climbing
+tired focused witnesses replay two turn abilities and spend more climbing
 energy than the historical V1 split. This is still an isolated
 alternative road: it does not overwrite V94's conflicting checkpoint
 deficit or its whole-field energy ledger, and cannot seed a group or
-finish until one recorded physical clock owns that rider.
+finish until one recorded physical clock owns that rider. Its focused
+turn inputs do not name leaders, so they do not prove paid physical
+front rotation under the newer source contract.
 `rear-split-solo-run-v1.mjs` extends that exact split through consecutive
 solo kilometres. Each rider has a fresh explicit choice in each kilometre,
 with a separate energy and bunch-gap calculation; the source replay

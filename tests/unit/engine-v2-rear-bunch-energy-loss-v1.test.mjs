@@ -119,4 +119,9 @@ test('exhausted bunch worker loses the wheel at last paid metre',()=>{
   assert.throws(()=>continueRearExhaustedSoloV1({
     lossInput:conflictInput,loss:conflictLoss}),
   /cannot lead the later bunch turn/);
+  const unnamedPlan=structuredClone(conflictPlan);
+  delete unnamedPlan.turns[1].leaderRiderId;
+  assert.throws(()=>advanceRearBunchEnergyLossV1({
+    ...conflictInput,bunchTurnPlan:unnamedPlan}),
+  /every named front turn/);
 });
