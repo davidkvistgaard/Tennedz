@@ -54,6 +54,40 @@ test('weak climbers lose more modeled ground to strong climbers on a final climb
   assert.equal(climb.allInCatchPossible,false);
 });
 
+test('physical matrix gives equal riders one leader speed, with reserve from rotation',()=>{
+  const front=team(1,{flat:65});
+  const chasing=team(2,{flat:75,chase:'all'});
+  const input={teams:[front,chasing],chaseTeamIds:[chasing.id],
+    remainingSegments:route('flat',30),gapSeconds:60,rotationVersion:3};
+  const one=forecastBreakThreat({...input,
+    frontRiderIds:[front.riders[0].id]});
+  const two=forecastBreakThreat({...input,
+    frontRiderIds:[front.riders[0].id,front.riders[1].id]});
+  assert.equal(one.kilometres[0].frontAbility,two.kilometres[0].frontAbility);
+  assert.ok(two.frontWorkReserveAtStart>one.frontWorkReserveAtStart);
+  assert.ok(one.kilometres[0].chaseLeaderAbility!==null);
+  assert.ok(one.kilometres[0].chaseRecoverySeconds>=0);
+});
+
+test('physical matrix can distinguish a weak climbing break from a strong flat break',()=>{
+  const weak=team(1,{flat:70,mountain:20});
+  const climbers=team(2,{flat:45,mountain:90,chase:'all'});
+  const climbing=forecastBreakThreat({teams:[weak,climbers],
+    frontRiderIds:[weak.riders[0].id],chaseTeamIds:[climbers.id],
+    remainingSegments:route('climb',150),gapSeconds:600,
+    rotationVersion:3});
+  assert.equal(climbing.terrainKilometres.climb,150);
+  assert.ok(climbing.allInCatchableGapSeconds>0);
+  const strong=Array.from({length:15},(_,index)=>team(index+3,{flat:88}));
+  const slow=team(20,{flat:55,chase:'all'});
+  const flat=forecastBreakThreat({teams:[...strong,slow],
+    frontRiderIds:strong.flatMap(row=>row.riders.slice(0,2).map(r=>r.id)),
+    chaseTeamIds:[slow.id],remainingSegments:route('flat',30),
+    gapSeconds:180,rotationVersion:3});
+  assert.equal(flat.frontRiderCount,30);
+  assert.equal(flat.allInCatchPossible,false);
+});
+
 test('large strong flat front with few helpers is urgent under the current clock',()=>{
   const teams=Array.from({length:20},(_,index)=>team(index+1,{
     flat:index<15?88:55,mountain:50,chase:index<15?'ignore':'selective',

@@ -2308,3 +2308,29 @@ The next opt-in decision must assess each observed front, remaining
 terrain, helper reserves and uncertain other-team participation using
 the same paid road model. It must not assign a GC stake to a team with
 no recorded classification or automatically command every protector.
+
+An internal read-only `rotationVersion: 3` threat matrix now estimates
+the same one-exposed-leader relative road pace: terrain-adjusted front
+worker ability, the lower-quartile bunch baseline, actual chase-helper
+turn shares, and the V94 passive-gap coefficient. Extra riders extend
+the possible rotation and energy reserve; they do not add simultaneous
+speed. The observer keeps exact own riders but bounded rival skill and
+energy estimates. For this version, rival future work orders are not
+read from the source: a neutral steady/selective potential order is
+used and the nominated/conditional coalition marks uncertain team
+participation. This is an *all-in potential* calculation, not a claim
+that those teams have committed or paid a turn. The historical matrix
+versions and actual motor decisions are unchanged.
+
+A four-case, source-replayed 120-km flat holdout inspected the matrix
+at km 10, 20, 30, 40, 50, 60 and 69. In seed 1 fresh, the observed
+front moved from nominated catch capacity at km 10-20 to conditional
+capacity at km 30-40, then beyond even conditional potential at km 50;
+five control teams were still holding their chase. The tired version
+crossed that last boundary by km 40. Seed 2 fresh stayed inside the
+nominated potential through km 69; seed 2 tired was beyond all potential
+already at km 10. These bands are diagnostic only. The future decision
+still needs a committed sporting stake, an explicit choice of which
+team spends energy and when, bounded uncertainty in willingness, and
+same-source contact and finish calibration. The matrix must not be
+silently substituted for the old decision clock.

@@ -84,6 +84,43 @@ test('new attack is assessed separately from an older front group',()=>{
   /coalition/);
 });
 
+test('observer can apply the physical one-leader matrix to both fronts',()=>{
+  const teams=[team(1,{skill:78}),team(2,{skill:72}),
+    team(3,{skill:82,chase:'all'})];
+  const roadGroups=[
+    {id:'road-1',riderIds:[teams[0].riders[0].id],
+      teamIds:[teams[0].id],gapSeconds:90},
+    {id:'road-2',riderIds:[teams[1].riders[0].id],
+      teamIds:[teams[1].id],gapSeconds:25},
+  ];
+  const result=assessRoadGroupsForObserver({teams,roadGroups,
+    observerTeamId:teams[2].id,raceSeed:'physical-two-fronts',
+    nominatedChaseTeamIds:[teams[2].id],
+    remainingSegments:route(35),rotationVersion:3});
+  assert.equal(result.groups.length,2);
+  assert.ok(result.groups.every(row=>
+    row.assessment.nominated.rotationVersion===3));
+  assert.ok(result.groups.every(row=>
+    row.assessment.nominated.kilometres[0].chaseLeaderAbility!==null));
+});
+
+test('physical observer does not read rival private work orders',()=>{
+  const teams=[team(1,{skill:72}),team(2,{skill:80}),team(3)];
+  const roadGroups=[{id:'road-1',riderIds:[teams[0].riders[0].id],
+    teamIds:[teams[0].id],gapSeconds:45}];
+  const input={roadGroups,observerTeamId:teams[2].id,
+    raceSeed:'private-rival-orders',
+    nominatedChaseTeamIds:[teams[1].id],
+    remainingSegments:route(30),rotationVersion:3};
+  const before=assessRoadGroupsForObserver({...input,teams});
+  const changed=structuredClone(teams);
+  changed[0].orders.baseline.breakWork='sit_on';
+  changed[1].orders.baseline.chase='ignore';
+  changed[1].orders.helperIds=[];
+  const after=assessRoadGroupsForObserver({...input,teams:changed});
+  assert.deepEqual(after.groups,before.groups);
+});
+
 test('underestimating a front rider can change the expected catch',()=>{
   const teams=[team(1,{skill:80,energy:80}),
     team(2,{skill:70,energy:80,chase:'all'})];
