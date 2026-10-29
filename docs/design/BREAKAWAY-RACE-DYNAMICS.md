@@ -2623,7 +2623,19 @@ cannot fund a full sheltered turn. The physical wheel ends at the
 precise distance their remaining reserve can pay; the split begins at
 zero gap and records no fictitious seconds behind the bunch. An
 unpayable *named leader* still refuses as an inconsistent source.
-Post-split solo movement and a full-race source binding remain open.
+At that increment, the road stopped at the split marker.
+`rear-exhausted-solo-v1.mjs` replays that exact energy-loss marker and
+uses the existing exhaustion-coast clock for the remaining solo road.
+At zero effort reserve the rider still moves at a slower sustainable
+pace; requested work is recorded as curtailed, and the rider gains no
+rear recovery. `rear-exhausted-finish-v1.mjs` extends this specific
+source through explicitly chosen conservative solo kilometres and
+sums actual riding time from the start, including all paid bunch work,
+the partial loss turn and each coast slice. A synthetic long-work
+witness finishes two kilometres after its loss, reconciles rider and
+bunch clocks, and records `timeLimitSeconds: null` with no official
+placing. This is one isolated source path, not whole-field finish
+validation or a routed race engine.
 `rear-split-solo-contact-v2.mjs` advances the same source-replayed
 meeting one named turn at a time and charges only distance actually
 travelled. It no longer requires an affordable full-kilometre solo

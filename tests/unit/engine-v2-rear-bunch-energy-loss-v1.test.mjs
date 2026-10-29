@@ -5,6 +5,12 @@ import {runRearBunchOriginRoadV1} from
 import {advanceRearBunchEnergyLossV1,
   validateRearBunchEnergyLossV1} from
   '../../lib/engine/v2/rear-bunch-energy-loss-v1.mjs';
+import {continueRearExhaustedSoloV1,
+  validateRearExhaustedSoloV1} from
+  '../../lib/engine/v2/rear-exhausted-solo-v1.mjs';
+import {runRearExhaustedFinishV1,
+  validateRearExhaustedFinishV1} from
+  '../../lib/engine/v2/rear-exhausted-finish-v1.mjs';
 
 const rider={id:'worker',mountain:90,flat:90,hills:90,
   timetrial:90,endurance:70,strength:70,form:50,fatigue:100};
@@ -57,4 +63,42 @@ test('exhausted bunch worker loses the wheel at last paid metre',()=>{
   forged.split.energySpent=0;
   assert.throws(()=>validateRearBunchEnergyLossV1(input,forged),
     /differs/);
+  const soloInput={lossInput:input,loss:road};
+  const solo=continueRearExhaustedSoloV1(soloInput);
+  assert.equal(solo.splitDistanceM,road.endDistanceM);
+  assert.equal(solo.endDistanceM,km*1000);
+  assert.ok(solo.soloElapsedSeconds>solo.bunchElapsedSeconds);
+  assert.ok(solo.behindBunchSeconds>0);
+  assert.equal(solo.paidFromReserve,0);
+  assert.ok(solo.slices.every(slice=>
+    slice.curtailedWorkDemand>0&&slice.coastDelaySeconds>0));
+  assert.equal(validateRearExhaustedSoloV1(soloInput,solo),true);
+  const forgedSolo=structuredClone(solo);
+  forgedSolo.slices[0].coastDelaySeconds=0;
+  assert.throws(()=>validateRearExhaustedSoloV1(
+    soloInput,forgedSolo),/differs/);
+  const finishInput={soloInput,solo,
+    routeKilometres:[...input.routeKilometres,
+      segment(km+1),segment(km+2)],
+    bunchTurnPlans:[...source.priorInput.bunchTurnPlans,
+      shelterPlan(),shelterPlan(),shelterPlan()],
+    soloChoices:[{riderId:'worker',km:km+1,
+      effort:'conserve',reason:'finish_safely'},
+    {riderId:'worker',km:km+2,
+      effort:'conserve',reason:'finish_safely'}]};
+  const finish=runRearExhaustedFinishV1(finishInput);
+  assert.equal(finish.finishDistanceM,(km+2)*1000);
+  assert.equal(finish.steps.length,2);
+  assert.ok(finish.finishElapsedSeconds>finish.bunchElapsedSeconds);
+  assert.ok(Math.abs(finish.finishElapsedSeconds-
+    finish.bunchElapsedSeconds-finish.behindBunchSeconds)<1e-6);
+  assert.equal(finish.energyAfter,0);
+  assert.equal(finish.timeLimitSeconds,null);
+  assert.equal(finish.officialResults,false);
+  assert.equal(validateRearExhaustedFinishV1(
+    finishInput,finish),true);
+  const forgedFinish=structuredClone(finish);
+  forgedFinish.finishElapsedSeconds=0;
+  assert.throws(()=>validateRearExhaustedFinishV1(
+    finishInput,forgedFinish),/differs/);
 });
