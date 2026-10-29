@@ -2518,7 +2518,15 @@ The result records a three-rider group at contact, with all prior group
 and solo energy source-replayed. It refuses a forged rider, forged
 prior energy, no contact or simultaneous bunch contact. Full-kilometre
 pace proposals in the evidence are not charged past the meeting point.
-This version stops at contact; the new member's next turn and the
-remaining distance of that kilometre still need a separate paid step.
+`rear-joined-group-continuation-v1.mjs` replays that contact and asks
+all three riders again whether they will pull or sit. The next willing
+leader in physical rotation takes the wind for the remaining metres;
+the other two pay their own lower sheltered charge. Their three energy
+balances and the shared clock advance together to the kilometre end,
+or stop at a calculated bunch rejoin. A leaderless or unpayable turn
+refuses. A changed contact, choice or energy fails source replay.
+The chain currently covers one three-rider join and its first shared
+turn. Its later kilometres, further joins, split departures, and real
+race finish times remain outside this isolated version.
 Neither this candidate nor the preceding rear-road modules are routed
 to a whole race.

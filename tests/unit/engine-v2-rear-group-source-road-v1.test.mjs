@@ -12,6 +12,8 @@ import {advanceRearGroupSoloJoinV1,validateRearGroupSoloJoinV1} from
   '../../lib/engine/v2/rear-group-solo-join-v1.mjs';
 import {runRearSoloSourceV1,validateRearSoloSourceRunV1} from
   '../../lib/engine/v2/rear-solo-source-run-v1.mjs';
+import {continueRearJoinedGroupV1,validateRearJoinedGroupV1} from
+  '../../lib/engine/v2/rear-joined-group-continuation-v1.mjs';
 
 const rider=(id,timetrial)=>({id,mountain:65,flat:65,hills:65,
   timetrial,endurance:70,strength:70,form:50,fatigue:0});
@@ -173,4 +175,29 @@ test('a third rider joins only at calculated paid rear contact',()=>{
   assert.throws(()=>advanceRearGroupSoloJoinV1({...joinInput,
     segment:{...joinInput.segment,terrain:'climb',gradientPct:6}}),
   /does not reach/);
+  const continuationInput={joinInput,join:joined,
+    rearGoals:[...rearGoals,{riderId:'c',goal:'rejoin_bunch',
+      rearWork:'cooperate'}]};
+  const continuation=continueRearJoinedGroupV1(continuationInput);
+  assert.equal(continuation.leaderRiderId,'b');
+  assert.notEqual(continuation.leaderRiderId,
+    joined.groupPlan.road.leaderRiderId);
+  assert.equal(continuation.startDistanceM,joined.atDistanceM);
+  assert.equal(continuation.endDistanceM,15000);
+  assert.equal(continuation.riders.length,3);
+  assert.equal(continuation.riders.filter(row=>
+    row.role==='leader').length,1);
+  assert.ok(continuation.riders.every(row=>row.energySpent>0));
+  assert.ok(continuation.riders.every(row=>row.energy>=0));
+  assert.ok(continuation.riders.find(row=>row.role==='leader').energySpent>
+    continuation.riders.find(row=>row.role==='sheltered').energySpent);
+  assert.equal(validateRearJoinedGroupV1(continuationInput,
+    continuation),true);
+  const forgedTurn=structuredClone(continuation);
+  forgedTurn.riders[0].energySpent=0;
+  assert.throws(()=>validateRearJoinedGroupV1(continuationInput,
+    forgedTurn),/differs/);
+  assert.throws(()=>continueRearJoinedGroupV1({...continuationInput,
+    rearGoals:continuationInput.rearGoals.map(row=>({...row,
+      rearWork:'sit_on'}))}),/No rear rider/);
 });
