@@ -136,3 +136,36 @@ test('watched kilometres recompute uncertainty and carry paid energy',()=>{
   assert.throws(()=>validateIsolatedPaidControlRunV1(
     runInput,forged),/differs/);
 });
+
+test('same-seed controller strength changes paid road outcome',()=>{
+  const base={commitment,teams,roadGroup:group,
+    observerTeamId:'observer',controlTeamId:'control',
+    raceSeed:'paid-watch-1',
+    nominatedChaseTeamIds:['observer'],
+    frontRiderGoals:[{riderId:'front-0',goal:'cooperate'}],
+    remainingSegments:route};
+  const weak=runIsolatedPaidControlV1(base);
+  const fasterTeams=structuredClone(teams);
+  for(const rider of fasterTeams[2].riders)for(const skill of SPORTING_SKILLS)
+    rider[skill]=99;
+  const strong=runIsolatedPaidControlV1({...base,teams:fasterTeams});
+  const tiredTeams=structuredClone(fasterTeams);
+  for(const rider of tiredTeams[2].riders){
+    rider.fatigue=85;
+    tiredTeams[2].energy[rider.id]=18;
+  }
+  const tired=runIsolatedPaidControlV1({...base,teams:tiredTeams});
+  assert.equal(weak.handoff?.action,'commit_now');
+  assert.equal(weak.contact,null);
+  assert.equal(strong.contact?.kind,'front_bunch_contact');
+  assert.ok(strong.steps.length<weak.steps.length);
+  assert.equal(tired.contact?.kind,'front_bunch_contact');
+  assert.ok(tired.contact.atDistanceM>
+    strong.contact.atDistanceM);
+  assert.ok(strong.steps.every(step=>
+    validateIsolatedPaidControlRoadV1(step.paidInput,step.road)));
+  assert.ok(tired.steps.every(step=>
+    validateIsolatedPaidControlRoadV1(step.paidInput,step.road)));
+  assert.equal(validateIsolatedPaidControlRunV1(
+    {...base,teams:tiredTeams},tired),true);
+});

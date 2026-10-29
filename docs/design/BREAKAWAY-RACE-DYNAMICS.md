@@ -2822,3 +2822,9 @@ while the sprint team watches. When the observer's next decision becomes
 advancing that kilometre; it does not quietly replace the controller
 with unpaid pursuit. It still cannot settle the rest of the peloton or
 carry that handoff through combined control and chase work.
+The same synthetic seed and route with a stronger paid controller
+instead reaches the front before the sprint team's handoff; making
+that controller fatigued and low on energy delays the calculated
+contact. All three isolated traces replay, but the fixture has only
+three teams and one named worker, so these are mechanism checks rather
+than whole-race calibration.
