@@ -2610,3 +2610,18 @@ recorded as bunch workers or just-caught break riders in the same or
 preceding kilometre. These samples establish a usable opposing bunch
 source for climb-drop experiments, while leaving the other two rear
 entry paths untested in this holdout.
+
+`road-group-sprint-choice-v1.mjs` is a separate opt-in answer to a
+specific forward-group question: a rider with an explicit stage-win
+goal can decline a late turn if their own known sprint is weaker than
+the observer's estimated rival sprint. The estimate includes a bounded
+range and does not expose the rival's exact hidden ability to the
+decision. A committed `drive` order can override that shelter motive;
+a teammate further ahead or insufficient remaining energy can stop a
+turn. The decision record includes each rider's observed rival ranges
+and reason, and source replay rejects altered choices. The existing
+single-leader road-group turn planner accepts the resulting willing
+pullers and charges the named leader more than the sitter. This is an
+isolated tactical branch, not a full road transition or a replacement
+for the current V94 group decision policy. Its late-sprint window and
+effect on race outcomes need calibration against whole races.
