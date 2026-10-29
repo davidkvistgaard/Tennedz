@@ -2784,3 +2784,16 @@ forging the earlier wheel-loss marker is rejected. The focused witness
 has two distinct source riders, one unable to hold the climb wheel,
 then a later paid solo contact. It does not infer contact from a shared
 kilometre snapshot or attach the group to guided races.
+
+`isolated-paid-chase-slide-run-v1.mjs` composes a source-replayed
+consecutive paid pursuit with the caught front rider's explicitly
+chosen, source-replayed postcontact road. It settles the named chase
+workers and caught rider through the end of the contact kilometre,
+carrying their paid energy into a separate final ledger. A focused
+two-kilometre case starts with a gap too large to catch in the first
+kilometre and reaches contact in the second. The remaining road leaves
+only a small positive wheel gap, so the status remains
+`wheel_gap_unresolved` and **no dropped-rider event** is recorded. The
+version still lists unmodeled peloton riders, stops at that kilometre
+and withholds official results. It refuses unobserved `watch` kilometres
+and does not manufacture the full bunch road or a later rear group.

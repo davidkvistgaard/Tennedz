@@ -8,6 +8,9 @@ import {runIsolatedPaidChaseV1,
   '../../lib/engine/v2/isolated-paid-chase-run-v1.mjs';
 import {advanceCaughtFrontSlideV1} from
   '../../lib/engine/v2/isolated-caught-front-slide-v1.mjs';
+import {runIsolatedPaidChaseSlideV1,
+  validateIsolatedPaidChaseSlideV1} from
+  '../../lib/engine/v2/isolated-paid-chase-slide-run-v1.mjs';
 import {validateIsolatedPaidChaseRoadV1} from
   '../../lib/engine/v2/isolated-paid-chase-road-v1.mjs';
 
@@ -67,4 +70,31 @@ test('a team re-evaluates and pays each consecutive chase kilometre',()=>{
     /differs/);
   assert.throws(()=>runIsolatedPaidChaseV1({...input,
     remainingSegments:[route[0]]}),/complete one-front route/);
+});
+
+test('paid contact and postcontact road settle one physical kilometre',()=>{
+  const slideDecision={riderId:'front-0',
+    action:'finish_safely',effort:'conserve'};
+  const source={paidChaseInput:input,slideDecision};
+  const run=runIsolatedPaidChaseSlideV1(source);
+  assert.equal(run.endDistanceM,30000);
+  assert.equal(run.slide.catchDistanceM,run.chase.contact.atDistanceM);
+  assert.equal(run.slide.status,'wheel_gap_unresolved');
+  assert.equal(run.slide.event,null);
+  assert.ok(run.slide.slices[0].startDistanceM>=29000);
+  assert.equal(run.finalTeams[0].energy['front-0'],
+    run.slide.energyByRider['front-0']);
+  const finalChaseId=run.chase.steps.at(-1).road.chaseTurnPlan
+    .candidates[0].riderId;
+  assert.equal(run.finalTeams[1].energy[finalChaseId],
+    run.slide.energyByRider[finalChaseId]);
+  assert.equal(run.officialResults,false);
+  assert.equal(validateIsolatedPaidChaseSlideV1(source,run),true);
+  const forged=structuredClone(run);
+  forged.finalTeams[0].energy['front-0']+=1;
+  assert.throws(()=>validateIsolatedPaidChaseSlideV1(source,forged),
+    /differs/);
+  assert.throws(()=>runIsolatedPaidChaseSlideV1({
+    ...source,slideDecision:{...slideDecision,effort:'hard'}}),
+  /explicit solo finish decision/);
 });
