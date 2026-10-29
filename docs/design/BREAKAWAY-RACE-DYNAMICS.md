@@ -2559,6 +2559,13 @@ keeps both behind the bunch with the former follower farther back.
 A forged split or duplicate choice fails replay; a potential meeting
 with the bunch or between the two riders requires a separate physical
 contact road. This is one more paid kilometre, not a full rear finish.
+`rear-split-solo-run-v1.mjs` extends that exact split through consecutive
+solo kilometres. Each rider has a fresh explicit choice in each kilometre,
+with a separate energy and bunch-gap calculation; the source replay
+rejects altered later energy. A changed second-kilometre effort changes
+the rider's resulting reserve. The run refuses a skipped kilometre or
+any meeting between the solos or with the bunch until a contact road
+can be paid. No stage finish or time limit is inferred.
 
 `rear-group-source-run-v1.mjs` chains that same derived calculation
 through consecutive whole kilometres. Each step uses the prior paid
