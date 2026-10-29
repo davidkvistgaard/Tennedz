@@ -2974,6 +2974,12 @@ instant rear-group membership. Unpayable work, a forged catch, or a
 rider who could hold the bunch refuses. This is an isolated one-km
 path, not a claim that recorded V94 catches have a known within-km
 contact marker or that the rider finishes the race.
+`isolated-caught-front-slide-v2.mjs` replays that V1 paid road and
+locates the later bunch-exit marker where the accumulated solo clock
+first crosses the existing rear-gap threshold. Its event is recorded
+at that calculated marker, after the catch; the V1 recording remains
+unchanged and replayable. A later return inside the threshold refuses
+until a separate contact road accounts for it.
 
 `isolated-paid-chase-run-v1.mjs` carries the same committed stake and
 one observed front across consecutive urgent pursuit kilometres. It

@@ -11,6 +11,9 @@ import {advanceIsolatedPaidChaseRoadV1} from
 import {advanceCaughtFrontSlideV1,
   validateCaughtFrontSlideV1} from
   '../../lib/engine/v2/isolated-caught-front-slide-v1.mjs';
+import {advanceCaughtFrontSlideV2,
+  validateCaughtFrontSlideV2} from
+  '../../lib/engine/v2/isolated-caught-front-slide-v2.mjs';
 
 const team=(id,skill)=>{
   const riders=Array.from({length:8},(_,number)=>({
@@ -53,6 +56,19 @@ test('caught solo passes through the paid bunch with no free wheel',()=>{
   const input={paidInput,paidRoad,slideDecision};
   const result=advanceCaughtFrontSlideV1(input);
   assert.equal(result.event.kind,'front_passes_through_bunch');
+  assert.equal(result.event.atDistanceM,result.catchDistanceM);
+  const versioned=advanceCaughtFrontSlideV2(input);
+  assert.equal(versioned.version,'v2-isolated-caught-front-slide-2');
+  assert.ok(versioned.event.atDistanceM>versioned.catchDistanceM);
+  assert.ok(versioned.event.atDistanceM<versioned.endDistanceM);
+  assert.equal(versioned.event.atDistanceM,
+    versioned.bunchExitDistanceM);
+  assert.deepEqual(versioned.slices,result.slices);
+  assert.equal(validateCaughtFrontSlideV2(input,versioned),true);
+  const forgedExit=structuredClone(versioned);
+  forgedExit.event.atDistanceM=forgedExit.catchDistanceM;
+  assert.throws(()=>validateCaughtFrontSlideV2(input,forgedExit),
+    /differs/);
   assert.equal(result.catchDistanceM,
     paidRoad.contact.atDistanceM);
   assert.equal(result.endDistanceM,30000);
