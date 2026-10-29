@@ -7,6 +7,11 @@ import {decideTeamChaseChoiceV1,
 import {commitTeamChaseStakesV1,teamChaseStakeAtKmV1,
   decideCommittedTeamChaseV1,validateCommittedTeamChaseV1} from
   '../../lib/engine/v2/team-chase-stake-v1.mjs';
+import {decideRoadGroupSprintChoiceV1} from
+  '../../lib/engine/v2/road-group-sprint-choice-v1.mjs';
+import {advanceIsolatedPaidChaseRoadV1,
+  validateIsolatedPaidChaseRoadV1} from
+  '../../lib/engine/v2/isolated-paid-chase-road-v1.mjs';
 
 function team(index,skill){
   const id=`team-${index}`;
@@ -78,6 +83,57 @@ test('one kilometre of rope can force a paid chase decision',()=>{
   assert.equal(decision.assessments[0].action,'commit_now');
   assert.equal(decision.assessments[0].nominatedCatchNow,true);
   assert.equal(decision.assessments[0].nominatedCatchAfterDelay,false);
+  const intentions=teams.map(team=>({teamId:team.id,
+    baseline:{goal:team.id==='team-3'?'sprint_finish':
+      'break_stage',captainId:team.riders[0].id},phases:[]}));
+  const commitment=commitTeamChaseStakesV1({teams,
+    distanceKm:30,intentions});
+  const committedChoiceInput={commitment,teams,
+    roadGroups:[group('road-1','team-1-0','team-1',gap)],
+    observerTeamId:'team-3',raceSeed:base.raceSeed,
+    nominatedChaseTeamIds:['team-3'],remainingSegments:route};
+  const committedChoice=decideCommittedTeamChaseV1(
+    committedChoiceInput);
+  const frontChoiceInput={roadGroups:committedChoiceInput.roadGroups,
+    groupId:'road-1',teams,riderGoals:[{
+      riderId:'team-1-0',goal:'cooperate'}],
+  km:1,distanceKm:30,raceSeed:base.raceSeed};
+  const frontChoice=decideRoadGroupSprintChoiceV1(frontChoiceInput);
+  const paidInput={committedChoiceInput,committedChoice,
+    frontChoiceInput,frontChoice,segment:route[0]};
+  const paid=advanceIsolatedPaidChaseRoadV1(paidInput);
+  assert.ok(paid.slices.length>=2);
+  assert.ok(paid.slices.every(row=>
+    row.riders.filter(rider=>rider.roadRole==='front'&&
+      rider.role==='leader').length===1&&
+    row.riders.filter(rider=>rider.roadRole==='bunch'&&
+      rider.role==='leader').length===1));
+  assert.ok(paid.slices.every(row=>row.riders.every(rider=>
+    rider.energySpent>0&&rider.energy>=0)));
+  assert.equal(paid.conditionalHelpPaid,false);
+  assert.equal(validateIsolatedPaidChaseRoadV1(paidInput,paid),true);
+  const forgedPaid=structuredClone(paid);
+  forgedPaid.slices[0].riders[0].energySpent=0;
+  assert.throws(()=>validateIsolatedPaidChaseRoadV1(paidInput,
+    forgedPaid),/differs/);
+  assert.throws(()=>advanceIsolatedPaidChaseRoadV1({...paidInput,
+    segment:{...route[0],terrain:'climb',gradientPct:6}}),
+  /matching committed road/);
+  const lateChoiceInput={...committedChoiceInput,
+    roadGroups:[group('road-1','team-1-0','team-1',.1)],
+    remainingSegments:[route[29]]};
+  const lateChoice=decideCommittedTeamChaseV1(lateChoiceInput);
+  assert.equal(lateChoice.choice.assessments[0].action,
+    'commit_now');
+  const lateFrontInput={...frontChoiceInput,
+    roadGroups:lateChoiceInput.roadGroups,km:30};
+  const lateFront=decideRoadGroupSprintChoiceV1(lateFrontInput);
+  const late=advanceIsolatedPaidChaseRoadV1({
+    committedChoiceInput:lateChoiceInput,committedChoice:lateChoice,
+    frontChoiceInput:lateFrontInput,frontChoice:lateFront,
+    segment:route[29]});
+  assert.equal(late.contact?.kind,'front_bunch_contact');
+  assert.ok(late.endDistanceM>29000&&late.endDistanceM<30000);
 });
 
 test('the observer does not read rival private work orders',()=>{

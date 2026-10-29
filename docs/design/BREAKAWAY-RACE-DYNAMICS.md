@@ -2661,3 +2661,20 @@ fails replay. The source is a caller-provided commitment snapshot,
 not yet a saved whole-race order or an authenticated in-race manager
 event. It creates no GC objective from a stage label and neither
 guarantees allied help nor charges any energy by itself.
+
+`isolated-paid-chase-road-v1.mjs` connects one urgent committed-team
+choice to one actual kilometre of named pursuit. It replays the team
+stake and forward riders' decisions, then selects only the observing
+team's available helpers. Existing front and chase turn planners set
+sequential leaders. The union of their turn boundaries divides the
+road into short slices: one rider leads each physical group, the
+others modeled in that group shelter at lower cost, and each rider's
+remaining energy changes after every slice. Rider/terrain effects
+determine both speeds; a calculated contact stops at its actual route
+marker and pays only the distance reached. The witness test covers a
+full kilometre and a separate late contact inside the kilometre.
+Conditional allies are explicitly unpaid. This is still only a
+bounded two-group counterfactual: other peloton riders' energy and
+speed, post-contact movement, multi-front interactions and the race
+finish remain unresolved. It cannot produce official results or run
+inside guided races.
