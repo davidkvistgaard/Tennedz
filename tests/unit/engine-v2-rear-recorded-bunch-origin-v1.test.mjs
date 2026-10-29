@@ -35,4 +35,13 @@ test('V94 paid bunch turn can anchor a separate physical start road',()=>{
   changed.frames[0].pelotonFrontTurnPlan.turns[0].ability+=1;
   assert.throws(()=>runRearRecordedBunchOriginV1({...input,
     recording:changed}),/differs|replay|recorded|turn/);
+  const weakerId='rival-1-0';
+  const weakerTeam=recording.committedInputs.teams.find(row=>
+    row.riders.some(rider=>rider.id===weakerId));
+  assert.throws(()=>runRearRecordedBunchOriginV1({
+    recording,riderId:weakerId,throughKm:1,
+    choices:[{riderId:weakerId,km:1,
+      effort:orderAt(weakerTeam.orders,0).effort,
+      action:'hold_wheel',reason:'follow_order'}]}),
+  /uncalibrated physical pace loss/);
 });
