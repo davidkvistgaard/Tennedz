@@ -2595,6 +2595,17 @@ The full-kilometre solo proposals must each be affordable before this
 narrow contact branch runs. The remainder of the contact kilometre has
 no chosen group leader or shelter charge yet, so the branch explicitly
 leaves that road unsettled and cannot be routed or produce a finish.
+`rear-bunch-origin-road-v1.mjs` starts a separate physical projection at
+the race start, with zero gap, an explicit rider choice for each traversed
+kilometre, committed effort orders, and named paid bunch turns. It pays
+exposed or sheltered terrain work according to the rider's actual turn,
+replays the route cap and quiet-bunch recovery, and records the first
+turn where a sheltered rider cannot hold the bunch pace. A deliberate
+release is a different event and requires an explicit future-stage plan.
+The focused flat-to-climb witness carries two paid bunch kilometres
+before losing the wheel at the start of a steep third kilometre. This
+origin stops at the split marker: solo remainder, other riders, source
+recording binding and finish times still require separate road models.
 `rear-split-solo-contact-v2.mjs` advances the same source-replayed
 meeting one named turn at a time and charges only distance actually
 travelled. It no longer requires an affordable full-kilometre solo
