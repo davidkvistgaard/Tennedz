@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { protectedRoute, requireGameWrites } from '../../../lib/auth/server';
+import { protectedRoute, requireMarketplaceWrites } from '../../../lib/auth/server';
 import { AuthError } from '../../../lib/auth/policy.mjs';
 import { publicRiderFields } from '../../../lib/onboarding/public-rider.mjs';
 import { MarketInputError, marketAction, marketFilters } from '../../../lib/marketplace/validation.mjs';
@@ -44,7 +44,7 @@ async function getHandler(req,_context,{team,db}) {
     has_more:items.length===50,coins:team.coins});
 }
 async function postHandler(req,_context,{user,db}) {
-  requireGameWrites();
+  requireMarketplaceWrites();
   let action;
   try { action=marketAction(await req.json()); } catch(error) {
     if (error instanceof SyntaxError) throw new AuthError('INVALID_MARKET_INPUT','Invalid market request.',400);
