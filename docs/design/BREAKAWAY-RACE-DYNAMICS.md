@@ -2722,6 +2722,18 @@ an invented rear group. This is an isolated within-kilometre contract:
 the recorded V94 peloton snapshot does not prove a physical occupied
 wheel, and no version is routed into whole races or official finishes.
 
+The same 24-case read-only audit applied this opt-in pace-loss candidate
+to each of the 306 recorded climb transitions using the rider, prior
+energy and that kilometre's paid peloton turns. All 306 counterfactuals
+paid their chosen conservative solo road and exceeded the existing
+dropped-gap threshold. **None** had zero prior checkpoint deficit:
+every source rider already carried a small positive deficit while
+still labeled `peloton`. Thus 306/306 is a conditional calculation
+*given an occupied wheel*, not evidence that those wheels existed or
+that this version reproduces 306 real drop trajectories. No original
+V94 recording or guided outcome changed. A future motor must record
+the wheel and exact loss event before connecting this pace branch.
+
 `rear-unpayable-solo-run-v1.mjs` source-replays that within-kilometre
 climb split before a rider can enter consecutive, paid solo kilometres.
 It refuses a sub-threshold wheel gap, a forged split marker, a changed

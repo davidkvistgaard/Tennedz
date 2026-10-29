@@ -15,11 +15,14 @@ import {MOTOR_RACE_DYNAMICS_VERSION,TUNING} from
   '../lib/engine/v2/tuning.mjs';
 import {advanceRearUnpayableClimbV1} from
   '../lib/engine/v2/rear-unpayable-climb-v1.mjs';
+import {advanceRearPaceClimbSplitV1} from
+  '../lib/engine/v2/rear-pace-climb-split-v1.mjs';
 import {riderKilometreEffect} from
   '../lib/engine/v2/physiology.mjs';
 
 const generated=process.argv.includes('--generated-profile');
 const unpayable=process.argv.includes('--unpayable-climb');
+const paceClimb=process.argv.includes('--pace-climb');
 const requestedSeeds=process.argv.find(arg=>arg.startsWith('--seeds='));
 const seedCount=requestedSeeds?Number(requestedSeeds.slice(8)):
   generated?2:8;
@@ -58,6 +61,10 @@ const summary={profile:generated?'generated':'legacy',
     cannotFundHardHold:0,soloRoadAccepted:0,
     soloRoadDetached:0,soloRoadUnresolved:0,
     soloRoadRefusals:{}}:{}),
+  ...(paceClimb?{paceClimbSnapshots:0,
+    priorZeroDeficitSnapshots:0,
+    paceLossAccepted:0,paceLossDetached:0,
+    paceLossUnresolved:0,paceLossRefusals:{}}:{}),
   examples:[]};
 for(let seed=1;seed<=seedCount;seed++)for(const terrain of ['flat','mountain'])
   for(const fatigue of [0,30]){
@@ -103,36 +110,60 @@ for(let seed=1;seed<=seedCount;seed++)for(const terrain of ['flat','mountain'])
           summary.caughtBreakPreviousKm++;
         if(frame.terrain==='climb'||frame.terrain==='mountain')
           summary.onClimbKmDrops++;
-        if(unpayable&&frame.terrain==='climb'&&
+        if((unpayable||paceClimb)&&frame.terrain==='climb'&&
           prior.riderGroups.some(row=>row.id===rider.id&&
             row.group==='peloton')&&
           frame.pelotonFrontTurnPlan?.status==='worked'){
-          summary.climbSnapshotTransitions++;
           const sourceRider=sourceRiders.get(rider.id);
           const sourceSegment=recording.route.kilometres[frame.km-1];
-          const priorEnergy=prior.riderGroups.find(row=>
-            row.id===rider.id).energy;
-          const effect=riderKilometreEffect(sourceRider,
-            sourceSegment,{phase:'cruise',energy:priorEnergy,
-              exposed:sourceSegment.exposed});
-          const hardHoldCost=TUNING.effortCost.hard*
-            effect.energyCostMultiplier*.8;
-          if(priorEnergy<hardHoldCost){
-            summary.cannotFundHardHold++;
+          const priorRow=prior.riderGroups.find(row=>
+            row.id===rider.id);
+          const priorEnergy=priorRow.energy;
+          if(paceClimb){
+            summary.paceClimbSnapshots++;
+            if(priorRow.deficitSeconds===0)
+              summary.priorZeroDeficitSnapshots++;
             try{
-              const candidate=advanceRearUnpayableClimbV1({
+              const candidate=advanceRearPaceClimbSplitV1({
                 rider:sourceRider,segment:sourceSegment,
                 energy:priorEnergy,
                 bunchTurnPlan:frame.pelotonFrontTurnPlan,
-                stageNumber:1,stageCount:1});
-              summary.soloRoadAccepted++;
+                stageNumber:1,stageCount:1,
+                soloEffort:'conserve',soloReason:'finish_safely'});
+              summary.paceLossAccepted++;
               if(candidate.status==='solo_behind')
-                summary.soloRoadDetached++;
-              else summary.soloRoadUnresolved++;
+                summary.paceLossDetached++;
+              else summary.paceLossUnresolved++;
             }catch(error){
               const reason=String(error.message);
-              summary.soloRoadRefusals[reason]=
-                (summary.soloRoadRefusals[reason]??0)+1;
+              summary.paceLossRefusals[reason]=
+                (summary.paceLossRefusals[reason]??0)+1;
+            }
+          }
+          if(unpayable){
+            summary.climbSnapshotTransitions++;
+            const effect=riderKilometreEffect(sourceRider,
+            sourceSegment,{phase:'cruise',energy:priorEnergy,
+              exposed:sourceSegment.exposed});
+            const hardHoldCost=TUNING.effortCost.hard*
+            effect.energyCostMultiplier*.8;
+            if(priorEnergy<hardHoldCost){
+              summary.cannotFundHardHold++;
+              try{
+                const candidate=advanceRearUnpayableClimbV1({
+                  rider:sourceRider,segment:sourceSegment,
+                  energy:priorEnergy,
+                  bunchTurnPlan:frame.pelotonFrontTurnPlan,
+                  stageNumber:1,stageCount:1});
+                summary.soloRoadAccepted++;
+                if(candidate.status==='solo_behind')
+                  summary.soloRoadDetached++;
+                else summary.soloRoadUnresolved++;
+              }catch(error){
+                const reason=String(error.message);
+                summary.soloRoadRefusals[reason]=
+                  (summary.soloRoadRefusals[reason]??0)+1;
+              }
             }
           }
         }
