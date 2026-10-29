@@ -2585,6 +2585,16 @@ contact or meeting between the two riders until that road is paid.
 A two-kilometre climbing continuation replays both riders' balances
 and rejects a forged later charge or skipped kilometre. This still
 does not produce a full-stage finish or a time-limit decision.
+`rear-split-solo-contact-v1.mjs` can replay that V2 split and any
+consecutive V2 solo run, then locate the two riders' meeting inside a
+named bunch turn. Both pay terrain-priced solo work only to the exact
+contact marker; the record includes both balances and a shared physical
+rear-group position. A flat-road witness closes a climb-created gap in
+the third kilometre, and forged prior energy or gap states fail replay.
+The full-kilometre solo proposals must each be affordable before this
+narrow contact branch runs. The remainder of the contact kilometre has
+no chosen group leader or shelter charge yet, so the branch explicitly
+leaves that road unsettled and cannot be routed or produce a finish.
 `rear-energy-demand-v1.mjs` now provides a separate opt-in price for a
 known rear-road role and distance. It applies that terrain load to both
 the exposed rider's and sheltered rider's base effort, keeps the
