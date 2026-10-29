@@ -2142,6 +2142,19 @@ paths cannot occur: the cases do not exercise them. The provisional
 `deficitSeconds` does not give a physical road coordinate, so these
 51 riders cannot be joined into a rear group from the frames alone.
 
+The same audit now has an opt-in `--generated-profile` route check. Two
+independent 260-km profile seeds, flat/mountain and fresh/tired produce
+eight source attempts under the opt-in V94 paid-turn versions. Six
+validate and replay; two mountain cases correctly refuse a combined
+fresh attack and pursuit without a shared road clock. The six accepted
+races have 112 first `dropped` transitions, all on actual `climb`
+kilometres. None is a recorded bunch worker that kilometre or the
+previous one, or a rider caught from the break in either kilometre.
+This shows the real generated climbs exercise the early-drop path far
+more than the old shallow mountain template. The `dropped` deficit is
+still provisional; these 112 transitions do not establish a paid
+position or a rear-group meeting.
+
 An internal V94 `roadGroupPaceVersion: 3` now consumes the recorded
 per-rider forward-group work decisions in an actual one-leader-at-a-time
 kilometre turn plan. Each leader's share and every sitter's lower extra

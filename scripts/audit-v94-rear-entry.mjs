@@ -4,16 +4,64 @@ import {createV94RaceDynamicsPreview} from
   '../lib/engine/v2/playtest-race-dynamics-v94.mjs';
 import {replayRaceDynamicsRecording} from
   '../lib/engine/v2/replay-race-dynamics-v94.mjs';
+import {generatePlaytestStageProfile} from
+  '../lib/engine/v2/playtest-stage-generator.mjs';
+import {prepareV91Playtest} from '../lib/engine/v2/playtest.mjs';
+import {prepareV94RivalIntent} from
+  '../lib/engine/v2/playtest-rival-intent-v94.mjs';
+import {simulateTacticalTour} from '../lib/engine/v2/tour.mjs';
+import {validateRecordedTour} from '../lib/engine/v2/recording.mjs';
+import {MOTOR_RACE_DYNAMICS_VERSION} from
+  '../lib/engine/v2/tuning.mjs';
 
-const summary={cases:0,newDrops:0,fromBunchWorkSameKm:0,
+const generated=process.argv.includes('--generated-profile');
+const seedCount=generated?2:8;
+
+function generatedRecording(seed,terrain,fatigue){
+  const raceSeed=`rear-entry-generated-${seed}-${terrain}-${fatigue}`;
+  const prepared=prepareV91Playtest({distanceKm:260,teamCount:20,
+    terrain:'custom',fatigue,attack:'none',chase:'selective',seed:raceSeed,
+    profileHeightsM:generatePlaytestStageProfile({distanceKm:260,
+      style:terrain,seed:raceSeed})});
+  const plan=prepareV94RivalIntent({prepared,format:'one_day',
+    controlTempoVersion:2,opportunisticSpecialistVersion:2,
+    frontRotationVersion:1});
+  const recording=simulateTacticalTour({stage:prepared.stage,
+    weather:prepared.weather,teams:plan.teams,seed:prepared.seed,
+    motorVersion:MOTOR_RACE_DYNAMICS_VERSION,
+    raceContext:{...plan.raceContext,controlPursuitVersion:2,
+      roadGroupPaceVersion:3,chaseTurnVersion:1,
+      bunchFrontTurnVersion:1,pelotonFrontTurnVersion:1,
+      frontObservationVersion:2,frontExhaustionVersion:4},
+    rivalIntent:plan.intent});
+  validateRecordedTour(recording);
+  replayRaceDynamicsRecording(recording);
+  return recording;
+}
+
+const summary={profile:generated?'generated':'legacy',
+  cases:0,refusedCases:0,refusals:[],newDrops:0,
+  fromBunchWorkSameKm:0,
   fromBunchWorkPreviousKm:0,caughtBreakSameKm:0,
   caughtBreakPreviousKm:0,onClimbKmDrops:0,examples:[]};
-for(let seed=1;seed<=8;seed++)for(const terrain of ['flat','mountain'])
+for(let seed=1;seed<=seedCount;seed++)for(const terrain of ['flat','mountain'])
   for(const fatigue of [0,30]){
-    const {recording}=createV94RaceDynamicsPreview({format:'one_day',
-      settings:{distanceKm:260,teamCount:20,attack:'none',chase:'selective',
-        seed:`rear-entry-holdout-${seed}-${terrain}-${fatigue}`,
-        terrain,fatigue}});
+    let recording;
+    try{
+      recording=generated?generatedRecording(seed,terrain,fatigue):
+        createV94RaceDynamicsPreview({format:'one_day',
+          settings:{distanceKm:260,teamCount:20,attack:'none',
+            chase:'selective',
+            seed:`rear-entry-holdout-${seed}-${terrain}-${fatigue}`,
+            terrain,fatigue}}).recording;
+    }catch(error){
+      if(!generated||!String(error.message).includes(
+        'Combined fresh attack and paid pursuit'))throw error;
+      summary.refusedCases++;
+      summary.refusals.push({seed,terrain,fatigue,
+        message:String(error.message)});
+      continue;
+    }
     replayRaceDynamicsRecording(recording);
     summary.cases++;
     for(let index=1;index<recording.frames.length;index++){
