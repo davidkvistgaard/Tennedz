@@ -8,6 +8,8 @@ import {advanceRearGroupSourceRoadV1,validateRearGroupSourceRoadV1} from
   '../../lib/engine/v2/rear-group-source-road-v1.mjs';
 import {advanceRearGroupSourceRoadV2,validateRearGroupSourceRoadV2} from
   '../../lib/engine/v2/rear-group-source-road-v2.mjs';
+import {advanceRearGroupSourceRoadV3,validateRearGroupSourceRoadV3} from
+  '../../lib/engine/v2/rear-group-source-road-v3.mjs';
 import {runRearGroupSourceV1,validateRearGroupSourceRunV1} from
   '../../lib/engine/v2/rear-group-source-run-v1.mjs';
 import {runRearGroupSourceV2,validateRearGroupSourceRunV2} from
@@ -187,6 +189,30 @@ test('new rear hold gate refuses an unpayable follower pace',()=>{
   const forged=structuredClone(held);
   forged.holdChecks[0].holdSpeedKph=0;
   assert.throws(()=>validateRearGroupSourceRoadV2(
+    slowerLeader,forged),/differs/);
+});
+
+test('terrain-priced rear step charges both physical roles without moving contact',()=>{
+  const slowerLeader={...input,rearGoals:[rearGoals[0],
+    {...rearGoals[1],rearWork:'sit_on'}]};
+  const climb=advanceRearGroupSourceRoadV3(slowerLeader);
+  const old=climb.sourceV2.sourceRoad.road;
+  assert.equal(climb.road.leaderRiderId,old.leaderRiderId);
+  assert.equal(climb.road.endDistanceM,old.endDistanceM);
+  assert.deepEqual(climb.road.event,old.event);
+  assert.ok(climb.road.riders.every((row,index)=>
+    row.energySpent>old.riders[index].energySpent));
+  assert.deepEqual(climb.prices.map(row=>row.role),
+    ['leader','sheltered']);
+  const flat=advanceRearGroupSourceRoadV3({...slowerLeader,
+    segment:{...nextSegment,terrain:'flat',gradientPct:0}});
+  assert.ok(flat.road.riders.every((row,index)=>
+    Math.abs(row.energySpent-
+      flat.sourceV2.sourceRoad.road.riders[index].energySpent)<1e-9));
+  assert.equal(validateRearGroupSourceRoadV3(slowerLeader,climb),true);
+  const forged=structuredClone(climb);
+  forged.road.riders[0].energy=100;
+  assert.throws(()=>validateRearGroupSourceRoadV3(
     slowerLeader,forged),/differs/);
 });
 

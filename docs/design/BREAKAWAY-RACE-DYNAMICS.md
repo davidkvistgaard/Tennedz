@@ -2578,6 +2578,14 @@ This is a pricing primitive, not a replacement for the existing rear
 road records: it does not carry the whole-race energy cap, recovery,
 route-wide prior reserves, or a source-bound postcontact continuation.
 It cannot yet be routed or used to claim a finished rider.
+`rear-group-source-road-v3.mjs` applies that price to both riders over
+the distance actually travelled on the replayed two-rider V2 road.
+It retains V2's hold decision, named leader, speed, contact marker and
+historical record while recording lower terrain-priced balances for
+both roles on the 6% climb. The flat road agrees with V2's charges.
+This is a separate opt-in one-kilometre road; its new balances still
+need a source-bound following kilometre and whole-race cap/recovery
+settlement before they can replace any routed state.
 The read-only generated-profile rear-entry audit (`--generated-profile
 --seeds=8 --pace-climb`) replayed and validated 28 of 32 full 20-team,
 260-km V94 cases. Four cases honestly refused their combined fresh
