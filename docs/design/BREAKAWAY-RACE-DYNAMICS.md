@@ -2404,3 +2404,12 @@ unaffordable work refuses. The absolute speed conversion remains a
 candidate; the model is not connected to historical V93, playable V94,
 or official finish times. It also cannot merge two rear solos without a
 separate, equally paid physical contact step.
+
+The four generated-mountain sources above supplied a valid paid bunch
+turn at the following kilometre for all 58 counterfactual solo entries.
+The solo continuation replayed and paid all 58 conservative next steps;
+all remained behind for that one kilometre and none rejoined or ran
+out of energy. This only tests a two-kilometre chain against the source
+road; those riders were not moved in the recorded tour. Later source
+orders and energy would diverge if the candidate were actually routed,
+so a full-race branch with its own state and validator is still needed.

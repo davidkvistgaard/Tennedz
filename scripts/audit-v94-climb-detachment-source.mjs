@@ -13,11 +13,15 @@ import {MOTOR_RACE_DYNAMICS_VERSION} from
   '../lib/engine/v2/tuning.mjs';
 import {advanceRearDetachmentV1,validateRearDetachmentV1} from
   '../lib/engine/v2/rear-detachment-v1.mjs';
+import {advanceRearSoloRoadV1,validateRearSoloRoadV1} from
+  '../lib/engine/v2/rear-solo-road-v1.mjs';
 
 const summary={races:0,refusedRaces:0,eligibleRiderKm:0,
   climbKm:0,paidClimbKm:0,terrainCounts:{},
   stillAttached:0,unresolvedWheelGap:0,paidSoloGap:0,
   soloRecordedPeloton:0,soloRecordedDropped:0,
+  nextSoloStep:0,nextSoloContact:0,nextSoloContinues:0,
+  nextPlanUnavailable:0,nextSoloUnpayable:0,
   gapOver1:0,gapOver3:0,gapOver5:0,
   unpayable:0,examples:[]};
 for(const seed of [1,2])for(const fatigue of [0,30]){
@@ -77,6 +81,23 @@ for(const seed of [1,2])for(const fatigue of [0,30]){
               rider.id===row.id)?.group;
             if(recorded==='peloton')summary.soloRecordedPeloton++;
             if(recorded==='dropped')summary.soloRecordedDropped++;
+            const next=recording.frames[index+1];
+            const nextSegment=recording.route.kilometres[index+1];
+            if(!next||next.pelotonFrontTurnPlan?.status!=='worked')
+              summary.nextPlanUnavailable++;
+            else try{
+              const soloInput={prior:entry,rider:riders.get(row.id),
+                segment:nextSegment,bunchTurnPlan:next.pelotonFrontTurnPlan,
+                effort:'conserve',reason:'finish_safely'};
+              const solo=advanceRearSoloRoadV1(soloInput);
+              validateRearSoloRoadV1(soloInput,solo);
+              summary.nextSoloStep++;
+              if(solo.status==='bunch_contact')summary.nextSoloContact++;
+              else summary.nextSoloContinues++;
+            }catch(error){
+              if(!String(error.message).includes('cannot pay'))throw error;
+              summary.nextSoloUnpayable++;
+            }
           }
           else summary.unresolvedWheelGap++;
           if(entry.behindBunchSeconds>1)summary.gapOver1++;
