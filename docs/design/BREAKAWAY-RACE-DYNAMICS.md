@@ -2365,6 +2365,17 @@ that does not establish realistic mountain survival. The next rear
 group version needs a physical transition and paid contact source before
 it can assign a shared wheel, rotation, shelter or finish pace.
 
+The same read-only audit now accepts bounded `--seeds=N` and a compact
+`--summary` output. Three independent holdout seeds across the same
+120/260-km, flat/mountain, fresh/tired matrix produced 22 replayed
+sources and two honest shared-road-clock refusals. The 22 sources had
+668,800 rider-kilometre energy rows, but only 26,963 explicit forward
+participation decision rows. They recorded 2,344 dropped-state
+rider-kilometres and zero dropped-rider participation decisions.
+The forward count is one kind of decision, not a count of every other
+team or attack choice; the contrast still proves that complete energy
+rows cannot establish a decision for every rider every kilometre.
+
 An isolated `rear-detachment-v1.mjs` candidate now links the committed
 climb choice to one paid 1-km road step. It requires an explicit
 contiguous bunch leader turn plan whose weighted ability matches its

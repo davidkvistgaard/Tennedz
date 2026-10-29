@@ -2,12 +2,17 @@
 import {createV94RaceDynamicsPreview} from
   '../lib/engine/v2/playtest-race-dynamics-v94.mjs';
 
+const requestedSeeds=process.argv.find(arg=>arg.startsWith('--seeds='));
+const seedCount=requestedSeeds?Number(requestedSeeds.slice(8)):1;
+if(!Number.isInteger(seedCount)||seedCount<1||seedCount>8)
+  throw new Error('Decision coverage seeds must be between 1 and 8.');
 const results=[];
-for(const distanceKm of [120,260])for(const terrain of ['flat','mountain'])
+for(let seed=1;seed<=seedCount;seed++)
+  for(const distanceKm of [120,260])for(const terrain of ['flat','mountain'])
   for(const fatigue of [0,30]){
   const settings={distanceKm,teamCount:20,terrain,fatigue,
     attack:'none',chase:'selective',
-    seed:`chase-turn-holdout-1-${terrain}-${fatigue}`};
+    seed:`chase-turn-holdout-${seed}-${terrain}-${fatigue}`};
   let recording;
   try{
     ({recording}=createV94RaceDynamicsPreview({format:'one_day',
@@ -16,7 +21,8 @@ for(const distanceKm of [120,260])for(const terrain of ['flat','mountain'])
   }catch(error){
     if(!String(error.message).includes('Combined fresh attack and paid pursuit'))
       throw error;
-    results.push({distanceKm,terrain,fatigue,refusal:error.message});
+    results.push({seed,distanceKm,terrain,fatigue,
+      refusal:error.message});
     continue;
   }
   const coverage={riderKilometres:0,paidEnergyRows:0,
@@ -43,6 +49,21 @@ for(const distanceKm of [120,260])for(const terrain of ['flat','mountain'])
       }
     }
   }
-  results.push({distanceKm,terrain,fatigue,coverage});
+  results.push({seed,distanceKm,terrain,fatigue,coverage});
 }
-console.log(JSON.stringify(results));
+if(process.argv.includes('--summary')){
+  const totals={seedCount,cases:results.length,
+    validatedCases:0,refusedCases:0,riderKilometres:0,
+    paidEnergyRows:0,forwardDecisionRows:0,
+    pelotonRiderKilometres:0,droppedRiderKilometres:0,
+    droppedDecisionRows:0};
+  for(const row of results){
+    if(row.refusal){totals.refusedCases++;continue;}
+    totals.validatedCases++;
+    for(const key of ['riderKilometres','paidEnergyRows',
+      'forwardDecisionRows','pelotonRiderKilometres',
+      'droppedRiderKilometres','droppedDecisionRows'])
+      totals[key]+=row.coverage[key];
+  }
+  console.log(JSON.stringify(totals));
+}else console.log(JSON.stringify(results));
