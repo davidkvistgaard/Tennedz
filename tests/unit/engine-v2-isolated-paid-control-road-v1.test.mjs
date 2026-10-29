@@ -127,6 +127,8 @@ test('a strong paid controller can make contact without observer chase',()=>{
   assert.equal(slide.status,'solo_behind');
   assert.equal(slide.event?.kind,
     'front_passes_through_bunch');
+  assert.ok(slide.event.atDistanceM>slide.catchDistanceM);
+  assert.ok(slide.event.atDistanceM<slide.endDistanceM);
   assert.ok(slide.riders.every(row=>row.energySpent>0&&
     row.energy>=0));
   assert.equal(validateControlCaughtFrontSlideV1(

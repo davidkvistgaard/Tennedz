@@ -2881,7 +2881,9 @@ waits. It replays the exact control catch, checks that the caught rider
 cannot hold the named worker's pace, then charges both for the
 remaining road. Only when the computed postcontact gap exceeds the
 existing dropped threshold does it record that the rider passed
-through the bunch into a solo road. The strong-controller focused
+through the bunch into a solo road, at the computed point where the
+gap crosses that threshold rather than at the initial catch. The
+strong-controller focused
 case records that event and rejects a forged energy trace. It does
 not grant the rider an unproved sheltered wheel or place them in a
 rear group, and the other bunch riders and finish remain unmodeled.
