@@ -69,6 +69,7 @@ const summary={profile:generated?'generated':'legacy',
     paceLossUnresolved:0,paceLossRefusals:{}}:{}),
   ...(onset?{firstPositiveClimbDeficits:0,
     firstPositivePaceAccepted:0,firstPositivePaceRefusals:{},
+    firstPositiveSingleTurn:0,firstPositiveSplitAtKmStart:0,
     firstPositiveWithinHalfSecond:0,
     firstPositiveMismatchSumSeconds:0,
     firstPositiveMismatchMinSeconds:null,
@@ -114,6 +115,8 @@ for(let seed=1;seed<=seedCount;seed++)for(const terrain of ['flat','mountain'])
             before.deficitSeconds!==0||
             rider.deficitSeconds<=0)continue;
           summary.firstPositiveClimbDeficits++;
+          if(frame.pelotonFrontTurnPlan.turns.length===1)
+            summary.firstPositiveSingleTurn++;
           try{
             const candidate=advanceRearPaceClimbSplitV1({
               rider:sourceRiders.get(rider.id),
@@ -123,6 +126,8 @@ for(let seed=1;seed<=seedCount;seed++)for(const terrain of ['flat','mountain'])
               stageNumber:1,stageCount:1,
               soloEffort:'conserve',soloReason:'finish_safely'});
             summary.firstPositivePaceAccepted++;
+            if(candidate.splitDistanceM===(frame.km-1)*1000)
+              summary.firstPositiveSplitAtKmStart++;
             const mismatch=Math.abs(candidate.behindBunchSeconds-
               rider.deficitSeconds);
             if(mismatch<=.5)summary.firstPositiveWithinHalfSecond++;

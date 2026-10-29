@@ -3,6 +3,9 @@ import assert from 'node:assert/strict';
 import {advanceRearPaceClimbSplitV1,
   validateRearPaceClimbSplitV1} from
   '../../lib/engine/v2/rear-pace-climb-split-v1.mjs';
+import {advanceRearPaceClimbSplitV2,
+  validateRearPaceClimbSplitV2} from
+  '../../lib/engine/v2/rear-pace-climb-split-v2.mjs';
 
 const rider={id:'climber',mountain:65,flat:65,hills:65,
   sprint:50,cobbles:50,timetrial:35,endurance:70,
@@ -49,4 +52,39 @@ test('matchable, unpaid and future-stage release paths refuse',()=>{
       reserveEnergy:.2}}),/hard hold attempt/);
   assert.throws(()=>advanceRearPaceClimbSplitV1({...input,
     soloEffort:'hard',energy:.26}),/chosen solo work/);
+});
+
+test('first-turn loss pays terrain work across every subsequent bunch turn',()=>{
+  const paidTurns={status:'worked',leaderAbility:90,
+    turns:[{startM:0,endM:500,ability:90},
+      {startM:500,endM:1000,ability:90}]};
+  const routeKilometres=Array.from({length:12},(_,index)=>({
+    ...segment,km:index+1}));
+  for(const fatigue of [0,30]){
+    const input={rider:{...rider,fatigue},segment,energy:40,
+      bunchTurnPlan:paidTurns,routeKilometres,
+      stageNumber:18,stageCount:21,
+      soloEffort:'conserve',soloReason:'finish_safely'};
+    const old=advanceRearPaceClimbSplitV1(input);
+    const result=advanceRearPaceClimbSplitV2(input);
+    assert.equal(result.splitDistanceM,11000);
+    assert.equal(result.soloSlices.length,2);
+    assert.ok(result.soloSlices.every(row=>row.energySpent>0&&
+      row.behindBunchSeconds>0));
+    assert.ok(result.energyAfter<old.energyAfter);
+    assert.equal(result.soloSlices[1].energyBefore,
+      result.soloSlices[0].energyAfter);
+    assert.equal(validateRearPaceClimbSplitV2(input,result),true);
+    const forged=structuredClone(result);
+    forged.soloSlices[1].energySpent=0;
+    assert.throws(()=>validateRearPaceClimbSplitV2(input,forged),
+      /differs/);
+  }
+  const broken=routeKilometres.map(row=>({...row}));
+  broken[11].gradientPct=0;
+  assert.throws(()=>advanceRearPaceClimbSplitV2({
+    rider,segment,energy:40,bunchTurnPlan:paidTurns,
+    routeKilometres:broken,stageNumber:18,stageCount:21,
+    soloEffort:'conserve',soloReason:'finish_safely'}),
+  /route-bound/);
 });

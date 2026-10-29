@@ -2638,6 +2638,16 @@ kilometre's start. This is an explicit clock conflict, not a source
 for assigning the rider a physical wheel or merging rear groups.
 The provisional checkpoint deficit and paid road must be reconciled
 under one versioned clock before the onset can enter the whole race.
+Across the same 444 first positive climbing deficits, every alternate
+paid split begins at the first metre of its kilometre; none of the
+source bunch plans has only one turn. `rear-pace-climb-split-v2.mjs`
+now prices each solo slice against its own named bunch turn with the
+route's terrain load and a route-derived capacity ceiling. Fresh and
+tired focused witnesses replay two paid turns and spend more climbing
+energy than the historical V1 split. This is still an isolated
+alternative road: it does not overwrite V94's conflicting checkpoint
+deficit or its whole-field energy ledger, and cannot seed a group or
+finish until one recorded physical clock owns that rider.
 `rear-split-solo-run-v1.mjs` extends that exact split through consecutive
 solo kilometres. Each rider has a fresh explicit choice in each kilometre,
 with a separate energy and bunch-gap calculation; the source replay
