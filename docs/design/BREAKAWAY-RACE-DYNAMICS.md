@@ -2569,6 +2569,19 @@ At the focused 6% gradient, the whole-race base-work multiplier would
 be 1.21 before other costs, while the isolated follower solo still uses
 1.00. A later paid version must reconcile the full leader and shelter
 ledger, rather than patch only the follower's final reserve.
+The read-only generated-profile rear-entry audit (`--generated-profile
+--seeds=8 --pace-climb`) replayed and validated 28 of 32 full 20-team,
+260-km V94 cases. Four cases honestly refused their combined fresh
+attack and pursuit clock. The accepted cases had 386 newly labelled
+`dropped` riders, 377 on climbing kilometres. All 386 had a positive
+checkpoint deficit already in the previous kilometre; none had a
+recorded bunch-work or caught-break event in that or the preceding
+kilometre. All 377 climb snapshots admitted the separate opt-in
+pace-loss solo calculation, but that cannot establish their initial
+physical detachment or contact with another rider. These checkpoint
+labels therefore cannot seed a rear group, a wheel, or an actual finish
+clock. The race source needs explicit paid crossing and subsequent
+contact evidence before rear routing.
 `rear-split-solo-run-v1.mjs` extends that exact split through consecutive
 solo kilometres. Each rider has a fresh explicit choice in each kilometre,
 with a separate energy and bunch-gap calculation; the source replay
