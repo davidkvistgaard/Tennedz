@@ -2780,11 +2780,12 @@ contact segments, refuses a missing earlier route kilometre or
 unpayable rider, and stops at bunch contact because the remainder of
 that kilometre has no paid road here. The two-kilometre source test
 replays and rejects a forged recovery award. The contact trace binds
-only its kilometre and the preceding one. V4 therefore now refuses a
-contact after km 160, because earlier decay-bearing route kilometres
+only its kilometre and the preceding one. V4 therefore refuses a
+contact after km 161, because earlier decay-bearing route kilometres
 are not source bound and a caller could otherwise forge the later
 energy ceiling.
-The km-160 contact followed by paid km-161/162 cap decay still replays.
+Km-160 and km-161 contacts followed by paid cap decay both replay;
+km 162 contact refuses because km 161 then lacks a route source.
 It remains an isolated two-rider run: the full field, later recruitment,
 actual finish and calibration are outside this version.
 A separate replay shifts the same source-bound contact to km 160 and
