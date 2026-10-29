@@ -2885,3 +2885,13 @@ through the bunch into a solo road. The strong-controller focused
 case records that event and rejects a forged energy trace. It does
 not grant the rider an unproved sheltered wheel or place them in a
 rear group, and the other bunch riders and finish remain unmodeled.
+
+`isolated-control-caught-rear-solo-v1.mjs` then takes that exact
+source-replayed slide into the next kilometre. The detached rider
+explicitly chooses a conservative solo road while the same named
+controller continues paying for the bunch front; their source-derived
+speeds and energy update the gap. The focused case remains alone
+behind after another fully paid kilometre and rejects a changed energy
+ledger. If the solo rider later reaches the bunch, this version stops
+at the calculated contact marker. It does not assign a rear-group
+wheel or finish time to a rider who has not physically met anyone.

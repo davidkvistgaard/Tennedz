@@ -27,6 +27,9 @@ import {auditIsolatedPaidRoadCoverageV1,
 import {advanceControlCaughtFrontSlideV1,
   validateControlCaughtFrontSlideV1} from
   '../../lib/engine/v2/isolated-control-caught-front-slide-v1.mjs';
+import {advanceControlCaughtRearSoloV1,
+  validateControlCaughtRearSoloV1} from
+  '../../lib/engine/v2/isolated-control-caught-rear-solo-v1.mjs';
 
 const team=(id,skill)=>{
   const riders=Array.from({length:8},(_,number)=>({
@@ -137,6 +140,23 @@ test('a strong paid controller can make contact without observer chase',()=>{
     ...slideInput,paidRoad:{...road,energyByRider:{
       ...road.energyByRider,'front-0':100}}}),
   /replayed paid catch/);
+  const soloInput={slideInput,slide,segment:route[1],
+    soloDecision:{riderId:'front-0',action:'finish_safely',
+      effort:'conserve'}};
+  const solo=advanceControlCaughtRearSoloV1(soloInput);
+  assert.equal(solo.startDistanceM,10000);
+  assert.equal(solo.endDistanceM,11000);
+  assert.equal(solo.status,'solo_behind');
+  assert.ok(solo.behindBunchSeconds>
+    slide.behindBunchSeconds);
+  assert.ok(solo.riders.every(row=>row.energySpent>0&&
+    row.energy>=0));
+  assert.equal(validateControlCaughtRearSoloV1(
+    soloInput,solo),true);
+  const forgedSolo=structuredClone(solo);
+  forgedSolo.energyByRider['front-0']=100;
+  assert.throws(()=>validateControlCaughtRearSoloV1(
+    soloInput,forgedSolo),/differs/);
 });
 
 test('watched kilometres recompute uncertainty and carry paid energy',()=>{
