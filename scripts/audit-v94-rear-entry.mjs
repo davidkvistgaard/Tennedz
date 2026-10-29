@@ -56,6 +56,7 @@ const summary={profile:generated?'generated':'legacy',
   fromBunchWorkSameKm:0,
   fromBunchWorkPreviousKm:0,caughtBreakSameKm:0,
   caughtBreakPreviousKm:0,onClimbKmDrops:0,
+  priorPositiveDeficitDrops:0,priorZeroDeficitDrops:0,
   droppedWithWorkedBunchTurn:0,droppedWithoutWorkedBunchTurn:0,
   ...(unpayable?{climbSnapshotTransitions:0,
     cannotFundHardHold:0,soloRoadAccepted:0,
@@ -99,6 +100,11 @@ for(let seed=1;seed<=seedCount;seed++)for(const terrain of ['flat','mountain'])
       for(const rider of frame.riderGroups.filter(row=>
         row.group==='dropped'&&!priorDropped.has(row.id))){
         summary.newDrops++;
+        const priorDeficit=prior.riderGroups.find(row=>
+          row.id===rider.id)?.deficitSeconds;
+        if(priorDeficit>0)summary.priorPositiveDeficitDrops++;
+        else if(priorDeficit===0)summary.priorZeroDeficitDrops++;
+        else throw new Error('Rear entry is missing its prior rider deficit.');
         if(frame.pelotonFrontTurnPlan?.status==='worked')
           summary.droppedWithWorkedBunchTurn++;
         else summary.droppedWithoutWorkedBunchTurn++;
@@ -170,8 +176,7 @@ for(let seed=1;seed<=seedCount;seed++)for(const terrain of ['flat','mountain'])
         if(summary.examples.length<12)summary.examples.push({seed,terrain,
           fatigue,km:frame.km,kmTerrain:frame.terrain,riderId:rider.id,
           deficitSeconds:rider.deficitSeconds,
-          priorDeficitSeconds:prior.riderGroups.find(row=>
-            row.id===rider.id)?.deficitSeconds??null,
+          priorDeficitSeconds:priorDeficit,
           bunchWorkSameKm:currentWorkers.has(rider.id),
           caughtSameKm:frame.caughtBreakawayRiderIds.includes(rider.id)});
       }
