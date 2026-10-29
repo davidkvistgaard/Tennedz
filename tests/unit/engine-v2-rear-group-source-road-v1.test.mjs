@@ -6,6 +6,8 @@ import {decideRearGroupChoiceV2} from
   '../../lib/engine/v2/rear-group-choice-v2.mjs';
 import {advanceRearGroupSourceRoadV1,validateRearGroupSourceRoadV1} from
   '../../lib/engine/v2/rear-group-source-road-v1.mjs';
+import {advanceRearGroupSourceRoadV2,validateRearGroupSourceRoadV2} from
+  '../../lib/engine/v2/rear-group-source-road-v2.mjs';
 import {runRearGroupSourceV1,validateRearGroupSourceRunV1} from
   '../../lib/engine/v2/rear-group-source-run-v1.mjs';
 import {advanceRearGroupSoloJoinV1,validateRearGroupSoloJoinV1} from
@@ -86,6 +88,22 @@ test('each kilometre can change willingness, but no leader refuses',()=>{
   assert.throws(()=>advanceRearGroupSourceRoadV1({...input,
     rearGoals:rearGoals.map(row=>({...row,rearWork:'sit_on'}))}),
   /No rear rider/);
+});
+
+test('new rear hold gate refuses an unpayable follower pace',()=>{
+  assert.throws(()=>advanceRearGroupSourceRoadV2(input),
+    /cannot hold the paid leader/);
+  const slowerLeader={...input,rearGoals:[rearGoals[0],
+    {...rearGoals[1],rearWork:'sit_on'}]};
+  const held=advanceRearGroupSourceRoadV2(slowerLeader);
+  assert.equal(held.sourceRoad.road.leaderRiderId,'a');
+  assert.deepEqual(held.holdChecks.map(row=>row.riderId),['b']);
+  assert.ok(held.holdChecks[0].canHold);
+  assert.equal(validateRearGroupSourceRoadV2(slowerLeader,held),true);
+  const forged=structuredClone(held);
+  forged.holdChecks[0].holdSpeedKph=0;
+  assert.throws(()=>validateRearGroupSourceRoadV2(
+    slowerLeader,forged),/differs/);
 });
 
 test('prior group, roster and bunch turn source cannot be forged',()=>{

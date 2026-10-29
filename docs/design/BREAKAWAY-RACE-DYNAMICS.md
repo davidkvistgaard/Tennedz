@@ -2519,6 +2519,16 @@ whole-race orders. Larger groups, recruitment, changing team stakes,
 stage finish and official classification remain outside this contract.
 It does not enter guided races or alter prior recordings.
 
+The opt-in `rear-group-source-road-v2.mjs` adds a physical hold check to
+that replayed kilometre. Each rider away from the front must be able to
+match the one paid leader's speed at their chosen effort with a draft
+allowance. The existing climb witness, with a hard-working leader and
+conserving follower, now refuses because the follower cannot hold;
+switching the named leader to the slower willing rider produces a paid,
+replayable group road. The old V1 recording stays unchanged. V2 stops
+when a follower cannot hold; it does not create a split, rear contact
+or finish from an unrecorded road.
+
 `rear-group-source-run-v1.mjs` chains that same derived calculation
 through consecutive whole kilometres. Each step uses the prior paid
 group gap and energy, a new terrain segment and bunch turn record,
