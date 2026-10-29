@@ -6,6 +6,8 @@ import {decideRearGroupChoiceV2} from
   '../../lib/engine/v2/rear-group-choice-v2.mjs';
 import {advanceRearGroupSourceRoadV1,validateRearGroupSourceRoadV1} from
   '../../lib/engine/v2/rear-group-source-road-v1.mjs';
+import {runRearGroupSourceV1,validateRearGroupSourceRunV1} from
+  '../../lib/engine/v2/rear-group-source-run-v1.mjs';
 
 const rider=(id,timetrial)=>({id,mountain:65,flat:65,hills:65,
   timetrial,endurance:70,strength:70,form:50,fatigue:0});
@@ -81,4 +83,33 @@ test('prior group, roster and bunch turn source cannot be forged',()=>{
   /next exact/);
   assert.throws(()=>advanceRearGroupSourceRoadV1({...input,
     bunchTurnPlan:{...bunchTurnPlan,leaderAbility:80}}),/differs/);
+});
+
+test('consecutive rear kilometres choose and pay fresh turns each time',()=>{
+  const kilometre={segment:nextSegment,bunchTurnPlan,teams,
+    rearGoals,roadGroups:[],stageNumber:18,stageCount:21};
+  const next={...kilometre,segment:{...nextSegment,km:15},
+    rearGoals:[{...rearGoals[0],rearWork:'sit_on'},rearGoals[1]]};
+  const runInput={initialChoiceInput:priorChoiceInput,initialChoice:priorChoice,
+    kilometres:[kilometre,next]};
+  const result=runRearGroupSourceV1(runInput);
+  assert.equal(result.steps.length,2);
+  assert.equal(result.steps[0].sourceKm,14);
+  assert.equal(result.steps[1].sourceKm,15);
+  assert.equal(result.steps[0].road.leaderRiderId,'b');
+  assert.equal(result.steps[1].road.leaderRiderId,'b');
+  assert.equal(result.steps[1].memberDecisions[0].choice,'sit_in');
+  assert.ok(result.steps[1].road.riders.every(row=>row.energySpent>0));
+  assert.equal(validateRearGroupSourceRunV1(runInput,result),true);
+  const tampered=structuredClone(result);
+  tampered.steps[1].road.riders[1].energySpent=0;
+  assert.throws(()=>validateRearGroupSourceRunV1(runInput,tampered),
+  /differs/);
+  assert.throws(()=>runRearGroupSourceV1({...runInput,kilometres:[
+    kilometre,{...next,segment:{...next.segment,km:16}}]}),
+  /consecutive/);
+  assert.throws(()=>runRearGroupSourceV1({...runInput,kilometres:[
+    kilometre,{...next,group:{...result.steps[0].road.rearGroup,
+      energyByRider:{a:100,b:100}}}]}),
+  /consecutive|differs|road/);
 });

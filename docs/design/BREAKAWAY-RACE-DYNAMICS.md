@@ -2478,3 +2478,15 @@ are explicit inputs to the isolated experiment rather than committed
 whole-race orders. Larger groups, recruitment, changing team stakes,
 stage finish and official classification remain outside this contract.
 It does not enter guided races or alter prior recordings.
+
+`rear-group-source-run-v1.mjs` chains that same derived calculation
+through consecutive whole kilometres. Each step uses the prior paid
+group gap and energy, a new terrain segment and bunch turn record,
+and that kilometre's explicit rider goals and team effort. It refuses a
+missing kilometre, forged prior contact, changed rider statistics,
+caller-supplied replacement group, or continuation after a recorded
+bunch rejoin. The complete sequence replays and rejects altered rider
+energy or turn evidence. This is still a bounded two-rider experimental
+chain. It lacks a committed whole-race source of rear directives and
+cannot yet handle a third rider joining or a caught break rider falling
+through the bunch.
