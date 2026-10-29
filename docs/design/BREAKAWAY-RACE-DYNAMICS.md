@@ -2290,3 +2290,21 @@ summed coalition's catch time, and the road ability to seconds mapping
 remains provisional. Do not route this version to guided races or
 production until decisions, fatigue, contact and finishes are tested
 together across a broad holdout.
+
+The same 16 sources were then run with **both** the single-leader
+peloton plan and the opt-in single-leader forward-group pace
+(`roadGroupPaceVersion: 3`). Fifteen validated and replayed; one
+correctly refused an unmodeled fresh attack occurring alongside paid
+pursuit. Among the 15, maximum leads were 35–82 seconds and a forward
+group remained at the recorded line in 14. All 15 first paid a chase
+at km 70 of 120, exactly 50 km remaining, despite the first front
+appearing at km 5. In a representative fresh flat case, five control
+teams were still holding their selective chase at km 69; one-day
+protector teams first paid at km 70. This is a decision-clock defect:
+the coalition's old summed-capacity catch estimate makes waiting look
+safe while the new physical single-leader road often cannot catch.
+Simply increasing a speed coefficient would conceal that mismatch.
+The next opt-in decision must assess each observed front, remaining
+terrain, helper reserves and uncertain other-team participation using
+the same paid road model. It must not assign a GC stake to a team with
+no recorded classification or automatically command every protector.

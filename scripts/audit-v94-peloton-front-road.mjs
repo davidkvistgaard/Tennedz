@@ -14,13 +14,15 @@ for(let seed=1;seed<=4;seed++)for(const terrain of ['flat','mountain'])
       ['separate',{chaseTurnVersion:1,bunchFrontTurnVersion:1}],
       ['shared',{chaseTurnVersion:1,bunchFrontTurnVersion:1,
         pelotonFrontTurnVersion:1}],
+      ['sharedBoth',{roadGroupPaceVersion:3,chaseTurnVersion:1,
+        bunchFrontTurnVersion:1,pelotonFrontTurnVersion:1}],
     ])try{
       const {recording,preview}=createV94RaceDynamicsPreview({format:'one_day',
         settings,...versions});
       row[name]={status:'replayed',
         maxLead:preview.story.widestRecordedLead.gapSeconds,
         finalRoadGroups:recording.frames.at(-1).roadGroups.length,
-        simultaneousKm:name==='shared'?recording.frames.filter(frame=>
+        simultaneousKm:name.startsWith('shared')?recording.frames.filter(frame=>
           frame.chaseTurnPlan.status==='worked'&&frame.paidBunchPace).length:
           null};
     }catch(error){
