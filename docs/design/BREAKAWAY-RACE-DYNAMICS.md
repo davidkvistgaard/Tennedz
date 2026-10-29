@@ -2671,6 +2671,15 @@ supports paid bunch survival for its named first leader, but the
 uncalibrated 117-rider split cannot be returned as physical fact.
 The separate synthetic bunch-origin experiment remains available
 for developing and testing the missing physical clock.
+The opt-in `rear-recorded-bunch-origin-v2.mjs` now replays the V94
+source and audits the projected rider's energy before, paid work,
+recovery and energy after for each kilometre. Its strict energy gate
+refuses even the named front worker's five-kilometre example: the
+separate road charges different work in the first kilometre and ends
+with a different reserve. A replayable front-turn plan therefore does
+not make the projected reserve a V94 physical source. This is an
+energy-only reconciliation; the audit explicitly leaves the physical
+clock unverified and cannot establish a wheel, contact or finish.
 Recorded V94 stage context contains a stage number but no committed
 stage schedule. The recorded-origin adapter now uses that number for
 ordinary paid holding and refuses a caller-supplied stage count or
