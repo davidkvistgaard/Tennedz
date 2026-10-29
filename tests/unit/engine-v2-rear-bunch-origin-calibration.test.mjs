@@ -38,6 +38,10 @@ test('same-seed first-km origin projection exposes calibration blocker',()=>{
               'physical_pace_loss');
             assert.ok(road.steps[0].split.bunchSpeedKph>
               road.steps[0].split.holdSpeedKph);
+            const paid=recording.frames[0].energyLedger.find(
+              row=>row.riderId===rider.id);
+            assert.ok(paid.paidFromReserve>0);
+            assert.equal(paid.unmetEnergyDemand,0);
             lost.push(rider.id);
           }else{
             assert.equal(road.status,'bunch');

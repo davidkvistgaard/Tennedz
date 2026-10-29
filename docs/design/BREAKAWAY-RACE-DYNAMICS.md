@@ -2632,7 +2632,11 @@ rolling and mountain, each at fatigue 0 and 30), the current opt-in
 bunch-origin speed comparison loses 117 of 160 riders immediately in
 every case. V94 records no separate road group in any first frame.
 The median projected speed deficit among those 117 ranges from about
-0.70 to 1.06 km/h. This shows that the isolated hold-speed rule is
+0.70 to 1.06 km/h. Every one of those 117 riders paid positive work
+in the V94 first-frame ledger with zero unmet demand. The named front
+workers' ability is being treated as realized bunch speed; capacity
+alone does not establish the field's actual physical pace. This shows
+that the isolated hold-speed rule is
 not calibrated as a field-wide physical wheel rule. Preserve both
 source observations; do not infer 117 real drops or route this model
 into guided races. A replacement must distinguish sustainable
