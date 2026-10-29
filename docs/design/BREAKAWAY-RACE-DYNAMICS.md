@@ -2460,3 +2460,21 @@ The earlier isolated v1 contract remains available for replay, but it
 interpreted a breakaway work order as a rear-group order. V2 requires
 the new explicit `rearWork` directive and must be the basis for any
 future routed rear-group version.
+
+The isolated `rear-group-source-road-v1.mjs` extends that exact two-rider
+contact one further kilometre. It replays the prior contact and first
+turn, requires the next physical kilometre and the same rider roster,
+then recomputes each rider's willingness from a distinct `rearWork`
+directive, current team effort, energy and any teammate ahead. One
+willing rider leads; the other occupies shelter even when willing to
+take a later turn. The route and rider physiology determine pace and
+each rider's exposed or sheltered energy price. A paid bunch turn plan
+sets the reference clock. The result includes the actual gap, energy,
+and any calculated bunch contact marker, all recomputed by source
+validation. A group with no willing leader refuses.
+
+This is a one-kilometre, two-rider continuation. The new rear directives
+are explicit inputs to the isolated experiment rather than committed
+whole-race orders. Larger groups, recruitment, changing team stakes,
+stage finish and official classification remain outside this contract.
+It does not enter guided races or alter prior recordings.
