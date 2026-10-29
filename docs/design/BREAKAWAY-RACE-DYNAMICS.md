@@ -2653,6 +2653,12 @@ supports paid bunch survival for its named first leader, but the
 uncalibrated 117-rider split cannot be returned as physical fact.
 The separate synthetic bunch-origin experiment remains available
 for developing and testing the missing physical clock.
+Recorded V94 stage context contains a stage number but no committed
+stage schedule. The recorded-origin adapter now uses that number for
+ordinary paid holding and refuses a caller-supplied stage count or
+future-stage release plan; otherwise a request could invent the later
+stage needed to justify deliberately leaving the bunch. A replayed
+20-team stage witness checks both the allowed holding road and refusal.
 `rear-energy-demand-v1.mjs` now exposes an unaffordable work quote
 without granting energy, and `rear-bunch-energy-loss-v1.mjs` replays a
 paid bunch-origin source before pricing the next turn. In a long

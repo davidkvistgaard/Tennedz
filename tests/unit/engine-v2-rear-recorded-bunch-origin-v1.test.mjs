@@ -45,3 +45,33 @@ test('V94 paid bunch turn can anchor a separate physical start road',()=>{
       action:'hold_wheel',reason:'follow_order'}]}),
   /uncalibrated physical pace loss/);
 });
+
+test('recorded stage number cannot invent a future-stage schedule',()=>{
+  const {recording}=createV94RaceDynamicsPreview({format:'stage',
+    roadGroupPaceVersion:3,bunchFrontTurnVersion:1,
+    chaseTurnVersion:1,pelotonFrontTurnVersion:1,
+    settings:{distanceKm:120,terrain:'mountain',teamCount:20,
+      fatigue:30,attack:'none',chase:'selective',
+      seed:'stage-plan-context'}});
+  const riderId=recording.frames[0].pelotonFrontTurnPlan.
+    turns[0].leaderRiderId;
+  const team=recording.committedInputs.teams.find(row=>
+    row.riders.some(rider=>rider.id===riderId));
+  const choice={riderId,km:1,
+    effort:orderAt(team.orders,0).effort,
+    action:'hold_wheel',reason:'follow_order'};
+  const road=runRearRecordedBunchOriginV1({recording,riderId,
+    throughKm:1,choices:[choice]});
+  assert.equal(road.road.status,'bunch');
+  const stageNumber=recording.committedInputs.raceContext.stageNumber;
+  assert.throws(()=>runRearRecordedBunchOriginV1({
+    recording,riderId,throughKm:1,stageCount:stageNumber+1,
+    committedStagePlan:{riderId,
+      currentStageNumber:stageNumber,
+      targetStageNumber:stageNumber+1,
+      currentGoal:'finish_safely',futureGoal:'target_stage',
+      reserveEnergy:50},
+    choices:[{...choice,action:'release_wheel',
+      reason:'committed_future_stage_reserve'}]}),
+  /no committed future-stage schedule/);
+});
