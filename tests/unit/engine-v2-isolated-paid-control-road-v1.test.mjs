@@ -173,6 +173,29 @@ test('a strong paid controller can make contact without observer chase',()=>{
   forgedRun.steps[1].behindBunchSeconds=0;
   assert.throws(()=>validateControlCaughtRearRunV1(
     runInput,forgedRun),/differs/);
+  const changedTeams=structuredClone(fasterTeams);
+  changedTeams[2].orders.phases=[{
+    atKm:10,frontWork:'sit_in'}];
+  const changedChoiceInput={...choiceInput,teams:changedTeams};
+  const changedFrontInput={...frontInput,teams:changedTeams};
+  const changedPaidInput={...source,
+    committedChoiceInput:changedChoiceInput,
+    committedChoice:decideCommittedTeamChaseV1(
+      changedChoiceInput),
+    frontChoiceInput:changedFrontInput,
+    frontChoice:decideRoadGroupSprintChoiceV1(
+      changedFrontInput)};
+  const changedPaid=advanceIsolatedPaidControlRoadV1(
+    changedPaidInput);
+  const changedSlideInput={paidInput:changedPaidInput,
+    paidRoad:changedPaid,
+    slideDecision:slideInput.slideDecision};
+  const changedSlide=advanceControlCaughtFrontSlideV1(
+    changedSlideInput);
+  assert.throws(()=>advanceControlCaughtRearSoloV1({
+    slideInput:changedSlideInput,slide:changedSlide,
+    segment:route[1],soloDecision:soloInput.soloDecision}),
+  /same named paid controller/);
 });
 
 test('watched kilometres recompute uncertainty and carry paid energy',()=>{

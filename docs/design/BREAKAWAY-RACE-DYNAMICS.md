@@ -2904,3 +2904,7 @@ catch; it records the solo rider's elapsed time **since the catch**.
 It does not have a source for the earlier absolute race clock, so it
 does not publish an actual full-stage finish time or invent a time
 limit. The other bunch riders still have no ledger.
+An explicit next-kilometre `sit_in` order for that controller now
+refuses the continuation instead of silently retaining their paid
+front role. Another payable bunch leader would need their own recorded
+order, turn and source-replayed road.
