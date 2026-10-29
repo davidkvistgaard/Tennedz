@@ -2389,3 +2389,18 @@ official drop events. The disagreement confirms that this candidate
 and the existing provisional bunch-membership model are not a
 calibrated common physical clock. No rear-group contact or draft benefit
 is inferred from the trial, and it must remain off the playable route.
+
+An isolated `rear-solo-road-v1.mjs` now accepts only the exact positive
+gap and paid reserve from the detachment step (or its own previous
+step), plus a complete source-paid bunch turn plan for the next
+kilometre. The rider explicitly chooses conserve, steady or hard
+effort and a `finish_safely` or `rejoin_bunch` reason. Terrain-adjusted
+solo ability and the recorded bunch leader produce two travel times;
+the rider pays energy through either the full kilometre or the
+calculated within-kilometre bunch contact. A contact stops at its
+distance marker and does not grant the rest of the kilometre for free.
+Source replay rejects changed energy, leader turns or position, and
+unaffordable work refuses. The absolute speed conversion remains a
+candidate; the model is not connected to historical V93, playable V94,
+or official finish times. It also cannot merge two rear solos without a
+separate, equally paid physical contact step.
