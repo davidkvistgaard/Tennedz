@@ -451,6 +451,27 @@ test('late rear road uses the source climbing cap instead of an early-stage cap'
   assert.equal(run.steps[1].settlement[0].cap,99.456);
   assert.ok(run.steps.every(step=>step.settlement.every(row=>
     row.energyAfter<=row.cap&&row.recoveryAward===0)));
+  const unsourcedPrior={...prior,km:160};
+  const unsourcedContact={...contact,km:161};
+  const unsourcedFront={...frontSource,segment:unsourcedPrior};
+  const unsourcedRear={...rearSource,segment:unsourcedPrior};
+  const unsourcedContactInput={...lateContactInput,
+    segment:unsourcedContact,
+    front:{...lateContactInput.front,priorSource:unsourcedFront,
+      prior:advanceRearDetachmentV1(unsourcedFront)},
+    rear:{...lateContactInput.rear,priorSource:unsourcedRear,
+      prior:advanceRearDetachmentV1(unsourcedRear)}};
+  const unsourcedChoiceInput={...priorChoiceInput,
+    contactInput:unsourcedContactInput};
+  const unsourcedChoice=decideRearGroupChoiceV2(
+    unsourcedChoiceInput);
+  assert.throws(()=>runRearGroupSourceV4({
+    initialChoiceInput:unsourcedChoiceInput,
+    initialChoice:unsourcedChoice,
+    routeKilometres:Array.from({length:163},(_,index)=>({
+      ...segment,km:index+1})),
+    kilometres:[{...first,segment:{...segment,km:162}}]}),
+  /sourced precontact decay route/);
 });
 
 test('a third rider joins only at calculated paid rear contact',()=>{

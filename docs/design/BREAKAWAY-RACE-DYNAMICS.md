@@ -2772,9 +2772,14 @@ into the next kilometre's choice. It binds the route to the replayed
 contact segments, refuses a missing earlier route kilometre or
 unpayable rider, and stops at bunch contact because the remainder of
 that kilometre has no paid road here. The two-kilometre source test
-replays and rejects a forged recovery award. It remains an isolated
-two-rider run: the full field, later recruitment, actual finish and
-calibration are outside this version.
+replays and rejects a forged recovery award. The contact trace binds
+only its kilometre and the preceding one. V4 therefore now refuses a
+contact after km 160, because earlier decay-bearing route kilometres
+are not source bound and a caller could otherwise forge the later
+energy ceiling.
+The km-160 contact followed by paid km-161/162 cap decay still replays.
+It remains an isolated two-rider run: the full field, later recruitment,
+actual finish and calibration are outside this version.
 A separate replay shifts the same source-bound contact to km 160 and
 continues through climbing km 161–162. The run records the capacity
 ceiling dropping to 99.728 and then 99.456 while both riders keep paying
