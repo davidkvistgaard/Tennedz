@@ -11,6 +11,7 @@
     "start": "next start",
     "lint": "eslint app lib tests",
     "test": "node --test tests/unit/*.test.mjs",
+    "test:marketplace:sql": "node tests/support/marketplace-sql-check.mjs",
     "test:e2e": "playwright test"
   },
   "dependencies": {
@@ -23,6 +24,7 @@
     "server-only": "0.0.1"
   },
   "devDependencies": {
+    "@electric-sql/pglite": "0.5.13",
     "@playwright/test": "1.56.1",
     "eslint": "9.39.1"
   },
