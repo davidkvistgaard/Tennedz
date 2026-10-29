@@ -2695,6 +2695,19 @@ stage. This is one climb only: an end-of-kilometre zero reserve does
 not imply that the rider can finish the race, and a sub-threshold gap
 remains an unresolved wheel rather than an invented rear group.
 
+A read-only six-seed generated-profile V94 audit put that low-energy
+entry in context. Of 24 flat/mountain and fresh/tired 20-team 260-km
+sources, 21 fully replayed and three retained the existing simultaneous
+attack/pursuit refusal. The replayed races recorded 311 first dropped
+transitions, 306 on climbs. All 306 had a worked bunch turn and a prior
+peloton *snapshot*, but none had energy below the candidate whole-km
+hard sheltered cost. The new unaffordable-climb branch therefore
+explains **zero** of these recorded transitions. Some prior snapshots
+already carried a small deficit, so they do not prove an occupied wheel
+at the next kilometre start. The predominant climb-drop path still
+needs a separately modeled physical ability/pace loss with an actual
+wheel trace; the isolated low-energy witness is no substitute for it.
+
 `rear-unpayable-solo-run-v1.mjs` source-replays that within-kilometre
 climb split before a rider can enter consecutive, paid solo kilometres.
 It refuses a sub-threshold wheel gap, a forged split marker, a changed

@@ -11,10 +11,15 @@ import {prepareV94RivalIntent} from
   '../lib/engine/v2/playtest-rival-intent-v94.mjs';
 import {simulateTacticalTour} from '../lib/engine/v2/tour.mjs';
 import {validateRecordedTour} from '../lib/engine/v2/recording.mjs';
-import {MOTOR_RACE_DYNAMICS_VERSION} from
+import {MOTOR_RACE_DYNAMICS_VERSION,TUNING} from
   '../lib/engine/v2/tuning.mjs';
+import {advanceRearUnpayableClimbV1} from
+  '../lib/engine/v2/rear-unpayable-climb-v1.mjs';
+import {riderKilometreEffect} from
+  '../lib/engine/v2/physiology.mjs';
 
 const generated=process.argv.includes('--generated-profile');
+const unpayable=process.argv.includes('--unpayable-climb');
 const requestedSeeds=process.argv.find(arg=>arg.startsWith('--seeds='));
 const seedCount=requestedSeeds?Number(requestedSeeds.slice(8)):
   generated?2:8;
@@ -49,6 +54,10 @@ const summary={profile:generated?'generated':'legacy',
   fromBunchWorkPreviousKm:0,caughtBreakSameKm:0,
   caughtBreakPreviousKm:0,onClimbKmDrops:0,
   droppedWithWorkedBunchTurn:0,droppedWithoutWorkedBunchTurn:0,
+  ...(unpayable?{climbSnapshotTransitions:0,
+    cannotFundHardHold:0,soloRoadAccepted:0,
+    soloRoadDetached:0,soloRoadUnresolved:0,
+    soloRoadRefusals:{}}:{}),
   examples:[]};
 for(let seed=1;seed<=seedCount;seed++)for(const terrain of ['flat','mountain'])
   for(const fatigue of [0,30]){
@@ -70,6 +79,8 @@ for(let seed=1;seed<=seedCount;seed++)for(const terrain of ['flat','mountain'])
     }
     replayRaceDynamicsRecording(recording);
     summary.cases++;
+    const sourceRiders=new Map(recording.committedInputs.teams.flatMap(
+      team=>team.riders.map(rider=>[rider.id,rider])));
     for(let index=1;index<recording.frames.length;index++){
       const prior=recording.frames[index-1],frame=recording.frames[index];
       const priorDropped=new Set(prior.riderGroups.filter(row=>
@@ -92,6 +103,39 @@ for(let seed=1;seed<=seedCount;seed++)for(const terrain of ['flat','mountain'])
           summary.caughtBreakPreviousKm++;
         if(frame.terrain==='climb'||frame.terrain==='mountain')
           summary.onClimbKmDrops++;
+        if(unpayable&&frame.terrain==='climb'&&
+          prior.riderGroups.some(row=>row.id===rider.id&&
+            row.group==='peloton')&&
+          frame.pelotonFrontTurnPlan?.status==='worked'){
+          summary.climbSnapshotTransitions++;
+          const sourceRider=sourceRiders.get(rider.id);
+          const sourceSegment=recording.route.kilometres[frame.km-1];
+          const priorEnergy=prior.riderGroups.find(row=>
+            row.id===rider.id).energy;
+          const effect=riderKilometreEffect(sourceRider,
+            sourceSegment,{phase:'cruise',energy:priorEnergy,
+              exposed:sourceSegment.exposed});
+          const hardHoldCost=TUNING.effortCost.hard*
+            effect.energyCostMultiplier*.8;
+          if(priorEnergy<hardHoldCost){
+            summary.cannotFundHardHold++;
+            try{
+              const candidate=advanceRearUnpayableClimbV1({
+                rider:sourceRider,segment:sourceSegment,
+                energy:priorEnergy,
+                bunchTurnPlan:frame.pelotonFrontTurnPlan,
+                stageNumber:1,stageCount:1});
+              summary.soloRoadAccepted++;
+              if(candidate.status==='solo_behind')
+                summary.soloRoadDetached++;
+              else summary.soloRoadUnresolved++;
+            }catch(error){
+              const reason=String(error.message);
+              summary.soloRoadRefusals[reason]=
+                (summary.soloRoadRefusals[reason]??0)+1;
+            }
+          }
+        }
         if(summary.examples.length<12)summary.examples.push({seed,terrain,
           fatigue,km:frame.km,kmTerrain:frame.terrain,riderId:rider.id,
           deficitSeconds:rider.deficitSeconds,
