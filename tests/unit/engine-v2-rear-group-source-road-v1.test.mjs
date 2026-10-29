@@ -21,6 +21,9 @@ import {runRearGroupSourceV4,validateRearGroupSourceRunV4} from
 import {advanceRearGroupFollowerSplitV1,
   validateRearGroupFollowerSplitV1} from
   '../../lib/engine/v2/rear-group-follower-split-v1.mjs';
+import {advanceRearGroupFollowerSplitV2,
+  validateRearGroupFollowerSplitV2} from
+  '../../lib/engine/v2/rear-group-follower-split-v2.mjs';
 import {advanceRearSplitSoloRoadV1,
   validateRearSplitSoloRoadV1} from
   '../../lib/engine/v2/rear-split-solo-road-v1.mjs';
@@ -194,6 +197,26 @@ test('new rear hold gate refuses an unpayable follower pace',()=>{
   forged.holdChecks[0].holdSpeedKph=0;
   assert.throws(()=>validateRearGroupSourceRoadV2(
     slowerLeader,forged),/differs/);
+});
+
+test('split rear riders both pay climb terrain without changing separation',()=>{
+  const routeKilometres=Array.from({length:14},(_,index)=>({
+    ...nextSegment,km:index+1}));
+  const source={...input,routeKilometres};
+  const result=advanceRearGroupFollowerSplitV2(source);
+  assert.equal(result.sourceV1.status,'two_solos_behind');
+  assert.equal(result.sourceV1.event.atDistanceM,
+    advanceRearGroupFollowerSplitV1(input).event.atDistanceM);
+  assert.ok(result.prices.every((row,index)=>
+    row.energyDemand>result.sourceV1.riders[index].energySpent&&
+    row.energyAfter>=0));
+  assert.deepEqual(result.solos.map(row=>row.behindBunchSeconds),
+    result.sourceV1.solos.map(row=>row.behindBunchSeconds));
+  assert.equal(validateRearGroupFollowerSplitV2(source,result),true);
+  const forged=structuredClone(result);
+  forged.solos[1].energyAfter=100;
+  assert.throws(()=>validateRearGroupFollowerSplitV2(source,forged),
+    /differs/);
 });
 
 test('terrain-priced rear step charges both physical roles without moving contact',()=>{

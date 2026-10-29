@@ -2569,6 +2569,13 @@ At the focused 6% gradient, the whole-race base-work multiplier would
 be 1.21 before other costs, while the isolated follower solo still uses
 1.00. A later paid version must reconcile the full leader and shelter
 ledger, rather than patch only the follower's final reserve.
+`rear-group-follower-split-v2.mjs` now replays the old physical split
+marker and charges both separated riders for their actual climbing
+roles and the route-derived cap. The leader and follower spend more
+than in V1 on the 6% climb; their source-derived separation and bunch
+gaps are unchanged. It remains a single opt-in split kilometre. The
+following solo run still uses V1 prices and cannot inherit V2's new
+balances until it has its own versioned terrain ledger.
 `rear-energy-demand-v1.mjs` now provides a separate opt-in price for a
 known rear-road role and distance. It applies that terrain load to both
 the exposed rider's and sheltered rider's base effort, keeps the
