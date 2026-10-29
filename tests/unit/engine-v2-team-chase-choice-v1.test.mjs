@@ -4,6 +4,9 @@ import {SPORTING_SKILLS} from '../../lib/engine/v2/skills.mjs';
 import {decideTeamChaseChoiceV1,
   validateTeamChaseChoiceV1} from
   '../../lib/engine/v2/team-chase-choice-v1.mjs';
+import {commitTeamChaseStakesV1,teamChaseStakeAtKmV1,
+  decideCommittedTeamChaseV1,validateCommittedTeamChaseV1} from
+  '../../lib/engine/v2/team-chase-stake-v1.mjs';
 
 function team(index,skill){
   const id=`team-${index}`;
@@ -86,4 +89,37 @@ test('the observer does not read rival private work orders',()=>{
   changed.teams[1].orders.baseline.chase='ignore';
   changed.teams[1].orders.helperIds=[];
   assert.deepEqual(decideTeamChaseChoiceV1(changed),before);
+});
+
+test('team chase goal and later change have a replayed roster source',()=>{
+  const intentions=teams.map(team=>({teamId:team.id,
+    baseline:{goal:team.id==='team-3'?'sprint_finish':
+      'break_stage',captainId:team.riders[0].id},
+    phases:team.id==='team-3'?[{atKm:10,
+      goal:'summit_attack',captainId:team.riders[0].id}]:[]}));
+  const commitment=commitTeamChaseStakesV1({teams,
+    distanceKm:30,intentions});
+  assert.equal(teamChaseStakeAtKmV1({commitment,
+    teamId:'team-3',km:10}).goal,'sprint_finish');
+  assert.equal(teamChaseStakeAtKmV1({commitment,
+    teamId:'team-3',km:11}).goal,'summit_attack');
+  const input={commitment,teams,roadGroups:[
+    group('road-1','team-1-0','team-1',90)],
+  observerTeamId:'team-3',raceSeed:base.raceSeed,
+  nominatedChaseTeamIds:['team-3'],remainingSegments:route};
+  const result=decideCommittedTeamChaseV1(input);
+  assert.equal(result.stake.goal,'sprint_finish');
+  assert.equal(validateCommittedTeamChaseV1(input,result),true);
+  const forged=structuredClone(result);
+  forged.stake.goal='summit_attack';
+  assert.throws(()=>validateCommittedTeamChaseV1(input,
+    forged),/differs/);
+  const altered=structuredClone(input);
+  altered.teams[2].riders[0].id='other';
+  assert.throws(()=>decideCommittedTeamChaseV1(altered),
+    /roster differs/);
+  assert.throws(()=>commitTeamChaseStakesV1({teams,distanceKm:30,
+    intentions:intentions.map(row=>row.teamId==='team-3'?{
+      ...row,phases:[{atKm:11,goal:'summit_attack',
+        captainId:row.baseline.captainId}]}:row)}),/route marker/);
 });

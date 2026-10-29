@@ -2643,3 +2643,15 @@ conditional helper need not increase instantaneous catch headroom:
 only one rider leads at a time, although a larger roster can spread
 future fatigue. This is still a forecast, with caller-supplied team
 stake and coalition, not a calibrated or executed chase policy.
+
+`team-chase-stake-v1.mjs` gives that isolated timing choice an explicit
+roster-bound sporting source. Every team names a captain and a goal
+before the simulated start: sprint finish, summit attack, break-stage
+bid, or none. Changes can be committed only at order markers and apply
+from the following kilometre. Only an active sprint or summit goal can
+enter the opt-in chase choice; a contemporaneous chase order must also
+allow pursuit. A changed captain, goal, team roster, or timing decision
+fails replay. The source is a caller-provided commitment snapshot,
+not yet a saved whole-race order or an authenticated in-race manager
+event. It creates no GC objective from a stage label and neither
+guarantees allied help nor charges any energy by itself.
