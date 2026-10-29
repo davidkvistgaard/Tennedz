@@ -2828,3 +2828,20 @@ that controller fatigued and low on energy delays the calculated
 contact. All three isolated traces replay, but the fixture has only
 three teams and one named worker, so these are mechanism checks rather
 than whole-race calibration.
+
+`isolated-paid-cooperative-road-v1.mjs` models the first kilometre
+after that weak-control case triggers a committed sprint-team chase.
+The same named controller and the actual available chase helpers take
+disjoint shares of **one** bunch-front position. The current leader
+sets each slice's pace; their abilities are not summed. Every named
+worker pays exposed work on their turn and a lower sheltered cost on
+the other turns. The front rider also chooses and pays their own road.
+The focused witness shows three distinct bunch turns and no contact in
+that first chase kilometre. It refuses an absent controller, conflicting
+order, missing payable chase helper, or unworked front. The separate
+`isolated-paid-control-chase-handoff-v1.mjs` replays the entire earlier
+watched run before allowing this shared kilometre, carrying the exact
+paid gap and energy forward and rejecting a forged control reserve.
+This remains an isolated three-team source trace. Other bunch riders,
+later cooperative kilometres and finish results are unmodeled; neither
+version is routed to guided races.

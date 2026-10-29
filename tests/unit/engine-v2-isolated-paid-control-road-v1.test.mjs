@@ -12,6 +12,12 @@ import {advanceIsolatedPaidControlRoadV1,
 import {runIsolatedPaidControlV1,
   validateIsolatedPaidControlRunV1} from
   '../../lib/engine/v2/isolated-paid-control-run-v1.mjs';
+import {advanceIsolatedPaidCooperativeRoadV1,
+  validateIsolatedPaidCooperativeRoadV1} from
+  '../../lib/engine/v2/isolated-paid-cooperative-road-v1.mjs';
+import {advancePaidControlChaseHandoffV1,
+  validatePaidControlChaseHandoffV1} from
+  '../../lib/engine/v2/isolated-paid-control-chase-handoff-v1.mjs';
 
 const team=(id,skill)=>{
   const riders=Array.from({length:8},(_,number)=>({
@@ -168,4 +174,71 @@ test('same-seed controller strength changes paid road outcome',()=>{
     validateIsolatedPaidControlRoadV1(step.paidInput,step.road)));
   assert.equal(validateIsolatedPaidControlRunV1(
     {...base,teams:tiredTeams},tired),true);
+});
+
+test('control and new chase helpers share one exposed bunch position',()=>{
+  const controlRunInput={
+    commitment,teams,roadGroup:group,
+    observerTeamId:'observer',controlTeamId:'control',
+    raceSeed:'paid-watch-1',
+    nominatedChaseTeamIds:['observer'],
+    frontRiderGoals:[{riderId:'front-0',goal:'cooperate'}],
+    remainingSegments:route};
+  const watched=runIsolatedPaidControlV1(controlRunInput);
+  const handoff=watched.handoff;
+  assert.equal(handoff.action,'commit_now');
+  const frontInput={roadGroups:handoff.committedChoiceInput.roadGroups,
+    groupId:'road-1',teams:handoff.committedChoiceInput.teams,
+    riderGoals:[{riderId:'front-0',goal:'cooperate'}],
+    km:handoff.sourceKm,distanceKm:30,
+    raceSeed:'paid-watch-1'};
+  const source={committedChoiceInput:handoff.committedChoiceInput,
+    committedChoice:handoff.committedChoice,
+    frontChoiceInput:frontInput,
+    frontChoice:decideRoadGroupSprintChoiceV1(frontInput),
+    segment:route[handoff.sourceKm-10],
+    controlTeamId:'control'};
+  const road=advanceIsolatedPaidCooperativeRoadV1(source);
+  assert.ok(road.turns.some(row=>
+    row.leaderRiderId==='control-2'));
+  assert.ok(road.turns.some(row=>
+    row.workKind==='chase'));
+  assert.equal(road.turns[0].startM,0);
+  assert.equal(road.turns.at(-1).endM,1000);
+  assert.ok(road.slices.every(slice=>
+    slice.riders.filter(row=>row.role==='bunch_leader').length===1&&
+    slice.riders.filter(row=>row.role==='front_leader').length===1&&
+    slice.riders.every(row=>row.energySpent>0&&row.energy>=0)));
+  const controllerTurns=road.slices.map(slice=>({
+    metres:slice.endDistanceM-slice.startDistanceM,
+    rider:slice.riders.find(row=>row.riderId==='control-2')}));
+  assert.equal(controllerTurns.filter(row=>
+    row.rider.role==='bunch_leader').length,1);
+  assert.ok(controllerTurns.find(row=>
+    row.rider.role==='bunch_leader').rider.energySpent/
+    controllerTurns.find(row=>
+      row.rider.role==='bunch_leader').metres>
+    controllerTurns.find(row=>
+      row.rider.role==='sheltered').rider.energySpent/
+      controllerTurns.find(row=>
+        row.rider.role==='sheltered').metres);
+  assert.equal(road.contact,null);
+  assert.equal(road.officialResults,false);
+  assert.equal(validateIsolatedPaidCooperativeRoadV1(source,road),true);
+  const forged=structuredClone(road);
+  forged.slices[0].riders[1].energySpent=0;
+  assert.throws(()=>validateIsolatedPaidCooperativeRoadV1(
+    source,forged),/differs/);
+  const linkedInput={controlRunInput,controlRun:watched};
+  const linked=advancePaidControlChaseHandoffV1(linkedInput);
+  assert.deepEqual(linked.cooperativeRoad,road);
+  assert.equal(linked.finalTeams[2].energy['control-2'],
+    road.energyByRider['control-2']);
+  assert.equal(linked.officialResults,false);
+  assert.equal(validatePaidControlChaseHandoffV1(
+    linkedInput,linked),true);
+  const forgedControl=structuredClone(watched);
+  forgedControl.finalTeams[2].energy['control-2']+=1;
+  assert.throws(()=>advancePaidControlChaseHandoffV1({
+    controlRunInput,controlRun:forgedControl}),/replayed paid control/);
 });
