@@ -2626,6 +2626,18 @@ physical detachment or contact with another rider. These checkpoint
 labels therefore cannot seed a rear group, a wheel, or an actual finish
 clock. The race source needs explicit paid crossing and subsequent
 contact evidence before rear routing.
+The same 8-seed generated-profile audit with `--onset` inspected the
+**first positive** climbing deficit, before the `dropped` label. Among
+the 28 validated races, 444 such rider-kilometres all admitted the
+separate paid climb-split calculation. None of its behind-bunch times
+agreed with the V94 checkpoint deficit within half a second: the
+absolute mismatch was 3.347–3.456 seconds (mean 3.423 seconds).
+For example, one rider's checkpoint first showed 0.230 seconds while
+the separately paid road produced 3.678 seconds from a split at that
+kilometre's start. This is an explicit clock conflict, not a source
+for assigning the rider a physical wheel or merging rear groups.
+The provisional checkpoint deficit and paid road must be reconciled
+under one versioned clock before the onset can enter the whole race.
 `rear-split-solo-run-v1.mjs` extends that exact split through consecutive
 solo kilometres. Each rider has a fresh explicit choice in each kilometre,
 with a separate energy and bunch-gap calculation; the source replay

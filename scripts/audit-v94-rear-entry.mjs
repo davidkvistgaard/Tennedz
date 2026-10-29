@@ -23,6 +23,7 @@ import {riderKilometreEffect} from
 const generated=process.argv.includes('--generated-profile');
 const unpayable=process.argv.includes('--unpayable-climb');
 const paceClimb=process.argv.includes('--pace-climb');
+const onset=process.argv.includes('--onset');
 const requestedSeeds=process.argv.find(arg=>arg.startsWith('--seeds='));
 const seedCount=requestedSeeds?Number(requestedSeeds.slice(8)):
   generated?2:8;
@@ -66,6 +67,13 @@ const summary={profile:generated?'generated':'legacy',
     priorZeroDeficitSnapshots:0,
     paceLossAccepted:0,paceLossDetached:0,
     paceLossUnresolved:0,paceLossRefusals:{}}:{}),
+  ...(onset?{firstPositiveClimbDeficits:0,
+    firstPositivePaceAccepted:0,firstPositivePaceRefusals:{},
+    firstPositiveWithinHalfSecond:0,
+    firstPositiveMismatchSumSeconds:0,
+    firstPositiveMismatchMinSeconds:null,
+    firstPositiveMismatchMaxSeconds:0,
+    firstPositiveExamples:[]}:{}),
   examples:[]};
 for(let seed=1;seed<=seedCount;seed++)for(const terrain of ['flat','mountain'])
   for(const fatigue of [0,30]){
@@ -97,6 +105,46 @@ for(let seed=1;seed<=seedCount;seed++)for(const terrain of ['flat','mountain'])
         ...frame.hardBunchWorkRiderIds,...frame.steadyBunchWorkRiderIds]);
       const priorWorkers=new Set([...(prior.paidBunchPace?.riderIds??[]),
         ...prior.hardBunchWorkRiderIds,...prior.steadyBunchWorkRiderIds]);
+      if(onset&&frame.terrain==='climb'&&
+        frame.pelotonFrontTurnPlan?.status==='worked'){
+        const priorById=new Map(prior.riderGroups.map(row=>[row.id,row]));
+        for(const rider of frame.riderGroups){
+          const before=priorById.get(rider.id);
+          if(before?.group!=='peloton'||
+            before.deficitSeconds!==0||
+            rider.deficitSeconds<=0)continue;
+          summary.firstPositiveClimbDeficits++;
+          try{
+            const candidate=advanceRearPaceClimbSplitV1({
+              rider:sourceRiders.get(rider.id),
+              segment:recording.route.kilometres[frame.km-1],
+              energy:before.energy,
+              bunchTurnPlan:frame.pelotonFrontTurnPlan,
+              stageNumber:1,stageCount:1,
+              soloEffort:'conserve',soloReason:'finish_safely'});
+            summary.firstPositivePaceAccepted++;
+            const mismatch=Math.abs(candidate.behindBunchSeconds-
+              rider.deficitSeconds);
+            if(mismatch<=.5)summary.firstPositiveWithinHalfSecond++;
+            summary.firstPositiveMismatchSumSeconds+=mismatch;
+            summary.firstPositiveMismatchMinSeconds=
+              summary.firstPositiveMismatchMinSeconds===null?mismatch:
+                Math.min(summary.firstPositiveMismatchMinSeconds,mismatch);
+            summary.firstPositiveMismatchMaxSeconds=Math.max(
+              summary.firstPositiveMismatchMaxSeconds,mismatch);
+            if(summary.firstPositiveExamples.length<8)
+              summary.firstPositiveExamples.push({seed,terrain,fatigue,
+                km:frame.km,riderId:rider.id,
+                checkpointDeficitSeconds:rider.deficitSeconds,
+                paidSplitDeficitSeconds:candidate.behindBunchSeconds,
+                splitDistanceM:candidate.splitDistanceM});
+          }catch(error){
+            const reason=String(error.message);
+            summary.firstPositivePaceRefusals[reason]=
+              (summary.firstPositivePaceRefusals[reason]??0)+1;
+          }
+        }
+      }
       for(const rider of frame.riderGroups.filter(row=>
         row.group==='dropped'&&!priorDropped.has(row.id))){
         summary.newDrops++;
