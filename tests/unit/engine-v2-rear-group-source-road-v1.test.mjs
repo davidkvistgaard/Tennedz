@@ -15,6 +15,9 @@ import {runRearGroupSourceV2,validateRearGroupSourceRunV2} from
 import {advanceRearGroupFollowerSplitV1,
   validateRearGroupFollowerSplitV1} from
   '../../lib/engine/v2/rear-group-follower-split-v1.mjs';
+import {advanceRearSplitSoloRoadV1,
+  validateRearSplitSoloRoadV1} from
+  '../../lib/engine/v2/rear-split-solo-road-v1.mjs';
 import {advanceRearGroupSoloJoinV1,validateRearGroupSoloJoinV1} from
   '../../lib/engine/v2/rear-group-solo-join-v1.mjs';
 import {runRearSoloSourceV1,validateRearSoloSourceRunV1} from
@@ -117,6 +120,27 @@ test('new rear hold gate refuses an unpayable follower pace',()=>{
   assert.ok(split.riders.every(row=>row.energySpent>0&&
     row.energy>=0));
   assert.equal(validateRearGroupFollowerSplitV1(input,split),true);
+  const soloInput={splitInput:input,split,
+    segment:{...nextSegment,km:15},bunchTurnPlan,
+    soloChoices:[{riderId:'b',effort:'hard',reason:'rejoin_bunch'},
+      {riderId:'a',effort:'conserve',reason:'finish_safely'}]};
+  const solos=advanceRearSplitSoloRoadV1(soloInput);
+  assert.equal(solos.steps.length,2);
+  assert.ok(solos.steps.every(row=>row.status==='solo_behind'&&
+    row.energySpent>0));
+  assert.ok(solos.soloStates[1].behindBunchSeconds>
+    solos.soloStates[0].behindBunchSeconds);
+  assert.equal(validateRearSplitSoloRoadV1(soloInput,solos),true);
+  const forgedSolos=structuredClone(solos);
+  forgedSolos.steps[1].energyAfter=100;
+  assert.throws(()=>validateRearSplitSoloRoadV1(
+    soloInput,forgedSolos),/differs/);
+  assert.throws(()=>advanceRearSplitSoloRoadV1({...soloInput,
+    split:{...split,solos:split.solos.map(row=>({...row,
+      energyAfter:100}))}}),/exact paid source/);
+  assert.throws(()=>advanceRearSplitSoloRoadV1({...soloInput,
+    soloChoices:[soloInput.soloChoices[0],
+      soloInput.soloChoices[0]]}),/two decisions/);
   const forgedSplit=structuredClone(split);
   forgedSplit.riders[1].energySpent=0;
   assert.throws(()=>validateRearGroupFollowerSplitV1(

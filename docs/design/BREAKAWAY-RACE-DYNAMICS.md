@@ -2552,6 +2552,13 @@ and rejects a forged energy trace. A smaller separation remains an
 unresolved wheel gap, and any bunch contact requires a separate road.
 This branch does not silently let the old two-rider group continue or
 create a finish time.
+`rear-split-solo-road-v1.mjs` replays that split and takes both named
+riders one further kilometre as separate solos, each with an explicit
+effort and goal and their own energy charge. The focused climb witness
+keeps both behind the bunch with the former follower farther back.
+A forged split or duplicate choice fails replay; a potential meeting
+with the bunch or between the two riders requires a separate physical
+contact road. This is one more paid kilometre, not a full rear finish.
 
 `rear-group-source-run-v1.mjs` chains that same derived calculation
 through consecutive whole kilometres. Each step uses the prior paid
