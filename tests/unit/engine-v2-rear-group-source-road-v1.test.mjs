@@ -14,6 +14,11 @@ import {runRearSoloSourceV1,validateRearSoloSourceRunV1} from
   '../../lib/engine/v2/rear-solo-source-run-v1.mjs';
 import {continueRearJoinedGroupV1,validateRearJoinedGroupV1} from
   '../../lib/engine/v2/rear-joined-group-continuation-v1.mjs';
+import {advanceRearGroupSourceStepV2,
+  validateRearGroupSourceStepV2} from
+  '../../lib/engine/v2/rear-group-source-step-v2.mjs';
+import {runRearGroupAfterJoinV1,validateRearGroupAfterJoinV1} from
+  '../../lib/engine/v2/rear-group-after-join-run-v1.mjs';
 
 const rider=(id,timetrial)=>({id,mountain:65,flat:65,hills:65,
   timetrial,endurance:70,strength:70,form:50,fatigue:0});
@@ -200,4 +205,47 @@ test('a third rider joins only at calculated paid rear contact',()=>{
   assert.throws(()=>continueRearJoinedGroupV1({...continuationInput,
     rearGoals:continuationInput.rearGoals.map(row=>({...row,
       rearWork:'sit_on'}))}),/No rear rider/);
+  const threeInput={group:continuation.rearGroup,
+    lastLeaderRiderId:continuation.leaderRiderId,
+    segment:{...joinInput.segment,km:16},bunchTurnPlan,
+    teams:extendedTeams,rearGoals:continuationInput.rearGoals,
+    roadGroups:[],stageNumber:18,stageCount:21};
+  const three=advanceRearGroupSourceStepV2(threeInput);
+  assert.equal(three.leaderRiderId,'c');
+  assert.equal(three.startDistanceM,15000);
+  assert.equal(three.endDistanceM,16000);
+  assert.equal(three.riders.filter(row=>row.role==='leader').length,1);
+  assert.ok(three.riders.every(row=>row.energySpent>0));
+  assert.equal(validateRearGroupSourceStepV2(threeInput,three),true);
+  const next=advanceRearGroupSourceStepV2({...threeInput,
+    group:three.rearGroup,lastLeaderRiderId:three.leaderRiderId,
+    segment:{...joinInput.segment,km:17},
+    rearGoals:continuationInput.rearGoals.map(row=>
+      row.riderId==='c'?{...row,rearWork:'sit_on'}:row)});
+  assert.equal(next.leaderRiderId,'a');
+  const forgedStep=structuredClone(three);
+  forgedStep.riders[0].energySpent=0;
+  assert.throws(()=>validateRearGroupSourceStepV2(threeInput,
+    forgedStep),/differs/);
+  const afterInput={continuationInput,continuation,kilometres:[
+    {segment:threeInput.segment,bunchTurnPlan,teams:extendedTeams,
+      rearGoals:continuationInput.rearGoals,roadGroups:[],
+      stageNumber:18,stageCount:21},
+    {segment:{...joinInput.segment,km:17},bunchTurnPlan,
+      teams:extendedTeams,rearGoals:continuationInput.rearGoals.map(row=>
+        row.riderId==='c'?{...row,rearWork:'sit_on'}:row),
+      roadGroups:[],stageNumber:18,stageCount:21}]};
+  const after=runRearGroupAfterJoinV1(afterInput);
+  assert.deepEqual(after.steps.map(step=>step.leaderRiderId),
+    ['c','a']);
+  assert.equal(after.finalRearGroup.atDistanceM,17000);
+  assert.equal(validateRearGroupAfterJoinV1(afterInput,after),true);
+  const forgedAfter=structuredClone(after);
+  forgedAfter.steps[1].riders[0].energy=100;
+  assert.throws(()=>validateRearGroupAfterJoinV1(afterInput,
+    forgedAfter),/differs/);
+  assert.throws(()=>runRearGroupAfterJoinV1({...afterInput,
+    kilometres:[afterInput.kilometres[0],
+      {...afterInput.kilometres[1],segment:{...joinInput.segment,
+        km:18}}]}),/consecutive/);
 });

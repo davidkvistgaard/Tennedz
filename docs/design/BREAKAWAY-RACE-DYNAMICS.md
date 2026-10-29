@@ -2525,8 +2525,18 @@ the other two pay their own lower sheltered charge. Their three energy
 balances and the shared clock advance together to the kilometre end,
 or stop at a calculated bunch rejoin. A leaderless or unpayable turn
 refuses. A changed contact, choice or energy fails source replay.
-The chain currently covers one three-rider join and its first shared
-turn. Its later kilometres, further joins, split departures, and real
-race finish times remain outside this isolated version.
+`rear-group-source-step-v2.mjs` and
+`rear-group-after-join-run-v1.mjs` now carry that same three-rider
+group through consecutive later kilometres. Every kilometre takes
+fresh explicit rider choices, terrain, current energy and a paid bunch
+turn record; the next willing leader follows the previously recorded
+leader in the actual group order, including when someone newly declines
+work. One rider takes the wind, two shelter, and their individual paid
+energy and the shared gap feed the next step. The run replays the full
+join chain and refuses a forged starting group, changed roster, missing
+kilometre, leaderless group or continuation after bunch contact.
+Further joins, split departures, and real race finish times remain
+outside this isolated version. The new `rearWork` goals are still
+caller-supplied evidence rather than committed whole-race orders.
 Neither this candidate nor the preceding rear-road modules are routed
 to a whole race.
