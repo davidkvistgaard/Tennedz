@@ -2439,16 +2439,24 @@ paid first turn in the isolated chain, but the choice source is still
 explicit input rather than autonomous whole-race rider logic. Later
 turns and merges remain outside this version.
 
-`rear-group-choice-v1.mjs` now replaces caller-selected first-turn
+The separately versioned `rear-group-choice-v2.mjs` replaces
+caller-selected first-turn
 choices in an isolated branch with a reproducible rider decision. It
-reads each rider's explicit rear goal, current committed `breakWork`
-and effort order, remaining energy and recorded teammates in a group
-further ahead. A rider can sit because of an order, a teammate ahead,
+reads each rider's explicit rear goal and distinct `rearWork` directive,
+current committed effort order, remaining energy and recorded teammates
+in a group further ahead. The existing breakaway `breakWork` order is
+never silently reinterpreted for a rear group. A rider can sit because
+of a rear directive, a teammate ahead,
 insufficient energy or a valid future-stage reserve plan. A cooperative
 rider with a `finish_safely` or `rejoin_bunch` goal can take a paid turn;
-an explicit drive order can override energy-saving intent if affordable.
+an explicit rear drive directive can override energy-saving intent if
+affordable.
 The willing roster alone determines the first leader. If both riders
 decline, the version refuses instead of silently inventing a puller.
 The exact choices, reason, leader, road and energy replay from the
 contact source. This still handles only a two-rider first-turn branch,
 not a whole-race goal policy or rear groups of arbitrary size.
+The earlier isolated v1 contract remains available for replay, but it
+interpreted a breakaway work order as a rear-group order. V2 requires
+the new explicit `rearWork` directive and must be the basis for any
+future routed rear-group version.
