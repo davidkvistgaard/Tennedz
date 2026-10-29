@@ -2615,6 +2615,15 @@ replays five paid bunch kilometres for its first named leader. The projected
 energy and wheel state are separately versioned and are not substituted
 for V94's checkpoint group label or energy ledger. This remains a
 single-rider physical projection, not the race's full field.
+`rear-energy-demand-v1.mjs` now exposes an unaffordable work quote
+without granting energy, and `rear-bunch-energy-loss-v1.mjs` replays a
+paid bunch-origin source before pricing the next turn. In a long
+high-fatigue witness, a rider pays repeated named front turns, then
+cannot fund a full sheltered turn. The physical wheel ends at the
+precise distance their remaining reserve can pay; the split begins at
+zero gap and records no fictitious seconds behind the bunch. An
+unpayable *named leader* still refuses as an inconsistent source.
+Post-split solo movement and a full-race source binding remain open.
 `rear-split-solo-contact-v2.mjs` advances the same source-replayed
 meeting one named turn at a time and charges only distance actually
 travelled. It no longer requires an affordable full-kilometre solo

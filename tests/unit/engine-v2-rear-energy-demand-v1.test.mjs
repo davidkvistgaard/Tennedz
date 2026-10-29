@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {priceRearEnergyDemandV1,validateRearEnergyDemandV1} from
+import {priceRearEnergyDemandV1,quoteRearEnergyDemandV1,
+  validateRearEnergyDemandV1} from
   '../../lib/engine/v2/rear-energy-demand-v1.mjs';
 
 const rider={id:'rear-a',mountain:65,flat:65,hills:65,
@@ -38,6 +39,8 @@ test('distance and capacity constrain each rider’s chosen work',()=>{
   assert.equal(half.energyDemand,full.energyDemand/2);
   assert.throws(()=>priceRearEnergyDemandV1({...base,
     role:'leader',energyBefore:.01}),/cannot pay/);
+  assert.ok(quoteRearEnergyDemandV1({...base,
+    role:'leader',energyBefore:.01}).energyDemand>.01);
   assert.throws(()=>priceRearEnergyDemandV1({...base,
     role:'leader',distanceM:1001}),/payable distance/);
 });
