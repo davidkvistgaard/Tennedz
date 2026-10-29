@@ -2528,6 +2528,12 @@ switching the named leader to the slower willing rider produces a paid,
 replayable group road. The old V1 recording stays unchanged. V2 stops
 when a follower cannot hold; it does not create a split, rear contact
 or finish from an unrecorded road.
+`rear-group-source-run-v2.mjs` applies that check again after each paid
+kilometre, using the next kilometre's own member choices, leader and
+remaining energy. Its two-kilometre source replays; changing the
+second kilometre's rear directive so the faster rider leads makes the
+conserving follower fail the hold check. The older consecutive V1
+recording remains available for historical replay.
 
 `rear-group-source-run-v1.mjs` chains that same derived calculation
 through consecutive whole kilometres. Each step uses the prior paid

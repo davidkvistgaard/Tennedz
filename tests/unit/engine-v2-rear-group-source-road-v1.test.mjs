@@ -10,6 +10,8 @@ import {advanceRearGroupSourceRoadV2,validateRearGroupSourceRoadV2} from
   '../../lib/engine/v2/rear-group-source-road-v2.mjs';
 import {runRearGroupSourceV1,validateRearGroupSourceRunV1} from
   '../../lib/engine/v2/rear-group-source-run-v1.mjs';
+import {runRearGroupSourceV2,validateRearGroupSourceRunV2} from
+  '../../lib/engine/v2/rear-group-source-run-v2.mjs';
 import {advanceRearGroupSoloJoinV1,validateRearGroupSoloJoinV1} from
   '../../lib/engine/v2/rear-group-solo-join-v1.mjs';
 import {runRearSoloSourceV1,validateRearSoloSourceRunV1} from
@@ -147,6 +149,30 @@ test('consecutive rear kilometres choose and pay fresh turns each time',()=>{
     kilometre,{...next,group:{...result.steps[0].road.rearGroup,
       energyByRider:{a:100,b:100}}}]}),
   /consecutive|differs|road/);
+});
+
+test('new rear run checks every follower against each paid leader',()=>{
+  const slowerGoals=[rearGoals[0],
+    {...rearGoals[1],rearWork:'sit_on'}];
+  const kilometre={segment:nextSegment,bunchTurnPlan,teams,
+    rearGoals:slowerGoals,roadGroups:[],
+    stageNumber:18,stageCount:21};
+  const next={...kilometre,segment:{...nextSegment,km:15}};
+  const source={initialChoiceInput:priorChoiceInput,
+    initialChoice:priorChoice,kilometres:[kilometre,next]};
+  const run=runRearGroupSourceV2(source);
+  assert.equal(run.steps.length,2);
+  assert.ok(run.steps.every(step=>
+    step.holdChecks.every(row=>row.canHold)));
+  assert.equal(validateRearGroupSourceRunV2(source,run),true);
+  assert.throws(()=>runRearGroupSourceV2({...source,
+    kilometres:[kilometre,{...next,rearGoals:[
+      {...rearGoals[0],rearWork:'sit_on'},rearGoals[1]]}]}),
+  /cannot hold the paid leader/);
+  const forged=structuredClone(run);
+  forged.steps[1].holdChecks[0].canHold=false;
+  assert.throws(()=>validateRearGroupSourceRunV2(
+    source,forged),/differs/);
 });
 
 test('a third rider joins only at calculated paid rear contact',()=>{
