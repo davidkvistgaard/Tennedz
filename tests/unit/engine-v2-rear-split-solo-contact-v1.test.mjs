@@ -11,6 +11,11 @@ import {advanceRearSplitSoloContactV1,
   '../../lib/engine/v2/rear-split-solo-contact-v1.mjs';
 import {runRearSplitSoloV2} from
   '../../lib/engine/v2/rear-split-solo-run-v2.mjs';
+import {commitRearGoalsV1} from
+  '../../lib/engine/v2/rear-goal-commitment-v1.mjs';
+import {continueRearSplitContactV1,
+  validateRearSplitContactContinuationV1} from
+  '../../lib/engine/v2/rear-split-contact-continuation-v1.mjs';
 
 const rider=(id,mountain,timetrial)=>({id,mountain,flat:65,hills:65,
   timetrial,endurance:70,strength:70,form:50,fatigue:0});
@@ -72,6 +77,48 @@ test('source-replayed rear solos only form a group at paid contact',()=>{
   assert.equal(contact.rearGroup.atDistanceM,contact.atDistanceM);
   assert.equal(contact.remainingKmUnsettled,true);
   assert.equal(validateRearSplitSoloContactV1(input,contact),true);
+  const strategies=rearGoals.map(row=>({riderId:row.riderId,
+    baseline:{goal:row.goal,rearWork:row.rearWork},phases:[]}));
+  const baselineCommitment=commitRearGoalsV1({
+    riderIds:['b','a'],strategies,distanceKm:20,
+    keypoints:[{km:16}],stageNumber:18,stageCount:21});
+  assert.throws(()=>continueRearSplitContactV1({
+    contactInput:input,contact,commitment:baselineCommitment}),
+  /cannot hold/);
+  const commitment=commitRearGoalsV1({
+    riderIds:['b','a'],strategies:strategies.map(row=>
+      row.riderId==='a'?{...row,phases:[{atKm:16,
+        goal:'finish_safely',rearWork:'sit_on'}]}:row),
+    distanceKm:20,keypoints:[{km:16}],
+    stageNumber:18,stageCount:21});
+  const joinedInput={contactInput:input,contact,
+    commitment};
+  const joined=continueRearSplitContactV1(joinedInput);
+  assert.equal(joined.startDistanceM,contact.atDistanceM);
+  assert.equal(joined.endDistanceM,17000);
+  assert.equal(joined.leaderRiderId,'b');
+  assert.equal(joined.slices[0].riders.filter(row=>
+    row.role==='leader').length,1);
+  assert.ok(joined.slices.every(slice=>slice.riders.every(row=>
+    row.energySpent>0)));
+  assert.ok(joined.slices.every(slice=>
+    slice.riders.find(row=>row.role==='sheltered').energySpent<
+      slice.riders.find(row=>row.role==='leader').energySpent));
+  assert.ok(joined.slices.every(slice=>
+    slice.holdChecks.every(row=>row.canHold)));
+  assert.ok(joined.settlement.every(row=>row.recoveryAward===0&&
+    row.cap===100));
+  assert.equal(joined.rearGroup.atDistanceM,17000);
+  assert.equal(validateRearSplitContactContinuationV1(
+    joinedInput,joined),true);
+  const forgedJoin=structuredClone(joined);
+  forgedJoin.rearGroup.energyByRider.a=100;
+  assert.throws(()=>validateRearSplitContactContinuationV1(
+    joinedInput,forgedJoin),/differs/);
+  const wrongCommitment=structuredClone(commitment);
+  wrongCommitment.strategies[0].baseline.rearWork='sit_on';
+  assert.throws(()=>continueRearSplitContactV1({...joinedInput,
+    commitment:wrongCommitment}),/prior commitment/);
   const forged=structuredClone(contact);
   forged.paid[1].energySpent=0;
   assert.throws(()=>validateRearSplitSoloContactV1(input,forged),/differs/);

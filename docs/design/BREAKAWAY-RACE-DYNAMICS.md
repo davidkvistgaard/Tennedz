@@ -2595,6 +2595,17 @@ The full-kilometre solo proposals must each be affordable before this
 narrow contact branch runs. The remainder of the contact kilometre has
 no chosen group leader or shelter charge yet, so the branch explicitly
 leaves that road unsettled and cannot be routed or produce a finish.
+`rear-split-contact-continuation-v1.mjs` replays that meeting and the
+pre-race rear-goal commitment before selecting one willing leader for
+the remaining physical road. It checks that the sheltered rider can
+hold the selected pace, charges both for only the remaining named turns
+with a lower sheltered base cost, and settles the route cap and zero
+rear recovery at the full kilometre. In the focused witness, a
+committed goal change at the 16 km marker takes effect at km 17, so the
+former rear rider declines the turn and the other rider leads; without
+that commitment the proposed leader is too fast for their follower and
+the road correctly refuses. Bunch contact still stops at its marker,
+and this branch has no whole-race finish.
 `rear-energy-demand-v1.mjs` now provides a separate opt-in price for a
 known rear-road role and distance. It applies that terrain load to both
 the exposed rider's and sheltered rider's base effort, keeps the
