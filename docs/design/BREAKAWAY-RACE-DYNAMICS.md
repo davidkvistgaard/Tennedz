@@ -2654,6 +2654,17 @@ opt-in terrain-priced sheltered quote is exactly 80% of that row.
 Those 158 cheaper draft costs cannot be substituted into the V94
 ledger after its movement; a new version must settle every rider's
 role, work, recovery and position on the same physical road.
+The reproducible read-only `audit-v94-rear-origin-calibration.mjs`
+extends the first-kilometre comparison to four seeds across flat,
+rolling and mountain routes, each fresh and tired (24 settings).
+It replays each generated V94 recording before comparing the separate
+opt-in physical origin. One mountain/fresh setting correctly refuses
+the unresolved shared-clock combination. In all 23 replayed settings,
+the origin projects 66–117 immediate wheel losses while V94 has zero
+separate first-frame road groups. Every projected loser has positive
+paid V94 work and zero unmet demand. The discrepancy persists across
+seeds; neither source establishes an actual dropped wheel or a
+calibrated replacement bunch clock.
 `rear-recorded-bunch-origin-v1.mjs` now refuses a projected pace
 loss from a V94 front-turn recording. The same replayed source still
 supports paid bunch survival for its named first leader, but the
