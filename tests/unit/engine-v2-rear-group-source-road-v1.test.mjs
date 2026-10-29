@@ -16,6 +16,8 @@ import {runRearGroupSourceV2,validateRearGroupSourceRunV2} from
   '../../lib/engine/v2/rear-group-source-run-v2.mjs';
 import {runRearGroupSourceV3,validateRearGroupSourceRunV3} from
   '../../lib/engine/v2/rear-group-source-run-v3.mjs';
+import {runRearGroupSourceV4,validateRearGroupSourceRunV4} from
+  '../../lib/engine/v2/rear-group-source-run-v4.mjs';
 import {advanceRearGroupFollowerSplitV1,
   validateRearGroupFollowerSplitV1} from
   '../../lib/engine/v2/rear-group-follower-split-v1.mjs';
@@ -309,6 +311,33 @@ test('terrain-priced rear run carries actual paid energy into the next choice',(
   assert.throws(()=>runRearGroupSourceV3({...source,kilometres:[
     kilometre,{...next,segment:{...next.segment,km:16}}]}),
   /consecutive/);
+});
+
+test('rear ledger settles route cap and zero recovery after each paid kilometre',()=>{
+  const goals=[rearGoals[0],{...rearGoals[1],rearWork:'sit_on'}];
+  const kilometre={segment:nextSegment,bunchTurnPlan,teams,
+    rearGoals:goals,roadGroups:[],stageNumber:18,stageCount:21};
+  const next={...kilometre,segment:{...nextSegment,km:15}};
+  const routeKilometres=Array.from({length:15},(_,index)=>({
+    ...nextSegment,km:index+1}));
+  const source={initialChoiceInput:priorChoiceInput,
+    initialChoice:priorChoice,routeKilometres,
+    kilometres:[kilometre,next]};
+  const run=runRearGroupSourceV4(source);
+  assert.equal(run.steps.length,2);
+  assert.ok(run.steps.every(step=>step.settlement.every(row=>
+    row.recoveryAward===0&&row.paidWork>0&&row.cap===100)));
+  assert.equal(run.steps[1].sourceStep.prices[0].energyBefore,
+    run.steps[0].settledGroup.energyByRider.a);
+  assert.equal(validateRearGroupSourceRunV4(source,run),true);
+  const forged=structuredClone(run);
+  forged.steps[0].settlement[0].recoveryAward=1;
+  assert.throws(()=>validateRearGroupSourceRunV4(
+    source,forged),/differs/);
+  const broken=routeKilometres.map(row=>({...row}));
+  broken[4].km=7;
+  assert.throws(()=>runRearGroupSourceV4({...source,
+    routeKilometres:broken}),/missing kilometre/);
 });
 
 test('a third rider joins only at calculated paid rear contact',()=>{

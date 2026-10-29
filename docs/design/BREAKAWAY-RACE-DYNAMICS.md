@@ -2591,6 +2591,23 @@ kilometre's fresh leader and follower decisions. The two-kilometre
 climbing witness replays, rejects a forged reserve or skipped kilometre,
 and leaves V1/V2 records intact. This remains a bounded two-rider
 experiment without a full-field finish or later group recruitment.
+`rear-energy-cap-source-v1.mjs` separately replays the whole-race
+capacity ceiling from the committed rider and every route kilometre.
+It applies the existing after-160-km decay, including climbing and
+surface load, and refuses a missing kilometre. At km 161 on a 6% climb,
+the fresh fixture's cap moves from 100 to 99.728; a rider starting
+at 88 from fatigue moves to 87.728. This source primitive does not
+yet clamp the V3 group's paid balances or settle recovery and contact.
+The separate `rear-group-source-run-v4.mjs` now applies that route-derived
+cap after each **complete** terrain-priced rear kilometre, records the
+zero recovery earned behind the bunch, and carries the settled balance
+into the next kilometre's choice. It binds the route to the replayed
+contact segments, refuses a missing earlier route kilometre or
+unpayable rider, and stops at bunch contact because the remainder of
+that kilometre has no paid road here. The two-kilometre source test
+replays and rejects a forged recovery award. It remains an isolated
+two-rider run: the full field, later recruitment, actual finish and
+calibration are outside this version.
 The read-only generated-profile rear-entry audit (`--generated-profile
 --seeds=8 --pace-climb`) replayed and validated 28 of 32 full 20-team,
 260-km V94 cases. Four cases honestly refused their combined fresh
