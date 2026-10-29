@@ -2334,3 +2334,20 @@ still needs a committed sporting stake, an explicit choice of which
 team spends energy and when, bounded uncertainty in willingness, and
 same-source contact and finish calibration. The matrix must not be
 silently substituted for the old decision clock.
+
+A separate read-only rider-kilometre coverage audit sampled the same
+joint physical V94 candidate on 120- and 260-km flat/mountain routes,
+fresh and tired. Seven of eight sources replayed; one 120-km tired
+mountain source correctly refused a fresh attack simultaneous with paid
+pursuit. Each replayed frame had an energy-ledger row for all 160 riders.
+The recorded forward-group participation decision covered only riders
+already in a forward group at the start of the kilometre; a newly
+attacking rider first appears in the next selection. On the 260-km
+flat fresh and tired sources, respectively, 146 and 228 rider-kilometres
+ended in the `dropped` state and **zero** had a dropped-rider choice or
+paid rear-group contact. Energy accounting therefore must not be
+mistaken for the per-rider tactical logic in the requested vision.
+These specific 260-km mountain samples produced no dropped end frames;
+that does not establish realistic mountain survival. The next rear
+group version needs a physical transition and paid contact source before
+it can assign a shared wheel, rotation, shelter or finish pace.
