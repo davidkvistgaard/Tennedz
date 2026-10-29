@@ -2567,6 +2567,15 @@ the rider's resulting reserve. The run refuses a skipped kilometre or
 any meeting between the solos or with the bunch until a contact road
 can be paid. No stage finish or time limit is inferred.
 
+For a three-rider group rotating within a kilometre,
+`rear-group-turn-kilometre-v2.mjs` checks every sheltered rider against
+the actual named leader in each paid slice, using that rider's reserve
+at the start of the slice. The existing alternating-leader witness
+refuses when a conserving rider cannot follow a stronger leader;
+with one slower willing leader, all slices replay and pass. The V1 turn
+recording is unchanged, and a failed hold still needs a separate paid
+split road.
+
 `rear-group-source-run-v1.mjs` chains that same derived calculation
 through consecutive whole kilometres. Each step uses the prior paid
 group gap and energy, a new terrain segment and bunch turn record,

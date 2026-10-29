@@ -39,6 +39,9 @@ import {runRearGroupAfterJoinV2,validateRearGroupAfterJoinV2} from
 import {advanceRearGroupTurnKilometreV1,
   validateRearGroupTurnKilometreV1} from
   '../../lib/engine/v2/rear-group-turn-kilometre-v1.mjs';
+import {advanceRearGroupTurnKilometreV2,
+  validateRearGroupTurnKilometreV2} from
+  '../../lib/engine/v2/rear-group-turn-kilometre-v2.mjs';
 import {commitRearGoalsV1,rearGoalsAtKmV1,
   advanceCommittedRearTurnsV1,validateCommittedRearTurnsV1} from
   '../../lib/engine/v2/rear-goal-commitment-v1.mjs';
@@ -394,6 +397,20 @@ test('a third rider joins only at calculated paid rear contact',()=>{
     rider.energySpent>0&&rider.energy>=0)));
   assert.equal(turned.rearGroup.atDistanceM,17000);
   assert.equal(validateRearGroupTurnKilometreV1(turnInput,turned),true);
+  assert.throws(()=>advanceRearGroupTurnKilometreV2(turnInput),
+    /cannot hold paid leader/);
+  const slowTurnInput={...turnInput,
+    rearGoals:turnInput.rearGoals.map(row=>
+      row.riderId==='a'?row:{...row,rearWork:'sit_on'})};
+  const heldTurns=advanceRearGroupTurnKilometreV2(slowTurnInput);
+  assert.ok(heldTurns.holdChecks.length>0);
+  assert.ok(heldTurns.holdChecks.every(row=>row.canHold));
+  assert.equal(validateRearGroupTurnKilometreV2(
+    slowTurnInput,heldTurns),true);
+  const forgedHold=structuredClone(heldTurns);
+  forgedHold.holdChecks[0].canHold=false;
+  assert.throws(()=>validateRearGroupTurnKilometreV2(
+    slowTurnInput,forgedHold),/differs/);
   const forgedTurns=structuredClone(turned);
   forgedTurns.slices[1].riders[0].energySpent=0;
   assert.throws(()=>validateRearGroupTurnKilometreV1(turnInput,
