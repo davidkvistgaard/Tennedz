@@ -14,6 +14,8 @@ import {runRearGroupSourceV1,validateRearGroupSourceRunV1} from
   '../../lib/engine/v2/rear-group-source-run-v1.mjs';
 import {runRearGroupSourceV2,validateRearGroupSourceRunV2} from
   '../../lib/engine/v2/rear-group-source-run-v2.mjs';
+import {runRearGroupSourceV3,validateRearGroupSourceRunV3} from
+  '../../lib/engine/v2/rear-group-source-run-v3.mjs';
 import {advanceRearGroupFollowerSplitV1,
   validateRearGroupFollowerSplitV1} from
   '../../lib/engine/v2/rear-group-follower-split-v1.mjs';
@@ -281,6 +283,32 @@ test('new rear run checks every follower against each paid leader',()=>{
   forged.steps[1].holdChecks[0].canHold=false;
   assert.throws(()=>validateRearGroupSourceRunV2(
     source,forged),/differs/);
+});
+
+test('terrain-priced rear run carries actual paid energy into the next choice',()=>{
+  const goals=[rearGoals[0],{...rearGoals[1],rearWork:'sit_on'}];
+  const kilometre={segment:nextSegment,bunchTurnPlan,teams,
+    rearGoals:goals,roadGroups:[],stageNumber:18,stageCount:21};
+  const next={...kilometre,segment:{...nextSegment,km:15}};
+  const source={initialChoiceInput:priorChoiceInput,
+    initialChoice:priorChoice,kilometres:[kilometre,next]};
+  const run=runRearGroupSourceV3(source);
+  const old=runRearGroupSourceV2(source);
+  assert.equal(run.steps.length,2);
+  assert.ok(run.steps.every(step=>step.sourceV2.holdChecks.every(
+    row=>row.canHold)));
+  assert.ok(run.steps[0].road.riders.every((row,index)=>
+    row.energy<old.steps[0].sourceRoad.road.riders[index].energy));
+  assert.equal(run.steps[1].prices[0].energyBefore,
+    run.steps[0].road.rearGroup.energyByRider.a);
+  assert.equal(validateRearGroupSourceRunV3(source,run),true);
+  const forged=structuredClone(run);
+  forged.steps[0].road.rearGroup.energyByRider.a=100;
+  assert.throws(()=>validateRearGroupSourceRunV3(
+    source,forged),/differs/);
+  assert.throws(()=>runRearGroupSourceV3({...source,kilometres:[
+    kilometre,{...next,segment:{...next.segment,km:16}}]}),
+  /consecutive/);
 });
 
 test('a third rider joins only at calculated paid rear contact',()=>{

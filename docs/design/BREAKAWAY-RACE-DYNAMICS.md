@@ -2584,8 +2584,13 @@ It retains V2's hold decision, named leader, speed, contact marker and
 historical record while recording lower terrain-priced balances for
 both roles on the 6% climb. The flat road agrees with V2's charges.
 This is a separate opt-in one-kilometre road; its new balances still
-need a source-bound following kilometre and whole-race cap/recovery
-settlement before they can replace any routed state.
+need whole-race cap/recovery settlement before they can replace any
+routed state. `rear-group-source-run-v3.mjs` now replays the initial
+paid contact and carries these terrain-priced balances into the next
+kilometre's fresh leader and follower decisions. The two-kilometre
+climbing witness replays, rejects a forged reserve or skipped kilometre,
+and leaves V1/V2 records intact. This remains a bounded two-rider
+experiment without a full-field finish or later group recruitment.
 The read-only generated-profile rear-entry audit (`--generated-profile
 --seeds=8 --pace-climb`) replayed and validated 28 of 32 full 20-team,
 260-km V94 cases. Four cases honestly refused their combined fresh
