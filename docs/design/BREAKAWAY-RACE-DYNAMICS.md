@@ -2665,10 +2665,17 @@ separate first-frame road groups. Every projected loser has positive
 paid V94 work and zero unmet demand. The discrepancy persists across
 seeds; neither source establishes an actual dropped wheel or a
 calibrated replacement bunch clock.
+The audit's energy reconciliation now also checks all projected
+first-kilometre **holders** in those 23 settings. All 1,583 have a
+paid-work mismatch and a resulting reserve mismatch against V94.
+Thus accepting a rider who remains in the projected bunch would not
+make their energy source compatible either. The source-bound V2 gate
+must stay closed until movement and energy are settled on one road.
 `rear-recorded-bunch-origin-v1.mjs` now refuses a projected pace
-loss from a V94 front-turn recording. The same replayed source still
-supports paid bunch survival for its named first leader, but the
-uncalibrated 117-rider split cannot be returned as physical fact.
+loss from a V94 front-turn recording. The same replayed turn plan still
+produces a separate paid survival projection for its named first leader.
+Its energy is not reconciled to V94, and the uncalibrated 117-rider
+split cannot be returned as physical fact.
 The separate synthetic bunch-origin experiment remains available
 for developing and testing the missing physical clock.
 The opt-in `rear-recorded-bunch-origin-v2.mjs` now replays the V94
