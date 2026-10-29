@@ -2797,3 +2797,17 @@ only a small positive wheel gap, so the status remains
 version still lists unmodeled peloton riders, stops at that kilometre
 and withholds official results. It refuses unobserved `watch` kilometres
 and does not manufacture the full bunch road or a later rear group.
+
+`isolated-paid-control-road-v1.mjs` covers one distinct kilometre in
+which an observer with a committed sprint stake chooses `watch`, while
+another team has explicitly ordered a **named** helper to rotate at
+the bunch front. That single worker pays the whole exposed control
+kilometre; the front rider also chooses and pays their own work. Their
+source-derived speeds update the physical gap and can yield a
+calculated contact. The unit refuses a missing worker, conflicting
+attack or chase order, unavailable worker, another ordered front-work
+team, or a mismatched perception source. The focused witness records
+the gap growing under a weaker paid control helper, while the sprint
+team waits. Other bunch riders have no energy ledger here. This is
+neither a free `watch` road nor a whole-race control policy, and it
+does not yet compose with the later paid pursuit run.
