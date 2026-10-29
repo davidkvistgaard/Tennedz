@@ -2625,3 +2625,21 @@ pullers and charges the named leader more than the sitter. This is an
 isolated tactical branch, not a full road transition or a replacement
 for the current V94 group decision policy. Its late-sprint window and
 effect on race outcomes need calibration against whole races.
+
+`team-chase-choice-v1.mjs` is an opt-in one-kilometre timing decision
+for a team with an explicit sprint or summit stake and an actual
+committed chase order. It assesses each existing front group
+separately through that team's bounded rider observations, its own
+known helper roster, and a deliberately uncertain set of other teams
+that might help. The other teams' private future work orders remain
+hidden. It compares whether the nominated chasers can still catch if
+they begin now or wait one kilometre. The result can be `watch`,
+`commit_now`, `request_help`, `commit_and_request_help`, or
+`capacity_shortfall`, with both capacity headrooms recorded. Asking
+for help never adds those riders to the actual paid road. The
+one-kilometre witness test shows a gap where delaying changes the
+perceived catch from possible to impossible. Adding a weaker
+conditional helper need not increase instantaneous catch headroom:
+only one rider leads at a time, although a larger roster can spread
+future fatigue. This is still a forecast, with caller-supplied team
+stake and coalition, not a calibrated or executed chase policy.
