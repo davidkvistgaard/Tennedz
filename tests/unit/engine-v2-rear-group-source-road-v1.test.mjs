@@ -12,6 +12,9 @@ import {runRearGroupSourceV1,validateRearGroupSourceRunV1} from
   '../../lib/engine/v2/rear-group-source-run-v1.mjs';
 import {runRearGroupSourceV2,validateRearGroupSourceRunV2} from
   '../../lib/engine/v2/rear-group-source-run-v2.mjs';
+import {advanceRearGroupFollowerSplitV1,
+  validateRearGroupFollowerSplitV1} from
+  '../../lib/engine/v2/rear-group-follower-split-v1.mjs';
 import {advanceRearGroupSoloJoinV1,validateRearGroupSoloJoinV1} from
   '../../lib/engine/v2/rear-group-solo-join-v1.mjs';
 import {runRearSoloSourceV1,validateRearSoloSourceRunV1} from
@@ -100,6 +103,24 @@ test('each kilometre can change willingness, but no leader refuses',()=>{
 test('new rear hold gate refuses an unpayable follower pace',()=>{
   assert.throws(()=>advanceRearGroupSourceRoadV2(input),
     /cannot hold the paid leader/);
+  const split=advanceRearGroupFollowerSplitV1(input);
+  assert.ok(split.separationSeconds>0);
+  assert.equal(split.status,'two_solos_behind');
+  assert.equal(split.event?.kind,'rear_group_follower_drops');
+  assert.ok(split.event.atDistanceM>split.startDistanceM&&
+    split.event.atDistanceM<split.endDistanceM);
+  assert.deepEqual(split.solos.map(row=>row.riderId),['b','a']);
+  assert.ok(split.solos.every(row=>row.atDistanceM===14000&&
+    row.behindBunchSeconds>0&&row.energyAfter>=0));
+  assert.ok(split.solos[1].behindBunchSeconds>
+    split.solos[0].behindBunchSeconds);
+  assert.ok(split.riders.every(row=>row.energySpent>0&&
+    row.energy>=0));
+  assert.equal(validateRearGroupFollowerSplitV1(input,split),true);
+  const forgedSplit=structuredClone(split);
+  forgedSplit.riders[1].energySpent=0;
+  assert.throws(()=>validateRearGroupFollowerSplitV1(
+    input,forgedSplit),/differs/);
   const slowerLeader={...input,rearGoals:[rearGoals[0],
     {...rearGoals[1],rearWork:'sit_on'}]};
   const held=advanceRearGroupSourceRoadV2(slowerLeader);

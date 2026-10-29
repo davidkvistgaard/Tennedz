@@ -2541,6 +2541,17 @@ strong-leader example refuses when a conserving follower cannot hold;
 a slower willing leader permits two replayed paid kilometres. These
 gates protect the already recorded group from an impossible free wheel.
 They still stop before a newly detached rider's solo road is known.
+An even narrower two-rider branch,
+`rear-group-follower-split-v1.mjs`, now replays the same paid group source
+when its follower cannot hold. The named leader keeps the exposed cost;
+the follower instead pays a full solo kilometre at their own chosen
+effort. Constant source-derived speeds determine their separation and
+the distance where it crosses the existing dropped threshold. The
+focused climb witness produces two paid solo states behind the bunch
+and rejects a forged energy trace. A smaller separation remains an
+unresolved wheel gap, and any bunch contact requires a separate road.
+This branch does not silently let the old two-rider group continue or
+create a finish time.
 
 `rear-group-source-run-v1.mjs` chains that same derived calculation
 through consecutive whole kilometres. Each step uses the prior paid
