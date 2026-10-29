@@ -2620,7 +2620,12 @@ flat-to-climb wheel loss and pays a new, explicit solo choice over the
 remaining named climb turns. It records terrain cost, the solo and
 bunch clocks, the true gap, the route cap and zero rear recovery. The
 focused rider completes that split kilometre behind the bunch;
-later solo kilometres and an actual finish remain separate work.
+`rear-origin-pace-finish-v1.mjs` continues from that replayed source
+through explicit solo choices and named paid bunch turns. The tested
+single-rider flat-to-climb case records actual elapsed time at 3 km,
+and a second case pays two further flat turns before finishing at
+4 km. Both retain the true gap, energy ledger and no time limit or
+official placing. Full-field source and calibration remain open.
 `rear-energy-demand-v1.mjs` now exposes an unaffordable work quote
 without granting energy, and `rear-bunch-energy-loss-v1.mjs` replays a
 paid bunch-origin source before pricing the next turn. In a long

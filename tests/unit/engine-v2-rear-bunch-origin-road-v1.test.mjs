@@ -6,6 +6,9 @@ import {runRearBunchOriginRoadV1,
 import {continueRearOriginPaceSoloV1,
   validateRearOriginPaceSoloV1} from
   '../../lib/engine/v2/rear-origin-pace-solo-v1.mjs';
+import {runRearOriginPaceFinishV1,
+  validateRearOriginPaceFinishV1} from
+  '../../lib/engine/v2/rear-origin-pace-finish-v1.mjs';
 
 const rider={id:'r',mountain:20,flat:90,hills:70,timetrial:70,
   endurance:70,strength:70,form:50,fatigue:30};
@@ -57,6 +60,42 @@ test('physical bunch origin pays wheels before a climb pace split',()=>{
   forgedSolo.slices[0].energySpent=0;
   assert.throws(()=>validateRearOriginPaceSoloV1(
     soloInput,forgedSolo),/differs/);
+  const finishInput={soloInput,solo,
+    routeKilometres,bunchTurnPlans,soloChoices:[]};
+  const finish=runRearOriginPaceFinishV1(finishInput);
+  assert.equal(finish.finishDistanceM,3000);
+  assert.ok(finish.finishElapsedSeconds>
+    finish.bunchElapsedSeconds);
+  assert.equal(finish.timeLimitSeconds,null);
+  assert.equal(finish.officialResults,false);
+  assert.equal(validateRearOriginPaceFinishV1(
+    finishInput,finish),true);
+  const forgedFinish=structuredClone(finish);
+  forgedFinish.behindBunchSeconds=0;
+  assert.throws(()=>validateRearOriginPaceFinishV1(
+    finishInput,forgedFinish),/differs/);
+  const finalSegment={...routeKilometres[2],km:4,
+    terrain:'flat',gradientPct:0};
+  const finalPlan={status:'worked',leaderAbility:100,
+    turns:[{startM:0,endM:500,ability:100,
+      leaderRiderId:'leader-a'},
+    {startM:500,endM:1000,ability:100,
+      leaderRiderId:'leader-b'}]};
+  const longerInput={soloInput,solo,
+    routeKilometres:[...routeKilometres,finalSegment],
+    bunchTurnPlans:[...bunchTurnPlans,finalPlan],
+    soloChoices:[{riderId:'r',km:4,effort:'conserve',
+      reason:'finish_safely'}]};
+  const longer=runRearOriginPaceFinishV1(longerInput);
+  assert.equal(longer.finishDistanceM,4000);
+  assert.equal(longer.steps[0].slices.length,2);
+  assert.ok(longer.steps[0].slices.every(slice=>
+    slice.energySpent>0));
+  assert.ok(Math.abs(longer.finishElapsedSeconds-
+    longer.bunchElapsedSeconds-
+    longer.behindBunchSeconds)<1e-9);
+  assert.equal(validateRearOriginPaceFinishV1(
+    longerInput,longer),true);
 });
 
 test('deliberate release needs an explicit future-stage commitment',()=>{
