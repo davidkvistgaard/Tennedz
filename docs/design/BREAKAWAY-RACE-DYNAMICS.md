@@ -2351,3 +2351,20 @@ These specific 260-km mountain samples produced no dropped end frames;
 that does not establish realistic mountain survival. The next rear
 group version needs a physical transition and paid contact source before
 it can assign a shared wheel, rotation, shelter or finish pace.
+
+An isolated `rear-detachment-v1.mjs` candidate now links the committed
+climb choice to one paid 1-km road step. It requires an explicit
+contiguous bunch leader turn plan whose weighted ability matches its
+recorded total; the rider starts in bunch contact and uses their own
+terrain, energy and chosen effort. Trying to hold can still produce a
+positive solo time gap if the rider cannot match the bunch. A deliberate
+energy-saving release requires the already versioned future-stage plan;
+an invalid plan or unaffordable hard kilometre refuses. An attached
+rider receives the same draft ability as the bunch and a provisional
+20% lower work cost than an exposed rider. The work price and ability
+to seconds conversion are experimental and uncalibrated. The output
+records the first solo gap and exact kilometre boundaries, with source
+replay/tamper rejection, but does not infer a later meeting, share a
+wheel, give a finish time, or alter V93/V94. The paid bunch turn source
+must itself have been validated by its existing full-race validator
+before this isolated candidate can be connected to a recording.
