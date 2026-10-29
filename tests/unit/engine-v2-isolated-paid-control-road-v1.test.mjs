@@ -165,7 +165,14 @@ test('a strong paid controller can make contact without observer chase',()=>{
   assert.deepEqual(run.steps[0],solo);
   assert.equal(run.endDistanceM,30000);
   assert.equal(run.finalStatus,'solo_behind');
-  assert.ok(run.soloElapsedSinceSlideSeconds>0);
+  const followingElapsed=run.steps.reduce((sum,step)=>
+    sum+(step.endDistanceM-step.startDistanceM)*3.6/
+      step.soloSpeedKph,0);
+  const catchKilometreElapsed=(slide.endDistanceM-
+    slide.catchDistanceM)*3.6/slide.soloSpeedKph;
+  assert.ok(catchKilometreElapsed>0);
+  assert.ok(Math.abs(run.soloElapsedSinceSlideSeconds-
+    (catchKilometreElapsed+followingElapsed))<1e-9);
   assert.equal(run.officialResults,false);
   assert.equal(validateControlCaughtRearRunV1(
     runInput,run),true);
