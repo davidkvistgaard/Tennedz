@@ -2694,3 +2694,9 @@ separate, already modeled voluntary release for a committed later
 stage. This is one climb only: an end-of-kilometre zero reserve does
 not imply that the rider can finish the race, and a sub-threshold gap
 remains an unresolved wheel rather than an invented rear group.
+
+`rear-unpayable-solo-run-v1.mjs` source-replays that within-kilometre
+climb split before a rider can enter consecutive, paid solo kilometres.
+It refuses a sub-threshold wheel gap, a forged split marker, a changed
+rider or a skipped kilometre. This still does not establish physical
+contact with another rear rider or a finish time.
