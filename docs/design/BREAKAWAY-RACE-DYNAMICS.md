@@ -2679,6 +2679,19 @@ speed, post-contact movement, multi-front interactions and the race
 finish remain unresolved. It cannot produce official results or run
 inside guided races.
 
+`isolated-caught-front-slide-v1.mjs` adds one explicit post-contact
+branch to that paid chase road. It accepts only a source-replayed catch
+of one named front rider before the kilometre ends. The caught rider
+chooses conservative solo finishing; the branch checks that their hard
+road ability cannot match the next named bunch leader. The bunch's
+chase helpers continue their one-leader turns, sheltered helpers pay
+less, and the former front rider pays solo work from the exact catch
+marker. Their clock can move behind the bunch without a free wheel or
+instant rear-group membership. Unpayable work, a forged catch, or a
+rider who could hold the bunch refuses. This is an isolated one-km
+path, not a claim that recorded V94 catches have a known within-km
+contact marker or that the rider finishes the race.
+
 `rear-unpayable-climb-v1.mjs` covers a distinct isolated entry path:
 a rider starts with an occupied bunch wheel but cannot fund a whole
 kilometre of hard climbing. A paid bunch turn plan provides the opposing
