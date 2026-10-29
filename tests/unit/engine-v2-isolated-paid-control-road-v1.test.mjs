@@ -28,7 +28,9 @@ import {advanceControlCaughtFrontSlideV1,
   validateControlCaughtFrontSlideV1} from
   '../../lib/engine/v2/isolated-control-caught-front-slide-v1.mjs';
 import {advanceControlCaughtRearSoloV1,
-  validateControlCaughtRearSoloV1} from
+  validateControlCaughtRearSoloV1,
+  runControlCaughtRearSoloV1,
+  validateControlCaughtRearRunV1} from
   '../../lib/engine/v2/isolated-control-caught-rear-solo-v1.mjs';
 
 const team=(id,skill)=>{
@@ -157,6 +159,20 @@ test('a strong paid controller can make contact without observer chase',()=>{
   forgedSolo.energyByRider['front-0']=100;
   assert.throws(()=>validateControlCaughtRearSoloV1(
     soloInput,forgedSolo),/differs/);
+  const runInput={slideInput,slide,
+    remainingSegments:route.slice(1)};
+  const run=runControlCaughtRearSoloV1(runInput);
+  assert.deepEqual(run.steps[0],solo);
+  assert.equal(run.endDistanceM,30000);
+  assert.equal(run.finalStatus,'solo_behind');
+  assert.ok(run.soloElapsedSinceSlideSeconds>0);
+  assert.equal(run.officialResults,false);
+  assert.equal(validateControlCaughtRearRunV1(
+    runInput,run),true);
+  const forgedRun=structuredClone(run);
+  forgedRun.steps[1].behindBunchSeconds=0;
+  assert.throws(()=>validateControlCaughtRearRunV1(
+    runInput,forgedRun),/differs/);
 });
 
 test('watched kilometres recompute uncertainty and carry paid energy',()=>{

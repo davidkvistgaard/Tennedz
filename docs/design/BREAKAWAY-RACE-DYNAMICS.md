@@ -2895,3 +2895,12 @@ behind after another fully paid kilometre and rejects a changed energy
 ledger. If the solo rider later reaches the bunch, this version stops
 at the calculated contact marker. It does not assign a rear-group
 wheel or finish time to a rider who has not physically met anyone.
+The same source can now drive a consecutive solo run: at every later
+kilometre the caught rider explicitly continues a conservative
+`finish_safely` road, the named controller's active order is checked,
+and both riders pay from the preceding energy state. A focused 20-km
+continuation remains alone behind and replays from the original paid
+catch; it records the solo rider's elapsed time **since the catch**.
+It does not have a source for the earlier absolute race clock, so it
+does not publish an actual full-stage finish time or invent a time
+limit. The other bunch riders still have no ledger.
