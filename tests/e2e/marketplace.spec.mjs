@@ -41,7 +41,13 @@ test('signed-in manager can search, list, cancel and buy in the marketplace UI',
   await page.getByLabel('Password').fill('fixture-password');
   await page.getByRole('button',{name:'Sign in',exact:true}).click();
   await expect(page).toHaveURL(/\/team$/);
-  await page.getByRole('link',{name:'Marketplace'}).click();
+  await page.getByRole('button',{name:'View profile of Emil Berg'}).click();
+  await page.getByRole('dialog').getByRole('link',{name:'Sell Emil Berg'}).click();
+  await expect(page.getByRole('combobox',{name:'Your rider'})).toHaveValue('fixture-M-0');
+  await expect(page.getByRole('spinbutton',{name:'Price in coins'})).toHaveValue('');
+  await page.getByRole('link',{name:'Riders'}).click();
+  await page.getByRole('link',{name:'Sell Emil Berg'}).click();
+  await expect(page.getByRole('combobox',{name:'Your rider'})).toHaveValue('fixture-M-0');
   await expect(page.getByRole('heading',{name:'Rider marketplace'})).toBeVisible();
   await expect(page.getByRole('heading',{name:'Nora Voss'})).toBeVisible();
   await page.screenshot({path:'test-results/marketplace-desktop.png',fullPage:true});

@@ -1,5 +1,5 @@
 "use client";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import TeamShell from "../../components/TeamShell";
 import { useAuth } from "../../components/AuthProvider";
 import { api } from "../../../lib/api";
@@ -37,6 +37,7 @@ export default function MarketplacePage(){
   const [loading,setLoading]=useState(true),[busy,setBusy]=useState(false);
   const [error,setError]=useState(""),[status,setStatus]=useState("");
   const [riderId,setRiderId]=useState(""),[price,setPrice]=useState("");
+  const sellLinkHandled=useRef(false);
   const team=session?.team;
   const load=useCallback(async()=>{
     setLoading(true);setError("");
@@ -51,6 +52,15 @@ export default function MarketplacePage(){
   const listedIds=new Set(market?.my_listings?.map(item=>item.rider_id)||[]);
   const saleRiders=useMemo(()=>(session?.riders||[]).filter(r=>!listedIds.has(r.id))
     .sort((a,b)=>displayName(a).localeCompare(displayName(b))),[session?.riders,market?.my_listings]);
+  useEffect(()=>{
+    if(sellLinkHandled.current||!session?.riders||!market)return;
+    sellLinkHandled.current=true;
+    const selected=new URLSearchParams(window.location.search).get("sell");
+    if(!selected)return;
+    if(market.my_listings?.some(item=>item.rider_id===selected))
+      setStatus("This rider is already listed. Manage the listing below.");
+    else if(saleRiders.some(r=>r.id===selected))setRiderId(selected);
+  },[session?.riders,market,saleRiders]);
   async function act(action,item){
     if(action==="buy"&&!window.confirm(`Buy ${displayName(item.rider)} for ${money(item.price)} coins?`))return;
     setBusy(true);setError("");setStatus("");
