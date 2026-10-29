@@ -2615,6 +2615,12 @@ replays five paid bunch kilometres for its first named leader. The projected
 energy and wheel state are separately versioned and are not substituted
 for V94's checkpoint group label or energy ledger. This remains a
 single-rider physical projection, not the race's full field.
+`rear-origin-pace-solo-v1.mjs` now replays the physically carried
+flat-to-climb wheel loss and pays a new, explicit solo choice over the
+remaining named climb turns. It records terrain cost, the solo and
+bunch clocks, the true gap, the route cap and zero rear recovery. The
+focused rider completes that split kilometre behind the bunch;
+later solo kilometres and an actual finish remain separate work.
 `rear-energy-demand-v1.mjs` now exposes an unaffordable work quote
 without granting energy, and `rear-bunch-energy-loss-v1.mjs` replays a
 paid bunch-origin source before pricing the next turn. In a long

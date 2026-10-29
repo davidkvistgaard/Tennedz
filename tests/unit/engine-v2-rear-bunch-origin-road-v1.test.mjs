@@ -3,6 +3,9 @@ import assert from 'node:assert/strict';
 import {runRearBunchOriginRoadV1,
   validateRearBunchOriginRoadV1} from
   '../../lib/engine/v2/rear-bunch-origin-road-v1.mjs';
+import {continueRearOriginPaceSoloV1,
+  validateRearOriginPaceSoloV1} from
+  '../../lib/engine/v2/rear-origin-pace-solo-v1.mjs';
 
 const rider={id:'r',mountain:20,flat:90,hills:70,timetrial:70,
   endurance:70,strength:70,form:50,fatigue:30};
@@ -39,6 +42,21 @@ test('physical bunch origin pays wheels before a climb pace split',()=>{
   assert.throws(()=>runRearBunchOriginRoadV1({...input,
     choices:[choices[0],{...choices[1],effort:'hard'},choices[2]]}),
   /explicit ordered decision/);
+  const soloInput={originInput:input,origin:road,
+    soloChoice:{riderId:'r',km:3,effort:'conserve',
+      reason:'finish_safely'}};
+  const solo=continueRearOriginPaceSoloV1(soloInput);
+  assert.equal(solo.splitDistanceM,road.steps[2].endDistanceM);
+  assert.equal(solo.endDistanceM,3000);
+  assert.ok(solo.behindBunchSeconds>0);
+  assert.ok(solo.slices.every(slice=>slice.energySpent>0&&
+    slice.soloSeconds>slice.bunchSeconds));
+  assert.equal(solo.recoveryAward,0);
+  assert.equal(validateRearOriginPaceSoloV1(soloInput,solo),true);
+  const forgedSolo=structuredClone(solo);
+  forgedSolo.slices[0].energySpent=0;
+  assert.throws(()=>validateRearOriginPaceSoloV1(
+    soloInput,forgedSolo),/differs/);
 });
 
 test('deliberate release needs an explicit future-stage commitment',()=>{
