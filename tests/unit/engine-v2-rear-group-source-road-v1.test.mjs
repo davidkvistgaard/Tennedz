@@ -122,6 +122,10 @@ test('new rear hold gate refuses an unpayable follower pace',()=>{
     row.behindBunchSeconds>0&&row.energyAfter>=0));
   assert.ok(split.solos[1].behindBunchSeconds>
     split.solos[0].behindBunchSeconds);
+  const flatSplit=advanceRearGroupFollowerSplitV1({...input,
+    segment:{...nextSegment,terrain:'flat',gradientPct:0}});
+  assert.notEqual(split.leaderSpeedKph,
+    flatSplit.leaderSpeedKph);
   assert.ok(split.riders.every(row=>row.energySpent>0&&
     row.energy>=0));
   assert.equal(validateRearGroupFollowerSplitV1(input,split),true);

@@ -2559,6 +2559,12 @@ keeps both behind the bunch with the former follower farther back.
 A forged split or duplicate choice fails replay; a potential meeting
 with the bunch or between the two riders requires a separate physical
 contact road. This is one more paid kilometre, not a full rear finish.
+The flat-versus-climb same-source check changes road speed but currently
+charges the same isolated solo energy at the same chosen effort. The
+whole-race work demand has a terrain-load term; these rear prototypes
+have not yet carried that term into a versioned, fully reconciled
+ledger. Their positive energy charges are accounting witnesses, not
+calibrated climbing costs, and block routing or finish claims.
 `rear-split-solo-run-v1.mjs` extends that exact split through consecutive
 solo kilometres. Each rider has a fresh explicit choice in each kilometre,
 with a separate energy and bunch-gap calculation; the source replay
