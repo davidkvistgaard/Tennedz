@@ -2588,3 +2588,17 @@ forged rider choice or energy. This remains an opt-in source contract:
 the live race preparation and user interface do not yet collect these
 intentions for all riders, and the equal-distance turn scheduling and
 finish road have not been calibrated.
+
+`rear-recorded-bunch-source-v1.mjs` can now take an actual v94 race
+kilometre as the opposing bunch road. It first validates and fully
+replays the locked race, requires a worked shared peloton turn plan,
+and refuses a bunch leader who also belongs to the proposed rear
+group. This binds the bunch turn abilities and named workers to the
+recorded source instead of accepting a free numeric pace. In six
+source-replayed generated mountain-profile races (two other generated
+cases refused the already known combined attack/pursuit limitation),
+all 112 first recorded dropped transitions had a worked peloton turn
+in that kilometre. The recorded dropped deficit is still a checkpoint,
+not physical rear-group contact or a complete within-kilometre wheel
+trace. A rear-road counterfactual cannot borrow a physical position
+from it; no candidate is routed to the real race on this evidence.

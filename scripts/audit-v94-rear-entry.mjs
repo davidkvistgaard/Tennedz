@@ -43,7 +43,9 @@ const summary={profile:generated?'generated':'legacy',
   cases:0,refusedCases:0,refusals:[],newDrops:0,
   fromBunchWorkSameKm:0,
   fromBunchWorkPreviousKm:0,caughtBreakSameKm:0,
-  caughtBreakPreviousKm:0,onClimbKmDrops:0,examples:[]};
+  caughtBreakPreviousKm:0,onClimbKmDrops:0,
+  droppedWithWorkedBunchTurn:0,droppedWithoutWorkedBunchTurn:0,
+  examples:[]};
 for(let seed=1;seed<=seedCount;seed++)for(const terrain of ['flat','mountain'])
   for(const fatigue of [0,30]){
     let recording;
@@ -75,6 +77,9 @@ for(let seed=1;seed<=seedCount;seed++)for(const terrain of ['flat','mountain'])
       for(const rider of frame.riderGroups.filter(row=>
         row.group==='dropped'&&!priorDropped.has(row.id))){
         summary.newDrops++;
+        if(frame.pelotonFrontTurnPlan?.status==='worked')
+          summary.droppedWithWorkedBunchTurn++;
+        else summary.droppedWithoutWorkedBunchTurn++;
         if(currentWorkers.has(rider.id))summary.fromBunchWorkSameKm++;
         if(priorWorkers.has(rider.id))summary.fromBunchWorkPreviousKm++;
         if(frame.caughtBreakawayRiderIds.includes(rider.id))
