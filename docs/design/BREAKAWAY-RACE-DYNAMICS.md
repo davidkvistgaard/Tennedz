@@ -2626,6 +2626,18 @@ single-rider flat-to-climb case records actual elapsed time at 3 km,
 and a second case pays two further flat turns before finishing at
 4 km. Both retain the true gap, energy ledger and no time limit or
 official placing. Full-field source and calibration remain open.
+The same-seed first-kilometre calibration audit is a hard routing
+blocker. Across six replayed 20-team, 120 km V94 recordings (flat,
+rolling and mountain, each at fatigue 0 and 30), the current opt-in
+bunch-origin speed comparison loses 117 of 160 riders immediately in
+every case. V94 records no separate road group in any first frame.
+The median projected speed deficit among those 117 ranges from about
+0.70 to 1.06 km/h. This shows that the isolated hold-speed rule is
+not calibrated as a field-wide physical wheel rule. Preserve both
+source observations; do not infer 117 real drops or route this model
+into guided races. A replacement must distinguish sustainable
+sheltered holding work from an actual inability to pay and must be
+validated over complete race clocks, contacts and finishes.
 `rear-energy-demand-v1.mjs` now exposes an unaffordable work quote
 without granting energy, and `rear-bunch-energy-loss-v1.mjs` replays a
 paid bunch-origin source before pricing the next turn. In a long
