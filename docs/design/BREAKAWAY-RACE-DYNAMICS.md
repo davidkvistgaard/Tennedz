@@ -2375,6 +2375,13 @@ rider-kilometres and zero dropped-rider participation decisions.
 The forward count is one kind of decision, not a count of every other
 team or attack choice; the contrast still proves that complete energy
 rows cannot establish a decision for every rider every kilometre.
+On the current branch, the same read-only audit was rerun with eight
+seeds across all 64 route/fatigue settings. Sixty-one sources replayed
+and three refused the unresolved shared clock. The replayed races had
+1,865,600 rider-kilometre energy rows and 75,026 forward participation
+decisions, while 7,738 dropped-state rider-kilometres still had zero
+dropped-rider decisions. This is a wider coverage check, not a
+whole-race physical validation or a new decision policy.
 
 An isolated `rear-detachment-v1.mjs` candidate now links the committed
 climb choice to one paid 1-km road step. It requires an explicit
