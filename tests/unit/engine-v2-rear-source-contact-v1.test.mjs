@@ -8,6 +8,8 @@ import {continueRearContactV1} from
   '../../lib/engine/v2/rear-contact-continuation-v1.mjs';
 import {continueRearSourceGroupV1,validateRearSourceGroupV1} from
   '../../lib/engine/v2/rear-source-group-v1.mjs';
+import {decideRearGroupChoiceV1,validateRearGroupChoiceV1} from
+  '../../lib/engine/v2/rear-group-choice-v1.mjs';
 
 const segment={km:13,terrain:'climb',surface:'road',gradientPct:6,
   exposed:false,weather:{temperatureC:16,windKph:0,rainMm:0}};
@@ -91,4 +93,61 @@ test('group cannot start without an agreed paid pull or genuine contact',()=>{
   assert.throws(()=>continueRearSourceGroupV1({...groupInput,
     contactInput:{...input,front:{...input.front,
       prior:{...frontPrior,energyAfter:0}}}}),/differs/);
+});
+
+const choiceInput={contactInput:input,groupId:'rear-1',
+  stageNumber:18,stageCount:21,roadGroups:[],
+  teams:[{id:'team-a',riders:[frontRider],orders:{
+    baseline:{effort:'conserve',breakWork:'sit_on'},phases:[]}},
+  {id:'team-b',riders:[rearRider],orders:{
+    baseline:{effort:'hard',breakWork:'cooperate'},phases:[]}}],
+  rearGoals:[{riderId:'a',goal:'finish_safely'},
+    {riderId:'b',goal:'rejoin_bunch'}]};
+
+test('orders and rider goals select one paid rear leader',()=>{
+  const result=decideRearGroupChoiceV1(choiceInput);
+  assert.equal(result.leaderRiderId,'b');
+  assert.deepEqual(result.memberDecisions.map(row=>
+    [row.riderId,row.choice,row.reason]),[
+    ['a','sit_in','ordered_sit_on'],['b','pull','rejoin_bunch']]);
+  assert.equal(result.group.continuation.rearGroup.riderIds.length,2);
+  assert.equal(validateRearGroupChoiceV1(choiceInput,result),true);
+  const forged=structuredClone(result);
+  forged.memberDecisions[0].reason='save_energy';
+  assert.throws(()=>validateRearGroupChoiceV1(choiceInput,forged),/differs/);
+});
+
+test('future-stage plan can withhold a turn, without inventing a leader',()=>{
+  const saved={...choiceInput,rearGoals:[choiceInput.rearGoals[0],
+    {riderId:'b',goal:'save_for_stage',committedStagePlan:{
+      riderId:'b',currentStageNumber:18,targetStageNumber:19,
+      currentGoal:'finish_safely',futureGoal:'target_stage',
+      reserveEnergy:30}}]};
+  assert.throws(()=>decideRearGroupChoiceV1(saved),/No rear rider/);
+  const drive=decideRearGroupChoiceV1({...saved,
+    teams:[saved.teams[0],{...saved.teams[1],orders:{
+      baseline:{effort:'hard',breakWork:'drive'},phases:[]}}]});
+  assert.equal(drive.memberDecisions[1].reason,'ordered_drive');
+  assert.equal(drive.leaderRiderId,'b');
+  assert.throws(()=>decideRearGroupChoiceV1({...saved,
+    rearGoals:[saved.rearGoals[0],{...saved.rearGoals[1],
+      committedStagePlan:{...saved.rearGoals[1].committedStagePlan,
+        targetStageNumber:18}}]}),/sporting goal/);
+});
+
+test('a teammate ahead removes the rear rider from the pull rotation',()=>{
+  const teammate={id:'a2'};
+  const teams=[{...choiceInput.teams[0],
+    riders:[frontRider,teammate],orders:{baseline:{
+      effort:'steady',breakWork:'cooperate'},phases:[]}},
+  choiceInput.teams[1]];
+  const roadGroups=[{id:'road-1',riderIds:['a2'],
+    teamIds:['team-a'],gapSeconds:20}];
+  const result=decideRearGroupChoiceV1({...choiceInput,teams,roadGroups});
+  assert.equal(result.memberDecisions[0].reason,'teammate_further_ahead');
+  assert.equal(result.memberDecisions[0].choice,'sit_in');
+  assert.equal(result.leaderRiderId,'b');
+  assert.throws(()=>decideRearGroupChoiceV1({...choiceInput,
+    roadGroups:[{id:'road-1',riderIds:['a'],
+      teamIds:['team-a'],gapSeconds:20}]}),/second road group/);
 });
