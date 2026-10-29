@@ -2725,6 +2725,13 @@ V1's meeting marker and bunch gap, and forged prior reserves or route
 fail replay. A low-reserve case in which V1 refuses the remaining
 kilometre but V2 reaches contact has not yet been validated from a
 complete paid split source; V2 remains an isolated alternative.
+The opt-in `rear-group-follower-split-v2.mjs` also now refuses a
+contact after km 161 before calculating its route cap. Its source
+binds the contact and split segments but cannot bind an earlier
+decay-bearing kilometre in the caller's route. The focused late
+contact witness checks this refusal; the existing paid km-13 contact
+and km-14 split remain replayable. A full-route commitment would be
+needed to lift this boundary safely.
 `rear-split-contact-continuation-v1.mjs` replays that meeting and the
 pre-race rear-goal commitment before selecting one willing leader for
 the remaining physical road. It checks that the sheltered rider can

@@ -58,6 +58,27 @@ const splitInput={priorChoiceInput,priorChoice,segment:terrain(14),
     terrain(index+1,index>=14?0:6))};
 const split=advanceRearGroupFollowerSplitV2(splitInput);
 
+test('late rear split refuses an unbound precontact cap route',()=>{
+  const prior=terrain(161);
+  const contactSegment=terrain(162);
+  const lateA={...sourceA,segment:prior};
+  const lateB={...sourceB,segment:prior};
+  const lateContactInput={...contactInput,segment:contactSegment,
+    front:{...contactInput.front,priorSource:lateA,
+      prior:advanceRearDetachmentV1(lateA)},
+    rear:{...contactInput.rear,priorSource:lateB,
+      prior:advanceRearDetachmentV1(lateB)}};
+  const lateChoiceInput={...priorChoiceInput,
+    contactInput:lateContactInput};
+  const lateChoice=decideRearGroupChoiceV2(lateChoiceInput);
+  assert.throws(()=>advanceRearGroupFollowerSplitV2({
+    ...splitInput,priorChoiceInput:lateChoiceInput,
+    priorChoice:lateChoice,segment:terrain(163),
+    routeKilometres:Array.from({length:163},(_,index)=>
+      terrain(index+1))}),
+  /sourced precontact decay route/);
+});
+
 test('source-replayed rear solos only form a group at paid contact',()=>{
   assert.deepEqual(split.solos.map(row=>row.riderId),['b','a']);
   const bunchTurnPlan={status:'worked',leaderAbility:90,
