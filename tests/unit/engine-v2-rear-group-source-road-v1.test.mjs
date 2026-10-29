@@ -19,6 +19,9 @@ import {advanceRearGroupSourceStepV2,
   '../../lib/engine/v2/rear-group-source-step-v2.mjs';
 import {runRearGroupAfterJoinV1,validateRearGroupAfterJoinV1} from
   '../../lib/engine/v2/rear-group-after-join-run-v1.mjs';
+import {advanceRearGroupTurnKilometreV1,
+  validateRearGroupTurnKilometreV1} from
+  '../../lib/engine/v2/rear-group-turn-kilometre-v1.mjs';
 
 const rider=(id,timetrial)=>({id,mountain:65,flat:65,hills:65,
   timetrial,endurance:70,strength:70,form:50,fatigue:0});
@@ -223,6 +226,46 @@ test('a third rider joins only at calculated paid rear contact',()=>{
     rearGoals:continuationInput.rearGoals.map(row=>
       row.riderId==='c'?{...row,rearWork:'sit_on'}:row)});
   assert.equal(next.leaderRiderId,'a');
+  const turnInput={priorInput:threeInput,priorStep:three,
+    segment:{...joinInput.segment,km:17},
+    bunchTurnPlan:{status:'worked',leaderAbility:90,
+      turns:[{startM:0,endM:500,ability:80},
+        {startM:500,endM:1000,ability:100}]},
+    teams:extendedTeams,rearGoals:continuationInput.rearGoals,
+    roadGroups:[],stageNumber:18,stageCount:21};
+  const turned=advanceRearGroupTurnKilometreV1(turnInput);
+  assert.deepEqual(turned.rearTurns.map(row=>row.leaderRiderId),
+    ['a','b','c']);
+  assert.equal(turned.slices.length,4);
+  assert.deepEqual(turned.slices.map(row=>row.leaderRiderId),
+    ['a','b','b','c']);
+  assert.ok(turned.slices.every(row=>
+    row.riders.filter(rider=>rider.role==='leader').length===1));
+  assert.ok(turned.slices.every(row=>row.riders.every(rider=>
+    rider.energySpent>0&&rider.energy>=0)));
+  assert.equal(turned.rearGroup.atDistanceM,17000);
+  assert.equal(validateRearGroupTurnKilometreV1(turnInput,turned),true);
+  const forgedTurns=structuredClone(turned);
+  forgedTurns.slices[1].riders[0].energySpent=0;
+  assert.throws(()=>validateRearGroupTurnKilometreV1(turnInput,
+    forgedTurns),/differ/);
+  assert.throws(()=>advanceRearGroupTurnKilometreV1({...turnInput,
+    priorStep:{...three,leaderRiderId:'a'}}),/replayed/);
+  const oneTurn=advanceRearGroupTurnKilometreV1({...turnInput,
+    rearGoals:turnInput.rearGoals.map(row=>
+      row.riderId==='a'?row:{...row,rearWork:'sit_on'})});
+  assert.deepEqual(oneTurn.rearTurns.map(row=>row.leaderRiderId),['a']);
+  const nearInput={...threeInput,group:{...threeInput.group,
+    behindBunchSeconds:.2}};
+  const caughtTurns=advanceRearGroupTurnKilometreV1({...turnInput,
+    priorInput:nearInput,
+    priorStep:advanceRearGroupSourceStepV2(nearInput),
+    bunchTurnPlan:{status:'worked',leaderAbility:20,
+      turns:[{startM:0,endM:1000,ability:20}]}});
+  assert.equal(caughtTurns.contact?.kind,'rejoin_bunch');
+  assert.ok(caughtTurns.contact.atDistanceM>16000&&
+    caughtTurns.contact.atDistanceM<17000);
+  assert.equal(caughtTurns.rearGroup,null);
   const forgedStep=structuredClone(three);
   forgedStep.riders[0].energySpent=0;
   assert.throws(()=>validateRearGroupSourceStepV2(threeInput,

@@ -2556,3 +2556,20 @@ outside this isolated version. The new `rearWork` goals are still
 caller-supplied evidence rather than committed whole-race orders.
 Neither this candidate nor the preceding rear-road modules are routed
 to a whole race.
+
+`rear-group-turn-kilometre-v1.mjs` is a separate opt-in continuation
+from a replayed three-rider rear-group step. At the next kilometre it
+asks each rider again, then assigns equal road-distance turns to the
+willing riders in physical rotation after the previous leader. The
+recorded bunch turn boundaries and these rear turn boundaries split the
+kilometre into short slices. Exactly one rear rider leads each slice;
+the others shelter at a lower energy cost. The source rider, effort,
+terrain and remaining energy determine the rear pace at each turn, and
+the paid bunch turn determines its opposing pace. Every slice records
+each rider's energy and the gap. A calculated bunch contact ends the
+rear group at that marker. A rider unable to pay a turn causes refusal;
+replay rejects a forged previous leader or any altered energy. Equal
+distance turns are a deliberately explicit candidate scheduling rule,
+not a claim about real races or a calibrated default. It still needs
+committed whole-race rear goals, realistic turn timing, additional
+joins and split handling, then broad finish and source validation.
