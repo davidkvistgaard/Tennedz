@@ -2413,3 +2413,16 @@ out of energy. This only tests a two-kilometre chain against the source
 road; those riders were not moved in the recorded tour. Later source
 orders and energy would diverge if the candidate were actually routed,
 so a full-race branch with its own state and validator is still needed.
+
+`rear-source-contact-v1.mjs` now joins two *separately source-replayed*
+rear solo states, derives both solo speeds and costs from their riders,
+energy, terrain and explicit effort, and recalculates an exact paid
+within-kilometre meeting against the same validated bunch turn plan.
+Forged prior positions, changed prior energy, invalid bunch turns and
+an unaffordable kilometre refuse. Its output contains the reconstructed
+solo-contact input so the earlier isolated rear-group continuation can
+verify the same meeting before granting any shared shelter. The group
+continuation's leader speed and cost are still caller-supplied; those
+must be derived from committed rider decisions in a further version.
+This contact chain remains isolated from actual V94 dropped riders and
+does not establish a finish time or group membership in a real race.
