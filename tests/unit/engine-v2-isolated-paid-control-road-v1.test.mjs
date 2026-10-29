@@ -21,6 +21,9 @@ import {advancePaidControlChaseHandoffV1,
 import {runIsolatedPaidControlChaseV1,
   validateIsolatedPaidControlChaseRunV1} from
   '../../lib/engine/v2/isolated-paid-control-chase-run-v1.mjs';
+import {auditIsolatedPaidRoadCoverageV1,
+  requireFullPaidRiderCoverageV1} from
+  '../../lib/engine/v2/isolated-paid-road-coverage-v1.mjs';
 
 const team=(id,skill)=>{
   const riders=Array.from({length:8},(_,number)=>({
@@ -313,4 +316,30 @@ test('flat and mountain control/chase traces replay fresh and tired',()=>{
       source,run),true);
     assert.equal(run.officialResults,false);
   }
+});
+
+test('a later chase turn does not erase unpaid earlier rider kilometres',()=>{
+  const runInput={commitment,teams,roadGroup:group,
+    observerTeamId:'observer',controlTeamId:'control',
+    raceSeed:'paid-watch-1',
+    nominatedChaseTeamIds:['observer'],
+    frontRiderGoals:[{riderId:'front-0',goal:'cooperate'}],
+    remainingSegments:route};
+  const run=runIsolatedPaidControlChaseV1(runInput);
+  const audit=auditIsolatedPaidRoadCoverageV1({runInput,run});
+  assert.equal(audit.rosterRiders,24);
+  assert.equal(audit.roadKilometres,run.steps.length);
+  assert.equal(audit.allRiderKilometresPaid,false);
+  assert.ok(audit.missingRiderKilometres>0);
+  assert.ok(audit.perKilometre[0].unmodeledRiderIds
+    .includes('observer-2'));
+  assert.ok(audit.perKilometre.some(row=>
+    row.action==='commit_now'&&
+    row.modeledRiderIds.includes('observer-2')));
+  assert.throws(()=>requireFullPaidRiderCoverageV1({runInput,run}),
+    /coverage is incomplete/);
+  const forged=structuredClone(run);
+  forged.steps[0].road.energyByRider['observer-2']=80;
+  assert.throws(()=>auditIsolatedPaidRoadCoverageV1({
+    runInput,run:forged}),/replayed paid road run/);
 });

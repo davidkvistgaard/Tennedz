@@ -2864,3 +2864,13 @@ Four further same-seed isolated traces now replay every paid step on
 flat and climbing routes, each with fresh and tired rider reserves.
 They test the state transition and refusal boundaries, not a realistic
 catch-rate distribution or full 20-team race.
+
+The read-only `isolated-paid-road-coverage-v1.mjs` now replays that
+control/chase trace and enumerates **missing rider-kilometres**, rather
+than merely listing riders never modeled at all. An observer helper
+who later takes a paid chase turn was still unmodeled during the earlier
+watched kilometres; that missing riding cost cannot be erased by the
+later turn. The strict coverage gate rejects this fixture. Even a
+future complete energy ledger would still need physical group, contact
+and finish validation before official results. The current isolated
+trace is not a full-field energy calculation.
