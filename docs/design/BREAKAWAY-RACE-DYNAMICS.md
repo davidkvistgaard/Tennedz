@@ -2626,6 +2626,11 @@ single-rider flat-to-climb case records actual elapsed time at 3 km,
 and a second case pays two further flat turns before finishing at
 4 km. Both retain the true gap, energy ledger and no time limit or
 official placing. Full-field source and calibration remain open.
+Both bunch-origin solo continuations now refuse a plan that names the
+detached rider as a later bunch leader in the same kilometre. Focused
+pace-loss and energy-loss witnesses prove the refusal. The front must
+be replanned and paid by a rider still physically in the bunch before
+that detached solo can continue; one rider cannot occupy both roads.
 The same-seed first-kilometre calibration audit is a hard routing
 blocker. Across six replayed 20-team, 120 km V94 recordings (flat,
 rolling and mountain, each at fatigue 0 and 30), the current opt-in

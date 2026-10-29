@@ -96,6 +96,20 @@ test('physical bunch origin pays wheels before a climb pace split',()=>{
     longer.behindBunchSeconds)<1e-9);
   assert.equal(validateRearOriginPaceFinishV1(
     longerInput,longer),true);
+  const conflictingPlan={status:'worked',leaderAbility:100,
+    turns:[{startM:0,endM:500,ability:100,
+      leaderRiderId:'leader'},
+    {startM:500,endM:1000,ability:100,
+      leaderRiderId:'r'}]};
+  const conflictingInput={...input,bunchTurnPlans:[
+    ...bunchTurnPlans.slice(0,2),conflictingPlan]};
+  const conflictingOrigin=runRearBunchOriginRoadV1(
+    conflictingInput);
+  assert.equal(conflictingOrigin.status,'wheel_lost');
+  assert.throws(()=>continueRearOriginPaceSoloV1({
+    originInput:conflictingInput,origin:conflictingOrigin,
+    soloChoice:soloInput.soloChoice}),
+  /cannot lead the later bunch turn/);
 });
 
 test('deliberate release needs an explicit future-stage commitment',()=>{

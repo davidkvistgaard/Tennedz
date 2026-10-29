@@ -101,4 +101,22 @@ test('exhausted bunch worker loses the wheel at last paid metre',()=>{
   forgedFinish.finishElapsedSeconds=0;
   assert.throws(()=>validateRearExhaustedFinishV1(
     finishInput,forgedFinish),/differs/);
+  const conflictSegment={...segment(km),terrain:'climb',
+    gradientPct:8};
+  const conflictPlan={status:'worked',leaderAbility:40,
+    turns:[{startM:0,endM:900,ability:40,
+      leaderRiderId:'other'},
+    {startM:900,endM:1000,ability:40,
+      leaderRiderId:'worker'}]};
+  const conflictInput={...input,
+    routeKilometres:[...source.priorInput.routeKilometres,
+      conflictSegment],segment:conflictSegment,
+    bunchTurnPlan:conflictPlan};
+  const conflictLoss=advanceRearBunchEnergyLossV1(
+    conflictInput);
+  assert.ok(conflictLoss.endDistanceM<
+    (km-1)*1000+900);
+  assert.throws(()=>continueRearExhaustedSoloV1({
+    lossInput:conflictInput,loss:conflictLoss}),
+  /cannot lead the later bunch turn/);
 });
