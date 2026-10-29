@@ -2606,6 +2606,15 @@ The focused flat-to-climb witness carries two paid bunch kilometres
 before losing the wheel at the start of a steep third kilometre. This
 origin stops at the split marker: solo remainder, other riders, source
 recording binding and finish times still require separate road models.
+`rear-recorded-bunch-origin-v1.mjs` now binds that narrow origin to a
+fully validated and replayed experimental V94 recording. It takes the
+committed rider and orders, exact route, and each named bunch-turn plan;
+it refuses an unworked plan, a rider already in a forward road group,
+or an altered recorded turn. A same-seed 120 km, 20-team source test
+replays five paid bunch kilometres for its first named leader. The projected
+energy and wheel state are separately versioned and are not substituted
+for V94's checkpoint group label or energy ledger. This remains a
+single-rider physical projection, not the race's full field.
 `rear-split-solo-contact-v2.mjs` advances the same source-replayed
 meeting one named turn at a time and charges only distance actually
 travelled. It no longer requires an affordable full-kilometre solo
