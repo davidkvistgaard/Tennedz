@@ -2678,3 +2678,19 @@ bounded two-group counterfactual: other peloton riders' energy and
 speed, post-contact movement, multi-front interactions and the race
 finish remain unresolved. It cannot produce official results or run
 inside guided races.
+
+`rear-unpayable-climb-v1.mjs` covers a distinct isolated entry path:
+a rider starts with an occupied bunch wheel but cannot fund a whole
+kilometre of hard climbing. A paid bunch turn plan provides the opposing
+road. The rider holds until either their available energy can no longer
+fund hard shelter plus the remaining solo climb, or the next named
+bunch turn exceeds their own hard climbing ability. The first such
+event determines the loss-of-wheel marker. From that marker the rider
+pays conservative solo work against each remaining bunch turn; their
+relative clock and energy are recorded slice by slice. If even the solo
+kilometre cannot be paid, or the proposed solo would keep contact, the
+contract refuses. The result distinguishes physical inability from the
+separate, already modeled voluntary release for a committed later
+stage. This is one climb only: an end-of-kilometre zero reserve does
+not imply that the rider can finish the race, and a sub-threshold gap
+remains an unresolved wheel rather than an invented rear group.
