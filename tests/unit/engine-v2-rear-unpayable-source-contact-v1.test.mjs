@@ -43,4 +43,7 @@ test('an unaffordable climb split can source a later paid rear contact',()=>{
   tampered.splitDistanceM+=10;
   assert.throws(()=>advanceRearSourceContactV1({...input,
     rear:{...input.rear,prior:tampered}}),/differs/);
+  assert.throws(()=>advanceRearSourceContactV1({...input,
+    rear:{...input.rear,rider:{...rearRider,mountain:100}}}),
+  /rider differs/);
 });
