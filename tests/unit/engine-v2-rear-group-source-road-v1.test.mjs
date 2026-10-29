@@ -21,8 +21,13 @@ import {continueRearJoinedGroupV1,validateRearJoinedGroupV1} from
 import {advanceRearGroupSourceStepV2,
   validateRearGroupSourceStepV2} from
   '../../lib/engine/v2/rear-group-source-step-v2.mjs';
+import {advanceRearGroupSourceStepV3,
+  validateRearGroupSourceStepV3} from
+  '../../lib/engine/v2/rear-group-source-step-v3.mjs';
 import {runRearGroupAfterJoinV1,validateRearGroupAfterJoinV1} from
   '../../lib/engine/v2/rear-group-after-join-run-v1.mjs';
+import {runRearGroupAfterJoinV2,validateRearGroupAfterJoinV2} from
+  '../../lib/engine/v2/rear-group-after-join-run-v2.mjs';
 import {advanceRearGroupTurnKilometreV1,
   validateRearGroupTurnKilometreV1} from
   '../../lib/engine/v2/rear-group-turn-kilometre-v1.mjs';
@@ -267,6 +272,33 @@ test('a third rider joins only at calculated paid rear contact',()=>{
   assert.equal(three.riders.filter(row=>row.role==='leader').length,1);
   assert.ok(three.riders.every(row=>row.energySpent>0));
   assert.equal(validateRearGroupSourceStepV2(threeInput,three),true);
+  assert.throws(()=>advanceRearGroupSourceStepV3(threeInput),
+    /cannot hold paid leader/);
+  const safeGoals=continuationInput.rearGoals.map(row=>
+    row.riderId==='a'?row:{...row,rearWork:'sit_on'});
+  const safeThreeInput={...threeInput,rearGoals:safeGoals};
+  const safeThree=advanceRearGroupSourceStepV3(safeThreeInput);
+  assert.equal(safeThree.sourceStep.leaderRiderId,'a');
+  assert.ok(safeThree.holdChecks.every(row=>row.canHold));
+  assert.equal(validateRearGroupSourceStepV3(
+    safeThreeInput,safeThree),true);
+  const safeRunInput={continuationInput,continuation,
+    kilometres:[{...safeThreeInput,group:undefined,
+      lastLeaderRiderId:undefined},
+    {...safeThreeInput,group:undefined,
+      lastLeaderRiderId:undefined,
+      segment:{...safeThreeInput.segment,km:17}}]};
+  const safeRun=runRearGroupAfterJoinV2(safeRunInput);
+  assert.equal(safeRun.steps.length,2);
+  assert.ok(safeRun.steps.every(step=>
+    step.holdChecks.every(row=>row.canHold)));
+  assert.equal(validateRearGroupAfterJoinV2(
+    safeRunInput,safeRun),true);
+  assert.throws(()=>runRearGroupAfterJoinV2({...safeRunInput,
+    kilometres:[safeRunInput.kilometres[0],
+      {...safeRunInput.kilometres[1],rearGoals:
+        continuationInput.rearGoals}]}),
+  /cannot hold paid leader/);
   const next=advanceRearGroupSourceStepV2({...threeInput,
     group:three.rearGroup,lastLeaderRiderId:three.leaderRiderId,
     segment:{...joinInput.segment,km:17},

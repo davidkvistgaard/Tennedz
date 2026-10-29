@@ -2534,6 +2534,13 @@ remaining energy. Its two-kilometre source replays; changing the
 second kilometre's rear directive so the faster rider leads makes the
 conserving follower fail the hold check. The older consecutive V1
 recording remains available for historical replay.
+The analogous opt-in three-rider `rear-group-source-step-v3.mjs` and
+`rear-group-after-join-run-v2.mjs` apply the hold check after a paid
+third-rider join, including after later leader changes. The existing
+strong-leader example refuses when a conserving follower cannot hold;
+a slower willing leader permits two replayed paid kilometres. These
+gates protect the already recorded group from an impossible free wheel.
+They still stop before a newly detached rider's solo road is known.
 
 `rear-group-source-run-v1.mjs` chains that same derived calculation
 through consecutive whole kilometres. Each step uses the prior paid
