@@ -2700,3 +2700,11 @@ climb split before a rider can enter consecutive, paid solo kilometres.
 It refuses a sub-threshold wheel gap, a forged split marker, a changed
 rider or a skipped kilometre. This still does not establish physical
 contact with another rear rider or a finish time.
+
+The isolated `rear-source-contact-v1.mjs` now accepts this replayed
+climb split as one of its paid prior solo roads. A later rider may
+reach another dropped rider only at the calculated contact marker;
+forging the earlier wheel-loss marker is rejected. The focused witness
+has two distinct source riders, one unable to hold the climb wheel,
+then a later paid solo contact. It does not infer contact from a shared
+kilometre snapshot or attach the group to guided races.
