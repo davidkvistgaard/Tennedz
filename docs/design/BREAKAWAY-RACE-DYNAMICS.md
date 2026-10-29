@@ -2647,6 +2647,13 @@ source observations; do not infer 117 real drops or route this model
 into guided races. A replacement must distinguish sustainable
 sheltered holding work from an actual inability to pay and must be
 validated over complete race clocks, contacts and finishes.
+The same replay also exposes an energy-source mismatch. On the
+mountain/fatigue-30 first frame, 158 riders are not the two named
+front workers. Each V94 ledger row charges full base work, while the
+opt-in terrain-priced sheltered quote is exactly 80% of that row.
+Those 158 cheaper draft costs cannot be substituted into the V94
+ledger after its movement; a new version must settle every rider's
+role, work, recovery and position on the same physical road.
 `rear-recorded-bunch-origin-v1.mjs` now refuses a projected pace
 loss from a V94 front-turn recording. The same replayed source still
 supports paid bunch survival for its named first leader, but the

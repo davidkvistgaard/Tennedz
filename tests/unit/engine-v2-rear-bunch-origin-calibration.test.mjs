@@ -5,6 +5,8 @@ import {createV94RaceDynamicsPreview} from
 import {orderAt} from '../../lib/engine/v2/orders.mjs';
 import {runRearBunchOriginRoadV1} from
   '../../lib/engine/v2/rear-bunch-origin-road-v1.mjs';
+import {quoteRearEnergyDemandV1} from
+  '../../lib/engine/v2/rear-energy-demand-v1.mjs';
 import {replayRaceDynamicsRecording} from
   '../../lib/engine/v2/replay-race-dynamics-v94.mjs';
 
@@ -29,6 +31,18 @@ test('same-seed first-km origin projection exposes calibration blocker',()=>{
           const choice={riderId:rider.id,km:1,
             effort:orderAt(team.orders,0).effort,
             action:'hold_wheel',reason:'follow_order'};
+          if(terrain==='mountain'&&fatigue===30&&
+            !turnPlan.turns.some(turn=>
+              turn.leaderRiderId===rider.id)){
+            const paid=recording.frames[0].energyLedger.find(
+              row=>row.riderId===rider.id);
+            const shelter=quoteRearEnergyDemandV1({rider,
+              segment,energyBefore:paid.energyBefore,
+              effort:choice.effort,role:'sheltered',
+              distanceM:1000});
+            assert.ok(Math.abs(shelter.energyDemand/
+              paid.paidFromReserve-.8)<1e-9);
+          }
           const road=runRearBunchOriginRoadV1({rider,
             orders:team.orders,routeKilometres:[segment],
             bunchTurnPlans:[turnPlan],choices:[choice],
