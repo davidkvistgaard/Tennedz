@@ -2565,6 +2565,10 @@ whole-race work demand has a terrain-load term; these rear prototypes
 have not yet carried that term into a versioned, fully reconciled
 ledger. Their positive energy charges are accounting witnesses, not
 calibrated climbing costs, and block routing or finish claims.
+At the focused 6% gradient, the whole-race base-work multiplier would
+be 1.21 before other costs, while the isolated follower solo still uses
+1.00. A later paid version must reconcile the full leader and shelter
+ledger, rather than patch only the follower's final reserve.
 `rear-split-solo-run-v1.mjs` extends that exact split through consecutive
 solo kilometres. Each rider has a fresh explicit choice in each kilometre,
 with a separate energy and bunch-gap calculation; the source replay
