@@ -2263,3 +2263,30 @@ check, not a race outcome. The existing race still charged and credited
 those two jobs separately. The planner must enter the actual energy
 ledger and relative road clock in a new opt-in version, with full
 source validation, before its effects can be assessed.
+
+That shared plan is now connected behind an additional **opt-in** V94
+`pelotonFrontTurnVersion: 1`, which requires the existing named chase
+and two-worker front-turn versions. The actual energy ledger charges
+only the combined plan's exposed shares; the separate plans remain
+recorded as source proposals. The relative gap clock uses its one
+turn-weighted leader ability as bunch pace and removes the old
+additional chase-capacity time credit on kilometres without a fresh
+attack. A fresh launch simultaneous with a paid pursuit is explicitly
+refused until the launch and moving-bunch clocks have one contract.
+The source validator reconstructs the shared plan from committed
+riders, orders, terrain and pre-kilometre energy, checks the paid chase
+share and relative gap, and full replay rejects a changed leader.
+Historical recordings and guided racing retain their old versions.
+
+In 16 same-seed, source-replayed 120-km flat/mountain fresh/tired cases,
+all shared-version races completed without a validator refusal. Their
+widest leads were 51–248 seconds, compared with 108–327 seconds when
+separately rotating chase and front plans retained the old chase credit,
+and 44–119 seconds in the prior summed-capacity motor. The front still
+survived in all 16 shared cases. This is a material improvement over
+the separate candidate but **not calibrated** for realistic late
+catches. In particular, team pursuit decisions still estimate the old
+summed coalition's catch time, and the road ability to seconds mapping
+remains provisional. Do not route this version to guided races or
+production until decisions, fatigue, contact and finishes are tested
+together across a broad holdout.
