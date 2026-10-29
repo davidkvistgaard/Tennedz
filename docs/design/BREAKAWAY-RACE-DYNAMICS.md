@@ -2602,3 +2602,11 @@ in that kilometre. The recorded dropped deficit is still a checkpoint,
 not physical rear-group contact or a complete within-kilometre wheel
 trace. A rear-road counterfactual cannot borrow a physical position
 from it; no candidate is routed to the real race on this evidence.
+An expanded six-seed generated-profile audit reached 21 fully replayed
+races and refused three on the existing combined attack/pursuit guard.
+All 311 new dropped transitions had a paid bunch turn at that
+checkpoint; 306 occurred on recorded climbs. None of these 311 were
+recorded as bunch workers or just-caught break riders in the same or
+preceding kilometre. These samples establish a usable opposing bunch
+source for climb-drop experiments, while leaving the other two rear
+entry paths untested in this holdout.

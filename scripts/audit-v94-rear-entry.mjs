@@ -15,7 +15,11 @@ import {MOTOR_RACE_DYNAMICS_VERSION} from
   '../lib/engine/v2/tuning.mjs';
 
 const generated=process.argv.includes('--generated-profile');
-const seedCount=generated?2:8;
+const requestedSeeds=process.argv.find(arg=>arg.startsWith('--seeds='));
+const seedCount=requestedSeeds?Number(requestedSeeds.slice(8)):
+  generated?2:8;
+if(!Number.isInteger(seedCount)||seedCount<1||seedCount>24)
+  throw new Error('Rear-entry audit seeds must be between 1 and 24.');
 
 function generatedRecording(seed,terrain,fatigue){
   const raceSeed=`rear-entry-generated-${seed}-${terrain}-${fatigue}`;
