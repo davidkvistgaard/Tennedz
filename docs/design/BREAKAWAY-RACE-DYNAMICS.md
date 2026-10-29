@@ -2595,6 +2595,14 @@ The full-kilometre solo proposals must each be affordable before this
 narrow contact branch runs. The remainder of the contact kilometre has
 no chosen group leader or shelter charge yet, so the branch explicitly
 leaves that road unsettled and cannot be routed or produce a finish.
+`rear-split-solo-contact-v2.mjs` advances the same source-replayed
+meeting one named turn at a time and charges only distance actually
+travelled. It no longer requires an affordable full-kilometre solo
+proposal before locating contact. The existing flat witness reproduces
+V1's meeting marker and bunch gap, and forged prior reserves or route
+fail replay. A low-reserve case in which V1 refuses the remaining
+kilometre but V2 reaches contact has not yet been validated from a
+complete paid split source; V2 remains an isolated alternative.
 `rear-split-contact-continuation-v1.mjs` replays that meeting and the
 pre-race rear-goal commitment before selecting one willing leader for
 the remaining physical road. It checks that the sheltered rider can

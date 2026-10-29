@@ -9,6 +9,9 @@ import {advanceRearGroupFollowerSplitV2} from
 import {advanceRearSplitSoloContactV1,
   validateRearSplitSoloContactV1} from
   '../../lib/engine/v2/rear-split-solo-contact-v1.mjs';
+import {advanceRearSplitSoloContactV2,
+  validateRearSplitSoloContactV2} from
+  '../../lib/engine/v2/rear-split-solo-contact-v2.mjs';
 import {runRearSplitSoloV2} from
   '../../lib/engine/v2/rear-split-solo-run-v2.mjs';
 import {commitRearGoalsV1} from
@@ -70,6 +73,25 @@ test('source-replayed rear solos only form a group at paid contact',()=>{
   const input={splitInput,split,priorRunInput,priorRun,
     segment:terrain(17,0),bunchTurnPlan,soloChoices};
   const contact=advanceRearSplitSoloContactV1(input);
+  const contactV2=advanceRearSplitSoloContactV2(input);
+  assert.ok(Math.abs(contactV2.atDistanceM-
+    contact.atDistanceM)<1e-7);
+  assert.ok(Math.abs(contactV2.rearGroup.behindBunchSeconds-
+    contact.rearGroup.behindBunchSeconds)<1e-7);
+  assert.equal(validateRearSplitSoloContactV2(input,contactV2),true);
+  assert.ok(contactV2.slices.every(slice=>slice.paid.every(row=>
+    row.energySpent>0)));
+  assert.ok(contactV2.slices.at(-1).endDistanceM<17000);
+  const forgedV2=structuredClone(contactV2);
+  forgedV2.slices[0].paid[0].energySpent=0;
+  assert.throws(()=>validateRearSplitSoloContactV2(
+    input,forgedV2),/differs/);
+  assert.throws(()=>advanceRearSplitSoloContactV2({...input,
+    priorRun:{...priorRun,finalSoloStates:[
+      {...priorRun.finalSoloStates[0],energyAfter:100},
+      priorRun.finalSoloStates[1]]}}),/replayed sources/);
+  assert.throws(()=>advanceRearSplitSoloContactV2({...input,
+    segment:{...input.segment,gradientPct:6}}),/replayed sources/);
   assert.equal(contact.event.kind,'rear_contact');
   assert.ok(contact.atDistanceM>16000&&contact.atDistanceM<17000);
   assert.ok(contact.paid.every(row=>row.energySpent>0));
@@ -132,3 +154,4 @@ test('source-replayed rear solos only form a group at paid contact',()=>{
     priorRunInput:null,priorRun:null,segment:terrain(15,0)}),
   /did not make paid contact/);
 });
+
