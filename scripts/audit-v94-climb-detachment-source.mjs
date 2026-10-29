@@ -15,13 +15,20 @@ import {advanceRearDetachmentV1,validateRearDetachmentV1} from
   '../lib/engine/v2/rear-detachment-v1.mjs';
 import {advanceRearSoloRoadV1,validateRearSoloRoadV1} from
   '../lib/engine/v2/rear-solo-road-v1.mjs';
+import {advanceRearSourceContactV1,validateRearSourceContactV1} from
+  '../lib/engine/v2/rear-source-contact-v1.mjs';
 
-const summary={races:0,refusedRaces:0,eligibleRiderKm:0,
+const rearEffort=process.argv.includes('--rear-hard')?'hard':'conserve';
+
+const summary={rearEffort,races:0,refusedRaces:0,eligibleRiderKm:0,
   climbKm:0,paidClimbKm:0,terrainCounts:{},
   stillAttached:0,unresolvedWheelGap:0,paidSoloGap:0,
   soloRecordedPeloton:0,soloRecordedDropped:0,
   nextSoloStep:0,nextSoloContact:0,nextSoloContinues:0,
   nextPlanUnavailable:0,nextSoloUnpayable:0,
+  orderedSoloPairs:0,equalGapPairs:0,
+  nextKmPaidPairContacts:0,nextKmSeparatePairs:0,
+  nextKmPairRefusals:0,contactExamples:[],
   gapOver1:0,gapOver3:0,gapOver5:0,
   unpayable:0,examples:[]};
 for(const seed of [1,2])for(const fatigue of [0,30]){
@@ -66,6 +73,7 @@ for(const seed of [1,2])for(const fatigue of [0,30]){
     if(segment.terrain!=='climb'||plan?.status!=='worked')continue;
     summary.paidClimbKm++;
     const workers=new Set(plan.turns.map(turn=>turn.leaderRiderId));
+    const solos=[];
     for(const row of prior.riderGroups){
       if(row.group!=='peloton'||workers.has(row.id))continue;
       summary.eligibleRiderKm++;
@@ -77,6 +85,7 @@ for(const seed of [1,2])for(const fatigue of [0,30]){
         if(entry.behindBunchSeconds>0){
           if(entry.status==='solo_behind'){
             summary.paidSoloGap++;
+            solos.push({entry,input,rider:riders.get(row.id)});
             const recorded=frame.riderGroups.find(rider=>
               rider.id===row.id)?.group;
             if(recorded==='peloton')summary.soloRecordedPeloton++;
@@ -115,6 +124,44 @@ for(const seed of [1,2])for(const fatigue of [0,30]){
         summary.unpayable++;
       }
     }
+    const next=recording.frames[index+1];
+    const nextSegment=recording.route.kilometres[index+1];
+    if(!next||next.pelotonFrontTurnPlan?.status!=='worked')continue;
+    for(let first=0;first<solos.length;first++)
+      for(let second=first+1;second<solos.length;second++){
+        const pair=[solos[first],solos[second]].sort((a,b)=>
+          a.entry.behindBunchSeconds-b.entry.behindBunchSeconds);
+        if(pair[0].entry.behindBunchSeconds===
+          pair[1].entry.behindBunchSeconds){
+          summary.equalGapPairs++;
+          continue;
+        }
+        summary.orderedSoloPairs++;
+        const source=(row,effort,reason)=>({prior:row.entry,
+          priorSource:row.input,rider:row.rider,effort,reason});
+        const contactInput={front:source(pair[0],'conserve',
+          'finish_safely'),
+        rear:source(pair[1],rearEffort,
+          rearEffort==='hard'?'rejoin_bunch':'finish_safely'),
+          segment:nextSegment,
+          bunchTurnPlan:next.pelotonFrontTurnPlan};
+        try{
+          const result=advanceRearSourceContactV1(contactInput);
+          validateRearSourceContactV1(contactInput,result);
+          if(result.contact.event){
+            summary.nextKmPaidPairContacts++;
+            if(summary.contactExamples.length<8)
+              summary.contactExamples.push({seed,fatigue,
+                km:nextSegment.km,
+                riderIds:result.contact.event.riderIds,
+                atDistanceM:result.contact.event.atDistanceM});
+          }else summary.nextKmSeparatePairs++;
+        }catch(error){
+          if(!/cannot pay|reaches the bunch before rear contact/.test(
+            String(error.message)))throw error;
+          summary.nextKmPairRefusals++;
+        }
+      }
   }
 }
 console.log(JSON.stringify(summary));

@@ -2427,6 +2427,22 @@ road; those riders were not moved in the recorded tour. Later source
 orders and energy would diverge if the candidate were actually routed,
 so a full-race branch with its own state and validator is still needed.
 
+The same four replayed generated-mountain sources now test *separate*
+pairwise next-kilometre rear-contact counterfactuals. Among 58
+candidate solo entries, 122 rider pairs had ordered positive gaps and
+93 pairs had equal modelled gaps, for which this two-solo contract cannot
+establish who follows whom. When both ordered riders chose conservative
+finish pace, all 122 pairs stayed separate. When the rear rider instead
+chose hard effort to rejoin while the front rider conserved, all 122
+separate pair calculations reached a paid contact in the next
+kilometre; every source replayed and none exhausted its rider.
+These pair calculations are mutually incompatible alternatives—one
+rider occurs in many pairs—and cannot be combined into 122 real group
+meetings. The all-or-none result shows that the provisional pace and
+individual decision need calibration and physical simultaneous-group
+resolution before this candidate is routed. No contact was inserted
+into an actual race or viewer.
+
 `rear-source-contact-v1.mjs` now joins two *separately source-replayed*
 rear solo states, derives both solo speeds and costs from their riders,
 energy, terrain and explicit effort, and recalculates an exact paid

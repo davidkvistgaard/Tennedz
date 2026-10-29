@@ -248,4 +248,16 @@ test('a third rider joins only at calculated paid rear contact',()=>{
     kilometres:[afterInput.kilometres[0],
       {...afterInput.kilometres[1],segment:{...joinInput.segment,
         km:18}}]}),/consecutive/);
+  assert.throws(()=>advanceRearGroupSourceStepV2({...threeInput,
+    group:{...continuation.rearGroup,
+      energyByRider:{...continuation.rearGroup.energyByRider,
+        c:.01}}}),/cannot pay/);
+  const bunchCatch=advanceRearGroupSourceStepV2({...threeInput,
+    group:{...continuation.rearGroup,behindBunchSeconds:.2},
+    bunchTurnPlan:{status:'worked',leaderAbility:20,
+      turns:[{startM:0,endM:1000,ability:20}]}});
+  assert.equal(bunchCatch.event?.kind,'rejoin_bunch');
+  assert.ok(bunchCatch.endDistanceM>15000&&
+    bunchCatch.endDistanceM<16000);
+  assert.equal(bunchCatch.rearGroup,null);
 });
