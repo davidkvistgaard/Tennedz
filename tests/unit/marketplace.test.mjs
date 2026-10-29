@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {marketAction,marketFilters} from '../../lib/marketplace/validation.mjs';
+import {assertMarketplaceWrites} from '../../lib/auth/policy.mjs';
 
 const rider='123e4567-e89b-42d3-a456-426614174000';
 const listing='123e4567-e89b-42d3-a456-426614174001';
@@ -28,4 +29,9 @@ test('market writes accept only bounded prices and UUID identifiers',()=>{
     {action:'cancel',listingId:rider.slice(0,-1)},
     {action:'delete',listingId:listing}])
     assert.throws(()=>marketAction(body),{name:'MarketInputError'});
+});
+test('market writes require their own explicit release switch',()=>{
+  assert.doesNotThrow(()=>assertMarketplaceWrites('true'));
+  for(const value of [undefined,'false','TRUE','1'])
+    assert.throws(()=>assertMarketplaceWrites(value),{code:'MARKET_READ_ONLY',status:503});
 });
