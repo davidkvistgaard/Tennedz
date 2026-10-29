@@ -2734,6 +2734,15 @@ that this version reproduces 306 real drop trajectories. No original
 V94 recording or guided outcome changed. A future motor must record
 the wheel and exact loss event before connecting this pace branch.
 
+The pace-loss output can now serve as a separately replayed prior solo
+source for a later physical rear-rider meeting. A focused witness uses
+abilities no higher than 100: the rider loses a paid climb turn, then
+meets another already detached rider on a later kilometre at the
+computed contact marker. The meeting pays both solo riders to that
+marker and rejects an altered split point or rider statistics. This
+does not establish that any of the 306 V94 snapshot transitions had
+the required occupied wheel or that any two of them actually met.
+
 `rear-unpayable-solo-run-v1.mjs` source-replays that within-kilometre
 climb split before a rider can enter consecutive, paid solo kilometres.
 It refuses a sub-threshold wheel gap, a forged split marker, a changed
