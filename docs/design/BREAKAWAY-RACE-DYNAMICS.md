@@ -2643,6 +2643,12 @@ conditional helper need not increase instantaneous catch headroom:
 only one rider leads at a time, although a larger roster can spread
 future fatigue. This is still a forecast, with caller-supplied team
 stake and coalition, not a calibrated or executed chase policy.
+Focused same-source comparisons also show that replacing the remaining
+flat road with climbs increases the chase headroom against a
+climbing-weak escape, while reducing the chasing roster's energy and
+raising its fatigue, or removing its helpers, reduces that headroom.
+Those changes come from rider/route work estimates, not scripted gap
+awards. They do not establish realistic catch rates.
 
 `team-chase-stake-v1.mjs` gives that isolated timing choice an explicit
 roster-bound sporting source. Every team names a captain and a goal

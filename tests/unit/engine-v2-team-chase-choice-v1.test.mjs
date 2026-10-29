@@ -91,6 +91,45 @@ test('the observer does not read rival private work orders',()=>{
   assert.deepEqual(decideTeamChaseChoiceV1(changed),before);
 });
 
+test('remaining climbs change the perceived rope for a weak climber',()=>{
+  const terrainTeams=[team(1,70),team(3,70)];
+  terrainTeams[0].riders[0].flat=85;
+  terrainTeams[0].riders[0].mountain=35;
+  for(const rider of terrainTeams[1].riders){
+    rider.flat=60;
+    rider.mountain=90;
+  }
+  const common={teams:terrainTeams,observerTeamId:'team-3',
+    raceSeed:'terrain-rope-1',stake:'summit_attack',
+    nominatedChaseTeamIds:['team-3'],roadGroups:[
+      group('road-1','team-1-0','team-1',120)]};
+  const flat=decideTeamChaseChoiceV1({...common,
+    remainingSegments:route});
+  const climb=decideTeamChaseChoiceV1({...common,
+    remainingSegments:route.map(segment=>({...segment,
+      terrain:'climb',gradientPct:6}))});
+  assert.ok(climb.assessments[0].nominatedHeadroomSeconds>
+    flat.assessments[0].nominatedHeadroomSeconds);
+});
+
+test('fatigue and unavailable helpers shrink an actual team choice',()=>{
+  const input={...base,roadGroups:[
+    group('road-1','team-1-0','team-1',120)]};
+  const fresh=decideTeamChaseChoiceV1(input);
+  const tiredInput=structuredClone(input);
+  for(const rider of tiredInput.teams[2].riders){
+    rider.fatigue=70;
+    tiredInput.teams[2].energy[rider.id]=40;
+  }
+  const tired=decideTeamChaseChoiceV1(tiredInput);
+  const short=decideTeamChaseChoiceV1({...input,
+    unavailableRiderIds:[...input.teams[2].orders.helperIds]});
+  assert.ok(fresh.assessments[0].nominatedHeadroomSeconds>
+    tired.assessments[0].nominatedHeadroomSeconds);
+  assert.ok(fresh.assessments[0].nominatedHeadroomSeconds>
+    short.assessments[0].nominatedHeadroomSeconds);
+});
+
 test('team chase goal and later change have a replayed roster source',()=>{
   const intentions=teams.map(team=>({teamId:team.id,
     baseline:{goal:team.id==='team-3'?'sprint_finish':
