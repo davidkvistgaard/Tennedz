@@ -2363,7 +2363,8 @@ an invalid plan or unaffordable hard kilometre refuses. An attached
 rider receives the same draft ability as the bunch and a provisional
 20% lower work cost than an exposed rider. The work price and ability
 to seconds conversion are experimental and uncalibrated. The output
-records the first solo gap and exact kilometre boundaries, with source
+records the first solo gap and route kilometre distance boundaries
+(the route segment's `startM`/`endM` are elevations), with source
 replay/tamper rejection, but does not infer a later meeting, share a
 wheel, give a finish time, or alter V93/V94. The paid bunch turn source
 must itself have been validated by its existing full-race validator

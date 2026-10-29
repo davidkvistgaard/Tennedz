@@ -5,7 +5,7 @@ import {advanceRearDetachmentV1,validateRearDetachmentV1} from
 
 const rider={id:'you-8',mountain:38,flat:60,hills:48,
   timetrial:50,endurance:65,strength:58,form:50,fatigue:0};
-const segment={km:12,startM:11000,endM:12000,
+const segment={km:12,startM:120,endM:190,
   terrain:'climb',surface:'road',exposed:false,
   weather:{temperatureC:16,windKph:0,rainMm:0}};
 const paidPlan=ability=>({status:'worked',leaderAbility:ability,
@@ -21,6 +21,8 @@ test('a rider can try and be physically distanced on a climb',()=>{
   assert.equal(entry.decision.choice,'hold');
   assert.equal(entry.decision.reason,'can_hold_current_group');
   assert.equal(entry.status,'solo_behind');
+  assert.equal(entry.startDistanceM,11000);
+  assert.equal(entry.endDistanceM,12000);
   assert.ok(entry.behindBunchSeconds>0);
   assert.ok(entry.energySpent>0);
   assert.equal(validateRearDetachmentV1(source,entry),true);
