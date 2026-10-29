@@ -2708,6 +2708,20 @@ at the next kilometre start. The predominant climb-drop path still
 needs a separately modeled physical ability/pace loss with an actual
 wheel trace; the isolated low-energy witness is no substitute for it.
 
+`rear-pace-climb-split-v1.mjs` is a separate opt-in pace-loss candidate
+for a rider who **chooses to hold** and can fund the projected hard
+sheltered kilometre. It compares that rider's terrain and energy based
+hard climbing ability with each named paid bunch turn. If a later turn
+first exceeds the rider's hold ability, the occupied wheel is lost at
+that turn boundary. The rider must then choose and pay a solo effort;
+each remaining slice records pace, energy and the clock behind the
+bunch. A matchable bunch, a voluntary future-stage release, an
+unpayable solo, or a solo clock that immediately regains the bunch
+refuses. A small positive gap remains unresolved rather than creating
+an invented rear group. This is an isolated within-kilometre contract:
+the recorded V94 peloton snapshot does not prove a physical occupied
+wheel, and no version is routed into whole races or official finishes.
+
 `rear-unpayable-solo-run-v1.mjs` source-replays that within-kilometre
 climb split before a rider can enter consecutive, paid solo kilometres.
 It refuses a sub-threshold wheel gap, a forged split marker, a changed
