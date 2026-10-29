@@ -2621,6 +2621,13 @@ recorded as bunch workers or just-caught break riders in the same or
 preceding kilometre. These samples establish a usable opposing bunch
 source for climb-drop experiments, while leaving the other two rear
 entry paths untested in this holdout.
+By contrast, a separate eight-seed legacy-profile audit replayed 32
+cases and found 51 new dropped-state transitions. None had a worked
+shared bunch-front turn at that checkpoint, and none followed a
+recorded bunch worker or caught break rider in the same or preceding
+kilometre. Those checkpoint labels cannot provide physical rear-entry
+positions or a paid bunch-turn source; they must not be used to infer
+rear-group contact.
 
 `road-group-sprint-choice-v1.mjs` is a separate opt-in answer to a
 specific forward-group question: a rider with an explicit stage-win
