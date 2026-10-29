@@ -2874,3 +2874,14 @@ later turn. The strict coverage gate rejects this fixture. Even a
 future complete energy ledger would still need physical group, contact
 and finish validation before official results. The current isolated
 trace is not a full-field energy calculation.
+
+`isolated-control-caught-front-slide-v1.mjs` also covers a front rider
+caught by one *paid control worker* while the sprint observer still
+waits. It replays the exact control catch, checks that the caught rider
+cannot hold the named worker's pace, then charges both for the
+remaining road. Only when the computed postcontact gap exceeds the
+existing dropped threshold does it record that the rider passed
+through the bunch into a solo road. The strong-controller focused
+case records that event and rejects a forged energy trace. It does
+not grant the rider an unproved sheltered wheel or place them in a
+rear group, and the other bunch riders and finish remain unmodeled.
