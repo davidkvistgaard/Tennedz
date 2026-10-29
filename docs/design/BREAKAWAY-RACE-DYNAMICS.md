@@ -2574,8 +2574,17 @@ marker and charges both separated riders for their actual climbing
 roles and the route-derived cap. The leader and follower spend more
 than in V1 on the 6% climb; their source-derived separation and bunch
 gaps are unchanged. It remains a single opt-in split kilometre. The
-following solo run still uses V1 prices and cannot inherit V2's new
-balances until it has its own versioned terrain ledger.
+historical following solo run still uses V1 prices and does not
+inherit V2's new balances.
+`rear-solo-road-v2.mjs` and `rear-split-solo-run-v2.mjs` now take those
+V2 balances forward as two separate solos. Each rider chooses effort
+and goal again each kilometre; every paid bunch turn receives its own
+source-derived road speed and terrain work. The run carries the
+route-derived cap and zero rear recovery, and refuses any solo/bunch
+contact or meeting between the two riders until that road is paid.
+A two-kilometre climbing continuation replays both riders' balances
+and rejects a forged later charge or skipped kilometre. This still
+does not produce a full-stage finish or a time-limit decision.
 `rear-energy-demand-v1.mjs` now provides a separate opt-in price for a
 known rear-road role and distance. It applies that terrain load to both
 the exposed rider's and sheltered rider's base effort, keeps the

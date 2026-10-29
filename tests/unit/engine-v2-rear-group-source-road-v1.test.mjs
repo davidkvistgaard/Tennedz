@@ -27,8 +27,12 @@ import {advanceRearGroupFollowerSplitV2,
 import {advanceRearSplitSoloRoadV1,
   validateRearSplitSoloRoadV1} from
   '../../lib/engine/v2/rear-split-solo-road-v1.mjs';
+import {advanceRearSoloRoadV2,validateRearSoloRoadV2} from
+  '../../lib/engine/v2/rear-solo-road-v2.mjs';
 import {runRearSplitSoloV1,validateRearSplitSoloRunV1} from
   '../../lib/engine/v2/rear-split-solo-run-v1.mjs';
+import {runRearSplitSoloV2,validateRearSplitSoloRunV2} from
+  '../../lib/engine/v2/rear-split-solo-run-v2.mjs';
 import {advanceRearGroupSoloJoinV1,validateRearGroupSoloJoinV1} from
   '../../lib/engine/v2/rear-group-solo-join-v1.mjs';
 import {runRearSoloSourceV1,validateRearSoloSourceRunV1} from
@@ -217,6 +221,65 @@ test('split rear riders both pay climb terrain without changing separation',()=>
   forged.solos[1].energyAfter=100;
   assert.throws(()=>validateRearGroupFollowerSplitV2(source,forged),
     /differs/);
+});
+
+test('terrain-priced solo follows each paid bunch turn after the rear split',()=>{
+  const routeKilometres=Array.from({length:15},(_,index)=>({
+    ...nextSegment,km:index+1}));
+  const split=advanceRearGroupFollowerSplitV2({...input,
+    routeKilometres});
+  const segment={...nextSegment,km:15};
+  const turns={status:'worked',leaderAbility:90,
+    turns:[{startM:0,endM:500,ability:90},
+      {startM:500,endM:1000,ability:90}]};
+  const prior={...split.solos[0],
+    version:split.version,endDistanceM:split.solos[0].atDistanceM};
+  const source={prior,rider:b,segment,bunchTurnPlan:turns,
+    routeKilometres,effort:'hard',reason:'rejoin_bunch'};
+  const road=advanceRearSoloRoadV2(source);
+  assert.equal(road.status,'solo_behind');
+  assert.equal(road.slices.length,2);
+  assert.equal(road.slices[1].energyBefore,
+    road.slices[0].energyAfter);
+  assert.ok(road.slices.every(row=>row.energySpent>0&&
+    row.behindBunchSeconds>0));
+  assert.equal(road.cap,100);
+  assert.equal(validateRearSoloRoadV2(source,road),true);
+  const forged=structuredClone(road);
+  forged.slices[1].energySpent=0;
+  assert.throws(()=>validateRearSoloRoadV2(source,forged),
+    /differ/);
+});
+
+test('separate rear solos keep fresh paid choices across kilometres',()=>{
+  const routeKilometres=Array.from({length:16},(_,index)=>({
+    ...nextSegment,km:index+1}));
+  const splitInput={...input,routeKilometres};
+  const split=advanceRearGroupFollowerSplitV2(splitInput);
+  const turns={status:'worked',leaderAbility:90,
+    turns:[{startM:0,endM:500,ability:90},
+      {startM:500,endM:1000,ability:90}]};
+  const choices=[{riderId:'b',effort:'hard',reason:'rejoin_bunch'},
+    {riderId:'a',effort:'conserve',reason:'finish_safely'}];
+  const source={splitInput,split,kilometres:[
+    {segment:{...nextSegment,km:15},bunchTurnPlan:turns,
+      soloChoices:choices},
+    {segment:{...nextSegment,km:16},bunchTurnPlan:turns,
+      soloChoices:choices}]};
+  const run=runRearSplitSoloV2(source);
+  assert.equal(run.steps.length,2);
+  assert.ok(run.steps.every(step=>step.riderRoads.every(row=>
+    row.slices.length===2&&row.paidWork>0)));
+  assert.equal(run.steps[1].riderRoads[0].energyBefore,
+    run.steps[0].soloStates[0].energyAfter);
+  assert.equal(validateRearSplitSoloRunV2(source,run),true);
+  const forged=structuredClone(run);
+  forged.steps[1].riderRoads[0].paidWork=0;
+  assert.throws(()=>validateRearSplitSoloRunV2(source,forged),
+    /differs/);
+  assert.throws(()=>runRearSplitSoloV2({...source,kilometres:[
+    source.kilometres[0],{...source.kilometres[1],
+      segment:{...nextSegment,km:17}}]}),/consecutive/);
 });
 
 test('terrain-priced rear step charges both physical roles without moving contact',()=>{
