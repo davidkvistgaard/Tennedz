@@ -2811,3 +2811,14 @@ the gap growing under a weaker paid control helper, while the sprint
 team waits. Other bunch riders have no energy ledger here. This is
 neither a free `watch` road nor a whole-race control policy, and it
 does not yet compose with the later paid pursuit run.
+
+`isolated-paid-control-run-v1.mjs` continues this narrow watched road
+kilometre by kilometre. It recomputes the sprint team's *perceived*
+catch choice and the front rider's work choice from the updated gap and
+only the energy that the two named workers actually spent. In a focused
+30-km-route witness, a weak named controller pays multiple kilometres
+while the sprint team watches. When the observer's next decision becomes
+`commit_now`, the run records an exact source replayable handoff **before**
+advancing that kilometre; it does not quietly replace the controller
+with unpaid pursuit. It still cannot settle the rest of the peloton or
+carry that handoff through combined control and chase work.

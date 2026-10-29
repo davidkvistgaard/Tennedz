@@ -9,6 +9,9 @@ import {decideRoadGroupSprintChoiceV1} from
 import {advanceIsolatedPaidControlRoadV1,
   validateIsolatedPaidControlRoadV1} from
   '../../lib/engine/v2/isolated-paid-control-road-v1.mjs';
+import {runIsolatedPaidControlV1,
+  validateIsolatedPaidControlRunV1} from
+  '../../lib/engine/v2/isolated-paid-control-run-v1.mjs';
 
 const team=(id,skill)=>{
   const riders=Array.from({length:8},(_,number)=>({
@@ -95,4 +98,41 @@ test('a strong paid controller can make contact without observer chase',()=>{
   assert.ok(road.riders.every(row=>row.energySpent>0&&
     row.energySpent<1));
   assert.equal(validateIsolatedPaidControlRoadV1(source,road),true);
+});
+
+test('watched kilometres recompute uncertainty and carry paid energy',()=>{
+  const runInput={commitment,teams,roadGroup:group,
+    observerTeamId:'observer',controlTeamId:'control',
+    raceSeed:'paid-watch-1',
+    nominatedChaseTeamIds:['observer'],
+    frontRiderGoals:[{riderId:'front-0',goal:'cooperate'}],
+    remainingSegments:route};
+  const run=runIsolatedPaidControlV1(runInput);
+  assert.ok(run.steps.length>1);
+  assert.ok(run.steps.every(step=>
+    validateIsolatedPaidControlRoadV1(step.paidInput,
+      step.road)));
+  assert.equal(run.steps[1].paidInput.committedChoiceInput
+    .teams[2].energy['control-2'],
+  run.steps[0].road.energyByRider['control-2']);
+  assert.equal(run.steps[1].paidInput.committedChoiceInput
+    .roadGroups[0].gapSeconds,
+  run.steps[0].road.gapSeconds);
+  assert.ok(run.finalGapSeconds>group.gapSeconds);
+  assert.ok(run.handoff,JSON.stringify({
+    paidKm:run.steps.length,gap:run.finalGapSeconds}));
+  assert.equal(run.handoff.action,'commit_now');
+  assert.equal(run.handoff.sourceKm,
+    run.steps.at(-1).road.sourceKm+1);
+  assert.equal(run.handoff.observedGapSeconds,
+    run.finalGapSeconds);
+  assert.equal(run.handoff.committedChoiceInput.teams[2]
+    .energy['control-2'],
+  run.finalTeams[2].energy['control-2']);
+  assert.equal(run.officialResults,false);
+  assert.equal(validateIsolatedPaidControlRunV1(runInput,run),true);
+  const forged=structuredClone(run);
+  forged.steps[0].road.riders[1].energySpent=0;
+  assert.throws(()=>validateIsolatedPaidControlRunV1(
+    runInput,forged),/differs/);
 });
