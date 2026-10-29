@@ -51,6 +51,10 @@ test('an unaffordable hold refuses before claiming a rear position',()=>{
     rider:{...rider,mountain:95},bunchTurnPlan:paidPlan(40)});
   assert.equal(strong.status,'bunch_contact');
   assert.equal(strong.behindBunchSeconds,0);
+  const smallGap=advanceRearDetachmentV1({...source,
+    bunchTurnPlan:paidPlan(52)});
+  assert.equal(smallGap.status,'wheel_gap_unresolved');
+  assert.ok(smallGap.behindBunchSeconds>0);
   assert.throws(()=>advanceRearDetachmentV1({...source,
     bunchTurnPlan:{...source.bunchTurnPlan,leaderAbility:80}}),
   /differs from paid turns/);

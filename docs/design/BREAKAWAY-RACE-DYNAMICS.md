@@ -2369,3 +2369,23 @@ replay/tamper rejection, but does not infer a later meeting, share a
 wheel, give a finish time, or alter V93/V94. The paid bunch turn source
 must itself have been validated by its existing full-race validator
 before this isolated candidate can be connected to a recording.
+
+The initial audit attempt with the legacy synthetic `terrain: mountain`
+template found **zero** `climb` kilometres in three completed 260-km
+sources: its long profile slopes are all below the route's 5% climb
+classification. This template cannot test early mountain shedding.
+The follow-up therefore used the existing seeded 13-anchor mountain
+profile generator as a committed custom route, without changing old
+templates. Four 260-km, 20-team V94 physical-road sources validated and
+replayed; 282 of their 1,040 route kilometres were classified `climb`.
+On 281 climb kilometres a source-paid bunch leader plan was available.
+Among 33,143 eligible *rider-kilometre counterfactuals*, the new entry
+step yielded 16,604 exact bunch-contact outcomes, 16,481 small positive
+gaps held as unresolved wheels, and 58 gaps beyond the provisional
+three-second separation gate. Forty-eight of those 58 riders remained
+`peloton` in the existing recording and ten were marked `dropped`.
+These are repeated per-kilometre trials, not 58 distinct riders or
+official drop events. The disagreement confirms that this candidate
+and the existing provisional bunch-membership model are not a
+calibrated common physical clock. No rear-group contact or draft benefit
+is inferred from the trial, and it must remain off the playable route.
