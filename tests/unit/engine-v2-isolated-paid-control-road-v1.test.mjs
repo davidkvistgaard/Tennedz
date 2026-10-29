@@ -285,3 +285,32 @@ test('the same road redecides control or chase every kilometre',()=>{
   assert.throws(()=>validateIsolatedPaidControlChaseRunV1(
     source,forged),/differs/);
 });
+
+test('flat and mountain control/chase traces replay fresh and tired',()=>{
+  for(const terrain of ['flat','climb'])for(const fatigue of [20,75]){
+    const variantTeams=structuredClone(teams);
+    for(const team of variantTeams)for(const rider of team.riders){
+      rider.fatigue=fatigue;
+      if(fatigue>20)team.energy[rider.id]=45;
+    }
+    const variantRoute=route.map(segment=>({...segment,
+      terrain,gradientPct:terrain==='climb'?7:0}));
+    const source={commitment,teams:variantTeams,
+      roadGroup:group,observerTeamId:'observer',
+      controlTeamId:'control',raceSeed:'paid-watch-1',
+      nominatedChaseTeamIds:['observer'],
+      frontRiderGoals:[{riderId:'front-0',goal:'cooperate'}],
+      remainingSegments:variantRoute};
+    const run=runIsolatedPaidControlChaseV1(source);
+    assert.ok(run.steps.length>0,
+      `${terrain}/${fatigue}`);
+    assert.ok(run.steps.every(step=>step.action==='watch'?
+      validateIsolatedPaidControlRoadV1(step.paidInput,
+        step.road):
+      validateIsolatedPaidCooperativeRoadV1(step.paidInput,
+        step.road)),`${terrain}/${fatigue}`);
+    assert.equal(validateIsolatedPaidControlChaseRunV1(
+      source,run),true);
+    assert.equal(run.officialResults,false);
+  }
+});

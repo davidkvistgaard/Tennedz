@@ -2860,3 +2860,7 @@ controller in the same synthetic seed catches the front earlier, while
 fatigue delays that contact. This is a real paid tactical mechanism for
 the modeled riders, not a whole-field result: all other riders' choices,
 energy, additional road groups and the finish remain unmodeled.
+Four further same-seed isolated traces now replay every paid step on
+flat and climbing routes, each with fresh and tired rider reserves.
+They test the state transition and refusal boundaries, not a realistic
+catch-rate distribution or full 20-team race.
