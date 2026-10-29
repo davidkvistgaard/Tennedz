@@ -6,6 +6,8 @@ import {advanceRearDetachmentV1} from
   '../../lib/engine/v2/rear-detachment-v1.mjs';
 import {continueRearContactV1} from
   '../../lib/engine/v2/rear-contact-continuation-v1.mjs';
+import {continueRearSourceGroupV1,validateRearSourceGroupV1} from
+  '../../lib/engine/v2/rear-source-group-v1.mjs';
 
 const segment={km:13,terrain:'climb',surface:'road',gradientPct:6,
   exposed:false,weather:{temperatureC:16,windKph:0,rainMm:0}};
@@ -61,4 +63,32 @@ test('ordering, unpayable work and forged bunch plan refuse',()=>{
   /differs/);
   assert.throws(()=>advanceRearSourceContactV1({...input,
     bunchTurnPlan:{...bunchTurnPlan,leaderAbility:80}}),/differs/);
+});
+
+const groupInput={contactInput:input,groupId:'rear-1',
+  leaderRiderId:'b',memberDecisions:[
+    {riderId:'a',choice:'sit_in',effort:'conserve',reason:'save_energy'},
+    {riderId:'b',choice:'pull',effort:'hard',reason:'rejoin_bunch'}]};
+
+test('after paid contact a willing leader pulls and the other rider shelters',()=>{
+  const result=continueRearSourceGroupV1(groupInput);
+  assert.equal(result.continuation.contact.event.kind,'rear_contact');
+  assert.equal(result.continuation.leaderRiderId,'b');
+  const byId=new Map(result.continuation.riders.map(row=>[row.riderId,row]));
+  assert.equal(byId.get('b').role,'leader');
+  assert.equal(byId.get('a').role,'sheltered');
+  assert.ok(byId.get('b').energySpent>byId.get('a').energySpent);
+  assert.equal(validateRearSourceGroupV1(groupInput,result),true);
+  const forged=structuredClone(result);
+  forged.continuation.riders[0].energySpent=0;
+  assert.throws(()=>validateRearSourceGroupV1(groupInput,forged),/differs/);
+});
+
+test('group cannot start without an agreed paid pull or genuine contact',()=>{
+  assert.throws(()=>continueRearSourceGroupV1({...groupInput,
+    memberDecisions:groupInput.memberDecisions.map(row=>({...row,
+      choice:'sit_in'}))}),/willing leader/);
+  assert.throws(()=>continueRearSourceGroupV1({...groupInput,
+    contactInput:{...input,front:{...input.front,
+      prior:{...frontPrior,energyAfter:0}}}}),/differs/);
 });

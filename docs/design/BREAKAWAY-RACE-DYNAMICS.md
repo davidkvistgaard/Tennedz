@@ -2426,3 +2426,15 @@ continuation's leader speed and cost are still caller-supplied; those
 must be derived from committed rider decisions in a further version.
 This contact chain remains isolated from actual V94 dropped riders and
 does not establish a finish time or group membership in a real race.
+
+`rear-source-group-v1.mjs` now takes that verified solo contact and two
+explicit rider choices for the remaining slice. A selected rider must
+have chosen `pull`; their terrain, energy and effort determine speed
+and exposed cost, while the other rider pays a lower individual
+sheltered cost. The existing continuation recomputes the same contact
+before forming a two-rider group; it records the group's clock and
+refuses unpayable work or a leaderless plan. Full source replay rejects
+changed rider choices, contact or energy. This is a genuine one-leader
+paid first turn in the isolated chain, but the choice source is still
+explicit input rather than autonomous whole-race rider logic. Later
+turns and merges remain outside this version.
