@@ -2692,6 +2692,21 @@ rider who could hold the bunch refuses. This is an isolated one-km
 path, not a claim that recorded V94 catches have a known within-km
 contact marker or that the rider finishes the race.
 
+`isolated-paid-chase-run-v1.mjs` carries the same committed stake and
+one observed front across consecutive urgent pursuit kilometres. It
+recomputes the team's perceived catch decision and the front rider's
+work choice each kilometre, copies only the energy actually paid by
+named front and chase workers into the next source, and replays every
+individual paid road step. In a focused two-kilometre witness, the
+first committed chase does not yet catch the break; the second uses
+the updated gap and helper energy and reaches a calculated contact.
+The source-replayed caught-rider slide can then start at that exact
+marker. This run refuses a `watch` decision rather than manufacturing
+an unpaid intermediate road. It explicitly lists unmodeled peloton
+riders, stops at contact, and has no official results. Long neutral
+periods, new attacks, changing ally willingness, the rest of the
+peloton's energy and the finish are outside this version.
+
 `rear-unpayable-climb-v1.mjs` covers a distinct isolated entry path:
 a rider starts with an occupied bunch wheel but cannot fund a whole
 kilometre of hard climbing. A paid bunch turn plan provides the opposing
