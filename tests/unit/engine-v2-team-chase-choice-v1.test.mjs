@@ -122,4 +122,8 @@ test('team chase goal and later change have a replayed roster source',()=>{
     intentions:intentions.map(row=>row.teamId==='team-3'?{
       ...row,phases:[{atKm:11,goal:'summit_attack',
         captainId:row.baseline.captainId}]}:row)}),/route marker/);
+  const duplicated=structuredClone(teams);
+  duplicated[1].riders[1].id=duplicated[0].riders[1].id;
+  assert.throws(()=>commitTeamChaseStakesV1({teams:duplicated,
+    distanceKm:30,intentions}),/rosters/);
 });
