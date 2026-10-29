@@ -22,6 +22,9 @@ import {runRearGroupAfterJoinV1,validateRearGroupAfterJoinV1} from
 import {advanceRearGroupTurnKilometreV1,
   validateRearGroupTurnKilometreV1} from
   '../../lib/engine/v2/rear-group-turn-kilometre-v1.mjs';
+import {commitRearGoalsV1,rearGoalsAtKmV1,
+  advanceCommittedRearTurnsV1,validateCommittedRearTurnsV1} from
+  '../../lib/engine/v2/rear-goal-commitment-v1.mjs';
 
 const rider=(id,timetrial)=>({id,mountain:65,flat:65,hills:65,
   timetrial,endurance:70,strength:70,form:50,fatigue:0});
@@ -255,6 +258,38 @@ test('a third rider joins only at calculated paid rear contact',()=>{
     rearGoals:turnInput.rearGoals.map(row=>
       row.riderId==='a'?row:{...row,rearWork:'sit_on'})});
   assert.deepEqual(oneTurn.rearTurns.map(row=>row.leaderRiderId),['a']);
+  const strategies=continuationInput.rearGoals.map(row=>({
+    riderId:row.riderId,baseline:{goal:row.goal,
+      rearWork:row.rearWork},phases:[]}));
+  const commitment=commitRearGoalsV1({
+    riderIds:['a','b','c'],strategies,distanceKm:150,
+    stageNumber:18,stageCount:21});
+  const committedInput={commitment,priorInput:threeInput,
+    priorStep:three,segment:turnInput.segment,
+    bunchTurnPlan:turnInput.bunchTurnPlan,
+    teams:extendedTeams,roadGroups:[]};
+  const committed=advanceCommittedRearTurnsV1(committedInput);
+  assert.deepEqual(committed.rearGoals,turnInput.rearGoals);
+  assert.deepEqual(committed.turn,turned);
+  assert.equal(validateCommittedRearTurnsV1(committedInput,committed),true);
+  const changedCommitment=structuredClone(commitment);
+  changedCommitment.strategies[0].baseline.rearWork='sit_on';
+  assert.throws(()=>validateCommittedRearTurnsV1(committedInput,
+    {...committed,commitment:changedCommitment}),/differ/);
+  const laterCommitment=commitRearGoalsV1({riderIds:['a','b','c'],
+    strategies:strategies.map(row=>row.riderId==='a'?{
+      ...row,phases:[{atKm:15,goal:'finish_safely',
+        rearWork:'sit_on'}]}:row),distanceKm:150,
+    stageNumber:18,stageCount:21});
+  assert.equal(rearGoalsAtKmV1({commitment:laterCommitment,
+    riderIds:['a','b','c'],km:15})[0].rearWork,'cooperate');
+  assert.equal(rearGoalsAtKmV1({commitment:laterCommitment,
+    riderIds:['a','b','c'],km:16})[0].rearWork,'sit_on');
+  assert.throws(()=>commitRearGoalsV1({riderIds:['a','b','c'],
+    strategies:strategies.map(row=>row.riderId==='b'?{
+      ...row,baseline:{...row.baseline,
+        goal:'save_for_stage'}}:row),distanceKm:150,
+    stageNumber:18,stageCount:21}),/intention/);
   const nearInput={...threeInput,group:{...threeInput.group,
     behindBunchSeconds:.2}};
   const caughtTurns=advanceRearGroupTurnKilometreV1({...turnInput,

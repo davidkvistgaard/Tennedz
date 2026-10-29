@@ -2573,3 +2573,18 @@ distance turns are a deliberately explicit candidate scheduling rule,
 not a claim about real races or a calibrated default. It still needs
 committed whole-race rear goals, realistic turn timing, additional
 joins and split handling, then broad finish and source validation.
+
+`rear-goal-commitment-v1.mjs` removes one source ambiguity from that
+isolated turn experiment. It requires an explicit pre-race intention for
+every named rider: a finish/rejoin/future-stage goal, a separate rear
+work directive, and any route-marker changes. A future-stage motive
+needs a committed target stage and reserve. No break-work or chase
+order is silently interpreted as rear work. At each kilometre, the
+intention active after the previous marker is read for the actual
+three-rider group; then current energy, team effort and teammates
+further ahead still determine who is willing to pull. The wrapper
+replays both the commitment and the paid turn trace, rejecting a
+forged rider choice or energy. This remains an opt-in source contract:
+the live race preparation and user interface do not yet collect these
+intentions for all riders, and the equal-distance turn scheduling and
+finish road have not been calibrated.
