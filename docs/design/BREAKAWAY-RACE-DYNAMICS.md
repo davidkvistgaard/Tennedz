@@ -2608,6 +2608,11 @@ that kilometre has no paid road here. The two-kilometre source test
 replays and rejects a forged recovery award. It remains an isolated
 two-rider run: the full field, later recruitment, actual finish and
 calibration are outside this version.
+A separate replay shifts the same source-bound contact to km 160 and
+continues through climbing km 161–162. The run records the capacity
+ceiling dropping to 99.728 and then 99.456 while both riders keep paying
+their own work. This checks that the late route and cap actually reach
+the V4 continuation, beyond the cap primitive's standalone test.
 The read-only generated-profile rear-entry audit (`--generated-profile
 --seeds=8 --pace-climb`) replayed and validated 28 of 32 full 20-team,
 260-km V94 cases. Four cases honestly refused their combined fresh

@@ -340,6 +340,33 @@ test('rear ledger settles route cap and zero recovery after each paid kilometre'
     routeKilometres:broken}),/missing kilometre/);
 });
 
+test('late rear road uses the source climbing cap instead of an early-stage cap',()=>{
+  const prior={...priorSegment,km:159};
+  const contact={...segment,km:160};
+  const frontSource={...sourceA,segment:prior};
+  const rearSource={...sourceB,segment:prior};
+  const lateContactInput={...contactInput,segment:contact,
+    front:{...contactInput.front,priorSource:frontSource,
+      prior:advanceRearDetachmentV1(frontSource)},
+    rear:{...contactInput.rear,priorSource:rearSource,
+      prior:advanceRearDetachmentV1(rearSource)}};
+  const lateChoiceInput={...priorChoiceInput,contactInput:lateContactInput};
+  const lateChoice=decideRearGroupChoiceV2(lateChoiceInput);
+  const goals=[rearGoals[0],{...rearGoals[1],rearWork:'sit_on'}];
+  const routeKilometres=Array.from({length:162},(_,index)=>({
+    ...segment,km:index+1}));
+  const first={segment:{...segment,km:161},bunchTurnPlan,
+    teams,rearGoals:goals,roadGroups:[],stageNumber:18,stageCount:21};
+  const second={...first,segment:{...segment,km:162}};
+  const run=runRearGroupSourceV4({initialChoiceInput:lateChoiceInput,
+    initialChoice:lateChoice,routeKilometres,
+    kilometres:[first,second]});
+  assert.equal(run.steps[0].settlement[0].cap,99.728);
+  assert.equal(run.steps[1].settlement[0].cap,99.456);
+  assert.ok(run.steps.every(step=>step.settlement.every(row=>
+    row.energyAfter<=row.cap&&row.recoveryAward===0)));
+});
+
 test('a third rider joins only at calculated paid rear contact',()=>{
   const c={...rider('c',100),mountain:15,flat:100};
   const extendedTeams=[...teams,{id:'team-c',riders:[c],orders:{
