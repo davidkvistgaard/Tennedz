@@ -8,6 +8,10 @@ import {advanceRearGroupSourceRoadV1,validateRearGroupSourceRoadV1} from
   '../../lib/engine/v2/rear-group-source-road-v1.mjs';
 import {runRearGroupSourceV1,validateRearGroupSourceRunV1} from
   '../../lib/engine/v2/rear-group-source-run-v1.mjs';
+import {advanceRearGroupSoloJoinV1,validateRearGroupSoloJoinV1} from
+  '../../lib/engine/v2/rear-group-solo-join-v1.mjs';
+import {runRearSoloSourceV1,validateRearSoloSourceRunV1} from
+  '../../lib/engine/v2/rear-solo-source-run-v1.mjs';
 
 const rider=(id,timetrial)=>({id,mountain:65,flat:65,hills:65,
   timetrial,endurance:70,strength:70,form:50,fatigue:0});
@@ -112,4 +116,61 @@ test('consecutive rear kilometres choose and pay fresh turns each time',()=>{
     kilometre,{...next,group:{...result.steps[0].road.rearGroup,
       energyByRider:{a:100,b:100}}}]}),
   /consecutive|differs|road/);
+});
+
+test('a third rider joins only at calculated paid rear contact',()=>{
+  const c={...rider('c',100),mountain:15,flat:100};
+  const extendedTeams=[...teams,{id:'team-c',riders:[c],orders:{
+    baseline:{effort:'hard',breakWork:'cooperate'},phases:[]}}];
+  const extendedChoiceInput={...priorChoiceInput,teams:extendedTeams};
+  const extendedChoice=decideRearGroupChoiceV2(extendedChoiceInput);
+  const joinBunchTurnPlan={status:'worked',leaderAbility:40,
+    turns:[{startM:0,endM:1000,ability:40}]};
+  const kilometre={segment:nextSegment,bunchTurnPlan:joinBunchTurnPlan,
+    teams:extendedTeams,rearGoals,roadGroups:[],
+    stageNumber:18,stageCount:21};
+  const priorRunInput={initialChoiceInput:extendedChoiceInput,
+    initialChoice:extendedChoice,kilometres:[kilometre]};
+  const priorRun=runRearGroupSourceV1(priorRunInput);
+  const soloInitialInput={rider:c,segment:priorSegment,energy:40,
+    bunchTurnPlan:priorPlan,stageNumber:18,stageCount:21};
+  const soloInitial=advanceRearDetachmentV1(soloInitialInput);
+  const priorSoloRunInput={initialInput:soloInitialInput,
+    initial:soloInitial,steps:[
+      {rider:c,segment,bunchTurnPlan:contactInput.bunchTurnPlan,
+        effort:'conserve',reason:'finish_safely'},
+      {rider:c,segment:nextSegment,bunchTurnPlan:joinBunchTurnPlan,
+        effort:'conserve',reason:'finish_safely'}]};
+  const priorSoloRun=runRearSoloSourceV1(priorSoloRunInput);
+  const joinInput={priorRunInput,priorRun,priorSoloRunInput,priorSoloRun,
+    soloRider:c,segment:{...nextSegment,km:15,
+      terrain:'flat',gradientPct:0},
+    bunchTurnPlan,teams:extendedTeams,rearGoals,
+    roadGroups:[],stageNumber:18,stageCount:21,
+    soloEffort:'hard',soloReason:'rejoin_bunch'};
+  assert.equal(validateRearSoloSourceRunV1(priorSoloRunInput,
+    priorSoloRun),true);
+  const joined=advanceRearGroupSoloJoinV1(joinInput);
+  assert.equal(joined.event.kind,'join_rear_group');
+  assert.equal(joined.joinedGroup.riderIds.length,3);
+  assert.ok(joined.atDistanceM>14000&&joined.atDistanceM<15000);
+  assert.deepEqual(joined.riders.map(row=>row.role),
+    ['leader','sheltered','solo']);
+  assert.ok(joined.riders.every(row=>row.energySpent>0));
+  assert.ok(joined.riders.every(row=>row.energy>=0));
+  assert.equal(joined.joinedGroup.atDistanceM,joined.event.atDistanceM);
+  assert.equal(validateRearGroupSoloJoinV1(joinInput,joined),true);
+  const forged=structuredClone(joined);
+  forged.joinedGroup.energyByRider.c=100;
+  assert.throws(()=>validateRearGroupSoloJoinV1(joinInput,forged),
+  /differs/);
+  const forgedSolo=structuredClone(priorSoloRun);
+  forgedSolo.finalSolo.energyAfter=100;
+  assert.throws(()=>advanceRearGroupSoloJoinV1({...joinInput,
+    priorSoloRun:forgedSolo}),/replayed paid solo/);
+  assert.throws(()=>advanceRearGroupSoloJoinV1({...joinInput,
+    soloRider:{...c,flat:90}}),/distinct paid solo/);
+  assert.throws(()=>advanceRearGroupSoloJoinV1({...joinInput,
+    segment:{...joinInput.segment,terrain:'climb',gradientPct:6}}),
+  /does not reach/);
 });

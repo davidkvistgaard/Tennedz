@@ -2500,6 +2500,25 @@ missing kilometre, forged prior contact, changed rider statistics,
 caller-supplied replacement group, or continuation after a recorded
 bunch rejoin. The complete sequence replays and rejects altered rider
 energy or turn evidence. This is still a bounded two-rider experimental
-chain. It lacks a committed whole-race source of rear directives and
-cannot yet handle a third rider joining or a caught break rider falling
-through the bunch.
+chain. It lacks a committed whole-race source of rear directives. The
+run itself cannot accept a third rider or handle a caught break rider
+falling through the bunch.
+
+An isolated `rear-solo-source-run-v1.mjs` now chains an occupied-wheel
+departure through successive, fully paid solo kilometres without
+granting group shelter. `rear-group-solo-join-v1.mjs` replays that solo
+and the separate two-rider rear-group road, then calculates whether the
+solo catches the group during the next kilometre. In the accepted
+three-rider example the solo began farther behind the bunch on a climb,
+then used a stronger flat-road ability to reach the existing group at
+a computed marker. The original group keeps exactly one leader to the
+marker; its other rider shelters and the incoming rider pays solo work.
+Only those fractions of the kilometre enter the actual energy ledger.
+The result records a three-rider group at contact, with all prior group
+and solo energy source-replayed. It refuses a forged rider, forged
+prior energy, no contact or simultaneous bunch contact. Full-kilometre
+pace proposals in the evidence are not charged past the meeting point.
+This version stops at contact; the new member's next turn and the
+remaining distance of that kilometre still need a separate paid step.
+Neither this candidate nor the preceding rear-road modules are routed
+to a whole race.
