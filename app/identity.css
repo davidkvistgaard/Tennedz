@@ -8,6 +8,8 @@
 .club-roster .club-rider-art { position:relative; padding:26px 0 0; background:#e2e1cb; overflow:hidden; }
 .club-roster .club-rider-art>.rider-avatar { width:100%!important; height:245px!important; max-width:270px; border-radius:0!important; background:transparent!important; }
 .club-rider-specialty { position:absolute; left:13px; top:12px; z-index:1; background:#fcf5e4eb; color:#3d583e; border:1px solid #d1d5ba; border-radius:6px; padding:5px 8px; font-size:10px; font-weight:700; }
+.club-rider-portrait { display:block; width:100%; padding:0; border:0; background:transparent; cursor:pointer; }
+.club-roster .club-rider-art .club-rider-portrait .rider-avatar { width:100%!important; height:245px!important; max-width:270px; margin:auto; border-radius:0!important; background:transparent!important; }
 .club-rider-country { position:absolute; bottom:11px; left:13px; right:13px; width:fit-content; max-width:calc(100% - 26px); background:#254d38eF; color:#fff9e7; border-radius:5px; padding:5px 9px; font-size:10px; letter-spacing:.5px; }
 .club-roster .club-rider-body{padding:18px}.club-roster .club-rider-meta{font-size:10px;letter-spacing:.5px;color:#5b6b50}.club-roster .club-rider-meta>span{letter-spacing:0;text-transform:none}.club-roster .club-rider h3{font-size:23px;letter-spacing:-.8px;margin:8px 0 18px;line-height:1.1;min-height:2.2em}
 .club-rider-strengths{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;padding:12px 0;border-top:1px solid #e0e3cf;border-bottom:1px solid #e0e3cf}.club-rider-strengths span{display:block;font-size:10px;color:#5c6b52;min-height:2.5em;line-height:1.25}.club-rider-strengths strong{font-family:Bricolage,sans-serif;font-size:22px;color:#35583d}.club-rider-condition{display:flex;justify-content:space-between;gap:7px;font-size:11px;color:#586a4e;margin:14px 0}.club-rider-condition strong{color:#2e5038;margin-left:3px}.club-roster .club-rider-points{border:0;padding:0;gap:7px}.club-roster .club-rider-points strong{font-size:20px}.club-roster .club-rider-points span{font-size:11px}.club-roster .club-rider summary{margin-top:13px;border-top:1px solid #e0e3cf;padding:13px 0 0;min-height:44px}
@@ -25,3 +27,4 @@
 .identity-victory h2 { font-size: clamp(28px,3vw,42px); line-height: 1.1; letter-spacing: -1px; }
 .identity-victory p:not(.identity-eyebrow) { line-height: 1.7; color: #58674f; }
 @media(max-width:700px) { .identity-hero,.identity-victory { grid-template-columns: 1fr; }.identity-race-art { transform: none; }.identity-victory > div { padding: 24px; } }
+@media(max-width:700px) { .club-roster .club-rider-art .club-rider-portrait .rider-avatar { width:125px!important; height:125px!important; } }
