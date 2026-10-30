@@ -10,20 +10,23 @@ const emptyFilters={q:"",gender:"",country:"",minAge:"",maxAge:"",
   skill:"",minSkill:"",minPrice:"",maxPrice:"",sort:"newest"};
 const money=value=>Number(value||0).toLocaleString("en-GB");
 const label=key=>key==="timetrial"?"Time trial":key[0].toUpperCase()+key.slice(1);
+const deadlineFormat={year:"numeric",month:"short",day:"numeric",hour:"2-digit",minute:"2-digit",second:"2-digit",timeZoneName:"short"};
 function displayName(rider){return rider?.display_name||rider?.name||"Unnamed rider";}
 function strengths(rider){
   return MARKET_SKILLS.map(key=>[key,Number(rider[key]??0)])
     .sort((a,b)=>b[1]-a[1]).slice(0,3);
 }
-function MarketCard({item,own,coins,busy,onAction}){
+function MarketCard({item,own,coins,busy,onAction,now}){
   const rider=item.rider;
+  const secondsLeft=Math.max(0,Math.ceil((Date.parse(item.expires_at)-now)/1000));
+  const timeLeft=`${Math.floor(secondsLeft/3600)}h ${Math.floor(secondsLeft%3600/60)}m ${secondsLeft%60}s left`;
   return <article className="market-card">
     <div className="market-card-head">
       <span className="market-initials" aria-hidden="true">{displayName(rider).split(" ").map(part=>part[0]).slice(0,2).join("")}</span>
       <div><h3>{displayName(rider)}</h3><p>{rider.gender==="F"?"Women":"Men"} · {rider.nationality||"Unknown"} · Age {rider.age??"–"}</p></div>
     </div>
     <dl className="market-strengths">{strengths(rider).map(([key,value])=><div key={key}><dt>{label(key)}</dt><dd>{value}</dd></div>)}</dl>
-    <div className="market-card-foot"><div><strong>{money(item.price)} coins</strong><small>Listed by {own?"your team":item.seller_name}</small></div>
+    <div className="market-card-foot"><div><strong>{money(item.price)} coins</strong><small>Listed by {own?"your team":item.seller_name}</small><small>Ends {new Date(item.expires_at).toLocaleString("en-GB",deadlineFormat)} · {timeLeft}</small></div>
       {own?<button className="btn" disabled={busy} onClick={()=>onAction("cancel",item)}>Cancel listing</button>
         :<button className="btn primary" disabled={busy||Number(coins)<item.price}
           onClick={()=>onAction("buy",item)}>{Number(coins)<item.price?"Not enough coins":"Buy rider"}</button>}
@@ -37,27 +40,35 @@ export default function MarketplacePage(){
   const [loading,setLoading]=useState(true),[busy,setBusy]=useState(false);
   const [error,setError]=useState(""),[status,setStatus]=useState("");
   const [riderId,setRiderId]=useState(""),[price,setPrice]=useState("");
+  const [now,setNow]=useState(()=>Date.now()),[clockOffset,setClockOffset]=useState(0);
   const sellLinkHandled=useRef(false);
   const team=session?.team;
+  useEffect(()=>{const timer=setInterval(()=>setNow(Date.now()),1000);return()=>clearInterval(timer);},[]);
   const load=useCallback(async()=>{
     setLoading(true);setError("");
     try{
       const params=new URLSearchParams();
       for(const [key,value] of Object.entries(applied)) if(value!=="") params.set(key,value);
       params.set("offset",String(offset));
-      setMarket(await api(`/api/marketplace?${params}`));
+      const result=await api(`/api/marketplace?${params}`);
+      setMarket(result);
+      if(Number.isFinite(Date.parse(result.server_time)))
+        setClockOffset(Date.parse(result.server_time)-Date.now());
     }catch(e){setError(e.message);}finally{setLoading(false);}
   },[applied,offset]);
   useEffect(()=>{load();},[load]);
-  const listedIds=new Set(market?.my_listings?.map(item=>item.rider_id)||[]);
+  const marketNow=now+clockOffset;
+  const liveItems=(market?.items||[]).filter(item=>Date.parse(item.expires_at)>marketNow);
+  const liveMine=(market?.my_listings||[]).filter(item=>Date.parse(item.expires_at)>marketNow);
+  const listedIds=new Set(liveMine.map(item=>item.rider_id));
   const saleRiders=useMemo(()=>(session?.riders||[]).filter(r=>!listedIds.has(r.id))
-    .sort((a,b)=>displayName(a).localeCompare(displayName(b))),[session?.riders,market?.my_listings]);
+    .sort((a,b)=>displayName(a).localeCompare(displayName(b))),[session?.riders,market?.my_listings,marketNow]);
   useEffect(()=>{
     if(sellLinkHandled.current||!session?.riders||!market)return;
     sellLinkHandled.current=true;
     const selected=new URLSearchParams(window.location.search).get("sell");
     if(!selected)return;
-    if(market.my_listings?.some(item=>item.rider_id===selected))
+    if(liveMine.some(item=>item.rider_id===selected))
       setStatus("This rider is already listed. Manage the listing below.");
     else if(saleRiders.some(r=>r.id===selected))setRiderId(selected);
   },[session?.riders,market,saleRiders]);
@@ -69,7 +80,7 @@ export default function MarketplacePage(){
       await api("/api/marketplace",{method:"POST",headers:{"Content-Type":"application/json"},
         body:JSON.stringify(body)});
       await refresh();
-      setStatus(action==="list"?"Rider listed.":action==="buy"?"Rider bought and added to your team.":"Listing cancelled.");
+      setStatus(action==="list"?"Rider listed for 96 hours.":action==="buy"?"Rider bought and added to your team.":"Listing cancelled.");
       if(action==="list"){setRiderId("");setPrice("");}
       await load();
     }catch(e){setError(e.message);}finally{setBusy(false);}
@@ -94,24 +105,24 @@ export default function MarketplacePage(){
         <label>Sort by<select value={filters.sort} onChange={e=>setFilters({...filters,sort:e.target.value})}><option value="newest">Newest</option><option value="price_asc">Lowest price</option><option value="price_desc">Highest price</option><option value="skill_desc" disabled={!filters.skill}>Highest chosen skill</option></select></label>
         <button className="btn primary" type="submit">Search</button>
       </form>
-      {loading?<p role="status">Loading listings…</p>:<><p className="market-count">{market?.items?.length||0} listings on this page</p>
-        <div className="market-grid">{market?.items?.map(item=><MarketCard key={item.id} item={item}
-          own={item.seller_team_id===team.id} coins={market.coins} busy={busy} onAction={act}/>)}</div>
-        {!market?.items?.length&&<p className="club-empty">No riders match these filters.</p>}
+      {loading?<p role="status">Loading listings…</p>:<><p className="market-count">{liveItems.length} listings on this page</p>
+        <div className="market-grid">{liveItems.map(item=><MarketCard key={item.id} item={item}
+          own={item.seller_team_id===team.id} coins={market.coins} busy={busy} onAction={act} now={marketNow}/>)}</div>
+        {!liveItems.length&&<p className="club-empty">No riders match these filters.</p>}
         <div className="market-pages"><button className="btn" disabled={offset===0||loading} onClick={()=>setOffset(Math.max(0,offset-50))}>Previous</button><span>Page {Math.floor(offset/50)+1}</span><button className="btn" disabled={!market?.has_more||loading} onClick={()=>setOffset(offset+50)}>Next</button></div>
       </>}
     </section>
     <section className="market-section" aria-labelledby="market-sell-title">
       <h2 id="market-sell-title">Sell a rider</h2>
-      <p>A rider selected for an unfinished race or saved lineup must be removed from it before listing.</p>
+      <p>Each listing ends exactly 96 hours after you post it. A rider selected for an unfinished race or saved lineup must be removed from it before listing.</p>
       <form className="market-sell" onSubmit={event=>{event.preventDefault();act("list");}}>
         <label>Your rider<select required value={riderId} onChange={e=>setRiderId(e.target.value)}><option value="">Choose a rider</option>{saleRiders.map(r=><option key={r.id} value={r.id}>{displayName(r)} · {r.gender==="F"?"Women":"Men"}</option>)}</select></label>
         <label>Price in coins<input required type="number" min="1" max="1000000000" step="1" value={price} onChange={e=>setPrice(e.target.value)}/></label>
         <button className="btn primary" disabled={busy||loading||!riderId||!price}>List rider</button>
       </form>
       <h3>Your active listings</h3>
-      <div className="market-grid">{market?.my_listings?.map(item=><MarketCard key={item.id} item={item} own coins={market.coins} busy={busy} onAction={act}/>)}</div>
-      {!market?.my_listings?.length&&<p className="club-empty">You have no active listings.</p>}
+      <div className="market-grid">{liveMine.map(item=><MarketCard key={item.id} item={item} own coins={market.coins} busy={busy} onAction={act} now={marketNow}/>)}</div>
+      {!liveMine.length&&<p className="club-empty">You have no active listings.</p>}
     </section>
   </TeamShell>;
 }

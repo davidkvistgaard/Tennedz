@@ -29,8 +29,9 @@ async function getHandler(req,_context,{team,db}) {
   const [search,mine]=await Promise.all([
     db.rpc('rider_market_search',filters),
     db.from('rider_market_listings')
-      .select('id,rider_id,seller_team_id,price,created_at')
+      .select('id,rider_id,seller_team_id,price,created_at,expires_at')
       .eq('seller_team_id',team.id).eq('status','active')
+      .gt('expires_at',new Date().toISOString())
       .order('created_at',{ascending:false}).limit(100),
   ]);
   databaseError(search.error); databaseError(mine.error);
@@ -41,7 +42,7 @@ async function getHandler(req,_context,{team,db}) {
   const myListings=(mine.data||[]).map(row=>({...row,rider:riders.get(row.rider_id)}))
     .filter(row=>row.rider);
   return NextResponse.json({ok:true,items,my_listings:myListings,
-    has_more:items.length===50,coins:team.coins});
+    has_more:items.length===50,coins:team.coins,server_time:new Date().toISOString()});
 }
 async function postHandler(req,_context,{user,db}) {
   requireMarketplaceWrites();

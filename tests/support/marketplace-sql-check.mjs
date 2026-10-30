@@ -20,29 +20,41 @@ create table public.recovery_default_lineups(team_id uuid references public.team
 `);
 const migration=readFileSync(new URL('../../supabase/migrations/20261029153000_rider_marketplace.sql',import.meta.url),'utf8');
 await db.exec(migration);
+const expiryMigration=readFileSync(new URL('../../supabase/migrations/20261030113000_rider_market_96_hour_deadline.sql',import.meta.url),'utf8');
+await db.exec(expiryMigration);
 const seller='11111111-1111-4111-8111-111111111111';
 const buyer='22222222-2222-4222-8222-222222222222';
 const userSeller='33333333-3333-4333-8333-333333333333';
 const userBuyer='44444444-4444-4444-8444-444444444444';
 const rider='55555555-5555-4555-8555-555555555555';
 const second='66666666-6666-4666-8666-666666666666';
+const third='88888888-8888-4888-8888-888888888888';
 await db.query('insert into public.teams values ($1,$2,100,$3),($4,$5,200,$6)',
   [seller,userSeller,'Seller',buyer,userBuyer,'Buyer']);
 await db.query(`insert into public.riders
   (id,name,display_name,gender,nationality,age,sprint,flat,hills,mountain,cobbles,timetrial,endurance,strength,wind)
   values ($1,'Nora Voss','Nora Voss','F','DEN',26,44,61,57,72,39,51,70,56,47),
-         ($2,'Emil Berg','Emil Berg','M','DEN',24,75,48,40,30,40,50,60,52,55)`,[rider,second]);
-await db.query('insert into public.team_riders(team_id,rider_id) values ($1,$2),($1,$3)',
-  [seller,rider,second]);
+         ($2,'Emil Berg','Emil Berg','M','DEN',24,75,48,40,30,40,50,60,52,55),
+         ($3,'Ada Holm','Ada Holm','F','DEN',25,48,60,65,70,44,50,62,56,51)`,[rider,second,third]);
+await db.query('insert into public.team_riders(team_id,rider_id) values ($1,$2),($1,$3),($1,$4)',
+  [seller,rider,second,third]);
 const listing=(await db.query('select public.rider_market_list($1,$2,$3) id',
   [userSeller,rider,50])).rows[0].id;
 assert.ok(listing);
+const duration=(await db.query(`select extract(epoch from (expires_at-created_at))::integer seconds
+  from public.rider_market_listings where id=$1`,[listing])).rows[0].seconds;
+assert.equal(duration,345600);
+const dstDuration=(await db.query(`select extract(epoch from (
+  (timestamptz '2027-03-27 23:30+00' + interval '345600 seconds') -
+    timestamptz '2027-03-27 23:30+00'))::integer seconds`)).rows[0].seconds;
+assert.equal(dstDuration,345600);
 await assert.rejects(db.query('select public.rider_market_list($1,$2,$3)',
   [userSeller,rider,50]));
 const found=(await db.query(`select * from public.rider_market_search(
   p_gender=>'F',p_skill=>'mountain',p_min_skill=>70,p_max_price=>50)`)).rows;
 assert.equal(found.length,1);
 assert.equal(found[0].rider_id,rider);
+assert.ok(found[0].expires_at);
 const hidden=(await db.query(`select * from public.rider_market_search(
   p_gender=>'M',p_skill=>'mountain',p_min_skill=>70)`)).rows;
 assert.equal(hidden.length,0);
@@ -75,6 +87,25 @@ const costly=(await db.query('select public.rider_market_list($1,$2,$3) id',
 await assert.rejects(db.query('select public.rider_market_buy($1,$2)',[userBuyer,costly]));
 assert.equal((await db.query('select status from public.rider_market_listings where id=$1',[costly])).rows[0].status,'active');
 assert.equal((await db.query('select team_id from public.team_riders where rider_id=$1',[second])).rows[0].team_id,seller);
+const expiredListing=(await db.query('select public.rider_market_list($1,$2,$3) id',
+  [userSeller,third,30])).rows[0].id;
+await db.query(`with expired as (select clock_timestamp()-interval '345601 seconds' started)
+  update public.rider_market_listings l set created_at=expired.started,
+    expires_at=expired.started+interval '345600 seconds'
+  from expired where l.id=$1`,[expiredListing]);
+assert.equal((await db.query('select count(*)::integer n from public.rider_market_search() where id=$1',
+  [expiredListing])).rows[0].n,0);
+await assert.rejects(db.query('select public.rider_market_buy($1,$2)',[userBuyer,expiredListing]),
+  /expired/);
+assert.equal((await db.query('select team_id from public.team_riders where rider_id=$1',
+  [third])).rows[0].team_id,seller);
+assert.deepEqual((await db.query('select id,coins from public.teams order by id')).rows,balances);
+const relisted=(await db.query('select public.rider_market_list($1,$2,$3) id',
+  [userSeller,third,31])).rows[0].id;
+assert.notEqual(relisted,expiredListing);
+const expired=(await db.query('select status,closed_at,expires_at from public.rider_market_listings where id=$1',
+  [expiredListing])).rows[0];
+assert.equal(expired.status,'expired');assert.equal(expired.closed_at.toISOString(),expired.expires_at.toISOString());
 const acl=(await db.query(`select c.relrowsecurity as rls,
   has_table_privilege('anon','public.rider_market_listings','SELECT') as anon_select,
   has_table_privilege('authenticated','public.rider_market_listings','INSERT') as authenticated_insert
@@ -82,5 +113,7 @@ const acl=(await db.query(`select c.relrowsecurity as rls,
 assert.deepEqual(acl,{rls:true,anon_select:false,authenticated_insert:false});
 assert.equal((await db.query(`select has_function_privilege(
   'anon','public.rider_market_buy(uuid,uuid)','EXECUTE') allowed`)).rows[0].allowed,false);
-console.log('Migration and local fixed-price listing/search/buy/cancel/ownership tests passed.');
+assert.equal((await db.query(`select has_function_privilege(
+  'anon','public.rider_market_stamp_listing()','EXECUTE') allowed`)).rows[0].allowed,false);
+console.log('Marketplace migrations and local 96-hour expiry, listing, search, purchase, cancellation and ownership checks passed.');
 await db.close();
