@@ -41,6 +41,9 @@ import {replayPhysicalManagerPostcatchLossV1,
   advancePhysicalManagerPostcatchBunchKmV1,
   validatePhysicalManagerPostcatchBunchKmV1} from
   '../lib/engine/v2/physical-manager-postcatch-loss-v1.mjs';
+import {advancePhysicalManagerPostcatchSoloPairV1,
+  validatePhysicalManagerPostcatchSoloPairV1} from
+  '../lib/engine/v2/physical-manager-postcatch-solo-pair-v1.mjs';
 import {riderKilometreEffect} from
   '../lib/engine/v2/physiology.mjs';
 import {TUNING} from '../lib/engine/v2/tuning.mjs';
@@ -203,6 +206,7 @@ function choice({attackerSkill,observerSkill,choiceKm,
                   rider.energyAfter)))};
           }catch(error){
             let nextBunch;
+            let nextPair;
             if(error.physicalLoss){
               const source=error.physicalLoss;
               const partial=replayPhysicalManagerPostcatchLossV1(
@@ -235,6 +239,19 @@ function choice({attackerSkill,observerSkill,choiceKm,
                 .riderIds.length,22);
               assert.equal(nextBunch.step.leaderRiderId===
                 source.loss.splits[0].riderId,false);
+              nextPair=advancePhysicalManagerPostcatchSoloPairV1({
+                ...nextInput,bunch:nextBunch});
+              assert.equal(
+                validatePhysicalManagerPostcatchSoloPairV1({
+                  ...nextInput,bunch:nextBunch},nextPair),true);
+              assert.equal(nextPair.riderStates.length,24);
+              assert.equal(nextPair.sources.solos.length,2);
+              const forgedPair=structuredClone(nextPair);
+              forgedPair.riderStates.at(-1).energyAfter+=1;
+              assert.throws(()=>
+                validatePhysicalManagerPostcatchSoloPairV1({
+                  ...nextInput,bunch:nextBunch},forgedPair),
+              /differs from paid road/);
               assert.equal(source.priorKilometres.length,
                 source.sourceKm-1);
               assert.equal(source.lossKilometre.riderStates
@@ -274,6 +291,11 @@ function choice({attackerSkill,observerSkill,choiceKm,
               nextBunchRiders:nextBunch.step.physicalGroup
                 .riderIds.length,
               nextBunchLeader:nextBunch.step.leaderRiderId,
+              nextPairRiderStates:nextPair.riderStates.length,
+              nextSoloEnergy:nextPair.sources.solos.map(
+                row=>({riderId:row.riderId,
+                  energySpent:row.energySpent,
+                  energyAfter:row.energyAfter})),
               paidSplits:error.physicalLoss.loss.splits.map(
                 row=>({riderId:row.riderId,
                   atDistanceM:row.atDistanceM,
@@ -775,6 +797,13 @@ if(process.argv.includes('--assert')){
         [0].recoveryAward===0&&
       row.counterfactual.finish.physicalLoss.completions
         [0].gapSecondsToBunch>0
+      &&row.counterfactual.finish.physicalLoss
+        .nextPairRiderStates===24&&
+      row.counterfactual.finish.physicalLoss
+        .nextSoloEnergy.length===2&&
+      row.counterfactual.finish.physicalLoss
+        .nextSoloEnergy.every(solo=>
+          solo.energySpent>0&&solo.energyAfter>=0)
     ).length,8);
   }
 }

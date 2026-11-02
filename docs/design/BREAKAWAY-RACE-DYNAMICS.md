@@ -3834,6 +3834,14 @@ committed named leader is `sprint-4` after the 160-km loss or
 silently return or serve as that leader. Forged next-kilometre
 energy is rejected. Neither solo has yet been carried across that
 next kilometre, so this is still a partial race.
+`physical-manager-postcatch-solo-pair-v1.mjs` now pays the caught
+break rider and the newly dropped worker separately across that
+same next kilometre. It refuses an unrecorded meeting with each
+other or the bunch, charges solo energy without recovery, and
+source-replays all 24 rider states behind the committed 22-rider
+bunch leader. All eight mixed-role split cases pass this next
+kilometre. Subsequent solo contact and finish still need a paid
+source before the partial recording can continue.
 
 `audit-physical-bunch-distance.mjs --assert` extends the opt-in
 paid-bunch source to mixed flat, hill, climb, descent and wind routes
