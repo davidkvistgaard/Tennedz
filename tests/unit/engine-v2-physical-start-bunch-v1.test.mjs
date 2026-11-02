@@ -37,6 +37,9 @@ import {runPhysicalFrontSoloV1,
 import {catchPhysicalFrontSoloV1,
   validatePhysicalFrontBunchCatchV1} from
   '../../lib/engine/v2/physical-front-bunch-catch-v1.mjs';
+import {slideCaughtBreakRiderV1,
+  validateCaughtBreakSlideV1} from
+  '../../lib/engine/v2/physical-caught-break-slide-v1.mjs';
 import {runPhysicalRearGroupV1,
   validatePhysicalRearGroupV1} from
   '../../lib/engine/v2/physical-rear-group-run-v1.mjs';
@@ -315,6 +318,19 @@ test('stronger later bunch worker creates an energy-priced catch window',()=>{
   assert.throws(()=>catchPhysicalFrontSoloV1({...input,
     attackKm:2,catchKm:catchKm-1}),
   /no paid bunch catch here/);
+  const slideInput={...catchInput,catchRecord:contact};
+  const slide=slideCaughtBreakRiderV1(slideInput);
+  assert.equal(slide.decision.choice,'slide_through');
+  assert.equal(slide.decision.goal,'finish_safely');
+  assert.ok(slide.holdAbility<slide.bunchLeaderAbility);
+  assert.ok(slide.gapSecondsToBunch>0);
+  assert.ok(slide.energySpent>0);
+  assert.equal(slide.physicalGroup.riderIds[0],'other-2');
+  assert.equal(validateCaughtBreakSlideV1(slideInput,slide),true);
+  const falseSlide=structuredClone(slide);
+  falseSlide.gapSecondsToBunch=0;
+  assert.throws(()=>validateCaughtBreakSlideV1(
+    slideInput,falseSlide),/differs/);
 });
 
 test('early climb weakness records a paid partial solo and no rear group',()=>{

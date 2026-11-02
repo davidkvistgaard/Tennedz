@@ -3518,3 +3518,15 @@ later catch; forged contact time fails replay. At the contact instant
 the rider and bunch are co-located, but no sheltered wheel or group
 membership is inferred. The remaining distance must decide whether
 the spent attacker holds on or slides through behind the bunch.
+
+`physical-caught-break-slide-v1.mjs` resolves the tested case where
+the spent attacker cannot match the paid bunch leader even with
+draft benefit. It records that physical inability separately from
+a deliberate future-stage release. At contact the rider explicitly
+switches to an energy-saving pace to finish the current stage, pays
+the remaining terrain as a solo, receives zero bunch recovery, and
+crosses the kilometre endpoint later than the 23-rider bunch.
+Their singleton position, energy, time and source goal replay; no
+peloton wheel is inferred. The later rear-solo road, possible rear
+group contact and final finish still need to be connected to this
+caught-break source.
