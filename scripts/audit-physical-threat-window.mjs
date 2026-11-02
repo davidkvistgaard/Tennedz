@@ -9,6 +9,8 @@ import {startPhysicalBunchV1} from
   '../lib/engine/v2/physical-start-bunch-v1.mjs';
 import {decidePhysicalFrontThreatV1} from
   '../lib/engine/v2/physical-front-threat-choice-v1.mjs';
+import {advancePhysicalPerceivedChaseKmV1} from
+  '../lib/engine/v2/physical-perceived-chase-km-v1.mjs';
 
 const route=Array.from({length:20},(_,index)=>({km:index+1,
   terrain:'flat',gradientPct:0,surface:'road',exposed:false,
@@ -36,8 +38,11 @@ function choice({attackerSkill,observerSkill,choiceKm}){
   }
   teams[2].orders.phases=[{atKm:1,attack:'selective',
     attackRiderId:'other-2',effort:'hard'}];
+  teams[0].orders.phases=[{atKm:choiceKm-1,
+    frontWork:'sit_in'}];
   teams[1].orders.phases=[{atKm:choiceKm-1,
-    chase:'selective'}];
+    chase:'selective',frontWork:'rotate',
+    frontWorkRiderId:'sprint-2'}];
   for(const team of teams)team.orders=normalizeOrders(team.orders,{
     riderIds:team.riders.map(rider=>rider.id),
     distanceKm:20,keypoints:[{km:1},{km:choiceKm-1}],
@@ -51,14 +56,23 @@ function choice({attackerSkill,observerSkill,choiceKm}){
   const startInput={teams,routeKilometres:route,commitment,
     raceSeed:'same-threat-window-seed'};
   const start=startPhysicalBunchV1(startInput);
-  const recording=decidePhysicalFrontThreatV1({startInput,start,
+  const input={startInput,start,
     attackKm:2,choiceKm,observerTeamId:'sprint',
-    nominatedChaseTeamIds:['sprint']});
+    nominatedChaseTeamIds:['sprint']};
+  const recording=decidePhysicalFrontThreatV1(input);
+  const action=recording.choice.choice.assessments[0].action;
+  let paidGapChangeSeconds;
+  if(['commit_now','commit_and_request_help'].includes(action)){
+    const paid=advancePhysicalPerceivedChaseKmV1(input);
+    paidGapChangeSeconds=+(paid.gapSecondsToBunch-
+      recording.observedGapSeconds).toFixed(3);
+  }
   return {attackerSkill,observerSkill,choiceKm,
     gapSeconds:+recording.observedGapSeconds.toFixed(3),
-    action:recording.choice.choice.assessments[0].action,
+    action,
     headroomSeconds:+recording.choice.choice.assessments[0]
-      .nominatedHeadroomSeconds.toFixed(3)};
+      .nominatedHeadroomSeconds.toFixed(3),
+    ...(paidGapChangeSeconds===undefined?{}:{paidGapChangeSeconds})};
 }
 
 const results=[];
@@ -79,6 +93,9 @@ if(process.argv.includes('--assert')){
   assert.equal(results.length,384);
   assert.equal(actionCounts.refused??0,0);
   assert.equal(actionCounts.commit_now,3);
+  assert.equal(commitWindows.length,3);
+  assert.ok(commitWindows.every(row=>
+    Number.isFinite(row.paidGapChangeSeconds)));
   assert.ok(actionCounts.watch>0&&
     actionCounts.capacity_shortfall>0);
 }

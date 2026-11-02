@@ -3613,6 +3613,14 @@ decision kilometre. It finds 79 `watch` and 302
 That thin and sometimes physically ineffective commitment window
 must be reconciled with actual turn rotation, energy and race
 length before the chase policy can be routed into a whole race.
+The audit now also pays the next kilometre for each of the three
+`commit_now` windows using a pre-named sprint helper. All three
+measured gaps widen: by 0.728, 0.495 and 1.197 seconds. The
+forecast therefore has no observed effective chase in this matrix,
+even when it urges immediate commitment. Its hypothetical rotating
+helper capacity and front effort assumptions need to be reconciled
+with the actual single exposed leader and paid front pace before
+it can control a full physical race.
 
 `audit-physical-bunch-distance.mjs --assert` extends the opt-in
 paid-bunch source to mixed flat, hill, climb, descent and wind routes
