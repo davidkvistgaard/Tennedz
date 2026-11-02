@@ -5,8 +5,11 @@ import {SPORTING_SKILLS} from '../lib/engine/v2/skills.mjs';
 import {normalizeOrders} from '../lib/engine/v2/orders.mjs';
 import {commitTeamChaseStakesV1} from
   '../lib/engine/v2/team-chase-stake-v1.mjs';
-import {startPhysicalBunchV1} from
+import {startPhysicalBunchV1,
+  validatePhysicalBunchAfterCaughtSlideLossKmV1} from
   '../lib/engine/v2/physical-start-bunch-v1.mjs';
+import {validatePhysicalPostCatchLossKmV1} from
+  '../lib/engine/v2/physical-pace-loss-completion-v1.mjs';
 import {decidePhysicalFrontThreatV1} from
   '../lib/engine/v2/physical-front-threat-choice-v1.mjs';
 import {advancePhysicalPerceivedChaseKmV1} from
@@ -193,7 +196,26 @@ function choice({attackerSkill,observerSkill,choiceKm,
               minimumEnergy:Math.min(...race.kilometres
                 .flatMap(row=>row.riderStates.map(rider=>
                   rider.energyAfter)))};
-          }catch(error){counterfactual.finish={
+          }catch(error){
+            if(error.physicalLoss){
+              const source=error.physicalLoss;
+              assert.equal(
+                validatePhysicalBunchAfterCaughtSlideLossKmV1(
+                  source.roadInput,source.loss),true);
+              for(let i=0;i<source.completions.length;i++){
+                assert.equal(validatePhysicalPostCatchLossKmV1(
+                  source.completionInputs[i],
+                  source.completions[i]),true);
+                const forged=structuredClone(
+                  source.completions[i]);
+                forged.energyAfter+=1;
+                assert.throws(()=>
+                  validatePhysicalPostCatchLossKmV1(
+                    source.completionInputs[i],forged),
+                /differs from source/);
+              }
+            }
+            counterfactual.finish={
             status:'unsettled',reason:error.message,
             ...(error.physicalLoss?{
               physicalLoss:{sourceKm:error.physicalLoss
