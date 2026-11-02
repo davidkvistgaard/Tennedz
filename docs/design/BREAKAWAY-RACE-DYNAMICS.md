@@ -3727,6 +3727,16 @@ Changing the rival's private future effort order, while replaying the
 same paid start, leaves this observer projection unchanged. The
 forecast uses observed road and perceived strength rather than
 peeking at that order.
+Across the 114 short, long and terrain audit rows, the independent
+pace projection finds a catch before the committed chase stop in 59
+`watch` cases, all 18 `commit_now` cases, and 15 cases labelled
+`capacity_shortfall` by the existing action forecast. The other 22
+capacity-shortfall cases have no projected catch. The projection
+assumes the front keeps its last observed effort and uses approximate
+future energy costs, so this is a measurable disagreement between
+two forecasts, not evidence that the denied chases would actually
+catch the front. A paid counterfactual and broader finish calibration
+are needed before changing the executable action policy.
 
 `audit-physical-bunch-distance.mjs --assert` extends the opt-in
 paid-bunch source to mixed flat, hill, climb, descent and wind routes

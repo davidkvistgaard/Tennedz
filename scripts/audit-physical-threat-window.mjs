@@ -50,7 +50,7 @@ function choice({attackerSkill,observerSkill,choiceKm,
   frontConserveAtKm=null,distanceKm=20,
   stopChaseAtKm=null,settleFinish=false,
   fatigue=20,roadVariant='flat',attackKm=2,
-  rotateLongLeaders=false}){
+  rotateLongLeaders=false,assessHorizon=false}){
   const terrainStartKm=distanceKm<=25?14:distanceKm-12;
   const terrainEndKm=distanceKm<=25?18:distanceKm-7;
   const road=Array.from({length:distanceKm},(_,index)=>({
@@ -129,6 +129,9 @@ function choice({attackerSkill,observerSkill,choiceKm,
     nominatedChaseTeamIds:['sprint']};
   const recording=decidePhysicalFrontThreatV1(input);
   const action=recording.choice.choice.assessments[0].action;
+  const horizon=assessHorizon?
+    estimatePhysicalObserverPursuitHorizonV1({
+      ...input,throughKm:distanceKm}):null;
   let paidGapChangeSeconds;
   let chaseRace;
   if(['commit_now','commit_and_request_help'].includes(action)){
@@ -233,6 +236,9 @@ function choice({attackerSkill,observerSkill,choiceKm,
   return {attackerSkill,observerSkill,choiceKm,
     ...(attackKm===2?{}:{attackKm}),
     ...(rotateLongLeaders?{rotateLongLeaders:true}:{}),
+    ...(assessHorizon?{
+      horizonCatchKm:horizon.predictedContact?.sourceKm??null,
+      horizonStopReason:horizon.stoppedReason}:{}),
     ...(fatigue===20?{}:{fatigue}),
     ...(roadVariant==='flat'?{}:{roadVariant}),
     ...(distanceKm===20?{}:{distanceKm}),
@@ -294,7 +300,7 @@ const calibration=process.argv.includes('--calibration')?
       roadVariant=>{
         const input={...variant,fatigue,roadVariant,
           distanceKm:25,stopChaseAtKm:20,
-          settleFinish:true};
+          settleFinish:true,assessHorizon:true};
         try{return choice(input);}
         catch(error){return {...input,refused:error.message};}
       }))):undefined;
@@ -307,7 +313,8 @@ const longCalibration=process.argv.includes('--long-calibration')?
         attackKm:distanceKm-20,
         frontConserveAtKm:distanceKm-15,
         distanceKm,stopChaseAtKm:distanceKm-5,
-        rotateLongLeaders:true,settleFinish:true};
+        rotateLongLeaders:true,settleFinish:true,
+        assessHorizon:true};
       try{return choice(input);}
       catch(error){return {...input,refused:error.message};}
     }))):undefined;
@@ -322,10 +329,26 @@ const longTerrainCalibration=process.argv.includes(
       attackKm:variant.distanceKm-20,
       frontConserveAtKm:variant.distanceKm-15,
       stopChaseAtKm:variant.distanceKm-5,
-      rotateLongLeaders:true,settleFinish:true};
+      rotateLongLeaders:true,settleFinish:true,
+      assessHorizon:true};
     try{return choice(input);}
     catch(error){return {...input,refused:error.message};}
   })):undefined;
+const policyCross=calibration&&longCalibration&&
+  longTerrainCalibration?{
+  rows:[...calibration,...longCalibration,
+    ...longTerrainCalibration].length,
+  projectedCatchByAction:Object.fromEntries(
+    ['watch','commit_now','capacity_shortfall']
+      .map(action=>[action,
+        [...calibration,...longCalibration,
+          ...longTerrainCalibration].filter(row=>
+          row.action===action&&
+          row.horizonCatchKm!==null).length])),
+  shortfallWithoutProjectedCatch:[...calibration,
+    ...longCalibration,...longTerrainCalibration]
+    .filter(row=>row.action==='capacity_shortfall'&&
+      row.horizonCatchKm===null).length}:null;
 if(process.argv.includes('--assert')){
   assert.equal(results.length,384);
   assert.equal(actionCounts.refused??0,0);
@@ -419,6 +442,12 @@ if(process.argv.includes('--assert')){
     assert.equal(wind.chaseRace.minFinishEnergy,
       calm.chaseRace.minFinishEnergy);
   }
+  if(policyCross!==null){
+    assert.equal(policyCross.rows,114);
+    assert.deepEqual(policyCross.projectedCatchByAction,{
+      watch:59,commit_now:18,capacity_shortfall:15});
+    assert.equal(policyCross.shortfallWithoutProjectedCatch,22);
+  }
 }
 process.stdout.write(JSON.stringify({version:1,
   raceSeed:'same-threat-window-seed',actionCounts,
@@ -427,5 +456,6 @@ process.stdout.write(JSON.stringify({version:1,
   ...(longCalibration===undefined?{}:{longCalibration}),
   ...(longTerrainCalibration===undefined?{}:{
     longTerrainCalibration}),
+  ...(policyCross===null?{}:{policyCross}),
   ...(process.argv.includes('--verbose')?{results}:{})},
 null,2)+'\n');
