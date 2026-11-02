@@ -54,6 +54,11 @@ import {inspectTwoRearPairsFieldContactV1} from
   '../../lib/engine/v2/physical-two-rear-pairs-field-contact-v1.mjs';
 import {finishPhysicalThirdRearContactV1} from
   '../../lib/engine/v2/physical-third-rear-contact-v1.mjs';
+import {pricePhysicalRearEventTrackV1} from
+  '../../lib/engine/v2/physical-rear-event-track-v1.mjs';
+import {replayPhysicalStaggeredRearEventsV1,
+  validatePhysicalStaggeredRearEventsV1} from
+  '../../lib/engine/v2/physical-staggered-rear-event-replay-v1.mjs';
 import {replayPhysicalStaggeredRaceV1,
   validatePhysicalStaggeredRaceV1} from
   '../../lib/engine/v2/physical-staggered-race-replay-v1.mjs';
@@ -382,6 +387,22 @@ test('different paid kilometres remove only physically dropped riders',()=>{
     staggered:catchingSource,throughKm:20};
   const catchingField=probePhysicalStaggeredSoloFieldV1(
     catchingFieldInput);
+  const rearEventInput={...catchingFieldInput,
+    soloField:catchingField};
+  const rearEvents=replayPhysicalStaggeredRearEventsV1(
+    rearEventInput);
+  assert.equal(rearEvents.kilometres.length,20);
+  assert.ok(rearEvents.kilometres.every(row=>
+    row.riderStates.length===24));
+  assert.equal(Object.keys(rearEvents
+    .observedFinishSecondsByRider).length,24);
+  assert.equal(validatePhysicalStaggeredRearEventsV1(
+    rearEventInput,rearEvents),true);
+  const forgedRearEvents=structuredClone(rearEvents);
+  forgedRearEvents.contacts[0].clockSeconds+=1;
+  assert.throws(()=>validatePhysicalStaggeredRearEventsV1(
+    rearEventInput,forgedRearEvents),
+  /differs from paid source/);
   const catchingFieldContact=
     inspectFirstStaggeredSoloFieldContactV1({
       ...catchingInput,staggered:catchingSource,
@@ -397,6 +418,24 @@ test('different paid kilometres remove only physically dropped riders',()=>{
     fieldContact:catchingFieldContact};
   const fieldRoad=finishPhysicalSoloFieldContactKmV1(
     fieldRoadInput);
+  const genericTrack=pricePhysicalRearEventTrackV1({
+    startInput:catchingInput.startInput,
+    riderIds:firstCatchingContact.riderIds,
+    energyByRider:Object.fromEntries(
+      firstCatchingContact.riders.map(row=>[
+        row.riderId,row.energyAtContact])),
+    km:firstCatchingContact.sourceKm,
+    startM:firstCatchingContact.atDistanceM-
+      (firstCatchingContact.sourceKm-1)*1000,
+    startClock:firstCatchingContact.clockSeconds,
+    contactLeaderRiderId:fieldRoad.leaderRiderId,
+    groupId:fieldRoad.physicalGroup.id});
+  assert.ok(Math.abs(genericTrack.endClock-
+    fieldRoad.elapsedSeconds)<1e-7);
+  assert.deepEqual(genericTrack.rows.map(row=>
+    [row.riderId,row.role,row.energyAfter]),
+  fieldRoad.riders.map(row=>
+    [row.riderId,row.role,row.energyAfter]));
   assert.equal(fieldRoad.riders.filter(row=>
     row.role==='leader').length,1);
   assert.equal(fieldRoad.riders.filter(row=>

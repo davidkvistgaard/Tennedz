@@ -40,6 +40,11 @@ import {finishPhysicalSecondRearPairContactV1,
   '../lib/engine/v2/physical-second-rear-pair-v1.mjs';
 import {advancePhysicalThirdRearGroupV1} from
   '../lib/engine/v2/physical-third-rear-contact-v1.mjs';
+import {pricePhysicalRearEventTrackV1} from
+  '../lib/engine/v2/physical-rear-event-track-v1.mjs';
+import {replayPhysicalStaggeredRearEventsV1,
+  validatePhysicalStaggeredRearEventsV1} from
+  '../lib/engine/v2/physical-staggered-rear-event-replay-v1.mjs';
 import {partitionPhysicalSimultaneousLossV1,
   validatePhysicalSimultaneousLossPartitionV1,
   contactPhysicalSimultaneousLossV1,
@@ -331,6 +336,31 @@ function audit(distanceKm,fatigue,variant){
           thirdContact={nextContacts:[third.thirdContact]};
           const thirdRoad=third.thirdContactRoad;
           const thirdGroup=third.group;
+          const thirdEvent=third.thirdContact;
+          const thirdTrack=pricePhysicalRearEventTrackV1({
+            startInput,
+            riderIds:thirdEvent.riders.map(row=>
+              row.riderId),
+            energyByRider:Object.fromEntries(
+              thirdEvent.riders.map(row=>[
+                row.riderId,row.energyAtContact])),
+            km:thirdEvent.sourceKm,
+            startM:thirdEvent.atDistanceM-
+              (thirdEvent.sourceKm-1)*1000,
+            startClock:thirdEvent.clockSeconds,
+            contactLeaderRiderId:
+              thirdRoad.leaderRiderId,
+            groupId:thirdRoad.physicalGroup.id});
+          const nextThirdTrack=pricePhysicalRearEventTrackV1({
+            startInput,
+            riderIds:thirdRoad.physicalGroup.riderIds,
+            energyByRider:Object.fromEntries(
+              thirdRoad.riders.map(row=>[
+                row.riderId,row.energyAfter])),
+            km:thirdEvent.sourceKm+1,startM:0,
+            startClock:thirdRoad.elapsedSeconds,
+            rotationIndex:0,
+            groupId:thirdRoad.physicalGroup.id});
           thirdRearGroup={sourceKm:thirdRoad.sourceKm,
               contactMetres:thirdRoad.startDistanceM,
               riderCount:thirdRoad.riders.length,
@@ -352,6 +382,23 @@ function audit(distanceKm,fatigue,variant){
                   rider.energySpent>0&&
                   rider.recoveryAward===0)),
               endClock:thirdGroup.elapsedSeconds,
+              genericTrackMatchesRoad:
+                Math.abs(thirdTrack.endClock-
+                  thirdRoad.elapsedSeconds)<1e-7&&
+                thirdTrack.leaderRiderId===
+                  thirdRoad.leaderRiderId&&
+                thirdTrack.rows.every(row=>
+                  Math.abs(row.energyAfter-
+                    thirdRoad.riders.find(item=>
+                      item.riderId===row.riderId)
+                      .energyAfter)<1e-7),
+              genericNextTrackMatches:
+                Math.abs(nextThirdTrack.endClock-
+                  thirdGroup.steps[0]
+                    .elapsedSeconds)<1e-7&&
+                nextThirdTrack.leaderRiderId===
+                  thirdGroup.steps[0]
+                    .leaderRiderId,
               otherRidersUnsettled:
                 thirdGroup.otherRidersUnsettled};
           secondRearPair={sourceKm:road.sourceKm,
@@ -692,6 +739,74 @@ function audit(distanceKm,fatigue,variant){
       run.energyByRider))};
 }
 
+if(process.argv.includes('--probe-rear-events-120')||
+  process.argv.includes('--probe-rear-events')){
+  const distances=process.argv.includes(
+    '--probe-rear-events-120')?[120]:[120,260];
+  const results=distances.flatMap(distanceKm=>
+    [10,30].map(fatigue=>{
+    const input=source(distanceKm,fatigue,
+      'varied_field');
+    const staggered=runPhysicalStaggeredBunchLossV1({
+      ...input,throughKm:distanceKm});
+    const soloField=probePhysicalStaggeredSoloFieldV1({
+      ...input,staggered,throughKm:distanceKm});
+    const race=replayPhysicalStaggeredRearEventsV1({
+      ...input,staggered,soloField,throughKm:
+        distanceKm});
+    assert.equal(validatePhysicalStaggeredRearEventsV1({
+      ...input,staggered,soloField,
+      throughKm:distanceKm},race),true);
+    assert.equal(race.kilometres.length,distanceKm);
+    assert.ok(race.kilometres.every(row=>
+      row.riderStates.length===160));
+    assert.equal(Object.keys(race
+      .observedFinishSecondsByRider).length,160);
+    assert.equal(race.contacts[0].sourceKm,
+      fatigue===30?26:31);
+    assert.deepEqual(race.contacts[0].riders.map(row=>
+      row.riderId),['team-3-3','team-4-3']);
+    assert.equal(race.contacts[1].sourceKm,31);
+    assert.deepEqual(race.contacts[1].riders.map(row=>
+      row.riderId),['team-8-6','team-19-1']);
+    assert.equal(race.contacts[2].sourceKm,31);
+    assert.equal(race.contacts[2].riders.length,
+      fatigue===30?4:3);
+    assert.ok(race.contacts.every(contact=>
+      contact.riders.every(row=>
+        row.energyAtContact>=0)&&
+      contact.contactDecisions.length===
+        contact.riders.length&&
+      contact.contactDecisions.filter(row=>
+        row.choice==='pull').length===1));
+    assert.ok(race.kilometres.every(row=>
+      row.riderStates.every(state=>
+        state.decisions.length>0&&
+        state.decisions.every(decision=>
+          decision?.riderId===state.riderId))));
+    return {distanceKm,fatigue,
+      contactCount:race.contactCount,
+      firstContacts:race.contacts.slice(0,5).map(row=>({
+        km:row.sourceKm,atDistanceM:row.atDistanceM,
+        riderIds:row.riders.map(rider=>
+          rider.riderId),
+        leaderRiderId:row.leaderRiderId})),
+      finishRiders:Object.keys(
+        race.observedFinishSecondsByRider).length,
+      riderKilometres:race.kilometres.reduce((sum,row)=>
+        sum+row.riderStates.length,0),
+      minimumFinishEnergy:Math.min(...race
+        .kilometres.at(-1).riderStates.map(row=>
+          row.energyAfter)),
+      earliestFinishSeconds:Math.min(...Object.values(
+        race.observedFinishSecondsByRider)),
+      latestFinishSeconds:Math.max(...Object.values(
+        race.observedFinishSecondsByRider))};
+  }));
+  process.stdout.write(JSON.stringify({results},null,2)+'\n');
+  process.exit(0);
+}
+
 const results=process.argv.includes('--probe-varied-120')?
   [10,30].map(fatigue=>
     audit(120,fatigue,'varied_field')):
@@ -887,6 +1002,8 @@ if(process.argv.includes('--assert-varied')){
     assert.equal(merged.oneLeaderEveryKm,true);
     assert.equal(merged.paidShelterEveryKm,true);
     assert.equal(merged.otherRidersUnsettled,true);
+    assert.equal(merged.genericTrackMatchesRoad,true);
+    assert.equal(merged.genericNextTrackMatches,true);
     if(row.fatigue===10){
       const road=row.staggeredScale
         .laterFieldContactRoad;

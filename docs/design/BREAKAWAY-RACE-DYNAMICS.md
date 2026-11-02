@@ -4166,3 +4166,22 @@ still exposed. All others shelter at lower terrain-priced cost. The
 members rotate a single paid leader on later kilometres. These roads
 remain counterfactual beyond any further contact with the other
 detached riders, and they do not establish whole-field finish times.
+
+An event-ordered rear replay now starts from the paid bunch splits and
+solo candidates, finds the earliest road-clock intersection, changes
+only the involved roads, and prices one leader plus sheltered members
+to the next encounter. It checks for an unhandled bunch crossing and
+refuses one. Each kilometre records all 160 riders' physical groups,
+decisions, energy and clock; contact and cross-kilometre energy must
+reconcile with the paid sources. Four varied-field same-seed witnesses
+cover 120 and 260 km at fatigue 10 and 30: respectively 12, 12, 22
+and 15 rear contacts, with 19,200 or 41,600 rider-kilometres and all
+160 actual finish clocks. The first three contacts match the separate
+source inspectors. No time limit or GC stake is inferred.
+
+This remains an opt-in Motor Lab replay. Its rear riders cooperate at
+recorded contact to save finish energy; it has not yet calibrated
+intent-sensitive passing, all orders and stages, heterogeneous group
+splits, break transitions and whole-race distributions. No guided race
+uses this version, and these four witnesses do not establish release
+readiness.
