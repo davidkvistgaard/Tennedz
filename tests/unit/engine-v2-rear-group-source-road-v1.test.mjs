@@ -52,6 +52,9 @@ import {runRearGroupAfterJoinV1,validateRearGroupAfterJoinV1} from
   '../../lib/engine/v2/rear-group-after-join-run-v1.mjs';
 import {runRearGroupAfterJoinV2,validateRearGroupAfterJoinV2} from
   '../../lib/engine/v2/rear-group-after-join-run-v2.mjs';
+import {runCommittedRearAfterJoinV1,
+  validateCommittedRearAfterJoinV1} from
+  '../../lib/engine/v2/rear-group-committed-after-join-run-v1.mjs';
 import {advanceRearGroupTurnKilometreV1,
   validateRearGroupTurnKilometreV1} from
   '../../lib/engine/v2/rear-group-turn-kilometre-v1.mjs';
@@ -647,6 +650,41 @@ test('a third rider joins only at calculated paid rear contact',()=>{
     step.holdChecks.every(row=>row.canHold)));
   assert.equal(validateRearGroupAfterJoinV2(
     safeRunInput,safeRun),true);
+  const committedStrategies=continuationInput.rearGoals.map(row=>({
+    riderId:row.riderId,
+    baseline:{goal:row.goal,rearWork:row.rearWork},
+    phases:row.riderId==='a'?[]:[{atKm:15,goal:row.goal,
+      rearWork:'sit_on'}]}));
+  const afterJoinCommitment=commitRearGoalsV1({
+    riderIds:['a','b','c'],strategies:committedStrategies,
+    distanceKm:150,keypoints:[{km:15}],stageNumber:18,
+    stageCount:21});
+  const committedJoinInput={commitment:afterJoinCommitment,
+    continuationInput,continuation,
+    kilometres:safeRunInput.kilometres.map(row=>({
+      segment:row.segment,bunchTurnPlan:row.bunchTurnPlan,
+      teams:row.teams,roadGroups:row.roadGroups}))};
+  const committedJoin=runCommittedRearAfterJoinV1(
+    committedJoinInput);
+  assert.deepEqual(committedJoin.paidRun,safeRun);
+  assert.equal(validateCommittedRearAfterJoinV1(
+    committedJoinInput,committedJoin),true);
+  assert.throws(()=>runCommittedRearAfterJoinV1({
+    ...committedJoinInput,kilometres:[{
+      ...committedJoinInput.kilometres[0],rearGoals:safeGoals}]}),
+  /replayed contact and road/);
+  const noJoinPhase=commitRearGoalsV1({riderIds:['a','b','c'],
+    strategies:committedStrategies.map(row=>({...row,phases:[]})),
+    distanceKm:150,keypoints:[{km:15}],stageNumber:18,
+    stageCount:21});
+  assert.throws(()=>runCommittedRearAfterJoinV1({
+    ...committedJoinInput,commitment:noJoinPhase}),
+  /cannot hold paid leader/);
+  const forgedCommittedJoin=structuredClone(committedJoin);
+  forgedCommittedJoin.paidRun.steps[0].sourceStep.riders[0]
+    .energySpent=0;
+  assert.throws(()=>validateCommittedRearAfterJoinV1(
+    committedJoinInput,forgedCommittedJoin),/differs/);
   assert.throws(()=>runRearGroupAfterJoinV2({...safeRunInput,
     kilometres:[safeRunInput.kilometres[0],
       {...safeRunInput.kilometres[1],rearGoals:

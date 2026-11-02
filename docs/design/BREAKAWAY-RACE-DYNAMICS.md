@@ -2915,6 +2915,16 @@ caller-supplied evidence rather than committed whole-race orders.
 Neither this candidate nor the preceding rear-road modules are routed
 to a whole race.
 
+`rear-group-committed-after-join-run-v1.mjs` now replays the physical
+third-rider join and derives the goals for each subsequent kilometre
+from one pre-race commitment for all three riders. In the focused
+same-source case, a route-marker change makes two riders sit in, so a
+slower willing rider leads and both sheltered riders can hold. Removing
+that committed change makes the paid hold check refuse; supplying
+different goals for one kilometre or altering the replayed energy also
+refuses. This isolated continuation still uses separately supplied
+bunch turn plans and does not settle a full-field race or finish.
+
 `rear-group-turn-kilometre-v1.mjs` is a separate opt-in continuation
 from a replayed three-rider rear-group step. At the next kilometre it
 asks each rider again, then assigns equal road-distance turns to the
