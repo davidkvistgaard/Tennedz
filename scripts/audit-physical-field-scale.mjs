@@ -5,6 +5,8 @@ import {SPORTING_SKILLS} from '../lib/engine/v2/skills.mjs';
 import {normalizeOrders} from '../lib/engine/v2/orders.mjs';
 import {commitTeamChaseStakesV1} from
   '../lib/engine/v2/team-chase-stake-v1.mjs';
+import {commitRearSoloPlanV1} from
+  '../lib/engine/v2/rear-solo-commitment-v1.mjs';
 import {startPhysicalBunchV1,runPhysicalBunchV1,
   runPhysicalBunchToPaceLossV1,
   runPhysicalStaggeredBunchLossV1} from
@@ -737,6 +739,98 @@ function audit(distanceKm,fatigue,variant){
     namedLeaders,
     minimumEnergy:Math.min(...Object.values(
       run.energyByRider))};
+}
+
+if(process.argv.includes('--probe-rear-stage-plan')){
+  const results=[120,260].map(distanceKm=>{
+    const fatigue=distanceKm===120?10:30;
+    const reserveEnergy=distanceKm===120?70:50;
+    const base=source(distanceKm,fatigue,
+      'varied_field');
+    const riderId='team-4-3';
+    const startInput={...base.startInput,
+      soloCommitments:[commitRearSoloPlanV1({
+        riderId,distanceKm,stageNumber:1,
+        stageCount:2,baseline:{
+          goal:'save_for_stage',
+          effort:'conserve',
+          committedStagePlan:{riderId,
+            currentStageNumber:1,
+            targetStageNumber:2,
+            currentGoal:'finish_safely',
+            futureGoal:'target_stage',
+            reserveEnergy}}})]};
+    const start=startPhysicalBunchV1(startInput);
+    const staggered=runPhysicalStaggeredBunchLossV1({
+      startInput,start,throughKm:distanceKm});
+    const soloField=probePhysicalStaggeredSoloFieldV1({
+      startInput,start,staggered,throughKm:distanceKm});
+    assert.equal(soloField.refusals.length,0,
+      JSON.stringify(soloField.refusals.slice(0,3)));
+    const input={startInput,start,staggered,
+      soloField,throughKm:distanceKm};
+    const race=replayPhysicalStaggeredRearEventsV1(input);
+    assert.equal(validatePhysicalStaggeredRearEventsV1(
+      input,race),true);
+    assert.ok(race.kilometres.every(row=>
+      row.riderStates.length===160&&
+      row.riderStates.every(state=>
+        state.decisions.length>0)));
+    assert.equal(Object.keys(race
+      .observedFinishSecondsByRider).length,160);
+    const saver=race.kilometres.at(-1)
+      .riderStates.find(row=>row.riderId===riderId);
+    assert.ok(saver.energyAfter>=reserveEnergy);
+    if(distanceKm===260){
+      const impossibleInput={...startInput,
+        soloCommitments:[commitRearSoloPlanV1({
+          riderId,distanceKm,stageNumber:1,
+          stageCount:2,baseline:{
+            goal:'save_for_stage',
+            effort:'conserve',
+            committedStagePlan:{riderId,
+              currentStageNumber:1,
+              targetStageNumber:2,
+              currentGoal:'finish_safely',
+              futureGoal:'target_stage',
+              reserveEnergy:70}}})]};
+      const impossibleStart=startPhysicalBunchV1(
+        impossibleInput);
+      const impossibleStaggered=
+        runPhysicalStaggeredBunchLossV1({
+          startInput:impossibleInput,
+          start:impossibleStart,throughKm:distanceKm});
+      const impossibleSolo=
+        probePhysicalStaggeredSoloFieldV1({
+          startInput:impossibleInput,
+          start:impossibleStart,
+          staggered:impossibleStaggered,
+          throughKm:distanceKm});
+      assert.deepEqual(impossibleSolo.refusals,[{
+        riderId,reason:
+          'Staggered solo breaks future-stage reserve.'}]);
+    }
+    assert.ok(race.kilometres.flatMap(row=>
+      row.segments).filter(segment=>
+      segment.kind==='group'&&
+      segment.riders.some(row=>
+        row.riderId===riderId)).every(segment=>
+      segment.riders.find(row=>
+        row.riderId===riderId).role==='sheltered'));
+    return {distanceKm,fatigue,riderId,reserveEnergy,
+      contactCount:race.contactCount,
+      saverFinishEnergy:saver.energyAfter,
+      saverFinishSeconds:saver.elapsedSeconds,
+      saverGroupKilometres:race.kilometres
+        .filter(row=>row.riderStates.find(state=>
+          state.riderId===riderId)
+          .physicalGroupId.startsWith(
+            'rear-event-')).length,
+      finishRiders:Object.keys(race
+        .observedFinishSecondsByRider).length};
+  });
+  process.stdout.write(JSON.stringify({results},null,2)+'\n');
+  process.exit(0);
 }
 
 if(process.argv.includes('--probe-rear-events-120')||

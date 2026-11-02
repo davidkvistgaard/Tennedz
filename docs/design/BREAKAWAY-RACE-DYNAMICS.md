@@ -4204,3 +4204,15 @@ stays sheltered in every later shared segment and finishes above the
 reserve. The contact records the other rider as the actual paid
 leader. A claimed later-stage motive without that committed plan is
 rejected before the race.
+
+The full-field stage-plan audit replays the same 160 varied riders
+over 120 km at fatigue 10 and 260 km at fatigue 30 with a named
+stage-2 target for team-4-3. The committed reserves are 70 and 50
+energy respectively. Source replay records 13 and 15 measured rear
+contacts, all 160 per-kilometre decisions and finish clocks, and the
+saving rider's 84.008 and 64.076 finish energy. That rider shelters in
+every segment of its formed rear group (90 and 235 kilometres). A
+70-energy reserve on the longer, more fatigued source is refused by
+the solo source rather than silently relabelled as attainable. This
+is a feasibility witness, not calibration of stage tactics or the
+whole-race finish distribution.
