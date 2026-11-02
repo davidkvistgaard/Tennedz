@@ -1442,6 +1442,24 @@ test('early climb weakness records a paid partial solo and no rear group',()=>{
     whole.observedFinishSecondsByRider['control-0']);
   assert.equal(validatePhysicalBunchPaceLossV1({...input,
     lossKm:1},loss),true);
+  const staggered=runPhysicalStaggeredBunchLossV1({
+    ...input,throughKm:20});
+  assert.deepEqual(staggered.losses.map(row=>[
+    row.sourceKm,row.riderId]),[[1,'other-3']]);
+  const soloField=probePhysicalStaggeredSoloFieldV1({
+    ...input,staggered,throughKm:20});
+  const rearInput={...input,staggered,soloField,
+    throughKm:20};
+  const rearRace=replayPhysicalStaggeredRearEventsV1(
+    rearInput);
+  assert.equal(rearRace.contactCount,0);
+  assert.ok(rearRace.kilometres.every(row=>
+    row.riderStates.length===24));
+  assert.equal(rearRace.observedFinishSecondsByRider[
+    'other-3'],whole.observedFinishSecondsByRider[
+      'other-3']);
+  assert.equal(validatePhysicalStaggeredRearEventsV1(
+    rearInput,rearRace),true);
   const forged=structuredClone(loss);
   forged.step.splits[0].atDistanceM+=1;
   assert.throws(()=>validatePhysicalBunchPaceLossV1({...input,

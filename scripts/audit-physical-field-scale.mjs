@@ -741,6 +741,67 @@ function audit(distanceKm,fatigue,variant){
       run.energyByRider))};
 }
 
+if(process.argv.includes('--probe-rear-extreme')){
+  const results=['one_weak_climber',
+    'unequal_descent_catch'].flatMap(variant=>
+    [10,30].map(fatigue=>{
+      const distanceKm=120;
+      const input=source(distanceKm,fatigue,variant);
+      let staggered;
+      try{staggered=runPhysicalStaggeredBunchLossV1({
+        ...input,throughKm:distanceKm});}
+      catch(error){return {variant,fatigue,
+        status:'bunch_source_refusal',
+        reason:error.message};}
+      const soloField=probePhysicalStaggeredSoloFieldV1({
+        ...input,staggered,throughKm:distanceKm});
+      if(soloField.refusals.length)
+        return {variant,fatigue,status:'solo_refusal',
+          detachedRiders:staggered.losses.length,
+          lossKilometres:[...new Set(staggered.losses
+            .map(row=>row.sourceKm))],
+          refusals:soloField.refusals.slice(0,5)};
+      try{
+        const replayInput={...input,staggered,
+          soloField,throughKm:distanceKm};
+        const race=replayPhysicalStaggeredRearEventsV1(
+          replayInput);
+        assert.equal(validatePhysicalStaggeredRearEventsV1(
+          replayInput,race),true);
+        assert.ok(race.kilometres.every(row=>
+          row.riderStates.length===160));
+        return {variant,fatigue,status:'full_replay',
+          detachedRiders:staggered.losses.length,
+          lossKilometres:[...new Set(staggered.losses
+            .map(row=>row.sourceKm))],
+          contacts:race.contactCount,
+          finishRiders:Object.keys(race
+            .observedFinishSecondsByRider).length};
+      }catch(error){
+        return {variant,fatigue,status:'rear_refusal',
+          detachedRiders:staggered.losses.length,
+          lossKilometres:[...new Set(staggered.losses
+            .map(row=>row.sourceKm))],
+          reason:error.message};
+      }
+    }));
+  assert.deepEqual(results.map(row=>[
+    row.variant,row.fatigue,row.status,
+    row.detachedRiders,row.lossKilometres]),[
+    ['one_weak_climber',10,'full_replay',1,[21]],
+    ['one_weak_climber',30,'full_replay',1,[21]],
+    ['unequal_descent_catch',10,
+      'rear_refusal',20,[21]],
+    ['unequal_descent_catch',30,
+      'rear_refusal',20,[21]]]);
+  assert.ok(results.slice(0,2).every(row=>
+    row.contacts===0&&row.finishRiders===160));
+  assert.ok(results.slice(2).every(row=>
+    row.reason==='Rear contact lacks catching source.'));
+  process.stdout.write(JSON.stringify({results},null,2)+'\n');
+  process.exit(0);
+}
+
 if(process.argv.includes('--probe-rear-stage-plan')){
   const results=[120,260].map(distanceKm=>{
     const fatigue=distanceKm===120?10:30;

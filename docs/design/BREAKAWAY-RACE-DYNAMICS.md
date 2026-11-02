@@ -4216,3 +4216,16 @@ every segment of its formed rear group (90 and 235 kilometres). A
 the solo source rather than silently relabelled as attainable. This
 is a feasibility witness, not calibration of stage tactics or the
 whole-race finish distribution.
+
+The isolated bunch-loss source now also accepts one paid loss or
+several losses in the same kilometre. Its earlier gate demanded two
+different loss kilometres even though no later road depends on that
+count. Historical recordings for previously accepted inputs retain
+the same source. A 160-rider, 120-km weak-climber field at fatigue 10
+and 30 now records one km-21 loss, no rear contact, every rider's
+kilometre decisions, and all 160 finish clocks. A more severe field
+records 20 km-21 losses, but the rear event replay refuses an
+ambiguous contact among equal paid trajectories: it has no measured
+catching road to establish a physical wheel. This case remains open;
+the replay does not form a rear group by assuming those riders are
+together.
