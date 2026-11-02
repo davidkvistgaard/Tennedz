@@ -425,7 +425,16 @@ test('a later chase turn does not erase unpaid earlier rider kilometres',()=>{
   assert.equal(audit.rosterRiders,24);
   assert.equal(audit.roadKilometres,run.steps.length);
   assert.equal(audit.allRiderKilometresPaid,false);
+  assert.equal(audit.allRiderKilometresDecided,false);
   assert.ok(audit.missingRiderKilometres>0);
+  assert.equal(audit.missingDecisionRiderKilometres,
+    run.steps.length*23);
+  assert.deepEqual(audit.perKilometre[0].decidedRiderIds,
+    ['front-0']);
+  assert.ok(audit.perKilometre[0].modeledRiderIds
+    .includes('control-2'));
+  assert.ok(audit.perKilometre[0].undecidedRiderIds
+    .includes('control-2'));
   assert.ok(audit.perKilometre[0].unmodeledRiderIds
     .includes('observer-2'));
   assert.ok(audit.perKilometre.some(row=>

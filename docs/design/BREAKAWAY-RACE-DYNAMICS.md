@@ -3234,6 +3234,15 @@ future complete energy ledger would still need physical group, contact
 and finish validation before official results. The current isolated
 trace is not a full-field energy calculation.
 
+The coverage audit now checks explicit rider decisions separately from
+paid energy. In the three-team, 24-rider control/chase witness, the
+single front rider has a source-replayed per-rider decision each worked
+kilometre; the other 23 riders do not. The named controller and later
+chase helpers have paid work, but their team orders and road roles do
+not silently count as individual decisions. A complete energy ledger
+alone therefore cannot pass the strict rider-kilometre gate. This is a
+read-only refusal check, not a change to any race recording or route.
+
 `isolated-control-caught-front-slide-v1.mjs` also covers a front rider
 caught by one *paid control worker* while the sprint observer still
 waits. It replays the exact control catch, checks that the caught rider
