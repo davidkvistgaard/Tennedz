@@ -37,7 +37,9 @@ import {replayPhysicalManagerChaseRaceV1,
   validatePhysicalManagerChaseRaceV1} from
   '../lib/engine/v2/physical-manager-chase-race-replay-v1.mjs';
 import {replayPhysicalManagerPostcatchLossV1,
-  validatePhysicalManagerPostcatchLossV1} from
+  validatePhysicalManagerPostcatchLossV1,
+  advancePhysicalManagerPostcatchBunchKmV1,
+  validatePhysicalManagerPostcatchBunchKmV1} from
   '../lib/engine/v2/physical-manager-postcatch-loss-v1.mjs';
 import {riderKilometreEffect} from
   '../lib/engine/v2/physiology.mjs';
@@ -200,6 +202,7 @@ function choice({attackerSkill,observerSkill,choiceKm,
                 .flatMap(row=>row.riderStates.map(rider=>
                   rider.energyAfter)))};
           }catch(error){
+            let nextBunch;
             if(error.physicalLoss){
               const source=error.physicalLoss;
               const partial=replayPhysicalManagerPostcatchLossV1(
@@ -214,6 +217,24 @@ function choice({attackerSkill,observerSkill,choiceKm,
                   paidInput,forgedPartial),
               /differs from paid source/);
               assert.equal(partial.sourceKm,source.sourceKm);
+              const nextInput={input:paidInput,partial,
+                segment:paidInput.startInput.routeKilometres[
+                  partial.sourceKm]};
+              nextBunch=advancePhysicalManagerPostcatchBunchKmV1(
+                nextInput);
+              assert.equal(
+                validatePhysicalManagerPostcatchBunchKmV1(
+                  nextInput,nextBunch),true);
+              const forgedNext=structuredClone(nextBunch);
+              forgedNext.step.riders[0].energyAfter+=1;
+              assert.throws(()=>
+                validatePhysicalManagerPostcatchBunchKmV1(
+                  nextInput,forgedNext),
+              /differs from replayed loss/);
+              assert.equal(nextBunch.step.physicalGroup
+                .riderIds.length,22);
+              assert.equal(nextBunch.step.leaderRiderId===
+                source.loss.splits[0].riderId,false);
               assert.equal(source.priorKilometres.length,
                 source.sourceKm-1);
               assert.equal(source.lossKilometre.riderStates
@@ -250,6 +271,9 @@ function choice({attackerSkill,observerSkill,choiceKm,
                 .lossKilometre.riderStates.length,
               caughtSoloEnergyAfter:error.physicalLoss
                 .caughtSoloEnergyAfter,
+              nextBunchRiders:nextBunch.step.physicalGroup
+                .riderIds.length,
+              nextBunchLeader:nextBunch.step.leaderRiderId,
               paidSplits:error.physicalLoss.loss.splits.map(
                 row=>({riderId:row.riderId,
                   atDistanceM:row.atDistanceM,

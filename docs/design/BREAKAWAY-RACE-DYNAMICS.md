@@ -3826,6 +3826,14 @@ the 260-km loss. The caught break rider and the new detached rider
 both pay their own remaining road; a forged loss-kilometre energy is
 rejected by source replay. Later contact and all remaining kilometres
 are still unsettled.
+`advancePhysicalManagerPostcatchBunchKmV1` now pays the next
+kilometre for the 22 riders who remained in the bunch, from the
+replayed split source. In all eight mixed-role split cases the
+committed named leader is `sprint-4` after the 160-km loss or
+`sprint-3` after the 260-km loss. The detached rider cannot
+silently return or serve as that leader. Forged next-kilometre
+energy is rejected. Neither solo has yet been carried across that
+next kilometre, so this is still a partial race.
 
 `audit-physical-bunch-distance.mjs --assert` extends the opt-in
 paid-bunch source to mixed flat, hill, climb, descent and wind routes
