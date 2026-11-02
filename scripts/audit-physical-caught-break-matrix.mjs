@@ -12,6 +12,9 @@ import {catchPhysicalFrontSoloV1} from
 import {replayPhysicalCaughtBreakRaceV1,
   validatePhysicalCaughtBreakRaceV1} from
   '../lib/engine/v2/physical-caught-break-race-replay-v1.mjs';
+import {replayPhysicalFrontRaceV1,
+  validatePhysicalFrontRaceV1} from
+  '../lib/engine/v2/physical-front-race-replay-v1.mjs';
 
 const route=()=>Array.from({length:20},(_,index)=>({
   km:index+1,terrain:'flat',gradientPct:0,
@@ -107,9 +110,29 @@ const results=scenarios.map(scenario=>{
           (refusals.get(error.message)??0)+1);
       }
     }
-    if(catchKm===null)
-      throw new Error('No supported paid catch by km 19: '+
-        JSON.stringify([...refusals]));
+    if(catchKm===null){
+      let race;
+      try{
+        const input={startInput,start,attackKm:2,
+          throughKm:20};
+        race=replayPhysicalFrontRaceV1(input);
+        validatePhysicalFrontRaceV1(input,race);
+      }catch(error){
+        throw new Error('No supported paid catch or front finish: '+
+          error.message+'; catch checks '+
+          JSON.stringify([...refusals]));
+      }
+      return {scenario:scenario.name,status:'front_finish',
+        riderKm:race.kilometres.reduce((sum,row)=>
+          sum+row.riderStates.length,0),
+        decisionRows:race.kilometres.reduce((sum,row)=>
+          sum+row.riderStates.reduce((n,state)=>n+
+            state.decisions.length,0),0),
+        bunchFinishSeconds:+race.observedFinishSecondsByRider[
+          'control-0'].toFixed(1),
+        frontFinishSeconds:+race.observedFinishSecondsByRider[
+          'other-2'].toFixed(1)};
+    }
     const input={startInput,start,attackKm:2,
       catchKm,throughKm:20};
     const race=replayPhysicalCaughtBreakRaceV1(input);
@@ -150,6 +173,13 @@ if(process.argv.includes('--assert')){
     byName.base.catchKm);
   assert.match(byName.attacker_very_fatigued.reason,
     /follower cannot hold paid pace/);
+  assert.equal(byName.attacker_fresher.status,'front_finish');
+  assert.equal(byName.weaker_later_leader.status,
+    'front_finish');
+  assert.ok(byName.attacker_fresher.frontFinishSeconds<
+    byName.attacker_fresher.bunchFinishSeconds);
+  assert.equal(byName.attacker_fresher.riderKm,480);
+  assert.equal(byName.attacker_fresher.decisionRows,480);
   assert.equal(byName.summit_stake.status,'replayed');
   assert.equal(byName.later_climb.status,'replayed');
   assert.equal(byName.windy_flat.status,'replayed');

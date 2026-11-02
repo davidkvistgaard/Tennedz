@@ -49,6 +49,9 @@ import {runPhysicalSlidBreakSoloV1,
 import {replayPhysicalCaughtBreakRaceV1,
   validatePhysicalCaughtBreakRaceV1} from
   '../../lib/engine/v2/physical-caught-break-race-replay-v1.mjs';
+import {replayPhysicalFrontRaceV1,
+  validatePhysicalFrontRaceV1} from
+  '../../lib/engine/v2/physical-front-race-replay-v1.mjs';
 import {runPhysicalRearGroupV1,
   validatePhysicalRearGroupV1} from
   '../../lib/engine/v2/physical-rear-group-run-v1.mjs';
@@ -274,6 +277,20 @@ test('named manager attack forms front solo only by paid faster road',()=>{
   forgedFront.steps[0].gapSecondsToBunch+=1;
   assert.throws(()=>validatePhysicalFrontSoloV1(
     frontInput,forgedFront),/differs/);
+  const full=replayPhysicalFrontRaceV1(frontInput);
+  assert.equal(full.kilometres.length,20);
+  assert.ok(full.kilometres.every(row=>
+    row.riderStates.length===24&&row.riderStates.every(state=>
+      state.decisions.length>0&&state.energyAfter>=0)));
+  assert.equal(Object.keys(full.observedFinishSecondsByRider)
+    .length,24);
+  assert.ok(full.observedFinishSecondsByRider['other-2']<
+    full.observedFinishSecondsByRider['control-0']);
+  assert.equal(validatePhysicalFrontRaceV1(frontInput,full),true);
+  const falseFull=structuredClone(full);
+  falseFull.kilometres[10].riderStates[0].energyAfter+=1;
+  assert.throws(()=>validatePhysicalFrontRaceV1(
+    frontInput,falseFull),/differs/);
 });
 
 test('stronger later bunch worker creates an energy-priced catch window',()=>{

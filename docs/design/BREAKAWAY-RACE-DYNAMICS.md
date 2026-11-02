@@ -3550,9 +3550,12 @@ metre 12,562.5; the caught rider finishes 17.7 seconds after the
 bunch, with both times derived from paid road. Modestly increased
 attacker fatigue moves the paid catch to km 9. A very fatigued
 attacker exposes a missing follower pace-loss path before the
-attack can launch. A fresher attacker and a weaker later bunch
-leader have no physical catch by km 19, which the audit reports as
-refusals rather than inventing one. The minimum finish energy near
+attack can launch. `physical-front-race-replay-v1.mjs` now covers
+the two no-catch variants: a fresher attacker and a weaker later
+bunch leader both produce 480 rider-kilometre decisions and a paid
+front-solo finish instead of an invented catch. Thus eight of nine
+variants reach source-replayed finishes; the very fatigued starter
+remains an explicit refusal. The minimum finish energy near
 84 on this short route is diagnostic only; fatigue and whole-race
 energy scales remain uncalibrated. No variant is routed to guided
 races or production.
