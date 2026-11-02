@@ -6,7 +6,8 @@ import {normalizeOrders} from '../lib/engine/v2/orders.mjs';
 import {commitTeamChaseStakesV1} from
   '../lib/engine/v2/team-chase-stake-v1.mjs';
 import {startPhysicalBunchV1,runPhysicalBunchV1,
-  runPhysicalBunchToPaceLossV1} from
+  runPhysicalBunchToPaceLossV1,
+  runPhysicalStaggeredBunchLossV1} from
   '../lib/engine/v2/physical-start-bunch-v1.mjs';
 import {replayPhysicalSingleLossRaceV1,
   validatePhysicalSingleLossRaceV1} from
@@ -82,6 +83,36 @@ function source(distanceKm,fatigue,variant){
     teams[19].riders[7].mountain=31;
     teams[19].riders[7].descending=0;
   }
+  if(variant==='varied_field')
+    for(let teamIndex=0;teamIndex<teams.length;
+      teamIndex++){
+      const team=teams[teamIndex];
+      for(let riderIndex=0;riderIndex<team.riders.length;
+        riderIndex++){
+        const rider=team.riders[riderIndex];
+        const marker=teamIndex*8+riderIndex;
+        rider.flat=92+(marker*3)%7;
+        rider.hills=92+(marker*5)%7;
+        rider.mountain=92+(marker*11)%7;
+        rider.endurance=92+(marker*13)%7;
+        rider.timetrial=92+(marker*17)%7;
+        rider.strength=92+(marker*19)%7;
+        rider.form=46+marker%9;
+        rider.fatigue=fatigue+marker%5;
+        team.energy[rider.id]=100-rider.fatigue*.4;
+      }
+    }
+  const workerChoices=variant==='varied_field'?
+    teams.map(team=>team.riders.slice(2).sort((a,b)=>{
+      const score=rider=>rider.flat+rider.hills+
+        rider.mountain+rider.endurance+
+        rider.form-rider.fatigue;
+      return score(b)-score(a)||
+        a.id.localeCompare(b.id);
+    }).slice(0,2).map(row=>row.id)):null;
+  if(workerChoices)
+    teams[0].orders.baseline.frontWorkRiderId=
+      workerChoices[0][0];
   for(let marker=5;marker<distanceKm;marker+=5){
     const priorTeam=Math.floor((marker-1)/5)%fieldSize;
     const nextTeam=Math.floor(marker/5)%fieldSize;
@@ -90,7 +121,9 @@ function source(distanceKm,fatigue,variant){
         atKm:marker,frontWork:'sit_in'});
     teams[nextTeam].orders.phases.push({
       atKm:marker,frontWork:'rotate',
-      frontWorkRiderId:`team-${nextTeam}-2`});
+      frontWorkRiderId:workerChoices?
+        workerChoices[nextTeam][0]:
+        `team-${nextTeam}-2`});
   }
   for(const team of teams)
     team.orders=normalizeOrders(team.orders,{
@@ -103,7 +136,14 @@ function source(distanceKm,fatigue,variant){
         'sprint_finish':'none',
       captainId:team.riders[0].id},phases:[]}))});
   const startInput={teams,routeKilometres:route(distanceKm),
-    commitment,raceSeed:'physical-20-team-scale-1'};
+    commitment,raceSeed:'physical-20-team-scale-1',
+    ...(variant==='varied_field'?{
+      physicalDraftVersion:2,
+      emergencyFrontWorkers:workerChoices.map(
+        (choices,index)=>({version:1,
+          teamId:teams[index].id,
+          unavailableRiderId:choices[0],
+          replacementRiderId:choices[1]}))}:{})};
   return {startInput,start:startPhysicalBunchV1(startInput)};
 }
 
@@ -129,6 +169,42 @@ function audit(distanceKm,fatigue,variant){
     const loss=runPhysicalBunchToPaceLossV1({
       ...input,lossKm});
     const splitIds=loss.step.splits.map(row=>row.riderId);
+    let staggeredScale=null;
+    if(variant==='varied_field'){
+      try{
+        const staggered=runPhysicalStaggeredBunchLossV1({
+          ...input,throughKm:distanceKm});
+        staggeredScale={status:'paid_bunch_finish',
+          sourceVersion:staggered.version,
+          detachedRiders:staggered.detachedRiderIds.length,
+          lossKilometres:[...new Set(staggered.losses
+            .map(row=>row.sourceKm))],
+          paidPaceMatches:staggered.road.reduce((sum,row)=>
+            sum+row.riders.filter(rider=>
+              rider.role==='pace_match').length,0),
+          emergencyTurns:staggered.road.filter(row=>
+            row.emergencyFrontWorker).length,
+          singleLeaderEveryKm:staggered.road.every(row=>
+            row.riders.filter(rider=>
+              rider.role==='leader').length===1),
+          validPaceMatches:staggered.road.every(row=>
+            row.riders.filter(rider=>
+              rider.role==='pace_match').every(rider=>
+              rider.energySpent>0&&
+              rider.recoveryAward===0&&
+              row.riderDecisions.find(decision=>
+                decision.riderId===rider.riderId)
+                ?.choice==='hold_pace')),
+          everyBunchRiderDecided:staggered.road.every(row=>
+            row.riders.length===
+              row.riderDecisions.length),
+          namedLeaders:new Set(staggered.road.map(row=>
+            row.leaderRiderId)).size,
+          bunchFinishRiders:staggered.physicalGroup
+            .riderIds.length};
+      }catch(nextError){staggeredScale={
+        status:'refused',reason:nextError.message};}
+    }
     const completions=splitIds.map(riderId=>
       completePhysicalPaceLossKmV1({
         ...input,lossKm,loss,riderId}));
@@ -370,6 +446,7 @@ function audit(distanceKm,fatigue,variant){
     return {distanceKm,fatigue,variant,
       status:'paid_split',sourceKm:lossKm,
       splitRiders:splitIds,
+      staggeredScale,
       soloClockSpread,
       paidArrivalPartitions,
       paidRearContact,
@@ -391,7 +468,11 @@ function audit(distanceKm,fatigue,variant){
       run.energyByRider))};
 }
 
-const results=process.argv.includes('--probe-descent')?
+const results=process.argv.includes('--probe-varied')?
+  [120,260].flatMap(distanceKm=>
+    [10,30].map(fatigue=>
+      audit(distanceKm,fatigue,'varied_field'))):
+  process.argv.includes('--probe-descent')?
   [audit(120,10,'unequal_descent_catch')]:
   [120,260].flatMap(distanceKm=>
   [10,30].flatMap(fatigue=>
@@ -483,6 +564,30 @@ if(process.argv.includes('--assert')){
         assert.ok(row.mixedContinuation.minimumEnergy>=0);
       }
     }
+  }
+}
+if(process.argv.includes('--assert-varied')){
+  assert.equal(results.length,4);
+  for(const row of results){
+    assert.equal(row.variant,'varied_field');
+    assert.equal(row.status,'paid_split');
+    assert.equal(row.sourceKm,21);
+    assert.equal(row.staggeredScale?.status,
+      'paid_bunch_finish');
+    assert.equal(row.staggeredScale.sourceVersion,
+      'v2-physical-staggered-bunch-loss-2');
+    assert.equal(row.staggeredScale
+      .singleLeaderEveryKm,true);
+    assert.equal(row.staggeredScale
+      .validPaceMatches,true);
+    assert.equal(row.staggeredScale
+      .everyBunchRiderDecided,true);
+    assert.ok(row.staggeredScale.paidPaceMatches>300);
+    assert.ok(row.staggeredScale.detachedRiders>=35);
+    assert.ok(row.staggeredScale.namedLeaders>=12);
+    assert.equal(row.staggeredScale.emergencyTurns,0);
+    assert.equal(row.staggeredScale.bunchFinishRiders,
+      160-row.staggeredScale.detachedRiders);
   }
 }
 process.stdout.write(JSON.stringify({

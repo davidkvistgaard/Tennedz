@@ -4067,3 +4067,23 @@ Equal skills and simultaneous identical solo arrivals are scale
 witnesses, not a calibrated field distribution. Other mixed arrivals,
 later merges, realistic fatigue and whole-race chase
 timing remain unresolved before routing.
+
+`audit-physical-field-scale.mjs --probe-varied --assert-varied` now
+tests a separate opt-in `physicalDraftVersion: 2` with four
+heterogeneous 160-rider fields (120 or 260 km; fatigue 10 or 30).
+It uses the already versioned terrain-specific bunch draft allowance:
+10 ability points on flats, 6 on hills, 0 on climbs and 8 on descents.
+A rider whose sheltered cruise ability is insufficient but whose paid
+solo ability can match the actual leader stays with the bunch as an
+individual `hold_pace` decision. That rider pays full work and receives
+no recovery; the single named front leader remains the only leader.
+The prior physical source and historical recordings retain their
+original version and 2-point draft. The varied fields first lose
+15–17 riders on km 21, not km 1, and the surviving bunch pays a named
+leader on every kilometre through finish with explicit precommitted
+worker and emergency orders. Across the four cases, 37–46 riders
+physically detach on km 21, 26, 66 or 141; 352–661 rider-km use the
+paid pace-match state. These recordings only complete the surviving
+bunch. The detached riders' independent road, contacts, energy and
+finish clocks remain to be resolved before a heterogeneous full-field
+race can be routed.
