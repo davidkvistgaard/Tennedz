@@ -59,6 +59,8 @@ import {pricePhysicalRearEventTrackV1} from
 import {replayPhysicalStaggeredRearEventsV1,
   validatePhysicalStaggeredRearEventsV1} from
   '../../lib/engine/v2/physical-staggered-rear-event-replay-v1.mjs';
+import {decidePhysicalRearContactV1} from
+  '../../lib/engine/v2/physical-rear-contact-choice-v1.mjs';
 import {replayPhysicalStaggeredRaceV1,
   validatePhysicalStaggeredRaceV1} from
   '../../lib/engine/v2/physical-staggered-race-replay-v1.mjs';
@@ -396,6 +398,90 @@ test('different paid kilometres remove only physically dropped riders',()=>{
     row.riderStates.length===24));
   assert.equal(Object.keys(rearEvents
     .observedFinishSecondsByRider).length,24);
+  const firstRearEvent=rearEvents.contacts[0];
+  const rearCatcher=firstRearEvent.catchingRoadId
+    .slice('solo-'.length);
+  const catcherDecision=firstRearEvent
+    .contactDecisions.find(row=>
+      row.riderId===rearCatcher);
+  assert.ok(catcherDecision.observedOwnSecondsPerKm<
+    catcherDecision.observedRivalSecondsPerKm);
+  const passStartInput={...catchingInput.startInput,
+    soloCommitments:[commitRearSoloPlanV1({
+      riderId:rearCatcher,distanceKm:20,
+      stageNumber:1,stageCount:1,
+      baseline:{goal:'rejoin_bunch',
+        effort:'conserve'}})]};
+  const passRoadIds=firstRearEvent.roadIds;
+  const passChoiceInput={startInput:passStartInput,
+    km:firstRearEvent.sourceKm,
+    roadIds:passRoadIds,
+    riderIdsByRoad:Object.fromEntries(
+      passRoadIds.map(id=>[id,[id.slice(5)]])),
+    catchingRoadId:firstRearEvent.catchingRoadId,
+    observedSecondsPerKmByRoad:
+      Object.fromEntries(passRoadIds.map(id=>[
+        id,firstRearEvent.contactDecisions.find(
+          row=>row.riderId===id.slice(5))
+          .observedOwnSecondsPerKm])),
+    leaderRiderId:rearCatcher};
+  const passChoice=decidePhysicalRearContactV1(
+    passChoiceInput);
+  assert.equal(passChoice.outcome,'pass_through');
+  const hiddenChanged=structuredClone(passStartInput);
+  const rivalId=passRoadIds.find(id=>
+    id!==firstRearEvent.catchingRoadId).slice(5);
+  const rival=hiddenChanged.teams.flatMap(team=>
+    team.riders).find(row=>row.id===rivalId);
+  rival.mountain=1;
+  assert.deepEqual(decidePhysicalRearContactV1({
+    ...passChoiceInput,startInput:hiddenChanged}),
+  passChoice);
+  const catcherTeam=catchingInput.startInput.teams
+    .find(team=>team.riders.some(row=>
+      row.id===rearCatcher));
+  const stakeInput={...catchingInput.startInput,
+    commitment:commitTeamChaseStakesV1({
+      teams:catchingInput.startInput.teams,
+      distanceKm:20,
+      intentions:catchingInput.startInput.teams
+        .map(team=>({teamId:team.id,
+          baseline:{goal:team.id===catcherTeam.id?
+            'sprint_finish':'none',
+          captainId:team.id===catcherTeam.id?
+            rearCatcher:team.orders.captainId},
+          phases:[]}))})};
+  assert.equal(decidePhysicalRearContactV1({
+    ...passChoiceInput,startInput:stakeInput})
+    .outcome,'pass_through');
+  const passStart=startPhysicalBunchV1(
+    passStartInput);
+  const passStaggered=
+    runPhysicalStaggeredBunchLossV1({
+      startInput:passStartInput,start:passStart,
+      throughKm:20});
+  const passSolo=probePhysicalStaggeredSoloFieldV1({
+    startInput:passStartInput,start:passStart,
+    staggered:passStaggered,throughKm:20});
+  const passedRace=replayPhysicalStaggeredRearEventsV1({
+    startInput:passStartInput,start:passStart,
+    staggered:passStaggered,soloField:passSolo,
+    throughKm:20});
+  assert.equal(validatePhysicalStaggeredRearEventsV1({
+    startInput:passStartInput,start:passStart,
+    staggered:passStaggered,soloField:passSolo,
+    throughKm:20},passedRace),true);
+  assert.equal(passedRace.contacts[0].outcome,
+    'pass_through');
+  assert.ok(passedRace.kilometres[
+    passedRace.contacts[0].sourceKm-1]
+    .riderStates.find(row=>row.riderId===
+      rearCatcher).decisions.some(row=>
+      row.choice==='pass_through'));
+  assert.equal(passedRace.kilometres.at(-1)
+    .riderStates.find(row=>row.riderId===
+      rearCatcher).physicalGroupId,
+  `solo-${rearCatcher}`);
   assert.equal(validatePhysicalStaggeredRearEventsV1(
     rearEventInput,rearEvents),true);
   const forgedRearEvents=structuredClone(rearEvents);

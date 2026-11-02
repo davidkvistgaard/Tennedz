@@ -4185,3 +4185,15 @@ intent-sensitive passing, all orders and stages, heterogeneous group
 splits, break transitions and whole-race distributions. No guided race
 uses this version, and these four witnesses do not establish release
 readiness.
+
+At each rear contact, a versioned choice now uses the two roads'
+observed speed at the meeting, each rider's precommitted rear goal,
+current team order and committed team stake. If the catching road has
+an explicit rejoin goal or a named captain with a live sporting stake,
+it passes through an observed slower road and both roads keep their
+paid paths. Other measured contacts may cooperate for cheaper shelter
+and a safe finish. A 24-rider same-seed witness records that deliberate
+pass-through in the rider's kilometre decisions and retains separate
+solo groups through finish. No rival's hidden skill is consulted for
+this choice. This rule still needs broader role, terrain and stage
+calibration before any guided routing.
