@@ -3765,7 +3765,11 @@ the continuation refuses a later unrecorded return to the bunch.
 The 114-case same-seed audit reaches a fully source-replayed finish
 for every one of its 92 paid-contact cases, with 24 observed rider
 finish times in each; the other 22 cases still stop at their explicit
-manager order before contact. A modified finish energy is rejected
+manager order before contact. The 92 full finishes comprise 60 at
+25 km, 10 at 80 km, 11 at 160 km and 11 at 260 km. The minimum
+recorded rider energy across each whole race ranges from 51.668 to
+91.136; these values do not establish physiological calibration.
+A modified finish energy is rejected
 by source replay. These results test a diagnostic counterfactual,
 not a calibrated chase policy. The tactical `capacity_shortfall`
 classification remains unchanged, and neither this replay nor the

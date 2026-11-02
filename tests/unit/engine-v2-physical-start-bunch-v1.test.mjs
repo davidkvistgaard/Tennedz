@@ -970,6 +970,15 @@ test('committed physical chase catches a slowing front on paid road',()=>{
     .observedFinishSecondsByRider).length,24);
   assert.equal(validatePhysicalManagerChaseRaceV1(
     hillInput,managerRace),true);
+  const acceptedManagerRace=replayPhysicalManagerChaseRaceV1(
+    raceInput);
+  assert.equal(acceptedManagerRace.perceivedAction,
+    'commit_now');
+  assert.equal(acceptedManagerRace.kilometres.length,25);
+  assert.equal(Object.keys(acceptedManagerRace
+    .observedFinishSecondsByRider).length,24);
+  assert.equal(validatePhysicalManagerChaseRaceV1(
+    raceInput,acceptedManagerRace),true);
   const forgedManagerRace=structuredClone(managerRace);
   forgedManagerRace.kilometres.at(-1)
     .riderStates[0].energyAfter+=1;
