@@ -17,7 +17,8 @@ import {startPhysicalBunchV1,advancePhysicalStartBunchV1,
   runPhysicalNamedAttackV1,
   validatePhysicalNamedAttackV1,
   runPhysicalBunchAfterNamedAttackV1,
-  validatePhysicalBunchAfterNamedAttackV1} from
+  validatePhysicalBunchAfterNamedAttackV1,
+  advancePhysicalBunchAfterPerceivedCatchKmV1} from
   '../../lib/engine/v2/physical-start-bunch-v1.mjs';
 import {completePhysicalPaceLossKmV1,
   completePhysicalStaggeredLossKmV1,
@@ -829,6 +830,24 @@ test('committed physical chase catches a slowing front on paid road',()=>{
     km.riderStates.length===24));
   assert.equal(race.sources.later[0].bunchStep.resolvedChase
     .caughtRiderId,'other-2');
+  const afterContactPrior={
+    riderIds:contact.bunchStep.physicalGroup.riderIds,
+    energyByRider:contact.bunchStep.energyByRider,
+    quietKmByRider:contact.bunchStep.quietKmByRider};
+  const nextSegment=startInput.routeKilometres[catchKm];
+  assert.throws(()=>
+    advancePhysicalBunchAfterPerceivedCatchKmV1({
+      startInput,prior:afterContactPrior,
+      segment:nextSegment,caughtRiderId:'other-2',
+      chasingTeamId:'control'}),
+  /one ordered front worker|named working team/);
+  assert.throws(()=>
+    advancePhysicalBunchAfterPerceivedCatchKmV1({
+      startInput,prior:{...afterContactPrior,
+        riderIds:[...afterContactPrior.riderIds,'other-2']},
+      segment:nextSegment,caughtRiderId:'other-2',
+      chasingTeamId:'sprint'}),
+  /cannot regain bunch without contact/);
   assert.equal(race.sources.later[0].bunchStep.riderDecisions
     .find(row=>row.riderId==='sprint-2').reason,
   'caught_chase_target_continued_front_work');
