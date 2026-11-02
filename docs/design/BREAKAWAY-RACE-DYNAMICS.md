@@ -3576,3 +3576,17 @@ or riders joining after new paid contact. The minimum finish energy near
 84 on this short route is diagnostic only; fatigue and whole-race
 energy scales remain uncalibrated. No variant is routed to guided
 races or production.
+
+`physical-front-threat-choice-v1.mjs` now feeds the existing
+committed, perceived-strength chase policy from a front solo's
+source-replayed gap and all riders' current paid energy. It checks
+the observing team's active chase order and explicit sporting stake.
+The full source recording retains exact energy for replay, while
+the `choice` payload contains the observer's forecast and no rival
+skill or exact energy input. Only that choice should be shown to
+the observing team. In a same-seed test a sprint team
+with a selective chase order watches the small measured gap at km
+10; waiting until km 16 instead yields a `capacity_shortfall`
+forecast. Forging the observed gap fails replay. This choice does
+not yet spend a rider's energy or move a group; the paid pursuit
+must be connected before the policy can control a race.

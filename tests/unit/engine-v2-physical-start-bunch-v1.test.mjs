@@ -55,6 +55,9 @@ import {replayPhysicalFrontRaceV1,
 import {replayPhysicalSingleLossRaceV1,
   validatePhysicalSingleLossRaceV1} from
   '../../lib/engine/v2/physical-single-loss-race-replay-v1.mjs';
+import {decidePhysicalFrontThreatV1,
+  validatePhysicalFrontThreatV1} from
+  '../../lib/engine/v2/physical-front-threat-choice-v1.mjs';
 import {runPhysicalRearGroupV1,
   validatePhysicalRearGroupV1} from
   '../../lib/engine/v2/physical-rear-group-run-v1.mjs';
@@ -414,6 +417,59 @@ test('stronger later bunch worker creates an energy-priced catch window',()=>{
     .elapsedSeconds+=1;
   assert.throws(()=>validatePhysicalCaughtBreakRaceV1(
     raceInput,falseRace),/differs/);
+});
+
+test('perceived chase choice reads a replayed physical front gap',()=>{
+  const teams=field();
+  for(const team of teams)for(const rider of team.riders)
+    for(const skill of SPORTING_SKILLS)rider[skill]=96;
+  for(const skill of SPORTING_SKILLS)
+    teams[2].riders[2][skill]=95;
+  teams[2].orders.phases=[{atKm:1,attack:'selective',
+    attackRiderId:'other-2',effort:'hard'}];
+  teams[1].orders.phases=[{atKm:9,chase:'selective'}];
+  const initial=source(teams,route(),{
+    sprint:'sprint_finish',other:'break_stage'},
+  [{km:1},{km:9}]);
+  const input={...initial,attackKm:2,choiceKm:10,
+    observerTeamId:'sprint',
+    nominatedChaseTeamIds:['sprint']};
+  const choice=decidePhysicalFrontThreatV1(input);
+  assert.equal(choice.sourceKm,10);
+  assert.equal(choice.frontRiderId,'other-2');
+  assert.ok(choice.observedGapSeconds>0);
+  assert.ok(Math.abs(choice.observedGapSeconds-
+    choice.physicalSource.front.gapSecondsToBunch)<1e-7);
+  assert.ok(!Object.hasOwn(choice,'choiceInput'));
+  assert.equal(choice.choice.stake.goal,'sprint_finish');
+  assert.equal(choice.choice.choice.assessments[0].action,
+    'watch');
+  assert.equal(choice.movesRoad,false);
+  assert.equal(validatePhysicalFrontThreatV1(input,choice),true);
+  const forged=structuredClone(choice);
+  forged.observedGapSeconds+=1;
+  assert.throws(()=>validatePhysicalFrontThreatV1(
+    input,forged),/differs/);
+  const lateTeams=field();
+  for(const team of lateTeams)for(const rider of team.riders)
+    for(const skill of SPORTING_SKILLS)rider[skill]=96;
+  for(const skill of SPORTING_SKILLS)
+    lateTeams[2].riders[2][skill]=95;
+  lateTeams[2].orders.phases=[{atKm:1,
+    attack:'selective',attackRiderId:'other-2',
+    effort:'hard'}];
+  lateTeams[1].orders.phases=[{atKm:15,
+    chase:'selective'}];
+  const lateSource=source(lateTeams,route(),{
+    sprint:'sprint_finish',other:'break_stage'},[{km:1}]);
+  const late=decidePhysicalFrontThreatV1({...lateSource,
+    attackKm:2,choiceKm:16,
+    observerTeamId:'sprint',
+    nominatedChaseTeamIds:['sprint']});
+  assert.equal(late.choice.choice.assessments[0].action,
+    'capacity_shortfall');
+  assert.ok(late.observedGapSeconds>
+    choice.observedGapSeconds);
 });
 
 test('early climb weakness records a paid partial solo and no rear group',()=>{
