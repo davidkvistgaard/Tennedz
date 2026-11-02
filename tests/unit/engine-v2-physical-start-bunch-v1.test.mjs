@@ -3,6 +3,8 @@ import assert from 'node:assert/strict';
 import {SPORTING_SKILLS} from '../../lib/engine/v2/skills.mjs';
 import {commitTeamChaseStakesV1} from
   '../../lib/engine/v2/team-chase-stake-v1.mjs';
+import {commitRearSoloPlanV1} from
+  '../../lib/engine/v2/rear-solo-commitment-v1.mjs';
 import {startPhysicalBunchV1,advancePhysicalStartBunchV1,
   validatePhysicalStartBunchV1,runPhysicalBunchV1,
   validatePhysicalBunchRunV1,runPhysicalBunchToPaceLossV1,
@@ -13,6 +15,9 @@ import {startPhysicalBunchV1,advancePhysicalStartBunchV1,
 import {completePhysicalPaceLossKmV1,
   validatePhysicalPaceLossCompletionV1} from
   '../../lib/engine/v2/physical-pace-loss-completion-v1.mjs';
+import {runPhysicalDetachedSoloV1,
+  validatePhysicalDetachedSoloV1} from
+  '../../lib/engine/v2/physical-detached-solo-run-v1.mjs';
 
 const route=(terrain='flat')=>Array.from({length:20},(_,index)=>({
   km:index+1,terrain,gradientPct:terrain==='climb'?6:0,
@@ -248,4 +253,72 @@ test('surviving bunch pays later leaders without reclaiming detached rider',()=>
   forged.road[0].physicalGroup.riderIds.push('other-3');
   assert.throws(()=>validatePhysicalBunchAfterPaceLossV1({...input,
     lossKm:1,throughKm:3},forged),/differs/);
+});
+
+test('detached rider follows pre-race solo plan with paid later road',()=>{
+  const teams=field();
+  for(const skill of SPORTING_SKILLS)teams[2].riders[3][skill]=10;
+  const initial=source(teams,route('climb'));
+  const plan=commitRearSoloPlanV1({riderId:'other-3',
+    distanceKm:20,stageNumber:1,stageCount:1,
+    baseline:{goal:'finish_safely',effort:'conserve'}});
+  const startInput={...initial.startInput,
+    soloCommitments:[plan]};
+  const start=startPhysicalBunchV1(startInput);
+  const input={startInput,start,lossKm:1,
+    throughKm:3,riderId:'other-3'};
+  const run=runPhysicalDetachedSoloV1(input);
+  assert.deepEqual(run.steps.map(row=>row.sourceKm),[2,3]);
+  assert.ok(run.steps.every(row=>
+    row.decision.goal==='finish_safely'&&
+    row.energySpent>0&&row.recoveryAward===0&&
+    row.gapSecondsToBunch>0));
+  assert.equal(run.physicalGroup.riderIds[0],'other-3');
+  assert.ok(run.elapsedSeconds>
+    run.steps.at(-1).bunchElapsedSeconds);
+  assert.equal(validatePhysicalDetachedSoloV1(input,run),true);
+  const forged=structuredClone(run);
+  forged.steps[0].energyAfter+=1;
+  assert.throws(()=>validatePhysicalDetachedSoloV1(input,forged),
+    /differs/);
+  const changed=structuredClone(startInput);
+  changed.soloCommitments[0].baseline.effort='hard';
+  assert.throws(()=>runPhysicalDetachedSoloV1({...input,
+    startInput:changed}),/replayed committed start/);
+  const phased=commitRearSoloPlanV1({riderId:'other-3',
+    distanceKm:20,stageNumber:1,stageCount:1,
+    baseline:{goal:'finish_safely',effort:'conserve'},
+    phases:[{atKm:5,goal:'rejoin_bunch',effort:'steady'}]});
+  const phasedInput={...initial.startInput,
+    soloCommitments:[phased]};
+  const changedGoal=runPhysicalDetachedSoloV1({
+    startInput:phasedInput,start:startPhysicalBunchV1(phasedInput),
+    lossKm:1,throughKm:6,riderId:'other-3'});
+  assert.equal(changedGoal.steps[3].decision.goal,'finish_safely');
+  assert.equal(changedGoal.steps[4].decision.goal,'rejoin_bunch');
+});
+
+test('detached solo respects team effort and future-stage reserve',()=>{
+  const teams=field();
+  for(const skill of SPORTING_SKILLS)teams[2].riders[3][skill]=10;
+  const initial=source(teams,route('climb'));
+  const runWithPlan=plan=>{
+    const startInput={...initial.startInput,
+      soloCommitments:[plan]};
+    return runPhysicalDetachedSoloV1({startInput,
+      start:startPhysicalBunchV1(startInput),
+      lossKm:1,throughKm:2,riderId:'other-3'});
+  };
+  const tooHard=commitRearSoloPlanV1({riderId:'other-3',
+    distanceKm:20,stageNumber:1,stageCount:1,
+    baseline:{goal:'rejoin_bunch',effort:'hard'}});
+  assert.throws(()=>runWithPlan(tooHard),/exceeds the team effort/);
+  const save=commitRearSoloPlanV1({riderId:'other-3',
+    distanceKm:20,stageNumber:1,stageCount:2,
+    baseline:{goal:'save_for_stage',effort:'conserve',
+      committedStagePlan:{riderId:'other-3',
+        currentStageNumber:1,targetStageNumber:2,
+        currentGoal:'finish_safely',futureGoal:'target_stage',
+        reserveEnergy:95}}});
+  assert.throws(()=>runWithPlan(save),/future-stage reserve/);
 });

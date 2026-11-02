@@ -3378,3 +3378,18 @@ exists. A same-seed early climb witness carries the surviving bunch
 through km 3 while the detached rider's road remains separate. Later
 additional bunch splits and the detached rider's consecutive solo road
 are still unsupported in this version.
+
+The start source may also snapshot explicit `rear-solo-commitment-v1`
+plans for named riders. `physical-detached-solo-run-v1.mjs` takes such
+a plan and replays the rider's completed split kilometre against the
+surviving bunch. Each later solo kilometre gets its committed goal and
+effort, must respect the active team effort ceiling, pays full solo
+terrain cost, settles the route-derived cap and records actual elapsed
+time and seconds behind the bunch. A future-stage saving goal still
+requires its explicit committed stage plan and reserve. A same-source
+climb witness verifies two further paid solo decisions and rejects a
+forged energy row or changed plan. A route-marker plan changes the
+rider's goal from a safe finish to rejoining at km 6. This route
+refuses if the rider
+catches the bunch; source-paid contact and possible rejoining still
+need separate implementation. It also refuses unpayable solo road.
