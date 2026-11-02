@@ -48,15 +48,20 @@ function choice({attackerSkill,observerSkill,choiceKm,
   stopChaseAtKm=null,settleFinish=false,
   fatigue=20,roadVariant='flat',attackKm=2,
   rotateLongLeaders=false}){
+  const terrainStartKm=distanceKm<=25?14:distanceKm-12;
+  const terrainEndKm=distanceKm<=25?18:distanceKm-7;
   const road=Array.from({length:distanceKm},(_,index)=>({
     ...route[0],km:index+1,
-    ...(index+1>=14&&index+1<=18&&
+    ...(index+1>=terrainStartKm&&
+      index+1<=terrainEndKm&&
       roadVariant==='hill_mid'?{
       terrain:'hill',gradientPct:4}:{}),
-    ...(index+1>=14&&index+1<=18&&
+    ...(index+1>=terrainStartKm&&
+      index+1<=terrainEndKm&&
       roadVariant==='climb_mid'?{
       terrain:'climb',gradientPct:6}:{}),
-    ...(index+1>=14&&index+1<=18&&
+    ...(index+1>=terrainStartKm&&
+      index+1<=terrainEndKm&&
       roadVariant==='wind_mid'?{
       exposed:true,weather:{temperatureC:16,
         windKph:20,rainMm:0}}:{})}));
@@ -277,6 +282,21 @@ const longCalibration=process.argv.includes('--long-calibration')?
       try{return choice(input);}
       catch(error){return {...input,refused:error.message};}
     }))):undefined;
+const longTerrainCalibration=process.argv.includes(
+  '--long-calibration')?[
+  {distanceKm:160,attackerSkill:95,observerSkill:98},
+  {distanceKm:260,attackerSkill:95,observerSkill:99},
+].flatMap(variant=>['hill_mid','climb_mid','wind_mid']
+  .map(roadVariant=>{
+    const input={...variant,roadVariant,
+      choiceKm:variant.distanceKm-12,
+      attackKm:variant.distanceKm-20,
+      frontConserveAtKm:variant.distanceKm-15,
+      stopChaseAtKm:variant.distanceKm-5,
+      rotateLongLeaders:true,settleFinish:true};
+    try{return choice(input);}
+    catch(error){return {...input,refused:error.message};}
+  })):undefined;
 if(process.argv.includes('--assert')){
   assert.equal(results.length,384);
   assert.equal(actionCounts.refused??0,0);
@@ -338,6 +358,19 @@ if(process.argv.includes('--assert')){
       row.action==='watch').length,18);
     assert.equal(longCalibration.filter(row=>
       row.action==='capacity_shortfall').length,28);
+    assert.equal(longTerrainCalibration.length,6);
+    assert.ok(longTerrainCalibration.every(row=>!row.refused));
+    assert.deepEqual(longTerrainCalibration.filter(row=>
+      row.chaseRace?.status==='paid_contact_finish')
+      .map(row=>[row.distanceKm,row.roadVariant]),
+    [[260,'wind_mid']]);
+    const calm=finishes.find(row=>row.distanceKm===260);
+    const wind=longTerrainCalibration.find(row=>
+      row.distanceKm===260&&row.roadVariant==='wind_mid');
+    assert.equal(wind.chaseRace.contactAtM,
+      calm.chaseRace.contactAtM);
+    assert.equal(wind.chaseRace.minFinishEnergy,
+      calm.chaseRace.minFinishEnergy);
   }
 }
 process.stdout.write(JSON.stringify({version:1,
@@ -345,5 +378,7 @@ process.stdout.write(JSON.stringify({version:1,
   commitWindows,frontEffortProbe,finishWitness,
   ...(calibration===undefined?{}:{calibration}),
   ...(longCalibration===undefined?{}:{longCalibration}),
+  ...(longTerrainCalibration===undefined?{}:{
+    longTerrainCalibration}),
   ...(process.argv.includes('--verbose')?{results}:{})},
 null,2)+'\n');

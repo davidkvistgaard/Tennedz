@@ -3701,6 +3701,14 @@ states, 24 finishes, seven leaders and minimum finish energy 51.83.
 No 80-km variant commits in this small grid. These long flat cases
 extend source coverage, but the substantial remaining energy and
 selective chase decisions still need calibrated race evidence.
+Six further long-route probes put a hill, climb or exposed 20 km/h
+wind into the late chase window of those two long witnesses. Hills
+and climbs change both decisions away from commitment. The 260-km
+wind case still catches and finishes, but its contact metre and
+minimum finish energy are identical to calm road in this uniform-skill
+fixture. The current physiological wind treatment alters skill mix
+only; it does not add an absolute wind load to the paid energy demand.
+Wind-sensitive pursuit timing and cost remain uncalibrated.
 
 `audit-physical-bunch-distance.mjs --assert` extends the opt-in
 paid-bunch source to mixed flat, hill, climb, descent and wind routes
