@@ -455,7 +455,8 @@ const earlyLongCalibration=process.argv.includes(
   })):undefined;
 const earlyRoleCalibration=process.argv.includes(
   '--role-long-calibration')?[160,260].flatMap(
-  distanceKm=>['flat','climb_mid'].map(roadVariant=>{
+  distanceKm=>['flat','hill_mid','climb_mid',
+    'wind_mid'].map(roadVariant=>{
     const input={attackerSkill:96,observerSkill:98,
       choiceKm:11,attackKm:2,frontConserveAtKm:5,
       distanceKm,stopChaseAtKm:20,
@@ -652,7 +653,7 @@ if(process.argv.includes('--assert')){
       row.counterfactual.finish.minimumEnergy>0));
   }
   if(earlyRoleCalibration!==undefined){
-    assert.equal(earlyRoleCalibration.length,4);
+    assert.equal(earlyRoleCalibration.length,8);
     assert.ok(earlyRoleCalibration.every(row=>
       !row.refused&&row.action==='watch'&&
       row.horizonCatchKm===11&&
@@ -686,7 +687,7 @@ if(process.argv.includes('--assert')){
         [0].energySpent>0&&
       row.counterfactual.finish.physicalLoss.completions
         [0].gapSecondsToBunch>0
-    ).length,2);
+    ).length,6);
   }
 }
 process.stdout.write(JSON.stringify({version:1,

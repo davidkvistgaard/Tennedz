@@ -3798,13 +3798,14 @@ season-long control exhaustion or tactical routing.
 mountain, endurance and wind ability and the front rider's matching
 abilities at the same seed. On 160- and 260-km flat routes, both
 manager-order chases meet at km 11 and source-replay all 24 finishes.
-On the corresponding routes with a later climb, contact still occurs
-at km 11, but the full diagnostic refuses when a bunch follower
-cannot hold the paid climbing pace. A separate opt-in post-catch
-source now records `sprint-2` losing the 160-km bunch on km 148,
-18.72 m before its kilometre line, and the 260-km bunch on km 251,
-16.40 m before its kilometre line. It source-replays the partial
-paid energy and verifies the physical split. A separate versioned
+On the corresponding routes with a later hill, climb or exposed wind,
+contact still occurs at km 11, but the full diagnostic refuses when
+a bunch follower cannot hold the paid pace. A separate opt-in
+post-catch source records `sprint-2` losing the 160-km bunch on
+km 148 and the 260-km bunch on km 251. In the climb variants the
+split occurs 18.72 m and 16.40 m before the respective kilometre
+lines. It source-replays the partial paid energy and verifies the
+physical split. A separate versioned
 completion then pays each rider's remaining metres and checks that
 the caught break rider cannot meet that rider or the bunch before
 the same kilometre line. The later solo road and possible future
