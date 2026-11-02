@@ -22,6 +22,8 @@ import {startPhysicalBunchV1,advancePhysicalStartBunchV1,
   '../../lib/engine/v2/physical-start-bunch-v1.mjs';
 import {completePhysicalPaceLossKmV1,
   completePhysicalStaggeredLossKmV1,
+  partitionPhysicalStaggeredLossArrivalsV1,
+  validatePhysicalStaggeredLossArrivalsV1,
   validatePhysicalPaceLossCompletionV1} from
   '../../lib/engine/v2/physical-pace-loss-completion-v1.mjs';
 import {runPhysicalStaggeredDetachedSoloV1,
@@ -240,6 +242,20 @@ test('different paid kilometres remove only physically dropped riders',()=>{
     !row.physicalGroup.riderIds.includes('other-3')));
   assert.equal(validatePhysicalStaggeredBunchLossV1({
     ...input,throughKm:20},recording),true);
+  const arrivalsInput={...input,staggered:recording};
+  const arrivals=partitionPhysicalStaggeredLossArrivalsV1(
+    arrivalsInput);
+  assert.equal(arrivals.completions.length,2);
+  assert.deepEqual(arrivals.arrivals.map(row=>[
+    row.sourceKm,row.riderIds]),[
+    [6,['control-2']],[11,['other-3']]]);
+  assert.equal(arrivals.contacts.length,0);
+  assert.equal(validatePhysicalStaggeredLossArrivalsV1(
+    arrivalsInput,arrivals),true);
+  const forgedArrivals=structuredClone(arrivals);
+  forgedArrivals.completions[0].energyAfter+=1;
+  assert.throws(()=>validatePhysicalStaggeredLossArrivalsV1(
+    arrivalsInput,forgedArrivals),/differ/);
   for(const riderId of ['control-2','other-3']){
     const completion=completePhysicalStaggeredLossKmV1({
       ...input,staggered:recording,riderId});

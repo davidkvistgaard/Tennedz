@@ -12,7 +12,9 @@ import {startPhysicalBunchV1,runPhysicalBunchV1,
 import {replayPhysicalSingleLossRaceV1,
   validatePhysicalSingleLossRaceV1} from
   '../lib/engine/v2/physical-single-loss-race-replay-v1.mjs';
-import {completePhysicalPaceLossKmV1} from
+import {completePhysicalPaceLossKmV1,
+  partitionPhysicalStaggeredLossArrivalsV1,
+  validatePhysicalStaggeredLossArrivalsV1} from
   '../lib/engine/v2/physical-pace-loss-completion-v1.mjs';
 import {partitionPhysicalSimultaneousLossV1,
   validatePhysicalSimultaneousLossPartitionV1,
@@ -174,9 +176,19 @@ function audit(distanceKm,fatigue,variant){
       try{
         const staggered=runPhysicalStaggeredBunchLossV1({
           ...input,throughKm:distanceKm});
+        const arrivalsInput={...input,staggered};
+        const arrivals=partitionPhysicalStaggeredLossArrivalsV1(
+          arrivalsInput);
+        validatePhysicalStaggeredLossArrivalsV1(
+          arrivalsInput,arrivals);
         staggeredScale={status:'paid_bunch_finish',
           sourceVersion:staggered.version,
           detachedRiders:staggered.detachedRiderIds.length,
+          paidLossCompletions:arrivals.completions.length,
+          sameMetreArrivalContacts:arrivals.contacts.length,
+          arrivalContacts:arrivals.contacts,
+          separateArrivalSolos:
+            arrivals.separateSoloRiderIds.length,
           lossKilometres:[...new Set(staggered.losses
             .map(row=>row.sourceKm))],
           paidPaceMatches:staggered.road.reduce((sum,row)=>
@@ -584,6 +596,18 @@ if(process.argv.includes('--assert-varied')){
       .everyBunchRiderDecided,true);
     assert.ok(row.staggeredScale.paidPaceMatches>300);
     assert.ok(row.staggeredScale.detachedRiders>=35);
+    assert.equal(row.staggeredScale.paidLossCompletions,
+      row.staggeredScale.detachedRiders);
+    assert.equal(row.staggeredScale
+      .sameMetreArrivalContacts,
+    row.fatigue===30?1:0);
+    assert.equal(row.staggeredScale.separateArrivalSolos+
+      row.staggeredScale.arrivalContacts.reduce((sum,
+        contact)=>sum+contact.riderIds.length,0),
+    row.staggeredScale.detachedRiders);
+    assert.ok(row.staggeredScale.arrivalContacts.every(
+      contact=>contact.riderIds.length>=2&&
+      contact.atDistanceM===contact.sourceKm*1000));
     assert.ok(row.staggeredScale.namedLeaders>=12);
     assert.equal(row.staggeredScale.emergencyTurns,0);
     assert.equal(row.staggeredScale.bunchFinishRiders,

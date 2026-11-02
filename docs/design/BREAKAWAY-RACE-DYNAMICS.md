@@ -4087,3 +4087,12 @@ paid pace-match state. These recordings only complete the surviving
 bunch. The detached riders' independent road, contacts, energy and
 finish clocks remain to be resolved before a heterogeneous full-field
 race can be routed.
+
+The varied-field audit now source-replays each detached rider's
+remaining loss-kilometre road in one batch. At fatigue 10, all 39 or
+46 arrivals have distinct clocks. At fatigue 30, one pair in each
+field reaches the same kilometre end at the same clock and is recorded
+as paid contact; the other 35 or 39 arrivals remain separate solos.
+This contact does not grant a shared pace, draft benefit or finish.
+Later encounters and every detached rider's remaining kilometres
+still need physical source replay.
