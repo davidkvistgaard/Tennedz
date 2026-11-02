@@ -3690,6 +3690,17 @@ those do not simulate a committed chase. No climb case reaches the
 contact-finish branch in this matrix. Some wind cases reproduce the
 same contact metre as calm road. These are specific calibration gaps,
 not evidence of complete long-race realism.
+The `--long-calibration --assert` probe places a manager-ordered late
+attack and rotating named bunch leaders into 80, 160 and 260 km flat
+races. Across 48 same-seed strength combinations, 18 choose watch,
+28 report capacity shortfall, and two commit a chase that reaches
+paid contact, slides, and finishes. The 160-km replay has 3,840
+rider-kilometre states, 24 finish times, seven distinct paid bunch
+leaders and minimum finish energy 66.49. The 260-km replay has 6,240
+states, 24 finishes, seven leaders and minimum finish energy 51.83.
+No 80-km variant commits in this small grid. These long flat cases
+extend source coverage, but the substantial remaining energy and
+selective chase decisions still need calibrated race evidence.
 
 `audit-physical-bunch-distance.mjs --assert` extends the opt-in
 paid-bunch source to mixed flat, hill, climb, descent and wind routes

@@ -46,7 +46,8 @@ const field=(fatigue=20)=>['control','sprint','other'].map(id=>{
 function choice({attackerSkill,observerSkill,choiceKm,
   frontConserveAtKm=null,distanceKm=20,
   stopChaseAtKm=null,settleFinish=false,
-  fatigue=20,roadVariant='flat'}){
+  fatigue=20,roadVariant='flat',attackKm=2,
+  rotateLongLeaders=false}){
   const road=Array.from({length:distanceKm},(_,index)=>({
     ...route[0],km:index+1,
     ...(index+1>=14&&index+1<=18&&
@@ -68,20 +69,39 @@ function choice({attackerSkill,observerSkill,choiceKm,
       for(const rider of teams[2].riders)
         if(rider.id!=='other-2')rider[skill]=100;
   }
-  teams[2].orders.phases=[{atKm:1,attack:'selective',
+  teams[2].orders.phases=[{atKm:attackKm-1,
+    attack:'selective',
     attackRiderId:'other-2',effort:'hard'}];
   if(frontConserveAtKm!==null)
     teams[2].orders.phases.push({atKm:frontConserveAtKm,
       effort:'conserve'});
   teams[0].orders.phases=[{atKm:choiceKm-1,
     frontWork:'sit_in'}];
+  if(rotateLongLeaders){
+    const rotations=[];
+    for(let atKm=5;atKm<choiceKm-1;atKm+=10)
+      rotations.push({atKm,
+        frontWork:'rotate',
+        frontWorkRiderId:`control-${2+
+          Math.floor(atKm/10)%6}`});
+    teams[0].orders.phases=[...rotations,
+      ...teams[0].orders.phases];
+  }
   teams[1].orders.phases=[{atKm:choiceKm-1,
     chase:'selective',frontWork:'rotate',
     frontWorkRiderId:'sprint-2'}];
   if(stopChaseAtKm!==null)
     teams[1].orders.phases.push({atKm:stopChaseAtKm,
       chase:'ignore'});
+  if(rotateLongLeaders)
+    for(let atKm=stopChaseAtKm??choiceKm+10;
+      atKm<distanceKm;atKm+=10)
+      if(atKm!==stopChaseAtKm)
+        teams[1].orders.phases.push({atKm,
+          frontWorkRiderId:`sprint-${2+
+            Math.floor(atKm/10)%6}`});
   const keypoints=[{km:1},{km:choiceKm-1},
+    {km:attackKm-1},
     ...(stopChaseAtKm===null?[]:[{km:stopChaseAtKm}])];
   for(const team of teams)team.orders=normalizeOrders(team.orders,{
     riderIds:team.riders.map(rider=>rider.id),
@@ -97,7 +117,7 @@ function choice({attackerSkill,observerSkill,choiceKm,
     raceSeed:'same-threat-window-seed'};
   const start=startPhysicalBunchV1(startInput);
   const input={startInput,start,
-    attackKm:2,choiceKm,observerTeamId:'sprint',
+    attackKm,choiceKm,observerTeamId:'sprint',
     nominatedChaseTeamIds:['sprint']};
   const recording=decidePhysicalFrontThreatV1(input);
   const action=recording.choice.choice.assessments[0].action;
@@ -160,7 +180,15 @@ function choice({attackerSkill,observerSkill,choiceKm,
                 riderKilometres:finish.kilometres.reduce(
                   (sum,row)=>sum+row.riderStates.length,0),
                 finishRiders:Object.keys(
-                  finish.observedFinishSecondsByRider).length};
+                  finish.observedFinishSecondsByRider).length,
+                minFinishEnergy:+Math.min(...finish.kilometres
+                  .at(-1).riderStates.map(row=>row.energyAfter))
+                  .toFixed(3),
+                distinctPaidLeaders:new Set(finish.kilometres
+                  .flatMap(row=>row.riderStates)
+                  .filter(row=>row.decisions.some(decision=>
+                    ['pull','chase'].includes(decision.choice)))
+                  .map(row=>row.riderId)).size};
             }
             break;
           }catch{continue;}
@@ -169,6 +197,8 @@ function choice({attackerSkill,observerSkill,choiceKm,
     }
   }
   return {attackerSkill,observerSkill,choiceKm,
+    ...(attackKm===2?{}:{attackKm}),
+    ...(rotateLongLeaders?{rotateLongLeaders:true}:{}),
     ...(fatigue===20?{}:{fatigue}),
     ...(roadVariant==='flat'?{}:{roadVariant}),
     ...(distanceKm===20?{}:{distanceKm}),
@@ -234,6 +264,19 @@ const calibration=process.argv.includes('--calibration')?
         try{return choice(input);}
         catch(error){return {...input,refused:error.message};}
       }))):undefined;
+const longCalibration=process.argv.includes('--long-calibration')?
+  [80,160,260].flatMap(distanceKm=>
+    [94,95,96,97].flatMap(attackerSkill=>
+      [97,98,99,100].map(observerSkill=>{
+      const input={attackerSkill,observerSkill,
+        choiceKm:distanceKm-12,
+        attackKm:distanceKm-20,
+        frontConserveAtKm:distanceKm-15,
+        distanceKm,stopChaseAtKm:distanceKm-5,
+        rotateLongLeaders:true,settleFinish:true};
+      try{return choice(input);}
+      catch(error){return {...input,refused:error.message};}
+    }))):undefined;
 if(process.argv.includes('--assert')){
   assert.equal(results.length,384);
   assert.equal(actionCounts.refused??0,0);
@@ -278,10 +321,29 @@ if(process.argv.includes('--assert')){
     assert.ok(finishes.some(row=>row.roadVariant==='wind_mid'));
     assert.ok(finishes.some(row=>row.fatigue===40));
   }
+  if(longCalibration!==undefined){
+    assert.equal(longCalibration.length,48);
+    assert.ok(longCalibration.every(row=>!row.refused));
+    const finishes=longCalibration.filter(row=>
+      row.chaseRace?.status==='paid_contact_finish');
+    assert.deepEqual(finishes.map(row=>row.distanceKm),
+      [160,260]);
+    assert.ok(finishes.every(row=>
+      row.chaseRace.riderKilometres===
+        row.distanceKm*24&&
+      row.chaseRace.finishRiders===24&&
+      row.chaseRace.minFinishEnergy>=0&&
+      row.chaseRace.distinctPaidLeaders>=7));
+    assert.equal(longCalibration.filter(row=>
+      row.action==='watch').length,18);
+    assert.equal(longCalibration.filter(row=>
+      row.action==='capacity_shortfall').length,28);
+  }
 }
 process.stdout.write(JSON.stringify({version:1,
   raceSeed:'same-threat-window-seed',actionCounts,
   commitWindows,frontEffortProbe,finishWitness,
   ...(calibration===undefined?{}:{calibration}),
+  ...(longCalibration===undefined?{}:{longCalibration}),
   ...(process.argv.includes('--verbose')?{results}:{})},
 null,2)+'\n');
