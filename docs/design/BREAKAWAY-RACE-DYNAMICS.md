@@ -3780,6 +3780,16 @@ classification remains unchanged, and neither this replay nor the
 forecast is routed to guided races. Pursuit timing across varied
 fields, terrain, fatigue, wind and team orders still needs whole-race
 calibration.
+An additional `--early-long-calibration` probe starts the same paid
+break at km 2 and the manager chase at km 11 on 160- and 260-km roads,
+each at initial fatigue 20 and 40. All four observer actions are
+`watch`, while both the observer-only horizon and the paid manager
+road reach contact at km 15. All four counterfactuals source-replay
+every rider kilometre and 24 finishes. Their minimum recorded
+energy ranges from 42.66 to 66.16; the two 260-km slowest finishes
+are 5.90 and 5.98 hours. This extends early-contact coverage, but
+it still uses a uniform synthetic field and does not validate
+season-long control exhaustion or tactical routing.
 
 `audit-physical-bunch-distance.mjs --assert` extends the opt-in
 paid-bunch source to mixed flat, hill, climb, descent and wind routes

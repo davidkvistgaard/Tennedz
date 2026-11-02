@@ -402,6 +402,17 @@ const longTerrainCalibration=process.argv.includes(
     try{return choice(input);}
     catch(error){return {...input,refused:error.message};}
   })):undefined;
+const earlyLongCalibration=process.argv.includes(
+  '--early-long-calibration')?[160,260].flatMap(
+  distanceKm=>[20,40].map(fatigue=>{
+    const input={attackerSkill:96,observerSkill:98,
+      choiceKm:11,attackKm:2,frontConserveAtKm:5,
+      distanceKm,stopChaseAtKm:20,
+      fatigue,rotateLongLeaders:true,
+      assessHorizon:true,assessCounterfactual:true};
+    try{return choice(input);}
+    catch(error){return {...input,refused:error.message};}
+  })):undefined;
 const policyCross=calibration&&longCalibration&&
   longTerrainCalibration?{
   rows:[...calibration,...longCalibration,
@@ -575,6 +586,19 @@ if(process.argv.includes('--assert')){
     assert.ok(counterfactualCross.sameCatchKm>0);
     assert.ok(counterfactualCross.maxCatchKmError<=2);
   }
+  if(earlyLongCalibration!==undefined){
+    assert.equal(earlyLongCalibration.length,4);
+    assert.ok(earlyLongCalibration.every(row=>
+      !row.refused&&row.action==='watch'&&
+      row.horizonCatchKm===15&&
+      row.counterfactual.status==='paid_contact'&&
+      row.counterfactual.contactKm===15&&
+      row.counterfactual.finish.status==='paid_finish'&&
+      row.counterfactual.finish.riderKilometres===
+        row.distanceKm*24&&
+      row.counterfactual.finish.finishRiders===24&&
+      row.counterfactual.finish.minimumEnergy>0));
+  }
 }
 process.stdout.write(JSON.stringify({version:1,
   raceSeed:'same-threat-window-seed',actionCounts,
@@ -583,6 +607,8 @@ process.stdout.write(JSON.stringify({version:1,
   ...(longCalibration===undefined?{}:{longCalibration}),
   ...(longTerrainCalibration===undefined?{}:{
     longTerrainCalibration}),
+  ...(earlyLongCalibration===undefined?{}:{
+    earlyLongCalibration}),
   ...(policyCross===null?{}:{policyCross}),
   ...(counterfactualCross===null?{}:{counterfactualCross}),
   ...(process.argv.includes('--verbose')?{results}:{})},
