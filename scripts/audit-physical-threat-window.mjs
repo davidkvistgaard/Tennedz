@@ -51,6 +51,12 @@ import {validatePhysicalPostcatchSplitContactV1} from
 import {finishPhysicalPostcatchContactKmV1,
   validatePhysicalPostcatchContactKmV1} from
   '../lib/engine/v2/physical-postcatch-contact-road-v1.mjs';
+import {replayPhysicalManagerPostcatchContactV1,
+  validatePhysicalManagerPostcatchContactV1} from
+  '../lib/engine/v2/physical-manager-postcatch-contact-v1.mjs';
+import {replayPhysicalManagerPostcatchGroupV1,
+  validatePhysicalManagerPostcatchGroupV1} from
+  '../lib/engine/v2/physical-manager-postcatch-group-v1.mjs';
 import {riderKilometreEffect} from
   '../lib/engine/v2/physiology.mjs';
 import {TUNING} from '../lib/engine/v2/tuning.mjs';
@@ -79,6 +85,7 @@ function choice({attackerSkill,observerSkill,choiceKm,
   fatigue=20,roadVariant='flat',attackKm=2,
   roleVariant='uniform',
   terrainStartOverride=null,
+  emergencyWorkerPlan=true,
   rotateLongLeaders=false,assessHorizon=false,
   assessCounterfactual=false}){
   const terrainStartKm=terrainStartOverride??
@@ -177,7 +184,12 @@ function choice({attackerSkill,observerSkill,choiceKm,
         team.id==='other'?'break_stage':'none',
       captainId:team.riders[0].id},phases:[]}))});
   const startInput={teams,routeKilometres:road,commitment,
-    raceSeed:'same-threat-window-seed'};
+    raceSeed:'same-threat-window-seed',
+    ...(roleVariant==='moderate_closing'&&
+      emergencyWorkerPlan?{
+      emergencyFrontWorkers:[{version:1,teamId:'sprint',
+        unavailableRiderId:'sprint-2',
+        replacementRiderId:'sprint-3'}]}:{})};
   const start=startPhysicalBunchV1(startInput);
   const input={startInput,start,
     attackKm,choiceKm,observerTeamId:'sprint',
@@ -283,6 +295,102 @@ function choice({attackerSkill,observerSkill,choiceKm,
                     row.riderId),
                   energySpent:road.riders.map(row=>
                     row.energySpent)};
+                const fullInput={input:paidInput,
+                  leaderRiderId:road.leaderRiderId};
+                const full=
+                  replayPhysicalManagerPostcatchContactV1(
+                    fullInput);
+                assert.equal(
+                  validatePhysicalManagerPostcatchContactV1(
+                    fullInput,full),true);
+                const forgedFull=structuredClone(full);
+                forgedFull.kilometres.at(-1)
+                  .riderStates[0].energyAfter+=1;
+                assert.throws(()=>
+                  validatePhysicalManagerPostcatchContactV1(
+                    fullInput,forgedFull),
+                /differs from source/);
+                paidPostcatchContact.groupRoad
+                  .riderKilometres=full.kilometres.reduce(
+                    (sum,row)=>sum+row.riderStates.length,0);
+                paidPostcatchContact.groupRoad
+                  .allRiders=full.kilometres.at(-1)
+                    .riderStates.length;
+                const nextInput={...fullInput,
+                  throughKm:contact.sourceKm+1};
+                const next=replayPhysicalManagerPostcatchGroupV1(
+                  nextInput);
+                assert.equal(
+                  validatePhysicalManagerPostcatchGroupV1(
+                    nextInput,next),true);
+                const forgedNext=structuredClone(next);
+                forgedNext.kilometres.at(-1)
+                  .riderStates[0].energyAfter+=1;
+                assert.throws(()=>
+                  validatePhysicalManagerPostcatchGroupV1(
+                    nextInput,forgedNext),
+                /differs from source/);
+                paidPostcatchContact.groupRoad
+                  .nextKilometre={
+                    leaderRiderId:next.sources.later[0]
+                      .leaderRiderId,
+                    gapSecondsToBunch:next.sources
+                      .later[0].gapSecondsToBunch,
+                    riderCount:next.kilometres.at(-1)
+                      .riderStates.length};
+                try{
+                  const finish=
+                    replayPhysicalManagerPostcatchGroupV1({
+                      ...fullInput,
+                      throughKm:paidInput.throughKm});
+                  const finishInput={...fullInput,
+                    throughKm:paidInput.throughKm};
+                  assert.equal(
+                    validatePhysicalManagerPostcatchGroupV1(
+                      finishInput,finish),true);
+                  const forgedFinish=structuredClone(finish);
+                  forgedFinish.kilometres.at(-1)
+                    .riderStates[0].energyAfter+=1;
+                  assert.throws(()=>
+                    validatePhysicalManagerPostcatchGroupV1(
+                      finishInput,forgedFinish),
+                  /differs from source/);
+                  assert.ok(finish.kilometres.every(row=>
+                    row.riderStates.length===24&&
+                    row.riderStates.every(rider=>
+                      rider.decisions.length>0&&
+                      rider.energyAfter>=0)));
+                  assert.ok(finish.sources.later.every(row=>
+                    row.gapSecondsToBunch>0&&
+                    row.rearRows.filter(item=>
+                      item.role==='leader').length===1&&
+                    row.rearRows.filter(item=>
+                      item.role==='sheltered').length===1));
+                  paidPostcatchContact.groupRoad.finish={
+                    status:'paid_finish',
+                    finishRiders:Object.keys(finish
+                      .observedFinishSecondsByRider)
+                      .length,
+                    riderKilometres:finish.kilometres.reduce(
+                      (sum,row)=>sum+
+                        row.riderStates.length,0),
+                    distinctRearLeaders:new Set(finish
+                      .sources.later.map(row=>
+                        row.leaderRiderId)).size,
+                    emergencyFrontKm:finish.sources.later
+                      .filter(row=>row.bunch
+                        .emergencyFrontWorker)
+                      .map(row=>row.sourceKm),
+                    minimumEnergy:Math.min(...finish
+                      .kilometres.flatMap(row=>row
+                        .riderStates.map(rider=>
+                          rider.energyAfter)))};
+                }catch(finishError){
+                  paidPostcatchContact.groupRoad.finish={
+                    status:'unsettled',
+                    reason:finishError.message,
+                    sourceKm:finishError.sourceKm};
+                }
               }
             }
             if(error.physicalLoss){
@@ -580,6 +688,8 @@ function choice({attackerSkill,observerSkill,choiceKm,
     ...(roleVariant==='uniform'?{}:{roleVariant}),
     ...(terrainStartOverride===null?{}:{
       terrainStartOverride}),
+    ...(emergencyWorkerPlan?{}:{
+      emergencyWorkerPlan:false}),
     ...(distanceKm===20?{}:{distanceKm}),
     ...(stopChaseAtKm===null?{}:{stopChaseAtKm}),
     ...(settleFinish?{settleFinish:true}:{}),
@@ -733,6 +843,21 @@ const earlyTerrainCalibration=process.argv.includes(
       fatigue:20,roadVariant:'climb_mid',
       terrainStartOverride:30,
       roleVariant:'moderate_closing',rotateLongLeaders:true,
+      assessHorizon:true,assessCounterfactual:true};
+    try{return choice(input);}
+    catch(error){return {...input,refused:error.message};}
+  }):undefined;
+const earlyNoEmergency=process.argv.includes(
+  '--early-no-emergency')?[160,260].map(
+  distanceKm=>{
+    const input={attackerSkill:96,observerSkill:98,
+      choiceKm:11,attackKm:2,frontConserveAtKm:5,
+      distanceKm,stopChaseAtKm:20,
+      fatigue:20,roadVariant:'climb_mid',
+      terrainStartOverride:30,
+      roleVariant:'moderate_closing',
+      emergencyWorkerPlan:false,
+      rotateLongLeaders:true,
       assessHorizon:true,assessCounterfactual:true};
     try{return choice(input);}
     catch(error){return {...input,refused:error.message};}
@@ -1022,8 +1147,31 @@ if(process.argv.includes('--assert')){
           group.gapSecondsToBunch>0&&
           group.riderIds.join(',')===
             'other-2,sprint-2'&&
-          group.energySpent[0]<group.energySpent[1];
+          group.energySpent[0]<group.energySpent[1]&&
+          group.allRiders===24&&
+          group.riderKilometres===31*24&&
+          group.finish?.status==='paid_finish'&&
+          group.finish.finishRiders===24&&
+          group.finish.riderKilometres===
+            row.distanceKm*24&&
+          group.finish.distinctRearLeaders===2&&
+          group.finish.emergencyFrontKm.includes(61)&&
+          group.finish.minimumEnergy>0;
     }));
+  }
+  if(earlyNoEmergency!==undefined){
+    assert.equal(earlyNoEmergency.length,2);
+    assert.ok(earlyNoEmergency.every(row=>
+      !row.refused&&row.counterfactual.finish
+        .paidPostcatchContact.groupRoad.finish
+        .status==='unsettled'&&
+      row.counterfactual.finish
+        .paidPostcatchContact.groupRoad.finish
+        .reason===
+          'Ordered front worker is no longer in bunch.'&&
+      row.counterfactual.finish
+        .paidPostcatchContact.groupRoad.finish
+        .sourceKm===61));
   }
 }
 process.stdout.write(JSON.stringify({version:1,
@@ -1041,6 +1189,8 @@ process.stdout.write(JSON.stringify({version:1,
     closingCalibration}),
   ...(earlyTerrainCalibration===undefined?{}:{
     earlyTerrainCalibration}),
+  ...(earlyNoEmergency===undefined?{}:{
+    earlyNoEmergency}),
   ...(policyCross===null?{}:{policyCross}),
   ...(counterfactualCross===null?{}:{counterfactualCross}),
   ...(process.argv.includes('--verbose')?{results}:{})},

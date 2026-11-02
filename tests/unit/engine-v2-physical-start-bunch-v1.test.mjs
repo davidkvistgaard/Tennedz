@@ -150,6 +150,24 @@ const source=(teams=field(),routeKilometres=route(),
   return {startInput,start,segment:routeKilometres[0]};
 };
 
+test('emergency front worker needs a precommitted named helper',()=>{
+  const {startInput}=source();
+  const plan={version:1,teamId:'control',
+    unavailableRiderId:'control-2',
+    replacementRiderId:'control-3'};
+  const committed=startPhysicalBunchV1({...startInput,
+    emergencyFrontWorkers:[plan]});
+  assert.deepEqual(committed.committedSource
+    .emergencyFrontWorkers,[plan]);
+  assert.throws(()=>startPhysicalBunchV1({...startInput,
+    emergencyFrontWorkers:[plan,plan]}),
+  /named emergency front workers/);
+  assert.throws(()=>startPhysicalBunchV1({...startInput,
+    emergencyFrontWorkers:[{...plan,
+      replacementRiderId:'control-0'}]}),
+  /named emergency front workers/);
+});
+
 test('start line pays one named leader and all 23 sheltered riders',()=>{
   const input=source();
   const road=advancePhysicalStartBunchV1(input);

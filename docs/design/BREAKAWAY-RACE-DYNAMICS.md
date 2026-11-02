@@ -3869,8 +3869,21 @@ break rider sheltered. Their separate contact energies feed the
 terrain-priced group work; both stay behind the bunch at the
 kilometre line, and altered energy is refused by source replay.
 The leader cannot use the caught rider's faster pace because that
-follower cannot hold it. A later rear-group rotation and finish
-remain unsettled, so neither fixture claims an official finish.
+follower cannot hold it. The separate
+`physical-manager-postcatch-contact-v1.mjs` source preserves all
+24 rider decisions and energy states through that kilometre.
+`physical-manager-postcatch-group-v1.mjs` then rotates the two
+named rear leaders, prices their work and shelter on each later
+terrain kilometre, and records 24 actual finish clocks in both
+160- and 260-km synthetic fixtures. The respective recordings
+contain 3,840 and 6,240 rider-kilometres, with positive energy
+and no inferred bunch return. The original manager order again
+names the dropped worker at km 61. A versioned, precommitted
+emergency helper replacement records the substitution each time
+it is needed; omitting that plan refuses at km 61. These
+synthetic observed finishes are not official awards or guided
+race behavior. Broader role, terrain, fatigue and contact
+calibration remains necessary before routing.
 
 `audit-physical-bunch-distance.mjs --assert` extends the opt-in
 paid-bunch source to mixed flat, hill, climb, descent and wind routes
