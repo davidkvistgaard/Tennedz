@@ -30,6 +30,9 @@ import {runPhysicalManagerChaseCounterfactualV1,
 import {completePhysicalManagerChaseContactKmV1,
   validatePhysicalManagerChaseContactKmV1} from
   '../lib/engine/v2/physical-manager-chase-contact-km-v1.mjs';
+import {replayPhysicalManagerChaseRaceV1,
+  validatePhysicalManagerChaseRaceV1} from
+  '../lib/engine/v2/physical-manager-chase-race-replay-v1.mjs';
 import {riderKilometreEffect} from
   '../lib/engine/v2/physiology.mjs';
 import {TUNING} from '../lib/engine/v2/tuning.mjs';
@@ -164,6 +167,20 @@ function choice({attackerSkill,observerSkill,choiceKm,
             fullFieldRiders:completion.riderStates.length,
             gapSeconds:+completion.gapSecondsToBunch
               .toFixed(3)};
+          try{
+            const race=replayPhysicalManagerChaseRaceV1(
+              paidInput);
+            validatePhysicalManagerChaseRaceV1(paidInput,race);
+            counterfactual.finish={status:'paid_finish',
+              riderKilometres:race.kilometres.reduce(
+                (sum,row)=>sum+row.riderStates.length,0),
+              finishRiders:Object.keys(race
+                .observedFinishSecondsByRider).length,
+              minimumEnergy:Math.min(...race.kilometres
+                .flatMap(row=>row.riderStates.map(rider=>
+                  rider.energyAfter)))};
+          }catch(error){counterfactual.finish={
+            status:'unsettled',reason:error.message};}
         }catch(error){
           counterfactual.contactKmCompletion={
             status:'unsettled',reason:error.message};
@@ -414,6 +431,14 @@ const counterfactualCross=policyCross&&
       'slide'&&row.counterfactual.contactKmCompletion
       .fullFieldRiders===24&&row.counterfactual
       .contactKmCompletion.gapSeconds>0).length,
+  paidFinishes:[...calibration,...longCalibration,
+    ...longTerrainCalibration].filter(row=>
+    row.counterfactual?.finish?.status===
+      'paid_finish').length,
+  unsettledFinishes:[...calibration,...longCalibration,
+    ...longTerrainCalibration].filter(row=>
+    row.counterfactual?.finish?.status===
+      'unsettled').length,
   sameCatchKm:[...calibration,...longCalibration,
     ...longTerrainCalibration].filter(row=>
     row.counterfactual?.status==='paid_contact'&&
@@ -530,6 +555,8 @@ if(process.argv.includes('--assert')){
         capacity_shortfall:15});
     assert.equal(counterfactualCross.orderStopped,22);
     assert.equal(counterfactualCross.fullContactKmSlides,92);
+    assert.equal(counterfactualCross.paidFinishes,92);
+    assert.equal(counterfactualCross.unsettledFinishes,0);
     assert.ok(counterfactualCross.sameCatchKm>0);
     assert.ok(counterfactualCross.maxCatchKmError<=2);
   }

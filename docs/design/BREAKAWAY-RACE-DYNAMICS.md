@@ -3756,8 +3756,22 @@ the contact kilometre in these diagnostics. All 92 paid meetings
 show physical inability to hold the named bunch leader; the caught
 rider pays conservative solo work, slides behind and completes that
 kilometre with 24 sourced rider states. A forged contact record is
-refused. Riding after the contact kilometre and all diagnostic
-finishes remain unproven.
+refused. The contact-only source does not establish later riding.
+`physical-manager-chase-race-replay-v1.mjs` now extends the same
+manager-order counterfactual across every remaining kilometre. The
+caught rider pays solo road after failing to hold the bunch; the
+other 23 riders continue behind exactly one named paid leader, and
+the continuation refuses a later unrecorded return to the bunch.
+The 114-case same-seed audit reaches a fully source-replayed finish
+for every one of its 92 paid-contact cases, with 24 observed rider
+finish times in each; the other 22 cases still stop at their explicit
+manager order before contact. A modified finish energy is rejected
+by source replay. These results test a diagnostic counterfactual,
+not a calibrated chase policy. The tactical `capacity_shortfall`
+classification remains unchanged, and neither this replay nor the
+forecast is routed to guided races. Pursuit timing across varied
+fields, terrain, fatigue, wind and team orders still needs whole-race
+calibration.
 
 `audit-physical-bunch-distance.mjs --assert` extends the opt-in
 paid-bunch source to mixed flat, hill, climb, descent and wind routes

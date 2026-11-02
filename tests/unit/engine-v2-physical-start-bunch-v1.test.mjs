@@ -107,6 +107,9 @@ import {runPhysicalManagerChaseCounterfactualV1,
 import {completePhysicalManagerChaseContactKmV1,
   validatePhysicalManagerChaseContactKmV1} from
   '../../lib/engine/v2/physical-manager-chase-contact-km-v1.mjs';
+import {replayPhysicalManagerChaseRaceV1,
+  validatePhysicalManagerChaseRaceV1} from
+  '../../lib/engine/v2/physical-manager-chase-race-replay-v1.mjs';
 import {runPhysicalRearGroupV1,
   validatePhysicalRearGroupV1} from
   '../../lib/engine/v2/physical-rear-group-run-v1.mjs';
@@ -956,6 +959,22 @@ test('committed physical chase catches a slowing front on paid road',()=>{
   assert.throws(()=>completePhysicalManagerChaseContactKmV1({
     ...managerContactInput,paidProbe:forgedManagerRoad}),
   /replayed paid meeting/);
+  const managerRace=replayPhysicalManagerChaseRaceV1(
+    hillInput);
+  assert.equal(managerRace.perceivedAction,
+    'capacity_shortfall');
+  assert.equal(managerRace.kilometres.length,25);
+  assert.ok(managerRace.kilometres.every(km=>
+    km.riderStates.length===24));
+  assert.equal(Object.keys(managerRace
+    .observedFinishSecondsByRider).length,24);
+  assert.equal(validatePhysicalManagerChaseRaceV1(
+    hillInput,managerRace),true);
+  const forgedManagerRace=structuredClone(managerRace);
+  forgedManagerRace.kilometres.at(-1)
+    .riderStates[0].energyAfter+=1;
+  assert.throws(()=>validatePhysicalManagerChaseRaceV1(
+    hillInput,forgedManagerRace),/differs/);
 });
 
 test('early climb weakness records a paid partial solo and no rear group',()=>{
