@@ -404,11 +404,16 @@ const longTerrainCalibration=process.argv.includes(
   })):undefined;
 const earlyLongCalibration=process.argv.includes(
   '--early-long-calibration')?[160,260].flatMap(
-  distanceKm=>[20,40].map(fatigue=>{
+  distanceKm=>[
+    {fatigue:20,roadVariant:'flat'},
+    {fatigue:40,roadVariant:'flat'},
+    ...['hill_mid','climb_mid','wind_mid'].map(
+      roadVariant=>({fatigue:20,roadVariant})),
+  ].map(({fatigue,roadVariant})=>{
     const input={attackerSkill:96,observerSkill:98,
       choiceKm:11,attackKm:2,frontConserveAtKm:5,
       distanceKm,stopChaseAtKm:20,
-      fatigue,rotateLongLeaders:true,
+      fatigue,roadVariant,rotateLongLeaders:true,
       assessHorizon:true,assessCounterfactual:true};
     try{return choice(input);}
     catch(error){return {...input,refused:error.message};}
@@ -587,7 +592,7 @@ if(process.argv.includes('--assert')){
     assert.ok(counterfactualCross.maxCatchKmError<=2);
   }
   if(earlyLongCalibration!==undefined){
-    assert.equal(earlyLongCalibration.length,4);
+    assert.equal(earlyLongCalibration.length,10);
     assert.ok(earlyLongCalibration.every(row=>
       !row.refused&&row.action==='watch'&&
       row.horizonCatchKm===15&&
