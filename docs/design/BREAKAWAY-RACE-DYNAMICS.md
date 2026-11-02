@@ -3840,8 +3840,18 @@ same next kilometre. It refuses an unrecorded meeting with each
 other or the bunch, charges solo energy without recovery, and
 source-replays all 24 rider states behind the committed 22-rider
 bunch leader. All eight mixed-role split cases pass this next
-kilometre. Subsequent solo contact and finish still need a paid
-source before the partial recording can continue.
+kilometre. At this step the later road was still unsettled.
+`replayPhysicalManagerSeparatedRoadV1` now extends those three
+physical groups to the actual finish when their paid clocks never
+meet. All eight mixed-role split cases complete: the 160-km cases
+record 3,840 rider-kilometre states and the 260-km cases record
+6,240, each with 24 observed finish times. Every later kilometre
+has one named paid bunch leader and two separately priced solos
+with no recovery. A crossing of either solo's clock with the bunch
+or the other solo refuses before claiming a group, and a forged
+finish energy fails source replay. These synthetic no-contact
+finishes do not settle variants in which the two solos meet or
+another bunch rider falls away.
 
 `audit-physical-bunch-distance.mjs --assert` extends the opt-in
 paid-bunch source to mixed flat, hill, climb, descent and wind routes
