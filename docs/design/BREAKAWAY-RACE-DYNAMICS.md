@@ -3506,3 +3506,15 @@ attacker completes the 20-kilometre synthetic route ahead of the
 attacker, the run refuses and requires a separate paid contact road.
 Neither this synthetic success nor its energy scale is a general
 race calibration or official result.
+
+`physical-front-bunch-catch-v1.mjs` now derives a narrow catch from
+a named break's replayed solo road and a later stronger named bunch
+leader's paid road. It solves the metre and clock at which their
+kilometre travel times meet, charges the attacker and all 23 bunch
+riders for the exact partial distance, and refuses an earlier
+kilometre without physical contact. A same-seed test changes the
+bunch's front worker at a committed km 5 order marker and records a
+later catch; forged contact time fails replay. At the contact instant
+the rider and bunch are co-located, but no sheltered wheel or group
+membership is inferred. The remaining distance must decide whether
+the spent attacker holds on or slides through behind the bunch.

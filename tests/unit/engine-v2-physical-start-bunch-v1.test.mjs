@@ -34,6 +34,9 @@ import {priceRearEnergyDemandV1} from
 import {runPhysicalFrontSoloV1,
   validatePhysicalFrontSoloV1} from
   '../../lib/engine/v2/physical-front-solo-run-v1.mjs';
+import {catchPhysicalFrontSoloV1,
+  validatePhysicalFrontBunchCatchV1} from
+  '../../lib/engine/v2/physical-front-bunch-catch-v1.mjs';
 import {runPhysicalRearGroupV1,
   validatePhysicalRearGroupV1} from
   '../../lib/engine/v2/physical-rear-group-run-v1.mjs';
@@ -259,6 +262,59 @@ test('named manager attack forms front solo only by paid faster road',()=>{
   forgedFront.steps[0].gapSecondsToBunch+=1;
   assert.throws(()=>validatePhysicalFrontSoloV1(
     frontInput,forgedFront),/differs/);
+});
+
+test('stronger later bunch worker creates an energy-priced catch window',()=>{
+  const teams=field();
+  for(const team of teams)for(const rider of team.riders)
+    for(const skill of SPORTING_SKILLS)rider[skill]=96;
+  for(const skill of SPORTING_SKILLS)
+    teams[2].riders[2][skill]=95;
+  for(const skill of SPORTING_SKILLS)
+    teams[0].riders[3][skill]=100;
+  teams[0].orders.phases=[{atKm:5,frontWorkRiderId:'control-3',
+    effort:'hard'}];
+  teams[1].orders.phases=[{atKm:5,effort:'hard'}];
+  teams[2].orders.phases=[{atKm:1,attack:'selective',
+    attackRiderId:'other-2',effort:'hard'}];
+  const input=source(teams,route(),{
+    other:'break_stage'},[{km:1}]);
+  let catchKm=null;
+  for(let throughKm=3;throughKm<=20;throughKm++){
+    try{runPhysicalFrontSoloV1({...input,attackKm:2,
+      throughKm});}
+    catch(error){
+      assert.match(error.message,/physical catch road/);
+      catchKm=throughKm;
+      break;
+    }
+  }
+  assert.ok(catchKm>5&&catchKm<20);
+  const before=runPhysicalFrontSoloV1({...input,
+    attackKm:2,throughKm:catchKm-1});
+  assert.ok(before.gapSecondsToBunch>0);
+  const catchInput={...input,attackKm:2,catchKm};
+  const contact=catchPhysicalFrontSoloV1(catchInput);
+  assert.equal(contact.contact.kind,
+    'bunch_catches_front_solo');
+  assert.ok(contact.contact.atDistanceM>
+    (catchKm-1)*1000&&
+    contact.contact.atDistanceM<catchKm*1000);
+  assert.equal(contact.bunchPartial.physicalGroup.riderIds.length,23);
+  assert.ok(!contact.bunchPartial.physicalGroup.riderIds
+    .includes('other-2'));
+  assert.ok(contact.frontPartial.energySpent>0);
+  assert.ok(contact.bunchPartial.riders.every(row=>
+    row.energySpent>0));
+  assert.equal(validatePhysicalFrontBunchCatchV1(
+    catchInput,contact),true);
+  const forged=structuredClone(contact);
+  forged.contact.clockSeconds+=1;
+  assert.throws(()=>validatePhysicalFrontBunchCatchV1(
+    catchInput,forged),/differs/);
+  assert.throws(()=>catchPhysicalFrontSoloV1({...input,
+    attackKm:2,catchKm:catchKm-1}),
+  /no paid bunch catch here/);
 });
 
 test('early climb weakness records a paid partial solo and no rear group',()=>{
