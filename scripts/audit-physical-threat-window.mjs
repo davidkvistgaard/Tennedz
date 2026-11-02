@@ -57,6 +57,21 @@ import {replayPhysicalManagerPostcatchContactV1,
 import {replayPhysicalManagerPostcatchGroupV1,
   validatePhysicalManagerPostcatchGroupV1} from
   '../lib/engine/v2/physical-manager-postcatch-group-v1.mjs';
+import {contactPhysicalManagerReturnV1,
+  validatePhysicalManagerReturnContactV1} from
+  '../lib/engine/v2/physical-manager-return-contact-v1.mjs';
+import {replayPhysicalManagerReturnKmV1,
+  validatePhysicalManagerReturnKmV1} from
+  '../lib/engine/v2/physical-manager-return-km-v1.mjs';
+import {replayPhysicalManagerReturnRaceV1,
+  validatePhysicalManagerReturnRaceV1} from
+  '../lib/engine/v2/physical-manager-return-race-v1.mjs';
+import {replayPhysicalManagerReturnLossV1,
+  validatePhysicalManagerReturnLossV1} from
+  '../lib/engine/v2/physical-manager-return-loss-v1.mjs';
+import {replayPhysicalManagerReturnSeparatedV1,
+  validatePhysicalManagerReturnSeparatedV1} from
+  '../lib/engine/v2/physical-manager-return-separated-v1.mjs';
 import {riderKilometreEffect} from
   '../lib/engine/v2/physiology.mjs';
 import {TUNING} from '../lib/engine/v2/tuning.mjs';
@@ -249,6 +264,152 @@ function choice({attackerSkill,observerSkill,choiceKm,
             let nextPair;
             let separatedStatus;
             let paidPostcatchContact;
+            let paidReturnContact;
+            if(error.paidReturnContact){
+              const input=error.paidReturnContact;
+              const contact=contactPhysicalManagerReturnV1(
+                input);
+              assert.equal(
+                validatePhysicalManagerReturnContactV1(
+                  input,contact),true);
+              const forged=structuredClone(contact);
+              forged.contactClockSeconds+=1;
+              assert.throws(()=>
+                validatePhysicalManagerReturnContactV1(
+                  input,forged),
+              /differs from paid source/);
+              paidReturnContact={sourceKm:contact.sourceKm,
+                contactAtDistanceM:
+                  contact.contactAtDistanceM,
+                soloDistanceM:contact.soloDistanceM,
+                shelteredDistanceM:
+                  contact.shelteredDistanceM,
+                soloEnergySpent:contact.soloEnergySpent,
+                shelteredEnergySpent:
+                  contact.shelteredEnergySpent,
+                riderId:contact.riderId};
+              const full=replayPhysicalManagerReturnKmV1(
+                paidInput);
+              assert.equal(validatePhysicalManagerReturnKmV1(
+                paidInput,full),true);
+              const forgedFull=structuredClone(full);
+              forgedFull.kilometres.at(-1)
+                .riderStates[0].energyAfter+=1;
+              assert.throws(()=>
+                validatePhysicalManagerReturnKmV1(
+                  paidInput,forgedFull),
+              /differs from paid source/);
+              paidReturnContact.riderKilometres=
+                full.kilometres.reduce((sum,row)=>
+                  sum+row.riderStates.length,0);
+              paidReturnContact.allRiders=full.kilometres
+                .at(-1).riderStates.length;
+              try{
+                const continued=
+                  replayPhysicalManagerReturnRaceV1(
+                    paidInput);
+                assert.equal(
+                  validatePhysicalManagerReturnRaceV1(
+                    paidInput,continued),true);
+                const forgedRace=structuredClone(continued);
+                forgedRace.kilometres.at(-1)
+                  .riderStates[0].energyAfter+=1;
+                assert.throws(()=>
+                  validatePhysicalManagerReturnRaceV1(
+                    paidInput,forgedRace),
+                /differs from paid source/);
+                paidReturnContact.continued={
+                  status:'paid_finish',
+                  riderKilometres:continued.kilometres
+                    .reduce((sum,row)=>sum+
+                      row.riderStates.length,0),
+                  finishRiders:Object.keys(continued
+                    .observedFinishSecondsByRider)
+                    .length};
+              }catch(continuedError){
+                paidReturnContact.continued={
+                  status:'unsettled',
+                  reason:continuedError.message,
+                  sourceKm:continuedError.sourceKm};
+                if(continuedError.physicalReturnLoss){
+                  const loss=replayPhysicalManagerReturnLossV1(
+                    paidInput);
+                  assert.equal(
+                    validatePhysicalManagerReturnLossV1(
+                      paidInput,loss),true);
+                  const forgedLoss=structuredClone(loss);
+                  forgedLoss.kilometres.at(-1)
+                    .riderStates[0].energyAfter+=1;
+                  assert.throws(()=>
+                    validatePhysicalManagerReturnLossV1(
+                      paidInput,forgedLoss),
+                  /differs from paid source/);
+                  paidReturnContact.continued.loss={
+                    sourceKm:loss.sourceKm,
+                    riderKilometres:loss.kilometres
+                      .reduce((sum,row)=>sum+
+                        row.riderStates.length,0),
+                    detachedRiderIds:loss.source.loss
+                      .splits.map(row=>row.riderId),
+                    splitDistancesM:loss.source.loss
+                      .splits.map(row=>row.atDistanceM),
+                    soloFinishClocks:loss.source
+                      .completions.map(row=>
+                        row.elapsedSeconds)};
+                  try{
+                    const separated=
+                      replayPhysicalManagerReturnSeparatedV1(
+                        paidInput);
+                    assert.equal(
+                      validatePhysicalManagerReturnSeparatedV1(
+                        paidInput,separated),true);
+                    const forgedSeparated=structuredClone(
+                      separated);
+                    forgedSeparated.kilometres.at(-1)
+                      .riderStates[0].energyAfter+=1;
+                    assert.throws(()=>
+                      validatePhysicalManagerReturnSeparatedV1(
+                        paidInput,forgedSeparated),
+                    /differs from paid source/);
+                    paidReturnContact.continued
+                      .separated={status:'paid_finish',
+                        riderKilometres:separated
+                          .kilometres.reduce((sum,row)=>
+                            sum+row.riderStates.length,0),
+                        finishRiders:Object.keys(separated
+                          .observedFinishSecondsByRider)
+                          .length,
+                        minimumEnergy:Math.min(...separated
+                          .kilometres.flatMap(row=>
+                            row.riderStates.map(rider=>
+                              rider.energyAfter))),
+                        distinctBunchLeaders:new Set(separated
+                          .sources.later.map(row=>
+                            row.bunch.leaderRiderId)).size,
+                        emergencyFrontKm:separated.sources
+                          .later.filter(row=>row.bunch
+                            .emergencyFrontWorker).map(row=>
+                            row.sourceKm),
+                        firstSoloGapSeconds:loss.source
+                          .completions[0].elapsedSeconds-
+                          loss.source.completions[1]
+                            .elapsedSeconds,
+                        finishSoloGapSeconds:separated
+                          .kilometres.at(-1).riderStates
+                          .find(row=>row.riderId===
+                            'sprint-2').elapsedSeconds-
+                          separated.kilometres.at(-1)
+                            .riderStates.find(row=>
+                              row.riderId==='other-2')
+                            .elapsedSeconds};
+                  }catch(separatedError){
+                    paidReturnContact.continued
+                      .separated={status:'unsettled',
+                        reason:separatedError.message};
+                  }
+                }
+              }
+            }
             if(error.paidPostcatchContact){
               const {contactInput,contact}=
                 error.paidPostcatchContact;
@@ -538,6 +699,8 @@ function choice({attackerSkill,observerSkill,choiceKm,
             status:'unsettled',reason:error.message,
             ...(paidPostcatchContact?{
               paidPostcatchContact}:{}),
+            ...(paidReturnContact?{
+              paidReturnContact}:{}),
             ...(error.physicalLoss?{
               physicalLoss:{sourceKm:error.physicalLoss
                 .sourceKm,
@@ -1245,7 +1408,44 @@ if(process.argv.includes('--assert')){
       row.roleStrengthOffset===10&&
       row.roadVariant==='climb_mid'&&
       row.counterfactual.finish?.reason===
-        'Manager slide needs paid return contact.')
+        'Manager slide needs paid return contact.'&&
+      row.counterfactual.finish.paidReturnContact
+        ?.sourceKm===30&&
+      row.counterfactual.finish.paidReturnContact
+        .contactAtDistanceM>29000&&
+      row.counterfactual.finish.paidReturnContact
+        .contactAtDistanceM<30000&&
+      row.counterfactual.finish.paidReturnContact
+        .soloEnergySpent>0&&
+      row.counterfactual.finish.paidReturnContact
+        .shelteredEnergySpent>0&&
+      row.counterfactual.finish.paidReturnContact
+        .allRiders===24&&
+      row.counterfactual.finish.paidReturnContact
+        .riderKilometres===30*24&&
+      row.counterfactual.finish.paidReturnContact
+        .continued.loss?.sourceKm===31&&
+      row.counterfactual.finish.paidReturnContact
+        .continued.loss.detachedRiderIds
+        .join(',')==='sprint-2,other-2'&&
+      row.counterfactual.finish.paidReturnContact
+        .continued.separated?.status==='paid_finish'&&
+      row.counterfactual.finish.paidReturnContact
+        .continued.separated.finishRiders===24&&
+      row.counterfactual.finish.paidReturnContact
+        .continued.separated.riderKilometres===
+          row.distanceKm*24&&
+      row.counterfactual.finish.paidReturnContact
+        .continued.separated.minimumEnergy>0&&
+      row.counterfactual.finish.paidReturnContact
+        .continued.separated.distinctBunchLeaders>1&&
+      row.counterfactual.finish.paidReturnContact
+        .continued.separated.emergencyFrontKm
+        .includes(61)&&
+      row.counterfactual.finish.paidReturnContact
+        .continued.separated.firstSoloGapSeconds>0&&
+      row.counterfactual.finish.paidReturnContact
+        .continued.separated.finishSoloGapSeconds>0)
       .length,2);
     assert.equal(postcatchStrengthMatrix.filter(row=>
       (row.roleStrengthOffset===-10&&

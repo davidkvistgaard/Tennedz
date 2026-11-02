@@ -3898,8 +3898,28 @@ hill and mountain skills by ten points. Four variants finish
 after paid rear contact. Two weaker-rider hill variants never
 reach that contact scenario; two stronger-rider climb variants
 refuse because the slid rider physically returns to the bunch
-before a paid return-contact source exists. These are explicit
-model boundaries, not evidence of calibrated real-world gaps.
+before the older whole-race replay can settle the return.
+`physical-manager-return-contact-v1.mjs` now replays those
+two stronger-rider crossings from the prior solo and bunch
+clocks at km 30, metre 29,987.45. The rider pays 987.45 metres
+alone and 12.55 metres sheltered after physically meeting the
+bunch. A forged contact clock fails source validation. Later
+`physical-manager-return-km-v1.mjs` includes all 24 riders'
+decisions and paid energy through km 30 (720 rider-kilometres),
+and refuses a forged finish energy. Both the returned rider and
+the original front worker physically lose the km-31 climb at
+different measured metres (30,986.55 and 30,954.26), so
+`physical-manager-return-loss-v1.mjs` prices their remaining
+solo metres. Their within-kilometre piecewise clocks do not
+cross. `physical-manager-return-separated-v1.mjs` then prices
+the two separate solo roads and the 22-rider bunch through
+observed finish in both 160- and 260-km variants: 3,840 and
+6,240 rider-kilometres, 24 finish clocks, positive energy,
+and no later solo contact. The precommitted emergency worker
+plan pays the named replacement when the dropped worker is
+ordered back to the front. These synthetic variants still need
+broader whole-race calibration and do not establish real-world
+gaps or official results.
 
 `audit-physical-bunch-distance.mjs --assert` extends the opt-in
 paid-bunch source to mixed flat, hill, climb, descent and wind routes
