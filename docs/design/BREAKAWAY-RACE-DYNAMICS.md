@@ -3804,9 +3804,11 @@ cannot hold the paid climbing pace. A separate opt-in post-catch
 source now records `sprint-2` losing the 160-km bunch on km 148,
 18.72 m before its kilometre line, and the 260-km bunch on km 251,
 16.40 m before its kilometre line. It source-replays the partial
-paid energy and verifies the physical split. The remaining split
-kilometre, later solo road and possible contact with the caught
-break rider are still unsettled. The refusal is an explicit missing
+paid energy and verifies the physical split. A separate versioned
+completion then pays each rider's remaining metres and checks that
+the caught break rider cannot meet that rider or the bunch before
+the same kilometre line. The later solo road and possible future
+contact remain unsettled. The refusal is an explicit missing
 physical branch, not a finished race result.
 
 `audit-physical-bunch-distance.mjs --assert` extends the opt-in

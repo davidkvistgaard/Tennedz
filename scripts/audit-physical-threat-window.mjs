@@ -210,7 +210,15 @@ function choice({attackerSkill,observerSkill,choiceKm,
                     .energySpent,
                   energyAfter:error.physicalLoss.loss.riders
                     .find(rider=>rider.riderId===row.riderId)
-                    .energyAfter}))}}:{})};}
+                    .energyAfter})),
+              completions:error.physicalLoss.completions.map(
+                row=>({riderId:row.riderId,
+                  endDistanceM:row.endDistanceM,
+                  gapSecondsToBunch:row.gapSecondsToBunch,
+                  energySpent:row.energySpent,
+                  energyAfter:row.energyAfter})),
+              caughtSoloEndClock:error.physicalLoss
+                .caughtSoloEndClock}}:{})};}
         }catch(error){
           counterfactual.contactKmCompletion={
             status:'unsettled',reason:error.message};
@@ -669,6 +677,15 @@ if(process.argv.includes('--assert')){
         [0].energySpent>0&&
       row.counterfactual.finish.physicalLoss.paidSplits
         [0].energyAfter>=0
+      &&row.counterfactual.finish.physicalLoss.completions
+        .length===1&&
+      row.counterfactual.finish.physicalLoss.completions
+        [0].endDistanceM===row.counterfactual.finish
+          .physicalLoss.sourceKm*1000&&
+      row.counterfactual.finish.physicalLoss.completions
+        [0].energySpent>0&&
+      row.counterfactual.finish.physicalLoss.completions
+        [0].gapSecondsToBunch>0
     ).length,2);
   }
 }
