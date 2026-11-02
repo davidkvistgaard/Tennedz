@@ -3664,6 +3664,10 @@ split kilometre and later solo road. With a moderate climb weakness,
 rider-kilometre states and 24 observed finishes while the two solos
 remain separate. A stronger climb weakness makes their solo clocks
 cross; the full race correctly refuses without a paid contact road.
-That contact, any resulting rear group and broader multi-loss
+`physical-staggered-solo-contact-v1.mjs` now finds exactly one later
+kilometre where those separately paid solo clocks meet. It records
+the common road metre and time, charges both riders to that point,
+and verifies that both remain behind the bunch. The rest of the
+contact kilometre, any resulting rear group and broader multi-loss
 terrain/energy calibration remain unfinished. Neither witness is
 routed to guided races.

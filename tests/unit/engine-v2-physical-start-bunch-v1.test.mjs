@@ -29,6 +29,9 @@ import {runPhysicalStaggeredDetachedSoloV1,
 import {replayPhysicalStaggeredRaceV1,
   validatePhysicalStaggeredRaceV1} from
   '../../lib/engine/v2/physical-staggered-race-replay-v1.mjs';
+import {contactPhysicalStaggeredSolosV1,
+  validatePhysicalStaggeredSoloContactV1} from
+  '../../lib/engine/v2/physical-staggered-solo-contact-v1.mjs';
 import {runPhysicalDetachedSoloV1,
   validatePhysicalDetachedSoloV1} from
   '../../lib/engine/v2/physical-detached-solo-run-v1.mjs';
@@ -220,6 +223,31 @@ test('different paid kilometres remove only physically dropped riders',()=>{
   const catchingInput=source(catchingTeams,kilometres);
   assert.throws(()=>replayPhysicalStaggeredRaceV1({
     ...catchingInput,throughKm:20}),/paid contact road/);
+  const catchingSource=runPhysicalStaggeredBunchLossV1({
+    ...catchingInput,throughKm:20});
+  const contacts=[];
+  for(let contactKm=12;contactKm<=20;contactKm++){
+    const contactInput={...catchingInput,
+      staggered:catchingSource,
+      riderIds:['control-2','other-3'],contactKm};
+    try{contacts.push({contactKm,
+      contact:contactPhysicalStaggeredSolosV1(contactInput),
+      contactInput});}catch(error){
+      assert.match(error.message,/contact|met before/);
+    }
+  }
+  assert.equal(contacts.length,1);
+  assert.equal(validatePhysicalStaggeredSoloContactV1(
+    contacts[0].contactInput,contacts[0].contact),true);
+  assert.ok(contacts[0].contact.contactAtDistanceM>
+    (contacts[0].contactKm-1)*1000);
+  assert.ok(contacts[0].contact.contactAtDistanceM<
+    contacts[0].contactKm*1000);
+  assert.ok(contacts[0].contact.behindBunchSeconds>0);
+  const forgedContact=structuredClone(contacts[0].contact);
+  forgedContact.riders[0].energyAfter+=1;
+  assert.throws(()=>validatePhysicalStaggeredSoloContactV1(
+    contacts[0].contactInput,forgedContact),/differs/);
   const forged=structuredClone(recording);
   forged.losses[1].atDistanceM=11000;
   assert.throws(()=>validatePhysicalStaggeredBunchLossV1({
