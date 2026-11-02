@@ -632,6 +632,43 @@ test('stronger later bunch worker creates an energy-priced catch window',()=>{
     raceInput,falseRace),/differs/);
 });
 
+test('front catch can be paid in first kilometre after attack',()=>{
+  const teams=field(0);
+  for(const team of teams)for(const rider of team.riders)
+    for(const skill of SPORTING_SKILLS)rider[skill]=96;
+  teams[2].riders[2].mountain=30;
+  teams[2].orders.phases=[{atKm:1,attack:'selective',
+    attackRiderId:'other-2',effort:'hard'},
+  {atKm:2,effort:'conserve'}];
+  const road=route();
+  road[2]={...road[2],terrain:'climb',gradientPct:6};
+  const input=source(teams,road,{
+    other:'break_stage'},[{km:1},{km:2}]);
+  const attack=runPhysicalFrontSoloV1({...input,
+    attackKm:2,throughKm:2});
+  assert.equal(attack.steps.length,0);
+  assert.equal(attack.sourceKm,2);
+  assert.equal(attack.physicalGroup.riderIds[0],'other-2');
+  assert.equal(validatePhysicalFrontSoloV1({...input,
+    attackKm:2,throughKm:2},attack),true);
+  const contact=catchPhysicalFrontSoloV1({...input,
+    attackKm:2,catchKm:3});
+  assert.ok(contact.contact.atDistanceM>2000&&
+    contact.contact.atDistanceM<3000);
+  assert.ok(contact.frontPartial.energySpent>0);
+  assert.equal(validatePhysicalFrontBunchCatchV1({
+    ...input,attackKm:2,catchKm:3},contact),true);
+  const race=replayPhysicalCaughtBreakRaceV1({...input,
+    attackKm:2,catchKm:3,throughKm:20});
+  assert.equal(race.kilometres.length,20);
+  assert.ok(race.kilometres.every(row=>
+    row.riderStates.length===24));
+  assert.equal(Object.keys(race.observedFinishSecondsByRider)
+    .length,24);
+  assert.equal(validatePhysicalCaughtBreakRaceV1({...input,
+    attackKm:2,catchKm:3,throughKm:20},race),true);
+});
+
 test('perceived chase choice reads a replayed physical front gap',()=>{
   const teams=field();
   for(const team of teams)for(const rider of team.riders)

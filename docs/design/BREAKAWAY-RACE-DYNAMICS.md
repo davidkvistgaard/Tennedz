@@ -3986,3 +3986,12 @@ on km 18, while the exposed-wind route leaves both riders separate
 through the finish. This sensitivity is useful coverage evidence,
 not proof of realistic speed, contact frequency or fatigue over a
 whole cycling season.
+
+The front-solo source also accepts a paid bunch catch in the first
+kilometre after a named attack. A flat attack followed immediately by
+a climb gives a source-derived meeting metre and clock on km 3.
+The attack kilometre is replayed directly, with no invented intervening
+solo kilometre. The existing catch, slide and separate solo road then
+replay all 24 riders through the observed 20-km finish. This closes the
+next-kilometre boundary only; it does not settle all early catches in
+long races or change guided-race routing.
