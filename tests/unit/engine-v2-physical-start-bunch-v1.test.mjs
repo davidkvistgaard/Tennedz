@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {SPORTING_SKILLS} from '../../lib/engine/v2/skills.mjs';
+import {normalizeOrders} from '../../lib/engine/v2/orders.mjs';
 import {commitTeamChaseStakesV1} from
   '../../lib/engine/v2/team-chase-stake-v1.mjs';
 import {commitRearSoloPlanV1} from
@@ -51,8 +52,13 @@ const field=(fatigue=20)=>['control','sprint','other'].map(id=>{
         frontWorkRiderId:'control-2'}:{})},phases:[]}};
 });
 const source=(teams=field(),routeKilometres=route(),
-  stakeByTeam={sprint:'sprint_finish'})=>{
+  stakeByTeam={sprint:'sprint_finish'},keypoints=[])=>{
+  for(const team of teams)team.orders=normalizeOrders(team.orders,{
+    riderIds:team.riders.map(rider=>rider.id),
+    distanceKm:routeKilometres.length,keypoints,
+    allowFrontWork:true,allowNamedFrontWorker:true});
   const commitment=commitTeamChaseStakesV1({teams,distanceKm:20,
+    keypoints,
     intentions:teams.map(team=>({teamId:team.id,
       baseline:{goal:stakeByTeam[team.id]??'none',
         captainId:team.riders[0].id},phases:[]}))});
@@ -113,7 +119,12 @@ test('unsupported orders and physical inability refuse before movement',()=>{
   const attack=structuredClone(input.startInput.teams);
   attack[1].orders.baseline.attack='opportunistic';
   assert.throws(()=>advancePhysicalStartBunchV1(source(attack)),
-    /one ordered front worker/);
+    /Invalid attack rule/);
+  const invalidPhase=field();
+  invalidPhase[0].orders.phases=[{atKm:2,
+    frontWork:'sit_in'}];
+  assert.throws(()=>source(invalidPhase),
+    /Phase changes must be at a 5 km or route marker/);
   const weak=structuredClone(input.startInput.teams);
   for(const skill of SPORTING_SKILLS)weak[2].riders[3][skill]=10;
   assert.throws(()=>advancePhysicalStartBunchV1(source(weak)),
@@ -139,7 +150,7 @@ test('consecutive paid road rotates named leader and replays every rider',()=>{
   teams[1].orders.phases=[{atKm:1,frontWork:'rotate',
     frontWorkRiderId:'sprint-2'},
   {atKm:3,frontWork:'sit_in'}];
-  const input=source(teams);
+  const input=source(teams,route(),undefined,[{km:1},{km:3}]);
   const road=runPhysicalBunchV1({...input,throughKm:5});
   assert.deepEqual(road.road.map(row=>row.leaderRiderId),
     ['control-2','sprint-2','sprint-2','control-3','control-3']);
@@ -168,7 +179,7 @@ test('named manager attack forms front solo only by paid faster road',()=>{
   for(const skill of SPORTING_SKILLS)
     teams[2].riders[2][skill]=95;
   const input=source(teams,route(),{
-    sprint:'sprint_finish',other:'break_stage'});
+    sprint:'sprint_finish',other:'break_stage'},[{km:1}]);
   const attack=runPhysicalNamedAttackV1({...input,
     attackKm:2});
   assert.equal(attack.frontSolo.riderIds[0],'other-2');
@@ -190,7 +201,7 @@ test('named manager attack forms front solo only by paid faster road',()=>{
     attackKm:2},forged),/differs/);
   assert.throws(()=>runPhysicalBunchV1({...input,
     throughKm:2}),/one ordered front worker/);
-  const noStake=source(teams,route());
+  const noStake=source(teams,route(),undefined,[{km:1}]);
   assert.throws(()=>runPhysicalNamedAttackV1({...noStake,
     attackKm:2}),/actual sporting stake/);
   const weakTeams=field();
@@ -240,7 +251,7 @@ test('former paid bunch worker can lose a later faster leader',()=>{
     frontWorkRiderId:'sprint-2',effort:'hard'}];
   for(const skill of SPORTING_SKILLS)
     teams[1].riders[2][skill]=95;
-  const input=source(teams);
+  const input=source(teams,route(),undefined,[{km:1}]);
   const loss=runPhysicalBunchToPaceLossV1({...input,lossKm:2});
   assert.equal(loss.priorRoad[0].leaderRiderId,'control-2');
   assert.ok(loss.step.splits.some(row=>row.riderId==='control-2'));
@@ -254,7 +265,7 @@ test('former paid bunch worker can lose a later faster leader',()=>{
   teams[0].orders.phases.push({atKm:2,frontWork:'rotate',
     frontWorkRiderId:'control-2'});
   teams[1].orders.phases.push({atKm:2,frontWork:'sit_in'});
-  const later=source(teams);
+  const later=source(teams,route(),undefined,[{km:1},{km:2}]);
   assert.throws(()=>runPhysicalBunchAfterPaceLossV1({...later,
     lossKm:2,throughKm:3}),/no longer in bunch/);
 });

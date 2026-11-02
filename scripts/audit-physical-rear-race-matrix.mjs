@@ -1,6 +1,7 @@
 // Read-only calibration witness for the opt-in physical rear model.
 // It never changes guided races, production data or official results.
 import {SPORTING_SKILLS} from '../lib/engine/v2/skills.mjs';
+import {normalizeOrders} from '../lib/engine/v2/orders.mjs';
 import assert from 'node:assert/strict';
 import {commitTeamChaseStakesV1} from
   '../lib/engine/v2/team-chase-stake-v1.mjs';
@@ -46,8 +47,14 @@ function source(scenario){
   catching.flat=90;
   catching.timetrial=65;
   scenario.modify({teams,kilometres,ahead,catching});
-  for(const team of teams)team.energy=Object.fromEntries(
-    team.riders.map(rider=>[rider.id,100-rider.fatigue*.4]));
+  for(const team of teams){
+    team.energy=Object.fromEntries(team.riders.map(rider=>
+      [rider.id,100-rider.fatigue*.4]));
+    team.orders=normalizeOrders(team.orders,{
+      riderIds:team.riders.map(rider=>rider.id),
+      distanceKm:20,allowFrontWork:true,
+      allowNamedFrontWorker:true});
+  }
   const commitment=commitTeamChaseStakesV1({teams,
     distanceKm:20,intentions:teams.map(team=>({
       teamId:team.id,baseline:{

@@ -3319,7 +3319,11 @@ race clock and is not routed to guided races or official results.
 `physical-start-bunch-v1.mjs` provides a new opt-in physical root at
 the start line: the complete committed roster begins at metre zero
 with source-checked starting energy and a snapshot of the route,
-roster, rider attributes and orders. In a supported first kilometre,
+roster, rider attributes and orders. The start now requires the
+existing normalized manager-order shape, including named-helper and
+route-marker phase guards; an uncommitted phase is refused. The
+synthetic early phase-change tests explicitly commit km 1, 2 or 3 as
+route markers. In a supported first kilometre,
 one explicitly named ordered helper sets the bunch pace and pays
 exposed terrain work; every other rider has a recorded shelter decision,
 pays a lower terrain cost, and carries their own recovery and cap.
