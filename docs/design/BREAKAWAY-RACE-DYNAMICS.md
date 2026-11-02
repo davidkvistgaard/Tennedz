@@ -4049,16 +4049,21 @@ one exposed group leader, 18 sheltered group riders and one separately
 paying solo, while the surviving bunch also retains its paid leader.
 Eight mixed variants with a 31- or 35-mountain unmatched solo
 source-replay 19,200 or 41,600 rider-kilometre states and 160
-observed finish clocks. A separate 120-km descent witness makes the
-solo slow enough for the group to reach it on km 36. The full
-continuation refuses there. A separate source now prices each of the
-20 riders to their common metre 35,648.1 and clock, 87.1 seconds
-behind the bunch, with one exposed group leader until contact. It
-leaves the remainder of km 36 and the joined group's later road
-unsettled. Forged partition, contact energy or finish data fails
-source validation.
+observed finish clocks. Four further descent variants make the solo
+slow enough for the group to reach it on km 36 at both fatigue levels
+over 120 and 260 km. The old separate continuation refuses there. A
+new source prices all 20 to their common meeting; the 120-km,
+fatigue-10 case meets at metre 35,648.1, 87.1 seconds behind the
+bunch. One exposed leader and 19 sheltered riders then pay the rest
+of km 36. The `physical-mixed-joined-rear-race-1` replay rotates all
+20 through finish. The four recordings contain 19,200 or 41,600
+rider-km states, all 160 observed finish clocks and nonnegative energy.
+Every joined rider has both pre-contact and post-contact decisions on
+km 36; the surviving 140-rider bunch retains its own paid decisions.
+Forged partition, contact energy or finish data fails source
+validation.
 
 Equal skills and simultaneous identical solo arrivals are scale
-witnesses, not a calibrated field distribution. Unequal
-Other mixed arrivals, later merges, realistic fatigue and whole-race chase
+witnesses, not a calibrated field distribution. Other mixed arrivals,
+later merges, realistic fatigue and whole-race chase
 timing remain unresolved before routing.

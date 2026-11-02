@@ -26,6 +26,12 @@ import {replayPhysicalSimultaneousRearGroupV1,
 import {contactPhysicalMixedRearSoloV1,
   validatePhysicalMixedRearSoloContactV1} from
   '../lib/engine/v2/physical-mixed-rear-solo-contact-v1.mjs';
+import {finishPhysicalMixedRearContactKmV1,
+  validatePhysicalMixedRearContactKmV1} from
+  '../lib/engine/v2/physical-mixed-rear-contact-road-v1.mjs';
+import {replayPhysicalMixedJoinedRearRaceV1,
+  validatePhysicalMixedJoinedRearRaceV1} from
+  '../lib/engine/v2/physical-mixed-joined-rear-race-v1.mjs';
 
 const fieldSize=20;
 const ridersPerTeam=8;
@@ -132,6 +138,8 @@ function audit(distanceKm,fatigue,variant){
     let continuation=null;
     let mixedContinuation=null;
     let laterMixedContact=null;
+    let laterMixedRoad=null;
+    let joinedContinuation=null;
     let paidRearContact=null;
     let paidArrivalPartitions=null;
     if(splitIds.length>1){
@@ -284,6 +292,62 @@ function audit(distanceKm,fatigue,variant){
             leaderRiderId:later.leaderRiderId,
             minimumEnergy:Math.min(...later.riders
               .map(row=>row.energyAfter))};
+          const roadInput={...laterInput,contact:later};
+          const road=finishPhysicalMixedRearContactKmV1(
+            roadInput);
+          assert.equal(validatePhysicalMixedRearContactKmV1(
+            roadInput,road),true);
+          assert.equal(road.riders.filter(row=>
+            row.role==='leader').length,1);
+          assert.equal(road.riders.filter(row=>
+            row.role==='sheltered').length,19);
+          assert.ok(road.riders.find(row=>
+            row.role==='leader').energySpent>
+            Math.max(...road.riders.filter(row=>
+              row.role==='sheltered').map(row=>
+                row.energySpent)));
+          laterMixedRoad={sourceKm:road.sourceKm,
+            endDistanceM:road.endDistanceM,
+            riderCount:road.riders.length,
+            gapSecondsToBunch:road.gapSecondsToBunch,
+            minimumEnergy:Math.min(...road.riders.map(
+              row=>row.energyAfter))};
+          try{
+            const joinedInput={...input,lossKm,
+              contactKm:later.sourceKm,
+              throughKm:distanceKm};
+            const joined=replayPhysicalMixedJoinedRearRaceV1(
+              joinedInput);
+            assert.equal(validatePhysicalMixedJoinedRearRaceV1(
+              joinedInput,joined),true);
+            const contactStates=joined.kilometres[
+              later.sourceKm-1].riderStates;
+            assert.equal(contactStates.filter(row=>
+              row.physicalGroupId!=='peloton'&&
+              row.decisions.length===2).length,20);
+            assert.equal(contactStates.filter(row=>
+              row.physicalGroupId==='peloton'&&
+              row.decisions.length===1).length,140);
+            const forgedJoined=structuredClone(joined);
+            forgedJoined.observedFinishSecondsByRider[
+              'team-19-7']+=1;
+            assert.throws(()=>
+              validatePhysicalMixedJoinedRearRaceV1(
+                joinedInput,forgedJoined),
+            /differs from source/);
+            joinedContinuation={status:'paid_finish',
+              riderKilometres:joined.kilometres.reduce(
+                (sum,row)=>sum+row.riderStates.length,0),
+              finishRiders:Object.keys(joined
+                .observedFinishSecondsByRider).length,
+              namedRearLeaders:new Set(joined.sources.later
+                .map(row=>row.leaderRiderId)).size,
+              minimumEnergy:Math.min(...joined.kilometres
+                .flatMap(row=>row.riderStates.map(rider=>
+                  rider.energyAfter)))};
+          }catch(joinedError){joinedContinuation={
+            status:'refused',reason:joinedError.message,
+            sourceKm:joinedError.sourceKm};}
         }
       }
     }
@@ -310,7 +374,9 @@ function audit(distanceKm,fatigue,variant){
       paidArrivalPartitions,
       paidRearContact,
       bunchAtKmEnd:loss.step.physicalGroup.riderIds.length,
-      continuation,mixedContinuation,laterMixedContact};
+      continuation,mixedContinuation,
+      laterMixedContact,laterMixedRoad,
+      joinedContinuation};
   }
   const decisions=run.road.reduce((sum,row)=>
     sum+row.riderDecisions.length,0);
@@ -325,17 +391,18 @@ function audit(distanceKm,fatigue,variant){
       run.energyByRider))};
 }
 
-const results=process.argv.includes('--probe-descent')?[]:
+const results=process.argv.includes('--probe-descent')?
+  [audit(120,10,'unequal_descent_catch')]:
   [120,260].flatMap(distanceKm=>
   [10,30].flatMap(fatigue=>
     ['equal_field','one_weak_climber',
       'many_weak_climbers',
       'unequal_weak_climbers',
-      'nearly_equal_weak_climbers'].map(variant=>
+      'nearly_equal_weak_climbers',
+      'unequal_descent_catch'].map(variant=>
       audit(distanceKm,fatigue,variant))));
-results.push(audit(120,10,'unequal_descent_catch'));
 if(process.argv.includes('--assert')){
-  assert.equal(results.length,21);
+  assert.equal(results.length,24);
   for(const row of results.filter(item=>
     item.variant==='equal_field')){
     assert.equal(row.status,'paid_bunch_finish');
@@ -395,6 +462,18 @@ if(process.argv.includes('--assert')){
         assert.equal(row.laterMixedContact.riderCount,20);
         assert.ok(row.laterMixedContact.behindBunchSeconds>0);
         assert.ok(row.laterMixedContact.minimumEnergy>=0);
+        assert.equal(row.laterMixedRoad?.sourceKm,36);
+        assert.equal(row.laterMixedRoad.endDistanceM,36000);
+        assert.equal(row.laterMixedRoad.riderCount,20);
+        assert.ok(row.laterMixedRoad.gapSecondsToBunch>0);
+        assert.ok(row.laterMixedRoad.minimumEnergy>=0);
+        assert.equal(row.joinedContinuation?.status,
+          'paid_finish');
+        assert.equal(row.joinedContinuation.riderKilometres,
+          row.distanceKm*fieldSize*ridersPerTeam);
+        assert.equal(row.joinedContinuation.finishRiders,160);
+        assert.equal(row.joinedContinuation.namedRearLeaders,20);
+        assert.ok(row.joinedContinuation.minimumEnergy>=0);
       }else{
         assert.equal(row.mixedContinuation?.status,'paid_finish');
         assert.equal(row.mixedContinuation.riderKilometres,
