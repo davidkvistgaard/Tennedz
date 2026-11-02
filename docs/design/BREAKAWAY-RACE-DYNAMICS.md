@@ -3633,6 +3633,20 @@ estimated gap changes are +0.737, +0.504 and +1.206 seconds, within
 The old multi-helper catch forecast still determines the action;
 this new pace signal exposes that disagreement for calibration and
 does not silently cancel a manager-authorized chase.
+`physical-chased-front-step-v1.mjs` now shares the front rider's
+paid terrain, energy and sporting-stake calculation with an opt-in
+consecutive pursuit source. `physical-perceived-chase-run-v1.mjs`
+follows the first perceived commitment with the actual manager's
+named chase leader on every later kilometre; a later precommitted
+helper can take over without changing the order silently. The full
+`physical-perceived-chase-race-replay-v1.mjs` records every rider's
+decision, energy and clock from the start to observed finish while
+the front rider remains ahead. In the three urgent 20-km windows,
+all 480 rider-kilometre states replay, but the front rider still
+finishes 18.132, 16.065 and 24.15 seconds ahead. A physical catch
+or a later chase dropout would require its own paid source. These
+results confirm the present urgency forecast is uncalibrated; this
+opt-in chase is not routed to guided races.
 
 `audit-physical-bunch-distance.mjs --assert` extends the opt-in
 paid-bunch source to mixed flat, hill, climb, descent and wind routes

@@ -82,6 +82,12 @@ import {decidePhysicalFrontThreatV1,
 import {advancePhysicalPerceivedChaseKmV1,
   validatePhysicalPerceivedChaseKmV1} from
   '../../lib/engine/v2/physical-perceived-chase-km-v1.mjs';
+import {runPhysicalPerceivedChaseV1,
+  validatePhysicalPerceivedChaseRunV1} from
+  '../../lib/engine/v2/physical-perceived-chase-run-v1.mjs';
+import {replayPhysicalPerceivedChaseRaceV1,
+  validatePhysicalPerceivedChaseRaceV1} from
+  '../../lib/engine/v2/physical-perceived-chase-race-replay-v1.mjs';
 import {runPhysicalRearGroupV1,
   validatePhysicalRearGroupV1} from
   '../../lib/engine/v2/physical-rear-group-run-v1.mjs';
@@ -689,6 +695,49 @@ test('perceived urgency pays one named chase leader and full field',()=>{
   forged.bunchStep.riders[2].energyAfter+=1;
   assert.throws(()=>validatePhysicalPerceivedChaseKmV1(
     input,forged),/differs/);
+  const chaseInput={...input,throughKm:20};
+  const chase=runPhysicalPerceivedChaseV1(chaseInput);
+  assert.equal(chase.steps.length,13);
+  assert.equal(Object.keys(
+    chase.observedFinishSecondsByRider).length,24);
+  assert.ok(chase.steps.every(row=>row.riderStates.length===24&&
+    row.gapSecondsToBunch>0&&
+    row.bunchStep.riders.filter(rider=>
+      rider.role==='leader').length===1));
+  assert.equal(validatePhysicalPerceivedChaseRunV1(
+    chaseInput,chase),true);
+  const rotationSource=structuredClone(startInput);
+  rotationSource.teams[1].orders.phases.push({atKm:10,
+    frontWork:'rotate',frontWorkRiderId:'sprint-3',
+    chase:'selective'});
+  const rotationInput={...chaseInput,startInput:rotationSource,
+    start:startPhysicalBunchV1(rotationSource)};
+  const rotated=runPhysicalPerceivedChaseV1(rotationInput);
+  assert.equal(rotated.steps[0].bunchStep.leaderRiderId,
+    'sprint-2');
+  assert.equal(rotated.steps.find(row=>row.sourceKm===11)
+    .bunchStep.leaderRiderId,'sprint-3');
+  assert.equal(Object.keys(rotated.observedFinishSecondsByRider)
+    .length,24);
+  const race=replayPhysicalPerceivedChaseRaceV1(rotationInput);
+  assert.equal(race.kilometres.length,20);
+  assert.equal(race.kilometres.reduce((sum,row)=>sum+
+    row.riderStates.length,0),480);
+  assert.equal(Object.keys(
+    race.observedFinishSecondsByRider).length,24);
+  assert.equal(validatePhysicalPerceivedChaseRaceV1(
+    rotationInput,race),true);
+  const forgedRace=structuredClone(race);
+  forgedRace.kilometres[11].riderStates.find(row=>
+    row.riderId==='sprint-3').energyAfter+=1;
+  assert.throws(()=>validatePhysicalPerceivedChaseRaceV1(
+    rotationInput,forgedRace),/differs/);
+  const stoppedSource=structuredClone(rotationSource);
+  stoppedSource.teams[1].orders.phases[1].chase='ignore';
+  assert.throws(()=>runPhysicalPerceivedChaseV1({
+    ...rotationInput,startInput:stoppedSource,
+    start:startPhysicalBunchV1(stoppedSource)}),
+  /has not committed paid chase|active manager order/);
   const hardInputSource=structuredClone(startInput);
   hardInputSource.teams[1].orders.phases[0].effort='hard';
   const hardInput={...input,startInput:hardInputSource,

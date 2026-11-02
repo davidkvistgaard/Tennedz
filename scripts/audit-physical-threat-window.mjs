@@ -11,6 +11,9 @@ import {decidePhysicalFrontThreatV1} from
   '../lib/engine/v2/physical-front-threat-choice-v1.mjs';
 import {advancePhysicalPerceivedChaseKmV1} from
   '../lib/engine/v2/physical-perceived-chase-km-v1.mjs';
+import {replayPhysicalPerceivedChaseRaceV1,
+  validatePhysicalPerceivedChaseRaceV1} from
+  '../lib/engine/v2/physical-perceived-chase-race-replay-v1.mjs';
 
 const route=Array.from({length:20},(_,index)=>({km:index+1,
   terrain:'flat',gradientPct:0,surface:'road',exposed:false,
@@ -62,10 +65,24 @@ function choice({attackerSkill,observerSkill,choiceKm}){
   const recording=decidePhysicalFrontThreatV1(input);
   const action=recording.choice.choice.assessments[0].action;
   let paidGapChangeSeconds;
+  let chaseRace;
   if(['commit_now','commit_and_request_help'].includes(action)){
     const paid=advancePhysicalPerceivedChaseKmV1(input);
     paidGapChangeSeconds=+(paid.gapSecondsToBunch-
       recording.observedGapSeconds).toFixed(3);
+    try{
+      const raceInput={...input,throughKm:20};
+      const race=replayPhysicalPerceivedChaseRaceV1(raceInput);
+      validatePhysicalPerceivedChaseRaceV1(raceInput,race);
+      chaseRace={status:'front_finish',
+        riderKilometres:race.kilometres.reduce((sum,row)=>
+          sum+row.riderStates.length,0),
+        finishRiders:Object.keys(
+          race.observedFinishSecondsByRider).length,
+        finishGapSeconds:+race.sources.chase
+          .gapSecondsToBunch.toFixed(3)};
+    }catch(error){chaseRace={status:'refused',
+      reason:error.message};}
   }
   return {attackerSkill,observerSkill,choiceKm,
     gapSeconds:+recording.observedGapSeconds.toFixed(3),
@@ -74,7 +91,8 @@ function choice({attackerSkill,observerSkill,choiceKm}){
       .nominatedHeadroomSeconds.toFixed(3),
     estimatedGapChangeSeconds:recording.paceEstimate
       .estimatedGapChangeSeconds,
-    ...(paidGapChangeSeconds===undefined?{}:{paidGapChangeSeconds})};
+    ...(paidGapChangeSeconds===undefined?{}:{
+      paidGapChangeSeconds,chaseRace})};
 }
 
 const results=[];
@@ -100,6 +118,10 @@ if(process.argv.includes('--assert')){
     Number.isFinite(row.paidGapChangeSeconds)&&
     Math.abs(row.estimatedGapChangeSeconds-
       row.paidGapChangeSeconds)<.1));
+  assert.ok(commitWindows.every(row=>
+    row.chaseRace.status==='front_finish'&&
+    row.chaseRace.riderKilometres===480&&
+    row.chaseRace.finishRiders===24));
   assert.ok(actionCounts.watch>0&&
     actionCounts.capacity_shortfall>0);
 }
