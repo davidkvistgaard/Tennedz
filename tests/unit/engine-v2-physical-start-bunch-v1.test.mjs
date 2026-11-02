@@ -13,7 +13,9 @@ import {startPhysicalBunchV1,advancePhysicalStartBunchV1,
   runPhysicalBunchAfterPaceLossV1,
   validatePhysicalBunchAfterPaceLossV1,
   runPhysicalNamedAttackV1,
-  validatePhysicalNamedAttackV1} from
+  validatePhysicalNamedAttackV1,
+  runPhysicalBunchAfterNamedAttackV1,
+  validatePhysicalBunchAfterNamedAttackV1} from
   '../../lib/engine/v2/physical-start-bunch-v1.mjs';
 import {completePhysicalPaceLossKmV1,
   validatePhysicalPaceLossCompletionV1} from
@@ -215,6 +217,31 @@ test('named manager attack forms front solo only by paid faster road',()=>{
     other:'break_stage'});
   assert.throws(()=>runPhysicalNamedAttackV1({...weak,
     attackKm:1}),/cannot establish physical gap/);
+  const bunchInput={...input,attackKm:2,throughKm:4};
+  const continued=runPhysicalBunchAfterNamedAttackV1(
+    bunchInput);
+  assert.equal(continued.road.length,2);
+  assert.ok(continued.road.every(row=>
+    row.physicalGroup.riderIds.length===23&&
+    row.riderDecisions.length===23&&
+    row.blockedAttacks.length===1&&
+    row.blockedAttacks[0].reason==='already_ahead'));
+  assert.ok(!Object.hasOwn(continued.energyByRider,
+    'other-2'));
+  assert.equal(validatePhysicalBunchAfterNamedAttackV1(
+    bunchInput,continued),true);
+  const falseBunch=structuredClone(continued);
+  falseBunch.road[0].blockedAttacks=[];
+  assert.throws(()=>validatePhysicalBunchAfterNamedAttackV1(
+    bunchInput,falseBunch),/differs/);
+  const secondOrder=structuredClone(teams);
+  secondOrder[2].orders.phases.push({atKm:2,
+    attackRiderId:'other-3'});
+  const changedAttack=source(secondOrder,route(),{
+    other:'break_stage'},[{km:1},{km:2}]);
+  assert.throws(()=>runPhysicalBunchAfterNamedAttackV1({
+    ...changedAttack,attackKm:2,throughKm:3}),
+  /one ordered front worker/);
 });
 
 test('early climb weakness records a paid partial solo and no rear group',()=>{

@@ -3482,3 +3482,13 @@ The intact-bunch path still refuses that active attack. Subsequent
 front road, perceived rival assessment and any physical pursuit or
 catch are still separate work; this branch is not routed to V94 or
 guided races.
+
+`runPhysicalBunchAfterNamedAttackV1` now continues the surviving
+23-rider bunch with one paid front leader and individual sheltered
+costs. The active manager attack order stays in the source; when its
+named rider is already ahead, each later kilometre records an
+`already_ahead` refusal for that attempted repeat. It cannot
+silently launch another named rider or return the forward rider to
+the bunch. A focused continuation through km 4 replays the road and
+rejects a forged blocked-attack row or a changed attack target.
+The forward rider's own later road remains separate.
