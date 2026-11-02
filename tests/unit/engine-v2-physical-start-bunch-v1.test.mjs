@@ -18,6 +18,9 @@ import {completePhysicalPaceLossKmV1,
 import {runPhysicalDetachedSoloV1,
   validatePhysicalDetachedSoloV1} from
   '../../lib/engine/v2/physical-detached-solo-run-v1.mjs';
+import {contactPhysicalRearSolosV1,
+  validatePhysicalRearSoloContactV1} from
+  '../../lib/engine/v2/physical-rear-solo-contact-v1.mjs';
 
 const route=(terrain='flat')=>Array.from({length:20},(_,index)=>({
   km:index+1,terrain,gradientPct:terrain==='climb'?6:0,
@@ -321,4 +324,49 @@ test('detached solo respects team effort and future-stage reserve',()=>{
         currentGoal:'finish_safely',futureGoal:'target_stage',
         reserveEnergy:95}}});
   assert.throws(()=>runWithPlan(save),/future-stage reserve/);
+});
+
+test('two paid rear solos meet on changed terrain before a group forms',()=>{
+  const teams=field();
+  const ahead=teams[2].riders[3];
+  const catching=teams[2].riders[4];
+  for(const skill of SPORTING_SKILLS){
+    ahead[skill]=50;
+    catching[skill]=50;
+  }
+  ahead.mountain=55;
+  ahead.flat=20;
+  ahead.timetrial=40;
+  catching.mountain=10;
+  catching.flat=90;
+  catching.timetrial=65;
+  const kilometres=route('flat');
+  kilometres[0].terrain='climb';
+  kilometres[0].gradientPct=6;
+  const initial=source(teams,kilometres);
+  const plans=[['other-3','conserve'],
+    ['other-4','steady']].map(([riderId,effort])=>
+    commitRearSoloPlanV1({riderId,distanceKm:20,
+      stageNumber:1,stageCount:1,
+      baseline:{goal:'finish_safely',effort}}));
+  const startInput={...initial.startInput,
+    soloCommitments:plans};
+  const start=startPhysicalBunchV1(startInput);
+  const input={startInput,start,lossKm:1,contactKm:2,
+    riderIds:['other-3','other-4']};
+  const contact=contactPhysicalRearSolosV1(input);
+  assert.equal(contact.catchingRiderId,'other-4');
+  assert.equal(contact.aheadRiderId,'other-3');
+  assert.ok(contact.contactAtDistanceM>1000&&
+    contact.contactAtDistanceM<2000);
+  assert.ok(contact.behindBunchSeconds>0);
+  assert.equal(contact.physicalGroup.riderIds.length,2);
+  assert.ok(contact.riders.every(row=>row.energySpent>0));
+  assert.equal(validatePhysicalRearSoloContactV1(input,contact),true);
+  const forged=structuredClone(contact);
+  forged.contactClockSeconds+=1;
+  assert.throws(()=>validatePhysicalRearSoloContactV1(input,forged),
+    /differs/);
+  assert.throws(()=>contactPhysicalRearSolosV1({...input,
+    contactKm:3}),/met before requested contact/);
 });

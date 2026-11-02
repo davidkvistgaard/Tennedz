@@ -3393,3 +3393,16 @@ rider's goal from a safe finish to rejoining at km 6. This route
 refuses if the rider
 catches the bunch; source-paid contact and possible rejoining still
 need separate implementation. It also refuses unpayable solo road.
+
+`physical-rear-solo-contact-v1.mjs` now derives the first meeting of
+two detached singleton riders from their recorded split, completed
+kilometre, pre-race solo plans, energy-priced solo pace and the
+surviving bunch's actual clock. It accepts a contact only inside the
+requested kilometre, at the same distance and time for both riders,
+with both still behind the bunch. Each pays the exact partial solo
+distance before a two-rider rear group is recorded. A climb-to-flat
+witness has the initially trailing rider catch the rider ahead during
+km 2; forged timing and a later duplicate contact fail replay. The
+remaining part of that kilometre and subsequent leader rotation and
+shelter in the new rear group remain unsettled. No official result or
+time limit is inferred.
