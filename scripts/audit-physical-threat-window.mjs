@@ -176,6 +176,10 @@ function choice({attackerSkill,observerSkill,choiceKm,
                 (sum,row)=>sum+row.riderStates.length,0),
               finishRiders:Object.keys(race
                 .observedFinishSecondsByRider).length,
+              fastestSeconds:Math.min(...Object.values(
+                race.observedFinishSecondsByRider)),
+              slowestSeconds:Math.max(...Object.values(
+                race.observedFinishSecondsByRider)),
               minimumEnergy:Math.min(...race.kilometres
                 .flatMap(row=>row.riderStates.map(rider=>
                   rider.energyAfter)))};
@@ -435,6 +439,16 @@ const counterfactualCross=policyCross&&
     ...longTerrainCalibration].filter(row=>
     row.counterfactual?.finish?.status===
       'paid_finish').length,
+  completePaidFinishes:[...calibration,...longCalibration,
+    ...longTerrainCalibration].filter(row=>{
+    const finish=row.counterfactual?.finish;
+    return finish?.status==='paid_finish'&&
+      finish.riderKilometres===row.distanceKm*24&&
+      finish.finishRiders===24&&
+      finish.minimumEnergy>=0&&
+      finish.fastestSeconds>0&&
+      finish.slowestSeconds>=finish.fastestSeconds;
+  }).length,
   unsettledFinishes:[...calibration,...longCalibration,
     ...longTerrainCalibration].filter(row=>
     row.counterfactual?.finish?.status===
@@ -556,6 +570,7 @@ if(process.argv.includes('--assert')){
     assert.equal(counterfactualCross.orderStopped,22);
     assert.equal(counterfactualCross.fullContactKmSlides,92);
     assert.equal(counterfactualCross.paidFinishes,92);
+    assert.equal(counterfactualCross.completePaidFinishes,92);
     assert.equal(counterfactualCross.unsettledFinishes,0);
     assert.ok(counterfactualCross.sameCatchKm>0);
     assert.ok(counterfactualCross.maxCatchKmError<=2);

@@ -3769,6 +3769,10 @@ manager order before contact. The 92 full finishes comprise 60 at
 25 km, 10 at 80 km, 11 at 160 km and 11 at 260 km. The minimum
 recorded rider energy across each whole race ranges from 51.668 to
 91.136; these values do not establish physiological calibration.
+The recorded 260-km finishes fall between 5.88 and 5.92 hours in
+this synthetic field. The audit also checks a decision and physical
+state for each of 24 riders per kilometre, 24 finish times, and
+nonnegative energy for every completed counterfactual.
 A modified finish energy is rejected
 by source replay. These results test a diagnostic counterfactual,
 not a calibrated chase policy. The tactical `capacity_shortfall`
