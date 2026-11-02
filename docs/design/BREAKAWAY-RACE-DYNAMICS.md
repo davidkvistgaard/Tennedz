@@ -3677,3 +3677,14 @@ finish times. The weaker-climber variant without contact still
 retains its separate solo finish replay. These are narrow synthetic
 cases. Other contact timing, terrain, fatigue and multiple simultaneous
 groups require whole-race calibration before guided races.
+The read-only `audit-physical-staggered-matrix.mjs --assert` varies
+the second rider's climbing skill (30–80), initial fatigue
+(10, 20, 40) and climb gradient (4 or 6 percent) across 30 same-seed
+20-km races. Eighteen have a paid rear contact, single-leader
+rotation and full finish replay; twelve finish as two separate solos.
+Every case records 480 rider-kilometre states and all 24 observed
+finishes; contact cases have 482 decisions because each rider chooses
+again for the remainder of the contact kilometre. No case invents a
+rear group without a paid meeting. Minimum finish energy ranges from
+79.09 to 91.2 on these short routes, so this is coverage evidence,
+not whole-race fatigue calibration.
