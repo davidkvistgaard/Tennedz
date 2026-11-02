@@ -12,6 +12,12 @@ import {validatePhysicalPostCatchLossKmV1} from
   '../lib/engine/v2/physical-pace-loss-completion-v1.mjs';
 import {decidePhysicalFrontThreatV1} from
   '../lib/engine/v2/physical-front-threat-choice-v1.mjs';
+import {catchPhysicalFrontSoloV1,
+  validatePhysicalFrontBunchCatchV1} from
+  '../lib/engine/v2/physical-front-bunch-catch-v1.mjs';
+import {replayPhysicalCaughtBreakRaceV1,
+  validatePhysicalCaughtBreakRaceV1} from
+  '../lib/engine/v2/physical-caught-break-race-replay-v1.mjs';
 import {advancePhysicalPerceivedChaseKmV1} from
   '../lib/engine/v2/physical-perceived-chase-km-v1.mjs';
 import {replayPhysicalPerceivedChaseRaceV1,
@@ -103,6 +109,7 @@ function choice({attackerSkill,observerSkill,choiceKm,
   emergencyWorkerPlan=true,
   roleStrengthOffset=0,
   rotateLongLeaders=false,assessHorizon=false,
+  settleEarlyCatch=false,
   assessCounterfactual=false}){
   const terrainStartKm=terrainStartOverride??
     (distanceKm<=25?14:distanceKm-12);
@@ -213,7 +220,52 @@ function choice({attackerSkill,observerSkill,choiceKm,
   const input={startInput,start,
     attackKm,choiceKm,observerTeamId:'sprint',
     nominatedChaseTeamIds:['sprint']};
-  const recording=decidePhysicalFrontThreatV1(input);
+  let recording;
+  try{recording=decidePhysicalFrontThreatV1(input);}
+  catch(error){
+    if(!settleEarlyCatch||error.message!==
+      'Front solo needs separate physical catch road.')throw error;
+    for(let catchKm=attackKm+1;catchKm<choiceKm;catchKm++){
+      let contact;
+      const contactInput={startInput,start,attackKm,catchKm};
+      try{contact=catchPhysicalFrontSoloV1(contactInput);}
+      catch(catchError){
+        if(catchError.message===
+          'Front solo has no paid bunch catch here.')continue;
+        throw catchError;
+      }
+      assert.equal(validatePhysicalFrontBunchCatchV1(
+        contactInput,contact),true);
+      const raceInput={...contactInput,throughKm:distanceKm};
+      let race;
+      try{race=replayPhysicalCaughtBreakRaceV1(raceInput);}
+      catch(raceError){
+        if(raceError.message!==
+          'Physical start follower cannot hold paid pace.')
+          throw raceError;
+        return {attackerSkill,observerSkill,attackKm,choiceKm,
+          fatigue,roadVariant,distanceKm,
+          status:'paid_early_contact_unsettled',catchKm,
+          contactAtM:+contact.contact.atDistanceM.toFixed(1),
+          lossKm:raceError.sourceKm,
+          reason:raceError.message};
+      }
+      assert.equal(validatePhysicalCaughtBreakRaceV1(
+        raceInput,race),true);
+      return {attackerSkill,observerSkill,attackKm,choiceKm,
+        fatigue,roadVariant,distanceKm,
+        status:'caught_before_choice',catchKm,
+        contactAtM:+contact.contact.atDistanceM.toFixed(1),
+        riderKilometres:race.kilometres.reduce((sum,row)=>
+          sum+row.riderStates.length,0),
+        finishRiders:Object.keys(race
+          .observedFinishSecondsByRider).length,
+        minimumEnergy:Math.min(...race.kilometres.flatMap(
+          row=>row.riderStates.map(rider=>
+            rider.energyAfter)))};
+    }
+    throw error;
+  }
   const action=recording.choice.choice.assessments[0].action;
   const horizon=assessHorizon?
     estimatePhysicalObserverPursuitHorizonV1({
@@ -1049,7 +1101,7 @@ const postcatchMatrix=process.argv.includes(
       fatigue,roadVariant,terrainStartOverride:30,
       roleVariant:'moderate_closing',
       rotateLongLeaders:true,assessHorizon:true,
-      assessCounterfactual:true};
+      assessCounterfactual:true,settleEarlyCatch:true};
     try{return choice(input);}
     catch(error){return {...input,refused:error.message};}
   }))):undefined;
@@ -1383,8 +1435,15 @@ if(process.argv.includes('--assert')){
   if(postcatchMatrix!==undefined){
     assert.equal(postcatchMatrix.length,12);
     assert.equal(postcatchMatrix.filter(row=>
-      row.fatigue===0&&row.refused===
-        'Front solo needs separate physical catch road.')
+      row.fatigue===0&&
+        row.status==='paid_early_contact_unsettled'&&
+        row.catchKm>row.attackKm&&
+        row.catchKm<row.choiceKm&&
+        row.contactAtM>(row.catchKm-1)*1000&&
+        row.contactAtM<row.catchKm*1000&&
+        row.lossKm>row.catchKm&&
+        row.reason===
+          'Physical start follower cannot hold paid pace.')
       .length,4);
     assert.equal(postcatchMatrix.filter(row=>
       row.fatigue!==0&&!row.refused&&

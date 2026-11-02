@@ -3891,8 +3891,10 @@ positive energy, two alternating rear leaders and a positive
 physical gap to the bunch. Hill versus climb changes the
 contact metre (30,660 versus 30,208 at fatigue 20) and the
 finish gap; higher fatigue lowers minimum finish energy. The
-four zero-fatigue cases refuse at an earlier unimplemented
-front-solo catch, so they do not claim a rear finish.
+four zero-fatigue cases now record the earlier front-solo catch
+at km 10, metre 9,896.6. Their later bunch continuation
+correctly refuses when a follower cannot hold the ordered pace;
+these cases do not claim a rear finish or a fabricated position.
 `--postcatch-strength-matrix --assert` varies the caught rider's
 hill and mountain skills by ten points. Four variants finish
 after paid rear contact. Two weaker-rider hill variants never
@@ -3995,3 +3997,10 @@ solo kilometre. The existing catch, slide and separate solo road then
 replay all 24 riders through the observed 20-km finish. This closes the
 next-kilometre boundary only; it does not settle all early catches in
 long races or change guided-race routing.
+When an already committed chase order starts after a paid catch, the
+post-slide bunch records the resolved target and still charges its
+named front worker for pulling. The rider's decision stays visible as
+front work rather than a chase of a rider who is no longer ahead.
+The zero-fatigue long-race matrix exposes the next unsolved case:
+a later follower physically loses this bunch on km 31. That split needs its
+own paid completion and subsequent road before any finish claim.

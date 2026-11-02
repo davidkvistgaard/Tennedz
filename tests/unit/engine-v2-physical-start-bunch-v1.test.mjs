@@ -640,10 +640,14 @@ test('front catch can be paid in first kilometre after attack',()=>{
   teams[2].orders.phases=[{atKm:1,attack:'selective',
     attackRiderId:'other-2',effort:'hard'},
   {atKm:2,effort:'conserve'}];
+  teams[0].orders.phases=[{atKm:3,frontWork:'sit_in'}];
+  teams[1].orders.phases=[{atKm:3,chase:'selective',
+    frontWork:'rotate',frontWorkRiderId:'sprint-2'}];
   const road=route();
   road[2]={...road[2],terrain:'climb',gradientPct:6};
   const input=source(teams,road,{
-    other:'break_stage'},[{km:1},{km:2}]);
+    other:'break_stage',sprint:'sprint_finish'},
+  [{km:1},{km:2},{km:3}]);
   const attack=runPhysicalFrontSoloV1({...input,
     attackKm:2,throughKm:2});
   assert.equal(attack.steps.length,0);
@@ -665,6 +669,15 @@ test('front catch can be paid in first kilometre after attack',()=>{
     row.riderStates.length===24));
   assert.equal(Object.keys(race.observedFinishSecondsByRider)
     .length,24);
+  assert.equal(race.sources.bunch.road[0]
+    .resolvedChase.teamId,'sprint');
+  assert.equal(race.sources.bunch.road[0]
+    .resolvedChase.caughtRiderId,'other-2');
+  assert.equal(race.sources.bunch.road[0]
+    .resolvedChase.order,'selective');
+  assert.equal(race.sources.bunch.road[0]
+    .riderDecisions.find(row=>row.riderId==='sprint-2')
+    .choice,'pull');
   assert.equal(validatePhysicalCaughtBreakRaceV1({...input,
     attackKm:2,catchKm:3,throughKm:20},race),true);
 });
