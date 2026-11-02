@@ -26,6 +26,9 @@ import {finishPhysicalRearContactKmV1,
   '../../lib/engine/v2/physical-rear-contact-road-v1.mjs';
 import {priceRearEnergyDemandV1} from
   '../../lib/engine/v2/rear-energy-demand-v1.mjs';
+import {runPhysicalRearGroupV1,
+  validatePhysicalRearGroupV1} from
+  '../../lib/engine/v2/physical-rear-group-run-v1.mjs';
 
 const route=(terrain='flat')=>Array.from({length:20},(_,index)=>({
   km:index+1,terrain,gradientPct:terrain==='climb'?6:0,
@@ -395,4 +398,39 @@ test('two paid rear solos meet on changed terrain before a group forms',()=>{
   falseGroup.riders[0].energyAfter+=1;
   assert.throws(()=>validatePhysicalRearContactRoadV1(
     groupInput,falseGroup),/differs/);
+  const runInput={...groupInput,contactRoad:group,
+    throughKm:4};
+  const rear=runPhysicalRearGroupV1(runInput);
+  assert.deepEqual(rear.steps.map(row=>row.leaderRiderId),
+    ['other-4','other-3']);
+  assert.ok(rear.steps.every(row=>
+    row.riders.length===2&&row.riders.every(rider=>
+      rider.energySpent>0&&rider.recoveryAward===0)));
+  assert.ok(rear.steps[0].groupAbility<
+    rear.steps[0].leaderMaxAbility);
+  assert.equal(rear.physicalGroup.atDistanceM,4000);
+  assert.equal(validatePhysicalRearGroupV1(runInput,rear),true);
+  const forgedRear=structuredClone(rear);
+  forgedRear.steps[0].riders[1].energyAfter+=1;
+  assert.throws(()=>validatePhysicalRearGroupV1(
+    runInput,forgedRear),/differs/);
+  const aggressiveInput={...startInput,
+    soloCommitments:[plans[0],commitRearSoloPlanV1({
+      riderId:'other-4',distanceKm:20,stageNumber:1,
+      stageCount:1,baseline:{goal:'rejoin_bunch',
+        effort:'steady'}})]};
+  const aggressiveStart=startPhysicalBunchV1(aggressiveInput);
+  const aggressiveContact=contactPhysicalRearSolosV1({
+    startInput:aggressiveInput,start:aggressiveStart,
+    lossKm:1,contactKm:2,
+    riderIds:input.riderIds});
+  const aggressiveRoad=finishPhysicalRearContactKmV1({
+    startInput:aggressiveInput,start:aggressiveStart,
+    lossKm:1,contactKm:2,riderIds:input.riderIds,
+    contact:aggressiveContact});
+  assert.throws(()=>runPhysicalRearGroupV1({
+    startInput:aggressiveInput,start:aggressiveStart,
+    lossKm:1,contactKm:2,riderIds:input.riderIds,
+    contact:aggressiveContact,contactRoad:aggressiveRoad,
+    throughKm:3}),/cannot hold paid leader/);
 });

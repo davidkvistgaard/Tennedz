@@ -3403,9 +3403,8 @@ with both still behind the bunch. Each pays the exact partial solo
 distance before a two-rider rear group is recorded. A climb-to-flat
 witness has the initially trailing rider catch the rider ahead during
 km 2; forged timing and a later duplicate contact fail replay. The
-remaining part of that kilometre and subsequent leader rotation and
-shelter in the new rear group remain unsettled. No official result or
-time limit is inferred.
+remaining part of that kilometre has a separate paid group road below.
+No official result or time limit is inferred.
 
 `physical-rear-contact-road-v1.mjs` pays the remaining distance of
 the contact kilometre as a two-rider group. The rider who was ahead
@@ -3416,5 +3415,19 @@ the front. Each rider records a goal, turn choice, terrain charge,
 zero rear recovery and the route-derived cap at the completed
 kilometre. The group clock remains behind the sourced bunch or the
 road refuses separate bunch contact. The climb-to-flat witness
-replays the paid turn and rejects forged energy. Later turns, further
-contact and the finish remain to be modeled.
+replays the paid turn and rejects forged energy.
+
+`physical-rear-group-run-v1.mjs` carries that exact contact group
+through later kilometres. The two riders rotate one exposed leader
+per kilometre, each records a fresh pull or shelter decision from
+their pre-race goal and active team effort limit, and both pay
+terrain-priced energy with zero rear recovery and a route-derived
+cap. A rider whose goal is to finish safely can moderate the front
+pace to the follower's physical draft capacity. A committed rejoin
+attempt refuses if its faster front pace would shed the follower;
+that split needs its own road. The climb-to-flat witness rotates
+leaders through km 4, pays less for shelter than solo riding at the
+same effort, and rejects a forged energy ledger. The group remains
+behind the sourced bunch or this module refuses a separate contact
+branch. Full-stage finish and general multi-group calibration remain
+open.
