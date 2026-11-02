@@ -67,9 +67,11 @@ function source(scenario){
 const scenarios=[
   {name:'base',stake:'break_stage',modify:()=>{}},
   {name:'attacker_more_fatigued',stake:'break_stage',
+    modify:({attacker})=>{attacker.fatigue=25;}},
+  {name:'attacker_very_fatigued',stake:'break_stage',
     modify:({attacker})=>{attacker.fatigue=40;}},
   {name:'attacker_fresher',stake:'break_stage',
-    modify:({attacker})=>{attacker.fatigue=5;}},
+    modify:({attacker})=>{attacker.fatigue=15;}},
   {name:'later_climb',stake:'break_stage',
     modify:({kilometres})=>{
       for(const row of kilometres.slice(6,11)){
@@ -142,6 +144,12 @@ if(process.argv.includes('--assert')){
   assert.equal(byName.base.decisionRows,481);
   assert.equal(byName.base.blockedAttackAfterCatch,
     'dropped_after_paid_catch');
+  assert.equal(byName.attacker_more_fatigued.status,
+    'replayed');
+  assert.ok(byName.attacker_more_fatigued.catchKm<
+    byName.base.catchKm);
+  assert.match(byName.attacker_very_fatigued.reason,
+    /follower cannot hold paid pace/);
   assert.equal(byName.summit_stake.status,'replayed');
   assert.equal(byName.later_climb.status,'replayed');
   assert.equal(byName.windy_flat.status,'replayed');

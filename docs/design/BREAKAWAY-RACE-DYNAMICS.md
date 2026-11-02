@@ -3542,13 +3542,15 @@ another dropped rider need further physical testing. The result is
 not an official classification or calibrated guided motor.
 
 The read-only `audit-physical-caught-break-matrix.mjs --assert` runs
-eight same-seed 20-kilometre variants. Five replay all 480 rider
-kilometres and 481 decision rows: baseline, later climb, wind,
-cobbles and a changed summit stake. Baseline contact is at km 13,
+nine same-seed 20-kilometre variants. Six replay all 480 rider
+kilometres and 481 decision rows: baseline, modestly increased
+attacker fatigue, later climb, wind, cobbles and a changed summit
+stake. Baseline contact is at km 13,
 metre 12,562.5; the caught rider finishes 17.7 seconds after the
-bunch, with both times derived from paid road. A more fatigued
-attacker exposes a missing simultaneous follower pace-loss path in
-the attacking bunch. A fresher attacker and a weaker later bunch
+bunch, with both times derived from paid road. Modestly increased
+attacker fatigue moves the paid catch to km 9. A very fatigued
+attacker exposes a missing follower pace-loss path before the
+attack can launch. A fresher attacker and a weaker later bunch
 leader have no physical catch by km 19, which the audit reports as
 refusals rather than inventing one. The minimum finish energy near
 84 on this short route is diagnostic only; fatigue and whole-race
