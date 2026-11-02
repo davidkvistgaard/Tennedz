@@ -20,8 +20,15 @@ import {startPhysicalBunchV1,advancePhysicalStartBunchV1,
   validatePhysicalBunchAfterNamedAttackV1} from
   '../../lib/engine/v2/physical-start-bunch-v1.mjs';
 import {completePhysicalPaceLossKmV1,
+  completePhysicalStaggeredLossKmV1,
   validatePhysicalPaceLossCompletionV1} from
   '../../lib/engine/v2/physical-pace-loss-completion-v1.mjs';
+import {runPhysicalStaggeredDetachedSoloV1,
+  validatePhysicalStaggeredDetachedSoloV1} from
+  '../../lib/engine/v2/physical-staggered-detached-solo-v1.mjs';
+import {replayPhysicalStaggeredRaceV1,
+  validatePhysicalStaggeredRaceV1} from
+  '../../lib/engine/v2/physical-staggered-race-replay-v1.mjs';
 import {runPhysicalDetachedSoloV1,
   validatePhysicalDetachedSoloV1} from
   '../../lib/engine/v2/physical-detached-solo-run-v1.mjs';
@@ -149,7 +156,7 @@ test('different paid kilometres remove only physically dropped riders',()=>{
     for(const skill of SPORTING_SKILLS)rider[skill]=96;
   for(const skill of SPORTING_SKILLS)
     teams[0].riders[2][skill]=90;
-  teams[2].riders[3].mountain=30;
+  teams[2].riders[3].mountain=80;
   teams[0].orders.phases=[{atKm:5,frontWork:'sit_in'}];
   teams[1].orders.phases=[{atKm:5,
     frontWork:'rotate',frontWorkRiderId:'sprint-2'}];
@@ -171,6 +178,48 @@ test('different paid kilometres remove only physically dropped riders',()=>{
     !row.physicalGroup.riderIds.includes('other-3')));
   assert.equal(validatePhysicalStaggeredBunchLossV1({
     ...input,throughKm:20},recording),true);
+  for(const riderId of ['control-2','other-3']){
+    const completion=completePhysicalStaggeredLossKmV1({
+      ...input,staggered:recording,riderId});
+    assert.equal(completion.riderId,riderId);
+    assert.ok(completion.startDistanceM<
+      completion.endDistanceM);
+    const soloInput={...input,staggered:recording,
+      riderId,throughKm:20};
+    const solo=runPhysicalStaggeredDetachedSoloV1(soloInput);
+    assert.equal(solo.steps.length,20-completion.sourceKm);
+    assert.ok(solo.steps.every(row=>
+      row.energyAfter>=0&&row.gapSecondsToBunch>0));
+    assert.equal(validatePhysicalStaggeredDetachedSoloV1(
+      soloInput,solo),true);
+  }
+  const raceInput={...input,throughKm:20};
+  const race=replayPhysicalStaggeredRaceV1(raceInput);
+  assert.equal(race.kilometres.reduce((sum,row)=>sum+
+    row.riderStates.length,0),480);
+  assert.equal(Object.keys(
+    race.observedFinishSecondsByRider).length,24);
+  assert.ok(race.observedFinishSecondsByRider['control-2']>
+    race.observedFinishSecondsByRider['control-0']);
+  assert.ok(race.observedFinishSecondsByRider['other-3']>
+    race.observedFinishSecondsByRider['control-0']);
+  assert.ok(race.kilometres.slice(10).every(row=>
+    row.riderStates.find(state=>state.riderId==='control-2')
+      .physicalGroupId==='solo-control-2'&&
+    row.riderStates.find(state=>state.riderId==='other-3')
+      .physicalGroupId==='solo-other-3'));
+  assert.equal(validatePhysicalStaggeredRaceV1(
+    raceInput,race),true);
+  const forgedRace=structuredClone(race);
+  forgedRace.kilometres[10].riderStates.find(row=>
+    row.riderId==='other-3').elapsedSeconds+=1;
+  assert.throws(()=>validatePhysicalStaggeredRaceV1(
+    raceInput,forgedRace),/differs/);
+  const catchingTeams=structuredClone(teams);
+  catchingTeams[2].riders[3].mountain=30;
+  const catchingInput=source(catchingTeams,kilometres);
+  assert.throws(()=>replayPhysicalStaggeredRaceV1({
+    ...catchingInput,throughKm:20}),/paid contact road/);
   const forged=structuredClone(recording);
   forged.losses[1].atDistanceM=11000;
   assert.throws(()=>validatePhysicalStaggeredBunchLossV1({

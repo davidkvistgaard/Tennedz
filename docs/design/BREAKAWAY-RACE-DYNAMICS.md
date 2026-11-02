@@ -3655,9 +3655,15 @@ replay remains separate from guided races and production.
 `runPhysicalStaggeredBunchLossV1` keeps a replayable paid bunch
 source when different riders lose contact on different kilometres.
 A 20-km same-seed fixture loses a former front worker at km 6 and
-a weak climber at km 11, leaving exactly 22 riders in the physical
+a weaker climber at km 11, leaving exactly 22 riders in the physical
 bunch. Each split has its measured partial distance; neither rider
-silently returns on later bunch kilometres. This source does not
-yet pay their separate later roads, test whether they meet, or record
-all 24 finish times. Those transitions require their own source
-replay before this branch can become a race runner.
+silently returns on later bunch kilometres.
+`physical-staggered-detached-solo-v1.mjs` pays each rider's remaining
+split kilometre and later solo road. With a moderate climb weakness,
+`physical-staggered-race-replay-v1.mjs` then source-replays all 480
+rider-kilometre states and 24 observed finishes while the two solos
+remain separate. A stronger climb weakness makes their solo clocks
+cross; the full race correctly refuses without a paid contact road.
+That contact, any resulting rear group and broader multi-loss
+terrain/energy calibration remain unfinished. Neither witness is
+routed to guided races.
