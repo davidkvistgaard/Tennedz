@@ -482,6 +482,52 @@ test('different paid kilometres remove only physically dropped riders',()=>{
     .riderStates.find(row=>row.riderId===
       rearCatcher).physicalGroupId,
   `solo-${rearCatcher}`);
+  assert.throws(()=>commitRearSoloPlanV1({
+    riderId:rearCatcher,distanceKm:20,
+    stageNumber:1,stageCount:2,
+    baseline:{goal:'save_for_stage',
+      effort:'conserve'}}),
+  /pre-race goal/);
+  const savedStartInput={...catchingInput.startInput,
+    soloCommitments:[commitRearSoloPlanV1({
+      riderId:rearCatcher,distanceKm:20,
+      stageNumber:1,stageCount:2,
+      baseline:{goal:'save_for_stage',
+        effort:'conserve',
+        committedStagePlan:{riderId:rearCatcher,
+          currentStageNumber:1,
+          targetStageNumber:2,
+          currentGoal:'finish_safely',
+          futureGoal:'target_stage',
+          reserveEnergy:80}}})]};
+  const savedStart=startPhysicalBunchV1(
+    savedStartInput);
+  const savedStaggered=
+    runPhysicalStaggeredBunchLossV1({
+      startInput:savedStartInput,start:savedStart,
+      throughKm:20});
+  const savedSolo=probePhysicalStaggeredSoloFieldV1({
+    startInput:savedStartInput,start:savedStart,
+    staggered:savedStaggered,throughKm:20});
+  const savedRace=replayPhysicalStaggeredRearEventsV1({
+    startInput:savedStartInput,start:savedStart,
+    staggered:savedStaggered,soloField:savedSolo,
+    throughKm:20});
+  assert.equal(savedRace.contacts[0].outcome,'join');
+  assert.notEqual(savedRace.contacts[0]
+    .leaderRiderId,rearCatcher);
+  assert.ok(savedRace.kilometres.slice(
+    savedRace.contacts[0].sourceKm-1)
+    .flatMap(row=>row.segments)
+    .filter(segment=>segment.kind==='group'&&
+      segment.riders.some(rider=>
+        rider.riderId===rearCatcher))
+    .every(segment=>segment.riders.find(
+      rider=>rider.riderId===rearCatcher)
+      .role==='sheltered'));
+  assert.ok(savedRace.kilometres.at(-1)
+    .riderStates.find(row=>row.riderId===
+      rearCatcher).energyAfter>=80);
   assert.equal(validatePhysicalStaggeredRearEventsV1(
     rearEventInput,rearEvents),true);
   const forgedRearEvents=structuredClone(rearEvents);

@@ -4197,3 +4197,10 @@ pass-through in the rider's kilometre decisions and retains separate
 solo groups through finish. No rival's hidden skill is consulted for
 this choice. This rule still needs broader role, terrain and stage
 calibration before any guided routing.
+
+A separate 24-rider witness uses a valid pre-race plan naming stage 2
+and an 80-energy reserve. That rider joins a measured rear contact,
+stays sheltered in every later shared segment and finishes above the
+reserve. The contact records the other rider as the actual paid
+leader. A claimed later-stage motive without that committed plan is
+rejected before the race.
