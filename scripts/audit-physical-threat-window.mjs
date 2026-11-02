@@ -14,6 +14,8 @@ import {advancePhysicalPerceivedChaseKmV1} from
 import {replayPhysicalPerceivedChaseRaceV1,
   validatePhysicalPerceivedChaseRaceV1} from
   '../lib/engine/v2/physical-perceived-chase-race-replay-v1.mjs';
+import {catchPhysicalPerceivedChaseV1} from
+  '../lib/engine/v2/physical-perceived-chase-contact-v1.mjs';
 
 const route=Array.from({length:20},(_,index)=>({km:index+1,
   terrain:'flat',gradientPct:0,surface:'road',exposed:false,
@@ -32,15 +34,22 @@ const field=()=>['control','sprint','other'].map(id=>{
           frontWorkRiderId:'control-2'}:{})},phases:[]}};
 });
 
-function choice({attackerSkill,observerSkill,choiceKm}){
+function choice({attackerSkill,observerSkill,choiceKm,
+  frontConserveAtKm=null}){
   const teams=field();
   for(const skill of SPORTING_SKILLS){
     teams[2].riders[2][skill]=attackerSkill;
     for(const rider of teams[1].riders)
       rider[skill]=observerSkill;
+    if(frontConserveAtKm!==null)
+      for(const rider of teams[2].riders)
+        if(rider.id!=='other-2')rider[skill]=100;
   }
   teams[2].orders.phases=[{atKm:1,attack:'selective',
     attackRiderId:'other-2',effort:'hard'}];
+  if(frontConserveAtKm!==null)
+    teams[2].orders.phases.push({atKm:frontConserveAtKm,
+      effort:'conserve'});
   teams[0].orders.phases=[{atKm:choiceKm-1,
     frontWork:'sit_in'}];
   teams[1].orders.phases=[{atKm:choiceKm-1,
@@ -81,10 +90,25 @@ function choice({attackerSkill,observerSkill,choiceKm}){
           race.observedFinishSecondsByRider).length,
         finishGapSeconds:+race.sources.chase
           .gapSecondsToBunch.toFixed(3)};
-    }catch(error){chaseRace={status:'refused',
-      reason:error.message};}
+    }catch(error){
+      chaseRace={status:'refused',reason:error.message};
+      if(/Later pursuit needs paid contact road/.test(
+        error.message)){
+        for(let catchKm=choiceKm+1;catchKm<=20;catchKm++){
+          try{
+            const contact=catchPhysicalPerceivedChaseV1({
+              ...input,catchKm});
+            chaseRace={status:'paid_contact',catchKm,
+              contactAtM:+contact.contact.atDistanceM.toFixed(1),
+              remainingKmUnsettled:true};
+            break;
+          }catch{continue;}
+        }
+      }
+    }
   }
   return {attackerSkill,observerSkill,choiceKm,
+    ...(frontConserveAtKm===null?{}:{frontConserveAtKm}),
     gapSeconds:+recording.observedGapSeconds.toFixed(3),
     action,
     headroomSeconds:+recording.choice.choice.assessments[0]
@@ -109,9 +133,24 @@ const actionCounts=Object.fromEntries([...new Set(results.map(row=>
     (row.action??'refused')===action).length]));
 const commitWindows=results.filter(row=>
   ['commit_now','commit_and_request_help'].includes(row.action));
+const frontEffortProbe=[
+  {attackerSkill:96,observerSkill:99,choiceKm:8},
+  {attackerSkill:96,observerSkill:100,choiceKm:8},
+  {attackerSkill:96,observerSkill:100,choiceKm:9},
+  {attackerSkill:97,observerSkill:98,choiceKm:5},
+].flatMap(variant=>[5,10,15].map(frontConserveAtKm=>{
+  try{return choice({...variant,frontConserveAtKm});}
+  catch(error){return {...variant,frontConserveAtKm,
+    refused:error.message};}
+}));
 if(process.argv.includes('--assert')){
   assert.equal(results.length,384);
   assert.equal(actionCounts.refused??0,0);
+  const paidContacts=frontEffortProbe.filter(row=>
+    row.chaseRace?.status==='paid_contact');
+  assert.equal(paidContacts.length,2);
+  assert.deepEqual(paidContacts.map(row=>row.chaseRace.catchKm),
+    [19,16]);
   assert.equal(actionCounts.commit_now,3);
   assert.equal(commitWindows.length,3);
   assert.ok(commitWindows.every(row=>
@@ -127,6 +166,6 @@ if(process.argv.includes('--assert')){
 }
 process.stdout.write(JSON.stringify({version:1,
   raceSeed:'same-threat-window-seed',actionCounts,
-  commitWindows,
+  commitWindows,frontEffortProbe,
   ...(process.argv.includes('--verbose')?{results}:{})},
 null,2)+'\n');

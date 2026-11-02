@@ -3647,6 +3647,15 @@ finishes 18.132, 16.065 and 24.15 seconds ahead. A physical catch
 or a later chase dropout would require its own paid source. These
 results confirm the present urgency forecast is uncalibrated; this
 opt-in chase is not routed to guided races.
+`physical-perceived-chase-contact-v1.mjs` now sources the first
+catch during a manager-committed chase from the separately paid
+front and bunch clocks. It records their common road metre and time,
+the named exposed bunch leader, and both sides' partial energy. The
+12-case same-seed front-effort probe has two such contacts, on km 19
+at metre 18,510.3 and km 16 at metre 15,397.3. The contact remainder,
+caught rider's position after contact and all later finishes are
+explicitly unsettled. This does not establish realistic pursuit
+timing or permit routing to guided races.
 
 `audit-physical-bunch-distance.mjs --assert` extends the opt-in
 paid-bunch source to mixed flat, hill, climb, descent and wind routes

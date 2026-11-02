@@ -88,6 +88,9 @@ import {runPhysicalPerceivedChaseV1,
 import {replayPhysicalPerceivedChaseRaceV1,
   validatePhysicalPerceivedChaseRaceV1} from
   '../../lib/engine/v2/physical-perceived-chase-race-replay-v1.mjs';
+import {catchPhysicalPerceivedChaseV1,
+  validatePhysicalPerceivedChaseContactV1} from
+  '../../lib/engine/v2/physical-perceived-chase-contact-v1.mjs';
 import {runPhysicalRearGroupV1,
   validatePhysicalRearGroupV1} from
   '../../lib/engine/v2/physical-rear-group-run-v1.mjs';
@@ -747,6 +750,59 @@ test('perceived urgency pays one named chase leader and full field',()=>{
   'capacity_shortfall');
   assert.throws(()=>advancePhysicalPerceivedChaseKmV1(
     hardInput),/has not committed paid chase/);
+});
+
+test('committed physical chase catches a slowing front on paid road',()=>{
+  const teams=field();
+  for(const team of teams)for(const rider of team.riders)
+    for(const skill of SPORTING_SKILLS)rider[skill]=96;
+  for(const rider of teams[1].riders)
+    for(const skill of SPORTING_SKILLS)rider[skill]=100;
+  for(const rider of teams[2].riders)
+    if(rider.id!=='other-2')
+      for(const skill of SPORTING_SKILLS)rider[skill]=100;
+  teams[2].orders.phases=[{atKm:1,attack:'selective',
+    attackRiderId:'other-2',effort:'hard'},
+  {atKm:10,effort:'conserve'}];
+  teams[0].orders.phases=[{atKm:8,frontWork:'sit_in'}];
+  teams[1].orders.phases=[{atKm:8,
+    frontWork:'rotate',frontWorkRiderId:'sprint-2',
+    chase:'selective'}];
+  const original=source(teams,route(),{
+    sprint:'sprint_finish',other:'break_stage'},
+  [{km:1},{km:8}]);
+  const startInput={...original.startInput,
+    raceSeed:'same-threat-window-seed'};
+  const input={startInput,
+    start:startPhysicalBunchV1(startInput),
+    attackKm:2,choiceKm:9,observerTeamId:'sprint',
+    nominatedChaseTeamIds:['sprint']};
+  assert.equal(decidePhysicalFrontThreatV1(input)
+    .choice.choice.assessments[0].action,'commit_now');
+  let catchKm=null;
+  for(let km=10;km<=20;km++){
+    try{runPhysicalPerceivedChaseV1({...input,
+      throughKm:km});}
+    catch(error){
+      assert.match(error.message,/paid contact road/);
+      catchKm=km;break;
+    }
+  }
+  assert.ok(catchKm!==null);
+  const contactInput={...input,catchKm};
+  const contact=catchPhysicalPerceivedChaseV1(contactInput);
+  assert.ok(contact.contact.atDistanceM>
+    (catchKm-1)*1000&&contact.contact.atDistanceM<
+    catchKm*1000);
+  assert.equal(contact.bunchPartial.leaderRiderId,
+    'sprint-2');
+  assert.ok(contact.frontPartial.energySpent>0);
+  assert.equal(validatePhysicalPerceivedChaseContactV1(
+    contactInput,contact),true);
+  const forged=structuredClone(contact);
+  forged.contact.clockSeconds+=1;
+  assert.throws(()=>validatePhysicalPerceivedChaseContactV1(
+    contactInput,forged),/differs/);
 });
 
 test('early climb weakness records a paid partial solo and no rear group',()=>{
