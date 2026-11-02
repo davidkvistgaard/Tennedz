@@ -86,6 +86,7 @@ function choice({attackerSkill,observerSkill,choiceKm,
   roleVariant='uniform',
   terrainStartOverride=null,
   emergencyWorkerPlan=true,
+  roleStrengthOffset=0,
   rotateLongLeaders=false,assessHorizon=false,
   assessCounterfactual=false}){
   const terrainStartKm=terrainStartOverride??
@@ -134,8 +135,11 @@ function choice({attackerSkill,observerSkill,choiceKm,
     if(roleVariant==='moderate_closing'){
       Object.assign(teams[1].riders[2],{hills:40,
         mountain:30});
-      Object.assign(teams[2].riders[2],{hills:90,
-        mountain:85});
+      Object.assign(teams[2].riders[2],{
+        hills:Math.max(0,Math.min(100,
+          90+roleStrengthOffset)),
+        mountain:Math.max(0,Math.min(100,
+          85+roleStrengthOffset))});
     }
   }else if(roleVariant!=='uniform')
     throw new Error('Unknown early long-race role variant.');
@@ -381,6 +385,14 @@ function choice({attackerSkill,observerSkill,choiceKm,
                       .filter(row=>row.bunch
                         .emergencyFrontWorker)
                       .map(row=>row.sourceKm),
+                    finalGapSeconds:finish.sources.later
+                      .at(-1).gapSecondsToBunch,
+                    fastestFinishSeconds:Math.min(
+                      ...Object.values(finish
+                        .observedFinishSecondsByRider)),
+                    slowestFinishSeconds:Math.max(
+                      ...Object.values(finish
+                        .observedFinishSecondsByRider)),
                     minimumEnergy:Math.min(...finish
                       .kilometres.flatMap(row=>row
                         .riderStates.map(rider=>
@@ -690,6 +702,8 @@ function choice({attackerSkill,observerSkill,choiceKm,
       terrainStartOverride}),
     ...(emergencyWorkerPlan?{}:{
       emergencyWorkerPlan:false}),
+    ...(roleStrengthOffset===0?{}:{
+      roleStrengthOffset}),
     ...(distanceKm===20?{}:{distanceKm}),
     ...(stopChaseAtKm===null?{}:{stopChaseAtKm}),
     ...(settleFinish?{settleFinish:true}:{}),
@@ -862,6 +876,36 @@ const earlyNoEmergency=process.argv.includes(
     try{return choice(input);}
     catch(error){return {...input,refused:error.message};}
   }):undefined;
+const postcatchMatrix=process.argv.includes(
+  '--postcatch-matrix')?[160,260].flatMap(distanceKm=>
+  [0,20,40].flatMap(fatigue=>
+  ['hill_mid','climb_mid'].map(roadVariant=>{
+    const input={attackerSkill:96,observerSkill:98,
+      choiceKm:11,attackKm:2,frontConserveAtKm:5,
+      distanceKm,stopChaseAtKm:20,
+      fatigue,roadVariant,terrainStartOverride:30,
+      roleVariant:'moderate_closing',
+      rotateLongLeaders:true,assessHorizon:true,
+      assessCounterfactual:true};
+    try{return choice(input);}
+    catch(error){return {...input,refused:error.message};}
+  }))):undefined;
+const postcatchStrengthMatrix=process.argv.includes(
+  '--postcatch-strength-matrix')?[160,260].flatMap(
+  distanceKm=>[-10,10].flatMap(
+  roleStrengthOffset=>
+  ['hill_mid','climb_mid'].map(roadVariant=>{
+    const input={attackerSkill:96,observerSkill:98,
+      choiceKm:11,attackKm:2,frontConserveAtKm:5,
+      distanceKm,stopChaseAtKm:20,
+      fatigue:20,roadVariant,
+      terrainStartOverride:30,
+      roleVariant:'moderate_closing',
+      roleStrengthOffset,rotateLongLeaders:true,
+      assessHorizon:true,assessCounterfactual:true};
+    try{return choice(input);}
+    catch(error){return {...input,refused:error.message};}
+  }))):undefined;
 const policyCross=calibration&&longCalibration&&
   longTerrainCalibration?{
   rows:[...calibration,...longCalibration,
@@ -1173,6 +1217,46 @@ if(process.argv.includes('--assert')){
         .paidPostcatchContact.groupRoad.finish
         .sourceKm===61));
   }
+  if(postcatchMatrix!==undefined){
+    assert.equal(postcatchMatrix.length,12);
+    assert.equal(postcatchMatrix.filter(row=>
+      row.fatigue===0&&row.refused===
+        'Front solo needs separate physical catch road.')
+      .length,4);
+    assert.equal(postcatchMatrix.filter(row=>
+      row.fatigue!==0&&!row.refused&&
+      row.counterfactual.finish.paidPostcatchContact
+        ?.groupRoad.finish.status==='paid_finish'&&
+      row.counterfactual.finish.paidPostcatchContact
+        .groupRoad.finish.finishRiders===24&&
+      row.counterfactual.finish.paidPostcatchContact
+        .groupRoad.finish.finalGapSeconds>0&&
+      row.counterfactual.finish.paidPostcatchContact
+        .groupRoad.finish.minimumEnergy>0).length,8);
+  }
+  if(postcatchStrengthMatrix!==undefined){
+    assert.equal(postcatchStrengthMatrix.length,8);
+    assert.equal(postcatchStrengthMatrix.filter(row=>
+      row.roleStrengthOffset===-10&&
+      row.roadVariant==='hill_mid'&&
+      !row.refused&&!row.counterfactual.finish)
+      .length,2);
+    assert.equal(postcatchStrengthMatrix.filter(row=>
+      row.roleStrengthOffset===10&&
+      row.roadVariant==='climb_mid'&&
+      row.counterfactual.finish?.reason===
+        'Manager slide needs paid return contact.')
+      .length,2);
+    assert.equal(postcatchStrengthMatrix.filter(row=>
+      (row.roleStrengthOffset===-10&&
+        row.roadVariant==='climb_mid'||
+        row.roleStrengthOffset===10&&
+        row.roadVariant==='hill_mid')&&
+      row.counterfactual.finish
+        ?.paidPostcatchContact?.groupRoad
+        .finish.status==='paid_finish')
+      .length,4);
+  }
 }
 process.stdout.write(JSON.stringify({version:1,
   raceSeed:'same-threat-window-seed',actionCounts,
@@ -1191,6 +1275,10 @@ process.stdout.write(JSON.stringify({version:1,
     earlyTerrainCalibration}),
   ...(earlyNoEmergency===undefined?{}:{
     earlyNoEmergency}),
+  ...(postcatchMatrix===undefined?{}:{
+    postcatchMatrix}),
+  ...(postcatchStrengthMatrix===undefined?{}:{
+    postcatchStrengthMatrix}),
   ...(policyCross===null?{}:{policyCross}),
   ...(counterfactualCross===null?{}:{counterfactualCross}),
   ...(process.argv.includes('--verbose')?{results}:{})},

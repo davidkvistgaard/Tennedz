@@ -3884,6 +3884,22 @@ it is needed; omitting that plan refuses at km 61. These
 synthetic observed finishes are not official awards or guided
 race behavior. Broader role, terrain, fatigue and contact
 calibration remains necessary before routing.
+The `--postcatch-matrix --assert` same-seed probe adds 12
+distance, fatigue and hill/climb combinations. At fatigue 20
+and 40, all eight source-replayed rear contacts finish with
+positive energy, two alternating rear leaders and a positive
+physical gap to the bunch. Hill versus climb changes the
+contact metre (30,660 versus 30,208 at fatigue 20) and the
+finish gap; higher fatigue lowers minimum finish energy. The
+four zero-fatigue cases refuse at an earlier unimplemented
+front-solo catch, so they do not claim a rear finish.
+`--postcatch-strength-matrix --assert` varies the caught rider's
+hill and mountain skills by ten points. Four variants finish
+after paid rear contact. Two weaker-rider hill variants never
+reach that contact scenario; two stronger-rider climb variants
+refuse because the slid rider physically returns to the bunch
+before a paid return-contact source exists. These are explicit
+model boundaries, not evidence of calibrated real-world gaps.
 
 `audit-physical-bunch-distance.mjs --assert` extends the opt-in
 paid-bunch source to mixed flat, hill, climb, descent and wind routes
