@@ -3701,6 +3701,10 @@ states, 24 finishes, seven leaders and minimum finish energy 51.83.
 No 80-km variant commits in this small grid. These long flat cases
 extend source coverage, but the substantial remaining energy and
 selective chase decisions still need calibrated race evidence.
+The finish audit also checks one named paid bunch leader on every
+kilometre, a decision and nonnegative energy for every rider on every
+kilometre, and source-derived observed times for all 24 finishers in
+each of the 18 short and long contact-finish cases.
 Six further long-route probes put a hill, climb or exposed 20 km/h
 wind into the late chase window of those two long witnesses. Hills
 and climbs change both decisions away from commitment. The 260-km

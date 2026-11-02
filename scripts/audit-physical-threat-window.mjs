@@ -189,6 +189,19 @@ function choice({attackerSkill,observerSkill,choiceKm,
                 minFinishEnergy:+Math.min(...finish.kilometres
                   .at(-1).riderStates.map(row=>row.energyAfter))
                   .toFixed(3),
+                paidLeaderKilometres:finish.kilometres
+                  .filter(row=>row.riderStates.filter(state=>
+                    state.physicalGroupId==='peloton'&&
+                    state.decisions.some(decision=>
+                      ['pull','chase'].includes(
+                        decision.choice))).length===1).length,
+                allEnergyAndDecisionsSourced:finish.kilometres
+                  .every(row=>row.riderStates.every(state=>
+                    state.energyAfter>=0&&
+                    state.decisions.length>0&&
+                    state.decisions.every(decision=>
+                      decision&&typeof decision.choice===
+                        'string'))),
                 distinctPaidLeaders:new Set(finish.kilometres
                   .flatMap(row=>row.riderStates)
                   .filter(row=>row.decisions.some(decision=>
@@ -335,6 +348,8 @@ if(process.argv.includes('--assert')){
     assert.ok(finishes.every(row=>
       row.chaseRace.riderKilometres===600&&
       row.chaseRace.finishRiders===24&&
+      row.chaseRace.paidLeaderKilometres===25&&
+      row.chaseRace.allEnergyAndDecisionsSourced&&
       row.chaseRace.holdMargin<0&&
       row.chaseRace.slideGapSeconds>0));
     assert.ok(finishes.some(row=>row.roadVariant==='hill_mid'));
@@ -352,6 +367,9 @@ if(process.argv.includes('--assert')){
       row.chaseRace.riderKilometres===
         row.distanceKm*24&&
       row.chaseRace.finishRiders===24&&
+      row.chaseRace.paidLeaderKilometres===
+        row.distanceKm&&
+      row.chaseRace.allEnergyAndDecisionsSourced&&
       row.chaseRace.minFinishEnergy>=0&&
       row.chaseRace.distinctPaidLeaders>=7));
     assert.equal(longCalibration.filter(row=>
@@ -367,6 +385,9 @@ if(process.argv.includes('--assert')){
     const calm=finishes.find(row=>row.distanceKm===260);
     const wind=longTerrainCalibration.find(row=>
       row.distanceKm===260&&row.roadVariant==='wind_mid');
+    assert.equal(wind.chaseRace.paidLeaderKilometres,260);
+    assert.equal(wind.chaseRace.allEnergyAndDecisionsSourced,
+      true);
     assert.equal(wind.chaseRace.contactAtM,
       calm.chaseRace.contactAtM);
     assert.equal(wind.chaseRace.minFinishEnergy,
