@@ -3667,7 +3667,13 @@ cross; the full race correctly refuses without a paid contact road.
 `physical-staggered-solo-contact-v1.mjs` now finds exactly one later
 kilometre where those separately paid solo clocks meet. It records
 the common road metre and time, charges both riders to that point,
-and verifies that both remain behind the bunch. The rest of the
-contact kilometre, any resulting rear group and broader multi-loss
-terrain/energy calibration remain unfinished. Neither witness is
-routed to guided races.
+and verifies that both remain behind the bunch.
+`physical-staggered-contact-road-v1.mjs` pays one exposed leader and
+one sheltered rider for the rest of that kilometre. The two riders
+then alternate paid single-leader turns in
+`physical-staggered-rear-group-v1.mjs`; the 20-km contact witness
+now source-replays all 480 rider-kilometre states and 24 observed
+finish times. The weaker-climber variant without contact still
+retains its separate solo finish replay. These are narrow synthetic
+cases. Other contact timing, terrain, fatigue and multiple simultaneous
+groups require whole-race calibration before guided races.

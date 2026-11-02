@@ -32,6 +32,15 @@ import {replayPhysicalStaggeredRaceV1,
 import {contactPhysicalStaggeredSolosV1,
   validatePhysicalStaggeredSoloContactV1} from
   '../../lib/engine/v2/physical-staggered-solo-contact-v1.mjs';
+import {finishPhysicalStaggeredContactKmV1,
+  validatePhysicalStaggeredContactKmV1} from
+  '../../lib/engine/v2/physical-staggered-contact-road-v1.mjs';
+import {runPhysicalStaggeredRearGroupV1,
+  validatePhysicalStaggeredRearGroupV1} from
+  '../../lib/engine/v2/physical-staggered-rear-group-v1.mjs';
+import {replayPhysicalStaggeredContactRaceV1,
+  validatePhysicalStaggeredContactRaceV1} from
+  '../../lib/engine/v2/physical-staggered-contact-race-replay-v1.mjs';
 import {runPhysicalDetachedSoloV1,
   validatePhysicalDetachedSoloV1} from
   '../../lib/engine/v2/physical-detached-solo-run-v1.mjs';
@@ -248,6 +257,47 @@ test('different paid kilometres remove only physically dropped riders',()=>{
   forgedContact.riders[0].energyAfter+=1;
   assert.throws(()=>validatePhysicalStaggeredSoloContactV1(
     contacts[0].contactInput,forgedContact),/differs/);
+  const contactRoadInput={...contacts[0].contactInput,
+    contact:contacts[0].contact};
+  const contactRoad=finishPhysicalStaggeredContactKmV1(
+    contactRoadInput);
+  assert.equal(contactRoad.riders.filter(row=>
+    row.role==='leader').length,1);
+  assert.equal(contactRoad.riders.filter(row=>
+    row.role==='sheltered').length,1);
+  assert.ok(contactRoad.riders.every(row=>
+    row.energySpent>0&&row.energyAfter>=0));
+  assert.equal(validatePhysicalStaggeredContactKmV1(
+    contactRoadInput,contactRoad),true);
+  const rearInput={...contactRoadInput,contactRoad,
+    throughKm:20};
+  const rear=runPhysicalStaggeredRearGroupV1(rearInput);
+  assert.equal(rear.steps.length,20-contacts[0].contactKm);
+  assert.ok(rear.steps.every(row=>
+    row.riders.filter(rider=>rider.role==='leader').length===1&&
+    row.riders.filter(rider=>rider.role==='sheltered').length===1));
+  assert.equal(validatePhysicalStaggeredRearGroupV1(
+    rearInput,rear),true);
+  const contactRaceInput={...catchingInput,
+    riderIds:['control-2','other-3'],
+    contactKm:contacts[0].contactKm,throughKm:20};
+  const contactRace=replayPhysicalStaggeredContactRaceV1(
+    contactRaceInput);
+  assert.equal(contactRace.kilometres.reduce((sum,row)=>
+    sum+row.riderStates.length,0),480);
+  assert.equal(Object.keys(contactRace
+    .observedFinishSecondsByRider).length,24);
+  assert.equal(contactRace.kilometres[
+    contacts[0].contactKm-1].riderStates.filter(row=>
+    row.physicalGroupId===contactRoad.physicalGroup.id)
+    .length,2);
+  assert.equal(validatePhysicalStaggeredContactRaceV1(
+    contactRaceInput,contactRace),true);
+  const forgedContactRace=structuredClone(contactRace);
+  forgedContactRace.kilometres.at(-1).riderStates.find(row=>
+    row.riderId==='control-2').energyAfter+=1;
+  assert.throws(()=>validatePhysicalStaggeredContactRaceV1(
+    contactRaceInput,forgedContactRace),/differs/);
   const forged=structuredClone(recording);
   forged.losses[1].atDistanceM=11000;
   assert.throws(()=>validatePhysicalStaggeredBunchLossV1({
