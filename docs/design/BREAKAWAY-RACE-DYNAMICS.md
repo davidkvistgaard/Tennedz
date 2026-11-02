@@ -3713,6 +3713,16 @@ minimum finish energy are identical to calm road in this uniform-skill
 fixture. The current physiological wind treatment alters skill mix
 only; it does not add an absolute wind load to the paid energy demand.
 Wind-sensitive pursuit timing and cost remain uncalibrated.
+`physical-observer-pursuit-horizon-v1.mjs` is a separate read-only
+timing estimate. It projects the observer's own named leader and
+known orders against the front rider's last visible paid speed,
+uncertain rival attributes and energy, and a stated steady-effort
+energy assumption. It does not use the rival's private future order
+or move either road group. In all 18 audited contact-finish cases it
+predicts the correct catch kilometre. On flat road its contact point
+is within 15 metres of the paid source; hill and wind cases differ by
+as much as 585 metres. This forecast is diagnostic and does not
+replace the still-unreliable action policy or prove pursuit realism.
 
 `audit-physical-bunch-distance.mjs --assert` extends the opt-in
 paid-bunch source to mixed flat, hill, climb, descent and wind routes

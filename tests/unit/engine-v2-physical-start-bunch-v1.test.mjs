@@ -98,6 +98,9 @@ import {slidePerceivedChaseCaughtFrontV1,
 import {replayPhysicalPerceivedChaseSlideRaceV1,
   validatePhysicalPerceivedChaseSlideRaceV1} from
   '../../lib/engine/v2/physical-perceived-chase-slide-race-v1.mjs';
+import {estimatePhysicalObserverPursuitHorizonV1,
+  validatePhysicalObserverPursuitHorizonV1} from
+  '../../lib/engine/v2/physical-observer-pursuit-horizon-v1.mjs';
 import {runPhysicalRearGroupV1,
   validatePhysicalRearGroupV1} from
   '../../lib/engine/v2/physical-rear-group-run-v1.mjs';
@@ -801,6 +804,20 @@ test('committed physical chase catches a slowing front on paid road',()=>{
   assert.equal(catchKm,16);
   const contactInput={...input,catchKm};
   const contact=catchPhysicalPerceivedChaseV1(contactInput);
+  const horizonInput={...input,throughKm:25};
+  const horizon=estimatePhysicalObserverPursuitHorizonV1(
+    horizonInput);
+  assert.equal(horizon.predictedContact.sourceKm,catchKm);
+  assert.ok(Math.abs(horizon.predictedContact.atDistanceM-
+    contact.contact.atDistanceM)<15);
+  assert.equal(horizon.movesRoad,false);
+  assert.equal(validatePhysicalObserverPursuitHorizonV1(
+    horizonInput,horizon),true);
+  const forgedHorizon=structuredClone(horizon);
+  forgedHorizon.predictedContact.atDistanceM+=100;
+  assert.throws(()=>
+    validatePhysicalObserverPursuitHorizonV1(
+      horizonInput,forgedHorizon),/differs/);
   assert.ok(contact.contact.atDistanceM>
     (catchKm-1)*1000&&contact.contact.atDistanceM<
     catchKm*1000);

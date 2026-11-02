@@ -21,6 +21,9 @@ import {slidePerceivedChaseCaughtFrontV1} from
 import {replayPhysicalPerceivedChaseSlideRaceV1,
   validatePhysicalPerceivedChaseSlideRaceV1} from
   '../lib/engine/v2/physical-perceived-chase-slide-race-v1.mjs';
+import {estimatePhysicalObserverPursuitHorizonV1,
+  validatePhysicalObserverPursuitHorizonV1} from
+  '../lib/engine/v2/physical-observer-pursuit-horizon-v1.mjs';
 import {riderKilometreEffect} from
   '../lib/engine/v2/physiology.mjs';
 import {TUNING} from '../lib/engine/v2/tuning.mjs';
@@ -179,6 +182,13 @@ function choice({attackerSkill,observerSkill,choiceKm,
                 finishInput);
               validatePhysicalPerceivedChaseSlideRaceV1(
                 finishInput,finish);
+              const horizonInput={...input,
+                throughKm:distanceKm};
+              const horizon=
+                estimatePhysicalObserverPursuitHorizonV1(
+                  horizonInput);
+              validatePhysicalObserverPursuitHorizonV1(
+                horizonInput,horizon);
               chaseRace={...chaseRace,
                 status:'paid_contact_finish',
                 remainingKmUnsettled:false,
@@ -206,7 +216,13 @@ function choice({attackerSkill,observerSkill,choiceKm,
                   .flatMap(row=>row.riderStates)
                   .filter(row=>row.decisions.some(decision=>
                     ['pull','chase'].includes(decision.choice)))
-                  .map(row=>row.riderId)).size};
+                  .map(row=>row.riderId)).size,
+                projectedCatchKm:horizon.predictedContact
+                  ?.sourceKm??null,
+                projectedCatchAtM:horizon.predictedContact?
+                  +horizon.predictedContact.atDistanceM
+                    .toFixed(1):null,
+                projectedStopReason:horizon.stoppedReason};
             }
             break;
           }catch{continue;}
@@ -350,6 +366,10 @@ if(process.argv.includes('--assert')){
       row.chaseRace.finishRiders===24&&
       row.chaseRace.paidLeaderKilometres===25&&
       row.chaseRace.allEnergyAndDecisionsSourced&&
+      row.chaseRace.projectedCatchKm===
+        row.chaseRace.catchKm&&
+      Math.abs(row.chaseRace.projectedCatchAtM-
+        row.chaseRace.contactAtM)<600&&
       row.chaseRace.holdMargin<0&&
       row.chaseRace.slideGapSeconds>0));
     assert.ok(finishes.some(row=>row.roadVariant==='hill_mid'));
@@ -370,6 +390,10 @@ if(process.argv.includes('--assert')){
       row.chaseRace.paidLeaderKilometres===
         row.distanceKm&&
       row.chaseRace.allEnergyAndDecisionsSourced&&
+      row.chaseRace.projectedCatchKm===
+        row.chaseRace.catchKm&&
+      Math.abs(row.chaseRace.projectedCatchAtM-
+        row.chaseRace.contactAtM)<15&&
       row.chaseRace.minFinishEnergy>=0&&
       row.chaseRace.distinctPaidLeaders>=7));
     assert.equal(longCalibration.filter(row=>
@@ -388,6 +412,8 @@ if(process.argv.includes('--assert')){
     assert.equal(wind.chaseRace.paidLeaderKilometres,260);
     assert.equal(wind.chaseRace.allEnergyAndDecisionsSourced,
       true);
+    assert.equal(wind.chaseRace.projectedCatchKm,
+      wind.chaseRace.catchKm);
     assert.equal(wind.chaseRace.contactAtM,
       calm.chaseRace.contactAtM);
     assert.equal(wind.chaseRace.minFinishEnergy,
