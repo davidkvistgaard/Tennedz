@@ -71,6 +71,9 @@ import {runPhysicalSlidBreakSoloV1,
 import {replayPhysicalCaughtBreakRaceV1,
   validatePhysicalCaughtBreakRaceV1} from
   '../../lib/engine/v2/physical-caught-break-race-replay-v1.mjs';
+import {replayPhysicalEarlyCaughtFollowerLossV1,
+  validatePhysicalEarlyCaughtFollowerLossV1} from
+  '../../lib/engine/v2/physical-early-caught-follower-loss-v1.mjs';
 import {replayPhysicalFrontRaceV1,
   validatePhysicalFrontRaceV1} from
   '../../lib/engine/v2/physical-front-race-replay-v1.mjs';
@@ -680,6 +683,44 @@ test('front catch can be paid in first kilometre after attack',()=>{
     .choice,'pull');
   assert.equal(validatePhysicalCaughtBreakRaceV1({...input,
     attackKm:2,catchKm:3,throughKm:20},race),true);
+});
+
+test('caught break and later follower loss have paid rider states',()=>{
+  const teams=field(0);
+  for(const team of teams)for(const rider of team.riders)
+    for(const skill of SPORTING_SKILLS)rider[skill]=96;
+  teams[2].riders[2].wind=30;
+  teams[1].riders[2].mountain=30;
+  teams[2].orders.phases=[{atKm:1,attack:'selective',
+    attackRiderId:'other-2',effort:'hard'},
+  {atKm:2,effort:'conserve'}];
+  teams[0].orders.phases=[{atKm:3,frontWork:'sit_in'}];
+  teams[1].orders.phases=[{atKm:3,chase:'selective',
+    frontWork:'rotate',frontWorkRiderId:'sprint-2'},
+  {atKm:13,chase:'ignore',
+    frontWorkRiderId:'sprint-3'}];
+  const road=route();
+  road[2]={...road[2],exposed:true,
+    weather:{temperatureC:16,windKph:30,rainMm:0}};
+  road[13]={...road[13],terrain:'climb',gradientPct:6};
+  const input=source(teams,road,{
+    other:'break_stage',sprint:'sprint_finish'},
+  [{km:1},{km:2},{km:3},{km:13}]);
+  const lossInput={...input,attackKm:2,catchKm:3,
+    lossKm:14};
+  const replay=replayPhysicalEarlyCaughtFollowerLossV1(
+    lossInput);
+  assert.equal(replay.kilometres.length,14);
+  assert.equal(replay.kilometres.at(-1)
+    .riderStates.length,24);
+  assert.ok(replay.sources.loss.splits.length===1);
+  assert.equal(validatePhysicalEarlyCaughtFollowerLossV1(
+    lossInput,replay),true);
+  const forged=structuredClone(replay);
+  forged.kilometres.at(-1).riderStates[0]
+    .energyAfter+=1;
+  assert.throws(()=>validatePhysicalEarlyCaughtFollowerLossV1(
+    lossInput,forged),/differs from source/);
 });
 
 test('perceived chase choice reads a replayed physical front gap',()=>{

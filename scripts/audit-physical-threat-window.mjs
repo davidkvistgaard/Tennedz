@@ -18,6 +18,9 @@ import {catchPhysicalFrontSoloV1,
 import {replayPhysicalCaughtBreakRaceV1,
   validatePhysicalCaughtBreakRaceV1} from
   '../lib/engine/v2/physical-caught-break-race-replay-v1.mjs';
+import {replayPhysicalEarlyCaughtFollowerLossV1,
+  validatePhysicalEarlyCaughtFollowerLossV1} from
+  '../lib/engine/v2/physical-early-caught-follower-loss-v1.mjs';
 import {advancePhysicalPerceivedChaseKmV1} from
   '../lib/engine/v2/physical-perceived-chase-km-v1.mjs';
 import {replayPhysicalPerceivedChaseRaceV1,
@@ -243,11 +246,36 @@ function choice({attackerSkill,observerSkill,choiceKm,
         if(raceError.message!==
           'Physical start follower cannot hold paid pace.')
           throw raceError;
+        const lossInput={...contactInput,
+          lossKm:raceError.sourceKm};
+        const partial=replayPhysicalEarlyCaughtFollowerLossV1(
+          lossInput);
+        assert.equal(validatePhysicalEarlyCaughtFollowerLossV1(
+          lossInput,partial),true);
         return {attackerSkill,observerSkill,attackKm,choiceKm,
           fatigue,roadVariant,distanceKm,
-          status:'paid_early_contact_unsettled',catchKm,
+          status:'paid_follower_loss_unsettled',catchKm,
           contactAtM:+contact.contact.atDistanceM.toFixed(1),
           lossKm:raceError.sourceKm,
+          followerAtBunchEndM:+partial.sources.loss.splits[0]
+            .atDistanceM.toFixed(1),
+          rearContactAtM:partial.sources.contact?
+            +partial.sources.contact.contactAtDistanceM
+              .toFixed(1):null,
+          rearContactPhase:partial.sources.contact
+            ?.phase??null,
+          rearLeaderId:partial.sources.groupRoad
+            ?.leaderRiderId??null,
+          rearLeaderCost:partial.sources.groupRoad
+            ?.riders.find(row=>row.role==='leader')
+            .energySpent??null,
+          rearShelterCost:partial.sources.groupRoad
+            ?.riders.find(row=>row.role==='sheltered')
+            .energySpent??null,
+          riderKilometres:partial.kilometres.reduce(
+            (sum,row)=>sum+row.riderStates.length,0),
+          allRiders:partial.kilometres.at(-1)
+            .riderStates.length,
           reason:raceError.message};
       }
       assert.equal(validatePhysicalCaughtBreakRaceV1(
@@ -1436,12 +1464,25 @@ if(process.argv.includes('--assert')){
     assert.equal(postcatchMatrix.length,12);
     assert.equal(postcatchMatrix.filter(row=>
       row.fatigue===0&&
-        row.status==='paid_early_contact_unsettled'&&
+        row.status==='paid_follower_loss_unsettled'&&
         row.catchKm>row.attackKm&&
         row.catchKm<row.choiceKm&&
         row.contactAtM>(row.catchKm-1)*1000&&
         row.contactAtM<row.catchKm*1000&&
         row.lossKm>row.catchKm&&
+        row.followerAtBunchEndM>
+          (row.lossKm-1)*1000&&
+        row.followerAtBunchEndM<row.lossKm*1000&&
+        row.rearContactAtM>
+          (row.lossKm-1)*1000&&
+        row.rearContactAtM<
+          row.followerAtBunchEndM&&
+        row.rearContactPhase===
+          'before_bunch_km_end'&&
+        row.rearLeaderId==='sprint-2'&&
+        row.rearShelterCost<row.rearLeaderCost&&
+        row.riderKilometres===row.lossKm*24&&
+        row.allRiders===24&&
         row.reason===
           'Physical start follower cannot hold paid pace.')
       .length,4);

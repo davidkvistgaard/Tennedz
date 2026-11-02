@@ -3892,9 +3892,13 @@ physical gap to the bunch. Hill versus climb changes the
 contact metre (30,660 versus 30,208 at fatigue 20) and the
 finish gap; higher fatigue lowers minimum finish energy. The
 four zero-fatigue cases now record the earlier front-solo catch
-at km 10, metre 9,896.6. Their later bunch continuation
-correctly refuses when a follower cannot hold the ordered pace;
-these cases do not claim a rear finish or a fabricated position.
+at km 10, metre 9,896.6. The new opt-in follower-loss replay
+then prices all 24 riders through km 31 (744 rider-kilometres),
+including the newly detached rider and the already slid break rider.
+The two rear riders meet at physical metre 30,591 on the hill or
+30,155.8 on the climb, before the bunch completes that kilometre.
+One named exposed rear leader pays more energy than the sheltered
+rider. These cases do not yet claim a rear finish.
 `--postcatch-strength-matrix --assert` varies the caught rider's
 hill and mountain skills by ten points. Four variants finish
 after paid rear contact. Two weaker-rider hill variants never
@@ -4001,6 +4005,9 @@ When an already committed chase order starts after a paid catch, the
 post-slide bunch records the resolved target and still charges its
 named front worker for pulling. The rider's decision stays visible as
 front work rather than a chase of a rider who is no longer ahead.
-The zero-fatigue long-race matrix exposes the next unsolved case:
-a later follower physically loses this bunch on km 31. That split needs its
-own paid completion and subsequent road before any finish claim.
+The zero-fatigue long-race matrix now pays the km-31 follower loss,
+the contact with the slid break rider and the rest of that kilometre.
+The reported follower position at the bunch's kilometre end is the
+solo projection used to find the meeting. It is not a later contact
+metre: the paid meeting occurs earlier in the same kilometre. The
+rear group's following road and observed finish remain unsettled.
