@@ -72,6 +72,8 @@ function choice({attackerSkill,observerSkill,choiceKm}){
     action,
     headroomSeconds:+recording.choice.choice.assessments[0]
       .nominatedHeadroomSeconds.toFixed(3),
+    estimatedGapChangeSeconds:recording.paceEstimate
+      .estimatedGapChangeSeconds,
     ...(paidGapChangeSeconds===undefined?{}:{paidGapChangeSeconds})};
 }
 
@@ -95,7 +97,9 @@ if(process.argv.includes('--assert')){
   assert.equal(actionCounts.commit_now,3);
   assert.equal(commitWindows.length,3);
   assert.ok(commitWindows.every(row=>
-    Number.isFinite(row.paidGapChangeSeconds)));
+    Number.isFinite(row.paidGapChangeSeconds)&&
+    Math.abs(row.estimatedGapChangeSeconds-
+      row.paidGapChangeSeconds)<.1));
   assert.ok(actionCounts.watch>0&&
     actionCounts.capacity_shortfall>0);
 }

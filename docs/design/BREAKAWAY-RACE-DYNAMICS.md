@@ -3621,6 +3621,18 @@ even when it urges immediate commitment. Its hypothetical rotating
 helper capacity and front effort assumptions need to be reconciled
 with the actual single exposed leader and paid front pace before
 it can control a full physical race.
+`physical-observer-pace-estimate-v1.mjs` now adds an observer-side
+next-kilometre estimate to the opt-in front-threat choice when the
+observer has a named leader. It uses the front rider's observed paid
+speed on the preceding kilometre, the observer's uncertain rival
+strength and energy estimate, and the observer's own committed leader
+and exact energy. It does not read the rival's private future order
+or exact strength into the estimate. For the three urgent windows its
+estimated gap changes are +0.737, +0.504 and +1.206 seconds, within
+0.009 seconds of the corresponding paid changes in this flat witness.
+The old multi-helper catch forecast still determines the action;
+this new pace signal exposes that disagreement for calibration and
+does not silently cancel a manager-authorized chase.
 
 `audit-physical-bunch-distance.mjs --assert` extends the opt-in
 paid-bunch source to mixed flat, hill, climb, descent and wind routes

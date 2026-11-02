@@ -513,6 +513,13 @@ test('perceived urgency pays one named chase leader and full field',()=>{
   assert.ok(paid.gapSecondsToBunch>0);
   assert.ok(paid.gapSecondsToBunch>
     paid.threat.observedGapSeconds);
+  assert.equal(paid.threat.paceEstimate.leaderRiderId,
+    'sprint-2');
+  assert.equal(paid.threat.paceEstimate.basis,
+    'observed_front_pace_and_perceived_rival_strength');
+  assert.ok(Math.abs(paid.threat.paceEstimate
+    .estimatedGapChangeSeconds-(paid.gapSecondsToBunch-
+      paid.threat.observedGapSeconds))<.1);
   assert.equal(validatePhysicalPerceivedChaseKmV1(
     input,paid),true);
   const forged=structuredClone(paid);
