@@ -29,6 +29,9 @@ import {priceRearEnergyDemandV1} from
 import {runPhysicalRearGroupV1,
   validatePhysicalRearGroupV1} from
   '../../lib/engine/v2/physical-rear-group-run-v1.mjs';
+import {replayPhysicalRearRaceV1,
+  validatePhysicalRearRaceV1} from
+  '../../lib/engine/v2/physical-rear-race-replay-v1.mjs';
 
 const route=(terrain='flat')=>Array.from({length:20},(_,index)=>({
   km:index+1,terrain,gradientPct:terrain==='climb'?6:0,
@@ -414,6 +417,30 @@ test('two paid rear solos meet on changed terrain before a group forms',()=>{
   forgedRear.steps[0].riders[1].energyAfter+=1;
   assert.throws(()=>validatePhysicalRearGroupV1(
     runInput,forgedRear),/differs/);
+  const whole=runPhysicalRearGroupV1({...runInput,
+    throughKm:20});
+  assert.equal(whole.sourceKm,20);
+  assert.equal(whole.physicalGroup.atDistanceM,20000);
+  assert.ok(whole.elapsedSeconds>rear.elapsedSeconds);
+  const raceInput={...input,throughKm:20};
+  const race=replayPhysicalRearRaceV1(raceInput);
+  assert.equal(race.kilometres.length,20);
+  assert.ok(race.kilometres.every(row=>
+    row.riderStates.length===24&&row.riderStates.every(state=>
+      state.decisions.length>0&&state.energyAfter>=0)));
+  assert.equal(Object.keys(race.observedFinishSecondsByRider)
+    .length,24);
+  assert.equal(race.sources.bunch.road.length,19);
+  assert.equal(race.sources.rear.steps.length,18);
+  assert.equal(race.sources.contact.riders.length,2);
+  assert.equal(race.officialResults,false);
+  assert.ok(race.observedFinishSecondsByRider['other-3']>
+    race.observedFinishSecondsByRider['control-0']);
+  assert.equal(validatePhysicalRearRaceV1(raceInput,race),true);
+  const falseRace=structuredClone(race);
+  falseRace.kilometres[10].riderStates[0].energyAfter+=1;
+  assert.throws(()=>validatePhysicalRearRaceV1(
+    raceInput,falseRace),/differs/);
   const aggressiveInput={...startInput,
     soloCommitments:[plans[0],commitRearSoloPlanV1({
       riderId:'other-4',distanceKm:20,stageNumber:1,

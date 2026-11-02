@@ -3429,5 +3429,20 @@ that split needs its own road. The climb-to-flat witness rotates
 leaders through km 4, pays less for shelter than solo riding at the
 same effort, and rejects a forged energy ledger. The group remains
 behind the sourced bunch or this module refuses a separate contact
-branch. Full-stage finish and general multi-group calibration remain
+branch. General full-stage finish and multi-group calibration remain
 open.
+
+`physical-rear-race-replay-v1.mjs` assembles a narrow complete-road
+witness from these physical sources. It requires exactly two riders
+to leave the bunch, meet through paid solo contact, and form one
+paid rear group while the surviving bunch keeps a valid single
+leader. For each race kilometre it records every starter's physical
+group, elapsed crossing time, settled energy and one or more explicit
+decisions. At the route end it records each rider's observed finish
+seconds without inventing an official placing or time limit. A
+same-seed 24-rider, 20-kilometre climb-to-flat witness covers all
+480 rider-kilometres and rejects forged energy. This is not general
+race support: attacks, a caught break rider passing through the bunch,
+later bunch splits, additional rear contacts, sprint finishes and
+whole-race calibration remain open. It is not routed to V94 or
+guided races.
