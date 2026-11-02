@@ -4116,3 +4116,13 @@ The continuation refuses an unpaid bunch catch. It does not yet test
 contact with the other 35 or 39 detached riders, so its end clocks are
 counterfactual pair-road evidence rather than validated whole-race
 finishes.
+
+A batched source probe now pays independent solo candidates for all
+37–46 detached riders. Those candidate trajectories have no unpaid
+bunch catch, but they are not race finishes because they ignore mutual
+contact. Comparing their piecewise road clocks and paid energy finds
+the first field contact between team-3-3 and team-4-3 in every varied
+case: within km 26 at fatigue 30, and near metre 30,097 in km 31 at
+fatigue 10. Only the path up to that first contact is sourced as a
+separate-solo race. The later paths must be recomputed with the new
+physical group and all remaining riders.

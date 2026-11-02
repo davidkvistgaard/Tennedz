@@ -25,6 +25,10 @@ import {finishPhysicalLossKmContactV1,
 import {runPhysicalLossKmRearPairV1,
   validatePhysicalLossKmRearPairV1} from
   '../lib/engine/v2/physical-loss-km-rear-pair-v1.mjs';
+import {probePhysicalStaggeredSoloFieldV1} from
+  '../lib/engine/v2/physical-staggered-detached-solo-v1.mjs';
+import {inspectFirstStaggeredSoloFieldContactV1} from
+  '../lib/engine/v2/physical-staggered-solo-field-contact-v1.mjs';
 import {partitionPhysicalSimultaneousLossV1,
   validatePhysicalSimultaneousLossPartitionV1,
   contactPhysicalSimultaneousLossV1,
@@ -190,6 +194,15 @@ function audit(distanceKm,fatigue,variant){
           arrivalsInput);
         validatePhysicalStaggeredLossArrivalsV1(
           arrivalsInput,arrivals);
+        const soloFieldInput={...arrivalsInput,
+          throughKm:distanceKm};
+        const soloField=probePhysicalStaggeredSoloFieldV1(
+          soloFieldInput);
+        const fieldContactInput={...arrivalsInput,
+          soloField};
+        const fieldContact=
+          inspectFirstStaggeredSoloFieldContactV1(
+            fieldContactInput);
         const lossContacts=
           inspectPhysicalStaggeredLossKmContactsV1(
             arrivalsInput);
@@ -238,6 +251,10 @@ function audit(distanceKm,fatigue,variant){
           sourceVersion:staggered.version,
           detachedRiders:staggered.detachedRiderIds.length,
           paidLossCompletions:arrivals.completions.length,
+          soloCandidates:soloField.candidates.length,
+          soloRefusals:soloField.refusals,
+          firstSoloFieldContact:
+            fieldContact.firstContact,
           nearCoincidentArrivals:
             arrivals.nearCoincidentArrivals.length,
           nearCoincidentArrivalRows:
@@ -659,6 +676,21 @@ if(process.argv.includes('--assert-varied')){
     assert.ok(row.staggeredScale.detachedRiders>=35);
     assert.equal(row.staggeredScale.paidLossCompletions,
       row.staggeredScale.detachedRiders);
+    assert.equal(row.staggeredScale.soloCandidates,
+      row.staggeredScale.detachedRiders);
+    assert.equal(row.staggeredScale.soloRefusals.length,0);
+    const firstFieldContact=row.staggeredScale
+      .firstSoloFieldContact;
+    assert.equal(firstFieldContact.sourceKm,
+      row.fatigue===30?26:31);
+    assert.deepEqual(firstFieldContact.riderIds,
+      ['team-3-3','team-4-3']);
+    assert.ok(firstFieldContact.atDistanceM>
+      (firstFieldContact.sourceKm-1)*1000&&
+      firstFieldContact.atDistanceM<
+        firstFieldContact.sourceKm*1000&&
+      firstFieldContact.riders.every(rider=>
+        rider.energyAtContact>=0));
     assert.equal(row.staggeredScale
       .nearCoincidentArrivals,
     row.fatigue===30?1:0);

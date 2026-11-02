@@ -27,8 +27,13 @@ import {completePhysicalPaceLossKmV1,
   validatePhysicalPaceLossCompletionV1} from
   '../../lib/engine/v2/physical-pace-loss-completion-v1.mjs';
 import {runPhysicalStaggeredDetachedSoloV1,
-  validatePhysicalStaggeredDetachedSoloV1} from
+  validatePhysicalStaggeredDetachedSoloV1,
+  probePhysicalStaggeredSoloFieldV1,
+  validatePhysicalStaggeredSoloFieldV1} from
   '../../lib/engine/v2/physical-staggered-detached-solo-v1.mjs';
+import {inspectFirstStaggeredSoloFieldContactV1,
+  validateFirstStaggeredSoloFieldContactV1} from
+  '../../lib/engine/v2/physical-staggered-solo-field-contact-v1.mjs';
 import {inspectPhysicalStaggeredLossKmContactsV1,
   validatePhysicalStaggeredLossKmContactsV1} from
   '../../lib/engine/v2/physical-staggered-loss-km-contact-v1.mjs';
@@ -279,6 +284,29 @@ test('different paid kilometres remove only physically dropped riders',()=>{
     ...arrivalsInput,contact:{sourceKm:6},
     contactRoad:{},throughKm:20}),
   /exact paid/);
+  const fieldInput={...arrivalsInput,throughKm:20};
+  const fieldProbe=probePhysicalStaggeredSoloFieldV1(
+    fieldInput);
+  assert.equal(fieldProbe.candidates.length,2);
+  assert.deepEqual(fieldProbe.refusals,[]);
+  assert.equal(validatePhysicalStaggeredSoloFieldV1(
+    fieldInput,fieldProbe),true);
+  const fieldContactInput={...arrivalsInput,
+    soloField:fieldProbe};
+  const fieldContact=
+    inspectFirstStaggeredSoloFieldContactV1(
+      fieldContactInput);
+  assert.equal(fieldContact.firstContact,null);
+  assert.equal(validateFirstStaggeredSoloFieldContactV1(
+    fieldContactInput,fieldContact),true);
+  const partialField=probePhysicalStaggeredSoloFieldV1({
+    ...arrivalsInput,throughKm:11});
+  assert.equal(partialField.candidates.length,2);
+  assert.equal(partialField.candidates.find(row=>
+    row.riderId==='other-3').steps.length,0);
+  assert.equal(inspectFirstStaggeredSoloFieldContactV1({
+    ...arrivalsInput,soloField:partialField})
+    .firstContact,null);
   for(const riderId of ['control-2','other-3']){
     const completion=completePhysicalStaggeredLossKmV1({
       ...input,staggered:recording,riderId});
@@ -288,6 +316,8 @@ test('different paid kilometres remove only physically dropped riders',()=>{
     const soloInput={...input,staggered:recording,
       riderId,throughKm:20};
     const solo=runPhysicalStaggeredDetachedSoloV1(soloInput);
+    assert.deepEqual(fieldProbe.candidates.find(row=>
+      row.riderId===riderId),solo);
     assert.equal(solo.steps.length,20-completion.sourceKm);
     assert.ok(solo.steps.every(row=>
       row.energyAfter>=0&&row.gapSecondsToBunch>0));
@@ -335,6 +365,18 @@ test('different paid kilometres remove only physically dropped riders',()=>{
     }
   }
   assert.equal(contacts.length,1);
+  const catchingFieldInput={...catchingInput,
+    staggered:catchingSource,throughKm:20};
+  const catchingField=probePhysicalStaggeredSoloFieldV1(
+    catchingFieldInput);
+  const firstCatchingContact=
+    inspectFirstStaggeredSoloFieldContactV1({
+      ...catchingInput,staggered:catchingSource,
+      soloField:catchingField}).firstContact;
+  assert.equal(firstCatchingContact.sourceKm,
+    contacts[0].contactKm);
+  assert.ok(Math.abs(firstCatchingContact.atDistanceM-
+    contacts[0].contact.contactAtDistanceM)<1e-5);
   assert.equal(validatePhysicalStaggeredSoloContactV1(
     contacts[0].contactInput,contacts[0].contact),true);
   assert.ok(contacts[0].contact.contactAtDistanceM>
