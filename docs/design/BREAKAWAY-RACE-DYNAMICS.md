@@ -3817,6 +3817,15 @@ contact remain unsettled. The refusal is an explicit missing
 physical branch, not a finished race result.
 The higher-fatigue climb variants produce the same loss kilometres,
 also with paid split and completion followed by explicit refusal.
+`physical-manager-postcatch-loss-v1.mjs` now exposes that refusal as
+a versioned partial-race recording rather than claiming a finish.
+The eight mixed-role hill, climb, wind and higher-fatigue split cases
+each replay all 24 rider states on the complete loss kilometre:
+3,528 prior rider-kilometres before the 160-km loss and 6,000 before
+the 260-km loss. The caught break rider and the new detached rider
+both pay their own remaining road; a forged loss-kilometre energy is
+rejected by source replay. Later contact and all remaining kilometres
+are still unsettled.
 
 `audit-physical-bunch-distance.mjs --assert` extends the opt-in
 paid-bunch source to mixed flat, hill, climb, descent and wind routes

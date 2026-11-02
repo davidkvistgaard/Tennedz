@@ -36,6 +36,9 @@ import {completePhysicalManagerChaseContactKmV1,
 import {replayPhysicalManagerChaseRaceV1,
   validatePhysicalManagerChaseRaceV1} from
   '../lib/engine/v2/physical-manager-chase-race-replay-v1.mjs';
+import {replayPhysicalManagerPostcatchLossV1,
+  validatePhysicalManagerPostcatchLossV1} from
+  '../lib/engine/v2/physical-manager-postcatch-loss-v1.mjs';
 import {riderKilometreEffect} from
   '../lib/engine/v2/physiology.mjs';
 import {TUNING} from '../lib/engine/v2/tuning.mjs';
@@ -199,6 +202,26 @@ function choice({attackerSkill,observerSkill,choiceKm,
           }catch(error){
             if(error.physicalLoss){
               const source=error.physicalLoss;
+              const partial=replayPhysicalManagerPostcatchLossV1(
+                paidInput);
+              assert.equal(validatePhysicalManagerPostcatchLossV1(
+                paidInput,partial),true);
+              const forgedPartial=structuredClone(partial);
+              forgedPartial.kilometres.at(-1).riderStates[0]
+                .energyAfter+=1;
+              assert.throws(()=>
+                validatePhysicalManagerPostcatchLossV1(
+                  paidInput,forgedPartial),
+              /differs from paid source/);
+              assert.equal(partial.sourceKm,source.sourceKm);
+              assert.equal(source.priorKilometres.length,
+                source.sourceKm-1);
+              assert.equal(source.lossKilometre.riderStates
+                .length,24);
+              assert.ok(source.lossKilometre.riderStates
+                .every(row=>row.decisions.length>0&&
+                  row.energyAfter>=0&&
+                  row.atDistanceM===source.sourceKm*1000));
               assert.equal(
                 validatePhysicalBunchAfterCaughtSlideLossKmV1(
                   source.roadInput,source.loss),true);
@@ -220,6 +243,13 @@ function choice({attackerSkill,observerSkill,choiceKm,
             ...(error.physicalLoss?{
               physicalLoss:{sourceKm:error.physicalLoss
                 .sourceKm,
+              riderKilometresBeforeLoss:error.physicalLoss
+                .priorKilometres.reduce((sum,row)=>
+                  sum+row.riderStates.length,0),
+              lossRiderStates:error.physicalLoss
+                .lossKilometre.riderStates.length,
+              caughtSoloEnergyAfter:error.physicalLoss
+                .caughtSoloEnergyAfter,
               paidSplits:error.physicalLoss.loss.splits.map(
                 row=>({riderId:row.riderId,
                   atDistanceM:row.atDistanceM,
