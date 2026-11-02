@@ -2866,6 +2866,18 @@ chain. It lacks a committed whole-race source of rear directives. The
 run itself cannot accept a third rider or handle a caught break rider
 falling through the bunch.
 
+`rear-group-committed-source-run-v1.mjs` now binds the two-rider V4
+terrain, recovery and cap ledger to an explicit pre-race rear-goal
+commitment. It replays the paid contact, requires the contact goals to
+match that commitment, and derives each later kilometre's goals from
+the committed phase markers. A caller cannot replace `rearGoals` or
+stage context for one kilometre. In a focused climb trace, a rider's
+committed change to sitting in after a route marker persists across two
+paid kilometres; both energy settlements replay, and forged contact
+intent or settled energy is rejected. This is still an isolated
+two-rider run. Its bunch turn inputs are not yet bound to a complete
+whole-race source, and it does not award an official finish.
+
 An isolated `rear-solo-source-run-v1.mjs` now chains an occupied-wheel
 departure through successive, fully paid solo kilometres without
 granting group shelter. `rear-group-solo-join-v1.mjs` replays that solo

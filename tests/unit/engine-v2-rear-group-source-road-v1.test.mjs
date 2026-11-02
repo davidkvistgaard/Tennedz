@@ -18,6 +18,9 @@ import {runRearGroupSourceV3,validateRearGroupSourceRunV3} from
   '../../lib/engine/v2/rear-group-source-run-v3.mjs';
 import {runRearGroupSourceV4,validateRearGroupSourceRunV4} from
   '../../lib/engine/v2/rear-group-source-run-v4.mjs';
+import {runCommittedRearGroupSourceV1,
+  validateCommittedRearGroupSourceRunV1} from
+  '../../lib/engine/v2/rear-group-committed-source-run-v1.mjs';
 import {advanceRearGroupFollowerSplitV1,
   validateRearGroupFollowerSplitV1} from
   '../../lib/engine/v2/rear-group-follower-split-v1.mjs';
@@ -424,6 +427,51 @@ test('rear ledger settles route cap and zero recovery after each paid kilometre'
   broken[4].km=7;
   assert.throws(()=>runRearGroupSourceV4({...source,
     routeKilometres:broken}),/missing kilometre/);
+});
+
+test('pre-race rear intent controls each paid kilometre without caller goals',()=>{
+  const routeKilometres=Array.from({length:20},(_,index)=>(
+    {...nextSegment,km:index+1}));
+  const commitment=commitRearGoalsV1({riderIds:['a','b'],
+    strategies:[{riderId:'a',baseline:{goal:'finish_safely',
+      rearWork:'cooperate'},phases:[]},
+    {riderId:'b',baseline:{goal:'rejoin_bunch',
+      rearWork:'cooperate'},phases:[{atKm:13,
+      goal:'rejoin_bunch',rearWork:'sit_on'}]}],
+    distanceKm:20,keypoints:[{km:13}],stageNumber:18,
+    stageCount:21});
+  const kilometres=[14,15].map(km=>({segment:{...nextSegment,km},
+    bunchTurnPlan,teams,roadGroups:[]}));
+  const input={commitment,initialChoiceInput:priorChoiceInput,
+    initialChoice:priorChoice,routeKilometres,kilometres};
+  const result=runCommittedRearGroupSourceV1(input);
+  assert.equal(result.paidRun.steps.length,2);
+  assert.deepEqual(result.paidRun.steps.map(step=>
+    step.sourceStep.sourceV2.sourceRoad.memberDecisions
+      .find(row=>row.riderId==='b').choice),['sit_in','sit_in']);
+  assert.ok(result.paidRun.steps.every(step=>
+    step.settlement.every(row=>row.recoveryAward===0&&
+      row.paidWork>0)));
+  assert.equal(validateCommittedRearGroupSourceRunV1(input,result),true);
+  const noPhase=commitRearGoalsV1({riderIds:['a','b'],
+    strategies:commitment.strategies.map(row=>({...row,phases:[]})),
+    distanceKm:20,keypoints:[{km:13}],stageNumber:18,
+    stageCount:21});
+  assert.throws(()=>runCommittedRearGroupSourceV1({...input,
+    commitment:noPhase}),/cannot hold the paid leader/);
+  assert.throws(()=>runCommittedRearGroupSourceV1({...input,
+    kilometres:[{...kilometres[0],rearGoals}]}),
+  /replayed contact and route/);
+  const changedContact={...priorChoiceInput,
+    rearGoals:[rearGoals[0],{...rearGoals[1],rearWork:'sit_on'}]};
+  assert.throws(()=>runCommittedRearGroupSourceV1({...input,
+    initialChoiceInput:changedContact,
+    initialChoice:decideRearGroupChoiceV2(changedContact)}),
+  /differ from pre-race commitment/);
+  const forged=structuredClone(result);
+  forged.paidRun.steps[0].settlement[0].energyAfter=100;
+  assert.throws(()=>validateCommittedRearGroupSourceRunV1(input,
+    forged),/differs from paid source/);
 });
 
 test('late rear road uses the source climbing cap instead of an early-stage cap',()=>{
