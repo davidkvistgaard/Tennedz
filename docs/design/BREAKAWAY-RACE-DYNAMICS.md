@@ -3446,3 +3446,20 @@ race support: attacks, a caught break rider passing through the bunch,
 later bunch splits, additional rear contacts, sprint finishes and
 whole-race calibration remain open. It is not routed to V94 or
 guided races.
+
+The read-only `scripts/audit-physical-rear-race-matrix.mjs --assert`
+replays eight same-seed 24-rider, 20-kilometre variants: climb grade,
+rear rider fatigue, exposed wind, cobbles, a named front-worker
+rotation and a changed team sporting stake. All eight currently
+produce 480 rider-kilometres and 482 decision rows, counting the
+two contact-kilometre riders' pre-contact and group decisions
+separately. On this synthetic route the bunch finishes in 1,756.0 s
+in the base case and 1,790.2 s with exposed wind; rear finish time
+changes from 1,913.3 s to 1,924.0 s when the two rear riders begin
+more fatigued. Cobbles move the paid rear meeting from 1,138.2 m to
+1,226.2 m. The front-worker variant records both named leaders.
+Changing the team stake changes the recorded goal but has no physical
+effect with the same named front-work orders; connecting sporting stakes to
+executable choices remains work. The lowest finish energy in the base
+20-kilometre witness is 86.08, and these normalized values have not
+been calibrated against a full race.
