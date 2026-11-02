@@ -4039,9 +4039,14 @@ shared kilometre charges the leader more than any sheltered rider;
 forged finish energy is rejected by replay validation. The source
 remains opt-in and does not move guided races or create official
 results. Four additional variants give one dropped climber a different
-climbing ability; the paid solo arrival clocks then differ, so the
-contact and shared rear road refuse without assigning a wheel.
+climbing ability. A separate paid-arrival partition records one
+19-rider meeting and one unmatched solo at the same route metre but
+different clocks; it does not assign the solo a wheel. The current
+whole-race continuation still refuses that mixed branch because the
+19-rider group's later road and the separate solo's possible contact
+have not both been paid and replayed.
+
 Equal skills and simultaneous identical solo arrivals are scale
 witnesses, not a calibrated field distribution. Unequal
-arrivals, later merges, realistic fatigue and whole-race chase
+Mixed arrivals, later merges, realistic fatigue and whole-race chase
 timing remain unresolved before routing.

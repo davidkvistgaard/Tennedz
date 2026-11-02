@@ -13,7 +13,9 @@ import {replayPhysicalSingleLossRaceV1,
   '../lib/engine/v2/physical-single-loss-race-replay-v1.mjs';
 import {completePhysicalPaceLossKmV1} from
   '../lib/engine/v2/physical-pace-loss-completion-v1.mjs';
-import {contactPhysicalSimultaneousLossV1,
+import {partitionPhysicalSimultaneousLossV1,
+  validatePhysicalSimultaneousLossPartitionV1,
+  contactPhysicalSimultaneousLossV1,
   validatePhysicalSimultaneousLossContactV1} from
   '../lib/engine/v2/physical-simultaneous-loss-contact-v1.mjs';
 import {replayPhysicalSimultaneousRearGroupV1,
@@ -116,8 +118,24 @@ function audit(distanceKm,fatigue,variant){
       ...completions.map(row=>row.elapsedSeconds));
     let continuation=null;
     let paidRearContact=null;
+    let paidArrivalPartitions=null;
     if(splitIds.length>1){
       const contactInput={...input,lossKm};
+      const partition=partitionPhysicalSimultaneousLossV1(
+        contactInput);
+      assert.equal(validatePhysicalSimultaneousLossPartitionV1(
+        contactInput,partition),true);
+      if(variant==='unequal_weak_climbers'&&
+        distanceKm===120&&fatigue===10){
+        const forged=structuredClone(partition);
+        forged.contacts[0].riderIds.push('team-19-7');
+        assert.throws(()=>
+          validatePhysicalSimultaneousLossPartitionV1(
+            contactInput,forged),/differs from source/);
+      }
+      paidArrivalPartitions={contactSizes:partition.contacts
+        .map(row=>row.riderIds.length),
+      separateSoloRiderIds:partition.separateSoloRiderIds};
       let contact;
       try{
         contact=contactPhysicalSimultaneousLossV1(
@@ -198,6 +216,7 @@ function audit(distanceKm,fatigue,variant){
       status:'paid_split',sourceKm:lossKm,
       splitRiders:splitIds,
       soloClockSpread,
+      paidArrivalPartitions,
       paidRearContact,
       bunchAtKmEnd:loss.step.physicalGroup.riderIds.length,
       continuation};
@@ -247,6 +266,9 @@ if(process.argv.includes('--assert')){
     }else if(row.variant==='many_weak_climbers'){
       assert.equal(row.splitRiders.length,20);
       assert.equal(row.paidRearContact.riderIds,20);
+      assert.deepEqual(row.paidArrivalPartitions.contactSizes,[20]);
+      assert.deepEqual(row.paidArrivalPartitions
+        .separateSoloRiderIds,[]);
       assert.equal(row.paidRearContact.atDistanceM,
         row.sourceKm*1000);
       assert.ok(row.paidRearContact
@@ -262,6 +284,9 @@ if(process.argv.includes('--assert')){
       assert.equal(row.splitRiders.length,20);
       assert.ok(row.soloClockSpread>0);
       assert.equal(row.paidRearContact,null);
+      assert.deepEqual(row.paidArrivalPartitions.contactSizes,[19]);
+      assert.deepEqual(row.paidArrivalPartitions
+        .separateSoloRiderIds,['team-19-7']);
       assert.equal(row.continuation?.status,'refused');
       assert.match(row.continuation.reason,
         /no recorded meeting/);
