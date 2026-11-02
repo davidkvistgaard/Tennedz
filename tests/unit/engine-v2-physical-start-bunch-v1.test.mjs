@@ -45,6 +45,9 @@ import {runPhysicalLossKmRearPairV1,
   runPhysicalSoloFieldRearPairV1,
   validatePhysicalSoloFieldRearPairV1} from
   '../../lib/engine/v2/physical-loss-km-rear-pair-v1.mjs';
+import {inspectNextRearPairFieldContactV1,
+  validateNextRearPairFieldContactV1} from
+  '../../lib/engine/v2/physical-rear-pair-field-contact-v1.mjs';
 import {replayPhysicalStaggeredRaceV1,
   validatePhysicalStaggeredRaceV1} from
   '../../lib/engine/v2/physical-staggered-race-replay-v1.mjs';
@@ -405,6 +408,19 @@ test('different paid kilometres remove only physically dropped riders',()=>{
       row.role==='leader').length===1));
   assert.equal(validatePhysicalSoloFieldRearPairV1(
     fieldPairInput,fieldPair),true);
+  const nextInput={...catchingFieldInput,
+    soloField:catchingField,
+    firstFieldContact:catchingFieldContact,
+    contactRoad:fieldRoad,pair:fieldPair};
+  const next=inspectNextRearPairFieldContactV1(
+    nextInput);
+  assert.deepEqual(next.nextContacts,[]);
+  assert.equal(validateNextRearPairFieldContactV1(
+    nextInput,next),true);
+  const forgedNext=structuredClone(next);
+  forgedNext.candidateOtherRiders=1;
+  assert.throws(()=>validateNextRearPairFieldContactV1(
+    nextInput,forgedNext),/differs/);
   assert.equal(validatePhysicalStaggeredSoloContactV1(
     contacts[0].contactInput,contacts[0].contact),true);
   assert.ok(contacts[0].contact.contactAtDistanceM>

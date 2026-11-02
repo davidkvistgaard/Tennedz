@@ -33,6 +33,8 @@ import {probePhysicalStaggeredSoloFieldV1} from
   '../lib/engine/v2/physical-staggered-detached-solo-v1.mjs';
 import {inspectFirstStaggeredSoloFieldContactV1} from
   '../lib/engine/v2/physical-staggered-solo-field-contact-v1.mjs';
+import {inspectNextRearPairFieldContactV1} from
+  '../lib/engine/v2/physical-rear-pair-field-contact-v1.mjs';
 import {partitionPhysicalSimultaneousLossV1,
   validatePhysicalSimultaneousLossPartitionV1,
   contactPhysicalSimultaneousLossV1,
@@ -222,6 +224,7 @@ function audit(distanceKm,fatigue,variant){
             fieldRoadInput,laterFieldContactRoad);
         }
         let laterPairContinuation=null;
+        let paidPairSource=null;
         if(laterFieldContactRoad){
           const pairInput={...fieldContactInput,
             fieldContact,
@@ -231,6 +234,7 @@ function audit(distanceKm,fatigue,variant){
             pairInput);
           validatePhysicalSoloFieldRearPairV1(
             pairInput,pair);
+          paidPairSource=pair;
           laterPairContinuation={status:'paid_pair_road',
             version:pair.version,
             steps:pair.steps.length,
@@ -272,6 +276,7 @@ function audit(distanceKm,fatigue,variant){
               pairInput);
             validatePhysicalLossKmRearPairV1(
               pairInput,pair);
+            paidPairSource=pair;
             rearPairContinuation={status:'paid_pair_road',
               version:pair.version,
               sourceKm:pair.sourceKm,
@@ -291,6 +296,13 @@ function audit(distanceKm,fatigue,variant){
           }catch(pairError){rearPairContinuation={
             status:'refused',reason:pairError.message,
             sourceKm:pairError.sourceKm??null};}
+        const nextContact=paidPairSource?
+          inspectNextRearPairFieldContactV1({
+            ...fieldContactInput,firstFieldContact:
+              fieldContact,
+            contactRoad:laterFieldContactRoad??
+              paidContactRemainders[0],
+            pair:paidPairSource}):null;
         staggeredScale={status:'paid_bunch_finish',
           sourceVersion:staggered.version,
           detachedRiders:staggered.detachedRiderIds.length,
@@ -311,6 +323,7 @@ function audit(distanceKm,fatigue,variant){
             lossContacts.contacts.slice(0,5),
           paidContactRemainders,
           rearPairContinuation,
+          nextContact:nextContact?.nextContacts??[],
           separateArrivalSolos:
             arrivals.separateSoloRiderIds.length,
           lossKilometres:[...new Set(staggered.losses
@@ -742,6 +755,17 @@ if(process.argv.includes('--assert-varied')){
       firstFieldContact.atDistanceM<
         firstFieldContact.sourceKm*1000&&
       firstFieldContact.riders.every(rider=>
+        rider.energyAtContact>=0));
+    const next=row.staggeredScale.nextContact;
+    assert.equal(next.length,1);
+    assert.equal(next[0].kind,
+      'two_other_solos_meet');
+    assert.equal(next[0].sourceKm,31);
+    assert.deepEqual(next[0].riderIds,
+      ['team-8-6','team-19-1']);
+    assert.ok(next[0].atDistanceM>30000&&
+      next[0].atDistanceM<31000&&
+      next[0].riders.every(rider=>
         rider.energyAtContact>=0));
     if(row.fatigue===10){
       const road=row.staggeredScale

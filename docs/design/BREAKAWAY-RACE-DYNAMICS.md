@@ -4133,3 +4133,12 @@ pays shelter. The isolated pair then alternates one paid leader and one
 sheltered rider for another 89 or 229 km through the 120 or 260 km
 course end. Those clocks still exclude interactions with the other
 detached riders, so they cannot be published as whole-race results.
+
+A contact-aware diagnostic now compares that first paid pair's road
+against every other solo and compares the remaining solos with each
+other. In all four varied fields, the next chronological meeting is
+between team-8-6 and team-19-1 within km 31, at about metre 30,265
+with fatigue 10 and metre 30,109 with fatigue 30. Both riders have
+source-priced energy at the contact. It is a second event, not an
+automatic merge with the first pair; shared road and later encounters
+remain unsettled.
