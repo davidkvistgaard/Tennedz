@@ -48,6 +48,9 @@ import {advancePhysicalManagerPostcatchSoloPairV1,
   '../lib/engine/v2/physical-manager-postcatch-solo-pair-v1.mjs';
 import {validatePhysicalPostcatchSplitContactV1} from
   '../lib/engine/v2/physical-postcatch-split-contact-v1.mjs';
+import {finishPhysicalPostcatchContactKmV1,
+  validatePhysicalPostcatchContactKmV1} from
+  '../lib/engine/v2/physical-postcatch-contact-road-v1.mjs';
 import {riderKilometreEffect} from
   '../lib/engine/v2/physiology.mjs';
 import {TUNING} from '../lib/engine/v2/tuning.mjs';
@@ -252,6 +255,35 @@ function choice({attackerSkill,observerSkill,choiceKm,
                   row.riderId),
                 energySpent:contact.riders.map(row=>
                   row.energySpent)};
+              const roadInput={contactInput,contact,
+                leaderRiderId:contact.detachedRiderId};
+              let road;
+              try{
+                road=finishPhysicalPostcatchContactKmV1(
+                  roadInput);
+              }catch(roadError){
+                paidPostcatchContact.groupRoad={
+                  status:'refused',reason:roadError.message};
+              }
+              if(road){
+                assert.equal(validatePhysicalPostcatchContactKmV1(
+                  roadInput,road),true);
+                const forgedRoad=structuredClone(road);
+                forgedRoad.riders[0].energySpent+=1;
+                assert.throws(()=>
+                  validatePhysicalPostcatchContactKmV1(
+                    roadInput,forgedRoad),
+                /differs from paid source/);
+                paidPostcatchContact.groupRoad={
+                  status:'paid',leaderRiderId:
+                    road.leaderRiderId,
+                  gapSecondsToBunch:
+                    road.gapSecondsToBunch,
+                  riderIds:road.riders.map(row=>
+                    row.riderId),
+                  energySpent:road.riders.map(row=>
+                    row.energySpent)};
+              }
             }
             if(error.physicalLoss){
               const source=error.physicalLoss;
@@ -972,6 +1004,7 @@ if(process.argv.includes('--assert')){
     assert.ok(earlyTerrainCalibration.every(row=>{
       const contact=row.counterfactual.finish
         ?.paidPostcatchContact;
+      const group=contact?.groupRoad;
       return !row.refused&&
         row.counterfactual.status==='paid_contact'&&
         row.counterfactual.finish.status===
@@ -983,7 +1016,13 @@ if(process.argv.includes('--assert')){
         contact.phase==='before_bunch_km_end'&&
         contact.riderIds.join(',')===
           'other-2,sprint-2'&&
-        contact.energySpent.every(value=>value>0);
+        contact.energySpent.every(value=>value>0)&&
+        group?.status==='paid'&&
+          group.leaderRiderId==='sprint-2'&&
+          group.gapSecondsToBunch>0&&
+          group.riderIds.join(',')===
+            'other-2,sprint-2'&&
+          group.energySpent[0]<group.energySpent[1];
     }));
   }
 }

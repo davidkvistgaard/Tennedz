@@ -3862,8 +3862,15 @@ at metre 30,207.88, 0.99 seconds behind the bunch's clock there.
 to that measured metre and replays the meeting from the prior
 physical split and solo clocks; a forged contact time is refused.
 This meeting occurs before the bunch reaches the kilometre line.
-The remaining contact kilometre has no paid leader or group road
-yet, so neither fixture claims a finish or a formed rear group.
+`physical-postcatch-contact-road-v1.mjs` now continues both
+early-climb fixtures over the remaining 792.12 metres with the
+newly dropped worker as named exposed leader and the caught
+break rider sheltered. Their separate contact energies feed the
+terrain-priced group work; both stay behind the bunch at the
+kilometre line, and altered energy is refused by source replay.
+The leader cannot use the caught rider's faster pace because that
+follower cannot hold it. A later rear-group rotation and finish
+remain unsettled, so neither fixture claims an official finish.
 
 `audit-physical-bunch-distance.mjs --assert` extends the opt-in
 paid-bunch source to mixed flat, hill, climb, descent and wind routes
