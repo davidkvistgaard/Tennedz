@@ -3357,3 +3357,14 @@ neither recovery nor the next-kilometre cap is awarded to a detached
 rider until their road continuation is modeled. It does not create a
 rear group or claim a finish time. The supported intact-bunch run still
 refuses loss rather than silently ignoring it.
+
+`physical-pace-loss-completion-v1.mjs` continues one of those source
+recorded solo riders through the unpaid remainder of the split
+kilometre. The rider pays solo terrain cost at their current energy,
+gets no bunch recovery, reaches the kilometre endpoint after the
+bunch, and receives the route-derived energy cap only after finishing
+that distance. Its elapsed time and seconds behind the bunch replay
+from the recorded partial position; a forged split or timing fails.
+The rider remains a singleton physical group. Subsequent kilometres,
+contact with other dropped riders and actual stage finish remain to be
+modeled.

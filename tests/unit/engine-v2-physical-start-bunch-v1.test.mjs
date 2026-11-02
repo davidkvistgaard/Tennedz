@@ -8,6 +8,9 @@ import {startPhysicalBunchV1,advancePhysicalStartBunchV1,
   validatePhysicalBunchRunV1,runPhysicalBunchToPaceLossV1,
   validatePhysicalBunchPaceLossV1} from
   '../../lib/engine/v2/physical-start-bunch-v1.mjs';
+import {completePhysicalPaceLossKmV1,
+  validatePhysicalPaceLossCompletionV1} from
+  '../../lib/engine/v2/physical-pace-loss-completion-v1.mjs';
 
 const route=(terrain='flat')=>Array.from({length:20},(_,index)=>({
   km:index+1,terrain,gradientPct:terrain==='climb'?6:0,
@@ -174,6 +177,11 @@ test('former paid bunch worker can lose a later faster leader',()=>{
   assert.ok(loss.step.splits.some(row=>row.riderId==='control-2'));
   assert.equal(loss.step.leaderRiderId,'sprint-2');
   assert.equal(loss.priorRoad[0].physicalGroup.riderIds.length,24);
+  const completed=completePhysicalPaceLossKmV1({
+    startInput:input.startInput,start:input.start,
+    lossKm:2,loss,riderId:'control-2'});
+  assert.equal(completed.sourceKm,2);
+  assert.ok(completed.elapsedSeconds>loss.elapsedSeconds);
 });
 
 test('pace-loss branch refuses a fictional split or incomplete route',()=>{
@@ -184,4 +192,30 @@ test('pace-loss branch refuses a fictional split or incomplete route',()=>{
   changed.routeKilometres[0].weather.windKph=Number.NaN;
   assert.throws(()=>startPhysicalBunchV1(changed),
     /committed field and route/);
+});
+
+test('detached rider pays remaining climb road and finishes kilometre late',()=>{
+  const teams=field();
+  for(const skill of SPORTING_SKILLS)teams[2].riders[3][skill]=10;
+  const input=source(teams,route('climb'));
+  const loss=runPhysicalBunchToPaceLossV1({...input,lossKm:1});
+  const completionInput={startInput:input.startInput,
+    start:input.start,lossKm:1,loss,riderId:'other-3'};
+  const completed=completePhysicalPaceLossKmV1(completionInput);
+  assert.equal(completed.endDistanceM,1000);
+  assert.ok(completed.elapsedSeconds>loss.elapsedSeconds);
+  assert.ok(completed.gapSecondsToBunch>0);
+  assert.ok(completed.energySpent>0);
+  assert.ok(completed.totalKmEnergySpent>
+    completed.energySpent);
+  assert.equal(completed.physicalGroup.riderIds.length,1);
+  assert.equal(completed.recoveryAward,0);
+  assert.equal(validatePhysicalPaceLossCompletionV1(
+    completionInput,completed),true);
+  const forged=structuredClone(completed);
+  forged.gapSecondsToBunch=0;
+  assert.throws(()=>validatePhysicalPaceLossCompletionV1(
+    completionInput,forged),/differs/);
+  assert.throws(()=>completePhysicalPaceLossKmV1({...completionInput,
+    riderId:'other-2'}),/detached source rider/);
 });
