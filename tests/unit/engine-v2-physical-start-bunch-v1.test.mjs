@@ -10,7 +10,9 @@ import {startPhysicalBunchV1,advancePhysicalStartBunchV1,
   validatePhysicalBunchRunV1,runPhysicalBunchToPaceLossV1,
   validatePhysicalBunchPaceLossV1,
   runPhysicalBunchAfterPaceLossV1,
-  validatePhysicalBunchAfterPaceLossV1} from
+  validatePhysicalBunchAfterPaceLossV1,
+  runPhysicalNamedAttackV1,
+  validatePhysicalNamedAttackV1} from
   '../../lib/engine/v2/physical-start-bunch-v1.mjs';
 import {completePhysicalPaceLossKmV1,
   validatePhysicalPaceLossCompletionV1} from
@@ -48,10 +50,11 @@ const field=(fatigue=20)=>['control','sprint','other'].map(id=>{
       ...(id==='control'?{frontWork:'rotate',
         frontWorkRiderId:'control-2'}:{})},phases:[]}};
 });
-const source=(teams=field(),routeKilometres=route())=>{
+const source=(teams=field(),routeKilometres=route(),
+  stakeByTeam={sprint:'sprint_finish'})=>{
   const commitment=commitTeamChaseStakesV1({teams,distanceKm:20,
     intentions:teams.map(team=>({teamId:team.id,
-      baseline:{goal:team.id==='sprint'?'sprint_finish':'none',
+      baseline:{goal:stakeByTeam[team.id]??'none',
         captainId:team.riders[0].id},phases:[]}))});
   const startInput={teams,routeKilometres,commitment,
     raceSeed:'physical-start-1'};
@@ -156,6 +159,51 @@ test('consecutive paid road rotates named leader and replays every rider',()=>{
   forged.road[2].riders[0].energyAfter+=1;
   assert.throws(()=>validatePhysicalBunchRunV1({...input,
     throughKm:5},forged),/differs/);
+});
+
+test('named manager attack forms front solo only by paid faster road',()=>{
+  const teams=field();
+  teams[2].orders.phases=[{atKm:1,attack:'selective',
+    attackRiderId:'other-2',effort:'hard'}];
+  for(const skill of SPORTING_SKILLS)
+    teams[2].riders[2][skill]=95;
+  const input=source(teams,route(),{
+    sprint:'sprint_finish',other:'break_stage'});
+  const attack=runPhysicalNamedAttackV1({...input,
+    attackKm:2});
+  assert.equal(attack.frontSolo.riderIds[0],'other-2');
+  assert.equal(attack.bunch.riderIds.length,23);
+  assert.ok(!attack.bunch.riderIds.includes('other-2'));
+  assert.ok(attack.frontGapSeconds>0);
+  assert.ok(attack.frontSolo.elapsedSeconds<
+    attack.bunch.elapsedSeconds);
+  assert.equal(attack.step.riderDecisions.length,24);
+  assert.equal(attack.step.riderDecisions.find(row=>
+    row.riderId==='other-2').goal,'break_stage');
+  assert.ok(attack.step.riders.find(row=>
+    row.riderId==='other-2').energySpent>0);
+  assert.equal(validatePhysicalNamedAttackV1({...input,
+    attackKm:2},attack),true);
+  const forged=structuredClone(attack);
+  forged.frontGapSeconds+=1;
+  assert.throws(()=>validatePhysicalNamedAttackV1({...input,
+    attackKm:2},forged),/differs/);
+  assert.throws(()=>runPhysicalBunchV1({...input,
+    throughKm:2}),/one ordered front worker/);
+  const noStake=source(teams,route());
+  assert.throws(()=>runPhysicalNamedAttackV1({...noStake,
+    attackKm:2}),/actual sporting stake/);
+  const weakTeams=field();
+  weakTeams[2].orders.baseline={
+    ...weakTeams[2].orders.baseline,
+    attack:'selective',attackRiderId:'other-2',
+    effort:'hard'};
+  for(const skill of SPORTING_SKILLS)
+    weakTeams[2].riders[2][skill]=20;
+  const weak=source(weakTeams,route(),{
+    other:'break_stage'});
+  assert.throws(()=>runPhysicalNamedAttackV1({...weak,
+    attackKm:1}),/cannot establish physical gap/);
 });
 
 test('early climb weakness records a paid partial solo and no rear group',()=>{

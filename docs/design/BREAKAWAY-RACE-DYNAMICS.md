@@ -3463,3 +3463,18 @@ effect with the same named front-work orders; connecting sporting stakes to
 executable choices remains work. The lowest finish energy in the base
 20-kilometre witness is 86.08, and these normalized values have not
 been calibrated against a full race.
+
+`runPhysicalNamedAttackV1` is a separate opt-in branch from the same
+committed start and paid bunch kilometres. One manager-named rider
+may attack only with a committed `break_stage` or `summit_attack`
+team stake, while a different named helper keeps leading the bunch.
+The attacker pays the attack terrain and energy cost, and their
+own measured kilometre time must be faster than the bunch's paid
+leader time before a front solo and time gap exist. The 23 remaining
+riders retain individual bunch decisions and costs. A focused km 2
+witness records all 24 decisions, a faster front crossing and the
+attacker's reduced energy; forged gap and absent sporting stake fail.
+The intact-bunch path still refuses that active attack. Subsequent
+front road, perceived rival assessment and any physical pursuit or
+catch are still separate work; this branch is not routed to V94 or
+guided races.
