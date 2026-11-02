@@ -3549,13 +3549,22 @@ stake. Baseline contact is at km 13,
 metre 12,562.5; the caught rider finishes 17.7 seconds after the
 bunch, with both times derived from paid road. Modestly increased
 attacker fatigue moves the paid catch to km 9. A very fatigued
-attacker exposes a missing follower pace-loss path before the
-attack can launch. `physical-front-race-replay-v1.mjs` now covers
+attacker loses the paid bunch pace before the planned attack. The
+active named attack remains visible as
+`rider_dropped_before_attack`; the rider does not launch from the
+rear or inherit a wheel. Without an explicit future-stage plan,
+physical inability permits only current-stage `finish_safely` solo
+pace, with a separate terrain charge each later kilometre.
+`physical-single-loss-race-replay-v1.mjs` now records all 24 riders
+and their observed finish for that case and for an early climb drop.
+`physical-front-race-replay-v1.mjs` covers
 the two no-catch variants: a fresher attacker and a weaker later
 bunch leader both produce 480 rider-kilometre decisions and a paid
-front-solo finish instead of an invented catch. Thus eight of nine
-variants reach source-replayed finishes; the very fatigued starter
-remains an explicit refusal. The minimum finish energy near
+front-solo finish instead of an invented catch. All nine narrow
+variants now reach source-replayed finishes; six include a paid
+catch, two a front finish and one a physical pre-attack loss. This
+does not cover simultaneous losses, general multi-group race roads
+or riders joining after new paid contact. The minimum finish energy near
 84 on this short route is diagnostic only; fatigue and whole-race
 energy scales remain uncalibrated. No variant is routed to guided
 races or production.

@@ -15,6 +15,9 @@ import {replayPhysicalCaughtBreakRaceV1,
 import {replayPhysicalFrontRaceV1,
   validatePhysicalFrontRaceV1} from
   '../lib/engine/v2/physical-front-race-replay-v1.mjs';
+import {replayPhysicalSingleLossRaceV1,
+  validatePhysicalSingleLossRaceV1} from
+  '../lib/engine/v2/physical-single-loss-race-replay-v1.mjs';
 
 const route=()=>Array.from({length:20},(_,index)=>({
   km:index+1,terrain:'flat',gradientPct:0,
@@ -117,10 +120,30 @@ const results=scenarios.map(scenario=>{
           throughKm:20};
         race=replayPhysicalFrontRaceV1(input);
         validatePhysicalFrontRaceV1(input,race);
-      }catch(error){
-        throw new Error('No supported paid catch or front finish: '+
-          error.message+'; catch checks '+
-          JSON.stringify([...refusals]));
+      }catch(frontError){
+        try{
+          const input={startInput,start,lossKm:1,
+            riderId:'other-2',throughKm:20};
+          race=replayPhysicalSingleLossRaceV1(input);
+          validatePhysicalSingleLossRaceV1(input,race);
+          return {scenario:scenario.name,
+            status:'pre_attack_loss',
+            riderKm:race.kilometres.reduce((sum,row)=>
+              sum+row.riderStates.length,0),
+            decisionRows:race.kilometres.reduce((sum,row)=>
+              sum+row.riderStates.reduce((n,state)=>n+
+                state.decisions.length,0),0),
+            bunchFinishSeconds:+race.observedFinishSecondsByRider[
+              'control-0'].toFixed(1),
+            soloFinishSeconds:+race.observedFinishSecondsByRider[
+              'other-2'].toFixed(1),
+            blockedAttack:race.sources.bunch.road[0]
+              .blockedAttacks[0].reason};
+        }catch(lossError){
+          throw new Error('No supported paid race: '+
+            frontError.message+'; '+lossError.message+
+            '; catch checks '+JSON.stringify([...refusals]));
+        }
       }
       return {scenario:scenario.name,status:'front_finish',
         riderKm:race.kilometres.reduce((sum,row)=>
@@ -171,8 +194,12 @@ if(process.argv.includes('--assert')){
     'replayed');
   assert.ok(byName.attacker_more_fatigued.catchKm<
     byName.base.catchKm);
-  assert.match(byName.attacker_very_fatigued.reason,
-    /follower cannot hold paid pace/);
+  assert.equal(byName.attacker_very_fatigued.status,
+    'pre_attack_loss');
+  assert.equal(byName.attacker_very_fatigued.riderKm,480);
+  assert.equal(byName.attacker_very_fatigued.decisionRows,480);
+  assert.equal(byName.attacker_very_fatigued.blockedAttack,
+    'rider_dropped_before_attack');
   assert.equal(byName.attacker_fresher.status,'front_finish');
   assert.equal(byName.weaker_later_leader.status,
     'front_finish');

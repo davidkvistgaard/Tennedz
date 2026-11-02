@@ -52,6 +52,9 @@ import {replayPhysicalCaughtBreakRaceV1,
 import {replayPhysicalFrontRaceV1,
   validatePhysicalFrontRaceV1} from
   '../../lib/engine/v2/physical-front-race-replay-v1.mjs';
+import {replayPhysicalSingleLossRaceV1,
+  validatePhysicalSingleLossRaceV1} from
+  '../../lib/engine/v2/physical-single-loss-race-replay-v1.mjs';
 import {runPhysicalRearGroupV1,
   validatePhysicalRearGroupV1} from
   '../../lib/engine/v2/physical-rear-group-run-v1.mjs';
@@ -432,6 +435,11 @@ test('early climb weakness records a paid partial solo and no rear group',()=>{
     row.riderId==='other-3'&&
     row.atDistanceM===split.atDistanceM));
   assert.equal(loss.step.riderDecisions.length,24);
+  const whole=replayPhysicalSingleLossRaceV1({...input,
+    lossKm:1,riderId:'other-3',throughKm:20});
+  assert.equal(whole.kilometres.length,20);
+  assert.ok(whole.observedFinishSecondsByRider['other-3']>
+    whole.observedFinishSecondsByRider['control-0']);
   assert.equal(validatePhysicalBunchPaceLossV1({...input,
     lossKm:1},loss),true);
   const forged=structuredClone(loss);
@@ -464,6 +472,60 @@ test('former paid bunch worker can lose a later faster leader',()=>{
   const later=source(teams,route(),undefined,[{km:1},{km:2}]);
   assert.throws(()=>runPhysicalBunchAfterPaceLossV1({...later,
     lossKm:2,throughKm:3}),/no longer in bunch/);
+});
+
+test('physically dropped planned attacker cannot launch from rear',()=>{
+  const teams=field();
+  for(const team of teams)for(const rider of team.riders)
+    for(const skill of SPORTING_SKILLS)rider[skill]=96;
+  for(const skill of SPORTING_SKILLS)
+    teams[2].riders[2][skill]=95;
+  teams[2].riders[2].fatigue=40;
+  teams[2].energy['other-2']=84;
+  teams[2].orders.phases=[{atKm:1,attack:'selective',
+    attackRiderId:'other-2',effort:'hard'}];
+  const input=source(teams,route(),{
+    other:'break_stage'},[{km:1}]);
+  const loss=runPhysicalBunchToPaceLossV1({...input,
+    lossKm:1});
+  assert.deepEqual(loss.step.splits.map(row=>row.riderId),
+    ['other-2']);
+  const bunch=runPhysicalBunchAfterPaceLossV1({...input,
+    lossKm:1,throughKm:3});
+  assert.deepEqual(bunch.road[0].blockedAttacks,[{
+    teamId:'other',riderId:'other-2',
+    reason:'rider_dropped_before_attack'}]);
+  const solo=runPhysicalDetachedSoloV1({...input,lossKm:1,
+    throughKm:3,riderId:'other-2'});
+  assert.ok(solo.steps.every(row=>
+    row.decision.goal==='finish_safely'&&
+    row.decision.effort==='conserve'&&
+    row.decision.reason==='cannot_hold_paid_front_pace'&&
+    row.energySpent>0));
+  assert.equal(validatePhysicalDetachedSoloV1({...input,
+    lossKm:1,throughKm:3,riderId:'other-2'},solo),true);
+  const finished=runPhysicalDetachedSoloV1({...input,
+    lossKm:1,throughKm:20,riderId:'other-2'});
+  assert.equal(finished.physicalGroup.atDistanceM,20000);
+  assert.ok(finished.elapsedSeconds>
+    finished.steps.at(-1).bunchElapsedSeconds);
+  const raceInput={...input,lossKm:1,
+    riderId:'other-2',throughKm:20};
+  const race=replayPhysicalSingleLossRaceV1(raceInput);
+  assert.equal(race.kilometres.length,20);
+  assert.ok(race.kilometres.every(row=>
+    row.riderStates.length===24&&row.riderStates.every(state=>
+      state.decisions.length>0&&state.energyAfter>=0)));
+  assert.equal(race.sources.bunch.road[0]
+    .blockedAttacks[0].reason,'rider_dropped_before_attack');
+  assert.ok(race.observedFinishSecondsByRider['other-2']>
+    race.observedFinishSecondsByRider['control-0']);
+  assert.equal(validatePhysicalSingleLossRaceV1(
+    raceInput,race),true);
+  const forged=structuredClone(race);
+  forged.kilometres[3].riderStates[18].energyAfter+=1;
+  assert.throws(()=>validatePhysicalSingleLossRaceV1(
+    raceInput,forged),/differs/);
 });
 
 test('pace-loss branch refuses a fictional split or incomplete route',()=>{
