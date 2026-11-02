@@ -21,6 +21,9 @@ import {replayPhysicalCaughtBreakRaceV1,
 import {replayPhysicalEarlyCaughtFollowerLossV1,
   validatePhysicalEarlyCaughtFollowerLossV1} from
   '../lib/engine/v2/physical-early-caught-follower-loss-v1.mjs';
+import {replayPhysicalEarlyCaughtGroupV1,
+  validatePhysicalEarlyCaughtGroupV1} from
+  '../lib/engine/v2/physical-early-caught-group-v1.mjs';
 import {advancePhysicalPerceivedChaseKmV1} from
   '../lib/engine/v2/physical-perceived-chase-km-v1.mjs';
 import {replayPhysicalPerceivedChaseRaceV1,
@@ -252,6 +255,36 @@ function choice({attackerSkill,observerSkill,choiceKm,
           lossInput);
         assert.equal(validatePhysicalEarlyCaughtFollowerLossV1(
           lossInput,partial),true);
+        let finish;
+        try{
+          const fullInput={...lossInput,throughKm:distanceKm};
+          const full=replayPhysicalEarlyCaughtGroupV1(
+            fullInput);
+          assert.equal(validatePhysicalEarlyCaughtGroupV1(
+            fullInput,full),true);
+          if(distanceKm===160&&
+            roadVariant==='hill_mid'){
+            const forged=structuredClone(full);
+            forged.kilometres.at(-1)
+              .riderStates[0].energyAfter+=1;
+            assert.throws(()=>
+              validatePhysicalEarlyCaughtGroupV1(
+                fullInput,forged),
+            /differs from paid source/);
+          }
+          finish={status:'paid_finish',
+            riderKilometres:full.kilometres.reduce(
+              (sum,row)=>sum+row.riderStates.length,0),
+            finishRiders:Object.keys(full
+              .observedFinishSecondsByRider).length,
+            distinctRearLeaders:new Set(full.sources.later
+              .map(row=>row.leaderRiderId)).size,
+            minimumEnergy:Math.min(...full.kilometres
+              .flatMap(row=>row.riderStates.map(rider=>
+                rider.energyAfter)))};
+        }catch(finishError){finish={status:'unsettled',
+          reason:finishError.message,
+          sourceKm:finishError.sourceKm};}
         return {attackerSkill,observerSkill,attackKm,choiceKm,
           fatigue,roadVariant,distanceKm,
           status:'paid_follower_loss_unsettled',catchKm,
@@ -276,6 +309,7 @@ function choice({attackerSkill,observerSkill,choiceKm,
             (sum,row)=>sum+row.riderStates.length,0),
           allRiders:partial.kilometres.at(-1)
             .riderStates.length,
+          finish,
           reason:raceError.message};
       }
       assert.equal(validatePhysicalCaughtBreakRaceV1(
@@ -1483,6 +1517,12 @@ if(process.argv.includes('--assert')){
         row.rearShelterCost<row.rearLeaderCost&&
         row.riderKilometres===row.lossKm*24&&
         row.allRiders===24&&
+        row.finish?.status==='paid_finish'&&
+        row.finish.riderKilometres===
+          row.distanceKm*24&&
+        row.finish.finishRiders===24&&
+        row.finish.distinctRearLeaders===2&&
+        row.finish.minimumEnergy>=0&&
         row.reason===
           'Physical start follower cannot hold paid pace.')
       .length,4);

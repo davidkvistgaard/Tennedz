@@ -3898,7 +3898,9 @@ including the newly detached rider and the already slid break rider.
 The two rear riders meet at physical metre 30,591 on the hill or
 30,155.8 on the climb, before the bunch completes that kilometre.
 One named exposed rear leader pays more energy than the sheltered
-rider. These cases do not yet claim a rear finish.
+rider. The pair then alternates paid turns through observed finish.
+All four 160- and 260-km variants replay 3,840 or 6,240 rider-kilometres,
+24 finish clocks, two rear leaders and nonnegative energy.
 `--postcatch-strength-matrix --assert` varies the caught rider's
 hill and mountain skills by ten points. Four variants finish
 after paid rear contact. Two weaker-rider hill variants never
@@ -4010,4 +4012,7 @@ the contact with the slid break rider and the rest of that kilometre.
 The reported follower position at the bunch's kilometre end is the
 solo projection used to find the meeting. It is not a later contact
 metre: the paid meeting occurs earlier in the same kilometre. The
-rear group's following road and observed finish remain unsettled.
+rear group's following road and observed finish are replayed by the
+same paid group source as the manager-chase case. This covers four
+synthetic zero-fatigue variants, not a calibrated distribution of
+early catches, split timing or long-race fatigue.
