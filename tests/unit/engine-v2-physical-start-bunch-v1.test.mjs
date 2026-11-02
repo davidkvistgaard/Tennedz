@@ -52,6 +52,8 @@ import {finishPhysicalSecondRearPairContactV1} from
   '../../lib/engine/v2/physical-second-rear-pair-v1.mjs';
 import {inspectTwoRearPairsFieldContactV1} from
   '../../lib/engine/v2/physical-two-rear-pairs-field-contact-v1.mjs';
+import {finishPhysicalThirdRearContactV1} from
+  '../../lib/engine/v2/physical-third-rear-contact-v1.mjs';
 import {replayPhysicalStaggeredRaceV1,
   validatePhysicalStaggeredRaceV1} from
   '../../lib/engine/v2/physical-staggered-race-replay-v1.mjs';
@@ -426,6 +428,10 @@ test('different paid kilometres remove only physically dropped riders',()=>{
   assert.throws(()=>inspectTwoRearPairsFieldContactV1({
     ...nextInput,secondContact:{kind:
       'two_other_solos_meet'}}),
+  /paid second contact/);
+  assert.throws(()=>finishPhysicalThirdRearContactV1({
+    ...nextInput,thirdContact:{kind:
+      'rear_pair_meets_solo'}}),
   /paid second contact/);
   assert.equal(validateNextRearPairFieldContactV1(
     nextInput,next),true);

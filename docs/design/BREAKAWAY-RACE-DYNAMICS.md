@@ -4158,3 +4158,11 @@ fatigue: at fatigue 10 the first pair catches team-14-6 around metre
 metre 30,758. The inspector records each involved rider's paid energy
 at that point. The common road after the encounter, subsequent
 contacts and the full field finish remain unpriced.
+
+The third meeting now has an opt-in paid remainder and isolated group
+continuation. The fatigue-10 contact forms three riders with team-4-3
+still exposed; the fatigue-30 pair meeting forms four with team-8-6
+still exposed. All others shelter at lower terrain-priced cost. The
+members rotate a single paid leader on later kilometres. These roads
+remain counterfactual beyond any further contact with the other
+detached riders, and they do not establish whole-field finish times.

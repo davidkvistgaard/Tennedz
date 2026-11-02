@@ -38,8 +38,8 @@ import {inspectNextRearPairFieldContactV1} from
 import {finishPhysicalSecondRearPairContactV1,
   runPhysicalSecondRearPairV1} from
   '../lib/engine/v2/physical-second-rear-pair-v1.mjs';
-import {inspectTwoRearPairsFieldContactV1} from
-  '../lib/engine/v2/physical-two-rear-pairs-field-contact-v1.mjs';
+import {advancePhysicalThirdRearGroupV1} from
+  '../lib/engine/v2/physical-third-rear-contact-v1.mjs';
 import {partitionPhysicalSimultaneousLossV1,
   validatePhysicalSimultaneousLossPartitionV1,
   contactPhysicalSimultaneousLossV1,
@@ -310,6 +310,7 @@ function audit(distanceKm,fatigue,variant){
             pair:paidPairSource}):null;
         let secondRearPair=null;
         let thirdContact=null;
+        let thirdRearGroup=null;
         if(nextContact?.nextContacts.length===1&&
           nextContact.nextContacts[0].kind===
             'two_other_solos_meet'){
@@ -324,9 +325,35 @@ function audit(distanceKm,fatigue,variant){
           const pair=runPhysicalSecondRearPairV1({
             ...secondInput,secondContactRoad:road,
             throughKm:distanceKm});
-          thirdContact=inspectTwoRearPairsFieldContactV1({
+          const third=advancePhysicalThirdRearGroupV1({
             ...secondInput,secondContactRoad:road,
-            secondPair:pair});
+            secondPair:pair,throughKm:distanceKm});
+          thirdContact={nextContacts:[third.thirdContact]};
+          const thirdRoad=third.thirdContactRoad;
+          const thirdGroup=third.group;
+          thirdRearGroup={sourceKm:thirdRoad.sourceKm,
+              contactMetres:thirdRoad.startDistanceM,
+              riderCount:thirdRoad.riders.length,
+              leaderRiderId:thirdRoad.leaderRiderId,
+              roadRoles:thirdRoad.riders.map(rider=>({
+                riderId:rider.riderId,role:rider.role,
+                energySpent:rider.energySpent})),
+              steps:thirdGroup.steps.length,
+              leaders:[...new Set(thirdGroup.steps.map(step=>
+                step.leaderRiderId))],
+              oneLeaderEveryKm:thirdGroup.steps.every(step=>
+                step.riders.filter(rider=>
+                  rider.role==='leader').length===1),
+              paidShelterEveryKm:thirdGroup.steps.every(step=>
+                step.riders.filter(rider=>
+                  rider.role==='sheltered').length===
+                    thirdRoad.riders.length-1&&
+                step.riders.every(rider=>
+                  rider.energySpent>0&&
+                  rider.recoveryAward===0)),
+              endClock:thirdGroup.elapsedSeconds,
+              otherRidersUnsettled:
+                thirdGroup.otherRidersUnsettled};
           secondRearPair={sourceKm:road.sourceKm,
             contactMetres:road.startDistanceM,
             leaderRiderId:road.leaderRiderId,
@@ -371,6 +398,7 @@ function audit(distanceKm,fatigue,variant){
           nextContact:nextContact?.nextContacts??[],
           secondRearPair,
           thirdContact:thirdContact?.nextContacts??[],
+          thirdRearGroup,
           separateArrivalSolos:
             arrivals.separateSoloRiderIds.length,
           lossKilometres:[...new Set(staggered.losses
@@ -846,6 +874,19 @@ if(process.argv.includes('--assert-varied')){
     }else
       assert.equal(third[0].kind,
         'rear_pair_meets_rear_pair');
+    const merged=row.staggeredScale.thirdRearGroup;
+    assert.equal(merged.sourceKm,31);
+    assert.equal(merged.riderCount,
+      row.fatigue===10?3:4);
+    assert.equal(merged.steps,row.distanceKm-31);
+    assert.equal(merged.roadRoles.filter(rider=>
+      rider.role==='leader').length,1);
+    assert.equal(merged.roadRoles.filter(rider=>
+      rider.role==='sheltered').length,
+    merged.riderCount-1);
+    assert.equal(merged.oneLeaderEveryKm,true);
+    assert.equal(merged.paidShelterEveryKm,true);
+    assert.equal(merged.otherRidersUnsettled,true);
     if(row.fatigue===10){
       const road=row.staggeredScale
         .laterFieldContactRoad;
