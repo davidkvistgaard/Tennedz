@@ -35,6 +35,9 @@ import {inspectFirstStaggeredSoloFieldContactV1} from
   '../lib/engine/v2/physical-staggered-solo-field-contact-v1.mjs';
 import {inspectNextRearPairFieldContactV1} from
   '../lib/engine/v2/physical-rear-pair-field-contact-v1.mjs';
+import {finishPhysicalSecondRearPairContactV1,
+  runPhysicalSecondRearPairV1} from
+  '../lib/engine/v2/physical-second-rear-pair-v1.mjs';
 import {partitionPhysicalSimultaneousLossV1,
   validatePhysicalSimultaneousLossPartitionV1,
   contactPhysicalSimultaneousLossV1,
@@ -303,6 +306,42 @@ function audit(distanceKm,fatigue,variant){
             contactRoad:laterFieldContactRoad??
               paidContactRemainders[0],
             pair:paidPairSource}):null;
+        let secondRearPair=null;
+        if(nextContact?.nextContacts.length===1&&
+          nextContact.nextContacts[0].kind===
+            'two_other_solos_meet'){
+          const secondInput={...fieldContactInput,
+            firstFieldContact:fieldContact,
+            contactRoad:laterFieldContactRoad??
+              paidContactRemainders[0],
+            pair:paidPairSource,
+            secondContact:nextContact.nextContacts[0]};
+          const road=finishPhysicalSecondRearPairContactV1(
+            secondInput);
+          const pair=runPhysicalSecondRearPairV1({
+            ...secondInput,secondContactRoad:road,
+            throughKm:distanceKm});
+          secondRearPair={sourceKm:road.sourceKm,
+            contactMetres:road.startDistanceM,
+            leaderRiderId:road.leaderRiderId,
+            roadRoles:road.riders.map(rider=>({
+              riderId:rider.riderId,role:rider.role,
+              energySpent:rider.energySpent})),
+            steps:pair.steps.length,
+            leaders:[...new Set(pair.steps.map(step=>
+              step.leaderRiderId))],
+            oneLeaderEveryKm:pair.steps.every(step=>
+              step.riders.filter(rider=>
+                rider.role==='leader').length===1),
+            paidShelterEveryKm:pair.steps.every(step=>
+              step.riders.filter(rider=>
+                rider.role==='sheltered').length===1&&
+              step.riders.every(rider=>
+                rider.energySpent>0&&
+                rider.recoveryAward===0)),
+            endClock:pair.elapsedSeconds,
+            otherRidersUnsettled:pair.otherRidersUnsettled};
+        }
         staggeredScale={status:'paid_bunch_finish',
           sourceVersion:staggered.version,
           detachedRiders:staggered.detachedRiderIds.length,
@@ -324,6 +363,7 @@ function audit(distanceKm,fatigue,variant){
           paidContactRemainders,
           rearPairContinuation,
           nextContact:nextContact?.nextContacts??[],
+          secondRearPair,
           separateArrivalSolos:
             arrivals.separateSoloRiderIds.length,
           lossKilometres:[...new Set(staggered.losses
@@ -767,6 +807,23 @@ if(process.argv.includes('--assert-varied')){
       next[0].atDistanceM<31000&&
       next[0].riders.every(rider=>
         rider.energyAtContact>=0));
+    assert.ok(next[0].riderIds.includes(
+      next[0].catchingRiderId));
+    const second=row.staggeredScale.secondRearPair;
+    assert.equal(second.sourceKm,31);
+    assert.equal(second.steps,row.distanceKm-31);
+    assert.equal(second.leaderRiderId,
+      next[0].catchingRiderId);
+    assert.equal(second.roadRoles.filter(rider=>
+      rider.role==='leader').length,1);
+    assert.equal(second.roadRoles.filter(rider=>
+      rider.role==='sheltered').length,1);
+    assert.ok(second.roadRoles.every(rider=>
+      rider.energySpent>0));
+    assert.equal(second.oneLeaderEveryKm,true);
+    assert.equal(second.paidShelterEveryKm,true);
+    assert.equal(second.leaders.length,2);
+    assert.equal(second.otherRidersUnsettled,true);
     if(row.fatigue===10){
       const road=row.staggeredScale
         .laterFieldContactRoad;

@@ -4142,3 +4142,11 @@ with fatigue 10 and metre 30,109 with fatigue 30. Both riders have
 source-priced energy at the contact. It is a second event, not an
 automatic merge with the first pair; shared road and later encounters
 remain unsettled.
+
+The second measured contact also has a separate opt-in paid road. In
+all four varied 160-rider cases, team-8-6 catches team-19-1 within km
+31 and pays the exposed remainder while team-19-1 pays the lower
+sheltered terrain cost. Each then has a decision, energy debit and
+alternating single-leader isolated pair road to km 120 or 260. The
+first rear pair and other detached riders still have unresolved later
+encounters, so these isolated end clocks are not whole-field finishes.
