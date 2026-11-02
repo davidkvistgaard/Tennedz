@@ -238,6 +238,7 @@ function choice({attackerSkill,observerSkill,choiceKm,
                   endDistanceM:row.endDistanceM,
                   gapSecondsToBunch:row.gapSecondsToBunch,
                   energySpent:row.energySpent,
+                  recoveryAward:row.recoveryAward,
                   energyAfter:row.energyAfter})),
               caughtSoloEndClock:error.physicalLoss
                 .caughtSoloEndClock}}:{})};}
@@ -716,6 +717,8 @@ if(process.argv.includes('--assert')){
           .physicalLoss.sourceKm*1000&&
       row.counterfactual.finish.physicalLoss.completions
         [0].energySpent>0&&
+      row.counterfactual.finish.physicalLoss.completions
+        [0].recoveryAward===0&&
       row.counterfactual.finish.physicalLoss.completions
         [0].gapSecondsToBunch>0
     ).length,8);

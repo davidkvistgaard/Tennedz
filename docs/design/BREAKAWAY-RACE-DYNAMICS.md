@@ -3810,7 +3810,8 @@ physical split. A separate versioned
 completion then pays each rider's remaining metres and checks that
 the caught break rider cannot meet that rider or the bunch before
 the same kilometre line. All eight paid split completions replay
-from their source, and forged completion energy is rejected. The
+from their source, charge positive energy, award no solo recovery,
+and reject forged completion energy. The
 later solo road and possible future
 contact remain unsettled. The refusal is an explicit missing
 physical branch, not a finished race result.
