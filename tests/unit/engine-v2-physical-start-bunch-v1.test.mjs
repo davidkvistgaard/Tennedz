@@ -846,6 +846,25 @@ test('committed physical chase catches a slowing front on paid road',()=>{
   forgedRace.kilometres.at(-1).riderStates[0].energyAfter+=1;
   assert.throws(()=>validatePhysicalPerceivedChaseSlideRaceV1(
     raceInput,forgedRace),/differs/);
+  const handoffTeams=structuredClone(teams);
+  handoffTeams[0].orders.phases.push({atKm:20,
+    frontWork:'rotate',frontWorkRiderId:'control-3'});
+  handoffTeams[1].orders.phases.at(-1).frontWork='sit_in';
+  const handoffSource=source(handoffTeams,longRoute,{
+    sprint:'sprint_finish',other:'break_stage'},
+  [{km:1},{km:12}]);
+  const handoffInput={...raceInput,
+    startInput:{...handoffSource.startInput,
+      raceSeed:'same-threat-window-seed'},
+    start:startPhysicalBunchV1({
+      ...handoffSource.startInput,
+      raceSeed:'same-threat-window-seed'})};
+  const handoffRace=replayPhysicalPerceivedChaseSlideRaceV1(
+    handoffInput);
+  assert.equal(handoffRace.sources.later.find(row=>
+    row.sourceKm===21).bunchStep.leaderRiderId,'control-3');
+  assert.equal(Object.keys(handoffRace
+    .observedFinishSecondsByRider).length,24);
 });
 
 test('early climb weakness records a paid partial solo and no rear group',()=>{

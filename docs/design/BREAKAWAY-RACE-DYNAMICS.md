@@ -3675,6 +3675,11 @@ chase order. All 600 rider-kilometre states and 24 finish times
 source-replay, without a wheel or group membership inferred for the
 caught rider. This single flat synthetic case does not calibrate
 whole-race pursuits, fatigue or other contact outcomes.
+The same 25-km witness also finishes when a precommitted km-20 phase
+hands named front work to another team after the chase target is
+caught. The previous nominated chase-team restriction now applies
+only while an active chase order remains. The new leader pays the
+road from its own committed order; no later order is relabelled.
 `audit-physical-threat-window.mjs --calibration --assert` varies
 five perceived chase roles, three initial fatigue levels (10, 20,
 40), and flat, mid-route hill, climb and exposed-wind road across
