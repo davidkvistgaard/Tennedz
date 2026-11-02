@@ -22,6 +22,9 @@ import {inspectPhysicalStaggeredLossKmContactsV1,
 import {finishPhysicalLossKmContactV1,
   validatePhysicalLossKmContactV1} from
   '../lib/engine/v2/physical-loss-km-contact-road-v1.mjs';
+import {runPhysicalLossKmRearPairV1,
+  validatePhysicalLossKmRearPairV1} from
+  '../lib/engine/v2/physical-loss-km-rear-pair-v1.mjs';
 import {partitionPhysicalSimultaneousLossV1,
   validatePhysicalSimultaneousLossPartitionV1,
   contactPhysicalSimultaneousLossV1,
@@ -201,6 +204,36 @@ function audit(distanceKm,fatigue,variant){
               contactInput,road);
             return road;
           });
+        let rearPairContinuation=null;
+        if(paidContactRemainders.length===1)
+          try{
+            const pairInput={...arrivalsInput,
+              contact:lossContacts.contacts[0],
+              contactRoad:paidContactRemainders[0],
+              throughKm:distanceKm};
+            const pair=runPhysicalLossKmRearPairV1(
+              pairInput);
+            validatePhysicalLossKmRearPairV1(
+              pairInput,pair);
+            rearPairContinuation={status:'paid_pair_road',
+              version:pair.version,
+              sourceKm:pair.sourceKm,
+              steps:pair.steps.length,
+              alternatingLeaders:new Set(pair.steps.map(
+                step=>step.leaderRiderId)).size,
+              oneLeaderEveryKm:pair.steps.every(step=>
+                step.riders.filter(rider=>
+                  rider.role==='leader').length===1),
+              paidShelterEveryKm:pair.steps.every(step=>
+                step.riders.filter(rider=>
+                  rider.role==='sheltered').length===1&&
+                step.riders.every(rider=>
+                  rider.energySpent>0&&
+                  rider.recoveryAward===0)),
+              endClock:pair.elapsedSeconds};
+          }catch(pairError){rearPairContinuation={
+            status:'refused',reason:pairError.message,
+            sourceKm:pairError.sourceKm??null};}
         staggeredScale={status:'paid_bunch_finish',
           sourceVersion:staggered.version,
           detachedRiders:staggered.detachedRiderIds.length,
@@ -214,6 +247,7 @@ function audit(distanceKm,fatigue,variant){
           firstWithinLossKmContacts:
             lossContacts.contacts.slice(0,5),
           paidContactRemainders,
+          rearPairContinuation,
           separateArrivalSolos:
             arrivals.separateSoloRiderIds.length,
           lossKilometres:[...new Set(staggered.losses
@@ -664,6 +698,19 @@ if(process.argv.includes('--assert-varied')){
           rider.energySpent>0&&
           rider.energyAfter>=0&&
           rider.recoveryAward===0)));
+    if(row.fatigue===30){
+      const pair=row.staggeredScale
+        .rearPairContinuation;
+      assert.equal(pair.status,'paid_pair_road');
+      assert.equal(pair.sourceKm,row.distanceKm);
+      assert.equal(pair.steps,row.distanceKm-26);
+      assert.equal(pair.alternatingLeaders,2);
+      assert.equal(pair.oneLeaderEveryKm,true);
+      assert.equal(pair.paidShelterEveryKm,true);
+      assert.ok(pair.endClock>0);
+    }else
+      assert.equal(row.staggeredScale
+        .rearPairContinuation,null);
     assert.ok(row.staggeredScale.namedLeaders>=12);
     assert.equal(row.staggeredScale.emergencyTurns,0);
     assert.equal(row.staggeredScale.bunchFinishRiders,

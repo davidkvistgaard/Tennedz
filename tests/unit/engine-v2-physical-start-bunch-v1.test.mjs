@@ -34,6 +34,8 @@ import {inspectPhysicalStaggeredLossKmContactsV1,
   '../../lib/engine/v2/physical-staggered-loss-km-contact-v1.mjs';
 import {finishPhysicalLossKmContactV1} from
   '../../lib/engine/v2/physical-loss-km-contact-road-v1.mjs';
+import {runPhysicalLossKmRearPairV1} from
+  '../../lib/engine/v2/physical-loss-km-rear-pair-v1.mjs';
 import {replayPhysicalStaggeredRaceV1,
   validatePhysicalStaggeredRaceV1} from
   '../../lib/engine/v2/physical-staggered-race-replay-v1.mjs';
@@ -273,6 +275,10 @@ test('different paid kilometres remove only physically dropped riders',()=>{
   assert.throws(()=>finishPhysicalLossKmContactV1({
     ...arrivalsInput,contact:{sourceKm:6}}),
   /exact paid source/);
+  assert.throws(()=>runPhysicalLossKmRearPairV1({
+    ...arrivalsInput,contact:{sourceKm:6},
+    contactRoad:{},throughKm:20}),
+  /exact paid/);
   for(const riderId of ['control-2','other-3']){
     const completion=completePhysicalStaggeredLossKmV1({
       ...input,staggered:recording,riderId});

@@ -4107,3 +4107,12 @@ follower's terrain-specific ability, and both retain separate orders,
 decisions, energy and clock. This settles only the pair's last 0.8 m
 of km 26. Other rear riders and later group kilometres still need
 contact-aware replay.
+
+An isolated continuation now pays this two-rider group's next 94 or
+234 kilometres through the 120 or 260 km course end. The riders
+alternate the single exposed turn; the other pays sheltered terrain
+cost, and both retain decisions, team effort caps, energy and clocks.
+The continuation refuses an unpaid bunch catch. It does not yet test
+contact with the other 35 or 39 detached riders, so its end clocks are
+counterfactual pair-road evidence rather than validated whole-race
+finishes.
