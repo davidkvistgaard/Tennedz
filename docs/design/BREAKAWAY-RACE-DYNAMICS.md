@@ -3557,6 +3557,14 @@ physical inability permits only current-stage `finish_safely` solo
 pace, with a separate terrain charge each later kilometre.
 `physical-single-loss-race-replay-v1.mjs` now records all 24 riders
 and their observed finish for that case and for an early climb drop.
+The former-bunch-worker witness was tightened: the earlier 70-skill
+field lost 23 followers when a 95-skill worker took over, so it was
+not evidence of one isolated worker drop. With a 96-skill field,
+a 90-skill first worker and a 97-skill later worker, exactly that
+former worker loses pace at km 2 while the other 23 continue. Their
+separate paid road and all 24 observed finishes now replay through
+km 20. A later order naming the detached worker to lead still
+refuses; there is no inferred return to the bunch.
 `physical-front-race-replay-v1.mjs` covers
 the two no-catch variants: a fresher attacker and a weaker later
 bunch leader both produce 480 rider-kilometre decisions and a paid

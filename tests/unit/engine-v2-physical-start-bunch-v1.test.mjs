@@ -450,13 +450,18 @@ test('early climb weakness records a paid partial solo and no rear group',()=>{
 
 test('former paid bunch worker can lose a later faster leader',()=>{
   const teams=field();
+  for(const team of teams)for(const rider of team.riders)
+    for(const skill of SPORTING_SKILLS)rider[skill]=96;
+  for(const skill of SPORTING_SKILLS)
+    teams[0].riders[2][skill]=90;
   teams[0].orders.phases=[{atKm:1,frontWork:'sit_in'}];
   teams[1].orders.phases=[{atKm:1,frontWork:'rotate',
     frontWorkRiderId:'sprint-2',effort:'hard'}];
   for(const skill of SPORTING_SKILLS)
-    teams[1].riders[2][skill]=95;
+    teams[1].riders[2][skill]=97;
   const input=source(teams,route(),undefined,[{km:1}]);
   const loss=runPhysicalBunchToPaceLossV1({...input,lossKm:2});
+  assert.equal(loss.step.splits.length,1);
   assert.equal(loss.priorRoad[0].leaderRiderId,'control-2');
   assert.ok(loss.step.splits.some(row=>row.riderId==='control-2'));
   assert.equal(loss.step.leaderRiderId,'sprint-2');
@@ -466,6 +471,13 @@ test('former paid bunch worker can lose a later faster leader',()=>{
     lossKm:2,loss,riderId:'control-2'});
   assert.equal(completed.sourceKm,2);
   assert.ok(completed.elapsedSeconds>loss.elapsedSeconds);
+  const full=replayPhysicalSingleLossRaceV1({...input,
+    lossKm:2,riderId:'control-2',throughKm:20});
+  assert.equal(full.kilometres.length,20);
+  assert.ok(full.kilometres.every(row=>
+    row.riderStates.length===24));
+  assert.ok(full.observedFinishSecondsByRider['control-2']>
+    full.observedFinishSecondsByRider['sprint-0']);
   teams[0].orders.phases.push({atKm:2,frontWork:'rotate',
     frontWorkRiderId:'control-2'});
   teams[1].orders.phases.push({atKm:2,frontWork:'sit_in'});
