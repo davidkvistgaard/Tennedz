@@ -5,7 +5,8 @@ import {commitTeamChaseStakesV1} from
   '../../lib/engine/v2/team-chase-stake-v1.mjs';
 import {startPhysicalBunchV1,advancePhysicalStartBunchV1,
   validatePhysicalStartBunchV1,runPhysicalBunchV1,
-  validatePhysicalBunchRunV1} from
+  validatePhysicalBunchRunV1,runPhysicalBunchToPaceLossV1,
+  validatePhysicalBunchPaceLossV1} from
   '../../lib/engine/v2/physical-start-bunch-v1.mjs';
 
 const route=(terrain='flat')=>Array.from({length:20},(_,index)=>({
@@ -131,4 +132,56 @@ test('consecutive paid road rotates named leader and replays every rider',()=>{
   forged.road[2].riders[0].energyAfter+=1;
   assert.throws(()=>validatePhysicalBunchRunV1({...input,
     throughKm:5},forged),/differs/);
+});
+
+test('early climb weakness records a paid partial solo and no rear group',()=>{
+  const teams=field();
+  for(const skill of SPORTING_SKILLS)teams[2].riders[3][skill]=10;
+  const input=source(teams,route('climb'));
+  const loss=runPhysicalBunchToPaceLossV1({...input,lossKm:1});
+  const split=loss.step.splits.find(row=>
+    row.riderId==='other-3');
+  const rider=loss.step.riders.find(row=>
+    row.riderId==='other-3');
+  assert.ok(split.atDistanceM>0&&split.atDistanceM<1000);
+  assert.equal(rider.role,'solo_partial');
+  assert.ok(rider.energySpent>0&&rider.energyAfter<
+    rider.energyBefore);
+  assert.equal(rider.recoveryAward,0);
+  assert.ok(!loss.step.physicalGroup.riderIds.includes('other-3'));
+  assert.ok(loss.step.rearSolos.some(row=>
+    row.riderId==='other-3'&&
+    row.atDistanceM===split.atDistanceM));
+  assert.equal(loss.step.riderDecisions.length,24);
+  assert.equal(validatePhysicalBunchPaceLossV1({...input,
+    lossKm:1},loss),true);
+  const forged=structuredClone(loss);
+  forged.step.splits[0].atDistanceM+=1;
+  assert.throws(()=>validatePhysicalBunchPaceLossV1({...input,
+    lossKm:1},forged),/differs/);
+});
+
+test('former paid bunch worker can lose a later faster leader',()=>{
+  const teams=field();
+  teams[0].orders.phases=[{atKm:1,frontWork:'sit_in'}];
+  teams[1].orders.phases=[{atKm:1,frontWork:'rotate',
+    frontWorkRiderId:'sprint-2',effort:'hard'}];
+  for(const skill of SPORTING_SKILLS)
+    teams[1].riders[2][skill]=95;
+  const input=source(teams);
+  const loss=runPhysicalBunchToPaceLossV1({...input,lossKm:2});
+  assert.equal(loss.priorRoad[0].leaderRiderId,'control-2');
+  assert.ok(loss.step.splits.some(row=>row.riderId==='control-2'));
+  assert.equal(loss.step.leaderRiderId,'sprint-2');
+  assert.equal(loss.priorRoad[0].physicalGroup.riderIds.length,24);
+});
+
+test('pace-loss branch refuses a fictional split or incomplete route',()=>{
+  const input=source();
+  assert.throws(()=>runPhysicalBunchToPaceLossV1({...input,
+    lossKm:1}),/no physical pace loss/);
+  const changed=structuredClone(input.startInput);
+  changed.routeKilometres[0].weather.windKph=Number.NaN;
+  assert.throws(()=>startPhysicalBunchV1(changed),
+    /committed field and route/);
 });

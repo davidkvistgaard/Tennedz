@@ -3343,3 +3343,17 @@ The five-kilometre same-seed witness rotates leaders at km 2 and 4,
 replays all 120 rider decisions and rejects a forged energy row. This
 path still refuses any unsupported attack, chase, wheel loss or
 unpayable road. It remains independent of V94 and guided races.
+
+An opt-in `runPhysicalBunchToPaceLossV1` replays the complete paid
+start and prior bunch road, then stops at the first requested kilometre
+where a rider cannot match the single named leader. That rider pays
+solo terrain cost for the distance physically covered while the bunch
+finishes that kilometre; their measured location, energy and distance
+behind the bunch are recorded. Each detached rider remains a separate
+solo, even if several drop together. A weak rider drops on an early
+climb and a former front worker can drop behind a stronger later
+leader in focused same-source tests. This is a partial-kilometre state:
+neither recovery nor the next-kilometre cap is awarded to a detached
+rider until their road continuation is modeled. It does not create a
+rear group or claim a finish time. The supported intact-bunch run still
+refuses loss rather than silently ignoring it.
