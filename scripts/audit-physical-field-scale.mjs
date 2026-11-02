@@ -11,6 +11,14 @@ import {startPhysicalBunchV1,runPhysicalBunchV1,
 import {replayPhysicalSingleLossRaceV1,
   validatePhysicalSingleLossRaceV1} from
   '../lib/engine/v2/physical-single-loss-race-replay-v1.mjs';
+import {completePhysicalPaceLossKmV1} from
+  '../lib/engine/v2/physical-pace-loss-completion-v1.mjs';
+import {contactPhysicalSimultaneousLossV1,
+  validatePhysicalSimultaneousLossContactV1} from
+  '../lib/engine/v2/physical-simultaneous-loss-contact-v1.mjs';
+import {replayPhysicalSimultaneousRearGroupV1,
+  validatePhysicalSimultaneousRearGroupV1} from
+  '../lib/engine/v2/physical-simultaneous-rear-group-v1.mjs';
 
 const fieldSize=20;
 const ridersPerTeam=8;
@@ -48,8 +56,11 @@ function source(distanceKm,fatigue,variant){
   });
   if(variant==='one_weak_climber')
     teams[19].riders[7].mountain=30;
-  if(variant==='many_weak_climbers')
+  if(variant==='many_weak_climbers'||
+    variant==='unequal_weak_climbers')
     for(const team of teams)team.riders[7].mountain=30;
+  if(variant==='unequal_weak_climbers')
+    teams[19].riders[7].mountain=35;
   for(let marker=5;marker<distanceKm;marker+=5){
     const priorTeam=Math.floor((marker-1)/5)%fieldSize;
     const nextTeam=Math.floor(marker/5)%fieldSize;
@@ -97,7 +108,76 @@ function audit(distanceKm,fatigue,variant){
     const loss=runPhysicalBunchToPaceLossV1({
       ...input,lossKm});
     const splitIds=loss.step.splits.map(row=>row.riderId);
+    const completions=splitIds.map(riderId=>
+      completePhysicalPaceLossKmV1({
+        ...input,lossKm,loss,riderId}));
+    const soloClockSpread=Math.max(...completions.map(
+      row=>row.elapsedSeconds))-Math.min(
+      ...completions.map(row=>row.elapsedSeconds));
     let continuation=null;
+    let paidRearContact=null;
+    if(splitIds.length>1){
+      const contactInput={...input,lossKm};
+      let contact;
+      try{
+        contact=contactPhysicalSimultaneousLossV1(
+          contactInput);
+        assert.equal(validatePhysicalSimultaneousLossContactV1(
+          contactInput,contact),true);
+        paidRearContact={atDistanceM:contact.contact
+          .atDistanceM,clockSeconds:contact.contact
+          .clockSeconds,
+        riderIds:contact.contact.riderIds.length,
+        behindBunchSeconds:contact.contact
+          .behindBunchSeconds};
+      }catch(contactError){continuation={
+        status:'refused',reason:contactError.message};}
+      if(contact){
+        try{
+        const groupInput={...input,lossKm,
+          throughKm:distanceKm};
+        const group=replayPhysicalSimultaneousRearGroupV1(
+          groupInput);
+        assert.equal(validatePhysicalSimultaneousRearGroupV1(
+          groupInput,group),true);
+        const firstRearKm=group.sources.later[0];
+        assert.equal(firstRearKm.rearRows.filter(row=>
+          row.role==='leader').length,1);
+        assert.equal(firstRearKm.rearRows.filter(row=>
+          row.role==='sheltered').length,19);
+        assert.ok(firstRearKm.rearRows.every(row=>
+          row.energySpent>0));
+        assert.ok(firstRearKm.rearRows.find(row=>
+          row.role==='leader').energySpent>
+          Math.max(...firstRearKm.rearRows.filter(row=>
+            row.role==='sheltered').map(row=>
+              row.energySpent)));
+        assert.ok(group.sources.later.every(row=>
+          row.gapSecondsToBunch>0));
+        if(distanceKm===120&&fatigue===10){
+          const forged=structuredClone(group);
+          forged.kilometres.at(-1).riderStates.find(row=>
+            row.riderId===splitIds[0]).energyAfter+=1;
+          assert.throws(()=>
+            validatePhysicalSimultaneousRearGroupV1(
+              groupInput,forged),
+          /differs from source/);
+        }
+        continuation={status:'paid_finish',
+          riderKilometres:group.kilometres.reduce(
+            (sum,row)=>sum+row.riderStates.length,0),
+          finishRiders:Object.keys(group
+            .observedFinishSecondsByRider).length,
+          namedRearLeaders:new Set(group.sources.later
+            .map(row=>row.leaderRiderId)).size,
+          minimumEnergy:Math.min(...group.kilometres
+            .flatMap(row=>row.riderStates.map(rider=>
+              rider.energyAfter)))};
+        }catch(groupError){continuation={
+          status:'refused',reason:groupError.message,
+          sourceKm:groupError.sourceKm};}
+      }
+    }
     if(splitIds.length===1){
       try{
         const replayInput={...input,lossKm,
@@ -117,6 +197,8 @@ function audit(distanceKm,fatigue,variant){
     return {distanceKm,fatigue,variant,
       status:'paid_split',sourceKm:lossKm,
       splitRiders:splitIds,
+      soloClockSpread,
+      paidRearContact,
       bunchAtKmEnd:loss.step.physicalGroup.riderIds.length,
       continuation};
   }
@@ -136,10 +218,11 @@ function audit(distanceKm,fatigue,variant){
 const results=[120,260].flatMap(distanceKm=>
   [10,30].flatMap(fatigue=>
     ['equal_field','one_weak_climber',
-      'many_weak_climbers'].map(variant=>
+      'many_weak_climbers',
+      'unequal_weak_climbers'].map(variant=>
       audit(distanceKm,fatigue,variant))));
 if(process.argv.includes('--assert')){
-  assert.equal(results.length,12);
+  assert.equal(results.length,16);
   for(const row of results.filter(item=>
     item.variant==='equal_field')){
     assert.equal(row.status,'paid_bunch_finish');
@@ -161,9 +244,27 @@ if(process.argv.includes('--assert')){
       assert.equal(row.continuation.riderKilometres,
         row.distanceKm*fieldSize*ridersPerTeam);
       assert.equal(row.continuation.finishRiders,160);
+    }else if(row.variant==='many_weak_climbers'){
+      assert.equal(row.splitRiders.length,20);
+      assert.equal(row.paidRearContact.riderIds,20);
+      assert.equal(row.paidRearContact.atDistanceM,
+        row.sourceKm*1000);
+      assert.ok(row.paidRearContact
+        .behindBunchSeconds>0);
+      assert.equal(row.continuation?.status,
+        'paid_finish');
+      assert.equal(row.continuation.riderKilometres,
+        row.distanceKm*fieldSize*ridersPerTeam);
+      assert.equal(row.continuation.finishRiders,160);
+      assert.equal(row.continuation.namedRearLeaders,20);
+      assert.ok(row.continuation.minimumEnergy>=0);
     }else{
       assert.equal(row.splitRiders.length,20);
-      assert.equal(row.continuation,null);
+      assert.ok(row.soloClockSpread>0);
+      assert.equal(row.paidRearContact,null);
+      assert.equal(row.continuation?.status,'refused');
+      assert.match(row.continuation.reason,
+        /no recorded meeting/);
     }
   }
 }

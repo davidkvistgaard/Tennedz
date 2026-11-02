@@ -4025,8 +4025,23 @@ decisions each kilometre (19,200 or 41,600 rider-kilometres), with
 160 observed finish clocks and nonnegative energy. Four variants
 with one weak climber record its km-21 physical loss and replay all
 160 riders to finish. Four variants with one weak climber per team
-record 20 simultaneous physical losses at km 21 but deliberately
-claim no finish: the current one-loss continuation cannot pay or
-form their rear roads. Equal skills are a scale check, not realistic
-field calibration. The 20-rider split is a concrete multi-loss
-branch needed before a varied 20-team race can be routed.
+record 20 simultaneous physical losses at km 21. Each split rider
+pays the remaining solo metres separately. Their measured arrivals
+share the same clock and route metre at km 21's end, 3.65 to 3.89
+seconds after the bunch, so `physical-simultaneous-loss-contact-v1`
+records a source-backed meeting. It refuses riders whose paid solo
+clocks or metres differ. `physical-simultaneous-rear-group-v1` then
+pays one exposed leader and 19 sheltered riders on each later
+kilometre, rotating through all 20 named leaders. Every 120- and
+260-km variant source-replays 19,200 or 41,600 rider-kilometre states
+and all 160 observed finish clocks with nonnegative energy. The first
+shared kilometre charges the leader more than any sheltered rider;
+forged finish energy is rejected by replay validation. The source
+remains opt-in and does not move guided races or create official
+results. Four additional variants give one dropped climber a different
+climbing ability; the paid solo arrival clocks then differ, so the
+contact and shared rear road refuse without assigning a wheel.
+Equal skills and simultaneous identical solo arrivals are scale
+witnesses, not a calibrated field distribution. Unequal
+arrivals, later merges, realistic fatigue and whole-race chase
+timing remain unresolved before routing.
