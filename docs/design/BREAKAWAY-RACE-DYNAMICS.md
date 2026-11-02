@@ -4098,3 +4098,12 @@ fatigue-10 fields have no crossing between riders dropped in the same
 kilometre. No shared pace, draft benefit or finish follows from this
 read-only contact. Encounters with riders dropped on other kilometres
 and every detached rider's later road remain unresolved.
+
+The exact km-26 contact now has an opt-in paid remainder witness in
+both fatigue-30 fields. The catching rider team-3-3 takes the exposed
+turn from metre 25,999.203884 to 26,000; team-4-3 pays the lower
+sheltered cost. The shared speed is limited by the leader and the
+follower's terrain-specific ability, and both retain separate orders,
+decisions, energy and clock. This settles only the pair's last 0.8 m
+of km 26. Other rear riders and later group kilometres still need
+contact-aware replay.

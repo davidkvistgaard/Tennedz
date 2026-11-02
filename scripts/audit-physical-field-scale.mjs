@@ -19,6 +19,9 @@ import {completePhysicalPaceLossKmV1,
 import {inspectPhysicalStaggeredLossKmContactsV1,
   validatePhysicalStaggeredLossKmContactsV1} from
   '../lib/engine/v2/physical-staggered-loss-km-contact-v1.mjs';
+import {finishPhysicalLossKmContactV1,
+  validatePhysicalLossKmContactV1} from
+  '../lib/engine/v2/physical-loss-km-contact-road-v1.mjs';
 import {partitionPhysicalSimultaneousLossV1,
   validatePhysicalSimultaneousLossPartitionV1,
   contactPhysicalSimultaneousLossV1,
@@ -189,6 +192,15 @@ function audit(distanceKm,fatigue,variant){
             arrivalsInput);
         validatePhysicalStaggeredLossKmContactsV1(
           arrivalsInput,lossContacts);
+        const paidContactRemainders=
+          lossContacts.contacts.map(contact=>{
+            const contactInput={...arrivalsInput,contact};
+            const road=finishPhysicalLossKmContactV1(
+              contactInput);
+            validatePhysicalLossKmContactV1(
+              contactInput,road);
+            return road;
+          });
         staggeredScale={status:'paid_bunch_finish',
           sourceVersion:staggered.version,
           detachedRiders:staggered.detachedRiderIds.length,
@@ -201,6 +213,7 @@ function audit(distanceKm,fatigue,variant){
             lossContacts.contacts.length,
           firstWithinLossKmContacts:
             lossContacts.contacts.slice(0,5),
+          paidContactRemainders,
           separateArrivalSolos:
             arrivals.separateSoloRiderIds.length,
           lossKilometres:[...new Set(staggered.losses
@@ -633,6 +646,24 @@ if(process.argv.includes('--assert-varied')){
           rider.energySpentToContact>0&&
           rider.energyAtContact<
             rider.energyBeforeAtKm)));
+    assert.equal(row.staggeredScale
+      .paidContactRemainders.length,
+    row.staggeredScale.withinLossKmContactPairs);
+    assert.ok(row.staggeredScale
+      .paidContactRemainders.every(road=>
+        road.riders.length===2&&
+        road.riders.filter(rider=>
+          rider.role==='leader').length===1&&
+        road.riders.filter(rider=>
+          rider.role==='sheltered').length===1&&
+        road.riders.find(rider=>
+          rider.role==='sheltered').energySpent<
+          road.riders.find(rider=>
+            rider.role==='leader').energySpent&&
+        road.riders.every(rider=>
+          rider.energySpent>0&&
+          rider.energyAfter>=0&&
+          rider.recoveryAward===0)));
     assert.ok(row.staggeredScale.namedLeaders>=12);
     assert.equal(row.staggeredScale.emergencyTurns,0);
     assert.equal(row.staggeredScale.bunchFinishRiders,
