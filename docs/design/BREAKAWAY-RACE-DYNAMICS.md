@@ -3491,4 +3491,18 @@ named rider is already ahead, each later kilometre records an
 silently launch another named rider or return the forward rider to
 the bunch. A focused continuation through km 4 replays the road and
 rejects a forged blocked-attack row or a changed attack target.
-The forward rider's own later road remains separate.
+The forward rider's own later road is modeled separately below.
+
+`physical-front-solo-run-v1.mjs` now replays that forward rider against
+the same paid bunch clock. Each later kilometre has an individual
+decision from the continuing committed `break_stage` or
+`summit_attack` stake and active team effort order, a full solo
+terrain charge, zero bunch recovery, route-derived cap, measured
+clock and gap. At the existing exhaustion threshold the rider may
+explicitly decline the higher team effort to conserve for this
+stage's finish; the manager order remains recorded. A strong named
+attacker completes the 20-kilometre synthetic route ahead of the
+23-rider bunch in a focused source replay. If the bunch catches the
+attacker, the run refuses and requires a separate paid contact road.
+Neither this synthetic success nor its energy scale is a general
+race calibration or official result.

@@ -31,6 +31,9 @@ import {finishPhysicalRearContactKmV1,
   '../../lib/engine/v2/physical-rear-contact-road-v1.mjs';
 import {priceRearEnergyDemandV1} from
   '../../lib/engine/v2/rear-energy-demand-v1.mjs';
+import {runPhysicalFrontSoloV1,
+  validatePhysicalFrontSoloV1} from
+  '../../lib/engine/v2/physical-front-solo-run-v1.mjs';
 import {runPhysicalRearGroupV1,
   validatePhysicalRearGroupV1} from
   '../../lib/engine/v2/physical-rear-group-run-v1.mjs';
@@ -242,6 +245,20 @@ test('named manager attack forms front solo only by paid faster road',()=>{
   assert.throws(()=>runPhysicalBunchAfterNamedAttackV1({
     ...changedAttack,attackKm:2,throughKm:3}),
   /one ordered front worker/);
+  const frontInput={...input,attackKm:2,throughKm:20};
+  const front=runPhysicalFrontSoloV1(frontInput);
+  assert.equal(front.steps.length,18);
+  assert.ok(front.steps.every(row=>
+    row.gapSecondsToBunch>0&&row.energySpent>0&&
+    row.recoveryAward===0&&
+    row.decision.teamOrderEffort==='hard'));
+  assert.equal(front.physicalGroup.atDistanceM,20000);
+  assert.ok(front.observedFinishSeconds>0);
+  assert.equal(validatePhysicalFrontSoloV1(frontInput,front),true);
+  const forgedFront=structuredClone(front);
+  forgedFront.steps[0].gapSecondsToBunch+=1;
+  assert.throws(()=>validatePhysicalFrontSoloV1(
+    frontInput,forgedFront),/differs/);
 });
 
 test('early climb weakness records a paid partial solo and no rear group',()=>{
