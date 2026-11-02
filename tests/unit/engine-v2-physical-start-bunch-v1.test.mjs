@@ -29,6 +29,9 @@ import {completePhysicalPaceLossKmV1,
 import {runPhysicalStaggeredDetachedSoloV1,
   validatePhysicalStaggeredDetachedSoloV1} from
   '../../lib/engine/v2/physical-staggered-detached-solo-v1.mjs';
+import {inspectPhysicalStaggeredLossKmContactsV1,
+  validatePhysicalStaggeredLossKmContactsV1} from
+  '../../lib/engine/v2/physical-staggered-loss-km-contact-v1.mjs';
 import {replayPhysicalStaggeredRaceV1,
   validatePhysicalStaggeredRaceV1} from
   '../../lib/engine/v2/physical-staggered-race-replay-v1.mjs';
@@ -249,13 +252,22 @@ test('different paid kilometres remove only physically dropped riders',()=>{
   assert.deepEqual(arrivals.arrivals.map(row=>[
     row.sourceKm,row.riderIds]),[
     [6,['control-2']],[11,['other-3']]]);
-  assert.equal(arrivals.contacts.length,0);
+  assert.equal(arrivals.nearCoincidentArrivals.length,0);
   assert.equal(validatePhysicalStaggeredLossArrivalsV1(
     arrivalsInput,arrivals),true);
   const forgedArrivals=structuredClone(arrivals);
   forgedArrivals.completions[0].energyAfter+=1;
   assert.throws(()=>validatePhysicalStaggeredLossArrivalsV1(
     arrivalsInput,forgedArrivals),/differ/);
+  const lossContacts=inspectPhysicalStaggeredLossKmContactsV1(
+    arrivalsInput);
+  assert.deepEqual(lossContacts.contacts,[]);
+  assert.equal(validatePhysicalStaggeredLossKmContactsV1(
+    arrivalsInput,lossContacts),true);
+  const forgedLossContacts=structuredClone(lossContacts);
+  forgedLossContacts.contacts.push({sourceKm:6});
+  assert.throws(()=>validatePhysicalStaggeredLossKmContactsV1(
+    arrivalsInput,forgedLossContacts),/differ/);
   for(const riderId of ['control-2','other-3']){
     const completion=completePhysicalStaggeredLossKmV1({
       ...input,staggered:recording,riderId});

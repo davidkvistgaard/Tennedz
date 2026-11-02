@@ -4089,10 +4089,12 @@ finish clocks remain to be resolved before a heterogeneous full-field
 race can be routed.
 
 The varied-field audit now source-replays each detached rider's
-remaining loss-kilometre road in one batch. At fatigue 10, all 39 or
-46 arrivals have distinct clocks. At fatigue 30, one pair in each
-field reaches the same kilometre end at the same clock and is recorded
-as paid contact; the other 35 or 39 arrivals remain separate solos.
-This contact does not grant a shared pace, draft benefit or finish.
-Later encounters and every detached rider's remaining kilometres
-still need physical source replay.
+remaining loss-kilometre road in one batch. Near-equal end clocks are
+only an observation. A piecewise road-clock check locates one contact
+between team-3-3 and team-4-3 at metre 25,999.203884 in each fatigue-30
+field, about 0.8 m before their near-coincident km-26 arrival. Their
+energy at that metre is derived from the two paid solo segments. The
+fatigue-10 fields have no crossing between riders dropped in the same
+kilometre. No shared pace, draft benefit or finish follows from this
+read-only contact. Encounters with riders dropped on other kilometres
+and every detached rider's later road remain unresolved.

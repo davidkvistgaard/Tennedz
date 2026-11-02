@@ -16,6 +16,9 @@ import {completePhysicalPaceLossKmV1,
   partitionPhysicalStaggeredLossArrivalsV1,
   validatePhysicalStaggeredLossArrivalsV1} from
   '../lib/engine/v2/physical-pace-loss-completion-v1.mjs';
+import {inspectPhysicalStaggeredLossKmContactsV1,
+  validatePhysicalStaggeredLossKmContactsV1} from
+  '../lib/engine/v2/physical-staggered-loss-km-contact-v1.mjs';
 import {partitionPhysicalSimultaneousLossV1,
   validatePhysicalSimultaneousLossPartitionV1,
   contactPhysicalSimultaneousLossV1,
@@ -181,12 +184,23 @@ function audit(distanceKm,fatigue,variant){
           arrivalsInput);
         validatePhysicalStaggeredLossArrivalsV1(
           arrivalsInput,arrivals);
+        const lossContacts=
+          inspectPhysicalStaggeredLossKmContactsV1(
+            arrivalsInput);
+        validatePhysicalStaggeredLossKmContactsV1(
+          arrivalsInput,lossContacts);
         staggeredScale={status:'paid_bunch_finish',
           sourceVersion:staggered.version,
           detachedRiders:staggered.detachedRiderIds.length,
           paidLossCompletions:arrivals.completions.length,
-          sameMetreArrivalContacts:arrivals.contacts.length,
-          arrivalContacts:arrivals.contacts,
+          nearCoincidentArrivals:
+            arrivals.nearCoincidentArrivals.length,
+          nearCoincidentArrivalRows:
+            arrivals.nearCoincidentArrivals,
+          withinLossKmContactPairs:
+            lossContacts.contacts.length,
+          firstWithinLossKmContacts:
+            lossContacts.contacts.slice(0,5),
           separateArrivalSolos:
             arrivals.separateSoloRiderIds.length,
           lossKilometres:[...new Set(staggered.losses
@@ -599,15 +613,26 @@ if(process.argv.includes('--assert-varied')){
     assert.equal(row.staggeredScale.paidLossCompletions,
       row.staggeredScale.detachedRiders);
     assert.equal(row.staggeredScale
-      .sameMetreArrivalContacts,
+      .nearCoincidentArrivals,
     row.fatigue===30?1:0);
     assert.equal(row.staggeredScale.separateArrivalSolos+
-      row.staggeredScale.arrivalContacts.reduce((sum,
+      row.staggeredScale.nearCoincidentArrivalRows.reduce((sum,
         contact)=>sum+contact.riderIds.length,0),
     row.staggeredScale.detachedRiders);
-    assert.ok(row.staggeredScale.arrivalContacts.every(
+    assert.ok(row.staggeredScale.nearCoincidentArrivalRows.every(
       contact=>contact.riderIds.length>=2&&
       contact.atDistanceM===contact.sourceKm*1000));
+    assert.equal(row.staggeredScale.withinLossKmContactPairs,
+      row.fatigue===30?1:0);
+    assert.ok(row.staggeredScale.firstWithinLossKmContacts
+      .every(contact=>contact.sourceKm===26&&
+        contact.atDistanceM>25000&&
+        contact.atDistanceM<26000&&
+        contact.riders.every(rider=>
+          rider.energyAtContact>=0&&
+          rider.energySpentToContact>0&&
+          rider.energyAtContact<
+            rider.energyBeforeAtKm)));
     assert.ok(row.staggeredScale.namedLeaders>=12);
     assert.equal(row.staggeredScale.emergencyTurns,0);
     assert.equal(row.staggeredScale.bunchFinishRiders,
