@@ -24,6 +24,9 @@ import {replayPhysicalPerceivedChaseSlideRaceV1,
 import {estimatePhysicalObserverPursuitHorizonV1,
   validatePhysicalObserverPursuitHorizonV1} from
   '../lib/engine/v2/physical-observer-pursuit-horizon-v1.mjs';
+import {runPhysicalManagerChaseCounterfactualV1,
+  validatePhysicalManagerChaseCounterfactualV1} from
+  '../lib/engine/v2/physical-manager-chase-counterfactual-v1.mjs';
 import {riderKilometreEffect} from
   '../lib/engine/v2/physiology.mjs';
 import {TUNING} from '../lib/engine/v2/tuning.mjs';
@@ -50,7 +53,8 @@ function choice({attackerSkill,observerSkill,choiceKm,
   frontConserveAtKm=null,distanceKm=20,
   stopChaseAtKm=null,settleFinish=false,
   fatigue=20,roadVariant='flat',attackKm=2,
-  rotateLongLeaders=false,assessHorizon=false}){
+  rotateLongLeaders=false,assessHorizon=false,
+  assessCounterfactual=false}){
   const terrainStartKm=distanceKm<=25?14:distanceKm-12;
   const terrainEndKm=distanceKm<=25?18:distanceKm-7;
   const road=Array.from({length:distanceKm},(_,index)=>({
@@ -132,6 +136,23 @@ function choice({attackerSkill,observerSkill,choiceKm,
   const horizon=assessHorizon?
     estimatePhysicalObserverPursuitHorizonV1({
       ...input,throughKm:distanceKm}):null;
+  let counterfactual;
+  if(assessCounterfactual){
+    const paidInput={...input,throughKm:distanceKm};
+    try{
+      const paid=runPhysicalManagerChaseCounterfactualV1(
+        paidInput);
+      validatePhysicalManagerChaseCounterfactualV1(
+        paidInput,paid);
+      counterfactual={status:paid.contact?'paid_contact':
+        paid.stoppedReason?'order_stopped':'front_ahead',
+      contactKm:paid.contact?.sourceKm??null,
+      contactAtM:paid.contact?
+        +paid.contact.atDistanceM.toFixed(1):null,
+      steps:paid.steps.length};
+    }catch(error){counterfactual={status:'refused',
+      reason:error.message};}
+  }
   let paidGapChangeSeconds;
   let chaseRace;
   if(['commit_now','commit_and_request_help'].includes(action)){
@@ -239,6 +260,7 @@ function choice({attackerSkill,observerSkill,choiceKm,
     ...(assessHorizon?{
       horizonCatchKm:horizon.predictedContact?.sourceKm??null,
       horizonStopReason:horizon.stoppedReason}:{}),
+    ...(assessCounterfactual?{counterfactual}:{}),
     ...(fatigue===20?{}:{fatigue}),
     ...(roadVariant==='flat'?{}:{roadVariant}),
     ...(distanceKm===20?{}:{distanceKm}),
@@ -300,7 +322,9 @@ const calibration=process.argv.includes('--calibration')?
       roadVariant=>{
         const input={...variant,fatigue,roadVariant,
           distanceKm:25,stopChaseAtKm:20,
-          settleFinish:true,assessHorizon:true};
+          settleFinish:true,assessHorizon:true,
+          assessCounterfactual:process.argv.includes(
+            '--counterfactual')};
         try{return choice(input);}
         catch(error){return {...input,refused:error.message};}
       }))):undefined;
@@ -314,7 +338,9 @@ const longCalibration=process.argv.includes('--long-calibration')?
         frontConserveAtKm:distanceKm-15,
         distanceKm,stopChaseAtKm:distanceKm-5,
         rotateLongLeaders:true,settleFinish:true,
-        assessHorizon:true};
+        assessHorizon:true,
+        assessCounterfactual:process.argv.includes(
+          '--counterfactual')};
       try{return choice(input);}
       catch(error){return {...input,refused:error.message};}
     }))):undefined;
@@ -330,7 +356,9 @@ const longTerrainCalibration=process.argv.includes(
       frontConserveAtKm:variant.distanceKm-15,
       stopChaseAtKm:variant.distanceKm-5,
       rotateLongLeaders:true,settleFinish:true,
-      assessHorizon:true};
+      assessHorizon:true,
+      assessCounterfactual:process.argv.includes(
+        '--counterfactual')};
     try{return choice(input);}
     catch(error){return {...input,refused:error.message};}
   })):undefined;
@@ -349,6 +377,29 @@ const policyCross=calibration&&longCalibration&&
     ...longCalibration,...longTerrainCalibration]
     .filter(row=>row.action==='capacity_shortfall'&&
       row.horizonCatchKm===null).length}:null;
+const counterfactualCross=policyCross&&
+  process.argv.includes('--counterfactual')?{
+  paidContactByAction:Object.fromEntries(
+    ['watch','commit_now','capacity_shortfall']
+      .map(action=>[action,
+        [...calibration,...longCalibration,
+          ...longTerrainCalibration].filter(row=>
+          row.action===action&&row.counterfactual
+            ?.status==='paid_contact').length])),
+  orderStopped:[...calibration,...longCalibration,
+    ...longTerrainCalibration].filter(row=>
+    row.counterfactual?.status==='order_stopped').length,
+  sameCatchKm:[...calibration,...longCalibration,
+    ...longTerrainCalibration].filter(row=>
+    row.counterfactual?.status==='paid_contact'&&
+    row.horizonCatchKm===row.counterfactual
+      .contactKm).length,
+  maxCatchKmError:Math.max(...[...calibration,
+    ...longCalibration,...longTerrainCalibration]
+    .filter(row=>row.counterfactual?.status===
+      'paid_contact')
+    .map(row=>Math.abs(row.horizonCatchKm-
+      row.counterfactual.contactKm)))}:null;
 if(process.argv.includes('--assert')){
   assert.equal(results.length,384);
   assert.equal(actionCounts.refused??0,0);
@@ -448,6 +499,14 @@ if(process.argv.includes('--assert')){
       watch:59,commit_now:18,capacity_shortfall:15});
     assert.equal(policyCross.shortfallWithoutProjectedCatch,22);
   }
+  if(counterfactualCross!==null){
+    assert.deepEqual(counterfactualCross
+      .paidContactByAction,{watch:59,commit_now:18,
+        capacity_shortfall:15});
+    assert.equal(counterfactualCross.orderStopped,22);
+    assert.ok(counterfactualCross.sameCatchKm>0);
+    assert.ok(counterfactualCross.maxCatchKmError<=2);
+  }
 }
 process.stdout.write(JSON.stringify({version:1,
   raceSeed:'same-threat-window-seed',actionCounts,
@@ -457,5 +516,6 @@ process.stdout.write(JSON.stringify({version:1,
   ...(longTerrainCalibration===undefined?{}:{
     longTerrainCalibration}),
   ...(policyCross===null?{}:{policyCross}),
+  ...(counterfactualCross===null?{}:{counterfactualCross}),
   ...(process.argv.includes('--verbose')?{results}:{})},
 null,2)+'\n');

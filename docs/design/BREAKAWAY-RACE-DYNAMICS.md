@@ -3737,6 +3737,21 @@ future energy costs, so this is a measurable disagreement between
 two forecasts, not evidence that the denied chases would actually
 catch the front. A paid counterfactual and broader finish calibration
 are needed before changing the executable action policy.
+`physical-manager-chase-counterfactual-v1.mjs` now pays the named
+manager's actual chase order on a separate diagnostic path without
+changing that policy or any guided race. It records exact clocks,
+energy and contact metre through the first meeting, then leaves the
+remaining contact kilometre and finish unsettled. In the 114-case
+matrix, this paid road reaches contact in 59 `watch` cases, all 18
+`commit_now` cases, and 15 `capacity_shortfall` cases; the manager
+order ends before contact in the other 22 shortfall cases. The
+observer-only timing projection matches the paid contact kilometre
+in 68 of the 92 meetings and differs by no more than two kilometres.
+A 25-km hill case explicitly records `capacity_shortfall` while the
+manager-order probe reaches contact at km 16; the normal perceived
+chase still refuses to execute, preserving the current guard. These
+counterfactuals do not settle postcontact riding or establish that
+the alternative policy would give realistic race results.
 
 `audit-physical-bunch-distance.mjs --assert` extends the opt-in
 paid-bunch source to mixed flat, hill, climb, descent and wind routes

@@ -101,6 +101,9 @@ import {replayPhysicalPerceivedChaseSlideRaceV1,
 import {estimatePhysicalObserverPursuitHorizonV1,
   validatePhysicalObserverPursuitHorizonV1} from
   '../../lib/engine/v2/physical-observer-pursuit-horizon-v1.mjs';
+import {runPhysicalManagerChaseCounterfactualV1,
+  validatePhysicalManagerChaseCounterfactualV1} from
+  '../../lib/engine/v2/physical-manager-chase-counterfactual-v1.mjs';
 import {runPhysicalRearGroupV1,
   validatePhysicalRearGroupV1} from
   '../../lib/engine/v2/physical-rear-group-run-v1.mjs';
@@ -907,6 +910,35 @@ test('committed physical chase catches a slowing front on paid road',()=>{
     row.sourceKm===21).bunchStep.leaderRiderId,'control-3');
   assert.equal(Object.keys(handoffRace
     .observedFinishSecondsByRider).length,24);
+  const hillRoute=longRoute.map(segment=>
+    segment.km>=14&&segment.km<=18?{
+      ...segment,terrain:'hill',gradientPct:4}:segment);
+  const hillSource=source(structuredClone(teams),hillRoute,{
+    sprint:'sprint_finish',other:'break_stage'},
+  [{km:1},{km:12}]);
+  const hillStartInput={...hillSource.startInput,
+    raceSeed:'same-threat-window-seed'};
+  const hillInput={...raceInput,
+    startInput:hillStartInput,
+    start:startPhysicalBunchV1(hillStartInput)};
+  assert.equal(decidePhysicalFrontThreatV1(hillInput)
+    .choice.choice.assessments[0].action,
+  'capacity_shortfall');
+  assert.throws(()=>advancePhysicalPerceivedChaseKmV1(
+    hillInput),/has not committed paid chase/);
+  const managerRoad=runPhysicalManagerChaseCounterfactualV1(
+    hillInput);
+  assert.equal(managerRoad.perceivedAction,
+    'capacity_shortfall');
+  assert.equal(managerRoad.contact.sourceKm,16);
+  assert.ok(managerRoad.contact.frontEnergySpent>0);
+  assert.equal(managerRoad.movesGuidedRace,false);
+  assert.equal(validatePhysicalManagerChaseCounterfactualV1(
+    hillInput,managerRoad),true);
+  const forgedManagerRoad=structuredClone(managerRoad);
+  forgedManagerRoad.contact.clockSeconds+=1;
+  assert.throws(()=>validatePhysicalManagerChaseCounterfactualV1(
+    hillInput,forgedManagerRoad),/differs/);
 });
 
 test('early climb weakness records a paid partial solo and no rear group',()=>{
