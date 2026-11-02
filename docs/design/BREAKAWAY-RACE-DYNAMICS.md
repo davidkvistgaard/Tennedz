@@ -3315,3 +3315,18 @@ attempt after km 15 and pays more energy than the V1 continuation;
 tampered energy fails replay. V1 remains unchanged. V2 still models
 only the detached rider and named controller, lacks the prior absolute
 race clock and is not routed to guided races or official results.
+
+`physical-start-bunch-v1.mjs` provides a new opt-in physical root at
+the start line: the complete committed roster begins at metre zero
+with source-checked starting energy. In a supported first kilometre,
+one explicitly named ordered helper sets the bunch pace and pays
+exposed terrain work; every other rider has a recorded shelter decision,
+pays a lower terrain cost, and carries their own recovery and cap.
+The 24-rider same-seed witness changes road cost with climbing terrain
+and starting fatigue. An unsupported attack or chase, absent leader,
+unpayable rider, or follower unable to hold the leader's pace refuses
+before movement. This does not invent a wheel loss or an early rear
+group. It is one kilometre only, with no front break, contact or finish,
+and is not attached to V94 recordings or guided races. The next version
+must carry this actual group and every rider's state across kilometres,
+then model paid split and contact when someone cannot hold.
