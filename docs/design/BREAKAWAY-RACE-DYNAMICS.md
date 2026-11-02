@@ -3406,3 +3406,15 @@ km 2; forged timing and a later duplicate contact fail replay. The
 remaining part of that kilometre and subsequent leader rotation and
 shelter in the new rear group remain unsettled. No official result or
 time limit is inferred.
+
+`physical-rear-contact-road-v1.mjs` pays the remaining distance of
+the contact kilometre as a two-rider group. The rider who was ahead
+keeps the single exposed turn unless their committed future-stage
+reserve forbids it; the catcher takes shelter, priced below solo work
+at the same effort. If the ahead rider cannot lead, the catcher may take
+the front. Each rider records a goal, turn choice, terrain charge,
+zero rear recovery and the route-derived cap at the completed
+kilometre. The group clock remains behind the sourced bunch or the
+road refuses separate bunch contact. The climb-to-flat witness
+replays the paid turn and rejects forged energy. Later turns, further
+contact and the finish remain to be modeled.

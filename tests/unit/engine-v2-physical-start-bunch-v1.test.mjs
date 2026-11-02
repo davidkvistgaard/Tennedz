@@ -21,6 +21,11 @@ import {runPhysicalDetachedSoloV1,
 import {contactPhysicalRearSolosV1,
   validatePhysicalRearSoloContactV1} from
   '../../lib/engine/v2/physical-rear-solo-contact-v1.mjs';
+import {finishPhysicalRearContactKmV1,
+  validatePhysicalRearContactRoadV1} from
+  '../../lib/engine/v2/physical-rear-contact-road-v1.mjs';
+import {priceRearEnergyDemandV1} from
+  '../../lib/engine/v2/rear-energy-demand-v1.mjs';
 
 const route=(terrain='flat')=>Array.from({length:20},(_,index)=>({
   km:index+1,terrain,gradientPct:terrain==='climb'?6:0,
@@ -369,4 +374,25 @@ test('two paid rear solos meet on changed terrain before a group forms',()=>{
     /differs/);
   assert.throws(()=>contactPhysicalRearSolosV1({...input,
     contactKm:3}),/met before requested contact/);
+  const groupInput={...input,contact};
+  const group=finishPhysicalRearContactKmV1(groupInput);
+  assert.equal(group.leaderRiderId,'other-3');
+  assert.equal(group.endDistanceM,2000);
+  assert.equal(group.physicalGroup.riderIds.length,2);
+  assert.ok(group.gapSecondsToBunch>0);
+  const sheltered=group.riders.find(row=>
+    row.riderId==='other-4');
+  assert.equal(sheltered.role,'sheltered');
+  const soloQuote=priceRearEnergyDemandV1({
+    rider:catching,segment:kilometres[1],
+    energyBefore:sheltered.energyBefore,
+    effort:sheltered.decision.effort,role:'solo',
+    distanceM:group.endDistanceM-group.startDistanceM});
+  assert.ok(sheltered.energySpent<soloQuote.energyDemand);
+  assert.equal(validatePhysicalRearContactRoadV1(
+    groupInput,group),true);
+  const falseGroup=structuredClone(group);
+  falseGroup.riders[0].energyAfter+=1;
+  assert.throws(()=>validatePhysicalRearContactRoadV1(
+    groupInput,falseGroup),/differs/);
 });
