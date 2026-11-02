@@ -4050,9 +4050,13 @@ paying solo, while the surviving bunch also retains its paid leader.
 Eight mixed variants with a 31- or 35-mountain unmatched solo
 source-replay 19,200 or 41,600 rider-kilometre states and 160
 observed finish clocks. A separate 120-km descent witness makes the
-solo slow enough for the group to reach it on km 36. The continuation
-refuses there pending a paid contact road. Forged partition or finish
-data fails source validation.
+solo slow enough for the group to reach it on km 36. The full
+continuation refuses there. A separate source now prices each of the
+20 riders to their common metre 35,648.1 and clock, 87.1 seconds
+behind the bunch, with one exposed group leader until contact. It
+leaves the remainder of km 36 and the joined group's later road
+unsettled. Forged partition, contact energy or finish data fails
+source validation.
 
 Equal skills and simultaneous identical solo arrivals are scale
 witnesses, not a calibrated field distribution. Unequal

@@ -23,6 +23,9 @@ import {replayPhysicalSimultaneousRearGroupV1,
   replayPhysicalMixedSimultaneousRearGroupV1,
   validatePhysicalMixedSimultaneousRearGroupV1} from
   '../lib/engine/v2/physical-simultaneous-rear-group-v1.mjs';
+import {contactPhysicalMixedRearSoloV1,
+  validatePhysicalMixedRearSoloContactV1} from
+  '../lib/engine/v2/physical-mixed-rear-solo-contact-v1.mjs';
 
 const fieldSize=20;
 const ridersPerTeam=8;
@@ -128,6 +131,7 @@ function audit(distanceKm,fatigue,variant){
       ...completions.map(row=>row.elapsedSeconds));
     let continuation=null;
     let mixedContinuation=null;
+    let laterMixedContact=null;
     let paidRearContact=null;
     let paidArrivalPartitions=null;
     if(splitIds.length>1){
@@ -247,6 +251,40 @@ function audit(distanceKm,fatigue,variant){
         }catch(mixedError){mixedContinuation={
           status:'refused',reason:mixedError.message,
           sourceKm:mixedError.sourceKm};}
+        if(variant==='unequal_descent_catch'&&
+          mixedContinuation.sourceKm){
+          const laterInput={...input,lossKm,
+            contactKm:mixedContinuation.sourceKm};
+          const later=contactPhysicalMixedRearSoloV1(
+            laterInput);
+          assert.equal(validatePhysicalMixedRearSoloContactV1(
+            laterInput,later),true);
+          assert.equal(later.sources.prior.kilometres.length,
+            later.sourceKm-1);
+          assert.equal(later.riders.filter(row=>
+            row.role==='leader').length,1);
+          assert.equal(later.riders.filter(row=>
+            row.role==='sheltered').length,18);
+          assert.equal(later.riders.filter(row=>
+            row.role==='solo').length,1);
+          assert.ok(later.riders.find(row=>
+            row.role==='leader').energySpent>
+            Math.max(...later.riders.filter(row=>
+              row.role==='sheltered').map(row=>
+                row.energySpent)));
+          const forged=structuredClone(later);
+          forged.riders.at(-1).energyAfter+=1;
+          assert.throws(()=>
+            validatePhysicalMixedRearSoloContactV1(
+              laterInput,forged),/differs from paid source/);
+          laterMixedContact={sourceKm:later.sourceKm,
+            atDistanceM:later.atDistanceM,
+            behindBunchSeconds:later.behindBunchSeconds,
+            riderCount:later.riders.length,
+            leaderRiderId:later.leaderRiderId,
+            minimumEnergy:Math.min(...later.riders
+              .map(row=>row.energyAfter))};
+        }
       }
     }
     if(splitIds.length===1){
@@ -272,7 +310,7 @@ function audit(distanceKm,fatigue,variant){
       paidArrivalPartitions,
       paidRearContact,
       bunchAtKmEnd:loss.step.physicalGroup.riderIds.length,
-      continuation,mixedContinuation};
+      continuation,mixedContinuation,laterMixedContact};
   }
   const decisions=run.road.reduce((sum,row)=>
     sum+row.riderDecisions.length,0);
@@ -351,6 +389,12 @@ if(process.argv.includes('--assert')){
         assert.equal(row.mixedContinuation.sourceKm,36);
         assert.match(row.mixedContinuation.reason,
           /need paid contact road/);
+        assert.equal(row.laterMixedContact?.sourceKm,36);
+        assert.ok(row.laterMixedContact.atDistanceM>35000&&
+          row.laterMixedContact.atDistanceM<36000);
+        assert.equal(row.laterMixedContact.riderCount,20);
+        assert.ok(row.laterMixedContact.behindBunchSeconds>0);
+        assert.ok(row.laterMixedContact.minimumEnergy>=0);
       }else{
         assert.equal(row.mixedContinuation?.status,'paid_finish');
         assert.equal(row.mixedContinuation.riderKilometres,
