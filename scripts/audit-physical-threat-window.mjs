@@ -194,7 +194,23 @@ function choice({attackerSkill,observerSkill,choiceKm,
                 .flatMap(row=>row.riderStates.map(rider=>
                   rider.energyAfter)))};
           }catch(error){counterfactual.finish={
-            status:'unsettled',reason:error.message};}
+            status:'unsettled',reason:error.message,
+            ...(error.physicalLoss?{
+              physicalLoss:{sourceKm:error.physicalLoss
+                .sourceKm,
+              paidSplits:error.physicalLoss.loss.splits.map(
+                row=>({riderId:row.riderId,
+                  atDistanceM:row.atDistanceM,
+                  behindBunchM:row.behindBunchM,
+                  energyBefore:error.physicalLoss.loss.riders
+                    .find(rider=>rider.riderId===row.riderId)
+                    .energyBefore,
+                  energySpent:error.physicalLoss.loss.riders
+                    .find(rider=>rider.riderId===row.riderId)
+                    .energySpent,
+                  energyAfter:error.physicalLoss.loss.riders
+                    .find(rider=>rider.riderId===row.riderId)
+                    .energyAfter}))}}:{})};}
         }catch(error){
           counterfactual.contactKmCompletion={
             status:'unsettled',reason:error.message};
@@ -640,8 +656,19 @@ if(process.argv.includes('--assert')){
     assert.equal(earlyRoleCalibration.filter(row=>
       row.counterfactual.finish.status===
         'unsettled'&&
-      row.counterfactual.finish.reason===
-        'Physical start follower cannot hold paid pace.'
+      row.counterfactual.finish.physicalLoss?.paidSplits
+        .length===1&&
+      row.counterfactual.finish.physicalLoss.paidSplits
+        [0].riderId==='sprint-2'&&
+      row.counterfactual.finish.physicalLoss.paidSplits
+        [0].atDistanceM>(row.counterfactual.finish
+          .physicalLoss.sourceKm-1)*1000&&
+      row.counterfactual.finish.physicalLoss.paidSplits
+        [0].behindBunchM>0&&
+      row.counterfactual.finish.physicalLoss.paidSplits
+        [0].energySpent>0&&
+      row.counterfactual.finish.physicalLoss.paidSplits
+        [0].energyAfter>=0
     ).length,2);
   }
 }
