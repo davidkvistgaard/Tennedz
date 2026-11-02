@@ -13,6 +13,8 @@ import {replayPhysicalStaggeredRaceV1,
   '../lib/engine/v2/physical-staggered-race-replay-v1.mjs';
 import {contactPhysicalStaggeredSolosV1} from
   '../lib/engine/v2/physical-staggered-solo-contact-v1.mjs';
+import {runPhysicalStaggeredDetachedSoloV1} from
+  '../lib/engine/v2/physical-staggered-detached-solo-v1.mjs';
 import {replayPhysicalStaggeredContactRaceV1,
   validatePhysicalStaggeredContactRaceV1} from
   '../lib/engine/v2/physical-staggered-contact-race-replay-v1.mjs';
@@ -20,7 +22,8 @@ import {replayPhysicalStaggeredContactRaceV1,
 const raceSeed='same-staggered-matrix-seed';
 const riderIds=['control-2','other-3'];
 
-function source({climberMountain,fatigue,climbPct}){
+function source({climberMountain,fatigue,climbPct,
+  distanceKm=20,windKph=0}){
   const teams=['control','sprint','other'].map(id=>{
     const riders=Array.from({length:8},(_,number)=>({
       id:`${id}-${number}`,form:50,fatigue,
@@ -41,18 +44,39 @@ function source({climberMountain,fatigue,climbPct}){
   teams[0].orders.phases=[{atKm:5,frontWork:'sit_in'}];
   teams[1].orders.phases=[{atKm:5,frontWork:'rotate',
     frontWorkRiderId:'sprint-2'}];
-  const routeKilometres=Array.from({length:20},(_,index)=>({
-    km:index+1,terrain:index<10?'flat':'climb',
-    gradientPct:index<10?0:climbPct,
-    surface:'road',exposed:false,
-    weather:{temperatureC:16,windKph:0,rainMm:0}}));
+  if(distanceKm>20){
+    let priorTeam=teams[1];
+    for(let marker=20;marker<distanceKm;marker+=5){
+      const nextTeam=teams[[0,2,1][
+        Math.floor((marker-20)/5)%3]];
+      priorTeam.orders.phases.push({atKm:marker,
+        frontWork:'sit_in'});
+      nextTeam.orders.phases.push({atKm:marker,
+        frontWork:'rotate',
+        frontWorkRiderId:nextTeam.id+'-'+(
+          nextTeam.id==='control'?3:
+            nextTeam.id==='other'?2:3)});
+      priorTeam=nextTeam;
+    }
+  }
+  const routeKilometres=Array.from({length:distanceKm},
+    (_,index)=>{
+      const terrain=index<10?'flat':index<20?'climb':
+        ['flat','hill','descent','flat','climb'][
+          Math.floor((index-20)/10)%5];
+      return {
+    km:index+1,terrain,
+    gradientPct:terrain==='climb'?climbPct:
+      terrain==='hill'?3:terrain==='descent'?-3:0,
+    surface:'road',exposed:windKph>0&&index%15<5,
+    weather:{temperatureC:16,windKph,rainMm:0}};});
   for(const team of teams)
     team.orders=normalizeOrders(team.orders,{
       riderIds:team.riders.map(row=>row.id),
-      distanceKm:20,keypoints:[{km:5}],
+      distanceKm,keypoints:[{km:5}],
       allowFrontWork:true,allowNamedFrontWorker:true});
   const commitment=commitTeamChaseStakesV1({teams,
-    distanceKm:20,keypoints:[{km:5}],
+    distanceKm,keypoints:[{km:5}],
     intentions:teams.map(team=>({teamId:team.id,
       baseline:{goal:team.id==='sprint'?'sprint_finish':'none',
         captainId:team.riders[0].id},phases:[]}))});
@@ -63,7 +87,7 @@ function source({climberMountain,fatigue,climbPct}){
 function audit(parameters){
   try{
     const input=source(parameters);
-    const throughKm=20;
+    const throughKm=parameters.distanceKm??20;
     const staggered=runPhysicalStaggeredBunchLossV1({
       ...input,throughKm});
     if(staggered.losses.length!==2||
@@ -85,26 +109,35 @@ function audit(parameters){
             state.decisions.length,0),0),
         minFinishEnergy:+Math.min(...race.kilometres.at(-1)
           .riderStates.map(row=>row.energyAfter)).toFixed(3),
+        lastFinishSeconds:+Math.max(...Object.values(
+          race.observedFinishSecondsByRider)).toFixed(1),
         finishRiders:Object.keys(
           race.observedFinishSecondsByRider).length};
     }catch(error){
       if(!/paid contact road/.test(error.message))
         throw error;
     }
-    const contacts=[];
-    let lastError='';
-    for(let contactKm=Math.max(...sourceLossKm)+1;
-      contactKm<throughKm;contactKm++){
-      try{contacts.push({contactKm,
-        contact:contactPhysicalStaggeredSolosV1({
-          ...input,staggered,riderIds,contactKm})});}
-      catch(error){lastError=error.message;}
+    const soloRuns=riderIds.map(riderId=>
+      runPhysicalStaggeredDetachedSoloV1({
+        ...input,staggered,riderId,throughKm}));
+    let contactKm=null;
+    for(let km=Math.max(...sourceLossKm)+1;
+      km<throughKm;km++){
+      const prior=soloRuns.map(solo=>km-1===solo.lossKm?
+        solo.completion.elapsedSeconds:solo.steps.find(row=>
+          row.sourceKm===km-1).elapsedSeconds);
+      const current=soloRuns.map(solo=>solo.steps.find(row=>
+        row.sourceKm===km).elapsedSeconds);
+      if(Math.sign(prior[0]-prior[1])!==
+        Math.sign(current[0]-current[1])){
+        contactKm=km;break;
+      }
     }
-    if(contacts.length!==1)
+    if(contactKm===null)
       return {...parameters,status:'contact_unresolved',
-        sourceLossKm,contactCandidates:contacts.length,
-        lastError};
-    const {contactKm,contact}=contacts[0];
+        sourceLossKm};
+    const contact=contactPhysicalStaggeredSolosV1({
+      ...input,staggered,riderIds,contactKm});
     const raceInput={...input,riderIds,contactKm,throughKm};
     const race=replayPhysicalStaggeredContactRaceV1(raceInput);
     validatePhysicalStaggeredContactRaceV1(raceInput,race);
@@ -117,6 +150,8 @@ function audit(parameters){
           state.decisions.length,0),0),
       minFinishEnergy:+Math.min(...race.kilometres.at(-1)
         .riderStates.map(row=>row.energyAfter)).toFixed(3),
+      lastFinishSeconds:+Math.max(...Object.values(
+        race.observedFinishSecondsByRider)).toFixed(1),
       finishRiders:Object.keys(
         race.observedFinishSecondsByRider).length};
   }catch(error){return {...parameters,status:'refused',
@@ -139,5 +174,27 @@ if(process.argv.includes('--assert')){
     row.finishRiders===24&&row.minFinishEnergy>=0&&
     row.decisionRows===(row.status==='rear_finish'?482:480)));
 }
+const longResults=[80,160,260].flatMap(distanceKm=>
+  [30,60,80].map(climberMountain=>audit({
+    distanceKm,climberMountain,fatigue:20,climbPct:6})));
+for(const climberMountain of [30,60,80])
+  longResults.push(audit({distanceKm:260,climberMountain,
+    fatigue:20,climbPct:6,windKph:20}));
+if(process.argv.includes('--assert')){
+  assert.equal(longResults.length,12);
+  assert.ok(longResults.every(row=>
+    ['rear_finish','separate_finish'].includes(row.status)&&
+    row.riderKilometres===row.distanceKm*24&&
+    row.finishRiders===24&&row.minFinishEnergy>=0&&
+    Number.isFinite(row.lastFinishSeconds)&&
+    row.decisionRows===row.riderKilometres+
+      (row.status==='rear_finish'?2:0)));
+  const baseline=longResults.find(row=>row.distanceKm===260&&
+    row.climberMountain===60&&!row.windKph);
+  const windy=longResults.find(row=>row.distanceKm===260&&
+    row.climberMountain===60&&row.windKph===20);
+  assert.equal(baseline.status,'rear_finish');
+  assert.equal(windy.status,'separate_finish');
+}
 process.stdout.write(JSON.stringify({version:1,raceSeed,
-  statusCounts,results},null,2)+'\n');
+  statusCounts,results,longResults},null,2)+'\n');

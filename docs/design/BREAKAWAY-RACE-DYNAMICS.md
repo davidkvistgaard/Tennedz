@@ -3688,3 +3688,14 @@ again for the remainder of the contact kilometre. No case invents a
 rear group without a paid meeting. Minimum finish energy ranges from
 79.09 to 91.2 on these short routes, so this is coverage evidence,
 not whole-race fatigue calibration.
+Twelve additional same-seed variants run 80, 160 and 260 kilometres
+with explicitly ordered later front-worker rotations and mixed
+terrain; three 260-km variants add exposed 20 km/h wind. Seven replay
+rear contact and five replay separate solo finishes. Every variant
+reaches all 24 source-derived finish times with nonnegative energy;
+the 260-km recordings each contain 6,240 rider-kilometre states.
+For a 60-mountain climber, the 260-km calm route records contact
+on km 18, while the exposed-wind route leaves both riders separate
+through the finish. This sensitivity is useful coverage evidence,
+not proof of realistic speed, contact frequency or fatigue over a
+whole cycling season.
