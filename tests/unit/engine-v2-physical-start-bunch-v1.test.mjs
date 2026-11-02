@@ -6,7 +6,9 @@ import {commitTeamChaseStakesV1} from
 import {startPhysicalBunchV1,advancePhysicalStartBunchV1,
   validatePhysicalStartBunchV1,runPhysicalBunchV1,
   validatePhysicalBunchRunV1,runPhysicalBunchToPaceLossV1,
-  validatePhysicalBunchPaceLossV1} from
+  validatePhysicalBunchPaceLossV1,
+  runPhysicalBunchAfterPaceLossV1,
+  validatePhysicalBunchAfterPaceLossV1} from
   '../../lib/engine/v2/physical-start-bunch-v1.mjs';
 import {completePhysicalPaceLossKmV1,
   validatePhysicalPaceLossCompletionV1} from
@@ -182,6 +184,12 @@ test('former paid bunch worker can lose a later faster leader',()=>{
     lossKm:2,loss,riderId:'control-2'});
   assert.equal(completed.sourceKm,2);
   assert.ok(completed.elapsedSeconds>loss.elapsedSeconds);
+  teams[0].orders.phases.push({atKm:2,frontWork:'rotate',
+    frontWorkRiderId:'control-2'});
+  teams[1].orders.phases.push({atKm:2,frontWork:'sit_in'});
+  const later=source(teams);
+  assert.throws(()=>runPhysicalBunchAfterPaceLossV1({...later,
+    lossKm:2,throughKm:3}),/no longer in bunch/);
 });
 
 test('pace-loss branch refuses a fictional split or incomplete route',()=>{
@@ -218,4 +226,26 @@ test('detached rider pays remaining climb road and finishes kilometre late',()=>
     completionInput,forged),/differs/);
   assert.throws(()=>completePhysicalPaceLossKmV1({...completionInput,
     riderId:'other-2'}),/detached source rider/);
+});
+
+test('surviving bunch pays later leaders without reclaiming detached rider',()=>{
+  const teams=field();
+  for(const skill of SPORTING_SKILLS)teams[2].riders[3][skill]=10;
+  const input=source(teams,route('climb'));
+  const continued=runPhysicalBunchAfterPaceLossV1({...input,
+    lossKm:1,throughKm:3});
+  assert.equal(continued.road.length,2);
+  assert.deepEqual(continued.road.map(row=>row.sourceKm),[2,3]);
+  assert.ok(!continued.physicalGroup.riderIds.includes('other-3'));
+  assert.ok(!Object.hasOwn(continued.bunchEnergyByRider,'other-3'));
+  assert.equal(continued.road[0].riderDecisions.length,
+    continued.loss.step.physicalGroup.riderIds.length);
+  assert.ok(continued.elapsedSeconds>
+    continued.loss.elapsedSeconds);
+  assert.equal(validatePhysicalBunchAfterPaceLossV1({...input,
+    lossKm:1,throughKm:3},continued),true);
+  const forged=structuredClone(continued);
+  forged.road[0].physicalGroup.riderIds.push('other-3');
+  assert.throws(()=>validatePhysicalBunchAfterPaceLossV1({...input,
+    lossKm:1,throughKm:3},forged),/differs/);
 });

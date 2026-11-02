@@ -3368,3 +3368,13 @@ from the recorded partial position; a forged split or timing fails.
 The rider remains a singleton physical group. Subsequent kilometres,
 contact with other dropped riders and actual stage finish remain to be
 modeled.
+
+`runPhysicalBunchAfterPaceLossV1` also carries the surviving bunch
+forward with new paid single-leader kilometres. A detached rider is
+excluded from the later bunch group, energy ledger and decisions; no
+wheel is silently restored. If an order names that detached rider for
+a later front turn, the road refuses until a valid replacement order
+exists. A same-seed early climb witness carries the surviving bunch
+through km 3 while the detached rider's road remains separate. Later
+additional bunch splits and the detached rider's consecutive solo road
+are still unsupported in this version.
