@@ -58,6 +58,9 @@ import {replayPhysicalSingleLossRaceV1,
 import {decidePhysicalFrontThreatV1,
   validatePhysicalFrontThreatV1} from
   '../../lib/engine/v2/physical-front-threat-choice-v1.mjs';
+import {advancePhysicalPerceivedChaseKmV1,
+  validatePhysicalPerceivedChaseKmV1} from
+  '../../lib/engine/v2/physical-perceived-chase-km-v1.mjs';
 import {runPhysicalRearGroupV1,
   validatePhysicalRearGroupV1} from
   '../../lib/engine/v2/physical-rear-group-run-v1.mjs';
@@ -445,6 +448,8 @@ test('perceived chase choice reads a replayed physical front gap',()=>{
   assert.equal(choice.choice.choice.assessments[0].action,
     'watch');
   assert.equal(choice.movesRoad,false);
+  assert.throws(()=>advancePhysicalPerceivedChaseKmV1(input),
+    /has not committed paid chase/);
   assert.equal(validatePhysicalFrontThreatV1(input,choice),true);
   const forged=structuredClone(choice);
   forged.observedGapSeconds+=1;
@@ -470,6 +475,59 @@ test('perceived chase choice reads a replayed physical front gap',()=>{
     'capacity_shortfall');
   assert.ok(late.observedGapSeconds>
     choice.observedGapSeconds);
+});
+
+test('perceived urgency pays one named chase leader and full field',()=>{
+  const teams=field();
+  for(const team of teams)for(const rider of team.riders)
+    for(const skill of SPORTING_SKILLS)rider[skill]=96;
+  for(const rider of teams[1].riders)
+    for(const skill of SPORTING_SKILLS)rider[skill]=99;
+  teams[2].orders.phases=[{atKm:1,attack:'selective',
+    attackRiderId:'other-2',effort:'hard'}];
+  teams[0].orders.phases=[{atKm:7,frontWork:'sit_in'}];
+  teams[1].orders.phases=[{atKm:7,
+    frontWork:'rotate',frontWorkRiderId:'sprint-2',
+    chase:'selective'}];
+  const initial=source(teams,route(),{
+    sprint:'sprint_finish',other:'break_stage'},
+  [{km:1},{km:7}]);
+  const startInput={...initial.startInput,
+    raceSeed:'same-threat-window-seed'};
+  const input={startInput,start:startPhysicalBunchV1(startInput),
+    attackKm:2,choiceKm:8,
+    observerTeamId:'sprint',
+    nominatedChaseTeamIds:['sprint']};
+  assert.equal(decidePhysicalFrontThreatV1(input)
+    .choice.choice.assessments[0].action,
+  'commit_now');
+  const paid=advancePhysicalPerceivedChaseKmV1(input);
+  assert.equal(paid.threat.choice.choice.assessments[0].action,
+    'commit_now');
+  assert.equal(paid.bunchStep.leaderRiderId,'sprint-2');
+  assert.equal(paid.bunchStep.riderDecisions.find(row=>
+    row.riderId==='sprint-2').choice,'chase');
+  assert.equal(paid.riderStates.length,24);
+  assert.ok(paid.riderStates.every(row=>
+    row.energyAfter>=0&&row.decisions.length===1));
+  assert.ok(paid.gapSecondsToBunch>0);
+  assert.ok(paid.gapSecondsToBunch>
+    paid.threat.observedGapSeconds);
+  assert.equal(validatePhysicalPerceivedChaseKmV1(
+    input,paid),true);
+  const forged=structuredClone(paid);
+  forged.bunchStep.riders[2].energyAfter+=1;
+  assert.throws(()=>validatePhysicalPerceivedChaseKmV1(
+    input,forged),/differs/);
+  const hardInputSource=structuredClone(startInput);
+  hardInputSource.teams[1].orders.phases[0].effort='hard';
+  const hardInput={...input,startInput:hardInputSource,
+    start:startPhysicalBunchV1(hardInputSource)};
+  assert.equal(decidePhysicalFrontThreatV1(hardInput)
+    .choice.choice.assessments[0].action,
+  'capacity_shortfall');
+  assert.throws(()=>advancePhysicalPerceivedChaseKmV1(
+    hardInput),/has not committed paid chase/);
 });
 
 test('early climb weakness records a paid partial solo and no rear group',()=>{

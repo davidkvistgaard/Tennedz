@@ -3588,5 +3588,28 @@ the observing team. In a same-seed test a sprint team
 with a selective chase order watches the small measured gap at km
 10; waiting until km 16 instead yields a `capacity_shortfall`
 forecast. Forging the observed gap fails replay. This choice does
-not yet spend a rider's energy or move a group; the paid pursuit
-must be connected before the policy can control a race.
+not itself spend a rider's energy or move a group.
+
+`physical-perceived-chase-km-v1.mjs` connects one urgent
+`commit_now` choice to a pre-committed manager rotation: the
+observer's named helper becomes the only exposed peloton leader;
+the other 22 bunch riders pay a lower sheltered cost, while the
+front solo pays their own road. It replays all 24 kilometre states,
+energy and both clocks from the prior physical source. A `watch`
+choice refuses a paid chase. The one-kilometre witness uses a
+96-skill attacker and a 99-skill sprint roster: perceived urgency
+commits at km 8 with a steady named helper, but the actual paid
+gap *widens*. The forecast assumes a stronger rotating chase than
+this single named worker can deliver; therefore perception and
+physical pursuit timing remain uncalibrated. A hard manager effort
+in this witness moves the forecast to `capacity_shortfall`; the
+cause and policy response need further calibration. No projected catch
+is treated as a physical catch.
+
+The read-only `audit-physical-threat-window.mjs --assert` checks
+384 same-seed combinations of attacker skill, observer skill and
+decision kilometre. It finds 79 `watch` and 302
+`capacity_shortfall` choices, but only three `commit_now` windows.
+That thin and sometimes physically ineffective commitment window
+must be reconciled with actual turn rotation, energy and race
+length before the chase policy can be routed into a whole race.
