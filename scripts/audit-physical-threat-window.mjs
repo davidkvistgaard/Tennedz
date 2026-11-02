@@ -455,12 +455,17 @@ const earlyLongCalibration=process.argv.includes(
   })):undefined;
 const earlyRoleCalibration=process.argv.includes(
   '--role-long-calibration')?[160,260].flatMap(
-  distanceKm=>['flat','hill_mid','climb_mid',
-    'wind_mid'].map(roadVariant=>{
+  distanceKm=>[
+    ...['flat','hill_mid','climb_mid',
+      'wind_mid'].map(roadVariant=>({roadVariant,
+      fatigue:20})),
+    {roadVariant:'flat',fatigue:40},
+    {roadVariant:'climb_mid',fatigue:40},
+  ].map(({roadVariant,fatigue})=>{
     const input={attackerSkill:96,observerSkill:98,
       choiceKm:11,attackKm:2,frontConserveAtKm:5,
       distanceKm,stopChaseAtKm:20,
-      fatigue:20,roadVariant,roleVariant:'mixed',
+      fatigue,roadVariant,roleVariant:'mixed',
       rotateLongLeaders:true,assessHorizon:true,
       assessCounterfactual:true};
     try{return choice(input);}
@@ -653,7 +658,7 @@ if(process.argv.includes('--assert')){
       row.counterfactual.finish.minimumEnergy>0));
   }
   if(earlyRoleCalibration!==undefined){
-    assert.equal(earlyRoleCalibration.length,8);
+    assert.equal(earlyRoleCalibration.length,12);
     assert.ok(earlyRoleCalibration.every(row=>
       !row.refused&&row.action==='watch'&&
       row.horizonCatchKm===11&&
@@ -661,7 +666,11 @@ if(process.argv.includes('--assert')){
       row.counterfactual.contactKm===11));
     assert.equal(earlyRoleCalibration.filter(row=>
       row.counterfactual.finish.status===
-        'paid_finish').length,2);
+        'paid_finish'&&
+      row.counterfactual.finish.riderKilometres===
+        row.distanceKm*24&&
+      row.counterfactual.finish.finishRiders===24
+    ).length,4);
     assert.equal(earlyRoleCalibration.filter(row=>
       row.counterfactual.finish.status===
         'unsettled'&&
@@ -687,7 +696,7 @@ if(process.argv.includes('--assert')){
         [0].energySpent>0&&
       row.counterfactual.finish.physicalLoss.completions
         [0].gapSecondsToBunch>0
-    ).length,6);
+    ).length,8);
   }
 }
 process.stdout.write(JSON.stringify({version:1,

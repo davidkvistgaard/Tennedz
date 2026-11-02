@@ -3797,7 +3797,8 @@ season-long control exhaustion or tactical routing.
 `--role-long-calibration` varies the named observer worker's hill,
 mountain, endurance and wind ability and the front rider's matching
 abilities at the same seed. On 160- and 260-km flat routes, both
-manager-order chases meet at km 11 and source-replay all 24 finishes.
+manager-order chases meet at km 11 and source-replay all 24 finishes
+at initial fatigue 20 and 40.
 On the corresponding routes with a later hill, climb or exposed wind,
 contact still occurs at km 11, but the full diagnostic refuses when
 a bunch follower cannot hold the paid pace. A separate opt-in
@@ -3811,6 +3812,8 @@ the caught break rider cannot meet that rider or the bunch before
 the same kilometre line. The later solo road and possible future
 contact remain unsettled. The refusal is an explicit missing
 physical branch, not a finished race result.
+The higher-fatigue climb variants produce the same loss kilometres,
+also with paid split and completion followed by explicit refusal.
 
 `audit-physical-bunch-distance.mjs --assert` extends the opt-in
 paid-bunch source to mixed flat, hill, climb, descent and wind routes
