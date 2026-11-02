@@ -3794,6 +3794,16 @@ it still uses a uniform synthetic field. Exposed wind leaves the
 minimum recorded energy identical to calm road at each distance;
 absolute wind cost remains uncalibrated. This probe does not validate
 season-long control exhaustion or tactical routing.
+`--role-long-calibration` varies the named observer worker's hill,
+mountain, endurance and wind ability and the front rider's matching
+abilities at the same seed. On 160- and 260-km flat routes, both
+manager-order chases meet at km 11 and source-replay all 24 finishes.
+On the corresponding routes with a later climb, contact still occurs
+at km 11, but the full diagnostic refuses when a bunch follower
+cannot hold the paid climbing pace. The current post-catch replay
+does not yet record that follower's partial split, later solo road or
+possible contact with the caught break rider. The refusal is an
+explicit missing physical branch, not a finished race result.
 
 `audit-physical-bunch-distance.mjs --assert` extends the opt-in
 paid-bunch source to mixed flat, hill, climb, descent and wind routes

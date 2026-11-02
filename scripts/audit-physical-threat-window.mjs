@@ -59,6 +59,7 @@ function choice({attackerSkill,observerSkill,choiceKm,
   frontConserveAtKm=null,distanceKm=20,
   stopChaseAtKm=null,settleFinish=false,
   fatigue=20,roadVariant='flat',attackKm=2,
+  roleVariant='uniform',
   rotateLongLeaders=false,assessHorizon=false,
   assessCounterfactual=false}){
   const terrainStartKm=distanceKm<=25?14:distanceKm-12;
@@ -87,6 +88,15 @@ function choice({attackerSkill,observerSkill,choiceKm,
       for(const rider of teams[2].riders)
         if(rider.id!=='other-2')rider[skill]=100;
   }
+  if(roleVariant==='mixed'){
+    Object.assign(teams[1].riders[2],{hills:82,
+      mountain:72,endurance:84,wind:80});
+    Object.assign(teams[1].riders[3],{hills:99,
+      mountain:99,endurance:92,wind:99});
+    Object.assign(teams[2].riders[2],{hills:88,
+      mountain:68,endurance:88,wind:84});
+  }else if(roleVariant!=='uniform')
+    throw new Error('Unknown early long-race role variant.');
   teams[2].orders.phases=[{atKm:attackKm-1,
     attack:'selective',
     attackRiderId:'other-2',effort:'hard'}];
@@ -303,6 +313,7 @@ function choice({attackerSkill,observerSkill,choiceKm,
     ...(assessCounterfactual?{counterfactual}:{}),
     ...(fatigue===20?{}:{fatigue}),
     ...(roadVariant==='flat'?{}:{roadVariant}),
+    ...(roleVariant==='uniform'?{}:{roleVariant}),
     ...(distanceKm===20?{}:{distanceKm}),
     ...(stopChaseAtKm===null?{}:{stopChaseAtKm}),
     ...(settleFinish?{settleFinish:true}:{}),
@@ -415,6 +426,18 @@ const earlyLongCalibration=process.argv.includes(
       distanceKm,stopChaseAtKm:20,
       fatigue,roadVariant,rotateLongLeaders:true,
       assessHorizon:true,assessCounterfactual:true};
+    try{return choice(input);}
+    catch(error){return {...input,refused:error.message};}
+  })):undefined;
+const earlyRoleCalibration=process.argv.includes(
+  '--role-long-calibration')?[160,260].flatMap(
+  distanceKm=>['flat','climb_mid'].map(roadVariant=>{
+    const input={attackerSkill:96,observerSkill:98,
+      choiceKm:11,attackKm:2,frontConserveAtKm:5,
+      distanceKm,stopChaseAtKm:20,
+      fatigue:20,roadVariant,roleVariant:'mixed',
+      rotateLongLeaders:true,assessHorizon:true,
+      assessCounterfactual:true};
     try{return choice(input);}
     catch(error){return {...input,refused:error.message};}
   })):undefined;
@@ -604,6 +627,23 @@ if(process.argv.includes('--assert')){
       row.counterfactual.finish.finishRiders===24&&
       row.counterfactual.finish.minimumEnergy>0));
   }
+  if(earlyRoleCalibration!==undefined){
+    assert.equal(earlyRoleCalibration.length,4);
+    assert.ok(earlyRoleCalibration.every(row=>
+      !row.refused&&row.action==='watch'&&
+      row.horizonCatchKm===11&&
+      row.counterfactual.status==='paid_contact'&&
+      row.counterfactual.contactKm===11));
+    assert.equal(earlyRoleCalibration.filter(row=>
+      row.counterfactual.finish.status===
+        'paid_finish').length,2);
+    assert.equal(earlyRoleCalibration.filter(row=>
+      row.counterfactual.finish.status===
+        'unsettled'&&
+      row.counterfactual.finish.reason===
+        'Physical start follower cannot hold paid pace.'
+    ).length,2);
+  }
 }
 process.stdout.write(JSON.stringify({version:1,
   raceSeed:'same-threat-window-seed',actionCounts,
@@ -614,6 +654,8 @@ process.stdout.write(JSON.stringify({version:1,
     longTerrainCalibration}),
   ...(earlyLongCalibration===undefined?{}:{
     earlyLongCalibration}),
+  ...(earlyRoleCalibration===undefined?{}:{
+    earlyRoleCalibration}),
   ...(policyCross===null?{}:{policyCross}),
   ...(counterfactualCross===null?{}:{counterfactualCross}),
   ...(process.argv.includes('--verbose')?{results}:{})},
