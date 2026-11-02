@@ -40,6 +40,15 @@ import {catchPhysicalFrontSoloV1,
 import {slideCaughtBreakRiderV1,
   validateCaughtBreakSlideV1} from
   '../../lib/engine/v2/physical-caught-break-slide-v1.mjs';
+import {runPhysicalBunchAfterCaughtSlideV1,
+  validatePhysicalBunchAfterCaughtSlideV1} from
+  '../../lib/engine/v2/physical-bunch-after-caught-slide-v1.mjs';
+import {runPhysicalSlidBreakSoloV1,
+  validatePhysicalSlidBreakSoloV1} from
+  '../../lib/engine/v2/physical-slid-break-solo-run-v1.mjs';
+import {replayPhysicalCaughtBreakRaceV1,
+  validatePhysicalCaughtBreakRaceV1} from
+  '../../lib/engine/v2/physical-caught-break-race-replay-v1.mjs';
 import {runPhysicalRearGroupV1,
   validatePhysicalRearGroupV1} from
   '../../lib/engine/v2/physical-rear-group-run-v1.mjs';
@@ -331,6 +340,60 @@ test('stronger later bunch worker creates an energy-priced catch window',()=>{
   falseSlide.gapSecondsToBunch=0;
   assert.throws(()=>validateCaughtBreakSlideV1(
     slideInput,falseSlide),/differs/);
+  const afterInput={...catchInput,catchRecord:contact,
+    slideRecord:slide,throughKm:catchKm+1};
+  const after=runPhysicalBunchAfterCaughtSlideV1(afterInput);
+  assert.equal(after.road.length,1);
+  assert.equal(after.road[0].riderDecisions.length,23);
+  assert.ok(!after.physicalGroup.riderIds.includes('other-2'));
+  assert.deepEqual(after.road[0].blockedAttacks,[{
+    teamId:'other',riderId:'other-2',
+    reason:'dropped_after_paid_catch'}]);
+  assert.equal(validatePhysicalBunchAfterCaughtSlideV1(
+    afterInput,after),true);
+  const falseAfter=structuredClone(after);
+  falseAfter.road[0].blockedAttacks[0].reason='already_ahead';
+  assert.throws(()=>validatePhysicalBunchAfterCaughtSlideV1(
+    afterInput,falseAfter),/differs/);
+  const solo=runPhysicalSlidBreakSoloV1(afterInput);
+  assert.deepEqual(solo.steps.map(row=>row.sourceKm),
+    [catchKm+1]);
+  assert.ok(solo.steps[0].gapSecondsToBunch>0&&
+    solo.steps[0].energySpent>0&&
+    solo.steps[0].recoveryAward===0);
+  assert.equal(solo.steps[0].decision.teamOrderEffort,'hard');
+  assert.equal(validatePhysicalSlidBreakSoloV1(
+    afterInput,solo),true);
+  const falseSolo=structuredClone(solo);
+  falseSolo.steps[0].energyAfter+=1;
+  assert.throws(()=>validatePhysicalSlidBreakSoloV1(
+    afterInput,falseSolo),/differs/);
+  const finishInput={...afterInput,throughKm:20};
+  const finished=runPhysicalSlidBreakSoloV1(finishInput);
+  assert.equal(finished.steps.length,20-catchKm);
+  assert.equal(finished.physicalGroup.atDistanceM,20000);
+  assert.ok(finished.observedFinishSeconds>
+    finished.steps.at(-1).bunchElapsedSeconds);
+  assert.equal(validatePhysicalSlidBreakSoloV1(
+    finishInput,finished),true);
+  const raceInput={...input,attackKm:2,catchKm,
+    throughKm:20};
+  const race=replayPhysicalCaughtBreakRaceV1(raceInput);
+  assert.equal(race.kilometres.length,20);
+  assert.ok(race.kilometres.every(row=>
+    row.riderStates.length===24&&row.riderStates.every(state=>
+      state.decisions.length>0&&state.energyAfter>=0)));
+  assert.equal(Object.keys(race.observedFinishSecondsByRider)
+    .length,24);
+  assert.ok(race.observedFinishSecondsByRider['other-2']>
+    race.observedFinishSecondsByRider['control-0']);
+  assert.equal(validatePhysicalCaughtBreakRaceV1(
+    raceInput,race),true);
+  const falseRace=structuredClone(race);
+  falseRace.kilometres[catchKm-1].riderStates[18]
+    .elapsedSeconds+=1;
+  assert.throws(()=>validatePhysicalCaughtBreakRaceV1(
+    raceInput,falseRace),/differs/);
 });
 
 test('early climb weakness records a paid partial solo and no rear group',()=>{

@@ -3527,6 +3527,16 @@ switches to an energy-saving pace to finish the current stage, pays
 the remaining terrain as a solo, receives zero bunch recovery, and
 crosses the kilometre endpoint later than the 23-rider bunch.
 Their singleton position, energy, time and source goal replay; no
-peloton wheel is inferred. The later rear-solo road, possible rear
-group contact and final finish still need to be connected to this
-caught-break source.
+peloton wheel is inferred. `physical-bunch-after-caught-slide-v1.mjs`
+continues the 23-rider paid bunch with the active attack order
+recorded as `dropped_after_paid_catch`, rather than falsely
+`already_ahead`. `physical-slid-break-solo-run-v1.mjs` pays each
+remaining solo kilometre at current-stage safe-finish pace, with
+zero bunch recovery. A 20-kilometre, 24-rider same-seed witness in
+`physical-caught-break-race-replay-v1.mjs` now records every rider's
+decision, energy, clock and physical group through observed finish.
+Forged catch, slide, post-catch order status, later energy and race
+clock fail source replay. This is still one narrow synthetic route;
+other terrain, role and fatigue combinations and rear contact with
+another dropped rider need further physical testing. The result is
+not an official classification or calibrated guided motor.
