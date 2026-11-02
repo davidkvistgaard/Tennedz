@@ -3651,3 +3651,13 @@ observed finishes. These are synthetic single-loss witnesses; they
 do not establish calibrated long-race fatigue, multiple simultaneous
 groups, new paid contact or an effective perceived chase. The 260-km
 replay remains separate from guided races and production.
+
+`runPhysicalStaggeredBunchLossV1` keeps a replayable paid bunch
+source when different riders lose contact on different kilometres.
+A 20-km same-seed fixture loses a former front worker at km 6 and
+a weak climber at km 11, leaving exactly 22 riders in the physical
+bunch. Each split has its measured partial distance; neither rider
+silently returns on later bunch kilometres. This source does not
+yet pay their separate later roads, test whether they meet, or record
+all 24 finish times. Those transitions require their own source
+replay before this branch can become a race runner.

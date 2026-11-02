@@ -12,6 +12,8 @@ import {startPhysicalBunchV1,advancePhysicalStartBunchV1,
   validatePhysicalBunchPaceLossV1,
   runPhysicalBunchAfterPaceLossV1,
   validatePhysicalBunchAfterPaceLossV1,
+  runPhysicalStaggeredBunchLossV1,
+  validatePhysicalStaggeredBunchLossV1,
   runPhysicalNamedAttackV1,
   validatePhysicalNamedAttackV1,
   runPhysicalBunchAfterNamedAttackV1,
@@ -139,6 +141,40 @@ test('same-seed terrain and fatigue change paid start road',()=>{
   assert.notEqual(tired.bunchSpeedKph,flat.bunchSpeedKph);
   assert.equal(climbing.riderDecisions.length,24);
   assert.equal(tired.riderDecisions.length,24);
+});
+
+test('different paid kilometres remove only physically dropped riders',()=>{
+  const teams=field();
+  for(const team of teams)for(const rider of team.riders)
+    for(const skill of SPORTING_SKILLS)rider[skill]=96;
+  for(const skill of SPORTING_SKILLS)
+    teams[0].riders[2][skill]=90;
+  teams[2].riders[3].mountain=30;
+  teams[0].orders.phases=[{atKm:5,frontWork:'sit_in'}];
+  teams[1].orders.phases=[{atKm:5,
+    frontWork:'rotate',frontWorkRiderId:'sprint-2'}];
+  const kilometres=route();
+  for(const segment of kilometres.slice(10)){
+    segment.terrain='climb';segment.gradientPct=6;
+  }
+  const input=source(teams,kilometres);
+  const recording=runPhysicalStaggeredBunchLossV1({
+    ...input,throughKm:20});
+  assert.deepEqual(recording.losses.map(row=>[
+    row.sourceKm,row.riderId]),[[6,'control-2'],
+    [11,'other-3']]);
+  assert.equal(recording.physicalGroup.riderIds.length,22);
+  assert.ok(recording.road.every(row=>
+    row.riderDecisions.length===row.riders.length));
+  assert.ok(recording.road.slice(11).every(row=>
+    !row.physicalGroup.riderIds.includes('control-2')&&
+    !row.physicalGroup.riderIds.includes('other-3')));
+  assert.equal(validatePhysicalStaggeredBunchLossV1({
+    ...input,throughKm:20},recording),true);
+  const forged=structuredClone(recording);
+  forged.losses[1].atDistanceM=11000;
+  assert.throws(()=>validatePhysicalStaggeredBunchLossV1({
+    ...input,throughKm:20},forged),/differ/);
 });
 
 test('unsupported orders and physical inability refuse before movement',()=>{
