@@ -19,7 +19,9 @@ import {partitionPhysicalSimultaneousLossV1,
   validatePhysicalSimultaneousLossContactV1} from
   '../lib/engine/v2/physical-simultaneous-loss-contact-v1.mjs';
 import {replayPhysicalSimultaneousRearGroupV1,
-  validatePhysicalSimultaneousRearGroupV1} from
+  validatePhysicalSimultaneousRearGroupV1,
+  replayPhysicalMixedSimultaneousRearGroupV1,
+  validatePhysicalMixedSimultaneousRearGroupV1} from
   '../lib/engine/v2/physical-simultaneous-rear-group-v1.mjs';
 
 const fieldSize=20;
@@ -59,10 +61,18 @@ function source(distanceKm,fatigue,variant){
   if(variant==='one_weak_climber')
     teams[19].riders[7].mountain=30;
   if(variant==='many_weak_climbers'||
-    variant==='unequal_weak_climbers')
+    variant==='unequal_weak_climbers'||
+    variant==='nearly_equal_weak_climbers'||
+    variant==='unequal_descent_catch')
     for(const team of teams)team.riders[7].mountain=30;
   if(variant==='unequal_weak_climbers')
     teams[19].riders[7].mountain=35;
+  if(variant==='nearly_equal_weak_climbers')
+    teams[19].riders[7].mountain=31;
+  if(variant==='unequal_descent_catch'){
+    teams[19].riders[7].mountain=31;
+    teams[19].riders[7].descending=0;
+  }
   for(let marker=5;marker<distanceKm;marker+=5){
     const priorTeam=Math.floor((marker-1)/5)%fieldSize;
     const nextTeam=Math.floor(marker/5)%fieldSize;
@@ -117,6 +127,7 @@ function audit(distanceKm,fatigue,variant){
       row=>row.elapsedSeconds))-Math.min(
       ...completions.map(row=>row.elapsedSeconds));
     let continuation=null;
+    let mixedContinuation=null;
     let paidRearContact=null;
     let paidArrivalPartitions=null;
     if(splitIds.length>1){
@@ -195,6 +206,48 @@ function audit(distanceKm,fatigue,variant){
           status:'refused',reason:groupError.message,
           sourceKm:groupError.sourceKm};}
       }
+      if(variant==='unequal_weak_climbers'||
+        variant==='nearly_equal_weak_climbers'||
+        variant==='unequal_descent_catch'){
+        const mixedInput={...input,lossKm,
+          throughKm:distanceKm};
+        try{
+          const mixed=replayPhysicalMixedSimultaneousRearGroupV1(
+            mixedInput);
+          assert.equal(validatePhysicalMixedSimultaneousRearGroupV1(
+            mixedInput,mixed),true);
+          assert.ok(mixed.sources.later.every(row=>
+            row.rearRows.filter(rider=>
+              rider.role==='leader').length===1&&
+            row.rearRows.filter(rider=>
+              rider.role==='sheltered').length===18));
+          assert.ok(mixed.sources.later[0].rearRows.find(row=>
+            row.role==='leader').energySpent>
+            Math.max(...mixed.sources.later[0]
+              .rearRows.filter(row=>row.role==='sheltered')
+              .map(row=>row.energySpent)));
+          if(distanceKm===120&&fatigue===10){
+            const forged=structuredClone(mixed);
+            forged.observedFinishSecondsByRider[
+              'team-19-7']+=1;
+            assert.throws(()=>
+              validatePhysicalMixedSimultaneousRearGroupV1(
+                mixedInput,forged),/differs from paid source/);
+          }
+          mixedContinuation={status:'paid_finish',
+            riderKilometres:mixed.kilometres.reduce(
+              (sum,row)=>sum+row.riderStates.length,0),
+            finishRiders:Object.keys(mixed
+              .observedFinishSecondsByRider).length,
+            namedRearLeaders:new Set(mixed.sources.later
+              .map(row=>row.leaderRiderId)).size,
+            minimumEnergy:Math.min(...mixed.kilometres
+              .flatMap(row=>row.riderStates.map(rider=>
+                rider.energyAfter)))};
+        }catch(mixedError){mixedContinuation={
+          status:'refused',reason:mixedError.message,
+          sourceKm:mixedError.sourceKm};}
+      }
     }
     if(splitIds.length===1){
       try{
@@ -219,7 +272,7 @@ function audit(distanceKm,fatigue,variant){
       paidArrivalPartitions,
       paidRearContact,
       bunchAtKmEnd:loss.step.physicalGroup.riderIds.length,
-      continuation};
+      continuation,mixedContinuation};
   }
   const decisions=run.road.reduce((sum,row)=>
     sum+row.riderDecisions.length,0);
@@ -234,14 +287,17 @@ function audit(distanceKm,fatigue,variant){
       run.energyByRider))};
 }
 
-const results=[120,260].flatMap(distanceKm=>
+const results=process.argv.includes('--probe-descent')?[]:
+  [120,260].flatMap(distanceKm=>
   [10,30].flatMap(fatigue=>
     ['equal_field','one_weak_climber',
       'many_weak_climbers',
-      'unequal_weak_climbers'].map(variant=>
+      'unequal_weak_climbers',
+      'nearly_equal_weak_climbers'].map(variant=>
       audit(distanceKm,fatigue,variant))));
+results.push(audit(120,10,'unequal_descent_catch'));
 if(process.argv.includes('--assert')){
-  assert.equal(results.length,16);
+  assert.equal(results.length,21);
   for(const row of results.filter(item=>
     item.variant==='equal_field')){
     assert.equal(row.status,'paid_bunch_finish');
@@ -290,6 +346,19 @@ if(process.argv.includes('--assert')){
       assert.equal(row.continuation?.status,'refused');
       assert.match(row.continuation.reason,
         /no recorded meeting/);
+      if(row.variant==='unequal_descent_catch'){
+        assert.equal(row.mixedContinuation?.status,'refused');
+        assert.equal(row.mixedContinuation.sourceKm,36);
+        assert.match(row.mixedContinuation.reason,
+          /need paid contact road/);
+      }else{
+        assert.equal(row.mixedContinuation?.status,'paid_finish');
+        assert.equal(row.mixedContinuation.riderKilometres,
+          row.distanceKm*fieldSize*ridersPerTeam);
+        assert.equal(row.mixedContinuation.finishRiders,160);
+        assert.equal(row.mixedContinuation.namedRearLeaders,19);
+        assert.ok(row.mixedContinuation.minimumEnergy>=0);
+      }
     }
   }
 }

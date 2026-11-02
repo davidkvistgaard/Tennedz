@@ -4038,15 +4038,23 @@ and all 160 observed finish clocks with nonnegative energy. The first
 shared kilometre charges the leader more than any sheltered rider;
 forged finish energy is rejected by replay validation. The source
 remains opt-in and does not move guided races or create official
-results. Four additional variants give one dropped climber a different
+results. Eight additional variants give one dropped climber a different
 climbing ability. A separate paid-arrival partition records one
 19-rider meeting and one unmatched solo at the same route metre but
 different clocks; it does not assign the solo a wheel. The current
-whole-race continuation still refuses that mixed branch because the
-19-rider group's later road and the separate solo's possible contact
-have not both been paid and replayed.
+all-rider contact continuation refuses that mixed branch. A separate
+`physical-mixed-simultaneous-rear-group-1` recording pays the 19-rider
+group and the unmatched solo independently. Each later kilometre has
+one exposed group leader, 18 sheltered group riders and one separately
+paying solo, while the surviving bunch also retains its paid leader.
+Eight mixed variants with a 31- or 35-mountain unmatched solo
+source-replay 19,200 or 41,600 rider-kilometre states and 160
+observed finish clocks. A separate 120-km descent witness makes the
+solo slow enough for the group to reach it on km 36. The continuation
+refuses there pending a paid contact road. Forged partition or finish
+data fails source validation.
 
 Equal skills and simultaneous identical solo arrivals are scale
 witnesses, not a calibrated field distribution. Unequal
-Mixed arrivals, later merges, realistic fatigue and whole-race chase
+Other mixed arrivals, later merges, realistic fatigue and whole-race chase
 timing remain unresolved before routing.
