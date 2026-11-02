@@ -4016,3 +4016,17 @@ rear group's following road and observed finish are replayed by the
 same paid group source as the manager-chase case. This covers four
 synthetic zero-fatigue variants, not a calibrated distribution of
 early catches, split timing or long-race fatigue.
+
+The separate `audit-physical-field-scale.mjs --assert` stresses the
+same opt-in source with 20 committed eight-rider teams over mixed
+120- and 260-km routes at two fatigue levels. Four equal-skill races
+pay one named exposed bunch leader at a time and record 160 rider
+decisions each kilometre (19,200 or 41,600 rider-kilometres), with
+160 observed finish clocks and nonnegative energy. Four variants
+with one weak climber record its km-21 physical loss and replay all
+160 riders to finish. Four variants with one weak climber per team
+record 20 simultaneous physical losses at km 21 but deliberately
+claim no finish: the current one-loss continuation cannot pay or
+form their rear roads. Equal skills are a scale check, not realistic
+field calibration. The 20-rider split is a concrete multi-loss
+branch needed before a varied 20-team race can be routed.
