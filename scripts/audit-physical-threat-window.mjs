@@ -46,6 +46,8 @@ import {advancePhysicalManagerPostcatchSoloPairV1,
   replayPhysicalManagerSeparatedRoadV1,
   validatePhysicalManagerSeparatedRoadV1} from
   '../lib/engine/v2/physical-manager-postcatch-solo-pair-v1.mjs';
+import {validatePhysicalPostcatchSplitContactV1} from
+  '../lib/engine/v2/physical-postcatch-split-contact-v1.mjs';
 import {riderKilometreEffect} from
   '../lib/engine/v2/physiology.mjs';
 import {TUNING} from '../lib/engine/v2/tuning.mjs';
@@ -73,10 +75,14 @@ function choice({attackerSkill,observerSkill,choiceKm,
   stopChaseAtKm=null,settleFinish=false,
   fatigue=20,roadVariant='flat',attackKm=2,
   roleVariant='uniform',
+  terrainStartOverride=null,
   rotateLongLeaders=false,assessHorizon=false,
   assessCounterfactual=false}){
-  const terrainStartKm=distanceKm<=25?14:distanceKm-12;
-  const terrainEndKm=distanceKm<=25?18:distanceKm-7;
+  const terrainStartKm=terrainStartOverride??
+    (distanceKm<=25?14:distanceKm-12);
+  const terrainEndKm=terrainStartOverride===null?
+    distanceKm<=25?18:distanceKm-7:
+    terrainStartOverride+5;
   const road=Array.from({length:distanceKm},(_,index)=>({
     ...route[0],km:index+1,
     ...(index+1>=terrainStartKm&&
@@ -101,13 +107,26 @@ function choice({attackerSkill,observerSkill,choiceKm,
       for(const rider of teams[2].riders)
         if(rider.id!=='other-2')rider[skill]=100;
   }
-  if(roleVariant==='mixed'){
+  if(['mixed','closing','moderate_closing']
+    .includes(roleVariant)){
     Object.assign(teams[1].riders[2],{hills:82,
       mountain:72,endurance:84,wind:80});
     Object.assign(teams[1].riders[3],{hills:99,
       mountain:99,endurance:92,wind:99});
     Object.assign(teams[2].riders[2],{hills:88,
       mountain:68,endurance:88,wind:84});
+    if(roleVariant==='closing'){
+      Object.assign(teams[1].riders[2],{hills:25,
+        mountain:10});
+      Object.assign(teams[2].riders[2],{hills:100,
+        mountain:100});
+    }
+    if(roleVariant==='moderate_closing'){
+      Object.assign(teams[1].riders[2],{hills:40,
+        mountain:30});
+      Object.assign(teams[2].riders[2],{hills:90,
+        mountain:85});
+    }
   }else if(roleVariant!=='uniform')
     throw new Error('Unknown early long-race role variant.');
   teams[2].orders.phases=[{atKm:attackKm-1,
@@ -210,6 +229,30 @@ function choice({attackerSkill,observerSkill,choiceKm,
             let nextBunch;
             let nextPair;
             let separatedStatus;
+            let paidPostcatchContact;
+            if(error.paidPostcatchContact){
+              const {contactInput,contact}=
+                error.paidPostcatchContact;
+              assert.equal(
+                validatePhysicalPostcatchSplitContactV1(
+                  contactInput,contact),true);
+              const forged=structuredClone(contact);
+              forged.contactClockSeconds+=1;
+              assert.throws(()=>
+                validatePhysicalPostcatchSplitContactV1(
+                  contactInput,forged),
+              /differs from paid source/);
+              paidPostcatchContact={
+                sourceKm:contact.sourceKm,
+                atDistanceM:contact.contactAtDistanceM,
+                behindBunchSeconds:
+                  contact.behindBunchSeconds,
+                phase:contact.phase,
+                riderIds:contact.riders.map(row=>
+                  row.riderId),
+                energySpent:contact.riders.map(row=>
+                  row.energySpent)};
+            }
             if(error.physicalLoss){
               const source=error.physicalLoss;
               const partial=replayPhysicalManagerPostcatchLossV1(
@@ -292,6 +335,22 @@ function choice({attackerSkill,observerSkill,choiceKm,
                     .kilometres.flatMap(row=>
                       row.riderStates.map(rider=>
                         rider.energyAfter))),
+                  initialSoloGapSeconds:separated.kilometres[
+                    separated.lossKm-1].riderStates.find(row=>
+                    row.riderId===partial.caughtRiderId)
+                    .elapsedSeconds-
+                    separated.kilometres[
+                      separated.lossKm-1].riderStates
+                      .find(row=>row.riderId===
+                        source.loss.splits[0].riderId)
+                      .elapsedSeconds,
+                  finishSoloGapSeconds:separated.kilometres
+                    .at(-1).riderStates.find(row=>row.riderId===
+                      partial.caughtRiderId).elapsedSeconds-
+                    separated.kilometres.at(-1).riderStates
+                      .find(row=>row.riderId===
+                        source.loss.splits[0].riderId)
+                      .elapsedSeconds,
                   distinctLeaders:new Set(separated
                     .sources.later.map(row=>row.sources
                       .bunch.step.leaderRiderId)).size};
@@ -325,6 +384,8 @@ function choice({attackerSkill,observerSkill,choiceKm,
             }
             counterfactual.finish={
             status:'unsettled',reason:error.message,
+            ...(paidPostcatchContact?{
+              paidPostcatchContact}:{}),
             ...(error.physicalLoss?{
               physicalLoss:{sourceKm:error.physicalLoss
                 .sourceKm,
@@ -485,6 +546,8 @@ function choice({attackerSkill,observerSkill,choiceKm,
     ...(fatigue===20?{}:{fatigue}),
     ...(roadVariant==='flat'?{}:{roadVariant}),
     ...(roleVariant==='uniform'?{}:{roleVariant}),
+    ...(terrainStartOverride===null?{}:{
+      terrainStartOverride}),
     ...(distanceKm===20?{}:{distanceKm}),
     ...(stopChaseAtKm===null?{}:{stopChaseAtKm}),
     ...(settleFinish?{settleFinish:true}:{}),
@@ -618,6 +681,30 @@ const earlyRoleCalibration=process.argv.includes(
     try{return choice(input);}
     catch(error){return {...input,refused:error.message};}
   })):undefined;
+const closingCalibration=process.argv.includes(
+  '--closing-calibration')?[160,260].map(distanceKm=>{
+  const input={attackerSkill:96,observerSkill:98,
+    choiceKm:11,attackKm:2,frontConserveAtKm:5,
+    distanceKm,stopChaseAtKm:20,
+    fatigue:20,roadVariant:'climb_mid',
+    roleVariant:'closing',rotateLongLeaders:true,
+    assessHorizon:true,assessCounterfactual:true};
+  try{return choice(input);}
+  catch(error){return {...input,refused:error.message};}
+}):undefined;
+const earlyTerrainCalibration=process.argv.includes(
+  '--early-terrain-calibration')?[160,260].map(
+  distanceKm=>{
+    const input={attackerSkill:96,observerSkill:98,
+      choiceKm:11,attackKm:2,frontConserveAtKm:5,
+      distanceKm,stopChaseAtKm:20,
+      fatigue:20,roadVariant:'climb_mid',
+      terrainStartOverride:30,
+      roleVariant:'moderate_closing',rotateLongLeaders:true,
+      assessHorizon:true,assessCounterfactual:true};
+    try{return choice(input);}
+    catch(error){return {...input,refused:error.message};}
+  }):undefined;
 const policyCross=calibration&&longCalibration&&
   longTerrainCalibration?{
   rows:[...calibration,...longCalibration,
@@ -866,6 +953,39 @@ if(process.argv.includes('--assert')){
       row.counterfactual.finish.physicalLoss
         .separatedStatus.distinctLeaders>0).length,8);
   }
+  if(closingCalibration!==undefined){
+    assert.equal(closingCalibration.length,2);
+    assert.ok(closingCalibration.every(row=>
+      !row.refused&&
+      row.counterfactual.status==='paid_contact'&&
+      row.counterfactual.finish.physicalLoss
+        ?.separatedStatus.status==='paid_finish'&&
+      row.counterfactual.finish.physicalLoss
+        .separatedStatus.finishRiders===24&&
+      row.counterfactual.finish.physicalLoss
+        .separatedStatus.initialSoloGapSeconds>
+      row.counterfactual.finish.physicalLoss
+        .separatedStatus.finishSoloGapSeconds));
+  }
+  if(earlyTerrainCalibration!==undefined){
+    assert.equal(earlyTerrainCalibration.length,2);
+    assert.ok(earlyTerrainCalibration.every(row=>{
+      const contact=row.counterfactual.finish
+        ?.paidPostcatchContact;
+      return !row.refused&&
+        row.counterfactual.status==='paid_contact'&&
+        row.counterfactual.finish.status===
+          'unsettled'&&
+        contact?.sourceKm===31&&
+        contact.atDistanceM>30000&&
+        contact.atDistanceM<31000&&
+        contact.behindBunchSeconds>0&&
+        contact.phase==='before_bunch_km_end'&&
+        contact.riderIds.join(',')===
+          'other-2,sprint-2'&&
+        contact.energySpent.every(value=>value>0);
+    }));
+  }
 }
 process.stdout.write(JSON.stringify({version:1,
   raceSeed:'same-threat-window-seed',actionCounts,
@@ -878,6 +998,10 @@ process.stdout.write(JSON.stringify({version:1,
     earlyLongCalibration}),
   ...(earlyRoleCalibration===undefined?{}:{
     earlyRoleCalibration}),
+  ...(closingCalibration===undefined?{}:{
+    closingCalibration}),
+  ...(earlyTerrainCalibration===undefined?{}:{
+    earlyTerrainCalibration}),
   ...(policyCross===null?{}:{policyCross}),
   ...(counterfactualCross===null?{}:{counterfactualCross}),
   ...(process.argv.includes('--verbose')?{results}:{})},

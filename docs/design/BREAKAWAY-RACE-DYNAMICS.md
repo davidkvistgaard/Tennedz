@@ -3852,6 +3852,18 @@ or the other solo refuses before claiming a group, and a forged
 finish energy fails source replay. These synthetic no-contact
 finishes do not settle variants in which the two solos meet or
 another bunch rider falls away.
+Two later-climb mixed-role controls let the gap between the caught
+break rider and dropped worker shrink while both still finish
+separately. Moving the same committed climb to km 30 and using a
+moderate terrain-strength difference produces the missing paid
+meeting in both 160- and 260-km fixtures. The riders meet on km 31
+at metre 30,207.88, 0.99 seconds behind the bunch's clock there.
+`physical-postcatch-split-contact-v1.mjs` prices each rider only
+to that measured metre and replays the meeting from the prior
+physical split and solo clocks; a forged contact time is refused.
+This meeting occurs before the bunch reaches the kilometre line.
+The remaining contact kilometre has no paid leader or group road
+yet, so neither fixture claims a finish or a formed rear group.
 
 `audit-physical-bunch-distance.mjs --assert` extends the opt-in
 paid-bunch source to mixed flat, hill, climb, descent and wind routes
