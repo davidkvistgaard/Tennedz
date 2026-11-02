@@ -3318,7 +3318,8 @@ race clock and is not routed to guided races or official results.
 
 `physical-start-bunch-v1.mjs` provides a new opt-in physical root at
 the start line: the complete committed roster begins at metre zero
-with source-checked starting energy. In a supported first kilometre,
+with source-checked starting energy and a snapshot of the route,
+roster, rider attributes and orders. In a supported first kilometre,
 one explicitly named ordered helper sets the bunch pace and pays
 exposed terrain work; every other rider has a recorded shelter decision,
 pays a lower terrain cost, and carries their own recovery and cap.
@@ -3330,3 +3331,15 @@ group. It is one kilometre only, with no front break, contact or finish,
 and is not attached to V94 recordings or guided races. The next version
 must carry this actual group and every rider's state across kilometres,
 then model paid split and contact when someone cannot hold.
+
+The same opt-in root now has `runPhysicalBunchV1` for consecutive
+supported kilometres. It recomputes from the committed start rather
+than accepting a caller-supplied prior group or energy state. Named
+front workers can rotate at committed order phase boundaries. Every
+kilometre records 24 separate shelter or pull decisions, a single
+paid leader, current terrain cost, each rider's recovery and energy,
+the physical group at the next kilometre and elapsed road seconds.
+The five-kilometre same-seed witness rotates leaders at km 2 and 4,
+replays all 120 rider decisions and rejects a forged energy row. This
+path still refuses any unsupported attack, chase, wheel loss or
+unpayable road. It remains independent of V94 and guided races.
