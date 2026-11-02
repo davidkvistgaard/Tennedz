@@ -18,6 +18,9 @@ import {catchPhysicalPerceivedChaseV1} from
   '../lib/engine/v2/physical-perceived-chase-contact-v1.mjs';
 import {slidePerceivedChaseCaughtFrontV1} from
   '../lib/engine/v2/physical-perceived-chase-slide-v1.mjs';
+import {replayPhysicalPerceivedChaseSlideRaceV1,
+  validatePhysicalPerceivedChaseSlideRaceV1} from
+  '../lib/engine/v2/physical-perceived-chase-slide-race-v1.mjs';
 import {riderKilometreEffect} from
   '../lib/engine/v2/physiology.mjs';
 import {TUNING} from '../lib/engine/v2/tuning.mjs';
@@ -40,7 +43,10 @@ const field=()=>['control','sprint','other'].map(id=>{
 });
 
 function choice({attackerSkill,observerSkill,choiceKm,
-  frontConserveAtKm=null}){
+  frontConserveAtKm=null,distanceKm=20,
+  stopChaseAtKm=null,settleFinish=false}){
+  const road=Array.from({length:distanceKm},(_,index)=>({
+    ...route[0],km:index+1}));
   const teams=field();
   for(const skill of SPORTING_SKILLS){
     teams[2].riders[2][skill]=attackerSkill;
@@ -60,17 +66,22 @@ function choice({attackerSkill,observerSkill,choiceKm,
   teams[1].orders.phases=[{atKm:choiceKm-1,
     chase:'selective',frontWork:'rotate',
     frontWorkRiderId:'sprint-2'}];
+  if(stopChaseAtKm!==null)
+    teams[1].orders.phases.push({atKm:stopChaseAtKm,
+      chase:'ignore'});
+  const keypoints=[{km:1},{km:choiceKm-1},
+    ...(stopChaseAtKm===null?[]:[{km:stopChaseAtKm}])];
   for(const team of teams)team.orders=normalizeOrders(team.orders,{
     riderIds:team.riders.map(rider=>rider.id),
-    distanceKm:20,keypoints:[{km:1},{km:choiceKm-1}],
+    distanceKm,keypoints,
     allowFrontWork:true,allowNamedFrontWorker:true});
   const commitment=commitTeamChaseStakesV1({teams,
-    distanceKm:20,keypoints:[{km:1},{km:choiceKm-1}],
+    distanceKm,keypoints,
     intentions:teams.map(team=>({teamId:team.id,
       baseline:{goal:team.id==='sprint'?'sprint_finish':
         team.id==='other'?'break_stage':'none',
       captainId:team.riders[0].id},phases:[]}))});
-  const startInput={teams,routeKilometres:route,commitment,
+  const startInput={teams,routeKilometres:road,commitment,
     raceSeed:'same-threat-window-seed'};
   const start=startPhysicalBunchV1(startInput);
   const input={startInput,start,
@@ -85,7 +96,7 @@ function choice({attackerSkill,observerSkill,choiceKm,
     paidGapChangeSeconds=+(paid.gapSecondsToBunch-
       recording.observedGapSeconds).toFixed(3);
     try{
-      const raceInput={...input,throughKm:20};
+      const raceInput={...input,throughKm:distanceKm};
       const race=replayPhysicalPerceivedChaseRaceV1(raceInput);
       validatePhysicalPerceivedChaseRaceV1(raceInput,race);
       chaseRace={status:'front_finish',
@@ -99,7 +110,8 @@ function choice({attackerSkill,observerSkill,choiceKm,
       chaseRace={status:'refused',reason:error.message};
       if(/Later pursuit needs paid contact road/.test(
         error.message)){
-        for(let catchKm=choiceKm+1;catchKm<=20;catchKm++){
+        for(let catchKm=choiceKm+1;catchKm<=distanceKm;
+          catchKm++){
           try{
             const contact=catchPhysicalPerceivedChaseV1({
               ...input,catchKm});
@@ -123,6 +135,21 @@ function choice({attackerSkill,observerSkill,choiceKm,
               holdMargin:+(holdAbility-leaderAbility).toFixed(3),
               slideGapSeconds:+slide.gapSecondsToBunch.toFixed(3),
               remainingKmUnsettled:true};
+            if(settleFinish){
+              const finishInput={...input,catchKm,
+                throughKm:distanceKm};
+              const finish=replayPhysicalPerceivedChaseSlideRaceV1(
+                finishInput);
+              validatePhysicalPerceivedChaseSlideRaceV1(
+                finishInput,finish);
+              chaseRace={...chaseRace,
+                status:'paid_contact_finish',
+                remainingKmUnsettled:false,
+                riderKilometres:finish.kilometres.reduce(
+                  (sum,row)=>sum+row.riderStates.length,0),
+                finishRiders:Object.keys(
+                  finish.observedFinishSecondsByRider).length};
+            }
             break;
           }catch{continue;}
         }
@@ -130,6 +157,9 @@ function choice({attackerSkill,observerSkill,choiceKm,
     }
   }
   return {attackerSkill,observerSkill,choiceKm,
+    ...(distanceKm===20?{}:{distanceKm}),
+    ...(stopChaseAtKm===null?{}:{stopChaseAtKm}),
+    ...(settleFinish?{settleFinish:true}:{}),
     ...(frontConserveAtKm===null?{}:{frontConserveAtKm}),
     gapSeconds:+recording.observedGapSeconds.toFixed(3),
     action,
@@ -165,6 +195,10 @@ const frontEffortProbe=[
   catch(error){return {...variant,frontConserveAtKm,
     refused:error.message};}
 }));
+const finishWitness=choice({attackerSkill:96,
+  observerSkill:98,choiceKm:13,
+  frontConserveAtKm:5,distanceKm:25,
+  stopChaseAtKm:20,settleFinish:true});
 if(process.argv.includes('--assert')){
   assert.equal(results.length,384);
   assert.equal(actionCounts.refused??0,0);
@@ -176,6 +210,12 @@ if(process.argv.includes('--assert')){
   assert.ok(paidContacts.every(row=>
     row.chaseRace.holdMargin<0&&
     row.chaseRace.slideGapSeconds>0));
+  assert.equal(finishWitness.action,'commit_now');
+  assert.equal(finishWitness.chaseRace?.status,
+    'paid_contact_finish');
+  assert.equal(finishWitness.chaseRace?.catchKm,16);
+  assert.equal(finishWitness.chaseRace?.riderKilometres,600);
+  assert.equal(finishWitness.chaseRace?.finishRiders,24);
   assert.equal(actionCounts.commit_now,3);
   assert.equal(commitWindows.length,3);
   assert.ok(commitWindows.every(row=>
@@ -191,6 +231,6 @@ if(process.argv.includes('--assert')){
 }
 process.stdout.write(JSON.stringify({version:1,
   raceSeed:'same-threat-window-seed',actionCounts,
-  commitWindows,frontEffortProbe,
+  commitWindows,frontEffortProbe,finishWitness,
   ...(process.argv.includes('--verbose')?{results}:{})},
 null,2)+'\n');

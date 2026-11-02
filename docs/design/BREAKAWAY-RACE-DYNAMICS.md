@@ -3663,6 +3663,18 @@ contacts the holding deficits are 3.359 and 0.391 ability points;
 the rider falls 0.630 and 0.346 seconds behind the bunch by the end
 of that kilometre. No wheel or bunch place is granted at contact.
 Later kilometres and finish replay still need a separate source.
+`physical-perceived-chase-slide-race-v1.mjs` now carries one 25-km
+same-seed witness through the full observed finish. The manager
+commits a sprint-team chase at km 12 and a later chase stop at km 20.
+The front rider slows under a committed order, is caught at metre
+15,859.7 on km 16, cannot hold the paid leader, and slides 0.117
+seconds behind by that kilometre's end. The named worker continues
+paying front work; each intervening kilometre explicitly records that
+its chase target has been caught. The later manager phase ends the
+chase order. All 600 rider-kilometre states and 24 finish times
+source-replay, without a wheel or group membership inferred for the
+caught rider. This single flat synthetic case does not calibrate
+whole-race pursuits, fatigue or other contact outcomes.
 
 `audit-physical-bunch-distance.mjs --assert` extends the opt-in
 paid-bunch source to mixed flat, hill, climb, descent and wind routes

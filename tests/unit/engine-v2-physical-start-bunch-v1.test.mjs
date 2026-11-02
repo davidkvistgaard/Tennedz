@@ -94,6 +94,9 @@ import {catchPhysicalPerceivedChaseV1,
 import {slidePerceivedChaseCaughtFrontV1,
   validatePerceivedChaseCaughtSlideV1} from
   '../../lib/engine/v2/physical-perceived-chase-slide-v1.mjs';
+import {replayPhysicalPerceivedChaseSlideRaceV1,
+  validatePhysicalPerceivedChaseSlideRaceV1} from
+  '../../lib/engine/v2/physical-perceived-chase-slide-race-v1.mjs';
 import {runPhysicalRearGroupV1,
   validatePhysicalRearGroupV1} from
   '../../lib/engine/v2/physical-rear-group-run-v1.mjs';
@@ -122,7 +125,8 @@ const source=(teams=field(),routeKilometres=route(),
     riderIds:team.riders.map(rider=>rider.id),
     distanceKm:routeKilometres.length,keypoints,
     allowFrontWork:true,allowNamedFrontWorker:true});
-  const commitment=commitTeamChaseStakesV1({teams,distanceKm:20,
+  const commitment=commitTeamChaseStakesV1({teams,
+    distanceKm:routeKilometres.length,
     keypoints,
     intentions:teams.map(team=>({teamId:team.id,
       baseline:{goal:stakeByTeam[team.id]??'none',
@@ -760,30 +764,32 @@ test('committed physical chase catches a slowing front on paid road',()=>{
   for(const team of teams)for(const rider of team.riders)
     for(const skill of SPORTING_SKILLS)rider[skill]=96;
   for(const rider of teams[1].riders)
-    for(const skill of SPORTING_SKILLS)rider[skill]=100;
+    for(const skill of SPORTING_SKILLS)rider[skill]=98;
   for(const rider of teams[2].riders)
     if(rider.id!=='other-2')
       for(const skill of SPORTING_SKILLS)rider[skill]=100;
   teams[2].orders.phases=[{atKm:1,attack:'selective',
     attackRiderId:'other-2',effort:'hard'},
-  {atKm:10,effort:'conserve'}];
-  teams[0].orders.phases=[{atKm:8,frontWork:'sit_in'}];
-  teams[1].orders.phases=[{atKm:8,
+  {atKm:5,effort:'conserve'}];
+  teams[0].orders.phases=[{atKm:12,frontWork:'sit_in'}];
+  teams[1].orders.phases=[{atKm:12,
     frontWork:'rotate',frontWorkRiderId:'sprint-2',
-    chase:'selective'}];
-  const original=source(teams,route(),{
+    chase:'selective'},{atKm:20,chase:'ignore'}];
+  const longRoute=Array.from({length:25},(_,index)=>({
+    ...route()[0],km:index+1}));
+  const original=source(teams,longRoute,{
     sprint:'sprint_finish',other:'break_stage'},
-  [{km:1},{km:8}]);
+  [{km:1},{km:12}]);
   const startInput={...original.startInput,
     raceSeed:'same-threat-window-seed'};
   const input={startInput,
     start:startPhysicalBunchV1(startInput),
-    attackKm:2,choiceKm:9,observerTeamId:'sprint',
+    attackKm:2,choiceKm:13,observerTeamId:'sprint',
     nominatedChaseTeamIds:['sprint']};
   assert.equal(decidePhysicalFrontThreatV1(input)
     .choice.choice.assessments[0].action,'commit_now');
   let catchKm=null;
-  for(let km=10;km<=20;km++){
+  for(let km=14;km<=25;km++){
     try{runPhysicalPerceivedChaseV1({...input,
       throughKm:km});}
     catch(error){
@@ -791,7 +797,7 @@ test('committed physical chase catches a slowing front on paid road',()=>{
       catchKm=km;break;
     }
   }
-  assert.ok(catchKm!==null);
+  assert.equal(catchKm,16);
   const contactInput={...input,catchKm};
   const contact=catchPhysicalPerceivedChaseV1(contactInput);
   assert.ok(contact.contact.atDistanceM>
@@ -816,6 +822,30 @@ test('committed physical chase catches a slowing front on paid road',()=>{
     contactInput,forged),/differs/);
   assert.throws(()=>slidePerceivedChaseCaughtFrontV1({
     ...slideInput,catchRecord:forged}),/replayed paid contact/);
+  const raceInput={...contactInput,throughKm:25};
+  const race=replayPhysicalPerceivedChaseSlideRaceV1(raceInput);
+  assert.equal(race.kilometres.length,25);
+  assert.ok(race.kilometres.every(km=>
+    km.riderStates.length===24));
+  assert.equal(race.sources.later[0].bunchStep.resolvedChase
+    .caughtRiderId,'other-2');
+  assert.equal(race.sources.later[0].bunchStep.riderDecisions
+    .find(row=>row.riderId==='sprint-2').reason,
+  'caught_chase_target_continued_front_work');
+  assert.equal(race.sources.later.find(row=>
+    row.sourceKm===21).bunchStep.resolvedChase,
+  undefined);
+  assert.ok(race.kilometres.slice(catchKm-1).every(km=>
+    km.riderStates.find(row=>row.riderId==='other-2')
+      .physicalGroupId==='solo-other-2'));
+  assert.equal(Object.keys(
+    race.observedFinishSecondsByRider).length,24);
+  assert.equal(validatePhysicalPerceivedChaseSlideRaceV1(
+    raceInput,race),true);
+  const forgedRace=structuredClone(race);
+  forgedRace.kilometres.at(-1).riderStates[0].energyAfter+=1;
+  assert.throws(()=>validatePhysicalPerceivedChaseSlideRaceV1(
+    raceInput,forgedRace),/differs/);
 });
 
 test('early climb weakness records a paid partial solo and no rear group',()=>{
