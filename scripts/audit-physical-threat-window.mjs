@@ -16,6 +16,11 @@ import {replayPhysicalPerceivedChaseRaceV1,
   '../lib/engine/v2/physical-perceived-chase-race-replay-v1.mjs';
 import {catchPhysicalPerceivedChaseV1} from
   '../lib/engine/v2/physical-perceived-chase-contact-v1.mjs';
+import {slidePerceivedChaseCaughtFrontV1} from
+  '../lib/engine/v2/physical-perceived-chase-slide-v1.mjs';
+import {riderKilometreEffect} from
+  '../lib/engine/v2/physiology.mjs';
+import {TUNING} from '../lib/engine/v2/tuning.mjs';
 
 const route=Array.from({length:20},(_,index)=>({km:index+1,
   terrain:'flat',gradientPct:0,surface:'road',exposed:false,
@@ -98,8 +103,25 @@ function choice({attackerSkill,observerSkill,choiceKm,
           try{
             const contact=catchPhysicalPerceivedChaseV1({
               ...input,catchKm});
+            const frontRider=teams.flatMap(team=>team.riders)
+              .find(rider=>rider.id===contact.contact.riderId);
+            const segment=startInput.routeKilometres[catchKm-1];
+            const holdAbility=riderKilometreEffect(frontRider,
+              segment,{phase:'cruise',
+                energy:contact.frontPartial.energyAtContact,
+                exposed:segment.exposed}).ability+
+              (TUNING.effortPressure[
+                contact.frontDecision.teamOrderEffort]-1)*20+
+              TUNING.breakaway.bunchDraftAdvantage;
+            const leaderAbility=contact.bunchStep.riders.find(
+              row=>row.riderId===contact.bunchStep.leaderRiderId)
+              .holdAbility;
+            const slide=slidePerceivedChaseCaughtFrontV1({
+              ...input,catchKm,catchRecord:contact});
             chaseRace={status:'paid_contact',catchKm,
               contactAtM:+contact.contact.atDistanceM.toFixed(1),
+              holdMargin:+(holdAbility-leaderAbility).toFixed(3),
+              slideGapSeconds:+slide.gapSecondsToBunch.toFixed(3),
               remainingKmUnsettled:true};
             break;
           }catch{continue;}
@@ -151,6 +173,9 @@ if(process.argv.includes('--assert')){
   assert.equal(paidContacts.length,2);
   assert.deepEqual(paidContacts.map(row=>row.chaseRace.catchKm),
     [19,16]);
+  assert.ok(paidContacts.every(row=>
+    row.chaseRace.holdMargin<0&&
+    row.chaseRace.slideGapSeconds>0));
   assert.equal(actionCounts.commit_now,3);
   assert.equal(commitWindows.length,3);
   assert.ok(commitWindows.every(row=>

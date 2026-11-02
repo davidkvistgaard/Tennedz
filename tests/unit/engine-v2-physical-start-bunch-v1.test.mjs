@@ -91,6 +91,9 @@ import {replayPhysicalPerceivedChaseRaceV1,
 import {catchPhysicalPerceivedChaseV1,
   validatePhysicalPerceivedChaseContactV1} from
   '../../lib/engine/v2/physical-perceived-chase-contact-v1.mjs';
+import {slidePerceivedChaseCaughtFrontV1,
+  validatePerceivedChaseCaughtSlideV1} from
+  '../../lib/engine/v2/physical-perceived-chase-slide-v1.mjs';
 import {runPhysicalRearGroupV1,
   validatePhysicalRearGroupV1} from
   '../../lib/engine/v2/physical-rear-group-run-v1.mjs';
@@ -799,10 +802,20 @@ test('committed physical chase catches a slowing front on paid road',()=>{
   assert.ok(contact.frontPartial.energySpent>0);
   assert.equal(validatePhysicalPerceivedChaseContactV1(
     contactInput,contact),true);
+  const slideInput={...contactInput,catchRecord:contact};
+  const slide=slidePerceivedChaseCaughtFrontV1(slideInput);
+  assert.equal(slide.decision.reason,
+    'cannot_hold_paid_bunch_pace');
+  assert.ok(slide.gapSecondsToBunch>0);
+  assert.ok(slide.energyAfter>=0);
+  assert.equal(validatePerceivedChaseCaughtSlideV1(
+    slideInput,slide),true);
   const forged=structuredClone(contact);
   forged.contact.clockSeconds+=1;
   assert.throws(()=>validatePhysicalPerceivedChaseContactV1(
     contactInput,forged),/differs/);
+  assert.throws(()=>slidePerceivedChaseCaughtFrontV1({
+    ...slideInput,catchRecord:forged}),/replayed paid contact/);
 });
 
 test('early climb weakness records a paid partial solo and no rear group',()=>{

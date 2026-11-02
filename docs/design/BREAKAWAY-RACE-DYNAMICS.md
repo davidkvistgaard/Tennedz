@@ -3656,6 +3656,13 @@ at metre 18,510.3 and km 16 at metre 15,397.3. The contact remainder,
 caught rider's position after contact and all later finishes are
 explicitly unsettled. This does not establish realistic pursuit
 timing or permit routing to guided races.
+`physical-perceived-chase-slide-v1.mjs` now pays the caught rider's
+remaining contact kilometre as a separate solo only when measured
+holding ability is below the named bunch leader's pace. In those two
+contacts the holding deficits are 3.359 and 0.391 ability points;
+the rider falls 0.630 and 0.346 seconds behind the bunch by the end
+of that kilometre. No wheel or bunch place is granted at contact.
+Later kilometres and finish replay still need a separate source.
 
 `audit-physical-bunch-distance.mjs --assert` extends the opt-in
 paid-bunch source to mixed flat, hill, climb, descent and wind routes
