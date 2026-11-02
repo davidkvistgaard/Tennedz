@@ -37,9 +37,13 @@ import {inspectFirstStaggeredSoloFieldContactV1,
 import {inspectPhysicalStaggeredLossKmContactsV1,
   validatePhysicalStaggeredLossKmContactsV1} from
   '../../lib/engine/v2/physical-staggered-loss-km-contact-v1.mjs';
-import {finishPhysicalLossKmContactV1} from
+import {finishPhysicalLossKmContactV1,
+  finishPhysicalSoloFieldContactKmV1,
+  validatePhysicalSoloFieldContactKmV1} from
   '../../lib/engine/v2/physical-loss-km-contact-road-v1.mjs';
-import {runPhysicalLossKmRearPairV1} from
+import {runPhysicalLossKmRearPairV1,
+  runPhysicalSoloFieldRearPairV1,
+  validatePhysicalSoloFieldRearPairV1} from
   '../../lib/engine/v2/physical-loss-km-rear-pair-v1.mjs';
 import {replayPhysicalStaggeredRaceV1,
   validatePhysicalStaggeredRaceV1} from
@@ -369,14 +373,38 @@ test('different paid kilometres remove only physically dropped riders',()=>{
     staggered:catchingSource,throughKm:20};
   const catchingField=probePhysicalStaggeredSoloFieldV1(
     catchingFieldInput);
-  const firstCatchingContact=
+  const catchingFieldContact=
     inspectFirstStaggeredSoloFieldContactV1({
       ...catchingInput,staggered:catchingSource,
-      soloField:catchingField}).firstContact;
+      soloField:catchingField});
+  const firstCatchingContact=catchingFieldContact
+    .firstContact;
   assert.equal(firstCatchingContact.sourceKm,
     contacts[0].contactKm);
   assert.ok(Math.abs(firstCatchingContact.atDistanceM-
     contacts[0].contact.contactAtDistanceM)<1e-5);
+  const fieldRoadInput={...catchingInput,
+    staggered:catchingSource,soloField:catchingField,
+    fieldContact:catchingFieldContact};
+  const fieldRoad=finishPhysicalSoloFieldContactKmV1(
+    fieldRoadInput);
+  assert.equal(fieldRoad.riders.filter(row=>
+    row.role==='leader').length,1);
+  assert.equal(fieldRoad.riders.filter(row=>
+    row.role==='sheltered').length,1);
+  assert.equal(validatePhysicalSoloFieldContactKmV1(
+    fieldRoadInput,fieldRoad),true);
+  const fieldPairInput={...fieldRoadInput,
+    contactRoad:fieldRoad,throughKm:20};
+  const fieldPair=runPhysicalSoloFieldRearPairV1(
+    fieldPairInput);
+  assert.equal(fieldPair.steps.length,
+    20-firstCatchingContact.sourceKm);
+  assert.ok(fieldPair.steps.every(step=>
+    step.riders.filter(row=>
+      row.role==='leader').length===1));
+  assert.equal(validatePhysicalSoloFieldRearPairV1(
+    fieldPairInput,fieldPair),true);
   assert.equal(validatePhysicalStaggeredSoloContactV1(
     contacts[0].contactInput,contacts[0].contact),true);
   assert.ok(contacts[0].contact.contactAtDistanceM>

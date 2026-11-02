@@ -4126,3 +4126,10 @@ case: within km 26 at fatigue 30, and near metre 30,097 in km 31 at
 fatigue 10. Only the path up to that first contact is sourced as a
 separate-solo race. The later paths must be recomputed with the new
 physical group and all remaining riders.
+
+The later km-31 contact has a source-replayed paid remainder. The
+catching rider team-4-3 takes the first exposed turn while team-3-3
+pays shelter. The isolated pair then alternates one paid leader and one
+sheltered rider for another 89 or 229 km through the 120 or 260 km
+course end. Those clocks still exclude interactions with the other
+detached riders, so they cannot be published as whole-race results.
