@@ -28,13 +28,14 @@ import {TUNING} from '../lib/engine/v2/tuning.mjs';
 const route=Array.from({length:20},(_,index)=>({km:index+1,
   terrain:'flat',gradientPct:0,surface:'road',exposed:false,
   weather:{temperatureC:16,windKph:0,rainMm:0}}));
-const field=()=>['control','sprint','other'].map(id=>{
+const field=(fatigue=20)=>['control','sprint','other'].map(id=>{
   const riders=Array.from({length:8},(_,number)=>({
-    id:`${id}-${number}`,form:50,fatigue:20,
+    id:`${id}-${number}`,form:50,fatigue,
     ...Object.fromEntries(SPORTING_SKILLS.map(skill=>
       [skill,96]))}));
   return {id,riders,
-    energy:Object.fromEntries(riders.map(row=>[row.id,92])),
+    energy:Object.fromEntries(riders.map(row=>[
+      row.id,100-fatigue*.4])),
     orders:{captainId:riders[0].id,
       helperIds:riders.slice(2).map(row=>row.id),
       baseline:{effort:'steady',attack:'none',chase:'ignore',
@@ -44,10 +45,21 @@ const field=()=>['control','sprint','other'].map(id=>{
 
 function choice({attackerSkill,observerSkill,choiceKm,
   frontConserveAtKm=null,distanceKm=20,
-  stopChaseAtKm=null,settleFinish=false}){
+  stopChaseAtKm=null,settleFinish=false,
+  fatigue=20,roadVariant='flat'}){
   const road=Array.from({length:distanceKm},(_,index)=>({
-    ...route[0],km:index+1}));
-  const teams=field();
+    ...route[0],km:index+1,
+    ...(index+1>=14&&index+1<=18&&
+      roadVariant==='hill_mid'?{
+      terrain:'hill',gradientPct:4}:{}),
+    ...(index+1>=14&&index+1<=18&&
+      roadVariant==='climb_mid'?{
+      terrain:'climb',gradientPct:6}:{}),
+    ...(index+1>=14&&index+1<=18&&
+      roadVariant==='wind_mid'?{
+      exposed:true,weather:{temperatureC:16,
+        windKph:20,rainMm:0}}:{})}));
+  const teams=field(fatigue);
   for(const skill of SPORTING_SKILLS){
     teams[2].riders[2][skill]=attackerSkill;
     for(const rider of teams[1].riders)
@@ -157,6 +169,8 @@ function choice({attackerSkill,observerSkill,choiceKm,
     }
   }
   return {attackerSkill,observerSkill,choiceKm,
+    ...(fatigue===20?{}:{fatigue}),
+    ...(roadVariant==='flat'?{}:{roadVariant}),
     ...(distanceKm===20?{}:{distanceKm}),
     ...(stopChaseAtKm===null?{}:{stopChaseAtKm}),
     ...(settleFinish?{settleFinish:true}:{}),
@@ -199,6 +213,27 @@ const finishWitness=choice({attackerSkill:96,
   observerSkill:98,choiceKm:13,
   frontConserveAtKm:5,distanceKm:25,
   stopChaseAtKm:20,settleFinish:true});
+const calibration=process.argv.includes('--calibration')?
+  [
+    {attackerSkill:94,observerSkill:97,choiceKm:13,
+      frontConserveAtKm:10},
+    {attackerSkill:95,observerSkill:100,choiceKm:13,
+      frontConserveAtKm:10},
+    {attackerSkill:96,observerSkill:98,choiceKm:13,
+      frontConserveAtKm:5},
+    {attackerSkill:97,observerSkill:99,choiceKm:9,
+      frontConserveAtKm:5},
+    {attackerSkill:97,observerSkill:100,choiceKm:13,
+      frontConserveAtKm:5},
+  ].flatMap(variant=>[10,20,40].flatMap(fatigue=>
+    ['flat','hill_mid','climb_mid','wind_mid'].map(
+      roadVariant=>{
+        const input={...variant,fatigue,roadVariant,
+          distanceKm:25,stopChaseAtKm:20,
+          settleFinish:true};
+        try{return choice(input);}
+        catch(error){return {...input,refused:error.message};}
+      }))):undefined;
 if(process.argv.includes('--assert')){
   assert.equal(results.length,384);
   assert.equal(actionCounts.refused??0,0);
@@ -228,9 +263,25 @@ if(process.argv.includes('--assert')){
     row.chaseRace.finishRiders===24));
   assert.ok(actionCounts.watch>0&&
     actionCounts.capacity_shortfall>0);
+  if(calibration!==undefined){
+    assert.equal(calibration.length,60);
+    assert.ok(calibration.every(row=>!row.refused));
+    const finishes=calibration.filter(row=>
+      row.chaseRace?.status==='paid_contact_finish');
+    assert.equal(finishes.length,15);
+    assert.ok(finishes.every(row=>
+      row.chaseRace.riderKilometres===600&&
+      row.chaseRace.finishRiders===24&&
+      row.chaseRace.holdMargin<0&&
+      row.chaseRace.slideGapSeconds>0));
+    assert.ok(finishes.some(row=>row.roadVariant==='hill_mid'));
+    assert.ok(finishes.some(row=>row.roadVariant==='wind_mid'));
+    assert.ok(finishes.some(row=>row.fatigue===40));
+  }
 }
 process.stdout.write(JSON.stringify({version:1,
   raceSeed:'same-threat-window-seed',actionCounts,
   commitWindows,frontEffortProbe,finishWitness,
+  ...(calibration===undefined?{}:{calibration}),
   ...(process.argv.includes('--verbose')?{results}:{})},
 null,2)+'\n');

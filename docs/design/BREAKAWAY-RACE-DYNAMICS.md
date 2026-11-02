@@ -3675,6 +3675,16 @@ chase order. All 600 rider-kilometre states and 24 finish times
 source-replay, without a wheel or group membership inferred for the
 caught rider. This single flat synthetic case does not calibrate
 whole-race pursuits, fatigue or other contact outcomes.
+`audit-physical-threat-window.mjs --calibration --assert` varies
+five perceived chase roles, three initial fatigue levels (10, 20,
+40), and flat, mid-route hill, climb and exposed-wind road across
+60 same-seed 25-km cases. Fifteen choose a chase, make paid contact,
+slide and source-replay all 600 rider-kilometre states and 24 finish
+times. Thirty-eight choose watch and seven report capacity shortfall;
+those do not simulate a committed chase. No climb case reaches the
+contact-finish branch in this matrix. Some wind cases reproduce the
+same contact metre as calm road. These are specific calibration gaps,
+not evidence of complete long-race realism.
 
 `audit-physical-bunch-distance.mjs --assert` extends the opt-in
 paid-bunch source to mixed flat, hill, climb, descent and wind routes
