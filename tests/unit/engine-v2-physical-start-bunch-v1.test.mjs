@@ -813,6 +813,12 @@ test('committed physical chase catches a slowing front on paid road',()=>{
   assert.equal(horizon.movesRoad,false);
   assert.equal(validatePhysicalObserverPursuitHorizonV1(
     horizonInput,horizon),true);
+  const privateFuture=structuredClone(startInput);
+  privateFuture.teams[2].orders.phases.push({atKm:20,
+    effort:'hard'});
+  assert.deepEqual(estimatePhysicalObserverPursuitHorizonV1({
+    ...horizonInput,startInput:privateFuture,
+    start:startPhysicalBunchV1(privateFuture)}),horizon);
   const forgedHorizon=structuredClone(horizon);
   forgedHorizon.predictedContact.atDistanceM+=100;
   assert.throws(()=>

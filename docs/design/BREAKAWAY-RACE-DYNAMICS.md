@@ -3723,6 +3723,10 @@ predicts the correct catch kilometre. On flat road its contact point
 is within 15 metres of the paid source; hill and wind cases differ by
 as much as 585 metres. This forecast is diagnostic and does not
 replace the still-unreliable action policy or prove pursuit realism.
+Changing the rival's private future effort order, while replaying the
+same paid start, leaves this observer projection unchanged. The
+forecast uses observed road and perceived strength rather than
+peeking at that order.
 
 `audit-physical-bunch-distance.mjs --assert` extends the opt-in
 paid-bunch source to mixed flat, hill, climb, descent and wind routes
