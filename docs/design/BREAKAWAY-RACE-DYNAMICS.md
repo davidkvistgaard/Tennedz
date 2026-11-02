@@ -3613,3 +3613,21 @@ decision kilometre. It finds 79 `watch` and 302
 That thin and sometimes physically ineffective commitment window
 must be reconciled with actual turn rotation, energy and race
 length before the chase policy can be routed into a whole race.
+
+`audit-physical-bunch-distance.mjs --assert` extends the opt-in
+paid-bunch source to mixed flat, hill, climb, descent and wind routes
+of 20, 80, 160 and 260 kilometres. All 12 equal-skill same-seed
+combinations at initial fatigue 10, 20 and 40 finish with 24
+physically present riders, nonnegative energy and named paid leaders.
+At 260 kilometres a 90-skill first worker physically loses the bunch
+at km 6, metre 5,991.8; a weak climber loses it at km 21, metre
+20,963.6. Each is the only split rider. A manager order that later
+names either detached rider to lead correctly refuses the continuation.
+When the manager has instead committed a different named worker for
+those later phases before the race, both detached riders complete
+their own paid solo road while the other 23 continue. Both 260-km
+recordings source-replay 6,240 rider-kilometre states and all 24
+observed finishes. These are synthetic single-loss witnesses; they
+do not establish calibrated long-race fatigue, multiple simultaneous
+groups, new paid contact or an effective perceived chase. The 260-km
+replay remains separate from guided races and production.
