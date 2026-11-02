@@ -104,6 +104,9 @@ import {estimatePhysicalObserverPursuitHorizonV1,
 import {runPhysicalManagerChaseCounterfactualV1,
   validatePhysicalManagerChaseCounterfactualV1} from
   '../../lib/engine/v2/physical-manager-chase-counterfactual-v1.mjs';
+import {completePhysicalManagerChaseContactKmV1,
+  validatePhysicalManagerChaseContactKmV1} from
+  '../../lib/engine/v2/physical-manager-chase-contact-km-v1.mjs';
 import {runPhysicalRearGroupV1,
   validatePhysicalRearGroupV1} from
   '../../lib/engine/v2/physical-rear-group-run-v1.mjs';
@@ -939,6 +942,20 @@ test('committed physical chase catches a slowing front on paid road',()=>{
   forgedManagerRoad.contact.clockSeconds+=1;
   assert.throws(()=>validatePhysicalManagerChaseCounterfactualV1(
     hillInput,forgedManagerRoad),/differs/);
+  const managerContactInput={...hillInput,
+    paidProbe:managerRoad};
+  const managerContact=completePhysicalManagerChaseContactKmV1(
+    managerContactInput);
+  assert.equal(managerContact.riderStates.length,24);
+  assert.ok(managerContact.gapSecondsToBunch>0);
+  assert.equal(managerContact.riderStates.find(row=>
+    row.riderId==='other-2').physicalGroupId,
+  'solo-other-2');
+  assert.equal(validatePhysicalManagerChaseContactKmV1(
+    managerContactInput,managerContact),true);
+  assert.throws(()=>completePhysicalManagerChaseContactKmV1({
+    ...managerContactInput,paidProbe:forgedManagerRoad}),
+  /replayed paid meeting/);
 });
 
 test('early climb weakness records a paid partial solo and no rear group',()=>{

@@ -27,6 +27,9 @@ import {estimatePhysicalObserverPursuitHorizonV1,
 import {runPhysicalManagerChaseCounterfactualV1,
   validatePhysicalManagerChaseCounterfactualV1} from
   '../lib/engine/v2/physical-manager-chase-counterfactual-v1.mjs';
+import {completePhysicalManagerChaseContactKmV1,
+  validatePhysicalManagerChaseContactKmV1} from
+  '../lib/engine/v2/physical-manager-chase-contact-km-v1.mjs';
 import {riderKilometreEffect} from
   '../lib/engine/v2/physiology.mjs';
 import {TUNING} from '../lib/engine/v2/tuning.mjs';
@@ -150,6 +153,22 @@ function choice({attackerSkill,observerSkill,choiceKm,
       contactAtM:paid.contact?
         +paid.contact.atDistanceM.toFixed(1):null,
       steps:paid.steps.length};
+      if(paid.contact){
+        const contactInput={...paidInput,paidProbe:paid};
+        try{
+          const completion=completePhysicalManagerChaseContactKmV1(
+            contactInput);
+          validatePhysicalManagerChaseContactKmV1(
+            contactInput,completion);
+          counterfactual.contactKmCompletion={status:'slide',
+            fullFieldRiders:completion.riderStates.length,
+            gapSeconds:+completion.gapSecondsToBunch
+              .toFixed(3)};
+        }catch(error){
+          counterfactual.contactKmCompletion={
+            status:'unsettled',reason:error.message};
+        }
+      }
     }catch(error){counterfactual={status:'refused',
       reason:error.message};}
   }
@@ -389,6 +408,12 @@ const counterfactualCross=policyCross&&
   orderStopped:[...calibration,...longCalibration,
     ...longTerrainCalibration].filter(row=>
     row.counterfactual?.status==='order_stopped').length,
+  fullContactKmSlides:[...calibration,...longCalibration,
+    ...longTerrainCalibration].filter(row=>
+    row.counterfactual?.contactKmCompletion?.status===
+      'slide'&&row.counterfactual.contactKmCompletion
+      .fullFieldRiders===24&&row.counterfactual
+      .contactKmCompletion.gapSeconds>0).length,
   sameCatchKm:[...calibration,...longCalibration,
     ...longTerrainCalibration].filter(row=>
     row.counterfactual?.status==='paid_contact'&&
@@ -504,6 +529,7 @@ if(process.argv.includes('--assert')){
       .paidContactByAction,{watch:59,commit_now:18,
         capacity_shortfall:15});
     assert.equal(counterfactualCross.orderStopped,22);
+    assert.equal(counterfactualCross.fullContactKmSlides,92);
     assert.ok(counterfactualCross.sameCatchKm>0);
     assert.ok(counterfactualCross.maxCatchKmError<=2);
   }
