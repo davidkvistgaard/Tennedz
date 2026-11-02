@@ -3291,3 +3291,17 @@ An explicit next-kilometre `sit_in` order for that controller now
 refuses the continuation instead of silently retaining their paid
 front role. Another payable bunch leader would need their own recorded
 order, turn and source-replayed road.
+
+The V1 consecutive solo run repeats one conservative decision; it is
+not a fresh rider choice at every kilometre. An opt-in V2 run now
+requires `rear-solo-commitment-v1.mjs` before the race. The rider's
+goal and effort can change only after a committed route marker, and
+each later kilometre derives its decision from that plan while using
+the current paid energy and the controller's active order. An effort
+above the team's order, an unpayable road, or a future-stage goal
+without a valid stage plan and retained reserve is refused. A focused
+same-source case changes from conserving to a committed steady rejoin
+attempt after km 15 and pays more energy than the V1 continuation;
+tampered energy fails replay. V1 remains unchanged. V2 still models
+only the detached rider and named controller, lacks the prior absolute
+race clock and is not routed to guided races or official results.

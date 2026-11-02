@@ -30,8 +30,12 @@ import {advanceControlCaughtFrontSlideV1,
 import {advanceControlCaughtRearSoloV1,
   validateControlCaughtRearSoloV1,
   runControlCaughtRearSoloV1,
-  validateControlCaughtRearRunV1} from
+  validateControlCaughtRearRunV1,
+  runControlCaughtRearSoloV2,
+  validateControlCaughtRearRunV2} from
   '../../lib/engine/v2/isolated-control-caught-rear-solo-v1.mjs';
+import {commitRearSoloPlanV1,rearSoloPlanAtKmV1} from
+  '../../lib/engine/v2/rear-solo-commitment-v1.mjs';
 
 const team=(id,skill)=>{
   const riders=Array.from({length:8},(_,number)=>({
@@ -178,6 +182,61 @@ test('a strong paid controller can make contact without observer chase',()=>{
   assert.equal(run.officialResults,false);
   assert.equal(validateControlCaughtRearRunV1(
     runInput,run),true);
+  const commitment=commitRearSoloPlanV1({riderId:'front-0',
+    distanceKm:30,stageNumber:1,stageCount:1,
+    baseline:{goal:'finish_safely',effort:'conserve'},
+    phases:[{atKm:15,goal:'rejoin_bunch',effort:'steady'}]});
+  assert.deepEqual(rearSoloPlanAtKmV1({commitment,km:15}),
+    {riderId:'front-0',action:'finish_safely',effort:'conserve'});
+  assert.deepEqual(rearSoloPlanAtKmV1({commitment,km:16}),
+    {riderId:'front-0',action:'rejoin_bunch',effort:'steady'});
+  const committedInput={...runInput,commitment};
+  const committedRun=runControlCaughtRearSoloV2(committedInput);
+  assert.equal(committedRun.steps.at(-1).sourceKm,30);
+  assert.equal(committedRun.steps.find(row=>row.sourceKm===16)
+    .soloDecision.action,'rejoin_bunch');
+  assert.ok(committedRun.energyByRider['front-0']<
+    run.energyByRider['front-0']);
+  assert.equal(validateControlCaughtRearRunV2(
+    committedInput,committedRun),true);
+  const forgedCommitted=structuredClone(committedRun);
+  forgedCommitted.steps[0].riders[0].energySpent=0;
+  assert.throws(()=>validateControlCaughtRearRunV2(
+    committedInput,forgedCommitted),/differs/);
+  assert.throws(()=>commitRearSoloPlanV1({riderId:'front-0',
+    distanceKm:30,stageNumber:1,stageCount:2,
+    baseline:{goal:'save_for_stage',effort:'conserve'}}),
+  /pre-race goal/);
+  const overOrder=commitRearSoloPlanV1({riderId:'front-0',
+    distanceKm:30,stageNumber:1,stageCount:1,
+    baseline:{goal:'finish_safely',effort:'conserve'},
+    phases:[{atKm:15,goal:'rejoin_bunch',effort:'hard'}]});
+  assert.throws(()=>runControlCaughtRearSoloV2({
+    ...committedInput,commitment:overOrder}),
+  /conflicts with team effort/);
+  const futureStage=commitRearSoloPlanV1({riderId:'front-0',
+    distanceKm:30,stageNumber:1,stageCount:2,
+    baseline:{goal:'finish_safely',effort:'conserve'},
+    phases:[{atKm:15,goal:'save_for_stage',effort:'conserve',
+      committedStagePlan:{riderId:'front-0',
+        currentStageNumber:1,targetStageNumber:2,
+        currentGoal:'finish_safely',futureGoal:'target_stage',
+        reserveEnergy:0}}]});
+  const futureRun=runControlCaughtRearSoloV2({
+    ...committedInput,commitment:futureStage});
+  assert.equal(futureRun.steps.find(row=>row.sourceKm===16)
+    .soloDecision.action,'save_for_stage');
+  const impossibleReserve=commitRearSoloPlanV1({riderId:'front-0',
+    distanceKm:30,stageNumber:1,stageCount:2,
+    baseline:{goal:'finish_safely',effort:'conserve'},
+    phases:[{atKm:15,goal:'save_for_stage',effort:'conserve',
+      committedStagePlan:{riderId:'front-0',
+        currentStageNumber:1,targetStageNumber:2,
+        currentGoal:'finish_safely',futureGoal:'target_stage',
+        reserveEnergy:100}}]});
+  assert.throws(()=>runControlCaughtRearSoloV2({
+    ...committedInput,commitment:impossibleReserve}),
+  /cannot retain committed stage reserve/);
   const forgedRun=structuredClone(run);
   forgedRun.steps[1].behindBunchSeconds=0;
   assert.throws(()=>validateControlCaughtRearRunV1(
