@@ -38,6 +38,8 @@ import {inspectNextRearPairFieldContactV1} from
 import {finishPhysicalSecondRearPairContactV1,
   runPhysicalSecondRearPairV1} from
   '../lib/engine/v2/physical-second-rear-pair-v1.mjs';
+import {inspectTwoRearPairsFieldContactV1} from
+  '../lib/engine/v2/physical-two-rear-pairs-field-contact-v1.mjs';
 import {partitionPhysicalSimultaneousLossV1,
   validatePhysicalSimultaneousLossPartitionV1,
   contactPhysicalSimultaneousLossV1,
@@ -307,6 +309,7 @@ function audit(distanceKm,fatigue,variant){
               paidContactRemainders[0],
             pair:paidPairSource}):null;
         let secondRearPair=null;
+        let thirdContact=null;
         if(nextContact?.nextContacts.length===1&&
           nextContact.nextContacts[0].kind===
             'two_other_solos_meet'){
@@ -321,6 +324,9 @@ function audit(distanceKm,fatigue,variant){
           const pair=runPhysicalSecondRearPairV1({
             ...secondInput,secondContactRoad:road,
             throughKm:distanceKm});
+          thirdContact=inspectTwoRearPairsFieldContactV1({
+            ...secondInput,secondContactRoad:road,
+            secondPair:pair});
           secondRearPair={sourceKm:road.sourceKm,
             contactMetres:road.startDistanceM,
             leaderRiderId:road.leaderRiderId,
@@ -364,6 +370,7 @@ function audit(distanceKm,fatigue,variant){
           rearPairContinuation,
           nextContact:nextContact?.nextContacts??[],
           secondRearPair,
+          thirdContact:thirdContact?.nextContacts??[],
           separateArrivalSolos:
             arrivals.separateSoloRiderIds.length,
           lossKilometres:[...new Set(staggered.losses
@@ -824,6 +831,21 @@ if(process.argv.includes('--assert-varied')){
     assert.equal(second.paidShelterEveryKm,true);
     assert.equal(second.leaders.length,2);
     assert.equal(second.otherRidersUnsettled,true);
+    const third=row.staggeredScale.thirdContact;
+    assert.equal(third.length,1);
+    assert.equal(third[0].sourceKm,31);
+    assert.ok(third[0].atDistanceM>30000&&
+      third[0].atDistanceM<31000);
+    assert.ok(third[0].riders.every(rider=>
+      rider.energyAtContact>=0));
+    if(row.fatigue===10){
+      assert.equal(third[0].kind,
+        'rear_pair_meets_solo');
+      assert.equal(third[0].roadIds[1],
+        'team-14-6');
+    }else
+      assert.equal(third[0].kind,
+        'rear_pair_meets_rear_pair');
     if(row.fatigue===10){
       const road=row.staggeredScale
         .laterFieldContactRoad;

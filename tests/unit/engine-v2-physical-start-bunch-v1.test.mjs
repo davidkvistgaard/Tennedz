@@ -50,6 +50,8 @@ import {inspectNextRearPairFieldContactV1,
   '../../lib/engine/v2/physical-rear-pair-field-contact-v1.mjs';
 import {finishPhysicalSecondRearPairContactV1} from
   '../../lib/engine/v2/physical-second-rear-pair-v1.mjs';
+import {inspectTwoRearPairsFieldContactV1} from
+  '../../lib/engine/v2/physical-two-rear-pairs-field-contact-v1.mjs';
 import {replayPhysicalStaggeredRaceV1,
   validatePhysicalStaggeredRaceV1} from
   '../../lib/engine/v2/physical-staggered-race-replay-v1.mjs';
@@ -421,6 +423,10 @@ test('different paid kilometres remove only physically dropped riders',()=>{
     ...nextInput,secondContact:{kind:
       'two_other_solos_meet'}}),
   /exact paid solo contact/);
+  assert.throws(()=>inspectTwoRearPairsFieldContactV1({
+    ...nextInput,secondContact:{kind:
+      'two_other_solos_meet'}}),
+  /paid second contact/);
   assert.equal(validateNextRearPairFieldContactV1(
     nextInput,next),true);
   const forgedNext=structuredClone(next);

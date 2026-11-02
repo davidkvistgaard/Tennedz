@@ -4150,3 +4150,11 @@ sheltered terrain cost. Each then has a decision, energy debit and
 alternating single-leader isolated pair road to km 120 or 260. The
 first rear pair and other detached riders still have unresolved later
 encounters, so these isolated end clocks are not whole-field finishes.
+
+A two-pair replay now inspects both groups and every remaining solo
+without merging them. The next chronological km-31 contact differs by
+fatigue: at fatigue 10 the first pair catches team-14-6 around metre
+30,302; at fatigue 30 the second pair catches the first pair around
+metre 30,758. The inspector records each involved rider's paid energy
+at that point. The common road after the encounter, subsequent
+contacts and the full field finish remain unpriced.
