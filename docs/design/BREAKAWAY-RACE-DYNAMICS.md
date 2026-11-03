@@ -5346,6 +5346,9 @@ The matrix also checks each explicit `committedTeamStake` and each
 stake-coded decision goal against the team's active source commitment
 on that kilometre. This checks recorded intent against the declared
 sporting goal; action goals such as finishing safely remain distinct.
+The same audit requires each rider state to cite its enclosing source
+kilometre and checks any decision-level kilometre or team ID against
+that rider's recorded frame and roster.
 
 The version 5 gate checks that every rider-kilometre has finite,
 nonnegative energy, a forward-moving observed road clock and a

@@ -453,6 +453,9 @@ if(process.argv.includes('--probe-front-rear-threat')){
       missingVersionByReason:{},
       orderEffortMismatch:0,
       committedStakeMismatch:0,
+      stateSourceKmMismatch:0,
+      decisionSourceKmMismatch:0,
+      decisionTeamMismatch:0,
       effortExceedsOrder:0,unknownEffort:0,
       invalidEnergy:0,invalidClock:0,
       nonForwardClock:0,missingGroupId:0,
@@ -473,6 +476,8 @@ if(process.argv.includes('--probe-front-rear-threat')){
           teamId:team.id,km:km.sourceKm}).goal]));
       for(const state of km.riderStates){
         summary.riderKilometres++;
+        if(state.sourceKm!==km.sourceKm)
+          summary.stateSourceKmMismatch++;
         if(!riderIds.has(state.riderId))
           summary.unknownRiderState++;
         if(seenRiders.has(state.riderId))
@@ -509,6 +514,12 @@ if(process.argv.includes('--probe-front-rear-threat')){
             summary.missingChoice++;
           if(decision?.riderId!==state.riderId)
             summary.missingRiderId++;
+          if(decision?.sourceKm!==undefined&&
+            decision.sourceKm!==km.sourceKm)
+            summary.decisionSourceKmMismatch++;
+          if(decision?.teamId!==undefined&&
+            decision.teamId!==teamByRider.get(state.riderId))
+            summary.decisionTeamMismatch++;
           const missingReason=typeof decision?.reason!==
             'string'||!decision.reason.trim();
           const missingGoal=typeof decision?.goal!==

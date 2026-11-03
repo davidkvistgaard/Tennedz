@@ -101,6 +101,10 @@ function runCase({roster,fatigue,distance}){
           ?.orderEffortMismatch,0);
         assert.equal(result.decisionCoverage
           ?.committedStakeMismatch,0);
+        for(const field of ['stateSourceKmMismatch',
+          'decisionSourceKmMismatch','decisionTeamMismatch'])
+          assert.equal(result.decisionCoverage
+            ?.[field],0);
         assert.equal(result.decisionCoverage
           ?.effortExceedsOrder,0);
         for(const field of ['invalidEnergy',
