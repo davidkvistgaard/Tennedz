@@ -4229,3 +4229,14 @@ ambiguous contact among equal paid trajectories: it has no measured
 catching road to establish a physical wheel. This case remains open;
 the replay does not form a rear group by assuming those riders are
 together.
+
+A same-seed 160-rider captain audit changes one team's named captain
+and committed sprint stake while holding the first paid rear contact
+at km 31, metre 30,097.365217 and the same clock and contact energy.
+The baseline catcher joins that road; the named sprint captain passes
+through the observed slower road. Four pass-through contacts are
+recorded over 120 km, each rider still has a decision each kilometre,
+and all 160 finish clocks replay. That captain later joins a different
+measured road when its own contact choice allows it. This demonstrates
+a role-and-stake dependent choice on identical observed contact, but
+does not calibrate how often a sprint captain should do so in a race.

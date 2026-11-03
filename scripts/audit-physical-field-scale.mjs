@@ -116,7 +116,8 @@ function source(distanceKm,fatigue,variant){
     teams[19].riders[7].mountain=31;
     teams[19].riders[7].descending=0;
   }
-  if(variant==='varied_field')
+  if(variant==='varied_field'||
+    variant==='varied_captain')
     for(let teamIndex=0;teamIndex<teams.length;
       teamIndex++){
       const team=teams[teamIndex];
@@ -135,8 +136,16 @@ function source(distanceKm,fatigue,variant){
         team.energy[rider.id]=100-rider.fatigue*.4;
       }
     }
-  const workerChoices=variant==='varied_field'?
-    teams.map(team=>team.riders.slice(2).sort((a,b)=>{
+  if(variant==='varied_captain'){
+    teams[4].orders.captainId='team-4-3';
+    teams[4].orders.helperIds=teams[4].orders
+      .helperIds.filter(id=>id!=='team-4-3');
+  }
+  const workerChoices=(variant==='varied_field'||
+    variant==='varied_captain')?
+    teams.map(team=>team.riders.slice(2)
+      .filter(row=>team.orders.helperIds.includes(
+        row.id)).sort((a,b)=>{
       const score=rider=>rider.flat+rider.hills+
         rider.mountain+rider.endurance+
         rider.form-rider.fatigue;
@@ -165,12 +174,14 @@ function source(distanceKm,fatigue,variant){
       allowNamedFrontWorker:true});
   const commitment=commitTeamChaseStakesV1({teams,
     distanceKm,intentions:teams.map((team,index)=>({
-      teamId:team.id,baseline:{goal:index===0?
+      teamId:team.id,baseline:{goal:index===0||
+        variant==='varied_captain'&&index===4?
         'sprint_finish':'none',
-      captainId:team.riders[0].id},phases:[]}))});
+      captainId:team.orders.captainId},phases:[]}))});
   const startInput={teams,routeKilometres:route(distanceKm),
     commitment,raceSeed:'physical-20-team-scale-1',
-    ...(variant==='varied_field'?{
+    ...(['varied_field','varied_captain'].includes(
+      variant)?{
       physicalDraftVersion:2,
       emergencyFrontWorkers:workerChoices.map(
         (choices,index)=>({version:1,
@@ -739,6 +750,76 @@ function audit(distanceKm,fatigue,variant){
     namedLeaders,
     minimumEnergy:Math.min(...Object.values(
       run.energyByRider))};
+}
+
+if(process.argv.includes('--probe-rear-captain')){
+  const distanceKm=120;
+  const baseline=source(distanceKm,10,
+    'varied_field');
+  const baselineStaggered=
+    runPhysicalStaggeredBunchLossV1({
+      ...baseline,throughKm:distanceKm});
+  const baselineSolo=
+    probePhysicalStaggeredSoloFieldV1({
+      ...baseline,staggered:baselineStaggered,
+      throughKm:distanceKm});
+  const baselineRace=replayPhysicalStaggeredRearEventsV1({
+    ...baseline,staggered:baselineStaggered,
+    soloField:baselineSolo,throughKm:distanceKm});
+  const input=source(distanceKm,10,
+    'varied_captain');
+  const staggered=runPhysicalStaggeredBunchLossV1({
+    ...input,throughKm:distanceKm});
+  const soloField=probePhysicalStaggeredSoloFieldV1({
+    ...input,staggered,throughKm:distanceKm});
+  const replayInput={...input,staggered,soloField,
+    throughKm:distanceKm};
+  const race=replayPhysicalStaggeredRearEventsV1(
+    replayInput);
+  assert.equal(validatePhysicalStaggeredRearEventsV1(
+    replayInput,race),true);
+  assert.ok(race.kilometres.every(row=>
+    row.riderStates.length===160&&
+    row.riderStates.every(state=>
+      state.decisions.length>0)));
+  const baselineFirst=baselineRace.contacts[0];
+  const captainFirst=race.contacts[0];
+  assert.equal(baselineFirst.outcome,'join');
+  assert.equal(captainFirst.outcome,
+    'pass_through');
+  assert.deepEqual(captainFirst.riders,
+    baselineFirst.riders);
+  assert.equal(captainFirst.atDistanceM,
+    baselineFirst.atDistanceM);
+  assert.equal(captainFirst.clockSeconds,
+    baselineFirst.clockSeconds);
+  assert.equal(captainFirst.contactDecisions.find(
+    row=>row.riderId==='team-4-3')?.choice,
+  'pass_through');
+  assert.ok(race.contacts.filter(row=>
+    row.outcome==='pass_through').length>=3);
+  assert.equal(race.kilometres[
+    captainFirst.sourceKm-1]
+    .riderStates.find(row=>row.riderId===
+      'team-4-3').physicalGroupId,
+  'solo-team-4-3');
+  process.stdout.write(JSON.stringify({
+    distanceKm,baselineFirstContact:
+      baselineFirst.outcome,
+    captainFirstContact:captainFirst.outcome,
+    firstContactKm:captainFirst.sourceKm,
+    firstContactAtDistanceM:
+      captainFirst.atDistanceM,
+    passThroughContacts:race.contacts.filter(row=>
+      row.outcome==='pass_through').length,
+    contactCount:race.contactCount,
+    captainFinishGroupId:race.kilometres.at(-1)
+      .riderStates.find(row=>row.riderId===
+        'team-4-3').physicalGroupId,
+    finishRiders:Object.keys(race
+      .observedFinishSecondsByRider).length},
+  null,2)+'\n');
+  process.exit(0);
 }
 
 if(process.argv.includes('--probe-rear-extreme')){
