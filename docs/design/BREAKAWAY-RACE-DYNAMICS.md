@@ -5249,3 +5249,16 @@ explicit and discovered finish clocks and energies. Roster 1 instead
 meets a rear solo in km 70 at metre 69,568.168036 and reaches all 160
 observed finishes at both distances. These two cases extend the
 synthetic holdout; they do not establish a real race distribution.
+
+At fatigue 50, roster 6 exposes a different paid-energy boundary in
+km 31. Rear solos team-9-3 and team-19-0 pass one another without
+joining, then each meets and joins the bunch in clock order. The
+second contact must price each solo only from its latest paid road
+origin; charging from the kilometre start double-counted energy and
+incorrectly refused the contact. The source now records the passage,
+both joins and all 160 end states. At 120 km the front remains ahead;
+at 260 km the bunch catches it in km 188. Both complete races retain
+all 160 rider decisions, energy histories and observed finish clocks.
+The fatigue-50 roster-5 catch still refuses an earlier solo/bunch
+passage that cannot hold the measured pace; its paid continuation
+remains to be resolved before that holdout can count as a finish.

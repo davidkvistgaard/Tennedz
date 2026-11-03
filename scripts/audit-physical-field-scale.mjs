@@ -606,6 +606,39 @@ if(process.argv.includes('--probe-front-rear-threat')){
       ...generated,attackKm:1,lossKm:21,
       throughKm,
       chaseObserverTeamId:team.id},whole),true);
+    if(process.argv.includes(
+      '--expect-repriced-bunch-contact')){
+      assert.ok(throughKm>=41);
+      const priorStates=new Map(whole
+        .kilometres[29].riderStates.map(
+          row=>[row.riderId,row]));
+      const contacts=whole.kilometres[30]
+        .contactEvents;
+      assert.deepEqual(contacts.map(row=>
+        row.choice),['pass_through',
+        'join_bunch','join_bunch']);
+      assert.ok(contacts.every((row,index)=>
+        index===0||row.event
+          .clockSeconds>contacts[index-1]
+            .event.clockSeconds));
+      const passingRiders=contacts[0]
+        .event.riders.map(row=>row.riderId);
+      assert.equal(passingRiders.length,2);
+      assert.ok(passingRiders.every(id=>
+        priorStates.get(id)?.physicalGroupId
+          .startsWith('solo-')));
+      assert.deepEqual(contacts.slice(1)
+        .map(row=>row.event.riders[0]
+          .riderId).sort(),
+      [...passingRiders].sort());
+      assert.ok(whole.kilometres[30]
+        .riderStates.filter(row=>
+          passingRiders.includes(row.riderId))
+        .every(row=>row.physicalGroupId===
+          'peloton'));
+      assert.equal(whole.kilometres[30]
+        .riderStates.length,160);
+    }
     assert.equal(whole.kilometres.length,throughKm);
     assert.ok(whole.chaseKilometres.length>0);
     assert.equal(whole.chaseKilometres[0]
