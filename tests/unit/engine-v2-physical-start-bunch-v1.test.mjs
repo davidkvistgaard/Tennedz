@@ -8,6 +8,8 @@ import {commitTeamChaseStakesV1} from
   '../../lib/engine/v2/team-chase-stake-v1.mjs';
 import {commitRearSoloPlanV1} from
   '../../lib/engine/v2/rear-solo-commitment-v1.mjs';
+import {physicalRearIntentAtKmV2} from
+  '../../lib/engine/v2/physical-rear-intent-v2.mjs';
 import {startPhysicalBunchV1,advancePhysicalStartBunchV1,
   validatePhysicalStartBunchV1,runPhysicalBunchV1,
   validatePhysicalBunchRunV1,runPhysicalBunchToPaceLossV1,
@@ -306,6 +308,32 @@ test('simultaneous paid splits choose and pay one rear leader',()=>{
     'paid_simultaneous_split').leaderRiderId='control-2';
   assert.throws(()=>validatePhysicalStaggeredRearEventsV1(
     input,forged),/differs from paid source/);
+  const orderedInput={...startInput,
+    physicalRearIntentVersion:2};
+  const orderedStart=startPhysicalBunchV1(
+    orderedInput);
+  const orderedStaggered=
+    runPhysicalStaggeredBunchLossV1({
+      startInput:orderedInput,start:orderedStart,
+      throughKm:3});
+  const orderedSolo=probePhysicalStaggeredSoloFieldV1({
+    startInput:orderedInput,start:orderedStart,
+    staggered:orderedStaggered,
+    throughKm:3});
+  const orderedRace=replayPhysicalStaggeredRearEventsV1({
+    startInput:orderedInput,start:orderedStart,
+    staggered:orderedStaggered,
+    soloField:orderedSolo,throughKm:3});
+  assert.ok(orderedRace.kilometres.every(row=>
+    row.riderStates.length===24));
+  assert.equal(orderedRace.contacts.filter(row=>
+    row.source==='paid_simultaneous_split').length,2);
+  assert.ok(orderedRace.kilometres.flatMap(row=>
+    row.segments).filter(row=>row.kind==='group')
+    .every(row=>row.riders.every(rider=>
+      rider.decision.effort==='steady'&&
+      rider.decision.intentSource===
+        'committed_manager_order_and_stake')));
 });
 
 test('versioned bunch pace match pays sheltered cost with one leader',()=>{
@@ -2330,6 +2358,96 @@ test('detached rider follows pre-race solo plan with paid later road',()=>{
     lossKm:1,throughKm:6,riderId:'other-3'});
   assert.equal(changedGoal.steps[3].decision.goal,'finish_safely');
   assert.equal(changedGoal.steps[4].decision.goal,'rejoin_bunch');
+});
+
+test('opt-in rear intent follows committed effort and sporting stake',()=>{
+  const teams=field();
+  for(const skill of SPORTING_SKILLS)
+    teams[2].riders[3][skill]=10;
+  const initial=source(teams,route('climb'));
+  const startInput={...initial.startInput,
+    physicalDraftVersion:4,
+    physicalRearIntentVersion:2};
+  const start=startPhysicalBunchV1(startInput);
+  assert.equal(start.version,
+    'v2-physical-start-bunch-4-rear-intent-2');
+  assert.equal(start.committedSource
+    .physicalRearIntentVersion,2);
+  const intent=physicalRearIntentAtKmV2({
+    startInput,riderId:'other-3',km:2});
+  assert.equal(intent.action,'finish_safely');
+  assert.equal(intent.effort,'steady');
+  assert.equal(intent.committedTeamStake,'none');
+  assert.equal(intent.source,
+    'committed_manager_order_and_stake');
+  const captain=physicalRearIntentAtKmV2({
+    startInput,riderId:'sprint-0',km:2});
+  assert.equal(captain.action,'rejoin_bunch');
+  assert.equal(captain.committedTeamStake,
+    'sprint_finish');
+  const stagePlan=commitRearSoloPlanV1({
+    riderId:'other-3',distanceKm:20,
+    stageNumber:1,stageCount:2,
+    baseline:{goal:'save_for_stage',
+      effort:'conserve',committedStagePlan:{
+        riderId:'other-3',
+        currentStageNumber:1,
+        targetStageNumber:2,
+        currentGoal:'finish_safely',
+        futureGoal:'target_stage',
+        reserveEnergy:20}}});
+  const planned=physicalRearIntentAtKmV2({
+    startInput:{...startInput,
+      soloCommitments:[stagePlan]},
+    riderId:'other-3',km:2});
+  assert.equal(planned.action,'save_for_stage');
+  assert.equal(planned.effort,'conserve');
+  assert.equal(planned.source,
+    'precommitted_rider_plan');
+  assert.equal(planned.committedStagePlan
+    .targetStageNumber,2);
+  const staggered=runPhysicalStaggeredBunchLossV1({
+    startInput,start,throughKm:3});
+  const solo=runPhysicalStaggeredDetachedSoloV1({
+    startInput,start,staggered,
+    riderId:'other-3',throughKm:3});
+  assert.equal(solo.steps.length,2);
+  assert.ok(solo.steps.every(row=>
+    row.decision.effort==='steady'&&
+    row.decision.goal==='finish_safely'&&
+    row.decision.committedTeamStake==='none'&&
+    row.decision.intentSource===
+      'committed_manager_order_and_stake'));
+  assert.equal(validatePhysicalStaggeredDetachedSoloV1({
+    startInput,start,staggered,
+    riderId:'other-3',throughKm:3},solo),true);
+  const legacyInput={...startInput};
+  delete legacyInput.physicalRearIntentVersion;
+  const legacyStart=startPhysicalBunchV1(
+    legacyInput);
+  const legacyStaggered=
+    runPhysicalStaggeredBunchLossV1({
+      startInput:legacyInput,start:legacyStart,
+      throughKm:3});
+  const legacySolo=
+    runPhysicalStaggeredDetachedSoloV1({
+      startInput:legacyInput,start:legacyStart,
+      staggered:legacyStaggered,
+      riderId:'other-3',throughKm:3});
+  assert.equal(legacySolo.steps[0].decision.effort,
+    'conserve');
+  assert.ok(solo.elapsedSeconds<
+    legacySolo.elapsedSeconds);
+  assert.ok(solo.energyAfter<
+    legacySolo.energyAfter);
+  assert.throws(()=>runPhysicalStaggeredDetachedSoloV1({
+    startInput:legacyInput,start,staggered,
+    riderId:'other-3',throughKm:3}),
+  /replayed committed start/);
+  assert.throws(()=>startPhysicalBunchV1({
+    ...initial.startInput,
+    physicalRearIntentVersion:2}),
+  /committed field and route/);
 });
 
 test('detached solo respects team effort and future-stage reserve',()=>{

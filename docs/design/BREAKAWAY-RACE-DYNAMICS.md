@@ -4500,3 +4500,23 @@ the finish-time spread relative to the single weak climber. Minimum
 finish energy is 57.39 at fatigue 10 and 49.39 at fatigue 30 in these
 synthetic fields. These monotonic checks are useful but do not
 calibrate whole-race effort, contact frequency or competitive timing.
+
+An additional opt-in rear-intent source (`physicalRearIntentVersion: 2`,
+with physical draft v4) removes the earlier automatic `conserve`
+choice for an unplanned detached rider. Each later solo and rear-group
+kilometre now reads the committed manager effort order; a rider who is
+the named captain for an active sprint, summit or break-stage stake
+records a rejoin goal. An explicit pre-race solo plan still overrides
+that goal within the manager effort ceiling, including a committed
+future-stage reserve. Contact decisions retain observed road pace, so
+this does not read hidden rival ability. The version is stored in the
+start source, and the unflagged path preserves prior recordings.
+
+A 24-rider climb witness pays the ordered steady solo and a three-rider
+rear group with one leader, and replays every rider through three
+kilometres. The broad same-seed 160-rider read-only probe across 120
+and 260 km, fatigue 10 and 30, currently refuses 13–19 solo candidates
+because their newly ordered pace reaches the bunch. It does not assign
+them an unrecorded bunch wheel. A general paid bunch-contact choice,
+partial kilometre and continued group membership must be sourced
+before this intent version can claim a full race or guide V94.

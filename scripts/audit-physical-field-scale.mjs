@@ -1181,6 +1181,50 @@ if(process.argv.includes('--probe-rear-captain')){
   process.exit(0);
 }
 
+if(process.argv.includes('--probe-rear-ordered')){
+  const results=[120,260].flatMap(distanceKm=>
+    [10,30].map(fatigue=>{
+      const base=source(distanceKm,fatigue,
+        'varied_field');
+      const startInput={...base.startInput,
+        physicalDraftVersion:4,
+        physicalRearIntentVersion:2};
+      const start=startPhysicalBunchV1(startInput);
+      try{
+        const staggered=
+          runPhysicalStaggeredBunchLossV1({
+            startInput,start,throughKm:distanceKm});
+        const soloField=
+          probePhysicalStaggeredSoloFieldV1({
+            startInput,start,staggered,
+            throughKm:distanceKm});
+        if(soloField.refusals.length)
+          return {distanceKm,fatigue,
+            status:'solo_source_refusal',
+            reason:soloField.refusals[0],
+            refusalCount:soloField.refusals.length};
+        const race=replayPhysicalStaggeredRearEventsV1({
+          startInput,start,staggered,soloField,
+          throughKm:distanceKm});
+        return {distanceKm,fatigue,
+          status:'full_replay',
+          contacts:race.contactCount,
+          riderKilometres:race.kilometres.reduce(
+            (sum,row)=>sum+row.riderStates.length,0),
+          finishRiders:Object.keys(race
+            .observedFinishSecondsByRider).length};
+      }catch(error){return {distanceKm,fatigue,
+        status:'refusal',reason:error.message};}
+    }));
+  assert.ok(results.every(row=>
+    row.status==='solo_source_refusal'&&
+    row.reason.reason===
+      'Staggered solo needs separate bunch contact.'&&
+    row.refusalCount>0));
+  process.stdout.write(JSON.stringify({results},null,2)+'\n');
+  process.exit(0);
+}
+
 if(process.argv.includes('--probe-rear-extreme')||
   process.argv.includes('--probe-rear-extreme-260')){
   const distanceKm=process.argv.includes(
