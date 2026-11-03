@@ -7,6 +7,9 @@ import {commitTeamChaseStakesV1} from
   '../lib/engine/v2/team-chase-stake-v1.mjs';
 import {commitRearSoloPlanV1} from
   '../lib/engine/v2/rear-solo-commitment-v1.mjs';
+import {replayPhysicalFrontRaceV1,
+  validatePhysicalFrontRaceV1} from
+  '../lib/engine/v2/physical-front-race-replay-v1.mjs';
 import {startPhysicalBunchV1,runPhysicalBunchV1,
   runPhysicalBunchToPaceLossV1,
   runPhysicalStaggeredBunchLossV1} from
@@ -203,7 +206,8 @@ function source(distanceKm,fatigue,variant){
     teams[19].riders[7].descending=0;
   }
   if(variant==='varied_field'||
-    variant==='varied_captain')
+    variant==='varied_captain'||
+    variant==='front_varied')
     for(let teamIndex=0;teamIndex<teams.length;
       teamIndex++){
       const team=teams[teamIndex];
@@ -227,8 +231,21 @@ function source(distanceKm,fatigue,variant){
     teams[4].orders.helperIds=teams[4].orders
       .helperIds.filter(id=>id!=='team-4-3');
   }
+  if(variant==='front_uniform'||
+    variant==='front_varied'){
+    const attacker=teams[19].riders[1];
+    for(const skill of SPORTING_SKILLS)
+      attacker[skill]=100;
+    teams[19].orders.baseline={
+      ...teams[19].orders.baseline,
+      effort:'hard',attack:'selective',
+      attackRiderId:attacker.id};
+    teams[19].orders.phases.push({atKm:5,
+      effort:'steady',attack:'none'});
+  }
   const workerChoices=(variant==='varied_field'||
-    variant==='varied_captain')?
+    variant==='varied_captain'||
+    variant==='front_varied')?
     teams.map(team=>team.riders.slice(2)
       .filter(row=>team.orders.helperIds.includes(
         row.id)).sort((a,b)=>{
@@ -260,13 +277,17 @@ function source(distanceKm,fatigue,variant){
       allowNamedFrontWorker:true});
   const commitment=commitTeamChaseStakesV1({teams,
     distanceKm,intentions:teams.map((team,index)=>({
-      teamId:team.id,baseline:{goal:index===0||
+      teamId:team.id,baseline:{goal:(variant===
+        'front_uniform'||variant===
+        'front_varied')&&index===19?
+        'break_stage':index===0||
         variant==='varied_captain'&&index===4?
         'sprint_finish':'none',
       captainId:team.orders.captainId},phases:[]}))});
   const startInput={teams,routeKilometres:route(distanceKm),
     commitment,raceSeed:'physical-20-team-scale-1',
-    ...(['varied_field','varied_captain'].includes(
+    ...(['varied_field','varied_captain',
+      'front_varied'].includes(
       variant)?{
       physicalDraftVersion:2,
       emergencyFrontWorkers:workerChoices.map(
@@ -275,6 +296,93 @@ function source(distanceKm,fatigue,variant){
           unavailableRiderId:choices[0],
           replacementRiderId:choices[1]}))}:{})};
   return {startInput,start:startPhysicalBunchV1(startInput)};
+}
+
+if(process.argv.includes('--probe-front-field')){
+  const variant=process.argv.includes(
+    '--front-varied')?
+    'front_varied':'front_uniform';
+  const distanceKm=Number(process.argv.find(arg=>
+    arg.startsWith('--distance='))?.split('=')[1]??120);
+  const fatigue=Number(process.argv.find(arg=>
+    arg.startsWith('--fatigue='))?.split('=')[1]??10);
+  const input=source(distanceKm,fatigue,variant);
+  const probe=throughKm=>replayPhysicalFrontRaceV1({
+    ...input,attackKm:1,throughKm});
+  let lastFullKm=1;
+  let refusal=null;
+  let full=null;
+  try{
+    full=probe(distanceKm);
+    lastFullKm=distanceKm;
+  }catch(error){
+    let lower=1;
+    let upper=distanceKm;
+    while(upper-lower>1){
+      const mid=Math.floor((lower+upper)/2);
+      try{probe(mid);lower=mid;}
+      catch{upper=mid;}
+    }
+    lastFullKm=lower;
+    try{probe(upper);}
+    catch(firstError){refusal={sourceKm:upper,
+      reason:firstError.message};}
+  }
+  if(full){
+    assert.equal(validatePhysicalFrontRaceV1({
+      ...input,attackKm:1,throughKm:distanceKm},
+    full),true);
+    assert.equal(full.kilometres.length,distanceKm);
+    assert.ok(full.kilometres.every(row=>
+      row.riderStates.length===160));
+    const previous=new Map();
+    for(const kilometre of full.kilometres)
+      for(const row of kilometre.riderStates){
+        const before=previous.get(row.riderId);
+        assert.equal(row.sourceKm,
+          kilometre.sourceKm);
+        assert.equal(row.atDistanceM,
+          kilometre.sourceKm*1000);
+        assert.ok(Number.isFinite(
+          row.elapsedSeconds)&&
+          (before===undefined||
+            row.elapsedSeconds>before));
+        assert.ok(Number.isFinite(
+          row.energyAfter)&&
+          row.energyAfter>=0);
+        assert.ok(row.decisions.length>0);
+        previous.set(row.riderId,
+          row.elapsedSeconds);
+      }
+  }
+  if(process.argv.includes('--assert-front-field')){
+    assert.equal(lastFullKm,variant===
+      'front_uniform'?distanceKm:20);
+    assert.equal(refusal?.sourceKm??null,
+      variant==='front_uniform'?null:21);
+    assert.equal(refusal?.reason??null,
+      variant==='front_uniform'?null:
+        'Physical start follower cannot hold paid pace.');
+  }
+  const finish=full?{
+    riderCount:full.kilometres.at(-1)
+      .riderStates.length,
+    frontRiderId:full.sources.front.riderId,
+    initialGapSeconds:full.sources.front.attack
+      .frontGapSeconds,
+    finalGapSeconds:full.sources.front.steps.at(-1)
+      .gapSecondsToBunch,
+    earliestSeconds:Math.min(...Object.values(
+      full.observedFinishSecondsByRider)),
+    latestSeconds:Math.max(...Object.values(
+      full.observedFinishSecondsByRider)),
+    minimumEnergy:Math.min(...full.kilometres
+      .at(-1).riderStates.map(row=>row.energyAfter)),
+    officialResults:full.officialResults}:null;
+  process.stdout.write(JSON.stringify({distanceKm,
+    fatigue,variant,lastFullKm,refusal,finish},
+  null,2)+'\n');
+  process.exit(0);
 }
 
 function audit(distanceKm,fatigue,variant){

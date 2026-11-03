@@ -4809,3 +4809,22 @@ The audit asserts these directions against the matching same-seed
 baseline. This expands the full-field synthetic matrix to twelve
 cases, but does not validate front breaks, chase timing, finish order
 or official results. Guided V94 routing remains withheld.
+
+An additional same-seed front-source probe commits team 19's named
+`team-19-1` to a selective km-1 attack for a `break_stage` goal, then
+ends that attack order at the km-5 marker. The attacker pays a faster
+road and starts 2.37–2.42 seconds ahead. In otherwise uniform 160-rider
+fields, the existing front replay carries all riders through the 120-
+and 260-km route ends at fatigue 10 and 30. Source validation and
+per-rider kilometre, clock, energy and decision checks pass. With no
+manager chase, the observed front gap reaches 181–186 seconds at 120 km
+and 369–379 seconds at 260 km. These are provisional observed clocks,
+not calibrated leads or official results.
+
+Using the same attack in the varied field, all four distance/fatigue
+branches stop at km 21, when the first bunch follower cannot hold the
+paid pace. The front-only replay refuses that split rather than
+inventing a finish. The explicit audit preserves this boundary: the
+front attack, rear split, subsequent chase and any catch still need a
+single paid field continuation before a varied front-break race can be
+calibrated or routed to guided play.
