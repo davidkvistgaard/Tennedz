@@ -486,7 +486,8 @@ if(process.argv.includes('--probe-front-next-bunch')){
 if(process.argv.includes('--probe-front-clear-prefix')||
   process.argv.includes('--probe-front-rear-contact')||
   process.argv.includes('--probe-front-rear-second-contact')||
-  process.argv.includes('--probe-front-rear-contact-km')){
+  process.argv.includes('--probe-front-rear-contact-km')||
+  process.argv.includes('--probe-front-rear-group-next')){
   const distanceKm=Number(process.argv.find(arg=>
     arg.startsWith('--distance='))?.split('=')[1]??120);
   const fatigue=Number(process.argv.find(arg=>
@@ -537,7 +538,9 @@ if(process.argv.includes('--probe-front-clear-prefix')||
     process.argv.includes(
       '--probe-front-rear-second-contact')||
     process.argv.includes(
-      '--probe-front-rear-contact-km')){
+      '--probe-front-rear-contact-km')||
+    process.argv.includes(
+      '--probe-front-rear-group-next')){
     const contactInput={startInput:input.startInput,
       prior};
     if(fatigue===30){
@@ -574,7 +577,9 @@ if(process.argv.includes('--probe-front-clear-prefix')||
     if(process.argv.includes(
       '--probe-front-rear-second-contact')||
       process.argv.includes(
-        '--probe-front-rear-contact-km')){
+        '--probe-front-rear-contact-km')||
+      process.argv.includes(
+        '--probe-front-rear-group-next')){
       const second=
         resolvePhysicalFrontRearSecondContactV1(
           contactInput);
@@ -597,7 +602,9 @@ if(process.argv.includes('--probe-front-clear-prefix')||
           row.draftFraction<1).length,2);
       assert.equal(second.paidApproaches.length,3);
       if(process.argv.includes(
-        '--probe-front-rear-contact-km')){
+        '--probe-front-rear-contact-km')||
+        process.argv.includes(
+          '--probe-front-rear-group-next')){
         const finished=
           replayPhysicalFrontRearOrderedContactKmV1(
             contactInput);
@@ -623,6 +630,50 @@ if(process.argv.includes('--probe-front-clear-prefix')||
           .filter(row=>second.candidateGroupRoad
             .riderIds.includes(row.riderId))
           .length,3);
+        if(process.argv.includes(
+          '--probe-front-rear-group-next')){
+          const next=
+            advancePhysicalFrontRearClearKmV1({
+              startInput:input.startInput,
+              prior:finished});
+          assert.deepEqual(next,
+            advancePhysicalFrontRearClearKmV1({
+              startInput:input.startInput,
+              prior:finished}));
+          assert.equal(next.sourceKm,32);
+          const groupRoad=next.sources.rearRoads
+            .find(row=>row.kind==='group');
+          assert.equal(groupRoad.rows.length,3);
+          assert.equal(groupRoad.rows.filter(row=>
+            row.role==='leader').length,1);
+          assert.equal(groupRoad.rows.filter(row=>
+            row.role==='sheltered'&&
+            row.draftFraction<1).length,2);
+          assert.ok(groupRoad.rows.every(row=>
+            row.energyAfter<row.energyBefore));
+          assert.deepEqual(next.firstCandidateEvent
+            ?.roadIds,[
+            'solo-team-11-2',
+            'solo-team-18-0']);
+          process.stdout.write(JSON.stringify({
+            distanceKm,fatigue,
+            sourceKm:next.sourceKm,
+            firstCandidateEvent:next
+              .firstCandidateEvent,
+            candidateEventCount:next
+              .candidateEventCount,
+            newSplits:next.sources.step.splits
+              .map(row=>row.riderId),
+            riderCount:next.riderCount??null,
+            groupRoad,
+            rearGroup:next.endRearEntities
+              ?.find(row=>row.kind==='group')
+              ??null,
+            fieldKilometreIncomplete:next
+              .fieldKilometreIncomplete},
+          null,2)+'\n');
+          process.exit(0);
+        }
         process.stdout.write(JSON.stringify({
           distanceKm,fatigue,
           sourceKm:finished.sourceKm,

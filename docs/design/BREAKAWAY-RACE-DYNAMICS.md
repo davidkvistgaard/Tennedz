@@ -4889,3 +4889,12 @@ first join, intermediate paid group road, second join and final group
 road in order. This completes that kilometre only. Subsequent group
 rotation, further contact, fatigue-30 simultaneous splits and full
 route finish still need validation before guided routing.
+
+The next-kilometre front/rear source now accepts a group only when it
+comes from the recorded paid contact state. At km 32 of both low-
+fatigue routes, that three-rider group rotates to one new exposed
+leader; the other two pay lower sheltered demand, with no recovery
+award. All separate solo and bunch roads are still compared. The first
+new measured meeting is between two other rear solos at metre
+31,225.679406, so km 32 remains incomplete. The source does not
+silently move or relabel the group at that contact.
