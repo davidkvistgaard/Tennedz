@@ -76,10 +76,12 @@ import {replayPhysicalOrderedRearNextBunchKmV1,
   validatePhysicalOrderedRearNextBunchKmV1} from
   '../lib/engine/v2/physical-ordered-rear-next-bunch-v1.mjs';
 import {inspectPhysicalOrderedRearNextBoundaryV1,
-  validatePhysicalOrderedRearNextBoundaryV1} from
+  validatePhysicalOrderedRearNextBoundaryV1,
+  sourcePhysicalOrderedRearBoundaryFromStateV1} from
   '../lib/engine/v2/physical-ordered-rear-next-boundary-v1.mjs';
 import {replayPhysicalOrderedRearNextKmV1,
-  validatePhysicalOrderedRearNextKmV1} from
+  validatePhysicalOrderedRearNextKmV1,
+  advancePhysicalOrderedRearClearKmV1} from
   '../lib/engine/v2/physical-ordered-rear-next-km-v1.mjs';
 import {replayPhysicalStaggeredRearEventsV1,
   validatePhysicalStaggeredRearEventsV1,
@@ -1533,6 +1535,50 @@ if(process.argv.includes('--probe-rear-ordered-prefix')){
             rearGroups:endState.endEntities
               .filter(entity=>entity.kind===
                 'group').length};
+          if(fatigue===30&&throughKm===32){
+            const bunchStep=staggered.road.at(-1);
+            const normalized={sourceKm:throughKm,
+              riderStates:race.kilometres.at(-1)
+                .riderStates,
+              riderCount:lastPaid.riderStates,
+              endRearEntities:endState.endEntities,
+              endBunchState:{
+                riderIds:bunchStep.physicalGroup
+                  .riderIds,
+                energyByRider:bunchStep
+                  .energyByRider,
+                quietKmByRider:bunchStep
+                  .quietKmByRider}};
+            const next=
+              sourcePhysicalOrderedRearBoundaryFromStateV1({
+                startInput,prior:normalized});
+            if(distanceKm===120){
+              const forged=structuredClone(normalized);
+              forged.riderStates.find(row=>
+                row.physicalGroupId==='peloton')
+                .energyAfter+=1;
+              assert.throws(()=>
+                sourcePhysicalOrderedRearBoundaryFromStateV1({
+                  startInput,prior:forged}),
+              /lacks paid clock/);
+            }
+            lastPaid.nextBoundaryFirstEvent=
+              next.recording.firstEvent;
+            lastPaid.nextBoundaryRoads=
+              next.recording.rearRoads.length;
+            lastPaid.nextBunchSplits=
+              next.next.step.splits.length;
+            if(!next.recording.firstEvent){
+              const paid=
+                advancePhysicalOrderedRearClearKmV1({
+                  startInput,prior:normalized});
+              assert.equal(paid.sourceKm,33);
+              assert.equal(paid.riderCount,160);
+              assert.equal(paid.endRearEntities
+                .length,24);
+              lastPaid.nextKmRiders=paid.riderCount;
+            }
+          }
         }catch(error){return {distanceKm,fatigue,
           lastPaid,firstRefusedKm:throughKm,
           source:'event_ordering',
@@ -1545,6 +1591,8 @@ if(process.argv.includes('--probe-rear-ordered-prefix')){
     row.lastPaid?.riderStates===160&&
     row.lastPaid.contactCount===3&&
     row.lastPaid.rearEntities>0&&
+    (row.fatigue!==30||
+      row.lastPaid.nextKmRiders===160)&&
     row.firstRefusedKm===
       (row.fatigue===10?32:33)&&
     row.refusalCount===1&&

@@ -4640,5 +4640,12 @@ km 33 has no new bunch split and no measured road-clock contact. The
 complete km-33 replay therefore joins the 133 paid bunch states with
 27 individually paid rear states on 24 separate roads. It exports new
 clocks, energies and rotation sources for km 34. The fatigue-30
-branches still require their distinct first km-33 crossing, and the
-120/260-km finishes remain unvalidated.
+branches are checked separately below; the 120/260-km finishes remain
+unvalidated.
+
+The no-contact continuation now accepts a verified whole-field end
+state as its source. The fatigue-30 120/260-km probes use their paid
+km-32 rear-event recording, rather than the obsolete independent solo
+crossing, to price km 33. Both have 24 rear roads, no new bunch split
+and no measured contact; the continuation pays all 160 riders through
+km 33. This does not settle later kilometres or a finish.
