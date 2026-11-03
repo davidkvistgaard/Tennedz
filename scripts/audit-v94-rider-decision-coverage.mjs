@@ -1,9 +1,12 @@
 // Read-only coverage inventory; a paid energy entry is not a rider decision.
 import {createV94RaceDynamicsPreview} from
   '../lib/engine/v2/playtest-race-dynamics-v94.mjs';
+import {prepareV91Playtest} from
+  '../lib/engine/v2/playtest.mjs';
 
 const requestedSeeds=process.argv.find(arg=>arg.startsWith('--seeds='));
 const seedCount=requestedSeeds?Number(requestedSeeds.slice(8)):1;
+const explicitStakes=process.argv.includes('--explicit-stakes');
 if(!Number.isInteger(seedCount)||seedCount<1||seedCount>8)
   throw new Error('Decision coverage seeds must be between 1 and 8.');
 const results=[];
@@ -13,10 +16,14 @@ for(let seed=1;seed<=seedCount;seed++)
   const settings={distanceKm,teamCount:20,terrain,fatigue,
     attack:'none',chase:'selective',
     seed:`chase-turn-holdout-${seed}-${terrain}-${fatigue}`};
+  const sportingStakes=explicitStakes?
+    prepareV91Playtest(settings).teams.map(team=>({
+      teamId:team.id,goal:'none',
+      captainId:team.orders.captainId})):null;
   let recording;
   try{
     ({recording}=createV94RaceDynamicsPreview({format:'one_day',
-      settings,roadGroupPaceVersion:3,chaseTurnVersion:1,
+      settings,sportingStakes,roadGroupPaceVersion:3,chaseTurnVersion:1,
       bunchFrontTurnVersion:1,pelotonFrontTurnVersion:1}));
   }catch(error){
     if(!String(error.message).includes('Combined fresh attack and paid pursuit'))
@@ -36,6 +43,7 @@ for(let seed=1;seed<=seedCount;seed++)
     uncoveredPelotonRiderKilometres:0,
     uncoveredDroppedRiderKilometres:0,
     paidBunchWorkerRiderKilometres:0,
+    paidBunchWorkerDecisionRows:0,
     paidBunchWorkerWithoutDecision:0};
   for(const frame of recording.frames){
     const count=frame.riderGroups.length;
@@ -47,13 +55,17 @@ for(let seed=1;seed<=seedCount;seed++)
     coverage.riderKilometres+=count;
     coverage.paidEnergyRows+=frame.energyLedger.length;
     coverage.forwardDecisionRows+=frame.roadGroupRiderDecisions.length;
-    const decisions=new Set(frame.roadGroupRiderDecisions.map(row=>row.riderId));
-    if(decisions.size!==frame.roadGroupRiderDecisions.length)
+    const forwardDecisions=frame.roadGroupRiderDecisions;
+    const workerDecisions=frame.pelotonRiderDecisions??[];
+    const decisions=new Set([...forwardDecisions,...workerDecisions]
+      .map(row=>row.riderId));
+    if(decisions.size!==forwardDecisions.length+workerDecisions.length)
       throw new Error('Duplicate forward rider decision.');
-    if(frame.roadGroupRiderDecisions.some(row=>
+    if([...forwardDecisions,...workerDecisions].some(row=>
       !riderIds.has(row.riderId)||
       typeof row.choice!=='string'||!row.choice.trim()))
       throw new Error('Invalid forward rider decision.');
+    coverage.paidBunchWorkerDecisionRows+=workerDecisions.length;
     coverage.coveredRiderKilometres+=decisions.size;
     coverage.uncoveredRiderKilometres+=count-decisions.size;
     const paidWorkers=new Set((frame.pelotonFrontTurnPlan?.turns??[])
@@ -62,6 +74,9 @@ for(let seed=1;seed<=seedCount;seed++)
       (frame.pelotonFrontTurnPlan?.turns?.length??0)||
       [...paidWorkers].some(id=>!riderIds.has(id)))
       throw new Error('Paid bunch worker is absent or repeated.');
+    if(workerDecisions.some(row=>!paidWorkers.has(row.riderId))||
+      (explicitStakes&&workerDecisions.length!==paidWorkers.size))
+      throw new Error('Paid bunch worker choices differ from turns.');
     coverage.paidBunchWorkerRiderKilometres+=paidWorkers.size;
     coverage.paidBunchWorkerWithoutDecision+=
       [...paidWorkers].filter(id=>!decisions.has(id)).length;
@@ -89,7 +104,7 @@ for(let seed=1;seed<=seedCount;seed++)
   results.push({seed,distanceKm,terrain,fatigue,coverage});
 }
 if(process.argv.includes('--summary')){
-  const totals={seedCount,cases:results.length,
+  const totals={seedCount,explicitStakes,cases:results.length,
     validatedCases:0,refusedCases:0,riderKilometres:0,
     paidEnergyRows:0,forwardDecisionRows:0,
     pelotonRiderKilometres:0,droppedRiderKilometres:0,
@@ -99,6 +114,7 @@ if(process.argv.includes('--summary')){
     uncoveredPelotonRiderKilometres:0,
     uncoveredDroppedRiderKilometres:0,
     paidBunchWorkerRiderKilometres:0,
+    paidBunchWorkerDecisionRows:0,
     paidBunchWorkerWithoutDecision:0};
   for(const row of results){
     if(row.refusal){totals.refusedCases++;continue;}
@@ -112,6 +128,7 @@ if(process.argv.includes('--summary')){
       'uncoveredPelotonRiderKilometres',
       'uncoveredDroppedRiderKilometres',
       'paidBunchWorkerRiderKilometres',
+      'paidBunchWorkerDecisionRows',
       'paidBunchWorkerWithoutDecision'])
       totals[key]+=row.coverage[key];
   }

@@ -5426,6 +5426,22 @@ works. Sheltered riders and absent front workers still lack individual
 choices, so this is a bounded replay increment, not full decision
 coverage or a physical-race release.
 
+The read-only `audit-v94-rider-decision-coverage.mjs
+--summary --explicit-stakes` mode uses committed `none` goals and each
+team's actual captain. In the seed-1 eight-case matrix, seven races
+validate and one still refuses. The seven completed races contain
+224,000 rider-kilometres: 19,230 have a rider choice, including all
+10,196 paid bunch-worker kilometres; 204,770 remain uncovered
+(62 forward, 204,334 peloton, 374 dropped). The same eight cases without
+explicit stakes still show zero bunch-worker choice rows and 214,966
+uncovered rider-kilometres. This audit counts only recorded choices;
+energy ledger entries do not count as decisions.
+Across three seeds, 22 of 24 races validate and two still refuse;
+55,899 of 668,800 rider-kilometres have recorded choices, including
+all 28,936 named paid bunch-worker kilometres. The other 612,901
+rider-kilometres remain uncovered (207 forward, 610,350 peloton,
+2,344 dropped).
+
 A same-seed adapter needs an
 explicit, paid, versioned leader decision that resolves competing
 teams and selects an eligible worker from the committed roster using
