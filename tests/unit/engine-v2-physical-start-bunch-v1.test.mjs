@@ -18,7 +18,8 @@ import {startPhysicalBunchV1,advancePhysicalStartBunchV1,
   validatePhysicalNamedAttackV1,
   runPhysicalBunchAfterNamedAttackV1,
   validatePhysicalBunchAfterNamedAttackV1,
-  advancePhysicalBunchAfterPerceivedCatchKmV1} from
+  advancePhysicalBunchAfterPerceivedCatchKmV1,
+  advancePhysicalBunchAfterCaughtSlideLossKmV1} from
   '../../lib/engine/v2/physical-start-bunch-v1.mjs';
 import {completePhysicalPaceLossKmV1,
   completePhysicalStaggeredLossKmV1,
@@ -1142,6 +1143,32 @@ test('caught break and later follower loss have paid rider states',()=>{
     .observedFinishSecondsByRider).length,24);
   assert.equal(validatePhysicalEarlyCaughtRearFinishV1(
     finishInput,finished),true);
+  const draftTeams=structuredClone(teams);
+  draftTeams[1].orders.phases.at(-1).effort='hard';
+  const draftSource=source(draftTeams,
+    structuredClone(contactRoad),{
+      other:'break_stage',sprint:'sprint_finish'},
+  [{km:1},{km:2},{km:3},{km:13}]);
+  const draftStartInput={...draftSource.startInput,
+    physicalDraftVersion:3};
+  const draftInput={...draftSource,
+    startInput:draftStartInput,
+    start:startPhysicalBunchV1(draftStartInput),
+    attackKm:2,catchKm:3,lossKm:14};
+  const draftPrior=replayPhysicalCaughtBreakRaceV1({
+    ...draftInput,throughKm:13});
+  const draftPriorStep=draftPrior.sources.bunch.road.at(-1);
+  const draftLoss=advancePhysicalBunchAfterCaughtSlideLossKmV1({
+    startInput:draftStartInput,
+    prior:{riderIds:draftPriorStep.physicalGroup.riderIds,
+      energyByRider:draftPriorStep.energyByRider,
+      quietKmByRider:draftPriorStep.quietKmByRider},
+    segment:contactRoad[13],caughtRiderId:'other-2'});
+  assert.equal(draftLoss.splits.length,16);
+  assert.ok(new Set(draftLoss.splits.map(row=>
+    row.atDistanceM)).size<draftLoss.splits.length);
+  assert.throws(()=>replayPhysicalEarlyCaughtNextRearKmV1(
+    draftInput),/one priced follower loss/);
   const forgedFinish=structuredClone(finished);
   forgedFinish.kilometres.at(-1).riderStates.find(row=>
     row.riderId==='sprint-2').elapsedSeconds+=1;

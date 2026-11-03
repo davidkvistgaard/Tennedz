@@ -4323,5 +4323,9 @@ forged finish clock is rejected. A later return to the bunch or a new
 bunch loss still refuses without another paid source; the pass-through
 branch has not been continued to finish. This is a narrow full-race
 witness, not field-scale or terrain/role calibration. It uses the older
-physical draft version; version 3 changes whether that follower drops
-at all, so its rear branch needs a separate source witness.
+physical draft version. On the same 24-rider route with version 3 and
+a harder named bunch leader, the priced km-14 road instead has 16
+simultaneous splits, including repeated split markers. The single-loss
+continuation refuses that input; it cannot infer their relative wheels
+or form a shared rear group. A general event source for those breaks
+remains necessary.
