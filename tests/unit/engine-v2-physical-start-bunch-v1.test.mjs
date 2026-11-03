@@ -1206,6 +1206,26 @@ test('perceived urgency pays one named chase leader and full field',()=>{
     race.observedFinishSecondsByRider).length,24);
   assert.equal(validatePhysicalPerceivedChaseRaceV1(
     rotationInput,race),true);
+  const shelteredSource={...rotationSource,
+    physicalDraftVersion:3};
+  const shelteredInput={...rotationInput,
+    startInput:shelteredSource,
+    start:startPhysicalBunchV1(shelteredSource)};
+  const shelteredRace=replayPhysicalPerceivedChaseRaceV1(
+    shelteredInput);
+  assert.equal(shelteredRace.kilometres.length,20);
+  assert.equal(shelteredRace.kilometres.reduce((sum,row)=>
+    sum+row.riderStates.length,0),480);
+  assert.ok(shelteredRace.kilometres.every(kilometre=>
+    kilometre.riderStates.every(row=>
+      row.decisions.length>0&&row.energyAfter>=0)));
+  assert.ok(shelteredRace.sources.chase.steps.every(row=>
+    row.bunchStep.riders.filter(rider=>
+      rider.role==='leader').length===1&&
+    row.bunchStep.riders.every(rider=>
+      ['leader','sheltered'].includes(rider.role))));
+  assert.equal(validatePhysicalPerceivedChaseRaceV1(
+    shelteredInput,shelteredRace),true);
   const forgedRace=structuredClone(race);
   forgedRace.kilometres[11].riderStates.find(row=>
     row.riderId==='sprint-3').energyAfter+=1;
@@ -1349,6 +1369,36 @@ test('committed physical chase catches a slowing front on paid road',()=>{
     race.observedFinishSecondsByRider).length,24);
   assert.equal(validatePhysicalPerceivedChaseSlideRaceV1(
     raceInput,race),true);
+  const draftSource={...startInput,physicalDraftVersion:3};
+  const draftInput={...input,startInput:draftSource,
+    start:startPhysicalBunchV1(draftSource)};
+  let draftCatchKm=null;
+  for(let km=14;km<=25;km++){
+    try{runPhysicalPerceivedChaseV1({...draftInput,
+      throughKm:km});}
+    catch(error){
+      assert.match(error.message,/paid contact road/);
+      draftCatchKm=km;
+      break;
+    }
+  }
+  assert.ok(draftCatchKm!==null);
+  const draftRaceInput={...draftInput,
+    catchKm:draftCatchKm,throughKm:25};
+  const draftRace=replayPhysicalPerceivedChaseSlideRaceV1(
+    draftRaceInput);
+  assert.equal(draftRace.kilometres.length,25);
+  assert.ok(draftRace.kilometres.every(km=>
+    km.riderStates.length===24));
+  assert.ok(draftRace.sources.later.every(row=>
+    row.bunchStep.riders.filter(rider=>
+      rider.role==='leader').length===1&&
+    row.bunchStep.riders.every(rider=>
+      ['leader','sheltered'].includes(rider.role))));
+  assert.equal(Object.keys(draftRace
+    .observedFinishSecondsByRider).length,24);
+  assert.equal(validatePhysicalPerceivedChaseSlideRaceV1(
+    draftRaceInput,draftRace),true);
   const forgedRace=structuredClone(race);
   forgedRace.kilometres.at(-1).riderStates[0].energyAfter+=1;
   assert.throws(()=>validatePhysicalPerceivedChaseSlideRaceV1(

@@ -4295,3 +4295,12 @@ less after subsequent physical interactions, rear contacts change
 from 22 to 18, and the earliest finish clock moves by about 0.0984
 seconds. These are model sensitivities, not evidence that the finish
 time or energy distribution is calibrated against cycling data.
+
+The version-3 shelter rule also replays in the separate 24-rider
+manager-attack and perceived-chase branches. One named chase worker
+leads each bunch kilometre while every other bunch member is
+sheltered, including after the paid catch when the caught rider slides
+behind. Every rider has a decision and energy state for all 20 or 25
+kilometres, and all finish clocks replay. This cross-branch witness
+does not integrate the slid rider into the generic rear-contact event
+replay or establish whole-race calibration.
