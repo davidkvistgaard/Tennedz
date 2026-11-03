@@ -828,6 +828,25 @@ if(process.argv.includes('--probe-rear-extreme')){
     [10,30].map(fatigue=>{
       const distanceKm=120;
       const input=source(distanceKm,fatigue,variant);
+      let firstLossReplay=null;
+      if(variant==='unequal_descent_catch'){
+        const firstLossKm=21;
+        const firstStaggered=
+          runPhysicalStaggeredBunchLossV1({
+            ...input,throughKm:firstLossKm});
+        const firstSolo=probePhysicalStaggeredSoloFieldV1({
+          ...input,staggered:firstStaggered,
+          throughKm:firstLossKm});
+        try{
+          const firstRace=replayPhysicalStaggeredRearEventsV1({
+            ...input,staggered:firstStaggered,
+            soloField:firstSolo,
+            throughKm:firstLossKm});
+          firstLossReplay={status:'full_replay',
+            contacts:firstRace.contactCount};
+        }catch(error){firstLossReplay={status:'refusal',
+          reason:error.message};}
+      }
       let staggered;
       try{staggered=runPhysicalStaggeredBunchLossV1({
         ...input,throughKm:distanceKm});}
@@ -863,6 +882,7 @@ if(process.argv.includes('--probe-rear-extreme')){
           detachedRiders:staggered.losses.length,
           lossKilometres:[...new Set(staggered.losses
             .map(row=>row.sourceKm))],
+          firstLossReplay,
           reason:error.message};
       }
     }));
@@ -878,14 +898,16 @@ if(process.argv.includes('--probe-rear-extreme')){
   assert.ok(results.slice(0,2).every(row=>
     row.contacts===0&&row.finishRiders===160));
   assert.ok(results.slice(2).every(row=>
-    row.reason==='Rear contact lacks catching source.'));
+    row.reason===
+      'Rear contact lacks distinct paid split ordering.'&&
+    row.firstLossReplay?.reason===row.reason));
   process.stdout.write(JSON.stringify({results},null,2)+'\n');
   process.exit(0);
 }
 
 if(process.argv.includes('--probe-rear-stage-plan')){
   const results=[120,260].map(distanceKm=>{
-    const fatigue=distanceKm===120?10:30;
+    const fatigue=10;
     const reserveEnergy=distanceKm===120?70:50;
     const base=source(distanceKm,fatigue,
       'varied_field');
@@ -924,7 +946,9 @@ if(process.argv.includes('--probe-rear-stage-plan')){
       .riderStates.find(row=>row.riderId===riderId);
     assert.ok(saver.energyAfter>=reserveEnergy);
     if(distanceKm===260){
-      const impossibleInput={...startInput,
+      const tiredBase=source(distanceKm,30,
+        'varied_field');
+      const impossibleInput={...tiredBase.startInput,
         soloCommitments:[commitRearSoloPlanV1({
           riderId,distanceKm,stageNumber:1,
           stageCount:2,baseline:{
@@ -987,6 +1011,17 @@ if(process.argv.includes('--probe-rear-events-120')||
       ...input,throughKm:distanceKm});
     const soloField=probePhysicalStaggeredSoloFieldV1({
       ...input,staggered,throughKm:distanceKm});
+    if(fatigue===30){
+      assert.throws(()=>
+        replayPhysicalStaggeredRearEventsV1({
+          ...input,staggered,soloField,
+          throughKm:distanceKm}),
+      /distinct paid split ordering/);
+      return {distanceKm,fatigue,
+        status:'refused_ambiguous_equal_split',
+        sourceKm:26,
+        riderIds:['team-3-3','team-4-3']};
+    }
     const race=replayPhysicalStaggeredRearEventsV1({
       ...input,staggered,soloField,throughKm:
         distanceKm});
@@ -1021,6 +1056,7 @@ if(process.argv.includes('--probe-rear-events-120')||
         state.decisions.every(decision=>
           decision?.riderId===state.riderId))));
     return {distanceKm,fatigue,
+      status:'full_replay',
       contactCount:race.contactCount,
       firstContacts:race.contacts.slice(0,5).map(row=>({
         km:row.sourceKm,atDistanceM:row.atDistanceM,

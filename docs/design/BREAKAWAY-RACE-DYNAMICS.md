@@ -4173,17 +4173,21 @@ only the involved roads, and prices one leader plus sheltered members
 to the next encounter. It checks for an unhandled bunch crossing and
 refuses one. Each kilometre records all 160 riders' physical groups,
 decisions, energy and clock; contact and cross-kilometre energy must
-reconcile with the paid sources. Four varied-field same-seed witnesses
-cover 120 and 260 km at fatigue 10 and 30: respectively 12, 12, 22
-and 15 rear contacts, with 19,200 or 41,600 rider-kilometres and all
-160 actual finish clocks. The first three contacts match the separate
-source inspectors. No time limit or GC stake is inferred.
+reconcile with the paid sources. Two varied-field same-seed witnesses
+at fatigue 10 cover 120 and 260 km: 12 and 22 rear contacts, 19,200
+and 41,600 rider-kilometres, and all 160 actual finish clocks. The
+first three contacts match the separate source inspectors. The two
+fatigue-30 fields are now refused at km 26 because team-3-3 and
+team-4-3 have identical measured split markers and no physical
+ordering. Earlier full-finish counts of 12 and 15 contacts in those
+fields relied on an arbitrary rider-ID tie break and are withdrawn.
+No time limit or GC stake is inferred.
 
 This remains an opt-in Motor Lab replay. Its rear riders cooperate at
 recorded contact to save finish energy; it has not yet calibrated
 intent-sensitive passing, all orders and stages, heterogeneous group
 splits, break transitions and whole-race distributions. No guided race
-uses this version, and these four witnesses do not establish release
+uses this version, and these witnesses do not establish release
 readiness.
 
 At each rear contact, a versioned choice now uses the two roads'
@@ -4206,16 +4210,18 @@ leader. A claimed later-stage motive without that committed plan is
 rejected before the race.
 
 The full-field stage-plan audit replays the same 160 varied riders
-over 120 km at fatigue 10 and 260 km at fatigue 30 with a named
+over 120 and 260 km at fatigue 10 with a named
 stage-2 target for team-4-3. The committed reserves are 70 and 50
-energy respectively. Source replay records 13 and 15 measured rear
+energy respectively. Source replay records 13 and 21 measured rear
 contacts, all 160 per-kilometre decisions and finish clocks, and the
-saving rider's 84.008 and 64.076 finish energy. That rider shelters in
-every segment of its formed rear group (90 and 235 kilometres). A
+saving rider's 84.008 and 71.978 finish energy. That rider shelters in
+every segment of its formed rear group (90 and 230 kilometres). A
 70-energy reserve on the longer, more fatigued source is refused by
 the solo source rather than silently relabelled as attainable. This
-is a feasibility witness, not calibration of stage tactics or the
-whole-race finish distribution.
+is a feasibility witness. The earlier 260-km fatigue-30 replay with
+64.076 finish energy also relied on the ambiguous km-26 split and is
+withdrawn. These runs do not calibrate stage tactics or the whole-race
+finish distribution.
 
 The isolated bunch-loss source now also accepts one paid loss or
 several losses in the same kilometre. Its earlier gate demanded two
@@ -4229,6 +4235,14 @@ ambiguous contact among equal paid trajectories: it has no measured
 catching road to establish a physical wheel. This case remains open;
 the replay does not form a rear group by assuming those riders are
 together.
+
+The same-kilometre fallback now requires different measured split
+distances before it can name a catching road. In the 20-rider case,
+equal split markers are refused in the first loss kilometre with
+`Rear contact lacks distinct paid split ordering.` This prevents an
+arbitrary rider-ID tie break from assigning a temporary leader before
+the later replay refusal. The missing physical ordering remains an
+open source requirement.
 
 A same-seed 160-rider captain audit changes one team's named captain
 and committed sprint stake while holding the first paid rear contact
