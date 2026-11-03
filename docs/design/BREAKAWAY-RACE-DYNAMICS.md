@@ -4731,3 +4731,16 @@ roads still need paying. At fatigue 30, `team-1-1` catches
 decisions form a two-rider group with `team-1-1` exposed. A separate
 solo then meets the bunch at metre 70,318.555781. The rear group
 must remain on its own paid road while that bunch decision is made.
+
+The reusable ordered sequence now handles rear and solo-to-bunch
+events in either order. It replays the fatigue-10 km-72 field meeting
+at metre 71,192.244369, a separate paid rear-pair join at metre
+71,242.16943 with `team-18-0` exposed, and a second solo joining
+the bunch at metre 71,612.928972. No later km-72 contact is measured.
+The full replay has 160 riders, 124 in the bunch and 36 on 30 rear
+roads, with each contact and remainder in the rider decision trace.
+The next event is in km 73 at metre 72,324.017632. Under fatigue 30,
+the same sequence records further km-71 contacts but reaches a
+three-rider group's meeting with the bunch at metre 70,905.641841.
+That group-to-bunch decision is still unsupported, so the fatigue-30
+km-71 field remains incomplete.

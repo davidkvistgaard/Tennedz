@@ -119,6 +119,12 @@ import {inspectPhysicalOrderedRearPostBunchChainV1,
 import {advancePhysicalOrderedRearPostBunchKmV1,
   validatePhysicalOrderedRearPostBunchKmV1} from
   '../lib/engine/v2/physical-ordered-rear-post-bunch-km-v1.mjs';
+import {inspectPhysicalOrderedRearEventSequenceV1,
+  validatePhysicalOrderedRearEventSequenceV1} from
+  '../lib/engine/v2/physical-ordered-rear-event-sequence-v1.mjs';
+import {advancePhysicalOrderedRearEventKmV1,
+  validatePhysicalOrderedRearEventKmV1} from
+  '../lib/engine/v2/physical-ordered-rear-event-km-v1.mjs';
 import {replayPhysicalStaggeredRearEventsV1,
   validatePhysicalStaggeredRearEventsV1,
   inspectPhysicalRearEventEndStateV1,
@@ -1474,6 +1480,25 @@ if(process.argv.includes('--probe-rear-ordered-prefix')){
       nextBoundary?.recording.firstEvent?
         resolvePhysicalOrderedRearContinuationContactV1({
           startInput,prior:nextPrior}):null;
+    const nextSequence=nextPrior?
+      inspectPhysicalOrderedRearEventSequenceV1({
+        startInput,prior:nextPrior}):null;
+    if(nextSequence&&verify)
+      assert.equal(
+        validatePhysicalOrderedRearEventSequenceV1({
+          startInput,prior:nextPrior},
+        nextSequence),true);
+    const nextFull=nextSequence&&
+      !nextSequence.firstUnsettledEvent&&
+      nextSequence.contacts.every(row=>
+        row.outcome==='join')?
+      advancePhysicalOrderedRearEventKmV1({
+        startInput,prior:nextPrior}):null;
+    if(nextFull&&verify)
+      assert.equal(
+        validatePhysicalOrderedRearEventKmV1({
+          startInput,prior:nextPrior},
+        nextFull),true);
     return {sourceKm:probe.sourceKm,
       riderId:contact.riderId,
       atDistanceM:contact.atDistanceM,
@@ -1531,7 +1556,32 @@ if(process.argv.includes('--probe-rear-ordered-prefix')){
           .candidateGroupRoad
           ?.leaderRiderId??null,
         nextCandidateEvent:nextContact
-          .nextCandidateEvent??null}:null};
+          .nextCandidateEvent??null}:null,
+      nextSequence:nextSequence?{
+        sourceKm:nextSequence.sourceKm,
+        contacts:nextSequence.contacts
+          .map(row=>({
+            atDistanceM:row.event.atDistanceM,
+            kind:row.kind,
+            outcome:row.outcome,
+            roadIds:row.event.roadIds,
+            leaderRiderId:row.groupRoad
+              ?.leaderRiderId??null})),
+        bunchRiders:nextSequence
+          .endBunchRiderIds.length,
+        rearRoads:nextSequence.endRoads
+          .length,
+        firstUnsettledEvent:nextSequence
+          .firstUnsettledEvent??null}:null,
+      nextFullRiders:nextFull?.riderCount??
+        null,
+      nextBunchRiders:nextFull
+        ?.endBunchState.riderIds.length??null,
+      nextRearRoads:nextFull
+        ?.endRearEntities.length??null,
+      afterNextClear:nextFull?
+        probeClearPrefix(startInput,
+          nextFull):null};
   };
   const results=[120,260].flatMap(distanceKm=>
     [10,30].map(fatigue=>{
@@ -2106,6 +2156,14 @@ if(process.argv.includes('--probe-rear-ordered-prefix')){
         ?.riderId==='team-13-0'&&
       row.post66Bunch?.nextContact
         ?.canHold===true&&
+      row.post66Bunch?.nextFullRiders===160&&
+      row.post66Bunch?.nextBunchRiders===124&&
+      row.post66Bunch?.nextRearRoads===30&&
+      row.post66Bunch?.afterNextClear
+        ?.firstUnresolvedKm===73&&
+      row.post66Bunch?.afterNextClear
+        ?.firstEvent?.atDistanceM===
+          72324.017632&&
       row.post47Clear?.lastFullKm===65)&&
     (row.fatigue!==30||
       row.lastPaid.km66Splits
@@ -2146,6 +2204,12 @@ if(process.argv.includes('--probe-rear-ordered-prefix')){
         ?.nextContact
           ?.nextCandidateEvent
           ?.atDistanceM===70318.555781&&
+      row.lastPaid.post66Bunch
+        ?.nextSequence
+          ?.firstUnsettledEvent
+          ?.atDistanceM===70905.641841&&
+      row.lastPaid.post66Bunch
+        ?.nextSequence?.rearRoads===29&&
       row.lastPaid.afterBunchClear
         ?.lastFullKm===65)&&
     row.firstRefusedKm===
