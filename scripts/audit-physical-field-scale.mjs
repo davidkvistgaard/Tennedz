@@ -441,6 +441,8 @@ if(process.argv.includes('--probe-front-rear-threat')){
     const teamByRider=new Map(startInput.teams.flatMap(team=>
       team.riders.map(rider=>[rider.id,team.id])));
     const effortRank={conserve:0,steady:1,hard:2};
+    const lastClockByRider=new Map();
+    const lastEnergyByRider=new Map();
     const summary={riderKilometres:0,
       decisionRows:0,missingDecisions:0,
       missingChoice:0,missingRiderId:0,
@@ -448,13 +450,35 @@ if(process.argv.includes('--probe-front-rear-threat')){
       missingEffort:0,missingTeamOrderEffort:0,
       missingVersion:0,
       orderEffortMismatch:0,
-      effortExceedsOrder:0,unknownEffort:0};
+      effortExceedsOrder:0,unknownEffort:0,
+      invalidEnergy:0,invalidClock:0,
+      nonForwardClock:0,missingGroupId:0,
+      finishClockMismatch:0,
+      finishEnergyMismatch:0};
     for(const km of race.kilometres){
       const orderedEffort=new Map(startInput.teams.map(team=>[
         team.id,orderAt(team.orders,km.sourceKm-1)
           .effort]));
       for(const state of km.riderStates){
         summary.riderKilometres++;
+        if(!Number.isFinite(state.energyAfter)||
+          state.energyAfter<0||state.energyAfter>100)
+          summary.invalidEnergy++;
+        if(!Number.isFinite(state.elapsedSeconds)||
+          state.elapsedSeconds<=0)
+          summary.invalidClock++;
+        const priorClock=lastClockByRider.get(
+          state.riderId);
+        if(priorClock!==undefined&&
+          state.elapsedSeconds<=priorClock)
+          summary.nonForwardClock++;
+        if(typeof state.physicalGroupId!==
+          'string'||!state.physicalGroupId)
+          summary.missingGroupId++;
+        lastClockByRider.set(state.riderId,
+          state.elapsedSeconds);
+        lastEnergyByRider.set(state.riderId,
+          state.energyAfter);
         const managerEffort=orderedEffort.get(
           teamByRider.get(state.riderId));
         if(effortRank[managerEffort]===undefined)
@@ -497,6 +521,22 @@ if(process.argv.includes('--probe-front-rear-threat')){
             summary.unknownEffort++;
         }
       }
+    }
+    for(const riderId of race.riderIds){
+      const finalClock=lastClockByRider.get(riderId);
+      const observedClock=
+        race.observedFinishSecondsByRider[riderId];
+      if(!Number.isFinite(finalClock)||
+        !Number.isFinite(observedClock)||
+        Math.abs(finalClock-observedClock)>1e-6)
+        summary.finishClockMismatch++;
+      const finalEnergy=lastEnergyByRider.get(riderId);
+      const observedEnergy=
+        race.observedFinishEnergyByRider[riderId];
+      if(!Number.isFinite(finalEnergy)||
+        !Number.isFinite(observedEnergy)||
+        Math.abs(finalEnergy-observedEnergy)>1e-6)
+        summary.finishEnergyMismatch++;
     }
     return summary;
   }

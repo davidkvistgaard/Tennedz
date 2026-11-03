@@ -5323,6 +5323,12 @@ that order, and explicit order copies match the source in all 42
 cells. Individual choice rows still have no own version field; their
 policy is identified by the enclosing replay sources. An explicit
 per-decision version remains a separate schema task before promotion.
+The version 5 gate checks that every rider-kilometre has finite,
+nonnegative energy, a forward-moving observed road clock and a
+physical group ID. The final paid clock and energy for each of the
+160 riders match the recorded finish in every matrix cell. These
+checks include early drops, later rear contacts and caught riders
+sliding through on their own paid road.
 It is a source-continuity gate, not an independent physics oracle or
 real-race calibration.
 The read-only `node scripts/audit-v94-physical-input-compatibility.mjs
