@@ -53,6 +53,8 @@ import {advancePhysicalThirdRearGroupV1} from
   '../lib/engine/v2/physical-third-rear-contact-v1.mjs';
 import {pricePhysicalRearEventTrackV1} from
   '../lib/engine/v2/physical-rear-event-track-v1.mjs';
+import {decidePhysicalRearContactV1} from
+  '../lib/engine/v2/physical-rear-contact-choice-v1.mjs';
 import {replayPhysicalCommittedStageReleaseFinishV1,
   validatePhysicalCommittedStageReleaseFinishV1} from
   '../lib/engine/v2/physical-committed-stage-release-km-v1.mjs';
@@ -1443,8 +1445,40 @@ if(process.argv.includes('--probe-rear-ordered-prefix')){
           const loss=
             sourcePhysicalOrderedRearLossBoundaryV1({
               startInput,prior});
-          const next=advancePhysicalOrderedRearLossKmV1({
-            startInput,prior});
+          let next;
+          try{next=advancePhysicalOrderedRearLossKmV1({
+            startInput,prior});}
+          catch(error){return {
+            lastFullKm:prior.sourceKm,
+            firstUnresolvedKm:km,
+            refusal:error.message,
+            newSplits:bunch.step.splits.map(row=>({
+              riderId:row.riderId,
+              atDistanceM:row.atDistanceM})),
+            candidateEvents:
+              findPhysicalOrderedBoundaryEventsV1(
+                loss.tracks,loss.bunch,km)
+                .map(row=>({
+                  atDistanceM:row.atDistanceM,
+                  roadIds:row.roadIds,
+                  involvesBunch:
+                    row.involvesBunch,
+                  choice:row.involvesBunch?
+                    null:decidePhysicalRearContactV1({
+                      startInput,km,
+                      roadIds:row.roadIds,
+                      riderIdsByRoad:
+                        row.riderIdsByRoad,
+                      catchingRoadId:
+                        row.catchingRoadId,
+                      observedSecondsPerKmByRoad:
+                        row.observedSecondsPerKmByRoad,
+                      leaderRiderId:loss.tracks.find(
+                        track=>track.id===
+                          row.catchingRoadId)
+                        ?.leaderRiderId})
+                    .outcome})),
+            contactKilometres};}
           if(loss.recording.firstEvent)
             assert.equal(
               validatePhysicalOrderedRearLossKmV1({
@@ -1475,7 +1509,9 @@ if(process.argv.includes('--probe-rear-ordered-prefix')){
           sequence?.contacts.some(row=>
             row.outcome!=='join'&&
             !(row.kind==='solo_bunch'&&
-              row.outcome==='stay_solo')))
+              row.outcome==='stay_solo')&&
+            !(row.kind==='rear_rear'&&
+              row.outcome==='pass_through')))
           return {lastFullKm:prior.sourceKm,
             firstUnresolvedKm:km,
             firstEvent:boundary.recording.firstEvent,
@@ -1735,15 +1771,79 @@ if(process.argv.includes('--probe-rear-ordered-prefix')){
   const selectedCase=process.argv.find(arg=>
     arg.startsWith('--probe-rear-ordered-case='))
     ?.split('=')[1]??null;
+  const [selectedDistance,selectedFatigue,
+    selectedVariant='varied_field']=
+    selectedCase?.split(':')??[];
+  const roleMatrix=process.argv.includes(
+    '--probe-rear-ordered-role-matrix');
+  if(roleMatrix||selectedCase&&
+    selectedVariant==='varied_captain'){
+    const probeRoleCase=(distanceKm,fatigue)=>{
+    const base=source(distanceKm,fatigue,
+      'varied_captain');
+    const startInput={...base.startInput,
+      physicalDraftVersion:4,
+      physicalRearIntentVersion:2};
+    const start=startPhysicalBunchV1(startInput);
+    const throughKm=31;
+    const staggered=runPhysicalStaggeredBunchLossV1({
+      startInput,start,throughKm});
+    const soloField=probePhysicalStaggeredSoloFieldV1({
+      startInput,start,staggered,throughKm});
+    assert.equal(soloField.refusals.length,0);
+    const end=inspectPhysicalRearEventEndStateV1({
+      startInput,start,staggered,soloField,
+      throughKm});
+    const riderStates=end.source.kilometres
+      .at(-1).riderStates;
+    const step=staggered.road.at(-1);
+    const prior={sourceKm:throughKm,
+      riderStates,riderCount:riderStates.length,
+      endBunchState:{
+        riderIds:[...step.physicalGroup.riderIds],
+        energyByRider:step.energyByRider,
+        quietKmByRider:step.quietKmByRider},
+      endRearEntities:end.endEntities};
+    const mixed=probeMixedPrefix(startInput,prior);
+    return {
+      distanceKm,fatigue,
+      variant:'varied_captain',
+      firstPaidKm:throughKm,
+      mixed};
+    };
+    const cases=roleMatrix?
+      [120,260].flatMap(distanceKm=>
+        [10,30].map(fatigue=>[
+          distanceKm,fatigue])):
+      [[Number(selectedDistance),
+        Number(selectedFatigue)]];
+    const results=cases.map(([distanceKm,
+      fatigue])=>probeRoleCase(distanceKm,
+      fatigue));
+    if(roleMatrix)
+      assert.ok(results.every(row=>
+        row.mixed.lastFullKm===
+          row.distanceKm&&
+        row.mixed.firstUnresolvedKm===null&&
+        row.mixed.observedFinish
+          ?.riderCount===160&&
+        row.mixed.contactKilometres.some(item=>
+          item.contacts?.some(contact=>
+            contact.outcome===
+              'pass_through'))));
+    process.stdout.write(JSON.stringify({results},
+      null,2)+'\n');
+    process.exit(0);
+  }
   const results=[120,260]
     .filter(distanceKm=>!selectedCase||
-      selectedCase.startsWith(`${distanceKm}:`))
+      selectedDistance===String(distanceKm))
     .flatMap(distanceKm=>
     [10,30].filter(fatigue=>!selectedCase||
-      selectedCase===`${distanceKm}:${fatigue}`)
+      selectedFatigue===String(fatigue))
       .map(fatigue=>{
       const base=source(distanceKm,fatigue,
-        'varied_field');
+        selectedVariant);
       const startInput={...base.startInput,
         physicalDraftVersion:4,
         physicalRearIntentVersion:2};

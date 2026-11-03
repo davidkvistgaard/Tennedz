@@ -4781,3 +4781,19 @@ ranges from 40.579 to 70.709 across these four probes. These are
 source-observed clocks, not official results. They do not yet validate
 sporting finish order, wider role and terrain outcomes, realistic
 break leads or control workload. Guided routing remains withheld.
+
+A second same-seed role matrix changes one team's committed captain
+while retaining the varied terrain, riders and route. Its early rear
+roads are rebuilt from their own paid km-31 state. At km 33, two solos
+meet but the faster captain's committed goal leads to a recorded
+pass-through, not a forced rear group. In the tired 260-km branch, an
+old solo joins a three-rider rear group in km 141 before twelve riders
+leave the bunch near that kilometre's end. The joined group pays one
+exposed leader and sheltered members for its remaining road; the new
+solo roads begin only at their measured split points. All four role
+variants now reach their 120/260-km route ends with 160 paid rider
+states and source-replayed contact kilometres. The differing role
+changes some remaining energy and rear-group membership. This doubles
+the full-field synthetic matrix to eight cases; it still lacks front
+break and broad sporting calibration, so observed clocks are not
+official results.
