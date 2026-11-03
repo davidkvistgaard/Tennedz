@@ -1263,6 +1263,88 @@ if(process.argv.includes('--probe-rear-ordered')){
   process.exit(0);
 }
 
+if(process.argv.includes('--probe-rear-ordered-prefix')){
+  const results=[120,260].flatMap(distanceKm=>
+    [10,30].map(fatigue=>{
+      const base=source(distanceKm,fatigue,
+        'varied_field');
+      const startInput={...base.startInput,
+        physicalDraftVersion:4,
+        physicalRearIntentVersion:2};
+      const start=startPhysicalBunchV1(startInput);
+      let lastPaid=null;
+      for(let throughKm=30;throughKm<=40;throughKm++){
+        try{
+          const staggered=
+            runPhysicalStaggeredBunchLossV1({
+              startInput,start,throughKm});
+          const soloField=
+            probePhysicalStaggeredSoloFieldV1({
+              startInput,start,staggered,
+              throughKm});
+          if(soloField.refusals.length){
+            const crossingCandidates=soloField.refusals
+              .map(refusal=>{
+                const input={startInput,start,staggered,
+                  riderId:refusal.riderId,
+                  throughKm};
+                const probe=
+                  probePhysicalOrderedSoloBunchContactV1(
+                    input);
+                assert.equal(
+                  validatePhysicalOrderedSoloBunchContactV1(
+                    input,probe),true);
+                return {riderId:refusal.riderId,
+                  contact:probe.contact};
+              }).filter(row=>row.contact)
+              .sort((a,b)=>a.contact.clockSeconds-
+                b.contact.clockSeconds);
+            return {distanceKm,fatigue,
+              lastPaid,firstRefusedKm:throughKm,
+              source:'independent_solo',
+              refusalCount:soloField.refusals.length,
+              firstCrossings:crossingCandidates
+                .slice(0,3).map(row=>({
+                  riderId:row.riderId,
+                  atDistanceM:row.contact.atDistanceM,
+                  clockSeconds:row.contact.clockSeconds,
+                  candidateOnly:row.contact.candidateOnly,
+                  otherRearRoadsUnsettled:
+                    row.contact.otherRearRoadsUnsettled}))};
+          }
+          const input={startInput,start,staggered,
+            soloField,throughKm};
+          const race=replayPhysicalStaggeredRearEventsV1(
+            input);
+          assert.equal(
+            validatePhysicalStaggeredRearEventsV1(
+              input,race),true);
+          lastPaid={sourceKm:throughKm,
+            contactCount:race.contactCount,
+            riderStates:race.kilometres.at(-1)
+              .riderStates.length};
+        }catch(error){return {distanceKm,fatigue,
+          lastPaid,firstRefusedKm:throughKm,
+          source:'event_ordering',
+          refusal:error.message};}
+      }
+      return {distanceKm,fatigue,lastPaid,
+        firstRefusedKm:null};
+    }));
+  assert.ok(results.every(row=>
+    row.lastPaid?.riderStates===160&&
+    row.lastPaid.contactCount===3&&
+    row.firstRefusedKm===
+      (row.fatigue===10?32:33)&&
+    row.refusalCount===1&&
+    row.firstCrossings?.length===1&&
+    row.firstCrossings[0].candidateOnly===true&&
+    row.firstCrossings[0]
+      .otherRearRoadsUnsettled===true));
+  process.stdout.write(JSON.stringify({results},null,2)+'\n');
+  process.exit(0);
+}
+
 if(process.argv.includes('--probe-rear-extreme')||
   process.argv.includes('--probe-rear-extreme-260')){
   const distanceKm=process.argv.includes(

@@ -4544,3 +4544,14 @@ pays one named front worker and the sheltered members through the
 20-km finish, and replays all 24 finish clocks. A later split refuses
 until its separate road is sourced. This narrow finish does not settle
 the 160-rider simultaneous rear roads or calibrate guided V94.
+
+The read-only `--probe-rear-ordered-prefix` audit narrows the first
+unresolved event in the same seeded 160-rider route. For 120 and 260 km
+with fatigue 10, the event-ordered rear replay pays all 160 states and
+three rear contacts through km 31; one independent solo then reaches
+the bunch at metre 31,447.39 in km 32. With fatigue 30, the paid
+prefix extends through km 32 and its first candidate bunch crossing
+is metre 32,711.11 in km 33. Both candidates remain refused because
+three previously formed rear contacts can alter later trajectories.
+The next source must order this bunch contact against the active rear
+groups and recompute later roads from the resulting membership.
