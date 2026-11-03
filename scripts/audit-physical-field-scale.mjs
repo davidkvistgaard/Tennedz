@@ -32,6 +32,8 @@ import {replayPhysicalFrontRearJoinedKmV1,
   validatePhysicalFrontRearJoinedKmV1,
   replayPhysicalFrontRearAllContactsKmV1,
   validatePhysicalFrontRearAllContactsKmV1,
+  replayPhysicalFrontToRearContactsKmV1,
+  validatePhysicalFrontToRearContactsKmV1,
   replayPhysicalAllRearAllContactsKmV1,
   validatePhysicalAllRearAllContactsKmV1} from
   '../lib/engine/v2/physical-front-rear-joined-km-v1.mjs';
@@ -888,6 +890,84 @@ if(process.argv.includes('--probe-front-rear-threat')){
       caughtRace.observedFinishEnergyByRider);
     }
   }
+  let frontToRear=null;
+  let frontToRearFinish=null;
+  let frontToRearRefusal=null;
+  if(process.argv.includes(
+    '--probe-front-to-rear')){
+    const frontContactKm=Number(process.argv
+      .find(arg=>arg.startsWith(
+        '--front-contact-km='))
+      ?.split('=')[1]??106);
+    const prefix=replayPhysicalFrontRearRaceV1({
+      ...generated,attackKm:1,lossKm:21,
+      throughKm:frontContactKm-1,
+      chaseObserverTeamId:team.id});
+    frontToRear=
+      replayPhysicalFrontToRearContactsKmV1({
+        startInput:generated.startInput,
+        prior:prefix.sources.last});
+    assert.equal(
+      validatePhysicalFrontToRearContactsKmV1({
+        startInput:generated.startInput,
+        prior:prefix.sources.last},
+      frontToRear),true);
+    assert.equal(frontToRear.sourceKm,
+      frontContactKm);
+    assert.equal(frontToRear.riderCount,160);
+    assert.ok(frontToRear.sources.contacts.some(
+      row=>row.event.roadIds.some(id=>
+        id.startsWith('front-'))));
+    assert.equal(frontToRear.sources
+      .frontSegments.at(-1).toMetres,
+    1000);
+    const priorFront=prefix.sources.last
+      .endFrontState;
+    let frontMetres=0;
+    let frontEnergy=priorFront.energyAfter;
+    for(const segment of frontToRear.sources
+      .frontSegments){
+      assert.equal(segment.riderId,
+        priorFront.riderId);
+      assert.ok(Math.abs(segment.fromMetres-
+        frontMetres)<.002);
+      assert.ok(Math.abs(segment.energyBefore-
+        frontEnergy)<.003);
+      assert.ok(segment.toMetres>
+        segment.fromMetres);
+      frontMetres=segment.toMetres;
+      frontEnergy=segment.energyAfter;
+    }
+    assert.ok(Math.abs(frontEnergy-
+      frontToRear.riderStates.find(row=>
+        row.riderId===priorFront.riderId)
+        .energyAfter)<.003);
+    let after=frontToRear;
+    for(let km=frontContactKm+1;
+      km<=distanceKm;km++){
+      try{
+        const input={startInput:generated
+          .startInput,prior:after};
+        const boundary=
+          advancePhysicalAllRearClearKmV1(input);
+        after=boundary.fieldKilometreIncomplete?
+          replayPhysicalAllRearAllContactsKmV1(
+            input):boundary;
+        assert.equal(after.sourceKm,km);
+        assert.equal(after.riderCount,160);
+      }catch(error){
+        frontToRearRefusal={sourceKm:km,
+          reason:error.message};
+        break;
+      }
+    }
+    if(!frontToRearRefusal)
+      frontToRearFinish={sourceKm:after.sourceKm,
+        riderCount:after.riderStates.length,
+        frontGroupId:after.riderStates.find(
+          row=>row.riderId===priorFront
+            .riderId).physicalGroupId};
+  }
   process.stdout.write(JSON.stringify({distanceKm,
     fatigue,choiceKm:41,
     withHelp:process.argv.includes('--with-help'),
@@ -1027,6 +1107,23 @@ if(process.argv.includes('--probe-front-rear-threat')){
               .map(decision=>
                 decision.riderId)}))??[]}:null,
     discoveredRaceRefusal,
+    frontToRear:frontToRear?{
+      version:frontToRear.version,
+      sourceKm:frontToRear.sourceKm,
+      frontInRear:frontToRear.endRearEntities
+        .some(row=>row.riderIds.includes(
+          'team-19-1')),
+      frontContacts:frontToRear.sources
+        .contacts.filter(row=>row.event
+          .roadIds.some(id=>id.startsWith(
+            'front-'))).map(row=>({
+          atDistanceM:row.event.atDistanceM,
+          choice:row.choice.outcome,
+          groupId:row.groupRoad.id,
+          leaderRiderId:row.groupRoad
+            .leaderRiderId}))}:null,
+    frontToRearFinish,
+    frontToRearRefusal,
     noCatchRace:noCatchRace?{
       riderCount:noCatchRace.riderIds.length,
       finishRiderCount:Object.keys(noCatchRace

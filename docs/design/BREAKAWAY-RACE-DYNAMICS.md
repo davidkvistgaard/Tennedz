@@ -5062,6 +5062,18 @@ The multi-contact kilometre and complete caught race use distinct
 version-2 recording IDs; the earlier one-contact recordings retain
 their version-1 IDs and output shape.
 
+An isolated front-to-rear contact kilometre now resolves roster 1's
+later km-106 meeting after its earlier solo/bunch event. The paid
+front and rear roads meet at metre 105,991.646982; the rear solo
+leads a two-rider group, and both riders' segmented energy and
+decisions reconcile through the kilometre. The 160 end states are
+versioned separately from the historic front-solo recordings. This
+does not settle the whole race: at km 107 the new group meets the
+bunch, and the existing group-join rule correctly refuses because
+not every member can pay and hold bunch pace. The next source model
+must let each group member make a paid join or slide decision at that
+recorded contact before this roster can count as a finish.
+
 The next opt-in contact version resolves the tired km-26 boundary at
 the **recorded common split point** (metre 25,999.203884). Both riders
 have paid the bunch to that point; neither is labelled as catching
