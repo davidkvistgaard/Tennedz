@@ -4588,3 +4588,12 @@ the lower shelter cost. A candidate group road is priced from their
 contact energy, but its later intersections and the other active
 rear roads have not yet been settled. No full km-32 state, field
 return or finish is claimed from that candidate.
+
+After that first two-rider join, a new source comparison replaces the
+two obsolete solo paths with their paid shared road. Its next
+candidate event is a group-to-bunch clock crossing at metre
+31,451.64, with `team-18-0` still paying the exposed turn and
+`team-11-2` sheltered. This is 4.25 metres later than the obsolete
+solo-to-bunch projection. No rider joins the bunch yet: each group
+member's ability to hold the bunch, contact energy, committed goal
+and the remaining kilometre still need a paid transition.

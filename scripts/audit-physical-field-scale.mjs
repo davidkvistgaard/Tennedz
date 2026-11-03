@@ -1335,6 +1335,9 @@ if(process.argv.includes('--probe-rear-ordered-prefix')){
               firstContactLeader:
                 firstContact?.candidateGroupRoad
                   ?.leaderRiderId??null,
+              nextCandidateEvent:
+                firstContact?.nextCandidateEvent??
+                  null,
               candidateBunchClockDifference:
                 boundary.candidateBunchClockDifference,
               independentCrossingPreemptedByRearJoin:
@@ -1410,6 +1413,12 @@ if(process.argv.includes('--probe-rear-ordered-prefix')){
       row.firstCrossings[0].clockSeconds&&
     row.firstContactGroup?.riderIds.length===2&&
     row.firstContactLeader==='team-18-0'&&
+    row.nextCandidateEvent?.involvesBunch===
+      true&&
+    row.nextCandidateEvent?.roadIds[0]===
+      'rear-event-team-11-2-team-18-0'&&
+    row.nextCandidateEvent.atDistanceM>
+      row.firstCrossings[0].atDistanceM&&
     row.independentCrossingPreemptedByRearJoin===
       false:
     row.firstOrderedEvent===null&&
