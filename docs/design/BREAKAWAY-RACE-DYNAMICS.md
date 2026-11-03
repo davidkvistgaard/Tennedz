@@ -4963,9 +4963,28 @@ solo team-19-6 physically catches the former break rider at metre
 leads and the former break rider pays a 0.8 shelter fraction. At
 fatigue 30 that second contact is at metre 61,886.367831. No later
 contact occurs in km 62, and all 160 riders have replayed clocks,
-energy and decisions at its end. The full-race wrapper still refuses
-the catch because later kilometres need a source that follows a field
-with no separate front rider. No post-catch finish is claimed.
+energy and decisions at its end.
+
+The all-rear source now continues from that paid catch without
+restoring the former break rider to the bunch. It prices one exposed
+leader and sheltered followers on every rear group, resolves later
+contacts in clock order, and records the next full-field kilometre.
+The new pair meets a larger rear group in km 64 only through its paid
+contact. A precommitted manager rotation also assigns team 0 to lead
+km 96–100 (and km 196–200 on the long route). Without that order,
+the synthetic plan asks team 19 to lead at km 96 despite having no
+rider left in the bunch; the engine refuses instead of substituting
+a rider after the fact.
+
+With that committed relief, the opt-in caught-front replay now checks
+all 160 riders' kilometre states, clocks and energy through the
+observed finish in four same-seed cases: 120/260 km and fatigue
+10/30. The observed finish clock spans are 153.31/154.98 seconds
+on 120 km and 395.20/357.66 seconds on 260 km. The caught rider
+finishes in a rear group formed through later paid contact. These
+observations do not establish realistic finish distributions or
+official placements. Other front catches, rider roles, terrain and
+seeds still need calibration; guided V94 remains separate.
 
 The next opt-in contact version resolves the tired km-26 boundary at
 the **recorded common split point** (metre 25,999.203884). Both riders

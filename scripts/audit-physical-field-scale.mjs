@@ -2,7 +2,8 @@
 // A refusal marks a missing branch, never an inferred wheel or finish.
 import assert from 'node:assert/strict';
 import {SPORTING_SKILLS} from '../lib/engine/v2/skills.mjs';
-import {normalizeOrders} from '../lib/engine/v2/orders.mjs';
+import {normalizeOrders,orderAt} from
+  '../lib/engine/v2/orders.mjs';
 import {commitTeamChaseStakesV1} from
   '../lib/engine/v2/team-chase-stake-v1.mjs';
 import {commitRearSoloPlanV1} from
@@ -30,7 +31,9 @@ import {replayPhysicalFrontRearOrderedContactKmV1,
 import {replayPhysicalFrontRearJoinedKmV1,
   validatePhysicalFrontRearJoinedKmV1,
   replayPhysicalFrontRearAllContactsKmV1,
-  validatePhysicalFrontRearAllContactsKmV1} from
+  validatePhysicalFrontRearAllContactsKmV1,
+  replayPhysicalAllRearAllContactsKmV1,
+  validatePhysicalAllRearAllContactsKmV1} from
   '../lib/engine/v2/physical-front-rear-joined-km-v1.mjs';
 import {replayPhysicalFrontRearRaceV1,
   validatePhysicalFrontRearRaceV1} from
@@ -47,6 +50,12 @@ import {probePhysicalFrontRearFrontCatchBoundaryV1,
 import {replayPhysicalFrontRearCaughtSlideKmV1,
   validatePhysicalFrontRearCaughtSlideKmV1} from
   '../lib/engine/v2/physical-front-rear-caught-slide-km-v1.mjs';
+import {advancePhysicalAllRearClearKmV1,
+  validatePhysicalAllRearClearKmV1} from
+  '../lib/engine/v2/physical-all-rear-next-km-v1.mjs';
+import {replayPhysicalFrontCaughtAllRearRaceV1,
+  validatePhysicalFrontCaughtAllRearRaceV1} from
+  '../lib/engine/v2/physical-front-caught-all-rear-race-v1.mjs';
 import {probePhysicalFrontRearGroupBunchContactV1,
   validatePhysicalFrontRearGroupBunchContactV1} from
   '../lib/engine/v2/physical-front-rear-group-bunch-contact-v1.mjs';
@@ -386,6 +395,34 @@ if(process.argv.includes('--probe-front-rear-threat')){
       distanceKm,allowFrontWork:true,
       allowNamedFrontWorker:true});
   }
+  if(process.argv.includes('--planned-relief')){
+    const frontTeam=generated.startInput.teams[19];
+    const relief=generated.startInput.teams[0];
+    const reliefMarkers=[95,195].filter(
+      marker=>marker<distanceKm);
+    const namedRelief=orderAt(relief.orders,
+      100).frontWorkRiderId;
+    frontTeam.orders=normalizeOrders({
+      ...frontTeam.orders,
+      phases:frontTeam.orders.phases.map(
+        phase=>reliefMarkers.includes(
+          phase.atKm)?{
+          ...phase,frontWork:'sit_in',
+          frontWorkRiderId:undefined}:phase)},
+    {riderIds:frontTeam.riders.map(row=>row.id),
+      distanceKm,allowFrontWork:true,
+      allowNamedFrontWorker:true});
+    relief.orders=normalizeOrders({
+      ...relief.orders,
+      phases:[...relief.orders.phases,
+        ...reliefMarkers.map(atKm=>({
+          atKm,frontWork:'rotate',
+          frontWorkRiderId:namedRelief}))]
+        .sort((a,b)=>a.atKm-b.atKm)},
+    {riderIds:relief.riders.map(row=>row.id),
+      distanceKm,allowFrontWork:true,
+      allowNamedFrontWorker:true});
+  }
   const team=generated.startInput.teams[8];
   team.orders=normalizeOrders({
     ...team.orders,
@@ -562,10 +599,99 @@ if(process.argv.includes('--probe-front-rear-threat')){
     assert.equal(caughtSlide
       .fieldKilometreIncomplete,false);
   }
+  const postCatch=process.argv.includes(
+    '--post-catch-next')?
+    advancePhysicalAllRearClearKmV1({
+      startInput:generated.startInput,
+      prior:caughtSlide}):null;
+  if(postCatch&&
+    !postCatch.fieldKilometreIncomplete){
+    assert.equal(validatePhysicalAllRearClearKmV1({
+      startInput:generated.startInput,
+      prior:caughtSlide},postCatch),true);
+    assert.equal(postCatch.riderCount,160);
+  }
+  let postCatchProgress=null;
+  if(process.argv.includes('--post-catch-probe')){
+    let prior=postCatch;
+    let completedThrough=prior.sourceKm;
+    let firstUnsettled=null;
+    for(let km=prior.sourceKm+1;
+      km<=distanceKm;km++){
+      try{
+        const input={
+          startInput:generated.startInput,prior};
+        const boundary=advancePhysicalAllRearClearKmV1(
+          input);
+        const next=boundary.fieldKilometreIncomplete?
+          replayPhysicalAllRearAllContactsKmV1(
+            input):boundary;
+        if(next.fieldKilometreIncomplete)
+          throw new Error(
+            'All-rear contact remains incomplete.');
+        if(boundary.fieldKilometreIncomplete)
+          assert.equal(
+            validatePhysicalAllRearAllContactsKmV1(
+              input,next),true);
+        assert.equal(next.riderCount,160);
+        completedThrough=km;
+        prior=next;
+      }catch(error){
+        const workingTeam=generated.startInput
+          .teams.find(team=>orderAt(team.orders,
+            km-1).frontWork==='rotate');
+        firstUnsettled={sourceKm:km,
+          reason:error.message,
+          orderedTeamId:workingTeam?.id,
+          namedWorkerId:workingTeam?
+            orderAt(workingTeam.orders,km-1)
+              .frontWorkRiderId:null,
+          availableTeamRiderIds:workingTeam
+            ?.riders.filter(row=>prior
+              .endBunchState.riderIds.includes(
+                row.id)).map(row=>row.id),
+          availableAlternatives:generated
+            .startInput.teams.filter(team=>
+              team.riders.some(row=>prior
+                .endBunchState.riderIds.includes(
+                  row.id)))
+            .slice(0,5).map(team=>({
+              teamId:team.id,
+              riderIds:team.riders.filter(row=>
+                prior.endBunchState.riderIds
+                  .includes(row.id))
+                .map(row=>row.id)}))};
+        break;
+      }
+    }
+    postCatchProgress={completedThrough,
+      firstUnsettled};
+  }
+  const caughtRace=process.argv.includes(
+    '--post-catch-race')?
+    replayPhysicalFrontCaughtAllRearRaceV1({
+      ...generated,attackKm:1,lossKm:21,
+      catchKm:62,
+      chaseObserverTeamId:team.id}):null;
+  if(caughtRace){
+    assert.equal(
+      validatePhysicalFrontCaughtAllRearRaceV1({
+        ...generated,attackKm:1,lossKm:21,
+        catchKm:62,
+        chaseObserverTeamId:team.id},
+      caughtRace),true);
+    assert.equal(caughtRace.kilometres.length,
+      distanceKm);
+    assert.equal(Object.keys(caughtRace
+      .observedFinishSecondsByRider)
+      .length,160);
+  }
   process.stdout.write(JSON.stringify({distanceKm,
     fatigue,choiceKm:41,
     withHelp:process.argv.includes('--with-help'),
     frontEases:process.argv.includes('--front-eases'),
+    plannedRelief:process.argv.includes(
+      '--planned-relief'),
     frontMountain:frontMountain?
       Number(frontMountain.split('=')[1]):null,
     observedGapSeconds:decision
@@ -631,6 +757,29 @@ if(process.argv.includes('--probe-front-rear-threat')){
         .frontRecoveryAward,
       remainingRaceUnsettled:caughtSlide
         .remainingRaceUnsettled}:null,
+    postCatch:postCatch?{
+      sourceKm:postCatch.sourceKm,
+      candidateEventCount:postCatch
+        .candidateEventCount,
+      firstCandidateEvent:postCatch
+        .firstCandidateEvent,
+      riderCount:postCatch.riderCount??null,
+      fieldKilometreIncomplete:postCatch
+        .fieldKilometreIncomplete}:null,
+    postCatchProgress,
+    caughtRace:caughtRace?{
+      distanceKm:caughtRace.distanceKm,
+      riderCount:caughtRace.riderIds.length,
+      catchKm:caughtRace.catchKm,
+      finishClockSpanSeconds:
+        Math.max(...Object.values(caughtRace
+          .observedFinishSecondsByRider))-
+        Math.min(...Object.values(caughtRace
+          .observedFinishSecondsByRider)),
+      formerFrontFinishGroupId:caughtRace
+        .sources.last.riderStates.find(row=>
+          row.riderId==='team-19-1')
+        .physicalGroupId}:null,
     paceEstimate:decision.paceEstimate,
     movesRoad:decision.movesRoad},null,2)+'\n');
   process.exit(0);
