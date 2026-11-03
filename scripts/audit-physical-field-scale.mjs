@@ -61,6 +61,12 @@ import {inspectPhysicalOrderedRearBoundaryV1,
 import {resolvePhysicalOrderedRearFirstContactV1,
   validatePhysicalOrderedRearFirstContactV1} from
   '../lib/engine/v2/physical-ordered-rear-first-contact-v1.mjs';
+import {probePhysicalOrderedRearBunchContactV1,
+  validatePhysicalOrderedRearBunchContactV1} from
+  '../lib/engine/v2/physical-ordered-rear-bunch-contact-v1.mjs';
+import {finishPhysicalOrderedRearBunchJoinKmV1,
+  validatePhysicalOrderedRearBunchJoinKmV1} from
+  '../lib/engine/v2/physical-ordered-rear-bunch-join-v1.mjs';
 import {replayPhysicalStaggeredRearEventsV1,
   validatePhysicalStaggeredRearEventsV1,
   inspectPhysicalRearEventEndStateV1,
@@ -1309,6 +1315,31 @@ if(process.argv.includes('--probe-rear-ordered-prefix')){
               assert.equal(firstContact.contact
                 .outcome,'join');
             }
+            const groupBunch=firstContact
+              ?.nextCandidateEvent?.involvesBunch?
+                probePhysicalOrderedRearBunchContactV1(
+                  boundaryInput):null;
+            if(groupBunch)
+              assert.equal(
+                validatePhysicalOrderedRearBunchContactV1(
+                  boundaryInput,groupBunch),true);
+            const joined=groupBunch?
+              finishPhysicalOrderedRearBunchJoinKmV1(
+                boundaryInput):null;
+            if(joined){
+              assert.equal(
+                validatePhysicalOrderedRearBunchJoinKmV1(
+                  boundaryInput,joined),true);
+              if(distanceKm===120&&fatigue===10){
+                const forged=structuredClone(joined);
+                forged.groupDecisions[0]
+                  .energyAfter+=1;
+                assert.throws(()=>
+                  validatePhysicalOrderedRearBunchJoinKmV1(
+                    boundaryInput,forged),
+                /differs from paid source/);
+              }
+            }
             const crossingCandidates=soloField.refusals
               .map(refusal=>{
                 const input={startInput,start,staggered,
@@ -1338,6 +1369,23 @@ if(process.argv.includes('--probe-rear-ordered-prefix')){
               nextCandidateEvent:
                 firstContact?.nextCandidateEvent??
                   null,
+              groupBunchRiders:groupBunch
+                ?.contact.groupRiders.map(row=>({
+                  riderId:row.riderId,
+                  canHold:row.canHold,
+                  payable:row.payable,
+                  reserveOkay:row.reserveOkay,
+                  shelterCheaper:
+                    row.shelterCheaper,
+                  energyAtContact:
+                    row.energyAtContact}))??null,
+              joinedBunchRiders:joined
+                ?.physicalGroup.riderIds.length??
+                  null,
+              joinedRiderStates:joined
+                ?.riderStates.length??null,
+              joinedFieldIncomplete:joined
+                ?.fieldKilometreIncomplete??null,
               candidateBunchClockDifference:
                 boundary.candidateBunchClockDifference,
               independentCrossingPreemptedByRearJoin:
@@ -1419,6 +1467,14 @@ if(process.argv.includes('--probe-rear-ordered-prefix')){
       'rear-event-team-11-2-team-18-0'&&
     row.nextCandidateEvent.atDistanceM>
       row.firstCrossings[0].atDistanceM&&
+    row.groupBunchRiders?.length===2&&
+    row.groupBunchRiders.every(rider=>
+      rider.canHold&&rider.payable&&
+      rider.reserveOkay&&
+      rider.shelterCheaper)&&
+    row.joinedBunchRiders===133&&
+    row.joinedRiderStates===133&&
+    row.joinedFieldIncomplete===true&&
     row.independentCrossingPreemptedByRearJoin===
       false:
     row.firstOrderedEvent===null&&

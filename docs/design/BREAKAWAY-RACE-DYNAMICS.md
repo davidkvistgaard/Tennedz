@@ -4597,3 +4597,13 @@ candidate event is a group-to-bunch clock crossing at metre
 solo-to-bunch projection. No rider joins the bunch yet: each group
 member's ability to hold the bunch, contact energy, committed goal
 and the remaining kilometre still need a paid transition.
+
+The two members now have a source-replayed contact decision at metre
+31,451.64. Their earlier exposed and sheltered group costs are paid
+only to that point. Both can hold the measured bunch pace, can pay the
+remaining distance, and spend less energy in bunch shelter than alone.
+They explicitly choose to join, bringing the paid bunch to 133 riders
+at the end of km 32 in both fatigue-10 120/260-km probes. Each has
+the solo approach, first rear contact, group turn and bunch join in
+the kilometre decision trace. The other 27 riders still require their
+own km-32 roads; this is not a complete 160-rider kilometre or finish.
