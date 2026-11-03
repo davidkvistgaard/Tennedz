@@ -4869,3 +4869,13 @@ roads and has no unambiguous catching road. The contact source refuses
 that branch until simultaneous split ordering is paid and resolved.
 The same-seed 120/260-km probes verify both outcomes. Neither branch
 is a whole-race or finish validation.
+
+The next paid contact in the low-fatigue km-31 branch now also has an
+opt-in source. It replays the first two-rider group's road from metre
+30,096.330085 and meets a third solo at metre 30,301.208844. All
+three riders choose to join based on observed paid road speeds and
+their committed intents. One rider pays the exposed turn on the final
+group road; the other two receive the lower shelter cost. Repricing
+the remaining roads finds no further km-31 candidate contact. A full
+160-rider km-31 state has not yet been assembled from these segments,
+and the tired simultaneous-split branch remains unresolved.
