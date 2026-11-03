@@ -653,6 +653,39 @@ if(process.argv.includes('--probe-front-rear-threat')){
         catchKm:catchKm-1,
         chaseObserverTeamId:team.id}),
     /no paid contact here/);
+    if(process.argv.includes(
+      '--expect-independent-simultaneous')){
+      const km26=catchBoundary.sources.prefix
+        .kilometres[25];
+      const simultaneous=km26.contactEvents
+        .filter(row=>row.event.clockSeconds===
+          km26.contactEvents[0]
+            .event.clockSeconds);
+      assert.ok(simultaneous.length>=2);
+      assert.ok(simultaneous[0].event.roadIds
+        .every(id=>!simultaneous[1]
+          .event.roadIds.includes(id)));
+      assert.ok(simultaneous[0].event
+        .atDistanceM!==simultaneous[1]
+          .event.atDistanceM);
+      assert.equal(km26.riderStates.length,160);
+      const groups=simultaneous.slice(0,2)
+        .map(contact=>{
+          assert.equal(contact.choice,'join');
+          const ids=contact.event.riders.map(row=>
+            row.riderId);
+          assert.ok(ids.includes(
+            contact.leaderRiderId));
+          const states=ids.map(id=>
+            km26.riderStates.find(row=>
+              row.riderId===id));
+          assert.ok(states.every(row=>
+            row?.physicalGroupId===states[0]
+              .physicalGroupId));
+          return states[0].physicalGroupId;
+        });
+      assert.notEqual(groups[0],groups[1]);
+    }
   }
   const caughtSlide=process.argv.includes(
     '--caught-slide-km')?

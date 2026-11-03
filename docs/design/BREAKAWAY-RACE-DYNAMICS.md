@@ -5056,8 +5056,14 @@ observed faster road choose a pass-through. The rider remains on a
 separate paid road. The group has one exposed leader, the others pay
 less shelter cost, and all 160 states and observed finish clocks
 replay through 120 and 260 km at fatigue 10. Fatigue 30 still refuses
-an earlier simultaneous contact in the front/rear source; it is not
-counted as a complete finish for this roster.
+an independent rear contact after the front catch; it is not counted
+as a complete finish for this roster. Its earlier km-26 refusal has
+been resolved: two disjoint pairs meet at the same clock time, at
+metres 25,997.398878 and 25,998.740780. They share no rider or road.
+Both contacts retain their paid common split origins and form separate
+groups with one leader each. A distinct kilometre version marks this
+parallel-contact source, and the full 160-rider prefix now reaches the
+km-62 catch boundary without claiming a finish.
 The multi-contact kilometre and complete caught race use distinct
 version-2 recording IDs; the earlier one-contact recordings retain
 their version-1 IDs and output shape.
