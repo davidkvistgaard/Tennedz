@@ -4742,5 +4742,12 @@ roads, with each contact and remainder in the rider decision trace.
 The next event is in km 73 at metre 72,324.017632. Under fatigue 30,
 the same sequence records further km-71 contacts but reaches a
 three-rider group's meeting with the bunch at metre 70,905.641841.
-That group-to-bunch decision is still unsupported, so the fatigue-30
-km-71 field remains incomplete.
+Each group member now has an individual measured holding, payment,
+reserve and shelter decision. All three can enter the bunch at that
+contact; the group's prior one-leader road is paid only to the
+meeting, and each member pays the remaining distance in bunch
+shelter. The five ordered km-71 events under fatigue 30 are two rear
+joins, two solo-to-bunch joins and this group-to-bunch join. Both
+route probes end km 71 with 160 paid rider states, 128 in the bunch
+and 32 on 28 rear roads. Later kilometres and both finishes still
+need whole-race calibration.

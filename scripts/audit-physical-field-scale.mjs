@@ -2205,11 +2205,19 @@ if(process.argv.includes('--probe-rear-ordered-prefix')){
           ?.nextCandidateEvent
           ?.atDistanceM===70318.555781&&
       row.lastPaid.post66Bunch
-        ?.nextSequence
-          ?.firstUnsettledEvent
+        ?.nextSequence?.contacts.length===5&&
+      row.lastPaid.post66Bunch
+        ?.nextSequence?.contacts.at(-1)
+          ?.kind==='group_bunch'&&
+      row.lastPaid.post66Bunch
+        ?.nextSequence?.contacts.at(-1)
           ?.atDistanceM===70905.641841&&
       row.lastPaid.post66Bunch
-        ?.nextSequence?.rearRoads===29&&
+        ?.nextFullRiders===160&&
+      row.lastPaid.post66Bunch
+        ?.nextBunchRiders===128&&
+      row.lastPaid.post66Bunch
+        ?.nextRearRoads===28&&
       row.lastPaid.afterBunchClear
         ?.lastFullKm===65)&&
     row.firstRefusedKm===
