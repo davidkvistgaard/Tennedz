@@ -5342,6 +5342,11 @@ also carry the version of their deciding source or policy. The
 version 6 matrix requires a nonempty version on every recorded
 decision in all 42 cases. Other physical paths are not established
 by this holdout.
+The matrix also checks each explicit `committedTeamStake` and each
+stake-coded decision goal against the team's active source commitment
+on that kilometre. This checks recorded intent against the declared
+sporting goal; action goals such as finishing safely remain distinct.
+
 The version 5 gate checks that every rider-kilometre has finite,
 nonnegative energy, a forward-moving observed road clock and a
 physical group ID. It also checks exactly one state for each known

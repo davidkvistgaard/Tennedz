@@ -100,6 +100,8 @@ function runCase({roster,fatigue,distance}){
         assert.equal(result.decisionCoverage
           ?.orderEffortMismatch,0);
         assert.equal(result.decisionCoverage
+          ?.committedStakeMismatch,0);
+        assert.equal(result.decisionCoverage
           ?.effortExceedsOrder,0);
         for(const field of ['invalidEnergy',
           'invalidClock','nonForwardClock',

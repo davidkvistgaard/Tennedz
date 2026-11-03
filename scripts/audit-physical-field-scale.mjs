@@ -5,7 +5,7 @@ import {isDeepStrictEqual} from 'node:util';
 import {SPORTING_SKILLS} from '../lib/engine/v2/skills.mjs';
 import {normalizeOrders,orderAt} from
   '../lib/engine/v2/orders.mjs';
-import {commitTeamChaseStakesV1} from
+import {commitTeamChaseStakesV1,teamChaseStakeAtKmV1} from
   '../lib/engine/v2/team-chase-stake-v1.mjs';
 import {commitRearSoloPlanV1} from
   '../lib/engine/v2/rear-solo-commitment-v1.mjs';
@@ -452,6 +452,7 @@ if(process.argv.includes('--probe-front-rear-threat')){
       missingVersion:0,missingVersionByChoice:{},
       missingVersionByReason:{},
       orderEffortMismatch:0,
+      committedStakeMismatch:0,
       effortExceedsOrder:0,unknownEffort:0,
       invalidEnergy:0,invalidClock:0,
       nonForwardClock:0,missingGroupId:0,
@@ -466,6 +467,10 @@ if(process.argv.includes('--probe-front-rear-threat')){
       const orderedEffort=new Map(startInput.teams.map(team=>[
         team.id,orderAt(team.orders,km.sourceKm-1)
           .effort]));
+      const committedStake=new Map(startInput.teams.map(team=>[
+        team.id,teamChaseStakeAtKmV1({
+          commitment:startInput.commitment,
+          teamId:team.id,km:km.sourceKm}).goal]));
       for(const state of km.riderStates){
         summary.riderKilometres++;
         if(!riderIds.has(state.riderId))
@@ -532,6 +537,15 @@ if(process.argv.includes('--probe-front-rear-threat')){
           if(!missingTeamOrderEffort&&
             decision.teamOrderEffort!==managerEffort)
             summary.orderEffortMismatch++;
+          const actualStake=committedStake.get(
+            teamByRider.get(state.riderId));
+          if(decision.committedTeamStake!==undefined&&
+            decision.committedTeamStake!==actualStake)
+            summary.committedStakeMismatch++;
+          if(['none','sprint_finish','summit_attack',
+            'break_stage'].includes(decision.goal)&&
+            decision.goal!==actualStake)
+            summary.committedStakeMismatch++;
           if(!missingEffort&&
             effortRank[decision.effort]>
               effortRank[managerEffort])
