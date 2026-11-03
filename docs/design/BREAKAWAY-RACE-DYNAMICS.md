@@ -5043,9 +5043,10 @@ catch kilometre. Rosters 1 and 3 originally refused when a rear solo
 met the front before the bunch did. Roster 4 has a rear
 solo/bunch meeting and then a rear/front meeting before front/bunch
 contact; roster 5 has a rear-pair meeting before front/bunch contact.
-These are distinct paid candidate events. Roster 4 still needs its
-contact order and remaining road sourced before this roster range can
-count as a calibrated whole-race matrix.
+These are distinct paid candidate events. Their fatigue-10 contact
+orders are now replayed, but the holdout still needs broader terrain,
+fatigue and outcome calibration before it can establish a realistic
+whole-race distribution.
 
 The roster-2 fresh race now replays that km-62 chain. A paid first
 contact forms a two-rider rear group; three later solos join at
@@ -5109,6 +5110,19 @@ this pre-catch-pair pattern, while the prior one-contact and chain
 versions remain unchanged. Fatigue 30 yields a different paid chain
 and retains its earlier recording version. This is still synthetic
 calibration evidence, not a guided race or official placing.
+
+Roster 4's km-66 source has a solo/bunch contact at metre
+65,213.679975. The rear rider can hold the measured bunch pace and
+pay for shelter, so he joins the bunch and his earlier rear solo road
+ends there. The previously predicted rear/front contact at metre
+65,424.843695 no longer occurs after repricing. The front/bunch
+contact remains at metre 65,441.778768 and the later rear contacts
+are settled in clock order. The joined rider's decision, energy and
+membership reconcile at the kilometre end, and all 160 riders replay
+to observed 120- and 260-km finishes at fatigue 10. This early bunch
+join has its own versioned kilometre and race records. At fatigue 30
+the same roster presents two early rear/bunch events and then further
+front/rear events; that different contact pattern still refuses.
 
 The next opt-in contact version resolves the tired km-26 boundary at
 the **recorded common split point** (metre 25,999.203884). Both riders

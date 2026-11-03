@@ -931,6 +931,39 @@ if(process.argv.includes('--probe-front-rear-threat')){
           isDeepStrictEqual(row,decision)));
       }
     }
+    if(process.argv.includes(
+      '--expect-precaught-bunch-join')){
+      const caught=discoveredRace.sources.caught;
+      const early=caught.earlyBunchJoin;
+      assert.match(discoveredRace.version,
+        /precaught-bunch-join-race-1$/);
+      assert.match(caught.version,
+        /precaught-bunch-join-km-1$/);
+      assert.ok(early);
+      assert.ok(early.event.clockSeconds<
+        caught.contact.clockSeconds);
+      const state=caught.riderStates.find(row=>
+        row.riderId===early.riderId);
+      assert.equal(state.physicalGroupId,
+        'peloton');
+      assert.equal(state.energyAfter,
+        early.energyAfter);
+      assert.deepEqual(state.decisions,
+        [early.soloDecision,early.decision]);
+      assert.ok(caught.endBunchState.riderIds
+        .includes(early.riderId));
+      assert.ok(!caught.endRearEntities.some(row=>
+        row.riderIds.includes(early.riderId)));
+      const events=discoveredRace.kilometres[
+        caught.sourceKm-1].contactEvents;
+      assert.equal(events[0].choice,
+        'join_bunch');
+      assert.deepEqual(events[0].event,
+        early.event);
+      assert.ok(events.every((row,index)=>
+        index===0||row.event.clockSeconds>
+          events[index-1].event.clockSeconds));
+    }
     if(caughtRace){
       assert.equal(discoveredRace.catchKm,
         caughtRace.catchKm);
@@ -1380,6 +1413,14 @@ if(process.argv.includes('--probe-front-rear-threat')){
             riderIds:discoveredRace.sources
               .caught.earlyContact.group
                 .riderIds}:null,
+      catchKilometreEarlyBunchJoin:
+        discoveredRace.sources.caught
+          .earlyBunchJoin?{
+            atDistanceM:discoveredRace.sources
+              .caught.earlyBunchJoin.event
+                .atDistanceM,
+            riderId:discoveredRace.sources
+              .caught.earlyBunchJoin.riderId}:null,
       catchKilometreAdditionalContacts:
         discoveredRace.sources.caught
           .additionalContacts?.map(row=>({
