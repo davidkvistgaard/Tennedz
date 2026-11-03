@@ -5306,9 +5306,11 @@ does not satisfy this gate.
 `node scripts/verify-physical-contact-matrix.mjs` reproduces all 42
 synthetic cells with explicit branch and 160-rider finish assertions.
 It also verifies all 1,276,800 rider-kilometres have a nonempty
-decision with a choice and matching rider ID. The front solo source
-and catch-boundary source now record that ID under their respective
-version 2 labels. This is coverage of the separate physical prototype,
-not of the V94 preview or guided races.
+decision with a goal, choice, reason and matching rider ID. The front
+solo source records its rider ID under version 2. The catch-boundary
+source records the same ID and the reason for continuing committed
+break work until paid contact under version 3. This audit covers the
+separate physical prototype. V94 preview and guided races remain
+outside it.
 It is a source-continuity gate, not an independent physics oracle or
 real-race calibration.

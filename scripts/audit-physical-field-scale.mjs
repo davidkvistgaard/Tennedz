@@ -440,7 +440,9 @@ if(process.argv.includes('--probe-front-rear-threat')){
       return null;
     const summary={riderKilometres:0,
       decisionRows:0,missingDecisions:0,
-      missingChoice:0,missingRiderId:0};
+      missingChoice:0,missingRiderId:0,
+      missingReason:0,missingGoal:0,
+      missingByChoice:{}};
     for(const km of race.kilometres){
       for(const state of km.riderStates){
         summary.riderKilometres++;
@@ -453,6 +455,20 @@ if(process.argv.includes('--probe-front-rear-threat')){
             summary.missingChoice++;
           if(decision?.riderId!==state.riderId)
             summary.missingRiderId++;
+          const missingReason=typeof decision?.reason!==
+            'string'||!decision.reason.trim();
+          const missingGoal=typeof decision?.goal!==
+            'string'||!decision.goal.trim();
+          if(missingReason)summary.missingReason++;
+          if(missingGoal)summary.missingGoal++;
+          if(missingReason||missingGoal){
+            const choice=decision?.choice??'(missing)';
+            const row=summary.missingByChoice[choice]??
+              {missingReason:0,missingGoal:0};
+            if(missingReason)row.missingReason++;
+            if(missingGoal)row.missingGoal++;
+            summary.missingByChoice[choice]=row;
+          }
         }
       }
     }
