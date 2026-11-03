@@ -260,7 +260,8 @@ test('start line pays one named leader and all 23 sheltered riders',()=>{
 
 test('simultaneous paid splits choose and pay one rear leader',()=>{
   const teams=field(30);
-  for(const id of ['sprint-3','other-3'])
+  const dropped=['control-3','sprint-3','other-3'];
+  for(const id of dropped)
     teams.flatMap(team=>team.riders)
       .find(rider=>rider.id===id).mountain=30;
   const kilometres=route();
@@ -278,18 +279,21 @@ test('simultaneous paid splits choose and pay one rear leader',()=>{
     throughKm:20};
   const race=replayPhysicalStaggeredRearEventsV1(input);
   const split=staggered.road[0].splits.filter(row=>
-    ['sprint-3','other-3'].includes(row.riderId));
-  assert.equal(split.length,2);
-  assert.equal(split[0].atDistanceM,
-    split[1].atDistanceM);
-  const contact=race.contacts.find(row=>
+    dropped.includes(row.riderId));
+  assert.equal(split.length,3);
+  assert.ok(split.every(row=>row.atDistanceM===
+    split[0].atDistanceM));
+  const shared=race.contacts.filter(row=>
     row.source==='paid_simultaneous_split');
+  assert.equal(shared.length,2);
+  const contact=shared.at(-1);
   assert.ok(contact);
   assert.ok(Math.abs(contact.atDistanceM-
     split[0].atDistanceM)<1e-5);
   assert.equal(contact.catchingRoadId,null);
   assert.equal(contact.contactDecisions.filter(row=>
     row.choice==='pull').length,1);
+  assert.equal(contact.physicalGroup.riderIds.length,3);
   assert.equal(race.kilometres[0].segments.find(row=>
     row.roadId===contact.physicalGroup.id)
     .riders.filter(row=>row.role==='leader').length,1);
@@ -299,8 +303,7 @@ test('simultaneous paid splits choose and pay one rear leader',()=>{
     input,race),true);
   const forged=structuredClone(race);
   forged.contacts.find(row=>row.source===
-    'paid_simultaneous_split').leaderRiderId=
-      'control-2';
+    'paid_simultaneous_split').leaderRiderId='control-2';
   assert.throws(()=>validatePhysicalStaggeredRearEventsV1(
     input,forged),/differs from paid source/);
 });

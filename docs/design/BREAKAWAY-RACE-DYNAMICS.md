@@ -4476,3 +4476,16 @@ nonnegative energy. These synthetic outcomes establish source
 continuity for this measured simultaneous-split case, not a calibrated
 rate of real-world bunch losses or rear cooperation. Guided V94 routing
 and production remain separate.
+
+A larger 160-rider stress case now gives 20 weak climbers a paid km-21
+split. Nineteen have the same recorded metre and clock and form a rear
+group through 18 recorded shared-start contacts. The twentieth has a
+different paid road and joins only at its later measured crossing.
+Both initial-fatigue 10 and 30 cases replay 19 contacts, one paid
+leader and sheltered members in the resulting 20-rider group, and all
+160 actual finish clocks over 120 km. The one-weak-climber controls
+remain separate solos. A computed catching direction at the exact
+shared starting coordinate is cleared because no rider was behind
+there; the forward pull is chosen and paid from that coordinate. This
+still leaves broader race calibration, front-break interactions and
+guided routing unproven.

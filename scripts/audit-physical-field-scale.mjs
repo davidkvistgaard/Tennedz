@@ -1234,6 +1234,14 @@ if(process.argv.includes('--probe-rear-extreme')){
           lossKilometres:[...new Set(staggered.losses
             .map(row=>row.sourceKm))],
           contacts:race.contactCount,
+          sharedSplitContacts:race.contacts.filter(row=>
+            row.source==='paid_simultaneous_split')
+            .length,
+          largestRearGroup:Math.max(0,...race.contacts
+            .filter(row=>row.outcome==='join')
+            .map(row=>row.physicalGroup.riderIds
+              .length)),
+          ...(firstLossReplay?{firstLossReplay}:{}),
           finishRiders:Object.keys(race
             .observedFinishSecondsByRider).length};
       }catch(error){
@@ -1251,15 +1259,17 @@ if(process.argv.includes('--probe-rear-extreme')){
     ['one_weak_climber',10,'full_replay',1,[21]],
     ['one_weak_climber',30,'full_replay',1,[21]],
     ['unequal_descent_catch',10,
-      'rear_refusal',20,[21]],
+      'full_replay',20,[21]],
     ['unequal_descent_catch',30,
-      'rear_refusal',20,[21]]]);
+      'full_replay',20,[21]]]);
   assert.ok(results.slice(0,2).every(row=>
     row.contacts===0&&row.finishRiders===160));
   assert.ok(results.slice(2).every(row=>
-    row.reason===
-      'Rear contact lacks distinct paid split ordering.'&&
-    row.firstLossReplay?.reason===row.reason));
+    row.contacts===19&&
+    row.sharedSplitContacts===18&&
+    row.largestRearGroup===20&&
+    row.firstLossReplay?.status==='full_replay'&&
+    row.finishRiders===160));
   process.stdout.write(JSON.stringify({results},null,2)+'\n');
   process.exit(0);
 }
