@@ -444,6 +444,7 @@ if(process.argv.includes('--probe-front-rear-threat')){
     const riderIds=new Set(race.riderIds);
     const lastClockByRider=new Map();
     const lastEnergyByRider=new Map();
+    const priorGroupByRider=new Map();
     const summary={riderKilometres:0,
       decisionRows:0,missingDecisions:0,
       missingChoice:0,missingRiderId:0,
@@ -461,6 +462,7 @@ if(process.argv.includes('--probe-front-rear-threat')){
       nonForwardClock:0,missingGroupId:0,
       missingRiderState:0,duplicateRiderState:0,
       unknownRiderState:0,nonSequentialKm:0,
+      groupMergeKm:0,unrecordedGroupMergeKm:0,
       finishClockMismatch:0,
       finishEnergyMismatch:0};
     for(const [index,km] of race.kilometres.entries()){
@@ -568,6 +570,24 @@ if(process.argv.includes('--probe-front-rear-threat')){
       }
       summary.missingRiderState+=race.riderIds.length-
         [...seenRiders].filter(id=>riderIds.has(id)).length;
+      const currentGroups=Map.groupBy(km.riderStates,
+        state=>state.physicalGroupId);
+      const merged=[...currentGroups.values()].some(states=>
+        new Set(states.map(state=>
+          priorGroupByRider.get(state.riderId))
+          .filter(Boolean)).size>1);
+      const recordedContact=(km.contactEvents??[])
+        .some(row=>['join_group','join_bunch',
+          'join_rear','catch_front'].includes(row.choice)||
+          row.choice?.includes('join'))||
+        race.catchKm===km.sourceKm&&
+          Boolean(race.sources?.caught);
+      if(merged)summary.groupMergeKm++;
+      if(merged&&!recordedContact)
+        summary.unrecordedGroupMergeKm++;
+      for(const state of km.riderStates)
+        priorGroupByRider.set(state.riderId,
+          state.physicalGroupId);
     }
     for(const riderId of race.riderIds){
       const finalClock=lastClockByRider.get(riderId);

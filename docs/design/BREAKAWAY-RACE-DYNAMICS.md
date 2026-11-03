@@ -5367,6 +5367,13 @@ matrix cell. These checks include early drops, later rear contacts
 and caught riders sliding through on their own paid road.
 It is a source-continuity gate, not an independent physics oracle or
 real-race calibration.
+The version 7 matrix additionally checks every kilometre where riders
+from distinct prior physical groups end in one group. Such a merge
+requires a recorded contact event in that kilometre, or the replayed
+front-catch source at the catch kilometre. This is a necessary contact
+condition; detailed event timing remains checked by the paid replay
+sources.
+
 The read-only `node scripts/audit-v94-physical-input-compatibility.mjs
 --seeds=3 --require-compatible` preflight uses the same prepared V94
 teams and normalized manager orders without running or changing a race.

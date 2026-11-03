@@ -107,6 +107,8 @@ function runCase({roster,fatigue,distance}){
             ?.[field],0);
         assert.equal(result.decisionCoverage
           ?.effortExceedsOrder,0);
+        assert.equal(result.decisionCoverage
+          ?.unrecordedGroupMergeKm,0);
         for(const field of ['invalidEnergy',
           'invalidClock','nonForwardClock',
           'missingGroupId','missingRiderState',
@@ -127,6 +129,8 @@ function runCase({roster,fatigue,distance}){
             result.catchKm??null,
           decisionRows:result.decisionCoverage
             .decisionRows,
+          groupMergeKm:result.decisionCoverage
+            .groupMergeKm,
           missingRiderId:result.decisionCoverage
             .missingRiderId,
           missingVersion:result.decisionCoverage
@@ -160,6 +164,8 @@ try{
   await Promise.all(Array.from({length:3},
     ()=>worker()));
   assert.equal(results.length,42);
+  assert.ok(results.reduce((sum,row)=>
+    sum+row.groupMergeKm,0)>0);
   const unversioned=results.filter(row=>
     row.missingVersion>0);
   assert.equal(unversioned.length,0,
@@ -168,7 +174,7 @@ try{
       distance:row.distance,
       missingVersion:row.missingVersion,
       reasons:row.missingVersionByReason}))));
-  console.log(JSON.stringify({version:6,
+  console.log(JSON.stringify({version:7,
     seed:'physical-20-team-scale-1',
     cases:results.length,
     finishRiderCount:160,
