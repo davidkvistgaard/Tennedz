@@ -753,11 +753,13 @@ function audit(distanceKm,fatigue,variant){
 }
 
 if(process.argv.includes('--probe-single-leader-weak')){
+  const draftVersion=process.argv.includes(
+    '--classified')?4:3;
   const results=[120,260].map(distanceKm=>{
     const base=source(distanceKm,30,
       'one_weak_climber');
     const startInput={...base.startInput,
-      physicalDraftVersion:3};
+      physicalDraftVersion:draftVersion};
     const start=startPhysicalBunchV1(startInput);
     const staggered=runPhysicalStaggeredBunchLossV1({
       startInput,start,throughKm:distanceKm});
@@ -782,7 +784,15 @@ if(process.argv.includes('--probe-single-leader-weak')){
         state.decisions.length>0)));
     assert.equal(Object.keys(race
       .observedFinishSecondsByRider).length,160);
+    const loss=staggered.losses[0];
+    const lossDecision=staggered.road[
+      loss.sourceKm-1].riderDecisions.find(row=>
+      row.riderId===loss.riderId);
+    if(draftVersion===4)
+      assert.equal(lossDecision.reason,
+        'cannot_hold_even_at_hard_effort');
     return {distanceKm,fatigue:30,
+      draftVersion,lossReason:lossDecision.reason,
       losses:staggered.losses.length,
       contacts:race.contactCount,
       finishRiders:Object.keys(race

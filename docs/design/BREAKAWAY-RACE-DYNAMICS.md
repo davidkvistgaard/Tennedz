@@ -4355,3 +4355,8 @@ true physical inability remains possible. These cause distributions
 show that the varied-field order and pace policy still needs whole-race
 calibration; classifying the cause does not justify automatically
 overriding the manager order or routing this model to guided races.
+The 160-rider weak-climber control at fatigue 30 also replays 120 and
+260 km: its single km-21 loss in each race is classified
+`cannot_hold_even_at_hard_effort`, has no inferred rear contact and
+retains all 160 finish clocks. Thus both cause branches have source
+witnesses, while their prevalence is not calibrated.
