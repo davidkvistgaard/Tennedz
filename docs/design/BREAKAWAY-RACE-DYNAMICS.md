@@ -5269,3 +5269,26 @@ Discovery verifies the original candidate within 0.002 metre,
 second and energy units, then records the paid transition event as
 the canonical contact; the two paths have identical finish clocks
 and energies. The pure front/bunch case remains a separate recording.
+
+The same seed's fatigue-50 holdout is complete at both 120 and 260 km:
+
+| Roster | 120 km | 260 km |
+| --- | --- | --- |
+| 0 | Front/bunch catch km 63 | Front/bunch catch km 63 |
+| 1 | Front/rear group km 70 | Front/rear group km 70 |
+| 2 | Front/bunch catch km 62 | Front/bunch catch km 62 |
+| 3 | Early bunch join, then front/rear group km 69 | Same sequence, km 69 |
+| 4 | Front/bunch catch km 67 | Front/bunch catch km 67 |
+| 5 | Solo/bunch passage, then front/rear group km 67 | Same sequence, km 67 |
+| 6 | No catch | Front/bunch catch km 188 |
+
+All fourteen cells source-replay 160 observed finishes. This adds
+fatigue variation to the synthetic contact matrix; realistic outcome
+frequencies and the V94 preview's missing peloton and dropped-rider
+decisions remain release blockers.
+The read-only `audit-v94-rider-decision-coverage.mjs --summary` probe
+still has only 9,034 forward decision rows across seven validated
+120/260-km terrain/fatigue cases, despite 224,000 paid energy rows;
+one eighth case refuses and none of the 374 dropped rider-kilometres
+has a rider decision. Energy coverage therefore cannot be treated as
+decision coverage for the guided or experimental V94 preview.
