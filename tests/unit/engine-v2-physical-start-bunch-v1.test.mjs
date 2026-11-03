@@ -108,6 +108,9 @@ import {replayPhysicalCaughtBreakRaceV1,
 import {replayPhysicalEarlyCaughtFollowerLossV1,
   validatePhysicalEarlyCaughtFollowerLossV1} from
   '../../lib/engine/v2/physical-early-caught-follower-loss-v1.mjs';
+import {replayPhysicalEarlyCaughtNextRearKmV1,
+  validatePhysicalEarlyCaughtNextRearKmV1} from
+  '../../lib/engine/v2/physical-early-caught-next-rear-km-v1.mjs';
 import {replayPhysicalFrontRaceV1,
   validatePhysicalFrontRaceV1} from
   '../../lib/engine/v2/physical-front-race-replay-v1.mjs';
@@ -1063,6 +1066,99 @@ test('caught break and later follower loss have paid rider states',()=>{
   assert.ok(replay.sources.loss.splits.length===1);
   assert.equal(validatePhysicalEarlyCaughtFollowerLossV1(
     lossInput,replay),true);
+  const next=replayPhysicalEarlyCaughtNextRearKmV1(
+    lossInput);
+  assert.equal(next.sourceKm,15);
+  assert.equal(next.kilometres.length,15);
+  assert.equal(next.kilometres.at(-1)
+    .riderStates.length,24);
+  assert.equal(next.kilometres.at(-1)
+    .riderStates.filter(row=>row.physicalGroupId===
+      'peloton').length,22);
+  assert.equal(next.sources.contact,undefined);
+  assert.equal(next.sources.rearSegments.length,2);
+  assert.equal(validatePhysicalEarlyCaughtNextRearKmV1(
+    lossInput,next),true);
+  const contactRoad=structuredClone(road);
+  contactRoad[14]={...contactRoad[14],terrain:'climb',
+    gradientPct:6};
+  const contactSource=source(teams,contactRoad,{
+    other:'break_stage',sprint:'sprint_finish'},
+  [{km:1},{km:2},{km:3},{km:13}]);
+  const contactInput={...contactSource,
+    attackKm:2,catchKm:3,lossKm:14};
+  const contactNext=replayPhysicalEarlyCaughtNextRearKmV1(
+    contactInput);
+  assert.equal(contactNext.sources.contact.outcome,'join');
+  assert.equal(contactNext.sources.contact.catchingRiderId,
+    'other-2');
+  assert.ok(contactNext.sources.contact.atDistanceM>14000&&
+    contactNext.sources.contact.atDistanceM<15000);
+  assert.equal(contactNext.sources.group.rows.filter(row=>
+    row.role==='leader').length,1);
+  assert.equal(contactNext.sources.group.rows.filter(row=>
+    row.role==='sheltered').length,1);
+  assert.equal(contactNext.sources.rearSegments.length,4);
+  assert.ok(contactNext.sources.rearSegments.every(row=>
+    row.endDistanceM>row.startDistanceM&&
+    row.endClock>row.startClock&&
+    row.energySpent>=0));
+  assert.ok(contactNext.sources.group.rows.every(row=>
+    Math.abs(row.energyBefore-
+      contactNext.sources.contact.riders.find(item=>
+        item.riderId===row.riderId)
+        .energyAtContact)<1e-6));
+  assert.ok(contactNext.sources.group.rows.find(row=>
+    row.role==='leader').energySpent>
+    contactNext.sources.group.rows.find(row=>
+      row.role==='sheltered').energySpent);
+  assert.equal(contactNext.kilometres.at(-1)
+    .riderStates.length,24);
+  assert.equal(new Set(contactNext.kilometres.at(-1)
+    .riderStates.filter(row=>row.physicalGroupId
+      .startsWith('rear-event-')).map(row=>
+      row.physicalGroupId)).size,1);
+  assert.equal(validatePhysicalEarlyCaughtNextRearKmV1(
+    contactInput,contactNext),true);
+  assert.ok(JSON.stringify(contactNext).includes(
+    'rear-event-other-2-sprint-2'));
+  const passCommitment=commitTeamChaseStakesV1({
+    teams:contactSource.startInput.teams,
+    distanceKm:contactRoad.length,
+    keypoints:[{km:1},{km:2},{km:3},{km:13}],
+    intentions:contactSource.startInput.teams.map(team=>({
+      teamId:team.id,baseline:{
+        goal:team.id==='other'?'break_stage':
+          team.id==='sprint'?'sprint_finish':'none',
+        captainId:team.id==='other'?'other-2':
+          team.riders[0].id},phases:[]}))});
+  const passStartInput={...contactSource.startInput,
+    commitment:passCommitment};
+  const passInput={...contactInput,
+    startInput:passStartInput,
+    start:startPhysicalBunchV1(passStartInput)};
+  const passed=replayPhysicalEarlyCaughtNextRearKmV1(
+    passInput);
+  assert.equal(passed.sources.contact.outcome,
+    'pass_through');
+  assert.equal(passed.sources.contact.atDistanceM,
+    contactNext.sources.contact.atDistanceM);
+  assert.equal(passed.sources.contact.clockSeconds,
+    contactNext.sources.contact.clockSeconds);
+  assert.deepEqual(passed.sources.contact.riders,
+    contactNext.sources.contact.riders);
+  assert.equal(passed.sources.group,undefined);
+  assert.equal(new Set(passed.kilometres.at(-1)
+    .riderStates.filter(row=>
+      ['other-2','sprint-2'].includes(row.riderId))
+    .map(row=>row.physicalGroupId)).size,2);
+  assert.equal(validatePhysicalEarlyCaughtNextRearKmV1(
+    passInput,passed),true);
+  const forgedNext=structuredClone(next);
+  forgedNext.kilometres.at(-1).riderStates.find(
+    row=>row.riderId==='other-2').energyAfter+=1;
+  assert.throws(()=>validatePhysicalEarlyCaughtNextRearKmV1(
+    lossInput,forgedNext),/differs/);
   const forged=structuredClone(replay);
   forged.kilometres.at(-1).riderStates[0]
     .energyAfter+=1;

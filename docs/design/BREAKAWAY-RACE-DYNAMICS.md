@@ -4304,3 +4304,20 @@ behind. Every rider has a decision and energy state for all 20 or 25
 kilometres, and all finish clocks replay. This cross-branch witness
 does not integrate the slid rider into the generic rear-contact event
 replay or establish whole-race calibration.
+
+A new isolated continuation covers the kilometre after a caught break
+rider slides through the bunch and a follower later drops. On the flat
+same-seed 24-rider road, their independent paid paths do not meet in
+kilometre 15, so both remain solo. When only that kilometre changes
+to a climb, the former break rider catches the dropped follower at
+metre 14,494.9144. Their recorded contact energies feed a shared road
+with one exposed leader, one sheltered rider and continuous source
+clocks and energy. If the catching rider is the committed captain with
+an active break stake, the same measured contact and energies yield a
+pass-through decision and separate solo roads. The recording has all
+24 decisions for the new kilometre and rejects forged energy. It is
+not yet a full finish replay for that combined break, loss and rear
+contact branch; subsequent group rotation and any later contact still
+need source-paid integration. This witness uses the older physical
+draft version; version 3 changes whether that follower drops at all,
+so its rear branch needs a separate source witness.
