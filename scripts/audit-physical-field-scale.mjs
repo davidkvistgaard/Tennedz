@@ -435,17 +435,30 @@ function shiftTeam3Captain(generated,distanceKm){
 }
 
 if(process.argv.includes('--probe-front-rear-threat')){
-  function decisionCoverage(race){
+  function decisionCoverage(race,startInput){
     if(!process.argv.includes('--decision-coverage'))
       return null;
+    const teamByRider=new Map(startInput.teams.flatMap(team=>
+      team.riders.map(rider=>[rider.id,team.id])));
+    const effortRank={conserve:0,steady:1,hard:2};
     const summary={riderKilometres:0,
       decisionRows:0,missingDecisions:0,
       missingChoice:0,missingRiderId:0,
       missingReason:0,missingGoal:0,
-      missingByChoice:{}};
+      missingEffort:0,missingTeamOrderEffort:0,
+      missingVersion:0,
+      orderEffortMismatch:0,
+      effortExceedsOrder:0,unknownEffort:0};
     for(const km of race.kilometres){
+      const orderedEffort=new Map(startInput.teams.map(team=>[
+        team.id,orderAt(team.orders,km.sourceKm-1)
+          .effort]));
       for(const state of km.riderStates){
         summary.riderKilometres++;
+        const managerEffort=orderedEffort.get(
+          teamByRider.get(state.riderId));
+        if(effortRank[managerEffort]===undefined)
+          throw new Error('Decision audit lacks manager order.');
         if(!state.decisions?.length)
           summary.missingDecisions++;
         for(const decision of state.decisions??[]){
@@ -459,16 +472,29 @@ if(process.argv.includes('--probe-front-rear-threat')){
             'string'||!decision.reason.trim();
           const missingGoal=typeof decision?.goal!==
             'string'||!decision.goal.trim();
+          const missingEffort=typeof decision?.effort!==
+            'string'||!decision.effort.trim();
+          const missingTeamOrderEffort=typeof
+            decision?.teamOrderEffort!==
+            'string'||!decision.teamOrderEffort.trim();
+          const missingVersion=typeof decision?.version!==
+            'string'||!decision.version.trim();
           if(missingReason)summary.missingReason++;
           if(missingGoal)summary.missingGoal++;
-          if(missingReason||missingGoal){
-            const choice=decision?.choice??'(missing)';
-            const row=summary.missingByChoice[choice]??
-              {missingReason:0,missingGoal:0};
-            if(missingReason)row.missingReason++;
-            if(missingGoal)row.missingGoal++;
-            summary.missingByChoice[choice]=row;
-          }
+          if(missingEffort)summary.missingEffort++;
+          if(missingTeamOrderEffort)
+            summary.missingTeamOrderEffort++;
+          if(missingVersion)summary.missingVersion++;
+          if(!missingTeamOrderEffort&&
+            decision.teamOrderEffort!==managerEffort)
+            summary.orderEffortMismatch++;
+          if(!missingEffort&&
+            effortRank[decision.effort]>
+              effortRank[managerEffort])
+            summary.effortExceedsOrder++;
+          if(!missingEffort&&
+            effortRank[decision.effort]===undefined)
+            summary.unknownEffort++;
         }
       }
     }
@@ -1184,7 +1210,8 @@ if(process.argv.includes('--probe-front-rear-threat')){
         validatePhysicalDiscoveredFrontToRearRaceV1(
           discoveryInput,race),true);
       frontToRearDecisionCoverage=
-        decisionCoverage(race);
+        decisionCoverage(race,
+          discoveryInput.startInput);
       if(process.argv.includes(
         '--expect-mixed-catch')){
         assert.match(discovery.version,
@@ -1748,7 +1775,8 @@ if(process.argv.includes('--probe-front-rear-threat')){
     discoveredRace:discoveredRace?{
       version:discoveredRace.version,
       decisionCoverage:
-        decisionCoverage(discoveredRace),
+        decisionCoverage(discoveredRace,
+          generated.startInput),
       catchKm:discoveredRace.catchKm,
       riderCount:discoveredRace.riderIds.length,
       finishRiderCount:Object.keys(discoveredRace
@@ -1817,7 +1845,8 @@ if(process.argv.includes('--probe-front-rear-threat')){
     discoveredFrontToRear,
     frontToRearDiscoveryProbe,
     noCatchRace:noCatchRace?{
-      decisionCoverage:decisionCoverage(noCatchRace),
+      decisionCoverage:decisionCoverage(noCatchRace,
+        generated.startInput),
       riderCount:noCatchRace.riderIds.length,
       finishRiderCount:Object.keys(noCatchRace
         .observedFinishSecondsByRider).length,

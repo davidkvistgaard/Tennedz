@@ -91,6 +91,14 @@ function runCase({roster,fatigue,distance}){
           ?.missingReason,0);
         assert.equal(result.decisionCoverage
           ?.missingGoal,0);
+        assert.equal(result.decisionCoverage
+          ?.missingEffort,0);
+        assert.equal(result.decisionCoverage
+          ?.unknownEffort,0);
+        assert.equal(result.decisionCoverage
+          ?.orderEffortMismatch,0);
+        assert.equal(result.decisionCoverage
+          ?.effortExceedsOrder,0);
         assert.ok(result.decisionCoverage
           ?.decisionRows>=160*distance);
         if(branch.kind!=='no_catch')
@@ -132,7 +140,7 @@ try{
   await Promise.all(Array.from({length:3},
     ()=>worker()));
   assert.equal(results.length,42);
-  console.log(JSON.stringify({version:3,
+  console.log(JSON.stringify({version:4,
     seed:'physical-20-team-scale-1',
     cases:results.length,
     finishRiderCount:160,

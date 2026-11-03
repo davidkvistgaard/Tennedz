@@ -5317,6 +5317,12 @@ source records the same ID and the reason for continuing committed
 break work until paid contact under version 3. This audit covers the
 separate physical prototype. V94 preview and guided races remain
 outside it.
+The matrix's version 4 gate also replays the actual manager effort
+order for each rider and kilometre. All recorded efforts stay within
+that order, and explicit order copies match the source in all 42
+cells. Individual choice rows still have no own version field; their
+policy is identified by the enclosing replay sources. An explicit
+per-decision version remains a separate schema task before promotion.
 It is a source-continuity gate, not an independent physics oracle or
 real-race calibration.
 The read-only `node scripts/audit-v94-physical-input-compatibility.mjs
