@@ -5121,8 +5121,14 @@ are settled in clock order. The joined rider's decision, energy and
 membership reconcile at the kilometre end, and all 160 riders replay
 to observed 120- and 260-km finishes at fatigue 10. This early bunch
 join has its own versioned kilometre and race records. At fatigue 30
-the same roster presents two early rear/bunch events and then further
-front/rear events; that different contact pattern still refuses.
+the same roster presents two early rear/bunch events, at metres
+65,372.577963 and 65,487.755921. Both riders can hold the measured
+bunch pace and pay for shelter. Each join removes its old solo road
+before the next event is measured; the two former front/solo candidates
+therefore disappear. A separate version-2 record keeps both contacts
+in time order and replays all 160 riders to observed 120- and 260-km
+finishes. Neither fatigue case establishes a population-wide finish
+distribution or an official classification.
 
 The next opt-in contact version resolves the tired km-26 boundary at
 the **recorded common split point** (metre 25,999.203884). Both riders

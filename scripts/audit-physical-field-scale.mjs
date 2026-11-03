@@ -964,6 +964,46 @@ if(process.argv.includes('--probe-front-rear-threat')){
         index===0||row.event.clockSeconds>
           events[index-1].event.clockSeconds));
     }
+    if(process.argv.includes(
+      '--expect-precaught-bunch-joins')){
+      const caught=discoveredRace.sources.caught;
+      const joins=caught.earlyBunchJoins;
+      assert.match(discoveredRace.version,
+        /precaught-bunch-joins-race-2$/);
+      assert.match(caught.version,
+        /precaught-bunch-joins-km-2$/);
+      assert.equal(joins?.length,2);
+      const events=discoveredRace.kilometres[
+        caught.sourceKm-1].contactEvents;
+      assert.equal(events.length,
+        joins.length+1+
+          (caught.nextContact?1:0)+
+          (caught.additionalContacts?.length??0));
+      for(const [index,join] of joins.entries()){
+        assert.equal(events[index].choice,
+          'join_bunch');
+        assert.deepEqual(events[index].event,
+          join.event);
+        const state=caught.riderStates.find(row=>
+          row.riderId===join.riderId);
+        assert.equal(state.physicalGroupId,
+          'peloton');
+        assert.equal(state.energyAfter,
+          join.energyAfter);
+        assert.deepEqual(state.decisions,
+          [join.soloDecision,join.decision]);
+        assert.ok(caught.endBunchState.riderIds
+          .includes(join.riderId));
+        assert.ok(!caught.endRearEntities
+          .some(row=>row.riderIds.includes(
+            join.riderId)));
+      }
+      assert.ok(events.every((row,index)=>
+        index===0||row.event.clockSeconds>
+          events[index-1].event.clockSeconds));
+      assert.ok(joins[1].event.clockSeconds<
+        caught.contact.clockSeconds);
+    }
     if(caughtRace){
       assert.equal(discoveredRace.catchKm,
         caughtRace.catchKm);
@@ -1421,6 +1461,11 @@ if(process.argv.includes('--probe-front-rear-threat')){
                 .atDistanceM,
             riderId:discoveredRace.sources
               .caught.earlyBunchJoin.riderId}:null,
+      catchKilometreEarlyBunchJoins:
+        discoveredRace.sources.caught
+          .earlyBunchJoins?.map(row=>({
+            atDistanceM:row.event.atDistanceM,
+            riderId:row.riderId}))??[],
       catchKilometreAdditionalContacts:
         discoveredRace.sources.caught
           .additionalContacts?.map(row=>({
