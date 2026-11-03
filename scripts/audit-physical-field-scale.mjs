@@ -35,6 +35,12 @@ import {replayPhysicalFrontRearJoinedKmV1,
 import {replayPhysicalFrontRearRaceV1,
   validatePhysicalFrontRearRaceV1} from
   '../lib/engine/v2/physical-front-rear-race-replay-v1.mjs';
+import {decidePhysicalFrontRearThreatFromStateV1,
+  validatePhysicalFrontRearThreatFromStateV1} from
+  '../lib/engine/v2/physical-front-rear-threat-from-state-v1.mjs';
+import {replayPhysicalFrontRearManagerChaseKmV1,
+  validatePhysicalFrontRearManagerChaseKmV1} from
+  '../lib/engine/v2/physical-front-rear-manager-chase-km-v1.mjs';
 import {probePhysicalFrontRearGroupBunchContactV1,
   validatePhysicalFrontRearGroupBunchContactV1} from
   '../lib/engine/v2/physical-front-rear-group-bunch-contact-v1.mjs';
@@ -346,6 +352,107 @@ function source(distanceKm,fatigue,variant){
           unavailableRiderId:choices[0],
           replacementRiderId:choices[1]}))}:{})};
   return {startInput,start:startPhysicalBunchV1(startInput)};
+}
+
+if(process.argv.includes('--probe-front-rear-threat')){
+  const distanceKm=Number(process.argv.find(arg=>
+    arg.startsWith('--distance='))?.split('=')[1]??120);
+  const fatigue=Number(process.argv.find(arg=>
+    arg.startsWith('--fatigue='))?.split('=')[1]??10);
+  const generated=source(distanceKm,fatigue,
+    'front_varied');
+  const team=generated.startInput.teams[8];
+  team.orders=normalizeOrders({
+    ...team.orders,
+    phases:team.orders.phases.map(phase=>
+      phase.atKm===40?{...phase,
+        chase:'selective',effort:'hard'}:
+        phase.atKm===45?{...phase,
+          chase:'ignore',effort:'steady'}:
+          phase)},
+  {riderIds:team.riders.map(row=>row.id),
+    distanceKm,allowFrontWork:true,
+    allowNamedFrontWorker:true});
+  generated.startInput.commitment=
+    commitTeamChaseStakesV1({
+      teams:generated.startInput.teams,
+      distanceKm,
+      intentions:generated.startInput
+        .commitment.intentions.map(row=>
+          row.teamId===team.id?{
+            ...row,baseline:{goal:'sprint_finish',
+              captainId:team.orders.captainId}}:
+            row)});
+  generated.start=startPhysicalBunchV1(
+    generated.startInput);
+  const input={...generated,attackKm:1,lossKm:21,
+    choiceKm:41,observerTeamId:team.id,
+    nominatedChaseTeamIds:[team.id],
+    conditionalChaseTeamIds:process.argv.includes(
+      '--with-help')?[
+      'team-9','team-10','team-11']:[]};
+  const decision=
+    decidePhysicalFrontRearThreatFromStateV1(
+      input);
+  assert.equal(
+    validatePhysicalFrontRearThreatFromStateV1(
+      input,decision),true);
+  assert.ok(decision.unavailableRiderIds.length>0);
+  assert.ok(decision.paceEstimate);
+  const paid=process.argv.includes('--pay-chase')?
+    replayPhysicalFrontRearManagerChaseKmV1(
+      input):null;
+  if(paid){
+    assert.equal(
+      validatePhysicalFrontRearManagerChaseKmV1(
+        input,paid),true);
+    assert.equal(paid.riderCount,160);
+    assert.equal(paid.workerId,
+      decision.paceEstimate.leaderRiderId);
+    assert.ok(paid.workerEnergyAfter<
+      paid.workerEnergyBefore);
+    const baseline=source(distanceKm,fatigue,
+      'front_varied');
+    const baselineKm41=
+      replayPhysicalFrontRearRaceV1({
+        ...baseline,attackKm:1,lossKm:21,
+        throughKm:41}).sources.last;
+    assert.throws(()=>
+      sourcePhysicalFrontRearBoundaryFromStateV1({
+        startInput:baseline.startInput,
+        prior:replayPhysicalFrontRearRaceV1({
+          ...baseline,attackKm:1,lossKm:21,
+          throughKm:40}).sources.last,
+        chaseObserverTeamId:team.id}),
+    /active manager order|named paid leader/);
+    assert.ok(paid.gapAfterSeconds<
+      baselineKm41.endFrontState
+        .gapSecondsToBunch);
+    assert.ok(paid.workerEnergyAfter<
+      baselineKm41.riderStates.find(row=>
+        row.riderId===paid.workerId)
+        .energyAfter);
+  }
+  process.stdout.write(JSON.stringify({distanceKm,
+    fatigue,choiceKm:41,
+    withHelp:process.argv.includes('--with-help'),
+    observedGapSeconds:decision
+      .observedGapSeconds,
+    unavailableRiders:decision
+      .unavailableRiderIds.length,
+    perceivedAction:decision.choice.choice
+      .assessments[0].action,
+    paidChase:paid?{
+      workerId:paid.workerId,
+      workerEnergyBefore:paid
+        .workerEnergyBefore,
+      workerEnergyAfter:paid
+        .workerEnergyAfter,
+      gapAfterSeconds:paid.gapAfterSeconds,
+      riderCount:paid.riderCount}:null,
+    paceEstimate:decision.paceEstimate,
+    movesRoad:decision.movesRoad},null,2)+'\n');
+  process.exit(0);
 }
 
 if(process.argv.includes('--probe-front-rear-race')){

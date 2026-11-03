@@ -4971,3 +4971,20 @@ rider's rear group and energy. This synthetic matrix is still one
 seed and does not establish realistic pursuit, break-lead or finish
 distributions. No official placing is inferred and guided V94 remains
 separate.
+
+An opt-in front/rear threat source now reads the complete paid field at
+km 40 before advising team 8 at km 41. It carries each rider's recorded
+energy, the actual front gap and the physically unavailable rear riders
+into the versioned perceived-strength decision. In the 120-km,
+fatigue-10 probe the front gap is 46.76088 seconds and 26 riders are
+outside the bunch. The isolated nominated team judges its capacity
+short; conditional help from teams 9–11 changes the advice to request
+help. A separate, explicitly committed manager chase order pays one
+named team-8 worker at km 41 despite that advice. His energy falls
+from 90.030 to 89.513; the gap becomes 46.65336 seconds, lower than
+the same-seed no-chase kilometre. All 160 rider states remain sourced,
+and removing the manager order makes the chase source refuse. The
+260-km fatigue-30 probe also pays the named worker and reduces its
+observed gap. This is one chase kilometre, not a calibrated pursuit
+or a validated front catch. The source does not move guided races or
+award results.
