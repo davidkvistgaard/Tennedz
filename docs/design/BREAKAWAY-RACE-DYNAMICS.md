@@ -5325,7 +5325,12 @@ teams and normalized manager orders without running or changing a race.
 It refuses a direct physical replay: 3,420 of 4,560 source kilometres
 have more than one team ordered to rotate at the front, with as many
 as eight in one case. The physical source currently requires exactly
-one front-work team per kilometre. A same-seed adapter must therefore
-resolve the competing orders through an explicit, paid, versioned
-single-leader decision; arbitrarily selecting a team would alter the
-committed source and fail this preflight.
+one front-work team per kilometre. In addition, all 15,200 ordered
+front-team kilometres lack a named helper in the V94 source, while
+the physical source requires one. Even the 1,140 single-team
+kilometres cannot be replayed directly. A same-seed adapter needs an
+explicit, paid, versioned leader decision that resolves competing
+teams and selects an eligible worker from the committed roster using
+perceived strength while retaining every manager order. Arbitrarily
+assigning either would alter the committed source and fail this
+preflight.

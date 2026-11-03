@@ -41,10 +41,16 @@ for(let seed=1;seed<=seedCount;seed++)
             chaseTargetIds:allTargets.filter(id=>
               id!==team.id&&!team.riders.some(rider=>
                 rider.id===id))}));
-        const counts=Array.from({length:distanceKm},
-          (_,index)=>orders.filter(teamOrders=>
-            orderAt(teamOrders,index)
-              .frontWork==='rotate').length);
+        const front=Array.from({length:distanceKm},
+          (_,index)=>orders.map(teamOrders=>({
+            order:orderAt(teamOrders,index),
+            teamOrders})).filter(row=>
+            row.order.frontWork==='rotate'));
+        const counts=front.map(rows=>rows.length);
+        const unnamedFrontTeamKm=front.reduce((sum,rows)=>
+          sum+rows.filter(({order,teamOrders})=>
+            !teamOrders.helperIds.includes(
+              order.frontWorkRiderId)).length,0);
         rows.push({seed,distanceKm,terrain,fatigue,
           riderCount:plan.teams.reduce((sum,team)=>
             sum+team.riders.length,0),
@@ -54,10 +60,13 @@ for(let seed=1;seed<=seedCount;seed++)
             count=>count>1).length,
           noFrontWorkerKm:counts.filter(
             count=>count===0).length,
+          orderedFrontTeamKm:counts.reduce((sum,count)=>
+            sum+count,0),
+          unnamedFrontTeamKm,
           maximumOrderedFrontTeams:Math.max(...counts)});
       }
 
-const summary={version:1,seedCount,cases:rows.length,
+const summary={version:2,seedCount,cases:rows.length,
   riderCount:rows.every(row=>row.riderCount===
     rows[0].riderCount)?rows[0].riderCount:null,
   riderKilometres:rows.reduce((sum,row)=>
@@ -68,6 +77,10 @@ const summary={version:1,seedCount,cases:rows.length,
     sum+row.multipleFrontWorkerKm,0),
   noFrontWorkerKm:rows.reduce((sum,row)=>
     sum+row.noFrontWorkerKm,0),
+  orderedFrontTeamKm:rows.reduce((sum,row)=>
+    sum+row.orderedFrontTeamKm,0),
+  unnamedFrontTeamKm:rows.reduce((sum,row)=>
+    sum+row.unnamedFrontTeamKm,0),
   maximumOrderedFrontTeams:Math.max(...rows.map(
     row=>row.maximumOrderedFrontTeams))};
 console.log(JSON.stringify(process.argv.includes('--rows')?
@@ -75,9 +88,10 @@ console.log(JSON.stringify(process.argv.includes('--rows')?
 if(process.argv.includes('--require-compatible')&&
   (summary.multipleFrontWorkerKm||
     summary.noFrontWorkerKm||
+    summary.unnamedFrontTeamKm||
     rows.some(row=>row.riderCount!==160))){
   console.error('Physical input preflight refused: '+
-    'V94 manager orders need an explicit multi-team '+
-    'single-leader decision source.');
+    'V94 manager orders need named helpers and an explicit '+
+    'multi-team single-leader decision source.');
   process.exitCode=1;
 }
