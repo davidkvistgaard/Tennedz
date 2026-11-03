@@ -4945,3 +4945,29 @@ energies. The observed finish clock spans are 191.60 seconds over
 observations, not official placements. Broader calibration and replay
 across fatigue and roles remain unvalidated. Guided routing stays
 withheld.
+
+The next opt-in contact version resolves the tired km-26 boundary at
+the **recorded common split point** (metre 25,999.203884). Both riders
+have paid the bunch to that point; neither is labelled as catching
+the other or assigned an unseen wheel. Their committed efforts choose
+one named volunteer to lead, with a stable tie choice. The two riders
+then pay the remaining group road, one exposed and one sheltered.
+The ordered replay also keeps a named rear rider on a separate road
+when a committed sprint goal makes its observed faster contact a
+pass-through. That decision changes later physical group membership
+and energy in the role counterfactual; the contact is recorded and
+does not silently merge the roads.
+
+The same seeded 160-rider front/rear race now source-replays all
+kilometres and observed finish clocks in **four** distance/fatigue
+cases (120/260 km, fatigue 10/30). The fatigue-30 finish clock spans
+are 182.45 and 400.33 seconds. Four further counterfactuals raise
+later climbs from 6% to 8%, and four change a previously dropped
+rider into team 3's committed sprint captain with matching manager
+orders and emergency worker coverage. All twelve runs retain complete
+paid rider states and recorded contact choices through the observed
+route end. The role change causes a paid pass-through and changes that
+rider's rear group and energy. This synthetic matrix is still one
+seed and does not establish realistic pursuit, break-lead or finish
+distributions. No official placing is inferred and guided V94 remains
+separate.

@@ -355,14 +355,54 @@ if(process.argv.includes('--probe-front-rear-race')){
     arg.startsWith('--fatigue='))?.split('=')[1]??10);
   const generated=source(distanceKm,fatigue,
     'front_varied');
-  const input={...generated,attackKm:1,lossKm:21};
-  if(process.argv.includes('--expect-refusal')){
-    assert.throws(()=>replayPhysicalFrontRearRaceV1(
-      input),/needs ordered rear catch/);
-    process.stdout.write(JSON.stringify({distanceKm,
-      fatigue,refusedAmbiguousContact:true})+'\n');
-    process.exit(0);
+  if(process.argv.includes('--steeper')){
+    generated.startInput.routeKilometres=
+      generated.startInput.routeKilometres
+        .map(segment=>segment.km>40&&
+          segment.terrain==='climb'?{
+            ...segment,gradientPct:8}:segment);
+    generated.start=startPhysicalBunchV1(
+      generated.startInput);
   }
+  if(process.argv.includes('--captain-shift')){
+    const team=generated.startInput.teams[3];
+    const captainId='team-3-3';
+    const helperIds=team.orders.helperIds
+      .filter(id=>id!==captainId);
+    const fallback=helperIds[0];
+    const moveWorker=plan=>
+      plan.frontWorkRiderId===captainId?{
+        ...plan,frontWorkRiderId:fallback}:plan;
+    team.orders=normalizeOrders({
+      ...team.orders,
+      captainId,roadCaptainId:captainId,
+      helperIds,
+      baseline:moveWorker(team.orders.baseline),
+      phases:team.orders.phases.map(moveWorker)},
+    {riderIds:team.riders.map(row=>row.id),
+      distanceKm,allowFrontWork:true,
+      allowNamedFrontWorker:true});
+    const emergency=generated.startInput
+      .emergencyFrontWorkers.find(row=>
+        row.teamId===team.id);
+    if(emergency.unavailableRiderId===captainId)
+      emergency.unavailableRiderId=fallback;
+    emergency.replacementRiderId=helperIds
+      .find(id=>id!==
+        emergency.unavailableRiderId);
+    const intentions=generated.startInput
+      .commitment.intentions.map(row=>
+        row.teamId===team.id?{
+          ...row,baseline:{goal:'sprint_finish',
+            captainId}}:row);
+    generated.startInput.commitment=
+      commitTeamChaseStakesV1({
+        teams:generated.startInput.teams,
+        distanceKm,intentions});
+    generated.start=startPhysicalBunchV1(
+      generated.startInput);
+  }
+  const input={...generated,attackKm:1,lossKm:21};
   const race=replayPhysicalFrontRearRaceV1(input);
   assert.equal(validatePhysicalFrontRearRaceV1(
     input,race),true);
@@ -372,12 +412,53 @@ if(process.argv.includes('--probe-front-rear-race')){
   assert.equal(Object.keys(race
     .observedFinishEnergyByRider).length,160);
   assert.equal(race.officialResults,false);
+  if(fatigue===30){
+    const splitContact=race.kilometres[25]
+      .contactEvents.find(row=>
+        row.splitLeader);
+    assert.equal(splitContact?.event
+      .catchingRoadId,null);
+    assert.equal(splitContact?.event
+      .metresIntoKm,999.203884);
+    assert.equal(splitContact?.splitLeader
+      .basis,
+      'committed_effort_then_stable_volunteer');
+    const pair=splitContact.event.roadIds
+      .map(id=>id.slice('solo-'.length));
+    assert.equal(new Set(pair.map(id=>race
+      .kilometres[25].riderStates.find(row=>
+        row.riderId===id).physicalGroupId)
+      ).size,1);
+  }
   const observed=Object.values(race
     .observedFinishSecondsByRider);
+  const rearPassThroughCount=race.kilometres
+    .flatMap(row=>row.contactEvents??[])
+    .filter(row=>row.choice===
+      'pass_through').length;
+  if(process.argv.includes('--captain-shift')){
+    assert.ok(rearPassThroughCount>=1);
+    assert.ok(race.kilometres.some(row=>
+      row.riderStates.find(state=>state.riderId===
+        'team-3-3')?.decisions.some(decision=>
+        decision.choice==='pass_through')));
+  }
   process.stdout.write(JSON.stringify({distanceKm,
     fatigue,riderCount:race.riderIds.length,
+    steeper:process.argv.includes('--steeper'),
+    captainShift:process.argv.includes(
+      '--captain-shift'),
     finishClockSpanSeconds:Math.max(...observed)-
       Math.min(...observed),
+    captainFinish:(()=>{
+      const row=race.kilometres.at(-1)
+        .riderStates.find(item=>item.riderId===
+          'team-3-3');
+      return {physicalGroupId:row.physicalGroupId,
+        energyAfter:row.energyAfter,
+        goal:row.decisions.at(-1).goal};
+    })(),
+    rearPassThroughCount,
     frontGapSeconds:race.sources.last
       .endFrontState.gapSecondsToBunch,
     officialResults:race.officialResults},null,2)+'\n');
@@ -892,6 +973,7 @@ if(process.argv.includes('--probe-front-clear-prefix')||
   let firstEvent=null;
   let candidateEventCount=0;
   let newSplits=[];
+  let splitDetails=[];
   for(let km=22;km<=distanceKm;km++){
     let next;
     try{next=advancePhysicalFrontRearClearKmV1({
@@ -906,6 +988,15 @@ if(process.argv.includes('--probe-front-clear-prefix')||
         next.candidateEventCount;
       newSplits=next.sources.step.splits.map(row=>
         row.riderId);
+      splitDetails=next.sources.step.splits.filter(row=>
+        firstEvent?.riderIdsByRoad?.[
+          `solo-${row.riderId}`]?.includes(
+            row.riderId)).map(row=>({
+          riderId:row.riderId,
+          atDistanceM:row.atDistanceM,
+          energyAtSplit:next.sources.step.riders
+            .find(item=>item.riderId===
+              row.riderId)?.energyAfter}));
       break;
     }
     assert.equal(next.riderCount,160);
@@ -1306,6 +1397,7 @@ if(process.argv.includes('--probe-front-clear-prefix')||
     fatigue,lastFullKm:prior.sourceKm,
     firstUnresolvedKm,reason,firstEvent,
     candidateEventCount,newSplits,
+    splitDetails,
     bunchRiders:prior.endBunchState.riderIds.length,
     rearRoads:prior.endRearEntities.length,
     frontGapSeconds:prior.endFrontState
