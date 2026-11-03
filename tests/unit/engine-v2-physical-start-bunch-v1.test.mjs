@@ -117,6 +117,9 @@ import {replayPhysicalEarlyCaughtNextRearKmV1,
 import {replayPhysicalEarlyCaughtRearFinishV1,
   validatePhysicalEarlyCaughtRearFinishV1} from
   '../../lib/engine/v2/physical-early-caught-rear-finish-v1.mjs';
+import {replayPhysicalCommittedStageReleaseKmV1,
+  validatePhysicalCommittedStageReleaseKmV1} from
+  '../../lib/engine/v2/physical-committed-stage-release-km-v1.mjs';
 import {replayPhysicalFrontRaceV1,
   validatePhysicalFrontRaceV1} from
   '../../lib/engine/v2/physical-front-race-replay-v1.mjs';
@@ -1273,6 +1276,88 @@ test('caught break and later follower loss have paid rider states',()=>{
     .energyAfter+=1;
   assert.throws(()=>validatePhysicalEarlyCaughtFollowerLossV1(
     lossInput,forged),/differs from source/);
+});
+
+test('committed later-stage plan releases only a rider able to hold',()=>{
+  const initial=source();
+  const plan=commitRearSoloPlanV1({
+    riderId:'other-3',distanceKm:20,
+    stageNumber:1,stageCount:2,
+    baseline:{goal:'finish_safely',
+      effort:'steady'},
+    phases:[{atKm:5,goal:'save_for_stage',
+      effort:'conserve',
+      committedStagePlan:{riderId:'other-3',
+        currentStageNumber:1,
+        targetStageNumber:2,
+        currentGoal:'finish_safely',
+        futureGoal:'target_stage',
+        reserveEnergy:80}}]});
+  const startInput={...initial.startInput,
+    physicalDraftVersion:4,
+    soloCommitments:[plan]};
+  const input={startInput,
+    start:startPhysicalBunchV1(startInput),
+    riderId:'other-3',releaseKm:6};
+  const released=replayPhysicalCommittedStageReleaseKmV1(
+    input);
+  assert.equal(released.kilometres.length,6);
+  assert.ok(released.kilometres.every(row=>
+    row.riderStates.length===24&&
+    row.riderStates.every(state=>
+      state.decisions.length>0)));
+  assert.equal(released.sources.release.decision.choice,
+    'chose_to_release');
+  assert.equal(released.sources.release.decision
+    .committedStagePlan.targetStageNumber,2);
+  assert.ok(released.sources.release.decision
+    .orderedHoldAbility>=released.sources.release
+      .decision.leaderAbility);
+  assert.ok(released.sources.release.gapSecondsToBunch>0);
+  assert.equal(released.sources.release.startDistanceM,
+    5000);
+  assert.ok(released.sources.release.energyAfter>=80);
+  assert.equal(validatePhysicalCommittedStageReleaseKmV1(
+    input,released),true);
+  const forged=structuredClone(released);
+  forged.sources.release.energyAfter+=1;
+  assert.throws(()=>validatePhysicalCommittedStageReleaseKmV1(
+    input,forged),/differs/);
+  const unplannedStartInput={...startInput,
+    soloCommitments:[]};
+  assert.throws(()=>replayPhysicalCommittedStageReleaseKmV1({
+    ...input,startInput:unplannedStartInput,
+    start:startPhysicalBunchV1(
+      unplannedStartInput)}),
+  /committed bunch rider/);
+  const weakTeams=field();
+  weakTeams[2].riders[3].mountain=10;
+  const weakRoute=route();
+  weakRoute[5]={...weakRoute[5],
+    terrain:'climb',gradientPct:6};
+  const weakInitial=source(weakTeams,weakRoute);
+  const weakStartInput={...weakInitial.startInput,
+    physicalDraftVersion:4,
+    soloCommitments:[plan]};
+  assert.throws(()=>
+    replayPhysicalCommittedStageReleaseKmV1({
+      ...input,startInput:weakStartInput,
+      start:startPhysicalBunchV1(
+        weakStartInput)}),
+  /rider able to hold/);
+  const attackTeams=field();
+  attackTeams[2].orders.phases=[{atKm:5,
+    attack:'selective',attackRiderId:'other-3'}];
+  const attackInput=source(attackTeams,route(),
+    {other:'break_stage'},[{km:5}]);
+  const attackStartInput={...attackInput.startInput,
+    physicalDraftVersion:4,soloCommitments:[plan]};
+  assert.throws(()=>
+    replayPhysicalCommittedStageReleaseKmV1({
+      ...input,startInput:attackStartInput,
+      start:startPhysicalBunchV1(
+        attackStartInput)}),
+  /conflicts with named manager attack/);
 });
 
 test('perceived chase choice reads a replayed physical front gap',()=>{

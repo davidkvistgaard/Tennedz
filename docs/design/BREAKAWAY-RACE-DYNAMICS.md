@@ -4360,3 +4360,20 @@ The 160-rider weak-climber control at fatigue 30 also replays 120 and
 `cannot_hold_even_at_hard_effort`, has no inferred rear contact and
 retains all 160 finish clocks. Thus both cause branches have source
 witnesses, while their prevalence is not calibrated.
+
+An isolated version-4 stage-release witness now exercises the other
+cause of leaving a bunch. Rider `other-3` has a pre-race two-stage
+plan whose km-5 marker changes the next kilometre to
+`save_for_stage`, names stage 2 and retains an energy reserve of 80.
+The 24-rider bunch pays kilometres 1–5. At the exact 5,000-metre
+boundary, the rider's ordered sheltered hold ability and affordable
+energy are checked against the paid bunch leader. The rider can hold,
+but chooses a slower conserving solo for kilometre 6; the source
+records its elapsed clock, positive gap, exposed energy cost, reserve
+and a separate decision for all 24 riders. Replayed source equality
+rejects changed energy. A missing plan, physical inability to hold,
+or a simultaneous named manager attack refuses. This proves a
+deliberate release for one committed case without misclassifying a
+forced drop. The solo and bunch have not yet been continued to a
+finish together; contact and final result remain unsettled. This
+does not alter guided races or justify a time cut-off.
