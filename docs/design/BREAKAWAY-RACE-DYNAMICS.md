@@ -5037,15 +5037,30 @@ form and fatigue pattern before the race and recomputes the named
 worker choices. On the 120-km fatigue-10 front-catch probe, roster 0
 reaches a source-discovered catch and full 160-rider finish. Roster 6
 has no front/bunch contact and the separately validated no-catch race
-finishes with the front 17.46504 seconds clear. The other five refuse
-an unresolved ordered event: rosters 1 and 3 have a rear solo meet the
-front before the bunch does; roster 2 has several rear solos approach
-the just-caught rider in the catch kilometre; roster 4 has a rear
+finishes with the front 17.46504 seconds clear. Roster 2 originally
+refused several rear solos approaching the just-caught rider in the
+catch kilometre. The other four refuse an unresolved ordered event:
+rosters 1 and 3 have a rear solo meet the front before the bunch does;
+roster 4 has a rear
 solo/bunch meeting and then a rear/front meeting before front/bunch
 contact; roster 5 has a rear-pair meeting before front/bunch contact.
 These are distinct paid candidate events, not finished groups. Their
 order and remaining road require source replay before this roster
 range can count as a calibrated whole-race matrix.
+
+The roster-2 fresh race now replays that km-62 chain. A paid first
+contact forms a two-rider rear group; three later solos join at
+metres 61,175.521390, 61,187.341035 and 61,215.108469. A fourth
+solo reaches them at metre 61,267.835462 but its committed goal and
+observed faster road choose a pass-through. The rider remains on a
+separate paid road. The group has one exposed leader, the others pay
+less shelter cost, and all 160 states and observed finish clocks
+replay through 120 and 260 km at fatigue 10. Fatigue 30 still refuses
+an earlier simultaneous contact in the front/rear source; it is not
+counted as a complete finish for this roster.
+The multi-contact kilometre and complete caught race use distinct
+version-2 recording IDs; the earlier one-contact recordings retain
+their version-1 IDs and output shape.
 
 The next opt-in contact version resolves the tired km-26 boundary at
 the **recorded common split point** (metre 25,999.203884). Both riders

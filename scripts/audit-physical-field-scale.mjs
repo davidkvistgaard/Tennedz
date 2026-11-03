@@ -835,6 +835,48 @@ if(process.argv.includes('--probe-front-rear-threat')){
       160);
     assert.equal(discoveredRace.kilometres.length,
       distanceKm);
+    if(process.argv.includes(
+      '--expect-catch-chain')){
+      const caught=discoveredRace.sources.caught;
+      const chain=caught.additionalContacts;
+      assert.match(discoveredRace.version,
+        /caught-chain-race-2$/);
+      assert.match(caught.version,
+        /caught-slide-chain-km-2$/);
+      assert.ok(caught.nextContact&&
+        Array.isArray(chain)&&chain.length>0);
+      let priorClock=caught.nextContact.event
+        .clockSeconds;
+      for(const contact of chain){
+        assert.ok(contact.event.clockSeconds>
+          priorClock);
+        assert.ok(['join','pass_through']
+          .includes(contact.choice.outcome));
+        if(contact.group){
+          assert.equal(contact.group.rows.filter(
+            row=>row.role==='leader').length,
+          1);
+          assert.ok(contact.group.rows.every(
+            row=>row.role!=='sheltered'||
+              row.draftFraction<1));
+        }else{
+          assert.equal(contact.choice.outcome,
+            'pass_through');
+          const passingRoad=caught
+            .endRearEntities.find(row=>
+              row.id===contact.event
+                .catchingRoadId);
+          assert.equal(passingRoad?.kind,
+            'solo');
+          assert.ok(!passingRoad.riderIds
+            .includes('team-19-1'));
+        }
+        priorClock=contact.event.clockSeconds;
+      }
+      assert.equal(discoveredRace.kilometres[
+        caught.sourceKm-1].contactEvents
+        .length,2+chain.length);
+    }
     if(caughtRace){
       assert.equal(discoveredRace.catchKm,
         caughtRace.catchKm);
@@ -968,13 +1010,22 @@ if(process.argv.includes('--probe-front-rear-threat')){
           row.riderId==='team-19-1')
         .physicalGroupId}:null,
     discoveredRace:discoveredRace?{
+      version:discoveredRace.version,
       catchKm:discoveredRace.catchKm,
       riderCount:discoveredRace.riderIds.length,
       finishRiderCount:Object.keys(discoveredRace
         .observedFinishSecondsByRider).length,
       catchKilometreSplitCount:discoveredRace
         .sources.caught.sources.splitCompletions
-          .length}:null,
+          .length,
+      catchKilometreAdditionalContacts:
+        discoveredRace.sources.caught
+          .additionalContacts?.map(row=>({
+            choice:row.choice.outcome,
+            atDistanceM:row.event.atDistanceM,
+            riderIds:row.choice.riderDecisions
+              .map(decision=>
+                decision.riderId)}))??[]}:null,
     discoveredRaceRefusal,
     noCatchRace:noCatchRace?{
       riderCount:noCatchRace.riderIds.length,
