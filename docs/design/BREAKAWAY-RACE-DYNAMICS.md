@@ -4660,3 +4660,14 @@ four lower-cost sheltered riders. All 160 km-34 states are replayed;
 the 27 riders remain on 23 distinct rear roads. Km 35 pays without a
 new contact. A solo reaches the bunch at metre 35,074.361235 in km 36;
 that next choice and the finish are still unsettled.
+
+The km-36 solo-to-bunch meeting is now priced from the solo's paid
+energy at metre 35,074.361235 and the bunch's measured clock. The
+rider can hold the bunch, pay the remaining road and save energy in
+shelter while respecting the committed order and reserve. The rider
+chooses to join; the recorded partial solo road and sheltered
+remainder place 134 riders in the bunch at km end, with 26 riders on
+22 rear roads.
+The other rear roads pay separately, and no later km-36 contact is
+measured. Both fatigue-30 route probes now pay all 160 riders through
+km 40. These are still prefixes, not validated 120/260-km finishes.
