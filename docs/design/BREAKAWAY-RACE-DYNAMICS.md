@@ -4381,3 +4381,12 @@ all 24 actual finish clocks and rejects a forged finish. Later contact
 is still refused until it has its own paid event source. This narrow
 finish witness does not establish field-scale calibration, alter
 guided races or justify a time cut-off.
+
+The same release replays in four equal-skill 160-rider audits over
+120 and 260 km with fatigue 10 and 30. Each has 160 decisions in
+every kilometre, one paid bunch leader, no unpriced contact, and 160
+observed finish clocks. The conserving solo ends 29.25–41.34 seconds
+behind the bunch and with 60.455–83.175 energy, exceeding its
+committed reserve of 20. These controlled sources check continuity
+and scale; their small time gaps are not calibrated release or chase
+outcomes for a varied field.

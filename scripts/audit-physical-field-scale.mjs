@@ -44,6 +44,9 @@ import {advancePhysicalThirdRearGroupV1} from
   '../lib/engine/v2/physical-third-rear-contact-v1.mjs';
 import {pricePhysicalRearEventTrackV1} from
   '../lib/engine/v2/physical-rear-event-track-v1.mjs';
+import {replayPhysicalCommittedStageReleaseFinishV1,
+  validatePhysicalCommittedStageReleaseFinishV1} from
+  '../lib/engine/v2/physical-committed-stage-release-km-v1.mjs';
 import {replayPhysicalStaggeredRearEventsV1,
   validatePhysicalStaggeredRearEventsV1} from
   '../lib/engine/v2/physical-staggered-rear-event-replay-v1.mjs';
@@ -750,6 +753,62 @@ function audit(distanceKm,fatigue,variant){
     namedLeaders,
     minimumEnergy:Math.min(...Object.values(
       run.energyByRider))};
+}
+
+if(process.argv.includes('--probe-stage-release')){
+  const results=[];
+  for(const distanceKm of [120,260])
+    for(const fatigue of [10,30]){
+      const base=source(distanceKm,fatigue,
+        'equal_field');
+      const riderId='team-19-7';
+      const plan=commitRearSoloPlanV1({
+        riderId,distanceKm,stageNumber:1,
+        stageCount:2,baseline:{goal:'finish_safely',
+          effort:'steady'},phases:[{atKm:5,
+          goal:'save_for_stage',effort:'conserve',
+          committedStagePlan:{riderId,
+            currentStageNumber:1,
+            targetStageNumber:2,
+            currentGoal:'finish_safely',
+            futureGoal:'target_stage',
+            reserveEnergy:20}}]});
+      const startInput={...base.startInput,
+        physicalDraftVersion:4,
+        soloCommitments:[plan]};
+      const input={startInput,
+        start:startPhysicalBunchV1(startInput),
+        riderId,releaseKm:6};
+      const race=replayPhysicalCommittedStageReleaseFinishV1(
+        input);
+      assert.equal(validatePhysicalCommittedStageReleaseFinishV1(
+        input,race),true);
+      assert.equal(race.kilometres.length,distanceKm);
+      assert.ok(race.kilometres.every(km=>
+        km.riderStates.length===160&&
+        km.riderStates.every(row=>
+          row.decisions.length>0&&
+          Number.isFinite(row.energyAfter))));
+      assert.ok(race.sources.later.every(step=>
+        step.gapSecondsToBunch>0&&
+        step.bunch.riders.filter(row=>
+          row.role==='leader').length===1&&
+        step.solo.energyAfter>=20));
+      assert.equal(Object.keys(race
+        .observedFinishSecondsByRider).length,160);
+      results.push({distanceKm,fatigue,
+        releaseGapSeconds:race.sources.first
+          .sources.release.gapSecondsToBunch,
+        finishGapSeconds:race.sources.later
+          .at(-1).gapSecondsToBunch,
+        soloFinishEnergy:race.kilometres.at(-1)
+          .riderStates.find(row=>
+            row.riderId===riderId).energyAfter,
+        finishRiders:160});
+    }
+  process.stdout.write(JSON.stringify({results},
+    null,2)+'\n');
+  process.exit(0);
 }
 
 if(process.argv.includes('--probe-single-leader-weak')){
