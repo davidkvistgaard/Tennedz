@@ -565,6 +565,11 @@ if(process.argv.includes('--probe-front-rear-threat')){
     catchKm>21&&catchKm<=distanceKm);
   const generated=source(distanceKm,fatigue,
     'front_varied');
+  if(process.argv.includes('--decision-coverage')){
+    generated.startInput.physicalDecisionVersion=1;
+    generated.start=startPhysicalBunchV1(
+      generated.startInput);
+  }
   if(process.argv.includes('--steeper-after-catch')){
     generated.startInput.routeKilometres=
       generated.startInput.routeKilometres

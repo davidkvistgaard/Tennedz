@@ -313,6 +313,38 @@ test('start line pays one named leader and all 23 sheltered riders',()=>{
     /differs/);
 });
 
+test('opt-in bunch decisions record source version and manager effort',()=>{
+  const legacy=source();
+  const legacyRoad=advancePhysicalStartBunchV1(legacy);
+  assert.equal(legacy.start.version,
+    'v2-physical-start-bunch-1');
+  assert.ok(legacyRoad.riderDecisions.every(row=>
+    row.version===undefined&&
+    row.teamOrderEffort===undefined));
+  const startInput={...legacy.startInput,
+    physicalDecisionVersion:1};
+  const start=startPhysicalBunchV1(startInput);
+  assert.equal(start.committedSource
+    .physicalDecisionVersion,1);
+  const road=advancePhysicalStartBunchV1({
+    startInput,start,segment:legacy.segment});
+  assert.match(start.version,/-decisions-1$/);
+  assert.match(road.version,/-decisions-1$/);
+  assert.ok(road.riderDecisions.every(row=>
+    row.version===road.version&&
+    row.teamOrderEffort===orderAt(
+      startInput.teams.find(team=>team.id===row.teamId)
+        .orders,0).effort));
+  assert.deepEqual(road.riders,legacyRoad.riders);
+  assert.equal(road.elapsedSeconds,
+    legacyRoad.elapsedSeconds);
+  assert.equal(validatePhysicalStartBunchV1({
+    startInput,start,segment:legacy.segment},road),true);
+  assert.throws(()=>startPhysicalBunchV1({
+    ...legacy.startInput,physicalDecisionVersion:2}),
+  /committed field and route/);
+});
+
 test('simultaneous paid splits choose and pay one rear leader',()=>{
   const teams=field(30);
   const dropped=['control-3','sprint-3','other-3'];

@@ -94,6 +94,8 @@ function runCase({roster,fatigue,distance}){
         assert.equal(result.decisionCoverage
           ?.missingEffort,0);
         assert.equal(result.decisionCoverage
+          ?.missingTeamOrderEffort,0);
+        assert.equal(result.decisionCoverage
           ?.unknownEffort,0);
         assert.equal(result.decisionCoverage
           ?.orderEffortMismatch,0);

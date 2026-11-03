@@ -5320,17 +5320,22 @@ outside it.
 The matrix's version 4 gate also replays the actual manager effort
 order for each rider and kilometre. All recorded efforts stay within
 that order, and explicit order copies match the source in all 42
-cells. Individual choice rows still have no own version field; their
-policy is identified by the enclosing replay sources. An explicit
-per-decision version remains a separate schema task before promotion.
+cells. In the earlier recording schema, choice policy versions are
+identified by the enclosing replay sources.
+An opt-in `physicalDecisionVersion: 1` on the committed physical
+start now records the bunch choice source version and the actual
+manager effort on each bunch rider decision. The default recording
+schema is unchanged. The contact matrix enables this source and
+requires an explicit order effort on every decision; decisions from
+other physical sources still need their own policy version before
+promotion.
 The version 5 gate checks that every rider-kilometre has finite,
 nonnegative energy, a forward-moving observed road clock and a
 physical group ID. It also checks exactly one state for each known
 rider on each sequential source kilometre. The final paid clock and
 energy for each of the 160 riders match the recorded finish in every
-matrix cell. These
-checks include early drops, later rear contacts and caught riders
-sliding through on their own paid road.
+matrix cell. These checks include early drops, later rear contacts
+and caught riders sliding through on their own paid road.
 It is a source-continuity gate, not an independent physics oracle or
 real-race calibration.
 The read-only `node scripts/audit-v94-physical-input-compatibility.mjs
