@@ -10,6 +10,9 @@ import {commitRearSoloPlanV1} from
 import {replayPhysicalFrontRaceV1,
   validatePhysicalFrontRaceV1} from
   '../lib/engine/v2/physical-front-race-replay-v1.mjs';
+import {replayPhysicalFrontFirstRearLossKmV1,
+  validatePhysicalFrontFirstRearLossKmV1} from
+  '../lib/engine/v2/physical-front-first-rear-loss-v1.mjs';
 import {startPhysicalBunchV1,runPhysicalBunchV1,
   runPhysicalBunchToPaceLossV1,
   runPhysicalStaggeredBunchLossV1} from
@@ -289,7 +292,10 @@ function source(distanceKm,fatigue,variant){
     ...(['varied_field','varied_captain',
       'front_varied'].includes(
       variant)?{
-      physicalDraftVersion:2,
+      physicalDraftVersion:variant===
+        'front_varied'?4:2,
+      ...(variant==='front_varied'?{
+        physicalRearIntentVersion:2}:{}),
       emergencyFrontWorkers:workerChoices.map(
         (choices,index)=>({version:1,
           teamId:teams[index].id,
@@ -382,6 +388,54 @@ if(process.argv.includes('--probe-front-field')){
   process.stdout.write(JSON.stringify({distanceKm,
     fatigue,variant,lastFullKm,refusal,finish},
   null,2)+'\n');
+  process.exit(0);
+}
+
+if(process.argv.includes('--probe-front-first-loss')){
+  const distanceKm=Number(process.argv.find(arg=>
+    arg.startsWith('--distance='))?.split('=')[1]??120);
+  const fatigue=Number(process.argv.find(arg=>
+    arg.startsWith('--fatigue='))?.split('=')[1]??10);
+  const input=source(distanceKm,fatigue,
+    'front_varied');
+  const replayInput={...input,attackKm:1,
+    lossKm:21};
+  const result=replayPhysicalFrontFirstRearLossKmV1(
+    replayInput);
+  assert.equal(validatePhysicalFrontFirstRearLossKmV1(
+    replayInput,result),true);
+  assert.equal(result.sourcedRiderCount,160);
+  assert.equal(result.riderCount,160);
+  assert.equal(result.fieldKilometreIncomplete,
+    false);
+  assert.equal(result.candidateEventCount,0);
+  const previous=new Map(result.sources.before
+    .kilometres.at(-1).riderStates.map(row=>
+      [row.riderId,row]));
+  assert.ok(result.riderStates.every(row=>{
+    const prior=previous.get(row.riderId);
+    return prior&&row.sourceKm===21&&
+      row.atDistanceM===21000&&
+      row.elapsedSeconds>prior.elapsedSeconds&&
+      Number.isFinite(row.energyAfter)&&
+      row.energyAfter>=0&&
+      row.decisions.length>0;
+  }));
+  process.stdout.write(JSON.stringify({distanceKm,
+    fatigue,sourceKm:result.sourceKm,
+    bunchRiders:result.endBunchState.riderIds.length,
+    frontRiderId:result.endFrontState.riderId,
+    rearRiderIds:result.candidateRearSolos.map(row=>
+      row.riderId),
+    frontGapSeconds:result.endFrontState
+      .gapSecondsToBunch,
+    firstRearGapSeconds:result.candidateRearSolos[0]
+      .gapSecondsToBunch,
+    firstCandidateEvent:result.firstCandidateEvent,
+    candidateEventCount:result.candidateEventCount,
+    riderCount:result.riderCount,
+    fieldKilometreIncomplete:result
+      .fieldKilometreIncomplete},null,2)+'\n');
   process.exit(0);
 }
 

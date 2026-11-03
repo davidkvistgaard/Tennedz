@@ -4828,3 +4828,17 @@ inventing a finish. The explicit audit preserves this boundary: the
 front attack, rear split, subsequent chase and any catch still need a
 single paid field continuation before a varied front-break race can be
 calibrated or routed to guided play.
+
+The opt-in `physical-front-first-rear-loss-v1` source now replays that
+first varied split kilometre from the named attack's complete prior
+road. It keeps the front rider's paid solo energy and clock separate
+from the bunch's one exposed turn, prices each split rider's partial
+road and solo completion, and checks the chronological candidate
+contacts among the front, bunch and rear roads. At km 21, the four
+120/260-km, fatigue-10/30 probes have no candidate contact, so all 160
+riders receive a source-replayed kilometre state: 142 bunch + 17 rear
++ one front at fatigue 10, or 144 + 15 + one at fatigue 30. The front
+gap is 27.95 or 27.36 seconds. A focused simultaneous-split case does
+produce candidate contact; its field kilometre remains incomplete
+until a paid group choice and remainder resolve it. The current source
+does not yet carry the front and rear roads through km 22 or finish.

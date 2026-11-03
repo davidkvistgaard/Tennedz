@@ -108,6 +108,9 @@ import {priceRearEnergyDemandV1} from
 import {runPhysicalFrontSoloV1,
   validatePhysicalFrontSoloV1} from
   '../../lib/engine/v2/physical-front-solo-run-v1.mjs';
+import {replayPhysicalFrontFirstRearLossKmV1,
+  validatePhysicalFrontFirstRearLossKmV1} from
+  '../../lib/engine/v2/physical-front-first-rear-loss-v1.mjs';
 import {catchPhysicalFrontSoloV1,
   validatePhysicalFrontBunchCatchV1} from
   '../../lib/engine/v2/physical-front-bunch-catch-v1.mjs';
@@ -1016,6 +1019,62 @@ test('named manager attack forms front solo only by paid faster road',()=>{
   falseFull.kilometres[10].riderStates[0].energyAfter+=1;
   assert.throws(()=>validatePhysicalFrontRaceV1(
     frontInput,falseFull),/differs/);
+});
+
+test('front rider and first rear split keep separate paid sources',()=>{
+  const teams=field(10);
+  for(const team of teams)for(const rider of team.riders)
+    for(const skill of SPORTING_SKILLS)rider[skill]=96;
+  for(const skill of SPORTING_SKILLS)
+    teams[2].riders[1][skill]=100;
+  teams[0].riders[3].mountain=30;
+  teams[2].orders.baseline={
+    ...teams[2].orders.baseline,
+    attack:'selective',attackRiderId:'other-1',
+    effort:'hard'};
+  teams[2].orders.phases=[{atKm:1,
+    attack:'none',effort:'steady'}];
+  const kilometres=route();
+  kilometres[2]={...kilometres[2],
+    terrain:'climb',gradientPct:6};
+  const base=source(teams,kilometres,{
+    other:'break_stage'},[{km:1}]);
+  const startInput={...base.startInput,
+    physicalDraftVersion:4,
+    physicalRearIntentVersion:2};
+  const start=startPhysicalBunchV1(startInput);
+  const input={startInput,start,attackKm:1,
+    lossKm:3};
+  const result=replayPhysicalFrontFirstRearLossKmV1(
+    input);
+  assert.equal(result.sourceKm,3);
+  assert.equal(result.sourcedRiderCount,24);
+  assert.equal(result.endFrontState.riderId,
+    'other-1');
+  assert.ok(result.candidateRearSolos.some(row=>
+    row.riderId==='control-3'));
+  assert.equal(result.fieldKilometreIncomplete,
+    false);
+  assert.equal(result.riderCount,24);
+  assert.equal(result.riderStates.length,24);
+  assert.equal(validatePhysicalFrontFirstRearLossKmV1(
+    input,result),true);
+  const forged=structuredClone(result);
+  forged.sources.frontStep.energyAfter+=1;
+  assert.throws(()=>(
+    validatePhysicalFrontFirstRearLossKmV1(
+      input,forged)),/differs/);
+  const simultaneous=structuredClone(startInput);
+  for(const riderId of ['sprint-3','other-3'])
+    simultaneous.teams.flatMap(team=>team.riders)
+      .find(row=>row.id===riderId).mountain=30;
+  const pending=replayPhysicalFrontFirstRearLossKmV1({
+    ...input,startInput:simultaneous,
+    start:startPhysicalBunchV1(simultaneous)});
+  assert.ok(pending.candidateEventCount>0);
+  assert.equal(pending.fieldKilometreIncomplete,
+    true);
+  assert.equal(pending.riderStates,undefined);
 });
 
 test('stronger later bunch worker creates an energy-priced catch window',()=>{
