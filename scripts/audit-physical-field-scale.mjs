@@ -47,6 +47,9 @@ import {replayPhysicalFrontRearManagerChaseKmV1,
 import {probePhysicalFrontRearFrontCatchBoundaryV1,
   validatePhysicalFrontRearFrontCatchBoundaryV1} from
   '../lib/engine/v2/physical-front-rear-front-catch-boundary-v1.mjs';
+import {discoverPhysicalFrontCatchV1,
+  validatePhysicalFrontCatchV1} from
+  '../lib/engine/v2/physical-front-catch-discovery-v1.mjs';
 import {replayPhysicalFrontRearCaughtSlideKmV1,
   validatePhysicalFrontRearCaughtSlideKmV1} from
   '../lib/engine/v2/physical-front-rear-caught-slide-km-v1.mjs';
@@ -413,8 +416,10 @@ if(process.argv.includes('--probe-front-rear-threat')){
     arg.startsWith('--distance='))?.split('=')[1]??120);
   const fatigue=Number(process.argv.find(arg=>
     arg.startsWith('--fatigue='))?.split('=')[1]??10);
-  const catchKm=Number(process.argv.find(arg=>
-    arg.startsWith('--catch-km='))?.split('=')[1]??62);
+  const requestedCatch=process.argv.find(arg=>
+    arg.startsWith('--catch-km='));
+  let catchKm=Number(requestedCatch
+    ?.split('=')[1]??62);
   assert.ok(Number.isInteger(catchKm)&&
     catchKm>21&&catchKm<=distanceKm);
   const generated=source(distanceKm,fatigue,
@@ -500,6 +505,21 @@ if(process.argv.includes('--probe-front-rear-threat')){
             row)});
   generated.start=startPhysicalBunchV1(
     generated.startInput);
+  const discoverInput={...generated,
+    attackKm:1,lossKm:21,
+    chaseObserverTeamId:team.id};
+  const discoveredCatch=process.argv.includes(
+    '--discover-catch')?
+    discoverPhysicalFrontCatchV1(
+      discoverInput):null;
+  if(discoveredCatch){
+    assert.equal(validatePhysicalFrontCatchV1(
+      discoverInput,discoveredCatch),true);
+    if(requestedCatch)
+      assert.equal(catchKm,
+        discoveredCatch.catchKm);
+    catchKm=discoveredCatch.catchKm;
+  }
   const input={...generated,attackKm:1,lossKm:21,
     choiceKm:41,observerTeamId:team.id,
     nominatedChaseTeamIds:[team.id],
@@ -771,6 +791,9 @@ if(process.argv.includes('--probe-front-rear-threat')){
       '--planned-relief'),
     frontMountain:frontMountain?
       Number(frontMountain.split('=')[1]):null,
+    discoveredCatch:discoveredCatch?{
+      catchKm:discoveredCatch.catchKm,
+      contact:discoveredCatch.contact}:null,
     observedGapSeconds:decision
       .observedGapSeconds,
     unavailableRiders:decision

@@ -5011,6 +5011,17 @@ contact checks. All 160 states and observed finish clocks replay at
 the front catch; split-before-catch and competing contact order still
 refuse until they have their own paid source.
 
+An isolated source discovery now runs the committed front/rear field
+until its first front/bunch contact refusal, then verifies that
+kilometre against the paid ordered-contact boundary. Changing the
+front rider's mountain ability to 45, 50, 52 and 55 discovers catches
+at km 61, 62, 63 and 64 respectively; all four fatigue-10 120-km
+recordings replay to observed finish. A mismatched caller-supplied
+catch kilometre is rejected. A stronger front rider with no contact
+on the 120-km route reports no catch, while a 260-km run without the
+required precommitted relief preserves its km-96 unavailable-worker
+refusal. Discovery does not invent contact, team orders or results.
+
 The next opt-in contact version resolves the tired km-26 boundary at
 the **recorded common split point** (metre 25,999.203884). Both riders
 have paid the bunch to that point; neither is labelled as catching
