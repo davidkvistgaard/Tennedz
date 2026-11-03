@@ -4456,3 +4456,23 @@ with one paid front leader and all 24 rider decisions, energies and
 actual finish clocks replay through km 20. An unsourced later return
 still refuses. This is a narrow role and terrain witness, not an
 estimate of how often stage savers lose the bunch after rejoining.
+
+The event-ordered rear replay now accepts two riders whose separately
+paid solo roads begin at the same recorded split metre and clock. It
+checks both split sources against that meeting, then records a contact
+decision. The prospective front turn is chosen from observed road pace,
+then paid contact energy, with a stable rider-id tie break; no previous
+wheel order is inferred. The group prices one exposed leader and one
+sheltered rider from that metre onward. Previously recorded cases with
+distinct splits retain their output shape and replay.
+
+The same-seed varied 160-rider audit now finishes 120 and 260 km at
+both initial fatigue 10 and 30. At fatigue 30 the first shared split
+occurs in km 26 at metre 25,999.203884; the first group has one paid
+leader and one sheltered rider. The 120-km run records 12 contacts and
+19,200 rider-kilometre states; the 260-km run records 15 contacts and
+41,600 states. Both source-replay all 160 observed finish clocks with
+nonnegative energy. These synthetic outcomes establish source
+continuity for this measured simultaneous-split case, not a calibrated
+rate of real-world bunch losses or rear cooperation. Guided V94 routing
+and production remain separate.

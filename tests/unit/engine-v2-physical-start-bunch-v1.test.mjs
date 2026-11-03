@@ -258,6 +258,53 @@ test('start line pays one named leader and all 23 sheltered riders',()=>{
     /differs/);
 });
 
+test('simultaneous paid splits choose and pay one rear leader',()=>{
+  const teams=field(30);
+  for(const id of ['sprint-3','other-3'])
+    teams.flatMap(team=>team.riders)
+      .find(rider=>rider.id===id).mountain=30;
+  const kilometres=route();
+  kilometres[0]={...kilometres[0],terrain:'climb',
+    gradientPct:6};
+  const base=source(teams,kilometres);
+  const startInput={...base.startInput,
+    physicalDraftVersion:4};
+  const start=startPhysicalBunchV1(startInput);
+  const staggered=runPhysicalStaggeredBunchLossV1({
+    startInput,start,throughKm:20});
+  const soloField=probePhysicalStaggeredSoloFieldV1({
+    startInput,start,staggered,throughKm:20});
+  const input={startInput,start,staggered,soloField,
+    throughKm:20};
+  const race=replayPhysicalStaggeredRearEventsV1(input);
+  const split=staggered.road[0].splits.filter(row=>
+    ['sprint-3','other-3'].includes(row.riderId));
+  assert.equal(split.length,2);
+  assert.equal(split[0].atDistanceM,
+    split[1].atDistanceM);
+  const contact=race.contacts.find(row=>
+    row.source==='paid_simultaneous_split');
+  assert.ok(contact);
+  assert.ok(Math.abs(contact.atDistanceM-
+    split[0].atDistanceM)<1e-5);
+  assert.equal(contact.catchingRoadId,null);
+  assert.equal(contact.contactDecisions.filter(row=>
+    row.choice==='pull').length,1);
+  assert.equal(race.kilometres[0].segments.find(row=>
+    row.roadId===contact.physicalGroup.id)
+    .riders.filter(row=>row.role==='leader').length,1);
+  assert.equal(Object.keys(race
+    .observedFinishSecondsByRider).length,24);
+  assert.equal(validatePhysicalStaggeredRearEventsV1(
+    input,race),true);
+  const forged=structuredClone(race);
+  forged.contacts.find(row=>row.source===
+    'paid_simultaneous_split').leaderRiderId=
+      'control-2';
+  assert.throws(()=>validatePhysicalStaggeredRearEventsV1(
+    input,forged),/differs from paid source/);
+});
+
 test('versioned bunch pace match pays sheltered cost with one leader',()=>{
   const teams=field();
   teams[2].riders[3].mountain=40;

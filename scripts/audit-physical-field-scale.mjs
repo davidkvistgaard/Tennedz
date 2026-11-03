@@ -1375,17 +1375,6 @@ if(process.argv.includes('--probe-rear-events-120')||
       ...input,throughKm:distanceKm});
     const soloField=probePhysicalStaggeredSoloFieldV1({
       ...input,staggered,throughKm:distanceKm});
-    if(fatigue===30){
-      assert.throws(()=>
-        replayPhysicalStaggeredRearEventsV1({
-          ...input,staggered,soloField,
-          throughKm:distanceKm}),
-      /distinct paid split ordering/);
-      return {distanceKm,fatigue,
-        status:'refused_ambiguous_equal_split',
-        sourceKm:26,
-        riderIds:['team-3-3','team-4-3']};
-    }
     const race=replayPhysicalStaggeredRearEventsV1({
       ...input,staggered,soloField,throughKm:
         distanceKm});
@@ -1399,6 +1388,29 @@ if(process.argv.includes('--probe-rear-events-120')||
       .observedFinishSecondsByRider).length,160);
     assert.equal(race.contacts[0].sourceKm,
       fatigue===30?26:31);
+    if(fatigue===30){
+      const first=race.contacts[0];
+      const split=staggered.road[first.sourceKm-1]
+        .splits.filter(row=>first.riders.some(
+          rider=>rider.riderId===row.riderId));
+      assert.equal(first.source,
+        'paid_simultaneous_split');
+      assert.equal(first.catchingRoadId,null);
+      assert.equal(split.length,2);
+      assert.ok(split.every(row=>
+        Math.abs(row.atDistanceM-
+          first.atDistanceM)<1e-5));
+      assert.equal(first.contactDecisions.filter(row=>
+        row.choice==='pull').length,1);
+      assert.ok(race.kilometres[
+        first.sourceKm-1].segments.some(segment=>
+        segment.kind==='group'&&
+        segment.roadId===first.physicalGroup.id&&
+        segment.riders.filter(row=>
+          row.role==='leader').length===1&&
+        segment.riders.filter(row=>
+          row.role==='sheltered').length===1));
+    }
     assert.deepEqual(race.contacts[0].riders.map(row=>
       row.riderId),['team-3-3','team-4-3']);
     assert.equal(race.contacts[1].sourceKm,31);
