@@ -4489,3 +4489,14 @@ shared starting coordinate is cleared because no rider was behind
 there; the forward pull is chosen and paid from that coordinate. This
 still leaves broader race calibration, front-break interactions and
 guided routing unproven.
+
+The read-only extreme-field audit also runs these four cases over 260
+km. Every case has 41,600 source-replayed rider-kilometre states and
+all 160 observed finish clocks; the 20-rider group still needs 19
+measured contacts, while the single weak climber stays solo. Initial
+fatigue 30 makes the earliest finish slower and lowers the minimum
+finish energy compared with fatigue 10. The 20-rider group extends
+the finish-time spread relative to the single weak climber. Minimum
+finish energy is 57.39 at fatigue 10 and 49.39 at fatigue 30 in these
+synthetic fields. These monotonic checks are useful but do not
+calibrate whole-race effort, contact frequency or competitive timing.

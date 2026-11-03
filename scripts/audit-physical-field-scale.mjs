@@ -1181,11 +1181,13 @@ if(process.argv.includes('--probe-rear-captain')){
   process.exit(0);
 }
 
-if(process.argv.includes('--probe-rear-extreme')){
+if(process.argv.includes('--probe-rear-extreme')||
+  process.argv.includes('--probe-rear-extreme-260')){
+  const distanceKm=process.argv.includes(
+    '--probe-rear-extreme-260')?260:120;
   const results=['one_weak_climber',
     'unequal_descent_catch'].flatMap(variant=>
     [10,30].map(fatigue=>{
-      const distanceKm=120;
       const input=source(distanceKm,fatigue,variant);
       let firstLossReplay=null;
       if(variant==='unequal_descent_catch'){
@@ -1228,8 +1230,24 @@ if(process.argv.includes('--probe-rear-extreme')){
         assert.equal(validatePhysicalStaggeredRearEventsV1(
           replayInput,race),true);
         assert.ok(race.kilometres.every(row=>
-          row.riderStates.length===160));
+          row.riderStates.length===160&&
+          row.riderStates.every(state=>
+            state.decisions.length>0&&
+            Number.isFinite(state.elapsedSeconds)&&
+            Number.isFinite(state.energyAfter)&&
+            state.energyAfter>=0)));
+        assert.ok(race.kilometres.flatMap(row=>
+          row.segments).filter(row=>
+          row.kind==='group').every(row=>
+          row.riders.filter(rider=>
+            rider.role==='leader').length===1&&
+          row.riders.filter(rider=>
+            rider.role==='sheltered').length===
+            row.riders.length-1));
+        const finishes=race.kilometres.at(-1)
+          .riderStates;
         return {variant,fatigue,status:'full_replay',
+          distanceKm,
           detachedRiders:staggered.losses.length,
           lossKilometres:[...new Set(staggered.losses
             .map(row=>row.sourceKm))],
@@ -1242,6 +1260,14 @@ if(process.argv.includes('--probe-rear-extreme')){
             .map(row=>row.physicalGroup.riderIds
               .length)),
           ...(firstLossReplay?{firstLossReplay}:{}),
+          riderKilometres:race.kilometres.reduce(
+            (sum,row)=>sum+row.riderStates.length,0),
+          minimumFinishEnergy:Math.min(...finishes
+            .map(row=>row.energyAfter)),
+          earliestFinishSeconds:Math.min(...finishes
+            .map(row=>row.elapsedSeconds)),
+          latestFinishSeconds:Math.max(...finishes
+            .map(row=>row.elapsedSeconds)),
           finishRiders:Object.keys(race
             .observedFinishSecondsByRider).length};
       }catch(error){
@@ -1263,13 +1289,27 @@ if(process.argv.includes('--probe-rear-extreme')){
     ['unequal_descent_catch',30,
       'full_replay',20,[21]]]);
   assert.ok(results.slice(0,2).every(row=>
-    row.contacts===0&&row.finishRiders===160));
+    row.contacts===0&&row.finishRiders===160&&
+    row.riderKilometres===160*distanceKm));
   assert.ok(results.slice(2).every(row=>
     row.contacts===19&&
     row.sharedSplitContacts===18&&
     row.largestRearGroup===20&&
     row.firstLossReplay?.status==='full_replay'&&
-    row.finishRiders===160));
+    row.finishRiders===160&&
+    row.riderKilometres===160*distanceKm));
+  for(const first of [0,2]){
+    assert.ok(results[first+1]
+      .earliestFinishSeconds>results[first]
+        .earliestFinishSeconds);
+    assert.ok(results[first+1]
+      .minimumFinishEnergy<results[first]
+        .minimumFinishEnergy);
+  }
+  assert.ok(results[2].latestFinishSeconds>
+    results[0].latestFinishSeconds&&
+    results[3].latestFinishSeconds>
+      results[1].latestFinishSeconds);
   process.stdout.write(JSON.stringify({results},null,2)+'\n');
   process.exit(0);
 }
