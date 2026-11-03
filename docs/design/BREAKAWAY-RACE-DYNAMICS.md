@@ -4277,3 +4277,11 @@ exposed bunch leader every kilometre, zero `pace_match` group roles,
 Historical version-1 and version-2 recordings remain unchanged. The
 new version is isolated from guided races pending broader terrain,
 fatigue, break and finish calibration.
+
+At fatigue 30, both version-3 varied-field distances still refuse the
+same ambiguous km-26 rear contact; lower draft cost does not supply
+missing physical order. A separate 160-rider weak-climber field at
+fatigue 30 fully replays one measured km-21 drop and all 160 finishes
+at both 120 and 260 km, with one exposed bunch leader in every
+kilometre. This covers a tired single-loss branch while the
+simultaneous-loss source remains unresolved.
