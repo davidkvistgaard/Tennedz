@@ -5329,6 +5329,11 @@ schema is unchanged. The contact matrix enables this source and
 requires an explicit order effort on every decision; decisions from
 other physical sources still need their own policy version before
 promotion.
+The same opt-in now versions each decision from the paid rear solo,
+solo continuation and rear group track at its generating source.
+The read-only coverage audit reports missing versions by choice and
+reason; one 120 km, 160-rider case falls from 3,962 unversioned rows
+to 476 with no change in paid finish, energy or contact checks.
 The version 5 gate checks that every rider-kilometre has finite,
 nonnegative energy, a forward-moving observed road clock and a
 physical group ID. It also checks exactly one state for each known

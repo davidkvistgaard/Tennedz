@@ -449,7 +449,8 @@ if(process.argv.includes('--probe-front-rear-threat')){
       missingChoice:0,missingRiderId:0,
       missingReason:0,missingGoal:0,
       missingEffort:0,missingTeamOrderEffort:0,
-      missingVersion:0,
+      missingVersion:0,missingVersionByChoice:{},
+      missingVersionByReason:{},
       orderEffortMismatch:0,
       effortExceedsOrder:0,unknownEffort:0,
       invalidEnergy:0,invalidClock:0,
@@ -519,7 +520,15 @@ if(process.argv.includes('--probe-front-rear-threat')){
           if(missingEffort)summary.missingEffort++;
           if(missingTeamOrderEffort)
             summary.missingTeamOrderEffort++;
-          if(missingVersion)summary.missingVersion++;
+          if(missingVersion){
+            summary.missingVersion++;
+            const choice=decision?.choice??'<missing>';
+            summary.missingVersionByChoice[choice]=
+              (summary.missingVersionByChoice[choice]??0)+1;
+            const reason=decision?.reason??'<missing>';
+            summary.missingVersionByReason[reason]=
+              (summary.missingVersionByReason[reason]??0)+1;
+          }
           if(!missingTeamOrderEffort&&
             decision.teamOrderEffort!==managerEffort)
             summary.orderEffortMismatch++;

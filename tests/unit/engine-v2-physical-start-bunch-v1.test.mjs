@@ -70,7 +70,8 @@ import {inspectTwoRearPairsFieldContactV1} from
 import {finishPhysicalThirdRearContactV1} from
   '../../lib/engine/v2/physical-third-rear-contact-v1.mjs';
 import {pricePhysicalRearEventTrackV1,
-  pricePhysicalRearSoloTrackV1} from
+  pricePhysicalRearSoloTrackV1,
+  pricePhysicalRearSoloFromContactV1} from
   '../../lib/engine/v2/physical-rear-event-track-v1.mjs';
 import {replayPhysicalStaggeredRearEventsV1,
   validatePhysicalStaggeredRearEventsV1,
@@ -285,6 +286,39 @@ test('next rear solo pays terrain from recorded energy and clock',()=>{
     pricePhysicalRearSoloTrackV1({
       ...input,groupId:'peloton'}),
   /recorded road state/);
+});
+
+test('opt-in rear road decisions carry their paid source version',()=>{
+  const base=source();
+  const legacy=pricePhysicalRearSoloTrackV1({
+    startInput:base.startInput,riderId:'other-2',
+    energyBefore:90,km:2,startClock:80,
+    groupId:'solo-other-2'});
+  assert.equal(legacy.rows[0].decision.version,
+    undefined);
+  const startInput={...base.startInput,
+    physicalDecisionVersion:1};
+  const solo=pricePhysicalRearSoloTrackV1({
+    startInput,riderId:'other-2',energyBefore:90,
+    km:2,startClock:80,groupId:'solo-other-2'});
+  const continuation=pricePhysicalRearSoloFromContactV1({
+    startInput,riderId:'other-2',energyBefore:90,
+    km:2,startM:500,startClock:80,
+    groupId:'solo-other-2'});
+  const group=pricePhysicalRearEventTrackV1({
+    startInput,riderIds:['other-2','other-3'],
+    energyByRider:{'other-2':90,'other-3':90},
+    km:2,startM:0,startClock:80,
+    groupId:'rear-pair'});
+  for(const road of [solo,continuation,group]){
+    assert.match(road.version,/-decisions-1$/);
+    assert.ok(road.rows.every(row=>
+      row.decision.version===road.version&&
+      row.decision.teamOrderEffort==='steady'));
+  }
+  assert.equal(solo.endClock,legacy.endClock);
+  assert.equal(solo.rows[0].energyAfter,
+    legacy.rows[0].energyAfter);
 });
 
 test('start line pays one named leader and all 23 sheltered riders',()=>{
