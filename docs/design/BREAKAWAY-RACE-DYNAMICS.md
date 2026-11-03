@@ -5403,6 +5403,15 @@ the manager-controlled `you` team, whose intent has neither an
 explicit sporting goal nor a sporting captain ID. These examples
 identify missing input and do not select a replacement rider or goal.
 
+The read-only physical input preflight also accepts `--explicit-stakes`
+to inspect the opt-in version 5 manifest on the same three seeds. All
+480 team cases then have a committed goal and captain. The remaining
+physical incompatibilities are unchanged: 3,420 of 4,560 race
+kilometres have several teams ordered to the front, and none of the
+15,200 ordered front-team kilometres names a helper. The first case
+still has four simultaneous front teams at km 1. Supplying sporting
+stakes alone therefore cannot select one paid physical leader.
+
 An opt-in V94 `sportingStakes` input now accepts exactly one explicit
 `{teamId, goal, captainId}` per participating team, including the
 manager-controlled team. The new version 5 intent manifest commits and

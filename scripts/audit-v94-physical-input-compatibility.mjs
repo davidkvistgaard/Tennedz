@@ -11,6 +11,7 @@ const requestedSeeds=process.argv.find(arg=>
   arg.startsWith('--seeds='));
 const seedCount=requestedSeeds?
   Number(requestedSeeds.slice(8)):3;
+const explicitStakes=process.argv.includes('--explicit-stakes');
 if(!Number.isInteger(seedCount)||
   seedCount<1||seedCount>8)
   throw new Error('Use --seeds=1 through 8.');
@@ -25,8 +26,12 @@ for(let seed=1;seed<=seedCount;seed++)
           chase:'selective',
           seed:`chase-turn-holdout-${seed}-${terrain}-${fatigue}`};
         const prepared=prepareV91Playtest(settings);
+        const sportingStakes=explicitStakes?
+          prepared.teams.map(team=>({teamId:team.id,
+            goal:'none',captainId:team.orders.captainId})):null;
         const plan=prepareV94RivalIntent({
           prepared,format:'one_day',rivalGoals:[],
+          sportingStakes,
           controlTempoVersion:2,
           opportunisticSpecialistVersion:2,
           frontRotationVersion:1});
@@ -118,7 +123,8 @@ const firstEvidence=key=>{
     terrain:row.terrain,fatigue:row.fatigue,
     ...row[key]}:null;
 };
-const summary={version:4,seedCount,cases:rows.length,
+const summary={version:explicitStakes?5:4,
+  explicitStakes,seedCount,cases:rows.length,
   riderCount:rows.every(row=>row.riderCount===
     rows[0].riderCount)?rows[0].riderCount:null,
   teamCases:rows.reduce((sum,row)=>
@@ -154,8 +160,16 @@ if(process.argv.includes('--require-compatible')&&
     summary.explicitSportingGoalTeams!==
       summary.teamCases||
     rows.some(row=>row.riderCount!==160))){
-  console.error('Physical input preflight refused: '+
-    'V94 needs explicit sporting goals, named helpers and '+
-    'a multi-team single-leader decision source.');
+  const missing=[];
+  if(summary.explicitSportingGoalTeams!==summary.teamCases)
+    missing.push('explicit sporting goals');
+  if(summary.unnamedFrontTeamKm)
+    missing.push('named helpers');
+  if(summary.multipleFrontWorkerKm||summary.noFrontWorkerKm)
+    missing.push('a single-leader decision source');
+  if(rows.some(row=>row.riderCount!==160))
+    missing.push('the complete rider field');
+  console.error('Physical input preflight refused: V94 needs '+
+    missing.join(', ')+'.');
   process.exitCode=1;
 }
