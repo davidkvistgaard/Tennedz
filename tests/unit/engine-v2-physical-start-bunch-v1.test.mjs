@@ -111,6 +111,9 @@ import {replayPhysicalEarlyCaughtFollowerLossV1,
 import {replayPhysicalEarlyCaughtNextRearKmV1,
   validatePhysicalEarlyCaughtNextRearKmV1} from
   '../../lib/engine/v2/physical-early-caught-next-rear-km-v1.mjs';
+import {replayPhysicalEarlyCaughtRearFinishV1,
+  validatePhysicalEarlyCaughtRearFinishV1} from
+  '../../lib/engine/v2/physical-early-caught-rear-finish-v1.mjs';
 import {replayPhysicalFrontRaceV1,
   validatePhysicalFrontRaceV1} from
   '../../lib/engine/v2/physical-front-race-replay-v1.mjs';
@@ -1122,6 +1125,28 @@ test('caught break and later follower loss have paid rider states',()=>{
     contactInput,contactNext),true);
   assert.ok(JSON.stringify(contactNext).includes(
     'rear-event-other-2-sprint-2'));
+  const finishInput={...contactInput,throughKm:20};
+  const finished=replayPhysicalEarlyCaughtRearFinishV1(
+    finishInput);
+  assert.equal(finished.kilometres.length,20);
+  assert.ok(finished.kilometres.every(row=>
+    row.riderStates.length===24&&
+    row.riderStates.every(state=>
+      state.decisions.length>0&&
+      state.energyAfter>=0)));
+  assert.deepEqual(finished.sources.later.map(row=>
+    row.rear.leaderRiderId),
+  ['sprint-2','other-2','sprint-2',
+    'other-2','sprint-2']);
+  assert.equal(Object.keys(finished
+    .observedFinishSecondsByRider).length,24);
+  assert.equal(validatePhysicalEarlyCaughtRearFinishV1(
+    finishInput,finished),true);
+  const forgedFinish=structuredClone(finished);
+  forgedFinish.kilometres.at(-1).riderStates.find(row=>
+    row.riderId==='sprint-2').elapsedSeconds+=1;
+  assert.throws(()=>validatePhysicalEarlyCaughtRearFinishV1(
+    finishInput,forgedFinish),/differs/);
   const passCommitment=commitTeamChaseStakesV1({
     teams:contactSource.startInput.teams,
     distanceKm:contactRoad.length,

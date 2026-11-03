@@ -4315,9 +4315,13 @@ with one exposed leader, one sheltered rider and continuous source
 clocks and energy. If the catching rider is the committed captain with
 an active break stake, the same measured contact and energies yield a
 pass-through decision and separate solo roads. The recording has all
-24 decisions for the new kilometre and rejects forged energy. It is
-not yet a full finish replay for that combined break, loss and rear
-contact branch; subsequent group rotation and any later contact still
-need source-paid integration. This witness uses the older physical
-draft version; version 3 changes whether that follower drops at all,
-so its rear branch needs a separate source witness.
+24 decisions for the new kilometre and rejects forged energy. The
+joined pair then pays five more kilometres with alternating exposed
+leaders, lower sheltered cost, continuous contact energy and clocks,
+and all 24 observed finish times over the complete 20-km route. A
+forged finish clock is rejected. A later return to the bunch or a new
+bunch loss still refuses without another paid source; the pass-through
+branch has not been continued to finish. This is a narrow full-race
+witness, not field-scale or terrain/role calibration. It uses the older
+physical draft version; version 3 changes whether that follower drops
+at all, so its rear branch needs a separate source witness.
