@@ -44,6 +44,9 @@ import {replayPhysicalFrontRearManagerChaseKmV1,
 import {probePhysicalFrontRearFrontCatchBoundaryV1,
   validatePhysicalFrontRearFrontCatchBoundaryV1} from
   '../lib/engine/v2/physical-front-rear-front-catch-boundary-v1.mjs';
+import {replayPhysicalFrontRearCaughtSlideKmV1,
+  validatePhysicalFrontRearCaughtSlideKmV1} from
+  '../lib/engine/v2/physical-front-rear-caught-slide-km-v1.mjs';
 import {probePhysicalFrontRearGroupBunchContactV1,
   validatePhysicalFrontRearGroupBunchContactV1} from
   '../lib/engine/v2/physical-front-rear-group-bunch-contact-v1.mjs';
@@ -519,6 +522,46 @@ if(process.argv.includes('--probe-front-rear-threat')){
         chaseObserverTeamId:team.id}),
     /no paid contact here/);
   }
+  const caughtSlide=process.argv.includes(
+    '--caught-slide-km')?
+    replayPhysicalFrontRearCaughtSlideKmV1({
+      ...generated,attackKm:1,lossKm:21,
+      catchKm:62,
+      chaseObserverTeamId:team.id}):null;
+  if(caughtSlide){
+    assert.equal(
+      validatePhysicalFrontRearCaughtSlideKmV1({
+        ...generated,attackKm:1,lossKm:21,
+        catchKm:62,
+        chaseObserverTeamId:team.id},
+      caughtSlide),true);
+    assert.equal(caughtSlide.riderCount,160);
+    assert.ok(caughtSlide.holdAbility<
+      caughtSlide.bunchLeaderAbility);
+    assert.ok(caughtSlide.gapSecondsToBunch>0);
+    if(caughtSlide.nextContact){
+      assert.equal(caughtSlide.nextContact
+        .choice.outcome,'join');
+      assert.equal(caughtSlide.nextContact.group
+        .rows.filter(row=>row.role==='leader')
+        .length,1);
+      assert.ok(caughtSlide.nextContact.group
+        .rows.find(row=>row.role==='sheltered')
+        .draftFraction<1);
+      const formed=caughtSlide.endRearEntities
+        .find(row=>row.id===caughtSlide
+          .nextContact.group.id);
+      assert.deepEqual(formed.riderIds,
+        caughtSlide.nextContact.group.riderIds);
+      assert.equal(formed.formedKm,62);
+      assert.equal(formed.rotationIndex,0);
+      assert.ok(caughtSlide.nextContact.event
+        .clockSeconds>caughtSlide.contact
+        .clockSeconds);
+    }
+    assert.equal(caughtSlide
+      .fieldKilometreIncomplete,false);
+  }
   process.stdout.write(JSON.stringify({distanceKm,
     fatigue,choiceKm:41,
     withHelp:process.argv.includes('--with-help'),
@@ -555,10 +598,39 @@ if(process.argv.includes('--probe-front-rear-threat')){
     catchBoundary:catchBoundary?{
       contact:catchBoundary.contact,
       rearRiderCount:catchBoundary.rearRiderCount,
+      bunchSplits:catchBoundary.sources
+        .bunchStep.splits.length,
       frontEnergyAtContact:catchBoundary
         .frontPartial.energyAtContact,
+      orderedCandidates:catchBoundary
+        .orderedContactCandidates.map(row=>({
+          roadIds:row.roadIds,
+          atDistanceM:row.atDistanceM,
+          clockSeconds:row.clockSeconds})),
       fieldKilometreIncomplete:catchBoundary
         .fieldKilometreIncomplete}:null,
+    caughtSlide:caughtSlide?{
+      riderCount:caughtSlide.riderCount,
+      holdAbility:caughtSlide.holdAbility,
+      bunchLeaderAbility:caughtSlide
+        .bunchLeaderAbility,
+      gapSecondsToBunch:caughtSlide
+        .gapSecondsToBunch,
+      nextContact:caughtSlide.nextContact?{
+        atDistanceM:caughtSlide.nextContact
+          .event.atDistanceM,
+        riderIds:caughtSlide.nextContact
+          .group.riderIds,
+        leaderRiderId:caughtSlide.nextContact
+          .group.leaderRiderId,
+        shelteredDraftFraction:caughtSlide
+          .nextContact.group.rows.find(row=>
+            row.role==='sheltered')
+          .draftFraction}:null,
+      frontRecoveryAward:caughtSlide
+        .frontRecoveryAward,
+      remainingRaceUnsettled:caughtSlide
+        .remainingRaceUnsettled}:null,
     paceEstimate:decision.paceEstimate,
     movesRoad:decision.movesRoad},null,2)+'\n');
   process.exit(0);

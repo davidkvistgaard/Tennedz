@@ -4954,10 +4954,18 @@ The versioned boundary records the exact common metre
 61,578.522708 and clock 5,344.741688 seconds, and prices the break
 rider's solo energy only to contact (83.686799 remaining). At fatigue
 30 the same counterfactual meets at metre 61,859.471711 with 26 rear
-riders. These are paid contact candidates; the ordered interaction
-with other roads, the caught rider's hold or slide, the rest of km 62
-and the finish are deliberately incomplete. The current full-race
-wrapper refuses at km 62 rather than inventing a post-catch wheel.
+riders. The ordered source finds this as the first contact, then
+tests the caught rider's ability against the measured bunch leader.
+At fatigue 10 the rider's 63.314 hold ability is below the leader's
+87.425, so the rider pays a solo slide, with no bunch recovery. Rear
+solo team-19-6 physically catches the former break rider at metre
+61,590.699596. Their committed intents choose a paid pair: team-19-6
+leads and the former break rider pays a 0.8 shelter fraction. At
+fatigue 30 that second contact is at metre 61,886.367831. No later
+contact occurs in km 62, and all 160 riders have replayed clocks,
+energy and decisions at its end. The full-race wrapper still refuses
+the catch because later kilometres need a source that follows a field
+with no separate front rider. No post-catch finish is claimed.
 
 The next opt-in contact version resolves the tired km-26 boundary at
 the **recorded common split point** (metre 25,999.203884). Both riders
