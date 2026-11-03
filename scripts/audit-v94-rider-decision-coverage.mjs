@@ -22,7 +22,8 @@ for(let seed=1;seed<=seedCount;seed++)
     if(!String(error.message).includes('Combined fresh attack and paid pursuit'))
       throw error;
     results.push({seed,distanceKm,terrain,fatigue,
-      refusal:error.message});
+      refusal:error.message,
+      sourceKm:error.sourceKm??null});
     continue;
   }
   const coverage={riderKilometres:0,paidEnergyRows:0,

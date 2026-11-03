@@ -5303,6 +5303,11 @@ every decision has a choice and names a rider in its frame. It currently
 exits nonzero: 641,837 of 668,800 recorded rider-kilometres have no
 decision, and two cases refuse. A paid turn plan or energy ledger entry
 does not satisfy this gate.
+The two refusals are the 120-km mountain/fatigue-30 case at km 80 in
+seed 1 and the 260-km mountain/fatigue-30 case at km 220 in seed 2.
+Both reach the existing guard against a fresh attack alongside paid
+pursuit without a shared road-clock contract. The refusal now carries
+its source kilometre; neither case receives an inferred gap or finish.
 `node scripts/verify-physical-contact-matrix.mjs` reproduces all 42
 synthetic cells with explicit branch and 160-rider finish assertions.
 It also verifies all 1,276,800 rider-kilometres have a nonempty
