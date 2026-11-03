@@ -5308,6 +5308,13 @@ seed 1 and the 260-km mountain/fatigue-30 case at km 220 in seed 2.
 Both reach the existing guard against a fresh attack alongside paid
 pursuit without a shared road-clock contract. The refusal now carries
 its source kilometre; neither case receives an inferred gap or finish.
+The refusal also exposes the committed segment, prior gap, each
+attacker's rider, team, order effort, pre-action energy and abstract
+pressure, plus the ordered paid bunch turns. These are source facts,
+not a rider position or an attacker road clock. At seed 1 km 80 the
+source has four preset-cadence attackers, 18 paid bunch turns and a
+4.28-second prior gap on a descent. A shared contact clock still
+requires recorded attacker launch position and paid travel.
 `node scripts/verify-physical-contact-matrix.mjs` reproduces all 42
 synthetic cells with explicit branch and 160-rider finish assertions.
 It also verifies all 1,276,800 rider-kilometres have a nonempty

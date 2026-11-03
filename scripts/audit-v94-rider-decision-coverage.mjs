@@ -23,7 +23,8 @@ for(let seed=1;seed<=seedCount;seed++)
       throw error;
     results.push({seed,distanceKm,terrain,fatigue,
       refusal:error.message,
-      sourceKm:error.sourceKm??null});
+      sourceKm:error.sourceKm??null,
+      sourceEvidence:error.sourceEvidence??null});
     continue;
   }
   const coverage={riderKilometres:0,paidEnergyRows:0,

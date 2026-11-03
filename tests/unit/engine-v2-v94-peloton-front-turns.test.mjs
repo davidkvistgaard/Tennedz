@@ -38,3 +38,33 @@ test('historical opt-in chase version retains its separate road contract',()=>{
     !Object.hasOwn(frame,'pelotonFrontTurnPlan')));
   assert.equal(replayRaceDynamicsRecording(recording).frames.length,120);
 });
+
+test('simultaneous attack and paid pursuit refuses with source facts',()=>{
+  const mountain={distanceKm:120,teamCount:20,
+    terrain:'mountain',fatigue:30,
+    attack:'none',chase:'selective',
+    seed:'chase-turn-holdout-1-mountain-30'};
+  assert.throws(()=>createV94RaceDynamicsPreview({
+    format:'one_day',settings:mountain,
+    roadGroupPaceVersion:3,chaseTurnVersion:1,
+    bunchFrontTurnVersion:1,pelotonFrontTurnVersion:1}),
+  error=>{
+    assert.match(error.message,
+      /Combined fresh attack and paid pursuit/);
+    assert.equal(error.sourceKm,80);
+    const evidence=error.sourceEvidence;
+    assert.equal(evidence.segment.km,80);
+    assert.ok(evidence.attackers.length>0);
+    assert.ok(evidence.attackers.every(row=>
+      row.riderId&&row.teamId&&
+      Number.isFinite(row.energyBefore)&&
+      Number.isFinite(row.abstractPressure)&&
+      row.teamOrderEffort));
+    assert.equal(evidence.paidBunchTurns[0].startM,0);
+    assert.equal(evidence.paidBunchTurns.at(-1).endM,
+      1000);
+    assert.ok(evidence.paidBunchTurns.some(row=>
+      row.workKind==='chase'));
+    return true;
+  });
+});
