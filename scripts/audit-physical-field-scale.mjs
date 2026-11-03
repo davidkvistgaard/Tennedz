@@ -1379,6 +1379,56 @@ if(process.argv.includes('--probe-rear-ordered-prefix')){
     }
     return prior;
   };
+  const post66Bunch=(startInput,km66Full,
+    priorKm,verify)=>{
+    if(!km66Full)return null;
+    const prior=advanceClearToKm(startInput,
+      km66Full,priorKm);
+    const input={startInput,prior};
+    const probe=
+      probePhysicalOrderedRearContinuationBunchContactV1(
+        input);
+    if(verify)
+      assert.equal(
+        validatePhysicalOrderedRearContinuationBunchContactV1(
+          input,probe),true);
+    const contact=probe.contact;
+    const canJoin=contact.canHold&&contact.payable&&
+      contact.reserveOkay&&contact.shelterCheaper;
+    const joined=canJoin?
+      finishPhysicalOrderedRearContinuationBunchJoinV1(
+        input):null;
+    const {tracks,bunch}=canJoin?
+      sourcePhysicalOrderedRearBoundaryFromStateV1(
+        input):{tracks:[],bunch:null};
+    const laterEvents=joined?
+      findPhysicalOrderedBoundaryEventsV1(
+        tracks.filter(track=>track.id!==
+          `solo-${contact.riderId}`),
+        bunch,probe.sourceKm):[];
+    const full=joined&&!laterEvents.length?
+      replayPhysicalOrderedRearContinuationBunchKmV1(
+        input):null;
+    if(full&&verify)
+      assert.equal(
+        validatePhysicalOrderedRearContinuationBunchKmV1(
+          input,full),true);
+    return {sourceKm:probe.sourceKm,
+      riderId:contact.riderId,
+      atDistanceM:contact.atDistanceM,
+      canHold:contact.canHold,
+      payable:contact.payable,
+      reserveOkay:contact.reserveOkay,
+      shelterCheaper:contact.shelterCheaper,
+      joinedBunchRiders:joined?.physicalGroup
+        .riderIds.length??null,
+      nextEvent:laterEvents[0]??null,
+      fullRiders:full?.riderCount??null,
+      bunchRiders:full?.endBunchState
+        .riderIds.length??null,
+      rearRoads:full?.endRearEntities
+        .length??null};
+  };
   const results=[120,260].flatMap(distanceKm=>
     [10,30].map(fatigue=>{
       const base=source(distanceKm,fatigue,
@@ -1638,6 +1688,9 @@ if(process.argv.includes('--probe-rear-ordered-prefix')){
               after66Clear:km66Full?
                 probeClearPrefix(startInput,
                   km66Full):null,
+              post66Bunch:post66Bunch(startInput,
+                km66Full,70,
+                distanceKm===120),
               candidateBunchClockDifference:
                 boundary.candidateBunchClockDifference,
               independentCrossingPreemptedByRearJoin:
@@ -1865,6 +1918,10 @@ if(process.argv.includes('--probe-rear-ordered-prefix')){
               lastPaid.after66Clear=km66Full?
                 probeClearPrefix(startInput,
                   km66Full):null;
+              lastPaid.post66Bunch=
+                post66Bunch(startInput,
+                  km66Full,68,
+                  distanceKm===120);
               lastPaid.km36BunchContact={
                 atDistanceM:bunchContact.contact
                   .atDistanceM,
@@ -1922,6 +1979,11 @@ if(process.argv.includes('--probe-rear-ordered-prefix')){
       row.after66Clear?.lastFullKm===70&&
       row.after66Clear?.firstEvent
         ?.roadIds[0]==='solo-team-9-2'&&
+      row.post66Bunch?.joinedBunchRiders===122&&
+      row.post66Bunch?.nextEvent
+        ?.roadIds.join('|')===
+          'solo-team-1-1|solo-team-13-5'&&
+      row.post66Bunch?.fullRiders===null&&
       row.post47Clear?.lastFullKm===65)&&
     (row.fatigue!==30||
       row.lastPaid.km66Splits
@@ -1934,6 +1996,12 @@ if(process.argv.includes('--probe-rear-ordered-prefix')){
       row.lastPaid.after66Clear
         ?.firstEvent?.roadIds[0]===
           'solo-team-1-5'&&
+      row.lastPaid.post66Bunch
+        ?.riderId==='team-1-5'&&
+      row.lastPaid.post66Bunch
+        ?.canHold===false&&
+      row.lastPaid.post66Bunch
+        ?.fullRiders===null&&
       row.lastPaid.afterBunchClear
         ?.lastFullKm===65)&&
     row.firstRefusedKm===

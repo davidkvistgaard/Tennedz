@@ -4688,3 +4688,12 @@ the new solos separate. The next measured contact is a solo meeting
 the bunch at metre 68,280.039786 in km 69 under fatigue 30; under
 fatigue 10 it is at metre 70,066.508636 in km 71. Those meetings
 still need decisions and paid remainder; neither finish is validated.
+
+The contact probe now evaluates those next meetings. Under fatigue
+30, `team-1-5` reaches the bunch position in km 69 but cannot hold
+its measured pace, so it cannot be silently absorbed into shelter.
+Under fatigue 10, `team-9-2` can pay and hold a km-71 bunch join;
+the partial join reaches 122 bunch riders. A separate paid solo pair
+meets later in that same kilometre at metre 70,523.626011, so km 71
+cannot yet be marked complete. The fatigue-30 crossing and the
+fatigue-10 second contact require explicit physical continuations.
