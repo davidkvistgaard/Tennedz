@@ -73,7 +73,8 @@ import {replayPhysicalOrderedRearKmV1,
   validatePhysicalOrderedRearKmV1} from
   '../lib/engine/v2/physical-ordered-rear-km-v1.mjs';
 import {replayPhysicalOrderedRearNextBunchKmV1,
-  validatePhysicalOrderedRearNextBunchKmV1} from
+  validatePhysicalOrderedRearNextBunchKmV1,
+  advancePhysicalOrderedRearBunchFromStateV1} from
   '../lib/engine/v2/physical-ordered-rear-next-bunch-v1.mjs';
 import {inspectPhysicalOrderedRearNextBoundaryV1,
   validatePhysicalOrderedRearNextBoundaryV1,
@@ -1309,14 +1310,17 @@ if(process.argv.includes('--probe-rear-ordered')){
 }
 
 if(process.argv.includes('--probe-rear-ordered-prefix')){
-  const probeClearPrefix=(startInput,first)=>{
+  const probeClearPrefix=(startInput,first,
+    limitKm=80)=>{
     let prior={sourceKm:first.sourceKm,
       riderStates:first.riderStates,
       riderCount:first.riderCount,
       endBunchState:first.endBunchState,
       endRearEntities:first.endRearEntities};
     let paidRiderKm=0;
-    for(let km=prior.sourceKm+1;km<=40;km++){
+    for(let km=prior.sourceKm+1;
+      km<=Math.min(limitKm,
+        startInput.routeKilometres.length);km++){
       try{
         const boundary=
           sourcePhysicalOrderedRearBoundaryFromStateV1({
@@ -1345,6 +1349,27 @@ if(process.argv.includes('--probe-rear-ordered-prefix')){
     return {lastFullKm:prior.sourceKm,
       firstUnresolvedKm:null,
       paidRiderKm};
+  };
+  const advanceClearToKm=(startInput,first,
+    throughKm)=>{
+    let prior={sourceKm:first.sourceKm,
+      riderStates:first.riderStates,
+      riderCount:first.riderCount,
+      endBunchState:first.endBunchState,
+      endRearEntities:first.endRearEntities};
+    while(prior.sourceKm<throughKm){
+      const next=advancePhysicalOrderedRearClearKmV1({
+        startInput,prior});
+      assert.equal(next.sourceKm,
+        prior.sourceKm+1);
+      assert.equal(next.riderCount,160);
+      prior={sourceKm:next.sourceKm,
+        riderStates:next.riderStates,
+        riderCount:next.riderCount,
+        endBunchState:next.endBunchState,
+        endRearEntities:next.endRearEntities};
+    }
+    return prior;
   };
   const results=[120,260].flatMap(distanceKm=>
     [10,30].map(fatigue=>{
@@ -1476,6 +1501,22 @@ if(process.argv.includes('--probe-rear-ordered-prefix')){
             }
             const laterClear=nextKm?
               probeClearPrefix(startInput,nextKm):null;
+            const km47=nextKm?
+              replayPhysicalOrderedRearContinuationBunchKmV1({
+                startInput,
+                prior:advanceClearToKm(startInput,
+                  nextKm,46)}):null;
+            if(km47){
+              assert.equal(km47.sourceKm,47);
+              assert.equal(km47.riderCount,160);
+            }
+            const post47Clear=km47?
+              probeClearPrefix(startInput,km47):null;
+            const km66Source=km47?
+              advancePhysicalOrderedRearBunchFromStateV1({
+                startInput,
+                prior:advanceClearToKm(startInput,
+                  km47,65)}):null;
             const crossingCandidates=soloField.refusals
               .map(refusal=>{
                 const input={startInput,start,staggered,
@@ -1541,6 +1582,17 @@ if(process.argv.includes('--probe-rear-ordered-prefix')){
                 nextBoundary?.firstEvent??null,
               nextKmRiders:nextKm?.riderCount??null,
               laterClear,
+              km47BunchRiders:km47
+                ?.endBunchState.riderIds.length??
+                  null,
+              km47RearRoads:km47
+                ?.endRearEntities.length??null,
+              post47Clear,
+              km66Splits:km66Source
+                ?.step.splits.map(split=>({
+                  riderId:split.riderId,
+                  atDistanceM:split.atDistanceM}))??
+                    null,
               candidateBunchClockDifference:
                 boundary.candidateBunchClockDifference,
               independentCrossingPreemptedByRearJoin:
@@ -1722,6 +1774,15 @@ if(process.argv.includes('--probe-rear-ordered-prefix')){
                 .length,22);
               lastPaid.afterBunchClear=
                 probeClearPrefix(startInput,bunchKm);
+              const km66Source=
+                advancePhysicalOrderedRearBunchFromStateV1({
+                  startInput,
+                  prior:advanceClearToKm(startInput,
+                    bunchKm,65)});
+              lastPaid.km66Splits=
+                km66Source.step.splits.map(split=>({
+                  riderId:split.riderId,
+                  atDistanceM:split.atDistanceM}));
               lastPaid.km36BunchContact={
                 atDistanceM:bunchContact.contact
                   .atDistanceM,
@@ -1770,7 +1831,15 @@ if(process.argv.includes('--probe-rear-ordered-prefix')){
       row.lastPaid.km36BunchContact
         .rearRoads===22&&
       row.lastPaid.afterBunchClear
-        ?.lastFullKm===40)&&
+        ?.lastFullKm>=40)&&
+    (row.fatigue!==10||
+      row.km66Splits?.length===13&&
+      row.post47Clear?.lastFullKm===65)&&
+    (row.fatigue!==30||
+      row.lastPaid.km66Splits
+        ?.length===11&&
+      row.lastPaid.afterBunchClear
+        ?.lastFullKm===65)&&
     row.firstRefusedKm===
       (row.fatigue===10?32:33)&&
     row.refusalCount===1&&
@@ -1805,7 +1874,9 @@ if(process.argv.includes('--probe-rear-ordered-prefix')){
     row.fullKmGroups===25&&
     row.nextBunchRiders===133&&
     row.nextKmRiders===160&&
-    row.laterClear?.lastFullKm===40&&
+    row.laterClear?.lastFullKm>=40&&
+    row.km47BunchRiders===134&&
+    row.km47RearRoads===23&&
     row.independentCrossingPreemptedByRearJoin===
       false:
     row.firstOrderedEvent===null&&

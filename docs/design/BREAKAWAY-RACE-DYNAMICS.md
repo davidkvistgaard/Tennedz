@@ -4671,3 +4671,13 @@ remainder place 134 riders in the bunch at km end, with 26 riders on
 The other rear roads pay separately, and no later km-36 contact is
 measured. Both fatigue-30 route probes now pay all 160 riders through
 km 40. These are still prefixes, not validated 120/260-km finishes.
+
+The same source transition pays the next fatigue-10 solo-to-bunch
+meeting in km 47. Both 120/260-km probes then have 134 riders in the
+bunch, 26 riders on 23 rear roads and all 160 km-47 rider states.
+Clear kilometres pay through km 65 in both fatigue settings. At km
+66 the bunch source records 13 new pace losses with fatigue 10 and
+11 with fatigue 30, at distinct measured metres within roughly two
+metres of the kilometre end. Their remaining solo roads and any
+contacts have not yet been replayed; similar end clocks cannot create
+a group on their own.
