@@ -125,6 +125,9 @@ import {replayPhysicalCommittedStageReleaseKmV1,
 import {probePhysicalCommittedStageBunchContactV1,
   validatePhysicalCommittedStageBunchContactV1} from
   '../../lib/engine/v2/physical-committed-stage-bunch-contact-v1.mjs';
+import {finishPhysicalCommittedStageBunchJoinKmV1,
+  validatePhysicalCommittedStageBunchJoinKmV1} from
+  '../../lib/engine/v2/physical-committed-stage-bunch-join-v1.mjs';
 import {replayPhysicalFrontRaceV1,
   validatePhysicalFrontRaceV1} from
   '../../lib/engine/v2/physical-front-race-replay-v1.mjs';
@@ -1464,6 +1467,24 @@ test('committed later-stage plan releases only a rider able to hold',()=>{
   assert.throws(()=>
     validatePhysicalCommittedStageBunchContactV1(
       catchInput,forgedContact),/differs/);
+  const joined=finishPhysicalCommittedStageBunchJoinKmV1(
+    catchInput);
+  assert.equal(joined.sourceKm,7);
+  assert.equal(joined.riderStates.length,24);
+  assert.equal(joined.riderStates.find(row=>
+    row.riderId==='other-3').decisions.length,2);
+  assert.equal(joined.physicalGroup.riderIds.length,24);
+  assert.ok(joined.shelteredEnergySpent<
+    joined.exposedAlternativeEnergyDemand);
+  assert.ok(joined.energyAfter>=80);
+  assert.ok(joined.holdAbility>=joined.leaderAbility);
+  assert.equal(validatePhysicalCommittedStageBunchJoinKmV1(
+    catchInput,joined),true);
+  const forgedJoin=structuredClone(joined);
+  forgedJoin.energyAfter+=1;
+  assert.throws(()=>
+    validatePhysicalCommittedStageBunchJoinKmV1(
+      catchInput,forgedJoin),/differs/);
 });
 
 test('perceived chase choice reads a replayed physical front gap',()=>{

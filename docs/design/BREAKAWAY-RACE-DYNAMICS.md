@@ -4404,3 +4404,15 @@ unridden solo metres are not charged. The event leaves both physical
 groups separate and marks
 the rider's next choice and remainder of the road unsettled; a later
 join cannot silently inherit a wheel or a full kilometre of shelter.
+
+An opt-in follow-up now makes that choice explicitly in the measured
+contact kilometre. The saving rider checks its conserve-effort hold
+ability against the paid bunch leader, then chooses shelter because
+the remaining sheltered metres cost less energy than riding them
+alone and the committed reserve survives. The recording charges the
+solo distance before contact and the sheltered distance afterward,
+retains one named bunch leader, and gives all 24 riders a decision and
+energy state at the km-7 boundary. The joining rider has two decisions
+for that kilometre. A forged join energy fails source replay. Later
+kilometres still need plan-aware bunch continuation before a finish
+can be claimed on this contact branch.
