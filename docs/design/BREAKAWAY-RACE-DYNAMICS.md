@@ -5292,7 +5292,17 @@ still has only 9,034 forward decision rows across seven validated
 one eighth case refuses and none of the 374 dropped rider-kilometres
 has a rider decision. Energy coverage therefore cannot be treated as
 decision coverage for the guided or experimental V94 preview.
+Across three seeds the same read-only audit validates 22 of 24 cases
+and refuses two. It finds 668,800 paid energy rows and 26,963 forward
+decision rows, with no rider decision in 2,344 dropped
+rider-kilometres. The coverage gap therefore persists across seeds;
+it cannot be closed by reinterpreting energy entries as choices.
 `node scripts/verify-physical-contact-matrix.mjs` reproduces all 42
 synthetic cells with explicit branch and 160-rider finish assertions.
+It also verifies all 1,276,800 rider-kilometres have a nonempty
+decision with a choice and matching rider ID. The front solo source
+and catch-boundary source now record that ID under their respective
+version 2 labels. This is coverage of the separate physical prototype,
+not of the V94 preview or guided races.
 It is a source-continuity gate, not an independent physics oracle or
 real-race calibration.

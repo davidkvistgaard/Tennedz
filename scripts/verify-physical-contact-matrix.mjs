@@ -52,7 +52,8 @@ function runCase({roster,fatigue,distance}){
     `--fatigue=${fatigue}`,
     `--distance=${distance}`,
     '--front-eases','--planned-relief',
-    '--front-mountain=50'];
+    '--front-mountain=50',
+    '--decision-coverage'];
   if(branch.kind!=='front_rear')
     args.push('--report-refusal');
   return new Promise((resolve,reject)=>{
@@ -78,6 +79,16 @@ function runCase({roster,fatigue,distance}){
             row.discoveredRace:row.noCatchRace;
         assert.ok(result);
         assert.equal(result.finishRiderCount,160);
+        assert.equal(result.decisionCoverage
+          ?.riderKilometres,160*distance);
+        assert.equal(result.decisionCoverage
+          ?.missingDecisions,0);
+        assert.equal(result.decisionCoverage
+          ?.missingChoice,0);
+        assert.equal(result.decisionCoverage
+          ?.missingRiderId,0);
+        assert.ok(result.decisionCoverage
+          ?.decisionRows>=160*distance);
         if(branch.kind!=='no_catch')
           assert.equal(result.contactKm??
             result.catchKm,
@@ -86,6 +97,10 @@ function runCase({roster,fatigue,distance}){
           branch:branch.kind,
           contactKm:result.contactKm??
             result.catchKm??null,
+          decisionRows:result.decisionCoverage
+            .decisionRows,
+          missingRiderId:result.decisionCoverage
+            .missingRiderId,
           finishRiderCount:result.finishRiderCount});
       }catch(error){
         reject(new Error(`Roster ${roster}, fatigue ${fatigue}, ${distance} km: ${error.message}`));
@@ -113,7 +128,7 @@ try{
   await Promise.all(Array.from({length:3},
     ()=>worker()));
   assert.equal(results.length,42);
-  console.log(JSON.stringify({version:1,
+  console.log(JSON.stringify({version:2,
     seed:'physical-20-team-scale-1',
     cases:results.length,
     finishRiderCount:160,

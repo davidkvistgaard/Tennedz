@@ -435,6 +435,29 @@ function shiftTeam3Captain(generated,distanceKm){
 }
 
 if(process.argv.includes('--probe-front-rear-threat')){
+  function decisionCoverage(race){
+    if(!process.argv.includes('--decision-coverage'))
+      return null;
+    const summary={riderKilometres:0,
+      decisionRows:0,missingDecisions:0,
+      missingChoice:0,missingRiderId:0};
+    for(const km of race.kilometres){
+      for(const state of km.riderStates){
+        summary.riderKilometres++;
+        if(!state.decisions?.length)
+          summary.missingDecisions++;
+        for(const decision of state.decisions??[]){
+          summary.decisionRows++;
+          if(typeof decision?.choice!=='string'||
+            !decision.choice.trim())
+            summary.missingChoice++;
+          if(decision?.riderId!==state.riderId)
+            summary.missingRiderId++;
+        }
+      }
+    }
+    return summary;
+  }
   const distanceKm=Number(process.argv.find(arg=>
     arg.startsWith('--distance='))?.split('=')[1]??120);
   const fatigue=Number(process.argv.find(arg=>
@@ -1127,6 +1150,7 @@ if(process.argv.includes('--probe-front-rear-threat')){
   let frontToRearRefusal=null;
   let discoveredFrontToRear=null;
   let frontToRearDiscoveryProbe=null;
+  let frontToRearDecisionCoverage=null;
   if(process.argv.includes(
     '--probe-discovered-front-to-rear')){
     const discoveryInput={...generated,
@@ -1143,6 +1167,8 @@ if(process.argv.includes('--probe-front-rear-threat')){
       assert.equal(
         validatePhysicalDiscoveredFrontToRearRaceV1(
           discoveryInput,race),true);
+      frontToRearDecisionCoverage=
+        decisionCoverage(race);
       if(process.argv.includes(
         '--expect-mixed-catch')){
         assert.match(discovery.version,
@@ -1314,6 +1340,8 @@ if(process.argv.includes('--probe-front-rear-threat')){
         contactKm:discovery.contactKm,
         atDistanceM:discovery.event
           .atDistanceM,
+        decisionCoverage:
+          frontToRearDecisionCoverage,
         finishRiderCount:Object.keys(race
           .observedFinishSecondsByRider)
           .length};
@@ -1703,6 +1731,8 @@ if(process.argv.includes('--probe-front-rear-threat')){
         .physicalGroupId}:null,
     discoveredRace:discoveredRace?{
       version:discoveredRace.version,
+      decisionCoverage:
+        decisionCoverage(discoveredRace),
       catchKm:discoveredRace.catchKm,
       riderCount:discoveredRace.riderIds.length,
       finishRiderCount:Object.keys(discoveredRace
@@ -1771,6 +1801,7 @@ if(process.argv.includes('--probe-front-rear-threat')){
     discoveredFrontToRear,
     frontToRearDiscoveryProbe,
     noCatchRace:noCatchRace?{
+      decisionCoverage:decisionCoverage(noCatchRace),
       riderCount:noCatchRace.riderIds.length,
       finishRiderCount:Object.keys(noCatchRace
         .observedFinishSecondsByRider).length,
