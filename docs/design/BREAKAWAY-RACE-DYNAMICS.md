@@ -4537,5 +4537,10 @@ fatigue 10, or metre 32,711.11 in km 33 with fatigue 30. Other rear
 roads are already active, so those crossings are explicitly marked
 `candidateOnly` and a bunch join refuses. Their earlier rear contacts
 must be ordered and paid before either a full field return or a finish
-can be claimed. The next-kilometre bunch source after an isolated
-return also remains unsettled.
+can be claimed. For the isolated 24-rider witness,
+`physical-ordered-solo-bunch-race-v1.mjs` now starts the next
+kilometre from the joined group's recorded energy and membership,
+pays one named front worker and the sheltered members through the
+20-km finish, and replays all 24 finish clocks. A later split refuses
+until its separate road is sourced. This narrow finish does not settle
+the 160-rider simultaneous rear roads or calibrate guided V94.

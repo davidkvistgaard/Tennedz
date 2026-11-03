@@ -16,6 +16,9 @@ import {probePhysicalOrderedSoloBunchContactV1,
 import {finishPhysicalOrderedSoloBunchJoinKmV1,
   validatePhysicalOrderedSoloBunchJoinKmV1} from
   '../../lib/engine/v2/physical-ordered-solo-bunch-join-v1.mjs';
+import {replayPhysicalOrderedSoloBunchRaceV1,
+  validatePhysicalOrderedSoloBunchRaceV1} from
+  '../../lib/engine/v2/physical-ordered-solo-bunch-race-v1.mjs';
 import {startPhysicalBunchV1,advancePhysicalStartBunchV1,
   validatePhysicalStartBunchV1,runPhysicalBunchV1,
   validatePhysicalBunchRunV1,runPhysicalBunchToPaceLossV1,
@@ -2513,6 +2516,27 @@ test('ordered rear solo finds paid bunch crossing before rejoin',()=>{
     row.riderId==='other-3').decisions.length===2);
   assert.equal(validatePhysicalOrderedSoloBunchJoinKmV1(
     input,joined),true);
+  const raceInput={contactInput:input,throughKm:20};
+  const race=replayPhysicalOrderedSoloBunchRaceV1(
+    raceInput);
+  assert.equal(race.kilometres.at(-1).sourceKm,20);
+  assert.ok(race.kilometres.every(kilometre=>
+    kilometre.riderStates.length===24&&
+    kilometre.riderStates.every(state=>
+      state.decisions.length>0&&
+      state.energyAfter>=0)));
+  assert.equal(Object.keys(race
+    .observedFinishSecondsByRider).length,24);
+  assert.ok(race.sources.steps.every(step=>
+    step.riders.filter(row=>
+      row.role==='leader').length===1));
+  assert.equal(validatePhysicalOrderedSoloBunchRaceV1(
+    raceInput,race),true);
+  const forgedRace=structuredClone(race);
+  forgedRace.kilometres.at(-1)
+    .riderStates[0].energyAfter+=1;
+  assert.throws(()=>validatePhysicalOrderedSoloBunchRaceV1(
+    raceInput,forgedRace),/differs from paid source/);
   const forged=structuredClone(probe);
   forged.contact.clockSeconds+=1;
   assert.throws(()=>validatePhysicalOrderedSoloBunchContactV1(
