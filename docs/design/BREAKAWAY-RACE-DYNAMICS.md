@@ -4946,6 +4946,19 @@ observations, not official placements. Broader calibration and replay
 across fatigue and roles remain unvalidated. Guided routing stays
 withheld.
 
+A further source counterfactual gives the committed break rider a
+mountain skill of 50 and a precommitted conserve phase from km 41.
+The field's road clocks then physically meet that rider in km 62,
+while 27 rear riders remain on their own paid roads (fatigue 10).
+The versioned boundary records the exact common metre
+61,578.522708 and clock 5,344.741688 seconds, and prices the break
+rider's solo energy only to contact (83.686799 remaining). At fatigue
+30 the same counterfactual meets at metre 61,859.471711 with 26 rear
+riders. These are paid contact candidates; the ordered interaction
+with other roads, the caught rider's hold or slide, the rest of km 62
+and the finish are deliberately incomplete. The current full-race
+wrapper refuses at km 62 rather than inventing a post-catch wheel.
+
 The next opt-in contact version resolves the tired km-26 boundary at
 the **recorded common split point** (metre 25,999.203884). Both riders
 have paid the bunch to that point; neither is labelled as catching
