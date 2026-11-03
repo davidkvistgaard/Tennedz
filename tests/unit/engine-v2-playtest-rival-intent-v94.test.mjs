@@ -3,6 +3,8 @@ import assert from 'node:assert/strict';
 import {prepareV91Playtest} from '../../lib/engine/v2/playtest.mjs';
 import {prepareV94RivalIntent} from
   '../../lib/engine/v2/playtest-rival-intent-v94.mjs';
+import {createV94RaceDynamicsPreview} from
+  '../../lib/engine/v2/playtest-race-dynamics-v94.mjs';
 import {simulateTacticalTour} from '../../lib/engine/v2/tour.mjs';
 import {validateRecordedTour} from '../../lib/engine/v2/recording.mjs';
 import {replayRaceDynamicsRecording} from
@@ -210,4 +212,58 @@ test('a paid control chase lets non-working peloton teams rest without easing ro
   const forged=structuredClone(race);
   forged.frames[99].pelotonRestTeamIds=[];
   assert.throws(()=>validateRecordedTour(forged),/peloton rest/);
+});
+
+test('explicit V94 sporting stakes commit every named captain without changing old intent',()=>{
+  const settings={distanceKm:40,teamCount:4,
+    seed:'explicit-stakes-1',attack:'none',chase:'selective'};
+  const prepared=prepareV91Playtest(settings);
+  const sportingStakes=prepared.teams.map((team,index)=>({
+    teamId:team.id,
+    goal:index===0?'sprint_finish':
+      index===1?'summit_attack':'none',
+    captainId:team.orders.captainId}));
+  const input={prepared,format:'one_day',
+    controlTempoVersion:2,
+    opportunisticSpecialistVersion:2};
+  const historical=prepareV94RivalIntent(input);
+  const plan=prepareV94RivalIntent({
+    ...input,sportingStakes});
+  assert.deepEqual(plan.teams,historical.teams);
+  assert.ok(historical.intent.every(row=>
+    !Object.hasOwn(row,'sportingGoal')));
+  assert.deepEqual(plan.intent.map(row=>({
+    teamId:row.teamId,goal:row.sportingGoal,
+    captainId:row.sportingCaptainId})),
+  sportingStakes);
+  assert.throws(()=>prepareV94RivalIntent({
+    ...input,sportingStakes:sportingStakes.slice(1)}),
+  /every team/);
+  assert.throws(()=>prepareV94RivalIntent({
+    ...input,sportingStakes:[{...sportingStakes[0],
+      captainId:'absent'},...sportingStakes.slice(1)]}),
+  /named captain/);
+  const race=simulateTacticalTour({stage:prepared.stage,
+    weather:prepared.weather,teams:plan.teams,
+    seed:prepared.seed,
+    motorVersion:MOTOR_RACE_DYNAMICS_VERSION,
+    raceContext:plan.raceContext,rivalIntent:plan.intent});
+  assert.equal(race.committedInputs.rivalIntentVersion,5);
+  assert.equal(validateRecordedTour(race),true);
+  assert.deepEqual(replayRaceDynamicsRecording(race),race);
+  const forged=structuredClone(race);
+  forged.committedInputs.rivalIntent[0]
+    .sportingCaptainId='absent';
+  assert.throws(()=>validateRecordedTour(forged),
+    /intent manifest/);
+  const {recording,preview}=
+    createV94RaceDynamicsPreview({
+      settings,format:'one_day',
+      sportingStakes});
+  assert.equal(recording.committedInputs
+    .rivalIntentVersion,5);
+  assert.equal(preview.policy.rivalIntentVersion,5);
+  assert.equal(preview.teamPlans.find(row=>
+    row.teamId==='you').sportingGoal,
+  'sprint_finish');
 });

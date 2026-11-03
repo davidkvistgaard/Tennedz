@@ -5403,6 +5403,16 @@ the manager-controlled `you` team, whose intent has neither an
 explicit sporting goal nor a sporting captain ID. These examples
 identify missing input and do not select a replacement rider or goal.
 
+An opt-in V94 `sportingStakes` input now accepts exactly one explicit
+`{teamId, goal, captainId}` per participating team, including the
+manager-controlled team. The new version 5 intent manifest commits and
+source-replays those names and goals; missing teams, unknown captains
+and unsupported goals refuse. The default version 4 manifest and its
+historical recordings are unchanged. This input contract records a
+sporting commitment; V94 tactics do not yet consume it as a rider
+decision, and the same-seed physical input preflight still refuses the
+existing holdout where no such commitments were provided.
+
 A same-seed adapter needs an
 explicit, paid, versioned leader decision that resolves competing
 teams and selects an eligible worker from the committed roster using
