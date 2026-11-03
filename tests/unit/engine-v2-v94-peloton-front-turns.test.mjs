@@ -4,6 +4,8 @@ import {createV94RaceDynamicsPreview} from
   '../../lib/engine/v2/playtest-race-dynamics-v94.mjs';
 import {replayRaceDynamicsRecording} from
   '../../lib/engine/v2/replay-race-dynamics-v94.mjs';
+import {prepareV91Playtest} from
+  '../../lib/engine/v2/playtest.mjs';
 
 const settings={distanceKm:120,teamCount:20,terrain:'flat',fatigue:0,
   attack:'none',chase:'selective',seed:'chase-turn-holdout-1-flat-0'};
@@ -28,6 +30,43 @@ test('opt-in shared bunch front pays one leader on every road metre',()=>{
   forged.frames.find(frame=>frame.pelotonFrontTurnPlan.turns.length>0)
     .pelotonFrontTurnPlan.turns[0].ability=100;
   assert.throws(()=>replayRaceDynamicsRecording(forged),/differ|invalid/i);
+});
+
+test('explicit V94 stakes source-replay named paid bunch worker choices',()=>{
+  const sportingStakes=prepareV91Playtest(settings).teams.map(
+    (team,index)=>({teamId:team.id,
+      goal:index===0?'sprint_finish':'none',
+      captainId:team.orders.captainId}));
+  const options={format:'one_day',settings,sportingStakes,
+    chaseTurnVersion:1,bunchFrontTurnVersion:1,
+    pelotonFrontTurnVersion:1};
+  const {recording}=createV94RaceDynamicsPreview(options);
+  assert.equal(recording.committedInputs.rivalIntentVersion,5);
+  assert.ok(recording.frames.every(frame=>
+    frame.pelotonRiderDecisions.length===
+    frame.pelotonFrontTurnPlan.turns.length));
+  for(const frame of recording.frames){
+    for(const choice of frame.pelotonRiderDecisions){
+      const turn=frame.pelotonFrontTurnPlan.turns.find(row=>
+        row.leaderRiderId===choice.riderId);
+      assert.equal(choice.sourceKm,frame.km);
+      assert.equal(choice.teamId,turn.teamId);
+      assert.equal(choice.startM,turn.startM);
+      assert.equal(choice.endM,turn.endM);
+      assert.equal(choice.goal,sportingStakes.find(row=>
+        row.teamId===choice.teamId).goal);
+      assert.ok(choice.paidExtraCost>0);
+    }
+  }
+  assert.deepEqual(replayRaceDynamicsRecording(recording),recording);
+  const forged=structuredClone(recording);
+  forged.frames[0].pelotonRiderDecisions[0].goal='summit_attack';
+  assert.throws(()=>replayRaceDynamicsRecording(forged),
+    /paid worker choices differ/);
+  const historical=createV94RaceDynamicsPreview({
+    ...options,sportingStakes:null}).recording;
+  assert.ok(historical.frames.every(frame=>
+    !Object.hasOwn(frame,'pelotonRiderDecisions')));
 });
 
 test('historical opt-in chase version retains its separate road contract',()=>{

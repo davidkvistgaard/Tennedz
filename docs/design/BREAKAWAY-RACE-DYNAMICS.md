@@ -5413,6 +5413,19 @@ sporting commitment; V94 tactics do not yet consume it as a rider
 decision, and the same-seed physical input preflight still refuses the
 existing holdout where no such commitments were provided.
 
+When version 5 stakes and the opt-in shared peloton front are both
+committed, `v94-paid-bunch-worker-decisions-1` now records one sourced
+choice for each named, paid front or chase turn. Each row names the rider,
+team, source kilometre, committed sporting goal and captain, current
+manager order, exact road interval, and extra energy paid. Recording
+validation reconstructs these rows from the committed input and turn
+plan and refuses altered or missing rows. Version 4 and other V94 pace
+options do not gain this field. The turn plan still selects the workers;
+the sporting goal is recorded as context and does not yet choose who
+works. Sheltered riders and absent front workers still lack individual
+choices, so this is a bounded replay increment, not full decision
+coverage or a physical-race release.
+
 A same-seed adapter needs an
 explicit, paid, versioned leader decision that resolves competing
 teams and selects an eligible worker from the committed roster using
