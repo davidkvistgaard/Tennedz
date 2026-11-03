@@ -5328,7 +5328,10 @@ as eight in one case. The physical source currently requires exactly
 one front-work team per kilometre. In addition, all 15,200 ordered
 front-team kilometres lack a named helper in the V94 source, while
 the physical source requires one. Even the 1,140 single-team
-kilometres cannot be replayed directly. A same-seed adapter needs an
+kilometres cannot be replayed directly. The V94 intent manifest also
+contains no explicit physical sporting goal and named captain pair
+for any of the 480 team cases; a generated role cannot supply one.
+A same-seed adapter needs an
 explicit, paid, versioned leader decision that resolves competing
 teams and selects an eligible worker from the committed roster using
 perceived strength while retaining every manager order. Arbitrarily

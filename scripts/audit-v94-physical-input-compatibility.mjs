@@ -47,6 +47,14 @@ for(let seed=1;seed<=seedCount;seed++)
             teamOrders})).filter(row=>
             row.order.frontWork==='rotate'));
         const counts=front.map(rows=>rows.length);
+        const explicitSportingGoalTeams=plan.intent.filter(
+          row=>['sprint_finish','summit_attack',
+            'break_stage','none'].includes(
+            row.sportingGoal)&&
+            plan.teams.some(team=>team.id===row.teamId&&
+              team.riders.some(rider=>
+                rider.id===row.sportingCaptainId)))
+          .length;
         const unnamedFrontTeamKm=front.reduce((sum,rows)=>
           sum+rows.filter(({order,teamOrders})=>
             !teamOrders.helperIds.includes(
@@ -54,6 +62,8 @@ for(let seed=1;seed<=seedCount;seed++)
         rows.push({seed,distanceKm,terrain,fatigue,
           riderCount:plan.teams.reduce((sum,team)=>
             sum+team.riders.length,0),
+          teamCount:plan.teams.length,
+          explicitSportingGoalTeams,
           singleFrontWorkerKm:counts.filter(
             count=>count===1).length,
           multipleFrontWorkerKm:counts.filter(
@@ -66,9 +76,13 @@ for(let seed=1;seed<=seedCount;seed++)
           maximumOrderedFrontTeams:Math.max(...counts)});
       }
 
-const summary={version:2,seedCount,cases:rows.length,
+const summary={version:3,seedCount,cases:rows.length,
   riderCount:rows.every(row=>row.riderCount===
     rows[0].riderCount)?rows[0].riderCount:null,
+  teamCases:rows.reduce((sum,row)=>
+    sum+row.teamCount,0),
+  explicitSportingGoalTeams:rows.reduce((sum,row)=>
+    sum+row.explicitSportingGoalTeams,0),
   riderKilometres:rows.reduce((sum,row)=>
     sum+row.riderCount*row.distanceKm,0),
   singleFrontWorkerKm:rows.reduce((sum,row)=>
@@ -89,9 +103,11 @@ if(process.argv.includes('--require-compatible')&&
   (summary.multipleFrontWorkerKm||
     summary.noFrontWorkerKm||
     summary.unnamedFrontTeamKm||
+    summary.explicitSportingGoalTeams!==
+      summary.teamCases||
     rows.some(row=>row.riderCount!==160))){
   console.error('Physical input preflight refused: '+
-    'V94 manager orders need named helpers and an explicit '+
-    'multi-team single-leader decision source.');
+    'V94 needs explicit sporting goals, named helpers and '+
+    'a multi-team single-leader decision source.');
   process.exitCode=1;
 }
