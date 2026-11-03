@@ -433,6 +433,39 @@ if(process.argv.includes('--probe-front-rear-threat')){
         row.riderId===paid.workerId)
         .energyAfter);
   }
+  const whole=process.argv.includes('--through-finish')?
+    replayPhysicalFrontRearRaceV1({
+      ...generated,attackKm:1,lossKm:21,
+      chaseObserverTeamId:team.id}):null;
+  let wholeBaseline=null;
+  if(whole){
+    assert.equal(validatePhysicalFrontRearRaceV1({
+      ...generated,attackKm:1,lossKm:21,
+      chaseObserverTeamId:team.id},whole),true);
+    assert.equal(whole.kilometres.length,distanceKm);
+    assert.ok(whole.chaseKilometres.length>0);
+    assert.equal(whole.chaseKilometres[0]
+      .sourceKm,41);
+    const noChaseInput=structuredClone(
+      generated.startInput);
+    noChaseInput.teams[8].orders.phases=
+      noChaseInput.teams[8].orders.phases
+        .map(phase=>phase.atKm===40?{
+          ...phase,chase:'ignore'}:phase);
+    wholeBaseline=replayPhysicalFrontRearRaceV1({
+      startInput:noChaseInput,
+      start:startPhysicalBunchV1(noChaseInput),
+      attackKm:1,lossKm:21});
+    // A label alone cannot buy speed: the same leader at the same
+    // hard effort must give the same observed front gap.
+    assert.ok(Math.abs(whole.sources.last.endFrontState
+      .gapSecondsToBunch-wholeBaseline.sources.last
+      .endFrontState.gapSecondsToBunch)<1e-7);
+    const workerId=whole.chaseKilometres[0].workerId;
+    assert.equal(whole.observedFinishEnergyByRider[
+      workerId],wholeBaseline
+      .observedFinishEnergyByRider[workerId]);
+  }
   process.stdout.write(JSON.stringify({distanceKm,
     fatigue,choiceKm:41,
     withHelp:process.argv.includes('--with-help'),
@@ -450,6 +483,15 @@ if(process.argv.includes('--probe-front-rear-threat')){
         .workerEnergyAfter,
       gapAfterSeconds:paid.gapAfterSeconds,
       riderCount:paid.riderCount}:null,
+    wholeChase:whole?{
+      chaseKilometres:whole.chaseKilometres,
+      finishRiderCount:Object.keys(whole
+        .observedFinishSecondsByRider).length,
+      frontFinishGapSeconds:whole.sources.last
+        .endFrontState.gapSecondsToBunch,
+      noChaseFrontFinishGapSeconds:wholeBaseline
+        .sources.last.endFrontState
+        .gapSecondsToBunch}:null,
     paceEstimate:decision.paceEstimate,
     movesRoad:decision.movesRoad},null,2)+'\n');
   process.exit(0);

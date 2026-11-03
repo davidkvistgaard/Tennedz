@@ -4988,3 +4988,17 @@ and removing the manager order makes the chase source refuse. The
 observed gap. This is one chase kilometre, not a calibrated pursuit
 or a validated front catch. The source does not move guided races or
 award results.
+
+The opt-in full-field wrapper also replays the five explicitly ordered
+hard-effort chase kilometres (41–45), then continues every rider to the
+120/260-km observed finish in the fatigue-10/30 probes. It records the
+named worker and gap each kilometre. A same-seed counterfactual with
+the **same hard effort and worker** but no chase label has the same
+physical finish gap and worker energy. Thus the label itself grants no
+speed or energy benefit; the committed effort pays the road. The
+120-km gap after those five kilometres is still 46.34448 seconds and
+is 114.33504 seconds at the observed finish (260-km fatigue-30:
+45.32616 and 223.12104 seconds). These cases do not demonstrate a
+successful pursuit or establish realistic chase timing. Front catch
+with rear roads present remains unresolved and guided routing stays
+withheld.
