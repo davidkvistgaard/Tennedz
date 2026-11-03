@@ -72,7 +72,9 @@ import {finishPhysicalThirdRearContactV1} from
 import {pricePhysicalRearEventTrackV1} from
   '../../lib/engine/v2/physical-rear-event-track-v1.mjs';
 import {replayPhysicalStaggeredRearEventsV1,
-  validatePhysicalStaggeredRearEventsV1} from
+  validatePhysicalStaggeredRearEventsV1,
+  inspectPhysicalRearEventEndStateV1,
+  validatePhysicalRearEventEndStateV1} from
   '../../lib/engine/v2/physical-staggered-rear-event-replay-v1.mjs';
 import {decidePhysicalRearContactV1} from
   '../../lib/engine/v2/physical-rear-contact-choice-v1.mjs';
@@ -2430,6 +2432,25 @@ test('opt-in rear intent follows committed effort and sporting stake',()=>{
   assert.equal(validatePhysicalStaggeredDetachedSoloV1({
     startInput,start,staggered,
     riderId:'other-3',throughKm:3},solo),true);
+  const soloField=probePhysicalStaggeredSoloFieldV1({
+    startInput,start,staggered,throughKm:3});
+  const rearInput={startInput,start,staggered,
+    soloField,throughKm:3};
+  const endState=inspectPhysicalRearEventEndStateV1(
+    rearInput);
+  assert.deepEqual(endState.source,
+    replayPhysicalStaggeredRearEventsV1(rearInput));
+  assert.equal(endState.endEntities.length,1);
+  assert.equal(endState.endEntities[0].kind,'solo');
+  assert.equal(endState.endEntities[0]
+    .energyByRider['other-3'],solo.energyAfter);
+  assert.equal(validatePhysicalRearEventEndStateV1(
+    rearInput,endState),true);
+  const forgedEnd=structuredClone(endState);
+  forgedEnd.endEntities[0]
+    .energyByRider['other-3']+=1;
+  assert.throws(()=>validatePhysicalRearEventEndStateV1(
+    rearInput,forgedEnd),/differs from paid source/);
   const legacyInput={...startInput};
   delete legacyInput.physicalRearIntentVersion;
   const legacyStart=startPhysicalBunchV1(

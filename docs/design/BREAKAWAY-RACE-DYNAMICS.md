@@ -4555,3 +4555,14 @@ is metre 32,711.11 in km 33. Both candidates remain refused because
 three previously formed rear contacts can alter later trajectories.
 The next source must order this bunch contact against the active rear
 groups and recompute later roads from the resulting membership.
+
+The opt-in rear replay can now expose a source-validated end-state
+snapshot without changing historical recordings. At the last fully
+paid 160-rider boundary, fatigue 10 has 26 separate rear roads,
+including two groups formed through paid contacts; fatigue 30 has
+24 rear roads, including one such group. Each snapshot records group
+members, clock, energy and the next rotation index. These states are
+replayed from the previous kilometres, not reconstructed from a
+position or an assumed wheel. The following bunch meeting remains
+unsettled until those active roads and the bunch are advanced and
+compared on the same kilometre.

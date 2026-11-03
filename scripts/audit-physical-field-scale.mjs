@@ -56,7 +56,9 @@ import {probePhysicalOrderedSoloBunchContactV1,
 import {finishPhysicalOrderedSoloBunchJoinKmV1} from
   '../lib/engine/v2/physical-ordered-solo-bunch-join-v1.mjs';
 import {replayPhysicalStaggeredRearEventsV1,
-  validatePhysicalStaggeredRearEventsV1} from
+  validatePhysicalStaggeredRearEventsV1,
+  inspectPhysicalRearEventEndStateV1,
+  validatePhysicalRearEventEndStateV1} from
   '../lib/engine/v2/physical-staggered-rear-event-replay-v1.mjs';
 import {partitionPhysicalSimultaneousLossV1,
   validatePhysicalSimultaneousLossPartitionV1,
@@ -1319,10 +1321,28 @@ if(process.argv.includes('--probe-rear-ordered-prefix')){
           assert.equal(
             validatePhysicalStaggeredRearEventsV1(
               input,race),true);
+          const endState=
+            inspectPhysicalRearEventEndStateV1(
+              input);
+          assert.deepEqual(endState.source,race);
+          assert.equal(
+            validatePhysicalRearEventEndStateV1(
+              input,endState),true);
+          const endRiderIds=endState.endEntities
+            .flatMap(entity=>entity.riderIds);
+          assert.equal(endRiderIds.length,
+            staggered.detachedRiderIds.length);
+          assert.equal(new Set(endRiderIds).size,
+            endRiderIds.length);
           lastPaid={sourceKm:throughKm,
             contactCount:race.contactCount,
             riderStates:race.kilometres.at(-1)
-              .riderStates.length};
+              .riderStates.length,
+            rearEntities:endState.endEntities
+              .length,
+            rearGroups:endState.endEntities
+              .filter(entity=>entity.kind===
+                'group').length};
         }catch(error){return {distanceKm,fatigue,
           lastPaid,firstRefusedKm:throughKm,
           source:'event_ordering',
@@ -1334,6 +1354,7 @@ if(process.argv.includes('--probe-rear-ordered-prefix')){
   assert.ok(results.every(row=>
     row.lastPaid?.riderStates===160&&
     row.lastPaid.contactCount===3&&
+    row.lastPaid.rearEntities>0&&
     row.firstRefusedKm===
       (row.fatigue===10?32:33)&&
     row.refusalCount===1&&
