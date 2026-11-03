@@ -111,6 +111,10 @@ import {runPhysicalFrontSoloV1,
 import {replayPhysicalFrontFirstRearLossKmV1,
   validatePhysicalFrontFirstRearLossKmV1} from
   '../../lib/engine/v2/physical-front-first-rear-loss-v1.mjs';
+import {advancePhysicalFrontRearClearKmV1,
+  replayPhysicalFrontRearNextKmV1,
+  validatePhysicalFrontRearNextKmV1} from
+  '../../lib/engine/v2/physical-front-rear-next-km-v1.mjs';
 import {catchPhysicalFrontSoloV1,
   validatePhysicalFrontBunchCatchV1} from
   '../../lib/engine/v2/physical-front-bunch-catch-v1.mjs';
@@ -1059,6 +1063,19 @@ test('front rider and first rear split keep separate paid sources',()=>{
   assert.equal(result.riderStates.length,24);
   assert.equal(validatePhysicalFrontFirstRearLossKmV1(
     input,result),true);
+  const next=replayPhysicalFrontRearNextKmV1(input);
+  assert.equal(next.sourceKm,4);
+  assert.equal(next.riderCount,24);
+  assert.equal(next.fieldKilometreIncomplete,
+    false);
+  assert.equal(next.endRearEntities.length,
+    result.endRearSolos.length);
+  assert.equal(validatePhysicalFrontRearNextKmV1(
+    input,next),true);
+  const fifth=advancePhysicalFrontRearClearKmV1({
+    startInput,prior:next});
+  assert.equal(fifth.sourceKm,5);
+  assert.equal(fifth.riderCount,24);
   const forged=structuredClone(result);
   forged.sources.frontStep.energyAfter+=1;
   assert.throws(()=>(
@@ -1075,6 +1092,11 @@ test('front rider and first rear split keep separate paid sources',()=>{
   assert.equal(pending.fieldKilometreIncomplete,
     true);
   assert.equal(pending.riderStates,undefined);
+  assert.throws(()=>(
+    replayPhysicalFrontRearNextKmV1({
+      ...input,startInput:simultaneous,
+      start:startPhysicalBunchV1(simultaneous)})),
+  /settled prior road/);
 });
 
 test('stronger later bunch worker creates an energy-priced catch window',()=>{

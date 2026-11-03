@@ -13,6 +13,10 @@ import {replayPhysicalFrontRaceV1,
 import {replayPhysicalFrontFirstRearLossKmV1,
   validatePhysicalFrontFirstRearLossKmV1} from
   '../lib/engine/v2/physical-front-first-rear-loss-v1.mjs';
+import {advancePhysicalFrontRearClearKmV1,
+  replayPhysicalFrontRearNextKmV1,
+  validatePhysicalFrontRearNextKmV1} from
+  '../lib/engine/v2/physical-front-rear-next-km-v1.mjs';
 import {startPhysicalBunchV1,runPhysicalBunchV1,
   runPhysicalBunchToPaceLossV1,
   runPhysicalStaggeredBunchLossV1} from
@@ -436,6 +440,94 @@ if(process.argv.includes('--probe-front-first-loss')){
     riderCount:result.riderCount,
     fieldKilometreIncomplete:result
       .fieldKilometreIncomplete},null,2)+'\n');
+  process.exit(0);
+}
+
+if(process.argv.includes('--probe-front-next-bunch')){
+  const distanceKm=Number(process.argv.find(arg=>
+    arg.startsWith('--distance='))?.split('=')[1]??120);
+  const fatigue=Number(process.argv.find(arg=>
+    arg.startsWith('--fatigue='))?.split('=')[1]??10);
+  const input=source(distanceKm,fatigue,
+    'front_varied');
+  const replayInput={...input,attackKm:1,
+    lossKm:21};
+  const next=replayPhysicalFrontRearNextKmV1(
+    replayInput);
+  assert.equal(validatePhysicalFrontRearNextKmV1(
+    replayInput,next),true);
+  process.stdout.write(JSON.stringify({distanceKm,
+    fatigue,sourceKm:next.sourceKm,
+    bunchRiders:next.endBunchState.riderIds.length,
+    rearRiders:next.endRearEntities.length,
+    frontRiderId:next.endFrontState.riderId,
+    frontGapSeconds:next.endFrontState
+      .gapSecondsToBunch,
+    newSplits:next.sources.step.splits.map(row=>({
+      riderId:row.riderId,
+      atDistanceM:row.atDistanceM})),
+    candidateEventCount:next.candidateEventCount,
+    firstCandidateEvent:next.firstCandidateEvent,
+    riderCount:next.riderCount??null,
+    fieldKilometreIncomplete:next
+      .fieldKilometreIncomplete},null,2)+'\n');
+  process.exit(0);
+}
+
+if(process.argv.includes('--probe-front-clear-prefix')){
+  const distanceKm=Number(process.argv.find(arg=>
+    arg.startsWith('--distance='))?.split('=')[1]??120);
+  const fatigue=Number(process.argv.find(arg=>
+    arg.startsWith('--fatigue='))?.split('=')[1]??10);
+  const input=source(distanceKm,fatigue,
+    'front_varied');
+  let prior=replayPhysicalFrontFirstRearLossKmV1({
+    ...input,attackKm:1,lossKm:21});
+  let firstUnresolvedKm=null;
+  let reason=null;
+  let firstEvent=null;
+  let candidateEventCount=0;
+  let newSplits=[];
+  for(let km=22;km<=distanceKm;km++){
+    let next;
+    try{next=advancePhysicalFrontRearClearKmV1({
+      startInput:input.startInput,prior});}
+    catch(error){firstUnresolvedKm=km;
+      reason=error.message;break;}
+    if(next.fieldKilometreIncomplete){
+      firstUnresolvedKm=km;
+      reason='Paid road contact needs a choice.';
+      firstEvent=next.firstCandidateEvent;
+      candidateEventCount=
+        next.candidateEventCount;
+      newSplits=next.sources.step.splits.map(row=>
+        row.riderId);
+      break;
+    }
+    assert.equal(next.riderCount,160);
+    prior=next;
+  }
+  if(process.argv.includes(
+    '--assert-front-clear-prefix')){
+    assert.equal(prior.sourceKm,
+      fatigue===10?30:25);
+    assert.equal(firstUnresolvedKm,
+      fatigue===10?31:26);
+    assert.deepEqual(firstEvent?.roadIds,[
+      'solo-team-3-3','solo-team-4-3']);
+    assert.equal(candidateEventCount,
+      fatigue===10?2:1);
+    assert.equal(newSplits.length,
+      fatigue===10?0:11);
+  }
+  process.stdout.write(JSON.stringify({distanceKm,
+    fatigue,lastFullKm:prior.sourceKm,
+    firstUnresolvedKm,reason,firstEvent,
+    candidateEventCount,newSplits,
+    bunchRiders:prior.endBunchState.riderIds.length,
+    rearRoads:prior.endRearEntities.length,
+    frontGapSeconds:prior.endFrontState
+      .gapSecondsToBunch},null,2)+'\n');
   process.exit(0);
 }
 

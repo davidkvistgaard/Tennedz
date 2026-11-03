@@ -4841,4 +4841,18 @@ riders receive a source-replayed kilometre state: 142 bunch + 17 rear
 gap is 27.95 or 27.36 seconds. A focused simultaneous-split case does
 produce candidate contact; its field kilometre remains incomplete
 until a paid group choice and remainder resolve it. The current source
-does not yet carry the front and rear roads through km 22 or finish.
+does not by itself carry the front and rear roads beyond km 21.
+
+The opt-in front/rear continuation now advances the paid km-21 state
+through later clear kilometres, using each rider's own stored clock,
+energy, committed order and stake. It includes new physical bunch
+splits only after paying each partial road and checking contact among
+all old and new rear roads, the front rider and the bunch. In the same
+four varied probes, all 160 riders reach km 25. At fatigue 10, eleven
+more riders split in km 26 with no measured contact; the complete field
+reaches km 30 and the first unresolved meeting is two rear solos at
+metre 30,096.330085 in km 31. At fatigue 30, eleven new km-26 splits
+include two rear solos that meet at metre 25,999.203884. The source
+stops at that contact, with no invented group or kilometre finish.
+Contact choice, remaining road and the subsequent front/rear race to
+the finish still require source replay and calibration.
