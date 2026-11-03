@@ -5067,12 +5067,19 @@ later km-106 meeting after its earlier solo/bunch event. The paid
 front and rear roads meet at metre 105,991.646982; the rear solo
 leads a two-rider group, and both riders' segmented energy and
 decisions reconcile through the kilometre. The 160 end states are
-versioned separately from the historic front-solo recordings. This
-does not settle the whole race: at km 107 the new group meets the
-bunch, and the existing group-join rule correctly refuses because
-not every member can pay and hold bunch pace. The next source model
-must let each group member make a paid join or slide decision at that
-recorded contact before this roster can count as a finish.
+versioned separately from the historic front-solo recordings. At
+km 107 the new group meets the bunch at metre 106,112.055116. Its
+leader `team-16-5` can pay and hold the bunch pace; the former front
+rider `team-19-1` cannot. The individual choice now moves the first
+into bunch shelter and reprices the latter on a separate solo road
+from the recorded contact. Eleven later paid rear contacts form a
+group again within the kilometre. A separate versioned full-race
+recording replays all 160 riders through 120 and 260 km with observed
+finish clocks and energy at fatigue 10. It requires a caller-supplied
+contact kilometre verified against the paid source; it is not yet
+source-discovered or a guided-race route. The fatigue-30 attempt at
+the same km-106 contact refuses because that meeting never occurs in
+its paid source.
 
 The next opt-in contact version resolves the tired km-26 boundary at
 the **recorded common split point** (metre 25,999.203884). Both riders
