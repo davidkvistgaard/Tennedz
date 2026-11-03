@@ -5032,6 +5032,21 @@ finish clocks and energies as the explicit-kilometre replay. Additional
 validate. This remains a narrow synthetic catch pattern, not guided
 race routing or official results.
 
+A seven-roster same-seed holdout now varies the riders' existing skill,
+form and fatigue pattern before the race and recomputes the named
+worker choices. On the 120-km fatigue-10 front-catch probe, roster 0
+reaches a source-discovered catch and full 160-rider finish. Roster 6
+has no front/bunch contact and the separately validated no-catch race
+finishes with the front 17.46504 seconds clear. The other five refuse
+an unresolved ordered event: rosters 1 and 3 have a rear solo meet the
+front before the bunch does; roster 2 has several rear solos approach
+the just-caught rider in the catch kilometre; roster 4 has a rear
+solo/bunch meeting and then a rear/front meeting before front/bunch
+contact; roster 5 has a rear-pair meeting before front/bunch contact.
+These are distinct paid candidate events, not finished groups. Their
+order and remaining road require source replay before this roster
+range can count as a calibrated whole-race matrix.
+
 The next opt-in contact version resolves the tired km-26 boundary at
 the **recorded common split point** (metre 25,999.203884). Both riders
 have paid the bunch to that point; neither is labelled as catching

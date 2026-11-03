@@ -245,6 +245,11 @@ const route=distanceKm=>Array.from({length:distanceKm},
   });
 
 function source(distanceKm,fatigue,variant){
+  const rosterVariant=Number(process.argv.find(arg=>
+    arg.startsWith('--roster-variant='))
+    ?.split('=')[1]??0);
+  assert.ok(Number.isInteger(rosterVariant)&&
+    rosterVariant>=0&&rosterVariant<160);
   const teams=Array.from({length:fieldSize},(_,number)=>{
     const id=`team-${number}`;
     const riders=Array.from({length:ridersPerTeam},
@@ -288,7 +293,8 @@ function source(distanceKm,fatigue,variant){
       for(let riderIndex=0;riderIndex<team.riders.length;
         riderIndex++){
         const rider=team.riders[riderIndex];
-        const marker=teamIndex*8+riderIndex;
+        const marker=(teamIndex*8+riderIndex+
+          rosterVariant*13)%160;
         rider.flat=92+(marker*3)%7;
         rider.hills=92+(marker*5)%7;
         rider.mountain=92+(marker*11)%7;
@@ -786,11 +792,39 @@ if(process.argv.includes('--probe-front-rear-threat')){
           .elapsedSeconds);
     }
   }
-  const discoveredRace=process.argv.includes(
-    '--discovered-full-race')?
-    replayPhysicalDiscoveredFrontCaughtRaceV1({
-      ...generated,attackKm:1,lossKm:21,
-      chaseObserverTeamId:team.id}):null;
+  let discoveredRace=null;
+  let discoveredRaceRefusal=null;
+  let noCatchRace=null;
+  if(process.argv.includes(
+    '--discovered-full-race')){
+    try{
+      discoveredRace=
+        replayPhysicalDiscoveredFrontCaughtRaceV1({
+          ...generated,attackKm:1,lossKm:21,
+          chaseObserverTeamId:team.id});
+    }catch(error){
+      if(!process.argv.includes(
+        '--report-refusal'))throw error;
+      if(error.message===
+        'Front catch discovery found no paid contact.'){
+        const noCatchInput={...generated,
+          attackKm:1,lossKm:21,
+          chaseObserverTeamId:team.id};
+        noCatchRace=replayPhysicalFrontRearRaceV1(
+          noCatchInput);
+        assert.equal(validatePhysicalFrontRearRaceV1(
+          noCatchInput,noCatchRace),true);
+        assert.ok(noCatchRace.sources.last
+          .endFrontState.gapSecondsToBunch>0);
+        assert.equal(Object.keys(noCatchRace
+          .observedFinishSecondsByRider)
+          .length,160);
+      }else
+        discoveredRaceRefusal={
+          reason:error.message,
+          sourceKm:error.sourceKm??null};
+    }
+  }
   if(discoveredRace){
     assert.equal(
       validatePhysicalDiscoveredFrontCaughtRaceV1({
@@ -818,6 +852,9 @@ if(process.argv.includes('--probe-front-rear-threat')){
     frontEases:process.argv.includes('--front-eases'),
     plannedRelief:process.argv.includes(
       '--planned-relief'),
+    rosterVariant:Number(process.argv.find(arg=>
+      arg.startsWith('--roster-variant='))
+      ?.split('=')[1]??0),
     frontMountain:frontMountain?
       Number(frontMountain.split('=')[1]):null,
     discoveredCatch:discoveredCatch?{
@@ -938,6 +975,14 @@ if(process.argv.includes('--probe-front-rear-threat')){
       catchKilometreSplitCount:discoveredRace
         .sources.caught.sources.splitCompletions
           .length}:null,
+    discoveredRaceRefusal,
+    noCatchRace:noCatchRace?{
+      riderCount:noCatchRace.riderIds.length,
+      finishRiderCount:Object.keys(noCatchRace
+        .observedFinishSecondsByRider).length,
+      frontFinishGapSeconds:noCatchRace
+        .sources.last.endFrontState
+        .gapSecondsToBunch}:null,
     paceEstimate:decision.paceEstimate,
     movesRoad:decision.movesRoad},null,2)+'\n');
   process.exit(0);
