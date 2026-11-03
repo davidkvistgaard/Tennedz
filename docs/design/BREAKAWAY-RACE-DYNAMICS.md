@@ -5259,6 +5259,13 @@ incorrectly refused the contact. The source now records the passage,
 both joins and all 160 end states. At 120 km the front remains ahead;
 at 260 km the bunch catches it in km 188. Both complete races retain
 all 160 rider decisions, energy histories and observed finish clocks.
-The fatigue-50 roster-5 catch still refuses an earlier solo/bunch
-passage that cannot hold the measured pace; its paid continuation
-remains to be resolved before that holdout can count as a finish.
+At fatigue 50, roster 5 has an earlier solo/bunch meeting at metre
+66,625.036933. Solo team-5-4 cannot hold the measured bunch pace,
+records a paid passage and stays on its own road. It then meets the
+front at metre 66,807.617287, just before the original front/bunch
+candidate. The repriced front/rear group and subsequent contacts
+replay all 160 riders to observed finishes at both 120 and 260 km.
+Discovery verifies the original candidate within 0.002 metre,
+second and energy units, then records the paid transition event as
+the canonical contact; the two paths have identical finish clocks
+and energies. The pure front/bunch case remains a separate recording.

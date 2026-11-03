@@ -1244,6 +1244,48 @@ if(process.argv.includes('--probe-front-rear-threat')){
         explicit.observedFinishEnergyByRider);
       }
       if(process.argv.includes(
+        '--expect-early-passage-before-front')){
+        assert.match(discovery.version,
+          /catch-boundary-discovery-1$/);
+        const transition=race.sources.transition;
+        const passage=transition.sources
+          .bunchPassages.find(row=>
+            row.event.roadIds.includes(
+              'solo-team-5-4'));
+        assert.ok(passage);
+        assert.ok(passage.event.clockSeconds<
+          discovery.event.clockSeconds);
+        assert.equal(passage.decision.choice,
+          'stay_solo_after_bunch_contact');
+        const events=race.kilometres[
+          discovery.contactKm-1]
+          .contactEvents;
+        assert.deepEqual(events.slice(0,2)
+          .map(row=>row.choice),
+        ['stay_solo','join']);
+        assert.deepEqual(events[1].event,
+          discovery.event);
+        assert.ok(events.every((row,index)=>
+          index===0||row.event.clockSeconds>
+            events[index-1]
+              .event.clockSeconds));
+        const explicitInput={...discoveryInput,
+          frontContactKm:discovery.contactKm,
+          allowFrontCatchBoundary:true};
+        const explicit=
+          replayPhysicalFrontToRearAllRaceV1(
+            explicitInput);
+        assert.equal(
+          validatePhysicalFrontToRearAllRaceV1(
+            explicitInput,explicit),true);
+        assert.deepEqual(race
+          .observedFinishSecondsByRider,
+        explicit.observedFinishSecondsByRider);
+        assert.deepEqual(race
+          .observedFinishEnergyByRider,
+        explicit.observedFinishEnergyByRider);
+      }
+      if(process.argv.includes(
         '--expect-group-pass')){
         assert.equal(discovery.contactKm,68);
         const passages=race.sources.transition
@@ -1286,12 +1328,16 @@ if(process.argv.includes('--probe-front-rear-threat')){
         frontContactEvent:error
           .frontContactEvent??null,
         groupBunchContact:error
-          .groupBunchContact??null};
+          .groupBunchContact??null,
+        paidFrontContact:error
+          .paidFrontContact??null};
     }
     if(process.argv.includes(
       '--expect-mixed-catch')||
       process.argv.includes(
         '--expect-early-bunch-before-front')||
+      process.argv.includes(
+        '--expect-early-passage-before-front')||
       process.argv.includes(
         '--expect-group-pass')||
       process.argv.includes(
