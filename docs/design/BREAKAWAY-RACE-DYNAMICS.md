@@ -5325,8 +5325,10 @@ policy is identified by the enclosing replay sources. An explicit
 per-decision version remains a separate schema task before promotion.
 The version 5 gate checks that every rider-kilometre has finite,
 nonnegative energy, a forward-moving observed road clock and a
-physical group ID. The final paid clock and energy for each of the
-160 riders match the recorded finish in every matrix cell. These
+physical group ID. It also checks exactly one state for each known
+rider on each sequential source kilometre. The final paid clock and
+energy for each of the 160 riders match the recorded finish in every
+matrix cell. These
 checks include early drops, later rear contacts and caught riders
 sliding through on their own paid road.
 It is a source-continuity gate, not an independent physics oracle or

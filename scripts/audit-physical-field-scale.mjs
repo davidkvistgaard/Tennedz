@@ -441,6 +441,7 @@ if(process.argv.includes('--probe-front-rear-threat')){
     const teamByRider=new Map(startInput.teams.flatMap(team=>
       team.riders.map(rider=>[rider.id,team.id])));
     const effortRank={conserve:0,steady:1,hard:2};
+    const riderIds=new Set(race.riderIds);
     const lastClockByRider=new Map();
     const lastEnergyByRider=new Map();
     const summary={riderKilometres:0,
@@ -453,14 +454,24 @@ if(process.argv.includes('--probe-front-rear-threat')){
       effortExceedsOrder:0,unknownEffort:0,
       invalidEnergy:0,invalidClock:0,
       nonForwardClock:0,missingGroupId:0,
+      missingRiderState:0,duplicateRiderState:0,
+      unknownRiderState:0,nonSequentialKm:0,
       finishClockMismatch:0,
       finishEnergyMismatch:0};
-    for(const km of race.kilometres){
+    for(const [index,km] of race.kilometres.entries()){
+      if(km.sourceKm!==index+1)
+        summary.nonSequentialKm++;
+      const seenRiders=new Set();
       const orderedEffort=new Map(startInput.teams.map(team=>[
         team.id,orderAt(team.orders,km.sourceKm-1)
           .effort]));
       for(const state of km.riderStates){
         summary.riderKilometres++;
+        if(!riderIds.has(state.riderId))
+          summary.unknownRiderState++;
+        if(seenRiders.has(state.riderId))
+          summary.duplicateRiderState++;
+        seenRiders.add(state.riderId);
         if(!Number.isFinite(state.energyAfter)||
           state.energyAfter<0||state.energyAfter>100)
           summary.invalidEnergy++;
@@ -521,6 +532,8 @@ if(process.argv.includes('--probe-front-rear-threat')){
             summary.unknownEffort++;
         }
       }
+      summary.missingRiderState+=race.riderIds.length-
+        [...seenRiders].filter(id=>riderIds.has(id)).length;
     }
     for(const riderId of race.riderIds){
       const finalClock=lastClockByRider.get(riderId);

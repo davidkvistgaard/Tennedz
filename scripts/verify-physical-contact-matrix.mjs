@@ -101,7 +101,9 @@ function runCase({roster,fatigue,distance}){
           ?.effortExceedsOrder,0);
         for(const field of ['invalidEnergy',
           'invalidClock','nonForwardClock',
-          'missingGroupId','finishClockMismatch',
+          'missingGroupId','missingRiderState',
+          'duplicateRiderState','unknownRiderState',
+          'nonSequentialKm','finishClockMismatch',
           'finishEnergyMismatch'])
           assert.equal(result.decisionCoverage
             ?.[field],0);
