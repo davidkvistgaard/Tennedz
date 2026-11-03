@@ -110,6 +110,9 @@ import {replayPhysicalOrderedRearContinuationBunchKmV1,
 import {advancePhysicalOrderedRearBunchPassKmV1,
   validatePhysicalOrderedRearBunchPassKmV1} from
   '../lib/engine/v2/physical-ordered-rear-bunch-pass-km-v1.mjs';
+import {resolvePhysicalOrderedRearBunchThenRearContactV1,
+  validatePhysicalOrderedRearBunchThenRearContactV1} from
+  '../lib/engine/v2/physical-ordered-rear-bunch-then-rear-contact-v1.mjs';
 import {replayPhysicalStaggeredRearEventsV1,
   validatePhysicalStaggeredRearEventsV1,
   inspectPhysicalRearEventEndStateV1,
@@ -1409,6 +1412,14 @@ if(process.argv.includes('--probe-rear-ordered-prefix')){
         tracks.filter(track=>track.id!==
           `solo-${contact.riderId}`),
         bunch,probe.sourceKm):[];
+    const rearContact=laterEvents[0]&&
+      !laterEvents[0].involvesBunch?
+      resolvePhysicalOrderedRearBunchThenRearContactV1(
+        input):null;
+    if(rearContact&&verify)
+      assert.equal(
+        validatePhysicalOrderedRearBunchThenRearContactV1(
+          input,rearContact),true);
     const full=joined&&!laterEvents.length?
       replayPhysicalOrderedRearContinuationBunchKmV1(
         input):null;
@@ -1433,6 +1444,15 @@ if(process.argv.includes('--probe-rear-ordered-prefix')){
       joinedBunchRiders:joined?.physicalGroup
         .riderIds.length??null,
       nextEvent:laterEvents[0]??null,
+      rearContact:rearContact?{
+        outcome:rearContact.choice.outcome,
+        atDistanceM:rearContact.event
+          .atDistanceM,
+        leaderRiderId:rearContact
+          .candidateGroupRoad?.leaderRiderId??
+            null,
+        nextEvent:rearContact
+          .nextCandidateEvent??null}:null,
       fullRiders:(full??passed)?.riderCount??null,
       passDecision:passed?.contactDecision
         .choice??null,
@@ -1995,6 +2015,13 @@ if(process.argv.includes('--probe-rear-ordered-prefix')){
       row.post66Bunch?.nextEvent
         ?.roadIds.join('|')===
           'solo-team-1-1|solo-team-13-5'&&
+      row.post66Bunch?.rearContact
+        ?.outcome==='join'&&
+      row.post66Bunch?.rearContact
+        ?.leaderRiderId==='team-1-1'&&
+      row.post66Bunch?.rearContact
+        ?.nextEvent?.atDistanceM===
+          70810.44904&&
       row.post66Bunch?.fullRiders===null&&
       row.post47Clear?.lastFullKm===65)&&
     (row.fatigue!==30||

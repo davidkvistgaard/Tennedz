@@ -4706,3 +4706,10 @@ four probes, so that kilometre ends with 160 paid rider states, 123
 in the bunch and the other 37 on 33 distinct rear roads. The crossing
 is recorded in the rider's decisions; it does not create a group.
 The later race and fatigue-10 second km-71 contact remain unsettled.
+
+The ordered km-71 continuation prices that second contact after the
+bunch join. `team-1-1` catches `team-13-5` at metre 70,523.626011;
+their committed decisions make a two-rider group with `team-1-1`
+paying the exposed turn and `team-13-5` sheltered. The repriced group
+then catches solo `team-6-7` at metre 70,810.44904. This is a third
+same-kilometre event, so the full km-71 field remains unsettled.
