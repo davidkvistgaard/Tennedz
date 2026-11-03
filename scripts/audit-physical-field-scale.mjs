@@ -1457,6 +1457,23 @@ if(process.argv.includes('--probe-rear-ordered-prefix')){
       assert.equal(
         validatePhysicalOrderedRearBunchPassKmV1(
           input,passed),true);
+    const resolved=full??passed??completedChain;
+    const laterClear=resolved?
+      probeClearPrefix(startInput,resolved):null;
+    const nextPrior=resolved&&laterClear
+      ?.firstEvent?
+      advanceClearToKm(startInput,resolved,
+        laterClear.lastFullKm):null;
+    const nextBoundary=nextPrior?
+      sourcePhysicalOrderedRearBoundaryFromStateV1({
+        startInput,prior:nextPrior}):null;
+    const nextContact=nextBoundary?.recording
+      .firstEvent?.involvesBunch?
+      probePhysicalOrderedRearContinuationBunchContactV1({
+        startInput,prior:nextPrior}):
+      nextBoundary?.recording.firstEvent?
+        resolvePhysicalOrderedRearContinuationContactV1({
+          startInput,prior:nextPrior}):null;
     return {sourceKm:probe.sourceKm,
       riderId:contact.riderId,
       atDistanceM:contact.atDistanceM,
@@ -1497,9 +1514,24 @@ if(process.argv.includes('--probe-rear-ordered-prefix')){
       rearRoads:(full??passed??completedChain)
         ?.endRearEntities
         .length??null,
-      laterClear:completedChain||passed?
-        probeClearPrefix(startInput,
-          completedChain??passed):null};
+      laterClear,
+      nextContact:nextContact?{
+        sourceKm:nextContact.sourceKm,
+        atDistanceM:(nextContact.contact??
+          nextContact.event).atDistanceM,
+        roadIds:(nextContact.contact??
+          nextContact.event).roadIds,
+        riderId:nextContact.contact
+          ?.riderId??null,
+        choice:nextContact.choice?.outcome??
+          null,
+        canHold:nextContact.contact
+          ?.canHold??null,
+        leaderRiderId:nextContact
+          .candidateGroupRoad
+          ?.leaderRiderId??null,
+        nextCandidateEvent:nextContact
+          .nextCandidateEvent??null}:null};
   };
   const results=[120,260].flatMap(distanceKm=>
     [10,30].map(fatigue=>{
@@ -2070,6 +2102,10 @@ if(process.argv.includes('--probe-rear-ordered-prefix')){
       row.post66Bunch?.laterClear
         ?.firstEvent?.roadIds[0]===
           'solo-team-13-0'&&
+      row.post66Bunch?.nextContact
+        ?.riderId==='team-13-0'&&
+      row.post66Bunch?.nextContact
+        ?.canHold===true&&
       row.post47Clear?.lastFullKm===65)&&
     (row.fatigue!==30||
       row.lastPaid.km66Splits
@@ -2101,6 +2137,15 @@ if(process.argv.includes('--probe-rear-ordered-prefix')){
         ?.laterClear?.firstEvent
           ?.roadIds.join('|')===
             'solo-team-1-1|solo-team-2-2'&&
+      row.lastPaid.post66Bunch
+        ?.nextContact?.choice==='join'&&
+      row.lastPaid.post66Bunch
+        ?.nextContact?.leaderRiderId===
+          'team-1-1'&&
+      row.lastPaid.post66Bunch
+        ?.nextContact
+          ?.nextCandidateEvent
+          ?.atDistanceM===70318.555781&&
       row.lastPaid.afterBunchClear
         ?.lastFullKm===65)&&
     row.firstRefusedKm===

@@ -4722,3 +4722,12 @@ meeting in km 72 at metre 71,192.244369. For fatigue 30, km 70 pays
 without contact after the km-69 solo passage; the next event is a
 solo-pair contact in km 71 at metre 70,045.628085. These later
 events and the 120/260-km finishes remain unsettled.
+
+The next opt-in probes show different event order. At fatigue 10,
+`team-13-0` reaches the bunch at metre 71,192.244369 in km 72 and
+can hold its measured pace; its final choice and all other rear
+roads still need paying. At fatigue 30, `team-1-1` catches
+`team-2-2` at metre 70,045.628085 in km 71. Their committed
+decisions form a two-rider group with `team-1-1` exposed. A separate
+solo then meets the bunch at metre 70,318.555781. The rear group
+must remain on its own paid road while that bunch decision is made.
