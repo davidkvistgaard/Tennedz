@@ -4924,3 +4924,24 @@ rear pair meeting at metre 70,523.626011. The source records that
 later event and leaves km 71 incomplete until the remaining contact
 and all other roads are settled. The tired simultaneous-split branch
 still stops at km 26; no varied front race has a validated finish.
+
+The isolated low-fatigue front/rear replay now settles all three km-71
+events: the solo's bunch join, the rear pair's paid meeting and a later
+solo joining that pair. One named leader pays the three-rider road;
+the other two pay sheltered costs. A versioned ordered contact loop
+also records solo-to-bunch passages when the rider cannot hold the
+measured bunch pace, retaining a separate paid solo road. With those
+choices, the same-seed 120-km probe gives all 160 riders a recorded
+state through km 120. The same source also binds three new bunch
+losses in km 186 to their measured split points and energies while an
+old solo meets the bunch earlier in that kilometre. With that event
+ordering, the 260-km probe gives all 160 riders a paid state through
+km 260. The fatigue-30 branch still stops at its simultaneous km-26
+loss contact. A versioned full-race wrapper checks every rider's
+per-kilometre state from km 1 to the observed route end, then replays
+the complete source before reporting all 160 finish clocks and
+energies. The observed finish clock spans are 191.60 seconds over
+120 km and 421.54 seconds over 260 km. These are physical clock
+observations, not official placements. Broader calibration and replay
+across fatigue and roles remain unvalidated. Guided routing stays
+withheld.
