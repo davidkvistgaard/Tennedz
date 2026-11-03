@@ -4262,3 +4262,18 @@ start at that rider's previous recorded kilometre finish clock.
 Energy continuity was already checked at both points. The 24-rider
 loss and 160-rider contact witnesses still replay with these clock
 checks; an elapsed-time gap cannot be hidden between kilometres.
+
+An opt-in physical draft source version 3 addresses a separate bunch
+accounting defect. Version 2 allowed a nonleader to match the bunch
+pace using solo physiology while assigning `pace_match` and full
+exposed energy cost inside the same physical peloton. The 160-rider
+fatigue-10 witnesses contained 402 such rider-kilometres at 120 km and
+661 at 260 km. Version 3 keeps the same payable pace condition but
+records each such rider as sheltered and charges the lower draft
+fraction. At the first observed case, team-0-2 on km 26 pays 0.1572032
+instead of 0.196504 energy. Both version-3 fields have exactly one
+exposed bunch leader every kilometre, zero `pace_match` group roles,
+12 and 18 measured rear contacts, and all 160 actual finish clocks.
+Historical version-1 and version-2 recordings remain unchanged. The
+new version is isolated from guided races pending broader terrain,
+fatigue, break and finish calibration.

@@ -752,6 +752,72 @@ function audit(distanceKm,fatigue,variant){
       run.energyByRider))};
 }
 
+if(process.argv.includes('--probe-single-leader')){
+  const distanceKm=process.argv.includes(
+    '--long')?260:120;
+  const baseline=source(distanceKm,10,
+    'varied_field');
+  const baselineRoad=runPhysicalStaggeredBunchLossV1({
+    ...baseline,throughKm:distanceKm});
+  const startInput={...baseline.startInput,
+    physicalDraftVersion:3};
+  const start=startPhysicalBunchV1(startInput);
+  const staggered=runPhysicalStaggeredBunchLossV1({
+    startInput,start,throughKm:distanceKm});
+  const soloField=probePhysicalStaggeredSoloFieldV1({
+    startInput,start,staggered,throughKm:distanceKm});
+  const input={startInput,start,staggered,
+    soloField,throughKm:distanceKm};
+  const race=replayPhysicalStaggeredRearEventsV1(input);
+  assert.equal(validatePhysicalStaggeredRearEventsV1(
+    input,race),true);
+  const countRole=(road,role)=>road.road.reduce(
+    (sum,step)=>sum+step.riders.filter(row=>
+      row.role===role).length,0);
+  const baselinePaceMatches=countRole(
+    baselineRoad,'pace_match');
+  assert.ok(baselinePaceMatches>0);
+  const firstLegacyMatch=baselineRoad.road.flatMap(step=>
+    step.riders.filter(row=>row.role===
+      'pace_match').map(row=>({
+        km:step.sourceKm,row}))).at(0);
+  const shelteredMatch=staggered.road[
+    firstLegacyMatch.km-1].riders.find(row=>
+    row.riderId===firstLegacyMatch.row.riderId);
+  assert.equal(shelteredMatch.role,'sheltered');
+  assert.ok(shelteredMatch.energySpent<
+    firstLegacyMatch.row.energySpent);
+  assert.equal(countRole(staggered,'pace_match'),0);
+  assert.ok(staggered.road.every(step=>
+    step.riders.filter(row=>row.role===
+      'leader').length===1&&
+    step.physicalGroup.riderIds.every(id=>
+      ['leader','sheltered'].includes(
+        step.riders.find(row=>row.riderId===
+          id)?.role))));
+  assert.ok(race.kilometres.every(row=>
+    row.riderStates.length===160&&
+    row.riderStates.every(state=>
+      state.decisions.length>0)));
+  assert.equal(Object.keys(race
+    .observedFinishSecondsByRider).length,160);
+  process.stdout.write(JSON.stringify({
+    distanceKm,baselinePaceMatches,
+    firstShelteredMatch:{km:firstLegacyMatch.km,
+      riderId:firstLegacyMatch.row.riderId,
+      oldEnergySpent:firstLegacyMatch.row.energySpent,
+      shelteredEnergySpent:
+        shelteredMatch.energySpent},
+    candidatePaceMatches:countRole(staggered,
+      'pace_match'),
+    losses:staggered.losses.length,
+    contacts:race.contactCount,
+    finishRiders:Object.keys(race
+      .observedFinishSecondsByRider).length},
+  null,2)+'\n');
+  process.exit(0);
+}
+
 if(process.argv.includes('--probe-rear-captain')){
   const distanceKm=120;
   const baseline=source(distanceKm,10,
@@ -985,6 +1051,11 @@ if(process.argv.includes('--probe-rear-stage-plan')){
         row.riderId===riderId).role==='sheltered'));
     return {distanceKm,fatigue,riderId,reserveEnergy,
       contactCount:race.contactCount,
+      bunchPaceMatches:race.kilometres.reduce(
+        (sum,row)=>sum+row.riderStates
+          .filter(state=>state.decisions.some(
+            decision=>decision.choice===
+              'hold_pace')).length,0),
       saverFinishEnergy:saver.energyAfter,
       saverFinishSeconds:saver.elapsedSeconds,
       saverGroupKilometres:race.kilometres
@@ -1058,6 +1129,11 @@ if(process.argv.includes('--probe-rear-events-120')||
     return {distanceKm,fatigue,
       status:'full_replay',
       contactCount:race.contactCount,
+      bunchPaceMatches:race.kilometres.reduce(
+        (sum,row)=>sum+row.riderStates
+          .filter(state=>state.decisions.some(
+            decision=>decision.choice===
+              'hold_pace')).length,0),
       firstContacts:race.contacts.slice(0,5).map(row=>({
         km:row.sourceKm,atDistanceM:row.atDistanceM,
         riderIds:row.riders.map(rider=>

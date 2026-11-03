@@ -231,6 +231,39 @@ test('start line pays one named leader and all 23 sheltered riders',()=>{
     /differs/);
 });
 
+test('versioned bunch pace match pays sheltered cost with one leader',()=>{
+  const teams=field();
+  teams[2].riders[3].mountain=40;
+  teams[2].riders[3].timetrial=100;
+  const base=source(teams,route('climb'));
+  const roadFor=physicalDraftVersion=>{
+    const startInput={...base.startInput,
+      physicalDraftVersion};
+    return advancePhysicalStartBunchV1({
+      startInput,start:startPhysicalBunchV1(
+        startInput),segment:base.segment});
+  };
+  const oldRoad=roadFor(2);
+  const sheltered=roadFor(3);
+  const old=oldRoad.riders.find(row=>
+    row.riderId==='other-3');
+  const next=sheltered.riders.find(row=>
+    row.riderId==='other-3');
+  assert.equal(old.role,'pace_match');
+  assert.equal(next.role,'sheltered');
+  assert.ok(next.energySpent<old.energySpent);
+  assert.equal(sheltered.riders.filter(row=>
+    row.role==='leader').length,1);
+  assert.ok(sheltered.physicalGroup.riderIds.every(id=>
+    ['leader','sheltered'].includes(
+      sheltered.riders.find(row=>
+        row.riderId===id).role)));
+  assert.equal(sheltered.riderDecisions.find(row=>
+    row.riderId==='other-3').reason,
+  'paid_individual_pace_match_in_shelter');
+  assert.notEqual(oldRoad.version,sheltered.version);
+});
+
 test('same-seed terrain and fatigue change paid start road',()=>{
   const flat=advancePhysicalStartBunchV1(source());
   const climbing=advancePhysicalStartBunchV1(
