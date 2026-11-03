@@ -5297,6 +5297,12 @@ and refuses two. It finds 668,800 paid energy rows and 26,963 forward
 decision rows, with no rider decision in 2,344 dropped
 rider-kilometres. The coverage gap therefore persists across seeds;
 it cannot be closed by reinterpreting energy entries as choices.
+The stricter `node scripts/audit-v94-rider-decision-coverage.mjs
+--seeds=3 --summary --require-complete` release gate also checks that
+every decision has a choice and names a rider in its frame. It currently
+exits nonzero: 641,837 of 668,800 recorded rider-kilometres have no
+decision, and two cases refuse. A paid turn plan or energy ledger entry
+does not satisfy this gate.
 `node scripts/verify-physical-contact-matrix.mjs` reproduces all 42
 synthetic cells with explicit branch and 160-rider finish assertions.
 It also verifies all 1,276,800 rider-kilometres have a nonempty

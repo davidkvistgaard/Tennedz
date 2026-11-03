@@ -28,17 +28,27 @@ for(let seed=1;seed<=seedCount;seed++)
   const coverage={riderKilometres:0,paidEnergyRows:0,
     forwardDecisionRows:0,forwardRiderKilometres:0,
     pelotonRiderKilometres:0,droppedRiderKilometres:0,
-    droppedDecisionRows:0};
+    droppedDecisionRows:0,coveredRiderKilometres:0,
+    uncoveredRiderKilometres:0};
   for(const frame of recording.frames){
     const count=frame.riderGroups.length;
     if(count!==160||frame.energyLedger.length!==count)
       throw new Error('Rider coverage source is incomplete.');
+    const riderIds=new Set(frame.riderGroups.map(row=>row.id));
+    if(riderIds.size!==count)
+      throw new Error('Duplicate rider in a V94 frame.');
     coverage.riderKilometres+=count;
     coverage.paidEnergyRows+=frame.energyLedger.length;
     coverage.forwardDecisionRows+=frame.roadGroupRiderDecisions.length;
     const decisions=new Set(frame.roadGroupRiderDecisions.map(row=>row.riderId));
     if(decisions.size!==frame.roadGroupRiderDecisions.length)
       throw new Error('Duplicate forward rider decision.');
+    if(frame.roadGroupRiderDecisions.some(row=>
+      !riderIds.has(row.riderId)||
+      typeof row.choice!=='string'||!row.choice.trim()))
+      throw new Error('Invalid forward rider decision.');
+    coverage.coveredRiderKilometres+=decisions.size;
+    coverage.uncoveredRiderKilometres+=count-decisions.size;
     for(const rider of frame.riderGroups){
       if(rider.group==='breakaway'||rider.group==='front')
         coverage.forwardRiderKilometres++;
@@ -56,14 +66,28 @@ if(process.argv.includes('--summary')){
     validatedCases:0,refusedCases:0,riderKilometres:0,
     paidEnergyRows:0,forwardDecisionRows:0,
     pelotonRiderKilometres:0,droppedRiderKilometres:0,
-    droppedDecisionRows:0};
+    droppedDecisionRows:0,coveredRiderKilometres:0,
+    uncoveredRiderKilometres:0};
   for(const row of results){
     if(row.refusal){totals.refusedCases++;continue;}
     totals.validatedCases++;
     for(const key of ['riderKilometres','paidEnergyRows',
       'forwardDecisionRows','pelotonRiderKilometres',
-      'droppedRiderKilometres','droppedDecisionRows'])
+      'droppedRiderKilometres','droppedDecisionRows',
+      'coveredRiderKilometres',
+      'uncoveredRiderKilometres'])
       totals[key]+=row.coverage[key];
   }
   console.log(JSON.stringify(totals));
 }else console.log(JSON.stringify(results));
+if(process.argv.includes('--require-complete')){
+  const refusals=results.filter(row=>row.refusal);
+  const missing=results.reduce((sum,row)=>sum+
+    (row.coverage?.uncoveredRiderKilometres??0),0);
+  if(refusals.length||missing){
+    console.error(`V94 decision coverage refused: `+
+      `${refusals.length} incomplete races, `+
+      `${missing} rider-kilometres without a choice.`);
+    process.exitCode=1;
+  }
+}
