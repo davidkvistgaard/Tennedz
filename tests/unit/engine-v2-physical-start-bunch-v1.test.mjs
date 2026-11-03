@@ -122,6 +122,9 @@ import {replayPhysicalCommittedStageReleaseKmV1,
   replayPhysicalCommittedStageReleaseFinishV1,
   validatePhysicalCommittedStageReleaseFinishV1} from
   '../../lib/engine/v2/physical-committed-stage-release-km-v1.mjs';
+import {probePhysicalCommittedStageBunchContactV1,
+  validatePhysicalCommittedStageBunchContactV1} from
+  '../../lib/engine/v2/physical-committed-stage-bunch-contact-v1.mjs';
 import {replayPhysicalFrontRaceV1,
   validatePhysicalFrontRaceV1} from
   '../../lib/engine/v2/physical-front-race-replay-v1.mjs';
@@ -1417,6 +1420,50 @@ test('committed later-stage plan releases only a rider able to hold',()=>{
       start:startPhysicalBunchV1(
         catchStartInput)}),
   /needs paid bunch contact/);
+  const catchInput={...input,
+    startInput:catchStartInput,
+    start:startPhysicalBunchV1(
+      catchStartInput),throughKm:20};
+  const contact=probePhysicalCommittedStageBunchContactV1(
+    catchInput);
+  assert.equal(contact.contact.sourceKm,7);
+  assert.ok(contact.contact.atDistanceM>6000&&
+    contact.contact.atDistanceM<7000);
+  assert.equal(contact.contact.bunchRiders.length,23);
+  assert.equal(contact.contact.bunchRiders.filter(row=>
+    row.role==='leader').length,1);
+  assert.ok(contact.contact.soloEnergySpentToContact>0&&
+    contact.contact.soloEnergyAtContact>=80);
+  assert.equal(contact.contact.physicalGroupsStillSeparate,true);
+  assert.equal(validatePhysicalCommittedStageBunchContactV1(
+    catchInput,contact),true);
+  const fullSolo=priceRearEnergyDemandV1({
+    rider:catchTeams[2].riders[3],
+    segment:catchRoute[6],
+    energyBefore:contact.contact.soloEnergyBefore,
+    effort:'conserve',role:'solo',
+    distanceM:1000});
+  const partialReserve=(fullSolo.energyAfter+
+    contact.contact.soloEnergyAtContact)/2;
+  assert.ok(partialReserve>fullSolo.energyAfter);
+  const partialPlan=commitRearSoloPlanV1({
+    ...plan,phases:[{...plan.phases[0],
+      committedStagePlan:{...plan.phases[0]
+        .committedStagePlan,
+        reserveEnergy:partialReserve}}]});
+  const partialInput={...catchInput,
+    startInput:{...catchStartInput,
+      soloCommitments:[partialPlan]}};
+  partialInput.start=startPhysicalBunchV1(
+    partialInput.startInput);
+  assert.ok(probePhysicalCommittedStageBunchContactV1(
+    partialInput).contact.soloEnergyAtContact>=
+      partialReserve);
+  const forgedContact=structuredClone(contact);
+  forgedContact.contact.metresIntoKm+=1;
+  assert.throws(()=>
+    validatePhysicalCommittedStageBunchContactV1(
+      catchInput,forgedContact),/differs/);
 });
 
 test('perceived chase choice reads a replayed physical front gap',()=>{

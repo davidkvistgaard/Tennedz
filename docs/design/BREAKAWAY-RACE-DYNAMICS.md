@@ -4390,3 +4390,17 @@ behind the bunch and with 60.455–83.175 energy, exceeding its
 committed reserve of 20. These controlled sources check continuity
 and scale; their small time gaps are not calibrated release or chase
 outcomes for a varied field.
+
+A changed-terrain counterfactual has a weaker paid bunch leader on km 7
+and a stronger conserving rider behind. The no-contact finish replay
+refuses when their clocks cross. A separate versioned contact probe
+now sources their first meeting inside that kilometre from the prior
+positive gap and both measured pace lines. It records the exact metre
+and clock, the solo's exposed cost to contact, and each of the 23
+bunch riders' cost and energy to that point. Forged contact metres
+fail replay. A reserve chosen between the solo's contact energy and
+its projected full-kilometre energy still permits the paid contact;
+unridden solo metres are not charged. The event leaves both physical
+groups separate and marks
+the rider's next choice and remainder of the road unsettled; a later
+join cannot silently inherit a wheel or a full kilometre of shelter.
