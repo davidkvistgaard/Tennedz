@@ -4797,3 +4797,15 @@ changes some remaining energy and rear-group membership. This doubles
 the full-field synthetic matrix to eight cases; it still lacks front
 break and broad sporting calibration, so observed clocks are not
 official results.
+
+The same role-matrix seed also completes four terrain counterfactuals:
+the climbs after km 40 increase from 6% to 8% while riders, orders and
+other route segments stay fixed. At fatigue 10 and 30, both the 120-km
+and 260-km routes retain 160 paid riders, source-replayed contacts and
+observed route-end clocks. Compared with their matching 6% runs, the
+earliest clock rises by about 126 seconds at 120 km and 317 seconds at
+260 km; the lowest remaining rider energy falls in all four cases.
+The audit asserts these directions against the matching same-seed
+baseline. This expands the full-field synthetic matrix to twelve
+cases, but does not validate front breaks, chase timing, finish order
+or official results. Guided V94 routing remains withheld.

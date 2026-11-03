@@ -1776,12 +1776,27 @@ if(process.argv.includes('--probe-rear-ordered-prefix')){
     selectedCase?.split(':')??[];
   const roleMatrix=process.argv.includes(
     '--probe-rear-ordered-role-matrix');
-  if(roleMatrix||selectedCase&&
-    selectedVariant==='varied_captain'){
-    const probeRoleCase=(distanceKm,fatigue)=>{
+  const terrainMatrix=process.argv.includes(
+    '--probe-rear-ordered-terrain-matrix');
+  if(roleMatrix||terrainMatrix||selectedCase&&
+    ['varied_captain',
+      'harder_late_climbs'].includes(
+        selectedVariant)){
+    const variant=terrainMatrix?
+      'harder_late_climbs':selectedVariant;
+    const probeRoleCase=(distanceKm,fatigue,
+      scenarioVariant)=>{
     const base=source(distanceKm,fatigue,
       'varied_captain');
     const startInput={...base.startInput,
+      routeKilometres:scenarioVariant===
+        'harder_late_climbs'?
+        base.startInput.routeKilometres
+          .map(segment=>segment.km>40&&
+            segment.terrain==='climb'?{
+              ...segment,gradientPct:8}:
+            segment):
+        base.startInput.routeKilometres,
       physicalDraftVersion:4,
       physicalRearIntentVersion:2};
     const start=startPhysicalBunchV1(startInput);
@@ -1807,11 +1822,11 @@ if(process.argv.includes('--probe-rear-ordered-prefix')){
     const mixed=probeMixedPrefix(startInput,prior);
     return {
       distanceKm,fatigue,
-      variant:'varied_captain',
+      variant:scenarioVariant,
       firstPaidKm:throughKm,
       mixed};
     };
-    const cases=roleMatrix?
+    const cases=roleMatrix||terrainMatrix?
       [120,260].flatMap(distanceKm=>
         [10,30].map(fatigue=>[
           distanceKm,fatigue])):
@@ -1819,8 +1834,8 @@ if(process.argv.includes('--probe-rear-ordered-prefix')){
         Number(selectedFatigue)]];
     const results=cases.map(([distanceKm,
       fatigue])=>probeRoleCase(distanceKm,
-      fatigue));
-    if(roleMatrix)
+      fatigue,variant));
+    if(roleMatrix||terrainMatrix)
       assert.ok(results.every(row=>
         row.mixed.lastFullKm===
           row.distanceKm&&
@@ -1831,6 +1846,26 @@ if(process.argv.includes('--probe-rear-ordered-prefix')){
           item.contacts?.some(contact=>
             contact.outcome===
               'pass_through'))));
+    const baseline=terrainMatrix?
+      cases.map(([distanceKm,fatigue])=>
+        probeRoleCase(distanceKm,fatigue,
+          'varied_captain')):null;
+    if(baseline)
+      assert.ok(results.every((row,index)=>{
+        const base=baseline[index];
+        return base.mixed.lastFullKm===
+          base.distanceKm&&
+          base.mixed.observedFinish
+            ?.riderCount===160&&
+          row.mixed.observedFinish
+            .earliestSeconds>
+            base.mixed.observedFinish
+              .earliestSeconds&&
+          row.mixed.observedFinish
+            .minimumEnergy<
+            base.mixed.observedFinish
+              .minimumEnergy;
+      }));
     process.stdout.write(JSON.stringify({results},
       null,2)+'\n');
     process.exit(0);
