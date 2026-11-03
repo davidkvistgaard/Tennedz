@@ -5303,6 +5303,14 @@ every decision has a choice and names a rider in its frame. It currently
 exits nonzero: 641,837 of 668,800 recorded rider-kilometres have no
 decision, and two cases refuse. A paid turn plan or energy ledger entry
 does not satisfy this gate.
+The read-only three-seed inventory now separates the 641,837 missing
+choices by recorded road group: 207 forward rider-kilometres, 639,286
+peloton rider-kilometres and 2,344 dropped rider-kilometres. All 28,936
+named paid bunch-worker rider-kilometres in completed cases lack a
+recorded rider choice. These workers are a concrete decision-source gap;
+their paid turn plan alone is not a sporting-goal decision. The two
+refused cases have no completed frames in these totals.
+
 The two refusals are the 120-km mountain/fatigue-30 case at km 80 in
 seed 1 and the 260-km mountain/fatigue-30 case at km 220 in seed 2.
 Both reach the existing guard against a fresh attack alongside paid

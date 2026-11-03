@@ -31,7 +31,12 @@ for(let seed=1;seed<=seedCount;seed++)
     forwardDecisionRows:0,forwardRiderKilometres:0,
     pelotonRiderKilometres:0,droppedRiderKilometres:0,
     droppedDecisionRows:0,coveredRiderKilometres:0,
-    uncoveredRiderKilometres:0};
+    uncoveredRiderKilometres:0,
+    uncoveredForwardRiderKilometres:0,
+    uncoveredPelotonRiderKilometres:0,
+    uncoveredDroppedRiderKilometres:0,
+    paidBunchWorkerRiderKilometres:0,
+    paidBunchWorkerWithoutDecision:0};
   for(const frame of recording.frames){
     const count=frame.riderGroups.length;
     if(count!==160||frame.energyLedger.length!==count)
@@ -51,15 +56,35 @@ for(let seed=1;seed<=seedCount;seed++)
       throw new Error('Invalid forward rider decision.');
     coverage.coveredRiderKilometres+=decisions.size;
     coverage.uncoveredRiderKilometres+=count-decisions.size;
+    const paidWorkers=new Set((frame.pelotonFrontTurnPlan?.turns??[])
+      .map(turn=>turn.leaderRiderId));
+    if(paidWorkers.size!==
+      (frame.pelotonFrontTurnPlan?.turns?.length??0)||
+      [...paidWorkers].some(id=>!riderIds.has(id)))
+      throw new Error('Paid bunch worker is absent or repeated.');
+    coverage.paidBunchWorkerRiderKilometres+=paidWorkers.size;
+    coverage.paidBunchWorkerWithoutDecision+=
+      [...paidWorkers].filter(id=>!decisions.has(id)).length;
     for(const rider of frame.riderGroups){
-      if(rider.group==='breakaway'||rider.group==='front')
+      if(rider.group==='breakaway'||rider.group==='front'){
         coverage.forwardRiderKilometres++;
-      else if(rider.group==='peloton')coverage.pelotonRiderKilometres++;
-      else if(rider.group==='dropped'){
+        if(!decisions.has(rider.id))
+          coverage.uncoveredForwardRiderKilometres++;
+      }else if(rider.group==='peloton'){
+        coverage.pelotonRiderKilometres++;
+        if(!decisions.has(rider.id))
+          coverage.uncoveredPelotonRiderKilometres++;
+      }else if(rider.group==='dropped'){
         coverage.droppedRiderKilometres++;
         if(decisions.has(rider.id))coverage.droppedDecisionRows++;
-      }
+        else coverage.uncoveredDroppedRiderKilometres++;
+      }else throw new Error('Unknown rider road group.');
     }
+    if(coverage.uncoveredRiderKilometres!==
+      coverage.uncoveredForwardRiderKilometres+
+      coverage.uncoveredPelotonRiderKilometres+
+      coverage.uncoveredDroppedRiderKilometres)
+      throw new Error('Missing decisions differ from road groups.');
   }
   results.push({seed,distanceKm,terrain,fatigue,coverage});
 }
@@ -69,7 +94,12 @@ if(process.argv.includes('--summary')){
     paidEnergyRows:0,forwardDecisionRows:0,
     pelotonRiderKilometres:0,droppedRiderKilometres:0,
     droppedDecisionRows:0,coveredRiderKilometres:0,
-    uncoveredRiderKilometres:0};
+    uncoveredRiderKilometres:0,
+    uncoveredForwardRiderKilometres:0,
+    uncoveredPelotonRiderKilometres:0,
+    uncoveredDroppedRiderKilometres:0,
+    paidBunchWorkerRiderKilometres:0,
+    paidBunchWorkerWithoutDecision:0};
   for(const row of results){
     if(row.refusal){totals.refusedCases++;continue;}
     totals.validatedCases++;
@@ -77,7 +107,12 @@ if(process.argv.includes('--summary')){
       'forwardDecisionRows','pelotonRiderKilometres',
       'droppedRiderKilometres','droppedDecisionRows',
       'coveredRiderKilometres',
-      'uncoveredRiderKilometres'])
+      'uncoveredRiderKilometres',
+      'uncoveredForwardRiderKilometres',
+      'uncoveredPelotonRiderKilometres',
+      'uncoveredDroppedRiderKilometres',
+      'paidBunchWorkerRiderKilometres',
+      'paidBunchWorkerWithoutDecision'])
       totals[key]+=row.coverage[key];
   }
   console.log(JSON.stringify(totals));
