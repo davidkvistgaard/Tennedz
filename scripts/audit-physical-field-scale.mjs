@@ -73,7 +73,8 @@ import {replayPhysicalFrontToRearAllRaceV1,
   '../lib/engine/v2/physical-front-to-rear-all-race-v1.mjs';
 import {discoverPhysicalFrontToRearContactV1,
   validatePhysicalFrontToRearContactV1,
-  replayPhysicalDiscoveredFrontToRearRaceV1} from
+  replayPhysicalDiscoveredFrontToRearRaceV1,
+  validatePhysicalDiscoveredFrontToRearRaceV1} from
   '../lib/engine/v2/physical-front-to-rear-discovery-v1.mjs';
 import {probePhysicalFrontRearGroupBunchContactV1,
   validatePhysicalFrontRearGroupBunchContactV1} from
@@ -1100,6 +1101,58 @@ if(process.argv.includes('--probe-front-rear-threat')){
       const race=
         replayPhysicalDiscoveredFrontToRearRaceV1(
           discoveryInput);
+      assert.equal(
+        validatePhysicalDiscoveredFrontToRearRaceV1(
+          discoveryInput,race),true);
+      if(process.argv.includes(
+        '--expect-mixed-catch')){
+        assert.match(discovery.version,
+          /catch-boundary-discovery-1$/);
+        assert.equal(discovery
+          .allowFrontCatchBoundary,true);
+        assert.match(race.version,
+          /catch-boundary-race-1$/);
+        const transition=race.sources.transition;
+        assert.match(transition.version,
+          /catch-boundary-km-1$/);
+        assert.match(transition.sources
+          .boundary.version,
+          /catch-boundary-km-1$/);
+        const separated=transition.sources
+          .groupSeparations;
+        assert.equal(separated.length,1);
+        assert.equal(separated[0]
+          .slideDecision.riderId,
+          discovery.event.roadIds.find(id=>
+            id.startsWith('front-'))
+            .slice('front-'.length));
+        assert.ok(separated[0].event
+          .clockSeconds>
+            discovery.event.clockSeconds);
+        assert.equal(separated[0]
+          .paidJoin.decisions.length,1);
+        assert.equal(transition.sources
+          .frontSegments.at(-1).toMetres,
+          1000);
+        assert.equal(race.riderIds.length,160);
+        assert.equal(race.kilometres.length,
+          distanceKm);
+        const explicitInput={...discoveryInput,
+          frontContactKm:discovery.contactKm,
+          allowFrontCatchBoundary:true};
+        const explicit=
+          replayPhysicalFrontToRearAllRaceV1(
+            explicitInput);
+        assert.equal(
+          validatePhysicalFrontToRearAllRaceV1(
+            explicitInput,explicit),true);
+        assert.deepEqual(race
+          .observedFinishSecondsByRider,
+        explicit.observedFinishSecondsByRider);
+        assert.deepEqual(race
+          .observedFinishEnergyByRider,
+        explicit.observedFinishEnergyByRider);
+      }
       if(process.argv.includes(
         '--expect-group-pass')){
         assert.equal(discovery.contactKm,68);
@@ -1145,6 +1198,10 @@ if(process.argv.includes('--probe-front-rear-threat')){
         groupBunchContact:error
           .groupBunchContact??null};
     }
+    if(process.argv.includes(
+      '--expect-mixed-catch'))
+      assert.equal(frontToRearDiscoveryProbe
+        .finishRiderCount,160);
   }
   if(process.argv.includes(
     '--expect-no-front-to-rear'))

@@ -5107,6 +5107,23 @@ contact and their segmented energy replay to 120- and 260-km
 observed finishes for all 160 riders at fatigue 10. This remains an
 opt-in source recording, separate from guided races.
 
+With the front rider's mountain skill at 50, a conserve order from
+km 40 and the recorded worker relief at km 95, fatigue-30 rosters 1
+and 3 have a different mixed contact within their front-catch
+kilometres. The front meets a rear solo first, at
+metres 106,055.059732 and 68,102.574240 respectively. The two paid
+roads form a group with the rear rider as its single leader. The
+repriced group meets the bunch at metres 106,120.093856 and
+68,227.392351, earlier than the old front-solo/bunch candidate.
+At each meeting the rear rider can pay and hold bunch shelter; the
+former front rider cannot and slides onto a separate paid solo road.
+The remaining rear contacts, per-rider decisions, segmented energy
+and observed finishes replay for all 160 riders through both 120 and
+260 km. The mixed boundary, contact kilometre, explicit race,
+discovery and discovered race have separate versions; the previous
+front-to-rear and front/bunch recordings keep their identifiers.
+These are opt-in observations and do not change guided races.
+
 Roster 5's km-67 source now first joins the two rear solos at metre
 66,055.650411, with one paid leader and a sheltered follower. The
 repriced pair remains behind the bunch as the bunch catches the front.
