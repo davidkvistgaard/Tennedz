@@ -5326,14 +5326,15 @@ An opt-in `physicalDecisionVersion: 1` on the committed physical
 start now records the bunch choice source version and the actual
 manager effort on each bunch rider decision. The default recording
 schema is unchanged. The contact matrix enables this source and
-requires an explicit order effort on every decision; decisions from
-other physical sources still need their own policy version before
-promotion.
+requires an explicit order effort on every decision.
 The same opt-in now versions each decision from the paid rear solo,
 solo continuation and rear group track at its generating source.
 The read-only coverage audit reports missing versions by choice and
-reason; one 120 km, 160-rider case falls from 3,962 unversioned rows
-to 476 with no change in paid finish, energy or contact checks.
+reason. Front solo, rear contact, paid bunch join and slide decisions
+also carry the version of their deciding source or policy. The
+version 6 matrix requires a nonempty version on every recorded
+decision in all 42 cases. Other physical paths are not established
+by this holdout.
 The version 5 gate checks that every rider-kilometre has finite,
 nonnegative energy, a forward-moving observed road clock and a
 physical group ID. It also checks exactly one state for each known

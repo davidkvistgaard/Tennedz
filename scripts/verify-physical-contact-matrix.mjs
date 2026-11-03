@@ -123,6 +123,10 @@ function runCase({roster,fatigue,distance}){
             .decisionRows,
           missingRiderId:result.decisionCoverage
             .missingRiderId,
+          missingVersion:result.decisionCoverage
+            .missingVersion,
+          missingVersionByReason:result.decisionCoverage
+            .missingVersionByReason,
           finishRiderCount:result.finishRiderCount});
       }catch(error){
         reject(new Error(`Roster ${roster}, fatigue ${fatigue}, ${distance} km: ${error.message}`));
@@ -150,11 +154,20 @@ try{
   await Promise.all(Array.from({length:3},
     ()=>worker()));
   assert.equal(results.length,42);
-  console.log(JSON.stringify({version:5,
+  const unversioned=results.filter(row=>
+    row.missingVersion>0);
+  assert.equal(unversioned.length,0,
+    JSON.stringify(unversioned.map(row=>({
+      roster:row.roster,fatigue:row.fatigue,
+      distance:row.distance,
+      missingVersion:row.missingVersion,
+      reasons:row.missingVersionByReason}))));
+  console.log(JSON.stringify({version:6,
     seed:'physical-20-team-scale-1',
     cases:results.length,
     finishRiderCount:160,
-    results}));
+    results:results.map(({
+      missingVersionByReason,...row})=>row)}));
 }catch(error){
   console.error(error.message);
   process.exitCode=1;

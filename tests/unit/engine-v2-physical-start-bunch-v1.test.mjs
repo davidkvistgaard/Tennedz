@@ -109,6 +109,8 @@ import {priceRearEnergyDemandV1} from
 import {runPhysicalFrontSoloV1,
   validatePhysicalFrontSoloV1} from
   '../../lib/engine/v2/physical-front-solo-run-v1.mjs';
+import {advancePhysicalChasedFrontStepV1} from
+  '../../lib/engine/v2/physical-chased-front-step-v1.mjs';
 import {replayPhysicalFrontFirstRearLossKmV1,
   validatePhysicalFrontFirstRearLossKmV1} from
   '../../lib/engine/v2/physical-front-first-rear-loss-v1.mjs';
@@ -319,6 +321,30 @@ test('opt-in rear road decisions carry their paid source version',()=>{
   assert.equal(solo.endClock,legacy.endClock);
   assert.equal(solo.rows[0].energyAfter,
     legacy.rows[0].energyAfter);
+});
+
+test('opt-in rear contact choice versions each rider decision',()=>{
+  const base=source();
+  const input={startInput:base.startInput,km:2,
+    roadIds:['solo-other-2','solo-other-3'],
+    riderIdsByRoad:{'solo-other-2':['other-2'],
+      'solo-other-3':['other-3']},
+    catchingRoadId:null,
+    observedSecondsPerKmByRoad:{
+      'solo-other-2':90,'solo-other-3':91},
+    leaderRiderId:'other-2'};
+  const legacy=decidePhysicalRearContactV1(input);
+  assert.ok(legacy.riderDecisions.every(row=>
+    row.version===undefined));
+  const choice=decidePhysicalRearContactV1({
+    ...input,startInput:{...base.startInput,
+      physicalDecisionVersion:1}});
+  assert.match(choice.version,/-decisions-1$/);
+  assert.deepEqual(choice.riderDecisions.map(row=>
+    row.choice),['pull','join_shelter']);
+  assert.ok(choice.riderDecisions.every(row=>
+    row.version===choice.version&&
+    row.teamOrderEffort==='steady'));
 });
 
 test('start line pays one named leader and all 23 sheltered riders',()=>{
@@ -1071,6 +1097,32 @@ test('named manager attack forms front solo only by paid faster road',()=>{
   assert.equal(front.physicalGroup.atDistanceM,20000);
   assert.ok(front.observedFinishSeconds>0);
   assert.equal(validatePhysicalFrontSoloV1(frontInput,front),true);
+  assert.ok(front.steps.every(row=>
+    row.decision.version===undefined));
+  const versionedStartInput={...input.startInput,
+    physicalDecisionVersion:1};
+  const versionedFront=runPhysicalFrontSoloV1({
+    startInput:versionedStartInput,
+    start:startPhysicalBunchV1(versionedStartInput),
+    attackKm:2,throughKm:4});
+  assert.ok(versionedFront.steps.every(row=>
+    row.decision.version===row.version&&
+    row.decision.teamOrderEffort==='hard'));
+  assert.equal(versionedFront.steps[0].energyAfter,
+    front.steps[0].energyAfter);
+  const chasedInput={frontRiderId:'other-2',
+    priorFront:front.steps[0],
+    segment:input.startInput.routeKilometres[3]};
+  const legacyChased=advancePhysicalChasedFrontStepV1({
+    ...chasedInput,startInput:input.startInput});
+  const versionedChased=advancePhysicalChasedFrontStepV1({
+    ...chasedInput,startInput:versionedStartInput});
+  assert.equal(legacyChased.decision.version,
+    undefined);
+  assert.equal(versionedChased.decision.version,
+    versionedChased.version);
+  assert.equal(versionedChased.energyAfter,
+    legacyChased.energyAfter);
   const forgedFront=structuredClone(front);
   forgedFront.steps[0].gapSecondsToBunch+=1;
   assert.throws(()=>validatePhysicalFrontSoloV1(
