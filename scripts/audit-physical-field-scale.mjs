@@ -58,6 +58,9 @@ import {finishPhysicalOrderedSoloBunchJoinKmV1} from
 import {inspectPhysicalOrderedRearBoundaryV1,
   validatePhysicalOrderedRearBoundaryV1} from
   '../lib/engine/v2/physical-ordered-rear-boundary-v1.mjs';
+import {resolvePhysicalOrderedRearFirstContactV1,
+  validatePhysicalOrderedRearFirstContactV1} from
+  '../lib/engine/v2/physical-ordered-rear-first-contact-v1.mjs';
 import {replayPhysicalStaggeredRearEventsV1,
   validatePhysicalStaggeredRearEventsV1,
   inspectPhysicalRearEventEndStateV1,
@@ -1296,6 +1299,16 @@ if(process.argv.includes('--probe-rear-ordered-prefix')){
             assert.equal(
               validatePhysicalOrderedRearBoundaryV1(
                 boundaryInput,boundary),true);
+            const firstContact=boundary.firstEvent?
+              resolvePhysicalOrderedRearFirstContactV1(
+                boundaryInput):null;
+            if(firstContact){
+              assert.equal(
+                validatePhysicalOrderedRearFirstContactV1(
+                  boundaryInput,firstContact),true);
+              assert.equal(firstContact.contact
+                .outcome,'join');
+            }
             const crossingCandidates=soloField.refusals
               .map(refusal=>{
                 const input={startInput,start,staggered,
@@ -1317,6 +1330,11 @@ if(process.argv.includes('--probe-rear-ordered-prefix')){
               source:'independent_solo',
               refusalCount:soloField.refusals.length,
               firstOrderedEvent:boundary.firstEvent,
+              firstContactGroup:firstContact?.contact
+                .physicalGroup??null,
+              firstContactLeader:
+                firstContact?.candidateGroupRoad
+                  ?.leaderRiderId??null,
               candidateBunchClockDifference:
                 boundary.candidateBunchClockDifference,
               independentCrossingPreemptedByRearJoin:
@@ -1390,9 +1408,12 @@ if(process.argv.includes('--probe-rear-ordered-prefix')){
       'solo-team-11-2|solo-team-18-0'&&
     row.firstOrderedEvent.clockSeconds<
       row.firstCrossings[0].clockSeconds&&
+    row.firstContactGroup?.riderIds.length===2&&
+    row.firstContactLeader==='team-18-0'&&
     row.independentCrossingPreemptedByRearJoin===
       false:
     row.firstOrderedEvent===null&&
+    row.firstContactGroup===null&&
     row.independentCrossingPreemptedByRearJoin===
       true&&
     row.crossingRiderActualRoadId.startsWith(

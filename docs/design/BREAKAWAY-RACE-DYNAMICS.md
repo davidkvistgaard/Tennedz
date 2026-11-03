@@ -4578,3 +4578,13 @@ next-kilometre road has no contact. The standalone solo crossing is
 therefore diagnostic only. The boundary probe orders these first
 events from actual prior group membership and refuses to change
 membership or award a finish until the subsequent road is priced.
+
+The first ordered rear contact now also replays both solo approaches
+to metre 31,225.68 and asks each rider to choose using only the two
+observed road speeds, current energy, committed team order and stake.
+In the fatigue-10 160-rider probes, both choose to form a two-rider
+group; `team-18-0` pays its first exposed turn and `team-11-2` receives
+the lower shelter cost. A candidate group road is priced from their
+contact energy, but its later intersections and the other active
+rear roads have not yet been settled. No full km-32 state, field
+return or finish is claimed from that candidate.
