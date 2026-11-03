@@ -42,7 +42,8 @@ for(let seed=1;seed<=seedCount;seed++)
               id!==team.id&&!team.riders.some(rider=>
                 rider.id===id))}));
         const front=Array.from({length:distanceKm},
-          (_,index)=>orders.map(teamOrders=>({
+          (_,index)=>orders.map((teamOrders,teamIndex)=>({
+            teamId:plan.teams[teamIndex].id,
             order:orderAt(teamOrders,index),
             teamOrders})).filter(row=>
             row.order.frontWork==='rotate'));
@@ -59,6 +60,18 @@ for(let seed=1;seed<=seedCount;seed++)
           sum+rows.filter(({order,teamOrders})=>
             !teamOrders.helperIds.includes(
               order.frontWorkRiderId)).length,0);
+        const firstMultipleIndex=counts.findIndex(count=>count>1);
+        const firstUnnamedIndex=front.findIndex(rows=>
+          rows.some(({order,teamOrders})=>
+            !teamOrders.helperIds.includes(
+              order.frontWorkRiderId)));
+        const firstMissingStake=plan.intent.find(row=>
+          !['sprint_finish','summit_attack',
+            'break_stage','none'].includes(
+            row.sportingGoal)||
+          !plan.teams.some(team=>team.id===row.teamId&&
+            team.riders.some(rider=>rider.id===
+              row.sportingCaptainId)));
         rows.push({seed,distanceKm,terrain,fatigue,
           riderCount:plan.teams.reduce((sum,team)=>
             sum+team.riders.length,0),
@@ -73,10 +86,39 @@ for(let seed=1;seed<=seedCount;seed++)
           orderedFrontTeamKm:counts.reduce((sum,count)=>
             sum+count,0),
           unnamedFrontTeamKm,
-          maximumOrderedFrontTeams:Math.max(...counts)});
+          maximumOrderedFrontTeams:Math.max(...counts),
+          firstMultipleFrontOrder:firstMultipleIndex<0?null:{
+            km:firstMultipleIndex+1,
+            teams:front[firstMultipleIndex].map(row=>({
+              teamId:row.teamId,
+              frontWorkRiderId:row.order.frontWorkRiderId??null,
+              effort:row.order.effort}))},
+          firstUnnamedFrontOrder:firstUnnamedIndex<0?null:{
+            km:firstUnnamedIndex+1,
+            teams:front[firstUnnamedIndex].filter(
+              ({order,teamOrders})=>
+                !teamOrders.helperIds.includes(
+                  order.frontWorkRiderId)).map(row=>({
+              teamId:row.teamId,
+              frontWorkRiderId:row.order.frontWorkRiderId??null,
+              helperIds:row.teamOrders.helperIds}))},
+          firstMissingSportingStake:firstMissingStake?{
+            teamId:firstMissingStake.teamId,
+            role:firstMissingStake.role,
+            source:firstMissingStake.source,
+            sportingGoal:firstMissingStake.sportingGoal??null,
+            sportingCaptainId:
+              firstMissingStake.sportingCaptainId??null}:null});
       }
 
-const summary={version:3,seedCount,cases:rows.length,
+const firstEvidence=key=>{
+  const row=rows.find(item=>item[key]);
+  return row?{seed:row.seed,
+    distanceKm:row.distanceKm,
+    terrain:row.terrain,fatigue:row.fatigue,
+    ...row[key]}:null;
+};
+const summary={version:4,seedCount,cases:rows.length,
   riderCount:rows.every(row=>row.riderCount===
     rows[0].riderCount)?rows[0].riderCount:null,
   teamCases:rows.reduce((sum,row)=>
@@ -96,7 +138,13 @@ const summary={version:3,seedCount,cases:rows.length,
   unnamedFrontTeamKm:rows.reduce((sum,row)=>
     sum+row.unnamedFrontTeamKm,0),
   maximumOrderedFrontTeams:Math.max(...rows.map(
-    row=>row.maximumOrderedFrontTeams))};
+    row=>row.maximumOrderedFrontTeams)),
+  firstMultipleFrontOrder:firstEvidence(
+    'firstMultipleFrontOrder'),
+  firstUnnamedFrontOrder:firstEvidence(
+    'firstUnnamedFrontOrder'),
+  firstMissingSportingStake:firstEvidence(
+    'firstMissingSportingStake')};
 console.log(JSON.stringify(process.argv.includes('--rows')?
   {...summary,rows}:summary));
 if(process.argv.includes('--require-compatible')&&

@@ -5393,6 +5393,16 @@ the physical source requires one. Even the 1,140 single-team
 kilometres cannot be replayed directly. The V94 intent manifest also
 contains no explicit physical sporting goal and named captain pair
 for any of the 480 team cases; a generated role cannot supply one.
+
+The version 4 read-only preflight includes the first source examples
+with seed, route settings, kilometre and team IDs. For seed 1's
+120-km flat, fatigue-0 case, km 1 names `rival-5`, `rival-11`,
+`rival-14` and `rival-15` as simultaneous front-order teams; each
+`frontWorkRiderId` is absent. The first missing sporting-stake row is
+the manager-controlled `you` team, whose intent has neither an
+explicit sporting goal nor a sporting captain ID. These examples
+identify missing input and do not select a replacement rider or goal.
+
 A same-seed adapter needs an
 explicit, paid, versioned leader decision that resolves competing
 teams and selects an eligible worker from the committed roster using
