@@ -1160,6 +1160,57 @@ if(process.argv.includes('--probe-front-rear-threat')){
         explicit.observedFinishEnergyByRider);
       }
       if(process.argv.includes(
+        '--expect-early-bunch-before-front')){
+        assert.match(discovery.version,
+          /catch-boundary-discovery-1$/);
+        const transition=race.sources.transition;
+        const early=transition.sources
+          .bunchJoins.find(row=>
+            row.event.roadIds.includes(
+              'solo-team-18-4'));
+        assert.ok(early);
+        assert.ok(early.event.clockSeconds<
+          discovery.event.clockSeconds);
+        assert.ok(early.decisions.some(row=>
+          row.riderId==='team-18-4'));
+        const contactEvents=race.kilometres[
+          discovery.contactKm-1]
+          .contactEvents;
+        assert.deepEqual(contactEvents[0],{
+          event:early.event,
+          choice:'join_bunch',
+          riderIds:early.decisions.map(row=>
+            row.riderId)});
+        assert.ok(contactEvents.every(
+          (row,index)=>index===0||
+            row.event.clockSeconds>
+              contactEvents[index-1]
+                .event.clockSeconds));
+        assert.equal(transition.sources
+          .contacts.find(row=>
+            isDeepStrictEqual(row.event,
+              discovery.event))?.choice
+            .outcome,'join');
+        assert.equal(race.riderIds.length,160);
+        assert.equal(race.kilometres.length,
+          distanceKm);
+        const explicitInput={...discoveryInput,
+          frontContactKm:discovery.contactKm,
+          allowFrontCatchBoundary:true};
+        const explicit=
+          replayPhysicalFrontToRearAllRaceV1(
+            explicitInput);
+        assert.equal(
+          validatePhysicalFrontToRearAllRaceV1(
+            explicitInput,explicit),true);
+        assert.deepEqual(race
+          .observedFinishSecondsByRider,
+        explicit.observedFinishSecondsByRider);
+        assert.deepEqual(race
+          .observedFinishEnergyByRider,
+        explicit.observedFinishEnergyByRider);
+      }
+      if(process.argv.includes(
         '--expect-group-pass')){
         assert.equal(discovery.contactKm,68);
         const passages=race.sources.transition
@@ -1206,6 +1257,8 @@ if(process.argv.includes('--probe-front-rear-threat')){
     }
     if(process.argv.includes(
       '--expect-mixed-catch')||
+      process.argv.includes(
+        '--expect-early-bunch-before-front')||
       process.argv.includes(
         '--expect-group-pass')||
       process.argv.includes(

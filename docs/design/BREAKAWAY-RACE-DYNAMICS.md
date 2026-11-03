@@ -5237,3 +5237,15 @@ source continuity and finish coverage, but does not calibrate
 population-wide pursuit timing, role behaviour, energy distribution
 or finish spread against real race evidence. V94 remains opt-in and
 separate from guided races.
+
+A further fatigue-50 holdout changes the contact order. Roster 3's
+rear solo team-18-4 first joins the bunch at metre 68,155.556419;
+the front then meets rear solo team-13-1 at metre 68,412.450460.
+The earlier front/bunch candidate at metre 68,710.393814 is repriced
+after those paid contacts. The ordered source records the bunch join
+before the front/rear group, checks each rider's decisions and energy,
+and reaches all 160 observed finishes at 120 and 260 km with identical
+explicit and discovered finish clocks and energies. Roster 1 instead
+meets a rear solo in km 70 at metre 69,568.168036 and reaches all 160
+observed finishes at both distances. These two cases extend the
+synthetic holdout; they do not establish a real race distribution.
