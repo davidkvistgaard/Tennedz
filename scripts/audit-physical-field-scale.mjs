@@ -805,6 +805,9 @@ if(process.argv.includes('--probe-single-leader')){
     'varied_field');
   const baselineRoad=runPhysicalStaggeredBunchLossV1({
     ...baseline,throughKm:distanceKm});
+  const baselineSolo=probePhysicalStaggeredSoloFieldV1({
+    ...baseline,staggered:baselineRoad,
+    throughKm:distanceKm});
   const startInput={...baseline.startInput,
     physicalDraftVersion:3};
   const start=startPhysicalBunchV1(startInput);
@@ -851,6 +854,9 @@ if(process.argv.includes('--probe-single-leader')){
     null,2)+'\n');
     process.exit(0);
   }
+  const baselineRace=replayPhysicalStaggeredRearEventsV1({
+    ...baseline,staggered:baselineRoad,
+    soloField:baselineSolo,throughKm:distanceKm});
   const race=replayPhysicalStaggeredRearEventsV1(input);
   assert.equal(validatePhysicalStaggeredRearEventsV1(
     input,race),true);
@@ -860,6 +866,16 @@ if(process.argv.includes('--probe-single-leader')){
       state.decisions.length>0)));
   assert.equal(Object.keys(race
     .observedFinishSecondsByRider).length,160);
+  const baselineFinishEnergy=Object.fromEntries(
+    baselineRace.kilometres.at(-1).riderStates.map(
+      row=>[row.riderId,row.energyAfter]));
+  const finishEnergyDeltas=race.kilometres.at(-1)
+    .riderStates.map(row=>row.energyAfter-
+      baselineFinishEnergy[row.riderId]);
+  assert.ok(finishEnergyDeltas.every(
+    Number.isFinite));
+  assert.ok(finishEnergyDeltas.some(value=>
+    value>1e-6));
   process.stdout.write(JSON.stringify({
     distanceKm,fatigue,baselinePaceMatches,
     firstShelteredMatch:{km:firstLegacyMatch.km,
@@ -869,8 +885,33 @@ if(process.argv.includes('--probe-single-leader')){
         shelteredMatch.energySpent},
     candidatePaceMatches:countRole(staggered,
       'pace_match'),
+    baselineContacts:baselineRace.contactCount,
     losses:staggered.losses.length,
     contacts:race.contactCount,
+    baselineFinishSecondsRange:[
+      Math.min(...Object.values(baselineRace
+        .observedFinishSecondsByRider)),
+      Math.max(...Object.values(baselineRace
+        .observedFinishSecondsByRider))],
+    candidateFinishSecondsRange:[
+      Math.min(...Object.values(race
+        .observedFinishSecondsByRider)),
+      Math.max(...Object.values(race
+        .observedFinishSecondsByRider))],
+    baselineMinimumFinishEnergy:Math.min(...baselineRace
+      .kilometres.at(-1).riderStates.map(row=>
+        row.energyAfter)),
+    candidateMinimumFinishEnergy:Math.min(...race
+      .kilometres.at(-1).riderStates.map(row=>
+        row.energyAfter)),
+    finishEnergyIncreasedRiders:
+      finishEnergyDeltas.filter(value=>
+        value>1e-6).length,
+    finishEnergyDecreasedRiders:
+      finishEnergyDeltas.filter(value=>
+        value< -1e-6).length,
+    maximumFinishEnergyGain:
+      Math.max(...finishEnergyDeltas),
     finishRiders:Object.keys(race
       .observedFinishSecondsByRider).length},
   null,2)+'\n');

@@ -4285,3 +4285,13 @@ fatigue 30 fully replays one measured km-21 drop and all 160 finishes
 at both 120 and 260 km, with one exposed bunch leader in every
 kilometre. This covers a tired single-loss branch while the
 simultaneous-loss source remains unresolved.
+
+Same-seed version-2/version-3 finish comparison shows the accounting
+change reaches riders without a scripted finish adjustment. At 120 km,
+37 of 160 riders finish with more energy (largest gain 0.8), none
+finish with less, and the observed finish-clock range is unchanged.
+At 260 km, 37 finish with more energy (largest gain 4.147), two with
+less after subsequent physical interactions, rear contacts change
+from 22 to 18, and the earliest finish clock moves by about 0.0984
+seconds. These are model sensitivities, not evidence that the finish
+time or energy distribution is calibrated against cycling data.
