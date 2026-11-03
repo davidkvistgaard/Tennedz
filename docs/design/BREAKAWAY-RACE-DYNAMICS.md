@@ -4254,3 +4254,11 @@ and all 160 finish clocks replay. That captain later joins a different
 measured road when its own contact choice allows it. This demonstrates
 a role-and-stake dependent choice on identical observed contact, but
 does not calibrate how often a sprint captain should do so in a race.
+
+The event replay now checks two additional clock handoffs. A rider's
+first rear segment after a paid bunch loss must start at the bunch's
+clock for that split kilometre, and every later rear segment must
+start at that rider's previous recorded kilometre finish clock.
+Energy continuity was already checked at both points. The 24-rider
+loss and 160-rider contact witnesses still replay with these clock
+checks; an elapsed-time gap cannot be hidden between kilometres.
