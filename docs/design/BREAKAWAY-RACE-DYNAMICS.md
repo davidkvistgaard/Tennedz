@@ -5374,6 +5374,13 @@ front-catch source at the catch kilometre. This is a necessary contact
 condition; detailed event timing remains checked by the paid replay
 sources.
 
+The version 8 gate also examines each newly formed rear group with at
+least two riders. Its kilometre must contain a `join` contact whose
+paid event names at least two members of that group. This includes
+groups formed after simultaneous bunch losses, where the riders shared
+the peloton in the previous frame and a simple prior-group merge check
+would miss their formation.
+
 The read-only `node scripts/audit-v94-physical-input-compatibility.mjs
 --seeds=3 --require-compatible` preflight uses the same prepared V94
 teams and normalized manager orders without running or changing a race.

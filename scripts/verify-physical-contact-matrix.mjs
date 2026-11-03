@@ -109,6 +109,8 @@ function runCase({roster,fatigue,distance}){
           ?.effortExceedsOrder,0);
         assert.equal(result.decisionCoverage
           ?.unrecordedGroupMergeKm,0);
+        assert.equal(result.decisionCoverage
+          ?.unrecordedRearGroupFormationKm,0);
         for(const field of ['invalidEnergy',
           'invalidClock','nonForwardClock',
           'missingGroupId','missingRiderState',
@@ -131,6 +133,8 @@ function runCase({roster,fatigue,distance}){
             .decisionRows,
           groupMergeKm:result.decisionCoverage
             .groupMergeKm,
+          rearGroupFormationKm:result.decisionCoverage
+            .rearGroupFormationKm,
           missingRiderId:result.decisionCoverage
             .missingRiderId,
           missingVersion:result.decisionCoverage
@@ -166,6 +170,8 @@ try{
   assert.equal(results.length,42);
   assert.ok(results.reduce((sum,row)=>
     sum+row.groupMergeKm,0)>0);
+  assert.ok(results.reduce((sum,row)=>
+    sum+row.rearGroupFormationKm,0)>0);
   const unversioned=results.filter(row=>
     row.missingVersion>0);
   assert.equal(unversioned.length,0,
@@ -174,7 +180,7 @@ try{
       distance:row.distance,
       missingVersion:row.missingVersion,
       reasons:row.missingVersionByReason}))));
-  console.log(JSON.stringify({version:7,
+  console.log(JSON.stringify({version:8,
     seed:'physical-20-team-scale-1',
     cases:results.length,
     finishRiderCount:160,

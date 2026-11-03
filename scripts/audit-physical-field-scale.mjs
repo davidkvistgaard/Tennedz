@@ -463,6 +463,8 @@ if(process.argv.includes('--probe-front-rear-threat')){
       missingRiderState:0,duplicateRiderState:0,
       unknownRiderState:0,nonSequentialKm:0,
       groupMergeKm:0,unrecordedGroupMergeKm:0,
+      rearGroupFormationKm:0,
+      unrecordedRearGroupFormationKm:0,
       finishClockMismatch:0,
       finishEnergyMismatch:0};
     for(const [index,km] of race.kilometres.entries()){
@@ -585,6 +587,23 @@ if(process.argv.includes('--probe-front-rear-threat')){
       if(merged)summary.groupMergeKm++;
       if(merged&&!recordedContact)
         summary.unrecordedGroupMergeKm++;
+      const newRearGroups=[...currentGroups]
+        .filter(([groupId,states])=>
+          groupId?.startsWith('rear-')&&
+          states.length>1&&
+          states.every(state=>
+            priorGroupByRider.get(state.riderId)!==
+              groupId));
+      if(newRearGroups.length)
+        summary.rearGroupFormationKm++;
+      if(newRearGroups.some(([,states])=>{
+        const members=new Set(states.map(state=>
+          state.riderId));
+        return !(km.contactEvents??[]).some(row=>
+          row.choice==='join'&&
+          row.event?.riders?.filter(rider=>
+            members.has(rider.riderId)).length>=2);
+      }))summary.unrecordedRearGroupFormationKm++;
       for(const state of km.riderStates)
         priorGroupByRider.set(state.riderId,
           state.physicalGroupId);
