@@ -128,6 +128,9 @@ import {probePhysicalCommittedStageBunchContactV1,
 import {finishPhysicalCommittedStageBunchJoinKmV1,
   validatePhysicalCommittedStageBunchJoinKmV1} from
   '../../lib/engine/v2/physical-committed-stage-bunch-join-v1.mjs';
+import {replayPhysicalCommittedStageJoinRaceV1,
+  validatePhysicalCommittedStageJoinRaceV1} from
+  '../../lib/engine/v2/physical-committed-stage-join-race-v1.mjs';
 import {replayPhysicalFrontRaceV1,
   validatePhysicalFrontRaceV1} from
   '../../lib/engine/v2/physical-front-race-replay-v1.mjs';
@@ -1485,6 +1488,34 @@ test('committed later-stage plan releases only a rider able to hold',()=>{
   assert.throws(()=>
     validatePhysicalCommittedStageBunchJoinKmV1(
       catchInput,forgedJoin),/differs/);
+  const joinedRace=replayPhysicalCommittedStageJoinRaceV1(
+    catchInput);
+  assert.equal(joinedRace.kilometres.length,20);
+  assert.ok(joinedRace.kilometres.every(row=>
+    row.riderStates.length===24));
+  assert.equal(joinedRace.sources.later.length,13);
+  assert.ok(joinedRace.sources.later.every(step=>{
+    const saver=step.riderDecisions.find(row=>
+      row.riderId==='other-3');
+    return saver.goal==='save_for_stage'&&
+      saver.effort==='conserve'&&
+      saver.teamOrderEffort==='steady'&&
+      saver.reason==='committed_stage_plan_shelter'&&
+      step.riders.find(row=>row.riderId===
+        'other-3').role==='sheltered'&&
+      step.riders.filter(row=>row.role===
+        'leader').length===1;
+  }));
+  assert.equal(Object.keys(joinedRace
+    .observedFinishSecondsByRider).length,24);
+  assert.equal(validatePhysicalCommittedStageJoinRaceV1(
+    catchInput,joinedRace),true);
+  const falseRace=structuredClone(joinedRace);
+  falseRace.observedFinishSecondsByRider
+    ['other-3']+=1;
+  assert.throws(()=>
+    validatePhysicalCommittedStageJoinRaceV1(
+      catchInput,falseRace),/differs/);
 });
 
 test('perceived chase choice reads a replayed physical front gap',()=>{

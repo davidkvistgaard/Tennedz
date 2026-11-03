@@ -4416,3 +4416,15 @@ energy state at the km-7 boundary. The joining rider has two decisions
 for that kilometre. A forged join energy fails source replay. Later
 kilometres still need plan-aware bunch continuation before a finish
 can be claimed on this contact branch.
+
+The source-backed contact branch now continues to the 20-km finish.
+After joining, the rider remains a named sheltered member of the
+peloton and chooses `conserve` under its separately recorded `steady`
+team effort ceiling. Its committed stage-2 goal and reserve remain
+visible in each later decision; energy uses the lower sheltered cost
+and the group's one exposed leader still pays the turn. All 24 riders
+have a decision, energy and clock every kilometre, and all 24 actual
+finish clocks replay. A changed finish clock is refused. A later
+inability to hold at the conserving effort still needs its own paid
+drop and rear-road source; the isolated continuation refuses that
+branch rather than assigning a wheel or silently increasing effort.
