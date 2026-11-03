@@ -4625,3 +4625,10 @@ clock, per-rider energy and recorded membership; existing groups carry
 the next exposed-turn rotation. The broad probe checks those counts
 and source fields. This is a continuation source, not yet a km-33
 transition or whole-race calibration.
+
+An opt-in next-kilometre bunch probe now replays that complete km-32
+source before advancing its exact 133-member bunch into km 33. The
+other 27 rider IDs stay explicitly detached; a new paid pace loss may
+remove more riders, and an absent ordered front worker still needs a
+precommitted emergency replacement. This probe does not advance the
+24 rear roads or assert a complete km-33 field state.

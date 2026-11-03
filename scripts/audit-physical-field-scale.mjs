@@ -72,6 +72,9 @@ import {finishPhysicalOrderedRearBunchJoinKmV1,
 import {replayPhysicalOrderedRearKmV1,
   validatePhysicalOrderedRearKmV1} from
   '../lib/engine/v2/physical-ordered-rear-km-v1.mjs';
+import {replayPhysicalOrderedRearNextBunchKmV1,
+  validatePhysicalOrderedRearNextBunchKmV1} from
+  '../lib/engine/v2/physical-ordered-rear-next-bunch-v1.mjs';
 import {replayPhysicalStaggeredRearEventsV1,
   validatePhysicalStaggeredRearEventsV1,
   inspectPhysicalRearEventEndStateV1,
@@ -1380,6 +1383,18 @@ if(process.argv.includes('--probe-rear-ordered-prefix')){
                     Number.isInteger(
                       entity.rotationIndex))));
             }
+            const nextBunch=fullKm?
+              replayPhysicalOrderedRearNextBunchKmV1(
+                boundaryInput):null;
+            if(nextBunch){
+              assert.equal(
+                validatePhysicalOrderedRearNextBunchKmV1(
+                  boundaryInput,nextBunch),true);
+              assert.equal(nextBunch.sourceKm,
+                throughKm+1);
+              assert.equal(nextBunch.step.riders.length,
+                133);
+            }
             const crossingCandidates=soloField.refusals
               .map(refusal=>{
                 const input={startInput,start,staggered,
@@ -1435,6 +1450,10 @@ if(process.argv.includes('--probe-rear-ordered-prefix')){
                 ?.riderCount??null,
               fullKmGroups:fullKm
                 ?.physicalGroups.length??null,
+              nextBunchRiders:nextBunch
+                ?.step.riders.length??null,
+              nextBunchSplits:nextBunch
+                ?.step.splits.length??null,
               candidateBunchClockDifference:
                 boundary.candidateBunchClockDifference,
               independentCrossingPreemptedByRearJoin:
@@ -1528,6 +1547,7 @@ if(process.argv.includes('--probe-rear-ordered-prefix')){
     row.remainingCandidateEvents===0&&
     row.fullKmRiders===160&&
     row.fullKmGroups===25&&
+    row.nextBunchRiders===133&&
     row.independentCrossingPreemptedByRearJoin===
       false:
     row.firstOrderedEvent===null&&
