@@ -5212,6 +5212,28 @@ speed or energy benefit; the committed effort pays the road. The
 120-km gap after those five kilometres is still 46.34448 seconds and
 is 114.33504 seconds at the observed finish (260-km fatigue-30:
 45.32616 and 223.12104 seconds). These cases do not demonstrate a
-successful pursuit or establish realistic chase timing. Front catch
-with rear roads present remains unresolved and guided routing stays
-withheld.
+successful pursuit or establish realistic chase timing. That
+five-kilometre chase counterfactual alone does not establish a catch,
+and guided routing stays withheld.
+
+The strict same-seed contact matrix uses `physical-20-team-scale-1`,
+front mountain skill 50, the front's conserve order from km 40 and
+the recorded worker relief at km 95. Each cell replays all 160 rider
+states and observed finish clocks and energies to the stated route end;
+the audit now fails if the expected contact branch is absent.
+
+| Roster | Fatigue 10, 120 / 260 km | Fatigue 30, 120 / 260 km |
+| --- | --- | --- |
+| 0 | Front/bunch catch km 62 / 62 | Front/bunch catch km 62 / 62 |
+| 1 | Front/rear group km 106 / 106 | Mixed front/rear then group/bunch km 107 / 107 |
+| 2 | Front/bunch catch km 62 / 62 | Front/bunch catch km 62 / 62 |
+| 3 | Front/rear group km 68 / 68 | Mixed front/rear then group/bunch km 69 / 69 |
+| 4 | Front/bunch catch km 66 / 66 | Front/bunch catch km 66 / 66 |
+| 5 | Front/bunch catch km 67 / 67 | Front/bunch catch km 67 / 67 |
+| 6 | No catch / front/rear group km 188 | No catch / front/bunch catch km 188 |
+
+This is a synthetic seven-roster holdout for one seed. It verifies
+source continuity and finish coverage, but does not calibrate
+population-wide pursuit timing, role behaviour, energy distribution
+or finish spread against real race evidence. V94 remains opt-in and
+separate from guided races.

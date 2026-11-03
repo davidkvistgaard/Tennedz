@@ -1083,6 +1083,12 @@ if(process.argv.includes('--probe-front-rear-threat')){
       caughtRace.observedFinishEnergyByRider);
     }
   }
+  if(process.argv.includes('--expect-front-catch'))
+    assert.equal(discoveredRace?.riderIds.length,
+      160);
+  if(process.argv.includes('--expect-no-catch'))
+    assert.equal(noCatchRace?.riderIds.length,
+      160);
   let frontToRear=null;
   let frontToRearFinish=null;
   let frontToRearRefusal=null;
@@ -1199,7 +1205,11 @@ if(process.argv.includes('--probe-front-rear-threat')){
           .groupBunchContact??null};
     }
     if(process.argv.includes(
-      '--expect-mixed-catch'))
+      '--expect-mixed-catch')||
+      process.argv.includes(
+        '--expect-group-pass')||
+      process.argv.includes(
+        '--expect-front-to-rear'))
       assert.equal(frontToRearDiscoveryProbe
         .finishRiderCount,160);
   }
