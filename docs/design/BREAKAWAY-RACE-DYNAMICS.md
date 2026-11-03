@@ -5292,3 +5292,7 @@ still has only 9,034 forward decision rows across seven validated
 one eighth case refuses and none of the 374 dropped rider-kilometres
 has a rider decision. Energy coverage therefore cannot be treated as
 decision coverage for the guided or experimental V94 preview.
+`node scripts/verify-physical-contact-matrix.mjs` reproduces all 42
+synthetic cells with explicit branch and 160-rider finish assertions.
+It is a source-continuity gate, not an independent physics oracle or
+real-race calibration.
