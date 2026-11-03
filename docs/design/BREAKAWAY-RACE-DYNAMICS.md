@@ -4649,3 +4649,14 @@ km-32 rear-event recording, rather than the obsolete independent solo
 crossing, to price km 33. Both have 24 rear roads, no new bunch split
 and no measured contact; the continuation pays all 160 riders through
 km 33. This does not settle later kilometres or a finish.
+
+The reusable state continuation keeps all 160 fatigue-10 riders paid
+through km 40 in both route lengths with no further measured contact.
+For fatigue 30, the first later event is at metre 33,173.656142 in
+km 34: a four-rider rear group catches one solo. The committed goals
+and observed road speeds choose a join. Their paid approaches and the
+remaining road form a five-rider group with one exposed leader and
+four lower-cost sheltered riders. All 160 km-34 states are replayed;
+the 27 riders remain on 23 distinct rear roads. Km 35 pays without a
+new contact. A solo reaches the bunch at metre 35,074.361235 in km 36;
+that next choice and the finish are still unsettled.

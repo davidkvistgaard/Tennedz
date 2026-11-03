@@ -83,6 +83,12 @@ import {replayPhysicalOrderedRearNextKmV1,
   validatePhysicalOrderedRearNextKmV1,
   advancePhysicalOrderedRearClearKmV1} from
   '../lib/engine/v2/physical-ordered-rear-next-km-v1.mjs';
+import {resolvePhysicalOrderedRearContinuationContactV1,
+  validatePhysicalOrderedRearContinuationContactV1} from
+  '../lib/engine/v2/physical-ordered-rear-continuation-contact-v1.mjs';
+import {replayPhysicalOrderedRearContinuationKmV1,
+  validatePhysicalOrderedRearContinuationKmV1} from
+  '../lib/engine/v2/physical-ordered-rear-continuation-km-v1.mjs';
 import {replayPhysicalStaggeredRearEventsV1,
   validatePhysicalStaggeredRearEventsV1,
   inspectPhysicalRearEventEndStateV1,
@@ -1294,6 +1300,43 @@ if(process.argv.includes('--probe-rear-ordered')){
 }
 
 if(process.argv.includes('--probe-rear-ordered-prefix')){
+  const probeClearPrefix=(startInput,first)=>{
+    let prior={sourceKm:first.sourceKm,
+      riderStates:first.riderStates,
+      riderCount:first.riderCount,
+      endBunchState:first.endBunchState,
+      endRearEntities:first.endRearEntities};
+    let paidRiderKm=0;
+    for(let km=prior.sourceKm+1;km<=40;km++){
+      try{
+        const boundary=
+          sourcePhysicalOrderedRearBoundaryFromStateV1({
+            startInput,prior});
+        if(boundary.recording.firstEvent)
+          return {lastFullKm:prior.sourceKm,
+            firstUnresolvedKm:km,
+            firstEvent:boundary.recording.firstEvent,
+            paidRiderKm};
+        const next=advancePhysicalOrderedRearClearKmV1({
+          startInput,prior});
+        assert.equal(next.sourceKm,km);
+        assert.equal(next.riderCount,160);
+        paidRiderKm+=next.riderCount;
+        prior={sourceKm:next.sourceKm,
+          riderStates:next.riderStates,
+          riderCount:next.riderCount,
+          endBunchState:next.endBunchState,
+          endRearEntities:next.endRearEntities};
+      }catch(error){return {
+        lastFullKm:prior.sourceKm,
+        firstUnresolvedKm:km,
+        refusal:error.message,
+        paidRiderKm};}
+    }
+    return {lastFullKm:prior.sourceKm,
+      firstUnresolvedKm:null,
+      paidRiderKm};
+  };
   const results=[120,260].flatMap(distanceKm=>
     [10,30].map(fatigue=>{
       const base=source(distanceKm,fatigue,
@@ -1422,6 +1465,8 @@ if(process.argv.includes('--probe-rear-ordered-prefix')){
               assert.equal(nextKm.endRearEntities
                 .length,24);
             }
+            const laterClear=nextKm?
+              probeClearPrefix(startInput,nextKm):null;
             const crossingCandidates=soloField.refusals
               .map(refusal=>{
                 const input={startInput,start,staggered,
@@ -1486,6 +1531,7 @@ if(process.argv.includes('--probe-rear-ordered-prefix')){
               nextBoundaryFirstEvent:
                 nextBoundary?.firstEvent??null,
               nextKmRiders:nextKm?.riderCount??null,
+              laterClear,
               candidateBunchClockDifference:
                 boundary.candidateBunchClockDifference,
               independentCrossingPreemptedByRearJoin:
@@ -1577,6 +1623,49 @@ if(process.argv.includes('--probe-rear-ordered-prefix')){
               assert.equal(paid.endRearEntities
                 .length,24);
               lastPaid.nextKmRiders=paid.riderCount;
+              lastPaid.laterClear=
+                probeClearPrefix(startInput,paid);
+              const paidState={
+                sourceKm:paid.sourceKm,
+                riderStates:paid.riderStates,
+                riderCount:paid.riderCount,
+                endBunchState:paid.endBunchState,
+                endRearEntities:paid.endRearEntities};
+              const contact=
+                resolvePhysicalOrderedRearContinuationContactV1({
+                  startInput,prior:paidState});
+              if(distanceKm===120)
+                assert.equal(
+                  validatePhysicalOrderedRearContinuationContactV1({
+                    startInput,prior:paidState},
+                  contact),true);
+              const contactKm=
+                replayPhysicalOrderedRearContinuationKmV1({
+                  startInput,prior:paidState});
+              if(distanceKm===120)
+                assert.equal(
+                  validatePhysicalOrderedRearContinuationKmV1({
+                    startInput,prior:paidState},
+                  contactKm),true);
+              assert.equal(contactKm.riderCount,160);
+              assert.equal(contactKm.sourceKm,34);
+              assert.equal(contactKm.endRearEntities
+                .length,23);
+              lastPaid.km34Contact={
+                atDistanceM:contact.event.atDistanceM,
+                outcome:contact.choice.outcome,
+                groupRiders:contact.physicalGroup
+                  ?.riderIds.length??null,
+                leaderRiderId:contact.candidateGroupRoad
+                  ?.leaderRiderId??null,
+                nextCandidateEvent:
+                  contact.nextCandidateEvent??null,
+                fullRiders:contactKm.riderCount,
+                rearRoads:contactKm
+                  .endRearEntities.length};
+              lastPaid.afterContactClear=
+                probeClearPrefix(startInput,
+                  contactKm);
             }
           }
         }catch(error){return {distanceKm,fatigue,
@@ -1592,7 +1681,13 @@ if(process.argv.includes('--probe-rear-ordered-prefix')){
     row.lastPaid.contactCount===3&&
     row.lastPaid.rearEntities>0&&
     (row.fatigue!==30||
-      row.lastPaid.nextKmRiders===160)&&
+      row.lastPaid.nextKmRiders===160&&
+      row.lastPaid.km34Contact
+        ?.atDistanceM===33173.656142&&
+      row.lastPaid.km34Contact
+        .fullRiders===160&&
+      row.lastPaid.km34Contact
+        .rearRoads===23)&&
     row.firstRefusedKm===
       (row.fatigue===10?32:33)&&
     row.refusalCount===1&&
@@ -1627,10 +1722,16 @@ if(process.argv.includes('--probe-rear-ordered-prefix')){
     row.fullKmGroups===25&&
     row.nextBunchRiders===133&&
     row.nextKmRiders===160&&
+    row.laterClear?.lastFullKm===40&&
     row.independentCrossingPreemptedByRearJoin===
       false:
     row.firstOrderedEvent===null&&
     row.firstContactGroup===null&&
+    row.lastPaid.afterContactClear
+      ?.lastFullKm===35&&
+    row.lastPaid.afterContactClear
+      ?.firstEvent?.roadIds.join('|')===
+        'solo-team-10-3|peloton'&&
     row.independentCrossingPreemptedByRearJoin===
       true&&
     row.crossingRiderActualRoadId.startsWith(
