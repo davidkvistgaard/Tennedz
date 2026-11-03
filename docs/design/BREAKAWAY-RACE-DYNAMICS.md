@@ -4986,6 +4986,20 @@ observations do not establish realistic finish distributions or
 official placements. Other front catches, rider roles, terrain and
 seeds still need calibration; guided V94 remains separate.
 
+The caught-front branch also replays eight same-seed counterfactuals
+through the observed finish: 120/260 km, fatigue 10/30, with either
+post-catch climbs raised from 6% to 8% or team 3's dropped rider
+committed as sprint captain. The captain change updates its actual
+orders and emergency worker coverage. Every run retains 160 rider
+histories and source-validated finish clocks. The terrain variants
+record 49–78 post-catch contact choices and 1–2 rear pass-throughs;
+the role variants record 53–84 choices and 2–8 pass-throughs. At
+120 km/fatigue 10, the captain finishes at 10,481.26 seconds and
+73.929 energy after the role change, versus 10,660.72 seconds and
+76.284 energy on the harder-terrain probe. These are physical
+counterfactual outcomes, not official results. One seed and one
+catch pattern remain insufficient for whole-race calibration.
+
 The next opt-in contact version resolves the tired km-26 boundary at
 the **recorded common split point** (metre 25,999.203884). Both riders
 have paid the bunch to that point; neither is labelled as catching

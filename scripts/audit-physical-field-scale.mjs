@@ -369,6 +369,45 @@ function source(distanceKm,fatigue,variant){
   return {startInput,start:startPhysicalBunchV1(startInput)};
 }
 
+function shiftTeam3Captain(generated,distanceKm){
+  const team=generated.startInput.teams[3];
+  const captainId='team-3-3';
+  const helperIds=team.orders.helperIds
+    .filter(id=>id!==captainId);
+  const fallback=helperIds[0];
+  const moveWorker=plan=>
+    plan.frontWorkRiderId===captainId?{
+      ...plan,frontWorkRiderId:fallback}:plan;
+  team.orders=normalizeOrders({
+    ...team.orders,
+    captainId,roadCaptainId:captainId,
+    helperIds,
+    baseline:moveWorker(team.orders.baseline),
+    phases:team.orders.phases.map(moveWorker)},
+  {riderIds:team.riders.map(row=>row.id),
+    distanceKm,allowFrontWork:true,
+    allowNamedFrontWorker:true});
+  const emergency=generated.startInput
+    .emergencyFrontWorkers.find(row=>
+      row.teamId===team.id);
+  if(emergency.unavailableRiderId===captainId)
+    emergency.unavailableRiderId=fallback;
+  emergency.replacementRiderId=helperIds
+    .find(id=>id!==
+      emergency.unavailableRiderId);
+  const intentions=generated.startInput
+    .commitment.intentions.map(row=>
+      row.teamId===team.id?{
+        ...row,baseline:{goal:'sprint_finish',
+          captainId}}:row);
+  generated.startInput.commitment=
+    commitTeamChaseStakesV1({
+      teams:generated.startInput.teams,
+      distanceKm,intentions});
+  generated.start=startPhysicalBunchV1(
+    generated.startInput);
+}
+
 if(process.argv.includes('--probe-front-rear-threat')){
   const distanceKm=Number(process.argv.find(arg=>
     arg.startsWith('--distance='))?.split('=')[1]??120);
@@ -376,6 +415,16 @@ if(process.argv.includes('--probe-front-rear-threat')){
     arg.startsWith('--fatigue='))?.split('=')[1]??10);
   const generated=source(distanceKm,fatigue,
     'front_varied');
+  if(process.argv.includes('--steeper-after-catch')){
+    generated.startInput.routeKilometres=
+      generated.startInput.routeKilometres
+        .map(segment=>segment.km>70&&
+          segment.terrain==='climb'?{
+            ...segment,gradientPct:8}:segment);
+  }
+  if(process.argv.includes('--captain-shift')){
+    shiftTeam3Captain(generated,distanceKm);
+  }
   const frontMountain=process.argv.find(arg=>
     arg.startsWith('--front-mountain='));
   if(frontMountain){
@@ -771,6 +820,20 @@ if(process.argv.includes('--probe-front-rear-threat')){
       distanceKm:caughtRace.distanceKm,
       riderCount:caughtRace.riderIds.length,
       catchKm:caughtRace.catchKm,
+      recordedContactCount:caughtRace.kilometres
+        .reduce((count,row)=>count+
+          (row.contactEvents?.length??0),0),
+      rearPassThroughCount:caughtRace.kilometres
+        .reduce((count,row)=>count+
+          (row.contactEvents??[]).filter(event=>
+            event.choice==='pass_through')
+            .length,0),
+      shiftedCaptainFinishSeconds:caughtRace
+        .observedFinishSecondsByRider
+          ['team-3-3'],
+      shiftedCaptainFinishEnergy:caughtRace
+        .observedFinishEnergyByRider
+          ['team-3-3'],
       finishClockSpanSeconds:
         Math.max(...Object.values(caughtRace
           .observedFinishSecondsByRider))-
@@ -802,42 +865,7 @@ if(process.argv.includes('--probe-front-rear-race')){
       generated.startInput);
   }
   if(process.argv.includes('--captain-shift')){
-    const team=generated.startInput.teams[3];
-    const captainId='team-3-3';
-    const helperIds=team.orders.helperIds
-      .filter(id=>id!==captainId);
-    const fallback=helperIds[0];
-    const moveWorker=plan=>
-      plan.frontWorkRiderId===captainId?{
-        ...plan,frontWorkRiderId:fallback}:plan;
-    team.orders=normalizeOrders({
-      ...team.orders,
-      captainId,roadCaptainId:captainId,
-      helperIds,
-      baseline:moveWorker(team.orders.baseline),
-      phases:team.orders.phases.map(moveWorker)},
-    {riderIds:team.riders.map(row=>row.id),
-      distanceKm,allowFrontWork:true,
-      allowNamedFrontWorker:true});
-    const emergency=generated.startInput
-      .emergencyFrontWorkers.find(row=>
-        row.teamId===team.id);
-    if(emergency.unavailableRiderId===captainId)
-      emergency.unavailableRiderId=fallback;
-    emergency.replacementRiderId=helperIds
-      .find(id=>id!==
-        emergency.unavailableRiderId);
-    const intentions=generated.startInput
-      .commitment.intentions.map(row=>
-        row.teamId===team.id?{
-          ...row,baseline:{goal:'sprint_finish',
-            captainId}}:row);
-    generated.startInput.commitment=
-      commitTeamChaseStakesV1({
-        teams:generated.startInput.teams,
-        distanceKm,intentions});
-    generated.start=startPhysicalBunchV1(
-      generated.startInput);
+    shiftTeam3Captain(generated,distanceKm);
   }
   const input={...generated,attackKm:1,lossKm:21};
   const race=replayPhysicalFrontRearRaceV1(input);
