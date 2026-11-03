@@ -36,6 +36,9 @@ import {probePhysicalFrontRearGroupBunchContactV1,
 import {replayPhysicalFrontRearGroupBunchKmV1,
   validatePhysicalFrontRearGroupBunchKmV1} from
   '../lib/engine/v2/physical-front-rear-group-bunch-km-v1.mjs';
+import {replayPhysicalFrontRearSoloBunchKmV1,
+  validatePhysicalFrontRearSoloBunchKmV1} from
+  '../lib/engine/v2/physical-front-rear-solo-bunch-km-v1.mjs';
 import {pricePhysicalOrderedRearGroupBunchJoinV1} from
   '../lib/engine/v2/physical-ordered-rear-group-bunch-v1.mjs';
 import {startPhysicalBunchV1,runPhysicalBunchV1,
@@ -492,6 +495,124 @@ if(process.argv.includes('--probe-front-next-bunch')){
     riderCount:next.riderCount??null,
     fieldKilometreIncomplete:next
       .fieldKilometreIncomplete},null,2)+'\n');
+  process.exit(0);
+}
+
+if(process.argv.includes('--probe-front-rear-after-bunch-prefix')){
+  const distanceKm=Number(process.argv.find(arg=>
+    arg.startsWith('--distance='))?.split('=')[1]??120);
+  const fatigue=Number(process.argv.find(arg=>
+    arg.startsWith('--fatigue='))?.split('=')[1]??10);
+  const input=source(distanceKm,fatigue,
+    'front_varied');
+  let prior=replayPhysicalFrontFirstRearLossKmV1({
+    ...input,attackKm:1,lossKm:21});
+  for(let km=22;km<=30;km++){
+    prior=advancePhysicalFrontRearClearKmV1({
+      startInput:input.startInput,prior});
+    assert.equal(prior.riderCount,160);
+  }
+  prior=replayPhysicalFrontRearOrderedContactKmV1({
+    startInput:input.startInput,prior});
+  prior=replayPhysicalFrontRearGroupBunchKmV1({
+    startInput:input.startInput,prior});
+  let firstUnresolved=null;
+  for(let km=33;km<=distanceKm;km++){
+    const next=advancePhysicalFrontRearClearKmV1({
+      startInput:input.startInput,prior});
+    if(next.fieldKilometreIncomplete){
+      if(process.argv.includes('--resolve-chain')&&
+        next.sources.step.splits.length===0){
+        const contactInput={
+          startInput:input.startInput,prior};
+        const soloBunch=next
+          .firstCandidateEvent?.involvesBunch&&
+          next.firstCandidateEvent.roadIds
+            .some(id=>id.startsWith('solo-'));
+        const joined=soloBunch?
+          replayPhysicalFrontRearSoloBunchKmV1(
+            contactInput):
+          replayPhysicalFrontRearJoinedKmV1(
+            contactInput);
+        if(soloBunch)
+          assert.equal(
+            validatePhysicalFrontRearSoloBunchKmV1(
+              contactInput,joined),true);
+        if(!joined.fieldKilometreIncomplete){
+          assert.equal(joined.riderCount,160);
+          if(km===47){
+            assert.equal(soloBunch,true);
+            assert.equal(joined.endBunchState
+              .riderIds.length,134);
+            assert.equal(joined.sources.paidJoin
+              .decision.choice,
+              'join_bunch_shelter');
+          }
+          prior=joined;
+          continue;
+        }
+        firstUnresolved={sourceKm:km,
+          event:joined.firstUnresolvedEvent,
+          paidContacts:joined.sources
+            .contacts?.length??0,
+          paidBunchJoin:Boolean(joined
+            .sources.paidJoin),
+          newSplits:[]};
+        break;
+      }
+      firstUnresolved={sourceKm:km,
+        event:next.firstCandidateEvent,
+        candidateEventCount:next
+          .candidateEventCount,
+        newSplits:next.sources.step.splits
+          .map(row=>row.riderId)};
+      break;
+    }
+    assert.equal(next.riderCount,160);
+    prior=next;
+  }
+  let resolved=null;
+  if(process.argv.includes('--resolve-chain')&&
+    fatigue===10){
+    assert.equal(prior.sourceKm,70);
+    assert.equal(firstUnresolved?.sourceKm,71);
+    assert.deepEqual(firstUnresolved
+      ?.event?.roadIds,[
+      'solo-team-1-1','solo-team-13-5']);
+    assert.equal(firstUnresolved
+      ?.paidBunchJoin,true);
+  }
+  if(process.argv.includes('--resolve-first')&&
+    firstUnresolved){
+    const inputAtContact={
+      startInput:input.startInput,prior};
+    const replay=replayPhysicalFrontRearJoinedKmV1(
+      inputAtContact);
+    assert.equal(validatePhysicalFrontRearJoinedKmV1(
+      inputAtContact,replay),true);
+    resolved={sourceKm:replay.sourceKm,
+      riderCount:replay.riderCount??null,
+      contacts:replay.sources.contacts.map(row=>({
+        event:row.event,
+        choice:row.choice.outcome,
+        groupId:row.groupRoad.id,
+        leaderRiderId:row.groupRoad
+          .leaderRiderId})),
+      firstUnresolvedEvent:replay
+        .firstUnresolvedEvent??null,
+      fieldKilometreIncomplete:replay
+        .fieldKilometreIncomplete};
+  }
+  process.stdout.write(JSON.stringify({
+    distanceKm,fatigue,
+    lastFullKm:prior.sourceKm,
+    firstUnresolved,
+    resolved,
+    bunchRiders:prior.endBunchState
+      .riderIds.length,
+    rearRoads:prior.endRearEntities.length,
+    frontGapSeconds:prior.endFrontState
+      .gapSecondsToBunch},null,2)+'\n');
   process.exit(0);
 }
 

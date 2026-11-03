@@ -4910,3 +4910,17 @@ in km 32. All 160 riders receive source-replayed clocks, energy and
 decisions, including the two riders' solo, pair and bunch segments.
 The bunch ends with 133 riders and one front rider remains separate.
 This is not a whole-race or finish calibration.
+
+With the same front break, the low-fatigue 120/260-km source now
+continues from km 32 through clear kilometres and a four-rider rear
+group formed by paid solo-to-group contact in km 36. A detached solo
+then meets the bunch late in km 47. The rider's own paid approach,
+holding ability, remaining energy, committed intent and cheaper bunch
+shelter permit a source-replayed join; all 160 rider states complete
+that kilometre and the bunch grows to 134. Later paid splits reduce
+the bunch, but all riders still have complete kilometre states through
+km 70. In km 71, another solo's paid bunch join precedes a separate
+rear pair meeting at metre 70,523.626011. The source records that
+later event and leaves km 71 incomplete until the remaining contact
+and all other roads are settled. The tired simultaneous-split branch
+still stops at km 26; no varied front race has a validated finish.
