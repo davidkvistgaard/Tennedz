@@ -4374,6 +4374,10 @@ and a separate decision for all 24 riders. Replayed source equality
 rejects changed energy. A missing plan, physical inability to hold,
 or a simultaneous named manager attack refuses. This proves a
 deliberate release for one committed case without misclassifying a
-forced drop. The solo and bunch have not yet been continued to a
-finish together; contact and final result remain unsettled. This
-does not alter guided races or justify a time cut-off.
+forced drop. A second isolated replay carries both physical roads
+through the full 20 km, preserving the solo reserve, the bunch's one
+paid leader and 24 individual decisions each kilometre. It records
+all 24 actual finish clocks and rejects a forged finish. Later contact
+is still refused until it has its own paid event source. This narrow
+finish witness does not establish field-scale calibration, alter
+guided races or justify a time cut-off.

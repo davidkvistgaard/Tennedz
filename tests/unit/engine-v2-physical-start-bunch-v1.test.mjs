@@ -118,7 +118,9 @@ import {replayPhysicalEarlyCaughtRearFinishV1,
   validatePhysicalEarlyCaughtRearFinishV1} from
   '../../lib/engine/v2/physical-early-caught-rear-finish-v1.mjs';
 import {replayPhysicalCommittedStageReleaseKmV1,
-  validatePhysicalCommittedStageReleaseKmV1} from
+  validatePhysicalCommittedStageReleaseKmV1,
+  replayPhysicalCommittedStageReleaseFinishV1,
+  validatePhysicalCommittedStageReleaseFinishV1} from
   '../../lib/engine/v2/physical-committed-stage-release-km-v1.mjs';
 import {replayPhysicalFrontRaceV1,
   validatePhysicalFrontRaceV1} from
@@ -1358,6 +1360,63 @@ test('committed later-stage plan releases only a rider able to hold',()=>{
       start:startPhysicalBunchV1(
         attackStartInput)}),
   /conflicts with named manager attack/);
+  const captainPlan=commitRearSoloPlanV1({
+    ...plan,riderId:'other-0',
+    phases:[{...plan.phases[0],
+      committedStagePlan:{...plan.phases[0]
+        .committedStagePlan,riderId:'other-0'}}]});
+  const captainInitial=source(field(),route(),
+    {other:'sprint_finish'});
+  const captainStartInput={...captainInitial.startInput,
+    physicalDraftVersion:4,
+    soloCommitments:[captainPlan]};
+  assert.throws(()=>
+    replayPhysicalCommittedStageReleaseKmV1({
+      startInput:captainStartInput,
+      start:startPhysicalBunchV1(
+        captainStartInput),
+      riderId:'other-0',releaseKm:6}),
+  /conflicts with current captain stake/);
+  const finished=replayPhysicalCommittedStageReleaseFinishV1(
+    input);
+  assert.equal(finished.kilometres.length,20);
+  assert.ok(finished.kilometres.every(row=>
+    row.riderStates.length===24));
+  assert.equal(Object.keys(finished
+    .observedFinishSecondsByRider).length,24);
+  assert.ok(finished.sources.later.every(row=>
+    row.gapSecondsToBunch>0&&
+    row.solo.energySpent>0&&
+    row.solo.energyAfter>=80&&
+    row.bunch.riders.filter(rider=>
+      rider.role==='leader').length===1));
+  assert.ok(finished.observedFinishSecondsByRider
+    ['other-3']>finished.observedFinishSecondsByRider
+      ['control-0']);
+  assert.equal(validatePhysicalCommittedStageReleaseFinishV1(
+    input,finished),true);
+  const falseFinish=structuredClone(finished);
+  falseFinish.observedFinishSecondsByRider
+    ['other-3']+=1;
+  assert.throws(()=>
+    validatePhysicalCommittedStageReleaseFinishV1(
+      input,falseFinish),/differs/);
+  const catchTeams=field();
+  catchTeams[0].riders[2].mountain=10;
+  catchTeams[2].riders[3].mountain=100;
+  const catchRoute=route();
+  catchRoute[6]={...catchRoute[6],
+    terrain:'climb',gradientPct:6};
+  const catchInitial=source(catchTeams,catchRoute);
+  const catchStartInput={...catchInitial.startInput,
+    physicalDraftVersion:4,
+    soloCommitments:[plan]};
+  assert.throws(()=>
+    replayPhysicalCommittedStageReleaseFinishV1({
+      ...input,startInput:catchStartInput,
+      start:startPhysicalBunchV1(
+        catchStartInput)}),
+  /needs paid bunch contact/);
 });
 
 test('perceived chase choice reads a replayed physical front gap',()=>{
