@@ -21,6 +21,7 @@ import {startPhysicalBunchV1,advancePhysicalStartBunchV1,
   runPhysicalBunchAfterNamedAttackV1,
   validatePhysicalBunchAfterNamedAttackV1,
   advancePhysicalBunchAfterPerceivedCatchKmV1,
+  advancePhysicalBunchAfterStageJoinKmV1,
   advancePhysicalBunchAfterCaughtSlideLossKmV1} from
   '../../lib/engine/v2/physical-start-bunch-v1.mjs';
 import {completePhysicalPaceLossKmV1,
@@ -131,6 +132,9 @@ import {finishPhysicalCommittedStageBunchJoinKmV1,
 import {replayPhysicalCommittedStageJoinRaceV1,
   validatePhysicalCommittedStageJoinRaceV1} from
   '../../lib/engine/v2/physical-committed-stage-join-race-v1.mjs';
+import {replayPhysicalCommittedStagePostjoinLossV1,
+  validatePhysicalCommittedStagePostjoinLossV1} from
+  '../../lib/engine/v2/physical-committed-stage-postjoin-loss-v1.mjs';
 import {replayPhysicalFrontRaceV1,
   validatePhysicalFrontRaceV1} from
   '../../lib/engine/v2/physical-front-race-replay-v1.mjs';
@@ -1516,6 +1520,94 @@ test('committed later-stage plan releases only a rider able to hold',()=>{
   assert.throws(()=>
     validatePhysicalCommittedStageJoinRaceV1(
       catchInput,falseRace),/differs/);
+});
+
+test('stage saver can be forced off a later faster climb',()=>{
+  const teams=field();
+  for(const team of teams)for(const rider of team.riders)
+    rider.mountain=100;
+  teams[0].orders.phases=[{atKm:6,
+    effort:'conserve'},
+  {atKm:7,effort:'steady',
+    frontWorkRiderId:'control-3'}];
+  const kilometres=route();
+  for(const index of [6,7])
+    kilometres[index]={...kilometres[index],
+      terrain:'climb',gradientPct:6};
+  const base=source(teams,kilometres,
+    {},[{km:6},{km:7}]);
+  const riderId='other-3';
+  const plan=commitRearSoloPlanV1({
+    riderId,distanceKm:20,
+    stageNumber:1,stageCount:2,
+    baseline:{goal:'finish_safely',
+      effort:'steady'},
+    phases:[{atKm:5,
+      goal:'save_for_stage',
+      effort:'conserve',
+      committedStagePlan:{riderId,
+        currentStageNumber:1,
+        targetStageNumber:2,
+        currentGoal:'finish_safely',
+        futureGoal:'target_stage',
+        reserveEnergy:80}}]});
+  const startInput={...base.startInput,
+    physicalDraftVersion:4,
+    soloCommitments:[plan]};
+  const input={startInput,
+    start:startPhysicalBunchV1(startInput),
+    riderId,releaseKm:6,
+    throughKm:20};
+  const join=finishPhysicalCommittedStageBunchJoinKmV1(
+    input);
+  assert.equal(join.sourceKm,7);
+  const prior={riderIds:join.physicalGroup.riderIds,
+    energyByRider:{...join.sources.bunch
+      .energyByRider,[riderId]:join.energyAfter},
+    quietKmByRider:{...join.sources.bunch
+      .quietKmByRider,[riderId]:0}};
+  const loss=advancePhysicalBunchAfterStageJoinKmV1({
+    startInput,prior,segment:kilometres[7],
+    riderId,contactKm:7,allowPaceLoss:true});
+  assert.deepEqual(loss.splits.map(row=>
+    row.riderId),[riderId]);
+  assert.equal(loss.splits[0].orderLimited,true);
+  const lossDecision=loss.riderDecisions.find(row=>
+    row.riderId===riderId);
+  assert.equal(lossDecision.choice,
+    'try_hold_stage_reserve');
+  assert.equal(lossDecision.reason,
+    'committed_stage_effort_ceiling');
+  assert.equal(lossDecision.effort,'conserve');
+  assert.equal(lossDecision.teamOrderEffort,'steady');
+  assert.throws(()=>
+    replayPhysicalCommittedStageJoinRaceV1(input),
+  /cannot hold paid pace/);
+  const lossInput={...input,lossKm:8};
+  const race=replayPhysicalCommittedStagePostjoinLossV1(
+    lossInput);
+  assert.equal(race.kilometres.length,20);
+  assert.equal(race.sources.loss.splits.length,1);
+  assert.equal(race.sources.completion
+    .decision.reason,
+  'committed_stage_effort_ceiling');
+  assert.ok(race.sources.completion
+    .energySpent>0&&
+    race.sources.completion.energyAfter>=80);
+  assert.ok(race.sources.later.every(row=>
+    row.gapSecondsToBunch>0&&
+    row.solo.energyAfter>=80));
+  assert.ok(race.kilometres.every(row=>
+    row.riderStates.length===24));
+  assert.equal(Object.keys(race
+    .observedFinishSecondsByRider).length,24);
+  assert.equal(validatePhysicalCommittedStagePostjoinLossV1(
+    lossInput,race),true);
+  const forged=structuredClone(race);
+  forged.sources.completion.energyAfter+=1;
+  assert.throws(()=>
+    validatePhysicalCommittedStagePostjoinLossV1(
+      lossInput,forged),/differs/);
 });
 
 test('perceived chase choice reads a replayed physical front gap',()=>{

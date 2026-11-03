@@ -4441,3 +4441,18 @@ This controlled team-order intervention demonstrates source
 continuity at field scale, not that such a slowing or return happens
 at a calibrated frequency in real races. Without an explicit lower
 front order, the comparable long race need not have this contact.
+
+The same 24-rider stage-saving return has a further controlled branch.
+After a measured km-7 join, the named front worker changes at a
+pre-race km-7 marker and leads a faster climb in km 8. The saving
+rider can hold at hard effort but cannot hold while honoring its
+committed `conserve` effort. The new decision records
+`try_hold_stage_reserve` and `committed_stage_effort_ceiling`, while
+retaining the separate manager `steady` ceiling; it is neither a
+new voluntary release nor a claim of absolute physical inability.
+The rider pays its measured partial bunch split, the remaining solo
+metres and each later solo kilometre. The 23-rider bunch continues
+with one paid front leader and all 24 rider decisions, energies and
+actual finish clocks replay through km 20. An unsourced later return
+still refuses. This is a narrow role and terrain witness, not an
+estimate of how often stage savers lose the bunch after rejoining.
