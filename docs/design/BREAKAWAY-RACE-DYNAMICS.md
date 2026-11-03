@@ -5000,6 +5000,17 @@ the role variants record 53–84 choices and 2–8 pass-throughs. At
 counterfactual outcomes, not official results. One seed and one
 catch pattern remain insufficient for whole-race calibration.
 
+A weaker front rider moves the paid bunch catch to km 61. At fatigue
+10 the bunch meets him at metre 60,358.029278; a separate bunch
+worker then loses the climb pace at metre 60,999.759171. The caught
+front replay now accepts this ordered pair of events. It sources the
+worker's partial bunch road, remaining solo road and end energy from
+the physical split completion, then carries that solo into later
+contact checks. All 160 states and observed finish clocks replay at
+120 and 260 km with fatigue 10 and 30. This is an observed split after
+the front catch; split-before-catch and competing contact order still
+refuse until they have their own paid source.
+
 The next opt-in contact version resolves the tired km-26 boundary at
 the **recorded common split point** (metre 25,999.203884). Both riders
 have paid the bunch to that point; neither is labelled as catching

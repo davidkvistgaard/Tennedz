@@ -413,6 +413,10 @@ if(process.argv.includes('--probe-front-rear-threat')){
     arg.startsWith('--distance='))?.split('=')[1]??120);
   const fatigue=Number(process.argv.find(arg=>
     arg.startsWith('--fatigue='))?.split('=')[1]??10);
+  const catchKm=Number(process.argv.find(arg=>
+    arg.startsWith('--catch-km='))?.split('=')[1]??62);
+  assert.ok(Number.isInteger(catchKm)&&
+    catchKm>21&&catchKm<=distanceKm);
   const generated=source(distanceKm,fatigue,
     'front_varied');
   if(process.argv.includes('--steeper-after-catch')){
@@ -589,13 +593,13 @@ if(process.argv.includes('--probe-front-rear-threat')){
     '--front-catch-boundary')?
     probePhysicalFrontRearFrontCatchBoundaryV1({
       ...generated,attackKm:1,lossKm:21,
-      catchKm:62,
+      catchKm,
       chaseObserverTeamId:team.id}):null;
   if(catchBoundary){
     assert.equal(
       validatePhysicalFrontRearFrontCatchBoundaryV1({
         ...generated,attackKm:1,lossKm:21,
-        catchKm:62,
+        catchKm,
         chaseObserverTeamId:team.id},
       catchBoundary),true);
     assert.ok(catchBoundary.rearRiderCount>0);
@@ -604,7 +608,7 @@ if(process.argv.includes('--probe-front-rear-threat')){
     assert.throws(()=>
       probePhysicalFrontRearFrontCatchBoundaryV1({
         ...generated,attackKm:1,lossKm:21,
-        catchKm:61,
+        catchKm:catchKm-1,
         chaseObserverTeamId:team.id}),
     /no paid contact here/);
   }
@@ -612,13 +616,13 @@ if(process.argv.includes('--probe-front-rear-threat')){
     '--caught-slide-km')?
     replayPhysicalFrontRearCaughtSlideKmV1({
       ...generated,attackKm:1,lossKm:21,
-      catchKm:62,
+      catchKm,
       chaseObserverTeamId:team.id}):null;
   if(caughtSlide){
     assert.equal(
       validatePhysicalFrontRearCaughtSlideKmV1({
         ...generated,attackKm:1,lossKm:21,
-        catchKm:62,
+        catchKm,
         chaseObserverTeamId:team.id},
       caughtSlide),true);
     assert.equal(caughtSlide.riderCount,160);
@@ -639,7 +643,7 @@ if(process.argv.includes('--probe-front-rear-threat')){
           .nextContact.group.id);
       assert.deepEqual(formed.riderIds,
         caughtSlide.nextContact.group.riderIds);
-      assert.equal(formed.formedKm,62);
+      assert.equal(formed.formedKm,catchKm);
       assert.equal(formed.rotationIndex,0);
       assert.ok(caughtSlide.nextContact.event
         .clockSeconds>caughtSlide.contact
@@ -720,13 +724,13 @@ if(process.argv.includes('--probe-front-rear-threat')){
     '--post-catch-race')?
     replayPhysicalFrontCaughtAllRearRaceV1({
       ...generated,attackKm:1,lossKm:21,
-      catchKm:62,
+      catchKm,
       chaseObserverTeamId:team.id}):null;
   if(caughtRace){
     assert.equal(
       validatePhysicalFrontCaughtAllRearRaceV1({
         ...generated,attackKm:1,lossKm:21,
-        catchKm:62,
+        catchKm,
         chaseObserverTeamId:team.id},
       caughtRace),true);
     assert.equal(caughtRace.kilometres.length,
@@ -734,6 +738,30 @@ if(process.argv.includes('--probe-front-rear-threat')){
     assert.equal(Object.keys(caughtRace
       .observedFinishSecondsByRider)
       .length,160);
+    if(process.argv.includes('--expect-catch-split')){
+      const caught=caughtRace.sources.caught;
+      const splits=caught.sources.boundary.sources
+        .bunchStep.splits;
+      assert.equal(splits.length,1);
+      const split=splits[0];
+      assert.ok(split.atDistanceM>
+        caught.contact.atDistanceM);
+      const completion=caught.sources
+        .splitCompletions.find(row=>
+          row.riderId===split.riderId);
+      const state=caught.riderStates.find(row=>
+        row.riderId===split.riderId);
+      assert.ok(completion&&state);
+      assert.equal(state.physicalGroupId,
+        `solo-${split.riderId}`);
+      assert.equal(state.energyAfter,
+        completion.energyAfter);
+      assert.ok(state.elapsedSeconds>
+        caughtRace.kilometres[catchKm-2]
+          .riderStates.find(row=>
+            row.riderId===split.riderId)
+          .elapsedSeconds);
+    }
   }
   process.stdout.write(JSON.stringify({distanceKm,
     fatigue,choiceKm:41,
@@ -775,6 +803,10 @@ if(process.argv.includes('--probe-front-rear-threat')){
       rearRiderCount:catchBoundary.rearRiderCount,
       bunchSplits:catchBoundary.sources
         .bunchStep.splits.length,
+      bunchSplitEvents:catchBoundary.sources
+        .bunchStep.splits.map(row=>({
+          riderId:row.riderId,
+          atDistanceM:row.atDistanceM})),
       frontEnergyAtContact:catchBoundary
         .frontPartial.energyAtContact,
       orderedCandidates:catchBoundary
@@ -820,6 +852,9 @@ if(process.argv.includes('--probe-front-rear-threat')){
       distanceKm:caughtRace.distanceKm,
       riderCount:caughtRace.riderIds.length,
       catchKm:caughtRace.catchKm,
+      catchKilometreSplitCount:caughtRace
+        .sources.caught.sources.splitCompletions
+          .length,
       recordedContactCount:caughtRace.kilometres
         .reduce((count,row)=>count+
           (row.contactEvents?.length??0),0),
