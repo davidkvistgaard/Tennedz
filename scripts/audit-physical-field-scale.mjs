@@ -113,6 +113,12 @@ import {advancePhysicalOrderedRearBunchPassKmV1,
 import {resolvePhysicalOrderedRearBunchThenRearContactV1,
   validatePhysicalOrderedRearBunchThenRearContactV1} from
   '../lib/engine/v2/physical-ordered-rear-bunch-then-rear-contact-v1.mjs';
+import {inspectPhysicalOrderedRearPostBunchChainV1,
+  validatePhysicalOrderedRearPostBunchChainV1} from
+  '../lib/engine/v2/physical-ordered-rear-post-bunch-chain-v1.mjs';
+import {advancePhysicalOrderedRearPostBunchKmV1,
+  validatePhysicalOrderedRearPostBunchKmV1} from
+  '../lib/engine/v2/physical-ordered-rear-post-bunch-km-v1.mjs';
 import {replayPhysicalStaggeredRearEventsV1,
   validatePhysicalStaggeredRearEventsV1,
   inspectPhysicalRearEventEndStateV1,
@@ -1420,6 +1426,23 @@ if(process.argv.includes('--probe-rear-ordered-prefix')){
       assert.equal(
         validatePhysicalOrderedRearBunchThenRearContactV1(
           input,rearContact),true);
+    const chain=rearContact?
+      inspectPhysicalOrderedRearPostBunchChainV1(
+        input):null;
+    if(chain&&verify)
+      assert.equal(
+        validatePhysicalOrderedRearPostBunchChainV1(
+          input,chain),true);
+    const completedChain=chain&&
+      !chain.firstUnsettledEvent&&
+      chain.contacts.every(row=>
+        row.choice.outcome==='join')?
+      advancePhysicalOrderedRearPostBunchKmV1(
+        input):null;
+    if(completedChain&&verify)
+      assert.equal(
+        validatePhysicalOrderedRearPostBunchKmV1(
+          input,completedChain),true);
     const full=joined&&!laterEvents.length?
       replayPhysicalOrderedRearContinuationBunchKmV1(
         input):null;
@@ -1453,13 +1476,30 @@ if(process.argv.includes('--probe-rear-ordered-prefix')){
             null,
         nextEvent:rearContact
           .nextCandidateEvent??null}:null,
-      fullRiders:(full??passed)?.riderCount??null,
+      rearChain:chain?{
+        contacts:chain.contacts.map(row=>({
+          atDistanceM:row.event.atDistanceM,
+          outcome:row.choice.outcome,
+          riderIds:row.event.riders.map(item=>
+            item.riderId),
+          leaderRiderId:row.groupRoad
+            ?.leaderRiderId??null})),
+        firstUnsettledEvent:chain
+          .firstUnsettledEvent??null,
+        endRoads:chain.endRoads.length}:null,
+      fullRiders:(full??passed??completedChain)
+        ?.riderCount??null,
       passDecision:passed?.contactDecision
         .choice??null,
-      bunchRiders:(full??passed)?.endBunchState
+      bunchRiders:(full??passed??completedChain)
+        ?.endBunchState
         .riderIds.length??null,
-      rearRoads:(full??passed)?.endRearEntities
-        .length??null};
+      rearRoads:(full??passed??completedChain)
+        ?.endRearEntities
+        .length??null,
+      laterClear:completedChain||passed?
+        probeClearPrefix(startInput,
+          completedChain??passed):null};
   };
   const results=[120,260].flatMap(distanceKm=>
     [10,30].map(fatigue=>{
@@ -2022,7 +2062,14 @@ if(process.argv.includes('--probe-rear-ordered-prefix')){
       row.post66Bunch?.rearContact
         ?.nextEvent?.atDistanceM===
           70810.44904&&
-      row.post66Bunch?.fullRiders===null&&
+      row.post66Bunch?.fullRiders===160&&
+      row.post66Bunch?.bunchRiders===122&&
+      row.post66Bunch?.rearRoads===33&&
+      row.post66Bunch?.laterClear
+        ?.firstUnresolvedKm===72&&
+      row.post66Bunch?.laterClear
+        ?.firstEvent?.roadIds[0]===
+          'solo-team-13-0'&&
       row.post47Clear?.lastFullKm===65)&&
     (row.fatigue!==30||
       row.lastPaid.km66Splits
@@ -2044,6 +2091,16 @@ if(process.argv.includes('--probe-rear-ordered-prefix')){
       row.lastPaid.post66Bunch
         ?.passDecision===
           'stay_solo_after_bunch_contact'&&
+      row.lastPaid.post66Bunch
+        ?.bunchRiders===123&&
+      row.lastPaid.post66Bunch
+        ?.rearRoads===33&&
+      row.lastPaid.post66Bunch
+        ?.laterClear?.firstUnresolvedKm===71&&
+      row.lastPaid.post66Bunch
+        ?.laterClear?.firstEvent
+          ?.roadIds.join('|')===
+            'solo-team-1-1|solo-team-2-2'&&
       row.lastPaid.afterBunchClear
         ?.lastFullKm===65)&&
     row.firstRefusedKm===

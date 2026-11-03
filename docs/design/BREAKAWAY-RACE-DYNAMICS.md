@@ -4712,4 +4712,13 @@ bunch join. `team-1-1` catches `team-13-5` at metre 70,523.626011;
 their committed decisions make a two-rider group with `team-1-1`
 paying the exposed turn and `team-13-5` sheltered. The repriced group
 then catches solo `team-6-7` at metre 70,810.44904. This is a third
-same-kilometre event, so the full km-71 field remains unsettled.
+same-kilometre event. The ordered chain now reprices that three-rider
+group with `team-1-1` still the one exposed leader and no further
+km-71 contact. Each affected rider keeps the paid approach, contact
+choice and remaining road in their km-71 decision trace. Both
+fatigue-10 routes have 160 paid km-71 riders, 122 in the bunch and
+38 on 33 rear roads. Their next measured event is a solo-to-bunch
+meeting in km 72 at metre 71,192.244369. For fatigue 30, km 70 pays
+without contact after the km-69 solo passage; the next event is a
+solo-pair contact in km 71 at metre 70,045.628085. These later
+events and the 120/260-km finishes remain unsettled.
