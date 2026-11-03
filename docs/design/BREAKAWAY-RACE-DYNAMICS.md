@@ -4428,3 +4428,16 @@ finish clocks replay. A changed finish clock is refused. A later
 inability to hold at the conserving effort still needs its own paid
 drop and rear-road source; the isolated continuation refuses that
 branch rather than assigning a wheel or silently increasing effort.
+
+A four-case, read-only 160-rider audit now exercises that return over
+120 and 260 km at fatigue 10 and 30. The solo release occurs during a
+named steady front turn. A separate pre-race km-6 order changes the
+next named front worker to `conserve`, allowing a measured return at
+metre 6,120.45 or 6,120.46 of km 7. The rider pays about 120 metres
+alone and 880 sheltered; all 160 rider-kilometre decisions and finish
+clocks replay through the varied flat, hill, climb and descent route.
+Its finish energy is 68.02–88.26, above the committed reserve of 20.
+This controlled team-order intervention demonstrates source
+continuity at field scale, not that such a slowing or return happens
+at a calibrated frequency in real races. Without an explicit lower
+front order, the comparable long race need not have this contact.

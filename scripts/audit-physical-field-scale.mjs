@@ -47,6 +47,9 @@ import {pricePhysicalRearEventTrackV1} from
 import {replayPhysicalCommittedStageReleaseFinishV1,
   validatePhysicalCommittedStageReleaseFinishV1} from
   '../lib/engine/v2/physical-committed-stage-release-km-v1.mjs';
+import {replayPhysicalCommittedStageJoinRaceV1,
+  validatePhysicalCommittedStageJoinRaceV1} from
+  '../lib/engine/v2/physical-committed-stage-join-race-v1.mjs';
 import {replayPhysicalStaggeredRearEventsV1,
   validatePhysicalStaggeredRearEventsV1} from
   '../lib/engine/v2/physical-staggered-rear-event-replay-v1.mjs';
@@ -753,6 +756,105 @@ function audit(distanceKm,fatigue,variant){
     namedLeaders,
     minimumEnergy:Math.min(...Object.values(
       run.energyByRider))};
+}
+
+if(process.argv.includes('--probe-stage-join')){
+  const results=[];
+  for(const distanceKm of [120,260])
+    for(const fatigue of [10,30]){
+      const base=source(distanceKm,fatigue,
+        'equal_field');
+      const riderId='team-19-7';
+      const keypoints=[{km:6}];
+      const frontTeam=base.startInput.teams[1];
+      frontTeam.orders.phases.push({
+        atKm:6,effort:'conserve'});
+      frontTeam.orders.phases=frontTeam.orders.phases
+        .map(phase=>phase.atKm===10?{
+          ...phase,effort:'steady'}:phase)
+        .sort((a,b)=>a.atKm-b.atKm);
+      for(const team of base.startInput.teams)
+        team.orders=normalizeOrders(team.orders,{
+          riderIds:team.riders.map(row=>row.id),
+          distanceKm,keypoints,
+          allowFrontWork:true,
+          allowNamedFrontWorker:true});
+      base.startInput.commitment=
+        commitTeamChaseStakesV1({
+          teams:base.startInput.teams,
+          distanceKm,keypoints,
+          intentions:base.startInput.teams.map(
+            (team,index)=>({teamId:team.id,
+              baseline:{goal:index===0?
+                'sprint_finish':'none',
+              captainId:team.orders.captainId},
+              phases:[]}))});
+      base.startInput.teams[19].riders[7]
+        .mountain=100;
+      const plan=commitRearSoloPlanV1({
+        riderId,distanceKm,stageNumber:1,
+        stageCount:2,baseline:{goal:'finish_safely',
+          effort:'steady'},phases:[{atKm:5,
+          goal:'save_for_stage',effort:'conserve',
+          committedStagePlan:{riderId,
+            currentStageNumber:1,
+            targetStageNumber:2,
+            currentGoal:'finish_safely',
+            futureGoal:'target_stage',
+            reserveEnergy:20}}]});
+      const startInput={...base.startInput,
+        physicalDraftVersion:4,
+        soloCommitments:[plan]};
+      const input={startInput,
+        start:startPhysicalBunchV1(startInput),
+        riderId,releaseKm:6,
+        throughKm:distanceKm};
+      const race=replayPhysicalCommittedStageJoinRaceV1(
+        input);
+      assert.equal(validatePhysicalCommittedStageJoinRaceV1(
+        input,race),true);
+      assert.equal(race.kilometres.length,distanceKm);
+      assert.ok(race.kilometres.every(km=>
+        km.riderStates.length===160&&
+        km.riderStates.every(row=>
+          row.decisions.length>0&&
+          Number.isFinite(row.energyAfter))));
+      assert.equal(Object.keys(race
+        .observedFinishSecondsByRider).length,160);
+      assert.equal(race.sources.join.sourceKm,7);
+      assert.ok(race.sources.join
+        .contactAtDistanceM>6000&&
+        race.sources.join.contactAtDistanceM<7000&&
+        race.sources.join.shelteredEnergySpent<
+          race.sources.join
+            .exposedAlternativeEnergyDemand);
+      assert.ok(race.sources.later.every(step=>
+        step.riders.filter(row=>
+          row.role==='leader').length===1&&
+        step.riders.find(row=>row.riderId===
+          riderId)?.role==='sheltered'&&
+        step.riderDecisions.find(row=>
+          row.riderId===riderId)?.effort===
+            'conserve'&&
+        step.riderDecisions.find(row=>
+          row.riderId===riderId)
+          ?.teamOrderEffort==='steady'));
+      results.push({distanceKm,fatigue,
+        contactKm:race.sources.join.sourceKm,
+        contactMetre:race.sources.join
+          .contactAtDistanceM,
+        soloMetres:race.sources.join
+          .soloDistanceM,
+        shelterMetres:race.sources.join
+          .shelteredDistanceM,
+        finishEnergy:race.kilometres.at(-1)
+          .riderStates.find(row=>
+            row.riderId===riderId).energyAfter,
+        finishRiders:160});
+    }
+  process.stdout.write(JSON.stringify({results},
+    null,2)+'\n');
+  process.exit(0);
 }
 
 if(process.argv.includes('--probe-stage-release')){
