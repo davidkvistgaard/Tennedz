@@ -50,6 +50,11 @@ import {replayPhysicalCommittedStageReleaseFinishV1,
 import {replayPhysicalCommittedStageJoinRaceV1,
   validatePhysicalCommittedStageJoinRaceV1} from
   '../lib/engine/v2/physical-committed-stage-join-race-v1.mjs';
+import {probePhysicalOrderedSoloBunchContactV1,
+  validatePhysicalOrderedSoloBunchContactV1} from
+  '../lib/engine/v2/physical-ordered-solo-bunch-contact-v1.mjs';
+import {finishPhysicalOrderedSoloBunchJoinKmV1} from
+  '../lib/engine/v2/physical-ordered-solo-bunch-join-v1.mjs';
 import {replayPhysicalStaggeredRearEventsV1,
   validatePhysicalStaggeredRearEventsV1} from
   '../lib/engine/v2/physical-staggered-rear-event-replay-v1.mjs';
@@ -1198,11 +1203,40 @@ if(process.argv.includes('--probe-rear-ordered')){
           probePhysicalStaggeredSoloFieldV1({
             startInput,start,staggered,
             throughKm:distanceKm});
-        if(soloField.refusals.length)
+        if(soloField.refusals.length){
+          const riderId=soloField.refusals[0]
+            .riderId;
+          const contactInput={startInput,start,
+            staggered,riderId,
+            throughKm:distanceKm};
+          const probe=
+            probePhysicalOrderedSoloBunchContactV1(
+              contactInput);
+          assert.equal(
+            validatePhysicalOrderedSoloBunchContactV1(
+              contactInput,probe),true);
+          assert.throws(()=>
+            finishPhysicalOrderedSoloBunchJoinKmV1(
+              contactInput),
+          /isolated paid contact/);
           return {distanceKm,fatigue,
             status:'solo_source_refusal',
             reason:soloField.refusals[0],
-            refusalCount:soloField.refusals.length};
+            refusalCount:soloField.refusals.length,
+            firstCandidateBunchCrossing:
+              probe.contact?{
+                riderId,
+                sourceKm:probe.contact.sourceKm,
+                atDistanceM:probe.contact.atDistanceM,
+                clockSeconds:probe.contact.clockSeconds,
+                soloEnergyAtContact:
+                  probe.contact.soloEnergyAtContact,
+                candidateOnly:probe.contact
+                  .candidateOnly,
+                otherRearRoadsUnsettled:
+                  probe.contact
+                    .otherRearRoadsUnsettled}:null};
+        }
         const race=replayPhysicalStaggeredRearEventsV1({
           startInput,start,staggered,soloField,
           throughKm:distanceKm});
@@ -1220,7 +1254,11 @@ if(process.argv.includes('--probe-rear-ordered')){
     row.status==='solo_source_refusal'&&
     row.reason.reason===
       'Staggered solo needs separate bunch contact.'&&
-    row.refusalCount>0));
+    row.refusalCount>0&&
+    row.firstCandidateBunchCrossing
+      ?.candidateOnly===true&&
+    row.firstCandidateBunchCrossing
+      ?.otherRearRoadsUnsettled===true));
   process.stdout.write(JSON.stringify({results},null,2)+'\n');
   process.exit(0);
 }

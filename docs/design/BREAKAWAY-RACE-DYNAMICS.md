@@ -4520,3 +4520,22 @@ because their newly ordered pace reaches the bunch. It does not assign
 them an unrecorded bunch wheel. A general paid bunch-contact choice,
 partial kilometre and continued group membership must be sourced
 before this intent version can claim a full race or guide V94.
+
+`physical-ordered-solo-bunch-contact-v1.mjs` now locates the first
+clock crossing for that ordered solo, charging its actual effort and
+terrain to the contact metre. It records the bunch's one paid front
+leader and each member's energy at the same clock. A controlled
+24-rider climb-to-flat witness has only one detached rider and pays
+the subsequent choice to take shelter for the remaining metres:
+the shelter cost is lower than a solo alternative, the rider can hold
+the measured pace, and every rider has a decision and energy at that
+kilometre. This contact and join replay from the committed source.
+
+In the varied 160-rider fields the first independent candidate for
+`team-4-3` reaches the bunch at metre 35,500.05 in km 36 with initial
+fatigue 10, or metre 32,711.11 in km 33 with fatigue 30. Other rear
+roads are already active, so those crossings are explicitly marked
+`candidateOnly` and a bunch join refuses. Their earlier rear contacts
+must be ordered and paid before either a full field return or a finish
+can be claimed. The next-kilometre bunch source after an isolated
+return also remains unsettled.

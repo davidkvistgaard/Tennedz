@@ -10,6 +10,12 @@ import {commitRearSoloPlanV1} from
   '../../lib/engine/v2/rear-solo-commitment-v1.mjs';
 import {physicalRearIntentAtKmV2} from
   '../../lib/engine/v2/physical-rear-intent-v2.mjs';
+import {probePhysicalOrderedSoloBunchContactV1,
+  validatePhysicalOrderedSoloBunchContactV1} from
+  '../../lib/engine/v2/physical-ordered-solo-bunch-contact-v1.mjs';
+import {finishPhysicalOrderedSoloBunchJoinKmV1,
+  validatePhysicalOrderedSoloBunchJoinKmV1} from
+  '../../lib/engine/v2/physical-ordered-solo-bunch-join-v1.mjs';
 import {startPhysicalBunchV1,advancePhysicalStartBunchV1,
   validatePhysicalStartBunchV1,runPhysicalBunchV1,
   validatePhysicalBunchRunV1,runPhysicalBunchToPaceLossV1,
@@ -2448,6 +2454,73 @@ test('opt-in rear intent follows committed effort and sporting stake',()=>{
     ...initial.startInput,
     physicalRearIntentVersion:2}),
   /committed field and route/);
+});
+
+test('ordered rear solo finds paid bunch crossing before rejoin',()=>{
+  const teams=field();
+  const rider=teams[2].riders[3];
+  for(const skill of SPORTING_SKILLS)
+    rider[skill]=50;
+  rider.mountain=10;
+  rider.flat=90;
+  rider.timetrial=90;
+  const kilometres=route();
+  kilometres[0]={...kilometres[0],
+    terrain:'climb',gradientPct:6};
+  const initial=source(teams,kilometres);
+  const startInput={...initial.startInput,
+    physicalDraftVersion:4,
+    physicalRearIntentVersion:2};
+  const start=startPhysicalBunchV1(startInput);
+  const staggered=runPhysicalStaggeredBunchLossV1({
+    startInput,start,throughKm:20});
+  const input={startInput,start,staggered,
+    riderId:'other-3',throughKm:20};
+  const probe=probePhysicalOrderedSoloBunchContactV1(
+    input);
+  assert.ok(probe.contact);
+  assert.ok(probe.contact.metresIntoKm>0&&
+    probe.contact.metresIntoKm<1000);
+  assert.equal(probe.contact
+    .otherRearRoadsUnsettled,false);
+  assert.equal(probe.contact.candidateOnly,false);
+  assert.equal(probe.contact.soloDecision
+    .effort,'steady');
+  assert.ok(probe.contact.soloEnergySpentToContact>0);
+  assert.equal(probe.contact.bunchRiders.filter(row=>
+    row.role==='leader').length,1);
+  assert.equal(validatePhysicalOrderedSoloBunchContactV1(
+    input,probe),true);
+  const joined=finishPhysicalOrderedSoloBunchJoinKmV1(
+    input);
+  assert.equal(joined.contactAtDistanceM,
+    probe.contact.atDistanceM);
+  assert.equal(joined.riderStates.length,24);
+  assert.equal(joined.physicalGroup.riderIds
+    .length,24);
+  assert.equal(joined.nextBunchState
+    .riderIds.length,24);
+  assert.equal(joined.decision.effort,'steady');
+  assert.equal(joined.decision.choice,
+    'join_bunch_shelter');
+  assert.ok(Math.abs(joined.bunchEndClock-
+    staggered.road.slice(0,joined.sourceKm)
+      .reduce((sum,row)=>sum+
+        row.elapsedSeconds,0))<1e-6);
+  assert.ok(joined.shelteredEnergySpent<
+    joined.exposedAlternativeEnergyDemand);
+  assert.ok(joined.riderStates.find(row=>
+    row.riderId==='other-3').decisions.length===2);
+  assert.equal(validatePhysicalOrderedSoloBunchJoinKmV1(
+    input,joined),true);
+  const forged=structuredClone(probe);
+  forged.contact.clockSeconds+=1;
+  assert.throws(()=>validatePhysicalOrderedSoloBunchContactV1(
+    input,forged),/differs from paid source/);
+  const forgedJoin=structuredClone(joined);
+  forgedJoin.energyAfter+=1;
+  assert.throws(()=>validatePhysicalOrderedSoloBunchJoinKmV1(
+    input,forgedJoin),/differs from paid source/);
 });
 
 test('detached solo respects team effort and future-stage reserve',()=>{
