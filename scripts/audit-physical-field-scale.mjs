@@ -56,7 +56,9 @@ import {probePhysicalOrderedSoloBunchContactV1,
 import {finishPhysicalOrderedSoloBunchJoinKmV1} from
   '../lib/engine/v2/physical-ordered-solo-bunch-join-v1.mjs';
 import {inspectPhysicalOrderedRearBoundaryV1,
-  validatePhysicalOrderedRearBoundaryV1} from
+  validatePhysicalOrderedRearBoundaryV1,
+  sourcePhysicalOrderedRearBoundaryRoadsV1,
+  findPhysicalOrderedBoundaryEventsV1} from
   '../lib/engine/v2/physical-ordered-rear-boundary-v1.mjs';
 import {resolvePhysicalOrderedRearFirstContactV1,
   validatePhysicalOrderedRearFirstContactV1} from
@@ -67,6 +69,9 @@ import {probePhysicalOrderedRearBunchContactV1,
 import {finishPhysicalOrderedRearBunchJoinKmV1,
   validatePhysicalOrderedRearBunchJoinKmV1} from
   '../lib/engine/v2/physical-ordered-rear-bunch-join-v1.mjs';
+import {replayPhysicalOrderedRearKmV1,
+  validatePhysicalOrderedRearKmV1} from
+  '../lib/engine/v2/physical-ordered-rear-km-v1.mjs';
 import {replayPhysicalStaggeredRearEventsV1,
   validatePhysicalStaggeredRearEventsV1,
   inspectPhysicalRearEventEndStateV1,
@@ -1340,6 +1345,23 @@ if(process.argv.includes('--probe-rear-ordered-prefix')){
                 /differs from paid source/);
               }
             }
+            const remainingEvents=joined?(()=>{
+              const {tracks,bunch}=
+                sourcePhysicalOrderedRearBoundaryRoadsV1(
+                  boundaryInput);
+              const remaining=tracks.filter(track=>
+                !firstContact.contact.roadIds
+                  .includes(track.id));
+              return findPhysicalOrderedBoundaryEventsV1(
+                remaining,bunch,throughKm);
+            })():null;
+            const fullKm=joined?
+              replayPhysicalOrderedRearKmV1(
+                boundaryInput):null;
+            if(fullKm)
+              assert.equal(
+                validatePhysicalOrderedRearKmV1(
+                  boundaryInput,fullKm),true);
             const crossingCandidates=soloField.refusals
               .map(refusal=>{
                 const input={startInput,start,staggered,
@@ -1386,6 +1408,15 @@ if(process.argv.includes('--probe-rear-ordered-prefix')){
                 ?.riderStates.length??null,
               joinedFieldIncomplete:joined
                 ?.fieldKilometreIncomplete??null,
+              remainingRearRoads:joined?
+                boundary.activeRoads.length-2:
+                null,
+              remainingCandidateEvents:
+                remainingEvents?.length??null,
+              fullKmRiders:fullKm
+                ?.riderCount??null,
+              fullKmGroups:fullKm
+                ?.physicalGroups.length??null,
               candidateBunchClockDifference:
                 boundary.candidateBunchClockDifference,
               independentCrossingPreemptedByRearJoin:
@@ -1475,6 +1506,10 @@ if(process.argv.includes('--probe-rear-ordered-prefix')){
     row.joinedBunchRiders===133&&
     row.joinedRiderStates===133&&
     row.joinedFieldIncomplete===true&&
+    row.remainingRearRoads===24&&
+    row.remainingCandidateEvents===0&&
+    row.fullKmRiders===160&&
+    row.fullKmGroups===25&&
     row.independentCrossingPreemptedByRearJoin===
       false:
     row.firstOrderedEvent===null&&

@@ -4607,3 +4607,13 @@ at the end of km 32 in both fatigue-10 120/260-km probes. Each has
 the solo approach, first rear contact, group turn and bunch join in
 the kilometre decision trace. The other 27 riders still require their
 own km-32 roads; this is not a complete 160-rider kilometre or finish.
+
+The remaining 24 rear roads have no later measured contact in km 32.
+`physical-ordered-rear-km-v1.mjs` now pays each to the kilometre end,
+checks its clock and energy against the prior recorded state, and
+assembles the field with the 133-rider bunch. The result has 160
+distinct rider states and 25 physical groups (one bunch and 24 rear
+roads) in both fatigue-10 route lengths. Each rear group retains one
+paid exposed leader; any new loss retains its paid partial bunch road
+and solo completion. Km 33 onward must still use this new membership
+and energy, so this does not validate a 120/260-km finish.
