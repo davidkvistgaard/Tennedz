@@ -5022,6 +5022,16 @@ on the 120-km route reports no catch, while a 260-km run without the
 required precommitted relief preserves its km-96 unavailable-worker
 refusal. Discovery does not invent contact, team orders or results.
 
+A separate opt-in full-race recording now chains that source discovery
+to the caught-front and all-rear replay without a caller-supplied catch
+kilometre. It retains the discovery evidence and gives every rider a
+paid state at every kilometre and an observed finish clock. The
+120-km early-catch/same-kilometre-split case has exactly the same 160
+finish clocks and energies as the explicit-kilometre replay. Additional
+120-km catches at km 62 and a 260-km fatigue-30 catch at km 64 also
+validate. This remains a narrow synthetic catch pattern, not guided
+race routing or official results.
+
 The next opt-in contact version resolves the tired km-26 boundary at
 the **recorded common split point** (metre 25,999.203884). Both riders
 have paid the bunch to that point; neither is labelled as catching

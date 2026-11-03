@@ -59,6 +59,9 @@ import {advancePhysicalAllRearClearKmV1,
 import {replayPhysicalFrontCaughtAllRearRaceV1,
   validatePhysicalFrontCaughtAllRearRaceV1} from
   '../lib/engine/v2/physical-front-caught-all-rear-race-v1.mjs';
+import {replayPhysicalDiscoveredFrontCaughtRaceV1,
+  validatePhysicalDiscoveredFrontCaughtRaceV1} from
+  '../lib/engine/v2/physical-discovered-front-caught-race-v1.mjs';
 import {probePhysicalFrontRearGroupBunchContactV1,
   validatePhysicalFrontRearGroupBunchContactV1} from
   '../lib/engine/v2/physical-front-rear-group-bunch-contact-v1.mjs';
@@ -783,6 +786,32 @@ if(process.argv.includes('--probe-front-rear-threat')){
           .elapsedSeconds);
     }
   }
+  const discoveredRace=process.argv.includes(
+    '--discovered-full-race')?
+    replayPhysicalDiscoveredFrontCaughtRaceV1({
+      ...generated,attackKm:1,lossKm:21,
+      chaseObserverTeamId:team.id}):null;
+  if(discoveredRace){
+    assert.equal(
+      validatePhysicalDiscoveredFrontCaughtRaceV1({
+        ...generated,attackKm:1,lossKm:21,
+        chaseObserverTeamId:team.id},
+      discoveredRace),true);
+    assert.equal(discoveredRace.riderIds.length,
+      160);
+    assert.equal(discoveredRace.kilometres.length,
+      distanceKm);
+    if(caughtRace){
+      assert.equal(discoveredRace.catchKm,
+        caughtRace.catchKm);
+      assert.deepEqual(discoveredRace
+        .observedFinishSecondsByRider,
+      caughtRace.observedFinishSecondsByRider);
+      assert.deepEqual(discoveredRace
+        .observedFinishEnergyByRider,
+      caughtRace.observedFinishEnergyByRider);
+    }
+  }
   process.stdout.write(JSON.stringify({distanceKm,
     fatigue,choiceKm:41,
     withHelp:process.argv.includes('--with-help'),
@@ -901,6 +930,14 @@ if(process.argv.includes('--probe-front-rear-threat')){
         .sources.last.riderStates.find(row=>
           row.riderId==='team-19-1')
         .physicalGroupId}:null,
+    discoveredRace:discoveredRace?{
+      catchKm:discoveredRace.catchKm,
+      riderCount:discoveredRace.riderIds.length,
+      finishRiderCount:Object.keys(discoveredRace
+        .observedFinishSecondsByRider).length,
+      catchKilometreSplitCount:discoveredRace
+        .sources.caught.sources.splitCompletions
+          .length}:null,
     paceEstimate:decision.paceEstimate,
     movesRoad:decision.movesRoad},null,2)+'\n');
   process.exit(0);
