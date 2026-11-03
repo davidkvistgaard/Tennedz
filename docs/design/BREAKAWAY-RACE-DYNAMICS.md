@@ -5055,15 +5055,21 @@ solo reaches them at metre 61,267.835462 but its committed goal and
 observed faster road choose a pass-through. The rider remains on a
 separate paid road. The group has one exposed leader, the others pay
 less shelter cost, and all 160 states and observed finish clocks
-replay through 120 and 260 km at fatigue 10. Fatigue 30 still refuses
-an independent rear contact after the front catch; it is not counted
-as a complete finish for this roster. Its earlier km-26 refusal has
-been resolved: two disjoint pairs meet at the same clock time, at
+replay through 120 and 260 km at fatigue 10. At fatigue 30, two
+disjoint pairs meet at the same clock time in km 26, at
 metres 25,997.398878 and 25,998.740780. They share no rider or road.
 Both contacts retain their paid common split origins and form separate
 groups with one leader each. A distinct kilometre version marks this
-parallel-contact source, and the full 160-rider prefix now reaches the
-km-62 catch boundary without claiming a finish.
+parallel-contact source. At km 62 the bunch catches the front at
+metre 61,372.441377. The former front rider then meets a rear solo on
+his paid slide road. A different rear solo catches an existing
+seven-rider group at metre 61,881.494648. That latter contact is
+settled after the front/rear meeting, keeps its own paid approach,
+choice and single leader, and is matched back to the earlier ordered
+source. A separate versioned contact-kilometre and full-race record
+now replays all 160 rider histories through observed 120- and 260-km
+finishes at fatigue 30. These are synthetic observations only; they
+do not establish a realistic finish distribution.
 The multi-contact kilometre and complete caught race use distinct
 version-2 recording IDs; the earlier one-contact recordings retain
 their version-1 IDs and output shape.

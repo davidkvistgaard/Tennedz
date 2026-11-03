@@ -1037,6 +1037,40 @@ if(process.argv.includes('--probe-front-rear-threat')){
       assert.ok(joins[1].event.clockSeconds<
         caught.contact.clockSeconds);
     }
+    if(process.argv.includes(
+      '--expect-postcaught-rear')){
+      const caught=discoveredRace.sources.caught;
+      const rear=caught.postRearContact;
+      assert.match(discoveredRace.version,
+        /postcaught-rear-contact-race-1$/);
+      assert.match(caught.version,
+        /postcaught-rear-contact-km-1$/);
+      assert.ok(caught.nextContact&&rear);
+      assert.ok(caught.contact.clockSeconds<
+        caught.nextContact.event.clockSeconds);
+      assert.ok(caught.nextContact.event
+        .clockSeconds<rear.event.clockSeconds);
+      assert.ok(rear.event.riders.every(row=>
+        row.riderId!==caught.contact.riderId));
+      assert.equal(rear.choice.outcome,'join');
+      assert.equal(rear.group.rows.filter(row=>
+        row.role==='leader').length,1);
+      assert.ok(rear.group.rows.every(row=>
+        row.role!=='sheltered'||
+          row.draftFraction<1));
+      const events=discoveredRace.kilometres[
+        caught.sourceKm-1].contactEvents;
+      assert.ok(events.some(row=>
+        isDeepStrictEqual(row.event,
+          rear.event)));
+      for(const decision of rear.choice
+        .riderDecisions){
+        const state=caught.riderStates.find(row=>
+          row.riderId===decision.riderId);
+        assert.ok(state.decisions.some(row=>
+          isDeepStrictEqual(row,decision)));
+      }
+    }
     if(caughtRace){
       assert.equal(discoveredRace.catchKm,
         caughtRace.catchKm);
@@ -1499,6 +1533,16 @@ if(process.argv.includes('--probe-front-rear-threat')){
           .earlyBunchJoins?.map(row=>({
             atDistanceM:row.event.atDistanceM,
             riderId:row.riderId}))??[],
+      catchKilometrePostRearContact:
+        discoveredRace.sources.caught
+          .postRearContact?{
+            atDistanceM:discoveredRace.sources
+              .caught.postRearContact.event
+                .atDistanceM,
+            riderIds:discoveredRace.sources
+              .caught.postRearContact.choice
+                .riderDecisions.map(row=>
+                  row.riderId)}:null,
       catchKilometreAdditionalContacts:
         discoveredRace.sources.caught
           .additionalContacts?.map(row=>({
