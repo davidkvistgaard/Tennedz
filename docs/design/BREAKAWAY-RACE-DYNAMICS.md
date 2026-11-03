@@ -5076,8 +5076,13 @@ from the recorded contact. Eleven later paid rear contacts form a
 group again within the kilometre. A separate versioned full-race
 recording replays all 160 riders through 120 and 260 km with observed
 finish clocks and energy at fatigue 10. It requires a caller-supplied
-contact kilometre verified against the paid source; it is not yet
-source-discovered or a guided-race route. The fatigue-30 attempt at
+contact kilometre verified against the paid source. A separate
+discovery now identifies that km-106 front/rear meeting from the
+ordered full-field refusal, replays the contact against its source
+and reaches identical 120/260-km finish clocks and energy without a
+caller-supplied kilometre. The roster-0 front/bunch catch remains a
+different event and is rejected by front/rear discovery. Neither
+recording is a guided-race route. The fatigue-30 attempt at
 the same km-106 contact refuses because that meeting never occurs in
 its paid source.
 

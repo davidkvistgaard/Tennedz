@@ -70,6 +70,10 @@ import {replayPhysicalDiscoveredFrontCaughtRaceV1,
 import {replayPhysicalFrontToRearAllRaceV1,
   validatePhysicalFrontToRearAllRaceV1} from
   '../lib/engine/v2/physical-front-to-rear-all-race-v1.mjs';
+import {discoverPhysicalFrontToRearContactV1,
+  validatePhysicalFrontToRearContactV1,
+  replayPhysicalDiscoveredFrontToRearRaceV1} from
+  '../lib/engine/v2/physical-front-to-rear-discovery-v1.mjs';
 import {probePhysicalFrontRearGroupBunchContactV1,
   validatePhysicalFrontRearGroupBunchContactV1} from
   '../lib/engine/v2/physical-front-rear-group-bunch-contact-v1.mjs';
@@ -899,6 +903,14 @@ if(process.argv.includes('--probe-front-rear-threat')){
   let frontToRear=null;
   let frontToRearFinish=null;
   let frontToRearRefusal=null;
+  let discoveredFrontToRear=null;
+  if(process.argv.includes(
+    '--expect-no-front-to-rear'))
+    assert.throws(()=>
+      discoverPhysicalFrontToRearContactV1({
+        ...generated,attackKm:1,lossKm:21,
+        chaseObserverTeamId:team.id}),
+    /Front solo needs separate physical catch road/);
   if(process.argv.includes(
     '--probe-front-to-rear')){
     const frontContactKm=Number(process.argv
@@ -1087,6 +1099,37 @@ if(process.argv.includes('--probe-front-rear-threat')){
         assert.equal(
           validatePhysicalFrontToRearAllRaceV1(
             wholeInput,whole),true);
+      if(process.argv.includes(
+        '--discover-front-to-rear')){
+        const discoveryInput={...generated,
+          attackKm:1,lossKm:21,
+          chaseObserverTeamId:team.id};
+        const discovery=
+          discoverPhysicalFrontToRearContactV1(
+            discoveryInput);
+        assert.equal(
+          validatePhysicalFrontToRearContactV1(
+            discoveryInput,discovery),true);
+        assert.equal(discovery.contactKm,
+          frontContactKm);
+        const replay=
+          replayPhysicalDiscoveredFrontToRearRaceV1(
+            discoveryInput);
+        assert.deepEqual(replay
+          .observedFinishSecondsByRider,
+        whole.observedFinishSecondsByRider);
+        assert.deepEqual(replay
+          .observedFinishEnergyByRider,
+        whole.observedFinishEnergyByRider);
+        discoveredFrontToRear={
+          version:replay.version,
+          contactKm:discovery.contactKm,
+          atDistanceM:discovery.event
+            .atDistanceM,
+          finishRiderCount:Object.keys(replay
+            .observedFinishSecondsByRider)
+            .length};
+      }
       frontToRearFinish={sourceKm:after.sourceKm,
         version:whole.version,
         riderCount:after.riderStates.length,
@@ -1252,6 +1295,7 @@ if(process.argv.includes('--probe-front-rear-threat')){
             .leaderRiderId}))}:null,
     frontToRearFinish,
     frontToRearRefusal,
+    discoveredFrontToRear,
     noCatchRace:noCatchRace?{
       riderCount:noCatchRace.riderIds.length,
       finishRiderCount:Object.keys(noCatchRace
