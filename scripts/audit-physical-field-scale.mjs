@@ -15,6 +15,8 @@ import {replayPhysicalSingleLossRaceV1,
   validatePhysicalSingleLossRaceV1} from
   '../lib/engine/v2/physical-single-loss-race-replay-v1.mjs';
 import {completePhysicalPaceLossKmV1,
+  completePhysicalOrderedRearLossesKmV1,
+  validatePhysicalOrderedRearLossesKmV1,
   partitionPhysicalStaggeredLossArrivalsV1,
   validatePhysicalStaggeredLossArrivalsV1} from
   '../lib/engine/v2/physical-pace-loss-completion-v1.mjs';
@@ -1512,11 +1514,20 @@ if(process.argv.includes('--probe-rear-ordered-prefix')){
             }
             const post47Clear=km47?
               probeClearPrefix(startInput,km47):null;
-            const km66Source=km47?
+            const paid65=km47?
+              advanceClearToKm(startInput,
+                km47,65):null;
+            const km66Source=paid65?
               advancePhysicalOrderedRearBunchFromStateV1({
-                startInput,
-                prior:advanceClearToKm(startInput,
-                  km47,65)}):null;
+                startInput,prior:paid65}):null;
+            const km66Losses=paid65?
+              completePhysicalOrderedRearLossesKmV1({
+                startInput,prior:paid65}):null;
+            if(km66Losses&&distanceKm===120)
+              assert.equal(
+                validatePhysicalOrderedRearLossesKmV1({
+                  startInput,prior:paid65},
+                km66Losses),true);
             const crossingCandidates=soloField.refusals
               .map(refusal=>{
                 const input={startInput,start,staggered,
@@ -1593,6 +1604,8 @@ if(process.argv.includes('--probe-rear-ordered-prefix')){
                   riderId:split.riderId,
                   atDistanceM:split.atDistanceM}))??
                     null,
+              km66Completions:km66Losses
+                ?.completions.length??null,
               candidateBunchClockDifference:
                 boundary.candidateBunchClockDifference,
               independentCrossingPreemptedByRearJoin:
@@ -1774,15 +1787,26 @@ if(process.argv.includes('--probe-rear-ordered-prefix')){
                 .length,22);
               lastPaid.afterBunchClear=
                 probeClearPrefix(startInput,bunchKm);
+              const paid65=
+                advanceClearToKm(startInput,
+                  bunchKm,65);
               const km66Source=
                 advancePhysicalOrderedRearBunchFromStateV1({
-                  startInput,
-                  prior:advanceClearToKm(startInput,
-                    bunchKm,65)});
+                  startInput,prior:paid65});
+              const km66Losses=
+                completePhysicalOrderedRearLossesKmV1({
+                  startInput,prior:paid65});
+              if(distanceKm===120)
+                assert.equal(
+                  validatePhysicalOrderedRearLossesKmV1({
+                    startInput,prior:paid65},
+                  km66Losses),true);
               lastPaid.km66Splits=
                 km66Source.step.splits.map(split=>({
                   riderId:split.riderId,
                   atDistanceM:split.atDistanceM}));
+              lastPaid.km66Completions=
+                km66Losses.completions.length;
               lastPaid.km36BunchContact={
                 atDistanceM:bunchContact.contact
                   .atDistanceM,
@@ -1834,10 +1858,12 @@ if(process.argv.includes('--probe-rear-ordered-prefix')){
         ?.lastFullKm>=40)&&
     (row.fatigue!==10||
       row.km66Splits?.length===13&&
+      row.km66Completions===13&&
       row.post47Clear?.lastFullKm===65)&&
     (row.fatigue!==30||
       row.lastPaid.km66Splits
         ?.length===11&&
+      row.lastPaid.km66Completions===11&&
       row.lastPaid.afterBunchClear
         ?.lastFullKm===65)&&
     row.firstRefusedKm===
