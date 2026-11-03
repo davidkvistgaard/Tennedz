@@ -4678,6 +4678,13 @@ bunch, 26 riders on 23 rear roads and all 160 km-47 rider states.
 Clear kilometres pay through km 65 in both fatigue settings. At km
 66 the bunch source records 13 new pace losses with fatigue 10 and
 11 with fatigue 30, at distinct measured metres within roughly two
-metres of the kilometre end. Their remaining solo roads and any
-contacts have not yet been replayed; similar end clocks cannot create
-a group on their own.
+metres of the kilometre end. Each rider now pays the remaining solo
+distance from that split, with source energy, effort, terrain and
+recovery. The boundary compares all new trajectories with the
+existing rear roads, each other and the bunch. No road-clock contact
+occurs in km 66 in the four same-seed 120/260-km fatigue-10/30
+probes. The resulting state has all 160 distinct riders and keeps
+the new solos separate. The next measured contact is a solo meeting
+the bunch at metre 68,280.039786 in km 69 under fatigue 30; under
+fatigue 10 it is at metre 70,066.508636 in km 71. Those meetings
+still need decisions and paid remainder; neither finish is validated.

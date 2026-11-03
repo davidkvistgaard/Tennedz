@@ -20,6 +20,12 @@ import {completePhysicalPaceLossKmV1,
   partitionPhysicalStaggeredLossArrivalsV1,
   validatePhysicalStaggeredLossArrivalsV1} from
   '../lib/engine/v2/physical-pace-loss-completion-v1.mjs';
+import {inspectPhysicalOrderedRearLossBoundaryV1,
+  validatePhysicalOrderedRearLossBoundaryV1} from
+  '../lib/engine/v2/physical-ordered-rear-loss-boundary-v1.mjs';
+import {advancePhysicalOrderedRearLossKmV1,
+  validatePhysicalOrderedRearLossKmV1} from
+  '../lib/engine/v2/physical-ordered-rear-loss-km-v1.mjs';
 import {inspectPhysicalStaggeredLossKmContactsV1,
   validatePhysicalStaggeredLossKmContactsV1} from
   '../lib/engine/v2/physical-staggered-loss-km-contact-v1.mjs';
@@ -1523,11 +1529,28 @@ if(process.argv.includes('--probe-rear-ordered-prefix')){
             const km66Losses=paid65?
               completePhysicalOrderedRearLossesKmV1({
                 startInput,prior:paid65}):null;
+            const km66Boundary=paid65?
+              inspectPhysicalOrderedRearLossBoundaryV1({
+                startInput,prior:paid65}):null;
+            const km66Full=km66Boundary&&
+              !km66Boundary.firstEvent?
+              advancePhysicalOrderedRearLossKmV1({
+                startInput,prior:paid65}):null;
             if(km66Losses&&distanceKm===120)
               assert.equal(
                 validatePhysicalOrderedRearLossesKmV1({
                   startInput,prior:paid65},
                 km66Losses),true);
+            if(km66Boundary&&distanceKm===120)
+              assert.equal(
+                validatePhysicalOrderedRearLossBoundaryV1({
+                  startInput,prior:paid65},
+                km66Boundary),true);
+            if(km66Full&&distanceKm===120)
+              assert.equal(
+                validatePhysicalOrderedRearLossKmV1({
+                  startInput,prior:paid65},
+                km66Full),true);
             const crossingCandidates=soloField.refusals
               .map(refusal=>{
                 const input={startInput,start,staggered,
@@ -1606,6 +1629,15 @@ if(process.argv.includes('--probe-rear-ordered-prefix')){
                     null,
               km66Completions:km66Losses
                 ?.completions.length??null,
+              km66FirstEvent:km66Boundary
+                ?.firstEvent??null,
+              km66EventCount:km66Boundary
+                ?.candidateEventCount??null,
+              km66FullRiders:km66Full
+                ?.riderCount??null,
+              after66Clear:km66Full?
+                probeClearPrefix(startInput,
+                  km66Full):null,
               candidateBunchClockDifference:
                 boundary.candidateBunchClockDifference,
               independentCrossingPreemptedByRearJoin:
@@ -1796,17 +1828,43 @@ if(process.argv.includes('--probe-rear-ordered-prefix')){
               const km66Losses=
                 completePhysicalOrderedRearLossesKmV1({
                   startInput,prior:paid65});
+              const km66Boundary=
+                inspectPhysicalOrderedRearLossBoundaryV1({
+                  startInput,prior:paid65});
+              const km66Full=
+                km66Boundary.firstEvent?null:
+                  advancePhysicalOrderedRearLossKmV1({
+                    startInput,prior:paid65});
               if(distanceKm===120)
                 assert.equal(
                   validatePhysicalOrderedRearLossesKmV1({
                     startInput,prior:paid65},
                   km66Losses),true);
+              if(distanceKm===120)
+                assert.equal(
+                  validatePhysicalOrderedRearLossBoundaryV1({
+                    startInput,prior:paid65},
+                  km66Boundary),true);
+              if(km66Full&&distanceKm===120)
+                assert.equal(
+                  validatePhysicalOrderedRearLossKmV1({
+                    startInput,prior:paid65},
+                  km66Full),true);
               lastPaid.km66Splits=
                 km66Source.step.splits.map(split=>({
                   riderId:split.riderId,
                   atDistanceM:split.atDistanceM}));
               lastPaid.km66Completions=
                 km66Losses.completions.length;
+              lastPaid.km66FirstEvent=
+                km66Boundary.firstEvent;
+              lastPaid.km66EventCount=
+                km66Boundary.candidateEventCount;
+              lastPaid.km66FullRiders=
+                km66Full?.riderCount??null;
+              lastPaid.after66Clear=km66Full?
+                probeClearPrefix(startInput,
+                  km66Full):null;
               lastPaid.km36BunchContact={
                 atDistanceM:bunchContact.contact
                   .atDistanceM,
@@ -1859,11 +1917,23 @@ if(process.argv.includes('--probe-rear-ordered-prefix')){
     (row.fatigue!==10||
       row.km66Splits?.length===13&&
       row.km66Completions===13&&
+      row.km66EventCount===0&&
+      row.km66FullRiders===160&&
+      row.after66Clear?.lastFullKm===70&&
+      row.after66Clear?.firstEvent
+        ?.roadIds[0]==='solo-team-9-2'&&
       row.post47Clear?.lastFullKm===65)&&
     (row.fatigue!==30||
       row.lastPaid.km66Splits
         ?.length===11&&
       row.lastPaid.km66Completions===11&&
+      row.lastPaid.km66EventCount===0&&
+      row.lastPaid.km66FullRiders===160&&
+      row.lastPaid.after66Clear
+        ?.lastFullKm===68&&
+      row.lastPaid.after66Clear
+        ?.firstEvent?.roadIds[0]===
+          'solo-team-1-5'&&
       row.lastPaid.afterBunchClear
         ?.lastFullKm===65)&&
     row.firstRefusedKm===
