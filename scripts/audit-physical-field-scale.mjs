@@ -75,6 +75,12 @@ import {replayPhysicalOrderedRearKmV1,
 import {replayPhysicalOrderedRearNextBunchKmV1,
   validatePhysicalOrderedRearNextBunchKmV1} from
   '../lib/engine/v2/physical-ordered-rear-next-bunch-v1.mjs';
+import {inspectPhysicalOrderedRearNextBoundaryV1,
+  validatePhysicalOrderedRearNextBoundaryV1} from
+  '../lib/engine/v2/physical-ordered-rear-next-boundary-v1.mjs';
+import {replayPhysicalOrderedRearNextKmV1,
+  validatePhysicalOrderedRearNextKmV1} from
+  '../lib/engine/v2/physical-ordered-rear-next-km-v1.mjs';
 import {replayPhysicalStaggeredRearEventsV1,
   validatePhysicalStaggeredRearEventsV1,
   inspectPhysicalRearEventEndStateV1,
@@ -1395,6 +1401,25 @@ if(process.argv.includes('--probe-rear-ordered-prefix')){
               assert.equal(nextBunch.step.riders.length,
                 133);
             }
+            const nextBoundary=nextBunch?
+              inspectPhysicalOrderedRearNextBoundaryV1(
+                boundaryInput):null;
+            if(nextBoundary)
+              assert.equal(
+                validatePhysicalOrderedRearNextBoundaryV1(
+                  boundaryInput,nextBoundary),true);
+            const nextKm=nextBoundary&&
+              !nextBoundary.firstEvent?
+              replayPhysicalOrderedRearNextKmV1(
+                boundaryInput):null;
+            if(nextKm){
+              assert.equal(
+                validatePhysicalOrderedRearNextKmV1(
+                  boundaryInput,nextKm),true);
+              assert.equal(nextKm.riderCount,160);
+              assert.equal(nextKm.endRearEntities
+                .length,24);
+            }
             const crossingCandidates=soloField.refusals
               .map(refusal=>{
                 const input={startInput,start,staggered,
@@ -1454,6 +1479,11 @@ if(process.argv.includes('--probe-rear-ordered-prefix')){
                 ?.step.riders.length??null,
               nextBunchSplits:nextBunch
                 ?.step.splits.length??null,
+              nextBoundaryRoads:nextBoundary
+                ?.rearRoads.length??null,
+              nextBoundaryFirstEvent:
+                nextBoundary?.firstEvent??null,
+              nextKmRiders:nextKm?.riderCount??null,
               candidateBunchClockDifference:
                 boundary.candidateBunchClockDifference,
               independentCrossingPreemptedByRearJoin:
@@ -1548,6 +1578,7 @@ if(process.argv.includes('--probe-rear-ordered-prefix')){
     row.fullKmRiders===160&&
     row.fullKmGroups===25&&
     row.nextBunchRiders===133&&
+    row.nextKmRiders===160&&
     row.independentCrossingPreemptedByRearJoin===
       false:
     row.firstOrderedEvent===null&&

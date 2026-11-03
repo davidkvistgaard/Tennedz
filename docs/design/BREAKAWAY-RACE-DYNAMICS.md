@@ -4632,3 +4632,13 @@ other 27 rider IDs stay explicitly detached; a new paid pace loss may
 remove more riders, and an absent ordered front worker still needs a
 precommitted emergency replacement. This probe does not advance the
 24 rear roads or assert a complete km-33 field state.
+
+The next boundary probe pays each remaining solo and group from that
+recorded end state, retaining the group's scheduled exposed turn and
+the lower sheltered energy cost. In the fatigue-10 120/260-km probes,
+km 33 has no new bunch split and no measured road-clock contact. The
+complete km-33 replay therefore joins the 133 paid bunch states with
+27 individually paid rear states on 24 separate roads. It exports new
+clocks, energies and rotation sources for km 34. The fatigue-30
+branches still require their distinct first km-33 crossing, and the
+120/260-km finishes remain unvalidated.

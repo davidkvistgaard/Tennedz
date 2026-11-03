@@ -69,7 +69,8 @@ import {inspectTwoRearPairsFieldContactV1} from
   '../../lib/engine/v2/physical-two-rear-pairs-field-contact-v1.mjs';
 import {finishPhysicalThirdRearContactV1} from
   '../../lib/engine/v2/physical-third-rear-contact-v1.mjs';
-import {pricePhysicalRearEventTrackV1} from
+import {pricePhysicalRearEventTrackV1,
+  pricePhysicalRearSoloTrackV1} from
   '../../lib/engine/v2/physical-rear-event-track-v1.mjs';
 import {replayPhysicalStaggeredRearEventsV1,
   validatePhysicalStaggeredRearEventsV1,
@@ -243,6 +244,40 @@ test('emergency front worker needs a precommitted named helper',()=>{
     emergencyFrontWorkers:[{...plan,
       replacementRiderId:'control-0'}]}),
   /named emergency front workers/);
+});
+
+test('next rear solo pays terrain from recorded energy and clock',()=>{
+  const base=source();
+  const startInput={...base.startInput,
+    physicalDraftVersion:4,
+    physicalRearIntentVersion:2};
+  const input={startInput,riderId:'other-2',
+    energyBefore:90,km:2,startClock:80,
+    groupId:'solo-other-2'};
+  const paid=pricePhysicalRearSoloTrackV1(input);
+  assert.equal(paid.rows.length,1);
+  assert.equal(paid.rows[0].role,'solo');
+  assert.equal(paid.rows[0].decision.effort,
+    'steady');
+  assert.equal(paid.clockAt(0),80);
+  assert.equal(paid.clockAt(1000),
+    paid.endClock);
+  assert.ok(paid.rows[0].energyAfter<90);
+  assert.ok(Math.abs(paid.energyAt(1000)-
+    paid.rows[0].energyAfter)<.002);
+  const climb={...startInput,
+    routeKilometres:startInput.routeKilometres
+      .map((segment,index)=>index===1?{
+        ...segment,terrain:'climb',
+        gradientPct:6}:segment)};
+  const climbPaid=pricePhysicalRearSoloTrackV1({
+    ...input,startInput:climb});
+  assert.ok(climbPaid.rows[0].energyAfter<
+    paid.rows[0].energyAfter);
+  assert.throws(()=>
+    pricePhysicalRearSoloTrackV1({
+      ...input,groupId:'peloton'}),
+  /recorded road state/);
 });
 
 test('start line pays one named leader and all 23 sheltered riders',()=>{
