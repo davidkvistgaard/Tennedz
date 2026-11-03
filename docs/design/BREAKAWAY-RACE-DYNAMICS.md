@@ -4898,3 +4898,15 @@ award. All separate solo and bunch roads are still compared. The first
 new measured meeting is between two other rear solos at metre
 31,225.679406, so km 32 remains incomplete. The source does not
 silently move or relabel the group at that contact.
+
+The low-fatigue km-32 source now resolves that first rear pair's
+measured meeting at metre 31,225.679406. The pair pays one exposed
+leader and one sheltered rider, then meets the bunch at metre
+31,451.641668. Both riders individually have enough paid energy,
+holding ability and reserve to enter bunch shelter; each pays for
+the remaining distance, and the bunch's original exposed leader
+remains paid. Rechecking the remaining roads finds no later meeting
+in km 32. All 160 riders receive source-replayed clocks, energy and
+decisions, including the two riders' solo, pair and bunch segments.
+The bunch ends with 133 riders and one front rider remains separate.
+This is not a whole-race or finish calibration.
