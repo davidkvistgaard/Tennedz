@@ -23,6 +23,9 @@ import {resolvePhysicalFrontRearContactV1,
 import {resolvePhysicalFrontRearSecondContactV1,
   validatePhysicalFrontRearSecondContactV1} from
   '../lib/engine/v2/physical-front-rear-second-contact-v1.mjs';
+import {replayPhysicalFrontRearOrderedContactKmV1,
+  validatePhysicalFrontRearOrderedContactKmV1} from
+  '../lib/engine/v2/physical-front-rear-ordered-contact-km-v1.mjs';
 import {startPhysicalBunchV1,runPhysicalBunchV1,
   runPhysicalBunchToPaceLossV1,
   runPhysicalStaggeredBunchLossV1} from
@@ -482,7 +485,8 @@ if(process.argv.includes('--probe-front-next-bunch')){
 
 if(process.argv.includes('--probe-front-clear-prefix')||
   process.argv.includes('--probe-front-rear-contact')||
-  process.argv.includes('--probe-front-rear-second-contact')){
+  process.argv.includes('--probe-front-rear-second-contact')||
+  process.argv.includes('--probe-front-rear-contact-km')){
   const distanceKm=Number(process.argv.find(arg=>
     arg.startsWith('--distance='))?.split('=')[1]??120);
   const fatigue=Number(process.argv.find(arg=>
@@ -531,7 +535,9 @@ if(process.argv.includes('--probe-front-clear-prefix')||
   if(process.argv.includes(
     '--probe-front-rear-contact')||
     process.argv.includes(
-      '--probe-front-rear-second-contact')){
+      '--probe-front-rear-second-contact')||
+    process.argv.includes(
+      '--probe-front-rear-contact-km')){
     const contactInput={startInput:input.startInput,
       prior};
     if(fatigue===30){
@@ -566,7 +572,9 @@ if(process.argv.includes('--probe-front-clear-prefix')||
     assert.equal(contact.nextCandidateEvent
       ?.sourceKm,firstUnresolvedKm);
     if(process.argv.includes(
-      '--probe-front-rear-second-contact')){
+      '--probe-front-rear-second-contact')||
+      process.argv.includes(
+        '--probe-front-rear-contact-km')){
       const second=
         resolvePhysicalFrontRearSecondContactV1(
           contactInput);
@@ -588,6 +596,54 @@ if(process.argv.includes('--probe-front-clear-prefix')||
         .filter(row=>row.role==='sheltered'&&
           row.draftFraction<1).length,2);
       assert.equal(second.paidApproaches.length,3);
+      if(process.argv.includes(
+        '--probe-front-rear-contact-km')){
+        const finished=
+          replayPhysicalFrontRearOrderedContactKmV1(
+            contactInput);
+        assert.equal(
+          validatePhysicalFrontRearOrderedContactKmV1(
+            contactInput,finished),true);
+        assert.equal(finished.riderCount,160);
+        assert.equal(finished.sourceKm,31);
+        assert.equal(finished
+          .fieldKilometreIncomplete,false);
+        assert.equal(finished.endRearEntities
+          .filter(row=>row.kind==='group')
+          .length,1);
+        assert.equal(new Set(finished.riderStates
+          .map(row=>row.riderId)).size,160);
+        assert.ok(finished.riderStates.every(
+          row=>row.sourceKm===31&&
+            row.atDistanceM===31000&&
+            Number.isFinite(row.elapsedSeconds)&&
+            Number.isFinite(row.energyAfter)&&
+            row.decisions.length>0));
+        assert.equal(finished.riderStates
+          .filter(row=>second.candidateGroupRoad
+            .riderIds.includes(row.riderId))
+          .length,3);
+        process.stdout.write(JSON.stringify({
+          distanceKm,fatigue,
+          sourceKm:finished.sourceKm,
+          riderCount:finished.riderCount,
+          bunchRiders:finished.endBunchState
+            .riderIds.length,
+          frontRiderId:finished.endFrontState
+            .riderId,
+          rearRoads:finished.endRearEntities
+            .length,
+          group:finished.endRearEntities.find(
+            row=>row.kind==='group'),
+          contactRiderStates:finished
+            .riderStates.filter(row=>
+              second.candidateGroupRoad.riderIds
+                .includes(row.riderId)),
+          fieldKilometreIncomplete:finished
+            .fieldKilometreIncomplete},
+        null,2)+'\n');
+        process.exit(0);
+      }
       process.stdout.write(JSON.stringify({
         distanceKm,fatigue,
         contactKm:second.sourceKm,

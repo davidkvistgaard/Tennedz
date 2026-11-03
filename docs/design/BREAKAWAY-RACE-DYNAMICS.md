@@ -4876,6 +4876,16 @@ opt-in source. It replays the first two-rider group's road from metre
 three riders choose to join based on observed paid road speeds and
 their committed intents. One rider pays the exposed turn on the final
 group road; the other two receive the lower shelter cost. Repricing
-the remaining roads finds no further km-31 candidate contact. A full
-160-rider km-31 state has not yet been assembled from these segments,
-and the tired simultaneous-split branch remains unresolved.
+the remaining roads finds no further km-31 candidate contact. The
+tired simultaneous-split branch remains unresolved.
+
+The low-fatigue km-31 branch now assembles both ordered joins, the
+separate front solo, the bunch and every remaining rear road into one
+source-replayed 160-rider kilometre state. The second group contains
+three riders at km 31; the bunch has 131 riders, with one front rider
+and 25 other rear solos. Every rider has a km-31 clock, energy and
+decision chain. The two contact riders retain their solo approach,
+first join, intermediate paid group road, second join and final group
+road in order. This completes that kilometre only. Subsequent group
+rotation, further contact, fatigue-30 simultaneous splits and full
+route finish still need validation before guided routing.
