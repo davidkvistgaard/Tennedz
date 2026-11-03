@@ -4329,3 +4329,29 @@ simultaneous splits, including repeated split markers. The single-loss
 continuation refuses that input; it cannot infer their relative wheels
 or form a shared rear group. A general event source for those breaks
 remains necessary.
+
+An opt-in physical draft version 4 keeps version 3's paid speed,
+energy and split metres but records why each rider leaves that hard
+leader. It compares each follower's ability and affordable sheltered
+cost at hard effort with the leader's paid pace. In the same 24-rider
+km-14 source, 15 of the 16 split riders could hold if they exceeded
+their active team effort ceiling. Their decision now explicitly says
+`try_hold_within_order` with `team_effort_ceiling`; the one rider who
+cannot hold even at hard effort keeps a `pace_loss` with
+`cannot_hold_even_at_hard_effort`. No later-stage motive is inferred,
+and the 16-way contact still refuses. Historical versions 1–3 keep
+their original recordings. This is truthful cause accounting for one
+source, not a calibrated rider choice to attack the climb or violate
+the manager's order.
+
+The same-seed 160-rider version-4 audit replays 120 and 260 km at
+fatigue 10 with all 160 finish clocks and the same 12 and 18 measured
+rear contacts as version 3. All 39 and 45 priced bunch splits in those
+two varied fields are order-limited, not physically impossible at a
+fundable hard effort. At fatigue 30, all 37 and 39 splits on the two
+distances have the same cause, but rear replay still refuses the equal
+split ordering. The separate weak-climber source establishes that a
+true physical inability remains possible. These cause distributions
+show that the varied-field order and pace policy still needs whole-race
+calibration; classifying the cause does not justify automatically
+overriding the manager order or routing this model to guided races.

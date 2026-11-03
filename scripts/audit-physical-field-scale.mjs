@@ -801,6 +801,8 @@ if(process.argv.includes('--probe-single-leader')){
     '--long')?260:120;
   const fatigue=process.argv.includes(
     '--fatigued')?30:10;
+  const draftVersion=process.argv.includes(
+    '--classified')?4:3;
   const baseline=source(distanceKm,fatigue,
     'varied_field');
   const baselineRoad=runPhysicalStaggeredBunchLossV1({
@@ -809,7 +811,7 @@ if(process.argv.includes('--probe-single-leader')){
     ...baseline,staggered:baselineRoad,
     throughKm:distanceKm});
   const startInput={...baseline.startInput,
-    physicalDraftVersion:3};
+    physicalDraftVersion:draftVersion};
   const start=startPhysicalBunchV1(startInput);
   const staggered=runPhysicalStaggeredBunchLossV1({
     startInput,start,throughKm:distanceKm});
@@ -817,6 +819,22 @@ if(process.argv.includes('--probe-single-leader')){
     startInput,start,staggered,throughKm:distanceKm});
   const input={startInput,start,staggered,
     soloField,throughKm:distanceKm};
+  const splitCauses=staggered.road.flatMap(step=>
+    step.splits.map(split=>step.riderDecisions
+      .find(row=>row.riderId===split.riderId)
+      ?.reason));
+  const splitCauseCounts=Object.fromEntries(
+    [...new Set(splitCauses)].map(reason=>[
+      reason,splitCauses.filter(row=>row===reason)
+        .length]));
+  if(draftVersion===4){
+    assert.equal(splitCauses.length,
+      staggered.losses.length);
+    assert.ok(splitCauses.every(reason=>
+      ['team_effort_ceiling',
+        'cannot_hold_even_at_hard_effort']
+        .includes(reason)));
+  }
   const countRole=(road,role)=>road.road.reduce(
     (sum,step)=>sum+step.riders.filter(row=>
       row.role===role).length,0);
@@ -846,11 +864,13 @@ if(process.argv.includes('--probe-single-leader')){
       replayPhysicalStaggeredRearEventsV1(input),
     /distinct paid split ordering/);
     process.stdout.write(JSON.stringify({
-      distanceKm,fatigue,baselinePaceMatches,
+      distanceKm,fatigue,draftVersion,
+      baselinePaceMatches,
       candidatePaceMatches:countRole(staggered,
         'pace_match'),
       status:'refused_ambiguous_equal_split',
-      losses:staggered.losses.length},
+      losses:staggered.losses.length,
+      splitCauseCounts},
     null,2)+'\n');
     process.exit(0);
   }
@@ -877,7 +897,8 @@ if(process.argv.includes('--probe-single-leader')){
   assert.ok(finishEnergyDeltas.some(value=>
     value>1e-6));
   process.stdout.write(JSON.stringify({
-    distanceKm,fatigue,baselinePaceMatches,
+    distanceKm,fatigue,draftVersion,
+    baselinePaceMatches,
     firstShelteredMatch:{km:firstLegacyMatch.km,
       riderId:firstLegacyMatch.row.riderId,
       oldEnergySpent:firstLegacyMatch.row.energySpent,
@@ -885,6 +906,7 @@ if(process.argv.includes('--probe-single-leader')){
         shelteredMatch.energySpent},
     candidatePaceMatches:countRole(staggered,
       'pace_match'),
+    splitCauseCounts,
     baselineContacts:baselineRace.contactCount,
     losses:staggered.losses.length,
     contacts:race.contactCount,

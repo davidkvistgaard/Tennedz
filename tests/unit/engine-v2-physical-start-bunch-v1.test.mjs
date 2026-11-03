@@ -1,7 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {SPORTING_SKILLS} from '../../lib/engine/v2/skills.mjs';
-import {normalizeOrders} from '../../lib/engine/v2/orders.mjs';
+import {TUNING} from '../../lib/engine/v2/tuning.mjs';
+import {normalizeOrders,orderAt} from
+  '../../lib/engine/v2/orders.mjs';
 import {commitTeamChaseStakesV1} from
   '../../lib/engine/v2/team-chase-stake-v1.mjs';
 import {commitRearSoloPlanV1} from
@@ -252,6 +254,7 @@ test('versioned bunch pace match pays sheltered cost with one leader',()=>{
   };
   const oldRoad=roadFor(2);
   const sheltered=roadFor(3);
+  const classified=roadFor(4);
   const old=oldRoad.riders.find(row=>
     row.riderId==='other-3');
   const next=sheltered.riders.find(row=>
@@ -269,6 +272,10 @@ test('versioned bunch pace match pays sheltered cost with one leader',()=>{
     row.riderId==='other-3').reason,
   'paid_individual_pace_match_in_shelter');
   assert.notEqual(oldRoad.version,sheltered.version);
+  assert.notEqual(classified.version,sheltered.version);
+  assert.deepEqual(classified.riders,sheltered.riders);
+  assert.deepEqual(classified.riderDecisions,
+    sheltered.riderDecisions);
 });
 
 test('same-seed terrain and fatigue change paid start road',()=>{
@@ -1167,8 +1174,58 @@ test('caught break and later follower loss have paid rider states',()=>{
   assert.equal(draftLoss.splits.length,16);
   assert.ok(new Set(draftLoss.splits.map(row=>
     row.atDistanceM)).size<draftLoss.splits.length);
+  const draftLeader=draftLoss.riders.find(row=>
+    row.riderId===draftLoss.leaderRiderId);
+  const couldMatchAtHard=draftLoss.splits.filter(split=>{
+    const rider=draftLoss.riders.find(row=>
+      row.riderId===split.riderId);
+    const team=draftStartInput.teams.find(row=>
+      row.riders.some(item=>item.id===split.riderId));
+    const ordered=orderAt(team.orders,13).effort;
+    return rider.holdAbility+20*(
+      TUNING.effortPressure.hard-
+      TUNING.effortPressure[ordered])>=
+      draftLeader.holdAbility;
+  });
+  assert.equal(couldMatchAtHard.length,15);
+  const classifiedStartInput={...draftStartInput,
+    physicalDraftVersion:4};
+  const classifiedInput={...draftInput,
+    startInput:classifiedStartInput,
+    start:startPhysicalBunchV1(classifiedStartInput)};
+  const classifiedPrior=replayPhysicalCaughtBreakRaceV1({
+    ...classifiedInput,throughKm:13});
+  const classifiedPriorStep=classifiedPrior.sources.bunch
+    .road.at(-1);
+  const classifiedLoss=advancePhysicalBunchAfterCaughtSlideLossKmV1({
+    startInput:classifiedStartInput,
+    prior:{riderIds:classifiedPriorStep.physicalGroup.riderIds,
+      energyByRider:classifiedPriorStep.energyByRider,
+      quietKmByRider:classifiedPriorStep.quietKmByRider},
+    segment:contactRoad[13],caughtRiderId:'other-2'});
+  assert.equal(classifiedLoss.splits.length,16);
+  assert.deepEqual(classifiedLoss.splits.map(row=>
+    row.atDistanceM),draftLoss.splits.map(row=>
+    row.atDistanceM));
+  assert.equal(classifiedLoss.elapsedSeconds,
+    draftLoss.elapsedSeconds);
+  assert.equal(classifiedLoss.splits.filter(row=>
+    row.orderLimited).length,15);
+  assert.equal(classifiedLoss.riderDecisions.filter(row=>
+    row.reason==='team_effort_ceiling'&&
+    row.choice==='try_hold_within_order').length,15);
+  assert.equal(classifiedLoss.riderDecisions.find(row=>
+    row.riderId==='sprint-2').reason,
+  'cannot_hold_even_at_hard_effort');
+  assert.equal(classifiedLoss.riderDecisions.find(row=>
+    row.riderId==='sprint-2').choice,
+  'pace_loss');
+  assert.ok(draftLoss.riderDecisions.filter(row=>
+    row.reason==='cannot_hold_paid_front_pace').length>=16);
   assert.throws(()=>replayPhysicalEarlyCaughtNextRearKmV1(
     draftInput),/one priced follower loss/);
+  assert.throws(()=>replayPhysicalEarlyCaughtNextRearKmV1(
+    classifiedInput),/one priced follower loss/);
   const forgedFinish=structuredClone(finished);
   forgedFinish.kilometres.at(-1).riderStates.find(row=>
     row.riderId==='sprint-2').elapsedSeconds+=1;
