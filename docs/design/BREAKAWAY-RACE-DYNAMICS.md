@@ -4751,3 +4751,20 @@ joins, two solo-to-bunch joins and this group-to-bunch join. Both
 route probes end km 71 with 160 paid rider states, 128 in the bunch
 and 32 on 28 rear roads. Later kilometres and both finishes still
 need whole-race calibration.
+
+The read-only mixed-field audit now advances each subsequent kilometre
+from the preceding full rider state. It chooses a clear road, an ordered
+contact sequence or a bunch-loss source according to the paid bunch
+step, then checks all 160 end states. A rear solo's measured bunch
+crossing may explicitly retain its solo road when the rider cannot
+hold or pay for shelter. That contact, its partial approach and the
+remaining solo energy are recorded without changing membership. The
+fatigue-30 probe exercises this passage in km 104 at metre
+103,863.695557. Both route lengths replay all riders through km 105;
+five new bunch losses in km 106 coincide with an earlier solo-bunch
+meeting at metre 105,129.865902, so an ordered split-and-contact
+continuation is still required. In fatigue 10, the same-seed 120- and
+260-km probes replay all 160 riders through km 120, including later
+paid split and contact kilometres. This is a physical prefix only;
+the 120-km finish and both 260-km finishes remain unvalidated, and the
+experimental model stays out of guided races.

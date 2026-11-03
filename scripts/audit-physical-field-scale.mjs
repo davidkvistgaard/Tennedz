@@ -21,7 +21,8 @@ import {completePhysicalPaceLossKmV1,
   validatePhysicalStaggeredLossArrivalsV1} from
   '../lib/engine/v2/physical-pace-loss-completion-v1.mjs';
 import {inspectPhysicalOrderedRearLossBoundaryV1,
-  validatePhysicalOrderedRearLossBoundaryV1} from
+  validatePhysicalOrderedRearLossBoundaryV1,
+  sourcePhysicalOrderedRearLossBoundaryV1} from
   '../lib/engine/v2/physical-ordered-rear-loss-boundary-v1.mjs';
 import {advancePhysicalOrderedRearLossKmV1,
   validatePhysicalOrderedRearLossKmV1} from
@@ -1397,6 +1398,105 @@ if(process.argv.includes('--probe-rear-ordered-prefix')){
     }
     return prior;
   };
+  const probeMixedPrefix=(startInput,first,
+    limitKm=120)=>{
+    let prior={sourceKm:first.sourceKm,
+      riderStates:first.riderStates,
+      riderCount:first.riderCount,
+      endBunchState:first.endBunchState,
+      endRearEntities:first.endRearEntities};
+    const contactKilometres=[];
+    for(let km=prior.sourceKm+1;
+      km<=Math.min(limitKm,
+        startInput.routeKilometres.length);km++){
+      try{
+        const bunch=advancePhysicalOrderedRearBunchFromStateV1({
+          startInput,prior});
+        if(bunch.step.attack)
+          return {lastFullKm:prior.sourceKm,
+            firstUnresolvedKm:km,
+            refusal:'New bunch attack needs paid continuation.',
+            contactKilometres};
+        if(bunch.step.splits.length){
+          const loss=
+            sourcePhysicalOrderedRearLossBoundaryV1({
+              startInput,prior});
+          if(loss.recording.firstEvent)
+            return {lastFullKm:prior.sourceKm,
+              firstUnresolvedKm:km,
+              firstEvent:loss.recording.firstEvent,
+              newSplits:bunch.step.splits.map(row=>
+                row.riderId),
+              contactKilometres};
+          const next=advancePhysicalOrderedRearLossKmV1({
+            startInput,prior});
+          assert.equal(next.sourceKm,km);
+          assert.equal(next.riderCount,160);
+          contactKilometres.push({sourceKm:km,
+            newSplits:bunch.step.splits.map(row=>
+              row.riderId),
+            bunchRiders:next.endBunchState
+              .riderIds.length,
+            rearRoads:next.endRearEntities.length});
+          prior={sourceKm:next.sourceKm,
+            riderStates:next.riderStates,
+            riderCount:next.riderCount,
+            endBunchState:next.endBunchState,
+            endRearEntities:next.endRearEntities};
+          continue;
+        }
+        const boundary=
+          sourcePhysicalOrderedRearBoundaryFromStateV1({
+            startInput,prior});
+        const sequence=boundary.recording.firstEvent?
+          inspectPhysicalOrderedRearEventSequenceV1({
+            startInput,prior}):null;
+        if(sequence?.firstUnsettledEvent||
+          sequence?.contacts.some(row=>
+            row.outcome!=='join'&&
+            !(row.kind==='solo_bunch'&&
+              row.outcome==='stay_solo')))
+          return {lastFullKm:prior.sourceKm,
+            firstUnresolvedKm:km,
+            firstEvent:boundary.recording.firstEvent,
+            firstUnsettledEvent:sequence
+              .firstUnsettledEvent,
+            firstUnsettledGroupAssessment:
+              sequence.firstUnsettledGroupAssessment,
+            contacts:sequence.contacts.map(row=>({
+              kind:row.kind,outcome:row.outcome,
+              atDistanceM:row.event.atDistanceM})),
+            contactKilometres};
+        const next=sequence?
+          advancePhysicalOrderedRearEventKmV1({
+            startInput,prior}):
+          advancePhysicalOrderedRearClearKmV1({
+            startInput,prior});
+        assert.equal(next.sourceKm,km);
+        assert.equal(next.riderCount,160);
+        if(sequence)contactKilometres.push({
+          sourceKm:km,
+          contacts:sequence.contacts.map(row=>({
+            kind:row.kind,outcome:row.outcome,
+            atDistanceM:row.event.atDistanceM})),
+          bunchRiders:next.endBunchState
+            .riderIds.length,
+          rearRoads:next.endRearEntities.length});
+        prior={sourceKm:next.sourceKm,
+          riderStates:next.riderStates,
+          riderCount:next.riderCount,
+          endBunchState:next.endBunchState,
+          endRearEntities:next.endRearEntities};
+      }catch(error){return {
+        lastFullKm:prior.sourceKm,
+        firstUnresolvedKm:km,
+        refusal:error.message,
+        contactKilometres};}
+    }
+    return {lastFullKm:prior.sourceKm,
+      firstUnresolvedKm:null,
+      contactKilometres};
+  };
   const post66Bunch=(startInput,km66Full,
     priorKm,verify)=>{
     if(!km66Full)return null;
@@ -1581,10 +1681,21 @@ if(process.argv.includes('--probe-rear-ordered-prefix')){
         ?.endRearEntities.length??null,
       afterNextClear:nextFull?
         probeClearPrefix(startInput,
+          nextFull):null,
+      afterNextMixed:nextFull?
+        probeMixedPrefix(startInput,
           nextFull):null};
   };
-  const results=[120,260].flatMap(distanceKm=>
-    [10,30].map(fatigue=>{
+  const selectedCase=process.argv.find(arg=>
+    arg.startsWith('--probe-rear-ordered-case='))
+    ?.split('=')[1]??null;
+  const results=[120,260]
+    .filter(distanceKm=>!selectedCase||
+      selectedCase.startsWith(`${distanceKm}:`))
+    .flatMap(distanceKm=>
+    [10,30].filter(fatigue=>!selectedCase||
+      selectedCase===`${distanceKm}:${fatigue}`)
+      .map(fatigue=>{
       const base=source(distanceKm,fatigue,
         'varied_field');
       const startInput={...base.startInput,
@@ -2106,6 +2217,12 @@ if(process.argv.includes('--probe-rear-ordered-prefix')){
       return {distanceKm,fatigue,lastPaid,
         firstRefusedKm:null};
     }));
+  if(selectedCase){
+    assert.equal(results.length,1);
+    process.stdout.write(JSON.stringify({results},
+      null,2)+'\n');
+    process.exit(0);
+  }
   assert.ok(results.every(row=>
     row.lastPaid?.riderStates===160&&
     row.lastPaid.contactCount===3&&
@@ -2164,6 +2281,10 @@ if(process.argv.includes('--probe-rear-ordered-prefix')){
       row.post66Bunch?.afterNextClear
         ?.firstEvent?.atDistanceM===
           72324.017632&&
+      row.post66Bunch?.afterNextMixed
+        ?.lastFullKm===120&&
+      row.post66Bunch?.afterNextMixed
+        ?.firstUnresolvedKm===null&&
       row.post47Clear?.lastFullKm===65)&&
     (row.fatigue!==30||
       row.lastPaid.km66Splits
@@ -2218,6 +2339,19 @@ if(process.argv.includes('--probe-rear-ordered-prefix')){
         ?.nextBunchRiders===128&&
       row.lastPaid.post66Bunch
         ?.nextRearRoads===28&&
+      row.lastPaid.post66Bunch
+        ?.afterNextMixed
+          ?.lastFullKm===105&&
+      row.lastPaid.post66Bunch
+        ?.afterNextMixed
+          ?.firstUnresolvedKm===106&&
+      row.lastPaid.post66Bunch
+        ?.afterNextMixed
+          ?.newSplits?.length===5&&
+      row.lastPaid.post66Bunch
+        ?.afterNextMixed
+          ?.firstEvent
+            ?.atDistanceM===105129.865902&&
       row.lastPaid.afterBunchClear
         ?.lastFullKm===65)&&
     row.firstRefusedKm===
