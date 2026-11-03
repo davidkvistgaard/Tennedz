@@ -17,6 +17,9 @@ import {advancePhysicalFrontRearClearKmV1,
   replayPhysicalFrontRearNextKmV1,
   validatePhysicalFrontRearNextKmV1} from
   '../lib/engine/v2/physical-front-rear-next-km-v1.mjs';
+import {resolvePhysicalFrontRearContactV1,
+  validatePhysicalFrontRearContactV1} from
+  '../lib/engine/v2/physical-front-rear-contact-v1.mjs';
 import {startPhysicalBunchV1,runPhysicalBunchV1,
   runPhysicalBunchToPaceLossV1,
   runPhysicalStaggeredBunchLossV1} from
@@ -474,7 +477,8 @@ if(process.argv.includes('--probe-front-next-bunch')){
   process.exit(0);
 }
 
-if(process.argv.includes('--probe-front-clear-prefix')){
+if(process.argv.includes('--probe-front-clear-prefix')||
+  process.argv.includes('--probe-front-rear-contact')){
   const distanceKm=Number(process.argv.find(arg=>
     arg.startsWith('--distance='))?.split('=')[1]??120);
   const fatigue=Number(process.argv.find(arg=>
@@ -519,6 +523,56 @@ if(process.argv.includes('--probe-front-clear-prefix')){
       fatigue===10?2:1);
     assert.equal(newSplits.length,
       fatigue===10?0:11);
+  }
+  if(process.argv.includes(
+    '--probe-front-rear-contact')){
+    const contactInput={startInput:input.startInput,
+      prior};
+    if(fatigue===30){
+      assert.equal(firstEvent?.catchingRoadId,
+        null);
+      assert.throws(()=>
+        resolvePhysicalFrontRearContactV1(
+          contactInput),
+      /needs measured rear approach/);
+      process.stdout.write(JSON.stringify({
+        distanceKm,fatigue,
+        contactKm:firstUnresolvedKm,
+        event:firstEvent,
+        simultaneousSplitContactRefused:true},
+      null,2)+'\n');
+      process.exit(0);
+    }
+    const contact=resolvePhysicalFrontRearContactV1(
+      contactInput);
+    assert.equal(validatePhysicalFrontRearContactV1(
+      contactInput,contact),true);
+    assert.equal(contact.sourceKm,
+      firstUnresolvedKm);
+    assert.deepEqual(contact.event,firstEvent);
+    assert.equal(contact.choice.outcome,'join');
+    assert.equal(contact.membershipChanged,true);
+    assert.equal(contact.candidateGroupRoad.riders
+      .filter(row=>row.role==='leader').length,1);
+    assert.ok(contact.candidateGroupRoad.riders
+      .some(row=>row.role==='sheltered'&&
+        row.draftFraction<1));
+    assert.equal(contact.nextCandidateEvent
+      ?.sourceKm,firstUnresolvedKm);
+    process.stdout.write(JSON.stringify({distanceKm,
+      fatigue,lastFullKm:prior.sourceKm,
+      contactKm:contact.sourceKm,
+      event:contact.event,
+      outcome:contact.choice.outcome,
+      membershipChanged:contact.membershipChanged,
+      paidApproaches:contact.paidApproaches,
+      candidateGroupRoad:contact
+        .candidateGroupRoad??null,
+      nextCandidateEvent:contact
+        .nextCandidateEvent??null,
+      laterRoadUnsettled:contact
+        .laterRoadUnsettled},null,2)+'\n');
+    process.exit(0);
   }
   process.stdout.write(JSON.stringify({distanceKm,
     fatigue,lastFullKm:prior.sourceKm,

@@ -4856,3 +4856,16 @@ include two rear solos that meet at metre 25,999.203884. The source
 stops at that contact, with no invented group or kilometre finish.
 Contact choice, remaining road and the subsequent front/rear race to
 the finish still require source replay and calibration.
+
+The next opt-in front/rear contact source resolves the first fatigue-10
+meeting in km 31 without moving any historical or guided race. The two
+solo approaches are repriced from their stored clocks and energies;
+the riders choose to join at metre 30,096.330085. A single exposed
+leader pays the remaining group road while the other rider receives
+the lower shelter cost. Rechecking all paid paths finds another rear
+solo meeting this group at metre 30,301.208844, so km 31 remains
+unsettled. The fatigue-30 meeting in km 26 occurs between newly split
+roads and has no unambiguous catching road. The contact source refuses
+that branch until simultaneous split ordering is paid and resolved.
+The same-seed 120/260-km probes verify both outcomes. Neither branch
+is a whole-race or finish validation.
