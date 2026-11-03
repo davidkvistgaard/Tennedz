@@ -904,6 +904,66 @@ if(process.argv.includes('--probe-front-rear-threat')){
   let frontToRearFinish=null;
   let frontToRearRefusal=null;
   let discoveredFrontToRear=null;
+  let frontToRearDiscoveryProbe=null;
+  if(process.argv.includes(
+    '--probe-discovered-front-to-rear')){
+    const discoveryInput={...generated,
+      attackKm:1,lossKm:21,
+      chaseObserverTeamId:team.id};
+    let discovery=null;
+    try{
+      discovery=
+        discoverPhysicalFrontToRearContactV1(
+          discoveryInput);
+      const race=
+        replayPhysicalDiscoveredFrontToRearRaceV1(
+          discoveryInput);
+      if(process.argv.includes(
+        '--expect-group-pass')){
+        assert.equal(discovery.contactKm,68);
+        const passages=race.sources.transition
+          .sources.groupPassages;
+        assert.equal(passages.length,1);
+        const passage=passages[0];
+        assert.ok(Math.abs(passage.event
+          .atDistanceM-67812.304062)<.002);
+        assert.equal(passage.decisions.length,3);
+        assert.ok(passage.decisions.every(row=>
+          row.choice===
+            'stay_group_after_bunch_contact'&&
+          row.reason===
+            'cannot_hold_measured_bunch_pace'));
+        assert.equal(passage.groupRoad.rows
+          .filter(row=>row.role==='leader')
+          .length,1);
+        assert.ok(passage.groupRoad.rows
+          .every(row=>row.role!==
+            'sheltered'||row.draftFraction<1));
+        assert.ok(race.kilometres[67]
+          .contactEvents.some(row=>
+            row.choice==='stay_group'));
+      }
+      frontToRearDiscoveryProbe={
+        contactKm:discovery.contactKm,
+        atDistanceM:discovery.event
+          .atDistanceM,
+        finishRiderCount:Object.keys(race
+          .observedFinishSecondsByRider)
+          .length};
+    }catch(error){
+      frontToRearDiscoveryProbe={
+        refusal:error.message,
+        sourceKm:error.sourceKm??null,
+        discovery:discovery?{
+          contactKm:discovery.contactKm,
+          atDistanceM:discovery.event
+            .atDistanceM}:null,
+        frontContactEvent:error
+          .frontContactEvent??null,
+        groupBunchContact:error
+          .groupBunchContact??null};
+    }
+  }
   if(process.argv.includes(
     '--expect-no-front-to-rear'))
     assert.throws(()=>
@@ -1296,6 +1356,7 @@ if(process.argv.includes('--probe-front-rear-threat')){
     frontToRearFinish,
     frontToRearRefusal,
     discoveredFrontToRear,
+    frontToRearDiscoveryProbe,
     noCatchRace:noCatchRace?{
       riderCount:noCatchRace.riderIds.length,
       finishRiderCount:Object.keys(noCatchRace

@@ -5039,14 +5039,13 @@ reaches a source-discovered catch and full 160-rider finish. Roster 6
 has no front/bunch contact and the separately validated no-catch race
 finishes with the front 17.46504 seconds clear. Roster 2 originally
 refused several rear solos approaching the just-caught rider in the
-catch kilometre. The other four refuse an unresolved ordered event:
-rosters 1 and 3 have a rear solo meet the front before the bunch does;
-roster 4 has a rear
+catch kilometre. Rosters 1 and 3 originally refused when a rear solo
+met the front before the bunch did. Roster 4 has a rear
 solo/bunch meeting and then a rear/front meeting before front/bunch
 contact; roster 5 has a rear-pair meeting before front/bunch contact.
-These are distinct paid candidate events, not finished groups. Their
-order and remaining road require source replay before this roster
-range can count as a calibrated whole-race matrix.
+These are distinct paid candidate events. Roster 4 and 5 still need
+their order and remaining road sourced before this roster range can
+count as a calibrated whole-race matrix.
 
 The roster-2 fresh race now replays that km-62 chain. A paid first
 contact forms a two-rider rear group; three later solos join at
@@ -5085,6 +5084,15 @@ different event and is rejected by front/rear discovery. Neither
 recording is a guided-race route. The fatigue-30 attempt at
 the same km-106 contact refuses because that meeting never occurs in
 its paid source.
+
+Roster 3 now finds its own km-68 front/rear contact at metre
+67,598.725665. After that paid group gains a third rider, the bunch
+passes it at metre 67,812.304062. None of its three members can hold
+the measured bunch pace, so they choose to continue as a group with
+one re-priced exposed leader and sheltered followers. The recorded
+contact and their segmented energy replay to 120- and 260-km
+observed finishes for all 160 riders at fatigue 10. This remains an
+opt-in source recording, separate from guided races.
 
 The next opt-in contact version resolves the tired km-26 boundary at
 the **recorded common split point** (metre 25,999.203884). Both riders
