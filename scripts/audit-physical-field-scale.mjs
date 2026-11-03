@@ -1,6 +1,7 @@
 // Read-only 20-team stress audit of the isolated paid physical source.
 // A refusal marks a missing branch, never an inferred wheel or finish.
 import assert from 'node:assert/strict';
+import {isDeepStrictEqual} from 'node:util';
 import {SPORTING_SKILLS} from '../lib/engine/v2/skills.mjs';
 import {normalizeOrders,orderAt} from
   '../lib/engine/v2/orders.mjs';
@@ -889,6 +890,47 @@ if(process.argv.includes('--probe-front-rear-threat')){
         caught.sourceKm-1].contactEvents
         .length,2+chain.length);
     }
+    if(process.argv.includes(
+      '--expect-precaught-pair')){
+      const caught=discoveredRace.sources.caught;
+      const early=caught.earlyContact;
+      assert.match(discoveredRace.version,
+        /precaught-pair-race-1$/);
+      assert.match(caught.version,
+        /precaught-pair-km-1$/);
+      assert.ok(early&&caught.nextContact&&
+        caught.additionalContacts?.length>0);
+      assert.equal(early.choice.outcome,'join');
+      assert.equal(early.group.riderIds.length,2);
+      assert.equal(early.group.rows.filter(row=>
+        row.role==='leader').length,1);
+      assert.ok(early.group.rows.every(row=>
+        row.role!=='sheltered'||
+          row.draftFraction<1));
+      assert.ok(early.event.clockSeconds<
+        caught.contact.clockSeconds);
+      assert.ok(caught.contact.clockSeconds<
+        caught.nextContact.event.clockSeconds);
+      const events=discoveredRace.kilometres[
+        caught.sourceKm-1].contactEvents;
+      assert.equal(events.length,
+        3+caught.additionalContacts.length);
+      assert.deepEqual(events[0].event,
+        early.event);
+      assert.equal(events[0].choice,'join');
+      assert.ok(events.every((row,index)=>
+        index===0||row.event.clockSeconds>
+          events[index-1].event.clockSeconds));
+      for(const id of early.group.riderIds){
+        const state=caught.riderStates.find(row=>
+          row.riderId===id);
+        const decision=early.choice
+          .riderDecisions.find(row=>
+            row.riderId===id);
+        assert.ok(state.decisions.some(row=>
+          isDeepStrictEqual(row,decision)));
+      }
+    }
     if(caughtRace){
       assert.equal(discoveredRace.catchKm,
         caughtRace.catchKm);
@@ -1329,6 +1371,15 @@ if(process.argv.includes('--probe-front-rear-threat')){
       catchKilometreSplitCount:discoveredRace
         .sources.caught.sources.splitCompletions
           .length,
+      catchKilometreEarlyContact:
+        discoveredRace.sources.caught
+          .earlyContact?{
+            atDistanceM:discoveredRace.sources
+              .caught.earlyContact.event
+                .atDistanceM,
+            riderIds:discoveredRace.sources
+              .caught.earlyContact.group
+                .riderIds}:null,
       catchKilometreAdditionalContacts:
         discoveredRace.sources.caught
           .additionalContacts?.map(row=>({

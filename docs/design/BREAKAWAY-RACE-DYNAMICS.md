@@ -5043,8 +5043,8 @@ catch kilometre. Rosters 1 and 3 originally refused when a rear solo
 met the front before the bunch did. Roster 4 has a rear
 solo/bunch meeting and then a rear/front meeting before front/bunch
 contact; roster 5 has a rear-pair meeting before front/bunch contact.
-These are distinct paid candidate events. Roster 4 and 5 still need
-their order and remaining road sourced before this roster range can
+These are distinct paid candidate events. Roster 4 still needs its
+contact order and remaining road sourced before this roster range can
 count as a calibrated whole-race matrix.
 
 The roster-2 fresh race now replays that km-62 chain. A paid first
@@ -5093,6 +5093,22 @@ one re-priced exposed leader and sheltered followers. The recorded
 contact and their segmented energy replay to 120- and 260-km
 observed finishes for all 160 riders at fatigue 10. This remains an
 opt-in source recording, separate from guided races.
+
+Roster 5's km-67 source now first joins the two rear solos at metre
+66,055.650411, with one paid leader and a sheltered follower. The
+repriced pair remains behind the bunch as the bunch catches the front.
+After the front slides through, its later paid rear contacts include
+the earlier pair catching a three-rider group at metre 66,332.196519.
+Each group contact records its rider choice, approach energy and new
+leader. The contact-kilometre event log starts with the rear-pair
+meeting and keeps the later events in clock order. All 160 riders have
+source-replayed kilometre states and observed finish clocks through
+120 and 260 km at fatigue 10; the same-seed explicit and discovered
+catch sources validate. A distinct version-1 recording identifies
+this pre-catch-pair pattern, while the prior one-contact and chain
+versions remain unchanged. Fatigue 30 yields a different paid chain
+and retains its earlier recording version. This is still synthetic
+calibration evidence, not a guided race or official placing.
 
 The next opt-in contact version resolves the tired km-26 boundary at
 the **recorded common split point** (metre 25,999.203884). Both riders
