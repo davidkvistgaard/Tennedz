@@ -1358,10 +1358,28 @@ if(process.argv.includes('--probe-rear-ordered-prefix')){
             const fullKm=joined?
               replayPhysicalOrderedRearKmV1(
                 boundaryInput):null;
-            if(fullKm)
+            if(fullKm){
               assert.equal(
                 validatePhysicalOrderedRearKmV1(
                   boundaryInput,fullKm),true);
+              assert.equal(fullKm.endBunchState
+                .riderIds.length,133);
+              assert.equal(fullKm.endRearEntities
+                .length,24);
+              assert.equal(fullKm.endRearEntities
+                .reduce((count,entity)=>
+                  count+entity.riderIds.length,0),27);
+              assert.ok(fullKm.endRearEntities
+                .every(entity=>
+                  entity.atDistanceM===
+                    throughKm*1000&&
+                  entity.riderIds.every(id=>
+                    Number.isFinite(
+                      entity.energyByRider[id]))&&
+                  (entity.kind==='solo'||
+                    Number.isInteger(
+                      entity.rotationIndex))));
+            }
             const crossingCandidates=soloField.refusals
               .map(refusal=>{
                 const input={startInput,start,staggered,

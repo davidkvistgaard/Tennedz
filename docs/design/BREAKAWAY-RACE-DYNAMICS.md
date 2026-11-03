@@ -4617,3 +4617,11 @@ roads) in both fatigue-10 route lengths. Each rear group retains one
 paid exposed leader; any new loss retains its paid partial bunch road
 and solo completion. Km 33 onward must still use this new membership
 and energy, so this does not validate a 120/260-km finish.
+
+The same km-32 replay also exports its paid end sources for the next
+kilometre: the 133-member bunch state and 24 distinct rear entities
+covering the other 27 riders. Each rear entity carries its measured
+clock, per-rider energy and recorded membership; existing groups carry
+the next exposed-turn rotation. The broad probe checks those counts
+and source fields. This is a continuation source, not yet a km-33
+transition or whole-race calibration.
