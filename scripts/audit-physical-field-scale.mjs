@@ -55,6 +55,9 @@ import {probePhysicalOrderedSoloBunchContactV1,
   '../lib/engine/v2/physical-ordered-solo-bunch-contact-v1.mjs';
 import {finishPhysicalOrderedSoloBunchJoinKmV1} from
   '../lib/engine/v2/physical-ordered-solo-bunch-join-v1.mjs';
+import {inspectPhysicalOrderedRearBoundaryV1,
+  validatePhysicalOrderedRearBoundaryV1} from
+  '../lib/engine/v2/physical-ordered-rear-boundary-v1.mjs';
 import {replayPhysicalStaggeredRearEventsV1,
   validatePhysicalStaggeredRearEventsV1,
   inspectPhysicalRearEventEndStateV1,
@@ -1285,6 +1288,14 @@ if(process.argv.includes('--probe-rear-ordered-prefix')){
               startInput,start,staggered,
               throughKm});
           if(soloField.refusals.length){
+            const boundaryInput={startInput,start,
+              throughKm};
+            const boundary=
+              inspectPhysicalOrderedRearBoundaryV1(
+                boundaryInput);
+            assert.equal(
+              validatePhysicalOrderedRearBoundaryV1(
+                boundaryInput,boundary),true);
             const crossingCandidates=soloField.refusals
               .map(refusal=>{
                 const input={startInput,start,staggered,
@@ -1305,6 +1316,18 @@ if(process.argv.includes('--probe-rear-ordered-prefix')){
               lastPaid,firstRefusedKm:throughKm,
               source:'independent_solo',
               refusalCount:soloField.refusals.length,
+              firstOrderedEvent:boundary.firstEvent,
+              candidateBunchClockDifference:
+                boundary.candidateBunchClockDifference,
+              independentCrossingPreemptedByRearJoin:
+                boundary
+                  .independentCrossingPreemptedByRearJoin,
+              crossingRiderActualRoadId:
+                boundary.crossingRiderActualRoadId,
+              candidateEventCount:
+                boundary.candidateEventCount,
+              activeRoads:boundary.activeRoads
+                .length,
               firstCrossings:crossingCandidates
                 .slice(0,3).map(row=>({
                   riderId:row.riderId,
@@ -1362,6 +1385,18 @@ if(process.argv.includes('--probe-rear-ordered-prefix')){
     row.firstCrossings[0].candidateOnly===true&&
     row.firstCrossings[0]
       .otherRearRoadsUnsettled===true));
+  assert.ok(results.every(row=>row.fatigue===10?
+    row.firstOrderedEvent?.roadIds.join('|')===
+      'solo-team-11-2|solo-team-18-0'&&
+    row.firstOrderedEvent.clockSeconds<
+      row.firstCrossings[0].clockSeconds&&
+    row.independentCrossingPreemptedByRearJoin===
+      false:
+    row.firstOrderedEvent===null&&
+    row.independentCrossingPreemptedByRearJoin===
+      true&&
+    row.crossingRiderActualRoadId.startsWith(
+      'rear-event-')));
   process.stdout.write(JSON.stringify({results},null,2)+'\n');
   process.exit(0);
 }

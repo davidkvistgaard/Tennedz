@@ -4566,3 +4566,15 @@ replayed from the previous kilometres, not reconstructed from a
 position or an assumed wheel. The following bunch meeting remains
 unsettled until those active roads and the bunch are advanced and
 compared on the same kilometre.
+
+The first opt-in boundary comparison does this without assigning a
+new group. At fatigue 10, `team-18-0` would meet the bunch at metre
+31,447.39 on an independent solo path, but first meets `team-11-2`
+at metre 31,225.68 on two paid solo roads. That earlier rear contact
+must decide their later path. At fatigue 30, the apparent independent
+solo crossing of `team-4-3` is already superseded: the prior replay
+places that rider in a four-person rear group, and that group's paid
+next-kilometre road has no contact. The standalone solo crossing is
+therefore diagnostic only. The boundary probe orders these first
+events from actual prior group membership and refuses to change
+membership or award a finish until the subsequent road is priced.
