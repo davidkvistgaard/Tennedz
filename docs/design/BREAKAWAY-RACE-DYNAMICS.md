@@ -4697,3 +4697,12 @@ the partial join reaches 122 bunch riders. A separate paid solo pair
 meets later in that same kilometre at metre 70,523.626011, so km 71
 cannot yet be marked complete. The fatigue-30 crossing and the
 fatigue-10 second contact require explicit physical continuations.
+
+The fatigue-30 crossing now has an explicit no-join continuation.
+`team-1-5` keeps its individually paid solo road after the measured
+km-69 meeting because its sheltered holding ability is below the
+recorded bunch pace. No other km-69 road-clock meeting occurs in the
+four probes, so that kilometre ends with 160 paid rider states, 123
+in the bunch and the other 37 on 33 distinct rear roads. The crossing
+is recorded in the rider's decisions; it does not create a group.
+The later race and fatigue-10 second km-71 contact remain unsettled.

@@ -107,6 +107,9 @@ import {finishPhysicalOrderedRearContinuationBunchJoinV1,
 import {replayPhysicalOrderedRearContinuationBunchKmV1,
   validatePhysicalOrderedRearContinuationBunchKmV1} from
   '../lib/engine/v2/physical-ordered-rear-continuation-bunch-km-v1.mjs';
+import {advancePhysicalOrderedRearBunchPassKmV1,
+  validatePhysicalOrderedRearBunchPassKmV1} from
+  '../lib/engine/v2/physical-ordered-rear-bunch-pass-km-v1.mjs';
 import {replayPhysicalStaggeredRearEventsV1,
   validatePhysicalStaggeredRearEventsV1,
   inspectPhysicalRearEventEndStateV1,
@@ -1409,10 +1412,17 @@ if(process.argv.includes('--probe-rear-ordered-prefix')){
     const full=joined&&!laterEvents.length?
       replayPhysicalOrderedRearContinuationBunchKmV1(
         input):null;
+    const passed=!canJoin&&!contact.canHold?
+      advancePhysicalOrderedRearBunchPassKmV1(
+        input):null;
     if(full&&verify)
       assert.equal(
         validatePhysicalOrderedRearContinuationBunchKmV1(
           input,full),true);
+    if(passed&&verify)
+      assert.equal(
+        validatePhysicalOrderedRearBunchPassKmV1(
+          input,passed),true);
     return {sourceKm:probe.sourceKm,
       riderId:contact.riderId,
       atDistanceM:contact.atDistanceM,
@@ -1423,10 +1433,12 @@ if(process.argv.includes('--probe-rear-ordered-prefix')){
       joinedBunchRiders:joined?.physicalGroup
         .riderIds.length??null,
       nextEvent:laterEvents[0]??null,
-      fullRiders:full?.riderCount??null,
-      bunchRiders:full?.endBunchState
+      fullRiders:(full??passed)?.riderCount??null,
+      passDecision:passed?.contactDecision
+        .choice??null,
+      bunchRiders:(full??passed)?.endBunchState
         .riderIds.length??null,
-      rearRoads:full?.endRearEntities
+      rearRoads:(full??passed)?.endRearEntities
         .length??null};
   };
   const results=[120,260].flatMap(distanceKm=>
@@ -2001,7 +2013,10 @@ if(process.argv.includes('--probe-rear-ordered-prefix')){
       row.lastPaid.post66Bunch
         ?.canHold===false&&
       row.lastPaid.post66Bunch
-        ?.fullRiders===null&&
+        ?.fullRiders===160&&
+      row.lastPaid.post66Bunch
+        ?.passDecision===
+          'stay_solo_after_bunch_contact'&&
       row.lastPaid.afterBunchClear
         ?.lastFullKm===65)&&
     row.firstRefusedKm===
