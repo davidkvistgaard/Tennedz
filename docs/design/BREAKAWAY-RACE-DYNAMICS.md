@@ -4760,11 +4760,24 @@ crossing may explicitly retain its solo road when the rider cannot
 hold or pay for shelter. That contact, its partial approach and the
 remaining solo energy are recorded without changing membership. The
 fatigue-30 probe exercises this passage in km 104 at metre
-103,863.695557. Both route lengths replay all riders through km 105;
-five new bunch losses in km 106 coincide with an earlier solo-bunch
-meeting at metre 105,129.865902, so an ordered split-and-contact
-continuation is still required. In fatigue 10, the same-seed 120- and
-260-km probes replay all 160 riders through km 120, including later
-paid split and contact kilometres. This is a physical prefix only;
-the 120-km finish and both 260-km finishes remain unvalidated, and the
-experimental model stays out of guided races.
+103,863.695557.
+
+In km 106, five further riders leave the bunch within the final half
+metre. The loss boundary now starts each new solo road at its recorded
+split metre. This removes spurious earlier contacts with riders who
+were still in the bunch. The sole measured earlier meeting is old solo
+`team-11-2` crossing the bunch at metre 105,129.865902. He cannot
+hold its pace, so the mixed split kilometre records his paid solo
+approach, passage and remainder while all five new riders pay their
+own completion. No group forms from an unrecorded meeting.
+
+The four same-seed 120/260-km, fatigue-10/30 route probes now carry
+all 160 riders to the route end. The audit checks their kilometre,
+distance, increasing clock, nonnegative energy and decision trace at
+each step after the ordered field prefix. At the observed route end,
+the latest rider is 71.8–71.9 seconds behind the earliest on 120 km
+and 186.7–230.0 seconds behind on 260 km. Minimum remaining energy
+ranges from 40.579 to 70.709 across these four probes. These are
+source-observed clocks, not official results. They do not yet validate
+sporting finish order, wider role and terrain outcomes, realistic
+break leads or control workload. Guided routing remains withheld.

@@ -1399,13 +1399,35 @@ if(process.argv.includes('--probe-rear-ordered-prefix')){
     return prior;
   };
   const probeMixedPrefix=(startInput,first,
-    limitKm=120)=>{
+    limitKm=startInput.routeKilometres.length)=>{
     let prior={sourceKm:first.sourceKm,
       riderStates:first.riderStates,
       riderCount:first.riderCount,
       endBunchState:first.endBunchState,
       endRearEntities:first.endRearEntities};
     const contactKilometres=[];
+    const acceptNext=(next,km)=>{
+      assert.equal(next.sourceKm,km);
+      assert.equal(next.riderCount,160);
+      assert.equal(next.riderStates.length,160);
+      const previous=new Map(prior.riderStates
+        .map(row=>[row.riderId,row]));
+      assert.equal(previous.size,160);
+      const ids=new Set();
+      for(const row of next.riderStates){
+        const before=previous.get(row.riderId);
+        assert.ok(before&&!ids.has(row.riderId));
+        ids.add(row.riderId);
+        assert.equal(row.sourceKm,km);
+        assert.equal(row.atDistanceM,km*1000);
+        assert.ok(Number.isFinite(row.elapsedSeconds)&&
+          row.elapsedSeconds>before.elapsedSeconds);
+        assert.ok(Number.isFinite(row.energyAfter)&&
+          row.energyAfter>=0);
+        assert.ok(Array.isArray(row.decisions)&&
+          row.decisions.length>0);
+      }
+    };
     for(let km=prior.sourceKm+1;
       km<=Math.min(limitKm,
         startInput.routeKilometres.length);km++){
@@ -1421,20 +1443,18 @@ if(process.argv.includes('--probe-rear-ordered-prefix')){
           const loss=
             sourcePhysicalOrderedRearLossBoundaryV1({
               startInput,prior});
-          if(loss.recording.firstEvent)
-            return {lastFullKm:prior.sourceKm,
-              firstUnresolvedKm:km,
-              firstEvent:loss.recording.firstEvent,
-              newSplits:bunch.step.splits.map(row=>
-                row.riderId),
-              contactKilometres};
           const next=advancePhysicalOrderedRearLossKmV1({
             startInput,prior});
-          assert.equal(next.sourceKm,km);
-          assert.equal(next.riderCount,160);
+          if(loss.recording.firstEvent)
+            assert.equal(
+              validatePhysicalOrderedRearLossKmV1({
+                startInput,prior},next),true);
+          acceptNext(next,km);
           contactKilometres.push({sourceKm:km,
             newSplits:bunch.step.splits.map(row=>
               row.riderId),
+            ...(loss.recording.firstEvent?{
+              contact:next.sources.passage}:{}),
             bunchRiders:next.endBunchState
               .riderIds.length,
             rearRoads:next.endRearEntities.length});
@@ -1472,8 +1492,11 @@ if(process.argv.includes('--probe-rear-ordered-prefix')){
             startInput,prior}):
           advancePhysicalOrderedRearClearKmV1({
             startInput,prior});
-        assert.equal(next.sourceKm,km);
-        assert.equal(next.riderCount,160);
+        if(sequence)
+          assert.equal(
+            validatePhysicalOrderedRearEventKmV1({
+              startInput,prior},next),true);
+        acceptNext(next,km);
         if(sequence)contactKilometres.push({
           sourceKm:km,
           contacts:sequence.contacts.map(row=>({
@@ -1493,9 +1516,32 @@ if(process.argv.includes('--probe-rear-ordered-prefix')){
         refusal:error.message,
         contactKilometres};}
     }
+    const atFinish=prior.sourceKm===
+      startInput.routeKilometres.length;
+    const sorted=atFinish?[...prior.riderStates]
+      .sort((left,right)=>
+        left.elapsedSeconds-
+          right.elapsedSeconds):[];
+    const firstClock=sorted[0]?.elapsedSeconds;
     return {lastFullKm:prior.sourceKm,
       firstUnresolvedKm:null,
-      contactKilometres};
+      contactKilometres,
+      ...(atFinish?{observedFinish:{
+        riderCount:sorted.length,
+        earliestRiderId:sorted[0].riderId,
+        earliestSeconds:firstClock,
+        medianGapSeconds:sorted[79]
+          .elapsedSeconds-firstClock,
+        latestGapSeconds:sorted.at(-1)
+          .elapsedSeconds-firstClock,
+        minimumEnergy:Math.min(...sorted
+          .map(row=>row.energyAfter)),
+        maximumEnergy:Math.max(...sorted
+          .map(row=>row.energyAfter)),
+        bunchRiders:prior.endBunchState
+          .riderIds.length,
+        rearRoads:prior.endRearEntities.length,
+        officialResults:false}}:{})};
   };
   const post66Bunch=(startInput,km66Full,
     priorKm,verify)=>{
@@ -2282,9 +2328,12 @@ if(process.argv.includes('--probe-rear-ordered-prefix')){
         ?.firstEvent?.atDistanceM===
           72324.017632&&
       row.post66Bunch?.afterNextMixed
-        ?.lastFullKm===120&&
+        ?.lastFullKm===row.distanceKm&&
       row.post66Bunch?.afterNextMixed
         ?.firstUnresolvedKm===null&&
+      row.post66Bunch?.afterNextMixed
+        ?.observedFinish
+          ?.riderCount===160&&
       row.post47Clear?.lastFullKm===65)&&
     (row.fatigue!==30||
       row.lastPaid.km66Splits
@@ -2341,17 +2390,27 @@ if(process.argv.includes('--probe-rear-ordered-prefix')){
         ?.nextRearRoads===28&&
       row.lastPaid.post66Bunch
         ?.afterNextMixed
-          ?.lastFullKm===105&&
+          ?.lastFullKm===row.distanceKm&&
       row.lastPaid.post66Bunch
         ?.afterNextMixed
-          ?.firstUnresolvedKm===106&&
+          ?.firstUnresolvedKm===null&&
       row.lastPaid.post66Bunch
         ?.afterNextMixed
-          ?.newSplits?.length===5&&
+          ?.observedFinish
+            ?.riderCount===160&&
       row.lastPaid.post66Bunch
         ?.afterNextMixed
-          ?.firstEvent
-            ?.atDistanceM===105129.865902&&
+          ?.contactKilometres
+            ?.some(item=>item.sourceKm===106&&
+              item.newSplits?.length===5&&
+              item.contact?.choice===
+                'stay_solo_after_bunch_contact')&&
+      row.lastPaid.post66Bunch
+        ?.afterNextMixed
+          ?.contactKilometres
+            ?.some(item=>item.sourceKm===106&&
+              item.contact?.atDistanceM===
+                105129.865902)&&
       row.lastPaid.afterBunchClear
         ?.lastFullKm===65)&&
     row.firstRefusedKm===
