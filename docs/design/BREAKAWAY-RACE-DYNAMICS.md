@@ -5428,7 +5428,10 @@ choice for each named, paid front or chase turn. Each row names the rider,
 team, source kilometre, committed sporting goal and captain, current
 manager order, exact road interval, and extra energy paid. Recording
 validation reconstructs these rows from the committed input and turn
-plan and refuses altered or missing rows. Version 4 and other V94 pace
+plan and refuses altered or missing rows. A chase choice additionally
+requires its rider in the recorded team chase contribution; this keeps
+emergency responses tied to their actual source even when the ordinary
+manager chase order says to ignore the gap. Version 4 and other V94 pace
 options do not gain this field. The turn plan still selects the workers;
 the sporting goal is recorded as context and does not yet choose who
 works. Sheltered riders and absent front workers still lack individual

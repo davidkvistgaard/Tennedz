@@ -6,6 +6,8 @@ import {replayRaceDynamicsRecording} from
   '../../lib/engine/v2/replay-race-dynamics-v94.mjs';
 import {prepareV91Playtest} from
   '../../lib/engine/v2/playtest.mjs';
+import {decideV94PaidBunchWorkersV1} from
+  '../../lib/engine/v2/v94-paid-bunch-worker-decisions-v1.mjs';
 
 const settings={distanceKm:120,teamCount:20,terrain:'flat',fatigue:0,
   attack:'none',chase:'selective',seed:'chase-turn-holdout-1-flat-0'};
@@ -63,6 +65,16 @@ test('explicit V94 stakes source-replay named paid bunch worker choices',()=>{
   forged.frames[0].pelotonRiderDecisions[0].goal='summit_attack';
   assert.throws(()=>replayRaceDynamicsRecording(forged),
     /paid worker choices differ/);
+  const chaseFrame=recording.frames.find(frame=>
+    frame.pelotonFrontTurnPlan.turns.some(turn=>
+      turn.workKind==='chase'));
+  assert.ok(chaseFrame);
+  assert.throws(()=>decideV94PaidBunchWorkersV1({
+    plan:chaseFrame.pelotonFrontTurnPlan,
+    teams:recording.committedInputs.teams,
+    intent:recording.committedInputs.rivalIntent,
+    chaseContributions:[],km:chaseFrame.km}),
+  /Paid worker choice differs/);
   const historical=createV94RaceDynamicsPreview({
     ...options,sportingStakes:null}).recording;
   assert.ok(historical.frames.every(frame=>
