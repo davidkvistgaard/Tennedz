@@ -6581,6 +6581,9 @@ reaches km 27 in both no-fatigue cases and km 24 in both 30-fatigue
 cases. The next kilometre refuses a measured collision between an
 existing paid rear group and a solo at 27.052 km or 24.156 km,
 respectively. No catch or new group is inferred from that crossing.
+The refusal includes both paid roads' leaders, members, prior group
+identities, boundary and finish clocks, and speeds so a later
+contact decision can use the actual riders and movement.
 
 Callers of the experimental preview can request
 `physicalFirstKmVersion: 1` to receive this completed physical first

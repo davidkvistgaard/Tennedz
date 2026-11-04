@@ -743,7 +743,12 @@ test('paid boundary contacts support a complete second flat kilometre',()=>{
     /Physical rear roads need paid contact resolution/.test(
       error.message)&&
     error.sourceEvidence?.atDistanceM>27000&&
-    error.sourceEvidence?.atDistanceM<28000);
+    error.sourceEvidence?.atDistanceM<28000&&
+    error.sourceEvidence?.roadEvidence?.length===2&&
+    error.sourceEvidence.roadEvidence.every(row=>
+      row.riderIds.includes(row.leaderRiderId)&&
+      row.previousGroupIds.length>0&&
+      Number.isFinite(row.speedMps)));
 });
 
 test('second-km road clocks refuse a faster rear catch',()=>{
