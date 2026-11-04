@@ -6009,7 +6009,10 @@ policies and compares
 the 15 paired races. The observed policy begins paid chase earlier in
 all 15. The earlier policy records 81 caught-rider transitions before
 the finish and none at the finish; the observed policy records none
-before the finish and 26 at the finish. The paired final front-gap
+before the finish and 26 at the finish. Each counted transition
+requires a prior breakaway label, a current peloton label, and the
+catch marker; no markers in these paired races fail that check.
+The paired final front-gap
 sum falls from 268.47 to 50.25 seconds, while complete front catches
 at the recorded line rise from two to six races. These synthetic
 outcomes do not establish realistic chase timing or physical catches.

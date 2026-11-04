@@ -8,6 +8,27 @@ import {replayRaceDynamicsRecording} from
   '../lib/engine/v2/replay-race-dynamics-v94.mjs';
 
 const recordedRoadSeeds=process.argv.includes('--recorded-road-seeds');
+function caughtTransitions(recording){
+  const transitions=[];
+  let unmatchedMarkers=0;
+  for(let index=1;index<recording.frames.length;index++){
+    const prior=recording.frames[index-1];
+    const frame=recording.frames[index];
+    const priorGroups=new Map(prior.riderGroups.map(row=>[row.id,row.group]));
+    const currentGroups=new Map(frame.riderGroups.map(row=>[row.id,row.group]));
+    for(const riderId of frame.caughtBreakawayRiderIds){
+      if(priorGroups.get(riderId)==='breakaway'&&
+        currentGroups.get(riderId)==='peloton')
+        transitions.push({riderId,km:frame.km});
+      else unmatchedMarkers++;
+    }
+  }
+  return {beforeFinish:transitions.filter(row=>
+    row.km<recording.route.kilometres.length).length,
+  atFinish:transitions.filter(row=>
+    row.km===recording.route.kilometres.length).length,
+  firstKm:transitions[0]?.km??null,unmatchedMarkers};
+}
 const results=[];
 for(let seed=1;seed<=3;seed++)
   for(const distanceKm of [120,260])
@@ -36,6 +57,7 @@ for(let seed=1;seed<=3;seed++)
                 pelotonFollowerDecisionVersion:2,
                 freshAttackDecisionVersion:1}:{})});
             replayRaceDynamicsRecording(recording);
+            const caught=caughtTransitions(recording);
             row[name]={firstPaidChaseKm:recording.frames.find(frame=>
               frame.chasePower>0)?.km??null,
             paidChaseKm:recording.frames.filter(frame=>
@@ -43,12 +65,10 @@ for(let seed=1;seed<=3;seed++)
             finalFrontGapSeconds:recording.frames.at(-1)
               .roadGroups[0]?.gapSeconds??0,
             frontCaught:recording.frames.at(-1).roadGroups.length===0,
-            caughtBeforeFinish:recording.frames.slice(0,-1).reduce(
-              (sum,frame)=>sum+frame.caughtBreakawayRiderIds.length,0),
-            caughtAtFinish:recording.frames.at(-1)
-              .caughtBreakawayRiderIds.length,
-            firstCaughtKm:recording.frames.find(frame=>
-              frame.caughtBreakawayRiderIds.length)?.km??null,
+            caughtBeforeFinish:caught.beforeFinish,
+            caughtAtFinish:caught.atFinish,
+            firstCaughtKm:caught.firstKm,
+            unmatchedCatchMarkers:caught.unmatchedMarkers,
             timingChoices:recording.frames.reduce((sum,frame)=>sum+
               (frame.protectorPursuitDecisions??[]).length,0)};
           }catch(error){
@@ -68,6 +88,7 @@ if(process.argv.includes('--summary')){
     pairedObservedCaughtBeforeFinish:0,
     pairedEarlierCaughtAtFinish:0,
     pairedObservedCaughtAtFinish:0,
+    unmatchedCatchMarkers:0,
     observedTimingChoices:0,refusals:[]};
   for(const row of results){
     if(row.earlier.refusal||row.observed.refusal)
@@ -94,6 +115,8 @@ if(process.argv.includes('--summary')){
       row.observed.caughtBeforeFinish;
     summary.pairedEarlierCaughtAtFinish+=row.earlier.caughtAtFinish;
     summary.pairedObservedCaughtAtFinish+=row.observed.caughtAtFinish;
+    summary.unmatchedCatchMarkers+=row.earlier.unmatchedCatchMarkers+
+      row.observed.unmatchedCatchMarkers;
     if(row.observed.firstPaidChaseKm!==null&&
       row.earlier.firstPaidChaseKm!==null){
       summary.observedEarlierChase+=Number(
