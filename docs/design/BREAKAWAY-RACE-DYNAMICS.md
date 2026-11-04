@@ -5749,6 +5749,20 @@ riders. The physical source's speed shelter and V94's consecutive
 kilometre deficit threshold do not describe the same contact rule.
 Energy agreement for the other 1,583 riders cannot justify joining
 the two group states or releasing V94 to guided races.
+
+The isolated physical bunch-origin source now accepts an opt-in
+`followerSpeedVersion: 1` for a diagnostic. The historical source
+added the same two ability points of bunch draft advantage to both
+the exposed leader's speed and the follower's hold speed, cancelling
+the follower advantage in the contact comparison. The opt-in applies
+those existing two points only to the sheltered follower and records
+a distinct origin version. On the same 23 first-kilometre cases,
+physical/V94 membership disagreement falls from 2,097 to 1,657
+riders; 2,023 attached riders retain exact paid and ending energy
+agreement. The 46–105 projected losses per case remain far above
+what V94's first-kilometre peloton labels record. This diagnostic
+does not change the default physical replay or assert that two points
+is a calibrated drafting-speed benefit.
 In the separate three-seed, 24-case V94 whole-race decision inventory
 with strict loss contact, draft, follower, fresh-attack and protector
 timing opt-ins, the exposure price accepts the same 19 cases and

@@ -12,6 +12,8 @@ import {replayRaceDynamicsRecording} from
 
 const draftCost=process.argv.includes('--v94-draft-cost');
 const physicalExposure=process.argv.includes('--v94-physical-exposure');
+const followerSpeedAdvantage=process.argv.includes(
+  '--physical-follower-speed-advantage');
 if(physicalExposure&&!draftCost)
   throw new Error('Physical exposure comparison needs V94 draft cost.');
 const results=[];
@@ -69,7 +71,8 @@ for(let seedNumber=1;seedNumber<=4;seedNumber++)
           const road=runRearBunchOriginRoadV1({rider,
             orders:team.orders,routeKilometres:[segment],
             bunchTurnPlans:[plan],choices:[choice],
-            stageNumber:1,stageCount:1});
+            stageNumber:1,stageCount:1,
+            followerSpeedVersion:followerSpeedAdvantage?1:0});
           const paid=energyById.get(rider.id);
           if(!paid)throw new Error('Missing first-kilometre energy source.');
           if(road.status==='wheel_lost'){
@@ -122,11 +125,12 @@ for(let seedNumber=1;seedNumber<=4;seedNumber++)
         heldMismatchByKind,firstHeldMismatch,
         v94FirstFrameRoadGroups:frame.roadGroups.length});
     }
-const version='v94-rear-origin-calibration-3';
+const version='v94-rear-origin-calibration-4';
 if(process.argv.includes('--summary')){
   const replayed=results.filter(row=>!row.refusal);
   const sum=key=>replayed.reduce((total,row)=>total+row[key],0);
   console.log(JSON.stringify({version,draftCost,physicalExposure,
+    followerSpeedAdvantage,
     cases:results.length,
     replayedCases:replayed.length,refusedCases:results.length-
       replayed.length,
@@ -151,4 +155,4 @@ if(process.argv.includes('--summary')){
       seedNumber:row.seedNumber,terrain:row.terrain,
       fatigue:row.fatigue,refusal:row.refusal}))}));
 }else console.log(JSON.stringify({version,draftCost,
-  physicalExposure,results}));
+  physicalExposure,followerSpeedAdvantage,results}));

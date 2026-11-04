@@ -3,6 +3,8 @@ import assert from 'node:assert/strict';
 import {runRearBunchOriginRoadV1,
   validateRearBunchOriginRoadV1} from
   '../../lib/engine/v2/rear-bunch-origin-road-v1.mjs';
+import {riderKilometreEffect} from
+  '../../lib/engine/v2/physiology.mjs';
 import {continueRearOriginPaceSoloV1,
   validateRearOriginPaceSoloV1} from
   '../../lib/engine/v2/rear-origin-pace-solo-v1.mjs';
@@ -25,6 +27,31 @@ const choices=[1,2,3].map(km=>({riderId:'r',km,
   effort:'conserve',action:'hold_wheel',reason:'follow_order'}));
 const input={rider,orders,routeKilometres,bunchTurnPlans,choices,
   stageNumber:1,stageCount:3};
+
+test('opt-in follower speed benefit applies only behind the named front',()=>{
+  const segment=routeKilometres[0];
+  const ability=riderKilometreEffect(rider,segment,{
+    phase:'cruise',energy:88,exposed:false}).ability;
+  const leaderAbility=+(ability-3.4).toFixed(3);
+  const plan={status:'worked',leaderAbility,
+    turns:[{startM:0,endM:1000,
+      ability:leaderAbility,leaderRiderId:'other'}]};
+  const source={...input,routeKilometres:[segment],
+    bunchTurnPlans:[plan],choices:[choices[0]],stageCount:1};
+  const old=runRearBunchOriginRoadV1(source);
+  const revised=runRearBunchOriginRoadV1({
+    ...source,followerSpeedVersion:1});
+  assert.equal(old.status,'wheel_lost');
+  assert.equal(revised.status,'bunch');
+  assert.equal(revised.version,'v2-rear-bunch-follower-speed-1');
+  assert.equal(revised.steps[0].slices[0].role,'sheltered');
+  assert.ok(revised.steps[0].slices[0].holdSpeedKph>
+    revised.steps[0].slices[0].bunchSpeedKph);
+  assert.equal(validateRearBunchOriginRoadV1({
+    ...source,followerSpeedVersion:1},revised),true);
+  assert.throws(()=>validateRearBunchOriginRoadV1(source,revised),
+    /differs/);
+});
 
 test('physical bunch origin pays wheels before a climb pace split',()=>{
   const road=runRearBunchOriginRoadV1(input);
