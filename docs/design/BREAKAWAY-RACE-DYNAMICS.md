@@ -6639,27 +6639,37 @@ The mixed paid group can keep its provenance across successive
 kilometres. The same-seed 120 km flat cases complete all 160 riders
 through km 69 (including another paid meeting of two rear groups at
 km 34 without fatigue or km 27 with 30 fatigue). At km 70 the source
-records 13 chaser team IDs, without identifying individual chaser
-riders. No rider can be assigned to a chase road from that claim.
-The four source break riders are physically split across one solo
-and two paid rear groups at km 69. The 260 km flat cases reach km 84
-without fatigue
-and km 88 with 30 fatigue; the next source frame has no breakaway
+records 13 chaser team IDs, but its paid peloton turn plan also names
+26 individual chase leaders. All 26 are physically in the peloton at
+the km-69 boundary. The guarded replay verifies each named turn
+against its team's chase contribution, charges the recorded chase
+exposure cost and records a per-rider `paid_chase_turn`. Both 120 km
+flat cases finish all 160 riders through km 74. The four source break
+riders remain physically split across one solo and two paid rear
+groups. The 260 km flat cases reach km 84 without fatigue and km 88
+with 30 fatigue; the next source frame has no breakaway
 riders while the four previously claimed break riders still occupy
 one solo and two paid rear groups in the no-fatigue paid km-84 field.
 The source disappearance is not a physical catch.
 These are source-plan refusals. No scripted catch or group transfer
-is used to bypass them.
+is used to bypass them. The earlier km-70 refusal was an overly broad
+chase guard, not absent rider-level chase evidence.
 
 `v94-physical-post-source-break-km-v1.mjs` separately drops the
 ended *source membership claim* while retaining all four riders on
-their paid rear roads. It requires an empty source break, attack,
-chaser and road-group frame, actual boundary choices, and any
-source-recorded front rest needed to reconcile energy. Both 260 km
-flat cases complete every rider through km 89. At km 90 the source
+their paid rear roads. It requires an empty source break, attack and
+road-group frame, actual boundary choices, verified named chase turns
+when a chase is recorded, and any source-recorded front rest needed
+to reconcile energy. Both 120 km flat cases complete every rider
+through km 79. At km 80 the source names four new attackers; their
+individual departures are paid as solo roads. Both cases then finish
+all 160 riders through km 83 and refuse a rear/front contact at km 84
+until that meeting is physically settled. Both 260 km flat cases
+complete every rider through km 89. At km 90 the source
 introduces two new attackers (`rival-19-7` and `rival-6-7`), so the
 post-break replay refuses until their departure is physically paid.
-The 120 km cases remain stopped at the 13-team chaser claim at km 70.
+The 120 km cases retain the earlier four riders on their rear roads
+while the named peloton chase proceeds.
 
 `v94-physical-post-break-fresh-km-v1.mjs` prices those two km-90
 departures as separate solo roads while the former break riders

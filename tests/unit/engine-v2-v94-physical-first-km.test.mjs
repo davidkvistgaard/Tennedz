@@ -876,9 +876,61 @@ test('paid boundary contacts support a complete second flat kilometre',()=>{
   assert.equal(laterPaidContacts,1);
   assert.equal(validateV94PhysicalMixedPaidNextKmV1(
     recording,priorAt68,mixedLater),true);
+  const namedChasers=recording.frames[69]
+    .pelotonFrontTurnPlan.turns.filter(turn=>
+      turn.workKind==='chase');
+  assert.equal(namedChasers.length,26);
+  assert.ok(namedChasers.every(turn=>mixedLater.finishes.some(row=>
+    row.riderId===turn.leaderRiderId&&
+    row.physicalGroup==='peloton')));
+  const firstChaser=namedChasers[0];
+  const contribution=recording.frames[69].chaseContributions
+    .find(row=>row.teamId===firstChaser.teamId);
+  const riderIds=contribution.riderIds;
+  contribution.riderIds=riderIds.filter(id=>
+    id!==firstChaser.leaderRiderId);
   assert.throws(()=>replayV94PhysicalMixedPaidNextKmV1(
     recording,mixedLater),
   /Physical front needs an intact paid plan/);
+  contribution.riderIds=riderIds;
+  for(let km=70;km<=74;km++){
+    mixedLater=replayV94PhysicalMixedPaidNextKmV1(
+      recording,mixedLater);
+    assert.equal(mixedLater.sourceKm,km);
+    assert.equal(mixedLater.finishes.length,160);
+    if(km===70){
+      const paidChase=mixedLater.front.road.flatMap(turn=>
+        turn.riderSlices.filter(row=>
+          row.decision.choice==='paid_chase_turn'));
+      assert.equal(paidChase.length,26);
+      assert.ok(paidChase.every(row=>
+        row.workKind==='chase'&&
+        row.sourcePaidExtraCost>0&&
+        row.energySpent>0));
+    }
+  }
+  assert.throws(()=>replayV94PhysicalMixedPaidNextKmV1(
+    recording,mixedLater),
+  /Physical front needs an intact paid plan/);
+  for(let km=75;km<=79;km++){
+    mixedLater=replayV94PhysicalPostSourceBreakKmV1(
+      recording,mixedLater);
+    assert.equal(mixedLater.sourceKm,km);
+    assert.equal(mixedLater.finishes.length,160);
+  }
+  mixedLater=replayV94PhysicalPostBreakFreshKmV1(
+    recording,mixedLater);
+  assert.equal(mixedLater.sourceKm,80);
+  assert.equal(mixedLater.finishes.length,160);
+  for(let km=81;km<=83;km++){
+    mixedLater=replayV94PhysicalUnattachedSourceNextKmV1(
+      recording,mixedLater);
+    assert.equal(mixedLater.sourceKm,km);
+    assert.equal(mixedLater.finishes.length,160);
+  }
+  assert.throws(()=>replayV94PhysicalUnattachedSourceNextKmV1(
+    recording,mixedLater),
+  /Physical rear\/front contact needs paid resolution/);
 });
 
 test('ended source break membership keeps four riders on paid roads',()=>{

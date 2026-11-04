@@ -614,9 +614,7 @@ for(let seed=1;seed<=seedCount;seed++)
       let sourceBreakEndedProbe=null;
       if(afterLaterRefusalKm&&
         recording.frames[afterLaterRefusalKm-1]
-          .breakawayRiderIds.length===0&&
-        recording.frames[afterLaterRefusalKm-1]
-          .chasers.length===0)try{
+          .breakawayRiderIds.length===0)try{
         const km=afterLaterRefusalKm;
         const frontInput={km,prior:afterLaterTrace,
             frontClockSeconds:
@@ -624,7 +622,7 @@ for(let seed=1;seed<=seedCount;seed++)
             version:'v94-post-source-break-front-probe-1',
             decisionVersion:
               'v94-post-source-break-front-decision-probe-1',
-            priorField:null};
+            priorField:null,allowNamedChaseTurns:true};
         let front;
         try{
           front=replayV94PhysicalFrontKmFromPriorV1(
@@ -692,7 +690,8 @@ for(let seed=1;seed<=seedCount;seed++)
           decisionVersion:
             'v94-post-break-fresh-front-decision-probe-1',
           priorField:null,
-          excludedFreshAttackRiderIds:freshIds};
+          excludedFreshAttackRiderIds:freshIds,
+          allowNamedChaseTurns:true};
         let namedFront;
         try{
           namedFront=replayV94PhysicalFrontKmFromPriorV1(
