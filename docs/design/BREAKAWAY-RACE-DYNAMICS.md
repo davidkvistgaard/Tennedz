@@ -5817,3 +5817,18 @@ timing opt-ins, the exposure price accepts the same 19 cases and
 refuses the same five unresolved peloton losses. The accepted races
 retain 544,000 versioned individual rider-kilometre decisions.
 The invariant does not establish a realistic whole-race finish.
+
+### Rechecked classified physical split probe
+
+The read-only `--probe-single-leader --classified` control previously
+expected every fatigue-30 run to refuse a coincident split. That
+assertion became stale after the replay learned to resolve riders
+whose paid solo roads begin at the same recorded metre and clock.
+The probe now validates the current replay instead. In the same
+synthetic field, 120 km at fatigue 10 and 30 yields respectively 39
+and 37 ordered-effort-ceiling losses; 260 km yields 45 and 39.
+Both fatigue-30 runs contain one coincident split pair. All four
+runs replay their sources, retain one paid bunch leader per
+kilometre, and record 160 rider finish clocks. This corrects the
+probe's expectation; it does not calibrate those split counts to
+real racing or change an engine transition.

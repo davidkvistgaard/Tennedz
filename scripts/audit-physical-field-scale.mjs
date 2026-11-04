@@ -3819,6 +3819,11 @@ if(process.argv.includes('--probe-single-leader')){
     [...new Set(splitCauses)].map(reason=>[
       reason,splitCauses.filter(row=>row===reason)
         .length]));
+  const coincidentSplitPairs=staggered.losses.reduce((total,
+    loss,index)=>total+staggered.losses.slice(index+1)
+    .filter(other=>other.sourceKm===loss.sourceKm&&
+      Math.abs(other.atDistanceM-loss.atDistanceM)<1e-6)
+    .length,0);
   if(draftVersion===4){
     assert.equal(splitCauses.length,
       staggered.losses.length);
@@ -3851,27 +3856,14 @@ if(process.argv.includes('--probe-single-leader')){
       ['leader','sheltered'].includes(
         step.riders.find(row=>row.riderId===
           id)?.role))));
-  if(fatigue===30){
-    assert.throws(()=>
-      replayPhysicalStaggeredRearEventsV1(input),
-    /distinct paid split ordering/);
-    process.stdout.write(JSON.stringify({
-      distanceKm,fatigue,draftVersion,
-      baselinePaceMatches,
-      candidatePaceMatches:countRole(staggered,
-        'pace_match'),
-      status:'refused_ambiguous_equal_split',
-      losses:staggered.losses.length,
-      splitCauseCounts},
-    null,2)+'\n');
-    process.exit(0);
-  }
   const baselineRace=replayPhysicalStaggeredRearEventsV1({
     ...baseline,staggered:baselineRoad,
     soloField:baselineSolo,throughKm:distanceKm});
   const race=replayPhysicalStaggeredRearEventsV1(input);
   assert.equal(validatePhysicalStaggeredRearEventsV1(
     input,race),true);
+  if(fatigue===30)
+    assert.ok(coincidentSplitPairs>0);
   assert.ok(race.kilometres.every(row=>
     row.riderStates.length===160&&
     row.riderStates.every(state=>
@@ -3899,6 +3891,7 @@ if(process.argv.includes('--probe-single-leader')){
     candidatePaceMatches:countRole(staggered,
       'pace_match'),
     splitCauseCounts,
+    coincidentSplitPairs,
     baselineContacts:baselineRace.contactCount,
     losses:staggered.losses.length,
     contacts:race.contactCount,
