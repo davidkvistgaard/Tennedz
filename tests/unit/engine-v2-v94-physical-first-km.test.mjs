@@ -95,6 +95,9 @@ import {replayV94PhysicalMixedFreshKmV1,
 import {decideV94PhysicalForwardBoundaryChoicesV1,
   validateV94PhysicalForwardBoundaryChoicesV1} from
   '../../lib/engine/v2/v94-physical-forward-boundary-choice-v1.mjs';
+import {replayV94PhysicalRecordedRestKmV1,
+  validateV94PhysicalRecordedRestKmV1} from
+  '../../lib/engine/v2/v94-physical-recorded-rest-km-v1.mjs';
 
 test('first V94 kilometre prices each named turn and detached solo metre',()=>{
   const settings={distanceKm:120,teamCount:20,terrain:'mountain',
@@ -705,6 +708,42 @@ test('paid boundary contacts support a complete second flat kilometre',()=>{
     recording,twentieth),error=>
     /Attached front energy differs/.test(error.message)&&
     error.sourceEvidence?.sourceKm===21);
+  const rested=replayV94PhysicalRecordedRestKmV1(
+    recording,twentieth);
+  assert.equal(rested.sourceKm,21);
+  assert.equal(rested.fullFieldKilometre,true);
+  assert.equal(rested.finishes.length,160);
+  assert.equal(rested.newFrontDrops.length,31);
+  assert.equal(rested.sourceRestDecisionUsed,true);
+  assert.equal(rested.sourceCheckpointCalibrationFailed,true);
+  assert.equal(rested.officialResults,false);
+  assert.ok(rested.sourceBreakRiderIds.filter(id=>
+    rested.finishes.find(row=>row.riderId===id)
+      .physicalGroup.startsWith('paid-contact-')).length===2);
+  assert.ok(rested.front.road.some(turn=>
+    turn.riderSlices.some(row=>
+      row.decision.teamOrderEffort==='steady'&&
+      row.decision.effectiveEffort==='conserve'&&
+      row.decision.recordedSourceRest)));
+  assert.equal(validateV94PhysicalRecordedRestKmV1(
+    recording,twentieth,rested),true);
+  let afterRest=rested,priorAt26=null;
+  for(let km=22;km<=27;km++){
+    if(km===27)priorAt26=afterRest;
+    afterRest=replayV94PhysicalRecordedRestKmV1(
+      recording,afterRest);
+    assert.equal(afterRest.sourceKm,km);
+    assert.equal(afterRest.finishes.length,160);
+    assert.equal(afterRest.sourceCheckpointCalibrationFailed,true);
+  }
+  assert.equal(validateV94PhysicalRecordedRestKmV1(
+    recording,priorAt26,afterRest),true);
+  assert.throws(()=>replayV94PhysicalRecordedRestKmV1(
+    recording,afterRest),error=>
+    /Physical rear roads need paid contact resolution/.test(
+      error.message)&&
+    error.sourceEvidence?.atDistanceM>27000&&
+    error.sourceEvidence?.atDistanceM<28000);
 });
 
 test('second-km road clocks refuse a faster rear catch',()=>{

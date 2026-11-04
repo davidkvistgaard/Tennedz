@@ -75,6 +75,9 @@ import {replayV94PhysicalMixedFreshAttackSolosV1,
 import {replayV94PhysicalMixedFreshKmV1,
   validateV94PhysicalMixedFreshKmV1} from
   '../lib/engine/v2/v94-physical-mixed-fresh-km-v1.mjs';
+import {replayV94PhysicalRecordedRestKmV1,
+  validateV94PhysicalRecordedRestKmV1} from
+  '../lib/engine/v2/v94-physical-recorded-rest-km-v1.mjs';
 
 const requested=process.argv.find(arg=>arg.startsWith('--seeds='));
 const seedCount=requested?Number(requested.slice(8)):1;
@@ -122,6 +125,12 @@ const afterMixedRequested=process.argv.find(arg=>
   arg.startsWith('--after-mixed-through='));
 const afterMixedThrough=afterMixedRequested?
   Number(afterMixedRequested.slice(22)):null;
+const recordedRestAfterMixed=process.argv.includes(
+  '--recorded-rest-after-mixed');
+const afterRestRequested=process.argv.find(arg=>
+  arg.startsWith('--after-rest-through='));
+const afterRestThrough=afterRestRequested?
+  Number(afterRestRequested.slice(21)):null;
 if((secondFront||boundaryChoice||secondRear||thirdSource)&&!complete||
   thirdSource&&!secondRear||thirdFront&&!secondRear||
   thirdBoundary&&!secondRear||thirdRear&&!secondRear||
@@ -141,7 +150,9 @@ if((secondFront||boundaryChoice||secondRear||thirdSource)&&!complete||
   mixedFreshAfterUnattached&&unattachedThrough===null||
   mixedFreshFullAfterUnattached&&unattachedThrough===null||
   afterMixedThrough!==null&&
-    !mixedFreshFullAfterUnattached)
+    !mixedFreshFullAfterUnattached||
+  recordedRestAfterMixed&&afterMixedThrough===null||
+  afterRestThrough!==null&&!recordedRestAfterMixed)
   throw new Error('Continuation audit needs --complete.');
 if(unattachedThrough!==null&&(
   !Number.isInteger(unattachedThrough)||
@@ -151,6 +162,10 @@ if(afterMixedThrough!==null&&(
   !Number.isInteger(afterMixedThrough)||
   afterMixedThrough<21||afterMixedThrough>260))
   throw new Error('After-mixed audit needs km 21 through 260.');
+if(afterRestThrough!==null&&(
+  !Number.isInteger(afterRestThrough)||
+  afterRestThrough<22||afterRestThrough>260))
+  throw new Error('After-rest audit needs km 22 through 260.');
 if(nextThrough!==null&&(!Number.isInteger(nextThrough)||
   nextThrough<5||nextThrough>260))
   throw new Error('Next physical audit needs km 5 through 260.');
@@ -364,6 +379,47 @@ for(let seed=1;seed<=seedCount;seed++)
           afterMixedRefusal=error.message;
           afterMixedRefusalKm=km;
           afterMixedEvidence=error.sourceEvidence??null;
+          break;
+        }
+      let recordedRestTrace=null,recordedRestRefusal=null;
+      let recordedRestEvidence=null;
+      if(recordedRestAfterMixed&&afterMixedRefusalKm&&
+        afterMixedTrace)try{
+        recordedRestTrace=replayV94PhysicalRecordedRestKmV1(
+          recording,afterMixedTrace);
+        validateV94PhysicalRecordedRestKmV1(
+          recording,afterMixedTrace,recordedRestTrace);
+      }catch(error){
+        recordedRestRefusal=error.message;
+        recordedRestEvidence=error.sourceEvidence??null;
+      }
+      let afterRestTrace=recordedRestTrace;
+      let afterRestRefusal=null,afterRestRefusalKm=null;
+      let afterRestEvidence=null,afterRestAwareKmCount=0;
+      if(afterRestThrough!==null&&recordedRestTrace)
+        for(let km=22;km<=Math.min(afterRestThrough,
+          recording.route.kilometres.length);km++)try{
+          let candidate;
+          try{
+            candidate=replayV94PhysicalUnattachedSourceNextKmV1(
+              recording,afterRestTrace);
+            validateV94PhysicalUnattachedSourceNextKmV1(
+              recording,afterRestTrace,candidate);
+          }catch(error){
+            if(error.message!==
+              'Attached front energy differs from V94 source.')
+              throw error;
+            candidate=replayV94PhysicalRecordedRestKmV1(
+              recording,afterRestTrace);
+            validateV94PhysicalRecordedRestKmV1(
+              recording,afterRestTrace,candidate);
+            afterRestAwareKmCount++;
+          }
+          afterRestTrace=candidate;
+        }catch(error){
+          afterRestRefusal=error.message;
+          afterRestRefusalKm=km;
+          afterRestEvidence=error.sourceEvidence??null;
           break;
         }
       let nextTrace=fourthTrace,nextRefusal=null;
@@ -651,6 +707,27 @@ for(let seed=1;seed<=seedCount;seed++)
               afterMixedTrace?.sourceKm??null,
             afterMixedRefusalKm,afterMixedRefusal,
             afterMixedEvidence}:{}),
+          ...(recordedRestAfterMixed?{
+            recordedRestFullField:
+              recordedRestTrace?.fullFieldKilometre??false,
+            recordedRestSourceKm:
+              recordedRestTrace?.sourceKm??null,
+            recordedRestNewFrontDrops:
+              recordedRestTrace?.newFrontDrops.length??0,
+            recordedRestRearGroups:
+              recordedRestTrace?.physicalRearGroups.length??0,
+            recordedRestForwardGroupRiders:recordedRestTrace?
+              recordedRestTrace.sourceBreakRiderIds.filter(id=>
+                recordedRestTrace.finishes.find(row=>
+                  row.riderId===id)?.physicalGroup.startsWith(
+                    'paid-contact-')).length:0,
+            recordedRestRefusal,recordedRestEvidence}:{}),
+          ...(afterRestThrough!==null?{
+            afterRestCompletedThroughKm:
+              afterRestTrace?.sourceKm??null,
+            afterRestAwareKmCount,
+            afterRestRefusalKm,afterRestRefusal,
+            afterRestEvidence}:{}),
           lastSoloClockSeconds:completion.soloCompletions.length?
             Math.max(...completion.soloCompletions.map(row=>
               row.finishClockSeconds)):null}:{}),
@@ -676,6 +753,8 @@ console.log(JSON.stringify({seedCount,complete,secondFront,boundaryChoice,
   mixedFreshAfterUnattached,
   mixedFreshFullAfterUnattached,
   afterMixedThrough,
+  recordedRestAfterMixed,
+  afterRestThrough,
   cases:cases.length,
   replayedFirstKilometres:accepted.length,
   refusedCases:cases.length-accepted.length,
@@ -893,6 +972,30 @@ console.log(JSON.stringify({seedCount,complete,secondFront,boundaryChoice,
       fatigue:row.fatigue,km:row.afterMixedRefusalKm,
       refusal:row.afterMixedRefusal,
       evidence:row.afterMixedEvidence})),
+  recordedRestFullFields:accepted.filter(row=>
+    row.recordedRestFullField).length,
+  recordedRestNewFrontDrops:accepted.reduce((sum,row)=>
+    sum+(row.recordedRestNewFrontDrops??0),0),
+  recordedRestRearGroups:accepted.reduce((sum,row)=>
+    sum+(row.recordedRestRearGroups??0),0),
+  recordedRestForwardGroupRiders:accepted.reduce((sum,row)=>
+    sum+(row.recordedRestForwardGroupRiders??0),0),
+  recordedRestRefusals:accepted.filter(row=>
+    row.recordedRestRefusal).map(row=>({seed:row.seed,
+      distanceKm:row.distanceKm,terrain:row.terrain,
+      fatigue:row.fatigue,
+      refusal:row.recordedRestRefusal,
+      evidence:row.recordedRestEvidence})),
+  afterRestCompletedThroughKm:accepted.map(row=>
+    row.afterRestCompletedThroughKm).filter(Number.isInteger),
+  afterRestAwareKmCount:accepted.reduce((sum,row)=>
+    sum+(row.afterRestAwareKmCount??0),0),
+  afterRestRefusals:accepted.filter(row=>
+    row.afterRestRefusal).map(row=>({seed:row.seed,
+      distanceKm:row.distanceKm,terrain:row.terrain,
+      fatigue:row.fatigue,km:row.afterRestRefusalKm,
+      refusal:row.afterRestRefusal,
+      evidence:row.afterRestEvidence})),
   firstCase:cases[0],refusals:cases.filter(row=>row.refusal),
   secondFrontRefusals:accepted.filter(row=>
     row.nextFrontRefusal),

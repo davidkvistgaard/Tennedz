@@ -6556,11 +6556,31 @@ arrival clock. `v94-physical-forward-boundary-choice-v1.mjs` quotes
 one payable break-work leader and lower shelter cost from their
 committed orders without assigning a wheel or forming a group. In a
 flat seed-1 case rival-16-5 is proposed to lead rival-8-5, with
-0.31312 leader versus 0.13184 shelter reserve quoted. All 8 km-20
-full fields then refuse km 21 because at least one attached front
-rider's source energy charge is below physical paid work (for one
-case, 0.085248 versus 0.14208). The source gap remains uncalibrated;
-no position or official award is inferred.
+0.31312 leader versus 0.13184 shelter reserve quoted. The ordinary
+ordered-effort front refuses km 21 for all 8 km-20 full fields because
+at least one attached rider's source energy charge is below physical
+paid work (for one case, 0.085248 versus 0.14208). The source's
+recorded `pelotonRestTeamIds` explains this difference: the team
+order is `steady`, but the recorded ease uses `conserve` effort.
+
+`v94-physical-recorded-rest-km-v1.mjs` is a separate conditional
+replay that requires the measured ordinary-energy refusal and an
+explicit recorded source rest decision. It records both manager and
+effective effort per rider, prices the lower rest work, and lets
+riders fall off the named paid front when reduced effort cannot hold
+the pace. The three-seed matrix completes km 21 in 4 flat cases,
+with 134 newly detached front riders in total, 18 paid rear
+groups and 8 source break riders in newly paid contact groups. Four
+mountain cases refuse when a fresh front drop physically meets a
+rear solo between 20.10 and 20.17 km. Source rest can depend on the
+uncalibrated source race context, so this conditional replay makes
+no official result or source-gap claim.
+
+Continuing those four flat cases with the same seed and paid roads
+reaches km 27 in both no-fatigue cases and km 24 in both 30-fatigue
+cases. The next kilometre refuses a measured collision between an
+existing paid rear group and a solo at 27.052 km or 24.156 km,
+respectively. No catch or new group is inferred from that crossing.
 
 Callers of the experimental preview can request
 `physicalFirstKmVersion: 1` to receive this completed physical first
