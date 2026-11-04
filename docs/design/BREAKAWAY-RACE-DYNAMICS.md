@@ -5832,3 +5832,25 @@ runs replay their sources, retain one paid bunch leader per
 kilometre, and record 160 rider finish clocks. This corrects the
 probe's expectation; it does not calibrate those split counts to
 real racing or change an engine transition.
+
+### Resolved front as a candidate shared input
+
+The raw-order physical preflight finds 3,420 kilometres with several
+teams offering front work and 15,200 team-kilometres without a named
+worker across the three-seed V94 input set. Those counts describe
+manager orders, not the front after V94 has assigned and priced
+individual turns. The read-only
+`audit-v94-resolved-front-compatibility.mjs --seeds=3` instead
+replays each complete V94 recording and examines that resolved plan.
+Of 24 same-seed cases, 22 replayed and two refused the existing
+simultaneous fresh-attack/paid-pursuit road-clock ambiguity. The
+replayed races contain 668,800 rider-kilometre ledger rows and 3,520
+provisional rider finishes. They have 4,180 kilometres of continuous
+named front turns:
+28,936 turns (7,112 front, 21,824 chase), with zero order mismatches
+and zero leaders lacking paid energy. This establishes a sourced
+candidate for comparing leader assignments, while the raw orders
+alone are insufficient physical input. The turn abilities and V94
+group labels still lack a calibrated physical speed/contact contract;
+this audit does not certify a shared clock, rear-group formation,
+realistic finishes or guided routing.
