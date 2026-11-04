@@ -146,6 +146,10 @@ const afterRestRequested=process.argv.find(arg=>
   arg.startsWith('--after-rest-through='));
 const afterRestThrough=afterRestRequested?
   Number(afterRestRequested.slice(21)):null;
+const afterContactRequested=process.argv.find(arg=>
+  arg.startsWith('--after-contact-through='));
+const afterContactThrough=afterContactRequested?
+  Number(afterContactRequested.slice(24)):null;
 if((secondFront||boundaryChoice||secondRear||thirdSource)&&!complete||
   thirdSource&&!secondRear||thirdFront&&!secondRear||
   thirdBoundary&&!secondRear||thirdRear&&!secondRear||
@@ -167,7 +171,8 @@ if((secondFront||boundaryChoice||secondRear||thirdSource)&&!complete||
   afterMixedThrough!==null&&
     !mixedFreshFullAfterUnattached||
   recordedRestAfterMixed&&afterMixedThrough===null||
-  afterRestThrough!==null&&!recordedRestAfterMixed)
+  afterRestThrough!==null&&!recordedRestAfterMixed||
+  afterContactThrough!==null&&afterRestThrough===null)
   throw new Error('Continuation audit needs --complete.');
 if(unattachedThrough!==null&&(
   !Number.isInteger(unattachedThrough)||
@@ -181,6 +186,10 @@ if(afterRestThrough!==null&&(
   !Number.isInteger(afterRestThrough)||
   afterRestThrough<22||afterRestThrough>260))
   throw new Error('After-rest audit needs km 22 through 260.');
+if(afterContactThrough!==null&&(
+  !Number.isInteger(afterContactThrough)||
+  afterContactThrough<26||afterContactThrough>260))
+  throw new Error('After-contact audit needs km 26 through 260.');
 if(nextThrough!==null&&(!Number.isInteger(nextThrough)||
   nextThrough<5||nextThrough>260))
   throw new Error('Next physical audit needs km 5 through 260.');
@@ -444,6 +453,10 @@ for(let seed=1;seed<=seedCount;seed++)
       let afterContactNext=null;
       let afterContactNextRefusal=null;
       let afterContactNextEvidence=null;
+      let afterContactTrace=null;
+      let afterContactRefusal=null;
+      let afterContactRefusalKm=null;
+      let afterContactEvidence=null;
       if(afterRestRefusal===
         'Physical rear roads need paid contact resolution.'){
         afterRestContactChoice=
@@ -517,6 +530,75 @@ for(let seed=1;seed<=seedCount;seed++)
           }
         }
       }
+      afterContactTrace=afterContactNext;
+      if(afterContactThrough!==null&&afterContactTrace)
+        for(let km=afterContactTrace.sourceKm+1;
+          km<=Math.min(afterContactThrough,
+            recording.route.kilometres.length);km++)try{
+          const candidate=replayV94PhysicalMixedPaidNextKmV1(
+            recording,afterContactTrace);
+          validateV94PhysicalMixedPaidNextKmV1(
+            recording,afterContactTrace,candidate);
+          afterContactTrace=candidate;
+        }catch(error){
+          afterContactRefusal=error.message;
+          afterContactRefusalKm=km;
+          afterContactEvidence=error.sourceEvidence??null;
+          break;
+        }
+      let laterContactChoice=null;
+      let laterContactFullField=null;
+      let laterContactResolutionRefusal=null;
+      if(afterContactRefusal===
+        'Physical rear roads need paid contact resolution.'){
+        try{
+          laterContactChoice=
+            decideV94PhysicalMidKmContactChoiceV1(
+              recording,afterContactTrace);
+          validateV94PhysicalMidKmContactChoiceV1(
+            recording,afterContactTrace,laterContactChoice);
+          laterContactFullField=
+            replayV94PhysicalMidKmContactFullFieldV1(
+              recording,afterContactTrace);
+          validateV94PhysicalMidKmContactFullFieldV1(
+            recording,afterContactTrace,
+              laterContactFullField);
+        }catch(error){
+          laterContactResolutionRefusal=error.message;
+        }
+      }
+      let afterLaterTrace=laterContactFullField;
+      let afterLaterPaidContacts=0;
+      let afterLaterRefusal=null;
+      let afterLaterRefusalKm=null;
+      let afterLaterEvidence=null;
+      if(afterContactThrough!==null&&afterLaterTrace)
+        for(let km=afterLaterTrace.sourceKm+1;
+          km<=Math.min(afterContactThrough,
+            recording.route.kilometres.length);km++)try{
+          let candidate;
+          try{
+            candidate=replayV94PhysicalMixedPaidNextKmV1(
+              recording,afterLaterTrace);
+            validateV94PhysicalMixedPaidNextKmV1(
+              recording,afterLaterTrace,candidate);
+          }catch(error){
+            if(error.message!==
+              'Physical rear roads need paid contact resolution.')
+              throw error;
+            candidate=replayV94PhysicalMidKmContactFullFieldV1(
+              recording,afterLaterTrace);
+            validateV94PhysicalMidKmContactFullFieldV1(
+              recording,afterLaterTrace,candidate);
+            afterLaterPaidContacts++;
+          }
+          afterLaterTrace=candidate;
+        }catch(error){
+          afterLaterRefusal=error.message;
+          afterLaterRefusalKm=km;
+          afterLaterEvidence=error.sourceEvidence??null;
+          break;
+        }
       let nextTrace=fourthTrace,nextRefusal=null;
       let nextRefusalKm=null,nextRefusalEvidence=null;
       if(nextThrough!==null&&fourthTrace){
@@ -876,7 +958,43 @@ for(let seed=1;seed<=seedCount;seed++)
                 null,
             afterContactNextKm:afterContactNext?.sourceKm??null,
             afterContactNextRefusal,
-            afterContactNextEvidence}:{}),
+            afterContactNextEvidence,
+            afterContactCompletedThroughKm:
+              afterContactTrace?.sourceKm??null,
+            afterContactRefusalKm,
+            afterContactRefusal,
+            afterContactEvidence,
+            laterContactChoice:laterContactChoice?{
+              sourceKm:laterContactChoice.sourceKm,
+              candidateCount:laterContactChoice.candidates.length,
+              pendingLeaderRiderId:
+                laterContactChoice.pendingLeaderRiderId,
+              pendingShelterCount:
+                laterContactChoice.pendingShelterRiderIds.length}:
+              null,
+            laterContactFullField:
+              laterContactFullField?{
+                sourceKm:laterContactFullField.sourceKm,
+                finishCount:laterContactFullField.finishes.length}:
+                null,
+            laterContactResolutionRefusal,
+            afterLaterCompletedThroughKm:
+              afterLaterTrace?.sourceKm??null,
+            afterLaterPaidContacts,
+            afterLaterRefusalKm,
+            afterLaterRefusal,
+            afterLaterEvidence,
+            afterLaterSource:afterLaterRefusalKm?{
+              attackers:recording.frames[
+                afterLaterRefusalKm-1].attackers,
+              breakawayRiderIds:recording.frames[
+                afterLaterRefusalKm-1].breakawayRiderIds,
+              joinedBreakawayRiderIds:recording.frames[
+                afterLaterRefusalKm-1]
+                .joinedBreakawayRiderIds,
+              chaserCount:recording.frames[
+                afterLaterRefusalKm-1].chasers.length}:
+              null}:{}),
           lastSoloClockSeconds:completion.soloCompletions.length?
             Math.max(...completion.soloCompletions.map(row=>
               row.finishClockSeconds)):null}:{}),
@@ -904,6 +1022,7 @@ console.log(JSON.stringify({seedCount,complete,secondFront,boundaryChoice,
   afterMixedThrough,
   recordedRestAfterMixed,
   afterRestThrough,
+  afterContactThrough,
   cases:cases.length,
   replayedFirstKilometres:accepted.length,
   refusedCases:cases.length-accepted.length,
@@ -1161,7 +1280,23 @@ console.log(JSON.stringify({seedCount,complete,secondFront,boundaryChoice,
       ...row.afterRestContactFullField,
       nextKm:row.afterContactNextKm,
       nextRefusal:row.afterContactNextRefusal,
-      nextEvidence:row.afterContactNextEvidence})),
+      nextEvidence:row.afterContactNextEvidence,
+      completedThroughKm:
+        row.afterContactCompletedThroughKm,
+      refusalKm:row.afterContactRefusalKm,
+      refusal:row.afterContactRefusal,
+      refusalEvidence:row.afterContactEvidence,
+      laterContactChoice:row.laterContactChoice,
+      laterContactFullField:row.laterContactFullField,
+      laterContactResolutionRefusal:
+        row.laterContactResolutionRefusal,
+      afterLaterCompletedThroughKm:
+        row.afterLaterCompletedThroughKm,
+      afterLaterPaidContacts:row.afterLaterPaidContacts,
+      afterLaterRefusalKm:row.afterLaterRefusalKm,
+      afterLaterRefusal:row.afterLaterRefusal,
+      afterLaterEvidence:row.afterLaterEvidence,
+      afterLaterSource:row.afterLaterSource})),
   afterRestRefusals:accepted.filter(row=>
     row.afterRestRefusal).map(row=>({seed:row.seed,
       distanceKm:row.distanceKm,terrain:row.terrain,

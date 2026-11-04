@@ -849,6 +849,30 @@ test('paid boundary contacts support a complete second flat kilometre',()=>{
     true);
   assert.equal(validateV94PhysicalMixedPaidNextKmV1(
     recording,contactedField,mixedNext),true);
+  let mixedLater=mixedNext,priorAt68=null;
+  let laterPaidContacts=0;
+  for(let km=30;km<=69;km++){
+    if(km===69)priorAt68=mixedLater;
+    try{
+      mixedLater=replayV94PhysicalMixedPaidNextKmV1(
+        recording,mixedLater);
+    }catch(error){
+      if(error.message!==
+        'Physical rear roads need paid contact resolution.')
+        throw error;
+      mixedLater=replayV94PhysicalMidKmContactFullFieldV1(
+        recording,mixedLater);
+      laterPaidContacts++;
+    }
+    assert.equal(mixedLater.sourceKm,km);
+    assert.equal(mixedLater.finishes.length,160);
+  }
+  assert.equal(laterPaidContacts,1);
+  assert.equal(validateV94PhysicalMixedPaidNextKmV1(
+    recording,priorAt68,mixedLater),true);
+  assert.throws(()=>replayV94PhysicalMixedPaidNextKmV1(
+    recording,mixedLater),
+  /Physical front needs an intact paid plan/);
 });
 
 test('second-km road clocks refuse a faster rear catch',()=>{

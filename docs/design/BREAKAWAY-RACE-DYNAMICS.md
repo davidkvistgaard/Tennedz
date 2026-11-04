@@ -6635,6 +6635,17 @@ lengths. The initial mixed group remains physically paid throughout;
 source membership remains a claim rather than a scripted physical
 position or official result.
 
+The mixed paid group can keep its provenance across successive
+kilometres. The same-seed 120 km flat cases complete all 160 riders
+through km 69 (including another paid meeting of two rear groups at
+km 34 without fatigue or km 27 with 30 fatigue). At km 70 the source
+records 13 chasers, which the current front guard cannot attach to
+the paid roads. The 260 km flat cases reach km 84 without fatigue
+and km 88 with 30 fatigue; the next source frame has no breakaway
+riders while the paid physical rear still needs reconciliation.
+These are source-plan refusals. No scripted catch or group transfer
+is used to bypass them.
+
 Callers of the experimental preview can request
 `physicalFirstKmVersion: 1` to receive this completed physical first
 kilometre as a separate `physicalFirstKm` result. It requires the
