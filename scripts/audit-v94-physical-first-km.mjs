@@ -24,6 +24,9 @@ import {replayV94PhysicalThirdFrontKmV1,
 import {decideV94PhysicalThirdBoundaryChoicesV1,
   validateV94PhysicalThirdBoundaryChoicesV1} from
   '../lib/engine/v2/v94-physical-third-boundary-choice-v1.mjs';
+import {replayV94PhysicalThirdRearKmV1,
+  validateV94PhysicalThirdRearKmV1} from
+  '../lib/engine/v2/v94-physical-third-rear-km-v1.mjs';
 
 const requested=process.argv.find(arg=>arg.startsWith('--seeds='));
 const seedCount=requested?Number(requested.slice(8)):1;
@@ -34,9 +37,10 @@ const secondRear=process.argv.includes('--second-rear');
 const thirdSource=process.argv.includes('--third-source');
 const thirdFront=process.argv.includes('--third-front');
 const thirdBoundary=process.argv.includes('--third-boundary');
+const thirdRear=process.argv.includes('--third-rear');
 if((secondFront||boundaryChoice||secondRear||thirdSource)&&!complete||
   thirdSource&&!secondRear||thirdFront&&!secondRear||
-  thirdBoundary&&!secondRear)
+  thirdBoundary&&!secondRear||thirdRear&&!secondRear)
   throw new Error('Continuation audit needs --complete.');
 if(!Number.isInteger(seedCount)||seedCount<1||seedCount>3)
   throw new Error('First-km physical audit needs one to three seeds.');
@@ -90,6 +94,11 @@ for(let seed=1;seed<=seedCount;seed++)
         validateV94PhysicalThirdBoundaryChoicesV1(
           recording,thirdChoice);
       }catch(error){thirdBoundaryRefusal=error.message;}
+      let thirdRearTrace=null,thirdRearRefusal=null;
+      if(thirdRear&&rear)try{
+        thirdRearTrace=replayV94PhysicalThirdRearKmV1(recording);
+        validateV94PhysicalThirdRearKmV1(recording,thirdRearTrace);
+      }catch(error){thirdRearRefusal=error.message;}
       const third=thirdSource?recording.frames[2]:null;
       const physicalFrontAtTwo=new Set(rear?.finishes.filter(row=>
         row.physicalGroup==='peloton').map(row=>row.riderId)??[]);
@@ -153,6 +162,16 @@ for(let seed=1;seed<=seedCount;seed++)
             thirdUnpairedSolos:
               thirdChoice?.unpairedSoloRiderIds.length??0,
             thirdBoundaryRefusal}:{}),
+          ...(thirdRear?{
+            thirdKmFullField:
+              thirdRearTrace?.fullFieldKilometre??false,
+            thirdKmRearGroups:
+              thirdRearTrace?.physicalRearGroups.length??0,
+            thirdKmNewFrontDrops:
+              thirdRearTrace?.newFrontDrops.length??0,
+            thirdKmCoincidentDropSets:
+              thirdRearTrace?.coincidentNewFrontDropSets.length??0,
+            thirdRearRefusal}:{}),
           lastSoloClockSeconds:completion.soloCompletions.length?
             Math.max(...completion.soloCompletions.map(row=>
               row.finishClockSeconds)):null}:{}),
@@ -165,7 +184,7 @@ for(let seed=1;seed<=seedCount;seed++)
   }
 const accepted=cases.filter(row=>!row.refusal);
 console.log(JSON.stringify({seedCount,complete,secondFront,boundaryChoice,
-  secondRear,thirdSource,thirdFront,thirdBoundary,
+  secondRear,thirdSource,thirdFront,thirdBoundary,thirdRear,
   cases:cases.length,
   replayedFirstKilometres:accepted.length,
   refusedCases:cases.length-accepted.length,
@@ -221,6 +240,14 @@ console.log(JSON.stringify({seedCount,complete,secondFront,boundaryChoice,
     sum+(row.thirdBoundaryRiders??0),0),
   thirdUnpairedSolos:accepted.reduce((sum,row)=>
     sum+(row.thirdUnpairedSolos??0),0),
+  thirdKmFullFields:accepted.filter(row=>
+    row.thirdKmFullField).length,
+  thirdKmRearGroups:accepted.reduce((sum,row)=>
+    sum+(row.thirdKmRearGroups??0),0),
+  thirdKmNewFrontDrops:accepted.reduce((sum,row)=>
+    sum+(row.thirdKmNewFrontDrops??0),0),
+  thirdKmCoincidentDropSets:accepted.reduce((sum,row)=>
+    sum+(row.thirdKmCoincidentDropSets??0),0),
   firstCase:cases[0],refusals:cases.filter(row=>row.refusal),
   secondFrontRefusals:accepted.filter(row=>
     row.nextFrontRefusal),
@@ -235,5 +262,9 @@ console.log(JSON.stringify({seedCount,complete,secondFront,boundaryChoice,
   thirdBoundaryRefusals:accepted.filter(row=>
     row.thirdBoundaryRefusal).map(row=>({seed:row.seed,
       distanceKm:row.distanceKm,terrain:row.terrain,
-      fatigue:row.fatigue,refusal:row.thirdBoundaryRefusal}))},
+      fatigue:row.fatigue,refusal:row.thirdBoundaryRefusal})),
+  thirdRearRefusals:accepted.filter(row=>
+    row.thirdRearRefusal).map(row=>({seed:row.seed,
+      distanceKm:row.distanceKm,terrain:row.terrain,
+      fatigue:row.fatigue,refusal:row.thirdRearRefusal}))},
 null,2));

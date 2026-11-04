@@ -6292,6 +6292,22 @@ move no one, charge no km-3 energy and form no new group. Km-3 rear
 road, contact checks, all new front-drop completions, and any finish
 remain open.
 
+`v94-physical-third-rear-km-v1.mjs` advances those boundary proposals
+through a paid third kilometre. Each formed or continued rear road
+has one paid leader and separately priced shelter riders; other
+riders pay their own solo road. The replay checks rear/rear,
+rear/front, new front-drop/rear and new front-drop/new front-drop
+contact in clock order and refuses an encounter without a paid
+decision. It completes new front drops as individual solos, applies
+zero rear bunch recovery and route-bound energy caps, and verifies
+all 160 rider clocks, distances and energy accounts at 3,000 metres.
+Across the 23 accepted cases in the three-seed audit, all 23 third
+kilometres complete, with 90 paid rear groups and 210 newly detached
+front riders. Twelve simultaneous new-drop arrival sets at 3,000
+metres remain contact candidates. The one first-kilometre source
+refusal remains. This is an experimental three-kilometre replay,
+not a validated whole race or an official finish.
+
 Callers of the experimental preview can request
 `physicalFirstKmVersion: 1` to receive this completed physical first
 kilometre as a separate `physicalFirstKm` result. It requires the
