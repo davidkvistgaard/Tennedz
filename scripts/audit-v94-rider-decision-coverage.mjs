@@ -52,11 +52,16 @@ for(let seed=1;seed<=seedCount;seed++)
     droppedDecisionRows:0,coveredRiderKilometres:0,
     uncoveredRiderKilometres:0,
     uncoveredForwardRiderKilometres:0,
+    firstUncoveredForward:null,
+    uncoveredForwardFreshAttack:0,
+    uncoveredForwardExisting:0,
+    uncoveredForwardNewOther:0,
     uncoveredPelotonRiderKilometres:0,
     uncoveredDroppedRiderKilometres:0,
     paidBunchWorkerRiderKilometres:0,
     paidBunchWorkerDecisionRows:0,
     paidBunchWorkerWithoutDecision:0};
+  let priorFrame=null;
   for(const frame of recording.frames){
     const count=frame.riderGroups.length;
     if(count!==160||frame.energyLedger.length!==count)
@@ -122,8 +127,25 @@ for(let seed=1;seed<=seedCount;seed++)
     for(const rider of frame.riderGroups){
       if(rider.group==='breakaway'||rider.group==='front'){
         coverage.forwardRiderKilometres++;
-        if(!decisions.has(rider.id))
+        if(!decisions.has(rider.id)){
           coverage.uncoveredForwardRiderKilometres++;
+          const origin=frame.attackers.includes(rider.id)?
+            'fresh_attack':priorFrame?.breakawayRiderIds
+              .includes(rider.id)?'existing_front':'new_other';
+          if(origin==='fresh_attack')
+            coverage.uncoveredForwardFreshAttack++;
+          else if(origin==='existing_front')
+            coverage.uncoveredForwardExisting++;
+          else coverage.uncoveredForwardNewOther++;
+          coverage.firstUncoveredForward??={km:frame.km,
+            riderId:rider.id,teamId:rider.teamId,origin,
+            roadGroupId:frame.roadGroups.find(group=>
+              group.riderIds.includes(rider.id))?.id??null,
+            splitAttack:frame.splitAttacks.some(row=>
+              row.riderId===rider.id),
+            joinedBreakaway:frame.joinedBreakawayRiderIds
+              .includes(rider.id)};
+        }
       }else if(rider.group==='peloton'){
         coverage.pelotonRiderKilometres++;
         if(!decisions.has(rider.id))
@@ -139,6 +161,7 @@ for(let seed=1;seed<=seedCount;seed++)
       coverage.uncoveredPelotonRiderKilometres+
       coverage.uncoveredDroppedRiderKilometres)
       throw new Error('Missing decisions differ from road groups.');
+    priorFrame=frame;
   }
   results.push({seed,distanceKm,terrain,fatigue,coverage});
 }
@@ -157,6 +180,9 @@ if(process.argv.includes('--summary')){
     droppedDecisionRows:0,coveredRiderKilometres:0,
     uncoveredRiderKilometres:0,
     uncoveredForwardRiderKilometres:0,
+    uncoveredForwardFreshAttack:0,
+    uncoveredForwardExisting:0,
+    uncoveredForwardNewOther:0,
     uncoveredPelotonRiderKilometres:0,
     uncoveredDroppedRiderKilometres:0,
     paidBunchWorkerRiderKilometres:0,
@@ -181,6 +207,9 @@ if(process.argv.includes('--summary')){
       'coveredRiderKilometres',
       'uncoveredRiderKilometres',
       'uncoveredForwardRiderKilometres',
+      'uncoveredForwardFreshAttack',
+      'uncoveredForwardExisting',
+      'uncoveredForwardNewOther',
       'uncoveredPelotonRiderKilometres',
       'uncoveredDroppedRiderKilometres',
       'paidBunchWorkerRiderKilometres',
@@ -190,7 +219,13 @@ if(process.argv.includes('--summary')){
   }
   const firstDrop=results.find(row=>
     row.coverage?.firstDiscountedDrop);
+  const firstForward=results.find(row=>
+    row.coverage?.firstUncoveredForward);
   console.log(JSON.stringify({...totals,
+    firstUncoveredForward:firstForward?{
+      seed:firstForward.seed,distanceKm:firstForward.distanceKm,
+      terrain:firstForward.terrain,fatigue:firstForward.fatigue,
+      ...firstForward.coverage.firstUncoveredForward}:null,
     firstDiscountedDrop:firstDrop?{
       seed:firstDrop.seed,distanceKm:firstDrop.distanceKm,
       terrain:firstDrop.terrain,fatigue:firstDrop.fatigue,

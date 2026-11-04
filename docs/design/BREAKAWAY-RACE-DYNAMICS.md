@@ -5453,6 +5453,13 @@ Across three seeds, 22 of 24 races validate and two still refuse;
 all 28,936 named paid bunch-worker kilometres. The other 612,901
 rider-kilometres remain uncovered (207 forward, 610,350 peloton,
 2,344 dropped).
+The same three-seed source inventory identifies all 207 uncovered
+forward rider-kilometres as fresh paid attacks on their launch
+kilometre. None are continuing front riders or unexplained new
+members. The first is `rival-13-5` at km 5 of seed 1's 120-km flat,
+fatigue-0 race, newly entering `road-1`. The existing road-group
+decision list covers riders already ahead at the start of a kilometre,
+so the launch needs its own sourced decision row.
 
 An additional opt-in `pelotonDraftCostVersion: 1` requires explicit
 sporting stakes and the shared paid peloton front. It reduces only the
