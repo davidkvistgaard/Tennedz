@@ -5526,3 +5526,26 @@ teams and selects an eligible worker from the committed roster using
 perceived strength while retaining every manager order. Arbitrarily
 assigning either would alter the committed source and fail this
 preflight.
+
+### Shared-peloton chase timing holdout
+
+`node scripts/audit-v94-shared-pursuit-timing.mjs` records the first
+front and first paid chase for four seeds, two terrains and two fatigue
+settings in 120-km one-day races with opt-in road-group pace version 3,
+chase turns and a single paid peloton front. Fifteen of 16 cases
+complete; the remaining mountain/fatigue-30 case refuses the combined
+fresh-attack and paid-pursuit clock. Every completed case forms a front
+at km 5 and first pays chase at km 70, exactly 50 km from the finish.
+Only one of those 15 fronts is caught by the finish. The first flat,
+fatigue-0 seed has a 50.42-second lead at km 69 and no paid chase;
+after 51 paid chase kilometres it still leads by 19.14 seconds.
+
+This repeated trigger comes from the existing `remainingKm <= 50`
+one-day protector condition. The preceding estimate sums *potential*
+helper capacities across protector teams even though the opt-in road
+plan permits just one exposed peloton leader at a time. It therefore
+cannot be treated as the attainable coalition road speed. The measured
+front trend and actual paid turn capacity must inform a versioned
+start decision before removing the fixed fallback. This audit does
+not establish a calibrated replacement or justify enabling V94 in
+guided races.
