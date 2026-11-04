@@ -6677,18 +6677,20 @@ peloton. Source break membership remains a separate claim. The next
 kilometre keeps the source claim alongside the physical fact. It
 continues the caught rider in the bunch from his own paid reserve,
 with his own manager effort and shelter cost, while the source energy
-ledger remains a calibration comparison. The 120 km flat cases finish
-all 160 riders through km 107 without fatigue or km 110 with 30
-fatigue. The next kilometre measures another rear/rear meeting and
-refuses until that contact is paid. No source break label moves the
-caught rider back onto a rear road.
-The km-108 contact audit selects the same paid, caught-rider-aware
-continuation as the whole-field replay. It observes two rear roads
-meeting and quotes a single leader for their remaining metres. That
-proposed group then meets `solo-rival-8-5` within the same kilometre
-at 107,263.845 m. The full-field guard refuses this second contact;
-forming a rear group from the first meeting alone would discard a
-measured paid crossing.
+ledger remains a calibration comparison. Before the next contact
+settlement, the 120 km flat cases finished all 160 riders through
+km 107 without fatigue or km 110 with 30 fatigue. No source break
+label moves the caught rider back onto a rear road. At km 108 without
+fatigue, three paid rear roads meet simultaneously at 107,263.845 m.
+The first pair reported by the rear replay omits `solo-rival-8-5`;
+the version 2 contact choice expands the measured crossing to all
+three roads before selecting one payable leader and shelter roles.
+The version 2 fragment and road audit then settle the whole 160-rider
+field through km 108, including the caught rider's independent
+physical reserve in the peloton. The same three-road settlement
+continues the 30-fatigue case through km 111. The next kilometres,
+109 and 112 respectively, refuse a mixed forward/rear boundary that
+still needs a paid joint choice.
 Both 260 km flat cases
 complete every rider through km 89. At km 90 the source
 introduces two new attackers (`rival-19-7` and `rival-6-7`), so the

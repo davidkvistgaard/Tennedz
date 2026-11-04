@@ -984,7 +984,11 @@ test('paid boundary contacts support a complete second flat kilometre',()=>{
   const rearContact=decideV94PhysicalMidKmContactChoiceV1(
     recording,mixedLater);
   assert.equal(rearContact.sourceKm,108);
-  assert.equal(rearContact.observedRoads.length,2);
+  assert.equal(rearContact.observedRoads.length,3);
+  assert.ok(rearContact.observedRoads.some(row=>
+    row.roadId==='solo-rival-8-5'));
+  assert.equal(rearContact.pendingShelterRiderIds.length,
+    rearContact.candidates.length-1);
   assert.equal(rearContact.paidWorkPending,true);
   const contactFragment=replayV94PhysicalMidKmContactFragmentV1(
     recording,mixedLater);
@@ -992,14 +996,26 @@ test('paid boundary contacts support a complete second flat kilometre',()=>{
   const roadAudit=inspectV94PhysicalMidKmContactRoadsV1(
     recording,mixedLater);
   assert.equal(roadAudit.sourceKm,108);
-  assert.equal(roadAudit.firstOtherContact?.kind,
-    'contact_fragment_rear');
-  assert.equal(roadAudit.firstOtherContact?.roadIds[1],
-    'solo-rival-8-5');
+  assert.equal(roadAudit.firstOtherContact,null);
   assert.equal(roadAudit.frontDropCount,0);
-  assert.throws(()=>replayV94PhysicalMidKmContactFullFieldV1(
-    recording,mixedLater),
-  /Contact field has unresolved road contact/);
+  const paidContact=replayV94PhysicalMidKmContactFullFieldV1(
+    recording,mixedLater);
+  assert.equal(paidContact.sourceKm,108);
+  assert.equal(paidContact.finishes.length,160);
+  assert.equal(validateV94PhysicalMidKmContactFullFieldV1(
+    recording,mixedLater,paidContact),true);
+  assert.equal(paidContact.finishes.find(row=>
+    row.riderId==='rival-6-7').physicalGroup,'peloton');
+  assert.equal(paidContact.finishes.find(row=>
+    row.riderId==='rival-6-7').energyBefore,
+  mixedLater.finishes.find(row=>
+    row.riderId==='rival-6-7').energyAfter);
+  assert.equal(paidContact.roads.find(row=>
+    row.roadId.startsWith('paid-mid-km-contact-'))
+    .previousGroupIds.length,3);
+  assert.throws(()=>replayV94PhysicalUnattachedSourceNextKmV1(
+    recording,paidContact),
+  /Mixed forward\/rear contact needs paid joint choice/);
 });
 
 test('ended source break membership keeps four riders on paid roads',()=>{

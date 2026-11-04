@@ -773,10 +773,21 @@ for(let seed=1;seed<=seedCount;seed++)
             for(let nextKm=caught.sourceKm+1;
               nextKm<=Math.min(afterContactThrough,
                 recording.route.kilometres.length);nextKm++)try{
-              const next=replayV94PhysicalUnattachedSourceNextKmV1(
-                recording,afterCatchTrace);
-              validateV94PhysicalUnattachedSourceNextKmV1(
-                recording,afterCatchTrace,next);
+              let next;
+              try{
+                next=replayV94PhysicalUnattachedSourceNextKmV1(
+                  recording,afterCatchTrace);
+                validateV94PhysicalUnattachedSourceNextKmV1(
+                  recording,afterCatchTrace,next);
+              }catch(error){
+                if(error.message!==
+                  'Physical rear roads need paid contact resolution.')
+                  throw error;
+                next=replayV94PhysicalMidKmContactFullFieldV1(
+                  recording,afterCatchTrace);
+                validateV94PhysicalMidKmContactFullFieldV1(
+                  recording,afterCatchTrace,next);
+              }
               afterCatchTrace=next;
             }catch(error){
               afterCatchRefusal=error.message;
