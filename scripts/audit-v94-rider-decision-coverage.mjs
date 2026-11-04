@@ -22,6 +22,7 @@ const protectorSportingPursuit=process.argv.includes(
   '--protector-sporting-pursuit');
 const protectorTiming=process.argv.includes('--protector-timing');
 const sprintStakes=process.argv.includes('--sprint-stakes');
+const recordedRoadSeeds=process.argv.includes('--recorded-road-seeds');
 if((draftCost||strictDraftCost)&&!explicitStakes)
   throw new Error('Draft cost audit needs explicit stakes.');
 if(draftCost&&strictDraftCost)
@@ -48,7 +49,8 @@ for(let seed=1;seed<=seedCount;seed++)
   for(const fatigue of [0,30]){
   const settings={distanceKm,teamCount:20,terrain,fatigue,
     attack:'none',chase:'selective',
-    seed:`chase-turn-holdout-${seed}-${terrain}-${fatigue}`};
+    seed:recordedRoadSeeds?`preview-recorded-road-${seed}`:
+      `chase-turn-holdout-${seed}-${terrain}-${fatigue}`};
   const sportingStakes=explicitStakes?
     prepareV91Playtest(settings).teams.map(team=>({
       teamId:team.id,goal:sprintStakes?'sprint_finish':'none',
@@ -93,6 +95,12 @@ for(let seed=1;seed<=seedCount;seed++)
     uncoveredForwardExisting:0,
     uncoveredForwardNewOther:0,
     uncoveredPelotonRiderKilometres:0,
+    caughtToPelotonTransitions:0,
+    caughtToPelotonBeforeFinish:0,
+    caughtToPelotonForwardDecisions:0,
+    caughtToPelotonWithoutDecision:0,
+    firstCaughtToPelotonTransition:null,
+    firstCaughtToPelotonBeforeFinish:null,
     uncoveredDroppedRiderKilometres:0,
     newDroppedFromPeloton:0,
     newDroppedFromFront:0,
@@ -218,8 +226,34 @@ for(let seed=1;seed<=seedCount;seed++)
         }
       }else if(rider.group==='peloton'){
         coverage.pelotonRiderKilometres++;
-        if(!decisions.has(rider.id))
+        const previous=priorFrame?.riderGroups.find(row=>
+          row.id===rider.id);
+        if(previous?.group==='breakaway'&&
+          frame.caughtBreakawayRiderIds.includes(rider.id)){
+          coverage.caughtToPelotonTransitions++;
+          const forwardDecision=forwardDecisions.some(row=>
+            row.riderId===rider.id);
+          if(frame.km<distanceKm){
+            coverage.caughtToPelotonBeforeFinish++;
+            coverage.firstCaughtToPelotonBeforeFinish??={
+              km:frame.km,riderId:rider.id,
+              priorGroup:previous.group,
+              decisionSource:forwardDecision?'road_group':
+                decisions.has(rider.id)?'other':'none'};
+          }
+          if(forwardDecision)
+            coverage.caughtToPelotonForwardDecisions++;
+          coverage.firstCaughtToPelotonTransition??={
+            km:frame.km,riderId:rider.id,
+            priorGroup:previous.group,
+            decisionSource:forwardDecision?'road_group':
+              decisions.has(rider.id)?'other':'none'};
+          if(!decisions.has(rider.id))
+            coverage.caughtToPelotonWithoutDecision++;
+        }
+        if(!decisions.has(rider.id)){
           coverage.uncoveredPelotonRiderKilometres++;
+        }
       }else if(rider.group==='dropped'){
         coverage.droppedRiderKilometres++;
         if(decisions.has(rider.id))coverage.droppedDecisionRows++;
@@ -257,6 +291,7 @@ for(let seed=1;seed<=seedCount;seed++)
 }
 if(process.argv.includes('--summary')){
   const totals={seedCount,explicitStakes,draftCost,
+    recordedRoadSeeds,
     freshAttackDecisions,protectorSportingPursuit,
     protectorTiming,sprintStakes,strictPelotonDropContact,
     pelotonFollowerDecisions,pelotonFollowerEffort,
@@ -280,6 +315,10 @@ if(process.argv.includes('--summary')){
     uncoveredForwardExisting:0,
     uncoveredForwardNewOther:0,
     uncoveredPelotonRiderKilometres:0,
+    caughtToPelotonTransitions:0,
+    caughtToPelotonBeforeFinish:0,
+    caughtToPelotonForwardDecisions:0,
+    caughtToPelotonWithoutDecision:0,
     uncoveredDroppedRiderKilometres:0,
     newDroppedFromPeloton:0,
     newDroppedFromFront:0,
@@ -316,6 +355,10 @@ if(process.argv.includes('--summary')){
       'uncoveredForwardExisting',
       'uncoveredForwardNewOther',
       'uncoveredPelotonRiderKilometres',
+      'caughtToPelotonTransitions',
+      'caughtToPelotonBeforeFinish',
+      'caughtToPelotonForwardDecisions',
+      'caughtToPelotonWithoutDecision',
       'uncoveredDroppedRiderKilometres',
       'newDroppedFromPeloton',
       'newDroppedFromFront',
@@ -334,7 +377,22 @@ if(process.argv.includes('--summary')){
     row.coverage?.firstUncoveredForward);
   const firstDropped=results.find(row=>
     row.coverage?.firstDroppedWithoutDecision);
+  const firstCaught=results.find(row=>
+    row.coverage?.firstCaughtToPelotonTransition);
+  const firstCaughtBeforeFinish=results.find(row=>
+    row.coverage?.firstCaughtToPelotonBeforeFinish);
   console.log(JSON.stringify({...totals,
+    firstCaughtToPelotonBeforeFinish:firstCaughtBeforeFinish?{
+      seed:firstCaughtBeforeFinish.seed,
+      distanceKm:firstCaughtBeforeFinish.distanceKm,
+      terrain:firstCaughtBeforeFinish.terrain,
+      fatigue:firstCaughtBeforeFinish.fatigue,
+      ...firstCaughtBeforeFinish.coverage
+        .firstCaughtToPelotonBeforeFinish}:null,
+    firstCaughtToPelotonTransition:firstCaught?{
+      seed:firstCaught.seed,distanceKm:firstCaught.distanceKm,
+      terrain:firstCaught.terrain,fatigue:firstCaught.fatigue,
+      ...firstCaught.coverage.firstCaughtToPelotonTransition}:null,
     firstDroppedWithoutDecision:firstDropped?{
       seed:firstDropped.seed,distanceKm:firstDropped.distanceKm,
       terrain:firstDropped.terrain,fatigue:firstDropped.fatigue,

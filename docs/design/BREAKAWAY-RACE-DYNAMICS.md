@@ -5982,3 +5982,36 @@ prototype, would still leave source disagreements and cannot be
 selected as a release setting from this audit. Paid within-turn
 separation and contact, followed by whole-race finish checks, remain
 the routing blockers.
+
+### Caught break riders under paired protector timing
+
+The read-only decision inventory can use the `--recorded-road-seeds`
+family to inspect caught break riders without changing race orders.
+With strict peloton-drop contact, V2 follower effort, exposure cost,
+fresh-attack decisions, sporting pursuit and synthetic sprint stakes,
+the earlier
+protector timing accepts 16 of 24 whole races and refuses eight
+unresolved peloton drops. All 464,000 accepted rider-kilometres have
+versioned choices. Ninety-three breakaway-to-peloton checkpoint
+transitions happen before the finish; every caught rider has a
+recorded road-group decision in that kilometre. The first is
+`rival-16-5` at km 75 of a 120 km flat race. The checkpoint catch
+marker does not supply the metre, shared paid road, or postcontact
+physical position.
+
+In the same seed family with observed-pace protector timing enabled,
+15 races pass the strict gate. All 422,400 accepted rider-kilometres
+have choices. The 26 breakaway-to-peloton transitions in this subset
+are finish-line catch markers; none occur earlier. To avoid comparing
+different accepted populations, the read-only protector timing
+comparison with `--recorded-road-seeds --summary` replays both
+policies and compares
+the 15 paired races. The observed policy begins paid chase earlier in
+all 15. The earlier policy records 81 caught-rider transitions before
+the finish and none at the finish; the observed policy records none
+before the finish and 26 at the finish. The paired final front-gap
+sum falls from 268.47 to 50.25 seconds, while complete front catches
+at the recorded line rise from two to six races. These synthetic
+outcomes do not establish realistic chase timing or physical catches.
+The marker's location, the paid turn clock and the rider's continuation
+must be reconciled before either policy can be released.
