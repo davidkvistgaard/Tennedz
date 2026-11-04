@@ -6524,6 +6524,26 @@ actual break-work orders in each paid rear/solo decision. It neither
 accepts the scripted source gap nor converts a source break group
 into a physical group without a paid contact leader.
 
+`v94-physical-seventh-km-v1.mjs` continues from a fully paid km 6
+when every source break rider still has an individual paid solo road.
+It refuses a boundary co-location involving one of those riders
+until a break-work leader can be chosen, and retains the source group
+only as a membership claim. The three-seed matrix completes km 7
+for the same 8 cases as km 6: 160 rider finishes per case, 36 paid
+rear groups in total and 16 source break riders still solo. The
+other cases retain their earlier km-1 or km-6 refusals.
+
+`v94-physical-unattached-source-next-km-v1.mjs` repeats that guarded
+paid continuation from km 8 while the recorded plan still has only
+named front work, no new attack or chase, and source break riders
+remain on separate solo roads. In the three-seed matrix, all 8 cases
+that completed km 7 continue through km 19 with 160 paid rider
+finishes per kilometre. At km 20 the source adds two flat-course or
+three mountain-course attackers to its existing break group. The
+physical replay refuses that fresh launch and source join pending
+paid launch and contact decisions. No source gap, position or
+official award is inferred.
+
 Callers of the experimental preview can request
 `physicalFirstKmVersion: 1` to receive this completed physical first
 kilometre as a separate `physicalFirstKm` result. It requires the

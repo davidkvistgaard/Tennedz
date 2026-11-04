@@ -80,6 +80,12 @@ import {replayV94PhysicalSixthFrontKmV1,
 import {replayV94PhysicalSixthKmV1,
   validateV94PhysicalSixthKmV1} from
   '../../lib/engine/v2/v94-physical-sixth-km-v1.mjs';
+import {replayV94PhysicalSeventhKmV1,
+  validateV94PhysicalSeventhKmV1} from
+  '../../lib/engine/v2/v94-physical-seventh-km-v1.mjs';
+import {replayV94PhysicalUnattachedSourceNextKmV1,
+  validateV94PhysicalUnattachedSourceNextKmV1} from
+  '../../lib/engine/v2/v94-physical-unattached-source-next-km-v1.mjs';
 
 test('first V94 kilometre prices each named turn and detached solo metre',()=>{
   const settings={distanceKm:120,teamCount:20,terrain:'mountain',
@@ -603,6 +609,38 @@ test('paid boundary contacts support a complete second flat kilometre',()=>{
   assert.throws(()=>validateV94PhysicalSixthKmV1(
     recording,fifth,forgedSixth),
   /differs from paid source/);
+  const seventh=replayV94PhysicalSeventhKmV1(
+    recording,sixth);
+  assert.equal(seventh.sourceKm,7);
+  assert.equal(seventh.fullFieldKilometre,true);
+  assert.equal(seventh.finishes.length,160);
+  assert.equal(seventh.sourceCheckpointCalibrationFailed,true);
+  assert.equal(seventh.officialResults,false);
+  assert.deepEqual(seventh.sourceBreakRiderIds,
+    sixth.sourceBreakRiderIds);
+  assert.ok(seventh.sourceBreakRiderIds.every(id=>
+    seventh.finishes.find(row=>row.riderId===id)
+      .physicalGroup.startsWith('solo-')));
+  assert.equal(validateV94PhysicalSeventhKmV1(
+    recording,sixth,seventh),true);
+  let next=seventh,priorAt18=null;
+  for(let km=8;km<=19;km++){
+    if(km===19)priorAt18=next;
+    const candidate=replayV94PhysicalUnattachedSourceNextKmV1(
+      recording,next);
+    assert.equal(candidate.sourceKm,km);
+    assert.equal(candidate.finishes.length,160);
+    assert.equal(candidate.sourceCheckpointCalibrationFailed,true);
+    assert.equal(candidate.officialResults,false);
+    next=candidate;
+  }
+  assert.equal(validateV94PhysicalUnattachedSourceNextKmV1(
+    recording,priorAt18,next),true);
+  assert.throws(()=>replayV94PhysicalUnattachedSourceNextKmV1(
+    recording,next),error=>
+    /needs an intact paid plan/.test(error.message)&&
+    error.sourceEvidence?.sourceKm===20&&
+    error.sourceEvidence.attackers.length===2);
 });
 
 test('second-km road clocks refuse a faster rear catch',()=>{
