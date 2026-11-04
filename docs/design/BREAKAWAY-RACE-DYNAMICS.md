@@ -6452,6 +6452,29 @@ the 23 paid fifth-kilometre fields. Seventy have a source break
 membership claim, while only 44 have a clock ahead of the paid
 peloton front. None of these proposals forms a group or advances km 6.
 
+`v94-physical-sixth-forward-contact-probe-v1.mjs` quotes a separate
+km-6 solo speed and terrain work demand for each rider whom the
+source claims is in its break. It starts from that rider's own paid
+km-5 clock and reserve, then compares individual proposed worldlines
+for a same-boundary co-location or a later meeting. The probe grants
+zero new distance, energy, shared work or group formation; any
+meeting is only a contact candidate needing a paid decision. It
+does not assume the source break gap or move the peloton and rear
+roads. In the flat seed-1 case, the two quoted source members start
+1.01712 seconds apart, and their individual km-6 solo estimates do
+not meet within the next 1,000 metres.
+Across the 23 paid fifth-kilometre cases, all 70 source-claimed break
+riders have payable individual solo quotes. Twenty-four rider pairs
+share a paid boundary clock and are recorded as possible contacts;
+no two distinct solo worldlines meet later in km 6. None of those
+pairwise co-locations proves that an entire source break group exists.
+The source's full-kilometre energy payment is compared with the
+quoted solo minimum separately before any physical work is charged.
+All 70 quotes fit both the rider's paid boundary reserve and the
+source's recorded full-kilometre energy payment. That affordability
+does not establish a shared group, complete km-6 energy attribution,
+or contact with the peloton.
+
 Callers of the experimental preview can request
 `physicalFirstKmVersion: 1` to receive this completed physical first
 kilometre as a separate `physicalFirstKm` result. It requires the

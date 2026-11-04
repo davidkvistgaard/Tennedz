@@ -51,6 +51,9 @@ import {inspectV94PhysicalSixthSourceBoundaryV1,
 import {decideV94PhysicalSixthRiderBoundaryV1,
   validateV94PhysicalSixthRiderBoundaryV1} from
   '../lib/engine/v2/v94-physical-sixth-rider-boundary-v1.mjs';
+import {inspectV94PhysicalSixthForwardContactProbeV1,
+  validateV94PhysicalSixthForwardContactProbeV1} from
+  '../lib/engine/v2/v94-physical-sixth-forward-contact-probe-v1.mjs';
 
 const requested=process.argv.find(arg=>arg.startsWith('--seeds='));
 const seedCount=requested?Number(requested.slice(8)):1;
@@ -79,6 +82,8 @@ const sixthSourceBoundary=process.argv.includes(
   '--sixth-source-boundary');
 const sixthRiderBoundary=process.argv.includes(
   '--sixth-rider-boundary');
+const sixthForwardProbe=process.argv.includes(
+  '--sixth-forward-probe');
 if((secondFront||boundaryChoice||secondRear||thirdSource)&&!complete||
   thirdSource&&!secondRear||thirdFront&&!secondRear||
   thirdBoundary&&!secondRear||thirdRear&&!secondRear||
@@ -89,7 +94,8 @@ if((secondFront||boundaryChoice||secondRear||thirdSource)&&!complete||
   fifthFront&&!fourthReplay||
   fifthReplay&&!fourthReplay||
   sixthSourceBoundary&&!fifthReplay||
-  sixthRiderBoundary&&!fifthReplay)
+  sixthRiderBoundary&&!fifthReplay||
+  sixthForwardProbe&&!fifthReplay)
   throw new Error('Continuation audit needs --complete.');
 if(nextThrough!==null&&(!Number.isInteger(nextThrough)||
   nextThrough<5||nextThrough>260))
@@ -203,6 +209,13 @@ for(let seed=1;seed<=seedCount;seed++)
         validateV94PhysicalSixthRiderBoundaryV1(
           recording,fifthTrace,sixthRiders);
       }catch(error){sixthRiderRefusal=error.message;}
+      let sixthForward=null,sixthForwardRefusal=null;
+      if(sixthForwardProbe&&fifthTrace)try{
+        sixthForward=inspectV94PhysicalSixthForwardContactProbeV1(
+          recording,fifthTrace);
+        validateV94PhysicalSixthForwardContactProbeV1(
+          recording,fifthTrace,sixthForward);
+      }catch(error){sixthForwardRefusal=error.message;}
       let nextTrace=fourthTrace,nextRefusal=null;
       let nextRefusalKm=null,nextRefusalEvidence=null;
       if(nextThrough!==null&&fourthTrace){
@@ -405,6 +418,22 @@ for(let seed=1;seed<=seedCount;seed++)
               sixthRiders?.decisions.filter(row=>
                 row.relativeToPaidFrontSeconds<0).length??0,
             sixthRiderRefusal}:{}),
+          ...(sixthForwardProbe?{
+            sixthForwardRoadQuotes:
+              sixthForward?.proposedSoloRoads.length??0,
+            sixthForwardUnpayable:
+              sixthForward?.proposedSoloRoads.filter(row=>
+                !row.individuallyPayable).length??0,
+            sixthForwardSourceBudgetShortfalls:
+              sixthForward?.proposedSoloRoads.filter(row=>
+                !row.sourcePaidBudgetCoversSolo).length??0,
+            sixthForwardBoundaryContacts:
+              sixthForward?.contactCandidates.filter(row=>
+                row.kind==='boundary_colocation').length??0,
+            sixthForwardRoadMeetings:
+              sixthForward?.contactCandidates.filter(row=>
+                row.kind==='solo_road_meeting').length??0,
+            sixthForwardRefusal}:{}),
           lastSoloClockSeconds:completion.soloCompletions.length?
             Math.max(...completion.soloCompletions.map(row=>
               row.finishClockSeconds)):null}:{}),
@@ -421,6 +450,7 @@ console.log(JSON.stringify({seedCount,complete,secondFront,boundaryChoice,
   fourthSource,fourthReplay,nextThrough,freshLaunchBoundary,
   freshAttackSolos,fifthFront,fifthReplay,sixthSourceBoundary,
   sixthRiderBoundary,
+  sixthForwardProbe,
   cases:cases.length,
   replayedFirstKilometres:accepted.length,
   refusedCases:cases.length-accepted.length,
@@ -562,6 +592,16 @@ console.log(JSON.stringify({seedCount,complete,secondFront,boundaryChoice,
     sum+(row.sixthRiderBreakClaims??0),0),
   sixthRiderPhysicallyAhead:accepted.reduce((sum,row)=>
     sum+(row.sixthRiderPhysicallyAhead??0),0),
+  sixthForwardRoadQuotes:accepted.reduce((sum,row)=>
+    sum+(row.sixthForwardRoadQuotes??0),0),
+  sixthForwardUnpayable:accepted.reduce((sum,row)=>
+    sum+(row.sixthForwardUnpayable??0),0),
+  sixthForwardSourceBudgetShortfalls:accepted.reduce((sum,row)=>
+    sum+(row.sixthForwardSourceBudgetShortfalls??0),0),
+  sixthForwardBoundaryContacts:accepted.reduce((sum,row)=>
+    sum+(row.sixthForwardBoundaryContacts??0),0),
+  sixthForwardRoadMeetings:accepted.reduce((sum,row)=>
+    sum+(row.sixthForwardRoadMeetings??0),0),
   firstCase:cases[0],refusals:cases.filter(row=>row.refusal),
   secondFrontRefusals:accepted.filter(row=>
     row.nextFrontRefusal),
@@ -609,5 +649,9 @@ console.log(JSON.stringify({seedCount,complete,secondFront,boundaryChoice,
   sixthRiderRefusals:accepted.filter(row=>
     row.sixthRiderRefusal).map(row=>({seed:row.seed,
       distanceKm:row.distanceKm,terrain:row.terrain,
-      fatigue:row.fatigue,refusal:row.sixthRiderRefusal}))},
+      fatigue:row.fatigue,refusal:row.sixthRiderRefusal})),
+  sixthForwardRefusals:accepted.filter(row=>
+    row.sixthForwardRefusal).map(row=>({seed:row.seed,
+      distanceKm:row.distanceKm,terrain:row.terrain,
+      fatigue:row.fatigue,refusal:row.sixthForwardRefusal}))},
 null,2));
