@@ -31,6 +31,9 @@ import {replayV94PhysicalThirdFrontKmV1,
   validateV94PhysicalThirdFrontKmV1,
   V94_PHYSICAL_THIRD_FRONT_DECISION_VERSION} from
   '../../lib/engine/v2/v94-physical-third-front-km-v1.mjs';
+import {decideV94PhysicalThirdBoundaryChoicesV1,
+  validateV94PhysicalThirdBoundaryChoicesV1} from
+  '../../lib/engine/v2/v94-physical-third-boundary-choice-v1.mjs';
 
 test('first V94 kilometre prices each named turn and detached solo metre',()=>{
   const settings={distanceKm:120,teamCount:20,terrain:'mountain',
@@ -263,6 +266,26 @@ test('second front records an early climb loss without completing rear road',()=
   assert.equal(third.rearConcurrentRoadUnresolved,true);
   assert.equal(third.officialResults,false);
   assert.equal(validateV94PhysicalThirdFrontKmV1(recording,third),true);
+  const thirdBoundary=decideV94PhysicalThirdBoundaryChoicesV1(
+    recording);
+  assert.ok(thirdBoundary.choices.length>=
+    complete.physicalRearGroups.length+
+    complete.coincidentNewFrontDropSets.length);
+  assert.ok(thirdBoundary.choices.every(row=>
+    row.atDistanceM===2000&&
+    row.riderDecisions.length===row.riderIds.length&&
+    row.formsRearGroup===false&&
+    row.paidArrivalEvidence.every(evidence=>
+      evidence.sourceKm===2&&
+      Number.isFinite(evidence.paidFromReserve))));
+  assert.equal(thirdBoundary.choices.reduce((sum,row)=>
+    sum+row.riderIds.length,0)+
+    thirdBoundary.unpairedSoloRiderIds.length,
+  complete.finishes.filter(row=>
+    row.physicalGroup!=='peloton').length);
+  assert.equal(thirdBoundary.physicalRearGroups.length,0);
+  assert.equal(validateV94PhysicalThirdBoundaryChoicesV1(
+    recording,thirdBoundary),true);
 });
 
 test('paid boundary contacts support a complete second flat kilometre',()=>{

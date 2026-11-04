@@ -6279,6 +6279,19 @@ resolved the 27 km-2 contact-candidate sets, completed the new drops,
 or established a km-3 full-field result. It remains outside the
 guided races and has no official finish.
 
+`v94-physical-third-boundary-choice-v1.mjs` inventories every paid
+rear arrival at 2,000 metres by its rider clock and reserve. It keeps
+the 63 already paid km-2 groups distinct from new contact; 27 sets of
+new front drops also arrive together. At each co-location it records
+each rider's km-3 manager effort, chase and front-work order,
+committed sporting goal and captain, perceived solo and shelter
+strength, and a versioned proposal for one next leader. All 90
+co-locations across the 23 accepted three-seed cases have a proposed
+leader and cover 1,023 rear riders. The proposals assign no wheel,
+move no one, charge no km-3 energy and form no new group. Km-3 rear
+road, contact checks, all new front-drop completions, and any finish
+remain open.
+
 Callers of the experimental preview can request
 `physicalFirstKmVersion: 1` to receive this completed physical first
 kilometre as a separate `physicalFirstKm` result. It requires the
