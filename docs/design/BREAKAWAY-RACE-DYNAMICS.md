@@ -6600,7 +6600,8 @@ lengths, and no contact group has been formed.
 previous role up to that crossing and the selected single leader
 and 18 sheltered riders over the remaining metres. It records each
 rider's before, contact and after reserve with cap adjustment and
-one shared finish clock. The result is expressly a fragment:
+one shared finish clock; every sheltered rider must still hold the
+leader's pace on end-of-fragment energy. The result is expressly a fragment:
 other road contacts are unchecked, and `fullFieldKilometre` is
 false. It cannot feed the next whole-race kilometre yet.
 Focused same-seed audits validate the 19-rider fragment in all four
