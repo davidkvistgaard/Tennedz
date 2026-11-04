@@ -11,12 +11,16 @@ const draftCost=process.argv.includes('--draft-cost');
 const strictDraftCost=process.argv.includes('--strict-draft-cost');
 const freshAttackDecisions=process.argv.includes(
   '--fresh-attack-decisions');
+const protectorSportingPursuit=process.argv.includes(
+  '--protector-sporting-pursuit');
 if((draftCost||strictDraftCost)&&!explicitStakes)
   throw new Error('Draft cost audit needs explicit stakes.');
 if(draftCost&&strictDraftCost)
   throw new Error('Choose one draft cost version.');
 if(freshAttackDecisions&&!explicitStakes)
   throw new Error('Fresh attack choices need explicit stakes.');
+if(protectorSportingPursuit&&!explicitStakes)
+  throw new Error('Protector pursuit needs explicit stakes.');
 if(!Number.isInteger(seedCount)||seedCount<1||seedCount>8)
   throw new Error('Decision coverage seeds must be between 1 and 8.');
 const results=[];
@@ -36,7 +40,8 @@ for(let seed=1;seed<=seedCount;seed++)
       settings,sportingStakes,roadGroupPaceVersion:3,chaseTurnVersion:1,
       bunchFrontTurnVersion:1,pelotonFrontTurnVersion:1,
       pelotonDraftCostVersion:strictDraftCost?2:draftCost?1:0,
-      freshAttackDecisionVersion:freshAttackDecisions?1:0}));
+      freshAttackDecisionVersion:freshAttackDecisions?1:0,
+      protectorSportingPursuitVersion:protectorSportingPursuit?1:0}));
   }catch(error){
     if(!String(error.message).includes('Combined fresh attack and paid pursuit')&&
       !String(error.message).includes('Unresolved peloton draft contact'))
@@ -207,7 +212,7 @@ for(let seed=1;seed<=seedCount;seed++)
 }
 if(process.argv.includes('--summary')){
   const totals={seedCount,explicitStakes,draftCost,
-    freshAttackDecisions,
+    freshAttackDecisions,protectorSportingPursuit,
     strictDraftCost,cases:results.length,
     validatedCases:0,refusedCases:0,
     unresolvedDraftContactCases:0,

@@ -5549,3 +5549,38 @@ front trend and actual paid turn capacity must inform a versioned
 start decision before removing the fixed fallback. This audit does
 not establish a calibrated replacement or justify enabling V94 in
 guided races.
+
+### Opt-in protector sporting pursuit
+
+`protectorSportingPursuitVersion: 1` requires the version 5 intent
+manifest with a goal and named sporting captain for every team, paid
+road-group pace version 3 and the shared peloton front. It allows an
+automatic one-day *protect* pursuit only for a declared
+`sprint_finish` goal while that captain is neither forward nor dropped.
+Explicit all-out chase orders, control teams, GC responses and the
+existing emergency and refusal paths retain their own source rules.
+This version changes the pursuit decision; the old V94 path and
+historical recordings retain their original behaviour.
+
+In the same 120-km flat seed used above, with all teams explicitly
+declaring `none`, the historical path records 408 protector pursuit
+rows and starts paid chase at km 70. Version 1 records zero such rows;
+control teams still pay chase starting at km 99, and the final front
+gap is 47.44 seconds rather than 19.14. Declaring `sprint_finish` for
+every team restores 408 protector rows, km 70 first chase and the
+19.14-second final gap. These all-none and all-sprint stakes are
+synthetic boundary probes, not claims about actual team intentions or
+calibrated race outcomes. They expose that version 5 sporting stakes
+previously annotated paid choices without influencing the protector
+decision. The fixed 50-km trigger remains for eligible sprint teams;
+the road-speed timing problem above is still open.
+
+The read-only three-seed whole-race inventory with
+`--explicit-stakes --protector-sporting-pursuit --summary` validates all 24 synthetic
+all-none cases without a refusal. It covers 729,600 rider-kilometres;
+686,346 still lack an individual choice, including 683,796 in the
+peloton and 2,344 dropped. The first new dropped rider remains
+`rival-14-0` at km 115 of the flat 260-km fatigue-0 case, without a
+paid contact point. The absence of a refusal in this particular
+all-none inventory is not evidence that mixed real goals are safe or
+that V94 is ready for guided races.

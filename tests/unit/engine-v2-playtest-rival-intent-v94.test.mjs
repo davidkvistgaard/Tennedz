@@ -267,3 +267,42 @@ test('explicit V94 sporting stakes commit every named captain without changing o
     row.teamId==='you').sportingGoal,
   'sprint_finish');
 });
+
+test('opt-in protector pursuit requires a named sprint stake still in the bunch',()=>{
+  const settings={distanceKm:120,teamCount:20,terrain:'flat',fatigue:0,
+    attack:'none',chase:'selective',seed:'chase-turn-holdout-1-flat-0'};
+  const prepared=prepareV91Playtest(settings);
+  const stakes=goal=>prepared.teams.map(team=>({teamId:team.id,goal,
+    captainId:team.orders.captainId}));
+  const options={format:'one_day',settings,roadGroupPaceVersion:3,
+    chaseTurnVersion:1,bunchFrontTurnVersion:1,
+    pelotonFrontTurnVersion:1,protectorSportingPursuitVersion:1};
+  assert.throws(()=>createV94RaceDynamicsPreview({
+    ...options,sportingStakes:null}),/experimental race settings/);
+  assert.throws(()=>createV94RaceDynamicsPreview({
+    ...options,roadGroupPaceVersion:2,
+    sportingStakes:stakes('sprint_finish')}),
+  /experimental race settings/);
+  const historic=createV94RaceDynamicsPreview({
+    ...options,protectorSportingPursuitVersion:0,
+    sportingStakes:stakes('none')}).recording;
+  const noStake=createV94RaceDynamicsPreview({
+    ...options,sportingStakes:stakes('none')}).recording;
+  const sprint=createV94RaceDynamicsPreview({
+    ...options,sportingStakes:stakes('sprint_finish')}).recording;
+  const protectChoices=race=>race.frames.flatMap(frame=>
+    frame.chaseReasons.filter(row=>row.reason===
+      'one_day_captain_pursuit'));
+  assert.ok(protectChoices(historic).length>0);
+  assert.equal(protectChoices(noStake).length,0);
+  assert.ok(noStake.frames.some(frame=>frame.chasePower>0));
+  assert.ok(protectChoices(sprint).length>0);
+  assert.equal(validateRecordedTour(noStake),true);
+  assert.deepEqual(replayRaceDynamicsRecording(sprint),sprint);
+  const forged=structuredClone(sprint);
+  const pursuing=protectChoices(forged)[0].teamId;
+  forged.committedInputs.rivalIntent.find(row=>
+    row.teamId===pursuing).sportingGoal='none';
+  assert.throws(()=>validateRecordedTour(forged),
+    /chase reason|source|recording/i);
+});
