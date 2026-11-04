@@ -992,8 +992,20 @@ for(let seed=1;seed<=seedCount;seed++)
               joinedBreakawayRiderIds:recording.frames[
                 afterLaterRefusalKm-1]
                 .joinedBreakawayRiderIds,
-              chaserCount:recording.frames[
-                afterLaterRefusalKm-1].chasers.length}:
+              chaserTeams:recording.frames[
+                afterLaterRefusalKm-1].chasers.map(teamId=>({
+                  teamId,
+                  riderGroups:recording.committedInputs.teams
+                    .find(team=>team.id===teamId)?.riders.map(
+                      rider=>({riderId:rider.id,
+                        physicalGroup:afterLaterTrace.finishes
+                          .find(finish=>
+                            finish.riderId===rider.id)
+                          ?.physicalGroup??null}))??[]})),
+              priorBreakRoads:afterLaterTrace.sourceBreakRiderIds
+                .map(id=>({riderId:id,
+                  physicalGroup:afterLaterTrace.finishes.find(row=>
+                    row.riderId===id)?.physicalGroup??null}))}:
               null}:{}),
           lastSoloClockSeconds:completion.soloCompletions.length?
             Math.max(...completion.soloCompletions.map(row=>
