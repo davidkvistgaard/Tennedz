@@ -1041,6 +1041,35 @@ test('paid boundary contacts support a complete second flat kilometre',()=>{
     row.riderId==='rival-6-7').physicalGroup,'peloton');
 });
 
+test('sixth front uses recorded rest before checking seed-three rear contact',()=>{
+  const settings={distanceKm:120,teamCount:20,terrain:'flat',
+    fatigue:0,attack:'none',chase:'selective',
+    seed:'preview-recorded-road-3'};
+  const sportingStakes=prepareV91Playtest(settings).teams.map(team=>({
+    teamId:team.id,goal:'sprint_finish',
+    captainId:team.orders.captainId}));
+  const {recording}=createV94RaceDynamicsPreview({
+    format:'one_day',settings,sportingStakes,
+    roadGroupPaceVersion:3,chaseTurnVersion:1,
+    bunchFrontTurnVersion:1,pelotonFrontTurnVersion:1,
+    pelotonDraftCostVersion:1,pelotonExposureCostVersion:1,
+    freshAttackDecisionVersion:1,
+    roadGroupRiderDecisionVersion:1,
+    protectorSportingPursuitVersion:1});
+  const fourth=replayV94PhysicalFourthKmV1(recording);
+  const fifth=replayV94PhysicalFifthKmV1(recording,fourth);
+  const sixthFront=replayV94PhysicalSixthFrontKmV1(
+    recording,fifth);
+  assert.equal(sixthFront.sourceRestDecisionUsed,true);
+  assert.equal(sixthFront.orderedEffortRefusal?.sourceKm,6);
+  assert.ok(sixthFront.recordedSourceRestTeamIds.length>0);
+  assert.equal(validateV94PhysicalSixthFrontKmV1(
+    recording,fifth,sixthFront),true);
+  assert.throws(()=>replayV94PhysicalSixthKmV1(
+    recording,fifth),
+  /Physical front drop\/rear contact needs paid resolution/);
+});
+
 test('ended source break membership keeps four riders on paid roads',()=>{
   const settings={distanceKm:260,teamCount:20,terrain:'flat',
     fatigue:0,attack:'none',chase:'selective',

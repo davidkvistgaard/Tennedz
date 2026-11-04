@@ -6698,6 +6698,14 @@ still prices one leader and shelter independently. In the seed-1
 160 paid finishes at each kilometre after the catch. They carry no
 official placings or awards. The other same-seed courses and seeds
 remain separate calibration cases.
+In seed 3, the km-6 source energy charge for an attached rider is
+smaller than the ordered front effort. The version 2 sixth-front
+replay uses the recording's explicit rest teams and front-rest rider
+decisions, then verifies the paid front charge against the source.
+This clears the energy mismatch without changing manager orders. The
+whole-field replay now reaches a measured front-drop/rear contact at
+km 6 and refuses there until the piecewise meeting is settled. Seed
+2 separately reaches a solo/front contact at km 6.
 Both 260 km flat cases
 complete every rider through km 89. At km 90 the source
 introduces two new attackers (`rival-19-7` and `rival-6-7`), so the
