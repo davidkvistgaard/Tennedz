@@ -24,7 +24,8 @@ import {decideV94PhysicalBoundaryChoicesV1,
 import {replayV94PhysicalSecondRearKmV1,
   validateV94PhysicalSecondRearKmV1,
   firstV94SecondRearRoadContactV1,
-  firstV94SecondFrontContactV1} from
+  firstV94SecondFrontContactV1,
+  firstV94SecondPiecewiseContactV1} from
   '../../lib/engine/v2/v94-physical-second-rear-km-v1.mjs';
 
 test('first V94 kilometre prices each named turn and detached solo metre',()=>{
@@ -228,8 +229,21 @@ test('second front records an early climb loss without completing rear road',()=
       row.decision.choice==='cannot_hold_paid_turn')));
   assert.equal(trace.detachedFrontRoadUnresolved,true);
   assert.equal(trace.officialResults,false);
-  assert.throws(()=>replayV94PhysicalSecondRearKmV1(recording),
-    /front drops need concurrent rear contact replay/);
+  const complete=replayV94PhysicalSecondRearKmV1(recording);
+  assert.equal(complete.newFrontDrops.length,40);
+  assert.equal(complete.droppedFrontFinishes.length,40);
+  assert.ok(complete.newFrontDrops.every(row=>
+    row.completionDecision.choice==='complete_detached_solo'&&
+    row.completionDecision.paidRemainingEnergy>0));
+  assert.equal(complete.finishes.length,160);
+  assert.equal(complete.coincidentNewFrontDropSets.length,2);
+  assert.ok(complete.coincidentNewFrontDropSets.every(row=>
+    row.formsRearGroup===false));
+  assert.equal(complete.continuationNeedsContactDecision,true);
+  assert.ok(complete.droppedFrontFinishes.some(row=>
+    row.riderId==='rival-1-0'&&
+    row.clockSeconds>complete.front.frontClockSeconds));
+  assert.equal(complete.fullFieldKilometre,true);
 });
 
 test('paid boundary contacts support a complete second flat kilometre',()=>{
@@ -283,4 +297,20 @@ test('second-km road clocks refuse a faster rear catch',()=>{
     .clockSeconds,20);
   assert.equal(firstV94SecondRearRoadContactV1(ahead,{
     ...behind,speedMps:5,finishClockSeconds:210}),null);
+  const drop=[{startClockSeconds:0,endClockSeconds:100,
+    startDistanceM:1000,endDistanceM:2000}];
+  const rear=[{startClockSeconds:10,endClockSeconds:60,
+    startDistanceM:1000,endDistanceM:2000}];
+  assert.equal(firstV94SecondPiecewiseContactV1(drop,rear)
+    .clockSeconds,20);
+  const sharedA=[{startClockSeconds:0,endClockSeconds:10,
+    startDistanceM:1000,endDistanceM:1100},
+  {startClockSeconds:10,endClockSeconds:20,
+    startDistanceM:1100,endDistanceM:1150}];
+  const sharedB=[{startClockSeconds:0,endClockSeconds:10,
+    startDistanceM:1000,endDistanceM:1050},
+  {startClockSeconds:10,endClockSeconds:20,
+    startDistanceM:1050,endDistanceM:1150}];
+  assert.equal(firstV94SecondPiecewiseContactV1(
+    sharedA,sharedB,{sharedOrigin:true}).clockSeconds,20);
 });

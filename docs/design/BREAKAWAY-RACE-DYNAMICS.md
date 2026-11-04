@@ -6241,16 +6241,23 @@ through the next paid kilometre where the full road remains
 unambiguous. Each accepted rear group has one leader who pays the
 lead cost; riders who can hold its measured pace pay the lower
 shelter cost. Solo riders pay their own road. Pairwise road-clock
-checks refuse a rear/rear or rear/front meeting, and any new front
-drop refuses until its concurrent contact is priced. Rear recovery
-is zero, route-bound energy caps are applied, and the complete
-160-rider km-2 energy and arrival ledger is revalidated. In the
-three-seed, 24-case audit, eight races (all seed 1) complete km 2
-for all 160 riders, forming 36 rear groups through recorded paid
-contact. Fifteen first-kilometre replays refuse km 2 because a new
-front drop needs concurrent rear contact; the remaining race has
-the existing km-1 source refusal. This is still an experimental
-two-kilometre replay with no official finish or whole-race claim.
+checks refuse a rear/rear or rear/front meeting. Riders dropped from
+the front-turn trace also continue as individually priced solo roads
+through the km-2 boundary, with a versioned completion decision and
+energy payment; each is compared in clock order with
+the paid rear roads and other front drops. A newly discovered
+meeting refuses rather than assigning a gap or shelter. Rear and
+newly dropped riders receive zero bunch recovery, route-bound caps,
+and a complete 160-rider km-2 energy and arrival ledger. The
+three-seed, 24-case audit now completes km 2 for all 160 riders in
+all 23 first-kilometre replays, forming 63 rear groups through
+recorded paid contact. The source-replayed 333 new front drops
+finish independently in 27 coincident arrival sets. The one
+remaining case retains its km-1 source refusal. These simultaneous
+new front-drop arrivals are recorded as contact candidates for the
+next kilometre, not silently grouped.
+This is still an experimental two-kilometre replay with no official
+finish or whole-race claim.
 
 Callers of the experimental preview can request
 `physicalFirstKmVersion: 1` to receive this completed physical first

@@ -97,6 +97,12 @@ for(let seed=1;seed<=seedCount;seed++)
           ...(secondRear?{
             secondKmFullField:rear?.fullFieldKilometre??false,
             secondKmRearGroups:rear?.physicalRearGroups.length??0,
+            secondKmNewFrontDrops:rear?.newFrontDrops.length??0,
+            secondKmCoincidentDropSets:
+              rear?.coincidentNewFrontDropSets.length??0,
+            secondKmCoincidentDropRiders:
+              rear?.coincidentNewFrontDropSets.reduce((sum,row)=>
+                sum+row.riderIds.length,0)??0,
             secondKmRefusal:rearRefusal}:{}),
           lastSoloClockSeconds:completion.soloCompletions.length?
             Math.max(...completion.soloCompletions.map(row=>
@@ -141,6 +147,12 @@ console.log(JSON.stringify({seedCount,complete,secondFront,boundaryChoice,
     row.secondKmFullField).length,
   secondKmRearGroups:accepted.reduce((sum,row)=>
     sum+(row.secondKmRearGroups??0),0),
+  secondKmNewFrontDrops:accepted.reduce((sum,row)=>
+    sum+(row.secondKmNewFrontDrops??0),0),
+  secondKmCoincidentDropSets:accepted.reduce((sum,row)=>
+    sum+(row.secondKmCoincidentDropSets??0),0),
+  secondKmCoincidentDropRiders:accepted.reduce((sum,row)=>
+    sum+(row.secondKmCoincidentDropRiders??0),0),
   firstCase:cases[0],refusals:cases.filter(row=>row.refusal),
   secondFrontRefusals:accepted.filter(row=>
     row.nextFrontRefusal),
