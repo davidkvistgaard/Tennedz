@@ -6482,16 +6482,47 @@ separate contact candidate. For those forward riders it uses the
 actual break-work and effort orders, perceived strength and payable
 leader/shelter quotes to propose at most one next leader, while
 recording each committed sporting stake. The candidate follower list
-is an eligibility check,
-not an assigned wheel. It forms no group, moves no rider and spends
-no km-6 energy. Riders who arrive at different clocks remain on
-different roads even if the source calls them one break.
+is an eligibility check, not an assigned wheel. It forms no group,
+moves no rider and spends no km-6 energy. Riders who arrive at
+different clocks remain on different roads even if the source calls
+them one break.
 The three-seed matrix accepts 112 paid-contact choice sets at the
 sixth-kilometre boundary: 102 continuing rear sets and 10 coincident
 fresh-forward sets. Each has one proposed payable leader and at
 least one eligible follower, but all 112 remain unformed until work
 and contact are settled on a km-6 road. The one km-1 source refusal
 remains unchanged.
+
+`v94-physical-sixth-front-km-v1.mjs` can conditionally continue the
+named peloton front through km 6 when its recorded turns are solely
+explicit front work, with no source chase turn or new attack. It
+requires the source break riders to remain separate paid attack solos
+at the prior physical boundary and excludes their invalid source
+group plan. Each included peloton rider makes a versioned decision
+against one named leader per turn and pays leader, shelter or solo
+pace-match work. The three-seed matrix accepts 16 of 23 source-valid
+fronts, covering 1,652 attached rider-kilometres without a new front
+drop. Seven fronts refuse because the source energy ledger charges
+less than physical paid work; for one flat seed-3 case it records
+0.085248 source versus 0.14208 paid reserve for rival-1-1. This is
+a front-only trace: forward/rear contacts, all rear finishes, source
+gap calibration and any official result remain unresolved.
+
+`v94-physical-sixth-km-v1.mjs` combines that conditional front with
+the recorded boundary contact choices and individually paid rear and
+forward roads. A three-seed matrix completes all 160 riders in 8 of
+the 23 source-valid cases and records 36 physically paid rear groups.
+All 16 source break riders in those completed cases remain on paid
+individual solo roads; none is added to a group from a source label.
+Eight cases stop at measured rear/front contact between 5,167 and
+5,257 metres, and seven stop at the source/front energy mismatch.
+The original combined attack/pursuit source refusal at km 1 remains.
+Each completed km-6 trace retains the source break rider IDs as claims,
+the failed source checkpoint flag, paid individual finish clocks,
+energy and group origin, and `officialResults: false`. It carries
+actual break-work orders in each paid rear/solo decision. It neither
+accepts the scripted source gap nor converts a source break group
+into a physical group without a paid contact leader.
 
 Callers of the experimental preview can request
 `physicalFirstKmVersion: 1` to receive this completed physical first

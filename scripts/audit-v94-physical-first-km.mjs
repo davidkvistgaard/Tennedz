@@ -57,6 +57,12 @@ import {inspectV94PhysicalSixthForwardContactProbeV1,
 import {decideV94PhysicalSixthBoundaryChoicesV1,
   validateV94PhysicalSixthBoundaryChoicesV1} from
   '../lib/engine/v2/v94-physical-sixth-boundary-choice-v1.mjs';
+import {replayV94PhysicalSixthFrontKmV1,
+  validateV94PhysicalSixthFrontKmV1} from
+  '../lib/engine/v2/v94-physical-sixth-front-km-v1.mjs';
+import {replayV94PhysicalSixthKmV1,
+  validateV94PhysicalSixthKmV1} from
+  '../lib/engine/v2/v94-physical-sixth-km-v1.mjs';
 
 const requested=process.argv.find(arg=>arg.startsWith('--seeds='));
 const seedCount=requested?Number(requested.slice(8)):1;
@@ -89,6 +95,8 @@ const sixthForwardProbe=process.argv.includes(
   '--sixth-forward-probe');
 const sixthContactChoices=process.argv.includes(
   '--sixth-contact-choices');
+const sixthFront=process.argv.includes('--sixth-front');
+const sixthReplay=process.argv.includes('--sixth-replay');
 if((secondFront||boundaryChoice||secondRear||thirdSource)&&!complete||
   thirdSource&&!secondRear||thirdFront&&!secondRear||
   thirdBoundary&&!secondRear||thirdRear&&!secondRear||
@@ -101,7 +109,8 @@ if((secondFront||boundaryChoice||secondRear||thirdSource)&&!complete||
   sixthSourceBoundary&&!fifthReplay||
   sixthRiderBoundary&&!fifthReplay||
   sixthForwardProbe&&!fifthReplay||
-  sixthContactChoices&&!fifthReplay)
+  sixthContactChoices&&!fifthReplay||
+  sixthFront&&!fifthReplay||sixthReplay&&!fifthReplay)
   throw new Error('Continuation audit needs --complete.');
 if(nextThrough!==null&&(!Number.isInteger(nextThrough)||
   nextThrough<5||nextThrough>260))
@@ -229,6 +238,27 @@ for(let seed=1;seed<=seedCount;seed++)
         validateV94PhysicalSixthBoundaryChoicesV1(
           recording,fifthTrace,sixthChoices);
       }catch(error){sixthChoicesRefusal=error.message;}
+      let sixthFrontTrace=null,sixthFrontRefusal=null;
+      let sixthFrontEvidence=null;
+      if(sixthFront&&fifthTrace)try{
+        sixthFrontTrace=replayV94PhysicalSixthFrontKmV1(
+          recording,fifthTrace);
+        validateV94PhysicalSixthFrontKmV1(
+          recording,fifthTrace,sixthFrontTrace);
+      }catch(error){
+        sixthFrontRefusal=error.message;
+        sixthFrontEvidence=error.sourceEvidence??null;
+      }
+      let sixthTrace=null,sixthRefusal=null,sixthEvidence=null;
+      if(sixthReplay&&fifthTrace)try{
+        sixthTrace=replayV94PhysicalSixthKmV1(
+          recording,fifthTrace);
+        validateV94PhysicalSixthKmV1(
+          recording,fifthTrace,sixthTrace);
+      }catch(error){
+        sixthRefusal=error.message;
+        sixthEvidence=error.sourceEvidence??null;
+      }
       let nextTrace=fourthTrace,nextRefusal=null;
       let nextRefusalKm=null,nextRefusalEvidence=null;
       if(nextThrough!==null&&fourthTrace){
@@ -455,6 +485,28 @@ for(let seed=1;seed<=seedCount;seed++)
             sixthPendingContactGroups:
               sixthChoices?.pendingGroupCount??0,
             sixthChoicesRefusal}:{}),
+          ...(sixthFront?{
+            sixthFrontRiderKilometres:
+              sixthFrontTrace?.completeFrontRiderKilometres??0,
+            sixthFrontNewDrops:
+              sixthFrontTrace?.atFrontClock.filter(row=>
+                !row.attached).length??0,
+            sixthFrontRefusal,sixthFrontEvidence}:{}),
+          ...(sixthReplay?{
+            sixthFullField:sixthTrace?.fullFieldKilometre??false,
+            sixthRearGroups:
+              sixthTrace?.physicalRearGroups.length??0,
+            sixthSourceBreakStillSolo:sixthTrace?
+              sixthTrace.sourceBreakRiderIds.filter(id=>
+                sixthTrace.finishes.find(row=>
+                  row.riderId===id)?.physicalGroup.startsWith(
+                    'solo-')).length:0,
+            sixthSourceBreakPaidContactRiders:sixthTrace?
+              sixthTrace.sourceBreakRiderIds.filter(id=>
+                sixthTrace.finishes.find(row=>
+                  row.riderId===id)?.physicalGroup.startsWith(
+                    'paid-contact-')).length:0,
+            sixthRefusal,sixthEvidence}:{}),
           lastSoloClockSeconds:completion.soloCompletions.length?
             Math.max(...completion.soloCompletions.map(row=>
               row.finishClockSeconds)):null}:{}),
@@ -473,6 +525,8 @@ console.log(JSON.stringify({seedCount,complete,secondFront,boundaryChoice,
   sixthRiderBoundary,
   sixthForwardProbe,
   sixthContactChoices,
+  sixthFront,
+  sixthReplay,
   cases:cases.length,
   replayedFirstKilometres:accepted.length,
   refusedCases:cases.length-accepted.length,
@@ -630,6 +684,21 @@ console.log(JSON.stringify({seedCount,complete,secondFront,boundaryChoice,
     sum+(row.sixthFreshForwardChoiceSets??0),0),
   sixthPendingContactGroups:accepted.reduce((sum,row)=>
     sum+(row.sixthPendingContactGroups??0),0),
+  sixthFrontCases:accepted.filter(row=>
+    row.sixthFrontRefusal===null&&
+    row.sixthFrontRiderKilometres>0).length,
+  sixthFrontRiderKilometres:accepted.reduce((sum,row)=>
+    sum+(row.sixthFrontRiderKilometres??0),0),
+  sixthFrontNewDrops:accepted.reduce((sum,row)=>
+    sum+(row.sixthFrontNewDrops??0),0),
+  sixthFullFields:accepted.filter(row=>
+    row.sixthFullField).length,
+  sixthRearGroups:accepted.reduce((sum,row)=>
+    sum+(row.sixthRearGroups??0),0),
+  sixthSourceBreakStillSolo:accepted.reduce((sum,row)=>
+    sum+(row.sixthSourceBreakStillSolo??0),0),
+  sixthSourceBreakPaidContactRiders:accepted.reduce((sum,row)=>
+    sum+(row.sixthSourceBreakPaidContactRiders??0),0),
   firstCase:cases[0],refusals:cases.filter(row=>row.refusal),
   secondFrontRefusals:accepted.filter(row=>
     row.nextFrontRefusal),
@@ -685,5 +754,15 @@ console.log(JSON.stringify({seedCount,complete,secondFront,boundaryChoice,
   sixthChoicesRefusals:accepted.filter(row=>
     row.sixthChoicesRefusal).map(row=>({seed:row.seed,
       distanceKm:row.distanceKm,terrain:row.terrain,
-      fatigue:row.fatigue,refusal:row.sixthChoicesRefusal}))},
+      fatigue:row.fatigue,refusal:row.sixthChoicesRefusal})),
+  sixthFrontRefusals:accepted.filter(row=>
+    row.sixthFrontRefusal).map(row=>({seed:row.seed,
+      distanceKm:row.distanceKm,terrain:row.terrain,
+      fatigue:row.fatigue,refusal:row.sixthFrontRefusal,
+      evidence:row.sixthFrontEvidence})),
+  sixthRefusals:accepted.filter(row=>
+    row.sixthRefusal).map(row=>({seed:row.seed,
+      distanceKm:row.distanceKm,terrain:row.terrain,
+      fatigue:row.fatigue,refusal:row.sixthRefusal,
+      evidence:row.sixthEvidence}))},
 null,2));

@@ -73,6 +73,13 @@ import {inspectV94PhysicalSixthForwardContactProbeV1,
 import {decideV94PhysicalSixthBoundaryChoicesV1,
   validateV94PhysicalSixthBoundaryChoicesV1} from
   '../../lib/engine/v2/v94-physical-sixth-boundary-choice-v1.mjs';
+import {replayV94PhysicalSixthFrontKmV1,
+  validateV94PhysicalSixthFrontKmV1,
+  V94_PHYSICAL_SIXTH_FRONT_DECISION_VERSION} from
+  '../../lib/engine/v2/v94-physical-sixth-front-km-v1.mjs';
+import {replayV94PhysicalSixthKmV1,
+  validateV94PhysicalSixthKmV1} from
+  '../../lib/engine/v2/v94-physical-sixth-km-v1.mjs';
 
 test('first V94 kilometre prices each named turn and detached solo metre',()=>{
   const settings={distanceKm:120,teamCount:20,terrain:'mountain',
@@ -493,6 +500,26 @@ test('second front records an early climb loss without completing rear road',()=
   assert.equal(sixthChoices.physicalRearGroups.length,0);
   assert.equal(validateV94PhysicalSixthBoundaryChoicesV1(
     recording,fifth,sixthChoices),true);
+  const sixthFront=replayV94PhysicalSixthFrontKmV1(
+    recording,fifth);
+  assert.equal(sixthFront.sourceKm,6);
+  assert.equal(sixthFront.sourceBreakRoadNotPhysical,true);
+  assert.ok(sixthFront.road.every(turn=>
+    turn.riderSlices.filter(row=>row.role==='leader').length===1&&
+    turn.riderSlices.every(row=>
+      row.decision.version===
+        V94_PHYSICAL_SIXTH_FRONT_DECISION_VERSION)));
+  assert.equal(sixthFront.remainingFieldRoadUnresolved,true);
+  assert.equal(sixthFront.officialResults,false);
+  assert.equal(validateV94PhysicalSixthFrontKmV1(
+    recording,fifth,sixthFront),true);
+  assert.throws(()=>replayV94PhysicalSixthKmV1(
+    recording,fifth),error=>
+    /rear\/front contact needs paid resolution/.test(
+      error.message)&&
+    error.sourceEvidence?.roadId==='solo-rival-18-5'&&
+    error.sourceEvidence.atDistanceM>5000&&
+    error.sourceEvidence.atDistanceM<6000);
   const forgedSixth=structuredClone(sixthRiders);
   forgedSixth.decisions[0].perceivedSoloAbility+=1;
   assert.throws(()=>validateV94PhysicalSixthRiderBoundaryV1(
@@ -548,6 +575,34 @@ test('paid boundary contacts support a complete second flat kilometre',()=>{
   forged.finishes[0].energyAfter=100;
   assert.throws(()=>validateV94PhysicalSecondRearKmV1(
     recording,forged),/differs from paid source/);
+  const fifth=replayV94PhysicalFifthKmV1(
+    recording,replayV94PhysicalFourthKmV1(recording));
+  const sixth=replayV94PhysicalSixthKmV1(recording,fifth);
+  assert.equal(sixth.sourceKm,6);
+  assert.equal(sixth.fullFieldKilometre,true);
+  assert.equal(sixth.finishes.length,160);
+  assert.equal(sixth.sourceBreakRoadNotPhysical,true);
+  assert.equal(sixth.sourceCheckpointCalibrationFailed,true);
+  assert.equal(sixth.officialResults,false);
+  assert.deepEqual(sixth.sourceBreakRiderIds,
+    fifth.freshAttackSoloRiderIds);
+  assert.ok(sixth.sourceBreakRiderIds.every(id=>
+    sixth.finishes.find(row=>row.riderId===id)
+      .physicalGroup.startsWith('solo-')));
+  assert.ok(sixth.physicalRearGroups.every(row=>
+    row.kind==='rear_group'&&row.riderDecisions.length>=2));
+  assert.ok(sixth.roads.every(road=>
+    road.riderDecisions.every(row=>
+      row.managerBreakWork==='cooperate'||
+      row.managerBreakWork==='sit_on'||
+      row.managerBreakWork==='drive')));
+  assert.equal(validateV94PhysicalSixthKmV1(
+    recording,fifth,sixth),true);
+  const forgedSixth=structuredClone(sixth);
+  forgedSixth.finishes[0].energyAfter+=1;
+  assert.throws(()=>validateV94PhysicalSixthKmV1(
+    recording,fifth,forgedSixth),
+  /differs from paid source/);
 });
 
 test('second-km road clocks refuse a faster rear catch',()=>{
