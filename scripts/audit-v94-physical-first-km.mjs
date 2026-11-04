@@ -69,6 +69,12 @@ import {replayV94PhysicalSeventhKmV1,
 import {replayV94PhysicalUnattachedSourceNextKmV1,
   validateV94PhysicalUnattachedSourceNextKmV1} from
   '../lib/engine/v2/v94-physical-unattached-source-next-km-v1.mjs';
+import {replayV94PhysicalMixedFreshAttackSolosV1,
+  validateV94PhysicalMixedFreshAttackSolosV1} from
+  '../lib/engine/v2/v94-physical-mixed-fresh-attack-solo-v1.mjs';
+import {replayV94PhysicalMixedFreshKmV1,
+  validateV94PhysicalMixedFreshKmV1} from
+  '../lib/engine/v2/v94-physical-mixed-fresh-km-v1.mjs';
 
 const requested=process.argv.find(arg=>arg.startsWith('--seeds='));
 const seedCount=requested?Number(requested.slice(8)):1;
@@ -108,6 +114,14 @@ const unattachedRequested=process.argv.find(arg=>
   arg.startsWith('--unattached-through='));
 const unattachedThrough=unattachedRequested?
   Number(unattachedRequested.slice(21)):null;
+const mixedFreshAfterUnattached=process.argv.includes(
+  '--mixed-fresh-after-unattached');
+const mixedFreshFullAfterUnattached=process.argv.includes(
+  '--mixed-fresh-full-after-unattached');
+const afterMixedRequested=process.argv.find(arg=>
+  arg.startsWith('--after-mixed-through='));
+const afterMixedThrough=afterMixedRequested?
+  Number(afterMixedRequested.slice(22)):null;
 if((secondFront||boundaryChoice||secondRear||thirdSource)&&!complete||
   thirdSource&&!secondRear||thirdFront&&!secondRear||
   thirdBoundary&&!secondRear||thirdRear&&!secondRear||
@@ -123,12 +137,20 @@ if((secondFront||boundaryChoice||secondRear||thirdSource)&&!complete||
   sixthContactChoices&&!fifthReplay||
   sixthFront&&!fifthReplay||sixthReplay&&!fifthReplay||
   seventhReplay&&!sixthReplay||
-  unattachedThrough!==null&&!seventhReplay)
+  unattachedThrough!==null&&!seventhReplay||
+  mixedFreshAfterUnattached&&unattachedThrough===null||
+  mixedFreshFullAfterUnattached&&unattachedThrough===null||
+  afterMixedThrough!==null&&
+    !mixedFreshFullAfterUnattached)
   throw new Error('Continuation audit needs --complete.');
 if(unattachedThrough!==null&&(
   !Number.isInteger(unattachedThrough)||
   unattachedThrough<8||unattachedThrough>260))
   throw new Error('Unattached audit needs km 8 through 260.');
+if(afterMixedThrough!==null&&(
+  !Number.isInteger(afterMixedThrough)||
+  afterMixedThrough<21||afterMixedThrough>260))
+  throw new Error('After-mixed audit needs km 21 through 260.');
 if(nextThrough!==null&&(!Number.isInteger(nextThrough)||
   nextThrough<5||nextThrough>260))
   throw new Error('Next physical audit needs km 5 through 260.');
@@ -303,6 +325,45 @@ for(let seed=1;seed<=seedCount;seed++)
           unattachedRefusal=error.message;
           unattachedRefusalKm=km;
           unattachedEvidence=error.sourceEvidence??null;
+          break;
+        }
+      let mixedFreshTrace=null,mixedFreshRefusal=null;
+      if(mixedFreshAfterUnattached&&unattachedRefusalKm&&
+        unattachedTrace)try{
+        mixedFreshTrace=
+          replayV94PhysicalMixedFreshAttackSolosV1(
+            recording,unattachedTrace);
+        validateV94PhysicalMixedFreshAttackSolosV1(
+          recording,unattachedTrace,mixedFreshTrace);
+      }catch(error){mixedFreshRefusal=error.message;}
+      let mixedFreshFull=null,mixedFreshFullRefusal=null;
+      let mixedFreshFullEvidence=null;
+      if(mixedFreshFullAfterUnattached&&
+        unattachedRefusalKm&&unattachedTrace)try{
+        mixedFreshFull=replayV94PhysicalMixedFreshKmV1(
+          recording,unattachedTrace);
+        validateV94PhysicalMixedFreshKmV1(
+          recording,unattachedTrace,mixedFreshFull);
+      }catch(error){
+        mixedFreshFullRefusal=error.message;
+        mixedFreshFullEvidence=error.sourceEvidence??null;
+      }
+      let afterMixedTrace=mixedFreshFull;
+      let afterMixedRefusal=null,afterMixedRefusalKm=null;
+      let afterMixedEvidence=null;
+      if(afterMixedThrough!==null&&mixedFreshFull)
+        for(let km=21;km<=Math.min(afterMixedThrough,
+          recording.route.kilometres.length);km++)try{
+          const candidate=
+            replayV94PhysicalUnattachedSourceNextKmV1(
+              recording,afterMixedTrace);
+          validateV94PhysicalUnattachedSourceNextKmV1(
+            recording,afterMixedTrace,candidate);
+          afterMixedTrace=candidate;
+        }catch(error){
+          afterMixedRefusal=error.message;
+          afterMixedRefusalKm=km;
+          afterMixedEvidence=error.sourceEvidence??null;
           break;
         }
       let nextTrace=fourthTrace,nextRefusal=null;
@@ -569,6 +630,27 @@ for(let seed=1;seed<=seedCount;seed++)
               unattachedTrace?.sourceKm??null,
             unattachedRefusalKm,unattachedRefusal,
             unattachedEvidence}:{}),
+          ...(mixedFreshAfterUnattached?{
+            mixedFreshKm:mixedFreshTrace?.sourceKm??null,
+            mixedFreshSoloRoads:
+              mixedFreshTrace?.roads.length??0,
+            mixedFreshSourceClaims:
+              mixedFreshTrace?.mixedSourceRoadClaims.length??0,
+            mixedFreshRefusal}:{}),
+          ...(mixedFreshFullAfterUnattached?{
+            mixedFreshFullField:
+              mixedFreshFull?.fullFieldKilometre??false,
+            mixedFreshFullSourceKm:
+              mixedFreshFull?.sourceKm??null,
+            mixedFreshFullRearGroups:
+              mixedFreshFull?.physicalRearGroups.length??0,
+            mixedFreshFullRefusal,
+            mixedFreshFullEvidence}:{}),
+          ...(afterMixedThrough!==null?{
+            afterMixedCompletedThroughKm:
+              afterMixedTrace?.sourceKm??null,
+            afterMixedRefusalKm,afterMixedRefusal,
+            afterMixedEvidence}:{}),
           lastSoloClockSeconds:completion.soloCompletions.length?
             Math.max(...completion.soloCompletions.map(row=>
               row.finishClockSeconds)):null}:{}),
@@ -591,6 +673,9 @@ console.log(JSON.stringify({seedCount,complete,secondFront,boundaryChoice,
   sixthReplay,
   seventhReplay,
   unattachedThrough,
+  mixedFreshAfterUnattached,
+  mixedFreshFullAfterUnattached,
+  afterMixedThrough,
   cases:cases.length,
   replayedFirstKilometres:accepted.length,
   refusedCases:cases.length-accepted.length,
@@ -778,6 +863,36 @@ console.log(JSON.stringify({seedCount,complete,secondFront,boundaryChoice,
       km:row.unattachedRefusalKm,
       refusal:row.unattachedRefusal,
       evidence:row.unattachedEvidence})),
+  mixedFreshCases:accepted.filter(row=>
+    row.mixedFreshKm!==null&&
+    row.mixedFreshKm!==undefined).length,
+  mixedFreshSoloRoads:accepted.reduce((sum,row)=>
+    sum+(row.mixedFreshSoloRoads??0),0),
+  mixedFreshSourceClaims:accepted.reduce((sum,row)=>
+    sum+(row.mixedFreshSourceClaims??0),0),
+  mixedFreshRefusals:accepted.filter(row=>
+    row.mixedFreshRefusal).map(row=>({seed:row.seed,
+      distanceKm:row.distanceKm,terrain:row.terrain,
+      fatigue:row.fatigue,
+      refusal:row.mixedFreshRefusal})),
+  mixedFreshFullFields:accepted.filter(row=>
+    row.mixedFreshFullField).length,
+  mixedFreshFullRearGroups:accepted.reduce((sum,row)=>
+    sum+(row.mixedFreshFullRearGroups??0),0),
+  mixedFreshFullRefusals:accepted.filter(row=>
+    row.mixedFreshFullRefusal).map(row=>({seed:row.seed,
+      distanceKm:row.distanceKm,terrain:row.terrain,
+      fatigue:row.fatigue,
+      refusal:row.mixedFreshFullRefusal,
+      evidence:row.mixedFreshFullEvidence})),
+  afterMixedCompletedThroughKm:accepted.map(row=>
+    row.afterMixedCompletedThroughKm).filter(Number.isInteger),
+  afterMixedRefusals:accepted.filter(row=>
+    row.afterMixedRefusal).map(row=>({seed:row.seed,
+      distanceKm:row.distanceKm,terrain:row.terrain,
+      fatigue:row.fatigue,km:row.afterMixedRefusalKm,
+      refusal:row.afterMixedRefusal,
+      evidence:row.afterMixedEvidence})),
   firstCase:cases[0],refusals:cases.filter(row=>row.refusal),
   secondFrontRefusals:accepted.filter(row=>
     row.nextFrontRefusal),

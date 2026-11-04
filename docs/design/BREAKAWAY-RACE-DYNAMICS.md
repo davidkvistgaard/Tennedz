@@ -6538,11 +6538,29 @@ paid continuation from km 8 while the recorded plan still has only
 named front work, no new attack or chase, and source break riders
 remain on separate solo roads. In the three-seed matrix, all 8 cases
 that completed km 7 continue through km 19 with 160 paid rider
-finishes per kilometre. At km 20 the source adds two flat-course or
-three mountain-course attackers to its existing break group. The
-physical replay refuses that fresh launch and source join pending
-paid launch and contact decisions. No source gap, position or
-official award is inferred.
+finishes per kilometre.
+
+At km 20 the source adds two flat-course or three mountain-course
+attackers to its existing break label. The optional mixed-fresh
+solo replay checks their actual launch orders, strength, sporting
+stakes and source-paid energy, then prices each attacker's individual
+road. It records the old riders' separate paid start clocks beside
+the new solo finish clocks and treats the source gap as a claim. The
+three-seed matrix prices 20 new attack solos across the same 8 cases.
+`v94-physical-mixed-fresh-km-v1.mjs` combines these roads with the
+named paid front and rear field; all 8 cases complete 160 rider
+finishes at km 20, with no source break group formed.
+
+At the km-21 boundary, the new attack solos can share an actual paid
+arrival clock. `v94-physical-forward-boundary-choice-v1.mjs` quotes
+one payable break-work leader and lower shelter cost from their
+committed orders without assigning a wheel or forming a group. In a
+flat seed-1 case rival-16-5 is proposed to lead rival-8-5, with
+0.31312 leader versus 0.13184 shelter reserve quoted. All 8 km-20
+full fields then refuse km 21 because at least one attached front
+rider's source energy charge is below physical paid work (for one
+case, 0.085248 versus 0.14208). The source gap remains uncalibrated;
+no position or official award is inferred.
 
 Callers of the experimental preview can request
 `physicalFirstKmVersion: 1` to receive this completed physical first

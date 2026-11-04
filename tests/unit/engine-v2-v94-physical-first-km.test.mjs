@@ -86,6 +86,15 @@ import {replayV94PhysicalSeventhKmV1,
 import {replayV94PhysicalUnattachedSourceNextKmV1,
   validateV94PhysicalUnattachedSourceNextKmV1} from
   '../../lib/engine/v2/v94-physical-unattached-source-next-km-v1.mjs';
+import {replayV94PhysicalMixedFreshAttackSolosV1,
+  validateV94PhysicalMixedFreshAttackSolosV1} from
+  '../../lib/engine/v2/v94-physical-mixed-fresh-attack-solo-v1.mjs';
+import {replayV94PhysicalMixedFreshKmV1,
+  validateV94PhysicalMixedFreshKmV1} from
+  '../../lib/engine/v2/v94-physical-mixed-fresh-km-v1.mjs';
+import {decideV94PhysicalForwardBoundaryChoicesV1,
+  validateV94PhysicalForwardBoundaryChoicesV1} from
+  '../../lib/engine/v2/v94-physical-forward-boundary-choice-v1.mjs';
 
 test('first V94 kilometre prices each named turn and detached solo metre',()=>{
   const settings={distanceKm:120,teamCount:20,terrain:'mountain',
@@ -641,6 +650,61 @@ test('paid boundary contacts support a complete second flat kilometre',()=>{
     /needs an intact paid plan/.test(error.message)&&
     error.sourceEvidence?.sourceKm===20&&
     error.sourceEvidence.attackers.length===2);
+  const mixedFresh=replayV94PhysicalMixedFreshAttackSolosV1(
+    recording,next);
+  assert.equal(mixedFresh.sourceKm,20);
+  assert.equal(mixedFresh.roads.length,2);
+  assert.equal(mixedFresh.mixedSourceRoadClaims.length,1);
+  assert.equal(mixedFresh.physicalRoadGroups.length,0);
+  assert.equal(mixedFresh.oldBreakRoadMotionUnresolved,true);
+  assert.equal(mixedFresh.sourceCheckpointCalibrationFailed,true);
+  assert.equal(mixedFresh.officialResults,false);
+  assert.ok(mixedFresh.roads.every(row=>
+    Math.abs(row.energyBefore-row.sourcePaidFromReserve-
+      row.sourceCapAdjustment-row.energyAfter)<.0015));
+  assert.equal(validateV94PhysicalMixedFreshAttackSolosV1(
+    recording,next,mixedFresh),true);
+  const twentieth=replayV94PhysicalMixedFreshKmV1(
+    recording,next);
+  assert.equal(twentieth.sourceKm,20);
+  assert.equal(twentieth.fullFieldKilometre,true);
+  assert.equal(twentieth.finishes.length,160);
+  assert.equal(twentieth.freshAttackSoloRiderIds.length,2);
+  assert.equal(twentieth.sourceBreakRiderIds.length,4);
+  assert.equal(twentieth.sourceBreakRoadNotPhysical,true);
+  assert.equal(twentieth.sourceCheckpointCalibrationFailed,true);
+  assert.equal(twentieth.officialResults,false);
+  assert.ok(twentieth.sourceBreakRiderIds.every(id=>
+    twentieth.finishes.find(row=>row.riderId===id)
+      .physicalGroup.startsWith('solo-')));
+  assert.equal(validateV94PhysicalMixedFreshKmV1(
+    recording,next,twentieth),true);
+  const twentyFirst=decideV94PhysicalForwardBoundaryChoicesV1(
+    recording,twentieth);
+  assert.equal(twentyFirst.sourceKm,21);
+  assert.ok(twentyFirst.forwardCandidateSets>0);
+  assert.ok(twentyFirst.choices.filter(row=>
+    row.forwardContactCandidate).every(row=>
+    row.riderDecisions.every(decision=>
+      decision.sourceBreakMembershipClaim&&
+      decision.managerBreakWork==='cooperate')));
+  const forwardChoice=twentyFirst.choices.find(row=>
+    row.forwardContactCandidate);
+  assert.equal(forwardChoice.pendingLeaderRiderId,
+    'rival-16-5');
+  assert.deepEqual(forwardChoice.pendingShelterRiderIds,
+    ['rival-8-5']);
+  assert.equal(forwardChoice.formsRearGroup,false);
+  assert.ok(forwardChoice.riderDecisions.find(row=>
+    row.riderId==='rival-8-5').quotedShelterEnergyDemand<
+    forwardChoice.riderDecisions.find(row=>
+      row.riderId==='rival-16-5').quotedLeaderEnergyDemand);
+  assert.equal(validateV94PhysicalForwardBoundaryChoicesV1(
+    recording,twentieth,twentyFirst),true);
+  assert.throws(()=>replayV94PhysicalUnattachedSourceNextKmV1(
+    recording,twentieth),error=>
+    /Attached front energy differs/.test(error.message)&&
+    error.sourceEvidence?.sourceKm===21);
 });
 
 test('second-km road clocks refuse a faster rear catch',()=>{
