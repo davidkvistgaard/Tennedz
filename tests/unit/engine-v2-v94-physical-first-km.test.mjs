@@ -953,6 +953,34 @@ test('paid boundary contacts support a complete second flat kilometre',()=>{
   assert.ok(mixedLater.caughtDecision.shelterTurns.length>0);
   assert.equal(validateV94PhysicalFrontCatchKmV1(
     recording,priorAt83,mixedLater),true);
+  const caughtEnergyAfter84=mixedLater.caughtFinish.energyAfter;
+  assert.notEqual(caughtEnergyAfter84,
+    recording.frames[84].energyLedger.find(row=>
+      row.riderId==='rival-6-7').energyBefore);
+  mixedLater=replayV94PhysicalUnattachedSourceNextKmV1(
+    recording,mixedLater);
+  assert.equal(mixedLater.sourceKm,85);
+  assert.equal(mixedLater.finishes.length,160);
+  assert.deepEqual(
+    mixedLater.physicallyCaughtSourceBreakRiderIds,
+    ['rival-6-7']);
+  assert.equal(mixedLater.finishes.find(row=>
+    row.riderId==='rival-6-7').physicalGroup,'peloton');
+  assert.equal(mixedLater.finishes.find(row=>
+    row.riderId==='rival-6-7').energyBefore,
+  caughtEnergyAfter84);
+  for(let km=86;km<=107;km++){
+    mixedLater=replayV94PhysicalUnattachedSourceNextKmV1(
+      recording,mixedLater);
+    assert.equal(mixedLater.sourceKm,km);
+    assert.equal(mixedLater.finishes.length,160);
+    assert.equal(mixedLater.finishes.find(row=>
+      row.riderId==='rival-6-7').physicalGroup,
+    'peloton');
+  }
+  assert.throws(()=>replayV94PhysicalUnattachedSourceNextKmV1(
+    recording,mixedLater),
+  /Physical rear roads need paid contact resolution/);
 });
 
 test('ended source break membership keeps four riders on paid roads',()=>{

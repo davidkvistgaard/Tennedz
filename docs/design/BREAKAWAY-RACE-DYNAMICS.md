@@ -6674,8 +6674,14 @@ roads for meetings, then charges this rider's solo work to the catch
 and sheltered work over the remaining named front turns. Both 120 km
 flat cases finish all 160 riders at km 84 with the caught rider in the
 peloton. Source break membership remains a separate claim. The next
-kilometre refuses because that claim still lists the caught rider as
-ahead, while his physical reserve and road now belong to the bunch.
+kilometre keeps the source claim alongside the physical fact. It
+continues the caught rider in the bunch from his own paid reserve,
+with his own manager effort and shelter cost, while the source energy
+ledger remains a calibration comparison. The 120 km flat cases finish
+all 160 riders through km 107 without fatigue or km 110 with 30
+fatigue. The next kilometre measures another rear/rear meeting and
+refuses until that contact is paid. No source break label moves the
+caught rider back onto a rear road.
 Both 260 km flat cases
 complete every rider through km 89. At km 90 the source
 introduces two new attackers (`rival-19-7` and `rival-6-7`), so the

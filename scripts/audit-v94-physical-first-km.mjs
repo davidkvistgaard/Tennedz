@@ -766,19 +766,42 @@ for(let seed=1;seed<=seedCount;seed++)
             recording,afterFreshTrace);
           validateV94PhysicalFrontCatchKmV1(
             recording,afterFreshTrace,caught);
-          let nextRefusalAfterCatch=null;
-          try{
-            replayV94PhysicalUnattachedSourceNextKmV1(
-              recording,caught);
-          }catch(error){
-            nextRefusalAfterCatch=error.message;
-          }
+          let afterCatchTrace=caught;
+          let afterCatchRefusal=null;
+          let afterCatchRefusalKm=null;
+          if(afterContactThrough!==null)
+            for(let nextKm=caught.sourceKm+1;
+              nextKm<=Math.min(afterContactThrough,
+                recording.route.kilometres.length);nextKm++)try{
+              const next=replayV94PhysicalUnattachedSourceNextKmV1(
+                recording,afterCatchTrace);
+              validateV94PhysicalUnattachedSourceNextKmV1(
+                recording,afterCatchTrace,next);
+              afterCatchTrace=next;
+            }catch(error){
+              afterCatchRefusal=error.message;
+              afterCatchRefusalKm=nextKm;
+              break;
+            }
           frontCatchProbe={sourceKm:caught.sourceKm,
             finishCount:caught.finishes.length,
             caughtRiderId:caught.caughtFinish.riderId,
+            physicalEnergyAfter:caught.caughtFinish.energyAfter,
+            sourceNextEnergyBefore:recording.frames[
+              caught.sourceKm]?.energyLedger.find(row=>
+              row.riderId===caught.caughtFinish.riderId)
+              ?.energyBefore??null,
+            sourceNextBreakClaim:recording.frames[
+              caught.sourceKm]?.breakawayRiderIds.includes(
+              caught.caughtFinish.riderId)??false,
+            sourceNextFrontLeader:recording.frames[
+              caught.sourceKm]?.pelotonFrontTurnPlan.turns.some(
+              row=>row.leaderRiderId===
+                caught.caughtFinish.riderId)??false,
             shelterTurnCount:
               caught.caughtDecision.shelterTurns.length,
-            nextRefusalAfterCatch};
+            afterCatchCompletedThroughKm:afterCatchTrace.sourceKm,
+            afterCatchRefusalKm,afterCatchRefusal};
         }catch(error){
           frontCatchProbe={refusal:error.message,
             evidence:error.sourceEvidence??null};
