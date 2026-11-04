@@ -101,6 +101,9 @@ import {replayV94PhysicalRecordedRestKmV1,
 import {decideV94PhysicalMidKmContactChoiceV1,
   validateV94PhysicalMidKmContactChoiceV1} from
   '../../lib/engine/v2/v94-physical-mid-km-contact-choice-v1.mjs';
+import {replayV94PhysicalMidKmContactFragmentV1,
+  validateV94PhysicalMidKmContactFragmentV1} from
+  '../../lib/engine/v2/v94-physical-mid-km-contact-fragment-v1.mjs';
 
 test('first V94 kilometre prices each named turn and detached solo metre',()=>{
   const settings={distanceKm:120,teamCount:20,terrain:'mountain',
@@ -772,6 +775,22 @@ test('paid boundary contacts support a complete second flat kilometre',()=>{
       row.quotedLeaderEnergyDemand));
   assert.equal(validateV94PhysicalMidKmContactChoiceV1(
     recording,afterRest,crossing),true);
+  const fragment=replayV94PhysicalMidKmContactFragmentV1(
+    recording,afterRest);
+  assert.equal(fragment.sourceKm,28);
+  assert.equal(fragment.road.leaderRiderId,'rival-6-5');
+  assert.equal(fragment.riderWork.length,19);
+  assert.equal(fragment.paidContactGroupFragment,true);
+  assert.equal(fragment.otherRoadContactsUnchecked,true);
+  assert.equal(fragment.fullFieldKilometre,false);
+  assert.equal(fragment.officialResults,false);
+  assert.ok(fragment.riderWork.every(row=>
+    row.paidEnergyToContact>0&&
+    row.paidEnergyAfterContact>0&&
+    row.finishClockSeconds===
+      fragment.road.finishClockSeconds));
+  assert.equal(validateV94PhysicalMidKmContactFragmentV1(
+    recording,afterRest,fragment),true);
 });
 
 test('second-km road clocks refuse a faster rear catch',()=>{

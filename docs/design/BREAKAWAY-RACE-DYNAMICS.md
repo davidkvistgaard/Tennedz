@@ -6596,6 +6596,18 @@ volunteers for the next paid turn and the 18 riders on the existing
 rear road can hold its quoted sheltered pace. These are the same
 physical participants at 24.156 or 27.052 km across both route
 lengths, and no contact group has been formed.
+`v94-physical-mid-km-contact-fragment-v1.mjs` then pays the
+previous role up to that crossing and the selected single leader
+and 18 sheltered riders over the remaining metres. It records each
+rider's before, contact and after reserve with cap adjustment and
+one shared finish clock. The result is expressly a fragment:
+other road contacts are unchecked, and `fullFieldKilometre` is
+false. It cannot feed the next whole-race kilometre yet.
+Focused same-seed audits validate the 19-rider fragment in all four
+flat crossings at both route lengths and both fatigue settings.
+The paid fragment finishes at clock 2285.852255 for no fatigue and
+2080.978688 for 30 fatigue; these are local road clocks, not
+official stage times.
 
 Callers of the experimental preview can request
 `physicalFirstKmVersion: 1` to receive this completed physical first
