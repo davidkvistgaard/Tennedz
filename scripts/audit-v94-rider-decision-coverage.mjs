@@ -13,6 +13,8 @@ const freshAttackDecisions=process.argv.includes(
   '--fresh-attack-decisions');
 const protectorSportingPursuit=process.argv.includes(
   '--protector-sporting-pursuit');
+const protectorTiming=process.argv.includes('--protector-timing');
+const sprintStakes=process.argv.includes('--sprint-stakes');
 if((draftCost||strictDraftCost)&&!explicitStakes)
   throw new Error('Draft cost audit needs explicit stakes.');
 if(draftCost&&strictDraftCost)
@@ -21,6 +23,9 @@ if(freshAttackDecisions&&!explicitStakes)
   throw new Error('Fresh attack choices need explicit stakes.');
 if(protectorSportingPursuit&&!explicitStakes)
   throw new Error('Protector pursuit needs explicit stakes.');
+if(protectorTiming&&(!protectorSportingPursuit||!sprintStakes)||
+  sprintStakes&&!explicitStakes)
+  throw new Error('Protector timing needs explicit sprint stakes.');
 if(!Number.isInteger(seedCount)||seedCount<1||seedCount>8)
   throw new Error('Decision coverage seeds must be between 1 and 8.');
 const results=[];
@@ -32,7 +37,7 @@ for(let seed=1;seed<=seedCount;seed++)
     seed:`chase-turn-holdout-${seed}-${terrain}-${fatigue}`};
   const sportingStakes=explicitStakes?
     prepareV91Playtest(settings).teams.map(team=>({
-      teamId:team.id,goal:'none',
+      teamId:team.id,goal:sprintStakes?'sprint_finish':'none',
       captainId:team.orders.captainId})):null;
   let recording;
   try{
@@ -41,7 +46,8 @@ for(let seed=1;seed<=seedCount;seed++)
       bunchFrontTurnVersion:1,pelotonFrontTurnVersion:1,
       pelotonDraftCostVersion:strictDraftCost?2:draftCost?1:0,
       freshAttackDecisionVersion:freshAttackDecisions?1:0,
-      protectorSportingPursuitVersion:protectorSportingPursuit?1:0}));
+      protectorSportingPursuitVersion:protectorSportingPursuit?1:0,
+      protectorPursuitTimingVersion:protectorTiming?1:0}));
   }catch(error){
     if(!String(error.message).includes('Combined fresh attack and paid pursuit')&&
       !String(error.message).includes('Unresolved peloton draft contact'))
@@ -76,7 +82,8 @@ for(let seed=1;seed<=seedCount;seed++)
     firstDroppedWithoutDecision:null,
     paidBunchWorkerRiderKilometres:0,
     paidBunchWorkerDecisionRows:0,
-    paidBunchWorkerWithoutDecision:0};
+    paidBunchWorkerWithoutDecision:0,
+    protectorTimingRows:0,protectorTimingChaseRows:0};
   let priorFrame=null;
   for(const frame of recording.frames){
     const count=frame.riderGroups.length;
@@ -87,6 +94,11 @@ for(let seed=1;seed<=seedCount;seed++)
       throw new Error('Duplicate rider in a V94 frame.');
     coverage.riderKilometres+=count;
     coverage.paidEnergyRows+=frame.energyLedger.length;
+    coverage.protectorTimingRows+=
+      (frame.protectorPursuitDecisions??[]).length;
+    coverage.protectorTimingChaseRows+=
+      (frame.protectorPursuitDecisions??[]).filter(row=>
+        row.choice==='chase').length;
     const draftRows=frame.pelotonDraftCosts??[];
     if((draftCost||strictDraftCost)&&draftRows.some(row=>
       row.sourceKm!==frame.km||
@@ -213,6 +225,7 @@ for(let seed=1;seed<=seedCount;seed++)
 if(process.argv.includes('--summary')){
   const totals={seedCount,explicitStakes,draftCost,
     freshAttackDecisions,protectorSportingPursuit,
+    protectorTiming,sprintStakes,
     strictDraftCost,cases:results.length,
     validatedCases:0,refusedCases:0,
     unresolvedDraftContactCases:0,
@@ -238,7 +251,8 @@ if(process.argv.includes('--summary')){
     otherDroppedOrigin:0,
     paidBunchWorkerRiderKilometres:0,
     paidBunchWorkerDecisionRows:0,
-    paidBunchWorkerWithoutDecision:0};
+    paidBunchWorkerWithoutDecision:0,
+    protectorTimingRows:0,protectorTimingChaseRows:0};
   for(const row of results){
     if(row.refusal){
       totals.refusedCases++;
@@ -270,7 +284,8 @@ if(process.argv.includes('--summary')){
       'otherDroppedOrigin',
       'paidBunchWorkerRiderKilometres',
       'paidBunchWorkerDecisionRows',
-      'paidBunchWorkerWithoutDecision'])
+      'paidBunchWorkerWithoutDecision',
+      'protectorTimingRows','protectorTimingChaseRows'])
       totals[key]+=row.coverage[key];
   }
   const firstDrop=results.find(row=>

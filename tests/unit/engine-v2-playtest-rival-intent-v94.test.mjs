@@ -306,3 +306,40 @@ test('opt-in protector pursuit requires a named sprint stake still in the bunch'
   assert.throws(()=>validateRecordedTour(forged),
     /chase reason|source|recording/i);
 });
+
+test('opt-in protector timing uses observed paid front pace and own helpers',()=>{
+  const settings={distanceKm:120,teamCount:20,terrain:'flat',fatigue:0,
+    attack:'none',chase:'selective',seed:'chase-turn-holdout-1-flat-0'};
+  const sportingStakes=prepareV91Playtest(settings).teams.map(team=>({
+    teamId:team.id,goal:'sprint_finish',
+    captainId:team.orders.captainId}));
+  const options={format:'one_day',settings,sportingStakes,
+    roadGroupPaceVersion:3,chaseTurnVersion:1,
+    bunchFrontTurnVersion:1,pelotonFrontTurnVersion:1,
+    protectorSportingPursuitVersion:1};
+  assert.throws(()=>createV94RaceDynamicsPreview({
+    ...options,protectorSportingPursuitVersion:0,
+    protectorPursuitTimingVersion:1}),
+  /experimental race settings/);
+  assert.throws(()=>createV94RaceDynamicsPreview({
+    ...options,format:'stage',protectorPursuitTimingVersion:1}),
+  /experimental race settings/);
+  const earlier=createV94RaceDynamicsPreview(options).recording;
+  const timed=createV94RaceDynamicsPreview({
+    ...options,protectorPursuitTimingVersion:1}).recording;
+  assert.equal(earlier.frames.find(frame=>frame.chasePower>0).km,70);
+  assert.ok(timed.frames.find(frame=>frame.chasePower>0).km<70);
+  const choices=timed.frames.flatMap(frame=>
+    frame.protectorPursuitDecisions);
+  assert.ok(choices.length>0);
+  assert.ok(choices.some(row=>row.choice==='chase'&&
+    row.observedFrontLeadAbility!==null&&
+    row.ownHelpers.length>0));
+  assert.equal(validateRecordedTour(timed),true);
+  assert.deepEqual(replayRaceDynamicsRecording(timed),timed);
+  const forged=structuredClone(timed);
+  forged.frames.find(frame=>frame.protectorPursuitDecisions.length)
+    .protectorPursuitDecisions[0].ownLeadAbility=0;
+  assert.throws(()=>validateRecordedTour(forged),
+    /protector timing/);
+});

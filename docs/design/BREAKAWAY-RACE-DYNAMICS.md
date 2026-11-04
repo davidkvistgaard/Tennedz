@@ -5584,3 +5584,51 @@ peloton and 2,344 dropped. The first new dropped rider remains
 paid contact point. The absence of a refusal in this particular
 all-none inventory is not evidence that mixed real goals are safe or
 that V94 is ready for guided races.
+
+### Opt-in observed-pace protector timing
+
+`protectorPursuitTimingVersion: 1` additionally requires the sporting
+pursuit version above. For each eligible sprint protector, the motor
+records a team choice from the previous front's paid lead ability,
+the completed five-kilometre front trend, the team's own available
+helpers and current energy, its named captain and committed chase
+order. A prior front on a different terrain, surface or exposure
+cannot supply a comparable pace. The estimated one-team catch
+distance is a forecast; the actual road gap still moves only through
+the shared paid front turns. Prior chasers use a lower wait threshold
+so a small forecast change does not immediately end their work.
+`protectorPursuitDecisions` records the input abilities, helper IDs,
+projected catch distance, choice and reason. The validator rebuilds
+those rows from the recorded prior kilometre and committed team
+source, and rejects altered forecasts. Historic timing remains on
+its earlier version.
+
+In the same 120-km flat seed with all teams synthetically declaring
+`sprint_finish`, first paid chase advances from km 70 to km 11.
+The final front still leads by 26.81 seconds versus 19.14 under the
+earlier timing rule. Earlier work therefore does not by itself make
+the whole-race result more plausible. This version is an experimental
+decision source, not a calibrated release rule.
+
+The read-only three-seed inventory with synthetic all-sprint stakes,
+`--protector-sporting-pursuit --protector-timing --summary`, validates
+all 24 whole races without a refusal. It source-replays 34,410
+protector timing rows, of which 19,170 choose to chase, across 729,600
+rider-kilometres. It still lacks 650,641 individual rider choices:
+647,342 in the peloton, 3,108 dropped and 191 fresh forward attackers.
+The first uncovered peloton loss is `rival-14-0` at km 124 of the
+260-km flat fatigue-0 case. The timing choices are team decisions and
+do not close those rider-level or physical contact gaps. The synthetic
+all-sprint assumption is a boundary test, not evidence that actual
+teams have that goal.
+
+The separate read-only same-seed comparison runs the earlier and
+observed-pace policies with identical synthetic all-sprint stakes.
+The earlier branch validates 22 of 24 races and refuses two
+simultaneous fresh-attack/paid-pursuit kilometres; the new branch
+validates all 24 in these seeds, without resolving that general
+shared-clock contract. In all 22 paired races, paid chase begins
+earlier with the new rule. Their summed final front gaps fall from
+744.20 to 553.22 seconds, but the earlier branch catches one front
+and the new branch catches none. Thus this holdout does not establish
+a realistic finish distribution or justify default selection.
