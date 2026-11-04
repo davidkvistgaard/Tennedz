@@ -6,9 +6,13 @@ import {prepareV91Playtest} from
 import {replayV94PhysicalFirstKmV1,
   validateV94PhysicalFirstKmV1} from
   '../lib/engine/v2/v94-physical-first-km-v1.mjs';
+import {completeV94PhysicalFirstKmV1,
+  validateV94PhysicalFirstKmCompletionV1} from
+  '../lib/engine/v2/v94-physical-first-km-completion-v1.mjs';
 
 const requested=process.argv.find(arg=>arg.startsWith('--seeds='));
 const seedCount=requested?Number(requested.slice(8)):1;
+const complete=process.argv.includes('--complete');
 if(!Number.isInteger(seedCount)||seedCount<1||seedCount>3)
   throw new Error('First-km physical audit needs one to three seeds.');
 const cases=[];
@@ -31,11 +35,20 @@ for(let seed=1;seed<=seedCount;seed++)
         protectorSportingPursuitVersion:1});
       const physical=replayV94PhysicalFirstKmV1(recording);
       validateV94PhysicalFirstKmV1(recording,physical);
+      const completion=complete?
+        completeV94PhysicalFirstKmV1(recording):null;
+      if(completion)
+        validateV94PhysicalFirstKmCompletionV1(recording,completion);
       const firstDetached=physical.atFrontClock.find(row=>!row.attached);
       cases.push({seed,distanceKm,terrain,fatigue,
         frontClockSeconds:physical.frontClockSeconds,
         completeRiderKilometres:physical.completeRiderKilometres,
         detachedRiderCount:physical.detachedRiderCount,
+        ...(completion?{
+          completedWholeFirstKm:completion.completeRiderKilometres,
+          lastSoloClockSeconds:completion.soloCompletions.length?
+            Math.max(...completion.soloCompletions.map(row=>
+              row.finishClockSeconds)):null}:{}),
         firstDetached:firstDetached?{riderId:firstDetached.riderId,
           remainingDistanceM:firstDetached.remainingDistanceM}:null});
     }catch(error){
@@ -44,11 +57,13 @@ for(let seed=1;seed<=seedCount;seed++)
     }
   }
 const accepted=cases.filter(row=>!row.refusal);
-console.log(JSON.stringify({seedCount,cases:cases.length,
+console.log(JSON.stringify({seedCount,complete,cases:cases.length,
   replayedFirstKilometres:accepted.length,
   refusedCases:cases.length-accepted.length,
   totalCompletedRiderKilometres:accepted.reduce((sum,row)=>
     sum+row.completeRiderKilometres,0),
   totalDetachedAtFrontClock:accepted.reduce((sum,row)=>
     sum+row.detachedRiderCount,0),
+  completedWholeFirstKm:accepted.reduce((sum,row)=>
+    sum+(row.completedWholeFirstKm??0),0),
   firstCase:cases[0],refusals:cases.filter(row=>row.refusal)},null,2));

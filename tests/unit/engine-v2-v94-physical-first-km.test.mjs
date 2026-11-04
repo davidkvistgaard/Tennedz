@@ -8,6 +8,10 @@ import {replayV94PhysicalFirstKmV1,
   validateV94PhysicalFirstKmV1,
   V94_PHYSICAL_FIRST_KM_DECISION_VERSION} from
   '../../lib/engine/v2/v94-physical-first-km-v1.mjs';
+import {completeV94PhysicalFirstKmV1,
+  validateV94PhysicalFirstKmCompletionV1,
+  firstV94SoloContactWithinBoundaryV1} from
+  '../../lib/engine/v2/v94-physical-first-km-completion-v1.mjs';
 
 test('first V94 kilometre prices each named turn and detached solo metre',()=>{
   const settings={distanceKm:120,teamCount:20,terrain:'mountain',
@@ -74,4 +78,40 @@ test('first V94 kilometre prices each named turn and detached solo metre',()=>{
   forged.atFrontClock.find(row=>row.riderId===riderId).atDistanceM=1000;
   assert.throws(()=>validateV94PhysicalFirstKmV1(recording,forged),
     /differs from paid source/);
+  const completed=completeV94PhysicalFirstKmV1(recording);
+  assert.equal(completed.completeRiderKilometres,starters);
+  assert.equal(completed.soloCompletions.length,
+    physical.detachedRiderCount);
+  assert.deepEqual(completed.physicalRearGroups,[]);
+  assert.equal(completed.officialResults,false);
+  assert.ok(completed.finishes.every(row=>
+    row.endDistanceM===1000&&
+    Math.abs(row.energyBefore-row.paidFromReserve+
+      row.recoveryAward-row.capAdjustment-row.energyAfter)<.001));
+  const soloFinish=completed.finishes.find(row=>
+    row.riderId===riderId);
+  assert.ok(soloFinish.clockSeconds>completed.frontClockSeconds);
+  assert.equal(soloFinish.physicalGroup,`solo-${riderId}`);
+  assert.equal(validateV94PhysicalFirstKmCompletionV1(
+    recording,completed),true);
+  const forgedFinish=structuredClone(completed);
+  forgedFinish.finishes.find(row=>row.riderId===riderId)
+    .energyAfter=100;
+  assert.throws(()=>validateV94PhysicalFirstKmCompletionV1(
+    recording,forgedFinish),/differs from paid source/);
+});
+
+test('solo completion detects a paid meeting before the kilometre boundary',()=>{
+  const crossing=[
+    {riderId:'behind',atDistanceM:900,speedKph:30,
+      remainingSeconds:12},
+    {riderId:'ahead',atDistanceM:950,speedKph:10,
+      remainingSeconds:18}];
+  const contact=firstV94SoloContactWithinBoundaryV1(crossing,80);
+  assert.deepEqual(contact.riderIds,['ahead','behind']);
+  assert.equal(contact.clockSeconds,89);
+  assert.equal(contact.atDistanceM,975);
+  assert.equal(firstV94SoloContactWithinBoundaryV1([
+    crossing[0],{...crossing[1],speedKph:25,
+      remainingSeconds:7.2}],80),null);
 });

@@ -6153,9 +6153,25 @@ reserve for its traversed solo road. This distance is calculated
 from the committed turn speeds and rider effort, not an assigned
 wheel or scripted gap.
 
-The probe stops at the front's first-kilometre clock. Detached
-riders' remaining metres, recovery, later contact, caught-break
-passage, full energy ledger and finish are unsettled. Its physical
-state is kept separate from V94's checkpoint group labels and from
-guided races. The 690 unfinished rider kilometres are therefore
-evidence of the work still required, not 690 official drops.
+The turn probe stops at the front's first-kilometre clock. Its
+physical state is kept separate from V94's checkpoint group labels
+and from guided races. The 690 unfinished rider kilometres are
+intermediate physical states, not official drops.
+
+`v94-physical-first-km-completion-v1.mjs` then pays those remaining
+individual solo metres to the same 1,000-metre boundary. It checks
+for any solo-to-solo catch before either rider reaches that boundary
+and refuses if a contact would require a new decision. The already
+attached riders retain their source-reconciled reserve, recovery and
+cap adjustment; each detached rider receives a solo reserve payment,
+zero bunch recovery and a route-bound capacity check. The output
+replays each rider clock and energy component, remains explicitly
+unofficial, and forms no rear group. In the same 23 accepted
+first-kilometre probes, all 3,680 rider kilometres are completed and
+source-replayed without an unpriced solo meeting. `rival-10-0`
+finishes the mountain seed's first kilometre at 96.661 seconds,
+with 0.20815 reserve paid and 99.792 energy after rounding. The
+24th case still refuses the independent simultaneous attack and
+pursuit contract. This is a one-kilometre physical result only;
+subsequent front and solo roads, contacts, and whole-race finishing
+remain unvalidated.
