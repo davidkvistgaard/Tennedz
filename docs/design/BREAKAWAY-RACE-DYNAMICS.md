@@ -6610,6 +6610,18 @@ The paid fragment finishes at clock 2285.852255 for no fatigue and
 2080.978688 for 30 fatigue; these are local road clocks, not
 official stage times.
 
+`v94-physical-mid-km-contact-road-audit-v1.mjs` checks both paid
+prefixes and the new contact fragment against every other rear road
+and the front. The four flat crossings have 8 or 9 rear roads, two
+front segments, no new front drops and no other contact. Therefore
+`v94-physical-mid-km-contact-full-field-v1.mjs` settles all 160
+riders at km 25 or 28 with 19 riders in the newly paid contact
+group. The subsequent kilometre refuses a mixed forward/rear
+boundary choice: the physical group contains a source break rider
+and other rear riders. That shared work choice must be derived from
+their actual orders before continuation. Source groups and official
+results remain unadopted.
+
 Callers of the experimental preview can request
 `physicalFirstKmVersion: 1` to receive this completed physical first
 kilometre as a separate `physicalFirstKm` result. It requires the

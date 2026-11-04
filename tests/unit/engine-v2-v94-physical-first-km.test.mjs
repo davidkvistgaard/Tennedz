@@ -104,6 +104,12 @@ import {decideV94PhysicalMidKmContactChoiceV1,
 import {replayV94PhysicalMidKmContactFragmentV1,
   validateV94PhysicalMidKmContactFragmentV1} from
   '../../lib/engine/v2/v94-physical-mid-km-contact-fragment-v1.mjs';
+import {inspectV94PhysicalMidKmContactRoadsV1,
+  validateV94PhysicalMidKmContactRoadsV1} from
+  '../../lib/engine/v2/v94-physical-mid-km-contact-road-audit-v1.mjs';
+import {replayV94PhysicalMidKmContactFullFieldV1,
+  validateV94PhysicalMidKmContactFullFieldV1} from
+  '../../lib/engine/v2/v94-physical-mid-km-contact-full-field-v1.mjs';
 
 test('first V94 kilometre prices each named turn and detached solo metre',()=>{
   const settings={distanceKm:120,teamCount:20,terrain:'mountain',
@@ -791,6 +797,33 @@ test('paid boundary contacts support a complete second flat kilometre',()=>{
       fragment.road.finishClockSeconds));
   assert.equal(validateV94PhysicalMidKmContactFragmentV1(
     recording,afterRest,fragment),true);
+  const contactRoads=inspectV94PhysicalMidKmContactRoadsV1(
+    recording,afterRest);
+  assert.equal(contactRoads.sourceKm,28);
+  assert.ok(contactRoads.checkedRearRoadCount>2);
+  assert.ok(contactRoads.checkedFrontSegmentCount>0);
+  assert.equal(contactRoads.frontDropCount,0);
+  assert.equal(contactRoads.frontDropsUnchecked,false);
+  assert.equal(contactRoads.firstOtherContact,null);
+  assert.equal(contactRoads.fullFieldKilometre,false);
+  assert.equal(validateV94PhysicalMidKmContactRoadsV1(
+    recording,afterRest,contactRoads),true);
+  const contactedField=
+    replayV94PhysicalMidKmContactFullFieldV1(
+      recording,afterRest);
+  assert.equal(contactedField.sourceKm,28);
+  assert.equal(contactedField.fullFieldKilometre,true);
+  assert.equal(contactedField.officialResults,false);
+  assert.equal(contactedField.finishes.length,160);
+  assert.equal(contactedField.finishes.filter(row=>
+    row.physicalGroup===fragment.road.roadId).length,19);
+  assert.equal(contactedField.sourceCheckpointCalibrationFailed,
+    true);
+  assert.equal(validateV94PhysicalMidKmContactFullFieldV1(
+    recording,afterRest,contactedField),true);
+  assert.throws(()=>replayV94PhysicalUnattachedSourceNextKmV1(
+    recording,contactedField),
+  /Mixed forward\/rear contact needs paid joint choice/);
 });
 
 test('second-km road clocks refuse a faster rear catch',()=>{

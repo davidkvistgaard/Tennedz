@@ -84,6 +84,12 @@ import {decideV94PhysicalMidKmContactChoiceV1,
 import {replayV94PhysicalMidKmContactFragmentV1,
   validateV94PhysicalMidKmContactFragmentV1} from
   '../lib/engine/v2/v94-physical-mid-km-contact-fragment-v1.mjs';
+import {inspectV94PhysicalMidKmContactRoadsV1,
+  validateV94PhysicalMidKmContactRoadsV1} from
+  '../lib/engine/v2/v94-physical-mid-km-contact-road-audit-v1.mjs';
+import {replayV94PhysicalMidKmContactFullFieldV1,
+  validateV94PhysicalMidKmContactFullFieldV1} from
+  '../lib/engine/v2/v94-physical-mid-km-contact-full-field-v1.mjs';
 
 const requested=process.argv.find(arg=>arg.startsWith('--seeds='));
 const seedCount=requested?Number(requested.slice(8)):1;
@@ -430,6 +436,11 @@ for(let seed=1;seed<=seedCount;seed++)
         }
       let afterRestContactChoice=null;
       let afterRestContactFragment=null;
+      let afterRestContactRoadAudit=null;
+      let afterRestContactFullField=null;
+      let afterContactNext=null;
+      let afterContactNextRefusal=null;
+      let afterContactNextEvidence=null;
       if(afterRestRefusal===
         'Physical rear roads need paid contact resolution.'){
         afterRestContactChoice=
@@ -445,6 +456,48 @@ for(let seed=1;seed<=seedCount;seed++)
               recording,afterRestTrace);
           validateV94PhysicalMidKmContactFragmentV1(
             recording,afterRestTrace,afterRestContactFragment);
+          afterRestContactRoadAudit=
+            inspectV94PhysicalMidKmContactRoadsV1(
+              recording,afterRestTrace);
+          validateV94PhysicalMidKmContactRoadsV1(
+            recording,afterRestTrace,
+              afterRestContactRoadAudit);
+          if(!afterRestContactRoadAudit.firstOtherContact&&
+            !afterRestContactRoadAudit.frontDropsUnchecked){
+            afterRestContactFullField=
+              replayV94PhysicalMidKmContactFullFieldV1(
+                recording,afterRestTrace);
+            validateV94PhysicalMidKmContactFullFieldV1(
+              recording,afterRestTrace,
+                afterRestContactFullField);
+            try{
+              afterContactNext=
+                replayV94PhysicalUnattachedSourceNextKmV1(
+                  recording,afterRestContactFullField);
+              validateV94PhysicalUnattachedSourceNextKmV1(
+                recording,afterRestContactFullField,
+                  afterContactNext);
+            }catch(error){
+              if(error.message===
+                'Attached front energy differs from V94 source.')try{
+                afterContactNext=
+                  replayV94PhysicalRecordedRestKmV1(
+                    recording,afterRestContactFullField);
+                validateV94PhysicalRecordedRestKmV1(
+                  recording,afterRestContactFullField,
+                    afterContactNext);
+              }catch(restError){
+                afterContactNextRefusal=restError.message;
+                afterContactNextEvidence=
+                  restError.sourceEvidence??null;
+              }
+              else{
+                afterContactNextRefusal=error.message;
+                afterContactNextEvidence=
+                  error.sourceEvidence??null;
+              }
+            }
+          }
         }
       }
       let nextTrace=fourthTrace,nextRefusal=null;
@@ -778,7 +831,35 @@ for(let seed=1;seed<=seedCount;seed++)
                 afterRestContactFragment.otherRoadContactsUnchecked,
               fullFieldKilometre:
                 afterRestContactFragment.fullFieldKilometre}:
-              null}:{}),
+              null,
+            afterRestContactRoadAudit:
+              afterRestContactRoadAudit?{
+                checkedRearRoadCount:
+                  afterRestContactRoadAudit.checkedRearRoadCount,
+                checkedFrontSegmentCount:
+                  afterRestContactRoadAudit.checkedFrontSegmentCount,
+                frontDropCount:
+                  afterRestContactRoadAudit.frontDropCount,
+                firstOtherContact:
+                  afterRestContactRoadAudit.firstOtherContact,
+                otherContactCount:
+                  afterRestContactRoadAudit.otherContactCount,
+                frontDropsUnchecked:
+                  afterRestContactRoadAudit.frontDropsUnchecked}:
+                null,
+            afterRestContactFullField:
+              afterRestContactFullField?{
+                sourceKm:afterRestContactFullField.sourceKm,
+                finishCount:
+                  afterRestContactFullField.finishes.length,
+                paidContactRiders:
+                  afterRestContactFullField.finishes.filter(row=>
+                    row.physicalGroup.startsWith(
+                      'paid-mid-km-contact-')).length}:
+                null,
+            afterContactNextKm:afterContactNext?.sourceKm??null,
+            afterContactNextRefusal,
+            afterContactNextEvidence}:{}),
           lastSoloClockSeconds:completion.soloCompletions.length?
             Math.max(...completion.soloCompletions.map(row=>
               row.finishClockSeconds)):null}:{}),
@@ -1051,6 +1132,19 @@ console.log(JSON.stringify({seedCount,complete,secondFront,boundaryChoice,
       seed:row.seed,distanceKm:row.distanceKm,
       terrain:row.terrain,fatigue:row.fatigue,
       ...row.afterRestContactFragment})),
+  afterRestContactRoadAudits:accepted.filter(row=>
+    row.afterRestContactRoadAudit).map(row=>({
+      seed:row.seed,distanceKm:row.distanceKm,
+      terrain:row.terrain,fatigue:row.fatigue,
+      ...row.afterRestContactRoadAudit})),
+  afterRestContactFullFields:accepted.filter(row=>
+    row.afterRestContactFullField).map(row=>({
+      seed:row.seed,distanceKm:row.distanceKm,
+      terrain:row.terrain,fatigue:row.fatigue,
+      ...row.afterRestContactFullField,
+      nextKm:row.afterContactNextKm,
+      nextRefusal:row.afterContactNextRefusal,
+      nextEvidence:row.afterContactNextEvidence})),
   afterRestRefusals:accepted.filter(row=>
     row.afterRestRefusal).map(row=>({seed:row.seed,
       distanceKm:row.distanceKm,terrain:row.terrain,
