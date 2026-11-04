@@ -6074,3 +6074,27 @@ paid front turns. The group's consecutive-shortfall counter dates its
 modelled underpace back to km 1; that is a diagnostic window, not a
 physical split metre. This is earlier evidence of the clock mismatch,
 not an inferred contact or an accepted rear-group origin.
+
+### Refuse unsourced caught-break contact
+
+The opt-in `caughtBreakContactVersion: 1` requires the named paid
+road-group and peloton turns. It refuses a caught break rider at the
+first provisional catch checkpoint, reporting the prior road-group
+membership and peloton gap, rider reserves before settlement, the
+provisional gap, and both paid turn
+plans. A finish-line catch is also refused with its source group and
+final rider reserve and paid peloton turns. Neither event records the metre of meeting,
+the rider's subsequent sheltered road, or a paid slide through the
+bunch. A recording claiming this strict version cannot contain a
+caught-break marker. Historical recordings and the default preview
+remain on their earlier contract.
+
+With this catch guard added to the strict peloton-deficit gate, all
+24 races in the same three-seed recorded-road audit refuse: 16 at an
+unresolved caught-break contact and eight at a peloton deficit onset.
+The first caught-break refusal is at km 75 of the 120-km flat,
+fatigue-0 seed-1 case. A separate observed-pace mountain case reaches
+a finish-line catch and is refused there. The zero accepted races
+show that the current V94 checkpoint movement cannot certify a
+whole-race physical road or finish under both contact requirements.
+They do not imply that no rider would finish in a physical model.
