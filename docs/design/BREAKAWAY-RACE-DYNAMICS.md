@@ -6236,6 +6236,22 @@ roads and the front, so its front timing is conditional on no rear
 contact. It has no complete km-2 field, rear group,
 recovery, or official result.
 
+`v94-physical-second-rear-km-v1.mjs` takes the boundary proposals
+through the next paid kilometre where the full road remains
+unambiguous. Each accepted rear group has one leader who pays the
+lead cost; riders who can hold its measured pace pay the lower
+shelter cost. Solo riders pay their own road. Pairwise road-clock
+checks refuse a rear/rear or rear/front meeting, and any new front
+drop refuses until its concurrent contact is priced. Rear recovery
+is zero, route-bound energy caps are applied, and the complete
+160-rider km-2 energy and arrival ledger is revalidated. In the
+three-seed, 24-case audit, eight races (all seed 1) complete km 2
+for all 160 riders, forming 36 rear groups through recorded paid
+contact. Fifteen first-kilometre replays refuse km 2 because a new
+front drop needs concurrent rear contact; the remaining race has
+the existing km-1 source refusal. This is still an experimental
+two-kilometre replay with no official finish or whole-race claim.
+
 Callers of the experimental preview can request
 `physicalFirstKmVersion: 1` to receive this completed physical first
 kilometre as a separate `physicalFirstKm` result. It requires the

@@ -21,6 +21,11 @@ import {decideV94PhysicalBoundaryChoicesV1,
   validateV94PhysicalBoundaryChoicesV1,
   V94_PHYSICAL_BOUNDARY_CHOICE_VERSION} from
   '../../lib/engine/v2/v94-physical-boundary-choice-v1.mjs';
+import {replayV94PhysicalSecondRearKmV1,
+  validateV94PhysicalSecondRearKmV1,
+  firstV94SecondRearRoadContactV1,
+  firstV94SecondFrontContactV1} from
+  '../../lib/engine/v2/v94-physical-second-rear-km-v1.mjs';
 
 test('first V94 kilometre prices each named turn and detached solo metre',()=>{
   const settings={distanceKm:120,teamCount:20,terrain:'mountain',
@@ -223,4 +228,59 @@ test('second front records an early climb loss without completing rear road',()=
       row.decision.choice==='cannot_hold_paid_turn')));
   assert.equal(trace.detachedFrontRoadUnresolved,true);
   assert.equal(trace.officialResults,false);
+  assert.throws(()=>replayV94PhysicalSecondRearKmV1(recording),
+    /front drops need concurrent rear contact replay/);
+});
+
+test('paid boundary contacts support a complete second flat kilometre',()=>{
+  const settings={distanceKm:120,teamCount:20,terrain:'flat',
+    fatigue:0,attack:'none',chase:'selective',
+    seed:'preview-recorded-road-1'};
+  const sportingStakes=prepareV91Playtest(settings).teams.map(team=>({
+    teamId:team.id,goal:'sprint_finish',
+    captainId:team.orders.captainId}));
+  const {recording}=createV94RaceDynamicsPreview({
+    format:'one_day',settings,sportingStakes,
+    roadGroupPaceVersion:3,chaseTurnVersion:1,
+    bunchFrontTurnVersion:1,pelotonFrontTurnVersion:1,
+    pelotonDraftCostVersion:1,pelotonExposureCostVersion:1,
+    freshAttackDecisionVersion:1,roadGroupRiderDecisionVersion:1,
+    protectorSportingPursuitVersion:1});
+  const second=replayV94PhysicalSecondRearKmV1(recording);
+  assert.equal(second.fullFieldKilometre,true);
+  assert.equal(second.finishes.length,160);
+  assert.equal(second.physicalRearGroups.length,4);
+  assert.ok(second.physicalRearGroups.every(group=>
+    group.riderDecisions.filter(row=>row.role==='leader').length===1&&
+    group.riderDecisions.some(row=>row.role==='sheltered'&&
+      row.paidFromReserve<group.riderDecisions.find(item=>
+        item.role==='leader').paidFromReserve)));
+  assert.ok(second.finishes.every(row=>
+    row.endDistanceM===2000&&
+    Math.abs(row.energyBefore-row.paidFromReserve+
+      row.recoveryAward-row.capAdjustment-row.energyAfter)<.001));
+  assert.equal(second.officialResults,false);
+  assert.equal(validateV94PhysicalSecondRearKmV1(
+    recording,second),true);
+  const forged=structuredClone(second);
+  forged.finishes[0].energyAfter=100;
+  assert.throws(()=>validateV94PhysicalSecondRearKmV1(
+    recording,forged),/differs from paid source/);
+});
+
+test('second-km road clocks refuse a faster rear catch',()=>{
+  const ahead={roadId:'ahead',startClockSeconds:0,
+    finishClockSeconds:100,speedMps:10};
+  const behind={roadId:'behind',startClockSeconds:10,
+    finishClockSeconds:60,speedMps:20};
+  const meeting=firstV94SecondRearRoadContactV1(ahead,behind);
+  assert.deepEqual(meeting.roadIds,['ahead','behind']);
+  assert.equal(meeting.clockSeconds,20);
+  assert.equal(meeting.atDistanceM,1200);
+  const front={road:[{startM:0,startClockSeconds:0,
+    endClockSeconds:100,leaderSpeedKph:36}]};
+  assert.equal(firstV94SecondFrontContactV1(front,behind)
+    .clockSeconds,20);
+  assert.equal(firstV94SecondRearRoadContactV1(ahead,{
+    ...behind,speedMps:5,finishClockSeconds:210}),null);
 });
