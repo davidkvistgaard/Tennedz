@@ -9,6 +9,8 @@ const seedCount=requestedSeeds?Number(requestedSeeds.slice(8)):1;
 const explicitStakes=process.argv.includes('--explicit-stakes');
 const draftCost=process.argv.includes('--draft-cost');
 const strictDraftCost=process.argv.includes('--strict-draft-cost');
+const strictPelotonDropContact=process.argv.includes(
+  '--strict-peloton-drop-contact');
 const freshAttackDecisions=process.argv.includes(
   '--fresh-attack-decisions');
 const protectorSportingPursuit=process.argv.includes(
@@ -45,12 +47,14 @@ for(let seed=1;seed<=seedCount;seed++)
       settings,sportingStakes,roadGroupPaceVersion:3,chaseTurnVersion:1,
       bunchFrontTurnVersion:1,pelotonFrontTurnVersion:1,
       pelotonDraftCostVersion:strictDraftCost?2:draftCost?1:0,
+      pelotonDropContactVersion:strictPelotonDropContact?1:0,
       freshAttackDecisionVersion:freshAttackDecisions?1:0,
       protectorSportingPursuitVersion:protectorSportingPursuit?1:0,
       protectorPursuitTimingVersion:protectorTiming?1:0}));
   }catch(error){
     if(!String(error.message).includes('Combined fresh attack and paid pursuit')&&
-      !String(error.message).includes('Unresolved peloton draft contact'))
+      !String(error.message).includes('Unresolved peloton draft contact')&&
+      !String(error.message).includes('Unresolved peloton drop contact'))
       throw error;
     results.push({seed,distanceKm,terrain,fatigue,
       refusal:error.message,
@@ -225,10 +229,11 @@ for(let seed=1;seed<=seedCount;seed++)
 if(process.argv.includes('--summary')){
   const totals={seedCount,explicitStakes,draftCost,
     freshAttackDecisions,protectorSportingPursuit,
-    protectorTiming,sprintStakes,
+    protectorTiming,sprintStakes,strictPelotonDropContact,
     strictDraftCost,cases:results.length,
     validatedCases:0,refusedCases:0,
     unresolvedDraftContactCases:0,
+    unresolvedPelotonDropContactCases:0,
     riderKilometres:0,
     casesWithDiscountedDrop:0,
     paidEnergyRows:0,forwardDecisionRows:0,
@@ -258,6 +263,8 @@ if(process.argv.includes('--summary')){
       totals.refusedCases++;
       if(row.refusal.includes('Unresolved peloton draft contact'))
         totals.unresolvedDraftContactCases++;
+      if(row.refusal.includes('Unresolved peloton drop contact'))
+        totals.unresolvedPelotonDropContactCases++;
       continue;
     }
     totals.validatedCases++;

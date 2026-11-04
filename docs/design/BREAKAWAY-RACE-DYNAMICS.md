@@ -5632,3 +5632,31 @@ earlier with the new rule. Their summed final front gaps fall from
 744.20 to 553.22 seconds, but the earlier branch catches one front
 and the new branch catches none. Thus this holdout does not establish
 a realistic finish distribution or justify default selection.
+
+### Opt-in strict peloton loss contact
+
+`pelotonDropContactVersion: 1` requires the shared paid peloton front.
+If a rider starts a kilometre in the peloton and ends it in the
+dropped group, V94 refuses the preview with the rider ID, kilometre,
+prior and final deficit, energy ledger and paid front turns. The
+end-of-kilometre deficit threshold does not locate a physical loss
+metre or pay the remaining solo road, so the motor cannot safely
+form a rear group from that transition. This guard does not invent
+a contact point, infer a wheel or change historic recordings. The
+recording validator also rejects a completed recording that claims
+this strict version while containing such a transition.
+
+The read-only one-seed, eight-case inventory without sporting stakes
+validates five cases, refuses one combined fresh attack and paid
+pursuit, and refuses two cases for unresolved peloton drop contact.
+This is a refusal gate, not a completed physical loss model or a
+whole-race calibration.
+
+With explicit synthetic all-sprint stakes, the observed-pace protector
+timing and fresh attacker decisions, the same guard validates 18 of
+24 three-seed cases and refuses six at the first unresolved peloton
+drop. The 18 completed cases cover 502,400 rider-kilometres, of which
+445,083 peloton rider-kilometres still lack individual choices. No
+completed case contains a dropped rider because the guard stops at
+the first such transition. These counts describe the strict input
+gate; they do not establish realistic contact or finish outcomes.

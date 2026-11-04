@@ -137,6 +137,28 @@ test('strict draft refuses a rider lost during discounted kilometre',()=>{
   });
 });
 
+test('strict peloton loss refuses a drop without paid within-km contact',()=>{
+  const longSettings={...settings,distanceKm:260};
+  assert.throws(()=>createV94RaceDynamicsPreview({
+    format:'one_day',settings:longSettings,
+    roadGroupPaceVersion:3,chaseTurnVersion:1,
+    bunchFrontTurnVersion:1,pelotonFrontTurnVersion:1,
+    pelotonDropContactVersion:1}),error=>{
+    assert.match(error.message,/Unresolved peloton drop contact/);
+    assert.equal(error.sourceEvidence.priorGroup,'peloton');
+    assert.equal(error.sourceEvidence.finalGroup,'dropped');
+    assert.ok(error.sourceEvidence.finalDeficitSeconds>
+      error.sourceEvidence.priorDeficitSeconds);
+    assert.equal(error.sourceEvidence.energyLedger.riderId,
+      error.sourceEvidence.riderId);
+    return true;
+  });
+  assert.throws(()=>createV94RaceDynamicsPreview({
+    format:'one_day',settings:longSettings,
+    pelotonDropContactVersion:1}),
+  /valid experimental race settings/);
+});
+
 test('fresh paid attackers receive source-replayed launch choices',()=>{
   const sportingStakes=prepareV91Playtest(settings).teams.map(team=>({
     teamId:team.id,goal:'none',
