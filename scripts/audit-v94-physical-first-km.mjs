@@ -105,6 +105,9 @@ import {replayV94PhysicalPostSourceBreakKmV1,
 import {replayV94PhysicalPostBreakFreshKmV1,
   validateV94PhysicalPostBreakFreshKmV1} from
   '../lib/engine/v2/v94-physical-post-break-fresh-km-v1.mjs';
+import {replayV94PhysicalFrontCatchKmV1,
+  validateV94PhysicalFrontCatchKmV1} from
+  '../lib/engine/v2/v94-physical-front-catch-km-v1.mjs';
 
 const requested=process.argv.find(arg=>arg.startsWith('--seeds='));
 const seedCount=requested?Number(requested.slice(8)):1;
@@ -756,6 +759,30 @@ for(let seed=1;seed<=seedCount;seed++)
             afterFreshEvidence=error.sourceEvidence??null;
             break;
           }
+        let frontCatchProbe=null;
+        if(afterFreshRefusal===
+          'Physical rear/front contact needs paid resolution.')try{
+          const caught=replayV94PhysicalFrontCatchKmV1(
+            recording,afterFreshTrace);
+          validateV94PhysicalFrontCatchKmV1(
+            recording,afterFreshTrace,caught);
+          let nextRefusalAfterCatch=null;
+          try{
+            replayV94PhysicalUnattachedSourceNextKmV1(
+              recording,caught);
+          }catch(error){
+            nextRefusalAfterCatch=error.message;
+          }
+          frontCatchProbe={sourceKm:caught.sourceKm,
+            finishCount:caught.finishes.length,
+            caughtRiderId:caught.caughtFinish.riderId,
+            shelterTurnCount:
+              caught.caughtDecision.shelterTurns.length,
+            nextRefusalAfterCatch};
+        }catch(error){
+          frontCatchProbe={refusal:error.message,
+            evidence:error.sourceEvidence??null};
+        }
         postBreakFreshProbe={soloRiderIds:freshIds,
           fullFieldKilometre:field.fullFieldKilometre,
           finishCount:field.finishes.length,
@@ -764,6 +791,7 @@ for(let seed=1;seed<=seedCount;seed++)
             afterFreshTrace.sourceKm,
           afterFreshRefusalKm,afterFreshRefusal,
           afterFreshEvidence,
+          frontCatchProbe,
           afterFreshSource:afterFreshRefusalKm?{
             attackers:recording.frames[
               afterFreshRefusalKm-1].attackers,

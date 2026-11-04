@@ -86,6 +86,9 @@ import {replayV94PhysicalSeventhKmV1,
 import {replayV94PhysicalUnattachedSourceNextKmV1,
   validateV94PhysicalUnattachedSourceNextKmV1} from
   '../../lib/engine/v2/v94-physical-unattached-source-next-km-v1.mjs';
+import {replayV94PhysicalFrontCatchKmV1,
+  validateV94PhysicalFrontCatchKmV1} from
+  '../../lib/engine/v2/v94-physical-front-catch-km-v1.mjs';
 import {replayV94PhysicalMixedFreshAttackSolosV1,
   validateV94PhysicalMixedFreshAttackSolosV1} from
   '../../lib/engine/v2/v94-physical-mixed-fresh-attack-solo-v1.mjs';
@@ -938,6 +941,18 @@ test('paid boundary contacts support a complete second flat kilometre',()=>{
     error.sourceEvidence.atDistanceM>83000&&
     error.sourceEvidence.atDistanceM<84000&&
     error.physicalRoads?.frontSegments.length>0);
+  const priorAt83=mixedLater;
+  mixedLater=replayV94PhysicalFrontCatchKmV1(
+    recording,mixedLater);
+  assert.equal(mixedLater.sourceKm,84);
+  assert.equal(mixedLater.finishes.length,160);
+  assert.equal(mixedLater.caughtFinish.riderId,
+    'rival-6-7');
+  assert.equal(mixedLater.caughtFinish.physicalGroup,
+    'peloton');
+  assert.ok(mixedLater.caughtDecision.shelterTurns.length>0);
+  assert.equal(validateV94PhysicalFrontCatchKmV1(
+    recording,priorAt83,mixedLater),true);
 });
 
 test('ended source break membership keeps four riders on paid roads',()=>{

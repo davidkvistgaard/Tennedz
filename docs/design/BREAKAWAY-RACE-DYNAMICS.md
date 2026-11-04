@@ -6669,8 +6669,14 @@ case, the paid `solo-rival-6-7` road starts 0.133 seconds ahead of the
 peloton at the km-83 boundary; a named chase turn catches it at
 83,272.177 metres. The refusal records the solo's rider, reserve,
 prior road, speed and clock together with the front turn's leader and
-work kind. It does not yet give the caught rider shelter or a finish
-clock. Both 260 km flat cases
+work kind. `v94-physical-front-catch-km-v1.mjs` checks all other paid
+roads for meetings, then charges this rider's solo work to the catch
+and sheltered work over the remaining named front turns. Both 120 km
+flat cases finish all 160 riders at km 84 with the caught rider in the
+peloton. Source break membership remains a separate claim. The next
+kilometre refuses because that claim still lists the caught rider as
+ahead, while his physical reserve and road now belong to the bunch.
+Both 260 km flat cases
 complete every rider through km 89. At km 90 the source
 introduces two new attackers (`rival-19-7` and `rival-6-7`), so the
 post-break replay refuses until their departure is physically paid.
