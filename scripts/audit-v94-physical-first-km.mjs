@@ -40,6 +40,10 @@ for(let seed=1;seed<=seedCount;seed++)
       if(completion)
         validateV94PhysicalFirstKmCompletionV1(recording,completion);
       const firstDetached=physical.atFrontClock.find(row=>!row.attached);
+      const attached=new Set(physical.atFrontClock.filter(row=>
+        row.attached).map(row=>row.riderId));
+      const next=recording.frames[1];
+      const nextTurns=next?.pelotonFrontTurnPlan?.turns??[];
       cases.push({seed,distanceKm,terrain,fatigue,
         frontClockSeconds:physical.frontClockSeconds,
         completeRiderKilometres:physical.completeRiderKilometres,
@@ -49,6 +53,12 @@ for(let seed=1;seed<=seedCount;seed++)
           coincidentSoloSets:completion.coincidentSoloSets.length,
           coincidentSoloRiders:completion.coincidentSoloSets.reduce(
             (sum,row)=>sum+row.riderIds.length,0),
+          nextKmSourceFront:next?.pelotonFrontTurnPlan?.status??null,
+          nextKmSourceLeadersAttached:nextTurns.every(row=>
+            attached.has(row.leaderRiderId)),
+          nextKmSourceHasAttack:!!(next?.attackers.length||
+            next?.joinedBreakawayRiderIds.length||
+            next?.breakawayRiderIds.length||next?.roadGroups.length),
           lastSoloClockSeconds:completion.soloCompletions.length?
             Math.max(...completion.soloCompletions.map(row=>
               row.finishClockSeconds)):null}:{}),
@@ -73,4 +83,9 @@ console.log(JSON.stringify({seedCount,complete,cases:cases.length,
     sum+(row.coincidentSoloSets??0),0),
   coincidentSoloRiders:accepted.reduce((sum,row)=>
     sum+(row.coincidentSoloRiders??0),0),
+  nextKmSourceLeadersAttached:accepted.filter(row=>
+    row.nextKmSourceFront==='worked'&&
+    row.nextKmSourceLeadersAttached).length,
+  nextKmSourceHasAttack:accepted.filter(row=>
+    row.nextKmSourceHasAttack).length,
   firstCase:cases[0],refusals:cases.filter(row=>row.refusal)},null,2));

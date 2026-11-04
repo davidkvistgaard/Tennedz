@@ -6186,6 +6186,15 @@ same place and time. A subsequent kilometre must resolve their
 actual orders, stakes, shared work and contact before forming any
 rear group or claiming a complete field replay.
 
+The same 24-case source audit checks the next kilometre without
+advancing physical riders. In all 23 replayed starts, the km-2
+peloton plan is worked, each named front-turn leader is still in
+the physically attached first-kilometre set, and no source attack
+or break road appears at km 2. This establishes that a named front
+plan is available for the next step. It does not resolve the 63
+coincident solo sets, price their next road, or prove that none can
+meet the front during that kilometre.
+
 Callers of the experimental preview can request
 `physicalFirstKmVersion: 1` to receive this completed physical first
 kilometre as a separate `physicalFirstKm` result. It requires the
