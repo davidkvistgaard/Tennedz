@@ -6,7 +6,9 @@ import {orderAt} from '../../lib/engine/v2/orders.mjs';
 import {runRearRecordedBunchOriginV1,
   validateRearRecordedBunchOriginV1,
   runRearRecordedBunchOriginV2,
-  validateRearRecordedBunchOriginV2} from
+  validateRearRecordedBunchOriginV2,
+  runRearRecordedBunchOriginV3,
+  validateRearRecordedBunchOriginV3} from
   '../../lib/engine/v2/rear-recorded-bunch-origin-v1.mjs';
 import {prepareV91Playtest} from
   '../../lib/engine/v2/playtest.mjs';
@@ -102,6 +104,23 @@ test('V94 recorded follower work anchors a separate paid physical road',()=>{
   assert.equal(result.road.steps[0].slices[0].role,'leader');
   assert.equal(result.checkpointGroupIsPhysicalPosition,false);
   assert.equal(validateRearRecordedBunchOriginV2(input,result),true);
+  const reconciled=runRearRecordedBunchOriginV3(input);
+  assert.equal(reconciled.version,'v2-rear-recorded-bunch-energy-3');
+  assert.equal(reconciled.sourceEnergyReconciliation.length,1);
+  assert.ok(Math.abs(reconciled.sourceEnergyReconciliation[0]
+    .sourcePaid-reconciled.sourceEnergyReconciliation[0]
+    .physicalPaid)<=.001);
+  assert.equal(validateRearRecordedBunchOriginV3(input,reconciled),true);
+  const forgedEnergy=structuredClone(reconciled);
+  forgedEnergy.sourceEnergyReconciliation[0].sourcePaid=0;
+  assert.throws(()=>validateRearRecordedBunchOriginV3(
+    input,forgedEnergy),/differs/);
+  const full=runRearRecordedBunchOriginV3({recording,
+    riderId:'rival-1-5',throughKm:120});
+  assert.equal(full.road.status,'bunch');
+  assert.equal(full.sourceEnergyReconciliation.length,120);
+  assert.ok(full.road.steps.some(step=>
+    step.effortSource==='recorded_peloton_rest'));
   const forged=structuredClone(result);
   forged.road.steps[0].slices[0].energySpent=0;
   assert.throws(()=>validateRearRecordedBunchOriginV2(

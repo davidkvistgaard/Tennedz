@@ -61,7 +61,7 @@ const summary={version:'v94-rear-origin-multikm-1',
   earliestMismatch:null,firstOtherMismatch:null,firstRefusal:null,
   firstMismatchRiders:0,firstMismatchRestRiders:0,
   firstMismatchOtherRiders:0,
-  lastPhysicalHeldKm:0};
+  lastPhysicalHeldKm:0,firstFullHeldRiderId:null};
 for(const team of recording.committedInputs.teams)
   for(const rider of team.riders){
     summary.riders++;
@@ -101,6 +101,8 @@ for(const team of recording.committedInputs.teams)
     }
     if(road.status==='wheel_lost')
       summary.projectedPaceLossRiders++;
+    else if(pelotonKm===frames.length)
+      summary.firstFullHeldRiderId??=rider.id;
     let riderMismatch=false;
     for(const step of road.steps){
       if(step.split)break;
