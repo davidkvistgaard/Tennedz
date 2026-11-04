@@ -6651,6 +6651,16 @@ The source disappearance is not a physical catch.
 These are source-plan refusals. No scripted catch or group transfer
 is used to bypass them.
 
+`v94-physical-post-source-break-km-v1.mjs` separately drops the
+ended *source membership claim* while retaining all four riders on
+their paid rear roads. It requires an empty source break, attack,
+chaser and road-group frame, actual boundary choices, and any
+source-recorded front rest needed to reconcile energy. Both 260 km
+flat cases complete every rider through km 89. At km 90 the source
+introduces two new attackers (`rival-19-7` and `rival-6-7`), so the
+post-break replay refuses until their departure is physically paid.
+The 120 km cases remain stopped at the 13-team chaser claim at km 70.
+
 Callers of the experimental preview can request
 `physicalFirstKmVersion: 1` to receive this completed physical first
 kilometre as a separate `physicalFirstKm` result. It requires the

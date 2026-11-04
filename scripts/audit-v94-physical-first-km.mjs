@@ -93,6 +93,15 @@ import {replayV94PhysicalMidKmContactFullFieldV1,
 import {replayV94PhysicalMixedPaidNextKmV1,
   validateV94PhysicalMixedPaidNextKmV1} from
   '../lib/engine/v2/v94-physical-mixed-paid-next-km-v1.mjs';
+import {replayV94PhysicalFrontKmFromPriorV1} from
+  '../lib/engine/v2/v94-physical-second-front-km-v1.mjs';
+import {decideV94PhysicalBoundaryFromPriorV1} from
+  '../lib/engine/v2/v94-physical-third-boundary-choice-v1.mjs';
+import {replayV94PhysicalRearKmFromPriorV1} from
+  '../lib/engine/v2/v94-physical-third-rear-km-v1.mjs';
+import {replayV94PhysicalPostSourceBreakKmV1,
+  validateV94PhysicalPostSourceBreakKmV1} from
+  '../lib/engine/v2/v94-physical-post-source-break-km-v1.mjs';
 
 const requested=process.argv.find(arg=>arg.startsWith('--seeds='));
 const seedCount=requested?Number(requested.slice(8)):1;
@@ -599,6 +608,70 @@ for(let seed=1;seed<=seedCount;seed++)
           afterLaterEvidence=error.sourceEvidence??null;
           break;
         }
+      let sourceBreakEndedProbe=null;
+      if(afterLaterRefusalKm&&
+        recording.frames[afterLaterRefusalKm-1]
+          .breakawayRiderIds.length===0&&
+        recording.frames[afterLaterRefusalKm-1]
+          .chasers.length===0)try{
+        const km=afterLaterRefusalKm;
+        const frontInput={km,prior:afterLaterTrace,
+            frontClockSeconds:
+              afterLaterTrace.front.frontClockSeconds,
+            version:'v94-post-source-break-front-probe-1',
+            decisionVersion:
+              'v94-post-source-break-front-decision-probe-1',
+            priorField:null};
+        let front;
+        try{
+          front=replayV94PhysicalFrontKmFromPriorV1(
+            recording,frontInput);
+        }catch(error){
+          if(error.message!==
+            'Attached front energy differs from V94 source.'||
+            !recording.frames[km-1]
+              .pelotonRestTeamIds?.length)
+            throw error;
+          front=replayV94PhysicalFrontKmFromPriorV1(
+            recording,{...frontInput,recordedRestMode:true});
+        }
+        const boundary=decideV94PhysicalBoundaryFromPriorV1(
+          recording,{km,prior:afterLaterTrace,
+            version:'v94-post-source-break-boundary-probe-1'});
+        const field=replayV94PhysicalRearKmFromPriorV1(
+          recording,{km,priorTrace:afterLaterTrace,
+            boundary,front,
+            version:'v94-post-source-break-field-probe-1',
+            decisionVersion:
+              'v94-post-source-break-rear-decision-probe-1'});
+        sourceBreakEndedProbe={frontAttachedCount:
+          front.atFrontClock.filter(row=>row.attached).length,
+        boundaryGroupCount:boundary.pendingGroupCount,
+        fullFieldKilometre:field.fullFieldKilometre,
+        finishCount:field.finishes.length};
+      }catch(error){
+        sourceBreakEndedProbe={refusal:error.message,
+          evidence:error.sourceEvidence??null};
+      }
+      let postBreakTrace=afterLaterTrace;
+      let postBreakRefusal=null,postBreakRefusalKm=null;
+      let postBreakEvidence=null;
+      if(sourceBreakEndedProbe?.fullFieldKilometre&&
+        afterContactThrough!==null)
+        for(let km=afterLaterRefusalKm;
+          km<=Math.min(afterContactThrough,
+            recording.route.kilometres.length);km++)try{
+          const candidate=replayV94PhysicalPostSourceBreakKmV1(
+            recording,postBreakTrace);
+          validateV94PhysicalPostSourceBreakKmV1(
+            recording,postBreakTrace,candidate);
+          postBreakTrace=candidate;
+        }catch(error){
+          postBreakRefusal=error.message;
+          postBreakRefusalKm=km;
+          postBreakEvidence=error.sourceEvidence??null;
+          break;
+        }
       let nextTrace=fourthTrace,nextRefusal=null;
       let nextRefusalKm=null,nextRefusalEvidence=null;
       if(nextThrough!==null&&fourthTrace){
@@ -1006,6 +1079,20 @@ for(let seed=1;seed<=seedCount;seed++)
                 .map(id=>({riderId:id,
                   physicalGroup:afterLaterTrace.finishes.find(row=>
                     row.riderId===id)?.physicalGroup??null}))}:
+              null,
+            sourceBreakEndedProbe,
+            postBreakCompletedThroughKm:
+              postBreakTrace?.sourceBreakMembershipEnded?
+                postBreakTrace.sourceKm:null,
+            postBreakRefusalKm,postBreakRefusal,
+            postBreakEvidence,
+            postBreakSource:postBreakRefusalKm?{
+              attackers:recording.frames[
+                postBreakRefusalKm-1].attackers,
+              breakawayRiderIds:recording.frames[
+                postBreakRefusalKm-1].breakawayRiderIds,
+              chasers:recording.frames[
+                postBreakRefusalKm-1].chasers}:
               null}:{}),
           lastSoloClockSeconds:completion.soloCompletions.length?
             Math.max(...completion.soloCompletions.map(row=>
@@ -1308,7 +1395,14 @@ console.log(JSON.stringify({seedCount,complete,secondFront,boundaryChoice,
       afterLaterRefusalKm:row.afterLaterRefusalKm,
       afterLaterRefusal:row.afterLaterRefusal,
       afterLaterEvidence:row.afterLaterEvidence,
-      afterLaterSource:row.afterLaterSource})),
+      afterLaterSource:row.afterLaterSource,
+      sourceBreakEndedProbe:row.sourceBreakEndedProbe,
+      postBreakCompletedThroughKm:
+        row.postBreakCompletedThroughKm,
+      postBreakRefusalKm:row.postBreakRefusalKm,
+      postBreakRefusal:row.postBreakRefusal,
+      postBreakEvidence:row.postBreakEvidence,
+      postBreakSource:row.postBreakSource})),
   afterRestRefusals:accepted.filter(row=>
     row.afterRestRefusal).map(row=>({seed:row.seed,
       distanceKm:row.distanceKm,terrain:row.terrain,

@@ -113,6 +113,9 @@ import {replayV94PhysicalMidKmContactFullFieldV1,
 import {replayV94PhysicalMixedPaidNextKmV1,
   validateV94PhysicalMixedPaidNextKmV1} from
   '../../lib/engine/v2/v94-physical-mixed-paid-next-km-v1.mjs';
+import {replayV94PhysicalPostSourceBreakKmV1,
+  validateV94PhysicalPostSourceBreakKmV1} from
+  '../../lib/engine/v2/v94-physical-post-source-break-km-v1.mjs';
 
 test('first V94 kilometre prices each named turn and detached solo metre',()=>{
   const settings={distanceKm:120,teamCount:20,terrain:'mountain',
@@ -873,6 +876,65 @@ test('paid boundary contacts support a complete second flat kilometre',()=>{
   assert.throws(()=>replayV94PhysicalMixedPaidNextKmV1(
     recording,mixedLater),
   /Physical front needs an intact paid plan/);
+});
+
+test('ended source break membership keeps four riders on paid roads',()=>{
+  const settings={distanceKm:260,teamCount:20,terrain:'flat',
+    fatigue:0,attack:'none',chase:'selective',
+    seed:'preview-recorded-road-1'};
+  const sportingStakes=prepareV91Playtest(settings).teams.map(team=>({
+    teamId:team.id,goal:'sprint_finish',
+    captainId:team.orders.captainId}));
+  const {recording}=createV94RaceDynamicsPreview({
+    format:'one_day',settings,sportingStakes,
+    roadGroupPaceVersion:3,chaseTurnVersion:1,
+    bunchFrontTurnVersion:1,pelotonFrontTurnVersion:1,
+    pelotonDraftCostVersion:1,pelotonExposureCostVersion:1,
+    freshAttackDecisionVersion:1,
+    roadGroupRiderDecisionVersion:1,
+    protectorSportingPursuitVersion:1});
+  const fifth=replayV94PhysicalFifthKmV1(
+    recording,replayV94PhysicalFourthKmV1(recording));
+  const sixth=replayV94PhysicalSixthKmV1(recording,fifth);
+  let paid=replayV94PhysicalSeventhKmV1(recording,sixth);
+  for(let km=8;km<=19;km++)
+    paid=replayV94PhysicalUnattachedSourceNextKmV1(
+      recording,paid);
+  paid=replayV94PhysicalMixedFreshKmV1(recording,paid);
+  paid=replayV94PhysicalRecordedRestKmV1(recording,paid);
+  for(let km=22;km<=27;km++)
+    paid=replayV94PhysicalRecordedRestKmV1(recording,paid);
+  paid=replayV94PhysicalMidKmContactFullFieldV1(
+    recording,paid);
+  for(let km=29;km<=33;km++)
+    paid=replayV94PhysicalMixedPaidNextKmV1(
+      recording,paid);
+  paid=replayV94PhysicalMidKmContactFullFieldV1(
+    recording,paid);
+  for(let km=35;km<=84;km++)
+    paid=replayV94PhysicalMixedPaidNextKmV1(
+      recording,paid);
+  const priorAt84=paid;
+  paid=replayV94PhysicalPostSourceBreakKmV1(
+    recording,paid);
+  assert.equal(paid.sourceKm,85);
+  assert.equal(paid.finishes.length,160);
+  assert.equal(paid.sourceBreakRiderIds.length,0);
+  assert.equal(paid.formerSourceBreakRiderIds.length,4);
+  assert.ok(paid.formerSourceBreakRiderIds.every(id=>
+    paid.finishes.find(row=>row.riderId===id)
+      .physicalGroup!=='peloton'));
+  assert.equal(validateV94PhysicalPostSourceBreakKmV1(
+    recording,priorAt84,paid),true);
+  for(let km=86;km<=89;km++){
+    paid=replayV94PhysicalPostSourceBreakKmV1(
+      recording,paid);
+    assert.equal(paid.sourceKm,km);
+    assert.equal(paid.finishes.length,160);
+  }
+  assert.throws(()=>replayV94PhysicalPostSourceBreakKmV1(
+    recording,paid),
+  /Post-break km needs ended source claim/);
 });
 
 test('second-km road clocks refuse a faster rear catch',()=>{
