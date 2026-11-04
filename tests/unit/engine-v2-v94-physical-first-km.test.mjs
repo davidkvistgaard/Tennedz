@@ -48,6 +48,10 @@ import {inspectV94PhysicalFreshLaunchBoundaryV1,
   validateV94PhysicalFreshLaunchBoundaryV1,
   V94_PHYSICAL_FRESH_LAUNCH_DECISION_VERSION} from
   '../../lib/engine/v2/v94-physical-fresh-launch-boundary-v1.mjs';
+import {replayV94PhysicalFreshAttackSolosV1,
+  validateV94PhysicalFreshAttackSolosV1,
+  V94_PHYSICAL_FRESH_ATTACK_SOLO_DECISION_VERSION} from
+  '../../lib/engine/v2/v94-physical-fresh-attack-solo-v1.mjs';
 
 test('first V94 kilometre prices each named turn and detached solo metre',()=>{
   const settings={distanceKm:120,teamCount:20,terrain:'mountain',
@@ -355,6 +359,26 @@ test('second front records an early climb loss without completing rear road',()=
     Number.isFinite(row.perceivedAttackAbility)));
   assert.equal(validateV94PhysicalFreshLaunchBoundaryV1(
     recording,fourth,launch),true);
+  const freshSolos=replayV94PhysicalFreshAttackSolosV1(
+    recording,fourth);
+  assert.equal(freshSolos.roads.length,
+    recording.frames[4].attackers.length);
+  assert.ok(freshSolos.roads.every(row=>
+    row.version===V94_PHYSICAL_FRESH_ATTACK_SOLO_DECISION_VERSION&&
+    row.startDistanceM===4000&&row.endDistanceM===5000&&
+    row.sourcePaidFromReserve+1e-8>=
+      row.minimumSoloEnergyDemand&&
+    Math.abs(row.energyBefore-row.sourcePaidFromReserve-
+      row.sourceCapAdjustment-row.energyAfter)<.0015));
+  assert.deepEqual(freshSolos.physicalRoadGroups,[]);
+  assert.equal(freshSolos.remainingFieldRoadUnresolved,true);
+  assert.equal(freshSolos.officialResults,false);
+  assert.equal(validateV94PhysicalFreshAttackSolosV1(
+    recording,fourth,freshSolos),true);
+  const forgedSolo=structuredClone(freshSolos);
+  forgedSolo.roads[0].earnedLeadSecondsAtBoundary+=1;
+  assert.throws(()=>validateV94PhysicalFreshAttackSolosV1(
+    recording,fourth,forgedSolo),/differ from paid source/);
   const forgedLaunch=structuredClone(launch);
   forgedLaunch.decisions[0].paidNewEnergy=1;
   assert.throws(()=>validateV94PhysicalFreshLaunchBoundaryV1(

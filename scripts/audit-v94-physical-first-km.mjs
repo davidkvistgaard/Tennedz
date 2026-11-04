@@ -36,6 +36,9 @@ import {replayV94PhysicalNextKmV1,
 import {inspectV94PhysicalFreshLaunchBoundaryV1,
   validateV94PhysicalFreshLaunchBoundaryV1} from
   '../lib/engine/v2/v94-physical-fresh-launch-boundary-v1.mjs';
+import {replayV94PhysicalFreshAttackSolosV1,
+  validateV94PhysicalFreshAttackSolosV1} from
+  '../lib/engine/v2/v94-physical-fresh-attack-solo-v1.mjs';
 
 const requested=process.argv.find(arg=>arg.startsWith('--seeds='));
 const seedCount=requested?Number(requested.slice(8)):1;
@@ -56,12 +59,15 @@ const nextRequested=process.argv.find(arg=>
 const nextThrough=nextRequested?Number(nextRequested.slice(15)):null;
 const freshLaunchBoundary=process.argv.includes(
   '--fresh-launch-boundary');
+const freshAttackSolos=process.argv.includes(
+  '--fresh-attack-solos');
 if((secondFront||boundaryChoice||secondRear||thirdSource)&&!complete||
   thirdSource&&!secondRear||thirdFront&&!secondRear||
   thirdBoundary&&!secondRear||thirdRear&&!secondRear||
   fourthSource&&!thirdRear||fourthReplay&&!thirdRear||
   nextThrough!==null&&!fourthReplay||
-  freshLaunchBoundary&&!fourthReplay)
+  freshLaunchBoundary&&!fourthReplay||
+  freshAttackSolos&&!fourthReplay)
   throw new Error('Continuation audit needs --complete.');
 if(nextThrough!==null&&(!Number.isInteger(nextThrough)||
   nextThrough<5||nextThrough>260))
@@ -137,6 +143,13 @@ for(let seed=1;seed<=seedCount;seed++)
         validateV94PhysicalFreshLaunchBoundaryV1(
           recording,fourthTrace,freshLaunch);
       }catch(error){freshLaunchRefusal=error.message;}
+      let freshSolo=null,freshSoloRefusal=null;
+      if(freshAttackSolos&&fourthTrace)try{
+        freshSolo=replayV94PhysicalFreshAttackSolosV1(
+          recording,fourthTrace);
+        validateV94PhysicalFreshAttackSolosV1(
+          recording,fourthTrace,freshSolo);
+      }catch(error){freshSoloRefusal=error.message;}
       let nextTrace=fourthTrace,nextRefusal=null;
       let nextRefusalKm=null,nextRefusalEvidence=null;
       if(nextThrough!==null&&fourthTrace){
@@ -285,6 +298,15 @@ for(let seed=1;seed<=seedCount;seed++)
             freshLaunchSourcePaidPlan:
               freshLaunch?.sourceNewBreakHasPaidTurnPlan??null,
             freshLaunchRefusal}:{}),
+          ...(freshAttackSolos?{
+            freshSoloRoads:freshSolo?.roads.length??0,
+            freshSoloAhead:freshSolo?.roads.filter(row=>
+              row.earnedLeadSecondsAtBoundary>0).length??0,
+            freshSoloSourceBreakAheadMismatches:
+              freshSolo?.sourceBreakAheadMismatchRiderIds.length??0,
+            freshSoloCoincidentSets:
+              freshSolo?.coincidentSoloSets.length??0,
+            freshSoloRefusal}:{}),
           lastSoloClockSeconds:completion.soloCompletions.length?
             Math.max(...completion.soloCompletions.map(row=>
               row.finishClockSeconds)):null}:{}),
@@ -299,6 +321,7 @@ const accepted=cases.filter(row=>!row.refusal);
 console.log(JSON.stringify({seedCount,complete,secondFront,boundaryChoice,
   secondRear,thirdSource,thirdFront,thirdBoundary,thirdRear,
   fourthSource,fourthReplay,nextThrough,freshLaunchBoundary,
+  freshAttackSolos,
   cases:cases.length,
   replayedFirstKilometres:accepted.length,
   refusedCases:cases.length-accepted.length,
@@ -392,6 +415,17 @@ console.log(JSON.stringify({seedCount,complete,secondFront,boundaryChoice,
     sum+(row.freshLaunchDecisions??0),0),
   freshLaunchPaidPlans:accepted.filter(row=>
     row.freshLaunchSourcePaidPlan===true).length,
+  freshSoloCases:accepted.filter(row=>
+    row.freshSoloRefusal===null&&row.freshSoloRoads>0).length,
+  freshSoloRoads:accepted.reduce((sum,row)=>
+    sum+(row.freshSoloRoads??0),0),
+  freshSoloAhead:accepted.reduce((sum,row)=>
+    sum+(row.freshSoloAhead??0),0),
+  freshSoloSourceBreakAheadMismatches:accepted.reduce(
+    (sum,row)=>sum+
+      (row.freshSoloSourceBreakAheadMismatches??0),0),
+  freshSoloCoincidentSets:accepted.reduce((sum,row)=>
+    sum+(row.freshSoloCoincidentSets??0),0),
   firstCase:cases[0],refusals:cases.filter(row=>row.refusal),
   secondFrontRefusals:accepted.filter(row=>
     row.nextFrontRefusal),
@@ -418,5 +452,9 @@ console.log(JSON.stringify({seedCount,complete,secondFront,boundaryChoice,
   freshLaunchRefusals:accepted.filter(row=>
     row.freshLaunchRefusal).map(row=>({seed:row.seed,
       distanceKm:row.distanceKm,terrain:row.terrain,
-      fatigue:row.fatigue,refusal:row.freshLaunchRefusal}))},
+      fatigue:row.fatigue,refusal:row.freshLaunchRefusal})),
+  freshSoloRefusals:accepted.filter(row=>
+    row.freshSoloRefusal).map(row=>({seed:row.seed,
+      distanceKm:row.distanceKm,terrain:row.terrain,
+      fatigue:row.fatigue,refusal:row.freshSoloRefusal}))},
 null,2));

@@ -6349,6 +6349,26 @@ covering 70 fresh attacker proposals; none of their newly formed
 source roads has a first-kilometre paid turn plan. A physical launch
 and later contact still need a separate paid road contract.
 
+`v94-physical-fresh-attack-solo-v1.mjs` tests each of those launch
+proposals on its own isolated 1,000-metre road. It derives speed from
+the rider's perceived attack strength and the recorded route, and
+compares its clock with the named paid peloton turns. The source
+energy ledger must cover at least the terrain-priced solo work, and
+the trace checks for a recrossing of the peloton front. A source
+breakaway membership is kept as a claim beside the physical clock;
+it does not grant a shared break road or a wheel. A source-joined
+rider whose paid solo clock is no faster than the peloton front is
+flagged as a calibration mismatch. Coincident solo arrivals remain
+contact candidates, never rear groups. This diagnostic does not move
+the other riders in km 5, resolve rear contact, or establish a finish.
+Across the same three-seed, 24-case matrix, 23 cases yield 70 paid
+individual attack roads. Only 44 riders reach 5,000 metres ahead of
+the paid peloton front; the other 26 are source-classified as having
+joined a break but their physical solo clocks do not support that
+position. Ten coincident solo arrival sets remain ungrouped. The
+one km-1 refusal persists. This mismatch blocks source calibration
+and any promotion to the guided race engine.
+
 Callers of the experimental preview can request
 `physicalFirstKmVersion: 1` to receive this completed physical first
 kilometre as a separate `physicalFirstKm` result. It requires the
