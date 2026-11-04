@@ -110,6 +110,9 @@ import {inspectV94PhysicalMidKmContactRoadsV1,
 import {replayV94PhysicalMidKmContactFullFieldV1,
   validateV94PhysicalMidKmContactFullFieldV1} from
   '../../lib/engine/v2/v94-physical-mid-km-contact-full-field-v1.mjs';
+import {replayV94PhysicalMixedPaidNextKmV1,
+  validateV94PhysicalMixedPaidNextKmV1} from
+  '../../lib/engine/v2/v94-physical-mixed-paid-next-km-v1.mjs';
 
 test('first V94 kilometre prices each named turn and detached solo metre',()=>{
   const settings={distanceKm:120,teamCount:20,terrain:'mountain',
@@ -824,6 +827,28 @@ test('paid boundary contacts support a complete second flat kilometre',()=>{
   assert.throws(()=>replayV94PhysicalUnattachedSourceNextKmV1(
     recording,contactedField),
   /Mixed forward\/rear contact needs paid joint choice/);
+  const mixedBoundary=
+    decideV94PhysicalForwardBoundaryChoicesV1(
+      recording,contactedField,
+      {allowPaidMixedContact:true});
+  const joint=mixedBoundary.choices.find(row=>
+    row.mixedPaidContact);
+  assert.equal(joint?.riderIds.length,19);
+  assert.equal(joint?.formsRearGroup,false);
+  assert.equal(joint?.pendingLeaderRiderId,'rival-6-5');
+  assert.equal(joint?.pendingShelterRiderIds.length,18);
+  assert.equal(validateV94PhysicalForwardBoundaryChoicesV1(
+    recording,contactedField,mixedBoundary,
+    {allowPaidMixedContact:true}),true);
+  const mixedNext=replayV94PhysicalMixedPaidNextKmV1(
+    recording,contactedField);
+  assert.equal(mixedNext.sourceKm,29);
+  assert.equal(mixedNext.finishes.length,160);
+  assert.equal(mixedNext.mixedPaidContactFromPrior,true);
+  assert.equal(mixedNext.sourceCheckpointCalibrationFailed,
+    true);
+  assert.equal(validateV94PhysicalMixedPaidNextKmV1(
+    recording,contactedField,mixedNext),true);
 });
 
 test('second-km road clocks refuse a faster rear catch',()=>{

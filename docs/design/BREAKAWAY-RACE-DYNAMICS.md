@@ -6616,11 +6616,24 @@ and the front. The four flat crossings have 8 or 9 rear roads, two
 front segments, no new front drops and no other contact. Therefore
 `v94-physical-mid-km-contact-full-field-v1.mjs` settles all 160
 riders at km 25 or 28 with 19 riders in the newly paid contact
-group. The subsequent kilometre refuses a mixed forward/rear
-boundary choice: the physical group contains a source break rider
+group. The ordinary continuation refuses a mixed forward/rear
+boundary choice because the physical group contains a source break rider
 and other rear riders. That shared work choice must be derived from
 their actual orders before continuation. Source groups and official
 results remain unadopted.
+
+`v94-physical-forward-boundary-choice-v1.mjs` now permits that
+mixed choice only when the previous group is itself the verified
+paid contact group. It reads break-work orders for the source break
+rider and chase/front-work orders for the other members, quotes one
+payable leader with lower shelter cost, and still leaves group
+formation pending. The separate
+`v94-physical-mixed-paid-next-km-v1.mjs` then pays those turns.
+All four flat cases complete all 160 riders in the next kilometre:
+km 29 without fatigue or km 26 with 30 fatigue, for both route
+lengths. The initial mixed group remains physically paid throughout;
+source membership remains a claim rather than a scripted physical
+position or official result.
 
 Callers of the experimental preview can request
 `physicalFirstKmVersion: 1` to receive this completed physical first

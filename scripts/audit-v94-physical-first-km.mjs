@@ -90,6 +90,9 @@ import {inspectV94PhysicalMidKmContactRoadsV1,
 import {replayV94PhysicalMidKmContactFullFieldV1,
   validateV94PhysicalMidKmContactFullFieldV1} from
   '../lib/engine/v2/v94-physical-mid-km-contact-full-field-v1.mjs';
+import {replayV94PhysicalMixedPaidNextKmV1,
+  validateV94PhysicalMixedPaidNextKmV1} from
+  '../lib/engine/v2/v94-physical-mixed-paid-next-km-v1.mjs';
 
 const requested=process.argv.find(arg=>arg.startsWith('--seeds='));
 const seedCount=requested?Number(requested.slice(8)):1;
@@ -491,6 +494,20 @@ for(let seed=1;seed<=seedCount;seed++)
                 afterContactNextEvidence=
                   restError.sourceEvidence??null;
               }
+              else if(error.message===
+                'Mixed forward/rear contact needs paid joint choice.')
+                try{
+                  afterContactNext=
+                    replayV94PhysicalMixedPaidNextKmV1(
+                      recording,afterRestContactFullField);
+                  validateV94PhysicalMixedPaidNextKmV1(
+                    recording,afterRestContactFullField,
+                      afterContactNext);
+                }catch(mixedError){
+                  afterContactNextRefusal=mixedError.message;
+                  afterContactNextEvidence=
+                    mixedError.sourceEvidence??null;
+                }
               else{
                 afterContactNextRefusal=error.message;
                 afterContactNextEvidence=
