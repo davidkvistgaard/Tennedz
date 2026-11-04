@@ -6265,6 +6265,20 @@ This provides a source for the next front step, but the 63 existing
 rear groups and 27 new contact-candidate sets still need fresh paid
 decisions and ordered road-clock contact checks.
 
+`v94-physical-third-front-km-v1.mjs` now extends the same versioned
+per-rider, per-turn physical front replay from the completed km-2
+boundary. It requires a continuous paid reserve, the source's named
+leader at the physical front, a committed sporting stake and manager
+effort for each included rider, and reconciliation of attached riders'
+energy with the recorded V94 ledger. The three-seed, 24-case audit
+accepts all 23 km-2 full-field replays: 2,447 riders complete km 3
+at the front clock, and 210 newly detached riders remain at partial
+distances. The one km-1 source refusal is unchanged. This is a
+conditional front trace only. It has not moved the 63 rear groups,
+resolved the 27 km-2 contact-candidate sets, completed the new drops,
+or established a km-3 full-field result. It remains outside the
+guided races and has no official finish.
+
 Callers of the experimental preview can request
 `physicalFirstKmVersion: 1` to receive this completed physical first
 kilometre as a separate `physicalFirstKm` result. It requires the
