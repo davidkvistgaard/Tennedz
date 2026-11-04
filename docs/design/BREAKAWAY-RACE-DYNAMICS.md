@@ -5476,6 +5476,16 @@ zero uncovered forward rider-kilometres. The two existing race
 refusals remain, as do 610,350 uncovered peloton and 2,344 uncovered
 dropped rider-kilometres. A launch choice does not establish physical
 contact for the later road group or solve those rear-group gaps.
+The follow-up source audit splits the 2,344 uncovered dropped
+rider-kilometres into 15 first losses from the peloton and 2,329
+continuing kilometres already marked dropped. None is a newly
+dropped front rider. The first loss is `rival-14-0` in seed 1's
+260-km flat, fatigue-0 race at km 115: its abstract deficit rises
+from 2.845 to 3.019 seconds, with zero coast delay and no paid
+front turn. That threshold crossing has no within-kilometre road
+coordinate. A loss or return choice cannot be inferred from it as
+physical contact, and continuing detached work still needs a paid
+road clock before it can become a complete rider decision.
 
 An additional opt-in `pelotonDraftCostVersion: 1` requires explicit
 sporting stakes and the shared paid peloton front. It reduces only the

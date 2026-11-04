@@ -64,6 +64,11 @@ for(let seed=1;seed<=seedCount;seed++)
     uncoveredForwardNewOther:0,
     uncoveredPelotonRiderKilometres:0,
     uncoveredDroppedRiderKilometres:0,
+    newDroppedFromPeloton:0,
+    newDroppedFromFront:0,
+    continuingDropped:0,
+    otherDroppedOrigin:0,
+    firstDroppedWithoutDecision:null,
     paidBunchWorkerRiderKilometres:0,
     paidBunchWorkerDecisionRows:0,
     paidBunchWorkerWithoutDecision:0};
@@ -168,7 +173,27 @@ for(let seed=1;seed<=seedCount;seed++)
       }else if(rider.group==='dropped'){
         coverage.droppedRiderKilometres++;
         if(decisions.has(rider.id))coverage.droppedDecisionRows++;
-        else coverage.uncoveredDroppedRiderKilometres++;
+        else{
+          coverage.uncoveredDroppedRiderKilometres++;
+          const previous=priorFrame?.riderGroups.find(row=>
+            row.id===rider.id);
+          const priorGroup=previous?.group??'peloton';
+          if(priorGroup==='peloton')
+            coverage.newDroppedFromPeloton++;
+          else if(priorGroup==='breakaway')
+            coverage.newDroppedFromFront++;
+          else if(priorGroup==='dropped')
+            coverage.continuingDropped++;
+          else coverage.otherDroppedOrigin++;
+          coverage.firstDroppedWithoutDecision??={
+            km:frame.km,riderId:rider.id,
+            teamId:rider.teamId,priorGroup,
+            priorDeficitSeconds:previous?.deficitSeconds??0,
+            deficitSeconds:rider.deficitSeconds,
+            coastDelaySeconds:ledgerByRider.get(rider.id)
+              ?.coastDelaySeconds??null,
+            paidFrontWorker:paidWorkers.has(rider.id)};
+        }
       }else throw new Error('Unknown rider road group.');
     }
     if(coverage.uncoveredRiderKilometres!==
@@ -202,6 +227,10 @@ if(process.argv.includes('--summary')){
     uncoveredForwardNewOther:0,
     uncoveredPelotonRiderKilometres:0,
     uncoveredDroppedRiderKilometres:0,
+    newDroppedFromPeloton:0,
+    newDroppedFromFront:0,
+    continuingDropped:0,
+    otherDroppedOrigin:0,
     paidBunchWorkerRiderKilometres:0,
     paidBunchWorkerDecisionRows:0,
     paidBunchWorkerWithoutDecision:0};
@@ -230,6 +259,10 @@ if(process.argv.includes('--summary')){
       'uncoveredForwardNewOther',
       'uncoveredPelotonRiderKilometres',
       'uncoveredDroppedRiderKilometres',
+      'newDroppedFromPeloton',
+      'newDroppedFromFront',
+      'continuingDropped',
+      'otherDroppedOrigin',
       'paidBunchWorkerRiderKilometres',
       'paidBunchWorkerDecisionRows',
       'paidBunchWorkerWithoutDecision'])
@@ -239,7 +272,13 @@ if(process.argv.includes('--summary')){
     row.coverage?.firstDiscountedDrop);
   const firstForward=results.find(row=>
     row.coverage?.firstUncoveredForward);
+  const firstDropped=results.find(row=>
+    row.coverage?.firstDroppedWithoutDecision);
   console.log(JSON.stringify({...totals,
+    firstDroppedWithoutDecision:firstDropped?{
+      seed:firstDropped.seed,distanceKm:firstDropped.distanceKm,
+      terrain:firstDropped.terrain,fatigue:firstDropped.fatigue,
+      ...firstDropped.coverage.firstDroppedWithoutDecision}:null,
     firstUncoveredForward:firstForward?{
       seed:firstForward.seed,distanceKm:firstForward.distanceKm,
       terrain:firstForward.terrain,fatigue:firstForward.fatigue,
