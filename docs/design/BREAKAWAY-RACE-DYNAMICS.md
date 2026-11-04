@@ -6664,7 +6664,13 @@ to reconcile energy. Both 120 km flat cases complete every rider
 through km 79. At km 80 the source names four new attackers; their
 individual departures are paid as solo roads. Both cases then finish
 all 160 riders through km 83 and refuse a rear/front contact at km 84
-until that meeting is physically settled. Both 260 km flat cases
+until that meeting is physically settled. In the no-fatigue seed-1
+case, the paid `solo-rival-6-7` road starts 0.133 seconds ahead of the
+peloton at the km-83 boundary; a named chase turn catches it at
+83,272.177 metres. The refusal records the solo's rider, reserve,
+prior road, speed and clock together with the front turn's leader and
+work kind. It does not yet give the caught rider shelter or a finish
+clock. Both 260 km flat cases
 complete every rider through km 89. At km 90 the source
 introduces two new attackers (`rival-19-7` and `rival-6-7`), so the
 post-break replay refuses until their departure is physically paid.

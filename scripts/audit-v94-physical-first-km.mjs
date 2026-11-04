@@ -727,6 +727,7 @@ for(let seed=1;seed<=seedCount;seed++)
         let afterFreshTrace=paidFresh;
         let afterFreshRefusal=null;
         let afterFreshRefusalKm=null;
+        let afterFreshEvidence=null;
         if(afterContactThrough!==null)
           for(let nextSourceKm=km+1;
             nextSourceKm<=Math.min(afterContactThrough,
@@ -752,6 +753,7 @@ for(let seed=1;seed<=seedCount;seed++)
           }catch(error){
             afterFreshRefusal=error.message;
             afterFreshRefusalKm=nextSourceKm;
+            afterFreshEvidence=error.sourceEvidence??null;
             break;
           }
         postBreakFreshProbe={soloRiderIds:freshIds,
@@ -761,6 +763,7 @@ for(let seed=1;seed<=seedCount;seed++)
           afterFreshCompletedThroughKm:
             afterFreshTrace.sourceKm,
           afterFreshRefusalKm,afterFreshRefusal,
+          afterFreshEvidence,
           afterFreshSource:afterFreshRefusalKm?{
             attackers:recording.frames[
               afterFreshRefusalKm-1].attackers,

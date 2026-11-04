@@ -930,7 +930,14 @@ test('paid boundary contacts support a complete second flat kilometre',()=>{
   }
   assert.throws(()=>replayV94PhysicalUnattachedSourceNextKmV1(
     recording,mixedLater),
-  /Physical rear\/front contact needs paid resolution/);
+  error=>/Physical rear\/front contact needs paid resolution/.test(
+    error.message)&&
+    error.sourceEvidence?.roadEvidence?.roadId===
+      'solo-rival-6-7'&&
+    error.sourceEvidence.frontEvidence?.workKind==='chase'&&
+    error.sourceEvidence.atDistanceM>83000&&
+    error.sourceEvidence.atDistanceM<84000&&
+    error.physicalRoads?.frontSegments.length>0);
 });
 
 test('ended source break membership keeps four riders on paid roads',()=>{
