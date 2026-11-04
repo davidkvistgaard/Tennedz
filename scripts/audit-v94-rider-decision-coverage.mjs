@@ -13,6 +13,7 @@ const strictPelotonDropContact=process.argv.includes(
   '--strict-peloton-drop-contact');
 const pelotonFollowerDecisions=process.argv.includes(
   '--peloton-follower-decisions');
+const physicalExposure=process.argv.includes('--physical-exposure');
 const freshAttackDecisions=process.argv.includes(
   '--fresh-attack-decisions');
 const protectorSportingPursuit=process.argv.includes(
@@ -26,6 +27,8 @@ if(draftCost&&strictDraftCost)
 if(pelotonFollowerDecisions&&(!explicitStakes||
   !(draftCost||strictDraftCost)||!strictPelotonDropContact))
   throw new Error('Follower choices need stakes, draft and strict loss contact.');
+if(physicalExposure&&!(draftCost||strictDraftCost))
+  throw new Error('Physical exposure audit needs draft cost.');
 if(freshAttackDecisions&&!explicitStakes)
   throw new Error('Fresh attack choices need explicit stakes.');
 if(protectorSportingPursuit&&!explicitStakes)
@@ -54,6 +57,7 @@ for(let seed=1;seed<=seedCount;seed++)
       pelotonDraftCostVersion:strictDraftCost?2:draftCost?1:0,
       pelotonDropContactVersion:strictPelotonDropContact?1:0,
       pelotonFollowerDecisionVersion:pelotonFollowerDecisions?1:0,
+      pelotonExposureCostVersion:physicalExposure?1:0,
       freshAttackDecisionVersion:freshAttackDecisions?1:0,
       protectorSportingPursuitVersion:protectorSportingPursuit?1:0,
       protectorPursuitTimingVersion:protectorTiming?1:0}));
@@ -240,7 +244,7 @@ if(process.argv.includes('--summary')){
   const totals={seedCount,explicitStakes,draftCost,
     freshAttackDecisions,protectorSportingPursuit,
     protectorTiming,sprintStakes,strictPelotonDropContact,
-    pelotonFollowerDecisions,
+    pelotonFollowerDecisions,physicalExposure,
     strictDraftCost,cases:results.length,
     validatedCases:0,refusedCases:0,
     unresolvedDraftContactCases:0,

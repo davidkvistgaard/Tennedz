@@ -122,6 +122,40 @@ test('opt-in peloton draft lowers sourced follower base cost',()=>{
     !Object.hasOwn(row,'pelotonFollowerDecisions')));
 });
 
+test('opt-in paid front exposure uses the physical leader price',()=>{
+  const sportingStakes=prepareV91Playtest(settings).teams.map(team=>({
+    teamId:team.id,goal:'none',
+    captainId:team.orders.captainId}));
+  const options={format:'one_day',settings,sportingStakes,
+    chaseTurnVersion:1,bunchFrontTurnVersion:1,
+    pelotonFrontTurnVersion:1,pelotonDraftCostVersion:1};
+  const historical=createV94RaceDynamicsPreview(options).recording;
+  const physical=createV94RaceDynamicsPreview({
+    ...options,pelotonExposureCostVersion:1}).recording;
+  const oldPlan=historical.frames[0].pelotonFrontTurnPlan;
+  const plan=physical.frames[0].pelotonFrontTurnPlan;
+  assert.equal(plan.exposureCostVersion,1);
+  const front=plan.turns.find(turn=>turn.workKind==='front');
+  assert.ok(front);
+  const cost=plan.extraEnergyCosts.find(row=>
+    row.riderId===front.leaderRiderId);
+  const oldCost=oldPlan.extraEnergyCosts.find(row=>
+    row.riderId===front.leaderRiderId);
+  assert.equal(cost.extraCost,
+    +(.18*(front.endM-front.startM)/1000).toFixed(6));
+  assert.ok(cost.extraCost>oldCost.extraCost);
+  assert.deepEqual(replayRaceDynamicsRecording(physical),physical);
+  const forged=structuredClone(physical);
+  forged.frames[0].pelotonFrontTurnPlan.extraEnergyCosts[0]
+    .extraCost=.001;
+  assert.throws(()=>validateRecordedTour(forged),
+    /shared peloton turns differ/);
+  assert.throws(()=>createV94RaceDynamicsPreview({
+    ...options,pelotonDraftCostVersion:0,
+    pelotonExposureCostVersion:1}),
+  /valid experimental race settings/);
+});
+
 test('strict draft refuses a rider lost during discounted kilometre',()=>{
   const longSettings={...settings,distanceKm:260};
   const sportingStakes=prepareV91Playtest(longSettings).teams.map(

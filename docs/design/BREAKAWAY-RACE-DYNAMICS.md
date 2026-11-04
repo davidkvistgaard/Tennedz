@@ -5717,3 +5717,34 @@ front clock changes from 79.456 to 79.730 seconds per kilometre;
 the observed prior front clock and own leader estimate stay fixed.
 Both seeds choose `watch`, so this probe does not demonstrate a
 different tactical action or a different physical outcome.
+
+### Opt-in physical front exposure price
+
+The first-kilometre V94/physical origin audit exposed an energy-price
+split. With the old V94 base cost, all 1,583 physically attached
+riders in 23 replayed synthetic cases differed in paid and ending
+energy, with 55.256 summed absolute paid-energy error. Enabling the
+version-1 peloton draft cost reduced that to 44 mismatches among
+1,528 attached riders in 22 completed cases. Every remaining
+mismatch belonged to a named paid front leader: the V94 steady
+front extra cost was 0.12 per kilometre, while the physical exposed
+leader source charged 0.18 per kilometre.
+
+`pelotonExposureCostVersion: 1` is an additional V94 opt-in requiring
+the sourced draft cost. It prices each named shared-front worker's
+actual leading metres at the physical leader's 0.18 extra cost per
+kilometre. The recorded plan carries the exposure version, and
+replay rebuilds its metre intervals and energy costs. Historic
+shared-front plans retain their original price. With both opt-ins,
+the same first-kilometre audit replays 23 of 24 cases and reports
+zero paid-energy and ending-energy mismatches for all 1,583
+physically attached riders. The remaining case refuses a simultaneous
+fresh attack and paid pursuit that lacks a shared road-clock contract.
+This comparison is limited to kilometre 1 and does not validate
+later losses, catches, finishes or realistic racing outcomes.
+In the separate three-seed, 24-case V94 whole-race decision inventory
+with strict loss contact, draft, follower, fresh-attack and protector
+timing opt-ins, the exposure price accepts the same 19 cases and
+refuses the same five unresolved peloton losses. The accepted races
+retain 544,000 versioned individual rider-kilometre decisions.
+The invariant does not establish a realistic whole-race finish.
