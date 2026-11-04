@@ -6176,6 +6176,16 @@ pursuit contract. This is a one-kilometre physical result only;
 subsequent front and solo roads, contacts, and whole-race finishing
 remain unvalidated.
 
+At the first-kilometre boundary, all 690 detached riders in those
+23 probes belong to 63 sets that share the same calculated distance
+and clock. `coincidentSoloSets` records those rider IDs and times,
+while `continuationNeedsContactDecision` stays true. The sets are
+parallel paid solo tracks, not rear groups or assigned wheels.
+Continuing one rider in isolation would ignore the others at the
+same place and time. A subsequent kilometre must resolve their
+actual orders, stakes, shared work and contact before forming any
+rear group or claiming a complete field replay.
+
 Callers of the experimental preview can request
 `physicalFirstKmVersion: 1` to receive this completed physical first
 kilometre as a separate `physicalFirstKm` result. It requires the

@@ -46,6 +46,9 @@ for(let seed=1;seed<=seedCount;seed++)
         detachedRiderCount:physical.detachedRiderCount,
         ...(completion?{
           completedWholeFirstKm:completion.completeRiderKilometres,
+          coincidentSoloSets:completion.coincidentSoloSets.length,
+          coincidentSoloRiders:completion.coincidentSoloSets.reduce(
+            (sum,row)=>sum+row.riderIds.length,0),
           lastSoloClockSeconds:completion.soloCompletions.length?
             Math.max(...completion.soloCompletions.map(row=>
               row.finishClockSeconds)):null}:{}),
@@ -66,4 +69,8 @@ console.log(JSON.stringify({seedCount,complete,cases:cases.length,
     sum+row.detachedRiderCount,0),
   completedWholeFirstKm:accepted.reduce((sum,row)=>
     sum+(row.completedWholeFirstKm??0),0),
+  coincidentSoloSets:accepted.reduce((sum,row)=>
+    sum+(row.coincidentSoloSets??0),0),
+  coincidentSoloRiders:accepted.reduce((sum,row)=>
+    sum+(row.coincidentSoloRiders??0),0),
   firstCase:cases[0],refusals:cases.filter(row=>row.refusal)},null,2));

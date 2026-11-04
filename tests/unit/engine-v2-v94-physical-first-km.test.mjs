@@ -86,6 +86,9 @@ test('first V94 kilometre prices each named turn and detached solo metre',()=>{
   assert.equal(completed.soloCompletions.length,
     physical.detachedRiderCount);
   assert.deepEqual(completed.physicalRearGroups,[]);
+  assert.equal(completed.continuationNeedsContactDecision,true);
+  assert.ok(completed.coincidentSoloSets.some(row=>
+    row.riderIds.includes(riderId)&&row.riderIds.length>1));
   assert.equal(completed.officialResults,false);
   assert.ok(completed.finishes.every(row=>
     row.endDistanceM===1000&&
