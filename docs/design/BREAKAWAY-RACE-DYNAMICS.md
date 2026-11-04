@@ -5743,7 +5743,7 @@ fresh attack and paid pursuit that lacks a shared road-clock contract.
 This comparison is limited to kilometre 1 and does not validate
 later losses, catches, finishes or realistic racing outcomes.
 The same comparison exposes a separate pace problem. In the 23
-replayed first kilometres, the physical origin marks 2,097 riders
+replayed first kilometres, the physical origin projects 2,097 riders
 as unable to hold the named front while V94 still calls them peloton
 riders. The physical source's speed shelter and V94's consecutive
 kilometre deficit threshold do not describe the same contact rule.
@@ -5757,7 +5757,7 @@ the exposed leader's speed and the follower's hold speed, cancelling
 the follower advantage in the contact comparison. The opt-in applies
 those existing two points only to the sheltered follower and records
 a distinct origin version. On the same 23 first-kilometre cases,
-physical/V94 membership disagreement falls from 2,097 to 1,657
+projected physical/V94 membership disagreement falls from 2,097 to 1,657
 riders; 2,023 attached riders retain exact paid and ending energy
 agreement. The 46–105 projected losses per case remain far above
 what V94's first-kilometre peloton labels record. This diagnostic
@@ -5792,13 +5792,25 @@ tests across terrain and wind, and whole-race contact and finish
 validation; no rider position or wheel may be inferred to apply a
 position-specific research result.
 In the existing synthetic first-kilometre audit with the two-point
-diagnostic, 556 of 1,280 riders lose the physical bunch in the flat
-settings, another 556 of 1,280 in the rolling settings, and 545 of
-1,120 in the seven replayed mountain settings. The rolling and flat
-routes have the same first-kilometre road, so their equal counts are
-not independent terrain evidence. The mountain set has one refusal
-and is not directly comparable as a matched population. These are
-model discrepancies, not observed real-race drop rates.
+diagnostic, 556 of 1,280 riders are projected to lose the physical
+bunch in the flat settings, another 556 of 1,280 in the rolling
+settings, and 545 of 1,120 in the seven replayed mountain settings.
+Flat and rolling routes have the same first-kilometre road; their
+equal counts are not independent terrain evidence. The mountain set
+has one refusal and is not directly comparable as a matched population.
+These are model discrepancies, not observed real-race drop rates.
+The origin audit now records the split metre and speed shortfall for
+each of those 1,657 projected losses. All 1,657 occur at metre zero,
+before a paid slice of the first kilometre. The computed bunch speed
+exceeds the rider's hold speed by 0.084252–1.850343 km/h (median
+0.50452 km/h; 90th percentile 1.064107 km/h). The origin source
+assumes that any positive speed shortfall immediately loses the
+starting wheel; it has no measured initial separation or within-turn
+gap integration. Its output therefore cannot prove that these riders
+actually detached at kilometre 1. The comparison establishes a
+contact-model disagreement and identifies the missing physical road
+contract. It is not a calibrated drop count and must not be used to
+override V94's strict loss refusal or infer a wheel position.
 In the separate three-seed, 24-case V94 whole-race decision inventory
 with strict loss contact, draft, follower, fresh-attack and protector
 timing opt-ins, the exposure price accepts the same 19 cases and

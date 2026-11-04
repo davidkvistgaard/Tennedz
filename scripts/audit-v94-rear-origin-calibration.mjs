@@ -1,5 +1,7 @@
 // Read-only same-seed comparison. A V94 front-turn capacity is not a
 // calibrated physical bunch clock or proof that a rider lost the wheel.
+// A speed shortfall at the starting wheel is a projection, not a measured
+// separation or paid within-kilometre contact transition.
 import {createV94RaceDynamicsPreview} from
   '../lib/engine/v2/playtest-race-dynamics-v94.mjs';
 import {prepareV91Playtest} from
@@ -53,6 +55,9 @@ for(let seedNumber=1;seedNumber<=4;seedNumber++)
       let projectedHolds=0;
       let physicalLostButV94Peloton=0;
       let physicalHeldButV94Dropped=0;
+      let paceLossAtStart=0;
+      let paceLossAfterPaidMetres=0;
+      const paceLossSpeedShortfallsKph=[];
       let heldPaidMismatches=0;
       let heldEnergyMismatches=0;
       let heldPaidAbsoluteError=0;
@@ -76,8 +81,15 @@ for(let seedNumber=1;seedNumber<=4;seedNumber++)
           const paid=energyById.get(rider.id);
           if(!paid)throw new Error('Missing first-kilometre energy source.');
           if(road.status==='wheel_lost'){
-            if(road.steps[0].split.kind!=='physical_pace_loss')
+            const split=road.steps[0].split;
+            if(split.kind!=='physical_pace_loss')
               throw new Error('Unexpected first-kilometre split source.');
+            if(split.atDistanceM===0)paceLossAtStart++;
+            else if(split.atDistanceM>0&&split.atDistanceM<1000)
+              paceLossAfterPaidMetres++;
+            else throw new Error('Invalid first-kilometre split metre.');
+            paceLossSpeedShortfallsKph.push(+(
+              split.bunchSpeedKph-split.holdSpeedKph).toFixed(6));
             projectedPaceLosses++;
             if(groupById.get(rider.id)==='peloton')
               physicalLostButV94Peloton++;
@@ -116,8 +128,13 @@ for(let seedNumber=1;seedNumber<=4;seedNumber++)
         }
       if(projectedPaceLosses+projectedHolds!==160)
         throw new Error('First-kilometre physical origin omitted a rider.');
+      if(paceLossAtStart+paceLossAfterPaidMetres!==projectedPaceLosses||
+        paceLossSpeedShortfallsKph.length!==projectedPaceLosses)
+        throw new Error('First-kilometre loss metre source is incomplete.');
       results.push({seedNumber,terrain,fatigue,
         projectedPaceLosses,paidPositive,unmetDemand,
+        paceLossAtStart,paceLossAfterPaidMetres,
+        paceLossSpeedShortfallsKph,
         projectedHolds,physicalLostButV94Peloton,
         physicalHeldButV94Dropped,
         heldPaidMismatches,heldEnergyMismatches,
@@ -125,10 +142,12 @@ for(let seedNumber=1;seedNumber<=4;seedNumber++)
         heldMismatchByKind,firstHeldMismatch,
         v94FirstFrameRoadGroups:frame.roadGroups.length});
     }
-const version='v94-rear-origin-calibration-4';
+const version='v94-rear-origin-calibration-5';
 if(process.argv.includes('--summary')){
   const replayed=results.filter(row=>!row.refusal);
   const sum=key=>replayed.reduce((total,row)=>total+row[key],0);
+  const shortfalls=replayed.flatMap(row=>
+    row.paceLossSpeedShortfallsKph).sort((a,b)=>a-b);
   console.log(JSON.stringify({version,draftCost,physicalExposure,
     followerSpeedAdvantage,
     cases:results.length,
@@ -139,6 +158,13 @@ if(process.argv.includes('--summary')){
     projectedPaceLossesMax:Math.max(...replayed.map(row=>
       row.projectedPaceLosses)),
     projectedHolds:sum('projectedHolds'),
+    paceLossAtStart:sum('paceLossAtStart'),
+    paceLossAfterPaidMetres:sum('paceLossAfterPaidMetres'),
+    paceLossSpeedShortfallKph:shortfalls.length?{
+      min:shortfalls[0],
+      median:shortfalls[Math.floor((shortfalls.length-1)/2)],
+      p90:shortfalls[Math.floor((shortfalls.length-1)*.9)],
+      max:shortfalls.at(-1)}:null,
     physicalLostButV94Peloton:sum('physicalLostButV94Peloton'),
     physicalHeldButV94Dropped:sum('physicalHeldButV94Dropped'),
     heldPaidMismatches:sum('heldPaidMismatches'),
@@ -155,4 +181,5 @@ if(process.argv.includes('--summary')){
       seedNumber:row.seedNumber,terrain:row.terrain,
       fatigue:row.fatigue,refusal:row.refusal}))}));
 }else console.log(JSON.stringify({version,draftCost,
-  physicalExposure,followerSpeedAdvantage,results}));
+  physicalExposure,followerSpeedAdvantage,
+  results:results.map(({paceLossSpeedShortfallsKph,...row})=>row)}));
