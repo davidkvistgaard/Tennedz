@@ -6175,3 +6175,11 @@ with 0.20815 reserve paid and 99.792 energy after rounding. The
 pursuit contract. This is a one-kilometre physical result only;
 subsequent front and solo roads, contacts, and whole-race finishing
 remain unvalidated.
+
+Callers of the experimental preview can request
+`physicalFirstKmVersion: 1` to receive this completed physical first
+kilometre as a separate `physicalFirstKm` result. It requires the
+named peloton-front plan and committed sporting stakes. It does not
+change the V94 recording, guided-race policy, provisional finish or
+default API response. The opt-in result is source-replayed and has no
+official placing or whole-race claim.

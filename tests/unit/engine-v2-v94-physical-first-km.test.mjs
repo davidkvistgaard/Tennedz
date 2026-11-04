@@ -19,13 +19,16 @@ test('first V94 kilometre prices each named turn and detached solo metre',()=>{
     seed:'preview-recorded-road-1'};
   const sportingStakes=prepareV91Playtest(settings).teams.map(team=>({
     teamId:team.id,goal:'sprint_finish',captainId:team.orders.captainId}));
-  const {recording}=createV94RaceDynamicsPreview({
+  const options={
     format:'one_day',settings,sportingStakes,
     roadGroupPaceVersion:3,chaseTurnVersion:1,
     bunchFrontTurnVersion:1,pelotonFrontTurnVersion:1,
     pelotonDraftCostVersion:1,pelotonExposureCostVersion:1,
     freshAttackDecisionVersion:1,roadGroupRiderDecisionVersion:1,
-    protectorSportingPursuitVersion:1});
+    protectorSportingPursuitVersion:1};
+  const baseline=createV94RaceDynamicsPreview(options);
+  const {recording}=baseline;
+  assert.equal(Object.hasOwn(baseline,'physicalFirstKm'),false);
   const physical=replayV94PhysicalFirstKmV1(recording);
   const starters=recording.committedInputs.teams.length*8;
   assert.equal(physical.road.length,
@@ -94,6 +97,14 @@ test('first V94 kilometre prices each named turn and detached solo metre',()=>{
   assert.equal(soloFinish.physicalGroup,`solo-${riderId}`);
   assert.equal(validateV94PhysicalFirstKmCompletionV1(
     recording,completed),true);
+  const integrated=createV94RaceDynamicsPreview({
+    ...options,physicalFirstKmVersion:1});
+  assert.deepEqual(integrated.physicalFirstKm,completed);
+  assert.equal(Object.hasOwn(integrated.recording.committedInputs
+    .raceContext,'physicalFirstKmVersion'),false);
+  assert.throws(()=>createV94RaceDynamicsPreview({
+    ...options,pelotonFrontTurnVersion:0,
+    physicalFirstKmVersion:1}),/valid experimental race settings/);
   const forgedFinish=structuredClone(completed);
   forgedFinish.finishes.find(row=>row.riderId===riderId)
     .energyAfter=100;
