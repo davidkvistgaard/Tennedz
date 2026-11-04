@@ -5915,12 +5915,23 @@ The read-only `audit-v94-rear-origin-multikm.mjs --recorded-work=1`
 compared four accepted 20-team, 120 km V94 races: flat fatigue 0/30,
 rolling fatigue 0, and mountain fatigue 30. Across 13,844 physical
 held rider-kilometres, paid demand and ending reserve match the V94
-ledger within 0.001 in every kilometre. Those races contain 74,369
+ledger within 0.001 in every kilometre. The expanded audit also
+matches starting reserve and recovery in every accepted kilometre.
+Those races contain 74,369
 V94 peloton rider-kilometres before a first non-peloton label, and
 the physical road still projects a pace loss for 537 riders. Mountain
 fatigue 0 refuses at km 11 for an unresolved V94 peloton drop. Neither
 the energy match nor the V94 checkpoint labels establish the missing
 physical contact or a whole-field finish.
+
+The same seed on three accepted 260 km cases (flat fatigue 0/30 and
+mountain fatigue 30) has another 21,153 physically held
+rider-kilometres with zero differences in starting reserve, paid
+work, recovery, or ending reserve. The source has 120,306 V94 peloton
+rider-kilometres; the physical road projects loss for 408 riders.
+These are same-source accounting checks, not independent observations
+of race contact. The late route-cap reduction is covered by a full
+260 km replay of rider `rival-1-7`.
 
 `runRearRecordedBunchOriginV3` adds a separate versioned reconciliation
 for each accepted kilometre: reserve before the turn, paid work,

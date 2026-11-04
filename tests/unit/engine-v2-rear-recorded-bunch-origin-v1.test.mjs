@@ -131,3 +131,26 @@ test('V94 recorded follower work anchors a separate paid physical road',()=>{
   assert.throws(()=>runRearRecordedBunchOriginV2({...input,
     recording:changed}),/differ|replay|source|turn/);
 });
+
+test('recorded source energy stays aligned beyond the late route cap',()=>{
+  const settings={distanceKm:260,terrain:'flat',teamCount:20,
+    fatigue:30,attack:'none',chase:'selective',
+    seed:'preview-recorded-road-1'};
+  const sportingStakes=prepareV91Playtest(settings).teams.map(team=>({
+    teamId:team.id,goal:'sprint_finish',
+    captainId:team.orders.captainId}));
+  const {recording}=createV94RaceDynamicsPreview({format:'one_day',
+    settings,sportingStakes,roadGroupPaceVersion:3,
+    bunchFrontTurnVersion:1,chaseTurnVersion:1,
+    pelotonFrontTurnVersion:1,pelotonDraftCostVersion:1,
+    pelotonExposureCostVersion:1,pelotonDropContactVersion:1,
+    pelotonFollowerDecisionVersion:2});
+  const result=runRearRecordedBunchOriginV3({recording,
+    riderId:'rival-1-7',throughKm:260});
+  assert.equal(result.road.status,'bunch');
+  assert.equal(result.sourceEnergyReconciliation.length,260);
+  assert.ok(result.road.steps[160].cap<100);
+  assert.equal(result.sourceEnergyReconciliation[160]
+    .sourceEnergyAfter,result.sourceEnergyReconciliation[160]
+    .physicalEnergyAfter);
+});

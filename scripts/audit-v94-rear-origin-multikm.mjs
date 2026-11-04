@@ -56,8 +56,10 @@ const summary={version:'v94-rear-origin-multikm-1',
   recordedWork,
   riders:0,v94PelotonRiderKm:0,physicalHeldRiderKm:0,
   energyAndPaidMatchedKm:0,
+  allEnergyMatchedKm:0,
   projectedPaceLossRiders:0,physicalRefusals:0,
-  paidMismatches:0,energyMismatches:0,
+  beforeMismatches:0,paidMismatches:0,
+  recoveryMismatches:0,energyMismatches:0,
   earliestMismatch:null,firstOtherMismatch:null,firstRefusal:null,
   firstMismatchRiders:0,firstMismatchRestRiders:0,
   firstMismatchOtherRiders:0,
@@ -111,13 +113,23 @@ for(const team of recording.committedInputs.teams)
       if(!ledger)throw new Error('Missing V94 rider ledger.');
       const physicalPaid=step.slices.reduce((sum,slice)=>
         sum+slice.energySpent,0);
+      const beforeError=Math.abs(
+        step.slices[0].energyBefore-ledger.energyBefore);
       const paidError=Math.abs(physicalPaid-ledger.paidFromReserve);
+      const recoveryError=Math.abs(
+        step.recoveryAward-ledger.recoveryAward);
       const energyError=Math.abs(step.energyAfter-ledger.energyAfter);
       if(paidError<=.001&&energyError<=.001)
         summary.energyAndPaidMatchedKm++;
+      if(beforeError<=.001&&paidError<=.001&&
+        recoveryError<=.001&&energyError<=.001)
+        summary.allEnergyMatchedKm++;
+      if(beforeError>.001)summary.beforeMismatches++;
       if(paidError>.001)summary.paidMismatches++;
+      if(recoveryError>.001)summary.recoveryMismatches++;
       if(energyError>.001)summary.energyMismatches++;
-      if(paidError>.001||energyError>.001){
+      if(beforeError>.001||paidError>.001||
+        recoveryError>.001||energyError>.001){
         const frame=frames[step.sourceKm-1];
         const v94RestTeam=frame.pelotonRestTeamIds
           ?.includes(team.id)??false;
@@ -170,4 +182,8 @@ for(const team of recording.committedInputs.teams)
         step.sourceKm);
     }
   }
+if(recordedWork&&(
+  summary.physicalRefusals>0||
+  summary.allEnergyMatchedKm!==summary.physicalHeldRiderKm))
+  throw new Error('Recorded work differs from V94 paid energy source.');
 console.log(JSON.stringify(summary));
