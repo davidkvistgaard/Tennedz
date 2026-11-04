@@ -6335,6 +6335,20 @@ must reconstruct those before km 5 can join the whole-field replay.
 The prior four kilometres remain available and no source gap is
 copied into the physical trace.
 
+`v94-physical-fresh-launch-boundary-v1.mjs` now records a separate
+source-backed launch observation at that 4,000-metre boundary.
+It verifies that every attacker was physically in the completed
+peloton at the same clock and reserve as the recorded V94 energy
+ledger, and it ties each versioned proposal to the actual manager
+attack, effort and break-work order, sporting goal and captain,
+source attack reason, and perceived attack and solo strength. It
+charges zero new distance and energy, grants no break group, gap
+or shelter, and records whether the source has a paid plan for the
+new road. The same three-seed audit accepts all 23 observations,
+covering 70 fresh attacker proposals; none of their newly formed
+source roads has a first-kilometre paid turn plan. A physical launch
+and later contact still need a separate paid road contract.
+
 Callers of the experimental preview can request
 `physicalFirstKmVersion: 1` to receive this completed physical first
 kilometre as a separate `physicalFirstKm` result. It requires the

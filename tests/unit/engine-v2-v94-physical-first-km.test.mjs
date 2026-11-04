@@ -44,6 +44,10 @@ import {replayV94PhysicalFourthKmV1,
   '../../lib/engine/v2/v94-physical-fourth-km-v1.mjs';
 import {replayV94PhysicalNextKmV1} from
   '../../lib/engine/v2/v94-physical-next-km-v1.mjs';
+import {inspectV94PhysicalFreshLaunchBoundaryV1,
+  validateV94PhysicalFreshLaunchBoundaryV1,
+  V94_PHYSICAL_FRESH_LAUNCH_DECISION_VERSION} from
+  '../../lib/engine/v2/v94-physical-fresh-launch-boundary-v1.mjs';
 
 test('first V94 kilometre prices each named turn and detached solo metre',()=>{
   const settings={distanceKm:120,teamCount:20,terrain:'mountain',
@@ -338,6 +342,24 @@ test('second front records an early climb loss without completing rear road',()=
         recording.frames[4].attackers.length&&
       error.sourceEvidence.priorAttackerGroups.every(row=>
         row.physicalGroup==='peloton'));
+  const launch=inspectV94PhysicalFreshLaunchBoundaryV1(
+    recording,fourth);
+  assert.equal(launch.sourceKm,5);
+  assert.equal(launch.atDistanceM,4000);
+  assert.equal(launch.sourceNewBreakHasPaidTurnPlan,false);
+  assert.deepEqual(launch.physicalRoadGroups,[]);
+  assert.ok(launch.decisions.every(row=>
+    row.version===V94_PHYSICAL_FRESH_LAUNCH_DECISION_VERSION&&
+    row.choice==='attempt_paid_launch'&&
+    row.paidNewDistanceM===0&&row.paidNewEnergy===0&&
+    Number.isFinite(row.perceivedAttackAbility)));
+  assert.equal(validateV94PhysicalFreshLaunchBoundaryV1(
+    recording,fourth,launch),true);
+  const forgedLaunch=structuredClone(launch);
+  forgedLaunch.decisions[0].paidNewEnergy=1;
+  assert.throws(()=>validateV94PhysicalFreshLaunchBoundaryV1(
+    recording,fourth,forgedLaunch),
+  /differs from paid source/);
 });
 
 test('paid boundary contacts support a complete second flat kilometre',()=>{

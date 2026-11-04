@@ -33,6 +33,9 @@ import {replayV94PhysicalFourthKmV1,
 import {replayV94PhysicalNextKmV1,
   validateV94PhysicalNextKmV1} from
   '../lib/engine/v2/v94-physical-next-km-v1.mjs';
+import {inspectV94PhysicalFreshLaunchBoundaryV1,
+  validateV94PhysicalFreshLaunchBoundaryV1} from
+  '../lib/engine/v2/v94-physical-fresh-launch-boundary-v1.mjs';
 
 const requested=process.argv.find(arg=>arg.startsWith('--seeds='));
 const seedCount=requested?Number(requested.slice(8)):1;
@@ -51,11 +54,14 @@ const fourthReplay=process.argv.includes('--fourth-replay');
 const nextRequested=process.argv.find(arg=>
   arg.startsWith('--next-through='));
 const nextThrough=nextRequested?Number(nextRequested.slice(15)):null;
+const freshLaunchBoundary=process.argv.includes(
+  '--fresh-launch-boundary');
 if((secondFront||boundaryChoice||secondRear||thirdSource)&&!complete||
   thirdSource&&!secondRear||thirdFront&&!secondRear||
   thirdBoundary&&!secondRear||thirdRear&&!secondRear||
   fourthSource&&!thirdRear||fourthReplay&&!thirdRear||
-  nextThrough!==null&&!fourthReplay)
+  nextThrough!==null&&!fourthReplay||
+  freshLaunchBoundary&&!fourthReplay)
   throw new Error('Continuation audit needs --complete.');
 if(nextThrough!==null&&(!Number.isInteger(nextThrough)||
   nextThrough<5||nextThrough>260))
@@ -124,6 +130,13 @@ for(let seed=1;seed<=seedCount;seed++)
         fourthTrace=replayV94PhysicalFourthKmV1(recording);
         validateV94PhysicalFourthKmV1(recording,fourthTrace);
       }catch(error){fourthRefusal=error.message;}
+      let freshLaunch=null,freshLaunchRefusal=null;
+      if(freshLaunchBoundary&&fourthTrace)try{
+        freshLaunch=inspectV94PhysicalFreshLaunchBoundaryV1(
+          recording,fourthTrace);
+        validateV94PhysicalFreshLaunchBoundaryV1(
+          recording,fourthTrace,freshLaunch);
+      }catch(error){freshLaunchRefusal=error.message;}
       let nextTrace=fourthTrace,nextRefusal=null;
       let nextRefusalKm=null,nextRefusalEvidence=null;
       if(nextThrough!==null&&fourthTrace){
@@ -267,6 +280,11 @@ for(let seed=1;seed<=seedCount;seed++)
             nextCompletedThroughKm:nextTrace?.sourceKm??null,
             nextRearGroups:nextTrace?.physicalRearGroups.length??0,
             nextRefusalKm,nextRefusal,nextRefusalEvidence}:{}),
+          ...(freshLaunchBoundary?{
+            freshLaunchDecisions:freshLaunch?.decisions.length??0,
+            freshLaunchSourcePaidPlan:
+              freshLaunch?.sourceNewBreakHasPaidTurnPlan??null,
+            freshLaunchRefusal}:{}),
           lastSoloClockSeconds:completion.soloCompletions.length?
             Math.max(...completion.soloCompletions.map(row=>
               row.finishClockSeconds)):null}:{}),
@@ -280,7 +298,7 @@ for(let seed=1;seed<=seedCount;seed++)
 const accepted=cases.filter(row=>!row.refusal);
 console.log(JSON.stringify({seedCount,complete,secondFront,boundaryChoice,
   secondRear,thirdSource,thirdFront,thirdBoundary,thirdRear,
-  fourthSource,fourthReplay,nextThrough,
+  fourthSource,fourthReplay,nextThrough,freshLaunchBoundary,
   cases:cases.length,
   replayedFirstKilometres:accepted.length,
   refusedCases:cases.length-accepted.length,
@@ -367,6 +385,13 @@ console.log(JSON.stringify({seedCount,complete,secondFront,boundaryChoice,
       terrain:row.terrain,fatigue:row.fatigue,
       km:row.nextRefusalKm,refusal:row.nextRefusal,
       evidence:row.nextRefusalEvidence})),
+  freshLaunchObservations:accepted.filter(row=>
+    row.freshLaunchRefusal===null&&
+    row.freshLaunchDecisions>0).length,
+  freshLaunchDecisions:accepted.reduce((sum,row)=>
+    sum+(row.freshLaunchDecisions??0),0),
+  freshLaunchPaidPlans:accepted.filter(row=>
+    row.freshLaunchSourcePaidPlan===true).length,
   firstCase:cases[0],refusals:cases.filter(row=>row.refusal),
   secondFrontRefusals:accepted.filter(row=>
     row.nextFrontRefusal),
@@ -389,5 +414,9 @@ console.log(JSON.stringify({seedCount,complete,secondFront,boundaryChoice,
   fourthRefusals:accepted.filter(row=>
     row.fourthRefusal).map(row=>({seed:row.seed,
       distanceKm:row.distanceKm,terrain:row.terrain,
-      fatigue:row.fatigue,refusal:row.fourthRefusal}))},
+      fatigue:row.fatigue,refusal:row.fourthRefusal})),
+  freshLaunchRefusals:accepted.filter(row=>
+    row.freshLaunchRefusal).map(row=>({seed:row.seed,
+      distanceKm:row.distanceKm,terrain:row.terrain,
+      fatigue:row.fatigue,refusal:row.freshLaunchRefusal}))},
 null,2));
