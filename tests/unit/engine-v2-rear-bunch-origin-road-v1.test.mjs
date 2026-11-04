@@ -53,6 +53,54 @@ test('opt-in follower speed benefit applies only behind the named front',()=>{
     /differs/);
 });
 
+test('recorded work prices sourced rest and a named chase turn',()=>{
+  const plans=[
+    {version:'v2-peloton-front-turns-1',status:'worked',
+      exposureCostVersion:1,leaderAbility:50,
+      turns:[{teamId:'other',leaderRiderId:'leader',
+        workKind:'front',startM:0,endM:1000,ability:50}],
+      extraEnergyCosts:[{teamId:'other',riderId:'leader',
+        workKind:'front',leadingM:1000,extraCost:.18}]},
+    {version:'v2-peloton-front-turns-1',status:'worked',
+      exposureCostVersion:1,leaderAbility:90,
+      turns:[{teamId:'team',leaderRiderId:'r',
+        workKind:'chase',startM:0,endM:1000,ability:90}],
+      extraEnergyCosts:[{teamId:'team',riderId:'r',
+        workKind:'chase',leadingM:1000,extraCost:.4}]},
+  ];
+  const source={rider,orders:{baseline:{effort:'steady'},phases:[]},
+    routeKilometres:routeKilometres.slice(0,2),
+    bunchTurnPlans:plans,choices:choices.slice(0,2).map(choice=>({
+      ...choice,effort:'steady'})),stageNumber:1,stageCount:1};
+  const ordinary=runRearBunchOriginRoadV1({
+    ...source,followerSpeedVersion:1});
+  const recordedInput={...source,teamId:'team',
+    followerSpeedVersion:1,recordedWorkVersion:1,
+    followerDecisions:[{version:'v94-peloton-follower-effort-2',
+      sourceKm:1,riderId:'r',teamId:'team',
+      teamOrderEffort:'steady',appliedEffort:'conserve',
+      effortSource:'recorded_peloton_rest'},null]};
+  const recorded=runRearBunchOriginRoadV1(recordedInput);
+  assert.equal(recorded.status,'bunch');
+  assert.equal(recorded.version,'v2-rear-bunch-recorded-work-1');
+  assert.equal(recorded.steps[0].appliedEffort,'conserve');
+  assert.equal(recorded.steps[0].effortSource,'recorded_peloton_rest');
+  assert.ok(recorded.steps[0].slices[0].energySpent<
+    ordinary.steps[0].slices[0].energySpent);
+  assert.equal(recorded.steps[1].slices[0].sourceExtraCost,.4);
+  assert.ok(recorded.steps[1].slices[0].energySpent>
+    ordinary.steps[1].slices[0].energySpent);
+  assert.equal(validateRearBunchOriginRoadV1(
+    recordedInput,recorded),true);
+  assert.throws(()=>runRearBunchOriginRoadV1({...recordedInput,
+    followerDecisions:[{...recordedInput.followerDecisions[0],
+      appliedEffort:'hard'},null]}),/follower decision source/);
+  assert.throws(()=>runRearBunchOriginRoadV1({...recordedInput,
+    bunchTurnPlans:[plans[0],{...plans[1],extraEnergyCosts:[{
+      ...plans[1].extraEnergyCosts[0],extraCost:NaN}]}]}),
+  /follower decision source/);
+});
+
 test('physical bunch origin pays wheels before a climb pace split',()=>{
   const road=runRearBunchOriginRoadV1(input);
   assert.equal(road.status,'wheel_lost');

@@ -4,8 +4,12 @@ import {createV94RaceDynamicsPreview} from
   '../../lib/engine/v2/playtest-race-dynamics-v94.mjs';
 import {orderAt} from '../../lib/engine/v2/orders.mjs';
 import {runRearRecordedBunchOriginV1,
-  validateRearRecordedBunchOriginV1} from
+  validateRearRecordedBunchOriginV1,
+  runRearRecordedBunchOriginV2,
+  validateRearRecordedBunchOriginV2} from
   '../../lib/engine/v2/rear-recorded-bunch-origin-v1.mjs';
+import {prepareV91Playtest} from
+  '../../lib/engine/v2/playtest.mjs';
 
 test('V94 paid bunch turn can anchor a separate physical start road',()=>{
   const {recording}=createV94RaceDynamicsPreview({format:'one_day',
@@ -74,4 +78,37 @@ test('recorded stage number cannot invent a future-stage schedule',()=>{
     choices:[{...choice,action:'release_wheel',
       reason:'committed_future_stage_reserve'}]}),
   /no committed future-stage schedule/);
+});
+
+test('V94 recorded follower work anchors a separate paid physical road',()=>{
+  const settings={distanceKm:120,terrain:'flat',teamCount:20,
+    fatigue:0,attack:'none',chase:'selective',
+    seed:'chase-turn-holdout-1-flat-0'};
+  const sportingStakes=prepareV91Playtest(settings).teams.map(team=>({
+    teamId:team.id,goal:'sprint_finish',
+    captainId:team.orders.captainId}));
+  const {recording}=createV94RaceDynamicsPreview({format:'one_day',
+    settings,sportingStakes,roadGroupPaceVersion:3,
+    bunchFrontTurnVersion:1,chaseTurnVersion:1,
+    pelotonFrontTurnVersion:1,pelotonDraftCostVersion:1,
+    pelotonExposureCostVersion:1,pelotonDropContactVersion:1,
+    pelotonFollowerDecisionVersion:2});
+  const riderId=recording.frames[0].pelotonFrontTurnPlan.turns[0]
+    .leaderRiderId;
+  const input={recording,riderId,throughKm:1};
+  const result=runRearRecordedBunchOriginV2(input);
+  assert.equal(result.version,'v2-rear-recorded-bunch-work-2');
+  assert.equal(result.road.status,'bunch');
+  assert.equal(result.road.steps[0].slices[0].role,'leader');
+  assert.equal(result.checkpointGroupIsPhysicalPosition,false);
+  assert.equal(validateRearRecordedBunchOriginV2(input,result),true);
+  const forged=structuredClone(result);
+  forged.road.steps[0].slices[0].energySpent=0;
+  assert.throws(()=>validateRearRecordedBunchOriginV2(
+    input,forged),/differs/);
+  const changed=structuredClone(recording);
+  changed.frames[0].pelotonFrontTurnPlan.extraEnergyCosts[0]
+    .extraCost=0;
+  assert.throws(()=>runRearRecordedBunchOriginV2({...input,
+    recording:changed}),/differ|replay|source|turn/);
 });

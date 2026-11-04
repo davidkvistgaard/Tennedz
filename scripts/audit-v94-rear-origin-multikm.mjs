@@ -18,33 +18,42 @@ const distanceKm=Number(option('distance',120));
 const fatigue=Number(option('fatigue',0));
 const terrain=option('terrain','flat');
 const seedNumber=Number(option('seed-number',1));
+const recordedWork=Number(option('recorded-work',0));
 if(![120,260].includes(distanceKm)||![0,30].includes(fatigue)||
   !['flat','rolling','mountain'].includes(terrain)||
-  !Number.isInteger(seedNumber)||seedNumber<1||seedNumber>4)
+  !Number.isInteger(seedNumber)||seedNumber<1||seedNumber>4||
+  ![0,1].includes(recordedWork))
   throw new Error('Multikm origin audit needs a known synthetic case.');
 const settings={distanceKm,terrain,teamCount:20,
   fatigue,attack:'none',chase:'selective',
   seed:`preview-recorded-road-${seedNumber}`};
 const sportingStakes=prepareV91Playtest(settings).teams.map(team=>({
-  teamId:team.id,goal:'none',captainId:team.orders.captainId}));
+  teamId:team.id,goal:recordedWork?'sprint_finish':'none',
+  captainId:team.orders.captainId}));
 let recording;
 try{
   ({recording}=createV94RaceDynamicsPreview({format:'one_day',
     settings,sportingStakes,roadGroupPaceVersion:3,
     bunchFrontTurnVersion:1,chaseTurnVersion:1,
     pelotonFrontTurnVersion:1,pelotonDraftCostVersion:1,
-    pelotonExposureCostVersion:1}));
+    pelotonExposureCostVersion:1,
+    ...(recordedWork?{pelotonDropContactVersion:1,
+      pelotonFollowerDecisionVersion:2}:{})}));
 }catch(error){
   if(!String(error.message).includes(
-    'Combined fresh attack and paid pursuit'))throw error;
+    'Combined fresh attack and paid pursuit')&&
+    !String(error.message).includes(
+      'Unresolved peloton drop contact'))throw error;
   console.log(JSON.stringify({version:'v94-rear-origin-multikm-1',
-    seedNumber,distanceKm,terrain,fatigue,refusal:error.message}));
+    seedNumber,distanceKm,terrain,fatigue,recordedWork,
+    refusal:error.message}));
   process.exit(0);
 }
 replayRaceDynamicsRecording(recording);
 const frames=recording.frames;
 const summary={version:'v94-rear-origin-multikm-1',
   raceSeed:recording.raceSeed,seedNumber,distanceKm,terrain,fatigue,
+  recordedWork,
   riders:0,v94PelotonRiderKm:0,physicalHeldRiderKm:0,
   energyAndPaidMatchedKm:0,
   projectedPaceLossRiders:0,physicalRefusals:0,
@@ -71,11 +80,19 @@ for(const team of recording.committedInputs.teams)
       effort:orderAt(team.orders,segment.km-1).effort,
       action:'hold_wheel',reason:'follow_order'}));
     let road;
+    const followerDecisions=recordedWork?
+      frames.slice(0,pelotonKm).map(frame=>
+        frame.pelotonFrontTurnPlan.turns.some(turn=>
+          turn.leaderRiderId===rider.id)?null:
+          frame.pelotonFollowerDecisions.find(row=>
+            row.riderId===rider.id)):null;
     try{
       road=runRearBunchOriginRoadV1({rider,
         orders:team.orders,routeKilometres,bunchTurnPlans,
         choices,stageNumber:1,stageCount:1,
-        followerSpeedVersion:1});
+        followerSpeedVersion:1,
+        ...(recordedWork?{recordedWorkVersion:1,
+          teamId:team.id,followerDecisions}:{})});
     }catch(error){
       summary.physicalRefusals++;
       summary.firstRefusal??={riderId:rider.id,
