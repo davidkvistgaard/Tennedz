@@ -10,6 +10,8 @@ import {prepareV91Playtest} from
   '../../lib/engine/v2/playtest.mjs';
 import {decideV94PaidBunchWorkersV1} from
   '../../lib/engine/v2/v94-paid-bunch-worker-decisions-v1.mjs';
+import {inspectV94PelotonHoldCeilingV1} from
+  '../../lib/engine/v2/v94-peloton-hold-ceiling-v1.mjs';
 
 const settings={distanceKm:120,teamCount:20,terrain:'flat',fatigue:0,
   attack:'none',chase:'selective',seed:'chase-turn-holdout-1-flat-0'};
@@ -246,6 +248,51 @@ test('strict deficit onset refuses before a peloton drop label',()=>{
     .deficitSeconds=.1;
   assert.throws(()=>validateRecordedTour(forged),
     /Recorded peloton deficit onset lacks paid contact/);
+});
+
+test('strict hold ceiling exposes an unholdable named turn before deficit',()=>{
+  const mountain={...settings,terrain:'mountain',
+    seed:'preview-recorded-road-1'};
+  const sportingStakes=prepareV91Playtest(mountain).teams.map(team=>({
+    teamId:team.id,goal:'sprint_finish',captainId:team.orders.captainId}));
+  const options={format:'one_day',settings:mountain,sportingStakes,
+    roadGroupPaceVersion:3,chaseTurnVersion:1,
+    bunchFrontTurnVersion:1,pelotonFrontTurnVersion:1,
+    pelotonDropContactVersion:1,pelotonDeficitContactVersion:1};
+  assert.throws(()=>createV94RaceDynamicsPreview({
+    ...options,pelotonHoldCeilingVersion:1}),error=>{
+    assert.match(error.message,/Unholdable paid peloton turn/);
+    assert.ok(error.sourceKm<3);
+    assert.ok(error.sourceEvidence.holdAbilityCeiling<
+      error.sourceEvidence.leaderAbility);
+    assert.ok(error.sourceEvidence.turnEndM>
+      error.sourceEvidence.turnStartM);
+    assert.ok(error.sourceEvidence.energyBefore>0);
+    return true;
+  });
+  assert.throws(()=>createV94RaceDynamicsPreview({
+    ...options,pelotonDeficitContactVersion:0,
+    pelotonHoldCeilingVersion:1}),/valid experimental race settings/);
+  const historic=createV94RaceDynamicsPreview({
+    ...options,pelotonDropContactVersion:0,
+    pelotonDeficitContactVersion:0}).recording;
+  const first=historic.frames[0];
+  const risk=inspectV94PelotonHoldCeilingV1({
+    plan:first.pelotonFrontTurnPlan,
+    priorRiderStates:historic.committedInputs.teams.flatMap(team=>
+      team.riders.map(rider=>({id:rider.id,teamId:team.id,
+        group:'peloton',energy:first.energyLedger.find(row=>
+          row.riderId===rider.id).energyBefore}))),
+    aheadRiderIds:first.breakawayRiderIds,
+    teams:historic.committedInputs.teams,
+    segment:historic.route.kilometres[0],km:1});
+  assert.ok(risk.length>0);
+  const forged=structuredClone(historic);
+  forged.committedInputs.raceContext.pelotonDropContactVersion=1;
+  forged.committedInputs.raceContext.pelotonDeficitContactVersion=1;
+  forged.committedInputs.raceContext.pelotonHoldCeilingVersion=1;
+  assert.throws(()=>validateRecordedTour(forged),
+    /Recorded peloton turn exceeds rider hold ceiling/);
 });
 
 test('opt-in follower payment choices replay strength, orders and stakes',()=>{

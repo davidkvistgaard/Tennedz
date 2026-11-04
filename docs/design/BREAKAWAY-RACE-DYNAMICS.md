@@ -6098,3 +6098,29 @@ a finish-line catch and is refused there. The zero accepted races
 show that the current V94 checkpoint movement cannot certify a
 whole-race physical road or finish under both contact requirements.
 They do not imply that no rider would finish in a physical model.
+
+### Refuse a named front turn that a rider cannot hold
+
+The opt-in `pelotonHoldCeilingVersion: 1` adds a conservative check
+before V94 moves the road. For each rider who starts the kilometre
+in the peloton, it compares each named paid leader turn with the
+rider's highest perceived ability across existing phases, hard effort,
+and the largest shelter bonus available anywhere in the current
+tuning. That generous ceiling does not assign the rider a wheel or
+claim that the rider actually rode hard. If it is still below the
+leader's paid ability, the preview refuses with the turn interval,
+both abilities, prior reserve, manager effort and committed sporting
+stake. The recording validator recomputes the same upper bound.
+The flag requires the stricter deficit-onset gate; the default and
+historic recordings retain their prior behavior.
+
+In the same three-seed, 24-case audit, all 24 races refuse at the
+first unholdable paid turn in km 1, earlier than their checkpoint
+deficit or caught-break events. In the first nominally flat case,
+`rival-10-0` has 74.2 as its best phase ability at full reserve;
+hard effort plus the deliberately generous 10-point shelter ceiling
+raises this to 87.4. The named leader `rival-1-5` rides the first
+500 metres at ability 90.81. These are source abilities, not a
+calculated gap, split position, or finish. They show why the
+three-kilometre grace counter cannot stand in for physical road
+contact. Within-turn movement and paid continuation remain open.
