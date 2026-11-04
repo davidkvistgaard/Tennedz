@@ -7,6 +7,9 @@ import {prepareV91Playtest} from
 const requestedSeeds=process.argv.find(arg=>arg.startsWith('--seeds='));
 const seedCount=requestedSeeds?Number(requestedSeeds.slice(8)):1;
 const explicitStakes=process.argv.includes('--explicit-stakes');
+const draftCost=process.argv.includes('--draft-cost');
+if(draftCost&&!explicitStakes)
+  throw new Error('Draft cost audit needs explicit stakes.');
 if(!Number.isInteger(seedCount)||seedCount<1||seedCount>8)
   throw new Error('Decision coverage seeds must be between 1 and 8.');
 const results=[];
@@ -24,7 +27,8 @@ for(let seed=1;seed<=seedCount;seed++)
   try{
     ({recording}=createV94RaceDynamicsPreview({format:'one_day',
       settings,sportingStakes,roadGroupPaceVersion:3,chaseTurnVersion:1,
-      bunchFrontTurnVersion:1,pelotonFrontTurnVersion:1}));
+      bunchFrontTurnVersion:1,pelotonFrontTurnVersion:1,
+      pelotonDraftCostVersion:draftCost?1:0}));
   }catch(error){
     if(!String(error.message).includes('Combined fresh attack and paid pursuit'))
       throw error;
@@ -35,6 +39,7 @@ for(let seed=1;seed<=seedCount;seed++)
     continue;
   }
   const coverage={riderKilometres:0,paidEnergyRows:0,
+    draftedRiderKilometres:0,
     forwardDecisionRows:0,forwardRiderKilometres:0,
     pelotonRiderKilometres:0,droppedRiderKilometres:0,
     droppedDecisionRows:0,coveredRiderKilometres:0,
@@ -54,6 +59,14 @@ for(let seed=1;seed<=seedCount;seed++)
       throw new Error('Duplicate rider in a V94 frame.');
     coverage.riderKilometres+=count;
     coverage.paidEnergyRows+=frame.energyLedger.length;
+    const draftRows=frame.pelotonDraftCosts??[];
+    if(draftCost&&draftRows.some(row=>
+      row.sourceKm!==frame.km||
+      row.baseCostFraction<.8||
+      row.baseCostFraction>1)||
+      !draftCost&&draftRows.length)
+      throw new Error('Invalid V94 draft cost source.');
+    coverage.draftedRiderKilometres+=draftRows.length;
     coverage.forwardDecisionRows+=frame.roadGroupRiderDecisions.length;
     const forwardDecisions=frame.roadGroupRiderDecisions;
     const workerDecisions=frame.pelotonRiderDecisions??[];
@@ -104,9 +117,10 @@ for(let seed=1;seed<=seedCount;seed++)
   results.push({seed,distanceKm,terrain,fatigue,coverage});
 }
 if(process.argv.includes('--summary')){
-  const totals={seedCount,explicitStakes,cases:results.length,
+  const totals={seedCount,explicitStakes,draftCost,cases:results.length,
     validatedCases:0,refusedCases:0,riderKilometres:0,
     paidEnergyRows:0,forwardDecisionRows:0,
+    draftedRiderKilometres:0,
     pelotonRiderKilometres:0,droppedRiderKilometres:0,
     droppedDecisionRows:0,coveredRiderKilometres:0,
     uncoveredRiderKilometres:0,
@@ -120,6 +134,7 @@ if(process.argv.includes('--summary')){
     if(row.refusal){totals.refusedCases++;continue;}
     totals.validatedCases++;
     for(const key of ['riderKilometres','paidEnergyRows',
+      'draftedRiderKilometres',
       'forwardDecisionRows','pelotonRiderKilometres',
       'droppedRiderKilometres','droppedDecisionRows',
       'coveredRiderKilometres',

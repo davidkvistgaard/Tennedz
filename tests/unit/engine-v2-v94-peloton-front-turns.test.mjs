@@ -81,6 +81,43 @@ test('explicit V94 stakes source-replay named paid bunch worker choices',()=>{
     !Object.hasOwn(frame,'pelotonRiderDecisions')));
 });
 
+test('opt-in peloton draft lowers sourced follower base cost',()=>{
+  const sportingStakes=prepareV91Playtest(settings).teams.map(team=>({
+    teamId:team.id,goal:'none',
+    captainId:team.orders.captainId}));
+  const options={format:'one_day',settings,sportingStakes,
+    chaseTurnVersion:1,bunchFrontTurnVersion:1,
+    pelotonFrontTurnVersion:1};
+  const historical=createV94RaceDynamicsPreview(options).recording;
+  assert.throws(()=>createV94RaceDynamicsPreview({
+    ...options,sportingStakes:null,pelotonDraftCostVersion:1}),
+  /valid experimental race settings/);
+  const drafted=createV94RaceDynamicsPreview({
+    ...options,pelotonDraftCostVersion:1}).recording;
+  const frame=drafted.frames[0];
+  assert.equal(frame.pelotonFrontTurnPlan.status,'worked');
+  const follower=frame.pelotonDraftCosts.find(row=>
+    row.leadingM===0&&!frame.breakawayRiderIds.includes(row.riderId));
+  assert.ok(follower);
+  assert.equal(follower.sourceKm,1);
+  assert.equal(follower.baseCostFraction,.8);
+  const cost=frame.energyLedger.find(row=>
+    row.riderId===follower.riderId).requestedWorkDemand;
+  const oldCost=historical.frames[0].energyLedger.find(row=>
+    row.riderId===follower.riderId).requestedWorkDemand;
+  assert.ok(cost<oldCost);
+  assert.ok(frame.pelotonDraftCosts.some(row=>
+    row.leadingM>0&&row.baseCostFraction>.8));
+  assert.deepEqual(replayRaceDynamicsRecording(drafted),drafted);
+  const forged=structuredClone(drafted);
+  forged.frames[0].pelotonDraftCosts.find(row=>
+    row.riderId===follower.riderId).baseCostFraction=1;
+  assert.throws(()=>replayRaceDynamicsRecording(forged),
+    /draft costs differ/);
+  assert.ok(historical.frames.every(row=>
+    !Object.hasOwn(row,'pelotonDraftCosts')));
+});
+
 test('historical opt-in chase version retains its separate road contract',()=>{
   const {recording}=createV94RaceDynamicsPreview({format:'one_day',settings,
     chaseTurnVersion:1,bunchFrontTurnVersion:1});

@@ -5454,6 +5454,27 @@ all 28,936 named paid bunch-worker kilometres. The other 612,901
 rider-kilometres remain uncovered (207 forward, 610,350 peloton,
 2,344 dropped).
 
+An additional opt-in `pelotonDraftCostVersion: 1` requires explicit
+sporting stakes and the shared paid peloton front. It reduces only the
+base work cost for riders already recorded in the peloton at the start
+of a kilometre. A non-leading follower pays 80% of that base cost;
+each named paid leader pays a distance-weighted fraction between 80%
+and 100% according to recorded leading metres. Attack, chase, helper
+and other extra work costs keep their existing price. An unworked
+front grants no discount, and previously dropped or forward riders
+receive none. `pelotonDraftCosts` records the source kilometre,
+prior group, leading metres and applied fraction for replay. This
+does not name a wheel or assert a physical position within the bunch.
+The default and historical V94 recordings retain their old costs.
+
+The three-seed opt-in draft-cost audit validates 23 of 24 races and
+still refuses one. Its completed races include 680,505 discounted
+rider-kilometres out of 710,400; these cost rows are not individual
+decisions. Only 57,397 rider-kilometres have recorded choices, leaving
+653,003 uncovered in that changed set of completed races. This is an
+experimental energy comparison and does not establish whole-race
+physical contact or realistic outcome calibration.
+
 A same-seed adapter needs an
 explicit, paid, versioned leader decision that resolves competing
 teams and selects an eligible worker from the committed roster using
