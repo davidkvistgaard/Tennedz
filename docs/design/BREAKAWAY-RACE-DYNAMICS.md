@@ -6430,6 +6430,11 @@ completed physical fifth kilometres. All 23 name riders whose paid
 The largest within-plan arrival spread is 1.52592 seconds. The audit
 leaves all those source plans unadvanced and retains the one original
 km-1 source refusal.
+The generic physical continuation now refuses km 6 with those
+unattachable source road plans and includes the prior physical
+version, named leaders and arrival-clock spread in its evidence.
+It cannot silently carry the source's `road-1` into the next paid
+kilometre.
 
 Callers of the experimental preview can request
 `physicalFirstKmVersion: 1` to receive this completed physical first

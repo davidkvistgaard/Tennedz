@@ -442,6 +442,12 @@ test('second front records an early climb loss without completing rear road',()=
   assert.deepEqual(sixthSource.physicalRoadGroups,[]);
   assert.equal(validateV94PhysicalSixthSourceBoundaryV1(
     recording,fifth,sixthSource),true);
+  assert.throws(()=>replayV94PhysicalNextKmV1(
+    recording,fifth),error=>
+    /lacks paid physical km5 contact/.test(error.message)&&
+    error.sourceKm===6&&
+    error.sourceEvidence.sourceRoads.every(row=>
+      row.sourcePlanCannotAttach));
   const forgedSolo=structuredClone(freshSolos);
   forgedSolo.roads[0].earnedLeadSecondsAtBoundary+=1;
   assert.throws(()=>validateV94PhysicalFreshAttackSolosV1(
