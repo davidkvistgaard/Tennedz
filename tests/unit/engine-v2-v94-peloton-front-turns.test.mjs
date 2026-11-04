@@ -227,6 +227,8 @@ test('strict deficit onset refuses before a peloton drop label',()=>{
     assert.equal(error.sourceEvidence.priorGroup,'peloton');
     assert.equal(error.sourceEvidence.priorDeficitSeconds,0);
     assert.ok(error.sourceEvidence.finalDeficitSeconds>0);
+    assert.equal(error.sourceEvidence.sustainedShortfallStartKm,
+      error.sourceKm-error.sourceEvidence.finalLowKilometres+1);
     assert.equal(error.sourceEvidence.energyLedger.riderId,
       error.sourceEvidence.riderId);
     assert.ok(error.sourceEvidence.paidFrontTurns.length>0);

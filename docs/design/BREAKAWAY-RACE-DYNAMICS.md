@@ -6070,5 +6070,7 @@ versioned choice; their 88 caught break riders still lack physical
 contact. The first new refusal is `rival-10-0` at km 3 of a 120 km
 mountain-profile case: the rider remains labelled peloton while the
 checkpoint deficit rises from zero to 0.582 seconds after two named
-paid front turns. This is earlier evidence of the clock mismatch,
+paid front turns. The group's consecutive-shortfall counter dates its
+modelled underpace back to km 1; that is a diagnostic window, not a
+physical split metre. This is earlier evidence of the clock mismatch,
 not an inferred contact or an accepted rear-group origin.
