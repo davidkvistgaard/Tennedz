@@ -10,7 +10,8 @@ import {replayV94PhysicalFirstKmV1,
   '../../lib/engine/v2/v94-physical-first-km-v1.mjs';
 import {completeV94PhysicalFirstKmV1,
   validateV94PhysicalFirstKmCompletionV1,
-  firstV94SoloContactWithinBoundaryV1} from
+  firstV94SoloContactWithinBoundaryV1,
+  V94_PAID_SOLO_COLOCATION_VERSION} from
   '../../lib/engine/v2/v94-physical-first-km-completion-v1.mjs';
 import {replayV94PhysicalSecondFrontKmV1,
   validateV94PhysicalSecondFrontKmV1,
@@ -93,6 +94,16 @@ test('first V94 kilometre prices each named turn and detached solo metre',()=>{
   assert.equal(completed.continuationNeedsContactDecision,true);
   assert.ok(completed.coincidentSoloSets.some(row=>
     row.riderIds.includes(riderId)&&row.riderIds.length>1));
+  const shared=completed.paidCoLocationObservations.find(row=>
+    row.riderIds.includes(riderId));
+  assert.equal(shared.version,V94_PAID_SOLO_COLOCATION_VERSION);
+  assert.equal(shared.clockSeconds,physical.frontClockSeconds);
+  assert.equal(shared.atDistanceM,atClock.atDistanceM);
+  assert.equal(shared.formsRearGroup,false);
+  assert.equal(shared.contactDecisionRequired,true);
+  assert.equal(shared.riderPaidThroughClock.find(row=>
+    row.riderId===riderId).paidFromReserve,
+  atClock.physicalPaidThroughClock);
   assert.equal(completed.officialResults,false);
   assert.ok(completed.finishes.every(row=>
     row.endDistanceM===1000&&

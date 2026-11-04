@@ -6186,6 +6186,14 @@ same place and time. A subsequent kilometre must resolve their
 actual orders, stakes, shared work and contact before forming any
 rear group or claiming a complete field replay.
 
+For each coincident set, `paidCoLocationObservations` also
+reconstructs the earlier front-clock point from each rider's paid
+first-kilometre track. It records the same calculated distance and
+solo speed for all members, plus each member's reserve cost through
+that clock. Its versioned evidence proves road-clock co-location,
+but `formsRearGroup` remains false. Cooperation, a single paid
+leader and shelter must come from a later recorded decision.
+
 The same 24-case source audit checks the next kilometre without
 advancing physical riders. In all 23 replayed starts, the km-2
 peloton plan is worked, each named front-turn leader is still in
