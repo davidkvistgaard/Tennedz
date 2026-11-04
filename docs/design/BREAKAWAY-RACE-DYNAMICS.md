@@ -5992,7 +5992,7 @@ fresh-attack decisions, sporting pursuit and synthetic sprint stakes,
 the earlier
 protector timing accepts 16 of 24 whole races and refuses eight
 unresolved peloton drops. All 464,000 accepted rider-kilometres have
-versioned choices. Ninety-three breakaway-to-peloton checkpoint
+recorded choices. Ninety-three breakaway-to-peloton checkpoint
 transitions happen before the finish; every caught rider has a
 recorded road-group decision in that kilometre. The first is
 `rival-16-5` at km 75 of a 120 km flat race. The checkpoint catch
@@ -6018,3 +6018,31 @@ at the recorded line rise from two to six races. These synthetic
 outcomes do not establish realistic chase timing or physical catches.
 The marker's location, the paid turn clock and the rider's continuation
 must be reconciled before either policy can be released.
+
+### Versioned forward-group choice provenance
+
+The opt-in `roadGroupRiderDecisionVersion: 1` leaves the historical
+forward-group work choice and road movement intact. For each rider in
+an existing road group it records the deciding source kilometre,
+choice version, committed sporting goal and captain, current effort
+and break-work orders, perceived ability, and energy before work.
+The road-group decision remains the source on a kilometre where the
+rider is caught by the peloton. This version makes the choice
+reviewable; the goal and perceived ability are evidence fields, not
+yet a calibrated threshold that changes whether the rider pulls.
+The turn plan still names one paid leader per road metre. No physical
+contact, position, or official placing is inferred from the added
+fields.
+
+The read-only decision inventory with
+`--road-group-rider-decisions` and the same three recorded-road seeds
+accepted 16 of 24 strict whole races; eight refused unresolved
+peloton-drop contact. All 11,294 forward decision rows in the accepted
+races carry the new version and source fields, including the 93
+caught-rider transitions. All 464,000 accepted rider-kilometres have
+one versioned choice with a source kilometre and sporting goal; none
+are unversioned or uncovered. A focused mixed-stakes recording replays
+its forward choices
+against committed team orders and refuses a forged goal. Historical
+recordings retain their original row format. The remaining strict
+refusals and physical road mismatch still block release.

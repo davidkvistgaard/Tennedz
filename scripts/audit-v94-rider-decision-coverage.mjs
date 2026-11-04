@@ -18,6 +18,8 @@ const pelotonFollowerEffort=process.argv.includes(
 const physicalExposure=process.argv.includes('--physical-exposure');
 const freshAttackDecisions=process.argv.includes(
   '--fresh-attack-decisions');
+const roadGroupRiderDecisions=process.argv.includes(
+  '--road-group-rider-decisions');
 const protectorSportingPursuit=process.argv.includes(
   '--protector-sporting-pursuit');
 const protectorTiming=process.argv.includes('--protector-timing');
@@ -36,6 +38,8 @@ if(physicalExposure&&!(draftCost||strictDraftCost))
   throw new Error('Physical exposure audit needs draft cost.');
 if(freshAttackDecisions&&!explicitStakes)
   throw new Error('Fresh attack choices need explicit stakes.');
+if(roadGroupRiderDecisions&&!explicitStakes)
+  throw new Error('Forward choices need explicit stakes.');
 if(protectorSportingPursuit&&!explicitStakes)
   throw new Error('Protector pursuit needs explicit stakes.');
 if(protectorTiming&&(!protectorSportingPursuit||!sprintStakes)||
@@ -66,6 +70,7 @@ for(let seed=1;seed<=seedCount;seed++)
         pelotonFollowerDecisions?1:0,
       pelotonExposureCostVersion:physicalExposure?1:0,
       freshAttackDecisionVersion:freshAttackDecisions?1:0,
+      roadGroupRiderDecisionVersion:roadGroupRiderDecisions?1:0,
       protectorSportingPursuitVersion:protectorSportingPursuit?1:0,
       protectorPursuitTimingVersion:protectorTiming?1:0}));
   }catch(error){
@@ -84,10 +89,12 @@ for(let seed=1;seed<=seedCount;seed++)
     discountedDropRiderKilometres:0,
     discountedCoastRiderKilometres:0,
     firstDiscountedDrop:null,
-    forwardDecisionRows:0,forwardRiderKilometres:0,
+    forwardDecisionRows:0,versionedForwardDecisionRows:0,
+    unversionedForwardDecisionRows:0,forwardRiderKilometres:0,
     freshAttackDecisionRows:0,
     pelotonRiderKilometres:0,droppedRiderKilometres:0,
     droppedDecisionRows:0,coveredRiderKilometres:0,
+    versionedDecisionRows:0,unversionedDecisionRows:0,
     uncoveredRiderKilometres:0,
     uncoveredForwardRiderKilometres:0,
     firstUncoveredForward:null,
@@ -156,6 +163,20 @@ for(let seed=1;seed<=seedCount;seed++)
           ?.coastDelaySeconds??0)>0).length;
     coverage.forwardDecisionRows+=frame.roadGroupRiderDecisions.length;
     const forwardDecisions=frame.roadGroupRiderDecisions;
+    const versionedForward=forwardDecisions.filter(row=>
+      row.version==='v94-road-group-rider-decisions-1'&&
+      row.sourceKm===frame.km&&
+      typeof row.goal==='string'&&
+      typeof row.teamOrderEffort==='string'&&
+      typeof row.teamOrderBreakWork==='string'&&
+      Number.isFinite(row.perceivedAbility)&&
+      Number.isFinite(row.energyBefore));
+    coverage.versionedForwardDecisionRows+=versionedForward.length;
+    coverage.unversionedForwardDecisionRows+=
+      forwardDecisions.length-versionedForward.length;
+    if(roadGroupRiderDecisions&&
+      versionedForward.length!==forwardDecisions.length)
+      throw new Error('Incomplete versioned forward decisions.');
     const workerDecisions=frame.pelotonRiderDecisions??[];
     const followerDecisions=frame.pelotonFollowerDecisions??[];
     const attackDecisions=frame.freshAttackRiderDecisions??[];
@@ -168,6 +189,13 @@ for(let seed=1;seed<=seedCount;seed++)
     const allDecisions=[...forwardDecisions,...workerDecisions,
       ...followerDecisions,
       ...attackDecisions];
+    const versionedDecisions=allDecisions.filter(row=>
+      typeof row.version==='string'&&row.version&&
+      row.sourceKm===frame.km&&
+      typeof row.goal==='string'&&row.goal).length;
+    coverage.versionedDecisionRows+=versionedDecisions;
+    coverage.unversionedDecisionRows+=allDecisions.length-
+      versionedDecisions;
     const decisions=new Set(allDecisions
       .map(row=>row.riderId));
     if(decisions.size!==allDecisions.length)
@@ -291,6 +319,7 @@ for(let seed=1;seed<=seedCount;seed++)
 }
 if(process.argv.includes('--summary')){
   const totals={seedCount,explicitStakes,draftCost,
+    roadGroupRiderDecisions,
     recordedRoadSeeds,
     freshAttackDecisions,protectorSportingPursuit,
     protectorTiming,sprintStakes,strictPelotonDropContact,
@@ -303,12 +332,15 @@ if(process.argv.includes('--summary')){
     riderKilometres:0,
     casesWithDiscountedDrop:0,
     paidEnergyRows:0,forwardDecisionRows:0,
+    versionedForwardDecisionRows:0,
+    unversionedForwardDecisionRows:0,
     freshAttackDecisionRows:0,
     draftedRiderKilometres:0,
     discountedDropRiderKilometres:0,
     discountedCoastRiderKilometres:0,
     pelotonRiderKilometres:0,droppedRiderKilometres:0,
     droppedDecisionRows:0,coveredRiderKilometres:0,
+    versionedDecisionRows:0,unversionedDecisionRows:0,
     uncoveredRiderKilometres:0,
     uncoveredForwardRiderKilometres:0,
     uncoveredForwardFreshAttack:0,
@@ -345,9 +377,11 @@ if(process.argv.includes('--summary')){
       'draftedRiderKilometres',
       'discountedDropRiderKilometres',
       'discountedCoastRiderKilometres',
-      'forwardDecisionRows','pelotonRiderKilometres',
+      'forwardDecisionRows','versionedForwardDecisionRows',
+      'unversionedForwardDecisionRows','pelotonRiderKilometres',
       'freshAttackDecisionRows',
       'droppedRiderKilometres','droppedDecisionRows',
+      'versionedDecisionRows','unversionedDecisionRows',
       'coveredRiderKilometres',
       'uncoveredRiderKilometres',
       'uncoveredForwardRiderKilometres',
