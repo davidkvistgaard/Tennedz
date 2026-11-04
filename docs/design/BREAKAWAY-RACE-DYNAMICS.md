@@ -5895,10 +5895,39 @@ version 2 accepts 19 races and refuses the same five unresolved
 peloton losses. All 544,000 accepted rider-kilometres have a
 versioned choice; 484,749 are follower decisions and 233,102 of
 those explicitly apply recorded peloton rest. This closes the
-effort-provenance gap in V94's decision replay, but the separate
-physical origin still does not consume that choice or the named
-chase-turn price. Whole-race physical speed, contact and finish
-calibration therefore remains open.
+effort-provenance gap in V94's decision replay. Whole-race physical
+speed, contact and finish calibration remains open.
 The focused V1/V2 replay tests, lint, isolated Next.js build and
 authenticated local preview browser check pass; V2 remains opt-in and
 is not routed into guided races.
+
+### Opt-in recorded work on the separate physical road
+
+`runRearRecordedBunchOriginV2` validates and replays a complete V94
+recording before following one named rider from the known starting
+bunch. Its separate `recordedWorkVersion: 1` prices the actual V94
+follower effort, including recorded team rest, and each named front or
+chase turn's paid extra cost. The ordinary physical origin, V1 source,
+historic recordings, and guided race remain unchanged. A projected
+pace loss refuses the V94 binding; it is not evidence of a lost wheel.
+
+The read-only `audit-v94-rear-origin-multikm.mjs --recorded-work=1`
+compared four accepted 20-team, 120 km V94 races: flat fatigue 0/30,
+rolling fatigue 0, and mountain fatigue 30. Across 13,844 physical
+held rider-kilometres, paid demand and ending reserve match the V94
+ledger within 0.001 in every kilometre. Those races contain 74,369
+V94 peloton rider-kilometres before a first non-peloton label, and
+the physical road still projects a pace loss for 537 riders. Mountain
+fatigue 0 refuses at km 11 for an unresolved V94 peloton drop. Neither
+the energy match nor the V94 checkpoint labels establish the missing
+physical contact or a whole-field finish.
+
+`runRearRecordedBunchOriginV3` adds a separate versioned reconciliation
+for each accepted kilometre: reserve before the turn, paid work,
+recovery, and reserve after it must match the replayed V94 source.
+The focused test follows rider `rival-1-5` across all 120 flat
+kilometres, including recorded team rest, and validates every source
+row. V2 and V3 remain opt-in read-only experiments. Focused replay
+tests, lint, an isolated Next.js build, and an authenticated local
+preview browser check passed for each increment. No guided routing or
+production deployment follows from this partial energy agreement.
