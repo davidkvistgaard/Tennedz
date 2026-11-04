@@ -304,6 +304,13 @@ for(let seed=1;seed<=seedCount;seed++)
               row.earnedLeadSecondsAtBoundary>0).length??0,
             freshSoloSourceBreakAheadMismatches:
               freshSolo?.sourceBreakAheadMismatchRiderIds.length??0,
+            freshSoloSourceRoads:
+              freshSolo?.sourceCheckpointComparisons.length??0,
+            freshSoloLargestSourceGapExcessSeconds:
+              freshSolo?.sourceCheckpointComparisons.length?
+                Math.max(...freshSolo.sourceCheckpointComparisons.map(
+                  row=>row.sourceGapMinusMaxIndividualLeadSeconds)):
+                null,
             freshSoloCoincidentSets:
               freshSolo?.coincidentSoloSets.length??0,
             freshSoloRefusal}:{}),
@@ -424,6 +431,13 @@ console.log(JSON.stringify({seedCount,complete,secondFront,boundaryChoice,
   freshSoloSourceBreakAheadMismatches:accepted.reduce(
     (sum,row)=>sum+
       (row.freshSoloSourceBreakAheadMismatches??0),0),
+  freshSoloSourceRoads:accepted.reduce((sum,row)=>
+    sum+(row.freshSoloSourceRoads??0),0),
+  freshSoloLargestSourceGapExcessSeconds:freshAttackSolos&&
+    accepted.some(row=>row.freshSoloSourceRoads>0)?Math.max(
+      ...accepted.map(row=>
+        row.freshSoloLargestSourceGapExcessSeconds??-Infinity)):
+    null,
   freshSoloCoincidentSets:accepted.reduce((sum,row)=>
     sum+(row.freshSoloCoincidentSets??0),0),
   firstCase:cases[0],refusals:cases.filter(row=>row.refusal),

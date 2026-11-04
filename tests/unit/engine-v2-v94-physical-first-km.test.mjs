@@ -371,6 +371,14 @@ test('second front records an early climb loss without completing rear road',()=
     Math.abs(row.energyBefore-row.sourcePaidFromReserve-
       row.sourceCapAdjustment-row.energyAfter)<.0015));
   assert.deepEqual(freshSolos.physicalRoadGroups,[]);
+  assert.ok(freshSolos.sourceCheckpointComparisons.length>0);
+  assert.ok(freshSolos.sourceCheckpointComparisons.every(row=>
+    row.physicalGroupFormed===false&&
+    Number.isFinite(row.sourceCheckpointGapSeconds)&&
+    Number.isFinite(row.maxIndividualPaidLeadSeconds)&&
+    row.sourceGapMinusMaxIndividualLeadSeconds===
+      row.sourceCheckpointGapSeconds-
+        row.maxIndividualPaidLeadSeconds));
   assert.equal(freshSolos.remainingFieldRoadUnresolved,true);
   assert.equal(freshSolos.officialResults,false);
   assert.equal(validateV94PhysicalFreshAttackSolosV1(

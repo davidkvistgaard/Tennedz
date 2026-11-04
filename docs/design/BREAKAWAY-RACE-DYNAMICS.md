@@ -6368,6 +6368,16 @@ joined a break but their physical solo clocks do not support that
 position. Ten coincident solo arrival sets remain ungrouped. The
 one km-1 refusal persists. This mismatch blocks source calibration
 and any promotion to the guided race engine.
+The diagnostic also compares source checkpoint claims with the
+individual paid clocks, without importing the claimed gap into any
+physical road. In the 120-km flat seed-1 case, the source records
+`road-1` at 27.78 seconds; its two individual paid leads are only
+0.31332 seconds and -0.7038 seconds. The comparison records no
+physical group because neither a paid first-kilometre break turn
+nor a later formation decision is present.
+All 23 new source roads have a checkpoint comparison. The largest
+source gap exceeds the fastest individual paid lead in its road by
+33.71936 seconds. This is calibration evidence, not a physical gap.
 
 Callers of the experimental preview can request
 `physicalFirstKmVersion: 1` to receive this completed physical first
