@@ -5854,3 +5854,31 @@ alone are insufficient physical input. The turn abilities and V94
 group labels still lack a calibrated physical speed/contact contract;
 this audit does not certify a shared clock, rear-group formation,
 realistic finishes or guided routing.
+
+### Multi-kilometre shared-energy boundary
+
+The read-only `audit-v94-rear-origin-multikm.mjs` follows each rider
+only while V94 still labels them peloton and stops comparing after
+the isolated physical origin projects a pace loss. It replays the
+V94 race, uses the same route, roster, manager effort, named turn
+plans, and the opt-in shelter and exposure prices. It neither grants
+a wheel nor turns a projected split into a rear group.
+
+On seed `preview-recorded-road-1`, 120 km, flat, fatigue 0, V94 has
+18,602 peloton rider-kilometres before its first non-peloton labels.
+The physical projection holds 4,140 of those rider-kilometres; 1,508
+match both paid and ending energy within 0.001. Forty-six riders
+first diverge in energy while still projected to hold. Forty-five
+of their first differences coincide with a recorded V94 peloton-rest
+team. The earliest is km 21: the isolated physical source prices the
+steady manager order at 0.13824 energy, while V94's recorded team
+rest prices conserve at 0.082944 from the same 97.24 reserve. The
+other first divergence is a named chase leader on km 102; V94's
+chase-turn extra price is not the isolated origin's ordinary exposed
+leader price. The flat-fatigue-30 and mountain-fatigue-0/30 controls
+show the same earliest rest discrepancy and 45 first rest-associated
+rider differences each. These counts are source-model differences,
+not independent race observations. A shared physical road needs a
+versioned, per-rider applied-effort reason for team rest and the
+actual paid chase-turn price before it can compare later energy or
+claim calibrated contact.
