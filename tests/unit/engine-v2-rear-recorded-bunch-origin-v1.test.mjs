@@ -153,4 +153,9 @@ test('recorded source energy stays aligned beyond the late route cap',()=>{
   assert.equal(result.sourceEnergyReconciliation[160]
     .sourceEnergyAfter,result.sourceEnergyReconciliation[160]
     .physicalEnergyAfter);
+  assert.ok(recording.frames[88].caughtBreakawayRiderIds
+    .includes('rival-16-5'));
+  assert.throws(()=>runRearRecordedBunchOriginV3({recording,
+    riderId:'rival-16-5',throughKm:89}),
+  /continuous peloton road/);
 });
