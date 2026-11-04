@@ -6661,6 +6661,14 @@ introduces two new attackers (`rival-19-7` and `rival-6-7`), so the
 post-break replay refuses until their departure is physically paid.
 The 120 km cases remain stopped at the 13-team chaser claim at km 70.
 
+`v94-physical-post-break-fresh-km-v1.mjs` prices those two km-90
+departures as separate solo roads while the former break riders
+retain their rear positions. Both 260 km flat cases then complete
+all 160 riders through km 99. At km 100 the source names
+`rival-16-5` and `rival-8-5` as new attackers even though they are
+already on paid rear roads. The front launch guard refuses rather
+than moving them to the peloton or assigning a scripted gap.
+
 Callers of the experimental preview can request
 `physicalFirstKmVersion: 1` to receive this completed physical first
 kilometre as a separate `physicalFirstKm` result. It requires the

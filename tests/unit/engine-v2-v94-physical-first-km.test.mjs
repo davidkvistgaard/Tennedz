@@ -116,6 +116,9 @@ import {replayV94PhysicalMixedPaidNextKmV1,
 import {replayV94PhysicalPostSourceBreakKmV1,
   validateV94PhysicalPostSourceBreakKmV1} from
   '../../lib/engine/v2/v94-physical-post-source-break-km-v1.mjs';
+import {replayV94PhysicalPostBreakFreshKmV1,
+  validateV94PhysicalPostBreakFreshKmV1} from
+  '../../lib/engine/v2/v94-physical-post-break-fresh-km-v1.mjs';
 
 test('first V94 kilometre prices each named turn and detached solo metre',()=>{
   const settings={distanceKm:120,teamCount:20,terrain:'mountain',
@@ -935,6 +938,31 @@ test('ended source break membership keeps four riders on paid roads',()=>{
   assert.throws(()=>replayV94PhysicalPostSourceBreakKmV1(
     recording,paid),
   /Post-break km needs ended source claim/);
+  const priorAt89=paid;
+  paid=replayV94PhysicalPostBreakFreshKmV1(
+    recording,paid);
+  assert.equal(paid.sourceKm,90);
+  assert.equal(paid.finishes.length,160);
+  assert.deepEqual(paid.sourceBreakRiderIds,
+    ['rival-19-7','rival-6-7']);
+  assert.ok(paid.formerSourceBreakRiderIds.every(id=>
+    paid.finishes.find(row=>row.riderId===id)
+      .physicalGroup!=='peloton'));
+  assert.equal(validateV94PhysicalPostBreakFreshKmV1(
+    recording,priorAt89,paid),true);
+  for(let km=91;km<=99;km++){
+    paid=replayV94PhysicalUnattachedSourceNextKmV1(
+      recording,paid);
+    assert.equal(paid.sourceKm,km);
+    assert.equal(paid.finishes.length,160);
+  }
+  assert.throws(()=>replayV94PhysicalUnattachedSourceNextKmV1(
+    recording,paid),error=>
+    /Physical front needs an intact paid plan/.test(
+      error.message)&&
+    error.sourceEvidence?.sourceKm===100&&
+    error.sourceEvidence.attackers.includes(
+      'rival-16-5'));
 });
 
 test('second-km road clocks refuse a faster rear catch',()=>{
