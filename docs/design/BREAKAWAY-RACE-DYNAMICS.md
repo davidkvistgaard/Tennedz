@@ -6682,6 +6682,13 @@ all 160 riders through km 107 without fatigue or km 110 with 30
 fatigue. The next kilometre measures another rear/rear meeting and
 refuses until that contact is paid. No source break label moves the
 caught rider back onto a rear road.
+The km-108 contact audit selects the same paid, caught-rider-aware
+continuation as the whole-field replay. It observes two rear roads
+meeting and quotes a single leader for their remaining metres. That
+proposed group then meets `solo-rival-8-5` within the same kilometre
+at 107,263.845 m. The full-field guard refuses this second contact;
+forming a rear group from the first meeting alone would discard a
+measured paid crossing.
 Both 260 km flat cases
 complete every rider through km 89. At km 90 the source
 introduces two new attackers (`rival-19-7` and `rival-6-7`), so the

@@ -981,6 +981,25 @@ test('paid boundary contacts support a complete second flat kilometre',()=>{
   assert.throws(()=>replayV94PhysicalUnattachedSourceNextKmV1(
     recording,mixedLater),
   /Physical rear roads need paid contact resolution/);
+  const rearContact=decideV94PhysicalMidKmContactChoiceV1(
+    recording,mixedLater);
+  assert.equal(rearContact.sourceKm,108);
+  assert.equal(rearContact.observedRoads.length,2);
+  assert.equal(rearContact.paidWorkPending,true);
+  const contactFragment=replayV94PhysicalMidKmContactFragmentV1(
+    recording,mixedLater);
+  assert.equal(contactFragment.sourceKm,108);
+  const roadAudit=inspectV94PhysicalMidKmContactRoadsV1(
+    recording,mixedLater);
+  assert.equal(roadAudit.sourceKm,108);
+  assert.equal(roadAudit.firstOtherContact?.kind,
+    'contact_fragment_rear');
+  assert.equal(roadAudit.firstOtherContact?.roadIds[1],
+    'solo-rival-8-5');
+  assert.equal(roadAudit.frontDropCount,0);
+  assert.throws(()=>replayV94PhysicalMidKmContactFullFieldV1(
+    recording,mixedLater),
+  /Contact field has unresolved road contact/);
 });
 
 test('ended source break membership keeps four riders on paid roads',()=>{
