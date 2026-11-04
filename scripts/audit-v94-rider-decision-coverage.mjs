@@ -9,10 +9,14 @@ const seedCount=requestedSeeds?Number(requestedSeeds.slice(8)):1;
 const explicitStakes=process.argv.includes('--explicit-stakes');
 const draftCost=process.argv.includes('--draft-cost');
 const strictDraftCost=process.argv.includes('--strict-draft-cost');
+const freshAttackDecisions=process.argv.includes(
+  '--fresh-attack-decisions');
 if((draftCost||strictDraftCost)&&!explicitStakes)
   throw new Error('Draft cost audit needs explicit stakes.');
 if(draftCost&&strictDraftCost)
   throw new Error('Choose one draft cost version.');
+if(freshAttackDecisions&&!explicitStakes)
+  throw new Error('Fresh attack choices need explicit stakes.');
 if(!Number.isInteger(seedCount)||seedCount<1||seedCount>8)
   throw new Error('Decision coverage seeds must be between 1 and 8.');
 const results=[];
@@ -31,7 +35,8 @@ for(let seed=1;seed<=seedCount;seed++)
     ({recording}=createV94RaceDynamicsPreview({format:'one_day',
       settings,sportingStakes,roadGroupPaceVersion:3,chaseTurnVersion:1,
       bunchFrontTurnVersion:1,pelotonFrontTurnVersion:1,
-      pelotonDraftCostVersion:strictDraftCost?2:draftCost?1:0}));
+      pelotonDraftCostVersion:strictDraftCost?2:draftCost?1:0,
+      freshAttackDecisionVersion:freshAttackDecisions?1:0}));
   }catch(error){
     if(!String(error.message).includes('Combined fresh attack and paid pursuit')&&
       !String(error.message).includes('Unresolved peloton draft contact'))
@@ -48,6 +53,7 @@ for(let seed=1;seed<=seedCount;seed++)
     discountedCoastRiderKilometres:0,
     firstDiscountedDrop:null,
     forwardDecisionRows:0,forwardRiderKilometres:0,
+    freshAttackDecisionRows:0,
     pelotonRiderKilometres:0,droppedRiderKilometres:0,
     droppedDecisionRows:0,coveredRiderKilometres:0,
     uncoveredRiderKilometres:0,
@@ -101,11 +107,20 @@ for(let seed=1;seed<=seedCount;seed++)
     coverage.forwardDecisionRows+=frame.roadGroupRiderDecisions.length;
     const forwardDecisions=frame.roadGroupRiderDecisions;
     const workerDecisions=frame.pelotonRiderDecisions??[];
-    const decisions=new Set([...forwardDecisions,...workerDecisions]
+    const attackDecisions=frame.freshAttackRiderDecisions??[];
+    if(freshAttackDecisions&&attackDecisions.length!==
+      frame.attackers.length||
+      attackDecisions.some(row=>
+        !frame.attackers.includes(row.riderId)))
+      throw new Error('Fresh attack choices differ from paid launch.');
+    coverage.freshAttackDecisionRows+=attackDecisions.length;
+    const allDecisions=[...forwardDecisions,...workerDecisions,
+      ...attackDecisions];
+    const decisions=new Set(allDecisions
       .map(row=>row.riderId));
-    if(decisions.size!==forwardDecisions.length+workerDecisions.length)
+    if(decisions.size!==allDecisions.length)
       throw new Error('Duplicate forward rider decision.');
-    if([...forwardDecisions,...workerDecisions].some(row=>
+    if(allDecisions.some(row=>
       !riderIds.has(row.riderId)||
       typeof row.choice!=='string'||!row.choice.trim()))
       throw new Error('Invalid forward rider decision.');
@@ -167,12 +182,14 @@ for(let seed=1;seed<=seedCount;seed++)
 }
 if(process.argv.includes('--summary')){
   const totals={seedCount,explicitStakes,draftCost,
+    freshAttackDecisions,
     strictDraftCost,cases:results.length,
     validatedCases:0,refusedCases:0,
     unresolvedDraftContactCases:0,
     riderKilometres:0,
     casesWithDiscountedDrop:0,
     paidEnergyRows:0,forwardDecisionRows:0,
+    freshAttackDecisionRows:0,
     draftedRiderKilometres:0,
     discountedDropRiderKilometres:0,
     discountedCoastRiderKilometres:0,
@@ -203,6 +220,7 @@ if(process.argv.includes('--summary')){
       'discountedDropRiderKilometres',
       'discountedCoastRiderKilometres',
       'forwardDecisionRows','pelotonRiderKilometres',
+      'freshAttackDecisionRows',
       'droppedRiderKilometres','droppedDecisionRows',
       'coveredRiderKilometres',
       'uncoveredRiderKilometres',

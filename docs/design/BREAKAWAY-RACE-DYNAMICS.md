@@ -5460,6 +5460,22 @@ members. The first is `rival-13-5` at km 5 of seed 1's 120-km flat,
 fatigue-0 race, newly entering `road-1`. The existing road-group
 decision list covers riders already ahead at the start of a kilometre,
 so the launch needs its own sourced decision row.
+Opt-in `freshAttackDecisionVersion: 1` requires version 5 sporting
+stakes and road-group turn version 3. Each paid fresh attacker now has
+a versioned launch choice with source kilometre, rider and team,
+committed goal and captain, current manager attack and effort orders,
+the recorded attack reason and pressure, and the applicable extra
+attack cost. GC target activation remains distinguishable from the
+ordinary manager attack order. Validation reconstructs the choice
+from committed orders and the attack trace and rejects forged rows.
+Default and historical recordings do not acquire this field.
+
+The three-seed read-only audit finds exactly 207 fresh-attack choice
+rows in the 22 completed races, with no duplicate rider choices and
+zero uncovered forward rider-kilometres. The two existing race
+refusals remain, as do 610,350 uncovered peloton and 2,344 uncovered
+dropped rider-kilometres. A launch choice does not establish physical
+contact for the later road group or solve those rear-group gaps.
 
 An additional opt-in `pelotonDraftCostVersion: 1` requires explicit
 sporting stakes and the shared paid peloton front. It reduces only the

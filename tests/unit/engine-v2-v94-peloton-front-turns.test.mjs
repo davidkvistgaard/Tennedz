@@ -137,6 +137,40 @@ test('strict draft refuses a rider lost during discounted kilometre',()=>{
   });
 });
 
+test('fresh paid attackers receive source-replayed launch choices',()=>{
+  const sportingStakes=prepareV91Playtest(settings).teams.map(team=>({
+    teamId:team.id,goal:'none',
+    captainId:team.orders.captainId}));
+  const options={format:'one_day',settings,sportingStakes,
+    roadGroupPaceVersion:3,chaseTurnVersion:1,
+    bunchFrontTurnVersion:1,pelotonFrontTurnVersion:1,
+    freshAttackDecisionVersion:1};
+  const {recording}=createV94RaceDynamicsPreview(options);
+  const launches=recording.frames.filter(frame=>
+    frame.attackers.length);
+  assert.ok(launches.length>0);
+  for(const frame of recording.frames){
+    assert.equal(frame.freshAttackRiderDecisions.length,
+      frame.attackers.length);
+    for(const row of frame.freshAttackRiderDecisions){
+      assert.equal(row.sourceKm,frame.km);
+      assert.ok(frame.attackers.includes(row.riderId));
+      assert.equal(row.choice,'launch_paid_attack');
+      assert.ok(row.paidExtraCost>0);
+      assert.ok(row.attackPressure>0);
+    }
+  }
+  assert.deepEqual(replayRaceDynamicsRecording(recording),recording);
+  const forged=structuredClone(recording);
+  forged.frames.find(frame=>frame.attackers.length)
+    .freshAttackRiderDecisions[0].goal='break_stage';
+  assert.throws(()=>replayRaceDynamicsRecording(forged),
+    /fresh attack choices differ/);
+  assert.throws(()=>createV94RaceDynamicsPreview({
+    ...options,sportingStakes:null}),
+  /valid experimental race settings/);
+});
+
 test('historical opt-in chase version retains its separate road contract',()=>{
   const {recording}=createV94RaceDynamicsPreview({format:'one_day',settings,
     chaseTurnVersion:1,bunchFrontTurnVersion:1});
