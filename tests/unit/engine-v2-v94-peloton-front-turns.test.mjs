@@ -208,6 +208,44 @@ test('strict peloton loss refuses a drop without paid within-km contact',()=>{
     /Recorded peloton drop lacks paid contact/);
 });
 
+test('strict deficit onset refuses before a peloton drop label',()=>{
+  const longSettings={...settings,distanceKm:260};
+  const options={format:'one_day',settings:longSettings,
+    roadGroupPaceVersion:3,chaseTurnVersion:1,
+    bunchFrontTurnVersion:1,pelotonFrontTurnVersion:1,
+    pelotonDropContactVersion:1};
+  let dropKm=null;
+  assert.throws(()=>createV94RaceDynamicsPreview(options),error=>{
+    assert.match(error.message,/Unresolved peloton drop contact/);
+    dropKm=error.sourceKm;
+    return true;
+  });
+  assert.throws(()=>createV94RaceDynamicsPreview({
+    ...options,pelotonDeficitContactVersion:1}),error=>{
+    assert.match(error.message,/Unresolved peloton deficit onset/);
+    assert.ok(error.sourceKm<dropKm);
+    assert.equal(error.sourceEvidence.priorGroup,'peloton');
+    assert.equal(error.sourceEvidence.priorDeficitSeconds,0);
+    assert.ok(error.sourceEvidence.finalDeficitSeconds>0);
+    assert.equal(error.sourceEvidence.energyLedger.riderId,
+      error.sourceEvidence.riderId);
+    assert.ok(error.sourceEvidence.paidFrontTurns.length>0);
+    return true;
+  });
+  assert.throws(()=>createV94RaceDynamicsPreview({
+    ...options,pelotonDropContactVersion:0,
+    pelotonDeficitContactVersion:1}),
+  /valid experimental race settings/);
+  const completed=createV94RaceDynamicsPreview({
+    ...options,settings,pelotonDeficitContactVersion:1}).recording;
+  assert.deepEqual(replayRaceDynamicsRecording(completed),completed);
+  const forged=structuredClone(completed);
+  forged.frames[0].riderGroups.find(row=>row.group==='peloton')
+    .deficitSeconds=.1;
+  assert.throws(()=>validateRecordedTour(forged),
+    /Recorded peloton deficit onset lacks paid contact/);
+});
+
 test('opt-in follower payment choices replay strength, orders and stakes',()=>{
   const sportingStakes=prepareV91Playtest(settings).teams.map(team=>({
     teamId:team.id,goal:'sprint_finish',

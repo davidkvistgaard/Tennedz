@@ -11,6 +11,8 @@ const draftCost=process.argv.includes('--draft-cost');
 const strictDraftCost=process.argv.includes('--strict-draft-cost');
 const strictPelotonDropContact=process.argv.includes(
   '--strict-peloton-drop-contact');
+const strictPelotonDeficitContact=process.argv.includes(
+  '--strict-peloton-deficit-contact');
 const pelotonFollowerDecisions=process.argv.includes(
   '--peloton-follower-decisions');
 const pelotonFollowerEffort=process.argv.includes(
@@ -40,6 +42,8 @@ if(freshAttackDecisions&&!explicitStakes)
   throw new Error('Fresh attack choices need explicit stakes.');
 if(roadGroupRiderDecisions&&!explicitStakes)
   throw new Error('Forward choices need explicit stakes.');
+if(strictPelotonDeficitContact&&!strictPelotonDropContact)
+  throw new Error('Deficit onset needs strict peloton drop contact.');
 if(protectorSportingPursuit&&!explicitStakes)
   throw new Error('Protector pursuit needs explicit stakes.');
 if(protectorTiming&&(!protectorSportingPursuit||!sprintStakes)||
@@ -66,6 +70,7 @@ for(let seed=1;seed<=seedCount;seed++)
       bunchFrontTurnVersion:1,pelotonFrontTurnVersion:1,
       pelotonDraftCostVersion:strictDraftCost?2:draftCost?1:0,
       pelotonDropContactVersion:strictPelotonDropContact?1:0,
+      pelotonDeficitContactVersion:strictPelotonDeficitContact?1:0,
       pelotonFollowerDecisionVersion:pelotonFollowerEffort?2:
         pelotonFollowerDecisions?1:0,
       pelotonExposureCostVersion:physicalExposure?1:0,
@@ -76,7 +81,8 @@ for(let seed=1;seed<=seedCount;seed++)
   }catch(error){
     if(!String(error.message).includes('Combined fresh attack and paid pursuit')&&
       !String(error.message).includes('Unresolved peloton draft contact')&&
-      !String(error.message).includes('Unresolved peloton drop contact'))
+      !String(error.message).includes('Unresolved peloton drop contact')&&
+      !String(error.message).includes('Unresolved peloton deficit onset'))
       throw error;
     results.push({seed,distanceKm,terrain,fatigue,
       refusal:error.message,
@@ -323,12 +329,14 @@ if(process.argv.includes('--summary')){
     recordedRoadSeeds,
     freshAttackDecisions,protectorSportingPursuit,
     protectorTiming,sprintStakes,strictPelotonDropContact,
+    strictPelotonDeficitContact,
     pelotonFollowerDecisions,pelotonFollowerEffort,
     physicalExposure,
     strictDraftCost,cases:results.length,
     validatedCases:0,refusedCases:0,
     unresolvedDraftContactCases:0,
     unresolvedPelotonDropContactCases:0,
+    unresolvedPelotonDeficitContactCases:0,
     riderKilometres:0,
     casesWithDiscountedDrop:0,
     paidEnergyRows:0,forwardDecisionRows:0,
@@ -368,6 +376,8 @@ if(process.argv.includes('--summary')){
         totals.unresolvedDraftContactCases++;
       if(row.refusal.includes('Unresolved peloton drop contact'))
         totals.unresolvedPelotonDropContactCases++;
+      if(row.refusal.includes('Unresolved peloton deficit onset'))
+        totals.unresolvedPelotonDeficitContactCases++;
       continue;
     }
     totals.validatedCases++;
@@ -415,7 +425,16 @@ if(process.argv.includes('--summary')){
     row.coverage?.firstCaughtToPelotonTransition);
   const firstCaughtBeforeFinish=results.find(row=>
     row.coverage?.firstCaughtToPelotonBeforeFinish);
+  const firstDeficitOnset=results.find(row=>
+    row.refusal?.includes('Unresolved peloton deficit onset'));
   console.log(JSON.stringify({...totals,
+    firstPelotonDeficitOnset:firstDeficitOnset?{
+      seed:firstDeficitOnset.seed,
+      distanceKm:firstDeficitOnset.distanceKm,
+      terrain:firstDeficitOnset.terrain,
+      fatigue:firstDeficitOnset.fatigue,
+      sourceKm:firstDeficitOnset.sourceKm,
+      sourceEvidence:firstDeficitOnset.sourceEvidence}:null,
     firstCaughtToPelotonBeforeFinish:firstCaughtBeforeFinish?{
       seed:firstCaughtBeforeFinish.seed,
       distanceKm:firstCaughtBeforeFinish.distanceKm,

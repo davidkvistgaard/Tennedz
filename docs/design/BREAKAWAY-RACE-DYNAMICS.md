@@ -6046,3 +6046,29 @@ its forward choices
 against committed team orders and refuses a forged goal. Historical
 recordings retain their original row format. The remaining strict
 refusals and physical road mismatch still block release.
+
+### Refuse the first unsourced peloton deficit
+
+The opt-in `pelotonDeficitContactVersion: 1` requires the existing
+strict peloton-drop contact gate. It refuses the first positive
+checkpoint deficit for a rider who began the kilometre in the
+peloton with zero deficit. The refusal reports that rider's prior
+and final group and deficit, low-kilometre count, paid energy ledger,
+and named front turns. It supplies no split metre or physical wheel.
+The recording validator rejects such an onset under the same
+committed flag. The historical group model and recordings are
+unchanged when the flag is absent.
+
+With this gate and the versioned forward choices enabled on the same
+three recorded-road seeds, 14 of 24 whole races replay and 10 refuse
+at a deficit onset. The earlier drop-only guard accepted 16 and
+refused eight. Thus two races that reached a recorded finish without
+triggering that drop guard still contain unresolved positive
+peloton deficits.
+All 380,800 rider-kilometres in the 14 accepted races have one
+versioned choice; their 88 caught break riders still lack physical
+contact. The first new refusal is `rival-10-0` at km 3 of a 120 km
+mountain-profile case: the rider remains labelled peloton while the
+checkpoint deficit rises from zero to 0.582 seconds after two named
+paid front turns. This is earlier evidence of the clock mismatch,
+not an inferred contact or an accepted rear-group origin.
