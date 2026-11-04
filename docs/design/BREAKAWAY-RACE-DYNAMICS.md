@@ -5763,6 +5763,42 @@ agreement. The 46–105 projected losses per case remain far above
 what V94's first-kilometre peloton labels record. This diagnostic
 does not change the default physical replay or assert that two points
 is a calibrated drafting-speed benefit.
+
+### Drafting evidence and the remaining calibration boundary
+
+[Blocken et al. (2018)](https://pure.tue.nl/ws/portalfiles/portal/101844924/1_s2.0_S0167610518303751_main.pdf)
+used CFD with wind-tunnel validation for two tightly packed
+121-rider pelotons. The reported aerodynamic drag varied strongly
+with location: mid-rear riders reached 5–10% of an isolated rider's
+drag at equal speed, while the leading riders had much less shelter.
+That study measures drag under specific configurations, not a
+universal speed bonus, the race engine's ability points, or a
+follower's unknown position. Its authors also identify rolling and
+bearing resistance as relatively more important when aerodynamic
+drag falls.
+
+[Blocken et al. (2021)](https://link.springer.com/article/10.1007/s12283-021-00345-2)
+combined wind-tunnel validation and CFD with a total-power model for
+uphill pacelines. In its 7.5% gradient, 6 m/s example, the second
+rider needed about 7.1% less total power than a solo rider at the same
+speed; the study reports larger savings at higher speed and notes
+limitations including no crosswind and identical rider bodies.
+These findings support terrain- and speed-sensitive shelter, but
+neither paper supplies a defensible mapping from measured drag or
+power into this motor's ability-point contact threshold. The current
+two-point diagnostic and 0.8 energy fraction remain experimental.
+Selecting a release value requires that mapping, source-paid road
+tests across terrain and wind, and whole-race contact and finish
+validation; no rider position or wheel may be inferred to apply a
+position-specific research result.
+In the existing synthetic first-kilometre audit with the two-point
+diagnostic, 556 of 1,280 riders lose the physical bunch in the flat
+settings, another 556 of 1,280 in the rolling settings, and 545 of
+1,120 in the seven replayed mountain settings. The rolling and flat
+routes have the same first-kilometre road, so their equal counts are
+not independent terrain evidence. The mountain set has one refusal
+and is not directly comparable as a matched population. These are
+model discrepancies, not observed real-race drop rates.
 In the separate three-seed, 24-case V94 whole-race decision inventory
 with strict loss contact, draft, follower, fresh-attack and protector
 timing opt-ins, the exposure price accepts the same 19 cases and
