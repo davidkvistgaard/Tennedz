@@ -5942,3 +5942,43 @@ row. V2 and V3 remain opt-in read-only experiments. Focused replay
 tests, lint, an isolated Next.js build, and an authenticated local
 preview browser check passed for each increment. No guided routing or
 production deployment follows from this partial energy agreement.
+
+### First-turn shelter capacity is still not contact calibration
+
+The read-only `audit-v94-first-turn-shelter-capacity.mjs` replays the
+strict V94 source and compares each recorded peloton follower's
+ability at the start of a named first turn with that turn's recorded
+ability. From km 2, only riders labelled peloton in both the prior
+and current frame are sampled, so a newly caught break rider is not silently
+treated as a follower before their contact. It reports the additional
+shelter ability required to equal the front, using the recorded
+applied effort and starting energy.
+This is a model-unit capacity comparison; it neither measures
+separation nor establishes a position or wheel.
+
+In the accepted 260 km flat, fatigue-30 seed, 27,071 of 40,434
+first-turn follower-kilometres require more than the separate physical
+origin's two-point candidate. Even the existing ten-point flat
+shelter value leaves 8,020 above the front. In the matching mountain
+seed, 9,198 of 18,083 hill follower-kilometres require more than the
+existing six-point hill value; 3,901 of 12,085 descent
+follower-kilometres require more than the eight-point descent value.
+The first kilometre has 159 followers: 105 exceed two points in both
+seeds, while 26 exceed ten flat points and 66 exceed six hill points.
+The mountain fatigue-0 strict source refuses at km 11 rather than
+producing a capacity distribution for that complete race.
+The flat and mountain 260 km audits exclude respectively 10 and 15
+transitions from a breakaway into a V94 peloton label. The first
+transition in each run has a `caughtBreakawayRiderIds` marker (flat km 89,
+mountain km 68 for `rival-16-5`); that checkpoint marker is not a
+physical paid bunch contact or a follower decision for the first
+turn. All 25 transitions have such a marker, but the audit still
+does not assign those riders a preceding peloton wheel.
+
+These comparisons use V94's peloton label as a sampling boundary,
+not as physical evidence of continuous contact. A larger fixed
+shelter bonus, including one already present elsewhere in the
+prototype, would still leave source disagreements and cannot be
+selected as a release setting from this audit. Paid within-turn
+separation and contact, followed by whole-race finish checks, remain
+the routing blockers.
