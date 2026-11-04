@@ -17,6 +17,10 @@ import {replayV94PhysicalSecondFrontKmV1,
   validateV94PhysicalSecondFrontKmV1,
   V94_PHYSICAL_SECOND_FRONT_DECISION_VERSION} from
   '../../lib/engine/v2/v94-physical-second-front-km-v1.mjs';
+import {decideV94PhysicalBoundaryChoicesV1,
+  validateV94PhysicalBoundaryChoicesV1,
+  V94_PHYSICAL_BOUNDARY_CHOICE_VERSION} from
+  '../../lib/engine/v2/v94-physical-boundary-choice-v1.mjs';
 
 test('first V94 kilometre prices each named turn and detached solo metre',()=>{
   const settings={distanceKm:120,teamCount:20,terrain:'mountain',
@@ -128,6 +132,28 @@ test('first V94 kilometre prices each named turn and detached solo metre',()=>{
     .energyAfter=100;
   assert.throws(()=>validateV94PhysicalFirstKmCompletionV1(
     recording,forgedFinish),/differs from paid source/);
+  const boundary=decideV94PhysicalBoundaryChoicesV1(recording);
+  const contactChoice=boundary.choices.find(row=>
+    row.riderIds.includes(riderId));
+  assert.equal(contactChoice.version,
+    V94_PHYSICAL_BOUNDARY_CHOICE_VERSION);
+  assert.equal(contactChoice.contactAtDistanceM,
+    shared.atDistanceM);
+  assert.equal(contactChoice.boundaryClockSeconds,
+    completed.finishes.find(row=>row.riderId===riderId)
+      .clockSeconds);
+  assert.equal(contactChoice.pendingLeaderRiderId,riderId);
+  assert.equal(contactChoice.formsRearGroup,false);
+  assert.deepEqual(boundary.physicalRearGroups,[]);
+  assert.equal(contactChoice.riderDecisions.find(row=>
+    row.riderId==='rival-2-0').willingToLead,false);
+  assert.equal(validateV94PhysicalBoundaryChoicesV1(
+    recording,boundary),true);
+  const forgedBoundary=structuredClone(boundary);
+  forgedBoundary.choices.find(row=>row.riderIds.includes(riderId))
+    .pendingLeaderRiderId='rival-2-0';
+  assert.throws(()=>validateV94PhysicalBoundaryChoicesV1(
+    recording,forgedBoundary),/Boundary choices differ from paid source/);
   const nextFront=replayV94PhysicalSecondFrontKmV1(recording);
   assert.equal(nextFront.sourceKm,2);
   assert.equal(nextFront.atFrontClock.length,

@@ -12,13 +12,17 @@ import {completeV94PhysicalFirstKmV1,
 import {replayV94PhysicalSecondFrontKmV1,
   validateV94PhysicalSecondFrontKmV1} from
   '../lib/engine/v2/v94-physical-second-front-km-v1.mjs';
+import {decideV94PhysicalBoundaryChoicesV1,
+  validateV94PhysicalBoundaryChoicesV1} from
+  '../lib/engine/v2/v94-physical-boundary-choice-v1.mjs';
 
 const requested=process.argv.find(arg=>arg.startsWith('--seeds='));
 const seedCount=requested?Number(requested.slice(8)):1;
 const complete=process.argv.includes('--complete');
 const secondFront=process.argv.includes('--second-front');
-if(secondFront&&!complete)
-  throw new Error('Second-km front audit needs --complete.');
+const boundaryChoice=process.argv.includes('--boundary-choice');
+if((secondFront||boundaryChoice)&&!complete)
+  throw new Error('Continuation audit needs --complete.');
 if(!Number.isInteger(seedCount)||seedCount<1||seedCount>3)
   throw new Error('First-km physical audit needs one to three seeds.');
 const cases=[];
@@ -45,6 +49,10 @@ for(let seed=1;seed<=seedCount;seed++)
         completeV94PhysicalFirstKmV1(recording):null;
       if(completion)
         validateV94PhysicalFirstKmCompletionV1(recording,completion);
+      const boundary=boundaryChoice?
+        decideV94PhysicalBoundaryChoicesV1(recording):null;
+      if(boundary)
+        validateV94PhysicalBoundaryChoicesV1(recording,boundary);
       let nextFront=null,nextFrontRefusal=null;
       if(secondFront)try{
         nextFront=replayV94PhysicalSecondFrontKmV1(recording);
@@ -64,6 +72,10 @@ for(let seed=1;seed<=seedCount;seed++)
           coincidentSoloSets:completion.coincidentSoloSets.length,
           coincidentSoloRiders:completion.coincidentSoloSets.reduce(
             (sum,row)=>sum+row.riderIds.length,0),
+          ...(boundary?{
+            pendingBoundaryGroups:boundary.pendingGroupCount,
+            noLeaderBoundaryContacts:boundary.choices.length-
+              boundary.pendingGroupCount}:{}),
           nextKmSourceFront:next?.pelotonFrontTurnPlan?.status??null,
           nextKmSourceLeadersAttached:nextTurns.every(row=>
             attached.has(row.leaderRiderId)),
@@ -84,7 +96,8 @@ for(let seed=1;seed<=seedCount;seed++)
     }
   }
 const accepted=cases.filter(row=>!row.refusal);
-console.log(JSON.stringify({seedCount,complete,secondFront,cases:cases.length,
+console.log(JSON.stringify({seedCount,complete,secondFront,boundaryChoice,
+  cases:cases.length,
   replayedFirstKilometres:accepted.length,
   refusedCases:cases.length-accepted.length,
   totalCompletedRiderKilometres:accepted.reduce((sum,row)=>
@@ -97,6 +110,10 @@ console.log(JSON.stringify({seedCount,complete,secondFront,cases:cases.length,
     sum+(row.coincidentSoloSets??0),0),
   coincidentSoloRiders:accepted.reduce((sum,row)=>
     sum+(row.coincidentSoloRiders??0),0),
+  pendingBoundaryGroups:accepted.reduce((sum,row)=>
+    sum+(row.pendingBoundaryGroups??0),0),
+  noLeaderBoundaryContacts:accepted.reduce((sum,row)=>
+    sum+(row.noLeaderBoundaryContacts??0),0),
   nextKmSourceLeadersAttached:accepted.filter(row=>
     row.nextKmSourceFront==='worked'&&
     row.nextKmSourceLeadersAttached).length,

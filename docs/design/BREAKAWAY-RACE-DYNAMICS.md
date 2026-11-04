@@ -6194,6 +6194,23 @@ that clock. Its versioned evidence proves road-clock co-location,
 but `formsRearGroup` remains false. Cooperation, a single paid
 leader and shelter must come from a later recorded decision.
 
+`v94-physical-boundary-choice-v1.mjs` makes a separate, opt-in
+proposal for the next kilometre. It reads each co-located rider's
+committed manager chase and effort order, front-work refusal, team
+sporting goal and named captain. A chase volunteer with an active
+stake may offer the next paid turn; equal effort volunteers use a
+stable rider-ID tie break, which assigns no wheel position. Every
+rider records its own perceived solo and shelter-hold strength and
+whether it would offer work, accept shelter, or fail to hold that
+proposed pace. The proposal nominates one leader only when at least
+one other rider can hold. It does not move riders, charge the next
+metre, grant shelter or form a rear group. Actual paid work and
+ordered contact with the front remain necessary before continuation.
+The same three-seed source audit yields 63 pending proposals across
+the 23 replayed first kilometres, with no contact lacking an eligible
+proposed leader. These are proposals only; none has paid a next-km
+metre or become a rear group.
+
 The same 24-case source audit checks the next kilometre without
 advancing physical riders. In all 23 replayed starts, the km-2
 peloton plan is worked, each named front-turn leader is still in
