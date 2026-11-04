@@ -1013,9 +1013,32 @@ test('paid boundary contacts support a complete second flat kilometre',()=>{
   assert.equal(paidContact.roads.find(row=>
     row.roadId.startsWith('paid-mid-km-contact-'))
     .previousGroupIds.length,3);
-  assert.throws(()=>replayV94PhysicalUnattachedSourceNextKmV1(
-    recording,paidContact),
-  /Mixed forward\/rear contact needs paid joint choice/);
+  const afterContact=replayV94PhysicalUnattachedSourceNextKmV1(
+    recording,paidContact);
+  assert.equal(afterContact.sourceKm,109);
+  assert.equal(afterContact.finishes.length,160);
+  assert.equal(validateV94PhysicalUnattachedSourceNextKmV1(
+    recording,paidContact,afterContact),true);
+  let later=afterContact;
+  for(let km=110;km<=120;km++){
+    const next=replayV94PhysicalUnattachedSourceNextKmV1(
+      recording,later);
+    assert.equal(validateV94PhysicalUnattachedSourceNextKmV1(
+      recording,later,next),true);
+    assert.equal(next.sourceKm,km);
+    assert.equal(next.finishes.length,160);
+    assert.ok(next.finishes.every(row=>
+      row.endDistanceM===km*1000));
+    later=next;
+  }
+  assert.equal(later.sourceKm,120);
+  assert.equal(later.officialResults,false);
+  assert.equal(new Set(later.finishes.map(row=>
+    row.riderId)).size,160);
+  assert.ok(later.finishes.every(row=>
+    row.endDistanceM===120000));
+  assert.equal(later.finishes.find(row=>
+    row.riderId==='rival-6-7').physicalGroup,'peloton');
 });
 
 test('ended source break membership keeps four riders on paid roads',()=>{

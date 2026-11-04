@@ -6689,8 +6689,15 @@ The version 2 fragment and road audit then settle the whole 160-rider
 field through km 108, including the caught rider's independent
 physical reserve in the peloton. The same three-road settlement
 continues the 30-fatigue case through km 111. The next kilometres,
-109 and 112 respectively, refuse a mixed forward/rear boundary that
-still needs a paid joint choice.
+109 and 112 respectively, contain a mixed source-break and rear
+group at an already paid boundary. The caught-rider continuation
+accepts that group only while its recorded contact fragment or
+forward-boundary provenance covers every member; each next kilometre
+still prices one leader and shelter independently. In the seed-1
+120 km flat calibration, both fatigue settings now reach km 120 with
+160 paid finishes at each kilometre after the catch. They carry no
+official placings or awards. The other same-seed courses and seeds
+remain separate calibration cases.
 Both 260 km flat cases
 complete every rider through km 89. At km 90 the source
 introduces two new attackers (`rival-19-7` and `rival-6-7`), so the
