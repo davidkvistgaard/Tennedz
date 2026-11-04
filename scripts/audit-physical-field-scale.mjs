@@ -246,6 +246,13 @@ import {replayPhysicalMixedJoinedRearRaceV1,
 
 const fieldSize=20;
 const ridersPerTeam=8;
+const requestedRaceSeed=process.argv.find(arg=>
+  arg.startsWith('--race-seed='));
+const raceSeed=requestedRaceSeed?
+  requestedRaceSeed.slice('--race-seed='.length):
+  'physical-20-team-scale-1';
+if(!raceSeed||raceSeed.length>100)
+  throw new Error('Physical audit needs a bounded race seed.');
 const route=distanceKm=>Array.from({length:distanceKm},
   (_,index)=>{
     const terrain=['flat','hill','climb','descent'][
@@ -379,7 +386,7 @@ function source(distanceKm,fatigue,variant){
         'sprint_finish':'none',
       captainId:team.orders.captainId},phases:[]}))});
   const startInput={teams,routeKilometres:route(distanceKm),
-    commitment,raceSeed:'physical-20-team-scale-1',
+    commitment,raceSeed,
     ...(['varied_field','varied_captain',
       'front_varied'].includes(
       variant)?{

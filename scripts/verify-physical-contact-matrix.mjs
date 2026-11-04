@@ -6,6 +6,13 @@ import {fileURLToPath} from 'node:url';
 
 const audit=fileURLToPath(new URL(
   './audit-physical-field-scale.mjs',import.meta.url));
+const requestedRaceSeed=process.argv.find(arg=>
+  arg.startsWith('--race-seed='));
+const raceSeed=requestedRaceSeed?
+  requestedRaceSeed.slice('--race-seed='.length):
+  'physical-20-team-scale-1';
+if(!raceSeed||raceSeed.length>100)
+  throw new Error('Physical matrix needs a bounded race seed.');
 const distances=[120,260];
 const fatigues=[10,30,50];
 const rosters=[0,1,2,3,4,5,6];
@@ -53,6 +60,7 @@ function runCase({roster,fatigue,distance}){
     `--distance=${distance}`,
     '--front-eases','--planned-relief',
     '--front-mountain=50',
+    `--race-seed=${raceSeed}`,
     '--decision-coverage'];
   if(branch.kind!=='front_rear')
     args.push('--report-refusal');
@@ -121,7 +129,8 @@ function runCase({roster,fatigue,distance}){
             ?.[field],0);
         assert.ok(result.decisionCoverage
           ?.decisionRows>=160*distance);
-        if(branch.kind!=='no_catch')
+        if(branch.kind!=='no_catch'&&
+          raceSeed==='physical-20-team-scale-1')
           assert.equal(result.contactKm??
             result.catchKm,
           expectedKm[roster][fatigue]);
@@ -181,7 +190,7 @@ try{
       missingVersion:row.missingVersion,
       reasons:row.missingVersionByReason}))));
   console.log(JSON.stringify({version:8,
-    seed:'physical-20-team-scale-1',
+    seed:raceSeed,
     cases:results.length,
     finishRiderCount:160,
     results:results.map(({

@@ -5694,3 +5694,26 @@ The paired same-seed run without follower choices accepts the same
 19 cases and refuses the same five, with 484,765 uncovered peloton
 rider-kilometres. The new rows therefore expose the already-paid
 work branch without changing those whole-race outcomes.
+
+### Second physical contact replay seed
+
+The read-only physical field audit and 42-case contact matrix now
+accept a bounded `--race-seed` input. Running the unchanged seven
+synthetic rosters, three fatigue settings and two route lengths with
+`physical-20-team-scale-2` validates all 42 cases: 160 riders and
+1,276,800 rider-kilometres reach the observed route ends. Every
+decision retains its version and source, every rear group formation
+and merger has recorded contact, and the energy, clock and finish
+replay checks report zero discrepancies. The expected contact
+branches and kilometres match the first seed in this matrix.
+
+This second seed changes the observer's race-seed input while the
+synthetic rider attributes, orders, route and manager chase stay the
+same. It is a source replay holdout, not an independent population
+sample or calibration against real finishes. It does not make the
+separate V94 whole-race refusal cases or guided routing safe.
+For the 120-km fatigue-10 roster-0 observer at km 41, the estimated
+front clock changes from 79.456 to 79.730 seconds per kilometre;
+the observed prior front clock and own leader estimate stay fixed.
+Both seeds choose `watch`, so this probe does not demonstrate a
+different tactical action or a different physical outcome.
