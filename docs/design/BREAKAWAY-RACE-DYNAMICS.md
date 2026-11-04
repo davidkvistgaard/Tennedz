@@ -5660,3 +5660,37 @@ drop. The 18 completed cases cover 502,400 rider-kilometres, of which
 completed case contains a dropped rider because the guard stops at
 the first such transition. These counts describe the strict input
 gate; they do not establish realistic contact or finish outcomes.
+
+### Opt-in peloton follower choices
+
+`pelotonFollowerDecisionVersion: 1` requires explicit version-5
+sporting stakes, the paid shared front, version-1 or version-2 draft
+costs and strict peloton drop contact. For each rider who begins the
+kilometre in the peloton, remains behind the break and does not take
+a named paid front turn, it records a choice before energy payment.
+The row records the rider's perceived cruising ability at current
+reserve, the actual manager effort and chase orders, the committed
+sporting goal and captain, the paid front status, the sourced draft
+fraction and the requested work. The payable-reserve comparison makes
+the choice. A payable rider pays the recorded
+sheltered or unworked peloton demand; an unpayable rider coasts under
+the existing exhaustion rule. The choice now selects that payment
+branch, and the validator reconstructs it from the prior state,
+front, committed source and energy ledger. It is not a wheel or
+position decision. Sporting goals affect the upstream team pursuit
+policy; this follower version records the goal but does not invent
+another rider-level goal effect.
+
+With synthetic all-sprint stakes, observed-pace protector timing,
+fresh attacker choices, draft costs and the strict loss guard, the
+three-seed inventory validates 19 of 24 whole races and refuses five
+at an unresolved peloton loss. The completed cases cover 544,000
+rider-kilometres with exactly one recorded individual choice per
+kilometre, including 484,765 follower rows. None of those completed
+cases contains a dropped rider; the guard stops at the first new
+loss. This is complete decision-row coverage of the accepted
+synthetic cases, not physical contact or finish calibration.
+The paired same-seed run without follower choices accepts the same
+19 cases and refuses the same five, with 484,765 uncovered peloton
+rider-kilometres. The new rows therefore expose the already-paid
+work branch without changing those whole-race outcomes.
