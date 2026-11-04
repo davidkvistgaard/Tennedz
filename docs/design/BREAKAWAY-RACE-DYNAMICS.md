@@ -6394,6 +6394,26 @@ front clock, with no new front drops. The one km-1 source refusal
 remains. This front result does not include the previously paid rear
 groups or certify any attacker as a shared break member.
 
+`v94-physical-fifth-km-v1.mjs` now attempts the entire fifth
+kilometre by combining that conditional front with the existing
+paid rear-boundary choices and each fresh attacker's individual paid
+solo road. The continuation checks front/rear, attacker/rear,
+attacker/front, new front-drop/rear and other road crossings before
+settling each rider's distance, clock and energy. A rear group still
+needs its recorded boundary contact and exactly one paid leader; the
+fresh attackers gain no source break wheel or shared group. The
+result explicitly marks the source checkpoint calibration as failed,
+even when a complete physical field can be settled, and awards no
+official result. A later kilometre cannot treat the source's km-5
+break road as physical contact.
+In the three-seed, 24-case matrix, the 23 source-valid cases all
+complete the full fifth kilometre for 160 riders, with 102 paid rear
+groups and 70 individual fresh-attack solo roads. No contact refusal
+occurs in those cases; the one original km-1 source refusal remains.
+The 26 attacker/front classification mismatches and the unearned
+source checkpoint gaps remain explicit, so this is not a calibrated
+whole-race continuation.
+
 Callers of the experimental preview can request
 `physicalFirstKmVersion: 1` to receive this completed physical first
 kilometre as a separate `physicalFirstKm` result. It requires the

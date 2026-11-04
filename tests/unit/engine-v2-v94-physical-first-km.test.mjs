@@ -56,6 +56,10 @@ import {replayV94PhysicalFifthFrontKmV1,
   validateV94PhysicalFifthFrontKmV1,
   V94_PHYSICAL_FIFTH_FRONT_DECISION_VERSION} from
   '../../lib/engine/v2/v94-physical-fifth-front-km-v1.mjs';
+import {replayV94PhysicalFifthKmV1,
+  validateV94PhysicalFifthKmV1,
+  V94_PHYSICAL_FIFTH_REAR_DECISION_VERSION} from
+  '../../lib/engine/v2/v94-physical-fifth-km-v1.mjs';
 
 test('first V94 kilometre prices each named turn and detached solo metre',()=>{
   const settings={distanceKm:120,teamCount:20,terrain:'mountain',
@@ -403,6 +407,24 @@ test('second front records an early climb loss without completing rear road',()=
   assert.equal(fifthFront.officialResults,false);
   assert.equal(validateV94PhysicalFifthFrontKmV1(
     recording,fourth,fifthFront),true);
+  const fifth=replayV94PhysicalFifthKmV1(recording,fourth);
+  assert.equal(fifth.fullFieldKilometre,true);
+  assert.equal(fifth.finishes.length,160);
+  assert.equal(fifth.freshAttackSoloRiderIds.length,
+    freshSolos.roads.length);
+  assert.equal(fifth.sourceCheckpointCalibrationFailed,true);
+  assert.ok(fifth.physicalRearGroups.every(group=>
+    group.riderDecisions.filter(row=>
+      row.role==='leader').length===1&&
+    group.riderDecisions.every(row=>
+      row.version===V94_PHYSICAL_FIFTH_REAR_DECISION_VERSION)));
+  assert.ok(fifth.finishes.every(row=>
+    row.endDistanceM===5000&&
+    Math.abs(row.energyBefore-row.paidFromReserve+
+      row.recoveryAward-row.capAdjustment-row.energyAfter)<.0015));
+  assert.equal(fifth.officialResults,false);
+  assert.equal(validateV94PhysicalFifthKmV1(
+    recording,fourth,fifth),true);
   const forgedSolo=structuredClone(freshSolos);
   forgedSolo.roads[0].earnedLeadSecondsAtBoundary+=1;
   assert.throws(()=>validateV94PhysicalFreshAttackSolosV1(
