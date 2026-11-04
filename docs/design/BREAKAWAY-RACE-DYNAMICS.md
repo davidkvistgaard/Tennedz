@@ -5742,6 +5742,13 @@ physically attached riders. The remaining case refuses a simultaneous
 fresh attack and paid pursuit that lacks a shared road-clock contract.
 This comparison is limited to kilometre 1 and does not validate
 later losses, catches, finishes or realistic racing outcomes.
+The same comparison exposes a separate pace problem. In the 23
+replayed first kilometres, the physical origin marks 2,097 riders
+as unable to hold the named front while V94 still calls them peloton
+riders. The physical source's speed shelter and V94's consecutive
+kilometre deficit threshold do not describe the same contact rule.
+Energy agreement for the other 1,583 riders cannot justify joining
+the two group states or releasing V94 to guided races.
 In the separate three-seed, 24-case V94 whole-race decision inventory
 with strict loss contact, draft, follower, fresh-attack and protector
 timing opt-ins, the exposure price accepts the same 19 cases and

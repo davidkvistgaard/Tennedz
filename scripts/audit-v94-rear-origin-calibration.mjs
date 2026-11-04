@@ -49,6 +49,8 @@ for(let seedNumber=1;seedNumber<=4;seedNumber++)
       let paidPositive=0;
       let unmetDemand=0;
       let projectedHolds=0;
+      let physicalLostButV94Peloton=0;
+      let physicalHeldButV94Dropped=0;
       let heldPaidMismatches=0;
       let heldEnergyMismatches=0;
       let heldPaidAbsoluteError=0;
@@ -57,6 +59,8 @@ for(let seedNumber=1;seedNumber<=4;seedNumber++)
       let firstHeldMismatch=null;
       const energyById=new Map(frame.energyLedger.map(row=>
         [row.riderId,row]));
+      const groupById=new Map(frame.riderGroups.map(row=>[
+        row.id,row.group]));
       for(const team of recording.committedInputs.teams)
         for(const rider of team.riders){
           const choice={riderId:rider.id,km:1,
@@ -72,12 +76,16 @@ for(let seedNumber=1;seedNumber<=4;seedNumber++)
             if(road.steps[0].split.kind!=='physical_pace_loss')
               throw new Error('Unexpected first-kilometre split source.');
             projectedPaceLosses++;
+            if(groupById.get(rider.id)==='peloton')
+              physicalLostButV94Peloton++;
             if(paid.paidFromReserve>0)paidPositive++;
             if(paid.unmetEnergyDemand>0)unmetDemand++;
           }else{
             if(road.status!=='bunch')
               throw new Error('Unexpected first-kilometre origin state.');
             projectedHolds++;
+            if(groupById.get(rider.id)==='dropped')
+              physicalHeldButV94Dropped++;
             const step=road.steps[0];
             const projectedPaid=step.slices.reduce((sum,slice)=>
               sum+slice.energySpent,0);
@@ -103,9 +111,13 @@ for(let seedNumber=1;seedNumber<=4;seedNumber++)
               heldEnergyMismatches++;
           }
         }
+      if(projectedPaceLosses+projectedHolds!==160)
+        throw new Error('First-kilometre physical origin omitted a rider.');
       results.push({seedNumber,terrain,fatigue,
         projectedPaceLosses,paidPositive,unmetDemand,
-        projectedHolds,heldPaidMismatches,heldEnergyMismatches,
+        projectedHolds,physicalLostButV94Peloton,
+        physicalHeldButV94Dropped,
+        heldPaidMismatches,heldEnergyMismatches,
         heldPaidAbsoluteError,heldEnergyAbsoluteError,
         heldMismatchByKind,firstHeldMismatch,
         v94FirstFrameRoadGroups:frame.roadGroups.length});
@@ -123,6 +135,8 @@ if(process.argv.includes('--summary')){
     projectedPaceLossesMax:Math.max(...replayed.map(row=>
       row.projectedPaceLosses)),
     projectedHolds:sum('projectedHolds'),
+    physicalLostButV94Peloton:sum('physicalLostButV94Peloton'),
+    physicalHeldButV94Dropped:sum('physicalHeldButV94Dropped'),
     heldPaidMismatches:sum('heldPaidMismatches'),
     heldEnergyMismatches:sum('heldEnergyMismatches'),
     heldPaidAbsoluteError:+sum('heldPaidAbsoluteError').toFixed(3),
