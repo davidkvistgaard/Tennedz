@@ -63,6 +63,10 @@ import {replayV94PhysicalFifthKmV1,
 import {inspectV94PhysicalSixthSourceBoundaryV1,
   validateV94PhysicalSixthSourceBoundaryV1} from
   '../../lib/engine/v2/v94-physical-sixth-source-boundary-v1.mjs';
+import {decideV94PhysicalSixthRiderBoundaryV1,
+  validateV94PhysicalSixthRiderBoundaryV1,
+  V94_PHYSICAL_SIXTH_RIDER_DECISION_VERSION} from
+  '../../lib/engine/v2/v94-physical-sixth-rider-boundary-v1.mjs';
 
 test('first V94 kilometre prices each named turn and detached solo metre',()=>{
   const settings={distanceKm:120,teamCount:20,terrain:'mountain',
@@ -442,6 +446,23 @@ test('second front records an early climb loss without completing rear road',()=
   assert.deepEqual(sixthSource.physicalRoadGroups,[]);
   assert.equal(validateV94PhysicalSixthSourceBoundaryV1(
     recording,fifth,sixthSource),true);
+  const sixthRiders=decideV94PhysicalSixthRiderBoundaryV1(
+    recording,fifth);
+  assert.equal(sixthRiders.decisions.length,160);
+  assert.ok(sixthRiders.decisions.every(row=>
+    row.version===V94_PHYSICAL_SIXTH_RIDER_DECISION_VERSION&&
+    row.atDistanceM===5000&&
+    Number.isFinite(row.relativeToPaidFrontSeconds)&&
+    Number.isFinite(row.perceivedCruiseAbility)&&
+    Number.isFinite(row.perceivedSoloAbility)&&
+    row.managerEffort&&row.sportingGoal&&
+    row.paidNewDistanceM===0&&row.paidNewEnergy===0));
+  assert.equal(validateV94PhysicalSixthRiderBoundaryV1(
+    recording,fifth,sixthRiders),true);
+  const forgedSixth=structuredClone(sixthRiders);
+  forgedSixth.decisions[0].perceivedSoloAbility+=1;
+  assert.throws(()=>validateV94PhysicalSixthRiderBoundaryV1(
+    recording,fifth,forgedSixth),/differs from paid source/);
   assert.throws(()=>replayV94PhysicalNextKmV1(
     recording,fifth),error=>
     /lacks paid physical km5 contact/.test(error.message)&&

@@ -6436,6 +6436,22 @@ version, named leaders and arrival-clock spread in its evidence.
 It cannot silently carry the source's `road-1` into the next paid
 kilometre.
 
+`v94-physical-sixth-rider-boundary-v1.mjs` now records one
+versioned km-6 decision proposal per paid km-5 finisher. Each row
+retains its physical road ID, 5,000-metre clock and reserve; it reads
+the actual next-kilometre manager effort, chase, front-work, attack
+and break-work order, committed sporting goal and captain, and the
+rider's perceived cruise and solo ability on the recorded route.
+Relative time uses the paid peloton front clock. Source break
+membership and named source turns are labeled as claims, not granted
+positions, wheels or groups. Every proposal pays zero new distance
+and energy until a new physical road plan resolves the km-6 source
+conflict.
+The same three-seed matrix accepts 3,680 such rider proposals across
+the 23 paid fifth-kilometre fields. Seventy have a source break
+membership claim, while only 44 have a clock ahead of the paid
+peloton front. None of these proposals forms a group or advances km 6.
+
 Callers of the experimental preview can request
 `physicalFirstKmVersion: 1` to receive this completed physical first
 kilometre as a separate `physicalFirstKm` result. It requires the
