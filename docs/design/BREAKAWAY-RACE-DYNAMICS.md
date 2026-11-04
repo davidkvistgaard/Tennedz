@@ -5475,6 +5475,18 @@ decisions. Only 57,397 rider-kilometres have recorded choices, leaving
 experimental energy comparison and does not establish whole-race
 physical contact or realistic outcome calibration.
 
+The version 1 audit finds 12 discounted riders who end their kilometre
+in the dropped group, across four of the 23 completed races. The first
+is `rival-14-0` at km 140 of seed 1's 260-km flat, fatigue-0 case.
+The kilometre model cannot identify the metre where shelter ended.
+Opt-in `pelotonDraftCostVersion: 2` therefore refuses that transition
+with the prior and final group, rider ID, source kilometre, leading
+metres and proposed fraction. It preserves version 1 recordings for
+replay. Across the three seeds, version 2 validates 19 of 24 races and
+refuses five; no completed version 2 race contains a discounted drop.
+This strict branch still needs paid within-kilometre loss and contact
+to cover the four additional races.
+
 A same-seed adapter needs an
 explicit, paid, versioned leader decision that resolves competing
 teams and selects an eligible worker from the committed roster using

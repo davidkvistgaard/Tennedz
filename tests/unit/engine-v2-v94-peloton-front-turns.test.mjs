@@ -118,6 +118,25 @@ test('opt-in peloton draft lowers sourced follower base cost',()=>{
     !Object.hasOwn(row,'pelotonDraftCosts')));
 });
 
+test('strict draft refuses a rider lost during discounted kilometre',()=>{
+  const longSettings={...settings,distanceKm:260};
+  const sportingStakes=prepareV91Playtest(longSettings).teams.map(
+    team=>({teamId:team.id,goal:'none',
+      captainId:team.orders.captainId}));
+  assert.throws(()=>createV94RaceDynamicsPreview({
+    format:'one_day',settings:longSettings,sportingStakes,
+    chaseTurnVersion:1,bunchFrontTurnVersion:1,
+    pelotonFrontTurnVersion:1,pelotonDraftCostVersion:2}),
+  error=>{
+    assert.match(error.message,/Unresolved peloton draft contact/);
+    assert.equal(error.sourceKm,140);
+    assert.equal(error.sourceEvidence.riderId,'rival-14-0');
+    assert.equal(error.sourceEvidence.priorGroup,'peloton');
+    assert.equal(error.sourceEvidence.finalGroup,'dropped');
+    return true;
+  });
+});
+
 test('historical opt-in chase version retains its separate road contract',()=>{
   const {recording}=createV94RaceDynamicsPreview({format:'one_day',settings,
     chaseTurnVersion:1,bunchFrontTurnVersion:1});
