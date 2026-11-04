@@ -78,6 +78,9 @@ import {replayV94PhysicalMixedFreshKmV1,
 import {replayV94PhysicalRecordedRestKmV1,
   validateV94PhysicalRecordedRestKmV1} from
   '../lib/engine/v2/v94-physical-recorded-rest-km-v1.mjs';
+import {decideV94PhysicalMidKmContactChoiceV1,
+  validateV94PhysicalMidKmContactChoiceV1} from
+  '../lib/engine/v2/v94-physical-mid-km-contact-choice-v1.mjs';
 
 const requested=process.argv.find(arg=>arg.startsWith('--seeds='));
 const seedCount=requested?Number(requested.slice(8)):1;
@@ -422,6 +425,15 @@ for(let seed=1;seed<=seedCount;seed++)
           afterRestEvidence=error.sourceEvidence??null;
           break;
         }
+      let afterRestContactChoice=null;
+      if(afterRestRefusal===
+        'Physical rear roads need paid contact resolution.'){
+        afterRestContactChoice=
+          decideV94PhysicalMidKmContactChoiceV1(
+            recording,afterRestTrace);
+        validateV94PhysicalMidKmContactChoiceV1(
+          recording,afterRestTrace,afterRestContactChoice);
+      }
       let nextTrace=fourthTrace,nextRefusal=null;
       let nextRefusalKm=null,nextRefusalEvidence=null;
       if(nextThrough!==null&&fourthTrace){
@@ -727,7 +739,20 @@ for(let seed=1;seed<=seedCount;seed++)
               afterRestTrace?.sourceKm??null,
             afterRestAwareKmCount,
             afterRestRefusalKm,afterRestRefusal,
-            afterRestEvidence}:{}),
+            afterRestEvidence,
+            afterRestContactChoice:afterRestContactChoice?{
+              sourceKm:afterRestContactChoice.sourceKm,
+              atDistanceM:afterRestContactChoice.atDistanceM,
+              riderIds:afterRestContactChoice.candidates.map(row=>
+                row.riderId),
+              pendingLeaderRiderId:
+                afterRestContactChoice.pendingLeaderRiderId,
+              pendingShelterRiderIds:
+                afterRestContactChoice.pendingShelterRiderIds,
+              paidWorkPending:
+                afterRestContactChoice.paidWorkPending,
+              formsRearGroup:afterRestContactChoice.formsRearGroup}:
+              null}:{}),
           lastSoloClockSeconds:completion.soloCompletions.length?
             Math.max(...completion.soloCompletions.map(row=>
               row.finishClockSeconds)):null}:{}),
@@ -990,6 +1015,11 @@ console.log(JSON.stringify({seedCount,complete,secondFront,boundaryChoice,
     row.afterRestCompletedThroughKm).filter(Number.isInteger),
   afterRestAwareKmCount:accepted.reduce((sum,row)=>
     sum+(row.afterRestAwareKmCount??0),0),
+  afterRestContactChoices:accepted.filter(row=>
+    row.afterRestContactChoice).map(row=>({
+      seed:row.seed,distanceKm:row.distanceKm,
+      terrain:row.terrain,fatigue:row.fatigue,
+      ...row.afterRestContactChoice})),
   afterRestRefusals:accepted.filter(row=>
     row.afterRestRefusal).map(row=>({seed:row.seed,
       distanceKm:row.distanceKm,terrain:row.terrain,

@@ -98,6 +98,9 @@ import {decideV94PhysicalForwardBoundaryChoicesV1,
 import {replayV94PhysicalRecordedRestKmV1,
   validateV94PhysicalRecordedRestKmV1} from
   '../../lib/engine/v2/v94-physical-recorded-rest-km-v1.mjs';
+import {decideV94PhysicalMidKmContactChoiceV1,
+  validateV94PhysicalMidKmContactChoiceV1} from
+  '../../lib/engine/v2/v94-physical-mid-km-contact-choice-v1.mjs';
 
 test('first V94 kilometre prices each named turn and detached solo metre',()=>{
   const settings={distanceKm:120,teamCount:20,terrain:'mountain',
@@ -749,6 +752,26 @@ test('paid boundary contacts support a complete second flat kilometre',()=>{
       row.riderIds.includes(row.leaderRiderId)&&
       row.previousGroupIds.length>0&&
       Number.isFinite(row.speedMps)));
+  const crossing=decideV94PhysicalMidKmContactChoiceV1(
+    recording,afterRest);
+  assert.equal(crossing.sourceKm,28);
+  assert.equal(crossing.formsRearGroup,false);
+  assert.equal(crossing.officialResults,false);
+  assert.equal(crossing.pendingLeaderRiderId,'rival-6-5');
+  assert.equal(crossing.pendingShelterRiderIds.length,18);
+  assert.equal(crossing.candidates.find(row=>
+    row.riderId==='rival-6-5').sourceBreakMembershipClaim,
+  true);
+  assert.equal(crossing.candidates.length,
+    crossing.observedRoads.reduce((sum,road)=>
+      sum+road.riderIds.length,0));
+  assert.ok(crossing.candidates.every(row=>
+    row.paidEnergyToContact>0&&
+    row.energyAtContact<row.energyBeforeKm&&
+    row.quotedShelterEnergyDemand<
+      row.quotedLeaderEnergyDemand));
+  assert.equal(validateV94PhysicalMidKmContactChoiceV1(
+    recording,afterRest,crossing),true);
 });
 
 test('second-km road clocks refuse a faster rear catch',()=>{

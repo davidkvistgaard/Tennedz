@@ -6584,6 +6584,18 @@ respectively. No catch or new group is inferred from that crossing.
 The refusal includes both paid roads' leaders, members, prior group
 identities, boundary and finish clocks, and speeds so a later
 contact decision can use the actual riders and movement.
+`v94-physical-mid-km-contact-choice-v1.mjs` replays that refusal,
+prices each rider's existing paid role up to the measured crossing,
+and quotes possible single-leader and sheltered work for the
+remaining distance from actual reserve, orders and sporting stakes.
+It is a proposal only: `formsRearGroup` stays false and the
+kilometre remains incomplete until the subsequent metres are paid
+and checked against every road.
+In the four flat source-valid crossings, the solo `rival-6-5`
+volunteers for the next paid turn and the 18 riders on the existing
+rear road can hold its quoted sheltered pace. These are the same
+physical participants at 24.156 or 27.052 km across both route
+lengths, and no contact group has been formed.
 
 Callers of the experimental preview can request
 `physicalFirstKmVersion: 1` to receive this completed physical first
