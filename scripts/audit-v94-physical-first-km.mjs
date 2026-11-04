@@ -27,9 +27,17 @@ import {decideV94PhysicalThirdBoundaryChoicesV1,
 import {replayV94PhysicalThirdRearKmV1,
   validateV94PhysicalThirdRearKmV1} from
   '../lib/engine/v2/v94-physical-third-rear-km-v1.mjs';
+import {replayV94PhysicalFourthKmV1,
+  validateV94PhysicalFourthKmV1} from
+  '../lib/engine/v2/v94-physical-fourth-km-v1.mjs';
+import {replayV94PhysicalNextKmV1,
+  validateV94PhysicalNextKmV1} from
+  '../lib/engine/v2/v94-physical-next-km-v1.mjs';
 
 const requested=process.argv.find(arg=>arg.startsWith('--seeds='));
 const seedCount=requested?Number(requested.slice(8)):1;
+const selectedCase=process.argv.find(arg=>arg.startsWith('--case='));
+const caseFilter=selectedCase?selectedCase.slice(7):null;
 const complete=process.argv.includes('--complete');
 const secondFront=process.argv.includes('--second-front');
 const boundaryChoice=process.argv.includes('--boundary-choice');
@@ -38,10 +46,20 @@ const thirdSource=process.argv.includes('--third-source');
 const thirdFront=process.argv.includes('--third-front');
 const thirdBoundary=process.argv.includes('--third-boundary');
 const thirdRear=process.argv.includes('--third-rear');
+const fourthSource=process.argv.includes('--fourth-source');
+const fourthReplay=process.argv.includes('--fourth-replay');
+const nextRequested=process.argv.find(arg=>
+  arg.startsWith('--next-through='));
+const nextThrough=nextRequested?Number(nextRequested.slice(15)):null;
 if((secondFront||boundaryChoice||secondRear||thirdSource)&&!complete||
   thirdSource&&!secondRear||thirdFront&&!secondRear||
-  thirdBoundary&&!secondRear||thirdRear&&!secondRear)
+  thirdBoundary&&!secondRear||thirdRear&&!secondRear||
+  fourthSource&&!thirdRear||fourthReplay&&!thirdRear||
+  nextThrough!==null&&!fourthReplay)
   throw new Error('Continuation audit needs --complete.');
+if(nextThrough!==null&&(!Number.isInteger(nextThrough)||
+  nextThrough<5||nextThrough>260))
+  throw new Error('Next physical audit needs km 5 through 260.');
 if(!Number.isInteger(seedCount)||seedCount<1||seedCount>3)
   throw new Error('First-km physical audit needs one to three seeds.');
 const cases=[];
@@ -49,6 +67,8 @@ for(let seed=1;seed<=seedCount;seed++)
   for(const distanceKm of [120,260])
   for(const terrain of ['flat','mountain'])
   for(const fatigue of [0,30]){
+    if(caseFilter&&caseFilter!==
+      `${distanceKm}-${terrain}-${fatigue}`)continue;
     const settings={distanceKm,teamCount:20,terrain,fatigue,
       attack:'none',chase:'selective',
       seed:`preview-recorded-road-${seed}`};
@@ -99,6 +119,59 @@ for(let seed=1;seed<=seedCount;seed++)
         thirdRearTrace=replayV94PhysicalThirdRearKmV1(recording);
         validateV94PhysicalThirdRearKmV1(recording,thirdRearTrace);
       }catch(error){thirdRearRefusal=error.message;}
+      let fourthTrace=null,fourthRefusal=null;
+      if(fourthReplay&&thirdRearTrace)try{
+        fourthTrace=replayV94PhysicalFourthKmV1(recording);
+        validateV94PhysicalFourthKmV1(recording,fourthTrace);
+      }catch(error){fourthRefusal=error.message;}
+      let nextTrace=fourthTrace,nextRefusal=null;
+      let nextRefusalKm=null,nextRefusalEvidence=null;
+      if(nextThrough!==null&&fourthTrace){
+        for(let km=5;km<=Math.min(nextThrough,
+          recording.route.kilometres.length);km++)try{
+          const candidate=replayV94PhysicalNextKmV1(
+            recording,nextTrace);
+          validateV94PhysicalNextKmV1(
+            recording,nextTrace,candidate);
+          nextTrace=candidate;
+        }catch(error){
+          nextRefusal=error.message;
+          nextRefusalKm=km;
+          const frame=recording.frames[km-1];
+          nextRefusalEvidence={
+            frontPlanStatus:
+              frame?.pelotonFrontTurnPlan?.status??null,
+            frontTurnCount:
+              frame?.pelotonFrontTurnPlan?.turns?.length??0,
+            attackers:frame?.attackers?.length??0,
+            joinedBreakawayRiders:
+              frame?.joinedBreakawayRiderIds?.length??0,
+            breakawayRiders:
+              frame?.breakawayRiderIds?.length??0,
+            roadGroups:frame?.roadGroups?.length??0,
+            roadGroupDetails:frame?.roadGroups?.map(group=>({
+              id:group.id,riderIds:group.riderIds,
+              gapSeconds:group.gapSeconds}))??[],
+            roadGroupTurnPlans:frame?.roadGroupTurnPlans??[],
+            sourceAttackContributions:
+              frame?.attackContributions??[],
+            attackerPhysicalStarts:(frame?.attackers??[]).map(
+              riderId=>({riderId,
+                priorPhysicalGroup:nextTrace?.finishes.find(row=>
+                  row.riderId===riderId)?.physicalGroup??null,
+                sourceDecision:frame?.freshAttackRiderDecisions
+                  ?.find(row=>row.riderId===riderId)??null,
+                sourceEnergy:frame?.energyLedger?.find(row=>
+                  row.riderId===riderId)??null})),
+            sourceContactEvidence:error.sourceEvidence??null};
+          break;
+        }
+      }
+      const fourth=fourthSource?recording.frames[3]:null;
+      const physicalFrontAtThree=new Set(
+        thirdRearTrace?.finishes.filter(row=>
+          row.physicalGroup==='peloton').map(row=>row.riderId)??[]);
+      const fourthTurns=fourth?.pelotonFrontTurnPlan?.turns??[];
       const third=thirdSource?recording.frames[2]:null;
       const physicalFrontAtTwo=new Set(rear?.finishes.filter(row=>
         row.physicalGroup==='peloton').map(row=>row.riderId)??[]);
@@ -172,6 +245,28 @@ for(let seed=1;seed<=seedCount;seed++)
             thirdKmCoincidentDropSets:
               thirdRearTrace?.coincidentNewFrontDropSets.length??0,
             thirdRearRefusal}:{}),
+          ...(fourthSource?{
+            fourthKmSourceFront:
+              fourth?.pelotonFrontTurnPlan?.status??null,
+            fourthKmLeadersAttached:fourthTurns.every(row=>
+              physicalFrontAtThree.has(row.leaderRiderId)),
+            fourthKmSourceHasAttack:!!(fourth?.attackers.length||
+              fourth?.joinedBreakawayRiderIds.length||
+              fourth?.breakawayRiderIds.length||
+              fourth?.roadGroups.length)}:{}),
+          ...(fourthReplay?{
+            fourthKmFullField:fourthTrace?.fullFieldKilometre??false,
+            fourthKmRearGroups:
+              fourthTrace?.physicalRearGroups.length??0,
+            fourthKmNewFrontDrops:
+              fourthTrace?.newFrontDrops.length??0,
+            fourthKmCoincidentDropSets:
+              fourthTrace?.coincidentNewFrontDropSets.length??0,
+            fourthRefusal}:{}),
+          ...(nextThrough!==null?{
+            nextCompletedThroughKm:nextTrace?.sourceKm??null,
+            nextRearGroups:nextTrace?.physicalRearGroups.length??0,
+            nextRefusalKm,nextRefusal,nextRefusalEvidence}:{}),
           lastSoloClockSeconds:completion.soloCompletions.length?
             Math.max(...completion.soloCompletions.map(row=>
               row.finishClockSeconds)):null}:{}),
@@ -185,6 +280,7 @@ for(let seed=1;seed<=seedCount;seed++)
 const accepted=cases.filter(row=>!row.refusal);
 console.log(JSON.stringify({seedCount,complete,secondFront,boundaryChoice,
   secondRear,thirdSource,thirdFront,thirdBoundary,thirdRear,
+  fourthSource,fourthReplay,nextThrough,
   cases:cases.length,
   replayedFirstKilometres:accepted.length,
   refusedCases:cases.length-accepted.length,
@@ -248,6 +344,29 @@ console.log(JSON.stringify({seedCount,complete,secondFront,boundaryChoice,
     sum+(row.thirdKmNewFrontDrops??0),0),
   thirdKmCoincidentDropSets:accepted.reduce((sum,row)=>
     sum+(row.thirdKmCoincidentDropSets??0),0),
+  fourthKmSourceWorked:accepted.filter(row=>
+    row.fourthKmSourceFront==='worked').length,
+  fourthKmLeadersAttached:accepted.filter(row=>
+    row.fourthKmSourceFront==='worked'&&
+    row.fourthKmLeadersAttached).length,
+  fourthKmSourceHasAttack:accepted.filter(row=>
+    row.fourthKmSourceHasAttack).length,
+  fourthKmFullFields:accepted.filter(row=>
+    row.fourthKmFullField).length,
+  fourthKmRearGroups:accepted.reduce((sum,row)=>
+    sum+(row.fourthKmRearGroups??0),0),
+  fourthKmNewFrontDrops:accepted.reduce((sum,row)=>
+    sum+(row.fourthKmNewFrontDrops??0),0),
+  fourthKmCoincidentDropSets:accepted.reduce((sum,row)=>
+    sum+(row.fourthKmCoincidentDropSets??0),0),
+  nextCompletedThroughKm:accepted.map(row=>
+    row.nextCompletedThroughKm).filter(Number.isInteger),
+  nextRefusalKilometres:accepted.filter(row=>
+    row.nextRefusalKm!==null&&row.nextRefusalKm!==undefined)
+    .map(row=>({seed:row.seed,distanceKm:row.distanceKm,
+      terrain:row.terrain,fatigue:row.fatigue,
+      km:row.nextRefusalKm,refusal:row.nextRefusal,
+      evidence:row.nextRefusalEvidence})),
   firstCase:cases[0],refusals:cases.filter(row=>row.refusal),
   secondFrontRefusals:accepted.filter(row=>
     row.nextFrontRefusal),
@@ -266,5 +385,9 @@ console.log(JSON.stringify({seedCount,complete,secondFront,boundaryChoice,
   thirdRearRefusals:accepted.filter(row=>
     row.thirdRearRefusal).map(row=>({seed:row.seed,
       distanceKm:row.distanceKm,terrain:row.terrain,
-      fatigue:row.fatigue,refusal:row.thirdRearRefusal}))},
+      fatigue:row.fatigue,refusal:row.thirdRearRefusal})),
+  fourthRefusals:accepted.filter(row=>
+    row.fourthRefusal).map(row=>({seed:row.seed,
+      distanceKm:row.distanceKm,terrain:row.terrain,
+      fatigue:row.fatigue,refusal:row.fourthRefusal}))},
 null,2));

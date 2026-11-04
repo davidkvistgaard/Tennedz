@@ -38,6 +38,12 @@ import {replayV94PhysicalThirdRearKmV1,
   validateV94PhysicalThirdRearKmV1,
   V94_PHYSICAL_THIRD_REAR_DECISION_VERSION} from
   '../../lib/engine/v2/v94-physical-third-rear-km-v1.mjs';
+import {replayV94PhysicalFourthKmV1,
+  validateV94PhysicalFourthKmV1,
+  V94_PHYSICAL_FOURTH_REAR_DECISION_VERSION} from
+  '../../lib/engine/v2/v94-physical-fourth-km-v1.mjs';
+import {replayV94PhysicalNextKmV1} from
+  '../../lib/engine/v2/v94-physical-next-km-v1.mjs';
 
 test('first V94 kilometre prices each named turn and detached solo metre',()=>{
   const settings={distanceKm:120,teamCount:20,terrain:'mountain',
@@ -307,6 +313,31 @@ test('second front records an early climb loss without completing rear road',()=
   assert.equal(thirdComplete.officialResults,false);
   assert.equal(validateV94PhysicalThirdRearKmV1(
     recording,thirdComplete),true);
+  const fourth=replayV94PhysicalFourthKmV1(recording);
+  assert.equal(fourth.sourceKm,4);
+  assert.equal(fourth.priorSourceKm,3);
+  assert.equal(fourth.finishes.length,160);
+  assert.equal(fourth.fullFieldKilometre,true);
+  assert.ok(fourth.physicalRearGroups.every(group=>
+    group.riderDecisions.filter(row=>
+      row.role==='leader').length===1&&
+    group.riderDecisions.every(row=>
+      row.version===V94_PHYSICAL_FOURTH_REAR_DECISION_VERSION)));
+  assert.ok(fourth.finishes.every(row=>
+    row.endDistanceM===4000&&
+    Math.abs(row.energyBefore-row.paidFromReserve+
+      row.recoveryAward-row.capAdjustment-row.energyAfter)<.001));
+  assert.equal(fourth.officialResults,false);
+  assert.equal(validateV94PhysicalFourthKmV1(recording,fourth),true);
+  if(recording.frames[4].attackers.length)
+    assert.throws(()=>replayV94PhysicalNextKmV1(
+      recording,fourth),error=>
+      /paid launch and contact contract/.test(error.message)&&
+      error.sourceKm===5&&
+      error.sourceEvidence.attackerRiderIds.length===
+        recording.frames[4].attackers.length&&
+      error.sourceEvidence.priorAttackerGroups.every(row=>
+        row.physicalGroup==='peloton'));
 });
 
 test('paid boundary contacts support a complete second flat kilometre',()=>{

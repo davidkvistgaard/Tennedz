@@ -6308,6 +6308,33 @@ metres remain contact candidates. The one first-kilometre source
 refusal remains. This is an experimental three-kilometre replay,
 not a validated whole race or an official finish.
 
+The paid boundary, front and rear rules now also expose a shared
+continuation that consumes a complete prior physical kilometre.
+`v94-physical-fourth-km-v1.mjs` gives km 4 its own versioned
+decisions, preserving the exact km-3 replay and keeping prior traces
+out of each new step's payload. The same three-seed, 24-case audit
+completes the fourth kilometre for all 160 riders in the 23 accepted
+cases, with 102 paid rear groups and no new front drops. The one
+source refusal remains at km 1. `v94-physical-next-km-v1.mjs`
+can apply the same recorded inputs to later kilometres, but must
+refuse when a source front plan, physical contact or paid energy
+cannot be reconciled. No whole-race or finish claim follows from
+the fourth-kilometre result.
+
+All 23 accepted cases in the three-seed audit refuse km 5. Their
+recorded front turn plan is worked, but each frame also has two to
+six fresh attackers and a new break road, which the intact-front
+continuation deliberately excludes. All those attackers start in
+the completed physical peloton and have committed, versioned attack
+decisions. None of the 23 new break roads has a paid turn plan in
+its first kilometre. In the 120-km flat seed-1 example, the source
+puts two attackers in `road-1` with a 27.78-second checkpoint gap.
+That gap cannot substitute for a measured launch road, a single
+paid leader, shelter and ordered physical contact. The next version
+must reconstruct those before km 5 can join the whole-field replay.
+The prior four kilometres remain available and no source gap is
+copied into the physical trace.
+
 Callers of the experimental preview can request
 `physicalFirstKmVersion: 1` to receive this completed physical first
 kilometre as a separate `physicalFirstKm` result. It requires the
