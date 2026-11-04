@@ -5882,3 +5882,23 @@ not independent race observations. A shared physical road needs a
 versioned, per-rider applied-effort reason for team rest and the
 actual paid chase-turn price before it can compare later energy or
 claim calibrated contact.
+
+The isolated V94 `pelotonFollowerDecisionVersion: 2` now records the
+manager's original order alongside each follower's applied effort,
+the source of a conserve choice, and the quoted paid demand. The
+recording validator derives rest eligibility from the recorded team
+rest, shelter, support, chase and attack sources; changing either the
+applied effort or its reason without changing the source is refused.
+Version 1 and historical recordings retain their existing shape.
+In the same three-seed, 24-case strict-contact whole-race inventory,
+version 2 accepts 19 races and refuses the same five unresolved
+peloton losses. All 544,000 accepted rider-kilometres have a
+versioned choice; 484,749 are follower decisions and 233,102 of
+those explicitly apply recorded peloton rest. This closes the
+effort-provenance gap in V94's decision replay, but the separate
+physical origin still does not consume that choice or the named
+chase-turn price. Whole-race physical speed, contact and finish
+calibration therefore remains open.
+The focused V1/V2 replay tests, lint, isolated Next.js build and
+authenticated local preview browser check pass; V2 remains opt-in and
+is not routed into guided races.

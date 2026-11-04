@@ -250,6 +250,52 @@ test('opt-in follower payment choices replay strength, orders and stakes',()=>{
   /Unresolved peloton drop contact/);
 });
 
+test('opt-in follower effort records actual peloton rest separately from order',()=>{
+  const sportingStakes=prepareV91Playtest(settings).teams.map(team=>({
+    teamId:team.id,goal:'sprint_finish',
+    captainId:team.orders.captainId}));
+  const options={
+    format:'one_day',settings,sportingStakes,
+    roadGroupPaceVersion:3,chaseTurnVersion:1,
+    bunchFrontTurnVersion:1,pelotonFrontTurnVersion:1,
+    pelotonDraftCostVersion:1,pelotonDropContactVersion:1,
+    pelotonFollowerDecisionVersion:2};
+  const {recording}=createV94RaceDynamicsPreview(options);
+  const choices=recording.frames.flatMap(frame=>
+    frame.pelotonFollowerDecisions);
+  assert.ok(choices.length>0);
+  assert.ok(choices.every(choice=>choice.version===
+    'v94-peloton-follower-effort-2'));
+  assert.ok(choices.every(choice=>choice.appliedEffort===
+    (choice.effortSource==='recorded_peloton_rest'?
+      'conserve':choice.teamOrderEffort)));
+  const rested=choices.find(choice=>
+    choice.effortSource==='recorded_peloton_rest'&&
+    choice.teamOrderEffort!=='conserve');
+  assert.ok(rested);
+  assert.equal(rested.reason,'payable_recorded_rest_work');
+  assert.deepEqual(replayRaceDynamicsRecording(recording),recording);
+  const forged=structuredClone(recording);
+  forged.frames.find(frame=>frame.pelotonFollowerDecisions.some(row=>
+    row.riderId===rested.riderId&&row.sourceKm===rested.sourceKm))
+    .pelotonFollowerDecisions.find(row=>row.riderId===rested.riderId)
+    .appliedEffort='steady';
+  assert.throws(()=>validateRecordedTour(forged),
+    /Invalid V94 follower applied effort source/);
+  const disguised=structuredClone(recording);
+  const changed=disguised.frames.find(frame=>
+    frame.km===rested.sourceKm).pelotonFollowerDecisions.find(row=>
+    row.riderId===rested.riderId);
+  changed.appliedEffort='steady';
+  changed.effortSource='team_order';
+  changed.reason='payable_ordered_work';
+  assert.throws(()=>validateRecordedTour(disguised),
+    /Invalid V94 follower applied effort source/);
+  assert.throws(()=>createV94RaceDynamicsPreview({
+    ...options,pelotonDropContactVersion:0}),
+  /valid experimental race settings/);
+});
+
 test('fresh paid attackers receive source-replayed launch choices',()=>{
   const sportingStakes=prepareV91Playtest(settings).teams.map(team=>({
     teamId:team.id,goal:'none',

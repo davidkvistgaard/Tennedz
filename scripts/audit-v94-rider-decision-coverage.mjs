@@ -13,6 +13,8 @@ const strictPelotonDropContact=process.argv.includes(
   '--strict-peloton-drop-contact');
 const pelotonFollowerDecisions=process.argv.includes(
   '--peloton-follower-decisions');
+const pelotonFollowerEffort=process.argv.includes(
+  '--peloton-follower-effort');
 const physicalExposure=process.argv.includes('--physical-exposure');
 const freshAttackDecisions=process.argv.includes(
   '--fresh-attack-decisions');
@@ -24,7 +26,9 @@ if((draftCost||strictDraftCost)&&!explicitStakes)
   throw new Error('Draft cost audit needs explicit stakes.');
 if(draftCost&&strictDraftCost)
   throw new Error('Choose one draft cost version.');
-if(pelotonFollowerDecisions&&(!explicitStakes||
+if(pelotonFollowerDecisions&&pelotonFollowerEffort)
+  throw new Error('Choose one follower decision version.');
+if((pelotonFollowerDecisions||pelotonFollowerEffort)&&(!explicitStakes||
   !(draftCost||strictDraftCost)||!strictPelotonDropContact))
   throw new Error('Follower choices need stakes, draft and strict loss contact.');
 if(physicalExposure&&!(draftCost||strictDraftCost))
@@ -56,7 +60,8 @@ for(let seed=1;seed<=seedCount;seed++)
       bunchFrontTurnVersion:1,pelotonFrontTurnVersion:1,
       pelotonDraftCostVersion:strictDraftCost?2:draftCost?1:0,
       pelotonDropContactVersion:strictPelotonDropContact?1:0,
-      pelotonFollowerDecisionVersion:pelotonFollowerDecisions?1:0,
+      pelotonFollowerDecisionVersion:pelotonFollowerEffort?2:
+        pelotonFollowerDecisions?1:0,
       pelotonExposureCostVersion:physicalExposure?1:0,
       freshAttackDecisionVersion:freshAttackDecisions?1:0,
       protectorSportingPursuitVersion:protectorSportingPursuit?1:0,
@@ -97,7 +102,7 @@ for(let seed=1;seed<=seedCount;seed++)
     paidBunchWorkerRiderKilometres:0,
     paidBunchWorkerDecisionRows:0,
     paidBunchWorkerWithoutDecision:0,
-    pelotonFollowerDecisionRows:0,
+    pelotonFollowerDecisionRows:0,pelotonFollowerRestRows:0,
     protectorTimingRows:0,protectorTimingChaseRows:0};
   let priorFrame=null;
   for(const frame of recording.frames){
@@ -165,6 +170,16 @@ for(let seed=1;seed<=seedCount;seed++)
       throw new Error('Invalid forward rider decision.');
     coverage.paidBunchWorkerDecisionRows+=workerDecisions.length;
     coverage.pelotonFollowerDecisionRows+=followerDecisions.length;
+    if(pelotonFollowerEffort){
+      if(followerDecisions.some(row=>row.version!==
+          'v94-peloton-follower-effort-2'||
+          row.appliedEffort!==(row.effortSource===
+            'recorded_peloton_rest'?'conserve':
+            row.teamOrderEffort)))
+        throw new Error('Invalid follower applied effort source.');
+      coverage.pelotonFollowerRestRows+=followerDecisions.filter(row=>
+        row.effortSource==='recorded_peloton_rest').length;
+    }
     coverage.coveredRiderKilometres+=decisions.size;
     coverage.uncoveredRiderKilometres+=count-decisions.size;
     const paidWorkers=new Set((frame.pelotonFrontTurnPlan?.turns??[])
@@ -244,7 +259,8 @@ if(process.argv.includes('--summary')){
   const totals={seedCount,explicitStakes,draftCost,
     freshAttackDecisions,protectorSportingPursuit,
     protectorTiming,sprintStakes,strictPelotonDropContact,
-    pelotonFollowerDecisions,physicalExposure,
+    pelotonFollowerDecisions,pelotonFollowerEffort,
+    physicalExposure,
     strictDraftCost,cases:results.length,
     validatedCases:0,refusedCases:0,
     unresolvedDraftContactCases:0,
@@ -272,7 +288,7 @@ if(process.argv.includes('--summary')){
     paidBunchWorkerRiderKilometres:0,
     paidBunchWorkerDecisionRows:0,
     paidBunchWorkerWithoutDecision:0,
-    pelotonFollowerDecisionRows:0,
+    pelotonFollowerDecisionRows:0,pelotonFollowerRestRows:0,
     protectorTimingRows:0,protectorTimingChaseRows:0};
   for(const row of results){
     if(row.refusal){
@@ -308,7 +324,7 @@ if(process.argv.includes('--summary')){
       'paidBunchWorkerRiderKilometres',
       'paidBunchWorkerDecisionRows',
       'paidBunchWorkerWithoutDecision',
-      'pelotonFollowerDecisionRows',
+      'pelotonFollowerDecisionRows','pelotonFollowerRestRows',
       'protectorTimingRows','protectorTimingChaseRows'])
       totals[key]+=row.coverage[key];
   }
