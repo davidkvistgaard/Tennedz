@@ -6414,6 +6414,23 @@ The 26 attacker/front classification mismatches and the unearned
 source checkpoint gaps remain explicit, so this is not a calibrated
 whole-race continuation.
 
+`v94-physical-sixth-source-boundary-v1.mjs` inspects each source km-6
+road-group turn plan against the 5,000-metre clocks and physical road
+IDs of the riders it names. It moves and charges no rider. A source
+plan for several riders can attach without a new formation decision
+only to a physically formed prior group; coincident solo arrivals
+still need a paid formation decision.
+In the flat seed-1 case, the source's `road-1` plans turns for two
+riders whose paid arrival clocks differ by 1.01712 seconds. That
+source group therefore cannot be continued as one physical road at
+km 6, regardless of its checkpoint gap.
+The three-seed matrix finds 23 source km-6 road plans after the 23
+completed physical fifth kilometres. All 23 name riders whose paid
+5,000-metre clocks differ, and none can attach as one physical group.
+The largest within-plan arrival spread is 1.52592 seconds. The audit
+leaves all those source plans unadvanced and retains the one original
+km-1 source refusal.
+
 Callers of the experimental preview can request
 `physicalFirstKmVersion: 1` to receive this completed physical first
 kilometre as a separate `physicalFirstKm` result. It requires the

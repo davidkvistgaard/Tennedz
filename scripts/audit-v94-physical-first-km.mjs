@@ -45,6 +45,9 @@ import {replayV94PhysicalFifthFrontKmV1,
 import {replayV94PhysicalFifthKmV1,
   validateV94PhysicalFifthKmV1} from
   '../lib/engine/v2/v94-physical-fifth-km-v1.mjs';
+import {inspectV94PhysicalSixthSourceBoundaryV1,
+  validateV94PhysicalSixthSourceBoundaryV1} from
+  '../lib/engine/v2/v94-physical-sixth-source-boundary-v1.mjs';
 
 const requested=process.argv.find(arg=>arg.startsWith('--seeds='));
 const seedCount=requested?Number(requested.slice(8)):1;
@@ -69,6 +72,8 @@ const freshAttackSolos=process.argv.includes(
   '--fresh-attack-solos');
 const fifthFront=process.argv.includes('--fifth-front');
 const fifthReplay=process.argv.includes('--fifth-replay');
+const sixthSourceBoundary=process.argv.includes(
+  '--sixth-source-boundary');
 if((secondFront||boundaryChoice||secondRear||thirdSource)&&!complete||
   thirdSource&&!secondRear||thirdFront&&!secondRear||
   thirdBoundary&&!secondRear||thirdRear&&!secondRear||
@@ -77,7 +82,8 @@ if((secondFront||boundaryChoice||secondRear||thirdSource)&&!complete||
   freshLaunchBoundary&&!fourthReplay||
   freshAttackSolos&&!fourthReplay||
   fifthFront&&!fourthReplay||
-  fifthReplay&&!fourthReplay)
+  fifthReplay&&!fourthReplay||
+  sixthSourceBoundary&&!fifthReplay)
   throw new Error('Continuation audit needs --complete.');
 if(nextThrough!==null&&(!Number.isInteger(nextThrough)||
   nextThrough<5||nextThrough>260))
@@ -177,6 +183,13 @@ for(let seed=1;seed<=seedCount;seed++)
         fifthRefusal=error.message;
         fifthEvidence=error.sourceEvidence??null;
       }
+      let sixthBoundary=null,sixthBoundaryRefusal=null;
+      if(sixthSourceBoundary&&fifthTrace)try{
+        sixthBoundary=inspectV94PhysicalSixthSourceBoundaryV1(
+          recording,fifthTrace);
+        validateV94PhysicalSixthSourceBoundaryV1(
+          recording,fifthTrace,sixthBoundary);
+      }catch(error){sixthBoundaryRefusal=error.message;}
       let nextTrace=fourthTrace,nextRefusal=null;
       let nextRefusalKm=null,nextRefusalEvidence=null;
       if(nextThrough!==null&&fourthTrace){
@@ -356,6 +369,19 @@ for(let seed=1;seed<=seedCount;seed++)
             fifthAttackSolos:
               fifthTrace?.freshAttackSoloRiderIds.length??0,
             fifthRefusal,fifthEvidence}:{}),
+          ...(sixthSourceBoundary?{
+            sixthSourceRoads:sixthBoundary?.sourceRoads.length??0,
+            sixthUnattachableSourceRoads:
+              sixthBoundary?.sourceRoads.filter(row=>
+                row.sourcePlanCannotAttach).length??0,
+            sixthNoncoincidentSourceRoads:
+              sixthBoundary?.sourceRoads.filter(row=>
+                !row.physicallyCoLocatedAtBoundary).length??0,
+            sixthLargestClockSpreadSeconds:
+              sixthBoundary?.sourceRoads.length?Math.max(
+                ...sixthBoundary.sourceRoads.map(row=>
+                  row.boundaryClockSpreadSeconds)):null,
+            sixthBoundaryRefusal}:{}),
           lastSoloClockSeconds:completion.soloCompletions.length?
             Math.max(...completion.soloCompletions.map(row=>
               row.finishClockSeconds)):null}:{}),
@@ -370,7 +396,7 @@ const accepted=cases.filter(row=>!row.refusal);
 console.log(JSON.stringify({seedCount,complete,secondFront,boundaryChoice,
   secondRear,thirdSource,thirdFront,thirdBoundary,thirdRear,
   fourthSource,fourthReplay,nextThrough,freshLaunchBoundary,
-  freshAttackSolos,fifthFront,fifthReplay,
+  freshAttackSolos,fifthFront,fifthReplay,sixthSourceBoundary,
   cases:cases.length,
   replayedFirstKilometres:accepted.length,
   refusedCases:cases.length-accepted.length,
@@ -495,6 +521,17 @@ console.log(JSON.stringify({seedCount,complete,secondFront,boundaryChoice,
     sum+(row.fifthRearGroups??0),0),
   fifthAttackSolos:accepted.reduce((sum,row)=>
     sum+(row.fifthAttackSolos??0),0),
+  sixthSourceRoads:accepted.reduce((sum,row)=>
+    sum+(row.sixthSourceRoads??0),0),
+  sixthUnattachableSourceRoads:accepted.reduce((sum,row)=>
+    sum+(row.sixthUnattachableSourceRoads??0),0),
+  sixthNoncoincidentSourceRoads:accepted.reduce((sum,row)=>
+    sum+(row.sixthNoncoincidentSourceRoads??0),0),
+  sixthLargestClockSpreadSeconds:sixthSourceBoundary&&
+    accepted.some(row=>row.sixthSourceRoads>0)?Math.max(
+      ...accepted.map(row=>
+        row.sixthLargestClockSpreadSeconds??-Infinity)):
+    null,
   firstCase:cases[0],refusals:cases.filter(row=>row.refusal),
   secondFrontRefusals:accepted.filter(row=>
     row.nextFrontRefusal),
@@ -534,5 +571,9 @@ console.log(JSON.stringify({seedCount,complete,secondFront,boundaryChoice,
     row.fifthRefusal).map(row=>({seed:row.seed,
       distanceKm:row.distanceKm,terrain:row.terrain,
       fatigue:row.fatigue,refusal:row.fifthRefusal,
-      evidence:row.fifthEvidence}))},
+      evidence:row.fifthEvidence})),
+  sixthBoundaryRefusals:accepted.filter(row=>
+    row.sixthBoundaryRefusal).map(row=>({seed:row.seed,
+      distanceKm:row.distanceKm,terrain:row.terrain,
+      fatigue:row.fatigue,refusal:row.sixthBoundaryRefusal}))},
 null,2));

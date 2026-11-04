@@ -60,6 +60,9 @@ import {replayV94PhysicalFifthKmV1,
   validateV94PhysicalFifthKmV1,
   V94_PHYSICAL_FIFTH_REAR_DECISION_VERSION} from
   '../../lib/engine/v2/v94-physical-fifth-km-v1.mjs';
+import {inspectV94PhysicalSixthSourceBoundaryV1,
+  validateV94PhysicalSixthSourceBoundaryV1} from
+  '../../lib/engine/v2/v94-physical-sixth-source-boundary-v1.mjs';
 
 test('first V94 kilometre prices each named turn and detached solo metre',()=>{
   const settings={distanceKm:120,teamCount:20,terrain:'mountain',
@@ -425,6 +428,20 @@ test('second front records an early climb loss without completing rear road',()=
   assert.equal(fifth.officialResults,false);
   assert.equal(validateV94PhysicalFifthKmV1(
     recording,fourth,fifth),true);
+  const sixthSource=inspectV94PhysicalSixthSourceBoundaryV1(
+    recording,fifth);
+  assert.equal(sixthSource.sourceKm,6);
+  assert.equal(sixthSource.paidNewDistanceM,0);
+  assert.equal(sixthSource.paidNewEnergy,0);
+  assert.ok(sixthSource.sourceRoads.every(row=>
+    row.sourceNamedLeaderRiderIds.every(id=>
+      row.sourceRiderIds.includes(id))&&
+    row.boundaryClockSpreadSeconds>=0&&
+    row.sourcePlanCannotAttach===
+      (!row.physicalGroupAlreadyFormed&&!row.singlePaidSolo)));
+  assert.deepEqual(sixthSource.physicalRoadGroups,[]);
+  assert.equal(validateV94PhysicalSixthSourceBoundaryV1(
+    recording,fifth,sixthSource),true);
   const forgedSolo=structuredClone(freshSolos);
   forgedSolo.roads[0].earnedLeadSecondsAtBoundary+=1;
   assert.throws(()=>validateV94PhysicalFreshAttackSolosV1(
