@@ -6379,6 +6379,21 @@ All 23 new source roads have a checkpoint comparison. The largest
 source gap exceeds the fastest individual paid lead in its road by
 33.71936 seconds. This is calibration evidence, not a physical gap.
 
+`v94-physical-fifth-front-km-v1.mjs` continues the named, paid peloton
+front beside those isolated attack roads. It excludes precisely the
+source attackers after verifying their own physical boundary and
+solo work, then makes a versioned decision at each source front turn
+for every remaining attached rider. The two independently derived
+front clocks must agree. A leader still pays alone, while shelter
+and solo pace matching have separate terrain-priced work. It leaves
+rear roads, newly detached riders, attacker contact and the complete
+km-5 field unresolved; the source break gap remains only a comparison.
+The three-seed matrix accepts this conditional front in all 23
+source-valid cases: 2,377 non-attacking riders complete km 5 at the
+front clock, with no new front drops. The one km-1 source refusal
+remains. This front result does not include the previously paid rear
+groups or certify any attacker as a shared break member.
+
 Callers of the experimental preview can request
 `physicalFirstKmVersion: 1` to receive this completed physical first
 kilometre as a separate `physicalFirstKm` result. It requires the
