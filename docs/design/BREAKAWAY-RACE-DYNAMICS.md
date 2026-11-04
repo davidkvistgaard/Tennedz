@@ -6258,6 +6258,12 @@ new front-drop arrivals are recorded as contact candidates for the
 next kilometre, not silently grouped.
 This is still an experimental two-kilometre replay with no official
 finish or whole-race claim.
+The same-seed source inventory finds a worked km-3 front plan in all
+23 completed km-2 cases: every named leader remains in the physical
+front, and no source attack or break road appears in that kilometre.
+This provides a source for the next front step, but the 63 existing
+rear groups and 27 new contact-candidate sets still need fresh paid
+decisions and ordered road-clock contact checks.
 
 Callers of the experimental preview can request
 `physicalFirstKmVersion: 1` to receive this completed physical first

@@ -25,7 +25,9 @@ const complete=process.argv.includes('--complete');
 const secondFront=process.argv.includes('--second-front');
 const boundaryChoice=process.argv.includes('--boundary-choice');
 const secondRear=process.argv.includes('--second-rear');
-if((secondFront||boundaryChoice||secondRear)&&!complete)
+const thirdSource=process.argv.includes('--third-source');
+if((secondFront||boundaryChoice||secondRear||thirdSource)&&!complete||
+  thirdSource&&!secondRear)
   throw new Error('Continuation audit needs --complete.');
 if(!Number.isInteger(seedCount)||seedCount<1||seedCount>3)
   throw new Error('First-km physical audit needs one to three seeds.');
@@ -67,6 +69,10 @@ for(let seed=1;seed<=seedCount;seed++)
         rear=replayV94PhysicalSecondRearKmV1(recording);
         validateV94PhysicalSecondRearKmV1(recording,rear);
       }catch(error){rearRefusal=error.message;}
+      const third=thirdSource?recording.frames[2]:null;
+      const physicalFrontAtTwo=new Set(rear?.finishes.filter(row=>
+        row.physicalGroup==='peloton').map(row=>row.riderId)??[]);
+      const thirdTurns=third?.pelotonFrontTurnPlan?.turns??[];
       const firstDetached=physical.atFrontClock.find(row=>!row.attached);
       const attached=new Set(physical.atFrontClock.filter(row=>
         row.attached).map(row=>row.riderId));
@@ -104,6 +110,14 @@ for(let seed=1;seed<=seedCount;seed++)
               rear?.coincidentNewFrontDropSets.reduce((sum,row)=>
                 sum+row.riderIds.length,0)??0,
             secondKmRefusal:rearRefusal}:{}),
+          ...(thirdSource?{
+            thirdKmSourceFront:third?.pelotonFrontTurnPlan?.status??null,
+            thirdKmLeadersAttached:thirdTurns.every(row=>
+              physicalFrontAtTwo.has(row.leaderRiderId)),
+            thirdKmSourceHasAttack:!!(third?.attackers.length||
+              third?.joinedBreakawayRiderIds.length||
+              third?.breakawayRiderIds.length||
+              third?.roadGroups.length)}:{}),
           lastSoloClockSeconds:completion.soloCompletions.length?
             Math.max(...completion.soloCompletions.map(row=>
               row.finishClockSeconds)):null}:{}),
@@ -116,7 +130,7 @@ for(let seed=1;seed<=seedCount;seed++)
   }
 const accepted=cases.filter(row=>!row.refusal);
 console.log(JSON.stringify({seedCount,complete,secondFront,boundaryChoice,
-  secondRear,
+  secondRear,thirdSource,
   cases:cases.length,
   replayedFirstKilometres:accepted.length,
   refusedCases:cases.length-accepted.length,
@@ -153,6 +167,11 @@ console.log(JSON.stringify({seedCount,complete,secondFront,boundaryChoice,
     sum+(row.secondKmCoincidentDropSets??0),0),
   secondKmCoincidentDropRiders:accepted.reduce((sum,row)=>
     sum+(row.secondKmCoincidentDropRiders??0),0),
+  thirdKmLeadersAttached:accepted.filter(row=>
+    row.thirdKmSourceFront==='worked'&&
+    row.thirdKmLeadersAttached).length,
+  thirdKmSourceHasAttack:accepted.filter(row=>
+    row.thirdKmSourceHasAttack).length,
   firstCase:cases[0],refusals:cases.filter(row=>row.refusal),
   secondFrontRefusals:accepted.filter(row=>
     row.nextFrontRefusal),
