@@ -12,6 +12,10 @@ import {completeV94PhysicalFirstKmV1,
   validateV94PhysicalFirstKmCompletionV1,
   firstV94SoloContactWithinBoundaryV1} from
   '../../lib/engine/v2/v94-physical-first-km-completion-v1.mjs';
+import {replayV94PhysicalSecondFrontKmV1,
+  validateV94PhysicalSecondFrontKmV1,
+  V94_PHYSICAL_SECOND_FRONT_DECISION_VERSION} from
+  '../../lib/engine/v2/v94-physical-second-front-km-v1.mjs';
 
 test('first V94 kilometre prices each named turn and detached solo metre',()=>{
   const settings={distanceKm:120,teamCount:20,terrain:'mountain',
@@ -113,6 +117,31 @@ test('first V94 kilometre prices each named turn and detached solo metre',()=>{
     .energyAfter=100;
   assert.throws(()=>validateV94PhysicalFirstKmCompletionV1(
     recording,forgedFinish),/differs from paid source/);
+  const nextFront=replayV94PhysicalSecondFrontKmV1(recording);
+  assert.equal(nextFront.sourceKm,2);
+  assert.equal(nextFront.atFrontClock.length,
+    physical.completeRiderKilometres);
+  assert.equal(nextFront.road.length,
+    recording.frames[1].pelotonFrontTurnPlan.turns.length);
+  assert.ok(nextFront.road.every(turn=>
+    turn.riderSlices.filter(row=>row.role==='leader').length===1&&
+    turn.riderSlices.every(row=>
+      row.decision.version===
+        V94_PHYSICAL_SECOND_FRONT_DECISION_VERSION&&
+      row.decision.sportingGoal==='sprint_finish'&&
+      row.energySpent>=0)));
+  assert.ok(nextFront.atFrontClock.filter(row=>row.attached).every(row=>
+    Math.abs(row.sourceFullKmPaidFromReserve-
+      row.physicalPaidThroughClock)<1e-5));
+  assert.equal(nextFront.rearConcurrentRoadUnresolved,true);
+  assert.deepEqual(nextFront.physicalRearGroups,[]);
+  assert.equal(nextFront.officialResults,false);
+  assert.equal(validateV94PhysicalSecondFrontKmV1(
+    recording,nextFront),true);
+  const forgedSecond=structuredClone(nextFront);
+  forgedSecond.atFrontClock[0].atDistanceM=2001;
+  assert.throws(()=>validateV94PhysicalSecondFrontKmV1(
+    recording,forgedSecond),/differs from paid source/);
 });
 
 test('solo completion detects a paid meeting before the kilometre boundary',()=>{
@@ -128,4 +157,33 @@ test('solo completion detects a paid meeting before the kilometre boundary',()=>
   assert.equal(firstV94SoloContactWithinBoundaryV1([
     crossing[0],{...crossing[1],speedKph:25,
       remainingSeconds:7.2}],80),null);
+});
+
+test('second front records an early climb loss without completing rear road',()=>{
+  const settings={distanceKm:120,teamCount:20,terrain:'mountain',
+    fatigue:0,attack:'none',chase:'selective',
+    seed:'preview-recorded-road-2'};
+  const sportingStakes=prepareV91Playtest(settings).teams.map(team=>({
+    teamId:team.id,goal:'sprint_finish',
+    captainId:team.orders.captainId}));
+  const {recording}=createV94RaceDynamicsPreview({
+    format:'one_day',settings,sportingStakes,
+    roadGroupPaceVersion:3,chaseTurnVersion:1,
+    bunchFrontTurnVersion:1,pelotonFrontTurnVersion:1,
+    pelotonDraftCostVersion:1,pelotonExposureCostVersion:1,
+    freshAttackDecisionVersion:1,roadGroupRiderDecisionVersion:1,
+    protectorSportingPursuitVersion:1});
+  const trace=replayV94PhysicalSecondFrontKmV1(recording);
+  assert.equal(trace.atFrontClock.length,134);
+  assert.equal(trace.completeFrontRiderKilometres,94);
+  const lost=trace.atFrontClock.find(row=>
+    row.riderId==='rival-1-0');
+  assert.equal(lost.attached,false);
+  assert.ok(lost.atDistanceM<2000);
+  assert.ok(trace.road.some(turn=>
+    turn.riderSlices.some(row=>
+      row.riderId===lost.riderId&&
+      row.decision.choice==='cannot_hold_paid_turn')));
+  assert.equal(trace.detachedFrontRoadUnresolved,true);
+  assert.equal(trace.officialResults,false);
 });

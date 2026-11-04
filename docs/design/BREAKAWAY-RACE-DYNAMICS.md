@@ -6195,6 +6195,22 @@ plan is available for the next step. It does not resolve the 63
 coincident solo sets, price their next road, or prove that none can
 meet the front during that kilometre.
 
+`v94-physical-second-front-km-v1.mjs` now replays that named km-2
+front plan for the riders physically attached at km 1. Each turn
+has one paid leader; each included rider records a versioned
+decision from its perceived strength, manager effort and committed
+sporting stake, plus travelled distance and reserve cost. The
+read-only three-seed audit replays the front trace in all 23
+first-kilometre cases and reconciles 2,657 attached second-kilometre
+reserve payments with V94. Another 333 riders leave that front
+during km 2 and remain at partial distances at its clock. In the
+120-km mountain, fatigue-0, seed-2 case, 134 begin km 2 attached
+and 94 still hold at its front clock. The trace does not advance
+the 690 previously detached riders or settle contact between those
+roads and the front, so its front timing is conditional on no rear
+contact. It has no complete km-2 field, rear group,
+recovery, or official result.
+
 Callers of the experimental preview can request
 `physicalFirstKmVersion: 1` to receive this completed physical first
 kilometre as a separate `physicalFirstKm` result. It requires the
