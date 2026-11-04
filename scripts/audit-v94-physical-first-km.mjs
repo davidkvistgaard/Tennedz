@@ -54,6 +54,9 @@ import {decideV94PhysicalSixthRiderBoundaryV1,
 import {inspectV94PhysicalSixthForwardContactProbeV1,
   validateV94PhysicalSixthForwardContactProbeV1} from
   '../lib/engine/v2/v94-physical-sixth-forward-contact-probe-v1.mjs';
+import {decideV94PhysicalSixthBoundaryChoicesV1,
+  validateV94PhysicalSixthBoundaryChoicesV1} from
+  '../lib/engine/v2/v94-physical-sixth-boundary-choice-v1.mjs';
 
 const requested=process.argv.find(arg=>arg.startsWith('--seeds='));
 const seedCount=requested?Number(requested.slice(8)):1;
@@ -84,6 +87,8 @@ const sixthRiderBoundary=process.argv.includes(
   '--sixth-rider-boundary');
 const sixthForwardProbe=process.argv.includes(
   '--sixth-forward-probe');
+const sixthContactChoices=process.argv.includes(
+  '--sixth-contact-choices');
 if((secondFront||boundaryChoice||secondRear||thirdSource)&&!complete||
   thirdSource&&!secondRear||thirdFront&&!secondRear||
   thirdBoundary&&!secondRear||thirdRear&&!secondRear||
@@ -95,7 +100,8 @@ if((secondFront||boundaryChoice||secondRear||thirdSource)&&!complete||
   fifthReplay&&!fourthReplay||
   sixthSourceBoundary&&!fifthReplay||
   sixthRiderBoundary&&!fifthReplay||
-  sixthForwardProbe&&!fifthReplay)
+  sixthForwardProbe&&!fifthReplay||
+  sixthContactChoices&&!fifthReplay)
   throw new Error('Continuation audit needs --complete.');
 if(nextThrough!==null&&(!Number.isInteger(nextThrough)||
   nextThrough<5||nextThrough>260))
@@ -216,6 +222,13 @@ for(let seed=1;seed<=seedCount;seed++)
         validateV94PhysicalSixthForwardContactProbeV1(
           recording,fifthTrace,sixthForward);
       }catch(error){sixthForwardRefusal=error.message;}
+      let sixthChoices=null,sixthChoicesRefusal=null;
+      if(sixthContactChoices&&fifthTrace)try{
+        sixthChoices=decideV94PhysicalSixthBoundaryChoicesV1(
+          recording,fifthTrace);
+        validateV94PhysicalSixthBoundaryChoicesV1(
+          recording,fifthTrace,sixthChoices);
+      }catch(error){sixthChoicesRefusal=error.message;}
       let nextTrace=fourthTrace,nextRefusal=null;
       let nextRefusalKm=null,nextRefusalEvidence=null;
       if(nextThrough!==null&&fourthTrace){
@@ -434,6 +447,14 @@ for(let seed=1;seed<=seedCount;seed++)
               sixthForward?.contactCandidates.filter(row=>
                 row.kind==='solo_road_meeting').length??0,
             sixthForwardRefusal}:{}),
+          ...(sixthContactChoices?{
+            sixthContactChoiceSets:
+              sixthChoices?.choices.length??0,
+            sixthFreshForwardChoiceSets:
+              sixthChoices?.freshForwardCandidateSets??0,
+            sixthPendingContactGroups:
+              sixthChoices?.pendingGroupCount??0,
+            sixthChoicesRefusal}:{}),
           lastSoloClockSeconds:completion.soloCompletions.length?
             Math.max(...completion.soloCompletions.map(row=>
               row.finishClockSeconds)):null}:{}),
@@ -451,6 +472,7 @@ console.log(JSON.stringify({seedCount,complete,secondFront,boundaryChoice,
   freshAttackSolos,fifthFront,fifthReplay,sixthSourceBoundary,
   sixthRiderBoundary,
   sixthForwardProbe,
+  sixthContactChoices,
   cases:cases.length,
   replayedFirstKilometres:accepted.length,
   refusedCases:cases.length-accepted.length,
@@ -602,6 +624,12 @@ console.log(JSON.stringify({seedCount,complete,secondFront,boundaryChoice,
     sum+(row.sixthForwardBoundaryContacts??0),0),
   sixthForwardRoadMeetings:accepted.reduce((sum,row)=>
     sum+(row.sixthForwardRoadMeetings??0),0),
+  sixthContactChoiceSets:accepted.reduce((sum,row)=>
+    sum+(row.sixthContactChoiceSets??0),0),
+  sixthFreshForwardChoiceSets:accepted.reduce((sum,row)=>
+    sum+(row.sixthFreshForwardChoiceSets??0),0),
+  sixthPendingContactGroups:accepted.reduce((sum,row)=>
+    sum+(row.sixthPendingContactGroups??0),0),
   firstCase:cases[0],refusals:cases.filter(row=>row.refusal),
   secondFrontRefusals:accepted.filter(row=>
     row.nextFrontRefusal),
@@ -653,5 +681,9 @@ console.log(JSON.stringify({seedCount,complete,secondFront,boundaryChoice,
   sixthForwardRefusals:accepted.filter(row=>
     row.sixthForwardRefusal).map(row=>({seed:row.seed,
       distanceKm:row.distanceKm,terrain:row.terrain,
-      fatigue:row.fatigue,refusal:row.sixthForwardRefusal}))},
+      fatigue:row.fatigue,refusal:row.sixthForwardRefusal})),
+  sixthChoicesRefusals:accepted.filter(row=>
+    row.sixthChoicesRefusal).map(row=>({seed:row.seed,
+      distanceKm:row.distanceKm,terrain:row.terrain,
+      fatigue:row.fatigue,refusal:row.sixthChoicesRefusal}))},
 null,2));

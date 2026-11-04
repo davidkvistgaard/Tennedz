@@ -6475,6 +6475,24 @@ source's recorded full-kilometre energy payment. That affordability
 does not establish a shared group, complete km-6 energy attribution,
 or contact with the peloton.
 
+`v94-physical-sixth-boundary-choice-v1.mjs` inventories all paid
+5,000-metre rear arrivals for km 6. It retains existing rear-group
+leader proposals and treats any coincident fresh-attack solos as a
+separate contact candidate. For those forward riders it uses the
+actual break-work and effort orders, perceived strength and payable
+leader/shelter quotes to propose at most one next leader, while
+recording each committed sporting stake. The candidate follower list
+is an eligibility check,
+not an assigned wheel. It forms no group, moves no rider and spends
+no km-6 energy. Riders who arrive at different clocks remain on
+different roads even if the source calls them one break.
+The three-seed matrix accepts 112 paid-contact choice sets at the
+sixth-kilometre boundary: 102 continuing rear sets and 10 coincident
+fresh-forward sets. Each has one proposed payable leader and at
+least one eligible follower, but all 112 remain unformed until work
+and contact are settled on a km-6 road. The one km-1 source refusal
+remains unchanged.
+
 Callers of the experimental preview can request
 `physicalFirstKmVersion: 1` to receive this completed physical first
 kilometre as a separate `physicalFirstKm` result. It requires the

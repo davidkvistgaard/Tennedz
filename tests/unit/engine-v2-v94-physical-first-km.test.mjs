@@ -70,6 +70,9 @@ import {decideV94PhysicalSixthRiderBoundaryV1,
 import {inspectV94PhysicalSixthForwardContactProbeV1,
   validateV94PhysicalSixthForwardContactProbeV1} from
   '../../lib/engine/v2/v94-physical-sixth-forward-contact-probe-v1.mjs';
+import {decideV94PhysicalSixthBoundaryChoicesV1,
+  validateV94PhysicalSixthBoundaryChoicesV1} from
+  '../../lib/engine/v2/v94-physical-sixth-boundary-choice-v1.mjs';
 
 test('first V94 kilometre prices each named turn and detached solo metre',()=>{
   const settings={distanceKm:120,teamCount:20,terrain:'mountain',
@@ -480,6 +483,16 @@ test('second front records an early climb loss without completing rear road',()=
   assert.deepEqual(forwardProbe.physicalRoadGroups,[]);
   assert.equal(validateV94PhysicalSixthForwardContactProbeV1(
     recording,fifth,forwardProbe),true);
+  const sixthChoices=decideV94PhysicalSixthBoundaryChoicesV1(
+    recording,fifth);
+  assert.ok(sixthChoices.choices.every(row=>
+    row.formsRearGroup===false&&
+    row.paidArrivalEvidence.length===row.riderIds.length&&
+    (!row.freshForwardContactCandidate||
+      row.sourceBreakGroupNotAdopted)));
+  assert.equal(sixthChoices.physicalRearGroups.length,0);
+  assert.equal(validateV94PhysicalSixthBoundaryChoicesV1(
+    recording,fifth,sixthChoices),true);
   const forgedSixth=structuredClone(sixthRiders);
   forgedSixth.decisions[0].perceivedSoloAbility+=1;
   assert.throws(()=>validateV94PhysicalSixthRiderBoundaryV1(
