@@ -6124,3 +6124,38 @@ raises this to 87.4. The named leader `rival-1-5` rides the first
 calculated gap, split position, or finish. They show why the
 three-kilometre grace counter cannot stand in for physical road
 contact. Within-turn movement and paid continuation remain open.
+
+### First-kilometre paid physical road probe
+
+`v94-physical-first-km-v1.mjs` replays an intact starting bunch from
+the validated V94 recording's first named front-turn plan. It uses the
+existing road-speed formula, committed manager effort, recorded
+sporting stake and captain, perceived cruise and solo strength, and
+terrain shelter allowance. Each turn has one paid leader. Every
+rider records a versioned choice, distance travelled during the
+front's turn clock, and energy paid for that distance. A rider who
+cannot hold the paid front continues as an individual solo. An
+unresolved solo-to-bunch or solo-to-solo meeting refuses; no rear
+group is made from a shared checkpoint label. The validator
+recomputes the trace from the complete recording. Attached riders'
+physical energy payment must reconcile with their recorded V94
+reserve payment.
+
+The read-only `audit-v94-physical-first-km.mjs --seeds=3` replays
+23 of the 24 same-seed first kilometres; one source race already
+refuses its combined fresh attack and paid pursuit. Across the 23
+replayed starts, 2,990 riders have completed the kilometre at the
+front clock and 690 are still on individually priced solo road.
+In the 120-km mountain, fatigue-0 seed-1 case, 79 of 160 riders
+reach km 1 with the front; 81 are behind. `rival-10-0` has covered
+959.403 m when the front reaches 1,000 m, after paying 0.199700
+reserve for its traversed solo road. This distance is calculated
+from the committed turn speeds and rider effort, not an assigned
+wheel or scripted gap.
+
+The probe stops at the front's first-kilometre clock. Detached
+riders' remaining metres, recovery, later contact, caught-break
+passage, full energy ledger and finish are unsettled. Its physical
+state is kept separate from V94's checkpoint group labels and from
+guided races. The 690 unfinished rider kilometres are therefore
+evidence of the work still required, not 690 official drops.
