@@ -124,14 +124,21 @@ for(const [terrain,fatigue] of [
       roadGroupRiderDecisionVersion:1,
       protectorSportingPursuitVersion:1});
     if(terrain==='mountain'){
-      assert.throws(()=>replayV94PhysicalWholeRaceV1(
-        recording),error=>{
-        const cause=error.cause;
+      const completed=fatigue===0?
+        replayV94PhysicalWholeRaceV1(recording):null;
+      const check=error=>{
+        const cause=error?.cause;
+        const traces=completed?.traces??cause?.paidTraces;
         const prior20=fatigue===0?
-          cause?.paidTraces?.[19]:cause?.paidPriorTrace;
+          traces?.[19]:cause?.paidPriorTrace;
         let km21Cause=null;
         if(fatigue===0){
-          const prior69=cause.paidTraces[68];
+          assert.equal(completed.traces.length,120);
+          assert.equal(completed.validation.totalRiderKm,19200);
+          assert.equal(completed.physicalFinish.riderCount,160);
+          assert.equal(completed.sourceCheckpointCalibrationFailed,
+            true);
+          const prior69=traces[68];
           const frame70=recording.frames[69];
           assert.deepEqual(prior69.sourceBreakRiderIds,[]);
           assert.deepEqual(frame70.attackers,
@@ -186,18 +193,10 @@ for(const [terrain,fatigue] of [
           assert.equal(available.turns.at(-1).endM,1000);
           assert.ok(available.turns.every(row=>row.payable));
           assert.equal(available.physicalRoadMoved,false);
-          assert.equal(cause.paidTraces[69].sourceKm,70);
-          assert.equal(cause.paidTraces[69].fullFieldKilometre,
+          assert.equal(traces[69].sourceKm,70);
+          assert.equal(traces[69].fullFieldKilometre,
             true);
-          assert.match(error.message,/stops at km 110/);
-          assert.equal(cause.message,
-            'Contact fragment needs one payable leader and all riders.');
-          assert.equal(cause.sourceEvidence.candidateCount,2);
-          assert.equal(cause.sourceEvidence.pendingLeaderRiderId,
-            null);
-          assert.deepEqual(cause.sourceEvidence.unpairedRiderIds,
-            ['rival-8-5','rival-19-7']);
-          const prior109=cause.paidTraces[108];
+          const prior109=traces[108];
           assert.equal(prior109.sourceKm,109);
           assert.equal(prior109.fullFieldKilometre,true);
           assert.equal(prior109.sourceBreakMembershipEnded,true);
@@ -207,7 +206,17 @@ for(const [terrain,fatigue] of [
             recording,prior109,{detachedPresetAvailable:true});
           assert.equal(contact110.pendingLeaderRiderId,null);
           assert.equal(contact110.candidates.length,2);
-          const prior79=cause.paidTraces[78];
+          const km110=traces[109];
+          assert.equal(km110.sourceKm,110);
+          assert.equal(km110.fullFieldKilometre,true);
+          assert.equal(km110.finishes.length,160);
+          assert.ok(km110.passThroughContacts.some(row=>
+            row.formsRearGroup===false&&
+            row.riderDecisions?.length===2&&
+            row.riderDecisions.every(decision=>
+              decision.choice===
+                'continue_separate_paid_solo_road')));
+          const prior79=traces[78];
           const contact=decideV94PhysicalMidKmContactChoiceV1(
             recording,prior79,{
               detachedPresetAvailable:true});
@@ -233,18 +242,18 @@ for(const [terrain,fatigue] of [
           const km80=replayV94PhysicalMidKmContactFullFieldV1(
             recording,prior79,{
               detachedPresetAvailable:true});
-          assert.deepEqual(cause.paidTraces[79],km80);
+          assert.deepEqual(traces[79],km80);
           assert.equal(km80.sourceKm,80);
           assert.equal(km80.finishes.length,160);
           assert.equal(km80.fullFieldKilometre,true);
           assert.equal(km80.detachedPresetDecisions.length,3);
           for(let index=79;index<108;index++){
-            const paid=cause.paidTraces[index];
+            const paid=traces[index];
             assert.equal(paid.sourceKm,index+1);
             assert.equal(paid.fullFieldKilometre,true);
             assert.equal(paid.finishes.length,160);
           }
-          const km71=cause.paidTraces[70];
+          const km71=traces[70];
           assert.equal(km71.sourceKm,71);
           assert.equal(km71.fullFieldKilometre,true);
           assert.equal(km71.finishes.length,160);
@@ -256,15 +265,15 @@ for(const [terrain,fatigue] of [
               row.recoveryAward-row.capAdjustment-
               row.energyAfter)<=.0010001));
           for(let index=70;index<79;index++){
-            const paid=cause.paidTraces[index];
+            const paid=traces[index];
             assert.equal(paid.sourceKm,index+1);
             assert.equal(paid.fullFieldKilometre,true);
             assert.equal(paid.finishes.length,160);
             assert.equal(paid.front.availableFrontPlanVersion,
               available.version);
           }
-          assert.equal(cause.paidTraces?.[20]?.sourceKm,21);
-          assert.equal(cause.paidTraces[20].fullFieldKilometre,
+          assert.equal(traces?.[20]?.sourceKm,21);
+          assert.equal(traces[20].fullFieldKilometre,
             true);
         }
         try{replayV94PhysicalRecordedRestKmV1(
@@ -383,7 +392,7 @@ for(const [terrain,fatigue] of [
             recording,prior20,physicalRoads),
         /needs paid shelter/);
         return (fatigue===0?
-          /stops at km 110/.test(error.message):
+          completed.traces.length===120:
           /stops at km 21/.test(error.message)&&
           cause.message===
             'Front-drop batch fragment needs paid shelter.')&&
@@ -396,7 +405,10 @@ for(const [terrain,fatigue] of [
           road?.riderDecisions?.[0]?.riderId==='rival-2-5'&&
           road.startClockSeconds>drop?.origin?.startClockSeconds&&
           road.finishClockSeconds<drop?.finish?.clockSeconds;
-      });
+      };
+      if(completed)assert.equal(check(null),true);
+      else assert.throws(()=>replayV94PhysicalWholeRaceV1(
+        recording),check);
     }else{
       const replay=replayV94PhysicalWholeRaceV1(recording);
       assert.equal(replay.validation.totalRiderKm,19200);
