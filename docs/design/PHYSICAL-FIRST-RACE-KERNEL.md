@@ -187,3 +187,16 @@ validates 1,280 rider-kilometres and the mountain control validates
 19,200. This is replay of the constrained physical-first scenarios;
 the historical V94 source still disagrees on 66 mountain finish
 gaps, and unresolved tactical features remain outside this replay.
+
+`physical-first-attack-choice-1` begins the missing attack path at a
+measured bunch boundary. It reads the actual team order, sporting goal,
+named attacker or committed specialist, helper policy, current rider
+contact and reserve, then records either a candidate attempt or a
+specific hold decision. It selects only a rider who can cover the
+existing attack initiation cost and minimum reserve. A named manager
+attacker overrides the general helper guard; generated attempts need
+an attack-oriented sporting goal. The choice does not move a rider,
+charge a full kilometre or award any gap. The whole-race probe still
+refuses attack orders until the attack has a paid road step, contact
+resolution and independent replay. The flat and mountain controls
+remain the calibrated scenarios; neither validates attack finishes.
