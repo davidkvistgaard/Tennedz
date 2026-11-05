@@ -22,6 +22,8 @@ import {replayV94PhysicalRecordedRestKmV1} from
   '../../lib/engine/v2/v94-physical-recorded-rest-km-v1.mjs';
 import {completeV94PhysicalFrontDropBatchFieldV1} from
   '../../lib/engine/v2/v94-physical-front-drop-batch-field-v1.mjs';
+import {decideV94PhysicalMixedOriginPresetV1} from
+  '../../lib/engine/v2/v94-physical-mixed-origin-preset-choice-v1.mjs';
 
 for(const fatigue of [0,30])test(
   `opt-in whole physical flat 260 km fatigue ${fatigue}`,()=>{
@@ -113,6 +115,27 @@ for(const [terrain,fatigue] of [
           cause?.paidTraces?.[19]:cause?.paidPriorTrace;
         let km21Cause=null;
         if(fatigue===0){
+          const prior69=cause.paidPriorTrace;
+          const frame70=recording.frames[69];
+          assert.deepEqual(prior69.sourceBreakRiderIds,[]);
+          assert.deepEqual(frame70.attackers,
+            ['rival-19-7','rival-6-7']);
+          assert.equal(prior69.finishes.find(row=>
+            row.riderId==='rival-19-7').physicalGroup,
+          'peloton');
+          assert.equal(prior69.finishes.find(row=>
+            row.riderId==='rival-6-7').physicalGroup,
+          'paid-contact-km69-1');
+          assert.ok(frame70.freshAttackRiderDecisions
+            .every(row=>row.attackReason==='preset_cadence'));
+          const mixed=decideV94PhysicalMixedOriginPresetV1(
+            recording,prior69);
+          assert.deepEqual(mixed.pendingPelotonLaunchRiderIds,
+            ['rival-19-7']);
+          assert.deepEqual(
+            mixed.declinedSourceFrontLaunchRiderIds,
+            ['rival-6-7']);
+          assert.equal(mixed.fullFieldKilometre,false);
           assert.match(error.message,/stops at km 70/);
           assert.equal(cause.message,
             'Detached preset needs exact paid rear and source membership.');
