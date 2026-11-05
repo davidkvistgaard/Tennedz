@@ -235,3 +235,11 @@ because two paid solo roads would cross during that kilometre without
 a recorded contact event. The historical source recorded one attack,
 but its gap is not adopted. This is the next concrete contact case;
 attack finishes and whole-race calibration remain unvalidated.
+
+The crossing guard now derives the meeting's distance and clock from
+the two measured start clocks and paid full-kilometre speeds. It
+reports that projection with the refusal instead of inventing a
+checkpoint gap. In the fixed attack race the two solo roads meet at
+6,098.75 m. The projection locates where a resolver must split
+and reprice the riders' work; it does not itself merge roads, grant
+shelter or settle a finish.

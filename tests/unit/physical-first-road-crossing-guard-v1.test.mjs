@@ -31,6 +31,22 @@ test('two solo roads cannot pass without recorded contact',()=>{
     error.sourceEvidence.endClockDifferenceSeconds>0);
 });
 
+test('crossing locates the physical meeting inside the km',()=>{
+  const measured={...prior,sourceKm:6};
+  const crossed=structuredClone(advanced);
+  crossed[1].finishClockSeconds=147;
+  assert.throws(()=>assertNoUnpaidRoadCrossingsV1(
+    measured,crossed),error=>{
+    const meeting=error.sourceEvidence
+      ?.projectedMeeting;
+    return meeting?.atDistanceM>6000&&
+      meeting.atDistanceM<7000&&
+      meeting.atClockSeconds>103&&
+      meeting.fractionOfKilometre>0&&
+      meeting.fractionOfKilometre<1;
+  });
+});
+
 test('a solo road cannot pass the bunch without contact',()=>{
   const crossed=structuredClone(advanced);
   crossed[1].finishClockSeconds=139;

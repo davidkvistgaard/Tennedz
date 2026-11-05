@@ -51,11 +51,17 @@ test('same-seed attack race stops at an unpaid solo crossing',t=>{
     t.diagnostic(`physical-first attack race completed
       ${error.completedThroughKm}/40 km; next contact:
       ${error.sourceEvidence?.firstRoadId} and
-      ${error.sourceEvidence?.secondRoadId}`);
+      ${error.sourceEvidence?.secondRoadId} at
+      ${error.sourceEvidence?.projectedMeeting
+        ?.atDistanceM} m`);
     return error.completedThroughKm===6&&
       error.sourceKm===7&&
       /Road crossing needs recorded paid contact/
         .test(error.message)&&
+      error.sourceEvidence?.projectedMeeting
+        ?.atDistanceM>6000&&
+      error.sourceEvidence?.projectedMeeting
+        ?.atDistanceM<7000&&
       error.sourceEvidence?.firstRoadId?.startsWith(
         'solo:')&&
       error.sourceEvidence?.secondRoadId?.startsWith(
