@@ -150,5 +150,27 @@ the bunch. Two separately paid solo roads have the same measured clock
 at that boundary; the probe now stops at km 2 instead of letting them
 continue as separate roads without contact resolution. The crossing
 guard checks every pair of existing roads, including two solo roads,
-and reports their start and end clock difference. A paid boundary
-contact event and a rear-group leader choice are needed next.
+and reports their start and end clock difference. This exposed the
+need for a paid boundary contact and rear-group leader choice.
+
+`physical-first-rear-boundary-contact-1` now resolves exact
+co-timed solo finishes only when each rider's preceding solo road has
+a paid decision, full-distance finish, matching clock and settled
+reserve. It records the common distance and time, origin roads, paid
+approaches, member IDs and one leader plan for the next kilometre.
+The leader must be permitted by `breakWork`, able to pay, and slow
+enough that the other members can hold lower-cost shelter through the
+kilometre. `sit_on` never volunteers a leader; `drive` currently
+refuses until its extra cost is priced. No group arises from matching
+source labels or a scripted gap.
+
+With a committed summit goal and no attack orders, the 120 km,
+20-team mountain probe now settles 19,200 rider-kilometre decisions
+and five paid rear contacts. It reaches the finish with 160 rider
+records. Its relative finish audit still differs from the historical
+source for 66 riders, maximum 419.07 seconds. The old source keeps
+these riders in the bunch; the physical run records early paid drops
+and rear contact. This is a measured limitation, not a reason to
+import source gaps. Contact with an existing rear group or the
+peloton, attacks, active chases, within-kilometre splits and
+independent replay remain open.
