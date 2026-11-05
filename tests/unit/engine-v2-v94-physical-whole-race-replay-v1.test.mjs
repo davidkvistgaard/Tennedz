@@ -8,6 +8,8 @@ import {replayV94PhysicalWholeRaceV1} from
   '../../lib/engine/v2/v94-physical-whole-race-replay-v1.mjs';
 import {auditV94PhysicalFrontDropContactsV1} from
   '../../lib/engine/v2/v94-physical-front-drop-contact-audit-v1.mjs';
+import {decideV94PhysicalFrontDropFirstBatchV1} from
+  '../../lib/engine/v2/v94-physical-front-drop-first-batch-choice-v1.mjs';
 
 for(const fatigue of [0,30])test(
   `opt-in whole physical flat 260 km fatigue ${fatigue}`,()=>{
@@ -114,6 +116,18 @@ for(const [terrain,fatigue] of [
         assert.ok(audit.firstContact.clockSeconds<
           evidence.clockSeconds);
         assert.equal(audit.physicalGroupFormed,false);
+        const choice=decideV94PhysicalFrontDropFirstBatchV1(
+          recording,cause.paidPriorTrace,
+        cause?.physicalRoads);
+        assert.equal(choice.passingRiderId,'rival-2-5');
+        assert.equal(choice.passingWillingToLead,true);
+        assert.equal(choice.drops.length,fatigue===0?17:13);
+        assert.equal(choice.pendingShelterRiderIds.length,
+          fatigue===0?17:0);
+        assert.ok(choice.drops.every(row=>
+          row.paidEnergyToContact>=0&&
+          row.energyAtContact>0));
+        assert.equal(choice.physicalGroupFormed,false);
         return /stops at km 21/.test(error.message)&&
           cause.message===
             'Physical front drop/rear contact needs paid resolution.'&&
