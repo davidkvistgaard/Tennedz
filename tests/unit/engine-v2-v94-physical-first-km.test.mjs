@@ -9,6 +9,8 @@ import {validateV94PhysicalWholeRaceV1,
   '../../lib/engine/v2/v94-physical-whole-race-validation-v1.mjs';
 import {auditV94PhysicalFinishSourceV1} from
   '../../lib/engine/v2/v94-physical-finish-source-audit-v1.mjs';
+import {deriveV94PhysicalFinishRoadsV1} from
+  '../../lib/engine/v2/v94-physical-finish-roads-v1.mjs';
 import {replayV94PhysicalFirstKmV1,
   validateV94PhysicalFirstKmV1,
   V94_PHYSICAL_FIRST_KM_DECISION_VERSION} from
@@ -2030,6 +2032,12 @@ test('ended source break membership keeps four riders on paid roads',()=>{
   assert.equal(probe.officialResults,false);
   assert.equal(validateV94PhysicalWholeRaceV1(
     recording,paidTraces).totalRiderKm,41600);
+  const paidFinish=deriveV94PhysicalFinishRoadsV1(
+    recording,paidTraces);
+  assert.equal(paidFinish.riderCount,160);
+  assert.equal(paidFinish.roads.flatMap(row=>row.riderIds)
+    .length,160);
+  assert.equal(paidFinish.officialResults,false);
   const sourceGapAudit=auditV94PhysicalWholeRaceSourceGapsV1(
     recording,paidTraces);
   assert.equal(sourceGapAudit.comparedGroupCheckpoints,374);
@@ -2181,6 +2189,27 @@ test('fatigued 260 km seed-one completes paid physical roads',()=>{
   }
   assert.equal(validateV94PhysicalWholeRaceV1(
     recording,traces).totalRiderKm,41600);
+  const paidFinish=deriveV94PhysicalFinishRoadsV1(
+    recording,traces);
+  assert.equal(paidFinish.riderCount,160);
+  assert.equal(paidFinish.roads.flatMap(row=>row.riderIds)
+    .length,160);
+  assert.equal(paidFinish.officialResults,false);
+  const shared=paidFinish.roads.find(row=>
+    row.roadId!=='peloton'&&row.riderIds.length>1);
+  assert.equal(paidFinish.roads.length,13);
+  assert.equal(paidFinish.roads[0].riderIds.length,4);
+  assert.ok(Math.abs(paidFinish.roads.find(row=>
+    row.roadId==='peloton').behindFirstRoadSeconds-
+    130.922269)<1e-6);
+  assert.ok(Math.abs(paidFinish.roads.at(-1)
+    .behindFirstRoadSeconds-1604.143486)<1e-6);
+  assert.ok(shared);
+  const forgedRoads=structuredClone(traces);
+  forgedRoads.at(-1).physicalRearGroups=[];
+  assert.throws(()=>deriveV94PhysicalFinishRoadsV1(
+    recording,forgedRoads),
+  /Shared rear finish lacks a paid group road/);
   const depleted=traces.flatMap(trace=>trace.roads??[])
     .flatMap(road=>road.riderDecisions)
     .filter(row=>row.unmetEnergyDemand>0);

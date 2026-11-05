@@ -6931,6 +6931,15 @@ him a bunch finisher, while his paid solo road reaches the line
 1,473.221217 seconds after the front. This is a source/physical
 classification conflict, not a wheel-order question. The audit
 does not turn either claim into an official placing.
+The separate version 1 paid-finish view groups riders only when their
+last physical road and finish clock agree. A shared rear road must
+have its paid group receipt in the final kilometre; deleting that
+receipt makes the finish invalid. The fatigue-30 260 km trace has 13
+such roads. Four riders share the first paid road, the bunch reaches
+the finish 130.922269 seconds later, and the last solo road arrives
+1,604.143486 seconds after the first. These are measured clock
+differences and road memberships, with no wheel order, official
+places or awards.
 
 Callers of the experimental preview can request
 `physicalFirstKmVersion: 1` to receive this completed physical first
