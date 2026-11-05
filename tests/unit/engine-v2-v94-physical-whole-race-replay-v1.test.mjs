@@ -132,8 +132,8 @@ for(const [terrain,fatigue] of [
         const cause=error?.cause;
         const traces=completed?.traces??cause?.paidTraces;
         if(fatigue===30){
-          assert.equal(traces.length,79);
-          for(let index=20;index<79;index++){
+          assert.equal(traces.length,101);
+          for(let index=20;index<101;index++){
             assert.equal(traces[index].sourceKm,index+1);
             assert.equal(traces[index].fullFieldKilometre,true);
             assert.equal(traces[index].finishes.length,160);
@@ -143,6 +143,10 @@ for(const [terrain,fatigue] of [
           assert.ok(traces[70].front.availableFrontPlanVersion);
           assert.equal(traces[71].physicallyCaughtSourceBreakRiderIds
             .length>0,true);
+          assert.deepEqual(traces[78].formerSourceBreakRiderIds,
+            ['rival-19-5','rival-6-5','rival-16-5',
+              'rival-2-5','rival-8-5']);
+          assert.equal(traces[79].mixedPaidContactFromPrior,true);
         }
         const prior20=traces?.[19];
         let km21Cause=null;
@@ -450,9 +454,9 @@ for(const [terrain,fatigue] of [
         /needs paid shelter/);
         return (fatigue===0?
           completed.traces.length===120:
-          /stops at km 80/.test(error.message)&&
+          /stops at km 102/.test(error.message)&&
           cause.message===
-            'Detached preset needs exact paid rear and source membership.')&&
+            'Physical rear roads need paid contact resolution.')&&
           km21Cause.message===
             'Physical front drop/rear contact needs paid resolution.'&&
           evidence.riderId==='rival-10-5'&&
