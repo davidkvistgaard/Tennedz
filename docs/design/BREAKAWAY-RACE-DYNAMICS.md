@@ -6897,11 +6897,18 @@ turn, so `rival-14-0` takes the payable lead with three payable
 followers. `rival-10-0` continues on a separate solo road. From km
 253, depleted solo decisions spend only available reserve and use
 the slower coast clock; the prior versions retain their refusal.
-This fatigue-30 trace now pays all 160 riders through km 258. At km
-259 two rear roads physically meet inside the kilometre, so the
-continuation refuses until that measured contact can be settled with
-the same depleted-solo pricing. No 260 km finish or official result
-is claimed for this case.
+This fatigue-30 trace pays all 160 riders through km 260. At km 259
+the paid rear group overtakes the depleted solo `rival-10-1` at
+258,628.40438 m. The solo has no reserve to pay for shelter over
+the remaining road, so a versioned contact receipt keeps the two
+roads separate, with neither free speed nor a fabricated group.
+The whole-race validator accepts 41,600 rider kilometres with
+continuous reserve, clock and distance; a forged pass-through group
+claim fails source replay. The source-gap audit compares 379 group
+checkpoints and 896 rider leads. In 57 checkpoints the source gap
+exceeds even the best individual paid lead, by up to 25.61068
+seconds. This calibration failure still blocks promotion. The
+trace has no official result or placing.
 
 Callers of the experimental preview can request
 `physicalFirstKmVersion: 1` to receive this completed physical first

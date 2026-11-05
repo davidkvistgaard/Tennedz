@@ -2043,7 +2043,7 @@ test('ended source break membership keeps four riders on paid roads',()=>{
   /cannot override a physical or manager attack/);
 });
 
-test('fatigued 260 km seed-one pays depletion through km 258',()=>{
+test('fatigued 260 km seed-one completes paid physical roads',()=>{
   const settings={distanceKm:260,teamCount:20,terrain:'flat',
     fatigue:30,attack:'none',chase:'selective',
     seed:'preview-recorded-road-1'};
@@ -2151,23 +2151,6 @@ test('fatigued 260 km seed-one pays depletion through km 258',()=>{
             recording,prior);failure=null;}
           catch(payableError){failure=payableError;}
         }
-        if(km===259&&failure?.message===
-          'Physical rear roads need paid contact resolution.'){
-          assert.equal(prior.sourceKm,258);
-          assert.equal(traces.length,258);
-          assert.ok(failure.sourceEvidence.atDistanceM>
-            258000);
-          assert.ok(failure.sourceEvidence.atDistanceM<
-            259000);
-          const depleted=traces.flatMap(trace=>trace.roads??[])
-            .flatMap(road=>road.riderDecisions)
-            .filter(row=>row.unmetEnergyDemand>0);
-          assert.ok(depleted.length>0);
-          assert.ok(depleted.every(row=>
-            row.paidFromReserve<=row.energyBefore&&
-            row.sustainableFraction<1));
-          return;
-        }
         if(failure)throw new Error(`km ${km}: ${
           failure.message}`,{cause:failure});
       }
@@ -2177,7 +2160,34 @@ test('fatigued 260 km seed-one pays depletion through km 258',()=>{
     traces.push(next);
     prior=next;
   }
-  assert.fail('The measured km-259 contact guard did not fire.');
+  assert.equal(validateV94PhysicalWholeRaceV1(
+    recording,traces).totalRiderKm,41600);
+  const depleted=traces.flatMap(trace=>trace.roads??[])
+    .flatMap(road=>road.riderDecisions)
+    .filter(row=>row.unmetEnergyDemand>0);
+  assert.ok(depleted.length>0);
+  assert.ok(depleted.every(row=>
+    row.paidFromReserve<=row.energyBefore&&
+    row.sustainableFraction<1));
+  const passes=traces.flatMap(trace=>
+    trace.passThroughContacts??[]);
+  assert.ok(passes.some(row=>row.sourceKm===259&&
+    row.passedRiderId==='rival-10-1'&&
+    row.formsRearGroup===false));
+  assert.equal(validateV94PhysicalMixedPayableNextKmV1(
+    recording,traces[257],traces[258]),true);
+  const forgedPass=structuredClone(traces[258]);
+  forgedPass.passThroughContacts[0].formsRearGroup=true;
+  assert.throws(()=>validateV94PhysicalMixedPayableNextKmV1(
+    recording,traces[257],forgedPass),/differs/);
+  const sourceGapAudit=auditV94PhysicalWholeRaceSourceGapsV1(
+    recording,traces);
+  assert.equal(sourceGapAudit.comparedGroupCheckpoints,379);
+  assert.equal(sourceGapAudit.comparedRiders,896);
+  assert.equal(sourceGapAudit.sourceGapExceedsBestPaidLeadCount,
+    57);
+  assert.equal(sourceGapAudit.maxGapOverBestPaidLeadSeconds,
+    25.61068);
 });
 
 test('second-km road clocks refuse a faster rear catch',()=>{
