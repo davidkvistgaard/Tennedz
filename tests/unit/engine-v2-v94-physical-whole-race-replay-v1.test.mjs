@@ -12,6 +12,8 @@ import {decideV94PhysicalFrontDropFirstBatchV1} from
   '../../lib/engine/v2/v94-physical-front-drop-first-batch-choice-v1.mjs';
 import {replayV94PhysicalFrontDropFirstBatchFragmentV1} from
   '../../lib/engine/v2/v94-physical-front-drop-first-batch-fragment-v1.mjs';
+import {inspectV94PhysicalFrontDropFirstBatchNextV1} from
+  '../../lib/engine/v2/v94-physical-front-drop-first-batch-next-v1.mjs';
 
 for(const fatigue of [0,30])test(
   `opt-in whole physical flat 260 km fatigue ${fatigue}`,()=>{
@@ -144,6 +146,17 @@ for(const [terrain,fatigue] of [
             row.energyAfter>=0&&
             row.paidFromReserve>=0));
           assert.equal(fragment.fullFieldKilometre,false);
+          const probe=inspectV94PhysicalFrontDropFirstBatchNextV1(
+            cause.physicalRoads,fragment);
+          assert.equal(probe.remainingRearRoadCount,9);
+          assert.equal(probe.remainingFrontDropCount,13);
+          assert.equal(probe.contactCount,13);
+          assert.deepEqual(probe.firstAdditionalContact.roadIds,
+            ['rival-10-5','rival-14-5','rival-18-5'].map(id=>[
+              fragment.road.roadId,`solo-${id}`]));
+          assert.ok(probe.firstAdditionalContact.clockSeconds>
+            fragment.contactClockSeconds);
+          assert.equal(probe.fullFieldKilometre,false);
         }else assert.throws(()=>
           replayV94PhysicalFrontDropFirstBatchFragmentV1(
             recording,cause.paidPriorTrace,
