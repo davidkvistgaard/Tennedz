@@ -16,6 +16,8 @@ import {inspectV94PhysicalFrontDropFirstBatchNextV1} from
   '../../lib/engine/v2/v94-physical-front-drop-first-batch-next-v1.mjs';
 import {quoteV94PhysicalFrontDropContactV1} from
   '../../lib/engine/v2/v94-physical-front-drop-contact-quote-v1.mjs';
+import {extendV94PhysicalFrontDropBatchV1} from
+  '../../lib/engine/v2/v94-physical-front-drop-batch-extension-v1.mjs';
 
 for(const fatigue of [0,30])test(
   `opt-in whole physical flat 260 km fatigue ${fatigue}`,()=>{
@@ -177,6 +179,26 @@ for(const [terrain,fatigue] of [
             row.paidEnergyToContact>0&&
             row.perceivedShelterHoldAbility>=
               row.requiredAbility));
+          const extended=extendV94PhysicalFrontDropBatchV1(
+            recording,cause.paidPriorTrace,
+            cause.physicalRoads,fragment);
+          assert.equal(extended.riderWork.length,21);
+          assert.equal(extended.road.shelteredRiderIds.length,
+            20);
+          assert.equal(extended.contactHistory.length,1);
+          const later=inspectV94PhysicalFrontDropFirstBatchNextV1(
+            cause.physicalRoads,extended);
+          const all=extendV94PhysicalFrontDropBatchV1(
+            recording,cause.paidPriorTrace,
+            cause.physicalRoads,extended);
+          assert.equal(later.remainingFrontDropCount,10);
+          assert.equal(all.riderWork.length,31);
+          assert.equal(all.passThroughContacts.length,0);
+          assert.equal(all.contactHistory.length,2);
+          const finishedContacts=
+            inspectV94PhysicalFrontDropFirstBatchNextV1(
+              cause.physicalRoads,all);
+          assert.equal(finishedContacts.contactCount,0);
         }else assert.throws(()=>
           replayV94PhysicalFrontDropFirstBatchFragmentV1(
             recording,cause.paidPriorTrace,
