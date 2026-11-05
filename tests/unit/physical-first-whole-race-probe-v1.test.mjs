@@ -8,6 +8,8 @@ import {createV94RaceDynamicsPreview} from
   '../../lib/engine/v2/playtest-race-dynamics-v94.mjs';
 import {replayRearEnergyCapV1} from
   '../../lib/engine/v2/rear-energy-cap-source-v1.mjs';
+import {calibratePhysicalFirstFinishV1} from
+  '../../lib/engine/v2/physical-first-finish-calibration-v1.mjs';
 
 const segments=[1,2].map(km=>({km,terrain:'flat',
   gradientPct:0,surface:'road',exposed:false,
@@ -15,6 +17,7 @@ const segments=[1,2].map(km=>({km,terrain:'flat',
 const rider=(id,flat)=>({id,flat,hills:flat,
   mountain:flat,endurance:65,form:50,fatigue:0});
 const input=(followerAbility=65)=>({
+  raceSeed:'fixture-two-km',
   start:{sourceKm:0,roads:[{roadId:'peloton',
     riderIds:['a','b'],clockSeconds:0}],
   riders:['a','b'].map(riderId=>({riderId,
@@ -77,7 +80,7 @@ test('physical-first probe refuses unresolved attack orders',()=>{
         .test(error.message));
 });
 
-test('committed 40 km control covers each rider without source frames',()=>{
+test('committed 40 km control covers each rider and audits source finish',t=>{
   const settings={distanceKm:40,teamCount:4,terrain:'flat',
     fatigue:0,attack:'none',chase:'selective',
     seed:'preview-recorded-road-1'};
@@ -108,7 +111,8 @@ test('committed 40 km control covers each rider without source frames',()=>{
     riderIds:riders.map(row=>row.riderId),
     clockSeconds:0}],riders};
   const result=runPhysicalFirstWholeRaceProbeV1({
-    start,kilometres,teams,stakes:rivalIntent});
+    start,kilometres,teams,stakes:rivalIntent,
+    raceSeed:recording.raceSeed});
   assert.equal(result.completedThroughKm,40);
   assert.equal(result.steps.reduce((count,step)=>
     count+step.peloton.roads.reduce((sum,road)=>
@@ -120,4 +124,21 @@ test('committed 40 km control covers each rider without source frames',()=>{
     row.distanceM===40000));
   assert.ok(result.states.every(state=>state.sourceGapUsed===
     false||state.sourceKm===0));
+  const calibration=calibratePhysicalFirstFinishV1(
+    recording,result);
+  assert.equal(calibration.validatedKm,40);
+  assert.equal(calibration.riderCount,32);
+  assert.equal(calibration.comparisons.length,32);
+  assert.equal(calibration.officialResults,false);
+  t.diagnostic(`40 km same-seed finish mismatches:
+    ${calibration.mismatchCount}/32; maximum
+    ${calibration.maxAbsoluteMismatchSeconds}s`);
+  assert.throws(()=>calibratePhysicalFirstFinishV1({
+    ...recording,raceSeed:'different-seed'},result),
+  /same committed full race/);
+  const changedStart=structuredClone(result);
+  changedStart.states[0].riders[0].reserve-=1;
+  assert.throws(()=>calibratePhysicalFirstFinishV1(
+    recording,changedStart),
+  /committed starting reserve/);
 });

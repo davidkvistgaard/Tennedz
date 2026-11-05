@@ -120,3 +120,12 @@ completes 1,280 rider-kilometre decisions. This is a constrained
 diagnostic run, not a calibrated new race: tactical attacks, active
 chases, within-kilometre drops and catches, full event replay, and
 finish validation against the historical same-seed run remain open.
+
+The control scenario now has an explicit same-seed finish audit. It
+binds the probe to the recorded route, teams, sporting stakes, emergency
+orders and initial reserve; source finish group claims are comparison
+data only. On the fixed 40 km seed, 6 of 32 relative rider finish
+clocks differ from the historical source claims, with a maximum
+absolute difference of 147.354 seconds. This failed calibration is
+reported rather than corrected by adopting historical gaps. The
+result cannot be used for official places or a guided-race release.
