@@ -126,14 +126,20 @@ for(const [terrain,fatigue] of [
       roadGroupRiderDecisionVersion:1,
       protectorSportingPursuitVersion:1});
     if(terrain==='mountain'){
-      const completed=fatigue===0?
-        replayV94PhysicalWholeRaceV1(recording):null;
+      const completed=replayV94PhysicalWholeRaceV1(recording);
       const check=error=>{
         const cause=error?.cause;
         const traces=completed?.traces??cause?.paidTraces;
         if(fatigue===30){
-          assert.equal(traces.length,109);
-          for(let index=20;index<109;index++){
+          assert.equal(traces.length,120);
+          assert.equal(completed.validation.totalRiderKm,19200);
+          assert.equal(completed.physicalFinish.riderCount,160);
+          assert.equal(completed.sourceCheckpointCalibrationFailed,
+            true);
+          assert.ok(completed.sourceGapAudit
+            .sourceGapExceedsBestPaidLeadCount>0);
+          assert.ok(completed.finishSourceAudit.mismatchCount>0);
+          for(let index=20;index<120;index++){
             assert.equal(traces[index].sourceKm,index+1);
             assert.equal(traces[index].fullFieldKilometre,true);
             assert.equal(traces[index].finishes.length,160);
@@ -155,6 +161,17 @@ for(const [terrain,fatigue] of [
           assert.ok(traces[101].contactFragmentVersion);
           assert.equal(traces[101].physicalRearGroups.some(group=>
             group.riderDecisions.length===23),true);
+          const nonjoin=traces[113].passThroughContacts.find(row=>
+            row.riderDecisions?.length===2&&
+            row.formsRearGroup===false);
+          assert.deepEqual(nonjoin.riderDecisions.map(row=>
+            row.riderId).sort(),
+          ['rival-19-7','rival-8-5']);
+          assert.equal(traces[113].physicalRearGroups.some(group=>
+            group.riderDecisions.some(row=>
+              row.riderId==='rival-19-7')&&
+            group.riderDecisions.some(row=>
+              row.riderId==='rival-8-5')),false);
           assert.ok(traces[107].front.availableFrontPlanVersion);
         }
         const prior20=traces?.[19];
@@ -461,11 +478,7 @@ for(const [terrain,fatigue] of [
           replayV94PhysicalFrontDropFirstBatchFragmentV1(
             recording,prior20,physicalRoads),
         /needs paid shelter/);
-        return (fatigue===0?
-          completed.traces.length===120:
-          /stops at km 110/.test(error.message)&&
-          cause.message===
-            'Physical front needs an intact paid plan.')&&
+        return completed.traces.length===120&&
           km21Cause.message===
             'Physical front drop/rear contact needs paid resolution.'&&
           evidence.riderId==='rival-10-5'&&
@@ -476,9 +489,7 @@ for(const [terrain,fatigue] of [
           road.startClockSeconds>drop?.origin?.startClockSeconds&&
           road.finishClockSeconds<drop?.finish?.clockSeconds;
       };
-      if(completed)assert.equal(check(null),true);
-      else assert.throws(()=>replayV94PhysicalWholeRaceV1(
-        recording),check);
+      assert.equal(check(null),true);
     }else{
       const replay=replayV94PhysicalWholeRaceV1(recording);
       assert.equal(replay.validation.totalRiderKm,19200);
