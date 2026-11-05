@@ -1179,6 +1179,31 @@ test('seed-two sixth solo joins the front through paid contact',()=>{
     row.riderId==='rival-18-5').energyBefore,
   caughtAgain.finishes.find(row=>
     row.riderId==='rival-18-5').energyAfter);
+  let probe=afterCatch;
+  for(let km=86;km<=120;km++){
+    const next=replayV94PhysicalUnattachedSourceNextKmV1(
+      recording,probe);
+    const previous=new Map(probe.finishes.map(row=>[
+      row.riderId,row]));
+    assert.equal(next.sourceKm,km);
+    assert.equal(next.finishes.length,160);
+    assert.equal(new Set(next.finishes.map(row=>
+      row.riderId)).size,160);
+    for(const finish of next.finishes){
+      assert.equal(finish.endDistanceM,km*1000);
+      assert.equal(finish.energyBefore,
+        previous.get(finish.riderId)?.energyAfter);
+      assert.ok(Number.isFinite(finish.clockSeconds));
+      assert.ok(finish.clockSeconds>
+        previous.get(finish.riderId).clockSeconds);
+      assert.ok(Math.abs(finish.energyBefore-
+        finish.paidFromReserve+finish.recoveryAward-
+        finish.capAdjustment-finish.energyAfter)<0.002);
+    }
+    probe=next;
+  }
+  assert.equal(probe.fullFieldKilometre,true);
+  assert.equal(probe.officialResults,false);
 });
 
 test('sixth front uses recorded rest before checking seed-three rear contact',()=>{
