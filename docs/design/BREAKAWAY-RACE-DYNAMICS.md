@@ -6696,8 +6696,11 @@ forward-boundary provenance covers every member; each next kilometre
 still prices one leader and shelter independently. In the seed-1
 120 km flat calibration, both fatigue settings now reach km 120 with
 160 paid finishes at each kilometre after the catch. They carry no
-official placings or awards. The other same-seed courses and seeds
-remain separate calibration cases.
+official placings or awards. The seed-1 no-fatigue unit trace also
+checks all 160 riders across every km 1-120 transition for continuous
+reserve, increasing clock, physical distance and the paid energy
+equation. The other same-seed courses and seeds remain separate
+calibration cases.
 In seed 3, the km-6 source energy charge for an attached rider is
 smaller than the ordered front effort. The version 2 sixth-front
 replay uses the recording's explicit rest teams and front-rest rider

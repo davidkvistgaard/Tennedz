@@ -617,9 +617,13 @@ test('paid boundary contacts support a complete second flat kilometre',()=>{
   forged.finishes[0].energyAfter=100;
   assert.throws(()=>validateV94PhysicalSecondRearKmV1(
     recording,forged),/differs from paid source/);
-  const fifth=replayV94PhysicalFifthKmV1(
-    recording,replayV94PhysicalFourthKmV1(recording));
+  const first=completeV94PhysicalFirstKmV1(recording);
+  const third=replayV94PhysicalThirdRearKmV1(recording);
+  const fourth=replayV94PhysicalFourthKmV1(recording);
+  const fifth=replayV94PhysicalFifthKmV1(recording,fourth);
+  const paidTraces=[first,second,third,fourth,fifth];
   const sixth=replayV94PhysicalSixthKmV1(recording,fifth);
+  paidTraces.push(sixth);
   assert.equal(sixth.sourceKm,6);
   assert.equal(sixth.fullFieldKilometre,true);
   assert.equal(sixth.finishes.length,160);
@@ -647,6 +651,7 @@ test('paid boundary contacts support a complete second flat kilometre',()=>{
   /differs from paid source/);
   const seventh=replayV94PhysicalSeventhKmV1(
     recording,sixth);
+  paidTraces.push(seventh);
   assert.equal(seventh.sourceKm,7);
   assert.equal(seventh.fullFieldKilometre,true);
   assert.equal(seventh.finishes.length,160);
@@ -668,6 +673,7 @@ test('paid boundary contacts support a complete second flat kilometre',()=>{
     assert.equal(candidate.finishes.length,160);
     assert.equal(candidate.sourceCheckpointCalibrationFailed,true);
     assert.equal(candidate.officialResults,false);
+    paidTraces.push(candidate);
     next=candidate;
   }
   assert.equal(validateV94PhysicalUnattachedSourceNextKmV1(
@@ -693,6 +699,7 @@ test('paid boundary contacts support a complete second flat kilometre',()=>{
     recording,next,mixedFresh),true);
   const twentieth=replayV94PhysicalMixedFreshKmV1(
     recording,next);
+  paidTraces.push(twentieth);
   assert.equal(twentieth.sourceKm,20);
   assert.equal(twentieth.fullFieldKilometre,true);
   assert.equal(twentieth.finishes.length,160);
@@ -734,6 +741,7 @@ test('paid boundary contacts support a complete second flat kilometre',()=>{
     error.sourceEvidence?.sourceKm===21);
   const rested=replayV94PhysicalRecordedRestKmV1(
     recording,twentieth);
+  paidTraces.push(rested);
   assert.equal(rested.sourceKm,21);
   assert.equal(rested.fullFieldKilometre,true);
   assert.equal(rested.finishes.length,160);
@@ -756,6 +764,7 @@ test('paid boundary contacts support a complete second flat kilometre',()=>{
     if(km===27)priorAt26=afterRest;
     afterRest=replayV94PhysicalRecordedRestKmV1(
       recording,afterRest);
+    paidTraces.push(afterRest);
     assert.equal(afterRest.sourceKm,km);
     assert.equal(afterRest.finishes.length,160);
     assert.equal(afterRest.sourceCheckpointCalibrationFailed,true);
@@ -823,6 +832,7 @@ test('paid boundary contacts support a complete second flat kilometre',()=>{
   const contactedField=
     replayV94PhysicalMidKmContactFullFieldV1(
       recording,afterRest);
+  paidTraces.push(contactedField);
   assert.equal(contactedField.sourceKm,28);
   assert.equal(contactedField.fullFieldKilometre,true);
   assert.equal(contactedField.officialResults,false);
@@ -851,6 +861,7 @@ test('paid boundary contacts support a complete second flat kilometre',()=>{
     {allowPaidMixedContact:true}),true);
   const mixedNext=replayV94PhysicalMixedPaidNextKmV1(
     recording,contactedField);
+  paidTraces.push(mixedNext);
   assert.equal(mixedNext.sourceKm,29);
   assert.equal(mixedNext.finishes.length,160);
   assert.equal(mixedNext.mixedPaidContactFromPrior,true);
@@ -875,6 +886,7 @@ test('paid boundary contacts support a complete second flat kilometre',()=>{
     }
     assert.equal(mixedLater.sourceKm,km);
     assert.equal(mixedLater.finishes.length,160);
+    paidTraces.push(mixedLater);
   }
   assert.equal(laterPaidContacts,1);
   assert.equal(validateV94PhysicalMixedPaidNextKmV1(
@@ -899,6 +911,7 @@ test('paid boundary contacts support a complete second flat kilometre',()=>{
   for(let km=70;km<=74;km++){
     mixedLater=replayV94PhysicalMixedPaidNextKmV1(
       recording,mixedLater);
+    paidTraces.push(mixedLater);
     assert.equal(mixedLater.sourceKm,km);
     assert.equal(mixedLater.finishes.length,160);
     if(km===70){
@@ -918,16 +931,19 @@ test('paid boundary contacts support a complete second flat kilometre',()=>{
   for(let km=75;km<=79;km++){
     mixedLater=replayV94PhysicalPostSourceBreakKmV1(
       recording,mixedLater);
+    paidTraces.push(mixedLater);
     assert.equal(mixedLater.sourceKm,km);
     assert.equal(mixedLater.finishes.length,160);
   }
   mixedLater=replayV94PhysicalPostBreakFreshKmV1(
     recording,mixedLater);
+  paidTraces.push(mixedLater);
   assert.equal(mixedLater.sourceKm,80);
   assert.equal(mixedLater.finishes.length,160);
   for(let km=81;km<=83;km++){
     mixedLater=replayV94PhysicalUnattachedSourceNextKmV1(
       recording,mixedLater);
+    paidTraces.push(mixedLater);
     assert.equal(mixedLater.sourceKm,km);
     assert.equal(mixedLater.finishes.length,160);
   }
@@ -944,6 +960,7 @@ test('paid boundary contacts support a complete second flat kilometre',()=>{
   const priorAt83=mixedLater;
   mixedLater=replayV94PhysicalFrontCatchKmV1(
     recording,mixedLater);
+  paidTraces.push(mixedLater);
   assert.equal(mixedLater.sourceKm,84);
   assert.equal(mixedLater.finishes.length,160);
   assert.equal(mixedLater.caughtFinish.riderId,
@@ -959,6 +976,7 @@ test('paid boundary contacts support a complete second flat kilometre',()=>{
       row.riderId==='rival-6-7').energyBefore);
   mixedLater=replayV94PhysicalUnattachedSourceNextKmV1(
     recording,mixedLater);
+  paidTraces.push(mixedLater);
   assert.equal(mixedLater.sourceKm,85);
   assert.equal(mixedLater.finishes.length,160);
   assert.deepEqual(
@@ -972,6 +990,7 @@ test('paid boundary contacts support a complete second flat kilometre',()=>{
   for(let km=86;km<=107;km++){
     mixedLater=replayV94PhysicalUnattachedSourceNextKmV1(
       recording,mixedLater);
+    paidTraces.push(mixedLater);
     assert.equal(mixedLater.sourceKm,km);
     assert.equal(mixedLater.finishes.length,160);
     assert.equal(mixedLater.finishes.find(row=>
@@ -1000,6 +1019,7 @@ test('paid boundary contacts support a complete second flat kilometre',()=>{
   assert.equal(roadAudit.frontDropCount,0);
   const paidContact=replayV94PhysicalMidKmContactFullFieldV1(
     recording,mixedLater);
+  paidTraces.push(paidContact);
   assert.equal(paidContact.sourceKm,108);
   assert.equal(paidContact.finishes.length,160);
   assert.equal(validateV94PhysicalMidKmContactFullFieldV1(
@@ -1015,6 +1035,7 @@ test('paid boundary contacts support a complete second flat kilometre',()=>{
     .previousGroupIds.length,3);
   const afterContact=replayV94PhysicalUnattachedSourceNextKmV1(
     recording,paidContact);
+  paidTraces.push(afterContact);
   assert.equal(afterContact.sourceKm,109);
   assert.equal(afterContact.finishes.length,160);
   assert.equal(validateV94PhysicalUnattachedSourceNextKmV1(
@@ -1023,6 +1044,7 @@ test('paid boundary contacts support a complete second flat kilometre',()=>{
   for(let km=110;km<=120;km++){
     const next=replayV94PhysicalUnattachedSourceNextKmV1(
       recording,later);
+    paidTraces.push(next);
     assert.equal(validateV94PhysicalUnattachedSourceNextKmV1(
       recording,later,next),true);
     assert.equal(next.sourceKm,km);
@@ -1039,6 +1061,30 @@ test('paid boundary contacts support a complete second flat kilometre',()=>{
     row.endDistanceM===120000));
   assert.equal(later.finishes.find(row=>
     row.riderId==='rival-6-7').physicalGroup,'peloton');
+  assert.equal(paidTraces.length,120);
+  for(let i=1;i<paidTraces.length;i++){
+    const prior=paidTraces[i-1];
+    const current=paidTraces[i];
+    const previous=new Map(prior.finishes.map(row=>[
+      row.riderId,row]));
+    assert.equal(current.sourceKm,prior.sourceKm+1);
+    assert.equal(current.finishes.length,160);
+    assert.equal(new Set(current.finishes.map(row=>
+      row.riderId)).size,160);
+    for(const finish of current.finishes){
+      assert.equal(finish.endDistanceM,
+        current.sourceKm*1000);
+      assert.equal(finish.energyBefore,
+        previous.get(finish.riderId)?.energyAfter,
+      `energy discontinuity at km ${current.sourceKm}: ${
+        finish.riderId}`);
+      assert.ok(finish.clockSeconds>
+        previous.get(finish.riderId).clockSeconds);
+      assert.ok(Math.abs(finish.energyBefore-
+        finish.paidFromReserve+finish.recoveryAward-
+        finish.capAdjustment-finish.energyAfter)<0.002);
+    }
+  }
 });
 
 for(const fatigue of [0,30])test(
