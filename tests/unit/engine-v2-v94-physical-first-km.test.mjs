@@ -1874,6 +1874,19 @@ test('ended source break membership keeps four riders on paid roads',()=>{
     error.sourceEvidence?.sourceKm===100&&
     error.sourceEvidence.attackers.includes(
       'rival-16-5'));
+  assert.throws(()=>replayV94PhysicalMixedFreshKmV1(
+    recording,paid),error=>
+    error.message===
+      'Fresh attacker lacks continuous physical source.'&&
+    error.sourceEvidence?.sourceKm===100&&
+    error.sourceEvidence.riderId==='rival-16-5'&&
+    error.sourceEvidence.priorPhysicalGroup===
+      'solo-rival-16-5'&&
+    error.sourceEvidence.priorDistanceM===99000&&
+    error.sourceEvidence.physicalEnergyBefore<
+      error.sourceEvidence.sourceEnergyBefore&&
+    error.sourceEvidence.sourceAttackReason===
+      'preset_cadence');
 });
 
 test('second-km road clocks refuse a faster rear catch',()=>{

@@ -6824,6 +6824,12 @@ all 160 riders through km 99. At km 100 the source names
 `rival-16-5` and `rival-8-5` as new attackers even though they are
 already on paid rear roads. The front launch guard refuses rather
 than moving them to the peloton or assigning a scripted gap.
+The km-100 diagnostic now names the first refused rider and his
+physical boundary: `rival-16-5` is on `solo-rival-16-5` at 99,000 m,
+with 79.082 physical reserve versus 79.194 in the source ledger.
+The source calls this a `preset_cadence` launch. The replay records
+that mismatch in refusal evidence; it does not turn the rear road
+into a peloton launch or claim the source road-3 gap as physical.
 
 Callers of the experimental preview can request
 `physicalFirstKmVersion: 1` to receive this completed physical first
