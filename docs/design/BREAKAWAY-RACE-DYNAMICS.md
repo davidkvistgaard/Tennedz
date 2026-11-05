@@ -6889,8 +6889,19 @@ The separate `v2-rear-depleted-travel-1` quote now applies the
 existing exhaustion coast factor to the rider's own road: it spends
 at most available reserve, records unmet demand and slows the rider's
 clock. It does not yet choose a replacement leader, settle followers'
-clocks or join roads at contact; the 260 km replay therefore retains
-the km-252 refusal until those decisions can be recorded and checked.
+clocks or join roads at contact by itself; a separate guarded
+boundary decision is required for the km-252 replay.
+The opt-in payable rear boundary and mixed continuation now resolve
+that specific km-252 turn: `rival-10-0` cannot fund another leader
+turn, so `rival-14-0` takes the payable lead with three payable
+followers. `rival-10-0` continues on a separate solo road. From km
+253, depleted solo decisions spend only available reserve and use
+the slower coast clock; the prior versions retain their refusal.
+This fatigue-30 trace now pays all 160 riders through km 258. At km
+259 two rear roads physically meet inside the kilometre, so the
+continuation refuses until that measured contact can be settled with
+the same depleted-solo pricing. No 260 km finish or official result
+is claimed for this case.
 
 Callers of the experimental preview can request
 `physicalFirstKmVersion: 1` to receive this completed physical first

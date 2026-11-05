@@ -131,6 +131,12 @@ import {replayV94PhysicalDetachedPresetKmV1,
 import {decideV94PhysicalForwardBoundaryChoicesV1,
   validateV94PhysicalForwardBoundaryChoicesV1} from
   '../../lib/engine/v2/v94-physical-forward-boundary-choice-v1.mjs';
+import {decideV94PhysicalPayableRearBoundaryV1,
+  validateV94PhysicalPayableRearBoundaryV1} from
+  '../../lib/engine/v2/v94-physical-payable-rear-boundary-v1.mjs';
+import {replayV94PhysicalMixedPayableNextKmV1,
+  validateV94PhysicalMixedPayableNextKmV1} from
+  '../../lib/engine/v2/v94-physical-mixed-payable-next-km-v1.mjs';
 import {replayV94PhysicalRecordedRestKmV1,
   validateV94PhysicalRecordedRestKmV1} from
   '../../lib/engine/v2/v94-physical-recorded-rest-km-v1.mjs';
@@ -2037,7 +2043,7 @@ test('ended source break membership keeps four riders on paid roads',()=>{
   /cannot override a physical or manager attack/);
 });
 
-test('fatigued 260 km seed-one reaches measured rear energy guard',()=>{
+test('fatigued 260 km seed-one pays depletion through km 258',()=>{
   const settings={distanceKm:260,teamCount:20,terrain:'flat',
     fatigue:30,attack:'none',chase:'selective',
     seed:'preview-recorded-road-1'};
@@ -2109,6 +2115,19 @@ test('fatigued 260 km seed-one reaches measured rear energy guard',()=>{
         contacts.push(km);
       }else if(failure){
         if(km===252){
+          const payable=decideV94PhysicalPayableRearBoundaryV1(
+            recording,prior,{allowPaidMixedContact:true});
+          const group=payable.choices.find(row=>
+            row.riderIds.includes('rival-10-0'));
+          assert.equal(group.pendingLeaderRiderId,
+            'rival-14-0');
+          assert.deepEqual(group.pendingShelterRiderIds,
+            ['rival-18-0','rival-2-0','rival-6-0']);
+          assert.equal(group.riderDecisions.find(row=>
+            row.riderId==='rival-10-0').payableLeader,false);
+          assert.equal(validateV94PhysicalPayableRearBoundaryV1(
+            recording,prior,payable,
+            {allowPaidMixedContact:true}),true);
           assert.equal(prior.sourceKm,251);
           assert.equal(traces.length,251);
           assert.ok(contacts.includes(25));
@@ -2119,10 +2138,38 @@ test('fatigued 260 km seed-one reaches measured rear energy guard',()=>{
             physicalGroup:'paid-contact-km251-8',
             role:'leader',effort:'steady',
             energyBefore:.316,energyDemand:.3496});
+          next=replayV94PhysicalMixedPayableNextKmV1(
+            recording,prior);
+          assert.equal(validateV94PhysicalMixedPayableNextKmV1(
+            recording,prior,next),true);
+          failure=null;
+        }
+        if(failure?.message===
+          'Rear rider cannot pay terrain-priced work.'&&
+          km>252){
+          try{next=replayV94PhysicalMixedPayableNextKmV1(
+            recording,prior);failure=null;}
+          catch(payableError){failure=payableError;}
+        }
+        if(km===259&&failure?.message===
+          'Physical rear roads need paid contact resolution.'){
+          assert.equal(prior.sourceKm,258);
+          assert.equal(traces.length,258);
+          assert.ok(failure.sourceEvidence.atDistanceM>
+            258000);
+          assert.ok(failure.sourceEvidence.atDistanceM<
+            259000);
+          const depleted=traces.flatMap(trace=>trace.roads??[])
+            .flatMap(road=>road.riderDecisions)
+            .filter(row=>row.unmetEnergyDemand>0);
+          assert.ok(depleted.length>0);
+          assert.ok(depleted.every(row=>
+            row.paidFromReserve<=row.energyBefore&&
+            row.sustainableFraction<1));
           return;
         }
-        throw new Error(`km ${km}: ${failure.message}`,
-          {cause:failure});
+        if(failure)throw new Error(`km ${km}: ${
+          failure.message}`,{cause:failure});
       }
     }
     assert.equal(next.sourceKm,km);
@@ -2130,7 +2177,7 @@ test('fatigued 260 km seed-one reaches measured rear energy guard',()=>{
     traces.push(next);
     prior=next;
   }
-  assert.fail('The measured km-252 reserve guard did not fire.');
+  assert.fail('The measured km-259 contact guard did not fire.');
 });
 
 test('second-km road clocks refuse a faster rear catch',()=>{
