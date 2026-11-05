@@ -7025,3 +7025,9 @@ contact. Removing the ability from a contact decision also refuses
 km 32 by rider ID. This establishes decision input coverage, while
 the source gap and finish clock mismatches above still block
 guided-race promotion.
+
+Version 3 compares the recorded effort and sporting goal with the
+committed kilometre order and team intent. Forging either on a paid
+contact rider fails at km 32 with that rider ID. The physical trace
+therefore documents which inputs actually governed each accepted
+decision; the independent source clock calibration still fails.

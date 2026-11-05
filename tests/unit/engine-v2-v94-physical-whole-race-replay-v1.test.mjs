@@ -193,6 +193,24 @@ for(const [terrain,fatigue] of [
           assert.throws(()=>auditV94PhysicalRiderDecisionsV1(
             recording,missingStrength),
           /km 32 rider rival-11-3: missing versioned paid choice/);
+          const forgedOrder=[...traces];
+          forgedOrder[31]=structuredClone(traces[31]);
+          for(const road of forgedOrder[31].roads)
+            for(const decision of road.riderDecisions??[])
+              if(decision.riderId==='rival-11-3')
+                decision.teamOrderEffort='forged';
+          assert.throws(()=>auditV94PhysicalRiderDecisionsV1(
+            recording,forgedOrder),
+          /km 32 rider rival-11-3: missing versioned paid choice/);
+          const forgedStake=[...traces];
+          forgedStake[31]=structuredClone(traces[31]);
+          for(const road of forgedStake[31].roads)
+            for(const decision of road.riderDecisions??[])
+              if(decision.riderId==='rival-11-3')
+                decision.sportingGoal='forged';
+          assert.throws(()=>auditV94PhysicalRiderDecisionsV1(
+            recording,forgedStake),
+          /km 32 rider rival-11-3: missing versioned paid choice/);
           const nonjoin=traces[113].passThroughContacts.find(row=>
             row.riderDecisions?.length===2&&
             row.formsRearGroup===false);
