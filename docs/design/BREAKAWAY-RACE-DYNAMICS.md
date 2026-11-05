@@ -6759,8 +6759,15 @@ rear field without a physical transfer. The mixed paid continuation
 then reaches km 120 with 160 unique paid finishes at every km
 through 114-120; the former source member remains recorded as such.
 This finishes the seed-3 flat 120 km, fatigue-0 physical replay,
-without official placings or awards. Other whole-race same-seed
-cases, finish validation and release gates remain open. Seed
+without official placings or awards. The same seed at fatigue 30
+diverges at km 6: a paid solo passes 17 simultaneous front drops
+at 5,050.667 m, then another 17 at 5,062.259 m. The first
+contact quote gives the drops no payable shelter under their
+recorded effort and strength, so the group fragment correctly
+refuses. A no-join replay must record both overtakes and preserve
+their separate paid roads before the fatigue-30 whole race can
+continue. Other whole-race same-seed cases, finish validation and
+release gates remain open. Seed
 2 separately reaches a solo/front contact at km 6. Its solo starts
 behind the paid front at the boundary, then catches it at 5,256.575
 m. The version 2 contact replay records that direction and charges

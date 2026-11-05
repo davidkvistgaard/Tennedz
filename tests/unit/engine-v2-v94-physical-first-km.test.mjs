@@ -1632,6 +1632,47 @@ test('sixth front uses recorded rest before checking seed-three rear contact',()
   assert.equal(paid.officialResults,false);
 });
 
+test('fatigued seed-three drops refuse unaffordable contact shelter',()=>{
+  const settings={distanceKm:120,teamCount:20,terrain:'flat',
+    fatigue:30,attack:'none',chase:'selective',
+    seed:'preview-recorded-road-3'};
+  const sportingStakes=prepareV91Playtest(settings).teams.map(team=>({
+    teamId:team.id,goal:'sprint_finish',
+    captainId:team.orders.captainId}));
+  const {recording}=createV94RaceDynamicsPreview({
+    format:'one_day',settings,sportingStakes,
+    roadGroupPaceVersion:3,chaseTurnVersion:1,
+    bunchFrontTurnVersion:1,pelotonFrontTurnVersion:1,
+    pelotonDraftCostVersion:1,pelotonExposureCostVersion:1,
+    freshAttackDecisionVersion:1,
+    roadGroupRiderDecisionVersion:1,
+    protectorSportingPursuitVersion:1});
+  const fifth=replayV94PhysicalFifthKmV1(recording,
+    replayV94PhysicalFourthKmV1(recording));
+  assert.throws(()=>replayV94PhysicalSixthKmV1(
+    recording,fifth),error=>
+    error.message===
+      'Physical front drop/rear contact needs paid resolution.'&&
+    error.sourceEvidence?.atDistanceM>5000&&
+    error.sourceEvidence?.atDistanceM<5100&&
+    error.sourceEvidence?.riderId==='rival-1-0');
+  const choice=decideV94PhysicalFrontDropContactChoiceV1(
+    recording,fifth);
+  assert.equal(choice.candidates.length,18);
+  assert.equal(choice.pendingLeaderRiderId,null);
+  assert.equal(choice.pendingShelterRiderIds.length,0);
+  assert.ok(choice.candidates.filter(row=>
+    row.previousPhysicalGroup==='peloton').every(row=>
+    row.perceivedShelterHoldAbility<
+      choice.candidates.find(item=>
+        item.riderId==='rival-10-5')
+        .perceivedSoloAbility));
+  assert.equal(validateV94PhysicalFrontDropContactChoiceV1(
+    recording,fifth,choice),true);
+  assert.throws(()=>replayV94PhysicalFrontDropContactFragmentV1(
+    recording,fifth),/needs payable riders/);
+});
+
 test('ended source break membership keeps four riders on paid roads',()=>{
   const settings={distanceKm:260,teamCount:20,terrain:'flat',
     fatigue:0,attack:'none',chase:'selective',
