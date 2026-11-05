@@ -6940,6 +6940,17 @@ the finish 130.922269 seconds later, and the last solo road arrives
 1,604.143486 seconds after the first. These are measured clock
 differences and road memberships, with no wheel order, official
 places or awards.
+The opt-in `v94-physical-whole-race-replay-1` now assembles the
+versioned kilometre decisions into one reproducible physical trace
+and returns the complete-race validation, source-gap audit,
+finish-source audit and paid-finish roads together. It has been
+checked on five flat 120 km same-seed cases (seed 1 fatigue 0,
+seeds 2 and 3 fatigue 0/30) and both flat 260 km seed-1 cases
+(fatigue 0/30). Every case reaches all 160 finish clocks and retains
+its explicit source-calibration failure. Contact, source rest,
+detached automatic presets and depleted solo continuations use
+their existing guarded versions. This is a research replay library;
+the ordinary guided race and production preview do not consume it.
 
 Callers of the experimental preview can request
 `physicalFirstKmVersion: 1` to receive this completed physical first
