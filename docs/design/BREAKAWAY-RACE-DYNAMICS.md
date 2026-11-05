@@ -6768,10 +6768,16 @@ refuses. The version 1 no-join choice records all 17 separate
 continuations at the first overtake. It then quotes 17 payable
 shelters at the second measured contact. The version 1 fragment
 prices that second group's leader and shelters to the km-6
-boundary, without claiming the other 142 rider finishes or an
-official result. The first 17 remain on separate paid roads until
-a whole-field contact audit can accept km 6. Other whole-race
-same-seed cases, finish validation and
+boundary. The version 1 whole-field audit checks those roads
+against the front, the remaining rear roads and the 17 unjoined
+drops. It accepts 160 paid km-6 finishes; the first 17 keep solo
+roads. Km 7 pays a new boundary choice. The fatigue-30 replay
+continues through km 120 with 160 continuous paid finishes every
+kilometre. Its measured rear-road contacts at km 82 and 91 use
+the existing paid mid-km choice, fragment and audit. The source
+break loses one rider at km 111, and the partial-withdrawal replay
+keeps his physical solo road. The trace issues no official result
+or awards. Other whole-race same-seed cases, finish validation and
 release gates remain open. Seed
 2 separately reaches a solo/front contact at km 6. Its solo starts
 behind the paid front at the boundary, then catches it at 5,256.575

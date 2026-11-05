@@ -104,6 +104,9 @@ import {decideV94PhysicalFrontDropNoJoinChoiceV1,
 import {replayV94PhysicalFrontDropAfterNoJoinFragmentV1,
   validateV94PhysicalFrontDropAfterNoJoinFragmentV1} from
   '../../lib/engine/v2/v94-physical-front-drop-after-no-join-fragment-v1.mjs';
+import {replayV94PhysicalFrontDropAfterNoJoinFieldV1,
+  validateV94PhysicalFrontDropAfterNoJoinFieldV1} from
+  '../../lib/engine/v2/v94-physical-front-drop-after-no-join-field-v1.mjs';
 import {replayV94PhysicalSeventhKmV1,
   validateV94PhysicalSeventhKmV1} from
   '../../lib/engine/v2/v94-physical-seventh-km-v1.mjs';
@@ -1638,7 +1641,7 @@ test('sixth front uses recorded rest before checking seed-three rear contact',()
   assert.equal(paid.officialResults,false);
 });
 
-test('fatigued seed-three drops refuse unaffordable contact shelter',()=>{
+test('fatigued seed-three no-join contact pays through 120 km',()=>{
   const settings={distanceKm:120,teamCount:20,terrain:'flat',
     fatigue:30,attack:'none',chase:'selective',
     seed:'preview-recorded-road-3'};
@@ -1701,6 +1704,92 @@ test('fatigued seed-three drops refuse unaffordable contact shelter',()=>{
   assert.equal(fragment.fullFieldKilometre,false);
   assert.equal(validateV94PhysicalFrontDropAfterNoJoinFragmentV1(
     recording,fifth,fragment),true);
+  const sixth=replayV94PhysicalFrontDropAfterNoJoinFieldV1(
+    recording,fifth);
+  assert.equal(sixth.finishes.length,160);
+  assert.equal(sixth.droppedFrontFinishes.length,17);
+  assert.equal(sixth.contactRoadAudit.unresolvedContactCount,0);
+  const fifthByRider=new Map(fifth.finishes.map(row=>[
+    row.riderId,row]));
+  for(const finish of sixth.finishes){
+    const old=fifthByRider.get(finish.riderId);
+    assert.ok(old);
+    assert.ok(finish.clockSeconds>old.clockSeconds);
+    assert.equal(finish.endDistanceM,6000);
+    assert.ok(Math.abs(finish.energyBefore-
+      old.energyAfter)<.001);
+    assert.ok(Math.abs(finish.energyBefore-
+      finish.paidFromReserve+finish.recoveryAward-
+      finish.capAdjustment-finish.energyAfter)<.0011);
+  }
+  assert.equal(validateV94PhysicalFrontDropAfterNoJoinFieldV1(
+    recording,fifth,sixth),true);
+  assert.ok(sixth.droppedFrontFinishes.every(row=>
+    row.physicalGroup.startsWith('solo-')));
+  const checkPaid=(previous,current,km)=>{
+    assert.equal(current.sourceKm,km);
+    assert.equal(current.fullFieldKilometre,true);
+    assert.equal(current.finishes.length,160);
+    const before=new Map(previous.finishes.map(row=>[
+      row.riderId,row]));
+    for(const finish of current.finishes){
+      const old=before.get(finish.riderId);
+      assert.ok(old);
+      assert.ok(finish.clockSeconds>old.clockSeconds);
+      assert.equal(finish.endDistanceM,km*1000);
+      assert.ok(Math.abs(finish.energyBefore-
+        old.energyAfter)<.001);
+      assert.ok(Math.abs(finish.energyBefore-
+        finish.paidFromReserve+finish.recoveryAward-
+        finish.capAdjustment-finish.energyAfter)<.0011);
+    }
+  };
+  let paid=replayV94PhysicalSeventhKmV1(recording,sixth);
+  checkPaid(sixth,paid,7);
+  for(let km=8;km<=79;km++){
+    const previous=paid;
+    paid=replayV94PhysicalUnattachedSourceNextKmV1(
+      recording,paid);
+    checkPaid(previous,paid,km);
+  }
+  const beforeEighty=paid;
+  paid=replayV94PhysicalMixedFreshKmV1(recording,paid);
+  checkPaid(beforeEighty,paid,80);
+  let mixed=false;
+  const paidContacts=[],withdrawals=[];
+  for(let km=81;km<=120;km++){
+    const previous=paid;
+    const sourceWithdraws=
+      recording.frames[km-1].breakawayRiderIds.length<
+        paid.sourceBreakRiderIds.length;
+    try{
+      paid=sourceWithdraws?
+        replayV94PhysicalPartialSourceWithdrawalKmV1(
+          recording,paid):mixed?
+          replayV94PhysicalMixedPaidNextKmV1(
+            recording,paid):
+          replayV94PhysicalUnattachedSourceNextKmV1(
+            recording,paid);
+    }catch(error){
+      if(error.message!==
+        'Physical rear roads need paid contact resolution.')
+        throw error;
+      paid=replayV94PhysicalMidKmContactFullFieldV1(
+        recording,previous);
+      mixed=true;
+      paidContacts.push(km);
+    }
+    if(sourceWithdraws){
+      withdrawals.push(km);
+      assert.deepEqual(paid.sourceMembershipWithdrawnRiderIds,
+        ['rival-19-5']);
+    }
+    checkPaid(previous,paid,km);
+  }
+  assert.deepEqual(paidContacts,[82,91]);
+  assert.deepEqual(withdrawals,[111]);
+  assert.equal(paid.sourceKm,120);
+  assert.equal(paid.officialResults,false);
 });
 
 test('ended source break membership keeps four riders on paid roads',()=>{
