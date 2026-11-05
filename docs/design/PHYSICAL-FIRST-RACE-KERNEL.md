@@ -143,3 +143,12 @@ remain physically connected and the relative finish mismatch count is
 0. This improves that constrained scenario, but says nothing about
 absolute elapsed time (the historical source records no absolute bunch
 clock), attacks, mountain splits, chases or contacts.
+
+The mountain benchmark with a committed summit goal exposed an
+unrecorded contact. Its first kilometre physically drops riders from
+the bunch. Two separately paid solo roads have the same measured clock
+at that boundary; the probe now stops at km 2 instead of letting them
+continue as separate roads without contact resolution. The crossing
+guard checks every pair of existing roads, including two solo roads,
+and reports their start and end clock difference. A paid boundary
+contact event and a rear-group leader choice are needed next.
