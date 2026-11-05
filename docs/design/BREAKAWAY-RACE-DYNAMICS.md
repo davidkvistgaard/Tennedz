@@ -6874,6 +6874,15 @@ Of 374 source group checkpoints covering 878 rider comparisons,
 60 claim a larger lead than any member's paid individual clock.
 The largest excess is 27.95292 seconds. This whole-race mismatch
 still blocks promotion despite the complete physical energy replay.
+The first mismatch has a concrete origin at km 5: the source gives
+two fresh attackers a 27.78-second road-1 gap from attack pressure
+with zero source chase power. The paid peloton nevertheless has two
+named front turns, and the faster attacker's measured lead at that
+boundary is only 0.31332 seconds. The source's pressure-derived gap
+is therefore not a distance earned on those paid roads. Matching
+that number by assigning it to the physical riders would fabricate
+their position; a calibrated V94 source must instead derive its
+road claims from the paid clocks and contacts.
 At the fatigue-0 finish, 87 of 160 source finish claims disagree with
 the paid clocks; the largest difference is 1,125.602364 seconds for
 `rival-10-0`. These are finish calibration errors despite complete

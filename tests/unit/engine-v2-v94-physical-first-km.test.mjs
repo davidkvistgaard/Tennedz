@@ -2037,6 +2037,16 @@ test('ended source break membership keeps four riders on paid roads',()=>{
   assert.equal(sourceGapAudit.sourceGapExceedsBestPaidLeadCount,60);
   assert.equal(sourceGapAudit.maxGapOverBestPaidLeadSeconds,
     27.95292);
+  const f5=recording.frames[4],p5=paidTraces[4];
+  assert.ok(f5.attackPower>160);
+  assert.equal(f5.chasePower,0);
+  assert.equal(f5.roadGroups[0].gapSeconds,27.78);
+  assert.deepEqual(p5.front.road.map(row=>row.leaderRiderId),
+    ['rival-1-5','rival-1-6']);
+  assert.ok(Math.abs(p5.front.frontClockSeconds-
+    p5.finishes.find(row=>
+      row.riderId==='rival-19-5').clockSeconds-
+    .31332)<1e-6);
   const finishAudit=auditV94PhysicalFinishSourceV1(
     recording,paidTraces);
   assert.equal(finishAudit.riderCount,160);
