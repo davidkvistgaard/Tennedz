@@ -6730,11 +6730,16 @@ contact road and the front segments. With no further measured
 intersection, it records 160 continuous paid finishes at km 6,
 including all 30 front drops that joined the solo at the two
 physical contacts. It grants no official result or source break
-road. Km 7 remains gated: its current source-break guard only
-accepts individual paid solo roads, while the previously solo
-source-break rider now leads a physically joined rear group. The
-next replay must preserve that paid group and price its next
-leader/shelter decisions. Seed
+road. At km 7 the forward-boundary choice accepts that recorded
+mixed group, quotes break-work willingness and each shelter, then
+replays a new paid kilometre. Recorded front rest settles the
+source charge. The same physical group is retained only while its
+paid prior contact or boundary choice proves membership. The
+seed-3 flat 120 km, fatigue-0 trace now reaches km 79 with 160
+continuous paid finishes per kilometre through km 7-79. Km 80
+contains a fresh source attacker joining the old source break
+label; its named front plan refuses before a paid new solo and
+front-rest settlement, so whole-race calibration remains open. Seed
 2 separately reaches a solo/front contact at km 6. Its solo starts
 behind the paid front at the boundary, then catches it at 5,256.575
 m. The version 2 contact replay records that direction and charges

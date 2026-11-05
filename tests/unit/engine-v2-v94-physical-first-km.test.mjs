@@ -1443,9 +1443,35 @@ test('sixth front uses recorded rest before checking seed-three rear contact',()
   }
   assert.equal(validateV94PhysicalFrontDropSecondFieldV1(
     recording,fifth,sixth),true);
-  assert.throws(()=>replayV94PhysicalSeventhKmV1(
-    recording,sixth),
-  /individual paid roads/);
+  const seventh=replayV94PhysicalSeventhKmV1(
+    recording,sixth);
+  assert.equal(seventh.finishes.length,160);
+  assert.equal(seventh.fullFieldKilometre,true);
+  assert.equal(validateV94PhysicalSeventhKmV1(
+    recording,sixth,seventh),true);
+  let paid=seventh;
+  for(let km=8;km<=79;km++){
+    const previous=paid;
+    paid=replayV94PhysicalUnattachedSourceNextKmV1(
+      recording,paid);
+    assert.equal(paid.sourceKm,km);
+    assert.equal(paid.fullFieldKilometre,true);
+    assert.equal(paid.finishes.length,160);
+    const before=new Map(previous.finishes.map(row=>[
+      row.riderId,row]));
+    for(const finish of paid.finishes){
+      const old=before.get(finish.riderId);
+      assert.ok(old);
+      assert.ok(finish.clockSeconds>old.clockSeconds);
+      assert.equal(finish.endDistanceM,km*1000);
+      assert.ok(Math.abs(finish.energyBefore-
+        old.energyAfter)<.001);
+      assert.ok(Math.abs(finish.energyBefore-
+        finish.paidFromReserve+finish.recoveryAward-
+        finish.capAdjustment-finish.energyAfter)<.0011);
+    }
+  }
+  assert.equal(paid.sourceKm,79);
 });
 
 test('ended source break membership keeps four riders on paid roads',()=>{
