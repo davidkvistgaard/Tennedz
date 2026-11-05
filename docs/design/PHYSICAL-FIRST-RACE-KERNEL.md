@@ -196,10 +196,9 @@ specific hold decision. It selects only a rider who can cover the
 existing attack initiation cost and minimum reserve. A named manager
 attacker overrides the general helper guard; generated attempts need
 an attack-oriented sporting goal. The choice does not move a rider,
-charge a full kilometre or award any gap. The whole-race probe still
-refuses attack orders until the attack has a paid road step, contact
-resolution and independent replay. The flat and mountain controls
-remain the calibrated scenarios; neither validates attack finishes.
+charge a full kilometre or award any gap. At this stage the whole-race
+probe still refused attack orders. The flat and mountain controls
+remained the calibrated scenarios; neither validated attack finishes.
 
 `physical-first-attack-road-1` now prices a selected attacker's first
 solo kilometre from the measured bunch boundary. It verifies the
@@ -207,9 +206,8 @@ choice against current committed orders, pays the terrain-priced solo
 road work plus the existing attack initiation cost from that rider's
 reserve, uses the attack phase for perceived speed, and records a
 zero-gap launch, full-distance finish, energy debit and cap. This is
-an isolated paid event contract. The whole-race runner and independent
-replay have not yet wired it into a simultaneous bunch movement or
-resolved a resulting catch, so attack races still stop safely.
+an isolated paid event contract; simultaneous bunch movement and
+resulting catches were not yet integrated at this stage.
 
 The version 5 whole-race probe and version 2 replay now validate
 every new solo road created by a start drop against its measured
@@ -220,3 +218,20 @@ tie a different existing road without recorded contact. Co-timed
 departures from the same source remain eligible for the existing paid
 rear boundary contact at the next kilometre. Both same-seed control
 races still complete with their previous relative finish audits.
+
+The version 6 whole-race probe and version 3 replay now apply every
+team's boundary attack choice each kilometre. Attempting riders leave
+the measured bunch at zero gap, pay a full attack kilometre on their
+own road, and are removed from the simultaneously paid bunch. The
+version 2 rear boundary contact accepts a paid attack solo receipt
+when exactly co-timed solo riders can form a payable rear road.
+Independent replay recomputes the choice, attack road, reserve debit,
+launch and finish. The one-kilometre attack fixture replays exactly;
+both no-attack whole-race controls retain their earlier audits.
+
+On a same-seed 40 km, four-team flat race with one committed break
+team, the experimental runner now reaches km 6. It stops at km 7
+because two paid solo roads would cross during that kilometre without
+a recorded contact event. The historical source recorded one attack,
+but its gap is not adopted. This is the next concrete contact case;
+attack finishes and whole-race calibration remain unvalidated.

@@ -73,13 +73,35 @@ test('physical-first probe refuses a missing ordered leader',()=>{
       /No ordered payable bunch leader/.test(error.message));
 });
 
-test('physical-first probe refuses unresolved attack orders',()=>{
-  const request=input();
+test('ordered attacker pays one full road while the bunch moves',()=>{
+  const request=input(75);
+  request.kilometres=segments.slice(0,1);
+  request.start.riders.forEach(row=>{row.reserve=100;});
   request.teams[1].orders.baseline.attack='selective';
-  assert.throws(()=>runPhysicalFirstWholeRaceProbeV1(request),
-    error=>error.sourceKm===1&&
-      /Ordered attacks need physical-first rider choices/
-        .test(error.message));
+  request.teams[1].orders.baseline.attackRiderId='b';
+  request.stakes[1].sportingGoal='break_stage';
+  const result=runPhysicalFirstWholeRaceProbeV1(request);
+  assert.equal(result.completedThroughKm,1);
+  assert.equal(result.steps[0].attackChoices[1].choice,
+    'attempt_paid_attack');
+  assert.equal(result.steps[0].attackSteps.length,1);
+  assert.equal(result.steps[0].attackSteps[0]
+    .launchEvent.atClockSeconds,0);
+  assert.equal(result.states[1].riders.length,2);
+  assert.deepEqual(result.states[1].riders.map(row=>
+    row.distanceM),[1000,1000]);
+  assert.equal(replayPhysicalFirstWholeRaceV1(request,
+    result).validatedRiderKm,2);
+  const tampered=structuredClone(result);
+  tampered.steps[0].attackSteps[0].finishes[0]
+    .energyAfter-=1;
+  assert.throws(()=>replayPhysicalFirstWholeRaceV1(
+    request,tampered),/attack road or reserve differs/);
+  const changedChoice=structuredClone(result);
+  changedChoice.steps[0].attackChoices[1]
+    .sportingGoal='none';
+  assert.throws(()=>replayPhysicalFirstWholeRaceV1(
+    request,changedChoice),/attack choices differ from order/);
 });
 
 test('committed 40 km control covers each rider and audits source finish',t=>{
