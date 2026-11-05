@@ -44,3 +44,23 @@ test('distance and capacity constrain each rider’s chosen work',()=>{
   assert.throws(()=>priceRearEnergyDemandV1({...base,
     role:'leader',distanceM:1001}),/payable distance/);
 });
+
+test('drive work has a separate versioned extra-cost receipt',()=>{
+  const ordinary=priceRearEnergyDemandV1({
+    ...base,role:'leader'});
+  const driven=priceRearEnergyDemandV1({
+    ...base,role:'leader',driveWork:true});
+  assert.equal(ordinary.version,
+    'v2-rear-energy-demand-1');
+  assert.equal(driven.version,
+    'v2-rear-energy-demand-drive-1');
+  assert.equal(driven.driveWork,true);
+  assert.ok(driven.energyDemand>
+    ordinary.energyDemand);
+  assert.equal(validateRearEnergyDemandV1({
+    ...base,role:'leader',driveWork:true},
+  driven),true);
+  assert.throws(()=>quoteRearEnergyDemandV1({
+    ...base,role:'sheltered',driveWork:true}),
+  /payable distance/);
+});

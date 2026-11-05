@@ -61,9 +61,37 @@ test('rear group cannot hide an unholdable sheltered rider',()=>{
     request),/lacks one payable/);
 });
 
-test('drive work is refused until its extra cost is priced',()=>{
+test('drive order pays more reserve for higher rear speed',()=>{
+  const request=input();
+  const ordinary=planPhysicalFirstRearLeaderV1(request);
+  const ordinaryStep=advancePhysicalFirstRoadV1({
+    ...request,leaderRiderId:ordinary.leaderRiderId,
+    planVersion:ordinary.version,
+    kilometres:[{...segment,km:1},segment]});
+  request.teams[0].orders.baseline.breakWork='drive';
+  const driven=planPhysicalFirstRearLeaderV1(request);
+  assert.equal(driven.leaderRiderId,'a');
+  assert.equal(driven.driveWork,true);
+  assert.equal(driven.perceivedAbilityAtChoice,
+    ordinary.perceivedAbilityAtChoice+5);
+  assert.ok(driven.quotedPaidWork>
+    ordinary.quotedPaidWork);
+  const drivenStep=advancePhysicalFirstRoadV1({
+    ...request,leaderRiderId:driven.leaderRiderId,
+    planVersion:driven.version,
+    kilometres:[{...segment,km:1},segment]});
+  assert.ok(drivenStep.road.finishClockSeconds<
+    ordinaryStep.road.finishClockSeconds);
+  assert.ok(drivenStep.finishes[0].paidFromReserve>
+    ordinaryStep.finishes[0].paidFromReserve);
+  assert.equal(drivenStep.road.riderDecisions[0]
+    .driveWork,true);
+});
+
+test('a drive order is not silently replaced by a slower worker',()=>{
   const request=input();
   request.teams[0].orders.baseline.breakWork='drive';
+  request.teams[1].riders[0]=rider('b',0);
   assert.throws(()=>planPhysicalFirstRearLeaderV1(
-    request),/drive order needs physical-first work pricing/);
+    request),/Ordered rear drive cannot lead/);
 });

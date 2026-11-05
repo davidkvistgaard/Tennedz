@@ -160,8 +160,10 @@ reserve. It records the common distance and time, origin roads, paid
 approaches, member IDs and one leader plan for the next kilometre.
 The leader must be permitted by `breakWork`, able to pay, and slow
 enough that the other members can hold lower-cost shelter through the
-kilometre. `sit_on` never volunteers a leader; `drive` currently
-refuses until its extra cost is priced. No group arises from matching
+kilometre. `sit_on` never volunteers a leader. A `drive` order
+adds its existing ability bonus and extra reserve cost, and cannot
+be silently replaced by a slower worker when its pace would break
+the group. No group arises from matching
 source labels or a scripted gap.
 
 With a committed summit goal and no attack orders, the 120 km,
