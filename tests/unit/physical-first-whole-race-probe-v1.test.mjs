@@ -130,6 +130,9 @@ test('committed 40 km control covers each rider and audits source finish',t=>{
   assert.equal(calibration.riderCount,32);
   assert.equal(calibration.comparisons.length,32);
   assert.equal(calibration.officialResults,false);
+  assert.equal(calibration.mismatchCount,0);
+  assert.equal(result.steps.reduce((count,step)=>
+    count+step.peloton.startDropEvents.length,0),0);
   t.diagnostic(`40 km same-seed finish mismatches:
     ${calibration.mismatchCount}/32; maximum
     ${calibration.maxAbsoluteMismatchSeconds}s`);

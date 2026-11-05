@@ -69,13 +69,27 @@ test('named worker cannot be silently replaced when unable to pay',()=>{
     /Named front worker cannot pay the road/);
 });
 
-test('unnamed rotation chooses a payable helper by perceived ability',()=>{
+test('sprint rotation chooses the quickest helper who keeps more shelter',()=>{
   const request=input();
   delete request.teams[0].orders.baseline.frontWorkRiderId;
   request.teams[0].riders[1]=rider('a2',70);
+  request.teams[1].riders[0]=rider('b1',37);
+  const plan=planPhysicalFirstPelotonLeaderV1(request);
+  assert.equal(plan.leaderRiderId,'a1');
+  assert.equal(plan.predictedStartDrops,0);
+  assert.equal(plan.choice,
+    'preserve_sprint_group_with_paid_front');
+  assert.ok(plan.perceivedAbilityAtChoice>0);
+});
+
+test('full chase still selects the fastest payable helper',()=>{
+  const request=input();
+  delete request.teams[0].orders.baseline.frontWorkRiderId;
+  request.teams[0].orders.baseline.chase='all';
+  request.teams[0].riders[1]=rider('a2',70);
   const plan=planPhysicalFirstPelotonLeaderV1(request);
   assert.equal(plan.leaderRiderId,'a2');
-  assert.ok(plan.perceivedAbilityAtChoice>0);
+  assert.equal(plan.choice,'pay_named_or_rotating_front');
 });
 
 test('sitting in supplies no invented bunch worker',()=>{

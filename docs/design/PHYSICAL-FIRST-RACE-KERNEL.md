@@ -124,8 +124,22 @@ finish validation against the historical same-seed run remain open.
 The control scenario now has an explicit same-seed finish audit. It
 binds the probe to the recorded route, teams, sporting stakes, emergency
 orders and initial reserve; source finish group claims are comparison
-data only. On the fixed 40 km seed, 6 of 32 relative rider finish
+data only. With the original leader plan, on the fixed 40 km seed,
+6 of 32 relative rider finish
 clocks differ from the historical source claims, with a maximum
 absolute difference of 147.354 seconds. This failed calibration is
 reported rather than corrected by adopting historical gaps. The
 result cannot be used for official places or a guided-race release.
+
+The first leader plan chose the highest perceived solo ability for an
+unnamed rotation. In the flat control it selected a worker whose km 1
+pace six riders could not hold even with shelter. All six were recorded
+as paid solo drops, while the old source kept them in the bunch. The
+version 2 plan now uses the actual `sprint_finish` stake to choose the
+quickest payable helper with the fewest predicted start drops; a
+committed named helper still stays named, and an `all` chase still
+selects the fastest worker. On the same flat 40 km seed, all 32 riders
+remain physically connected and the relative finish mismatch count is
+0. This improves that constrained scenario, but says nothing about
+absolute elapsed time (the historical source records no absolute bunch
+clock), attacks, mountain splits, chases or contacts.
