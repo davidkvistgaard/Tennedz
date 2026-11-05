@@ -132,8 +132,8 @@ for(const [terrain,fatigue] of [
         const cause=error?.cause;
         const traces=completed?.traces??cause?.paidTraces;
         if(fatigue===30){
-          assert.equal(traces.length,101);
-          for(let index=20;index<101;index++){
+          assert.equal(traces.length,109);
+          for(let index=20;index<109;index++){
             assert.equal(traces[index].sourceKm,index+1);
             assert.equal(traces[index].fullFieldKilometre,true);
             assert.equal(traces[index].finishes.length,160);
@@ -147,6 +147,15 @@ for(const [terrain,fatigue] of [
             ['rival-19-5','rival-6-5','rival-16-5',
               'rival-2-5','rival-8-5']);
           assert.equal(traces[79].mixedPaidContactFromPrior,true);
+          const crossing=decideV94PhysicalMidKmContactChoiceV1(
+            recording,traces[100]);
+          assert.deepEqual(crossing.observedRoads.map(row=>
+            row.riderIds.length),[2,21]);
+          assert.equal(crossing.pendingShelterRiderIds.length,22);
+          assert.ok(traces[101].contactFragmentVersion);
+          assert.equal(traces[101].physicalRearGroups.some(group=>
+            group.riderDecisions.length===23),true);
+          assert.ok(traces[107].front.availableFrontPlanVersion);
         }
         const prior20=traces?.[19];
         let km21Cause=null;
@@ -454,9 +463,9 @@ for(const [terrain,fatigue] of [
         /needs paid shelter/);
         return (fatigue===0?
           completed.traces.length===120:
-          /stops at km 102/.test(error.message)&&
+          /stops at km 110/.test(error.message)&&
           cause.message===
-            'Physical rear roads need paid contact resolution.')&&
+            'Physical front needs an intact paid plan.')&&
           km21Cause.message===
             'Physical front drop/rear contact needs paid resolution.'&&
           evidence.riderId==='rival-10-5'&&
