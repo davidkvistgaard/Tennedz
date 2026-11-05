@@ -183,7 +183,13 @@ for(const [terrain,fatigue] of [
             true);
           assert.match(error.message,/stops at km 80/);
           assert.equal(cause.message,
-            'Physical front needs an intact paid plan.');
+            'Physical rear roads need paid contact resolution.');
+          assert.deepEqual(cause.sourceEvidence.roadIds,[
+            'paid-contact-km80-1','paid-contact-km80-2']);
+          assert.ok(cause.sourceEvidence.atDistanceM>79000&&
+            cause.sourceEvidence.atDistanceM<80000);
+          assert.equal(cause.physicalRoads.front
+            .sourceNamedFrontReallocated,true);
           const km71=cause.paidTraces[70];
           assert.equal(km71.sourceKm,71);
           assert.equal(km71.fullFieldKilometre,true);
