@@ -6732,9 +6732,10 @@ to the source ledger. The same-seed 120 km flat no-fatigue case now has
 160 reconciled physical finishes through km 85. The same replay then
 continues without another contact refusal through the 120 km finish.
 The seed-2 no-fatigue test checks all 160 riders at every kilometre
-from 86 through 120 for physical distance, increasing clock, reserve
-continuity and the paid energy equation. This is one complete same-seed
-physical trace, not a multi-seed finish validation or official result.
+from 1 through 120, including every transition's physical distance,
+increasing clock, reserve continuity and paid energy equation. This
+is one complete same-seed physical trace, not a multi-seed finish
+validation or official result.
 Both 260 km flat cases
 complete every rider through km 89. At km 90 the source
 introduces two new attackers (`rival-19-7` and `rival-6-7`), so the

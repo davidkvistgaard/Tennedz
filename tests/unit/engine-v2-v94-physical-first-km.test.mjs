@@ -1056,10 +1056,15 @@ test('seed-two sixth solo joins the front through paid contact',()=>{
     freshAttackDecisionVersion:1,
     roadGroupRiderDecisionVersion:1,
     protectorSportingPursuitVersion:1});
-  const fifth=replayV94PhysicalFifthKmV1(
-    recording,replayV94PhysicalFourthKmV1(recording));
+  const first=completeV94PhysicalFirstKmV1(recording);
+  const second=replayV94PhysicalSecondRearKmV1(recording);
+  const third=replayV94PhysicalThirdRearKmV1(recording);
+  const fourth=replayV94PhysicalFourthKmV1(recording);
+  const fifth=replayV94PhysicalFifthKmV1(recording,fourth);
+  const paidTraces=[first,second,third,fourth,fifth];
   const contacted=replayV94PhysicalFrontCatchKmV1(
     recording,fifth);
+  paidTraces.push(contacted);
   assert.equal(contacted.sourceKm,6);
   assert.equal(contacted.finishes.length,160);
   assert.equal(contacted.caughtFinish.physicalGroup,'peloton');
@@ -1070,6 +1075,7 @@ test('seed-two sixth solo joins the front through paid contact',()=>{
   assert.equal(validateV94PhysicalFrontCatchKmV1(
     recording,fifth,contacted),true);
   const seventh=replayV94PhysicalSeventhKmV1(recording,contacted);
+  paidTraces.push(seventh);
   assert.equal(seventh.sourceKm,7);
   assert.equal(seventh.finishes.length,160);
   assert.equal(seventh.finishes.find(row=>
@@ -1078,6 +1084,7 @@ test('seed-two sixth solo joins the front through paid contact',()=>{
     recording,contacted,seventh),true);
   const eighth=replayV94PhysicalUnattachedSourceNextKmV1(
     recording,seventh);
+  paidTraces.push(eighth);
   assert.equal(eighth.sourceKm,8);
   assert.equal(eighth.finishes.length,160);
   let later=eighth;
@@ -1088,6 +1095,7 @@ test('seed-two sixth solo joins the front through paid contact',()=>{
       recording,later,next),true);
     assert.equal(next.sourceKm,km);
     assert.equal(next.finishes.length,160);
+    paidTraces.push(next);
     later=next;
   }
   assert.throws(()=>replayV94PhysicalUnattachedSourceNextKmV1(
@@ -1096,6 +1104,7 @@ test('seed-two sixth solo joins the front through paid contact',()=>{
   assert.ok(recording.frames[19].attackers.length>0);
   const twentieth=replayV94PhysicalMixedFreshKmV1(
     recording,later);
+  paidTraces.push(twentieth);
   assert.equal(twentieth.sourceKm,20);
   assert.equal(twentieth.finishes.length,160);
   assert.equal(validateV94PhysicalMixedFreshKmV1(
@@ -1112,6 +1121,7 @@ test('seed-two sixth solo joins the front through paid contact',()=>{
       assert.equal(next.sourceRestDecisionUsed,true);
       assert.equal(next.orderedEffortRefusal?.sourceKm,21);
     }
+    paidTraces.push(next);
     afterFresh=next;
   }
   assert.throws(()=>replayV94PhysicalUnattachedSourceNextKmV1(
@@ -1121,6 +1131,7 @@ test('seed-two sixth solo joins the front through paid contact',()=>{
   assert.equal(recording.frames[77].breakawayRiderIds.length,0);
   const ended=replayV94PhysicalPostSourceBreakKmV1(
     recording,afterFresh);
+  paidTraces.push(ended);
   assert.equal(ended.sourceKm,78);
   assert.equal(ended.finishes.length,160);
   assert.equal(ended.finishes.find(row=>
@@ -1129,6 +1140,7 @@ test('seed-two sixth solo joins the front through paid contact',()=>{
     recording,afterFresh,ended),true);
   const post=replayV94PhysicalPostSourceBreakKmV1(
     recording,ended);
+  paidTraces.push(post);
   assert.equal(post.sourceKm,79);
   assert.equal(post.finishes.length,160);
   assert.equal(post.finishes.find(row=>
@@ -1140,6 +1152,7 @@ test('seed-two sixth solo joins the front through paid contact',()=>{
   /Post-break km needs ended source claim/);
   const freshAfterBreak=replayV94PhysicalPostBreakFreshKmV1(
     recording,post);
+  paidTraces.push(freshAfterBreak);
   assert.equal(freshAfterBreak.sourceKm,80);
   assert.equal(freshAfterBreak.finishes.length,160);
   assert.equal(freshAfterBreak.finishes.find(row=>
@@ -1150,6 +1163,7 @@ test('seed-two sixth solo joins the front through paid contact',()=>{
     recording,post,freshAfterBreak),true);
   const nextAfterFresh=replayV94PhysicalUnattachedSourceNextKmV1(
     recording,freshAfterBreak);
+  paidTraces.push(nextAfterFresh);
   assert.equal(nextAfterFresh.sourceKm,81);
   assert.equal(nextAfterFresh.finishes.length,160);
   assert.equal(nextAfterFresh.finishes.find(row=>
@@ -1158,11 +1172,13 @@ test('seed-two sixth solo joins the front through paid contact',()=>{
   for(let km=82;km<=83;km++){
     laterFresh=replayV94PhysicalUnattachedSourceNextKmV1(
       recording,laterFresh);
+    paidTraces.push(laterFresh);
     assert.equal(laterFresh.sourceKm,km);
     assert.equal(laterFresh.finishes.length,160);
   }
   const caughtAgain=replayV94PhysicalFrontCatchKmV1(
     recording,laterFresh);
+  paidTraces.push(caughtAgain);
   assert.equal(caughtAgain.sourceKm,84);
   assert.equal(caughtAgain.finishes.find(row=>
     row.riderId==='rival-18-5').energyBefore,
@@ -1173,6 +1189,7 @@ test('seed-two sixth solo joins the front through paid contact',()=>{
     .physicallyCaughtFormerBreakRiderIds,['rival-18-5']);
   const afterCatch=replayV94PhysicalUnattachedSourceNextKmV1(
     recording,caughtAgain);
+  paidTraces.push(afterCatch);
   assert.equal(afterCatch.sourceKm,85);
   assert.equal(afterCatch.finishes.length,160);
   assert.equal(afterCatch.finishes.find(row=>
@@ -1200,10 +1217,35 @@ test('seed-two sixth solo joins the front through paid contact',()=>{
         finish.paidFromReserve+finish.recoveryAward-
         finish.capAdjustment-finish.energyAfter)<0.002);
     }
+    paidTraces.push(next);
     probe=next;
   }
   assert.equal(probe.fullFieldKilometre,true);
   assert.equal(probe.officialResults,false);
+  assert.equal(paidTraces.length,120);
+  for(let i=1;i<paidTraces.length;i++){
+    const prior=paidTraces[i-1];
+    const current=paidTraces[i];
+    const previous=new Map(prior.finishes.map(row=>[
+      row.riderId,row]));
+    assert.equal(current.sourceKm,prior.sourceKm+1);
+    assert.equal(current.finishes.length,160);
+    assert.equal(new Set(current.finishes.map(row=>
+      row.riderId)).size,160);
+    for(const finish of current.finishes){
+      assert.equal(finish.endDistanceM,
+        current.sourceKm*1000);
+      assert.equal(finish.energyBefore,
+        previous.get(finish.riderId)?.energyAfter,
+      `energy discontinuity at km ${current.sourceKm}: ${
+        finish.riderId}`);
+      assert.ok(finish.clockSeconds>
+        previous.get(finish.riderId).clockSeconds);
+      assert.ok(Math.abs(finish.energyBefore-
+        finish.paidFromReserve+finish.recoveryAward-
+        finish.capAdjustment-finish.energyAfter)<0.002);
+    }
+  }
 });
 
 test('sixth front uses recorded rest before checking seed-three rear contact',()=>{
