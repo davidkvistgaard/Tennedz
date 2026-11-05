@@ -1041,9 +1041,11 @@ test('paid boundary contacts support a complete second flat kilometre',()=>{
     row.riderId==='rival-6-7').physicalGroup,'peloton');
 });
 
-test('seed-two sixth solo joins the front through paid contact',()=>{
+for(const fatigue of [0,30])test(
+  `seed-two paid contact race through 120 km fatigue ${fatigue}`,
+  ()=>{
   const settings={distanceKm:120,teamCount:20,terrain:'flat',
-    fatigue:0,attack:'none',chase:'selective',
+    fatigue,attack:'none',chase:'selective',
     seed:'preview-recorded-road-2'};
   const sportingStakes=prepareV91Playtest(settings).teams.map(team=>({
     teamId:team.id,goal:'sprint_finish',
