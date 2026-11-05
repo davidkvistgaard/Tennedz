@@ -6810,6 +6810,14 @@ from 1 through 120, including every transition's physical distance,
 increasing clock, reserve continuity and paid energy equation. This
 is a pair of complete same-seed physical traces, not a multi-seed
 finish validation or official result.
+The separate version 1 whole-race validator checks the seed-1
+fatigue-0 and seed-2 fatigue-0/30 flat 120 km traces against all
+120 source kilometres and 160 committed riders. It requires one
+unofficial finish per rider per kilometre, exact distance, increasing
+clocks, continuous reserve and the paid energy equation. Each accepted
+trace covers 19,200 rider kilometres. A forged final reserve is
+rejected. This checks trace completeness and accounting; source gap
+calibration, sporting finish order and official results remain open.
 Both 260 km flat cases
 complete every rider through km 89. At km 90 the source
 introduces two new attackers (`rival-19-7` and `rival-6-7`), so the

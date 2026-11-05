@@ -4,6 +4,8 @@ import {createV94RaceDynamicsPreview} from
   '../../lib/engine/v2/playtest-race-dynamics-v94.mjs';
 import {prepareV91Playtest} from
   '../../lib/engine/v2/playtest.mjs';
+import {validateV94PhysicalWholeRaceV1} from
+  '../../lib/engine/v2/v94-physical-whole-race-validation-v1.mjs';
 import {replayV94PhysicalFirstKmV1,
   validateV94PhysicalFirstKmV1,
   V94_PHYSICAL_FIRST_KM_DECISION_VERSION} from
@@ -1092,6 +1094,17 @@ test('paid boundary contacts support a complete second flat kilometre',()=>{
   assert.equal(later.finishes.find(row=>
     row.riderId==='rival-6-7').physicalGroup,'peloton');
   assert.equal(paidTraces.length,120);
+  assert.deepEqual(validateV94PhysicalWholeRaceV1(
+    recording,paidTraces),{
+    version:'v94-physical-whole-race-validation-1',
+    validatedKm:120,riderCount:160,totalRiderKm:19200,
+    finishDistanceM:120000,officialResults:false});
+  const brokenFinish=[...paidTraces];
+  brokenFinish[119]=structuredClone(paidTraces[119]);
+  brokenFinish[119].finishes[0].energyBefore+=1;
+  assert.throws(()=>validateV94PhysicalWholeRaceV1(
+    recording,brokenFinish),
+  /Physical whole-race km 120 rider .*invalid physical/);
   for(let i=1;i<paidTraces.length;i++){
     const prior=paidTraces[i-1];
     const current=paidTraces[i];
@@ -1301,6 +1314,8 @@ for(const fatigue of [0,30])test(
   assert.equal(probe.fullFieldKilometre,true);
   assert.equal(probe.officialResults,false);
   assert.equal(paidTraces.length,120);
+  assert.equal(validateV94PhysicalWholeRaceV1(
+    recording,paidTraces).totalRiderKm,19200);
   for(let i=1;i<paidTraces.length;i++){
     const prior=paidTraces[i-1];
     const current=paidTraces[i];
