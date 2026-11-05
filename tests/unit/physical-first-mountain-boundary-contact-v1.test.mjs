@@ -68,6 +68,14 @@ test('committed 120 km mountain contact covers paid field',t=>{
   assert.equal(race.states.at(-1).riders.length,160);
   assert.ok(race.states.at(-1).riders.every(row=>
     row.distanceM===120000));
+  assert.equal(kilometres[0].terrain,'hill');
+  assert.equal(race.steps[0].peloton.startDropEvents.length,66);
+  assert.equal(race.states[1].roads.find(row=>
+    row.roadId==='peloton').riderIds.length,94);
+  assert.ok(race.steps[0].peloton.startDropEvents.every(
+    row=>row.atDistanceM===0&&
+      row.leaderRiderId==='you-5'&&
+      row.perceivedShelterHoldAbility<row.leaderAbility));
   const decisions=race.steps.reduce((sum,step)=>
     sum+step.peloton.roads.reduce((count,road)=>
       count+road.riderDecisions.length,0)+

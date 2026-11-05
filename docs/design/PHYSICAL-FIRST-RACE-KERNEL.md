@@ -313,6 +313,12 @@ committed inputs. The relative finish audit disagrees with the old
 source for 67 of 160 riders, maximum 419.07 seconds. The matching
 no-attack mountain control disagrees for 66 of 160 riders. A complete
 replay therefore establishes physical accounting, not mountain
-calibration. The large discrepancy remains concentrated in early
-climb drops that the old source keeps with the bunch, and needs
-investigation before guided-race use.
+calibration. The large discrepancy begins on km 1, a hill rather
+than a climb: the only ordered front worker has perceived ability
+89.57 and 66 of 160 riders cannot hold that paid pace even with the
+existing hill shelter benefit. They leave at the measured start
+boundary; five sets of those riders make paid rear contact at km 2.
+The old source keeps these riders with the bunch. Changing their
+pace or shelter solely to match that source would invent a road
+outcome. The mismatch needs a source and sporting review before
+guided-race use.
