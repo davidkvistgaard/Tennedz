@@ -7008,3 +7008,14 @@ Calibration therefore remains an explicit release blocker. V94 stays
 separate from guided races and production until the physical clocks,
 contact decisions and finish claims can be reconciled without
 inserting source gaps as movement.
+
+The version 1 paid rider decision audit now checks every physical
+rider kilometre for a versioned choice and sporting goal on a paid
+front road, rear road or physical catch. Contact group traces carry
+the chosen paid leader or shelter role, committed team effort and
+sporting stakes alongside the energy receipt. All ten whole-race
+cases pass this audit (160 riders per kilometre; 19,200 decisions in
+each 120 km case and 41,600 in each 260 km case). Removing one
+contact rider's choice makes the audit refuse km 32 by rider ID.
+This establishes decision trace coverage, while the source gap and
+finish clock mismatches above still block guided-race promotion.

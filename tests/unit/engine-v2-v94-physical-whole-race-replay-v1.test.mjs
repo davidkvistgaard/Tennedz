@@ -6,6 +6,8 @@ import {createV94RaceDynamicsPreview} from
   '../../lib/engine/v2/playtest-race-dynamics-v94.mjs';
 import {replayV94PhysicalWholeRaceV1} from
   '../../lib/engine/v2/v94-physical-whole-race-replay-v1.mjs';
+import {auditV94PhysicalRiderDecisionsV1} from
+  '../../lib/engine/v2/v94-physical-whole-race-validation-v1.mjs';
 import {auditV94PhysicalFrontDropContactsV1} from
   '../../lib/engine/v2/v94-physical-front-drop-contact-audit-v1.mjs';
 import {decideV94PhysicalFrontDropFirstBatchV1} from
@@ -64,6 +66,7 @@ for(const fatigue of [0,30])test(
       protectorSportingPursuitVersion:1});
     const replay=replayV94PhysicalWholeRaceV1(recording);
     assert.equal(replay.validation.totalRiderKm,41600);
+    assert.equal(replay.riderDecisionAudit.coveredRiderKm,41600);
     assert.equal(replay.traces.length,260);
     assert.equal(replay.physicalFinish.riderCount,160);
     assert.equal(replay.officialResults,false);
@@ -98,6 +101,7 @@ for(const [seed,fatigue] of [
       protectorSportingPursuitVersion:1});
     const replay=replayV94PhysicalWholeRaceV1(recording);
     assert.equal(replay.validation.totalRiderKm,19200);
+    assert.equal(replay.riderDecisionAudit.coveredRiderKm,19200);
     assert.equal(replay.traces.length,120);
     assert.equal(replay.physicalFinish.riderCount,160);
     assert.equal(replay.officialResults,false);
@@ -133,6 +137,8 @@ for(const [terrain,fatigue] of [
         if(fatigue===30){
           assert.equal(traces.length,120);
           assert.equal(completed.validation.totalRiderKm,19200);
+          assert.equal(completed.riderDecisionAudit
+            .coveredRiderKm,19200);
           assert.equal(completed.physicalFinish.riderCount,160);
           assert.equal(completed.sourceCheckpointCalibrationFailed,
             true);
@@ -169,6 +175,15 @@ for(const [terrain,fatigue] of [
           assert.ok(traces[101].contactFragmentVersion);
           assert.equal(traces[101].physicalRearGroups.some(group=>
             group.riderDecisions.length===23),true);
+          const missingChoice=[...traces];
+          missingChoice[31]=structuredClone(traces[31]);
+          for(const road of missingChoice[31].roads)
+            for(const decision of road.riderDecisions??[])
+              if(decision.riderId==='rival-11-3')
+                delete decision.choice;
+          assert.throws(()=>auditV94PhysicalRiderDecisionsV1(
+            recording,missingChoice),
+          /km 32 rider rival-11-3: missing versioned paid choice/);
           const nonjoin=traces[113].passThroughContacts.find(row=>
             row.riderDecisions?.length===2&&
             row.formsRearGroup===false);
@@ -191,6 +206,8 @@ for(const [terrain,fatigue] of [
         if(fatigue===0){
           assert.equal(completed.traces.length,120);
           assert.equal(completed.validation.totalRiderKm,19200);
+          assert.equal(completed.riderDecisionAudit
+            .coveredRiderKm,19200);
           assert.equal(completed.physicalFinish.riderCount,160);
           assert.equal(completed.sourceCheckpointCalibrationFailed,
             true);
