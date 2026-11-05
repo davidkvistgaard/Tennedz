@@ -4,7 +4,8 @@ import {createV94RaceDynamicsPreview} from
   '../../lib/engine/v2/playtest-race-dynamics-v94.mjs';
 import {prepareV91Playtest} from
   '../../lib/engine/v2/playtest.mjs';
-import {validateV94PhysicalWholeRaceV1} from
+import {validateV94PhysicalWholeRaceV1,
+  auditV94PhysicalWholeRaceSourceGapsV1} from
   '../../lib/engine/v2/v94-physical-whole-race-validation-v1.mjs';
 import {replayV94PhysicalFirstKmV1,
   validateV94PhysicalFirstKmV1,
@@ -1099,6 +1100,12 @@ test('paid boundary contacts support a complete second flat kilometre',()=>{
     version:'v94-physical-whole-race-validation-1',
     validatedKm:120,riderCount:160,totalRiderKm:19200,
     finishDistanceM:120000,officialResults:false});
+  const sourceGapAudit=auditV94PhysicalWholeRaceSourceGapsV1(
+    recording,paidTraces);
+  assert.ok(sourceGapAudit.comparedGroupCheckpoints>0);
+  assert.ok(sourceGapAudit.sourceGapExceedsBestPaidLeadCount>0);
+  assert.ok(sourceGapAudit.maxGapOverBestPaidLeadSeconds>30);
+  assert.equal(sourceGapAudit.sourceGapUsedAsPhysicalPosition,false);
   const brokenFinish=[...paidTraces];
   brokenFinish[119]=structuredClone(paidTraces[119]);
   brokenFinish[119].finishes[0].energyBefore+=1;
@@ -1316,6 +1323,8 @@ for(const fatigue of [0,30])test(
   assert.equal(paidTraces.length,120);
   assert.equal(validateV94PhysicalWholeRaceV1(
     recording,paidTraces).totalRiderKm,19200);
+  assert.ok(auditV94PhysicalWholeRaceSourceGapsV1(
+    recording,paidTraces).comparedGroupCheckpoints>0);
   for(let i=1;i<paidTraces.length;i++){
     const prior=paidTraces[i-1];
     const current=paidTraces[i];
@@ -1667,6 +1676,8 @@ test('sixth front uses recorded rest before checking seed-three rear contact',()
   assert.equal(paid.officialResults,false);
   assert.equal(validateV94PhysicalWholeRaceV1(
     recording,paidTraces).totalRiderKm,19200);
+  assert.ok(auditV94PhysicalWholeRaceSourceGapsV1(
+    recording,paidTraces).comparedGroupCheckpoints>0);
 });
 
 test('fatigued seed-three no-join contact pays through 120 km',()=>{
@@ -1825,6 +1836,8 @@ test('fatigued seed-three no-join contact pays through 120 km',()=>{
   assert.equal(paid.officialResults,false);
   assert.equal(validateV94PhysicalWholeRaceV1(
     recording,paidTraces).totalRiderKm,19200);
+  assert.ok(auditV94PhysicalWholeRaceSourceGapsV1(
+    recording,paidTraces).comparedGroupCheckpoints>0);
 });
 
 test('ended source break membership keeps four riders on paid roads',()=>{

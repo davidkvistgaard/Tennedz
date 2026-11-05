@@ -6818,6 +6818,14 @@ clocks, continuous reserve and the paid energy equation. Each accepted
 trace covers 19,200 rider kilometres. A forged final reserve is
 rejected. This checks trace completeness and accounting; source gap
 calibration, sporting finish order and official results remain open.
+The version 1 whole-race source-gap audit compares each recorded
+break road checkpoint with its members' individual paid clocks. It
+does not assign the source gap to a physical road. For seed 1,
+flat 120 km without fatigue, 111 group checkpoints cover 414 rider
+comparisons; the largest source gap exceeds even the best individual
+paid lead by 32.62904 seconds. All five complete traces are now
+audited for comparable source checkpoints. This discrepancy remains
+an explicit calibration failure.
 Both 260 km flat cases
 complete every rider through km 89. At km 90 the source
 introduces two new attackers (`rival-19-7` and `rival-6-7`), so the
