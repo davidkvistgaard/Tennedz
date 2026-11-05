@@ -10,6 +10,8 @@ import {auditV94PhysicalFrontDropContactsV1} from
   '../../lib/engine/v2/v94-physical-front-drop-contact-audit-v1.mjs';
 import {decideV94PhysicalFrontDropFirstBatchV1} from
   '../../lib/engine/v2/v94-physical-front-drop-first-batch-choice-v1.mjs';
+import {replayV94PhysicalFrontDropFirstBatchFragmentV1} from
+  '../../lib/engine/v2/v94-physical-front-drop-first-batch-fragment-v1.mjs';
 
 for(const fatigue of [0,30])test(
   `opt-in whole physical flat 260 km fatigue ${fatigue}`,()=>{
@@ -128,6 +130,25 @@ for(const [terrain,fatigue] of [
           row.paidEnergyToContact>=0&&
           row.energyAtContact>0));
         assert.equal(choice.physicalGroupFormed,false);
+        if(fatigue===0){
+          const fragment=
+            replayV94PhysicalFrontDropFirstBatchFragmentV1(
+              recording,cause.paidPriorTrace,
+              cause.physicalRoads);
+          assert.equal(fragment.riderWork.length,18);
+          assert.equal(fragment.road.leaderRiderId,
+            'rival-2-5');
+          assert.equal(fragment.road.shelteredRiderIds.length,
+            17);
+          assert.ok(fragment.riderWork.every(row=>
+            row.energyAfter>=0&&
+            row.paidFromReserve>=0));
+          assert.equal(fragment.fullFieldKilometre,false);
+        }else assert.throws(()=>
+          replayV94PhysicalFrontDropFirstBatchFragmentV1(
+            recording,cause.paidPriorTrace,
+            cause.physicalRoads),
+        /needs paid shelter/);
         return /stops at km 21/.test(error.message)&&
           cause.message===
             'Physical front drop/rear contact needs paid resolution.'&&
