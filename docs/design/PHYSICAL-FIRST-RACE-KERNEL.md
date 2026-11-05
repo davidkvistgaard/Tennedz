@@ -90,3 +90,13 @@ settlement. A rider who cannot hold shelter or pay the work causes a
 named refusal. The step neither chooses the leader nor silently
 creates a group or a drop. Those decisions need explicit event
 contracts before the kernel can advance a whole race.
+
+`physical-first-start-drop-1` now records a rider who cannot hold the
+leader's speed at the kilometre boundary leaving the connected road.
+It records the common distance and clock, the two perceived abilities
+and the new solo road ID. The original road and each detached rider then
+advance independently through the paid road step; an existing solo road
+cannot be silently reused. This covers an early climb drop at the start
+of a kilometre. A rider who loses shelter partway through the kilometre
+still needs a measured within-kilometre split event, and the kernel does
+not yet connect these steps into a whole-race recorder.

@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {advancePhysicalFirstRoadV1} from
+import {advancePhysicalFirstRoadV1,
+  advancePhysicalFirstRoadWithStartDropsV1} from
   '../../lib/engine/v2/physical-first-road-step-v1.mjs';
 
 const segment={km:1,terrain:'flat',gradientPct:0,
@@ -64,4 +65,69 @@ test('physical-first road step refuses invented shared membership',()=>{
   request.prior.riders[1].roadId='solo-b';
   assert.throws(()=>advancePhysicalFirstRoadV1(request),
     /invalid prior membership/);
+});
+
+test('unholdable follower leaves at the measured boundary and pays solo',()=>{
+  const request=input();
+  request.teams[1].riders[0]={id:'b',flat:0,hills:0,
+    mountain:0,endurance:0,form:0,fatigue:0};
+  const result=advancePhysicalFirstRoadWithStartDropsV1(request);
+  assert.deepEqual(result.roads.map(row=>row.roadId),
+    ['peloton','solo:b']);
+  assert.equal(result.startDropEvents.length,1);
+  assert.equal(result.startDropEvents[0].atDistanceM,0);
+  assert.equal(result.startDropEvents[0].atClockSeconds,0);
+  assert.equal(result.startDropEvents[0].riderId,'b');
+  assert.equal(result.roads[1].riderDecisions[0].role,'leader');
+  assert.equal(result.finishes.length,2);
+  assert.ok(result.finishes.every(row=>row.endDistanceM===1000));
+  assert.ok(result.finishes[1].clockSeconds>
+    result.finishes[0].clockSeconds);
+  assert.ok(result.finishes[1].paidFromReserve>0);
+});
+
+test('a detached rider continues from paid time and reserve next km',()=>{
+  const request=input();
+  request.teams[1].riders[0]={id:'b',flat:0,hills:0,
+    mountain:0,endurance:0,form:0,fatigue:0};
+  const first=advancePhysicalFirstRoadWithStartDropsV1(request);
+  const nextSegment={...segment,km:2};
+  const nextPrior={sourceKm:1,roads:first.roads.map(road=>({
+    roadId:road.roadId,riderIds:road.riderIds,
+    clockSeconds:road.finishClockSeconds})),
+  riders:first.finishes.map(finish=>({
+    riderId:finish.riderId,teamId:finish.riderId,
+    roadId:finish.physicalGroup,
+    distanceM:finish.endDistanceM,
+    clockSeconds:finish.clockSeconds,
+    reserve:finish.energyAfter,quietKm:finish.quietKm}))};
+  const next={...request,prior:nextPrior,segment:nextSegment,
+    kilometres:[segment,nextSegment]};
+  const bunch=advancePhysicalFirstRoadWithStartDropsV1(next);
+  const solo=advancePhysicalFirstRoadV1({...next,
+    roadId:'solo:b',leaderRiderId:'b'});
+  assert.equal(bunch.startDropEvents.length,0);
+  assert.equal(bunch.finishes[0].endDistanceM,2000);
+  assert.equal(solo.finishes[0].endDistanceM,2000);
+  assert.equal(solo.finishes[0].energyBefore,
+    first.finishes[1].energyAfter);
+  assert.equal(solo.road.startClockSeconds,
+    first.roads[1].finishClockSeconds);
+});
+
+test('a start drop cannot silently reuse an existing solo road',()=>{
+  const request=input();
+  request.teams[1].riders[0]={id:'b',flat:0,hills:0,
+    mountain:0,endurance:0,form:0,fatigue:0};
+  request.prior.roads.push({roadId:'solo:b',riderIds:['x'],
+    clockSeconds:0});
+  assert.throws(()=>advancePhysicalFirstRoadWithStartDropsV1(
+    request),/conflicts with an existing solo road/);
+});
+
+test('start drop wrapper preserves a connected paid road',()=>{
+  const result=advancePhysicalFirstRoadWithStartDropsV1(input());
+  assert.deepEqual(result.startDropEvents,[]);
+  assert.equal(result.roads.length,1);
+  assert.deepEqual(result.roads[0],result.road);
 });
