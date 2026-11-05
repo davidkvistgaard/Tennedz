@@ -305,3 +305,14 @@ The historical relative finish mismatch falls from 8 of 32 riders
 (maximum 116.327831 seconds) to 1 of 32 (60.4232 seconds). The
 remaining rider's old source lead is comparison evidence, not a
 physical gap or an official result.
+
+The same-seed 120 km, 20-team selective-attack mountain scenario now
+also reaches a paid finish. Its one historical attack is paid once;
+all 160 riders finish and all 19,200 rider-kilometres replay from the
+committed inputs. The relative finish audit disagrees with the old
+source for 67 of 160 riders, maximum 419.07 seconds. The matching
+no-attack mountain control disagrees for 66 of 160 riders. A complete
+replay therefore establishes physical accounting, not mountain
+calibration. The large discrepancy remains concentrated in early
+climb drops that the old source keeps with the bunch, and needs
+investigation before guided-race use.

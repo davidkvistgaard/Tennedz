@@ -81,3 +81,65 @@ test('same-seed attack pays contact and reaches a replayed finish',t=>{
   assert.equal(calibration.mismatchCount,1);
   assert.ok(calibration.maxAbsoluteMismatchSeconds<61);
 });
+
+test('same-seed mountain attack replays every rider-kilometre',t=>{
+  const settings={distanceKm:120,teamCount:20,
+    terrain:'mountain',fatigue:0,attack:'selective',
+    chase:'selective',seed:'preview-recorded-road-1'};
+  const sportingStakes=prepareV91Playtest(settings)
+    .teams.map(team=>({teamId:team.id,
+      goal:team.id==='you'?'summit_attack':'none',
+      captainId:team.orders.captainId}));
+  const rivalGoals=Array.from({length:19},
+    (_,index)=>({teamId:`rival-${index+1}`,
+      role:'protect'}));
+  const {recording}=createV94RaceDynamicsPreview({
+    format:'one_day',settings,sportingStakes,
+    rivalGoals,ownFrontWork:'rotate',
+    roadGroupPaceVersion:3,chaseTurnVersion:1,
+    bunchFrontTurnVersion:1,
+    pelotonFrontTurnVersion:1,
+    pelotonDraftCostVersion:1,
+    pelotonExposureCostVersion:1,
+    freshAttackDecisionVersion:1,
+    roadGroupRiderDecisionVersion:1,
+    protectorSportingPursuitVersion:1});
+  const {teams,rivalIntent}=recording.committedInputs;
+  const kilometres=recording.route.kilometres;
+  const riders=teams.flatMap(team=>team.riders.map(
+    rider=>({riderId:rider.id,teamId:team.id,
+      roadId:'peloton',distanceM:0,clockSeconds:0,
+      reserve:replayRearEnergyCapV1({
+        rider,kilometres,throughKm:0}).initialCap,
+      quietKm:0})));
+  const start={sourceKm:0,
+    roads:[{roadId:'peloton',
+      riderIds:riders.map(row=>row.riderId),
+      clockSeconds:0}],riders};
+  const input={start,kilometres,teams,
+    stakes:rivalIntent,raceSeed:recording.raceSeed};
+  const race=runPhysicalFirstWholeRaceProbeV1(input);
+  assert.equal(race.completedThroughKm,120);
+  assert.equal(race.states.at(-1).riders.length,160);
+  assert.ok(race.states.at(-1).riders.every(row=>
+    row.distanceM===120000));
+  assert.equal(recording.frames.reduce((sum,frame)=>
+    sum+frame.attackers.length,0),1);
+  assert.equal(race.steps.reduce((sum,step)=>
+    sum+step.attackSteps.length,0),1);
+  const replay=replayPhysicalFirstWholeRaceV1(
+    input,race);
+  assert.equal(replay.validatedRiderKm,19200);
+  assert.deepEqual(replay.finalState,
+    race.states.at(-1));
+  const calibration=calibratePhysicalFirstFinishV1(
+    recording,race);
+  t.diagnostic(`120 km mountain attack finish mismatches:
+    ${calibration.mismatchCount}/160; maximum
+    ${calibration.maxAbsoluteMismatchSeconds}s`);
+  assert.equal(calibration.validatedKm,120);
+  assert.equal(calibration.riderCount,160);
+  assert.equal(calibration.mismatchCount,67);
+  assert.ok(calibration.maxAbsoluteMismatchSeconds<420);
+  assert.equal(calibration.officialResults,false);
+});
