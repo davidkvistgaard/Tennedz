@@ -28,6 +28,8 @@ import {replayV94PhysicalFreshAttackSolosV1} from
   '../../lib/engine/v2/v94-physical-fresh-attack-solo-v1.mjs';
 import {replayV94PhysicalMixedOriginPresetKmV1} from
   '../../lib/engine/v2/v94-physical-mixed-origin-preset-km-v1.mjs';
+import {decideV94PhysicalForwardBoundaryChoicesV1} from
+  '../../lib/engine/v2/v94-physical-forward-boundary-choice-v1.mjs';
 
 for(const fatigue of [0,30])test(
   `opt-in whole physical flat 260 km fatigue ${fatigue}`,()=>{
@@ -153,12 +155,26 @@ for(const [terrain,fatigue] of [
             recording,prior69);
           assert.equal(km70.sourceKm,70);
           assert.equal(km70.finishes.length,160);
+          const forward=decideV94PhysicalForwardBoundaryChoicesV1(
+            recording,km70,{allowPaidMixedContact:true});
+          assert.ok(forward.choices.some(row=>
+            row.mixedPaidContact===true));
+          const rearNamedLeaders=recording.frames[70]
+            .pelotonFrontTurnPlan.turns.filter(turn=>
+              cause.paidPriorTrace.finishes.find(row=>
+                row.riderId===turn.leaderRiderId)
+                ?.physicalGroup!=='peloton');
+          assert.deepEqual(rearNamedLeaders.map(row=>
+            row.leaderRiderId),[
+            'rival-10-5','rival-10-6',
+            'rival-14-5','rival-14-6',
+            'rival-18-5','rival-18-6']);
           assert.equal(cause.paidTraces[69].sourceKm,70);
           assert.equal(cause.paidTraces[69].fullFieldKilometre,
             true);
           assert.match(error.message,/stops at km 71/);
           assert.equal(cause.message,
-            'Mixed forward/rear contact needs paid joint choice.');
+            'Named leader left the physical front.');
           assert.equal(cause.paidTraces?.[20]?.sourceKm,21);
           assert.equal(cause.paidTraces[20].fullFieldKilometre,
             true);
