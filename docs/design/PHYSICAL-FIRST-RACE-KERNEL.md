@@ -100,3 +100,13 @@ cannot be silently reused. This covers an early climb drop at the start
 of a kilometre. A rider who loses shelter partway through the kilometre
 still needs a measured within-kilometre split event, and the kernel does
 not yet connect these steps into a whole-race recorder.
+
+The first composed bunch kilometre selects a payable front worker from
+committed `frontWork: rotate` orders. A named helper stays named and
+requires the exact committed emergency replacement if absent; a named
+helper who cannot pay is refused. An unnamed rotation chooses a present
+helper using perceived ability and quoted work. Multiple working teams
+alternate by kilometre in stable team order. A sitting-in team supplies
+no invented worker. The selected plan and start-drop events are stored
+with the paid road result. Break leaders, chase reactions and physical
+contact still need their own planners and receipts.
