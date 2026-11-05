@@ -14,6 +14,8 @@ import {replayV94PhysicalFrontDropFirstBatchFragmentV1} from
   '../../lib/engine/v2/v94-physical-front-drop-first-batch-fragment-v1.mjs';
 import {inspectV94PhysicalFrontDropFirstBatchNextV1} from
   '../../lib/engine/v2/v94-physical-front-drop-first-batch-next-v1.mjs';
+import {quoteV94PhysicalFrontDropContactV1} from
+  '../../lib/engine/v2/v94-physical-front-drop-contact-quote-v1.mjs';
 
 for(const fatigue of [0,30])test(
   `opt-in whole physical flat 260 km fatigue ${fatigue}`,()=>{
@@ -157,6 +159,24 @@ for(const [terrain,fatigue] of [
           assert.ok(probe.firstAdditionalContact.clockSeconds>
             fragment.contactClockSeconds);
           assert.equal(probe.fullFieldKilometre,false);
+          const quotes=probe.firstAdditionalContact.riderIds
+            .flat().map(riderId=>
+              quoteV94PhysicalFrontDropContactV1(
+                recording,cause.paidPriorTrace,
+                cause.physicalRoads,{riderId,
+                  clockSeconds:probe.firstAdditionalContact
+                    .clockSeconds,
+                  atDistanceM:probe.firstAdditionalContact
+                    .atDistanceM,
+                  requiredAbility:choice
+                    .passingPerceivedSoloAbility}));
+          assert.deepEqual(quotes.map(row=>row.riderId),
+            ['rival-10-5','rival-14-5','rival-18-5']);
+          assert.ok(quotes.every(row=>
+            row.choice==='eligible_for_paid_shelter'&&
+            row.paidEnergyToContact>0&&
+            row.perceivedShelterHoldAbility>=
+              row.requiredAbility));
         }else assert.throws(()=>
           replayV94PhysicalFrontDropFirstBatchFragmentV1(
             recording,cause.paidPriorTrace,
