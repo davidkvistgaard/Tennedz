@@ -24,6 +24,10 @@ import {completeV94PhysicalFrontDropBatchFieldV1} from
   '../../lib/engine/v2/v94-physical-front-drop-batch-field-v1.mjs';
 import {decideV94PhysicalMixedOriginPresetV1} from
   '../../lib/engine/v2/v94-physical-mixed-origin-preset-choice-v1.mjs';
+import {replayV94PhysicalFreshAttackSolosV1} from
+  '../../lib/engine/v2/v94-physical-fresh-attack-solo-v1.mjs';
+import {replayV94PhysicalMixedOriginPresetKmV1} from
+  '../../lib/engine/v2/v94-physical-mixed-origin-preset-km-v1.mjs';
 
 for(const fatigue of [0,30])test(
   `opt-in whole physical flat 260 km fatigue ${fatigue}`,()=>{
@@ -115,7 +119,7 @@ for(const [terrain,fatigue] of [
           cause?.paidTraces?.[19]:cause?.paidPriorTrace;
         let km21Cause=null;
         if(fatigue===0){
-          const prior69=cause.paidPriorTrace;
+          const prior69=cause.paidTraces[68];
           const frame70=recording.frames[69];
           assert.deepEqual(prior69.sourceBreakRiderIds,[]);
           assert.deepEqual(frame70.attackers,
@@ -136,9 +140,25 @@ for(const [terrain,fatigue] of [
             mixed.declinedSourceFrontLaunchRiderIds,
             ['rival-6-7']);
           assert.equal(mixed.fullFieldKilometre,false);
-          assert.match(error.message,/stops at km 70/);
+          const solos=replayV94PhysicalFreshAttackSolosV1(
+            recording,prior69,{
+              existingSourceBreakRiderIds:
+                mixed.declinedSourceFrontLaunchRiderIds,
+              selectedRiderIds:
+                mixed.pendingPelotonLaunchRiderIds});
+          assert.equal(solos.roads.length,1);
+          assert.equal(solos.roads[0].riderId,'rival-19-7');
+          assert.equal(solos.mixedSourceRoadClaims.length,1);
+          const km70=replayV94PhysicalMixedOriginPresetKmV1(
+            recording,prior69);
+          assert.equal(km70.sourceKm,70);
+          assert.equal(km70.finishes.length,160);
+          assert.equal(cause.paidTraces[69].sourceKm,70);
+          assert.equal(cause.paidTraces[69].fullFieldKilometre,
+            true);
+          assert.match(error.message,/stops at km 71/);
           assert.equal(cause.message,
-            'Detached preset needs exact paid rear and source membership.');
+            'Mixed forward/rear contact needs paid joint choice.');
           assert.equal(cause.paidTraces?.[20]?.sourceKm,21);
           assert.equal(cause.paidTraces[20].fullFieldKilometre,
             true);
@@ -259,7 +279,7 @@ for(const [terrain,fatigue] of [
             recording,prior20,physicalRoads),
         /needs paid shelter/);
         return (fatigue===0?
-          /stops at km 70/.test(error.message):
+          /stops at km 71/.test(error.message):
           /stops at km 21/.test(error.message)&&
           cause.message===
             'Front-drop batch fragment needs paid shelter.')&&
