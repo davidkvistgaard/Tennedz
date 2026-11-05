@@ -1,0 +1,71 @@
+# Physical-first race kernel migration
+
+## Why the V94 replay is not the next source recorder
+
+The opt-in V94 replay now completes every rider kilometre in ten
+whole-race cases. Its decisions expose the committed effort, sporting
+goal and perceived ability, and its clocks, contact and energy are
+replayable. The source recording still creates a new break gap from
+abstract attack pressure before the physical roads move. In the
+120 km mountain seed-1 case, source road-1 is 27.76 seconds ahead at
+km 5, while the best individually paid rider lead is 0.31332 seconds.
+The source also treats riders as a group before paid contact. The
+physical replay must keep that group label separate from its roads.
+
+Changing a conversion constant or copying the source gap into a road
+would not establish paid movement. The V94 physical replay also uses
+source frames to choose fresh attacks, front turns and rest, so its
+completed trace cannot simply replace those frames as the next
+kilometre's independent input. Historic recordings remain replayable
+and are never rewritten.
+
+## One state that advances the race
+
+The successor kernel must own one immutable boundary state per
+kilometre. Each rider has a measured distance, clock, reserve, team,
+physical road ID and active decision. A road has a leader, a start
+clock and distance, paid turns, and members who can hold its speed.
+Solo roads remain separate even when two riders share a checkpoint
+clock. A rear group is created only by a contact event with time,
+distance, leader, shelter eligibility and paid work for every member.
+
+For each kilometre, the kernel should:
+
+1. Read the route, weather, committed manager and emergency orders,
+   sporting stakes and the prior physical boundary state.
+2. Record each rider's perceived ability, energy, permitted role and
+   versioned choice. Select one payable leader at a time; price less
+   reserve for sheltered work.
+3. Advance roads through measured turn and contact events. A rider
+   who cannot hold the front continues on a priced solo road, including
+   an early climb drop. A caught break rider receives a new decision
+   and can slide through the bunch only after measured contact.
+4. Settle every rider's distance, clock and energy at the boundary.
+   The next kilometre reads this result, including physical road
+   membership and observed gap. No source checkpoint gap supplies
+   speed, membership, position or a group.
+
+The source recorder and independent replay then consume the same
+versioned event contract. The recorder emits the decisions and paid
+work; the replay recomputes clocks, contact and reserve from the
+committed inputs and event choices. Exact same-seed agreement at
+every kilometre and finish is required before a guided-race switch.
+The old V94 recordings remain comparison fixtures, with their
+historical gaps and results reported as differences, not adopted as
+physical facts.
+
+## Migration order and release gate
+
+First, define and validate the physical boundary state and a single
+road-step contract without source-frame group labels. Then move the
+start bunch, solo launch, chase turns, drops, catches and rear contact
+to that contract. Only after full races replay should the successor
+recorder become an experimental preview. Preserve old manager and
+emergency order semantics and all refusal guards throughout.
+
+The gate remains whole-race coverage and exact recorder/replay clocks,
+energy, contact, road membership and finish for the same seed, with
+focused refusal tests, lint, isolated build and authenticated browser
+checks. No official places, awards, GC stakes, stage plans, time
+limits, wheels or positions are inferred. Production promotion needs
+the separate READY and rollback checks.
