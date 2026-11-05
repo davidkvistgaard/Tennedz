@@ -18,6 +18,10 @@ import {quoteV94PhysicalFrontDropContactV1} from
   '../../lib/engine/v2/v94-physical-front-drop-contact-quote-v1.mjs';
 import {extendV94PhysicalFrontDropBatchV1} from
   '../../lib/engine/v2/v94-physical-front-drop-batch-extension-v1.mjs';
+import {replayV94PhysicalRecordedRestKmV1} from
+  '../../lib/engine/v2/v94-physical-recorded-rest-km-v1.mjs';
+import {completeV94PhysicalFrontDropBatchFieldV1} from
+  '../../lib/engine/v2/v94-physical-front-drop-batch-field-v1.mjs';
 
 for(const fatigue of [0,30])test(
   `opt-in whole physical flat 260 km fatigue ${fatigue}`,()=>{
@@ -105,13 +109,28 @@ for(const [terrain,fatigue] of [
       assert.throws(()=>replayV94PhysicalWholeRaceV1(
         recording),error=>{
         const cause=error.cause;
-        const evidence=cause?.sourceEvidence;
-        const road=cause?.physicalRoads?.roads?.find(row=>
+        const prior20=fatigue===0?
+          cause?.paidTraces?.[19]:cause?.paidPriorTrace;
+        let km21Cause=null;
+        if(fatigue===0){
+          assert.match(error.message,/stops at km 70/);
+          assert.equal(cause.message,
+            'Detached preset needs exact paid rear and source membership.');
+          assert.equal(cause.paidTraces?.[20]?.sourceKm,21);
+          assert.equal(cause.paidTraces[20].fullFieldKilometre,
+            true);
+        }
+        try{replayV94PhysicalRecordedRestKmV1(
+          recording,prior20);}
+        catch(measured){km21Cause=measured;}
+        const evidence=km21Cause?.sourceEvidence;
+        const physicalRoads=km21Cause?.physicalRoads;
+        const road=physicalRoads?.roads?.find(row=>
           row.roadId===evidence?.roadId);
-        const drop=cause?.physicalRoads?.newFrontDrops?.find(row=>
+        const drop=physicalRoads?.newFrontDrops?.find(row=>
           row.riderId===evidence?.riderId);
         const audit=auditV94PhysicalFrontDropContactsV1(
-          cause?.physicalRoads,{sourceKm:21});
+          physicalRoads,{sourceKm:21});
         assert.equal(audit.frontDropCount,fatigue===0?30:33);
         assert.equal(audit.rearRoadCount,fatigue===0?10:9);
         assert.equal(audit.contactCount,audit.frontDropCount);
@@ -124,9 +143,15 @@ for(const [terrain,fatigue] of [
         assert.ok(audit.firstContact.clockSeconds<
           evidence.clockSeconds);
         assert.equal(audit.physicalGroupFormed,false);
+        const provisional=replayV94PhysicalRecordedRestKmV1(
+          recording,prior20,{
+            provisionalFrontDropContacts:true});
+        assert.equal(provisional.fullFieldKilometre,false);
+        assert.equal(provisional.finishes.length,160);
+        assert.equal(provisional.pendingFrontDropContacts.length,
+          audit.contactCount);
         const choice=decideV94PhysicalFrontDropFirstBatchV1(
-          recording,cause.paidPriorTrace,
-        cause?.physicalRoads);
+          recording,prior20,physicalRoads);
         assert.equal(choice.passingRiderId,'rival-2-5');
         assert.equal(choice.passingWillingToLead,true);
         assert.equal(choice.drops.length,fatigue===0?17:13);
@@ -139,8 +164,7 @@ for(const [terrain,fatigue] of [
         if(fatigue===0){
           const fragment=
             replayV94PhysicalFrontDropFirstBatchFragmentV1(
-              recording,cause.paidPriorTrace,
-              cause.physicalRoads);
+              recording,prior20,physicalRoads);
           assert.equal(fragment.riderWork.length,18);
           assert.equal(fragment.road.leaderRiderId,
             'rival-2-5');
@@ -151,7 +175,7 @@ for(const [terrain,fatigue] of [
             row.paidFromReserve>=0));
           assert.equal(fragment.fullFieldKilometre,false);
           const probe=inspectV94PhysicalFrontDropFirstBatchNextV1(
-            cause.physicalRoads,fragment);
+            physicalRoads,fragment);
           assert.equal(probe.remainingRearRoadCount,9);
           assert.equal(probe.remainingFrontDropCount,13);
           assert.equal(probe.contactCount,13);
@@ -164,8 +188,7 @@ for(const [terrain,fatigue] of [
           const quotes=probe.firstAdditionalContact.riderIds
             .flat().map(riderId=>
               quoteV94PhysicalFrontDropContactV1(
-                recording,cause.paidPriorTrace,
-                cause.physicalRoads,{riderId,
+                recording,prior20,physicalRoads,{riderId,
                   clockSeconds:probe.firstAdditionalContact
                     .clockSeconds,
                   atDistanceM:probe.firstAdditionalContact
@@ -180,32 +203,44 @@ for(const [terrain,fatigue] of [
             row.perceivedShelterHoldAbility>=
               row.requiredAbility));
           const extended=extendV94PhysicalFrontDropBatchV1(
-            recording,cause.paidPriorTrace,
-            cause.physicalRoads,fragment);
+            recording,prior20,physicalRoads,fragment);
           assert.equal(extended.riderWork.length,21);
           assert.equal(extended.road.shelteredRiderIds.length,
             20);
           assert.equal(extended.contactHistory.length,1);
           const later=inspectV94PhysicalFrontDropFirstBatchNextV1(
-            cause.physicalRoads,extended);
+            physicalRoads,extended);
           const all=extendV94PhysicalFrontDropBatchV1(
-            recording,cause.paidPriorTrace,
-            cause.physicalRoads,extended);
+            recording,prior20,physicalRoads,extended);
           assert.equal(later.remainingFrontDropCount,10);
           assert.equal(all.riderWork.length,31);
           assert.equal(all.passThroughContacts.length,0);
           assert.equal(all.contactHistory.length,2);
           const finishedContacts=
             inspectV94PhysicalFrontDropFirstBatchNextV1(
-              cause.physicalRoads,all);
+              physicalRoads,all);
           assert.equal(finishedContacts.contactCount,0);
+          const field=completeV94PhysicalFrontDropBatchFieldV1(
+            recording,prior20,physicalRoads,
+            provisional,all);
+          assert.equal(field.fullFieldKilometre,true);
+          assert.equal(field.finishes.length,160);
+          assert.equal(field.physicalRearGroups.find(row=>
+            row.roadId===all.road.roadId)
+            .riderDecisions.length,31);
+          assert.equal(field.paidContactHistory.length,3);
+          assert.ok(field.finishes.every(row=>
+            row.energyBefore>=row.energyAfter));
         }else assert.throws(()=>
           replayV94PhysicalFrontDropFirstBatchFragmentV1(
-            recording,cause.paidPriorTrace,
-            cause.physicalRoads),
+            recording,prior20,physicalRoads),
         /needs paid shelter/);
-        return /stops at km 21/.test(error.message)&&
+        return (fatigue===0?
+          /stops at km 70/.test(error.message):
+          /stops at km 21/.test(error.message)&&
           cause.message===
+            'Front-drop batch fragment needs paid shelter.')&&
+          km21Cause.message===
             'Physical front drop/rear contact needs paid resolution.'&&
           evidence.riderId==='rival-10-5'&&
           evidence.roadId==='solo-rival-2-5'&&
