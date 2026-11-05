@@ -32,6 +32,14 @@ import {decideV94PhysicalForwardBoundaryChoicesV1} from
   '../../lib/engine/v2/v94-physical-forward-boundary-choice-v1.mjs';
 import {planV94PhysicalAvailableFrontTurnsV1} from
   '../../lib/engine/v2/v94-physical-available-front-turns-v1.mjs';
+import {decideV94PhysicalMidKmContactChoiceV1} from
+  '../../lib/engine/v2/v94-physical-mid-km-contact-choice-v1.mjs';
+import {replayV94PhysicalMidKmContactFragmentV1} from
+  '../../lib/engine/v2/v94-physical-mid-km-contact-fragment-v1.mjs';
+import {inspectV94PhysicalMidKmContactRoadsV1} from
+  '../../lib/engine/v2/v94-physical-mid-km-contact-road-audit-v1.mjs';
+import {replayV94PhysicalMidKmContactFullFieldV1} from
+  '../../lib/engine/v2/v94-physical-mid-km-contact-full-field-v1.mjs';
 
 for(const fatigue of [0,30])test(
   `opt-in whole physical flat 260 km fatigue ${fatigue}`,()=>{
@@ -181,15 +189,46 @@ for(const [terrain,fatigue] of [
           assert.equal(cause.paidTraces[69].sourceKm,70);
           assert.equal(cause.paidTraces[69].fullFieldKilometre,
             true);
-          assert.match(error.message,/stops at km 80/);
+          assert.match(error.message,/stops at km 109/);
           assert.equal(cause.message,
-            'Physical rear roads need paid contact resolution.');
-          assert.deepEqual(cause.sourceEvidence.roadIds,[
-            'paid-contact-km80-1','paid-contact-km80-2']);
-          assert.ok(cause.sourceEvidence.atDistanceM>79000&&
-            cause.sourceEvidence.atDistanceM<80000);
-          assert.equal(cause.physicalRoads.front
-            .sourceNamedFrontReallocated,true);
+            'Physical front needs an intact paid plan.');
+          const prior79=cause.paidTraces[78];
+          const contact=decideV94PhysicalMidKmContactChoiceV1(
+            recording,prior79,{
+              detachedPresetAvailable:true});
+          assert.deepEqual(contact.observedRoads.map(row=>
+            row.roadId),['paid-contact-km80-1',
+            'paid-contact-km80-2']);
+          assert.ok(contact.atDistanceM>79000&&
+            contact.atDistanceM<80000);
+          assert.equal(contact.pendingLeaderRiderId,
+            'rival-14-7');
+          assert.equal(contact.pendingShelterRiderIds.length,32);
+          const fragment=replayV94PhysicalMidKmContactFragmentV1(
+            recording,prior79,{
+              detachedPresetAvailable:true});
+          assert.equal(fragment.riderWork.length,33);
+          assert.equal(fragment.fullFieldKilometre,false);
+          const contactAudit=inspectV94PhysicalMidKmContactRoadsV1(
+            recording,prior79,{
+              detachedPresetAvailable:true});
+          assert.equal(contactAudit.firstOtherContact,null);
+          assert.equal(contactAudit.frontDropCount,0);
+          assert.equal(contactAudit.otherContactCount,0);
+          const km80=replayV94PhysicalMidKmContactFullFieldV1(
+            recording,prior79,{
+              detachedPresetAvailable:true});
+          assert.deepEqual(cause.paidTraces[79],km80);
+          assert.equal(km80.sourceKm,80);
+          assert.equal(km80.finishes.length,160);
+          assert.equal(km80.fullFieldKilometre,true);
+          assert.equal(km80.detachedPresetDecisions.length,3);
+          for(let index=79;index<108;index++){
+            const paid=cause.paidTraces[index];
+            assert.equal(paid.sourceKm,index+1);
+            assert.equal(paid.fullFieldKilometre,true);
+            assert.equal(paid.finishes.length,160);
+          }
           const km71=cause.paidTraces[70];
           assert.equal(km71.sourceKm,71);
           assert.equal(km71.fullFieldKilometre,true);
@@ -329,7 +368,7 @@ for(const [terrain,fatigue] of [
             recording,prior20,physicalRoads),
         /needs paid shelter/);
         return (fatigue===0?
-          /stops at km 80/.test(error.message):
+          /stops at km 109/.test(error.message):
           /stops at km 21/.test(error.message)&&
           cause.message===
             'Front-drop batch fragment needs paid shelter.')&&
