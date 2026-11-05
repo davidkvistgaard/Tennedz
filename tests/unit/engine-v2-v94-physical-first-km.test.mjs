@@ -1321,8 +1321,18 @@ test('sixth front uses recorded rest before checking seed-three rear contact',()
   assert.equal(validateV94PhysicalSixthFrontKmV1(
     recording,fifth,sixthFront),true);
   assert.throws(()=>replayV94PhysicalSixthKmV1(
-    recording,fifth),
-  /Physical front drop\/rear contact needs paid resolution/);
+    recording,fifth),error=>
+    /Physical front drop\/rear contact needs paid resolution/.test(
+      error.message)&&
+    error.sourceEvidence?.riderId==='rival-1-1'&&
+    error.sourceEvidence?.roadId==='solo-rival-10-5'&&
+    error.sourceEvidence.atDistanceM>5000&&
+    error.sourceEvidence.atDistanceM<6000&&
+    error.sourceEvidence.dropSegments?.length>0&&
+    error.sourceEvidence.roadEvidence?.riderIds.includes(
+      'rival-10-5')&&
+    error.physicalRoads?.newFrontDrops.some(row=>
+      row.riderId==='rival-1-1'));
 });
 
 test('ended source break membership keeps four riders on paid roads',()=>{

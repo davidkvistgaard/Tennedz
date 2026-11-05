@@ -6707,7 +6707,11 @@ replay uses the recording's explicit rest teams and front-rest rider
 decisions, then verifies the paid front charge against the source.
 This clears the energy mismatch without changing manager orders. The
 whole-field replay now reaches a measured front-drop/rear contact at
-km 6 and refuses there until the piecewise meeting is settled. Seed
+km 6 and refuses there until the piecewise meeting is settled. The
+first seed-3 crossing is `rival-1-1` on a paid front-drop path meeting
+the separate `rival-10-5` solo at 5,092.928 m. The refusal retains
+both measured road paths and the source road decision so a later
+resolver can decide paid contact without assuming a rear group. Seed
 2 separately reaches a solo/front contact at km 6. Its solo starts
 behind the paid front at the boundary, then catches it at 5,256.575
 m. The version 2 contact replay records that direction and charges
