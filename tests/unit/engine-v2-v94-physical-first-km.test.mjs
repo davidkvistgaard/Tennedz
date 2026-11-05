@@ -1472,6 +1472,53 @@ test('sixth front uses recorded rest before checking seed-three rear contact',()
     }
   }
   assert.equal(paid.sourceKm,79);
+  const seventyNinth=paid;
+  paid=replayV94PhysicalMixedFreshKmV1(recording,paid);
+  assert.equal(paid.sourceKm,80);
+  assert.equal(paid.finishes.length,160);
+  assert.equal(paid.sourceBreakRiderIds.length,6);
+  const beforeEighty=new Map(seventyNinth.finishes.map(row=>[
+    row.riderId,row]));
+  for(const finish of paid.finishes){
+    const old=beforeEighty.get(finish.riderId);
+    assert.ok(old);
+    assert.ok(finish.clockSeconds>old.clockSeconds);
+    assert.equal(finish.endDistanceM,80000);
+    assert.ok(Math.abs(finish.energyBefore-
+      old.energyAfter)<.001);
+    assert.ok(Math.abs(finish.energyBefore-
+      finish.paidFromReserve+finish.recoveryAward-
+      finish.capAdjustment-finish.energyAfter)<.0011);
+  }
+  assert.equal(validateV94PhysicalMixedFreshKmV1(
+    recording,seventyNinth,paid),true);
+  for(let km=81;km<=95;km++){
+    const previous=paid;
+    paid=replayV94PhysicalUnattachedSourceNextKmV1(
+      recording,paid);
+    assert.equal(paid.sourceKm,km);
+    assert.equal(paid.fullFieldKilometre,true);
+    assert.equal(paid.finishes.length,160);
+    const before=new Map(previous.finishes.map(row=>[
+      row.riderId,row]));
+    for(const finish of paid.finishes){
+      const old=before.get(finish.riderId);
+      assert.ok(old);
+      assert.ok(finish.clockSeconds>old.clockSeconds);
+      assert.equal(finish.endDistanceM,km*1000);
+      assert.ok(Math.abs(finish.energyBefore-
+        old.energyAfter)<.001);
+      assert.ok(Math.abs(finish.energyBefore-
+        finish.paidFromReserve+finish.recoveryAward-
+        finish.capAdjustment-finish.energyAfter)<.0011);
+    }
+  }
+  assert.throws(()=>replayV94PhysicalUnattachedSourceNextKmV1(
+    recording,paid),error=>
+    error.message==='Physical rear roads need paid contact resolution.'&&
+    error.sourceEvidence?.atDistanceM>95000&&
+    error.sourceEvidence?.atDistanceM<96000&&
+    error.sourceEvidence?.roadIds.length===2);
 });
 
 test('ended source break membership keeps four riders on paid roads',()=>{

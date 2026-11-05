@@ -6735,11 +6735,18 @@ mixed group, quotes break-work willingness and each shelter, then
 replays a new paid kilometre. Recorded front rest settles the
 source charge. The same physical group is retained only while its
 paid prior contact or boundary choice proves membership. The
-seed-3 flat 120 km, fatigue-0 trace now reaches km 79 with 160
+seed-3 flat 120 km, fatigue-0 trace reaches km 79 with 160
 continuous paid finishes per kilometre through km 7-79. Km 80
 contains a fresh source attacker joining the old source break
-label; its named front plan refuses before a paid new solo and
-front-rest settlement, so whole-race calibration remains open. Seed
+label. The version 3 mixed-fresh replay checks the older source
+riders against their paid rear-group membership, prices the new
+solo launch, retains the prior mixed group's paid boundary choice
+and uses recorded front rest. The field then continues with 160
+paid finishes per kilometre through km 95. Km 96 has a measured
+rear-group contact at 95,101.683 m between a three-rider group and
+a 31-rider group. Both roads have paid km-95 origins; a mid-km
+leader and shelter choice is still required before km 96 can be
+accepted. Whole-race calibration remains open. Seed
 2 separately reaches a solo/front contact at km 6. Its solo starts
 behind the paid front at the boundary, then catches it at 5,256.575
 m. The version 2 contact replay records that direction and charges
