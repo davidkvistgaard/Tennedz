@@ -8,6 +8,8 @@ import {replayV94PhysicalWholeRaceV1} from
   '../../lib/engine/v2/v94-physical-whole-race-replay-v1.mjs';
 import {auditV94PhysicalRiderDecisionsV1} from
   '../../lib/engine/v2/v94-physical-whole-race-validation-v1.mjs';
+import {projectV94PhysicalBoundaryStatesV1} from
+  '../../lib/engine/v2/v94-physical-boundary-state-v1.mjs';
 import {auditV94PhysicalFrontDropContactsV1} from
   '../../lib/engine/v2/v94-physical-front-drop-contact-audit-v1.mjs';
 import {decideV94PhysicalFrontDropFirstBatchV1} from
@@ -67,6 +69,7 @@ for(const fatigue of [0,30])test(
     const replay=replayV94PhysicalWholeRaceV1(recording);
     assert.equal(replay.validation.totalRiderKm,41600);
     assert.equal(replay.riderDecisionAudit.coveredRiderKm,41600);
+    assert.equal(replay.physicalBoundaryStates.length,260);
     assert.equal(replay.traces.length,260);
     assert.equal(replay.physicalFinish.riderCount,160);
     assert.equal(replay.officialResults,false);
@@ -102,6 +105,7 @@ for(const [seed,fatigue] of [
     const replay=replayV94PhysicalWholeRaceV1(recording);
     assert.equal(replay.validation.totalRiderKm,19200);
     assert.equal(replay.riderDecisionAudit.coveredRiderKm,19200);
+    assert.equal(replay.physicalBoundaryStates.length,120);
     assert.equal(replay.traces.length,120);
     assert.equal(replay.physicalFinish.riderCount,160);
     assert.equal(replay.officialResults,false);
@@ -139,6 +143,32 @@ for(const [terrain,fatigue] of [
           assert.equal(completed.validation.totalRiderKm,19200);
           assert.equal(completed.riderDecisionAudit
             .coveredRiderKm,19200);
+          assert.equal(completed.physicalBoundaryStates.length,120);
+          const sourceGapChange=structuredClone(recording);
+          sourceGapChange.frames[4].roadGroups[0].gapSeconds+=20;
+          assert.deepEqual(projectV94PhysicalBoundaryStatesV1(
+            sourceGapChange,traces)[4],
+          completed.physicalBoundaryStates[4]);
+          const unsupportedGroup=[...traces];
+          unsupportedGroup[31]=structuredClone(traces[31]);
+          const formed=unsupportedGroup[31]
+            .physicalRearGroups.find(road=>
+              road.riderDecisions.length>1);
+          unsupportedGroup[31].physicalRearGroups=
+            unsupportedGroup[31].physicalRearGroups.filter(
+              road=>road.roadId!==formed.roadId);
+          assert.throws(()=>projectV94PhysicalBoundaryStatesV1(
+            recording,unsupportedGroup),
+          /Physical boundary km 32 lacks paid rear group/);
+          const doubleLeader=[...traces];
+          doubleLeader[31]=structuredClone(traces[31]);
+          const shared=doubleLeader[31].physicalRearGroups.find(
+            road=>road.riderDecisions.length>1);
+          shared.riderDecisions.find(decision=>
+            decision.role==='sheltered').role='leader';
+          assert.throws(()=>projectV94PhysicalBoundaryStatesV1(
+            recording,doubleLeader),
+          /Physical boundary km 32 lacks paid rear group/);
           assert.equal(completed.physicalFinish.riderCount,160);
           assert.equal(completed.sourceCheckpointCalibrationFailed,
             true);

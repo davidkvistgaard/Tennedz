@@ -69,3 +69,13 @@ focused refusal tests, lint, isolated build and authenticated browser
 checks. No official places, awards, GC stakes, stage plans, time
 limits, wheels or positions are inferred. Production promotion needs
 the separate READY and rollback checks.
+
+The first boundary-state projection now runs over the opt-in V94
+physical trace. It groups riders solely by their paid road ID and
+clock, carries each rider's boundary distance and reserve, and
+derives leads from paid clocks. It rejects a shared rear road without
+a matching paid group receipt and exactly one named paid leader.
+Changing a historical source checkpoint
+gap leaves this projection unchanged. This is a migration seam; the
+current V94 choice scheduler still reads source frames and cannot yet
+serve as the physical-first recorder.
