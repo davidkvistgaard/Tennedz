@@ -6719,7 +6719,18 @@ source break claim ends. The version 2 post-break replay keeps the
 already caught rider in the peloton from his own paid reserve and
 the other former break riders on their physical rear roads. It
 settles all 160 riders through km 79. A new source attack at km 80
-requires its own paid launch and source-claim transition.
+requires its own paid launch and source-claim transition. The version 2
+post-break fresh replay pays those four new attackers as separate solo
+roads at km 80, while the previously caught former break rider stays
+in the peloton on his own physical reserve. The version 4 unattached
+continuation carries both the current source-break claim and that
+former caught rider through km 83. At km 84, another source-break solo
+meets the paid front. Version 3 of the front-catch replay charges his
+work before contact and shelter afterward, then carries the former
+caught rider from his prior physical reserve rather than resetting him
+to the source ledger. The same-seed 120 km flat no-fatigue case now has
+160 reconciled physical finishes through km 85. Later kilometres still
+need contact and finish validation; this is not a whole-race result.
 Both 260 km flat cases
 complete every rider through km 89. At km 90 the source
 introduces two new attackers (`rival-19-7` and `rival-6-7`), so the

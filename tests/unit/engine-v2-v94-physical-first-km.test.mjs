@@ -1138,6 +1138,47 @@ test('seed-two sixth solo joins the front through paid contact',()=>{
   assert.throws(()=>replayV94PhysicalPostSourceBreakKmV1(
     recording,post),
   /Post-break km needs ended source claim/);
+  const freshAfterBreak=replayV94PhysicalPostBreakFreshKmV1(
+    recording,post);
+  assert.equal(freshAfterBreak.sourceKm,80);
+  assert.equal(freshAfterBreak.finishes.length,160);
+  assert.equal(freshAfterBreak.finishes.find(row=>
+    row.riderId==='rival-18-5').physicalGroup,'peloton');
+  assert.deepEqual(freshAfterBreak
+    .physicallyCaughtFormerBreakRiderIds,['rival-18-5']);
+  assert.equal(validateV94PhysicalPostBreakFreshKmV1(
+    recording,post,freshAfterBreak),true);
+  const nextAfterFresh=replayV94PhysicalUnattachedSourceNextKmV1(
+    recording,freshAfterBreak);
+  assert.equal(nextAfterFresh.sourceKm,81);
+  assert.equal(nextAfterFresh.finishes.length,160);
+  assert.equal(nextAfterFresh.finishes.find(row=>
+    row.riderId==='rival-18-5').physicalGroup,'peloton');
+  let laterFresh=nextAfterFresh;
+  for(let km=82;km<=83;km++){
+    laterFresh=replayV94PhysicalUnattachedSourceNextKmV1(
+      recording,laterFresh);
+    assert.equal(laterFresh.sourceKm,km);
+    assert.equal(laterFresh.finishes.length,160);
+  }
+  const caughtAgain=replayV94PhysicalFrontCatchKmV1(
+    recording,laterFresh);
+  assert.equal(caughtAgain.sourceKm,84);
+  assert.equal(caughtAgain.finishes.find(row=>
+    row.riderId==='rival-18-5').energyBefore,
+  laterFresh.finishes.find(row=>
+    row.riderId==='rival-18-5').energyAfter);
+  assert.equal(caughtAgain.finishes.length,160);
+  assert.deepEqual(caughtAgain
+    .physicallyCaughtFormerBreakRiderIds,['rival-18-5']);
+  const afterCatch=replayV94PhysicalUnattachedSourceNextKmV1(
+    recording,caughtAgain);
+  assert.equal(afterCatch.sourceKm,85);
+  assert.equal(afterCatch.finishes.length,160);
+  assert.equal(afterCatch.finishes.find(row=>
+    row.riderId==='rival-18-5').energyBefore,
+  caughtAgain.finishes.find(row=>
+    row.riderId==='rival-18-5').energyAfter);
 });
 
 test('sixth front uses recorded rest before checking seed-three rear contact',()=>{
