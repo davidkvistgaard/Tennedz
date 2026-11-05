@@ -6708,16 +6708,20 @@ decisions, then verifies the paid front charge against the source.
 This clears the energy mismatch without changing manager orders. The
 whole-field replay now reaches a measured front-drop/rear contact at
 km 6 and refuses there until the piecewise meeting is settled. The
-first seed-3 crossing is `rival-1-1` on a paid front-drop path meeting
-the separate `rival-10-5` solo at 5,092.928 m. The refusal retains
-both measured road paths and the source road decision so a later
+first seed-3 crossing has 17 co-located paid front-drop riders,
+including `rival-1-1`, meeting the separate `rival-10-5` solo at
+5,092.928 m. The refusal retains
+the measured road paths and source road decisions so a later
 resolver can decide paid contact without assuming a rear group.
-The version 1 front-drop contact choice prices both riders to that
+The version 1 front-drop contact choice prices all 18 riders to that
 meeting from their own physical reserves. `rival-10-5` is willing to
-lead under his recorded break order; `rival-1-1` can hold shelter at
-the quoted start and end reserves under his recorded ease. This is
-only a proposed next turn. The km-6 field still refuses because the
-remaining paid roads and later contacts have not been settled. Seed
+lead under his recorded break order; all 17 co-located drops can hold
+shelter at their quoted start and end reserves under their recorded
+effort. The version 1 fragment prices the 18 riders to the boundary,
+but it grants no complete km-6 field. A separate version 1 road probe
+finds the proposed group's next meeting with 13 other co-located
+front drops at 5,849.655 m. That second meeting needs its own paid
+choice before km 6 can be accepted. Seed
 2 separately reaches a solo/front contact at km 6. Its solo starts
 behind the paid front at the boundary, then catches it at 5,256.575
 m. The version 2 contact replay records that direction and charges

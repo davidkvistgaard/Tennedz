@@ -83,6 +83,12 @@ import {replayV94PhysicalSixthKmV1,
 import {decideV94PhysicalFrontDropContactChoiceV1,
   validateV94PhysicalFrontDropContactChoiceV1} from
   '../../lib/engine/v2/v94-physical-front-drop-contact-choice-v1.mjs';
+import {replayV94PhysicalFrontDropContactFragmentV1,
+  validateV94PhysicalFrontDropContactFragmentV1} from
+  '../../lib/engine/v2/v94-physical-front-drop-contact-fragment-v1.mjs';
+import {inspectV94PhysicalFrontDropContactNextV1,
+  validateV94PhysicalFrontDropContactNextV1} from
+  '../../lib/engine/v2/v94-physical-front-drop-contact-next-probe-v1.mjs';
 import {replayV94PhysicalSeventhKmV1,
   validateV94PhysicalSeventhKmV1} from
   '../../lib/engine/v2/v94-physical-seventh-km-v1.mjs';
@@ -1340,8 +1346,10 @@ test('sixth front uses recorded rest before checking seed-three rear contact',()
     recording,fifth);
   assert.equal(dropContact.sourceKm,6);
   assert.equal(dropContact.pendingLeaderRiderId,'rival-10-5');
-  assert.deepEqual(dropContact.pendingShelterRiderIds,
-    ['rival-1-1']);
+  assert.equal(dropContact.pendingShelterRiderIds.length,17);
+  assert.ok(dropContact.pendingShelterRiderIds.includes(
+    'rival-1-1'));
+  assert.equal(dropContact.observedRoadIds.length,18);
   assert.equal(dropContact.physicalGroupFormed,false);
   assert.ok(dropContact.candidates.find(row=>
     row.riderId==='rival-1-1').quotedShelterEnergyDemand<
@@ -1354,6 +1362,33 @@ test('sixth front uses recorded rest before checking seed-three rear contact',()
   assert.throws(()=>validateV94PhysicalFrontDropContactChoiceV1(
     recording,fifth,inventedGroup),
   /differs from paid source/);
+  const dropFragment=
+    replayV94PhysicalFrontDropContactFragmentV1(
+      recording,fifth);
+  assert.equal(dropFragment.sourceKm,6);
+  assert.equal(dropFragment.riderWork.length,18);
+  assert.equal(dropFragment.road.leaderRiderId,'rival-10-5');
+  assert.deepEqual(dropFragment.road.shelteredRiderIds,
+    dropContact.pendingShelterRiderIds);
+  assert.ok(dropFragment.riderWork.every(row=>
+    row.paidEnergyToContact>0&&
+    row.paidEnergyAfterContact>0&&
+    row.endDistanceM===6000));
+  assert.equal(dropFragment.fullFieldKilometre,false);
+  assert.equal(validateV94PhysicalFrontDropContactFragmentV1(
+    recording,fifth,dropFragment),true);
+  const nextDropContact=inspectV94PhysicalFrontDropContactNextV1(
+    recording,fifth);
+  assert.equal(nextDropContact.sourceKm,6);
+  assert.equal(nextDropContact
+    .firstAdditionalContact.riderIds.length,13);
+  assert.ok(nextDropContact.firstAdditionalContact
+    .atDistanceM>5800);
+  assert.ok(nextDropContact.firstAdditionalContact
+    .atDistanceM<5900);
+  assert.equal(nextDropContact.fullFieldKilometre,false);
+  assert.equal(validateV94PhysicalFrontDropContactNextV1(
+    recording,fifth,nextDropContact),true);
 });
 
 test('ended source break membership keeps four riders on paid roads',()=>{
