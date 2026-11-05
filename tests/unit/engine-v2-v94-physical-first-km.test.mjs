@@ -80,6 +80,9 @@ import {replayV94PhysicalSixthFrontKmV1,
 import {replayV94PhysicalSixthKmV1,
   validateV94PhysicalSixthKmV1} from
   '../../lib/engine/v2/v94-physical-sixth-km-v1.mjs';
+import {decideV94PhysicalFrontDropContactChoiceV1,
+  validateV94PhysicalFrontDropContactChoiceV1} from
+  '../../lib/engine/v2/v94-physical-front-drop-contact-choice-v1.mjs';
 import {replayV94PhysicalSeventhKmV1,
   validateV94PhysicalSeventhKmV1} from
   '../../lib/engine/v2/v94-physical-seventh-km-v1.mjs';
@@ -1333,6 +1336,24 @@ test('sixth front uses recorded rest before checking seed-three rear contact',()
       'rival-10-5')&&
     error.physicalRoads?.newFrontDrops.some(row=>
       row.riderId==='rival-1-1'));
+  const dropContact=decideV94PhysicalFrontDropContactChoiceV1(
+    recording,fifth);
+  assert.equal(dropContact.sourceKm,6);
+  assert.equal(dropContact.pendingLeaderRiderId,'rival-10-5');
+  assert.deepEqual(dropContact.pendingShelterRiderIds,
+    ['rival-1-1']);
+  assert.equal(dropContact.physicalGroupFormed,false);
+  assert.ok(dropContact.candidates.find(row=>
+    row.riderId==='rival-1-1').quotedShelterEnergyDemand<
+    dropContact.candidates.find(row=>
+      row.riderId==='rival-10-5').quotedLeaderEnergyDemand);
+  assert.equal(validateV94PhysicalFrontDropContactChoiceV1(
+    recording,fifth,dropContact),true);
+  const inventedGroup=structuredClone(dropContact);
+  inventedGroup.physicalGroupFormed=true;
+  assert.throws(()=>validateV94PhysicalFrontDropContactChoiceV1(
+    recording,fifth,inventedGroup),
+  /differs from paid source/);
 });
 
 test('ended source break membership keeps four riders on paid roads',()=>{

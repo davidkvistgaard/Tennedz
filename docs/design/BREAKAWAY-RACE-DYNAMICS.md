@@ -6711,7 +6711,13 @@ km 6 and refuses there until the piecewise meeting is settled. The
 first seed-3 crossing is `rival-1-1` on a paid front-drop path meeting
 the separate `rival-10-5` solo at 5,092.928 m. The refusal retains
 both measured road paths and the source road decision so a later
-resolver can decide paid contact without assuming a rear group. Seed
+resolver can decide paid contact without assuming a rear group.
+The version 1 front-drop contact choice prices both riders to that
+meeting from their own physical reserves. `rival-10-5` is willing to
+lead under his recorded break order; `rival-1-1` can hold shelter at
+the quoted start and end reserves under his recorded ease. This is
+only a proposed next turn. The km-6 field still refuses because the
+remaining paid roads and later contacts have not been settled. Seed
 2 separately reaches a solo/front contact at km 6. Its solo starts
 behind the paid front at the boundary, then catches it at 5,256.575
 m. The version 2 contact replay records that direction and charges
