@@ -1476,11 +1476,16 @@ test('sixth front uses recorded rest before checking seed-three rear contact',()
   assert.equal(seventh.fullFieldKilometre,true);
   assert.equal(validateV94PhysicalSeventhKmV1(
     recording,sixth,seventh),true);
+  const paidTraces=[completeV94PhysicalFirstKmV1(recording),
+    replayV94PhysicalSecondRearKmV1(recording),
+    replayV94PhysicalThirdRearKmV1(recording),
+    fourth,fifth,sixth,seventh];
   let paid=seventh;
   for(let km=8;km<=79;km++){
     const previous=paid;
     paid=replayV94PhysicalUnattachedSourceNextKmV1(
       recording,paid);
+    paidTraces.push(paid);
     assert.equal(paid.sourceKm,km);
     assert.equal(paid.fullFieldKilometre,true);
     assert.equal(paid.finishes.length,160);
@@ -1501,6 +1506,7 @@ test('sixth front uses recorded rest before checking seed-three rear contact',()
   assert.equal(paid.sourceKm,79);
   const seventyNinth=paid;
   paid=replayV94PhysicalMixedFreshKmV1(recording,paid);
+  paidTraces.push(paid);
   assert.equal(paid.sourceKm,80);
   assert.equal(paid.finishes.length,160);
   assert.equal(paid.sourceBreakRiderIds.length,6);
@@ -1523,6 +1529,7 @@ test('sixth front uses recorded rest before checking seed-three rear contact',()
     const previous=paid;
     paid=replayV94PhysicalUnattachedSourceNextKmV1(
       recording,paid);
+    paidTraces.push(paid);
     assert.equal(paid.sourceKm,km);
     assert.equal(paid.fullFieldKilometre,true);
     assert.equal(paid.finishes.length,160);
@@ -1567,6 +1574,7 @@ test('sixth front uses recorded rest before checking seed-three rear contact',()
   const ninetyFifth=paid;
   paid=replayV94PhysicalMidKmContactFullFieldV1(
     recording,paid);
+  paidTraces.push(paid);
   assert.equal(paid.sourceKm,96);
   assert.equal(paid.finishes.length,160);
   const beforeNinetySix=new Map(ninetyFifth.finishes.map(row=>[
@@ -1588,6 +1596,7 @@ test('sixth front uses recorded rest before checking seed-three rear contact',()
     const previous=paid;
     paid=replayV94PhysicalMixedPaidNextKmV1(
       recording,paid);
+    paidTraces.push(paid);
     assert.equal(paid.sourceKm,km);
     assert.equal(paid.finishes.length,160);
     const before=new Map(previous.finishes.map(row=>[
@@ -1609,6 +1618,7 @@ test('sixth front uses recorded rest before checking seed-three rear contact',()
   const oneThirteen=paid;
   paid=replayV94PhysicalPartialSourceWithdrawalKmV1(
     recording,paid);
+  paidTraces.push(paid);
   assert.equal(paid.sourceKm,114);
   assert.equal(paid.finishes.length,160);
   assert.deepEqual(paid.sourceMembershipWithdrawnRiderIds,
@@ -1634,6 +1644,7 @@ test('sixth front uses recorded rest before checking seed-three rear contact',()
     const previous=paid;
     paid=replayV94PhysicalMixedPaidNextKmV1(
       recording,paid);
+    paidTraces.push(paid);
     assert.equal(paid.sourceKm,km);
     assert.equal(paid.finishes.length,160);
     assert.ok(paid.formerSourceBreakRiderIds.includes(
@@ -1654,6 +1665,8 @@ test('sixth front uses recorded rest before checking seed-three rear contact',()
   }
   assert.equal(paid.sourceKm,120);
   assert.equal(paid.officialResults,false);
+  assert.equal(validateV94PhysicalWholeRaceV1(
+    recording,paidTraces).totalRiderKm,19200);
 });
 
 test('fatigued seed-three no-join contact pays through 120 km',()=>{
@@ -1671,8 +1684,8 @@ test('fatigued seed-three no-join contact pays through 120 km',()=>{
     freshAttackDecisionVersion:1,
     roadGroupRiderDecisionVersion:1,
     protectorSportingPursuitVersion:1});
-  const fifth=replayV94PhysicalFifthKmV1(recording,
-    replayV94PhysicalFourthKmV1(recording));
+  const fourth=replayV94PhysicalFourthKmV1(recording);
+  const fifth=replayV94PhysicalFifthKmV1(recording,fourth);
   assert.throws(()=>replayV94PhysicalSixthKmV1(
     recording,fifth),error=>
     error.message===
@@ -1741,7 +1754,12 @@ test('fatigued seed-three no-join contact pays through 120 km',()=>{
     recording,fifth,sixth),true);
   assert.ok(sixth.droppedFrontFinishes.every(row=>
     row.physicalGroup.startsWith('solo-')));
+  const paidTraces=[completeV94PhysicalFirstKmV1(recording),
+    replayV94PhysicalSecondRearKmV1(recording),
+    replayV94PhysicalThirdRearKmV1(recording),
+    fourth,fifth,sixth];
   const checkPaid=(previous,current,km)=>{
+    paidTraces.push(current);
     assert.equal(current.sourceKm,km);
     assert.equal(current.fullFieldKilometre,true);
     assert.equal(current.finishes.length,160);
@@ -1805,6 +1823,8 @@ test('fatigued seed-three no-join contact pays through 120 km',()=>{
   assert.deepEqual(withdrawals,[111]);
   assert.equal(paid.sourceKm,120);
   assert.equal(paid.officialResults,false);
+  assert.equal(validateV94PhysicalWholeRaceV1(
+    recording,paidTraces).totalRiderKm,19200);
 });
 
 test('ended source break membership keeps four riders on paid roads',()=>{

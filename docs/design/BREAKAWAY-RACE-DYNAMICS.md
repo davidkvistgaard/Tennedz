@@ -6811,7 +6811,7 @@ increasing clock, reserve continuity and paid energy equation. This
 is a pair of complete same-seed physical traces, not a multi-seed
 finish validation or official result.
 The separate version 1 whole-race validator checks the seed-1
-fatigue-0 and seed-2 fatigue-0/30 flat 120 km traces against all
+fatigue-0 and seed-2/3 fatigue-0/30 flat 120 km traces against all
 120 source kilometres and 160 committed riders. It requires one
 unofficial finish per rider per kilometre, exact distance, increasing
 clocks, continuous reserve and the paid energy equation. Each accepted
