@@ -253,5 +253,16 @@ leader and one lower-cost sheltered rider after contact; `sit_on`
 does not volunteer a leader, and a `drive` order carries its extra
 speed and reserve cost. The result records one road, two complete
 energy debits and a common finish clock. This contract is not yet
-connected to the whole-race crossing guard or replay, so the fixed
-attack race still stops at its measured km 7 contact.
+connected to the whole-race crossing guard or replay at that stage,
+so the fixed attack race stopped at its measured km 7 contact.
+
+The version 7 whole-race probe and version 4 replay now settle one
+crossing pair of previously paid solo roads within a kilometre. The
+settlement recomputes both solo approaches from committed input,
+replaces their provisional full-solo finishes with the repriced
+shared finish, and checks that the new road does not cross any third
+road before or after contact. The fixed attack race now pays and
+replays all 32 riders through km 8 (256 rider-kilometres), including
+the contact at 6,098.75 m. At km 9 the field reaches a separate solo
+rider at 8,097.744361 m. The field-to-solo catch has no paid resolver
+yet, so the full 40 km attack calibration remains blocked there.
