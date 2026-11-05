@@ -1041,6 +1041,86 @@ test('paid boundary contacts support a complete second flat kilometre',()=>{
     row.riderId==='rival-6-7').physicalGroup,'peloton');
 });
 
+test('seed-two sixth solo joins the front through paid contact',()=>{
+  const settings={distanceKm:120,teamCount:20,terrain:'flat',
+    fatigue:0,attack:'none',chase:'selective',
+    seed:'preview-recorded-road-2'};
+  const sportingStakes=prepareV91Playtest(settings).teams.map(team=>({
+    teamId:team.id,goal:'sprint_finish',
+    captainId:team.orders.captainId}));
+  const {recording}=createV94RaceDynamicsPreview({
+    format:'one_day',settings,sportingStakes,
+    roadGroupPaceVersion:3,chaseTurnVersion:1,
+    bunchFrontTurnVersion:1,pelotonFrontTurnVersion:1,
+    pelotonDraftCostVersion:1,pelotonExposureCostVersion:1,
+    freshAttackDecisionVersion:1,
+    roadGroupRiderDecisionVersion:1,
+    protectorSportingPursuitVersion:1});
+  const fifth=replayV94PhysicalFifthKmV1(
+    recording,replayV94PhysicalFourthKmV1(recording));
+  const contacted=replayV94PhysicalFrontCatchKmV1(
+    recording,fifth);
+  assert.equal(contacted.sourceKm,6);
+  assert.equal(contacted.finishes.length,160);
+  assert.equal(contacted.caughtFinish.physicalGroup,'peloton');
+  assert.equal(contacted.paidFrontContact.roadId,
+    'solo-rival-18-5');
+  assert.equal(contacted.paidFrontContact.contactKind,
+    'solo_joins_peloton_from_behind');
+  assert.equal(validateV94PhysicalFrontCatchKmV1(
+    recording,fifth,contacted),true);
+  const seventh=replayV94PhysicalSeventhKmV1(recording,contacted);
+  assert.equal(seventh.sourceKm,7);
+  assert.equal(seventh.finishes.length,160);
+  assert.equal(seventh.finishes.find(row=>
+    row.riderId==='rival-18-5').physicalGroup,'peloton');
+  assert.equal(validateV94PhysicalSeventhKmV1(
+    recording,contacted,seventh),true);
+  const eighth=replayV94PhysicalUnattachedSourceNextKmV1(
+    recording,seventh);
+  assert.equal(eighth.sourceKm,8);
+  assert.equal(eighth.finishes.length,160);
+  let later=eighth;
+  for(let km=9;km<=19;km++){
+    const next=replayV94PhysicalUnattachedSourceNextKmV1(
+      recording,later);
+    assert.equal(validateV94PhysicalUnattachedSourceNextKmV1(
+      recording,later,next),true);
+    assert.equal(next.sourceKm,km);
+    assert.equal(next.finishes.length,160);
+    later=next;
+  }
+  assert.throws(()=>replayV94PhysicalUnattachedSourceNextKmV1(
+    recording,later),
+  /Physical front needs an intact paid plan/);
+  assert.ok(recording.frames[19].attackers.length>0);
+  const twentieth=replayV94PhysicalMixedFreshKmV1(
+    recording,later);
+  assert.equal(twentieth.sourceKm,20);
+  assert.equal(twentieth.finishes.length,160);
+  assert.equal(validateV94PhysicalMixedFreshKmV1(
+    recording,later,twentieth),true);
+  let afterFresh=twentieth;
+  for(let km=21;km<=77;km++){
+    const next=replayV94PhysicalUnattachedSourceNextKmV1(
+      recording,afterFresh);
+    assert.equal(validateV94PhysicalUnattachedSourceNextKmV1(
+      recording,afterFresh,next),true);
+    assert.equal(next.sourceKm,km);
+    assert.equal(next.finishes.length,160);
+    if(km===21){
+      assert.equal(next.sourceRestDecisionUsed,true);
+      assert.equal(next.orderedEffortRefusal?.sourceKm,21);
+    }
+    afterFresh=next;
+  }
+  assert.throws(()=>replayV94PhysicalUnattachedSourceNextKmV1(
+    recording,afterFresh),
+  /Physical front needs an intact paid plan/);
+  assert.equal(recording.frames[77].attackers.length,0);
+  assert.equal(recording.frames[77].breakawayRiderIds.length,0);
+});
+
 test('sixth front uses recorded rest before checking seed-three rear contact',()=>{
   const settings={distanceKm:120,teamCount:20,terrain:'flat',
     fatigue:0,attack:'none',chase:'selective',

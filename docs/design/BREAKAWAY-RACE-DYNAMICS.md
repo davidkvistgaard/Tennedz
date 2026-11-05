@@ -6705,7 +6705,18 @@ decisions, then verifies the paid front charge against the source.
 This clears the energy mismatch without changing manager orders. The
 whole-field replay now reaches a measured front-drop/rear contact at
 km 6 and refuses there until the piecewise meeting is settled. Seed
-2 separately reaches a solo/front contact at km 6.
+2 separately reaches a solo/front contact at km 6. Its solo starts
+behind the paid front at the boundary, then catches it at 5,256.575
+m. The version 2 contact replay records that direction and charges
+solo work to the meeting plus shelter over the remaining named front
+turns. It completes all 160 riders without adopting the source break
+road. The caught rider remains physically in the peloton while the
+source break claim continues. Km 7 through 19 and km 20's fresh
+attack replay retain that distinction. Recorded source rest resolves
+the km-21 front charge, and the seed-2 flat 120 km no-fatigue case
+reaches km 77 with 160 paid finishes per kilometre. At km 78 the
+source break claim ends, which needs a continuation for the already
+caught rider before the next field can be settled.
 Both 260 km flat cases
 complete every rider through km 89. At km 90 the source
 introduces two new attackers (`rival-19-7` and `rival-6-7`), so the
