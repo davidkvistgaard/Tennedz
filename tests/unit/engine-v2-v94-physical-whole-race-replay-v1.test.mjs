@@ -181,9 +181,9 @@ for(const [terrain,fatigue] of [
           assert.equal(cause.paidTraces[69].sourceKm,70);
           assert.equal(cause.paidTraces[69].fullFieldKilometre,
             true);
-          assert.match(error.message,/stops at km 72/);
+          assert.match(error.message,/stops at km 80/);
           assert.equal(cause.message,
-            'Physical front lacks continuous paid reserve.');
+            'Physical front needs an intact paid plan.');
           const km71=cause.paidTraces[70];
           assert.equal(km71.sourceKm,71);
           assert.equal(km71.fullFieldKilometre,true);
@@ -195,6 +195,14 @@ for(const [terrain,fatigue] of [
             Math.abs(row.energyBefore-row.paidFromReserve+
               row.recoveryAward-row.capAdjustment-
               row.energyAfter)<=.0010001));
+          for(let index=70;index<79;index++){
+            const paid=cause.paidTraces[index];
+            assert.equal(paid.sourceKm,index+1);
+            assert.equal(paid.fullFieldKilometre,true);
+            assert.equal(paid.finishes.length,160);
+            assert.equal(paid.front.availableFrontPlanVersion,
+              available.version);
+          }
           assert.equal(cause.paidTraces?.[20]?.sourceKm,21);
           assert.equal(cause.paidTraces[20].fullFieldKilometre,
             true);
@@ -315,7 +323,7 @@ for(const [terrain,fatigue] of [
             recording,prior20,physicalRoads),
         /needs paid shelter/);
         return (fatigue===0?
-          /stops at km 72/.test(error.message):
+          /stops at km 80/.test(error.message):
           /stops at km 21/.test(error.message)&&
           cause.message===
             'Front-drop batch fragment needs paid shelter.')&&
