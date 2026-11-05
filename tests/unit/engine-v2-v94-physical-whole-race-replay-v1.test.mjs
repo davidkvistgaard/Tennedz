@@ -139,6 +139,14 @@ for(const [terrain,fatigue] of [
           assert.ok(completed.sourceGapAudit
             .sourceGapExceedsBestPaidLeadCount>0);
           assert.ok(completed.finishSourceAudit.mismatchCount>0);
+          assert.equal(completed.sourceGapAudit
+            .sourceGapExceedsBestPaidLeadCount,38);
+          assert.equal(completed.sourceGapAudit
+            .maxGapOverBestPaidLeadSeconds,25.07512);
+          assert.equal(completed.finishSourceAudit.mismatchCount,
+            109);
+          assert.equal(completed.finishSourceAudit
+            .maxAbsoluteMismatchSeconds,460.811973);
           for(let index=20;index<120;index++){
             assert.equal(traces[index].sourceKm,index+1);
             assert.equal(traces[index].fullFieldKilometre,true);
@@ -175,6 +183,10 @@ for(const [terrain,fatigue] of [
           assert.ok(traces[107].front.availableFrontPlanVersion);
         }
         const prior20=traces?.[19];
+        assert.equal(completed.sourceGapAudit.firstExcessGap
+          .sourceKm,5);
+        assert.equal(completed.sourceGapAudit.firstExcessGap
+          .sourceRoadGroupId,'road-1');
         let km21Cause=null;
         if(fatigue===0){
           assert.equal(completed.traces.length,120);

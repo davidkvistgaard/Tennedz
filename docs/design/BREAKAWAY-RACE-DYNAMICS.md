@@ -6967,3 +6967,44 @@ named peloton-front plan and committed sporting stakes. It does not
 change the V94 recording, guided-race policy, provisional finish or
 default API response. The opt-in result is source-replayed and has no
 official placing or whole-race claim.
+
+## Whole-race physical replay update (2026-11-05)
+
+The later opt-in `v94-physical-whole-race-replay-5` supersedes the
+km-21 mountain refusal described above. All ten same-seed whole-race
+cases now reach their route boundary with 160 paid rider finishes per
+kilometre: two 260 km flat cases, five 120 km flat cases, one 120 km
+rolling case, and both 120 km mountain fatigue cases. The 120 km
+mountain traces validate 19,200 continuous rider kilometres each;
+the 260 km flat traces validate 41,600 each. The physical finish view
+includes every rider and awards no official result.
+
+At mountain km 21 with fatigue 30, the same rear solo actually crosses
+33 dropped front riders in three measured contact batches. The first
+13 cannot hold and pay shelter, and pass separately. The later 17 and
+three can pay, forming one group with a single paid leader and 20
+sheltered riders. No rear group is created for the 13 pass-throughs.
+Subsequent source break labels remain distinct from physical road
+membership. Recorded paid contact lets rear riders regroup at km 102;
+at km 114 two solo riders cross but cannot form a payable pair, so
+both continue on separately paid roads. The older refusal guards
+still reject unpaid contact, unsupported source membership and
+unpayable work.
+
+Completion of distance and energy replay does **not** pass same-seed
+source calibration. In the 120 km mountain fatigue-0 case, 49 source
+group checkpoints exceed the best individual paid lead, with a maximum
+excess of 27.44668 seconds; 119 source finish claims differ from paid
+clocks, by up to 498.307936 seconds. With fatigue 30 the corresponding
+counts are 38 checkpoints and 109 finish claims, with maximum excess
+25.07512 seconds and maximum finish difference 460.811973 seconds.
+The first excess in both cases is at km 5. The source gives road-1 a
+27.76 or 25.42 second gap, while the best paid individual lead is
+only 0.31332 or 0.34488 seconds. The source model converts abstract
+attack pressure to gap seconds in `tactics.mjs`; the physical model
+prices each attacker's road and the named peloton turns. Assigning the
+source gap to those riders would invent an untraveled position.
+Calibration therefore remains an explicit release blocker. V94 stays
+separate from guided races and production until the physical clocks,
+contact decisions and finish claims can be reconciled without
+inserting source gaps as movement.
