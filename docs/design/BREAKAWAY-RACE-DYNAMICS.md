@@ -6721,7 +6721,20 @@ effort. The version 1 fragment prices the 18 riders to the boundary,
 but it grants no complete km-6 field. A separate version 1 road probe
 finds the proposed group's next meeting with 13 other co-located
 front drops at 5,849.655 m. That second meeting needs its own paid
-choice before km 6 can be accepted. Seed
+choice before km 6 can be accepted. The version 1 second-contact
+choice quotes the existing leader and all 30 sheltered riders from
+their own paid reserves. Its fragment prices every member of that
+31-rider road to the km-6 boundary. The version 1 whole-field
+settlement audits the remaining rear roads against each other, the
+contact road and the front segments. With no further measured
+intersection, it records 160 continuous paid finishes at km 6,
+including all 30 front drops that joined the solo at the two
+physical contacts. It grants no official result or source break
+road. Km 7 remains gated: its current source-break guard only
+accepts individual paid solo roads, while the previously solo
+source-break rider now leads a physically joined rear group. The
+next replay must preserve that paid group and price its next
+leader/shelter decisions. Seed
 2 separately reaches a solo/front contact at km 6. Its solo starts
 behind the paid front at the boundary, then catches it at 5,256.575
 m. The version 2 contact replay records that direction and charges

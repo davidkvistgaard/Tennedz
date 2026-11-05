@@ -89,6 +89,15 @@ import {replayV94PhysicalFrontDropContactFragmentV1,
 import {inspectV94PhysicalFrontDropContactNextV1,
   validateV94PhysicalFrontDropContactNextV1} from
   '../../lib/engine/v2/v94-physical-front-drop-contact-next-probe-v1.mjs';
+import {decideV94PhysicalFrontDropSecondContactChoiceV1,
+  validateV94PhysicalFrontDropSecondContactChoiceV1} from
+  '../../lib/engine/v2/v94-physical-front-drop-second-contact-choice-v1.mjs';
+import {replayV94PhysicalFrontDropSecondFragmentV1,
+  validateV94PhysicalFrontDropSecondFragmentV1} from
+  '../../lib/engine/v2/v94-physical-front-drop-second-contact-fragment-v1.mjs';
+import {replayV94PhysicalFrontDropSecondFieldV1,
+  validateV94PhysicalFrontDropSecondFieldV1} from
+  '../../lib/engine/v2/v94-physical-front-drop-second-contact-field-v1.mjs';
 import {replayV94PhysicalSeventhKmV1,
   validateV94PhysicalSeventhKmV1} from
   '../../lib/engine/v2/v94-physical-seventh-km-v1.mjs';
@@ -1389,6 +1398,54 @@ test('sixth front uses recorded rest before checking seed-three rear contact',()
   assert.equal(nextDropContact.fullFieldKilometre,false);
   assert.equal(validateV94PhysicalFrontDropContactNextV1(
     recording,fifth,nextDropContact),true);
+  const secondDropChoice=
+    decideV94PhysicalFrontDropSecondContactChoiceV1(
+      recording,fifth);
+  assert.equal(secondDropChoice.sourceKm,6);
+  assert.equal(secondDropChoice.candidates.length,31);
+  assert.equal(secondDropChoice.pendingLeaderRiderId,
+    'rival-10-5');
+  assert.equal(secondDropChoice.pendingShelterRiderIds.length,30);
+  assert.equal(secondDropChoice.physicalGroupFormed,false);
+  assert.equal(validateV94PhysicalFrontDropSecondContactChoiceV1(
+    recording,fifth,secondDropChoice),true);
+  const secondFragment=replayV94PhysicalFrontDropSecondFragmentV1(
+    recording,fifth);
+  assert.equal(secondFragment.sourceKm,6);
+  assert.equal(secondFragment.riderWork.length,31);
+  assert.equal(secondFragment.road.shelteredRiderIds.length,30);
+  assert.ok(secondFragment.riderWork.every(row=>
+    row.paidEnergyToContact>0&&
+    row.paidEnergyAfterContact>0&&
+    row.endDistanceM===6000));
+  assert.equal(secondFragment.fullFieldKilometre,false);
+  assert.equal(validateV94PhysicalFrontDropSecondFragmentV1(
+    recording,fifth,secondFragment),true);
+  const sixth=replayV94PhysicalFrontDropSecondFieldV1(
+    recording,fifth);
+  assert.equal(sixth.fullFieldKilometre,true);
+  assert.equal(sixth.finishes.length,160);
+  assert.equal(sixth.contactRoadAudit.unresolvedContactCount,0);
+  assert.equal(sixth.newFrontDrops.length,0);
+  assert.equal(sixth.officialResults,false);
+  const fifthByRider=new Map(fifth.finishes.map(row=>
+    [row.riderId,row]));
+  for(const finish of sixth.finishes){
+    const previous=fifthByRider.get(finish.riderId);
+    assert.ok(previous);
+    assert.ok(finish.clockSeconds>previous.clockSeconds);
+    assert.equal(finish.endDistanceM,6000);
+    assert.ok(Math.abs(finish.energyBefore-
+      previous.energyAfter)<.001);
+    assert.ok(Math.abs(finish.energyBefore-
+      finish.paidFromReserve+finish.recoveryAward-
+      finish.capAdjustment-finish.energyAfter)<.0011);
+  }
+  assert.equal(validateV94PhysicalFrontDropSecondFieldV1(
+    recording,fifth,sixth),true);
+  assert.throws(()=>replayV94PhysicalSeventhKmV1(
+    recording,sixth),
+  /individual paid roads/);
 });
 
 test('ended source break membership keeps four riders on paid roads',()=>{
