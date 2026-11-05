@@ -210,3 +210,13 @@ zero-gap launch, full-distance finish, energy debit and cap. This is
 an isolated paid event contract. The whole-race runner and independent
 replay have not yet wired it into a simultaneous bunch movement or
 resolved a resulting catch, so attack races still stop safely.
+
+The version 5 whole-race probe and version 2 replay now validate
+every new solo road created by a start drop against its measured
+departure from the source road. A launch must remove exactly that
+rider, start at the source distance and clock, and finish a paid full
+kilometre. It may diverge from its shared source, but cannot pass or
+tie a different existing road without recorded contact. Co-timed
+departures from the same source remain eligible for the existing paid
+rear boundary contact at the next kilometre. Both same-seed control
+races still complete with their previous relative finish audits.
