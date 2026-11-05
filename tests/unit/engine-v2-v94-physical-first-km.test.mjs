@@ -125,6 +125,9 @@ import {replayV94PhysicalMixedFreshAttackSolosV1,
 import {replayV94PhysicalMixedFreshKmV1,
   validateV94PhysicalMixedFreshKmV1} from
   '../../lib/engine/v2/v94-physical-mixed-fresh-km-v1.mjs';
+import {replayV94PhysicalDetachedPresetKmV1,
+  validateV94PhysicalDetachedPresetKmV1} from
+  '../../lib/engine/v2/v94-physical-detached-preset-km-v1.mjs';
 import {decideV94PhysicalForwardBoundaryChoicesV1,
   validateV94PhysicalForwardBoundaryChoicesV1} from
   '../../lib/engine/v2/v94-physical-forward-boundary-choice-v1.mjs';
@@ -1935,6 +1938,47 @@ test('ended source break membership keeps four riders on paid roads',()=>{
       error.sourceEvidence.sourceEnergyBefore&&
     error.sourceEvidence.sourceAttackReason===
       'preset_cadence');
+  const hundred=replayV94PhysicalDetachedPresetKmV1(
+    recording,paid);
+  assert.equal(hundred.sourceKm,100);
+  assert.equal(hundred.finishes.length,160);
+  const paidAt99=new Map(paid.finishes.map(row=>
+    [row.riderId,row]));
+  for(const finish of hundred.finishes){
+    const old=paidAt99.get(finish.riderId);
+    assert.ok(old);
+    assert.equal(finish.endDistanceM,100000);
+    assert.ok(finish.clockSeconds>old.clockSeconds);
+    assert.ok(Math.abs(finish.energyBefore-old.energyAfter)<.002);
+    assert.ok(Math.abs(finish.energyBefore-
+      finish.paidFromReserve+finish.recoveryAward-
+      finish.capAdjustment-finish.energyAfter)<.002);
+  }
+  assert.deepEqual(hundred.sourceBreakRiderIds,
+    ['rival-19-7','rival-6-7','rival-16-5','rival-8-5']);
+  assert.ok(hundred.detachedPresetDecisions.every(row=>
+    hundred.finishes.find(item=>item.riderId===row.riderId)
+      .physicalGroup!=='peloton'));
+  assert.deepEqual(hundred.detachedPresetDecisions.map(row=>
+    row.riderId),['rival-16-5','rival-8-5']);
+  assert.ok(hundred.detachedPresetDecisions.every(row=>
+    row.priorPhysicalGroup.startsWith('solo-')&&
+    row.choice===
+      'continue_paid_rear_road_refuse_preset_front_launch'));
+  assert.equal(validateV94PhysicalDetachedPresetKmV1(
+    recording,paid,hundred),true);
+  const afterPreset=replayV94PhysicalUnattachedSourceNextKmV1(
+    recording,hundred);
+  assert.equal(afterPreset.sourceKm,101);
+  assert.equal(afterPreset.finishes.length,160);
+  assert.ok(afterPreset.formerSourceBreakRiderIds.includes(
+    'rival-19-5'));
+  const explicitOrder=structuredClone(recording);
+  explicitOrder.frames[99].freshAttackRiderDecisions[0]
+    .attackReason='named_order';
+  assert.throws(()=>replayV94PhysicalDetachedPresetKmV1(
+    explicitOrder,paid),
+  /cannot override a physical or manager attack/);
 });
 
 test('second-km road clocks refuse a faster rear catch',()=>{

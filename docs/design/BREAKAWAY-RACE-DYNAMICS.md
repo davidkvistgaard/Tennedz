@@ -6846,6 +6846,20 @@ with 79.082 physical reserve versus 79.194 in the source ledger.
 The source calls this a `preset_cadence` launch. The replay records
 that mismatch in refusal evidence; it does not turn the rear road
 into a peloton launch or claim the source road-3 gap as physical.
+The version 1 detached-preset continuation now handles this precise
+source-only cadence case in the 260 km flat, fatigue-0 seed. Both
+named riders retain their paid rear roads. Their decisions record
+physical reserve, perceived solo and attack strength, current team
+orders and sporting stakes, and decline the source's *front* launch
+without spending energy or moving distance at the boundary. The
+ordinary physical rear choices pay km 100 for all 160 riders, while
+source break membership remains a separate claim. A forged explicit
+manager attack still refuses this path. Km 101 then pays all 160
+riders with the source's recorded front rest; former break identity
+persists even when those riders were never physically caught.
+The 30-fatigue 260 km path has a separate paid road contact at km 25
+and is not covered by this continuation test. No 260 km finish or
+source-gap calibration follows from the two paid kilometres.
 
 Callers of the experimental preview can request
 `physicalFirstKmVersion: 1` to receive this completed physical first
