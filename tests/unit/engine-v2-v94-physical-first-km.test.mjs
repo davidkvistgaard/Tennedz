@@ -1519,6 +1519,66 @@ test('sixth front uses recorded rest before checking seed-three rear contact',()
     error.sourceEvidence?.atDistanceM>95000&&
     error.sourceEvidence?.atDistanceM<96000&&
     error.sourceEvidence?.roadIds.length===2);
+  const choice=decideV94PhysicalMidKmContactChoiceV1(
+    recording,paid);
+  assert.equal(choice.candidates.length,34);
+  assert.equal(choice.pendingLeaderRiderId,'rival-10-5');
+  assert.equal(choice.pendingShelterRiderIds.length,33);
+  assert.equal(validateV94PhysicalMidKmContactChoiceV1(
+    recording,paid,choice),true);
+  const fragment=replayV94PhysicalMidKmContactFragmentV1(
+    recording,paid);
+  assert.equal(fragment.riderWork.length,34);
+  assert.equal(validateV94PhysicalMidKmContactFragmentV1(
+    recording,paid,fragment),true);
+  const audit=inspectV94PhysicalMidKmContactRoadsV1(
+    recording,paid);
+  assert.equal(audit.frontDropCount,0);
+  assert.equal(audit.firstOtherContact,null);
+  assert.equal(validateV94PhysicalMidKmContactRoadsV1(
+    recording,paid,audit),true);
+  const ninetyFifth=paid;
+  paid=replayV94PhysicalMidKmContactFullFieldV1(
+    recording,paid);
+  assert.equal(paid.sourceKm,96);
+  assert.equal(paid.finishes.length,160);
+  const beforeNinetySix=new Map(ninetyFifth.finishes.map(row=>[
+    row.riderId,row]));
+  for(const finish of paid.finishes){
+    const old=beforeNinetySix.get(finish.riderId);
+    assert.ok(old);
+    assert.ok(finish.clockSeconds>old.clockSeconds);
+    assert.equal(finish.endDistanceM,96000);
+    assert.ok(Math.abs(finish.energyBefore-
+      old.energyAfter)<.001);
+    assert.ok(Math.abs(finish.energyBefore-
+      finish.paidFromReserve+finish.recoveryAward-
+      finish.capAdjustment-finish.energyAfter)<.0011);
+  }
+  assert.equal(validateV94PhysicalMidKmContactFullFieldV1(
+    recording,ninetyFifth,paid),true);
+  for(let km=97;km<=113;km++){
+    const previous=paid;
+    paid=replayV94PhysicalMixedPaidNextKmV1(
+      recording,paid);
+    assert.equal(paid.sourceKm,km);
+    assert.equal(paid.finishes.length,160);
+    const before=new Map(previous.finishes.map(row=>[
+      row.riderId,row]));
+    for(const finish of paid.finishes){
+      const old=before.get(finish.riderId);
+      assert.ok(old);
+      assert.ok(finish.clockSeconds>old.clockSeconds);
+      assert.equal(finish.endDistanceM,km*1000);
+      assert.ok(Math.abs(finish.energyBefore-
+        old.energyAfter)<.001);
+      assert.ok(Math.abs(finish.energyBefore-
+        finish.paidFromReserve+finish.recoveryAward-
+        finish.capAdjustment-finish.energyAfter)<.0011);
+    }
+  }
+  assert.throws(()=>replayV94PhysicalMixedPaidNextKmV1(
+    recording,paid),/intact paid plan/);
 });
 
 test('ended source break membership keeps four riders on paid roads',()=>{

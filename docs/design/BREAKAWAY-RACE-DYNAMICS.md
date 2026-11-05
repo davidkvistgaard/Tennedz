@@ -6744,9 +6744,17 @@ solo launch, retains the prior mixed group's paid boundary choice
 and uses recorded front rest. The field then continues with 160
 paid finishes per kilometre through km 95. Km 96 has a measured
 rear-group contact at 95,101.683 m between a three-rider group and
-a 31-rider group. Both roads have paid km-95 origins; a mid-km
-leader and shelter choice is still required before km 96 can be
-accepted. Whole-race calibration remains open. Seed
+a 31-rider group. Both roads have paid km-95 origins. The existing
+version 2 mid-km contact choice finds all 34 riders, quotes
+`rival-10-5` as the sole willing paid leader and 33 payable
+shelters, and the fragment prices the rest of km 96. The road
+audit finds no further contact or front drop, so the full-field
+settlement accepts all 160 paid finishes. Forward boundary work
+then carries the physical group through km 113 with all-rider
+energy and clock continuity. At km 114 the source break label
+loses one of its six riders. That partial withdrawal needs an
+explicit source-membership transition while retaining the
+physical roads. Whole-race calibration remains open. Seed
 2 separately reaches a solo/front contact at km 6. Its solo starts
 behind the paid front at the boundary, then catches it at 5,256.575
 m. The version 2 contact replay records that direction and charges
