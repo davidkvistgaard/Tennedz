@@ -6,6 +6,8 @@ import {createV94RaceDynamicsPreview} from
   '../../lib/engine/v2/playtest-race-dynamics-v94.mjs';
 import {replayV94PhysicalWholeRaceV1} from
   '../../lib/engine/v2/v94-physical-whole-race-replay-v1.mjs';
+import {auditV94PhysicalFrontDropContactsV1} from
+  '../../lib/engine/v2/v94-physical-front-drop-contact-audit-v1.mjs';
 
 for(const fatigue of [0,30])test(
   `opt-in whole physical flat 260 km fatigue ${fatigue}`,()=>{
@@ -98,6 +100,20 @@ for(const [terrain,fatigue] of [
           row.roadId===evidence?.roadId);
         const drop=cause?.physicalRoads?.newFrontDrops?.find(row=>
           row.riderId===evidence?.riderId);
+        const audit=auditV94PhysicalFrontDropContactsV1(
+          cause?.physicalRoads,{sourceKm:21});
+        assert.equal(audit.frontDropCount,fatigue===0?30:33);
+        assert.equal(audit.rearRoadCount,fatigue===0?10:9);
+        assert.equal(audit.contactCount,audit.frontDropCount);
+        assert.equal(audit.firstContact.kind,
+          'front_drop_rear_road');
+        assert.equal(audit.firstContact.secondRoadId,
+          'solo-rival-2-5');
+        assert.equal(audit.firstContact.firstRiderId,
+          fatigue===0?'rival-10-6':'rival-11-3');
+        assert.ok(audit.firstContact.clockSeconds<
+          evidence.clockSeconds);
+        assert.equal(audit.physicalGroupFormed,false);
         return /stops at km 21/.test(error.message)&&
           cause.message===
             'Physical front drop/rear contact needs paid resolution.'&&
