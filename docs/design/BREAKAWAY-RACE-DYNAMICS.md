@@ -7017,5 +7017,11 @@ sporting stakes alongside the energy receipt. All ten whole-race
 cases pass this audit (160 riders per kilometre; 19,200 decisions in
 each 120 km case and 41,600 in each 260 km case). Removing one
 contact rider's choice makes the audit refuse km 32 by rider ID.
-This establishes decision trace coverage, while the source gap and
-finish clock mismatches above still block guided-race promotion.
+Version 2 of that audit also requires the committed effort and a
+finite perceived ability in each accepted paid decision. Contact
+fragments now carry the measured ability used to select the leader
+or verify shelter, and a caught rider records shelter ability at
+contact. Removing the ability from a contact decision also refuses
+km 32 by rider ID. This establishes decision input coverage, while
+the source gap and finish clock mismatches above still block
+guided-race promotion.
