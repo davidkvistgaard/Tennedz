@@ -1119,6 +1119,25 @@ test('seed-two sixth solo joins the front through paid contact',()=>{
   /Physical front needs an intact paid plan/);
   assert.equal(recording.frames[77].attackers.length,0);
   assert.equal(recording.frames[77].breakawayRiderIds.length,0);
+  const ended=replayV94PhysicalPostSourceBreakKmV1(
+    recording,afterFresh);
+  assert.equal(ended.sourceKm,78);
+  assert.equal(ended.finishes.length,160);
+  assert.equal(ended.finishes.find(row=>
+    row.riderId==='rival-18-5').physicalGroup,'peloton');
+  assert.equal(validateV94PhysicalPostSourceBreakKmV1(
+    recording,afterFresh,ended),true);
+  const post=replayV94PhysicalPostSourceBreakKmV1(
+    recording,ended);
+  assert.equal(post.sourceKm,79);
+  assert.equal(post.finishes.length,160);
+  assert.equal(post.finishes.find(row=>
+    row.riderId==='rival-18-5').physicalGroup,'peloton');
+  assert.equal(validateV94PhysicalPostSourceBreakKmV1(
+    recording,ended,post),true);
+  assert.throws(()=>replayV94PhysicalPostSourceBreakKmV1(
+    recording,post),
+  /Post-break km needs ended source claim/);
 });
 
 test('sixth front uses recorded rest before checking seed-three rear contact',()=>{

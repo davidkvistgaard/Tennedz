@@ -6715,8 +6715,11 @@ source break claim continues. Km 7 through 19 and km 20's fresh
 attack replay retain that distinction. Recorded source rest resolves
 the km-21 front charge, and the seed-2 flat 120 km no-fatigue case
 reaches km 77 with 160 paid finishes per kilometre. At km 78 the
-source break claim ends, which needs a continuation for the already
-caught rider before the next field can be settled.
+source break claim ends. The version 2 post-break replay keeps the
+already caught rider in the peloton from his own paid reserve and
+the other former break riders on their physical rear roads. It
+settles all 160 riders through km 79. A new source attack at km 80
+requires its own paid launch and source-claim transition.
 Both 260 km flat cases
 complete every rider through km 89. At km 90 the source
 introduces two new attackers (`rival-19-7` and `rival-6-7`), so the
