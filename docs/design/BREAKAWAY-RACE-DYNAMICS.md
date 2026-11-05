@@ -6764,9 +6764,14 @@ diverges at km 6: a paid solo passes 17 simultaneous front drops
 at 5,050.667 m, then another 17 at 5,062.259 m. The first
 contact quote gives the drops no payable shelter under their
 recorded effort and strength, so the group fragment correctly
-refuses. A no-join replay must record both overtakes and preserve
-their separate paid roads before the fatigue-30 whole race can
-continue. Other whole-race same-seed cases, finish validation and
+refuses. The version 1 no-join choice records all 17 separate
+continuations at the first overtake. It then quotes 17 payable
+shelters at the second measured contact. The version 1 fragment
+prices that second group's leader and shelters to the km-6
+boundary, without claiming the other 142 rider finishes or an
+official result. The first 17 remain on separate paid roads until
+a whole-field contact audit can accept km 6. Other whole-race
+same-seed cases, finish validation and
 release gates remain open. Seed
 2 separately reaches a solo/front contact at km 6. Its solo starts
 behind the paid front at the boundary, then catches it at 5,256.575

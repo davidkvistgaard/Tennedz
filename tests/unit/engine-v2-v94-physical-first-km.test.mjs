@@ -98,6 +98,12 @@ import {replayV94PhysicalFrontDropSecondFragmentV1,
 import {replayV94PhysicalFrontDropSecondFieldV1,
   validateV94PhysicalFrontDropSecondFieldV1} from
   '../../lib/engine/v2/v94-physical-front-drop-second-contact-field-v1.mjs';
+import {decideV94PhysicalFrontDropNoJoinChoiceV1,
+  validateV94PhysicalFrontDropNoJoinChoiceV1} from
+  '../../lib/engine/v2/v94-physical-front-drop-no-join-choice-v1.mjs';
+import {replayV94PhysicalFrontDropAfterNoJoinFragmentV1,
+  validateV94PhysicalFrontDropAfterNoJoinFragmentV1} from
+  '../../lib/engine/v2/v94-physical-front-drop-after-no-join-fragment-v1.mjs';
 import {replayV94PhysicalSeventhKmV1,
   validateV94PhysicalSeventhKmV1} from
   '../../lib/engine/v2/v94-physical-seventh-km-v1.mjs';
@@ -1671,6 +1677,30 @@ test('fatigued seed-three drops refuse unaffordable contact shelter',()=>{
     recording,fifth,choice),true);
   assert.throws(()=>replayV94PhysicalFrontDropContactFragmentV1(
     recording,fifth),/needs payable riders/);
+  const noJoin=decideV94PhysicalFrontDropNoJoinChoiceV1(
+    recording,fifth);
+  assert.equal(noJoin.contacts.length,17);
+  assert.ok(noJoin.contacts.every(row=>
+    row.choice==='continue_separate_paid_roads'&&
+    row.physicalGroupFormed===false));
+  assert.equal(noJoin.nextPayableContact?.candidates.length,17);
+  assert.ok(noJoin.nextPayableContact.atDistanceM>5060);
+  assert.ok(noJoin.nextPayableContact.atDistanceM<5070);
+  assert.equal(validateV94PhysicalFrontDropNoJoinChoiceV1(
+    recording,fifth,noJoin),true);
+  const fragment=
+    replayV94PhysicalFrontDropAfterNoJoinFragmentV1(
+      recording,fifth);
+  assert.equal(fragment.noJoinContactCount,17);
+  assert.equal(fragment.riderWork.length,18);
+  assert.equal(fragment.road.shelteredRiderIds.length,17);
+  assert.ok(fragment.riderWork.every(row=>
+    row.paidEnergyToContact>0&&
+    row.paidEnergyAfterContact>0&&
+    row.endDistanceM===6000));
+  assert.equal(fragment.fullFieldKilometre,false);
+  assert.equal(validateV94PhysicalFrontDropAfterNoJoinFragmentV1(
+    recording,fifth,fragment),true);
 });
 
 test('ended source break membership keeps four riders on paid roads',()=>{
