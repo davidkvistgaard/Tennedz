@@ -110,3 +110,13 @@ alternate by kilometre in stable team order. A sitting-in team supplies
 no invented worker. The selected plan and start-drop events are stored
 with the paid road result. Break leaders, chase reactions and physical
 contact still need their own planners and receipts.
+
+`physical-first-whole-race-probe-1` now carries those paid roads,
+individual reserves and team decisions into the next kilometre. It
+refuses an unresolved attack order, an unpayable worker, an unsupported
+rear group, an unrecorded crossing or a missing rider finish. A
+committed four-team, 40 km control scenario with no attack orders
+completes 1,280 rider-kilometre decisions. This is a constrained
+diagnostic run, not a calibrated new race: tactical attacks, active
+chases, within-kilometre drops and catches, full event replay, and
+finish validation against the historical same-seed run remain open.

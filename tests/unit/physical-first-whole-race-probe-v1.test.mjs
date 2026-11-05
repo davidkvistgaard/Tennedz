@@ -1,0 +1,123 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {runPhysicalFirstWholeRaceProbeV1} from
+  '../../lib/engine/v2/physical-first-whole-race-probe-v1.mjs';
+import {prepareV91Playtest} from
+  '../../lib/engine/v2/playtest.mjs';
+import {createV94RaceDynamicsPreview} from
+  '../../lib/engine/v2/playtest-race-dynamics-v94.mjs';
+import {replayRearEnergyCapV1} from
+  '../../lib/engine/v2/rear-energy-cap-source-v1.mjs';
+
+const segments=[1,2].map(km=>({km,terrain:'flat',
+  gradientPct:0,surface:'road',exposed:false,
+  weather:{temperatureC:16,windKph:0,rainMm:0}}));
+const rider=(id,flat)=>({id,flat,hills:flat,
+  mountain:flat,endurance:65,form:50,fatigue:0});
+const input=(followerAbility=65)=>({
+  start:{sourceKm:0,roads:[{roadId:'peloton',
+    riderIds:['a','b'],clockSeconds:0}],
+  riders:['a','b'].map(riderId=>({riderId,
+    teamId:riderId,roadId:'peloton',distanceM:0,
+    clockSeconds:0,reserve:80,quietKm:0}))},
+  kilometres:segments,
+  teams:[['a',65],['b',followerAbility]].map(
+    ([id,ability])=>({id,riders:[rider(id,ability)],
+      orders:{helperIds:[id],baseline:{effort:'steady',
+        chase:'selective',attack:'none',
+        frontWork:id==='a'?'rotate':'sit_in',
+        frontWorkRiderId:id==='a'?id:null},
+      phases:[]}})),
+  stakes:['a','b'].map(teamId=>({teamId,
+    sportingGoal:'sprint_finish',
+    sportingCaptainId:teamId}))});
+
+test('physical-first probe covers every rider and kilometre',()=>{
+  const race=runPhysicalFirstWholeRaceProbeV1(input());
+  assert.equal(race.completedThroughKm,2);
+  assert.equal(race.states.length,3);
+  assert.equal(race.steps.length,2);
+  assert.ok(race.steps.every(step=>
+    step.peloton.finishes.length===2&&
+    step.peloton.leaderPlan.leaderRiderId==='a'));
+  assert.ok(race.states[2].riders.every(row=>
+    row.distanceM===2000&&Number.isFinite(row.reserve)));
+  assert.equal(race.states[2].sourceGapUsed,false);
+  assert.equal(race.officialResults,false);
+});
+
+test('physical-first probe carries detached solo through all km',()=>{
+  const race=runPhysicalFirstWholeRaceProbeV1(input(0));
+  assert.equal(race.completedThroughKm,2);
+  assert.equal(race.steps[0].peloton.startDropEvents[0]
+    .riderId,'b');
+  assert.equal(race.steps[1].soloSteps.length,1);
+  assert.equal(race.states[2].roads.length,2);
+  assert.ok(race.states[2].riders.every(row=>
+    row.distanceM===2000));
+  assert.ok(race.states[2].roads.find(row=>
+    row.roadId==='solo:b').clockSeconds>
+    race.states[2].frontClockSeconds);
+});
+
+test('physical-first probe refuses a missing ordered leader',()=>{
+  const request=input();
+  request.teams[0].orders.baseline.frontWork='sit_in';
+  assert.throws(()=>runPhysicalFirstWholeRaceProbeV1(request),
+    error=>error.sourceKm===1&&
+      /No ordered payable bunch leader/.test(error.message));
+});
+
+test('physical-first probe refuses unresolved attack orders',()=>{
+  const request=input();
+  request.teams[1].orders.baseline.attack='selective';
+  assert.throws(()=>runPhysicalFirstWholeRaceProbeV1(request),
+    error=>error.sourceKm===1&&
+      /Ordered attacks need physical-first rider choices/
+        .test(error.message));
+});
+
+test('committed 40 km control covers each rider without source frames',()=>{
+  const settings={distanceKm:40,teamCount:4,terrain:'flat',
+    fatigue:0,attack:'none',chase:'selective',
+    seed:'preview-recorded-road-1'};
+  const sportingStakes=prepareV91Playtest(settings).teams.map(
+    team=>({teamId:team.id,goal:'sprint_finish',
+      captainId:team.orders.captainId}));
+  const {recording}=createV94RaceDynamicsPreview({
+    format:'one_day',settings,sportingStakes,
+    rivalGoals:[1,2,3].map(number=>({
+      teamId:`rival-${number}`,role:'protect'})),
+    ownFrontWork:'rotate',roadGroupPaceVersion:3,
+    chaseTurnVersion:1,bunchFrontTurnVersion:1,
+    pelotonFrontTurnVersion:1,pelotonDraftCostVersion:1,
+    pelotonExposureCostVersion:1,
+    freshAttackDecisionVersion:1,
+    roadGroupRiderDecisionVersion:1,
+    protectorSportingPursuitVersion:1});
+  const {teams,rivalIntent}=recording.committedInputs;
+  const kilometres=recording.route.kilometres;
+  assert.equal(recording.frames.reduce((count,frame)=>
+    count+frame.attackers.length,0),0);
+  const riders=teams.flatMap(team=>team.riders.map(rider=>({
+    riderId:rider.id,teamId:team.id,roadId:'peloton',
+    distanceM:0,clockSeconds:0,
+    reserve:replayRearEnergyCapV1({rider,kilometres,
+      throughKm:0}).initialCap,quietKm:0})));
+  const start={sourceKm:0,roads:[{roadId:'peloton',
+    riderIds:riders.map(row=>row.riderId),
+    clockSeconds:0}],riders};
+  const result=runPhysicalFirstWholeRaceProbeV1({
+    start,kilometres,teams,stakes:rivalIntent});
+  assert.equal(result.completedThroughKm,40);
+  assert.equal(result.steps.reduce((count,step)=>
+    count+step.peloton.roads.reduce((sum,road)=>
+      sum+road.riderDecisions.length,0)+
+    step.soloSteps.reduce((sum,solo)=>
+      sum+solo.road.riderDecisions.length,0),0),1280);
+  assert.equal(result.states.at(-1).riders.length,32);
+  assert.ok(result.states.at(-1).riders.every(row=>
+    row.distanceM===40000));
+  assert.ok(result.states.every(state=>state.sourceGapUsed===
+    false||state.sourceKm===0));
+});
