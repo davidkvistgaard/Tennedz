@@ -6885,6 +6885,12 @@ work or speed for free. This path needs a versioned depleted-rider
 choice with paid speed and contact resolution before it can claim a
 260 km finish. The fatigue-0 whole-race result does not validate this
 fatigue-30 path.
+The separate `v2-rear-depleted-travel-1` quote now applies the
+existing exhaustion coast factor to the rider's own road: it spends
+at most available reserve, records unmet demand and slows the rider's
+clock. It does not yet choose a replacement leader, settle followers'
+clocks or join roads at contact; the 260 km replay therefore retains
+the km-252 refusal until those decisions can be recorded and checked.
 
 Callers of the experimental preview can request
 `physicalFirstKmVersion: 1` to receive this completed physical first
