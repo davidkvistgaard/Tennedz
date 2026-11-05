@@ -1858,30 +1858,37 @@ test('ended source break membership keeps four riders on paid roads',()=>{
     freshAttackDecisionVersion:1,
     roadGroupRiderDecisionVersion:1,
     protectorSportingPursuitVersion:1});
-  const fifth=replayV94PhysicalFifthKmV1(
-    recording,replayV94PhysicalFourthKmV1(recording));
+  const first=completeV94PhysicalFirstKmV1(recording);
+  const second=replayV94PhysicalSecondRearKmV1(recording);
+  const third=replayV94PhysicalThirdRearKmV1(recording);
+  const fourth=replayV94PhysicalFourthKmV1(recording);
+  const fifth=replayV94PhysicalFifthKmV1(recording,fourth);
   const sixth=replayV94PhysicalSixthKmV1(recording,fifth);
   let paid=replayV94PhysicalSeventhKmV1(recording,sixth);
+  const paidTraces=[first,second,third,fourth,fifth,sixth,paid];
+  const advance=trace=>{paidTraces.push(trace);return trace;};
   for(let km=8;km<=19;km++)
-    paid=replayV94PhysicalUnattachedSourceNextKmV1(
-      recording,paid);
-  paid=replayV94PhysicalMixedFreshKmV1(recording,paid);
-  paid=replayV94PhysicalRecordedRestKmV1(recording,paid);
+    paid=advance(replayV94PhysicalUnattachedSourceNextKmV1(
+      recording,paid));
+  paid=advance(replayV94PhysicalMixedFreshKmV1(recording,paid));
+  paid=advance(replayV94PhysicalRecordedRestKmV1(
+    recording,paid));
   for(let km=22;km<=27;km++)
-    paid=replayV94PhysicalRecordedRestKmV1(recording,paid);
-  paid=replayV94PhysicalMidKmContactFullFieldV1(
-    recording,paid);
+    paid=advance(replayV94PhysicalRecordedRestKmV1(
+      recording,paid));
+  paid=advance(replayV94PhysicalMidKmContactFullFieldV1(
+    recording,paid));
   for(let km=29;km<=33;km++)
-    paid=replayV94PhysicalMixedPaidNextKmV1(
-      recording,paid);
-  paid=replayV94PhysicalMidKmContactFullFieldV1(
-    recording,paid);
+    paid=advance(replayV94PhysicalMixedPaidNextKmV1(
+      recording,paid));
+  paid=advance(replayV94PhysicalMidKmContactFullFieldV1(
+    recording,paid));
   for(let km=35;km<=84;km++)
-    paid=replayV94PhysicalMixedPaidNextKmV1(
-      recording,paid);
+    paid=advance(replayV94PhysicalMixedPaidNextKmV1(
+      recording,paid));
   const priorAt84=paid;
-  paid=replayV94PhysicalPostSourceBreakKmV1(
-    recording,paid);
+  paid=advance(replayV94PhysicalPostSourceBreakKmV1(
+    recording,paid));
   assert.equal(paid.sourceKm,85);
   assert.equal(paid.finishes.length,160);
   assert.equal(paid.sourceBreakRiderIds.length,0);
@@ -1892,8 +1899,8 @@ test('ended source break membership keeps four riders on paid roads',()=>{
   assert.equal(validateV94PhysicalPostSourceBreakKmV1(
     recording,priorAt84,paid),true);
   for(let km=86;km<=89;km++){
-    paid=replayV94PhysicalPostSourceBreakKmV1(
-      recording,paid);
+    paid=advance(replayV94PhysicalPostSourceBreakKmV1(
+      recording,paid));
     assert.equal(paid.sourceKm,km);
     assert.equal(paid.finishes.length,160);
   }
@@ -1901,8 +1908,8 @@ test('ended source break membership keeps four riders on paid roads',()=>{
     recording,paid),
   /Post-break km needs ended source claim/);
   const priorAt89=paid;
-  paid=replayV94PhysicalPostBreakFreshKmV1(
-    recording,paid);
+  paid=advance(replayV94PhysicalPostBreakFreshKmV1(
+    recording,paid));
   assert.equal(paid.sourceKm,90);
   assert.equal(paid.finishes.length,160);
   assert.deepEqual(paid.sourceBreakRiderIds,
@@ -1913,8 +1920,8 @@ test('ended source break membership keeps four riders on paid roads',()=>{
   assert.equal(validateV94PhysicalPostBreakFreshKmV1(
     recording,priorAt89,paid),true);
   for(let km=91;km<=99;km++){
-    paid=replayV94PhysicalUnattachedSourceNextKmV1(
-      recording,paid);
+    paid=advance(replayV94PhysicalUnattachedSourceNextKmV1(
+      recording,paid));
     assert.equal(paid.sourceKm,km);
     assert.equal(paid.finishes.length,160);
   }
@@ -1940,6 +1947,7 @@ test('ended source break membership keeps four riders on paid roads',()=>{
       'preset_cadence');
   const hundred=replayV94PhysicalDetachedPresetKmV1(
     recording,paid);
+  paidTraces.push(hundred);
   assert.equal(hundred.sourceKm,100);
   assert.equal(hundred.finishes.length,160);
   const paidAt99=new Map(paid.finishes.map(row=>
@@ -1969,10 +1977,58 @@ test('ended source break membership keeps four riders on paid roads',()=>{
     recording,paid,hundred),true);
   const afterPreset=replayV94PhysicalUnattachedSourceNextKmV1(
     recording,hundred);
+  paidTraces.push(afterPreset);
   assert.equal(afterPreset.sourceKm,101);
   assert.equal(afterPreset.finishes.length,160);
   assert.ok(afterPreset.formerSourceBreakRiderIds.includes(
     'rival-19-5'));
+  let probe=afterPreset;
+  const paidContacts=[];
+  for(let km=102;km<=260;km++){
+    const prior=probe;
+    const frame=recording.frames[km-1];
+    let next;
+    try{next=frame.attackers.length?
+      replayV94PhysicalDetachedPresetKmV1(recording,prior):
+      frame.breakawayRiderIds.length===0?
+        replayV94PhysicalPostSourceBreakKmV1(recording,prior):
+      frame.breakawayRiderIds.length<
+        prior.sourceBreakRiderIds.length?
+        replayV94PhysicalPartialSourceWithdrawalKmV1(
+          recording,prior):
+        replayV94PhysicalUnattachedSourceNextKmV1(
+          recording,prior);}
+    catch(error){
+      if(error.message!==
+        'Physical rear roads need paid contact resolution.')
+        throw error;
+      next=replayV94PhysicalMidKmContactFullFieldV1(
+        recording,prior);
+      paidContacts.push(km);
+    }
+    probe=advance(next);
+    assert.equal(probe.sourceKm,km);
+    assert.equal(probe.finishes.length,160);
+  }
+  assert.deepEqual(paidContacts,[123,139]);
+  assert.deepEqual(paidTraces[208]
+    .sourceMembershipWithdrawnRiderIds,
+  ['rival-16-5','rival-8-5']);
+  assert.deepEqual(paidTraces[219]
+    .sourcePresetFrontLaunchDeclinedRiderIds,
+  ['rival-16-5','rival-8-5']);
+  assert.equal(paidTraces[256].sourceBreakMembershipEnded,true);
+  assert.equal(probe.sourceKm,260);
+  assert.equal(probe.officialResults,false);
+  assert.equal(validateV94PhysicalWholeRaceV1(
+    recording,paidTraces).totalRiderKm,41600);
+  const sourceGapAudit=auditV94PhysicalWholeRaceSourceGapsV1(
+    recording,paidTraces);
+  assert.equal(sourceGapAudit.comparedGroupCheckpoints,374);
+  assert.equal(sourceGapAudit.comparedRiders,878);
+  assert.equal(sourceGapAudit.sourceGapExceedsBestPaidLeadCount,60);
+  assert.equal(sourceGapAudit.maxGapOverBestPaidLeadSeconds,
+    27.95292);
   const explicitOrder=structuredClone(recording);
   explicitOrder.frames[99].freshAttackRiderDecisions[0]
     .attackReason='named_order';

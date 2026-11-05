@@ -6858,8 +6858,22 @@ manager attack still refuses this path. Km 101 then pays all 160
 riders with the source's recorded front rest; former break identity
 persists even when those riders were never physically caught.
 The 30-fatigue 260 km path has a separate paid road contact at km 25
-and is not covered by this continuation test. No 260 km finish or
-source-gap calibration follows from the two paid kilometres.
+and is not covered by this continuation test.
+
+The fatigue-0 seed-1 continuation now carries all 160 paid riders
+from km 102 through the 260 km boundary. Two measured rear-road
+contacts at km 123 and 139 use the existing paid contact fragment and
+whole-field audit. The source withdraws two claimed break riders at
+km 209; they retain physical rear roads. The same automatic preset
+attempt returns at km 220 and is again declined from those roads.
+The source break claim ends at km 257 without assigning a physical
+catch from that label. The version 1 whole-race validator accepts
+41,600 rider kilometres with continuous reserve, distance and clocks.
+The source gap audit remains a comparison; no official finish is awarded.
+Of 374 source group checkpoints covering 878 rider comparisons,
+60 claim a larger lead than any member's paid individual clock.
+The largest excess is 27.95292 seconds. This whole-race mismatch
+still blocks promotion despite the complete physical energy replay.
 
 Callers of the experimental preview can request
 `physicalFirstKmVersion: 1` to receive this completed physical first
