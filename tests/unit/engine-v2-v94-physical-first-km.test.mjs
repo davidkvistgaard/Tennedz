@@ -2037,6 +2037,102 @@ test('ended source break membership keeps four riders on paid roads',()=>{
   /cannot override a physical or manager attack/);
 });
 
+test('fatigued 260 km seed-one reaches measured rear energy guard',()=>{
+  const settings={distanceKm:260,teamCount:20,terrain:'flat',
+    fatigue:30,attack:'none',chase:'selective',
+    seed:'preview-recorded-road-1'};
+  const sportingStakes=prepareV91Playtest(settings).teams.map(team=>({
+    teamId:team.id,goal:'sprint_finish',
+    captainId:team.orders.captainId}));
+  const {recording}=createV94RaceDynamicsPreview({
+    format:'one_day',settings,sportingStakes,
+    roadGroupPaceVersion:3,chaseTurnVersion:1,
+    bunchFrontTurnVersion:1,pelotonFrontTurnVersion:1,
+    pelotonDraftCostVersion:1,pelotonExposureCostVersion:1,
+    freshAttackDecisionVersion:1,
+    roadGroupRiderDecisionVersion:1,
+    protectorSportingPursuitVersion:1});
+  const fourth=replayV94PhysicalFourthKmV1(recording);
+  const fifth=replayV94PhysicalFifthKmV1(recording,fourth);
+  const sixth=replayV94PhysicalSixthKmV1(recording,fifth);
+  let prior=replayV94PhysicalSeventhKmV1(recording,sixth);
+  const traces=[completeV94PhysicalFirstKmV1(recording),
+    replayV94PhysicalSecondRearKmV1(recording),
+    replayV94PhysicalThirdRearKmV1(recording),
+    fourth,fifth,sixth,prior];
+  const contacts=[];
+  for(let km=8;km<=260;km++){
+    const frame=recording.frames[km-1];
+    let next;
+    try{
+      if(frame.attackers.length){
+        const byId=new Map(prior.finishes.map(row=>
+          [row.riderId,row]));
+        next=frame.attackers.every(id=>
+          byId.get(id)?.physicalGroup==='peloton')?
+          prior.sourceBreakRiderIds.length?
+            replayV94PhysicalMixedFreshKmV1(recording,prior):
+            replayV94PhysicalPostBreakFreshKmV1(
+              recording,prior):
+          replayV94PhysicalDetachedPresetKmV1(recording,prior);
+      }else if(frame.breakawayRiderIds.length===0){
+        next=replayV94PhysicalPostSourceBreakKmV1(
+          recording,prior);
+      }else if(frame.breakawayRiderIds.length<
+        prior.sourceBreakRiderIds.length){
+        next=replayV94PhysicalPartialSourceWithdrawalKmV1(
+          recording,prior);
+      }else next=prior.contactFragmentVersion||
+        prior.mixedPaidContactFromPrior===true?
+          replayV94PhysicalMixedPaidNextKmV1(recording,prior):
+          replayV94PhysicalUnattachedSourceNextKmV1(
+            recording,prior);
+    }catch(error){
+      let failure=error;
+      if(failure.message===
+        'Attached front energy differs from V94 source.'&&
+        frame.pelotonRestTeamIds?.length){
+        try{next=replayV94PhysicalRecordedRestKmV1(
+          recording,prior);failure=null;}
+        catch(restError){failure=restError;}
+      }
+      if(failure?.message===
+        'Mixed paid km needs physical mixed contact.'){
+        try{next=replayV94PhysicalUnattachedSourceNextKmV1(
+          recording,prior);failure=null;}
+        catch(nextError){failure=nextError;}
+      }
+      if(failure?.message===
+        'Physical rear roads need paid contact resolution.'){
+        next=replayV94PhysicalMidKmContactFullFieldV1(
+          recording,prior);
+        contacts.push(km);
+      }else if(failure){
+        if(km===252){
+          assert.equal(prior.sourceKm,251);
+          assert.equal(traces.length,251);
+          assert.ok(contacts.includes(25));
+          assert.equal(failure.message,
+            'Rear rider cannot pay terrain-priced work.');
+          assert.deepEqual(failure.sourceEvidence,{
+            sourceKm:252,riderId:'rival-10-0',
+            physicalGroup:'paid-contact-km251-8',
+            role:'leader',effort:'steady',
+            energyBefore:.316,energyDemand:.3496});
+          return;
+        }
+        throw new Error(`km ${km}: ${failure.message}`,
+          {cause:failure});
+      }
+    }
+    assert.equal(next.sourceKm,km);
+    assert.equal(next.finishes.length,160);
+    traces.push(next);
+    prior=next;
+  }
+  assert.fail('The measured km-252 reserve guard did not fire.');
+});
+
 test('second-km road clocks refuse a faster rear catch',()=>{
   const ahead={roadId:'ahead',startClockSeconds:0,
     finishClockSeconds:100,speedMps:10};

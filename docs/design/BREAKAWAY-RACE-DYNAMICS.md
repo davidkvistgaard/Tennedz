@@ -6875,6 +6875,17 @@ Of 374 source group checkpoints covering 878 rider comparisons,
 The largest excess is 27.95292 seconds. This whole-race mismatch
 still blocks promotion despite the complete physical energy replay.
 
+The same seed at fatigue 30 now pays all 160 riders through km 251,
+including the km-25 road contact. Km 252 has a measured reserve
+refusal: `rival-10-0` reaches the boundary in
+`paid-contact-km251-8` with 0.316 reserve, but its recorded
+steady-effort leader turn demands 0.3496. The replay names the rider,
+road, role, effort and shortfall and refuses to grant the remaining
+work or speed for free. This path needs a versioned depleted-rider
+choice with paid speed and contact resolution before it can claim a
+260 km finish. The fatigue-0 whole-race result does not validate this
+fatigue-30 path.
+
 Callers of the experimental preview can request
 `physicalFirstKmVersion: 1` to receive this completed physical first
 kilometre as a separate `physicalFirstKm` result. It requires the
