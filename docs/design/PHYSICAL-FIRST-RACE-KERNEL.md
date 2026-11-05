@@ -200,3 +200,13 @@ charge a full kilometre or award any gap. The whole-race probe still
 refuses attack orders until the attack has a paid road step, contact
 resolution and independent replay. The flat and mountain controls
 remain the calibrated scenarios; neither validates attack finishes.
+
+`physical-first-attack-road-1` now prices a selected attacker's first
+solo kilometre from the measured bunch boundary. It verifies the
+choice against current committed orders, pays the terrain-priced solo
+road work plus the existing attack initiation cost from that rider's
+reserve, uses the attack phase for perceived speed, and records a
+zero-gap launch, full-distance finish, energy debit and cap. This is
+an isolated paid event contract. The whole-race runner and independent
+replay have not yet wired it into a simultaneous bunch movement or
+resolved a resulting catch, so attack races still stop safely.
