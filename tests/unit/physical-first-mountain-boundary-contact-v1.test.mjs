@@ -10,6 +10,8 @@ import {runPhysicalFirstWholeRaceProbeV1} from
   '../../lib/engine/v2/physical-first-whole-race-probe-v1.mjs';
 import {calibratePhysicalFirstFinishV1} from
   '../../lib/engine/v2/physical-first-finish-calibration-v1.mjs';
+import {replayPhysicalFirstWholeRaceV1} from
+  '../../lib/engine/v2/physical-first-whole-race-replay-v1.mjs';
 
 test('committed 120 km mountain contact covers paid field',t=>{
   const settings={distanceKm:120,teamCount:20,
@@ -54,6 +56,14 @@ test('committed 120 km mountain contact covers paid field',t=>{
   const race=runPhysicalFirstWholeRaceProbeV1({
     start,kilometres,teams,stakes:rivalIntent,
     raceSeed:recording.raceSeed});
+  const replayInput={start,kilometres,teams,
+    stakes:rivalIntent,raceSeed:recording.raceSeed};
+  const replay=replayPhysicalFirstWholeRaceV1(
+    replayInput,race);
+  assert.equal(replay.validatedKm,120);
+  assert.equal(replay.validatedRiderKm,19200);
+  assert.deepEqual(replay.finalState,
+    race.states.at(-1));
   assert.equal(race.completedThroughKm,120);
   assert.equal(race.states.at(-1).riders.length,160);
   assert.ok(race.states.at(-1).riders.every(row=>
@@ -72,6 +82,22 @@ test('committed 120 km mountain contact covers paid field',t=>{
     event.recordedPaidContact&&
     event.approach.every(row=>row.paidFromReserve>0)&&
     event.leaderPlan.leaderRiderId));
+  const changedContact=structuredClone(race);
+  changedContact.steps.find(step=>
+    step.boundaryContactEvents.length)
+    .boundaryContactEvents[0].approach[0]
+    .paidFromReserve+=1;
+  assert.throws(()=>replayPhysicalFirstWholeRaceV1(
+    replayInput,changedContact),
+  /contact differs from paid approach/);
+  const changedRear=structuredClone(race);
+  changedRear.steps.find(step=>
+    step.otherSteps.some(row=>
+      row.leaderPlan)).otherSteps.find(row=>
+    row.leaderPlan).finishes[0].energyAfter-=1;
+  assert.throws(()=>replayPhysicalFirstWholeRaceV1(
+    replayInput,changedRear),
+  /rear work or reserve differs/);
   const calibration=calibratePhysicalFirstFinishV1(
     recording,race);
   t.diagnostic(`mountain relative finish:

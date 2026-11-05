@@ -173,4 +173,15 @@ these riders in the bunch; the physical run records early paid drops
 and rear contact. This is a measured limitation, not a reason to
 import source gaps. Contact with an existing rear group or the
 peloton, attacks, active chases, within-kilometre splits and
-independent replay remain open.
+a separate replay were the next gates.
+
+`physical-first-whole-race-replay-1` now independently walks the
+experimental recording. From the committed route, teams, stakes,
+start reserve and seed, it recomputes the ordered bunch leader,
+every paid road and start drop, each rear contact and leader, and
+each rider's boundary clock and energy. It refuses altered contact
+approaches, road payments and finish states. The flat control
+validates 1,280 rider-kilometres and the mountain control validates
+19,200. This is replay of the constrained physical-first scenarios;
+the historical V94 source still disagrees on 66 mountain finish
+gaps, and unresolved tactical features remain outside this replay.

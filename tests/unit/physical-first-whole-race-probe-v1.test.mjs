@@ -10,6 +10,8 @@ import {replayRearEnergyCapV1} from
   '../../lib/engine/v2/rear-energy-cap-source-v1.mjs';
 import {calibratePhysicalFirstFinishV1} from
   '../../lib/engine/v2/physical-first-finish-calibration-v1.mjs';
+import {replayPhysicalFirstWholeRaceV1} from
+  '../../lib/engine/v2/physical-first-whole-race-replay-v1.mjs';
 
 const segments=[1,2].map(km=>({km,terrain:'flat',
   gradientPct:0,surface:'road',exposed:false,
@@ -113,6 +115,14 @@ test('committed 40 km control covers each rider and audits source finish',t=>{
   const result=runPhysicalFirstWholeRaceProbeV1({
     start,kilometres,teams,stakes:rivalIntent,
     raceSeed:recording.raceSeed});
+  const replayInput={start,kilometres,teams,
+    stakes:rivalIntent,raceSeed:recording.raceSeed};
+  const replay=replayPhysicalFirstWholeRaceV1(
+    replayInput,result);
+  assert.equal(replay.validatedKm,40);
+  assert.equal(replay.validatedRiderKm,1280);
+  assert.deepEqual(replay.finalState,
+    result.states.at(-1));
   assert.equal(result.completedThroughKm,40);
   assert.equal(result.steps.reduce((count,step)=>
     count+step.peloton.roads.reduce((sum,road)=>
@@ -144,4 +154,19 @@ test('committed 40 km control covers each rider and audits source finish',t=>{
   assert.throws(()=>calibratePhysicalFirstFinishV1(
     recording,changedStart),
   /committed starting reserve/);
+  const changedWork=structuredClone(result);
+  changedWork.steps[0].peloton.finishes[0]
+    .energyAfter-=1;
+  assert.throws(()=>replayPhysicalFirstWholeRaceV1(
+    replayInput,changedWork),
+  /bunch work or reserve differs/);
+  const changedFinish=structuredClone(result);
+  changedFinish.states.at(-1).riders[0]
+    .clockSeconds+=1;
+  assert.throws(()=>replayPhysicalFirstWholeRaceV1(
+    replayInput,changedFinish),
+  /boundary or finish differs/);
+  assert.throws(()=>replayPhysicalFirstWholeRaceV1({
+    ...replayInput,raceSeed:'different-seed'},result),
+  /same committed recording/);
 });
