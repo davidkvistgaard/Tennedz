@@ -30,6 +30,8 @@ import {replayV94PhysicalMixedOriginPresetKmV1} from
   '../../lib/engine/v2/v94-physical-mixed-origin-preset-km-v1.mjs';
 import {decideV94PhysicalForwardBoundaryChoicesV1} from
   '../../lib/engine/v2/v94-physical-forward-boundary-choice-v1.mjs';
+import {planV94PhysicalAvailableFrontTurnsV1} from
+  '../../lib/engine/v2/v94-physical-available-front-turns-v1.mjs';
 
 for(const fatigue of [0,30])test(
   `opt-in whole physical flat 260 km fatigue ${fatigue}`,()=>{
@@ -169,6 +171,13 @@ for(const [terrain,fatigue] of [
             'rival-10-5','rival-10-6',
             'rival-14-5','rival-14-6',
             'rival-18-5','rival-18-6']);
+          const available=planV94PhysicalAvailableFrontTurnsV1(
+            recording,cause.paidPriorTrace);
+          assert.equal(available.missing.length,6);
+          assert.equal(available.availableTurnCount,20);
+          assert.equal(available.turns.at(-1).endM,1000);
+          assert.ok(available.turns.every(row=>row.payable));
+          assert.equal(available.physicalRoadMoved,false);
           assert.equal(cause.paidTraces[69].sourceKm,70);
           assert.equal(cause.paidTraces[69].fullFieldKilometre,
             true);
