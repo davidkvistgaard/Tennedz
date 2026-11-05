@@ -91,15 +91,24 @@ for(const [terrain,fatigue] of [
       protectorSportingPursuitVersion:1});
     if(terrain==='mountain'){
       assert.throws(()=>replayV94PhysicalWholeRaceV1(
-        recording),error=>
-        /stops at km 21/.test(error.message)&&
-        error.cause?.message===
-          'Physical front drop/rear contact needs paid resolution.'&&
-        error.cause.sourceEvidence?.riderId==='rival-10-5'&&
-        error.cause.sourceEvidence?.roadId===
-          'solo-rival-2-5'&&
-        error.cause.sourceEvidence.atDistanceM>20000&&
-        error.cause.sourceEvidence.atDistanceM<21000);
+        recording),error=>{
+        const cause=error.cause;
+        const evidence=cause?.sourceEvidence;
+        const road=cause?.physicalRoads?.roads?.find(row=>
+          row.roadId===evidence?.roadId);
+        const drop=cause?.physicalRoads?.newFrontDrops?.find(row=>
+          row.riderId===evidence?.riderId);
+        return /stops at km 21/.test(error.message)&&
+          cause.message===
+            'Physical front drop/rear contact needs paid resolution.'&&
+          evidence.riderId==='rival-10-5'&&
+          evidence.roadId==='solo-rival-2-5'&&
+          evidence.atDistanceM>20000&&
+          evidence.atDistanceM<21000&&
+          road?.riderDecisions?.[0]?.riderId==='rival-2-5'&&
+          road.startClockSeconds>drop?.origin?.startClockSeconds&&
+          road.finishClockSeconds<drop?.finish?.clockSeconds;
+      });
     }else{
       const replay=replayV94PhysicalWholeRaceV1(recording);
       assert.equal(replay.validation.totalRiderKm,19200);
