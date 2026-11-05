@@ -163,7 +163,7 @@ for(const [terrain,fatigue] of [
             row.mixedPaidContact===true));
           const rearNamedLeaders=recording.frames[70]
             .pelotonFrontTurnPlan.turns.filter(turn=>
-              cause.paidPriorTrace.finishes.find(row=>
+              km70.finishes.find(row=>
                 row.riderId===turn.leaderRiderId)
                 ?.physicalGroup!=='peloton');
           assert.deepEqual(rearNamedLeaders.map(row=>
@@ -172,7 +172,7 @@ for(const [terrain,fatigue] of [
             'rival-14-5','rival-14-6',
             'rival-18-5','rival-18-6']);
           const available=planV94PhysicalAvailableFrontTurnsV1(
-            recording,cause.paidPriorTrace);
+            recording,km70);
           assert.equal(available.missing.length,6);
           assert.equal(available.availableTurnCount,20);
           assert.equal(available.turns.at(-1).endM,1000);
@@ -181,9 +181,20 @@ for(const [terrain,fatigue] of [
           assert.equal(cause.paidTraces[69].sourceKm,70);
           assert.equal(cause.paidTraces[69].fullFieldKilometre,
             true);
-          assert.match(error.message,/stops at km 71/);
+          assert.match(error.message,/stops at km 72/);
           assert.equal(cause.message,
-            'Named leader left the physical front.');
+            'Physical front lacks continuous paid reserve.');
+          const km71=cause.paidTraces[70];
+          assert.equal(km71.sourceKm,71);
+          assert.equal(km71.fullFieldKilometre,true);
+          assert.equal(km71.finishes.length,160);
+          assert.equal(km71.front.sourceNamedFrontReallocated,true);
+          assert.equal(km71.front.availableFrontPlanVersion,
+            available.version);
+          assert.ok(km71.finishes.every(row=>
+            Math.abs(row.energyBefore-row.paidFromReserve+
+              row.recoveryAward-row.capAdjustment-
+              row.energyAfter)<=.0010001));
           assert.equal(cause.paidTraces?.[20]?.sourceKm,21);
           assert.equal(cause.paidTraces[20].fullFieldKilometre,
             true);
@@ -304,7 +315,7 @@ for(const [terrain,fatigue] of [
             recording,prior20,physicalRoads),
         /needs paid shelter/);
         return (fatigue===0?
-          /stops at km 71/.test(error.message):
+          /stops at km 72/.test(error.message):
           /stops at km 21/.test(error.message)&&
           cause.message===
             'Front-drop batch fragment needs paid shelter.')&&
