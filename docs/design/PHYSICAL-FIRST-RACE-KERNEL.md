@@ -284,3 +284,24 @@ historical V94 relative finish audit differs for 8 of 32 riders,
 maximum 116.327831 seconds; source finish claims were only comparison
 data. This is a complete constrained attack race, not whole-race
 calibration across mountain, chase, multi-contact and stage scenarios.
+
+`physical-first-attack-choice-4` now records a hold on kilometres
+outside the existing ordered repeated/selective attack windows;
+an explicitly named attacker or a committed phase start can still
+launch immediately. It counts only teammates physically ahead of the
+bunch for the existing two-rider break limit. If one teammate is
+already forward, an unnamed attacker compares the measured gap and
+both riders' perceived sustainable solo speeds against the remaining
+committed route. The helper holds when the estimated bridge would
+leave less than the existing reciprocal pull interval for shared
+work. This estimate affects the rider's choice only; actual contact
+still requires measured, paid roads. The version 9 probe and version
+6 replay record and recompute the choice.
+
+On the fixed same-seed 40 km break scenario, the generated team now
+pays one attack at km 5 and holds a second that would provide too
+little shared road. All 1,280 rider-kilometres still finish and replay.
+The historical relative finish mismatch falls from 8 of 32 riders
+(maximum 116.327831 seconds) to 1 of 32 (60.4232 seconds). The
+remaining rider's old source lead is comparison evidence, not a
+physical gap or an official result.
