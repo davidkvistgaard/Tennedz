@@ -10,8 +10,10 @@ import {runPhysicalFirstWholeRaceProbeV1} from
   '../../lib/engine/v2/physical-first-whole-race-probe-v1.mjs';
 import {replayPhysicalFirstWholeRaceV1} from
   '../../lib/engine/v2/physical-first-whole-race-replay-v1.mjs';
+import {calibratePhysicalFirstFinishV1} from
+  '../../lib/engine/v2/physical-first-finish-calibration-v1.mjs';
 
-test('same-seed attack pays solo contact then stops at bunch catch',t=>{
+test('same-seed attack pays contact and reaches a replayed finish',t=>{
   const settings={distanceKm:40,teamCount:4,
     terrain:'flat',fatigue:0,attack:'none',
     chase:'selective',seed:'preview-recorded-road-1'};
@@ -65,26 +67,35 @@ test('same-seed attack pays solo contact then stops at bunch catch',t=>{
     .finishes[0].energyAfter-=1;
   assert.throws(()=>replayPhysicalFirstWholeRaceV1(
     eight,altered),/within-km contact differs/);
-  assert.throws(()=>runPhysicalFirstWholeRaceProbeV1({
+  const fullInput={
     start,kilometres,teams,stakes:rivalIntent,
-    raceSeed:recording.raceSeed}),error=>{
-    t.diagnostic(`physical-first attack race completed
-      ${error.completedThroughKm}/40 km; next contact:
-      ${error.sourceEvidence?.firstRoadId} and
-      ${error.sourceEvidence?.secondRoadId} at
-      ${error.sourceEvidence?.projectedMeeting
-        ?.atDistanceM} m`);
-    return error.completedThroughKm===8&&
-      error.sourceKm===9&&
-      /Road crossing needs recorded paid contact/
-        .test(error.message)&&
-      error.sourceEvidence?.projectedMeeting
-        ?.atDistanceM>8000&&
-      error.sourceEvidence?.projectedMeeting
-        ?.atDistanceM<9000&&
-      error.sourceEvidence?.firstRoadId===
-        'peloton'&&
-      error.sourceEvidence?.secondRoadId?.startsWith(
-        'solo:');
-  });
+    raceSeed:recording.raceSeed};
+  const full=runPhysicalFirstWholeRaceProbeV1(
+    fullInput);
+  assert.equal(full.completedThroughKm,40);
+  assert.equal(full.states.at(-1).riders.length,32);
+  assert.ok(full.states.at(-1).riders.every(row=>
+    row.distanceM===40000));
+  assert.equal(replayPhysicalFirstWholeRaceV1(
+    fullInput,full).validatedRiderKm,1280);
+  const catchResult=full.steps[8]
+    .withinKmContactEvents[0];
+  assert.ok(catchResult.event.atDistanceM>8000&&
+    catchResult.event.atDistanceM<9000);
+  assert.equal(catchResult.event.recordedPaidContact,
+    true);
+  const falseCatch=structuredClone(full);
+  falseCatch.steps[8].withinKmContactEvents[0]
+    .finish.energyAfter-=1;
+  assert.throws(()=>replayPhysicalFirstWholeRaceV1(
+    fullInput,falseCatch),
+  /within-km contact differs/);
+  const calibration=calibratePhysicalFirstFinishV1(
+    recording,full);
+  t.diagnostic(`40 km attack finish mismatches:
+    ${calibration.mismatchCount}/32; maximum
+    ${calibration.maxAbsoluteMismatchSeconds}s;
+    bunch catch: ${catchResult.event.choice}`);
+  assert.equal(calibration.validatedKm,40);
+  assert.equal(calibration.riderCount,32);
 });

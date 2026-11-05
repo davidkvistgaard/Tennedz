@@ -264,5 +264,23 @@ shared finish, and checks that the new road does not cross any third
 road before or after contact. The fixed attack race now pays and
 replays all 32 riders through km 8 (256 rider-kilometres), including
 the contact at 6,098.75 m. At km 9 the field reaches a separate solo
-rider at 8,097.744361 m. The field-to-solo catch has no paid resolver
-yet, so the full 40 km attack calibration remains blocked there.
+rider at 8,097.744361 m. The field-to-solo catch had no paid resolver
+at that stage, so the full 40 km attack calibration stopped there.
+
+`physical-first-bunch-catch-1` now handles a faster paid bunch reaching
+one slower paid solo rider within a kilometre. The solo rider pays the
+approach to the measured contact. If that rider can hold the bunch's
+single paid leader through the remaining distance, the rider pays
+lower-cost shelter and joins the bunch at its finish clock. Otherwise
+the rider keeps the fully paid solo road and slides through the bunch;
+the pass is still a recorded contact. The version 2 contact settlement
+checks other roads for unrecorded crossings, and version 8 probe and
+version 5 replay include the catch receipt and final energy.
+
+The fixed 40 km, four-team same-seed attack race now reaches the
+finish with 32 rider records and 1,280 independently replayed
+rider-kilometres. The km 9 caught rider joins paid bunch shelter. The
+historical V94 relative finish audit differs for 8 of 32 riders,
+maximum 116.327831 seconds; source finish claims were only comparison
+data. This is a complete constrained attack race, not whole-race
+calibration across mountain, chase, multi-contact and stage scenarios.
