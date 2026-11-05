@@ -138,6 +138,14 @@ for(const [terrain,fatigue] of [
           assert.equal(completed.physicalFinish.riderCount,160);
           assert.equal(completed.sourceCheckpointCalibrationFailed,
             true);
+          assert.equal(completed.sourceGapAudit
+            .sourceGapExceedsBestPaidLeadCount,49);
+          assert.equal(completed.sourceGapAudit
+            .maxGapOverBestPaidLeadSeconds,27.44668);
+          assert.equal(completed.finishSourceAudit.mismatchCount,
+            119);
+          assert.equal(completed.finishSourceAudit
+            .maxAbsoluteMismatchSeconds,498.307936);
           const prior69=traces[68];
           const frame70=recording.frames[69];
           assert.deepEqual(prior69.sourceBreakRiderIds,[]);
