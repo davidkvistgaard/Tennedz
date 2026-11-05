@@ -189,9 +189,24 @@ for(const [terrain,fatigue] of [
           assert.equal(cause.paidTraces[69].sourceKm,70);
           assert.equal(cause.paidTraces[69].fullFieldKilometre,
             true);
-          assert.match(error.message,/stops at km 109/);
+          assert.match(error.message,/stops at km 110/);
           assert.equal(cause.message,
-            'Physical front needs an intact paid plan.');
+            'Contact fragment needs one payable leader and all riders.');
+          assert.equal(cause.sourceEvidence.candidateCount,2);
+          assert.equal(cause.sourceEvidence.pendingLeaderRiderId,
+            null);
+          assert.deepEqual(cause.sourceEvidence.unpairedRiderIds,
+            ['rival-8-5','rival-19-7']);
+          const prior109=cause.paidTraces[108];
+          assert.equal(prior109.sourceKm,109);
+          assert.equal(prior109.fullFieldKilometre,true);
+          assert.equal(prior109.sourceBreakMembershipEnded,true);
+          assert.deepEqual(prior109.sourceBreakRiderIds,[]);
+          assert.equal(prior109.formerSourceBreakRiderIds.length,7);
+          const contact110=decideV94PhysicalMidKmContactChoiceV1(
+            recording,prior109,{detachedPresetAvailable:true});
+          assert.equal(contact110.pendingLeaderRiderId,null);
+          assert.equal(contact110.candidates.length,2);
           const prior79=cause.paidTraces[78];
           const contact=decideV94PhysicalMidKmContactChoiceV1(
             recording,prior79,{
@@ -368,7 +383,7 @@ for(const [terrain,fatigue] of [
             recording,prior20,physicalRoads),
         /needs paid shelter/);
         return (fatigue===0?
-          /stops at km 109/.test(error.message):
+          /stops at km 110/.test(error.message):
           /stops at km 21/.test(error.message)&&
           cause.message===
             'Front-drop batch fragment needs paid shelter.')&&
