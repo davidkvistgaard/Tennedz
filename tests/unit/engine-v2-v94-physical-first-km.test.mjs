@@ -137,6 +137,9 @@ import {replayV94PhysicalMixedPaidNextKmV1,
 import {replayV94PhysicalPostSourceBreakKmV1,
   validateV94PhysicalPostSourceBreakKmV1} from
   '../../lib/engine/v2/v94-physical-post-source-break-km-v1.mjs';
+import {replayV94PhysicalPartialSourceWithdrawalKmV1,
+  validateV94PhysicalPartialSourceWithdrawalKmV1} from
+  '../../lib/engine/v2/v94-physical-partial-source-withdrawal-km-v1.mjs';
 import {replayV94PhysicalPostBreakFreshKmV1,
   validateV94PhysicalPostBreakFreshKmV1} from
   '../../lib/engine/v2/v94-physical-post-break-fresh-km-v1.mjs';
@@ -1579,6 +1582,54 @@ test('sixth front uses recorded rest before checking seed-three rear contact',()
   }
   assert.throws(()=>replayV94PhysicalMixedPaidNextKmV1(
     recording,paid),/intact paid plan/);
+  const oneThirteen=paid;
+  paid=replayV94PhysicalPartialSourceWithdrawalKmV1(
+    recording,paid);
+  assert.equal(paid.sourceKm,114);
+  assert.equal(paid.finishes.length,160);
+  assert.deepEqual(paid.sourceMembershipWithdrawnRiderIds,
+    ['rival-19-5']);
+  assert.ok(paid.finishes.find(row=>
+    row.riderId==='rival-19-5')?.physicalGroup.startsWith('solo-'));
+  const beforeWithdrawal=new Map(oneThirteen.finishes.map(row=>[
+    row.riderId,row]));
+  for(const finish of paid.finishes){
+    const old=beforeWithdrawal.get(finish.riderId);
+    assert.ok(old);
+    assert.ok(finish.clockSeconds>old.clockSeconds);
+    assert.equal(finish.endDistanceM,114000);
+    assert.ok(Math.abs(finish.energyBefore-
+      old.energyAfter)<.001);
+    assert.ok(Math.abs(finish.energyBefore-
+      finish.paidFromReserve+finish.recoveryAward-
+      finish.capAdjustment-finish.energyAfter)<.0011);
+  }
+  assert.equal(validateV94PhysicalPartialSourceWithdrawalKmV1(
+    recording,oneThirteen,paid),true);
+  for(let km=115;km<=120;km++){
+    const previous=paid;
+    paid=replayV94PhysicalMixedPaidNextKmV1(
+      recording,paid);
+    assert.equal(paid.sourceKm,km);
+    assert.equal(paid.finishes.length,160);
+    assert.ok(paid.formerSourceBreakRiderIds.includes(
+      'rival-19-5'));
+    const before=new Map(previous.finishes.map(row=>[
+      row.riderId,row]));
+    for(const finish of paid.finishes){
+      const old=before.get(finish.riderId);
+      assert.ok(old);
+      assert.ok(finish.clockSeconds>old.clockSeconds);
+      assert.equal(finish.endDistanceM,km*1000);
+      assert.ok(Math.abs(finish.energyBefore-
+        old.energyAfter)<.001);
+      assert.ok(Math.abs(finish.energyBefore-
+        finish.paidFromReserve+finish.recoveryAward-
+        finish.capAdjustment-finish.energyAfter)<.0011);
+    }
+  }
+  assert.equal(paid.sourceKm,120);
+  assert.equal(paid.officialResults,false);
 });
 
 test('ended source break membership keeps four riders on paid roads',()=>{

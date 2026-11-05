@@ -6752,9 +6752,15 @@ audit finds no further contact or front drop, so the full-field
 settlement accepts all 160 paid finishes. Forward boundary work
 then carries the physical group through km 113 with all-rider
 energy and clock continuity. At km 114 the source break label
-loses one of its six riders. That partial withdrawal needs an
-explicit source-membership transition while retaining the
-physical roads. Whole-race calibration remains open. Seed
+loses one of its six riders. The version 1 partial-withdrawal
+replay verifies the exact five remaining source members, keeps the
+departing rider on his paid solo road, and prices the front and
+rear field without a physical transfer. The mixed paid continuation
+then reaches km 120 with 160 unique paid finishes at every km
+through 114-120; the former source member remains recorded as such.
+This finishes the seed-3 flat 120 km, fatigue-0 physical replay,
+without official placings or awards. Other whole-race same-seed
+cases, finish validation and release gates remain open. Seed
 2 separately reaches a solo/front contact at km 6. Its solo starts
 behind the paid front at the boundary, then catches it at 5,256.575
 m. The version 2 contact replay records that direction and charges
