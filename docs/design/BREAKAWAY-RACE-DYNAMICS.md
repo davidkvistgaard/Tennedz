@@ -6857,8 +6857,8 @@ source break membership remains a separate claim. A forged explicit
 manager attack still refuses this path. Km 101 then pays all 160
 riders with the source's recorded front rest; former break identity
 persists even when those riders were never physically caught.
-The 30-fatigue 260 km path has a separate paid road contact at km 25
-and is not covered by this continuation test.
+The 30-fatigue 260 km path has a separate paid road contact at km 25;
+its subsequent paid continuation is described below.
 
 The fatigue-0 seed-1 continuation now carries all 160 paid riders
 from km 102 through the 260 km boundary. Two measured rear-road
@@ -6874,8 +6874,13 @@ Of 374 source group checkpoints covering 878 rider comparisons,
 60 claim a larger lead than any member's paid individual clock.
 The largest excess is 27.95292 seconds. This whole-race mismatch
 still blocks promotion despite the complete physical energy replay.
+At the fatigue-0 finish, 87 of 160 source finish claims disagree with
+the paid clocks; the largest difference is 1,125.602364 seconds for
+`rival-10-0`. These are finish calibration errors despite complete
+energy and distance accounting.
 
-The same seed at fatigue 30 now pays all 160 riders through km 251,
+Before the payable-rear continuation, the same seed at fatigue 30
+paid all 160 riders through km 251,
 including the km-25 road contact. Km 252 has a measured reserve
 refusal: `rival-10-0` reaches the boundary in
 `paid-contact-km251-8` with 0.316 reserve, but its recorded
@@ -6883,7 +6888,7 @@ steady-effort leader turn demands 0.3496. The replay names the rider,
 road, role, effort and shortfall and refuses to grant the remaining
 work or speed for free. This path needs a versioned depleted-rider
 choice with paid speed and contact resolution before it can claim a
-260 km finish. The fatigue-0 whole-race result does not validate this
+260 km finish. The fatigue-0 whole-race result did not validate this
 fatigue-30 path.
 The separate `v2-rear-depleted-travel-1` quote now applies the
 existing exhaustion coast factor to the rider's own road: it spends
@@ -6909,6 +6914,14 @@ checkpoints and 896 rider leads. In 57 checkpoints the source gap
 exceeds even the best individual paid lead, by up to 25.61068
 seconds. This calibration failure still blocks promotion. The
 trace has no official result or placing.
+The version 1 finish-source audit compares every source finish claim
+with each rider's paid clock relative to the paid front. In this
+fatigue-30 seed, 74 of 160 claims differ beyond the accounting
+tolerance. The largest difference is `rival-10-0`: the source calls
+him a bunch finisher, while his paid solo road reaches the line
+1,473.221217 seconds after the front. This is a source/physical
+classification conflict, not a wheel-order question. The audit
+does not turn either claim into an official placing.
 
 Callers of the experimental preview can request
 `physicalFirstKmVersion: 1` to receive this completed physical first

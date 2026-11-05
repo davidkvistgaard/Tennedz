@@ -7,6 +7,8 @@ import {prepareV91Playtest} from
 import {validateV94PhysicalWholeRaceV1,
   auditV94PhysicalWholeRaceSourceGapsV1} from
   '../../lib/engine/v2/v94-physical-whole-race-validation-v1.mjs';
+import {auditV94PhysicalFinishSourceV1} from
+  '../../lib/engine/v2/v94-physical-finish-source-audit-v1.mjs';
 import {replayV94PhysicalFirstKmV1,
   validateV94PhysicalFirstKmV1,
   V94_PHYSICAL_FIRST_KM_DECISION_VERSION} from
@@ -2035,6 +2037,13 @@ test('ended source break membership keeps four riders on paid roads',()=>{
   assert.equal(sourceGapAudit.sourceGapExceedsBestPaidLeadCount,60);
   assert.equal(sourceGapAudit.maxGapOverBestPaidLeadSeconds,
     27.95292);
+  const finishAudit=auditV94PhysicalFinishSourceV1(
+    recording,paidTraces);
+  assert.equal(finishAudit.riderCount,160);
+  assert.equal(finishAudit.mismatchCount,87);
+  assert.equal(finishAudit.maxAbsoluteMismatchSeconds,
+    1125.602364);
+  assert.equal(finishAudit.maxMismatchRiderId,'rival-10-0');
   const explicitOrder=structuredClone(recording);
   explicitOrder.frames[99].freshAttackRiderDecisions[0]
     .attackReason='named_order';
@@ -2188,6 +2197,20 @@ test('fatigued 260 km seed-one completes paid physical roads',()=>{
     57);
   assert.equal(sourceGapAudit.maxGapOverBestPaidLeadSeconds,
     25.61068);
+  const finishAudit=auditV94PhysicalFinishSourceV1(
+    recording,traces);
+  assert.equal(finishAudit.riderCount,160);
+  assert.equal(finishAudit.mismatchCount,74);
+  assert.equal(finishAudit.maxAbsoluteMismatchSeconds,
+    1473.221217);
+  assert.equal(finishAudit.maxMismatchRiderId,'rival-10-0');
+  const worst=finishAudit.comparisons.find(row=>
+    row.riderId==='rival-10-0');
+  assert.equal(worst.sourceGroup,'peloton');
+  assert.equal(worst.physicalGroup,'solo-rival-10-0');
+  assert.equal(worst.claimedLeadSeconds,0);
+  assert.ok(Math.abs(worst.paidLeadSeconds+
+    1473.2212171274914)<1e-6);
 });
 
 test('second-km road clocks refuse a faster rear catch',()=>{
