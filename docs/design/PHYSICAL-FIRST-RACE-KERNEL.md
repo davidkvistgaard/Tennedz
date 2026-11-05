@@ -79,3 +79,14 @@ Changing a historical source checkpoint
 gap leaves this projection unchanged. This is a migration seam; the
 current V94 choice scheduler still reads source frames and cannot yet
 serve as the physical-first recorder.
+
+`physical-first-road-step-1` is the first source-frame-independent
+movement contract. Given an already connected road, an explicit
+versioned leader plan, the committed teams and stakes, route segment
+and prior rider clocks and reserve, it prices one kilometre with a
+single exposed leader and cheaper sheltered work. Each rider records
+the resolved order, perceived ability, goal, choice and energy
+settlement. A rider who cannot hold shelter or pay the work causes a
+named refusal. The step neither chooses the leader nor silently
+creates a group or a drop. Those decisions need explicit event
+contracts before the kernel can advance a whole race.
