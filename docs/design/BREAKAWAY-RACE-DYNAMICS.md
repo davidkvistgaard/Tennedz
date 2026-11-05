@@ -6946,11 +6946,19 @@ and returns the complete-race validation, source-gap audit,
 finish-source audit and paid-finish roads together. It has been
 checked on five flat 120 km same-seed cases (seed 1 fatigue 0,
 seeds 2 and 3 fatigue 0/30) and both flat 260 km seed-1 cases
-(fatigue 0/30). Every case reaches all 160 finish clocks and retains
-its explicit source-calibration failure. Contact, source rest,
+(fatigue 0/30), plus one rolling 120 km seed-1 fatigue-0 case.
+All eight reach 160 finish clocks and retain
+their explicit source-calibration failure. Contact, source rest,
 detached automatic presets and depleted solo continuations use
 their existing guarded versions. This is a research replay library;
 the ordinary guided race and production preview do not consume it.
+Mountain 120 km seed 1 at fatigue 0 and 30 currently refuses at
+km 21: a front rider drops into a measured rear solo road at
+20,169.291339 m or 20,100.309376 m respectively. The paid km-6
+front-drop settlement is specific to that earlier case and cannot
+be reused for this later climb contact. The missing kilometre
+requires its own versioned paid contact and subsequent whole-field
+audit before a mountain finish can be claimed.
 
 Callers of the experimental preview can request
 `physicalFirstKmVersion: 1` to receive this completed physical first

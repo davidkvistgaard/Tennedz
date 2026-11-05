@@ -67,3 +67,44 @@ for(const [seed,fatigue] of [
     assert.equal(replay.officialResults,false);
     assert.equal(replay.sourceCheckpointCalibrationFailed,true);
   });
+
+for(const [terrain,fatigue] of [
+  ['rolling',0],['mountain',0],['mountain',30]])test(
+  `opt-in whole physical ${terrain} 120 km fatigue ${fatigue}`,
+  ()=>{
+    const settings={distanceKm:120,teamCount:20,
+      terrain,fatigue,attack:'none',chase:'selective',
+      seed:'preview-recorded-road-1'};
+    const sportingStakes=prepareV91Playtest(settings)
+      .teams.map(team=>({teamId:team.id,
+        goal:'sprint_finish',
+        captainId:team.orders.captainId}));
+    const {recording}=createV94RaceDynamicsPreview({
+      format:'one_day',settings,sportingStakes,
+      roadGroupPaceVersion:3,chaseTurnVersion:1,
+      bunchFrontTurnVersion:1,
+      pelotonFrontTurnVersion:1,
+      pelotonDraftCostVersion:1,
+      pelotonExposureCostVersion:1,
+      freshAttackDecisionVersion:1,
+      roadGroupRiderDecisionVersion:1,
+      protectorSportingPursuitVersion:1});
+    if(terrain==='mountain'){
+      assert.throws(()=>replayV94PhysicalWholeRaceV1(
+        recording),error=>
+        /stops at km 21/.test(error.message)&&
+        error.cause?.message===
+          'Physical front drop/rear contact needs paid resolution.'&&
+        error.cause.sourceEvidence?.riderId==='rival-10-5'&&
+        error.cause.sourceEvidence?.roadId===
+          'solo-rival-2-5'&&
+        error.cause.sourceEvidence.atDistanceM>20000&&
+        error.cause.sourceEvidence.atDistanceM<21000);
+    }else{
+      const replay=replayV94PhysicalWholeRaceV1(recording);
+      assert.equal(replay.validation.totalRiderKm,19200);
+      assert.equal(replay.physicalFinish.riderCount,160);
+      assert.equal(replay.sourceCheckpointCalibrationFailed,
+        true);
+    }
+  });
