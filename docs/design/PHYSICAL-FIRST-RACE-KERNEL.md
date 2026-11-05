@@ -243,3 +243,15 @@ checkpoint gap. In the fixed attack race the two solo roads meet at
 6,098.75 m. The projection locates where a resolver must split
 and reprice the riders' work; it does not itself merge roads, grant
 shelter or settle a finish.
+
+`physical-first-solo-contact-1` now resolves an isolated meeting of
+two paid solo roads inside one kilometre. It verifies each full solo
+receipt against the committed rider, route and order, locates their
+meeting from measured clocks, then reprices the distance to contact
+and the remaining distance. The riders share one payable exposed
+leader and one lower-cost sheltered rider after contact; `sit_on`
+does not volunteer a leader, and a `drive` order carries its extra
+speed and reserve cost. The result records one road, two complete
+energy debits and a common finish clock. This contract is not yet
+connected to the whole-race crossing guard or replay, so the fixed
+attack race still stops at its measured km 7 contact.
