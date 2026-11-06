@@ -69,8 +69,16 @@ acceleration. Synthetic 30- and 150-rider stress fixtures are separately
 available with `mode=exhibition&field=30` and `field=150`; `asset=missing`
 selects a deliberately unavailable tree texture to check failure handling.
 These parameters never alter the Motor Lab recording, and all added rider
-identities are labelled synthetic. Browser results for the stress and missing
-asset checks must be recorded before production approval.
+identities are labelled synthetic. The exact-SHA preview
+`a129e7d27aab087b18897386bc5d611ef837d145` rendered 150 women riders
+and all four fictional groups in WebGL. The observed viewer counter was
+approximately 19 fps after reducing synthetic tree density and finish crowds.
+This is below smooth-playback approval, and the browser did not expose an
+independent hardware GPU identity. The 30-rider men fixture with
+`asset=missing` reported one failed scene asset, retained WebGL rendering, and
+continued the shared replay with fallback. No official race result was
+generated. These browser results are not acceptance of 150 riders or hardware
+GPU performance for production.
 
 This is a visual milestone, not a finished engine-to-production integration.
 Official race replays still lack the simultaneous rider coordinates that the
