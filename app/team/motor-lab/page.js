@@ -1,11 +1,10 @@
-import LegacyMotorLab from './LegacyMotorLab';
-import Playtest from '../v91-playtest/Playtest';
-import '../v91-playtest/playtest.css';
+import MotorLabEnginePage from './engine/page';
+import ViewerPreviewPage from './viewer-preview/page';
 
 export const dynamic='force-dynamic';
 
-export default function MotorLabPage(){
-  const enabled=process.env.PELOTONIA_V91_PLAYTEST_ENABLED==='true'&&
-    process.env.PELOTONIA_V93_COASTED_PLAYTEST_ENABLED==='true';
-  return enabled?<Playtest guided/>:<LegacyMotorLab/>;
+export default function MotorLabPage({searchParams}){
+  if(process.env.PELOTONIA_VIEWER_V1_ENABLED==='false')
+    return <MotorLabEnginePage/>;
+  return <ViewerPreviewPage searchParams={searchParams}/>;
 }

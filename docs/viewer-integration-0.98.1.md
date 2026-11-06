@@ -1,4 +1,4 @@
-# Pelotonia Viewer 0.98.1 integration — preview only
+# Pelotonia Viewer 0.98.1 integration — default Motor Lab screen
 
 The independently packaged `@pelotonia/race-viewer` is installed from
 `vendor/pelotonia-race-viewer-0.98.1.tgz` (SHA-256
@@ -7,11 +7,15 @@ The kit's older native adapters are unused. The new, versioned
 `physical-first-to-pelotonia.viewer.v1-1` adapter consumes current committed
 physical-first Motor Lab inputs and paid probe output. The motor is unchanged.
 
-Set `PELOTONIA_VIEWER_V1_PREVIEW_ENABLED=true` to expose the authenticated
-`/team/motor-lab/viewer-preview` route. Otherwise it returns 404. The legacy
-Motor Lab viewer remains the default. In development only, the same preview
-is available at `/viewer-acceptance` without a Supabase session, and a
-clearly synthetic renderer fixture at `/viewer-acceptance/stress`.
+The authenticated `/team/motor-lab` route opens the new viewer by default.
+`/team/motor-lab/engine` preserves the guided or legacy Motor Lab controls.
+`PELOTONIA_VIEWER_V1_ENABLED=false` restores those controls as the default
+and disables the new viewer's clock endpoint. The old official race viewer
+remains the fallback for actual game runs because they do not supply this
+viewer's required rider positions. In development only, setting
+`PELOTONIA_VIEWER_V1_PREVIEW_ENABLED=true` enables unauthenticated local
+acceptance routes at `/viewer-acceptance`, `/viewer-acceptance/inspection`,
+and `/viewer-acceptance/stress`.
 
 ## First recorded race
 
@@ -61,9 +65,9 @@ The synthetic stress feed fabricates riders, lane offsets and spacing only
 for renderer testing and must never appear as Motor Lab race data.
 Browser WebGL, camera, asset failure, and performance observations should
 be recorded separately from contract tests. A WebGL renderer label or CPU
-fallback alone is not GPU certification. Production remains on the legacy
-viewer until a real full race with splits and official result coverage passes
-the same checks and authenticated browser validation.
+fallback alone is not GPU certification. Actual game races remain on the
+legacy viewer until a real full race with splits and official result coverage
+passes the same checks and authenticated browser validation.
 
 Local development browser acceptance on 2026-11-06 showed actual 32-rider
 men's and women's previews in WebGL, with the recorded 0 km and 40 km
@@ -75,3 +79,9 @@ browser/machine. A deliberately missing, referenced glTF produced one asset
 error while 150 riders continued rendering. These are local observations,
 not a hardware-wide or production performance guarantee. No authenticated
 production browser check has yet run.
+
+The Motor Lab and live production branches diverged after their common
+production commit. Publishing the Motor Lab branch directly would also
+publish its unrelated engine history and replace newer production-only
+changes. A separate release integration is required before tennedz.eu can
+use this as its default Motor Lab screen.

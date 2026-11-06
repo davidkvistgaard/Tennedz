@@ -7,7 +7,7 @@ const PreviewScene=dynamic(()=>import('./ViewerPreviewScene'),{
     <p role="status">Loading the race renderer…</p>});
 
 export default function ViewerPreviewClient({feed,coverage,version,
-  previewPath='/team/motor-lab/viewer-preview'}){
+  previewPath='/team/motor-lab'}){
   const [sync,setSync]=useState(null);
   const [error,setError]=useState(null);
   useEffect(()=>{
@@ -36,20 +36,20 @@ export default function ViewerPreviewClient({feed,coverage,version,
   },[feed.raceId,feed.riderCategory,feed.duration]);
   return <main className="motor-viewer-preview">
     <header>
-      <p className="eyebrow">Motor Lab · isolated viewer preview</p>
-      <h1>Recorded physical race</h1>
+      <p className="eyebrow">Motor Lab · new race viewer</p>
+      <h1>Recorded sample race</h1>
       <p>40 km · {feed.riderCategory==='women'?'Women':'Men'} · {
         coverage.riderCount} riders · 1× shared replay</p>
       <p>The road is a schematic distance axis. Geography, rider lanes,
         helmets and official results are unavailable in this recording.</p>
     </header>
-    {error?<p role="alert">{error} <a href="/team/motor-lab">
-      Open the existing Motor Lab viewer</a>.</p>:null}
+    {error?<p role="alert">{error} <a href="/team/motor-lab/engine">
+      Open the Motor Lab engine</a>.</p>:null}
     {!sync&&!error?<p role="status">Synchronizing race time…</p>:null}
     {sync?<PreviewScene feed={feed} coverage={coverage}
       version={version} {...sync}/>:null}
-    <footer><a href="/team/motor-lab">
-      Existing Motor Lab viewer</a> · <a href={
+    <footer><a href="/team/motor-lab/engine">
+      Motor Lab engine</a> · <a href={
       `${previewPath}?category=${
         feed.riderCategory==='women'?'men':'women'}`}>
       Switch to {feed.riderCategory==='women'?'men':'women'}’s test field</a>

@@ -10,7 +10,7 @@ export const dynamic='force-dynamic';
 const durations=new Map();
 
 async function handler(request){
-  if(process.env.PELOTONIA_VIEWER_V1_PREVIEW_ENABLED!=='true')
+  if(process.env.PELOTONIA_VIEWER_V1_ENABLED==='false')
     return NextResponse.json({error:'Preview unavailable.'},{status:404});
   const category=new URL(request.url).searchParams.get('category');
   if(!['men','women'].includes(category))
@@ -24,5 +24,6 @@ async function handler(request){
 }
 
 // Local acceptance has no Supabase account. Production always requires auth.
-export const GET=process.env.NODE_ENV==='development'?
+export const GET=process.env.NODE_ENV==='development'&&
+  process.env.PELOTONIA_VIEWER_V1_PREVIEW_ENABLED==='true'?
   handler:protectedRoute(handler);
