@@ -1,5 +1,7 @@
 node_modules/
 .next/
+.next-viewer-build/
+.next-viewer-acceptance/
 .next-market-*/
 .env*
 !.env.example
