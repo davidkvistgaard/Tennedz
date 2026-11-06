@@ -4,7 +4,6 @@ import { use, useEffect, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import TeamShell from "../../../components/TeamShell";
-import RaceViewer from "../../../components/RaceViewer";
 
 export default function ViewPage({ params }) {
   const eventId = use(params).event_stage_id;
@@ -75,19 +74,14 @@ export default function ViewPage({ params }) {
           <h2>Preparing race day…</h2>
           <p>Loading the recorded race.</p>
         </section>
-      ) : data.run.replay?.version === 1 ? (
-        <RaceViewer
-          key={`${eventId}:${data.run.division_index}`}
-          run={data.run}
-          teamId={data.team_id}
-        />
       ) : (
         <section className="card empty-state">
-          <p className="eyebrow">Historic race</p>
+          <p className="eyebrow">Recorded race</p>
           <h1>{data.run.stage_snapshot?.name || "Race report"}</h1>
           <p>
-            This race took place before the new viewer. The original report is
-            preserved; no recorded group replay is available.
+            The new race viewer needs simultaneous rider positions. This
+            recording contains group gaps and results, but no rider positions.
+            Its recorded report remains available below.
           </p>
           <button
             className="btn primary"

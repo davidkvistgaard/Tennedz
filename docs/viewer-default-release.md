@@ -15,18 +15,19 @@ positions, geographic route, helmets, assets, or official placings.
 Intermediate animation is interpolation between recorded kilometre
 boundaries. No Motor Lab sample is substituted for an official game race.
 
-`/team/motor-lab` opens the new viewer by default, while
-`/team/motor-lab/engine` preserves the existing guided or legacy laboratory.
+`/team/motor-lab` opens the new viewer, while
+`/team/motor-lab/engine` preserves the motor laboratory.
 The same clearly labelled fictional sample is also available without a game
 account at `/viewer`, so collaborators can inspect rendering before the
 preview environment has team data. Its separate public clock uses the same
 server-hour anchor; it exposes no account or official race information.
-`PELOTONIA_VIEWER_V1_ENABLED=false` restores the old Motor Lab default and
-disables the new clock endpoint. Actual game race replays at `/team/view`
-retain the old viewer because their available data cannot support precise
-simultaneous rider positions in this package. Authentication remains active.
+The old race viewer and its scene implementation have been removed. Actual
+game race recordings at `/team/view` retain their recorded reports and results,
+but cannot be played in 3D until the race engine records simultaneous rider
+positions. The route explains this limitation and never substitutes the
+fictional Motor Lab sample for an official race. Authentication remains active.
 
-The clock is anchored to a server UTC hour and shared by spectators, while
+The sample clock is anchored to a server UTC hour and shared by spectators, while
 camera choice stays local. Commentary follows recorded events and does not
 reveal the next kilometre's paid leader at its start. The production release
 requires an authenticated browser check and exact deployment SHA, READY,

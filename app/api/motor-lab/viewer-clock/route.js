@@ -10,8 +10,6 @@ export const dynamic='force-dynamic';
 const durations=new Map();
 
 async function handler(request){
-  if(process.env.PELOTONIA_VIEWER_V1_ENABLED==='false')
-    return NextResponse.json({error:'Preview unavailable.'},{status:404});
   const category=new URL(request.url).searchParams.get('category');
   if(!['men','women'].includes(category))
     return NextResponse.json({error:'Invalid category.'},{status:400});
