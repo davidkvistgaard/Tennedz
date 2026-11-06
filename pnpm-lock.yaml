@@ -11,6 +11,9 @@ importers:
 
   .:
     dependencies:
+      '@pelotonia/race-viewer':
+        specifier: file:vendor/pelotonia-race-viewer-0.98.1.tgz
+        version: file:vendor/pelotonia-race-viewer-0.98.1.tgz(react@19.3.0)(three@0.187.0)
       '@supabase/ssr':
         specifier: 0.12.7
         version: 0.12.7(@supabase/supabase-js@2.117.1)
@@ -32,6 +35,9 @@ importers:
       server-only:
         specifier: 0.0.1
         version: 0.0.1
+      three:
+        specifier: 0.187.0
+        version: 0.187.0
     devDependencies:
       '@electric-sql/pglite':
         specifier: 0.5.13
@@ -325,6 +331,13 @@ packages:
     engines: {node: '>= 10'}
     cpu: [x64]
     os: [win32]
+
+  '@pelotonia/race-viewer@file:vendor/pelotonia-race-viewer-0.98.1.tgz':
+    resolution: {integrity: sha512-TA/HCnKO7tyTvpm4MPr2xdPIpoNRPGlqjSKpwTuW3rXlcQqHVVKQCVt1zXD31A9w7qQF3sJVNz5JgVCuYdYtCw==, tarball: file:vendor/pelotonia-race-viewer-0.98.1.tgz}
+    version: 0.98.1
+    peerDependencies:
+      react: ^19.0.0
+      three: 0.187.0
 
   '@playwright/test@1.56.1':
     resolution: {integrity: sha512-vSMYtL/zOcFpvJCW71Q/OEGQb7KYBPAdKh35WNSkaZA75JlAO8ED8UN6GUNTm3drWomcbcqRPFqQbLae8yBTdg==}
@@ -746,6 +759,9 @@ packages:
     resolution: {integrity: sha512-qpCAvRl9stuOHveKsn7HncJRvv501qIacKzQlO/+Lwxc9+0q2wLyv4Dfvt80/DPn2pqOBsJdDiogXGR9+OvwRw==}
     engines: {node: '>=8'}
 
+  three@0.187.0:
+    resolution: {integrity: sha512-Qiu7R+Cmh8CstZsY1uJOSWnVlfo7ZtNLV7mF8Jltk3LB3AtDu9cRZlcnRKkAk8Y4z6KKw35z7Y7Urd7jWY8etA==}
+
   tslib@2.8.1:
     resolution: {integrity: sha512-oJFu94HQb+KVduSUQL7wnpmqnfmLsOA/nAh6b6EH0wCEoK0/mPeXU6c3wKDV83MkOuHPRHtSXKKU99IBazS/2w==}
 
@@ -972,6 +988,11 @@ snapshots:
 
   '@next/swc-win32-x64-msvc@15.5.26':
     optional: true
+
+  '@pelotonia/race-viewer@file:vendor/pelotonia-race-viewer-0.98.1.tgz(react@19.3.0)(three@0.187.0)':
+    dependencies:
+      react: 19.3.0
+      three: 0.187.0
 
   '@playwright/test@1.56.1':
     dependencies:
@@ -1380,6 +1401,8 @@ snapshots:
   supports-color@7.2.0:
     dependencies:
       has-flag: 4.0.0
+
+  three@0.187.0: {}
 
   tslib@2.8.1: {}
 

@@ -1,0 +1,20 @@
+.motor-viewer-preview{max-width:1280px;margin:0 auto;padding:28px;color:#1b3230}
+.motor-viewer-preview header{max-width:900px;margin-bottom:20px}
+.motor-viewer-preview h1{font-size:clamp(2rem,4vw,3.5rem);margin:.15em 0}
+.motor-viewer-preview .eyebrow{text-transform:uppercase;letter-spacing:.14em}
+.motor-viewer-preview a{color:#17564a}
+.motor-viewer-status,.motor-viewer-targets{display:flex;gap:16px;
+  align-items:center;flex-wrap:wrap;margin:12px 0}
+.motor-viewer-status span{background:#172d2b;border:1px solid #45635b;
+  border-radius:9px;padding:8px 12px;color:#eef4f2}
+.motor-viewer-targets button,.motor-viewer-targets select{
+  background:#172d2b;color:#eef4f2;border:1px solid #648478;
+  border-radius:7px;padding:8px 12px}
+.motor-viewer-preview details{margin:24px 0;padding:16px;
+  border:1px solid #45635b;border-radius:9px}
+.motor-viewer-commentary{padding:12px 18px;margin-top:16px;
+  background:#f0f5ef;border-left:3px solid #326d5e}
+.motor-viewer-commentary details{margin:8px 0;padding:8px 12px}
+.motor-viewer-commentary button{border:1px solid #326d5e;
+  background:#fff;color:#1b3230;border-radius:7px;padding:6px 10px}
+.motor-viewer-preview footer{margin:28px 0}
