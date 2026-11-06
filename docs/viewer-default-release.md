@@ -77,8 +77,17 @@ This is below smooth-playback approval, and the browser did not expose an
 independent hardware GPU identity. The 30-rider men fixture with
 `asset=missing` reported one failed scene asset, retained WebGL rendering, and
 continued the shared replay with fallback. No official race result was
-generated. These browser results are not acceptance of 150 riders or hardware
-GPU performance for production.
+generated. The package automatically creates a dense finish crowd whenever
+crowds are enabled. In this preview it created 2,202 spectators and about 4.2
+million triangles; CPU frame median was 3.4 ms while the displayed rate was
+about 19–23 fps. Commit `312df9f3442530c2a3b3620707af2d63baf93847`
+disables that optional synthetic crowd only for the 150-rider visual fixture.
+The same protected browser then displayed about 48–50 fps for 150 men and
+47 fps for 150 women, with zero spectators, about 1.2–1.3 million triangles,
+and CPU frame median 3.3 ms. The four fictional groups, local camera choice,
+shared timeline, and time-gated commentary remained available. This is a
+successful WebGL browser stress check for this reduced-scene fixture, not an
+independent hardware GPU sign-off or approval of a crowded 150-rider scene.
 
 This is a visual milestone, not a finished engine-to-production integration.
 Official race replays still lack the simultaneous rider coordinates that the
