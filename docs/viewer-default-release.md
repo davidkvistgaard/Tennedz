@@ -20,14 +20,15 @@ boundaries. No Motor Lab sample is substituted for an official game race.
 The same clearly labelled fictional sample is also available without a game
 account at `/viewer`, so collaborators can inspect rendering before the
 preview environment has team data. Its separate public clock uses the same
-server-hour anchor; it exposes no account or official race information.
+server-derived race cycle; it exposes no account or official race information.
 The old race viewer and its scene implementation have been removed. Actual
 game race recordings at `/team/view` retain their recorded reports and results,
 but cannot be played in 3D until the race engine records simultaneous rider
 positions. The route explains this limitation and never substitutes the
 fictional Motor Lab sample for an official race. Authentication remains active.
 
-The sample clock is anchored to a server UTC hour and shared by spectators, while
+The sample clock is anchored to a server-derived race-duration cycle and shared
+by spectators, while
 camera choice stays local. Commentary follows recorded events and does not
 reveal the next kilometre's paid leader at its start. The production release
 requires an authenticated browser check and exact deployment SHA, READY,

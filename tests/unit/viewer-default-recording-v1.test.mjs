@@ -3,6 +3,21 @@ import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {validateFeed,createSampler,commentaryAt} from
   '@pelotonia/race-viewer/data';
+import {previewBroadcastClockV1} from
+  '../../lib/viewer/preview-clock-v1.mjs';
+
+test('shared sample clock loops with the recorded race duration',()=>{
+  const duration=3317.9154;
+  const cycleMs=Math.round(duration*1000);
+  for(const now of [0,cycleMs-1,cycleMs,3_600_000,
+    86_400_000+cycleMs-1]){
+    const {clock}=previewBroadcastClockV1(duration,now);
+    const position=(now-clock.serverEpochMs)/1000;
+    assert.ok(position>=0&&position<duration,
+      `out-of-range preview time ${position} at ${now}`);
+    assert.equal(clock.duration,duration);
+  }
+});
 
 for(const category of ['men','women'])
   test(`production-base viewer recording ${category} is complete`,()=>{
