@@ -40,6 +40,7 @@ for(const fieldSize of [30,150])
       assert.deepEqual(validateFeed(feed),feed);
       assert.equal(feed.riders.length,fieldSize);
       assert.equal(feed.crowd.enabled,fieldSize!==150);
+      assert.equal(feed.spectators?.length,fieldSize===150?240:undefined);
       assert.equal(new Set(feed.riders.map(row=>row.id)).size,fieldSize);
       assert.equal(createSampler(feed)(120).positions.length,fieldSize);
       assert.equal(feed.results,undefined);
