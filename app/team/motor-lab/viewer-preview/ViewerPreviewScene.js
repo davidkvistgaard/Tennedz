@@ -11,12 +11,14 @@ const clockLabel=seconds=>{
 export default function ViewerPreviewScene({feed,coverage,mode='recorded',
   version,clock,serverOffsetMs}){
   const viewerRef=useRef(null),lastUpdate=useRef(-1);
+  const lastAssetStatus=useRef('');
   const pelotonId=Object.entries(feed.frames[0]?.groupRoles??{})
     .find(([,role])=>role==='peloton')?.[0]??
     feed.frames[0]?.positions[0]?.groupId;
   const [target,setTarget]=useState({type:'group',id:pelotonId});
   const [cycleKey,setCycleKey]=useState(0);
   const [stats,setStats]=useState(null),[error,setError]=useState(null);
+  const [assetStatus,setAssetStatus]=useState(null);
   const [detailsOpen,setDetailsOpen]=useState(false);
   const [tab,setTab]=useState('riders'),[light,setLight]=useState('day');
   useEffect(()=>{
@@ -43,7 +45,14 @@ export default function ViewerPreviewScene({feed,coverage,mode='recorded',
           setCycleKey(current=>current+1);
           if(Math.abs(next.time-lastUpdate.current)>=.5||
           next.time===feed.duration){lastUpdate.current=next.time;
-          setStats(next);}}} className="race-theatre-canvas"/>
+          setStats(next);
+          const status=viewerRef.current?.getAssetStatus();
+          const signature=JSON.stringify(status);
+          if(signature!==lastAssetStatus.current){
+            lastAssetStatus.current=signature;
+            setAssetStatus(status);
+          }
+        }}} className="race-theatre-canvas"/>
       <header className="race-theatre-header">
         <div className="race-theatre-brand"><span aria-hidden="true">◩</span>
           <strong>PELOTONIA</strong><small>RACE THEATRE</small></div>
@@ -121,6 +130,10 @@ export default function ViewerPreviewScene({feed,coverage,mode='recorded',
         {stats?.renderer??'Loading renderer'} · {stats?.visible??0} riders
         {stats?.fps?` · ${Math.round(stats.fps)} fps`:''}
       </div>
+      {assetStatus?.errors?.length?<p role="alert"
+        className="race-theatre-error">{assetStatus.errors.length} scene asset
+        {assetStatus.errors.length===1?'':'s'} failed to load;
+        fallback rendering remains active.</p>:null}
     </div>
     <div className="race-theatre-bottom">
       <div className="race-theatre-commentary">
