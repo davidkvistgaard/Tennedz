@@ -8,11 +8,17 @@ const PreviewScene=dynamic(()=>import('./ViewerPreviewScene'),{
 
 export default function ViewerPreviewClient({feed,coverage,version,
   mode='recorded',
+  fieldSize=32,missingAsset=false,
   previewPath='/team/motor-lab',
   clockPath='/api/motor-lab/viewer-clock'}){
   const categoryQuery=feed.riderCategory==='women'?'?category=women':'';
   const exhibitionQuery=`?mode=exhibition${
-    feed.riderCategory==='women'?'&category=women':''}`;
+    feed.riderCategory==='women'?'&category=women':''}${
+    fieldSize===32?'':`&field=${fieldSize}`}${
+    missingAsset?'&asset=missing':''}`;
+  const clockQuery=`category=${feed.riderCategory}${
+    mode==='exhibition'&&fieldSize!==32?`&field=${fieldSize}`:''}${
+    mode==='exhibition'&&missingAsset?'&asset=missing':''}`;
   const [sync,setSync]=useState(null);
   const [error,setError]=useState(null);
   useEffect(()=>{
@@ -20,8 +26,8 @@ export default function ViewerPreviewClient({feed,coverage,version,
     const load=async()=>{
       try{
         const sent=Date.now();
-        const response=await fetch(`${clockPath}?category=${
-          feed.riderCategory}`,{cache:'no-store'});
+        const response=await fetch(`${clockPath}?${clockQuery}`,
+          {cache:'no-store'});
         if(!response.ok)throw new Error('Shared preview clock unavailable.');
         const payload=await response.json();
         const received=Date.now();
@@ -38,14 +44,16 @@ export default function ViewerPreviewClient({feed,coverage,version,
     load();
     const timer=setInterval(load,5000);
     return ()=>{active=false;clearInterval(timer);};
-  },[feed.raceId,feed.riderCategory,feed.duration,clockPath]);
+  },[feed.raceId,feed.riderCategory,feed.duration,clockPath,clockQuery]);
   return <main className="motor-viewer-preview">
     <div className="motor-viewer-intro">
       <h1>{mode==='exhibition'?'Synthetic visual exhibition':
         'Recorded Motor Lab race'}</h1>
       <span>{feed.riderCategory==='women'?'Women':'Men'} · {
         coverage.riderCount} riders · {mode==='exhibition'?'4 min':'40 km'}</span>
-      <span>{mode==='exhibition'?'Entire race is fictional':
+      <span>{mode==='exhibition'?(missingAsset?
+        'Fictional fixture · missing texture test':
+        'Entire race is fictional'):
         'Motor race data · synthetic scenery'}</span>
       <nav className="motor-viewer-modes" aria-label="Viewer mode">
         <a aria-current={mode==='recorded'?'page':undefined}
@@ -66,7 +74,9 @@ export default function ViewerPreviewClient({feed,coverage,version,
         'Synthetic visual exhibition'}</a> · <a href={
       `${previewPath}?category=${
         feed.riderCategory==='women'?'men':'women'}${
-        mode==='exhibition'?'&mode=exhibition':''}`}>
+        mode==='exhibition'?`&mode=exhibition${
+          fieldSize===32?'':`&field=${fieldSize}`}${
+          missingAsset?'&asset=missing':''}`:''}`}>
       Switch to {feed.riderCategory==='women'?'men':'women'}’s test field</a>
     </footer>
   </main>;

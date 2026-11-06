@@ -13,12 +13,17 @@ export default async function PublicViewerPage({searchParams}){
   const params=await searchParams;
   const category=params?.category==='women'?'women':'men';
   const exhibition=params?.mode==='exhibition';
+  const fieldSize=exhibition&&['30','150'].includes(params?.field)?
+    Number(params.field):32;
+  const missingAsset=exhibition&&params?.asset==='missing';
   const recorded=recordedViewerRaceV1(category);
-  const race=exhibition?syntheticExhibitionV1(recorded.feed):recorded;
+  const race=exhibition?syntheticExhibitionV1(recorded.feed,
+    {fieldSize,missingAsset}):recorded;
   return <ViewerPreviewClient previewPath="/viewer"
     clockPath={exhibition?'/api/viewer-exhibition-clock':
       '/api/viewer-sample-clock'}
     mode={exhibition?'exhibition':'recorded'}
+    fieldSize={fieldSize} missingAsset={missingAsset}
     {...race} feed={exhibition?race.feed:
       scenicPresentationV1(race.feed)}/>;
 }

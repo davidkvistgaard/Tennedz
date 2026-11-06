@@ -65,8 +65,12 @@ Local browser checks on the 32-rider men and women fixtures showed WebGL
 rendering, group and rider controls, route profile, time-matched commentary,
 and roughly 35–55 displayed frames per second after loading in the test
 browser. The displayed renderer mode alone does not establish hardware GPU
-acceleration. A 150-rider browser performance and asset-failure check has not
-yet passed, so this visual fixture is not a scale approval for official races.
+acceleration. Synthetic 30- and 150-rider stress fixtures are separately
+available with `mode=exhibition&field=30` and `field=150`; `asset=missing`
+selects a deliberately unavailable tree texture to check failure handling.
+These parameters never alter the Motor Lab recording, and all added rider
+identities are labelled synthetic. Browser results for the stress and missing
+asset checks must be recorded before production approval.
 
 This is a visual milestone, not a finished engine-to-production integration.
 Official race replays still lack the simultaneous rider coordinates that the

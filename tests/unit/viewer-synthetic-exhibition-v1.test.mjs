@@ -29,3 +29,30 @@ for(const category of ['men','women'])
     assert.ok(commentaryAt(feed,239).every(row=>row.time<240));
     assert.match(commentaryAt(feed,240).at(-1).text,/No race result/);
   });
+
+for(const fieldSize of [30,150])
+  for(const category of ['men','women'])
+    test(`${fieldSize} ${category} synthetic riders remain separate`,()=>{
+      const source=JSON.parse(readFileSync(new URL(
+        `../../data/viewer/physical-40km-${category}-v1.json`,
+        import.meta.url))).feed;
+      const {feed}=syntheticExhibitionV1(source,{fieldSize});
+      assert.deepEqual(validateFeed(feed),feed);
+      assert.equal(feed.riders.length,fieldSize);
+      assert.equal(new Set(feed.riders.map(row=>row.id)).size,fieldSize);
+      assert.equal(createSampler(feed)(120).positions.length,fieldSize);
+      assert.equal(feed.results,undefined);
+    });
+
+test('missing exhibition texture remains a valid, isolated QA feed',()=>{
+  const source=JSON.parse(readFileSync(new URL(
+    '../../data/viewer/physical-40km-men-v1.json',
+    import.meta.url))).feed;
+  const original=syntheticExhibitionV1(source).feed;
+  const {feed}=syntheticExhibitionV1(source,{missingAsset:true});
+  assert.deepEqual(validateFeed(feed),feed);
+  assert.match(feed.assets[0].textureUrl,/qa-missing-spruce/);
+  assert.notEqual(feed.raceId,original.raceId);
+  assert.equal(original.assets[0].textureUrl,
+    '/viewer-scenery/alpine-spruce-v1.png');
+});
