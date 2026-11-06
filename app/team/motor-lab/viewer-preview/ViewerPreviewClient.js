@@ -7,7 +7,8 @@ const PreviewScene=dynamic(()=>import('./ViewerPreviewScene'),{
     <p role="status">Loading the race renderer…</p>});
 
 export default function ViewerPreviewClient({feed,coverage,version,
-  previewPath='/team/motor-lab'}){
+  previewPath='/team/motor-lab',
+  clockPath='/api/motor-lab/viewer-clock'}){
   const [sync,setSync]=useState(null);
   const [error,setError]=useState(null);
   useEffect(()=>{
@@ -15,7 +16,7 @@ export default function ViewerPreviewClient({feed,coverage,version,
     const load=async()=>{
       try{
         const sent=Date.now();
-        const response=await fetch(`/api/motor-lab/viewer-clock?category=${
+        const response=await fetch(`${clockPath}?category=${
           feed.riderCategory}`,{cache:'no-store'});
         if(!response.ok)throw new Error('Shared preview clock unavailable.');
         const payload=await response.json();
@@ -33,7 +34,7 @@ export default function ViewerPreviewClient({feed,coverage,version,
     load();
     const timer=setInterval(load,5000);
     return ()=>{active=false;clearInterval(timer);};
-  },[feed.raceId,feed.riderCategory,feed.duration]);
+  },[feed.raceId,feed.riderCategory,feed.duration,clockPath]);
   return <main className="motor-viewer-preview">
     <header>
       <p className="eyebrow">Motor Lab · new race viewer</p>

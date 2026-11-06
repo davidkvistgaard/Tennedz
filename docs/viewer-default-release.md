@@ -17,6 +17,10 @@ boundaries. No Motor Lab sample is substituted for an official game race.
 
 `/team/motor-lab` opens the new viewer by default, while
 `/team/motor-lab/engine` preserves the existing guided or legacy laboratory.
+The same clearly labelled fictional sample is also available without a game
+account at `/viewer`, so collaborators can inspect rendering before the
+preview environment has team data. Its separate public clock uses the same
+server-hour anchor; it exposes no account or official race information.
 `PELOTONIA_VIEWER_V1_ENABLED=false` restores the old Motor Lab default and
 disables the new clock endpoint. Actual game race replays at `/team/view`
 retain the old viewer because their available data cannot support precise
