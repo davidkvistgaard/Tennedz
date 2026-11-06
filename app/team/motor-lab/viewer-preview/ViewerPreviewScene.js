@@ -19,6 +19,7 @@ export default function ViewerPreviewScene({feed,coverage,mode='recorded',
   const [cycleKey,setCycleKey]=useState(0);
   const [stats,setStats]=useState(null),[error,setError]=useState(null);
   const [assetStatus,setAssetStatus]=useState(null);
+  const [diagnostics,setDiagnostics]=useState(null);
   const [detailsOpen,setDetailsOpen]=useState(false);
   const [tab,setTab]=useState('riders'),[light,setLight]=useState('day');
   useEffect(()=>{
@@ -52,6 +53,19 @@ export default function ViewerPreviewScene({feed,coverage,mode='recorded',
             lastAssetStatus.current=signature;
             setAssetStatus(status);
           }
+          const report=viewerRef.current?.getDiagnostics();
+          if(report)setDiagnostics({
+            renderer:report.renderer,
+            crowdCount:report.crowdCount,
+            renderedFrames:report.renderedFrames,
+            cpuP50Ms:report.cpuFrameMs?.p50,
+            samplingP50Ms:report.samplingMs?.p50,
+            rigP50Ms:report.rigMs?.p50,
+            drawP50Ms:report.drawSubmissionMs?.p50,
+            drawCalls:report.resources?.drawCalls,
+            triangles:report.resources?.triangles,
+            errors:report.errors?.length,
+          });
         }}} className="race-theatre-canvas"/>
       <header className="race-theatre-header">
         <div className="race-theatre-brand"><span aria-hidden="true">◩</span>
@@ -173,6 +187,8 @@ export default function ViewerPreviewScene({feed,coverage,mode='recorded',
           'All positions, groups, gaps, route and events are fictional. This mode tests the viewer appearance only.':
           'Within-kilometre movement is interpolation between recorded states. Lanes, canonical geography, helmets and official results are absent. Trees, ground and spectators are synthetic visual presentation.'}</p>
       </details>
+      <output className="race-theatre-diagnostics" hidden
+        data-viewer-diagnostics={JSON.stringify(diagnostics)}/>
     </div>
   </section>;
 }
