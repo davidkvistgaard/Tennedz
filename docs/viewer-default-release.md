@@ -17,10 +17,12 @@ boundaries. No Motor Lab sample is substituted for an official game race.
 
 `/team/motor-lab` opens the new viewer, while
 `/team/motor-lab/engine` preserves the motor laboratory.
-The same clearly labelled fictional sample is also available without a game
-account at `/viewer`, so collaborators can inspect rendering before the
-preview environment has team data. Its separate public clock uses the same
-server-derived race cycle; it exposes no account or official race information.
+The recorded Motor Lab test race, with clearly labelled synthetic scenery, is
+also available without a game account at `/viewer`, so collaborators can
+inspect rendering before the preview environment has team data. Its separate
+public clock uses the same server-derived race cycle; it exposes no account
+or official race information. The wholly fictional visual fixture is available
+only with `?mode=exhibition`.
 The old race viewer and its scene implementation have been removed. Actual
 game race recordings at `/team/view` retain their recorded reports and results,
 but cannot be played in 3D until the race engine records simultaneous rider
@@ -73,8 +75,7 @@ identities are labelled synthetic. The exact-SHA preview
 `a129e7d27aab087b18897386bc5d611ef837d145` rendered 150 women riders
 and all four fictional groups in WebGL. The observed viewer counter was
 approximately 19 fps after reducing synthetic tree density and finish crowds.
-This is below smooth-playback approval, and the browser did not expose an
-independent hardware GPU identity. The 30-rider men fixture with
+This was below smooth-playback approval. The 30-rider men fixture with
 `asset=missing` reported one failed scene asset, retained WebGL rendering, and
 continued the shared replay with fallback. No official race result was
 generated. The package automatically creates a dense finish crowd whenever
@@ -84,10 +85,18 @@ about 19–23 fps. Commit `312df9f3442530c2a3b3620707af2d63baf93847`
 disables that optional synthetic crowd only for the 150-rider visual fixture.
 The same protected browser then displayed about 48–50 fps for 150 men and
 47 fps for 150 women, with zero spectators, about 1.2–1.3 million triangles,
-and CPU frame median 3.3 ms. The four fictional groups, local camera choice,
-shared timeline, and time-gated commentary remained available. This is a
-successful WebGL browser stress check for this reduced-scene fixture, not an
-independent hardware GPU sign-off or approval of a crowded 150-rider scene.
+and CPU frame median 3.3 ms. Commit `557398c6b74ecd4f317136be957003025d73c004`
+adds a bounded set of 240 static spectators to the 150-rider fixture. On
+exact-SHA preview `b838196cb6a281c4cd85c2c7230fd610d4f67fb0`, the
+spectators were visible on both sides of the road; the 150-rider men and women
+fixtures each displayed about 40–43 fps with about 1.5–1.7 million triangles
+and no runtime errors. A WebGL2 diagnostic identified the test machine's
+renderer as ANGLE on Intel UHD Graphics via Direct3D11, so this is a
+hardware-backed browser check on that one machine. The viewer's `crowdCount`
+diagnostic remains zero because it counts the disabled dynamic crowd rather
+than the 240 static feed spectators. Four fictional groups, local camera
+choice, shared timeline, and time-gated commentary remained available.
+Other devices still require their own performance checks.
 
 This is a visual milestone, not a finished engine-to-production integration.
 Official race replays still lack the simultaneous rider coordinates that the

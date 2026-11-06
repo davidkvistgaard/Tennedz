@@ -165,9 +165,8 @@ export default function ViewerPreviewScene({feed,coverage,mode='recorded',
         {stats?.fps?` · ${Math.round(stats.fps)} fps`:''}
       </div>
       {assetStatus?.errors?.length?<p role="alert"
-        className="race-theatre-error">{assetStatus.errors.length} scene asset
-        {assetStatus.errors.length===1?'':'s'} failed to load;
-        fallback rendering remains active.</p>:null}
+        className="race-theatre-error">{`${assetStatus.errors.length} scene asset${
+          assetStatus.errors.length===1?'':'s'} failed to load; fallback rendering remains active.`}</p>:null}
     </div>
     <div className="race-theatre-bottom">
       <div className="race-theatre-commentary">
