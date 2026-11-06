@@ -90,6 +90,8 @@
   padding:6px 10px;border-radius:5px;background:#fffdf0d9;
   color:#52735b;font-size:10px}
 .race-theatre-bottom{background:#f1f1df}
+.race-theatre-position-note{margin:0;padding:9px 18px;
+  background:#e4ead9;color:#3c604c;font-size:11px}
 .race-theatre-commentary{padding:13px 18px;border-bottom:1px solid #d5dbc7}
 .race-theatre-commentary>p{margin:0 0 9px;font-size:10px;font-weight:700;
   letter-spacing:.15em}

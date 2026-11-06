@@ -28,6 +28,10 @@ export default function ViewerPreviewScene({feed,coverage,mode='recorded',
   },[cycleKey]);
   const time=stats?.time??0;
   const sampler=useMemo(()=>createSampler(feed),[feed]);
+  const groupOnlyPositions=useMemo(()=>mode==='recorded'&&
+    feed.frames.every(frame=>frame.positions.length>1&&
+      new Set(frame.positions.map(row=>`${row.distance}:${
+        row.lateral??0}`)).size===1),[feed,mode]);
   const situation=useMemo(()=>sampler(time),[sampler,time]);
   const groups=labelRaceGroups(raceGroups(situation.positions),
     situation.groupRoles);
@@ -169,6 +173,10 @@ export default function ViewerPreviewScene({feed,coverage,mode='recorded',
           assetStatus.errors.length===1?'':'s'} failed to load; fallback rendering remains active.`}</p>:null}
     </div>
     <div className="race-theatre-bottom">
+      {groupOnlyPositions?<p className="race-theatre-position-note">
+        This recording has one road coordinate per group. Its riders overlap
+        in the scene; their individual lanes and order were not recorded.
+      </p>:null}
       <div className="race-theatre-commentary">
         <p>RACE COMMENTARY <small>{mode==='exhibition'?
           'FICTIONAL EVENTS':'RECORDED EVENTS'}</small></p>

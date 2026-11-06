@@ -23,6 +23,10 @@ inspect rendering before the preview environment has team data. Its separate
 public clock uses the same server-derived race cycle; it exposes no account
 or official race information. The wholly fictional visual fixture is available
 only with `?mode=exhibition`.
+Preview clock version `motor-lab-preview-clock-2` holds the recorded finish
+for 15 seconds of presentation time before restarting. It does not extend
+the race or add a sporting time limit; all spectators use the same server
+cycle, and their camera choice remains local.
 The old race viewer and its scene implementation have been removed. Actual
 game race recordings at `/team/view` retain their recorded reports and results,
 but cannot be played in 3D until the race engine records simultaneous rider
@@ -104,6 +108,17 @@ on the same Intel GPU. Both visual presentation versions now use 240 explicitly
 placed static spectators and disable the automatic crowd. The recorded Motor
 Lab positions, group membership, timing, actions, events, and results remain
 unchanged. The limited spectator placement is a visual choice, not motor data.
+
+The exact-SHA preview `1837b7c3d360ef6ea63b6ac41c534aa95c93baec`
+then displayed about 60–61 fps for both 30-rider categories after warming up,
+with 240 visible spectators, zero dynamic spectators, roughly 0.67 million
+triangles, and no renderer errors. A deliberately missing texture produced one
+visible asset error while WebGL and the race continued at about 61 fps. Two
+separate browser spectators showed the same shared race second while each
+retained a different local camera target. A single recorded 32-rider women's
+race tab displayed about 50–53 fps late in the 40 km race, with metres shown
+under the last kilometre. The recorded riders all overlap at one coordinate;
+the interface now explains that data limitation beside the replay.
 
 This is a visual milestone, not a finished engine-to-production integration.
 Official race replays still lack the simultaneous rider coordinates that the
