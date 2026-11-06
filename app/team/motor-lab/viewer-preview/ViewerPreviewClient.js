@@ -10,6 +10,9 @@ export default function ViewerPreviewClient({feed,coverage,version,
   mode='recorded',
   previewPath='/team/motor-lab',
   clockPath='/api/motor-lab/viewer-clock'}){
+  const categoryQuery=feed.riderCategory==='women'?'?category=women':'';
+  const exhibitionQuery=`?mode=exhibition${
+    feed.riderCategory==='women'?'&category=women':''}`;
   const [sync,setSync]=useState(null);
   const [error,setError]=useState(null);
   useEffect(()=>{
@@ -46,9 +49,9 @@ export default function ViewerPreviewClient({feed,coverage,version,
         'Motor race data · synthetic scenery'}</span>
       <nav className="motor-viewer-modes" aria-label="Viewer mode">
         <a aria-current={mode==='recorded'?'page':undefined}
-          href="/viewer">Recorded race</a>
+          href={`/viewer${categoryQuery}`}>Recorded race</a>
         <a aria-current={mode==='exhibition'?'page':undefined}
-          href="/viewer?mode=exhibition">Visual exhibition</a>
+          href={`/viewer${exhibitionQuery}`}>Visual exhibition</a>
       </nav>
     </div>
     {error?<p role="alert">{error} <a href="/team/motor-lab/engine">
@@ -58,7 +61,7 @@ export default function ViewerPreviewClient({feed,coverage,version,
       version={version} {...sync}/>:null}
     <footer><a href="/team/motor-lab/engine">
       Motor Lab engine</a> · <a href={mode==='exhibition'?
-      '/viewer':'/viewer?mode=exhibition'}>
+      `/viewer${categoryQuery}`:`/viewer${exhibitionQuery}`}>
       {mode==='exhibition'?'Recorded Motor Lab race':
         'Synthetic visual exhibition'}</a> · <a href={
       `${previewPath}?category=${
