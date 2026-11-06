@@ -39,6 +39,7 @@ for(const fieldSize of [30,150])
       const {feed}=syntheticExhibitionV1(source,{fieldSize});
       assert.deepEqual(validateFeed(feed),feed);
       assert.equal(feed.riders.length,fieldSize);
+      assert.equal(feed.crowd.enabled,fieldSize!==150);
       assert.equal(new Set(feed.riders.map(row=>row.id)).size,fieldSize);
       assert.equal(createSampler(feed)(120).positions.length,fieldSize);
       assert.equal(feed.results,undefined);
