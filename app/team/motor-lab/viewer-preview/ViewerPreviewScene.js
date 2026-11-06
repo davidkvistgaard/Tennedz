@@ -12,6 +12,7 @@ export default function ViewerPreviewScene({feed,coverage,mode='recorded',
   version,clock,serverOffsetMs}){
   const viewerRef=useRef(null),lastUpdate=useRef(-1);
   const lastAssetStatus=useRef('');
+  const graphicsBackend=useRef(null);
   const pelotonId=Object.entries(feed.frames[0]?.groupRoles??{})
     .find(([,role])=>role==='peloton')?.[0]??
     feed.frames[0]?.positions[0]?.groupId;
@@ -54,6 +55,24 @@ export default function ViewerPreviewScene({feed,coverage,mode='recorded',
             setAssetStatus(status);
           }
           const report=viewerRef.current?.getDiagnostics();
+          if(report?.renderer==='WebGL'&&!graphicsBackend.current){
+            try{
+              const canvas=document.querySelector('.race-theatre-canvas canvas');
+              const gl=canvas?.getContext('webgl2');
+              if(gl){
+                const extension=gl.getExtension('WEBGL_debug_renderer_info');
+                graphicsBackend.current={
+                  api:'WebGL2',
+                  vendor:gl.getParameter(gl.VENDOR),
+                  renderer:gl.getParameter(gl.RENDERER),
+                  unmaskedVendor:extension?
+                    gl.getParameter(extension.UNMASKED_VENDOR_WEBGL):null,
+                  unmaskedRenderer:extension?
+                    gl.getParameter(extension.UNMASKED_RENDERER_WEBGL):null,
+                };
+              }
+            }catch{graphicsBackend.current={api:'WebGL2',detail:'unavailable'};}
+          }
           if(report)setDiagnostics({
             renderer:report.renderer,
             crowdCount:report.crowdCount,
@@ -65,6 +84,7 @@ export default function ViewerPreviewScene({feed,coverage,mode='recorded',
             drawCalls:report.resources?.drawCalls,
             triangles:report.resources?.triangles,
             errors:report.errors?.length,
+            graphicsBackend:graphicsBackend.current,
           });
         }}} className="race-theatre-canvas"/>
       <header className="race-theatre-header">
