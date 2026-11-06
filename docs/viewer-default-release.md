@@ -44,7 +44,7 @@ timeline around the installed `@pelotonia/race-viewer` renderer. Its visual
 style follows the supplied ChatGPT Work screenshot. It uses the package as a
 module; the kit's demo application is not part of Tennedz.
 
-`motor-lab-scenic-study-1` adds only flat terrain, generated roadside trees,
+`motor-lab-scenic-study-2` adds only flat terrain, generated roadside trees,
 grass, spectators, and a finish structure to the recorded 40 km Motor Lab
 sample. Two foliage textures come from the supplied Viewer Integration Kit
 0.98.1 (`source/public/assets/alpine-spruce-v1.png` and
@@ -55,7 +55,7 @@ sampling. The recording places all 32 riders at the same longitudinal road
 position within one peloton and has no lanes, so the 3D view cannot display a
 real spread-out peloton or multiple groups from that source.
 
-`viewer-visual-exhibition-1` is a separate, explicitly fictional four-minute
+`viewer-visual-exhibition-2` is a separate, explicitly fictional four-minute
 visual fixture at `/viewer?mode=exhibition`. It shows leaders, a chase group,
 peloton, and a dropped group to demonstrate the intended screen and camera
 with the same men/women roster identities. Its route, positions, gaps, events,
@@ -97,6 +97,13 @@ diagnostic remains zero because it counts the disabled dynamic crowd rather
 than the 240 static feed spectators. Four fictional groups, local camera
 choice, shared timeline, and time-gated commentary remained available.
 Other devices still require their own performance checks.
+
+The next performance check found that the 30-rider fixture enabled the package's
+automatic finish crowd and fell to about 28 fps with 1,908 dynamic spectators
+on the same Intel GPU. Both visual presentation versions now use 240 explicitly
+placed static spectators and disable the automatic crowd. The recorded Motor
+Lab positions, group membership, timing, actions, events, and results remain
+unchanged. The limited spectator placement is a visual choice, not motor data.
 
 This is a visual milestone, not a finished engine-to-production integration.
 Official race replays still lack the simultaneous rider coordinates that the
