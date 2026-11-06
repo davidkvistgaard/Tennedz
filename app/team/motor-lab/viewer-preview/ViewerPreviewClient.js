@@ -7,6 +7,7 @@ const PreviewScene=dynamic(()=>import('./ViewerPreviewScene'),{
     <p role="status">Loading the race renderer…</p>});
 
 export default function ViewerPreviewClient({feed,coverage,version,
+  mode='recorded',
   previewPath='/team/motor-lab',
   clockPath='/api/motor-lab/viewer-clock'}){
   const [sync,setSync]=useState(null);
@@ -36,23 +37,33 @@ export default function ViewerPreviewClient({feed,coverage,version,
     return ()=>{active=false;clearInterval(timer);};
   },[feed.raceId,feed.riderCategory,feed.duration,clockPath]);
   return <main className="motor-viewer-preview">
-    <header>
-      <p className="eyebrow">Motor Lab · new race viewer</p>
-      <h1>Recorded sample race</h1>
-      <p>40 km · {feed.riderCategory==='women'?'Women':'Men'} · {
-        coverage.riderCount} riders · 1× shared replay</p>
-      <p>The road is a schematic distance axis. Geography, rider lanes,
-        helmets and official results are unavailable in this recording.</p>
-    </header>
+    <div className="motor-viewer-intro">
+      <h1>{mode==='exhibition'?'Synthetic visual exhibition':
+        'Recorded Motor Lab race'}</h1>
+      <span>{feed.riderCategory==='women'?'Women':'Men'} · {
+        coverage.riderCount} riders · {mode==='exhibition'?'4 min':'40 km'}</span>
+      <span>{mode==='exhibition'?'Entire race is fictional':
+        'Motor race data · synthetic scenery'}</span>
+      <nav className="motor-viewer-modes" aria-label="Viewer mode">
+        <a aria-current={mode==='recorded'?'page':undefined}
+          href="/viewer">Recorded race</a>
+        <a aria-current={mode==='exhibition'?'page':undefined}
+          href="/viewer?mode=exhibition">Visual exhibition</a>
+      </nav>
+    </div>
     {error?<p role="alert">{error} <a href="/team/motor-lab/engine">
       Open the Motor Lab engine</a>.</p>:null}
     {!sync&&!error?<p role="status">Synchronizing race time…</p>:null}
-    {sync?<PreviewScene feed={feed} coverage={coverage}
+    {sync?<PreviewScene feed={feed} coverage={coverage} mode={mode}
       version={version} {...sync}/>:null}
     <footer><a href="/team/motor-lab/engine">
-      Motor Lab engine</a> · <a href={
+      Motor Lab engine</a> · <a href={mode==='exhibition'?
+      '/viewer':'/viewer?mode=exhibition'}>
+      {mode==='exhibition'?'Recorded Motor Lab race':
+        'Synthetic visual exhibition'}</a> · <a href={
       `${previewPath}?category=${
-        feed.riderCategory==='women'?'men':'women'}`}>
+        feed.riderCategory==='women'?'men':'women'}${
+        mode==='exhibition'?'&mode=exhibition':''}`}>
       Switch to {feed.riderCategory==='women'?'men':'women'}’s test field</a>
     </footer>
   </main>;

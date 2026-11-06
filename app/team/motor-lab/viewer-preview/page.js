@@ -1,5 +1,7 @@
 import {recordedViewerRaceV1} from
   '../../../../lib/viewer/recorded-race-v1.mjs';
+import {scenicPresentationV1} from
+  '../../../../lib/viewer/scenic-presentation-v1.mjs';
 import ViewerPreviewClient from './ViewerPreviewClient';
 import TeamShell from '../../../components/TeamShell';
 import '@pelotonia/race-viewer/commentary.css';
@@ -13,5 +15,6 @@ export default async function ViewerPreviewPage({searchParams}){
   const category=params?.category==='women'?'women':'men';
   const race=recordedViewerRaceV1(category);
   return <TeamShell compact><ViewerPreviewClient {...race}
+    feed={scenicPresentationV1(race.feed)}
     previewPath="/team/motor-lab"/></TeamShell>;
 }
