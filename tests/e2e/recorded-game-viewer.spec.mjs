@@ -81,6 +81,13 @@ test('saved paid game race renders on the shared viewer clock',
           {timeout:65000});
       await expect(page.getByText(`All ${riderCount} crossings`))
         .toBeVisible();
+      const measuredFinish=page.getByRole('region',
+        {name:'Measured Motor Lab finish crossings'});
+      await measuredFinish.getByText(`All ${riderCount} crossings`).click();
+      await expect(measuredFinish.locator('details[open] li'))
+        .toHaveCount(riderCount);
+      await expect(measuredFinish.locator('details[open] time'))
+        .toHaveCount(riderCount);
     }else{
       await expect(page.getByText(
         'The race feed and measured finish are not available yet.'))
