@@ -52,3 +52,17 @@ improved from 6/20 to 12/20. A separate 160-rider mountain attack fixture
 improved from 67 finish mismatches to one, with all 19,200 rider-kilometres
 still paid and replayed. These numbers support retaining the policy as an
 experimental increment; they do not approve guided races or publication.
+
+The complete rerun on 9 November isolates the remaining discrepancy: all
+24 no-attack scenarios calibrate, while all 24 selective-attack and all 24
+repeated-attack scenarios have at least one same-seed finish difference.
+The candidate races still complete and replay; the difference is between
+historical V94 gap claims and paid attack-road clocks. For example, in the
+120 km men's flat all-chase selective-attack race, the first attack at km 20
+has one paid attacker (`you-7`) with 79.85532 seconds for that kilometre
+against the paid bunch's 82.91796 seconds. Its measured lead is 3.06264
+seconds; V94 claims 15.04 seconds at the same checkpoint. No paid bunch
+drop occurs there. The discrepancy persists to an 18.36576-second relative
+finish difference. The source claim cannot be used as a physical position.
+The audit now reports calibration by attack order, so future policy changes
+must improve the affected classes without regressing the no-attack cases.
