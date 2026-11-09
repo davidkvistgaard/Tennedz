@@ -49,8 +49,15 @@ test('committed two kilometre race exports complete viewer evidence',()=>{
   assert.equal(exported.coverage.riderNumberSource,'committed-race-bib');
   assert.deepEqual(exported.feed.riders.map(row=>row.number),[11,12]);
   assert.equal(exported.finishEvidence.entries.length,2);
+  assert.equal(exported.finishEvidence.version,'motor-lab-paid-finish-v2');
+  assert.equal(exported.finishEvidence.clockGroups.length,1);
+  assert.equal(exported.finishEvidence.unresolvedTieRiders,2);
   assert.equal(sealPhysicalFirstRaceDocumentV2(exported,
     {category:'men'}).raceId,'paid-two-km');
+  const tampered=structuredClone(exported);
+  tampered.finishEvidence.clockGroups[0].riderIds.pop();
+  assert.throws(()=>sealPhysicalFirstRaceDocumentV2(tampered,
+    {category:'men'}),/invalid finish clock groups/);
 });
 
 test('export refuses missing orders and a different paid recording',()=>{

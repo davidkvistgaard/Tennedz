@@ -83,6 +83,11 @@ test('saved paid game race renders on the shared viewer clock',
         .toBeVisible();
       const measuredFinish=page.getByRole('region',
         {name:'Measured Motor Lab finish crossings'});
+      await expect(measuredFinish.getByText(
+        `${riderCount} riders · shared clock`)).toBeVisible();
+      await expect(measuredFinish.getByText(
+        `${riderCount} riders have unresolved equal-clock finishes.`))
+        .toBeVisible();
       await measuredFinish.getByText(`All ${riderCount} crossings`).click();
       await expect(measuredFinish.locator('details[open] li'))
         .toHaveCount(riderCount);

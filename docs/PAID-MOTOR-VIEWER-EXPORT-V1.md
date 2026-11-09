@@ -26,6 +26,17 @@ lanes or canonical geography. Between paid crossings and contacts,
 longitudinal distance is interpolation. The finish evidence records paid
 clock and road only; it does not award official places or points.
 
+New exports carry `motor-lab-paid-finish-v2` evidence. `clockGroups` is
+copied from the independent Motor Lab race recorder after the full replay:
+each group contains the exact measured crossing clock and the riders sharing
+it. `unresolvedTieRiders` counts riders in groups of two or more. The
+document seal verifies that every group and clock matches the crossing list.
+Historic `motor-lab-paid-finish-v1` documents remain readable. The viewer
+shows a shared-clock group instead of an arbitrary first-ten ranking and
+explains that names within the group have no recorded finishing order.
+In a 20-team flat test race, all 160 riders share one paid bunch clock; the
+motor has not recorded an individual sprint or tie-breaking result.
+
 This is **not yet an official game race export**. The current live entry saves
 eight selected riders and a captain, but no tactical orders or sporting
 stakes; its official cycle still calls `simulateStage`, and its replay uses

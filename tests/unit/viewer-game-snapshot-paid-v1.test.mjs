@@ -74,6 +74,9 @@ test('complete 20-team divisions fit viewer contract without dropping riders',()
     assert.equal(validateFeed(document.feed),document.feed);
     assert.equal(document.feed.riders.length,160);
     assert.equal(document.finishEvidence.entries.length,160);
+    assert.equal(document.finishEvidence.clockGroups.length,1);
+    assert.equal(document.finishEvidence.clockGroups[0].riderIds.length,160);
+    assert.equal(document.finishEvidence.unresolvedTieRiders,160);
     assert.equal(document.source.validatedRiderKilometres,3200);
     assert.throws(()=>validateFeed({...document.feed,
       riders:[...document.feed.riders,{

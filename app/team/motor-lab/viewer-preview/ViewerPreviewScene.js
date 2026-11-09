@@ -62,6 +62,8 @@ export default function ViewerPreviewScene({feed,coverage,mode='recorded',
   const time=stats?.time??0;
   const publishedFinish=mode==='split'&&finishEvidence&&
     time>=finishEvidence.publishedAt?finishEvidence:null;
+  const clockGroups=publishedFinish?.version===
+    'motor-lab-paid-finish-v2'?publishedFinish.clockGroups:null;
   const riderNames=useMemo(()=>new Map(feed.riders.map(rider=>
     [rider.id,rider.name])),[feed]);
   const sampler=useMemo(()=>createSampler(feed),[feed]);
@@ -262,10 +264,22 @@ export default function ViewerPreviewScene({feed,coverage,mode='recorded',
         <h2>Measured finish crossings <small>Motor Lab test · unofficial</small></h2>
         <p>Shown after every recorded rider reached the line. Equal clocks
           remain tied; no placing, award or official result is assigned.</p>
-        <ul>{publishedFinish.entries.slice(0,10).map(row=><li
+        {clockGroups?<>
+          <p>{publishedFinish.unresolvedTieRiders} riders have unresolved
+            equal-clock finishes. Groups below show measured clocks only.</p>
+          <ul>{clockGroups.slice(0,10).map(group=><li
+            key={group.clockSeconds}>
+            <span>{group.riderIds.length===1?
+              riderNames.get(group.riderIds[0]):
+              `${group.riderIds.length} riders · shared clock`}</span>
+            <time>{finishClockLabel(group.clockSeconds)}</time>
+          </li>)}</ul>
+        </>:<ul>{publishedFinish.entries.slice(0,10).map(row=><li
           key={row.riderId}><span>{riderNames.get(row.riderId)}</span>
-          <time>{finishClockLabel(row.clockSeconds)}</time></li>)}</ul>
+          <time>{finishClockLabel(row.clockSeconds)}</time></li>)}</ul>}
         <details><summary>All {publishedFinish.entries.length} crossings</summary>
+          {clockGroups?<p>Rider names within a shared clock have no
+            recorded finishing order.</p>:null}
           <ul>{publishedFinish.entries.map(row=><li key={row.riderId}>
             <span>{riderNames.get(row.riderId)}</span>
             <time>{finishClockLabel(row.clockSeconds)}</time>
