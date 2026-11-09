@@ -1,7 +1,8 @@
 // Reproduce the experimental Motor Lab -> viewer export across complete races.
 // This reports calibration; it does not bless the preview as an official race.
-import {createPhysicalFirstRaceDocumentV2} from
-  '../lib/viewer/physical-first-race-document-v2.mjs';
+import {createPhysicalFirstRaceDocumentV3,
+  verifyPhysicalFirstRaceDocumentV3} from
+  '../lib/viewer/physical-first-race-document-v3.mjs';
 
 const smoke=process.argv.includes('--smoke');
 const strict=process.argv.includes('--require-calibrated');
@@ -21,8 +22,9 @@ const rows=[];
 for(const input of cases){
   try{
     const {category,...variant}=input;
-    const document=createPhysicalFirstRaceDocumentV2(
+    const document=createPhysicalFirstRaceDocumentV3(
       category,variant);
+    verifyPhysicalFirstRaceDocumentV3(document);
     const {coverage,source,finishEvidence,feed}=document;
     rows.push({input,status:'complete',
       riderCount:coverage.riderCount,

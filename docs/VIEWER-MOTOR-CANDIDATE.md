@@ -101,6 +101,9 @@ digest binds input metadata, feed, finish, coverage and motor source.
 Historic v2 recordings retain their original verification rule and remain
 readable. The local, unapplied recording migration accepts both versions;
 the database separately checks event ID and seed on write.
+The release audit now seals and verifies v3. Its 20-scenario same-seed smoke
+run completed every race, with 12 calibrated, 8 mismatched and zero official
+results; guided-race readiness remains false.
 
 An isolated browser fixture also verified the new spectator path with a
 signed-in non-administrator. A saved 16-rider game-shaped race displayed a
