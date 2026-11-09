@@ -49,3 +49,17 @@ only one kilometre of physically supported positions. Likewise,
 distance: a 3 km connected-road example has 1/16, since the other riders
 are still behind the line when the front road clock ends. No official
 classification may be inferred from that partial finish.
+
+`physical-first-position-finish-tail-1` can settle that partial line only
+after every kilometre has a supported, unchanged connected road. The
+field continues at its last paid road speed for the remaining distance
+between the last wheel and the finish. Every rider pays the additional
+terrain-priced distance, including the front worker riding beyond the
+line to keep the field sheltered until the last wheel crosses. Individual
+crossing clocks are calculated from each recorded pre-tail position.
+Replay rejects altered times or charges. In isolated 16- and 160-rider
+tests all wheels reach the line, but the contract deliberately preserves
+their previous order: no paid sprint or overtaking has happened, so these
+are neither official placements nor a validated stage result. A leader
+change, drop, attack or contact still prevents this settlement until its
+position movement is implemented and replayed.

@@ -16,6 +16,9 @@ import {recordPhysicalFirstPositionTraceV1,
   '../../lib/engine/v2/physical-first-position-trace-v1.mjs';
 import {recordPhysicalFirstRaceV1} from
   '../../lib/engine/v2/physical-first-race-record-v1.mjs';
+import {settlePhysicalFirstPositionFinishTailV1,
+  replayPhysicalFirstPositionFinishTailV1} from
+  '../../lib/engine/v2/physical-first-position-finish-tail-v1.mjs';
 
 const grid={laneCount:4,wheelSpacingM:2.5,laneStaggerM:.08};
 const rider=id=>({id,flat:65,hills:65,mountain:65,
@@ -49,8 +52,8 @@ function input(teamCount=2,raceSeed='position-seed-a'){
       sportingCaptainId:team.orders.captainId}))};
 }
 
-function cappedInput(kmCount){
-  const committed=input();
+function cappedInput(kmCount,teamCount=2){
+  const committed=input(teamCount);
   committed.kilometres=Array.from({length:kmCount},
     (_,index)=>({...committed.kilometres[0],km:index+1}));
   for(const state of committed.start.riders){
@@ -191,4 +194,49 @@ test('position trace stops at a leader change without paid passing',()=>{
   assert.match(trace.unsupported.reason,/unchanged paid leader/);
   assert.equal(trace.validatedPositionRiderKm,16);
   assert.equal(trace.officialResults,false);
+  assert.throws(()=>settlePhysicalFirstPositionFinishTailV1(
+    committed,trace),/fully paid connected position road/);
+});
+
+test('paid finish tail carries all model wheels across the line',()=>{
+  const committed=cappedInput(3);
+  const trace=recordPhysicalFirstPositionTraceV1(committed,grid);
+  const tail=settlePhysicalFirstPositionFinishTailV1(
+    committed,trace);
+  assert.equal(tail.lineCrossingCoverage,'16/16');
+  assert.equal(tail.tailDistanceM,
+    3000-Math.min(...trace.states.at(-1).positions.map(row=>
+      row.distanceM)));
+  assert.equal(tail.lineCrossings[0].riderId,
+    trace.states[0].positions[0].riderId);
+  assert.equal(tail.lineCrossings[0].clockSeconds,
+    trace.states.at(-1).clockSeconds);
+  assert.ok(tail.lineCrossings.slice(1).every(row=>
+    row.clockSeconds>tail.lineCrossings[0].clockSeconds));
+  assert.ok(tail.tailDecisions.every(row=>
+    row.paidFromReserve>0&&
+    row.energyAfter<row.energyBefore));
+  assert.equal(tail.tailDecisions[0].role,'leader');
+  assert.equal(tail.frontWorkerPaidBeyondFinish,true);
+  assert.equal(tail.competitiveSprintModelUsed,false);
+  assert.equal(tail.officialResults,false);
+  assert.deepEqual(replayPhysicalFirstPositionFinishTailV1(
+    committed,trace,tail),tail);
+  const forged=structuredClone(tail);
+  forged.lineCrossings[1].clockSeconds-=1;
+  assert.throws(()=>replayPhysicalFirstPositionFinishTailV1(
+    committed,trace,forged),/differs from paid rider motion/);
+});
+
+test('paid finish tail covers a 160-rider connected field',()=>{
+  const committed=cappedInput(2,20);
+  const trace=recordPhysicalFirstPositionTraceV1(committed,grid);
+  const tail=settlePhysicalFirstPositionFinishTailV1(
+    committed,trace);
+  assert.equal(trace.validatedPositionRiderKm,320);
+  assert.equal(tail.lineCrossings.length,160);
+  assert.equal(new Set(tail.lineCrossings.map(row=>
+    row.clockSeconds)).size,160);
+  assert.ok(tail.tailDistanceM<1000);
+  assert.equal(tail.officialResults,false);
 });
