@@ -67,6 +67,8 @@ test('source-independent race record validates complete measured finish',()=>{
   assert.equal(result.version,PHYSICAL_FIRST_RACE_RECORD_VERSION);
   assert.equal(result.replay.validatedRiderKm,4);
   assert.equal(result.finishCrossings.length,2);
+  assert.equal(result.finishClockGroups.length,2);
+  assert.equal(result.unresolvedTieRiders,0);
   assert.ok(result.finishCrossings.every(row=>
     row.clockSeconds>0&&row.roadId));
   assert.equal(result.officialResults,false);
@@ -83,6 +85,18 @@ test('source-independent race record validates complete measured finish',()=>{
   assert.throws(()=>recordPhysicalFirstRaceV1(committed,
     {recording:tampered}),
   /boundary or finish differs/);
+  const tied=input();
+  for(const row of tied.start.riders){
+    const source=tied.teams.find(team=>team.id===row.teamId)
+      .riders[0];
+    row.reserve=replayRearEnergyCapV1({rider:source,
+      kilometres:tied.kilometres,throughKm:0}).initialCap;
+  }
+  const shared=recordPhysicalFirstRaceV1(tied);
+  assert.equal(shared.finishClockGroups.length,1);
+  assert.deepEqual(shared.finishClockGroups[0].riderIds,
+    ['a','b']);
+  assert.equal(shared.unresolvedTieRiders,2);
 });
 
 test('physical-first probe carries detached solo through all km',()=>{
