@@ -16,8 +16,17 @@ const finishClockLabel=seconds=>{
 };
 
 export default function ViewerPreviewScene({feed,coverage,mode='recorded',
-  version,clock,serverOffsetMs,finishEvidence=null,publicEvents=[]}){
+  version,clock,serverOffsetMs,finishEvidence=null,publicEvents=[],
+  rendererFeed=null,cycleEpochMs=null}){
   const viewerRef=useRef(null),lastUpdate=useRef(-1);
+  const appendedThrough=useRef((()=>{
+    const initial=rendererFeed?.frames;
+    if(!initial)return 0;
+    const tail=initial.at(-1);
+    return tail.time===rendererFeed.duration&&
+      tail.positions.length===0?
+        initial.at(-2).time:tail.time;
+  })());
   const lastAssetStatus=useRef('');
   const graphicsBackend=useRef(null);
   const pelotonId=Object.entries(feed.frames[0]?.groupRoles??{})
@@ -26,6 +35,8 @@ export default function ViewerPreviewScene({feed,coverage,mode='recorded',
   const [target,setTarget]=useState({type:'group',id:pelotonId});
   const [cycleKey,setCycleKey]=useState(0);
   const [stats,setStats]=useState(null),[error,setError]=useState(null);
+  const [renderedThrough,setRenderedThrough]=useState(
+    appendedThrough.current);
   const [assetStatus,setAssetStatus]=useState(null);
   const [diagnostics,setDiagnostics]=useState(null);
   const [detailsOpen,setDetailsOpen]=useState(false);
@@ -33,6 +44,21 @@ export default function ViewerPreviewScene({feed,coverage,mode='recorded',
   useEffect(()=>{
     viewerRef.current?.setZoom(.35);
   },[cycleKey]);
+  useEffect(()=>{
+    if(!rendererFeed)return;
+    const newFrames=feed.frames.filter(frame=>
+      frame.time>appendedThrough.current&&
+      frame.positions.length>0);
+    if(!newFrames.length)return;
+    try{
+      const through=viewerRef.current?.appendRecordedFrames(
+        newFrames);
+      if(through!==newFrames.at(-1).time)
+        throw new Error('The renderer did not accept reached frames.');
+      appendedThrough.current=through;
+      setRenderedThrough(through);
+    }catch(cause){setError(cause.message);}
+  },[feed.frames,rendererFeed]);
   const time=stats?.time??0;
   const publishedFinish=mode==='split'&&finishEvidence&&
     time>=finishEvidence.publishedAt?finishEvidence:null;
@@ -60,12 +86,17 @@ export default function ViewerPreviewScene({feed,coverage,mode='recorded',
     feed.riders.find(rider=>rider.id===target.id):null;
   const progress=Math.min(100,100*time/feed.duration);
   const choose=next=>{setTarget(next);viewerRef.current?.follow(next);};
-  return <section className="race-theatre" aria-label="Pelotonia race theatre">
+  return <section className="race-theatre"
+    aria-label="Pelotonia race theatre"
+    data-rendered-through={rendererFeed?renderedThrough:undefined}
+    data-cycle-epoch={rendererFeed?cycleEpochMs:undefined}>
     <div className="race-theatre-stage">
-      <RaceViewer key={cycleKey} ref={viewerRef} feed={feed} clock={clock}
+      <RaceViewer key={cycleKey} ref={viewerRef}
+        feed={rendererFeed??feed} clock={clock}
         serverOffsetMs={serverOffsetMs} target={target}
         onSelect={choose} onError={cause=>setError(cause.message)}
-        onStats={next=>{if(next.time<lastUpdate.current-30)
+        onStats={next=>{if(!rendererFeed&&
+          next.time<lastUpdate.current-30)
           setCycleKey(current=>current+1);
           if(Math.abs(next.time-lastUpdate.current)>=.5||
           next.time===feed.duration){lastUpdate.current=next.time;
@@ -109,6 +140,7 @@ export default function ViewerPreviewScene({feed,coverage,mode='recorded',
             triangles:report.resources?.triangles,
             errors:report.errors?.length,
             graphicsBackend:graphicsBackend.current,
+            cameraYaw:next.camera?.yaw,
           });
         }}} className="race-theatre-canvas"/>
       <header className="race-theatre-header">

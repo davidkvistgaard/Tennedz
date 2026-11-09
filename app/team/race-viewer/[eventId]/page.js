@@ -49,12 +49,16 @@ export default async function RaceViewerPage({params}){
     return <TeamShell compact><WaitingRecordedGameViewer
       eventId={eventId} clockPath={clockPath}
       publicationAtMs={broadcast.publicationAtMs}/></TeamShell>;
-  const projection=physicalSpectatorFeedV1(document,eventId);
+  const projection=physicalSpectatorFeedV1(document,eventId,
+    broadcast.elapsed);
   return <TeamShell compact><RecordedGameViewerClient
     eventId={eventId} raceId={projection.raceId}
     sha256={projection.sha256} feed={projection.feed}
     coverage={projection.coverage}
     version={projection.adapterVersion}
+    initialAvailableThrough={projection.availableThrough}
+    initialCycleEpochMs={broadcast.clock.serverEpochMs}
+    framesPath="/api/event/physical-viewer-frames"
     clockPath={clockPath}
     finishPath="/api/event/physical-viewer-finish"/>
   </TeamShell>;

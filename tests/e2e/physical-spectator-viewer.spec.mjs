@@ -8,7 +8,15 @@ test('signed-in non-admin sees a paid race without private inputs',
       'true','Requires the isolated physical recording fixture.');
     test.setTimeout(90000);
     const errors=[];
+    const increments=[];
     page.on('pageerror',error=>errors.push(error.message));
+    page.on('response',response=>{
+      if(response.ok()&&response.url().includes(
+          '/api/event/physical-viewer-frames?'))
+        response.json().then(payload=>{
+          if(payload.frames?.length)increments.push(payload);
+        }).catch(error=>errors.push(error.message));
+    });
     await page.goto('/login');
     await page.getByLabel('Email or username').fill('bob');
     await page.getByLabel('Password',{exact:true})
@@ -42,6 +50,41 @@ test('signed-in non-admin sees a paid race without private inputs',
       expect(html).not.toContain('physicalSourceVersion');
       expect(html).not.toContain('seedProvenance');
       expect(html).not.toContain('finishEvidence');
+      if(process.env.PELOTONIA_E2E_PHYSICAL_VIEWER_STREAM===
+          'true'){
+        await page.getByRole('button',
+          {name:'Orbit camera left'}).click();
+        await expect.poll(async()=>{
+          const raw=await page.locator(
+            '[data-viewer-diagnostics]').getAttribute(
+              'data-viewer-diagnostics');
+          return raw?JSON.parse(raw)?.cameraYaw:null;
+        }).toBeLessThan(-0.4);
+        await expect.poll(()=>increments.length,
+          {timeout:20000}).toBeGreaterThan(0);
+        const reached=increments.at(-1);
+        expect(reached.frames.every(frame=>
+          frame.time<=reached.elapsed)).toBe(true);
+        expect(JSON.stringify(reached)).not.toContain('source');
+        await expect.poll(async()=>{
+          const stage=page.locator('.race-theatre');
+          const cycle=Number(await stage.getAttribute(
+            'data-cycle-epoch'));
+          const rendered=Number(await stage.getAttribute(
+            'data-rendered-through'));
+          return cycle===reached.cycleEpochMs&&
+            rendered>=reached.availableThrough;
+        },{timeout:10000}).toBe(true);
+        const camera=JSON.parse(await page.locator(
+          '[data-viewer-diagnostics]').getAttribute(
+            'data-viewer-diagnostics'));
+        expect(camera.cameraYaw).toBeLessThan(-0.4);
+        await expect(page.getByRole('heading',
+          {name:'Measured finish crossings'}))
+          .toBeVisible({timeout:50000});
+        await expect(page.getByText('All 16 crossings'))
+          .toBeVisible();
+      }
     }else{
       await expect(page.getByText(
         'The race feed and measured finish are not available yet.'))

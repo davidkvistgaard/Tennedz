@@ -5,6 +5,8 @@ import { randomUUID } from "node:crypto";
 import {v2BrowserRecordingLock} from './v2-browser-recording-fixture.mjs';
 import {physicalGameViewerFixture,physicalViewerEventId} from
   './physical-game-viewer-fixture.mjs';
+import {recordedGameBroadcastV1} from
+  '../../lib/viewer/recorded-game-broadcast-v1.mjs';
 
 const sessions = new Map();
 const clubKits = new Map();
@@ -32,7 +34,10 @@ const physicalViewerDocument=physicalViewerFixture?
     category:physicalViewerCategory}):null;
 const physicalViewerRecordedAt=physicalViewerFixture?
   new Date(Date.now()+(process.env.
-    PELOTONIA_E2E_PHYSICAL_VIEWER_FINISHED==='true'?-600000:60000))
+    PELOTONIA_E2E_PHYSICAL_VIEWER_STREAM==='true'?
+      -Math.ceil(physicalViewerDocument.feed.duration*1000/60)-500:
+    process.env.PELOTONIA_E2E_PHYSICAL_VIEWER_FINISHED===
+      'true'?-600000:60000))
     .toISOString():null;
 let v2LockedAt = null;
 let v2RecordedAt = null;
@@ -102,6 +107,21 @@ const server = http.createServer(async (req, res) => {
         duration:physicalViewerDocument.feed.duration,
         events:physicalViewerDocument.feed.events});
     }
+      if (physicalViewerFixture && url.pathname ===
+        '/rest/v1/rpc/recovery_physical_viewer_frame_slice_v1') {
+        if(body.p_event!==physicalViewerEventId)return send(200,null);
+        const broadcast=recordedGameBroadcastV1({
+          recorded_at:physicalViewerRecordedAt,
+          race_id:physicalViewerDocument.raceId,
+          duration:physicalViewerDocument.feed.duration,
+          events:physicalViewerDocument.feed.events},Date.now());
+        const permitted=Math.min(body.p_elapsed,broadcast.elapsed);
+        const frames=physicalViewerDocument.feed.frames.filter(frame=>
+          frame.time>body.p_after&&frame.time<=permitted);
+        return send(200,{raceId:physicalViewerDocument.raceId,
+          sha256:physicalViewerDocument.sha256,frames,
+          availableThrough:frames.at(-1)?.time??body.p_after});
+      }
     if (v2RecordingFixture && url.pathname === "/rest/v1/rpc/recovery_save_v2_recorded_candidate") {
       if (body.p_event !== v2PreviewEventId || body.p_contract?.schemaVersion !== 1 ||
           body.p_contract?.engineVersion !== 2 ||

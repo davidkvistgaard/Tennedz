@@ -9,6 +9,9 @@ const migration=readFileSync(new URL(
 const broadcastMigration=readFileSync(new URL(
   '../../supabase/migrations/20261109140727_physical_viewer_broadcast_source_v1.sql',
   import.meta.url),'utf8');
+const frameMigration=readFileSync(new URL(
+  '../../supabase/migrations/20261109170324_physical_viewer_frame_slice_v1.sql',
+  import.meta.url),'utf8');
 const event='11111111-1111-4111-8111-111111111111';
 const teams=['22222222-2222-4222-8222-222222222222',
   '33333333-3333-4333-8333-333333333333'];
@@ -47,6 +50,7 @@ async function database(){
     [event,team,team]);
   await db.exec(migration);
   await db.exec(broadcastMigration);
+  await db.exec(frameMigration);
   return db;
 }
 async function source(db){
@@ -103,12 +107,53 @@ test('paid viewer recording is immutable and private',async()=>{
         'EXECUTE') as anon_execute,
       has_function_privilege('anon',
         'public.recovery_physical_viewer_broadcast_source_v1(uuid)',
-        'EXECUTE') as anon_clock`);
+        'EXECUTE') as anon_clock,
+      has_function_privilege('anon',
+        'public.recovery_physical_viewer_frame_slice_v1(uuid,double precision,double precision)',
+        'EXECUTE') as anon_frames`);
     assert.equal(grants.rows[0].anon_read,false);
     assert.equal(grants.rows[0].anon_execute,false);
     assert.equal(grants.rows[0].anon_clock,false);
+    assert.equal(grants.rows[0].anon_frames,false);
   }finally{await db.close();}
 });
+
+test('frame slice returns only checkpoints reached by database clock',
+  async()=>{
+    const db=await database();
+    try{
+      const input=await source(db);
+      const frames=[0,1,10,60,120].map(time=>({time,
+        positions:[{riderId:'r1',groupId:'g1',distanceKm:time}]}));
+      await save(db,input,{...document,feed:{...document.feed,frames}});
+      await db.query(`update public.recovery_physical_viewer_recordings
+        set recorded_at=clock_timestamp()-interval '2.05 seconds'
+        where event_id=$1`,[event]);
+      const early=(await db.query(`select
+        public.recovery_physical_viewer_frame_slice_v1(
+          $1::uuid,0::double precision,120::double precision) as slice`,
+      [event])).rows[0].slice;
+      assert.equal(early.raceId,document.raceId);
+      assert.equal(early.sha256,sha);
+      assert.deepEqual(early.frames.map(frame=>frame.time),[1]);
+      assert.equal(early.availableThrough,1);
+      await db.query(`update public.recovery_physical_viewer_recordings
+        set recorded_at=clock_timestamp()-interval '10 seconds'
+        where event_id=$1`,[event]);
+      const late=(await db.query(`select
+        public.recovery_physical_viewer_frame_slice_v1(
+          $1::uuid,1::double precision,120::double precision) as slice`,
+      [event])).rows[0].slice;
+      assert.deepEqual(late.frames.map(frame=>frame.time),
+        [10,60,120]);
+      assert.equal(late.availableThrough,120);
+      const invalid=(await db.query(`select
+        public.recovery_physical_viewer_frame_slice_v1(
+          $1::uuid,-1::double precision,120::double precision) as slice`,
+      [event])).rows[0].slice;
+      assert.equal(invalid,null);
+    }finally{await db.close();}
+  });
 
 test('changed team inputs or race snapshot cannot be recorded',async()=>{
   const db=await database();

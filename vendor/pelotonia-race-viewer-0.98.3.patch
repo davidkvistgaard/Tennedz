@@ -1,0 +1,120 @@
+diff --git a/source/package.json b/source/package.json
+index 8afa903..5876c7e 100644
+--- a/source/package.json
++++ b/source/package.json
+@@ -1,6 +1,6 @@
+ {
+   "name": "pelotonia-viewer",
+-  "version": "0.98.1",
++  "version": "0.98.3",
+   "type": "module",
+   "scripts": {
+     "dev": "vite --host 0.0.0.0",
+diff --git a/source/src/index.d.ts b/source/src/index.d.ts
+index a00999c..6b51c7b 100644
+--- a/source/src/index.d.ts
++++ b/source/src/index.d.ts
+@@ -107,6 +107,8 @@ export interface CameraState extends CameraSettings {
+   fittedScale?: number;
+ }
+ export interface RaceViewerHandle {
++  /** Append reached recording frames without rebuilding the 3D scene. */
++  appendRecordedFrames(frames: ViewerFeed["frames"]): number | undefined;
+   getCameraState(): CameraState | undefined;
+   setCamera(settings: Partial<CameraSettings>): CameraState | undefined;
+   orbit(radians: number): CameraState | undefined;
+diff --git a/source/src/version.js b/source/src/version.js
+index a5d4c6f..eba6c32 100644
+--- a/source/src/version.js
++++ b/source/src/version.js
+@@ -1 +1 @@
+-export const VIEWER_VERSION = '0.98.1';
++export const VIEWER_VERSION = '0.98.3';
+diff --git a/source/src/viewer/RaceViewer.jsx b/source/src/viewer/RaceViewer.jsx
+index 2ba31b7..944f847 100644
+--- a/source/src/viewer/RaceViewer.jsx
++++ b/source/src/viewer/RaceViewer.jsx
+@@ -87,6 +87,8 @@ export const RaceViewer = forwardRef(function RaceViewer(
+       whenAssetsReady: () => controller.current?.whenAssetsReady(),
+       getAssetStatus: () => controller.current?.assetStatus(),
+       getDiagnostics: () => controller.current?.getDiagnostics(),
++      appendRecordedFrames: (frames) =>
++        controller.current?.appendRecordedFrames(frames),
+       setLight: (value) => controller.current?.setLight(value),
+     }),
+     [],
+diff --git a/source/src/viewer/ViewerController.js b/source/src/viewer/ViewerController.js
+index ec8f1c9..17baa36 100644
+--- a/source/src/viewer/ViewerController.js
++++ b/source/src/viewer/ViewerController.js
+@@ -182,6 +182,32 @@ export class ViewerController {
+     const revision=this.sceneRevision;
+     this.whenAssetsReady().then(status=>{if(!this.disposed&&!status.superseded&&revision===this.sceneRevision)this.assetRevision++;});
+   }
++  appendRecordedFrames(frames) {
++    if (this.disposed || !this.feed?.streaming || !Array.isArray(frames))
++      throw Error('Incremental frames require a live recorded feed');
++    const previous=this.feed.frames;
++    const sentinel=previous.at(-1);
++    const hasSentinel=sentinel.time===this.feed.duration&&
++      sentinel.positions.length===0;
++    const real=hasSentinel?previous.slice(0,-1):previous;
++    const lastTime=real.at(-1).time;
++    if(frames.some((frame,index)=>
++      !frame||frame.time<=(index?frames[index-1].time:lastTime)||
++      frame.time>this.feed.duration))
++      throw Error('Recorded frames must advance in source order');
++    if(!frames.length)return lastTime;
++    if(!hasSentinel)throw Error('Recorded race already has its final frame');
++    const appended=[...real,...frames];
++    if(appended.at(-1).time<this.feed.duration)
++      appended.push({time:this.feed.duration,positions:[]});
++    const next={...this.feed,frames:appended};
++    validateFeed(next);
++    this.feed=next;
++    this.sample=createSampler(next);
++    this.sceneRevision++;
++    this.cameraSettled=false;
++    return frames.at(-1).time;
++  }
+   time(now = performance.now()) {
+     if (this.shared)
+       return broadcastTime(
+diff --git a/source/test/incrementalFrames.test.js b/source/test/incrementalFrames.test.js
+new file mode 100644
+index 0000000..38be9bc
+--- /dev/null
++++ b/source/test/incrementalFrames.test.js
+@@ -0,0 +1,32 @@
++import test from 'node:test';
++import assert from 'node:assert/strict';
++import {demoFeed,createSampler,validateFeed} from '../src/adapter.js';
++import {ViewerController} from '../src/viewer/ViewerController.js';
++
++test('reached frames append without replacing the camera or scene',()=>{
++  const source=demoFeed(30);
++  const initial={...source,streaming:true,events:[],
++    frames:[source.frames[0],
++      {time:source.duration,positions:[]}]};
++  validateFeed(initial);
++  const controller=Object.create(ViewerController.prototype);
++  const camera={type:'rider',id:source.riders[0].id};
++  Object.assign(controller,{feed:initial,
++    sample:createSampler(initial),sceneRevision:0,
++    cameraSettled:true,target:camera,disposed:false});
++  assert.deepEqual(controller.sample(0).positions.length,30);
++  assert.equal(controller.appendRecordedFrames([source.frames[1]]),
++    source.frames[1].time);
++  assert.equal(controller.sample(source.frames[1].time)
++    .positions.length,30);
++  assert.equal(controller.sceneRevision,1);
++  assert.equal(controller.target,camera);
++  assert.deepEqual(controller.feed.frames.at(-1).positions,[]);
++  assert.throws(()=>controller.appendRecordedFrames(
++    [source.frames[1]]),/advance in source order/);
++  assert.equal(controller.appendRecordedFrames(
++    source.frames.slice(2)),source.duration);
++  assert.deepEqual(controller.feed.frames,source.frames);
++  assert.throws(()=>controller.appendRecordedFrames(
++    [source.frames.at(-1)]),/advance in source order/);
++});

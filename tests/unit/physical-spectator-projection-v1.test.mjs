@@ -4,6 +4,7 @@ import {createPhysicalFirstRaceDocumentV2,
   sealPhysicalFirstRaceDocumentV2} from
   '../../lib/viewer/physical-first-race-document-v2.mjs';
 import {physicalSpectatorFeedV1,
+  physicalSpectatorFramesV1,
   physicalSpectatorFinishV1,
   PHYSICAL_SPECTATOR_PROJECTION_VERSION} from
   '../../lib/viewer/physical-spectator-projection-v1.mjs';
@@ -18,13 +19,17 @@ const document=sealPhysicalFirstRaceDocumentV2({
 
 test('spectator projection excludes private race inputs and future events',
   ()=>{
-    const projection=physicalSpectatorFeedV1(document,eventId);
+    const projection=physicalSpectatorFeedV1(document,eventId,0);
     assert.equal(projection.version,
       PHYSICAL_SPECTATOR_PROJECTION_VERSION);
     assert.equal(projection.raceId,document.raceId);
     assert.equal(projection.sha256,document.sha256);
     assert.equal(projection.feed.synthetic,true);
+    assert.equal(projection.feed.streaming,true);
     assert.deepEqual(projection.feed.events,[]);
+    assert.equal(projection.availableThrough,0);
+    assert.equal(projection.feed.frames.length,2);
+    assert.deepEqual(projection.feed.frames[1].positions,[]);
     assert.equal(projection.feed.riders.length,
       document.feed.riders.length);
     assert.equal(projection.feed.results,undefined);
@@ -33,8 +38,22 @@ test('spectator projection excludes private race inputs and future events',
     assert.equal(serialized.includes('"source"'),false);
     assert.equal(serialized.includes('"finishEvidence"'),false);
     assert.throws(()=>physicalSpectatorFeedV1(document,
-      '4efc7fa5-4ff7-46ba-92d0-9422884eed79'),/does not match/);
+      '4efc7fa5-4ff7-46ba-92d0-9422884eed79',0),/does not match/);
   });
+
+test('frame increments contain reached physical checkpoints only',()=>{
+  const first=document.feed.frames[1].time;
+  const before=physicalSpectatorFramesV1(document,eventId,
+    first-0.001,0);
+  assert.deepEqual(before.frames,[]);
+  const reached=physicalSpectatorFramesV1(document,eventId,first,0);
+  assert.equal(reached.frames.length,1);
+  assert.deepEqual(reached.frames[0],document.feed.frames[1]);
+  assert.equal(reached.availableThrough,first);
+  const end=physicalSpectatorFeedV1(document,eventId,
+    document.feed.duration);
+  assert.equal(end.feed.frames.length,document.feed.frames.length);
+});
 
 test('finish evidence is released only after shared finish publication',
   ()=>{

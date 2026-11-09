@@ -42,8 +42,9 @@ The 32-rider saved race has only a common group road position: its individual
 rider rigs overlap, and one visible rider cannot be interpreted as a recorded
 peloton formation.
 
-The strict whole-race release audit completed 72/72 scenarios but found
-60/72 same-seed finish mismatches and 0 official results. Hosted Supabase
+The latest strict whole-race release audit completed 72/72 scenarios but
+still found 48/72 same-seed finish mismatches and 0 official results.
+Hosted Supabase
 does not yet contain the physical entry or recording tables. Those opt-in
 migrations have only been verified locally. The physical preview flag defaults
 to off. The
@@ -57,7 +58,7 @@ showed 12 applied migrations, ending with the 96-hour rider-market migration.
 All 12 matched the local SQL by migration name and MD5 after normalizing line
 endings and trailing whitespace. Eleven local filenames had different
 timestamps, so this candidate renames those files to the exact applied
-versions without changing their SQL. The three physical viewer migrations
+versions without changing their SQL. The physical viewer migrations
 remain new and unapplied. Neither the hosted schema nor its history was
 changed by this reconciliation.
 
@@ -75,15 +76,21 @@ snapshot, source ledger, future commentary events and unpublished finish
 evidence. A separate authenticated finish endpoint releases measured
 crossings only when the shared clock reaches the finish. Focused projection
 and broadcast tests, lint and isolated build passed. No hosted game event
-has exercised this path, and the three required migrations are not applied.
+has exercised this path, and the required migrations are not applied.
 
-The current viewer feed must still contain all position frames to satisfy
-the package's replay contract. A browser user can inspect those future
-frames in network data and infer later race positions. That limits this
-route to an experimental preview; it does not meet an enforceable no-spoiler
-requirement for a live game. The viewer needs a versioned incremental frame
-delivery contract and authenticated browser verification before the
-spectator flag may be enabled in production. The saved-document digest
+The spectator route now uses viewer package 0.98.3's append-only frame
+contract. Its initial page contains only already reached frames; subsequent
+one-second polls call the private, service-role-only frame-slice RPC. That
+RPC caps the requested time against the database recording clock and returns
+only paid checkpoints reached in the current replay cycle. The renderer
+accepts them without rebuilding the scene or losing the local camera. The
+SQL clock/privacy tests, 286 package tests, lint, isolated build, and local
+authenticated browser replay passed. The browser replay covered the entire
+16-rider recording, checked the camera across frame appends, and showed
+finish evidence only at the shared finish. A separate future-dated recording
+remained unpublished. No hosted event has yet exercised this path, and the
+new frame-slice migration remains unapplied alongside the three earlier
+physical viewer migrations. The saved-document digest
 covers feed, finish, coverage and motor source, but does not cover the
 document's input metadata; the database separately checks event ID and seed
 on write. This too should be hardened in a new document version before
@@ -99,3 +106,11 @@ The team's race preparation page discovers an available recorded race through
 the authenticated clock endpoint and links to the new viewer; when no
 physical recording exists, the existing historical race route remains in
 place. This navigation change passed lint and an isolated production build.
+
+The frame-slice RPC avoids transferring an entire roughly 1.1 MB, 120-rider
+recording on each poll. It still reads and filters the immutable JSONB
+document inside PostgreSQL, so concurrent spectator load and hosted latency
+remain unmeasured. The initial page still transfers the already reached
+frames, and no browser-side request can prove exact individual road spacing
+where the motor records only group positions. The spectator flag remains off
+by default while finish calibration is incomplete.
