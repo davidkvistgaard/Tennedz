@@ -72,4 +72,9 @@ test('game snapshot refuses to infer tactical orders or race bibs',()=>{
   injured.snapshot.teams[0].riders[0].injury_until='2026-12-01';
   assert.throws(()=>createGameSnapshotPaidViewerDocumentV1(
     injured.snapshot,injured.manifest),/missing rider identity/);
+  const missingAbility=fixture();
+  delete missingAbility.snapshot.teams[0].riders[0].strength;
+  assert.throws(()=>createGameSnapshotPaidViewerDocumentV1(
+    missingAbility.snapshot,missingAbility.manifest),
+  /missing rider identity/);
 });
