@@ -194,8 +194,8 @@ export default function ViewerPreviewScene({feed,coverage,mode='recorded',
     </div>
     <div className="race-theatre-bottom">
       {groupOnlyPositions?<p className="race-theatre-position-note">
-        Riders on the same recorded road overlap in the scene. Their
-        individual lanes and order were not recorded.
+        These riders share a recorded road position. Their individual
+        lanes and order were not recorded.
       </p>:null}
       <div className="race-theatre-commentary">
         <p>RACE COMMENTARY <small>{mode==='exhibition'?
