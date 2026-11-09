@@ -60,11 +60,16 @@ for(const category of ['men','women'])
     assert.equal(coverage.sameSeedFinishMismatches,0);
     assert.equal(coverage.officialResults,false);
     assert.equal(feed.results,undefined);
-    assert.equal(finishEvidence.version,'motor-lab-paid-finish-v1');
+    assert.equal(finishEvidence.version,'motor-lab-paid-finish-v2');
     assert.equal(finishEvidence.publishedAt,feed.duration);
     assert.equal(finishEvidence.entries.length,120);
     assert.equal(new Set(finishEvidence.entries.map(row=>row.riderId)).size,
       120);
+    assert.deepEqual(finishEvidence.clockGroups.flatMap(group=>
+      group.riderIds),finishEvidence.entries.map(row=>row.riderId));
+    assert.equal(finishEvidence.unresolvedTieRiders,
+      finishEvidence.clockGroups.filter(group=>group.riderIds.length>1)
+        .reduce((count,group)=>count+group.riderIds.length,0));
     assert.ok(finishEvidence.entries.every((row,index,rows)=>
       row.clockSeconds>0&&row.clockSeconds<=feed.duration&&
       (index===0||row.clockSeconds>=rows[index-1].clockSeconds)));
