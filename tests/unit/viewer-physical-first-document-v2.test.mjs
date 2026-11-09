@@ -108,4 +108,3 @@ test('package-native HTTP loader accepts the completed Motor Lab export',
     assert.equal(createSampler(imported.feed)(imported.feed.duration)
       .positions.length,120);
   });
-
