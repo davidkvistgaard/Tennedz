@@ -57,6 +57,12 @@ test('signed-in non-admin sees a paid race without private inputs',
       if(process.env.PELOTONIA_REQUIRE_HARDWARE_WEBGL==='true')
         expect(initialDiagnostics.graphicsBackend?.unmaskedRenderer??'')
           .not.toMatch(/SwiftShader|llvmpipe|software/i);
+      await test.info().attach('spectator-renderer-diagnostics',{
+        body:JSON.stringify({riderCount,
+          category:process.env.
+            PELOTONIA_E2E_PHYSICAL_VIEWER_CATEGORY??'men',
+          ...initialDiagnostics},null,2),
+        contentType:'application/json'});
       const html=await page.content();
       expect(html).not.toContain('physicalSourceVersion');
       expect(html).not.toContain('seedProvenance');
@@ -95,6 +101,13 @@ test('signed-in non-admin sees a paid race without private inputs',
           .toBeVisible({timeout:50000});
         await expect(page.getByText(`All ${riderCount} crossings`))
           .toBeVisible();
+        const finalDiagnostics=JSON.parse(await page.locator(
+          '[data-viewer-diagnostics]').getAttribute(
+            'data-viewer-diagnostics'));
+        console.log('Spectator replay diagnostics:',JSON.stringify({
+          riderCount,category:process.env.
+            PELOTONIA_E2E_PHYSICAL_VIEWER_CATEGORY??'men',
+          ...finalDiagnostics}));
       }
     }else{
       await expect(page.getByText(

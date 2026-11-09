@@ -90,7 +90,10 @@ authenticated browser replay passed. The browser replay covered the entire
 finish evidence only at the shared finish. A separate future-dated recording
 remained unpublished. The same authenticated streaming replay also passed
 with complete 144-rider men's and women's fixtures. These are local WebGL
-checks, not a hosted or cross-device performance guarantee. No hosted event
+checks, not a hosted or cross-device performance guarantee. The women's
+144-rider final diagnostic on Intel UHD Graphics/Direct3D11 was 33 fps,
+160 draw calls, 2,058,340 triangles and zero renderer errors after the
+full replay and a local camera turn. No hosted event
 has yet exercised this path, and the
 new frame-slice migration remains unapplied alongside the three earlier
 physical viewer migrations. The saved-document digest
