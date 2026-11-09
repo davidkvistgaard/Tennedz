@@ -3,8 +3,8 @@ import {requireTeam} from '../../../../lib/auth/server';
 import {AuthError} from '../../../../lib/auth/policy.mjs';
 import {createPhysicalFirstViewerTestRaceV1} from
   '../../../../lib/viewer/physical-first-test-race-v1.mjs';
-import {createPhysicalFirstSplitViewerTestRaceV1} from
-  '../../../../lib/viewer/physical-first-split-test-race-v1.mjs';
+import {createPhysicalFirstRaceDocumentV1} from
+  '../../../../lib/viewer/physical-first-race-document-v1.mjs';
 import {parsePhysicalSplitVariantV1,physicalSplitVariantQueryV1} from
   '../../../../lib/viewer/physical-first-split-variant-v1.mjs';
 import {scenicPresentationV1} from
@@ -41,9 +41,10 @@ export default async function ViewerPreviewPage({searchParams}){
     catch{notFound();}
   }
   const race=raceMode==='split'?
-    createPhysicalFirstSplitViewerTestRaceV1(category,variant):
+    createPhysicalFirstRaceDocumentV1(category,variant):
     createPhysicalFirstViewerTestRaceV1(category);
   return <TeamShell compact><ViewerPreviewClient {...race}
+    version={race.adapterVersion??race.version}
     feed={scenicPresentationV1(race.feed)}
     raceMode={raceMode}
     variantQuery={variant?physicalSplitVariantQueryV1(variant):''}

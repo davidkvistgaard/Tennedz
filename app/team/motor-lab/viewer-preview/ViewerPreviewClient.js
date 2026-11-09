@@ -14,6 +14,8 @@ export default function ViewerPreviewClient({feed,coverage,version,
   const splitSettings=new URLSearchParams(variantQuery);
   const [sync,setSync]=useState(null);
   const [error,setError]=useState(null);
+  const racePublished=sync&&sync.serverNowMs>=
+    sync.clock.serverEpochMs+feed.duration*1000;
   useEffect(()=>{
     let active=true;
     const load=async()=>{
@@ -29,7 +31,7 @@ export default function ViewerPreviewClient({feed,coverage,version,
           payload.clock?.duration!==feed.duration)
           throw new Error('Shared clock does not match this race.');
         if(active){
-          setSync({clock:payload.clock,
+          setSync({clock:payload.clock,serverNowMs:payload.serverNowMs,
             serverOffsetMs:payload.serverNowMs-(sent+received)/2});
           setError(null);
         }
@@ -86,6 +88,9 @@ export default function ViewerPreviewClient({feed,coverage,version,
         <button type="submit">Generate recorded race</button>
         <p>120 km · 15 teams · experimental paid road. The orders
           affect the motor run; no official placing is inferred.</p>
+        {racePublished?<p><a href={`/api/motor-lab/viewer-race?category=${
+          feed.riderCategory}${variantQuery?`&${variantQuery}`:''}`}>
+          Open completed race data (versioned JSON)</a></p>:null}
       </form>:null}
     </details>
     {error?<p role="alert">{error} <a href="/team/motor-lab/engine">

@@ -208,3 +208,26 @@ the crossing list only after the last rider's recorded finish time. It does
 not assign ranks, points, awards or official results, and `feed.results`
 remains absent. The event markers on the shared timeline now appear only
 after their recorded time; future events remain out of the visible report.
+
+### Versioned race data document
+
+`motor-lab-viewer-document-v1` packages the raw
+`pelotonia.viewer.v1` feed, adapter version, validated input tuple,
+coverage, and separately labelled paid finish evidence. A SHA-256 digest
+of the three race payloads makes repeated same-seed exports comparable.
+The document does not contain the synthetic scenic layer: that layer is
+applied by the viewer at presentation time. Men and women produce separate
+documents. The paid race, adapter, and viewer contract are validated before
+export; the document refuses invented winner or result fields.
+
+The authenticated GET `/api/motor-lab/viewer-race?category=men` accepts
+the same optional `terrain`, `chase`, `attack`, and `seed` inputs as the
+split preview. Unknown or repeated parameters are rejected. It returns the
+complete JSON document only after the shared preview clock reaches the last
+paid finish, and otherwise returns HTTP 425. Its response is private and
+uncached. The preview offers the completed document link after publication.
+This is a Motor Lab test recording, not a production game event or official
+result. The current page still sends the complete experimental feed to the
+browser to render the race, so this export gate alone is **not** a general
+anti-spoiler boundary. A production live race needs server-side time-sliced
+delivery before the viewer may be used for unreleased results.
