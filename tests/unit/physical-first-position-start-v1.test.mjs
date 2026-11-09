@@ -9,6 +9,13 @@ import {advancePhysicalFirstPositionRoadV1,
   '../../lib/engine/v2/physical-first-position-road-v1.mjs';
 import {runPhysicalFirstWholeRaceProbeV1} from
   '../../lib/engine/v2/physical-first-whole-race-probe-v1.mjs';
+import {replayRearEnergyCapV1} from
+  '../../lib/engine/v2/rear-energy-cap-source-v1.mjs';
+import {recordPhysicalFirstPositionTraceV1,
+  replayPhysicalFirstPositionTraceV1} from
+  '../../lib/engine/v2/physical-first-position-trace-v1.mjs';
+import {recordPhysicalFirstRaceV1} from
+  '../../lib/engine/v2/physical-first-race-record-v1.mjs';
 
 const grid={laneCount:4,wheelSpacingM:2.5,laneStaggerM:.08};
 const rider=id=>({id,flat:65,hills:65,mountain:65,
@@ -40,6 +47,21 @@ function input(teamCount=2,raceSeed='position-seed-a'){
     teams,stakes:teams.map(team=>({teamId:team.id,
       sportingGoal:'sprint_finish',
       sportingCaptainId:team.orders.captainId}))};
+}
+
+function cappedInput(kmCount){
+  const committed=input();
+  committed.kilometres=Array.from({length:kmCount},
+    (_,index)=>({...committed.kilometres[0],km:index+1}));
+  for(const state of committed.start.riders){
+    const source=committed.teams.find(team=>
+      team.id===state.teamId).riders.find(row=>
+      row.id===state.riderId);
+    state.reserve=replayRearEnergyCapV1({rider:source,
+      kilometres:committed.kilometres,
+      throughKm:0}).initialCap;
+  }
+  return committed;
 }
 
 test('committed first leader and positioning contest form a replayable start',()=>{
@@ -135,4 +157,38 @@ test('start refuses an uncommitted grid or changed rider roster',()=>{
   altered.start.roads[0].riderIds.pop();
   assert.throws(()=>createPhysicalFirstPositionStartV1({
     input:altered,grid}),/committed field and grid/);
+});
+
+test('position trace reports paid coverage and missing finish crossings',()=>{
+  const committed=cappedInput(3);
+  const trace=recordPhysicalFirstPositionTraceV1(committed,grid);
+  assert.equal(trace.raceValidatedKm,3);
+  assert.equal(trace.completedThroughKm,3);
+  assert.equal(trace.validatedPositionRiderKm,48);
+  assert.equal(trace.unsupported,null);
+  assert.equal(trace.finishCrossingCoverage,'1/16');
+  assert.equal(trace.checkpointCrossings.filter(row=>
+    row.km===1).length,16);
+  assert.equal(trace.officialResults,false);
+  assert.deepEqual(replayPhysicalFirstPositionTraceV1(
+    committed,grid,trace,{recording:
+      recordPhysicalFirstRaceV1(committed).recording}),trace);
+  const forged=structuredClone(trace);
+  forged.finishCrossings[0].clockSeconds+=1;
+  assert.throws(()=>replayPhysicalFirstPositionTraceV1(
+    committed,grid,forged),/differs from committed paid race/);
+});
+
+test('position trace stops at a leader change without paid passing',()=>{
+  const committed=cappedInput(3);
+  committed.teams[1].orders.baseline.frontWork='rotate';
+  committed.teams[1].orders.baseline.frontWorkRiderId=
+    committed.teams[1].riders[1].id;
+  const trace=recordPhysicalFirstPositionTraceV1(committed,grid);
+  assert.equal(trace.raceValidatedKm,3);
+  assert.equal(trace.completedThroughKm,1);
+  assert.equal(trace.unsupported.sourceKm,2);
+  assert.match(trace.unsupported.reason,/unchanged paid leader/);
+  assert.equal(trace.validatedPositionRiderKm,16);
+  assert.equal(trace.officialResults,false);
 });

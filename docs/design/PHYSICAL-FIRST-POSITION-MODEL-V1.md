@@ -30,9 +30,22 @@ The separate old group checkpoint may mark the front at kilometre N while
 followers are still behind it in this positional model. It must not be
 treated as all riders' individual crossing distance or finish time.
 
-This is an opt-in research contract. It does not produce a line crossing,
-official place or award. Before it can drive the viewer or game cycle, the
+This is an opt-in research contract. It does not produce complete finish
+crossings, official places or awards. Before it can drive the viewer or game cycle, the
 motor must pay and replay leader rotations and passing, attacks, early
 drops and physical contact, sprint motion and every rider's actual passage
 through the finish. Full 30/150/160-rider and both-category race coverage,
 same-seed calibration and hosted checks remain release requirements.
+
+`physical-first-position-trace-1` first replays the complete existing paid
+race from committed input. It then advances the separate positional
+contract for each supported kilometre, records every supported checkpoint
+passage, and reports the first unsupported kilometre. Only a known missing
+movement contract can produce an unsupported report; unexpected energy or
+position disagreement throws. Its `raceValidatedKm` and
+`completedThroughKm` are deliberately separate. A fully paid race may have
+only one kilometre of physically supported positions. Likewise,
+`finishCrossingCoverage` counts actual individual crossings at the final
+distance: a 3 km connected-road example has 1/16, since the other riders
+are still behind the line when the front road clock ends. No official
+classification may be inferred from that partial finish.
