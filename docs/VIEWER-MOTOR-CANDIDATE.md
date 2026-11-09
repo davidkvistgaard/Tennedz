@@ -65,3 +65,26 @@ Do not promote this candidate until real committed game entries and a hosted
 recording exist, the physical finish is calibrated and versioned for official
 use, authenticated browser checks pass on the exact deployment, and the
 READY/alias/page/JS/runtime/rollback checks are complete.
+
+The candidate now has an opt-in authenticated spectator route at
+`/team/race-viewer/[eventId]`, guarded by
+`PELOTONIA_PHYSICAL_VIEWER_SPECTATOR_ENABLED=true` (off by default). It
+reads an immutable saved physical recording and uses the same server clock
+as the administrator preview. The page projection omits the committed input
+snapshot, source ledger, future commentary events and unpublished finish
+evidence. A separate authenticated finish endpoint releases measured
+crossings only when the shared clock reaches the finish. Focused projection
+and broadcast tests, lint and isolated build passed. No hosted game event
+has exercised this path, and the three required migrations are not applied.
+
+The current viewer feed must still contain all position frames to satisfy
+the package's replay contract. A browser user can inspect those future
+frames in network data and infer later race positions. That limits this
+route to an experimental preview; it does not meet an enforceable no-spoiler
+requirement for a live game. The viewer needs a versioned incremental frame
+delivery contract and authenticated browser verification before the
+spectator flag may be enabled in production. The saved-document digest
+covers feed, finish, coverage and motor source, but does not cover the
+document's input metadata; the database separately checks event ID and seed
+on write. This too should be hardened in a new document version before
+official publication.

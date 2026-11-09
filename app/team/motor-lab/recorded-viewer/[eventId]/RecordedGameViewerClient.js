@@ -8,7 +8,9 @@ const Scene=dynamic(()=>import(
     <p role="status">Loading the race renderer…</p>});
 
 export default function RecordedGameViewerClient({eventId,raceId,
-  sha256,feed,coverage,version}){
+  sha256,feed,coverage,version,
+  clockPath='/api/admin/physical-viewer-clock',
+  finishPath='/api/admin/physical-viewer-preview'}){
   const [sync,setSync]=useState(null);
   const [finishEvidence,setFinishEvidence]=useState(null);
   const [error,setError]=useState(null);
@@ -18,7 +20,7 @@ export default function RecordedGameViewerClient({eventId,raceId,
       try{
         const sent=Date.now();
         const response=await fetch(
-          `/api/admin/physical-viewer-clock?event_id=${eventId}`,
+          `${clockPath}?event_id=${eventId}`,
           {cache:'no-store'});
         if(!response.ok)throw new Error(
           'The recorded race clock is unavailable.');
@@ -47,14 +49,14 @@ export default function RecordedGameViewerClient({eventId,raceId,
     load();
     const timer=setInterval(load,5000);
     return ()=>{active=false;clearInterval(timer);};
-  },[eventId,raceId,feed.duration]);
+  },[eventId,raceId,feed.duration,clockPath]);
   useEffect(()=>{
     if(!sync?.finishPublished||finishEvidence)return;
     const controller=new AbortController();
     let active=true;
     (async()=>{
       const response=await fetch(
-        `/api/admin/physical-viewer-preview?event_id=${eventId}`,
+        `${finishPath}?event_id=${eventId}`,
         {cache:'no-store',signal:controller.signal});
       if(!response.ok)throw new Error(
         'The recorded finish is unavailable.');
@@ -68,7 +70,7 @@ export default function RecordedGameViewerClient({eventId,raceId,
     });
     return ()=>{active=false;controller.abort();};
   },[eventId,raceId,sha256,feed.duration,sync?.finishPublished,
-    finishEvidence]);
+    finishEvidence,finishPath]);
   return <main className="motor-viewer-preview">
     <header className="motor-viewer-intro">
       <h1>Recorded game race</h1>

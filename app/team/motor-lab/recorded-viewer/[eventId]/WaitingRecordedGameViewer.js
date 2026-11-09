@@ -3,7 +3,8 @@ import {useEffect,useState} from 'react';
 import {useRouter} from 'next/navigation';
 
 export default function WaitingRecordedGameViewer({eventId,
-  publicationAtMs}){
+  publicationAtMs,
+  clockPath='/api/admin/physical-viewer-clock'}){
   const router=useRouter();
   const [remaining,setRemaining]=useState(null);
   const [error,setError]=useState(null);
@@ -12,7 +13,7 @@ export default function WaitingRecordedGameViewer({eventId,
     const load=async()=>{
       try{
         const response=await fetch(
-          `/api/admin/physical-viewer-clock?event_id=${eventId}`,
+          `${clockPath}?event_id=${eventId}`,
           {cache:'no-store'});
         if(!response.ok)throw new Error(
           'The race clock is unavailable.');
@@ -29,7 +30,7 @@ export default function WaitingRecordedGameViewer({eventId,
     load();
     const timer=setInterval(load,5000);
     return ()=>{active=false;clearInterval(timer);};
-  },[eventId,publicationAtMs,router]);
+  },[eventId,publicationAtMs,router,clockPath]);
   return <main className="motor-viewer-preview">
     <header className="motor-viewer-intro">
       <h1>Recorded game race</h1>
