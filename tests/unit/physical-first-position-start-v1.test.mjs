@@ -97,6 +97,18 @@ test('unchanged paid road moves every rider and energy on the same clock',()=>{
   assert.equal(second.positions[0].distanceM,2000);
   assert.ok(second.positions.slice(1).every(row=>
     row.distanceM<2000&&row.paidDistanceM===2000));
+  assert.deepEqual(first.checkpointCrossings.map(row=>row.riderId),
+    [start.positions[0].riderId]);
+  const firstLine=second.checkpointCrossings.filter(row=>row.km===1);
+  assert.equal(firstLine.length,15);
+  assert.equal(second.checkpointCrossings.filter(row=>
+    row.km===2).length,1);
+  assert.deepEqual(firstLine.map(row=>row.riderId),
+    start.positions.slice(1).map(row=>row.riderId));
+  assert.ok(firstLine.every(row=>row.clockSeconds>
+    first.clockSeconds&&row.clockSeconds<second.clockSeconds));
+  assert.equal(new Set(firstLine.map(row=>
+    row.clockSeconds)).size,firstLine.length);
   assert.deepEqual(replayPhysicalFirstPositionRoadV1(
     first,race.steps[1],second),second);
   const forged=structuredClone(second);

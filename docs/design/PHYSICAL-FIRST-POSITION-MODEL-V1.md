@@ -20,6 +20,12 @@ road with the same named leader, no attack, drop or contact. Each rider
 travels exactly 1,000 metres at the road's paid speed, retains their
 relative slot and carries the energy and quiet-kilometre state from that
 rider's paid decision. Replay rejects a changed position, energy or leader.
+It records each rider's passage of a kilometre line only when that rider's
+start and end positions straddle the line during a paid road interval. The
+crossing clock is interpolated from the recorded road speed. On a 2 km
+steady road the front worker crosses kilometre 1 in the first interval;
+the riders behind cross it later, during the second interval. These
+checkpoint passages are model data, not official race results.
 The separate old group checkpoint may mark the front at kilometre N while
 followers are still behind it in this positional model. It must not be
 treated as all riders' individual crossing distance or finish time.
