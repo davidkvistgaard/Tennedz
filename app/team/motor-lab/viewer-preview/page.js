@@ -1,6 +1,6 @@
 import {notFound,redirect} from 'next/navigation';
 import {requireTeam} from '../../../../lib/auth/server';
-import {AuthError} from '../../../../lib/auth/policy.mjs';
+import {AuthError,assertAdmin} from '../../../../lib/auth/policy.mjs';
 import {createPhysicalFirstViewerTestRaceV1} from
   '../../../../lib/viewer/physical-first-test-race-v1.mjs';
 import {createPhysicalFirstRaceDocumentV2} from
@@ -24,7 +24,8 @@ export default async function ViewerPreviewPage({searchParams}){
     notFound();
   // The team layout checks on the client, after server rendering. Reject here
   // before a seed can trigger the full 120 km simulation.
-  try{await requireTeam();}
+  let user;
+  try{({user}=await requireTeam());}
   catch(error){
     if(error instanceof AuthError&&error.code==='UNAUTHENTICATED')
       redirect('/login');
@@ -48,11 +49,19 @@ export default async function ViewerPreviewPage({searchParams}){
   const finishEvidence=raceMode==='split'&&
     previewRacePublishedV1(race.feed.duration,Date.now())?
     race.finishEvidence:null;
+  let physicalRecordingAvailable=false;
+  if(process.env.PELOTONIA_PHYSICAL_VIEWER_PREVIEW_ENABLED===
+      'true'){
+    try{assertAdmin(user.id,process.env.ADMIN_USER_IDS);
+      physicalRecordingAvailable=true;}
+    catch(error){if(!(error instanceof AuthError))throw error;}
+  }
   return <TeamShell compact><ViewerPreviewClient {...race}
     finishEvidence={finishEvidence}
     version={race.adapterVersion??race.version}
     feed={scenicPresentationV1({...race.feed,events:[]})}
     raceMode={raceMode}
+    physicalRecordingAvailable={physicalRecordingAvailable}
     variantQuery={variant?physicalSplitVariantQueryV1(variant):''}
     previewPath="/team/motor-lab/viewer-preview"/></TeamShell>;
 }

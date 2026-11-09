@@ -62,6 +62,10 @@ serves that saved document without rerunning the race. Both calls require
 `PELOTONIA_PHYSICAL_VIEWER_PREVIEW_ENABLED=true`; POST also respects the
 game-write gate. Both flags are off by default, neither hosted migration has
 been applied, and no actual game race has completed this path.
+Administrators can enter an event ID at
+`/team/motor-lab/recorded-viewer` to record and open a race. Exact retries
+open the existing immutable recording. Incomplete entries or an unfinished
+entry deadline produce a visible error; no synthetic entry is substituted.
 
 Migration `20261109140727_physical_viewer_broadcast_source_v1.sql` exposes
 only the immutable recording timestamp, race ID, duration and recorded

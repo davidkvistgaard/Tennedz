@@ -9,6 +9,7 @@ const PreviewScene=dynamic(()=>import('./ViewerPreviewScene'),{
 export default function ViewerPreviewClient({feed,coverage,version,
   finishEvidence:initialFinishEvidence=null,
   raceMode='connected',
+  physicalRecordingAvailable=false,
   variantQuery='',
   previewPath='/team/motor-lab'}){
   const splitSettings=new URLSearchParams(variantQuery);
@@ -144,6 +145,8 @@ export default function ViewerPreviewClient({feed,coverage,version,
         raceMode==='split'?'connected':'split'}&category=${
         feed.riderCategory}`}>
         {raceMode==='split'?'Connected sample':'Split road sample'}</a>
+      {physicalRecordingAvailable?<> · <a href={
+        '/team/motor-lab/recorded-viewer'}>Record a game race</a></>:null}
     </footer>
   </main>;
 }

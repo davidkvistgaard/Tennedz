@@ -16,8 +16,14 @@ test('saved paid game race renders on the shared viewer clock',
     await page.getByRole('button',{name:'Sign in',exact:true})
       .click();
     await expect(page).toHaveURL(/\/team$/);
-    await page.goto(`/team/motor-lab/recorded-viewer/${
-      physicalViewerEventId}`);
+    await page.goto('/team/motor-lab/recorded-viewer');
+    await expect(page.getByRole('heading',
+      {name:'Record a game race'})).toBeVisible();
+    await page.getByLabel('Race ID').fill(physicalViewerEventId);
+    await page.getByRole('button',
+      {name:'Record and open viewer'}).click();
+    await expect(page).toHaveURL(new RegExp(
+      `/team/motor-lab/recorded-viewer/${physicalViewerEventId}$`));
     await expect(page.getByRole('heading',
       {name:'Recorded game race'})).toBeVisible();
     const finished=process.env.
