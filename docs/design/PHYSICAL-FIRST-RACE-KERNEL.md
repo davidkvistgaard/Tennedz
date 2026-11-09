@@ -322,3 +322,18 @@ The old source keeps these riders with the bunch. Changing their
 pace or shelter solely to match that source would invent a road
 outcome. The mismatch needs a source and sporting review before
 guided-race use.
+
+## Source-independent recording boundary, 9 November
+
+`physical-first-race-record-1` is the experimental motor entry point for
+the paid whole-race recorder and its independent replay. It accepts the
+committed route, riders, orders, stakes, start reserve and seed. It refuses
+a replay mismatch, incomplete rider-kilometre coverage, missing rider,
+unpaid final distance or invalid final clock and reserve. It returns every
+measured finish crossing sorted by paid clock, with equal clocks left tied.
+It assigns no place, points, award or official result. No V94 checkpoint
+group or gap is an input. A supplied recording must replay against the same
+committed inputs; changed abilities and altered finish clocks are refused.
+This boundary is ready for the viewer exporter to consume, but still needs
+official result policy, full-race attack calibration and game-cycle
+integration before replacing the historic source.
