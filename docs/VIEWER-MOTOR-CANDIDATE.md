@@ -120,3 +120,14 @@ remain unmeasured. The initial page still transfers the already reached
 frames, and no browser-side request can prove exact individual road spacing
 where the motor records only group positions. The spectator flag remains off
 by default while finish calibration is incomplete.
+
+Synthetic presentation study 3 places more roadside trees closer to the
+fictional road on long recorded schematics. It does not alter race frames,
+riders, groups, clock, commentary or finish evidence. A trial with generated
+crowds reached the measured finish but reduced the Intel UHD WebGL2 sample
+from 33 fps to 25 fps for women and 22 fps for men, with 576 generated
+spectators. The generated crowd remains disabled; the 240 static synthetic
+finish spectators remain. These are device-specific samples, not a
+device-wide performance certification.
+Both public split-road samples passed the local Edge WebGL browser check with
+the study 3 scene; the generated crowd remains off.

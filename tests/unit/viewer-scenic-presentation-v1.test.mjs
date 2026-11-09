@@ -12,7 +12,7 @@ for(const category of ['men','women'])
       import.meta.url))).feed;
     const source=structuredClone(original);
     const scene=scenicPresentationV1(original);
-    assert.equal(SCENIC_PRESENTATION_VERSION,'motor-lab-scenic-study-2');
+    assert.equal(SCENIC_PRESENTATION_VERSION,'motor-lab-scenic-study-3');
     assert.deepEqual(validateFeed(scene),scene);
     assert.deepEqual(original,source);
     for(const key of ['raceId','riderCategory','duration','riders','teams',
