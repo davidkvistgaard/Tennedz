@@ -71,3 +71,20 @@ the paid finish tail covers 160/160 crossings. This fixture proves
 whole-route continuity only for its connected-road conditions. It does
 not replace the 72-case, both-category release calibration, nor does it
 establish sprint results or performance in the viewer.
+
+`pnpm audit:motor:positions` uses the same committed 120 km Motor Lab
+input generator as the experimental viewer exporter. It fails closed until
+every scenario has full positional coverage, every rider crosses the
+finish and official results exist. The shorter diagnostic command is
+`node scripts/audit-motor-position-coverage.mjs --smoke`. On the current
+seed its four cases all replay the paid race through 120 km. In mountain
+selective chase without attacks, both men and women have 24 km of
+position coverage (2,880/14,400 rider-kilometres), then the named leader
+changes from `you-0` to `you-2` at km 25 without a paid passing move. In
+flat all-helper chase with selective attacks, both categories have 19 km
+of position coverage (2,280/14,400 rider-kilometres), then an attack
+launch changes road membership at km 20 without a paid positional
+departure. All four currently have 0/120 individual finish crossings in
+the positional trace, and none has official results. These are precise
+missing movement contracts, not crashes or missing kilometres in the
+existing group-clock race.

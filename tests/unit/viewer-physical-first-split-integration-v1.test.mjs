@@ -2,8 +2,11 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {validateFeed,createSampler,commentaryAt} from
   '@pelotonia/race-viewer/data';
-import {createPhysicalFirstSplitViewerTestRaceV1} from
+import {createPhysicalFirstSplitViewerTestRaceV1,
+  preparePhysicalFirstSplitMotorInputV1} from
   '../../lib/viewer/physical-first-split-test-race-v1.mjs';
+import {physicalFirstInputHash} from
+  '../../lib/engine/v2/physical-first-whole-race-probe-v1.mjs';
 import {previewBroadcastClockV1} from
   '../../lib/viewer/preview-clock-v1.mjs';
 import {parsePhysicalSplitVariantV1,physicalSplitVariantQueryV1} from
@@ -43,6 +46,13 @@ test('new seed and profile produce a distinct replayable viewer race',()=>{
   assert.equal(first.coverage.paidRiderKilometres,14400);
   assert.equal(first.feed.results,undefined);
   assert.equal(first.feed.frames.at(-1).time,first.feed.duration);
+  const prepared=preparePhysicalFirstSplitMotorInputV1(
+    'men',variant);
+  assert.equal(prepared.input.raceSeed,first.source.raceSeed);
+  assert.equal(physicalFirstInputHash(prepared.input),
+    first.source.commitmentHash);
+  assert.equal(prepared.input.start.riders.length,
+    first.feed.riders.length);
   assert.equal(previewBroadcastClockV1(first.feed.duration,10_000)
     .clock.duration,first.feed.duration);
 });

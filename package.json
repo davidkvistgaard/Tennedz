@@ -12,6 +12,7 @@
     "lint": "eslint app lib tests",
     "test": "node --test tests/unit/*.test.mjs",
     "audit:viewer:release": "node scripts/audit-motor-viewer-release.mjs --require-calibrated",
+    "audit:motor:positions": "node scripts/audit-motor-position-coverage.mjs --require-complete",
     "test:marketplace:sql": "node tests/support/marketplace-sql-check.mjs",
     "test:e2e": "playwright test"
   },
