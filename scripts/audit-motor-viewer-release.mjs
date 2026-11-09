@@ -42,6 +42,16 @@ for(const input of cases){
   }
 }
 const complete=rows.filter(row=>row.status==='complete');
+const byAttack=Object.fromEntries(
+  ['none','selective','repeated'].map(attack=>{
+    const set=rows.filter(row=>row.input.attack===attack);
+    return [attack,{scenarios:set.length,
+      completed:set.filter(row=>row.status==='complete').length,
+      calibrated:set.filter(row=>row.status==='complete'&&
+        row.sameSeedFinishMismatches===0).length,
+      mismatched:set.filter(row=>row.status==='complete'&&
+        row.sameSeedFinishMismatches>0).length}];
+  }));
 const summary={version:'motor-viewer-release-audit-1',
   scenarios:rows.length,completed:complete.length,
   failed:rows.length-complete.length,
@@ -51,6 +61,7 @@ const summary={version:'motor-viewer-release-audit-1',
     row.sameSeedFinishMismatches>0).length,
   officialResultsAvailable:complete.filter(row=>
     row.officialResults).length,
+  byAttack,
   readyForGuidedRace:rows.length>0&&rows.every(row=>
     row.status==='complete'&&
     row.sameSeedFinishMismatches===0&&
