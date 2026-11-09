@@ -51,12 +51,17 @@ and labels that provenance in the document. It never stores weather or
 publishes official results. `loadPhysicalGameRaceDocumentV1` rereads the
 game snapshot after the private rows and rejects a changed source.
 
-An administrator-only GET at
-`/api/admin/physical-viewer-preview?event_id=<uuid>` exposes this transport
-document when `PELOTONIA_PHYSICAL_VIEWER_PREVIEW_ENABLED=true`. It uses the
-existing deadline-guarded snapshot RPC, so it cannot preview an open race
-before its deadline. Both flags are off by default; the hosted migration has
-not been applied, and no actual game race has yet completed this path.
+Migration `20261109135901_physical_viewer_recording_v1.sql` adds a private,
+immutable recording table and an atomic save RPC. Under the existing race
+transaction lock, that RPC compares the current game snapshot and every
+physical entry against the data used to calculate the paid document. A
+different document cannot replace the recording; exact retries are safe.
+An administrator-only POST to `/api/admin/physical-viewer-preview` records
+it after the entry deadline, and the corresponding GET with `event_id`
+serves that saved document without rerunning the race. Both calls require
+`PELOTONIA_PHYSICAL_VIEWER_PREVIEW_ENABLED=true`; POST also respects the
+game-write gate. Both flags are off by default, neither hosted migration has
+been applied, and no actual game race has completed this path.
 Until every participating team saves a physical input, this route correctly
 refuses the old incomplete entries.
 
