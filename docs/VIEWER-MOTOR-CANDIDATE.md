@@ -52,6 +52,15 @@ game field can be tested at 144 riders; exact 150 belongs to the synthetic
 renderer stress matrix. No official result, award, timing rule, race position
 or geographic detail is inferred to fill missing motor data.
 
+On 9 November, read-only inspection of the hosted `Tennedz` Supabase project
+showed 12 applied migrations, ending with the 96-hour rider-market migration.
+All 12 matched the local SQL by migration name and MD5 after normalizing line
+endings and trailing whitespace. Eleven local filenames had different
+timestamps, so this candidate renames those files to the exact applied
+versions without changing their SQL. The three physical viewer migrations
+remain new and unapplied. Neither the hosted schema nor its history was
+changed by this reconciliation.
+
 Do not promote this candidate until real committed game entries and a hosted
 recording exist, the physical finish is calibrated and versioned for official
 use, authenticated browser checks pass on the exact deployment, and the

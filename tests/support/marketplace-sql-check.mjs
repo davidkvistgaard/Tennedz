@@ -18,7 +18,7 @@ create table public.event_teams(event_id uuid references public.events(id),
 create table public.recovery_default_lineups(team_id uuid references public.teams(id),
   selected_riders uuid[],captain_id uuid);
 `);
-const migration=readFileSync(new URL('../../supabase/migrations/20261029153000_rider_marketplace.sql',import.meta.url),'utf8');
+const migration=readFileSync(new URL('../../supabase/migrations/20261029155824_rider_marketplace.sql',import.meta.url),'utf8');
 await db.exec(migration);
 const seller='11111111-1111-4111-8111-111111111111';
 const buyer='22222222-2222-4222-8222-222222222222';
