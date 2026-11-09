@@ -7,6 +7,7 @@ const PreviewScene=dynamic(()=>import('./ViewerPreviewScene'),{
     <p role="status">Loading the race renderer…</p>});
 
 export default function ViewerPreviewClient({feed,coverage,version,
+  finishEvidence=null,
   raceMode='connected',
   variantQuery='',
   previewPath='/team/motor-lab'}){
@@ -91,6 +92,7 @@ export default function ViewerPreviewClient({feed,coverage,version,
       Open the Motor Lab engine</a>.</p>:null}
     {!sync&&!error?<p role="status">Synchronizing race time…</p>:null}
     {sync?<PreviewScene feed={feed} coverage={coverage}
+      finishEvidence={finishEvidence}
       mode={raceMode==='split'?'split':'recorded'}
       version={version} {...sync}/>:null}
     <footer><a href="/team/motor-lab/engine">

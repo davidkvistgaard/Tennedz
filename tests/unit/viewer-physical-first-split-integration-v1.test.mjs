@@ -49,7 +49,7 @@ test('new seed and profile produce a distinct replayable viewer race',()=>{
 
 for(const category of ['men','women'])
   test(`selective paid race ${category} reaches viewer finish`,()=>{
-    const {feed,coverage,version}=
+    const {feed,coverage,version,finishEvidence}=
       createPhysicalFirstSplitViewerTestRaceV1(category);
     assert.deepEqual(validateFeed(feed),feed);
     assert.match(version,/split-to-pelotonia.viewer.v1/);
@@ -60,6 +60,16 @@ for(const category of ['men','women'])
     assert.equal(coverage.sameSeedFinishMismatches,0);
     assert.equal(coverage.officialResults,false);
     assert.equal(feed.results,undefined);
+    assert.equal(finishEvidence.version,'motor-lab-paid-finish-v1');
+    assert.equal(finishEvidence.publishedAt,feed.duration);
+    assert.equal(finishEvidence.entries.length,120);
+    assert.equal(new Set(finishEvidence.entries.map(row=>row.riderId)).size,
+      120);
+    assert.ok(finishEvidence.entries.every((row,index,rows)=>
+      row.clockSeconds>0&&row.clockSeconds<=feed.duration&&
+      (index===0||row.clockSeconds>=rows[index-1].clockSeconds)));
+    assert.equal(finishEvidence.entries.at(-1).clockSeconds,
+      feed.duration);
     assert.equal(feed.frames[0].time,0);
     assert.equal(feed.frames.at(-1).time,feed.duration);
     const sampler=createSampler(feed);
@@ -95,7 +105,8 @@ for(const category of ['men','women'])
 
 for(const category of ['men','women'])
   test(`full chase ${category} preserves paid split/contact evidence`,()=>{
-    const {feed,coverage}=createPhysicalFirstSplitViewerTestRaceV1(
+    const {feed,coverage,finishEvidence}=
+      createPhysicalFirstSplitViewerTestRaceV1(
       category,{chase:'all'});
     assert.deepEqual(validateFeed(feed),feed);
     assert.equal(coverage.paidRiderKilometres,14400);
@@ -110,4 +121,5 @@ for(const category of ['men','women'])
     assert.ok(createSampler(feed)(feed.duration).positions.every(row=>
       row.distance===120000));
     assert.equal(feed.results,undefined);
+    assert.equal(finishEvidence.entries.length,120);
   });

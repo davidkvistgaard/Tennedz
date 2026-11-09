@@ -200,3 +200,11 @@ Authentication or team-service failures fail closed. The development-only
 `/viewer-acceptance` route remains available without a game account when
 its development preview switch is enabled. This access guard changes no
 race decisions or viewer feed data.
+
+The paid split adapter also exports `motor-lab-paid-finish-v1` as separate
+finish evidence. It contains each rider's recorded 120 km crossing clock
+and road, sorted by clock with equal times left equal. The rich viewer shows
+the crossing list only after the last rider's recorded finish time. It does
+not assign ranks, points, awards or official results, and `feed.results`
+remains absent. The event markers on the shared timeline now appear only
+after their recorded time; future events remain out of the visible report.

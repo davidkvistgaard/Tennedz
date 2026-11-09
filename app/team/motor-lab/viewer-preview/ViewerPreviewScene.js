@@ -7,9 +7,16 @@ const clockLabel=seconds=>{
   const value=Math.max(0,Math.floor(seconds||0));
   return `${Math.floor(value/60)}:${String(value%60).padStart(2,'0')}`;
 };
+const finishClockLabel=seconds=>{
+  const milliseconds=Math.round(seconds*1000);
+  const minutes=Math.floor(milliseconds/60000);
+  const remaining=((milliseconds%60000)/1000).toFixed(3)
+    .padStart(6,'0');
+  return `${minutes}:${remaining}`;
+};
 
 export default function ViewerPreviewScene({feed,coverage,mode='recorded',
-  version,clock,serverOffsetMs}){
+  version,clock,serverOffsetMs,finishEvidence=null}){
   const viewerRef=useRef(null),lastUpdate=useRef(-1);
   const lastAssetStatus=useRef('');
   const graphicsBackend=useRef(null);
@@ -27,6 +34,10 @@ export default function ViewerPreviewScene({feed,coverage,mode='recorded',
     viewerRef.current?.setZoom(.35);
   },[cycleKey]);
   const time=stats?.time??0;
+  const publishedFinish=mode==='split'&&finishEvidence&&
+    time>=finishEvidence.publishedAt?finishEvidence:null;
+  const riderNames=useMemo(()=>new Map(feed.riders.map(rider=>
+    [rider.id,rider.name])),[feed]);
   const sampler=useMemo(()=>createSampler(feed),[feed]);
   const groupOnlyPositions=useMemo(()=>mode!=='exhibition'&&
     feed.frames.some(frame=>{
@@ -203,13 +214,29 @@ export default function ViewerPreviewScene({feed,coverage,mode='recorded',
         </div>
         <div className="race-theatre-timeline" aria-label="Shared race timeline">
           <div className="race-theatre-track"><span style={{width:`${progress}%`}}/>
-            {feed.events?.filter(event=>event.riderId).map((event,index)=><i
+            {feed.events?.filter(event=>event.riderId&&event.time<=time)
+              .map((event,index)=><i
               key={index} style={{left:`${100*event.time/feed.duration}%`}}/>)}</div>
           <div><small>START</small><small>{Math.round(progress)}% OF RACE</small>
             <small>FINISH</small></div>
         </div>
         <span className="race-theatre-rate">1× shared</span>
       </div>
+      {publishedFinish?<section className="race-theatre-paid-finish"
+        aria-label="Measured Motor Lab finish crossings">
+        <h2>Measured finish crossings <small>Motor Lab test · unofficial</small></h2>
+        <p>Shown after every recorded rider reached the line. Equal clocks
+          remain tied; no placing, award or official result is assigned.</p>
+        <ul>{publishedFinish.entries.slice(0,10).map(row=><li
+          key={row.riderId}><span>{riderNames.get(row.riderId)}</span>
+          <time>{finishClockLabel(row.clockSeconds)}</time></li>)}</ul>
+        <details><summary>All {publishedFinish.entries.length} crossings</summary>
+          <ul>{publishedFinish.entries.map(row=><li key={row.riderId}>
+            <span>{riderNames.get(row.riderId)}</span>
+            <time>{finishClockLabel(row.clockSeconds)}</time>
+          </li>)}</ul>
+        </details>
+      </section>:null}
       <div className="race-theatre-footnote">
         <span>Camera is local · race time is shared</span>
         <span>{mode==='exhibition'?

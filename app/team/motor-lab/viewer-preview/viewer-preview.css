@@ -132,6 +132,21 @@
   margin-top:9px;font-size:9px;color:#91a088}
 .race-theatre-rate{padding:10px;border:1px solid #d5ddcc;border-radius:5px;
   font-size:11px;white-space:nowrap}
+.race-theatre-paid-finish{margin:7px 18px 16px;padding:14px 16px;
+  border:1px solid #cbd8c5;border-radius:5px;background:#fffdf1;
+  color:#2c4e40}
+.race-theatre-paid-finish h2{display:flex;flex-wrap:wrap;gap:9px;
+  align-items:baseline;margin:0 0 6px;font-size:16px}
+.race-theatre-paid-finish h2 small{font-size:10px;font-weight:400;
+  letter-spacing:.05em;text-transform:uppercase;color:#6f856d}
+.race-theatre-paid-finish p{margin:0 0 10px;font-size:11px;color:#617861}
+.race-theatre-paid-finish ul{list-style:none;margin:0;padding:0;
+  max-height:220px;overflow:auto}
+.race-theatre-paid-finish li{display:flex;justify-content:space-between;
+  gap:12px;padding:5px 0;border-top:1px solid #e1e7d8;font-size:12px}
+.race-theatre-paid-finish time{font-variant-numeric:tabular-nums}
+.race-theatre-paid-finish details{margin-top:10px}
+.race-theatre-paid-finish summary{cursor:pointer;font-size:11px}
 .race-theatre-footnote{display:flex;justify-content:space-between;
   padding:0 18px 12px;color:#91a088;font-size:9px;letter-spacing:.03em}
 .race-theatre-data{margin:0 18px;padding:8px 0;border-top:1px solid #d5ddcc;
