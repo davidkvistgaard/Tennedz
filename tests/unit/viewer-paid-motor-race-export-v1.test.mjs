@@ -33,7 +33,8 @@ const styles=[{id:'a',name:'Team a',color:'#224466',
   accent:'#ffffff'}];
 const exportRace=(committed=input(),extra={})=>
   exportPaidMotorRaceToViewerV1({input:committed,
-    raceId:'paid-two-km',category:'men',teamStyles:styles,...extra});
+    raceId:'paid-two-km',category:'men',teamStyles:styles,
+    riderNumbers:{a:11,b:12},...extra});
 
 test('committed two kilometre race exports complete viewer evidence',()=>{
   const exported=exportRace();
@@ -43,6 +44,8 @@ test('committed two kilometre race exports complete viewer evidence',()=>{
     PAID_MOTOR_RACE_EXPORT_VERSION);
   assert.equal(exported.source.validatedRiderKilometres,4);
   assert.equal(exported.coverage.teamKitSource,'committed-team-style');
+  assert.equal(exported.coverage.riderNumberSource,'committed-race-bib');
+  assert.deepEqual(exported.feed.riders.map(row=>row.number),[11,12]);
   assert.equal(exported.finishEvidence.entries.length,2);
   assert.equal(sealPhysicalFirstRaceDocumentV2(exported,
     {category:'men'}).raceId,'paid-two-km');
@@ -52,6 +55,8 @@ test('export refuses missing orders and a different paid recording',()=>{
   const missing=input();
   delete missing.teams[0].orders.baseline;
   assert.throws(()=>exportRace(missing),/committed Motor Lab inputs/);
+  assert.throws(()=>exportRace(input(),{riderNumbers:{a:1}}),
+    /committed Motor Lab inputs/);
   const recordedInput=input();
   const paidRace=runPhysicalFirstWholeRaceProbeV1(recordedInput);
   const altered=input();
