@@ -163,3 +163,10 @@ omits official results and still uses the fixed 15-team synthetic roster
 and sporting stakes; this is not yet arbitrary team orders or the official
 game race. A fresh flat-profile seed replayed all 14,400 rider-kilometres,
 validated against `pelotonia.viewer.v1`, and produced a distinct race ID.
+The development-only `/viewer-acceptance` page accepts the same variant
+and was checked in a browser for both fields with the new flat-profile
+seed. Both pages rendered 120 riders in WebGL, the route profile and
+commentary advanced on the shared server clock, and category switching
+preserved every variant input. This checks the data bridge and browser
+rendering locally; it is not an authenticated production check or a
+measured GPU performance approval.
