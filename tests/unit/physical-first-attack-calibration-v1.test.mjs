@@ -139,7 +139,7 @@ test('same-seed mountain attack replays every rider-kilometre',t=>{
     ${calibration.maxAbsoluteMismatchSeconds}s`);
   assert.equal(calibration.validatedKm,120);
   assert.equal(calibration.riderCount,160);
-  assert.equal(calibration.mismatchCount,67);
-  assert.ok(calibration.maxAbsoluteMismatchSeconds<420);
+  assert.equal(calibration.mismatchCount,1);
+  assert.ok(calibration.maxAbsoluteMismatchSeconds<100);
   assert.equal(calibration.officialResults,false);
 });
