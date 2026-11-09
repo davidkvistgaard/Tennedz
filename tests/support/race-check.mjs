@@ -5,6 +5,7 @@ import { createClient } from "@supabase/supabase-js";
 import { request } from "@playwright/test";
 import { readTestConfig } from "./real-project.mjs";
 import { buildRace } from "../../lib/race/cycle.mjs";
+import { withRecordedAppearanceV1 } from "../../lib/viewer/recorded-appearance-v1.mjs";
 const cfg = readTestConfig(),
   db = createClient(cfg.url, cfg.serviceKey, {
     auth: { persistSession: false },
@@ -286,7 +287,13 @@ try {
   assert.ok(run.run.feed.length > 0);
   assert.equal(run.run.replay.version, 1);
   assert.equal(run.run.replay.roster.length, 16);
-  assert.deepEqual(run.run.replay, output.divisions[0].replay);
+  const selectedKits = await ok(db.from("club_identities")
+    .select("team_id,palette,pattern")
+    .in("team_id", snapshot.teams.map((team) => team.id)));
+  const recorded = withRecordedAppearanceV1(output, selectedKits);
+  assert.deepEqual(run.run.replay, recorded.divisions[0].replay);
+  assert.equal(run.run.replay.appearance.version, 1);
+  assert.equal(run.viewer_clock.version, "guided-replay-broadcast-1");
   assert.equal(run.team_id, f.teams.alice.id);
   assert.equal(run.run.seed, undefined);
   const reloaded = await (

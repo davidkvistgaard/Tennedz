@@ -23,6 +23,10 @@ Kameravalg er lokalt.
 Replay v1 har et fælles `km` for hvert checkpoint og gruppetidsgab, men ikke
 præcise samtidige meter mellem grupper eller indbyrdes hjulplacering, bane og
 rækkefølge i gruppen. Alle ryttere forankres ved det registrerede kilometer;
+den nuværende guided motors replay danner desuden sine gruppetidsgab ud fra
+simulerede faser og de endelige resultater. Det er motorens gemte model, ikke
+en måling af fysisk betalt kontakt ved hvert kilometer. Den eksperimentelle
+V94-motor er fortsat separat.
 `illustrative-group-layout-1` spreder kun cyklerne visuelt inden for gruppen
 og er mærket illustrativt i brugerfladen. Gruppens sekunder bliver aldrig
 omregnet til opdigtede meter. Ruten er en skematisk distanceakse. Træer,
