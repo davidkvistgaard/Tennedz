@@ -15,9 +15,9 @@ const fixtureUuid=(teamNumber,riderNumber=0)=>{
 
 export function physicalGameViewerFixture({teamCount=2,
   category='men'}={}){
-  if(!Number.isInteger(teamCount)||teamCount<2||teamCount>18||
+  if(!Number.isInteger(teamCount)||teamCount<2||teamCount>20||
     !['men','women'].includes(category))
-    throw new Error('The fixture needs 2–18 teams and one rider category.');
+    throw new Error('The fixture needs 2–20 teams and one rider category.');
   const gender=category==='women'?'F':'M';
   const event={id:physicalViewerEventId,kind:'one_day',
     gender,seed:`fixture-saved-race-seed-${category}-${teamCount}`,

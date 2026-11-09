@@ -12,8 +12,8 @@ importers:
   .:
     dependencies:
       '@pelotonia/race-viewer':
-        specifier: file:vendor/pelotonia-race-viewer-0.98.4.tgz
-        version: file:vendor/pelotonia-race-viewer-0.98.4.tgz(react@19.3.0)(three@0.187.0)
+        specifier: file:vendor/pelotonia-race-viewer-0.98.5.tgz
+        version: file:vendor/pelotonia-race-viewer-0.98.5.tgz(react@19.3.0)(three@0.187.0)
       '@supabase/ssr':
         specifier: 0.12.7
         version: 0.12.7(@supabase/supabase-js@2.117.1)
@@ -332,9 +332,9 @@ packages:
     cpu: [x64]
     os: [win32]
 
-  '@pelotonia/race-viewer@file:vendor/pelotonia-race-viewer-0.98.4.tgz':
-    resolution: {integrity: sha512-E/qNKs/dQizvAermIpifrXHMNR/fuKIXtK81Y7K/JHrVMKi38Ws2smkCR1nBCadEM9SYqa0+2hF2AvfgB1C/cA==, tarball: file:vendor/pelotonia-race-viewer-0.98.4.tgz}
-    version: 0.98.4
+  '@pelotonia/race-viewer@file:vendor/pelotonia-race-viewer-0.98.5.tgz':
+    resolution: {integrity: sha512-eHydoa+n7SEUtqTTK8/iOwTnFwTs4IHSSA+nO0/AJzRJsE8fxfTxAgcGbcOW6B59Cp0btxiM6A0/R/Meh1ff/A==, tarball: file:vendor/pelotonia-race-viewer-0.98.5.tgz}
+    version: 0.98.5
     peerDependencies:
       react: ^19.0.0
       three: 0.187.0
@@ -989,7 +989,7 @@ snapshots:
   '@next/swc-win32-x64-msvc@15.5.26':
     optional: true
 
-  '@pelotonia/race-viewer@file:vendor/pelotonia-race-viewer-0.98.4.tgz(react@19.3.0)(three@0.187.0)':
+  '@pelotonia/race-viewer@file:vendor/pelotonia-race-viewer-0.98.5.tgz(react@19.3.0)(three@0.187.0)':
     dependencies:
       react: 19.3.0
       three: 0.187.0

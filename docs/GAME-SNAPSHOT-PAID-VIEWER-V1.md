@@ -103,6 +103,13 @@ local samples, not a device-wide performance guarantee. The viewer contract
 currently accepts at most 150 riders; a game field of complete eight-rider
 teams can reach 144 within that cap. Exact 30/150 synthetic renderer stress
 tests remain separate from the game-shaped race matrix.
+Package 0.98.5 extends the package feed limit to 160 riders so a complete
+20-team one-day division can be represented. It changes no race or scene
+positions. Isolated authenticated Edge tests rendered all 160 riders and
+all measured finish crossings for both categories on Intel UHD WebGL2 with
+zero renderer errors. The sampled rate was 31 fps for women and 31 fps for
+men. This is one device and two game-shaped fixtures, not a universal
+performance or production approval.
 Until every participating team saves a physical input, this route correctly
 refuses the old incomplete entries.
 

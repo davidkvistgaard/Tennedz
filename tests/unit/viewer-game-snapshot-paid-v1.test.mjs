@@ -10,6 +10,8 @@ import {createPhysicalGameRaceDocumentV1,
   loadPhysicalGameRaceDocumentV1,
   loadLockedPhysicalGameRaceRecordInputV1} from
   '../../lib/viewer/physical-game-race-source-v1.mjs';
+import {physicalGameViewerFixture} from
+  '../support/physical-game-viewer-fixture.mjs';
 
 const skills={sprint:65,flat:65,hills:65,mountain:65,
   cobbles:65,timetrial:65,endurance:65,strength:65,
@@ -64,6 +66,21 @@ for(const category of ['M','F'])
     assert.equal(document.finishEvidence.entries.length,16);
     assert.equal(document.input.officialResults,false);
   });
+
+test('complete 20-team divisions fit viewer contract without dropping riders',()=>{
+  for(const category of ['men','women']){
+    const document=physicalGameViewerFixture({teamCount:20,
+      category});
+    assert.equal(validateFeed(document.feed),document.feed);
+    assert.equal(document.feed.riders.length,160);
+    assert.equal(document.finishEvidence.entries.length,160);
+    assert.equal(document.source.validatedRiderKilometres,3200);
+    assert.throws(()=>validateFeed({...document.feed,
+      riders:[...document.feed.riders,{
+        ...document.feed.riders[0],id:'extra-rider'}]}),
+    /supported rider count is 1–160/);
+  }
+});
 
 test('saved physical entries become a complete paid viewer race',()=>{
   const {snapshot,manifest}=fixture('F');
