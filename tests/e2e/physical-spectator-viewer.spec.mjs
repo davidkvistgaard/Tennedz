@@ -7,6 +7,8 @@ test('signed-in non-admin sees a paid race without private inputs',
     test.skip(process.env.PELOTONIA_E2E_PHYSICAL_VIEWER!==
       'true','Requires the isolated physical recording fixture.');
     test.setTimeout(90000);
+    const riderCount=8*Number(process.env.
+      PELOTONIA_E2E_PHYSICAL_VIEWER_TEAMS??2);
     const errors=[];
     const increments=[];
     page.on('pageerror',error=>errors.push(error.message));
@@ -46,6 +48,15 @@ test('signed-in non-admin sees a paid race without private inputs',
             'data-viewer-diagnostics');
         return raw?JSON.parse(raw)?.renderer:null;
       },{timeout:20000}).toBe('WebGL');
+      const initialDiagnostics=JSON.parse(await page.locator(
+        '[data-viewer-diagnostics]').getAttribute(
+          'data-viewer-diagnostics'));
+      expect(initialDiagnostics.visible).toBe(riderCount);
+      expect(initialDiagnostics.errors).toBe(0);
+      expect(initialDiagnostics.graphicsBackend?.api).toBe('WebGL2');
+      if(process.env.PELOTONIA_REQUIRE_HARDWARE_WEBGL==='true')
+        expect(initialDiagnostics.graphicsBackend?.unmaskedRenderer??'')
+          .not.toMatch(/SwiftShader|llvmpipe|software/i);
       const html=await page.content();
       expect(html).not.toContain('physicalSourceVersion');
       expect(html).not.toContain('seedProvenance');
@@ -82,7 +93,7 @@ test('signed-in non-admin sees a paid race without private inputs',
         await expect(page.getByRole('heading',
           {name:'Measured finish crossings'}))
           .toBeVisible({timeout:50000});
-        await expect(page.getByText('All 16 crossings'))
+        await expect(page.getByText(`All ${riderCount} crossings`))
           .toBeVisible();
       }
     }else{

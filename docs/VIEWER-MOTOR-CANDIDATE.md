@@ -88,7 +88,10 @@ SQL clock/privacy tests, 286 package tests, lint, isolated build, and local
 authenticated browser replay passed. The browser replay covered the entire
 16-rider recording, checked the camera across frame appends, and showed
 finish evidence only at the shared finish. A separate future-dated recording
-remained unpublished. No hosted event has yet exercised this path, and the
+remained unpublished. The same authenticated streaming replay also passed
+with complete 144-rider men's and women's fixtures. These are local WebGL
+checks, not a hosted or cross-device performance guarantee. No hosted event
+has yet exercised this path, and the
 new frame-slice migration remains unapplied alongside the three earlier
 physical viewer migrations. The saved-document digest
 covers feed, finish, coverage and motor source, but does not cover the
