@@ -192,3 +192,11 @@ Observed frame rates around 7–12 fps in this local browser session are not
 acceptable as a production performance approval. The authenticated Vercel
 preview for this branch reached the game's sign-in screen; the new rich
 viewer itself has not been verified there or on tennedz.eu.
+
+The protected Motor Lab preview now verifies the signed-in user's team on
+the server before constructing a generated race. A missing session goes to
+sign-in, and a signed-in user without a linked team goes to onboarding.
+Authentication or team-service failures fail closed. The development-only
+`/viewer-acceptance` route remains available without a game account when
+its development preview switch is enabled. This access guard changes no
+race decisions or viewer feed data.

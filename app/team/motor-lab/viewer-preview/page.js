@@ -1,4 +1,6 @@
-import {notFound} from 'next/navigation';
+import {notFound,redirect} from 'next/navigation';
+import {requireTeam} from '../../../../lib/auth/server';
+import {AuthError} from '../../../../lib/auth/policy.mjs';
 import {createPhysicalFirstViewerTestRaceV1} from
   '../../../../lib/viewer/physical-first-test-race-v1.mjs';
 import {createPhysicalFirstSplitViewerTestRaceV1} from
@@ -18,6 +20,16 @@ export const dynamic='force-dynamic';
 export default async function ViewerPreviewPage({searchParams}){
   if(process.env.PELOTONIA_VIEWER_V1_ENABLED==='false')
     notFound();
+  // The team layout checks on the client, after server rendering. Reject here
+  // before a seed can trigger the full 120 km simulation.
+  try{await requireTeam();}
+  catch(error){
+    if(error instanceof AuthError&&error.code==='UNAUTHENTICATED')
+      redirect('/login');
+    if(error instanceof AuthError&&error.code==='TEAM_NOT_LINKED')
+      redirect('/onboarding');
+    throw error;
+  }
   const params=await searchParams;
   const category=params?.category==='women'?'women':'men';
   const raceMode=params?.race==='split'?'split':'connected';
