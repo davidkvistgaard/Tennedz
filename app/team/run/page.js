@@ -65,6 +65,7 @@ export default function RunPage() {
     [saved, setSaved] = useState(null),
     [physicalAvailable,setPhysicalAvailable]=useState(false),
     [physicalSaved,setPhysicalSaved]=useState(null),
+    [recordedViewerAvailable,setRecordedViewerAvailable]=useState(false),
     [busy, setBusy] = useState(false),
     [notice, setNotice] = useState("");
   const [sortKey, setSortKey] = useState("form"),
@@ -114,6 +115,7 @@ export default function RunPage() {
     setSaved(null);
     setPhysicalAvailable(false);
     setPhysicalSaved(null);
+    setRecordedViewerAvailable(false);
     setStage(null);
     setEntryError("");
     setNotice("");
@@ -132,12 +134,21 @@ export default function RunPage() {
           return {disabled:true};
         throw error;
       }),
+      api(`/api/event/physical-viewer-clock?event_id=${eventId}`,
+        {signal:abort.signal}).then(()=>true).catch(error=>{
+        if(error.status===404&&
+          ['PHYSICAL_VIEWER_DISABLED',
+            'PHYSICAL_VIEWER_NOT_RECORDED'].includes(error.code))
+          return false;
+        throw error;
+      }),
     ])
-      .then(([profile, entry, physical]) => {
+      .then(([profile, entry, physical, recordedViewer]) => {
         if (abort.signal.aborted) return;
         setStage(profile.stage);
         setPhysicalAvailable(!physical.disabled);
         setPhysicalSaved(physical.entry??null);
+        setRecordedViewerAvailable(recordedViewer);
         const existing=physical.entry??entry.entry;
         setSaved(existing);
         setSelected(existing?.selected_riders || []);
@@ -361,6 +372,11 @@ export default function RunPage() {
           ) : (
             <>
               {stage && <StageProfile stage={stage} />}
+              {recordedViewerAvailable && event.status!=='FINISHED' &&
+                <Link className="btn primary"
+                href={`/team/race-viewer/${event.id}`}>
+                Watch recorded race →
+              </Link>}
               {!locked && <a className="lineup-jump" href="#race-lineup">Build your lineup <span aria-hidden="true">↓</span></a>}
               {event.status === "FINISHED" ? (
                 <div className="card race-ready">
@@ -369,7 +385,9 @@ export default function RunPage() {
                     Follow your division in the viewer, or go straight to
                     the results.
                   </p>
-                  <Link className="btn primary" href={`/team/view/${event.id}`}>
+                  <Link className="btn primary" href={recordedViewerAvailable?
+                    `/team/race-viewer/${event.id}`:
+                    `/team/view/${event.id}`}>
                     Watch the race →
                   </Link>
                   <Link

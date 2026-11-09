@@ -95,3 +95,7 @@ WebGL canvas without private input fields in the page; a future-dated
 recording displayed only the waiting state and its finish endpoint returned
 425. Both browser cases passed on the local test server. They do not replace
 the missing hosted game-event check.
+The team's race preparation page discovers an available recorded race through
+the authenticated clock endpoint and links to the new viewer; when no
+physical recording exists, the existing historical race route remains in
+place. This navigation change passed lint and an isolated production build.
