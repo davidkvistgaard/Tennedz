@@ -1,0 +1,92 @@
+diff --git a/source/package.json b/source/package.json
+index 0fdab67..5afb261 100644
+--- a/source/package.json
++++ b/source/package.json
+@@ -1,6 +1,6 @@
+ {
+   "name": "pelotonia-viewer",
+-  "version": "0.98.3",
++  "version": "0.98.4",
+   "type": "module",
+   "scripts": {
+     "dev": "vite --host 0.0.0.0",
+diff --git a/source/src/contract.d.ts b/source/src/contract.d.ts
+index 4941e5a..6755540 100644
+--- a/source/src/contract.d.ts
++++ b/source/src/contract.d.ts
+@@ -152,7 +152,7 @@ export interface CrashParticipant { riderId:string; fallAt:number; side:-1|1; fa
+ /** Every victim and source trajectory must be supplied; no collision propagation is calculated. */
+ export interface CrashIncident {id:string;type:"single"|"mass";start:number;end:number;riders:CrashParticipant[];}
+ export interface CrashPose {incidentId:string;type:"single"|"mass";causedByRiderId:string|null;fallAt:number;side:-1|1;amount:number;phase:"falling"|"down"|"remounting";}
+-export interface CrowdSettings { enabled?:boolean; seed?:number; backgroundSpacing?:number; zones?:Array<{id:string;from:number;to:number;kind:"normal"|"town"|"climb"|"iconic"|"finish";rows?:number;spacing?:number;side?:-1|1|"both";barriers?:boolean;rowRise?:number}>; }
++export interface CrowdSettings { enabled?:boolean; seed?:number; backgroundSpacing?:number; autoFinish?:boolean; zones?:Array<{id:string;from:number;to:number;kind:"normal"|"town"|"climb"|"iconic"|"finish";rows?:number;spacing?:number;side?:-1|1|"both";barriers?:boolean;rowRise?:number}>; }
+ export interface ViewerFeed {
+   weather?:WeatherFrame[];
+   incidents?:CrashIncident[];
+diff --git a/source/src/raceSceneData.js b/source/src/raceSceneData.js
+index 5b75d5e..fbcc196 100644
+--- a/source/src/raceSceneData.js
++++ b/source/src/raceSceneData.js
+@@ -6,6 +6,7 @@ export function validateSceneData(feed,ids,fail){
+  if(feed.route.surfaces!==undefined){if(!Array.isArray(feed.route.surfaces)||feed.route.surfaces.length>256)fail('invalid route surfaces');let end=-1;for(const s of feed.route.surfaces){if(!record(s)||!finite(s.from)||!finite(s.to)||s.from<0||s.to<=s.from||s.from<end||!SURFACE_TYPES.includes(s.type)||(s.barriers!==undefined&&typeof s.barriers!=='boolean'))fail('invalid or overlapping route surface');end=s.to;}}
+  if(feed.weather!==undefined){if(!Array.isArray(feed.weather)||!feed.weather.length||feed.weather.length>1000)fail('invalid weather frames');let previous=-1;for(const w of feed.weather){if(!record(w)||!finite(w.time)||w.time<0||w.time>feed.duration||w.time<=previous||!WEATHER_TYPES.includes(w.condition)||(w.intensity!==undefined&&(!finite(w.intensity)||w.intensity<0||w.intensity>1))||(w.wind!==undefined&&(!Array.isArray(w.wind)||w.wind.length!==2||w.wind.some(v=>!finite(v)||Math.abs(v)>60))))fail('invalid weather frame');previous=w.time;}if(feed.weather[0].time!==0)fail('weather must begin at zero');}
+  if(feed.crowd!==undefined){const c=feed.crowd;if(!record(c)||(c.enabled!==undefined&&typeof c.enabled!=='boolean')||(c.backgroundSpacing!==undefined&&(!finite(c.backgroundSpacing)||c.backgroundSpacing<8||c.backgroundSpacing>200))||(c.seed!==undefined&&!Number.isSafeInteger(c.seed)))fail('invalid crowd settings');if(c.zones!==undefined&&(!Array.isArray(c.zones)||c.zones.length>128))fail('invalid crowd zones');const seen=new Set();for(const z of c.zones||[]){if(!record(z)||typeof z.id!=='string'||!z.id||seen.has(z.id)||!finite(z.from)||!finite(z.to)||z.from<0||z.to<=z.from||!['normal','town','climb','iconic','finish'].includes(z.kind)||(z.rows!==undefined&&(!Number.isInteger(z.rows)||z.rows<1||z.rows>5))||(z.spacing!==undefined&&(!finite(z.spacing)||z.spacing<.65||z.spacing>50))||(z.side!==undefined&&![-1,1,'both'].includes(z.side))||(z.barriers!==undefined&&typeof z.barriers!=='boolean')||(z.rowRise!==undefined&&(!finite(z.rowRise)||z.rowRise<0||z.rowRise>.5)))fail('invalid crowd zone');seen.add(z.id);}}
++ if(feed.crowd?.autoFinish!==undefined&&typeof feed.crowd.autoFinish!=='boolean')fail('invalid crowd settings');
+  if(feed.incidents!==undefined){if(!Array.isArray(feed.incidents)||feed.incidents.length>1000)fail('invalid incidents');const seen=new Set(),ranges=new Map();for(const event of feed.incidents){if(!record(event)||typeof event.id!=='string'||!event.id||seen.has(event.id)||!['single','mass'].includes(event.type)||!finite(event.start)||!finite(event.end)||event.start<0||event.end<=event.start||event.end>feed.duration||!Array.isArray(event.riders)||!event.riders.length||event.riders.length>150||(event.type==='single'&&event.riders.length!==1)||(event.type==='mass'&&event.riders.length<2))fail('invalid crash incident');seen.add(event.id);const members=new Map();for(const rider of event.riders){if(!record(rider)||!ids.has(rider.riderId)||members.has(rider.riderId)||!finite(rider.fallAt)||rider.fallAt<event.start||rider.fallAt+(rider.fallDuration??.65)>event.end||![-1,1].includes(rider.side)||(rider.fallDuration!==undefined&&(!finite(rider.fallDuration)||rider.fallDuration<.2||rider.fallDuration>2))||(rider.downUntil!==undefined&&(!finite(rider.downUntil)||rider.downUntil<rider.fallAt+(rider.fallDuration??.65)||rider.downUntil>event.end))||(rider.recoveredAt!==undefined&&(!finite(rider.recoveredAt)||rider.recoveredAt<=(rider.downUntil??event.end)||rider.recoveredAt>event.end)))fail('invalid crash participant');members.set(rider.riderId,rider);const list=ranges.get(rider.riderId)||[];list.push([rider.fallAt,rider.recoveredAt??event.end]);ranges.set(rider.riderId,list);}for(const rider of event.riders)if(rider.causedByRiderId!==undefined&&(!members.has(rider.causedByRiderId)||rider.causedByRiderId===rider.riderId||members.get(rider.causedByRiderId).fallAt>rider.fallAt))fail('invalid crash causality');}for(const list of ranges.values()){list.sort((a,b)=>a[0]-b[0]);if(list.some((r,i)=>i&&r[0]<list[i-1][1]))fail('overlapping rider incidents');}}
+ }
+ export function surfaceAt(route,distance){return (route.surfaces||[]).find(s=>distance>=s.from&&distance<s.to)?.type||'asphalt';}
+diff --git a/source/src/version.js b/source/src/version.js
+index 2ee987f..b68ce8e 100644
+--- a/source/src/version.js
++++ b/source/src/version.js
+@@ -1 +1 @@
+-export const VIEWER_VERSION = '0.98.3';
++export const VIEWER_VERSION = '0.98.4';
+diff --git a/source/src/viewer/roadside.js b/source/src/viewer/roadside.js
+index a6742e0..4fb4cdb 100644
+--- a/source/src/viewer/roadside.js
++++ b/source/src/viewer/roadside.js
+@@ -3,7 +3,7 @@ import{Spectators}from'./spectators.js';
+ const palette=['#bd774e','#d7b659','#5b898d','#e5d9bb','#596b83','#8c5c77','#425e4c','#b84c43'],skins=['#cda27f','#97684b','#e1bfa0','#74503b'];
+ const random=(n,seed=1)=>{const x=Math.sin(n*127.1+seed*311.7)*43758.5453;return x-Math.floor(x)};
+ export function eventBarrierRanges(feed,routeLength){const result=[];if(feed.finish){const end=feed.finish.routeFraction*routeLength;for(const side of [-1,1])result.push({from:Math.max(0,end-(feed.finish.barrierBefore??1000)),to:Math.min(routeLength,end+(feed.finish.barrierAfter??18)),side});}for(const s of feed.route.surfaces||[])if(s.type==='cobbles'&&s.barriers!==false)for(const side of [-1,1])result.push({from:s.from,to:Math.min(s.to,routeLength),side});for(const z of feed.crowd?.zones||[])if(z.barriers)for(const side of z.side&&z.side!=='both'?[z.side]:[-1,1])result.push({from:z.from,to:Math.min(z.to,routeLength),side});const merged=[];for(const side of [-1,1]){for(const r of result.filter(r=>r.side===side&&r.to>r.from).sort((a,b)=>a.from-b.from)){const last=merged.at(-1);if(last?.side===side&&r.from<=last.to)last.to=Math.max(last.to,r.to);else merged.push({...r});}}return merged;}
+-export function roadsidePeople(feed,route,center,range=180){if(!feed.crowd?.enabled)return[];const config=feed.crowd,finish=feed.finish?route.length*feed.finish.routeFraction:null,zones=[...(config.zones||[])];if(finish!==null)zones.push({id:'finish-auto',from:Math.max(0,finish-1000),to:Math.min(route.length,finish+18),kind:'finish',rows:3,spacing:1.1});for(const s of feed.route.surfaces||[])if(s.type==='cobbles')zones.push({id:'cobbles-auto',from:s.from,to:s.to,kind:'iconic',rows:3,spacing:1});const scale=route.length/(route.geometryLength||route.length),maxRows=Math.max(3,...zones.map(z=>z.rows??4)),low=Math.max(0,center-range*scale),high=Math.min(route.length,center+range*scale),people=[],step=Math.max(.8,4*range*maxRows/2200)*scale;
++export function roadsidePeople(feed,route,center,range=180){if(!feed.crowd?.enabled)return[];const config=feed.crowd,finish=feed.finish?route.length*feed.finish.routeFraction:null,zones=[...(config.zones||[])];if(finish!==null&&config.autoFinish!==false)zones.push({id:'finish-auto',from:Math.max(0,finish-1000),to:Math.min(route.length,finish+18),kind:'finish',rows:3,spacing:1.1});for(const s of feed.route.surfaces||[])if(s.type==='cobbles')zones.push({id:'cobbles-auto',from:s.from,to:s.to,kind:'iconic',rows:3,spacing:1});const scale=route.length/(route.geometryLength||route.length),maxRows=Math.max(3,...zones.map(z=>z.rows??4)),low=Math.max(0,center-range*scale),high=Math.min(route.length,center+range*scale),people=[],step=Math.max(.8,4*range*maxRows/2200)*scale;
+  for(let slot=Math.ceil(low/step);slot*step<=high;slot++){const distance=slot*step;for(const side of [-1,1]){const active=zones.filter(z=>distance>=z.from&&distance<=z.to&&(!z.side||z.side==='both'||z.side===side)).sort((a,b)=>(b.rows??(b.kind==='iconic'?4:2))-(a.rows??(a.kind==='iconic'?4:2)))[0],rows=active?(active.rows??(active.kind==='normal'?1:active.kind==='iconic'?4:2)):1,spacing=active?(active.spacing??(active.kind==='normal'?8:1.2)):(config.backgroundSpacing??28);if(slot%Math.max(1,Math.round(spacing*scale/step)))continue;if(!active&&random(slot+side,config.seed??5)>.55)continue;
+  for(let row=0;row<rows;row++){if(people.length>=2400)return people;const salt=slot*13+row*41+side*7,archetype=Math.floor(random(salt,config.seed??5)*16),offset=side*(feed.route.width/2+1.2+row*.76+random(salt+2)*.12),p=route.at(distance+(row%2)*.35,offset);if(feed.terrain)p.position.y=Math.max(p.position.y,heightAt(feed.terrain,p.position.x,p.position.z));p.position.y+=row*(active?.rowRise??0);people.push({position:p.position.toArray(),rotation:p.heading-side*Math.PI/2,scale:.88+(archetype%5)*.045,color:palette[archetype%8],skinColor:skins[archetype%4],pose:archetype%4===0?'cheering':archetype%3===0?'clapping':'standing'});}}}return people;}
+ export class RoadsideCrowd{constructor(scene,feed,route){this.feed=feed;this.route=route;this.people=new Spectators(scene,{});this.bucket=null;this.count=0;}update(distance){const bucket=Math.round(distance/(24*this.route.length/(this.route.geometryLength||this.route.length)))*(24*this.route.length/(this.route.geometryLength||this.route.length));if(bucket===this.bucket)return;this.bucket=bucket;const people=roadsidePeople(this.feed,this.route,bucket);this.count=people.length;this.people.setPeople(people);}get instances(){return this.people.instances;}dispose(){this.people.dispose();}}
+diff --git a/source/test/crowdAutoFinish.test.js b/source/test/crowdAutoFinish.test.js
+new file mode 100644
+index 0000000..5271b7c
+--- /dev/null
++++ b/source/test/crowdAutoFinish.test.js
+@@ -0,0 +1,29 @@
++import test from 'node:test';
++import assert from 'node:assert/strict';
++import {roadsidePeople} from '../src/viewer/roadside.js';
++import {createRoute} from '../src/viewer/geometry.js';
++import {validateFeed} from '../src/adapter.js';
++import {conditionsDemo} from '../src/demoConditions.js';
++
++test('explicit sparse finish crowd replaces the automatic dense zone',()=>{
++  const route=createRoute([[0,0,0],[0,0,1000]]);
++  const feed={route:{width:7,surfaces:[]},
++    finish:{routeFraction:1},
++    crowd:{enabled:true,backgroundSpacing:80,
++      zones:[{id:'finish-study',from:700,to:1000,
++        kind:'finish',rows:1,spacing:8}]}};
++  const dense=roadsidePeople(feed,route,900);
++  const sparseFeed={...feed,crowd:{...feed.crowd,autoFinish:false}};
++  const sparse=roadsidePeople(sparseFeed,route,900);
++  assert.ok(dense.length>sparse.length*2);
++  assert.ok(sparse.length>0);
++  assert.deepEqual(sparse,roadsidePeople(sparseFeed,route,900));
++});
++
++test('automatic finish setting accepts only booleans',()=>{
++  const feed=conditionsDemo('rain-cobbles');
++  feed.crowd.autoFinish=false;
++  assert.equal(validateFeed(feed),feed);
++  feed.crowd.autoFinish='false';
++  assert.throws(()=>validateFeed(feed),/Invalid viewer feed/);
++});

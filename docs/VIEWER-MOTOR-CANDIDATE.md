@@ -134,3 +134,22 @@ finish spectators remain. These are device-specific samples, not a
 device-wide performance certification.
 Both public split-road samples passed the local Edge WebGL browser check with
 the study 3 scene; the generated crowd remains off.
+
+Synthetic presentation study 4 replaces the disabled generated crowd with a
+sparse roadside crowd and an explicit sparse finish zone. Viewer package
+0.98.4 adds the `autoFinish` crowd control, with the old dense automatic
+finish behavior remaining the package default. The fictional Motor Lab scene
+sets it to false; rider frames, group positions, race clock, commentary,
+finish evidence and result publication remain unchanged. After an isolated
+production build, authenticated local Edge playback completed 16 riders at
+55 fps with 31 generated spectators, 144 men at 33 fps with 26 generated
+spectators, and 144 women at 32 fps with 33 generated spectators on Intel UHD
+WebGL2/Direct3D11. All three runs had zero renderer errors and reached all
+measured finish crossings. The 144-rider sample took about 176–182 draw calls
+and 1.97–2.10 million triangles. A stale prior build initially reported zero
+generated spectators; those earlier performance readings were discarded.
+The new browser assertion requires the generated crowd to be nonempty. These
+are local, device-specific samples, not hosted validation or a
+cross-device performance guarantee. Hosted physical viewer migrations remain
+unapplied and the spectator flag remains off while same-seed motor
+calibration is incomplete.

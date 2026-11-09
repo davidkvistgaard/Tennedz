@@ -55,12 +55,19 @@ test('saved paid game race renders on the shared viewer clock',
             'data-viewer-diagnostics');
         return raw?JSON.parse(raw)?.renderedFrames??0:0;
       },{timeout:15000}).toBeGreaterThan(60);
+      await expect.poll(async()=>{
+        const raw=await page.locator(
+          '[data-viewer-diagnostics]').getAttribute(
+            'data-viewer-diagnostics');
+        return raw?JSON.parse(raw)?.crowdCount??0:0;
+      },{timeout:15000}).toBeGreaterThan(0);
       const diagnostics=JSON.parse(await page.locator(
         '[data-viewer-diagnostics]').getAttribute(
           'data-viewer-diagnostics'));
       expect(diagnostics.visible).toBe(riderCount);
       expect(diagnostics.errors).toBe(0);
       expect(diagnostics.graphicsBackend?.api).toBe('WebGL2');
+      expect(diagnostics.crowdCount).toBeGreaterThan(0);
       if(process.env.PELOTONIA_REQUIRE_HARDWARE_WEBGL==='true')
         expect(diagnostics.graphicsBackend?.unmaskedRenderer??'')
           .not.toMatch(/SwiftShader|llvmpipe|software/i);
