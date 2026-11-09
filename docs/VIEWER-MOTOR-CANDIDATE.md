@@ -1,0 +1,43 @@
+# Viewer plus Motor Lab candidate
+
+This branch joins the released viewer branch `e6f1e3bd` with the separate
+experimental Motor Lab branch `7427e328`. It is an integration candidate,
+not a production release. The currently published `tennedz.eu` deployment
+remains `89f39dcc`.
+
+`/viewer` still displays immutable Motor Lab samples or a clearly labelled
+fictional exhibition. The public sample client now receives only events
+already reached on its server clock. It does not substitute a sample for an
+official game recording. `/team/motor-lab/recorded-viewer` is the flagged,
+administrator-only path for a saved game-shaped physical recording with a
+shared publication clock and measured unofficial finish crossings. Historic
+game recordings keep their reports; old group gaps are not presented as
+simultaneous rider positions.
+
+The isolated production build and lint passed. Public browser checks passed
+for exact 30 and 150 synthetic riders in both categories, camera controls,
+WebGL rendering, public sample time/event filtering, and a missing texture
+with visible fallback. A separate authenticated browser check passed for a
+paid 16-rider game-shaped recording and its measured finish on Intel UHD
+WebGL2/Direct3D11. The Motor Lab branch additionally passed paid 32- and
+144-rider browser races in both categories; its local frame samples ranged
+from 32 to 53 fps. These observations do not certify other GPUs or a hosted
+game event.
+The optional full 159-file unit suite was started and stopped while an
+unchanged, long-running heterogeneous motor test was still computing; it
+has no passing or failing final status. The targeted viewer tests passed.
+
+The strict whole-race release audit completed 72/72 scenarios but found
+60/72 same-seed finish mismatches and 0 official results. Hosted Supabase
+does not yet contain the physical entry or recording tables. Those opt-in
+migrations have only been verified locally. The physical preview flag defaults
+to off. The
+viewer package supports at most 150 riders, so a complete eight-rider-team
+game field can be tested at 144 riders; exact 150 belongs to the synthetic
+renderer stress matrix. No official result, award, timing rule, race position
+or geographic detail is inferred to fill missing motor data.
+
+Do not promote this candidate until real committed game entries and a hosted
+recording exist, the physical finish is calibrated and versioned for official
+use, authenticated browser checks pass on the exact deployment, and the
+READY/alias/page/JS/runtime/rollback checks are complete.

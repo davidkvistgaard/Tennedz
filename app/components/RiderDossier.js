@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useRef } from "react";
+import Link from "next/link";
 import RiderAvatar from "./RiderAvatar";
 import { RIDER_SKILLS } from "./SquadRider";
 import { countryLabel } from "../../lib/riders/identity.mjs";
@@ -29,5 +30,6 @@ export default function RiderDossier({ riders, onClose }) {
     <p className="studio-caption">{comparing ? "Highlighted cells show the best available value in this selection, including ties. Lower fatigue is better. Swipe the table sideways on a small screen." : "Your rider’s strengths and current condition, in one place."}</p>
     <div className="studio-table-wrap" tabIndex={0} role="region" aria-label="Rider attribute comparison"><table className="studio-table"><thead><tr><th>Attribute</th>{riders.map(r => <th key={r.id}>{r.display_name || r.name}</th>)}</tr></thead><tbody>{RIDER_SKILLS.map(([key, label]) => <tr key={key}><th>{label}<small>{descriptions[key]}</small></th>{riders.map(r => <td key={r.id} className={comparing && r[key]!=null && Number(r[key])===best(key)?"studio-best-value":undefined}><strong>{display(r[key])}</strong>{r[key] != null && <meter aria-label={`${r.display_name || r.name}: ${label}`} min="0" max="100" value={Number(r[key]) || 0}/>}</td>)}</tr>)}</tbody></table></div>
     <p className="studio-caption">These are the current rider records, not predictions of a race result. No hidden potential is shown.</p>
+    {!comparing && <div className="studio-rider-actions"><Link className="btn primary" href={`/team/marketplace?sell=${encodeURIComponent(riders[0].id)}#market-sell-title`}>Sell {riders[0].display_name || riders[0].name}</Link></div>}
   </dialog>;
 }

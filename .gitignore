@@ -2,6 +2,7 @@ node_modules/
 .next/
 .next-viewer-acceptance/
 .next-viewer-build/
+.next-market-*/
 .env*
 !.env.example
 .vercel/

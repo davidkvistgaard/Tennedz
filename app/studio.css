@@ -42,6 +42,11 @@
   --text: var(--studio-ink);
 }
 body { background: radial-gradient(ellipse at 15% 0%, #fffcf0 0, transparent 60%), var(--studio-cream); }
+.site-clock { position: sticky; top: 0; z-index: 40; display: flex; align-items: baseline; justify-content: center; flex-wrap: wrap; gap: 6px 16px; min-height: 36px; padding: 7px 16px; box-sizing: border-box; border-bottom: 1px solid var(--studio-line); background: #fff9ebf2; color: var(--studio-ink); box-shadow: 0 2px 10px #283f3512; font-size: 12px; font-variant-numeric: tabular-nums; }
+.site-clock-label { font-weight: 800; text-transform: uppercase; letter-spacing: .12em; color: var(--studio-forest); }
+.site-clock time { font-weight: 700; white-space: nowrap; }
+.site-clock-source { color: #596451; font-size: 11px; }
+@media(max-width:600px) { .site-clock { gap: 2px 10px; font-size: 11px; }.site-clock-source { width: 100%; text-align: center; } }
 .game-shell { max-width: 1500px; }
 .game-shell .game-header { border-bottom: 2px solid var(--studio-line); padding-bottom: 22px; }
 .game-shell .game-brand .brand-mark { background: var(--studio-forest); color: var(--studio-paper); border-radius: 16px 8px 16px 8px; box-shadow: 3px 3px 0 var(--studio-honey); }
