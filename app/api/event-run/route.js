@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { protectedRoute } from "../../../lib/auth/server";
 import { AuthError } from "../../../lib/auth/policy.mjs";
 import { uuid } from "../../../lib/race/server";
+import { guidedReplayClockV1 } from "../../../lib/viewer/guided-replay-clock-v1.mjs";
 export const GET = protectedRoute(async (req, context, auth) => {
   const url = new URL(req.url),
     id = uuid(url.searchParams.get("event_id"));
@@ -42,5 +43,14 @@ export const GET = protectedRoute(async (req, context, auth) => {
       "This division has not raced yet.",
       404,
     );
-  return NextResponse.json({ ok: true, run: data, team_id: auth.team.id });
+  let clock = null;
+  if (data.replay?.version === 1 && data.replay.frames?.length >= 2) {
+    try {
+      clock = guidedReplayClockV1(data.replay.frames.at(-1).elapsed_sec,
+        data.created_at, Date.now());
+    } catch { /* Historic or incomplete recordings still expose their report. */ }
+  }
+  return NextResponse.json({ ok: true, run: data, team_id: auth.team.id,
+    viewer_clock: clock },
+  { headers: { "Cache-Control": "private, no-store" } });
 });

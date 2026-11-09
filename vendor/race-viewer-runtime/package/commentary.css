@@ -1,0 +1,19 @@
+
+.commentary{margin:-8px 0 14px;padding:0 0 12px;border-bottom:1px solid #355b4526;color:#294b3a}
+.commentary-toolbar{display:flex;align-items:center;gap:14px;min-height:24px}
+.commentary-heading{display:flex;align-items:center;gap:7px;font-size:9px;letter-spacing:1.6px;font-weight:750;white-space:nowrap}
+.commentary-heading i{width:5px;height:5px;border-radius:50%;background:#b59a4e}
+.commentary-source{font-size:8px;letter-spacing:1px;color:#829077;margin-right:auto}
+.commentary-toolbar>button{background:transparent;border:0;color:#46644d;font-size:10px;cursor:pointer;padding:5px 0;white-space:nowrap}
+.commentary-toolbar>button:first-of-type{margin-left:auto;color:#7a886f}
+.commentary-toolbar>button:last-child{font-weight:700}
+.commentary-current,.commentary-entry{display:grid;grid-template-columns:38px 1fr;gap:9px;align-items:baseline}
+.commentary time{font-size:11px;font-variant-numeric:tabular-nums;color:#8c7c45}
+.commentary p{margin:4px 0 0;font-size:14px;line-height:1.5;font-weight:450}
+.commentary-rider{font:inherit;font-weight:750;color:inherit;background:transparent;border:0;border-bottom:1px solid #47644b60;padding:0;cursor:pointer}
+.commentary button:focus-visible,.commentary-history:focus-visible{outline:2px solid #aa8932;outline-offset:3px}
+.commentary-history{max-height:min(230px,32dvh);overflow:auto;margin-top:12px;border-top:1px solid #355b4526;padding-top:10px;overscroll-behavior:contain}
+.commentary .commentary-note{font-size:10px;color:#75836c;margin:0 0 12px}
+.commentary-entry{padding:9px 0;border-bottom:1px solid #355b4515}
+.commentary-entry p{font-size:12px}
+@media(max-width:750px){.commentary-source{display:none}.commentary-toolbar{gap:12px}.commentary-heading{font-size:8px;letter-spacing:1px}.commentary p{font-size:12px}.commentary-current{grid-template-columns:31px 1fr}.commentary-entry p{font-size:11px}}

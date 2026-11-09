@@ -1,0 +1,64 @@
+{
+  "name": "@pelotonia/race-viewer",
+  "version": "0.98.5-pelotonia.1",
+  "type": "module",
+  "private": true,
+  "main": "./viewer.js",
+  "types": "./index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./index.d.ts",
+      "import": "./viewer.js"
+    },
+    "./data": {
+      "types": "./data.d.ts",
+      "import": "./data.js"
+    },
+    "./profile.css": "./profile.css",
+    "./commentary.css": "./commentary.css"
+  },
+  "files": [
+    "commentary.css",
+    "COMMENTARY_DA.md",
+    "viewer.js",
+    "profile.css",
+    "data.js",
+    "data.d.ts",
+    "index.d.ts",
+    "contract.d.ts",
+    "README.md",
+    "HANDOFF.md",
+    "VALIDATION.md",
+    "FINISH.md",
+    "ACTIVITY.md",
+    "RESULTS.md",
+    "SESSION.md",
+    "LOADING.md",
+    "OVERVIEW_DA.md",
+    "VISUAL_ROUND_DA.md",
+    "RIDER_ROUND_DA.md",
+    "TERRAIN_ROUND_DA.md",
+    "PERFORMANCE_ROUND_DA.md",
+    "MOTION_ROUND_DA.md",
+    "ACTION_TRANSITIONS_DA.md",
+    "ROUTE_COVERAGE_DA.md",
+    "CAMERA_FRAMING_DA.md",
+    "HUD_CAMERA_DA.md",
+    "IMPORT_BOUNDARY_DA.md",
+    "ASSET_LIFETIME_DA.md",
+    "NIGHT_ROUND_DA.md",
+    "RIDER_CATEGORY_DA.md",
+    "ROUTE_PROFILE_DA.md",
+    "RACE_SCENE_DA.md",
+    "GRAPHICS_TEN_VERSIONS_DA.md",
+    "docs",
+    "examples"
+  ],
+  "peerDependencies": {
+    "react": "^19.0.0",
+    "three": "0.187.0"
+  },
+  "sideEffects": [
+    "*.css"
+  ]
+}

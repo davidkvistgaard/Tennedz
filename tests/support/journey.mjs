@@ -2,8 +2,10 @@
 // paid service, or production data. Sporting output comes from the real race engine.
 import { execFileSync } from 'node:child_process';
 import { routeTemplates } from '../../lib/race/templates.mjs';
+import { guidedReplayClockV1 } from '../../lib/viewer/guided-replay-clock-v1.mjs';
 export async function installJourney(page) {
-  let signedIn=false, created=false, entry=null, finished=false, output=null, rejected=false;
+  let signedIn=false, created=false, entry=null, finished=false, output=null,
+    rejected=false, replayAtFinish=false, createdAt=null;
   const team={id:'11111111-1111-4111-8111-111111111112',name:'Northern Lights Cycling',budget:100000,coins:100000};
   const names=['Emil Berg','Louis Morel','Mateo Rojas','Dawit Tesfay','Luca Rossi','Noah Vermeer','Adam Nowak','Elias Holm','Freja Møller','Elin Lind','Femke Visser','Zofia Kowalska','Haruka Mori','Lina Moreau','Sara Costa','Amina Diallo'];
   const riders=names.map((name,i)=>({id:`rider-${i}`,name,gender:i<8?'M':'F',nationality:['DNK','FRA','COL','ERI','ITA','NLD','POL','SWE'][i%8],age:22+i%7,rating:0,sprint:40+i,flat:52,hills:45+i,mountain:65-i,cobbles:40,timetrial:43,endurance:60,strength:45,wind:47,form:85,fatigue:i%8}));
@@ -29,7 +31,16 @@ export async function installJourney(page) {
       return send({ok:true,entry});
     }
     if(path==='/api/event/divisions')return send({ok:true,my_division:1,divisions:[{division_index:1,team_count:2}]});
-    if(path==='/api/event-run')return send({ok:true,team_id:team.id,run:{event_id:event.id,division_index:1,stage_snapshot:stage,replay:output.divisions[0].replay}});
+    if(path==='/api/event-run'){
+      const replay=output.divisions[0].replay;
+      const duration=replay.frames.at(-1).elapsed_sec;
+      const recordedAt=replayAtFinish?new Date(Date.now()-
+        Math.ceil(duration*1000/60)-3000).toISOString():createdAt;
+      return send({ok:true,team_id:team.id,
+        run:{event_id:event.id,division_index:1,stage_snapshot:stage,
+          replay,created_at:recordedAt},
+        viewer_clock:guidedReplayClockV1(duration,recordedAt,Date.now())});
+    }
     if(path==='/api/event/results'){
       const division=output.divisions[0];
       return send({ok:true,event,total_divisions:1,teams:division.teams.map(t=>({...t,multiplier:1,teams:{name:t.team_id===team.id?team.name:'Rival Cycling'}})),riders:division.results.map(r=>({...r,riders:{name:r.rider_name},teams:{name:r.team_name}}))});
@@ -38,6 +49,7 @@ export async function installJourney(page) {
   });
   return {
     rejectNextSave(){rejected=true;},
+    replayAtFinish(){replayAtFinish=true;},
     entry(){return entry;},
     finish(){
       if(!entry)throw Error('No saved lineup');
@@ -50,6 +62,7 @@ export async function installJourney(page) {
         const engine=new URL('../../lib/race/cycle.mjs',import.meta.url).href;
         const code=`import {buildRace} from ${JSON.stringify(engine)}; import {readFileSync} from 'node:fs'; process.stdout.write(JSON.stringify(buildRace(JSON.parse(readFileSync(0,'utf8')))));`;
         output=JSON.parse(execFileSync(process.execPath,['--input-type=module','-e',code],{input:JSON.stringify({event,stage,game_date:'2026-09-24',teams:[own,rival]}),encoding:'utf8',maxBuffer:8*1024*1024}));
+        createdAt=new Date().toISOString();
       }
       finished=true;event.status='FINISHED';
     },event,stage,

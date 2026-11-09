@@ -41,7 +41,11 @@ export default function ViewerPreviewScene({feed,coverage,mode='recorded',
   const situation=useMemo(()=>sampler(time),[sampler,time]);
   const groups=labelRaceGroups(raceGroups(situation.positions),
     situation.groupRoles);
-  const commentary=commentaryAt(feed,time),latest=commentary.at(-1);
+  const commentary=mode==='guided'?
+    (feed.events??[]).filter(event=>event.time<=time)
+      .map((event,index)=>({id:`recorded-${index}`,time:event.time,
+        text:event.label})):
+    commentaryAt(feed,time),latest=commentary.at(-1);
   const remaining=formatFinishDistance(stats?.finishRemaining??
     feed.route.profile.samples.at(-1)[0]);
   const selected=target.type==='rider'?
@@ -85,6 +89,12 @@ export default function ViewerPreviewScene({feed,coverage,mode='recorded',
           }
           if(report)setDiagnostics({
             renderer:report.renderer,
+            fps:next.fps,
+            visible:next.visible,
+            camera:next.camera,
+            targetAvailable:next.targetAvailable,
+            sampledDistance:next.distance,
+            routeCoverage:next.routeCoverage,
             crowdCount:report.crowdCount,
             renderedFrames:report.renderedFrames,
             cpuP50Ms:report.cpuFrameMs?.p50,
@@ -105,7 +115,8 @@ export default function ViewerPreviewScene({feed,coverage,mode='recorded',
           <span>{latest?.text??'The recorded race begins.'}</span>
         </div>
         <span className="race-theatre-badge">{mode==='exhibition'?
-          'SYNTHETIC EXHIBITION':'RECORDED MOTOR LAB RACE'}</span>
+          'SYNTHETIC EXHIBITION':mode==='guided'?
+            'RECORDED GAME RACE · SCHEMATIC ROAD':'RECORDED MOTOR LAB RACE'}</span>
       </header>
       <nav className="race-theatre-groups" aria-label="Race groups">
         <div className="race-theatre-distance"><span>⚑</span>
@@ -148,7 +159,8 @@ export default function ViewerPreviewScene({feed,coverage,mode='recorded',
       </nav>
       {detailsOpen?<aside className="race-theatre-details" aria-label="Race details">
         <div className="race-theatre-tabs">
-          {['riders','teams','route','events'].map(name=><button
+          {['riders','teams','route','events',
+            ...(mode==='guided'?['results']:[])].map(name=><button
             key={name} type="button" aria-pressed={tab===name}
             onClick={()=>setTab(name)}>{name}</button>)}
         </div>
@@ -167,8 +179,19 @@ export default function ViewerPreviewScene({feed,coverage,mode='recorded',
         {tab==='events'?<ol className="race-theatre-event-list">
           {commentary.map(row=><li key={row.id}>
             <time>{clockLabel(row.time)}</time> {row.text}</li>)}</ol>:null}
+        {tab==='results'&&mode==='guided'?situation.results?
+          <ol className="race-theatre-event-list">
+            {[...situation.results.entries].sort((a,b)=>a.rank-b.rank)
+              .map(row=><li key={row.riderId}>
+                <strong>{row.rank}.</strong> {feed.riders.find(r=>
+                  r.id===row.riderId)?.name??row.riderId}
+                {' '}{row.gap>0?`+${clockLabel(row.gap)}`:'Winner'}
+              </li>)}</ol>:
+          <p>The official result appears at the recorded finish.</p>:null}
         <p className="race-theatre-coverage">{mode==='exhibition'?
           'Fictional positions, groups, route and scenery. No game result.':
+          mode==='guided'?
+            'The saved race supplies checkpoint kilometres, group membership, time gaps, events and official results. The road is schematic; scenery is illustrative. Exact simultaneous rider metres, lanes and group order were not recorded. Kits without a saved race snapshot use neutral colours.':
           mode==='split'?
             'Paid kilometre crossings and contact events are recorded. Between crossings, distance is interpolated. No official result or precise rider lanes. Scenery is synthetic.':
           'Motor positions and events are recorded. Scenery is a synthetic visual study, not game geography.'}</p>
@@ -182,7 +205,10 @@ export default function ViewerPreviewScene({feed,coverage,mode='recorded',
           assetStatus.errors.length===1?'':'s'} failed to load; fallback rendering remains active.`}</p>:null}
     </div>
     <div className="race-theatre-bottom">
-      {groupOnlyPositions?<p className="race-theatre-position-note">
+      {mode==='guided'?<p className="race-theatre-position-note">
+        Rider spacing within a group is illustrative. The saved race records
+        checkpoint kilometres and group time gaps, not precise lanes or order.
+      </p>:groupOnlyPositions?<p className="race-theatre-position-note">
         Riders on the same recorded road overlap in the scene. Their
         individual lanes and order were not recorded.
       </p>:null}
@@ -209,12 +235,13 @@ export default function ViewerPreviewScene({feed,coverage,mode='recorded',
           <div><small>START</small><small>{Math.round(progress)}% OF RACE</small>
             <small>FINISH</small></div>
         </div>
-        <span className="race-theatre-rate">1× shared</span>
+        <span className="race-theatre-rate">{clock.rate}× shared</span>
       </div>
       <div className="race-theatre-footnote">
         <span>Camera is local · race time is shared</span>
-        <span>{mode==='exhibition'?
-          'SYNTHETIC DATA ONLY':'SYNTHETIC SCENE · RECORDED MOTOR DATA'} · VIEWER v1</span>
+        <span>{mode==='exhibition'? 'SYNTHETIC DATA ONLY':
+          mode==='guided'?'ILLUSTRATIVE SCENERY · RECORDED GAME DATA':
+            'SYNTHETIC SCENE · RECORDED MOTOR DATA'} · VIEWER v1</span>
       </div>
       {error?<p role="alert" className="race-theatre-error">{error}</p>:null}
       <details className="race-theatre-data"><summary>Data coverage and limitations</summary>
@@ -224,6 +251,8 @@ export default function ViewerPreviewScene({feed,coverage,mode='recorded',
             coverage.recordedContactEvents} recorded contacts.`:''}</p>
         <p>{mode==='exhibition'?
           'All positions, groups, gaps, route and events are fictional. This mode tests the viewer appearance only.':
+          mode==='guided'?
+            'The recording has one kilometre per checkpoint for every rider. Between checkpoints the display interpolates time and distance. All members of a checkpoint share its recorded kilometre; visual overlap does not mean a measured tie. Group gaps remain seconds, not invented metres. The trees, ground and spectators are illustrative; no canonical geography or exact lanes were recorded.':
           mode==='split'?
             'Longitudinal positions between motor crossings are interpolated. Group gaps are not presented as exact simultaneous positions. Lanes, canonical geography, helmets and official results are absent. Trees, ground and spectators are synthetic.':
           'Within-kilometre movement is interpolation between recorded states. Lanes, canonical geography, helmets and official results are absent. Trees, ground and spectators are synthetic visual presentation.'}</p>

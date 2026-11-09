@@ -1,6 +1,7 @@
 import { test, expect } from '@playwright/test';
 import { installJourney } from '../support/journey.mjs';
 for(const width of [390,1440])test(`English manager journey from signup to replay and results at ${width}px`,async({page})=>{
+  test.setTimeout(90000);
   await page.setViewportSize({width,height:960});
   const fixture=await installJourney(page),errors=[];
   page.on('pageerror',e=>errors.push(e.message));
@@ -24,7 +25,7 @@ for(const width of [390,1440])test(`English manager journey from signup to repla
   await expect(page.locator('.club-rider')).toHaveCount(8);
   await fits();
   await page.getByRole('link',{name:'My team',exact:true}).click();
-  await page.getByRole('link',{name:'Race details and lineup ↗'}).click();
+  await page.getByRole('link',{name:'Set up team ↗'}).click();
   await page.getByRole('button',{name:/The Coast Classic/}).click();
   await expect(page.getByText('Your lineup',{exact:true})).toBeVisible();
   await expect(page.getByRole('button',{name:'Enter team',exact:true})).toBeDisabled();
@@ -52,14 +53,27 @@ for(const width of [390,1440])test(`English manager journey from signup to repla
   await expect(page.getByRole('heading',{name:'Watch the race first?'})).toBeVisible();
   await expect(page.getByRole('heading',{name:'Team results',exact:true})).toHaveCount(0);
   await page.getByRole('link',{name:'Watch the race →',exact:true}).click();
-  await expect(page.getByRole('heading',{name:'Race commentary'})).toBeVisible();
-  await expect(page.getByRole('heading',{name:/wins/})).toHaveCount(0);
-  await page.getByRole('button',{name:'▶ Play'}).click();
-  await page.getByRole('button',{name:'Pause',exact:true}).click();
-  await page.getByRole('button',{name:'Next moment →'}).click();
+  await expect(page.locator('.race-theatre')).toBeVisible({timeout:15000});
+  await expect(page.getByText(/The saved race drives this schematic viewer/)).toBeVisible();
+  await expect(page.getByRole('button',{name:'Full report available at the finish'})).toBeDisabled();
+  await expect(page.getByRole('link',{name:'View results and points →'})).toHaveCount(0);
   await fits();await page.screenshot({path:`test-results/journey-replay-${width}.png`,fullPage:true});
-  await page.getByRole('slider',{name:'Playback position'}).focus();await page.keyboard.press('End');
-  await expect(page.getByText('The race is decided',{exact:true})).toBeVisible();
+  const diagnostics=await page.locator('[data-viewer-diagnostics]')
+    .getAttribute('data-viewer-diagnostics');
+  const observed=JSON.parse(diagnostics);
+  expect(observed.renderer).toBe('WebGL');
+  expect(observed.targetAvailable).toBe(true);
+  expect(Math.abs(observed.sampledDistance-observed.camera.focus[2]))
+    .toBeLessThan(30);
+  await page.getByRole('button',{name:'Race details'}).click();
+  await page.locator('.race-theatre-detail-list button').first().click();
+  await page.screenshot({path:`test-results/journey-follow-${width}.png`,fullPage:true});
+  fixture.replayAtFinish();
+  await page.reload();
+  await expect(page.getByRole('link',{name:'View results and points →'})).toBeVisible();
+  await page.getByRole('button',{name:'Race details'}).click();
+  await page.getByRole('button',{name:'results',exact:true}).click();
+  await expect(page.locator('.race-theatre-details li').first()).toContainText('Winner');
   await page.getByRole('link',{name:'View results and points →'}).click();
   await expect(page.getByRole('heading',{name:'Team results',exact:true})).toBeVisible();
   await expect(page.getByRole('heading',{name:'Rider results',exact:true})).toBeVisible();
