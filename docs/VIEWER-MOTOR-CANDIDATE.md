@@ -88,3 +88,10 @@ covers feed, finish, coverage and motor source, but does not cover the
 document's input metadata; the database separately checks event ID and seed
 on write. This too should be hardened in a new document version before
 official publication.
+
+An isolated browser fixture also verified the new spectator path with a
+signed-in non-administrator. A saved 16-rider game-shaped race displayed a
+WebGL canvas without private input fields in the page; a future-dated
+recording displayed only the waiting state and its finish endpoint returned
+425. Both browser cases passed on the local test server. They do not replace
+the missing hosted game-event check.

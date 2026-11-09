@@ -359,6 +359,8 @@ const child = spawn(process.execPath, ["node_modules/next/dist/bin/next", "start
   PELOTONIA_V2_SETTLEMENT_ENABLED: v2SettlementFixture ? "true" : "false",
   PELOTONIA_PHYSICAL_VIEWER_PREVIEW_ENABLED:
     physicalViewerFixture?'true':'false',
+  PELOTONIA_PHYSICAL_VIEWER_SPECTATOR_ENABLED:
+    physicalViewerFixture?'true':'false',
   SUPABASE_URL: "http://127.0.0.1:54329", SUPABASE_ANON_KEY: "fixture-anon", SUPABASE_SERVICE_ROLE_KEY: "fixture-service-role",
   NEXT_PUBLIC_SUPABASE_URL: "", NEXT_PUBLIC_SUPABASE_ANON_KEY: "", APP_ORIGIN: "http://localhost:3100", ADMIN_USER_IDS: ids.alice,
   RECOVERY_ALLOW_GAME_WRITES: noContestFixture || v2SaveFixture || v2LockFixture || v2RecordingFixture || physicalViewerFixture ? "true" : "false",
