@@ -16,7 +16,7 @@ for(const category of ['men','women'])
         await expect.poll(async()=>{
           const raw=await page.locator('[data-viewer-diagnostics]')
             .getAttribute('data-viewer-diagnostics');
-          return raw?JSON.parse(raw).renderer:null;
+          return raw?JSON.parse(raw)?.renderer:null;
         },{timeout:15000}).toBe('WebGL');
         const diagnostics=JSON.parse(await page.locator(
           '[data-viewer-diagnostics]').getAttribute(
@@ -62,7 +62,7 @@ for(const category of ['men','women'])
       await expect.poll(async()=>{
         const raw=await page.locator('[data-viewer-diagnostics]')
           .getAttribute('data-viewer-diagnostics');
-        return raw?JSON.parse(raw).renderer:null;
+        return raw?JSON.parse(raw)?.renderer:null;
       },{timeout:15000}).toBe('WebGL');
       const diagnostics=JSON.parse(await page.locator(
         '[data-viewer-diagnostics]').getAttribute(
