@@ -8,7 +8,9 @@ const PreviewScene=dynamic(()=>import('./ViewerPreviewScene'),{
 
 export default function ViewerPreviewClient({feed,coverage,version,
   raceMode='connected',
+  variantQuery='',
   previewPath='/team/motor-lab'}){
+  const splitSettings=new URLSearchParams(variantQuery);
   const [sync,setSync]=useState(null);
   const [error,setError]=useState(null);
   useEffect(()=>{
@@ -17,7 +19,8 @@ export default function ViewerPreviewClient({feed,coverage,version,
       try{
         const sent=Date.now();
         const response=await fetch(`/api/motor-lab/viewer-clock?category=${
-          feed.riderCategory}&race=${raceMode}`,{cache:'no-store'});
+          feed.riderCategory}&race=${raceMode}${
+          variantQuery?`&${variantQuery}`:''}`,{cache:'no-store'});
         if(!response.ok)throw new Error('Shared preview clock unavailable.');
         const payload=await response.json();
         const received=Date.now();
@@ -34,7 +37,8 @@ export default function ViewerPreviewClient({feed,coverage,version,
     load();
     const timer=setInterval(load,5000);
     return ()=>{active=false;clearInterval(timer);};
-  },[feed.raceId,feed.riderCategory,feed.duration,raceMode]);
+  },[feed.raceId,feed.riderCategory,feed.duration,raceMode,
+    variantQuery]);
   return <main className="motor-viewer-preview">
     <header>
       <p className="eyebrow">Motor Lab · new race viewer</p>
@@ -51,6 +55,35 @@ export default function ViewerPreviewClient({feed,coverage,version,
         {' '}of {coverage.riderCount} same-seed finish times still differ
         from the guided engine. This preview is not an official result.
       </p>:null}
+      {raceMode==='split'?<form action={previewPath} method="get"
+        aria-label="Generate a Motor Lab viewer race">
+        <input type="hidden" name="race" value="split"/>
+        <input type="hidden" name="category" value={feed.riderCategory}/>
+        <label>Route profile <select name="terrain"
+          defaultValue={splitSettings.get('terrain')??'mountain'}>
+          <option value="flat">Flat</option>
+          <option value="rolling">Rolling</option>
+          <option value="mountain">Mountain</option>
+        </select></label>{' '}
+        <label>Chase order <select name="chase"
+          defaultValue={splitSettings.get('chase')??'selective'}>
+          <option value="selective">Selective</option>
+          <option value="all">All helpers</option>
+        </select></label>{' '}
+        <label>Attack order <select name="attack"
+          defaultValue={splitSettings.get('attack')??'none'}>
+          <option value="none">None</option>
+          <option value="selective">Selective</option>
+          <option value="repeated">Repeated</option>
+        </select></label>{' '}
+        <label>Seed <input name="seed" required maxLength="64"
+          pattern="[A-Za-z0-9-]+"
+          defaultValue={splitSettings.get('seed')??
+            'preview-recorded-road-1'}/></label>{' '}
+        <button type="submit">Generate recorded race</button>
+        <p>120 km · 15 teams · experimental paid road. The orders
+          affect the motor run; no official placing is inferred.</p>
+      </form>:null}
     </header>
     {error?<p role="alert">{error} <a href="/team/motor-lab/engine">
       Open the Motor Lab engine</a>.</p>:null}
@@ -60,7 +93,8 @@ export default function ViewerPreviewClient({feed,coverage,version,
     <footer><a href="/team/motor-lab/engine">
       Motor Lab engine</a> · <a href={
       `${previewPath}?race=${raceMode}&category=${
-        feed.riderCategory==='women'?'men':'women'}`}>
+        feed.riderCategory==='women'?'men':'women'}${
+        variantQuery?`&${variantQuery}`:''}`}>
       Switch to {feed.riderCategory==='women'?'men':'women'}’s test field</a>
       {' '}· <a href={`${previewPath}?race=${
         raceMode==='split'?'connected':'split'}&category=${

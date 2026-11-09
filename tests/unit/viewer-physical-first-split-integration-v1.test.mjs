@@ -6,6 +6,38 @@ import {createPhysicalFirstSplitViewerTestRaceV1} from
   '../../lib/viewer/physical-first-split-test-race-v1.mjs';
 import {previewBroadcastClockV1} from
   '../../lib/viewer/preview-clock-v1.mjs';
+import {parsePhysicalSplitVariantV1,physicalSplitVariantQueryV1} from
+  '../../lib/viewer/physical-first-split-variant-v1.mjs';
+
+test('split viewer variant survives URL and rejects invented inputs',()=>{
+  const variant={terrain:'rolling',chase:'all',attack:'selective',
+    seed:'race-21'};
+  const query=physicalSplitVariantQueryV1(variant);
+  assert.deepEqual(parsePhysicalSplitVariantV1(new URLSearchParams(query)),
+    variant);
+  assert.throws(()=>parsePhysicalSplitVariantV1({terrain:'desert'}),
+    /Choose valid/);
+  assert.throws(()=>parsePhysicalSplitVariantV1({seed:'../secret'}),
+    /Choose valid/);
+  assert.throws(()=>parsePhysicalSplitVariantV1({winner:'you-7'}),
+    /Choose valid/);
+});
+
+test('new seed and profile produce a distinct replayable viewer race',()=>{
+  const variant=parsePhysicalSplitVariantV1({terrain:'flat',
+    seed:'new-profile-2'});
+  const first=createPhysicalFirstSplitViewerTestRaceV1('men',variant);
+  const again=createPhysicalFirstSplitViewerTestRaceV1('men',variant);
+  const original=createPhysicalFirstSplitViewerTestRaceV1('men');
+  assert.equal(first,again);
+  assert.notEqual(first.feed.raceId,original.feed.raceId);
+  assert.deepEqual(validateFeed(first.feed),first.feed);
+  assert.equal(first.coverage.paidRiderKilometres,14400);
+  assert.equal(first.feed.results,undefined);
+  assert.equal(first.feed.frames.at(-1).time,first.feed.duration);
+  assert.equal(previewBroadcastClockV1(first.feed.duration,10_000)
+    .clock.duration,first.feed.duration);
+});
 
 for(const category of ['men','women'])
   test(`selective paid race ${category} reaches viewer finish`,()=>{

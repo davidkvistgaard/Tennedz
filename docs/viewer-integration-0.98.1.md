@@ -90,7 +90,7 @@ use this as its default Motor Lab screen.
 
 ## Experimental split-road export
 
-`/team/motor-lab?race=split` selects the separate,
+`/team/motor-lab/viewer-preview?race=split` selects the separate,
 `physical-first-split-to-pelotonia.viewer.v1-1` adapter. It runs a fixed
 120 km mountain test with 15 teams and 120 riders, separately for men and
 women. The original connected preview remains available. The 120 rider
@@ -151,3 +151,15 @@ repeated attack orders and another seed also left one difference; full
 chase left 51 differences. These are test-case observations, not a general
 calibration claim. The unchanged full-chase scenario keeps split/contact
 coverage visible while the motor still needs general whole-race calibration.
+
+The split preview now accepts validated `terrain` (`flat`, `rolling`,
+`mountain`), `chase` (`selective`, `all`), `attack` (`none`, `selective`,
+`repeated`), and a 1–64 character alphanumeric/hyphen `seed`. Its GET form
+generates a new paid 120 km race and keeps those exact inputs when switching
+between the separate men's and women's fields. The server clock resolves
+the same variant and checks the resulting race ID and duration in the client.
+The versioned query parser rejects unsupported values. The adapter still
+omits official results and still uses the fixed 15-team synthetic roster
+and sporting stakes; this is not yet arbitrary team orders or the official
+game race. A fresh flat-profile seed replayed all 14,400 rider-kilometres,
+validated against `pelotonia.viewer.v1`, and produced a distinct race ID.
