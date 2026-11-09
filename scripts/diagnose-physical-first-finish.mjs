@@ -55,6 +55,8 @@ const probe=runPhysicalFirstWholeRaceProbeV1({start,kilometres,
 const finish=calibratePhysicalFirstFinishV1(recording,probe);
 const firstPaidDrops=probe.steps.find(step=>
   step.peloton.startDropEvents.length);
+const firstPaidAttack=probe.steps.find(step=>
+  step.attackSteps.length);
 const dropEvents=firstPaidDrops?.peloton.startDropEvents??[];
 const EPS=.002;
 const checkpointRows=recording.frames.map((frame,index)=>{
@@ -103,6 +105,28 @@ process.stdout.write(`${JSON.stringify({
     maxAbsoluteMismatchSeconds:finish.maxAbsoluteMismatchSeconds,
     maxMismatchRiderId:finish.maxMismatchRiderId},
   firstMismatch:first??null,
+  firstPaidAttack:firstPaidAttack?{
+    km:firstPaidAttack.sourceKm,
+    choices:firstPaidAttack.attackChoices.filter(choice=>
+      choice.choice==='attempt_paid_attack').map(choice=>({
+      riderId:choice.riderId,perceivedAbility:
+        choice.perceivedAbilityAtChoice,
+      initiationCost:choice.attackInitiationCost})),
+    roads:firstPaidAttack.attackSteps.map(step=>({
+      riderId:step.choice.riderId,
+      secondsPerKm:step.road.finishClockSeconds-
+        step.road.startClockSeconds,
+      energyBefore:step.finishes[0].energyBefore,
+      energyAfter:step.finishes[0].energyAfter,
+      paidFromReserve:step.finishes[0].paidFromReserve})),
+    bunchSecondsPerKm:firstPaidAttack.peloton.road.
+      finishClockSeconds-
+      firstPaidAttack.peloton.road.startClockSeconds,
+    sourceGroups:recording.frames[firstPaidAttack.sourceKm-1].
+      roadGroups.map(group=>({
+        gapSeconds:group.gapSeconds,
+        riderIds:group.riderIds})),
+  }:null,
   firstPaidPelotonDrop:firstPaidDrops?{
     km:firstPaidDrops.sourceKm,
     leaderId:firstPaidDrops.peloton.road.leaderRiderId,
