@@ -6,6 +6,9 @@ import {PGlite} from '@electric-sql/pglite';
 const migration=readFileSync(new URL(
   '../../supabase/migrations/20261109135901_physical_viewer_recording_v1.sql',
   import.meta.url),'utf8');
+const broadcastMigration=readFileSync(new URL(
+  '../../supabase/migrations/20261109140727_physical_viewer_broadcast_source_v1.sql',
+  import.meta.url),'utf8');
 const event='11111111-1111-4111-8111-111111111111';
 const teams=['22222222-2222-4222-8222-222222222222',
   '33333333-3333-4333-8333-333333333333'];
@@ -14,7 +17,7 @@ const document={schemaVersion:'motor-lab-viewer-document-v2',
   raceId:'recorded-race',sha256:sha,
   input:{eventId:event,officialResults:false},
   coverage:{officialResults:false},source:{raceSeed:'real-seed'},
-  feed:{raceId:'recorded-race'}};
+  feed:{raceId:'recorded-race',duration:120,events:[]}};
 
 async function database(){
   const db=new PGlite();
@@ -43,6 +46,7 @@ async function database(){
       '{}'::jsonb,'{}'::jsonb,'{}'::jsonb,'{}'::jsonb)`,
     [event,team,team]);
   await db.exec(migration);
+  await db.exec(broadcastMigration);
   return db;
 }
 async function source(db){
@@ -81,15 +85,28 @@ test('paid viewer recording is immutable and private',async()=>{
     const count=await db.query(`select count(*)::int as total
       from public.recovery_physical_viewer_recordings`);
     assert.equal(count.rows[0].total,1);
+    const broadcast=await db.query(`select
+      public.recovery_physical_viewer_broadcast_source_v1(
+        $1::uuid) as source`,[event]);
+    assert.equal(broadcast.rows[0].source.race_id,
+      'recorded-race');
+    assert.equal(broadcast.rows[0].source.duration,120);
+    assert.deepEqual(broadcast.rows[0].source.events,[]);
+    assert.equal(Object.hasOwn(broadcast.rows[0].source,
+      'frames'),false);
     const grants=await db.query(`select
       has_table_privilege('anon',
         'public.recovery_physical_viewer_recordings','SELECT')
         as anon_read,
       has_function_privilege('anon',
         'public.recovery_save_physical_viewer_recording_v1(uuid,jsonb,jsonb,jsonb)',
-        'EXECUTE') as anon_execute`);
+        'EXECUTE') as anon_execute,
+      has_function_privilege('anon',
+        'public.recovery_physical_viewer_broadcast_source_v1(uuid)',
+        'EXECUTE') as anon_clock`);
     assert.equal(grants.rows[0].anon_read,false);
     assert.equal(grants.rows[0].anon_execute,false);
+    assert.equal(grants.rows[0].anon_clock,false);
   }finally{await db.close();}
 });
 

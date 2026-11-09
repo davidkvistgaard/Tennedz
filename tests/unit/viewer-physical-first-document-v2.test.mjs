@@ -1,11 +1,11 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {createHash} from 'node:crypto';
 import {validateFeed,createSampler,createRaceExportLoader} from
   '@pelotonia/race-viewer/data';
 import {createPhysicalFirstRaceDocumentV2,
   PHYSICAL_FIRST_RACE_DOCUMENT_VERSION,
-  sealPhysicalFirstRaceDocumentV2} from
+  sealPhysicalFirstRaceDocumentV2,
+  verifyPhysicalFirstRaceDocumentV2} from
   '../../lib/viewer/physical-first-race-document-v2.mjs';
 import {createPhysicalFirstSplitViewerTestRaceV1} from
   '../../lib/viewer/physical-first-split-test-race-v1.mjs';
@@ -30,13 +30,24 @@ for(const category of ['men','women'])
     assert.equal(document.finishEvidence.entries.length,120);
     assert.equal(createSampler(document.feed)(document.feed.duration)
       .positions.length,120);
-    const {feed,finishEvidence,coverage,source}=document;
-    assert.equal(document.sha256,
-      createHash('sha256').update(JSON.stringify(
-        {feed,finishEvidence,coverage,source})).digest('hex'));
+    assert.equal(verifyPhysicalFirstRaceDocumentV2(document),document);
     assert.equal(createPhysicalFirstRaceDocumentV2(category).sha256,
       document.sha256);
   });
+
+test('recording digest survives JSONB key order and rejects tampering',()=>{
+  const document=createPhysicalFirstRaceDocumentV2('men');
+  const reorder=value=>Array.isArray(value)?value.map(reorder):
+    value&&typeof value==='object'?Object.fromEntries(
+      Object.keys(value).reverse().map(key=>[key,reorder(value[key])])):
+      value;
+  const restored=reorder(JSON.parse(JSON.stringify(document)));
+  assert.equal(verifyPhysicalFirstRaceDocumentV2(restored),restored);
+  const changed=structuredClone(restored);
+  changed.feed.riders[0].name='Tampered rider';
+  assert.throws(()=>verifyPhysicalFirstRaceDocumentV2(changed),
+    /changed after recording/);
+});
 
 test('distinct seed changes document identity and refuses invented inputs',()=>{
   const original=createPhysicalFirstRaceDocumentV2('men');

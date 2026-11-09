@@ -221,7 +221,7 @@ export default function ViewerPreviewScene({feed,coverage,mode='recorded',
           <div><small>START</small><small>{Math.round(progress)}% OF RACE</small>
             <small>FINISH</small></div>
         </div>
-        <span className="race-theatre-rate">1× shared</span>
+        <span className="race-theatre-rate">{clock.rate}× shared</span>
       </div>
       {publishedFinish?<section className="race-theatre-paid-finish"
         aria-label="Measured Motor Lab finish crossings">

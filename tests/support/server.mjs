@@ -3,6 +3,8 @@ import http from "node:http";
 import { spawn } from "node:child_process";
 import { randomUUID } from "node:crypto";
 import {v2BrowserRecordingLock} from './v2-browser-recording-fixture.mjs';
+import {physicalGameViewerFixture,physicalViewerEventId} from
+  './physical-game-viewer-fixture.mjs';
 
 const sessions = new Map();
 const clubKits = new Map();
@@ -19,6 +21,14 @@ const v2SettlementFixture = process.env.PELOTONIA_E2E_V2_SETTLEMENT === "true";
 const v2FutureSettlementFixture = process.env.PELOTONIA_E2E_V2_SETTLEMENT_FUTURE === "true";
 const v2RecordingFixture = process.env.PELOTONIA_E2E_V2_RECORDING === "true" ||
   v2SettlementFixture;
+const physicalViewerFixture=process.env.PELOTONIA_E2E_PHYSICAL_VIEWER===
+  'true';
+const physicalViewerDocument=physicalViewerFixture?
+  physicalGameViewerFixture():null;
+const physicalViewerRecordedAt=physicalViewerFixture?
+  new Date(Date.now()+(process.env.
+    PELOTONIA_E2E_PHYSICAL_VIEWER_FINISHED==='true'?-600000:60000))
+    .toISOString():null;
 let v2LockedAt = null;
 let v2RecordedAt = null;
 let v2RecordedHeader = null;
@@ -79,6 +89,14 @@ const server = http.createServer(async (req, res) => {
   }
   if (url.pathname.startsWith("/rest/v1/")) {
     if (req.headers.apikey !== "fixture-service-role") return send(403, { message: "Bad fixture key" });
+    if (physicalViewerFixture && url.pathname ===
+      '/rest/v1/rpc/recovery_physical_viewer_broadcast_source_v1') {
+      if(body.p_event!==physicalViewerEventId)return send(200,null);
+      return send(200,{recorded_at:physicalViewerRecordedAt,
+        race_id:physicalViewerDocument.raceId,
+        duration:physicalViewerDocument.feed.duration,
+        events:physicalViewerDocument.feed.events});
+    }
     if (v2RecordingFixture && url.pathname === "/rest/v1/rpc/recovery_save_v2_recorded_candidate") {
       if (body.p_event !== v2PreviewEventId || body.p_contract?.schemaVersion !== 1 ||
           body.p_contract?.engineVersion !== 2 ||
@@ -169,6 +187,12 @@ const server = http.createServer(async (req, res) => {
     }
     if (req.method !== "GET" && req.method !== "HEAD") return send(500, { message: "Unexpected database mutation in recovery" });
     const table = url.pathname.split("/").at(-1);
+    if (physicalViewerFixture && table ===
+      'recovery_physical_viewer_recordings')
+      return send(200,url.searchParams.get('event_id')===
+        `eq.${physicalViewerEventId}`?{
+          document:physicalViewerDocument,
+          recorded_at:physicalViewerRecordedAt}:null);
     if (noContestFixture && table === "recovery_two_phase_voids")
       return send(200, noContestCancelled ? [{
         event_id: twoPhaseEventId, reason: "INCOMPLETE_ENTRY_SCAN", decided_by: ids.alice,
@@ -328,6 +352,8 @@ const child = spawn(process.execPath, ["node_modules/next/dist/bin/next", "start
   PELOTONIA_V2_TACTICS_LOCK_ENABLED: v2LockFixture ? "true" : "false",
   PELOTONIA_V2_RECORDING_ENABLED: v2RecordingFixture ? "true" : "false",
   PELOTONIA_V2_SETTLEMENT_ENABLED: v2SettlementFixture ? "true" : "false",
+  PELOTONIA_PHYSICAL_VIEWER_PREVIEW_ENABLED:
+    physicalViewerFixture?'true':'false',
   SUPABASE_URL: "http://127.0.0.1:54329", SUPABASE_ANON_KEY: "fixture-anon", SUPABASE_SERVICE_ROLE_KEY: "fixture-service-role",
   NEXT_PUBLIC_SUPABASE_URL: "", NEXT_PUBLIC_SUPABASE_ANON_KEY: "", APP_ORIGIN: "http://localhost:3100", ADMIN_USER_IDS: ids.alice,
   RECOVERY_ALLOW_GAME_WRITES: noContestFixture || v2SaveFixture || v2LockFixture || v2RecordingFixture ? "true" : "false",

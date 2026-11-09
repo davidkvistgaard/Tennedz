@@ -62,6 +62,22 @@ serves that saved document without rerunning the race. Both calls require
 `PELOTONIA_PHYSICAL_VIEWER_PREVIEW_ENABLED=true`; POST also respects the
 game-write gate. Both flags are off by default, neither hosted migration has
 been applied, and no actual game race has completed this path.
+
+Migration `20261109140727_physical_viewer_broadcast_source_v1.sql` exposes
+only the immutable recording timestamp, race ID, duration and recorded
+events to the service role for clock polls. The admin-only
+`/team/motor-lab/recorded-viewer/<event-id>` page verifies the saved
+document digest, renders the paid positions in the new WebGL viewer and
+labels the scenic layer as synthetic. The first 60× pass from the saved
+recording timestamp determines a shared publication time. Before that time,
+the page sends no race feed and the document GET returns 425. Afterward,
+all viewers follow the same repeating 60× replay clock. The clock API
+releases commentary events when reached in each replay; measured finish
+crossings appear when the replay reaches the finish. The document digest is canonical across JSONB
+key ordering and detects changed recording content. Local browser fixtures
+verified the withholding gate and actual WebGL rendering after publication
+for one complete 20 km game-shaped race. This is an experimental admin preview;
+the fixture is not a hosted game race or GPU performance approval.
 Until every participating team saves a physical input, this route correctly
 refuses the old incomplete entries.
 
