@@ -3,9 +3,12 @@ import assert from 'node:assert/strict';
 import {createHash} from 'node:crypto';
 import {validateFeed,createSampler,createRaceExportLoader} from
   '@pelotonia/race-viewer/data';
-import {createPhysicalFirstRaceDocumentV1,
-  PHYSICAL_FIRST_RACE_DOCUMENT_VERSION} from
-  '../../lib/viewer/physical-first-race-document-v1.mjs';
+import {createPhysicalFirstRaceDocumentV2,
+  PHYSICAL_FIRST_RACE_DOCUMENT_VERSION,
+  sealPhysicalFirstRaceDocumentV2} from
+  '../../lib/viewer/physical-first-race-document-v2.mjs';
+import {createPhysicalFirstSplitViewerTestRaceV1} from
+  '../../lib/viewer/physical-first-split-test-race-v1.mjs';
 import {VIEWER_PREVIEW_CYCLE_MS,previewBroadcastClockV1,
   previewRacePublishedV1,
   previewVisibleEventsV1} from
@@ -13,7 +16,7 @@ import {VIEWER_PREVIEW_CYCLE_MS,previewBroadcastClockV1,
 
 for(const category of ['men','women'])
   test(`versioned ${category} Motor Lab document reaches paid finish`,()=>{
-    const document=createPhysicalFirstRaceDocumentV1(category);
+    const document=createPhysicalFirstRaceDocumentV2(category);
     assert.equal(document.schemaVersion,
       PHYSICAL_FIRST_RACE_DOCUMENT_VERSION);
     assert.equal(document.raceId,document.feed.raceId);
@@ -21,29 +24,45 @@ for(const category of ['men','women'])
     assert.deepEqual(validateFeed(document.feed),document.feed);
     assert.equal(document.feed.results,undefined);
     assert.equal(document.coverage.paidRiderKilometres,14400);
+    assert.equal(document.source.validatedKm,120);
+    assert.equal(document.source.validatedRiderKilometres,14400);
+    assert.match(document.source.commitmentHash,/^[a-f0-9]{64}$/);
     assert.equal(document.finishEvidence.entries.length,120);
     assert.equal(createSampler(document.feed)(document.feed.duration)
       .positions.length,120);
-    const {feed,finishEvidence,coverage}=document;
+    const {feed,finishEvidence,coverage,source}=document;
     assert.equal(document.sha256,
       createHash('sha256').update(JSON.stringify(
-        {feed,finishEvidence,coverage})).digest('hex'));
-    assert.equal(createPhysicalFirstRaceDocumentV1(category).sha256,
+        {feed,finishEvidence,coverage,source})).digest('hex'));
+    assert.equal(createPhysicalFirstRaceDocumentV2(category).sha256,
       document.sha256);
   });
 
 test('distinct seed changes document identity and refuses invented inputs',()=>{
-  const original=createPhysicalFirstRaceDocumentV1('men');
-  const other=createPhysicalFirstRaceDocumentV1('men',
+  const original=createPhysicalFirstRaceDocumentV2('men');
+  const other=createPhysicalFirstRaceDocumentV2('men',
     {terrain:'flat',seed:'document-seed-2'});
   assert.notEqual(other.raceId,original.raceId);
   assert.notEqual(other.sha256,original.sha256);
-  assert.throws(()=>createPhysicalFirstRaceDocumentV1('men',
+  assert.throws(()=>createPhysicalFirstRaceDocumentV2('men',
     {winner:'you-1'}),/Choose valid/);
 });
 
+test('document seal rejects mismatched motor provenance and race length',()=>{
+  const race=createPhysicalFirstSplitViewerTestRaceV1('men');
+  const input={category:'men'};
+  assert.throws(()=>sealPhysicalFirstRaceDocumentV2(
+    {...race,source:{...race.source,validatedKm:119}},input),
+  /lacks paid race evidence/);
+  assert.throws(()=>sealPhysicalFirstRaceDocumentV2(
+    {...race,source:{...race.source,commitmentHash:'0'.repeat(63)}},
+    input),/lacks paid race evidence/);
+  assert.throws(()=>sealPhysicalFirstRaceDocumentV2(race,
+    {category:'women'}),/lacks paid race evidence/);
+});
+
 test('complete document is released only after the shared paid finish',()=>{
-  const duration=createPhysicalFirstRaceDocumentV1('men').feed.duration;
+  const duration=createPhysicalFirstRaceDocumentV2('men').feed.duration;
   const at=previewBroadcastClockV1(duration,0).clock.serverEpochMs;
   assert.equal(previewRacePublishedV1(duration,at),false);
   assert.equal(previewRacePublishedV1(duration,
@@ -73,7 +92,7 @@ test('shared clock releases recorded events only when reached',()=>{
 
 test('package-native HTTP loader accepts the completed Motor Lab export',
   async()=>{
-    const document=createPhysicalFirstRaceDocumentV1('women');
+    const document=createPhysicalFirstRaceDocumentV2('women');
     const clock=previewBroadcastClockV1(document.feed.duration,
       document.feed.duration*1000).clock;
     const load=createRaceExportLoader({
@@ -89,3 +108,4 @@ test('package-native HTTP loader accepts the completed Motor Lab export',
     assert.equal(createSampler(imported.feed)(imported.feed.duration)
       .positions.length,120);
   });
+

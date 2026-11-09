@@ -3,8 +3,8 @@ import {requireTeam} from '../../../../lib/auth/server';
 import {AuthError} from '../../../../lib/auth/policy.mjs';
 import {createPhysicalFirstViewerTestRaceV1} from
   '../../../../lib/viewer/physical-first-test-race-v1.mjs';
-import {createPhysicalFirstRaceDocumentV1} from
-  '../../../../lib/viewer/physical-first-race-document-v1.mjs';
+import {createPhysicalFirstRaceDocumentV2} from
+  '../../../../lib/viewer/physical-first-race-document-v2.mjs';
 import {parsePhysicalSplitVariantV1,physicalSplitVariantQueryV1} from
   '../../../../lib/viewer/physical-first-split-variant-v1.mjs';
 import {scenicPresentationV1} from
@@ -43,7 +43,7 @@ export default async function ViewerPreviewPage({searchParams}){
     catch{notFound();}
   }
   const race=raceMode==='split'?
-    createPhysicalFirstRaceDocumentV1(category,variant):
+    createPhysicalFirstRaceDocumentV2(category,variant):
     createPhysicalFirstViewerTestRaceV1(category);
   const finishEvidence=raceMode==='split'&&
     previewRacePublishedV1(race.feed.duration,Date.now())?

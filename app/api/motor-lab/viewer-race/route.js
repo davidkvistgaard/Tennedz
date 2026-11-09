@@ -1,7 +1,7 @@
 import {NextResponse} from 'next/server';
 import {protectedRoute} from '../../../../lib/auth/server';
-import {createPhysicalFirstRaceDocumentV1} from
-  '../../../../lib/viewer/physical-first-race-document-v1.mjs';
+import {createPhysicalFirstRaceDocumentV2} from
+  '../../../../lib/viewer/physical-first-race-document-v2.mjs';
 import {parsePhysicalSplitVariantV1} from
   '../../../../lib/viewer/physical-first-split-variant-v1.mjs';
 import {previewBroadcastClockV1,previewRacePublishedV1} from
@@ -31,7 +31,7 @@ async function handler(request){
     return NextResponse.json({error:'Invalid split race settings.'},
       {status:400});
   }
-  const document=createPhysicalFirstRaceDocumentV1(category,variant);
+  const document=createPhysicalFirstRaceDocumentV2(category,variant);
   const now=Date.now();
   if(!previewRacePublishedV1(document.feed.duration,now))
     return NextResponse.json({error:'Race recording is still in progress.'},
