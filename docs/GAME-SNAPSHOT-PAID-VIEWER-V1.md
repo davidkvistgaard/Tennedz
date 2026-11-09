@@ -51,6 +51,18 @@ and labels that provenance in the document. It never stores weather or
 publishes official results. `loadPhysicalGameRaceDocumentV1` rereads the
 game snapshot after the private rows and rejects a changed source.
 
+The separate, unapplied
+`20261109184219_physical_viewer_source_lock_v1.sql` migration adds a
+service-role-only transaction that commits that same seed and weather to
+the event before a new game recording. It compares the post-deadline race
+snapshot and every physical entry under the existing cycle lock, rejects
+changed inputs and conflicting already-locked weather, and is idempotent
+for an exact retry. The admin recording endpoint rereads both after the
+transaction and seals a distinct `physical-game-race-locked-source-v1`
+document. This makes the experimental viewer and the later official cycle
+read the same committed source values; it does not make the physical
+crossings official results. Historic documents remain readable.
+
 Migration `20261109135901_physical_viewer_recording_v1.sql` adds a private,
 immutable recording table and an atomic save RPC. Under the existing race
 transaction lock, that RPC compares the current game snapshot and every

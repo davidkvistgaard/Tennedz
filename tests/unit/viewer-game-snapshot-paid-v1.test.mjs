@@ -7,7 +7,8 @@ import {createGameSnapshotPaidViewerDocumentV1,
 import {manifestFromCommittedPhysicalEntriesV1} from
   '../../lib/viewer/committed-physical-manifest-v1.mjs';
 import {createPhysicalGameRaceDocumentV1,
-  loadPhysicalGameRaceDocumentV1} from
+  loadPhysicalGameRaceDocumentV1,
+  loadLockedPhysicalGameRaceRecordInputV1} from
   '../../lib/viewer/physical-game-race-source-v1.mjs';
 
 const skills={sprint:65,flat:65,hills:65,mountain:65,
@@ -140,3 +141,49 @@ test('physical viewer loader refuses a changed source snapshot',async()=>{
       event:{...snapshot.event,seed:'changed'}},
     readEntries:async()=>rows}),/race changed/);
 });
+
+test('recorded game race locks official seed and weather before export',
+  async()=>{
+    const {snapshot,manifest}=fixture();
+    const rows=manifest.entries.map(entry=>{
+      const team=snapshot.teams.find(item=>item.id===entry.teamId);
+      return {event_id:snapshot.event.id,team_id:entry.teamId,
+        schema_version:'physical-entry-input-v1',
+        selected_riders:team.entry.selected_riders,
+        captain_id:team.entry.captain_id,orders:entry.orders,
+        stake:entry.stake,team_style:entry.style,
+        rider_numbers:entry.riderNumbers};
+    });
+    let current={...snapshot,event:{...snapshot.event,
+      seed:null,weather_locked:null}};
+    const saved=await loadLockedPhysicalGameRaceRecordInputV1({
+      readSnapshot:async()=>current,
+      readEntries:async()=>rows,
+      commitSource:async({snapshot:prior,entries,seed,weather})=>{
+        assert.equal(prior,current);
+        assert.deepEqual(entries,rows);
+        assert.equal(seed,'game-fixture-race:recovery-one-day-3');
+        assert.equal(weather.source,'LOCKED_SIM');
+        current={...prior,event:{...prior.event,seed,
+          weather_locked:weather}};
+        return current;
+      }});
+    assert.deepEqual(saved.snapshot,current);
+    assert.equal(saved.document.source.raceSeed,current.event.seed);
+    assert.equal(saved.document.input.physicalSourceVersion,
+      'physical-game-race-locked-source-v1');
+    assert.equal(saved.document.input.seedProvenance,'event-seed');
+    assert.equal(saved.document.input.weatherProvenance,
+      'event-locked-weather');
+    assert.equal(saved.document.source.validatedRiderKilometres,320);
+    await assert.rejects(loadLockedPhysicalGameRaceRecordInputV1({
+      readSnapshot:async()=>({finished:true}),
+      readEntries:async()=>{throw new Error('entries read');},
+      commitSource:async()=>{throw new Error('source locked');}}),
+    /unfinished game race/);
+    await assert.rejects(loadLockedPhysicalGameRaceRecordInputV1({
+      readSnapshot:async()=>current,
+      readEntries:async()=>rows,
+      commitSource:async()=>({...current,event:{...current.event,
+        seed:'different'}})}),/race changed after/);
+  });

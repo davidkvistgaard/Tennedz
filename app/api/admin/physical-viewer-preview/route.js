@@ -3,7 +3,7 @@ import {protectedRoute,databaseClient,requireGameWrites} from
   '../../../../lib/auth/server';
 import {AuthError} from '../../../../lib/auth/policy.mjs';
 import {rpc,uuid} from '../../../../lib/race/server';
-import {loadPhysicalGameRaceRecordInputV1} from
+import {loadLockedPhysicalGameRaceRecordInputV1} from
   '../../../../lib/viewer/physical-game-race-source-v1.mjs';
 import {verifyPhysicalFirstRaceDocument} from
   '../../../../lib/viewer/physical-first-race-document-v3.mjs';
@@ -66,7 +66,7 @@ export const POST=protectedRoute(async req=>{
   }
   let input;
   try{
-    input=await loadPhysicalGameRaceRecordInputV1({
+    input=await loadLockedPhysicalGameRaceRecordInputV1({
       readSnapshot:()=>rpc(db,'recovery_race_snapshot',
         {p_event:eventId}),
       readEntries:async id=>{
@@ -76,7 +76,11 @@ export const POST=protectedRoute(async req=>{
           .eq('event_id',id).order('team_id');
         if(error)throw new Error('Could not read committed race entries.');
         return data;
-      }});
+      },
+      commitSource:({snapshot,entries,seed,weather})=>rpc(db,
+        'recovery_lock_physical_viewer_source_v1',{
+          p_event:eventId,p_snapshot:snapshot,p_entries:entries,
+          p_seed:seed,p_weather:weather})});
   }catch(error){
     if(error instanceof AuthError)throw error;
     throw new AuthError('PHYSICAL_VIEWER_UNAVAILABLE',
