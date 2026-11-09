@@ -25,11 +25,23 @@ offsets and geography remain unavailable. Tests cover complete 20 km
 game-shaped races for men and women and refusal of missing tactics, bibs and
 an injured selected rider. These are fixtures, not production races.
 
-The current database entry and `recovery_race_snapshot` **do not yet carry**
-the required tactical manifest, game bib assignment or style snapshot. The
-official `buildRace` still invokes the earlier `simulateStage` and awards
-official points from that engine. Connecting this boundary to official races
-requires storing those missing inputs atomically, validating full-race
-calibration and finish semantics, then versioning the official cycle and
-preserving historic runs. This module must not be used to fabricate those
-inputs from the old strategic replay.
+Migration `20261109131922_committed_physical_entry_inputs.sql` adds an
+optional, locked entry transaction that saves the normalized team order,
+sporting stake and game kit with the selected lineup. The database allocates
+unique positive race bibs and preserves them on an identical resubmission.
+The private table has RLS enabled and no client grants. The companion
+`/api/event/join-physical` endpoint is disabled unless
+`PELOTONIA_PHYSICAL_ENTRY_ENABLED=true`; it validates the manager input,
+reads the saved game kit and uses the atomic RPC. The legacy entry path remains
+available. PGlite tests verify the transaction, bib assignment, rollback
+and revoked anonymous grants. The migration has **not** been applied to the
+hosted database.
+
+The current `recovery_race_snapshot` still omits these new fields, and no
+game UI writes the new entry yet. The official `buildRace` still invokes the
+earlier `simulateStage` and awards official points from that engine.
+Connecting this boundary to official races requires reading a consistent
+physical input snapshot, committing seed and weather, validating full-race
+calibration and finish semantics, then versioning the official cycle while
+preserving historic runs. This module must not fabricate those inputs from
+the old strategic replay.
