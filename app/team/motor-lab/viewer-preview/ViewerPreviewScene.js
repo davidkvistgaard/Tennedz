@@ -2,6 +2,8 @@
 import {useEffect,useMemo,useRef,useState} from 'react';
 import {RaceViewer,RouteProfile,commentaryAt,createSampler,
   formatFinishDistance,labelRaceGroups,raceGroups} from '@pelotonia/race-viewer';
+import {illustrativeGroupLayoutFeedV1,
+  illustrativeGroupLayoutFrameV1} from '../../../../lib/viewer/illustrative-group-layout-v1.mjs';
 
 const clockLabel=seconds=>{
   const value=Math.max(0,Math.floor(seconds||0));
@@ -41,6 +43,12 @@ export default function ViewerPreviewScene({feed,coverage,mode='recorded',
   const [diagnostics,setDiagnostics]=useState(null);
   const [detailsOpen,setDetailsOpen]=useState(false);
   const [tab,setTab]=useState('riders'),[light,setLight]=useState('day');
+  const totalDistanceM=feed.route.profile.samples.at(-1)[0];
+  const sourceRendererFeed=rendererFeed??feed;
+  const visualFeed=useMemo(()=>mode==='exhibition'?
+    sourceRendererFeed:
+    illustrativeGroupLayoutFeedV1(sourceRendererFeed),
+  [sourceRendererFeed,mode]);
   useEffect(()=>{
     viewerRef.current?.setZoom(.35);
   },[cycleKey]);
@@ -52,13 +60,14 @@ export default function ViewerPreviewScene({feed,coverage,mode='recorded',
     if(!newFrames.length)return;
     try{
       const through=viewerRef.current?.appendRecordedFrames(
-        newFrames);
+        mode==='exhibition'?newFrames:newFrames.map(frame=>
+          illustrativeGroupLayoutFrameV1(frame,totalDistanceM)));
       if(through!==newFrames.at(-1).time)
         throw new Error('The renderer did not accept reached frames.');
       appendedThrough.current=through;
       setRenderedThrough(through);
     }catch(cause){setError(cause.message);}
-  },[feed.frames,rendererFeed]);
+  },[feed.frames,rendererFeed,mode,totalDistanceM]);
   const time=stats?.time??0;
   const publishedFinish=mode==='split'&&finishEvidence&&
     time>=finishEvidence.publishedAt?finishEvidence:null;
@@ -82,8 +91,8 @@ export default function ViewerPreviewScene({feed,coverage,mode='recorded',
     situation.groupRoles);
   const commentary=commentaryAt({...feed,events:publicEvents},time),
     latest=commentary.at(-1);
-  const remaining=formatFinishDistance(stats?.finishRemaining??
-    feed.route.profile.samples.at(-1)[0]);
+  const remaining=formatFinishDistance(Math.max(0,totalDistanceM-
+    Math.max(0,...situation.positions.map(row=>row.distance))));
   const selected=target.type==='rider'?
     feed.riders.find(rider=>rider.id===target.id):null;
   const progress=Math.min(100,100*time/feed.duration);
@@ -94,7 +103,7 @@ export default function ViewerPreviewScene({feed,coverage,mode='recorded',
     data-cycle-epoch={rendererFeed?cycleEpochMs:undefined}>
     <div className="race-theatre-stage">
       <RaceViewer key={cycleKey} ref={viewerRef}
-        feed={rendererFeed??feed} clock={clock}
+        feed={visualFeed} clock={clock}
         serverOffsetMs={serverOffsetMs} target={target}
         onSelect={choose} onError={cause=>setError(cause.message)}
         onStats={next=>{if(!rendererFeed&&
@@ -218,8 +227,8 @@ export default function ViewerPreviewScene({feed,coverage,mode='recorded',
         <p className="race-theatre-coverage">{mode==='exhibition'?
           'Fictional positions, groups, route and scenery. No game result.':
           mode==='split'?
-            'Paid kilometre crossings and contact events are recorded. Between crossings, distance is interpolated. No official result or precise rider lanes. Scenery is synthetic.':
-          'Motor positions and events are recorded. Scenery is a synthetic visual study, not game geography.'}</p>
+            'Paid kilometre crossings and contact events are recorded. Between crossings, distance is interpolated. Rider spacing within a group is illustrative. No official result or precise rider lanes. Scenery is synthetic.':
+          'Motor group positions and events are recorded. Rider spacing within a group is illustrative. Scenery is synthetic, not game geography.'}</p>
       </aside>:null}
       <div className="race-theatre-camera-status" role="status">
         {stats?.renderer??'Loading renderer'} · {stats?.visible??0} riders
@@ -231,8 +240,9 @@ export default function ViewerPreviewScene({feed,coverage,mode='recorded',
     </div>
     <div className="race-theatre-bottom">
       {groupOnlyPositions?<p className="race-theatre-position-note">
-        These riders share a recorded road position. Their individual
-        lanes and order were not recorded.
+        The motor records these riders at the same group position.
+        Their visible spacing is illustrative; lanes and wheel order
+        were not recorded.
       </p>:null}
       <div className="race-theatre-commentary">
         <p>RACE COMMENTARY <small>{mode==='exhibition'?

@@ -88,8 +88,10 @@ export default function ViewerPreviewClient({feed,coverage,version,
     <details className="motor-viewer-setup">
       <summary>Race setup and data limits</summary>
       <p>Distances between paid kilometre crossings are interpolated.
-        The road is a schematic distance axis. Geography, rider lanes,
-        helmets and official results are unavailable in this recording.</p>
+        Riders at the same recorded group position are spaced for display
+        only. The road is a schematic distance axis. Geography, rider
+        lanes, helmets and official results are unavailable in this
+        recording.</p>
       {coverage.sameSeedFinishMismatches>0?<p role="note">
         {coverage.sameSeedFinishMismatches} of {coverage.riderCount}
         {' '}same-seed finish times still differ from the guided engine.

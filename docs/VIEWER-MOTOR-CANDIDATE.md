@@ -153,3 +153,34 @@ are local, device-specific samples, not hosted validation or a
 cross-device performance guarantee. Hosted physical viewer migrations remain
 unapplied and the spectator flag remains off while same-seed motor
 calibration is incomplete.
+
+### Illustrative rider spacing (viewer layout v1)
+
+The motor's recorded kilometre crossings, group membership, times, actions,
+events and finish evidence remain the source of truth. Older physical-first
+recordings place every rider in a group at one common road coordinate. The
+3D package previously collapsed these overlapping coordinates into one bike.
+The viewer now creates a renderer-only copy of each reached frame and spreads
+overlapping rider symbols in up to eight visual lanes and short rows around
+the recorded group anchor. A stable rider-ID hash makes the layout
+deterministic. This is an illustrative arrangement, not measured wheel order,
+individual lanes or a new race calculation. The original feed still drives
+group headings, commentary, remaining distance, shared time and finish
+evidence. Unreached streaming frames and the future finish remain unavailable
+until the broadcast clock reaches them. The UI labels the spacing explicitly.
+
+Local unit checks covered both categories and recorded 120-rider frames,
+plus 30-, 150- and 160-rider overlap cases. A freshly isolated production
+build and Edge WebGL checks showed all 120 riders in both public split-road
+samples, and an authenticated streaming 16-rider game fixture kept the camera
+through frame appends and reached the measured finish with zero renderer
+errors. After at least 60 rendered frames, both 120-rider samples reported
+39 fps on Intel UHD/Direct3D11 WebGL2; the authenticated 16-rider stream
+reported 55 fps on the same GPU. These
+checks do not establish accurate individual position inside a group or
+hosted, multi-device performance. The strict whole-race release audit and
+unapplied physical viewer migrations still gate production.
+An authenticated 144-rider women's streaming fixture also completed with
+all 144 riders visible, camera state retained through frame appends, 31 fps
+on Intel UHD WebGL2/Direct3D11 at the final diagnostic, and zero renderer
+errors.

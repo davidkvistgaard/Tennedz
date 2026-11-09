@@ -64,10 +64,28 @@ for(const category of ['men','women'])
           .getAttribute('data-viewer-diagnostics');
         return raw?JSON.parse(raw)?.renderer:null;
       },{timeout:15000}).toBe('WebGL');
+      await expect.poll(async()=>{
+        const raw=await page.locator('[data-viewer-diagnostics]')
+          .getAttribute('data-viewer-diagnostics');
+        return raw?JSON.parse(raw)?.renderedFrames??0:0;
+      },{timeout:20000}).toBeGreaterThan(60);
       const diagnostics=JSON.parse(await page.locator(
         '[data-viewer-diagnostics]').getAttribute(
           'data-viewer-diagnostics'));
+      expect(diagnostics.visible).toBe(120);
       expect(diagnostics.errors).toBe(0);
+      expect(diagnostics.graphicsBackend?.api).toBe('WebGL2');
+      expect(diagnostics.fps).toBeGreaterThan(0);
+      await expect(page.getByText(/visible spacing is illustrative/i))
+        .toBeVisible();
+      console.log('Split-road renderer diagnostics:',
+        JSON.stringify({category,...diagnostics}));
+      await test.info().attach('recorded-rider-layout',{
+        body:await page.locator('.race-theatre-stage').screenshot(),
+        contentType:'image/png'});
+      await test.info().attach('renderer-diagnostics',{
+        body:JSON.stringify(diagnostics,null,2),
+        contentType:'application/json'});
       expect(errors).toEqual([]);
     });
 
