@@ -5,6 +5,8 @@ import {createPhysicalFirstSplitViewerTestRaceV1} from
   '../../../../lib/viewer/physical-first-split-test-race-v1.mjs';
 import {parsePhysicalSplitVariantV1,physicalSplitVariantQueryV1} from
   '../../../../lib/viewer/physical-first-split-variant-v1.mjs';
+import {scenicPresentationV1} from
+  '../../../../lib/viewer/scenic-presentation-v1.mjs';
 import ViewerPreviewClient from './ViewerPreviewClient';
 import TeamShell from '../../../components/TeamShell';
 import '@pelotonia/race-viewer/commentary.css';
@@ -30,6 +32,7 @@ export default async function ViewerPreviewPage({searchParams}){
     createPhysicalFirstSplitViewerTestRaceV1(category,variant):
     createPhysicalFirstViewerTestRaceV1(category);
   return <TeamShell compact><ViewerPreviewClient {...race}
+    feed={scenicPresentationV1(race.feed)}
     raceMode={raceMode}
     variantQuery={variant?physicalSplitVariantQueryV1(variant):''}
     previewPath="/team/motor-lab/viewer-preview"/></TeamShell>;

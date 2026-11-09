@@ -5,6 +5,8 @@ import {createPhysicalFirstSplitViewerTestRaceV1} from
   '../../lib/viewer/physical-first-split-test-race-v1.mjs';
 import {parsePhysicalSplitVariantV1,physicalSplitVariantQueryV1} from
   '../../lib/viewer/physical-first-split-variant-v1.mjs';
+import {scenicPresentationV1} from
+  '../../lib/viewer/scenic-presentation-v1.mjs';
 import ViewerPreviewClient from '../team/motor-lab/viewer-preview/ViewerPreviewClient';
 import '@pelotonia/race-viewer/commentary.css';
 import '@pelotonia/race-viewer/profile.css';
@@ -32,5 +34,5 @@ export default async function ViewerAcceptancePage({searchParams}){
   return <ViewerPreviewClient previewPath="/viewer-acceptance"
     raceMode={raceMode}
     variantQuery={variant?physicalSplitVariantQueryV1(variant):''}
-    {...race}/>;
+    {...race} feed={scenicPresentationV1(race.feed)}/>;
 }

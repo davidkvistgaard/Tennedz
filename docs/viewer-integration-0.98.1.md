@@ -170,3 +170,25 @@ commentary advanced on the shared server clock, and category switching
 preserved every variant input. This checks the data bridge and browser
 rendering locally; it is not an authenticated production check or a
 measured GPU performance approval.
+
+### Rich viewer on generated Motor Lab races
+
+The experimental Motor Lab preview now uses the same Work-style race
+theatre component and CSS as the separate viewer release. A versioned
+visual-only scenic layer adds clearly labelled synthetic terrain, trees,
+crowd and finish assets; tests verify that it leaves every paid rider frame
+and event unchanged. The actual route still has no canonical geography or
+individual lanes. The compact setup panel keeps the experiment controls
+available while placing the race theatre at the top of the page.
+
+Local browser acceptance opened a freshly generated 120 km flat-profile
+race for both men's and women's fields. WebGL rendered all 120 rider entries,
+the clock and commentary progressed, category switching retained the seed
+and orders, and the local rider camera selected a named rider. The first
+run exposed two missing foliage textures; after the release textures were
+added, no asset error appeared on reload. The viewer remained visually
+sparse because same-group rider positions overlap on the unrecorded lane.
+Observed frame rates around 7–12 fps in this local browser session are not
+acceptable as a production performance approval. The authenticated Vercel
+preview for this branch reached the game's sign-in screen; the new rich
+viewer itself has not been verified there or on tennedz.eu.

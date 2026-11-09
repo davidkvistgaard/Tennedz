@@ -8,6 +8,8 @@ import {previewBroadcastClockV1} from
   '../../lib/viewer/preview-clock-v1.mjs';
 import {parsePhysicalSplitVariantV1,physicalSplitVariantQueryV1} from
   '../../lib/viewer/physical-first-split-variant-v1.mjs';
+import {scenicPresentationV1} from
+  '../../lib/viewer/scenic-presentation-v1.mjs';
 
 test('split viewer variant survives URL and rejects invented inputs',()=>{
   const variant={terrain:'rolling',chase:'all',attack:'selective',
@@ -32,6 +34,12 @@ test('new seed and profile produce a distinct replayable viewer race',()=>{
   assert.equal(first,again);
   assert.notEqual(first.feed.raceId,original.feed.raceId);
   assert.deepEqual(validateFeed(first.feed),first.feed);
+  const scene=scenicPresentationV1(first.feed);
+  assert.deepEqual(validateFeed(scene),scene);
+  assert.equal(scene.synthetic,true);
+  assert.deepEqual(scene.frames,first.feed.frames);
+  assert.deepEqual(scene.events,first.feed.events);
+  assert.equal(scene.results,undefined);
   assert.equal(first.coverage.paidRiderKilometres,14400);
   assert.equal(first.feed.results,undefined);
   assert.equal(first.feed.frames.at(-1).time,first.feed.duration);

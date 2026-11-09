@@ -40,20 +40,22 @@ export default function ViewerPreviewClient({feed,coverage,version,
   },[feed.raceId,feed.riderCategory,feed.duration,raceMode,
     variantQuery]);
   return <main className="motor-viewer-preview">
-    <header>
-      <p className="eyebrow">Motor Lab · new race viewer</p>
-      <h1>{raceMode==='split'?'Recorded split road race':
-        'Recorded sample race'}</h1>
-      <p>{feed.route.profile.samples.at(-1)[0]/1000} km · {
+    <header className="motor-viewer-intro">
+      <h1>{raceMode==='split'?'Motor Lab recorded race':
+        'Motor Lab sample race'}</h1>
+      <span>{feed.route.profile.samples.at(-1)[0]/1000} km · {
         feed.riderCategory==='women'?'Women':'Men'} · {
-        coverage.riderCount} riders · 1× shared replay</p>
+        coverage.riderCount} riders</span>
+      <span>Experimental motor data · synthetic scenery · no official result</span>
+    </header>
+    <details className="motor-viewer-setup">
+      <summary>Race setup and data limits</summary>
       <p>Distances between paid kilometre crossings are interpolated.
         The road is a schematic distance axis. Geography, rider lanes,
         helmets and official results are unavailable in this recording.</p>
       {coverage.sameSeedFinishMismatches>0?<p role="note">
-        Experimental Motor Lab race: {coverage.sameSeedFinishMismatches}
-        {' '}of {coverage.riderCount} same-seed finish times still differ
-        from the guided engine. This preview is not an official result.
+        {coverage.sameSeedFinishMismatches} of {coverage.riderCount}
+        {' '}same-seed finish times still differ from the guided engine.
       </p>:null}
       {raceMode==='split'?<form action={previewPath} method="get"
         aria-label="Generate a Motor Lab viewer race">
@@ -84,11 +86,12 @@ export default function ViewerPreviewClient({feed,coverage,version,
         <p>120 km · 15 teams · experimental paid road. The orders
           affect the motor run; no official placing is inferred.</p>
       </form>:null}
-    </header>
+    </details>
     {error?<p role="alert">{error} <a href="/team/motor-lab/engine">
       Open the Motor Lab engine</a>.</p>:null}
     {!sync&&!error?<p role="status">Synchronizing race time…</p>:null}
     {sync?<PreviewScene feed={feed} coverage={coverage}
+      mode={raceMode==='split'?'split':'recorded'}
       version={version} {...sync}/>:null}
     <footer><a href="/team/motor-lab/engine">
       Motor Lab engine</a> · <a href={
