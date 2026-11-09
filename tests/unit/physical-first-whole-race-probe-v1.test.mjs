@@ -12,6 +12,9 @@ import {calibratePhysicalFirstFinishV1} from
   '../../lib/engine/v2/physical-first-finish-calibration-v1.mjs';
 import {replayPhysicalFirstWholeRaceV1} from
   '../../lib/engine/v2/physical-first-whole-race-replay-v1.mjs';
+import {recordPhysicalFirstRaceV1,
+  PHYSICAL_FIRST_RACE_RECORD_VERSION} from
+  '../../lib/engine/v2/physical-first-race-record-v1.mjs';
 
 const segments=[1,2].map(km=>({km,terrain:'flat',
   gradientPct:0,surface:'road',exposed:false,
@@ -49,6 +52,37 @@ test('physical-first probe covers every rider and kilometre',()=>{
     row.distanceM===2000&&Number.isFinite(row.reserve)));
   assert.equal(race.states[2].sourceGapUsed,false);
   assert.equal(race.officialResults,false);
+});
+
+test('source-independent race record validates complete measured finish',()=>{
+  const committed=input(0);
+  for(const row of committed.start.riders){
+    const source=committed.teams.find(team=>team.id===row.teamId)
+      .riders[0];
+    row.reserve=replayRearEnergyCapV1({rider:source,
+      kilometres:committed.kilometres,
+      throughKm:0}).initialCap;
+  }
+  const result=recordPhysicalFirstRaceV1(committed);
+  assert.equal(result.version,PHYSICAL_FIRST_RACE_RECORD_VERSION);
+  assert.equal(result.replay.validatedRiderKm,4);
+  assert.equal(result.finishCrossings.length,2);
+  assert.ok(result.finishCrossings.every(row=>
+    row.clockSeconds>0&&row.roadId));
+  assert.equal(result.officialResults,false);
+  assert.deepEqual(recordPhysicalFirstRaceV1(committed,
+    {recording:result.recording}).finishCrossings,
+  result.finishCrossings);
+  const changed=input(0);
+  changed.teams[0].riders[0].flat=90;
+  assert.throws(()=>recordPhysicalFirstRaceV1(changed,
+    {recording:result.recording}),
+  /same committed recording/);
+  const tampered=structuredClone(result.recording);
+  tampered.states[2].riders[0].clockSeconds+=1;
+  assert.throws(()=>recordPhysicalFirstRaceV1(committed,
+    {recording:tampered}),
+  /boundary or finish differs/);
 });
 
 test('physical-first probe carries detached solo through all km',()=>{
