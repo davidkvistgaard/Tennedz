@@ -6,6 +6,7 @@ import TeamShell from "../../components/TeamShell";
 import StageProfile from "../../components/StageProfile";
 import RiderAvatar from "../../components/RiderAvatar";
 import LineupPresets from "../../components/LineupPresets";
+import PhysicalRaceEntryControls from "./PhysicalRaceEntryControls";
 import { useAuth } from "../../components/AuthProvider";
 import { api } from "../../../lib/api";
 import { normalizeRoute, routeAdvice } from "../../../lib/race/route.mjs";
@@ -62,6 +63,8 @@ export default function RunPage() {
   const [selected, setSelected] = useState([]),
     [captain, setCaptain] = useState(""),
     [saved, setSaved] = useState(null),
+    [physicalAvailable,setPhysicalAvailable]=useState(false),
+    [physicalSaved,setPhysicalSaved]=useState(null),
     [busy, setBusy] = useState(false),
     [notice, setNotice] = useState("");
   const [sortKey, setSortKey] = useState("form"),
@@ -109,6 +112,8 @@ export default function RunPage() {
     setSelected([]);
     setCaptain("");
     setSaved(null);
+    setPhysicalAvailable(false);
+    setPhysicalSaved(null);
     setStage(null);
     setEntryError("");
     setNotice("");
@@ -120,13 +125,23 @@ export default function RunPage() {
     Promise.all([
       api(`/api/stage-profile?event_id=${eventId}`, { signal: abort.signal }),
       api(`/api/event/join?event_id=${eventId}`, { signal: abort.signal }),
+      api(`/api/event/join-physical?event_id=${eventId}`,
+        {signal:abort.signal}).catch(error=>{
+        if(error.status===404&&
+          error.code==='PHYSICAL_ENTRY_DISABLED')
+          return {disabled:true};
+        throw error;
+      }),
     ])
-      .then(([profile, entry]) => {
+      .then(([profile, entry, physical]) => {
         if (abort.signal.aborted) return;
         setStage(profile.stage);
-        setSaved(entry.entry);
-        setSelected(entry.entry?.selected_riders || []);
-        setCaptain(entry.entry?.captain_id || "");
+        setPhysicalAvailable(!physical.disabled);
+        setPhysicalSaved(physical.entry??null);
+        const existing=physical.entry??entry.entry;
+        setSaved(existing);
+        setSelected(existing?.selected_riders || []);
+        setCaptain(existing?.captain_id || "");
         try {
           setSortKey(routeAdvice(normalizeRoute(profile.stage)).primary);
         } catch {
@@ -168,7 +183,8 @@ export default function RunPage() {
     selected.length === 8 &&
     selected.includes(captain) &&
     selected.every((id) => available.some((r) => r.id === id && eligible(r)));
-  const unchanged = sameLineup(saved, {
+  const unchanged = sameLineup(physicalAvailable?
+    physicalSaved:saved, {
     selected_riders: selected,
     captain_id: captain,
   });
@@ -392,11 +408,12 @@ export default function RunPage() {
                       <span
                         className={`save-badge ${unchanged ? "saved" : ""}`}
                       >
-                        {saved
+                        {(physicalAvailable?physicalSaved:saved)
                           ? unchanged
                             ? "Saved ✓"
                             : "Unsaved changes"
-                          : "Not entered"}
+                          : physicalAvailable&&saved?
+                            "Race tactics needed":"Not entered"}
                       </span>
                     </div>
                     <div className="lineup-slots">
@@ -453,7 +470,7 @@ export default function RunPage() {
                           ? ` · Cost ${event.entry_fee} coins`
                           : ""}
                       </span>
-                      <button
+                      {!physicalAvailable&&<button
                         className="btn primary"
                         disabled={locked || !valid || busy || unchanged}
                         onClick={save}
@@ -465,7 +482,7 @@ export default function RunPage() {
                             : saved
                               ? "Save changes"
                               : "Enter team"}
-                      </button>
+                      </button>}
                     </div>
                     <p className="small">
                       {locked
@@ -478,6 +495,14 @@ export default function RunPage() {
                       </p>
                     )}
                   </section>
+                  {physicalAvailable?<PhysicalRaceEntryControls
+                    eventId={eventId} teamId={team?.id}
+                    selected={selected} captain={captain}
+                    riders={available} locked={locked} valid={valid}
+                    savedEntry={physicalSaved}
+                    onSaved={entry=>{
+                      setSaved(entry);setPhysicalSaved(entry);
+                    }}/>:null}
                   {!locked && (
                     <>
                       <div className="rider-selection-toolbar">

@@ -37,8 +37,9 @@ available. PGlite tests verify the transaction, bib assignment, rollback
 and revoked anonymous grants. The migration has **not** been applied to the
 hosted database.
 
-The current `recovery_race_snapshot` still omits these new fields, and no
-game UI writes the new entry yet. The official `buildRace` still invokes the
+The current `recovery_race_snapshot` still omits these new fields. The
+physical-entry UI is gated by the server flag and hosted migration. The
+official `buildRace` still invokes the
 earlier `simulateStage` and awards official points from that engine.
 
 `manifestFromCommittedPhysicalEntriesV1` now assembles the private saved
@@ -56,8 +57,17 @@ document when `PELOTONIA_PHYSICAL_VIEWER_PREVIEW_ENABLED=true`. It uses the
 existing deadline-guarded snapshot RPC, so it cannot preview an open race
 before its deadline. Both flags are off by default; the hosted migration has
 not been applied, and no actual game race has yet completed this path.
-Until the tactical entry UI saves physical inputs for every participating
-team, this route correctly refuses the old incomplete entries.
+Until every participating team saves a physical input, this route correctly
+refuses the old incomplete entries.
+
+The race-entry screen now offers an explicit tactical form when the physical
+entry endpoint is enabled. The manager selects effort, chase, attack, front
+work, road captain, helpers, sporting goal and goal rider before saving the
+lineup and orders in the same RPC. Existing advanced phases, contingency and
+response orders are retained when editing the visible baseline fields. The
+legacy lineup form remains the active path while the feature flag is off.
+Browser fixtures cover the physical form and the preserved legacy path;
+neither fixture proves a hosted race has completed the workflow.
 
 Connecting this boundary to official races requires reading a consistent
 physical input snapshot, committing seed and weather, validating full-race

@@ -1463,3 +1463,10 @@ p {
   }
 }
 .race-scene-canvas{position:relative;background:#dce3d0}.race-scene-art{object-fit:cover}.race-scene-canvas>svg{position:relative;z-index:1;display:block;width:100%;height:auto}
+.physical-entry{margin-top:20px}
+.physical-entry-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;margin:20px 0}
+.physical-entry-grid label{display:flex;flex-direction:column;gap:7px;font-weight:600}
+.physical-entry-grid select{width:100%;padding:10px;border:1px solid var(--border);border-radius:8px;background:#fffdf6;color:var(--text)}
+.physical-entry fieldset{display:flex;flex-wrap:wrap;gap:12px;border:1px solid var(--border);border-radius:8px;margin:0 0 20px;padding:14px}
+.physical-entry fieldset label{display:flex;align-items:center;gap:7px}
+.physical-entry fieldset legend{font-weight:600}

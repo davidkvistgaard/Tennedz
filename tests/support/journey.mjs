@@ -2,8 +2,9 @@
 // paid service, or production data. Sporting output comes from the real race engine.
 import { execFileSync } from 'node:child_process';
 import { routeTemplates } from '../../lib/race/templates.mjs';
-export async function installJourney(page) {
+export async function installJourney(page,{physical=false}={}) {
   let signedIn=false, created=false, entry=null, finished=false, output=null, rejected=false;
+  let physicalEntry=null;
   const team={id:'11111111-1111-4111-8111-111111111112',name:'Northern Lights Cycling',budget:100000,coins:100000};
   const names=['Emil Berg','Louis Morel','Mateo Rojas','Dawit Tesfay','Luca Rossi','Noah Vermeer','Adam Nowak','Elias Holm','Freja Møller','Elin Lind','Femke Visser','Zofia Kowalska','Haruka Mori','Lina Moreau','Sara Costa','Amina Diallo'];
   const riders=names.map((name,i)=>({id:`rider-${i}`,name,gender:i<8?'M':'F',nationality:['DNK','FRA','COL','ERI','ITA','NLD','POL','SWE'][i%8],age:22+i%7,rating:0,sprint:40+i,flat:52,hills:45+i,mountain:65-i,cobbles:40,timetrial:43,endurance:60,strength:45,wind:47,form:85,fatigue:i%8}));
@@ -21,6 +22,19 @@ export async function installJourney(page) {
     if(path==='/api/game-date')return send({ok:true,game_date:'2026-09-24'});
     if(path==='/api/events')return send({ok:true,server_time:new Date().toISOString(),events:[event]});
     if(path==='/api/stage-profile')return send({ok:true,stage});
+    if(path==='/api/event/join-physical'){
+      if(!physical)return send({ok:false,
+        code:'PHYSICAL_ENTRY_DISABLED',
+        error:'Physical race entry is not available yet.'},404);
+      if(request.method()==='POST'){
+        const body=request.postDataJSON();
+        entry=body;physicalEntry={...body,
+          schema_version:'physical-entry-input-v1'};
+        return send({ok:true,physical_input_version:
+          'physical-entry-input-v1'});
+      }
+      return send({ok:true,entry:physicalEntry});
+    }
     if(path==='/api/event/join'){
       if(request.method()==='POST'){
         if(rejected){rejected=false;return send({ok:false,error:'Could not save your lineup. Please try again.'},503);}
@@ -39,6 +53,7 @@ export async function installJourney(page) {
   return {
     rejectNextSave(){rejected=true;},
     entry(){return entry;},
+    physicalEntry(){return physicalEntry;},
     finish(){
       if(!entry)throw Error('No saved lineup');
       event.deadline=new Date(Date.now()-1000).toISOString();
