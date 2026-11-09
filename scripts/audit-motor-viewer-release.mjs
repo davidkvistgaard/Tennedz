@@ -29,6 +29,8 @@ for(const input of cases){
       paidRiderKilometres:coverage.paidRiderKilometres,
       validatedRiderKilometres:source.validatedRiderKilometres,
       finishEntries:finishEvidence.entries.length,
+      finishClockGroups:finishEvidence.clockGroups?.length??null,
+      unresolvedTieRiders:finishEvidence.unresolvedTieRiders??null,
       boundaryFrames:coverage.boundaryFrames,
       recordedContactEvents:coverage.recordedContactEvents,
       sameSeedFinishMismatches:coverage.sameSeedFinishMismatches,
@@ -52,7 +54,7 @@ const byAttack=Object.fromEntries(
       mismatched:set.filter(row=>row.status==='complete'&&
         row.sameSeedFinishMismatches>0).length}];
   }));
-const summary={version:'motor-viewer-release-audit-1',
+const summary={version:'motor-viewer-release-audit-2',
   scenarios:rows.length,completed:complete.length,
   failed:rows.length-complete.length,
   calibrated:complete.filter(row=>
@@ -61,10 +63,19 @@ const summary={version:'motor-viewer-release-audit-1',
     row.sameSeedFinishMismatches>0).length,
   officialResultsAvailable:complete.filter(row=>
     row.officialResults).length,
+  unresolvedTieRiders:complete.reduce((count,row)=>
+    count+(row.unresolvedTieRiders??0),0),
+  racesWithUnresolvedTies:complete.filter(row=>
+    row.unresolvedTieRiders>0).length,
+  finishClockGroupsAvailable:complete.every(row=>
+    Number.isInteger(row.finishClockGroups)&&
+    row.finishClockGroups>0&&
+    Number.isInteger(row.unresolvedTieRiders)),
   byAttack,
   readyForGuidedRace:rows.length>0&&rows.every(row=>
     row.status==='complete'&&
     row.sameSeedFinishMismatches===0&&
+    row.unresolvedTieRiders===0&&
     row.officialResults)};
 process.stdout.write(`${JSON.stringify({summary,rows},null,2)}\n`);
 if(strict&&!summary.readyForGuidedRace)process.exitCode=1;

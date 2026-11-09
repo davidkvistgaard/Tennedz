@@ -60,7 +60,9 @@ for(const category of ['men','women'])
     assert.equal(coverage.sameSeedFinishMismatches,0);
     assert.equal(coverage.officialResults,false);
     assert.equal(feed.results,undefined);
-    assert.equal(finishEvidence.version,'motor-lab-paid-finish-v1');
+    assert.equal(finishEvidence.version,'motor-lab-paid-finish-v2');
+    assert.deepEqual(finishEvidence.clockGroups.flatMap(group=>
+      group.riderIds),finishEvidence.entries.map(row=>row.riderId));
     assert.equal(finishEvidence.publishedAt,feed.duration);
     assert.equal(finishEvidence.entries.length,120);
     assert.equal(new Set(finishEvidence.entries.map(row=>row.riderId)).size,
@@ -104,20 +106,19 @@ for(const category of ['men','women'])
   });
 
 for(const category of ['men','women'])
-  test(`full chase ${category} preserves paid split/contact evidence`,()=>{
+  test(`full chase ${category} records a paid attack without inventing contact`,()=>{
     const {feed,coverage,finishEvidence}=
       createPhysicalFirstSplitViewerTestRaceV1(
-      category,{chase:'all'});
+      category,{chase:'all',attack:'repeated'});
     assert.deepEqual(validateFeed(feed),feed);
     assert.equal(coverage.paidRiderKilometres,14400);
-    assert.equal(coverage.recordedContactEvents,5);
-    assert.equal(coverage.sameSeedFinishMismatches,50);
-    assert.ok(feed.frames[0].positions.some(row=>
-      row.groupId.startsWith('solo:')));
-    assert.ok(feed.frames.at(-1).positions.some(row=>
-      row.groupId.startsWith('rear:')));
-    assert.ok(feed.events.some(row=>
-      row.label.includes('recorded paid contact')));
+    assert.equal(coverage.recordedContactEvents,0);
+    assert.equal(coverage.sameSeedFinishMismatches,1);
+    assert.ok(feed.frames.some(frame=>frame.positions.some(row=>
+      row.groupId.startsWith('solo:'))));
+    assert.ok(feed.events.some(row=>row.label.includes('paid attack')));
+    assert.equal(feed.events.some(row=>
+      row.label.includes('recorded paid contact')),false);
     assert.ok(createSampler(feed)(feed.duration).positions.every(row=>
       row.distance===120000));
     assert.equal(feed.results,undefined);
