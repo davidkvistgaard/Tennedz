@@ -4,11 +4,24 @@ Run `pnpm audit:viewer:release` from the Motor Lab worktree. It covers 72
 complete paid 120 km races: two distinct seeds, both rider categories, three
 route profiles, two chase orders and three attack orders. The command prints
 versioned JSON for every case and exits unsuccessfully unless every case
-finishes, every same-seed finish matches the guided source, and official
-results are available. `node scripts/audit-motor-viewer-release.mjs --smoke`
+finishes, every same-seed finish matches the guided source, each rider has
+an independently resolved finish, and official results are available.
+`node scripts/audit-motor-viewer-release.mjs --smoke`
 runs one seed with a smaller 20-case matrix for diagnostics.
 
-Baseline on `d9c25e592464852cec59624d5161da4d77d51ec2` (9 November
+The current `motor-viewer-release-audit-2` run on 9 November 2026
+completed all 72 races and paid all 8,640 rider finishes. Of those,
+8,592 riders had a shared exact finish clock and no recorded order within
+their group. Every race had at least one unresolved tie. Twenty-four
+no-attack races matched the old source finish clocks; all 48 attack races
+disagreed. No race had official results. Thus a matching group clock alone
+cannot authorize placement or the existing place-based points. The 20-case
+smoke run likewise had 2,392 unresolved riders out of 2,400. These counts
+come from the motor recorder's exact clock groups, carried through the
+versioned viewer adapter. The audit explicitly refuses guided-race
+readiness while any such group remains unresolved.
+
+Historical baseline on `d9c25e592464852cec59624d5161da4d77d51ec2` (9 November
 2026): **72/72 complete exports, 12/72 calibrated, 60/72 with a same-seed
 finish discrepancy, 0/72 with official results**. Both seeds generated
 different document hashes and durations. The release gate is red.
@@ -22,16 +35,19 @@ different document hashes and durations. The release gate is red.
 | All helpers / selective | 12 | 0 | 21–51 |
 | All helpers / repeated | 12 | 0 | 21–51 |
 
-The largest observed discrepancy was 421.48 seconds. The complete exports
+In that historical baseline, the largest observed discrepancy was 421.48
+seconds. The complete exports
 prove that the experimental physical race can pay and replay every rider to
 the finish in this matrix. They do **not** establish that its chase timing,
 attack outcome, official ranking or general race validity is ready for
-guided races. The next motor work should address the full-chase difference
-first, then the one-rider attack difference, and rerun both seeds. The viewer
+guided races. A subsequent versioned leader plan resolved the full-chase
+clock differences in the no-attack cases. The remaining source comparison
+differs in every attack case; finish order is independently unresolved in
+every case. The viewer
 still lacks individual lane and wheel positions, canonical geography and
 official results. The production viewer cannot be approved from this audit.
 
-The 120 km mountain, all-helpers chase has 50 riders finishing on paid rear
+In the historical baseline, the 120 km mountain, all-helpers chase had 50 riders finishing on paid rear
 roads and 50 same-seed finish discrepancies. The selective chase has no
 rear-road finishers and no discrepancy. This points to the physical treatment
 of dropped workers as the dominant difference from the guided source. It is
