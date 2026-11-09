@@ -224,8 +224,13 @@ The authenticated GET `/api/motor-lab/viewer-race?category=men` accepts
 the same optional `terrain`, `chase`, `attack`, and `seed` inputs as the
 split preview. Unknown or repeated parameters are rejected. It returns the
 complete JSON document only after the shared preview clock reaches the last
-paid finish, and otherwise returns HTTP 425. Its response is private and
-uncached. The preview offers the completed document link after publication.
+paid finish, and otherwise returns HTTP 425. The response also carries the
+current broadcast `clock` and `revision: 0` required by the package's
+`createRaceExportLoader`; those transport fields are not part of the
+recording checksum. A focused test imports the completed women's race
+through that package loader and samples the last frame. The response is
+private and uncached. The preview offers the completed document link after
+publication.
 This is a Motor Lab test recording, not a production game event or official
 result. The current page still sends the complete experimental feed to the
 browser to render the race, so this export gate alone is **not** a general

@@ -4,7 +4,7 @@ import {createPhysicalFirstRaceDocumentV1} from
   '../../../../lib/viewer/physical-first-race-document-v1.mjs';
 import {parsePhysicalSplitVariantV1} from
   '../../../../lib/viewer/physical-first-split-variant-v1.mjs';
-import {previewRacePublishedV1} from
+import {previewBroadcastClockV1,previewRacePublishedV1} from
   '../../../../lib/viewer/preview-clock-v1.mjs';
 
 export const runtime='nodejs';
@@ -32,10 +32,12 @@ async function handler(request){
       {status:400});
   }
   const document=createPhysicalFirstRaceDocumentV1(category,variant);
-  if(!previewRacePublishedV1(document.feed.duration,Date.now()))
+  const now=Date.now();
+  if(!previewRacePublishedV1(document.feed.duration,now))
     return NextResponse.json({error:'Race recording is still in progress.'},
       {status:425,headers:{'Cache-Control':'private, no-store'}});
-  return NextResponse.json(document,
+  const {clock}=previewBroadcastClockV1(document.feed.duration,now);
+  return NextResponse.json({...document,clock,revision:0},
     {headers:{'Cache-Control':'private, no-store',
       'X-Content-Type-Options':'nosniff'}});
 }

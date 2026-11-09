@@ -1,7 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {createHash} from 'node:crypto';
-import {validateFeed,createSampler} from '@pelotonia/race-viewer/data';
+import {validateFeed,createSampler,createRaceExportLoader} from
+  '@pelotonia/race-viewer/data';
 import {createPhysicalFirstRaceDocumentV1,
   PHYSICAL_FIRST_RACE_DOCUMENT_VERSION} from
   '../../lib/viewer/physical-first-race-document-v1.mjs';
@@ -48,3 +49,22 @@ test('complete document is released only after the shared paid finish',()=>{
   assert.equal(previewRacePublishedV1(duration,
     at+duration*1000),true);
 });
+
+test('package-native HTTP loader accepts the completed Motor Lab export',
+  async()=>{
+    const document=createPhysicalFirstRaceDocumentV1('women');
+    const clock=previewBroadcastClockV1(document.feed.duration,
+      document.feed.duration*1000).clock;
+    const load=createRaceExportLoader({
+      urlForRace:()=>
+        'https://example.test/api/motor-lab/viewer-race?category=women',
+      fetchImpl:async()=>new Response(JSON.stringify(
+        {...document,clock,revision:0}))});
+    const imported=await load(document.raceId);
+    assert.equal(imported.feed.raceId,document.raceId);
+    assert.equal(imported.feed.riders.length,120);
+    assert.equal(imported.clock.duration,document.feed.duration);
+    assert.equal(imported.revision,0);
+    assert.equal(createSampler(imported.feed)(imported.feed.duration)
+      .positions.length,120);
+  });
