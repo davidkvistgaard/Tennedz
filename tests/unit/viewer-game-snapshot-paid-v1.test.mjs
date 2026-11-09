@@ -4,6 +4,11 @@ import {validateFeed} from '@pelotonia/race-viewer/data';
 import {createGameSnapshotPaidViewerDocumentV1,
   GAME_SNAPSHOT_PAID_VIEWER_VERSION} from
   '../../lib/viewer/game-snapshot-paid-viewer-v1.mjs';
+import {manifestFromCommittedPhysicalEntriesV1} from
+  '../../lib/viewer/committed-physical-manifest-v1.mjs';
+import {createPhysicalGameRaceDocumentV1,
+  loadPhysicalGameRaceDocumentV1} from
+  '../../lib/viewer/physical-game-race-source-v1.mjs';
 
 const skills={sprint:65,flat:65,hills:65,mountain:65,
   cobbles:65,timetrial:65,endurance:65,strength:65,
@@ -59,6 +64,39 @@ for(const category of ['M','F'])
     assert.equal(document.input.officialResults,false);
   });
 
+test('saved physical entries become a complete paid viewer race',()=>{
+  const {snapshot,manifest}=fixture('F');
+  const rows=manifest.entries.map(entry=>{
+    const team=snapshot.teams.find(item=>item.id===entry.teamId);
+    return {event_id:snapshot.event.id,team_id:entry.teamId,
+      schema_version:'physical-entry-input-v1',
+      selected_riders:team.entry.selected_riders,
+      captain_id:team.entry.captain_id,
+      orders:entry.orders,stake:entry.stake,
+      team_style:entry.style,rider_numbers:entry.riderNumbers};
+  });
+  const saved=manifestFromCommittedPhysicalEntriesV1(snapshot,rows);
+  assert.deepEqual(saved,manifest);
+  const document=createGameSnapshotPaidViewerDocumentV1(snapshot,saved);
+  assert.equal(document.source.validatedRiderKilometres,320);
+  assert.equal(document.feed.riderCategory,'women');
+  assert.equal(document.coverage.officialResults,false);
+  const direct=createPhysicalGameRaceDocumentV1(snapshot,rows);
+  assert.equal(direct.sha256,document.sha256);
+  assert.equal(direct.input.seedProvenance,'event-seed');
+  assert.equal(direct.input.weatherProvenance,'event-locked-weather');
+  assert.throws(()=>createPhysicalGameRaceDocumentV1(
+    {...snapshot,finished:true},rows),/unfinished game race/);
+  assert.throws(()=>manifestFromCommittedPhysicalEntriesV1(
+    snapshot,rows.slice(1)),/Every participating team/);
+  assert.throws(()=>manifestFromCommittedPhysicalEntriesV1(
+    snapshot,[{...rows[0],selected_riders:[...rows[0].selected_riders]
+      .reverse()},rows[1]]),/lineup changed/);
+  assert.throws(()=>manifestFromCommittedPhysicalEntriesV1(
+    snapshot,[{...rows[0],event_id:'different'},rows[1]]),
+  /do not match/);
+});
+
 test('game snapshot refuses to infer tactical orders or race bibs',()=>{
   const {snapshot,manifest}=fixture();
   delete manifest.entries[0].orders.baseline;
@@ -77,4 +115,28 @@ test('game snapshot refuses to infer tactical orders or race bibs',()=>{
   assert.throws(()=>createGameSnapshotPaidViewerDocumentV1(
     missingAbility.snapshot,missingAbility.manifest),
   /missing rider identity/);
+});
+
+test('physical viewer loader refuses a changed source snapshot',async()=>{
+  const {snapshot,manifest}=fixture();
+  const rows=manifest.entries.map(entry=>{
+    const team=snapshot.teams.find(item=>item.id===entry.teamId);
+    return {event_id:snapshot.event.id,team_id:entry.teamId,
+      schema_version:'physical-entry-input-v1',
+      selected_riders:team.entry.selected_riders,
+      captain_id:team.entry.captain_id,orders:entry.orders,
+      stake:entry.stake,team_style:entry.style,
+      rider_numbers:entry.riderNumbers};
+  });
+  let reads=0;
+  const document=await loadPhysicalGameRaceDocumentV1({
+    readSnapshot:async()=>{reads++;return snapshot;},
+    readEntries:async id=>{
+      assert.equal(id,snapshot.event.id);return rows;}});
+  assert.equal(reads,2);
+  assert.equal(document.source.validatedRiderKilometres,320);
+  await assert.rejects(loadPhysicalGameRaceDocumentV1({
+    readSnapshot:async()=>++reads%2?snapshot:{...snapshot,
+      event:{...snapshot.event,seed:'changed'}},
+    readEntries:async()=>rows}),/race changed/);
 });

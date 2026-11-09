@@ -40,6 +40,25 @@ hosted database.
 The current `recovery_race_snapshot` still omits these new fields, and no
 game UI writes the new entry yet. The official `buildRace` still invokes the
 earlier `simulateStage` and awards official points from that engine.
+
+`manifestFromCommittedPhysicalEntriesV1` now assembles the private saved
+entry rows into the exact manifest above, checking the event, every team,
+selected rider order and captain against the current game snapshot.
+`createPhysicalGameRaceDocumentV1` uses the official engine's current seed
+and deterministic weather fallback when those values are not yet locked,
+and labels that provenance in the document. It never stores weather or
+publishes official results. `loadPhysicalGameRaceDocumentV1` rereads the
+game snapshot after the private rows and rejects a changed source.
+
+An administrator-only GET at
+`/api/admin/physical-viewer-preview?event_id=<uuid>` exposes this transport
+document when `PELOTONIA_PHYSICAL_VIEWER_PREVIEW_ENABLED=true`. It uses the
+existing deadline-guarded snapshot RPC, so it cannot preview an open race
+before its deadline. Both flags are off by default; the hosted migration has
+not been applied, and no actual game race has yet completed this path.
+Until the tactical entry UI saves physical inputs for every participating
+team, this route correctly refuses the old incomplete entries.
+
 Connecting this boundary to official races requires reading a consistent
 physical input snapshot, committing seed and weather, validating full-race
 calibration and finish semantics, then versioning the official cycle while
