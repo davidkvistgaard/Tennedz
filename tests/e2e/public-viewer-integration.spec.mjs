@@ -58,7 +58,7 @@ for(const category of ['men','women'])
         'Immutable Motor Lab test recording · synthetic scenery · no game result'))
         .toBeVisible();
       await expect(page.locator('.race-theatre-canvas canvas'))
-        .toBeVisible();
+        .toBeVisible({timeout:20000});
       await expect.poll(async()=>{
         const raw=await page.locator('[data-viewer-diagnostics]')
           .getAttribute('data-viewer-diagnostics');

@@ -36,6 +36,8 @@ test('renderer spacing is deterministic and leaves recorded data intact',()=>{
         `${row.distance}:${row.lateral}`)).size,feed.riders.length);
       assert.ok(frame.positions.every(row=>row.distance>=0&&
         row.distance<=feed.route.profile.samples.at(-1)[0]));
+      if(index>0)assert.ok(frame.positions.every((row,position)=>(
+        row.distance<=original.positions[position].distance)));
     }
   }
 });
@@ -52,7 +54,8 @@ for(const count of [30,150,160])
     assert.equal(new Set(visual.positions.map(row=>
       `${row.distance}:${row.lateral}`)).size,count);
     assert.ok(visual.positions.every(row=>row.groupId==='peloton'&&
-      Math.abs(row.distance-50_000)<30&&Math.abs(row.lateral)<3));
+      row.distance<=50_000&&row.distance>=49_950&&
+      Math.abs(row.lateral)<3));
   });
 
 test('solo positions and unreached streaming sentinel stay unchanged',()=>{
@@ -65,6 +68,11 @@ test('solo positions and unreached streaming sentinel stay unchanged',()=>{
   assert.equal(visual.positions.length,3);
   assert.equal(illustrativeGroupLayoutFrameV1(
     {time:10,positions:[]},1000).positions.length,0);
+  const short={positions:Array.from({length:20},(_,index)=>({
+    riderId:`short-${index}`,groupId:'peloton',distance:5,
+    lateral:0}))};
+  assert.ok(illustrativeGroupLayoutFrameV1(short,10).positions.every(
+    row=>row.distance>=0&&row.distance<=10));
   assert.throws(()=>illustrativeGroupLayoutFrameV1(
     {positions:[{...solo,distance:NaN}]},1000),/anchor/);
 });
