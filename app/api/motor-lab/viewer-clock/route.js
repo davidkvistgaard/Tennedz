@@ -2,6 +2,8 @@ import {NextResponse} from 'next/server';
 import {protectedRoute} from '../../../../lib/auth/server';
 import {createPhysicalFirstViewerTestRaceV1} from
   '../../../../lib/viewer/physical-first-test-race-v1.mjs';
+import {createPhysicalFirstSplitViewerTestRaceV1} from
+  '../../../../lib/viewer/physical-first-split-test-race-v1.mjs';
 import {previewBroadcastClockV1} from
   '../../../../lib/viewer/preview-clock-v1.mjs';
 
@@ -13,13 +15,18 @@ async function handler(request){
   if(process.env.PELOTONIA_VIEWER_V1_ENABLED==='false')
     return NextResponse.json({error:'Preview unavailable.'},{status:404});
   const category=new URL(request.url).searchParams.get('category');
+  const raceMode=new URL(request.url).searchParams.get('race')===
+    'split'?'split':'connected';
   if(!['men','women'].includes(category))
     return NextResponse.json({error:'Invalid category.'},{status:400});
-  if(!durations.has(category))durations.set(category,
-    createPhysicalFirstViewerTestRaceV1(category).feed.duration);
+  const key=`${raceMode}:${category}`;
+  const race=raceMode==='split'?
+    createPhysicalFirstSplitViewerTestRaceV1(category):
+    createPhysicalFirstViewerTestRaceV1(category);
+  if(!durations.has(key))durations.set(key,race.feed.duration);
   return NextResponse.json({
-    raceId:`motor-lab-physical-40km-${category}-seed1`,
-    ...previewBroadcastClockV1(durations.get(category),Date.now())},
+    raceId:race.feed.raceId,
+    ...previewBroadcastClockV1(durations.get(key),Date.now())},
   {headers:{'Cache-Control':'no-store'}});
 }
 

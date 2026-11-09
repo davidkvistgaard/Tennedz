@@ -1,6 +1,8 @@
 import {notFound} from 'next/navigation';
 import {createPhysicalFirstViewerTestRaceV1} from
   '../../../../lib/viewer/physical-first-test-race-v1.mjs';
+import {createPhysicalFirstSplitViewerTestRaceV1} from
+  '../../../../lib/viewer/physical-first-split-test-race-v1.mjs';
 import ViewerPreviewClient from './ViewerPreviewClient';
 import TeamShell from '../../../components/TeamShell';
 import '@pelotonia/race-viewer/commentary.css';
@@ -14,7 +16,11 @@ export default async function ViewerPreviewPage({searchParams}){
     notFound();
   const params=await searchParams;
   const category=params?.category==='women'?'women':'men';
-  const race=createPhysicalFirstViewerTestRaceV1(category);
+  const raceMode=params?.race==='split'?'split':'connected';
+  const race=raceMode==='split'?
+    createPhysicalFirstSplitViewerTestRaceV1(category):
+    createPhysicalFirstViewerTestRaceV1(category);
   return <TeamShell compact><ViewerPreviewClient {...race}
-    previewPath="/team/motor-lab"/></TeamShell>;
+    raceMode={raceMode}
+    previewPath="/team/motor-lab/viewer-preview"/></TeamShell>;
 }

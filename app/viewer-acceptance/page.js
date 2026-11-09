@@ -1,6 +1,8 @@
 import {notFound} from 'next/navigation';
 import {createPhysicalFirstViewerTestRaceV1} from
   '../../lib/viewer/physical-first-test-race-v1.mjs';
+import {createPhysicalFirstSplitViewerTestRaceV1} from
+  '../../lib/viewer/physical-first-split-test-race-v1.mjs';
 import ViewerPreviewClient from '../team/motor-lab/viewer-preview/ViewerPreviewClient';
 import '@pelotonia/race-viewer/commentary.css';
 import '@pelotonia/race-viewer/profile.css';
@@ -13,7 +15,11 @@ export default async function ViewerAcceptancePage({searchParams}){
     process.env.PELOTONIA_VIEWER_V1_PREVIEW_ENABLED!=='true')
     notFound();
   const params=await searchParams;
+  const category=params?.category==='women'?'women':'men';
+  const raceMode=params?.race==='split'?'split':'connected';
+  const race=raceMode==='split'?
+    createPhysicalFirstSplitViewerTestRaceV1(category):
+    createPhysicalFirstViewerTestRaceV1(category);
   return <ViewerPreviewClient previewPath="/viewer-acceptance"
-    {...createPhysicalFirstViewerTestRaceV1(
-      params?.category==='women'?'women':'men')}/>;
+    raceMode={raceMode} {...race}/>;
 }

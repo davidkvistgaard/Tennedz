@@ -29,8 +29,10 @@ the end of its kilometre, never at the start.
 The viewer interpolates visually between boundaries; these interpolated
 locations are **not** additional measured motor positions.
 
-The preview clock is anchored to the same UTC hour for all spectators, runs
-at 1×, and holds the finish until the next hour. The API returns server time
+The preview clock is anchored to the same UTC cycle for all spectators, runs
+at 1×, and holds the finish until the next cycle. The cycle is rounded up
+to enough whole hours for the recorded race, so a long race cannot reset
+before its last paid finish. The API returns server time
 for clock offset estimation and refreshes every five seconds. Camera target
 is browser-local. Commentary and route profile use the same viewer time;
 events after that time are withheld. No result or winner is supplied.
@@ -85,3 +87,44 @@ production commit. Publishing the Motor Lab branch directly would also
 publish its unrelated engine history and replace newer production-only
 changes. A separate release integration is required before tennedz.eu can
 use this as its default Motor Lab screen.
+
+## Experimental split-road export
+
+`/team/motor-lab?race=split` selects the separate,
+`physical-first-split-to-pelotonia.viewer.v1-1` adapter. It runs a fixed
+120 km mountain test with 15 teams and 120 riders, separately for men and
+women. The original connected preview remains available. The 120 rider
+count is a Motor Lab supported field size within the package's 150 rider
+limit; the known 160 rider test cannot be exported intact.
+
+The source is the current V94 experimental physical-first probe, not the
+kit's older native adapter. An independent replay checks all 14,400 rider
+kilometres before export. The adapter checks every state membership change
+against recorded drop, launch, catch, or paid-contact events. Five paid
+rear contacts appear in this seed. It refuses an unrecorded transition.
+The viewer's one shared timeline uses the motor's per-rider kilometre
+crossing times and recorded contact anchors. It interpolates longitudinal
+distance between those anchors; those intermediate distances are estimates,
+not exact simultaneous motor positions. It does not derive coordinates
+from group time gaps. Rider lanes remain at the centreline because the
+motor does not record them. The route is a schematic distance axis.
+
+The export intentionally omits official results, winner, classifications,
+and helmets. The same-seed finish check still differs from the guided
+recording for 50 of 120 riders, with a maximum absolute difference of
+421.01688 seconds in this fixed seed. This test shows that the data bridge
+works; it does not calibrate V94 or authorize guided race replacement.
+The split preview stays on the Motor Lab branch until whole-race calibration,
+finish validation, authenticated browser checks, and an isolated release
+integration pass.
+
+Local browser acceptance on 2026-11-09 opened both 120-rider fields with
+WebGL rendering, the shared clock progressing, the route profile and
+commentary updating, and a browser-local rider camera selection. The
+observed frame rate was roughly 23–35 fps on this machine. No browser
+error or warning was reported. Riders in a connected road overlap heavily
+because lateral positions are absent; the scene currently looks sparse
+despite all 120 riders being present in the data. The package's CPU timing
+readout displayed 0.0 ms and is not a GPU performance measurement. Exact
+race-end rendering was checked with the viewer sampler, not by waiting
+three hours in the browser.

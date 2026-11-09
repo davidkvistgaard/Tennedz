@@ -63,9 +63,10 @@ export default function ViewerPreviewScene({feed,coverage,
     <details><summary>Recording coverage and limitations</summary>
       <p>Adapter {version}; {coverage.paidRiderKilometres}
         independently replayed rider-kilometres; {
-          coverage.boundaryFrames} measured boundary frames.</p>
+          coverage.boundaryFrames} display frames; {
+          coverage.recordedContactEvents??0} recorded contact events.</p>
       <p>Within-kilometre positions are viewer interpolation between
-        paid boundary states. All rider lanes are unknown and rendered on
+        paid crossing and contact anchors. All rider lanes are unknown and rendered on
         the centreline. The horizontal route is schematic. The test kit
         uses the game’s catalog allocation for fictional teams. No
         official result, geography or scene asset was supplied.</p>
