@@ -58,6 +58,13 @@ test('committed two kilometre race exports complete viewer evidence',()=>{
   tampered.finishEvidence.clockGroups[0].riderIds.pop();
   assert.throws(()=>sealPhysicalFirstRaceDocumentV2(tampered,
     {category:'men'}),/invalid finish clock groups/);
+  const duplicated=structuredClone(exported);
+  duplicated.finishEvidence.entries[1].riderId=
+    duplicated.finishEvidence.entries[0].riderId;
+  duplicated.finishEvidence.clockGroups[0].riderIds[1]=
+    duplicated.finishEvidence.clockGroups[0].riderIds[0];
+  assert.throws(()=>sealPhysicalFirstRaceDocumentV2(duplicated,
+    {category:'men'}),/invalid finish clock groups/);
 });
 
 test('export refuses missing orders and a different paid recording',()=>{
