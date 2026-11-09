@@ -42,6 +42,8 @@ test('committed two kilometre race exports complete viewer evidence',()=>{
   assert.equal(exported.source.validatedKm,2);
   assert.equal(exported.source.exportVersion,
     PAID_MOTOR_RACE_EXPORT_VERSION);
+  assert.equal(exported.source.recordVersion,
+    'physical-first-race-record-1');
   assert.equal(exported.source.validatedRiderKilometres,4);
   assert.equal(exported.coverage.teamKitSource,'committed-team-style');
   assert.equal(exported.coverage.riderNumberSource,'committed-race-bib');

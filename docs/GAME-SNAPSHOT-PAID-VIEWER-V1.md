@@ -18,6 +18,13 @@ unknown manifest fields are rejected. The route comes from the motor's
 energy cap. The paid race export then verifies every rider-kilometre and
 produces `motor-lab-viewer-document-v2`.
 
+The export calls `physical-first-race-record-1`, a source-independent motor
+recording boundary. It independently replays the committed inputs, validates
+every measured finish crossing, and checks that the viewer adapter preserves
+the same rider IDs, roads and clocks exactly. The document records this motor
+boundary version. V94 group claims remain calibration evidence only and
+cannot supply viewer positions or results.
+
 The resulting viewer document labels `officialResults:false`. Paid finish
 clocks are evidence, not official places, points or awards. The adapter's
 longitudinal coordinates between recorded crossings are interpolation; lane
