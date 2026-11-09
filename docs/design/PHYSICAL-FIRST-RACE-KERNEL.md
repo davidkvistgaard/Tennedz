@@ -337,3 +337,11 @@ committed inputs; changed abilities and altered finish clocks are refused.
 This boundary is ready for the viewer exporter to consume, but still needs
 official result policy, full-race attack calibration and game-cycle
 integration before replacing the historic source.
+
+The record also reports exact finish-clock groups and the number of riders
+in unresolved ties. In the current 20-team, 20 km game-shaped flat fixtures,
+all 160 riders in each category share one measured clock. A motor that knows
+only the group clock cannot supply a 1–160 placing or distribute the existing
+place-based point table without inventing the order. A later sprint and
+finish-contact model must record and replay individual crossing times or an
+explicit unresolved tie policy before official settlement can use this path.
