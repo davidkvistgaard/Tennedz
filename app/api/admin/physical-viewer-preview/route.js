@@ -5,8 +5,8 @@ import {AuthError} from '../../../../lib/auth/policy.mjs';
 import {rpc,uuid} from '../../../../lib/race/server';
 import {loadPhysicalGameRaceRecordInputV1} from
   '../../../../lib/viewer/physical-game-race-source-v1.mjs';
-import {verifyPhysicalFirstRaceDocumentV2} from
-  '../../../../lib/viewer/physical-first-race-document-v2.mjs';
+import {verifyPhysicalFirstRaceDocument} from
+  '../../../../lib/viewer/physical-first-race-document-v3.mjs';
 import {recordedGameBroadcastV1} from
   '../../../../lib/viewer/recorded-game-broadcast-v1.mjs';
 
@@ -39,7 +39,7 @@ export const GET=protectedRoute(async req=>{
   if(!broadcast.recordingPublished)
     throw new AuthError('PHYSICAL_VIEWER_NOT_PUBLISHED',
       'The physical race recording is not published yet.',425);
-  const document=verifyPhysicalFirstRaceDocumentV2(data.document);
+  const document=verifyPhysicalFirstRaceDocument(data.document);
   return NextResponse.json({...document,
     recording:{version:'physical-viewer-recording-v1',
       recordedAt:data.recorded_at}});
@@ -58,7 +58,7 @@ export const POST=protectedRoute(async req=>{
   if(existingError)throw new AuthError('PHYSICAL_VIEWER_UNAVAILABLE',
     'Could not check the physical race recording.',503);
   if(existing){
-    const document=verifyPhysicalFirstRaceDocumentV2(
+    const document=verifyPhysicalFirstRaceDocument(
       existing.document);
     return NextResponse.json({ok:true,event_id:eventId,
       sha256:document.sha256,

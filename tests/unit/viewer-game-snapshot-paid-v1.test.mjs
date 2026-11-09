@@ -82,7 +82,7 @@ test('saved physical entries become a complete paid viewer race',()=>{
   assert.equal(document.feed.riderCategory,'women');
   assert.equal(document.coverage.officialResults,false);
   const direct=createPhysicalGameRaceDocumentV1(snapshot,rows);
-  assert.equal(direct.sha256,document.sha256);
+  assert.notEqual(direct.sha256,document.sha256);
   assert.equal(direct.input.seedProvenance,'event-seed');
   assert.equal(direct.input.weatherProvenance,'event-locked-weather');
   assert.throws(()=>createPhysicalGameRaceDocumentV1(

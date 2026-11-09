@@ -64,8 +64,9 @@ begin
   expected_seed := coalesce(nullif(
     current_snapshot->'event'->>'seed',''),
     p_event::text || ':recovery-one-day-3');
-  if p_document->>'schemaVersion' is distinct from
-      'motor-lab-viewer-document-v2'
+  if coalesce(p_document->>'schemaVersion','') not in (
+      'motor-lab-viewer-document-v2',
+      'motor-lab-viewer-document-v3')
     or p_document->'input'->>'eventId' is distinct from
       p_event::text
     or p_document->'input'->>'officialResults' is distinct from

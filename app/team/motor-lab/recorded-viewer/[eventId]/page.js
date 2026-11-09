@@ -3,8 +3,8 @@ import {requireAdministrator,databaseClient} from
   '../../../../../lib/auth/server';
 import {AuthError} from '../../../../../lib/auth/policy.mjs';
 import {uuid} from '../../../../../lib/race/server';
-import {verifyPhysicalFirstRaceDocumentV2} from
-  '../../../../../lib/viewer/physical-first-race-document-v2.mjs';
+import {verifyPhysicalFirstRaceDocument} from
+  '../../../../../lib/viewer/physical-first-race-document-v3.mjs';
 import {scenicPresentationV1} from
   '../../../../../lib/viewer/scenic-presentation-v1.mjs';
 import {recordedGameBroadcastV1} from
@@ -45,7 +45,7 @@ export default async function RecordedGameViewerPage({params}){
     return <TeamShell compact><WaitingRecordedGameViewer
       eventId={eventId}
       publicationAtMs={broadcast.publicationAtMs}/></TeamShell>;
-  const document=verifyPhysicalFirstRaceDocumentV2(data.document);
+  const document=verifyPhysicalFirstRaceDocument(data.document);
   if(document.input?.eventId!==eventId||
     document.input?.officialResults!==false)notFound();
   const feed=scenicPresentationV1({...document.feed,events:[]});

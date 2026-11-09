@@ -76,6 +76,8 @@ test('paid viewer recording is immutable and private',async()=>{
   try{
     const input=await source(db);
     await assert.rejects(save(db,input,{...document,
+      schemaVersion:undefined}),/falsely official/);
+    await assert.rejects(save(db,input,{...document,
       coverage:{officialResults:true}}),/falsely official/);
     await assert.rejects(save(db,input,{...document,
       feed:{raceId:'recorded-race',results:[{place:1}]}}),
@@ -115,6 +117,20 @@ test('paid viewer recording is immutable and private',async()=>{
     assert.equal(grants.rows[0].anon_execute,false);
     assert.equal(grants.rows[0].anon_clock,false);
     assert.equal(grants.rows[0].anon_frames,false);
+  }finally{await db.close();}
+});
+
+test('unapplied recording migration accepts v3 while retaining v2',async()=>{
+  const db=await database();
+  try{
+    const input=await source(db);
+    const current={...document,
+      schemaVersion:'motor-lab-viewer-document-v3'};
+    const receipt=await save(db,input,current);
+    assert.equal(receipt.sha256,sha);
+    assert.equal(receipt.already_recorded,false);
+    await assert.rejects(save(db,input,document),
+      /already committed/);
   }finally{await db.close();}
 });
 

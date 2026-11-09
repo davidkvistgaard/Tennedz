@@ -96,11 +96,11 @@ checks, not a hosted or cross-device performance guarantee. The women's
 full replay and a local camera turn. No hosted event
 has yet exercised this path, and the
 new frame-slice migration remains unapplied alongside the three earlier
-physical viewer migrations. The saved-document digest
-covers feed, finish, coverage and motor source, but does not cover the
-document's input metadata; the database separately checks event ID and seed
-on write. This too should be hardened in a new document version before
-official publication.
+physical viewer migrations. New game recordings use document v3, whose
+digest binds input metadata, feed, finish, coverage and motor source.
+Historic v2 recordings retain their original verification rule and remain
+readable. The local, unapplied recording migration accepts both versions;
+the database separately checks event ID and seed on write.
 
 An isolated browser fixture also verified the new spectator path with a
 signed-in non-administrator. A saved 16-rider game-shaped race displayed a
