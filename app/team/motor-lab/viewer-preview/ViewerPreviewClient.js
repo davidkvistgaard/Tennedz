@@ -12,11 +12,14 @@ export default function ViewerPreviewClient({feed,coverage,version,
   previewPath='/team/motor-lab',
   clockPath='/api/motor-lab/viewer-clock'}){
   const categoryQuery=feed.riderCategory==='women'?'?category=women':'';
+  const splitQuery=`?mode=split${
+    feed.riderCategory==='women'?'&category=women':''}`;
   const exhibitionQuery=`?mode=exhibition${
     feed.riderCategory==='women'?'&category=women':''}${
     fieldSize===32?'':`&field=${fieldSize}`}${
     missingAsset?'&asset=missing':''}`;
   const clockQuery=`category=${feed.riderCategory}${
+    mode==='split'?'&race=split':''}${
     mode==='exhibition'&&fieldSize!==32?`&field=${fieldSize}`:''}${
     mode==='exhibition'&&missingAsset?'&asset=missing':''}`;
   const [sync,setSync]=useState(null);
@@ -48,16 +51,24 @@ export default function ViewerPreviewClient({feed,coverage,version,
   return <main className="motor-viewer-preview">
     <div className="motor-viewer-intro">
       <h1>{mode==='exhibition'?'Synthetic visual exhibition':
-        'Recorded Motor Lab race'}</h1>
+        mode==='split'?'Recorded split-road Motor Lab race':
+          'Recorded Motor Lab race'}</h1>
       <span>{feed.riderCategory==='women'?'Women':'Men'} · {
-        coverage.riderCount} riders · {mode==='exhibition'?'4 min':'40 km'}</span>
+        coverage.riderCount} riders · {mode==='exhibition'?'4 min':
+        `${feed.route.profile.samples.at(-1)[0]/1000} km`}</span>
       <span>{mode==='exhibition'?(missingAsset?
         'Fictional fixture · missing texture test':
         'Entire race is fictional'):
-        'Motor race data · synthetic scenery'}</span>
+        mode==='split'?'Experimental motor race data · synthetic scenery':
+          'Motor race data · synthetic scenery'}</span>
+      {mode==='split'?<span>Same-seed finish calibration: {
+        coverage.sameSeedFinishMismatches}/{coverage.riderCount}
+        {' '}riders differ. No official result.</span>:null}
       <nav className="motor-viewer-modes" aria-label="Viewer mode">
         <a aria-current={mode==='recorded'?'page':undefined}
           href={`/viewer${categoryQuery}`}>Recorded race</a>
+        <a aria-current={mode==='split'?'page':undefined}
+          href={`/viewer${splitQuery}`}>Split-road race</a>
         <a aria-current={mode==='exhibition'?'page':undefined}
           href={`/viewer${exhibitionQuery}`}>Visual exhibition</a>
       </nav>
@@ -74,6 +85,7 @@ export default function ViewerPreviewClient({feed,coverage,version,
         'Synthetic visual exhibition'}</a> · <a href={
       `${previewPath}?category=${
         feed.riderCategory==='women'?'men':'women'}${
+        mode==='split'?`&${previewPath==='/viewer'?'mode':'race'}=split`:
         mode==='exhibition'?`&mode=exhibition${
           fieldSize===32?'':`&field=${fieldSize}`}${
           missingAsset?'&asset=missing':''}`:''}`}>

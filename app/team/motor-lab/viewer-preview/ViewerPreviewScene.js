@@ -28,10 +28,16 @@ export default function ViewerPreviewScene({feed,coverage,mode='recorded',
   },[cycleKey]);
   const time=stats?.time??0;
   const sampler=useMemo(()=>createSampler(feed),[feed]);
-  const groupOnlyPositions=useMemo(()=>mode==='recorded'&&
-    feed.frames.every(frame=>frame.positions.length>1&&
-      new Set(frame.positions.map(row=>`${row.distance}:${
-        row.lateral??0}`)).size===1),[feed,mode]);
+  const groupOnlyPositions=useMemo(()=>mode!=='exhibition'&&
+    feed.frames.some(frame=>{
+      const seen=new Set();
+      return frame.positions.some(row=>{
+        const key=`${row.groupId}:${row.distance}:${row.lateral??0}`;
+        if(seen.has(key))return true;
+        seen.add(key);
+        return false;
+      });
+    }),[feed,mode]);
   const situation=useMemo(()=>sampler(time),[sampler,time]);
   const groups=labelRaceGroups(raceGroups(situation.positions),
     situation.groupRoles);
@@ -113,7 +119,8 @@ export default function ViewerPreviewScene({feed,coverage,mode='recorded',
             <span>{String(index+1).padStart(2,'0')}</span>
             <strong>{group.label}</strong>
             <small>{group.count} {group.count===1?'rider':'riders'}</small>
-            <b>{index===0?'LEAD':Number.isFinite(stats?.gaps?.[group.id])?
+            <b>{index===0?'LEAD':mode==='split'?'—':
+              Number.isFinite(stats?.gaps?.[group.id])?
               `+${clockLabel(stats.gaps[group.id])}`:'—'}</b>
           </button>)}
         </div>
@@ -162,6 +169,8 @@ export default function ViewerPreviewScene({feed,coverage,mode='recorded',
             <time>{clockLabel(row.time)}</time> {row.text}</li>)}</ol>:null}
         <p className="race-theatre-coverage">{mode==='exhibition'?
           'Fictional positions, groups, route and scenery. No game result.':
+          mode==='split'?
+            'Paid kilometre crossings and contact events are recorded. Between crossings, distance is interpolated. No official result or precise rider lanes. Scenery is synthetic.':
           'Motor positions and events are recorded. Scenery is a synthetic visual study, not game geography.'}</p>
       </aside>:null}
       <div className="race-theatre-camera-status" role="status">
@@ -174,8 +183,8 @@ export default function ViewerPreviewScene({feed,coverage,mode='recorded',
     </div>
     <div className="race-theatre-bottom">
       {groupOnlyPositions?<p className="race-theatre-position-note">
-        This recording has one road coordinate per group. Its riders overlap
-        in the scene; their individual lanes and order were not recorded.
+        Riders on the same recorded road overlap in the scene. Their
+        individual lanes and order were not recorded.
       </p>:null}
       <div className="race-theatre-commentary">
         <p>RACE COMMENTARY <small>{mode==='exhibition'?
@@ -209,9 +218,13 @@ export default function ViewerPreviewScene({feed,coverage,mode='recorded',
       {error?<p role="alert" className="race-theatre-error">{error}</p>:null}
       <details className="race-theatre-data"><summary>Data coverage and limitations</summary>
         <p>{mode==='exhibition'?'Visual fixture':'Adapter'} {version};
-          {coverage.boundaryFrames} frames.</p>
+          {coverage.boundaryFrames} display frames.
+          {mode==='split'?` ${coverage.paidRiderKilometres} paid rider-kilometres; ${
+            coverage.recordedContactEvents} recorded contacts.`:''}</p>
         <p>{mode==='exhibition'?
           'All positions, groups, gaps, route and events are fictional. This mode tests the viewer appearance only.':
+          mode==='split'?
+            'Longitudinal positions between motor crossings are interpolated. Group gaps are not presented as exact simultaneous positions. Lanes, canonical geography, helmets and official results are absent. Trees, ground and spectators are synthetic.':
           'Within-kilometre movement is interpolation between recorded states. Lanes, canonical geography, helmets and official results are absent. Trees, ground and spectators are synthetic visual presentation.'}</p>
       </details>
       <output className="race-theatre-diagnostics" hidden

@@ -125,3 +125,38 @@ Official race replays still lack the simultaneous rider coordinates that the
 package requires. The next data milestone is a new versioned adapter from a
 whole-race motor recording that supplies actual distance and group transitions
 for every rider, followed by the same-seed replay and finish checks.
+
+## Experimental 120 km split-road recording
+
+`/viewer?mode=split` and `/team/motor-lab/viewer-preview?race=split` use two
+immutable men/women exports from experimental Motor Lab commit
+`5352f9eb0a2f618976083b933189839bcacbe673`. Their adapter version is
+`physical-first-split-to-pelotonia.viewer.v1-1`. Each contains 120 riders,
+14,400 paid rider-kilometres, 131 frames and five recorded paid contacts.
+The renderer receives recorded kilometre crossing times and membership;
+between crossings it interpolates distance for presentation. The two fields
+share the same server-derived clock cycle with all spectators of that field;
+camera choice remains local. The exported feed has no official results or
+group-gap field. The UI does not infer official gaps from interpolated road
+positions and does not reveal future commentary.
+
+This is a fixed Motor Lab test race, not a conversion of an official game run.
+Same-seed finish calibration differs for 50 of 120 riders, with a maximum
+deviation of 421.01688 seconds. Some riders share the same longitudinal
+coordinate because individual lanes and order were not recorded. At the start,
+the adapter records 50 solo riders, so the group strip is unusually long.
+The route, terrain, trees and spectators are a synthetic visual study and do
+not assert canonical geography. No official finish result is displayed.
+
+On 9 November 2026, local browser checks loaded both gender categories from
+start to late race on hardware-backed WebGL2 (ANGLE Intel UHD Graphics via
+Direct3D11), with no renderer errors. The 120 km scene displayed about 21 fps
+after warming up and around 4.0–4.1 million triangles on that machine. The
+separate 150-rider, 40 km synthetic fixture displayed about 25 fps and 1.52
+million triangles in the same development browser. These measurements are
+below a smooth-playback release target and are not evidence for other devices.
+The split recording remains an explicitly labelled preview. The guided game
+race at `/team/view/[event_stage_id]` still has group gaps and results but no
+simultaneous rider positions, so it retains its report until the engine records
+an authoritative viewer feed. The experimental split data must not be
+substituted for an official race.

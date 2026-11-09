@@ -2,22 +2,23 @@ import {NextResponse} from 'next/server';
 import {protectedRoute} from '../../../../lib/auth/server';
 import {recordedViewerRaceV1} from
   '../../../../lib/viewer/recorded-race-v1.mjs';
-import {previewBroadcastClockV1} from
-  '../../../../lib/viewer/preview-clock-v1.mjs';
+import {recordedSplitRaceV1} from
+  '../../../../lib/viewer/recorded-split-race-v1.mjs';
+import {previewBroadcastClockV2} from
+  '../../../../lib/viewer/preview-clock-v2.mjs';
 
 export const runtime='nodejs';
 export const dynamic='force-dynamic';
-const durations=new Map();
-
 async function handler(request){
   const category=new URL(request.url).searchParams.get('category');
+  const split=new URL(request.url).searchParams.get('race')==='split';
   if(!['men','women'].includes(category))
     return NextResponse.json({error:'Invalid category.'},{status:400});
-  if(!durations.has(category))durations.set(category,
-    recordedViewerRaceV1(category).feed.duration);
+  const feed=(split?recordedSplitRaceV1(category):
+    recordedViewerRaceV1(category)).feed;
   return NextResponse.json({
-    raceId:`motor-lab-physical-40km-${category}-seed1`,
-    ...previewBroadcastClockV1(durations.get(category),Date.now())},
+    raceId:feed.raceId,
+    ...previewBroadcastClockV2(feed.duration,Date.now())},
   {headers:{'Cache-Control':'no-store'}});
 }
 
