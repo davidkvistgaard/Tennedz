@@ -63,3 +63,11 @@ their previous order: no paid sprint or overtaking has happened, so these
 are neither official placements nor a validated stage result. A leader
 change, drop, attack or contact still prevents this settlement until its
 position movement is implemented and replayed.
+
+A focused 120 km, 160-rider flat fixture with one ordered front worker
+now completes all 19,200 rider-kilometres in both the paid race replay
+and the separate positional trace. Every rider passes kilometre 119 and
+the paid finish tail covers 160/160 crossings. This fixture proves
+whole-route continuity only for its connected-road conditions. It does
+not replace the 72-case, both-category release calibration, nor does it
+establish sprint results or performance in the viewer.

@@ -240,3 +240,18 @@ test('paid finish tail covers a 160-rider connected field',()=>{
   assert.ok(tail.tailDistanceM<1000);
   assert.equal(tail.officialResults,false);
 });
+
+test('120 km connected road pays and replays all 160 rider positions',()=>{
+  const committed=cappedInput(120,20);
+  const trace=recordPhysicalFirstPositionTraceV1(committed,grid);
+  assert.equal(trace.raceValidatedKm,120);
+  assert.equal(trace.completedThroughKm,120);
+  assert.equal(trace.validatedPositionRiderKm,19200);
+  assert.equal(trace.unsupported,null);
+  assert.equal(trace.checkpointCrossings.filter(row=>
+    row.km===119).length,160);
+  const tail=settlePhysicalFirstPositionFinishTailV1(
+    committed,trace);
+  assert.equal(tail.lineCrossingCoverage,'160/160');
+  assert.equal(tail.officialResults,false);
+});
