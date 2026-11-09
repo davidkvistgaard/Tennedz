@@ -128,3 +128,26 @@ despite all 120 riders being present in the data. The package's CPU timing
 readout displayed 0.0 ms and is not a GPU performance measurement. Exact
 race-end rendering was checked with the viewer sampler, not by waiting
 three hours in the browser.
+
+### Subsequent experimental front-worker calibration
+
+The immutable split recording already transferred to the separate viewer
+release remains the version above. A later `physical-first-leader-plan-3`
+changes *selective* front work: an unnamed payable helper is chosen to
+minimize predicted start drops before using ability as a tie-breaker, for
+every sporting goal. A named worker and an explicit full-chase order still
+take precedence. This changes the simulated paid road, not the viewer's
+geometry or the historical export.
+
+The same 120 km mountain seed now completes with zero unrecorded contacts,
+zero start drops and zero same-seed finish differences for both categories
+under selective chase and no attack. A separate full-chase variant still
+records five paid rear contacts and differs for 50 riders, maximum
+421.01688 seconds. Six additional 120 km checks across flat, rolling and
+mountain profiles with another seed found zero finish differences without
+attacks; selective attack orders left one difference (18.36576, 18.41296
+and 62.13208 seconds respectively). Both categories with selective or
+repeated attack orders and another seed also left one difference; full
+chase left 51 differences. These are test-case observations, not a general
+calibration claim. The unchanged full-chase scenario keeps split/contact
+coverage visible while the motor still needs general whole-race calibration.

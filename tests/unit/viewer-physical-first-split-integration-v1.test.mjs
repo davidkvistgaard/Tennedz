@@ -8,7 +8,7 @@ import {previewBroadcastClockV1} from
   '../../lib/viewer/preview-clock-v1.mjs';
 
 for(const category of ['men','women'])
-  test(`paid split race ${category} reaches viewer finish`,()=>{
+  test(`selective paid race ${category} reaches viewer finish`,()=>{
     const {feed,coverage,version}=
       createPhysicalFirstSplitViewerTestRaceV1(category);
     assert.deepEqual(validateFeed(feed),feed);
@@ -16,8 +16,8 @@ for(const category of ['men','women'])
     assert.equal(feed.riderCategory,category);
     assert.equal(feed.riders.length,120);
     assert.equal(coverage.paidRiderKilometres,14400);
-    assert.equal(coverage.recordedContactEvents,5);
-    assert.ok(coverage.sameSeedFinishMismatches>0);
+    assert.equal(coverage.recordedContactEvents,0);
+    assert.equal(coverage.sameSeedFinishMismatches,0);
     assert.equal(coverage.officialResults,false);
     assert.equal(feed.results,undefined);
     assert.equal(feed.frames[0].time,0);
@@ -36,12 +36,12 @@ for(const category of ['men','women'])
       assert.ok(commentaryAt(feed,time).every(row=>
         row.time<=time));
     }
-    assert.ok(feed.frames[0].positions.some(row=>
-      row.groupId.startsWith('solo:')));
-    assert.ok(feed.frames.at(-1).positions.some(row=>
-      row.groupId.startsWith('rear:')));
-    assert.ok(feed.events.some(row=>
-      row.label.includes('recorded paid contact')));
+    assert.ok(feed.frames[0].positions.every(row=>
+      row.groupId==='peloton'));
+    assert.ok(feed.frames.at(-1).positions.every(row=>
+      row.groupId==='peloton'));
+    assert.equal(feed.events.some(row=>
+      row.label.includes('recorded paid contact')),false);
     assert.ok(feed.frames.at(-1).positions.every(row=>
       row.distance===120000));
     assert.equal(commentaryAt(feed,0).some(row=>
@@ -51,4 +51,23 @@ for(const category of ['men','women'])
     assert.equal(anchor.clock.serverEpochMs,4*3_600_000);
     assert.ok(anchor.clock.serverEpochMs+
       feed.duration*1000<8*3_600_000);
+  });
+
+for(const category of ['men','women'])
+  test(`full chase ${category} preserves paid split/contact evidence`,()=>{
+    const {feed,coverage}=createPhysicalFirstSplitViewerTestRaceV1(
+      category,{chase:'all'});
+    assert.deepEqual(validateFeed(feed),feed);
+    assert.equal(coverage.paidRiderKilometres,14400);
+    assert.equal(coverage.recordedContactEvents,5);
+    assert.equal(coverage.sameSeedFinishMismatches,50);
+    assert.ok(feed.frames[0].positions.some(row=>
+      row.groupId.startsWith('solo:')));
+    assert.ok(feed.frames.at(-1).positions.some(row=>
+      row.groupId.startsWith('rear:')));
+    assert.ok(feed.events.some(row=>
+      row.label.includes('recorded paid contact')));
+    assert.ok(createSampler(feed)(feed.duration).positions.every(row=>
+      row.distance===120000));
+    assert.equal(feed.results,undefined);
   });

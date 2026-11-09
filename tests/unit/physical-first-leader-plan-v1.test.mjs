@@ -69,7 +69,7 @@ test('named worker cannot be silently replaced when unable to pay',()=>{
     /Named front worker cannot pay the road/);
 });
 
-test('sprint rotation chooses the quickest helper who keeps more shelter',()=>{
+test('selective front work chooses a payable helper who keeps shelter',()=>{
   const request=input();
   delete request.teams[0].orders.baseline.frontWorkRiderId;
   request.teams[0].riders[1]=rider('a2',70);
@@ -78,8 +78,20 @@ test('sprint rotation chooses the quickest helper who keeps more shelter',()=>{
   assert.equal(plan.leaderRiderId,'a1');
   assert.equal(plan.predictedStartDrops,0);
   assert.equal(plan.choice,
-    'preserve_sprint_group_with_paid_front');
+    'preserve_road_group_with_paid_front');
   assert.ok(plan.perceivedAbilityAtChoice>0);
+});
+
+test('selective summit support also preserves the paid bunch',()=>{
+  const request=input();
+  delete request.teams[0].orders.baseline.frontWorkRiderId;
+  request.stakes[0].sportingGoal='summit_attack';
+  request.teams[0].riders[1]=rider('a2',70);
+  request.teams[1].riders[0]=rider('b1',37);
+  const plan=planPhysicalFirstPelotonLeaderV1(request);
+  assert.equal(plan.leaderRiderId,'a1');
+  assert.equal(plan.predictedStartDrops,0);
+  assert.equal(plan.choice,'preserve_road_group_with_paid_front');
 });
 
 test('full chase still selects the fastest payable helper',()=>{
