@@ -27,6 +27,21 @@ The optional full 159-file unit suite was started and stopped while an
 unchanged, long-running heterogeneous motor test was still computing; it
 has no passing or failing final status. The targeted viewer tests passed.
 
+The pushed merge commit `0d12df8b` built as protected Vercel preview
+`dpl_38BJPnDxhrFqcEWUPLfdC8FwZAna` (READY, no production alias). An
+authenticated in-app browser opened that exact preview: the saved 32-rider
+men's and women's feeds, the 120-rider women's split-road feed, group labels,
+shared commentary and WebGL canvas rendered. The split sample plainly reports
+50/120 finish-calibration differences and no official result. On Intel UHD
+WebGL2/Direct3D11, an isolated hosted 30-rider fictional exhibition sampled
+50 fps and 627,220 triangles; the isolated 150-rider exhibition sampled
+34 fps and 1,519,340 triangles, with zero renderer errors. Opening several
+WebGL race tabs together reduced the observed rates to about 14–20 fps, so
+these measurements are per-tab observations rather than a device guarantee.
+The 32-rider saved race has only a common group road position: its individual
+rider rigs overlap, and one visible rider cannot be interpreted as a recorded
+peloton formation.
+
 The strict whole-race release audit completed 72/72 scenarios but found
 60/72 same-seed finish mismatches and 0 official results. Hosted Supabase
 does not yet contain the physical entry or recording tables. Those opt-in
