@@ -15,6 +15,12 @@ the largest difference grows from 3.6888 seconds at kilometre 1 to 421.47936
 seconds at kilometre 120. The women, rolling, all-team chase case with holdout
 seed `viewer-release-holdout-2` likewise starts with 120 source peloton riders
 versus 100 paid peloton riders and 20 mismatches at kilometre 1.
+The first paid front worker is `you-5`; the detached riders' perceived
+sheltered ability is 1.13–5.37 points below that worker's pace. The current
+full-chase leader plan explicitly selects the fastest payable ordered helper,
+so this is a model-choice difference, not an adapter timing or missing-rider
+error. Changing that choice requires a new, versioned motor policy and
+whole-race balance evidence; historic recordings must retain their version.
 
 On the first seed, women, mountain, selective chase and selective attack, the
 sole discrepancy starts at kilometre 20: V94 claims 15 seconds for `you-7`,

@@ -53,6 +53,9 @@ const start={sourceKm:0,roads:[{roadId:'peloton',
 const probe=runPhysicalFirstWholeRaceProbeV1({start,kilometres,
   teams,stakes:rivalIntent,raceSeed:recording.raceSeed});
 const finish=calibratePhysicalFirstFinishV1(recording,probe);
+const firstPaidDrops=probe.steps.find(step=>
+  step.peloton.startDropEvents.length);
+const dropEvents=firstPaidDrops?.peloton.startDropEvents??[];
 const EPS=.002;
 const checkpointRows=recording.frames.map((frame,index)=>{
   const state=probe.states[index+1];
@@ -100,6 +103,17 @@ process.stdout.write(`${JSON.stringify({
     maxAbsoluteMismatchSeconds:finish.maxAbsoluteMismatchSeconds,
     maxMismatchRiderId:finish.maxMismatchRiderId},
   firstMismatch:first??null,
+  firstPaidPelotonDrop:firstPaidDrops?{
+    km:firstPaidDrops.sourceKm,
+    leaderId:firstPaidDrops.peloton.road.leaderRiderId,
+    count:dropEvents.length,
+    abilityShortfallRange:[
+      +Math.min(...dropEvents.map(row=>
+        row.leaderAbility-row.perceivedShelterHoldAbility)).toFixed(6),
+      +Math.max(...dropEvents.map(row=>
+        row.leaderAbility-row.perceivedShelterHoldAbility)).toFixed(6)],
+    riders:dropEvents.map(row=>row.riderId),
+  }:null,
   checkpoints:checkpointRows.filter(row=>
     row.km<=5||row.km%10===0||row.km===first?.km),
   worstFinish:finish.comparisons.toSorted((a,b)=>
