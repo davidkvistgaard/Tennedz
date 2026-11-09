@@ -6,7 +6,9 @@ import {validateFeed,createSampler,createRaceExportLoader} from
 import {createPhysicalFirstRaceDocumentV1,
   PHYSICAL_FIRST_RACE_DOCUMENT_VERSION} from
   '../../lib/viewer/physical-first-race-document-v1.mjs';
-import {previewBroadcastClockV1,previewRacePublishedV1} from
+import {VIEWER_PREVIEW_CYCLE_MS,previewBroadcastClockV1,
+  previewRacePublishedV1,
+  previewVisibleEventsV1} from
   '../../lib/viewer/preview-clock-v1.mjs';
 
 for(const category of ['men','women'])
@@ -48,6 +50,25 @@ test('complete document is released only after the shared paid finish',()=>{
     at+duration*1000-1),false);
   assert.equal(previewRacePublishedV1(duration,
     at+duration*1000),true);
+});
+
+test('shared clock releases recorded events only when reached',()=>{
+  const feed={duration:12,events:[
+    {time:0,label:'Start'},
+    {time:5,label:'Contact'},
+    {time:12,label:'Finish'}]};
+  const anchor=previewBroadcastClockV1(feed.duration,0)
+    .clock.serverEpochMs;
+  assert.deepEqual(previewVisibleEventsV1(feed,anchor)
+    .map(row=>row.label),['Start']);
+  assert.deepEqual(previewVisibleEventsV1(feed,anchor+4999)
+    .map(row=>row.label),['Start']);
+  assert.deepEqual(previewVisibleEventsV1(feed,anchor+5000)
+    .map(row=>row.label),['Start','Contact']);
+  assert.deepEqual(previewVisibleEventsV1(feed,anchor+12000)
+    .map(row=>row.label),['Start','Contact','Finish']);
+  assert.deepEqual(previewVisibleEventsV1(feed,
+    anchor+VIEWER_PREVIEW_CYCLE_MS).map(row=>row.label),['Start']);
 });
 
 test('package-native HTTP loader accepts the completed Motor Lab export',

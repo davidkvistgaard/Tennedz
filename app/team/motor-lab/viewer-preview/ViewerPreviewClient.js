@@ -18,8 +18,10 @@ export default function ViewerPreviewClient({feed,coverage,version,
     {raceId:feed.raceId,evidence:initialFinishEvidence}:null);
   const finishEvidence=paidFinish?.raceId===feed.raceId?
     paidFinish.evidence:initialFinishEvidence;
-  const racePublished=sync&&sync.serverNowMs>=
+  const racePublished=sync?.raceId===feed.raceId&&
+    sync.serverNowMs>=
     sync.clock.serverEpochMs+feed.duration*1000;
+  const publicEvents=sync?.raceId===feed.raceId?sync.events:[];
   useEffect(()=>{
     let active=true;
     const load=async()=>{
@@ -32,10 +34,15 @@ export default function ViewerPreviewClient({feed,coverage,version,
         const payload=await response.json();
         const received=Date.now();
         if(payload.raceId!==feed.raceId||
-          payload.clock?.duration!==feed.duration)
+          payload.clock?.duration!==feed.duration||
+          !Array.isArray(payload.events)||
+          payload.events.some(event=>event.time>
+            Math.min(feed.duration,(payload.serverNowMs-
+              payload.clock.serverEpochMs)/1000)))
           throw new Error('Shared clock does not match this race.');
         if(active){
-          setSync({clock:payload.clock,serverNowMs:payload.serverNowMs,
+          setSync({raceId:payload.raceId,events:payload.events,
+            clock:payload.clock,serverNowMs:payload.serverNowMs,
             serverOffsetMs:payload.serverNowMs-(sent+received)/2});
           setError(null);
         }
@@ -122,7 +129,8 @@ export default function ViewerPreviewClient({feed,coverage,version,
     {error?<p role="alert">{error} <a href="/team/motor-lab/engine">
       Open the Motor Lab engine</a>.</p>:null}
     {!sync&&!error?<p role="status">Synchronizing race time…</p>:null}
-    {sync?<PreviewScene feed={feed} coverage={coverage}
+    {sync?.raceId===feed.raceId?<PreviewScene feed={feed} coverage={coverage}
+      publicEvents={publicEvents}
       finishEvidence={racePublished?finishEvidence:null}
       mode={raceMode==='split'?'split':'recorded'}
       version={version} {...sync}/>:null}

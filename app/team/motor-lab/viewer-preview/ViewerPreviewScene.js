@@ -16,7 +16,7 @@ const finishClockLabel=seconds=>{
 };
 
 export default function ViewerPreviewScene({feed,coverage,mode='recorded',
-  version,clock,serverOffsetMs,finishEvidence=null}){
+  version,clock,serverOffsetMs,finishEvidence=null,publicEvents=[]}){
   const viewerRef=useRef(null),lastUpdate=useRef(-1);
   const lastAssetStatus=useRef('');
   const graphicsBackend=useRef(null);
@@ -52,7 +52,8 @@ export default function ViewerPreviewScene({feed,coverage,mode='recorded',
   const situation=useMemo(()=>sampler(time),[sampler,time]);
   const groups=labelRaceGroups(raceGroups(situation.positions),
     situation.groupRoles);
-  const commentary=commentaryAt(feed,time),latest=commentary.at(-1);
+  const commentary=commentaryAt({...feed,events:publicEvents},time),
+    latest=commentary.at(-1);
   const remaining=formatFinishDistance(stats?.finishRemaining??
     feed.route.profile.samples.at(-1)[0]);
   const selected=target.type==='rider'?
@@ -214,7 +215,7 @@ export default function ViewerPreviewScene({feed,coverage,mode='recorded',
         </div>
         <div className="race-theatre-timeline" aria-label="Shared race timeline">
           <div className="race-theatre-track"><span style={{width:`${progress}%`}}/>
-            {feed.events?.filter(event=>event.riderId&&event.time<=time)
+            {publicEvents.filter(event=>event.riderId&&event.time<=time)
               .map((event,index)=><i
               key={index} style={{left:`${100*event.time/feed.duration}%`}}/>)}</div>
           <div><small>START</small><small>{Math.round(progress)}% OF RACE</small>

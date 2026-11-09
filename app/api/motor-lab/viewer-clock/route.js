@@ -6,7 +6,7 @@ import {createPhysicalFirstSplitViewerTestRaceV1} from
   '../../../../lib/viewer/physical-first-split-test-race-v1.mjs';
 import {parsePhysicalSplitVariantV1} from
   '../../../../lib/viewer/physical-first-split-variant-v1.mjs';
-import {previewBroadcastClockV1} from
+import {previewBroadcastClockV1,previewVisibleEventsV1} from
   '../../../../lib/viewer/preview-clock-v1.mjs';
 
 export const runtime='nodejs';
@@ -31,9 +31,11 @@ async function handler(request){
   const race=raceMode==='split'?
     createPhysicalFirstSplitViewerTestRaceV1(category,variant):
     createPhysicalFirstViewerTestRaceV1(category);
+  const now=Date.now();
   return NextResponse.json({
     raceId:race.feed.raceId,
-    ...previewBroadcastClockV1(race.feed.duration,Date.now())},
+    ...previewBroadcastClockV1(race.feed.duration,now),
+    events:previewVisibleEventsV1(race.feed,now)},
   {headers:{'Cache-Control':'no-store'}});
 }
 

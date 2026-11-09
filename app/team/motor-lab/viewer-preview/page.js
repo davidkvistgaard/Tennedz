@@ -51,7 +51,7 @@ export default async function ViewerPreviewPage({searchParams}){
   return <TeamShell compact><ViewerPreviewClient {...race}
     finishEvidence={finishEvidence}
     version={race.adapterVersion??race.version}
-    feed={scenicPresentationV1(race.feed)}
+    feed={scenicPresentationV1({...race.feed,events:[]})}
     raceMode={raceMode}
     variantQuery={variant?physicalSplitVariantQueryV1(variant):''}
     previewPath="/team/motor-lab/viewer-preview"/></TeamShell>;
