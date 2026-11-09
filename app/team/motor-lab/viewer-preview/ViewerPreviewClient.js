@@ -7,13 +7,17 @@ const PreviewScene=dynamic(()=>import('./ViewerPreviewScene'),{
     <p role="status">Loading the race renderer…</p>});
 
 export default function ViewerPreviewClient({feed,coverage,version,
-  finishEvidence=null,
+  finishEvidence:initialFinishEvidence=null,
   raceMode='connected',
   variantQuery='',
   previewPath='/team/motor-lab'}){
   const splitSettings=new URLSearchParams(variantQuery);
   const [sync,setSync]=useState(null);
   const [error,setError]=useState(null);
+  const [paidFinish,setPaidFinish]=useState(initialFinishEvidence?
+    {raceId:feed.raceId,evidence:initialFinishEvidence}:null);
+  const finishEvidence=paidFinish?.raceId===feed.raceId?
+    paidFinish.evidence:initialFinishEvidence;
   const racePublished=sync&&sync.serverNowMs>=
     sync.clock.serverEpochMs+feed.duration*1000;
   useEffect(()=>{
@@ -42,6 +46,28 @@ export default function ViewerPreviewClient({feed,coverage,version,
     return ()=>{active=false;clearInterval(timer);};
   },[feed.raceId,feed.riderCategory,feed.duration,raceMode,
     variantQuery]);
+  useEffect(()=>{
+    if(raceMode!=='split'||!racePublished||finishEvidence)return;
+    let active=true;
+    const controller=new AbortController();
+    (async()=>{
+      const response=await fetch(`/api/motor-lab/viewer-race?category=${
+        feed.riderCategory}${variantQuery?`&${variantQuery}`:''}`,
+      {cache:'no-store',signal:controller.signal});
+      if(!response.ok)throw new Error('Paid finish unavailable.');
+      const document=await response.json();
+      if(document.raceId!==feed.raceId||
+        document.feed?.duration!==feed.duration||
+        document.finishEvidence?.publishedAt!==feed.duration)
+        throw new Error('Paid finish does not match this race.');
+      if(active)setPaidFinish({raceId:feed.raceId,
+        evidence:document.finishEvidence});
+    })().catch(cause=>{
+      if(active&&cause.name!=='AbortError')setError(cause.message);
+    });
+    return()=>{active=false;controller.abort();};
+  },[raceMode,racePublished,finishEvidence,feed.raceId,
+    feed.riderCategory,feed.duration,variantQuery]);
   return <main className="motor-viewer-preview">
     <header className="motor-viewer-intro">
       <h1>{raceMode==='split'?'Motor Lab recorded race':
@@ -97,7 +123,7 @@ export default function ViewerPreviewClient({feed,coverage,version,
       Open the Motor Lab engine</a>.</p>:null}
     {!sync&&!error?<p role="status">Synchronizing race time…</p>:null}
     {sync?<PreviewScene feed={feed} coverage={coverage}
-      finishEvidence={finishEvidence}
+      finishEvidence={racePublished?finishEvidence:null}
       mode={raceMode==='split'?'split':'recorded'}
       version={version} {...sync}/>:null}
     <footer><a href="/team/motor-lab/engine">

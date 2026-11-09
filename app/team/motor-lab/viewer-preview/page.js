@@ -9,6 +9,8 @@ import {parsePhysicalSplitVariantV1,physicalSplitVariantQueryV1} from
   '../../../../lib/viewer/physical-first-split-variant-v1.mjs';
 import {scenicPresentationV1} from
   '../../../../lib/viewer/scenic-presentation-v1.mjs';
+import {previewRacePublishedV1} from
+  '../../../../lib/viewer/preview-clock-v1.mjs';
 import ViewerPreviewClient from './ViewerPreviewClient';
 import TeamShell from '../../../components/TeamShell';
 import '@pelotonia/race-viewer/commentary.css';
@@ -43,7 +45,11 @@ export default async function ViewerPreviewPage({searchParams}){
   const race=raceMode==='split'?
     createPhysicalFirstRaceDocumentV1(category,variant):
     createPhysicalFirstViewerTestRaceV1(category);
+  const finishEvidence=raceMode==='split'&&
+    previewRacePublishedV1(race.feed.duration,Date.now())?
+    race.finishEvidence:null;
   return <TeamShell compact><ViewerPreviewClient {...race}
+    finishEvidence={finishEvidence}
     version={race.adapterVersion??race.version}
     feed={scenicPresentationV1(race.feed)}
     raceMode={raceMode}
