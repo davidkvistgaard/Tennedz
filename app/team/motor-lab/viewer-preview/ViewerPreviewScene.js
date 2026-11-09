@@ -97,6 +97,8 @@ export default function ViewerPreviewScene({feed,coverage,mode='recorded',
           }
           if(report)setDiagnostics({
             renderer:report.renderer,
+            visible:next.visible,
+            fps:next.fps,
             crowdCount:report.crowdCount,
             renderedFrames:report.renderedFrames,
             cpuP50Ms:report.cpuFrameMs?.p50,

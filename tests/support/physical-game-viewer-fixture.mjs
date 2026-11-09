@@ -7,18 +7,29 @@ const abilities={sprint:65,flat:65,hills:65,mountain:65,
   cobbles:65,timetrial:65,endurance:65,strength:65,
   wind:65,leadership:65,form:50,fatigue:0};
 
-export function physicalGameViewerFixture(){
+const fixtureUuid=(teamNumber,riderNumber=0)=>{
+  const team=teamNumber.toString(16).padStart(8,'0');
+  const rider=riderNumber.toString(16).padStart(12,'0');
+  return `${team}-0000-4000-8000-${rider}`;
+};
+
+export function physicalGameViewerFixture({teamCount=2,
+  category='men'}={}){
+  if(!Number.isInteger(teamCount)||teamCount<2||teamCount>18||
+    !['men','women'].includes(category))
+    throw new Error('The fixture needs 2–18 teams and one rider category.');
+  const gender=category==='women'?'F':'M';
   const event={id:physicalViewerEventId,kind:'one_day',
-    gender:'M',seed:'fixture-saved-race-seed',
+    gender,seed:`fixture-saved-race-seed-${category}-${teamCount}`,
     weather_locked:{temp_c:16,wind_kph:0,
       precipitation_mm:0}};
   const stage={distance_km:20,profile_points:[[0,100],[20,100]],
     keypoints:[]};
-  const teams=['b','d'].map((prefix,index)=>{
-    const id=`${prefix.repeat(8)}-${prefix.repeat(4)}-4${prefix.repeat(3)}-8${prefix.repeat(3)}-${prefix.repeat(12)}`;
+  const teams=Array.from({length:teamCount},(_,index)=>{
+    const id=fixtureUuid(index+1);
     const riders=Array.from({length:8},(_,number)=>({
-      ...abilities,id:`${prefix.repeat(8)}-${prefix.repeat(4)}-4${prefix.repeat(3)}-8${prefix.repeat(3)}-${String(number+1).padStart(12,'0')}`,
-      name:`Fixture rider ${index+1}-${number+1}`,gender:'M'}));
+      ...abilities,id:fixtureUuid(index+1,number+1),
+      name:`Fixture rider ${index+1}-${number+1}`,gender}));
     return {id,name:`Fixture team ${index+1}`,riders,
       entry:{selected_riders:riders.map(rider=>rider.id),
         captain_id:riders[6].id}};

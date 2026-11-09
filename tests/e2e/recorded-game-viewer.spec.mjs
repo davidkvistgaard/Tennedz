@@ -28,9 +28,16 @@ test('saved paid game race renders on the shared viewer clock',
       {name:'Recorded game race'})).toBeVisible();
     const finished=process.env.
       PELOTONIA_E2E_PHYSICAL_VIEWER_FINISHED==='true';
+    const riderCount=8*Number(process.env.
+      PELOTONIA_E2E_PHYSICAL_VIEWER_TEAMS??2);
+    const category=process.env.
+      PELOTONIA_E2E_PHYSICAL_VIEWER_CATEGORY??'men';
     if(finished){
       await expect(page.getByText(
         'Saved Motor Lab race · synthetic scenery · unofficial finish'))
+        .toBeVisible();
+      await expect(page.getByText(new RegExp(
+        `${category==='women'?'Women':'Men'} · ${riderCount} riders`)))
         .toBeVisible();
       await expect(page.getByRole('navigation',
         {name:'Race groups'})).toBeVisible();
@@ -42,10 +49,30 @@ test('saved paid game race renders on the shared viewer clock',
             'data-viewer-diagnostics');
         return raw?JSON.parse(raw)?.renderer:null;
       },{timeout:15000}).toBe('WebGL');
+      await expect.poll(async()=>{
+        const raw=await page.locator(
+          '[data-viewer-diagnostics]').getAttribute(
+            'data-viewer-diagnostics');
+        return raw?JSON.parse(raw)?.renderedFrames??0:0;
+      },{timeout:15000}).toBeGreaterThan(60);
+      const diagnostics=JSON.parse(await page.locator(
+        '[data-viewer-diagnostics]').getAttribute(
+          'data-viewer-diagnostics'));
+      expect(diagnostics.visible).toBe(riderCount);
+      expect(diagnostics.errors).toBe(0);
+      expect(diagnostics.graphicsBackend?.api).toBe('WebGL2');
+      if(process.env.PELOTONIA_REQUIRE_HARDWARE_WEBGL==='true')
+        expect(diagnostics.graphicsBackend?.unmaskedRenderer??'')
+          .not.toMatch(/SwiftShader|llvmpipe|software/i);
+      console.log('Recorded game viewer diagnostics:',
+        JSON.stringify({category,riderCount,...diagnostics}));
+      await test.info().attach('viewer-diagnostics',{
+        body:JSON.stringify({category,riderCount,...diagnostics},null,2),
+        contentType:'application/json'});
       await expect(page.getByRole('heading',
         {name:'Measured finish crossings'})).toBeVisible(
           {timeout:65000});
-      await expect(page.getByText('All 16 crossings'))
+      await expect(page.getByText(`All ${riderCount} crossings`))
         .toBeVisible();
     }else{
       await expect(page.getByText(

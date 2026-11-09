@@ -14,3 +14,17 @@ test('browser fixture is a paid complete game-shaped race',()=>{
   assert.equal(document.source.validatedRiderKilometres,320);
   assert.equal(document.coverage.officialResults,false);
 });
+
+test('game-shaped fields retain complete paid riders in both categories',()=>{
+  for(const category of ['men','women'])
+    for(const teamCount of [4,18]){
+      const document=physicalGameViewerFixture({category,teamCount});
+      assert.deepEqual(validateFeed(document.feed),document.feed);
+      assert.equal(document.feed.riderCategory,category);
+      assert.equal(document.feed.riders.length,teamCount*8);
+      assert.equal(document.source.validatedRiderKilometres,
+        teamCount*8*20);
+      assert.equal(document.finishEvidence.entries.length,teamCount*8);
+      assert.equal(document.coverage.officialResults,false);
+    }
+});

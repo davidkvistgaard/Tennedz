@@ -23,8 +23,13 @@ const v2RecordingFixture = process.env.PELOTONIA_E2E_V2_RECORDING === "true" ||
   v2SettlementFixture;
 const physicalViewerFixture=process.env.PELOTONIA_E2E_PHYSICAL_VIEWER===
   'true';
+const physicalViewerTeamCount=Number(process.env.
+  PELOTONIA_E2E_PHYSICAL_VIEWER_TEAMS??2);
+const physicalViewerCategory=process.env.
+  PELOTONIA_E2E_PHYSICAL_VIEWER_CATEGORY??'men';
 const physicalViewerDocument=physicalViewerFixture?
-  physicalGameViewerFixture():null;
+  physicalGameViewerFixture({teamCount:physicalViewerTeamCount,
+    category:physicalViewerCategory}):null;
 const physicalViewerRecordedAt=physicalViewerFixture?
   new Date(Date.now()+(process.env.
     PELOTONIA_E2E_PHYSICAL_VIEWER_FINISHED==='true'?-600000:60000))

@@ -82,6 +82,15 @@ key ordering and detects changed recording content. Local browser fixtures
 verified the withholding gate and actual WebGL rendering after publication
 for one complete 20 km game-shaped race. This is an experimental admin preview;
 the fixture is not a hosted game race or GPU performance approval.
+The game-shaped browser matrix also covers 32 and 144 paid riders in each
+category. Every rider reached a measured finish, all were visible in WebGL2,
+and the diagnostics reported no rendering errors. On the local Intel UHD
+Direct3D11 backend, the four sampled frame rates were 53 fps (32 men),
+50 fps (32 women), 34 fps (144 men) and 32 fps (144 women). These are single
+local samples, not a device-wide performance guarantee. The viewer contract
+currently accepts at most 150 riders; a game field of complete eight-rider
+teams can reach 144 within that cap. Exact 30/150 synthetic renderer stress
+tests remain separate from the game-shaped race matrix.
 Until every participating team saves a physical input, this route correctly
 refuses the old incomplete entries.
 
