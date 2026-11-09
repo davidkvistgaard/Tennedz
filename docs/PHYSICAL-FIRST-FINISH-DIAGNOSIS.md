@@ -35,3 +35,20 @@ evidence. It must not move physical riders into a V94 group, copy V94 gaps,
 or suppress a paid drop just to make the comparison green. Until the
 calibration and official finish contract are resolved, the recorded viewer
 remains a Motor Lab preview with unofficial measured crossings.
+
+## Versioned bunch leader experiment, 9 November
+
+`physical-first-leader-plan-4` keeps the committed front-work order and
+single payable leader. Among an unnamed team's payable helpers, it first
+minimizes predicted start drops for both selective and all-team chase, then
+chooses the faster perceived helper. Named workers and emergency orders
+still take precedence. This changes pace by choosing an actual eligible
+rider; no rider is assigned to a V94 group and no gap is copied.
+
+The full 72-scenario, 120 km, 15-team same-seed audit completed all races.
+Calibrated finishes increased from 12 to 24; mismatched finishes fell from
+60 to 48. Official results remain unavailable in all 72. The smoke matrix
+improved from 6/20 to 12/20. A separate 160-rider mountain attack fixture
+improved from 67 finish mismatches to one, with all 19,200 rider-kilometres
+still paid and replayed. These numbers support retaining the policy as an
+experimental increment; they do not approve guided races or publication.

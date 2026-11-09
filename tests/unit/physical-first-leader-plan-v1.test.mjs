@@ -94,14 +94,16 @@ test('selective summit support also preserves the paid bunch',()=>{
   assert.equal(plan.choice,'preserve_road_group_with_paid_front');
 });
 
-test('full chase still selects the fastest payable helper',()=>{
+test('full chase uses a payable helper without avoidable start drops',()=>{
   const request=input();
   delete request.teams[0].orders.baseline.frontWorkRiderId;
   request.teams[0].orders.baseline.chase='all';
   request.teams[0].riders[1]=rider('a2',70);
+  request.teams[1].riders[0]=rider('b1',37);
   const plan=planPhysicalFirstPelotonLeaderV1(request);
-  assert.equal(plan.leaderRiderId,'a2');
-  assert.equal(plan.choice,'pay_named_or_rotating_front');
+  assert.equal(plan.leaderRiderId,'a1');
+  assert.equal(plan.predictedStartDrops,0);
+  assert.equal(plan.choice,'preserve_road_group_with_paid_front');
 });
 
 test('sitting in supplies no invented bunch worker',()=>{
