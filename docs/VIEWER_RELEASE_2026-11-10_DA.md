@@ -2,16 +2,22 @@
 
 ## Udgivelse og kilde
 
-- Udgivet kode: `485d60cc232d4d883531498ea856efd5018dac1f` på
-  `codex/viewer-atlas-integration`.
-- Vercel-produktion: `dpl_FkRU2sf1QtCroYzDKpc3nYvLgmvL`, bygget som
-  produktionsdeployment uden domæne og derefter promoveret uden genbygning.
-  Både `tennedz.eu` og `www.tennedz.eu` pegede på dette deployment efter
-  promovering. Den tidligere `dpl_CEUquKHrX4mpB98B3tKZxg24hSaj` var
-  fortsat `READY` som rollback.
-- Deploymentets kildefiler for `ViewerPreviewScene.js` og den fokuserede
-  Motor Lab-browsertest havde samme SHA-1 som de tilsvarende filer i den rene
-  lokale commit. Produktionssidens JavaScript-URL havde det nye deployment-id.
+- Aktuelt udgivet kode: `8e9beb732cb53a66a2b95ba77888ef30a3c7d1b5`
+  på `codex/viewer-atlas-integration`. Det gør handlingen "Generate and watch
+  a test race" tydelig på standardvieweren og fører den loggede manager til
+  taktikformularen. Den underliggende kamerarettelse kom med
+  `485d60cc232d4d883531498ea856efd5018dac1f`.
+- Aktuelt Vercel-produktionsdeployment: `dpl_BSEMYg5mqyu9mM4W3HFez7qCPshq`.
+  Kameraudgaven `dpl_FkRU2sf1QtCroYzDKpc3nYvLgmvL` og den forrige
+  `dpl_CEUquKHrX4mpB98B3tKZxg24hSaj` var `READY` ved kontrol. Begge
+  udgivelser blev først bygget til produktionsmiljø uden domæne og derefter
+  promoveret uden genbygning. `tennedz.eu` og `www.tennedz.eu` pegede på
+  det aktuelle deployment efter sidste promovering.
+- Deploymentets kildefiler for `ViewerPreviewClient.js`, `viewer-preview.css`
+  og den fokuserede Motor Lab-browsertest havde samme SHA-1 som i den rene
+  lokale commit. Tidligere blev `ViewerPreviewScene.js` ligeledes matchet
+  for kamerarettelsen. Produktionssidens JavaScript-URL havde det aktuelle
+  deployment-id.
 - Den parallelle Atlas-gren stod på `d55d2ef42b2b7dffa2a32c51d171740d4528a5db`
   ved udgivelsen; denne commit er forfader til viewer-grenen. Motor-grenen
   blev ikke ændret.
@@ -44,6 +50,13 @@ ikke muligt i den aktuelle browsersession; den beskyttede viewer og dens
 afsluttede replay blev derfor browserkontrolleret på `tennedz.eu` straks
 efter promovering. Vercels runtime-logoversigt viste ingen indlæg i
 kontrolvinduet.
+
+På den sidste udgivelse viste den offentlige standardviewer knappen
+"Generate and watch a test race", WebGL-rendering og JavaScript fra
+`dpl_BSEMYg5mqyu9mM4W3HFez7qCPshq`. Et klik førte den loggede manager til
+den beskyttede formular med plan, rute, scenarienummer og holdordrer uden at
+starte et løb automatisk. `www.tennedz.eu/viewer` viderestillede til
+`tennedz.eu/viewer` og viste samme deployment uden konsolfejl.
 
 ## Testport
 
