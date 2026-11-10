@@ -5,7 +5,8 @@ import {createMotorLabPreviewSource} from
 import {adaptMotorLabCheckpointsV1} from
   '../../../../lib/viewer/motor-lab-checkpoint-adapter-v1.mjs';
 import {createCheckpointBroadcastSessionV2,
-  verifyCheckpointBroadcastSessionV2, checkpointSessionClockV2} from
+  verifyCheckpointBroadcastSessionV2, checkpointSessionClockV2,
+  motorLabRecordingDigestV2} from
   '../../../../lib/viewer/checkpoint-broadcast-session-v2.mjs';
 
 export const runtime = 'nodejs';
@@ -45,7 +46,8 @@ async function handler(request, _context, auth) {
       source, now);
     if (session.raceId !== adapted.feed.raceId ||
         session.engineVersion !== source.race.version ||
-        session.tuningVersion !== source.race.tuningVersion)
+        session.tuningVersion !== source.race.tuningVersion ||
+        session.recordingDigest !== motorLabRecordingDigestV2(source))
       return NextResponse.json({ok: false,
         error: 'The motor version for this replay is no longer available.'},
       {status: 409});

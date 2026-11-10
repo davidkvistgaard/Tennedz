@@ -4,7 +4,7 @@ import {createMotorLabPreviewSource} from
   '../../lib/engine/v2/preview.mjs';
 import {createCheckpointBroadcastSessionV2,
   verifyCheckpointBroadcastSessionV2,
-  checkpointSessionClockV2} from
+  checkpointSessionClockV2, motorLabRecordingDigestV2} from
   '../../lib/viewer/checkpoint-broadcast-session-v2.mjs';
 
 const key = 'test-only-session-signing-key';
@@ -22,6 +22,7 @@ test('signed session starts each generated race at the server time', () => {
     plan: source.plan, routeId: source.routeId, seed: source.seed,
     orders: source.orders});
   assert.equal(joined.startedAtMs, session.startedAtMs);
+  assert.equal(joined.recordingDigest, motorLabRecordingDigestV2(source));
   const first = checkpointSessionClockV2(duration,
     session.startedAtMs, session.startedAtMs);
   const second = checkpointSessionClockV2(duration,
@@ -33,6 +34,18 @@ test('signed session starts each generated race at the server time', () => {
     session.startedAtMs + duration * 1000 - 1).clock.paused, false);
   assert.equal(checkpointSessionClockV2(duration, session.startedAtMs,
     session.startedAtMs + duration * 1000).clock.paused, true);
+});
+
+test('same-version source changes are visible to the replay integrity gate', () => {
+  const source = createMotorLabPreviewSource(input);
+  const session = createCheckpointBroadcastSessionV2(source, source,
+    1_800_000_000_000, key);
+  const altered = structuredClone(source);
+  altered.race.frames[0].riderGroups[0].deficitSeconds += 1;
+  assert.notEqual(session.recordingDigest,
+    motorLabRecordingDigestV2(altered));
+  assert.equal(session.engineVersion, altered.race.version);
+  assert.equal(session.tuningVersion, altered.race.tuningVersion);
 });
 
 test('changing the broadcast start or orders invalidates the token', () => {
