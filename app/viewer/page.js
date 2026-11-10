@@ -2,8 +2,6 @@ import {recordedViewerRaceV1} from '../../lib/viewer/recorded-race-v1.mjs';
 import {recordedSplitRaceV1} from
   '../../lib/viewer/recorded-split-race-v1.mjs';
 import {scenicPresentationV1} from '../../lib/viewer/scenic-presentation-v1.mjs';
-import {illustrativeGroupLayoutFeedV1} from
-  '../../lib/viewer/illustrative-group-layout-v1.mjs';
 import {syntheticExhibitionV1} from
   '../../lib/viewer/synthetic-exhibition-v1.mjs';
 import ViewerPreviewClient from '../team/motor-lab/viewer-preview/ViewerPreviewClient';
@@ -25,13 +23,11 @@ export default async function PublicViewerPage({searchParams}){
     recordedViewerRaceV1(category);
   const race=exhibition?syntheticExhibitionV1(recorded.feed,
     {fieldSize,missingAsset}):recorded;
-  const displayFeed=exhibition?race.feed:
-    illustrativeGroupLayoutFeedV1(race.feed);
   return <ViewerPreviewClient previewPath="/viewer"
     clockPath={exhibition?'/api/viewer-exhibition-clock':
       '/api/viewer-sample-clock'}
     mode={exhibition?'exhibition':split?'split':'recorded'}
     fieldSize={fieldSize} missingAsset={missingAsset}
     {...race} feed={exhibition?race.feed:
-      scenicPresentationV1(displayFeed)}/>;
+      scenicPresentationV1(race.feed)}/>;
 }

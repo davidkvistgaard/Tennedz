@@ -172,6 +172,9 @@ arrangement does not claim measured lanes, wheel order, contact, or race
 results. The viewer labels this limitation beside the canvas. A frame at the
 start line can still overlap because the source has zero distance and the
 display does not move anyone before the start.
+The renderer receives this display-only copy on the client. The group strip,
+distance to finish, time gaps, route profile, commentary and results sample
+the unmodified recording; the two feeds are not serialized into the page.
 
 The 120 km schematic scene uses 80 m longitudinal terrain cells instead of
 20 m cells. Decorative road markings on both 40 km and 120 km schematic

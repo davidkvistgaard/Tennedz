@@ -1,7 +1,9 @@
 'use client';
 import {useEffect,useMemo,useRef,useState} from 'react';
 import {RaceViewer,RouteProfile,commentaryAt,createSampler,
-  formatFinishDistance,labelRaceGroups,raceGroups} from '@pelotonia/race-viewer';
+  finishRemaining,formatFinishDistance,labelRaceGroups,raceGroups} from '@pelotonia/race-viewer';
+import {illustrativeGroupLayoutFeedV1} from
+  '../../../../lib/viewer/illustrative-group-layout-v1.mjs';
 
 const clockLabel=seconds=>{
   const value=Math.max(0,Math.floor(seconds||0));
@@ -27,6 +29,10 @@ export default function ViewerPreviewScene({feed,coverage,mode='recorded',
     viewerRef.current?.setZoom(.35);
   },[cycleKey]);
   const time=stats?.time??0;
+  // Keep the recorded feed authoritative for every sporting display value.
+  // Only the WebGL canvas receives illustrative rider spacing.
+  const displayFeed=useMemo(()=>mode==='exhibition'?feed:
+    illustrativeGroupLayoutFeedV1(feed),[feed,mode]);
   const sampler=useMemo(()=>createSampler(feed),[feed]);
   const groupOnlyPositions=useMemo(()=>mode!=='exhibition'&&
     feed.frames.some(frame=>{
@@ -46,15 +52,16 @@ export default function ViewerPreviewScene({feed,coverage,mode='recorded',
       .map((event,index)=>({id:`recorded-${index}`,time:event.time,
         text:event.label})):
     commentaryAt(feed,time),latest=commentary.at(-1);
-  const remaining=formatFinishDistance(stats?.finishRemaining??
-    feed.route.profile.samples.at(-1)[0]);
+  const totalDistance=feed.route.profile.samples.at(-1)[0];
+  const remaining=formatFinishDistance(finishRemaining(
+    situation.positions,totalDistance,feed.finish)??totalDistance);
   const selected=target.type==='rider'?
     feed.riders.find(rider=>rider.id===target.id):null;
   const progress=Math.min(100,100*time/feed.duration);
   const choose=next=>{setTarget(next);viewerRef.current?.follow(next);};
   return <section className="race-theatre" aria-label="Pelotonia race theatre">
     <div className="race-theatre-stage">
-      <RaceViewer key={cycleKey} ref={viewerRef} feed={feed} clock={clock}
+      <RaceViewer key={cycleKey} ref={viewerRef} feed={displayFeed} clock={clock}
         serverOffsetMs={serverOffsetMs} target={target}
         onSelect={choose} onError={cause=>setError(cause.message)}
         onStats={next=>{if(next.time<lastUpdate.current-30)
@@ -131,8 +138,8 @@ export default function ViewerPreviewScene({feed,coverage,mode='recorded',
             <strong>{group.label}</strong>
             <small>{group.count} {group.count===1?'rider':'riders'}</small>
             <b>{index===0?'LEAD':mode==='split'?'—':
-              Number.isFinite(stats?.gaps?.[group.id])?
-              `+${clockLabel(stats.gaps[group.id])}`:'—'}</b>
+              Number.isFinite(situation.gaps?.[group.id])?
+              `+${clockLabel(situation.gaps[group.id])}`:'—'}</b>
           </button>)}
         </div>
         <button className="race-theatre-details-toggle" type="button"

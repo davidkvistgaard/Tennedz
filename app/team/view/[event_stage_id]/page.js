@@ -7,8 +7,6 @@ import { useSearchParams } from "next/navigation";
 import TeamShell from "../../../components/TeamShell";
 import { adaptGuidedReplayV1 } from "../../../../lib/viewer/guided-replay-adapter-v1.mjs";
 import { guidedReplayClockV1 } from "../../../../lib/viewer/guided-replay-clock-v1.mjs";
-import { illustrativeGroupLayoutFeedV1 } from
-  "../../../../lib/viewer/illustrative-group-layout-v1.mjs";
 import { guidedSceneryV1 } from
   "../../../../lib/viewer/guided-scenery-v1.mjs";
 import "@pelotonia/race-viewer/commentary.css";
@@ -47,7 +45,7 @@ export default function ViewPage({ params }) {
     } catch { return null; }
   }, [adapted, data, now]);
   const displayFeed = useMemo(() => adapted &&
-    guidedSceneryV1(illustrativeGroupLayoutFeedV1(adapted.feed)), [adapted]);
+    guidedSceneryV1(adapted.feed), [adapted]);
   const canShowReport = !adapted || !clock || clock.paused;
   useEffect(() => {
     if (!clock?.paused) return;
