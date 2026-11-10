@@ -430,3 +430,12 @@ one paid catch and one paid later front pass. Maximum front clock
 differences were under 0.25 seconds. The fixture is still synthetic;
 these runs vary profile and field size, not rider roster, tactical
 choices or route width.
+
+The shared step now caches a rider's terrain/role speed for its own
+kilometre invocation; reserve changes only after the step is settled.
+Three complete fixture recording SHA-256 hashes (16 riders at 4 and
+120 km, and 160 riders at 30 km) stayed identical before and after
+the cache. On the same machine, the 160-rider 120 km race-3 compute
+fell from about 96 to 24 seconds, and compute plus exact replay from
+about 146 to 42 seconds. This is a runtime improvement, not a change
+to rider decisions or race outcomes.
