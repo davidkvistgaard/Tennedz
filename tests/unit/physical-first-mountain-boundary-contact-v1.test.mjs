@@ -40,6 +40,10 @@ test('committed 120 km mountain contact covers paid field',t=>{
   assert.equal(recording.frames.reduce((count,frame)=>
     count+frame.attackers.length,0),0);
   const {teams,rivalIntent}=recording.committedInputs;
+  // Keep the early-drop case explicit: the newer planner otherwise
+  // selects a weaker worker to avoid avoidable first-kilometre losses.
+  teams.find(team=>team.id==='you')
+    .orders.baseline.frontWorkRiderId='you-5';
   const kilometres=recording.route.kilometres;
   const riders=teams.flatMap(team=>team.riders.map(
     rider=>({

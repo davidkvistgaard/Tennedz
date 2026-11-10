@@ -78,6 +78,16 @@ catch and dropped-worker movement. The position model remains separate
 from guided races and the production viewer; successful distance coverage
 does not clear the release gate.
 
+A separate 160-rider mountain diagnostic with an explicitly named,
+committed front worker reproduces 66 first-kilometre start drops in the
+older paid source. The opt-in wheel-position model stops at kilometre 1:
+it cannot yet pay and record the slow riders sliding through the bunch.
+`physical-first-position-rear-tail-drop-km-1` proves the narrower case
+of a single last wheel losing measured contact after paid sheltered travel,
+then paying solo travel. This is replayable but is not wired into the
+whole-race runner, does not settle interior sliding or rear-group contact,
+and does not change the production viewer or release decision.
+
 Local browser WebGL checks with the deliberately synthetic renderer fixture
 showed all 30 or 150 rider rigs for both categories, 51 draw calls and no
 renderer errors. Observed status samples after settling were 68 fps for 30

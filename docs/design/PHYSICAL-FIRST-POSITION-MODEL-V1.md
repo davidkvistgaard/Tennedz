@@ -145,3 +145,23 @@ as much as 39.5 seconds, and the peloton front by up to 1.7 seconds, so
 neither calibration nor official results are established. The recorder
 rejects any second attempted departure or unpriced contact; these
 scenarios did not exercise those missing paths.
+
+The separate `physical-first-position-early-climb-audit-1` fixes a
+160-rider, 20-team mountain input with an explicitly committed named front
+worker. The older paid race records 66 first-kilometre start drops. The
+new position step stops at kilometre 1 with `Rotation kilometre loses first
+shelter.` Its speed projection is labelled **unpaid diagnostic**: it omits
+energy and collision settlement and cannot become a viewer recording.
+This fixture exposes a missing movement contract, not a reason to apply
+the old source's instantaneous drop membership to new wheel positions.
+
+`physical-first-position-rear-tail-drop-km-1` is the first narrow contact
+contract: one weak last wheel in the first kilometre pays sheltered travel
+until the measured gap reaches two wheel spacings, then pays solo travel.
+It records contact time, location, both priced distances and energy, and
+replay rejects altered data. It refuses a simultaneous front pass or any
+case without measurable contact loss. It does not claim to solve the
+160-rider fixture: interior riders still need paid sliding through the
+pack, detached riders need their own subsequent roads, and rear groups
+may form only after their actual positions establish contact. No official
+finish or viewer export is derived from this isolated contract.

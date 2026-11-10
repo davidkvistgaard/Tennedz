@@ -48,6 +48,9 @@ import {advancePhysicalFirstPositionSoloKmV1,
 import {recordPhysicalFirstPositionOneAttackRaceV1,
   replayPhysicalFirstPositionOneAttackRaceV1} from
   '../../lib/engine/v2/physical-first-position-one-attack-race-v1.mjs';
+import {advancePhysicalFirstPositionRearTailDropKmV1,
+  replayPhysicalFirstPositionRearTailDropKmV1} from
+  '../../lib/engine/v2/physical-first-position-rear-tail-drop-km-v1.mjs';
 
 const grid={laneCount:4,wheelSpacingM:2.5,laneStaggerM:.08};
 
@@ -241,6 +244,42 @@ test('one paid solo reaches the line on the shared race clock',()=>{
   assert.equal(race.officialResults,false);
   assert.deepEqual(replayPhysicalFirstPositionOneAttackRaceV1(
     request,race),race);
+});
+
+test('the last wheel pays shelter until it physically loses contact',()=>{
+  const committed=input(2);
+  committed.positionModelVersion=
+    PHYSICAL_FIRST_POSITION_START_V2_VERSION;
+  const before=createPhysicalFirstPositionStartV2({
+    input:committed,grid});
+  const tailId=before.positions.at(-1).riderId;
+  const source=committed.teams.flatMap(team=>
+    team.riders).find(row=>row.id===tailId);
+  Object.assign(source,{flat:0,hills:0,mountain:0,
+    sprint:0,endurance:0,form:0,positioning:0});
+  const start=createPhysicalFirstPositionStartV2({
+    input:committed,grid});
+  assert.equal(start.positions.at(-1).riderId,tailId);
+  const request={prior:start,
+    segment:committed.kilometres[0],
+    input:committed,riderId:tailId};
+  const drop=advancePhysicalFirstPositionRearTailDropKmV1(
+    request);
+  assert.equal(drop.contactLossEvent.type,
+    'paid_tail_contact_loss');
+  assert.ok(drop.contactLossEvent.atClockSeconds>0);
+  assert.ok(drop.contactLossEvent.paidShelteredDistanceM>0);
+  assert.ok(drop.contactLossEvent.paidSoloDistanceM>0);
+  assert.ok(drop.position.distanceM<
+    drop.peloton.positions.at(-1).distanceM);
+  assert.equal(drop.peloton.positions.length,15);
+  assert.ok(drop.decision.paidFromReserve>0);
+  assert.deepEqual(replayPhysicalFirstPositionRearTailDropKmV1(
+    request,drop),drop);
+  const forged=structuredClone(drop);
+  forged.contactLossEvent.atClockSeconds=0;
+  assert.throws(()=>replayPhysicalFirstPositionRearTailDropKmV1(
+    request,forged),/differs from paid movement/);
 });
 const rider=id=>({id,flat:65,hills:65,mountain:65,
   sprint:65,endurance:65,form:50,fatigue:0});
