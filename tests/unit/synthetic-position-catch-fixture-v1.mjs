@@ -16,16 +16,22 @@ export function prepareSyntheticPositionCatchV1({
   teamCount=2,kmCount=4,
   profile='hill',oneTimeAttack=false,
   weakBunchCount=0,
+  secondAttackAtKm=null,
   frontWorkerAtKm=null,
   raceSeed='position-seed-a'}={}){
   if(!Number.isInteger(teamCount)||
     teamCount<2||teamCount>20||
     !Number.isInteger(kmCount)||
     kmCount<4||kmCount>120||
-    !['hill','alternating'].includes(profile)||
+    !['hill','alternating',
+      'hill_then_mountain'].includes(profile)||
     typeof oneTimeAttack!=='boolean'||
     !Number.isInteger(weakBunchCount)||
     weakBunchCount<0||weakBunchCount>2||
+    secondAttackAtKm!==null&&
+      (!Number.isInteger(secondAttackAtKm)||
+        secondAttackAtKm<4||
+        secondAttackAtKm>=kmCount-1)||
     frontWorkerAtKm!==null&&
       (!Number.isInteger(frontWorkerAtKm)||
         frontWorkerAtKm<2||
@@ -42,7 +48,8 @@ export function prepareSyntheticPositionCatchV1({
             index!==6).map(row=>row.id),
           baseline:{effort:'steady',
             chase:'selective',
-            ...(weakBunchCount?{
+            ...(weakBunchCount||
+              secondAttackAtKm!==null?{
               breakWork:'cooperate'}:{}),
             attack:teamIndex===0?
               'selective':'none',
@@ -63,6 +70,18 @@ export function prepareSyntheticPositionCatchV1({
   if(oneTimeAttack)
     teams[0].orders.phases.push({
       atKm:1,attack:'none'});
+  if(secondAttackAtKm!==null){
+    Object.assign(teams[0].riders[0],{
+      hills:100,mountain:0,
+      acceleration:100});
+    teams[0].orders.phases.push({
+      atKm:secondAttackAtKm-1,
+      attack:'selective',
+      attackRiderId:'team-0-1'});
+    teams[0].orders.phases.push({
+      atKm:secondAttackAtKm,
+      attack:'none'});
+  }
   if(frontWorkerAtKm!==null){
     teams[0].orders.phases.push({
       atKm:frontWorkerAtKm,
@@ -79,11 +98,16 @@ export function prepareSyntheticPositionCatchV1({
   const kilometres=Array.from({length:kmCount},
     (_,index)=>{
       const km=index+1;
-      const hill=km>1&&(
+      const mountain=profile===
+        'hill_then_mountain'&&km>5;
+      const hill=km>1&&!mountain&&(
         profile==='hill'||km<=8||
         Math.floor(km/10)%2===1);
-      return {km,terrain:hill?'hill':'flat',
-        gradientPct:hill?3.75:0,
+      return {km,
+        terrain:mountain?'climb':
+          hill?'hill':'flat',
+        gradientPct:mountain?6.5:
+          hill?3.75:0,
         surface:'road',exposed:false,
         weather:{temperatureC:16,windKph:0,
           rainMm:0}};

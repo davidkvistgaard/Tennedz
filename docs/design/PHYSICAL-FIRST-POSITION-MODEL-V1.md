@@ -548,3 +548,52 @@ With two equally weak bunch workers, the source probe refuses
 their proposed rear group because it cannot choose a payable
 shelter-compatible leader; that case is not a completed
 same-seed comparison.
+
+`node scripts/audit-position-catch-matrix-v1.mjs --km=30`
+screens 24 synthetic combinations of 16 or 160 riders, two
+profiles, two seeds and zero, one or two weak bunch workers.
+The v5 positional recorder finishes and exactly replays all 24,
+with full per-rider kilometre decisions, intermediate checkpoint
+crossings and finish crossings. The source completes 16 cases;
+all 16 agree on final peloton membership. Its eight failures
+are the two-weak-worker rear-leader refusal above, so they do
+not establish a source/position comparison. The fixture still
+shares a narrow roster and tactical pattern; this matrix is a
+coverage measure for those inputs, not proof of other races or
+an official classification.
+
+The same catch matrix at `--km=120 --weak=0,1` completes all
+16 source and positional races, each with 16 or 160 riders, two
+profiles and two seeds. Every positional race exactly replays and
+has all rider decisions, intermediate kilometre crossings and
+finish crossings. All 16 final peloton memberships agree with
+the source. The two-weak-worker source refusal remains excluded
+from this longer comparison.
+
+`physical-first-position-shared-road-km-6` permits a later named
+attack to earn a separate departure in the same paid clock. Its
+choice and initiation cost are recorded before movement; the
+departure event is emitted only after the rider pays for clear
+lane movement and gains physical separation. The opt-in
+`multi-attack-contact-race-1` composes this with the first-kilometre
+departure. A 16-rider, 20 km synthetic hill-to-climb race with
+ordered attacks at kilometres 1 and 5 completes with 320 rider
+decisions, 304 intermediate crossings, 16 finish crossings and
+exact replay. The source also completes the same input.
+This case is **not calibrated**: paid contact joins the two
+attackers at kilometre 8, but they separate again in the
+positional model, while the source keeps them in one rear group
+at the finish. The recorded contact alone does not justify
+forcing them to stay together. A simultaneous later attack and
+planned front-worker change records a
+`front_assignment_conflict` refusal for the attempted attack.
+The front-worker move retains its paid route. This one-corridor
+priority is an explicit experiment, not a claim that the source
+attack happened. The 8-case two-attack audit at 20 km completes
+and exactly replays all positional races with complete rider
+decisions and crossings. The source makes two paid departures in
+all eight; the positional model makes two in only one, recording
+lane or assignment refusals in the others. Final rear groups
+match in one case. Thus full-race completion alone is not
+calibration, and this version cannot enter guided races. No
+official result or viewer-ready race is asserted.
