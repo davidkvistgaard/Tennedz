@@ -7,10 +7,19 @@ import {runPhysicalFirstWholeRaceProbeV1} from
   '../lib/engine/v2/physical-first-whole-race-probe-v1.mjs';
 import {recordPhysicalFirstPositionOneAttackRaceV1} from
   '../lib/engine/v2/physical-first-position-one-attack-race-v1.mjs';
-import {PHYSICAL_FIRST_POSITION_START_V2_VERSION} from
+import {createPhysicalFirstPositionStartV2,
+  PHYSICAL_FIRST_POSITION_START_V2_VERSION} from
   '../lib/engine/v2/physical-first-position-start-v2.mjs';
+import {replayRearEnergyCapV1} from
+  '../lib/engine/v2/rear-energy-cap-source-v1.mjs';
 
 const smoke=process.argv.includes('--smoke');
+const attackerAbilityShift=Number(process.argv.find(arg=>
+  arg.startsWith('--attacker-ability-shift='))
+  ?.slice('--attacker-ability-shift='.length)??0);
+if(!Number.isInteger(attackerAbilityShift)||
+  Math.abs(attackerAbilityShift)>20)
+  throw new Error('Audit attacker ability shift is invalid.');
 const grid={laneCount:4,wheelSpacingM:2.5,laneStaggerM:.08};
 const variants=smoke?[
   {category:'men',terrain:'flat',chase:'all',
@@ -34,9 +43,27 @@ for(const variant of variants){
   try{
     const {input:base}=preparePhysicalFirstSplitMotorInputV1(
       category,options);
-    const input={...base,positionModelVersion:
-      PHYSICAL_FIRST_POSITION_START_V2_VERSION};
-    const source=runPhysicalFirstWholeRaceProbeV1(base);
+    const input=structuredClone({...base,positionModelVersion:
+      PHYSICAL_FIRST_POSITION_START_V2_VERSION});
+    if(attackerAbilityShift){
+      const staged=createPhysicalFirstPositionStartV2({
+        input,grid});
+      const attackerId=staged.stagedAttackRiderId;
+      const attacker=input.teams.flatMap(team=>team.riders)
+        .find(rider=>rider.id===attackerId);
+      if(!attacker)
+        throw new Error('Audit has no committed staged attacker.');
+      for(const ability of ['flat','hills','mountain'])
+        attacker[ability]=Math.max(0,Math.min(100,
+          attacker[ability]+attackerAbilityShift));
+      input.start.riders.find(row=>
+        row.riderId===attackerId).reserve=
+        replayRearEnergyCapV1({
+          rider:attacker,
+          kilometres:input.kilometres,
+          throughKm:0}).initialCap;
+    }
+    const source=runPhysicalFirstWholeRaceProbeV1(input);
     const race=recordPhysicalFirstPositionOneAttackRaceV1({
       input,grid});
     const sourceFinish=source.states.at(-1);
@@ -53,12 +80,19 @@ for(const variant of variants){
       sourcePelotonIds.size===modelPelotonIds.size&&
       [...modelPelotonIds].every(id=>
         sourcePelotonIds.has(id));
-    rows.push({variant,status:'complete',
+    rows.push({variant,attackerAbilityShift,
+      status:'complete',
       plannedKm:input.kilometres.length,
       completedThroughKm:race.completedThroughKm,
       riderCount:race.riderCount,
       paidAttackDepartures:race.steps.filter(row=>
         row.departure).length,
+      departureKm:race.steps.find(row=>
+        row.departure)?.sourceKm??null,
+      minSoloGapAheadM:Math.min(
+        ...race.steps.flatMap(row=>
+          row.soloStep&&!row.soloStep.finished?
+            [row.soloStep.gapAheadOfPelotonM]:[])),
       sourceRoadCount:sourceFinish.roads.length,
       modelRoadCount:race.physicalRoadCount,
       pelotonMembershipAligned,
@@ -72,7 +106,8 @@ for(const variant of variants){
         sourcePeloton.clockSeconds,
       officialResults:false});
   }catch(error){
-    rows.push({variant,status:'unsupported',
+    rows.push({variant,attackerAbilityShift,
+      status:'unsupported',
       reason:error.message});
   }
 }
@@ -83,6 +118,7 @@ const failures=Object.entries(rows.filter(row=>
   return counts;
 },{})).map(([reason,count])=>({reason,count}));
 const summary={version:'physical-first-position-one-attack-audit-1',
+  attackerAbilityShift,
   scenarios:rows.length,
   completeRaces:complete.length,
   completeWithEveryFinish:complete.filter(row=>

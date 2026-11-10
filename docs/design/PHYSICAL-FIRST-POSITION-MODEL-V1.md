@@ -278,3 +278,14 @@ by five points also completes, but the older source and position model
 disagree on peloton membership throughout that race. These synthetic
 variants are diagnostic inputs, not canonical rider profiles, a broad
 profile calibration, or permission to infer official results.
+
+The separate one-attack recorder was checked against synthetic changes
+to its already selected attacker's terrain abilities, without adding a
+route or a team order. A five-point reduction still completes the
+four-case two-category smoke set. A seven-point reduction exposes a
+second attempted departure at kilometre 10 in both mountain fixtures;
+a ten-point reduction exposes second attempts at kilometre 10 in the
+mountains and kilometre 40 on flat roads. The recorder refuses these
+orders because it has only one paid solo-road slot. None of these
+fixtures demonstrates a caught solo rider; that contact contract remains
+missing.
