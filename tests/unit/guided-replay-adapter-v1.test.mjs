@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { validateFeed, createSampler, resultsAt } from '@pelotonia/race-viewer/data';
+import { validateFeed, createSampler, labelRaceGroups, raceGroups,
+  resultsAt } from '@pelotonia/race-viewer/data';
 import { simulateStage } from '../../lib/engine/simulateStage.js';
 import { adaptGuidedReplayV1 } from '../../lib/viewer/guided-replay-adapter-v1.mjs';
 import { illustrativeGroupLayoutFeedV2 } from
@@ -86,6 +87,30 @@ for (const category of ['men', 'women']) {
     });
   }
 }
+
+test('guided group strip follows recorded gaps when source groups arrive out of order', () => {
+  const source = actualReplay('men', 160);
+  const replay = structuredClone(source);
+  const checkpoint = replay.frames.find(frame => frame.groups.length > 1 &&
+    frame.groups.some(group => group.gap !== frame.groups[0].gap));
+  assert.ok(checkpoint, 'The generated race needs a split checkpoint.');
+  checkpoint.groups.reverse();
+  const { feed } = adaptGuidedReplayV1(replay, { raceId: 'shuffled-groups' });
+  const frame = feed.frames.find(row => row.time === checkpoint.elapsed_sec);
+  const expectedGaps = checkpoint.groups.map(group => group.gap)
+    .sort((a, b) => a - b);
+  assert.deepEqual(Object.values(frame.gaps), expectedGaps);
+  assert.deepEqual(labelRaceGroups(raceGroups(frame.positions),
+    frame.groupRoles).map(group => frame.gaps[group.id]), expectedGaps);
+  assert.equal(Object.values(frame.gaps)[0], 0);
+  assert.deepEqual(new Set(frame.positions.map(row => row.riderId)),
+    new Set(source.roster.map(row => row.id)));
+  assert.deepEqual(feed.results.entries.map(row => row.riderId),
+    source.finish.map(row => row.rider_id));
+  assert.deepEqual(source.frames.find(row =>
+    row.elapsed_sec === checkpoint.elapsed_sec).groups,
+  [...checkpoint.groups].reverse());
+});
 
 test('recorded team appearance survives later selection changes without altering sport data', () => {
   const replay = actualReplay('women', 32);
