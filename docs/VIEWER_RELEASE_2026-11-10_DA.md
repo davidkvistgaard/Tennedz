@@ -122,6 +122,12 @@ så den kunne ikke afspille et gemt produktionsløb. Begge domænealiaser pegede
 på det aktuelle `READY` deployment; den forrige udgave var også `READY` som
 rollback, og runtime-logoversigten var tom i kontrolvinduet.
 
+En efterfølgende testcommit `e8824b81d93a8f4e116989ee425fb4a5f106175e`
+ændrer kun testkoden og er ikke en ny produktion. Den verificerede to
+autentificerede tilskuere til samme gemte løb: API-svarene havde samme
+serverforankrede løbsstart, begge WebGL-scener viste alle 32 ryttere, og
+rotation af det ene kamera ændrede ikke det andet. Testen og lint bestod.
+
 ## Testport
 
 - `pnpm lint`, `git diff --check` og isoleret Next.js-produktionsbuild bestod.
