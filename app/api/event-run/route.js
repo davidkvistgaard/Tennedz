@@ -18,11 +18,23 @@ export const GET = protectedRoute(async (req, context, auth) => {
       "Could not load the division.",
       503,
     );
+  if (!mine.data)
+    throw new AuthError(
+      "RUN_FORBIDDEN",
+      "This team is not in the requested race.",
+      403,
+    );
   const index = Number(
-    url.searchParams.get("division_index") || mine.data?.division_index || 1,
+    url.searchParams.get("division_index") || mine.data.division_index,
   );
   if (!Number.isInteger(index) || index < 1)
     throw new AuthError("INVALID_DIVISION", "Invalid division.", 400);
+  if (index !== mine.data.division_index)
+    throw new AuthError(
+      "RUN_FORBIDDEN",
+      "This team is not in the requested division.",
+      403,
+    );
   const { data, error } = await auth.db
     .from("event_division_runs")
     .select(

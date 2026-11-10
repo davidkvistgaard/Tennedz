@@ -8,6 +8,34 @@ const guidedSavedRunIds = {
 test.skip(process.env.PELOTONIA_E2E_GUIDED_SAVED_RUN !== 'true',
   'Run with the saved guided race fixture enabled.');
 
+test('saved race API refuses another division and a nonparticipant',
+  async ({page, context, browser}) => {
+    const eventId = guidedSavedRunIds.men;
+    await page.goto('/login');
+    await page.getByLabel('Email or username').fill('alice');
+    await page.getByLabel('Password').fill('fixture-password');
+    await page.getByRole('button', {name: 'Sign in', exact: true}).click();
+    await expect(page).toHaveURL(/\/team$/);
+    expect((await context.request.get(
+      `/api/event-run?event_id=${eventId}&division_index=2`)).status())
+      .toBe(403);
+    expect((await context.request.get(
+      `/api/event-run?event_id=${eventId}&division_index=1`)).status())
+      .toBe(200);
+
+    const other = await browser.newContext();
+    try {
+      const outsider = await other.newPage();
+      await outsider.goto('/login');
+      await outsider.getByLabel('Email or username').fill('bob');
+      await outsider.getByLabel('Password').fill('fixture-password');
+      await outsider.getByRole('button', {name: 'Sign in', exact: true}).click();
+      await expect(outsider).toHaveURL(/\/team$/);
+      expect((await other.request.get(
+        `/api/event-run?event_id=${eventId}`)).status()).toBe(403);
+    } finally { await other.close(); }
+  });
+
 for (const category of ['men', 'women']) {
   test(`protected saved ${category} race API drives the WebGL viewer`,
     async ({page, context}) => {
