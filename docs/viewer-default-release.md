@@ -1,9 +1,10 @@
 # Viewer default release
 
-This release starts from production commit
-`817da900cba6673a0ad645f24d36eceb6f9fb82f` and adds only the viewer
-package, two immutable Motor Lab recordings, the shared preview clock, and
-the Motor Lab screen. It does not merge the experimental motor branch.
+This branch started from production commit
+`817da900cba6673a0ad645f24d36eceb6f9fb82f`. It contains a separate
+viewer package, immutable Motor Lab recordings, a shared preview clock, and
+a versioned adapter for saved guided game races. It does not merge the
+experimental motor branch or change race decisions to fit the viewer.
 
 The recordings were generated and independently replayed from Motor Lab
 commit `21d1fbf84f571b5155d937296a6c87bfa92b8510` using adapter
@@ -28,10 +29,12 @@ for 15 seconds of presentation time before restarting. It does not extend
 the race or add a sporting time limit; all spectators use the same server
 cycle, and their camera choice remains local.
 The old race viewer and its scene implementation have been removed. Actual
-game race recordings at `/team/view` retain their recorded reports and results,
-but cannot be played in 3D until the race engine records simultaneous rider
-positions. The route explains this limitation and never substitutes the
-fictional Motor Lab sample for an official race. Authentication remains active.
+game race recordings at `/team/view` use the saved guided replay in a
+schematic 3D scene, with their recorded reports and results. The replay has
+checkpoint kilometres and group time gaps but no simultaneous rider metres,
+lanes or wheel order. Incomplete historic recordings retain a report fallback.
+The route explains these limits and never substitutes the fictional Motor Lab
+sample for an official race. Authentication remains active.
 
 The sample clock is anchored to a server-derived race-duration cycle and shared
 by spectators, while
