@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>H5 drone flight · Pelotonia Atlas</title>
+  <meta name="description" content="Fly over the alpine village of H5 in the Pelotonia Atlas.">
+  <link rel="stylesheet" href="./h5-flight.css">
+  <script type="importmap">{"imports":{"three":"./vendor/three.module.js"}}</script>
+</head>
+<body>
+  <main class="flight">
+    <div id="stage" class="stage" aria-label="H5 alpine landscape">
+      <img id="poster" src="./h5-village.webp" alt="The H5 road winding through an alpine village beneath forested slopes">
+    </div>
+    <header class="top">
+      <a class="back" href="./index.html?cell=H5" aria-label="Back to H5 in the atlas">← <span>Atlas</span></a>
+      <div class="identity"><span>PELOTONIA</span><strong>Field H5</strong></div>
+      <span id="mode" class="mode" role="status">Loading landscape…</span>
+    </header>
+    <div class="lower">
+      <div class="caption">
+        <span class="eyebrow">GREAT RANGE <span class="rule"></span> H5</span>
+        <h1>Through the alpine village</h1>
+        <p id="phase">Village approach</p>
+      </div>
+      <div id="controls" class="controls" hidden>
+        <button id="play" type="button">Pause</button>
+        <div class="scrub"><label for="time">Flight progress</label><input type="range" id="time" min="0" max="40" step=".05" value="0"></div>
+        <output id="clock" for="time">0:00 / 0:40</output>
+        <button id="restart" type="button" aria-label="Restart flight">↺</button>
+      </div>
+      <div id="stills" class="controls stills" hidden>
+        <button type="button" data-shot="village" aria-pressed="true">Village approach</button>
+        <button type="button" data-shot="ridge" aria-pressed="false">Across the valley</button>
+      </div>
+      <p id="note" class="note">Illustrative local relief based on the atlas road and settlement coordinates.</p>
+    </div>
+  </main>
+  <script type="module" src="./h5-flight.js"></script>
+</body>
+</html>
