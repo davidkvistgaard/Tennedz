@@ -366,3 +366,22 @@ The same 160-rider fixture also completed a full 120 km stress run with
 whole-recording replay. Computation plus replay took about 124 seconds.
 Its hill profile and one-time attack order are synthetic; the result
 does not settle comparison with the old motor or sporting plausibility.
+
+`physical-first-position-shared-road-km-2` adds an opt-in named front
+surge on the same clock. It verifies the actual front-worker plan,
+requires a clear passing lane and payable surge, changes the leader only
+after the measured wheel passes, and records the observed pass time,
+distance and surge cost. `physical-first-position-single-catch-race-2`
+composes this with the catch and rear-road continuation. A four-kilometre
+fixture and a 160-rider, 30 km fixture with a committed worker order
+at kilometre 25 each record one paid late pass, one caught solo, complete
+finish coverage and whole-recording replay. The v1 contracts stay
+separate. Passing is still limited to a clear lane; a blocked worker
+does not teleport forward. Further attacks, simultaneous pass/contact
+stress cases and whole-distance same-seed calibration remain open.
+The 160-rider front-pass variant also completed the full 120 km route:
+19,200 rider-kilometre crossings, 160 paid finish crossings, one caught
+solo, one paid front pass and exact whole-recording replay. Computation
+plus replay took about 104 seconds. This is a synthetic hill course with
+one-time attack and a later named worker order; it still needs comparison
+against source races and varied route/order combinations.
