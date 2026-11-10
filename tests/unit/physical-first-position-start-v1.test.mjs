@@ -73,6 +73,9 @@ import {recordPhysicalFirstPositionMultiSoloRaceV1,
 import {advancePhysicalFirstPositionSharedRoadKmV1,
   replayPhysicalFirstPositionSharedRoadKmV1} from
   '../../lib/engine/v2/physical-first-position-shared-road-km-v1.mjs';
+import {recordPhysicalFirstPositionSingleCatchRaceV1,
+  replayPhysicalFirstPositionSingleCatchRaceV1} from
+  '../../lib/engine/v2/physical-first-position-single-catch-race-v1.mjs';
 
 const grid={laneCount:4,wheelSpacingM:2.5,laneStaggerM:.08};
 
@@ -782,6 +785,37 @@ test('shared road records a paid catch and slide into the rear',()=>{
     Number.isFinite(row.clockSeconds)));
   assert.deepEqual(replayPhysicalFirstPositionFixedLaneFinishV1({
     prior:final,input:committed},finish),finish);
+  const wholeRequest={input:committed,grid};
+  const whole=recordPhysicalFirstPositionSingleCatchRaceV1(
+    wholeRequest);
+  assert.equal(whole.completedThroughKm,4);
+  assert.equal(whole.finishCrossings.length,16);
+  assert.equal(whole.soloCatchEvents.length,1,
+    JSON.stringify(whole.steps.map(row=>({
+      km:row.sourceKm,
+      front:row.sharedRoad?.positions[0]
+        .distanceM,
+      solo:row.sharedRoad?.positions.find(
+        position=>position.riderId===
+          'team-0-7')?.distanceM,
+      roads:row.sharedRoad?.contactComponents}))));
+  assert.equal(whole.soloCatchEvents[0].sourceKm,3);
+  assert.deepEqual(replayPhysicalFirstPositionSingleCatchRaceV1(
+    wholeRequest,whole),whole);
+  const altered=structuredClone(whole);
+  altered.soloCatchEvents[0].soloDistanceM+=1;
+  assert.throws(()=>
+    replayPhysicalFirstPositionSingleCatchRaceV1(
+      wholeRequest,altered),
+  /differs from paid movement/);
+  const secondOrder=structuredClone(committed);
+  secondOrder.teams[1].orders.phases=[{
+    atKm:1,attack:'selective',
+    attackRiderId:'team-1-7'}];
+  assert.throws(()=>
+    recordPhysicalFirstPositionSingleCatchRaceV1({
+      input:secondOrder,grid}),
+  /needs another paid attack/);
 });
 
 test('committed first leader and positioning contest form a replayable start',()=>{

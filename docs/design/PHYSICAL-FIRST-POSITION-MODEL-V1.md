@@ -340,3 +340,10 @@ shared step currently keeps fixed lanes, refuses a bunch leader blocked
 in its lane, and does not execute a new attack or front-worker change
 while a solo is being caught. It therefore cannot yet replace the
 whole-race recorder or support guided races.
+`physical-first-position-single-catch-race-1` composes the paid departure,
+shared road, observed catch, rear continuation and finish settlement into
+a complete four-kilometre recording. It verifies one crossing per rider
+per kilometre, 16 paid finish crossings and exact whole-recording replay.
+It explicitly refuses a second attack or a changed front worker. This
+does not establish a 120 km caught-break race or multi-attack race, and
+therefore remains an isolated experimental contract.
