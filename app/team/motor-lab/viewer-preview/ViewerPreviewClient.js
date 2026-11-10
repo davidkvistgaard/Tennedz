@@ -65,7 +65,9 @@ export default function ViewerPreviewClient({feed,coverage,version,
         coverage.sameSeedFinishMismatches}/{coverage.riderCount}
         {' '}riders differ. No official result.</span>:null}
       <p><a className="motor-viewer-generate"
-        href="/team/motor-lab/live">Generate and watch a test race ↗</a></p>
+        href="/team/run">Watch your saved game race ↗</a></p>
+      <p><a href="/team/motor-lab/live">
+        Generate and watch a test race ↗</a></p>
       <nav className="motor-viewer-modes" aria-label="Viewer mode">
         <a aria-current={mode==='recorded'?'page':undefined}
           href={`/viewer${categoryQuery}`}>Recorded race</a>
