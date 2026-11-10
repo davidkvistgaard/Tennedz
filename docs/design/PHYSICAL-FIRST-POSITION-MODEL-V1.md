@@ -366,6 +366,14 @@ The same 160-rider fixture also completed a full 120 km stress run with
 whole-recording replay. Computation plus replay took about 124 seconds.
 Its hill profile and one-time attack order are synthetic; the result
 does not settle comparison with the old motor or sporting plausibility.
+The same-seed source comparison exposes a serious fixed-lane artefact:
+in the 160-rider 120 km hill fixture, the old motor ends with 159 in the
+peloton and one solo, while the position model puts 120 in the front
+component and 40 in a rear component. The weak caught solo blocks one
+entire lane; 39 other riders remain trapped behind it. The peloton-front
+clock differs by only about 0.21 seconds at the finish, so clock agreement
+does not validate road membership. The model needs a measured, paid way
+for following riders to pass or change lanes around the caught rider.
 
 `physical-first-position-shared-road-km-2` adds an opt-in named front
 surge on the same clock. It verifies the actual front-worker plan,
@@ -385,3 +393,40 @@ solo, one paid front pass and exact whole-recording replay. Computation
 plus replay took about 104 seconds. This is a synthetic hill course with
 one-time attack and a later named worker order; it still needs comparison
 against source races and varied route/order combinations.
+
+`physical-first-position-shared-road-km-3` is an isolated successor
+with an explicit `positionPassingCorridorCount: 1` motor input. The
+position-model configuration hash binds that choice to the recording.
+Following riders may enter an outside corridor only when the nearest
+same-lane wheel ahead is the already caught rider. The move is recorded
+with a clock, distance and rider IDs; movement in the corridor pays the
+exposed leader cost. A rider returns to the original lane only after
+passing that rider by at least one wheel spacing and finding an open
+wheel slot. The return is also recorded. The race-3 recorder keeps
+the earlier race variants unchanged and replays every recorded move.
+The number of lanes is a synthetic fixture assumption, not canonical
+course geometry, so this branch cannot be applied to an actual route
+without a route-width source.
+
+On the same synthetic 160-rider hill seed, race-3 completed 30 and
+120 km with one paid catch, one paid later front-worker pass, 160
+finish crossings and 78 recorded corridor entry/return events. The
+120 km run had 19,200 rider-kilometre crossings and took about 96
+seconds to compute. Peloton membership matches the old source on
+118 of 120 kilometre checkpoints, including the finish. The two
+disagreements are at the caught-solo transition. The maximum front
+clock difference is about 0.21 seconds. A fixed-lane predecessor
+mistake initially stopped passing after three wheels; choosing the
+nearest wheel and recording the return eliminated the false 40-rider
+rear group in this one seed. Source agreement is a diagnostic, not
+ground truth: the old source still labels its caught rider separately
+at the two transition checkpoints. Other seeds, profiles, orders,
+multiple attacks and official results still require calibration.
+The same-seed alternating flat/hill variant completed at 16 and
+160 riders for 120 km: 16-rider peloton membership aligned at all
+120 checkpoints, while 160-rider membership aligned at 118 of 120.
+Both finished with the same peloton membership as the old source,
+one paid catch and one paid later front pass. Maximum front clock
+differences were under 0.25 seconds. The fixture is still synthetic;
+these runs vary profile and field size, not rider roster, tactical
+choices or route width.
