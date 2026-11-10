@@ -19,6 +19,9 @@ import {recordPhysicalFirstRaceV1} from
 import {settlePhysicalFirstPositionFinishTailV1,
   replayPhysicalFirstPositionFinishTailV1} from
   '../../lib/engine/v2/physical-first-position-finish-tail-v1.mjs';
+import {advancePhysicalFirstPositionRotationKmV1,
+  replayPhysicalFirstPositionRotationKmV1} from
+  '../../lib/engine/v2/physical-first-position-rotation-km-v1.mjs';
 
 const grid={laneCount:4,wheelSpacingM:2.5,laneStaggerM:.08};
 const rider=id=>({id,flat:65,hills:65,mountain:65,
@@ -120,6 +123,12 @@ test('unchanged paid road moves every rider and energy on the same clock',()=>{
   assert.equal(second.frontDistanceM,2000);
   assert.equal(second.clockSeconds,race.states[2].frontClockSeconds);
   assert.equal(second.positions[0].distanceM,2000);
+  assert.equal(first.checkpointCrossings.filter(row=>
+    row.km===1).length,1);
+  assert.equal(second.checkpointCrossings.filter(row=>
+    row.km===1).length,15);
+  assert.equal(second.checkpointCrossings.filter(row=>
+    row.km===2).length,1);
   assert.ok(second.positions.slice(1).every(row=>
     row.distanceM<2000&&row.paidDistanceM===2000));
   assert.deepEqual(first.checkpointCrossings.map(row=>row.riderId),
@@ -254,4 +263,67 @@ test('120 km connected road pays and replays all 160 rider positions',()=>{
     committed,trace);
   assert.equal(tail.lineCrossingCoverage,'160/160');
   assert.equal(tail.officialResults,false);
+});
+
+test('selected replacement reaches the front only through paid passing',()=>{
+  const committed=cappedInput(2);
+  committed.teams[1].orders.baseline.frontWork='rotate';
+  committed.teams[1].orders.baseline.frontWorkRiderId=
+    committed.teams[1].riders[1].id;
+  committed.teams[1].riders[1].positioning=100;
+  const start=createPhysicalFirstPositionStartV1({
+    input:committed,grid});
+  const firstInput={prior:start,
+    segment:committed.kilometres[0],
+    input:committed};
+  const first=advancePhysicalFirstPositionRotationKmV1(
+    firstInput);
+  const secondInput={...firstInput,prior:first,
+    segment:committed.kilometres[1]};
+  const second=advancePhysicalFirstPositionRotationKmV1(
+    secondInput);
+  assert.equal(first.leaderRiderId,'team-0-2');
+  assert.equal(second.proposedLeaderRiderId,'team-1-2');
+  assert.equal(second.event.type,'paid_front_pass');
+  assert.equal(second.leaderRiderId,'team-1-2');
+  assert.equal(second.positions[0].distanceM,2000);
+  assert.ok(second.event.atClockSeconds>
+    first.clockSeconds&&second.event.atClockSeconds<
+    second.clockSeconds);
+  assert.ok(second.event.surgePaidFromReserve>0);
+  assert.ok(second.decisions.every(row=>
+    row.paidFromReserve>0));
+  assert.deepEqual(replayPhysicalFirstPositionRotationKmV1(
+    secondInput,second),second);
+  const forged=structuredClone(second);
+  forged.event.surgePaidFromReserve=0;
+  assert.throws(()=>replayPhysicalFirstPositionRotationKmV1(
+    secondInput,forged),/differs from paid movement/);
+  const changed=structuredClone(committed);
+  changed.teams[1].riders[1].sprint+=1;
+  assert.throws(()=>advancePhysicalFirstPositionRotationKmV1({
+    ...secondInput,input:changed}),
+  /changed committed race input/);
+});
+
+test('unreachable front worker is refused without changing the leader',()=>{
+  const committed=cappedInput(2);
+  committed.teams[1].orders.baseline.frontWork='rotate';
+  committed.teams[1].orders.baseline.frontWorkRiderId=
+    committed.teams[1].riders[1].id;
+  committed.teams[1].riders[1].positioning=100;
+  committed.teams[1].riders[1].acceleration=0;
+  const first=advancePhysicalFirstPositionRotationKmV1({
+    prior:createPhysicalFirstPositionStartV1({
+      input:committed,grid}),
+    segment:committed.kilometres[0],input:committed});
+  const second=advancePhysicalFirstPositionRotationKmV1({
+    prior:first,segment:committed.kilometres[1],
+    input:committed});
+  assert.equal(second.proposedLeaderRiderId,'team-1-2');
+  assert.equal(second.event.type,'front_pass_refused');
+  assert.equal(second.leaderRiderId,'team-0-2');
+  assert.equal(second.positions[0].distanceM,2000);
+  assert.ok(second.decisions.find(row=>
+    row.riderId==='team-1-2').firstRole==='sheltered');
 });
