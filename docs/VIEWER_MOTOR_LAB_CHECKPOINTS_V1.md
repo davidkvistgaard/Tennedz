@@ -18,7 +18,7 @@ The generated viewer at `/team/motor-lab/live` is an **experimental, fictional M
 | --- | --- | --- |
 | Rider identity and category | 32 fictional named men in four exercise teams | Copied; no women's field is fabricated from this source |
 | Distance and route profile | 160 one-kilometre route samples | Copied as checkpoint distance and elevation; road geometry is schematic |
-| Rider group | One recorded state per rider and kilometre | Road groups and peloton copied; each dropped rider stays solo because contact between dropped riders is not recorded |
+| Rider group | One recorded state per rider and kilometre | Road groups and peloton copied; chase and dropped headings numbered after sorting by recorded gap; each dropped rider stays solo because contact between dropped riders is not recorded |
 | Time gap | Recorded road-group and rider deficits in seconds | Displayed as seconds; never used to derive simultaneous rider metres |
 | Recorded event | Successful break joins, catches, drops, selected and blocked break attacks, and recorded chase-group formation | Emitted at the relevant checkpoint; a committed order that could not start is never described as a successful attack; commentary filters by shared playback time |
 | Tactics and energy | In raw engine recording | Do not manufacture visual actions or energy from a team order; full tactic and energy inspection stays in Motor Lab |

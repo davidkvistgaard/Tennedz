@@ -144,6 +144,28 @@ test('break attack order is shown only with its recorded outcome', () => {
     event.label.includes('got clear from the break')));
 });
 
+test('a rider recorded in a chase group is not announced as joining the lead break', () => {
+  const source = createMotorLabPreviewSource({plan: 'break',
+    routeId: 'coast', seed: 1});
+  const frame = source.race.frames.find(row =>
+    row.joinedBreakawayRiderIds.length && row.roadGroups.length === 1 &&
+    row.roadGroups[0].riderIds.length > 1 &&
+    row.roadGroups[0].gapSeconds > 0);
+  assert.ok(frame);
+  const chaseRiderId = frame.joinedBreakawayRiderIds[0];
+  const front = frame.roadGroups[0];
+  front.riderIds = front.riderIds.filter(id => id !== chaseRiderId);
+  frame.roadGroups.push({id: 'recorded-chase-fixture',
+    riderIds: [chaseRiderId], teamIds: ['team-0'],
+    gapSeconds: front.gapSeconds / 2});
+  const feed = adaptMotorLabCheckpointsV1(source).feed;
+  const event = feed.events.find(row => row.time === frame.km * 8 &&
+    row.riderId === chaseRiderId);
+  assert.ok(event?.label.includes('joined a recorded chase group'));
+  assert.equal(feed.frames[frame.km].groupRoles['recorded-chase-fixture'],
+    'chase');
+});
+
 test('multiple plans, seeds and routes produce complete source-derived feeds', () => {
   for (const routeId of ['coast', 'ridge'])
     for (const plan of ['sprint', 'break', 'balanced', 'conserve'])

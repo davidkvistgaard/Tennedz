@@ -4,6 +4,8 @@ import {RaceViewer,RouteProfile,commentaryAt,createSampler,
   finishRemaining,formatFinishDistance,labelRaceGroups,raceGroups} from '@pelotonia/race-viewer';
 import {illustrativeGroupLayoutFeedV3} from
   '../../../../lib/viewer/illustrative-group-layout-v3.mjs';
+import {recordedGroupHeadingsV1} from
+  '../../../../lib/viewer/recorded-group-headings-v1.mjs';
 
 const clockLabel=seconds=>{
   const value=Math.max(0,Math.floor(seconds||0));
@@ -45,16 +47,10 @@ export default function ViewerPreviewScene({feed,coverage,mode='recorded',
       });
     }),[feed,mode]);
   const situation=useMemo(()=>sampler(time),[sampler,time]);
-  const groups=labelRaceGroups(raceGroups(situation.positions),
-    situation.groupRoles);
-  if(mode==='lab'||mode==='guided'){
-    const roleRank={leaders:0,chase:1,peloton:2,dropped:3};
-    groups.sort((a,b)=>
-      (situation.gaps?.[a.id]??Infinity)-
-      (situation.gaps?.[b.id]??Infinity)||
-      (roleRank[situation.groupRoles?.[a.id]]??4)-
-      (roleRank[situation.groupRoles?.[b.id]]??4));
-  }
+  const groups=mode==='lab'||mode==='guided'?
+    recordedGroupHeadingsV1(situation.positions,situation.gaps,
+      situation.groupRoles):
+    labelRaceGroups(raceGroups(situation.positions),situation.groupRoles);
   const commentary=mode==='guided'||mode==='lab'?
     (feed.events??[]).filter(event=>event.time<=time)
       .map((event,index)=>({id:`recorded-${index}`,time:event.time,
