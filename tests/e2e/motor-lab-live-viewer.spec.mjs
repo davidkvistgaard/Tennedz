@@ -37,6 +37,18 @@ test('authenticated full Motor Lab race reaches the new WebGL viewer',
     expect(body.feed.results).toBeUndefined();
     expect(body.coverage.recordedRiderKilometres).toBe(5120);
     expect(body.coverage.recordedElapsedClock).toBe(false);
+    const sharedLink = await page.getByRole('link',
+      {name: 'Open this shared replay'}).getAttribute('href');
+    const secondPage = await context.newPage();
+    const secondResponse = secondPage.waitForResponse(reply =>
+      new URL(reply.url()).pathname === endpoint &&
+      reply.request().method() === 'POST');
+    await secondPage.goto(sharedLink);
+    const secondBody = await (await secondResponse).json();
+    expect(secondBody.feed.raceId).toBe(body.feed.raceId);
+    expect(secondBody.feed.frames).toEqual(body.feed.frames);
+    expect(secondBody.clock.duration).toBe(body.clock.duration);
+    await secondPage.close();
     const resultResponse = await context.request.post(
       '/api/motor-lab/checkpoint-result', {
         data: {...runInput, raceId: body.feed.raceId},

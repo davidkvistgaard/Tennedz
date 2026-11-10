@@ -1,6 +1,6 @@
 'use client';
 import dynamic from 'next/dynamic';
-import {useCallback, useEffect, useState} from 'react';
+import {useCallback, useEffect, useRef, useState} from 'react';
 import {scenicPresentationV1} from
   '../../../../lib/viewer/scenic-presentation-v1.mjs';
 
@@ -8,10 +8,11 @@ const ViewerScene = dynamic(() => import(
   '../viewer-preview/ViewerPreviewScene'), {ssr: false,
   loading: () => <p role="status">Loading the race renderer…</p>});
 
-export default function MotorLabLiveClient() {
-  const [plan, setPlan] = useState('break');
-  const [routeId, setRouteId] = useState('ridge');
-  const [seed, setSeed] = useState(1);
+export default function MotorLabLiveClient({initialInput}) {
+  const [plan, setPlan] = useState(initialInput?.plan ?? 'break');
+  const [routeId, setRouteId] = useState(initialInput?.routeId ?? 'ridge');
+  const [seed, setSeed] = useState(initialInput?.seed ?? 1);
+  const autoStarted = useRef(false);
   const [run, setRun] = useState(null);
   const [sync, setSync] = useState(null);
   const [classification, setClassification] = useState(null);
@@ -41,6 +42,11 @@ export default function MotorLabLiveClient() {
     } catch (cause) { setError(cause.message); }
     finally { setBusy(false); }
   }, [plan, routeId, seed]);
+  useEffect(() => {
+    if (!initialInput || autoStarted.current) return;
+    autoStarted.current = true;
+    start();
+  }, [initialInput, start]);
   useEffect(() => {
     if (!run) return undefined;
     let active = true;
@@ -116,6 +122,10 @@ export default function MotorLabLiveClient() {
       {run?<p role="status">{run.coverage.recordedRiderKilometres}
         {' '}rider checkpoints loaded from a full 160 km simulation.
         The camera is local; playback time is shared.</p>:null}
+      {run?<a href={`/team/motor-lab/live?plan=${
+        encodeURIComponent(run.input.plan)}&route=${
+        encodeURIComponent(run.input.routeId)}&seed=${run.input.seed}`}>
+        Open this shared replay ↗</a>:null}
       {error?<p role="alert">{error}</p>:null}
     </div>
     {run && sync?<ViewerScene key={run.feed.raceId} {...run}
