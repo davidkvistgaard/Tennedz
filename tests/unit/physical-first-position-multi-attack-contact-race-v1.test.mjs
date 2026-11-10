@@ -9,7 +9,9 @@ import {recordPhysicalFirstPositionMultiAttackContactRaceV1,
   recordPhysicalFirstPositionMultiAttackContactRaceV2,
   replayPhysicalFirstPositionMultiAttackContactRaceV2,
   recordPhysicalFirstPositionMultiAttackContactRaceV3,
-  replayPhysicalFirstPositionMultiAttackContactRaceV3} from
+  replayPhysicalFirstPositionMultiAttackContactRaceV3,
+  recordPhysicalFirstPositionMultiAttackContactRaceV4,
+  replayPhysicalFirstPositionMultiAttackContactRaceV4} from
   '../../lib/engine/v2/physical-first-position-multi-attack-contact-race-v1.mjs';
 
 function twoAttackRequest(){
@@ -158,4 +160,83 @@ test('v3 does not hold a rear wheel without a cooperation order',()=>{
     .filter(row=>['team-0-1','team-0-7']
       .includes(row.riderId));
   assert.notEqual(rear[0].roadId,rear[1].roadId);
+});
+
+test('v4 pays a front pass and a different attack in one kilometre',()=>{
+  const request=prepareSyntheticPositionCatchV1({
+    teamCount:2,kmCount:20,
+    profile:'hill_then_mountain',
+    oneTimeAttack:true,
+    frontWorkerAtKm:2,
+    secondAttackAtKm:5});
+  request.input.positionPassingCorridorCount=1;
+  const race=recordPhysicalFirstPositionMultiAttackContactRaceV4(
+    request);
+  const step=race.steps[4].sharedRoad;
+  assert.equal(step.frontPassEvent?.toRiderId,'team-0-2');
+  assert.equal(step.attackDepartureEvent?.toRiderId,
+    'team-0-1');
+  assert.notEqual(step.frontPassEvent.toRiderId,
+    step.attackDepartureEvent.toRiderId);
+  assert.equal(race.attackDepartureEvents.length,2);
+  assert.equal(race.attackRefusals.length,0);
+  assert.deepEqual(
+    replayPhysicalFirstPositionMultiAttackContactRaceV4(
+      request,race),race);
+});
+
+test('v4 lets a 160-rider front pass a caught attacker physically',()=>{
+  const request=prepareSyntheticPositionCatchV1({
+    teamCount:20,kmCount:20,
+    raceSeed:'position-seed-b',
+    profile:'hill_then_mountain',
+    oneTimeAttack:true,
+    frontWorkerAtKm:2,
+    secondAttackAtKm:5});
+  request.input.positionPassingCorridorCount=1;
+  const race=recordPhysicalFirstPositionMultiAttackContactRaceV4(
+    request);
+  assert.equal(race.attackDepartureEvents.length,2);
+  const concurrent=race.steps[4].sharedRoad;
+  assert.ok(concurrent.frontPassEvent
+    .observedAtClockSeconds<
+      concurrent.attackDepartureEvent
+        .observedAtClockSeconds);
+  assert.equal(concurrent.attackDepartureEvent
+    .fromRiderId,'team-0-2');
+  const frontLaneEvents=race.steps.flatMap(step=>
+    step.sharedRoad?.laneChangeEvents??[])
+    .filter(row=>row.riderId==='team-1-2'&&
+      row.passedRiderId==='team-0-1');
+  assert.deepEqual(frontLaneEvents.map(row=>row.type),[
+    'paid_exposed_caught_rider_pass',
+    'paid_exposed_caught_rider_rejoin']);
+  const rear=race.steps.at(-1).sharedRoad.positions
+    .filter(row=>['team-0-1','team-0-7']
+      .includes(row.riderId));
+  assert.equal(rear[0].roadId,rear[1].roadId);
+  assert.equal(race.decisionCount,3200);
+  assert.equal(race.finishCrossings.length,160);
+  assert.deepEqual(
+    replayPhysicalFirstPositionMultiAttackContactRaceV4(
+      request,race),race);
+});
+
+test('v4 keeps the absent named front-worker refusal',()=>{
+  const request=prepareSyntheticPositionCatchV1({
+    teamCount:2,kmCount:20,
+    profile:'hill_then_mountain',
+    oneTimeAttack:true,
+    frontWorkerAtKm:2,
+    secondAttackAtKm:5,
+    secondAttackRiderIndex:2});
+  request.input.positionPassingCorridorCount=1;
+  assert.throws(()=>
+    runPhysicalFirstWholeRaceProbeV1(
+      request.input),
+  /Named front worker is absent/);
+  assert.throws(()=>
+    recordPhysicalFirstPositionMultiAttackContactRaceV4(
+      request),
+  /Named front worker cannot also depart/);
 });

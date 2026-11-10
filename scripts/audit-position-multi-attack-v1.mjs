@@ -10,7 +10,9 @@ import {recordPhysicalFirstPositionMultiAttackContactRaceV1,
   recordPhysicalFirstPositionMultiAttackContactRaceV2,
   replayPhysicalFirstPositionMultiAttackContactRaceV2,
   recordPhysicalFirstPositionMultiAttackContactRaceV3,
-  replayPhysicalFirstPositionMultiAttackContactRaceV3} from
+  replayPhysicalFirstPositionMultiAttackContactRaceV3,
+  recordPhysicalFirstPositionMultiAttackContactRaceV4,
+  replayPhysicalFirstPositionMultiAttackContactRaceV4} from
   '../lib/engine/v2/physical-first-position-multi-attack-contact-race-v1.mjs';
 
 const kmCount=Number(process.argv.find(arg=>
@@ -20,8 +22,8 @@ const positionVersion=Number(process.argv.find(arg=>
   ?.slice('--position-version='.length)??'1');
 if(!Number.isInteger(kmCount)||kmCount<7||kmCount>120)
   throw new Error('Multi-attack audit needs 7..120 km.');
-if(![1,2,3].includes(positionVersion))
-  throw new Error('Multi-attack audit needs position version 1..3.');
+if(![1,2,3,4].includes(positionVersion))
+  throw new Error('Multi-attack audit needs position version 1..4.');
 const teamCounts=(process.argv.find(arg=>
   arg.startsWith('--teams='))?.slice(8)??'2,20')
   .split(',').map(Number);
@@ -30,22 +32,30 @@ const frontWorkers=(process.argv.find(arg=>
   ?.slice('--front-workers='.length)??'none,2')
   .split(',').map(value=>value==='none'?
     null:Number(value));
+const attackerIndexes=(process.argv.find(arg=>
+  arg.startsWith('--attackers='))?.slice(12)??'1')
+  .split(',').map(Number);
 if(!teamCounts.length||teamCounts.some(count=>
   ![2,20].includes(count))||
   !frontWorkers.length||frontWorkers.some(value=>
-    value!==null&&value!==2))
+    value!==null&&value!==2)||
+  !attackerIndexes.length||attackerIndexes.some(value=>
+    ![1,2,3,4,5,6,8].includes(value)))
   throw new Error('Multi-attack audit has invalid matrix axes.');
-const plannedCases=teamCounts.length*2*frontWorkers.length;
+const plannedCases=teamCounts.length*2*
+  frontWorkers.length*attackerIndexes.length;
 const rows=[];
 for(const teamCount of teamCounts)
   for(const raceSeed of [
     'position-seed-a','position-seed-b'])
-    for(const frontWorkerAtKm of frontWorkers){
+    for(const secondAttackRiderIndex of attackerIndexes)
+      for(const frontWorkerAtKm of frontWorkers){
       const request=prepareSyntheticPositionCatchV1({
         teamCount,kmCount,raceSeed,
         profile:'hill_then_mountain',
         oneTimeAttack:true,
         secondAttackAtKm:5,
+        secondAttackRiderIndex,
         frontWorkerAtKm});
       request.input.positionPassingCorridorCount=1;
       let source=null,sourceError=null;
@@ -57,13 +67,17 @@ for(const teamCount of teamCounts)
       }
       let position=null,positionError=null;
       try{
-        position=(positionVersion===3?
+        position=(positionVersion===4?
+          recordPhysicalFirstPositionMultiAttackContactRaceV4:
+          positionVersion===3?
           recordPhysicalFirstPositionMultiAttackContactRaceV3:
           positionVersion===2?
           recordPhysicalFirstPositionMultiAttackContactRaceV2:
           recordPhysicalFirstPositionMultiAttackContactRaceV1)(
           request);
-        (positionVersion===3?
+        (positionVersion===4?
+          replayPhysicalFirstPositionMultiAttackContactRaceV4:
+          positionVersion===3?
           replayPhysicalFirstPositionMultiAttackContactRaceV3:
           positionVersion===2?
           replayPhysicalFirstPositionMultiAttackContactRaceV2:
@@ -108,6 +122,7 @@ for(const teamCount of teamCounts)
         }):[];
       const row={teamCount,riderCount:teamCount*8,
         kmCount,raceSeed,frontWorkerAtKm,
+        secondAttackRiderIndex,
         sourceStatus:source?'complete':'failed',
         sourceError,
         sourcePaidAttackSteps:source?.steps.reduce(
@@ -148,6 +163,7 @@ for(const teamCount of teamCounts)
       rows.push(row);
       process.stderr.write(`${rows.length}/${plannedCases} `+
         `${teamCount} teams, ${raceSeed}, `+
+        `attacker ${secondAttackRiderIndex}, `+
         `front worker ${frontWorkerAtKm??'none'}: `+
         `${row.sourceStatus}/${row.positionStatus}\n`);
     }

@@ -630,3 +630,31 @@ distance, compared with one of eight for v2. The
 remaining case has an unresolved simultaneous front-worker
 assignment and second attack. Larger rear components and
 competitive finishing still need separate physical rules.
+
+`shared-road-km-9` and `multi-attack-contact-race-4` price a
+front-worker pass and a distinct named attack within the same
+source kilometre. The event order follows their measured
+separation on the shared clock. A front rider blocked by the
+newly caught attacker first records contact, then enters and
+returns through the explicit paid passing corridor. In the
+eight-case 20 km and eight-case 120 km two-attack audits,
+all positional races finish and exactly replay, both attacks
+physically depart, and final rear memberships match the source
+in all eight at each distance. Every positional race has complete
+per-rider decisions, intermediate crossings and finish crossings.
+Intermediate peloton membership still diverges at some
+checkpoints (as many as four of 120). A distinct test assigning
+the same named rider to attack and front work is refused by both
+models without a paid replacement; the source's manager-order
+guard remains in force. This
+does not establish precise wheel order, official classification,
+or validity for races without an explicit corridor.
+Changing the named second attacker across six rider slots in
+the 16-rider fixture completes and replays 12 of 12 cases, each
+with two paid departures and aligned final rear membership.
+Three alternate second-attacker slots in the 160-rider field,
+with and without a front-worker change, complete and replay
+12 of 12 cases with aligned final rear membership. Some of
+those larger-field positional attempts are physically refused
+even though the source launches two attacks; final group
+agreement must not be mistaken for attack-decision agreement.

@@ -17,6 +17,7 @@ export function prepareSyntheticPositionCatchV1({
   profile='hill',oneTimeAttack=false,
   weakBunchCount=0,
   secondAttackAtKm=null,
+  secondAttackRiderIndex=1,
   frontWorkerAtKm=null,
   raceSeed='position-seed-a'}={}){
   if(!Number.isInteger(teamCount)||
@@ -32,6 +33,11 @@ export function prepareSyntheticPositionCatchV1({
       (!Number.isInteger(secondAttackAtKm)||
         secondAttackAtKm<4||
         secondAttackAtKm>=kmCount-1)||
+    !Number.isInteger(secondAttackRiderIndex)||
+    ![1,2,3,4,5,6,8]
+      .includes(secondAttackRiderIndex)||
+    secondAttackAtKm===null&&
+      secondAttackRiderIndex!==1||
     frontWorkerAtKm!==null&&
       (!Number.isInteger(frontWorkerAtKm)||
         frontWorkerAtKm<2||
@@ -71,13 +77,16 @@ export function prepareSyntheticPositionCatchV1({
     teams[0].orders.phases.push({
       atKm:1,attack:'none'});
   if(secondAttackAtKm!==null){
-    Object.assign(teams[0].riders[0],{
+    const secondAttackerId=
+      `team-0-${secondAttackRiderIndex}`;
+    Object.assign(teams[0].riders[
+      secondAttackRiderIndex-1],{
       hills:100,mountain:0,
       acceleration:100});
     teams[0].orders.phases.push({
       atKm:secondAttackAtKm-1,
       attack:'selective',
-      attackRiderId:'team-0-1'});
+      attackRiderId:secondAttackerId});
     teams[0].orders.phases.push({
       atKm:secondAttackAtKm,
       attack:'none'});
