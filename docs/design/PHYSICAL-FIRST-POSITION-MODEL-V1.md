@@ -500,3 +500,25 @@ successor and retains the 0.071-second maximum solo finish clock
 difference in that matrix. Those fixture races have only one
 successful departure each; the separate three-kilometre test is
 the evidence for two successful departures.
+
+`physical-first-position-shared-road-km-4` applies the same
+exposed-leader energy payment to a separate solo rider and to a
+front-pass candidate, recording `energyRole: leader` on the paid
+legs. The enclosing `single-catch-race-4` is opt-in and requires
+the explicit one-lane passing-corridor input. Earlier recordings
+and replay versions remain unchanged. In a synthetic 160-rider hill
+fixture, both the 30 km and full 120 km runs complete with one
+paid catch, one paid later front pass, 78 lane events, and every
+rider crossing every kilometre and the finish. At 120 km the final
+peloton membership matches the source (159 riders), with one rider
+remaining separate; membership matches at 118 of 120 checkpoints.
+The largest front-clock difference is 0.195 seconds. This verifies
+that the exposed-leader cost can be carried through this whole
+race shape. The 160-rider 120 km recording also passes exact
+same-input replay, including its energy, contact, checkpoint and
+finish data. The source has only group clocks, so these comparisons
+cannot validate exact rider order or make the tail crossing order
+an official result. The corridor is a synthetic model input, not
+measured route width. Additional orders, profiles, early drops,
+multiple catches and competitive finishes still need full-race
+validation before guided-race activation.

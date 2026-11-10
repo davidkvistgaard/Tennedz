@@ -5,7 +5,8 @@ import {prepareSyntheticPositionCatchV1} from
 import {runPhysicalFirstWholeRaceProbeV1} from
   '../lib/engine/v2/physical-first-whole-race-probe-v1.mjs';
 import {recordPhysicalFirstPositionSingleCatchRaceV2,
-  recordPhysicalFirstPositionSingleCatchRaceV3} from
+  recordPhysicalFirstPositionSingleCatchRaceV3,
+  recordPhysicalFirstPositionSingleCatchRaceV4} from
   '../lib/engine/v2/physical-first-position-single-catch-race-v1.mjs';
 
 const option=(name,defaultValue)=>{
@@ -21,8 +22,11 @@ const profile=option('profile','hill');
 const raceSeed=option('seed',
   'position-seed-a');
 const corridorCount=Number(option('corridor','0'));
+const leaderCost=option('leader-cost','false')==='true';
 if(![0,1].includes(corridorCount))
   throw new Error('Corridor count must be 0 or 1.');
+if(leaderCost&&!corridorCount)
+  throw new Error('Leader cost needs the recorded passing corridor.');
 const {input,grid}=prepareSyntheticPositionCatchV1({
   teamCount,kmCount,profile,
   oneTimeAttack:teamCount>2,
@@ -39,7 +43,9 @@ try{
 const sourceElapsedMs=performance.now()-began;
 let position=null,positionFailure=null;
 try{
-  position=(corridorCount?
+  position=(leaderCost?
+    recordPhysicalFirstPositionSingleCatchRaceV4:
+    corridorCount?
     recordPhysicalFirstPositionSingleCatchRaceV3:
     recordPhysicalFirstPositionSingleCatchRaceV2)(
     {input,grid});
@@ -95,7 +101,7 @@ const result={version:
 fixture:'synthetic_only',
 raceSeed,teamCount,
 riderCount:teamCount*8,kmCount,
-profile,frontWorkerAtKm,corridorCount,
+profile,frontWorkerAtKm,corridorCount,leaderCost,
 source:{status:source?'complete':'failed',
   elapsedMs:+sourceElapsedMs.toFixed(1),
   failure:sourceFailure,

@@ -90,7 +90,9 @@ import {recordPhysicalFirstPositionSingleCatchRaceV1,
   recordPhysicalFirstPositionSingleCatchRaceV2,
   replayPhysicalFirstPositionSingleCatchRaceV2,
   recordPhysicalFirstPositionSingleCatchRaceV3,
-  replayPhysicalFirstPositionSingleCatchRaceV3} from
+  replayPhysicalFirstPositionSingleCatchRaceV3,
+  recordPhysicalFirstPositionSingleCatchRaceV4,
+  replayPhysicalFirstPositionSingleCatchRaceV4} from
   '../../lib/engine/v2/physical-first-position-single-catch-race-v1.mjs';
 import {prepareSyntheticPositionCatchV1} from
   './synthetic-position-catch-fixture-v1.mjs';
@@ -1216,6 +1218,60 @@ test('opt-in passing corridor pays wheels around a caught rider',()=>{
   /committed inputs/);
 });
 
+test('v4 prices exposed solo and front pass work without changing old recordings',()=>{
+  const request=prepareSyntheticPositionCatchV1({
+    teamCount:2,kmCount:4,
+    frontWorkerAtKm:2});
+  request.input.positionPassingCorridorCount=1;
+  const old=recordPhysicalFirstPositionSingleCatchRaceV3(request);
+  const race=recordPhysicalFirstPositionSingleCatchRaceV4(request);
+  assert.equal(race.completedThroughKm,4);
+  assert.equal(race.soloCatchEvents.length,1);
+  assert.equal(race.paidFrontPasses,1);
+  assert.equal(race.paidLaneChanges,old.paidLaneChanges);
+  assert.equal(race.finishCrossings.length,16);
+  assert.deepEqual(race.steps.map(step=>step.sharedRoad
+    ?.contactComponents),old.steps.map(step=>step.sharedRoad
+    ?.contactComponents));
+  const v4Decisions=race.steps.flatMap(step=>step.sharedRoad
+    ?.decisions??[]);
+  const v3Decisions=old.steps.flatMap(step=>step.sharedRoad
+    ?.decisions??[]);
+  const paid=v4Decisions.filter(row=>row.legs.some(leg=>
+    leg.role==='solo'&&leg.energyRole==='leader'));
+  assert.ok(paid.length>0);
+  assert.ok(paid.some(row=>{
+    const prior=v3Decisions.find(older=>
+      older.riderId===row.riderId&&
+      older.legs.some(leg=>leg.role==='solo'&&
+        leg.sourceKm===row.legs.find(leg=>
+          leg.energyRole==='leader')?.sourceKm));
+    return prior&&row.paidFromReserve>
+      prior.paidFromReserve;
+  }));
+  assert.ok(old.steps.flatMap(step=>step.sharedRoad
+    ?.decisions??[]).every(row=>row.legs.every(leg=>
+    !Object.hasOwn(leg,'energyRole'))));
+  assert.deepEqual(replayPhysicalFirstPositionSingleCatchRaceV3(
+    request,old),old);
+  assert.deepEqual(replayPhysicalFirstPositionSingleCatchRaceV4(
+    request,race),race);
+  const falsified=structuredClone(race);
+  const charged=falsified.steps.flatMap(step=>step.sharedRoad
+    ?.decisions??[]).find(row=>row.legs.some(leg=>
+    leg.energyRole==='leader'));
+  delete charged.legs.find(leg=>leg.energyRole==='leader')
+    .energyRole;
+  assert.throws(()=>
+    replayPhysicalFirstPositionSingleCatchRaceV4(
+      request,falsified),/differs from paid movement/);
+  const withoutCorridor=structuredClone(request);
+  delete withoutCorridor.input.positionPassingCorridorCount;
+  assert.throws(()=>
+    recordPhysicalFirstPositionSingleCatchRaceV4(
+      withoutCorridor),/committed inputs/);
+});
+
 test('160 caught-solo wheels return through paid corridor contact',()=>{
   const kmCount=process.env.PELOTONIA_STRESS_CATCH_KM===
     '120'?120:30;
@@ -1238,6 +1294,30 @@ test('160 caught-solo wheels return through paid corridor contact',()=>{
   assert.ok(race.steps.at(-1).sharedRoad.positions
     .every(row=>row.lane<4));
   assert.deepEqual(replayPhysicalFirstPositionSingleCatchRaceV3(
+    request,race),race);
+});
+
+test('160 exposed-leader priced caught-solo wheels finish and replay',()=>{
+  const kmCount=process.env.PELOTONIA_STRESS_CATCH_KM===
+    '120'?120:30;
+  const request=prepareSyntheticPositionCatchV1({
+    teamCount:20,kmCount,
+    frontWorkerAtKm:25,
+    oneTimeAttack:true});
+  request.input.positionPassingCorridorCount=1;
+  const race=recordPhysicalFirstPositionSingleCatchRaceV4(
+    request);
+  assert.equal(race.completedThroughKm,kmCount);
+  assert.equal(race.paidFrontPasses,1);
+  assert.equal(race.soloCatchEvents.length,1);
+  assert.equal(race.checkpointCrossings.length,
+    160*(kmCount-1));
+  assert.equal(race.finishCrossings.length,160);
+  assert.equal(race.steps.at(-1).sharedRoad.positions
+    .filter(row=>row.roadId==='peloton').length,159);
+  assert.ok(race.steps.at(-1).sharedRoad.positions
+    .every(row=>row.lane<4));
+  assert.deepEqual(replayPhysicalFirstPositionSingleCatchRaceV4(
     request,race),race);
 });
 
