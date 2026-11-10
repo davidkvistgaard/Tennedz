@@ -3098,34 +3098,39 @@ var Mn = class {
 				vertexColors: !0,
 				roughness: 1,
 				side: c.DoubleSide
-			}), s = new c.InstancedMesh(a, o, i.length), l = new c.Object3D();
-			for (let [e, t] of i.entries()) l.position.set(...t.position), l.rotation.set(0, t.rotation || 0, 0), l.scale.setScalar(t.scale || 1), l.updateMatrix(), s.setMatrixAt(e, l.matrix), n === "rock" ? this.rocks.push({
-				location: t,
-				parts: [{
-					geometry: a,
-					material: o
-				}],
-				matrix: l.matrix.clone()
-			}) : this.grass.push({
-				...t,
-				kind: "grass",
-				rotation: t.rotation || 0,
-				styleKey: "grass/meadow-v2",
-				location: {
-					position: [...t.position],
-					scale: t.scale || 1
-				},
-				matrix: l.matrix.clone(),
-				parts: [{
-					geometry: a,
-					material: o
-				}]
-			});
-			s.castShadow = n === "rock", s.receiveShadow = !0, e.add(s), this.batches.push(s);
+			}), l = new c.Object3D(), chunks = /* @__PURE__ */ new Map();
+			// Local batches let WebGL cull details outside the camera's road section.
+			for (let item of i) {
+				let key = Math.floor(item.position[2] / 512);
+				chunks.has(key) || chunks.set(key, []), chunks.get(key).push(item);
+			}
+			for (let items of chunks.values()) {
+				let s = new c.InstancedMesh(a, o, items.length);
+				for (let [index, item] of items.entries()) l.position.set(...item.position), l.rotation.set(0, item.rotation || 0, 0), l.scale.setScalar(item.scale || 1), l.updateMatrix(), s.setMatrixAt(index, l.matrix), n === "rock" ? this.rocks.push({
+					location: item,
+					parts: [{ geometry: a, material: o }],
+					matrix: l.matrix.clone()
+				}) : this.grass.push({
+					...item,
+					kind: "grass",
+					rotation: item.rotation || 0,
+					styleKey: "grass/meadow-v2",
+					location: {
+						position: [...item.position],
+						scale: item.scale || 1
+					},
+					matrix: l.matrix.clone(),
+					parts: [{ geometry: a, material: o }]
+				});
+				s.castShadow = n === "rock", s.receiveShadow = !0, e.add(s), this.batches.push(s);
+			}
 		}
 	}
 	dispose() {
-		for (let e of this.batches) this.scene.remove(e), e.dispose(), e.geometry.dispose(), e.material.dispose();
+		let geometries = new Set(), materials = new Set();
+		for (let e of this.batches) this.scene.remove(e), e.dispose(), geometries.add(e.geometry), materials.add(e.material);
+		for (let e of geometries) e.dispose();
+		for (let e of materials) e.dispose();
 		this.batches = [], this.rocks = [], this.grass = [];
 	}
 }, Nn = class {

@@ -179,6 +179,20 @@ motor data and visual ordering of groups now agree at every frame.
 Version 3 leaves every rider drawn exactly on the finish line once the
 recording places that rider there. Earlier illustrative spacing moved a
 recorded finisher several metres behind the line.
+
+## Local grass culling, 10 November 2026
+
+The vendored viewer runtime `0.98.5-pelotonia.2` groups decorative rock and
+grass instances into 512 m road sections. Three.js can then cull sections
+outside the camera instead of drawing the entire route's ground details in
+one instanced mesh. This changes only the rendering batch; it does not alter
+the race feed, ground detail placements, clocks or results. On Intel UHD
+Graphics with WebGL2, the 32-rider 40 km scene showed about 397,000 rendered
+triangles after the change versus about 495,000 on the exact-SHA preview
+before it. The local 150-rider fictional women fixture showed about 657,000
+triangles and 38 fps after warming; a previous preview sample showed about
+829,000 triangles with two WebGL tabs active, so those FPS samples are not a
+controlled before/after comparison. Other devices remain unverified.
 The renderer receives this display-only copy on the client. The group strip,
 distance to finish, time gaps, route profile, commentary and results sample
 the unmodified recording; the two feeds are not serialized into the page.

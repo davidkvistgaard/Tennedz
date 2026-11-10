@@ -1,6 +1,6 @@
 {
   "name": "@pelotonia/race-viewer",
-  "version": "0.98.5-pelotonia.1",
+  "version": "0.98.5-pelotonia.2",
   "type": "module",
   "private": true,
   "main": "./viewer.js",
