@@ -88,6 +88,30 @@ then paying solo travel. This is replayable but is not wired into the
 whole-race runner, does not settle interior sliding or rear-group contact,
 and does not change the production viewer or release decision.
 
+The experimental fixed-lane convoy now pays and replays all 160 riders
+for all 120 kilometres of that same no-attack mountain input. Its front
+clock matches the older paid source exactly; peloton membership and road
+count agree at 118/120 kilometre boundaries. Five measured contact
+topology changes create six final components. The first two boundaries
+still disagree, lane changes and overtaking are unavailable, and the
+last rider is about 3 km behind when the front finishes. A separate
+paid continuation carries all 160 riders to the real line, without
+extending the route after the finish. Its replay covers 160/160
+crossings; only one clock exactly matches the old group-clock source,
+and the largest difference is 129.7 seconds. There is still no sprint
+or official placement. These counts are diagnostic and leave the
+release gate red.
+
+The opt-in hybrid policy combines paid rotation and measured fixed-lane
+drop movement without copying old group positions. Its 24-case no-attack
+matrix completed every 120 km trace and every rider's paid crossing;
+the maximum front-clock difference from the old source was 1.69536
+seconds. All standard cases selected rotation for every kilometre,
+so this does not validate a mixed drop-and-rotation race. A separate
+160-rider mountain case selected fixed-lane movement for all 120 km.
+Attack orders, mixed movements, lane passing, a competitive sprint and
+official results remain unsupported; the new recorder remains opt-in.
+
 Local browser WebGL checks with the deliberately synthetic renderer fixture
 showed all 30 or 150 rider rigs for both categories, 51 draw calls and no
 renderer errors. Observed status samples after settling were 68 fps for 30

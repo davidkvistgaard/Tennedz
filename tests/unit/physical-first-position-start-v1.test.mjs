@@ -51,6 +51,15 @@ import {recordPhysicalFirstPositionOneAttackRaceV1,
 import {advancePhysicalFirstPositionRearTailDropKmV1,
   replayPhysicalFirstPositionRearTailDropKmV1} from
   '../../lib/engine/v2/physical-first-position-rear-tail-drop-km-v1.mjs';
+import {advancePhysicalFirstPositionFixedLaneConvoyKmV1,
+  replayPhysicalFirstPositionFixedLaneConvoyKmV1} from
+  '../../lib/engine/v2/physical-first-position-fixed-lane-convoy-km-v1.mjs';
+import {settlePhysicalFirstPositionFixedLaneFinishV1,
+  replayPhysicalFirstPositionFixedLaneFinishV1} from
+  '../../lib/engine/v2/physical-first-position-fixed-lane-finish-v1.mjs';
+import {recordPhysicalFirstPositionHybridRaceV1,
+  replayPhysicalFirstPositionHybridRaceV1} from
+  '../../lib/engine/v2/physical-first-position-hybrid-race-v1.mjs';
 
 const grid={laneCount:4,wheelSpacingM:2.5,laneStaggerM:.08};
 
@@ -134,6 +143,25 @@ test('staged worker makes a paid front pass in a full 120 km race',()=>{
   forged.lineCrossings[1].clockSeconds-=1;
   assert.throws(()=>replayPhysicalFirstPositionFinishTailV2(
     tailRequest,forged),/differs from paid movement/);
+});
+
+test('hybrid records and replays the same-seed 120 km front rotation',()=>{
+  const {input:base}=preparePhysicalFirstSplitMotorInputV1(
+    'men',{terrain:'mountain',chase:'selective',
+      attack:'none',seed:'preview-recorded-road-1'});
+  const committed={...base,
+    positionModelVersion:
+      PHYSICAL_FIRST_POSITION_START_V2_VERSION};
+  const request={input:committed,grid};
+  const race=recordPhysicalFirstPositionHybridRaceV1(
+    request);
+  assert.equal(race.positionRiderKm,14400);
+  assert.equal(race.frontPassEvents.length,1);
+  assert.equal(race.frontPassEvents[0].sourceKm,25);
+  assert.equal(race.finishCrossingCoverage,'120/120');
+  assert.equal(race.officialResults,false);
+  assert.deepEqual(replayPhysicalFirstPositionHybridRaceV1(
+    request,race),race);
 });
 
 test('an attack order cannot create an unpaid positional departure',()=>{
@@ -281,6 +309,170 @@ test('the last wheel pays shelter until it physically loses contact',()=>{
   assert.throws(()=>replayPhysicalFirstPositionRearTailDropKmV1(
     request,forged),/differs from paid movement/);
 });
+test('a weak interior lane forms only measured contact components',()=>{
+  const committed=input(2);
+  committed.positionModelVersion=
+    PHYSICAL_FIRST_POSITION_START_V2_VERSION;
+  const initial=createPhysicalFirstPositionStartV2({
+    input:committed,grid});
+  const weakId=initial.positions[1].riderId;
+  const weak=committed.teams.flatMap(team=>team.riders)
+    .find(row=>row.id===weakId);
+  Object.assign(weak,{flat:0,hills:0,mountain:0,
+    sprint:0,endurance:0,form:0,
+    positioning:100});
+  const start=createPhysicalFirstPositionStartV2({
+    input:committed,grid});
+  assert.ok(start.positions.findIndex(row=>
+    row.riderId===weakId)<4);
+  const request={prior:start,
+    segment:committed.kilometres[0],
+    input:committed};
+  const first=advancePhysicalFirstPositionFixedLaneConvoyKmV1(
+    request);
+  assert.equal(first.decisions.length,16);
+  assert.ok(first.contactEvents.length>0);
+  assert.ok(first.contactComponents.length>1);
+  assert.equal(first.contactComponents.flat().length,16);
+  assert.ok(first.decisions.every(row=>
+    row.paidFromReserve>0&&
+    row.paidDistanceM>0));
+  assert.ok(first.positions.every(row=>
+    row.distanceM<=1000));
+  for(let lane=0;lane<grid.laneCount;lane++){
+    const sameLane=first.positions.filter(row=>
+      row.lane===lane).sort((a,b)=>
+      a.row-b.row);
+    assert.ok(sameLane.slice(1).every((row,index)=>
+      sameLane[index].distanceM-row.distanceM>=
+        grid.wheelSpacingM-1e-6));
+  }
+  assert.deepEqual(replayPhysicalFirstPositionFixedLaneConvoyKmV1(
+    request,first),first);
+  const forged=structuredClone(first);
+  forged.contactEvents[0].components=[];
+  assert.throws(()=>replayPhysicalFirstPositionFixedLaneConvoyKmV1(
+    request,forged),/differs from paid movement/);
+});
+
+test('detached lanes continue paying and cross their real kilometre lines',()=>{
+  const committed=cappedInput(2);
+  committed.positionModelVersion=
+    PHYSICAL_FIRST_POSITION_START_V2_VERSION;
+  const initial=createPhysicalFirstPositionStartV2({
+    input:committed,grid});
+  const weakId=initial.positions[1].riderId;
+  const weak=committed.teams.flatMap(team=>team.riders)
+    .find(row=>row.id===weakId);
+  Object.assign(weak,{flat:0,hills:0,mountain:0,
+    sprint:0,endurance:0,form:0,
+    positioning:100});
+  const start=createPhysicalFirstPositionStartV2({
+    input:committed,grid});
+  const first=advancePhysicalFirstPositionFixedLaneConvoyKmV1({
+    prior:start,segment:committed.kilometres[0],
+    input:committed});
+  const request={prior:first,
+    segment:committed.kilometres[1],
+    input:committed};
+  const second=advancePhysicalFirstPositionFixedLaneConvoyKmV1(
+    request);
+  assert.equal(second.sourceKm,2);
+  assert.equal(second.positions.length,16);
+  assert.equal(second.decisions.length,16);
+  assert.ok(second.clockSeconds>first.clockSeconds);
+  assert.ok(second.checkpointCrossings.some(row=>
+    row.km===1&&row.riderId!==
+      second.leaderRiderId));
+  assert.equal(second.checkpointCrossings.filter(row=>
+    row.km===2).length,1);
+  assert.ok(second.checkpointCrossings.every(row=>
+    row.clockSeconds>first.clockSeconds&&
+    row.clockSeconds<=second.clockSeconds));
+  assert.deepEqual(replayPhysicalFirstPositionFixedLaneConvoyKmV1(
+    request,second),second);
+});
+
+test('detached wheels pay to the finish without invented road beyond it',()=>{
+  const committed=cappedInput(2);
+  committed.positionModelVersion=
+    PHYSICAL_FIRST_POSITION_START_V2_VERSION;
+  const initial=createPhysicalFirstPositionStartV2({
+    input:committed,grid});
+  const weakId=initial.positions[1].riderId;
+  const weak=committed.teams.flatMap(team=>team.riders)
+    .find(row=>row.id===weakId);
+  Object.assign(weak,{flat:0,hills:0,mountain:0,
+    sprint:0,endurance:0,form:0,
+    positioning:100});
+  let prior=createPhysicalFirstPositionStartV2({
+    input:committed,grid});
+  for(const segment of committed.kilometres)
+    prior=advancePhysicalFirstPositionFixedLaneConvoyKmV1({
+      prior,segment,input:committed});
+  const request={prior,input:committed};
+  const finish=settlePhysicalFirstPositionFixedLaneFinishV1(
+    request);
+  assert.equal(finish.finishCrossings.length,16);
+  assert.equal(finish.finishCrossings[0].riderId,
+    prior.leaderRiderId);
+  assert.equal(finish.finishCrossings[0].clockSeconds,
+    prior.clockSeconds);
+  assert.ok(finish.finishCrossings.at(-1)
+    .clockSeconds>prior.clockSeconds);
+  assert.ok(finish.decisions.some(row=>
+    row.paidTailDistanceM>0&&
+    row.paidFromReserve>0));
+  assert.equal(finish.officialResults,false);
+  assert.deepEqual(replayPhysicalFirstPositionFixedLaneFinishV1(
+    request,finish),finish);
+  const forged=structuredClone(finish);
+  forged.finishCrossings.at(-1).clockSeconds=0;
+  assert.throws(()=>replayPhysicalFirstPositionFixedLaneFinishV1(
+    request,forged),/differs from paid movement/);
+});
+
+test('whole-race hybrid replay keeps every paid wheel and crossing',()=>{
+  const committed=cappedInput(2);
+  committed.positionModelVersion=
+    PHYSICAL_FIRST_POSITION_START_V2_VERSION;
+  const initial=createPhysicalFirstPositionStartV2({
+    input:committed,grid});
+  const weakId=initial.positions[1].riderId;
+  const weak=committed.teams.flatMap(team=>team.riders)
+    .find(row=>row.id===weakId);
+  Object.assign(weak,{flat:0,hills:0,mountain:0,
+    sprint:0,endurance:0,form:0,
+    positioning:100});
+  const request={input:committed,grid};
+  const race=recordPhysicalFirstPositionHybridRaceV1(
+    request);
+  assert.equal(race.positionRiderKm,32);
+  assert.equal(race.steps.length,2);
+  assert.equal(race.finishCrossingCoverage,'16/16');
+  assert.equal(race.steps[0].contactComponents
+    .flat().length,16);
+  assert.equal(race.officialResults,false);
+  assert.equal(race.viewerReady,false);
+  assert.deepEqual(replayPhysicalFirstPositionHybridRaceV1(
+    request,race),race);
+  const forged=structuredClone(race);
+  forged.finish.finishCrossings[0].clockSeconds=0;
+  assert.throws(()=>replayPhysicalFirstPositionHybridRaceV1(
+    request,forged),/differs from paid movement/);
+});
+
+test('hybrid refuses an attack order until the departure is paid',()=>{
+  const committed=input(2);
+  committed.positionModelVersion=
+    PHYSICAL_FIRST_POSITION_START_V2_VERSION;
+  committed.teams[0].orders.baseline.attack=
+    'selective';
+  assert.throws(()=>recordPhysicalFirstPositionHybridRaceV1({
+    input:committed,grid}),
+  /needs a paid attack departure/);
+});
+
 const rider=id=>({id,flat:65,hills:65,mountain:65,
   sprint:65,endurance:65,form:50,fatigue:0});
 function input(teamCount=2,raceSeed='position-seed-a'){

@@ -10,8 +10,18 @@ import {runPhysicalFirstWholeRaceProbeV1} from
 import {createPhysicalFirstPositionStartV2,
   PHYSICAL_FIRST_POSITION_START_V2_VERSION} from
   '../lib/engine/v2/physical-first-position-start-v2.mjs';
-import {advancePhysicalFirstPositionRotationKmV2} from
+import {advancePhysicalFirstPositionRotationKmV2,
+  PHYSICAL_FIRST_POSITION_ROTATION_KM_V2_VERSION} from
   '../lib/engine/v2/physical-first-position-rotation-km-v2.mjs';
+import {advancePhysicalFirstPositionFixedLaneConvoyKmV1,
+  replayPhysicalFirstPositionFixedLaneConvoyKmV1} from
+  '../lib/engine/v2/physical-first-position-fixed-lane-convoy-km-v1.mjs';
+import {settlePhysicalFirstPositionFixedLaneFinishV1,
+  replayPhysicalFirstPositionFixedLaneFinishV1} from
+  '../lib/engine/v2/physical-first-position-fixed-lane-finish-v1.mjs';
+import {advancePhysicalFirstPositionHybridKmV1,
+  replayPhysicalFirstPositionHybridKmV1} from
+  '../lib/engine/v2/physical-first-position-hybrid-km-v1.mjs';
 import {orderAt} from '../lib/engine/v2/orders.mjs';
 import {riderKilometreEffect} from
   '../lib/engine/v2/physiology.mjs';
@@ -20,7 +30,11 @@ import {segmentBaseSeconds} from
 import {MOTOR_DRAFT_SHELTER,MOTOR_RACE_DYNAMICS,
   TUNING} from '../lib/engine/v2/tuning.mjs';
 
+const category=process.argv.includes('--women')?
+  'women':'men';
+const hybrid=process.argv.includes('--hybrid');
 const settings={distanceKm:120,teamCount:20,
+  gender:category==='men'?'M':'F',
   terrain:'mountain',fatigue:0,attack:'none',
   chase:'selective',seed:'preview-recorded-road-1'};
 const sportingStakes=prepareV91Playtest(settings)
@@ -116,9 +130,115 @@ try{
   positionOutcome={status:'unsupported',
     sourceKm:1,reason:error.message};
 }
+let fixedLaneOutcome=null;
+try{
+  let prior=positionStart;
+  let contactEvents=0;
+  let riderDecisions=0;
+  let rotationKm=0;
+  let fixedLaneKm=0;
+  let maxFrontClockDeltaSeconds=0;
+  let firstPelotonMembershipMismatchKm=null;
+  let matchingPelotonKilometres=0;
+  let matchingRoadCounts=0;
+  let unsupported=null;
+  for(const roadSegment of kilometres){
+    const args={prior,segment:roadSegment,input};
+    try{
+      const next=hybrid?
+        advancePhysicalFirstPositionHybridKmV1(args):
+        advancePhysicalFirstPositionFixedLaneConvoyKmV1(args);
+      if(hybrid)
+        replayPhysicalFirstPositionHybridKmV1(args,next);
+      else replayPhysicalFirstPositionFixedLaneConvoyKmV1(
+        args,next);
+      if(next.version===
+        PHYSICAL_FIRST_POSITION_ROTATION_KM_V2_VERSION)
+        rotationKm++;
+      else fixedLaneKm++;
+      contactEvents+=next.contactEvents.length;
+      riderDecisions+=next.decisions.length;
+      const sourceState=source.states[roadSegment.km];
+      maxFrontClockDeltaSeconds=Math.max(
+        maxFrontClockDeltaSeconds,
+        Math.abs(next.clockSeconds-
+          sourceState.frontClockSeconds));
+      const paidIds=next.contactComponents[0];
+      const sourceIds=[...sourceState.roads.find(
+        road=>road.roadId==='peloton')
+        .riderIds].sort();
+      if(JSON.stringify(paidIds)===
+        JSON.stringify(sourceIds))
+        matchingPelotonKilometres++;
+      else if(firstPelotonMembershipMismatchKm===null)
+          firstPelotonMembershipMismatchKm=
+            roadSegment.km;
+      if(next.contactComponents.length===
+        sourceState.roads.length)
+        matchingRoadCounts++;
+      prior=next;
+    }catch(error){
+      unsupported={sourceKm:roadSegment.km,
+        reason:error.message};
+      break;
+    }
+  }
+  fixedLaneOutcome={status:unsupported?
+    'partial':'trace_complete_finish_unresolved',
+  completedThroughKm:prior.sourceKm,
+  riderDecisions,
+  rotationKm,fixedLaneKm,
+  contactComponentSizes:prior.sourceKm?
+    prior.contactComponents.map(group=>
+      group.length):null,
+  contactEvents,
+  maxFrontClockDeltaSeconds,
+  firstPelotonMembershipMismatchKm,
+  matchingPelotonKilometres,
+  matchingRoadCounts,
+  sourceFinalRoadSizes:source.states.at(-1)
+    .roads.map(road=>road.riderIds.length),
+  lastDistanceM:prior.positions.at(-1).distanceM,
+  unsupported,
+  officialResults:false};
+  if(!unsupported){
+    try{
+      const tailRequest={prior,input};
+      const finish=settlePhysicalFirstPositionFixedLaneFinishV1(
+        tailRequest);
+      replayPhysicalFirstPositionFixedLaneFinishV1(
+        tailRequest,finish);
+      const sourceFinishClock=new Map(
+        source.states.at(-1).riders.map(row=>
+          [row.riderId,row.clockSeconds]));
+      const finishClockDeltas=finish.finishCrossings
+        .map(row=>Math.abs(row.clockSeconds-
+          sourceFinishClock.get(row.riderId)));
+      fixedLaneOutcome.finish={status:
+        'paid_crossings_unranked',
+      crossingCoverage:`${finish.finishCrossings.length}/${riders.length}`,
+      lastClockSeconds:finish.lastClockSeconds,
+      contactEvents:finish.contactEvents.length,
+      maxOldGroupClockDeltaSeconds:
+        Math.max(...finishClockDeltas),
+      exactOldGroupClockMatches:
+        finishClockDeltas.filter(delta=>
+          delta<1e-6).length,
+      officialResults:finish.officialResults};
+      fixedLaneOutcome.status=
+        'trace_and_crossings_complete_unranked';
+    }catch(error){
+      fixedLaneOutcome.finish={status:'unsupported',
+        reason:error.message};
+    }
+  }
+}catch(error){
+  fixedLaneOutcome={status:'unsupported',
+    sourceKm:1,reason:error.message};
+}
 process.stdout.write(`${JSON.stringify({
   version:'physical-first-position-early-climb-audit-1',
-  category:'men',riderCount:riders.length,
+  category,hybrid,riderCount:riders.length,
   firstTerrain:kilometres[0].terrain,
   sourceFront:source.steps[0].peloton
     .road.leaderRiderId,
@@ -130,4 +250,5 @@ process.stdout.write(`${JSON.stringify({
   maxFallBackM:Math.max(...projected.map(row=>
     row.fallsBackM)),
   componentSizes:components.map(group=>group.length)},
-  positionOutcome,officialResults:false},null,2)}\n`);
+  positionOutcome,fixedLaneOutcome,
+  officialResults:false},null,2)}\n`);

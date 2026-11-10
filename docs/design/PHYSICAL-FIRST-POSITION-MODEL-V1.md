@@ -165,3 +165,64 @@ case without measurable contact loss. It does not claim to solve the
 pack, detached riders need their own subsequent roads, and rear groups
 may form only after their actual positions establish contact. No official
 finish or viewer export is derived from this isolated contract.
+
+An additional experimental `physical-first-position-fixed-lane-convoy-km-1`
+advances every rider from a committed start grid, kilometre by kilometre.
+The front worker sets one shared race clock. Every other rider has a
+strength and order-dependent preferred speed, but cannot ride through the
+wheel immediately ahead in the same lane. A rider near a wheel ahead pays
+sheltered distance; the first wheel of each detached component pays leader
+distance. Quarter-second paid movement samples record every change in the
+measured contact components. The component records and per-rider energy
+and distance replay exactly; no old group time sets these positions.
+The fixed-lane rule deliberately forbids lane changes, attacks and front
+rotations, so its output is an **experimental trace**, not an assertion of
+realistic overtaking or a completed race result. The 160-rider
+named-worker fixture records all 19,200 rider-kilometre decisions over
+120 km and five paid contact-topology changes. It matches the older
+source's front clock exactly and its peloton membership and road count
+at 118/120 kilometre boundaries. At the first boundary it has four
+components of 114, 20, 15 and 11 riders, while the old source has 66
+immediate start drops. Their membership differs in the first two
+kilometres. At the final boundary both have six roads, including a
+94-rider peloton, but the new model's last rider still has about 3 km
+to travel when the front crosses. The two initial drop counts are not
+silently substituted for one another.
+
+`physical-first-position-fixed-lane-finish-1` continues each unfinished
+rider on the actual remaining kilometre segments. A rider stops at the
+real line; no one rides an invented post-finish route to tow teammates.
+Each quarter-second interval pays its measured distance with the role
+implied by current contact; the route and team order are selected at the
+rider's own distance. The 160-rider fixture covers 160/160 replayable
+individual crossings. The largest difference from the older source's
+**group clock** is 129.7 seconds, and only one individual clock matches
+exactly. The older clock does not contain wheel order, so neither these
+differences nor the new deterministic crossing order establish a
+calibrated official result. Lane changes, a competitive sprint, more
+seeds and distinct rider profiles remain to be validated before any
+viewer feed. The same audit also completed for a separately committed
+women's field; the synthetic playtest generator assigns identical skill
+numbers to its men's and women's rosters, so this checks category
+isolation and replay, not a second physical calibration.
+
+`physical-first-position-hybrid-policy-1` selects the existing paid
+rotation when every wheel remains connected and all riders can hold its
+shelter. A measured shelter loss selects the fixed-lane convoy instead.
+An attack order still refuses: the policy has no attack departure path,
+and an unpayable front change cannot silently take effect. The versioned
+whole-race recorder stores each chosen step, every rider decision,
+checkpoint crossings, contact events and an individually paid finish;
+whole-recording replay rejects changes. Its viewer-ready and
+official-results fields remain false.
+
+The 24-case no-attack, two-seed matrix (men and women, flat/rolling/
+mountain, selective/all chase) completed 24/24 120 km traces and
+120/120 finish crossings per race. It agreed with the older source on
+peloton membership at every kilometre. The maximum front-clock
+difference was 1.69536 seconds. **All 2,880 kilometres selected the
+rotation path and none selected the fixed-lane path**, because these
+standard 120-rider inputs did not lose shelter. The separate 160-rider
+named-worker mountain fixture selected fixed-lane movement for all
+120 kilometres and completed 160/160 paid crossings. This is evidence
+for two paths separately, not yet a mixed drop-and-rotation race.
