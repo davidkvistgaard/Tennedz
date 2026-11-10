@@ -19,7 +19,7 @@ export default function MotorLabLiveClient({initialInput}) {
   const [classification, setClassification] = useState(null);
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
-  const start = useCallback(async (event) => {
+  const start = useCallback(async (event, sharedSessionToken) => {
     event?.preventDefault();
     setBusy(true); setError(''); setRun(null); setSync(null);
     setClassification(null);
@@ -28,7 +28,9 @@ export default function MotorLabLiveClient({initialInput}) {
       const response = await fetch('/api/motor-lab/viewer-run', {
         method: 'POST', cache: 'no-store',
         headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({plan, routeId, seed: Number(seed), orders}),
+        body: JSON.stringify(sharedSessionToken?
+          {sessionToken: sharedSessionToken}:
+          {plan, routeId, seed: Number(seed), orders}),
       });
       const payload = await response.json();
       const received = Date.now();
@@ -37,7 +39,7 @@ export default function MotorLabLiveClient({initialInput}) {
       setRun({feed: scenicPresentationV1(payload.feed),
         coverage: payload.coverage,
         version: payload.version,
-        input: {plan, routeId, seed: Number(seed), orders}});
+        input: payload.input, sessionToken: payload.sessionToken});
       setSync({clock: payload.clock,
         serverOffsetMs: payload.serverNowMs - (sent + received) / 2});
     } catch (cause) { setError(cause.message); }
@@ -46,7 +48,7 @@ export default function MotorLabLiveClient({initialInput}) {
   useEffect(() => {
     if (!initialInput || autoStarted.current) return;
     autoStarted.current = true;
-    start();
+    start(undefined, initialInput.sessionToken);
   }, [initialInput, start]);
   useEffect(() => {
     if (!run) return undefined;
@@ -55,8 +57,8 @@ export default function MotorLabLiveClient({initialInput}) {
       try {
         const sent = Date.now();
         const response = await fetch(
-          `/api/motor-lab/checkpoint-clock?raceId=${
-            encodeURIComponent(run.feed.raceId)}`, {cache: 'no-store'});
+          `/api/motor-lab/checkpoint-clock?session=${
+            encodeURIComponent(run.sessionToken)}`, {cache: 'no-store'});
         const payload = await response.json();
         const received = Date.now();
         if (!response.ok || payload.raceId !== run.feed.raceId ||
@@ -79,7 +81,7 @@ export default function MotorLabLiveClient({initialInput}) {
       const response = await fetch('/api/motor-lab/checkpoint-result', {
         method: 'POST', cache: 'no-store',
         headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({...run.input, raceId: run.feed.raceId}),
+        body: JSON.stringify({sessionToken: run.sessionToken}),
       });
       const payload = await response.json();
       if (!response.ok || !payload.ok ||
@@ -184,10 +186,8 @@ export default function MotorLabLiveClient({initialInput}) {
       {run?<p role="status">{run.coverage.recordedRiderKilometres}
         {' '}rider checkpoints loaded from a full 160 km simulation.
         The camera is local; playback time is shared.</p>:null}
-      {run?<a href={`/team/motor-lab/live?plan=${
-        encodeURIComponent(run.input.plan)}&route=${
-        encodeURIComponent(run.input.routeId)}&seed=${run.input.seed}&orders=${
-        encodeURIComponent(JSON.stringify(run.input.orders))}`}>
+      {run?<a href={`/team/motor-lab/live?session=${
+        encodeURIComponent(run.sessionToken)}`}>
         Open this shared replay ↗</a>:null}
       {error?<p role="alert">{error}</p>:null}
     </div>

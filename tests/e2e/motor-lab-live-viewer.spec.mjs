@@ -1,6 +1,8 @@
 import {test, expect} from '@playwright/test';
 import {createMotorLabPreviewSource} from
   '../../lib/engine/v2/preview.mjs';
+import {createCheckpointBroadcastSessionV2} from
+  '../../lib/viewer/checkpoint-broadcast-session-v2.mjs';
 
 const runInput = {plan: 'sprint', routeId: 'ridge', seed: 1};
 
@@ -42,6 +44,9 @@ test('authenticated full Motor Lab race reaches the new WebGL viewer',
     expect(body.feed.frames.every(frame => frame.positions.length === 32))
       .toBe(true);
     expect(body.feed.results).toBeUndefined();
+    expect(body.sessionToken).toMatch(/^[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$/);
+    expect(Math.abs(body.clock.serverEpochMs - body.serverNowMs))
+      .toBeLessThan(5000);
     expect(body.coverage.recordedRiderKilometres).toBe(5120);
     expect(body.coverage.recordedElapsedClock).toBe(false);
     const sharedLink = await page.getByRole('link',
@@ -52,20 +57,41 @@ test('authenticated full Motor Lab race reaches the new WebGL viewer',
       reply.request().method() === 'POST');
     await secondPage.goto(sharedLink);
     const secondBody = await (await secondResponse).json();
+    expect(secondBody.sessionToken).toBe(body.sessionToken);
     expect(secondBody.feed.raceId).toBe(body.feed.raceId);
     expect(secondBody.feed.frames).toEqual(body.feed.frames);
     expect(secondBody.clock.duration).toBe(body.clock.duration);
+    expect(secondBody.clock.serverEpochMs).toBe(body.clock.serverEpochMs);
     await secondPage.close();
     const resultResponse = await context.request.post(
       '/api/motor-lab/checkpoint-result', {
-        data: {...submittedInput, raceId: body.feed.raceId},
+        data: {sessionToken: body.sessionToken},
         headers: {Origin: 'http://localhost:3100'},
       });
-    expect([200, 425]).toContain(resultResponse.status());
-    if (resultResponse.status() === 425)
-      expect((await resultResponse.json()).results).toBeUndefined();
-    else
-      expect((await resultResponse.json()).results).toHaveLength(32);
+    expect(resultResponse.status()).toBe(425);
+    expect((await resultResponse.json()).results).toBeUndefined();
+    const source = createMotorLabPreviewSource(submittedInput);
+    const finishedSession = createCheckpointBroadcastSessionV2(source,
+      source, Date.now() - body.feed.duration * 1000 - 1000,
+      'fixture-service-role');
+    const released = await context.request.post(
+      '/api/motor-lab/checkpoint-result', {
+        data: {sessionToken: finishedSession.token},
+        headers: {Origin: 'http://localhost:3100'},
+      });
+    expect(released.status()).toBe(200);
+    expect((await released.json()).results).toHaveLength(32);
+    const finishedPage = await context.newPage();
+    await finishedPage.goto(`/team/motor-lab/live?session=${
+      encodeURIComponent(finishedSession.token)}`);
+    await expect(finishedPage.locator('.race-theatre'))
+      .toBeVisible({timeout: 30000});
+    await finishedPage.getByRole('button', {name: 'Race details'}).click();
+    await finishedPage.getByRole('button', {name: 'results', exact: true})
+      .click();
+    await expect(finishedPage.locator('.race-theatre-details li'))
+      .toHaveCount(32, {timeout: 15000});
+    await finishedPage.close();
     await expect(page.locator('.race-theatre')).toBeVisible({timeout: 30000});
     await expect(page.getByText(/Playback time is presentation time/))
       .toBeVisible();

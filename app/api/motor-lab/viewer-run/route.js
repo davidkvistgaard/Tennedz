@@ -4,8 +4,9 @@ import {createMotorLabPreviewSource} from
   '../../../../lib/engine/v2/preview.mjs';
 import {adaptMotorLabCheckpointsV1} from
   '../../../../lib/viewer/motor-lab-checkpoint-adapter-v1.mjs';
-import {checkpointBroadcastClockV1} from
-  '../../../../lib/viewer/checkpoint-broadcast-clock-v1.mjs';
+import {createCheckpointBroadcastSessionV2,
+  verifyCheckpointBroadcastSessionV2, checkpointSessionClockV2} from
+  '../../../../lib/viewer/checkpoint-broadcast-session-v2.mjs';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -33,14 +34,29 @@ async function handler(request, _context, auth) {
   catch { return NextResponse.json({ok: false,
     error: 'Invalid request.'}, {status: 400}); }
   try {
-    const source = createMotorLabPreviewSource(input);
-    const adapted = adaptMotorLabCheckpointsV1(source);
+    if (!input || typeof input !== 'object' || Array.isArray(input))
+      throw new Error('Choose a valid Motor Lab plan, route and seed.');
     const now = Date.now();
+    const existing = input.sessionToken?
+      verifyCheckpointBroadcastSessionV2(input.sessionToken, now):null;
+    const source = createMotorLabPreviewSource(existing?.input ?? input);
+    const adapted = adaptMotorLabCheckpointsV1(source);
+    const session = existing ?? createCheckpointBroadcastSessionV2(source,
+      source, now);
+    if (session.raceId !== adapted.feed.raceId ||
+        session.engineVersion !== source.race.version ||
+        session.tuningVersion !== source.race.tuningVersion)
+      return NextResponse.json({ok: false,
+        error: 'The motor version for this replay is no longer available.'},
+      {status: 409});
     return NextResponse.json({ok: true, ...adapted,
-      ...checkpointBroadcastClockV1(adapted.feed.duration, now)},
+      input: session.input, sessionToken: session.token,
+      ...checkpointSessionClockV2(adapted.feed.duration,
+        session.startedAtMs, now)},
     {headers: {'Cache-Control': 'private, no-store'}});
   } catch (error) {
-    if (error.message.startsWith('Choose '))
+    if (error.message.startsWith('Choose ') ||
+        error.message.includes('viewer session'))
       return NextResponse.json({ok: false, error: error.message},
         {status: 400});
     throw error;

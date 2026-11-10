@@ -4,8 +4,9 @@ import {createMotorLabPreviewSource} from
   '../../../../lib/engine/v2/preview.mjs';
 import {motorLabCheckpointRaceId, MOTOR_LAB_CHECKPOINT_SECONDS} from
   '../../../../lib/viewer/motor-lab-checkpoint-adapter-v1.mjs';
-import {checkpointBroadcastClockV1} from
-  '../../../../lib/viewer/checkpoint-broadcast-clock-v1.mjs';
+import {verifyCheckpointBroadcastSessionV2,
+  checkpointSessionClockV2} from
+  '../../../../lib/viewer/checkpoint-broadcast-session-v2.mjs';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -31,21 +32,28 @@ async function handler(request, _context, auth) {
   try { input = await request.json(); }
   catch { return NextResponse.json({ok: false, error: 'Invalid request.'},
     {status: 400}); }
-  try { motorLabCheckpointRaceId(input); }
-  catch (error) { return NextResponse.json({ok: false,
-    error: error.message}, {status: 400}); }
+  const now = Date.now();
+  let session;
+  try { session = verifyCheckpointBroadcastSessionV2(
+    input?.sessionToken, now); }
+  catch { return NextResponse.json({ok: false,
+    error: 'Invalid viewer session.'}, {status: 400}); }
   const duration = 160 * MOTOR_LAB_CHECKPOINT_SECONDS;
-  const clock = checkpointBroadcastClockV1(duration, Date.now());
+  const clock = checkpointSessionClockV2(duration,
+    session.startedAtMs, now);
   if (!clock.clock.paused)
     return NextResponse.json({ok: false,
       error: 'The provisional classification is withheld until the finish.'},
     {status: 425});
   try {
-    const source = createMotorLabPreviewSource(input);
+    const source = createMotorLabPreviewSource(session.input);
     const raceId = motorLabCheckpointRaceId(source);
-    if (input.raceId !== raceId)
-      return NextResponse.json({ok: false, error: 'Race ID mismatch.'},
-        {status: 400});
+    if (session.raceId !== raceId ||
+        session.engineVersion !== source.race.version ||
+        session.tuningVersion !== source.race.tuningVersion)
+      return NextResponse.json({ok: false,
+        error: 'The motor version for this replay is no longer available.'},
+        {status: 409});
     const results = source.race.provisionalResults;
     if (!Array.isArray(results) || results.length !== 32 ||
         new Set(results.map(row => row.riderId)).size !== 32 ||
