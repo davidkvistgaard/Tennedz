@@ -7,6 +7,8 @@ import {runPhysicalFirstWholeRaceProbeV1} from
   '../lib/engine/v2/physical-first-whole-race-probe-v1.mjs';
 import {recordPhysicalFirstPositionOneAttackRaceV1} from
   '../lib/engine/v2/physical-first-position-one-attack-race-v1.mjs';
+import {recordPhysicalFirstPositionMultiSoloRaceV1} from
+  '../lib/engine/v2/physical-first-position-multi-solo-race-v1.mjs';
 import {createPhysicalFirstPositionStartV2,
   PHYSICAL_FIRST_POSITION_START_V2_VERSION} from
   '../lib/engine/v2/physical-first-position-start-v2.mjs';
@@ -14,6 +16,7 @@ import {replayRearEnergyCapV1} from
   '../lib/engine/v2/rear-energy-cap-source-v1.mjs';
 
 const smoke=process.argv.includes('--smoke');
+const multi=process.argv.includes('--multi');
 const attackerAbilityShift=Number(process.argv.find(arg=>
   arg.startsWith('--attacker-ability-shift='))
   ?.slice('--attacker-ability-shift='.length)??0);
@@ -64,12 +67,18 @@ for(const variant of variants){
           throughKm:0}).initialCap;
     }
     const source=runPhysicalFirstWholeRaceProbeV1(input);
-    const race=recordPhysicalFirstPositionOneAttackRaceV1({
-      input,grid});
+    const race=multi?
+      recordPhysicalFirstPositionMultiSoloRaceV1({
+        input,grid}):
+      recordPhysicalFirstPositionOneAttackRaceV1({
+        input,grid});
     const sourceFinish=source.states.at(-1);
     const sourcePeloton=sourceFinish.roads.find(row=>
       row.roadId==='peloton');
-    const soloId=race.soloFinish?.riderId??null;
+    const soloFinish=multi?
+      race.soloFinishes[0]?.[1]??null:
+      race.soloFinish;
+    const soloId=soloFinish?.riderId??null;
     const sourceSolo=soloId?sourceFinish.riders.find(row=>
       row.riderId===soloId):null;
     const sourcePelotonIds=new Set(
@@ -87,19 +96,30 @@ for(const variant of variants){
       riderCount:race.riderCount,
       paidAttackDepartures:race.steps.filter(row=>
         row.departure).length,
+      refusedAttackPasses:multi?
+        race.refusedAttackPasses:0,
       departureKm:race.steps.find(row=>
         row.departure)?.sourceKm??null,
       minSoloGapAheadM:Math.min(
         ...race.steps.flatMap(row=>
+          multi?row.soloSteps.filter(step=>
+            !step.finished).map(step=>
+            step.gapAheadOfPelotonM):
           row.soloStep&&!row.soloStep.finished?
             [row.soloStep.gapAheadOfPelotonM]:[])),
       sourceRoadCount:sourceFinish.roads.length,
       modelRoadCount:race.physicalRoadCount,
+      sourceForwardRiderIds:sourceFinish.roads
+        .filter(row=>row.roadId!=='peloton')
+        .flatMap(row=>row.riderIds).sort(),
+      modelForwardRiderIds:multi?
+        race.soloFinishes.map(([id])=>id).sort():
+        soloId?[soloId]:[],
       pelotonMembershipAligned,
       finishCrossings:race.finishCrossings.length,
-      soloFinishSourceKm:race.soloFinish?.sourceKm??null,
+      soloFinishSourceKm:soloFinish?.sourceKm??null,
       soloFinishClockDeltaSeconds:sourceSolo?
-        race.soloFinish.clockSeconds-
+        soloFinish.clockSeconds-
         sourceSolo.clockSeconds:null,
       pelotonFrontClockDeltaSeconds:
         race.tail.frontClockSeconds-
@@ -118,6 +138,7 @@ const failures=Object.entries(rows.filter(row=>
   return counts;
 },{})).map(([reason,count])=>({reason,count}));
 const summary={version:'physical-first-position-one-attack-audit-1',
+  multi,
   attackerAbilityShift,
   scenarios:rows.length,
   completeRaces:complete.length,

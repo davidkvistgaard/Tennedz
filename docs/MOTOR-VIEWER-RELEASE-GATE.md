@@ -138,6 +138,17 @@ membership at only 50/120 kilometre boundaries, so the release gate
 is still red. A pass with an actual concurrent contact split has not
 been validated.
 
+The separate multi-solo position recorder can pay two sequential
+departures in a three-kilometre synthetic mechanics test and replay all
+crossings. On a four-case, ten-point weaker-attacker whole-race smoke
+set it instead records later attempted attacks as physically refused:
+one refusal on each flat race and three on each mountain race. All four
+120 km recordings finish with every rider paid, but the older source
+places a second rider in the forward road. No positional lane change
+has yet made that second attempt payable, and no caught solo has been
+validated. The multi-solo recorder is opt-in and has no official results
+or viewer export.
+
 Local browser WebGL checks with the deliberately synthetic renderer fixture
 showed all 30 or 150 rider rigs for both categories, 51 draw calls and no
 renderer errors. Observed status samples after settling were 68 fps for 30

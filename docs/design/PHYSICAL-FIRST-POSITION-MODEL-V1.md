@@ -289,3 +289,30 @@ mountains and kilometre 40 on flat roads. The recorder refuses these
 orders because it has only one paid solo-road slot. None of these
 fixtures demonstrates a caught solo rider; that contact contract remains
 missing.
+
+`physical-first-position-multi-solo-race-1` extends the isolated position
+recorder to carry several paid solo roads on one peloton clock. A second
+attack is only a recorded solo road after the named rider passes the
+measured front in a clear lane and pays for the move. If a selected
+attacker lacks that lane, the attempt is recorded as a refusal and the
+rider stays in the peloton. Solo-to-solo contact still fails closed.
+Finishers stop at their own paid crossing times: sharing the finish
+coordinate after finishing is not evidence of simultaneous contact.
+The small synthetic two-team, three-kilometre test has two paid
+departures, distinct solo crossings, complete finish coverage and exact
+whole-recording replay. This proves the movement path, not whole-race
+calibration for multiple successful attacks.
+The unmodified 48-case, two-seed, two-category attack matrix also
+completes 48/48 races and every finish crossing on this recorder, with
+one paid departure per race and no refusal. It matches the older
+source's final road membership in those cases; no scenario in that
+matrix needs a second successful attack.
+
+On the ten-point weaker-attacker 120 km smoke set, the new recorder
+completes all four races with one paid departure and one refused later
+attempt on each flat race or three on each mountain race. The older
+source sends `you-5` into the forward road as well as `you-7`; the
+position model keeps `you-5` in the peloton because its passing lane
+is blocked. This is an explicit source disagreement, not a scripted
+model catch-up. A paid positioning or lane-change decision and a
+measured caught-break contact remain release blockers.

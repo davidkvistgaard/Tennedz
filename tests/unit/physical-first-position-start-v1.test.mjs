@@ -67,6 +67,9 @@ import {PHYSICAL_FIRST_POSITION_MIXED_FRONT_PASS_VERSION} from
   '../../lib/engine/v2/physical-first-position-mixed-front-pass-km-v1.mjs';
 import {quotePhysicalFirstPositionFrontPassV1} from
   '../../lib/engine/v2/physical-first-position-front-pass-quote-v1.mjs';
+import {recordPhysicalFirstPositionMultiSoloRaceV1,
+  replayPhysicalFirstPositionMultiSoloRaceV1} from
+  '../../lib/engine/v2/physical-first-position-multi-solo-race-v1.mjs';
 
 const grid={laneCount:4,wheelSpacingM:2.5,laneStaggerM:.08};
 
@@ -613,6 +616,43 @@ function cappedInput(kmCount,teamCount=2){
   }
   return committed;
 }
+
+test('two distinct ordered attacks need two paid physical departures',()=>{
+  const committed=cappedInput(3);
+  committed.positionModelVersion=
+    PHYSICAL_FIRST_POSITION_START_V2_VERSION;
+  for(const stake of committed.stakes)
+    stake.sportingGoal='break_stage';
+  const first=committed.teams[0];
+  const second=committed.teams[1];
+  first.orders.baseline.attack='selective';
+  first.orders.baseline.attackRiderId='team-0-7';
+  second.orders.phases=[{
+    atKm:1,attack:'selective',
+    attackRiderId:'team-1-7'}];
+  Object.assign(first.riders[6],{flat:85,
+    sprint:85,acceleration:100,
+    positioning:100});
+  Object.assign(second.riders[6],{flat:70,
+    sprint:70,acceleration:100,
+    positioning:100});
+  const request={input:committed,grid};
+  const race=recordPhysicalFirstPositionMultiSoloRaceV1(
+    request);
+  assert.equal(race.paidAttackDepartures,2);
+  assert.equal(race.finishCrossings.length,16);
+  assert.deepEqual(race.steps.filter(row=>
+    row.departure).map(row=>row.departure
+    .soloPosition.riderId),['team-0-7','team-1-7']);
+  assert.equal(race.soloFinishes.length,2);
+  assert.equal(race.refusedAttackPasses,0);
+  assert.deepEqual(replayPhysicalFirstPositionMultiSoloRaceV1(
+    request,race),race);
+  const forged=structuredClone(race);
+  forged.steps[1].departure.passEvent.atClockSeconds=0;
+  assert.throws(()=>replayPhysicalFirstPositionMultiSoloRaceV1(
+    request,forged),/differs from paid movement/);
+});
 
 test('committed first leader and positioning contest form a replayable start',()=>{
   const committed=input();
