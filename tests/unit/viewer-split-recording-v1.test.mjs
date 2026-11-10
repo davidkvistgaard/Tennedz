@@ -30,7 +30,8 @@ for(const category of ['men','women'])
     const scenic=scenicPresentationV1(feed);
     assert.deepEqual(validateFeed(scenic),scenic);
     assert.equal(scenic.route.profile.samples.at(-1)[0],120000);
-    assert.equal(scenic.terrain.rows,6003);
+    assert.equal(scenic.terrain.step[1],80);
+    assert.equal(scenic.terrain.rows,1503);
     assert.ok(scenic.landmarks.every(row=>
       row.position[2]>=0&&row.position[2]<120000));
     const sample=createSampler(scenic);

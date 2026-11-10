@@ -3423,17 +3423,27 @@ function zn(e, t, n) {
 		t !== O && (C.addGroup(D * 6, (e - D) * 6, O), D = e, O = t);
 	}
 	p(C, T.materials), p(xn(l, t.route.width));
-	let k = new L();
-	for (let e = 0; e < n.length; e += 6.8) {
-		if (T.at(e).type !== "asphalt") continue;
-		let t = n.at(e).position.add(I(0, .075, 0)), r = n.at(e + 2.3).position.add(I(0, .075, 0));
-		k.rod(t, r, .037, "#dedaca", 4);
+	// Long schematic roads need local marking meshes so the GPU can cull
+	// kilometres that are outside the current camera view.
+	let markingChunk = _ ? 512 : n.length;
+	for (let from = 0; from < n.length; from += markingChunk) {
+		let to = Math.min(n.length, from + markingChunk), k = new L();
+		for (let index = Math.ceil(from / 6.8); index * 6.8 < to; index++) {
+			let e = index * 6.8;
+			if (T.at(e).type !== "asphalt") continue;
+			let t = n.at(e).position.add(I(0, .075, 0)), r = n.at(e + 2.3).position.add(I(0, .075, 0));
+			k.rod(t, r, .037, "#dedaca", 4);
+		}
+		for (let index = Math.ceil(from / 9); index * 9 < to; index++) {
+			let e = index * 9;
+			if (index % 3 !== 0) continue;
+			for (let side of [-1, 1]) {
+				let i = n.at(e, side * (t.route.width / 2 + 1.25));
+				k.rod(i.position, i.position.clone().add(I(0, .75, 0)), .065, "#e4dfcd", 5), k.box(.1, .14, .09, "#59675e", i.position.x, i.position.y + .58, i.position.z);
+			}
+		}
+		p(k.build());
 	}
-	for (let e = 0; e < n.length; e += 9) for (let r of [-1, 1]) {
-		let i = n.at(e, r * (t.route.width / 2 + 1.25));
-		e % 27 == 0 && (k.rod(i.position, i.position.clone().add(I(0, .75, 0)), .065, "#e4dfcd", 5), k.box(.1, .14, .09, "#59675e", i.position.x, i.position.y + .58, i.position.z));
-	}
-	p(k.build());
 	for (let e of t.landmarks || []) ["tree", "pine"].includes(e.type) && !(t.assets || []).some((t) => t.id === e.assetId && t.type === "gltf") && i.push({
 		x: e.position[0],
 		y: e.position[1],

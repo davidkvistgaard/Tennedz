@@ -155,8 +155,31 @@ after warming up and around 4.0–4.1 million triangles on that machine. The
 separate 150-rider, 40 km synthetic fixture displayed about 25 fps and 1.52
 million triangles in the same development browser. These measurements are
 below a smooth-playback release target and are not evidence for other devices.
-The split recording remains an explicitly labelled preview. The guided game
-race at `/team/view/[event_stage_id]` still has group gaps and results but no
-simultaneous rider positions, so it retains its report until the engine records
-an authoritative viewer feed. The experimental split data must not be
+The split recording remains an explicitly labelled preview. Guided game races
+at `/team/view/[event_stage_id]` use their separate saved replay adapter,
+described in `VIEWER_GUIDED_INTEGRATION_DA.md`. They still have no measured
+simultaneous rider positions. The experimental split data must not be
 substituted for an official race.
+
+## Split-road display study, 10 November 2026
+
+`illustrative-group-layout-1` now gives riders who share the same recorded
+group, distance, and lane a stable visual arrangement in the split-road
+preview. The source recording is not changed. Each drawn rider remains in its
+recorded group and at most 20 m behind its recorded distance anchor; the
+arrangement does not claim measured lanes, wheel order, contact, or race
+results. The viewer labels this limitation beside the canvas. A frame at the
+start line can still overlap because the source has zero distance and the
+display does not move anyone before the start.
+
+The 120 km schematic scene uses 80 m longitudinal terrain cells instead of
+20 m cells, and its decorative road markings are built in 512 m sections for
+camera culling. These changes affect only generated scenery. On the local
+Intel UHD/ANGLE WebGL2 browser, the split preview displayed all 120 riders
+at a midrace checkpoint, around 0.9 million rendered triangles, 75 draw
+calls, and about 29 fps after warmup. This is one-device evidence and still
+below a 60 fps target. The 30-rider fictional exhibition displayed about
+44 fps and the 150-rider exhibition about 31 fps in the same session. The
+missing-texture fixture displayed a fallback warning while WebGL continued.
+The split recording still has 50/120 same-seed finish mismatches and no
+official result. It is not approved for guided races or production default.
