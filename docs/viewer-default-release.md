@@ -203,3 +203,15 @@ draw calls from 78 to about 63. The observed rate was about 39 fps after
 warmup, with no clear frame-rate gain over the prior build. Near the finish
 of the fictional 30-rider fixture, roadside spectators remained visible;
 its replay reached 4:00 and explicitly ended with no race result.
+
+The schematic two-point roads now skip the sun's 2048-pixel shadow pass at
+every length, including the 40 km recording. This changes lighting only;
+recorded road positions and sporting data are unaffected. On the same local
+Intel UHD/ANGLE WebGL2 browser with one viewer tab open, the 32-rider view
+away from the finish changed from about 31 fps, 63 draw calls and 0.89 million
+submitted triangles in the exact-SHA preview to about 45 fps, 34 draw calls
+and 0.50 million triangles in the isolated shadow study. The 150-rider
+fictional women's fixture showed all riders, roadside spectators, about
+34 fps and no browser warnings or errors. These numbers describe one GPU and
+viewport, not a general performance guarantee. The removed Three.js
+`PCFSoftShadowMap` setting was also updated to supported `PCFShadowMap`.

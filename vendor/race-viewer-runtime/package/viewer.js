@@ -5047,7 +5047,7 @@ function dr(e, { canvas: t = document.createElement("canvas"), webglFactory: n =
 			canvas: t,
 			context: a,
 			antialias: !0
-		}), i.setPixelRatio(ur()), i.shadowMap.enabled = !0, i.shadowMap.type = c.PCFSoftShadowMap, i.toneMapping = c.ACESFilmicToneMapping, i.toneMappingExposure = 1.18, i.outputColorSpace = c.SRGBColorSpace, i.mode = "WebGL", e.appendChild(t), {
+		}), i.setPixelRatio(ur()), i.shadowMap.enabled = !0, i.shadowMap.type = c.PCFShadowMap, i.toneMapping = c.ACESFilmicToneMapping, i.toneMappingExposure = 1.18, i.outputColorSpace = c.SRGBColorSpace, i.mode = "WebGL", e.appendChild(t), {
 			renderer: i,
 			error: null
 		};
@@ -5118,7 +5118,7 @@ var fr = class {
 		}), this.feed = e, this.weatherState = null, this.sample = we(e), this.route = ke(e.route.points, {
 			interpolation: e.route.interpolation,
 			distanceStations: e.route.distanceStations
-		}), this.sun.castShadow = !((e.synthetic === !0 || e.route.label?.startsWith("Schematic distance axis")) && e.route.points?.length === 2 && this.route.length > 4e4), this.weatherEffects?.dispose(), this.roadFlags?.dispose(), this.environment?.dispose(), this.field?.dispose(), this.environment = zn(this.scene, e, this.route), this.field = new Kt(this.scene, e), this.weatherEffects = new je(this.scene), this.roadFlags = new Ae(this.scene, e, this.route), this.local.position = e.synthetic ? Math.min(110, e.duration) : 0, this.local.paused = !1, this.local.rate = 1, this.local.epoch = performance.now(), this.shared = null, this.initial = !0, this.targetChosen = !1, this.target = Ze(this.sample(this.local.position).positions.filter((e) => Fe(e, this.route.length)), e.riders[0].id);
+		}), this.sun.castShadow = !((e.synthetic === !0 || e.route.label?.startsWith("Schematic distance axis")) && e.route.points?.length === 2), this.weatherEffects?.dispose(), this.roadFlags?.dispose(), this.environment?.dispose(), this.field?.dispose(), this.environment = zn(this.scene, e, this.route), this.field = new Kt(this.scene, e), this.weatherEffects = new je(this.scene), this.roadFlags = new Ae(this.scene, e, this.route), this.local.position = e.synthetic ? Math.min(110, e.duration) : 0, this.local.paused = !1, this.local.rate = 1, this.local.epoch = performance.now(), this.shared = null, this.initial = !0, this.targetChosen = !1, this.target = Ze(this.sample(this.local.position).positions.filter((e) => Fe(e, this.route.length)), e.riders[0].id);
 		let t = this.sceneRevision;
 		this.whenAssetsReady().then((e) => {
 			!this.disposed && !e.superseded && t === this.sceneRevision && this.assetRevision++;
