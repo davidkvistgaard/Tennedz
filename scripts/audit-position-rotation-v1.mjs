@@ -41,13 +41,15 @@ for(const variant of variants){
     let state=createPhysicalFirstPositionStartV1({
       input:committed,grid});
     let paidFrontPasses=0,refusedFrontPasses=0;
+    let blockedPassingLanes=0,openPassingLanes=0;
     let sourceAlignedKm=0,firstSourceDifference=null;
     const crossings=[];
     let unsupported=null;
     for(const segment of committed.kilometres){
       try{
+        const prior=state;
         state=advancePhysicalFirstPositionRotationKmV1({
-          prior:state,segment,input:committed});
+          prior,segment,input:committed});
         crossings.push(...state.checkpointCrossings);
         if(!firstSourceDifference){
           const paid=paidRace.steps[segment.km-1];
@@ -73,8 +75,17 @@ for(const variant of variants){
           else sourceAlignedKm=segment.km;
         }
         if(state.event?.type==='paid_front_pass')paidFrontPasses++;
-        if(state.event?.type==='front_pass_refused')
+        if(state.event?.type==='front_pass_refused'){
           refusedFrontPasses++;
+          const candidate=prior.positions.find(row=>
+            row.riderId===state.proposedLeaderRiderId);
+          const blocked=prior.positions.some(row=>
+            row.riderId!==candidate.riderId&&
+            row.lane===candidate.lane&&
+            row.distanceM>candidate.distanceM+1e-6);
+          if(blocked)blockedPassingLanes++;
+          else openPassingLanes++;
+        }
       }catch(error){
         unsupported={km:segment.km,reason:error.message};
         break;
@@ -88,6 +99,7 @@ for(const variant of variants){
       riderCount,recordedRiderCrossings:uniqueCrossings.size,
       sourceAlignedKm,firstSourceDifference,
       paidFrontPasses,refusedFrontPasses,unsupported,
+      blockedPassingLanes,openPassingLanes,
       officialResults:false});
   }catch(error){
     rows.push({variant,status:'failed',reason:error.message});
@@ -102,6 +114,10 @@ const summary={version:'physical-first-position-rotation-audit-1',
     row.sourceAlignedKm===row.plannedKm).length,
   paidFrontPasses:complete.reduce((sum,row)=>
     sum+row.paidFrontPasses,0),
+  blockedPassingLanes:complete.reduce((sum,row)=>
+    sum+row.blockedPassingLanes,0),
+  openPassingLanes:complete.reduce((sum,row)=>
+    sum+row.openPassingLanes,0),
   officialResultsAvailable:0,
   readyForViewerPositions:false};
 process.stdout.write(`${JSON.stringify({summary,rows},null,2)}\n`);
