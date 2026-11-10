@@ -30,7 +30,10 @@ test('authenticated full Motor Lab race reaches the new WebGL viewer',
     await expect(page).toHaveURL(/\/team$/);
     expect((await context.request.post(endpoint, {data: runInput,
       headers: {Origin: 'https://invalid.example'}})).status()).toBe(403);
-    await page.goto('/team/motor-lab/live');
+    await page.goto('/team/motor-lab');
+    await page.getByRole('link',
+      {name: 'Generate and watch a test race'}).click();
+    await expect(page).toHaveURL(/\/team\/motor-lab\/live$/);
     await expect(page.getByRole('heading',
       {name: 'Generated Motor Lab checkpoint replay'})).toBeVisible();
     await page.getByText('Team orders', {exact: true}).click();
