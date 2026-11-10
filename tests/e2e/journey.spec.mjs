@@ -46,7 +46,11 @@ for(const width of [390,1440])test(`English manager journey from signup to repla
   await expect(page.getByText('Saved ✓',{exact:true})).toBeVisible();
   await fits();await page.screenshot({path:`test-results/journey-lineup-${width}.png`,fullPage:true});
   fixture.finish();
-  await page.reload();await page.getByRole('button',{name:'Finished',exact:true}).click();
+  await page.goto('/viewer');
+  await page.getByRole('link',{name:/Watch your saved game race/}).click();
+  await expect(page).toHaveURL(/\/team\/run\?bucket=finished$/);
+  await expect(page.getByRole('button',{name:'Finished',exact:true}))
+    .toHaveAttribute('aria-pressed','true');
   await page.getByRole('button',{name:/The Coast Classic/}).click();
   await expect(page.getByRole('button',{name:'Enter team',exact:true})).toHaveCount(0);
   await page.getByRole('link',{name:'Results',exact:true}).click();

@@ -96,6 +96,9 @@ export default function RunPage() {
     const params = new URLSearchParams(window.location.search);
     const requestedGender = params.get("gender");
     if (requestedGender === "M" || requestedGender === "F") setGender(requestedGender);
+    const requestedBucket = params.get("bucket");
+    if (["upcoming", "pending", "finished"].includes(requestedBucket))
+      setBucket(requestedBucket);
     const requestedEvent = params.get("event_id");
     if (requestedEvent && /^[0-9a-f-]{36}$/i.test(requestedEvent)) setEventId(requestedEvent);
     if (params.get("return_filter")) setReturnFilter(params.get("return_filter"));
