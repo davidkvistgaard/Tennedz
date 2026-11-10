@@ -2159,7 +2159,7 @@ var $t = class {
 				geometry: Qt(n[0]),
 				mesh: null,
 				capacity: 0
-			}, this.groups.set(e, t)), n.length > t.capacity && (t.mesh && (this.scene.remove(t.mesh), t.mesh.dispose()), t.capacity = 2 ** Math.ceil(Math.log2(Math.max(1, n.length))), t.mesh = new c.InstancedMesh(t.geometry, this.material, t.capacity), t.mesh.castShadow = !0, t.mesh.receiveShadow = !0, t.mesh.frustumCulled = !1, this.scene.add(t.mesh)), t.mesh.count = n.length, n.forEach((n, r) => {
+			}, this.groups.set(e, t)), n.length > t.capacity && (t.mesh && (this.scene.remove(t.mesh), t.mesh.dispose()), t.capacity = 2 ** Math.ceil(Math.log2(Math.max(1, n.length))), t.mesh = new c.InstancedMesh(t.geometry, this.material, t.capacity), t.mesh.castShadow = !0, t.mesh.receiveShadow = !0, t.mesh.frustumCulled = !0, this.scene.add(t.mesh)), t.mesh.count = n.length, n.forEach((n, r) => {
 				let i = new c.Matrix4().makeRotationY(n.rotation || 0).setPosition(I(...n.position)).scale(I(n.scale || 1, n.scale || 1, n.scale || 1));
 				t.mesh.setMatrixAt(r, i), this.instances.push({
 					kind: "spectator",
@@ -2175,7 +2175,7 @@ var $t = class {
 						material: this.material
 					}]
 				});
-			}), t.mesh.instanceMatrix.needsUpdate = !0;
+			}), t.mesh.instanceMatrix.needsUpdate = !0, t.mesh.boundingSphere = null, t.mesh.computeBoundingSphere();
 		}
 	}
 	dispose() {

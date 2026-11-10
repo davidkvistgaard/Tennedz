@@ -48,7 +48,7 @@ timeline around the installed `@pelotonia/race-viewer` renderer. Its visual
 style follows the supplied ChatGPT Work screenshot. It uses the package as a
 module; the kit's demo application is not part of Tennedz.
 
-`motor-lab-scenic-study-2` adds only flat terrain, generated roadside trees,
+`motor-lab-scenic-study-3` adds only flat terrain, generated roadside trees,
 grass, spectators, and a finish structure to the recorded 40 km Motor Lab
 sample. Two foliage textures come from the supplied Viewer Integration Kit
 0.98.1 (`source/public/assets/alpine-spruce-v1.png` and
@@ -191,3 +191,12 @@ displayed rate was around 37 fps in both builds; the polygon reduction did
 not produce a measured frame-rate gain on this machine.
 The split recording still has 50/120 same-seed finish mismatches and no
 official result. It is not approved for guided races or production default.
+
+Static and generated spectator batches now refresh their instance bounds when
+placements change, allowing Three.js to cull spectators outside the camera.
+On the same local default 32-rider view away from the finish, this reduced
+submitted geometry from about 1.23 million to 0.91 million triangles and
+draw calls from 78 to about 63. The observed rate was about 39 fps after
+warmup, with no clear frame-rate gain over the prior build. Near the finish
+of the fictional 30-rider fixture, roadside spectators remained visible;
+its replay reached 4:00 and explicitly ended with no race result.
