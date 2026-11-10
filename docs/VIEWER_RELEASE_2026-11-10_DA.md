@@ -2,14 +2,19 @@
 
 ## Udgivelse og kilde
 
-- Aktuelt udgivet kode: `c1a03eed89e45f93be485b8b0bf597422e83da64`
-  på `codex/viewer-atlas-integration`. `cf2db20c` begrænser en gemt
-  optagelse til managerens egen division. `c1a03eed` udelukker lokale
+- Aktuelt udgivet kode: `61bbaf65886d8dc0530430898afd01932078a46d`
+  på `codex/viewer-atlas-integration`.
+  Den versionerede guided-adapter v1-3 sorterer officielle målrækker efter
+  kildens placering og bruger kildens vinder-tid som reference for de viste
+  tidsforskelle. Kildens placeringer og måltider ændres ikke. `cf2db20c`
+  begrænser en gemt optagelse til managerens egen division. `c1a03eed`
+  udelukker lokale
   testbuilds og fixtures fra Vercels upload. `8e9beb73` gjorde handlingen
   "Generate and watch a test race" tydelig på standardvieweren, og
   `485d60cc` rettede kameraet efter fangster.
-- Aktuelt Vercel-produktionsdeployment: `dpl_39nxYcLYSHqFbaZx4rzUixNfcvBq`.
-  Den forrige produktion `dpl_BSEMYg5mqyu9mM4W3HFez7qCPshq`, kameraudgaven
+- Aktuelt Vercel-produktionsdeployment: `dpl_HT3Rj7XDk4ywBXJ2bRNSLKPw3VGC`.
+  Den forrige produktion `dpl_39nxYcLYSHqFbaZx4rzUixNfcvBq` og dennes
+  forgænger `dpl_BSEMYg5mqyu9mM4W3HFez7qCPshq`, kameraudgaven
   `dpl_FkRU2sf1QtCroYzDKpc3nYvLgmvL` og den ældre
   `dpl_CEUquKHrX4mpB98B3tKZxg24hSaj` var `READY` ved kontrol. De nye
   udgivelser blev først bygget til produktionsmiljø uden domæne og derefter
@@ -18,8 +23,9 @@
 - På de tidligere deployments havde `ViewerPreviewClient.js`,
   `viewer-preview.css`, den fokuserede Motor Lab-browsertest og
   `ViewerPreviewScene.js` samme SHA-1 som i de rene lokale commits. I den
-  seneste staged build matchede
-  `app/api/event-run/route.js` lokal SHA-1
+  seneste staged build matchede `lib/viewer/guided-replay-adapter-v1.mjs`
+  lokal SHA-1 `ade5c8534b16efb29586a1ec2dd5fa9486bd8dea`.
+  Den forrige staged builds `app/api/event-run/route.js` matchede lokal SHA-1
   `9df546e7f63dc337a26237c657c190a5d1612118`. Dry-run havde nul lokale
   build- eller testfiler. Produktionssidens JavaScript-URL havde det aktuelle
   deployment-id.
@@ -66,7 +72,7 @@ kontrolvinduet.
 
 På den sidste udgivelse viste den offentlige standardviewer knappen
 "Generate and watch a test race", WebGL-rendering og JavaScript fra
-`dpl_39nxYcLYSHqFbaZx4rzUixNfcvBq`. Et klik førte den loggede manager til
+`dpl_HT3Rj7XDk4ywBXJ2bRNSLKPw3VGC`. Et klik førte den loggede manager til
 den beskyttede formular med plan, rute, scenarienummer og holdordrer uden at
 starte et løb automatisk. `www.tennedz.eu/viewer` viderestillede til
 `tennedz.eu/viewer` og viste samme deployment uden konsolfejl. Den staged
@@ -78,6 +84,8 @@ divisionsmedlemskab.
 ## Testport
 
 - `pnpm lint`, `git diff --check` og isoleret Next.js-produktionsbuild bestod.
+- Ti guided-adapter-unittests bestod, herunder en optagelse med ombyttede
+  officielle målrækker. Den gemte kilde blev ikke ændret.
 - To autentificerede Motor Lab-browsertests bestod med WebGL2, fuld
   checkpointdækning, to tilskuere på samme tid, afvisning af ugyldig session,
   fremtidsskjult resultat, 32 placeringer ved mål, fangst af valgt gruppe,
