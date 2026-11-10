@@ -5,7 +5,8 @@ import {preparePhysicalFirstSplitMotorInputV1} from
   '../lib/viewer/physical-first-split-test-race-v1.mjs';
 import {PHYSICAL_FIRST_POSITION_START_V2_VERSION} from
   '../lib/engine/v2/physical-first-position-start-v2.mjs';
-import {runPhysicalFirstWholeRaceProbeV1} from
+import {runPhysicalFirstWholeRaceProbeV1,
+  runPhysicalFirstWholeRaceProbeV2} from
   '../lib/engine/v2/physical-first-whole-race-probe-v1.mjs';
 import {recordPhysicalFirstPositionGeneralRaceV1,
   replayPhysicalFirstPositionGeneralRaceV1,
@@ -21,6 +22,7 @@ const terrains=option('terrains','mountain').split(',');
 const chases=option('chases','selective').split(',');
 const attack=option('attack','none');
 const positionVersion=option('position-version','1');
+const sourceVersion=option('source-version','1');
 const seeds=option('seeds',
   'preview-recorded-road-1').split(',');
 if(categories.some(value=>
@@ -31,6 +33,7 @@ if(categories.some(value=>
     !['selective','all'].includes(value))||
   !['none','selective','repeated'].includes(attack)||
   !['1','2'].includes(positionVersion)||
+  !['1','2'].includes(sourceVersion)||
   seeds.some(seed=>
     !(/^[A-Za-z0-9-]{1,64}$/).test(seed)))
   throw new Error('General audit has unsupported inputs.');
@@ -55,7 +58,9 @@ for(const category of categories)
           grid:{laneCount:4,
             wheelSpacingM:2.5,
             laneStaggerM:.08}};
-        source=runPhysicalFirstWholeRaceProbeV1(input);
+        source=(sourceVersion==='2'?
+          runPhysicalFirstWholeRaceProbeV2:
+          runPhysicalFirstWholeRaceProbeV1)(input);
       }catch(error){
         sourceError={message:error.message,
           sourceKm:error.sourceKm??null};
@@ -187,7 +192,8 @@ for(const category of categories)
 const summary={version:
   'physical-first-position-general-motor-lab-audit-1',
 fixture:'current_motor_lab_test_input',
-attack,positionVersion,seeds,plannedCases,
+attack,positionVersion,sourceVersion,
+seeds,plannedCases,
 sourceCompleted:rows.filter(row=>
   row.sourceStatus==='complete').length,
 positionCompletedAndReplayed:rows.filter(row=>

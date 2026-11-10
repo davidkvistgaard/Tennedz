@@ -3,7 +3,8 @@ import assert from 'node:assert/strict';
 import {advancePhysicalFirstRoadWithStartDropsV1,
   advancePhysicalFirstRoadV1} from
   '../../lib/engine/v2/physical-first-road-step-v1.mjs';
-import {resolvePhysicalFirstRearBoundaryContactV1} from
+import {resolvePhysicalFirstRearBoundaryContactV1,
+  resolvePhysicalFirstRearBoundaryContactV2} from
   '../../lib/engine/v2/physical-first-rear-boundary-contact-v1.mjs';
 
 const first={km:1,terrain:'flat',gradientPct:0,
@@ -95,5 +96,8 @@ test('contact refuses a rear group with no willing leader',()=>{
   request.teams[2].orders.baseline.breakWork='sit_on';
   assert.throws(()=>
     resolvePhysicalFirstRearBoundaryContactV1(
+      request),/lacks one payable/);
+  assert.throws(()=>
+    resolvePhysicalFirstRearBoundaryContactV2(
       request),/lacks one payable/);
 });

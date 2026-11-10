@@ -727,3 +727,44 @@ also finish and exactly replay. The source and positional
 records agree on the one attack departure in every one of
 those runs. This is evidence for those generated inputs, not
 a guarantee for arbitrary profiles, rosters or manager orders.
+
+`rear-boundary-contact-3`, `road-crossing-guard-3`,
+`solo-contact-settlement-3` and `whole-race-probe-10` are a
+separate source-probe opt-in. When two solo roads have paid
+receipts at the same kilometre boundary but the next terrain
+has no willing, payable, shelter-compatible leader, the contact
+event records that fact without forming a rear road. Both
+riders continue on separate exposed, paid solo roads. The new
+crossing guard permits their co-timed departure only when the
+exact boundary contact and each paid solo receipt are present;
+other unrecorded road crossings still fail. A no-willing-leader
+order still refuses a shared road. The earlier probe and
+boundary contracts are unchanged, and probe 10 adds exact
+whole-race replay.
+
+In synthetic, noncanonical 16-rider 20 km tests, one and two
+weak bunch workers now let probe 10 reach the finish where
+probe 9 stopped at kilometre 3. The position recorder also
+finishes and replays each input. Peloton membership agrees at
+all 19 pre-finish checkpoints. With one weak worker, the
+source eventually forms a two-rider rear road while the
+position model keeps two separate physical rear riders; that
+membership remains uncalibrated. A different synthetic case
+with two attacks and a later front worker still stops probe 10
+at kilometre 12 when a solo crosses an existing rear road.
+That crossing needs its own paid physical contact contract.
+Passing the simpler cases does not waive this refusal.
+The two-worker positional case emits 6,385 contact-topology
+observations over 20 km, which is a measured replay and viewer
+performance concern. Any event reduction must preserve the
+underlying paid-contact evidence and use a new model version.
+On the synthetic 160-rider, 120 km one-worker variant, probe 10
+and the positional recorder both finish. The position record
+contains 19,200 per-rider kilometre rows, all 19,040
+intermediate passages and 160 finish passages, with exact
+replay. Peloton membership differs at kilometre 2 and agrees
+at the other 118 pre-finish checkpoints. The source's final
+two-rider rear road is still two separate positional riders;
+the recorded boundary tie alone is insufficient to force a
+positional reunion. This is a calibration limit, not a reason
+to insert an unearned contact.
