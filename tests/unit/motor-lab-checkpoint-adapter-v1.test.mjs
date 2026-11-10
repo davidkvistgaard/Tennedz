@@ -167,11 +167,27 @@ test('a rider recorded in a chase group is not announced as joining the lead bre
 });
 
 test('multiple plans, seeds and routes produce complete source-derived feeds', () => {
+  const orderSets = [{},
+    {attackPosture: 'repeated', chaseContribution: 'all',
+      breakAttackMarker: '40'},
+    {breakWork: 'sit_on', captainSupport: 'drop_back_if_dropped',
+      lateEffort: 'hard'},
+    {breakResponse: 'chase_if_threatened', attackPosture: 'none',
+      lateChaseContribution: 'ignore'}];
+  let runs = 0;
   for (const routeId of ['coast', 'ridge'])
     for (const plan of ['sprint', 'break', 'balanced', 'conserve'])
-      for (const seed of [0, 1, 37]) {
-        const {source, feed} = run(plan, routeId, seed);
+      for (const seed of [0, 1, 37])
+        for (const orders of orderSets) {
+        const source = createMotorLabPreviewSource({plan, routeId,
+          seed, orders});
+        const {feed, coverage} = adaptMotorLabCheckpointsV1(source);
         assert.equal(feed.frames.length, source.race.route.distanceKm + 1);
-        assert.equal(feed.frames.at(-1).positions.length, 32);
+        assert.ok(feed.frames.every(frame =>
+          frame.positions.length === 32));
+        assert.equal(coverage.recordedRiderKilometres, 5120);
+        assert.equal(feed.results, undefined);
+        runs++;
       }
+  assert.equal(runs, 96);
 });
