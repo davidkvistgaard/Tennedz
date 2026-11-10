@@ -43,10 +43,14 @@ import {advancePhysicalFirstPositionAttackDepartureKmV1,
   replayPhysicalFirstPositionAttackDepartureKmV1} from
   '../../lib/engine/v2/physical-first-position-attack-departure-km-v1.mjs';
 import {advancePhysicalFirstPositionSoloKmV1,
-  replayPhysicalFirstPositionSoloKmV1} from
+  advancePhysicalFirstPositionSoloKmV2,
+  replayPhysicalFirstPositionSoloKmV1,
+  replayPhysicalFirstPositionSoloKmV2} from
   '../../lib/engine/v2/physical-first-position-solo-km-v1.mjs';
 import {recordPhysicalFirstPositionOneAttackRaceV1,
-  replayPhysicalFirstPositionOneAttackRaceV1} from
+  recordPhysicalFirstPositionOneAttackRaceV2,
+  replayPhysicalFirstPositionOneAttackRaceV1,
+  replayPhysicalFirstPositionOneAttackRaceV2} from
   '../../lib/engine/v2/physical-first-position-one-attack-race-v1.mjs';
 import {advancePhysicalFirstPositionRearTailDropKmV1,
   replayPhysicalFirstPositionRearTailDropKmV1} from
@@ -283,6 +287,14 @@ test('ordered attacker separates only after paid physical passing',()=>{
   assert.ok(solo.decision.paidFromReserve>0);
   assert.deepEqual(replayPhysicalFirstPositionSoloKmV1(
     soloRequest,solo),solo);
+  const localSolo=advancePhysicalFirstPositionSoloKmV2(
+    soloRequest);
+  assert.ok(localSolo.speedLegs.length>0);
+  assert.ok(Math.abs(localSolo.speedLegs.reduce(
+    (sum,leg)=>sum+leg.distanceM,0)-
+      localSolo.decision.paidDistanceM)<1e-5);
+  assert.deepEqual(replayPhysicalFirstPositionSoloKmV2(
+    soloRequest,localSolo),localSolo);
   const shared=advancePhysicalFirstPositionSharedRoadKmV1({
     priorPeloton:departure.peloton,
     priorSolos:[departure.soloPosition],
@@ -297,6 +309,50 @@ test('ordered attacker separates only after paid physical passing',()=>{
   forged.soloPosition.distanceM+=10;
   assert.throws(()=>replayPhysicalFirstPositionAttackDepartureKmV1(
     request,forged),/differs from paid movement/);
+});
+
+test('rider-local solo terrain pays route legs through the finish',()=>{
+  const {input:base}=preparePhysicalFirstSplitMotorInputV1(
+    'men',{terrain:'mountain',chase:'selective',
+      attack:'repeated',
+      seed:'viewer-release-holdout-2'});
+  const request={input:{...base,
+    positionModelVersion:
+      PHYSICAL_FIRST_POSITION_START_V2_VERSION},
+  grid};
+  const historic=recordPhysicalFirstPositionOneAttackRaceV1(
+    request);
+  const local=recordPhysicalFirstPositionOneAttackRaceV2(
+    request);
+  assert.equal(local.completedThroughKm,120);
+  assert.equal(local.finishCrossings.length,120);
+  assert.equal(local.soloFinish.riderId,'you-7');
+  assert.notEqual(local.soloFinish.clockSeconds,
+    historic.soloFinish.clockSeconds);
+  const soloSteps=local.steps.flatMap(step=>
+    step.soloStep?[step.soloStep]:[]);
+  assert.ok(soloSteps.some(step=>
+    step.speedLegs.length>1));
+  assert.ok(soloSteps.some(step=>
+    step.speedLegs.some(leg=>
+      leg.sourceKm!==step.sourceKm)));
+  for(const step of soloSteps){
+    assert.ok(Math.abs(step.speedLegs.reduce(
+      (sum,leg)=>sum+leg.distanceM,0)-
+        step.decision.paidDistanceM)<1e-5);
+    assert.ok(Math.abs(step.speedLegs.reduce(
+      (sum,leg)=>sum+leg.paidFromReserve,0)-
+        step.decision.paidFromReserve)<1e-5);
+  }
+  assert.deepEqual(replayPhysicalFirstPositionOneAttackRaceV2(
+    request,local),local);
+  const forged=structuredClone(local);
+  forged.steps.find(step=>step.soloStep)
+    .soloStep.speedLegs[0].distanceM+=1;
+  assert.throws(()=>
+    replayPhysicalFirstPositionOneAttackRaceV2(
+      request,forged),
+  /differs from paid movement/);
 });
 
 test('one paid solo reaches the line on the shared race clock',()=>{

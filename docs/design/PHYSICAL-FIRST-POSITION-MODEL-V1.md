@@ -452,3 +452,17 @@ successful attack is the recorder's limit. The old group's finish
 clock is not an individual finish order. This audit demonstrates
 that one pre-existing recorder already covers the connected and
 one-solo matrix; it does not make the motor release-ready.
+
+`physical-first-position-solo-km-2` corrects a separate locality
+error in the opt-in one-solo branch. A solo rider ahead of the field
+now rides each terrain segment under that rider's own wheel during
+the shared clock interval. The recorder stores the segment, speed,
+distance and energy payment for each leg. The successor
+`physical-first-position-one-attack-race-2` uses those legs and
+replays the complete route; v1 is unchanged, with a byte-for-byte
+recording comparison on an existing 120 km mountain case. In all
+48 synthetic attack scenarios, v2 completes 120 km, every rider
+finishes, and the source's final road membership aligns. Maximum
+solo finish clock disagreement falls from about 39.5 to 33.2
+seconds. The remaining clock disagreement needs explanation; no
+official result or viewer-ready position claim follows from this.
