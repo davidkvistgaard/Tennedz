@@ -65,6 +65,8 @@ import {advancePhysicalFirstPositionHybridKmV1,
   '../../lib/engine/v2/physical-first-position-hybrid-km-v1.mjs';
 import {PHYSICAL_FIRST_POSITION_MIXED_FRONT_PASS_VERSION} from
   '../../lib/engine/v2/physical-first-position-mixed-front-pass-km-v1.mjs';
+import {quotePhysicalFirstPositionFrontPassV1} from
+  '../../lib/engine/v2/physical-first-position-front-pass-quote-v1.mjs';
 
 const grid={laneCount:4,wheelSpacingM:2.5,laneStaggerM:.08};
 
@@ -527,11 +529,21 @@ test('a paid front pass continues detached rear roads on one clock',()=>{
   const request={prior:first,
     segment:committed.kilometres[1],
     input:committed};
+  const quote=quotePhysicalFirstPositionFrontPassV1(
+    request);
   const second=advancePhysicalFirstPositionHybridKmV1(
     request);
   assert.equal(second.version,
     PHYSICAL_FIRST_POSITION_MIXED_FRONT_PASS_VERSION);
   assert.equal(second.event.type,'paid_front_pass');
+  assert.equal(quote.fromRiderId,
+    second.event.fromRiderId);
+  assert.equal(quote.toRiderId,
+    second.event.toRiderId);
+  assert.ok(Math.abs(quote.firstSeconds-
+    second.firstSeconds)<1e-6);
+  assert.ok(Math.abs(quote.secondSeconds-
+    second.secondSeconds)<1e-6);
   assert.equal(second.positions.length,16);
   assert.ok(second.positions.some(row=>
     row.roadId!=='peloton'));

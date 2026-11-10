@@ -109,8 +109,9 @@ the maximum front-clock difference from the old source was 1.69536
 seconds. All standard cases selected rotation for every kilometre,
 so this does not validate a mixed drop-and-rotation race. A separate
 160-rider mountain case selected fixed-lane movement for all 120 km.
-Attack orders, mixed movements, lane passing, a competitive sprint and
-official results remain unsupported; the new recorder remains opt-in.
+Attack orders on detached roads, general lane passing, a competitive
+sprint and official results remain unsupported; the recorder remains
+opt-in.
 
 A separate 160-rider mountain variant now combines early measured drops
 and a later paid peloton front pass while rear roads continue on the
@@ -123,6 +124,19 @@ clocks by roughly 129 seconds from the old group-clock recording.
 The synthetic rosters share numerical skills across gender labels.
 This is not whole-matrix calibration, and it does not authorize guided
 races, official results, viewer export or deployment.
+
+A synthetic five-point weaker front worker previously stopped the mixed
+race at kilometre 43 because the coarse rotation model predicted a
+shelter loss during the proposed pass. A separate versioned movement
+step now pays the pass and all 160 wheels at quarter-second resolution;
+the measured contact topology does not actually change in that step.
+Both category-labelled 120 km races complete 19,200 decisions,
+160/160 crossings and whole-recording replay. A ten-point weaker worker
+produces an explicit earlier refusal followed by a paid pass at km 43.
+The five-point weaker profile matches the old source's peloton
+membership at only 50/120 kilometre boundaries, so the release gate
+is still red. A pass with an actual concurrent contact split has not
+been validated.
 
 Local browser WebGL checks with the deliberately synthetic renderer fixture
 showed all 30 or 150 rider rigs for both categories, 51 draw calls and no

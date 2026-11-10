@@ -30,6 +30,8 @@ import {advancePhysicalFirstPositionHybridKmV1,
   '../lib/engine/v2/physical-first-position-hybrid-km-v1.mjs';
 import {PHYSICAL_FIRST_POSITION_MIXED_FRONT_PASS_VERSION} from
   '../lib/engine/v2/physical-first-position-mixed-front-pass-km-v1.mjs';
+import {PHYSICAL_FIRST_POSITION_PASS_CONTACT_VERSION} from
+  '../lib/engine/v2/physical-first-position-pass-contact-km-v1.mjs';
 import {recordPhysicalFirstPositionHybridRaceV1,
   replayPhysicalFirstPositionHybridRaceV1} from
   '../lib/engine/v2/physical-first-position-hybrid-race-v1.mjs';
@@ -54,9 +56,14 @@ const seed=process.argv.find(arg=>
 const frontAbilityShift=Number(process.argv.find(arg=>
   arg.startsWith('--front-ability-shift='))
   ?.slice('--front-ability-shift='.length)??0);
+const successorAbilityShift=Number(process.argv.find(arg=>
+  arg.startsWith('--successor-ability-shift='))
+  ?.slice('--successor-ability-shift='.length)??0);
 if(!Number.isInteger(frontAbilityShift)||
-  Math.abs(frontAbilityShift)>10)
-  throw new Error('Audit front ability shift must be an integer within 10.');
+  Math.abs(frontAbilityShift)>10||
+  !Number.isInteger(successorAbilityShift)||
+  Math.abs(successorAbilityShift)>10)
+  throw new Error('Audit ability shifts must be integers within 10.');
 const settings={distanceKm:120,teamCount:20,
   gender:category==='men'?'M':'F',
   terrain:'mountain',fatigue:0,attack:'none',
@@ -86,6 +93,13 @@ if(frontAbilityShift){
   for(const ability of ['flat','hills','mountain'])
     worker[ability]=Math.max(0,Math.min(100,
       worker[ability]+frontAbilityShift));
+}
+if(successorAbilityShift){
+  const successor=teams.find(team=>team.id==='you')
+    .riders.find(rider=>rider.id==='you-6');
+  for(const ability of ['flat','hills','mountain'])
+    successor[ability]=Math.max(0,Math.min(100,
+      successor[ability]+successorAbilityShift));
 }
 // A committed named worker can impose a pace some sheltered riders
 // cannot hold. This is a new input variant, not a changed recording.
@@ -179,6 +193,9 @@ try{
   let rotationKm=0;
   let fixedLaneKm=0;
   let mixedFrontPassKm=0;
+  let passContactKm=0;
+  let passContactAtKm=null;
+  let passContactEvents=0;
   let refusedFrontPasses=0;
   let maxFrontClockDeltaSeconds=0;
   let firstPelotonMembershipMismatchKm=null;
@@ -201,6 +218,12 @@ try{
       else if(next.version===
         PHYSICAL_FIRST_POSITION_MIXED_FRONT_PASS_VERSION)
         mixedFrontPassKm++;
+      else if(next.version===
+        PHYSICAL_FIRST_POSITION_PASS_CONTACT_VERSION){
+        passContactKm++;
+        passContactAtKm=roadSegment.km;
+        passContactEvents+=next.contactEvents.length;
+      }
       else fixedLaneKm++;
       refusedFrontPasses+=Number(next.event
         ?.type==='front_pass_refused');
@@ -286,6 +309,8 @@ try{
   riderDecisions,
   rotationKm,fixedLaneKm,
   mixedFrontPassKm,
+  passContactKm,passContactAtKm,
+  passContactEvents,
   refusedFrontPasses,
   contactComponentSizes:prior.sourceKm?
     prior.contactComponents.map(group=>
@@ -356,6 +381,8 @@ process.stdout.write(`${JSON.stringify({
   version:'physical-first-position-early-climb-audit-1',
   category,hybrid,rotateAfterDrop,seed,
   syntheticFrontAbilityShift:frontAbilityShift,
+  syntheticSuccessorAbilityShift:
+    successorAbilityShift,
   riderCount:riders.length,
   firstTerrain:kilometres[0].terrain,
   sourceFront:source.steps[0].peloton

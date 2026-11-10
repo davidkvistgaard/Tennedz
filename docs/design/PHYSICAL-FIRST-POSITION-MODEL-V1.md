@@ -255,16 +255,26 @@ Repeating the men's variant with a second committed seed also completed
 it exercised the same one paid pass after 42 refusals. This seed check
 does not add a distinct rider-strength profile.
 
-A deliberately synthetic front-worker ability sensitivity check exposes
-the next missing contract. Reducing the current worker's three terrain
+A deliberately synthetic front-worker ability sensitivity check exposed
+a missing movement contract. Reducing the current worker's three terrain
 abilities by five points changes the older source's first-kilometre
-start drops from 66 to 46. The positional race advances 42 km with
-6,720 paid rider-kilometres and four measured contact changes, then
-stops at kilometre 43: the selected replacement has a clear outside
-lane only 0.24 m behind the front, but the established pass calculation
-would lose a second sheltered wheel. The model cannot yet pay the pass
-and simultaneous contact loss on one clock. Increasing the worker's
-abilities by five points completes 120 km and 160/160 paid crossings,
-but the older source and position model disagree on peloton membership
-throughout the race. These synthetic variants are diagnostic inputs,
-not canonical rider profiles or permission to infer official results.
+start drops from 66 to 46. The established rotation calculation rejects
+the proposed pass at kilometre 43 because its uniform shelter check says
+a second wheel would drop. The replacement is in a clear outside lane
+only 0.24 m behind the front. The opt-in
+`physical-first-position-pass-contact-km-1` now quotes the payable pass,
+then moves and charges every wheel in quarter-second steps on one clock.
+It records any measured contact changes instead of inferring them from
+the older shelter check. In this exact fixture, **no new contact change
+occurs during the pass**. Both category-labelled 120 km variants complete
+19,200 decisions, 160/160 paid crossings and whole-recording replay.
+The new contract has not yet been demonstrated on a pass that actually
+splits contact in the same kilometre.
+
+At a ten-point reduction, the model explicitly refuses an unpayable
+earlier pass, then records one paid pass at kilometre 43 and completes
+120 km with 160/160 crossings. Increasing the current worker's abilities
+by five points also completes, but the older source and position model
+disagree on peloton membership throughout that race. These synthetic
+variants are diagnostic inputs, not canonical rider profiles, a broad
+profile calibration, or permission to infer official results.
