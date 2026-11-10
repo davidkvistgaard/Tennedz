@@ -9,10 +9,25 @@ import {advancePhysicalFirstPositionRotationKmV1} from
   '../lib/engine/v2/physical-first-position-rotation-km-v1.mjs';
 import {runPhysicalFirstWholeRaceProbeV1} from
   '../lib/engine/v2/physical-first-whole-race-probe-v1.mjs';
+import {orderAt} from '../lib/engine/v2/orders.mjs';
+import {riderKilometreEffect} from
+  '../lib/engine/v2/physiology.mjs';
+import {segmentBaseSeconds} from
+  '../lib/engine/v2/road-clock.mjs';
+import {MOTOR_RACE_DYNAMICS,TUNING} from
+  '../lib/engine/v2/tuning.mjs';
 
 const smoke=process.argv.includes('--smoke');
 const requireComplete=process.argv.includes('--require-complete');
 const grid={laneCount:4,wheelSpacingM:2.5,laneStaggerM:.08};
+const speedFor=(source,segment,energy,phase)=>{
+  const order=orderAt(source.team.orders,segment.km-1);
+  const ability=riderKilometreEffect(source.rider,segment,
+    {phase,energy,exposed:segment.exposed}).ability+
+    (TUNING.effortPressure[order.effort]-1)*20;
+  return 1000/(segmentBaseSeconds(segment)+
+    (50-ability)*MOTOR_RACE_DYNAMICS.secondsPerAbilityPoint);
+};
 const variants=smoke?[
   {category:'men',terrain:'mountain',chase:'selective',
     attack:'none',seed:'preview-recorded-road-1'},
@@ -42,6 +57,8 @@ for(const variant of variants){
       input:committed,grid});
     let paidFrontPasses=0,refusedFrontPasses=0;
     let blockedPassingLanes=0,openPassingLanes=0;
+    let blockedButFaster=0,openButFaster=0;
+    let reachableIfOpen=0;
     let sourceAlignedKm=0,firstSourceDifference=null;
     const crossings=[];
     let unsupported=null;
@@ -79,12 +96,31 @@ for(const variant of variants){
           refusedFrontPasses++;
           const candidate=prior.positions.find(row=>
             row.riderId===state.proposedLeaderRiderId);
+          const front=prior.positions[0];
+          const sourceFor=id=>committed.teams.flatMap(team=>
+            team.riders.map(rider=>({rider,team})))
+            .find(source=>source.rider.id===id);
+          const approachSpeed=speedFor(
+            sourceFor(candidate.riderId),segment,
+            candidate.energy,'attack');
+          const frontSpeed=speedFor(sourceFor(front.riderId),
+            segment,front.energy,'solo');
+          const faster=approachSpeed>frontSpeed;
+          const gain=front.distanceM-candidate.distanceM+
+            prior.grid.wheelSpacingM;
+          if(faster&&gain/(approachSpeed-frontSpeed)<
+            1000/frontSpeed)reachableIfOpen++;
           const blocked=prior.positions.some(row=>
             row.riderId!==candidate.riderId&&
             row.lane===candidate.lane&&
             row.distanceM>candidate.distanceM+1e-6);
-          if(blocked)blockedPassingLanes++;
-          else openPassingLanes++;
+          if(blocked){
+            blockedPassingLanes++;
+            if(faster)blockedButFaster++;
+          }else{
+            openPassingLanes++;
+            if(faster)openButFaster++;
+          }
         }
       }catch(error){
         unsupported={km:segment.km,reason:error.message};
@@ -100,6 +136,8 @@ for(const variant of variants){
       sourceAlignedKm,firstSourceDifference,
       paidFrontPasses,refusedFrontPasses,unsupported,
       blockedPassingLanes,openPassingLanes,
+      blockedButFaster,openButFaster,
+      reachableIfOpen,
       officialResults:false});
   }catch(error){
     rows.push({variant,status:'failed',reason:error.message});
@@ -118,6 +156,12 @@ const summary={version:'physical-first-position-rotation-audit-1',
     sum+row.blockedPassingLanes,0),
   openPassingLanes:complete.reduce((sum,row)=>
     sum+row.openPassingLanes,0),
+  blockedButFaster:complete.reduce((sum,row)=>
+    sum+row.blockedButFaster,0),
+  openButFaster:complete.reduce((sum,row)=>
+    sum+row.openButFaster,0),
+  reachableIfOpen:complete.reduce((sum,row)=>
+    sum+row.reachableIfOpen,0),
   officialResultsAvailable:0,
   readyForViewerPositions:false};
 process.stdout.write(`${JSON.stringify({summary,rows},null,2)}\n`);
