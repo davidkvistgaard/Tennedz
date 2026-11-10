@@ -99,3 +99,39 @@ test('saved women race publishes source results at the shared finish',
     await expect(page.getByRole('link',
       {name: 'View results and points →'})).toBeVisible();
   });
+
+test('two saved-race viewers share the broadcast clock but choose cameras locally',
+  async ({page, context}) => {
+    test.setTimeout(90000);
+    const eventId = guidedSavedRunIds.men;
+    await page.goto('/login');
+    await page.getByLabel('Email or username').fill('alice');
+    await page.getByLabel('Password').fill('fixture-password');
+    await page.getByRole('button', {name: 'Sign in', exact: true}).click();
+    await expect(page).toHaveURL(/\/team$/);
+    const other = await context.newPage();
+    try {
+      const url = `/team/view/${eventId}`;
+      const firstResponse = page.waitForResponse(response =>
+        response.url().includes(`/api/event-run?event_id=${eventId}`));
+      await page.goto(url);
+      const first = await (await firstResponse).json();
+      const secondResponse = other.waitForResponse(response =>
+        response.url().includes(`/api/event-run?event_id=${eventId}`));
+      await other.goto(url);
+      const second = await (await secondResponse).json();
+      expect(first.viewer_clock.clock.serverEpochMs)
+        .toBe(second.viewer_clock.clock.serverEpochMs);
+      const diagnostics = async viewer => JSON.parse(await viewer.locator(
+        '[data-viewer-diagnostics]').getAttribute('data-viewer-diagnostics'));
+      await expect.poll(async () => (await diagnostics(page))?.visible,
+        {timeout: 30000}).toBe(32);
+      await expect.poll(async () => (await diagnostics(other))?.visible,
+        {timeout: 30000}).toBe(32);
+      const secondYaw = (await diagnostics(other)).camera.yaw;
+      await page.getByRole('button', {name: 'Orbit camera right'}).click();
+      await expect.poll(async () => (await diagnostics(page)).camera.yaw)
+        .not.toBe(0);
+      expect((await diagnostics(other)).camera.yaw).toBe(secondYaw);
+    } finally { await other.close(); }
+  });
