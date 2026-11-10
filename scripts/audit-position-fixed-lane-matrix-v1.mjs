@@ -88,8 +88,15 @@ for(const seed of seeds){
           try{
             const settled=settlePhysicalFirstPositionFixedLaneFinishV1({
               prior,input});
+            const sourceFinishClock=new Map(
+              source.states.at(-1).riders.map(row=>
+                [row.riderId,row.clockSeconds]));
             finish={crossings:settled.finishCrossings.length,
               riderCount:prior.positions.length,
+              maxOldGroupClockDeltaSeconds:Math.max(
+                ...settled.finishCrossings.map(row=>
+                  Math.abs(row.clockSeconds-
+                    sourceFinishClock.get(row.riderId)))),
               officialResults:settled.officialResults};
           }catch(error){
             finish={unsupported:error.message};
@@ -115,6 +122,9 @@ process.stdout.write(`${JSON.stringify({
     Number.isInteger(row.finish?.crossings)&&
     row.finish.crossings===
       row.finish.riderCount).length,
+  maxOldGroupClockDeltaSeconds:Math.max(
+    ...results.map(row=>row.finish
+      ?.maxOldGroupClockDeltaSeconds??0)),
   officialResultsCount:results.filter(row=>
     row.finish?.officialResults).length,
   results},null,2)}\n`);

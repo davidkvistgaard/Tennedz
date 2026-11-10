@@ -60,6 +60,11 @@ import {settlePhysicalFirstPositionFixedLaneFinishV1,
 import {recordPhysicalFirstPositionHybridRaceV1,
   replayPhysicalFirstPositionHybridRaceV1} from
   '../../lib/engine/v2/physical-first-position-hybrid-race-v1.mjs';
+import {advancePhysicalFirstPositionHybridKmV1,
+  replayPhysicalFirstPositionHybridKmV1} from
+  '../../lib/engine/v2/physical-first-position-hybrid-km-v1.mjs';
+import {PHYSICAL_FIRST_POSITION_MIXED_FRONT_PASS_VERSION} from
+  '../../lib/engine/v2/physical-first-position-mixed-front-pass-km-v1.mjs';
 
 const grid={laneCount:4,wheelSpacingM:2.5,laneStaggerM:.08};
 
@@ -98,6 +103,25 @@ test('staged start keeps 160 distinct paid rider slots',()=>{
   assert.equal(new Set(start.positions.map(row=>
     `${row.lane}:${row.row}`)).size,160);
   assert.ok(start.stagedBackupRiderId);
+});
+
+test('committed future worker stages near front before its order begins',()=>{
+  const committed=cappedInput(30);
+  committed.positionModelVersion=
+    PHYSICAL_FIRST_POSITION_START_V2_VERSION;
+  committed.teams[0].orders.phases=[{
+    atKm:25,frontWork:'rotate',
+    frontWorkRiderId:'team-0-6'}];
+  const start=createPhysicalFirstPositionStartV2({
+    input:committed,grid});
+  assert.equal(start.stagedBackupRiderId,
+    'team-0-6');
+  const worker=start.positions.find(row=>
+    row.riderId==='team-0-6');
+  assert.equal(worker.lane,3);
+  assert.equal(worker.row,0);
+  assert.deepEqual(replayPhysicalFirstPositionStartV2(
+    committed,grid,start),start);
 });
 
 test('staged worker makes a paid front pass in a full 120 km race',()=>{
@@ -471,6 +495,65 @@ test('hybrid refuses an attack order until the departure is paid',()=>{
   assert.throws(()=>recordPhysicalFirstPositionHybridRaceV1({
     input:committed,grid}),
   /needs a paid attack departure/);
+});
+
+test('a paid front pass continues detached rear roads on one clock',()=>{
+  const committed=cappedInput(2);
+  committed.positionModelVersion=
+    PHYSICAL_FIRST_POSITION_START_V2_VERSION;
+  committed.teams[0].orders.phases=[{
+    atKm:1,frontWork:'rotate',
+    frontWorkRiderId:'team-0-6'}];
+  const successor=committed.teams[0].riders[5];
+  Object.assign(successor,{flat:68,
+    sprint:68,acceleration:100,
+    form:70,endurance:70,
+    positioning:100});
+  const before=createPhysicalFirstPositionStartV2({
+    input:committed,grid});
+  const weakId=before.positions.find(row=>
+    row.lane===1&&row.row===0).riderId;
+  const weak=committed.teams.flatMap(team=>team.riders)
+    .find(row=>row.id===weakId);
+  Object.assign(weak,{flat:0,hills:0,mountain:0,
+    sprint:0,endurance:0,form:0,
+    positioning:100});
+  const start=createPhysicalFirstPositionStartV2({
+    input:committed,grid});
+  const first=advancePhysicalFirstPositionHybridKmV1({
+    prior:start,segment:committed.kilometres[0],
+    input:committed});
+  assert.ok(first.contactComponents.length>1);
+  const request={prior:first,
+    segment:committed.kilometres[1],
+    input:committed};
+  const second=advancePhysicalFirstPositionHybridKmV1(
+    request);
+  assert.equal(second.version,
+    PHYSICAL_FIRST_POSITION_MIXED_FRONT_PASS_VERSION);
+  assert.equal(second.event.type,'paid_front_pass');
+  assert.equal(second.positions.length,16);
+  assert.ok(second.positions.some(row=>
+    row.roadId!=='peloton'));
+  assert.ok(second.decisions.filter(row=>
+    row.role==='rear_road_movement')
+    .every(row=>row.paidFromReserve>0));
+  assert.deepEqual(replayPhysicalFirstPositionHybridKmV1(
+    request,second),second);
+  const forged=structuredClone(second);
+  forged.event.surgePaidFromReserve=0;
+  assert.throws(()=>replayPhysicalFirstPositionHybridKmV1(
+    request,forged),/differs from paid movement/);
+  const unpaidRear=structuredClone(second);
+  unpaidRear.decisions.find(row=>
+    row.role==='rear_road_movement').paidFromReserve=0;
+  assert.throws(()=>replayPhysicalFirstPositionHybridKmV1(
+    request,unpaidRear),/differs from paid movement/);
+  const movedRear=structuredClone(second);
+  movedRear.positions.find(row=>
+    row.roadId!=='peloton').distanceM+=1;
+  assert.throws(()=>replayPhysicalFirstPositionHybridKmV1(
+    request,movedRear),/differs from paid movement/);
 });
 
 const rider=id=>({id,flat:65,hills:65,mountain:65,

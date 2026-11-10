@@ -10,6 +10,12 @@ import {runPhysicalFirstWholeRaceProbeV1} from
 import {createPhysicalFirstPositionStartV2,
   PHYSICAL_FIRST_POSITION_START_V2_VERSION} from
   '../lib/engine/v2/physical-first-position-start-v2.mjs';
+import {createPhysicalFirstPositionStartV1,
+  PHYSICAL_FIRST_POSITION_START_VERSION} from
+  '../lib/engine/v2/physical-first-position-start-v1.mjs';
+import {advancePhysicalFirstPositionRotationKmV1,
+  PHYSICAL_FIRST_POSITION_ROTATION_KM_VERSION} from
+  '../lib/engine/v2/physical-first-position-rotation-km-v1.mjs';
 import {advancePhysicalFirstPositionRotationKmV2,
   PHYSICAL_FIRST_POSITION_ROTATION_KM_V2_VERSION} from
   '../lib/engine/v2/physical-first-position-rotation-km-v2.mjs';
@@ -22,6 +28,11 @@ import {settlePhysicalFirstPositionFixedLaneFinishV1,
 import {advancePhysicalFirstPositionHybridKmV1,
   replayPhysicalFirstPositionHybridKmV1} from
   '../lib/engine/v2/physical-first-position-hybrid-km-v1.mjs';
+import {PHYSICAL_FIRST_POSITION_MIXED_FRONT_PASS_VERSION} from
+  '../lib/engine/v2/physical-first-position-mixed-front-pass-km-v1.mjs';
+import {recordPhysicalFirstPositionHybridRaceV1,
+  replayPhysicalFirstPositionHybridRaceV1} from
+  '../lib/engine/v2/physical-first-position-hybrid-race-v1.mjs';
 import {orderAt} from '../lib/engine/v2/orders.mjs';
 import {riderKilometreEffect} from
   '../lib/engine/v2/physiology.mjs';
@@ -33,6 +44,10 @@ import {MOTOR_DRAFT_SHELTER,MOTOR_RACE_DYNAMICS,
 const category=process.argv.includes('--women')?
   'women':'men';
 const hybrid=process.argv.includes('--hybrid');
+const rotateAfterDrop=process.argv.includes(
+  '--rotate-after-drop');
+const recordWhole=process.argv.includes(
+  '--record-whole');
 const settings={distanceKm:120,teamCount:20,
   gender:category==='men'?'M':'F',
   terrain:'mountain',fatigue:0,attack:'none',
@@ -59,6 +74,14 @@ const {teams,rivalIntent}=recording.committedInputs;
 // cannot hold. This is a new input variant, not a changed recording.
 teams.find(team=>team.id==='you')
   .orders.baseline.frontWorkRiderId='you-5';
+if(rotateAfterDrop){
+  const orders=teams.find(team=>team.id==='you')
+    .orders;
+  orders.phases=[...orders.phases,
+    {atKm:25,frontWork:'rotate',
+      frontWorkRiderId:'you-6'}]
+    .sort((a,b)=>a.atKm-b.atKm);
+}
 const kilometres=recording.route.kilometres;
 const riders=teams.flatMap(team=>team.riders.map(rider=>({
   riderId:rider.id,teamId:team.id,
@@ -131,12 +154,15 @@ try{
     sourceKm:1,reason:error.message};
 }
 let fixedLaneOutcome=null;
+let wholeRecording=null;
 try{
   let prior=positionStart;
   let contactEvents=0;
   let riderDecisions=0;
   let rotationKm=0;
   let fixedLaneKm=0;
+  let mixedFrontPassKm=0;
+  let refusedFrontPasses=0;
   let maxFrontClockDeltaSeconds=0;
   let firstPelotonMembershipMismatchKm=null;
   let matchingPelotonKilometres=0;
@@ -155,7 +181,12 @@ try{
       if(next.version===
         PHYSICAL_FIRST_POSITION_ROTATION_KM_V2_VERSION)
         rotationKm++;
+      else if(next.version===
+        PHYSICAL_FIRST_POSITION_MIXED_FRONT_PASS_VERSION)
+        mixedFrontPassKm++;
       else fixedLaneKm++;
+      refusedFrontPasses+=Number(next.event
+        ?.type==='front_pass_refused');
       contactEvents+=next.contactEvents.length;
       riderDecisions+=next.decisions.length;
       const sourceState=source.states[roadSegment.km];
@@ -180,6 +211,52 @@ try{
     }catch(error){
       unsupported={sourceKm:roadSegment.km,
         reason:error.message};
+      if(rotateAfterDrop&&error.message===
+        'Fixed-lane convoy needs a paid front pass.'){
+        const candidate=prior.positions.find(
+          row=>row.riderId==='you-6');
+        unsupported.frontPassGeometry={
+          fromRiderId:prior.positions[0]
+            .riderId,
+          candidateRiderId:candidate?.riderId,
+          candidateLane:candidate?.lane,
+          candidateGapM:candidate?
+            prior.positions[0].distanceM-
+              candidate.distanceM:null,
+          aheadInCandidateLane:candidate?
+            prior.positions.filter(row=>
+              row.lane===candidate.lane&&
+              row.distanceM>candidate.distanceM)
+              .map(row=>row.riderId):[]};
+        const legacyInput={...input,
+          positionModelVersion:
+            PHYSICAL_FIRST_POSITION_START_VERSION};
+        try{
+          const legacyStart=createPhysicalFirstPositionStartV1({
+            input:legacyInput,grid:prior.grid});
+          const subset=advancePhysicalFirstPositionRotationKmV1({
+            prior:{...prior,
+              version:
+                PHYSICAL_FIRST_POSITION_ROTATION_KM_VERSION,
+              inputHash:legacyStart.inputHash,
+              positions:prior.positions.filter(row=>
+                row.roadId==='peloton'),
+              separateRoadRiderIds:prior.positions
+                .filter(row=>row.roadId!=='peloton')
+                .map(row=>row.riderId)},
+            segment:roadSegment,
+            input:legacyInput});
+          unsupported.pelotonSubsetPass={
+            event:subset.event?.type??null,
+            from:subset.event?.fromRiderId??null,
+            to:subset.event?.toRiderId??null,
+            firstSeconds:subset.firstSeconds,
+            secondSeconds:subset.secondSeconds};
+        }catch(passError){
+          unsupported.pelotonSubsetPass={
+            unsupported:passError.message};
+        }
+      }
       break;
     }
   }
@@ -188,6 +265,8 @@ try{
   completedThroughKm:prior.sourceKm,
   riderDecisions,
   rotationKm,fixedLaneKm,
+  mixedFrontPassKm,
+  refusedFrontPasses,
   contactComponentSizes:prior.sourceKm?
     prior.contactComponents.map(group=>
       group.length):null,
@@ -232,16 +311,40 @@ try{
         reason:error.message};
     }
   }
+  if(!unsupported&&recordWhole&&hybrid){
+    try{
+      const request={input,grid:positionStart.grid};
+      const race=recordPhysicalFirstPositionHybridRaceV1(
+        request);
+      replayPhysicalFirstPositionHybridRaceV1(
+        request,race);
+      wholeRecording={status:'replay_verified',
+        riderKm:race.positionRiderKm,
+        crossingCoverage:race.finishCrossingCoverage,
+        paidFrontPasses:race.frontPassEvents.length,
+        officialResults:race.officialResults};
+    }catch(error){
+      wholeRecording={status:'unsupported',
+        reason:error.message};
+    }
+  }
 }catch(error){
   fixedLaneOutcome={status:'unsupported',
     sourceKm:1,reason:error.message};
 }
 process.stdout.write(`${JSON.stringify({
   version:'physical-first-position-early-climb-audit-1',
-  category,hybrid,riderCount:riders.length,
+  category,hybrid,rotateAfterDrop,
+  riderCount:riders.length,
   firstTerrain:kilometres[0].terrain,
   sourceFront:source.steps[0].peloton
     .road.leaderRiderId,
+  sourceFrontAtKm26:source.steps[25].peloton
+    .road.leaderRiderId,
+  sourceTeamRidersInPelotonAtKm25:
+    source.states[25].roads.find(road=>
+      road.roadId==='peloton').riderIds
+      .filter(id=>id.startsWith('you-')),
   sourceStartDrops:source.steps[0].peloton
     .startDropEvents.length,
   stagedFront:positionStart.positions[0].riderId,
@@ -251,4 +354,5 @@ process.stdout.write(`${JSON.stringify({
     row.fallsBackM)),
   componentSizes:components.map(group=>group.length)},
   positionOutcome,fixedLaneOutcome,
+  wholeRecording,
   officialResults:false},null,2)}\n`);

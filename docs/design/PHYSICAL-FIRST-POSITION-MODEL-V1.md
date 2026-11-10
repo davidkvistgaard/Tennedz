@@ -220,9 +220,33 @@ The 24-case no-attack, two-seed matrix (men and women, flat/rolling/
 mountain, selective/all chase) completed 24/24 120 km traces and
 120/120 finish crossings per race. It agreed with the older source on
 peloton membership at every kilometre. The maximum front-clock
-difference was 1.69536 seconds. **All 2,880 kilometres selected the
+difference was 1.69536 seconds. The largest individual finish-clock
+difference from an older group clock was 9.16 seconds; that older source
+does not record individual finish order. **All 2,880 kilometres selected the
 rotation path and none selected the fixed-lane path**, because these
 standard 120-rider inputs did not lose shelter. The separate 160-rider
 named-worker mountain fixture selected fixed-lane movement for all
 120 kilometres and completed 160/160 paid crossings. This is evidence
 for two paths separately, not yet a mixed drop-and-rotation race.
+
+`physical-first-position-mixed-front-pass-km-1` covers a narrower mixed
+case: a connected peloton makes the established, priced passing move
+while already detached rear roads continue on its two measured clock
+segments. Every rear rider pays actual distance and the step refuses any
+new contact topology it cannot account for. A committed future named
+worker can be staged near the front from the start; staging is recorded
+in the start input hash and does not guarantee a later pass. A proposed
+worker who cannot make the paid move receives an explicit refusal.
+
+In a 160-rider mountain variant, a committed order at the allowed 25 km
+marker requests a new front worker from kilometre 26. The older source
+switches immediately. The new position race records 42 refused passes,
+then one payable pass at kilometre 68 with the six existing contact
+components kept intact. It completes 19,200 rider-kilometres and
+160/160 individual paid crossings for the separately committed men's
+and women's fixtures. The maximum peloton-front clock difference from
+the older source is 13.45 seconds, and the maximum individual finish
+difference from old group clocks is about 129 seconds. These differences
+are retained as evidence that the new positional timing still needs
+calibration; the output has no official classification. The synthetic
+roster uses identical numerical skills for the two gender labels.

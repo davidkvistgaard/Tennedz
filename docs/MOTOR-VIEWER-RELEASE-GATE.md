@@ -112,6 +112,18 @@ so this does not validate a mixed drop-and-rotation race. A separate
 Attack orders, mixed movements, lane passing, a competitive sprint and
 official results remain unsupported; the new recorder remains opt-in.
 
+A separate 160-rider mountain variant now combines early measured drops
+and a later paid peloton front pass while rear roads continue on the
+same clock. An actual order at the 25 km marker selects the new worker.
+The old source changes front at km 26; the positional race refuses 42
+unpayable attempts and records the pass at km 68. Both gender-labelled
+fixtures complete 19,200 rider-kilometres and 160/160 paid crossings,
+but the front clock differs by up to 13.45 seconds and individual finish
+clocks by roughly 129 seconds from the old group-clock recording.
+The synthetic rosters share numerical skills across gender labels.
+This is not whole-matrix calibration, and it does not authorize guided
+races, official results, viewer export or deployment.
+
 Local browser WebGL checks with the deliberately synthetic renderer fixture
 showed all 30 or 150 rider rigs for both categories, 51 draw calls and no
 renderer errors. Observed status samples after settling were 68 fps for 30
