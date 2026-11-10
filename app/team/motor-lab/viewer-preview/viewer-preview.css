@@ -24,6 +24,13 @@
   border:0;border-radius:4px;background:#2d5945;color:#fffdf1;
   font:inherit;font-weight:700;cursor:pointer}
 .motor-viewer-live-intro button:disabled{opacity:.6;cursor:wait}
+.motor-viewer-live-intro form>details{flex-basis:100%;padding:8px 10px;
+  border:1px solid #bdcbb7;border-radius:4px}
+.motor-viewer-live-intro form>details summary{cursor:pointer;font-weight:700}
+.motor-viewer-live-intro form>details[open]{display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:10px}
+.motor-viewer-live-intro form>details[open] summary,
+.motor-viewer-live-intro form>details[open] p{grid-column:1/-1}
 .race-theatre{width:100%;background:#f0f0df;color:#2a483e}
 .race-theatre-stage{position:relative;height:min(69vh,760px);min-height:480px;
   overflow:hidden;background:#b9c7ae}

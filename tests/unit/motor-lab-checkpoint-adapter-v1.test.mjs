@@ -107,6 +107,19 @@ test('race identity changes with orders and shared playback has a finish hold', 
   assert.equal(finish.clock.paused, true);
 });
 
+test('selected team order reaches the motor before adaptation', () => {
+  const base = {plan: 'sprint', routeId: 'ridge', seed: 1};
+  const standard = createMotorLabPreviewSource(base);
+  const ordered = createMotorLabPreviewSource({...base,
+    orders: {attackPosture: 'repeated'}});
+  assert.equal(ordered.race.committedInputs.teams[0].orders.baseline.attack,
+    'repeated');
+  assert.notDeepEqual(ordered.race.provisionalResults,
+    standard.race.provisionalResults);
+  assert.notEqual(adaptMotorLabCheckpointsV1(ordered).feed.raceId,
+    adaptMotorLabCheckpointsV1(standard).feed.raceId);
+});
+
 test('multiple plans, seeds and routes produce complete source-derived feeds', () => {
   for (const routeId of ['coast', 'ridge'])
     for (const plan of ['sprint', 'break', 'balanced', 'conserve'])

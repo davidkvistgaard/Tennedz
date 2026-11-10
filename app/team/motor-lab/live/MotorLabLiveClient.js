@@ -12,6 +12,7 @@ export default function MotorLabLiveClient({initialInput}) {
   const [plan, setPlan] = useState(initialInput?.plan ?? 'break');
   const [routeId, setRouteId] = useState(initialInput?.routeId ?? 'ridge');
   const [seed, setSeed] = useState(initialInput?.seed ?? 1);
+  const [orders, setOrders] = useState(initialInput?.orders ?? {});
   const autoStarted = useRef(false);
   const [run, setRun] = useState(null);
   const [sync, setSync] = useState(null);
@@ -27,7 +28,7 @@ export default function MotorLabLiveClient({initialInput}) {
       const response = await fetch('/api/motor-lab/viewer-run', {
         method: 'POST', cache: 'no-store',
         headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({plan, routeId, seed: Number(seed)}),
+        body: JSON.stringify({plan, routeId, seed: Number(seed), orders}),
       });
       const payload = await response.json();
       const received = Date.now();
@@ -36,12 +37,12 @@ export default function MotorLabLiveClient({initialInput}) {
       setRun({feed: scenicPresentationV1(payload.feed),
         coverage: payload.coverage,
         version: payload.version,
-        input: {plan, routeId, seed: Number(seed)}});
+        input: {plan, routeId, seed: Number(seed), orders}});
       setSync({clock: payload.clock,
         serverOffsetMs: payload.serverNowMs - (sent + received) / 2});
     } catch (cause) { setError(cause.message); }
     finally { setBusy(false); }
-  }, [plan, routeId, seed]);
+  }, [plan, routeId, seed, orders]);
   useEffect(() => {
     if (!initialInput || autoStarted.current) return;
     autoStarted.current = true;
@@ -114,6 +115,58 @@ export default function MotorLabLiveClient({initialInput}) {
         <label>Scenario number <input type="number" min="0" max="9999"
           required value={seed} onChange={event =>
             setSeed(event.target.value)}/></label>
+        <details><summary>Team orders</summary>
+          <p>These orders are sent to the Motor Lab simulation before it runs.
+            The viewer only displays the resulting recording.</p>
+          <label>Chase contribution <select
+            value={orders.chaseContribution ?? 'follow_plan'}
+            onChange={event => setOrders(current => ({...current,
+              chaseContribution: event.target.value}))}>
+            <option value="follow_plan">Follow plan</option>
+            <option value="ignore">Do not chase</option>
+            <option value="all">All available helpers chase</option>
+          </select></label>
+          <label>Attack posture <select
+            value={orders.attackPosture ?? 'follow_plan'}
+            onChange={event => setOrders(current => ({...current,
+              attackPosture: event.target.value}))}>
+            <option value="follow_plan">Follow plan</option>
+            <option value="none">No bunch attacks</option>
+            <option value="selective">Selective attacks</option>
+            <option value="repeated">Repeated attacks</option>
+          </select></label>
+          <label>Break response <select
+            value={orders.breakResponse ?? 'hold_plan'}
+            onChange={event => setOrders(current => ({...current,
+              breakResponse: event.target.value}))}>
+            <option value="hold_plan">Hold plan</option>
+            <option value="chase_if_threatened">Chase if threatened</option>
+          </select></label>
+          <label>Break work <select
+            value={orders.breakWork ?? 'cooperate'}
+            onChange={event => setOrders(current => ({...current,
+              breakWork: event.target.value}))}>
+            <option value="cooperate">Cooperate</option>
+            <option value="sit_on">Sit on</option>
+            <option value="drive">Drive</option>
+          </select></label>
+          <label>Captain support <select
+            value={orders.captainSupport ?? 'hold_position'}
+            onChange={event => setOrders(current => ({...current,
+              captainSupport: event.target.value}))}>
+            <option value="hold_position">Hold position</option>
+            <option value="drop_back_if_dropped">Drop back if dropped</option>
+          </select></label>
+          <label>Late effort <select
+            value={orders.lateEffort ?? 'follow_plan'}
+            onChange={event => setOrders(current => ({...current,
+              lateEffort: event.target.value}))}>
+            <option value="follow_plan">Follow plan</option>
+            <option value="conserve">Conserve</option>
+            <option value="steady">Steady</option>
+            <option value="hard">Hard</option>
+          </select></label>
+        </details>
         <button type="submit" disabled={busy}>{busy?
           'Generating…':'Generate and watch'}</button>
       </form>
@@ -124,7 +177,8 @@ export default function MotorLabLiveClient({initialInput}) {
         The camera is local; playback time is shared.</p>:null}
       {run?<a href={`/team/motor-lab/live?plan=${
         encodeURIComponent(run.input.plan)}&route=${
-        encodeURIComponent(run.input.routeId)}&seed=${run.input.seed}`}>
+        encodeURIComponent(run.input.routeId)}&seed=${run.input.seed}&orders=${
+        encodeURIComponent(JSON.stringify(run.input.orders))}`}>
         Open this shared replay ↗</a>:null}
       {error?<p role="alert">{error}</p>:null}
     </div>

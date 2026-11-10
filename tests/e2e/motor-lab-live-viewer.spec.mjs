@@ -23,12 +23,17 @@ test('authenticated full Motor Lab race reaches the new WebGL viewer',
     await page.goto('/team/motor-lab/live');
     await expect(page.getByRole('heading',
       {name: 'Generated Motor Lab checkpoint replay'})).toBeVisible();
+    await page.getByText('Team orders', {exact: true}).click();
+    await page.getByRole('combobox', {name: 'Attack posture'})
+      .selectOption('repeated');
     const runResponse = page.waitForResponse(response =>
       new URL(response.url()).pathname === endpoint &&
       response.request().method() === 'POST');
     await page.getByRole('button', {name: 'Generate and watch'}).click();
     const response = await runResponse;
+    const submittedInput = response.request().postDataJSON();
     expect(response.status()).toBe(200);
+    expect(submittedInput.orders.attackPosture).toBe('repeated');
     const body = await response.json();
     expect(body.ok).toBe(true);
     expect(body.feed.frames).toHaveLength(161);
@@ -51,7 +56,7 @@ test('authenticated full Motor Lab race reaches the new WebGL viewer',
     await secondPage.close();
     const resultResponse = await context.request.post(
       '/api/motor-lab/checkpoint-result', {
-        data: {...runInput, raceId: body.feed.raceId},
+        data: {...submittedInput, raceId: body.feed.raceId},
         headers: {Origin: 'http://localhost:3100'},
       });
     expect([200, 425]).toContain(resultResponse.status());
@@ -90,7 +95,7 @@ test('authenticated full Motor Lab race reaches the new WebGL viewer',
     await page.getByRole('button', {name: 'results', exact: true}).click();
     await expect(page.getByText(/Withheld until the shared checkpoint/))
       .toBeVisible();
-    const classification = createMotorLabPreviewSource(runInput)
+    const classification = createMotorLabPreviewSource(submittedInput)
       .race.provisionalResults.map(row => ({riderId: row.riderId,
         position: row.position, gapSeconds: row.gapSeconds}));
     await page.route('**/api/motor-lab/checkpoint-result', route =>

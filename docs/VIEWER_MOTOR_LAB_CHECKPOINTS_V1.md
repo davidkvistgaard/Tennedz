@@ -4,12 +4,12 @@ The generated viewer at `/team/motor-lab/live` is an **experimental, fictional M
 
 ## Data path
 
-1. The protected `/api/motor-lab/viewer-run` accepts a plan, route and seed, then runs the existing `runKilometreLab` through `createMotorLabPreviewSource`. The original `createMotorLabPreview` summary keeps its previous output.
+1. The protected `/api/motor-lab/viewer-run` accepts a plan, route, seed and existing Motor Lab team orders, then runs the existing `runKilometreLab` through `createMotorLabPreviewSource`. The original `createMotorLabPreview` summary keeps its previous output. The form exposes chase contribution, attack posture, break response, break work, captain support and late effort; it does not create new motor tactics.
 2. `motor-lab-checkpoint-adapter-v1.mjs` validates the full raw recording and emits `pelotonia.viewer.v1`. Its `raceId` includes the plan, route, seed and normalized orders. Every one of the 32 riders appears exactly once at each **recorded** kilometre 1–160. The adapter adds a neutral start frame at kilometre 0 from the known starting roster; it is not a measured motor checkpoint.
 3. Each rider's longitudinal coordinate is the **recorded checkpoint kilometre**. A group gap remains a number of seconds. The adapter does not turn it into simultaneous metres, a wheel order or a lane.
 4. `scenicPresentationV1` adds trees, spectators and other synthetic scenery for the WebGL canvas. It does not change a sporting field. The canvas can space riders who share a recorded coordinate; the sporting overlay continues to use the unspaced feed.
 5. `/api/motor-lab/checkpoint-clock` gives all spectators the same server-derived presentation cycle. The adapter assigns eight display seconds per recorded kilometre because this legacy motor has no measured elapsed checkpoint clock. The viewer labels this as **checkpoint playback**, never actual race time. Camera selection remains local.
-   The generated replay has a shareable URL with its validated plan, route and seed; another signed-in spectator reruns the same deterministic source and joins the same clock.
+   The generated replay has a shareable URL with its validated plan, route, seed and chosen orders; another signed-in spectator reruns the same deterministic source and joins the same clock.
 6. `/api/motor-lab/checkpoint-result` withholds the engine's provisional model classification until the shared cycle reaches the finish. The initial feed contains no result or winner. The viewer labels the list as provisional; it is not an official game result.
 
 ## What the recording can and cannot support
