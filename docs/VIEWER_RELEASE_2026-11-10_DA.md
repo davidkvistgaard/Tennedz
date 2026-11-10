@@ -44,6 +44,14 @@ kamerafokus fulgte det registrerede checkpoint, og konsollen forblev fejlfri.
 Rytterne vises tættere på både desktop og telefon, og den fælles tid er
 uændret.
 
+Dette andet produktionsløb blev derefter fulgt helt til 160 km på den
+rettede viewer. Den fælles afspilning sluttede ved 21:20, alle 32 foreløbige
+resultatrækker blev vist, og det valgte kamera pegede fortsat på en
+eksisterende gruppe ved det registrerede 160.000-meter-checkpoint. WebGL2
+viste 32 ryttere ved mål og browseren rapporterede ingen konsolfejl. Den
+observerede visning nåede omkring 149.000 renderede frames under hele løbet;
+det dokumenterer kun denne browser og maskine.
+
 Den staged produktionsbuild viste `/viewer` med WebGL, 32 ryttere og
 JavaScript fra det præcise deployment. Direkte login på stagingdomænet var
 ikke muligt i den aktuelle browsersession; den beskyttede viewer og dens
