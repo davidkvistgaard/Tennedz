@@ -3,6 +3,8 @@ import http from "node:http";
 import { spawn } from "node:child_process";
 import { randomUUID } from "node:crypto";
 import {v2BrowserRecordingLock} from './v2-browser-recording-fixture.mjs';
+import {createGuidedSavedRunFixture, guidedSavedRunIds} from
+  './guided-saved-run-fixture.mjs';
 
 const sessions = new Map();
 const clubKits = new Map();
@@ -19,6 +21,14 @@ const v2SettlementFixture = process.env.PELOTONIA_E2E_V2_SETTLEMENT === "true";
 const v2FutureSettlementFixture = process.env.PELOTONIA_E2E_V2_SETTLEMENT_FUTURE === "true";
 const v2RecordingFixture = process.env.PELOTONIA_E2E_V2_RECORDING === "true" ||
   v2SettlementFixture;
+const guidedSavedRunFixture = process.env.PELOTONIA_E2E_GUIDED_SAVED_RUN === 'true';
+const savedRuns = guidedSavedRunFixture ? Object.fromEntries(
+  ['men', 'women'].map(category => [guidedSavedRunIds[category],
+    createGuidedSavedRunFixture(category)])) : {};
+if (guidedSavedRunFixture) savedRuns[guidedSavedRunIds.womenFinished] = {
+  ...savedRuns[guidedSavedRunIds.women],
+  event_id: guidedSavedRunIds.womenFinished,
+};
 let v2LockedAt = null;
 let v2RecordedAt = null;
 let v2RecordedHeader = null;
@@ -169,6 +179,23 @@ const server = http.createServer(async (req, res) => {
     }
     if (req.method !== "GET" && req.method !== "HEAD") return send(500, { message: "Unexpected database mutation in recovery" });
     const table = url.pathname.split("/").at(-1);
+    if (guidedSavedRunFixture && table === 'event_divisions') {
+      const eventId = url.searchParams.get('event_id')?.replace('eq.', '');
+      return send(200, savedRuns[eventId] &&
+        url.searchParams.get('team_id') === 'eq.team-alice' ?
+        {division_index: 1} : null);
+    }
+    if (guidedSavedRunFixture && table === 'event_division_runs') {
+      const eventId = url.searchParams.get('event_id')?.replace('eq.', '');
+      let run = savedRuns[eventId] ?? null;
+      if (run && eventId === guidedSavedRunIds.womenFinished) {
+        const duration = run.replay.frames.at(-1).elapsed_sec;
+        run = {...run, created_at: new Date(Date.now() -
+          Math.ceil(duration * 1000 / 60) - 3000).toISOString()};
+      }
+      return send(200, url.searchParams.get('division_index') === 'eq.1' ?
+        run : null);
+    }
     if (noContestFixture && table === "recovery_two_phase_voids")
       return send(200, noContestCancelled ? [{
         event_id: twoPhaseEventId, reason: "INCOMPLETE_ENTRY_SCAN", decided_by: ids.alice,
