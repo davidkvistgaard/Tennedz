@@ -2,8 +2,8 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { validateFeed } from '@pelotonia/race-viewer/data';
-import { illustrativeGroupLayoutFeedV2 } from
-  '../../lib/viewer/illustrative-group-layout-v2.mjs';
+import { illustrativeGroupLayoutFeedV3 } from
+  '../../lib/viewer/illustrative-group-layout-v3.mjs';
 
 for (const category of ['men', 'women']) {
   test(`${category} split race display separates recorded overlaps`, () => {
@@ -11,13 +11,14 @@ for (const category of ['men', 'women']) {
       `../../data/viewer/physical-120km-${category}-v1.json`,
       import.meta.url))).feed;
     const original = structuredClone(source);
-    const display = illustrativeGroupLayoutFeedV2(source);
+    const display = illustrativeGroupLayoutFeedV3(source);
     assert.deepEqual(validateFeed(display), display);
     assert.deepEqual(source, original);
     for (const key of ['raceId', 'duration', 'riders', 'teams', 'events',
       'orders', 'actions', 'results', 'finish'])
       assert.deepEqual(display[key], source[key], key);
     assert.deepEqual(display.route, source.route);
+    const finishM = source.route.profile.samples.at(-1)[0];
     for (let index = 0; index < source.frames.length; index++) {
       const recorded = source.frames[index];
       const shown = display.frames[index];
@@ -37,6 +38,9 @@ for (const category of ['men', 'women']) {
         assert.equal(row.groupId, anchor.groupId);
         assert.ok(row.distance <= anchor.distance);
         assert.ok(anchor.distance - row.distance <= 20);
+        if (anchor.distance === finishM)
+          assert.equal(row.distance, finishM,
+            `A recorded finisher moved behind the line in frame ${index}`);
         shownMinimums.set(row.groupId, Math.min(
           shownMinimums.get(row.groupId) ?? Infinity, row.distance));
       }
@@ -56,12 +60,18 @@ for (const category of ['men', 'women']) {
       `../../data/viewer/physical-40km-${category}-v1.json`,
       import.meta.url))).feed;
     const original = structuredClone(source);
-    const display = illustrativeGroupLayoutFeedV2(source);
+    const display = illustrativeGroupLayoutFeedV3(source);
     assert.deepEqual(validateFeed(display), display);
     assert.deepEqual(source, original);
     assert.deepEqual(display.events, source.events);
     assert.deepEqual(display.results, source.results);
     assert.deepEqual(display.finish, source.finish);
+    const finishM = source.route.profile.samples.at(-1)[0];
+    const recordedFinish = source.frames.at(-1).positions;
+    const shownFinish = display.frames.at(-1).positions;
+    for (let index = 0; index < recordedFinish.length; index++)
+      if (recordedFinish[index].distance === finishM)
+        assert.equal(shownFinish[index].distance, finishM);
     const middleIndex = Math.floor(display.frames.length / 2);
     const middle = display.frames[middleIndex];
     assert.deepEqual(middle.groupRoles, source.frames[middleIndex].groupRoles);

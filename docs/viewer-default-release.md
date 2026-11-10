@@ -163,7 +163,7 @@ substituted for an official race.
 
 ## Split-road display study, 10 November 2026
 
-`illustrative-group-layout-2` now gives riders who share the same recorded
+`illustrative-group-layout-3` now gives riders who share the same recorded
 group, distance, and lane a stable visual arrangement in both the default
 32-rider recording and the 120-rider split-road preview. The source recording
 is not changed. Each drawn rider remains in its
@@ -176,6 +176,9 @@ Version 2 also caps the drawn rows before the next recorded group anchor;
 the prior display layout crossed a slower group's recorded distance for 15
 group pairs in each 120 km split recording. The saved
 motor data and visual ordering of groups now agree at every frame.
+Version 3 leaves every rider drawn exactly on the finish line once the
+recording places that rider there. Earlier illustrative spacing moved a
+recorded finisher several metres behind the line.
 The renderer receives this display-only copy on the client. The group strip,
 distance to finish, time gaps, route profile, commentary and results sample
 the unmodified recording; the two feeds are not serialized into the page.

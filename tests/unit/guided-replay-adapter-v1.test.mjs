@@ -4,8 +4,8 @@ import { validateFeed, createSampler, labelRaceGroups, raceGroups,
   resultsAt } from '@pelotonia/race-viewer/data';
 import { simulateStage } from '../../lib/engine/simulateStage.js';
 import { adaptGuidedReplayV1 } from '../../lib/viewer/guided-replay-adapter-v1.mjs';
-import { illustrativeGroupLayoutFeedV2 } from
-  '../../lib/viewer/illustrative-group-layout-v2.mjs';
+import { illustrativeGroupLayoutFeedV3 } from
+  '../../lib/viewer/illustrative-group-layout-v3.mjs';
 import { withRecordedAppearanceV1 } from
   '../../lib/viewer/recorded-appearance-v1.mjs';
 import { teamKitOptions, defaultKit, CLUB_PALETTES } from
@@ -44,6 +44,7 @@ for (const category of ['men', 'women']) {
       assert.equal(feed.riders.length, count);
       assert.equal(feed.results.entries.length, count);
       assert.equal(coverage.exactSimultaneousRiderMetres, false);
+      assert.equal(coverage.recordedGroupRoles, false);
       assert.equal(coverage.sourceKitCount, 0);
       for (let index = 0; index < feed.frames.length; index++) {
         const source = replay.frames[index], frame = feed.frames[index];
@@ -61,9 +62,12 @@ for (const category of ['men', 'women']) {
       assert.ok(feed.events.filter(e => e.label.startsWith('Finish!'))
         .every(e => e.time === feed.duration));
       assert.equal(JSON.stringify(replay), before);
-      const display = illustrativeGroupLayoutFeedV2(feed);
+      const display = illustrativeGroupLayoutFeedV3(feed);
       validateFeed(display);
       assert.deepEqual(display.frames[0], feed.frames[0]);
+      const finishM = feed.route.profile.samples.at(-1)[0];
+      for (const row of display.frames.at(-1).positions)
+        assert.equal(row.distance, finishM);
       for (let index = 1; index < display.frames.length; index++) {
         const original = feed.frames[index], visual = display.frames[index];
         assert.deepEqual(visual.gaps, original.gaps);
