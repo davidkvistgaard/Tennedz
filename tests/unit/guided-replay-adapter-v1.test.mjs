@@ -3,8 +3,8 @@ import assert from 'node:assert/strict';
 import { validateFeed, createSampler, resultsAt } from '@pelotonia/race-viewer/data';
 import { simulateStage } from '../../lib/engine/simulateStage.js';
 import { adaptGuidedReplayV1 } from '../../lib/viewer/guided-replay-adapter-v1.mjs';
-import { illustrativeGroupLayoutFeedV1 } from
-  '../../lib/viewer/illustrative-group-layout-v1.mjs';
+import { illustrativeGroupLayoutFeedV2 } from
+  '../../lib/viewer/illustrative-group-layout-v2.mjs';
 import { withRecordedAppearanceV1 } from
   '../../lib/viewer/recorded-appearance-v1.mjs';
 import { teamKitOptions, defaultKit, CLUB_PALETTES } from
@@ -60,7 +60,7 @@ for (const category of ['men', 'women']) {
       assert.ok(feed.events.filter(e => e.label.startsWith('Finish!'))
         .every(e => e.time === feed.duration));
       assert.equal(JSON.stringify(replay), before);
-      const display = illustrativeGroupLayoutFeedV1(feed);
+      const display = illustrativeGroupLayoutFeedV2(feed);
       validateFeed(display);
       assert.deepEqual(display.frames[0], feed.frames[0]);
       for (let index = 1; index < display.frames.length; index++) {

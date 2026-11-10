@@ -2,8 +2,8 @@
 import {useEffect,useMemo,useRef,useState} from 'react';
 import {RaceViewer,RouteProfile,commentaryAt,createSampler,
   finishRemaining,formatFinishDistance,labelRaceGroups,raceGroups} from '@pelotonia/race-viewer';
-import {illustrativeGroupLayoutFeedV1} from
-  '../../../../lib/viewer/illustrative-group-layout-v1.mjs';
+import {illustrativeGroupLayoutFeedV2} from
+  '../../../../lib/viewer/illustrative-group-layout-v2.mjs';
 
 const clockLabel=seconds=>{
   const value=Math.max(0,Math.floor(seconds||0));
@@ -32,7 +32,7 @@ export default function ViewerPreviewScene({feed,coverage,mode='recorded',
   // Keep the recorded feed authoritative for every sporting display value.
   // Only the WebGL canvas receives illustrative rider spacing.
   const displayFeed=useMemo(()=>mode==='exhibition'?feed:
-    illustrativeGroupLayoutFeedV1(feed),[feed,mode]);
+    illustrativeGroupLayoutFeedV2(feed),[feed,mode]);
   const sampler=useMemo(()=>createSampler(feed),[feed]);
   const groupOnlyPositions=useMemo(()=>mode!=='exhibition'&&
     feed.frames.some(frame=>{

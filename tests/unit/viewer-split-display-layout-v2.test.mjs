@@ -2,8 +2,8 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { validateFeed } from '@pelotonia/race-viewer/data';
-import { illustrativeGroupLayoutFeedV1 } from
-  '../../lib/viewer/illustrative-group-layout-v1.mjs';
+import { illustrativeGroupLayoutFeedV2 } from
+  '../../lib/viewer/illustrative-group-layout-v2.mjs';
 
 for (const category of ['men', 'women']) {
   test(`${category} split race display separates recorded overlaps`, () => {
@@ -11,7 +11,7 @@ for (const category of ['men', 'women']) {
       `../../data/viewer/physical-120km-${category}-v1.json`,
       import.meta.url))).feed;
     const original = structuredClone(source);
-    const display = illustrativeGroupLayoutFeedV1(source);
+    const display = illustrativeGroupLayoutFeedV2(source);
     assert.deepEqual(validateFeed(display), display);
     assert.deepEqual(source, original);
     for (const key of ['raceId', 'duration', 'riders', 'teams', 'events',
@@ -26,13 +26,25 @@ for (const category of ['men', 'women']) {
       assert.deepEqual(shown.gaps, recorded.gaps);
       assert.deepEqual(shown.events, recorded.events);
       const rows = new Map(recorded.positions.map(row => [row.riderId, row]));
+      const anchors = new Map();
+      const shownMinimums = new Map();
+      for (const row of recorded.positions)
+        anchors.set(row.groupId, Math.max(
+          anchors.get(row.groupId) ?? 0, row.distance));
       for (const row of shown.positions) {
         const anchor = rows.get(row.riderId);
         assert.ok(anchor);
         assert.equal(row.groupId, anchor.groupId);
         assert.ok(row.distance <= anchor.distance);
         assert.ok(anchor.distance - row.distance <= 20);
+        shownMinimums.set(row.groupId, Math.min(
+          shownMinimums.get(row.groupId) ?? Infinity, row.distance));
       }
+      for (const [groupId, distance] of anchors)
+        for (const [otherId, otherDistance] of anchors)
+          if (groupId !== otherId && distance > otherDistance)
+            assert.ok(shownMinimums.get(groupId) >= otherDistance,
+              `Display crossed a recorded group at frame ${index}`);
     }
     const middle = display.frames[Math.floor(display.frames.length / 2)];
     assert.equal(new Set(middle.positions.map(row =>
@@ -44,7 +56,7 @@ for (const category of ['men', 'women']) {
       `../../data/viewer/physical-40km-${category}-v1.json`,
       import.meta.url))).feed;
     const original = structuredClone(source);
-    const display = illustrativeGroupLayoutFeedV1(source);
+    const display = illustrativeGroupLayoutFeedV2(source);
     assert.deepEqual(validateFeed(display), display);
     assert.deepEqual(source, original);
     assert.deepEqual(display.events, source.events);
