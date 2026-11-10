@@ -439,3 +439,16 @@ the cache. On the same machine, the 160-rider 120 km race-3 compute
 fell from about 96 to 24 seconds, and compute plus exact replay from
 about 146 to 42 seconds. This is a runtime improvement, not a change
 to rider decisions or race outcomes.
+
+`node scripts/audit-position-unified-72-v1.mjs` reuses one existing
+opt-in positional recorder for the 72-case synthetic 120 km matrix:
+two categories, three terrain families, two chase orders, three
+attack orders and two seeds. All 72 have complete per-active-rider
+decisions, one crossing per rider and kilometre, exact recording
+replay and the same peloton membership at the finish as the old
+source. There are zero official results. The shared fixture roster
+does not exercise the separate early-climb drop case, and one
+successful attack is the recorder's limit. The old group's finish
+clock is not an individual finish order. This audit demonstrates
+that one pre-existing recorder already covers the connected and
+one-solo matrix; it does not make the motor release-ready.
