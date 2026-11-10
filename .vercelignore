@@ -1,0 +1,9 @@
+# Local and isolated build output must not be uploaded as deployment source.
+.next-viewer-*/
+.next-market-*/
+test-results/
+playwright-report/
+coverage/
+.recovery-local/
+tests/
+*.log
