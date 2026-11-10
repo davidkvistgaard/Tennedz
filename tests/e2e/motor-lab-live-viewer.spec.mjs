@@ -126,9 +126,18 @@ test('authenticated full Motor Lab race reaches the new WebGL viewer',
     expect(observed.graphicsBackend?.api).toBe('WebGL2');
     expect(observed.errors).toBe(0);
     expect(observed.fps).toBeGreaterThan(0);
+    expect(observed.targetAvailable).toBe(true);
+    expect(Math.abs(observed.sampledDistance - observed.camera.focus[2]))
+      .toBeLessThan(12);
+    expect(observed.camera.zoom).toBe(1);
+    await page.locator('.race-theatre-stage').screenshot({
+      path: 'test-results/motor-lab-live-desktop.png'});
     console.log(`Motor Lab generated WebGL: ${JSON.stringify({
       fps: observed.fps, cpuP50Ms: observed.cpuP50Ms,
-      drawCalls: observed.drawCalls,
+      samplingP50Ms: observed.samplingP50Ms,
+      rigP50Ms: observed.rigP50Ms,
+      drawP50Ms: observed.drawP50Ms,
+      drawCalls: observed.drawCalls, triangles: observed.triangles,
       backend: observed.graphicsBackend?.unmaskedRenderer})}`);
     await page.route('**/api/motor-lab/checkpoint-clock?*', route =>
       route.fulfill({json: {raceId: body.feed.raceId,

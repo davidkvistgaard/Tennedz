@@ -28,8 +28,11 @@ export default function ViewerPreviewScene({feed,coverage,mode='recorded',
   const [detailsOpen,setDetailsOpen]=useState(false);
   const [tab,setTab]=useState('riders'),[light,setLight]=useState('day');
   useEffect(()=>{
-    viewerRef.current?.setZoom(.35);
-  },[cycleKey]);
+    // Shared Motor Lab checkpoints move 125 m/s in presentation time. Keep
+    // the full source group in frame; other viewer modes retain their tested
+    // close camera. This only changes local camera framing.
+    viewerRef.current?.setZoom(mode==='lab'?1:.35);
+  },[cycleKey,mode]);
   const time=stats?.time??0;
   // Keep the recorded feed authoritative for every sporting display value.
   // Only the WebGL canvas receives illustrative rider spacing.

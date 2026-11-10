@@ -5286,7 +5286,7 @@ var fr = class {
 			this.lastRadius = m;
 		}
 		f.length && (this.lastFitScale = Math.max(Ye(f, p, this.yaw, this.camera.fov, this.camera.aspect, .12, this.safeArea), Ye(f, p, this.orbitState?.yaw ?? this.yaw, this.camera.fov, this.camera.aspect, .12, this.safeArea)));
-		let h = this.zoom * (d ? .77 : this.mode === "overview" ? Math.max(2.8, this.lastFitScale || .88) : this.lastFitScale || .88), g = 1 - Math.exp(-t * 3.8 * Math.max(1, this.shared?.clock.rate ?? 1));
+		let h = this.zoom * (d ? .77 : this.mode === "overview" ? Math.max(2.8, this.lastFitScale || .88) : this.lastFitScale || .88), g = this.shared ? 1 : 1 - Math.exp(-t * 3.8);
 		this.initial ? (this.focus.copy(p), this.orbitState = {
 			yaw: this.yaw,
 			scale: h
