@@ -597,3 +597,36 @@ lane or assignment refusals in the others. Final rear groups
 match in one case. Thus full-race completion alone is not
 calibration, and this version cannot enter guided races. No
 official result or viewer-ready race is asserted.
+
+`shared-road-km-7` lets a later attacker enter the explicitly
+provided passing corridor at their measured distance. The
+attacker pays initiation and exposed travel, earns a departure
+only after physical separation, then records a return to a
+normal lane. The `multi-attack-contact-race-2` wrapper preserves
+the v1 recording. In the four 20 km audit cases without a
+competing front-worker assignment, both ordered attacks now
+depart in the positional model, up from one of four in v1.
+All eight positional cases finish and replay at both 20 and
+120 km with complete per-rider decisions, checkpoint and finish
+coverage. The source launches both attacks in all eight;
+the positional model still refuses the second in the four
+front-assignment conflict cases. Final rear membership matches
+only one of eight cases at either distance. The corridor is a
+synthetic input and cannot be inferred for a real route.
+
+`shared-road-km-8` allows a follower in a measured two-rider
+rear contact to choose cooperative shelter, provided both
+actual team orders say `breakWork: cooperate`. The follower
+limits their paid sheltered speed to the front rider's paid
+leader speed, with a versioned pace event. No contact is created
+by this decision; a prior physical contact observation is
+required. With `sit_on` instead, no pace event occurs and the
+two riders separate in the targeted 20 km case. The enclosing
+`multi-attack-contact-race-3` completes and replays all eight
+20 km and all eight 120 km audit cases. Every run has complete
+per-rider decisions, checkpoint and finish crossings. Final rear
+membership matches the source in seven of eight at each
+distance, compared with one of eight for v2. The
+remaining case has an unresolved simultaneous front-worker
+assignment and second attack. Larger rear components and
+competitive finishing still need separate physical rules.

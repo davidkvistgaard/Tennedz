@@ -6,18 +6,41 @@ import {prepareSyntheticPositionCatchV1} from
 import {runPhysicalFirstWholeRaceProbeV1} from
   '../lib/engine/v2/physical-first-whole-race-probe-v1.mjs';
 import {recordPhysicalFirstPositionMultiAttackContactRaceV1,
-  replayPhysicalFirstPositionMultiAttackContactRaceV1} from
+  replayPhysicalFirstPositionMultiAttackContactRaceV1,
+  recordPhysicalFirstPositionMultiAttackContactRaceV2,
+  replayPhysicalFirstPositionMultiAttackContactRaceV2,
+  recordPhysicalFirstPositionMultiAttackContactRaceV3,
+  replayPhysicalFirstPositionMultiAttackContactRaceV3} from
   '../lib/engine/v2/physical-first-position-multi-attack-contact-race-v1.mjs';
 
 const kmCount=Number(process.argv.find(arg=>
   arg.startsWith('--km='))?.slice(5)??'20');
+const positionVersion=Number(process.argv.find(arg=>
+  arg.startsWith('--position-version='))
+  ?.slice('--position-version='.length)??'1');
 if(!Number.isInteger(kmCount)||kmCount<7||kmCount>120)
   throw new Error('Multi-attack audit needs 7..120 km.');
+if(![1,2,3].includes(positionVersion))
+  throw new Error('Multi-attack audit needs position version 1..3.');
+const teamCounts=(process.argv.find(arg=>
+  arg.startsWith('--teams='))?.slice(8)??'2,20')
+  .split(',').map(Number);
+const frontWorkers=(process.argv.find(arg=>
+  arg.startsWith('--front-workers='))
+  ?.slice('--front-workers='.length)??'none,2')
+  .split(',').map(value=>value==='none'?
+    null:Number(value));
+if(!teamCounts.length||teamCounts.some(count=>
+  ![2,20].includes(count))||
+  !frontWorkers.length||frontWorkers.some(value=>
+    value!==null&&value!==2))
+  throw new Error('Multi-attack audit has invalid matrix axes.');
+const plannedCases=teamCounts.length*2*frontWorkers.length;
 const rows=[];
-for(const teamCount of [2,20])
+for(const teamCount of teamCounts)
   for(const raceSeed of [
     'position-seed-a','position-seed-b'])
-    for(const frontWorkerAtKm of [null,2]){
+    for(const frontWorkerAtKm of frontWorkers){
       const request=prepareSyntheticPositionCatchV1({
         teamCount,kmCount,raceSeed,
         profile:'hill_then_mountain',
@@ -34,9 +57,17 @@ for(const teamCount of [2,20])
       }
       let position=null,positionError=null;
       try{
-        position=recordPhysicalFirstPositionMultiAttackContactRaceV1(
+        position=(positionVersion===3?
+          recordPhysicalFirstPositionMultiAttackContactRaceV3:
+          positionVersion===2?
+          recordPhysicalFirstPositionMultiAttackContactRaceV2:
+          recordPhysicalFirstPositionMultiAttackContactRaceV1)(
           request);
-        replayPhysicalFirstPositionMultiAttackContactRaceV1(
+        (positionVersion===3?
+          replayPhysicalFirstPositionMultiAttackContactRaceV3:
+          positionVersion===2?
+          replayPhysicalFirstPositionMultiAttackContactRaceV2:
+          replayPhysicalFirstPositionMultiAttackContactRaceV1)(
           request,position);
       }catch(error){
         positionError=error.message;
@@ -55,6 +86,26 @@ for(const teamCount of [2,20])
             row.riderId).sort()):[];
       const normalized=groups=>groups.sort((a,b)=>
         a.join(',').localeCompare(b.join(',')));
+      const checkpointComparisons=source&&position?
+        position.steps.map((step,index)=>{
+          const sourceState=source.states[index+1];
+          const positionalState=step.sharedRoad??
+            step.departure.peloton;
+          const sourcePeloton=sourceState.roads.find(
+            road=>road.roadId==='peloton')
+            ?.riderIds??[];
+          const positionPeloton=positionalState
+            .positions.filter(row=>
+              row.roadId==='peloton')
+            .map(row=>row.riderId);
+          return {km:index+1,
+            pelotonAligned:isDeepStrictEqual(
+              [...sourcePeloton].sort(),
+              [...positionPeloton].sort()),
+            frontClockDifferenceSeconds:
+              Math.abs(sourceState.frontClockSeconds-
+                positionalState.clockSeconds)};
+        }):[];
       const row={teamCount,riderCount:teamCount*8,
         kmCount,raceSeed,frontWorkerAtKm,
         sourceStatus:source?'complete':'failed',
@@ -71,8 +122,21 @@ for(const teamCount of [2,20])
           isDeepStrictEqual(
             normalized(sourceRear),
             normalized(positionRear)):null,
+        alignedPelotonCheckpoints:
+          checkpointComparisons.filter(item=>
+            item.pelotonAligned).length,
+        firstPelotonMismatchKm:
+          checkpointComparisons.find(item=>
+            !item.pelotonAligned)?.km??null,
+        maxFrontClockDifferenceSeconds:
+          checkpointComparisons.length?
+            +Math.max(...checkpointComparisons.map(
+              item=>item.frontClockDifferenceSeconds))
+              .toFixed(3):null,
         departures:position?.attackDepartureEvents.length??null,
         attackRefusals:position?.attackRefusals.length??null,
+        cooperativePaceEvents:
+          position?.contactPaceEvents?.length??null,
         decisionCoverage:position?.decisionCount===
           teamCount*8*kmCount,
         checkpointCoverage:
@@ -82,13 +146,14 @@ for(const teamCount of [2,20])
           position?.finishCrossings.length===
             teamCount*8};
       rows.push(row);
-      process.stderr.write(`${rows.length}/8 `+
+      process.stderr.write(`${rows.length}/${plannedCases} `+
         `${teamCount} teams, ${raceSeed}, `+
         `front worker ${frontWorkerAtKm??'none'}: `+
         `${row.sourceStatus}/${row.positionStatus}\n`);
     }
 const summary={version:
   'physical-first-position-multi-attack-audit-1',
+positionVersion,
 fixture:'synthetic_only',plannedCases:rows.length,
 sourceCompleted:rows.filter(row=>
   row.sourceStatus==='complete').length,

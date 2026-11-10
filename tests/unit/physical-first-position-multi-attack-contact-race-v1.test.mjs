@@ -5,7 +5,11 @@ import {prepareSyntheticPositionCatchV1} from
 import {runPhysicalFirstWholeRaceProbeV1} from
   '../../lib/engine/v2/physical-first-whole-race-probe-v1.mjs';
 import {recordPhysicalFirstPositionMultiAttackContactRaceV1,
-  replayPhysicalFirstPositionMultiAttackContactRaceV1} from
+  replayPhysicalFirstPositionMultiAttackContactRaceV1,
+  recordPhysicalFirstPositionMultiAttackContactRaceV2,
+  replayPhysicalFirstPositionMultiAttackContactRaceV2,
+  recordPhysicalFirstPositionMultiAttackContactRaceV3,
+  replayPhysicalFirstPositionMultiAttackContactRaceV3} from
   '../../lib/engine/v2/physical-first-position-multi-attack-contact-race-v1.mjs';
 
 function twoAttackRequest(){
@@ -83,4 +87,75 @@ test('competing front assignment records a refusal, not a launch',()=>{
   assert.deepEqual(
     replayPhysicalFirstPositionMultiAttackContactRaceV1(
       request,race),race);
+});
+
+test('v2 pays a passing-corridor approach before a later attack',()=>{
+  const request=twoAttackRequest();
+  request.input.raceSeed='position-seed-b';
+  const race=recordPhysicalFirstPositionMultiAttackContactRaceV2(
+    request);
+  assert.deepEqual(race.attackDepartureEvents.map(row=>
+    row.sourceKm),[1,5]);
+  const laneEvents=race.steps.flatMap(step=>
+    step.sharedRoad?.laneChangeEvents??[])
+    .filter(row=>row.riderId==='team-0-1');
+  assert.deepEqual(laneEvents.map(row=>row.type),[
+    'paid_attack_passing_lane_entry',
+    'paid_attack_passing_lane_return']);
+  const attackStep=race.steps[4].sharedRoad;
+  const attackerDecision=attackStep.decisions.find(row=>
+    row.riderId==='team-0-1');
+  assert.ok(attackerDecision.paidFromReserve>
+    attackerDecision.attackInitiationCost);
+  assert.ok(attackerDecision.legs.some(row=>
+    row.energyRole==='leader'));
+  assert.deepEqual(
+    replayPhysicalFirstPositionMultiAttackContactRaceV2(
+      request,race),race);
+  const forged=structuredClone(race);
+  forged.steps[4].sharedRoad.laneChangeEvents[0]
+    .atDistanceM+=10;
+  assert.throws(()=>
+    replayPhysicalFirstPositionMultiAttackContactRaceV2(
+      request,forged),/differs from paid movement/);
+});
+
+test('v3 cooperative shelter holds a measured two-rider rear contact',()=>{
+  const request=twoAttackRequest();
+  const source=runPhysicalFirstWholeRaceProbeV1(
+    request.input);
+  const race=recordPhysicalFirstPositionMultiAttackContactRaceV3(
+    request);
+  const sourceRear=source.states.at(-1).roads.find(row=>
+    row.roadId.startsWith('rear:'));
+  const positionalRear=race.steps.at(-1).sharedRoad
+    .positions.filter(row=>row.roadId.startsWith('rear:'));
+  assert.deepEqual([...sourceRear.riderIds].sort(),
+    positionalRear.map(row=>row.riderId).sort());
+  assert.equal(new Set(positionalRear.map(row=>
+    row.roadId)).size,1);
+  assert.ok(race.contactPaceEvents.length>0);
+  assert.ok(race.contactPaceEvents.every(row=>
+    row.heldSpeedMps<row.unrestrainedSpeedMps));
+  assert.deepEqual(
+    replayPhysicalFirstPositionMultiAttackContactRaceV3(
+      request,race),race);
+  const forged=structuredClone(race);
+  forged.contactPaceEvents[0].heldSpeedMps=0;
+  assert.throws(()=>
+    replayPhysicalFirstPositionMultiAttackContactRaceV3(
+      request,forged),/differs from paid movement/);
+});
+
+test('v3 does not hold a rear wheel without a cooperation order',()=>{
+  const request=twoAttackRequest();
+  request.input.teams[0].orders.baseline
+    .breakWork='sit_on';
+  const race=recordPhysicalFirstPositionMultiAttackContactRaceV3(
+    request);
+  assert.equal(race.contactPaceEvents.length,0);
+  const rear=race.steps.at(-1).sharedRoad.positions
+    .filter(row=>['team-0-1','team-0-7']
+      .includes(row.riderId));
+  assert.notEqual(rear[0].roadId,rear[1].roadId);
 });
