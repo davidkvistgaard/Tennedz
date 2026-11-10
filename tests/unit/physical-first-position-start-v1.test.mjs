@@ -847,6 +847,34 @@ test('long caught-solo route keeps every rear crossing payable',()=>{
     request,race),race);
 });
 
+test('160-rider caught solo keeps paid contact and finish coverage',()=>{
+  const committed=cappedInput(30,20);
+  committed.positionModelVersion=
+    PHYSICAL_FIRST_POSITION_START_V2_VERSION;
+  for(const segment of committed.kilometres.slice(1)){
+    segment.terrain='hill';
+    segment.gradientPct=3.75;
+  }
+  for(const stake of committed.stakes)
+    stake.sportingGoal='break_stage';
+  committed.teams[0].orders.baseline.attack='selective';
+  committed.teams[0].orders.baseline.attackRiderId=
+    'team-0-7';
+  committed.teams[0].orders.phases=[{
+    atKm:1,attack:'none'}];
+  Object.assign(committed.teams[0].riders[6],{
+    flat:85,hills:0,sprint:85,
+    acceleration:100,positioning:100});
+  const request={input:committed,grid};
+  const race=recordPhysicalFirstPositionSingleCatchRaceV1(
+    request);
+  assert.equal(race.completedThroughKm,30);
+  assert.equal(race.finishCrossings.length,160);
+  assert.equal(race.soloCatchEvents.length,1);
+  assert.deepEqual(replayPhysicalFirstPositionSingleCatchRaceV1(
+    request,race),race);
+});
+
 test('committed first leader and positioning contest form a replayable start',()=>{
   const committed=input();
   const start=createPhysicalFirstPositionStartV1({input:committed,grid});

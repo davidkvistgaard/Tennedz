@@ -354,6 +354,11 @@ rear group is behind the peloton by more than a kilometre. The finish
 continuation records the rear riders' remaining kilometre crossings;
 all 1,920 rider-kilometre crossings and 16 finish crossings validate and
 the whole recording replays. This route and roster are deliberately
-synthetic and do not calibrate real sporting outcomes. A 160-rider catch,
+synthetic and do not calibrate real sporting outcomes. A 120 km 160-rider catch,
 later team attacks, changed front workers and variable lateral passing
 remain unverified or unsupported.
+An additional 160-rider, 30 km synthetic catch with an explicit one-time
+attack order completes 4,800 rider-kilometre crossings and 160 paid finish
+crossings with whole-recording replay. Its first-time computation plus
+replay took about 33 seconds on the development machine. This expands
+the field-size check; it is not a whole 120 km calibration at that size.
