@@ -61,6 +61,11 @@ test('authenticated full Motor Lab race reaches the new WebGL viewer',
         data: {sessionToken: 'invalid'},
         headers: {Origin: 'http://localhost:3100'},
       })).status()).toBe(400);
+    const invalidPage = await context.newPage();
+    await invalidPage.goto('/team/motor-lab/live?session=invalid');
+    await expect(invalidPage.getByRole('alert').filter({hasText: 'shared replay link'}))
+      .toContainText('shared replay link is invalid or expired');
+    await invalidPage.close();
     expect(Math.abs(body.clock.serverEpochMs - body.serverNowMs))
       .toBeLessThan(5000);
     expect(body.coverage.recordedRiderKilometres).toBe(5120);

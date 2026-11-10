@@ -29,7 +29,11 @@ export default async function MotorLabLivePage({searchParams}) {
       motorLabCheckpointRaceId(initialInput);
     }
   }
-  catch { return <TeamShell compact><MotorLabLiveClient/></TeamShell>; }
+  catch { return <TeamShell compact><MotorLabLiveClient
+    initialError={params?.session?
+      'This shared replay link is invalid or expired. Generate a new race.':
+      'This replay link is invalid. Choose a plan and generate a new race.'}/>
+  </TeamShell>; }
   return <TeamShell compact><MotorLabLiveClient
     initialInput={initialInput}/></TeamShell>;
 }

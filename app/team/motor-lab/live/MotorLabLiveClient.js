@@ -8,7 +8,7 @@ const ViewerScene = dynamic(() => import(
   '../viewer-preview/ViewerPreviewScene'), {ssr: false,
   loading: () => <p role="status">Loading the race renderer…</p>});
 
-export default function MotorLabLiveClient({initialInput}) {
+export default function MotorLabLiveClient({initialInput, initialError = ''}) {
   const [plan, setPlan] = useState(initialInput?.plan ?? 'break');
   const [routeId, setRouteId] = useState(initialInput?.routeId ?? 'ridge');
   const [seed, setSeed] = useState(initialInput?.seed ?? 1);
@@ -17,7 +17,7 @@ export default function MotorLabLiveClient({initialInput}) {
   const [run, setRun] = useState(null);
   const [sync, setSync] = useState(null);
   const [classification, setClassification] = useState(null);
-  const [error, setError] = useState('');
+  const [error, setError] = useState(initialError);
   const [busy, setBusy] = useState(false);
   const start = useCallback(async (event, sharedSessionToken) => {
     event?.preventDefault();
