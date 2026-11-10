@@ -212,7 +212,11 @@ export default function ViewerPreviewScene({feed,coverage,mode='recorded',
           assetStatus.errors.length===1?'':'s'} failed to load; fallback rendering remains active.`}</p>:null}
     </div>
     <div className="race-theatre-bottom">
-      {mode==='guided'?<p className="race-theatre-position-note">
+      {mode!=='exhibition'&&groupOnlyPositions&&time>=feed.duration?
+        <p className="race-theatre-position-note">
+          Riders with the same recorded finish coordinate overlap at the line.
+          Their lanes and wheel order were not recorded.
+        </p>:mode==='guided'?<p className="race-theatre-position-note">
         Rider spacing within a group is illustrative. The saved race records
         checkpoint kilometres and group time gaps, not precise lanes or order.
       </p>:mode==='split'?<p className="race-theatre-position-note">
