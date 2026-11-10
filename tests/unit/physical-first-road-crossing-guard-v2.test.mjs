@@ -100,3 +100,19 @@ test('the new source probe preserves paid races without the new contact',()=>{
   assert.deepEqual(withoutVersion(oldRace.states),
     withoutVersion(newRace.states));
 });
+
+test('a solo cannot pass an existing rear road without paid contact',()=>{
+  const request=prepareSyntheticPositionCatchV1({
+    kmCount:20,profile:'hill_then_mountain',
+    weakBunchCount:1,oneTimeAttack:true,
+    secondAttackAtKm:5,frontWorkerAtKm:2});
+  assert.throws(()=>
+    runPhysicalFirstWholeRaceProbeV2(request.input),
+  error=>error.sourceKm===12&&
+    error.message===
+      'Road crossing needs recorded paid contact.'&&
+    error.sourceEvidence?.firstRoadId
+      .startsWith('solo:')&&
+    error.sourceEvidence?.secondRoadId
+      .startsWith('rear:'));
+});

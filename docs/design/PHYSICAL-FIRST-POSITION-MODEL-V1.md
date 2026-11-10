@@ -768,3 +768,44 @@ two-rider rear road is still two separate positional riders;
 the recorded boundary tie alone is insufficient to force a
 positional reunion. This is a calibration limit, not a reason
 to insert an unearned contact.
+
+`shared-road-km-12` and `general-race-3` change only the
+experimental contact event projection. A contact observation is
+now emitted when the membership of a connected group changes,
+not when two riders merely exchange order inside that group.
+Each movement tick still computes the physical groups and uses
+their current lead order for paid pace and shelter. Event
+membership is compared without relying on rider or group order;
+the event still records its observed clock and paid step.
+The 16-rider 20 km two-weak-worker fixture emits eight group
+membership events instead of 6,385 order-sensitive observations.
+The full positions, decisions, intermediate line passages and
+finish clocks match `general-race-2` exactly, and the new record
+exactly replays. This removes viewer event noise without changing
+the paid race. It does not resolve the source and position model's
+remaining rear-road membership difference, nor does it make this
+experimental version a guided-race or production default.
+The 160-rider 120 km one-worker fixture also completes and
+exactly replays with all 19,200 decisions and 160 finish
+passages. It emits three membership events. Its source and
+positional peloton membership still differs at kilometre 2,
+and the source's final two-rider rear road remains two separate
+positional riders. This event reduction does not mask those
+calibration differences.
+On the current 120-rider Motor Lab seed with one selective
+attack, all twelve combinations of men's/women's fields,
+flat/rolling/mountain terrain and selective/all chase complete
+with positional replay, full rider-kilometre decision coverage,
+all intermediate line passages and all finish passages. The
+recorded attack departures and the peloton membership agree at
+all 119 comparable pre-finish checkpoints in each case. This is
+one generated seed, not arbitrary-manager-order certification.
+The source and position final reserves still differ by up to
+3.349 recorded units on flat and rolling routes, and the new
+model still has no official competitive sprint result.
+The same branch's isolated Next build and authenticated local
+V94 browser smoke pass after the existing preview test is routed
+to `/team/motor-lab/engine`, where the guided workbench now
+resides. The browser smoke protects the existing game path; it
+does not publish or authenticate the experimental positional
+race in the hosted viewer.

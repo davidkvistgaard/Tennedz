@@ -13,7 +13,7 @@ test('experimental v94 race shows committed plans and measured road only',
     await page.getByLabel('Password',{exact:true}).fill('fixture-password');
     await page.getByRole('button',{name:'Sign in',exact:true}).click();
     await expect(page).toHaveURL(/\/team$/);
-    await page.goto('/team/motor-lab');
+    await page.goto('/team/motor-lab/engine');
     await page.getByRole('link',
       {name:/experimental whole-race dynamics preview/}).click();
     await expect(page.getByRole('heading',

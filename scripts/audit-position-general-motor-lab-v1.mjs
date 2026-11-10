@@ -6,12 +6,15 @@ import {preparePhysicalFirstSplitMotorInputV1} from
 import {PHYSICAL_FIRST_POSITION_START_V2_VERSION} from
   '../lib/engine/v2/physical-first-position-start-v2.mjs';
 import {runPhysicalFirstWholeRaceProbeV1,
-  runPhysicalFirstWholeRaceProbeV2} from
+  runPhysicalFirstWholeRaceProbeV2,
+  replayPhysicalFirstWholeRaceProbeV2} from
   '../lib/engine/v2/physical-first-whole-race-probe-v1.mjs';
 import {recordPhysicalFirstPositionGeneralRaceV1,
   replayPhysicalFirstPositionGeneralRaceV1,
   recordPhysicalFirstPositionGeneralRaceV2,
-  replayPhysicalFirstPositionGeneralRaceV2} from
+  replayPhysicalFirstPositionGeneralRaceV2,
+  recordPhysicalFirstPositionGeneralRaceV3,
+  replayPhysicalFirstPositionGeneralRaceV3} from
   '../lib/engine/v2/physical-first-position-general-race-v1.mjs';
 
 const option=(name,fallback)=>process.argv.find(arg=>
@@ -32,7 +35,7 @@ if(categories.some(value=>
   chases.some(value=>
     !['selective','all'].includes(value))||
   !['none','selective','repeated'].includes(attack)||
-  !['1','2'].includes(positionVersion)||
+  !['1','2','3'].includes(positionVersion)||
   !['1','2'].includes(sourceVersion)||
   seeds.some(seed=>
     !(/^[A-Za-z0-9-]{1,64}$/).test(seed)))
@@ -61,18 +64,25 @@ for(const category of categories)
         source=(sourceVersion==='2'?
           runPhysicalFirstWholeRaceProbeV2:
           runPhysicalFirstWholeRaceProbeV1)(input);
+        if(sourceVersion==='2')
+          replayPhysicalFirstWholeRaceProbeV2(input,source);
       }catch(error){
+        source=null;
         sourceError={message:error.message,
           sourceKm:error.sourceKm??null};
       }
       if(request){
         try{
-          position=(positionVersion==='2'?
-            recordPhysicalFirstPositionGeneralRaceV2:
-            recordPhysicalFirstPositionGeneralRaceV1)(request);
-          (positionVersion==='2'?
-            replayPhysicalFirstPositionGeneralRaceV2:
-            replayPhysicalFirstPositionGeneralRaceV1)(
+          position=(positionVersion==='3'?
+            recordPhysicalFirstPositionGeneralRaceV3:
+            positionVersion==='2'?
+              recordPhysicalFirstPositionGeneralRaceV2:
+              recordPhysicalFirstPositionGeneralRaceV1)(request);
+          (positionVersion==='3'?
+            replayPhysicalFirstPositionGeneralRaceV3:
+            positionVersion==='2'?
+              replayPhysicalFirstPositionGeneralRaceV2:
+              replayPhysicalFirstPositionGeneralRaceV1)(
             request,position);
         }catch(error){
           positionError={message:error.message,
@@ -122,7 +132,8 @@ for(const category of categories)
         Math.abs(row.clockSeconds-
           sourceFinishClock.get(row.riderId)))??[];
       const row={seed,category,terrain,chase,attack,
-        sourceStatus:source?'complete':'failed',
+        sourceStatus:source?sourceVersion==='2'?
+          'complete_replayed':'complete':'failed',
         sourceError,
         positionStatus:position?
           'complete_replayed':'failed',
@@ -156,6 +167,8 @@ for(const category of categories)
               ?.length)?.sourceKm??null,
         frontPasses:
           position?.frontPassEvents.length??null,
+        contactObservations:
+          position?.contactEvents.length??null,
         alignedPelotonCheckpoints:
           comparisons.filter(item=>
             item.pelotonAligned).length,
@@ -195,11 +208,13 @@ fixture:'current_motor_lab_test_input',
 attack,positionVersion,sourceVersion,
 seeds,plannedCases,
 sourceCompleted:rows.filter(row=>
-  row.sourceStatus==='complete').length,
+  row.sourceStatus.startsWith('complete')).length,
+sourceCompletedAndReplayed:rows.filter(row=>
+  row.sourceStatus==='complete_replayed').length,
 positionCompletedAndReplayed:rows.filter(row=>
   row.positionStatus==='complete_replayed').length,
 bothCompleted:rows.filter(row=>
-  row.sourceStatus==='complete'&&
+  row.sourceStatus.startsWith('complete')&&
     row.positionStatus==='complete_replayed').length,
 fullDecisionCoverage:rows.filter(row=>
   row.decisionCoverage).length,
@@ -207,9 +222,16 @@ fullCheckpointCoverage:rows.filter(row=>
   row.checkpointCoverage).length,
 fullFinishCoverage:rows.filter(row=>
   row.finishCoverage).length,
+maxContactObservations:rows.every(row=>
+  row.contactObservations!==null)?
+  Math.max(...rows.map(row=>row.contactObservations)):
+  null,
 officialResults:false,
 readyForGuidedRaces:false};
 process.stdout.write(JSON.stringify({summary,rows},
   null,2)+'\n');
 if(rows.some(row=>row.positionStatus!==
-  'complete_replayed'))process.exitCode=1;
+  'complete_replayed'||
+  row.sourceStatus!==(sourceVersion==='2'?
+    'complete_replayed':'complete')))
+  process.exitCode=1;

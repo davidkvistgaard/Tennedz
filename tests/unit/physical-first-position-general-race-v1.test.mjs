@@ -13,7 +13,9 @@ import {runPhysicalFirstWholeRaceProbeV1} from
 import {recordPhysicalFirstPositionGeneralRaceV1,
   replayPhysicalFirstPositionGeneralRaceV1,
   recordPhysicalFirstPositionGeneralRaceV2,
-  replayPhysicalFirstPositionGeneralRaceV2} from
+  replayPhysicalFirstPositionGeneralRaceV2,
+  recordPhysicalFirstPositionGeneralRaceV3,
+  replayPhysicalFirstPositionGeneralRaceV3} from
   '../../lib/engine/v2/physical-first-position-general-race-v1.mjs';
 
 test('a connected start records every rider without an attack',()=>{
@@ -37,6 +39,41 @@ test('a connected start records every rider without an attack',()=>{
   assert.throws(()=>
     replayPhysicalFirstPositionGeneralRaceV1(
       request,forged),/differs from paid movement/);
+});
+
+test('membership-only contact events preserve paid movement and finish',()=>{
+  const request=prepareSyntheticPositionCatchV1({
+    teamCount:2,kmCount:20,weakBunchCount:2,
+    profile:'hill_then_mountain'});
+  request.input.positionPassingCorridorCount=1;
+  request.input.teams[0].orders.baseline.attack='none';
+  const prior=recordPhysicalFirstPositionGeneralRaceV2(request);
+  const race=recordPhysicalFirstPositionGeneralRaceV3(request);
+  assert.equal(race.completedThroughKm,20);
+  assert.equal(race.decisionCount,320);
+  assert.equal(race.checkpointCrossings.length,304);
+  assert.equal(race.finishCrossings.length,16);
+  assert.ok(prior.contactEvents.length>1000);
+  assert.ok(race.contactEvents.length<20);
+  assert.deepEqual(race.steps.map(step=>
+    step.sharedRoad.positions.map(({version,...row})=>row)),
+  prior.steps.map(step=>
+    step.sharedRoad.positions.map(({version,...row})=>row)));
+  assert.deepEqual(race.steps.map(step=>
+    step.sharedRoad.decisions.map(({version,...row})=>row)),
+  prior.steps.map(step=>
+    step.sharedRoad.decisions.map(({version,...row})=>row)));
+  assert.deepEqual(race.checkpointCrossings,
+    prior.checkpointCrossings);
+  assert.deepEqual(race.finishCrossings,
+    prior.finishCrossings);
+  assert.deepEqual(
+    replayPhysicalFirstPositionGeneralRaceV3(request,race),race);
+  const forged=structuredClone(race);
+  forged.contactEvents[0].observedAtClockSeconds+=1;
+  assert.throws(()=>
+    replayPhysicalFirstPositionGeneralRaceV3(request,forged),
+  /differs from paid movement/);
 });
 
 test('an early solo finish retains its paid clock and freezes the rider',()=>{
