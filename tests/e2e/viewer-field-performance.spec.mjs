@@ -1,5 +1,14 @@
 import {test, expect} from '@playwright/test';
 
+test('saved race entry keeps the selected field category', async ({page}) => {
+  for (const [category, gender] of [['men', 'M'], ['women', 'F']]) {
+    await page.goto(`/viewer?category=${category}`);
+    await expect(page.getByRole('link',
+      {name: /Watch your saved game race/})).toHaveAttribute('href',
+      `/team/run?bucket=finished&gender=${gender}`);
+  }
+});
+
 for (const category of ['men', 'women'])
   for (const fieldSize of [30, 150])
     test(`${fieldSize} ${category} visual fixture renders on WebGL2`,

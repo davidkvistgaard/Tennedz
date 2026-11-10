@@ -48,7 +48,7 @@ for(const width of [390,1440])test(`English manager journey from signup to repla
   fixture.finish();
   await page.goto('/viewer');
   await page.getByRole('link',{name:/Watch your saved game race/}).click();
-  await expect(page).toHaveURL(/\/team\/run\?bucket=finished$/);
+  await expect(page).toHaveURL(/\/team\/run\?bucket=finished&gender=M$/);
   await expect(page.getByRole('button',{name:'Finished',exact:true}))
     .toHaveAttribute('aria-pressed','true');
   await page.getByRole('button',{name:/The Coast Classic/}).click();

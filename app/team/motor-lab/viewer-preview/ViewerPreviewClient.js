@@ -65,7 +65,9 @@ export default function ViewerPreviewClient({feed,coverage,version,
         coverage.sameSeedFinishMismatches}/{coverage.riderCount}
         {' '}riders differ. No official result.</span>:null}
       <p><a className="motor-viewer-generate"
-        href="/team/run?bucket=finished">Watch your saved game race ↗</a></p>
+        href={`/team/run?bucket=finished&gender=${
+          feed.riderCategory==='women'?'F':'M'}`}>
+        Watch your saved game race ↗</a></p>
       <p><a href="/team/motor-lab/live">
         Generate and watch a test race ↗</a></p>
       <nav className="motor-viewer-modes" aria-label="Viewer mode">
