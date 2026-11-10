@@ -522,3 +522,29 @@ an official result. The corridor is a synthetic model input, not
 measured route width. Additional orders, profiles, early drops,
 multiple catches and competitive finishes still need full-race
 validation before guided-race activation.
+
+`physical-first-position-shared-road-km-5` and
+`single-catch-race-5` extend the same explicit corridor to a
+stronger bunch rider blocked by a slower worker in the same lane.
+Before entering, the model checks that the worker cannot hold the
+current front speed under shelter while the following rider can.
+Entry and return are separate recorded events; the follower pays
+exposed-leader energy during the bypass. In the synthetic hill
+fixture with one extra weak bunch worker, the v4 recorder drops
+both the weak rider and the follower at kilometre 2. V5 records
+the follower's pass and return within that kilometre. The weak
+rider becomes a measured rear road; the follower stays with the
+peloton. The 160-rider 30 km and 120 km hill recordings complete
+and replay, with every rider's finish crossing and final peloton
+membership aligned to the source. A 120 km alternating-profile
+run on another seed also completes with matching final peloton
+membership; it differs at three intermediate checkpoint groups
+and its largest front-clock difference is 0.234 seconds. This is
+an opt-in positional experiment. The
+model's chosen corridor width, a single attack and a single
+catch remain fixture limits, and the source's group labels do
+not prove the exact simultaneous wheel trajectories.
+With two equally weak bunch workers, the source probe refuses
+their proposed rear group because it cannot choose a payable
+shelter-compatible leader; that case is not a completed
+same-seed comparison.

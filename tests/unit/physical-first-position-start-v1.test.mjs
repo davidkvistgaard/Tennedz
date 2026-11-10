@@ -92,7 +92,9 @@ import {recordPhysicalFirstPositionSingleCatchRaceV1,
   recordPhysicalFirstPositionSingleCatchRaceV3,
   replayPhysicalFirstPositionSingleCatchRaceV3,
   recordPhysicalFirstPositionSingleCatchRaceV4,
-  replayPhysicalFirstPositionSingleCatchRaceV4} from
+  replayPhysicalFirstPositionSingleCatchRaceV4,
+  recordPhysicalFirstPositionSingleCatchRaceV5,
+  replayPhysicalFirstPositionSingleCatchRaceV5} from
   '../../lib/engine/v2/physical-first-position-single-catch-race-v1.mjs';
 import {prepareSyntheticPositionCatchV1} from
   './synthetic-position-catch-fixture-v1.mjs';
@@ -1318,6 +1320,68 @@ test('160 exposed-leader priced caught-solo wheels finish and replay',()=>{
   assert.ok(race.steps.at(-1).sharedRoad.positions
     .every(row=>row.lane<4));
   assert.deepEqual(replayPhysicalFirstPositionSingleCatchRaceV4(
+    request,race),race);
+});
+
+test('a payable bunch worker pass prevents a second unplanned drop',()=>{
+  const request=prepareSyntheticPositionCatchV1({
+    teamCount:20,kmCount:4,
+    oneTimeAttack:true,
+    weakBunchCount:1});
+  request.input.positionPassingCorridorCount=1;
+  const prior=recordPhysicalFirstPositionSingleCatchRaceV4(
+    request);
+  const race=recordPhysicalFirstPositionSingleCatchRaceV5(
+    request);
+  const second= race.steps[1].sharedRoad;
+  const changes=second.laneChangeEvents.filter(event=>
+    event.riderId==='team-7-6');
+  assert.deepEqual(changes.map(event=>event.type),[
+    'paid_exposed_bunch_worker_pass_entry',
+    'paid_exposed_bunch_worker_rejoin']);
+  assert.equal(prior.steps[1].sharedRoad.positions
+    .find(row=>row.riderId==='team-7-6')
+    .roadId.startsWith('rear:'),true);
+  assert.equal(second.positions.find(row=>
+    row.riderId==='team-7-6').roadId,'peloton');
+  assert.equal(second.positions.find(row=>
+    row.riderId==='team-2-4').roadId.startsWith('rear:'),true);
+  assert.ok(second.contactEvents.length>0);
+  assert.ok(second.decisions.find(row=>
+    row.riderId==='team-7-6').legs.some(leg=>
+    leg.role==='leader'&&leg.distanceM>0));
+  assert.deepEqual(replayPhysicalFirstPositionSingleCatchRaceV5(
+    request,race),race);
+});
+
+test('160 riders replay a catch, weak worker drop and paid bypass',()=>{
+  const kmCount=process.env.PELOTONIA_STRESS_CATCH_KM===
+    '120'?120:30;
+  const request=prepareSyntheticPositionCatchV1({
+    teamCount:20,kmCount,
+    frontWorkerAtKm:25,
+    oneTimeAttack:true,
+    weakBunchCount:1});
+  request.input.positionPassingCorridorCount=1;
+  const source=runPhysicalFirstWholeRaceProbeV1(
+    request.input);
+  const race=recordPhysicalFirstPositionSingleCatchRaceV5(
+    request);
+  assert.equal(source.completedThroughKm,kmCount);
+  assert.equal(race.completedThroughKm,kmCount);
+  assert.equal(race.paidFrontPasses,1);
+  assert.equal(race.soloCatchEvents.length,1);
+  assert.equal(race.checkpointCrossings.length,
+    160*(kmCount-1));
+  assert.equal(race.finishCrossings.length,160);
+  const sourcePeloton=new Set(source.states.at(-1)
+    .roads.find(row=>row.roadId==='peloton')
+    .riderIds);
+  const modelPeloton=new Set(race.steps.at(-1)
+    .sharedRoad.positions.filter(row=>
+      row.roadId==='peloton').map(row=>row.riderId));
+  assert.deepEqual(modelPeloton,sourcePeloton);
+  assert.deepEqual(replayPhysicalFirstPositionSingleCatchRaceV5(
     request,race),race);
 });
 

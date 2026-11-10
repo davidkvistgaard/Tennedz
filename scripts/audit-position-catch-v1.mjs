@@ -6,7 +6,8 @@ import {runPhysicalFirstWholeRaceProbeV1} from
   '../lib/engine/v2/physical-first-whole-race-probe-v1.mjs';
 import {recordPhysicalFirstPositionSingleCatchRaceV2,
   recordPhysicalFirstPositionSingleCatchRaceV3,
-  recordPhysicalFirstPositionSingleCatchRaceV4} from
+  recordPhysicalFirstPositionSingleCatchRaceV4,
+  recordPhysicalFirstPositionSingleCatchRaceV5} from
   '../lib/engine/v2/physical-first-position-single-catch-race-v1.mjs';
 
 const option=(name,defaultValue)=>{
@@ -23,13 +24,19 @@ const raceSeed=option('seed',
   'position-seed-a');
 const corridorCount=Number(option('corridor','0'));
 const leaderCost=option('leader-cost','false')==='true';
+const weakBunchCount=Number(option('weak-bunch','0'));
+const passDropped=option('pass-dropped','false')===
+  'true';
 if(![0,1].includes(corridorCount))
   throw new Error('Corridor count must be 0 or 1.');
 if(leaderCost&&!corridorCount)
   throw new Error('Leader cost needs the recorded passing corridor.');
+if(passDropped&&!leaderCost)
+  throw new Error('Dropped-worker passing needs leader-paid work.');
 const {input,grid}=prepareSyntheticPositionCatchV1({
   teamCount,kmCount,profile,
   oneTimeAttack:teamCount>2,
+  weakBunchCount,
   frontWorkerAtKm,raceSeed});
 if(corridorCount)input.positionPassingCorridorCount=
   corridorCount;
@@ -43,7 +50,9 @@ try{
 const sourceElapsedMs=performance.now()-began;
 let position=null,positionFailure=null;
 try{
-  position=(leaderCost?
+  position=(passDropped?
+    recordPhysicalFirstPositionSingleCatchRaceV5:
+    leaderCost?
     recordPhysicalFirstPositionSingleCatchRaceV4:
     corridorCount?
     recordPhysicalFirstPositionSingleCatchRaceV3:
@@ -102,6 +111,7 @@ fixture:'synthetic_only',
 raceSeed,teamCount,
 riderCount:teamCount*8,kmCount,
 profile,frontWorkerAtKm,corridorCount,leaderCost,
+weakBunchCount,passDropped,
 source:{status:source?'complete':'failed',
   elapsedMs:+sourceElapsedMs.toFixed(1),
   failure:sourceFailure,

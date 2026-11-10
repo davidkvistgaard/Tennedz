@@ -15,6 +15,7 @@ const rider=id=>({id,flat:65,hills:65,
 export function prepareSyntheticPositionCatchV1({
   teamCount=2,kmCount=4,
   profile='hill',oneTimeAttack=false,
+  weakBunchCount=0,
   frontWorkerAtKm=null,
   raceSeed='position-seed-a'}={}){
   if(!Number.isInteger(teamCount)||
@@ -23,6 +24,8 @@ export function prepareSyntheticPositionCatchV1({
     kmCount<4||kmCount>120||
     !['hill','alternating'].includes(profile)||
     typeof oneTimeAttack!=='boolean'||
+    !Number.isInteger(weakBunchCount)||
+    weakBunchCount<0||weakBunchCount>2||
     frontWorkerAtKm!==null&&
       (!Number.isInteger(frontWorkerAtKm)||
         frontWorkerAtKm<2||
@@ -39,6 +42,8 @@ export function prepareSyntheticPositionCatchV1({
             index!==6).map(row=>row.id),
           baseline:{effort:'steady',
             chase:'selective',
+            ...(weakBunchCount?{
+              breakWork:'cooperate'}:{}),
             attack:teamIndex===0?
               'selective':'none',
             ...(teamIndex===0?{
@@ -52,6 +57,9 @@ export function prepareSyntheticPositionCatchV1({
   Object.assign(teams[0].riders[6],{
     flat:85,hills:0,sprint:85,
     acceleration:100,positioning:100});
+  const weakTeam=teams[Math.min(2,teamCount-1)];
+  for(let index=0;index<weakBunchCount;index++)
+    weakTeam.riders[3+index].hills=0;
   if(oneTimeAttack)
     teams[0].orders.phases.push({
       atKm:1,attack:'none'});
