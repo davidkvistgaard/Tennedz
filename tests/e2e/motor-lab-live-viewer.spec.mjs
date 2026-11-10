@@ -15,6 +15,14 @@ test('authenticated full Motor Lab race reaches the new WebGL viewer',
     const endpoint = '/api/motor-lab/viewer-run';
     expect((await context.request.post(endpoint, {data: runInput,
       headers: {Origin: 'http://localhost:3100'}})).status()).toBe(401);
+    expect((await context.request.get(
+      '/api/motor-lab/checkpoint-clock?session=invalid')).status())
+      .toBe(401);
+    expect((await context.request.post(
+      '/api/motor-lab/checkpoint-result', {
+        data: {sessionToken: 'invalid'},
+        headers: {Origin: 'http://localhost:3100'},
+      })).status()).toBe(401);
     await page.goto('/login');
     await page.getByLabel('Email or username').fill('alice');
     await page.getByLabel('Password').fill('fixture-password');
@@ -45,6 +53,14 @@ test('authenticated full Motor Lab race reaches the new WebGL viewer',
       .toBe(true);
     expect(body.feed.results).toBeUndefined();
     expect(body.sessionToken).toMatch(/^[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$/);
+    expect((await context.request.get(
+      '/api/motor-lab/checkpoint-clock?session=invalid')).status())
+      .toBe(400);
+    expect((await context.request.post(
+      '/api/motor-lab/checkpoint-result', {
+        data: {sessionToken: 'invalid'},
+        headers: {Origin: 'http://localhost:3100'},
+      })).status()).toBe(400);
     expect(Math.abs(body.clock.serverEpochMs - body.serverNowMs))
       .toBeLessThan(5000);
     expect(body.coverage.recordedRiderKilometres).toBe(5120);
