@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Explore a field · Pelotonia Atlas</title>
+  <meta name="description" content="Explore all 192 Pelotonia Atlas fields in 3D.">
+  <link rel="stylesheet" href="./h5-flight.css">
+  <script type="importmap">{"imports":{"three":"./vendor/three.module.js"}}</script>
+</head>
+<body data-field-explorer>
+  <main class="flight">
+    <div id="stage" class="stage" aria-label="Pelotonia landscape">
+      <img id="poster" alt="" hidden>
+    </div>
+    <header class="top">
+      <a id="atlas-back" class="back" href="./index.html" aria-label="Back to the atlas">← <span>Atlas</span></a>
+      <div class="identity"><span>PELOTONIA</span><label for="field-choice">Grid cell</label></div>
+      <select id="field-choice" class="field-choice" disabled><option>Loading fields…</option></select>
+      <span id="mode" class="mode" role="status">Loading landscape…</span>
+    </header>
+    <div class="lower">
+      <div class="caption">
+        <span id="landscape-region" class="eyebrow">PELOTONIA ATLAS</span>
+        <h1 id="landscape-title">Explore the landscape</h1>
+        <p id="phase">Preparing field</p>
+      </div>
+      <div id="controls" class="controls" hidden>
+        <button id="play" type="button">Pause</button>
+        <div class="scrub"><label for="time">Flight progress</label><input type="range" id="time" min="0" max="40" step=".05" value="0"></div>
+        <output id="clock" for="time">0:00 / 0:40</output>
+        <button id="restart" type="button" aria-label="Restart flight">↺</button>
+      </div>
+      <div id="detail-control" class="detail-control" hidden>
+        <label for="detail-choice">View a local feature</label>
+        <select id="detail-choice" class="field-choice"></select>
+      </div>
+      <p id="note" class="note"></p>
+    </div>
+  </main>
+  <script type="module" src="./h5-flight.js"></script>
+</body>
+</html>
