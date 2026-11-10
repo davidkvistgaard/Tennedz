@@ -2,12 +2,15 @@
 
 ## Udgivelse og kilde
 
-- Aktuelt udgivet kode: `8f3d3e1db9449d197c7148c5deb66093e0f29580`
+- Aktuelt udgivet kode: `e2525da55dbca9f4f599deb6ffe9378da4d263f7`
   på `codex/viewer-atlas-integration`.
   Linket fra standardvieweren åbner nu direkte filteret for afsluttede
-  spilløb, hvorfra en gemt optagelse kan åbnes. Hele managerforløbet fra
+  spilløb i den valgte kønskategori, hvorfra en gemt optagelse kan åbnes.
+  Hele managerforløbet fra
   holdoprettelse over tilmelding og viewer til resultat bestod ved både
   390 og 1440 pixels i den isolerede browserfixture.
+  `8f3d3e1db9449d197c7148c5deb66093e0f29580` indførte linket til
+  afsluttede løb; `e2525da5` fører den valgte kategori med.
   Den forrige kodecommit `8c6937278e553c9a89cc75d0c208f77c752e07a3`
   rettede checkpointforklaringen.
   Dækningsforklaringen for gemte guidede løb siger nu korrekt, at alle ryttere
@@ -25,8 +28,9 @@
   testbuilds og fixtures fra Vercels upload. `8e9beb73` gjorde handlingen
   "Generate and watch a test race" tydelig på standardvieweren, og
   `485d60cc` rettede kameraet efter fangster.
-- Aktuelt Vercel-produktionsdeployment: `dpl_xY1MyeY9xM3myVqXKrDHR7NshPR9`.
-  Den forrige produktion `dpl_mR9UwaMvFAf5h4L2EiMSqEThHqUB`, dennes
+- Aktuelt Vercel-produktionsdeployment: `dpl_6ZPr7dAzt4wmv1GpkSrBot7pw8Du`.
+  Den forrige produktion `dpl_xY1MyeY9xM3myVqXKrDHR7NshPR9`, dennes
+  forgænger `dpl_mR9UwaMvFAf5h4L2EiMSqEThHqUB`, dennes
   forgænger `dpl_88zYwQMbHGX2sCyiSEPiNDuY7cFW`, dennes
   forgænger `dpl_HT3Rj7XDk4ywBXJ2bRNSLKPw3VGC`, dennes
   forgænger `dpl_39nxYcLYSHqFbaZx4rzUixNfcvBq` og dennes
@@ -127,6 +131,24 @@ En efterfølgende testcommit `e8824b81d93a8f4e116989ee425fb4a5f106175e`
 autentificerede tilskuere til samme gemte løb: API-svarene havde samme
 serverforankrede løbsstart, begge WebGL-scener viste alle 32 ryttere, og
 rotation af det ene kamera ændrede ikke det andet. Testen og lint bestod.
+
+Den seneste kategoriændring bestod lint, en frisk isoleret Next.js-build,
+en fokuseret test af linkets kategori og managerforløbet ved 390 og 1440
+pixels. En samlet Playwright-kørsel mistede en worker; begge managerforløb
+bestod ved særskilt gentagelse. Staged deployment `dpl_6ZPr7dAzt4wmv1GpkSrBot7pw8Du`
+var `READY`. Dets `ViewerPreviewClient.js` matchede lokal SHA-1
+`82395dd5379c2b7662208939c54814f796f5e3c3`, og uploadmanifestet
+indeholdt ingen lokale build- eller testfiler. Den offentlige kvindevisning
+viste 32 WebGL-ryttere, korrekt link til
+`/team/run?bucket=finished&gender=F`, deploymentets JavaScript og ingen
+konsoladvarsler eller fejl. Efter promovering viste `tennedz.eu` samme link;
+et klik i den autentificerede managersession åbnede kalenderen med både
+"Women" og "Finished" valgt. Kontoen havde stadig intet afsluttet
+kvindeløb. Begge domænealiaser pegede på dette `READY` deployment, den
+forrige produktion var `READY` som rollback, og runtime-logoversigten var
+tom i kontrolvinduet. Den aktuelle fane viste 11 fps med mange samtidige
+browserfaner åbne; det er ikke en stabil ydelsesmåling og giver ikke
+grundlag for en generel 60 fps-påstand.
 
 ## Testport
 
