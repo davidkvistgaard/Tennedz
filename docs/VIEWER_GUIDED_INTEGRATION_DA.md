@@ -8,6 +8,9 @@ separat `appearance` v1-snapshot med spillets valgte holddragter. Snapshotten
 kommer fra `club_identities`; uden et valgt design bruges spillets egen
 deterministiske standarddragt. Gamle optagelser får ikke efterkonstruerede
 trøjer og vises neutralt.
+Spillets nuværende holddragt gemmer palette og mønster, men intet særskilt
+hjelmvalg. Vieweren bruger derfor holdets primærfarve på hjelmen; den
+påstår ikke at vise et optaget, individuelt hjelmdesign.
 
 `guided-replay-to-pelotonia.viewer.v1-3` konverterer den gemte optagelse til
 `pelotonia.viewer.v1`. Den kopierer hele rytterlisten, alle checkpoints,
