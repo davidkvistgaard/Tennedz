@@ -9,7 +9,7 @@ kommer fra `club_identities`; uden et valgt design bruges spillets egen
 deterministiske standarddragt. Gamle optagelser får ikke efterkonstruerede
 trøjer og vises neutralt.
 
-`guided-replay-to-pelotonia.viewer.v1-2` konverterer den gemte optagelse til
+`guided-replay-to-pelotonia.viewer.v1-3` konverterer den gemte optagelse til
 `pelotonia.viewer.v1`. Den kopierer hele rytterlisten, alle checkpoints,
 grupper, gruppetidsgab i sekunder, engelske registrerede hændelser,
 ruteprofil og officielle måltider/placeringer. Den accepterer 1–160 ryttere i
@@ -18,7 +18,10 @@ publiceres ved den gemte måltid. En fælles serverforankret visningscyklus
 spiller løbet ved 60×, holder målet i 15 sekunder og starter så forfra.
 Kameravalg er lokalt. Adapteren ordner grupperne efter deres registrerede
 tidsgab. Et fremtidigt replay med en anden array-rækkefølge får derfor ikke
-en forkert fører i gruppeoversigten.
+en forkert fører i gruppeoversigten. Den ordner også målrækker efter
+registreret placering og udleder visningens tidsforskel fra den registrerede
+førsteplads og de registrerede måltider. Motorens placeringer og tider ændres
+ikke, selv hvis kildens array-rækkefølge ændrer sig.
 
 ## Kendte datagrænser
 

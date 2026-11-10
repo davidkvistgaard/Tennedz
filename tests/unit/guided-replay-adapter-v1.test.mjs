@@ -116,6 +116,23 @@ test('guided group strip follows recorded gaps when source groups arrive out of 
   [...checkpoint.groups].reverse());
 });
 
+test('guided classification follows recorded rank when finish rows arrive out of order', () => {
+  const replay = actualReplay('men', 32);
+  const sourceOrder = replay.finish.map(row => row.rider_id);
+  replay.finish.reverse();
+  const {feed} = adaptGuidedReplayV1(replay,
+    {raceId: 'shuffled-finish'});
+  validateFeed(feed);
+  const sorted = [...replay.finish].sort((a, b) =>
+    a.position - b.position);
+  assert.deepEqual(feed.results.entries.map(row => row.riderId),
+    sorted.map(row => row.rider_id));
+  assert.deepEqual(feed.results.entries.map(row => row.gap),
+    sorted.map(row => row.time_sec - sorted[0].time_sec));
+  assert.deepEqual([...replay.finish].reverse().map(row => row.rider_id),
+    sourceOrder);
+});
+
 test('recorded team appearance survives later selection changes without altering sport data', () => {
   const replay = actualReplay('women', 32);
   const options = teamKitOptions('team-0');
