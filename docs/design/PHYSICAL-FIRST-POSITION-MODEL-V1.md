@@ -658,3 +658,32 @@ with and without a front-worker change, complete and replay
 those larger-field positional attempts are physically refused
 even though the source launches two attacks; final group
 agreement must not be mistaken for attack-decision agreement.
+
+`shared-road-km-10` accepts a connected positional start with
+no separate solo road. The opt-in `general-race-1` recorder
+derives the first paid front from the committed start plan and
+records all riders on the same clock whether the first attack
+order is present or absent. A 16-rider 20 km connected fixture
+finishes with 320 rider decisions, 304 intermediate kilometre
+crossings and 16 finish crossings, with exact replay. A separate
+20 km two-attack fixture also finishes and exactly replays.
+For the current generated Motor Lab 120-rider mountain test input
+without attacks, both men's and women's 120 km races complete
+and exactly replay: 14,400 decisions, all intermediate crossings
+and 120 finish crossings per race. All 120 peloton membership
+checkpoints align with the source and the maximum front-clock
+difference is 0.02 seconds. These are test inputs, not guided
+races or official classifications. A men's rolling selective
+attack test currently stops the positional recorder at kilometre
+118 when a solo reaches the actual finish before the peloton;
+that physical early arrival needs an explicit finish contract.
+The wider no-attack audit completes and exactly replays all
+12 current Motor Lab test inputs: both categories, flat/rolling/
+mountain profiles, and selective/all chase orders. Every run
+contains 14,400 rider decisions, all intermediate crossings and
+120 finish crossings, and all 120 peloton membership checkpoints
+agree with its source run. The largest front-clock difference
+in each flat case is 1.67 seconds, in each rolling case 1.70
+seconds, and in each mountain case 0.02 seconds. These group
+clock comparisons do not certify exact rider positions or
+official finish order.
