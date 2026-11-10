@@ -101,3 +101,47 @@ diverged at a front-worker/clock change and 48 at a separate attack-road
 membership change. There were no paid front passes in the matrix and no
 official results. Independent distance coverage is therefore not
 viewer-ready race coverage; the release gate remains red.
+
+The opt-in `physical-first-position-start-2` uses the same committed
+orders, rider strengths, seed and grid to stage the payable reserve front
+worker in the first row at the outside edge. When an actual committed
+attack order and sporting goal identify an attacker, the start contract
+also stages that rider near the front. This is a start decision,
+not a retrofit to historic recordings. Its input hash and deterministic
+replay cover the staging. `physical-first-position-rotation-km-2` then
+uses the existing charged passing physics on that grid; a selected
+worker still remains behind if the pass cannot be paid or reached. The
+new connected-road recorder refuses every attack order until a paid
+positional departure exists, and its finish tail charges the continued
+road movement until the last wheel crosses. It does not award places.
+
+In a 120 km, 120-rider mountain fixture with no attacks, this successor
+records 14,400 rider-kilometre decisions, one paid passing event at km 25,
+120/120 individual finish crossings, a replayable energy ledger and no
+official results. The old group-clock source changed leader at km 25
+without a passing interval; the successor's physical pass makes the
+checkpoint clock about 0.02 seconds later. That discrepancy is retained
+and measured rather than overwritten. Attack departures, dropped riders,
+contact, competitive sprint order and whole-race calibration remain
+release blockers.
+
+`physical-first-position-attack-departure-km-1` accepts an attack choice
+only when its rider has a clear lane, can pay the initiation and road
+work, and actually passes the measured bunch front before the kilometre
+ends. It records the passing time and distance, solo energy and each
+crossed kilometre line. `physical-first-position-solo-km-1` advances that
+new road on the same authoritative clock, paying the distance travelled;
+the rider stops at the real finish line even if the bunch has kilometres
+left. A solo rider whose lead disappears requires a separate paid contact
+contract and causes a fail-closed stop. The whole-race successor currently
+supports at most one attack and refuses any additional attempted launch.
+The 48-case matrix (two seeds, both categories, three terrain profiles,
+two chase orders, selective and repeated attack orders) reached 120 km
+in every case. Each had one paid departure and 120/120 finish crossings.
+All 48 had the same final road count and peloton membership as the older
+paid source, but this does not establish agreement at every kilometre.
+The solo finish clock differed from the older paid group-clock source by
+as much as 39.5 seconds, and the peloton front by up to 1.7 seconds, so
+neither calibration nor official results are established. The recorder
+rejects any second attempted departure or unpriced contact; these
+scenarios did not exercise those missing paths.

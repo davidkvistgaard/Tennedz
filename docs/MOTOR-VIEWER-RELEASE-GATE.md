@@ -61,6 +61,23 @@ It cannot yet run the physical Motor Lab decisions from the user's actual
 orders. Migrating that pipeline and providing official results remains a
 separate release blocker.
 
+The newer, still opt-in positional contracts have separate diagnostics:
+`pnpm audit:motor:rotation:diagnose` and
+`pnpm audit:motor:attack:diagnose`. The staged-start rotation contract
+completed 24/24 no-attack 120 km races with an individually paid finish
+for every rider and 24 paid front passes. The one-attack contract completed
+48/48 attack-order races with one paid departure and every finish crossing.
+All 48 had the same final road count and peloton membership as the older
+paid source, while their exact clocks still differed.
+These are new motor-owned wheel positions, not positions retrofitted to
+the historical recording. The first 48-case attack audit found up to
+39.5 seconds of solo finish-clock difference and 1.7 seconds of peloton
+front-clock difference against the older paid source. Its completed
+races still have no official places, sprint, awarded points, or verified
+catch and dropped-worker movement. The position model remains separate
+from guided races and the production viewer; successful distance coverage
+does not clear the release gate.
+
 Local browser WebGL checks with the deliberately synthetic renderer fixture
 showed all 30 or 150 rider rigs for both categories, 51 draw calls and no
 renderer errors. Observed status samples after settling were 68 fps for 30

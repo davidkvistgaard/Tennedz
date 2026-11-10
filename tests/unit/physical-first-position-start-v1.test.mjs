@@ -22,8 +22,226 @@ import {settlePhysicalFirstPositionFinishTailV1,
 import {advancePhysicalFirstPositionRotationKmV1,
   replayPhysicalFirstPositionRotationKmV1} from
   '../../lib/engine/v2/physical-first-position-rotation-km-v1.mjs';
+import {createPhysicalFirstPositionStartV2,
+  replayPhysicalFirstPositionStartV2,
+  PHYSICAL_FIRST_POSITION_START_V2_VERSION} from
+  '../../lib/engine/v2/physical-first-position-start-v2.mjs';
+import {advancePhysicalFirstPositionRotationKmV2,
+  replayPhysicalFirstPositionRotationKmV2} from
+  '../../lib/engine/v2/physical-first-position-rotation-km-v2.mjs';
+import {preparePhysicalFirstSplitMotorInputV1} from
+  '../../lib/viewer/physical-first-split-test-race-v1.mjs';
+import {settlePhysicalFirstPositionFinishTailV2,
+  replayPhysicalFirstPositionFinishTailV2} from
+  '../../lib/engine/v2/physical-first-position-finish-tail-v2.mjs';
+import {recordPhysicalFirstPositionRotationRaceV2,
+  replayPhysicalFirstPositionRotationRaceV2} from
+  '../../lib/engine/v2/physical-first-position-rotation-race-v2.mjs';
+import {choosePhysicalFirstBoundaryAttacksV1} from
+  '../../lib/engine/v2/physical-first-attack-choice-v1.mjs';
+import {advancePhysicalFirstPositionAttackDepartureKmV1,
+  replayPhysicalFirstPositionAttackDepartureKmV1} from
+  '../../lib/engine/v2/physical-first-position-attack-departure-km-v1.mjs';
+import {advancePhysicalFirstPositionSoloKmV1,
+  replayPhysicalFirstPositionSoloKmV1} from
+  '../../lib/engine/v2/physical-first-position-solo-km-v1.mjs';
+import {recordPhysicalFirstPositionOneAttackRaceV1,
+  replayPhysicalFirstPositionOneAttackRaceV1} from
+  '../../lib/engine/v2/physical-first-position-one-attack-race-v1.mjs';
 
 const grid={laneCount:4,wheelSpacingM:2.5,laneStaggerM:.08};
+
+test('opt-in start stages a payable backup on the front edge',()=>{
+  const committed=input(2);
+  committed.positionModelVersion=
+    PHYSICAL_FIRST_POSITION_START_V2_VERSION;
+  committed.teams[0].orders.baseline.frontWorkRiderId=null;
+  const start=createPhysicalFirstPositionStartV2({
+    input:committed,grid});
+  assert.equal(start.version,
+    PHYSICAL_FIRST_POSITION_START_V2_VERSION);
+  assert.equal(start.positions.length,16);
+  assert.ok(start.stagedBackupRiderId);
+  const backup=start.positions.find(row=>row.riderId===
+    start.stagedBackupRiderId);
+  assert.equal(backup.lane,3);
+  assert.equal(backup.row,0);
+  assert.ok(start.positions.every(row=>row.lane<4));
+  assert.deepEqual(replayPhysicalFirstPositionStartV2(
+    committed,grid,start),start);
+  const forged=structuredClone(start);
+  forged.positions[3].lane=4;
+  assert.throws(()=>replayPhysicalFirstPositionStartV2(
+    committed,grid,forged),/differs from committed inputs/);
+});
+
+test('staged start keeps 160 distinct paid rider slots',()=>{
+  const committed=cappedInput(120,20);
+  committed.positionModelVersion=
+    PHYSICAL_FIRST_POSITION_START_V2_VERSION;
+  committed.teams[0].orders.baseline.frontWorkRiderId=null;
+  const start=createPhysicalFirstPositionStartV2({
+    input:committed,grid});
+  assert.equal(start.positions.length,160);
+  assert.equal(new Set(start.positions.map(row=>
+    `${row.lane}:${row.row}`)).size,160);
+  assert.ok(start.stagedBackupRiderId);
+});
+
+test('staged worker makes a paid front pass in a full 120 km race',()=>{
+  const {input:base}=preparePhysicalFirstSplitMotorInputV1(
+    'men',{terrain:'mountain',chase:'selective',
+      attack:'none',seed:'preview-recorded-road-1'});
+  const committed={...base,
+    positionModelVersion:
+      PHYSICAL_FIRST_POSITION_START_V2_VERSION};
+  const request={input:committed,grid};
+  const race=recordPhysicalFirstPositionRotationRaceV2(request);
+  const state=race.steps.at(-1);
+  assert.equal(race.start.stagedBackupRiderId,'you-2');
+  const paidPasses=race.steps.filter(step=>
+    step.event?.type==='paid_front_pass');
+  const firstPass=paidPasses[0]?.event;
+  assert.equal(state.sourceKm,120);
+  assert.equal(state.positions.length,120);
+  assert.equal(race.positionRiderKm,14400);
+  assert.equal(paidPasses.length,1);
+  assert.equal(firstPass.sourceKm,25);
+  assert.equal(firstPass.toRiderId,'you-2');
+  assert.ok(firstPass.surgePaidFromReserve>0);
+  assert.equal(race.checkpointCrossings.filter(row=>
+    row.km===119).length,120);
+  assert.equal(state.officialResults,false);
+  const passRequest={prior:race.steps[23],
+    segment:committed.kilometres[24],input:committed};
+  assert.deepEqual(replayPhysicalFirstPositionRotationKmV2(
+    passRequest,race.steps[24]),race.steps[24]);
+  const finish=race.finish;
+  assert.equal(finish.lineCrossingCoverage,'120/120');
+  assert.equal(finish.officialResults,false);
+  assert.ok(finish.frontWorkerPaidBeyondFinish);
+  const tailRequest={input:committed,prior:state};
+  assert.deepEqual(settlePhysicalFirstPositionFinishTailV2(
+    tailRequest),finish);
+  assert.deepEqual(replayPhysicalFirstPositionFinishTailV2(
+    tailRequest,finish),finish);
+  assert.deepEqual(replayPhysicalFirstPositionRotationRaceV2(
+    request,race),race);
+  const forged=structuredClone(finish);
+  forged.lineCrossings[1].clockSeconds-=1;
+  assert.throws(()=>replayPhysicalFirstPositionFinishTailV2(
+    tailRequest,forged),/differs from paid movement/);
+});
+
+test('an attack order cannot create an unpaid positional departure',()=>{
+  const {input:base}=preparePhysicalFirstSplitMotorInputV1(
+    'men',{terrain:'flat',chase:'all',
+      attack:'selective',seed:'preview-recorded-road-1'});
+  const committed={...base,
+    positionModelVersion:
+      PHYSICAL_FIRST_POSITION_START_V2_VERSION};
+  assert.throws(()=>recordPhysicalFirstPositionRotationRaceV2({
+    input:committed,grid}),
+  /lacks paid attack departure at km 20/);
+});
+
+test('ordered attacker separates only after paid physical passing',()=>{
+  const {input:base}=preparePhysicalFirstSplitMotorInputV1(
+    'men',{terrain:'flat',chase:'all',
+      attack:'selective',seed:'preview-recorded-road-1'});
+  const committed={...base,
+    positionModelVersion:
+      PHYSICAL_FIRST_POSITION_START_V2_VERSION};
+  let state=createPhysicalFirstPositionStartV2({
+    input:committed,grid});
+  assert.equal(state.stagedAttackRiderId,'you-7');
+  for(const segment of committed.kilometres.slice(0,19))
+    state=advancePhysicalFirstPositionRotationKmV2({
+      prior:state,segment,input:committed});
+  const choicePrior={sourceKm:state.sourceKm,
+    roads:[{roadId:'peloton',
+      riderIds:state.positions.map(row=>row.riderId),
+      clockSeconds:state.clockSeconds}],
+    riders:state.positions.map(row=>({
+      riderId:row.riderId,teamId:row.teamId,
+      roadId:'peloton',distanceM:19000,
+      clockSeconds:state.clockSeconds,
+      reserve:row.energy,quietKm:row.quietKm}))};
+  const choice=choosePhysicalFirstBoundaryAttacksV1({
+    prior:choicePrior,segment:committed.kilometres[19],
+    teams:committed.teams,stakes:committed.stakes,
+    kilometres:committed.kilometres})
+    .find(row=>row.choice==='attempt_paid_attack');
+  const request={prior:state,
+    segment:committed.kilometres[19],
+    input:committed,choice};
+  const departure=advancePhysicalFirstPositionAttackDepartureKmV1(
+    request);
+  assert.equal(departure.passEvent.type,'paid_attack_pass');
+  assert.equal(departure.passEvent.sourceKm,20);
+  assert.equal(departure.soloPosition.riderId,'you-7');
+  assert.ok(departure.soloPosition.distanceM>
+    departure.peloton.frontDistanceM);
+  assert.ok(departure.soloDecision.paidFromReserve>
+    departure.soloDecision.attackInitiationCost);
+  assert.ok(!departure.peloton.positions.some(row=>
+    row.riderId==='you-7'));
+  assert.ok(departure.soloCheckpointCrossings.some(row=>
+    row.km===20));
+  assert.deepEqual(replayPhysicalFirstPositionAttackDepartureKmV1(
+    request,departure),departure);
+  const nextPeloton=advancePhysicalFirstPositionRotationKmV2({
+    prior:departure.peloton,
+    segment:committed.kilometres[20],
+    input:committed});
+  assert.equal(nextPeloton.positions.length,119);
+  assert.deepEqual(nextPeloton.separateRoadRiderIds,
+    ['you-7']);
+  const soloRequest={priorSolo:departure.soloPosition,
+    priorPeloton:departure.peloton,
+    nextPeloton,segment:committed.kilometres[20],
+    input:committed};
+  const solo=advancePhysicalFirstPositionSoloKmV1(
+    soloRequest);
+  assert.equal(solo.sourceKm,21);
+  assert.ok(solo.position.distanceM>
+    nextPeloton.frontDistanceM);
+  assert.ok(solo.decision.paidFromReserve>0);
+  assert.deepEqual(replayPhysicalFirstPositionSoloKmV1(
+    soloRequest,solo),solo);
+  const forged=structuredClone(departure);
+  forged.soloPosition.distanceM+=10;
+  assert.throws(()=>replayPhysicalFirstPositionAttackDepartureKmV1(
+    request,forged),/differs from paid movement/);
+});
+
+test('one paid solo reaches the line on the shared race clock',()=>{
+  const {input:base}=preparePhysicalFirstSplitMotorInputV1(
+    'men',{terrain:'flat',chase:'all',
+      attack:'selective',seed:'preview-recorded-road-1'});
+  const request={input:{...base,
+    positionModelVersion:
+      PHYSICAL_FIRST_POSITION_START_V2_VERSION},
+  grid};
+  const race=recordPhysicalFirstPositionOneAttackRaceV1(
+    request);
+  assert.equal(race.completedThroughKm,120);
+  assert.equal(race.riderCount,120);
+  assert.equal(race.steps.filter(row=>
+    row.departure).length,1);
+  assert.equal(race.steps[19].departure
+    .passEvent.riderId,'you-7');
+  assert.equal(race.soloFinish.riderId,'you-7');
+  assert.equal(race.soloFinish.sourceKm,118);
+  assert.equal(race.finishCrossings.length,120);
+  assert.equal(race.finishCrossings[0].riderId,'you-7');
+  assert.equal(race.finishCrossings[0].sourceKm,118);
+  assert.ok(race.soloFinish.clockSeconds<
+    race.tail.frontClockSeconds);
+  assert.equal(race.officialResults,false);
+  assert.deepEqual(replayPhysicalFirstPositionOneAttackRaceV1(
+    request,race),race);
+});
 const rider=id=>({id,flat:65,hills:65,mountain:65,
   sprint:65,endurance:65,form:50,fatigue:0});
 function input(teamCount=2,raceSeed='position-seed-a'){
