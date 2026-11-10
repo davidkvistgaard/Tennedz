@@ -466,3 +466,17 @@ finishes, and the source's final road membership aligns. Maximum
 solo finish clock disagreement falls from about 39.5 to 33.2
 seconds. The remaining clock disagreement needs explanation; no
 official result or viewer-ready position claim follows from this.
+
+The following opt-in solo-km-3 and one-attack-race-3 versions also
+charge the lone rider as the exposed road leader. The prior solo
+versions charged the cheaper `solo` energy role, while the source
+physical road step charges `leader`. The record keeps the solo road
+role and writes `energyRole: leader` on each paid terrain leg. In
+the same 48-case, 120 km attack matrix, all races and finish
+crossings still complete and final road membership aligns. Maximum
+solo finish clock disagreement with the source falls from about
+39.5 seconds in v1 and 33.2 seconds in v2 to 0.071 seconds in v3.
+The source peloton-front clock still differs by up to 1.70 seconds;
+the matrix has one successful attacker per race and no competitive
+sprint or official classification. This is calibration evidence,
+not authority to activate guided races.

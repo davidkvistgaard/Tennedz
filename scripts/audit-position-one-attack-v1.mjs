@@ -6,7 +6,8 @@ import {preparePhysicalFirstSplitMotorInputV1} from
 import {runPhysicalFirstWholeRaceProbeV1} from
   '../lib/engine/v2/physical-first-whole-race-probe-v1.mjs';
 import {recordPhysicalFirstPositionOneAttackRaceV1,
-  recordPhysicalFirstPositionOneAttackRaceV2} from
+  recordPhysicalFirstPositionOneAttackRaceV2,
+  recordPhysicalFirstPositionOneAttackRaceV3} from
   '../lib/engine/v2/physical-first-position-one-attack-race-v1.mjs';
 import {recordPhysicalFirstPositionMultiSoloRaceV1} from
   '../lib/engine/v2/physical-first-position-multi-solo-race-v1.mjs';
@@ -19,7 +20,8 @@ import {replayRearEnergyCapV1} from
 const smoke=process.argv.includes('--smoke');
 const multi=process.argv.includes('--multi');
 const localTerrain=process.argv.includes('--local-terrain');
-if(multi&&localTerrain)
+const leaderCost=process.argv.includes('--leader-cost');
+if(multi&&(localTerrain||leaderCost))
   throw new Error('Multi-solo local terrain has no recorder.');
 const attackerAbilityShift=Number(process.argv.find(arg=>
   arg.startsWith('--attacker-ability-shift='))
@@ -74,7 +76,9 @@ for(const variant of variants){
     const race=multi?
       recordPhysicalFirstPositionMultiSoloRaceV1({
         input,grid}):
-      (localTerrain?
+      (leaderCost?
+        recordPhysicalFirstPositionOneAttackRaceV3:
+        localTerrain?
         recordPhysicalFirstPositionOneAttackRaceV2:
         recordPhysicalFirstPositionOneAttackRaceV1)({
         input,grid});
@@ -147,7 +151,7 @@ const failures=Object.entries(rows.filter(row=>
   return counts;
 },{})).map(([reason,count])=>({reason,count}));
 const summary={version:'physical-first-position-one-attack-audit-1',
-    multi,localTerrain,
+    multi,localTerrain,leaderCost,
   attackerAbilityShift,
   scenarios:rows.length,
   completeRaces:complete.length,

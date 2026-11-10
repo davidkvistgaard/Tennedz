@@ -44,13 +44,17 @@ import {advancePhysicalFirstPositionAttackDepartureKmV1,
   '../../lib/engine/v2/physical-first-position-attack-departure-km-v1.mjs';
 import {advancePhysicalFirstPositionSoloKmV1,
   advancePhysicalFirstPositionSoloKmV2,
+  advancePhysicalFirstPositionSoloKmV3,
   replayPhysicalFirstPositionSoloKmV1,
-  replayPhysicalFirstPositionSoloKmV2} from
+  replayPhysicalFirstPositionSoloKmV2,
+  replayPhysicalFirstPositionSoloKmV3} from
   '../../lib/engine/v2/physical-first-position-solo-km-v1.mjs';
 import {recordPhysicalFirstPositionOneAttackRaceV1,
   recordPhysicalFirstPositionOneAttackRaceV2,
+  recordPhysicalFirstPositionOneAttackRaceV3,
   replayPhysicalFirstPositionOneAttackRaceV1,
-  replayPhysicalFirstPositionOneAttackRaceV2} from
+  replayPhysicalFirstPositionOneAttackRaceV2,
+  replayPhysicalFirstPositionOneAttackRaceV3} from
   '../../lib/engine/v2/physical-first-position-one-attack-race-v1.mjs';
 import {advancePhysicalFirstPositionRearTailDropKmV1,
   replayPhysicalFirstPositionRearTailDropKmV1} from
@@ -295,6 +299,15 @@ test('ordered attacker separates only after paid physical passing',()=>{
       localSolo.decision.paidDistanceM)<1e-5);
   assert.deepEqual(replayPhysicalFirstPositionSoloKmV2(
     soloRequest,localSolo),localSolo);
+  const leaderPaidSolo=advancePhysicalFirstPositionSoloKmV3(
+    soloRequest);
+  assert.equal(leaderPaidSolo.decision.energyRole,
+    'leader');
+  assert.ok(leaderPaidSolo.decision.paidFromReserve>
+    localSolo.decision.paidFromReserve);
+  assert.deepEqual(replayPhysicalFirstPositionSoloKmV3(
+    soloRequest,leaderPaidSolo),
+  leaderPaidSolo);
   const shared=advancePhysicalFirstPositionSharedRoadKmV1({
     priorPeloton:departure.peloton,
     priorSolos:[departure.soloPosition],
@@ -353,6 +366,20 @@ test('rider-local solo terrain pays route legs through the finish',()=>{
     replayPhysicalFirstPositionOneAttackRaceV2(
       request,forged),
   /differs from paid movement/);
+  const leaderPaid=recordPhysicalFirstPositionOneAttackRaceV3(
+    request);
+  const source=runPhysicalFirstWholeRaceProbeV1(
+    request.input);
+  const sourceSolo=source.states.at(-1)
+    .riders.find(row=>row.riderId==='you-7');
+  assert.ok(Math.abs(leaderPaid.soloFinish
+    .clockSeconds-sourceSolo.clockSeconds)<.1);
+  assert.equal(leaderPaid.finishCrossings.length,120);
+  assert.ok(leaderPaid.steps.flatMap(step=>
+    step.soloStep?.speedLegs??[])
+    .every(leg=>leg.energyRole==='leader'));
+  assert.deepEqual(replayPhysicalFirstPositionOneAttackRaceV3(
+    request,leaderPaid),leaderPaid);
 });
 
 test('one paid solo reaches the line on the shared race clock',()=>{
