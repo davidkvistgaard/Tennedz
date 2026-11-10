@@ -652,6 +652,34 @@ test('two distinct ordered attacks need two paid physical departures',()=>{
   forged.steps[1].departure.passEvent.atClockSeconds=0;
   assert.throws(()=>replayPhysicalFirstPositionMultiSoloRaceV1(
     request,forged),/differs from paid movement/);
+  const converging=structuredClone(committed);
+  Object.assign(converging.teams[1].riders[6],{
+    flat:95,sprint:95});
+  assert.throws(()=>recordPhysicalFirstPositionMultiSoloRaceV1({
+    input:converging,grid}),
+  /needs paid solo contact/);
+});
+
+test('a measured peloton catch refuses unpriced solo contact',()=>{
+  const committed=cappedInput(4);
+  committed.positionModelVersion=
+    PHYSICAL_FIRST_POSITION_START_V2_VERSION;
+  for(const segment of committed.kilometres.slice(1)){
+    segment.terrain='hill';
+    segment.gradientPct=3.75;
+  }
+  for(const stake of committed.stakes)
+    stake.sportingGoal='break_stage';
+  committed.teams[0].orders.baseline.attack='selective';
+  committed.teams[0].orders.baseline.attackRiderId=
+    'team-0-7';
+  const attacker=committed.teams[0].riders[6];
+  Object.assign(attacker,{flat:85,hills:0,
+    sprint:85,acceleration:100,
+    positioning:100});
+  assert.throws(()=>recordPhysicalFirstPositionMultiSoloRaceV1({
+    input:committed,grid}),
+  /Solo kilometre needs paid bunch contact/);
 });
 
 test('committed first leader and positioning contest form a replayable start',()=>{

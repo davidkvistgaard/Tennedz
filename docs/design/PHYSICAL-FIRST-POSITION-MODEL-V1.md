@@ -316,3 +316,12 @@ position model keeps `you-5` in the peloton because its passing lane
 is blocked. This is an explicit source disagreement, not a scripted
 model catch-up. A paid positioning or lane-change decision and a
 measured caught-break contact remain release blockers.
+At the rejected flat-road window, `you-5` is 25.24 m from the front
+with ten wheels ahead in its lane; in the mountain case it is 35 m back
+with fourteen ahead. These are long positioning moves, not a missing
+fractional timing adjustment. A separate two-solo mechanics variant
+confirms that the recorder refuses a genuine mid-road solo catch while
+allowing riders to cross the same finish coordinate at different times.
+A separate four-kilometre synthetic hill fixture makes the peloton catch
+a paid solo in kilometre 3. The recorder currently refuses that contact;
+this is a reproducible release blocker, not a completed catch model.

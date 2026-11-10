@@ -98,6 +98,9 @@ for(const variant of variants){
         row.departure).length,
       refusedAttackPasses:multi?
         race.refusedAttackPasses:0,
+      attackRefusals:multi?
+        race.steps.flatMap(row=>row.attackRefusal?
+          [row.attackRefusal]:[]):[],
       departureKm:race.steps.find(row=>
         row.departure)?.sourceKm??null,
       minSoloGapAheadM:Math.min(
