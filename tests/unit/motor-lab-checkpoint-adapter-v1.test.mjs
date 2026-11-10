@@ -120,6 +120,30 @@ test('selected team order reaches the motor before adaptation', () => {
     adaptMotorLabCheckpointsV1(standard).feed.raceId);
 });
 
+test('break attack order is shown only with its recorded outcome', () => {
+  const input = {routeId: 'ridge', seed: 1,
+    orders: {breakAttackMarker: '40'}};
+  const successful = run('break', input.routeId, input.seed);
+  const breakSource = createMotorLabPreviewSource({...input, plan: 'break'});
+  const breakFeed = adaptMotorLabCheckpointsV1(breakSource).feed;
+  const breakKm = breakSource.race.frames.find(frame =>
+    frame.splitAttacks.some(attack => attack.status === 'split')).km;
+  assert.ok(breakFeed.events.some(event => event.time === breakKm * 8 &&
+    event.label.includes('got clear from the break')));
+  assert.ok(!successful.feed.events.some(event =>
+    event.label.includes('got clear from the break')));
+
+  const blockedSource = createMotorLabPreviewSource({...input, plan: 'sprint'});
+  const blockedFeed = adaptMotorLabCheckpointsV1(blockedSource).feed;
+  const blockedKm = blockedSource.race.frames.find(frame =>
+    frame.blockedBreakAttacks.some(attack =>
+      attack.reason === 'not_in_break')).km;
+  assert.ok(blockedFeed.events.some(event => event.time === blockedKm * 8 &&
+    event.label.includes('did not start: not in the break')));
+  assert.ok(!blockedFeed.events.some(event =>
+    event.label.includes('got clear from the break')));
+});
+
 test('multiple plans, seeds and routes produce complete source-derived feeds', () => {
   for (const routeId of ['coast', 'ridge'])
     for (const plan of ['sprint', 'break', 'balanced', 'conserve'])

@@ -4,7 +4,7 @@ The generated viewer at `/team/motor-lab/live` is an **experimental, fictional M
 
 ## Data path
 
-1. The protected `/api/motor-lab/viewer-run` accepts a plan, route, seed and existing Motor Lab team orders, then runs the existing `runKilometreLab` through `createMotorLabPreviewSource`. The original `createMotorLabPreview` summary keeps its previous output. The form exposes chase contribution, attack posture, break response, break work, captain support and late effort; it does not create new motor tactics.
+1. The protected `/api/motor-lab/viewer-run` accepts a plan, route, seed and existing Motor Lab team orders, then runs the existing `runKilometreLab` through `createMotorLabPreviewSource`. The original `createMotorLabPreview` summary keeps its previous output. The form exposes chase contribution, attack posture, break response, break work, a scheduled captain break attack, captain support and late effort; it does not create new motor tactics.
 2. `motor-lab-checkpoint-adapter-v1.mjs` validates the full raw recording and emits `pelotonia.viewer.v1`. Its `raceId` includes the plan, route, seed and normalized orders. Every one of the 32 riders appears exactly once at each **recorded** kilometre 1–160. The adapter adds a neutral start frame at kilometre 0 from the known starting roster; it is not a measured motor checkpoint.
 3. Each rider's longitudinal coordinate is the **recorded checkpoint kilometre**. A group gap remains a number of seconds. The adapter does not turn it into simultaneous metres, a wheel order or a lane.
 4. `scenicPresentationV1` adds trees, spectators and other synthetic scenery for the WebGL canvas. It does not change a sporting field. The canvas can space riders who share a recorded coordinate; the sporting overlay continues to use the unspaced feed.
@@ -20,7 +20,7 @@ The generated viewer at `/team/motor-lab/live` is an **experimental, fictional M
 | Distance and route profile | 160 one-kilometre route samples | Copied as checkpoint distance and elevation; road geometry is schematic |
 | Rider group | One recorded state per rider and kilometre | Road groups and peloton copied; each dropped rider stays solo because contact between dropped riders is not recorded |
 | Time gap | Recorded road-group and rider deficits in seconds | Displayed as seconds; never used to derive simultaneous rider metres |
-| Recorded event | Successful break joins, catches, drops and recorded chase-group formation | Emitted at the relevant checkpoint; commentary filters by shared playback time |
+| Recorded event | Successful break joins, catches, drops, selected and blocked break attacks, and recorded chase-group formation | Emitted at the relevant checkpoint; a committed order that could not start is never described as a successful attack; commentary filters by shared playback time |
 | Tactics and energy | In raw engine recording | Do not manufacture visual actions or energy from a team order; full tactic and energy inspection stays in Motor Lab |
 | Elapsed race clock | Absent | Explicit presentation cadence, not a claimed race time |
 | Rider lanes, wheels, contact proof | Absent | Canvas spacing illustrative; no rear-group contact inferred |

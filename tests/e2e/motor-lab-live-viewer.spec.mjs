@@ -26,6 +26,8 @@ test('authenticated full Motor Lab race reaches the new WebGL viewer',
     await page.getByText('Team orders', {exact: true}).click();
     await page.getByRole('combobox', {name: 'Attack posture'})
       .selectOption('repeated');
+    await page.getByRole('combobox', {name: 'Captain’s break attack'})
+      .selectOption('40');
     const runResponse = page.waitForResponse(response =>
       new URL(response.url()).pathname === endpoint &&
       response.request().method() === 'POST');
@@ -85,12 +87,18 @@ test('authenticated full Motor Lab race reaches the new WebGL viewer',
       route.fulfill({json: {raceId: body.feed.raceId,
         serverNowMs: Date.now(),
         clock: {position: 0,
-          serverEpochMs: Date.now() - 20 * 8 * 1000,
+          serverEpochMs: Date.now() - 42 * 8 * 1000,
           rate: 1, paused: false, duration: body.feed.duration}}}));
     await expect(page.locator('.race-theatre-group-scroll button').first())
       .toContainText('leaders', {timeout: 15000});
     await expect(page.locator('.race-theatre-group-scroll button').first())
       .toContainText('LEAD');
+    const actualBreakMove = createMotorLabPreviewSource(submittedInput)
+      .race.frames[40].splitAttacks.find(attack =>
+        attack.riderId === 'r-0-0');
+    expect(actualBreakMove?.status).toBe('split');
+    await expect(page.locator('.race-theatre-commentary'))
+      .toContainText('Amber Captain got clear from the break');
     await page.getByRole('button', {name: 'Race details'}).click();
     await page.getByRole('button', {name: 'results', exact: true}).click();
     await expect(page.getByText(/Withheld until the shared checkpoint/))

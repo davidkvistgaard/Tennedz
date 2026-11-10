@@ -150,6 +150,15 @@ export default function MotorLabLiveClient({initialInput}) {
             <option value="sit_on">Sit on</option>
             <option value="drive">Drive</option>
           </select></label>
+          <label>Captain’s break attack <select
+            value={orders.breakAttackMarker ?? 'none'}
+            onChange={event => setOrders(current => ({...current,
+              breakAttackMarker: event.target.value}))}>
+            <option value="none">No scheduled break attack</option>
+            <option value="40">After km 40</option>
+            <option value="80">After km 80</option>
+            <option value="120">After km 120</option>
+          </select></label>
           <label>Captain support <select
             value={orders.captainSupport ?? 'hold_position'}
             onChange={event => setOrders(current => ({...current,
