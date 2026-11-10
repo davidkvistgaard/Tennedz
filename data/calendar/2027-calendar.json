@@ -1,0 +1,1275 @@
+{
+  "calendar_year": 2027,
+  "races": [
+    {
+      "name": "Santos Tour Down Under",
+      "gender": "Men",
+      "format": "stage",
+      "start": "2027-01-19",
+      "end": "2027-01-24",
+      "year": 1,
+      "tier": "SILVER",
+      "country": "AUS"
+    },
+    {
+      "name": "Santos Tour Down Under",
+      "gender": "Women",
+      "format": "stage",
+      "start": "2027-01-22",
+      "end": "2027-01-24",
+      "year": 1,
+      "tier": "SILVER",
+      "country": "AUS"
+    },
+    {
+      "name": "AlUla Tour",
+      "gender": "Men",
+      "format": "stage",
+      "start": "2027-01-25",
+      "end": "2027-01-29",
+      "year": 1,
+      "tier": "SILVER",
+      "country": "KSA"
+    },
+    {
+      "name": "Surf Coast Classic - Women",
+      "gender": "Women",
+      "format": "one_day",
+      "start": "2027-01-27",
+      "end": "2027-01-27",
+      "year": 1,
+      "tier": "BRONZE",
+      "country": "AUS"
+    },
+    {
+      "name": "Surf Coast Classic - Men",
+      "gender": "Men",
+      "format": "one_day",
+      "start": "2027-01-27",
+      "end": "2027-01-27",
+      "year": 1,
+      "tier": "BRONZE",
+      "country": "AUS"
+    },
+    {
+      "name": "Mapei Cadel Evans Great Ocean Road Race - Women",
+      "gender": "Women",
+      "format": "one_day",
+      "start": "2027-01-31",
+      "end": "2027-01-31",
+      "year": 1,
+      "tier": "SILVER",
+      "country": "AUS"
+    },
+    {
+      "name": "Mapei Cadel Evans Great Ocean Road Race - Men",
+      "gender": "Men",
+      "format": "one_day",
+      "start": "2027-01-31",
+      "end": "2027-01-31",
+      "year": 1,
+      "tier": "SILVER",
+      "country": "AUS"
+    },
+    {
+      "name": "UAE Tour Women",
+      "gender": "Women",
+      "format": "stage",
+      "start": "2027-02-03",
+      "end": "2027-02-06",
+      "year": 1,
+      "tier": "SILVER",
+      "country": "UAE"
+    },
+    {
+      "name": "Vuelta CV Feminas",
+      "gender": "Women",
+      "format": "one_day",
+      "start": "2027-02-07",
+      "end": "2027-02-07",
+      "year": 1,
+      "tier": "BRONZE",
+      "country": "ESP"
+    },
+    {
+      "name": "Setmana Ciclista Volta Femenina de la Comunitat Valenciana",
+      "gender": "Women",
+      "format": "stage",
+      "start": "2027-02-11",
+      "end": "2027-02-14",
+      "year": 1,
+      "tier": "BRONZE",
+      "country": "ESP"
+    },
+    {
+      "name": "Clasica de Almeria",
+      "gender": "Men",
+      "format": "one_day",
+      "start": "2027-02-14",
+      "end": "2027-02-14",
+      "year": 1,
+      "tier": "BRONZE",
+      "country": "ESP"
+    },
+    {
+      "name": "UAE Tour",
+      "gender": "Men",
+      "format": "stage",
+      "start": "2027-02-15",
+      "end": "2027-02-21",
+      "year": 1,
+      "tier": "SILVER",
+      "country": "UAE"
+    },
+    {
+      "name": "Vuelta a Andalucia Ruta Ciclista Del Sol",
+      "gender": "Men",
+      "format": "stage",
+      "start": "2027-02-17",
+      "end": "2027-02-21",
+      "year": 1,
+      "tier": "SILVER",
+      "country": "ESP"
+    },
+    {
+      "name": "Clasica de Almeria",
+      "gender": "Women",
+      "format": "one_day",
+      "start": "2027-02-21",
+      "end": "2027-02-21",
+      "year": 1,
+      "tier": "BRONZE",
+      "country": "ESP"
+    },
+    {
+      "name": "Faun-Ardèche Classic",
+      "gender": "Men",
+      "format": "one_day",
+      "start": "2027-02-28",
+      "end": "2027-02-28",
+      "year": 1,
+      "tier": "BRONZE",
+      "country": "FRA"
+    },
+    {
+      "name": "Omloop Nieuwsblad",
+      "gender": "Men",
+      "format": "one_day",
+      "start": "2027-02-28",
+      "end": "2027-02-28",
+      "year": 1,
+      "tier": "GOLD",
+      "country": "BEL"
+    },
+    {
+      "name": "Omloop Nieuwsblad",
+      "gender": "Women",
+      "format": "one_day",
+      "start": "2027-02-28",
+      "end": "2027-02-28",
+      "year": 1,
+      "tier": "GOLD",
+      "country": "BEL"
+    },
+    {
+      "name": "Faun Drome Classic",
+      "gender": "Men",
+      "format": "one_day",
+      "start": "2027-02-28",
+      "end": "2027-02-28",
+      "year": 1,
+      "tier": "BRONZE",
+      "country": "FRA"
+    },
+    {
+      "name": "Kuurne - Brussel - Kuurne",
+      "gender": "Men",
+      "format": "one_day",
+      "start": "2027-02-28",
+      "end": "2027-02-28",
+      "year": 1,
+      "tier": "SILVER",
+      "country": "BEL"
+    },
+    {
+      "name": "Strade Bianche",
+      "gender": "Men",
+      "format": "one_day",
+      "start": "2027-03-07",
+      "end": "2027-03-07",
+      "year": 1,
+      "tier": "GOLD",
+      "country": "ITA"
+    },
+    {
+      "name": "Strade Bianche Donne",
+      "gender": "Women",
+      "format": "one_day",
+      "start": "2027-03-07",
+      "end": "2027-03-07",
+      "year": 1,
+      "tier": "GOLD",
+      "country": "ITA"
+    },
+    {
+      "name": "Paris-Nice",
+      "gender": "Men",
+      "format": "stage",
+      "start": "2027-03-07",
+      "end": "2027-03-14",
+      "year": 1,
+      "tier": "GOLD",
+      "country": "FRA"
+    },
+    {
+      "name": "Tirreno-Adriatico",
+      "gender": "Men",
+      "format": "stage",
+      "start": "2027-03-08",
+      "end": "2027-03-14",
+      "year": 1,
+      "tier": "GOLD",
+      "country": "ITA"
+    },
+    {
+      "name": "Trofeo Alfredo Binda - Comune di Cittiglio",
+      "gender": "Women",
+      "format": "one_day",
+      "start": "2027-03-14",
+      "end": "2027-03-14",
+      "year": 1,
+      "tier": "SILVER",
+      "country": "ITA"
+    },
+    {
+      "name": "Danilith Nokere Koerse",
+      "gender": "Men",
+      "format": "one_day",
+      "start": "2027-03-17",
+      "end": "2027-03-17",
+      "year": 1,
+      "tier": "BRONZE",
+      "country": "BEL"
+    },
+    {
+      "name": "Milano - Torino",
+      "gender": "Men",
+      "format": "one_day",
+      "start": "2027-03-17",
+      "end": "2027-03-17",
+      "year": 1,
+      "tier": "SILVER",
+      "country": "ITA"
+    },
+    {
+      "name": "Danilith Nokere Koerse WE",
+      "gender": "Women",
+      "format": "one_day",
+      "start": "2027-03-17",
+      "end": "2027-03-17",
+      "year": 1,
+      "tier": "BRONZE",
+      "country": "BEL"
+    },
+    {
+      "name": "Bredene Koksijde Classic",
+      "gender": "Men",
+      "format": "one_day",
+      "start": "2027-03-21",
+      "end": "2027-03-21",
+      "year": 1,
+      "tier": "BRONZE",
+      "country": "BEL"
+    },
+    {
+      "name": "Milano-Sanremo",
+      "gender": "Men",
+      "format": "one_day",
+      "start": "2027-03-21",
+      "end": "2027-03-21",
+      "year": 1,
+      "tier": "LEGEND",
+      "country": "ITA"
+    },
+    {
+      "name": "Milano Sanremo Women",
+      "gender": "Women",
+      "format": "one_day",
+      "start": "2027-03-21",
+      "end": "2027-03-21",
+      "year": 1,
+      "tier": "GOLD",
+      "country": "ITA"
+    },
+    {
+      "name": "Volta Ciclista a Catalunya",
+      "gender": "Men",
+      "format": "stage",
+      "start": "2027-03-22",
+      "end": "2027-03-28",
+      "year": 1,
+      "tier": "GOLD",
+      "country": "ESP"
+    },
+    {
+      "name": "Ronde Van Brugge - Tour of Bruges",
+      "gender": "Men",
+      "format": "one_day",
+      "start": "2027-03-24",
+      "end": "2027-03-24",
+      "year": 1,
+      "tier": "SILVER",
+      "country": "BEL"
+    },
+    {
+      "name": "Ronde Van Brugge - Tour of Bruges",
+      "gender": "Women",
+      "format": "one_day",
+      "start": "2027-03-24",
+      "end": "2027-03-24",
+      "year": 1,
+      "tier": "SILVER",
+      "country": "BEL"
+    },
+    {
+      "name": "E3 Saxo Classic",
+      "gender": "Men",
+      "format": "one_day",
+      "start": "2027-03-28",
+      "end": "2027-03-28",
+      "year": 1,
+      "tier": "GOLD",
+      "country": "BEL"
+    },
+    {
+      "name": "In Flanders Fields - From Middelkerke to Wevelgem",
+      "gender": "Men",
+      "format": "one_day",
+      "start": "2027-03-28",
+      "end": "2027-03-28",
+      "year": 1,
+      "tier": "GOLD",
+      "country": "BEL"
+    },
+    {
+      "name": "In Flanders Fields - In Wevelgem",
+      "gender": "Women",
+      "format": "one_day",
+      "start": "2027-03-28",
+      "end": "2027-03-28",
+      "year": 1,
+      "tier": "GOLD",
+      "country": "BEL"
+    },
+    {
+      "name": "Dwars door Vlaanderen - A travers la Flandre",
+      "gender": "Men",
+      "format": "one_day",
+      "start": "2027-03-31",
+      "end": "2027-03-31",
+      "year": 1,
+      "tier": "GOLD",
+      "country": "BEL"
+    },
+    {
+      "name": "Dwars door Vlaanderen / A travers la Flandre",
+      "gender": "Women",
+      "format": "one_day",
+      "start": "2027-03-31",
+      "end": "2027-03-31",
+      "year": 1,
+      "tier": "GOLD",
+      "country": "BEL"
+    },
+    {
+      "name": "Gran Premio Miguel Indurain",
+      "gender": "Men",
+      "format": "one_day",
+      "start": "2027-04-04",
+      "end": "2027-04-04",
+      "year": 1,
+      "tier": "SILVER",
+      "country": "ESP"
+    },
+    {
+      "name": "Ronde van Vlaanderen",
+      "gender": "Men",
+      "format": "one_day",
+      "start": "2027-04-04",
+      "end": "2027-04-04",
+      "year": 1,
+      "tier": "LEGEND",
+      "country": "BEL"
+    },
+    {
+      "name": "Ronde van Vlaanderen",
+      "gender": "Women",
+      "format": "one_day",
+      "start": "2027-04-04",
+      "end": "2027-04-04",
+      "year": 1,
+      "tier": "LEGEND",
+      "country": "BEL"
+    },
+    {
+      "name": "Itzulia Basque Country",
+      "gender": "Men",
+      "format": "stage",
+      "start": "2027-04-05",
+      "end": "2027-04-10",
+      "year": 1,
+      "tier": "GOLD",
+      "country": "ESP"
+    },
+    {
+      "name": "Région Pays de la Loire Tour",
+      "gender": "Men",
+      "format": "stage",
+      "start": "2027-04-06",
+      "end": "2027-04-09",
+      "year": 1,
+      "tier": "BRONZE",
+      "country": "FRA"
+    },
+    {
+      "name": "Scheldeprijs",
+      "gender": "Men",
+      "format": "one_day",
+      "start": "2027-04-07",
+      "end": "2027-04-07",
+      "year": 1,
+      "tier": "SILVER",
+      "country": "BEL"
+    },
+    {
+      "name": "Scheldeprijs vrouwen elite",
+      "gender": "Women",
+      "format": "one_day",
+      "start": "2027-04-07",
+      "end": "2027-04-07",
+      "year": 1,
+      "tier": "SILVER",
+      "country": "BEL"
+    },
+    {
+      "name": "Paris-Roubaix Hauts-de-France",
+      "gender": "Men",
+      "format": "one_day",
+      "start": "2027-04-11",
+      "end": "2027-04-11",
+      "year": 1,
+      "tier": "LEGEND",
+      "country": "FRA"
+    },
+    {
+      "name": "Paris-Roubaix Femmes Hauts-de-France",
+      "gender": "Women",
+      "format": "one_day",
+      "start": "2027-04-11",
+      "end": "2027-04-11",
+      "year": 1,
+      "tier": "LEGEND",
+      "country": "FRA"
+    },
+    {
+      "name": "De Brabantse Pijl - La Flèche Brabançonne",
+      "gender": "Men",
+      "format": "one_day",
+      "start": "2027-04-18",
+      "end": "2027-04-18",
+      "year": 1,
+      "tier": "SILVER",
+      "country": "BEL"
+    },
+    {
+      "name": "De Brabantse Pijl - La Flèche Brabançonne",
+      "gender": "Women",
+      "format": "one_day",
+      "start": "2027-04-18",
+      "end": "2027-04-18",
+      "year": 1,
+      "tier": "SILVER",
+      "country": "BEL"
+    },
+    {
+      "name": "Amstel Gold Race",
+      "gender": "Men",
+      "format": "one_day",
+      "start": "2027-04-18",
+      "end": "2027-04-18",
+      "year": 1,
+      "tier": "GOLD",
+      "country": "NED"
+    },
+    {
+      "name": "Amstel Gold Race Ladies Edition",
+      "gender": "Women",
+      "format": "one_day",
+      "start": "2027-04-18",
+      "end": "2027-04-18",
+      "year": 1,
+      "tier": "GOLD",
+      "country": "NED"
+    },
+    {
+      "name": "Tour of the Alps",
+      "gender": "Men",
+      "format": "stage",
+      "start": "2027-04-19",
+      "end": "2027-04-23",
+      "year": 1,
+      "tier": "GOLD",
+      "country": "ITA"
+    },
+    {
+      "name": "La Flèche Wallonne",
+      "gender": "Men",
+      "format": "one_day",
+      "start": "2027-04-21",
+      "end": "2027-04-21",
+      "year": 1,
+      "tier": "GOLD",
+      "country": "BEL"
+    },
+    {
+      "name": "La Flèche Wallonne Femmes",
+      "gender": "Women",
+      "format": "one_day",
+      "start": "2027-04-21",
+      "end": "2027-04-21",
+      "year": 1,
+      "tier": "GOLD",
+      "country": "BEL"
+    },
+    {
+      "name": "Liège-Bastogne-Liège",
+      "gender": "Men",
+      "format": "one_day",
+      "start": "2027-04-25",
+      "end": "2027-04-25",
+      "year": 1,
+      "tier": "LEGEND",
+      "country": "BEL"
+    },
+    {
+      "name": "Presidential Cycling Tour of Turkiye",
+      "gender": "Men",
+      "format": "stage",
+      "start": "2027-04-25",
+      "end": "2027-05-02",
+      "year": 1,
+      "tier": "SILVER",
+      "country": "TUR"
+    },
+    {
+      "name": "Liège-Bastogne-Liège Femmes",
+      "gender": "Women",
+      "format": "one_day",
+      "start": "2027-04-25",
+      "end": "2027-04-25",
+      "year": 1,
+      "tier": "LEGEND",
+      "country": "BEL"
+    },
+    {
+      "name": "Tour de Romandie",
+      "gender": "Men",
+      "format": "stage",
+      "start": "2027-04-27",
+      "end": "2027-05-02",
+      "year": 1,
+      "tier": "GOLD",
+      "country": "SUI"
+    },
+    {
+      "name": "Eschborn-Frankfurt",
+      "gender": "Men",
+      "format": "one_day",
+      "start": "2027-05-02",
+      "end": "2027-05-02",
+      "year": 2,
+      "tier": "SILVER",
+      "country": "GER"
+    },
+    {
+      "name": "Vuelta a Burgos Feminas",
+      "gender": "Women",
+      "format": "stage",
+      "start": "2027-05-06",
+      "end": "2027-05-09",
+      "year": 2,
+      "tier": "SILVER",
+      "country": "ESP"
+    },
+    {
+      "name": "Giro d'Italia",
+      "gender": "Men",
+      "format": "stage",
+      "start": "2027-05-08",
+      "end": "2027-05-30",
+      "year": 2,
+      "tier": "LEGEND",
+      "country": "ITA"
+    },
+    {
+      "name": "Grand Prix du Morbihan",
+      "gender": "Men",
+      "format": "one_day",
+      "start": "2027-05-09",
+      "end": "2027-05-09",
+      "year": 2,
+      "tier": "BRONZE",
+      "country": "FRA"
+    },
+    {
+      "name": "Tro-Bro Léon",
+      "gender": "Men",
+      "format": "one_day",
+      "start": "2027-05-09",
+      "end": "2027-05-09",
+      "year": 2,
+      "tier": "BRONZE",
+      "country": "FRA"
+    },
+    {
+      "name": "Tour de Hongrie",
+      "gender": "Men",
+      "format": "stage",
+      "start": "2027-05-12",
+      "end": "2027-05-16",
+      "year": 2,
+      "tier": "BRONZE",
+      "country": "HUN"
+    },
+    {
+      "name": "Navarra Women's Elite Classic",
+      "gender": "Women",
+      "format": "one_day",
+      "start": "2027-05-12",
+      "end": "2027-05-12",
+      "year": 2,
+      "tier": "BRONZE",
+      "country": "ESP"
+    },
+    {
+      "name": "Itzulia Women",
+      "gender": "Women",
+      "format": "stage",
+      "start": "2027-05-14",
+      "end": "2027-05-16",
+      "year": 2,
+      "tier": "SILVER",
+      "country": "ESP"
+    },
+    {
+      "name": "Antwerp Port Epic Ladies",
+      "gender": "Women",
+      "format": "one_day",
+      "start": "2027-05-16",
+      "end": "2027-05-16",
+      "year": 2,
+      "tier": "BRONZE",
+      "country": "BEL"
+    },
+    {
+      "name": "Classique Dunkerque Hauts de France",
+      "gender": "Men",
+      "format": "one_day",
+      "start": "2027-05-19",
+      "end": "2027-05-19",
+      "year": 2,
+      "tier": "BRONZE",
+      "country": "FRA"
+    },
+    {
+      "name": "4 Jours de Dunkerque des Hauts de France",
+      "gender": "Men",
+      "format": "stage",
+      "start": "2027-05-19",
+      "end": "2027-05-23",
+      "year": 2,
+      "tier": "SILVER",
+      "country": "FRA"
+    },
+    {
+      "name": "Boucles de la Mayenne - Crédit Mutuel",
+      "gender": "Men",
+      "format": "stage",
+      "start": "2027-05-27",
+      "end": "2027-05-30",
+      "year": 2,
+      "tier": "BRONZE",
+      "country": "FRA"
+    },
+    {
+      "name": "Tour of Norway",
+      "gender": "Men",
+      "format": "stage",
+      "start": "2027-05-27",
+      "end": "2027-05-30",
+      "year": 2,
+      "tier": "SILVER",
+      "country": "NOR"
+    },
+    {
+      "name": "Giro d'Italia Women",
+      "gender": "Women",
+      "format": "stage",
+      "start": "2027-05-29",
+      "end": "2027-06-06",
+      "year": 2,
+      "tier": "LEGEND",
+      "country": "ITA"
+    },
+    {
+      "name": "Tour of Norway Women",
+      "gender": "Women",
+      "format": "stage",
+      "start": "2027-05-29",
+      "end": "2027-05-31",
+      "year": 2,
+      "tier": "SILVER",
+      "country": "NOR"
+    },
+    {
+      "name": "Brussels Cycling Classic",
+      "gender": "Men",
+      "format": "one_day",
+      "start": "2027-06-06",
+      "end": "2027-06-06",
+      "year": 2,
+      "tier": "SILVER",
+      "country": "BEL"
+    },
+    {
+      "name": "Tour Auvergne - Rhône-Alpes",
+      "gender": "Men",
+      "format": "stage",
+      "start": "2027-06-06",
+      "end": "2027-06-13",
+      "year": 2,
+      "tier": "GOLD",
+      "country": "FRA"
+    },
+    {
+      "name": "CIC-Tour Féminin des Pyrénées",
+      "gender": "Women",
+      "format": "stage",
+      "start": "2027-06-10",
+      "end": "2027-06-13",
+      "year": 2,
+      "tier": "BRONZE",
+      "country": "FRA"
+    },
+    {
+      "name": "Copenhagen Sprint",
+      "gender": "Women",
+      "format": "one_day",
+      "start": "2027-06-13",
+      "end": "2027-06-13",
+      "year": 2,
+      "tier": "SILVER",
+      "country": "DEN"
+    },
+    {
+      "name": "Copenhagen Sprint",
+      "gender": "Men",
+      "format": "one_day",
+      "start": "2027-06-13",
+      "end": "2027-06-13",
+      "year": 2,
+      "tier": "SILVER",
+      "country": "DEN"
+    },
+    {
+      "name": "Tour de Suisse",
+      "gender": "Men",
+      "format": "stage",
+      "start": "2027-06-16",
+      "end": "2027-06-20",
+      "year": 2,
+      "tier": "GOLD",
+      "country": "SUI"
+    },
+    {
+      "name": "Tour de Suisse Women",
+      "gender": "Women",
+      "format": "stage",
+      "start": "2027-06-16",
+      "end": "2027-06-20",
+      "year": 2,
+      "tier": "GOLD",
+      "country": "SUI"
+    },
+    {
+      "name": "Tour of Slovenia",
+      "gender": "Men",
+      "format": "stage",
+      "start": "2027-06-17",
+      "end": "2027-06-20",
+      "year": 2,
+      "tier": "SILVER",
+      "country": "SLO"
+    },
+    {
+      "name": "LOTTO Thüringen Women Cycling Challenge",
+      "gender": "Women",
+      "format": "one_day",
+      "start": "2027-06-20",
+      "end": "2027-06-20",
+      "year": 2,
+      "tier": "BRONZE",
+      "country": "GER"
+    },
+    {
+      "name": "Tour de France",
+      "gender": "Men",
+      "format": "stage",
+      "start": "2027-07-02",
+      "end": "2027-07-25",
+      "year": 2,
+      "tier": "LEGEND",
+      "country": "FRA"
+    },
+    {
+      "name": "Tour of Magnificent Qinghai",
+      "gender": "Men",
+      "format": "stage",
+      "start": "2027-07-10",
+      "end": "2027-07-17",
+      "year": 2,
+      "tier": "BRONZE",
+      "country": "CHN"
+    },
+    {
+      "name": "Tour de Pologne Women",
+      "gender": "Women",
+      "format": "stage",
+      "start": "2027-07-23",
+      "end": "2027-07-25",
+      "year": 2,
+      "tier": "SILVER",
+      "country": "POL"
+    },
+    {
+      "name": "Tour of Denmark",
+      "gender": "Men",
+      "format": "stage",
+      "start": "2027-07-28",
+      "end": "2027-08-01",
+      "year": 2,
+      "tier": "SILVER",
+      "country": "DEN"
+    },
+    {
+      "name": "Tour de France Femmes avec Zwift",
+      "gender": "Women",
+      "format": "stage",
+      "start": "2027-07-30",
+      "end": "2027-08-07",
+      "year": 2,
+      "tier": "LEGEND",
+      "country": "FRA"
+    },
+    {
+      "name": "Donostia San Sebastian Klasikoa",
+      "gender": "Men",
+      "format": "one_day",
+      "start": "2027-08-01",
+      "end": "2027-08-01",
+      "year": 2,
+      "tier": "GOLD",
+      "country": "ESP"
+    },
+    {
+      "name": "Tour de Pologne",
+      "gender": "Men",
+      "format": "stage",
+      "start": "2027-08-02",
+      "end": "2027-08-08",
+      "year": 2,
+      "tier": "GOLD",
+      "country": "POL"
+    },
+    {
+      "name": "Vuelta a Burgos",
+      "gender": "Men",
+      "format": "stage",
+      "start": "2027-08-03",
+      "end": "2027-08-07",
+      "year": 2,
+      "tier": "SILVER",
+      "country": "ESP"
+    },
+    {
+      "name": "Lloyds Tour of Britain Women",
+      "gender": "Women",
+      "format": "stage",
+      "start": "2027-08-11",
+      "end": "2027-08-15",
+      "year": 2,
+      "tier": "GOLD",
+      "country": "GBR"
+    },
+    {
+      "name": "Arctic Race of Norway",
+      "gender": "Men",
+      "format": "stage",
+      "start": "2027-08-12",
+      "end": "2027-08-15",
+      "year": 2,
+      "tier": "SILVER",
+      "country": "NOR"
+    },
+    {
+      "name": "Czech Tour",
+      "gender": "Men",
+      "format": "stage",
+      "start": "2027-08-12",
+      "end": "2027-08-15",
+      "year": 2,
+      "tier": "SILVER",
+      "country": "CZE"
+    },
+    {
+      "name": "ADAC Cyclassics",
+      "gender": "Men",
+      "format": "one_day",
+      "start": "2027-08-15",
+      "end": "2027-08-15",
+      "year": 2,
+      "tier": "GOLD",
+      "country": "GER"
+    },
+    {
+      "name": "Lidl Deutschland Tour",
+      "gender": "Men",
+      "format": "stage",
+      "start": "2027-08-18",
+      "end": "2027-08-22",
+      "year": 2,
+      "tier": "SILVER",
+      "country": "GER"
+    },
+    {
+      "name": "Renewi Tour",
+      "gender": "Men",
+      "format": "stage",
+      "start": "2027-08-18",
+      "end": "2027-08-22",
+      "year": 2,
+      "tier": "GOLD",
+      "country": "BEL"
+    },
+    {
+      "name": "GP Lucien Van Impe",
+      "gender": "Women",
+      "format": "one_day",
+      "start": "2027-08-18",
+      "end": "2027-08-18",
+      "year": 2,
+      "tier": "BRONZE",
+      "country": "BEL"
+    },
+    {
+      "name": "Classic Lorient Agglomération",
+      "gender": "Women",
+      "format": "one_day",
+      "start": "2027-08-22",
+      "end": "2027-08-22",
+      "year": 2,
+      "tier": "GOLD",
+      "country": "FRA"
+    },
+    {
+      "name": "Bretagne Classic - CIC",
+      "gender": "Men",
+      "format": "one_day",
+      "start": "2027-08-22",
+      "end": "2027-08-22",
+      "year": 2,
+      "tier": "GOLD",
+      "country": "FRA"
+    },
+    {
+      "name": "Vuelta a España",
+      "gender": "Men",
+      "format": "stage",
+      "start": "2027-09-04",
+      "end": "2027-09-26",
+      "year": 3,
+      "tier": "LEGEND",
+      "country": "ESP"
+    },
+    {
+      "name": "Tour de Romandie Féminin",
+      "gender": "Women",
+      "format": "stage",
+      "start": "2027-09-10",
+      "end": "2027-09-12",
+      "year": 3,
+      "tier": "GOLD",
+      "country": "SUI"
+    },
+    {
+      "name": "Grand Prix Cycliste de Québec",
+      "gender": "Men",
+      "format": "one_day",
+      "start": "2027-09-12",
+      "end": "2027-09-12",
+      "year": 3,
+      "tier": "GOLD",
+      "country": "CAN"
+    },
+    {
+      "name": "GP de Fourmies / La Voix du Nord",
+      "gender": "Men",
+      "format": "one_day",
+      "start": "2027-09-12",
+      "end": "2027-09-12",
+      "year": 3,
+      "tier": "BRONZE",
+      "country": "FRA"
+    },
+    {
+      "name": "Grand Prix Cycliste de Montréal",
+      "gender": "Men",
+      "format": "one_day",
+      "start": "2027-09-12",
+      "end": "2027-09-12",
+      "year": 3,
+      "tier": "GOLD",
+      "country": "CAN"
+    },
+    {
+      "name": "La Choralis Fourmies Féminine",
+      "gender": "Women",
+      "format": "one_day",
+      "start": "2027-09-12",
+      "end": "2027-09-12",
+      "year": 3,
+      "tier": "BRONZE",
+      "country": "FRA"
+    },
+    {
+      "name": "Skoda Tour de Luxembourg",
+      "gender": "Men",
+      "format": "stage",
+      "start": "2027-09-15",
+      "end": "2027-09-19",
+      "year": 3,
+      "tier": "SILVER",
+      "country": "LUX"
+    },
+    {
+      "name": "Flandrien 0.0 Classic",
+      "gender": "Men",
+      "format": "one_day",
+      "start": "2027-09-19",
+      "end": "2027-09-19",
+      "year": 3,
+      "tier": "BRONZE",
+      "country": "BEL"
+    },
+    {
+      "name": "Women's Cycling Grand Prix Region Stuttgart",
+      "gender": "Women",
+      "format": "one_day",
+      "start": "2027-09-19",
+      "end": "2027-09-19",
+      "year": 3,
+      "tier": "BRONZE",
+      "country": "GER"
+    },
+    {
+      "name": "CRO Race",
+      "gender": "Men",
+      "format": "stage",
+      "start": "2027-09-22",
+      "end": "2027-09-26",
+      "year": 3,
+      "tier": "SILVER",
+      "country": "CRO"
+    },
+    {
+      "name": "GP Industria & Artigianato",
+      "gender": "Men",
+      "format": "one_day",
+      "start": "2027-09-26",
+      "end": "2027-09-26",
+      "year": 3,
+      "tier": "BRONZE",
+      "country": "ITA"
+    },
+    {
+      "name": "Pointe du Raz Ladies Classic",
+      "gender": "Women",
+      "format": "one_day",
+      "start": "2027-09-26",
+      "end": "2027-09-26",
+      "year": 3,
+      "tier": "BRONZE",
+      "country": "FRA"
+    },
+    {
+      "name": "Giro dell'Emilia",
+      "gender": "Men",
+      "format": "one_day",
+      "start": "2027-10-03",
+      "end": "2027-10-03",
+      "year": 3,
+      "tier": "GOLD",
+      "country": "ITA"
+    },
+    {
+      "name": "Giro dell'Emilia Internazionale Donne Elite",
+      "gender": "Women",
+      "format": "one_day",
+      "start": "2027-10-03",
+      "end": "2027-10-03",
+      "year": 3,
+      "tier": "GOLD",
+      "country": "ITA"
+    },
+    {
+      "name": "Le Tour de Langkawi",
+      "gender": "Men",
+      "format": "stage",
+      "start": "2027-10-03",
+      "end": "2027-10-10",
+      "year": 3,
+      "tier": "BRONZE",
+      "country": "MAS"
+    },
+    {
+      "name": "Sparkassen Münsterland Giro",
+      "gender": "Men",
+      "format": "one_day",
+      "start": "2027-10-03",
+      "end": "2027-10-03",
+      "year": 3,
+      "tier": "BRONZE",
+      "country": "GER"
+    },
+    {
+      "name": "Vuelta España Femenina by Carrefour.es",
+      "gender": "Women",
+      "format": "stage",
+      "start": "2027-10-03",
+      "end": "2027-10-10",
+      "year": 3,
+      "tier": "LEGEND",
+      "country": "ESP"
+    },
+    {
+      "name": "Coppa Bernocchi - GP Banco BPM",
+      "gender": "Men",
+      "format": "one_day",
+      "start": "2027-10-03",
+      "end": "2027-10-03",
+      "year": 3,
+      "tier": "BRONZE",
+      "country": "ITA"
+    },
+    {
+      "name": "Tre Valli Varesine",
+      "gender": "Men",
+      "format": "one_day",
+      "start": "2027-10-06",
+      "end": "2027-10-06",
+      "year": 3,
+      "tier": "SILVER",
+      "country": "ITA"
+    },
+    {
+      "name": "Tre Valli Varesine Women's Race",
+      "gender": "Women",
+      "format": "one_day",
+      "start": "2027-10-06",
+      "end": "2027-10-06",
+      "year": 3,
+      "tier": "SILVER",
+      "country": "ITA"
+    },
+    {
+      "name": "Gran Piemonte",
+      "gender": "Men",
+      "format": "one_day",
+      "start": "2027-10-06",
+      "end": "2027-10-06",
+      "year": 3,
+      "tier": "SILVER",
+      "country": "ITA"
+    },
+    {
+      "name": "Il Lombardia",
+      "gender": "Men",
+      "format": "one_day",
+      "start": "2027-10-10",
+      "end": "2027-10-10",
+      "year": 3,
+      "tier": "LEGEND",
+      "country": "ITA"
+    },
+    {
+      "name": "Paris - Tours Elite",
+      "gender": "Men",
+      "format": "one_day",
+      "start": "2027-10-10",
+      "end": "2027-10-10",
+      "year": 3,
+      "tier": "SILVER",
+      "country": "FRA"
+    },
+    {
+      "name": "Tour of Guangxi",
+      "gender": "Men",
+      "format": "stage",
+      "start": "2027-10-12",
+      "end": "2027-10-17",
+      "year": 3,
+      "tier": "SILVER",
+      "country": "CHN"
+    },
+    {
+      "name": "Tour of Chongming Island",
+      "gender": "Women",
+      "format": "stage",
+      "start": "2027-10-12",
+      "end": "2027-10-14",
+      "year": 3,
+      "tier": "SILVER",
+      "country": "CHN"
+    },
+    {
+      "name": "Giro del Veneto",
+      "gender": "Men",
+      "format": "one_day",
+      "start": "2027-10-13",
+      "end": "2027-10-13",
+      "year": 3,
+      "tier": "BRONZE",
+      "country": "ITA"
+    },
+    {
+      "name": "Utsunomiya Japan Cup Road Race",
+      "gender": "Men",
+      "format": "one_day",
+      "start": "2027-10-17",
+      "end": "2027-10-17",
+      "year": 3,
+      "tier": "SILVER",
+      "country": "JPN"
+    },
+    {
+      "name": "Veneto Classic",
+      "gender": "Men",
+      "format": "one_day",
+      "start": "2027-10-17",
+      "end": "2027-10-17",
+      "year": 3,
+      "tier": "SILVER",
+      "country": "ITA"
+    }
+  ]
+}

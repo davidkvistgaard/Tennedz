@@ -1,10 +1,10 @@
 import TeamShell from "../../components/TeamShell";
 import PlanCalendar from "./PlanCalendar";
-import outline from "../../../data/calendar/2027-outline.json";
+import calendar from "../../../data/calendar/2027-calendar.json";
 import "./plan.css";
 
 export default function CalendarPlanPage(){
   return <TeamShell title="2027 calendar plan"><div className="calendar-plan-page">
-    <PlanCalendar outline={outline}/>
+    <PlanCalendar races={calendar.races}/>
   </div></TeamShell>;
 }

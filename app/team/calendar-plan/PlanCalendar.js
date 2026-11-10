@@ -2,68 +2,73 @@
 import {useState} from "react";
 import {PELOTONIA_SEASONS} from "../../../lib/calendar/season-plan.mjs";
 
-const monthLabel=key=>new Date(`${key}-01T12:00:00Z`).toLocaleDateString("en-GB",{month:"long",timeZone:"UTC"});
-const total=(months,key)=>months.reduce((sum,month)=>sum+month[key],0);
-const seasonFocus={
-  1:"The opening months bring spring racing and the first stage-race campaigns.",
-  2:"The middle season centres on summer stage racing and long-distance challenges.",
-  3:"Autumn racing leads into space for original Pelotonia events at the end of the year.",
-};
+const monthFormatter=new Intl.DateTimeFormat("en-GB",{month:"long",timeZone:"UTC"});
+const dateFormatter=new Intl.DateTimeFormat("en-GB",{day:"numeric",month:"short",timeZone:"UTC"});
+const monthLabel=key=>monthFormatter.format(new Date(`${key}-01T12:00:00Z`));
+const dateLabel=date=>dateFormatter.format(new Date(`${date}T12:00:00Z`));
+const tiers=["LEGEND","GOLD","SILVER","BRONZE"];
 
-function oneDayDates(monthKey){
-  const [year,month]=monthKey.split("-").map(Number);
-  const last=new Date(Date.UTC(year,month,0)).getUTCDate();
-  const dates=[];
-  for(let day=1;day<=last;day++){
-    const weekday=new Date(Date.UTC(year,month-1,day)).getUTCDay();
-    if(weekday===0||weekday===3)dates.push({day,weekday:weekday===3?"Wed":"Sun"});
-  }
-  return dates;
+function RaceRow({race}){
+  const dates=dateLabel(race.start)+(race.start===race.end?"":` – ${dateLabel(race.end)}`);
+  return <li className="plan-race-row">
+    <span className="plan-race-date">{dates}</span>
+    <div><strong>{race.name}</strong><small>{race.country} · {race.gender} · {race.format==="stage"?"Stage race":"One-day race"}</small></div>
+    <span className="plan-tier" data-tier={race.tier}>{race.tier}</span>
+  </li>;
 }
 
-export default function PlanCalendar({outline}){
+export default function PlanCalendar({races}){
   const [seasonNumber,setSeasonNumber]=useState(1);
   const [selectedMonth,setSelectedMonth]=useState("2027-01");
+  const [gender,setGender]=useState("");
+  const [format,setFormat]=useState("");
+  const [tier,setTier]=useState("");
   const season=PELOTONIA_SEASONS.find(item=>item.number===seasonNumber);
-  const seasonData=outline.seasons.find(item=>item.number===seasonNumber);
-  const month=seasonData.months.find(item=>item.key===selectedMonth);
+  const seasonRaces=races.filter(race=>race.year===seasonNumber);
+  const months=Array.from({length:4},(_,i)=>`2027-${String((seasonNumber-1)*4+i+1).padStart(2,"0")}`);
+  const monthRaces=seasonRaces.filter(race=>race.start.startsWith(selectedMonth));
+  const visible=monthRaces.filter(race=>(!gender||race.gender===gender)&&(!format||race.format===format)&&(!tier||race.tier===tier));
+  const stageCount=seasonRaces.filter(race=>race.format==="stage").length;
   return <div className="plan-calendar">
-    <header className="plan-intro"><div><p className="identity-eyebrow">2027 CALENDAR · EARLY LOOK</p>
+    <header className="plan-intro"><div><p className="identity-eyebrow">2027 RACE CALENDAR</p>
       <h1>Three years. One road.</h1>
-      <p>Pelotonia will have three seasons each calendar year. Real-world racing guides the programme; original Pelotonia events will add variety between its highlights.</p></div>
-      <div className="plan-draft-note"><strong>Work in progress</strong><span>This is the season structure, not a published race schedule. Dates, race names and rankings are still being prepared.</span></div>
+      <p>Browse the {races.length} scheduled races across Pelotonia’s three seasons.</p></div>
+      <div className="plan-draft-note"><strong>Season programme</strong><span>Dates follow the Pelotonia calendar. Entry opens separately in Calendar &amp; races.</span></div>
     </header>
     <nav className="plan-seasons" aria-label="Pelotonia year">{PELOTONIA_SEASONS.map(item=>{
-      const count=total(outline.seasons.find(row=>row.number===item.number).months,"candidates");
+      const count=races.filter(race=>race.year===item.number).length;
       return <button type="button" key={item.number} aria-pressed={seasonNumber===item.number}
         onClick={()=>{setSeasonNumber(item.number);setSelectedMonth(item.start.slice(0,7));}}>
-        <span>YEAR {item.number}</span><strong>{item.months}</strong><small>{count} races under review</small>
+        <span>YEAR {item.number}</span><strong>{item.months}</strong><small>{count} races</small>
       </button>;
     })}</nav>
     <section className="plan-overview" aria-labelledby="plan-season-title"><div className="plan-overview-main">
       <p className="identity-eyebrow">SEASON {season.number} / 3</p><h2 id="plan-season-title">{season.label}</h2>
-      <p>{season.months} 2027 · a separate Pelotonia season with its own future highlights, results and rankings.</p>
-      <div className="plan-metrics"><span><strong>{total(seasonData.months,"candidates")}</strong> races under review</span>
-        <span><strong>{total(seasonData.months,"stage_races")}</strong> stage-race candidates</span>
-        <span><strong>{total(seasonData.months,"open_one_day_slots")}</strong> open one-day slots</span></div>
-      <p className="plan-footnote">Open slots are planned Wednesday and Sunday opportunities for men and women. They are not registered events yet.</p>
-    </div><div className="plan-highlights"><h3>Season direction</h3><p>{seasonFocus[season.number]}</p>
-      <p>Named highlights and their dates will appear when the calendar is reviewed.</p>
+      <p>{season.months} 2027</p>
+      <div className="plan-metrics"><span><strong>{seasonRaces.length}</strong> races</span>
+        <span><strong>{seasonRaces.length-stageCount}</strong> one-day races</span>
+        <span><strong>{stageCount}</strong> stage races</span></div>
+    </div><div className="plan-highlights"><h3>Race dates</h3>
+      <p>One-day races are scheduled for Wednesday or Sunday. Stage races retain their start and finish dates.</p>
     </div></section>
     <div className="plan-list-head"><div><p className="identity-eyebrow">THE SEASON RHYTHM</p><h2>Explore the months</h2></div></div>
-    <nav className="plan-month-picker" aria-label="Month">{seasonData.months.map(item=><button type="button"
-      key={item.key} aria-pressed={selectedMonth===item.key} onClick={()=>setSelectedMonth(item.key)}>
-      {monthLabel(item.key)}<span>{item.candidates}</span></button>)}</nav>
-    <section className="plan-month" aria-labelledby="plan-month-title"><h3 id="plan-month-title">{monthLabel(month.key)} <span>Planning outline</span></h3>
-      <div className="plan-month-overview"><div className="plan-month-summary">
-        <p>{month.candidates?`${month.candidates} race candidates are being reviewed for this month.`:"This month is reserved for original Pelotonia races still to be designed."}</p>
-        <div className="plan-metrics"><span><strong>{month.one_day}</strong> one-day candidates</span>
-          <span><strong>{month.stage_races}</strong> stage-race candidates</span>
-          <span><strong>{month.open_one_day_slots}</strong> open one-day slots</span></div>
-      </div><div className="plan-rhythm"><h4>One-day race rhythm</h4><p>Wednesday and Sunday · separate opportunities for men and women</p>
-        <div>{oneDayDates(month.key).map(date=><span key={date.day}><strong>{date.weekday}</strong> {date.day}</span>)}</div>
-      </div></div>
+    <nav className="plan-month-picker" aria-label="Month">{months.map(month=><button type="button"
+      key={month} aria-pressed={selectedMonth===month} onClick={()=>setSelectedMonth(month)}>
+      {monthLabel(month)}<span>{seasonRaces.filter(race=>race.start.startsWith(month)).length}</span></button>)}</nav>
+    <section className="plan-month" aria-labelledby="plan-month-title"><h3 id="plan-month-title">{monthLabel(selectedMonth)} <span>2027</span></h3>
+      <div className="plan-race-filters">
+        <label>Field<select value={gender} onChange={event=>setGender(event.target.value)}>
+          <option value="">All fields</option><option>Men</option><option>Women</option></select></label>
+        <label>Format<select value={format} onChange={event=>setFormat(event.target.value)}>
+          <option value="">All formats</option><option value="one_day">One-day race</option><option value="stage">Stage race</option></select></label>
+        <label>Class<select value={tier} onChange={event=>setTier(event.target.value)}>
+          <option value="">All classes</option>{tiers.map(value=><option key={value}>{value}</option>)}</select></label>
+      </div>
+      <p className="plan-race-count" role="status">{visible.length} of {monthRaces.length} races</p>
+      {visible.length>0 ? <ul className="plan-race-list">{visible.map(race=>
+        <RaceRow key={`${race.start}:${race.gender}:${race.name}`} race={race}/>)}</ul>:
+        <p>{monthRaces.length?"No races match these filters.":"No races are scheduled to start this month."}</p>}
     </section>
-    <p className="plan-source">Planning counts come from the supplied 2027 workbook. The selected UCI races, names, dates, classes and original Pelotonia events still need review. No entry or ranking points are available from this outline.</p>
+    <p className="plan-source">Each race is listed by its scheduled start date. Source: Pelotonia’s 2027 race calendar.</p>
   </div>;
 }

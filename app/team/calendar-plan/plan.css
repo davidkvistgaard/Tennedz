@@ -12,3 +12,15 @@
 .plan-month-overview{display:grid;grid-template-columns:minmax(0,1fr) minmax(280px,1fr);gap:16px}.plan-month-summary,.plan-rhythm{padding:24px;border-radius:16px;background:#fffaf0;border:1px solid #e0ddcd}.plan-month-summary>p{margin:0;line-height:1.5}.plan-rhythm h4{font:700 1.2rem Georgia,serif;margin:0 0 8px}.plan-rhythm p{font-size:.82rem;line-height:1.5;color:#58705d;margin:0 0 15px}.plan-rhythm>div{display:flex;flex-wrap:wrap;gap:6px}.plan-rhythm span{font-size:.74rem;padding:7px 9px;border-radius:8px;background:#e9eee2;color:#315341}.plan-rhythm span strong{font-size:.65rem;text-transform:uppercase;letter-spacing:.04em}.plan-source{font-size:.78rem;color:#677568;line-height:1.5;border-top:1px solid #d4dacb;padding-top:15px}
 @media(max-width:750px){.plan-intro{display:block}.plan-draft-note{margin-top:24px}.plan-overview,.plan-month-overview{grid-template-columns:1fr}.plan-list-head{display:block}.plan-seasons{gap:7px}.plan-seasons button{padding:13px}.plan-seasons strong{font-size:.95rem}.plan-seasons small{font-size:.69rem}}
 @media(max-width:520px){.agenda-view-tabs button{padding:10px 8px;font-size:.8rem}.agenda-view-tabs span{display:block;margin:3px 0 0}.plan-seasons{grid-template-columns:1fr}.plan-seasons button{grid-template-columns:60px 1fr auto;align-items:center}.plan-seasons strong{font-size:1rem}.plan-seasons small{text-align:right}.plan-race{grid-template-columns:70px 1fr;gap:8px;padding:13px}.plan-race-tags{grid-column:2;flex-wrap:wrap}.plan-metrics{gap:13px}}
+.plan-race-filters{display:flex;flex-wrap:wrap;gap:.65rem;margin:1rem 0 .6rem}
+.plan-race-filters label{display:grid;gap:.25rem;font-size:.8rem}
+.plan-race-filters select{min-width:8rem;padding:.35rem .6rem;border:1px solid #bbc7b8;border-radius:.35rem;background:#fcf9f0;color:#233e30;font:inherit}
+.plan-race-count{font-size:.8rem}
+.plan-race-list{list-style:none;padding:0;margin:.6rem 0 0}
+.plan-race-row{display:grid;grid-template-columns:8rem minmax(0,1fr) auto;align-items:center;gap:.7rem;padding:.8rem 0;border-top:1px solid #b2bba55c}
+.plan-race-row small{display:block;margin-top:.2rem;opacity:.8}
+.plan-race-date{font-variant-numeric:tabular-nums}
+.plan-tier{font-size:.65rem;font-weight:750;letter-spacing:.06em;background:#e6ebe0;color:#2b4435;padding:.25rem .45rem;border-radius:.25rem;justify-self:start}
+.plan-tier[data-tier="LEGEND"]{background:#e6ded3;color:#533855}.plan-tier[data-tier="GOLD"]{background:#eee1b8;color:#624b18}
+.plan-tier[data-tier="SILVER"]{background:#e1e7e6;color:#344d50}.plan-tier[data-tier="BRONZE"]{background:#eadbca;color:#684b32}
+@media(max-width:540px){.plan-race-row{grid-template-columns:minmax(0,1fr) auto;gap:.25rem .5rem}.plan-race-date{grid-column:1/-1;font-size:.8rem}.plan-race-filters select{min-width:0;max-width:100%}}
