@@ -347,3 +347,13 @@ per kilometre, 16 paid finish crossings and exact whole-recording replay.
 It explicitly refuses a second attack or a changed front worker. This
 does not establish a 120 km caught-break race or multi-attack race, and
 therefore remains an isolated experimental contract.
+The same 16-rider contract now completes a separate synthetic 120 km
+route with alternating flat and hill stretches. Each rider's speed and
+energy cost use the segment under that rider's wheel, including when a
+rear group is behind the peloton by more than a kilometre. The finish
+continuation records the rear riders' remaining kilometre crossings;
+all 1,920 rider-kilometre crossings and 16 finish crossings validate and
+the whole recording replays. This route and roster are deliberately
+synthetic and do not calibrate real sporting outcomes. A 160-rider catch,
+later team attacks, changed front workers and variable lateral passing
+remain unverified or unsupported.
