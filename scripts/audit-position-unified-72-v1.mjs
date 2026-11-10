@@ -7,12 +7,15 @@ import {runPhysicalFirstWholeRaceProbeV1} from
 import {PHYSICAL_FIRST_POSITION_START_V2_VERSION} from
   '../lib/engine/v2/physical-first-position-start-v2.mjs';
 import {recordPhysicalFirstPositionOneAttackRaceV1,
-  replayPhysicalFirstPositionOneAttackRaceV1} from
+  recordPhysicalFirstPositionOneAttackRaceV3,
+  replayPhysicalFirstPositionOneAttackRaceV1,
+  replayPhysicalFirstPositionOneAttackRaceV3} from
   '../lib/engine/v2/physical-first-position-one-attack-race-v1.mjs';
 
 const grid={laneCount:4,wheelSpacingM:2.5,
   laneStaggerM:.08};
 const smoke=process.argv.includes('--smoke');
+const leaderCost=process.argv.includes('--leader-cost');
 const seeds=smoke?['preview-recorded-road-1']:
   ['preview-recorded-road-1',
     'viewer-release-holdout-2'];
@@ -35,10 +38,15 @@ for(const variant of variants){
     const input={...base,positionModelVersion:
       PHYSICAL_FIRST_POSITION_START_V2_VERSION};
     const source=runPhysicalFirstWholeRaceProbeV1(input);
-    const race=recordPhysicalFirstPositionOneAttackRaceV1({
-      input,grid});
-    replayPhysicalFirstPositionOneAttackRaceV1({
-      input,grid},race);
+    const request={input,grid};
+    const race=(leaderCost?
+      recordPhysicalFirstPositionOneAttackRaceV3:
+      recordPhysicalFirstPositionOneAttackRaceV1)(
+      request);
+    (leaderCost?
+      replayPhysicalFirstPositionOneAttackRaceV3:
+      replayPhysicalFirstPositionOneAttackRaceV1)(
+      request,race);
     const riderCount=race.riderCount;
     const plannedKm=input.kilometres.length;
     const keys=new Set([
@@ -66,10 +74,17 @@ for(const variant of variants){
       sourcePelotonIds.size===modelPelotonIds.size&&
       [...modelPelotonIds].every(id=>
         sourcePelotonIds.has(id));
+    const soloFinish=race.soloFinish;
+    const sourceSolo=soloFinish&&
+      sourceFinish.riders.find(row=>
+        row.riderId===soloFinish.riderId);
     rows.push({...variant,status:'complete',
       riderCount,plannedKm,
       fullDecisionCoverage,complete,
       finishMembershipAligned,
+      soloClockDeltaSeconds:sourceSolo?
+        soloFinish.clockSeconds-
+          sourceSolo.clockSeconds:null,
       officialResults:race.officialResults,
       elapsedMs:+(performance.now()-began)
         .toFixed(1)});
@@ -83,6 +98,7 @@ for(const variant of variants){
 const summary={version:
   'physical-first-position-unified-72-audit-1',
 fixture:'synthetic_only',
+leaderCost,
 scenarios:rows.length,
 complete:rows.filter(row=>row.complete).length,
 fullDecisionCoverage:rows.filter(row=>
@@ -91,6 +107,9 @@ finishMembershipAligned:rows.filter(row=>
   row.finishMembershipAligned).length,
 officialResults:rows.filter(row=>
   row.officialResults).length,
+maxAbsSoloClockDeltaSeconds:Math.max(0,
+  ...rows.map(row=>Math.abs(
+    row.soloClockDeltaSeconds??0))),
 failures:rows.filter(row=>
   row.status==='failed'||!row.complete||
     !row.fullDecisionCoverage||

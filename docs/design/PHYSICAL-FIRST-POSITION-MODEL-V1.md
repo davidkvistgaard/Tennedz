@@ -480,3 +480,23 @@ The source peloton-front clock still differs by up to 1.70 seconds;
 the matrix has one successful attacker per race and no competitive
 sprint or official classification. This is calibration evidence,
 not authority to activate guided races.
+With the v3 exposed-leader solo payment selected, the unified
+72-case audit also completes 72/72 with full decision and finish
+coverage, final peloton membership alignment and exact replay.
+Maximum solo finish clock disagreement is 0.071 seconds among the
+attack cases. The result remains synthetic and unranked.
+
+`physical-first-position-multi-solo-race-2` applies the same
+exposed-leader solo legs to each active separate rider while
+preserving the v1 recording byte for byte. Its contact guard checks
+the minimum measured gap at every terrain-leg boundary shared by
+two solo trajectories. A three-kilometre fixture with two distinct
+paid departures completes and replays; a converging second solo is
+refused until a paid contact contract exists. This extension fixes
+the cost rule across another race shape, but it does not yet join
+two solo roads or settle their competitive finish.
+The 48-case attack audit also completes with this multi-solo
+successor and retains the 0.071-second maximum solo finish clock
+difference in that matrix. Those fixture races have only one
+successful departure each; the separate three-kilometre test is
+the evidence for two successful departures.

@@ -76,7 +76,9 @@ import {PHYSICAL_FIRST_POSITION_MIXED_FRONT_PASS_VERSION} from
 import {quotePhysicalFirstPositionFrontPassV1} from
   '../../lib/engine/v2/physical-first-position-front-pass-quote-v1.mjs';
 import {recordPhysicalFirstPositionMultiSoloRaceV1,
-  replayPhysicalFirstPositionMultiSoloRaceV1} from
+  recordPhysicalFirstPositionMultiSoloRaceV2,
+  replayPhysicalFirstPositionMultiSoloRaceV1,
+  replayPhysicalFirstPositionMultiSoloRaceV2} from
   '../../lib/engine/v2/physical-first-position-multi-solo-race-v1.mjs';
 import {advancePhysicalFirstPositionSharedRoadKmV1,
   replayPhysicalFirstPositionSharedRoadKmV1,
@@ -755,6 +757,19 @@ test('two distinct ordered attacks need two paid physical departures',()=>{
   assert.equal(race.refusedAttackPasses,0);
   assert.deepEqual(replayPhysicalFirstPositionMultiSoloRaceV1(
     request,race),race);
+  const leaderPaid=recordPhysicalFirstPositionMultiSoloRaceV2(
+    request);
+  assert.equal(leaderPaid.paidAttackDepartures,2);
+  assert.equal(leaderPaid.finishCrossings.length,16);
+  assert.ok(leaderPaid.steps.flatMap(step=>
+    step.soloSteps).every(step=>
+    step.speedLegs.every(leg=>
+      leg.energyRole==='leader')));
+  assert.ok(leaderPaid.steps.flatMap(step=>
+    step.soloSteps).some(step=>
+    step.speedLegs.length>1));
+  assert.deepEqual(replayPhysicalFirstPositionMultiSoloRaceV2(
+    request,leaderPaid),leaderPaid);
   const forged=structuredClone(race);
   forged.steps[1].departure.passEvent.atClockSeconds=0;
   assert.throws(()=>replayPhysicalFirstPositionMultiSoloRaceV1(
@@ -763,6 +778,9 @@ test('two distinct ordered attacks need two paid physical departures',()=>{
   Object.assign(converging.teams[1].riders[6],{
     flat:95,sprint:95});
   assert.throws(()=>recordPhysicalFirstPositionMultiSoloRaceV1({
+    input:converging,grid}),
+  /needs paid solo contact/);
+  assert.throws(()=>recordPhysicalFirstPositionMultiSoloRaceV2({
     input:converging,grid}),
   /needs paid solo contact/);
 });
