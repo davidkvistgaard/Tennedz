@@ -59,5 +59,9 @@ kræves, hvis udfaldet også skal være hemmeligt i browserens netværksdata.
   og resultater. Ét afbrudt træ-asset gav en synlig fejlbesked, mens canvas
   og løbet fortsatte.
 
-Produktionsfrigivelse kræver stadig preview og autentificeret kontrol af den
-præcise commit, API, side, JavaScript og runtime samt en testet rollback.
+Den nye viewer er nu udgivet på `tennedz.eu`. Den præcise commit, produktionens
+side og JavaScript, den autentificerede Motor Lab-API, WebGL og rollback er
+kontrolleret; se [udgivelsesrapporten](VIEWER_RELEASE_2026-11-10_DA.md).
+Produktionskontoen havde endnu intet gemt guidet løb, så den gemte
+spiloptagelse er verificeret gennem beskyttede lokale API-fixtures og
+browsertests, men ikke gennem et faktisk gemt løb på produktionskontoen.
