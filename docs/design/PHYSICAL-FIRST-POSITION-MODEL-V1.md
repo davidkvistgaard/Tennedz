@@ -88,3 +88,16 @@ departure. All four currently have 0/120 individual finish crossings in
 the positional trace, and none has official results. These are precise
 missing movement contracts, not crashes or missing kilometres in the
 existing group-clock race.
+
+`physical-first-position-rotation-km-1` is a separate successor step. A
+replacement front worker must pass in a clear lane at a faster payable
+speed, and the step records crossing time, roles, energy and refusal.
+The focused rotation tests pass, including replay and forged-payment
+refusal. `scripts/audit-position-rotation-v1.mjs` compares this independent
+model against the actual paid race at every kilometre. In the 72-case
+matrix the independent model continued to 120 km in all 72 races, but
+**zero** remained aligned with the paid source throughout: 24 first
+diverged at a front-worker/clock change and 48 at a separate attack-road
+membership change. There were no paid front passes in the matrix and no
+official results. Independent distance coverage is therefore not
+viewer-ready race coverage; the release gate remains red.
