@@ -8,7 +8,9 @@ import {PHYSICAL_FIRST_POSITION_START_V2_VERSION} from
 import {runPhysicalFirstWholeRaceProbeV1} from
   '../lib/engine/v2/physical-first-whole-race-probe-v1.mjs';
 import {recordPhysicalFirstPositionGeneralRaceV1,
-  replayPhysicalFirstPositionGeneralRaceV1} from
+  replayPhysicalFirstPositionGeneralRaceV1,
+  recordPhysicalFirstPositionGeneralRaceV2,
+  replayPhysicalFirstPositionGeneralRaceV2} from
   '../lib/engine/v2/physical-first-position-general-race-v1.mjs';
 
 const option=(name,fallback)=>process.argv.find(arg=>
@@ -18,17 +20,24 @@ const categories=option('categories','men,women').split(',');
 const terrains=option('terrains','mountain').split(',');
 const chases=option('chases','selective').split(',');
 const attack=option('attack','none');
+const positionVersion=option('position-version','1');
+const seeds=option('seeds',
+  'preview-recorded-road-1').split(',');
 if(categories.some(value=>
   !['men','women'].includes(value))||
   terrains.some(value=>
     !['flat','rolling','mountain'].includes(value))||
   chases.some(value=>
     !['selective','all'].includes(value))||
-  !['none','selective','repeated'].includes(attack))
+  !['none','selective','repeated'].includes(attack)||
+  !['1','2'].includes(positionVersion)||
+  seeds.some(seed=>
+    !(/^[A-Za-z0-9-]{1,64}$/).test(seed)))
   throw new Error('General audit has unsupported inputs.');
 const rows=[];
 const plannedCases=categories.length*terrains.length*
-  chases.length;
+  chases.length*seeds.length;
+for(const seed of seeds)
 for(const category of categories)
   for(const terrain of terrains)
     for(const chase of chases){
@@ -37,7 +46,7 @@ for(const category of categories)
       try{
         const prepared=preparePhysicalFirstSplitMotorInputV1(
           category,{terrain,chase,attack,
-            seed:'preview-recorded-road-1'});
+            seed});
         const input={...prepared.input,
           positionModelVersion:
             PHYSICAL_FIRST_POSITION_START_V2_VERSION,
@@ -53,9 +62,12 @@ for(const category of categories)
       }
       if(request){
         try{
-          position=recordPhysicalFirstPositionGeneralRaceV1(
-            request);
-          replayPhysicalFirstPositionGeneralRaceV1(
+          position=(positionVersion==='2'?
+            recordPhysicalFirstPositionGeneralRaceV2:
+            recordPhysicalFirstPositionGeneralRaceV1)(request);
+          (positionVersion==='2'?
+            replayPhysicalFirstPositionGeneralRaceV2:
+            replayPhysicalFirstPositionGeneralRaceV1)(
             request,position);
         }catch(error){
           positionError={message:error.message,
@@ -69,7 +81,7 @@ for(const category of categories)
         }
       }
       const comparisons=source&&position?
-        position.steps.map((step,index)=>{
+        position.steps.slice(0,-1).map((step,index)=>{
           const sourceState=source.states[index+1];
           const sourcePeloton=sourceState.roads.find(
             row=>row.roadId==='peloton')
@@ -88,6 +100,12 @@ for(const category of categories)
       const sourceFinal=source?.states.at(-1);
       const modelFinal=position?.steps.at(-1)
         .sharedRoad;
+      const sourceAttacks=source?.steps.flatMap(step=>
+        step.attackSteps.map(attackStep=>
+          `${step.sourceKm}:${attackStep.choice.riderId}`))??[];
+      const positionAttacks=position
+        ?.attackDepartureEvents.map(event=>
+          `${event.sourceKm}:${event.toRiderId}`)??[];
       const sourceEnergy=new Map(sourceFinal?.riders.map(
         row=>[row.riderId,row.reserve])??[]);
       const energyDrifts=position?.tail.decisions.map(row=>
@@ -98,7 +116,7 @@ for(const category of categories)
       const finishClockDrifts=position?.finishCrossings.map(row=>
         Math.abs(row.clockSeconds-
           sourceFinishClock.get(row.riderId)))??[];
-      const row={category,terrain,chase,attack,
+      const row={seed,category,terrain,chase,attack,
         sourceStatus:source?'complete':'failed',
         sourceError,
         positionStatus:position?
@@ -108,6 +126,8 @@ for(const category of categories)
         plannedKm:position?.plannedKm??null,
         decisionCoverage:position?.decisionCount===
           120*120,
+        terminalRecords:
+          position?.terminalDecisionCount??null,
         checkpointCoverage:
           position?.checkpointCrossings.length===
             120*119,
@@ -115,11 +135,27 @@ for(const category of categories)
           position?.finishCrossings.length===120,
         attackDepartures:
           position?.attackDepartureEvents.length??null,
+        sourceAttackDepartures:source?
+          sourceAttacks.length:null,
+        unmatchedSourceAttacks:
+          source&&position?sourceAttacks.filter(key=>
+            !positionAttacks.includes(key)):null,
+        unmatchedPositionAttacks:
+          source&&position?positionAttacks.filter(key=>
+            !sourceAttacks.includes(key)):null,
+        sharedRoadFinishCrossings:
+          position?.earlyFinishCrossings?.length??null,
+        firstSharedRoadFinishSourceKm:
+          position?.steps.find(step=>
+            step.sharedRoad.earlyFinishCrossings
+              ?.length)?.sourceKm??null,
         frontPasses:
           position?.frontPassEvents.length??null,
         alignedPelotonCheckpoints:
           comparisons.filter(item=>
             item.pelotonAligned).length,
+        comparedPelotonCheckpoints:
+          comparisons.length,
         firstPelotonMismatchKm:
           comparisons.find(item=>
             !item.pelotonAligned)?.km??null,
@@ -131,24 +167,27 @@ for(const category of categories)
         maxFinalReserveDifference:
           energyDrifts.length?
             +Math.max(...energyDrifts).toFixed(3):null,
-        maxFinishClockDifferenceSeconds:
+        maxSourceGroupClockVsWheelFinishSeconds:
           finishClockDrifts.length?
             +Math.max(...finishClockDrifts).toFixed(3):null,
-        sourceFinalPelotonRiders:
+        sourceFinalPelotonGroupRiders:
           sourceFinal?.roads.find(row=>
             row.roadId==='peloton')?.riderIds.length??null,
-        positionFinalPelotonRiders:
+        positionFinalActivePelotonRiders:
           modelFinal?.positions.filter(row=>
-            row.roadId==='peloton').length??null};
+            row.roadId==='peloton').length??null,
+        positionFinalAlreadyFinishedRiders:
+          modelFinal?.positions.filter(row=>
+            row.roadId==='finished').length??null};
       rows.push(row);
       process.stderr.write(`${rows.length}/${plannedCases} `+
-        `${category}, ${terrain}, ${chase}: `+
+        `${seed}, ${category}, ${terrain}, ${chase}: `+
         `${row.sourceStatus}/${row.positionStatus}\n`);
     }
 const summary={version:
   'physical-first-position-general-motor-lab-audit-1',
 fixture:'current_motor_lab_test_input',
-attack,plannedCases,
+attack,positionVersion,seeds,plannedCases,
 sourceCompleted:rows.filter(row=>
   row.sourceStatus==='complete').length,
 positionCompletedAndReplayed:rows.filter(row=>

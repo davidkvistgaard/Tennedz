@@ -687,3 +687,43 @@ in each flat case is 1.67 seconds, in each rolling case 1.70
 seconds, and in each mountain case 0.02 seconds. These group
 clock comparisons do not certify exact rider positions or
 official finish order.
+
+`shared-road-km-11` and `general-race-2` keep the connected
+start but give a rider who reaches the route's actual finish
+before the peloton front an explicit paid crossing clock. The
+rider leaves contact topology at that instant. Later global
+kilometres contain a terminal `already_finished` row with zero
+movement, unchanged reserve and the original finish clock;
+they do not charge further distance or invent a new decision.
+The fixed-lane finish validates and retains the earlier crossing
+instead of replacing it with the peloton's later clock. Replay
+checks the entire versioned record. Versions 1–10 retain their
+original behavior and historic group-clock races are unchanged.
+
+On the current generated 120-rider Motor Lab test input with a
+selective attack, all twelve same-seed combinations of men's
+and women's fields, flat/rolling/mountain terrain and
+selective/all chase orders complete the full 120 km and exactly
+replay. Each has 14,400 per-rider kilometre records, 120 × 119
+intermediate line passages and 120 finish passages. A solo first
+reaches the finish while the peloton front is still settling
+kilometre 118. The peloton membership matches the source at
+all 119 comparable pre-finish checkpoints. The last global
+checkpoint is a different observation: the positional model
+withdraws finishers, while the source still classifies them in
+their source groups. Maximum observed front-clock differences
+are 1.60 seconds on flat/rolling routes and 0.02 seconds on
+mountain routes; maximum final reserve difference is 3.349
+units. The largest 9.722-second difference between an
+individual positional finish and the source's group finish
+clock is reported for visibility; a group clock does not
+establish the simultaneous position of its members. The
+energy difference still needs investigation and calibration. The
+record does not supply an official sprint, placing, awards,
+atlas coordinates or production-ready viewer data.
+Eight additional 120-rider selective-attack runs with two
+different seeds, both categories and rolling/mountain profiles
+also finish and exactly replay. The source and positional
+records agree on the one attack departure in every one of
+those runs. This is evidence for those generated inputs, not
+a guarantee for arbitrary profiles, rosters or manager orders.
