@@ -64,6 +64,7 @@ export default function ViewerPreviewClient({feed,coverage,version,
       {mode==='split'?<span>Same-seed finish calibration: {
         coverage.sameSeedFinishMismatches}/{coverage.riderCount}
         {' '}riders differ. No official result.</span>:null}
+      <p><a href="/team/motor-lab/live">Generate a race ↗</a></p>
       <nav className="motor-viewer-modes" aria-label="Viewer mode">
         <a aria-current={mode==='recorded'?'page':undefined}
           href={`/viewer${categoryQuery}`}>Recorded race</a>
