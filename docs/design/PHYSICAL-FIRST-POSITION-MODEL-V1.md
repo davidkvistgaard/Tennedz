@@ -325,3 +325,18 @@ allowing riders to cross the same finish coordinate at different times.
 A separate four-kilometre synthetic hill fixture makes the peloton catch
 a paid solo in kilometre 3. The recorder currently refuses that contact;
 this is a reproducible release blocker, not a completed catch model.
+
+An isolated successor step,
+`physical-first-position-shared-road-km-1`, now advances the existing
+solo and every bunch wheel on the same quarter-second clock for that
+fixture. It records the first measured solo-to-peloton contact during
+kilometre 3, including observed time and wheel distances. The rider
+then falls through the bunch and ends in a recorded rear component,
+while every rider pays distance and energy. The same state advances
+through kilometre 4 and the existing positional finish tail pays all
+16 crossings; a forged contact distance fails replay. This is a
+synthetic mechanics proof, not yet the 120 km attack recorder. The
+shared step currently keeps fixed lanes, refuses a bunch leader blocked
+in its lane, and does not execute a new attack or front-worker change
+while a solo is being caught. It therefore cannot yet replace the
+whole-race recorder or support guided races.

@@ -70,6 +70,9 @@ import {quotePhysicalFirstPositionFrontPassV1} from
 import {recordPhysicalFirstPositionMultiSoloRaceV1,
   replayPhysicalFirstPositionMultiSoloRaceV1} from
   '../../lib/engine/v2/physical-first-position-multi-solo-race-v1.mjs';
+import {advancePhysicalFirstPositionSharedRoadKmV1,
+  replayPhysicalFirstPositionSharedRoadKmV1} from
+  '../../lib/engine/v2/physical-first-position-shared-road-km-v1.mjs';
 
 const grid={laneCount:4,wheelSpacingM:2.5,laneStaggerM:.08};
 
@@ -680,6 +683,105 @@ test('a measured peloton catch refuses unpriced solo contact',()=>{
   assert.throws(()=>recordPhysicalFirstPositionMultiSoloRaceV1({
     input:committed,grid}),
   /Solo kilometre needs paid bunch contact/);
+});
+
+test('shared road records a paid catch and slide into the rear',()=>{
+  const committed=cappedInput(4);
+  committed.positionModelVersion=
+    PHYSICAL_FIRST_POSITION_START_V2_VERSION;
+  for(const segment of committed.kilometres.slice(1)){
+    segment.terrain='hill';
+    segment.gradientPct=3.75;
+  }
+  for(const stake of committed.stakes)
+    stake.sportingGoal='break_stage';
+  committed.teams[0].orders.baseline.attack='selective';
+  committed.teams[0].orders.baseline.attackRiderId=
+    'team-0-7';
+  Object.assign(committed.teams[0].riders[6],{
+    flat:85,hills:0,sprint:85,
+    acceleration:100,positioning:100});
+  const start=createPhysicalFirstPositionStartV2({
+    input:committed,grid});
+  const choice=choosePhysicalFirstBoundaryAttacksV1({
+    prior:{sourceKm:0,
+      roads:[{roadId:'peloton',
+        riderIds:start.positions.map(row=>row.riderId),
+        clockSeconds:0}],
+      riders:start.positions.map(row=>({
+        riderId:row.riderId,teamId:row.teamId,
+        roadId:'peloton',distanceM:0,
+        clockSeconds:0,reserve:row.energy,
+        quietKm:row.quietKm}))},
+    segment:committed.kilometres[0],
+    teams:committed.teams,
+    stakes:committed.stakes,
+    kilometres:committed.kilometres})
+    .find(row=>row.choice==='attempt_paid_attack');
+  const first=advancePhysicalFirstPositionAttackDepartureKmV1({
+    prior:start,segment:committed.kilometres[0],
+    input:committed,choice});
+  const secondPeloton=advancePhysicalFirstPositionRotationKmV2({
+    prior:first.peloton,
+    segment:committed.kilometres[1],
+    input:committed});
+  const secondSolo=advancePhysicalFirstPositionSoloKmV1({
+    priorSolo:first.soloPosition,
+    priorPeloton:first.peloton,
+    nextPeloton:secondPeloton,
+    segment:committed.kilometres[1],
+    input:committed});
+  const request={priorPeloton:secondPeloton,
+    priorSolos:[secondSolo.position],
+    segment:committed.kilometres[2],
+    input:committed};
+  const caught=advancePhysicalFirstPositionSharedRoadKmV1(
+    request);
+  assert.equal(caught.sourceKm,3);
+  assert.equal(caught.decisions.length,16);
+  assert.ok(caught.contactEvents.length>0);
+  assert.deepEqual(caught.caughtSoloRiderIds,
+    ['team-0-7']);
+  assert.equal(caught.soloCatchEvents.length,1);
+  assert.equal(caught.soloCatchEvents[0].sourceKm,3);
+  assert.ok(caught.soloCatchEvents[0]
+    .observedAtClockSeconds>
+      secondPeloton.clockSeconds);
+  assert.ok(caught.soloCatchEvents[0]
+    .observedAtClockSeconds<caught.clockSeconds);
+  assert.ok(caught.soloCatchEvents[0]
+    .contactRiderIds.includes('team-0-2'));
+  assert.deepEqual(caught.joinedSoloRiderIds,[]);
+  assert.equal(caught.positions.find(row=>
+    row.riderId==='team-0-7').roadId,'rear:1');
+  assert.ok(caught.decisions.every(row=>
+    row.paidDistanceM>0&&
+    row.paidFromReserve>0));
+  assert.deepEqual(replayPhysicalFirstPositionSharedRoadKmV1(
+    request,caught),caught);
+  const forged=structuredClone(caught);
+  forged.soloCatchEvents[0].soloDistanceM+=1;
+  assert.throws(()=>
+    replayPhysicalFirstPositionSharedRoadKmV1(
+      request,forged),
+  /differs from paid movement/);
+  const final=advancePhysicalFirstPositionSharedRoadKmV1({
+    priorPeloton:caught,
+    segment:committed.kilometres[3],
+    input:committed});
+  assert.equal(final.sourceKm,4);
+  assert.equal(final.decisions.length,16);
+  assert.ok(final.clockSeconds>caught.clockSeconds);
+  assert.ok(final.positions.every(row=>
+    row.distanceM>caught.positions.find(previous=>
+      previous.riderId===row.riderId).distanceM));
+  const finish=settlePhysicalFirstPositionFixedLaneFinishV1({
+    prior:final,input:committed});
+  assert.equal(finish.finishCrossings.length,16);
+  assert.ok(finish.finishCrossings.every(row=>
+    Number.isFinite(row.clockSeconds)));
+  assert.deepEqual(replayPhysicalFirstPositionFixedLaneFinishV1({
+    prior:final,input:committed},finish),finish);
 });
 
 test('committed first leader and positioning contest form a replayable start',()=>{
