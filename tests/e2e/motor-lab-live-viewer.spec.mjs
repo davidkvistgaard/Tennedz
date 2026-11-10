@@ -112,6 +112,8 @@ test('authenticated full Motor Lab race reaches the new WebGL viewer',
       .click();
     await expect(finishedPage.locator('.race-theatre-details li'))
       .toHaveCount(32, {timeout: 15000});
+    await expect(finishedPage.getByLabel('Shared replay finished'))
+      .toBeVisible();
     await finishedPage.close();
     await expect(page.locator('.race-theatre')).toBeVisible({timeout: 30000});
     await expect(page.getByText(/Playback time is presentation time/))
@@ -129,7 +131,7 @@ test('authenticated full Motor Lab race reaches the new WebGL viewer',
     expect(observed.targetAvailable).toBe(true);
     expect(Math.abs(observed.sampledDistance - observed.camera.focus[2]))
       .toBeLessThan(12);
-    expect(observed.camera.zoom).toBe(1);
+    expect(observed.camera.zoom).toBe(.5);
     await page.locator('.race-theatre-stage').screenshot({
       path: 'test-results/motor-lab-live-desktop.png'});
     console.log(`Motor Lab generated WebGL: ${JSON.stringify({
@@ -139,11 +141,12 @@ test('authenticated full Motor Lab race reaches the new WebGL viewer',
       drawP50Ms: observed.drawP50Ms,
       drawCalls: observed.drawCalls, triangles: observed.triangles,
       backend: observed.graphicsBackend?.unmaskedRenderer})}`);
+    let presentationKm = 42;
     await page.route('**/api/motor-lab/checkpoint-clock?*', route =>
       route.fulfill({json: {raceId: body.feed.raceId,
         serverNowMs: Date.now(),
         clock: {position: 0,
-          serverEpochMs: Date.now() - 42 * 8 * 1000,
+          serverEpochMs: Date.now() - presentationKm * 8 * 1000,
           rate: 1, paused: false, duration: body.feed.duration}}}));
     await expect(page.locator('.race-theatre-group-scroll button').first())
       .toContainText('leaders', {timeout: 15000});
@@ -155,6 +158,16 @@ test('authenticated full Motor Lab race reaches the new WebGL viewer',
     expect(actualBreakMove?.status).toBe('split');
     await expect(page.locator('.race-theatre-commentary'))
       .toContainText('Amber Captain got clear from the break');
+    // The selected leading road group is caught later. Its local camera
+    // target must move to a group still present in the recorded checkpoint.
+    await page.locator('.race-theatre-group-scroll button').first().click();
+    presentationKm = 80;
+    await expect.poll(async () => (await diagnostics())?.routeCoverage?.time,
+      {timeout: 15000}).toBeGreaterThan(80 * 8);
+    await expect.poll(async () => (await diagnostics())?.targetAvailable)
+      .toBe(true);
+    await expect(page.locator('.race-theatre-group-scroll button.active'))
+      .toContainText('peloton');
     await page.getByRole('button', {name: 'Race details'}).click();
     await page.getByRole('button', {name: 'results', exact: true}).click();
     await expect(page.getByText(/Withheld until the shared checkpoint/))
@@ -195,6 +208,11 @@ test('generated Motor Lab viewer fits a phone and survives an asset failure',
       .toBeVisible({timeout: 30000});
     await expect(page.getByText(/scene asset failed to load/))
       .toBeVisible({timeout: 30000});
+    await expect.poll(async () => JSON.parse(await page.locator(
+      '[data-viewer-diagnostics]').getAttribute(
+      'data-viewer-diagnostics'))?.targetAvailable).toBe(true);
+    await page.locator('.race-theatre-stage').screenshot({
+      path: 'test-results/motor-lab-live-mobile-stage.png'});
     expect(await page.evaluate(() =>
       document.documentElement.scrollWidth <= innerWidth)).toBe(true);
     await page.getByRole('button', {name: 'Race details'}).click();

@@ -28,10 +28,10 @@ export default function ViewerPreviewScene({feed,coverage,mode='recorded',
   const [detailsOpen,setDetailsOpen]=useState(false);
   const [tab,setTab]=useState('riders'),[light,setLight]=useState('day');
   useEffect(()=>{
-    // Shared Motor Lab checkpoints move 125 m/s in presentation time. Keep
-    // the full source group in frame; other viewer modes retain their tested
-    // close camera. This only changes local camera framing.
-    viewerRef.current?.setZoom(mode==='lab'?1:.35);
+    // Shared Motor Lab checkpoints move 125 m/s in presentation time. The
+    // runtime follows their source coordinate directly, so the closer camera
+    // can keep the recorded group in view. This changes only local framing.
+    viewerRef.current?.setZoom(mode==='lab'?.5:.35);
   },[cycleKey,mode]);
   const time=stats?.time??0;
   // Keep the recorded feed authoritative for every sporting display value.
@@ -54,6 +54,17 @@ export default function ViewerPreviewScene({feed,coverage,mode='recorded',
     recordedGroupHeadingsV1(situation.positions,situation.gaps,
       situation.groupRoles):
     labelRaceGroups(raceGroups(situation.positions),situation.groupRoles);
+  const visibleGroupIds=groups.map(group=>group.id).join('|');
+  useEffect(()=>{
+    if(target.type!=='group'||!groups.length||
+      groups.some(group=>group.id===target.id))return;
+    // A recorded road group can be caught or split at the next checkpoint.
+    // Keep a local camera target on the road without changing the race feed.
+    const fallback=groups.find(group=>group.id===pelotonId)??groups[0];
+    const next={type:'group',id:fallback.id};
+    setTarget(next);
+    viewerRef.current?.follow(next);
+  },[visibleGroupIds,target.type,target.id,pelotonId]);
   const commentary=mode==='guided'||mode==='lab'?
     (feed.events??[]).filter(event=>event.time<=time)
       .map((event,index)=>({id:`recorded-${index}`,time:event.time,
@@ -267,7 +278,9 @@ export default function ViewerPreviewScene({feed,coverage,mode='recorded',
         </details>
       </div>
       <div className="race-theatre-transport">
-        <span className="race-theatre-live" aria-label="Shared replay in progress">●</span>
+        <span className="race-theatre-live" aria-label={
+          clock?.paused&&time>=feed.duration?
+            'Shared replay finished':'Shared replay in progress'}>●</span>
         <div className="race-theatre-time"><small>{mode==='lab'?
           'SHARED CHECKPOINT PLAYBACK':'SHARED REPLAY'}</small>
           <strong>{clockLabel(time)} <span>/ {clockLabel(feed.duration)}</span></strong>
