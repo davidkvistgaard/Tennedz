@@ -2,9 +2,12 @@
 
 ## Udgivelse og kilde
 
-- Aktuelt udgivet kode: `61bbaf65886d8dc0530430898afd01932078a46d`
+- Aktuelt udgivet kode: `f7daf6752f55eec2d0c336405f10c2cb071e6719`
   på `codex/viewer-atlas-integration`.
-  Den versionerede guided-adapter v1-3 sorterer officielle målrækker efter
+  Standardvieweren linker nu direkte til løbskalenderens gemte spilløb og
+  beholder indgangen til et Motor Lab-testløb. Den tidligere kodecommit
+  `61bbaf65886d8dc0530430898afd01932078a46d` indeholder den
+  versionerede guided-adapter v1-3, som sorterer officielle målrækker efter
   kildens placering og bruger kildens vinder-tid som reference for de viste
   tidsforskelle. Kildens placeringer og måltider ændres ikke. `cf2db20c`
   begrænser en gemt optagelse til managerens egen division. `c1a03eed`
@@ -12,8 +15,9 @@
   testbuilds og fixtures fra Vercels upload. `8e9beb73` gjorde handlingen
   "Generate and watch a test race" tydelig på standardvieweren, og
   `485d60cc` rettede kameraet efter fangster.
-- Aktuelt Vercel-produktionsdeployment: `dpl_HT3Rj7XDk4ywBXJ2bRNSLKPw3VGC`.
-  Den forrige produktion `dpl_39nxYcLYSHqFbaZx4rzUixNfcvBq` og dennes
+- Aktuelt Vercel-produktionsdeployment: `dpl_88zYwQMbHGX2sCyiSEPiNDuY7cFW`.
+  Den forrige produktion `dpl_HT3Rj7XDk4ywBXJ2bRNSLKPw3VGC`, dennes
+  forgænger `dpl_39nxYcLYSHqFbaZx4rzUixNfcvBq` og dennes
   forgænger `dpl_BSEMYg5mqyu9mM4W3HFez7qCPshq`, kameraudgaven
   `dpl_FkRU2sf1QtCroYzDKpc3nYvLgmvL` og den ældre
   `dpl_CEUquKHrX4mpB98B3tKZxg24hSaj` var `READY` ved kontrol. De nye
@@ -72,7 +76,8 @@ kontrolvinduet.
 
 På den sidste udgivelse viste den offentlige standardviewer knappen
 "Generate and watch a test race", WebGL-rendering og JavaScript fra
-`dpl_HT3Rj7XDk4ywBXJ2bRNSLKPw3VGC`. Et klik førte den loggede manager til
+`dpl_88zYwQMbHGX2sCyiSEPiNDuY7cFW` samt det nye link "Watch your saved
+game race" til `/team/run`. Et klik på testløbslinket førte den loggede manager til
 den beskyttede formular med plan, rute, scenarienummer og holdordrer uden at
 starte et løb automatisk. `www.tennedz.eu/viewer` viderestillede til
 `tennedz.eu/viewer` og viste samme deployment uden konsolfejl. Den staged
@@ -80,6 +85,14 @@ build blev kontrolleret med 32 WebGL2-ryttere, korrekt JavaScript-id og nul
 konsolfejl, og derefter på hoveddomænet. En logget ind manager fik
 `RUN_FORBIDDEN` ved direkte adgang til en optagelse uden eget
 divisionsmedlemskab.
+
+For den nye navigation bestod lint og en frisk isoleret Next.js-build.
+Staging og derefter hoveddomænet viste begge links, 32 renderede ryttere,
+WebGL-scenen og JavaScript-URL med `dpl_88zYwQMbHGX2sCyiSEPiNDuY7cFW`.
+Browseren rapporterede ingen konsoladvarsler eller fejl. Begge domænealiaser
+pegede på samme `READY` deployment; den tidligere produktion var `READY`
+som rollback. Vercels runtime-logoversigt havde ingen indlæg i
+kontrolvinduet.
 
 ## Testport
 
