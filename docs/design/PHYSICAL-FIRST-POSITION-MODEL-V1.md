@@ -250,3 +250,21 @@ difference from old group clocks is about 129 seconds. These differences
 are retained as evidence that the new positional timing still needs
 calibration; the output has no official classification. The synthetic
 roster uses identical numerical skills for the two gender labels.
+Repeating the men's variant with a second committed seed also completed
+120/120 kilometres, 160/160 paid crossings and whole-recording replay;
+it exercised the same one paid pass after 42 refusals. This seed check
+does not add a distinct rider-strength profile.
+
+A deliberately synthetic front-worker ability sensitivity check exposes
+the next missing contract. Reducing the current worker's three terrain
+abilities by five points changes the older source's first-kilometre
+start drops from 66 to 46. The positional race advances 42 km with
+6,720 paid rider-kilometres and four measured contact changes, then
+stops at kilometre 43: the selected replacement has a clear outside
+lane only 0.24 m behind the front, but the established pass calculation
+would lose a second sheltered wheel. The model cannot yet pay the pass
+and simultaneous contact loss on one clock. Increasing the worker's
+abilities by five points completes 120 km and 160/160 paid crossings,
+but the older source and position model disagree on peloton membership
+throughout the race. These synthetic variants are diagnostic inputs,
+not canonical rider profiles or permission to infer official results.

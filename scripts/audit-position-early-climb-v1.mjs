@@ -48,10 +48,19 @@ const rotateAfterDrop=process.argv.includes(
   '--rotate-after-drop');
 const recordWhole=process.argv.includes(
   '--record-whole');
+const seed=process.argv.find(arg=>
+  arg.startsWith('--seed='))?.slice('--seed='.length)??
+  'preview-recorded-road-1';
+const frontAbilityShift=Number(process.argv.find(arg=>
+  arg.startsWith('--front-ability-shift='))
+  ?.slice('--front-ability-shift='.length)??0);
+if(!Number.isInteger(frontAbilityShift)||
+  Math.abs(frontAbilityShift)>10)
+  throw new Error('Audit front ability shift must be an integer within 10.');
 const settings={distanceKm:120,teamCount:20,
   gender:category==='men'?'M':'F',
   terrain:'mountain',fatigue:0,attack:'none',
-  chase:'selective',seed:'preview-recorded-road-1'};
+  chase:'selective',seed};
 const sportingStakes=prepareV91Playtest(settings)
   .teams.map(team=>({teamId:team.id,
     goal:team.id==='you'?'summit_attack':'none',
@@ -70,6 +79,14 @@ const {recording}=createV94RaceDynamicsPreview({
   roadGroupRiderDecisionVersion:1,
   protectorSportingPursuitVersion:1});
 const {teams,rivalIntent}=recording.committedInputs;
+if(frontAbilityShift){
+  // Synthetic profile sensitivity only; never change a historic recording.
+  const worker=teams.find(team=>team.id==='you')
+    .riders.find(rider=>rider.id==='you-5');
+  for(const ability of ['flat','hills','mountain'])
+    worker[ability]=Math.max(0,Math.min(100,
+      worker[ability]+frontAbilityShift));
+}
 // A committed named worker can impose a pace some sheltered riders
 // cannot hold. This is a new input variant, not a changed recording.
 teams.find(team=>team.id==='you')
@@ -211,8 +228,11 @@ try{
     }catch(error){
       unsupported={sourceKm:roadSegment.km,
         reason:error.message};
-      if(rotateAfterDrop&&error.message===
-        'Fixed-lane convoy needs a paid front pass.'){
+      if(rotateAfterDrop&&[
+        'Fixed-lane convoy needs a paid front pass.',
+        'Rotation kilometre loses first shelter.',
+        'Rotation kilometre loses second shelter.'
+      ].includes(error.message)){
         const candidate=prior.positions.find(
           row=>row.riderId==='you-6');
         unsupported.frontPassGeometry={
@@ -334,7 +354,8 @@ try{
 }
 process.stdout.write(`${JSON.stringify({
   version:'physical-first-position-early-climb-audit-1',
-  category,hybrid,rotateAfterDrop,
+  category,hybrid,rotateAfterDrop,seed,
+  syntheticFrontAbilityShift:frontAbilityShift,
   riderCount:riders.length,
   firstTerrain:kilometres[0].terrain,
   sourceFront:source.steps[0].peloton
