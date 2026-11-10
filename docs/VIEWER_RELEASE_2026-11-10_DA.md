@@ -2,21 +2,26 @@
 
 ## Udgivelse og kilde
 
-- Aktuelt udgivet kode: `8e9beb732cb53a66a2b95ba77888ef30a3c7d1b5`
-  på `codex/viewer-atlas-integration`. Det gør handlingen "Generate and watch
-  a test race" tydelig på standardvieweren og fører den loggede manager til
-  taktikformularen. Den underliggende kamerarettelse kom med
-  `485d60cc232d4d883531498ea856efd5018dac1f`.
-- Aktuelt Vercel-produktionsdeployment: `dpl_BSEMYg5mqyu9mM4W3HFez7qCPshq`.
-  Kameraudgaven `dpl_FkRU2sf1QtCroYzDKpc3nYvLgmvL` og den forrige
-  `dpl_CEUquKHrX4mpB98B3tKZxg24hSaj` var `READY` ved kontrol. Begge
+- Aktuelt udgivet kode: `c1a03eed89e45f93be485b8b0bf597422e83da64`
+  på `codex/viewer-atlas-integration`. `cf2db20c` begrænser en gemt
+  optagelse til managerens egen division. `c1a03eed` udelukker lokale
+  testbuilds og fixtures fra Vercels upload. `8e9beb73` gjorde handlingen
+  "Generate and watch a test race" tydelig på standardvieweren, og
+  `485d60cc` rettede kameraet efter fangster.
+- Aktuelt Vercel-produktionsdeployment: `dpl_39nxYcLYSHqFbaZx4rzUixNfcvBq`.
+  Den forrige produktion `dpl_BSEMYg5mqyu9mM4W3HFez7qCPshq`, kameraudgaven
+  `dpl_FkRU2sf1QtCroYzDKpc3nYvLgmvL` og den ældre
+  `dpl_CEUquKHrX4mpB98B3tKZxg24hSaj` var `READY` ved kontrol. De nye
   udgivelser blev først bygget til produktionsmiljø uden domæne og derefter
   promoveret uden genbygning. `tennedz.eu` og `www.tennedz.eu` pegede på
   det aktuelle deployment efter sidste promovering.
-- Deploymentets kildefiler for `ViewerPreviewClient.js`, `viewer-preview.css`
-  og den fokuserede Motor Lab-browsertest havde samme SHA-1 som i den rene
-  lokale commit. Tidligere blev `ViewerPreviewScene.js` ligeledes matchet
-  for kamerarettelsen. Produktionssidens JavaScript-URL havde det aktuelle
+- På de tidligere deployments havde `ViewerPreviewClient.js`,
+  `viewer-preview.css`, den fokuserede Motor Lab-browsertest og
+  `ViewerPreviewScene.js` samme SHA-1 som i de rene lokale commits. I den
+  seneste staged build matchede
+  `app/api/event-run/route.js` lokal SHA-1
+  `9df546e7f63dc337a26237c657c190a5d1612118`. Dry-run havde nul lokale
+  build- eller testfiler. Produktionssidens JavaScript-URL havde det aktuelle
   deployment-id.
 - Den parallelle Atlas-gren stod på `d55d2ef42b2b7dffa2a32c51d171740d4528a5db`
   ved udgivelsen; denne commit er forfader til viewer-grenen. Motor-grenen
@@ -61,10 +66,14 @@ kontrolvinduet.
 
 På den sidste udgivelse viste den offentlige standardviewer knappen
 "Generate and watch a test race", WebGL-rendering og JavaScript fra
-`dpl_BSEMYg5mqyu9mM4W3HFez7qCPshq`. Et klik førte den loggede manager til
+`dpl_39nxYcLYSHqFbaZx4rzUixNfcvBq`. Et klik førte den loggede manager til
 den beskyttede formular med plan, rute, scenarienummer og holdordrer uden at
 starte et løb automatisk. `www.tennedz.eu/viewer` viderestillede til
-`tennedz.eu/viewer` og viste samme deployment uden konsolfejl.
+`tennedz.eu/viewer` og viste samme deployment uden konsolfejl. Den staged
+build blev kontrolleret med 32 WebGL2-ryttere, korrekt JavaScript-id og nul
+konsolfejl, og derefter på hoveddomænet. En logget ind manager fik
+`RUN_FORBIDDEN` ved direkte adgang til en optagelse uden eget
+divisionsmedlemskab.
 
 ## Testport
 
@@ -76,7 +85,9 @@ starte et løb automatisk. `www.tennedz.eu/viewer` viderestillede til
 - Seks yderligere browsertests bestod for guidede herre- og kvindefelter
   med 160 ryttere og visuelle felter på 30 og 150 ryttere i begge kategorier.
   Tre tests bestod for gemte løb gennem den beskyttede `/api/event-run`,
-  herunder kilderesultatet ved fælles mål.
+  herunder kilderesultatet ved fælles mål. En fjerde autentificeret test
+  bekræftede, at en manager kan se sin egen division, men får 403 ved et
+  andet divisionsnummer eller som udenforstående.
 - På den lokale Intel UHD/WebGL2-maskine målte de visuelle felter 87 fps
   (30 mænd), 61 fps (150 mænd), 81 fps (30 kvinder) og 60 fps
   (150 kvinder). Et guidet 160-rytter kvindeløb målte 42 fps. Den genererede
