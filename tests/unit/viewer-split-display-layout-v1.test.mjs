@@ -38,4 +38,22 @@ for (const category of ['men', 'women']) {
     assert.equal(new Set(middle.positions.map(row =>
       `${row.distance}:${row.lateral}`)).size, source.riders.length);
   });
+
+  test(`${category} default recording displays the full peloton`, () => {
+    const source = JSON.parse(readFileSync(new URL(
+      `../../data/viewer/physical-40km-${category}-v1.json`,
+      import.meta.url))).feed;
+    const original = structuredClone(source);
+    const display = illustrativeGroupLayoutFeedV1(source);
+    assert.deepEqual(validateFeed(display), display);
+    assert.deepEqual(source, original);
+    assert.deepEqual(display.events, source.events);
+    assert.deepEqual(display.results, source.results);
+    assert.deepEqual(display.finish, source.finish);
+    const middleIndex = Math.floor(display.frames.length / 2);
+    const middle = display.frames[middleIndex];
+    assert.deepEqual(middle.groupRoles, source.frames[middleIndex].groupRoles);
+    assert.equal(new Set(middle.positions.map(row =>
+      `${row.distance}:${row.lateral}`)).size, source.riders.length);
+  });
 }

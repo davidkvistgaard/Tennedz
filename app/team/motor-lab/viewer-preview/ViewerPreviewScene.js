@@ -212,8 +212,8 @@ export default function ViewerPreviewScene({feed,coverage,mode='recorded',
         Riders sharing a recorded road position are spaced for display only.
         Exact lanes and order were not recorded.
       </p>:groupOnlyPositions?<p className="race-theatre-position-note">
-        Riders on the same recorded road overlap in the scene. Their
-        individual lanes and order were not recorded.
+        Riders sharing a recorded road position are spaced for display only.
+        Exact lanes and order were not recorded.
       </p>:null}
       <div className="race-theatre-commentary">
         <p>RACE COMMENTARY <small>{mode==='exhibition'?
@@ -258,7 +258,7 @@ export default function ViewerPreviewScene({feed,coverage,mode='recorded',
             'The recording has one kilometre per checkpoint for every rider. Between checkpoints the display interpolates time and distance. All members of a checkpoint share its recorded kilometre; visual overlap does not mean a measured tie. Group gaps remain seconds, not invented metres. The trees, ground and spectators are illustrative; no canonical geography or exact lanes were recorded.':
           mode==='split'?
             'Longitudinal positions between motor crossings are interpolated. Riders at the same recorded road position are spaced visually within their group; the recorded distance and group remain authoritative. Group gaps are not presented as exact simultaneous positions. Lanes, canonical geography, helmets and official results are absent. Trees, ground and spectators are synthetic.':
-          'Within-kilometre movement is interpolation between recorded states. Lanes, canonical geography, helmets and official results are absent. Trees, ground and spectators are synthetic visual presentation.'}</p>
+          'Within-kilometre movement is interpolation between recorded states. Riders sharing a road position are spaced visually; their recorded distance and group remain authoritative. Exact lanes, order, canonical geography, helmets and official results are absent. Trees, ground and spectators are synthetic visual presentation.'}</p>
       </details>
       <output className="race-theatre-diagnostics" hidden
         data-viewer-diagnostics={JSON.stringify(diagnostics)}/>

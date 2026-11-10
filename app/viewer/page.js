@@ -25,7 +25,8 @@ export default async function PublicViewerPage({searchParams}){
     recordedViewerRaceV1(category);
   const race=exhibition?syntheticExhibitionV1(recorded.feed,
     {fieldSize,missingAsset}):recorded;
-  const displayFeed=split?illustrativeGroupLayoutFeedV1(race.feed):race.feed;
+  const displayFeed=exhibition?race.feed:
+    illustrativeGroupLayoutFeedV1(race.feed);
   return <ViewerPreviewClient previewPath="/viewer"
     clockPath={exhibition?'/api/viewer-exhibition-clock':
       '/api/viewer-sample-clock'}

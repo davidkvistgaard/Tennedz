@@ -56,8 +56,8 @@ sample. Two foliage textures come from the supplied Viewer Integration Kit
 recording, rider identities, kilometre boundaries, group membership, events,
 orders, and results are unchanged; tests compare the original and scenic
 sampling. The recording places all 32 riders at the same longitudinal road
-position within one peloton and has no lanes, so the 3D view cannot display a
-real spread-out peloton or multiple groups from that source.
+position within one peloton and has no lanes. The current renderer spaces
+their bikes illustratively but cannot infer real order or multiple groups.
 
 `viewer-visual-exhibition-2` is a separate, explicitly fictional four-minute
 visual fixture at `/viewer?mode=exhibition`. It shows leaders, a chase group,
@@ -117,14 +117,14 @@ visible asset error while WebGL and the race continued at about 61 fps. Two
 separate browser spectators showed the same shared race second while each
 retained a different local camera target. A single recorded 32-rider women's
 race tab displayed about 50–53 fps late in the 40 km race, with metres shown
-under the last kilometre. The recorded riders all overlap at one coordinate;
-the interface now explains that data limitation beside the replay.
+under the last kilometre. That observation preceded the illustrative group
+layout; the recorded source still has one coordinate for all 32 riders.
 
-This is a visual milestone, not a finished engine-to-production integration.
-Official race replays still lack the simultaneous rider coordinates that the
-package requires. The next data milestone is a new versioned adapter from a
-whole-race motor recording that supplies actual distance and group transitions
-for every rider, followed by the same-seed replay and finish checks.
+This was a visual milestone. Guided game replays now have a separate versioned
+adapter, documented in `VIEWER_GUIDED_INTEGRATION_DA.md`, but the saved race
+still lacks measured simultaneous rider coordinates and paid contact at every
+kilometre. Whole-race same-seed replay and finish checks remain required for
+the experimental motor before it can be used for official racing.
 
 ## Experimental 120 km split-road recording
 
@@ -164,8 +164,9 @@ substituted for an official race.
 ## Split-road display study, 10 November 2026
 
 `illustrative-group-layout-1` now gives riders who share the same recorded
-group, distance, and lane a stable visual arrangement in the split-road
-preview. The source recording is not changed. Each drawn rider remains in its
+group, distance, and lane a stable visual arrangement in both the default
+32-rider recording and the 120-rider split-road preview. The source recording
+is not changed. Each drawn rider remains in its
 recorded group and at most 20 m behind its recorded distance anchor; the
 arrangement does not claim measured lanes, wheel order, contact, or race
 results. The viewer labels this limitation beside the canvas. A frame at the
@@ -173,13 +174,20 @@ start line can still overlap because the source has zero distance and the
 display does not move anyone before the start.
 
 The 120 km schematic scene uses 80 m longitudinal terrain cells instead of
-20 m cells, and its decorative road markings are built in 512 m sections for
-camera culling. These changes affect only generated scenery. On the local
+20 m cells. Decorative road markings on both 40 km and 120 km schematic
+roads are built in 512 m sections for camera culling. These changes affect
+only generated scenery. On the local
 Intel UHD/ANGLE WebGL2 browser, the split preview displayed all 120 riders
 at a midrace checkpoint, around 0.9 million rendered triangles, 75 draw
 calls, and about 29 fps after warmup. This is one-device evidence and still
 below a 60 fps target. The 30-rider fictional exhibition displayed about
 44 fps and the 150-rider exhibition about 31 fps in the same session. The
 missing-texture fixture displayed a fallback warning while WebGL continued.
+The updated 32-rider default recording displayed a visible peloton in both
+categories instead of one stack of bikes. At a midrace checkpoint, the men’s
+local WebGL view submitted about 1.23 million triangles and 78 draw calls,
+versus about 1.60 million triangles before 40 km marking culling. Its
+displayed rate was around 37 fps in both builds; the polygon reduction did
+not produce a measured frame-rate gain on this machine.
 The split recording still has 50/120 same-seed finish mismatches and no
 official result. It is not approved for guided races or production default.

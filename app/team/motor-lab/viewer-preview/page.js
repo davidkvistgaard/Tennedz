@@ -20,7 +20,7 @@ export default async function ViewerPreviewPage({searchParams}){
   const split=params?.race==='split';
   const race=split?recordedSplitRaceV1(category):
     recordedViewerRaceV1(category);
-  const displayFeed=split?illustrativeGroupLayoutFeedV1(race.feed):race.feed;
+  const displayFeed=illustrativeGroupLayoutFeedV1(race.feed);
   return <TeamShell compact><ViewerPreviewClient {...race}
     feed={scenicPresentationV1(displayFeed)}
     mode={split?'split':'recorded'}

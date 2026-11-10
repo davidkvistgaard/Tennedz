@@ -3425,7 +3425,7 @@ function zn(e, t, n) {
 	p(C, T.materials), p(xn(l, t.route.width));
 	// Long schematic roads need local marking meshes so the GPU can cull
 	// kilometres that are outside the current camera view.
-	let markingChunk = _ ? 512 : n.length;
+	let markingChunk = t.synthetic === !0 && t.route.points?.length === 2 && n.length >= 4e4 ? 512 : n.length;
 	for (let from = 0; from < n.length; from += markingChunk) {
 		let to = Math.min(n.length, from + markingChunk), k = new L();
 		for (let index = Math.ceil(from / 6.8); index * 6.8 < to; index++) {
