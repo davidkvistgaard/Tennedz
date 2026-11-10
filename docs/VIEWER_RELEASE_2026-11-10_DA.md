@@ -2,8 +2,12 @@
 
 ## Udgivelse og kilde
 
-- Aktuelt udgivet kode: `f7daf6752f55eec2d0c336405f10c2cb071e6719`
+- Aktuelt udgivet kode: `8c6937278e553c9a89cc75d0c208f77c752e07a3`
   på `codex/viewer-atlas-integration`.
+  Dækningsforklaringen for gemte guidede løb siger nu korrekt, at alle ryttere
+  er til stede ved hvert gemt checkpoint, mens ikke hver kilometer er optaget.
+  `f7daf6752f55eec2d0c336405f10c2cb071e6719` tilføjede den synlige
+  adgang til gemte spilløb.
   Standardvieweren linker nu direkte til løbskalenderens gemte spilløb og
   beholder indgangen til et Motor Lab-testløb. Den tidligere kodecommit
   `61bbaf65886d8dc0530430898afd01932078a46d` indeholder den
@@ -15,8 +19,9 @@
   testbuilds og fixtures fra Vercels upload. `8e9beb73` gjorde handlingen
   "Generate and watch a test race" tydelig på standardvieweren, og
   `485d60cc` rettede kameraet efter fangster.
-- Aktuelt Vercel-produktionsdeployment: `dpl_88zYwQMbHGX2sCyiSEPiNDuY7cFW`.
-  Den forrige produktion `dpl_HT3Rj7XDk4ywBXJ2bRNSLKPw3VGC`, dennes
+- Aktuelt Vercel-produktionsdeployment: `dpl_mR9UwaMvFAf5h4L2EiMSqEThHqUB`.
+  Den forrige produktion `dpl_88zYwQMbHGX2sCyiSEPiNDuY7cFW`, dennes
+  forgænger `dpl_HT3Rj7XDk4ywBXJ2bRNSLKPw3VGC`, dennes
   forgænger `dpl_39nxYcLYSHqFbaZx4rzUixNfcvBq` og dennes
   forgænger `dpl_BSEMYg5mqyu9mM4W3HFez7qCPshq`, kameraudgaven
   `dpl_FkRU2sf1QtCroYzDKpc3nYvLgmvL` og den ældre
@@ -76,7 +81,7 @@ kontrolvinduet.
 
 På den sidste udgivelse viste den offentlige standardviewer knappen
 "Generate and watch a test race", WebGL-rendering og JavaScript fra
-`dpl_88zYwQMbHGX2sCyiSEPiNDuY7cFW` samt det nye link "Watch your saved
+`dpl_mR9UwaMvFAf5h4L2EiMSqEThHqUB` samt det nye link "Watch your saved
 game race" til `/team/run`. Et klik på testløbslinket førte den loggede manager til
 den beskyttede formular med plan, rute, scenarienummer og holdordrer uden at
 starte et løb automatisk. `www.tennedz.eu/viewer` viderestillede til
@@ -88,11 +93,16 @@ divisionsmedlemskab.
 
 For den nye navigation bestod lint og en frisk isoleret Next.js-build.
 Staging og derefter hoveddomænet viste begge links, 32 renderede ryttere,
-WebGL-scenen og JavaScript-URL med `dpl_88zYwQMbHGX2sCyiSEPiNDuY7cFW`.
+WebGL-scenen og JavaScript-URL med `dpl_mR9UwaMvFAf5h4L2EiMSqEThHqUB`.
 Browseren rapporterede ingen konsoladvarsler eller fejl. Begge domænealiaser
 pegede på samme `READY` deployment; den tidligere produktion var `READY`
 som rollback. Vercels runtime-logoversigt havde ingen indlæg i
 kontrolvinduet.
+Den seneste rettelse bestod fire autentificerede browserforløb for gemte
+herre- og kvindeløb, inklusive resultat ved fælles mål og divisionsværn.
+Den isolerede produktionsbuild, lint og diffkontrol bestod. Uploadmanifestet
+indeholdt ingen lokale build- eller testfiler; staged kildefilen havde SHA-1
+`35fa37bc7a2f8331331996f6d3cbaa406110eea2`.
 
 ## Testport
 
