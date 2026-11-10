@@ -170,6 +170,14 @@ grundlag for en generel 60 fps-påstand.
   (150 kvinder). Et guidet 160-rytter kvindeløb målte 42 fps. Den genererede
   32-ryttervisning målte 120 fps efter at en konkurrerende WebGL-fane blev
   lukket. GPU-ydelse på andre enheder er ikke verificeret.
+- En senere samlet gentagelse på samme Intel UHD-maskine under anden lokal
+  belastning bestod også alle fire WebGL2-felter, men målte 35 fps
+  (30 mænd), 22 fps (150 mænd), 31 fps (30 kvinder) og 21 fps
+  (150 kvinder). Median-CPU-tiden var cirka 3 ms for 30 og 8 ms for 150
+  ryttere. Den lavere måling viser, at 150-ryttervisningen har begrænset
+  ydelsesmargin på denne enhed; tidligere højere fps kan ikke bruges som
+  generelt ydelsesløfte. Baggrundsfaners rapporterede fps er ikke en
+  pålidelig GPU-måling.
 
 ## Datagrænser
 
