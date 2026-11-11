@@ -55,6 +55,8 @@ const byAttack=Object.fromEntries(
         row.sameSeedFinishMismatches>0).length}];
   }));
 const summary={version:'motor-viewer-release-audit-2',
+  enginePath:'physical-first-group-clock-probe-v1',
+  positionModelV7:false,
   scenarios:rows.length,completed:complete.length,
   failed:rows.length-complete.length,
   calibrated:complete.filter(row=>

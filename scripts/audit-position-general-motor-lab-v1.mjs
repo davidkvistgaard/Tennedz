@@ -1,5 +1,7 @@
 // Same-input audit of the experimental positional recorder against
 // current 120-rider Motor Lab test inputs. Group clocks are not wheels.
+// --require-ready exits nonzero unless complete V7 replay, an unambiguous
+// finish, source-comparable decisions and official results all exist.
 import {isDeepStrictEqual} from 'node:util';
 import {preparePhysicalFirstSplitMotorInputV1} from
   '../lib/viewer/physical-first-split-test-race-v1.mjs';
@@ -35,6 +37,7 @@ const attack=option('attack','none');
 const positionVersion=option('position-version','1');
 const sourceVersion=option('source-version','1');
 const sprintStakes=option('sprint-stakes','none');
+const requireReady=process.argv.includes('--require-ready');
 const seeds=option('seeds',
   'preview-recorded-road-1').split(',');
 if(categories.some(value=>
@@ -267,6 +270,7 @@ for(const category of categories)
             120*119,
         finishCoverage:
           position?.finishCrossings.length===120,
+        officialResults:position?.officialResults??null,
         unresolvedFinishClockTies:
           position?.finaleFinishTieObservations
             ?.length??null,
@@ -359,6 +363,9 @@ for(const category of categories)
     }
 const summary={version:
   'physical-first-position-general-motor-lab-audit-1',
+enginePath:positionVersion==='7'?
+  'physical-first-position-general-race-v7':
+  'physical-first-position-general-race-earlier',
 fixture:sprintStakes==='none'?
   'current_motor_lab_test_input':
   'synthetic_stake_variant_of_motor_lab_test_input',
@@ -412,8 +419,20 @@ casesWithSprintPasses:rows.filter(row=>
   (row.sprintPasses??0)>0).length,
 casesWithUnresolvedFinishClockTies:rows.filter(row=>
   (row.unresolvedFinishClockTies??0)>0).length,
-officialResults:false,
-readyForGuidedRaces:false};
+officialResultsAvailable:rows.filter(row=>
+  row.officialResults===true).length,
+officialResults:rows.length>0&&rows.every(row=>
+  row.officialResults===true),
+readyForGuidedRaces:positionVersion==='7'&&
+  sourceVersion==='2'&&rows.length>0&&
+  rows.every(row=>row.sourceStatus==='complete_replayed'&&
+    row.positionStatus==='complete_replayed'&&
+    row.decisionCoverage&&row.checkpointCoverage&&
+    row.finishCoverage&&row.finaleFrameRiderCoverage&&
+    row.unresolvedFinishClockTies===0&&
+    row.officialResults===true&&
+    row.attackChoiceMismatchesWithoutFinishedSourceRider===0&&
+    row.firstPelotonMismatchKm===null)};
 process.stdout.write(JSON.stringify({summary,rows},
   null,2)+'\n');
 if(rows.some(row=>row.positionStatus!==
@@ -424,5 +443,6 @@ if(rows.some(row=>row.positionStatus!==
   !row.checkpointCoverage||
   !row.finishCoverage||
   positionVersion==='7'&&
-    !row.finaleFrameRiderCoverage))
+    !row.finaleFrameRiderCoverage)||
+  requireReady&&!summary.readyForGuidedRaces)
   process.exitCode=1;

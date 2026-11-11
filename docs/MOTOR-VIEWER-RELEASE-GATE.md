@@ -1,5 +1,14 @@
 # Motor Lab viewer release gate
 
+**Scope of this audit:** `pnpm audit:viewer:release` runs the older
+`physical-first-group-clock-probe-v1`, not the experimental V7 wheel-position
+engine. Its 8,592 unresolved group-clock finishes must not be reported as V7
+finish ties. The V7 audit is
+`node scripts/audit-position-general-motor-lab-v1.mjs --position-version=7 --source-version=2 --require-ready`.
+The latter checks replay, kilometre decisions, recorded positions and finish
+crossings, and exits unsuccessfully while official results or other required
+release evidence are missing. Neither audit alone authorizes production.
+
 Run `pnpm audit:viewer:release` from the Motor Lab worktree. It covers 72
 complete paid 120 km races: two distinct seeds, both rider categories, three
 route profiles, two chase orders and three attack orders. The command prints
