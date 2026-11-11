@@ -2,6 +2,8 @@
 import http from "node:http";
 import { spawn } from "node:child_process";
 import { randomUUID } from "node:crypto";
+import {existsSync} from 'node:fs';
+import {resolve} from 'node:path';
 import {v2BrowserRecordingLock} from './v2-browser-recording-fixture.mjs';
 import {physicalGameViewerFixture,physicalViewerEventId} from
   './physical-game-viewer-fixture.mjs';
@@ -36,13 +38,25 @@ const physicalViewerRecordedAt=physicalViewerFixture?
   new Date(Date.now()+(process.env.
     PELOTONIA_E2E_PHYSICAL_VIEWER_FINISHED==='true'?-600000:60000))
     .toISOString():null;
+const persistedPositionViewer=process.env.
+  PELOTONIA_E2E_POSITION_VIEWER_PERSISTED==='true';
 const positionViewerFixture=process.env.PELOTONIA_E2E_POSITION_VIEWER===
-  'true';
+  'true'||persistedPositionViewer;
+const persistedPositionPath=process.env.
+  PELOTONIA_PERSISTED_POSITION_DB?
+  resolve(process.env.PELOTONIA_PERSISTED_POSITION_DB):null;
+if(persistedPositionViewer&&!persistedPositionPath)
+  throw new Error('Set PELOTONIA_PERSISTED_POSITION_DB for the isolated race.');
+if(persistedPositionViewer&&!existsSync(persistedPositionPath))
+  throw new Error('The persisted position race database is missing.');
+const persistedPositionDb=persistedPositionViewer?
+  new (await import('@electric-sql/pglite')).PGlite(
+    persistedPositionPath):null;
 const positionViewerTeamCount=Number(process.env.
   PELOTONIA_E2E_POSITION_VIEWER_TEAMS??2);
 const positionViewerCategory=process.env.
   PELOTONIA_E2E_POSITION_VIEWER_CATEGORY??'men';
-const positionViewerData=positionViewerFixture?
+const positionViewerData=positionViewerFixture&&!persistedPositionViewer?
   positionGameViewerFixture({teamCount:positionViewerTeamCount,
     category:positionViewerCategory}):null;
 const positionViewerDocument=positionViewerData?.document;
@@ -117,6 +131,12 @@ const server = http.createServer(async (req, res) => {
     }
     if (positionViewerFixture && url.pathname ===
       '/rest/v1/rpc/recovery_position_viewer_broadcast_source_v1') {
+      if(persistedPositionDb){
+        const row=await persistedPositionDb.query(`select
+          public.recovery_position_viewer_broadcast_source_v1(
+            $1::uuid) as source`,[body.p_event]);
+        return send(200,row.rows[0]?.source??null);
+      }
       if(body.p_event!==positionViewerEventId||
         !positionViewerRecordedAt)return send(200,null);
       return send(200,{recorded_at:positionViewerRecordedAt,
@@ -126,11 +146,32 @@ const server = http.createServer(async (req, res) => {
     }
     if (positionViewerFixture && url.pathname ===
       '/rest/v1/rpc/recovery_race_snapshot') {
+      if(persistedPositionDb){
+        const row=await persistedPositionDb.query(`select
+          public.recovery_race_snapshot($1::uuid) as snapshot`,
+        [body.p_event]);
+        return send(200,row.rows[0]?.snapshot??null);
+      }
       if(body.p_event!==positionViewerEventId)return send(200,null);
       return send(200,positionViewerData.snapshot);
     }
     if (positionViewerFixture && url.pathname ===
       '/rest/v1/rpc/recovery_save_position_race_recording_v1') {
+      if(persistedPositionDb){
+        try{
+          const row=await persistedPositionDb.query(`select
+            public.recovery_save_position_race_recording_v1(
+              $1::uuid,$2::jsonb,$3::jsonb,$4::jsonb,
+              $5::jsonb,$6::text) as receipt`,
+          [body.p_event,JSON.stringify(body.p_snapshot),
+            JSON.stringify(body.p_entries),
+            JSON.stringify(body.p_document),
+            JSON.stringify(body.p_archive_metadata),
+            body.p_archive_base64]);
+          return send(200,row.rows[0].receipt);
+        }catch(error){return send(409,{code:error.code??'PT409',
+          message:error.message});}
+      }
       const invalid={event:body.p_event!==positionViewerEventId,
         snapshot:body.p_snapshot?.event?.id!==positionViewerEventId,
         entries:body.p_entries?.length!==positionViewerData.rows.length,
@@ -252,17 +293,33 @@ const server = http.createServer(async (req, res) => {
           document:physicalViewerDocument,
           recorded_at:physicalViewerRecordedAt}:null);
     if (positionViewerFixture && table ===
-      'recovery_position_race_recordings')
+      'recovery_position_race_recordings'){
+      if(persistedPositionDb){
+        const row=await persistedPositionDb.query(`select document,
+          recorded_at from public.recovery_position_race_recordings
+          where event_id=$1::uuid`,[positionViewerEventId]);
+        return send(200,row.rows[0]??null);
+      }
       return send(200,positionViewerRecordedAt&&
         url.searchParams.get('event_id')===
         `eq.${positionViewerEventId}`?{
           document:positionViewerDocument,
           recorded_at:positionViewerRecordedAt}:null);
+    }
     if (positionViewerFixture && table ===
-      'recovery_physical_entry_inputs')
+      'recovery_physical_entry_inputs'){
+      if(persistedPositionDb){
+        const row=await persistedPositionDb.query(`select
+          to_jsonb(i)-'committed_at' as entry
+          from public.recovery_physical_entry_inputs i
+          where event_id=$1::uuid order by team_id`,
+        [positionViewerEventId]);
+        return send(200,row.rows.map(item=>item.entry));
+      }
       return send(200,url.searchParams.get('event_id')===
         `eq.${positionViewerEventId}`?
         positionViewerData.rows:[]);
+    }
     if (noContestFixture && table === "recovery_two_phase_voids")
       return send(200, noContestCancelled ? [{
         event_id: twoPhaseEventId, reason: "INCOMPLETE_ENTRY_SCAN", decided_by: ids.alice,

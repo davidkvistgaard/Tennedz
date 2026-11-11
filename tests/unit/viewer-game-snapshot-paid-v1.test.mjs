@@ -90,6 +90,12 @@ for(const category of ['M','F'])
       snapshot,manifest);
     assert.deepEqual(verifyGameSnapshotPositionViewerDocumentV1(
       document),document);
+    const stored=structuredClone(document);
+    stored.input.grid=Object.fromEntries(Object.entries(
+      stored.input.grid).sort(([left],[right])=>
+      left.localeCompare(right)));
+    assert.deepEqual(verifyGameSnapshotPositionViewerDocumentV1(
+      stored),stored);
     assert.deepEqual(validateFeed(document.feed),document.feed);
     assert.equal(document.feed.synthetic,false);
     assert.equal(document.feed.results,undefined);
