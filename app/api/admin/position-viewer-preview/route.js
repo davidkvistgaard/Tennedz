@@ -6,8 +6,8 @@ import {rpc,uuid} from '../../../../lib/race/server';
 import {loadGameSnapshotPositionRaceRecordingV1,
   verifyGameSnapshotPositionViewerDocumentV1} from
   '../../../../lib/viewer/game-snapshot-position-viewer-v1.mjs';
-import {encodeGameSnapshotPositionRaceArchiveV1} from
-  '../../../../lib/viewer/game-snapshot-position-archive-v1.mjs';
+import {encodeGameSnapshotPositionRaceArchiveV2} from
+  '../../../../lib/viewer/game-snapshot-position-archive-v2.mjs';
 import {recordedGameBroadcastV1} from
   '../../../../lib/viewer/recorded-game-broadcast-v1.mjs';
 
@@ -100,7 +100,7 @@ export const POST=protectedRoute(async req=>{
   if(recording.bundle.document.input.eventId!==eventId)
     throw new AuthError('POSITION_VIEWER_UNAVAILABLE',
       'Position recording belongs to another event.',409);
-  const archive=encodeGameSnapshotPositionRaceArchiveV1(
+  const archive=encodeGameSnapshotPositionRaceArchiveV2(
     recording.bundle);
   const receipt=await rpc(db,
     'recovery_save_position_race_recording_v1',{

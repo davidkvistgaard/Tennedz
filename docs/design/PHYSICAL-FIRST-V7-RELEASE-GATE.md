@@ -14,24 +14,39 @@ production viewer. The long design ledger remains in
 | Mixed attack and sprint orders | A labelled synthetic 12-case matrix keeps the current team's attack stake and assigns sprint stakes to the 14 rival teams, across both categories, three terrains and two chase orders. Source and V7 replay all 12 with full rider coverage, one paid attack departure and 14 paid sprint choices per case; each has recorded sprint passes. | Passed for this selected stake variation; finish ties remain |
 | Mixed 150-rider transport stress | Two synthetic seeds per category, each 150 riders and 120 km with attack and sprint stakes, completed and replayed 18,000 decisions, 17,850 intermediate crossings and 150 finishes. Seed 1 recorded 16/17 paid contacts (men/women), 2,234/2,231 finale frames and 25,330,730/25,276,738 raw finale-projection bytes. V3 kept every finish milestone with 149 displayed finale frames and 3,266,708/3,263,925-byte complete viewer projections. Seed 2 recorded 307/16 contacts, 2,231/2,231 finale frames and 3,316,230/3,325,309-byte projections, with 153/154 displayed finale frames. The full motor records remain separate; seed 2 request plus race measured 50,341,845/49,363,156 JSON bytes. All four races still have 12/25/27/32 finish-tie groups. | Both synthetic categories and two seeds passed; official finish and hosted runtime open |
 | Sporting calibration | 24/36 same-seed cases differ in named front leader. Every attack-choice detail mismatch in those 36 cases involves a rider the source still counts on another road after V7 has recorded that rider over the finish. No mismatch without this condition was found. In the flat men's case the first front-leader difference is a refused, unpayable pass at km 88. Maximum final reserve drift is 3.349; maximum old group-clock versus paid-wheel finish drift is 9.674 seconds. | Open: assess front work and finish by physical evidence, never copy the old group clock as a wheel |
-| Official finish | All 36 selective-attack cases and all 36 new-seed repeated-attack cases expose unresolved model-clock ties. In a separate flat 120-rider no-attack fixture, both categories have 23 two-rider ties: each pair occupies the same recorded longitudinal distance in different lanes just before the line. A controlled 120 km, 120-rider strength probe on three seeds found 13, 0 and 28 tie groups with the fixture's identical rider ratings; after a small, explicitly synthetic per-rider rating variation, it found 0, 0 and 0. A second control uses the actual game starter sporting profiles in synthetic 120-rider events, with sprint stakes for all teams: three seeds in each category completed and replayed 14,400 decisions and 120 finishes per race, with zero ties in all six. This is not a saved game roster or a varied-order release matrix. Ties depend on input and seed, and none is silently ordered. No official placing or awards are produced. | Blocked pending real roster validation and a non-invented tie policy |
+| Official finish | All 36 selective-attack cases and all 36 new-seed repeated-attack cases expose unresolved model-clock ties. In a separate flat 120-rider no-attack fixture, both categories have 23 two-rider ties: each pair occupies the same recorded longitudinal distance in different lanes just before the line. A controlled 120 km, 120-rider strength probe on three seeds found 13, 0 and 28 tie groups with the fixture's identical rider ratings; after a small, explicitly synthetic per-rider rating variation, it found 0, 0 and 0. A second control uses actual game starter sporting profiles in synthetic 120-rider events, with sprint stakes for all teams. The first six runs had zero ties, but that fixture inadvertently retained a synthetic attacker's acceleration and positioning bonus. After removing those bonuses, the first two seeds in each category still had zero ties. These are not saved game rosters or a varied-order release matrix. Ties depend on input and seed, and none is silently ordered. No official placing or awards are produced. | Blocked pending real roster validation and a non-invented tie policy |
 | Full display fidelity | Before the final 300 metres, within-kilometre movement is visual interpolation. Metric lateral coordinates, canonical geography and actual helmets are absent from this Motor Lab fixture. | Open |
 | Local browser inspection | The development inspection page renders the 120-rider, 120 km synthetic fixture in WebGL for both categories; all 120 distinct midrace positions render. A separate authenticated local recording flow starts with no saved document, then runs the actual POST simulation and save for 16 men, 16 women, 120 men and 120 women on a 20 km committed-shape fixture. The published replays rendered in WebGL and displayed measured, unofficial finish crossings, which stayed visible across replay cycles. The women's unpublished replay showed no race feed or finish and its document endpoint returned 425. At time zero 119 of the 120-rider, 120 km fixture have recorded negative start-grid distances, which viewer 0.98.2 culls; at the final time all 120 recorded finish coordinates coincide, so the scene overlaps them. | Local flows passed; start and finish scene fidelity and hardware GPU benchmark open |
 | Hosted release | An isolated branch build succeeds with 53 generated pages including the flag-gated recording, clock and viewer routes. The local recording test uses a fixture database, not the hosted Supabase project. The migration has not been applied to production. V7 is not wired to guided races or production. | Blocked pending hosted integration and release checks |
 
 The full 120-rider recording is much larger than its viewer
-projection. A 120-rider/120 km V7 fixture measured 14,175,640
-JSON bytes for the motor ledger and 1,706,991 gzip bytes. The
-versioned archive envelope checks its compressed and uncompressed
-hashes, event ID, viewer-document hash and full motor replay after
-decompression, with a bounded output size. A separate, immutable
+projection. A flat 120-rider/120 km V7 fixture measured 14,175,640
+JSON bytes for the motor ledger and 1,706,991 gzip bytes in the V1
+archive. A synthetic game-shaped, mountainous 120-rider run with game
+starter sporting profiles generated 45,140 contact observations and
+204,989,027 raw bundle JSON bytes. This exceeds V1's 64 MiB bound.
+The lossless V2 archive packs repeated contact topology by rider index,
+removes duplicate top-level contact and checkpoint arrays, then restores
+the exact V7 bundle before full replay verification. That same run used
+64,517,108 JSON bytes before gzip and 5,429,942 after, within V2's
+64 MiB uncompressed bound. The corresponding synthetic women's case
+replayed 45,128 contact observations with 205,056,349 raw bundle
+bytes, 64,634,992 compact JSON bytes and 5,408,400 gzip bytes.
+JSON normalizes a cosmetic starter appearance value of `-0` to `0`;
+the archive check compares all recorded fields under that JSON rule.
+These are two synthetic cases, not a hosted workload guarantee; the
+margin to the bound is small. The
+archive envelope checks compressed and uncompressed hashes, event ID,
+viewer-document hash and full motor replay after decompression. V1
+archives remain readable. A separate, immutable
 experimental table can store that archive and the versioned viewer
 document. Its local PGlite tests cover privacy, immutability,
 current-entry checks, base64-to-bytea storage and the small clock
 response. The hosted database and runtime remain unverified. Generate
 and replay a race once, persist the archive and separate versioned
 viewer document, and serve only the document on later page views.
-The recording route rereads the committed snapshot and entries after
+The recording route uses V2 for new experimental recordings and rereads
+the committed snapshot and entries after
 simulation to reject a changed race. A local 120-rider recording exposed
 a closed idle mock-database connection during that final verification;
 the route retries a failed read once. The save itself is never retried.

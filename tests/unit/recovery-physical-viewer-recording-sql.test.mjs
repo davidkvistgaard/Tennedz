@@ -232,3 +232,26 @@ test('experimental V7 recording refuses changed committed inputs',async()=>{
       /team inputs changed/);
   }finally{await db.close();}
 });
+
+test('experimental V7 recording accepts the lossless V2 archive only with its packing contract',async()=>{
+  const db=await database();
+  try{
+    const input=await source(db);
+    const metadata={...archiveMetadata,
+      version:'motor-lab-game-position-race-archive-v2',
+      packing:'contact-topology-index-v1'};
+    await assert.rejects(savePosition(db,input,
+      positionDocument,{...metadata,packing:null}),
+    /falsely official/);
+    const receipt=await savePosition(db,input,
+      positionDocument,metadata);
+    assert.equal(receipt.already_recorded,false);
+    const stored=await db.query(`select archive_metadata
+      from public.recovery_position_race_recordings
+      where event_id=$1`,[event]);
+    assert.equal(stored.rows[0].archive_metadata.version,
+      metadata.version);
+    assert.equal(stored.rows[0].archive_metadata.packing,
+      metadata.packing);
+  }finally{await db.close();}
+});

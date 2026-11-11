@@ -17,6 +17,10 @@ import {manifestFromCommittedPhysicalEntriesV1} from
 import {encodeGameSnapshotPositionRaceArchiveV1,
   decodeGameSnapshotPositionRaceArchiveV1} from
   '../../lib/viewer/game-snapshot-position-archive-v1.mjs';
+import {encodeGameSnapshotPositionRaceArchiveV2,
+  decodeGameSnapshotPositionRaceArchiveV2,
+  GAME_SNAPSHOT_POSITION_ARCHIVE_V2_VERSION} from
+  '../../lib/viewer/game-snapshot-position-archive-v2.mjs';
 import {createPhysicalGameRaceDocumentV1,
   loadPhysicalGameRaceDocumentV1} from
   '../../lib/viewer/physical-game-race-source-v1.mjs';
@@ -212,6 +216,28 @@ test('compressed V7 archive replays its original motor and viewer document',()=>
     metadata:{...archive.metadata,
       uncompressedBytes:100*1024*1024},
     body:archive.body}),/metadata changed/);
+});
+
+test('V2 archive restores paid contact topology without changing V1',()=>{
+  const {snapshot,manifest}=fixture('M');
+  const bundle=createGameSnapshotPositionRaceBundleV1(
+    snapshot,manifest);
+  const v2=encodeGameSnapshotPositionRaceArchiveV2(bundle);
+  assert.equal(v2.metadata.version,
+    GAME_SNAPSHOT_POSITION_ARCHIVE_V2_VERSION);
+  assert.deepEqual(decodeGameSnapshotPositionRaceArchiveV2(v2),
+    bundle);
+  const repeat=encodeGameSnapshotPositionRaceArchiveV2(bundle);
+  assert.deepEqual(repeat.metadata,v2.metadata);
+  assert.deepEqual(repeat.body,v2.body);
+  const v1=encodeGameSnapshotPositionRaceArchiveV1(bundle);
+  assert.deepEqual(decodeGameSnapshotPositionRaceArchiveV1(v1),
+    bundle);
+  const changed=Buffer.from(v2.body);
+  changed[changed.length-1]^=1;
+  assert.throws(()=>decodeGameSnapshotPositionRaceArchiveV2({
+    metadata:v2.metadata,body:changed}),
+  /metadata changed/);
 });
 
 test('saved race input remains fixed through V7 projection',async()=>{

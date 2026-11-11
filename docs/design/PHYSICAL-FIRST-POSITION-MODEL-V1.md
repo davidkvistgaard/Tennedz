@@ -1187,10 +1187,28 @@ V1/V2 recordings retain their original export and verification
 behavior. These cases still contain unresolved model-clock ties;
 the transport change does not validate an official finish.
 An additional read-only diagnostic copies the game's starter sporting
-profiles into labelled synthetic 120-rider V7 events. Three seeds in
-each category complete and replay all 14,400 decisions and 120
-finish crossings, with no model-clock tie in any of the six races.
-This differs materially from equal-rating test fixtures, but is
-not a persisted roster, a varied-order sample, or proof that all
-future events have an unambiguous winner. No official result is
-published by this diagnostic.
+profiles into labelled synthetic 120-rider V7 events. The initial
+three seeds in each category completed and replayed all 14,400
+decisions and 120 finish crossings, with zero model-clock ties, but
+that diagnostic had retained a synthetic attacker's acceleration and
+positioning bonus. The corrected diagnostic removes both bonuses;
+its first two seeds in each category still have zero ties. This
+differs materially from equal-rating test fixtures, but is not a
+persisted roster, a varied-order sample, or proof that all future
+events have an unambiguous winner. No official result is published.
+
+That corrected mountainous control recorded about 45,000 paid contact
+topology observations and roughly 202 MB of raw request-plus-race
+JSON, exceeding the V1 archive's 64 MiB uncompressed limit. A
+separate lossless V2 archive packs each per-step topology by its
+recorded rider index and derives duplicate top-level contact and
+checkpoint lists on decoding. It restores and fully replays the
+original V7 bundle, including its unchanged viewer document. A
+game-shaped men's 120-rider run measured 204,989,027 raw bundle bytes,
+64,517,108 compact JSON bytes and 5,429,942 gzip bytes. The matching
+women's run measured 205,056,349 raw, 64,634,992 compact and 5,408,400
+gzip bytes; JSON normalizes a cosmetic appearance value of `-0` to `0`
+without changing recorded motor fields. The 64 MiB
+compact bound leaves little headroom for other races. The V1 archive
+decoder remains available for historic experimental recordings. The
+storage change does not settle finish ties or hosted runtime cost.

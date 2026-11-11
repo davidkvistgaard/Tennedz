@@ -13,17 +13,23 @@ import {replayRearEnergyCapV1} from
 const category=process.argv[2]??'men';
 const seed=process.argv[3]??
   `v7-starter-roster-${category}-1`;
+const mode=process.argv[4]??'sprint_control';
 if(!['men','women'].includes(category)||
+  !['sprint_control','selective_attack'].includes(mode)||
   !/^[A-Za-z0-9-]{1,64}$/.test(seed))
-  throw new Error('Supply a category and bounded seed.');
+  throw new Error('Supply a category, bounded seed and mode.');
 const request=prepareSyntheticPositionCatchV1({
   teamCount:15,riderCount:120,kmCount:120,
   profile:'hill_then_mountain',
-  oneTimeAttack:false,raceSeed:seed});
+  oneTimeAttack:mode==='selective_attack',
+  raceSeed:seed});
 request.input.positionPassingCorridorCount=1;
-request.input.teams[0].orders.baseline.attack='none';
+if(mode==='sprint_control')
+  request.input.teams[0].orders.baseline.attack='none';
 for(const stake of request.input.stakes)
-  stake.sportingGoal='sprint_finish';
+  stake.sportingGoal=mode==='selective_attack'&&
+    stake.teamId===request.input.teams[0].id?
+      'break_stage':'sprint_finish';
 const gender=category==='men'?'M':'F';
 for(const [teamIndex,team] of
   request.input.teams.entries()){
@@ -33,6 +39,8 @@ for(const [teamIndex,team] of
   if(starter.length!==team.riders.length)
     throw new Error('Starter profile field is incomplete.');
   for(const [index,rider] of team.riders.entries()){
+    delete rider.acceleration;
+    delete rider.positioning;
     for(const key of skills)
       rider[key]=starter[index][key];
     rider.leadership=starter[index].leadership;
@@ -59,12 +67,48 @@ replayPhysicalFirstPositionGeneralRaceV7(request,race);
 const tiedRiders=new Set(
   race.finaleFinishTieObservations.flatMap(row=>
     row.riderIds));
+const sectionBytes=Object.fromEntries(
+  Object.entries(race).map(([key,value])=>
+    [key,Buffer.byteLength(JSON.stringify(value))]));
+const riderIndex=new Map(request.input.start.riders
+  .map((row,index)=>[row.riderId,index]));
+const packedSteps=race.steps.map(step=>({
+  ...step,sharedRoad:{...step.sharedRoad,
+    contactEvents:undefined,
+    contactEventsPacked:step.sharedRoad.contactEvents.map(event=>{
+      const groups=event.components;
+      if(event.version!==step.sharedRoad.version||
+        event.type!=='paid_contact_topology_observation'||
+        event.sourceKm!==step.sourceKm||
+        groups.length>255||groups.some(group=>
+        !Array.isArray(group)||group.length>255||
+        group.some(id=>!riderIndex.has(id))))
+        throw new Error('Contact topology cannot be packed.');
+      const bytes=[groups.length,
+        ...groups.map(group=>group.length),
+        ...groups.flatMap(group=>group.map(id=>
+          riderIndex.get(id)))];
+      return [event.observedAtClockSeconds,
+        event.observedAfterPaidStepSeconds,
+        Buffer.from(bytes).toString('base64')];
+    })}}));
+const packedRecordBytes=Buffer.byteLength(
+  JSON.stringify({request,race:{...race,
+    steps:packedSteps,contactEvents:undefined,
+    checkpointCrossings:undefined}}));
 console.log(JSON.stringify({
   version:'v7-starter-roster-tie-control-1',
   source:'synthetic_event_game_starter_sporting_profiles',
-  category,seed,elapsedMs:Date.now()-started,
+  category,seed,mode,elapsedMs:Date.now()-started,
   decisions:race.decisionCount,
   finishers:race.finishCrossings.length,
+  attackDepartures:race.attackDepartureEvents.length,
+  paidContactEvents:race.contactEvents.length,
+  finaleFrames:race.tail.positionFrames.length,
+  motorRecordBytes:Buffer.byteLength(
+    JSON.stringify({request,race})),
+  sectionBytes,
+  packedRecordBytes,
   paidSprintPasses:race.finaleSprintPassEvents.length,
   tieGroups:race.finaleFinishTieObservations.length,
   tiedRiders:tiedRiders.size,

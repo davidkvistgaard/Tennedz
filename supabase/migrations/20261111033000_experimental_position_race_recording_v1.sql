@@ -107,8 +107,12 @@ begin
       'false'
     or coalesce(p_document->>'sha256','') !~ '^[a-f0-9]{64}$'
     or p_document->'feed' ? 'results'
-    or p_archive_metadata->>'version' is distinct from
-      'motor-lab-game-position-race-archive-v1'
+    or (p_archive_metadata->>'version' is distinct from
+        'motor-lab-game-position-race-archive-v1'
+      and (p_archive_metadata->>'version' is distinct from
+          'motor-lab-game-position-race-archive-v2'
+        or p_archive_metadata->>'packing' is distinct from
+          'contact-topology-index-v1'))
     or p_archive_metadata->>'encoding' is distinct from
       'gzip'
     or p_archive_metadata->>'eventId' is distinct from
