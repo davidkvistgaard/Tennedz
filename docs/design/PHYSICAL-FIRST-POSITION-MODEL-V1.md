@@ -1116,12 +1116,24 @@ assigns positions to old recordings. The V7 motor computes the
 race, the V2 viewer projection replays it, and a content hash
 seals the transport document. Men's and women's 16-rider,
 20 km game-shaped fixtures validate and reject a changed
-viewer frame. The hash checks transport integrity, not a
-substitute for the retained full motor replay. The read-only
+viewer frame. A separate 120-rider, 120 km game-shaped
+fixture validates all 14,400 rider-kilometres, 120 finishes
+and complete rider membership in each viewer frame. The hash
+checks transport integrity, not a substitute for a full motor
+replay. The separate race-bundle API keeps the V7 request and
+ledger, replays them and verifies that they reproduce the
+sealed viewer projection. A forged energy entry fails that
+check. Retaining the bundle for a later audit still requires
+separate persistence. The read-only
 loader refuses changed game snapshots or entry rows before
 or after simulation. This bridge is not connected to official
 races, persistence or a hosted WebGL viewer and does not
 publish results.
+The game-shaped bridge now resolves a missing stored seed or
+locked weather using the same deterministic fallback as the
+current official engine, and seals explicit provenance for each
+in the V7 viewer document. It does not invent an arbitrary
+seed or weather snapshot to satisfy the positional model.
 The V7 tie diagnostic on the current flat, no-attack 120-rider
 fixture reports 23 two-rider model-clock ties in each category.
 All 23 pairs occupy the same recorded longitudinal distance
@@ -1138,3 +1150,22 @@ coverage. A separate 12-case repeated-attack seed also passes
 those checks. These 84 cases establish continuity for the
 selected Motor Lab generator inputs, not universal coverage
 for arbitrary game events, a validated winner or release.
+The selective-attack audit was reclassified across all 36
+same-seed cases. Every attack-choice detail mismatch involves
+a source other-road rider who has already crossed the finish
+in the paid V7 positional record; no mismatch without that
+condition was found. For the flat men's first-seed case, the
+first named front-leader mismatch is at km 88: the source
+assigns `you-2`, while V7 retains `you-3` and records a
+`no_payable_front_pass` refusal. These observations explain
+where the models diverge; they do not validate V7's sporting
+outcome or justify copying a group clock into a wheel position.
+A further 12-case synthetic stake variation keeps the current
+team's committed `summit_attack` goal and gives the 14 rival
+teams `sprint_finish` goals. Both categories, all three terrain
+profiles and both chase orders complete and replay in source V2
+and V7. Every case records one paid attack departure, 14 paid
+sprint choices, 39–45 sprint passes, full decision/crossing/frame
+coverage and at least one unresolved finish tie. These
+experimental stakes are not the unmodified Motor Lab generator
+or an official game result.

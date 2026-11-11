@@ -46,7 +46,7 @@ if(categories.some(value=>
   !['none','selective','repeated'].includes(attack)||
   !['1','2','3','4','5','6','7'].includes(positionVersion)||
   !['1','2'].includes(sourceVersion)||
-  !['none','you','all'].includes(sprintStakes)||
+  !['none','you','rivals','all'].includes(sprintStakes)||
   sprintStakes!=='none'&&
     !['6','7'].includes(positionVersion)||
   seeds.some(seed=>
@@ -72,7 +72,9 @@ for(const category of categories)
         if(sprintStakes!=='none')
           input.stakes=input.stakes.map(stake=>({
             ...stake,sportingGoal:sprintStakes==='all'||
-              stake.teamId==='you'?
+              sprintStakes==='you'&&stake.teamId==='you'||
+              sprintStakes==='rivals'&&
+                stake.teamId!=='you'?
               'sprint_finish':stake.sportingGoal}));
         request={input,
           grid:{laneCount:4,
@@ -153,6 +155,36 @@ for(const category of categories)
           step.peloton.road.leaderRiderId===
             position.steps[index].sharedRoad
               .leaderRiderId?[]:[index+1]):[];
+      const firstFrontLeaderMismatch=
+        frontLeaderMismatches.length?(()=>{
+          const index=frontLeaderMismatches[0]-1;
+          const before=index===0?position.start:
+            position.steps[index-1].sharedRoad;
+          const candidate=before.positions.find(row=>
+            row.riderId===source.steps[index]
+              .peloton.road.leaderRiderId);
+          const modelFront=before.positions.find(row=>
+            row.riderId===before.leaderRiderId);
+          return {sourceKm:index+1,
+            sourceLeaderRiderId:source.steps[index]
+              .peloton.road.leaderRiderId,
+            positionLeaderRiderId:position.steps[index]
+              .sharedRoad.leaderRiderId,
+            positionFrontPassRefusal:
+              position.steps[index].frontPassRefusal??null,
+            positionFrontPassEvent:
+              position.steps[index].sharedRoad
+                .frontPassEvent??null,
+            sourceLeaderPriorPosition:candidate?{
+              roadId:candidate.roadId,
+              lane:candidate.lane,
+              distanceBehindModelFrontM:modelFront?
+                modelFront.distanceM-candidate.distanceM:null,
+              aheadInLaneCount:before.positions.filter(row=>
+                row.roadId==='peloton'&&
+                row.lane===candidate.lane&&
+                row.distanceM>candidate.distanceM).length}:null};
+        })():null;
       const attackChoiceMismatches=source&&position?
         source.steps.flatMap((step,index)=>
           step.attackChoices.flatMap(sourceChoice=>{
@@ -197,6 +229,13 @@ for(const category of categories)
       const sourceAttacks=source?.steps.flatMap(step=>
         step.attackSteps.map(attackStep=>
           `${step.sourceKm}:${attackStep.choice.riderId}`))??[];
+      const mismatchesWithFinishedSourceRider=
+        attackChoiceMismatches.filter(mismatch=>
+          mismatch.sourceOtherRoadRiders.some(sourceRider=>
+            mismatch.positionOtherRoadRiders.some(
+              positionRider=>
+                positionRider.riderId===sourceRider.riderId&&
+                positionRider.roadId==='finished')));
       const positionAttacks=position
         ?.attackDepartureEvents.map(event=>
           `${event.sourceKm}:${event.toRiderId}`)??[];
@@ -269,8 +308,16 @@ for(const category of categories)
             frontLeaderMismatches.length:null,
         firstFrontLeaderMismatchKm:
           frontLeaderMismatches[0]??null,
+        firstFrontLeaderMismatch,
         attackChoiceMismatchCount:source&&position?
           attackChoiceMismatches.length:null,
+        attackChoiceMismatchesWithSourceRiderAlreadyFinished:
+          source&&position?
+            mismatchesWithFinishedSourceRider.length:null,
+        attackChoiceMismatchesWithoutFinishedSourceRider:
+          source&&position?
+            attackChoiceMismatches.length-
+              mismatchesWithFinishedSourceRider.length:null,
         firstAttackChoiceMismatch:
           attackChoiceMismatches[0]??null,
         contactObservations:
@@ -346,6 +393,10 @@ casesWithFrontLeaderMismatch:rows.filter(row=>
   (row.frontLeaderMismatchKmCount??0)>0).length,
 casesWithAttackChoiceMismatch:rows.filter(row=>
   (row.attackChoiceMismatchCount??0)>0).length,
+casesWithAttackChoiceMismatchWithoutFinishedSourceRider:
+  rows.filter(row=>
+    (row.attackChoiceMismatchesWithoutFinishedSourceRider??0)>0)
+    .length,
 casesWithPelotonMembershipMismatch:rows.filter(row=>
   row.firstPelotonMismatchKm!==null).length,
 maxFinalReserveDifference:rows.every(row=>

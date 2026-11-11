@@ -6,7 +6,9 @@ import {createGameSnapshotPaidViewerDocumentV1,
   '../../lib/viewer/game-snapshot-paid-viewer-v1.mjs';
 import {createGameSnapshotPositionViewerDocumentV1,
   verifyGameSnapshotPositionViewerDocumentV1,
-  loadGameSnapshotPositionViewerDocumentV1} from
+  loadGameSnapshotPositionViewerDocumentV1,
+  createGameSnapshotPositionRaceBundleV1,
+  verifyGameSnapshotPositionRaceBundleV1} from
   '../../lib/viewer/game-snapshot-position-viewer-v1.mjs';
 import {manifestFromCommittedPhysicalEntriesV1} from
   '../../lib/viewer/committed-physical-manifest-v1.mjs';
@@ -17,14 +19,16 @@ import {createPhysicalGameRaceDocumentV1,
 const skills={sprint:65,flat:65,hills:65,mountain:65,
   cobbles:65,timetrial:65,endurance:65,strength:65,
   wind:65,leadership:65,form:50,fatigue:0};
-function fixture(category='M'){
+function fixture(category='M',teamCount=2,distanceKm=20){
   const event={id:'game-fixture-race',kind:'one_day',
     gender:category,seed:'committed-game-seed',
     weather_locked:{temp_c:16,wind_kph:0,
       precipitation_mm:0}};
-  const stage={distance_km:20,profile_points:[[0,100],[20,100]],
+  const stage={distance_km:distanceKm,
+    profile_points:[[0,100],[distanceKm,100]],
     keypoints:[]};
-  const teams=['a','b'].map(id=>{
+  const teams=Array.from({length:teamCount},(_,index)=>
+    index===0?'a':index===1?'b':`team-${index+1}`).map(id=>{
     const riders=Array.from({length:8},(_,index)=>({
       ...skills,id:`${id}-${index+1}`,
       name:`Rider ${id} ${index+1}`,gender:category}));
@@ -97,6 +101,46 @@ for(const category of ['M','F'])
       verifyGameSnapshotPositionViewerDocumentV1(changed),
     /changed or lacks paid evidence/);
   });
+
+test('120-rider committed-shape preview covers a whole race',()=>{
+  const {snapshot,manifest}=fixture('F',15,120);
+  const document=createGameSnapshotPositionViewerDocumentV1(
+    snapshot,manifest);
+  verifyGameSnapshotPositionViewerDocumentV1(document);
+  assert.equal(document.feed.riders.length,120);
+  assert.equal(document.source.validatedKm,120);
+  assert.equal(document.source.validatedRiderKilometres,14400);
+  assert.equal(document.coverage.recordedBoundaryFrames,121);
+  assert.equal(document.finishEvidence.entries.length,120);
+  assert.ok(document.feed.frames.every(frame=>
+    frame.positions.length===120&&
+    new Set(frame.positions.map(position=>
+      position.riderId)).size===120));
+});
+
+test('saved position bundle retains a replayable motor record',()=>{
+  const {snapshot,manifest}=fixture('M');
+  const bundle=createGameSnapshotPositionRaceBundleV1(
+    snapshot,manifest);
+  assert.equal(verifyGameSnapshotPositionRaceBundleV1(
+    bundle),bundle);
+  assert.equal(bundle.race.decisionCount,320);
+  assert.equal(bundle.document.source.inputHash,
+    bundle.race.inputHash);
+  const stored=JSON.parse(JSON.stringify(bundle));
+  assert.deepEqual(verifyGameSnapshotPositionRaceBundleV1(
+    stored),stored);
+  const changed=structuredClone(bundle);
+  changed.race.steps[0].sharedRoad.decisions[0]
+    .energyAfter+=1;
+  assert.throws(()=>
+    verifyGameSnapshotPositionRaceBundleV1(changed));
+  const wrongKit=structuredClone(bundle);
+  wrongKit.presentation.teamStyles[0].color='#ff0000';
+  assert.throws(()=>
+    verifyGameSnapshotPositionRaceBundleV1(wrongKit),
+  /changed its viewer projection/);
+});
 
 test('saved race input remains fixed through V7 projection',async()=>{
   const {snapshot,manifest}=fixture('F');
@@ -187,6 +231,20 @@ test('game snapshot refuses to infer tactical orders or race bibs',()=>{
   assert.throws(()=>createGameSnapshotPaidViewerDocumentV1(
     missingAbility.snapshot,missingAbility.manifest),
   /missing rider identity/);
+  const missingSeed=fixture();
+  delete missingSeed.snapshot.event.seed;
+  const seedFallback=createGameSnapshotPositionViewerDocumentV1(
+    missingSeed.snapshot,missingSeed.manifest);
+  assert.equal(seedFallback.input.seedProvenance,
+    'official-engine-fallback');
+  assert.match(seedFallback.source.raceSeed,
+    /^game-fixture-race:/);
+  const missingWeather=fixture();
+  delete missingWeather.snapshot.event.weather_locked;
+  const weatherFallback=createGameSnapshotPositionViewerDocumentV1(
+    missingWeather.snapshot,missingWeather.manifest);
+  assert.equal(weatherFallback.input.weatherProvenance,
+    'official-engine-deterministic-fallback');
 });
 
 test('physical viewer loader refuses a changed source snapshot',async()=>{
