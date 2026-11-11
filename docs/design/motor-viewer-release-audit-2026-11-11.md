@@ -82,6 +82,25 @@ are identical model crossing times rather than display rounding. Sorting
 the tied rider IDs would invent an official order. The finish solver still
 describes its crossing order as non-official.
 
+## Repeated-attack V7 holdout matrix
+
+A further audit used the unchanged Motor Lab repeated-attack input, seed
+`viewer-release-holdout-2`, source version 2 and position version 7. It
+covered both categories, all three terrain profiles and both chase orders:
+12 complete 120-rider, 120 km races. All 12 source and position traces
+completed and replayed; every case covered all rider decisions, checkpoints,
+finish crossings and finale frames. No sprint goal was added to this input.
+
+Eight cases (flat and rolling) had 17 front-leader mismatch kilometres each;
+mountain cases had none. Every case had attack-choice differences, but none
+involved a source rider still on the road: these differences concern riders
+already marked finished in the position trace. Maximum final reserve
+difference was 3.349 units. Maximum source group-clock versus wheel-finish
+difference was 9.653 seconds. All 12 cases still had 12–21 unresolved
+finish-clock ties. The audit remains `officialResults: false` and
+`readyForGuidedRaces: false`. This is one holdout seed, not the full V7
+release matrix.
+
 ## Hosted check
 
 The branch Preview uses an isolated test Supabase project. A normal
