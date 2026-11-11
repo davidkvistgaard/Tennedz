@@ -1,9 +1,10 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {choosePhysicalFirstBoundaryAttacksV1} from
+import {choosePhysicalFirstBoundaryAttacksV1,
+  choosePhysicalFirstBoundaryAttacksV2} from
   '../../lib/engine/v2/physical-first-attack-choice-v1.mjs';
 
-const segment={km:5,terrain:'flat',surface:'road',
+const segment={km:5,terrain:'flat',gradientPct:0,surface:'road',
   exposed:false,weather:{temperatureC:16,windKph:0,rainMm:0}};
 const rider=id=>({id,flat:70,hills:60,mountain:50,
   endurance:65,form:50,fatigue:0});
@@ -125,4 +126,59 @@ test('unnamed bridge holds when it cannot reach a useful shared turn',()=>{
   input.teams[0].orders.baseline.attackRiderId='helper';
   assert.equal(choosePhysicalFirstBoundaryAttacksV1(
     input)[0].choice,'attempt_paid_attack');
+});
+
+test('position choice counts a forward teammate from recorded metres',()=>{
+  const input=fixture();
+  input.teams[0].orders.baseline.helperAttackPolicy='open';
+  input.prior.frontDistanceM=4000;
+  input.prior.roads[0].riderIds=['helper'];
+  input.prior.riders[0].roadId='solo:captain';
+  input.prior.riders[0].distanceM=4103.8796;
+  input.kilometres=Array.from({length:40},
+    (_,index)=>({...segment,km:index+1}));
+  const historic=choosePhysicalFirstBoundaryAttacksV1(input)[0];
+  const positional=choosePhysicalFirstBoundaryAttacksV2(input)[0];
+  assert.equal(historic.forwardRiderCount,0);
+  assert.equal(positional.forwardRiderCount,1);
+  assert.ok(Math.abs(positional.bridge.measuredGapM-
+    103.8796)<1e-6);
+  assert.equal(positional.bridge.measuredGapSeconds,
+    undefined);
+  assert.equal(positional.bridge.projectedContactKm,null);
+  assert.equal(positional.choice,
+    'hold_unhelpful_forward_bridge');
+});
+
+test('position bridge tests closing speed against measured road gap',()=>{
+  const input=fixture();
+  input.teams[0].orders.baseline.helperAttackPolicy='open';
+  Object.assign(input.teams[0].riders[1],{
+    flat:100,timetrial:100});
+  input.prior.frontDistanceM=4000;
+  input.prior.roads[0].riderIds=['helper'];
+  input.prior.riders[0].roadId='solo:captain';
+  input.prior.riders[0].distanceM=4100;
+  input.kilometres=Array.from({length:40},
+    (_,index)=>({...segment,km:index+1}));
+  const choice=choosePhysicalFirstBoundaryAttacksV2(input)[0];
+  assert.equal(choice.forwardRiderCount,1);
+  assert.equal(choice.bridge.measuredGapM,100);
+  assert.ok(choice.bridge.closingSpeedMps>0);
+  assert.ok(choice.bridge.projectedContactKm>0);
+  assert.equal(choice.choice,'attempt_paid_attack');
+  input.kilometres=input.kilometres.slice(0,8);
+  assert.equal(choosePhysicalFirstBoundaryAttacksV2(input)[0]
+    .choice,'hold_unhelpful_forward_bridge');
+});
+
+test('position choice refuses an unmeasured front distance',()=>{
+  const input=fixture();
+  assert.throws(()=>
+    choosePhysicalFirstBoundaryAttacksV2(input),
+  /measured bunch/);
+  input.prior.frontDistanceM=3999;
+  assert.throws(()=>
+    choosePhysicalFirstBoundaryAttacksV2(input),
+  /measured bunch/);
 });

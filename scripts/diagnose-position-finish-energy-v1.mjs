@@ -6,8 +6,17 @@ import {PHYSICAL_FIRST_POSITION_START_V2_VERSION} from
   '../lib/engine/v2/physical-first-position-start-v2.mjs';
 import {runPhysicalFirstWholeRaceProbeV2} from
   '../lib/engine/v2/physical-first-whole-race-probe-v1.mjs';
-import {recordPhysicalFirstPositionGeneralRaceV3} from
+import {recordPhysicalFirstPositionGeneralRaceV3,
+  recordPhysicalFirstPositionGeneralRaceV4,
+  recordPhysicalFirstPositionGeneralRaceV5} from
   '../lib/engine/v2/physical-first-position-general-race-v1.mjs';
+import {orderAt} from '../lib/engine/v2/orders.mjs';
+import {riderKilometreEffect} from
+  '../lib/engine/v2/physiology.mjs';
+import {segmentBaseSeconds} from
+  '../lib/engine/v2/road-clock.mjs';
+import {MOTOR_RACE_DYNAMICS,TUNING} from
+  '../lib/engine/v2/tuning.mjs';
 
 const option=(name,fallback)=>process.argv.find(arg=>
   arg.startsWith(`--${name}=`))?.slice(name.length+3)??
@@ -17,10 +26,12 @@ const terrain=option('terrain','flat');
 const chase=option('chase','selective');
 const attack=option('attack','selective');
 const seed=option('seed','preview-recorded-road-1');
+const positionVersion=option('position-version','5');
 if(!['men','women'].includes(category)||
   !['flat','rolling','mountain'].includes(terrain)||
   !['selective','all'].includes(chase)||
   !['none','selective','repeated'].includes(attack)||
+  !['3','4','5'].includes(positionVersion)||
   !(/^[A-Za-z0-9-]{1,64}$/).test(seed))
   throw new Error('Unsupported finish-energy diagnosis input.');
 const prepared=preparePhysicalFirstSplitMotorInputV1(
@@ -30,7 +41,11 @@ const input={...prepared.input,
     PHYSICAL_FIRST_POSITION_START_V2_VERSION,
   positionPassingCorridorCount:1};
 const source=runPhysicalFirstWholeRaceProbeV2(input);
-const position=recordPhysicalFirstPositionGeneralRaceV3({
+const position=(positionVersion==='5'?
+  recordPhysicalFirstPositionGeneralRaceV5:
+  positionVersion==='4'?
+    recordPhysicalFirstPositionGeneralRaceV4:
+    recordPhysicalFirstPositionGeneralRaceV3)({
   input,grid:{laneCount:4,wheelSpacingM:2.5,
     laneStaggerM:.08}});
 const sourceFinal=new Map(source.states.at(-1).riders
@@ -48,6 +63,60 @@ const frontLeaderMismatches=source.steps.flatMap((step,index)=>{
     sourceKm:index+1,sourceLeaderRiderId,
     positionLeaderRiderId}];
 });
+const sources=new Map(input.teams.flatMap(team=>
+  team.riders.map(rider=>[rider.id,{rider,team}])));
+const speed=(riderId,energy,segment,phase)=>{
+  const source=sources.get(riderId);
+  const effort=orderAt(source.team.orders,
+    segment.km-1).effort;
+  const ability=riderKilometreEffect(source.rider,
+    segment,{phase,energy,
+      exposed:segment.exposed}).ability+
+    (TUNING.effortPressure[effort]-1)*20;
+  return 1000/(segmentBaseSeconds(segment)+
+    (50-ability)*
+      MOTOR_RACE_DYNAMICS.secondsPerAbilityPoint);
+};
+const firstFrontPassConstraints=frontLeaderMismatches
+  .slice(0,10).map(({sourceKm})=>{
+    const step=position.steps[sourceKm-1];
+    const prior=sourceKm===1?position.start:
+      position.steps[sourceKm-2].sharedRoad;
+    const candidateId=step.leaderPlan.leaderRiderId;
+    const frontId=prior.leaderRiderId??
+      prior.firstLeaderPlan.leaderRiderId;
+    const front=prior.positions.find(row=>
+      row.riderId===frontId);
+    const candidate=prior.positions.find(row=>
+      row.riderId===candidateId);
+    const segment=input.kilometres[sourceKm-1];
+    const sameRoad=candidate?.roadId==='peloton';
+    const laneClear=sameRoad&&
+      candidate.lane!==front.lane&&
+      !prior.positions.some(row=>
+        row.roadId==='peloton'&&
+        row.riderId!==candidateId&&
+        row.lane===candidate.lane&&
+        row.distanceM>candidate.distanceM+1e-6);
+    const relativeSpeedMps=sameRoad?
+      speed(candidateId,candidate.energy,segment,
+        'attack')-
+      speed(frontId,front.energy,segment,
+        'solo'):null;
+    const requiredGainM=sameRoad?
+      front.distanceM-candidate.distanceM+
+        prior.grid.wheelSpacingM:null;
+    const firstDistanceM=relativeSpeedMps>0?
+      speed(frontId,front.energy,segment,
+        'solo')*requiredGainM/
+          relativeSpeedMps:null;
+    return {sourceKm,frontId,candidateId,
+      sameRoad,laneClear,requiredGainM,
+      relativeSpeedMps,firstDistanceM,
+      proposedPassRecorded:
+        Boolean(step.sharedRoad.frontPassEvent),
+      refusal:step.frontPassRefusal??null};
+  });
 const rows=position.finishCrossings.map(crossing=>{
   const riderId=crossing.riderId;
   const sourceRow=sourceFinal.get(riderId);
@@ -73,6 +142,7 @@ process.stdout.write(JSON.stringify({
   version:'position-finish-energy-diagnosis-1',
   fixture:'current_motor_lab_test_input',
   category,terrain,chase,attack,seed,
+  positionVersion,
   riderCount:rows.length,
   maxAbsoluteFinishReserveDifference:
     Math.abs(rows[0].sourceMinusPositionAtFinish),
@@ -82,6 +152,12 @@ process.stdout.write(JSON.stringify({
       rows.length).toFixed(3),
   frontLeaderMismatchKmCount:
     frontLeaderMismatches.length,
+  frontPassRefusalCount:position.steps.filter(step=>
+    step.frontPassRefusal).length,
+  firstFrontPassRefusals:position.steps.filter(step=>
+    step.frontPassRefusal).slice(0,10).map(step=>
+    step.frontPassRefusal),
+  firstFrontPassConstraints,
   firstFrontLeaderMismatches:
     frontLeaderMismatches.slice(0,10),
   topRiders:rows.slice(0,10),

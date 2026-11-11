@@ -16,7 +16,9 @@ import {recordPhysicalFirstPositionGeneralRaceV1,
   recordPhysicalFirstPositionGeneralRaceV3,
   replayPhysicalFirstPositionGeneralRaceV3,
   recordPhysicalFirstPositionGeneralRaceV4,
-  replayPhysicalFirstPositionGeneralRaceV4} from
+  replayPhysicalFirstPositionGeneralRaceV4,
+  recordPhysicalFirstPositionGeneralRaceV5,
+  replayPhysicalFirstPositionGeneralRaceV5} from
   '../lib/engine/v2/physical-first-position-general-race-v1.mjs';
 
 const option=(name,fallback)=>process.argv.find(arg=>
@@ -37,7 +39,7 @@ if(categories.some(value=>
   chases.some(value=>
     !['selective','all'].includes(value))||
   !['none','selective','repeated'].includes(attack)||
-  !['1','2','3','4'].includes(positionVersion)||
+  !['1','2','3','4','5'].includes(positionVersion)||
   !['1','2'].includes(sourceVersion)||
   seeds.some(seed=>
     !(/^[A-Za-z0-9-]{1,64}$/).test(seed)))
@@ -75,14 +77,18 @@ for(const category of categories)
       }
       if(request){
         try{
-          position=(positionVersion==='4'?
+          position=(positionVersion==='5'?
+            recordPhysicalFirstPositionGeneralRaceV5:
+            positionVersion==='4'?
             recordPhysicalFirstPositionGeneralRaceV4:
             positionVersion==='3'?
               recordPhysicalFirstPositionGeneralRaceV3:
             positionVersion==='2'?
               recordPhysicalFirstPositionGeneralRaceV2:
               recordPhysicalFirstPositionGeneralRaceV1)(request);
-          (positionVersion==='4'?
+          (positionVersion==='5'?
+            replayPhysicalFirstPositionGeneralRaceV5:
+            positionVersion==='4'?
             replayPhysicalFirstPositionGeneralRaceV4:
             positionVersion==='3'?
               replayPhysicalFirstPositionGeneralRaceV3:
@@ -126,6 +132,26 @@ for(const category of categories)
           step.peloton.road.leaderRiderId===
             position.steps[index].sharedRoad
               .leaderRiderId?[]:[index+1]):[];
+      const attackChoiceMismatches=source&&position?
+        source.steps.flatMap((step,index)=>
+          step.attackChoices.flatMap(sourceChoice=>{
+            const modelChoice=position.steps[index]
+              .attackChoices.find(row=>
+                row.teamId===sourceChoice.teamId);
+            return modelChoice&&
+              modelChoice.choice===sourceChoice.choice&&
+              modelChoice.riderId===sourceChoice.riderId&&
+              modelChoice.forwardRiderCount===
+                sourceChoice.forwardRiderCount?[]:[{
+                sourceKm:index+1,
+                teamId:sourceChoice.teamId,
+                sourceChoice:sourceChoice.choice,
+                positionChoice:modelChoice?.choice??null,
+                sourceForwardRiderCount:
+                  sourceChoice.forwardRiderCount,
+                positionForwardRiderCount:
+                  modelChoice?.forwardRiderCount??null}];
+          })):[];
       const sourceAttacks=source?.steps.flatMap(step=>
         step.attackSteps.map(attackStep=>
           `${step.sourceKm}:${attackStep.choice.riderId}`))??[];
@@ -185,6 +211,10 @@ for(const category of categories)
             frontLeaderMismatches.length:null,
         firstFrontLeaderMismatchKm:
           frontLeaderMismatches[0]??null,
+        attackChoiceMismatchCount:source&&position?
+          attackChoiceMismatches.length:null,
+        firstAttackChoiceMismatch:
+          attackChoiceMismatches[0]??null,
         contactObservations:
           position?.contactEvents.length??null,
         tailContactObservations:
@@ -252,6 +282,8 @@ maxTailContactObservations:rows.every(row=>
     row.tailContactObservations)):null,
 casesWithFrontLeaderMismatch:rows.filter(row=>
   (row.frontLeaderMismatchKmCount??0)>0).length,
+casesWithAttackChoiceMismatch:rows.filter(row=>
+  (row.attackChoiceMismatchCount??0)>0).length,
 officialResults:false,
 readyForGuidedRaces:false};
 process.stdout.write(JSON.stringify({summary,rows},

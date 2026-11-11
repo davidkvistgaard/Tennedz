@@ -850,3 +850,63 @@ finishes and replays: one recorded departure and three
 explicitly unpaid boundary-slot refusals. The no-attack
 two-weak-worker fixture still completes and replays both
 source and positional records under the new version.
+
+`physical-first-attack-choice-5`, `shared-road-km-14` and
+`general-race-5` correct a positional decision error without
+changing historic attack choices or the guided race path. The
+previous positional adapter projected all riders to the same
+group clock when asking whether a teammate was already up the
+road. A paid solo rider 103.8796 metres ahead therefore counted
+as zero forward teammates. The new opt-in choice reads the
+committed front distance and each detached rider's actual
+recorded distance. It counts only riders physically ahead of
+the bunch front. Its bridge estimate uses that measured gap in
+metres and the riders' committed route, condition and ordered
+effort to estimate closing speed. This is a decision projection,
+not a fabricated simultaneous wheel or contact. The actual
+road step must still price and record a pass; the estimate
+cannot create a group or a departure. If the projected catch
+leaves no useful shared work, the choice holds as before.
+In a synthetic 16-rider two-attack race the second boundary
+choice now records one physically forward teammate; both
+departures, every rider-kilometre decision, all line crossings
+and the finish replay. The same no-attack race retains the V4
+paid positions, decisions and crossing clocks exactly.
+The remaining flat-seed front mismatch is not a lane blockage.
+At kilometre 88 the proposed worker is on the same paid road
+with a clear lane, 2.74 metres from completing the front pass,
+but the quoted relative speed is only 0.000446 metres per
+second. The pass would need roughly 73 km of old-leader travel
+at that pace, well beyond the kilometre. The group-clock
+source rotates the name anyway. The positional recorder
+retains the old paid leader and reports a refusal instead of
+granting a physically impossible pass. This explains a
+measured reserve difference; it is not a calibration knob
+to erase by inserting a scripted move.
+The current 120-rider, one-seed, selective-attack matrix of
+men's and women's fields, three terrains and two chase orders
+completes and exactly replays 12/12 source and positional
+races under V5. All 12 have every per-rider kilometre decision,
+every intermediate line passage and every finish crossing.
+Eight have at least one front-leader mismatch, which remains
+visible in the audit. These are coverage and replay results,
+not proof of official sprint placements, arbitrary new seeds,
+all manager orders or hosted viewer readiness.
+The V5 160-rider, 120 km synthetic one-weak-worker case
+also completes and exactly replays both comparison source and
+positional runs: 19,200 decisions, 19,040 intermediate line
+passages and 160 finish crossings. Positional contact emits
+three membership observations. Peloton membership differs
+from the group-clock source at km 2, as in V4.
+The 16-rider two-attack, two-weak-worker, front-rotation
+synthetic case completes and replays the positional race with
+320 decisions, 16 finish crossings and 50 contact-membership
+observations. The source probe stops at km 12 when two rear
+roads cross without its required paid contact contract.
+A 32-rider same-boundary two-team attack case likewise
+finishes and replays positionally with 640 decisions and 32
+finish crossings; one attempted attack is an explicit unpaid
+boundary-slot refusal. The source probe stops at km 2 on a
+missing solo-contact contract. These failures must remain
+visible; a completed positional race does not retroactively
+give the source a physical contact or an official result.

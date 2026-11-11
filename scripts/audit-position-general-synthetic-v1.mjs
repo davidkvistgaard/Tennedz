@@ -11,7 +11,9 @@ import {recordPhysicalFirstPositionGeneralRaceV2,
   recordPhysicalFirstPositionGeneralRaceV3,
   replayPhysicalFirstPositionGeneralRaceV3,
   recordPhysicalFirstPositionGeneralRaceV4,
-  replayPhysicalFirstPositionGeneralRaceV4} from
+  replayPhysicalFirstPositionGeneralRaceV4,
+  recordPhysicalFirstPositionGeneralRaceV5,
+  replayPhysicalFirstPositionGeneralRaceV5} from
   '../lib/engine/v2/physical-first-position-general-race-v1.mjs';
 
 const option=(name,fallback)=>process.argv.find(arg=>
@@ -39,7 +41,7 @@ if(!['first','none'].includes(option('attack','first')))
   throw new Error('Unsupported attack audit option.');
 if(!['1','2'].includes(sourceVersion))
   throw new Error('Unsupported source probe version.');
-if(!['2','3','4'].includes(positionVersion)||
+if(!['2','3','4','5'].includes(positionVersion)||
   !['true','false'].includes(parallelTeamAttack))
   throw new Error('Unsupported position version.');
 const request=prepareSyntheticPositionCatchV1(options);
@@ -70,12 +72,16 @@ try{source=(sourceVersion==='2'?
     evidence:error.sourceEvidence??null};
 }
 try{
-  position=(positionVersion==='4'?
+  position=(positionVersion==='5'?
+    recordPhysicalFirstPositionGeneralRaceV5:
+    positionVersion==='4'?
     recordPhysicalFirstPositionGeneralRaceV4:
     positionVersion==='3'?
       recordPhysicalFirstPositionGeneralRaceV3:
     recordPhysicalFirstPositionGeneralRaceV2)(request);
-  (positionVersion==='4'?
+  (positionVersion==='5'?
+    replayPhysicalFirstPositionGeneralRaceV5:
+    positionVersion==='4'?
     replayPhysicalFirstPositionGeneralRaceV4:
     positionVersion==='3'?
       replayPhysicalFirstPositionGeneralRaceV3:

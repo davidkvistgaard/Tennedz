@@ -19,7 +19,9 @@ import {recordPhysicalFirstPositionGeneralRaceV1,
   recordPhysicalFirstPositionGeneralRaceV3,
   replayPhysicalFirstPositionGeneralRaceV3,
   recordPhysicalFirstPositionGeneralRaceV4,
-  replayPhysicalFirstPositionGeneralRaceV4} from
+  replayPhysicalFirstPositionGeneralRaceV4,
+  recordPhysicalFirstPositionGeneralRaceV5,
+  replayPhysicalFirstPositionGeneralRaceV5} from
   '../../lib/engine/v2/physical-first-position-general-race-v1.mjs';
 
 test('a connected start records every rider without an attack',()=>{
@@ -299,4 +301,62 @@ test('a stronger non-staged attacker still has to pass physically',()=>{
   assert.deepEqual(
     replayPhysicalFirstPositionGeneralRaceV4(request,race),
     race);
+});
+
+test('positional attack choices see a paid teammate ahead in metres',()=>{
+  const request=prepareSyntheticPositionCatchV1({
+    teamCount:2,kmCount:20,oneTimeAttack:true,
+    secondAttackAtKm:5});
+  request.input.positionPassingCorridorCount=1;
+  Object.assign(request.input.teams[0].riders[6],{
+    flat:100,hills:100,mountain:100});
+  const prior=recordPhysicalFirstPositionGeneralRaceV4(request);
+  const race=recordPhysicalFirstPositionGeneralRaceV5(request);
+  const fourth=race.steps[3].sharedRoad;
+  const forward=fourth.positions.find(row=>
+    row.riderId==='team-0-7');
+  assert.ok(forward.distanceM>fourth.frontDistanceM+100);
+  assert.equal(prior.steps[4].attackChoices[0]
+    .forwardRiderCount,0);
+  assert.equal(race.steps[4].attackChoices[0]
+    .forwardRiderCount,1);
+  assert.equal(race.steps[4].attackChoices[0]
+    .choice,'attempt_paid_attack');
+  assert.deepEqual(race.attackDepartureEvents.map(row=>
+    row.sourceKm),[1,5]);
+  assert.equal(race.decisionCount,320);
+  assert.equal(race.finishCrossings.length,16);
+  assert.deepEqual(replayPhysicalFirstPositionGeneralRaceV5(
+    request,race),race);
+  const forged=structuredClone(race);
+  forged.steps[4].attackChoices[0]
+    .forwardRiderCount=0;
+  assert.throws(()=>
+    replayPhysicalFirstPositionGeneralRaceV5(
+      request,forged),/differs from paid movement/);
+});
+
+test('position choice version preserves a no-attack paid race',()=>{
+  const request=prepareSyntheticPositionCatchV1({
+    teamCount:2,kmCount:20,weakBunchCount:2,
+    profile:'hill_then_mountain'});
+  request.input.positionPassingCorridorCount=1;
+  request.input.teams[0].orders.baseline.attack='none';
+  const prior=recordPhysicalFirstPositionGeneralRaceV4(request);
+  const race=recordPhysicalFirstPositionGeneralRaceV5(request);
+  const withoutVersion=rows=>rows.map(({version,...row})=>row);
+  assert.deepEqual(race.steps.map(step=>
+    withoutVersion(step.sharedRoad.positions)),
+  prior.steps.map(step=>
+    withoutVersion(step.sharedRoad.positions)));
+  assert.deepEqual(race.steps.map(step=>
+    withoutVersion(step.sharedRoad.decisions)),
+  prior.steps.map(step=>
+    withoutVersion(step.sharedRoad.decisions)));
+  assert.deepEqual(race.checkpointCrossings,
+    prior.checkpointCrossings);
+  assert.deepEqual(race.finishCrossings,
+    prior.finishCrossings);
+  assert.deepEqual(replayPhysicalFirstPositionGeneralRaceV5(
+    request,race),race);
 });
