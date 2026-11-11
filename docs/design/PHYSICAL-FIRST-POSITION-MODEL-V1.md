@@ -1089,3 +1089,9 @@ has fictional rival identities and synthetic bib allocation;
 no canonical geography, actual helmets or official places are
 claimed. The full ledger stays the replay authority and V7
 remains separate from guided races and production.
+An additional 20 km V7 regression covers two paid departures,
+two caught solo riders, two early weak-worker drops and rear
+road contact. The first caught attacker ends the kilometre on
+a recorded rear road rather than being silently inserted into
+the peloton. All 320 rider decisions, 304 intermediate passages,
+16 finishes and the complete finale frame set replay exactly.

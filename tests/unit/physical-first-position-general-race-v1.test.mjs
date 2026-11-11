@@ -573,3 +573,32 @@ test('sampled finale positions use the paid shared clock',()=>{
     replayPhysicalFirstPositionGeneralRaceV7(
       request,forged),/differs from paid movement/);
 });
+
+test('V7 replays caught attackers and early climb drops through finish',()=>{
+  const request=prepareSyntheticPositionCatchV1({
+    teamCount:2,kmCount:20,
+    profile:'hill_then_mountain',
+    weakBunchCount:2,oneTimeAttack:true,
+    frontWorkerAtKm:2,secondAttackAtKm:5});
+  request.input.positionPassingCorridorCount=1;
+  const race=recordPhysicalFirstPositionGeneralRaceV7(request);
+  assert.deepEqual(race.attackDepartureEvents.map(row=>
+    row.sourceKm),[1,5]);
+  assert.deepEqual(race.soloCatchEvents.map(row=>
+    row.sourceKm),[2,6]);
+  const afterFirstCatch=race.steps[1]
+    .sharedRoad.positions;
+  for(const riderId of ['team-0-7','team-1-4','team-1-5'])
+    assert.ok(afterFirstCatch.find(row=>
+      row.riderId===riderId).roadId.startsWith('rear:'));
+  assert.ok(race.contactEvents.some(row=>
+    row.sourceKm===2&&row.components.some(ids=>
+      ids.includes('team-0-7'))));
+  assert.equal(race.decisionCount,320);
+  assert.equal(race.checkpointCrossings.length,304);
+  assert.equal(race.finishCrossings.length,16);
+  assert.ok(race.tail.positionFrames.every(frame=>
+    frame.positions.length===16));
+  assert.deepEqual(replayPhysicalFirstPositionGeneralRaceV7(
+    request,race),race);
+});
