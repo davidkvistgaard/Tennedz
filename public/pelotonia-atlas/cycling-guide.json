@@ -1,0 +1,124 @@
+{
+  "version": 1,
+  "cities": {
+    "CITY-001": "Pelotonia’s capital spreads across a south-facing estuary. In Old Aurelia, the cathedral spire gives away the climb before the road pitches up. Farther down, the Grand Market’s roof marks the return to the lower city, while the Old Citadel crowns a separate climb above the western streets.",
+    "CITY-002": "Valedor is the river capital of the Central Plains. On a fast approach across the floodplain, the roofline of Great River Hall appears before the old town. The covered platforms of Valedor Central Station make a second landmark on the way out.",
+    "CITY-003": "Meralva is a rain-washed west-coast port squeezed between steep, wooded ground and the Pacific. The striped lantern of Stormbreak Lighthouse marks the port, while the long covered sheds of Pacific Market give the old harbour its street-level character.",
+    "CITY-004": "Ordelune stands at the eastern end of Lake Verdan. Follow the lake road past the glass of Verdan Botanical Gardens and up to the timber roofs of Great Lake Station, where the town gives way to the wooded foothills.",
+    "CITY-005": "Kaen is an eastern steppe city built around shade, water and the copper trade. Its old market is a low arcade of warm stone, while the domed Eastern Observatory sits above the approach from the open plateau.",
+    "CITY-006": "Iriama sits between the western rainforest and the sea. The Rainforest Museum’s raised timber galleries and the ironwork of the Upper Falls Funicular are easy to pick out on the climb from the lower town into the canopy.",
+    "CITY-007": "Skarn is a highland city where slate roofs and thick stone walls face the northern weather. Skarn Tower is visible from the open approach. In town, the steep roofs of Highland Hall frame a short rise through the old streets.",
+    "CITY-008": "Porto Liora is a southern port with a sheltered market street and a lighthouse on the approach to the old harbour. The market’s tiled awnings give way to an exposed stretch where riders can feel the sea wind.",
+    "CITY-009": "Ember is a volcanic town built in dark stone. The copper dome of Blackstone Baths catches the light in the old quarter. Higher up, the white dome of Ember Observatory is a marker on the road out towards the lava country."
+  },
+  "sites": [
+    {
+      "id": "AUR-LMK-001", "parentId": "CITY-001", "name": "Great Cathedral of Aurelia", "model": "cathedral", "point": [267.804, 282.696], "bearing": 0,
+      "description": "The 171 m spire rises above Old Aurelia on Cathedral Hill. The paved approach opens onto a broad forecourt beneath the west front, giving a climb through town a clear point to aim for."
+    },
+    {
+      "id": "AUR-LMK-008", "parentId": "CITY-001", "name": "Grand Market", "model": "market", "point": [268.9, 283.6], "bearing": 0.3,
+      "description": "A long red roof with iron ribs covers Old Aurelia’s market. The short bends around the market block make a tight approach before the streets open towards the lower city."
+    },
+    {
+      "id": "AUR-LMK-006", "parentId": "CITY-001", "name": "Old Citadel", "model": "gate", "point": [263.4, 278.5], "bearing": 1.1,
+      "description": "The citadel’s twin stone towers frame a high gate above the western streets. The old walls come into view as the climb leaves the houses, with the estuary visible in the distance."
+    },
+    {
+      "id": "CITY-002-V12-LMK-01", "parentId": "CITY-002", "name": "Great River Hall", "model": "hall", "point": [224.941, 165.104], "bearing": 0.55,
+      "description": "The pale riverside hall has a broad stair and a green copper roof. From the flat approach into Valedor it is the first building tall enough to stand out above the river trees."
+    },
+    {
+      "id": "CITY-002-V12-LMK-02", "parentId": "CITY-002", "name": "Valedor Central Station", "model": "station", "point": [225.167, 165.034], "bearing": 0.56,
+      "description": "Twin train sheds sit behind a sandstone clock front. The long station frontage gives a fast group a straight reference point between the tighter bends of the old town."
+    },
+    {
+      "id": "CITY-003-V12-LMK-02", "parentId": "CITY-003", "name": "Stormbreak Lighthouse", "model": "lighthouse", "point": [74.81, 134.803], "bearing": 0,
+      "description": "A red-banded lantern tower marks the harbour approach above Meralva. The climb to the lamp is short, but the road opens to the weather as it leaves the shelter of the old port."
+    },
+    {
+      "id": "CITY-003-V12-LMK-04", "parentId": "CITY-003", "name": "Pacific Market", "model": "market", "point": [75.227, 134.988], "bearing": 0.34,
+      "description": "Three terracotta roofs cover the fish and produce sheds. The road bends past the covered frontage before it climbs away from the old harbour."
+    },
+    {
+      "id": "CITY-004-V12-LMK-02", "parentId": "CITY-004", "name": "Great Lake Station", "model": "station", "point": [225.246, 74.82], "bearing": -1.05,
+      "description": "Deep timber eaves shelter the station forecourt. Its clock is the last obvious landmark before the northbound road leaves Ordelune and runs into the pine country."
+    },
+    {
+      "id": "CITY-004-V12-LMK-03", "parentId": "CITY-004", "name": "Verdan Botanical Gardens", "model": "glasshouse", "point": [224.907, 75.005], "bearing": 0.3,
+      "description": "The gardens’ ribbed glasshouses catch the light near the lake approach. Low stone walls follow the bend, with open views between the terraces."
+    },
+    {
+      "id": "CITY-005-V12-LMK-04", "parentId": "CITY-005", "name": "Copper Market", "model": "market", "point": [404.879, 194.95], "bearing": -0.7,
+      "description": "A shaded arcade of ochre stone surrounds the market sheds. The street narrows at its south corner before opening back onto the dry plain."
+    },
+    {
+      "id": "CITY-005-V12-LMK-06", "parentId": "CITY-005", "name": "Eastern Observatory", "model": "observatory", "point": [405.412, 194.618], "bearing": 0,
+      "description": "A pale dome sits on a square stone base above the eastern road. The approach is open and exposed, and the dome stays in sight long after the last market houses fall away."
+    },
+    {
+      "id": "CITY-006-V12-LMK-03", "parentId": "CITY-006", "name": "Rainforest Museum", "model": "hall", "point": [75.127, 255.046], "bearing": -0.35,
+      "description": "Copper roofs over raised galleries sit just above the lower town. The building is visible from the roadside before forest closes around the upper approach."
+    },
+    {
+      "id": "CITY-006-V12-LMK-05", "parentId": "CITY-006", "name": "Upper Falls Funicular", "model": "funicular", "point": [74.585, 254.977], "bearing": -1.2,
+      "description": "A timber lower station and its exposed rails point straight up the wooded hillside. The road takes the longer way up, turning back under the canopy."
+    },
+    {
+      "id": "CITY-007-V12-LMK-01", "parentId": "CITY-007", "name": "Skarn Tower", "model": "tower", "point": [194.748, 44.702], "bearing": 0.4,
+      "description": "The square stone watchtower stands above the old northern approach. Its dark pyramidal roof is a steady reference across the moor, even when low cloud covers the hills behind."
+    },
+    {
+      "id": "CITY-007-V12-LMK-03", "parentId": "CITY-007", "name": "Highland Hall", "model": "hall", "point": [195.132, 45.149], "bearing": 0.43,
+      "description": "A steep copper roof and broad entrance identify the civic hall in Skarn. The road lifts past the steps before straightening between the slate-roofed houses."
+    },
+    {
+      "id": "CITY-008-V12-LMK-01", "parentId": "CITY-008", "name": "Porto Liora Lighthouse", "model": "lighthouse", "point": [295.669, 302.884], "bearing": 0,
+      "description": "The old harbour lamp stands clear of the low roofs on Porto Liora’s coastal approach. Its pale tower and red lantern are easy to see from the exposed road above the shore."
+    },
+    {
+      "id": "CITY-008-V12-LMK-05", "parentId": "CITY-008", "name": "Old Harbour Market", "model": "market", "point": [295.445, 302.042], "bearing": 1.2,
+      "description": "Low market sheds and tiled awnings line the old port approach. The street is sheltered here, and the wind becomes noticeable again on the exposed stretch towards the lighthouse."
+    },
+    {
+      "id": "CITY-009-V12-LMK-03", "parentId": "CITY-009", "name": "Blackstone Baths", "model": "baths", "point": [344.879, 164.904], "bearing": -0.35,
+      "description": "The dark basalt walls of the baths hold the warmth of the old geothermal quarter. Three copper domes make a distinctive silhouette just beyond the first bend through Ember."
+    },
+    {
+      "id": "CITY-009-V12-LMK-06", "parentId": "CITY-009", "name": "Ember Observatory", "model": "observatory", "point": [345.466, 164.619], "bearing": 0,
+      "description": "The observatory’s white dome sits above the black volcanic ground east of town. It is a clear point to look for on the open road out of Ember."
+    },
+    {
+      "id": "RIDE-J7-01", "parentId": "REG-006", "name": "Serrat Vine Terraces", "model": "vineyard", "point": [279.044, 197.674], "bearing": -0.79,
+      "description": "Parallel vine rows run down a sunny bank above the Central Plains. The road sweeps past the head of the rows, with a small press house at the far end."
+    },
+    {
+      "id": "RIDE-M11-01", "parentId": "REG-010", "name": "Tenuta Valsé", "model": "vineyard", "point": [369.823, 315.245], "bearing": -0.35,
+      "description": "On a dry slope above the southern coast, the Valsé estate grows vines behind low stone boundaries. The open corner by the press house is a good point to pick out riders on the rise."
+    },
+    {
+      "id": "RIDE-P11-01", "parentId": "V12-ISLAND-003", "name": "Isoletta Saltwind Vines", "model": "vineyard", "point": [461.733, 317.25], "bearing": 0.6,
+      "description": "Low rows of vines shelter behind limestone walls on Isoletta. The terraces look towards the sea, and the gaps between the walls expose the island road to the wind."
+    },
+    {
+      "id": "RIDE-D5-01", "parentId": "REG-003", "name": "Abbey of St. Caelo", "model": "abbey", "point": [104.28, 123.87], "bearing": 0.5,
+      "description": "A rain-darkened cloister, a small bell tower and an enclosed herb garden occupy a clearing on the Emerald Coast. A short paved lane turns off the main road at the abbey wall."
+    },
+    {
+      "id": "RIDE-E10-01", "parentId": "REG-011", "name": "San Veyr Priory", "model": "abbey", "point": [143.48, 275.678], "bearing": 0.7,
+      "description": "The priory’s pale walls and steep roof stand out against the upper fjord slopes. The road rounds its boundary at a bend, then drops back into the trees."
+    },
+    {
+      "id": "RIDE-H8-01", "parentId": "REG-005", "name": "Aubrac Hospice", "model": "abbey", "point": [214.472, 226.083], "bearing": 0.77,
+      "description": "A stone hospice and a low chapel sit together on the Great Range approach. Their enclosed yard is the last sheltered stretch before the road turns up towards the high valley."
+    },
+    {
+      "id": "RIDE-N9-01", "parentId": "REG-009", "name": "The Basalt Gate", "model": "gate", "point": [411.51, 259.537], "bearing": -0.28,
+      "description": "A black-stone toll gate stands beside the road through the Redlands. It marks the point where the pale open plateau gives way to warmer rock and longer, more exposed bends."
+    },
+    {
+      "id": "RIDE-K4-01", "parentId": "REG-NORTHERN-PLATEAU", "name": "The Three Mills of Avel", "model": "windmills", "point": [311.845, 114.105], "bearing": 0.72,
+      "description": "Three stone windmills sit in a staggered line above the Arven Tablelands road. Their sails are visible across the fields before the road reaches the long crest."
+    }
+  ]
+}

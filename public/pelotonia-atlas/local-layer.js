@@ -55,7 +55,7 @@ function tint(feature) {
   const {surface, domain, type} = feature.properties;
   return SURFACES[surface]?.[1] ?? (
     domain === 'water' || ['lake', 'wetland'].includes(type) ? water :
-    type === 'settlement' ? '#ffdfa0' :
+    ['settlement', 'landmark'].includes(type) ? '#ffdfa0' :
     ['salt_flat', 'dry_basin', 'lava_field'].includes(type) ? '#e8bb89' : greenery
   );
 }

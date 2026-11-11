@@ -24,10 +24,13 @@
 <aside>
 <div class="eyebrow">EXPLORE THE ISLAND</div>
 <h2>From coast to summit</h2>
-<p>Rainforest in the west, snowy peaks across the island and sun-baked rock in the southeast.</p>
+<p>Explore cathedral streets, coastal lighthouses, vineyard terraces and abbeys along Pelotonia’s roads.</p>
 <a id="flight-link" class="flight-link" href="./field-flight.html?cell=H5"><span id="flight-field">192 ATLAS FIELDS</span><strong>Explore in 3D <i aria-hidden="true">↗</i></strong><small id="flight-hint">Choose any field for a drone flight</small></a>
 <label for="places">Places in the atlas</label><select id="places"><option value="">Select a place</option></select>
 <div id="place-info" aria-live="polite"></div>
+<p id="city-description" aria-live="polite"></p>
+<ul id="city-sites" class="guide-sites" aria-label="City landmarks" hidden></ul>
+<label for="guide-choice">Cycling landmarks</label><select id="guide-choice" disabled><option value="">Find a landmark</option></select>
 <div class="divider"></div>
 <div class="eyebrow">LOCAL DETAILS · PROPOSED</div>
 <label class="local-toggle"><input type="checkbox" id="local-toggle" checked> Show local details when zooming</label>
@@ -35,11 +38,12 @@
 <label for="local-feature">Details in this cell</label><select id="local-feature" disabled><option value="">Select a detail</option></select>
 <p id="local-info">Select a grid cell or zoom in on the map.</p>
 <p id="local-description" aria-live="polite"></p>
+<a id="site-flight" class="site-flight" href="./field-flight.html" hidden>See this landmark from the drone ↗</a>
 <ul class="legend surface-legend" aria-label="Road surfaces"><li><i style="--color:#62655e"></i>Asphalt</li><li><i style="--color:#b1a182"></i>Gravel</li><li><i style="--color:#8c8779"></i>Cobblestone</li><li><i style="--color:#947756"></i>Dirt</li></ul>
 <div class="divider"></div>
 <div class="eyebrow">TERRAIN</div>
 <ul class="legend"><li><i style="--color:#e7eae3"></i>Snow and ice</li><li><i style="--color:#9e836b"></i>Mountain rock</li><li><i style="--color:#2c6848"></i>Forest and rainforest</li><li><i style="--color:#9da95e"></i>Plains</li><li><i style="--color:#b9a05e"></i>Steppe</li><li><i style="--color:#cc8253"></i>Dry terrain</li></ul>
-<div class="hint">Drag to pan. Scroll or pinch to zoom. Select a village to see it up close.</div>
+<div class="hint" id="map-hint">Drag to pan. Scroll or pinch to zoom from the world map into the 3D landscape.</div>
 </aside>
 </main>
 <footer>PELOTONIA ATLAS <span>30 km per grid cell · Illustrative terrain</span></footer>

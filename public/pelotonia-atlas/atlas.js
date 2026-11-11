@@ -3,6 +3,8 @@ import {OrbitControls} from './vendor/OrbitControls.js';
 import {centerOf, DETAIL_ZOOM, drawFlatLayer, indexLocalLayer, LOCAL_ZOOM, makeThreeLayer, MAX_ZOOM, SURFACES, zoomLevel} from './local-layer.js';
 import {drawSettlements, makeSettlements, settlementModels} from './settlement-models.js';
 
+import {flightLink, readGuide, withCyclingGuide} from './cycling-guide.mjs';
+
 const $ = (id) => document.getElementById(id);
 const host = $('surface');
 const map = $('map');
@@ -11,13 +13,15 @@ const response = await fetch('./atlas.json');
 if (!response.ok) throw new Error('Could not load the atlas.');
 const data = await response.json();
 let local;
+const guide = await readGuide().catch(error => { console.warn(error); return {cities: {}, sites: []}; });
 try {
   const [collection, manifest] = await Promise.all(['./lokallag.geojson', './lokallag-manifest.json'].map(async url => {
     const result = await fetch(url);
     if (!result.ok) throw new Error(`Could not load ${url}`);
     return result.json();
   }));
-  local = indexLocalLayer(collection, manifest, data);
+  const [expanded, indexed] = withCyclingGuide(collection, manifest, guide, data.grid);
+  local = indexLocalLayer(expanded, indexed, data);
 } catch (error) {
   console.warn(error);
   $('local-info').textContent = 'Could not load local details.';
@@ -47,18 +51,24 @@ function focusLocal(x, z, zoom) {
   view.focus({x,z,px:x-cx,pz:z-cz}, zoom);
 }
 function chooseLocal(id) {
-  const feature = local.features.get(id);
+  const feature = local?.features.get(id);
   if (!feature) {
     selectedLocal = '';
     $('local-description').textContent = '';
+    $('site-flight').hidden = true;
     return;
   }
   selectedLocal = id;
+  localChoice.value = id;
   const {description, surface, minZoom, type} = feature.properties;
   $('local-description').textContent = [SURFACES[surface]?.[0], description].filter(Boolean).join(' · ');
   const [x,z] = centerOf(feature);
-  const closeZoom=type==='settlement' ? 128 : surface ? 32 : minZoom===4 ? DETAIL_ZOOM+1 : LOCAL_ZOOM+1;
+  const closeZoom=type==='landmark' && map.dataset.renderer==='three' ? 290 :
+    type==='settlement' ? 128 : surface ? 32 : minZoom===4 ? DETAIL_ZOOM+1 : LOCAL_ZOOM+1;
   focusLocal(x, z, Math.max(view.magnification(), closeZoom));
+  const link = $('site-flight');
+  link.hidden = type !== 'landmark';
+  if (!link.hidden) link.href = flightLink(feature.properties.gridCell, id);
 }
 function updateLocal(zoom, x, z) {
   const level = layerEnabled && local ? zoomLevel(zoom) : 2;
@@ -74,7 +84,7 @@ function updateLocal(zoom, x, z) {
   map.dataset.localLevel = String(level);
   $('map-level').textContent = level === 2 ? 'WORLD OVERVIEW' : `${level === 3 ? 'LOCAL AREA' : 'SITE DETAIL'}${key ? ' · '+key : ''}`;
   field.value = key;
-  $('flight-link').href = `./field-flight.html?cell=${key||'H5'}`;
+  $('flight-link').href = flightLink(key || 'H5');
   $('flight-field').textContent = key ? `FIELD ${key}` : '192 ATLAS FIELDS';
   $('flight-hint').textContent = key ? '40-second drone flight' : 'Choose any field for a drone flight';
   localChoice.replaceChildren(new Option('Select a detail', ''));
@@ -97,9 +107,10 @@ function updateLocal(zoom, x, z) {
   else {
     selectedLocal = '';
     $('local-description').textContent = '';
+    $('site-flight').hidden = true;
   }
   if (local) $('local-info').textContent = cell ?
-    `${visible.length} proposals in ${key}${cell.landSourceConflict ? ' · Shoreline needs review' : ''}` :
+    `${visible.length} local features in ${key}${cell.landSourceConflict ? ' · Shoreline needs review' : ''}` :
     'Select a grid cell or zoom in on the map.';
   return level;
 }
@@ -112,8 +123,28 @@ function choose(id) {
   pins.get(id).classList.add('active');
   $('places').value = id;
   $('place-info').textContent = `${kinds[p.type]} · ${Math.round(p.x)}, ${Math.round(p.z)} km`;
-  view.focus(p);
+  $('city-description').textContent = guide.cities[id] ?? '';
+  const citySites = guide.sites.filter(site => site.parentId === id);
+  const links = $('city-sites');
+  links.replaceChildren(...citySites.map(site => {
+    const li = document.createElement('li');
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.textContent = site.name;
+    button.onclick = () => openSite(site.id);
+    li.append(button);
+    return li;
+  }));
+  links.hidden = citySites.length === 0;
+  const city = p.type==='city' || p.type==='capital';
+  view.focus(p, city && map.dataset.renderer==='three' ? 65 : undefined);
 }
+for (const site of [...guide.sites].sort((a,b) => a.name.localeCompare(b.name))) {
+  $('guide-choice').add(new Option(site.name, site.id));
+}
+$('guide-choice').disabled = !guide.sites.length || !local;
+$('guide-choice').onchange = event => openSite(event.target.value);
+
 for (const p of [...places].sort((a,b)=>a.name.localeCompare(b.name))) {
   $('places').add(new Option(p.name,p.id));
 }
@@ -153,6 +184,17 @@ function layout(project, pixelsPerKm) {
 function priority(type){return ['capital','city','island','region-label','peak'].indexOf(type);}
 function fit(){return Math.min(host.clientWidth/(spanX*1.03),host.clientHeight/(spanZ*1.03));}
 const terrainBlend=zoom=>THREE.MathUtils.smoothstep(zoom,3.1,5.2);
+const LANDSCAPE_ZOOM = 12;
+const LANDSCAPE_MAX_ZOOM = 2200;
+
+async function loadCloseView(heights) {
+  const [module, response] = await Promise.all([
+    import('./atlas-close-view.js'), fetch('./field-geography.json'),
+  ]);
+  if (!response.ok) throw new Error('Could not load landscape geography.');
+  const geography = await response.json();
+  return module.makeAtlasCloseView({atlas:data, geography, heights, cells:local.cells});
+}
 
 function terrainMaterial(renderer) {
   const loader=new THREE.TextureLoader();
@@ -277,12 +319,16 @@ function start3d(renderer, heights) {
   controls.screenSpacePanning=true;
   controls.enableDamping=true;
   controls.minZoom=.75;
-  controls.maxZoom=MAX_ZOOM;
+  controls.maxZoom=LANDSCAPE_MAX_ZOOM;
+  controls.zoomToCursor=true;
   controls.maxPolarAngle=1.18;
   controls.minPolarAngle=.018;
   let mode='top';
-  const vector=new THREE.Vector3();
-  let projectionScale;
+  const vector=new THREE.Vector3(), offset=new THREE.Vector3();
+  let projectionScale, closeView, loadingCloseView, closeViewFailed, closeVisible;
+  function setStatus(message) {
+    if(status.textContent!==message) status.textContent=message;
+  }
   function resize(){
     const w=host.clientWidth,h=host.clientHeight;
     projectionScale=fit();
@@ -290,6 +336,7 @@ function start3d(renderer, heights) {
     camera.top=h/2/projectionScale;camera.bottom=-camera.top;
     camera.updateProjectionMatrix();
     renderer.setSize(w,h,false);
+    closeView?.invalidate();
   }
   function setMode(value){
     mode=value;
@@ -321,9 +368,39 @@ function start3d(renderer, heights) {
   resize();
   reset();
   new ResizeObserver(resize).observe(host);
-  renderer.setAnimationLoop(()=>{
+  renderer.setAnimationLoop(now=>{
     controls.update();
-    const level=updateLocal(camera.zoom,controls.target.x+cx,controls.target.z+cz);
+    const x=controls.target.x+cx,z=controls.target.z+cz;
+    const level=updateLocal(camera.zoom,x,z);
+    if(local && camera.zoom>=8 && !loadingCloseView){
+      loadingCloseView=loadCloseView(heights).then(view=>{closeView=view;}).catch(error=>{
+        closeViewFailed=true;
+        console.warn(error);
+      });
+    }
+    if(local && camera.zoom>=LANDSCAPE_ZOOM){
+      offset.copy(camera.position).sub(controls.target);
+      const result=closeView?.render(renderer,{x,z,zoom:camera.zoom,ortho:camera,offset,grid:grid.visible},now);
+      if(result==='rendered'||result==='retained'){
+        if(!closeVisible || result==='rendered'){
+          layout(p=>closeView.project(p,host.clientWidth,host.clientHeight),projectionScale*camera.zoom);
+        }
+        if(!closeVisible){
+          map.dataset.view='landscape';
+          setStatus('3D landscape');
+        }
+        closeVisible=true;
+        return;
+      }
+      setStatus(closeViewFailed||result==='unavailable'?'3D relief':'Loading 3D landscape…');
+    }else{
+      setStatus('Three.js · 3D terrain');
+    }
+    if(closeVisible) closeView?.invalidate();
+    closeVisible=false;
+    map.dataset.view='relief';
+    renderer.toneMapping=THREE.NoToneMapping;
+    renderer.shadowMap.enabled=false;
     localLayer.show(level);
     villages.visible=level>=4;
     reliefMaterial.update(camera.zoom);
@@ -404,6 +481,8 @@ function start2d(){
   localTerrain.onload=render;
   localTerrain.src='./terrain-local.webp';
   $('tilt').disabled=true;
+  map.dataset.view='flat';
+  $('map-hint').textContent='Drag to pan. Scroll or pinch to zoom. The 3D landscape requires WebGL2.';
   status.textContent='Flat map · WebGL unavailable';
   map.dataset.renderer='flat';
   return {
@@ -431,14 +510,23 @@ $('minus').onclick=()=>view.zoom(1/1.32);
 $('reset').onclick=()=>view.reset();
 $('grid').onchange=e=>view.grid(e.target.checked);
 $('places').onchange=e=>choose(e.target.value);
-function openField(key){
+function openSite(id) {
+  const site = guide.sites.find(candidate => candidate.id === id);
+  if (!site || !local) return;
+  $('local-toggle').checked = layerEnabled = true;
+  chooseLocal(id);
+  $('guide-choice').value = id;
+}
+function openField(key, zoom=LOCAL_ZOOM+1.5){
   const cell=local?.cells.get(key);
   if (!cell) return;
   $('local-toggle').checked=layerEnabled=true;
   const [x,z,e,s]=cell.boundsKm;
-  focusLocal((x+e)/2,(z+s)/2,LOCAL_ZOOM+1.5);
+  focusLocal((x+e)/2,(z+s)/2,zoom);
 }
-field.onchange=()=>openField(field.value);
+field.onchange=()=>openField(field.value,map.dataset.renderer==='three' ? LANDSCAPE_ZOOM+2 : undefined);
 localChoice.onchange=()=>chooseLocal(localChoice.value);
 $('local-toggle').onchange=e=>{layerEnabled=e.target.checked;view.refresh();};
-openField(new URLSearchParams(location.search).get('cell'));
+const query = new URLSearchParams(location.search);
+openField(query.get('cell'));
+openSite(query.get('site'));

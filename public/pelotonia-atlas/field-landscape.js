@@ -1,6 +1,8 @@
 import * as THREE from './vendor/three.module.js';
 import {batch,box,coniferGeometry,cottage,FLIGHT_SECONDS,hash,noise,random,standard} from './h5-landscape.js';
 
+import {landmarkMesh, landmarkRadius} from './landmark-models.js';
+
 const clamp=(x,a=0,b=1)=>Math.min(b,Math.max(a,x));
 const mix=(a,b,t)=>a+(b-a)*t;
 const smooth=(a,b,x)=>{const t=clamp((x-a)/(b-a));return t*t*(3-2*t);};
@@ -33,12 +35,14 @@ const climates={
   O:['Open water','#94a771','#5c7c55','#969b8e',.52,.51,'mixed'],
 };
 
-export function describeField(cell,geography){
+export function describeField(cell,geography,features=[]){
+  const highlights=features.filter(feature=>feature.properties.model).map(feature=>feature.properties.name);
+  const guideNote=highlights.length ? 'From the cycling field guide: ' + new Intl.ListFormat('en').format(highlights) + '.' : '';
   return {
     region:geography.regions[cell.regionId]??'Pelotonia waters',
     title:cell.landDetail?climates[cell.environmentCode][0]:(cell.sampledLandPercent?'Along the coast':'Over open water'),
     note:cell.landSourceConflict?'This cell is classified as land. The current atlas shoreline places its features in water.':
-      'Illustrative terrain and scenery follow the atlas geometry and proposed local features.',
+      guideNote || 'Illustrative terrain and scenery follow the atlas geometry and proposed local features.',
   };
 }
 
@@ -76,7 +80,7 @@ function routeOf(feature,toLocal){
   return {feature,path,sample,length,segments,style:roadStyles[feature.properties.surface]};
 }
 
-function makeFieldTerrain({cell,features,geography,atlas,heights}){
+function makeFieldTerrain({cell,features,geography,atlas,heights,atlasFocus}){
   const routes=features.filter(f=>f.properties.type==='road');
   const primary=routes.find(f=>f.properties.surface==='asphalt');
   const anchors=new Map(geography.places.map(p=>[p.id,p]));
@@ -87,7 +91,9 @@ function makeFieldTerrain({cell,features,geography,atlas,heights}){
     [(cell.boundsKm[0]+cell.boundsKm[2])/2,(cell.boundsKm[1]+cell.boundsKm[3])/2];
   const toLocal=([x,z])=>[(x-anchor[0])*1000,(z-anchor[1])*1000];
   const [w,n]=toLocal(cell.boundsKm.slice(0,2)),[e,s]=toLocal(cell.boundsKm.slice(2));
-  const pad=2100,bounds=[w-pad,n-pad,e+pad,s+pad];
+  const detailCenter=atlasFocus ? toLocal(atlasFocus) : [0,0];
+  const pad=atlasFocus ? 30000 : 2100;
+  const bounds=[w-pad,n-pad,e+pad,s+pad];
   const near=p=>p.limits[0]<=bounds[2]&&p.limits[2]>=bounds[0]&&p.limits[1]<=bounds[3]&&p.limits[3]>=bounds[1];
   const coast=geography.coast.map(rings=>polygon(rings.map(r=>r.map(toLocal)))).filter(near);
   const areas=features.filter(f=>f.geometry.type==='Polygon').map(f=>({
@@ -150,17 +156,31 @@ function makeFieldTerrain({cell,features,geography,atlas,heights}){
     if(nearRoad) y=mix(groundBase(nearRoad[0],nearRoad[1]),y,smooth(12,68,nearRoad[2]));
     return y;
   }
-  return {cell,anchor,bounds,toLocal,profile,isLand,hasLand:coast.length>0,lakes,areas,roadLines,road,roadDistance,bed,place,village};
+  const landmarks=features.filter(f=>f.properties.model).map(f=>{
+    const [x,z]=toLocal(f.geometry.coordinates);
+    return {id:f.id,x,z,bearing:f.properties.bearing,model:f.properties.model,radius:landmarkRadius[f.properties.model]};
+  }).filter(({x,z})=>isLand(x,z)&&!lakes.some(lake=>lake.inside(x,z)));
+  return {cell,landmarks,anchor,bounds,toLocal,detailCenter,atlasFocus,profile,isLand,hasLand:coast.length>0,lakes,areas,roadLines,road,roadDistance,bed,place,village};
 }
 
 function groundMesh(land){
-  const axis=(min,max)=>{
-    const values=[min,max];
-    for(let x=Math.ceil(min/295)*295;x<max;x+=295)values.push(x);
-    if(land.hasLand)for(let x=-3060;x<=3060;x+=24)if(x>min&&x<max)values.push(x);
+  const axis=(min,max,key,center)=>{
+    const values=[min,max],step=land.atlasFocus?550:295;
+    for(let x=Math.ceil(min/step)*step;x<max;x+=step)values.push(x);
+    if(land.hasLand)for(let offset=-3060;offset<=3060;offset+=24){
+      const p=center+offset;
+      if(p>min&&p<max)values.push(p);
+    }
+    for(const site of land.landmarks){
+      for(let offset=-120;offset<=120;offset+=24){
+        const p=site[key]+offset;
+        if(p>min&&p<max)values.push(p);
+      }
+    }
     return [...new Set(values)].sort((a,b)=>a-b);
   };
-  const [w,n,e,s]=land.bounds,us=axis(w,e),vs=axis(n,s),pos=[],colors=[],indices=[],ys=[];
+  const [w,n,e,s]=land.bounds,[focusX,focusZ]=land.detailCenter;
+  const us=axis(w,e,'x',focusX),vs=axis(n,s,'z',focusZ),pos=[],colors=[],indices=[],ys=[];
   const [_,grassHex,treesHex,rockHex,relief]=land.profile;
   const grass=color(grassHex),trees=color(treesHex),rock=color(rockHex),high=color('#d5dcd4');
   const seabed=color('#487a79'),sand=color('#819d91'),col=color(grassHex);
@@ -258,6 +278,10 @@ function roadsMesh(land){
   return mesh;
 }
 
+function nearLandmark(land,x,z) {
+  return land.landmarks.some(site=>(x-site.x)**2+(z-site.z)**2<site.radius**2);
+}
+
 function settlementsMesh(land,features){
   const houses=batch(),yards=batch(),used=[];
   const style=land.profile[0]==='Dry plateau'?
@@ -282,7 +306,7 @@ function settlementsMesh(land,features){
       const x=p[0]+ahead*u-setback*v,z=p[1]+ahead*v+setback*u;
       const size=(city?12:8)+r()*(city?12:9);
       if(!land.isLand(x,z)||land.ground(x,z)<1 || land.roadDistance(x,z,8+size*.42) ||
-        land.lakes.some(l=>l.inside(x,z)) || used.some(o=>distance(o,[x,z])<size*.93))continue;
+        land.lakes.some(l=>l.inside(x,z)) || nearLandmark(land,x,z) || used.some(o=>distance(o,[x,z])<size*.93))continue;
       const rotation=yaw+(r()-.5)*.52+(i%6===0?1.18:0);
       cottage(houses,x,z,rotation,size,land,r,i%5===0?'barn':'house',style);
       used.push([x,z]);
@@ -325,7 +349,7 @@ function vegetation(land,houses){
     const grove=noise(X/370,Z/350)*.70+noise(X/110,Z/92)*.30;
     const named=land.areas.some(a=>['forest','woodland','rainforest'].includes(a.type)&&a.inside(x,z));
     if(r()>clamp((grove-.33)*1.38*density+(named?.35:0))||land.ground(x,z)>2650||
-      land.roadDistance(x,z,13)||houses.some(p=>distance(p,[x,z])<10))return;
+      land.roadDistance(x,z,13)||nearLandmark(land,x,z)||houses.some(p=>distance(p,[x,z])<10))return;
     const broad=near&&(flora==='broadleaf'||(flora==='mixed'&&r()>.52));
     const model=broad?'broadleaf':near?'near conifer':'distant conifer';
     const key=model+':'+Math.floor(x/1300)+':'+Math.floor(z/1300);
@@ -335,11 +359,14 @@ function vegetation(land,houses){
     patches.get(key).items.push([x,z,size,r()*TAU,.81+r()*.19]);
   };
   // Concentrate model detail along the camera corridor and use sparse, cheaper trees further away.
-  for(let z=-2350;z<=2350;z+=24)for(let x=-2350;x<=2350;x+=24)use(x+(r()-.5)*24,z+(r()-.5)*24,true);
-  const [w,n,e,s]=land.bounds;
-  for(let z=n;z<s;z+=118)for(let x=w;x<e;x+=118){
-    if(Math.abs(x)<2400&&Math.abs(z)<2400)continue;
-    use(x+(r()-.5)*118,z+(r()-.5)*118,false);
+  const [focusX,focusZ]=land.detailCenter;
+  for(let z=-2350;z<=2350;z+=24)for(let x=-2350;x<=2350;x+=24){
+    use(focusX+x+(r()-.5)*24,focusZ+z+(r()-.5)*24,true);
+  }
+  const [w,n,e,s]=land.bounds,step=land.atlasFocus?340:118;
+  for(let z=n;z<s;z+=step)for(let x=w;x<e;x+=step){
+    if(Math.abs(x-focusX)<2400&&Math.abs(z-focusZ)<2400)continue;
+    use(x+(r()-.5)*step,z+(r()-.5)*step,false);
   }
   if(!patches.size)return [];
   const geometry=new Map(),material=standard({side:THREE.DoubleSide});
@@ -435,7 +462,7 @@ function roadsideLandscape(land){
 function localDetails(land,features){
   const out=batch();
   for(const f of features){
-    if(f.geometry.type!=='Point'||f.properties.type==='settlement')continue;
+    if(f.geometry.type!=='Point'||['settlement','landmark'].includes(f.properties.type))continue;
     const [x,z]=land.toLocal(f.geometry.coordinates),{type,domain}=f.properties;
     if(domain==='water'){
       if(type!=='marine_site'||land.isLand(x,z))continue;
@@ -515,11 +542,12 @@ export function buildField(input){
   if(land.roadLines.length)group.add(roadsMesh(land));
   const settlements=settlementsMesh(land,input.features);
   for(const mesh of settlements.meshes)if(mesh.geometry.attributes.position.count)group.add(mesh);
+  if(land.landmarks.length)group.add(landmarkMesh(land));
   const trees=vegetation(land,settlements.used);
   if(trees.length)group.add(...trees);
   const roadside=roadsideLandscape(land);
   if(roadside)group.add(roadside);
   const details=localDetails(land,input.features);
   if(details.geometry.attributes.position.count)group.add(details);
-  return {group,land,pose:makeFlight(land),description:describeField(input.cell,input.geography)};
+  return {group,land,pose:makeFlight(land),description:describeField(input.cell,input.geography,input.features)};
 }

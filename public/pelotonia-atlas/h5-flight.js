@@ -1,7 +1,10 @@
 import * as THREE from './vendor/three.module.js';
+import {addTerrainDetail, animateWater} from './landscape-materials.js';
 import {buildH5, flightPose, FLIGHT_SECONDS} from './h5-landscape.js';
 import {buildField, describeField} from './field-landscape.js';
 import {centerOf,drawFlatLayer} from './local-layer.js';
+
+import {readGuide, withCyclingGuide} from './cycling-guide.mjs';
 
 const $=id=>document.getElementById(id);
 const shots={
@@ -18,14 +21,20 @@ const readJson=async file=>{
 };
 
 async function openField(){
-  const [atlas,geography,manifest,collection]=await Promise.all(
-    ['atlas.json','field-geography.json','lokallag-manifest.json','lokallag.geojson'].map(readJson));
+  const [atlas,geography,baseManifest,baseCollection,guide]=await Promise.all([
+    ...['atlas.json','field-geography.json','lokallag-manifest.json','lokallag.geojson'].map(readJson),
+    readGuide().catch(error=>{console.warn(error);return {sites:[]};}),
+  ]);
+  const [collection,manifest]=withCyclingGuide(baseCollection,baseManifest,guide,atlas.grid);
   const index=new Map(manifest.cells.map(cell=>[cell.cell,cell]));
-  const key=new URLSearchParams(location.search).get('cell');
+  const query=new URLSearchParams(location.search);
+  const key=query.get('cell');
   const cell=index.get(key)??index.get('H5');
   const lookup=new Map(collection.features.map(f=>[f.id,f]));
   const features=cell.featureIds.map(id=>lookup.get(id));
-  const description=describeField(cell,geography);
+  const description=describeField(cell,geography,features);
+  const landmarks=features.filter(f=>f.properties.model);
+  const selectedSite=landmarks.find(f=>f.id===query.get('site'));
   const select=$('field-choice');
   select.replaceChildren(...manifest.cells.map(c=>new Option(c.cell,c.cell)));
   select.value=cell.cell;select.disabled=false;
@@ -44,15 +53,42 @@ async function openField(){
     $('poster').alt=`Rendered landscape of field ${cell.cell}`;
     $('poster').hidden=false;
   }
-  return {atlas,geography,cell,features,lookup,description,preview};
+  return {atlas,geography,cell,features,lookup,description,preview,landmarks,selectedSite};
+}
+
+function showFeature(feature) {
+  const {cell,description}=field;
+  const site=feature?.properties.model ? feature.id : '';
+  const query=new URLSearchParams({cell:cell.cell});
+  if(site)query.set('site',site);
+  $('atlas-back').href='./index.html?'+query;
+  $('note').textContent=feature?.properties.description ?? description.note;
+  if(feature)$('phase').textContent=feature.properties.name;
+}
+
+function fieldPicker(features,placeholder,selectFeature,selected='') {
+  const detail=$('detail-choice');
+  $('detail-control').hidden=false;
+  detail.replaceChildren(new Option(placeholder,''),...features.map(f=>new Option(f.properties.name,f.id)));
+  detail.value=selected;
+  detail.onchange=()=>selectFeature(field.lookup.get(detail.value));
 }
 
 async function flatField(reason){
   if(!field){$('mode').textContent='Landscape unavailable';$('note').textContent=reason;return;}
-  $('mode').textContent=field.preview?'Rendered view':'Field map';
-  $('phase').textContent=field.preview?'A view from the drone route':`${field.features.length} local features`;
+  const hasStill=field.preview&&!field.landmarks.length;
+  $('mode').textContent=hasStill?'Rendered view':'Field map';
+  $('phase').textContent=hasStill?'A view from the drone route':`${field.features.length} local features`;
   $('note').textContent=reason+' '+field.description.note;
-  if(field.preview)return;
+  if(field.landmarks.length){
+    const show=feature=>{
+      showFeature(feature);
+      if(!feature)$('phase').textContent=`${field.landmarks.length} cycling landmarks`;
+    };
+    fieldPicker(field.landmarks,'Choose a cycling landmark',show,field.selectedSite?.id);
+    if(field.selectedSite)show(field.selectedSite);
+  }
+  if(hasStill)return;
   const map=new Image();
   map.src='./terrain-local.webp';
   await map.decode();
@@ -66,7 +102,7 @@ async function flatField(reason){
     (x,z)=>[(x-w)/(e-w)*1024,(z-n)/(s-n)*1024],1024/(e-w));
   const poster=$('poster');
   poster.src=canvas.toDataURL('image/webp',.91);
-  poster.alt=`Overview map of field ${field.cell} with proposed local features`;
+  poster.alt=`Overview map of field ${field.cell.cell} with local features`;
   poster.dataset.overview='';
   poster.hidden=false;
 }
@@ -87,29 +123,6 @@ function showStills(reason){
       }
     };
   }
-}
-
-function addTerrainDetail(material){
-  material.onBeforeCompile=shader=>{
-    shader.vertexShader=shader.vertexShader.replace('#include <common>','#include <common>\nvarying vec2 earth;')
-      .replace('#include <begin_vertex>','#include <begin_vertex>\nearth=position.xz;');
-    shader.fragmentShader=shader.fragmentShader.replace('#include <common>',`
-      #include <common>
-      varying vec2 earth;
-      float landNoise(vec2 p){
-        vec2 q=floor(p),f=fract(p);f=f*f*(3.-2.*f);
-        vec4 h=fract(sin(vec4(dot(q,vec2(29.37,81.59)),dot(q+vec2(1,0),vec2(29.37,81.59)),
-          dot(q+vec2(0,1),vec2(29.37,81.59)),dot(q+vec2(1,1),vec2(29.37,81.59))))*42118.67);
-        return mix(mix(h.x,h.y,f.x),mix(h.z,h.w,f.x),f.y)-.5;
-      }
-      float filteredNoise(vec2 p){
-        return landNoise(p)*(1.-smoothstep(.24,1.15,max(length(dFdx(p)),length(dFdy(p)))));
-      }`).replace('#include <color_fragment>',`
-      #include <color_fragment>
-      float grain=filteredNoise(earth*.15)*.27+filteredNoise(earth*.64)*.15+filteredNoise(earth*2.1)*.12;
-      diffuseColor.rgb*=1.+grain;
-    `);
-  };
 }
 
 function skyDome(){
@@ -144,34 +157,6 @@ function skyDome(){
   const mesh=new THREE.Mesh(new THREE.SphereGeometry(9000,24,12),material);
   mesh.renderOrder=-10;
   return mesh;
-}
-
-function animateWater(material){
-  const time={value:0};
-  material.onBeforeCompile=shader=>{
-    shader.uniforms.waveTime=time;
-    shader.vertexShader=shader.vertexShader.replace('#include <common>','#include <common>\nvarying vec2 waterPos;')
-      .replace('#include <begin_vertex>','#include <begin_vertex>\nwaterPos=position.xz;');
-    shader.fragmentShader=shader.fragmentShader.replace('#include <common>',`
-      #include <common>
-      varying vec2 waterPos;
-      uniform float waveTime;
-    `).replace('#include <color_fragment>',`
-      #include <color_fragment>
-      vec2 p=waterPos;
-      float bands=sin(dot(p,vec2(.053,.061))-waveTime*.91+sin(p.x*.011)*2.);
-      float ripples=sin(dot(p,vec2(-.183,.101))+waveTime*1.21);
-      float width=max(length(dFdx(p)),length(dFdy(p)));
-      float wave=(bands*.13+ripples*.042)*(1.-smoothstep(4.,25.,width));
-      diffuseColor.rgb*=1.+wave;
-    `).replace('#include <normal_fragment_maps>',`
-      #include <normal_fragment_maps>
-      float bend=(1.-smoothstep(5.,32.,width))*.088;
-      vec3 rippleNormal=vec3(bands+bend*ripples,0.,ripples*.65-bands*.32)*bend;
-      normal=normalize(normal+mat3(viewMatrix)*rippleNormal);
-    `);
-  };
-  return time;
 }
 
 async function start(){
@@ -276,27 +261,30 @@ async function start(){
     transition={start:performance.now(),from:currentPose};
     inspection=null;
     $('detail-choice').value='';
-    $('note').textContent=field.description.note;
+    showFeature();
     dirty=true;
   }
   if(land){
-    const detail=$('detail-choice');
-    $('detail-control').hidden=false;
-    detail.add(new Option('Drone route',''));
-    for(const feature of field.features)detail.add(new Option(feature.properties.name,feature.id));
-    detail.onchange=()=>{
-      if(!detail.value){resumeRoute();return;}
-      const feature=field.lookup.get(detail.value);
+    const inspect=feature=>{
+      if(!feature){resumeRoute();return;}
       const [x,z]=land.toLocal(centerOf(feature));
       const level=Math.max(0,land.ground(x,z),...land.lakes.filter(l=>l.inside(x,z)).map(l=>l.level));
+      const site=land.landmarks.find(landmark=>landmark.id===feature.id);
       const wide=feature.geometry.type==='Polygon';
-      const dx=wide?570:175,dz=wide?440:145;
+      const dx=site?Math.max(105,site.radius*2.75):wide?570:175;
+      const dz=dx*.8;
+      const height=site?Math.max(60,site.radius*1.68):wide?520:136;
       transition={start:performance.now(),from:currentPose};
-      inspection={eye:[x-dx,Math.max(level,land.ground(x-dx,z+dz))+(wide?520:136),z+dz],target:[x,level+5,z]};
+      inspection={eye:[x-dx,Math.max(level,land.ground(x-dx,z+dz))+height,z+dz],
+        target:[x,level+(site?.model==='cathedral'?58:site?12:5),z]};
       playing=false;dirty=true;showPlay();
-      $('phase').textContent=feature.properties.name;
-      $('note').textContent=feature.properties.description;
+      showFeature(feature);
     };
+    fieldPicker(field.features,'Drone route',inspect,field.selectedSite?.id);
+    if(field.selectedSite){
+      inspect(field.selectedSite);
+      transition=null;
+    }
   }
   play.onclick=()=>{
     resumeRoute();

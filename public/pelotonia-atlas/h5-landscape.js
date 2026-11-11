@@ -27,10 +27,11 @@ export function terrainFor(route, village) {
   const norm=Math.hypot(...delta);
   const ux=delta[0]/norm,uz=delta[1]/norm;
   // Rotate around the existing settlement anchor, retaining the route's atlas coordinates.
-  const nodes=coords.map(([x,z])=>{
+  const toLocal=([x,z])=>{
     const dx=(x-origin[0])*metres,dz=(z-origin[1])*metres;
     return [ux*dx+uz*dz, -uz*dx+ux*dz];
-  });
+  };
+  const nodes=coords.map(toLocal);
   function centre(u) {
     let i=nodes.findIndex(p=>p[0]>u)-1;
     if(u>=nodes.at(-1)[0]) i=nodes.length-2;
@@ -55,7 +56,7 @@ export function terrainFor(route, village) {
     const ridges=ridge*ridge*cliffs*235;
     return grade(u)+smooth(8,72,Math.abs(d))*(hill+range+ridges+grain-ravine*29);
   };
-  return {centre,grade,ground,nodes};
+  return {centre,grade,ground,nodes,toLocal};
 }
 
 export function batch() {

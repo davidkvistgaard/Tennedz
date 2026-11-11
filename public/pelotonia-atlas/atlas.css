@@ -60,3 +60,9 @@ aside label[for="field"],aside label[for="local-feature"]{margin-top:12px}
 .flight-link small{font-size:11px;color:#526a5b}
 .flight-link i{font:12px system-ui;padding-left:4px}
 .flight-link:hover,.flight-link:focus-visible{background:#dbe6d2}
+
+#city-description:empty{display:none}
+.guide-sites{list-style:none;margin:8px 0;padding:0}
+.guide-sites button,.site-flight{color:#315b48;font:600 12px system-ui;text-decoration:underline;text-underline-offset:3px}
+.guide-sites button{background:none;border:0;cursor:pointer;text-align:left;padding:5px 0}
+.local-pin[data-type="landmark"]{color:#ffe2a3}
