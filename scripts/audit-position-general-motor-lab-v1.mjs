@@ -331,6 +331,17 @@ casesWithFrontLeaderMismatch:rows.filter(row=>
   (row.frontLeaderMismatchKmCount??0)>0).length,
 casesWithAttackChoiceMismatch:rows.filter(row=>
   (row.attackChoiceMismatchCount??0)>0).length,
+casesWithPelotonMembershipMismatch:rows.filter(row=>
+  row.firstPelotonMismatchKm!==null).length,
+maxFinalReserveDifference:rows.every(row=>
+  row.maxFinalReserveDifference!==null)?
+  Math.max(...rows.map(row=>
+    row.maxFinalReserveDifference)):null,
+maxSourceGroupClockVsWheelFinishSeconds:
+  rows.every(row=>
+    row.maxSourceGroupClockVsWheelFinishSeconds!==null)?
+    Math.max(...rows.map(row=>
+      row.maxSourceGroupClockVsWheelFinishSeconds)):null,
 casesWithSprintPasses:rows.filter(row=>
   (row.sprintPasses??0)>0).length,
 casesWithUnresolvedFinishClockTies:rows.filter(row=>

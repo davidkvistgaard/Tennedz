@@ -989,3 +989,37 @@ This is labelled a synthetic stake variant, not the unmodified
 Motor Lab generator output. Both source and V6 position models
 complete and replay all six; V6 records paid sprint passes in
 all six with full decision, checkpoint and finish coverage.
+The full 160-rider, 120 km V6 JSON recording is 16,627,965
+bytes in this synthetic fixture, including 14,224,031 bytes of
+per-kilometre steps. This is an audit record, not a suitable
+viewer response body. A separate versioned projection should
+transport only committed rider positions, times, paid contact
+events and publishable result evidence; it must retain a link
+to the full recording and must not infer missing outcomes.
+The deliberately synthetic variable-field fixture now checks
+exactly 30 and 150 riders over 120 km with explicit sprint
+stakes. Both sizes complete and exactly replay in the source
+probe and V6 position model. The 30-rider case records 3,600
+kilometre decisions, 3,570 intermediate crossings and 30
+finish crossings; the 150-rider case records 18,000, 17,850
+and 150 respectively. They expose five and one unresolved
+model-clock ties. The source calls the final detached rider
+`solo:team-0-7`, while the paid positional topology retains
+one separate rear road. At 150 riders the peloton memberships
+first diverge at km 2. These labels remain diagnostic rather
+than being coerced into agreement.
+The three-seed, 36-case V6 audit of the unmodified current
+Motor Lab test inputs also completes and exactly replays all
+source and positional runs, with full decision, intermediate
+passage and finish coverage. Twenty-four cases differ in at
+least one named front leader and all 36 in at least one
+attack-choice detail. The positions remain physical; the old
+source's group-clock names are comparison data, not authority
+for a wheel or a sprint. No case has a committed sprint goal.
+Two additional 160-rider, 120 km synthetic variants with an
+ordered opening attack, one also with a second attack order
+and a named worker change, complete and replay every positional
+decision, passage and finish. The source probe refuses missing
+paid contact at km 65 and km 10 respectively. The positional
+records expose these failed source comparisons instead of
+silently producing source road membership.

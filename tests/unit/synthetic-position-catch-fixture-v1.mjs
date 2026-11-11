@@ -14,6 +14,7 @@ const rider=id=>({id,flat:65,hills:65,
 
 export function prepareSyntheticPositionCatchV1({
   teamCount=2,kmCount=4,
+  riderCount=teamCount*8,
   profile='hill',oneTimeAttack=false,
   weakBunchCount=0,
   secondAttackAtKm=null,
@@ -22,6 +23,9 @@ export function prepareSyntheticPositionCatchV1({
   raceSeed='position-seed-a'}={}){
   if(!Number.isInteger(teamCount)||
     teamCount<2||teamCount>20||
+    !Number.isInteger(riderCount)||
+    riderCount<(teamCount-1)*8+6||
+    riderCount>teamCount*8||
     !Number.isInteger(kmCount)||
     kmCount<4||kmCount>120||
     !['hill','alternating',
@@ -103,6 +107,14 @@ export function prepareSyntheticPositionCatchV1({
     Object.assign(teams[1].riders[1],{
       hills:90,acceleration:100,
       positioning:100});
+  }
+  if(riderCount<teamCount*8){
+    const last=teams.at(-1);
+    last.riders=last.riders.slice(0,
+      riderCount-(teamCount-1)*8);
+    last.orders.captainId=last.riders.at(-1).id;
+    last.orders.helperIds=last.riders.slice(0,-1)
+      .map(row=>row.id);
   }
   const kilometres=Array.from({length:kmCount},
     (_,index)=>{

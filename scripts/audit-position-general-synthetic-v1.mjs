@@ -35,6 +35,7 @@ const options={teamCount:integer('teams',2),
   secondAttackAtKm:integer('second-attack-km',0)||null,
   frontWorkerAtKm:integer('front-worker-km',0)||null,
   raceSeed:option('seed','synthetic-general-audit-1')};
+options.riderCount=integer('riders',options.teamCount*8);
 const sourceVersion=option('source-version','1');
 const positionVersion=option('position-version','2');
 const parallelTeamAttack=option('parallel-team-attack',
