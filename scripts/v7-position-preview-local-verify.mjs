@@ -37,7 +37,7 @@ try{
     baseEnv);
   for(const [category,finished,teams] of [
     ['men',true,2],['women',false,2],
-    ['men',true,15]]){
+    ['men',true,15],['women',true,15]]){
     if(process.env.PELOTONIA_V7_VERIFY_ONLY&&
       process.env.PELOTONIA_V7_VERIFY_ONLY!==
         `${category}-${teams}`)continue;

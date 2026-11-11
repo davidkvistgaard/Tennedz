@@ -8,6 +8,8 @@ test('saved V7 game race reaches the shared WebGL viewer',
       'true','Requires the isolated V7 recording fixture.');
     const teamCount=Number(process.env.
       PELOTONIA_E2E_POSITION_VIEWER_TEAMS??2);
+    const category=process.env.
+      PELOTONIA_E2E_POSITION_VIEWER_CATEGORY??'men';
     test.setTimeout(teamCount>=15?180000:90000);
     const errors=[];
     page.on('pageerror',error=>errors.push(error.message));
@@ -44,6 +46,9 @@ test('saved V7 game race reaches the shared WebGL viewer',
     const finished=process.env.
       PELOTONIA_E2E_POSITION_VIEWER_FINISHED==='true';
     if(finished){
+      await expect(page.locator(
+        '.motor-viewer-intro span').first()).toContainText(
+          category==='women'?'Women':'Men');
       await expect(page.getByText(`${teamCount*8} riders`,
         {exact:false}).first()).toBeVisible();
       await expect(page.locator(
