@@ -238,6 +238,10 @@ test('V2 archive restores paid contact topology without changing V1',()=>{
   assert.throws(()=>decodeGameSnapshotPositionRaceArchiveV2({
     metadata:v2.metadata,body:changed}),
   /metadata changed/);
+  assert.throws(()=>decodeGameSnapshotPositionRaceArchiveV2({
+    metadata:{...v2.metadata,
+      uncompressedBytes:96*1024*1024+1},
+    body:v2.body}),/metadata changed/);
 });
 
 test('saved race input remains fixed through V7 projection',async()=>{
@@ -346,6 +350,14 @@ test('game snapshot refuses to infer tactical orders or race bibs',()=>{
     missingWeather.snapshot,missingWeather.manifest);
   assert.equal(weatherFallback.input.weatherProvenance,
     'official-engine-deterministic-fallback');
+});
+
+test('game snapshot refuses a field beyond the viewer contract before simulation',()=>{
+  const {snapshot,manifest}=fixture('M',19);
+  assert.throws(()=>createGameSnapshotPositionRaceBundleV1(
+    snapshot,manifest),/at most 150 committed riders/);
+  assert.throws(()=>createGameSnapshotPaidViewerDocumentV1(
+    snapshot,manifest),/at most 150 committed riders/);
 });
 
 test('physical viewer loader refuses a changed source snapshot',async()=>{

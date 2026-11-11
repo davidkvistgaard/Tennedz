@@ -10,7 +10,7 @@ production viewer. The long design ledger remains in
 | One recorded decision per rider per kilometre, paid contact, energy and line passage | The 72-case matrix of no-attack and selective-attack orders completes and replays on three seeds, both categories, three terrains and two chase orders. Another 12 repeated-attack cases on the original seed and 36 repeated-attack cases on three new seeds complete and replay. Each has 14,400 decisions, 14,280 intermediate crossings and 120 finishes. The new 36 also have complete finale frames and no peloton-membership mismatch. | Passed for these 120 inputs |
 | Motor-owned positions at a shared time | Start and each kilometre boundary are recorded. V7 adds all-rider quarter-second finale samples. Replay rejects a forged sample. | Passed at recorded times |
 | Viewer transport | A replay-verified `pelotonia.viewer.v1` projection validates for the current 120-rider Motor Lab fixture in both categories and synthetic 30/150-rider cases. The new V3 adapter bounds the display feed using only recorded finale frames, including the first recorded sample at or after every rider's finish clock; V1/V2 exports remain readable. The game-snapshot bridge accepts committed one-day entrants, orders, sporting stakes, names, bibs and team styles in both categories, generates V7 positions, and seals a versioned document. A 120-rider, 120 km game-shaped fixture covers all 14,400 rider-kilometres, 120 finishes and every rider in each frame. An immutable experimental recording schema and admin-only, flag-gated recording and clock routes have local SQL and authenticated browser tests. | Experimental local integration passed; live database and hosted runtime unverified |
-| Internal large field | A synthetic 160-rider, 120 km V7 sprint race completes and replays 19,200 decisions, 19,040 intermediate crossings, 160 finishes and 225 complete finale frames. The source group-clock probe refuses missing paid contact at km 120. | Position model passed; source comparison blocked |
+| Internal large field | A synthetic 160-rider, 120 km V7 sprint race completes and replays 19,200 decisions, 19,040 intermediate crossings, 160 finishes and 225 complete finale frames. The source group-clock probe refuses missing paid contact at km 120. The current viewer contract accepts at most 150 riders, so this internal motor control is not a viewer transport control. | Position model passed; source comparison blocked |
 | Mixed attack and sprint orders | A labelled synthetic 12-case matrix keeps the current team's attack stake and assigns sprint stakes to the 14 rival teams, across both categories, three terrains and two chase orders. Source and V7 replay all 12 with full rider coverage, one paid attack departure and 14 paid sprint choices per case; each has recorded sprint passes. | Passed for this selected stake variation; finish ties remain |
 | Attempted attack without physical departure | A synthetic 120-rider game-starter-profile selective-attack control previously stopped at km 1 after a chosen attack could not separate. V7 now checks the actual paid runway even in a clear own lane, records `insufficient_paid_attack_runway` and keeps the rider with the bunch. Two seeds in each category now complete and replay 14,400 decisions and 120 finishes per race, with zero departures and zero ties. A focused 16-rider regression reproduces the refusal; 30 related position tests pass, including paid successful departures. After the change, 12 same-seed selective-attack Motor Lab cases and two different-seed repeated-attack mountain cases also complete with full decision, checkpoint, finish and finale-frame coverage. The 12 selective cases still show eight front-leader differences and unresolved finish ties in every case. | Passed for these controls; varied real rosters and official finish remain open |
 | Mixed 150-rider transport stress | Two synthetic seeds per category, each 150 riders and 120 km with attack and sprint stakes, completed and replayed 18,000 decisions, 17,850 intermediate crossings and 150 finishes. Seed 1 recorded 16/17 paid contacts (men/women), 2,234/2,231 finale frames and 25,330,730/25,276,738 raw finale-projection bytes. V3 kept every finish milestone with 149 displayed finale frames and 3,266,708/3,263,925-byte complete viewer projections. Seed 2 recorded 307/16 contacts, 2,231/2,231 finale frames and 3,316,230/3,325,309-byte projections, with 153/154 displayed finale frames. The full motor records remain separate; seed 2 request plus race measured 50,341,845/49,363,156 JSON bytes. All four races still have 12/25/27/32 finish-tie groups. | Both synthetic categories and two seeds passed; official finish and hosted runtime open |
@@ -29,14 +29,32 @@ starter sporting profiles generated 45,140 contact observations and
 The lossless V2 archive packs repeated contact topology by rider index,
 removes duplicate top-level contact and checkpoint arrays, then restores
 the exact V7 bundle before full replay verification. That same run used
-64,517,108 JSON bytes before gzip and 5,429,942 after, within V2's
-64 MiB uncompressed bound. The corresponding synthetic women's case
-replayed 45,128 contact observations with 205,056,349 raw bundle
-bytes, 64,634,992 compact JSON bytes and 5,408,400 gzip bytes.
+64,517,108 JSON bytes before gzip and 5,429,942 after. The corresponding
+synthetic women's case replayed 45,128 contact observations with
+205,056,349 raw bundle bytes, 64,634,992 compact JSON bytes and
+5,408,400 gzip bytes.
 JSON normalizes a cosmetic starter appearance value of `-0` to `0`;
 the archive check compares all recorded fields under that JSON rule.
-These are two synthetic cases, not a hosted workload guarantee; the
-margin to the bound is small. The
+These are two synthetic cases, not a hosted workload guarantee. An
+18-team, 144-rider men's mountainous starter-profile control then
+completed and replayed all 17,280 decisions and 144 finish crossings.
+Its 45,522 contact observations occupied 246,001,511 raw bundle JSON
+bytes, 78,407,470 compact archive JSON bytes and 6,416,291 gzip bytes.
+The V2 uncompressed bound is now 96 MiB to fit that measured complete
+team field while still rejecting larger archive content. Nineteen
+complete eight-rider teams would contain 152 riders and exceed the
+current 150-rider viewer contract; this is a transport limit, not a
+new game entry rule. The 144-rider local create, encode, decode and
+replay check took 163,863 ms and reached about 2.75 GB peak RSS. The
+experimental route has a 180-second duration, but the local check
+contains extra decode and replay work while the route performs database
+work. Its hosted memory and runtime have not been measured. The matching
+18-team women's control also replayed 17,280 decisions, 144 finishes
+and 45,644 contact observations. Its compact JSON was 78,179,955 bytes and gzip was
+6,396,461 bytes; complete local create, encode, decode and replay took
+173,004 ms and about 2.75 GB peak RSS. Create plus encode measured
+122,564 ms for women; that local phase time excludes hosted database
+work and cannot clear the route gate. The
 archive envelope checks compressed and uncompressed hashes, event ID,
 viewer-document hash and full motor replay after decompression. V1
 archives remain readable. A separate, immutable

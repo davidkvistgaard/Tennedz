@@ -12,16 +12,22 @@ import {encodeGameSnapshotPositionRaceArchiveV2,
 
 const category=process.argv[2]??'men';
 const profile=process.argv[3]??'flat';
+const teamCount=Number(process.argv[4]??15);
 if(!['men','women'].includes(category))
   throw new Error('Choose a valid category.');
 if(!['flat','hill_then_mountain'].includes(profile))
   throw new Error('Choose a valid route profile.');
+if(!Number.isInteger(teamCount)||
+  teamCount<2||teamCount>20)
+  throw new Error('Choose 2–20 eight-rider teams.');
+if(teamCount*8>150)
+  throw new Error('Viewer feed supports at most 150 riders; this game snapshot uses complete eight-rider teams.');
 const gender=category==='men'?'M':'F';
 const event={id:`synthetic-starter-archive-${category}`,
   kind:'one_day',gender,seed:`starter-archive-${category}`,
   weather_locked:{temp_c:16,wind_kph:0,
     precipitation_mm:0}};
-const teams=Array.from({length:15},(_,index)=>{
+const teams=Array.from({length:teamCount},(_,index)=>{
   const id=`team-${index}`;
   const riders=starterPack(seedrandom(
     `archive-starter-control:${category}:${index}`))
@@ -65,10 +71,16 @@ const manifest={version:GAME_SNAPSHOT_PAID_VIEWER_VERSION,
 const started=Date.now();
 const bundle=createGameSnapshotPositionRaceBundleV1(
   snapshot,manifest);
+const builtAt=Date.now();
+const builtRssBytes=process.resourceUsage().maxRSS*1024;
 const archive=encodeGameSnapshotPositionRaceArchiveV2(
   bundle);
+const encodedAt=Date.now();
+const encodedRssBytes=process.resourceUsage().maxRSS*1024;
 const restored=decodeGameSnapshotPositionRaceArchiveV2(
   archive);
+const decodedAt=Date.now();
+const decodedRssBytes=process.resourceUsage().maxRSS*1024;
 function firstDifference(a,b,path='$'){
   // JSON archives canonically write -0 as 0; a starter appearance value
   // can be -0 without changing any motor or viewer field.
@@ -96,13 +108,16 @@ if(difference)
     restoredContacts:restored.race.contactEvents.length,
     firstDifference:difference,
   })}`);
-if(bundle.race.decisionCount!==14_400||
-  bundle.race.finishCrossings.length!==120)
+if(bundle.race.decisionCount!==teamCount*8*120||
+  bundle.race.finishCrossings.length!==teamCount*8)
   throw new Error('Starter race did not cover every rider and kilometre.');
 console.log(JSON.stringify({
   version:'v7-starter-archive-control-1',
   source:'synthetic_game_shaped_starter_profiles',
-  category,elapsedMs:Date.now()-started,
+  category,teamCount,elapsedMs:Date.now()-started,
+  buildElapsedMs:builtAt-started,
+  encodeElapsedMs:encodedAt-builtAt,
+  decodeElapsedMs:decodedAt-encodedAt,
   profile,
   decisions:bundle.race.decisionCount,
   finishers:bundle.race.finishCrossings.length,
@@ -116,6 +131,9 @@ console.log(JSON.stringify({
     archive.metadata.compressedBytes,
   viewerDocumentBytes:Buffer.byteLength(
     JSON.stringify(bundle.document)),
+  peakRssBytes:process.resourceUsage().maxRSS*1024,
+  builtRssBytes,encodedRssBytes,decodedRssBytes,
+  currentHeapUsedBytes:process.memoryUsage().heapUsed,
   archiveSha256:archive.metadata.compressedSha256,
   replayVerified:true,
   officialResults:bundle.race.officialResults,
