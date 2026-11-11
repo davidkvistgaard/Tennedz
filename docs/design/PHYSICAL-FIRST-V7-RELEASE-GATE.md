@@ -1,5 +1,36 @@
 # Experimental position engine V7: release gate
 
+## 11 November 2026 holdout and release-gate check
+
+The 72-case `audit:viewer:release` command is an older paid group-clock probe,
+not a V7 position run. The position audit now labels its engine path and has
+an explicit `--require-ready` exit gate. In a new one-case mountain control,
+the 120-rider V7 race and same-seed source both completed and replayed, with
+all rider finishes recorded. The strict command exited 1 because V7 still
+reported an unresolved finish-tie group and no official results. It did not
+turn complete replay into a release approval.
+
+Eight new game-starter-profile synthetic controls (two no-attack seeds and
+two selective-attack seeds per category, 120 riders and 120 km each) completed
+and replayed all 14,400 rider-kilometre decisions and 120 finish crossings per
+race. Each had zero model-clock tie groups and 20–24 recorded paid sprint
+passes. The selective-attack controls recorded refused attempts but no actual
+departures. These controls establish that ties are input dependent; they do
+not establish official results, varied-order coverage or behaviour on a saved
+game roster.
+
+A separate new-seed same-input holdout covered both categories, flat and
+mountain routes, and selective and all-helper chase orders (eight 120-rider
+cases). Source and V7 replayed completely, with full decision, checkpoint,
+finale-frame and finish coverage and no peloton-membership mismatch. Four
+flat cases differed in named front worker over 17 kilometres from km 88,
+where the historical source selected an unpayable pass. The flat cases had
+21 unresolved finish-tie groups each; mountain cases had 11 each. Source
+group-clock versus wheel-finish drift was 8.129 seconds on flat routes and
+9.711 seconds on mountain routes. These are comparisons for diagnosis,
+not official timing or a reason to force the wheel model to match a group
+clock. `readyForGuidedRaces` remains false.
+
 This is the short current-state checklist for `general-race-7`.
 It is separate from guided races, historic recordings and the
 production viewer. The long design ledger remains in
