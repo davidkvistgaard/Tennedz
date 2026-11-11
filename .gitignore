@@ -15,3 +15,5 @@ supabase/.temp/
 
 .next-viewer-acceptance/
 .next-viewer-build/
+
+.next-release-audit/
