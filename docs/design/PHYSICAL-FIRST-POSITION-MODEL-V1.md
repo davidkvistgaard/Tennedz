@@ -910,3 +910,82 @@ boundary-slot refusal. The source probe stops at km 2 on a
 missing solo-contact contract. These failures must remain
 visible; a completed positional race does not retroactively
 give the source a physical contact or an official result.
+On the repeated-attack mountain seed both categories complete
+and replay in source and V5 position. The first attack-choice
+count difference in the men's record is at km 118: the source
+still lists `you-7` as a solo 284.507 seconds ahead, while the
+positional record has already paid and frozen that rider at the
+120 km finish. V5 correctly excludes a finished rider from
+the count of teammates still riding ahead. The actual ordered
+attack departure count remains one in both recordings, and
+the first choice remains `hold_until_ordered_attack_window`.
+The audit reports this distinction rather than equating a
+past group clock with an active wheel on the road.
+Two additional seeds, `calibration-a` and `calibration-b`,
+complete and exactly replay all 24 of their selective-attack
+120-rider source/position combinations across both categories,
+three terrains and two chase orders. Together with the
+original seed, V5 has 36/36 such full-route cases with complete
+decisions, intermediate passages and finish crossings. This
+expands same-input coverage; it does not certify all possible
+orders, contact cases or an official sprint classification.
+
+`shared-road-km-15`, `fixed-lane-finish-2` and `general-race-6`
+are an opt-in finish experiment. The final shared-road kilometre
+stops with its paid front at 300 metres to go; solo riders who
+already crossed the true finish remain frozen at their paid
+crossing. The finish continuation then advances every remaining
+rider to the actual line in quarter-second steps. A rider is
+eligible to choose a sprint only if the committed team stake
+names that rider as sporting captain with `sprint_finish`.
+The V2 finish rejects a sprint stake that names another team's
+rider, so one team cannot spend a different captain's reserve.
+The choice records actual reserve and an exposed-work quote.
+Insufficient reserve yields a `hold_sprint` decision. A paid
+sprinter accelerates according to their finale ability, ordered
+effort and remaining reserve, is charged for every travelled
+metre, and may enter one adjacent clear lane per step. Changes
+of lane and measured overtakes are separate versioned events;
+pass observations carry cumulative sprint distance and cost.
+Crossings whose model clocks differ by at most one microsecond
+are marked as unresolved finish-clock ties; the stable rider-ID
+sort used to serialize crossings must not be read as an official
+placing between those riders.
+Every rider gets one recorded finish choice, including riders
+who crossed early. The old fixed-lane finish remains unchanged.
+In a synthetic 16-rider, 20 km race an explicitly committed
+sprint captain makes a paid pass and reaches the line first.
+Another fixture refuses an exhausted captain, and a two-team
+fixture records both captains' independent paid choices. Full
+record replay rejects a forged pass clock. These fixtures are
+noncanonical. The new finish is not an official classification:
+the choices and lane model need whole-race, all-category and
+larger-field calibration, finish-tie validation and game-result
+integration before any awards or guided-race use.
+The current 120-rider Motor Lab input matrix (one seed, both
+categories, three terrains and two chase orders, selective attack)
+completes and exactly replays all 12 V6 positional recordings.
+Every case has 14,400 kilometre decisions, 14,280 intermediate
+passages and 120 finish crossings. The source probe also completes
+and replays all 12, but eight cases differ in front leader and all
+12 differ in at least one attack-choice detail. These inputs have
+`none` or `summit_attack` stakes, so none exercises a paid sprint.
+The deliberately synthetic 160-rider, 120 km, two-weak-worker
+fixture with 20 explicit `sprint_finish` stakes completes and
+exactly replays 19,200 decisions, 19,040 intermediate passages,
+160 finish crossings, 20 paid sprint choices, 11 lane-entry
+observations and 281 overtake observations. The V6 record
+also exposes one unresolved model-clock tie rather
+than silently assigning a placing from the serialization order.
+Its source
+group-clock probe refuses a peloton/rear crossing at km 120
+without recorded paid contact. This is an exposed source-model
+limit; the positional finish must not be used to overwrite that
+source recording or publish an official result.
+A separate six-case 120-rider stake-variation audit explicitly
+changes every team goal to `sprint_finish` on the current Motor
+Lab fixture (both categories and all three terrains, no attack).
+This is labelled a synthetic stake variant, not the unmodified
+Motor Lab generator output. Both source and V6 position models
+complete and replay all six; V6 records paid sprint passes in
+all six with full decision, checkpoint and finish coverage.

@@ -13,7 +13,9 @@ import {recordPhysicalFirstPositionGeneralRaceV2,
   recordPhysicalFirstPositionGeneralRaceV4,
   replayPhysicalFirstPositionGeneralRaceV4,
   recordPhysicalFirstPositionGeneralRaceV5,
-  replayPhysicalFirstPositionGeneralRaceV5} from
+  replayPhysicalFirstPositionGeneralRaceV5,
+  recordPhysicalFirstPositionGeneralRaceV6,
+  replayPhysicalFirstPositionGeneralRaceV6} from
   '../lib/engine/v2/physical-first-position-general-race-v1.mjs';
 
 const option=(name,fallback)=>process.argv.find(arg=>
@@ -37,15 +39,22 @@ const sourceVersion=option('source-version','1');
 const positionVersion=option('position-version','2');
 const parallelTeamAttack=option('parallel-team-attack',
   'false');
+const sprintStakes=option('sprint-stakes','none');
 if(!['first','none'].includes(option('attack','first')))
   throw new Error('Unsupported attack audit option.');
 if(!['1','2'].includes(sourceVersion))
   throw new Error('Unsupported source probe version.');
-if(!['2','3','4','5'].includes(positionVersion)||
-  !['true','false'].includes(parallelTeamAttack))
+if(!['2','3','4','5','6'].includes(positionVersion)||
+  !['true','false'].includes(parallelTeamAttack)||
+  !['none','first','all'].includes(sprintStakes)||
+  sprintStakes!=='none'&&positionVersion!=='6')
   throw new Error('Unsupported position version.');
 const request=prepareSyntheticPositionCatchV1(options);
 request.input.positionPassingCorridorCount=1;
+if(sprintStakes!=='none')
+  for(const [index,stake] of request.input.stakes.entries())
+    if(sprintStakes==='all'||index===0)
+      stake.sportingGoal='sprint_finish';
 if(option('attack','first')==='none')
   request.input.teams[0].orders.baseline.attack='none';
 if(parallelTeamAttack==='true'){
@@ -72,14 +81,18 @@ try{source=(sourceVersion==='2'?
     evidence:error.sourceEvidence??null};
 }
 try{
-  position=(positionVersion==='5'?
+  position=(positionVersion==='6'?
+    recordPhysicalFirstPositionGeneralRaceV6:
+    positionVersion==='5'?
     recordPhysicalFirstPositionGeneralRaceV5:
     positionVersion==='4'?
     recordPhysicalFirstPositionGeneralRaceV4:
     positionVersion==='3'?
       recordPhysicalFirstPositionGeneralRaceV3:
     recordPhysicalFirstPositionGeneralRaceV2)(request);
-  (positionVersion==='5'?
+  (positionVersion==='6'?
+    replayPhysicalFirstPositionGeneralRaceV6:
+    positionVersion==='5'?
     replayPhysicalFirstPositionGeneralRaceV5:
     positionVersion==='4'?
     replayPhysicalFirstPositionGeneralRaceV4:
@@ -125,6 +138,7 @@ const summary={version:'position-general-synthetic-audit-1',
   fixture:'synthetic_noncanonical',options,
   sourceVersion,positionVersion,
   parallelTeamAttack:parallelTeamAttack==='true',
+  sprintStakes,
   sourceStatus:source?sourceVersion==='2'?
     'complete_replayed':'complete':'failed',
   sourceError,
@@ -140,6 +154,18 @@ const summary={version:'position-general-synthetic-audit-1',
     position?.checkpointCrossings.length??null,
   finishCrossings:
     position?.finishCrossings.length??null,
+  unresolvedFinishClockTies:
+    position?.finaleFinishTieObservations
+      ?.length??null,
+  sprintDecisions:
+    position?.finaleSprintDecisions?.length??null,
+  paidSprintAttempts:
+    position?.finaleSprintDecisions?.filter(row=>
+      row.choice==='attempt_paid_sprint').length??null,
+  sprintPassObservations:
+    position?.finaleSprintPassEvents?.length??null,
+  sprintLaneObservations:
+    position?.finaleSprintLaneEvents?.length??null,
   sourceAttacks,positionAttacks,
   attackCapacityRefusals:
     position?.attackCapacityRefusals

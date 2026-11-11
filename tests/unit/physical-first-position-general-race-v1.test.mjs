@@ -21,7 +21,9 @@ import {recordPhysicalFirstPositionGeneralRaceV1,
   recordPhysicalFirstPositionGeneralRaceV4,
   replayPhysicalFirstPositionGeneralRaceV4,
   recordPhysicalFirstPositionGeneralRaceV5,
-  replayPhysicalFirstPositionGeneralRaceV5} from
+  replayPhysicalFirstPositionGeneralRaceV5,
+  recordPhysicalFirstPositionGeneralRaceV6,
+  replayPhysicalFirstPositionGeneralRaceV6} from
   '../../lib/engine/v2/physical-first-position-general-race-v1.mjs';
 
 test('a connected start records every rider without an attack',()=>{
@@ -358,5 +360,138 @@ test('position choice version preserves a no-attack paid race',()=>{
   assert.deepEqual(race.finishCrossings,
     prior.finishCrossings);
   assert.deepEqual(replayPhysicalFirstPositionGeneralRaceV5(
+    request,race),race);
+});
+
+test('last 300 metres settle from a paid sprint handoff',()=>{
+  const request=prepareSyntheticPositionCatchV1({
+    teamCount:2,kmCount:20,
+    profile:'hill_then_mountain'});
+  request.input.positionPassingCorridorCount=1;
+  request.input.teams[0].orders.baseline.attack='none';
+  request.input.stakes[0].sportingGoal='sprint_finish';
+  Object.assign(request.input.teams[0].riders[6],{
+    hills:65,mountain:65,sprint:100,
+    acceleration:100});
+  const race=recordPhysicalFirstPositionGeneralRaceV6(request);
+  assert.equal(race.completedThroughKm,20);
+  assert.equal(race.decisionCount,320);
+  assert.equal(race.checkpointCrossings.length,304);
+  assert.equal(race.finishCrossings.length,16);
+  assert.equal(race.steps.at(-1).sharedRoad
+    .frontDistanceM,19_700);
+  assert.equal(race.tail.sprintDecisions.length,16);
+  assert.deepEqual(race.tail.sprintDecisions
+    .filter(row=>row.choice==='attempt_paid_sprint')
+    .map(row=>row.riderId),['team-0-7']);
+  assert.ok(race.tail.sprintLaneEvents.some(row=>
+    row.riderId==='team-0-7'));
+  assert.ok(race.tail.sprintPassEvents.some(row=>
+    row.riderId==='team-0-7'&&
+    row.passedRiderId==='team-0-2'&&
+    row.cumulativeSprintDistanceM>0&&
+    row.cumulativeSprintPaidFromReserve>0));
+  assert.ok(race.tail.decisions.find(row=>
+    row.riderId==='team-0-7').legs.some(leg=>
+    leg.role==='sprint'&&leg.paidFromReserve>0));
+  assert.equal(race.finishCrossings[0].riderId,
+    'team-0-7');
+  assert.deepEqual(replayPhysicalFirstPositionGeneralRaceV6(
+    request,race),race);
+  const forged=structuredClone(race);
+  forged.tail.sprintPassEvents[0]
+    .observedAtClockSeconds+=1;
+  assert.throws(()=>
+    replayPhysicalFirstPositionGeneralRaceV6(
+      request,forged),/differs from paid movement/);
+});
+
+test('an exhausted sprint captain cannot receive a free launch',()=>{
+  const request=prepareSyntheticPositionCatchV1({
+    teamCount:2,kmCount:20,
+    profile:'hill_then_mountain'});
+  request.input.positionPassingCorridorCount=1;
+  request.input.teams[0].orders.baseline.attack='none';
+  request.input.stakes[0].sportingGoal='sprint_finish';
+  request.input.start.riders.find(row=>
+    row.riderId==='team-0-7').reserve=10;
+  const race=recordPhysicalFirstPositionGeneralRaceV6(request);
+  const choice=race.tail.sprintDecisions.find(row=>
+    row.riderId==='team-0-7');
+  assert.equal(choice.choice,'hold_sprint');
+  assert.equal(choice.reason,'insufficient_reserve');
+  assert.ok(!race.tail.sprintLaneEvents.some(row=>
+    row.riderId==='team-0-7'));
+  assert.ok(!race.tail.decisions.find(row=>
+    row.riderId==='team-0-7').legs.some(leg=>
+    leg.role==='sprint'));
+  assert.equal(race.finishCrossings.length,16);
+  assert.deepEqual(replayPhysicalFirstPositionGeneralRaceV6(
+    request,race),race);
+});
+
+test('a sprint stake cannot spend another team captain reserve',()=>{
+  const request=prepareSyntheticPositionCatchV1({
+    teamCount:2,kmCount:20,
+    profile:'hill_then_mountain'});
+  request.input.positionPassingCorridorCount=1;
+  request.input.teams[0].orders.baseline.attack='none';
+  request.input.stakes[0].sportingGoal='sprint_finish';
+  request.input.stakes[0].sportingCaptainId='team-1-7';
+  assert.throws(()=>
+    recordPhysicalFirstPositionGeneralRaceV6(request),
+  /Sprint captain is not on the committed team/);
+});
+
+test('two sprint captains make separately paid finish choices',()=>{
+  const request=prepareSyntheticPositionCatchV1({
+    teamCount:2,kmCount:20,
+    profile:'hill_then_mountain'});
+  request.input.positionPassingCorridorCount=1;
+  request.input.teams[0].orders.baseline.attack='none';
+  for(const stake of request.input.stakes)
+    stake.sportingGoal='sprint_finish';
+  for(const team of request.input.teams)
+    Object.assign(team.riders[6],{
+      hills:65,mountain:65,
+      sprint:100,acceleration:100});
+  const race=recordPhysicalFirstPositionGeneralRaceV6(request);
+  const sprintIds=race.tail.sprintDecisions
+    .filter(row=>row.choice==='attempt_paid_sprint')
+    .map(row=>row.riderId).sort();
+  assert.deepEqual(sprintIds,
+    ['team-0-7','team-1-7']);
+  assert.equal(race.finishCrossings.length,16);
+  assert.equal(race.decisionCount,320);
+  for(const riderId of sprintIds)
+    assert.ok(race.tail.decisions.find(row=>
+      row.riderId===riderId).paidFromReserve>0);
+  assert.deepEqual(replayPhysicalFirstPositionGeneralRaceV6(
+    request,race),race);
+});
+
+test('sprint handoff leaves earlier paid kilometres intact',()=>{
+  const request=prepareSyntheticPositionCatchV1({
+    teamCount:2,kmCount:20,
+    profile:'hill_then_mountain'});
+  request.input.positionPassingCorridorCount=1;
+  request.input.teams[0].orders.baseline.attack='none';
+  const prior=recordPhysicalFirstPositionGeneralRaceV5(request);
+  const race=recordPhysicalFirstPositionGeneralRaceV6(request);
+  const withoutVersion=rows=>rows.map(({version,...row})=>row);
+  assert.deepEqual(race.steps.slice(0,-1).map(step=>
+    withoutVersion(step.sharedRoad.positions)),
+  prior.steps.slice(0,-1).map(step=>
+    withoutVersion(step.sharedRoad.positions)));
+  assert.deepEqual(race.steps.slice(0,-1).map(step=>
+    withoutVersion(step.sharedRoad.decisions)),
+  prior.steps.slice(0,-1).map(step=>
+    withoutVersion(step.sharedRoad.decisions)));
+  assert.equal(race.tail.sprintDecisions.length,16);
+  assert.ok(race.tail.sprintDecisions.every(row=>
+    row.choice==='hold_sprint'));
+  assert.equal(race.tail.sprintLaneEvents.length,0);
+  assert.equal(race.tail.sprintPassEvents.length,0);
+  assert.deepEqual(replayPhysicalFirstPositionGeneralRaceV6(
     request,race),race);
 });

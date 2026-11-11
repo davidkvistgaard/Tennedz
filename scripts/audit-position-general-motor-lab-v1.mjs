@@ -18,7 +18,9 @@ import {recordPhysicalFirstPositionGeneralRaceV1,
   recordPhysicalFirstPositionGeneralRaceV4,
   replayPhysicalFirstPositionGeneralRaceV4,
   recordPhysicalFirstPositionGeneralRaceV5,
-  replayPhysicalFirstPositionGeneralRaceV5} from
+  replayPhysicalFirstPositionGeneralRaceV5,
+  recordPhysicalFirstPositionGeneralRaceV6,
+  replayPhysicalFirstPositionGeneralRaceV6} from
   '../lib/engine/v2/physical-first-position-general-race-v1.mjs';
 
 const option=(name,fallback)=>process.argv.find(arg=>
@@ -30,6 +32,7 @@ const chases=option('chases','selective').split(',');
 const attack=option('attack','none');
 const positionVersion=option('position-version','1');
 const sourceVersion=option('source-version','1');
+const sprintStakes=option('sprint-stakes','none');
 const seeds=option('seeds',
   'preview-recorded-road-1').split(',');
 if(categories.some(value=>
@@ -39,8 +42,10 @@ if(categories.some(value=>
   chases.some(value=>
     !['selective','all'].includes(value))||
   !['none','selective','repeated'].includes(attack)||
-  !['1','2','3','4','5'].includes(positionVersion)||
+  !['1','2','3','4','5','6'].includes(positionVersion)||
   !['1','2'].includes(sourceVersion)||
+  !['none','you','all'].includes(sprintStakes)||
+  sprintStakes!=='none'&&positionVersion!=='6'||
   seeds.some(seed=>
     !(/^[A-Za-z0-9-]{1,64}$/).test(seed)))
   throw new Error('General audit has unsupported inputs.');
@@ -61,6 +66,11 @@ for(const category of categories)
           positionModelVersion:
             PHYSICAL_FIRST_POSITION_START_V2_VERSION,
           positionPassingCorridorCount:1};
+        if(sprintStakes!=='none')
+          input.stakes=input.stakes.map(stake=>({
+            ...stake,sportingGoal:sprintStakes==='all'||
+              stake.teamId==='you'?
+              'sprint_finish':stake.sportingGoal}));
         request={input,
           grid:{laneCount:4,
             wheelSpacingM:2.5,
@@ -77,7 +87,9 @@ for(const category of categories)
       }
       if(request){
         try{
-          position=(positionVersion==='5'?
+          position=(positionVersion==='6'?
+            recordPhysicalFirstPositionGeneralRaceV6:
+            positionVersion==='5'?
             recordPhysicalFirstPositionGeneralRaceV5:
             positionVersion==='4'?
             recordPhysicalFirstPositionGeneralRaceV4:
@@ -86,7 +98,9 @@ for(const category of categories)
             positionVersion==='2'?
               recordPhysicalFirstPositionGeneralRaceV2:
               recordPhysicalFirstPositionGeneralRaceV1)(request);
-          (positionVersion==='5'?
+          (positionVersion==='6'?
+            replayPhysicalFirstPositionGeneralRaceV6:
+            positionVersion==='5'?
             replayPhysicalFirstPositionGeneralRaceV5:
             positionVersion==='4'?
             replayPhysicalFirstPositionGeneralRaceV4:
@@ -150,7 +164,28 @@ for(const category of categories)
                 sourceForwardRiderCount:
                   sourceChoice.forwardRiderCount,
                 positionForwardRiderCount:
-                  modelChoice?.forwardRiderCount??null}];
+                  modelChoice?.forwardRiderCount??null,
+                sourceOtherRoadRiders:
+                  source.states[index].riders.filter(row=>
+                    row.teamId===sourceChoice.teamId&&
+                    row.roadId!=='peloton').map(row=>({
+                    riderId:row.riderId,
+                    roadId:row.roadId,
+                    leadSeconds:
+                      source.states[index].roads.find(road=>
+                        road.roadId===row.roadId)
+                        ?.leadOverFrontSeconds??null})),
+                positionOtherRoadRiders:index===0?[]:
+                  position.steps[index-1].sharedRoad
+                    .positions.filter(row=>
+                      row.teamId===sourceChoice.teamId&&
+                      row.roadId!=='peloton').map(row=>({
+                      riderId:row.riderId,
+                      roadId:row.roadId,
+                      distanceM:row.distanceM,
+                      frontDistanceM:
+                        position.steps[index-1].sharedRoad
+                          .frontDistanceM}))}];
           })):[];
       const sourceAttacks=source?.steps.flatMap(step=>
         step.attackSteps.map(attackStep=>
@@ -186,10 +221,20 @@ for(const category of categories)
             120*119,
         finishCoverage:
           position?.finishCrossings.length===120,
+        unresolvedFinishClockTies:
+          position?.finaleFinishTieObservations
+            ?.length??null,
         attackDepartures:
           position?.attackDepartureEvents.length??null,
         attackCapacityRefusals:
           position?.attackCapacityRefusals.length??null,
+        sprintAttempts:position?.finaleSprintDecisions
+          ?.filter(choice=>choice.choice===
+            'attempt_paid_sprint').length??null,
+        sprintPasses:position?.finaleSprintPassEvents
+          ?.length??null,
+        sprintLaneEvents:position?.finaleSprintLaneEvents
+          ?.length??null,
         sourceAttackDepartures:source?
           sourceAttacks.length:null,
         unmatchedSourceAttacks:
@@ -254,8 +299,10 @@ for(const category of categories)
     }
 const summary={version:
   'physical-first-position-general-motor-lab-audit-1',
-fixture:'current_motor_lab_test_input',
-attack,positionVersion,sourceVersion,
+fixture:sprintStakes==='none'?
+  'current_motor_lab_test_input':
+  'synthetic_stake_variant_of_motor_lab_test_input',
+attack,positionVersion,sourceVersion,sprintStakes,
 seeds,plannedCases,
 sourceCompleted:rows.filter(row=>
   row.sourceStatus.startsWith('complete')).length,
@@ -284,6 +331,10 @@ casesWithFrontLeaderMismatch:rows.filter(row=>
   (row.frontLeaderMismatchKmCount??0)>0).length,
 casesWithAttackChoiceMismatch:rows.filter(row=>
   (row.attackChoiceMismatchCount??0)>0).length,
+casesWithSprintPasses:rows.filter(row=>
+  (row.sprintPasses??0)>0).length,
+casesWithUnresolvedFinishClockTies:rows.filter(row=>
+  (row.unresolvedFinishClockTies??0)>0).length,
 officialResults:false,
 readyForGuidedRaces:false};
 process.stdout.write(JSON.stringify({summary,rows},
