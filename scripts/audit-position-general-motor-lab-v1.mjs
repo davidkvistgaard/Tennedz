@@ -20,7 +20,9 @@ import {recordPhysicalFirstPositionGeneralRaceV1,
   recordPhysicalFirstPositionGeneralRaceV5,
   replayPhysicalFirstPositionGeneralRaceV5,
   recordPhysicalFirstPositionGeneralRaceV6,
-  replayPhysicalFirstPositionGeneralRaceV6} from
+  replayPhysicalFirstPositionGeneralRaceV6,
+  recordPhysicalFirstPositionGeneralRaceV7,
+  replayPhysicalFirstPositionGeneralRaceV7} from
   '../lib/engine/v2/physical-first-position-general-race-v1.mjs';
 
 const option=(name,fallback)=>process.argv.find(arg=>
@@ -42,10 +44,11 @@ if(categories.some(value=>
   chases.some(value=>
     !['selective','all'].includes(value))||
   !['none','selective','repeated'].includes(attack)||
-  !['1','2','3','4','5','6'].includes(positionVersion)||
+  !['1','2','3','4','5','6','7'].includes(positionVersion)||
   !['1','2'].includes(sourceVersion)||
   !['none','you','all'].includes(sprintStakes)||
-  sprintStakes!=='none'&&positionVersion!=='6'||
+  sprintStakes!=='none'&&
+    !['6','7'].includes(positionVersion)||
   seeds.some(seed=>
     !(/^[A-Za-z0-9-]{1,64}$/).test(seed)))
   throw new Error('General audit has unsupported inputs.');
@@ -87,7 +90,9 @@ for(const category of categories)
       }
       if(request){
         try{
-          position=(positionVersion==='6'?
+          position=(positionVersion==='7'?
+            recordPhysicalFirstPositionGeneralRaceV7:
+            positionVersion==='6'?
             recordPhysicalFirstPositionGeneralRaceV6:
             positionVersion==='5'?
             recordPhysicalFirstPositionGeneralRaceV5:
@@ -98,7 +103,9 @@ for(const category of categories)
             positionVersion==='2'?
               recordPhysicalFirstPositionGeneralRaceV2:
               recordPhysicalFirstPositionGeneralRaceV1)(request);
-          (positionVersion==='6'?
+          (positionVersion==='7'?
+            replayPhysicalFirstPositionGeneralRaceV7:
+            positionVersion==='6'?
             replayPhysicalFirstPositionGeneralRaceV6:
             positionVersion==='5'?
             replayPhysicalFirstPositionGeneralRaceV5:
@@ -235,6 +242,12 @@ for(const category of categories)
           ?.length??null,
         sprintLaneEvents:position?.finaleSprintLaneEvents
           ?.length??null,
+        finalePositionFrames:
+          position?.tail.positionFrames?.length??null,
+        finaleFrameRiderCoverage:
+          position?.tail.positionFrames?.every(frame=>
+            frame.positions.length===
+              position.riderCount)??null,
         sourceAttackDepartures:source?
           sourceAttacks.length:null,
         unmatchedSourceAttacks:
@@ -319,6 +332,8 @@ fullCheckpointCoverage:rows.filter(row=>
   row.checkpointCoverage).length,
 fullFinishCoverage:rows.filter(row=>
   row.finishCoverage).length,
+fullFinaleFrameCoverage:rows.filter(row=>
+  row.finaleFrameRiderCoverage===true).length,
 maxContactObservations:rows.every(row=>
   row.contactObservations!==null)?
   Math.max(...rows.map(row=>row.contactObservations)):

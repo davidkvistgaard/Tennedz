@@ -15,7 +15,9 @@ import {recordPhysicalFirstPositionGeneralRaceV2,
   recordPhysicalFirstPositionGeneralRaceV5,
   replayPhysicalFirstPositionGeneralRaceV5,
   recordPhysicalFirstPositionGeneralRaceV6,
-  replayPhysicalFirstPositionGeneralRaceV6} from
+  replayPhysicalFirstPositionGeneralRaceV6,
+  recordPhysicalFirstPositionGeneralRaceV7,
+  replayPhysicalFirstPositionGeneralRaceV7} from
   '../lib/engine/v2/physical-first-position-general-race-v1.mjs';
 
 const option=(name,fallback)=>process.argv.find(arg=>
@@ -45,10 +47,11 @@ if(!['first','none'].includes(option('attack','first')))
   throw new Error('Unsupported attack audit option.');
 if(!['1','2'].includes(sourceVersion))
   throw new Error('Unsupported source probe version.');
-if(!['2','3','4','5','6'].includes(positionVersion)||
+if(!['2','3','4','5','6','7'].includes(positionVersion)||
   !['true','false'].includes(parallelTeamAttack)||
   !['none','first','all'].includes(sprintStakes)||
-  sprintStakes!=='none'&&positionVersion!=='6')
+  sprintStakes!=='none'&&
+    !['6','7'].includes(positionVersion))
   throw new Error('Unsupported position version.');
 const request=prepareSyntheticPositionCatchV1(options);
 request.input.positionPassingCorridorCount=1;
@@ -82,7 +85,9 @@ try{source=(sourceVersion==='2'?
     evidence:error.sourceEvidence??null};
 }
 try{
-  position=(positionVersion==='6'?
+  position=(positionVersion==='7'?
+    recordPhysicalFirstPositionGeneralRaceV7:
+    positionVersion==='6'?
     recordPhysicalFirstPositionGeneralRaceV6:
     positionVersion==='5'?
     recordPhysicalFirstPositionGeneralRaceV5:
@@ -91,7 +96,9 @@ try{
     positionVersion==='3'?
       recordPhysicalFirstPositionGeneralRaceV3:
     recordPhysicalFirstPositionGeneralRaceV2)(request);
-  (positionVersion==='6'?
+  (positionVersion==='7'?
+    replayPhysicalFirstPositionGeneralRaceV7:
+    positionVersion==='6'?
     replayPhysicalFirstPositionGeneralRaceV6:
     positionVersion==='5'?
     replayPhysicalFirstPositionGeneralRaceV5:
@@ -167,6 +174,12 @@ const summary={version:'position-general-synthetic-audit-1',
     position?.finaleSprintPassEvents?.length??null,
   sprintLaneObservations:
     position?.finaleSprintLaneEvents?.length??null,
+  finalePositionFrames:
+    position?.tail.positionFrames?.length??null,
+  finaleFrameRiderCoverage:
+    position?.tail.positionFrames?.every(frame=>
+      frame.positions.length===position.riderCount)
+      ??null,
   sourceAttacks,positionAttacks,
   attackCapacityRefusals:
     position?.attackCapacityRefusals

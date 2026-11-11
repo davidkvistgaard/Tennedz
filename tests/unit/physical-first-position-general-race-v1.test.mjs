@@ -23,7 +23,9 @@ import {recordPhysicalFirstPositionGeneralRaceV1,
   recordPhysicalFirstPositionGeneralRaceV5,
   replayPhysicalFirstPositionGeneralRaceV5,
   recordPhysicalFirstPositionGeneralRaceV6,
-  replayPhysicalFirstPositionGeneralRaceV6} from
+  replayPhysicalFirstPositionGeneralRaceV6,
+  recordPhysicalFirstPositionGeneralRaceV7,
+  replayPhysicalFirstPositionGeneralRaceV7} from
   '../../lib/engine/v2/physical-first-position-general-race-v1.mjs';
 
 test('a connected start records every rider without an attack',()=>{
@@ -520,4 +522,54 @@ test('a large sprint field exposes unresolved model clock ties',()=>{
   assert.equal(race.officialResults,false);
   assert.deepEqual(replayPhysicalFirstPositionGeneralRaceV6(
     request,race),race);
+});
+
+test('sampled finale positions use the paid shared clock',()=>{
+  const request=prepareSyntheticPositionCatchV1({
+    teamCount:2,kmCount:20,
+    profile:'hill_then_mountain'});
+  request.input.positionPassingCorridorCount=1;
+  request.input.teams[0].orders.baseline.attack='none';
+  request.input.stakes[0].sportingGoal='sprint_finish';
+  const prior=recordPhysicalFirstPositionGeneralRaceV6(request);
+  const race=recordPhysicalFirstPositionGeneralRaceV7(request);
+  assert.deepEqual(race.finishCrossings,
+    prior.finishCrossings);
+  const frames=race.tail.positionFrames;
+  assert.ok(frames.length>1);
+  assert.equal(frames[0].clockSeconds,
+    race.steps.at(-1).sharedRoad.clockSeconds);
+  assert.equal(race.tail.positionFrameStepSeconds,.25);
+  assert.ok(frames.every(frame=>
+    frame.positions.length===race.riderCount));
+  for(let index=1;index<frames.length;index++){
+    const interval=frames[index].clockSeconds-
+      frames[index-1].clockSeconds;
+    assert.ok(interval>0&&interval<=.25+1e-6);
+    if(index<frames.length-1)
+      assert.ok(Math.abs(interval-.25)<1e-6);
+    for(let riderIndex=0;riderIndex<race.riderCount;
+      riderIndex++){
+      const before=frames[index-1]
+        .positions[riderIndex];
+      const after=frames[index].positions[riderIndex];
+      assert.equal(after.riderId,before.riderId);
+      assert.ok(after.distanceM+1e-6>=
+        before.distanceM);
+      assert.ok(after.energy<=before.energy+1e-6);
+    }
+  }
+  assert.ok(frames.at(-1).positions.every(row=>
+    row.roadId==='finished'&&
+    row.distanceM===20_000));
+  assert.equal(frames.at(-1).clockSeconds,
+    race.tail.lastClockSeconds);
+  assert.deepEqual(replayPhysicalFirstPositionGeneralRaceV7(
+    request,race),race);
+  const forged=structuredClone(race);
+  forged.tail.positionFrames[1]
+    .positions[0].distanceM+=1;
+  assert.throws(()=>
+    replayPhysicalFirstPositionGeneralRaceV7(
+      request,forged),/differs from paid movement/);
 });

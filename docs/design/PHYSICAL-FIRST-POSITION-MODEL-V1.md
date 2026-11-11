@@ -1023,3 +1023,35 @@ decision, passage and finish. The source probe refuses missing
 paid contact at km 65 and km 10 respectively. The positional
 records expose these failed source comparisons instead of
 silently producing source road membership.
+`fixed-lane-finish-3` and `general-race-7` preserve the V6
+paid physics and add a versioned quarter-second position frame
+for every committed rider through the last 300 metres. Each
+frame contains the common clock, rider distance, lane, road ID
+and reserve. A rider who has crossed is frozen at the actual
+line; the final frame is timestamped at the last paid crossing,
+not at the end of an otherwise idle simulation tick. These
+frames are motor output for a future viewer projection. They
+do not supply atlas coordinates, positions between the
+kilometre boundary samples before the last 300 metres, or an
+official classification.
+An exact 150-rider synthetic sprint field completes and replays
+with 206 finale frames, all 150 riders present in every frame,
+18,000 kilometre decisions, 17,850 intermediate crossings and
+150 finish crossings. The source probe also completes, though
+the differing detached-road membership remains visible.
+In a separate six-case synthetic stake variation of the current
+120-rider Motor Lab inputs, both categories and three terrains
+complete and replay in source and V7 position. Every V7 frame
+contains all 120 riders, every case records paid sprint passes
+and an unresolved model-clock tie, and every case has full
+kilometre and finish coverage. The maximum source versus
+position reserve difference is 7.189 and the maximum source
+group-clock versus paid-wheel finish difference is 9.658
+seconds. These are measured calibration gaps, not parameters
+to tune away by assigning group clocks to riders.
+For the exact 150-rider, 120 km synthetic fixture, V7 and V6
+have identical paid finish crossings and per-kilometre decisions.
+The V7 audit JSON is 18,824,590 bytes versus 15,523,387 for
+V6; the 206 authoritative finale frames account for 3,301,153
+bytes. Frames are stored only once in the tail so the transport
+can select them without duplicating the full audit ledger.
