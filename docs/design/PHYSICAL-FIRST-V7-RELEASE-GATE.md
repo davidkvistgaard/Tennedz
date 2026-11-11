@@ -19,6 +19,17 @@ departures. These controls establish that ties are input dependent; they do
 not establish official results, varied-order coverage or behaviour on a saved
 game roster.
 
+Four further game-starter-profile controls used the fixture's alternating
+route instead of its long mountain section, with one no-attack and one
+selective-attack order per category on seed `v7-alt-holdout-1`. All four
+completed and replayed 14,400 decisions and 120 finishes. Each recorded four
+paid sprint passes. The no-attack races had four unresolved model-clock tie
+groups; the selective-attack races had three. No attack physically departed.
+Their local end-to-end diagnostic elapsed times were 131.6–153.0 seconds,
+including replay and JSON measurements, so this is not a hosted function
+runtime benchmark. A tie-free mountain fixture cannot clear the finish gate
+for a different route profile.
+
 A separate new-seed same-input holdout covered both categories, flat and
 mountain routes, and selective and all-helper chase orders (eight 120-rider
 cases). Source and V7 replayed completely, with full decision, checkpoint,

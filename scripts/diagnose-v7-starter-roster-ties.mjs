@@ -14,13 +14,16 @@ const category=process.argv[2]??'men';
 const seed=process.argv[3]??
   `v7-starter-roster-${category}-1`;
 const mode=process.argv[4]??'sprint_control';
+const profile=process.argv[5]??'hill_then_mountain';
 if(!['men','women'].includes(category)||
   !['sprint_control','selective_attack'].includes(mode)||
+  !['hill','alternating','hill_then_mountain']
+    .includes(profile)||
   !/^[A-Za-z0-9-]{1,64}$/.test(seed))
-  throw new Error('Supply a category, bounded seed and mode.');
+  throw new Error('Supply a category, bounded seed, mode and profile.');
 const request=prepareSyntheticPositionCatchV1({
   teamCount:15,riderCount:120,kmCount:120,
-  profile:'hill_then_mountain',
+  profile,
   oneTimeAttack:mode==='selective_attack',
   raceSeed:seed});
 request.input.positionPassingCorridorCount=1;
@@ -99,7 +102,8 @@ const packedRecordBytes=Buffer.byteLength(
 console.log(JSON.stringify({
   version:'v7-starter-roster-tie-control-1',
   source:'synthetic_event_game_starter_sporting_profiles',
-  category,seed,mode,elapsedMs:Date.now()-started,
+  category,seed,mode,profile,
+  elapsedMs:Date.now()-started,
   decisions:race.decisionCount,
   finishers:race.finishCrossings.length,
   attackDepartures:race.attackDepartureEvents.length,
