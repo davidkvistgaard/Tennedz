@@ -368,5 +368,10 @@ process.stdout.write(JSON.stringify({summary,rows},
 if(rows.some(row=>row.positionStatus!==
   'complete_replayed'||
   row.sourceStatus!==(sourceVersion==='2'?
-    'complete_replayed':'complete')))
+    'complete_replayed':'complete')||
+  !row.decisionCoverage||
+  !row.checkpointCoverage||
+  !row.finishCoverage||
+  positionVersion==='7'&&
+    !row.finaleFrameRiderCoverage))
   process.exitCode=1;
