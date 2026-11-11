@@ -12,6 +12,8 @@ import { normalizeRoute, routeAdvice } from "../../../lib/race/route.mjs";
 import RaceOrders from "../../components/RaceOrders";
 import { draftOrders } from "../../../lib/race/orders.mjs";
 
+import { usesWinterPoints } from "../../../lib/race/winter-points.mjs";
+
 const skills = {
   sprint: "Sprint",
   flat: "Flat roads",
@@ -411,8 +413,9 @@ export default function RunPage() {
                       <div>
                         <h2>Your lineup</h2>
                         <p className="small">
-                          Eight riders and one captain. Your captain’s time determines
-                          your team’s placing.
+                          Eight riders and one captain. {usesWinterPoints(stage)
+                            ? "Your team scores the points earned by its riders in the top 30."
+                            : "Your captain’s time determines your team’s placing."}
                         </p>
                       </div>
                       <span

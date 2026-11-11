@@ -37,3 +37,21 @@ test("full multi-division simulation ranks each rider and captain exactly once",
  assert.equal(new Set(results.map(r=>r.rider_id)).size,328);
  assert.ok(race.divisions.every(d=>d.teams.every(t=>t.captain_id===`${t.team_id}-0`) && d.teams[0].points===Math.round(100*d.multiplier)));
 });
+
+test("winter races score every rider by field size and sum only the top 30 for teams",()=>{
+  const s=input();
+  s.stage.tags.push("WINTER_2026");
+  s.teams=Array.from({length:9},(_,i)=>{
+    const id=`winter-${i}`;
+    const riders=Array.from({length:8},(_,j)=>rider(`${id}-${j}`));
+    return {id,name:id,riders,entry:{selected_riders:riders.map(r=>r.id),captain_id:riders[0].id}};
+  });
+  const [division]=buildRace(s).divisions;
+  assert.deepEqual(division.results.map(r=>r.points),[...Array.from({length:71},(_,i)=>72-i),0]);
+  for(const team of division.teams){
+    const expected=division.results.filter(r=>r.team_id===team.team_id&&r.position<=30)
+      .reduce((sum,r)=>sum+r.points,0);
+    assert.equal(team.points,expected);
+  }
+  assert.deepEqual(division.teams.map(t=>t.points),division.teams.map(t=>t.points).sort((a,b)=>b-a));
+});
