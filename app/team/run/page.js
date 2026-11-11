@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import TeamShell from "../../components/TeamShell";
@@ -144,6 +144,17 @@ export default function RunPage() {
       });
     return () => abort.abort();
   }, [eventId]);
+  const preparationRef = useRef(null);
+  const lineupRef = useRef(null);
+  function focusPreparation() {
+    const target = lineupRef.current ?? preparationRef.current;
+    target?.focus({ preventScroll: true });
+    target?.scrollIntoView({ block: "start" });
+  }
+  useEffect(() => {
+    if (!event || loading || entryLoading) return;
+    focusPreparation();
+  }, [event, loading, entryLoading]);
   const list = events.filter(
     (e) =>
       e.gender === gender &&
@@ -294,7 +305,10 @@ export default function RunPage() {
             <button
               className={`event-card ${eventId === e.id ? "selected" : ""}`}
               key={e.id}
-              onClick={() => setEventId(e.id)}
+              onClick={() => {
+                if (eventId === e.id) focusPreparation();
+                else setEventId(e.id);
+              }}
               aria-pressed={eventId === e.id}
             >
               <span className="eyebrow">
@@ -325,7 +339,7 @@ export default function RunPage() {
         </div>
       )}
       {event && (
-        <section id="race-preparation" className="race-preparation" aria-label="Race preparation">
+        <section id="race-preparation" className="race-preparation" aria-label="Race preparation" ref={preparationRef} tabIndex={-1}>
           <div className="page-heading">
             <div>
               <p className="eyebrow">
@@ -383,7 +397,7 @@ export default function RunPage() {
                       </Link>
                     </section>
                   )}
-                  <section id="race-lineup" className="card lineup-summary">
+                  <section id="race-lineup" className="card lineup-summary" ref={lineupRef} tabIndex={-1} aria-label={`Your lineup for ${event.name}`}>
                     <div className="panel-heading">
                       <div>
                         <h2>Your lineup</h2>
