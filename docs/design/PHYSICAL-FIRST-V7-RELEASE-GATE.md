@@ -15,7 +15,8 @@ production viewer. The long design ledger remains in
 | Sporting calibration | 24/36 same-seed cases differ in named front leader. Every attack-choice detail mismatch in those 36 cases involves a rider the source still counts on another road after V7 has recorded that rider over the finish. No mismatch without this condition was found. In the flat men's case the first front-leader difference is a refused, unpayable pass at km 88. Maximum final reserve drift is 3.349; maximum old group-clock versus paid-wheel finish drift is 9.674 seconds. | Open: assess front work and finish by physical evidence, never copy the old group clock as a wheel |
 | Official finish | All 36 selective-attack cases expose unresolved model-clock ties. In a separate flat 120-rider no-attack fixture, both categories have 23 two-rider ties: each pair occupies the same recorded longitudinal distance in different lanes just before the line. These are model positions, not a serialization rounding error. No official placing or awards are produced. | Blocked |
 | Full display fidelity | Before the final 300 metres, within-kilometre movement is visual interpolation. Metric lateral coordinates, canonical geography and actual helmets are absent from this Motor Lab fixture. | Open |
-| Hosted release | An isolated branch build in `.next-motor-v7` succeeds with 51 generated pages. V7 is not wired to guided races or production, so this build is a regression check, not a V7 browser or GPU approval. | Blocked pending integration and authenticated browser checks |
+| Local browser inspection | A development-only, flag-gated V7 page renders the 120-rider, 120 km synthetic fixture in WebGL for both categories. At midrace all 120 distinct longitudinal positions render. At time zero 119 riders have recorded negative start-grid distances, which viewer 0.98.2 culls; at the final time all 120 recorded finish coordinates coincide, so the scene overlaps them. The page states both limits and reveals only recorded events at the inspected clock. | Partial; start and finish scene fidelity open, no GPU benchmark |
+| Hosted release | An isolated branch build succeeds with 51 generated pages after the V7 inspection page was added. V7 is not wired to guided races or production, so this build is a regression check, not a hosted or authenticated browser approval. | Blocked pending integration and release checks |
 
 The full 120-rider recording is much larger than its viewer
 projection. Generate and replay it once, persist the versioned
@@ -42,6 +43,16 @@ race. Where an event has no stored seed or locked weather, the
 bridge uses the current official engine's deterministic fallback
 and records that provenance in the sealed document. Persistence
 and a hosted viewer route are still missing.
+
+The development inspection route is intentionally unavailable in
+production. It shows the current package's inability to render
+negative start-grid distance, and its single finish coordinate for
+every rider after crossing. These are display limits, not missing
+motor start positions or a reason to invent a new start or finish
+order. The motor records lane indices, but no metric lane width;
+the adapter therefore does not present lane index as a measured
+lateral coordinate. The scene and HUD must not claim an official
+result from overlapping finish geometry.
 
 Before considering the guided path or `tennedz.eu`, finish the
 varied-order whole-race matrix, explain material source differences,

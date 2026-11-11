@@ -50,6 +50,21 @@ export default function ViewerPreviewScene({feed,coverage,mode='recorded',
       });
     }),[feed,mode]);
   const situation=useMemo(()=>sampler(time),[sampler,time]);
+  const positionInspection=coverage?.exactFinalePositionSamples===true;
+  const beforeStartCount=positionInspection?
+    situation.positions.filter(row=>row.distance<0).length:0;
+  const positionNote=positionInspection?
+    beforeStartCount?
+      `${beforeStartCount} riders are recorded behind the start line. `+
+      'This viewer renders only the route from the start line onward.':
+      time>=feed.duration?
+        'The riders have finished at recorded times. Their finish '+
+        'coordinates overlap here; no official placing is inferred.':
+        'Longitudinal positions are recorded. Metric lane '+
+        'coordinates are unavailable, so the scene uses one road line.':
+    groupOnlyPositions?
+      'These riders share a recorded road position. Their individual '+
+      'lanes and order were not recorded.':null;
   const groups=labelRaceGroups(raceGroups(situation.positions),
     situation.groupRoles);
   const commentary=commentaryAt({...feed,events:publicEvents},time),
@@ -126,7 +141,10 @@ export default function ViewerPreviewScene({feed,coverage,mode='recorded',
           <strong>{remaining.value}</strong>
           <small>{remaining.unit.toUpperCase()} TO FINISH</small></div>
         <div className="race-theatre-group-scroll">
-          {groups.map((group,index)=><button type="button" key={group.id}
+          {positionInspection&&time>=feed.duration?
+            <span>All recorded riders have finished</span>:null}
+          {(positionInspection&&time>=feed.duration?[]:groups)
+            .map((group,index)=><button type="button" key={group.id}
             className={target.type==='group'&&target.id===group.id?'active':''}
             aria-pressed={target.type==='group'&&target.id===group.id}
             onClick={()=>choose({type:'group',id:group.id})}>
@@ -196,9 +214,8 @@ export default function ViewerPreviewScene({feed,coverage,mode='recorded',
           assetStatus.errors.length===1?'':'s'} failed to load; fallback rendering remains active.`}</p>:null}
     </div>
     <div className="race-theatre-bottom">
-      {groupOnlyPositions?<p className="race-theatre-position-note">
-        These riders share a recorded road position. Their individual
-        lanes and order were not recorded.
+      {positionNote?<p className="race-theatre-position-note">
+        {positionNote}
       </p>:null}
       <div className="race-theatre-commentary">
         <p>RACE COMMENTARY <small>{mode==='exhibition'?
