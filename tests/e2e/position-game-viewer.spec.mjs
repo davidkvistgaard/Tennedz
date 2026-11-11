@@ -44,7 +44,9 @@ test('saved V7 game race reaches the shared WebGL viewer',
     {timeout:30000});
     await expect(page.getByRole('heading',
       {name:'Recorded position race'})).toBeVisible();
-    const finished=process.env.
+    const live=process.env.PELOTONIA_E2E_POSITION_VIEWER_LIVE===
+      'true';
+    const finished=live||process.env.
       PELOTONIA_E2E_POSITION_VIEWER_FINISHED==='true';
     if(finished){
       await expect(page.locator(
@@ -72,6 +74,26 @@ test('saved V7 game race reaches the shared WebGL viewer',
       expect(diagnostics.visible).toBeGreaterThan(0);
       expect(diagnostics.errors).toBe(0);
       expect(diagnostics.graphicsBackend?.api).toBe('WebGL2');
+      if(live){
+        const response=await page.request.get(
+          `/api/admin/position-viewer-preview?event_id=${eventId}`);
+        expect(response.ok()).toBe(true);
+        const duration=(await response.json()).feed.duration;
+        await expect.poll(async()=>{
+          const raw=await page.locator('[data-viewer-diagnostics]')
+            .getAttribute('data-viewer-diagnostics');
+          const sample=raw?JSON.parse(raw):null;
+          return sample?.raceTime>duration*.15&&
+            sample.raceTime<duration*.8?
+            sample.cameraFocusLagM:null;
+        },{timeout:30000,intervals:[250]})
+          .toBeLessThan(12);
+        await test.info().attach('live-camera-mid-race',{
+          body:await page.screenshot(),contentType:'image/png'});
+        if(process.env.PELOTONIA_CAMERA_SCREENSHOT_PATH)
+          await page.screenshot({path:process.env.
+            PELOTONIA_CAMERA_SCREENSHOT_PATH});
+      }
       if(process.env.PELOTONIA_REQUIRE_HARDWARE_WEBGL==='true')
         expect(diagnostics.graphicsBackend?.unmaskedRenderer??'')
           .not.toMatch(/SwiftShader|llvmpipe|software/i);

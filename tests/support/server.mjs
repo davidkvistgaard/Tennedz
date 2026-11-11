@@ -189,7 +189,10 @@ const server = http.createServer(async (req, res) => {
       if(positionViewerRecordedAt)return send(409,{code:'PT409',
         message:'The position race has already been recorded.'});
       positionViewerRecordedAt=new Date(Date.now()+
-        (process.env.PELOTONIA_E2E_POSITION_VIEWER_FINISHED===
+        (process.env.PELOTONIA_E2E_POSITION_VIEWER_LIVE===
+          'true'?-Math.ceil(positionViewerDocument.feed.duration*
+            1000/60)-1000:
+          process.env.PELOTONIA_E2E_POSITION_VIEWER_FINISHED===
           'true'?-600000:60000)).toISOString();
       return send(200,{event_id:positionViewerEventId,
         sha256:positionViewerDocument.sha256,

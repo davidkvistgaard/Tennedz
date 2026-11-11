@@ -21,7 +21,7 @@
     "test:e2e": "playwright test"
   },
   "dependencies": {
-    "@pelotonia/race-viewer": "file:vendor/pelotonia-race-viewer-0.98.2.tgz",
+    "@pelotonia/race-viewer": "file:vendor/pelotonia-race-viewer-0.98.3.tgz",
     "@supabase/ssr": "0.12.7",
     "@supabase/supabase-js": "2.117.1",
     "next": "15.5.26",

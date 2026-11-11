@@ -119,6 +119,10 @@ export default function ViewerPreviewScene({feed,coverage,mode='recorded',
           if(report)setDiagnostics({
             renderer:report.renderer,
             visible:next.visible,
+            raceTime:next.time,
+            cameraFocusLagM:mode==='position'&&
+              Number.isFinite(next.camera?.focus?.[2])?
+              Math.abs(next.distance-next.camera.focus[2]):null,
             fps:next.fps,
             crowdCount:report.crowdCount,
             renderedFrames:report.renderedFrames,
