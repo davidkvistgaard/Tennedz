@@ -495,3 +495,29 @@ test('sprint handoff leaves earlier paid kilometres intact',()=>{
   assert.deepEqual(replayPhysicalFirstPositionGeneralRaceV6(
     request,race),race);
 });
+
+test('a large sprint field exposes unresolved model clock ties',()=>{
+  const request=prepareSyntheticPositionCatchV1({
+    teamCount:20,kmCount:120,
+    weakBunchCount:2,
+    profile:'hill_then_mountain',
+    oneTimeAttack:false});
+  request.input.positionPassingCorridorCount=1;
+  for(const stake of request.input.stakes)
+    stake.sportingGoal='sprint_finish';
+  const race=recordPhysicalFirstPositionGeneralRaceV6(request);
+  assert.equal(race.riderCount,160);
+  assert.equal(race.finishCrossings.length,160);
+  assert.ok(race.finaleFinishTieObservations.length>0);
+  for(const tie of race.finaleFinishTieObservations){
+    assert.ok(tie.riderIds.length>1);
+    const crossingTimes=tie.riderIds.map(riderId=>
+      race.finishCrossings.find(row=>
+        row.riderId===riderId).clockSeconds);
+    assert.ok(Math.max(...crossingTimes)-
+      Math.min(...crossingTimes)<=1e-6);
+  }
+  assert.equal(race.officialResults,false);
+  assert.deepEqual(replayPhysicalFirstPositionGeneralRaceV6(
+    request,race),race);
+});
