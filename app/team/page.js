@@ -36,7 +36,7 @@ function NextRace({ gender }) {
   const entryOpen=next&&Date.parse(next.deadline)>now+calendar.offset;
   const raceDate=next?.scheduled_at??next?.deadline;
   const action=!next?"Open race calendar":!entryOpen?"View race":
-    next.orders_ready?"Review orders":next.team_count===next.team_size?"Set orders":"Set up team";
+    next.orders_ready?"Review orders":(next.team_count??0)===(next.team_size??8)?"Set orders":"Set up team";
   return <section className="club-race" aria-label="Next race">
     <p className="identity-eyebrow">NEXT CHAPTER · {gender==="M"?"MEN":"WOMEN"}</p>
     <h2>{calendar.loading?"Loading your next race…":next?.name || (calendar.error?"Calendar unavailable":"The road is waiting")}</h2>
