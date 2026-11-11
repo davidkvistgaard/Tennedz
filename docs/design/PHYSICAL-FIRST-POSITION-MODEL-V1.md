@@ -1055,3 +1055,37 @@ The V7 audit JSON is 18,824,590 bytes versus 15,523,387 for
 V6; the 206 authoritative finale frames account for 3,301,153
 bytes. Frames are stored only once in the tail so the transport
 can select them without duplicating the full audit ledger.
+
+`physical-first-position-to-pelotonia.viewer.v1-1` is an
+experimental, separate projection of a **replayed V7 record**.
+It refuses missing rider names, bib numbers, team kit, route
+profile or the complete race. The feed is marked synthetic and
+uses a labelled schematic distance axis. Its group IDs come
+from the paid road record; its roles are display labels derived
+from the recorded road distances, with no fabricated gap in
+seconds. It does not convert an ordered attack into an event:
+only the motor's paid departure, pass and contact observations
+can be narrated. The viewer contract receives one common
+motor clock, start and kilometre-boundary positions, every
+quarter-second finale position, and events at recorded times.
+It receives no `results` before a supported official
+classification exists. A separate finish-evidence object is
+released only at the last recorded crossing and retains
+unresolved model-clock ties.
+
+The unmodified 120-rider current Motor Lab fixture completes
+and validates this projection in both categories: 14,400 paid
+kilometre decisions, 120 finish crossings, 270 viewer frames,
+and all 120 riders in each frame. The feed is about 2.77 MB
+per category, compared with the much larger full motor ledger.
+This is a contract and playback audit, not a GPU test or a
+release gate. Before the final 300 metres the motor records
+positions at kilometre boundaries only; the viewer's smooth
+movement between them is visual interpolation, not measured
+within-kilometre position. The motor has lane indices but no
+metric lateral coordinates, so the projection supplies zero
+lateral metres rather than inventing lane width. This fixture
+has fictional rival identities and synthetic bib allocation;
+no canonical geography, actual helmets or official places are
+claimed. The full ledger stays the replay authority and V7
+remains separate from guided races and production.

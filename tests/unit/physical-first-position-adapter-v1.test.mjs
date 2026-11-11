@@ -1,0 +1,81 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {validateFeed,createSampler,commentaryAt} from
+  '@pelotonia/race-viewer/data';
+import {prepareSyntheticPositionCatchV1} from
+  './synthetic-position-catch-fixture-v1.mjs';
+import {recordPhysicalFirstPositionGeneralRaceV7} from
+  '../../lib/engine/v2/physical-first-position-general-race-v1.mjs';
+import {adaptPhysicalFirstPositionRaceV1} from
+  '../../lib/viewer/physical-first-position-adapter-v1.mjs';
+
+const makeRecord=(category='men',riderCount=16)=>{
+  const request=prepareSyntheticPositionCatchV1({
+    teamCount:Math.ceil(riderCount/8),riderCount,
+    kmCount:20,profile:'hill_then_mountain'});
+  request.input.positionPassingCorridorCount=1;
+  request.input.teams[0].orders.baseline.attack='none';
+  request.input.stakes[0].sportingGoal='sprint_finish';
+  for(const team of request.input.teams)
+    for(const rider of team.riders){
+      rider.name=`Fixture rider ${rider.id}`;
+      rider.gender=category==='men'?'M':'F';
+    }
+  for(const segment of request.input.kilometres){
+    segment.startM=0;
+    segment.endM=0;
+  }
+  const teamStyles=request.input.teams.map((team,index)=>({
+    id:team.id,name:`Fixture team ${index+1}`,
+    color:index?'#226688':'#aa4433',
+    accent:'#ffffff',pattern:'band'}));
+  const riderNumbers=Object.fromEntries(request.input.teams
+    .flatMap((team,teamIndex)=>team.riders.map((rider,index)=>
+      [rider.id,teamIndex*8+index+1])));
+  return {request,
+    race:recordPhysicalFirstPositionGeneralRaceV7(request),
+    category,teamStyles,riderNumbers,
+    raceId:`synthetic-${category}-${riderCount}-20km`};
+};
+
+for(const category of ['men','women'])
+for(const riderCount of [16,30,150])
+  test(`V7 ${category} ${riderCount}-rider feed is complete`,()=>{
+    const source=makeRecord(category,riderCount);
+    const exported=adaptPhysicalFirstPositionRaceV1(source);
+    const {feed,coverage,finishEvidence}=exported;
+    assert.deepEqual(validateFeed(feed),feed);
+    assert.equal(feed.riderCategory,category);
+    assert.equal(feed.synthetic,true);
+    assert.equal(feed.riders.length,riderCount);
+    assert.equal(feed.frames.length,
+      1+20+source.race.tail.positionFrames.length-1);
+    assert.ok(feed.frames.every(frame=>
+      frame.positions.length===riderCount));
+    assert.ok(feed.frames.every((frame,index)=>
+      index===0||frame.time>feed.frames[index-1].time));
+    assert.equal(feed.duration,
+      source.race.tail.lastClockSeconds);
+    assert.equal(finishEvidence.publishedAt,feed.duration);
+    assert.equal(finishEvidence.entries.length,riderCount);
+    assert.equal(feed.results,undefined);
+    assert.equal(coverage.exactBetweenKilometrePositions,false);
+    assert.equal(coverage.canonicalGeography,false);
+    assert.equal(coverage.officialResults,false);
+    const sampler=createSampler(feed);
+    assert.equal(sampler(0).positions.length,riderCount);
+    assert.equal(sampler(feed.duration).positions.length,riderCount);
+    assert.ok(commentaryAt(feed,0).every(event=>event.time<=0));
+  });
+
+test('V7 export rejects forged motor movement and missing identity',()=>{
+  const source=makeRecord();
+  const forged=structuredClone(source.race);
+  forged.tail.positionFrames[1].positions[0].distanceM+=1;
+  assert.throws(()=>adaptPhysicalFirstPositionRaceV1({
+    ...source,race:forged}),/differs from paid movement/);
+  const missing=structuredClone(source);
+  delete missing.request.input.teams[0].riders[0].name;
+  assert.throws(()=>adaptPhysicalFirstPositionRaceV1(missing),
+    /committed, complete field/);
+});
