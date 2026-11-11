@@ -34,6 +34,9 @@ for(const width of [390,1440])test(`English manager journey from signup to repla
   await expect(page.getByRole('button',{name:'Enter team',exact:true})).toBeDisabled();
   await page.getByRole('button',{name:'Choose captain',exact:true}).first().click();
   await expect(page.getByRole('button',{name:'Enter team',exact:true})).toBeEnabled();
+  await page.getByLabel('Team plan',{exact:true}).selectOption('captain');
+  await page.getByLabel('Role for Adam Nowak',{exact:true}).selectOption('helper');
+  await page.getByLabel('Effort for Elias Holm',{exact:true}).selectOption('aggressive');
   fixture.rejectNextSave();
   await page.getByRole('button',{name:'Enter team',exact:true}).click();
   await expect(page.getByText('Could not save your lineup. Please try again.')).toBeVisible();
@@ -42,8 +45,13 @@ for(const width of [390,1440])test(`English manager journey from signup to repla
   await expect(page.getByText('Saved ✓',{exact:true})).toBeVisible();
   expect(fixture.entry().selected_riders).toHaveLength(8);
   expect(fixture.entry().selected_riders).toContain(fixture.entry().captain_id);
+  expect(fixture.entry().orders.plan).toBe('captain');
+  expect(fixture.entry().orders.riders['rider-6'].role).toBe('helper');
   await page.reload();await page.getByRole('button',{name:/The Coast Classic/}).click();
   await expect(page.getByText('Saved ✓',{exact:true})).toBeVisible();
+  await expect(page.getByLabel('Team plan',{exact:true})).toHaveValue('captain');
+  await expect(page.getByLabel('Role for Adam Nowak',{exact:true})).toHaveValue('helper');
+  await expect(page.getByLabel('Effort for Elias Holm',{exact:true})).toHaveValue('aggressive');
   await fits();await page.screenshot({path:`test-results/journey-lineup-${width}.png`,fullPage:true});
   fixture.finish();
   await page.goto('/viewer');

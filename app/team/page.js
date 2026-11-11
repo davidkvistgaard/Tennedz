@@ -28,12 +28,14 @@ function NextRace({ gender }) {
   },[]);
   const next = nextTeamRace(calendar.events,gender,now+calendar.offset);
   const raceDate=next?.scheduled_at??next?.deadline;
-  const action=next?.team_ready?"Review lineup":next?"Set up team":"Open race calendar";
+  const entryOpen=next&&Date.parse(next.deadline)>now+calendar.offset;
+  const action=!next?"Open race calendar":!entryOpen?"View race":
+    next.orders_ready?"Review orders":next.team_ready?"Set orders":"Set up team";
   return <section className="club-race" aria-labelledby="club-next-race-label">
     <p id="club-next-race-label" className="identity-eyebrow">NEXT RACE · {gender==="M"?"MEN":"WOMEN"}</p>
     <h2>{calendar.loading?"Loading…":next?.name || (calendar.error?"Calendar unavailable":"The road is waiting")}</h2>
     {next&&<p className="club-race-date">{next.scheduled_at?"Race day":"Entry deadline"} · {new Date(raceDate).toLocaleDateString("en-GB",{weekday:"long",day:"numeric",month:"long",timeZone:"UTC"})}{next.race_tier?` · T${next.race_tier}`:""}</p>}
-    {next&&<div className="club-race-readiness"><span>Team <strong>{next.team_count??0}/{next.team_size??8}</strong></span><span>{next.team_ready?"Entered":"Lineup needed"}</span></div>}
+    {next&&<div className="club-race-readiness"><span>Team <strong>{next.team_count??0}/{next.team_size??8}</strong></span><span>Orders <strong>{next.orders_ready?"Ready":"Missing"}</strong></span>{!entryOpen&&<span>Locked</span>}</div>}
     <p>{calendar.error || (next ? `Entries close ${new Date(next.deadline).toLocaleString("en-GB",{timeZone:"UTC",day:"numeric",month:"long",hour:"2-digit",minute:"2-digit"})} UTC.` : calendar.loading?"":"There are no open one-day races for this squad yet.")}</p>
     <Link className="btn" href={next?`/team/run?event_id=${encodeURIComponent(next.id)}&gender=${gender}`:"/team/calendar"}>{action} ↗</Link>
   </section>;

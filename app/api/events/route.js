@@ -43,7 +43,7 @@ async function handler(req, context, auth) {
   const all = [...upcoming.data, ...pending.data, ...finished.data];
   const ids = all.map(event => event.id);
   const {data: entries, error: entryError} = ids.length
-    ? await auth.db.from("event_teams").select("event_id,selected_riders,captain_id")
+    ? await auth.db.from("event_teams").select("event_id,selected_riders,captain_id,orders")
       .eq("team_id", auth.team.id).in("event_id", ids)
     : {data: [], error: null};
   if (entryError) throw new Error("Entry query failed");
@@ -55,6 +55,7 @@ async function handler(req, context, auth) {
       team_count: entry?.selected_riders?.length ?? 0,
       team_ready: !!entry && entry.selected_riders?.length === teamSize &&
         entry.selected_riders.includes(entry.captain_id),
+      orders_ready: !!entry?.orders,
       winner_points: event.race_tier
         ? pointsForResult({tier: event.race_tier, resultType: event.kind === "one_day" ? "ONE_DAY" : "GC", placing: 1})
         : null};
