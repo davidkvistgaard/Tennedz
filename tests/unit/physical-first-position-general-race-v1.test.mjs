@@ -4,9 +4,11 @@ import {prepareSyntheticPositionCatchV1} from
   './synthetic-position-catch-fixture-v1.mjs';
 import {preparePhysicalFirstSplitMotorInputV1} from
   '../../lib/viewer/physical-first-split-test-race-v1.mjs';
-import {PHYSICAL_FIRST_POSITION_START_V2_VERSION} from
+import {createPhysicalFirstPositionStartV2,
+  PHYSICAL_FIRST_POSITION_START_V2_VERSION} from
   '../../lib/engine/v2/physical-first-position-start-v2.mjs';
-import {advancePhysicalFirstPositionSharedRoadKmV11} from
+import {advancePhysicalFirstPositionSharedRoadKmV11,
+  advancePhysicalFirstPositionSharedRoadKmV13} from
   '../../lib/engine/v2/physical-first-position-shared-road-km-v1.mjs';
 import {runPhysicalFirstWholeRaceProbeV1} from
   '../../lib/engine/v2/physical-first-whole-race-probe-v1.mjs';
@@ -15,7 +17,9 @@ import {recordPhysicalFirstPositionGeneralRaceV1,
   recordPhysicalFirstPositionGeneralRaceV2,
   replayPhysicalFirstPositionGeneralRaceV2,
   recordPhysicalFirstPositionGeneralRaceV3,
-  replayPhysicalFirstPositionGeneralRaceV3} from
+  replayPhysicalFirstPositionGeneralRaceV3,
+  recordPhysicalFirstPositionGeneralRaceV4,
+  replayPhysicalFirstPositionGeneralRaceV4} from
   '../../lib/engine/v2/physical-first-position-general-race-v1.mjs';
 
 test('a connected start records every rider without an attack',()=>{
@@ -168,4 +172,131 @@ test('a general race records two paid attacks and a shared rear contact',()=>{
   assert.deepEqual(
     replayPhysicalFirstPositionGeneralRaceV1(
       request,race),race);
+});
+
+test('two ordered attacks receive one paid boundary attempt slot',()=>{
+  const request=prepareSyntheticPositionCatchV1({
+    teamCount:2,kmCount:20,oneTimeAttack:true});
+  request.input.positionPassingCorridorCount=1;
+  request.input.teams[1].orders.baseline.attack=
+    'selective';
+  request.input.teams[1].orders.baseline
+    .attackRiderId='team-1-7';
+  request.input.teams[1].orders.phases.push({
+    atKm:1,attack:'none',attackRiderId:null});
+  assert.throws(()=>
+    recordPhysicalFirstPositionGeneralRaceV3(request),
+  /needs multiple paid attacks/);
+  const race=recordPhysicalFirstPositionGeneralRaceV4(
+    request);
+  assert.equal(race.completedThroughKm,20);
+  assert.equal(race.decisionCount,320);
+  assert.equal(race.checkpointCrossings.length,304);
+  assert.equal(race.finishCrossings.length,16);
+  assert.deepEqual(race.steps[0].attackChoices
+    .filter(row=>row.choice==='attempt_paid_attack')
+    .map(row=>row.riderId),
+  ['team-0-7','team-1-7']);
+  assert.deepEqual(race.attackDepartureEvents
+    .map(row=>row.toRiderId),['team-0-7']);
+  assert.deepEqual(race.attackCapacityRefusals
+    .map(row=>[row.sourceKm,row.riderId,
+      row.prioritizedRiderId,
+      row.paidFromReserve,
+      row.recordedPaidDeparture]),
+  [[1,'team-1-7','team-0-7',0,false]]);
+  const start=createPhysicalFirstPositionStartV2(request);
+  assert.throws(()=>
+    advancePhysicalFirstPositionSharedRoadKmV13({
+      priorPeloton:{...start,frontDistanceM:0,
+        leaderRiderId:start.firstLeaderPlan.leaderRiderId,
+        separateRoadRiderIds:[]},
+      segment:request.input.kilometres[0],
+      input:request.input,
+      attackChoice:race.steps[0].attackChoices.find(row=>
+        row.riderId==='team-1-7')}),
+  /differs from committed choice/);
+  assert.deepEqual(
+    replayPhysicalFirstPositionGeneralRaceV4(request,race),
+    race);
+  const forged=structuredClone(race);
+  forged.attackCapacityRefusals[0]
+    .prioritizedRiderId='team-1-7';
+  assert.throws(()=>
+    replayPhysicalFirstPositionGeneralRaceV4(
+      request,forged),/differs from paid movement/);
+});
+
+test('a single attack retains the prior paid positional trajectory',()=>{
+  const request=prepareSyntheticPositionCatchV1({
+    teamCount:2,kmCount:20,oneTimeAttack:true});
+  request.input.positionPassingCorridorCount=1;
+  const prior=recordPhysicalFirstPositionGeneralRaceV3(request);
+  const race=recordPhysicalFirstPositionGeneralRaceV4(request);
+  assert.equal(race.attackCapacityRefusals.length,0);
+  assert.deepEqual(race.steps.map(step=>
+    step.sharedRoad.positions.map(({version,...row})=>row)),
+  prior.steps.map(step=>
+    step.sharedRoad.positions.map(({version,...row})=>row)));
+  assert.deepEqual(race.steps.map(step=>
+    step.sharedRoad.decisions.map(({version,...row})=>row)),
+  prior.steps.map(step=>
+    step.sharedRoad.decisions.map(({version,...row})=>row)));
+  assert.deepEqual(race.checkpointCrossings,
+    prior.checkpointCrossings);
+  assert.deepEqual(race.finishCrossings,
+    prior.finishCrossings);
+});
+
+test('four ordered teams cannot occupy one attack slot',()=>{
+  const request=prepareSyntheticPositionCatchV1({
+    teamCount:4,kmCount:20,oneTimeAttack:true});
+  request.input.positionPassingCorridorCount=1;
+  for(const team of request.input.teams.slice(1)){
+    team.orders.baseline.attack='selective';
+    team.orders.baseline.attackRiderId=
+      `${team.id}-7`;
+    team.orders.phases.push({
+      atKm:1,attack:'none',attackRiderId:null});
+  }
+  const race=recordPhysicalFirstPositionGeneralRaceV4(
+    request);
+  assert.equal(race.completedThroughKm,20);
+  assert.equal(race.decisionCount,640);
+  assert.equal(race.finishCrossings.length,32);
+  assert.equal(race.steps[0].attackChoices.filter(row=>
+    row.choice==='attempt_paid_attack').length,4);
+  assert.equal(race.attackCapacityRefusals.length,3);
+  assert.equal(race.attackDepartureEvents.length,1);
+  assert.deepEqual(
+    replayPhysicalFirstPositionGeneralRaceV4(request,race),
+    race);
+});
+
+test('a stronger non-staged attacker still has to pass physically',()=>{
+  const request=prepareSyntheticPositionCatchV1({
+    teamCount:2,kmCount:20,oneTimeAttack:true});
+  request.input.positionPassingCorridorCount=1;
+  request.input.teams[1].orders.baseline.attack=
+    'selective';
+  request.input.teams[1].orders.baseline
+    .attackRiderId='team-1-7';
+  request.input.teams[1].orders.phases.push({
+    atKm:1,attack:'none',attackRiderId:null});
+  Object.assign(request.input.teams[1].riders[6],{
+    flat:100,hills:100,mountain:100,
+    acceleration:100,positioning:100});
+  const race=recordPhysicalFirstPositionGeneralRaceV4(
+    request);
+  assert.equal(race.start.stagedAttackRiderId,
+    'team-0-7');
+  assert.equal(race.attackCapacityRefusals[0]
+    .riderId,'team-0-7');
+  assert.equal(race.attackDepartureEvents[0]
+    .toRiderId,'team-1-7');
+  assert.ok(race.attackDepartureEvents[0]
+    .surgePaidFromReserve>0);
+  assert.deepEqual(
+    replayPhysicalFirstPositionGeneralRaceV4(request,race),
+    race);
 });

@@ -809,3 +809,44 @@ to `/team/motor-lab/engine`, where the guided workbench now
 resides. The browser smoke protects the existing game path; it
 does not publish or authenticate the experimental positional
 race in the hosted viewer.
+The flat selective-attack seed's largest final reserve drift
+is now traced to the actual front choice. The group-clock
+source names `you-2` as peloton leader in 17 kilometres
+starting at km 88. The position recorder keeps `you-3`
+in front because the proposed pass has no payable, completed
+movement on that road. At the finish the source versus
+positional reserves differ by -3.349 for `you-2` and +3.315
+for `you-3`; the mean absolute difference across 120 riders
+is 0.062. The tail adds effectively no distance or energy to
+these two, so this is leader-work allocation, not an
+unrecorded finish tail. Aligning the records by copying the
+source leader would invent a position and is prohibited.
+The audit now reports leader mismatches explicitly.
+
+`shared-road-km-13` and `general-race-4` are a further opt-in
+decision policy for simultaneous orders. When more than one
+team attempts an attack at the same kilometre boundary, the
+committed single passing corridor grants one attempt to the
+rider with the highest recorded perceived attack ability,
+breaking a tie by rider ID. Every other attempted choice is
+retained as an unpaid `single_boundary_attack_slot` refusal;
+an order is never converted into a departure merely because
+it was requested. The selected rider still has to pay and
+physically pass, and can independently be refused by the
+existing lane/runway guards. This version does not model a
+second attack later within the same kilometre. In a synthetic,
+noncanonical 16-rider, 20 km two-team attack case, the earlier
+general recorder stops at km 1; the new one records both
+attempts, one paid departure and one explicit refusal, then
+finishes all 320 rider decisions, 304 intermediate passages
+and 16 finish passages with exact replay. A single-attack
+fixture has identical paid positions, decisions and crossing
+clocks to `general-race-3`. The independent source probe still
+stops this two-team synthetic input at km 2 because its solo
+contact contract is incomplete. Thus the new decision policy
+is not calibrated for guided races or official results.
+A 32-rider 20 km fixture with four attacking teams likewise
+finishes and replays: one recorded departure and three
+explicitly unpaid boundary-slot refusals. The no-attack
+two-weak-worker fixture still completes and replays both
+source and positional records under the new version.
