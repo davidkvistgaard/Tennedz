@@ -35,7 +35,7 @@ test('manager explicitly saves physical race orders with lineup',
       .selectOption('rotate');
     await tactics.getByRole('checkbox',{name:'Mateo Rojas'})
       .check();
-    await tactics.getByLabel('Named front worker')
+    await tactics.getByLabel('Preferred front worker (optional)')
       .selectOption('rider-2');
     await tactics.getByRole('combobox',
       {name:'Sporting goal',exact:true})
@@ -58,5 +58,11 @@ test('manager explicitly saves physical race orders with lineup',
     await expect(tactics.getByRole('combobox',
       {name:'Sporting goal',exact:true}))
       .toHaveValue('break_stage');
+    await tactics.getByLabel('Preferred front worker (optional)')
+      .selectOption('');
+    await tactics.getByRole('button',
+      {name:'Save lineup and race tactics'}).click();
+    await expect.poll(()=>fixture.physicalEntry()
+      ?.orders.baseline.frontWorkRiderId).toBeNull();
     expect(errors).toEqual([]);
   });
