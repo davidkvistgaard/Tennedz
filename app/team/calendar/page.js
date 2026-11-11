@@ -4,7 +4,9 @@ import Link from "next/link";
 import TeamShell from "../../components/TeamShell";
 import {api} from "../../../lib/api";
 import {PLACING_PERCENT,STAGE_POINTS,TIER_WINNER_POINTS} from "../../../lib/calendar/points.mjs";
+import RaceProgramme from "./RaceProgramme";
 import "./calendar.css";
+import "./programme.css";
 
 const FILTERS=["All","Men","Women","UCI","Pelotonia","Stage races","My races"];
 const displayDate=value=>new Date(value).toLocaleDateString("en-GB",{weekday:"short",day:"numeric",month:"short",timeZone:"UTC"});
@@ -57,8 +59,24 @@ function PointsList({values}){
 
 export default function CalendarPage(){
   const [data,setData]=useState(null),[error,setError]=useState(""),[filter,setFilter]=useState("All");
-  useEffect(()=>{const requested=new URLSearchParams(window.location.search).get("filter");
-    if(FILTERS.includes(requested))setFilter(requested);},[]);
+  const [view,setView]=useState("upcoming");
+  useEffect(()=>{
+    const params=new URLSearchParams(window.location.search);
+    const requested=params.get("filter");
+    if(FILTERS.includes(requested))setFilter(requested);
+    const syncView=()=>setView(new URLSearchParams(window.location.search).get("view")==="2027"?"2027":"upcoming");
+    syncView();
+    window.addEventListener("popstate",syncView);
+    return ()=>window.removeEventListener("popstate",syncView);
+  },[]);
+  function selectView(next){
+    if(next===view)return;
+    const url=new URL(window.location.href);
+    if(next==="2027")url.searchParams.set("view","2027");
+    else url.searchParams.delete("view");
+    window.history.pushState(null,"",url);
+    setView(next);
+  }
   useEffect(()=>{let active=true;api("/api/events?limit=100").then(result=>{if(active)setData(result);})
     .catch(e=>{if(active)setError(e.message);});return()=>{active=false;};},[]);
   const visible=useMemo(()=>{
@@ -75,9 +93,14 @@ export default function CalendarPage(){
       if(!result.has(key))result.set(key,[]);result.get(key).push(event);}
     return [...result];
   },[visible]);
-  return <TeamShell title="Race calendar"><div className="agenda-page">
+  return <TeamShell title="Calendar & races"><div className="agenda-page">
     <header className="agenda-hero"><p className="identity-eyebrow">THE SEASON AHEAD</p>
       <h1>Every race begins here.</h1><p>Explore upcoming races and prepare your squad. Official dates and ranking tiers appear as they are published.</p></header>
+    <nav className="programme-views" aria-label="Calendar view">
+      <button type="button" aria-pressed={view==="upcoming"} onClick={()=>selectView("upcoming")}>Upcoming races</button>
+      <button type="button" aria-pressed={view==="2027"} onClick={()=>selectView("2027")}>2027 race programme</button>
+    </nav>
+    {view==="2027"?<RaceProgramme/>:<>
     <nav className="agenda-filters" aria-label="Calendar filters">{FILTERS.map(name=><button key={name}
       aria-pressed={filter===name} onClick={()=>setFilter(name)}>{name}</button>)}</nav>
     {error&&<p role="alert">Could not load the race calendar: {error}</p>}
@@ -87,5 +110,6 @@ export default function CalendarPage(){
     {groups.map(([day,events])=><section className="agenda-day" key={day}>
       <h2>{displayDate(day)}</h2><div className="agenda-grid">{events.map(event=><EventCard key={event.id} event={event} filter={filter}/>)}</div>
     </section>)}
+    </>}
   </div></TeamShell>;
 }

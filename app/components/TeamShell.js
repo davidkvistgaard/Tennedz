@@ -26,7 +26,6 @@ export default function TeamShell({ title, children, compact = false }) {
     ["/team", "My team"],
     ["/team/settings", "Settings"],
     ["/team/calendar", "Calendar & races"],
-    ["/team/calendar-plan", "2027 calendar plan"],
     ["/team/motor-lab", "Motor Lab"],
     ["/team/portraits", "Riders"],
     ["/team/marketplace", "Marketplace"],
